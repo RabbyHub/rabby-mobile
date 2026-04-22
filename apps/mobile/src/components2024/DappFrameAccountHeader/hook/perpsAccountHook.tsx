@@ -3,14 +3,13 @@ import React, { useCallback, useMemo } from 'react';
 import { INNER_DAPP_LIST } from '@/components2024/DappFrameAccountHeader';
 import { Account } from '@/core/services/preference';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { useAccounts } from '@/hooks/account';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
-import useAppChainStore from '@/store/appchain';
-import { useShallow } from 'zustand/shallow';
+import { appChainResourceStore } from '@/store/appchain';
 import { formatUsdValue } from '@/utils/number';
 import { View } from 'react-native';
 import { getStyle } from '../styles';
-import { sortBy } from 'lodash';
 import { Text } from '@/components/Typography';
 
 const PERPS_LIST = INNER_DAPP_LIST.PERPS;
@@ -27,6 +26,7 @@ const getOriginKey = (url?: string) => {
 export const usePerpsDappAccountExtraInfo = (dapp: string) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
+  const { accounts } = useAccounts({ disableAutoFetch: true });
   const activeItem = useMemo(
     () => PERPS_LIST.find(item => item.id === dapp) || PERPS_LIST[0],
     [dapp],
@@ -40,15 +40,20 @@ export const usePerpsDappAccountExtraInfo = (dapp: string) => {
     }
     return safeGetOrigin(activeItem.url) || activeItem.url;
   }, [activeItem?.id, activeItem?.url]);
+  const trackedAddresses = useMemo(
+    () => accounts.map(account => account.address),
+    [accounts],
+  );
+  const appChainsByAddress =
+    appChainResourceStore.useAddressesAppChains(trackedAddresses);
 
-  const appChainMap = useAppChainStore(useShallow(s => s.appChainMap));
   const perpsAppChainByAddress = useMemo(() => {
     const originKey = getOriginKey(perpsDappOrigin);
     if (!originKey) {
       return undefined;
     }
     const map: Record<string, { balance: number; positions: number }> = {};
-    Object.entries(appChainMap).forEach(([address, list]) => {
+    Object.entries(appChainsByAddress).forEach(([address, list]) => {
       let balance = 0;
       let positions = 0;
       let hasMatch = false;
@@ -61,15 +66,15 @@ export const usePerpsDappAccountExtraInfo = (dapp: string) => {
         balance += Number(item.netWorth || 0);
         const hyperliquidWithdrawable = `perp_withdrawable_usdc_hyperliquid_${address?.toLowerCase()}`;
 
-        item.portfolio_item_list.reduce((pre, item) => {
+        item.portfolio_item_list.reduce((pre, portfolioItem) => {
           if (activeItem?.id === 'hyperliquid') {
-            if (item.position_index === hyperliquidWithdrawable) {
-              return pre + (item?.stats?.net_usd_value || 0);
+            if (portfolioItem.position_index === hyperliquidWithdrawable) {
+              return pre + (portfolioItem?.stats?.net_usd_value || 0);
             }
             return pre;
           }
-          if (item.name === 'deposit') {
-            return pre + item.stats.net_usd_value;
+          if (portfolioItem.name === 'deposit') {
+            return pre + portfolioItem.stats.net_usd_value;
           }
           return pre;
         }, 0);
@@ -83,7 +88,7 @@ export const usePerpsDappAccountExtraInfo = (dapp: string) => {
       }
     });
     return map;
-  }, [appChainMap, perpsDappOrigin, activeItem?.id]);
+  }, [appChainsByAddress, perpsDappOrigin, activeItem?.id]);
 
   const renderPerpsDappRight = useCallback(
     ({ account }: { account: Account }) => {
@@ -122,11 +127,11 @@ export const usePerpsDappAccountExtraInfo = (dapp: string) => {
   );
 
   const sortPerpsDappAccounts = useCallback(
-    (accounts: Account[]) => {
+    (accountList: Account[]) => {
       if (!perpsAppChainByAddress) {
-        return accounts;
+        return accountList;
       }
-      const list = [...accounts];
+      const list = [...accountList];
       list.sort((a, b) => {
         const aKey = a.address?.toLowerCase() || '';
         const bKey = b.address?.toLowerCase() || '';

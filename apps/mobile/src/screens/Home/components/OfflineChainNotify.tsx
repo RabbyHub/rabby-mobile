@@ -2,7 +2,7 @@ import { openapi } from '@/core/request';
 import { offlineChainService } from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
 import addressBalanceStore from '@/store/balance';
-import { useAccountStore } from '@/store/account';
+import { accountResourceStore } from '@/store/account';
 import { findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
@@ -60,7 +60,7 @@ export const useMockClearOfflineChainTips = () => {
 
 export const useOfflineChain = () => {
   const closedTipsChains = closedTipsStore(s => s.closedTipsChains);
-  const accounts = useAccountStore(s => s.accounts);
+  const accounts = accountResourceStore.useAccounts();
   const { mockData } = useMockDataForHomeCenterArea();
   const { value: offlineList } = useAsync(async () => {
     // leave here for mock data

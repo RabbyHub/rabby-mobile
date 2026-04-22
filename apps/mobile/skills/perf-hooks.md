@@ -187,6 +187,35 @@ Good APIs naturally steer callers toward:
 - less repeated computation
 - less repeated rendering
 
+### 9. Do Not Depend On Wide Dictionaries In Memoized React Code
+
+- Do not put broad dictionary-like objects into `useMemo` or `useCallback` dependency arrays when the scene only needs a few keys.
+- Common red flags include:
+  - `valueMap`
+  - `metaMap`
+  - `byAddress`
+  - `byChain`
+  - `pinAddressesDict`
+  - any freshly-built `Record<string, ...>` lookup object
+- A wide dictionary dependency usually means:
+  - one entry changes
+  - the whole dictionary gets a new identity
+  - every downstream memo recomputes
+  - render fan-out spreads far beyond the changed unit
+- Prefer this direction instead:
+  - subscribe to the exact key first
+  - derive a small primitive dependency first
+  - pass the finalized small result down
+- If you need a lookup map for one render path, build it in that same render path and consume it immediately. Do not build a broad dictionary, then feed that dictionary into more memoized hooks downstream.
+
+### 10. Preserve Per-Item References Across Snapshot Updates
+
+- For list-like resource families, do not rebuild every item object when only one item changed.
+- If one account is added, removed, or updated:
+  - unchanged accounts should keep the same object reference whenever practical
+  - unchanged rows should not rerender just because the parent snapshot refreshed
+- Resource/store migrations should preserve stable references for unchanged units before relying on `useMemo` to recover performance.
+
 ## Recommended Decision Order
 
 When adding a hook or changing store exposure, reason in this order:
@@ -211,6 +240,8 @@ Before merging changes in this area, check:
 - Do child components actually need to subscribe to store state directly?
 - Are there residual broad subscribers still sitting in the same path?
 - Am I scanning the same inputs multiple times when one pass would do?
+- Am I using a wide dictionary or lookup object as a memo dependency?
+- Am I rebuilding unchanged item objects during snapshot refresh?
 - Does the API limit misuse, or does it encourage misuse?
 
 ## Preference Order

@@ -1,3 +1,4 @@
+import { IS_ROZENITE_ENABLED } from '@/constant/env';
 import { makeJsEEClass } from '@/core/services/_utils';
 import { zCreate } from '@/core/utils/reexports';
 
@@ -148,6 +149,10 @@ export const recordResourceFlowTrace = (
     at: input.at || Date.now(),
   };
 
+  if (!IS_ROZENITE_ENABLED) {
+    return entry;
+  }
+
   resourceFlowDebugStore.setState(prev => ({
     ...prev,
     entries: [...prev.entries, entry].slice(-MAX_RESOURCE_FLOW_TRACE_ENTRIES),
@@ -158,6 +163,10 @@ export const recordResourceFlowTrace = (
 };
 
 export const clearResourceFlowTraces = () => {
+  if (!IS_ROZENITE_ENABLED) {
+    return;
+  }
+
   resourceFlowDebugStore.setState(() => ({
     entries: [],
     resources: {},
@@ -176,6 +185,10 @@ export const upsertResourceFlowResourceSnapshot = (
       buildResourceFlowResourceId(resource.family, resource.resourceKey),
   };
 
+  if (!IS_ROZENITE_ENABLED) {
+    return nextResource;
+  }
+
   resourceFlowDebugStore.setState(prev => ({
     ...prev,
     resources: {
@@ -193,6 +206,10 @@ export const removeResourceFlowResourceSnapshot = (
   resourceKey: string,
 ) => {
   const resourceId = buildResourceFlowResourceId(family, resourceKey);
+
+  if (!IS_ROZENITE_ENABLED) {
+    return resourceId;
+  }
 
   resourceFlowDebugStore.setState(prev => {
     if (!prev.resources[resourceId]) {

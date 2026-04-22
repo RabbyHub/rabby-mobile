@@ -4,13 +4,14 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { splitNumberByStep } from '@/utils/number';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
-import { useAccountsInfo } from '@/hooks/useAccountInfo';
+import { useAccountInfo } from '@/hooks/useAccountInfo';
 import { useAddressSource } from '@/hooks/useAddressSource';
 import { GnosisSafeInfoBar } from './GnosisSafeInfoBar';
 import { SeedPhraseBar } from './SeedPhraseBar';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '../Card';
 import { Item } from './Item';
+import { useAddressBalance } from '@/hooks/useCurrentBalance';
 
 interface AddressInfoProps {
   account: KeyringAccountWithAlias;
@@ -21,13 +22,17 @@ export const AddressAssetsItem: React.FC<AddressInfoProps> = props => {
   const { account, onCancel } = props;
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const { balance } = useAddressBalance(account.address);
 
-  const useValue = useMemo(
-    () => `$${splitNumberByStep(account.balance?.toFixed(2) || 0)}`,
-    [account.balance],
-  );
+  const useValue = useMemo(() => {
+    if (typeof balance !== 'number') {
+      return '--';
+    }
 
-  const accountInfo = useAccountsInfo(
+    return `$${splitNumberByStep(balance.toFixed(2))}`;
+  }, [balance]);
+
+  const { value: accountInfo } = useAccountInfo(
     account.type,
     account.address,
     account.brandName,

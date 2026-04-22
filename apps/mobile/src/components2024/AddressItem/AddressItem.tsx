@@ -9,7 +9,7 @@ import {
 import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { ellipsisAddress } from '@/utils/address';
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import { KeyringAccountWithAlias, useAccountByAddress } from '@/hooks/account';
 import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';
@@ -17,6 +17,7 @@ import { WalletIcon, WalletIconProps } from '../WalletIcon/WalletIcon';
 import RcIconPin from '@/assets2024/icons/address/pin-cc.svg';
 import { useCurrency } from '@/hooks/useCurrency';
 import BigNumber from 'bignumber.js';
+import { useAddressBalance } from '@/hooks/useCurrentBalance';
 
 const { isSameAddress } = addressUtils;
 
@@ -30,9 +31,13 @@ interface ChildrenProps {
   styles: ReturnType<(typeof getStyle)['getStyles']>;
 }
 
+type AddressItemAccount = KeyringAccountWithAlias & {
+  balance?: number | null;
+};
+
 type AddressItemProps = (
   | {
-      account: KeyringAccountWithAlias;
+      account: AddressItemAccount;
     }
   | {
       address: string;
@@ -40,6 +45,12 @@ type AddressItemProps = (
 ) & {
   children?: (props: ChildrenProps) => React.ReactNode;
   fetchAccount?: boolean;
+  style?: StyleProp<ViewStyle>;
+};
+
+type AddressItemResolvedProps = {
+  account?: AddressItemAccount;
+  children?: AddressItemProps['children'];
   style?: StyleProp<ViewStyle>;
 };
 
@@ -52,51 +63,51 @@ export const WalletPin = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   );
 };
 
-export const AddressItem = (props: AddressItemProps) => {
+const AddressItemResolved = ({
+  account,
+  children,
+  style,
+}: AddressItemResolvedProps) => {
   const { styles } = useTheme2024({ getStyle });
-  const { accounts } = useAccounts({
-    disableAutoFetch: props?.fetchAccount ? false : true,
-  });
-  const account = useMemo(
-    () =>
-      'account' in props
-        ? props.account
-        : accounts.find(a => isSameAddress(a.address, props.address))!,
-    [accounts, props],
-  );
+  const { balance: storeBalance } = useAddressBalance(account?.address);
+  const balance = account?.balance ?? storeBalance;
 
   const walletName = useMemo(
-    () => account?.aliasName || account?.brandName,
+    () => account?.aliasName || account?.brandName || '',
     [account?.aliasName, account?.brandName],
   );
 
   const address = useMemo(
-    () => ellipsisAddress(account.address),
+    () => (account?.address ? ellipsisAddress(account.address) : ''),
     [account?.address],
   );
 
   const { currency } = useCurrency();
 
   const usdValue = useMemo(() => {
-    const b = new BigNumber(account.balance || 0).times(currency.usd_rate);
+    if (typeof balance !== 'number') {
+      return '--';
+    }
+
+    const b = new BigNumber(balance).times(currency.usd_rate);
     return `${currency.symbol}${splitNumberByStep(
       b.isGreaterThan(10)
         ? b.decimalPlaces(0, BigNumber.ROUND_FLOOR).toString()
         : b.toFixed(2),
     )}`;
-  }, [account.balance, currency.symbol, currency.usd_rate]);
+  }, [balance, currency.symbol, currency.usd_rate]);
 
   const WalletIconWrapper = useCallback(
     (props: Omit<WalletIconProps, 'type'>) => {
       return (
         <WalletIcon
-          type={account.brandName}
-          address={account.address}
+          type={account?.brandName}
+          address={account?.address}
           {...props}
         />
       );
     },
-    [account.address, account.brandName],
+    [account?.address, account?.brandName],
   );
   const WalletName = useCallback(
     ({ style }: { style?: StyleProp<TextStyle> }) => {
@@ -134,10 +145,14 @@ export const AddressItem = (props: AddressItemProps) => {
     [styles.balanceText, usdValue],
   );
 
+  if (!account) {
+    return null;
+  }
+
   return (
-    <View style={props.style}>
-      {props.children ? (
-        props.children({
+    <View style={style}>
+      {children ? (
+        children({
           WalletIcon: WalletIconWrapper,
           WalletName,
           WalletAddress,
@@ -167,6 +182,47 @@ export const AddressItem = (props: AddressItemProps) => {
       )}
     </View>
   );
+};
+
+const AddressItemByAddress = ({
+  address,
+  fetchAccount,
+  children,
+  style,
+}: Extract<AddressItemProps, { address: string }>) => {
+  const { account } = useAccountByAddress(address, {
+    disableAutoFetch: fetchAccount ? false : true,
+  });
+
+  const resolvedAccount = useMemo<AddressItemAccount | undefined>(() => {
+    if (!account || !isSameAddress(account.address, address)) {
+      return undefined;
+    }
+
+    return account as AddressItemAccount;
+  }, [account, address]);
+
+  return (
+    <AddressItemResolved
+      account={resolvedAccount}
+      style={style}
+      children={children}
+    />
+  );
+};
+
+export const AddressItem = (props: AddressItemProps) => {
+  if ('account' in props) {
+    return (
+      <AddressItemResolved
+        account={props.account}
+        style={props.style}
+        children={props.children}
+      />
+    );
+  }
+
+  return <AddressItemByAddress {...props} />;
 };
 
 export const getStyle = createGetStyles2024(({ colors2024 }) => ({

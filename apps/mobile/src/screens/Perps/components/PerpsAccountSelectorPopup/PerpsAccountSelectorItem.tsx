@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, TouchableOpacity, View } from 'react-native';
 import { ClearinghouseState } from '@rabby-wallet/hyperliquid-sdk';
 import { Text } from '@/components/Typography';
+import { useAddressBalance } from '@/hooks/useCurrentBalance';
 
 export const PerpsAccountSelectorItem: React.FC<{
   account: KeyringAccountWithAlias;
@@ -38,10 +39,11 @@ export const PerpsAccountSelectorItem: React.FC<{
   const { styles, colors2024 } = useTheme2024({
     getStyle: getStyle,
   });
+  const { balance } = useAddressBalance(account.address);
   const usdValue = useMemo(() => {
-    const b = account.balance || 0;
+    const b = balance || 0;
     return `$${splitNumberByStep(b > 10 ? Math.floor(b) : b.toFixed(2))}`;
-  }, [account.balance]);
+  }, [balance]);
 
   const positionCount = useMemo(() => {
     return info?.assetPositions?.length || 0;

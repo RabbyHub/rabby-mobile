@@ -10,7 +10,7 @@ import { AddressAssetsItem } from './AddressAssetsItem';
 import { AddressBackupItem } from './AddressBackupItem';
 import { Card } from '../Card';
 import { Item } from './Item';
-import { useDeleteAccountModal } from '@/screens/Address/useDeleteAccountModal';
+import { showDeleteAccountModal } from '@/screens/Address/useDeleteAccountModal';
 import DeleteSVG from '@/assets2024/icons/common/delete-cc.svg';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import QrcodeSVG from '@/assets2024/icons/common/qrcode-cc.svg';
@@ -65,7 +65,6 @@ export const AddressDetailInner: React.FC<
     },
     [togglePinAddressAsync, account.address, account.brandName],
   );
-  const removeAccount = useDeleteAccountModal();
   const qrCodeModal = useQrCodeModal();
   const { t } = useTranslation();
 
@@ -130,12 +129,14 @@ export const AddressDetailInner: React.FC<
         <Card
           style={[styles.card, styles.delete]}
           onPress={() => {
-            removeAccount({
+            showDeleteAccountModal({
               account,
               onFinished: () => {
                 onDelete?.();
                 onCancel();
               },
+            }).catch(error => {
+              console.error('show delete account modal failed', error);
             });
           }}>
           <Item

@@ -15,6 +15,7 @@ import { Card } from '@/components2024/Card';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { ArrowCircleCC } from '@/assets2024/icons/address';
 import { Text } from '@/components/Typography';
+import { useAddressBalance } from '@/hooks/useCurrentBalance';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
@@ -151,9 +152,10 @@ export const AddressItemInner2024 = ({
   const isZeroPercentChange = changePercent === '0%';
 
   const { isNewlyAdded } = useIsNewlyAddedAccount(account);
+  const { evmBalance } = useAddressBalance(account.address);
 
   const shouldShowNewMark =
-    showMarkIfNewlyAdded && isNewlyAdded && account.evmBalance === 0;
+    showMarkIfNewlyAdded && isNewlyAdded && evmBalance === 0;
 
   return (
     <Card

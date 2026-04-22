@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Dimensions,
@@ -21,6 +21,13 @@ import { RcIconCopyCC, RcIconCorrectCC } from '@/assets/icons/common';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { Button } from '@/components2024/Button';
+import {
+  hideRNRToastOnUI,
+  rnrToast,
+  showRNRToastOnUI,
+  updateRNRToastOnUI,
+  type RNRToastHandle,
+} from '@/components/RNRToast';
 import { toast, toastLoadingSuccess } from '@/components2024/Toast';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import {
@@ -33,6 +40,7 @@ import i18next from 'i18next';
 import Clipboard from '@react-native-clipboard/clipboard';
 import dayjs from 'dayjs';
 import { useAppNotificationEnabled } from '@/hooks/appNotification';
+import { runOnUI } from 'react-native-reanimated';
 import {
   connectFeService,
   getFeServiceURL,
@@ -497,6 +505,306 @@ function DevNotifications() {
   );
 }
 
+function DevRNRToast() {
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getStyles,
+    isLight: true,
+  });
+  const currentToastRef = useRef<RNRToastHandle | null>(null);
+  const workletToastIdRef = useRef<number>(4000);
+
+  const clearCurrentToast = useCallback(() => {
+    currentToastRef.current?.hide();
+    currentToastRef.current = null;
+  }, []);
+
+  const showManagedToast = useCallback(
+    (
+      factory: () => RNRToastHandle,
+      options?: {
+        autoClearAfterMs?: number;
+      },
+    ) => {
+      clearCurrentToast();
+      const nextToast = factory();
+      currentToastRef.current = nextToast;
+
+      if (options?.autoClearAfterMs) {
+        setTimeout(() => {
+          if (currentToastRef.current?.id === nextToast.id) {
+            currentToastRef.current = null;
+          }
+        }, options.autoClearAfterMs);
+      }
+    },
+    [clearCurrentToast],
+  );
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <Text style={[styles.componentName, { fontSize: 24, marginBottom: 12 }]}>
+        RNR Toast
+      </Text>
+      <View style={{ width: '100%', flexDirection: 'column' }}>
+        <Text style={[styles.propertyDesc, { marginVertical: 12 }]}>
+          <Text style={[{ fontSize: 18, fontWeight: '700' }]}>
+            Summary{' '.repeat(100)}
+          </Text>
+          <Text style={{ marginBottom: 12 }}>
+            `rnrToast` uses a global Reanimated host. The visual state lives in
+            shared values, and the same host can be updated from JS or directly
+            from a worklet.
+          </Text>
+        </Text>
+
+        <View style={{ width: '100%', marginBottom: 24 }}>
+          <View style={[styles.propertyDesc, { marginTop: 12 }]}>
+            <Text style={styles.propertyType}>
+              JS API basic actions{' '.repeat(100)}
+            </Text>
+            <Text style={{ marginBottom: 12 }}>
+              Start with these to compare the new host against the old root
+              toast behavior.
+            </Text>
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['blue-default'] }}
+              type={'ghost'}
+              title={'Show'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                showManagedToast(() =>
+                  rnrToast.show('RNR toast is visible', {
+                    duration: 2000,
+                  }),
+                );
+              }}
+            />
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['neutral-title-2'] }}
+              type={'success'}
+              title={'Success'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                showManagedToast(() => rnrToast.success('RNR success toast'));
+              }}
+            />
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['neutral-title-2'] }}
+              type={'danger'}
+              title={'Error'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                showManagedToast(() => rnrToast.error('RNR error toast'));
+              }}
+            />
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['blue-default'] }}
+              type={'ghost'}
+              title={'Info'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                showManagedToast(() => rnrToast.info('RNR info toast'));
+              }}
+            />
+          </View>
+        </View>
+
+        <View style={{ width: '100%', marginBottom: 24 }}>
+          <View style={[styles.propertyDesc, { marginTop: 12 }]}>
+            <Text style={styles.propertyType}>
+              Loading and transition{' '.repeat(100)}
+            </Text>
+            <Text style={{ marginBottom: 12 }}>
+              These buttons keep the same host alive and update it in place, so
+              you can inspect loading to success transitions.
+            </Text>
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['blue-default'] }}
+              type={'ghost'}
+              title={'Loading'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                showManagedToast(() =>
+                  rnrToast.loading('Deleting in progress'),
+                );
+              }}
+            />
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['blue-default'] }}
+              type={'ghost'}
+              title={'Hide'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                clearCurrentToast();
+              }}
+            />
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['neutral-title-2'] }}
+              type={'primary'}
+              title={'Loading -> Success'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                clearCurrentToast();
+                const handle = rnrToast.loading('Deleting in progress');
+                currentToastRef.current = handle;
+
+                setTimeout(() => {
+                  handle.update('Deleted successfully', {
+                    duration: 2000,
+                    kind: 'success',
+                  });
+                }, 1200);
+              }}
+            />
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['neutral-title-2'] }}
+              type={'primary'}
+              title={'Loading -> Error'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                clearCurrentToast();
+                const handle = rnrToast.loading('Deleting in progress');
+                currentToastRef.current = handle;
+
+                setTimeout(() => {
+                  handle.update('Delete failed', {
+                    duration: 2400,
+                    kind: 'error',
+                  });
+                }, 1200);
+              }}
+            />
+          </View>
+        </View>
+
+        <View style={{ width: '100%', marginBottom: 24 }}>
+          <View style={[styles.propertyDesc, { marginTop: 12 }]}>
+            <Text style={styles.propertyType}>
+              Position test{' '.repeat(100)}
+            </Text>
+            <Text style={{ marginBottom: 12 }}>
+              Top should match the delete flow. Center is useful for comparing
+              old center loading to the new host.
+            </Text>
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['blue-default'] }}
+              type={'ghost'}
+              title={'Top'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                showManagedToast(() =>
+                  rnrToast.info('Top positioned RNR toast', {
+                    position: 'top',
+                  }),
+                );
+              }}
+            />
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['blue-default'] }}
+              type={'ghost'}
+              title={'Center'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                showManagedToast(() =>
+                  rnrToast.loading('Centered RNR loading', {
+                    position: 'center',
+                  }),
+                );
+              }}
+            />
+          </View>
+        </View>
+
+        <View style={{ width: '100%', marginBottom: 24 }}>
+          <View style={[styles.propertyDesc, { marginTop: 12 }]}>
+            <Text style={styles.propertyType}>
+              Worklet API{' '.repeat(100)}
+            </Text>
+            <Text style={{ marginBottom: 12 }}>
+              These buttons call the UI-runtime entrypoints directly. They are
+              useful when testing whether toast timing still depends on JS
+              scheduling.
+            </Text>
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['neutral-title-2'] }}
+              type={'primary'}
+              title={'UI Show'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                const toastId = ++workletToastIdRef.current;
+                runOnUI(showRNRToastOnUI)(toastId, {
+                  duration: 0,
+                  kind: 'loading',
+                  message: 'Shown from worklet',
+                  position: 'top',
+                });
+              }}
+            />
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['neutral-title-2'] }}
+              type={'primary'}
+              title={'UI Update'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                const toastId = workletToastIdRef.current;
+                runOnUI(updateRNRToastOnUI)(toastId, {
+                  duration: 2000,
+                  kind: 'success',
+                  message: 'Updated from worklet',
+                  position: 'top',
+                });
+              }}
+            />
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['blue-default'] }}
+              type={'ghost'}
+              title={'UI Hide'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                runOnUI(hideRNRToastOnUI)(workletToastIdRef.current);
+              }}
+            />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 function DevUINotifications(): JSX.Element {
   const { styles, colors2024, colors } = useTheme2024({
     getStyle: getStyles,
@@ -523,6 +831,15 @@ function DevUINotifications(): JSX.Element {
             contentContainerStyle={styles.screenScrollableView}
             horizontal={false}>
             <DevToast />
+          </Tabs.ScrollView>
+        </Tabs.Tab>
+        <Tabs.Tab name="rnr-toast" label={'RNR Toast'}>
+          <Tabs.ScrollView
+            tvParallaxProperties={undefined}
+            nestedScrollEnabled={false}
+            contentContainerStyle={styles.screenScrollableView}
+            horizontal={false}>
+            <DevRNRToast />
           </Tabs.ScrollView>
         </Tabs.Tab>
         <Tabs.Tab name="notifications" label={'Notifications'}>

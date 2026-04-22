@@ -1,5 +1,4 @@
 import { openapi } from '@/core/request';
-import { keyringService } from '@/core/services';
 import { MMKV_FILE_NAMES } from '@/core/storage/mmkvConstants';
 import { dayCurveMMKV } from '@/core/storage/mmkvInstances';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
@@ -64,6 +63,71 @@ const normalizeAddress = (address?: string) => address?.toLowerCase() || '';
 
 const normalizeAddresses = (addresses: string[]) =>
   Array.from(new Set(addresses.map(address => address.toLowerCase())));
+
+const curve24hAccountCleanupLifecycleStateRef = {
+  promise: null as Promise<void> | null,
+  hasSubscribed: false,
+  prevAccountAddresses: [] as string[],
+};
+
+async function initCurve24hAccountCleanupLifecycle() {
+  const { default: accountStore } = await import('./account');
+
+  const getAccountAddresses = () => {
+    return Array.from(
+      new Set(
+        accountStore
+          .getState()
+          .accounts.map(account => account.address.toLowerCase()),
+      ),
+    ).sort();
+  };
+
+  if (curve24hAccountCleanupLifecycleStateRef.hasSubscribed) {
+    curve24hAccountCleanupLifecycleStateRef.prevAccountAddresses =
+      getAccountAddresses();
+    return;
+  }
+
+  curve24hAccountCleanupLifecycleStateRef.hasSubscribed = true;
+  curve24hAccountCleanupLifecycleStateRef.prevAccountAddresses =
+    getAccountAddresses();
+
+  accountStore.subscribe(state => {
+    const nextAccountAddresses = Array.from(
+      new Set(state.accounts.map(account => account.address.toLowerCase())),
+    ).sort();
+    const nextAccountAddressSet = new Set(nextAccountAddresses);
+
+    curve24hAccountCleanupLifecycleStateRef.prevAccountAddresses.forEach(
+      address => {
+        if (!nextAccountAddressSet.has(address)) {
+          addressCurve24hStore.removeAddressCurve(address, {
+            source: 'accounts_changed',
+            reason: 'address_deleted_after_account_commit',
+          });
+        }
+      },
+    );
+
+    curve24hAccountCleanupLifecycleStateRef.prevAccountAddresses =
+      nextAccountAddresses;
+  });
+}
+
+function ensureCurve24hAccountCleanupLifecycle() {
+  if (curve24hAccountCleanupLifecycleStateRef.promise) {
+    return curve24hAccountCleanupLifecycleStateRef.promise;
+  }
+
+  const promise = initCurve24hAccountCleanupLifecycle().catch(error => {
+    curve24hAccountCleanupLifecycleStateRef.promise = null;
+    throw error;
+  });
+
+  curve24hAccountCleanupLifecycleStateRef.promise = promise;
+  return promise;
+}
 
 const buildCombinedDayCurveData = ({
   addresses,
@@ -617,22 +681,8 @@ class SceneCurve24hStore extends BaseStore<SceneCurveState> {
       return;
     }
     this.hasStartedLifecycle = true;
-
-    keyringService.on('removedAccount', async account => {
-      const lowerAddress = normalizeAddress(account.address);
-      const addresses = await keyringService.getAllAddresses();
-      const stillExists = addresses.some(item => {
-        return normalizeAddress(item.address) === lowerAddress;
-      });
-
-      if (stillExists) {
-        return;
-      }
-
-      addressCurve24hStore.removeAddressCurve(lowerAddress, {
-        source: 'keyringService.removedAccount',
-        reason: 'address_deleted',
-      });
+    void ensureCurve24hAccountCleanupLifecycle().catch(error => {
+      console.error('initCurve24hAccountCleanupLifecycle failed', error);
     });
 
     addressCurve24hStore.subscribe(() => {

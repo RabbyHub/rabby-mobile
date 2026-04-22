@@ -61,10 +61,27 @@ function MultiPinnedAddressList({
   const pinnedAddresses = useMemo(() => {
     return pinnedAccountList.map(item => item.address.toLowerCase());
   }, [pinnedAccountList]);
+  const balanceSnapshots =
+    addressBalanceStore.useAddressesSnapshot(pinnedAddresses);
   const balance24hSnapshots =
     balance24hStore.useAddresses24hBalanceSnapshots(pinnedAddresses);
 
   const addressListData = useMemo(() => {
+    const balanceMap = balanceSnapshots.reduce(
+      (acc, snapshot) => {
+        if (snapshot.value) {
+          acc[snapshot.address] = snapshot.value;
+        }
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          totalBalance: number;
+          evmBalance: number;
+        }
+      >,
+    );
     const multi24hBalance = balance24hSnapshots.reduce(
       (acc, snapshot) => {
         if (snapshot.value) {
@@ -81,30 +98,48 @@ function MultiPinnedAddressList({
       >,
     );
 
-    return sortBy(
-      pinnedAccountList.map(item => {
+    return pinnedAccountList
+      .map((item, index) => {
         const lcAddr = item.address.toLowerCase();
+        const balanceData = balanceMap[lcAddr];
         const address24hBalanceData = multi24hBalance[lcAddr];
+        const evmBalance = balanceData?.evmBalance;
+        const balance = balanceData?.totalBalance;
         const canShowChange =
-          !!address24hBalanceData && typeof item.evmBalance === 'number';
+          !!address24hBalanceData && typeof evmBalance === 'number';
         const total_usd_value = address24hBalanceData?.total_usd_value || 0;
-        const { assetsChange, changePercent } = computeBalanceChange(
-          item.evmBalance || 0,
-          total_usd_value,
-        );
+        const balanceChange = canShowChange
+          ? computeBalanceChange(evmBalance, total_usd_value)
+          : null;
 
         return {
-          ...item,
+          account: item,
           updateTime: address24hBalanceData?.updateTime,
-          balance: item.balance || 0,
-          evmBalance: item.evmBalance || 0,
-          changePercent: canShowChange ? changePercent : undefined,
-          isLoss: canShowChange ? assetsChange < 0 : undefined,
+          balance,
+          sortIndex: index,
+          changePercent: balanceChange?.changePercent,
+          isLoss:
+            typeof balanceChange?.assetsChange === 'number'
+              ? balanceChange.assetsChange < 0
+              : undefined,
         };
-      }),
-      item => -(item.balance || 0),
-    ).slice(0, 3);
-  }, [balance24hSnapshots, pinnedAccountList]);
+      })
+      .sort((a, b) => {
+        const aHasBalance = typeof a.balance === 'number';
+        const bHasBalance = typeof b.balance === 'number';
+
+        if (aHasBalance && bHasBalance && a.balance !== b.balance) {
+          return b.balance - a.balance;
+        }
+
+        if (aHasBalance !== bHasBalance) {
+          return aHasBalance ? -1 : 1;
+        }
+
+        return a.sortIndex - b.sortIndex;
+      })
+      .slice(0, 3);
+  }, [balance24hSnapshots, balanceSnapshots, pinnedAccountList]);
 
   useEffect(() => {
     if (!addressListData?.length) {
@@ -127,9 +162,10 @@ function MultiPinnedAddressList({
         return (
           <HomeAddressItem
             hideType={hideType}
-            account={item}
+            account={item.account}
+            balanceValue={item.balance}
             updateTime={item.updateTime}
-            key={`${item.type}-${item.address}`}
+            key={`${item.account.type}-${item.account.address}`}
             isLoss={item.isLoss}
             changePercent={item.changePercent}
           />

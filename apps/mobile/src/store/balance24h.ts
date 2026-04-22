@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { getTop10MyAccounts } from '@/core/apis/account';
-import { keyringService } from '@/core/services';
 import { perfEvents } from '@/core/utils/perf';
 import { MMKV_FILE_NAMES } from '@/core/storage/mmkvConstants';
 import { balance24hMMKV } from '@/core/storage/mmkvInstances';
@@ -131,6 +130,71 @@ const build24hTraceDetail = (
     endpoint: trace?.endpoint,
   };
 };
+
+const balance24hAccountCleanupLifecycleStateRef = {
+  promise: null as Promise<void> | null,
+  hasSubscribed: false,
+  prevAccountAddresses: [] as string[],
+};
+
+async function initBalance24hAccountCleanupLifecycle() {
+  const { default: accountStore } = await import('./account');
+
+  const getAccountAddresses = () => {
+    return Array.from(
+      new Set(
+        accountStore
+          .getState()
+          .accounts.map(account => account.address.toLowerCase()),
+      ),
+    ).sort();
+  };
+
+  if (balance24hAccountCleanupLifecycleStateRef.hasSubscribed) {
+    balance24hAccountCleanupLifecycleStateRef.prevAccountAddresses =
+      getAccountAddresses();
+    return;
+  }
+
+  balance24hAccountCleanupLifecycleStateRef.hasSubscribed = true;
+  balance24hAccountCleanupLifecycleStateRef.prevAccountAddresses =
+    getAccountAddresses();
+
+  accountStore.subscribe(state => {
+    const nextAccountAddresses = Array.from(
+      new Set(state.accounts.map(account => account.address.toLowerCase())),
+    ).sort();
+    const nextAccountAddressSet = new Set(nextAccountAddresses);
+
+    balance24hAccountCleanupLifecycleStateRef.prevAccountAddresses.forEach(
+      address => {
+        if (!nextAccountAddressSet.has(address)) {
+          balance24hStore.removeAddress24hBalance(address, {
+            source: 'accounts_changed',
+            reason: 'address_deleted_after_account_commit',
+          });
+        }
+      },
+    );
+
+    balance24hAccountCleanupLifecycleStateRef.prevAccountAddresses =
+      nextAccountAddresses;
+  });
+}
+
+function ensureBalance24hAccountCleanupLifecycle() {
+  if (balance24hAccountCleanupLifecycleStateRef.promise) {
+    return balance24hAccountCleanupLifecycleStateRef.promise;
+  }
+
+  const promise = initBalance24hAccountCleanupLifecycle().catch(error => {
+    balance24hAccountCleanupLifecycleStateRef.promise = null;
+    throw error;
+  });
+
+  balance24hAccountCleanupLifecycleStateRef.promise = promise;
+  return promise;
+}
 
 class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
   constructor() {
@@ -900,22 +964,8 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
       return;
     }
     this.hasStartedLifecycle = true;
-
-    keyringService.on('removedAccount', async account => {
-      const lowerAddress = account.address.toLowerCase();
-      const addresses = await keyringService.getAllAddresses();
-      const stillExists = addresses.some(item => {
-        return item.address.toLowerCase() === lowerAddress;
-      });
-
-      if (stillExists) {
-        return;
-      }
-
-      balance24hStore.removeAddress24hBalance(lowerAddress, {
-        source: 'keyringService.removedAccount',
-        reason: 'address_deleted',
-      });
+    void ensureBalance24hAccountCleanupLifecycle().catch(error => {
+      console.error('initBalance24hAccountCleanupLifecycle failed', error);
     });
 
     balance24hStore.subscribe(() => {

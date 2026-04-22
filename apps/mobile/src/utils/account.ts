@@ -105,7 +105,6 @@ export function makeAccountObject<T extends Account>({
     aliasName:
       contactService.getAliasByAddress(address)?.alias ||
       ellipsisAddress(address),
-    balance: 0,
     type: KEYRING_CLASS.WATCH,
   } as any as T;
 }

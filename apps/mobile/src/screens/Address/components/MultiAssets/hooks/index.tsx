@@ -25,9 +25,15 @@ export const isTabsSwiping = {
   value: false,
 };
 
-export function useAccountInfo() {
+export function useAccountInfo(opts?: {
+  includeRemoving?: boolean;
+  includeFinishingVisual?: boolean;
+}) {
+  const { includeRemoving = true, includeFinishingVisual = false } = opts || {};
   const { accounts, fetchAccounts } = useAccounts({
     disableAutoFetch: true,
+    includeRemoving,
+    includeFinishingVisual,
   });
 
   const myAccounts = useCreationWithShallowCompare(
@@ -135,10 +141,9 @@ export async function getShowReceiveAddressTip(options?: {
   if (!targetAccount) return null;
   if (!isAccountToShowReceiveTip(targetAccount)) return null;
 
-  const evmBalance =
-    addressBalanceStore.getAddressValue(targetAccount.address)?.evmBalance ??
-    targetAccount.evmBalance ??
-    0;
+  const evmBalance = addressBalanceStore.getAddressValue(
+    targetAccount.address,
+  )?.evmBalance;
 
   const appChains = await useAppChainStore
     .getState()

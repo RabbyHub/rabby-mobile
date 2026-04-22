@@ -72,6 +72,17 @@ export default function DevDataPlaygroundModal({
   const Items = (() => {
     const list: DevTestItem[] = [
       {
+        label: 'Account Playground',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevDataAccountPlayground,
+            }),
+          );
+        },
+      },
+      {
         label: 'SQLite',
         icon: <RcCode style={styles.labelIcon} />,
         onPress: () => {
@@ -155,6 +166,10 @@ export default function DevDataPlaygroundModal({
         <View style={styles.mainContainer}>
           {Items.map((item, idx) => {
             const itemKey = `testitem-${item.label}`;
+            const rightNode =
+              typeof item.rightNode === 'function'
+                ? item.rightNode()
+                : item.rightNode;
 
             return (
               <GeneralTestItem
@@ -170,7 +185,7 @@ export default function DevDataPlaygroundModal({
                   <View style={styles.iconWrapper}>{item.icon}</View>
                   <Text style={styles.settingItemLabel}>{item.label}</Text>
                 </View>
-                <RcArrowRightCC color={colors['neutral-foot']} />
+                {rightNode || <RcArrowRightCC color={colors['neutral-foot']} />}
               </GeneralTestItem>
             );
           })}

@@ -14,8 +14,9 @@ import { filterMyAccounts } from '@/utils/account';
 import { useCreationWithShallowCompare } from './common/useMemozied';
 import { accountEvents, KeyringAccountWithAlias } from '@/core/apis/account';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import addressBalanceStore from '@/store/balance';
 import accountStore, {
+  type AccountRemovingVisualStage,
+  accountResourceStore,
   NEWLY_ADDED_ACCOUNT_DURATION,
   useAccountStore,
 } from '@/store/account';
@@ -28,6 +29,7 @@ import { appServiceEvents } from '@/core/services/_utils';
 import { Store } from '@/core/services/hdKeyringService';
 import { perfEvents } from '@/core/utils/perf';
 import { AccountInfoEntity } from '@/databases/entities/accountInfo';
+import { useSVFromMutable, useValueFromSharedValue } from './reanimated';
 
 export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias };
 
@@ -181,10 +183,20 @@ export function setCurrentAccount(
   accountStore.setCurrentAccount(valOrFunc);
 }
 
-export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
-  const accounts = useAccountStore(s => s.accounts);
-
-  const { disableAutoFetch = false } = opts || {};
+export function useAccounts(opts?: {
+  disableAutoFetch?: boolean;
+  includeRemoving?: boolean;
+  includeFinishingVisual?: boolean;
+}) {
+  const {
+    disableAutoFetch = false,
+    includeRemoving = true,
+    includeFinishingVisual = false,
+  } = opts || {};
+  const accounts = accountResourceStore.useAccounts({
+    includeRemoving,
+    includeFinishingVisual,
+  });
 
   useEffect(() => {
     if (!disableAutoFetch) {
@@ -202,19 +214,80 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   };
 }
 
+export function useAccountByAddress(
+  address?: string,
+  opts?: {
+    disableAutoFetch?: boolean;
+    includeRemoving?: boolean;
+    includeFinishingVisual?: boolean;
+  },
+) {
+  const {
+    disableAutoFetch = false,
+    includeRemoving = true,
+    includeFinishingVisual = false,
+  } = opts || {};
+  const account = accountResourceStore.useAccountByAddress(address, {
+    includeRemoving,
+    includeFinishingVisual,
+  });
+
+  useEffect(() => {
+    if (!disableAutoFetch) {
+      accountStore.fetchAccounts();
+    }
+  }, [disableAutoFetch]);
+
+  return {
+    account,
+    fetchAccounts: accountStore.fetchAccounts,
+  };
+}
+
 export const storeApiAccounts = {
-  getAccounts() {
-    return accountStore.getState().accounts;
+  getAccounts(opts?: {
+    includeRemoving?: boolean;
+    includeFinishingVisual?: boolean;
+  }) {
+    return accountResourceStore.getAccounts(opts);
+  },
+  getAccountByAddress(
+    address?: string,
+    opts?: { includeRemoving?: boolean; includeFinishingVisual?: boolean },
+  ) {
+    return accountResourceStore.getAccountByAddress(address, opts);
   },
   getPinAddresses() {
     return accountStore.getState().pinnedAddresses;
   },
+  getRemovingVisualStageSV(account?: KeyringAccountWithAlias | null) {
+    return accountResourceStore.getRemovingVisualStageSV(account);
+  },
+  getRemovingToastBridge(account?: KeyringAccountWithAlias | null) {
+    return accountResourceStore.getRemovingToastBridge(account);
+  },
   fetchAccounts: accountStore.fetchAccounts,
+  clearRemovingToastBridge(account?: KeyringAccountWithAlias | null) {
+    return accountResourceStore.clearRemovingToastBridge(account);
+  },
+  markRemovingToastTransitioned(account?: KeyringAccountWithAlias | null) {
+    return accountResourceStore.markRemovingToastTransitioned(account);
+  },
   removeAccount: accountStore.removeAccount,
+  registerRemovingToastBridge(
+    account: KeyringAccountWithAlias,
+    bridge: {
+      successMessage: string;
+      toastId: number;
+    },
+  ) {
+    return accountResourceStore.registerRemovingToastBridge(account, bridge);
+  },
+  finishRemovingAccountVisual: accountStore.finishRemovingAccountVisual,
 };
 
 export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
-  const allAccounts = useAccountStore(s => s.accounts);
+  const allAccounts = accountResourceStore.useAccounts();
 
   const { disableAutoFetch = false } = opts || {};
 
@@ -260,10 +333,36 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   };
 };
 
+export function useIsRemovingAccount(account?: KeyringAccountWithAlias | null) {
+  return accountResourceStore.useIsRemovingAccount(account);
+}
+
+export function useAccountRemovingVisualStage(
+  account?: KeyringAccountWithAlias | null,
+) {
+  return useValueFromSharedValue(
+    accountResourceStore.getRemovingVisualStageSV(account),
+  );
+}
+
+export function useAccountRemovingVisualStageSV(
+  account?: KeyringAccountWithAlias | null,
+) {
+  return useSVFromMutable(
+    accountResourceStore.getRemovingVisualStageSV(account),
+  );
+}
+
+export function useAccountRemovingToastBridge(
+  account?: KeyringAccountWithAlias | null,
+) {
+  return accountResourceStore.useRemovingToastBridge(account);
+}
+
 export const usePinnedAccountList = () => {
   const pinAddresses = useAccountStore(s => s.pinnedAddresses);
-  const accounts = useAccountStore(s => s.accounts);
-  const pinnedBaseAccounts = useMemo(() => {
+  const accounts = accountResourceStore.useAccounts();
+  return useMemo(() => {
     const res: KeyringAccountWithAlias[] = [];
     pinAddresses?.forEach(pinAddr => {
       const item = accounts.find(account => {
@@ -286,50 +385,27 @@ export const usePinnedAccountList = () => {
 
     return res;
   }, [accounts, pinAddresses]);
-  const pinnedAddresses = useMemo(() => {
-    return pinnedBaseAccounts.map(item => item.address.toLowerCase());
-  }, [pinnedBaseAccounts]);
-  const balanceSnapshots =
-    addressBalanceStore.useAddressesSnapshot(pinnedAddresses);
-
-  const pinnedAccountList = useMemo(() => {
-    const balanceMap = balanceSnapshots.reduce(
-      (acc, snapshot) => {
-        if (snapshot.value) {
-          acc[snapshot.address] = snapshot.value;
-        }
-        return acc;
-      },
-      {} as Record<
-        string,
-        {
-          totalBalance: number;
-          evmBalance: number;
-        }
-      >,
-    );
-
-    return pinnedBaseAccounts.map(item => {
-      const balance = balanceMap[item.address.toLowerCase()];
-
-      return {
-        ...item,
-        balance: balance?.totalBalance || item.balance || 0,
-        evmBalance: balance?.evmBalance || item.evmBalance || 0,
-      };
-    });
-  }, [balanceSnapshots, pinnedBaseAccounts]);
-
-  return pinnedAccountList;
 };
 
 /**
  * @deprecated use `storeApiAccounts.removeAccount` directly
  */
 export function useRemoveAccount() {
-  return useCallback(async (account: KeyringAccount) => {
-    await accountStore.removeAccount(account as KeyringAccountWithAlias);
-  }, []);
+  return useCallback(
+    async (
+      account: KeyringAccount,
+      opts?: {
+        beforeCommit?: () => void | Promise<void>;
+        afterCommit?: () => void | Promise<void>;
+      },
+    ) => {
+      await accountStore.removeAccount(
+        account as KeyringAccountWithAlias,
+        opts,
+      );
+    },
+    [],
+  );
 }
 
 export function useWalletBrandLogo<T extends string>(brandName?: T) {
@@ -346,3 +422,4 @@ export function useWalletBrandLogo<T extends string>(brandName?: T) {
 
 export { NEWLY_ADDED_ACCOUNT_DURATION };
 export type { Account, IPinAddress };
+export type { AccountRemovingVisualStage };

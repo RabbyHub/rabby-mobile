@@ -1,11 +1,10 @@
 import { contactService } from '@/core/services';
-import { batchBalanceWithLocalCache } from '@/databases/hooks/balance';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useCreationWithDeepCompare } from '@/hooks/common/useMemozied';
 import { useWhitelist } from '@/hooks/whitelist';
+import addressBalanceStore from '@/store/balance';
 import { filterMyAccounts, findAccountByPriority } from '@/utils/account';
 import { ellipsisAddress } from '@/utils/address';
-import { getTokenSettings } from '@/utils/getTokenSettings';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils/src/types';
@@ -29,7 +28,6 @@ export const useFindAddressByWhitelist = () => {
       address: string,
       options: {
         brandName?: string;
-        disableBalance?: boolean;
         /** @default true */
         useEllipsisAsFallback?: boolean;
       },
@@ -39,24 +37,13 @@ export const useFindAddressByWhitelist = () => {
       );
       const myAccountsInner = filterMyAccounts(accounts);
 
-      const { brandName, disableBalance, useEllipsisAsFallback } = options;
-      let balance = 0;
-      if (!targetAccounts.length && !disableBalance) {
-        const userTokenSettings = await getTokenSettings();
-        const { total_usd_value } = await batchBalanceWithLocalCache({
-          address: address,
-          isCore: false,
-          ...userTokenSettings,
-        });
-        balance = total_usd_value || 0;
-      }
+      const { brandName, useEllipsisAsFallback } = options;
       const defaultAccount = {
         address,
         aliasName:
           contactService.getAliasByAddress(address, {
             keepEmptyIfNotFound: !useEllipsisAsFallback,
           })?.alias || (useEllipsisAsFallback ? ellipsisAddress(address) : ''),
-        balance,
         type: KEYRING_CLASS.WATCH,
         brandName: KEYRING_CLASS.WATCH,
       };
@@ -89,14 +76,12 @@ export const useFindAddressByWhitelist = () => {
         isSameAddress(item.address, address),
       );
       const myAccountsInner = filterMyAccounts(accounts);
-      let balance = 0;
       const defaultAccount: KeyringAccountWithAlias = {
         address,
         aliasName:
           contactService.getAliasByAddress(address, {
             keepEmptyIfNotFound: !useEllipsisAsFallback,
           })?.alias || (useEllipsisAsFallback ? ellipsisAddress(address) : ''),
-        balance,
         type: KEYRING_CLASS.WATCH,
         brandName: KEYRING_CLASS.WATCH,
       };
@@ -139,43 +124,52 @@ export function useWhitelistVariedAccounts() {
     const ret = {
       list: [] as KeyringAccountWithAlias[],
     };
+    type WhiteListSortableAccount = {
+      account: KeyringAccountWithAlias;
+      sortBalance: number;
+    };
 
     const groupAccounts = groupBy(accounts, item => item.address.toLowerCase());
     const uniqueAccounts = Object.values(groupAccounts).map(item =>
       findAccountByPriority(item),
     );
-    const importAddress: KeyringAccountWithAlias[] = uniqueAccounts
+    const importAddress: WhiteListSortableAccount[] = uniqueAccounts
       .filter(acc => isAddrOnWhitelist(acc.address))
       .map(acc => ({
-        address: acc.address,
-        aliasName:
-          contactService.getAliasByAddress(acc.address)?.alias ||
-          acc.aliasName ||
-          ellipsisAddress(acc.address),
-        balance: acc.balance || 0,
-        type: acc.brandName as KeyringTypeName,
-        brandName: acc.brandName,
+        account: {
+          address: acc.address,
+          aliasName:
+            contactService.getAliasByAddress(acc.address)?.alias ||
+            acc.aliasName ||
+            ellipsisAddress(acc.address),
+          type: acc.brandName as KeyringTypeName,
+          brandName: acc.brandName,
+        },
+        sortBalance:
+          addressBalanceStore.getAddressValue(acc.address)?.totalBalance || 0,
       }));
     const importPlainAddress = [
-      ...new Set(importAddress.map(item => item.address)),
+      ...new Set(importAddress.map(item => item.account.address)),
     ];
-    const unimportAddress: KeyringAccountWithAlias[] = whitelist
+    const unimportAddress: WhiteListSortableAccount[] = whitelist
       .filter(
         item => !importPlainAddress.some(plain => isSameAddress(plain, item)),
       )
       .map(address => ({
-        address,
-        aliasName:
-          contactService.getAliasByAddress(address)?.alias ||
-          ellipsisAddress(address),
-        balance: 0,
-        type: KEYRING_CLASS.WATCH,
-        brandName: KEYRING_CLASS.WATCH,
+        account: {
+          address,
+          aliasName:
+            contactService.getAliasByAddress(address)?.alias ||
+            ellipsisAddress(address),
+          type: KEYRING_CLASS.WATCH,
+          brandName: KEYRING_CLASS.WATCH,
+        },
+        sortBalance: 0,
       }));
 
-    ret.list = [...unimportAddress, ...importAddress].sort(
-      (a, b) => (b.balance || 0) - (a.balance || 0),
-    );
+    ret.list = [...unimportAddress, ...importAddress]
+      .sort((a, b) => b.sortBalance - a.sortBalance)
+      .map(item => item.account);
 
     return ret;
   }, [accounts, whitelist]);

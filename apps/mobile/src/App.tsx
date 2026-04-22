@@ -36,6 +36,7 @@ import {
   RerenderDetector,
   useRendererDetect,
 } from './components/Perf/PerfDetector';
+import { RNRToastHost } from './components/RNRToast';
 import { isEqual } from 'lodash';
 import { svsLayout } from './hooks/useAppLayout';
 import { openapi } from './core/request';
@@ -118,6 +119,7 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
               <GestureHandlerRootView style={{ flex: 1 }}>
                 {/* read from native bundle on production */}
                 <MainScreen rabbitCode={rabbitCode} />
+                <RNRToastHost />
               </GestureHandlerRootView>
             </Suspense>
           </RootSiblingParent>

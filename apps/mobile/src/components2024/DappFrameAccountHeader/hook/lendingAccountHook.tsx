@@ -1,15 +1,19 @@
 import { Account } from '@/core/services/preference';
 import React, { useCallback } from 'react';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import useAppChainStore from '@/store/appchain';
-import { useShallow } from 'zustand/shallow';
+import { appChainResourceStore } from '@/store/appchain';
 import { formatNetworth } from '@/utils/math';
 import { INNER_DAPP_LIST } from '../constants';
 import { useAccounts } from '@/hooks/account';
 import useProtocolListStore from '@/store/protocols';
+import { useShallow } from 'zustand/shallow';
 
 export const useLendingAccountExtraInfo = (dapp: string) => {
   const { accounts } = useAccounts({ disableAutoFetch: true });
+  const trackedAddresses = React.useMemo(
+    () => accounts.map(account => account.address),
+    [accounts],
+  );
 
   const protocolMap = useProtocolListStore(
     useShallow(state => state.protocolMap),
@@ -26,7 +30,8 @@ export const useLendingAccountExtraInfo = (dapp: string) => {
     return safeGetOrigin(activeItem.url!) || activeItem.url!;
   }, [activeItem?.url]);
 
-  const appChainMap = useAppChainStore(useShallow(s => s.appChainMap));
+  const appChainsByAddress =
+    appChainResourceStore.useAddressesAppChains(trackedAddresses);
   const accountNetWorthByAddress = React.useMemo(() => {
     const originKey =
       safeGetOrigin(dappOrigin) ||
@@ -44,7 +49,7 @@ export const useLendingAccountExtraInfo = (dapp: string) => {
         return;
       }
       const protocols = protocolMap[address] || [];
-      const appChains = appChainMap[address] || [];
+      const appChains = appChainsByAddress[address] || [];
       let netWorth = 0;
       let hasMatch = false;
 
@@ -86,7 +91,7 @@ export const useLendingAccountExtraInfo = (dapp: string) => {
     });
 
     return map;
-  }, [accounts, appChainMap, dappOrigin, protocolMap]);
+  }, [accounts, appChainsByAddress, dappOrigin, protocolMap]);
 
   const renderNetWorthRight = React.useMemo(() => {
     if (!accountNetWorthByAddress) {
@@ -106,11 +111,11 @@ export const useLendingAccountExtraInfo = (dapp: string) => {
   }, [accountNetWorthByAddress]);
 
   const sortLendingDappAccounts = useCallback(
-    (accounts: Account[]) => {
+    (accountList: Account[]) => {
       if (!accountNetWorthByAddress) {
-        return accounts;
+        return accountList;
       }
-      const list = [...accounts];
+      const list = [...accountList];
       list.sort((a, b) => {
         const aKey = a.address?.toLowerCase() || '';
         const bKey = b.address?.toLowerCase() || '';

@@ -123,6 +123,16 @@ const _getMnemonicKeyringByAddress = (address: string) => {
   }) as unknown as HdKeyring;
 };
 
+export const getCachedKeyringAccountCountByAddress = (address: string) => {
+  const keyring = _getMnemonicKeyringByAddress(address);
+
+  if (!keyring) {
+    throw new Error(t('background.error.notFoundKeyringByAddress'));
+  }
+
+  return keyring.accounts?.length || 0;
+};
+
 const updateKeyringInStash = keyring => {
   let keyringId = Object.keys(stashKeyrings).find(key => {
     return (

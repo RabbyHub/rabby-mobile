@@ -1,7 +1,5 @@
-import { RootNames } from '@/constant/layout';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import { KeyringAccountWithAlias, useIsRemovingAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
-import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import React, { useCallback } from 'react';
@@ -65,9 +63,10 @@ export const AddressItemEntry = (props: AddressItemProps) => {
   } = props;
   const { styles } = useTheme2024({ getStyle });
   const [isPressing, setIsPressing] = React.useState(false);
+  const isRemoving = useIsRemovingAccount(account);
 
   const onDetail = useCallback(() => {
-    if (isTabsSwiping.value) {
+    if (isRemoving || isTabsSwiping.value) {
       return;
     }
     trigger('impactLight', {
@@ -77,7 +76,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     onSelect?.();
     handleGoDetail?.();
     apisSingleHome.navigateToSingleHome(account);
-  }, [account, onSelect, handleGoDetail]);
+  }, [account, handleGoDetail, isRemoving, onSelect]);
 
   const isCurrentAccount = React.useMemo(() => {
     return (
@@ -92,12 +91,17 @@ export const AddressItemEntry = (props: AddressItemProps) => {
       style={[styles.shadow, isPressing && styles.rootPressing]}>
       <TouchableOpacity
         activeOpacity={1}
-        onPressIn={() => !useLongPressing && setIsPressing(true)}
+        disabled={isRemoving}
+        onPressIn={() => !isRemoving && !useLongPressing && setIsPressing(true)}
         onPressOut={() => setIsPressing(false)}
         style={StyleSheet.flatten([styles.root, props.style])}
-        delayLongPress={200} // long press delay
+        delayLongPress={200}
         onPress={onDetail}
         onLongPress={() => {
+          if (isRemoving) {
+            return;
+          }
+
           useLongPressing && setIsPressing(true);
           trigger('impactLight', {
             enableVibrateFallback: true,
@@ -114,7 +118,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
       </TouchableOpacity>
     </AddressItemShadowView>
   );
-  if (disableMenu || isScrolling) {
+  if (disableMenu || isScrolling || isRemoving) {
     return children;
   }
   return (

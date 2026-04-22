@@ -57,39 +57,6 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
       ),
     [list, navState?.newAccounts],
   );
-  const balanceSnapshots = addressBalanceStore.useAddressesSnapshot(
-    useMemo(() => {
-      return accounts.map(account => account.address.toLowerCase());
-    }, [accounts]),
-  );
-  const balanceAccounts = useMemo(() => {
-    const balanceMap = balanceSnapshots.reduce(
-      (result, snapshot) => {
-        if (snapshot.value) {
-          result[snapshot.address] = snapshot.value;
-        }
-
-        return result;
-      },
-      {} as Record<
-        string,
-        {
-          totalBalance: number;
-          evmBalance: number;
-        }
-      >,
-    );
-
-    return accounts.map(account => {
-      const balance = balanceMap[account.address.toLowerCase()];
-      return {
-        ...account,
-        balance: balance?.totalBalance ?? account.balance ?? 0,
-        evmBalance: balance?.evmBalance ?? account.evmBalance ?? 0,
-      };
-    });
-  }, [accounts, balanceSnapshots]);
-
   useEffect(() => {
     if (accounts.length) {
       addressBalanceStore.batchGetTotalBalance(
@@ -110,9 +77,7 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
     }
   }, [accounts]);
 
-  const sortedList = useSortAddressList(
-    balanceAccounts?.length ? balanceAccounts : accounts,
-  );
+  const sortedList = useSortAddressList(accounts);
 
   const addressItems: AddressItem[] = useMemo(
     () =>
