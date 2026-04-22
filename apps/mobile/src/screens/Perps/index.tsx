@@ -48,7 +48,8 @@ import { stats } from '@/utils/stats';
 import { APP_VERSIONS } from '@/constant';
 import BigNumber from 'bignumber.js';
 import { usePerpsGroupedMarketData } from './hooks/usePerpsGroupedMarketData';
-import { PERPS_CATEGORY_MAP } from './constants/perpsCategories';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { useShallow } from 'zustand/react/shallow';
 
 export const PerpsOriginScreen = () => {
   const { t } = useTranslation();
@@ -89,9 +90,11 @@ export const PerpsOriginScreen = () => {
 
   const [popupState, setPopupState] = usePerpsPopupState();
 
+  const backendCategories = perpsStore(useShallow(s => s.categories));
   const { visibleHome } = usePerpsGroupedMarketData({
     marketData,
     favoriteMarkets,
+    backendCategories,
   });
 
   const scrollViewRef = useRef<ScrollView>(null);
@@ -274,15 +277,14 @@ export const PerpsOriginScreen = () => {
               />
 
               {visibleHome.map((cat, catIdx) => {
-                const cfg = PERPS_CATEGORY_MAP[cat.id];
                 return (
                   <View key={cat.id}>
-                    <PerpsCategorySectionHeader categoryId={cat.id} />
+                    <PerpsCategorySectionHeader cfg={cat.cfg} />
                     {cat.items.map((item, i) => (
                       <PerpsMarketItem
                         key={`${cat.id}-${item.name}`}
                         item={item}
-                        rank={cfg.showRankOnHome ? i + 1 : undefined}
+                        rank={cat.cfg.showRankOnHome ? i + 1 : undefined}
                         onPress={() => {
                           scrollToTop();
                           naviPush(RootNames.StackTransaction, {

@@ -16,7 +16,7 @@ import { Account } from '@/core/services/preference';
 import { ApproveSignatures } from '@/core/services/perpsService';
 import {
   DEFAULT_TOP_ASSET,
-  HYPE_EVM_BRIDGE_ADDRESS,
+  DEFAULT_TOKEN_CATEGORY,
   HYPE_EVM_BRIDGE_ADDRESS_MAP,
   HYPE_CORE_DEPOSIT_WALLET,
 } from '@/constant/perps';
@@ -40,11 +40,15 @@ import {
 import { AppState } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 import { perpsService } from '@/core/services';
-import { PerpTopTokenV3 } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  PerpTopTokenV3,
+  PerpTopTokenCategory,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { stats } from '@/utils/stats';
 import BigNumber from 'bignumber.js';
 
 let perpsTopTokenCache: PerpTopTokenV3[] = [];
+let perpsCategoryCache: PerpTopTokenCategory[] = [];
 
 // 保持原有的接口定义
 export interface PositionAndOpenOrder extends AssetPosition {
@@ -78,6 +82,7 @@ export interface MarketData {
   prevDayPx: string;
   dexId: string;
   category?: string;
+  categoryId?: string;
   brief?: string;
   description?: string;
 }
@@ -121,6 +126,7 @@ export interface PerpsState {
   accountNeedApproveBuilderFee: boolean; // 账户是否需要重新approve builder fee
   marketData: MarketData[];
   marketDataMap: MarketDataMap;
+  categories: PerpTopTokenCategory[];
   hasPermission: boolean;
   perpFee: number;
   isLogin: boolean;
@@ -184,6 +190,7 @@ export const initialState: PerpsState = {
     type: 'pnl',
   },
   fillsOrderTpOrSl: {},
+  categories: DEFAULT_TOKEN_CATEGORY,
 };
 
 export const perpsStore = zCreate<PerpsState>(() => ({ ...initialState }));
@@ -323,10 +330,14 @@ export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
   perpsService.setCurrentAccount(payload);
 };
 
-const setMarketData = (payload: MarketData[] | []) => {
+const setMarketData = (
+  payload: MarketData[] | [],
+  categories: PerpTopTokenCategory[],
+) => {
   const list = payload || [];
   setPerpsState(prev => ({
     ...prev,
+    categories,
     marketData: list,
     marketDataMap: buildMarketDataMap(list as MarketData[]),
   }));
@@ -355,8 +366,28 @@ const fetchMarketData = async () => {
       }
     };
 
-    const [topAssets, allMetas, perpDexs] = await Promise.all([
+    const fetchTokenCategories = async () => {
+      try {
+        if (perpsCategoryCache.length > 0) {
+          return perpsCategoryCache;
+        }
+        const categories = await openapi.getPerpTokenCategories({
+          lang: 'en-US',
+        });
+        if (categories.length > 0) {
+          perpsCategoryCache = categories;
+          return categories;
+        } else {
+          return DEFAULT_TOKEN_CATEGORY;
+        }
+      } catch (error) {
+        console.error('Failed to fetch top assets:', error);
+        return DEFAULT_TOKEN_CATEGORY;
+      }
+    };
+    const [topAssets, categories, allMetas, perpDexs] = await Promise.all([
       fetchTopTokenList(),
+      fetchTokenCategories(),
       sdk.info.getPerpsAllMetas(),
       sdk.info.getPerpDexs(),
     ]);
@@ -366,7 +397,8 @@ const fetchMarketData = async () => {
       dexIdMap[idx] = dex?.name ?? '';
     });
 
-    setMarketData(formatMarkData(allMetas, topAssets, dexIdMap));
+    const marketData = formatMarkData(allMetas, topAssets, dexIdMap);
+    setMarketData(marketData, categories);
   } catch (error) {
     console.error('Failed to fetch market data:', error);
   }

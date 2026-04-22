@@ -32,11 +32,7 @@ import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 
 import CustomLabel from '../TokenDetail/components/CustomLabel';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
-import {
-  PERPS_CATEGORIES,
-  PerpsCategoryId,
-  PERPS_CATEGORY_MAP,
-} from '../Perps/constants/perpsCategories';
+import { PerpsCategoryId } from '../Perps/constants/perpsCategories';
 import { usePerpsGroupedMarketData } from '../Perps/hooks/usePerpsGroupedMarketData';
 import { PerpsSearchTabContent } from './components/PerpsSearchTabContent';
 import { PerpsSearchFilteredList } from './components/PerpsSearchFilteredList';
@@ -70,26 +66,33 @@ export const PerpsSearchScreen: React.FC = () => {
   const navigation = useRabbyAppNavigation();
   const inputRef = useRef<NextSearchBarMethods | null>(null);
 
-  const { marketData, favoriteMarkets } = perpsStore(
+  const { marketData, favoriteMarkets, backendCategories } = perpsStore(
     useShallow(s => ({
       marketData: s.marketData,
       favoriteMarkets: s.favoriteMarkets,
+      backendCategories: s.categories,
     })),
   );
-  const { fullByCategory, visibleSearchTabs } = usePerpsGroupedMarketData({
+  const { visibleSearchTabs } = usePerpsGroupedMarketData({
     marketData,
     favoriteMarkets,
+    backendCategories,
   });
 
+  const visibleTabIds = useMemo(
+    () => visibleSearchTabs.map(tab => tab.id),
+    [visibleSearchTabs],
+  );
+
   const defaultTab: PerpsCategoryId = useMemo(() => {
-    if (params.initialTab && visibleSearchTabs.includes(params.initialTab)) {
+    if (params.initialTab && visibleTabIds.includes(params.initialTab)) {
       return params.initialTab;
     }
-    if (visibleSearchTabs.includes('topVolume')) {
+    if (visibleTabIds.includes('topVolume')) {
       return 'topVolume';
     }
-    return visibleSearchTabs[0] ?? 'topVolume';
-  }, [params.initialTab, visibleSearchTabs]);
+    return visibleTabIds[0] ?? 'topVolume';
+  }, [params.initialTab, visibleTabIds]);
 
   const handleSelect = useCallback(
     (coin: string) => {
@@ -109,11 +112,6 @@ export const PerpsSearchScreen: React.FC = () => {
 
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, { wait: 200 });
-
-  const visibleTabs = useMemo(
-    () => PERPS_CATEGORIES.filter(c => visibleSearchTabs.includes(c.id)),
-    [visibleSearchTabs],
-  );
 
   const renderTabBar = useCallback(
     (props: any) => (
@@ -173,7 +171,7 @@ export const PerpsSearchScreen: React.FC = () => {
         />
       ) : (
         <Tabs.Container
-          key={visibleSearchTabs.join(',')}
+          key={visibleTabIds.join(',')}
           renderTabBar={renderTabBar}
           tabBarHeight={TAB_BAR_HEIGHT}
           lazy
@@ -181,25 +179,24 @@ export const PerpsSearchScreen: React.FC = () => {
           headerContainerStyle={styles.tabBarWrap}
           initialTabName={defaultTab}>
           {
-            visibleTabs.map(cfg => {
-              const isFav = cfg.id === 'favorite';
-              const label = t(cfg.labelI18nKey);
+            visibleSearchTabs.map(tab => {
+              const isFav = tab.id === 'favorite';
               const renderLabel = ({ index: i, indexDecimal }: any) => (
                 <CustomLabel
                   index={i}
                   indexDecimal={indexDecimal}
-                  text={isFav ? '' : label}
+                  text={isFav ? '' : tab.cfg.label}
                   style={styles.tabLabel}
                   containerStyle={styles.tabLabelContainer}
                   icon={isFav ? <FavoriteTabIcon /> : undefined}
                 />
               );
               return (
-                <Tabs.Tab key={cfg.id} name={cfg.id} label={renderLabel}>
+                <Tabs.Tab key={tab.id} name={tab.id} label={renderLabel}>
                   <PerpsSearchTabContent
-                    categoryId={cfg.id}
-                    items={fullByCategory[cfg.id] || []}
-                    showRank={cfg.showRankOnSearch}
+                    categoryId={tab.id}
+                    items={tab.items}
+                    showRank={tab.cfg.showRankOnSearch}
                     onSelect={handleSelect}
                   />
                 </Tabs.Tab>

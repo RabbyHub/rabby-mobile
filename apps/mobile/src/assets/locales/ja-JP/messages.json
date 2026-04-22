@@ -2624,6 +2624,10 @@
       "selectAccountTitle": "ウォレットを選択してログインしてください",
       "more": "もっと見る",
       "explorePerps": "Perpsを探る",
+      "categories": {
+        "favorite": "お気に入り",
+        "topVolume": "取引量上位"
+      },
       "positions": "ポジション",
       "leverageRangeMinError": "最小レバレッジは{{min}}xです。",
       "regionNotSupport": "あなたの地域ではポジションのオープンはサポートされていません",

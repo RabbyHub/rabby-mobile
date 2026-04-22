@@ -394,13 +394,7 @@ export type TransactionNavigatorParamList = {
     direction?: 'Long' | 'Short';
   };
   [RootNames.PerpsSearch]?: {
-    initialTab?:
-      | 'favorite'
-      | 'topVolume'
-      | 'stocks'
-      | 'commodities'
-      | 'indices'
-      | 'fx';
+    initialTab?: string;
     openFromSource?: 'openPosition' | 'searchPerps';
     direction?: 'Long' | 'Short';
     autoFocus?: boolean;

@@ -1,4 +1,7 @@
-import { PerpTopTokenV3 } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  PerpTopTokenCategory,
+  PerpTopTokenV3,
+} from '@rabby-wallet/rabby-api/dist/types';
 
 // must be a USDC token and more than 5 usdc
 export const PERPS_SEND_ARB_USDC_ADDRESS =
@@ -168,7 +171,10 @@ export enum CANDLE_MENU_KEY_V2 {
 }
 
 import DEFAULT_TOP_ASSET_JSON from './PerpsTopAsset.json';
+import DEFAULT_TOKEN_CATEGORY_JSON from './PerpsTokenCategory.json';
 export const DEFAULT_TOP_ASSET = DEFAULT_TOP_ASSET_JSON as PerpTopTokenV3[];
+export const DEFAULT_TOKEN_CATEGORY =
+  DEFAULT_TOKEN_CATEGORY_JSON as PerpTopTokenCategory[];
 
 export const PERPS_MAX_NTL_VALUE = 1000000;
 

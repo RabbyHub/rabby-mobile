@@ -2689,6 +2689,10 @@
       "selectAccountTitle": "Chọn Ví Để Đăng Nhập",
       "more": "Thêm",
       "explorePerps": "Khám phá Perps",
+      "categories": {
+        "favorite": "Yêu thích",
+        "topVolume": "Khối lượng cao nhất"
+      },
       "positions": "Vị trí",
       "deleteAgentSuccess": "Đại lý đã xóa thành công",
       "regionNotSupport": "Việc mở các vị trí không được hỗ trợ ở khu vực của bạn.",

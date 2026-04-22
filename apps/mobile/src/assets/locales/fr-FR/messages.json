@@ -2581,6 +2581,10 @@
       "selectAccountTitle": "Sélectionnez un portefeuille pour vous connecter",
       "more": "Plus",
       "explorePerps": "Explorer les Perps",
+      "categories": {
+        "favorite": "Favori",
+        "topVolume": "Volume Principal"
+      },
       "positions": "Positions",
       "deleteAgentSuccess": "Agent supprimé avec succès",
       "regionNotSupport": "L'ouverture de positions n'est pas prise en charge dans votre région.",

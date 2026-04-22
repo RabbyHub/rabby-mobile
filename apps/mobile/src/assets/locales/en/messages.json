@@ -2629,11 +2629,7 @@
       "more": "More",
       "categories": {
         "favorite": "Favorite",
-        "topVolume": "Top Volume",
-        "stocks": "Stocks",
-        "commodities": "Commodities",
-        "indices": "Indices",
-        "fx": "FX"
+        "topVolume": "Top Volume"
       },
       "search": {
         "headerTitle": "Search Perps",

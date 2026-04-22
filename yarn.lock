@@ -9499,16 +9499,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/hyperliquid-sdk@npm:1.1.7-beta.2":
-  version: 1.1.7-beta.2
-  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.1.7-beta.2"
+"@rabby-wallet/hyperliquid-sdk@npm:1.1.7-beta.3":
+  version: 1.1.7-beta.3
+  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.1.7-beta.3"
   dependencies:
     "@ethereumjs/util": "npm:9.0.0"
     "@metamask/eth-sig-util": "npm:5.1.0"
     "@msgpack/msgpack": "npm:3.1.2"
     "@noble/hashes": "npm:1.8.0"
     ethereum-cryptography: "npm:2.2.1"
-  checksum: 10/2500d9876aec8d91c9932cbe25dd0cda88d91c692a9cd4cbca4c1619ad1e7a86b4984c4eb53f240641162b8a9c035c9317375f179cf5545707e14b522f7c2abf
+  checksum: 10/308ad7b9b765b22eaab7d63da2f10bbabe0cbb5bac2ef0e01d58cb253540c2747030d342e794e1bb80063698f0c6e147f201953961d48c1bec0764b26ebe69de
   languageName: node
   linkType: hard
 
@@ -9713,9 +9713,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.60-beta.1":
-  version: 0.9.60-beta.1
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.60-beta.1"
+"@rabby-wallet/rabby-api@npm:0.9.60-beta.2":
+  version: 0.9.60-beta.2
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.60-beta.2"
   dependencies:
     "@rabby-wallet/rabby-sign": "npm:0.4.0"
     axios: "npm:^0.27.2"
@@ -9726,7 +9726,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 10/f67e670b69a126a54398fde58bb372a6a2318ed99bec7556199b86088c5b3cbf03090d9182380fadf0d243a21214608bf5cf5e70f80b0e0575f9703bf1ed4ccb
+  checksum: 10/41ba00b3cedce90a40457bfe0b3ed4e1f4a0394a911a9f40bded991323fc410c4dc110a7429233f4503eb12cc5767beaead21999679f61150b48adca13bea82d
   languageName: node
   linkType: hard
 
@@ -38122,11 +38122,11 @@ __metadata:
     "@rabby-wallet/eth-keyring-watch": "npm:*"
     "@rabby-wallet/eth-simple-keyring": "npm:5.1.0"
     "@rabby-wallet/gnosis-sdk": "npm:1.4.8"
-    "@rabby-wallet/hyperliquid-sdk": "npm:1.1.7-beta.2"
+    "@rabby-wallet/hyperliquid-sdk": "npm:1.1.7-beta.3"
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": "npm:0.1.14"
-    "@rabby-wallet/rabby-api": "npm:0.9.60-beta.1"
+    "@rabby-wallet/rabby-api": "npm:0.9.60-beta.2"
     "@rabby-wallet/rabby-logger": "npm:0.3.0"
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
