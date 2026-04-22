@@ -61,6 +61,9 @@ export const PerpsAddPositionPopup: React.FC<{
   pnlPercent: number;
   markPrice: number;
   leverageRang: [number, number]; // [min, max]
+  quoteAsset?: string;
+  onDepositPress?(): void;
+  onSwapPress?(): void;
   onCancel: () => void;
   onConfirm: () => void;
   handleAddPosition: (tradeSize: string) => Promise<void>;
@@ -84,6 +87,9 @@ export const PerpsAddPositionPopup: React.FC<{
   pnl,
   pnlPercent,
   pxDecimals,
+  quoteAsset = 'USDC',
+  onDepositPress,
+  onSwapPress,
   onCancel,
   onConfirm,
   handleAddPosition,
@@ -367,9 +373,24 @@ export const PerpsAddPositionPopup: React.FC<{
                 <Text style={styles.amountValue}>
                   ${splitNumberByStep(availableBalance.toFixed(2))}
                 </Text>
-                <Text style={styles.totalLabel}>
-                  {t('page.perpsDetail.PerpsEditMarginPopup.available')}
-                </Text>
+                <View style={styles.availableRow}>
+                  <Text style={styles.totalLabel}>
+                    {t('page.perpsDetail.PerpsEditMarginPopup.available')}
+                  </Text>
+                  {marginValidation.error === 'insufficient_balance' &&
+                    availableBalance < 0.1 && (
+                      <TouchableOpacity
+                        onPress={
+                          quoteAsset === 'USDC' ? onDepositPress : onSwapPress
+                        }>
+                        <Text style={styles.entryLink}>
+                          {quoteAsset === 'USDC'
+                            ? t('page.perps.PerpsSpotSwap.toDepositEntry')
+                            : t('page.perps.PerpsSpotSwap.toSwapEntry')}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                </View>
               </View>
               <BottomSheetTextInput
                 keyboardType="numeric"
@@ -656,6 +677,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'flex-start',
       marginTop: 16,
       // gap: 4,
+    },
+    availableRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    entryLink: {
+      color: '#50D2C1',
+      fontSize: 13,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
     },
     amountValueRow: {
       flexDirection: 'row',

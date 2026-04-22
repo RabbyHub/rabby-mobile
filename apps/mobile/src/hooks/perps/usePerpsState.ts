@@ -324,8 +324,8 @@ export const usePerpsState = () => {
         }),
       );
 
+      handleSafeSetUnifiedAccount();
       setTimeout(() => {
-        handleSafeSetUnifiedAccount();
         handleSafeSetReference();
       }, 100);
     },

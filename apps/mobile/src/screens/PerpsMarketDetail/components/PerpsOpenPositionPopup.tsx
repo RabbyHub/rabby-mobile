@@ -597,22 +597,25 @@ export const PerpsOpenPositionPopup: React.FC<{
                       ]}>
                       {t('page.perpsDetail.PerpsOpenPositionPopup.available')}
                     </Text>
-                    {availableBalance < 0.1 && (
-                      <TouchableOpacity
-                        onPress={
-                          quoteAsset === 'USDC' ? onDepositPress : onSwapPress
-                        }>
-                        <Text
-                          style={{
-                            color: '#50D2C1',
-                            fontSize: 13,
-                            fontWeight: '700',
-                            fontFamily: 'SF Pro Rounded',
-                          }}>
-                          {quoteAsset === 'USDC' ? 'To Deposit→' : 'To swap→'}
-                        </Text>
-                      </TouchableOpacity>
-                    )}
+                    {availableBalance < 0.1 &&
+                      marginValidation.error === 'insufficient' && (
+                        <TouchableOpacity
+                          onPress={
+                            quoteAsset === 'USDC' ? onDepositPress : onSwapPress
+                          }>
+                          <Text
+                            style={{
+                              color: '#50D2C1',
+                              fontSize: 13,
+                              fontWeight: '700',
+                              fontFamily: 'SF Pro Rounded',
+                            }}>
+                            {quoteAsset === 'USDC'
+                              ? t('page.perps.PerpsSpotSwap.toDepositEntry')
+                              : t('page.perps.PerpsSpotSwap.toSwapEntry')}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
                   </View>
                 </View>
                 <BottomSheetTextInput

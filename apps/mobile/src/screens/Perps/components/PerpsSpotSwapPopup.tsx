@@ -18,6 +18,7 @@ import {
   Pressable,
 } from 'react-native';
 import { Text } from '@/components/Typography';
+import { Tip } from '@/components/Tip';
 import { apisPerps } from '@/core/apis';
 import RcIconUSDC from '@/assets2024/icons/perps/IconUSDC.svg';
 import RcIconUSDT from '@/assets2024/icons/perps/IconUSDT.svg';
@@ -26,6 +27,7 @@ import RcIconUSDE from '@/assets2024/icons/perps/IconUSDE.svg';
 import BigNumber from 'bignumber.js';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import RcIconSwapDeposit from '@/assets2024/icons/perps/IconSwapDeposit.svg';
+import { RcIconInfoFill1CC } from '@/assets/icons/common';
 
 const COIN_ICONS: Record<string, (size: number) => React.ReactNode> = {
   USDC: (s: number) => <RcIconUSDC width={s} height={s} />,
@@ -76,6 +78,8 @@ export const PerpsSpotSwapPopup: React.FC<{
   const { t } = useTranslation();
   const { spotBalancesMap, getSpotBalance } = usePerpsAccount();
   const [isLoading, setIsLoading] = useState(false);
+  const [tipVisible, setTipVisible] = useState(false);
+  const hideTip = useCallback(() => setTipVisible(false), []);
 
   const [fromCoin, setFromCoin] = useState<string>('USDC');
   const [toCoin, setToCoin] = useState<string>(targetAsset || 'USDT');
@@ -521,12 +525,36 @@ export const PerpsSpotSwapPopup: React.FC<{
             {/* Est receive & error */}
             <View style={styles.bottomInfo}>
               {Number(amount) > 0 && !validation.error ? (
-                <Text style={styles.estText}>
-                  {t('page.perps.PerpsSpotSwap.estReceive', {
-                    amount: estReceive,
-                    coin: toCoin,
-                  })}
-                </Text>
+                <TouchableOpacity
+                  style={styles.estReceiveContainer}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setTipVisible(true);
+                  }}>
+                  <Text style={styles.estText}>
+                    {t('page.perps.PerpsSpotSwap.estReceive', {
+                      amount: estReceive,
+                      coin: toCoin,
+                    })}
+                  </Text>
+                  <Tip
+                    isVisible={tipVisible}
+                    onClose={hideTip}
+                    content={
+                      <View style={{ width: 280, padding: 8 }}>
+                        <Text style={{ fontSize: 12, color: '#fff' }}>
+                          {t('page.perps.PerpsSpotSwap.estReceiveTooltip')}
+                        </Text>
+                      </View>
+                    }
+                    placement="top">
+                    <RcIconInfoFill1CC
+                      color={colors2024['neutral-info']}
+                      width={18}
+                      height={18}
+                    />
+                  </Tip>
+                </TouchableOpacity>
               ) : validation.error ? (
                 <Text style={styles.errorText}>{validation.error}</Text>
               ) : null}
@@ -746,6 +774,12 @@ const getStyle = createGetStyles2024(ctx => ({
     minHeight: 18,
     // marginLeft: 8,
     marginBottom: 12,
+  },
+  estReceiveContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
   },
   estText: {
     fontFamily: 'SF Pro Rounded',

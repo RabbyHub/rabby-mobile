@@ -336,13 +336,15 @@ export const PerpsMarketDetailScreen = () => {
   const [isShowEnableUnifiedPopup, setIsShowEnableUnifiedPopup] =
     useState(false);
 
-  const handleSwapPress = useCallback(() => {
+  const handleSwapPress = useCallback(async () => {
+    await handleActionApproveStatus();
+
     if (!isUnifiedAccount) {
       setIsShowEnableUnifiedPopup(true);
       return;
     }
     setIsShowSwapPopup(true);
-  }, [isUnifiedAccount]);
+  }, [isUnifiedAccount, handleActionApproveStatus]);
 
   const handleEnableUnifiedConfirm = useCallback(async () => {
     const success = await handleEnableUnifiedAccount();
@@ -708,6 +710,15 @@ export const PerpsMarketDetailScreen = () => {
           onCancel={() => setAddPositionVisible(false)}
           onConfirm={() => {
             setAddPositionVisible(false);
+          }}
+          quoteAsset={currentAssetCtx?.quoteAsset}
+          onDepositPress={() => {
+            setAddPositionVisible(false);
+            setIsShowDepositPopup(true);
+          }}
+          onSwapPress={() => {
+            setAddPositionVisible(false);
+            handleSwapPress();
           }}
           handleAddPosition={async (tradeSize: string) => {
             const res = await handleOpenPosition({

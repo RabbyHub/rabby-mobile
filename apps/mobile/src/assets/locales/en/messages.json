@@ -2679,7 +2679,9 @@
         "swapBtn": "Swap",
         "max": "Max",
         "estReceive": "Est. Receive: {{amount}} {{coin}}",
+        "estReceiveTooltip": "Estimated receive amount is subject to market price fluctuations.",
         "toSwapEntry": "To swap→",
+        "toDepositEntry": "To deposit→",
         "insufficientBalance": "Insufficient balance",
         "invalidAmount": "Please input a valid amount",
         "minimumAmount": "The minimum swap amount is {{amount}}"
