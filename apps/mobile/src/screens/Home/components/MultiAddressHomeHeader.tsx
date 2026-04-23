@@ -13,16 +13,13 @@ import {
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import usePrevious from 'react-use/lib/usePrevious';
-
+import { perfEvents } from '@/core/utils/perf';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   createGetStyles2024,
   makeDebugBorder,
   makeDevOnlyStyle,
 } from '@/utils/styles';
-
-import addressBalanceStore from '@/store/balance';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 import { BlurShadowView } from '@/components2024/BluerShadow';
@@ -48,7 +45,6 @@ import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGloba
 import { RNGHTouchableOpacity } from '@/components/customized/reexports';
 import { computeBalanceChange } from '@/core/apis/balance';
 import { balance24hStore } from '@/store/balance24h';
-import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
 
 function MultiPinnedAddressList({
   pinnedAccountList,
@@ -145,8 +141,6 @@ export function MultiAddressHomeHeader(
   } & RNViewProps,
 ): JSX.Element {
   const { style, onRefresh } = props;
-  const data = useHomePortfolioStore(state => state.changeData);
-
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { isDisConnect } = useGlobalStatus();
@@ -158,41 +152,56 @@ export function MultiAddressHomeHeader(
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
-  const { loadBalanceFromApiStage } =
-    addressBalanceStore.useLoadBalanceFromApiStage();
-  const previousLoading = usePrevious(loadBalanceFromApiStage);
+  const isManualRefreshRef = useRef(false);
   const [isAnimRunning, setIsAnimRunning] = useState(false);
   const animTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
-    if (!__DEV__ && data.isLoss) return;
+    const sub = perfEvents.subscribe('HOME_WILL_BE_REFRESHED_MANUALLY', () => {
+      isManualRefreshRef.current = true;
+    });
+    return () => sub.remove();
+  }, []);
 
-    const durationMs = IS_IOS ? 2000 : 2500;
+  useEffect(() => {
+    const sub = perfEvents.subscribe(
+      'SCENE_24H_BALANCE_UPDATED',
+      (ctx: {
+        scene: string;
+        combinedData: { rawChange?: number; isLoss?: boolean };
+      }) => {
+        if (ctx.scene !== 'Home') return;
+        if (!isManualRefreshRef.current) return;
 
-    if (
-      data.rawChange &&
-      loadBalanceFromApiStage !== 'loading' &&
-      previousLoading === 'loading'
-    ) {
-      setIsAnimRunning(true);
-      gasketWebViewRef.current?.sendMessage?.({
-        type: 'GASKETVIEW:TOGGLE_LOADING',
-        info: {
-          loading: previousLoading,
-          isPositive: !data.isLoss,
-        },
-        animationDurationMs: durationMs,
-        animationGradientBorderRadius: SIZES.cardContentRadius,
-      });
-    }
+        const { rawChange, isLoss } = ctx.combinedData;
+        if (!rawChange) return;
+        if (!__DEV__ && isLoss) return;
 
-    if (animTimerRef.current) {
-      clearTimeout(animTimerRef.current);
-    }
-    animTimerRef.current = setTimeout(
-      () => setIsAnimRunning(false),
-      durationMs,
+        isManualRefreshRef.current = false;
+
+        const durationMs = IS_IOS ? 2000 : 2500;
+        setIsAnimRunning(true);
+        gasketWebViewRef.current?.sendMessage?.({
+          type: 'GASKETVIEW:TOGGLE_LOADING',
+          info: {
+            loading: true,
+            isPositive: !isLoss,
+          },
+          animationDurationMs: durationMs,
+          animationGradientBorderRadius: SIZES.cardContentRadius,
+        });
+
+        if (animTimerRef.current) {
+          clearTimeout(animTimerRef.current);
+        }
+        animTimerRef.current = setTimeout(
+          () => setIsAnimRunning(false),
+          durationMs,
+        );
+      },
     );
-  }, [data.isLoss, data.rawChange, loadBalanceFromApiStage, previousLoading]);
+    return () => sub.remove();
+  }, []);
 
   const modalRef =
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>(undefined);
@@ -236,9 +245,7 @@ export function MultiAddressHomeHeader(
         // {...__DEV__ && { hasError: true }}
         description={t('component.globalWarning.networkError.globalDesc')}
         style={styles.globalWarning}
-        onRefresh={() => {
-          onRefresh?.();
-        }}
+        onRefresh={() => onRefresh?.()}
       />
       <BlurShadowView
         isLight={isLight}
