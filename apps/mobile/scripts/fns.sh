@@ -1,6 +1,23 @@
 #!/bin/sh
 
-. "$( cd "$( dirname "$0"  )" && pwd )/_fns.sh" --source-only
+resolve_fns_script_path() {
+  if [ -n "${BASH_SOURCE:-}" ]; then
+    printf '%s\n' "$BASH_SOURCE"
+    return 0
+  fi
+
+  printf '%s\n' "$0"
+}
+
+resolve_fns_script_dir() {
+  local self_path
+  self_path=$(resolve_fns_script_path)
+  cd "$( dirname "$self_path" )" && pwd
+}
+
+RABBY_FNS_SCRIPT_DIR=$(resolve_fns_script_dir)
+
+. "$RABBY_FNS_SCRIPT_DIR/_fns.sh" --source-only
 
 UNIX_TYPE=$(uname -s)
 RABBY_HOST_OS=`uname`
@@ -18,7 +35,7 @@ case $OSTYPE in
 esac
 
 prepare_env() {
-  export script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
+  export script_dir="$RABBY_FNS_SCRIPT_DIR"
   export project_dir=$script_dir
 }
 
@@ -137,7 +154,7 @@ unix_replace_variables() {
 }
 
 reset_builtin_assets() {
-  local script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
+  local script_dir="$RABBY_FNS_SCRIPT_DIR"
   local project_dir=$(dirname $script_dir)
 
   # local targets=(
@@ -183,8 +200,41 @@ reset_builtin_assets() {
   # rm -f $android_assets_target/sf_pro_all.ttf && cp $project_dir/assets/fonts/* $ios_target
 }
 
+ensure_inpage_bridge_assets() {
+  local current_project_dir
+  current_project_dir=$(resolve_mobile_project_dir)
+
+  local missing_targets=""
+  local target
+
+  for target in \
+    "$current_project_dir/assets/custom/InpageBridgeWeb3.js" \
+    "$current_project_dir/src/core/bridges/InpageBridgeWeb3.js"
+  do
+    if [ ! -s "$target" ]; then
+      missing_targets="${missing_targets}${target}
+"
+    fi
+  done
+
+  if [ -z "$missing_targets" ]; then
+    return 0
+  fi
+
+  echo "[ensure_inpage_bridge_assets] regenerate inpage bridge assets because these targets are missing:"
+  printf '%s' "$missing_targets" | while IFS= read -r target; do
+    [ -n "$target" ] || continue
+    printf '[ensure_inpage_bridge_assets]   - %s\n' "$target"
+  done
+
+  (
+    cd "$current_project_dir" &&
+      yarn build-inpage
+  )
+}
+
 build_worker_if_not_exist() {
-  local script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
+  local script_dir="$RABBY_FNS_SCRIPT_DIR"
   local project_dir=$(dirname $script_dir)
 
   # ./assets/ios/threads/worker.thread.jsbundle
@@ -268,7 +318,7 @@ run_upload_changelog() {
 
 update_webview_assets() {
   if [ -z $project_dir ]; then
-    local script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
+    local script_dir="$RABBY_FNS_SCRIPT_DIR"
     project_dir=$(dirname $script_dir)
   fi
   curl -fSL https://unpkg.com/vconsole@3.15.1/dist/vconsole.min.js -o $project_dir/assets/custom/vconsole.min.js
