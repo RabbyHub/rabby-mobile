@@ -41,7 +41,7 @@ export function DepositAssetsCard({ account }: { account?: Account | null }) {
               : require('@/assets/images/home_deposit_bg_dark.png')
           }
           style={styles.backgroundImage}
-          resizeMode="cover"
+          resizeMode="contain"
         />
 
         <View style={styles.textBox}>

@@ -578,7 +578,9 @@ const getStyle = createGetStyles2024(
       padding: 8,
       paddingLeft: 11,
       borderRadius: 10,
-      backgroundColor: colors2024['neutral-line'],
+      backgroundColor: isLight
+        ? colors2024['neutral-line']
+        : colors2024['brand-default'],
       shadowColor: colors2024['brand-light-1'],
       shadowOffset: { width: 0, height: 9.411 },
       shadowOpacity: 0.1,

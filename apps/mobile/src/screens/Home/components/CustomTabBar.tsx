@@ -230,7 +230,7 @@ const indicatorStyles = createGetStyles2024(
         height: 6,
         backgroundColor: isLight
           ? 'rgba(0, 0, 0, 1)'
-          : 'rgba(255, 255, 255, 1)',
+          : colors2024['brand-default'],
         position: 'absolute',
         borderRadius: 12,
         top: indicatorMarginTop,
