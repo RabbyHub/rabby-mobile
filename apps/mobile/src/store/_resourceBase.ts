@@ -182,6 +182,21 @@ export class ResourceBaseStore<TValue> extends ObservableResourceStore<TValue> {
     return buildResourceSnapshots(resourceKeys, state.valueMap, state.metaMap);
   };
 
+  useValues = (resourceKeys: string[]) => {
+    const normalizedResourceKeys = useMemo(
+      () => normalizeResourceKeys(resourceKeys),
+      [resourceKeys],
+    );
+
+    return this.useStore(
+      useShallow(state => {
+        return normalizedResourceKeys.map(resourceKey => {
+          return state.valueMap[resourceKey];
+        });
+      }),
+    );
+  };
+
   useFamilyFlowState = (resourceKeys: string[]) => {
     const normalizedResourceKeys = useMemo(
       () => normalizeResourceKeys(resourceKeys),

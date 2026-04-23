@@ -48,6 +48,50 @@ async function resetCurrentAccount() {
   }
 }
 
+function cleanupRemovedAddressInBackground(args: {
+  account: KeyringAccountWithAlias;
+  newCurrentAccount: ReturnType<typeof getCurrentAccount>;
+}) {
+  const { account, newCurrentAccount } = args;
+
+  return Promise.resolve()
+    .then(async () => {
+      const hasSameAddressLeft = await keyringService.hasAddress(
+        account.address,
+      );
+      if (!hasSameAddressLeft) {
+        removeTestnetAddressBalanceCache(account.address);
+        preferenceService.removeAddressAvatar(account.address);
+        contactService.removeAlias(account.address);
+        whitelistService.removeWhitelist(account.address);
+        transactionHistoryService.removeList(account.address);
+        perpsService.removeAgentWallet(account.address);
+      }
+
+      Object.entries(dappService.getDapps()).forEach(([origin, dapp]) => {
+        if (isSameAccount(account, dapp.currentAccount)) {
+          dappService.updateDapp({
+            ...dapp,
+            origin,
+            currentAccount: newCurrentAccount,
+          });
+          if (dapp?.isConnected) {
+            sessionService.broadcastEvent(
+              BroadcastEvent.accountsChanged,
+              newCurrentAccount?.address
+                ? [newCurrentAccount.address.toLowerCase()]
+                : [],
+              origin,
+            );
+          }
+        }
+      });
+    })
+    .catch(error => {
+      console.error('cleanupRemovedAddressInBackground failed', error);
+    });
+}
+
 export async function removeAddress(account: KeyringAccountWithAlias) {
   const isRemoveEmptyKeyring =
     account.type !== KEYRING_TYPE.WalletConnectKeyring;
@@ -58,16 +102,6 @@ export async function removeAddress(account: KeyringAccountWithAlias) {
     account.brandName,
     isRemoveEmptyKeyring,
   );
-
-  const hasSameAddressLeft = await keyringService.hasAddress(account.address);
-  if (!hasSameAddressLeft) {
-    removeTestnetAddressBalanceCache(account.address);
-    preferenceService.removeAddressAvatar(account.address);
-    contactService.removeAlias(account.address);
-    whitelistService.removeWhitelist(account.address);
-    transactionHistoryService.removeList(account.address);
-    perpsService.removeAgentWallet(account.address);
-  }
   preferenceService.removePinAddress(account);
 
   const currentAccount = getCurrentAccount();
@@ -84,23 +118,9 @@ export async function removeAddress(account: KeyringAccountWithAlias) {
   }
 
   const newCurrentAccount = getCurrentAccount();
-  Object.entries(dappService.getDapps()).forEach(([origin, dapp]) => {
-    if (isSameAccount(account, dapp.currentAccount)) {
-      dappService.updateDapp({
-        ...dapp,
-        origin,
-        currentAccount: newCurrentAccount,
-      });
-      if (dapp?.isConnected) {
-        sessionService.broadcastEvent(
-          BroadcastEvent.accountsChanged,
-          newCurrentAccount?.address
-            ? [newCurrentAccount.address.toLowerCase()]
-            : [],
-          origin,
-        );
-      }
-    }
+  void cleanupRemovedAddressInBackground({
+    account,
+    newCurrentAccount,
   });
 }
 

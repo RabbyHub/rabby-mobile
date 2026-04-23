@@ -12,7 +12,7 @@ import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { coerceFloat } from '@/utils/number';
 import { zCreate } from '@/core/utils/reexports';
 import addressBalanceStore from '@/store/balance';
-import { useAccountStore } from '@/store/account';
+import { accountResourceStore } from '@/store/account';
 
 type MatteredChainBalances = {
   [P in Chain['serverId']]?: DisplayChainWithWhiteLogo;
@@ -205,7 +205,7 @@ export function useLoadMatteredChainBalances({
 }
 
 export function useMatteredChainBalancesAll() {
-  const accounts = useAccountStore(s => s.accounts);
+  const accounts = accountResourceStore.useAccounts();
   const balanceSnapshots = addressBalanceStore.useAddressesSnapshot(
     useMemo(() => {
       return accounts.map(account => account.address.toLowerCase());

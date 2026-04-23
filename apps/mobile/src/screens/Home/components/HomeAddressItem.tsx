@@ -28,6 +28,7 @@ import { Text } from '@/components/Typography';
 
 export const HomeAddressItem: React.FC<{
   account: KeyringAccountWithAlias;
+  balanceValue?: number;
   updateTime?: number;
   style?: StyleProp<ViewStyle>;
   changePercent?: string;
@@ -36,6 +37,7 @@ export const HomeAddressItem: React.FC<{
 }> = ({
   style,
   account,
+  balanceValue,
   updateTime,
   changePercent: prop_changePercent,
   isLoss,
@@ -56,11 +58,11 @@ export const HomeAddressItem: React.FC<{
   //   (curveState?.updateTime || 0) > (updateTime || 0),
   // );
 
-  const { balance, isZeroPercentChange, changePercent } = useMemo(() => {
+  const { balanceText, isZeroPercentChange, changePercent } = useMemo(() => {
     const ret = {
-      balance: '',
+      balanceText: '--',
       isZeroPercentChange: false,
-      changePercent: '0%',
+      changePercent: undefined as string | undefined,
     };
     // if (
     //   curveState?.loadedFromApi &&
@@ -77,8 +79,12 @@ export const HomeAddressItem: React.FC<{
     //   return ret;
     // }
 
-    const b = new BigNumber(account.balance || 0);
-    ret.balance = formatSmallCurrencyValue(b.toNumber(), {
+    if (typeof balanceValue !== 'number') {
+      return ret;
+    }
+
+    const b = new BigNumber(balanceValue);
+    ret.balanceText = formatSmallCurrencyValue(b.toNumber(), {
       currency: currency,
     });
     ret.changePercent = prop_changePercent || '0%';
@@ -92,7 +98,7 @@ export const HomeAddressItem: React.FC<{
     // curveState?.selectData.changePercent,
     // curveState?.selectData.rawChange,
     prop_changePercent,
-    account.balance,
+    balanceValue,
     currency,
   ]);
 
@@ -144,7 +150,7 @@ export const HomeAddressItem: React.FC<{
                   <>
                     <WalletName style={[styles.accountName]} />
                     <View style={[styles.accountBalanceRow]}>
-                      <Text style={styles.accountBalance}>{balance}</Text>
+                      <Text style={styles.accountBalance}>{balanceText}</Text>
                       {typeof changePercent === 'string' ? (
                         <Text
                           style={[

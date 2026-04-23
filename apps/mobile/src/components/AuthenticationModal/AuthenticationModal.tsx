@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
 import { apisKeychain, apisLock } from '@/core/apis';
+import { PasswordStatus } from '@/core/apis/lock';
 import { IS_IOS } from '@/core/native/utils';
 import { useThemeStyles } from '@/hooks/theme';
-import { usePasswordStatus } from '@/hooks/useLock';
+import { getPwdStatus, usePasswordStatus } from '@/hooks/useLock';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import type { ValidationBehaviorProps } from '@/core/apis/lock';
 
@@ -519,9 +520,25 @@ AuthenticationModal.show = async (
     onDismiss,
     ...props
   } = showConfig;
+  const isNoneAuthOnly =
+    showConfig.authType?.length === 1 && showConfig.authType[0] === 'none';
   let disableValidation = showConfig.disableValidation;
-  const lockInfo = await apisLock.getRabbyLockInfo();
-  if (!lockInfo.isUseCustomPwd) {
+  const isUseCustomPwd = isNoneAuthOnly
+    ? false
+    : (() => {
+        const cachedPwdStatus = getPwdStatus();
+        if (cachedPwdStatus === PasswordStatus.Unknown) {
+          return undefined;
+        }
+        return cachedPwdStatus === PasswordStatus.Custom;
+      })();
+
+  const resolvedIsUseCustomPwd =
+    typeof isUseCustomPwd === 'boolean'
+      ? isUseCustomPwd
+      : (await apisLock.getRabbyLockInfo()).isUseCustomPwd;
+
+  if (!resolvedIsUseCustomPwd) {
     // enforce disableValidation to be false if the app doesn't have a custom password
     disableValidation = true;
   } else if (typeof showConfig.disableValidation !== 'boolean') {

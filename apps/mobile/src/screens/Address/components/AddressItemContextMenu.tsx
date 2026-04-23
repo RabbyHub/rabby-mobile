@@ -9,11 +9,10 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { keyBy } from 'lodash';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDeleteAccountModal } from '../useDeleteAccountModal';
+import { showDeleteAccountModal } from '../useDeleteAccountModal';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { trigger } from 'react-native-haptic-feedback';
-import { toast } from '@/components2024/Toast';
 
 const MenuIcons = {
   copyDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy_dark.png'),
@@ -35,7 +34,6 @@ interface Props {
 }
 export const AddressItemContextMenu: React.FC<Props> = props => {
   const { account, children, actions, preViewBorderRadius = 20 } = props;
-  const removeAccount = useDeleteAccountModal();
   const editAliasName = useAliasNameEditModal();
 
   const { pinAddresses, togglePinAddressAsync } = usePinAddresses({
@@ -125,27 +123,14 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
             androidIconName: 'ic_rabby_menu_delete',
             destructive: true,
             action() {
-              removeAccount({
-                account,
-                onFinished: () => {
-                  toast.success(t('global.Deleted'));
-                },
-              });
+              void showDeleteAccountModal({ account });
             },
           },
         ] as MenuAction[]
       ).filter(Boolean),
       item => item.key,
     );
-  }, [
-    t,
-    isDarkTheme,
-    editAliasName,
-    account,
-    removeAccount,
-    pinned,
-    handlePinned,
-  ]);
+  }, [t, isDarkTheme, editAliasName, account, pinned, handlePinned]);
 
   const menuActions = React.useMemo(() => {
     return actions

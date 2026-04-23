@@ -187,6 +187,75 @@ Good APIs naturally steer callers toward:
 - less repeated computation
 - less repeated rendering
 
+### 9. Do Not Depend On Wide Dictionaries In Memoized React Code
+
+- Do not put broad dictionary-like objects into `useMemo` or `useCallback` dependency arrays when the scene only needs a few keys.
+- Common red flags include:
+  - `valueMap`
+  - `metaMap`
+  - `byAddress`
+  - `byChain`
+  - `pinAddressesDict`
+  - any freshly-built `Record<string, ...>` lookup object
+- A wide dictionary dependency usually means:
+  - one entry changes
+  - the whole dictionary gets a new identity
+  - every downstream memo recomputes
+  - render fan-out spreads far beyond the changed unit
+- Prefer this direction instead:
+  - subscribe to the exact key first
+  - derive a small primitive dependency first
+  - pass the finalized small result down
+- If you need a lookup map for one render path, build it in that same render path and consume it immediately. Do not build a broad dictionary, then feed that dictionary into more memoized hooks downstream.
+
+### 10. Preserve Per-Item References Across Snapshot Updates
+
+- For list-like resource families, do not rebuild every item object when only one item changed.
+- If one account is added, removed, or updated:
+  - unchanged accounts should keep the same object reference whenever practical
+- unchanged rows should not rerender just because the parent snapshot refreshed
+- Resource/store migrations should preserve stable references for unchanged units before relying on `useMemo` to recover performance.
+
+### 11. Let `BaseStore` / `ResourceStore` Own Purely Visual Shared Values
+
+- If a state is:
+  - transient
+  - visual-only
+  - per-item or per-scene
+  - and needs to drive Reanimated behavior without waiting for React rerenders
+    then it can live in the store as a Reanimated mutable/shared value instead of a React-derived phase.
+- This pattern is especially useful for:
+  - remove / insert / collapse phases
+  - toast transition phases
+  - gesture-adjacent visual stages
+  - other UI-thread-friendly animation states
+- Prefer one canonical phase source.
+- Do not keep:
+  - one JS phase in Zustand or hooks
+  - and a second mirrored shared value for the same concept
+    unless there is a clear business reason and the ownership boundary is explicit.
+- Recommended shape for resource-like stores:
+  - keep business truth in normal store/resource state
+  - keep visual phase in a `Map<resourceKey, SharedValue<...>>`
+  - expose `getXxxSV(resource)` as the canonical read API
+  - expose React wrappers only as adapters:
+    - `useSVFromMutable(...)` when a consumer needs a `SharedValue`
+    - `useValueFromSharedValue(...)` when a consumer needs a JS value
+- For `ResourceStore` families, key these shared values by stable resource identity such as `resourceKey`, not by array index.
+- Clean them up when the owning item is removed from the store or when stale snapshot entries are dropped.
+- Keep React/Zustand booleans only for semantics that React still owns, such as:
+  - whether a row remains in the visible collection
+  - whether interaction should be disabled
+  - whether a fallback JS flow still needs to run
+- Do not promote business state into Reanimated mutable values just to avoid rerenders.
+- Business truth should still live in the normal store/resource path. The shared value layer is for animation timing and visual transitions, not persistence or correctness.
+- Repo-local helpers already exist in `src/hooks/reanimated.ts`:
+  - `useSVFromMutable`
+  - `useValueFromSharedValue`
+- If a future store change introduces a visual phase, ask:
+  - can React own this without causing avoidable fan-out?
+  - if not, should the store own a canonical shared value and let React read from that same source instead of inventing a second phase state?
+
 ## Recommended Decision Order
 
 When adding a hook or changing store exposure, reason in this order:
@@ -211,6 +280,10 @@ Before merging changes in this area, check:
 - Do child components actually need to subscribe to store state directly?
 - Are there residual broad subscribers still sitting in the same path?
 - Am I scanning the same inputs multiple times when one pass would do?
+- Am I using a wide dictionary or lookup object as a memo dependency?
+- Am I rebuilding unchanged item objects during snapshot refresh?
+- If this is a visual-only transition phase, should it be a store-owned mutable/shared value instead of React state?
+- If I introduced a shared value phase, is it the only phase source, or did I accidentally leave a second JS-derived copy behind?
 - Does the API limit misuse, or does it encourage misuse?
 
 ## Preference Order

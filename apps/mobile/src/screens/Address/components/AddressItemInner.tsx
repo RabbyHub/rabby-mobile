@@ -23,6 +23,7 @@ import { splitNumberByStep } from '@/utils/number';
 import { KEYRING_TYPE } from '../../../../../../packages/keyring-utils/src/types';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { makeDebugBorder } from '@/utils/styles';
+import { useAddressBalance } from '@/hooks/useCurrentBalance';
 
 interface AddressItemProps {
   wallet: KeyringAccountWithAlias;
@@ -50,7 +51,11 @@ export const AddressItemInner = (props: AddressItemProps) => {
   const walletName = wallet?.aliasName || wallet?.brandName;
   const walletNameIndex = '';
   const address = ellipsisAddress(wallet.address);
-  const usdValue = `$${splitNumberByStep(wallet.balance?.toFixed(2) || 0)}`;
+  const { balance } = useAddressBalance(wallet.address);
+  const usdValue =
+    typeof balance === 'number'
+      ? `$${splitNumberByStep(balance.toFixed(2))}`
+      : '--';
   const inWhitelist = useMemo(
     () => isAddrOnWhitelist(wallet.address),
     [isAddrOnWhitelist, wallet.address],

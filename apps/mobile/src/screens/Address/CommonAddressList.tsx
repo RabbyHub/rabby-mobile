@@ -1,6 +1,15 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, FlatList } from 'react-native';
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import Animated from 'react-native-reanimated';
+import { updateRNRToastOnUI } from '@/components/RNRToast';
+import {
+  KeyringAccountWithAlias,
+  storeApiAccounts,
+  useAccountRemovingVisualStageSV,
+  useAccountRemovingToastBridge,
+  useAccounts,
+  useIsRemovingAccount,
+} from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { AddressItemEntry } from './components/AddressItem';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
@@ -10,12 +19,74 @@ import { Card } from '@/components2024/Card';
 import PlusSVG from '@/assets2024/icons/common/plus-cc.svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/Typography';
+import {
+  useDeletingCollapseStyle,
+  useDeletingOpacity,
+} from '@/hooks/useDeletingOpacity';
 
 interface Props {
   type: KeyringTypeName;
   footerButtonText: string;
   footerButtonPress: () => void;
 }
+
+const ADDRESS_ROW_HEIGHT = 78;
+const ADDRESS_ROW_GAP = 12;
+
+const AddressListRow = ({
+  account,
+  expandedMarginTop,
+}: {
+  account: KeyringAccountWithAlias;
+  expandedMarginTop: number;
+}) => {
+  const isRemoving = useIsRemovingAccount(account);
+  const removingVisualStageSV = useAccountRemovingVisualStageSV(account);
+  const removingToastBridge = useAccountRemovingToastBridge(account);
+  const removingToastId = removingToastBridge?.toastId;
+  const removingSuccessMessage = removingToastBridge?.successMessage;
+  const handleRemovingVisualFinished = useCallback(() => {
+    storeApiAccounts.markRemovingToastTransitioned(account);
+    storeApiAccounts.finishRemovingAccountVisual(account).catch(error => {
+      console.error('finish removing account visual failed', error);
+    });
+  }, [account]);
+  const handleRemovingToastFinishedOnUI = useCallback(() => {
+    'worklet';
+
+    if (!removingToastId || !removingSuccessMessage) {
+      return;
+    }
+
+    updateRNRToastOnUI(removingToastId, {
+      duration: 2000,
+      kind: 'success',
+      message: removingSuccessMessage,
+      position: 'top',
+    });
+  }, [removingSuccessMessage, removingToastId]);
+  const deletingOpacityStyle = useDeletingOpacity(removingVisualStageSV);
+  const collapseStyle = useDeletingCollapseStyle({
+    stage: removingVisualStageSV,
+    expandedHeight: ADDRESS_ROW_HEIGHT,
+    expandedMarginTop,
+    onFinish: handleRemovingVisualFinished,
+    onFinishUI:
+      removingToastId && removingSuccessMessage
+        ? handleRemovingToastFinishedOnUI
+        : undefined,
+  });
+
+  return (
+    <Animated.View
+      pointerEvents={isRemoving ? 'none' : 'auto'}
+      style={collapseStyle}>
+      <Animated.View style={deletingOpacityStyle}>
+        <AddressItemEntry account={account} />
+      </Animated.View>
+    </Animated.View>
+  );
+};
 
 export const CommonAddressList: React.FC<Props> = ({
   type,
@@ -24,6 +95,8 @@ export const CommonAddressList: React.FC<Props> = ({
 }) => {
   const { accounts } = useAccounts({
     disableAutoFetch: true,
+    includeRemoving: true,
+    includeFinishingVisual: true,
   });
   const { bottom } = useSafeAreaInsets();
 
@@ -40,11 +113,10 @@ export const CommonAddressList: React.FC<Props> = ({
       keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
       style={styles.listContainer}
       renderItem={({ item, index }) => (
-        <View
-          key={`${item.address}-${item.type}-${item.brandName}-${index}`}
-          style={styles.itemGap}>
-          <AddressItemEntry account={item} />
-        </View>
+        <AddressListRow
+          account={item}
+          expandedMarginTop={index === 0 ? 0 : ADDRESS_ROW_GAP}
+        />
       )}
       ListFooterComponent={
         <>
@@ -70,9 +142,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     paddingHorizontal: 16,
     paddingTop: 16,
-  },
-  itemGap: {
-    marginBottom: 12,
   },
   footer: {
     backgroundColor: colors2024['neutral-bg-2'],

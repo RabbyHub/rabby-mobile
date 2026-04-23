@@ -90,10 +90,7 @@ import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import useTokenList from '@/store/tokens';
 import useProtocol from '@/store/protocols';
 import { colord } from 'colord';
-import {
-  isTabsSwiping,
-  useAccountInfo,
-} from '../../Address/components/MultiAssets/hooks';
+import { isTabsSwiping } from '../../Address/components/MultiAssets/hooks';
 import { BrowserOrPerpsPosition } from './BrowserOrPerpsPosition';
 import { GasAccountBadge } from '../../GasAccount/components/GasAccountBadge';
 import { apisLending } from '../../Lending/hooks';
@@ -110,6 +107,7 @@ import {
   resetFetchHistoryTxCount,
   useHomeHistoryStore,
 } from '../hooks/history';
+import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
 import {
   TabsScrollView,
   TabsScrollViewProps,
@@ -145,6 +143,7 @@ import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { sleep } from '@/utils/async';
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { isEqual } from 'lodash';
+import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import {
   isOverPulldownRefreshThreshold,
   OnRefreshOnJs,
@@ -750,7 +749,15 @@ export const HomeOverview = React.memo(() => {
     }, []),
   );
 
+  const displayAddresses = useHomePortfolioStore(
+    state => state.displayAddresses,
+  );
   const { myTop10Addresses } = useAccountInfo();
+  const myTop10AddressesRef = useRef(myTop10Addresses);
+
+  useEffect(() => {
+    myTop10AddressesRef.current = myTop10Addresses;
+  }, [myTop10Addresses]);
 
   useFocusEffect(
     useCallback(() => {
@@ -772,8 +779,8 @@ export const HomeOverview = React.memo(() => {
       triggerUpdateAlert();
       // // leave here to measure perf impact
       // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
-      syncTop10History(myTop10Addresses, false);
-    }, [triggerUpdate, triggerUpdateAlert, myTop10Addresses]),
+      syncTop10History(myTop10AddressesRef.current, false);
+    }, [triggerUpdate, triggerUpdateAlert]),
   );
 
   const onRefresh = useCallback(async () => {
@@ -807,10 +814,16 @@ export const HomeOverview = React.memo(() => {
       currencyService.syncCurrencyList(forceRefresh);
 
       // refresh token/protocol list
-      useTokenList.getState().batchGetTokenList(myTop10Addresses, forceRefresh);
-      useProtocol.getState().batchGetProtocols(myTop10Addresses, forceRefresh);
+      useTokenList.getState().batchGetTokenList(displayAddresses, forceRefresh);
+      useProtocol.getState().batchGetProtocols(displayAddresses, forceRefresh);
     });
-  }, [triggerUpdate, checkAddressesEligibility, forceUpdate, myTop10Addresses]);
+  }, [
+    checkAddressesEligibility,
+    displayAddresses,
+    forceUpdate,
+    myTop10Addresses,
+    triggerUpdate,
+  ]);
 
   // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
   const handlePressMarket = useCallback(() => {

@@ -109,9 +109,60 @@ export async function getAllAccountsToDisplay() {
 
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
-  balance?: number;
-  evmBalance?: number;
 };
+
+const ACCOUNT_IDENTITY_KEY_SEPARATOR = '::';
+
+function buildAccountIdentityKey(
+  account:
+    | Pick<KeyringAccountWithAlias, 'address' | 'type' | 'brandName'>
+    | undefined
+    | null,
+) {
+  if (!account?.address || !account?.type) {
+    return undefined;
+  }
+
+  return [
+    account.address.toLowerCase(),
+    account.type,
+    account.brandName || '',
+  ].join(ACCOUNT_IDENTITY_KEY_SEPARATOR);
+}
+
+function reuseStableAccountRefs(
+  prevAccounts: KeyringAccountWithAlias[],
+  nextAccounts: KeyringAccountWithAlias[],
+) {
+  if (!prevAccounts.length || !nextAccounts.length) {
+    return nextAccounts;
+  }
+
+  const prevAccountMap = new Map(
+    prevAccounts.map(account => [buildAccountIdentityKey(account), account]),
+  );
+
+  const reconciledAccounts = nextAccounts.map(account => {
+    const prevAccount = prevAccountMap.get(buildAccountIdentityKey(account));
+
+    if (prevAccount && isEqual(prevAccount, account)) {
+      return prevAccount;
+    }
+
+    return account;
+  });
+
+  if (
+    prevAccounts.length === reconciledAccounts.length &&
+    prevAccounts.every(
+      (account, index) => account === reconciledAccounts[index],
+    )
+  ) {
+    return prevAccounts;
+  }
+
+  return reconciledAccounts;
+}
 
 /**
  * @description if new fetched accounts are same from the existing ones, return the existing ones
@@ -121,17 +172,13 @@ const existedAccountsRef = { current: [] as KeyringAccountWithAlias[] };
 async function fetchAllAccountsProcess() {
   let nextAccounts: KeyringAccountWithAlias[] = [];
   try {
-    const balanceMap = addressBalanceStore.getAddressValueMap();
     nextAccounts = await keyringService
       .getAllVisibleAccountsArray()
       .then(list => {
         return list.map(account => {
-          const balance = balanceMap[account.address.toLowerCase()];
           return {
             ...account,
             aliasName: '',
-            evmBalance: balance?.evmBalance || 0,
-            balance: balance?.totalBalance || 0,
           };
         });
       });
@@ -148,8 +195,13 @@ async function fetchAllAccountsProcess() {
   } catch (err) {
     Sentry.captureException(err);
   } finally {
-    if (!isEqual(existedAccountsRef.current, nextAccounts)) {
-      existedAccountsRef.current = nextAccounts;
+    const nextStableAccounts = reuseStableAccountRefs(
+      existedAccountsRef.current,
+      nextAccounts,
+    );
+
+    if (existedAccountsRef.current !== nextStableAccounts) {
+      existedAccountsRef.current = nextStableAccounts;
     }
 
     return existedAccountsRef.current;
@@ -162,8 +214,18 @@ export const sortAccountsByBalance = <
   accounts: T,
 ) => {
   return [...accounts].sort((a, b) => {
-    const balanceDiff = new BigNumber(b?.balance || 0)
-      .minus(new BigNumber(a?.balance || 0))
+    const getSortBalance = (item: T[number]) => {
+      if (typeof item?.balance === 'number') {
+        return item.balance;
+      }
+
+      return (
+        addressBalanceStore.getAddressValue(item.address)?.totalBalance || 0
+      );
+    };
+
+    const balanceDiff = new BigNumber(getSortBalance(b))
+      .minus(new BigNumber(getSortBalance(a)))
       .toNumber();
 
     if (balanceDiff !== 0) {

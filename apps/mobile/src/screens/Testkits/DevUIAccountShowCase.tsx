@@ -13,12 +13,8 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useNavigation } from '@react-navigation/native';
 import { Text } from '@/components/Typography';
 
-const TEST_ACCOUNT: Pick<
-  KeyringAccountWithAlias,
-  'address' | 'balance' | 'aliasName'
-> = {
+const TEST_ACCOUNT: Pick<KeyringAccountWithAlias, 'address' | 'aliasName'> = {
   address: '0x10B26700B0a2d3F5eF12fA250aba818eE3b43bf4',
-  balance: 2039078,
   aliasName: 'Boss',
 };
 

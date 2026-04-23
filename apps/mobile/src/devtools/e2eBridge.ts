@@ -19,7 +19,7 @@ import {
   getSendTokenScreenState,
   requestSendTokenFormPatch,
 } from '@/screens/Send/hooks/useSendToken';
-import accountStore from '@/store/account';
+import accountStore, { accountResourceStore } from '@/store/account';
 import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import { balance24hStore, scene24hBalanceStore } from '@/store/balance24h';
 import { addressCurve24hStore, sceneCurve24hStore } from '@/store/curve24h';
@@ -61,7 +61,7 @@ function resolveSceneAccount(
   }
 
   return (
-    accountStore.getState().accounts.find(account => {
+    accountResourceStore.getAccounts().find(account => {
       return (
         normalizeAddress(account.address) ===
           normalizeAddress(sceneAccount.address) &&
@@ -84,7 +84,7 @@ function resolveSendFromAccount(input?: {
     );
   }
 
-  const matchedAccounts = accountStore.getState().accounts.filter(account => {
+  const matchedAccounts = accountResourceStore.getAccounts().filter(account => {
     return normalizeAddress(account.address) === address;
   });
 

@@ -34,13 +34,11 @@ export function sceneKeyringAccountToAccount(
   input: KeyringAccount,
   partials: {
     aliasName?: string;
-    balance?: number;
   },
 ): Account {
   return {
     ...input,
     aliasName: partials.aliasName,
-    balance: partials.balance,
   };
 }
 

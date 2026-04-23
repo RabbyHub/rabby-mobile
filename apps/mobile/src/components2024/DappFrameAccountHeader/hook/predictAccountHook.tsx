@@ -3,9 +3,9 @@ import React, { useCallback, useMemo } from 'react';
 import { INNER_DAPP_LIST } from '@/components2024/DappFrameAccountHeader';
 import { Account } from '@/core/services/preference';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
-import useAppChainStore from '@/store/appchain';
-import { useShallow } from 'zustand/shallow';
+import { appChainResourceStore } from '@/store/appchain';
 import { formatUsdValue } from '@/utils/number';
 import { View } from 'react-native';
 import { getStyle } from '../styles';
@@ -23,6 +23,7 @@ const getOriginKey = (url?: string) => {
 
 export const usePredictDappAccountExtraInfo = (dapp: string) => {
   const { styles } = useTheme2024({ getStyle });
+  const { accounts } = useAccounts({ disableAutoFetch: true });
   const activeItem = useMemo(
     () => PREDICTION_LIST.find(item => item.id === dapp) || PREDICTION_LIST[0],
     [dapp],
@@ -33,8 +34,12 @@ export const usePredictDappAccountExtraInfo = (dapp: string) => {
     }
     return safeGetOrigin(activeItem.url) || activeItem.url;
   }, [activeItem?.url]);
-
-  const appChainMap = useAppChainStore(useShallow(s => s.appChainMap));
+  const trackedAddresses = useMemo(
+    () => accounts.map(account => account.address),
+    [accounts],
+  );
+  const appChainsByAddress =
+    appChainResourceStore.useAddressesAppChains(trackedAddresses);
 
   const predictAppChainByAddress = useMemo(() => {
     const originKey = getOriginKey(predictDappOrigin);
@@ -42,7 +47,7 @@ export const usePredictDappAccountExtraInfo = (dapp: string) => {
       return undefined;
     }
     const map: Record<string, { balance: number }> = {};
-    Object.entries(appChainMap).forEach(([address, list]) => {
+    Object.entries(appChainsByAddress).forEach(([address, list]) => {
       let balance = 0;
       let hasMatch = false;
       list.forEach(item => {
@@ -59,7 +64,7 @@ export const usePredictDappAccountExtraInfo = (dapp: string) => {
       }
     });
     return map;
-  }, [appChainMap, predictDappOrigin]);
+  }, [appChainsByAddress, predictDappOrigin]);
 
   const renderPredictDappRight = useCallback(
     ({ account }: { account: Account }) => {
@@ -92,11 +97,11 @@ export const usePredictDappAccountExtraInfo = (dapp: string) => {
   );
 
   const sortPredictDappAccounts = useCallback(
-    (accounts: Account[]) => {
+    (accountList: Account[]) => {
       if (!predictAppChainByAddress) {
-        return accounts;
+        return accountList;
       }
-      const list = [...accounts];
+      const list = [...accountList];
       list.sort((a, b) => {
         const aKey = a.address?.toLowerCase() || '';
         const bKey = b.address?.toLowerCase() || '';

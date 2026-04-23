@@ -78,6 +78,7 @@
       "hour": "{{t}} 小时"
     },
     "Deleted": "删除",
+    "Deleting": "正在删除",
     "WalletCreated": "钱包创建",
     "WalletImported": "钱包导入",
     "themeMode": {

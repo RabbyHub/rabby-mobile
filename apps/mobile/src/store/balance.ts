@@ -17,7 +17,7 @@ import { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
 import { unionBy } from 'lodash';
 import PQueue from 'p-queue';
 import { useCallback, useMemo, useRef } from 'react';
-import type { Account } from '@/core/services/preference';
+import type { Account, IPinAddress } from '@/core/services/preference';
 import { perfEvents } from '@/core/utils/perf';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
@@ -29,6 +29,8 @@ import {
 } from './_resourceBase';
 import { ResourceLocalTarget } from './_resourceFlowDebug';
 import { useAppChainStore } from './appchain';
+import BigNumber from 'bignumber.js';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
 export interface CURVE_STEP_ITEM {
   timestamp: number;
@@ -1228,6 +1230,120 @@ async function pickSelectedAccountsFromSortedAccounts(
   };
 }
 
+function isMatteredAccount(account: Pick<Account, 'type'>) {
+  return (
+    account.type !== KEYRING_CLASS.WATCH &&
+    account.type !== KEYRING_CLASS.GNOSIS &&
+    account.type !== KEYRING_CLASS.WALLETCONNECT
+  );
+}
+
+function sortAccountsByCurrentBalance<T extends Account>(accounts: T[]) {
+  return [...accounts].sort((a, b) => {
+    const getSortBalance = (item: T) => {
+      const typedBalance = (item as { balance?: number }).balance;
+      if (typeof typedBalance === 'number') {
+        return typedBalance;
+      }
+
+      return (
+        addressBalanceStore.getAddressValue(item.address)?.totalBalance || 0
+      );
+    };
+
+    const balanceDiff = new BigNumber(getSortBalance(b))
+      .minus(new BigNumber(getSortBalance(a)))
+      .toNumber();
+
+    if (balanceDiff !== 0) {
+      return balanceDiff;
+    }
+
+    const aAddress = a.address.toLowerCase();
+    const bAddress = b.address.toLowerCase();
+    if (aAddress !== bAddress) {
+      return aAddress.localeCompare(bAddress);
+    }
+
+    const aType = typeof a.type === 'string' ? a.type : '';
+    const bType = typeof b.type === 'string' ? b.type : '';
+    if (aType !== bType) {
+      return aType.localeCompare(bType);
+    }
+
+    const aBrandName = typeof a.brandName === 'string' ? a.brandName : '';
+    const bBrandName = typeof b.brandName === 'string' ? b.brandName : '';
+
+    return aBrandName.localeCompare(bBrandName);
+  });
+}
+
+function sortAccountsForSelection(
+  accounts: Account[],
+  highlighted: IPinAddress[],
+) {
+  const restAccounts = [...accounts];
+  let highlightedAccounts: Account[] = [];
+
+  highlighted.forEach(item => {
+    const idx = restAccounts.findIndex(
+      account =>
+        isSameAddress(account.address, item.address) &&
+        account.brandName === item.brandName,
+    );
+    if (idx > -1 && restAccounts[idx]) {
+      highlightedAccounts.push(restAccounts[idx]);
+      restAccounts.splice(idx, 1);
+    }
+  });
+
+  highlightedAccounts = sortAccountsByCurrentBalance(highlightedAccounts);
+
+  return highlightedAccounts
+    .concat(sortAccountsByCurrentBalance(restAccounts))
+    .filter(Boolean);
+}
+
+function pickSelectedAccountsFromSortedAccountsSync(sortedAccounts: Account[]) {
+  const top10Accounts = sortedAccounts.slice(0, 10);
+  const top10Records = new Set<string>();
+  const top10Addresses: string[] = [];
+
+  top10Accounts.forEach(item => {
+    const lowerAddress = item.address.toLowerCase();
+    if (!top10Records.has(lowerAddress)) {
+      top10Addresses.push(lowerAddress);
+    }
+    top10Records.add(lowerAddress);
+  });
+
+  return {
+    selectedAccounts: unionBy(top10Accounts, account =>
+      account.address.toLowerCase(),
+    ),
+    selectedAddresses: top10Addresses,
+  };
+}
+
+function getMatteredAccountsSnapshotFromState(input: {
+  accounts: Account[];
+  pinnedAddresses: IPinAddress[];
+}) {
+  const matteredAccounts = input.accounts.filter(isMatteredAccount);
+  const sortedAccounts = sortAccountsForSelection(
+    matteredAccounts,
+    input.pinnedAddresses,
+  );
+  const { selectedAccounts, selectedAddresses } =
+    pickSelectedAccountsFromSortedAccountsSync(sortedAccounts);
+
+  return {
+    selectedAccounts,
+    selectedAddresses,
+    matteredAccountLength: sortedAccounts.length,
+  };
+}
+
 async function getMatteredAccountsSnapshot() {
   const { getAccountList } = await import('@/core/apis/account');
   const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
@@ -1250,6 +1366,8 @@ const accountBalanceSelectionLifecycleStateRef = {
   promise: null as Promise<void> | null,
   hasSubscribed: false,
   prevSelectionSignature: '',
+  syncRequestId: 0,
+  prevAccountAddresses: [] as string[],
 };
 
 async function initAccountBalanceSelectionLifecycle() {
@@ -1258,10 +1376,13 @@ async function initAccountBalanceSelectionLifecycle() {
   try {
     const { default: accountStore } = await import('./account');
 
-    const syncSelectionFromAccounts = async () => {
+    const applyMatteredAccountsSnapshot = (snapshot: {
+      selectedAccounts: Account[];
+      selectedAddresses: string[];
+      matteredAccountLength: number;
+    }) => {
       const { selectedAccounts, selectedAddresses, matteredAccountLength } =
-        await getMatteredAccountsSnapshot();
-      await warmupSelectedAccountsBalance(selectedAccounts);
+        snapshot;
       const nextBalance = buildBalanceAccountsFromList(
         selectedAccounts,
         addressBalanceStore.getAddressValueMap(),
@@ -1280,12 +1401,42 @@ async function initAccountBalanceSelectionLifecycle() {
           source: 'accounts_changed',
         },
       );
+
+      void warmupSelectedAccountsBalance(selectedAccounts);
+    };
+
+    const syncSelectionFromAccounts = async (
+      state = accountStore.getState(),
+    ) => {
+      const requestId =
+        ++accountBalanceSelectionLifecycleStateRef.syncRequestId;
+
+      if (state.hasFetchedAccounts || state.accounts.length > 0) {
+        applyMatteredAccountsSnapshot(
+          getMatteredAccountsSnapshotFromState({
+            accounts: state.accounts as Account[],
+            pinnedAddresses: state.pinnedAddresses,
+          }),
+        );
+        return;
+      }
+
+      const snapshot = await getMatteredAccountsSnapshot();
+      if (
+        requestId !== accountBalanceSelectionLifecycleStateRef.syncRequestId
+      ) {
+        return;
+      }
+      applyMatteredAccountsSnapshot(snapshot);
     };
 
     if (!accountBalanceSelectionLifecycleStateRef.hasSubscribed) {
       accountBalanceSelectionLifecycleStateRef.hasSubscribed = true;
 
       accountStore.subscribe(state => {
+        const nextAccountAddresses = Array.from(
+          new Set(state.accounts.map(account => account.address.toLowerCase())),
+        ).sort();
         const accountsSignature = state.accounts
           .map(
             account =>
@@ -1307,8 +1458,22 @@ async function initAccountBalanceSelectionLifecycle() {
           return;
         }
 
+        const nextAccountAddressSet = new Set(nextAccountAddresses);
+        accountBalanceSelectionLifecycleStateRef.prevAccountAddresses.forEach(
+          address => {
+            if (!nextAccountAddressSet.has(address)) {
+              addressBalanceStore.removeAddressBalance(address, {
+                source: 'accounts_changed',
+                reason: 'address_deleted_after_account_commit',
+              });
+            }
+          },
+        );
+
         accountBalanceSelectionLifecycleStateRef.prevSelectionSignature =
           nextSignature;
+        accountBalanceSelectionLifecycleStateRef.prevAccountAddresses =
+          nextAccountAddresses;
         void syncSelectionFromAccounts();
       });
     }
@@ -1360,22 +1525,6 @@ export function startProcessAccountBalanceEvents() {
     return;
   }
   hasStartedAccountBalanceLifecycle = true;
-
-  keyringService.on('removedAccount', async account => {
-    const addresses = await keyringService.getAllAddresses();
-    const stillExists = addresses.some(item => {
-      return isSameAddress(item.address, account.address);
-    });
-
-    if (stillExists) {
-      return;
-    }
-
-    addressBalanceStore.removeAddressBalance(account.address, {
-      source: 'keyringService.removedAccount',
-      reason: 'address_deleted',
-    });
-  });
 
   perfEvents.subscribe('USER_MANUALLY_UNLOCK', async () => {
     syncBalanceAccountStore();

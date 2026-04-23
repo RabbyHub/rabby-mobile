@@ -1,17 +1,23 @@
 import {
+  useAccountRemovingVisualStageSV,
+  useAccountRemovingToastBridge,
   KeyringAccountWithAlias,
+  storeApiAccounts,
   useAccounts,
+  useIsRemovingAccount,
   usePinAddresses,
 } from '@/hooks/account';
 import React, { useCallback } from 'react';
 import { Dimensions, TouchableOpacity, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useTheme2024 } from '@/hooks/theme';
+import { updateRNRToastOnUI } from '@/components/RNRToast';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressItemInner2024 } from '@/screens/Address/components/AddressItemInner2024';
 import EditSVG from '@/assets2024/icons/common/edit-cc.svg';
 import DeleteSVG from '@/assets2024/icons/common/delete-cc.svg';
 import MoreSVG from '@/assets2024/icons/common/more-cc.svg';
-import { useDeleteAccountModal } from '@/screens/Address/useDeleteAccountModal';
+import { showDeleteAccountModal } from '@/screens/Address/useDeleteAccountModal';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAliasNameEditModal } from '../AliasNameEditModal/useAliasNameEditModal';
 import { useAddressDetailModal } from '@/screens/Address/useAddressDetailModal';
@@ -28,8 +34,11 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '../GlobalBottomSheetModal';
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
-import { toast } from '../Toast';
 import { Text } from '@/components/Typography';
+import {
+  useDeletingCollapseStyle,
+  useDeletingOpacity,
+} from '@/hooks/useDeletingOpacity';
 
 export interface Props {
   type: 'address' | 'watch-address' | 'safe-address';
@@ -38,13 +47,118 @@ export interface Props {
 }
 
 const maxHeight = Dimensions.get('window').height - 104;
-
-// eslint-disable-next-line react-native/no-inline-styles
-const ItemSeparatorComponent = () => <View style={{ height: 12 }} />;
+const QUICK_MANAGER_ROW_HEIGHT = 78;
+const QUICK_MANAGER_ROW_GAP = 12;
 
 const ItemFooterComponent = () => {
   // eslint-disable-next-line react-native/no-inline-styles
   return <View style={{ height: 56 }} />;
+};
+
+const QuickManagerRow = ({
+  account,
+  expandedMarginTop,
+  isPinned,
+  onDelete,
+  onEdit,
+  onMore,
+}: {
+  account: KeyringAccountWithAlias;
+  expandedMarginTop: number;
+  isPinned: boolean;
+  onDelete: () => void;
+  onEdit: () => void;
+  onMore: () => void;
+}) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const isRemoving = useIsRemovingAccount(account);
+  const removingVisualStageSV = useAccountRemovingVisualStageSV(account);
+  const removingToastBridge = useAccountRemovingToastBridge(account);
+  const removingToastId = removingToastBridge?.toastId;
+  const removingSuccessMessage = removingToastBridge?.successMessage;
+  const handleRemovingVisualFinished = useCallback(() => {
+    storeApiAccounts.markRemovingToastTransitioned(account);
+    storeApiAccounts.finishRemovingAccountVisual(account).catch(error => {
+      console.error('finish removing account visual failed', error);
+    });
+  }, [account]);
+  const handleRemovingToastFinishedOnUI = useCallback(() => {
+    'worklet';
+
+    if (!removingToastId || !removingSuccessMessage) {
+      return;
+    }
+
+    updateRNRToastOnUI(removingToastId, {
+      duration: 2000,
+      kind: 'success',
+      message: removingSuccessMessage,
+      position: 'top',
+    });
+  }, [removingSuccessMessage, removingToastId]);
+  const collapseStyle = useDeletingCollapseStyle({
+    stage: removingVisualStageSV,
+    expandedHeight: QUICK_MANAGER_ROW_HEIGHT,
+    expandedMarginTop,
+    onFinish: handleRemovingVisualFinished,
+    onFinishUI:
+      removingToastId && removingSuccessMessage
+        ? handleRemovingToastFinishedOnUI
+        : undefined,
+  });
+  const deletingOpacityStyle = useDeletingOpacity(removingVisualStageSV);
+
+  return (
+    <Animated.View
+      pointerEvents={isRemoving ? 'none' : 'auto'}
+      style={collapseStyle}>
+      <Animated.View
+        style={deletingOpacityStyle}
+        key={account.type + account.address}>
+        <View style={styles.addressItem}>
+          <View style={styles.itemLeft}>
+            <TouchableOpacity
+              disabled={isRemoving}
+              hitSlop={10}
+              onPress={onDelete}>
+              <DeleteSVG />
+            </TouchableOpacity>
+            <AddressItemInner2024
+              style={styles.card}
+              account={account}
+              hiddenPin
+              hiddenArrow
+            />
+          </View>
+          <View style={styles.buttonGroup}>
+            <TouchableOpacity
+              disabled={isRemoving}
+              onPress={onEdit}
+              hitSlop={10}
+              style={[styles.button, isRemoving && styles.buttonDisabled]}>
+              <EditSVG
+                color={colors2024['neutral-body']}
+                width={20}
+                height={20}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              disabled={isRemoving}
+              onPress={onMore}
+              hitSlop={10}
+              style={[styles.button, isRemoving && styles.buttonDisabled]}>
+              <MoreSVG
+                color={colors2024['neutral-body']}
+                width={20}
+                height={20}
+              />
+            </TouchableOpacity>
+          </View>
+          {isPinned ? <WalletPin /> : null}
+        </View>
+      </Animated.View>
+    </Animated.View>
+  );
 };
 
 export const AddressQuickManager: React.FC<Props> = ({
@@ -54,6 +168,8 @@ export const AddressQuickManager: React.FC<Props> = ({
 }) => {
   const { accounts } = useAccounts({
     disableAutoFetch: true,
+    includeRemoving: true,
+    includeFinishingVisual: true,
   });
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -78,7 +194,6 @@ export const AddressQuickManager: React.FC<Props> = ({
 
     return [];
   }, [accounts, type]);
-  const removeAccount = useDeleteAccountModal();
   const editAliasName = useAliasNameEditModal();
   const showAddressDetail = useAddressDetailModal();
   const list = useSortAddressList(accountList);
@@ -146,7 +261,6 @@ export const AddressQuickManager: React.FC<Props> = ({
         style={styles.list}
         data={list}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
-        ItemSeparatorComponent={ItemSeparatorComponent}
         ListFooterComponent={
           type === 'address' ? (
             <View style={styles.footer}>
@@ -184,56 +298,25 @@ export const AddressQuickManager: React.FC<Props> = ({
             ItemFooterComponent
           )
         }
-        renderItem={({ item: account }) => (
-          <View style={styles.addressItem} key={account.type + account.address}>
-            <View style={styles.itemLeft}>
-              <TouchableOpacity
-                hitSlop={10}
-                onPress={() => {
-                  removeAccount({
-                    account,
-                    onFinished: () => {
-                      toast.success(t('global.Deleted'));
-                    },
-                  });
-                }}>
-                <DeleteSVG />
-              </TouchableOpacity>
-              <AddressItemInner2024
-                style={styles.card}
-                account={account}
-                hiddenPin
-                hiddenArrow
-              />
-            </View>
-            <View style={styles.buttonGroup}>
-              <TouchableOpacity
-                onPress={() => {
-                  editAliasName.show(account);
-                }}
-                hitSlop={10}
-                style={styles.button}>
-                <EditSVG
-                  color={colors2024['neutral-body']}
-                  width={20}
-                  height={20}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  showAddressDetail({ account, onCancel });
-                }}
-                hitSlop={10}
-                style={styles.button}>
-                <MoreSVG
-                  color={colors2024['neutral-body']}
-                  width={20}
-                  height={20}
-                />
-              </TouchableOpacity>
-            </View>
-            {isPinned(account) ? <WalletPin /> : null}
-          </View>
+        renderItem={({ item: account, index }) => (
+          <QuickManagerRow
+            account={account}
+            expandedMarginTop={index === 0 ? 0 : QUICK_MANAGER_ROW_GAP}
+            isPinned={isPinned(account)}
+            onDelete={() => {
+              showDeleteAccountModal({
+                account,
+              }).catch(error => {
+                console.error('show delete account modal failed', error);
+              });
+            }}
+            onEdit={() => {
+              editAliasName.show(account);
+            }}
+            onMore={() => {
+              showAddressDetail({ account, onCancel });
+            }}
+          />
         )}
       />
     </View>
@@ -276,6 +359,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-bg-2'],
     padding: 5,
     borderRadius: 30,
+  },
+  buttonDisabled: {
+    opacity: 0.54,
+  },
+  removingChip: {
+    position: 'absolute',
+    right: 18,
+    bottom: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 107, 107, 0.14)',
+  },
+  removingChipText: {
+    color: colors2024['red-default'],
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
   },
   titleTextWrapper: {
     // flex: 1,

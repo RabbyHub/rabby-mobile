@@ -2,6 +2,7 @@
 import { View, TouchableOpacity, Pressable } from 'react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import Animated from 'react-native-reanimated';
 
 import { AddressEntry } from './RenderRow/AddressEntry';
 import { Card } from '@/components2024/Card';
@@ -22,8 +23,132 @@ import { balance24hStore } from '@/store/balance24h';
 import { computeBalanceChange } from '@/core/apis/balance';
 import addressBalanceStore from '@/store/balance';
 import { Text } from '@/components/Typography';
+import { updateRNRToastOnUI } from '@/components/RNRToast';
+import {
+  storeApiAccounts,
+  useAccountRemovingVisualStageSV,
+  useAccountRemovingToastBridge,
+  useIsRemovingAccount,
+  type KeyringAccountWithAlias,
+} from '@/hooks/account';
+import {
+  useDeletingCollapseStyle,
+  useDeletingOpacity,
+} from '@/hooks/useDeletingOpacity';
 
 const SPACING_HEIGHT = 8;
+const ADDRESS_ROW_HEIGHT = 78;
+
+const AddressListRow = ({
+  item,
+  isManageMode,
+  onDone,
+  showMarkIfNewlyAdded,
+  colors2024,
+  styles,
+}: {
+  item: KeyringAccountWithAlias & {
+    changPercent?: string;
+    isLoss?: boolean;
+  };
+  isManageMode?: boolean;
+  onDone?: () => void;
+  showMarkIfNewlyAdded: boolean;
+  colors2024: ReturnType<typeof useTheme2024>['colors2024'];
+  styles: ReturnType<typeof useTheme2024>['styles'];
+}) => {
+  const isRemoving = useIsRemovingAccount(item);
+  const removingVisualStageSV = useAccountRemovingVisualStageSV(item);
+  const removingToastBridge = useAccountRemovingToastBridge(item);
+  const removingToastId = removingToastBridge?.toastId;
+  const removingSuccessMessage = removingToastBridge?.successMessage;
+  const handleRemovingVisualFinished = useCallback(() => {
+    storeApiAccounts.markRemovingToastTransitioned(item);
+    storeApiAccounts.finishRemovingAccountVisual(item).catch(error => {
+      console.error('finish removing account visual failed', error);
+    });
+  }, [item]);
+  const handleRemovingToastFinishedOnUI = useCallback(() => {
+    'worklet';
+
+    if (!removingToastId || !removingSuccessMessage) {
+      return;
+    }
+
+    updateRNRToastOnUI(removingToastId, {
+      duration: 2000,
+      kind: 'success',
+      message: removingSuccessMessage,
+      position: 'top',
+    });
+  }, [removingSuccessMessage, removingToastId]);
+  const deletingOpacityStyle = useDeletingOpacity(removingVisualStageSV);
+  const collapseStyle = useDeletingCollapseStyle({
+    stage: removingVisualStageSV,
+    expandedHeight: ADDRESS_ROW_HEIGHT,
+    expandedMarginTop: SPACING_HEIGHT,
+    onFinish: handleRemovingVisualFinished,
+    onFinishUI:
+      removingToastId && removingSuccessMessage
+        ? handleRemovingToastFinishedOnUI
+        : undefined,
+  });
+
+  if (isManageMode) {
+    const gotoAddressDetail = () => {
+      onDone?.();
+      naviPush(RootNames.StackAddress, {
+        screen: RootNames.AddressDetail,
+        params: {
+          address: item.address,
+          type: item.type,
+          brandName: item.brandName,
+        },
+      });
+    };
+
+    return (
+      <Animated.View
+        pointerEvents={isRemoving ? 'none' : 'auto'}
+        style={[collapseStyle, styles.manageModeItem]}>
+        <Animated.View style={deletingOpacityStyle}>
+          <Pressable
+            disabled={isRemoving}
+            onPress={gotoAddressDetail}
+            style={styles.manageBtn}>
+            <RcIconSettingCC
+              width={20}
+              height={20}
+              color={colors2024['neutral-secondary']}
+            />
+          </Pressable>
+          <View style={{ width: '100%' }}>
+            <AddressEntry
+              showMarkIfNewlyAdded={showMarkIfNewlyAdded}
+              data={item}
+              onSelect={onDone}
+            />
+          </View>
+        </Animated.View>
+      </Animated.View>
+    );
+  }
+
+  return (
+    <Animated.View
+      pointerEvents={isRemoving ? 'none' : 'auto'}
+      style={collapseStyle}>
+      <Animated.View style={deletingOpacityStyle}>
+        <AddressEntry
+          showMarkIfNewlyAdded={showMarkIfNewlyAdded}
+          data={item}
+          onSelect={onDone}
+        />
+      </Animated.View>
+    </Animated.View>
+  );
+};
+
 interface AddressListProps {
   showMarkIfNewlyAdded?: boolean;
   onAddAddressPress?: () => void;
@@ -42,7 +167,10 @@ const AddressList = ({
   const { t } = useTranslation();
 
   const { myTop10Accounts, myTop10Records, notMatteredAccounts } =
-    useAccountInfo();
+    useAccountInfo({
+      includeRemoving: true,
+      includeFinishingVisual: true,
+    });
   const top10Addresses = useMemo(() => {
     return myTop10Accounts.map(item => item.address.toLowerCase());
   }, [myTop10Accounts]);
@@ -85,82 +213,61 @@ const AddressList = ({
     );
 
     return myTop10Accounts
-      .map(item => {
+      .map((item, index) => {
         const account = balanceMap[item.address.toLowerCase()];
-        const canShowChange = !!account;
-
-        const balance = account?.totalBalance || item.balance || 0;
-        const evmBalance = account?.evmBalance || item.evmBalance || 0;
+        const balance = account?.totalBalance;
+        const evmBalance = account?.evmBalance;
+        const canShowChange =
+          typeof evmBalance === 'number' &&
+          !!multi24hBalance[item.address.toLowerCase()];
 
         const changeData = multi24hBalance[item.address.toLowerCase()];
         const startValue = changeData?.total_usd_value || 0;
-        const { changePercent, assetsChange } = computeBalanceChange(
-          evmBalance,
-          startValue,
-        );
+        const balanceChange = canShowChange
+          ? computeBalanceChange(evmBalance, startValue)
+          : null;
         return {
           ...item,
           balance,
           evmBalance,
-          changPercent: changeData && canShowChange ? changePercent : undefined,
-          isLoss: changeData && canShowChange ? assetsChange < 0 : undefined,
+          sortIndex: index,
+          changPercent: balanceChange?.changePercent,
+          isLoss:
+            typeof balanceChange?.assetsChange === 'number'
+              ? balanceChange.assetsChange < 0
+              : undefined,
         };
       })
-      .sort((a, b) => b.balance - a.balance);
+      .sort((a, b) => {
+        const aHasBalance = typeof a.balance === 'number';
+        const bHasBalance = typeof b.balance === 'number';
+
+        if (aHasBalance && bHasBalance && a.balance !== b.balance) {
+          return b.balance - a.balance;
+        }
+
+        if (aHasBalance !== bHasBalance) {
+          return aHasBalance ? -1 : 1;
+        }
+
+        return a.sortIndex - b.sortIndex;
+      });
   }, [balance24hSnapshots, balanceSnapshots, myTop10Accounts]);
 
   const renderItem = useCallback(
     ({ item }) => {
-      if (isManageMode) {
-        const gotoAddressDetail = () => {
-          onDone?.();
-          naviPush(RootNames.StackAddress, {
-            screen: RootNames.AddressDetail,
-            params: {
-              address: item.address,
-              type: item.type,
-              brandName: item.brandName,
-            },
-          });
-        };
-        return (
-          <View style={[styles.itemGap, styles.manageModeItem]}>
-            <Pressable onPress={gotoAddressDetail} style={styles.manageBtn}>
-              <RcIconSettingCC
-                width={20}
-                height={20}
-                color={colors2024['neutral-secondary']}
-              />
-            </Pressable>
-            <View style={{ width: '100%' }}>
-              <AddressEntry
-                showMarkIfNewlyAdded={showMarkIfNewlyAdded}
-                data={item}
-                onSelect={onDone}
-              />
-            </View>
-          </View>
-        );
-      }
       return (
-        <View style={styles.itemGap}>
-          <AddressEntry
-            showMarkIfNewlyAdded={showMarkIfNewlyAdded}
-            data={item}
-            onSelect={onDone}
-          />
-        </View>
+        <AddressListRow
+          item={item}
+          isManageMode={isManageMode}
+          onDone={onDone}
+          showMarkIfNewlyAdded={showMarkIfNewlyAdded}
+          colors2024={colors2024}
+          styles={styles}
+        />
       );
     },
-    [
-      isManageMode,
-      styles.itemGap,
-      styles.manageModeItem,
-      styles.manageBtn,
-      onDone,
-      colors2024,
-      showMarkIfNewlyAdded,
-    ],
+    [isManageMode, styles, onDone, colors2024, showMarkIfNewlyAdded],
   );
 
   const handleMoreWalletsPress = useCallback(() => {

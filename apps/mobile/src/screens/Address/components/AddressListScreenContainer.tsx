@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { useNavigation } from '@react-navigation/core';
 import { RootStackParamsList } from '@/navigation-type';
@@ -7,6 +6,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { redirectToAddAddressEntry } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { useAccountStore } from '@/store/account';
 
 export type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -17,16 +17,16 @@ export const AddressListScreenContainer: React.FC<any> = ({
   children,
   style,
 }) => {
-  const { accounts } = useAccounts();
+  const accountCount = useAccountStore(state => state.accounts.length);
   const { styles } = useTheme2024({ getStyle });
 
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
   useEffect(() => {
-    if (!accounts?.length) {
+    if (!accountCount) {
       redirectToAddAddressEntry({ action: 'classical:resetTo' });
     }
-  }, [accounts, navigation]);
+  }, [accountCount, navigation]);
 
   return (
     <NormalScreenContainer2024 overwriteStyle={[styles.root, style]}>
