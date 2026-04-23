@@ -389,7 +389,7 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.PerpsMarketDetail]: {
     market: string;
-    fromSource?: 'homePagePositionList' | 'openPosition' | '';
+    fromSource?: 'homePagePositionList' | 'openPosition' | 'marketDetail' | '';
     showOpenPosition?: boolean;
     direction?: 'Long' | 'Short';
   };
