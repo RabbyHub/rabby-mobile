@@ -72,8 +72,8 @@ export function usePerpsGroupedMarketData(params: {
     ];
 
     const favSet = new Set(favoriteMarkets.map(s => s.toUpperCase()));
-    // has sorted by backend
-    const volSorted = marketData;
+
+    const volSorted = sortByVolDesc(marketData);
 
     const fullByCategory: Record<PerpsCategoryId, MarketData[]> = {};
     configs.forEach(cfg => {
