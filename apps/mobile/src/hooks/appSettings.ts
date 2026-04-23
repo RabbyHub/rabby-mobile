@@ -37,7 +37,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     iosForceDisableAlertForSensitiveScene: isNonPublicProductionEnv,
 
     timeTipAboutSeedPhraseAndPrivateKey: 'copy',
-    blockSubmitIfFormChangedOnAuth: __DEV__,
+    blockSubmitIfFormChangedOnAuth: false,
     toastOpenApiHttpErrorStatus: false,
     debugSwapHistorySkipLocalLookup: false,
   },
