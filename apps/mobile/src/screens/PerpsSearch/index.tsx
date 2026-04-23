@@ -159,6 +159,7 @@ export const PerpsSearchScreen: React.FC = () => {
           placeholder={t('page.perps.search.placeholder')}
           value={search}
           onChangeText={setSearch}
+          onCancel={() => setSearch('')}
           returnKeyType="done"
         />
       </View>
