@@ -1,4 +1,4 @@
-import { formatAmount } from '@/utils/number';
+import { formatAmount, formatNumber } from '@/utils/number';
 import { getTimeSpan } from '@/utils/time';
 import BigNumber from 'bignumber.js';
 
@@ -33,14 +33,19 @@ export const formatAmountValueKMB = (
     formattedValue = `${(numValue / 1e6).toFixed(2)}M`;
   } else if (numValue >= 1e3) {
     formattedValue = `${(numValue / 1e3).toFixed(2)}K`;
+  } else if (numValue >= 1) {
+    formattedValue = formatNumber(value, decimals);
   } else {
     formattedValue = formatAmount(value, decimals);
   }
 
   return `${formattedValue}`;
 };
-export const formatUsdValueKMB = (value: string | number): string => {
-  return `$${formatAmountValueKMB(value)}`;
+export const formatUsdValueKMB = (
+  value: string | number,
+  decimals = 4,
+): string => {
+  return `$${formatAmountValueKMB(value, decimals)}`;
 };
 
 // <60s: XX s
