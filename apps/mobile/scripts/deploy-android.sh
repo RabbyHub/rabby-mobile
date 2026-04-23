@@ -50,6 +50,8 @@ prepare_android_build_artifacts() {
     fi
   fi
 
+  ensure_inpage_bridge_assets || return $?
+
   yarn check-nodeengines &&
     yarn ../mobile-local-pages make-theme &&
     yarn ../mobile-local-pages build --mode android &&
@@ -102,6 +104,7 @@ build_appstore() {
   if turbo_build_enabled; then
     prepare_android_build_artifacts || return $?
   else
+    ensure_inpage_bridge_assets || return $?
     yarn &&
       yarn check-nodeengines &&
       yarn ../mobile-local-pages bundle:all &&

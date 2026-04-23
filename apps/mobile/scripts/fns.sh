@@ -200,6 +200,35 @@ reset_builtin_assets() {
   # rm -f $android_assets_target/sf_pro_all.ttf && cp $project_dir/assets/fonts/* $ios_target
 }
 
+ensure_inpage_bridge_assets() {
+  local current_project_dir
+  current_project_dir=$(resolve_mobile_project_dir)
+
+  local missing_targets=()
+  local required_targets=(
+    "$current_project_dir/assets/custom/InpageBridgeWeb3.js"
+    "$current_project_dir/src/core/bridges/InpageBridgeWeb3.js"
+  )
+
+  for target in "${required_targets[@]}"; do
+    if [ ! -s "$target" ]; then
+      missing_targets+=("$target")
+    fi
+  done
+
+  if [ "${#missing_targets[@]}" -eq 0 ]; then
+    return 0
+  fi
+
+  echo "[ensure_inpage_bridge_assets] regenerate inpage bridge assets because these targets are missing:"
+  printf '[ensure_inpage_bridge_assets]   - %s\n' "${missing_targets[@]}"
+
+  (
+    cd "$current_project_dir" &&
+      yarn build-inpage
+  )
+}
+
 build_worker_if_not_exist() {
   local script_dir="$RABBY_FNS_SCRIPT_DIR"
   local project_dir=$(dirname $script_dir)
