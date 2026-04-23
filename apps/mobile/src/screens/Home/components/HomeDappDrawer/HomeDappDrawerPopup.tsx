@@ -1,11 +1,23 @@
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 
-import AutoLockView from '@/components/AutoLockView';
-import RcIconStar from '@/assets/icons/dapp/icon-star.svg';
 import RcIconStarFull from '@/assets/icons/dapp/icon-star-full.svg';
+import RcIconStar from '@/assets/icons/dapp/icon-star.svg';
+import AutoLockView from '@/components/AutoLockView';
+import { Text } from '@/components/Typography';
+import { Button } from '@/components2024/Button';
+import { CheckBoxRect } from '@/components2024/CheckBox';
+import hotDappList from '@/constant/hot-dapp.json';
+import { openapi } from '@/core/request';
+import { dappService } from '@/core/services';
+import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useTheme2024 } from '@/hooks/theme';
+import { useDapps } from '@/hooks/useDapps';
+import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { createGetStyles2024 } from '@/utils/styles';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { useRequest } from 'ahooks';
 import React, {
   useCallback,
   useEffect,
@@ -13,37 +25,29 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { View, Image, TouchableOpacity } from 'react-native';
-import { DappInfo } from '@/core/services/dappService';
-import { Text } from '@/components/Typography';
-import { DappIcon } from '@/screens/Dapps/components/DappIcon';
-import { Button } from '@/components2024/Button';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { CheckBoxRect } from '@/components2024/CheckBox';
-import { useRequest } from 'ahooks';
-import { openapi } from '@/core/request';
-import hotDappList from '@/constant/hot-dapp.json';
-import { uniq } from 'lodash';
-import { dappService } from '@/core/services';
-import { useDapps } from '@/hooks/useDapps';
+import { useTranslation } from 'react-i18next';
+import { Image, TouchableOpacity, View } from 'react-native';
 
 const LIST_BY_ICON_SIZE = 12;
 const LIST_BY_GAP = 4;
 const LIST_BY_MIN_LABEL_GAP = 12;
 const DEFAULT_VISIBLE_LIST_BY_COUNT = 3;
 
-const categories = uniq(hotDappList.map(item => item.category));
+const hotDappMap = new Map(
+  hotDappList.map(item => [item.origin, item] as const),
+);
 
 export const DappInfoPopup: React.FC<{
-  dappInfo?: DappInfo;
-  visible: boolean;
+  url?: string;
+  visible?: boolean;
   onClose: () => void;
   onOpenDapp?: (url: string) => void;
-}> = ({ visible, onClose, dappInfo, onOpenDapp }) => {
+}> = ({ visible, onClose, url, onOpenDapp }) => {
   const { addBookmark, removeBookmark, getBookmark } = useBrowserBookmark();
   const [listByRowWidth, setListByRowWidth] = useState(0);
   const [listByLabelWidth, setListByLabelWidth] = useState(0);
   const [listByMoreWidth, setListByMoreWidth] = useState(0);
+  const { t, i18n } = useTranslation();
 
   const { styles } = useTheme2024({ getStyle });
 
@@ -54,52 +58,98 @@ export const DappInfoPopup: React.FC<{
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   const { dapps } = useDapps();
-  const bookmarkKey = dappInfo?.url || dappInfo?.origin;
+  const origin = useMemo(() => {
+    if (!url) {
+      return '';
+    }
+
+    return safeGetOrigin(url) || safeGetOrigin(`https://${url}`) || url;
+  }, [url]);
+  const dapp = origin ? dapps[origin] : undefined;
+  const hotDappInfo = useMemo(() => {
+    if (!origin) {
+      return;
+    }
+
+    return hotDappMap.get(origin);
+  }, [origin]);
+  const bookmark = useMemo(() => {
+    if (!url && !origin) {
+      return;
+    }
+
+    return getBookmark(url || origin);
+  }, [getBookmark, origin, url]);
+
+  const displayUrl = url || dapp?.url || bookmark?.url || origin;
+  const displayName = hotDappInfo?.name || dapp?.name || '';
+
+  const bookmarkKey = displayUrl || origin;
   const isFavorite = !!(bookmarkKey && getBookmark(bookmarkKey));
-  const isSkipRemind = !!(
-    dappInfo?.origin && dapps[dappInfo.origin]?.isSkipRemind
-  );
+  const isSkipRemind = !!(origin && dapps[origin]?.isSkipRemind);
 
   const { data: level } = useRequest(
     async () => {
-      if (!dappInfo?.origin) {
+      if (!origin) {
         return;
       }
-      const result = await openapi.getOriginPopularityLevel(dappInfo.origin);
+      const result = await openapi.getOriginPopularityLevel(origin);
 
       return result.level;
     },
     {
-      refreshDeps: [dappInfo?.origin],
-      cacheKey: `dapp-getOriginPopularityLevel-${dappInfo?.origin}`,
+      refreshDeps: [origin],
+      cacheKey: `dapp-getOriginPopularityLevel-${origin}`,
       staleTime: 10 * 1000,
     },
   );
 
-  const { data: basicDappInfo = dappInfo?.info } = useRequest(
+  const { data: basicDappInfo = dapp?.info } = useRequest(
     async () => {
-      if (!dappInfo?.origin) {
+      if (!origin) {
         return;
       }
       const res = await openapi.getDappsInfo({
-        ids: [dappInfo?.origin.replace(/^https?:\/\//, '') || ''],
+        ids: [origin.replace(/^https?:\/\//, '') || ''],
       });
       return res?.[0];
     },
     {
-      refreshDeps: [dappInfo?.origin],
-      cacheKey: `dapp-getDappsInfo-${dappInfo?.origin}`,
+      refreshDeps: [origin],
+      cacheKey: `dapp-getDappsInfo-${origin}`,
       staleTime: 10 * 1000,
     },
   );
 
-  const category = useMemo(() => {
-    return dappInfo?.info?.tags?.find(tag => categories.includes(tag));
-  }, [dappInfo?.info?.tags]);
+  const displayDescription = useMemo(() => {
+    if (!hotDappInfo) {
+      return basicDappInfo?.description || dapp?.info?.description || '';
+    }
+
+    if (i18n.language === 'zh') {
+      return hotDappInfo.zh;
+    } else {
+      return hotDappInfo.en;
+    }
+  }, [
+    basicDappInfo?.description,
+    dapp?.info?.description,
+    hotDappInfo,
+    i18n.language,
+  ]);
+
+  const displayIcon =
+    dapp?.icon ||
+    basicDappInfo?.logo_url ||
+    dapp?.info?.logo_url ||
+    hotDappInfo?.logo ||
+    bookmark?.icon;
+
+  const category = hotDappInfo?.category;
 
   const collectionList = useMemo(() => {
-    return basicDappInfo?.collected_list || dappInfo?.info?.collected_list;
-  }, [basicDappInfo?.collected_list, dappInfo?.info?.collected_list]);
+    return basicDappInfo?.collected_list || dapp?.info?.collected_list;
+  }, [basicDappInfo?.collected_list, dapp?.info?.collected_list]);
 
   const listByAvailableWidth = useMemo(() => {
     if (!listByRowWidth || !listByLabelWidth) {
@@ -184,7 +234,7 @@ export const DappInfoPopup: React.FC<{
   );
 
   const handleFavoritePress = useCallback(() => {
-    if (!bookmarkKey || !dappInfo) {
+    if (!bookmarkKey || !origin) {
       return;
     }
 
@@ -195,11 +245,19 @@ export const DappInfoPopup: React.FC<{
 
     addBookmark({
       url: bookmarkKey,
-      name: dappInfo.info?.name || dappInfo.name,
-      icon: dappInfo.icon,
+      name: displayName || origin,
+      icon: displayIcon,
       createdAt: Date.now(),
     });
-  }, [addBookmark, bookmarkKey, dappInfo, getBookmark, removeBookmark]);
+  }, [
+    addBookmark,
+    bookmarkKey,
+    displayIcon,
+    displayName,
+    getBookmark,
+    origin,
+    removeBookmark,
+  ]);
 
   useEffect(() => {
     if (visible) {
@@ -227,29 +285,26 @@ export const DappInfoPopup: React.FC<{
         }
       }}>
       <AutoLockView as="View" style={styles.content}>
-        {dappInfo ? (
+        {origin ? (
           <BottomSheetScrollView
             style={styles.scrollView}
             contentContainerStyle={styles.scrollViewContent}>
             <View style={styles.dappCard}>
               <DappIcon
                 source={
-                  dappInfo?.icon
+                  displayIcon
                     ? {
-                        uri: dappInfo.icon,
+                        uri: displayIcon,
                       }
                     : undefined
                 }
-                origin={dappInfo.origin}
+                origin={origin}
                 style={styles.dappIcon}
               />
               <View style={styles.dappContent}>
                 <View style={styles.dappContentHeader}>
                   <Text style={[styles.dappTitle]} numberOfLines={1}>
-                    {dappInfo?.info?.name ||
-                      dappInfo.name ||
-                      dappInfo.origin.split('://')[1] ||
-                      dappInfo.origin}
+                    {displayName || origin}
                   </Text>
                   <TouchableOpacity
                     style={styles.favoriteButton}
@@ -259,13 +314,13 @@ export const DappInfoPopup: React.FC<{
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.dappOrigin} numberOfLines={1}>
-                  {dappInfo.origin}
+                  {origin}
                 </Text>
               </View>
             </View>
-            {dappInfo.info?.description ? (
+            {displayDescription ? (
               <Text style={styles.dappDesc} numberOfLines={3}>
-                {dappInfo.info?.description}
+                {displayDescription}
               </Text>
             ) : null}
             <View style={styles.divider} />
@@ -360,12 +415,12 @@ export const DappInfoPopup: React.FC<{
               <View style={styles.checkBoxContainer}>
                 <TouchableOpacity
                   onPress={() => {
-                    if (!dappInfo) {
+                    if (!origin) {
                       return;
                     }
 
                     dappService.patchDapps({
-                      [dappInfo.origin]: {
+                      [origin]: {
                         isSkipRemind: !isSkipRemind,
                       },
                     });
@@ -381,9 +436,9 @@ export const DappInfoPopup: React.FC<{
               <Button
                 type="primary"
                 onPress={() => {
-                  onOpenDapp?.(dappInfo?.url || dappInfo?.origin);
+                  onOpenDapp?.(displayUrl || origin);
                 }}
-                title={`Open ${dappInfo.info?.name || dappInfo.origin}`}
+                title={`Open ${displayName || origin}`}
                 titleStyle={styles.openButtonTitle}
               />
             </View>
@@ -391,6 +446,31 @@ export const DappInfoPopup: React.FC<{
         ) : null}
       </AutoLockView>
     </AppBottomSheetModal>
+  );
+};
+
+export const GlobalDappInfoPopup: React.FC = () => {
+  const { browserState, setPartialBrowserState, openTab } = useBrowser();
+  return (
+    <DappInfoPopup
+      visible={browserState.isShowDappInfo}
+      url={browserState.dappInfoUrl}
+      onClose={() => {
+        setPartialBrowserState({
+          isShowDappInfo: false,
+          dappInfoUrl: '',
+        });
+      }}
+      onOpenDapp={(url: string) => {
+        openTab(url, {
+          isDapp: true,
+        });
+        setPartialBrowserState({
+          isShowDappInfo: false,
+          dappInfoUrl: '',
+        });
+      }}
+    />
   );
 };
 

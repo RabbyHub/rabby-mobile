@@ -35,6 +35,9 @@ import { BrowserHot } from './BrowserHot';
 import { BrowserFavorite } from './BrowserFavorite';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LocalPannableDraggableView } from '@/components/customized/BottomSheetDraggableView';
+import { dappService } from '@/core/services';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { browserApis } from '@/hooks/browser/useBrowser';
 
 export function BrowserSearch({
   onClose,
@@ -120,10 +123,23 @@ export function BrowserSearch({
   });
 
   const handleOpenUrl = useMemoizedFn(
-    async (url: string, options?: { isDirect?: boolean }) => {
+    async (
+      url: string,
+      options?: { isDirect?: boolean; isRemindOpen?: boolean },
+    ) => {
       isOpenURLRef.current = true;
       Keyboard.dismiss();
       await waitKeyboardHide();
+      if (
+        options?.isRemindOpen &&
+        !dappService.getDapp(safeGetOrigin(url))?.isSkipRemind
+      ) {
+        browserApis.setPartialBrowserState({
+          isShowDappInfo: true,
+          dappInfoUrl: url,
+        });
+        return;
+      }
       onOpenURL?.(url, options);
     },
   );
@@ -205,7 +221,9 @@ export function BrowserSearch({
                   isInBottomSheet
                   list={browserHistoryList}
                   onPress={dapp => {
-                    handleOpenUrl(dapp.url || dapp.origin);
+                    handleOpenUrl(dapp.url || dapp.origin, {
+                      isRemindOpen: true,
+                    });
                     if (dapp.origin) {
                       matomoRequestEvent({
                         category: 'Websites Usage',

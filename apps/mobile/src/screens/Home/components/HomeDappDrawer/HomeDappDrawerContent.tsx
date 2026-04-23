@@ -8,13 +8,11 @@ import React, {
 } from 'react';
 import {
   FlatListProps,
-  Platform,
   FlatList as RNFlatList,
   TouchableOpacity,
   View,
 } from 'react-native';
 
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -28,14 +26,9 @@ import { DynamicCustomMaterialTabBar } from '../../../TokenDetail/components/Cus
 // import { useMarketVisibleTokenPriceRefresh } from './hooks/useMarketVisibleTokenPriceRefresh';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { DappInfo } from '@/core/services/dappService';
-import {
-  getBookmarkList,
-  useBrowserBookmark,
-} from '@/hooks/browser/useBrowserBookmark';
-import { useSafeSizes } from '@/hooks/useAppLayout';
+import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import CustomLabel from '@/screens/TokenDetail/components/CustomLabel';
-import RcIconDelete from '@/assets2024/icons/common/delete-cc.svg';
 import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
 import Animated, {
   scrollTo,
@@ -51,17 +44,14 @@ import {
 
 import dappList from '@/constant/hot-dapp.json';
 import { useAtom } from 'jotai';
-import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
-import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
-import { IS_ANDROID } from '@/core/native/utils';
-import { Button } from '@/components2024/Button';
 import { useBrowser } from '@/hooks/browser/useBrowser';
-import { DappInfoPopup } from './HomeDappDrawerPopup';
 import { useMemoizedFn } from 'ahooks';
-import { browserService, dappService } from '@/core/services';
+import { browserService } from '@/core/services';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { useDapps } from '@/hooks/useDapps';
+import { DappFavoriteList } from './DappFavoriteList';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 type HotDappListItem = (typeof dappList)[number];
 
@@ -81,7 +71,7 @@ const mapHotDappListToDappInfo = ({
     return {
       ...dapp,
       origin: item.origin,
-      icon: item.logo || '',
+      icon: dapp?.icon || item.logo || '',
       name: item.name,
       chainId: undefined as unknown as DappInfo['chainId'],
       isDapp: true,
@@ -89,40 +79,12 @@ const mapHotDappListToDappInfo = ({
         ...dapp?.info,
         id: item.origin.replace(/^https?:\/\//, ''),
         name: item.name,
-        logo_url: item.logo || '',
+        logo_url: dapp?.icon || item.logo || '',
         description: isZh ? item.zh : item.en,
         user_range: '',
         tags: item.category ? [item.category] : [],
         chain_ids: [],
       },
-    };
-  });
-};
-
-const mergeBookmarkListWithHotDappInfo = (
-  list: DappInfo[],
-  hotDappInfoList: DappInfo[],
-): DappInfo[] => {
-  const hotDappInfoMap = new Map(
-    hotDappInfoList.map(item => [item.origin, item] as const),
-  );
-
-  return list.map(item => {
-    const hotDappInfo = hotDappInfoMap.get(item.origin);
-
-    if (!hotDappInfo?.info?.description) {
-      return item;
-    }
-
-    return {
-      ...item,
-      info: item.info
-        ? {
-            ...item.info,
-            description: hotDappInfo.info.description,
-            tags: hotDappInfo.info.tags,
-          }
-        : hotDappInfo.info,
     };
   });
 };
@@ -202,28 +164,19 @@ export const HomeDappDrawerContent: React.FC<{
   drawerScrollOffsetY: Animated.SharedValue<number>;
   scrollableStatus: Animated.SharedValue<SCROLLABLE_STATUS>;
 }> = ({ drawerScrollableGesture, drawerScrollOffsetY, scrollableStatus }) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
-  const { pullPercent, isExpanded, translateY, swipeUpHintHeight } =
-    homeDrawerAnimateMutable;
+  const { isExpanded } = homeDrawerAnimateMutable;
   const isDrawerExpanded = useValueFromSharedValue(isExpanded);
   const previousIsDrawerExpandedRef = useRef(isDrawerExpanded);
   const { t } = useTranslation();
   const { activeTab, setActiveTab } = useDappTab();
-  const [selectedDapp, setSelectedDapp] = useState<DappInfo>();
-  const { setPartialBrowserState, openTab } = useBrowser();
+  const { openTab } = useBrowser();
   const handleDappPress = useMemoizedFn((item: DappInfo) => {
-    if (!item.isSkipRemind) {
-      setSelectedDapp(item);
-      return;
-    }
     openTab(item.url || item.origin, {
       isDapp: true,
+      isRemindOpen: true,
     });
-  });
-
-  const handleCloseDappInfoPopup = useMemoizedFn(() => {
-    setSelectedDapp(undefined);
   });
 
   const initialTabItemsLayout = useMemo(() => {
@@ -354,7 +307,7 @@ export const HomeDappDrawerContent: React.FC<{
           <TouchableOpacity
             disabled={!hasData}
             onPress={handle}
-            style={[!hasData && { opacity: 0.5 }]}>
+            style={!hasData ? styles.editDisabled : undefined}>
             <Text style={styles.edit}>
               {isEditing ? t('global.Done') : t('global.Edit')}
             </Text>
@@ -378,43 +331,14 @@ export const HomeDappDrawerContent: React.FC<{
               return (
                 <Tabs.Tab label={renderFavoriteLabel} name="favorite">
                   <View style={styles.content}>
-                    <DappList
+                    <DappFavoriteList
                       drawerScrollableGesture={drawerScrollableGesture}
                       drawerScrollOffsetY={drawerScrollOffsetY}
                       scrollableStatus={scrollableStatus}
-                      category="favorite"
-                      onDappPress={handleDappPress}
                       isEditing={isEditing}
                       bookmarkList={list}
                       onRemoveLocal={handleRemoveLocal}
-                      ListEmptyComponent={
-                        <View style={styles.empty}>
-                          {isLight ? (
-                            <RcIconEmpty style={styles.emptyIcon} />
-                          ) : (
-                            <RcIconEmptyDark style={styles.emptyIcon} />
-                          )}
-                          <Text style={styles.emptyText}>
-                            {IS_ANDROID
-                              ? t('page.home.DappDrawer.emptyAndroid')
-                              : t('page.home.DappDrawer.empty')}
-                          </Text>
-                          <Button
-                            title={t('page.home.DappDrawer.search')}
-                            buttonStyle={styles.searchButton}
-                            titleStyle={styles.searchButtonText}
-                            onPress={() => {
-                              setPartialBrowserState({
-                                isShowBrowser: true,
-                                isShowSearch: true,
-                                searchText: '',
-                                searchTabId: '',
-                                trigger: 'home',
-                              });
-                            }}
-                          />
-                        </View>
-                      }
+                      onDappPress={handleDappPress}
                     />
                   </View>
                 </Tabs.Tab>
@@ -449,17 +373,6 @@ export const HomeDappDrawerContent: React.FC<{
           }) as unknown as React.ReactElement<any>
         }
       </Tabs.Container>
-      <DappInfoPopup
-        visible={!!selectedDapp}
-        onClose={handleCloseDappInfoPopup}
-        dappInfo={selectedDapp}
-        onOpenDapp={(url: string) => {
-          openTab(url, {
-            isDapp: true,
-          });
-          handleCloseDappInfoPopup();
-        }}
-      />
     </View>
   );
 };
@@ -469,24 +382,15 @@ const DappList: React.FC<{
   drawerScrollOffsetY: Animated.SharedValue<number>;
   scrollableStatus: Animated.SharedValue<SCROLLABLE_STATUS>;
   category: string;
-  ListEmptyComponent?: FlatListProps<DappInfo>['ListEmptyComponent'];
-  isEditing?: boolean;
   onDappPress?: (item: DappInfo) => void;
-  bookmarkList?: DappInfo[];
-  onRemoveLocal?: (url: string) => void;
 }> = ({
   drawerScrollableGesture,
   drawerScrollOffsetY,
   scrollableStatus,
   category,
-  ListEmptyComponent,
   onDappPress,
-  bookmarkList,
-  isEditing,
-  onRemoveLocal,
 }) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
+  const { styles } = useTheme2024({ getStyle });
   const lang = useTranslation().i18n.language;
   const { dapps } = useDapps();
   const hotDappInfoList = useMemo(
@@ -494,19 +398,12 @@ const DappList: React.FC<{
     [dapps, lang],
   );
 
-  const favoriteList = useMemo(
-    () => mergeBookmarkListWithHotDappInfo(bookmarkList || [], hotDappInfoList),
-    [bookmarkList, hotDappInfoList],
-  );
   const list = useMemo(() => {
-    if (category === 'favorite') {
-      return favoriteList;
-    }
     if (category === 'all') {
       return hotDappInfoList;
     }
     return hotDappInfoList.filter(item => item.info?.tags?.includes(category));
-  }, [favoriteList, category, hotDappInfoList]);
+  }, [category, hotDappInfoList]);
 
   const scrollableRef = useAnimatedRef<Animated.FlatList<DappInfo>>();
 
@@ -516,7 +413,7 @@ const DappList: React.FC<{
   }));
 
   const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event, context) => {
+    onScroll: event => {
       'worklet';
 
       if (scrollableStatus.value === SCROLLABLE_STATUS.LOCKED) {
@@ -537,8 +434,8 @@ const DappList: React.FC<{
         keyExtractor={item => item.url || item.origin}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
-          { flexGrow: 1 },
-          list.length ? null : { justifyContent: 'center' },
+          styles.listContentContainer,
+          list.length ? null : styles.emptyListContentContainer,
         ]}
         ref={scrollableRef}
         onScroll={scrollHandler}
@@ -547,16 +444,16 @@ const DappList: React.FC<{
         renderItem={({ item }) => {
           return (
             <View style={styles.listItem}>
-              {isEditing ? (
+              <View style={styles.listItemContent}>
                 <TouchableOpacity
                   onPress={() => {
-                    onRemoveLocal?.(item.origin);
+                    onDappPress?.(item);
+                    matomoRequestEvent({
+                      category: 'Websites Usage',
+                      action: 'Website_Visit_Other',
+                      label: item.origin,
+                    });
                   }}>
-                  <RcIconDelete width={20} height={20} />
-                </TouchableOpacity>
-              ) : null}
-              <View style={styles.listItemContent}>
-                <TouchableOpacity onPress={() => onDappPress?.(item)}>
                   <View style={styles.dappCard}>
                     <DappIcon
                       source={
@@ -586,7 +483,6 @@ const DappList: React.FC<{
             </View>
           );
         }}
-        ListEmptyComponent={ListEmptyComponent}
       />
     </GestureDetector>
   );
@@ -629,6 +525,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontStyle: 'normal',
       fontWeight: '700',
       lineHeight: 18,
+    },
+    editDisabled: {
+      opacity: 0.5,
     },
 
     tabBarWrap: {
@@ -690,6 +589,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
     list: {
       paddingTop: 8,
+    },
+    listContentContainer: {
+      flexGrow: 1,
+      paddingBottom: 12,
+    },
+    emptyListContentContainer: {
+      justifyContent: 'center',
     },
 
     // -------- dapp card --------

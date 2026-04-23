@@ -102,6 +102,7 @@ import { coerceNumber } from './utils/coerce';
 import { useAppCouldRender } from './hooks/useBootstrap';
 import { InnerDappWebViewPreloadEntry } from './components/WebView/InnerDappWebViewPreloadEntry';
 import { useTranslation } from 'react-i18next';
+import { GlobalDappInfoPopup } from './screens/Home/components/HomeDappDrawer/HomeDappDrawerPopup';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -560,6 +561,7 @@ export default function AppNavigation() {
           <ApprovalTokenDetailSheetModalStub />
           <GlobalSearchBottomSheet />
           <BottomSheetBrowser />
+          <GlobalDappInfoPopup />
           <BrowserManagePopup />
           <BrowserFavoritePopup />
         </NavigationContainer>
