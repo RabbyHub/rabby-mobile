@@ -37,7 +37,7 @@ export const PerpsRankBadge: React.FC<{ rank: number }> = ({ rank }) => {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    width: 26,
+    width: 28,
     height: 20,
     alignItems: 'center',
     justifyContent: 'center',

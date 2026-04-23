@@ -167,8 +167,19 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </TouchableOpacity>
               <View>
                 <Text style={styles.value}>
-                  {formatUsdValue(Number(tradeAmount))} = {tradeSize}{' '}
-                  {formatPerpsCoin(coin)}
+                  {tradeSize} {formatPerpsCoin(coin)}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.listItem}>
+              <View style={styles.listItemMain}>
+                <Text style={styles.label}>
+                  {t('page.perps.historyDetail.tradeValue')}
+                </Text>
+              </View>
+              <View>
+                <Text style={styles.value}>
+                  {formatUsdValue(Number(tradeAmount))}
                 </Text>
               </View>
             </View>

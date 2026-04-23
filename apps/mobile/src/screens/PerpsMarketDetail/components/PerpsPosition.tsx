@@ -533,11 +533,22 @@ export const PerpsPosition: React.FC<{
             </TouchableOpacity>
             <View>
               <Text style={styles.value}>
+                {positionData?.size} {formatPerpsCoin(displayName)}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.listItem}>
+            <View style={styles.listItemMain}>
+              <Text style={styles.label}>
+                {t('page.perps.historyDetail.tradeValue')}
+              </Text>
+            </View>
+            <View>
+              <Text style={styles.value}>
                 $
                 {splitNumberByStep(
                   Number(positionData?.positionValue || 0).toFixed(2),
-                )}{' '}
-                = {positionData?.size} {formatPerpsCoin(displayName)}
+                )}
               </Text>
             </View>
           </View>
@@ -553,7 +564,7 @@ export const PerpsPosition: React.FC<{
               </Text>
             </View>
           </View>
-          <View style={styles.listItem}>
+          {/* <View style={styles.listItem}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
                 {t('page.perpsDetail.PerpsPosition.marginMode')}
@@ -566,7 +577,7 @@ export const PerpsPosition: React.FC<{
                   : t('page.perpsDetail.PerpsPosition.isolated')}
               </Text>
             </View>
-          </View>
+          </View> */}
           <View style={styles.listItem}>
             <TouchableOpacity
               onPress={() => {

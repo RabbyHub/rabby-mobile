@@ -279,8 +279,19 @@ export const PerpsHistoryDetailPopup: React.FC<{
                     </TouchableOpacity>
                     <View>
                       <Text style={styles.value}>
-                        ${splitNumberByStep(tradeValue.toFixed(2))} = {sz}{' '}
-                        {formatPerpsCoin(coin || '')}
+                        {sz} {formatPerpsCoin(coin || '')}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.listItem}>
+                    <View style={styles.listItemMain}>
+                      <Text style={styles.label}>
+                        {t('page.perps.historyDetail.tradeValue')}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={styles.value}>
+                        ${splitNumberByStep(tradeValue.toFixed(2))}
                       </Text>
                     </View>
                   </View>
