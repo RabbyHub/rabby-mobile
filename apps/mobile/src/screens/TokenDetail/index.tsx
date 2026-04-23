@@ -141,7 +141,7 @@ const TokenDetailContent = () => {
   const getHeaderTitle = useCallback(() => {
     return (
       <TokenDetailHeaderArea
-        //style={{ marginLeft: isAndroid ? 0 : -30 }}
+        style={{ marginLeft: isAndroid ? 0 : -30 }}
         key={effectiveAccount?.address}
         tokenSize={33}
         chainSize={15}
@@ -162,29 +162,22 @@ const TokenDetailContent = () => {
 
   const getHeaderRight = useCallback(() => {
     return (
-      <View style={styles.headerRightContent}>
-        <AccountSwitcher
-          forScene="TokenDetail"
-          disableSwitch={false}
-          style={styles.headerAccountSwitcher}
-        />
-        <RightMore
-          token={token}
-          triggerUpdate={() =>
-            effectiveAccount?.address &&
-            apisAddressBalance.triggerUpdate({
-              address: effectiveAccount?.address,
-              force: false,
-              fromScene: 'TokenDetail',
-            })
-          }
-          isMultiAddress={false}
-          refreshTags={refreshTag}
-          unHold
-        />
-      </View>
+      <RightMore
+        token={token}
+        triggerUpdate={() =>
+          effectiveAccount?.address &&
+          apisAddressBalance.triggerUpdate({
+            address: effectiveAccount?.address,
+            force: false,
+            fromScene: 'TokenDetail',
+          })
+        }
+        isMultiAddress={false}
+        refreshTags={refreshTag}
+        unHold
+      />
     );
-  }, [effectiveAccount?.address, refreshTag, styles, token]);
+  }, [effectiveAccount?.address, refreshTag, token]);
 
   useFocusEffect(
     useCallback(() => {
@@ -221,6 +214,7 @@ const TokenDetailContent = () => {
   const renderHeader = useCallback(() => {
     return (
       <View style={styles.balanceOverviewContainer}>
+        <AccountSwitcher forScene="TokenDetail" disableSwitch={false} />
         <View style={styles.balanceOverviewContent}>
           <BalanceOverview usdValue={usdValue} amount={amountSum} />
           {!baseTokenInfo ? null : (

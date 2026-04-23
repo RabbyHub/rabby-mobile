@@ -136,18 +136,11 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
 
 const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   root: {
-    //width: screenWidth - 300,
-    maxWidth: 130,
-    flex: 1,
-    //borderWidth: 1,
-    //borderColor: 'red',
+    width: screenWidth - 140,
   },
   container: {
+    width: screenWidth - 140,
     marginLeft: 0,
-    paddingRight: 0,
-    paddingLeft: 0,
-    flex: 1,
-    width: '100%',
     display: 'flex',
     flexDirection: 'column',
   },

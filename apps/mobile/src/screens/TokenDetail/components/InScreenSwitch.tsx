@@ -96,15 +96,14 @@ export const AccountSwitcher = memo(AccountSwitcherComponent);
 const getStyle = createGetStyles2024(ctx => {
   return {
     container: {
-      borderRadius: 8,
+      borderRadius: 6,
       padding: 6,
       backgroundColor: ctx.colors2024['neutral-bg-5'],
-      borderWidth: 1,
-      borderColor: ctx.colors2024['neutral-line'],
       flexDirection: 'row',
       alignItems: 'center',
       alignSelf: 'flex-start',
-      maxWidth: 132,
+      marginBottom: 12,
+      maxWidth: '100%',
     },
     addressItem: {
       flexShrink: 1,
@@ -125,19 +124,19 @@ const getStyle = createGetStyles2024(ctx => {
       borderRadius: 5,
       width: 18,
       height: 18,
-      marginRight: 4,
+      marginRight: 8,
     },
     address: {
       fontFamily: 'SF Pro Rounded',
       fontWeight: '500',
-      lineHeight: 18,
-      fontSize: 14,
-      color: ctx.colors2024['neutral-foot'],
+      lineHeight: 20,
+      fontSize: 16,
+      color: ctx.colors2024['neutral-body'],
       flexShrink: 1,
     },
     addressCaretIcon: {
-      marginLeft: 4,
-      width: 18,
+      marginLeft: 0,
+      width: 20,
       flexShrink: 0,
     },
     reverseCaret: {
