@@ -87,7 +87,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     backgroundImage: {
       width: '100%',
-      height: 164,
+      height: 146,
     },
     textBox: {
       backgroundColor: isLight
