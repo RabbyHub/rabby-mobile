@@ -76,7 +76,7 @@ import {
   createAmountComparer,
   shouldIgnoreAmountChangeInMaxMode,
 } from '@/utils/form';
-import { Alert } from 'react-native';
+import { buildTx as buildBridgeTx } from '@rabby-wallet/rabby-bridge';
 
 /** Bridge form snapshot for validation during auth */
 export interface BridgeFormSnapshot {
@@ -364,21 +364,24 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         setFetchingBridgeQuote(true);
         const tx = await pRetry(
           () =>
-            openapi.buildBridgeTx({
-              aggregator_id: selectedBridgeQuote.aggregator.id,
-              bridge_id: selectedBridgeQuote.bridge_id,
-              from_token_id: fromToken.id,
-              user_addr: currentAccount?.address,
-              from_chain_id: fromToken.chain,
-              from_token_raw_amount: new BigNumber(amount)
-                .times(10 ** fromToken.decimals)
-                .toFixed(0, 1)
-                .toString(),
-              to_chain_id: toToken.chain,
-              to_token_id: toToken.id,
-              slippage: new BigNumber(slippageState).div(100).toString(10),
-              quote_key: JSON.stringify(selectedBridgeQuote.quote_key || {}),
-            }),
+            buildBridgeTx(
+              selectedBridgeQuote.aggregator.id,
+              {
+                bridgeId: selectedBridgeQuote.bridge_id,
+                userAddress: currentAccount?.address,
+                fromChainId: fromToken.chain,
+                fromTokenId: fromToken.id,
+                fromTokenRawAmount: new BigNumber(amount)
+                  .times(10 ** fromToken.decimals)
+                  .toFixed(0, 1)
+                  .toString(),
+                toChainId: toToken.chain,
+                toTokenId: toToken.id,
+                slippage: new BigNumber(slippageState).div(100).toString(10),
+                quoteKey: selectedBridgeQuote.quote_key || {},
+              },
+              openapi,
+            ),
           { retries: 1 },
         );
         stats.report('bridgeQuoteResult', {
@@ -491,21 +494,24 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
       currentAccount?.address
     ) {
       try {
-        const tx = await openapi.buildBridgeTx({
-          aggregator_id: selectedBridgeQuote.aggregator.id,
-          bridge_id: selectedBridgeQuote.bridge_id,
-          from_token_id: fromToken.id,
-          user_addr: currentAccount?.address,
-          from_chain_id: fromToken.chain,
-          from_token_raw_amount: new BigNumber(amount)
-            .times(10 ** fromToken.decimals)
-            .toFixed(0, 1)
-            .toString(),
-          to_chain_id: toToken.chain,
-          to_token_id: toToken.id,
-          slippage: new BigNumber(slippageState).div(100).toString(10),
-          quote_key: JSON.stringify(selectedBridgeQuote.quote_key || {}),
-        });
+        const tx = await buildBridgeTx(
+          selectedBridgeQuote.aggregator.id,
+          {
+            bridgeId: selectedBridgeQuote.bridge_id,
+            userAddress: currentAccount?.address,
+            fromChainId: fromToken.chain,
+            fromTokenId: fromToken.id,
+            fromTokenRawAmount: new BigNumber(amount)
+              .times(10 ** fromToken.decimals)
+              .toFixed(0, 1)
+              .toString(),
+            toChainId: toToken.chain,
+            toTokenId: toToken.id,
+            slippage: new BigNumber(slippageState).div(100).toString(10),
+            quoteKey: selectedBridgeQuote.quote_key || {},
+          },
+          openapi,
+        );
         stats.report('bridgeQuoteResult', {
           aggregatorIds: selectedBridgeQuote.aggregator.id,
           bridgeId: selectedBridgeQuote.bridge_id,
@@ -703,33 +709,33 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   );
 
   const handleBridge = useMemoizedFn(async (p?: { ignoreGasFee?: boolean }) => {
-    if (__DEV__) {
-      const snapshot = formValuesRef.current.getSnapshot();
-
-      if (!snapshot) {
-        toast.info(t('page.bridge.formChangedAmount'));
-        return;
-      }
-
-      // Check if amount changed during authentication
-      const comparison = formValuesRef.current.compare({
-        amount: amount || '',
-      });
-
-      // If amount changed during authentication, close modal and alert user
-      if (comparison.isChanged) {
-        formValuesRef.current.clear();
-        closeMiniSigner();
-        Alert.alert(
-          t('page.bridge.formChangedTitle') || 'Form Changed',
-          t('page.bridge.formChangedAmount'),
-          [{ text: t('global.ok') || 'OK' }],
-        );
-        refresh(e => e + 1);
-        mutateTxs([]);
-        return;
-      }
-    }
+    // if (__DEV__) {
+    //   const snapshot = formValuesRef.current.getSnapshot();
+    //
+    //   if (!snapshot) {
+    //     toast.info(t('page.bridge.formChangedAmount'));
+    //     return;
+    //   }
+    //
+    //   // Check if amount changed during authentication
+    //   const comparison = formValuesRef.current.compare({
+    //     amount: amount || '',
+    //   });
+    //
+    //   // If amount changed during authentication, close modal and alert user
+    //   if (comparison.isChanged) {
+    //     formValuesRef.current.clear();
+    //     closeMiniSigner();
+    //     Alert.alert(
+    //       t('page.bridge.formChangedTitle') || 'Form Changed',
+    //       t('page.bridge.formChangedAmount'),
+    //       [{ text: t('global.ok') || 'OK' }],
+    //     );
+    //     refresh(e => e + 1);
+    //     mutateTxs([]);
+    //     return;
+    //   }
+    // }
 
     // Clear snapshot after validation
     formValuesRef.current.clear();

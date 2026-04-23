@@ -34,6 +34,7 @@ import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { shouldScheduleQuotePolling } from '@/utils/quotePolling';
 import { isTokenMarketClosed } from '@/utils/token';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
+import { getQuoteList as getBridgeQuoteList } from '@rabby-wallet/rabby-bridge';
 
 export const enableInsufficientQuote = true;
 
@@ -641,13 +642,13 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         const getQUoteV2 = async (alternativeToken?: TokenItem) =>
           await Promise.allSettled(
             aggregatorsList.map(async bridgeAggregator => {
-              const data = await openapi
-                .getBridgeQuoteV2({
-                  aggregator_id: bridgeAggregator.id,
-                  user_addr: userAddress,
-                  from_chain_id: alternativeToken?.chain || fromToken.chain,
-                  from_token_id: alternativeToken?.id || fromToken.id,
-                  from_token_raw_amount: alternativeToken
+              const data = await getBridgeQuoteList(
+                bridgeAggregator.id,
+                {
+                  userAddress,
+                  fromChainId: alternativeToken?.chain || fromToken.chain,
+                  fromTokenId: alternativeToken?.id || fromToken.id,
+                  fromTokenRawAmount: alternativeToken
                     ? new BigNumber(amount)
                         .times(fromToken.price)
                         .div(alternativeToken.price)
@@ -658,27 +659,28 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
                         .times(10 ** fromToken.decimals)
                         .toFixed(0, 1)
                         .toString(),
-                  to_chain_id: toToken.chain,
-                  to_token_id: toToken.id,
+                  toChainId: toToken.chain,
+                  toTokenId: toToken.id,
                   slippage: new BigNumber(slippageObj.slippageState)
                     .div(100)
                     .toString(10),
-                })
-                .catch(e => {
-                  if (
-                    currentFetchId === fetchIdRef.current &&
-                    !alternativeToken
-                  ) {
-                    stats.report('bridgeQuoteResult', {
-                      aggregatorIds: bridgeAggregator.id,
-                      fromChainId: fromToken.chain,
-                      fromTokenId: fromToken.id,
-                      toTokenId: toToken.id,
-                      toChainId: toToken.chain,
-                      status: 'fail',
-                    });
-                  }
-                });
+                },
+                openapi,
+              ).catch(e => {
+                if (
+                  currentFetchId === fetchIdRef.current &&
+                  !alternativeToken
+                ) {
+                  stats.report('bridgeQuoteResult', {
+                    aggregatorIds: bridgeAggregator.id,
+                    fromChainId: fromToken.chain,
+                    fromTokenId: fromToken.id,
+                    toTokenId: toToken.id,
+                    toChainId: toToken.chain,
+                    status: 'fail',
+                  });
+                }
+              });
 
               if (alternativeToken) {
                 if (
