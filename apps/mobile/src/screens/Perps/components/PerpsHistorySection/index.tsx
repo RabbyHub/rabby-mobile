@@ -19,7 +19,6 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import RcArrowRight2CC from '@/assets2024/icons/copyTrading/IconRrightArrowCC.svg';
 import { Text } from '@/components/Typography';
-import { showToast } from '@/hooks/perps/showToast';
 
 export const PerpsHistorySection: React.FC<{
   marketDataMap: MarketDataMap;
@@ -50,7 +49,6 @@ export const PerpsHistorySection: React.FC<{
       logoUrl: marketDataMap[fill.coin]?.logoUrl || '',
       quoteAsset: marketDataMap[fill.coin]?.quoteAsset || 'USDC',
     };
-    showToast(obj.quoteAsset as string);
     setSelectedFill(obj);
     setDetailVisible(true);
   });
