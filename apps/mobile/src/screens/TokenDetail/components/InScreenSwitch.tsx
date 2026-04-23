@@ -21,7 +21,6 @@ import { Text } from '@/components/Typography';
 function AccountSwitcherComponent({
   forScene = 'TokenDetail',
   disableSwitch = false,
-  style,
 }: RNViewProps &
   AccountSwitcherAopProps<{
     disableSwitch?: boolean;
@@ -48,7 +47,7 @@ function AccountSwitcherComponent({
 
   return (
     <Pressable
-      style={[styles.container, style]}
+      style={styles.container}
       disabled={disableSwitch}
       onPress={() => {
         const nextOpen = !isOpen;
@@ -64,7 +63,7 @@ function AccountSwitcherComponent({
           {({ WalletIcon }) => {
             return (
               <View style={styles.addressRow}>
-                <WalletIcon style={styles.walletIcon} width={18} height={18} />
+                <WalletIcon style={styles.walletIcon} />
                 <Text
                   numberOfLines={1}
                   ellipsizeMode="tail"
@@ -81,8 +80,6 @@ function AccountSwitcherComponent({
         <CaretArrowIconCC
           dir={!isOpen ? 'down' : 'down'}
           style={[styles.addressCaretIcon]}
-          width={18}
-          height={18}
           bgColor="transparent"
           lineColor={colors2024['neutral-foot']}
         />
