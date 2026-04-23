@@ -158,6 +158,7 @@ export const HomeDappDrawer: React.FC<{
   const drawerGesture = useMemo(
     () =>
       Gesture.Pan()
+        // .activeOffsetY([-8, 8])
         // .activeOffsetY([
         //   -DRAWER_GESTURE_ACTIVE_OFFSET_Y,
         //   DRAWER_GESTURE_ACTIVE_OFFSET_Y,

@@ -43,7 +43,7 @@
     "category": "Predict",
     "name": "Probable",
     "origin": "https://probable.markets",
-    "logo": null,
+    "logo": "https://static.debank.com/image/third_party/logo_url/defillama/1be7417e6461f9851dcd2521786d41ba.png",
     "zh": "部署在 BNB Chain 上的去中心化预测市场。",
     "en": "A decentralized prediction market built on BNB Chain."
   },
@@ -83,9 +83,9 @@
     "category": "Perps",
     "name": "StandX",
     "origin": "https://standx.com",
-    "logo": null,
+    "logo": "https://static.debank.com/image/third_party/logo_url/coinmarketcap/f7c62d7fa33dfec3a2d3365792c20f23.png",
     "zh": "以可赚收益的 DUSD 保证金为特色的永续合约交易平台。",
-    "en": "A perpetuals trading platform distinguished by its yield-bearing DUSD m argin model."
+    "en": "A perpetuals trading platform distinguished by its yield-bearing DUSD margin model."
   },
   {
     "category": "RWA",
@@ -115,8 +115,8 @@
     "category": "RWA",
     "name": "Midas",
     "origin": "https://midas.app",
-    "logo": null,
-    "zh": "主打链上投资产品标准化发行与接入的RWA/投资平台。",
+    "logo": "https://static.debank.com/image/third_party/logo_url/debank/140bebfd1d2fae73bfc6222cf38284a4.png",
+    "zh": "主打链上投资产品标准化发行与接入的 RWA/投资平台。",
     "en": "An investment platform focused on standardized issuance and access for onchain investment products."
   },
   {
@@ -147,8 +147,8 @@
     "category": "DeFi",
     "name": "Curve",
     "origin": "https://www.curve.finance",
-    "logo": null,
-    "zh": "以稳定币和同类资产低滑点兑换⻅⻓的经典 AMM 协议。",
+    "logo": "https://static.debank.com/image/dapp/logo_url/9b5695ae1125a207988f850c7003ecff/9b5695ae1125a207988f850c7003ecff.png",
+    "zh": "以稳定币和同类资产低滑点兑换见长的经典 AMM 协议。",
     "en": "A leading AMM protocol known for low-slippage swaps between stablecoins and similar assets."
   },
   {
@@ -195,7 +195,7 @@
     "category": "DeFi",
     "name": "vfat",
     "origin": "https://vfat.io",
-    "logo": null,
+    "logo": "https://static.debank.com/image/third_party/logo_url/debank/140bebfd1d2fae73bfc6222cf38284a4.png",
     "zh": "集收益聚合、资产看板与 DeFi 工具于一体的多链收益管理平台。",
     "en": "A multi-chain yield management platform combining yield aggregation, portfolio dashboards, and DeFi tools."
   },
@@ -205,7 +205,7 @@
     "origin": "https://stargate.finance",
     "logo": "https://static.debank.com/image/dapp/logo_url/7769b47348430f848c0e784c68222478/7769b47348430f848c0e784c68222478.png",
     "zh": "基于 LayerZero 的跨链流动性协议,可跨链转移多种主流资产。",
-    "en": "A LayerZero-powered cross-chain liquidity protocol for moving m ajor assets across chains."
+    "en": "A LayerZero-powered cross-chain liquidity protocol for moving major assets across chains."
   },
   {
     "category": "DeFi",
@@ -221,7 +221,7 @@
     "origin": "https://app.uniswap.org",
     "logo": "https://static.debank.com/image/dapp/logo_url/fe004c7bccd24837394c2861a5d4f50c/fe004c7bccd24837394c2861a5d4f50c.png",
     "zh": "最主流的链上交易入口之一,以 AMM 交易与多链代币兑换为核心。",
-    "en": "One of the m ost widely used onchain trading venues, centered on AMM swaps and multi-chain token trading."
+    "en": "One of the most widely used onchain trading venues, centered on AMM swaps and multi-chain token trading."
   },
   {
     "category": "DEX",
@@ -244,8 +244,8 @@
     "name": "Velodrome",
     "origin": "https://velodrome.finance",
     "logo": "https://static.debank.com/image/dapp/logo_url/eabfc13510db10c399f6e336b3ac56db/eabfc13510db10c399f6e336b3ac56db.png",
-    "zh": "Optim ism 生态代表性 DEX,强调以流动性激励驱动的链上交易市场。",
-    "en": "A flagship DEX in the Optim ism ecosystem , built around incentive-driven onchain liquidity markets."
+    "zh": "Optimism 生态代表性 DEX,强调以流动性激励驱动的链上交易市场。",
+    "en": "A flagship DEX in the Optimism ecosystem , built around incentive-driven onchain liquidity markets."
   },
   {
     "category": "DEX",
@@ -259,9 +259,9 @@
     "category": "DEX",
     "name": "LFJ",
     "origin": "https://lfj.gg",
-    "logo": null,
+    "logo": "https://static.debank.com/image/third_party/logo_url/tp/fbea0946449682d2d511de4c83ce7343.png",
     "zh": "面向链上交易场景的 DEX 品牌,强调更完整的交易体验。",
-    "en": "A DEX brand for onchain trading, positioned around a more complete trading experience."
+    "en": "A DEX brand for onchain trading, positioned around a more com plete trading experience."
   },
   {
     "category": "DEX",
@@ -269,15 +269,15 @@
     "origin": "https://swap.defillama.com",
     "logo": "https://static.debank.com/image/project/logo_url/arb_defillama/1be7417e6461f9851dcd2521786d41ba.png",
     "zh": "DefiLlama 提供的聚合式换币入口,主打透明比价与路由。",
-    "en": "A swap aggregator by DefiLlama focused on transparent pricing and route comparison."
+    "en": "A swap aggregator by DefiLlama focused on transparent pricing and route com parison."
   },
   {
     "category": "DEX",
-    "name": "M atcha",
+    "name": "Matcha",
     "origin": "https://matcha.xyz",
-    "logo": null,
+    "logo": "https://static.debank.com/image/third_party/logo_url/tp/fbea0946449682d2d511de4c83ce7343.png",
     "zh": "由 0x 支持的 DEX 聚合交易前端,强调简洁顺畅的兑换体验。",
-    "en": "A 0x-powered DEX aggregation frontend focused on a simple and sm ooth trading experience."
+    "en": "A 0x-powered DEX aggregation frontend focused on a sim ple and smooth trading experience."
   },
   {
     "category": "DEX",
@@ -299,7 +299,7 @@
     "category": "DEX",
     "name": "OpenOcean",
     "origin": "https://app.openocean.finance",
-    "logo": null,
+    "logo": "https://static.debank.com/image/third_party/logo_url/coinmarketcap/f7c62d7fa33dfec3a2d3365792c20f23.png",
     "zh": "主打最佳兑换回报的加密资产聚合交易平台。",
     "en": "A crypto trading aggregator focused on delivering the best possible swap returns."
   },
@@ -315,7 +315,7 @@
     "category": "DEX",
     "name": "Fly",
     "origin": "https://app.fly.trade",
-    "logo": null,
+    "logo": "https://static.debank.com/image/third_party/logo_url/coinmarketcap/f7c62d7fa33dfec3a2d3365792c20f23.png",
     "zh": "面向链上交易场景的聚合式交易产品。",
     "en": "An aggregated trading product designed for onchain trading use cases."
   },

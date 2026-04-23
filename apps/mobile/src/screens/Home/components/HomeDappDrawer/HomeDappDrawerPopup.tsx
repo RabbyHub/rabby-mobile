@@ -1,25 +1,19 @@
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 
 import AutoLockView from '@/components/AutoLockView';
-import { useBrowser } from '@/hooks/browser/useBrowser';
+import RcIconStar from '@/assets/icons/dapp/icon-star.svg';
+import RcIconStarFull from '@/assets/icons/dapp/icon-star-full.svg';
+import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useTheme2024 } from '@/hooks/theme';
-import { useSafeSizes } from '@/hooks/useAppLayout';
-import { EVENT_SHOW_BROWSER_MANAGE, eventBus } from '@/utils/events';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, {
   useCallback,
   useEffect,
   useMemo,
   useRef,
-  useTransition,
+  useState,
 } from 'react';
-import {
-  BackHandler,
-  View,
-  Image,
-  Touchable,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Image, TouchableOpacity } from 'react-native';
 import { DappInfo } from '@/core/services/dappService';
 import { Text } from '@/components/Typography';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
@@ -28,23 +22,30 @@ import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { useRequest } from 'ahooks';
 import { openapi } from '@/core/request';
-import { useTranslation } from 'react-i18next';
-import { useSyncDappsInfo } from '@/hooks/useSyncDappsInfo';
 import hotDappList from '@/constant/hot-dapp.json';
 import { uniq } from 'lodash';
+import { dappService } from '@/core/services';
+import { useDapps } from '@/hooks/useDapps';
+
+const LIST_BY_ICON_SIZE = 12;
+const LIST_BY_GAP = 4;
+const LIST_BY_MIN_LABEL_GAP = 12;
+const DEFAULT_VISIBLE_LIST_BY_COUNT = 3;
+
 const categories = uniq(hotDappList.map(item => item.category));
 
 export const DappInfoPopup: React.FC<{
   dappInfo?: DappInfo;
   visible: boolean;
   onClose: () => void;
-  isRemind?: boolean;
-  onChangeRemind?: (value: boolean) => void;
   onOpenDapp?: (url: string) => void;
-}> = ({ visible, onClose, dappInfo, isRemind, onChangeRemind, onOpenDapp }) => {
-  const { safeOffScreenTop } = useSafeSizes();
+}> = ({ visible, onClose, dappInfo, onOpenDapp }) => {
+  const { addBookmark, removeBookmark, getBookmark } = useBrowserBookmark();
+  const [listByRowWidth, setListByRowWidth] = useState(0);
+  const [listByLabelWidth, setListByLabelWidth] = useState(0);
+  const [listByMoreWidth, setListByMoreWidth] = useState(0);
 
-  const { colors2024, styles } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
 
   const snapPoints = useMemo(() => {
     return [494];
@@ -52,8 +53,12 @@ export const DappInfoPopup: React.FC<{
 
   const modalRef = useRef<AppBottomSheetModal>(null);
 
-  console.log('render DappInfoPopup', visible, dappInfo);
-  const { t } = useTranslation();
+  const { dapps } = useDapps();
+  const bookmarkKey = dappInfo?.url || dappInfo?.origin;
+  const isFavorite = !!(bookmarkKey && getBookmark(bookmarkKey));
+  const isSkipRemind = !!(
+    dappInfo?.origin && dapps[dappInfo.origin]?.isSkipRemind
+  );
 
   const { data: level } = useRequest(
     async () => {
@@ -62,14 +67,7 @@ export const DappInfoPopup: React.FC<{
       }
       const result = await openapi.getOriginPopularityLevel(dappInfo.origin);
 
-      const dict = {
-        high: t('page.connect.popularLevelHigh'),
-        medium: t('page.connect.popularLevelMedium'),
-        low: t('page.connect.popularLevelLow'),
-        very_low: t('page.connect.popularLevelVeryLow'),
-      };
-
-      return dict[result?.level || ''];
+      return result.level;
     },
     {
       refreshDeps: [dappInfo?.origin],
@@ -102,6 +100,106 @@ export const DappInfoPopup: React.FC<{
   const collectionList = useMemo(() => {
     return basicDappInfo?.collected_list || dappInfo?.info?.collected_list;
   }, [basicDappInfo?.collected_list, dappInfo?.info?.collected_list]);
+
+  const listByAvailableWidth = useMemo(() => {
+    if (!listByRowWidth || !listByLabelWidth) {
+      return 0;
+    }
+
+    return Math.max(
+      0,
+      listByRowWidth - listByLabelWidth - LIST_BY_MIN_LABEL_GAP,
+    );
+  }, [listByLabelWidth, listByRowWidth]);
+
+  const listByVisibleCount = useMemo(() => {
+    const totalCount = collectionList?.length || 0;
+
+    if (!totalCount) {
+      return 0;
+    }
+
+    if (!listByAvailableWidth) {
+      return Math.min(totalCount, DEFAULT_VISIBLE_LIST_BY_COUNT);
+    }
+
+    const maxVisibleCount = Math.min(
+      totalCount,
+      Math.floor(
+        (listByAvailableWidth + LIST_BY_GAP) /
+          (LIST_BY_ICON_SIZE + LIST_BY_GAP),
+      ),
+    );
+
+    if (maxVisibleCount >= totalCount) {
+      return totalCount;
+    }
+
+    for (
+      let visibleCount = maxVisibleCount;
+      visibleCount >= 0;
+      visibleCount -= 1
+    ) {
+      const hiddenCount = totalCount - visibleCount;
+      const extraMoreWidth = hiddenCount
+        ? listByMoreWidth || `${hiddenCount}`.length * 8 + 10
+        : 0;
+      const iconsWidth = visibleCount
+        ? visibleCount * LIST_BY_ICON_SIZE + (visibleCount - 1) * LIST_BY_GAP
+        : 0;
+      const totalWidth =
+        iconsWidth +
+        (hiddenCount && visibleCount ? LIST_BY_GAP : 0) +
+        extraMoreWidth;
+
+      if (totalWidth <= listByAvailableWidth) {
+        return visibleCount;
+      }
+    }
+
+    return 0;
+  }, [collectionList, listByAvailableWidth, listByMoreWidth]);
+
+  const hiddenListByCount = Math.max(
+    0,
+    (collectionList?.length || 0) - listByVisibleCount,
+  );
+
+  const visibleCollectionList = useMemo(() => {
+    return collectionList?.slice(0, listByVisibleCount) || [];
+  }, [collectionList, listByVisibleCount]);
+
+  const setRoundedWidth = useCallback(
+    (
+      setter: React.Dispatch<React.SetStateAction<number>>,
+      nextWidth: number,
+    ) => {
+      const roundedWidth = Math.ceil(nextWidth);
+
+      setter(prevWidth =>
+        prevWidth === roundedWidth ? prevWidth : roundedWidth,
+      );
+    },
+    [],
+  );
+
+  const handleFavoritePress = useCallback(() => {
+    if (!bookmarkKey || !dappInfo) {
+      return;
+    }
+
+    if (getBookmark(bookmarkKey)) {
+      removeBookmark(bookmarkKey);
+      return;
+    }
+
+    addBookmark({
+      url: bookmarkKey,
+      name: dappInfo.info?.name || dappInfo.name,
+      icon: dappInfo.icon,
+      createdAt: Date.now(),
+    });
+  }, [addBookmark, bookmarkKey, dappInfo, getBookmark, removeBookmark]);
 
   useEffect(() => {
     if (visible) {
@@ -146,12 +244,20 @@ export const DappInfoPopup: React.FC<{
                 style={styles.dappIcon}
               />
               <View style={styles.dappContent}>
-                <Text style={[styles.dappTitle]} numberOfLines={1}>
-                  {dappInfo?.info?.name ||
-                    dappInfo.name ||
-                    dappInfo.origin.split('://')[1] ||
-                    dappInfo.origin}
-                </Text>
+                <View style={styles.dappContentHeader}>
+                  <Text style={[styles.dappTitle]} numberOfLines={1}>
+                    {dappInfo?.info?.name ||
+                      dappInfo.name ||
+                      dappInfo.origin.split('://')[1] ||
+                      dappInfo.origin}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.favoriteButton}
+                    hitSlop={8}
+                    onPress={handleFavoritePress}>
+                    {isFavorite ? <RcIconStarFull /> : <RcIconStar />}
+                  </TouchableOpacity>
+                </View>
                 <Text style={styles.dappOrigin} numberOfLines={1}>
                   {dappInfo.origin}
                 </Text>
@@ -164,11 +270,33 @@ export const DappInfoPopup: React.FC<{
             ) : null}
             <View style={styles.divider} />
             <View style={styles.list}>
-              <View style={styles.listItem}>
-                <Text style={styles.listLabel}>Listed by</Text>
+              <View
+                style={styles.listItem}
+                onLayout={event => {
+                  setRoundedWidth(
+                    setListByRowWidth,
+                    event.nativeEvent.layout.width,
+                  );
+                }}>
+                <Text
+                  style={styles.listLabel}
+                  onLayout={event => {
+                    setRoundedWidth(
+                      setListByLabelWidth,
+                      event.nativeEvent.layout.width,
+                    );
+                  }}>
+                  Listed by
+                </Text>
                 {collectionList?.length ? (
-                  <View style={styles.listBy}>
-                    {collectionList?.slice(0, 3).map((item, index) => (
+                  <View
+                    style={[
+                      styles.listBy,
+                      listByAvailableWidth
+                        ? { maxWidth: listByAvailableWidth }
+                        : null,
+                    ]}>
+                    {visibleCollectionList.map((item, index) => (
                       <Image
                         key={index}
                         source={{
@@ -177,9 +305,16 @@ export const DappInfoPopup: React.FC<{
                         style={styles.listByIcon as any}
                       />
                     ))}
-                    {collectionList?.length > 3 ? (
-                      <Text style={styles.listByMore}>
-                        +{collectionList?.length - 3}
+                    {hiddenListByCount ? (
+                      <Text
+                        style={styles.listByMore}
+                        onLayout={event => {
+                          setRoundedWidth(
+                            setListByMoreWidth,
+                            event.nativeEvent.layout.width,
+                          );
+                        }}>
+                        +{hiddenListByCount}
                       </Text>
                     ) : null}
                   </View>
@@ -188,7 +323,31 @@ export const DappInfoPopup: React.FC<{
               <View style={styles.listItem}>
                 <Text style={styles.listLabel}>Site popularity</Text>
 
-                <Text style={styles.sitePopularity}>{level}</Text>
+                {level === 'high' ? (
+                  <View style={[styles.tag, styles.tagHigh]}>
+                    <Text style={[styles.tagText, styles.tagTextHigh]}>
+                      High
+                    </Text>
+                  </View>
+                ) : level === 'medium' ? (
+                  <View style={[styles.tag, styles.tagMedium]}>
+                    <Text style={[styles.tagText, styles.tagTextMedium]}>
+                      Medium
+                    </Text>
+                  </View>
+                ) : level === 'low' ? (
+                  <View style={[styles.tag, styles.tagMedium]}>
+                    <Text style={[styles.tagText, styles.tagTextMedium]}>
+                      Low
+                    </Text>
+                  </View>
+                ) : level === 'very_low' ? (
+                  <View style={[styles.tag, styles.tagMedium]}>
+                    <Text style={[styles.tagText, styles.tagTextMedium]}>
+                      Very Low
+                    </Text>
+                  </View>
+                ) : null}
               </View>
               <View style={styles.listItem}>
                 <Text style={styles.listLabel}>Category</Text>
@@ -201,12 +360,20 @@ export const DappInfoPopup: React.FC<{
               <View style={styles.checkBoxContainer}>
                 <TouchableOpacity
                   onPress={() => {
-                    onChangeRemind?.(!isRemind);
+                    if (!dappInfo) {
+                      return;
+                    }
+
+                    dappService.patchDapps({
+                      [dappInfo.origin]: {
+                        isSkipRemind: !isSkipRemind,
+                      },
+                    });
                   }}>
                   <View style={styles.checkBoxContent}>
-                    <CheckBoxRect checked={!isRemind} />
+                    <CheckBoxRect checked={isSkipRemind} />
                     <Text style={styles.checkBoxText}>
-                      Don’t remind anymore
+                      Skip this page next time
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -216,21 +383,8 @@ export const DappInfoPopup: React.FC<{
                 onPress={() => {
                   onOpenDapp?.(dappInfo?.url || dappInfo?.origin);
                 }}
-                // title={`Open ${dappInfo.info?.name || dappInfo.origin}`}
-                title={({ titleStyle }) => {
-                  return (
-                    <Text
-                      style={[
-                        titleStyle,
-                        {
-                          paddingHorizontal: 8,
-                        },
-                      ]}
-                      numberOfLines={1}>
-                      {`Open ${dappInfo.info?.name || dappInfo.origin}`}
-                    </Text>
-                  );
-                }}
+                title={`Open ${dappInfo.info?.name || dappInfo.origin}`}
+                titleStyle={styles.openButtonTitle}
               />
             </View>
           </BottomSheetScrollView>
@@ -240,7 +394,7 @@ export const DappInfoPopup: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+const getStyle = createGetStyles2024(({ colors2024, isLight: _isLight }) => {
   return {
     popupStyle: {
       borderRadius: 32,
@@ -299,16 +453,30 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontSize: 16,
       lineHeight: 20,
       color: colors2024['neutral-title-1'],
+      flex: 1,
+    },
+    dappContentHeader: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
     },
     dappContent: {
       minWidth: 0,
       flex: 1,
     },
+    favoriteButton: {
+      padding: 4,
+      marginRight: -4,
+    },
+    openButtonTitle: {
+      paddingHorizontal: 8,
+    },
     dappOrigin: {
       marginTop: 4,
       fontFamily: 'SF Pro Rounded',
       fontWeight: '500',
-      fontSize: 13,
+      fontSize: 14,
       lineHeight: 18,
       color: colors2024['neutral-secondary'],
     },
@@ -318,7 +486,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
       fontWeight: '500',
       fontSize: 14,
-      lineHeight: 24,
+      lineHeight: 20,
       color: colors2024['neutral-secondary'],
     },
 
@@ -335,11 +503,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingVertical: 12,
+      paddingVertical: 10,
     },
     listLabel: {
       fontFamily: 'SF Pro Rounded',
-      fontWeight: '700',
+      fontWeight: '500',
       fontSize: 14,
       lineHeight: 18,
       color: colors2024['neutral-secondary'],
@@ -348,6 +516,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'flex-end',
+      flexShrink: 1,
       gap: 4,
     },
     listByIcon: {
@@ -374,6 +544,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingHorizontal: 4,
       paddingVertical: 1,
       borderRadius: 4,
+      minWidth: 38,
     },
     tagText: {
       fontFamily: 'SF Pro Rounded',
@@ -381,7 +552,38 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontSize: 12,
       lineHeight: 16,
       color: colors2024['neutral-secondary'],
+      textAlign: 'center',
     },
+
+    tagHigh: {
+      backgroundColor: colors2024['green-light-1'],
+    },
+    tagTextHigh: {
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['green-default'],
+    },
+
+    tagMedium: {
+      backgroundColor: colors2024['orange-light-1'],
+    },
+    tagTextMedium: {
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['orange-default'],
+    },
+    // tagLow: {
+    //   backgroundColor: colors2024['green-light-1'],
+    // },
+    // tagTextLow: {
+    //   fontFamily: 'SF Pro Rounded',
+    //   color: colors2024['green-default'],
+    // },
+    // tagVeryLow: {
+    //   backgroundColor: colors2024['green-light-1'],
+    // },
+    // tagTextVeryLow: {
+    //   fontFamily: 'SF Pro Rounded',
+    //   color: colors2024['green-default'],
+    // },
 
     footer: {
       marginTop: 'auto',

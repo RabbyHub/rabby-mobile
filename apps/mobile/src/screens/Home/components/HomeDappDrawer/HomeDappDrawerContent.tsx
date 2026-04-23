@@ -28,7 +28,10 @@ import { DynamicCustomMaterialTabBar } from '../../../TokenDetail/components/Cus
 // import { useMarketVisibleTokenPriceRefresh } from './hooks/useMarketVisibleTokenPriceRefresh';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { DappInfo } from '@/core/services/dappService';
-import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
+import {
+  getBookmarkList,
+  useBrowserBookmark,
+} from '@/hooks/browser/useBrowserBookmark';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import CustomLabel from '@/screens/TokenDetail/components/CustomLabel';
@@ -55,26 +58,35 @@ import { Button } from '@/components2024/Button';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { DappInfoPopup } from './HomeDappDrawerPopup';
 import { useMemoizedFn } from 'ahooks';
-import { dappService } from '@/core/services';
+import { browserService, dappService } from '@/core/services';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
+import { useDapps } from '@/hooks/useDapps';
 
 type HotDappListItem = (typeof dappList)[number];
 
-const mapHotDappListToDappInfo = (
-  list: HotDappListItem[],
-  lang: string,
-): DappInfo[] => {
+const mapHotDappListToDappInfo = ({
+  dapps,
+  list,
+  lang,
+}: {
+  dapps: Record<string, DappInfo>;
+  list: HotDappListItem[];
+  lang: string;
+}): DappInfo[] => {
   const isZh = lang.toLowerCase().startsWith('zh');
 
   return list.map(item => {
+    const dapp = dapps[item.origin];
     return {
+      ...dapp,
       origin: item.origin,
       icon: item.logo || '',
       name: item.name,
       chainId: undefined as unknown as DappInfo['chainId'],
       isDapp: true,
       info: {
+        ...dapp?.info,
         id: item.origin.replace(/^https?:\/\//, ''),
         name: item.name,
         logo_url: item.logo || '',
@@ -147,11 +159,23 @@ const tabs = [
     id: 'Predict',
     label: 'Predict',
   },
+  {
+    id: 'DEX',
+    label: 'DEX',
+  },
+  {
+    id: 'NFT',
+    label: 'NFT',
+  },
 ] as const;
 type TabKey = (typeof tabs)[number]['id'];
-const dappTabAtom = atomByMMKV<TabKey>('@dapp.activeTab', 'favorite', {
-  getOnInit: true,
-});
+const dappTabAtom = atomByMMKV<TabKey>(
+  '@dapp.activeTab',
+  browserService.bookmark.selectors.selectTotal() ? 'favorite' : 'all',
+  {
+    getOnInit: true,
+  },
+);
 
 export const dappRemindAtom = atomByMMKV<boolean>('@dapp.remind', true, {
   getOnInit: true,
@@ -186,11 +210,10 @@ export const HomeDappDrawerContent: React.FC<{
   const previousIsDrawerExpandedRef = useRef(isDrawerExpanded);
   const { t } = useTranslation();
   const { activeTab, setActiveTab } = useDappTab();
-  const [isRemind, setIsRemind] = useAtom(dappRemindAtom);
   const [selectedDapp, setSelectedDapp] = useState<DappInfo>();
   const { setPartialBrowserState, openTab } = useBrowser();
   const handleDappPress = useMemoizedFn((item: DappInfo) => {
-    if (isRemind) {
+    if (!item.isSkipRemind) {
       setSelectedDapp(item);
       return;
     }
@@ -218,6 +241,7 @@ export const HomeDappDrawerContent: React.FC<{
       <DynamicCustomMaterialTabBar
         materialTabBarProps={{
           ...props,
+          scrollEnabled: true,
           tabStyle: styles.tabBar,
         }}
         containerStyle={styles.tabsBarContainer}
@@ -324,7 +348,7 @@ export const HomeDappDrawerContent: React.FC<{
       <View style={styles.header}>
         <Text style={styles.title}>
           {/* {t('page.home.DappDrawer.favorite')} */}
-          Website
+          Websites
         </Text>
         {activeTab === 'favorite' ? (
           <TouchableOpacity
@@ -429,10 +453,6 @@ export const HomeDappDrawerContent: React.FC<{
         visible={!!selectedDapp}
         onClose={handleCloseDappInfoPopup}
         dappInfo={selectedDapp}
-        isRemind={isRemind}
-        onChangeRemind={value => {
-          setIsRemind(value);
-        }}
         onOpenDapp={(url: string) => {
           openTab(url, {
             isDapp: true,
@@ -468,9 +488,10 @@ const DappList: React.FC<{
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const lang = useTranslation().i18n.language;
+  const { dapps } = useDapps();
   const hotDappInfoList = useMemo(
-    () => mapHotDappListToDappInfo(dappList, lang),
-    [lang],
+    () => mapHotDappListToDappInfo({ dapps, list: dappList, lang }),
+    [dapps, lang],
   );
 
   const favoriteList = useMemo(
@@ -717,7 +738,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       marginTop: 4,
       fontFamily: 'SF Pro Rounded',
       fontWeight: '500',
-      fontSize: 13,
+      fontSize: 14,
       lineHeight: 18,
       color: colors2024['neutral-secondary'],
     },
