@@ -204,24 +204,28 @@ ensure_inpage_bridge_assets() {
   local current_project_dir
   current_project_dir=$(resolve_mobile_project_dir)
 
-  local missing_targets=()
-  local required_targets=(
-    "$current_project_dir/assets/custom/InpageBridgeWeb3.js"
-    "$current_project_dir/src/core/bridges/InpageBridgeWeb3.js"
-  )
+  local missing_targets=""
+  local target
 
-  for target in "${required_targets[@]}"; do
+  for target in \
+    "$current_project_dir/assets/custom/InpageBridgeWeb3.js" \
+    "$current_project_dir/src/core/bridges/InpageBridgeWeb3.js"
+  do
     if [ ! -s "$target" ]; then
-      missing_targets+=("$target")
+      missing_targets="${missing_targets}${target}
+"
     fi
   done
 
-  if [ "${#missing_targets[@]}" -eq 0 ]; then
+  if [ -z "$missing_targets" ]; then
     return 0
   fi
 
   echo "[ensure_inpage_bridge_assets] regenerate inpage bridge assets because these targets are missing:"
-  printf '[ensure_inpage_bridge_assets]   - %s\n' "${missing_targets[@]}"
+  printf '%s' "$missing_targets" | while IFS= read -r target; do
+    [ -n "$target" ] || continue
+    printf '[ensure_inpage_bridge_assets]   - %s\n' "$target"
+  done
 
   (
     cd "$current_project_dir" &&
