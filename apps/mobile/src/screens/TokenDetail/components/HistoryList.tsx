@@ -321,6 +321,7 @@ export const TokenDetailHistoryList = ({
         refreshLoading={loading}
         isForMultipleAddress={false}
         appendBottom={300}
+        style={styles.overwriteListContainer}
         moreLoadingLength={5}
         loadMore={() => {
           // avoid exec multi times loadMore
@@ -336,6 +337,9 @@ export const TokenDetailHistoryList = ({
 };
 
 const getStyle = createGetStyles2024(ctx => ({
+  overwriteListContainer: {
+    paddingHorizontal: 12,
+  },
   container: {
     width: '100%',
     // paddingHorizontal: 15,

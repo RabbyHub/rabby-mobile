@@ -438,8 +438,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       overflow: 'hidden',
     },
     balanceOverviewContainer: {
-      paddingLeft: 23,
-      paddingRight: 16,
+      paddingLeft: 12,
+      paddingRight: 12,
     },
     headerRightContent: {
       flexDirection: 'row',
@@ -463,6 +463,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       justifyContent: 'space-between',
       overflow: 'hidden',
+      paddingLeft: 5,
+      paddingRight: 9,
     },
     floatingBarContent: {
       flexDirection: 'column',
