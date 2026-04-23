@@ -827,8 +827,6 @@ export const apisPerpsStore = {
 };
 
 export const usePerpsStore = () => {
-  const state = perpsStore(s => s);
-
   const setFillsOrderTpOrSl = useMemoizedFn(
     (payload: Record<string, 'tp' | 'sl'>) => {
       setPerpsState(prev => ({ ...prev, fillsOrderTpOrSl: payload }));
@@ -968,7 +966,6 @@ export const usePerpsStore = () => {
 
   return {
     // State
-    state,
     setState: setPerpsState,
 
     // Reducers

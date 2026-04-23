@@ -1,8 +1,4 @@
-import {
-  AccountHistoryItem,
-  MarketDataMap,
-  perpsStore,
-} from '@/hooks/perps/usePerpsStore';
+import { AccountHistoryItem, perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { WsFill } from '@rabby-wallet/hyperliquid-sdk';
@@ -21,10 +17,9 @@ import RcArrowRight2CC from '@/assets2024/icons/copyTrading/IconRrightArrowCC.sv
 import { Text } from '@/components/Typography';
 
 export const PerpsHistorySection: React.FC<{
-  marketDataMap: MarketDataMap;
   historyList?: (AccountHistoryItem | WsFill)[];
   coin?: string;
-}> = ({ marketDataMap, historyList: list, coin }) => {
+}> = ({ historyList: list, coin }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -32,6 +27,7 @@ export const PerpsHistorySection: React.FC<{
     return (list || []).slice(0, 3);
   }, [list]);
 
+  const marketDataMap = perpsStore(s => s.marketDataMap);
   const fillsOrderTpOrSl = perpsStore(s => s.fillsOrderTpOrSl);
 
   const [selectedFill, setSelectedFill] = useState<

@@ -13,43 +13,29 @@ import {
 } from 'react-native';
 import { Button } from '@/components2024/Button';
 import { PerpsAccountCard } from './components/PerpsAccountCard';
-import { PerpsAgentsLimitModal } from './components/PerpsAgentsLimitModal';
-import { PerpsGuidePopup } from './components/PerpsGuidePopup';
-import { PerpsDepositPopup } from './components/PerpsDepositPopup';
-import { PerpsWithdrawPopup } from './components/PerpsWithdrawPopup';
-import { PerpsSpotSwapPopup } from './components/PerpsSpotSwapPopup';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
-import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 import RcIconBackTopCC from '@/assets2024/icons/perps/IconBackTopCC.svg';
 import { usePerpsPopupState } from './hooks/usePerpsPopupState';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { Account } from '@/core/services/preference';
-import { PerpsAccountLogoutPopup } from './components/PerpsAccountLogoutPopup';
 import { usePerpsDeposit } from './hooks/usePerpsDeposit';
-import { PerpsMarketItem } from './components/PerpsMarketSection/PerpsMarketItem';
-import { PerpsCategorySectionHeader } from './components/PerpsMarketSection/PerpsCategorySectionHeader';
-import { PerpsSearchInlineInput } from './components/PerpsMarketSection/PerpsSearchInlineInput';
+import { PerpsMarketHomeList } from './components/PerpsMarketSection/PerpsMarketHomeList';
 import { PerpsPositionSection } from './components/PerpsPositionSection';
-import { apisPerps } from '@/core/apis';
-import { PerpsAccountSelectorPopup } from './components/PerpsAccountSelectorPopup';
+import { PerpsPopupGroup } from './components/PerpsPopupGroup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
 import { PerpsNativeHeader } from './components/PerpsHeaderTitle';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { calculateDistanceToLiquidation } from './components/PerpsPositionSection/utils';
-import { PerpsRiskLevelPopup } from './components/PerpsPositionSection/PerpsRiskLevelPopup';
 import { PerpsSkeletonLoader } from './components/PerpsSkeletonLoader';
 import { usePerpsPosition } from '../PerpsMarketDetail/hooks/usePerpsPosition';
-import { PerpsInvitePopup } from './components/PerpsInvitePopup';
 import { checkPerpsReference, getStatsReportSide } from '@/utils/perps';
 import { perpsService } from '@/core/services';
 import { stats } from '@/utils/stats';
 import { APP_VERSIONS } from '@/constant';
 import BigNumber from 'bignumber.js';
-import { usePerpsGroupedMarketData } from './hooks/usePerpsGroupedMarketData';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
-import { useShallow } from 'zustand/react/shallow';
 
 export const PerpsOriginScreen = () => {
   const { t } = useTranslation();
@@ -64,13 +50,10 @@ export const PerpsOriginScreen = () => {
     currentPerpsAccount,
     isLogin,
     isInitialized,
-    marketData,
     userFills,
-    marketDataMap,
     logout,
     login,
     handleWithdraw,
-    homeHistoryList,
     handleDeleteAgent,
     hasPermission,
     refreshData,
@@ -82,20 +65,10 @@ export const PerpsOriginScreen = () => {
     handleActionApproveStatus,
     handleSafeSetReference,
     setInitialized,
-
-    favoriteMarkets,
   } = usePerpsState();
   const { handleClosePosition, handleStableCoinOrder } = usePerpsPosition();
-  const { isUnifiedAccount } = usePerpsAccount();
 
-  const [popupState, setPopupState] = usePerpsPopupState();
-
-  const backendCategories = perpsStore(useShallow(s => s.categories));
-  const { visibleHome } = usePerpsGroupedMarketData({
-    marketData,
-    favoriteMarkets,
-    backendCategories,
-  });
+  const [, setPopupState] = usePerpsPopupState();
 
   const scrollViewRef = useRef<ScrollView>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
@@ -142,6 +115,18 @@ export const PerpsOriginScreen = () => {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   });
 
+  const handleHomeItemPress = useMemoizedFn((market: string) => {
+    scrollToTop();
+    naviPush(RootNames.StackTransaction, {
+      screen: RootNames.PerpsMarketDetail,
+      params: {
+        market,
+        fromSource: 'openPosition',
+        showOpenPosition: true,
+      },
+    });
+  });
+
   const handleShowRiskPopup = useMemoizedFn((coin: string) => {
     setSelectedCoin(coin);
   });
@@ -170,6 +155,10 @@ export const PerpsOriginScreen = () => {
     },
   );
 
+  const selectedCoinMarketData = perpsStore(s =>
+    selectedCoin ? s.marketDataMap[selectedCoin] : undefined,
+  );
+
   const riskPopupData = useMemo(() => {
     if (!selectedCoin) {
       return null;
@@ -182,15 +171,14 @@ export const PerpsOriginScreen = () => {
       return null;
     }
 
-    const marketDataItem = marketDataMap[selectedCoin];
-    const markPrice = Number(marketDataItem?.markPx || 0);
+    const markPrice = Number(selectedCoinMarketData?.markPx || 0);
     const liquidationPrice = Number(
       selectedPosition.position.liquidationPx || 0,
     );
 
     const distanceLiquidation = calculateDistanceToLiquidation(
       selectedPosition.position.liquidationPx,
-      marketDataItem?.markPx,
+      selectedCoinMarketData?.markPx,
     );
     return {
       distanceLiquidation,
@@ -200,10 +188,10 @@ export const PerpsOriginScreen = () => {
           ? 'Long'
           : ('Short' as 'Long' | 'Short'),
       currentPrice: markPrice,
-      pxDecimals: marketDataItem?.pxDecimals || 2,
+      pxDecimals: selectedCoinMarketData?.pxDecimals || 2,
       liquidationPrice,
     };
-  }, [selectedCoin, positionAndOpenOrders, marketDataMap]);
+  }, [selectedCoin, positionAndOpenOrders, selectedCoinMarketData]);
 
   return (
     <>
@@ -240,9 +228,9 @@ export const PerpsOriginScreen = () => {
                 handleCloseRiskPopup={handleCloseRiskPopup}
                 positionAndOpenOrders={positionAndOpenOrders}
                 handleActionApproveStatus={handleActionApproveStatus}
-                marketDataMap={marketDataMap}
                 onClosePosition={async position => {
-                  const marketDataItem = marketDataMap[position.coin];
+                  const marketDataItem =
+                    perpsStore.getState().marketDataMap[position.coin];
                   const res = await handleClosePosition({
                     coin: position.coin,
                     size: Math.abs(Number(position.szi || 0)).toString() || '0',
@@ -276,32 +264,7 @@ export const PerpsOriginScreen = () => {
                 }}
               />
 
-              {visibleHome.map((cat, catIdx) => {
-                return (
-                  <View key={cat.id}>
-                    <PerpsCategorySectionHeader cfg={cat.cfg} />
-                    {cat.items.map((item, i) => (
-                      <PerpsMarketItem
-                        key={`${cat.id}-${item.name}`}
-                        item={item}
-                        rank={cat.cfg.showRankOnHome ? i + 1 : undefined}
-                        onPress={() => {
-                          scrollToTop();
-                          naviPush(RootNames.StackTransaction, {
-                            screen: RootNames.PerpsMarketDetail,
-                            params: {
-                              market: item.name,
-                              fromSource: 'openPosition',
-                              showOpenPosition: true,
-                            },
-                          });
-                        }}
-                      />
-                    ))}
-                    {catIdx === 0 && <PerpsSearchInlineInput />}
-                  </View>
-                );
-              })}
+              <PerpsMarketHomeList onItemPress={handleHomeItemPress} />
               <View style={styles.emptyPadding} />
             </ScrollView>
 
@@ -350,146 +313,20 @@ export const PerpsOriginScreen = () => {
           </View>
         )}
       </NormalScreenContainer2024>
-      <PerpsAccountSelectorPopup
-        visible={popupState.isShowLoginPopup}
-        onClose={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowLoginPopup: false,
-          }));
-        }}
-        value={currentPerpsAccount}
-        onChange={handleLogin}
-        title={t('page.perps.selectAccountTitle')}
-      />
-      <PerpsAccountLogoutPopup
-        visible={popupState.isShowLogoutPopup}
-        onClose={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowLogoutPopup: false,
-          }));
-        }}
+      <PerpsPopupGroup
+        currentPerpsAccount={currentPerpsAccount}
+        onLogin={handleLogin}
         onLogout={handleLogout}
-        account={currentPerpsAccount}
-      />
-      <PerpsAgentsLimitModal
-        visible={popupState.isShowDeleteAgentPopup}
-        onCancel={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowDeleteAgentPopup: false,
-          }));
-        }}
-        onConfirm={() => {
-          handleDeleteAgent();
-          setPopupState(prev => ({
-            ...prev,
-            isShowDeleteAgentPopup: false,
-          }));
-        }}
-      />
-      <PerpsGuidePopup
-        visible={popupState.isShowGuidePopup}
-        onClose={async () => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowGuidePopup: false,
-          }));
-        }}
-        onComplete={() => {
-          apisPerps.setHasDoneNewUserProcess(true);
-          setPopupState(prev => ({
-            ...prev,
-            isShowGuidePopup: false,
-          }));
-        }}
-      />
-      <PerpsDepositPopup
-        account={currentPerpsAccount}
-        visible={popupState.isShowDepositPopup}
-        onClose={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowDepositPopup: false,
-          }));
-        }}
-        onDeposit={async (txs, amount, cacheBridgeHistory, options) => {
-          try {
-            return await handleDeposit(
-              txs,
-              amount,
-              cacheBridgeHistory,
-              options,
-            );
-          } catch (e) {
-            console.error(e);
-          }
-        }}
-      />
-      <PerpsWithdrawPopup
-        visible={popupState.isShowWithdrawPopup}
-        marketDataMap={marketDataMap}
-        onWithdraw={async (amount, isHypeWithdraw, targetAsset) => {
-          await handleWithdraw(
-            amount,
-            isHypeWithdraw,
-            isUnifiedAccount,
-            targetAsset,
-          );
-          setPopupState(prev => ({
-            ...prev,
-            isShowWithdrawPopup: false,
-          }));
-        }}
-        onClose={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowWithdrawPopup: false,
-          }));
-        }}
-      />
-      <PerpsSpotSwapPopup
-        visible={popupState.isShowSwapPopup}
-        onClose={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowSwapPopup: false,
-          }));
-        }}
+        onDeleteAgent={handleDeleteAgent}
+        onDeposit={handleDeposit}
+        onWithdraw={handleWithdraw}
         onSpotOrder={handleStableCoinOrder}
-        onSwapSuccess={() => {
-          // Balance refreshed via WebSocket subscription
-        }}
-        onDepositPress={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowDepositPopup: true,
-          }));
-        }}
-      />
-      {riskPopupData && (
-        <PerpsRiskLevelPopup
-          isCross={riskPopupData.isCross}
-          direction={riskPopupData.direction}
-          visible={!!riskPopupData}
-          pxDecimals={riskPopupData?.pxDecimals || 2}
-          onClose={handleCloseRiskPopup}
-          distanceLiquidation={riskPopupData.distanceLiquidation}
-          currentPrice={riskPopupData.currentPrice}
-          liquidationPrice={riskPopupData.liquidationPrice}
-        />
-      )}
-      <PerpsInvitePopup
-        visible={isShowInvite}
-        onClose={() => setIsShowInvite(false)}
-        onInvite={async () => {
-          await handleActionApproveStatus({
-            isHideToast: true,
-          });
-          await handleSafeSetReference();
-          setIsShowInvite(false);
-        }}
+        onApproveStatus={handleActionApproveStatus}
+        onSafeSetReference={handleSafeSetReference}
+        riskPopupData={riskPopupData}
+        onCloseRiskPopup={handleCloseRiskPopup}
+        isShowInvite={isShowInvite}
+        setIsShowInvite={setIsShowInvite}
       />
     </>
   );

@@ -7,7 +7,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useRoute } from '@react-navigation/native';
-import { sortBy } from 'lodash';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -19,25 +18,13 @@ export const PerpsHistoryScreen = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
   const navigation = useRabbyAppNavigation();
-  const {
-    marketData,
-    marketDataMap,
-    userFills,
-    localLoadingHistory,
-    userAccountHistory,
-  } = perpsStore(
+  const { userFills, localLoadingHistory, userAccountHistory } = perpsStore(
     useShallow(s => ({
-      marketData: s.marketData,
-      marketDataMap: s.marketDataMap,
       userFills: s.userFills,
       localLoadingHistory: s.localLoadingHistory,
       userAccountHistory: s.userAccountHistory,
     })),
   );
-
-  const data = React.useMemo(() => {
-    return sortBy(marketData, item => -(item.dayNtlVlm || 0));
-  }, [marketData]);
 
   const route =
     useRoute<
@@ -65,7 +52,7 @@ export const PerpsHistoryScreen = () => {
   return (
     <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
       <View style={styles.container}>
-        <PerpsHistoryList marketDataMap={marketDataMap} historyList={list} />
+        <PerpsHistoryList historyList={list} />
       </View>
     </NormalScreenContainer2024>
   );

@@ -1,7 +1,7 @@
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { apisPerps } from '@/core/apis';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -97,9 +97,7 @@ export const PerpsMarketDetailScreen = () => {
   const {
     isInitialized,
     positionAndOpenOrders,
-    marketDataMap,
     perpFee,
-    marketData,
     hasPermission,
     currentPerpsAccount,
     isLogin,
@@ -111,6 +109,8 @@ export const PerpsMarketDetailScreen = () => {
     handleDeleteAgent,
     handleEnableUnifiedAccount,
   } = usePerpsState();
+
+  const currentAssetCtx = perpsStore(s => s.marketDataMap[coin]);
   // const hasPermission = true;
   const [showRiskPopup, setShowRiskPopup] = useState(false);
   const [selectedInterval, setSelectedInterval] =
@@ -149,10 +149,6 @@ export const PerpsMarketDetailScreen = () => {
     return unsubscribe;
   }, [navigation, fromSource]);
 
-  const market = useMemo(() => {
-    return marketDataMap[coin];
-  }, [marketDataMap, coin]);
-
   const { activeAssetCtx, activeAssetData } = useActiveAssetSubscription(coin);
 
   const [positionDirection, setPositionDirection] = React.useState<
@@ -167,13 +163,7 @@ export const PerpsMarketDetailScreen = () => {
     );
   }, [positionAndOpenOrders, coin]);
 
-  const providerFee = React.useMemo(() => {
-    return perpFee;
-  }, [perpFee]);
-
-  const currentAssetCtx = useMemo(() => {
-    return marketDataMap[coin];
-  }, [marketDataMap, coin]);
+  const providerFee = perpFee;
 
   const { tpPrice, slPrice, tpOid, slOid } = useMemo(() => {
     if (
@@ -359,26 +349,31 @@ export const PerpsMarketDetailScreen = () => {
   }, [activeAssetCtx?.markPx, currentAssetCtx?.markPx]);
 
   // Position data if exists
-  const positionData = currentPosition
-    ? {
-        pnl: Number(currentPosition.position.unrealizedPnl || 0),
-        positionValue: Number(currentPosition.position.positionValue || 0),
-        size: Math.abs(Number(currentPosition.position.szi || 0)),
-        marginUsed: Number(currentPosition.position.marginUsed || 0),
-        type: currentPosition.position.leverage.type,
-        leverage: Number(currentPosition.position.leverage.value || 1),
-        entryPrice: Number(currentPosition.position.entryPx || 0),
-        liquidationPrice: Number(
-          currentPosition.position.liquidationPx || 0,
-        ).toFixed(currentAssetCtx?.pxDecimals || 2),
-        autoClose: false, // This would come from SDK
-        direction: (Number(currentPosition.position.szi || 0) > 0
-          ? 'Long'
-          : 'Short') as 'Long' | 'Short',
-        pnlPercent: Number(currentPosition.position.returnOnEquity || 0) * 100,
-        fundingPayments: currentPosition.position.cumFunding.sinceOpen,
-      }
-    : null;
+  const positionData = useMemo(
+    () =>
+      currentPosition
+        ? {
+            pnl: Number(currentPosition.position.unrealizedPnl || 0),
+            positionValue: Number(currentPosition.position.positionValue || 0),
+            size: Math.abs(Number(currentPosition.position.szi || 0)),
+            marginUsed: Number(currentPosition.position.marginUsed || 0),
+            type: currentPosition.position.leverage.type,
+            leverage: Number(currentPosition.position.leverage.value || 1),
+            entryPrice: Number(currentPosition.position.entryPx || 0),
+            liquidationPrice: Number(
+              currentPosition.position.liquidationPx || 0,
+            ).toFixed(currentAssetCtx?.pxDecimals || 2),
+            autoClose: false, // This would come from SDK
+            direction: (Number(currentPosition.position.szi || 0) > 0
+              ? 'Long'
+              : 'Short') as 'Long' | 'Short',
+            pnlPercent:
+              Number(currentPosition.position.returnOnEquity || 0) * 100,
+            fundingPayments: currentPosition.position.cumFunding.sinceOpen,
+          }
+        : null,
+    [currentPosition, currentAssetCtx?.pxDecimals],
+  );
 
   const handleCancelAutoClose = useMemoizedFn(
     async (actionType: 'tp' | 'sl') => {
@@ -514,11 +509,10 @@ export const PerpsMarketDetailScreen = () => {
             />
           )}
           {!hasPosition && <PerpsAbout coin={coin} />}
-          <PerpsInfo market={market} activeAssetCtx={activeAssetCtx} />
+          <PerpsInfo market={currentAssetCtx} activeAssetCtx={activeAssetCtx} />
 
           <PerpsHistorySection
             coin={coin}
-            marketDataMap={marketDataMap}
             historyList={singleCoinHistoryList}
           />
           {hasPosition && <PerpsAbout coin={coin} />}
@@ -598,7 +592,7 @@ export const PerpsMarketDetailScreen = () => {
       <PerpsOpenPositionPopup
         activeAssetCtx={activeAssetCtx}
         currentAssetCtx={currentAssetCtx}
-        marketDataItem={marketDataMap[coin]}
+        marketDataItem={currentAssetCtx}
         visible={openPositionVisible}
         direction={positionDirection}
         providerFee={providerFee}

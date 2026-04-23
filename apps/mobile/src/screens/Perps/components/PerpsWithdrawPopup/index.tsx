@@ -18,11 +18,7 @@ import {
 } from '@/constant/perps';
 import { apisPerps } from '@/core/apis';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
-import {
-  AccountSummary,
-  MarketDataMap,
-  perpsStore,
-} from '@/hooks/perps/usePerpsStore';
+import { AccountSummary, perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { Tip } from '@/components/Tip';
 import { useUsdInput } from '@/hooks/useUsdInput';
@@ -63,8 +59,8 @@ export const PerpsWithdrawPopup: React.FC<{
     isHypeWithdraw: boolean,
     targetAsset: keyof typeof HYPE_SEND_ASSET_TOKEN_MAP,
   ): void;
-  marketDataMap?: MarketDataMap;
-}> = ({ visible, onClose, onWithdraw, marketDataMap }) => {
+}> = ({ visible, onClose, onWithdraw }) => {
+  const hypeMarkPx = perpsStore(s => s.marketDataMap?.HYPE?.markPx);
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   const { styles, colors2024, isLight } = useTheme2024({
@@ -156,9 +152,9 @@ export const PerpsWithdrawPopup: React.FC<{
 
   // Calculate HyperEVM gas fee in USD
   const hypeGasFeeUsd = useMemo(() => {
-    const hypePrice = Number(marketDataMap?.HYPE?.markPx || 0);
+    const hypePrice = Number(hypeMarkPx || 0);
     return new BigNumber(HYPE_GAS_FEE_IN_HYPE).times(hypePrice).toNumber();
-  }, [marketDataMap]);
+  }, [hypeMarkPx]);
 
   // Effective balance after subtracting activation fee for HyperEVM
   const effectiveBalance = useMemo(() => {

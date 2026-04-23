@@ -35,6 +35,7 @@ import { showToast } from './showToast';
 import { usePerpsPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { useTranslation } from 'react-i18next';
 import { sleep } from '@/utils/async';
+import { useShallow } from 'zustand/react/shallow';
 type SignActionType =
   | 'approveAgent'
   | 'approveBuilderFee'
@@ -51,7 +52,6 @@ export const usePerpsState = () => {
   const { t } = useTranslation();
   const deleteAgentCbRef = useRef<(() => Promise<void>) | null>(null);
   const {
-    state: perpsState,
     setApproveSignatures,
     setLocalLoadingHistory,
     setUserAccountHistory,
@@ -73,6 +73,24 @@ export const usePerpsState = () => {
     fetchPerpFee,
     unsubscribeAll,
   } = usePerpsStore();
+
+  const perpsState = perpsStore(
+    useShallow(s => ({
+      currentPerpsAccount: s.currentPerpsAccount,
+      accountNeedApproveAgent: s.accountNeedApproveAgent,
+      accountNeedApproveBuilderFee: s.accountNeedApproveBuilderFee,
+      isInitialized: s.isInitialized,
+      isLogin: s.isLogin,
+      hasPermission: s.hasPermission,
+      perpFee: s.perpFee,
+      userFills: s.userFills,
+      userAccountHistory: s.userAccountHistory,
+      localLoadingHistory: s.localLoadingHistory,
+      favoriteMarkets: s.favoriteMarkets,
+      openOrders: s.openOrders,
+      currentClearinghouseState: s.currentClearinghouseState,
+    })),
+  );
   const {
     isInitialized,
     currentPerpsAccount,
@@ -808,20 +826,6 @@ export const usePerpsState = () => {
     },
   );
 
-  const homeHistoryList = useMemo(() => {
-    const list = [
-      ...perpsState.localLoadingHistory,
-      ...perpsState.userAccountHistory,
-      ...perpsState.userFills,
-    ];
-
-    return list.sort((a, b) => b.time - a.time);
-  }, [
-    perpsState.userAccountHistory,
-    perpsState.userFills,
-    perpsState.localLoadingHistory,
-  ]);
-
   const allDexsPositions = useMemo(() => {
     const res = perpsState.currentClearinghouseState?.assetPositions || [];
     return res;
@@ -906,15 +910,12 @@ export const usePerpsState = () => {
 
   return {
     // State
-    marketData: perpsState.marketData,
-    marketDataMap: perpsState.marketDataMap,
     positionAndOpenOrders,
     currentPerpsAccount: perpsState.currentPerpsAccount,
     isLogin: perpsState.isLogin,
     isInitialized: perpsState.isInitialized,
     userFills: perpsState.userFills,
     hasPermission: perpsState.hasPermission,
-    homeHistoryList,
     perpFee: perpsState.perpFee,
     userAccountHistory: perpsState.userAccountHistory,
     localLoadingHistory: perpsState.localLoadingHistory,
