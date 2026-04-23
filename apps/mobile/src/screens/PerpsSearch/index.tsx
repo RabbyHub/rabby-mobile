@@ -14,7 +14,6 @@ import {
 } from 'react-native-collapsible-tab-view';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
-import { useDebounce } from 'ahooks';
 
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
@@ -111,7 +110,17 @@ export const PerpsSearchScreen: React.FC = () => {
   );
 
   const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounce(search, { wait: 200 });
+
+  // Remember the last user-selected tab
+  const lastSelectedTabRef = useRef<PerpsCategoryId | null>(null);
+  const handleTabChange = useCallback(({ tabName }: { tabName: string }) => {
+    lastSelectedTabRef.current = tabName as PerpsCategoryId;
+  }, []);
+  const resolvedInitialTab =
+    lastSelectedTabRef.current &&
+    visibleTabIds.includes(lastSelectedTabRef.current)
+      ? lastSelectedTabRef.current
+      : defaultTab;
 
   const renderTabBar = useCallback(
     (props: any) => (
@@ -145,7 +154,7 @@ export const PerpsSearchScreen: React.FC = () => {
     navigation.goBack();
   }, [navigation]);
 
-  const isSearching = debouncedSearch.trim().length > 0;
+  const isSearching = search.trim().length > 0;
 
   return (
     <NormalScreenContainer2024 noHeader type="bg1">
@@ -166,7 +175,7 @@ export const PerpsSearchScreen: React.FC = () => {
 
       {isSearching ? (
         <PerpsSearchFilteredList
-          query={debouncedSearch}
+          query={search}
           marketData={marketData}
           onSelect={handleSelect}
         />
@@ -178,7 +187,8 @@ export const PerpsSearchScreen: React.FC = () => {
           lazy
           containerStyle={styles.container}
           headerContainerStyle={styles.tabBarWrap}
-          initialTabName={defaultTab}>
+          initialTabName={resolvedInitialTab}
+          onTabChange={handleTabChange}>
           {
             visibleSearchTabs.map(tab => {
               const isFav = tab.id === 'favorite';
