@@ -37,7 +37,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     iosForceDisableAlertForSensitiveScene: isNonPublicProductionEnv,
 
     timeTipAboutSeedPhraseAndPrivateKey: 'copy',
-    blockSubmitIfFormChangedOnAuth: __DEV__,
+    blockSubmitIfFormChangedOnAuth: false,
     toastOpenApiHttpErrorStatus: false,
     debugSwapHistorySkipLocalLookup: false,
   },
@@ -46,6 +46,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
 export const storeApiExpSettingData = {
   set: setExpSettingData,
   get: getExpSettingData,
+  getShouldBlockSubmitIfFormChangedOnAuth,
   getTimeTipAboutSeedPhraseAndPrivateKey: () => {
     if (!__DEV__) {
       return 'pasted';
@@ -68,6 +69,10 @@ function setExpSettingData(valOrFunc: UpdaterOrPartials<ScreenshotSettings>) {
 
 function getExpSettingData() {
   return experimentalSettingsStore.getState();
+}
+
+function getShouldBlockSubmitIfFormChangedOnAuth() {
+  return __DEV__ && getExpSettingData().blockSubmitIfFormChangedOnAuth;
 }
 
 const KEY = isIOS
