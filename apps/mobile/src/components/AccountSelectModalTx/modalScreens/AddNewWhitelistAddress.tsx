@@ -57,7 +57,6 @@ import { SelectAccountSheetModalSizes } from '../layout';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { touchedFeedback } from '@/utils/touch';
-import { IS_IOS } from '@/core/native/utils';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -437,7 +436,7 @@ export default ScreenAddNewWhitelistAddress;
 
 const SIZES = {
   bottomContentH: 56,
-  bottomContentBottom: IS_IOS ? 48 : 0,
+  bottomContentBottom: 48,
   containerPb: 20,
 };
 const getStyles = createGetStyles2024(ctx => ({
