@@ -416,7 +416,7 @@ export const PerpsMarketDetailScreen = () => {
           naviReplace(RootNames.StackTransaction, {
             screen: RootNames.PerpsSearch,
             params: {
-              openFromSource: 'searchPerps',
+              openFromSource: 'marketDetail',
               initialTab: 'topVolume',
             },
           });

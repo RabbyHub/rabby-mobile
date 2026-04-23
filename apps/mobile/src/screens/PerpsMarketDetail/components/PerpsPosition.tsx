@@ -141,6 +141,7 @@ export const PerpsPosition: React.FC<{
   }
 
   const displayName = currentAssetCtx?.displayName || coin;
+  const quoteAsset = currentAssetCtx?.quoteAsset || 'USDC';
 
   return (
     <>
@@ -291,10 +292,10 @@ export const PerpsPosition: React.FC<{
                     setEditMarginVisible(true);
                   }}>
                   <Text style={[styles.tagText]}>
-                    $
                     {splitNumberByStep(
                       Number(positionData?.marginUsed || 0).toFixed(2),
-                    )}
+                    )}{' '}
+                    {quoteAsset}
                   </Text>
                   <IconPerpEdit
                     width={16}

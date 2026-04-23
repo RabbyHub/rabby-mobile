@@ -395,7 +395,7 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.PerpsSearch]?: {
     initialTab?: string;
-    openFromSource?: 'openPosition' | 'searchPerps';
+    openFromSource?: 'openPosition' | 'searchPerps' | 'marketDetail';
     direction?: 'Long' | 'Short';
     autoFocus?: boolean;
   };

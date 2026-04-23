@@ -95,17 +95,18 @@ export const PerpsSearchScreen: React.FC = () => {
 
   const handleSelect = useCallback(
     (coin: string) => {
+      const openFromSource = params.openFromSource;
       naviReplace(RootNames.StackTransaction, {
         screen: RootNames.PerpsMarketDetail,
         params: {
           market: coin,
           fromSource: 'openPosition',
-          showOpenPosition: true,
+          showOpenPosition: openFromSource !== 'marketDetail',
           direction: params.direction ?? 'Long',
         },
       });
     },
-    [params.direction],
+    [params.direction, params.openFromSource],
   );
 
   const [search, setSearch] = useState('');
