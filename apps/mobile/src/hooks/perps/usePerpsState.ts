@@ -28,6 +28,7 @@ import {
   perpsStore,
   PositionAndOpenOrder,
   usePerpsStore,
+  waitForInitialWsData,
 } from './usePerpsStore';
 import * as Sentry from '@sentry/react-native';
 import { minBy, uniqBy } from 'lodash';
@@ -542,7 +543,10 @@ export const usePerpsState = () => {
 
         // checkIsNeedAutoLoginOut(initAccount.address, agentAddress);
         ensureLoginApproveSign(initAccount, agentAddress);
-        await fetchMarketData();
+        // Run HTTP meta fetch and WS first-frame wait in parallel.
+        // waitForInitialWsData resolves on first push of both
+        // currentClearinghouseState and global asset ticker, or on timeout.
+        await Promise.all([fetchMarketData(), waitForInitialWsData()]);
 
         setInitialized(true);
         return true;

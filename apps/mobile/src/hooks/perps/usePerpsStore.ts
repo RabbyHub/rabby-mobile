@@ -108,6 +108,8 @@ export interface SpotBalance {
   available: string;
 }
 
+export type MarketDataStatus = 'idle' | 'loading' | 'success' | 'error';
+
 export interface PerpsState {
   // positionAndOpenOrders: PositionAndOpenOrder[];
   currentClearinghouseState: ClearinghouseState | null;
@@ -126,11 +128,16 @@ export interface PerpsState {
   accountNeedApproveBuilderFee: boolean; // 账户是否需要重新approve builder fee
   marketData: MarketData[];
   marketDataMap: MarketDataMap;
+  marketDataStatus: MarketDataStatus;
   categories: PerpTopTokenCategory[];
   hasPermission: boolean;
   perpFee: number;
   isLogin: boolean;
   isInitialized: boolean;
+  // First WS snapshot received for the current account's clearinghouse state.
+  isUserDataReady: boolean;
+  // First WS push received for global asset ticker (AllDexsAssetCtxs).
+  isMarketTickerReady: boolean;
   approveSignatures: ApproveSignatures;
   userFills: WsFill[];
   userAccountHistory: AccountHistoryItem[];
@@ -176,8 +183,11 @@ export const initialState: PerpsState = {
   userAccountHistory: [],
   localLoadingHistory: [],
   marketDataMap: {},
+  marketDataStatus: 'idle',
   isLogin: false,
   isInitialized: false,
+  isUserDataReady: false,
+  isMarketTickerReady: false,
   userFills: [],
   approveSignatures: [],
   wsSubscriptions: [],
@@ -237,6 +247,35 @@ function setWsSubscriptions(
 
 const setInitialized = (payload: boolean) => {
   setPerpsState(prev => ({ ...prev, isInitialized: payload }));
+};
+
+// Wait until both WS first frames have arrived (user clearinghouseState + global asset ticker).
+// Falls through on timeout so init never hangs forever (e.g. brand-new account, flaky WS).
+export const waitForInitialWsData = (timeoutMs = 5000): Promise<void> => {
+  return new Promise(resolve => {
+    const isReady = (s: PerpsState) =>
+      s.isUserDataReady && s.isMarketTickerReady;
+    if (isReady(perpsStore.getState())) {
+      resolve();
+      return;
+    }
+    let done = false;
+    const finish = () => {
+      if (done) {
+        return;
+      }
+      done = true;
+      unsubscribe();
+      clearTimeout(timer);
+      resolve();
+    };
+    const unsubscribe = perpsStore.subscribe(state => {
+      if (isReady(state)) {
+        finish();
+      }
+    });
+    const timer = setTimeout(finish, timeoutMs);
+  });
 };
 
 const setHasPermission = (payload: boolean) => {
@@ -325,82 +364,170 @@ export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
     currentPerpsAccount: payload,
     isLogin: !!payload,
     isInitialized: false,
+    isUserDataReady: false,
+    // Clear stale user-scoped state so init waits for fresh WS push for the new account.
+    currentClearinghouseState: null,
     homePositionPnl: pnl,
   }));
   perpsService.setCurrentAccount(payload);
+};
+
+// Cache of the latest WS-pushed asset ctxs keyed by dex name.
+// WS pushes are full-dex snapshots, so we always keep the latest one.
+// Used to backfill ticker fields (markPx / midPx / funding ...) whenever
+// fetchMarketData writes a fresh meta list — otherwise ticker updates
+// pushed during the fetch window would be lost.
+let lastCtxsByDex: Record<string, AssetCtx[]> | null = null;
+
+const applyAssetCtxsToList = (
+  list: MarketData[],
+  ctxsByDex: Record<string, AssetCtx[]>,
+): MarketData[] => {
+  return list.map(item => {
+    const dexName = item.dexId ? item.dexId : 'hyperliquid';
+    const ctx = ctxsByDex[dexName]?.[item.index];
+    if (!ctx) {
+      return item;
+    }
+    return {
+      ...item,
+      ...ctx,
+      pxDecimals: ctx.markPx
+        ? getPxDecimals(String(ctx.markPx))
+        : item.pxDecimals,
+    };
+  });
 };
 
 const setMarketData = (
   payload: MarketData[] | [],
   categories: PerpTopTokenCategory[],
 ) => {
-  const list = payload || [];
+  const base = payload || [];
+  // Merge any WS ticker data that arrived during the fetch window.
+  const list = lastCtxsByDex ? applyAssetCtxsToList(base, lastCtxsByDex) : base;
   setPerpsState(prev => ({
     ...prev,
     categories,
     marketData: list,
-    marketDataMap: buildMarketDataMap(list as MarketData[]),
+    marketDataMap: buildMarketDataMap(list),
   }));
 };
 
-const fetchMarketData = async () => {
-  const sdk = apisPerps.getPerpsSDK();
-  try {
-    const fetchTopTokenList = async () => {
-      try {
-        if (perpsTopTokenCache.length > 0) {
-          return perpsTopTokenCache;
-        }
-        const topAssets = await openapi.getPerpTopTokenListV3({
-          dex_id: 'all',
-        });
-        if (topAssets.length > 0) {
-          perpsTopTokenCache = topAssets;
-          return topAssets;
-        } else {
-          return DEFAULT_TOP_ASSET;
-        }
-      } catch (error) {
-        console.error('Failed to fetch top assets:', error);
-        return DEFAULT_TOP_ASSET;
-      }
-    };
+const setMarketDataStatus = (status: MarketDataStatus) => {
+  setPerpsState(prev =>
+    prev.marketDataStatus === status
+      ? prev
+      : { ...prev, marketDataStatus: status },
+  );
+};
 
-    const fetchTokenCategories = async () => {
-      try {
-        if (perpsCategoryCache.length > 0) {
-          return perpsCategoryCache;
-        }
-        const categories = await openapi.getPerpTokenCategories({
-          lang: 'en-US',
-        });
-        if (categories.length > 0) {
-          perpsCategoryCache = categories;
-          return categories;
-        } else {
-          return DEFAULT_TOKEN_CATEGORY;
-        }
-      } catch (error) {
-        console.error('Failed to fetch top assets:', error);
-        return DEFAULT_TOKEN_CATEGORY;
+// Retry with exponential backoff. Returns undefined if all attempts fail.
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  options: { retries?: number; baseMs?: number; label?: string } = {},
+): Promise<T | undefined> {
+  const { retries = 2, baseMs = 500, label = 'task' } = options;
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (attempt < retries) {
+        const delay = baseMs * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
-    };
+    }
+  }
+  console.error(`[fetchMarketData] ${label} failed after retries:`, lastError);
+  return undefined;
+}
+
+let isFetchingMarketData = false;
+
+const fetchMarketData = async () => {
+  if (isFetchingMarketData) {
+    return;
+  }
+  isFetchingMarketData = true;
+  const prevStatus = perpsStore.getState().marketDataStatus;
+  // Only show loading if we don't already have data; avoid UI flicker on silent refresh.
+  if (prevStatus !== 'success') {
+    setMarketDataStatus('loading');
+  }
+
+  const sdk = apisPerps.getPerpsSDK();
+
+  const fetchTopTokenList = async () => {
+    if (perpsTopTokenCache.length > 0) {
+      return perpsTopTokenCache;
+    }
+    try {
+      const topAssets = await openapi.getPerpTopTokenListV3({ dex_id: 'all' });
+      if (topAssets.length > 0) {
+        perpsTopTokenCache = topAssets;
+        return topAssets;
+      }
+    } catch (error) {
+      console.error('Failed to fetch top assets:', error);
+    }
+    return DEFAULT_TOP_ASSET;
+  };
+
+  const fetchTokenCategories = async () => {
+    if (perpsCategoryCache.length > 0) {
+      return perpsCategoryCache;
+    }
+    try {
+      const categories = await openapi.getPerpTokenCategories({
+        lang: 'en-US',
+      });
+      if (categories.length > 0) {
+        perpsCategoryCache = categories;
+        return categories;
+      }
+    } catch (error) {
+      console.error('Failed to fetch token categories:', error);
+    }
+    return DEFAULT_TOKEN_CATEGORY;
+  };
+
+  try {
+    // Core data — must succeed (retried). perpDexs is degradable.
     const [topAssets, categories, allMetas, perpDexs] = await Promise.all([
       fetchTopTokenList(),
       fetchTokenCategories(),
-      sdk.info.getPerpsAllMetas(),
-      sdk.info.getPerpDexs(),
+      withRetry(() => sdk.info.getPerpsAllMetas(), {
+        label: 'getPerpsAllMetas',
+      }),
+      withRetry(() => sdk.info.getPerpDexs(), { label: 'getPerpDexs' }),
     ]);
 
+    if (!allMetas || allMetas.length === 0) {
+      // Core data unavailable — mark error for retry
+      setMarketDataStatus('error');
+      return;
+    }
+
+    // perpDexs failure is degradable
     const dexIdMap: Record<number, string> = {};
-    perpDexs.forEach((dex, idx) => {
+    (perpDexs ?? []).forEach((dex, idx) => {
       dexIdMap[idx] = dex?.name ?? '';
     });
 
     const marketData = formatMarkData(allMetas, topAssets, dexIdMap);
+    if (marketData.length === 0) {
+      setMarketDataStatus('error');
+      return;
+    }
     setMarketData(marketData, categories);
+    setMarketDataStatus('success');
   } catch (error) {
     console.error('Failed to fetch market data:', error);
+    setMarketDataStatus('error');
+  } finally {
+    isFetchingMarketData = false;
   }
 };
 
@@ -526,6 +653,8 @@ const resetAccountState = () => {
     },
     accountNeedApproveAgent: false,
     accountNeedApproveBuilderFee: false,
+    isUserDataReady: false,
+    currentClearinghouseState: null,
   }));
 };
 
@@ -700,25 +829,25 @@ const updateMarketData = (payload: [string, AssetCtx[]][]) => {
     const dexName = dexId ? dexId : 'hyperliquid';
     marketByDexName[dexName] = assetCtx;
   });
+
+  // Always cache the latest ticker snapshot — fetchMarketData will merge it in
+  // when it writes the next meta list, so pushes during the fetch window are
+  // not lost.
+  lastCtxsByDex = marketByDexName;
+
   setPerpsState(prev => {
-    const newMarketData = prev.marketData.map(item => {
-      // other dex , example xyz is error
-      const dexName = item.dexId ? item.dexId : 'hyperliquid';
-      const assetCtx = marketByDexName[dexName];
-      const ctx = assetCtx?.[item.index];
-      if (!ctx) {
-        return item;
-      }
-      return {
-        ...item,
-        ...ctx,
-        pxDecimals: ctx.markPx
-          ? getPxDecimals(String(ctx.markPx))
-          : item.pxDecimals,
-      };
-    });
+    if (prev.marketData.length === 0) {
+      return prev.isMarketTickerReady
+        ? prev
+        : { ...prev, isMarketTickerReady: true };
+    }
+    const newMarketData = applyAssetCtxsToList(
+      prev.marketData,
+      marketByDexName,
+    );
     return {
       ...prev,
+      isMarketTickerReady: true,
       marketData: newMarketData,
       marketDataMap: buildMarketDataMap(newMarketData),
     };
@@ -741,6 +870,7 @@ const subscribeToUserData = (account: Account) => {
         ...prev,
         homePositionPnl: formatPositionPnl(currentClearinghouseState!),
         currentClearinghouseState: currentClearinghouseState,
+        isUserDataReady: true,
       }));
     });
 
@@ -878,15 +1008,17 @@ export const usePerpsStore = () => {
 
   const loginPerpsAccount = useMemoizedFn(async (account: Account) => {
     apisPerps.setPerpsCurrentAccount(account);
-    setCurrentPerpsAccount(account);
+    setPerpsState(prev => ({
+      ...prev,
+      currentPerpsAccount: account,
+      isLogin: !!account,
+      currentClearinghouseState: null,
+      userAbstraction: UserAbstractionResp.default,
+    }));
     refreshData();
     subscribeToUserData(account);
     fetchUserNonFundingLedgerUpdates();
     fetchPerpPermission(account.address);
-    setPerpsState(prev => ({
-      ...prev,
-      userAbstraction: UserAbstractionResp.default,
-    }));
     fetchUserAbstraction(account.address);
 
     setTimeout(() => {
@@ -944,8 +1076,12 @@ export const usePerpsStore = () => {
   });
 
   const refreshData = useMemoizedFn(async () => {
-    // await fetchPositionAndOpenOrders();
     // await is login is too low
+    const { marketDataStatus, marketData } = perpsStore.getState();
+    if (marketDataStatus === 'error' || marketData.length === 0) {
+      fetchMarketData();
+    }
+
     await fetchUserHistoricalOrders();
   });
 
@@ -1007,6 +1143,14 @@ export function startSubscribePerpsOnAppState() {
   const subscription = AppState.addEventListener('change', nextAppState => {
     // Pass the state string ('active', 'background', 'inactive') directly
     sdk.ws.handleAppStateChange(nextAppState);
+
+    // When app returns to active, retry market data if it previously failed or never loaded.
+    if (nextAppState === 'active') {
+      const { marketDataStatus, marketData } = perpsStore.getState();
+      if (marketDataStatus === 'error' || marketData.length === 0) {
+        fetchMarketData();
+      }
+    }
   });
 
   return () => {
