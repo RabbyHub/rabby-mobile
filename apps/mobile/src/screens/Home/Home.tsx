@@ -86,7 +86,7 @@ function SingleAddressHome(): JSX.Element {
 
   const handleReachTopStatusChange = React.useCallback(
     (status: boolean) => {
-      apisSingleHome.setReachTop(!status);
+      apisSingleHome.setReachTop(status);
       Animated.timing(fadeAnim, {
         toValue: status ? 1 : 0,
         duration: 100,
