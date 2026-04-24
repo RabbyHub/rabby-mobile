@@ -18,6 +18,7 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAccountHomeShowReceiveTip } from '@/screens/Address/components/MultiAssets/hooks';
+import { useMockDataForHomeCenterArea } from '../hooks/homeCenterArea';
 import { DepositAssetsCard } from './DepositAssetsCard';
 
 export function HomeCenterArea() {
@@ -30,6 +31,8 @@ export function HomeCenterArea() {
   const { shouldShowRateGuideOnHome } = useExposureRateGuide();
   const offlineChainData = useOfflineChain();
   const txCount = rateGuideLastExposureState(state => state.txCount);
+  const { mockData } = useMockDataForHomeCenterArea();
+  const forceShowDepositAssetsCard = mockData?.forceShowDepositAssetsCard;
 
   const { viewedHomeTip: viewedScreenShotReportTip } = useViewedHomeTip();
 
@@ -58,7 +61,7 @@ export function HomeCenterArea() {
       };
     }
 
-    if (accountToShowReceiveTip) {
+    if (accountToShowReceiveTip || forceShowDepositAssetsCard) {
       blocks.soloAccountToShowReceiveTip = true;
     } else {
       if (hasCompletedTransaction && hasOfflineChainData)
@@ -82,6 +85,7 @@ export function HomeCenterArea() {
     viewedScreenShotReportTip,
     isLoadingAccountToShowReceiveTip,
     txCount,
+    forceShowDepositAssetsCard,
   ]);
 
   return (
@@ -100,7 +104,7 @@ export function HomeCenterArea() {
 
       {blocksVisibility.soloAccountToShowReceiveTip && (
         <Animated.View entering={FadeInUp.duration(200)}>
-          <DepositAssetsCard account={accountToShowReceiveTip} />
+          <DepositAssetsCard account={accountToShowReceiveTip || null} />
         </Animated.View>
       )}
 

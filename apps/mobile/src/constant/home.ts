@@ -2,16 +2,16 @@ import { IS_ANDROID } from '@/core/native/utils';
 
 export const HOME_REFRESH_INTERVAL = 10 * 60 * 1000;
 export const ITEM_LAYOUT_PADDING_HORIZONTAL = 16;
-export const ITEM_GRID_GAP = 10;
+export const ITEM_GRID_GAP = 12;
 export const SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING = !IS_ANDROID;
 
 export const HOME_TOP_HEADER_SIZES = {
-  headerHeight: 52,
+  headerHeight: 46,
   // headerHeight: 0,
   headerIndicatorHeight: 6,
-  headerOffsetAfterIndicator: 8,
+  headerOffsetAfterIndicator: 12,
   headerTabItemHeight: 32,
-  headerOffsetAfterTabItem: 8,
+  headerOffsetAfterTabItem: 12,
   get tabItemLineHeight() {
     return (
       HOME_TOP_HEADER_SIZES.headerIndicatorHeight +
