@@ -9,6 +9,7 @@ import React, {
 import {
   FlatListProps,
   FlatList as RNFlatList,
+  ScrollView,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -29,8 +30,13 @@ import { DappInfo } from '@/core/services/dappService';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import CustomLabel from '@/screens/TokenDetail/components/CustomLabel';
-import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
+import {
+  Gesture,
+  GestureDetector,
+  NativeGesture,
+} from 'react-native-gesture-handler';
 import Animated, {
+  runOnJS,
   scrollTo,
   useAnimatedProps,
   useAnimatedRef,
@@ -52,6 +58,7 @@ import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { useDapps } from '@/hooks/useDapps';
 import { DappFavoriteList } from './DappFavoriteList';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { IS_ANDROID } from '@/core/native/utils';
 
 type HotDappListItem = (typeof dappList)[number];
 
@@ -126,6 +133,14 @@ const tabs = [
     label: 'DEX',
   },
   {
+    id: 'NFTxx',
+    label: 'NFTssss',
+  },
+  {
+    id: 'NFTx',
+    label: 'NFT',
+  },
+  {
     id: 'NFT',
     label: 'NFT',
   },
@@ -171,6 +186,10 @@ export const HomeDappDrawerContent: React.FC<{
   const previousIsDrawerExpandedRef = useRef(isDrawerExpanded);
   const { t } = useTranslation();
   const { activeTab, setActiveTab } = useDappTab();
+  const activeTabIndex = useMemo(
+    () => tabs.findIndex(tab => tab.id === activeTab),
+    [activeTab],
+  );
   const { openTab } = useBrowser();
   const handleDappPress = useMemoizedFn((item: DappInfo) => {
     openTab(item.url || item.origin, {
@@ -296,6 +315,82 @@ export const HomeDappDrawerContent: React.FC<{
     }
   }, [completeEditing, isEditing, startEditing]);
 
+  const androidSwipeGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .activeOffsetX([-16, 16])
+        .failOffsetY([-12, 12])
+        .onEnd(event => {
+          'worklet';
+
+          const SWIPE_DISTANCE = 48;
+          const SWIPE_VELOCITY = 600;
+          const shouldSwipeLeft =
+            event.translationX < -SWIPE_DISTANCE ||
+            event.velocityX < -SWIPE_VELOCITY;
+          const shouldSwipeRight =
+            event.translationX > SWIPE_DISTANCE ||
+            event.velocityX > SWIPE_VELOCITY;
+
+          if (shouldSwipeLeft && activeTabIndex < tabs.length - 1) {
+            runOnJS(setActiveTab)(tabs[activeTabIndex + 1].id);
+            return;
+          }
+
+          if (shouldSwipeRight && activeTabIndex > 0) {
+            runOnJS(setActiveTab)(tabs[activeTabIndex - 1].id);
+          }
+        }),
+    [activeTabIndex, setActiveTab],
+  );
+
+  const renderTabContent = useCallback(
+    (tabKey: TabKey, isAndroidTab = false) => {
+      const contentStyle = isAndroidTab
+        ? [styles.content, styles.androidTabContent]
+        : styles.content;
+
+      if (tabKey === 'favorite') {
+        return (
+          <View style={contentStyle}>
+            <DappFavoriteList
+              drawerScrollableGesture={drawerScrollableGesture}
+              drawerScrollOffsetY={drawerScrollOffsetY}
+              scrollableStatus={scrollableStatus}
+              isEditing={isEditing}
+              bookmarkList={list}
+              onRemoveLocal={handleRemoveLocal}
+              onDappPress={handleDappPress}
+            />
+          </View>
+        );
+      }
+
+      return (
+        <View style={contentStyle}>
+          <DappList
+            drawerScrollableGesture={drawerScrollableGesture}
+            drawerScrollOffsetY={drawerScrollOffsetY}
+            scrollableStatus={scrollableStatus}
+            category={tabKey}
+            onDappPress={handleDappPress}
+          />
+        </View>
+      );
+    },
+    [
+      drawerScrollOffsetY,
+      drawerScrollableGesture,
+      handleDappPress,
+      handleRemoveLocal,
+      isEditing,
+      list,
+      scrollableStatus,
+      styles.androidTabContent,
+      styles.content,
+    ],
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -314,65 +409,110 @@ export const HomeDappDrawerContent: React.FC<{
           </TouchableOpacity>
         ) : null}
       </View>
-      <Tabs.Container
-        renderTabBar={renderTabBar}
-        tabBarHeight={TAB_BAR_HEIGHT}
-        lazy
-        containerStyle={styles.container}
-        headerContainerStyle={styles.tabBarWrap}
-        initialTabName={activeTab}
-        onTabChange={({ tabName }) => {
-          console.debug('onTabChange', { tabName });
-          setActiveTab(tabName as TabKey);
-        }}>
-        {
-          tabs.map(tabItem => {
-            if (tabItem.id === 'favorite') {
+      {IS_ANDROID ? (
+        <>
+          <View style={styles.tabBarWrap}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.androidTabsBarContainer}>
+              {tabs.map((tabItem, index) => {
+                const isActive = activeTab === tabItem.id;
+
+                return (
+                  <TouchableOpacity
+                    key={tabItem.id}
+                    onPress={() => setActiveTab(tabItem.id)}
+                    style={[
+                      styles.androidTabButton,
+                      index === 0
+                        ? styles.androidFirstTabButton
+                        : styles.androidRestTabButton,
+                      isActive
+                        ? styles.androidTabButtonActive
+                        : styles.androidTabButtonInactive,
+                    ]}>
+                    {tabItem.id === 'favorite' ? (
+                      <View style={styles.favoriteLabelContainer}>
+                        <RcIconFavorite
+                          width={18}
+                          height={18}
+                          color={
+                            isActive
+                              ? colors2024['orange-default']
+                              : colors2024['neutral-info']
+                          }
+                        />
+                      </View>
+                    ) : (
+                      <Text
+                        style={[
+                          styles.androidTabLabel,
+                          isActive
+                            ? styles.androidTabLabelActive
+                            : styles.androidTabLabelInactive,
+                        ]}>
+                        {tabItem.label}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+          <View style={styles.androidContent}>
+            <GestureDetector gesture={androidSwipeGesture}>
+              <View style={styles.androidPagerPage}>
+                {renderTabContent(activeTab, true)}
+              </View>
+            </GestureDetector>
+          </View>
+        </>
+      ) : (
+        <Tabs.Container
+          renderTabBar={renderTabBar}
+          tabBarHeight={TAB_BAR_HEIGHT}
+          lazy
+          containerStyle={styles.container}
+          headerContainerStyle={styles.tabBarWrap}
+          initialTabName={activeTab}
+          onTabChange={({ tabName }) => {
+            setActiveTab(tabName as TabKey);
+          }}>
+          {
+            tabs.map(tabItem => {
+              if (tabItem.id === 'favorite') {
+                return (
+                  <Tabs.Tab
+                    key={tabItem.id}
+                    label={renderFavoriteLabel}
+                    name="favorite">
+                    {renderTabContent(tabItem.id)}
+                  </Tabs.Tab>
+                );
+              }
+              const renderCategoryLabel = ({ index, indexDecimal }) => (
+                <CustomLabel
+                  index={index}
+                  style={styles.tabLabel}
+                  containerStyle={styles.categoryLabelContainer}
+                  indexDecimal={indexDecimal}
+                  text={tabItem.label}
+                />
+              );
+
               return (
-                <Tabs.Tab label={renderFavoriteLabel} name="favorite">
-                  <View style={styles.content}>
-                    <DappFavoriteList
-                      drawerScrollableGesture={drawerScrollableGesture}
-                      drawerScrollOffsetY={drawerScrollOffsetY}
-                      scrollableStatus={scrollableStatus}
-                      isEditing={isEditing}
-                      bookmarkList={list}
-                      onRemoveLocal={handleRemoveLocal}
-                      onDappPress={handleDappPress}
-                    />
-                  </View>
+                <Tabs.Tab
+                  key={tabItem.id}
+                  label={renderCategoryLabel}
+                  name={tabItem.id}>
+                  {renderTabContent(tabItem.id)}
                 </Tabs.Tab>
               );
-            }
-            const renderCategoryLabel = ({ index, indexDecimal }) => (
-              <CustomLabel
-                index={index}
-                style={styles.tabLabel}
-                containerStyle={styles.categoryLabelContainer}
-                indexDecimal={indexDecimal}
-                text={tabItem.label}
-              />
-            );
-
-            return (
-              <Tabs.Tab
-                key={tabItem.id}
-                label={renderCategoryLabel}
-                name={tabItem.id}>
-                <View style={styles.content}>
-                  <DappList
-                    drawerScrollableGesture={drawerScrollableGesture}
-                    drawerScrollOffsetY={drawerScrollOffsetY}
-                    scrollableStatus={scrollableStatus}
-                    category={tabItem.id}
-                    onDappPress={handleDappPress}
-                  />
-                </View>
-              </Tabs.Tab>
-            );
-          }) as unknown as React.ReactElement<any>
-        }
-      </Tabs.Container>
+            }) as unknown as React.ReactElement<any>
+          }
+        </Tabs.Container>
+      )}
     </View>
   );
 };
@@ -586,6 +726,51 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flex: 1,
       paddingHorizontal: 16,
       paddingTop: TAB_BAR_HEIGHT,
+    },
+    androidContent: {
+      flex: 1,
+    },
+    androidPagerPage: {
+      flex: 1,
+    },
+    androidTabContent: {
+      paddingTop: 0,
+    },
+    androidTabsBarContainer: {
+      paddingLeft: 20,
+      paddingRight: 20,
+    },
+    androidTabButton: {
+      minWidth: 60,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderBottomWidth: 4,
+      height: TAB_BAR_HEIGHT,
+      paddingBottom: 4,
+    },
+    androidFirstTabButton: {
+      marginRight: FIRST_TAB_GAP,
+    },
+    androidRestTabButton: {
+      marginRight: TAB_GAP,
+    },
+    androidTabButtonActive: {
+      borderBottomColor: colors2024['neutral-body'],
+    },
+    androidTabButtonInactive: {
+      borderBottomColor: 'transparent',
+    },
+    androidTabLabel: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+    },
+    androidTabLabelActive: {
+      color: colors2024['neutral-title-1'],
+    },
+    androidTabLabelInactive: {
+      color: colors2024['neutral-info'],
     },
     list: {
       paddingTop: 8,
