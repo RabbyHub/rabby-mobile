@@ -150,7 +150,7 @@ const ContractCall = ({
             title={t('page.signTx.myMark')}
           />
         </SubTable>
-        <Col>
+        <Col style={{ gap: 20 }}>
           <Row isTitle>
             <Text style={commonStyle.rowTitleText}>
               {t('page.signTx.contractCall.operation')}
@@ -159,10 +159,19 @@ const ContractCall = ({
           <Row>
             <View
               style={StyleSheet.flatten({
+                flex: 1,
                 flexDirection: 'row',
                 alignItems: 'center',
+                justifyContent: 'flex-end',
               })}>
-              <Text style={commonStyle.primaryText}>{operation || '-'}</Text>
+              <Text
+                style={StyleSheet.flatten({
+                  ...commonStyle.primaryText,
+                  flexShrink: 1,
+                  textAlign: 'right',
+                })}>
+                {operation || '-'}
+              </Text>
               <Tip
                 content={
                   operation
