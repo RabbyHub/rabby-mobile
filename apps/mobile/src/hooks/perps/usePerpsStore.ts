@@ -872,7 +872,7 @@ const updateMarketData = (payload: [string, AssetCtx[]][]) => {
   });
 };
 
-const subscribeToUserData = (account: Account) => {
+export const subscribeToUserData = (account: Account) => {
   const sdk = apisPerps.getPerpsSDK();
   const address = account.address;
   unsubscribeAll();
