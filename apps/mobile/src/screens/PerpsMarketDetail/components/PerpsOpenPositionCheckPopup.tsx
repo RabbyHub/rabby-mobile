@@ -7,7 +7,11 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { formatPercent } from '@/screens/Home/utils/price';
-import { formatUsdValue, splitNumberByStep } from '@/utils/number';
+import {
+  formatPerpsNumber,
+  formatUsdValue,
+  splitNumberByStep,
+} from '@/utils/number';
 import { formatPerpsCoin } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
@@ -177,7 +181,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </TouchableOpacity>
               <View>
                 <Text style={styles.value}>
-                  {splitNumberByStep(Number(tradeAmount))}{' '}
+                  {formatPerpsNumber(Number(tradeAmount))}{' '}
                   {info.quoteAsset || 'USDC'}
                 </Text>
               </View>
