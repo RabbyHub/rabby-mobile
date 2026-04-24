@@ -50,6 +50,7 @@ type RabbyDevToolsBridgeMethodName =
   | 'getSingleHomeSnapshot'
   | 'openSendScreen'
   | 'getSendScreenSnapshot'
+  | 'clearWhitelistData'
   | 'setSendAmount';
 
 interface RabbyDevToolsBridge {
@@ -61,6 +62,7 @@ interface RabbyDevToolsBridge {
   getSingleHomeSnapshot(): unknown;
   openSendScreen(input: unknown): unknown;
   getSendScreenSnapshot(): unknown;
+  clearWhitelistData(): unknown;
   setSendAmount(amount: unknown): unknown;
 }
 

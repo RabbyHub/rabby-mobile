@@ -5,6 +5,7 @@ import { useStackScreenConfig } from '@/hooks/navigation';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import {
   DebugLogViewer,
+  DevDataKeychain,
   DevDataSQLite,
   DevDataWhitelist,
   DevPerf,
@@ -96,6 +97,17 @@ export function TestkitsNavigator() {
             headerShown: true,
             headerTitle: 'Whitelist Data',
             title: 'Whitelist Data',
+          },
+        ])}
+      />
+      <Stack.Screen
+        name={RootNames.DevDataKeychain}
+        component={DevDataKeychain}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'Keychain Data',
+            title: 'Keychain Data',
           },
         ])}
       />

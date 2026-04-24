@@ -1,13 +1,7 @@
 #!/usr/bin/env node
 
 const Axios = require('axios');
-
-const {
-  getLarkToken,
-  makeSign,
-  generateQRCodeImageBuffer,
-  uploadImageToLark,
-} = require('./libs/lark');
+const { createHmac } = require('crypto');
 
 const chatURL =
   process.env.RABBY_MOBILE_LARK_CHAT_URL || process.env.LARK_CHAT_URL;
@@ -20,6 +14,24 @@ if (!chatSecret) {
   throw new Error('RABBY_MOBILE_LARK_CHAT_SECRET is not set');
 }
 
+function loadLarkHelpers() {
+  return require('./libs/lark');
+}
+
+function makeLarkSign(secret) {
+  const timestamp = Date.now();
+  const timeSec = Math.floor(timestamp / 1000);
+  const stringToSign = `${timeSec}\n${secret}`;
+  const Signature = createHmac('sha256', stringToSign)
+    .digest()
+    .toString('base64');
+
+  return {
+    timeSec,
+    Signature,
+  };
+}
+
 // sendMessage with axios
 async function sendMessage({
   platform = 'android',
@@ -30,7 +42,8 @@ async function sendMessage({
   gitRefURL = '',
   triggers = [],
 }) {
-  const { timeSec, Signature } = makeSign(chatSecret);
+  const { generateQRCodeImageBuffer, uploadImageToLark } = loadLarkHelpers();
+  const { timeSec, Signature } = makeLarkSign(chatSecret);
 
   // dedupe
   triggers = [...new Set(triggers)];
@@ -150,11 +163,45 @@ async function sendMessage({
   console.log(res.data);
 }
 
+async function sendTextMessage({ title, lines = [] }) {
+  const { timeSec, Signature } = makeLarkSign(chatSecret);
+
+  const headers = {
+    'Content-Type': 'application/json',
+    Signature: Signature,
+  };
+
+  const content = lines.filter(Boolean).map(text => [{ tag: 'text', text }]);
+
+  const body = {
+    timestamp: timeSec,
+    sign: Signature,
+    msg_type: 'post',
+    content: {
+      post: {
+        zh_cn: {
+          title,
+          content,
+        },
+      },
+    },
+  };
+
+  const res = await Axios.post(chatURL, body, { headers });
+  console.log(res.data);
+}
+
 const args = process.argv.slice(2);
 
 if (!process.env.CI && args[0] === 'get-token') {
+  const { getLarkToken } = loadLarkHelpers();
   getLarkToken().then(accessToken => {
     console.log(`[notify-lark] get-token accessToken: ${accessToken}`);
+  });
+} else if (args[0] === 'text') {
+  sendTextMessage({
+    title: args[1] || 'Rabby Mobile Notification',
+    lines: args.slice(2),
   });
 } else if (args[0]) {
   sendMessage({

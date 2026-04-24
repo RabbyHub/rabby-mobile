@@ -18,8 +18,8 @@ Follow these rules:
 - Default to the upcoming Friday tmp branch in `Asia/Shanghai` unless the user names a different `tmp/*` branch.
 - Assume the release target is `origin/develop` when the tmp branch does not exist yet. The script mirrors `.github/workflows/create_tmp_friday_branch.yml` and creates the remote tmp branch from `origin/develop`.
 - Default Feature Test inputs to the release-friendly path used most often here: `mobile-local`, pod cache enabled, node_modules cache enabled, gradle cache enabled, and `REALLY_UPLOAD=true`.
-- Re-read [.github/workflows/feature_test.yml](/Users/workrichard/projects/RabbyHub/rabby-mobile/.github/workflows/feature_test.yml) before editing the script if the workflow inputs may have changed.
-- Re-read [.github/workflows/create_tmp_friday_branch.yml](/Users/workrichard/projects/RabbyHub/rabby-mobile/.github/workflows/create_tmp_friday_branch.yml) before editing branch-creation logic.
+- Re-read [.github/workflows/feature_test.yml](../../.github/workflows/feature_test.yml) before editing the script if the workflow inputs may have changed.
+- Re-read [.github/workflows/create_tmp_friday_branch.yml](../../.github/workflows/create_tmp_friday_branch.yml) before editing branch-creation logic.
 
 Use these examples as the default entry points:
 

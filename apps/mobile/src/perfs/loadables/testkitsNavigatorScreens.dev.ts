@@ -15,6 +15,7 @@ export { default as DevUIBuiltInPages } from '@/screens/Testkits/DevUIBuiltInPag
 export { default as DevUIPermissions } from '@/screens/Testkits/DevUIPermissions';
 export { default as DevDataSQLite } from '@/screens/Testkits/DevDataSQLite';
 export { default as DevDataWhitelist } from '@/screens/Testkits/DevDataWhitelist';
+export { default as DevDataKeychain } from '@/screens/Testkits/DevDataKeychain';
 export { default as DevSwitches } from '@/screens/Testkits/DevSwitches';
 export { default as DevPerf } from '@/screens/Testkits/DevPerf';
 export { default as DebugLogViewer } from '@/screens/Testkits/DebugLogViewer';

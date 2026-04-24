@@ -92,6 +92,13 @@ export const DevDataWhitelist = registerAppScreen<
   name: TESTKITS_PRELOAD_SCREENS.DevDataWhitelist,
 });
 
+export const DevDataKeychain = registerAppScreen<
+  typeof import('@/screens/Testkits/DevDataKeychain').default
+>({
+  loader: () => import('@/screens/Testkits/DevDataKeychain'),
+  name: TESTKITS_PRELOAD_SCREENS.DevDataKeychain,
+});
+
 export const DevSwitches = registerAppScreen<
   typeof import('@/screens/Testkits/DevSwitches').default
 >({
