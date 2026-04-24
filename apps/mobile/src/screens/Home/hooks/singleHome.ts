@@ -69,7 +69,7 @@ function getDefault(): SingleHomeState {
     currentAccount: null,
     selectedChain: null,
     foldChart: true,
-    reachTop: false,
+    reachTop: true,
   };
 }
 const singleHomeState = zCreate<SingleHomeState>(() => getDefault());
