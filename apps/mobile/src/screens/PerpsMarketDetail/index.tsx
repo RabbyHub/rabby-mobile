@@ -113,8 +113,19 @@ export const PerpsMarketDetailScreen = () => {
   const currentAssetCtx = perpsStore(s => s.marketDataMap[coin]);
   // const hasPermission = true;
   const [showRiskPopup, setShowRiskPopup] = useState(false);
-  const [selectedInterval, setSelectedInterval] =
+  const [selectedInterval, setSelectedIntervalState] =
     React.useState<CANDLE_MENU_KEY_V2>(CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES);
+  useEffect(() => {
+    apisPerps.getSelectedKlineInterval().then(v => {
+      if (v) {
+        setSelectedIntervalState(v);
+      }
+    });
+  }, []);
+  const setSelectedInterval = useMemoizedFn((v: CANDLE_MENU_KEY_V2) => {
+    setSelectedIntervalState(v);
+    apisPerps.setSelectedKlineInterval(v);
+  });
   const [showGuideEntryPopup, setShowGuideEntryPopup] = useState(false);
   const coinNameRef = useRef(coin);
   useEffect(() => {
