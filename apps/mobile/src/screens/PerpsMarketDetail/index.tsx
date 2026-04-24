@@ -162,10 +162,13 @@ export const PerpsMarketDetailScreen = () => {
   }, [navigation, fromSource]);
 
   useEffect(() => {
+    const needDepositFirst =
+      Number(accountValue) === 0 && Number(availableBalance) === 0;
     const isLocalWallet =
       currentPerpsAccount?.type === KEYRING_CLASS.PRIVATE_KEY ||
       currentPerpsAccount?.type === KEYRING_CLASS.MNEMONIC;
-    if (isLocalWallet) {
+    if (isLocalWallet && !needDepositFirst) {
+      // deposit first before approve agent
       handleActionApproveStatus({
         isHideToast: true,
       });
