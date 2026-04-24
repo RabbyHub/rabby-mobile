@@ -1,9 +1,6 @@
 import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import {
-  MarketDataMap,
-  PositionAndOpenOrder,
-} from '@/hooks/perps/usePerpsStore';
+import { perpsStore, PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { sortBy } from 'lodash';
@@ -25,14 +22,12 @@ import { toast } from '@/components2024/Toast';
 import { Text } from '@/components/Typography';
 export const PerpsPositionSection: React.FC<{
   positionAndOpenOrders?: PositionAndOpenOrder[];
-  marketDataMap: MarketDataMap;
   handleShowRiskPopup: (coin: string) => void;
   handleCloseRiskPopup: () => void;
   handleActionApproveStatus: () => Promise<void>;
   onClosePosition: (position: AssetPosition['position']) => Promise<void>;
 }> = ({
   positionAndOpenOrders,
-  marketDataMap,
   handleShowRiskPopup,
   handleCloseRiskPopup,
   handleActionApproveStatus,
@@ -41,6 +36,7 @@ export const PerpsPositionSection: React.FC<{
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
+  const marketDataMap = perpsStore(s => s.marketDataMap);
   const list = useMemo(() => {
     return sortBy(
       positionAndOpenOrders || [],

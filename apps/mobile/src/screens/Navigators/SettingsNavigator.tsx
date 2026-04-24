@@ -2,24 +2,12 @@ import { RootNames, makeHeadersPresets } from '@/constant/layout';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+import {
+  ProviderControllerTester,
+  SetPasswordScreen,
+  SettingsScreen,
+} from '@/perfs/loadables/settingsNavigatorScreens';
 import { CustomTestnetScreen } from '../CustomTestnet';
-import { registerAppScreen } from '@/perfs/apis';
-
-const SettingsScreen = registerAppScreen<
-  typeof import('../Settings/Settings').default
->({
-  loader: () => import('../Settings/Settings'),
-});
-const SetPasswordScreen = registerAppScreen<
-  typeof import('../ManagePassword/SetPassword').default
->({
-  loader: () => import('../ManagePassword/SetPassword'),
-});
-const ProviderControllerTester = registerAppScreen<
-  typeof import('../ProviderControllerTester/ProviderControllerTester').default
->({
-  loader: () => import('../ProviderControllerTester/ProviderControllerTester'),
-});
 import { I18nRouteScreenTitle } from '@/components2024/i18n/RouteScreen';
 
 const SettingsStack = createNativeStackNavigator();

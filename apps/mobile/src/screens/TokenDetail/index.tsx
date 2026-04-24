@@ -225,7 +225,7 @@ const TokenDetailContent = () => {
                       isLoss ? styles.lossShadow : styles.upShadow,
                       {
                         borderColor: is24hNoChange
-                          ? colors2024['neutral-secondary']
+                          ? colors2024['neutral-bg-5']
                           : isLoss
                           ? colors2024['red-disable']
                           : colors2024['green-light-2'],
@@ -242,7 +242,11 @@ const TokenDetailContent = () => {
               {has24hChangeData ? (
                 <>
                   <View style={styles.floatPriceContainer}>
-                    <Text style={styles.floatBalanceTitle}>
+                    <Text
+                      style={[
+                        styles.floatBalanceTitle,
+                        is24hNoChange ? styles.noChangePriceChange : undefined,
+                      ]}>
                       {t('page.tokenDetail.price')}:
                     </Text>
                     <Text style={styles.floatPrice}>
@@ -253,28 +257,33 @@ const TokenDetailContent = () => {
                     <Text
                       style={[
                         styles.floatPriceChange,
-                        {
-                          color: is24hNoChange
-                            ? colors2024['neutral-body']
-                            : isLoss
-                            ? colors2024['red-default']
-                            : colors2024['green-default'],
-                        },
+                        is24hNoChange
+                          ? styles.noChangePriceChange
+                          : isLoss
+                          ? styles.redPriceChange
+                          : styles.greenPriceChange,
                       ]}>
                       {is24hNoChange ? '' : isLoss ? '-' : '+'}
                       {percentChange}
                     </Text>
-                    <RcIconRightArrowCC
-                      width={14}
-                      height={14}
-                      color={
-                        is24hNoChange
-                          ? colors2024['neutral-body']
-                          : isLoss
-                          ? colors2024['red-default']
-                          : colors2024['green-default']
-                      }
-                    />
+                    {is24hNoChange ? (
+                      <IconRightCC
+                        width={14}
+                        height={14}
+                        rectColor={colors2024['neutral-line']}
+                        pathColor={colors2024['neutral-title-1']}
+                      />
+                    ) : (
+                      <RcIconRightArrowCC
+                        width={14}
+                        height={14}
+                        color={
+                          isLoss
+                            ? colors2024['red-default']
+                            : colors2024['green-default']
+                        }
+                      />
+                    )}
                   </View>
                 </>
               ) : (
@@ -547,6 +556,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       lineHeight: 18,
       fontWeight: '800',
       fontFamily: 'SF Pro Rounded',
+    },
+    noChangePriceChange: {
+      color: colors2024['neutral-body'],
+      fontWeight: '500',
+    },
+    greenPriceChange: {
+      color: colors2024['green-default'],
+    },
+    redPriceChange: {
+      color: colors2024['red-default'],
     },
     relateTitle: {
       color: colors2024['neutral-title-1'],

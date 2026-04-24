@@ -56,6 +56,7 @@ build_appstore() {
   cd $project_dir;
   sh ./ios/patches/override-xcconfig-release.sh;
   turbo_prepare_js_dependencies || return $?
+  ensure_inpage_bridge_assets || return $?
   yarn check-nodeengines &&
     yarn ../mobile-local-pages bundle:all &&
     yarn link-assets &&
