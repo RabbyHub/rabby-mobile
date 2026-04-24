@@ -88,6 +88,17 @@
     "category_id": "indices"
   },
   {
+    "id": "ed8e8497a6a4c2315790d3d56b7c5065",
+    "token_id": 229,
+    "name": "CHIP",
+    "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/CHIP/499e85df1f57f45e0c5e7df99d35fa8a.png",
+    "daily_volume": 181064488,
+    "dex_id": "",
+    "category": "",
+    "display_name": "",
+    "category_id": ""
+  },
+  {
     "id": "5e54d35ed029b9c8aff3617aedfcef3d",
     "token_id": 26,
     "name": "xyz:SILVER",
@@ -127,9 +138,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/DOGE/afd891241598726761558a25aab6a06e.png",
     "daily_volume": 42616284,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "c63538def0a6ce77678955cb8ace334e",
@@ -182,9 +193,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/kPEPE/2772fce17d82e91858de3647aa0d68c2.png",
     "daily_volume": 28168610,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "c90289ab12219fabcf23d401ff25c1b8",
@@ -589,9 +600,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/PENGU/7de952f2680865214557bb2df7494cb5.png",
     "daily_volume": 6713837,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "bc0fb4b20facb7d76dab135eb2714b30",
@@ -688,9 +699,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/FARTCOIN/7570a0003534d307ea94dc469df4774f.png",
     "daily_volume": 5451380,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "e16e7de27a14715adc9ab640766934c0",
@@ -853,9 +864,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/PNUT/06e0eed45b89ba7f004c947045630990.png",
     "daily_volume": 3545717,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "e2948f5089640fea42b44390d5947a70",
@@ -952,9 +963,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/kBONK/d7d74434bcc032d1fd59e22f08210f1d.png",
     "daily_volume": 2977740,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "99f2dada6f62ed81892b1ddedae7a8de",
@@ -1040,9 +1051,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/WIF/84bbc41011231fb0cd53f27fed09363c.png",
     "daily_volume": 2581502,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "8cfd9064c17dc09415be2523f5367caa",
@@ -1062,9 +1073,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/TRUMP/a17d412d5e7f39327f31177f030c0afc.png",
     "daily_volume": 2502812,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "1d967ac21266b2f672043625b5ce9506",
@@ -1106,9 +1117,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/TST/dd7460b1f1fc51c2a54bacc1f029a544.png",
     "daily_volume": 2386319,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "bbff0c486096c0d653fa4961fb18ebe1",
@@ -1216,9 +1227,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/SPX/763fc4fdb016443b2fee8a30f1534cb3.png",
     "daily_volume": 1932254,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "7457cdd15d09bfc6c4dbb5d2b6f87390",
@@ -1238,9 +1249,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/kSHIB/63a7aef6e0dca75052150eba268ead6b.png",
     "daily_volume": 1855781,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "2b3592bde4b93c88169dfd8a2e5c3d23",
@@ -1304,9 +1315,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/POPCAT/df6f2cd5a70f264a754da9fa223d1e5a.png",
     "daily_volume": 1526063,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "5b61a1b298a0d06efa6933a97e68d763",
@@ -1403,9 +1414,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/kNEIRO/1105a44956961a609c705b483adac319.png",
     "daily_volume": 1146000,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "08e2712b1d2881e26b43015d6e3e6213",
@@ -1766,9 +1777,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/MELANIA/2fbec5080c3769b29aa2fa933cfbdb7b.png",
     "daily_volume": 560449,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "b8881d75d2f68bb493365695daafec19",
@@ -1832,9 +1843,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/GOAT/0fd6105931829a35cadd6f80522bf844.png",
     "daily_volume": 525408,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "ec7804479111f4f6e920958750d879e6",
@@ -1898,9 +1909,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/VINE/bced4e71d25c42b6a381ff8ea1a5139f.png",
     "daily_volume": 478486,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "db8faad9e67f2bc20b000e10d60de875",
@@ -1964,9 +1975,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/MOODENG/eea919702ea1af180b5c0b7f7dc69694.png",
     "daily_volume": 441238,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "8cfbc6bc8db98c5bd60362347fca2da7",
@@ -2052,9 +2063,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/PURR/26a90cc916ea70d7bb13ac5715db9ff0.png",
     "daily_volume": 372694,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "faee4ca3c30ee18148ce3ada37466498",
@@ -2272,9 +2283,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/MEME/c596c4e59f466d913d29f3e34f3eabc6.png",
     "daily_volume": 281612,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "74e67efcb0c3c12cbaf6477fc7aef7d3",
@@ -2283,9 +2294,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/kFLOKI/c346d0a9dbd44a8c005e7821ea241638.png",
     "daily_volume": 267813,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "b252d1fe1c0c16d001027c2fce9b6529",
@@ -2503,9 +2514,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/TURBO/b059f8fea0822de401e94bbc42ca5457.png",
     "daily_volume": 198250,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "b9c29cd5f83c535b0bcaf31343315bad",
@@ -3097,9 +3108,9 @@
     "full_logo_url": "https://static.debank.com/image/hyper_liquid/logo_url/YZY/05f3e30a2a1ea94144ad1e0bb011dfe7.png",
     "daily_volume": 94053,
     "dex_id": "",
-    "category": "",
+    "category": "Memes",
     "display_name": "",
-    "category_id": ""
+    "category_id": "memes"
   },
   {
     "id": "4974d591db664ba0cfbdeeaa8bc11c5c",
