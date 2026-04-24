@@ -2570,6 +2570,10 @@
       "title": "Perps",
       "selectAccountTitle": "Pilih Dompet untuk Masuk",
       "explorePerps": "Jelajahi Perps",
+      "categories": {
+        "favorite": "Favorit",
+        "topVolume": "Volume Teratas"
+      },
       "leverageRangeMaxError": "Leverage maksimum adalah {{max}}x",
       "deleteAgentSuccess": "Agen berhasil dihapus",
       "regionNotSupport": "Membuka posisi tidak didukung di wilayah Anda",

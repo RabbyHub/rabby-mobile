@@ -2689,6 +2689,10 @@
       "selectAccountTitle": "Выберите кошелек для входа",
       "more": "Больше",
       "explorePerps": "Изучить Perps",
+      "categories": {
+        "favorite": "Избранное",
+        "topVolume": "Топ по объёму"
+      },
       "deleteAgentSuccess": "Агент успешно удален",
       "regionNotSupport": "Открытие позиций не поддерживается в вашем регионе.",
       "leverageRangeMaxError": "Максимальное кредитное плечо составляет {{max}}x",

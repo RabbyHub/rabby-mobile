@@ -2573,6 +2573,10 @@
       "positions": "Pozisyonlar",
       "deleteAgentModal": "Maksimum ajan sayısına ulaştınız. Yeni bir oluşturmak için mevcut bir ajanın silinmesini ister misiniz?",
       "explorePerps": "Perps'ı Keşfet",
+      "categories": {
+        "favorite": "Favori",
+        "topVolume": "En Yüksek Hacim"
+      },
       "leverageRangeMaxError": "Maksimum kaldıraç {{max}}x'dir.",
       "deleteAgentSuccess": "Ajan başarıyla silindi",
       "leverageRangeMinError": "Minimum kaldıraç {{min}}x'dir.",

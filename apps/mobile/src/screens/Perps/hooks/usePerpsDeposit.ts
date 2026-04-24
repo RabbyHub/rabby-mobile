@@ -33,7 +33,7 @@ export const usePerpsDeposit = ({
 }: {
   currentPerpsAccount: Account | null;
 }) => {
-  const { state: perpsState, setLocalLoadingHistory } = usePerpsStore();
+  const { setLocalLoadingHistory } = usePerpsStore();
 
   // const {
   //   sendMiniTransactions,
