@@ -11,6 +11,7 @@ import {
   FlatList as RNFlatList,
   ScrollView,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
@@ -38,9 +39,12 @@ import {
 import Animated, {
   runOnJS,
   scrollTo,
+  useAnimatedStyle,
   useAnimatedProps,
   useAnimatedRef,
   useAnimatedScrollHandler,
+  useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
 import {
   homeDrawerAnimateMutable,
@@ -133,14 +137,6 @@ const tabs = [
     label: 'DEX',
   },
   {
-    id: 'NFTxx',
-    label: 'NFTssss',
-  },
-  {
-    id: 'NFTx',
-    label: 'NFT',
-  },
-  {
     id: 'NFT',
     label: 'NFT',
   },
@@ -180,6 +176,9 @@ export const HomeDappDrawerContent: React.FC<{
   scrollableStatus: Animated.SharedValue<SCROLLABLE_STATUS>;
 }> = ({ drawerScrollableGesture, drawerScrollOffsetY, scrollableStatus }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { width } = useWindowDimensions();
+  const androidPageWidth = Math.max(width, 1);
+  const androidPagerTranslateX = useSharedValue(-androidPageWidth);
 
   const { isExpanded } = homeDrawerAnimateMutable;
   const isDrawerExpanded = useValueFromSharedValue(isExpanded);
@@ -190,6 +189,11 @@ export const HomeDappDrawerContent: React.FC<{
     () => tabs.findIndex(tab => tab.id === activeTab),
     [activeTab],
   );
+  const prevTab = activeTabIndex > 0 ? tabs[activeTabIndex - 1].id : null;
+  const nextTab =
+    activeTabIndex >= 0 && activeTabIndex < tabs.length - 1
+      ? tabs[activeTabIndex + 1].id
+      : null;
   const { openTab } = useBrowser();
   const handleDappPress = useMemoizedFn((item: DappInfo) => {
     openTab(item.url || item.origin, {
@@ -201,9 +205,9 @@ export const HomeDappDrawerContent: React.FC<{
   const initialTabItemsLayout = useMemo(() => {
     let x = 20;
     return tabs.map((tab, index) => {
-      const width = Math.max(60, tab.label.length * 12 + 20);
-      const item = { x, width };
-      x += width + (index === 0 ? FIRST_TAB_GAP : TAB_GAP);
+      const itemWidth = Math.max(60, tab.label.length * 12 + 20);
+      const item = { x, width: itemWidth };
+      x += itemWidth + (index === 0 ? FIRST_TAB_GAP : TAB_GAP);
       return item;
     });
   }, []);
@@ -295,6 +299,10 @@ export const HomeDappDrawerContent: React.FC<{
     previousIsDrawerExpandedRef.current = isDrawerExpanded;
   }, [isDrawerExpanded, resetEditing]);
 
+  useEffect(() => {
+    androidPagerTranslateX.value = -androidPageWidth;
+  }, [androidPageWidth, androidPagerTranslateX]);
+
   const completeEditing = useCallback(() => {
     setIsEditing(false);
     removedItems.forEach(url => {
@@ -315,15 +323,39 @@ export const HomeDappDrawerContent: React.FC<{
     }
   }, [completeEditing, isEditing, startEditing]);
 
+  const syncAndroidTab = useCallback(
+    (tab: TabKey) => {
+      androidPagerTranslateX.value = -androidPageWidth;
+      setActiveTab(tab);
+    },
+    [androidPageWidth, androidPagerTranslateX, setActiveTab],
+  );
+
   const androidSwipeGesture = useMemo(
     () =>
       Gesture.Pan()
         .activeOffsetX([-16, 16])
         .failOffsetY([-12, 12])
+        .onUpdate(event => {
+          'worklet';
+
+          const leftLimit = nextTab ? -androidPageWidth * 2 : -androidPageWidth;
+          const rightLimit = prevTab ? 0 : -androidPageWidth;
+          let nextTranslate = -androidPageWidth + event.translationX;
+
+          if (nextTranslate < leftLimit) {
+            nextTranslate = leftLimit + (nextTranslate - leftLimit) * 0.2;
+          }
+          if (nextTranslate > rightLimit) {
+            nextTranslate = rightLimit + (nextTranslate - rightLimit) * 0.2;
+          }
+
+          androidPagerTranslateX.value = nextTranslate;
+        })
         .onEnd(event => {
           'worklet';
 
-          const SWIPE_DISTANCE = 48;
+          const SWIPE_DISTANCE = androidPageWidth * 0.18;
           const SWIPE_VELOCITY = 600;
           const shouldSwipeLeft =
             event.translationX < -SWIPE_DISTANCE ||
@@ -332,16 +364,52 @@ export const HomeDappDrawerContent: React.FC<{
             event.translationX > SWIPE_DISTANCE ||
             event.velocityX > SWIPE_VELOCITY;
 
-          if (shouldSwipeLeft && activeTabIndex < tabs.length - 1) {
-            runOnJS(setActiveTab)(tabs[activeTabIndex + 1].id);
+          if (shouldSwipeLeft && nextTab) {
+            androidPagerTranslateX.value = withTiming(
+              -androidPageWidth * 2,
+              { duration: 180 },
+              finished => {
+                if (finished) {
+                  runOnJS(syncAndroidTab)(nextTab);
+                }
+              },
+            );
             return;
           }
 
-          if (shouldSwipeRight && activeTabIndex > 0) {
-            runOnJS(setActiveTab)(tabs[activeTabIndex - 1].id);
+          if (shouldSwipeRight && prevTab) {
+            androidPagerTranslateX.value = withTiming(
+              0,
+              { duration: 180 },
+              finished => {
+                if (finished) {
+                  runOnJS(syncAndroidTab)(prevTab);
+                }
+              },
+            );
+            return;
           }
+
+          androidPagerTranslateX.value = withTiming(-androidPageWidth, {
+            duration: 180,
+          });
         }),
-    [activeTabIndex, setActiveTab],
+    [
+      androidPageWidth,
+      androidPagerTranslateX,
+      nextTab,
+      prevTab,
+      syncAndroidTab,
+    ],
+  );
+
+  const androidPagerTrackStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: androidPagerTranslateX.value }],
+  }));
+
+  const androidPagerTabs = useMemo(
+    () => [prevTab, activeTab, nextTab] as const,
+    [activeTab, nextTab, prevTab],
   );
 
   const renderTabContent = useCallback(
@@ -422,7 +490,7 @@ export const HomeDappDrawerContent: React.FC<{
                 return (
                   <TouchableOpacity
                     key={tabItem.id}
-                    onPress={() => setActiveTab(tabItem.id)}
+                    onPress={() => syncAndroidTab(tabItem.id)}
                     style={[
                       styles.androidTabButton,
                       index === 0
@@ -462,9 +530,23 @@ export const HomeDappDrawerContent: React.FC<{
           </View>
           <View style={styles.androidContent}>
             <GestureDetector gesture={androidSwipeGesture}>
-              <View style={styles.androidPagerPage}>
-                {renderTabContent(activeTab, true)}
-              </View>
+              <Animated.View
+                style={[
+                  styles.androidPagerTrack,
+                  { width: androidPageWidth * androidPagerTabs.length },
+                  androidPagerTrackStyle,
+                ]}>
+                {androidPagerTabs.map((tabKey, index) => (
+                  <View
+                    key={tabKey ?? `empty-${index}`}
+                    style={[
+                      styles.androidPagerPage,
+                      { width: androidPageWidth },
+                    ]}>
+                    {tabKey ? renderTabContent(tabKey, true) : null}
+                  </View>
+                ))}
+              </Animated.View>
             </GestureDetector>
           </View>
         </>
@@ -729,6 +811,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
     androidContent: {
       flex: 1,
+      overflow: 'hidden',
+    },
+    androidPagerTrack: {
+      flex: 1,
+      flexDirection: 'row',
     },
     androidPagerPage: {
       flex: 1,
