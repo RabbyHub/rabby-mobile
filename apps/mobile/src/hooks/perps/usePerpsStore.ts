@@ -795,10 +795,28 @@ const setUserNonFundingLedgerUpdates = (payload: {
     list,
     state.currentPerpsAccount?.address,
   );
+
   if (isSnapshot) {
+    // Snapshot may be large (historical replay after WS reconnect on app
+    // foreground). Avoid O(pending * snapshot) type scan — take the latest
+    // ledger time per type and drop any pending of the same type whose time
+    // is older, since HL has already recorded an event for it.
+    const maxTimeByType: Record<string, number> = {};
+    for (const item of newList) {
+      const prev = maxTimeByType[item.type];
+      if (prev === undefined || item.time > prev) {
+        maxTimeByType[item.type] = item.time;
+      }
+    }
+    const filteredLocalHistory = state.localLoadingHistory.filter(p => {
+      const cutoff = maxTimeByType[p.type];
+      return cutoff === undefined || p.time > cutoff;
+    });
+
     fetchUserNonFundingLedgerUpdates();
     setPerpsState(prev => ({
       ...prev,
+      localLoadingHistory: filteredLocalHistory,
       userAccountHistory: newList,
     }));
     return;

@@ -163,7 +163,7 @@ export const PerpsAccountCard: React.FC = () => {
             )}
         </View>
       </LinearGradient>
-      {!showLearnMore && (
+      {showLearnMore && (
         <LinearGradient
           colors={[colors2024['neutral-bg-5'], colors2024['neutral-bg-5']]}
           start={{ x: 0, y: 0 }}
