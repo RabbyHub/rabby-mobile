@@ -1,11 +1,4 @@
-import React, {
-  useCallback,
-  useState,
-  useEffect,
-  useMemo,
-  useRef,
-  memo,
-} from 'react';
+import React, { useCallback, useState, useEffect, useMemo, memo } from 'react';
 import { ListRenderItem, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
@@ -41,32 +34,28 @@ import useProtocols, {
   useProtocolListComputedStore,
 } from '@/store/protocols';
 import { useShallow } from 'zustand/react/shallow';
+import { useAppForeground } from '@/hooks/useAppForeground';
 
 const emptyCacheProtocolItem: ICacheProtocolItem = {
   fold: [],
   unFold: [],
 };
 
-export const icons = {
-  unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
-  unfoldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png'),
-  foldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png'),
-  foldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
-  pinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite_dark.png'),
-  pinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite.png'),
-  unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png'),
-  unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
-};
 const MemoFullDefiRenderItem = memo(FullDefiRenderItem);
 
 interface Props {
+  onForeground?: () => void;
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
 
-export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
+export const PortfolioList = ({
+  onForeground,
+  onRefresh,
+  onReachTopStatusChange,
+}: Props) => {
   const { styles } = useTheme2024({
     getStyle: getStyles,
   });
@@ -207,11 +196,29 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
     t,
   ]);
 
-  useEffect(() => {
-    if (isFocused && lowerAddress) {
-      updatePortfolio(lowerAddress);
+  const refreshPortfolioList = useCallback(() => {
+    if (!lowerAddress) {
+      return;
     }
-  }, [isFocused, lowerAddress, updatePortfolio]);
+    updatePortfolio(lowerAddress);
+  }, [lowerAddress, updatePortfolio]);
+
+  useEffect(() => {
+    if (isFocused) {
+      refreshPortfolioList();
+    }
+  }, [isFocused, refreshPortfolioList]);
+
+  useAppForeground({
+    enabled: isFocused,
+    onForeground: () => {
+      if (loadingPortfolio || !isFocused || !lowerAddress) {
+        return;
+      }
+      onForeground?.();
+      refreshPortfolioList();
+    },
+  });
 
   useEffect(() => {
     if (!lowerAddress) {

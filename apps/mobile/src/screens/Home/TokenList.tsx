@@ -38,6 +38,7 @@ import useTokenList, {
   useTokenListComputedStore,
 } from '@/store/tokens';
 import { formatNetworth } from '@/utils/math';
+import { useAppForeground } from '@/hooks/useAppForeground';
 
 type TokenListItem =
   | {
@@ -68,6 +69,7 @@ type TokenListItem =
 
 interface Props {
   noAssetsOnAnyChain: boolean;
+  onForeground?: () => void;
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
 }
@@ -76,6 +78,7 @@ const SPACING_HEIGHT = 8;
 
 export const TokenList = ({
   noAssetsOnAnyChain,
+  onForeground,
   onRefresh,
   onReachTopStatusChange,
 }: Props) => {
@@ -154,12 +157,30 @@ export const TokenList = ({
   });
   const getTokenList = useTokenList(s => s.getTokenList);
 
-  useEffect(() => {
-    if (!isFocused || !currentAddress) {
+  const refreshTokenList = useCallback(() => {
+    if (!currentAddress) {
       return;
     }
     getTokenList(currentAddress);
-  }, [currentAddress, getTokenList, isFocused]);
+  }, [currentAddress, getTokenList]);
+
+  useEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+    refreshTokenList();
+  }, [isFocused, refreshTokenList]);
+
+  useAppForeground({
+    enabled: isFocused,
+    onForeground: () => {
+      if (isLoading || isAllLoading || !isFocused || !currentAddress) {
+        return;
+      }
+      onForeground?.();
+      refreshTokenList();
+    },
+  });
 
   const { selectData } = useSingleHomeSelectData();
   const noAnyAssets = !selectData.rawNetWorth || noAssetsOnAnyChain;

@@ -46,6 +46,8 @@ import {
   usePulldownRefreshStyles,
 } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { RNGHRefreshControl } from '@/components/customized/reexports';
+import { useAppForeground } from '@/hooks/useAppForeground';
+import addressBalanceStore from '@/store/balance';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -100,7 +102,9 @@ export const TokenList = () => {
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
 
   const getAccountByAddress = useFindAccountByAddress();
-  const { isFocused } = useIsFocusedCurrentTab(TabName.token);
+  const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
+
+  const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
 
   const emptyResult = useMemo(
     () => ({
@@ -163,6 +167,19 @@ export const TokenList = () => {
   useEffect(() => {
     batchGetTokenList(myTop10Addresses);
   }, [myTop10Addresses]);
+
+  const handleForeground = useCallback(() => {
+    if (isLoading || !isFocusing || !myTop10Addresses) {
+      return;
+    }
+    triggerUpdate(false);
+    batchGetTokenList(myTop10Addresses);
+  }, [isFocusing, isLoading, myTop10Addresses, triggerUpdate]);
+
+  useAppForeground({
+    enabled: isFocusing,
+    onForeground: handleForeground,
+  });
 
   const hasNoAssets =
     tokens.length + foldTokens.length + scamTokens.length === 0 &&
