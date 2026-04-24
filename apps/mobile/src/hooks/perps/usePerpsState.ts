@@ -30,6 +30,7 @@ import {
   usePerpsStore,
   waitForInitialWsData,
   fetchUserAbstraction,
+  subscribeToUserData,
 } from './usePerpsStore';
 import * as Sentry from '@sentry/react-native';
 import { minBy, uniqBy } from 'lodash';
@@ -333,9 +334,10 @@ export const usePerpsState = () => {
       // need fetch setAbstraction
       setTimeout(() => {
         fetchUserAbstraction('');
+        subscribeToUserData(currentPerpsAccount!);
       }, 100);
     }
-  }, [handleSafeSetDexAbstraction]);
+  }, [handleSafeSetDexAbstraction, currentPerpsAccount]);
 
   const handleDirectApprove = useCallback(
     async (signActions: SignAction[]): Promise<void> => {
@@ -562,6 +564,7 @@ export const usePerpsState = () => {
     currentPerpsAccount?.type,
     accountNeedApproveAgent,
     handleActionApproveStatus,
+    currentPerpsAccount,
   ]);
 
   useEffect(() => {
