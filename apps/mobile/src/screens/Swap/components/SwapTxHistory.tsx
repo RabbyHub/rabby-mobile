@@ -392,7 +392,7 @@ export const SwapTxHistory = ({
       enableDismissOnClose
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: isDarkTheme ? 'bg1' : 'bg2',
+        linearGradientType: isDarkTheme ? 'bg1' : 'bg0',
       })}>
       <HistoryList onGotoDetail={goToDetail} recentShowTime={recentShowTime} />
     </AppBottomSheetModal>

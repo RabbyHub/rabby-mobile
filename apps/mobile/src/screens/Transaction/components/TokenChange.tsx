@@ -158,8 +158,8 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     borderRadius: 2,
   },
   text: {
-    fontSize: 17,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
     color: colors2024['green-default'],
     minWidth: 0,
@@ -181,7 +181,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   textNegative: {
     color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
+    fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
   },

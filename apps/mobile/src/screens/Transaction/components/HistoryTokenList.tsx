@@ -245,8 +245,8 @@ export const HistoryTokenList = ({
             <View
               style={{ flexDirection: 'row', alignItems: 'center', width: 32 }}>
               <RcIconSingleArrow
-                width={32}
-                height={32}
+                width={26}
+                height={26}
                 color={colors2024['neutral-bg-2']}
               />
             </View>
@@ -259,7 +259,7 @@ export const HistoryTokenList = ({
       return (
         <View style={[styles.doubleBox]}>
           <Text style={styles.swapTitle}>{t('global.from')}</Text>
-          <View style={[styles.swapBoxContainer, { marginBottom: 12 }]}>
+          <View style={[styles.swapBoxContainer, { marginBottom: 16 }]}>
             {data.sends.map(item => {
               const token = item.token as TokenItem;
               const tokenIsNft = item.token_id?.length === 32;
@@ -329,11 +329,11 @@ export const HistoryTokenList = ({
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        width: 32,
+                        width: 26,
                       }}>
                       <RcIconSingleArrow
-                        width={32}
-                        height={32}
+                        width={26}
+                        height={26}
                         color={colors2024['neutral-bg-2']}
                       />
                     </View>
@@ -410,11 +410,11 @@ export const HistoryTokenList = ({
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        width: 32,
+                        width: 26,
                       }}>
                       <RcIconSingleArrow
-                        width={32}
-                        height={32}
+                        width={26}
+                        height={26}
                         color={colors2024['neutral-bg-2']}
                       />
                     </View>
@@ -472,9 +472,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenAmountText: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '700',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '800',
   },
   tokenApproveAmountText: {
     color: colors2024['neutral-title-1'],
@@ -493,14 +493,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenPriceText: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '500',
   },
   singleColomnBox: {
     // flex: 1,
     width: Dimensions.get('window').width - 160,
     flexDirection: 'column',
+    gap: 2,
     // alignItems: 'center',
   },
   colomnBox: {
@@ -532,7 +533,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
     borderRadius: 16,
-    padding: 12,
+    padding: 16,
   },
   swapTitle: {
     color: colors2024['neutral-secondary'],
@@ -581,15 +582,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   singleBox: {
     width: '100%',
-    height: 92,
+    // height: 92,
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
     justifyContent: 'space-between',
     alignContent: 'center',
     borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 16,
+    padding: 16,
     flexDirection: 'row',
   },
   swapBoxContainer: {

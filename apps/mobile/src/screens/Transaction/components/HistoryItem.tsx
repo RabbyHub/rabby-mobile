@@ -8,7 +8,6 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { getAliasName } from '@/core/apis/contact';
-import { ellipsisAddress } from '@/utils/address';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
@@ -35,6 +34,13 @@ export type TokenChangeDataItem = {
   token_id: string;
   price?: number;
   type: 'send' | 'receive' | 'approve';
+};
+
+const ellipsisAddress = (address: string) => {
+  if (!address) {
+    return '';
+  }
+  return address.slice(0, 8) + '...';
 };
 
 export const HistoryItem = React.memo(
@@ -183,7 +189,9 @@ export const HistoryItem = React.memo(
 
           const name = project
             ? project.name
-            : getAliasName(addr) || ellipsisAddress(addr);
+            : getAliasName(addr, {
+                keepEmptyIfNotFound: true,
+              }) || ellipsisAddress(addr);
 
           if (cexInfo) {
             address = (
@@ -203,7 +211,8 @@ export const HistoryItem = React.memo(
                   }}
                 />
                 <Text style={styles.describeText}>
-                  {getAliasName(addr) || ellipsisAddress(addr)}
+                  {getAliasName(addr, { keepEmptyIfNotFound: true }) ||
+                    ellipsisAddress(addr)}
                 </Text>
               </View>
             );
@@ -213,7 +222,9 @@ export const HistoryItem = React.memo(
           break;
 
         case HistoryItemCateType.Cancel:
-          address = getAliasName(data.address) || ellipsisAddress(data.address);
+          address =
+            getAliasName(data.address, { keepEmptyIfNotFound: true }) ||
+            ellipsisAddress(data.address);
           break;
         case HistoryItemCateType.Contract:
         case HistoryItemCateType.Revoke:

@@ -415,7 +415,7 @@ function HistoryDetailScreen(): JSX.Element {
 
   return (
     <NormalScreenContainer2024
-      type={!isLight ? 'bg1' : 'bg2'}
+      type={!isLight ? 'bg1' : 'bg0'}
       style={[styles.container]}>
       {isScam ? (
         <View style={styles.scamContainerWrapper}>
@@ -637,6 +637,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailContainer: {
     width: '100%',
     marginTop: 12,
+    paddingVertical: 4,
     borderRadius: 16,
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
@@ -657,20 +658,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailItem: {
     flexDirection: 'row',
     // gap: 4,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   itemTitleText: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '500',
     maxWidth: '45%',
   },
   itemAddressText: {
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'right',
     width: 170,

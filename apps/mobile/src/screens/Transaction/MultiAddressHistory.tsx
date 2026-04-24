@@ -749,7 +749,7 @@ const HistoryScreen = ({ isForMultipleAddress = true }) => {
   const { styles } = useTheme2024({ getStyle });
 
   return (
-    <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
+    <NormalScreenContainer2024 type="bg0" overwriteStyle={styles.container}>
       {isForMultipleAddress && (
         <AccountSwitcherModal
           forScene="MultiHistory"
