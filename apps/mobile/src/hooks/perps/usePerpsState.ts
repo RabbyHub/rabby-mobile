@@ -328,16 +328,14 @@ export const usePerpsState = () => {
       await sdk.exchange?.agentSetAbstraction(Abstraction.UNIFIED_ACCOUNT);
     } catch (e) {
       // silent: this is a best-effort post-approve sync
-      // fallback to dex abstraction if unified account setup fails
       handleSafeSetDexAbstraction();
     } finally {
       // need fetch setAbstraction
       setTimeout(() => {
         fetchUserAbstraction('');
-        subscribeToUserData(currentPerpsAccount!);
       }, 100);
     }
-  }, [handleSafeSetDexAbstraction, currentPerpsAccount]);
+  }, [handleSafeSetDexAbstraction]);
 
   const handleDirectApprove = useCallback(
     async (signActions: SignAction[]): Promise<void> => {
@@ -541,32 +539,6 @@ export const usePerpsState = () => {
     ],
   );
 
-  const { availableBalance } = usePerpsAccount();
-  let hasCheckedApproveStatus = useRef(false);
-
-  useEffect(() => {
-    const isLocalWallet =
-      currentPerpsAccount?.type === KEYRING_CLASS.PRIVATE_KEY ||
-      currentPerpsAccount?.type === KEYRING_CLASS.MNEMONIC;
-    if (
-      isLocalWallet &&
-      Number(availableBalance) &&
-      accountNeedApproveAgent &&
-      !hasCheckedApproveStatus.current
-    ) {
-      hasCheckedApproveStatus.current = true;
-      setTimeout(() => {
-        handleActionApproveStatus({ isHideToast: true });
-      }, 1000);
-    }
-  }, [
-    availableBalance,
-    currentPerpsAccount?.type,
-    accountNeedApproveAgent,
-    handleActionApproveStatus,
-    currentPerpsAccount,
-  ]);
-
   useEffect(() => {
     if (isInitialized) {
       return;
@@ -735,7 +707,6 @@ export const usePerpsState = () => {
         // 不存在agent wallet,，需要创建新的，同时签名
         await handleLoginWithSignApprove(account);
       }
-      hasCheckedApproveStatus.current = false;
       return true;
     } catch (error: any) {
       console.error('Failed to login Perps account:', error);
