@@ -48,13 +48,7 @@ export const BlurShadowView = ({
         isLight ? styles.lightContainer : styles.container,
         viewProps?.style,
       ]}>
-      <BlurView
-        style={StyleSheet.flatten([styles.blur, { borderRadius }])}
-        blurAmount={blurAmount}
-        blurType="light"
-        reducedTransparencyFallbackColor="white">
-        {children}
-      </BlurView>
+      {children}
     </View>
   );
 };
