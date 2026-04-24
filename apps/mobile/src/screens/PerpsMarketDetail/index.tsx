@@ -68,6 +68,7 @@ import { getStatsReportSide } from '@/utils/perps';
 import { APP_VERSIONS } from '@/constant';
 import { Text } from '@/components/Typography';
 import { PerpsGuideEntryPopup } from './components/PerpsGuideEntryPopup';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -159,6 +160,16 @@ export const PerpsMarketDetailScreen = () => {
     });
     return unsubscribe;
   }, [navigation, fromSource]);
+
+  useEffect(() => {
+    const isLocalWallet =
+      currentPerpsAccount?.type === KEYRING_CLASS.PRIVATE_KEY ||
+      currentPerpsAccount?.type === KEYRING_CLASS.MNEMONIC;
+    if (isLocalWallet) {
+      handleActionApproveStatus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { activeAssetCtx, activeAssetData } = useActiveAssetSubscription(coin);
 
