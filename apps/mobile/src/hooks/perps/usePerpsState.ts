@@ -553,7 +553,9 @@ export const usePerpsState = () => {
       !hasCheckedApproveStatus.current
     ) {
       hasCheckedApproveStatus.current = true;
-      handleActionApproveStatus({ isHideToast: true });
+      setTimeout(() => {
+        handleActionApproveStatus({ isHideToast: true });
+      }, 1000);
     }
   }, [
     availableBalance,
