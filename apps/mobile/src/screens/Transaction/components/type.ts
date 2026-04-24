@@ -40,3 +40,8 @@ export const LendingReportType = {
   RepayWithCollateral: 'RepayWithCollateral',
   DebtSwap: 'DebtSwap',
 };
+
+export const LendingSignType = {
+  Simplified: 'simplified',
+  Full: 'full',
+};

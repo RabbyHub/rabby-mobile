@@ -6,7 +6,7 @@ import React, {
   useImperativeHandle,
   type Ref,
 } from 'react';
-import { FlatList, Platform, View } from 'react-native';
+import { FlatList, Platform, StyleProp, View, ViewStyle } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { HistoryItem } from './HistoryItem';
 import { SkeletonCard } from './SkeletonCard';
@@ -85,6 +85,7 @@ export const HistoryList = ({
   appendBottom,
   moreLoadingLength = 1,
   tabList,
+  style,
   ref,
 }: {
   firstFetchDone?: boolean;
@@ -102,6 +103,7 @@ export const HistoryList = ({
   appendBottom?: number;
   moreLoadingLength?: number;
   tabList?: boolean;
+  style?: StyleProp<ViewStyle>;
   ref?: Ref<{ scrollToTop: () => void }>;
 }) => {
   const flatListRef = useRef<FlatList>(null);
@@ -229,7 +231,7 @@ export const HistoryList = ({
           />
         ) : null
       }
-      style={styles.container}
+      style={[styles.container, style]}
       keyExtractor={item =>
         'id' in item.data
           ? `${item.data.address}-${item.data.chain}-${item.data.id}`
@@ -295,7 +297,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
-    paddingLeft: 8,
+    paddingLeft: 4,
     marginTop: 4,
     marginBottom: 8,
     color: colors2024['neutral-secondary'],

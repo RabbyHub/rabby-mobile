@@ -2084,7 +2084,6 @@
       "switchAccount": "Переключить кошелек",
       "depositFailed": "Ошибка при депозите",
       "lowBalance": "У вас недостаточно газа. Внесите газ, чтобы обеспечитьSmooth будущие транзакции.",
-      "depositWith": "Депозит с",
       "depositSubmitted": "Депозит отправлен"
     },
     "tokenDetail": {
@@ -2689,6 +2688,10 @@
       "selectAccountTitle": "Выберите кошелек для входа",
       "more": "Больше",
       "explorePerps": "Изучить Perps",
+      "categories": {
+        "favorite": "Избранное",
+        "topVolume": "Топ по объёму"
+      },
       "deleteAgentSuccess": "Агент успешно удален",
       "regionNotSupport": "Открытие позиций не поддерживается в вашем регионе.",
       "leverageRangeMaxError": "Максимальное кредитное плечо составляет {{max}}x",

@@ -2467,7 +2467,6 @@
         "subtitle": "quando ficar sem gas"
       },
       "gasBalance": "Saldo de Gas",
-      "depositWith": "Depósito com",
       "depositNow": "Deposite agora",
       "switchAccount": "Mudar Carteira",
       "depositFailed": "Depósito falhou",
@@ -2949,6 +2948,10 @@
       "title": "Perps",
       "more": "Mais",
       "explorePerps": "Explorar Perps",
+      "categories": {
+        "favorite": "Favorito",
+        "topVolume": "Maior Volume"
+      },
       "positions": "Posições",
       "leverageRangeMinError": "A alavancagem mínima é {{min}}x",
       "deleteAgentSuccess": "Agente eliminado com sucesso",

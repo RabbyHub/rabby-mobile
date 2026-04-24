@@ -1865,7 +1865,6 @@
       },
       "depositNow": "Déposez maintenant",
       "switchAccount": "Changer de portefeuille",
-      "depositWith": "Dépôt avec",
       "depositFailed": "Le dépôt a échoué",
       "gasBalance": "Solde de Gaz",
       "lowBalance": "Vous n'avez pas assez de gas. Déposez du gas pour garantir que vos futures transactions se déroulent sans problème.",
@@ -2581,6 +2580,10 @@
       "selectAccountTitle": "Sélectionnez un portefeuille pour vous connecter",
       "more": "Plus",
       "explorePerps": "Explorer les Perps",
+      "categories": {
+        "favorite": "Favori",
+        "topVolume": "Volume Principal"
+      },
       "positions": "Positions",
       "deleteAgentSuccess": "Agent supprimé avec succès",
       "regionNotSupport": "L'ouverture de positions n'est pas prise en charge dans votre région.",

@@ -1,6 +1,9 @@
 import { apisPerps } from '@/core/apis';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
-import { perpsStore, usePerpsStore } from '@/hooks/perps/usePerpsStore';
+import {
+  perpsStore,
+  setAccountNeedApproveAgent,
+} from '@/hooks/perps/usePerpsStore';
 import { useMemoizedFn } from 'ahooks';
 import * as Sentry from '@sentry/react-native';
 import { Dimensions, Platform } from 'react-native';
@@ -8,21 +11,11 @@ import { PERPS_BUILDER_INFO } from '@/constant/perps';
 import { sleep } from '@/utils/async';
 import { OrderResponse } from '@rabby-wallet/hyperliquid-sdk';
 import { showToast } from '@/hooks/perps/showToast';
-import { useShallow } from 'zustand/react/shallow';
 import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
 
 export const usePerpsPosition = () => {
-  const {
-    fetchPositionOpenOrders,
-    fetchClearinghouseState,
-    setAccountNeedApproveAgent,
-  } = usePerpsStore();
-  const { currentPerpsAccount } = perpsStore(
-    useShallow(s => ({
-      currentPerpsAccount: s.currentPerpsAccount,
-    })),
-  );
+  const currentPerpsAccount = perpsStore(s => s.currentPerpsAccount);
 
   const formatTriggerPx = (px?: string) => {
     // avoid '.15' input error from hy validator
@@ -103,7 +96,6 @@ export const usePerpsPosition = () => {
         });
         if (res?.status === 'ok') {
           showToast(actionText + ' successfully', 'success');
-          fetchClearinghouseState();
         } else {
           showToast(
             res?.response?.data?.error || actionText + ' error',
@@ -154,9 +146,6 @@ export const usePerpsPosition = () => {
         formattedSlTriggerPx &&
           (nextCurrentTpOrSl.slPrice = formattedSlTriggerPx);
         showToast(autoCloseText + ' set successfully', 'success');
-        setTimeout(() => {
-          fetchPositionOpenOrders();
-        }, 1000);
         return true;
       } catch (error: any) {
         const isExpired = await judgeIsUserAgentIsExpired(error?.message || '');
@@ -199,7 +188,6 @@ export const usePerpsPosition = () => {
 
         const filled = res?.response?.data?.statuses[0]?.filled;
         if (filled) {
-          fetchClearinghouseState();
           const { totalSz, avgPx } = filled;
           const msg = `Closed ${direction} ${formatPerpsCoin(
             coin,
@@ -311,8 +299,6 @@ export const usePerpsPosition = () => {
         const res = results[0];
         const filled = res?.response?.data?.statuses[0]?.filled;
         if (filled) {
-          fetchClearinghouseState();
-
           const { totalSz, avgPx } = filled;
           const msg = `Opened ${direction} ${formatPerpsCoin(
             coin,
@@ -356,11 +342,63 @@ export const usePerpsPosition = () => {
     },
   );
 
+  const handleStableCoinOrder = useMemoizedFn(
+    async (params: {
+      coin: 'USDH' | 'USDT' | 'USDE';
+      isBuy: boolean;
+      size: string;
+      limitPx: string;
+    }) => {
+      try {
+        if (
+          params.coin !== 'USDH' &&
+          params.coin !== 'USDT' &&
+          params.coin !== 'USDE'
+        ) {
+          throw new Error('Invalid stablecoin');
+        }
+
+        const sdk = apisPerps.getPerpsSDK();
+        const res = await sdk.exchange?.stableCoinOrder({
+          coin: params.coin,
+          isBuy: params.isBuy,
+          size: params.size,
+          limitPx: params.limitPx,
+        });
+        const filled = res?.response?.data?.statuses[0]?.filled;
+        if (filled) {
+          showToast('Swap completed successfully', 'success');
+          return filled;
+        }
+        const errorMsg = res?.response?.data?.statuses[0]?.error;
+        showToast(errorMsg || 'Swap failed', 'error');
+        return null;
+      } catch (error: any) {
+        const isExpired = await judgeIsUserAgentIsExpired(error?.message || '');
+        if (isExpired) {
+          return null;
+        }
+        showToast(error?.message || 'Swap failed', 'error');
+        Sentry.captureException(
+          new Error(
+            'PERPS spot order error' +
+              'params: ' +
+              JSON.stringify(params) +
+              'error: ' +
+              JSON.stringify(error),
+          ),
+        );
+        return null;
+      }
+    },
+  );
+
   return {
     handleOpenPosition,
     handleClosePosition,
     handleSetAutoClose,
     handleUpdateMargin,
     handleCancelOrder,
+    handleStableCoinOrder,
   };
 };

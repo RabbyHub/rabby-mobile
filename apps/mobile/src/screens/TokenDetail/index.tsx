@@ -46,6 +46,7 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
 import { IconRightCC } from './components/IconRightCC';
+import { TokenDetailWalletCard } from './components/TokenDetailWalletCard';
 
 const isAndroid = Platform.OS === 'android';
 const ScreenWidth = Dimensions.get('window').width;
@@ -176,7 +177,7 @@ const TokenDetailContent = () => {
         unHold
       />
     );
-  }, [token, refreshTag, effectiveAccount?.address]);
+  }, [effectiveAccount?.address, refreshTag, token]);
 
   useFocusEffect(
     useCallback(() => {
@@ -225,7 +226,7 @@ const TokenDetailContent = () => {
                       isLoss ? styles.lossShadow : styles.upShadow,
                       {
                         borderColor: is24hNoChange
-                          ? colors2024['neutral-secondary']
+                          ? colors2024['neutral-bg-5']
                           : isLoss
                           ? colors2024['red-disable']
                           : colors2024['green-light-2'],
@@ -242,7 +243,11 @@ const TokenDetailContent = () => {
               {has24hChangeData ? (
                 <>
                   <View style={styles.floatPriceContainer}>
-                    <Text style={styles.floatBalanceTitle}>
+                    <Text
+                      style={[
+                        styles.floatBalanceTitle,
+                        is24hNoChange ? styles.noChangePriceChange : undefined,
+                      ]}>
                       {t('page.tokenDetail.price')}:
                     </Text>
                     <Text style={styles.floatPrice}>
@@ -253,28 +258,33 @@ const TokenDetailContent = () => {
                     <Text
                       style={[
                         styles.floatPriceChange,
-                        {
-                          color: is24hNoChange
-                            ? colors2024['neutral-body']
-                            : isLoss
-                            ? colors2024['red-default']
-                            : colors2024['green-default'],
-                        },
+                        is24hNoChange
+                          ? styles.noChangePriceChange
+                          : isLoss
+                          ? styles.redPriceChange
+                          : styles.greenPriceChange,
                       ]}>
                       {is24hNoChange ? '' : isLoss ? '-' : '+'}
                       {percentChange}
                     </Text>
-                    <RcIconRightArrowCC
-                      width={14}
-                      height={14}
-                      color={
-                        is24hNoChange
-                          ? colors2024['neutral-body']
-                          : isLoss
-                          ? colors2024['red-default']
-                          : colors2024['green-default']
-                      }
-                    />
+                    {is24hNoChange ? (
+                      <IconRightCC
+                        width={14}
+                        height={14}
+                        rectColor={colors2024['neutral-line']}
+                        pathColor={colors2024['neutral-title-1']}
+                      />
+                    ) : (
+                      <RcIconRightArrowCC
+                        width={14}
+                        height={14}
+                        color={
+                          isLoss
+                            ? colors2024['red-default']
+                            : colors2024['green-default']
+                        }
+                      />
+                    )}
                   </View>
                 </>
               ) : (
@@ -296,6 +306,10 @@ const TokenDetailContent = () => {
           )}
         </View>
 
+        {effectiveAccount ? (
+          <TokenDetailWalletCard account={effectiveAccount} />
+        ) : null}
+
         <View style={[styles.historyHeader]}>
           <Text style={styles.relateTitle}>
             {t('page.tokenDetail.Transaction')}
@@ -307,6 +321,7 @@ const TokenDetailContent = () => {
     amountSum,
     baseTokenInfo,
     colors2024,
+    effectiveAccount,
     handleOpenTokenMarketInfo,
     has24hChangeData,
     is24hNoChange,
@@ -364,7 +379,7 @@ const TokenDetailContent = () => {
       <Tabs.Container
         renderTabBar={() => null}
         tabBarHeight={0}
-        headerHeight={120}
+        headerHeight={260}
         renderHeader={renderHeader}
         headerContainerStyle={styles.headerContainer}
         containerStyle={styles.container}
@@ -432,8 +447,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       overflow: 'hidden',
     },
     balanceOverviewContainer: {
-      paddingLeft: 23,
-      paddingRight: 16,
+      paddingLeft: 12,
+      paddingRight: 12,
+    },
+    headerRightContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    headerAccountSwitcher: {
+      marginRight: 12,
     },
     bottomContainer: {
       width: '100%',
@@ -450,6 +472,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       justifyContent: 'space-between',
       overflow: 'hidden',
+      paddingLeft: 5,
+      paddingRight: 9,
     },
     floatingBarContent: {
       flexDirection: 'column',
@@ -548,6 +572,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '800',
       fontFamily: 'SF Pro Rounded',
     },
+    noChangePriceChange: {
+      color: colors2024['neutral-body'],
+      fontWeight: '500',
+    },
+    greenPriceChange: {
+      color: colors2024['green-default'],
+    },
+    redPriceChange: {
+      color: colors2024['red-default'],
+    },
     relateTitle: {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
@@ -557,7 +591,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     historyHeader: {
       flexDirection: 'row',
-      marginTop: 26,
+      marginTop: 0,
       justifyContent: 'space-between',
       alignItems: 'center',
     },

@@ -317,7 +317,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
   },
   leftBox: {
-    // ...makeDebugBorder('yellow'),
     height: '100%',
     flexDirection: 'row',
     justifyContent: 'flex-start',
@@ -328,12 +327,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   balanceTextBox: {
     color: colors2024['neutral-title-1'],
-    fontWeight: '900',
-    fontSize: 20,
-    lineHeight: 24,
+    fontWeight: '700',
+    fontSize: 18,
+    lineHeight: 22,
     textAlign: 'left',
     fontFamily: 'SF Pro Rounded',
-    // ...makeDebugBorder('green'),
   },
   balanceLoadingBox: {
     minWidth: 24,

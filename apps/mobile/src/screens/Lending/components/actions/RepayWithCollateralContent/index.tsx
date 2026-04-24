@@ -45,6 +45,7 @@ import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
   LendingReportType,
+  LendingSignType,
 } from '@/screens/Transaction/components/type';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { normalizeBN, valueToBigNumber } from '@aave/math-utils';
@@ -780,6 +781,10 @@ export default function RepayWithCollateral({
         }
 
         let results: string[] = [];
+        const signType =
+          canShowDirectSubmit && !p?.forceFullSign
+            ? LendingSignType.Simplified
+            : LendingSignType.Full;
         if (canShowDirectSubmit && !p?.forceFullSign) {
           try {
             results = await openDirect({
@@ -847,6 +852,7 @@ export default function RepayWithCollateral({
           usd_value: usdValue,
           create_at: Date.now(),
           app_version: APP_VERSIONS.fromNative || '0',
+          signType,
           ...(source ? { source } : {}),
         });
         toast.success(

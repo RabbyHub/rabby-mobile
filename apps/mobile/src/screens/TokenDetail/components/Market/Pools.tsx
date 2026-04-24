@@ -208,7 +208,7 @@ const LiquidityDetail = ({
             ))}
           </View>
           <Text style={[styles.amountItem]}>
-            {formatUsdValueKMB(item.usd_value)}
+            {formatUsdValueKMB(item.usd_value, 2)}
           </Text>
           <View style={styles.addressItem}>
             <Pressable
@@ -448,7 +448,7 @@ const Top5Pools = ({
                   </View>
                   <View style={styles.usdValueItem}>
                     <Text style={styles.poolUsdValue}>
-                      {formatUsdValueKMB(item.usd_value)}
+                      {formatUsdValueKMB(item.usd_value, 2)}
                     </Text>
                   </View>
                 </View>

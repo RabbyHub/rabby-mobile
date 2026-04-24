@@ -3,16 +3,13 @@ import 'react-native-gesture-handler';
 import { useThemeColors } from '@/hooks/theme';
 
 import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from '@/constant/layout';
+import { WebViewControlPreload } from '@/perfs/loadables/rootNavigatorScreens';
 
 import { HomeNavigatorParamsList } from '@/navigation-type';
 import React, { useLayoutEffect } from 'react';
-import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
-import ApprovalTokenDetailSheetModalStub from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
-import BiometricsStubModal from '@/components/AuthenticationModal/BiometricsStubModal';
 import MultiAddressHome from '@/screens/Home/MultiAddressHome';
-import { DappWebViewStubScreen } from '../Dapps/DappWebViewScreen';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { preloadSettingsScreen } from '@/perfs/preloads';
+import { preloadHomeShortcutNavigators } from '@/perfs/preloads';
 
 const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
 
@@ -26,7 +23,11 @@ export function HomeScreenNavigator() {
   }
 
   useLayoutEffect(() => {
-    const timer = setTimeout(() => preloadSettingsScreen(), 200);
+    const timer = setTimeout(() => {
+      preloadHomeShortcutNavigators().catch(error => {
+        console.error('preloadHomeShortcutNavigators::error', error);
+      });
+    }, 300);
 
     return () => clearTimeout(timer);
   }, []);
@@ -82,10 +83,6 @@ export function HomeScreenNavigator() {
           }}
         /> */}
       </HomeHiddenTabStack.Navigator>
-
-      <BiometricsStubModal />
-
-      <ApprovalTokenDetailSheetModalStub />
 
       <WebViewControlPreload />
     </>

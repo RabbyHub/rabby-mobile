@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { View } from 'react-native';
+import { View, Alert } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';
@@ -69,7 +69,7 @@ import {
 import { BridgeSlippage } from './BridgeSlippage';
 import { Text } from '@/components/Typography';
 import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
-import { useBlockSubmitIfFormChangedOnAuth } from '@/hooks/appSettings';
+import { storeApiExpSettingData } from '@/hooks/appSettings';
 import {
   FormAmountMode,
   FormValuesOnSubmit,
@@ -663,9 +663,6 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
 
   const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
 
-  const { blockSubmitIfFormChangedOnAuth } =
-    useBlockSubmitIfFormChangedOnAuth();
-
   const buildFormSnapshot = useCallback(
     (): BridgeFormSnapshot => ({
       amount: amount || '',
@@ -709,33 +706,33 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   );
 
   const handleBridge = useMemoizedFn(async (p?: { ignoreGasFee?: boolean }) => {
-    // if (__DEV__) {
-    //   const snapshot = formValuesRef.current.getSnapshot();
-    //
-    //   if (!snapshot) {
-    //     toast.info(t('page.bridge.formChangedAmount'));
-    //     return;
-    //   }
-    //
-    //   // Check if amount changed during authentication
-    //   const comparison = formValuesRef.current.compare({
-    //     amount: amount || '',
-    //   });
-    //
-    //   // If amount changed during authentication, close modal and alert user
-    //   if (comparison.isChanged) {
-    //     formValuesRef.current.clear();
-    //     closeMiniSigner();
-    //     Alert.alert(
-    //       t('page.bridge.formChangedTitle') || 'Form Changed',
-    //       t('page.bridge.formChangedAmount'),
-    //       [{ text: t('global.ok') || 'OK' }],
-    //     );
-    //     refresh(e => e + 1);
-    //     mutateTxs([]);
-    //     return;
-    //   }
-    // }
+    if (storeApiExpSettingData.getShouldBlockSubmitIfFormChangedOnAuth()) {
+      const snapshot = formValuesRef.current.getSnapshot();
+
+      if (!snapshot) {
+        toast.info(t('page.bridge.formChangedAmount'));
+        return;
+      }
+
+      // Check if amount changed during authentication
+      const comparison = formValuesRef.current.compare({
+        amount: amount || '',
+      });
+
+      // If amount changed during authentication, close modal and alert user
+      if (comparison.isChanged) {
+        formValuesRef.current.clear();
+        closeMiniSigner();
+        Alert.alert(
+          t('page.bridge.formChangedTitle') || 'Form Changed',
+          t('page.bridge.formChangedAmount'),
+          [{ text: t('global.ok') || 'OK' }],
+        );
+        refresh(e => e + 1);
+        mutateTxs([]);
+        return;
+      }
+    }
 
     // Clear snapshot after validation
     formValuesRef.current.clear();

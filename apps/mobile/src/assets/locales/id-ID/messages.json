@@ -1930,7 +1930,6 @@
         "title": "Bayar Biaya Gas di Semua chain",
         "subtitle": "saat kehabisan gas"
       },
-      "depositWith": "Setor dengan",
       "gasBalance": "Saldo Gas",
       "depositFailed": "Setoran gagal",
       "lowBalance": "Anda tidak memiliki cukup gas. Deposit gas untuk memastikan transaksi di masa mendatang berjalan lancar.",
@@ -2570,6 +2569,10 @@
       "title": "Perps",
       "selectAccountTitle": "Pilih Dompet untuk Masuk",
       "explorePerps": "Jelajahi Perps",
+      "categories": {
+        "favorite": "Favorit",
+        "topVolume": "Volume Teratas"
+      },
       "leverageRangeMaxError": "Leverage maksimum adalah {{max}}x",
       "deleteAgentSuccess": "Agen berhasil dihapus",
       "regionNotSupport": "Membuka posisi tidak didukung di wilayah Anda",

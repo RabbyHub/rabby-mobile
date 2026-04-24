@@ -2,44 +2,24 @@ import React, { useCallback } from 'react';
 import { View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { perfEvents } from '@/core/utils/perf';
 import { runIIFEFunc } from '@/core/utils/store';
-import {
-  apisHomeTabIndex,
-  HomeTabName,
-  useHomeTabIndex,
-} from '@/hooks/navigation';
+import { apisHomeTabIndex, HomeTabName } from '@/hooks/navigation';
 import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
 import { TabsTopHeader } from '@/screens/Home/components/OverviewTopHeader';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
-import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
 import { matomoRequestEvent } from '@/utils/analytics';
-import {
-  Container,
-  TabBarProps,
-  Tabs,
-} from 'react-native-collapsible-tab-view';
+import { Tabs } from 'react-native-collapsible-tab-view';
 import { isTabsSwiping } from './hooks';
 import { NFTList } from './NFTList';
 import { ProtocolList } from './ProtocolList';
 import { TokenList } from './TokenList';
 import { IS_IOS } from '@/core/native/utils';
 import { HomeOverview } from '@/screens/Home/components/HomeOverview';
-import { runOnJS, useAnimatedReaction } from 'react-native-reanimated';
 
-export const icons = {
-  unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
-  unfoldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png'),
-  foldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png'),
-  foldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
-  pinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite_dark.png'),
-  pinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite.png'),
-  unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png'),
-  unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
-};
 export const TAB_HEADER_FULL_HEIGHT =
   HOME_TOP_HEADER_SIZES.headerHeight +
   HOME_TOP_HEADER_SIZES.scrollableListTopOffset;
@@ -54,7 +34,9 @@ const homeTabScrollerRef = apisHomeTabIndex.homeTabScrollerRef;
 
 runIIFEFunc(() => {
   perfEvents.subscribe('NAV_BACK_ON_HOME', () => {
-    if (!homeTabScrollerRef.current) return;
+    if (!homeTabScrollerRef.current) {
+      return;
+    }
     const currentIndex = homeTabScrollerRef.current?.getCurrentIndex() || 0;
     if (currentIndex > 0) {
       homeTabScrollerRef.current?.setIndex(Math.max(0, currentIndex - 1));
@@ -140,7 +122,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
   );
 };
 
-const getStyles = createGetStyles2024(({ safeAreaInsets }) => ({
+const getStyles = createGetStyles2024(() => ({
   container: {
     position: 'relative',
     flex: 1,

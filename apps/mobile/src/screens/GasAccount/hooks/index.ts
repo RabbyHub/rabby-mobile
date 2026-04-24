@@ -112,14 +112,15 @@ export const useGasAccountLogin = () => {
 export const useGasAccountHistory = () => {
   const { sig, accountId } = useGasAccountSign();
   const history = gasAccountStore(s => s.history);
+  const confirmedCount = history.list.length;
+  const pendingCount =
+    history.rechargeList.length + history.withdrawList.length;
+  const hasHistory = confirmedCount > 0 || pendingCount > 0;
+  const hasPendingHistory = pendingCount > 0;
+
   useEffect(() => {
     if (!sig || !accountId) {
-      const shouldClearHistory =
-        history.status !== 'ready' ||
-        history.totalCount > 0 ||
-        history.list.length > 0 ||
-        history.rechargeList.length > 0 ||
-        history.withdrawList.length > 0;
+      const shouldClearHistory = history.status !== 'ready' || hasHistory;
 
       if (shouldClearHistory) {
         storeApiGasAccount.refreshHistory().catch(error => {
@@ -129,18 +130,14 @@ export const useGasAccountHistory = () => {
       return;
     }
 
-    if (
-      history.status === 'idle' &&
-      !history.list.length &&
-      !history.rechargeList.length &&
-      !history.withdrawList.length
-    ) {
+    if (history.status === 'idle' && !hasHistory) {
       storeApiGasAccount.refreshHistory().catch(error => {
         console.error('useGasAccountHistory refresh error', error);
       });
     }
   }, [
     accountId,
+    hasHistory,
     history.list.length,
     history.rechargeList.length,
     history.totalCount,
@@ -151,13 +148,10 @@ export const useGasAccountHistory = () => {
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    const hasSomePending = Boolean(
-      history.rechargeList.length || history.withdrawList.length,
-    );
     if (
       history.status !== 'refreshing' &&
       !history.loadingMore &&
-      hasSomePending
+      hasPendingHistory
     ) {
       timer = setTimeout(() => {
         storeApiGasAccount.refreshHistory().catch(error => {
@@ -171,6 +165,7 @@ export const useGasAccountHistory = () => {
       }
     };
   }, [
+    hasPendingHistory,
     history.loadingMore,
     history.rechargeList.length,
     history.status,
@@ -192,11 +187,7 @@ export const useGasAccountHistory = () => {
     ],
   );
 
-  const noMore =
-    history.totalCount <=
-    history.list.length +
-      history.rechargeList.length +
-      history.withdrawList.length;
+  const noMore = history.totalCount <= confirmedCount;
 
   return {
     loading: history.status === 'refreshing' && !history.lastFetchedAt,
@@ -204,6 +195,8 @@ export const useGasAccountHistory = () => {
     loadingMore: !!history.loadingMore,
     loadMore: storeApiGasAccount.loadMoreHistory,
     noMore,
+    hasHistory,
+    hasPendingHistory,
   };
 };
 

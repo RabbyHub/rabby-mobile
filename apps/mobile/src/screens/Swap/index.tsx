@@ -110,7 +110,7 @@ import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
 import { APP_VERSIONS } from '@/constant';
 import { stats } from '@/utils/stats';
 import { Text } from '@/components/Typography';
-import { useBlockSubmitIfFormChangedOnAuth } from '@/hooks/appSettings';
+import { storeApiExpSettingData } from '@/hooks/appSettings';
 import {
   FormAmountMode,
   FormValuesOnSubmit,
@@ -261,9 +261,6 @@ const Swap = ({
     () => (autoSlippage ? autoSuggestSlippage : _slippage),
     [_slippage, autoSlippage, autoSuggestSlippage],
   );
-
-  const { blockSubmitIfFormChangedOnAuth } =
-    useBlockSubmitIfFormChangedOnAuth();
 
   const {
     isSupportedChain,
@@ -615,7 +612,7 @@ const Swap = ({
   );
 
   const handleSwap = useMemoizedFn(async (p?: { ignoreGasFee?: boolean }) => {
-    if (__DEV__) {
+    if (storeApiExpSettingData.getShouldBlockSubmitIfFormChangedOnAuth()) {
       const snapshot = formValuesRef.current.getSnapshot();
 
       if (!snapshot) {

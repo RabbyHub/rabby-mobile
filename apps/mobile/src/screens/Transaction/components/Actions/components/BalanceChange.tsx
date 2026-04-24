@@ -330,9 +330,9 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => {
     changeText: {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
-      fontSize: 18,
-      lineHeight: 22,
-      fontWeight: '700',
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '900',
     },
 
     changeTextPositive: {

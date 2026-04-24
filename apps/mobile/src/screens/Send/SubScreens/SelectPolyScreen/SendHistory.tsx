@@ -132,7 +132,7 @@ export const SendHistory = ({
       // enableDismissOnClose={true}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: isDarkTheme ? 'bg1' : 'bg2',
+        linearGradientType: isDarkTheme ? 'bg1' : 'bg0',
       })}>
       {/* <BottomSheetScrollView> */}
       <AppBottomSheetModalTitle

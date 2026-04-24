@@ -14,9 +14,9 @@ import { formatPrice, formatUsdValue } from '@/utils/number';
 import { Text } from '@/components/Typography';
 
 interface ItemIconProps {
-  tokenId: string;
-  chainId: string;
-  address: string;
+  tokenId?: string;
+  chainId?: string;
+  address?: string;
   amount: number;
   singlePrice?: number;
   style?: StyleProp<TextStyle>;
