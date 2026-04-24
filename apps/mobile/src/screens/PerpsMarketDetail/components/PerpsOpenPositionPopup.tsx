@@ -596,7 +596,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                       {t('page.perpsDetail.PerpsOpenPositionPopup.available')}
                     </Text>
                     {(availableBalance < 0.1 ||
-                      marginValidation.error === 'insufficient') && (
+                      marginValidation.error === 'insufficient_balance') && (
                       <TouchableOpacity
                         onPress={
                           quoteAsset === 'USDC' ? onDepositPress : onSwapPress

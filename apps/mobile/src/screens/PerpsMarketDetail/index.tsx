@@ -329,12 +329,12 @@ export const PerpsMarketDetailScreen = () => {
   const handleSwapPress = useCallback(async () => {
     await handleActionApproveStatus();
 
-    if (!isUnifiedAccount) {
+    if (!isUnifiedAccount && !accountNeedApproveAgent) {
       setIsShowEnableUnifiedPopup(true);
       return;
     }
     setIsShowSwapPopup(true);
-  }, [isUnifiedAccount, handleActionApproveStatus]);
+  }, [isUnifiedAccount, handleActionApproveStatus, accountNeedApproveAgent]);
 
   const handleEnableUnifiedConfirm = useCallback(async () => {
     const success = await handleEnableUnifiedAccount();

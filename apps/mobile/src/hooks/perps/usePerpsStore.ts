@@ -289,7 +289,7 @@ const fetchPerpPermission = async (address: string) => {
   // setHasPermission(true);
 };
 
-const fetchUserAbstraction = async (address: string) => {
+export const fetchUserAbstraction = async (address: string) => {
   const sdk = apisPerps.getPerpsSDK();
   const userAbstraction = await sdk.info.getUserAbstraction(address);
   setPerpsState(prev => ({ ...prev, userAbstraction: userAbstraction }));
@@ -710,7 +710,7 @@ const mapLedgerUpdatesToHistory = (
         };
       }
 
-      const { destination, usdcValue, user, destinationDex } =
+      const { destination, usdcValue, user, destinationDex, sourceDex } =
         item.delta as any;
       const isWithdrawSend = Object.values(
         HYPE_EVM_BRIDGE_ADDRESS_MAP,
@@ -729,11 +729,12 @@ const mapLedgerUpdatesToHistory = (
         currentAddress &&
         isSameAddress(destination, currentAddress)
       ) {
-        if (user === HYPE_CORE_DEPOSIT_WALLET) {
+        if (sourceDex === 'spot' || destinationDex === 'spot') {
           return {
             time: item.time,
             hash: item.hash,
-            type: 'receive' as const,
+            destinationDex,
+            type: 'transfer' as const,
             status: 'success' as const,
             usdValue: usdcValue.toString(),
           };
@@ -741,8 +742,7 @@ const mapLedgerUpdatesToHistory = (
           return {
             time: item.time,
             hash: item.hash,
-            destinationDex,
-            type: 'transfer' as const,
+            type: 'receive' as const,
             status: 'success' as const,
             usdValue: usdcValue.toString(),
           };

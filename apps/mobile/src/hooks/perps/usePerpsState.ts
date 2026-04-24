@@ -29,6 +29,7 @@ import {
   PositionAndOpenOrder,
   usePerpsStore,
   waitForInitialWsData,
+  fetchUserAbstraction,
 } from './usePerpsStore';
 import * as Sentry from '@sentry/react-native';
 import { minBy, uniqBy } from 'lodash';
@@ -37,6 +38,7 @@ import { usePerpsPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { useTranslation } from 'react-i18next';
 import { sleep } from '@/utils/async';
 import { useShallow } from 'zustand/react/shallow';
+import { usePerpsAccount } from './usePerpsAccount';
 type SignActionType =
   | 'approveAgent'
   | 'approveBuilderFee'
@@ -315,8 +317,13 @@ export const usePerpsState = () => {
       await sdk.exchange?.agentSetAbstraction(Abstraction.UNIFIED_ACCOUNT);
     } catch (e) {
       // silent: this is a best-effort post-approve sync
+    } finally {
+      // need fetch setAbstraction
+      setTimeout(() => {
+        fetchUserAbstraction(currentPerpsAccount?.address || '');
+      }, 100);
     }
-  }, []);
+  }, [currentPerpsAccount?.address]);
 
   const handleDirectApprove = useCallback(
     async (signActions: SignAction[]): Promise<void> => {
@@ -517,6 +524,29 @@ export const usePerpsState = () => {
       setAccountNeedApproveBuilderFee,
     ],
   );
+
+  const { availableBalance } = usePerpsAccount();
+  let hasCheckedApproveStatus = useRef(false);
+
+  useEffect(() => {
+    const isLocalWallet =
+      currentPerpsAccount?.type === KEYRING_CLASS.PRIVATE_KEY ||
+      currentPerpsAccount?.type === KEYRING_CLASS.MNEMONIC;
+    if (
+      isLocalWallet &&
+      Number(availableBalance) &&
+      accountNeedApproveAgent &&
+      !hasCheckedApproveStatus.current
+    ) {
+      hasCheckedApproveStatus.current = true;
+      handleActionApproveStatus({ isHideToast: true });
+    }
+  }, [
+    availableBalance,
+    currentPerpsAccount?.type,
+    accountNeedApproveAgent,
+    handleActionApproveStatus,
+  ]);
 
   useEffect(() => {
     if (isInitialized) {
@@ -884,19 +914,9 @@ export const usePerpsState = () => {
       });
 
       // Refresh account state
-      const abstraction = await sdk.info.getUserAbstraction(account.address);
-      perpsStore.setState({ userAbstraction: abstraction });
-      try {
-        const spotState = await sdk.info.getSpotClearingHouseState(
-          account.address,
-        );
-        if (spotState) {
-          perpsStore.setState({ spotState: formatSpotState(spotState) });
-        }
-      } catch (e) {
-        console.error('Failed to fetch spot state:', e);
-      }
-
+      setTimeout(() => {
+        fetchUserAbstraction(account.address);
+      }, 100);
       showToast('Unified Account enabled', 'success');
       return true;
     } catch (error: any) {
