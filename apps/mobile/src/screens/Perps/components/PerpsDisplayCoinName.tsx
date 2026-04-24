@@ -8,13 +8,14 @@ import { formatPerpsCoin } from '@/utils/perps';
 
 export const PerpsDisplayCoinName: React.FC<{
   item?: MarketData;
-}> = ({ item }) => {
+  coin?: string;
+}> = ({ item, coin = '' }) => {
   const { styles } = useTheme2024({ getStyle });
-  if (!item) {
+  if (!item && !coin) {
     return null;
   }
-  const baseCoin = formatPerpsCoin(item.displayName || item.name);
-  const quoteCoin = item.quoteAsset;
+  const baseCoin = formatPerpsCoin(item?.displayName || item?.name || coin);
+  const quoteCoin = item?.quoteAsset || 'USDC';
 
   return (
     <View style={styles.container}>

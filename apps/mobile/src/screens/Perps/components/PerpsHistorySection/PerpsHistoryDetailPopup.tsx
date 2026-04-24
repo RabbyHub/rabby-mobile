@@ -258,17 +258,29 @@ export const PerpsHistoryDetailPopup: React.FC<{
                     </View>
                   </View>
                   <View style={styles.listItem}>
+                    <View style={styles.listItemMain}>
+                      <Text style={styles.label}>
+                        {t('page.perps.historyDetail.size')}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={styles.value}>
+                        {sz} {formatPerpsCoin(coin || '')}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.listItem}>
                     <TouchableOpacity
                       onPress={() => {
                         showTipsPopup({
-                          title: t('page.perps.historyDetail.size'),
+                          title: t('page.perps.historyDetail.tradeValue'),
                           desc: t('page.perps.historyDetail.sizeTips'),
                           buttonType: 'hyperliquid',
                         });
                       }}>
                       <View style={styles.listItemMain}>
                         <Text style={styles.label}>
-                          {t('page.perps.historyDetail.size')}
+                          {t('page.perps.historyDetail.tradeValue')}
                         </Text>
                         <RcIconInfoCC
                           width={18}
@@ -279,19 +291,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
                     </TouchableOpacity>
                     <View>
                       <Text style={styles.value}>
-                        {sz} {formatPerpsCoin(coin || '')}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.listItem}>
-                    <View style={styles.listItemMain}>
-                      <Text style={styles.label}>
-                        {t('page.perps.historyDetail.tradeValue')}
-                      </Text>
-                    </View>
-                    <View>
-                      <Text style={styles.value}>
-                        ${splitNumberByStep(tradeValue.toFixed(2))}
+                        {splitNumberByStep(tradeValue.toFixed(2))} {quoteAsset}
                       </Text>
                     </View>
                   </View>

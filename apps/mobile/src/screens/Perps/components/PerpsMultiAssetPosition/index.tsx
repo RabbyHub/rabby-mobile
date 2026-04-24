@@ -171,7 +171,7 @@ const AssetPositionItem = ({
       </View>
 
       <View style={styles.bottomSection}>
-        <View style={[styles.coinNameRow, styles.addressRow]}>
+        <View style={[styles.bottomNameRow, styles.addressRow]}>
           <WalletIcon
             width={14}
             height={14}
@@ -183,7 +183,7 @@ const AssetPositionItem = ({
             {item.account.aliasName || ellipsisAddress(item.account.address)}
           </Text>
         </View>
-        <View style={styles.coinNameRow}>
+        <View style={styles.bottomNameRow}>
           <RcIconHyperliquid opacity={0.3} />
           <Text style={styles.hyperliquidText}>
             {t('page.perps.assetPage.hyperliquidPosition')}
@@ -525,6 +525,11 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   coinNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  bottomNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   coinName: {
     fontFamily: 'SF Pro Rounded',

@@ -91,7 +91,7 @@ export const PerpsPositionItem: React.FC<{
             <AssetAvatar logo={logoUrl} size={28} logoStyle={styles.icon} />
             <View style={styles.coinInfo}>
               <View style={styles.coinNameRow}>
-                <PerpsDisplayCoinName item={marketData} />
+                <PerpsDisplayCoinName item={marketData} coin={coin} />
                 <View style={styles.crossTag}>
                   <Text style={styles.crossText}>
                     {leverageType === 'cross'
@@ -121,7 +121,7 @@ export const PerpsPositionItem: React.FC<{
                 {side} {leverageText}
               </Text>
             </View>
-            {!hasStopLoss && (
+            {!hasStopLoss && marketData && (
               <DistanceToLiquidationTag
                 liquidationPrice={liquidationPx}
                 markPrice={marketData?.markPx}

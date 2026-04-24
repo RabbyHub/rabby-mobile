@@ -142,12 +142,22 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </View>
             </View>
             <View style={styles.listItem}>
+              <View style={styles.listItemMain}>
+                <Text style={styles.label}>
+                  {t('page.perpsDetail.PerpsOpenPositionCheckPopup.size')}
+                </Text>
+              </View>
+              <View>
+                <Text style={styles.value}>
+                  {tradeSize} {formatPerpsCoin(coin)}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.listItem}>
               <TouchableOpacity
                 onPress={() => {
                   showTipsPopup({
-                    title: t(
-                      'page.perpsDetail.PerpsOpenPositionCheckPopup.size',
-                    ),
+                    title: t('page.perps.historyDetail.tradeValue'),
                     desc: t(
                       'page.perpsDetail.PerpsOpenPositionCheckPopup.sizeTips',
                     ),
@@ -167,19 +177,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </TouchableOpacity>
               <View>
                 <Text style={styles.value}>
-                  {tradeSize} {formatPerpsCoin(coin)}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.listItem}>
-              <View style={styles.listItemMain}>
-                <Text style={styles.label}>
-                  {t('page.perps.historyDetail.tradeValue')}
-                </Text>
-              </View>
-              <View>
-                <Text style={styles.value}>
-                  {formatUsdValue(Number(tradeAmount))}
+                  {splitNumberByStep(Number(tradeAmount))}{' '}
+                  {info.quoteAsset || 'USDC'}
                 </Text>
               </View>
             </View>

@@ -163,12 +163,16 @@ export const PerpsAccountCard: React.FC = () => {
             )}
         </View>
       </LinearGradient>
-      {showLearnMore && (
+      {!showLearnMore && (
         <LinearGradient
-          colors={isLight ? ['#FFF', '#FFF'] : ['#0F2F3A', '#041920']}
+          colors={[colors2024['neutral-bg-5'], colors2024['neutral-bg-5']]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={[styles.card, styles.balanceCard, { marginTop: 12 }]}>
+          style={[
+            styles.card,
+            styles.balanceCard,
+            { marginTop: 12, backgroundColor: colors2024['neutral-bg-5'] },
+          ]}>
           <TouchableOpacity
             onPress={() => {
               setPopupState(prev => ({
@@ -319,7 +323,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 24,
     paddingHorizontal: 16,
     height: 106,
-    backgroundColor: isLight ? colors2024['neutral-bg-1'] : '#0E1A1E',
   },
   balanceCardRow: {
     flexDirection: 'row',

@@ -513,17 +513,29 @@ export const PerpsPosition: React.FC<{
             </View>
           </View>
           <View style={styles.listItem}>
+            <View style={styles.listItemMain}>
+              <Text style={styles.label}>
+                {t('page.perpsDetail.PerpsPosition.size')}
+              </Text>
+            </View>
+            <View>
+              <Text style={styles.value}>
+                {positionData?.size} {formatPerpsCoin(displayName)}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.listItem}>
             <TouchableOpacity
               onPress={() => {
                 showTipsPopup({
-                  title: t('page.perpsDetail.PerpsPosition.size'),
+                  title: t('page.perps.historyDetail.tradeValue'),
                   desc: t('page.perpsDetail.PerpsPosition.sizeTips'),
                   buttonType: 'hyperliquid',
                 });
               }}>
               <View style={styles.listItemMain}>
                 <Text style={styles.label}>
-                  {t('page.perpsDetail.PerpsPosition.size')}
+                  {t('page.perps.historyDetail.tradeValue')}
                 </Text>
                 <RcIconInfoCC
                   width={18}
@@ -534,22 +546,10 @@ export const PerpsPosition: React.FC<{
             </TouchableOpacity>
             <View>
               <Text style={styles.value}>
-                {positionData?.size} {formatPerpsCoin(displayName)}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.listItem}>
-            <View style={styles.listItemMain}>
-              <Text style={styles.label}>
-                {t('page.perps.historyDetail.tradeValue')}
-              </Text>
-            </View>
-            <View>
-              <Text style={styles.value}>
-                $
                 {splitNumberByStep(
                   Number(positionData?.positionValue || 0).toFixed(2),
-                )}
+                )}{' '}
+                {quoteAsset}
               </Text>
             </View>
           </View>
