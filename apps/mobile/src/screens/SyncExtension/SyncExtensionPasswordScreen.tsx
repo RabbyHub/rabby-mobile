@@ -5,13 +5,18 @@ import { Keyboard, TouchableWithoutFeedback, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
-import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
+import {
+  apisHomeTabIndex,
+  resetNavigationTo,
+  useRabbyAppNavigation,
+} from '@/hooks/navigation';
 import { SyncExtensionHeader } from './components/Header';
 import { NextInput } from '@/components2024/Form/Input';
 import {
   contactService,
   keyringService,
   preferenceService,
+  whitelistService,
 } from '@/core/services';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { decryptWithDetail } from '@metamask/browser-passworder';
@@ -20,14 +25,13 @@ import { useBiometrics } from '@/hooks/biometrics';
 import { apisLock } from '@/core/apis';
 import { RootNames } from '@/constant/layout';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { ellipsis } from '@/utils/address';
-import { useWhitelist } from '@/hooks/whitelist';
+import { setWhitelist } from '@/hooks/whitelist';
 import { usePinAddresses } from '@/hooks/account';
-import { DisplayedKeyring } from '@rabby-wallet/keyring-utils';
 import useAsync from 'react-use/lib/useAsync';
 import { NoNewAddressesModal } from './components/NoNewAddresses';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Text } from '@/components/Typography';
+import { mergeWhitelistAddresses } from '@/utils/whitelist';
 
 export const SyncExtensionPasswordScreen = () => {
   const { t } = useTranslation();
@@ -40,13 +44,11 @@ export const SyncExtensionPasswordScreen = () => {
   const [error, setError] = useState('');
 
   const {
-    computed: { defaultTypeLabel, isBiometricsEnabled, couldSetupBiometrics },
+    computed: { defaultTypeLabel, couldSetupBiometrics },
     toggleBiometrics,
   } = useBiometrics({ autoFetch: true });
 
   const [biometricsEnabled, setBiometricsEnabled] = useState(true);
-
-  const { addWhitelist } = useWhitelist();
 
   const { togglePinAddressAsync } = usePinAddresses();
 
@@ -87,13 +89,15 @@ export const SyncExtensionPasswordScreen = () => {
   const shouldSetupPassword =
     !!_shouldSetupPassword && !shouldSetupPasswordLoading;
 
-  const syncOther = ({
-    newAccounts,
+  const syncOther = async ({
+    allAccounts,
     whitelist,
     alianNames,
     highligtedAddresses,
   }: {
-    newAccounts: DisplayedKeyring['accounts'];
+    allAccounts: Awaited<
+      ReturnType<typeof keyringService.getAllVisibleAccountsArray>
+    >;
     whitelist: string[];
     alianNames: { name: string; address: string }[];
     highligtedAddresses: {
@@ -101,40 +105,98 @@ export const SyncExtensionPasswordScreen = () => {
       address: string;
     }[];
   }) => {
-    newAccounts.forEach(newAccount => {
-      const isInWhitelist = (whitelist as string[])?.some(addr =>
-        isSameAddress(addr, newAccount?.address),
-      );
+    const currentWhitelist = whitelistService.getWhitelist();
+    const mergedWhitelist = mergeWhitelistAddresses(
+      currentWhitelist,
+      whitelist,
+    );
+    const didSyncWhitelist = mergedWhitelist.length !== currentWhitelist.length;
+    const nextPinnedAddresses = [...preferenceService.getPinAddresses()];
+    let didSyncAlias = false;
+    let didSyncPinnedAddress = false;
+
+    if (didSyncWhitelist) {
+      await setWhitelist(mergedWhitelist);
+    }
+
+    for (const account of allAccounts) {
       const isInPinned = highligtedAddresses.some(
         pinned =>
-          isSameAddress(pinned.address, newAccount?.address) &&
-          pinned.brandName === newAccount.brandName,
+          isSameAddress(pinned.address, account.address) &&
+          pinned.brandName === account.brandName,
+      );
+      const isAlreadyPinned = nextPinnedAddresses.some(
+        pinned =>
+          isSameAddress(pinned.address, account.address) &&
+          pinned.brandName === account.brandName,
       );
 
-      const aliasName =
-        alianNames.find(alias =>
-          isSameAddress(alias.address, newAccount.address),
-        )?.name || ellipsis(newAccount.address);
-
-      if (isInWhitelist) {
-        addWhitelist(newAccount?.address, { hasValidated: true });
-      }
-
-      if (isInPinned) {
-        togglePinAddressAsync({
-          brandName: newAccount?.brandName,
-          address: newAccount?.address,
+      if (isInPinned && !isAlreadyPinned) {
+        await togglePinAddressAsync({
+          brandName: account.brandName,
+          address: account.address,
           nextPinned: true,
         });
+        nextPinnedAddresses.unshift({
+          brandName: account.brandName,
+          address: account.address,
+        });
+        didSyncPinnedAddress = true;
       }
 
+      const aliasName = alianNames.find(alias =>
+        isSameAddress(alias.address, account.address),
+      )?.name;
+
       if (aliasName) {
-        contactService.updateAlias({
-          address: newAccount.address,
-          name: aliasName,
-        });
+        const currentAlias = contactService.getAliasByAddress(account.address);
+
+        if (currentAlias?.alias !== aliasName) {
+          contactService.updateAlias({
+            address: account.address,
+            name: aliasName,
+          });
+          didSyncAlias = true;
+        }
       }
+    }
+
+    return {
+      didSyncMetadata: didSyncWhitelist || didSyncAlias || didSyncPinnedAddress,
+    };
+  };
+
+  const finishMetadataOnlySync = () => {
+    clear();
+    toast.success(t('page.syncExtension.importedSuccessfully'));
+    resetNavigationTo(navigation, 'Home');
+    apisHomeTabIndex.setTabIndex(0);
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.SCAN_SYNC_EXTENSION_DONE,
+    );
+  };
+
+  const finishAccountSync = ({
+    newAccounts,
+  }: {
+    newAccounts: Awaited<ReturnType<typeof keyringService.syncExtensionData>>;
+  }) => {
+    clear();
+    navigation.reset({
+      index: 0,
+      routes: [
+        {
+          name: RootNames.StackAddress,
+          params: {
+            screen: RootNames.SyncExtensionAccountSuccess,
+            params: {
+              newAccounts: newAccounts,
+            },
+          },
+        },
+      ],
     });
+    apisHomeTabIndex.setTabIndex(0);
   };
 
   const handleConfirm = async () => {
@@ -188,37 +250,24 @@ export const SyncExtensionPasswordScreen = () => {
       }
 
       const newAccounts = await keyringService.syncExtensionData(vault as any);
+      const allAccounts = await keyringService.getAllVisibleAccountsArray();
+      const { didSyncMetadata } = await syncOther({
+        allAccounts,
+        whitelist,
+        alianNames,
+        highligtedAddresses,
+      });
 
       if (newAccounts.length) {
-        syncOther({
-          newAccounts,
-          whitelist,
-          alianNames,
-          highligtedAddresses,
-        });
-
-        clear();
-        navigation.reset({
-          index: 0,
-          routes: [
-            {
-              name: RootNames.StackAddress,
-              params: {
-                screen: RootNames.SyncExtensionAccountSuccess,
-                params: {
-                  newAccounts: newAccounts,
-                },
-              },
-            },
-          ],
-        });
-        apisHomeTabIndex.setTabIndex(0);
+        finishAccountSync({ newAccounts });
+      } else if (didSyncMetadata) {
+        finishMetadataOnlySync();
       } else {
         setNoAddrVisible(true);
       }
-    } catch (error) {
-      setError(String(error));
-      console.error('appEncryptor.decrypt error', error);
+    } catch (caughtError) {
+      setError(String(caughtError));
+      console.error('appEncryptor.decrypt error', caughtError);
     }
 
     setLoading(false);

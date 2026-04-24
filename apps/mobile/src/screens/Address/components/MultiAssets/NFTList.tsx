@@ -61,6 +61,7 @@ import {
   SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
 } from '@/constant/home';
 import { IS_ANDROID } from '@/core/native/utils';
+import { useAppForeground } from '@/hooks/useAppForeground';
 
 export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -274,6 +275,19 @@ const NFTListInner = () => {
       console.error('Refresh failed:', error);
     }
   }, [batchGetNFTList, triggerUpdate, nftRefresh]);
+
+  const handleForeground = useCallback(() => {
+    if (isLoading || !isFocusing || !myTop10Addresses) {
+      return;
+    }
+    triggerUpdate(false);
+    batchGetNFTList(false, {});
+  }, [isLoading, isFocusing, myTop10Addresses, triggerUpdate, batchGetNFTList]);
+
+  useAppForeground({
+    enabled: isFocusing,
+    onForeground: handleForeground,
+  });
 
   const scrollY = useCurrentTabScrollY();
   const {

@@ -5,9 +5,13 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { View } from 'react-native';
 import { formatPrice, formatUsdValue } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
-import { formatAmountValueKMB } from '../util';
+import { formatAmountValueKMB, formatUsdValueKMB } from '../util';
 import { Text } from '@/components/Typography';
 import { isNumber } from 'lodash';
+
+const PRICE_VALUE_MAX_LENGTH = 8;
+const PRICE_VALUE_BASE_FONT_SIZE = 42;
+const PRICE_VALUE_MIN_FONT_SIZE = 36;
 
 const MarketInfo = ({
   price,
@@ -29,6 +33,12 @@ const MarketInfo = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const currentIsLoss = isNumber(price24hChange) ? price24hChange < 0 : false;
+  const priceText = `$${formatPrice(price)}`;
+  const priceValueFontSize = Math.max(
+    PRICE_VALUE_MIN_FONT_SIZE,
+    PRICE_VALUE_BASE_FONT_SIZE -
+      Math.max(0, priceText.length - PRICE_VALUE_MAX_LENGTH),
+  );
   const percentChangeText = useMemo(() => {
     const changeValue = isNumber(price24hChange)
       ? formatUsdValue(price24hChange * price)
@@ -49,7 +59,9 @@ const MarketInfo = ({
   return (
     <View style={styles.container}>
       <View style={styles.priceContainer}>
-        <Text style={styles.priceValue}>{`$${formatPrice(price)}`}</Text>
+        <Text style={[styles.priceValue, { fontSize: priceValueFontSize }]}>
+          {priceText}
+        </Text>
         <View style={styles.priceChangeContainer}>
           <Text
             style={[
@@ -72,7 +84,7 @@ const MarketInfo = ({
             {t('page.tokenDetail.marketInfo.marketCap')}
           </Text>
           <Text style={styles.infoItemValue}>
-            {marketCap ? formatUsdValue(marketCap) : '-'}
+            {marketCap ? formatUsdValueKMB(marketCap) : '-'}
           </Text>
         </View>
         <View style={styles.infoItem}>
@@ -88,7 +100,7 @@ const MarketInfo = ({
             {t('page.tokenDetail.marketInfo.volume24h')}
           </Text>
           <Text style={styles.infoItemValue}>
-            {volume24h ? formatUsdValue(volume24h, undefined, true) : '-'}
+            {volume24h ? formatUsdValueKMB(volume24h) : '-'}
           </Text>
         </View>
         <View style={styles.infoItem}>
@@ -101,7 +113,9 @@ const MarketInfo = ({
           <Text style={styles.infoItemText}>
             {t('page.tokenDetail.marketInfo.holders')}
           </Text>
-          <Text style={styles.infoItemValue}>{holders ? holders : '-'}</Text>
+          <Text style={styles.infoItemValue}>
+            {holders ? formatAmountValueKMB(holders) : '-'}
+          </Text>
         </View>
       </View>
     </View>

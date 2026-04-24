@@ -12,6 +12,24 @@ import { Text } from '@/components/Typography';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 
+type TriggerLayout = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+const EMPTY_LAYOUT: TriggerLayout = {
+  x: 0,
+  y: 0,
+  width: 0,
+  height: 0,
+};
+
+const isValidTriggerLayout = (
+  layout: TriggerLayout | null | undefined,
+): layout is TriggerLayout => !!layout && layout.width > 0 && layout.height > 0;
+
 type DirectSignGasInfoUIProps = {
   label?: React.ReactNode;
   leftIcon?: React.ReactNode;
@@ -56,14 +74,26 @@ export const DirectSignGasInfoUI = ({
 }: DirectSignGasInfoUIProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const triggerRef = useRef<View>(null);
+  const lastValidLayoutRef = useRef<TriggerLayout>(EMPTY_LAYOUT);
   const lastHandledAutoOpenSignalRef = useRef(0);
   const [visible, setVisible] = useState(false);
-  const [layout, setLayout] = useState({
-    x: 0,
-    y: 0,
-    width: 0,
-    height: 0,
-  });
+  const [layout, setLayout] = useState<TriggerLayout>(EMPTY_LAYOUT);
+
+  const updateLayout = useCallback((nextLayout: TriggerLayout) => {
+    lastValidLayoutRef.current = nextLayout;
+    setLayout(prev => {
+      if (
+        prev.x === nextLayout.x &&
+        prev.y === nextLayout.y &&
+        prev.width === nextLayout.width &&
+        prev.height === nextLayout.height
+      ) {
+        return prev;
+      }
+
+      return nextLayout;
+    });
+  }, []);
 
   const setModalVisible = useCallback(
     (next: boolean) => {
@@ -73,30 +103,70 @@ export const DirectSignGasInfoUI = ({
     [onOpenChange],
   );
 
-  const measureTrigger = useCallback((afterMeasure?: () => void) => {
-    if (!triggerRef.current) {
-      afterMeasure?.();
-      return;
-    }
+  const closeModal = useCallback(() => {
+    setVisible(false);
+    onOpenChange?.(false);
+  }, [onOpenChange]);
 
-    requestAnimationFrame(() => {
-      triggerRef.current?.measureInWindow((x, y, width, height) => {
-        setLayout({ x, y, width, height });
-        afterMeasure?.();
+  const measureTriggerOnce = useCallback(() => {
+    return new Promise<TriggerLayout | null>(resolve => {
+      const trigger = triggerRef.current;
+
+      if (!trigger) {
+        resolve(null);
+        return;
+      }
+
+      requestAnimationFrame(() => {
+        trigger.measureInWindow((x, y, width, height) => {
+          const nextLayout = { x, y, width, height };
+
+          if (isValidTriggerLayout(nextLayout)) {
+            resolve(nextLayout);
+            return;
+          }
+
+          resolve(null);
+        });
       });
     });
   }, []);
 
-  const openModal = useCallback(() => {
-    if (!triggerRef.current) {
-      setModalVisible(true);
-      return;
+  const getFallbackLayout = useCallback(
+    () =>
+      isValidTriggerLayout(lastValidLayoutRef.current)
+        ? lastValidLayoutRef.current
+        : null,
+    [],
+  );
+
+  const measureTrigger = useCallback(async () => {
+    const firstMeasuredLayout = await measureTriggerOnce();
+    if (isValidTriggerLayout(firstMeasuredLayout)) {
+      updateLayout(firstMeasuredLayout);
+      return firstMeasuredLayout;
     }
 
-    measureTrigger(() => {
-      setModalVisible(true);
-    });
-  }, [measureTrigger, setModalVisible]);
+    const retryMeasuredLayout = await measureTriggerOnce();
+    if (isValidTriggerLayout(retryMeasuredLayout)) {
+      updateLayout(retryMeasuredLayout);
+      return retryMeasuredLayout;
+    }
+
+    return getFallbackLayout();
+  }, [getFallbackLayout, measureTriggerOnce, updateLayout]);
+
+  const openModal = useCallback(() => {
+    setModalVisible(true);
+  }, [setModalVisible]);
+
+  const handleTriggerPress = useCallback(() => {
+    openModal();
+  }, [openModal]);
+
+  const handleTriggerLayout = useCallback(() => {
+    void measureTrigger();
+  }, [measureTrigger]);
 
   useEffect(() => {
     if (
@@ -117,24 +187,6 @@ export const DirectSignGasInfoUI = ({
     };
   }, [autoOpenSignal, openModal, visible]);
 
-  useEffect(() => {
-    if (!visible) {
-      return;
-    }
-
-    const task = InteractionManager.runAfterInteractions(() => {
-      measureTrigger(() => {
-        requestAnimationFrame(() => {
-          measureTrigger();
-        });
-      });
-    });
-
-    return () => {
-      task.cancel();
-    };
-  }, [measureTrigger, visible]);
-
   return (
     <View style={style}>
       <ListItem
@@ -145,12 +197,11 @@ export const DirectSignGasInfoUI = ({
         {!loading && !empty ? (
           <TouchableOpacity
             ref={triggerRef}
-            onPress={() => {
-              openModal();
-            }}
-            onLayout={() => {
-              measureTrigger();
-            }}>
+            activeOpacity={0.7}
+            hitSlop={8}
+            style={styles.triggerButton}
+            onPress={handleTriggerPress}
+            onLayout={handleTriggerLayout}>
             <View style={styles.quoteContainer}>
               <Text
                 style={[
@@ -195,7 +246,7 @@ export const DirectSignGasInfoUI = ({
       {renderModal?.({
         visible,
         layout,
-        close: () => setModalVisible(false),
+        close: closeModal,
         chainId,
       })}
     </View>
@@ -250,6 +301,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     gap: 4,
     height: 24,
+  },
+  triggerButton: {
+    paddingHorizontal: 4,
+    paddingVertical: 6,
+    marginHorizontal: -4,
+    marginVertical: -6,
+    justifyContent: 'center',
   },
   noQuotePlaceholder: {
     color: colors2024['neutral-foot'],

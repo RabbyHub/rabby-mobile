@@ -7,6 +7,7 @@ import { SendApproveParams } from '@rabby-wallet/hyperliquid-sdk';
 import { getRandomBytesSync } from 'ethereum-cryptography/random.js';
 import { secp256k1 } from 'ethereum-cryptography/secp256k1.js';
 import { keyringService } from '@/core/services';
+import { CANDLE_MENU_KEY_V2 } from '@/constant/perps';
 import { Account } from './preference';
 
 export interface AgentWalletInfo {
@@ -48,6 +49,7 @@ export interface PerpsServiceStore {
     };
   };
   favoriteMarkets: string[];
+  selectedKlineInterval: CANDLE_MENU_KEY_V2;
 }
 export interface PerpsServiceMemoryState {
   agentWallets: {
@@ -79,6 +81,7 @@ export class PerpsService {
           hasShownPerpsGuidePopup: false,
           hasClosedLearnMoreCard: false,
           favoriteMarkets: [],
+          selectedKlineInterval: CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES,
         },
       },
       {
@@ -159,6 +162,20 @@ export class PerpsService {
       throw new Error('PerpsService not initialized');
     }
     return this.store.hasClosedLearnMoreCard;
+  };
+
+  setSelectedKlineInterval = async (value: CANDLE_MENU_KEY_V2) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    this.store.selectedKlineInterval = value;
+  };
+
+  getSelectedKlineInterval = async () => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return this.store.selectedKlineInterval;
   };
 
   setSendApproveAfterDeposit = async (

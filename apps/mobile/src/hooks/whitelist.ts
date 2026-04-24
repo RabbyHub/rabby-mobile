@@ -13,6 +13,10 @@ import { removeCexId } from '@/utils/addressCexId';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import i18next from 'i18next';
+import {
+  normalizeWhitelistAddresses,
+  type WhitelistRecord,
+} from '@/utils/whitelist';
 
 const { isSameAddress } = addressUtils;
 
@@ -20,35 +24,49 @@ const { isSameAddress } = addressUtils;
 // const enableAtom = atom<boolean>(whitelistService.isWhitelistEnabled());
 
 type WhitelistState = {
-  whitelist: string[];
+  whitelist: WhitelistRecord[];
+  whitelistAddresses: string[];
   enable: boolean;
 };
 const whitelistStore = zCreate<WhitelistState>(() => ({
   whitelist: [],
+  whitelistAddresses: [],
   enable: false,
 }));
 
-function gSetWhitelist(valOrFunc: UpdaterOrPartials<string[]>) {
+function mapWhitelistAddresses(whitelist: WhitelistRecord[]) {
+  return whitelist.map(item => item.address);
+}
+
+function gSetWhitelist(valOrFunc: UpdaterOrPartials<WhitelistRecord[]>) {
   whitelistStore.setState(prev => {
     const { newVal, changed } = resolveValFromUpdater(
       prev.whitelist,
       valOrFunc,
       { strict: true },
     );
-    if (!changed) return prev;
+    if (!changed) {
+      return prev;
+    }
 
-    return { ...prev, whitelist: newVal };
+    return {
+      ...prev,
+      whitelist: newVal,
+      whitelistAddresses: mapWhitelistAddresses(newVal),
+    };
   });
 }
 
 const getWhitelist = async () => {
-  const data = await whitelistService.getWhitelist();
+  const data = await whitelistService.getWhitelistRecords();
   gSetWhitelist(data);
 };
 
 export const setWhitelist = async (addresses: string[]) => {
-  await whitelistService.setWhitelist(addresses);
-  gSetWhitelist(addresses);
+  const normalizedAddresses = normalizeWhitelistAddresses(addresses);
+
+  await whitelistService.setWhitelist(normalizedAddresses);
+  gSetWhitelist(whitelistService.getWhitelistRecords());
 };
 
 function setEnable(val: boolean) {
@@ -69,13 +87,18 @@ const gIsAddrOnWhitelist = (
 
 export const isAddrInWhitelist = (
   address?: string,
-  whitelist: string[] = [],
+  whitelist: Array<string | WhitelistRecord> = [],
 ) => {
   if (!address) {
     return false;
   }
 
-  return whitelist.some(item => isSameAddress(item, address.toLowerCase()));
+  return whitelist.some(item =>
+    isSameAddress(
+      typeof item === 'string' ? item : item.address,
+      address.toLowerCase(),
+    ),
+  );
 };
 
 const removeWhitelist = async (address: string) => {
@@ -119,24 +142,24 @@ const init = async () => {
 };
 
 export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
-  const { whitelist, enable } = whitelistStore(s => s);
+  const { whitelist, whitelistAddresses, enable } = whitelistStore(s => s);
   const { t } = useTranslation();
 
   const addWhitelist = React.useCallback(
     async (
       address: string,
-      options?: { hasValidated?: boolean; onAdded?: () => void },
+      addOptions?: { hasValidated?: boolean; onAdded?: () => void },
     ) => {
-      const { hasValidated = false } = options || {};
+      const { hasValidated = false } = addOptions || {};
 
       const onFinished = async () => {
         await whitelistService.addWhitelist(address);
         await getWhitelist();
-        options?.onAdded?.();
+        addOptions?.onAdded?.();
       };
 
       if (hasValidated) {
-        onFinished();
+        return onFinished();
       } else {
         AuthenticationModal2024.show({
           title: t('page.addressDetail.add-to-whitelist'),
@@ -168,7 +191,8 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
   return {
     init,
     fetchWhitelist: init,
-    whitelist,
+    whitelist: whitelistAddresses,
+    whitelistRecords: whitelist,
     enable,
     whitelistEnabled: enable,
     addWhitelist,

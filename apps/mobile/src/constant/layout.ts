@@ -127,6 +127,7 @@ export const RootNames = {
   DevUIDapps: 'DevUIDapps',
   DevDataSQLite: 'DevDataSQLite',
   DevDataKeychain: 'DevDataKeychain',
+  DevDataWhitelist: 'DevDataWhitelist',
   DevUIBuiltInPages: 'DevUIBuiltInPages',
   DevUIPermissions: 'DevUIPermissions',
   DevSwitches: 'DevSwitches',
@@ -159,6 +160,7 @@ export const RootNames = {
   PerpsMarketList: 'PerpsMarketList',
   PerpsMarketDetail: 'PerpsMarketDetail',
   PerpsHistory: 'PerpsHistory',
+  PerpsSearch: 'PerpsSearch',
   AccountTransaction: 'AccountTransaction',
   /** @deprecated */
   MyBundle: 'MyBundle',
@@ -385,6 +387,7 @@ function makeScreenSpecConfig() {
       [RootNames.DevUIDapps]: bg1Default2024Conf,
       [RootNames.DevDataSQLite]: bg1Default2024Conf,
       [RootNames.DevDataKeychain]: bg1Default2024Conf,
+      [RootNames.DevDataWhitelist]: bg1Default2024Conf,
       [RootNames.DevUIBuiltInPages]: bg1Default2024Conf,
       [RootNames.DevUIPermissions]: bg1Default2024Conf,
       [RootNames.DevSwitches]: bg1Default2024Conf,
@@ -415,6 +418,7 @@ function makeScreenSpecConfig() {
       [RootNames.PerpsMarketList]: bg1Default2024Conf,
       [RootNames.PerpsMarketDetail]: bg1Default2024Conf,
       [RootNames.PerpsHistory]: bg1Default2024Conf,
+      [RootNames.PerpsSearch]: bg1Default2024Conf,
       [RootNames.AccountTransaction]: bg1Default2024Conf,
       [RootNames.MyBundle]: bg1Default2024Conf,
 

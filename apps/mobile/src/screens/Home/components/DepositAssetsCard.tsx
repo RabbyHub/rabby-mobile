@@ -14,7 +14,7 @@ import RcIconArrow from '@/assets/icons/home/setting';
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
 export function DepositAssetsCard({ account }: { account?: Account | null }) {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const navigation = useNavigation<HomeProps['navigation']>();
 
@@ -35,9 +35,13 @@ export function DepositAssetsCard({ account }: { account?: Account | null }) {
     <Pressable style={styles.container} onPress={handlePress}>
       <View style={styles.card}>
         <Image
-          source={require('@/assets/images/home_deposit_bg.png')}
+          source={
+            isLight
+              ? require('@/assets/images/home_deposit_bg_light.png')
+              : require('@/assets/images/home_deposit_bg_dark.png')
+          }
           style={styles.backgroundImage}
-          resizeMode="cover"
+          resizeMode="contain"
         />
 
         <View style={styles.textBox}>
@@ -83,42 +87,44 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     backgroundImage: {
       width: '100%',
-      height: 164,
+      height: 146,
     },
     textBox: {
       backgroundColor: isLight
         ? colors2024['neutral-bg-5']
         : colors2024['neutral-bg-1'],
       borderRadius: 12,
-      marginVertical: 16,
+      marginBottom: 16,
       marginHorizontal: 12,
       paddingHorizontal: 16,
       paddingVertical: 12,
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-between',
+      justifyContent: 'center',
+      position: 'relative',
     },
     textContainer: {
-      flex: 1,
       alignItems: 'center',
     },
     settingIcon: {
       width: 26,
       height: 26,
+      position: 'absolute',
+      right: 16,
     },
     subtitle: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
+      fontSize: 14,
       fontWeight: '400',
-      lineHeight: 20,
+      lineHeight: 18,
       color: colors2024['neutral-secondary'],
       textAlign: 'center',
     },
     title: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 18,
+      fontSize: 20,
       fontWeight: '800',
-      lineHeight: 22,
+      lineHeight: 24,
       color: colors2024['neutral-title-1'],
       textAlign: 'center',
       marginBottom: 6,

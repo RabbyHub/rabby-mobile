@@ -17,7 +17,9 @@
     "matomo",
     "Paraswap",
     "Perps",
-    "rabby"
+    "rabby",
+    "USDE",
+    "USDH"
   ],
   "i18n-ally.enabledFrameworks": ["i18next", "react-i18next"],
   "i18n-ally.keysInUse": [

@@ -2156,7 +2156,6 @@
         "title": "ชำระค่า Gas บนทุก Chain",
         "subtitle": "เมื่อคุณหมด Gas"
       },
-      "depositWith": "ฝากด้วย",
       "switchAccount": "เปลี่ยนกระเป๋าเงิน",
       "depositNow": "ฝากตอนนี้",
       "gasBalance": "ยอดก๊าซ",
@@ -2832,6 +2831,10 @@
       "title": "Perps",
       "more": "เพิ่มเติม",
       "explorePerps": "สำรวจ Perps",
+      "categories": {
+        "favorite": "รายการโปรด",
+        "topVolume": "ปริมาณสูงสุด"
+      },
       "leverageRangeMinError": "เลเวอเรจขั้นต่ำคือ {{min}}x",
       "positions": "สถานะ",
       "regionNotSupport": "การเปิดตำแหน่งไม่ได้รับการสนับสนุนในภูมิภาคของคุณ",

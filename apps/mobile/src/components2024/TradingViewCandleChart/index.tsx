@@ -200,28 +200,20 @@ const TradingViewCandleChart = ({
         return;
       }
 
-      let dataToSend: any = null;
-      let dataSource = 'none';
+      const dataToSend = formatCandleData(data);
+      const dataSource = dataToSend.length > 0 ? 'real' : 'empty';
 
-      // Prioritize real data over sample data
-      if (data?.candles && data.candles.length > 0) {
-        dataToSend = formatCandleData(data);
-        dataSource = 'real';
-      }
-
-      if (dataToSend) {
-        localWebViewRef.current.sendMessage?.({
-          type: 'TRADINGVIEW_MESSAGE',
-          data: {
-            type: 'SET_CANDLESTICK_DATA',
-            data: dataToSend,
-            source: dataSource,
-            showVolume: data.showVolume ?? false,
-            fitContent: data.fitContent ?? false,
-            noTime: data.noTime ?? false,
-          },
-        });
-      }
+      localWebViewRef.current.sendMessage?.({
+        type: 'TRADINGVIEW_MESSAGE',
+        data: {
+          type: 'SET_CANDLESTICK_DATA',
+          data: dataToSend,
+          source: dataSource,
+          showVolume: data.showVolume ?? false,
+          fitContent: data.fitContent ?? false,
+          noTime: data.noTime ?? false,
+        },
+      });
     },
     [isChartReady],
   );

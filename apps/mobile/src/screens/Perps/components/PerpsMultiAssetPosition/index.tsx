@@ -45,6 +45,8 @@ interface AssetPositionWithAccount {
   account: Account;
   assetPositions: AssetPosition;
   logoUrl: string;
+  quoteAsset: string;
+  displayName: string;
 }
 
 const AssetPositionItem = ({
@@ -112,7 +114,10 @@ const AssetPositionItem = ({
             <AssetAvatar logo={logoUrl} size={28} />
             <View style={styles.coinInfo}>
               <View style={styles.coinNameRow}>
-                <Text style={styles.coinName}>{formatPerpsCoin(coin)}</Text>
+                <Text style={styles.coinName}>
+                  {formatPerpsCoin(item.displayName || coin)}
+                </Text>
+                <Text style={styles.quote}>{`/${item.quoteAsset}`}</Text>
                 <View style={styles.crossTag}>
                   <Text style={styles.crossText}>
                     {leverageType === 'cross'
@@ -166,7 +171,7 @@ const AssetPositionItem = ({
       </View>
 
       <View style={styles.bottomSection}>
-        <View style={[styles.coinNameRow, styles.addressRow]}>
+        <View style={[styles.bottomNameRow, styles.addressRow]}>
           <WalletIcon
             width={14}
             height={14}
@@ -178,7 +183,7 @@ const AssetPositionItem = ({
             {item.account.aliasName || ellipsisAddress(item.account.address)}
           </Text>
         </View>
-        <View style={styles.coinNameRow}>
+        <View style={styles.bottomNameRow}>
           <RcIconHyperliquid opacity={0.3} />
           <Text style={styles.hyperliquidText}>
             {t('page.perps.assetPage.hyperliquidPosition')}
@@ -342,10 +347,16 @@ export const PerpsMultiAssetPosition: React.FC = () => {
       }
       const assetPositions = clearinghouseState?.assetPositions || [];
       assetPositions.forEach(assetPosition => {
+        const quoteAsset =
+          marketDataMap[assetPosition.position.coin]?.quoteAsset || 'USDC';
         resList.push({
           account,
+          quoteAsset,
           assetPositions: assetPosition,
           logoUrl: marketDataMap[assetPosition.position.coin]?.logoUrl || '',
+          displayName:
+            marketDataMap[assetPosition.position.coin]?.displayName ||
+            assetPosition.position.coin,
         });
       });
     });
@@ -467,7 +478,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     marginBottom: 16,
   },
   homeContainer: {
-    marginTop: 20,
+    marginTop: 24,
     ...Platform.select({
       ios: {
         shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.4)',
@@ -514,6 +525,10 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   coinNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  bottomNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
   },
   coinName: {
@@ -522,6 +537,13 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     lineHeight: 20,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
+  },
+  quote: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: colors2024['neutral-info'],
   },
   crossText: {
     fontFamily: 'SF Pro Rounded',
@@ -535,6 +557,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     paddingHorizontal: 4,
     paddingVertical: 1,
     backgroundColor: colors2024['neutral-bg-5'],
+    marginLeft: 6,
   },
   tagRow: {
     flexDirection: 'row',

@@ -939,7 +939,7 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 20,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    maxWidth: 150,
+    maxWidth: '100%',
     // ...makeDebugBorder(),
   },
   lpTokenIconContainer: {

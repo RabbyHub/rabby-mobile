@@ -1889,7 +1889,6 @@
       "depositNow": "Nạp ngay",
       "switchAccount": "Chuyển Wallet",
       "depositFailed": "Nạp tiền không thành công",
-      "depositWith": "Gửi tiền với",
       "gasBalance": "Số dư Gas",
       "lowBalance": "Bạn không có đủ gas. Nạp gas để đảm bảo các giao dịch trong tương lai diễn ra suôn sẻ.",
       "depositSubmitted": "Đã gửi tiền gửi"
@@ -2689,6 +2688,10 @@
       "selectAccountTitle": "Chọn Ví Để Đăng Nhập",
       "more": "Thêm",
       "explorePerps": "Khám phá Perps",
+      "categories": {
+        "favorite": "Yêu thích",
+        "topVolume": "Khối lượng cao nhất"
+      },
       "positions": "Vị trí",
       "deleteAgentSuccess": "Đại lý đã xóa thành công",
       "regionNotSupport": "Việc mở các vị trí không được hỗ trợ ở khu vực của bạn.",

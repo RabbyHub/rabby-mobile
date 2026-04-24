@@ -1,5 +1,5 @@
 import { AssetAvatar } from '@/components';
-import { MarketData, PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
+import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
 import { splitNumberByStep } from '@/utils/number';
@@ -8,16 +8,17 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import { FavoriteTag } from '@/components2024/Favorite';
-import { formatPerpsCoin } from '@/utils/perps';
+import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { Text } from '@/components/Typography';
+import { PerpsDisplayCoinName } from '../PerpsDisplayCoinName';
+import { PerpsRankBadge } from './PerpsRankBadge';
 const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 
 const PerpsMarketItemComponent: React.FC<{
   item: MarketData;
-  isFavorite?: boolean;
-  hasPosition?: boolean;
+  rank?: number;
   onPress?(): void;
-}> = ({ item, onPress, hasPosition, isFavorite }) => {
+}> = ({ item, onPress, rank }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -29,16 +30,12 @@ const PerpsMarketItemComponent: React.FC<{
   return (
     <TouchableOpacity onPress={onPress}>
       <View style={styles.card}>
+        {rank != null && <PerpsRankBadge rank={rank} />}
         <AssetAvatar logo={item.logoUrl} logoStyle={styles.icon} size={46} />
         <View style={styles.content}>
           <View style={styles.row}>
             <View style={styles.nameContainer}>
-              <Text style={styles.name}>{formatPerpsCoin(item.name)}</Text>
-              {hasPosition && (
-                <View style={styles.positionContainer}>
-                  <Text style={styles.positionText}>1 Position</Text>
-                </View>
-              )}
+              <PerpsDisplayCoinName item={item} />
             </View>
             <Text style={styles.price}>
               {`$${splitNumberByStep(item.markPx)}`}
@@ -62,22 +59,43 @@ const PerpsMarketItemComponent: React.FC<{
             </Text>
           </View>
         </View>
-        {isFavorite && <FavoriteTag style={styles.favoriteTag} />}
+        {/* {isFavorite && (
+          <RcIconFavorite
+            width={13}
+            height={12}
+            style={styles.favoriteTag}
+            color={colors2024['orange-default']}
+          />
+        )} */}
       </View>
     </TouchableOpacity>
   );
 };
 
-export const PerpsMarketItem = React.memo(PerpsMarketItemComponent);
+export const PerpsMarketItem = React.memo(
+  PerpsMarketItemComponent,
+  (prev, next) => {
+    // Only re-render when visible data actually changes
+    return (
+      prev.item.name === next.item.name &&
+      prev.item.markPx === next.item.markPx &&
+      prev.item.prevDayPx === next.item.prevDayPx &&
+      prev.item.dayNtlVlm === next.item.dayNtlVlm &&
+      prev.item.maxLeverage === next.item.maxLeverage &&
+      prev.item.logoUrl === next.item.logoUrl &&
+      prev.item.quoteAsset === next.item.quoteAsset &&
+      prev.rank === next.rank
+    );
+  },
+);
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-3'],
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    // backgroundColor: isLight
+    //   ? colors2024['neutral-bg-1']
+    //   : colors2024['neutral-bg-3'],
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
@@ -174,7 +192,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   favoriteTag: {
     position: 'absolute',
-    right: 0,
+    right: 8,
     top: 0,
   },
 }));

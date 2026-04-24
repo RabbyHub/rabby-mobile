@@ -6,7 +6,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { ScrollView } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useInterval, useMemoizedFn, useMount, useRequest } from 'ahooks';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -209,7 +209,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
 
   return (
     <NormalScreenContainer2024
-      type={!isLight ? 'bg1' : 'bg2'}
+      type={!isLight ? 'bg1' : 'bg0'}
       style={{
         paddingTop: isSelfScrollAction ? 24 : 0,
       }}>
@@ -307,7 +307,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   singleBox: {
     width: '100%',
-    height: 92,
+    // height: 92,
     backgroundColor: colors2024['neutral-bg-1'],
     justifyContent: 'space-between',
     alignContent: 'center',

@@ -217,7 +217,7 @@ export const SignMainnetShowMoreGasModal = ({
                   left: position.left,
                   top: position.top,
                 }
-              : styles.hiddenUntilMeasured,
+              : styles.fallbackContainer,
           ]}>
           {shouldHideApprovalGasMethodTabs() ? null : (
             <View style={styles.header}>
@@ -405,8 +405,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   anchoredContainer: {
     position: 'absolute',
   },
-  hiddenUntilMeasured: {
-    opacity: 0,
+  fallbackContainer: {
+    top: 12,
+    right: 12,
   },
   header: {
     padding: 2,

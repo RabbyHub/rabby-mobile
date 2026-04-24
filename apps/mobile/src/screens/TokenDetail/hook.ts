@@ -324,9 +324,15 @@ export const useSingleTokenBalance = ({ token }: { token: TokenItem }) => {
   }, [token?.price_24h_change]);
 
   const percentChange = useMemo(() => {
-    return has24hChangeData
-      ? Math.abs(Number(token?.price_24h_change || 0) * 100).toFixed(2) + '%'
-      : '';
+    if (!has24hChangeData) {
+      return '';
+    }
+    if (!token?.price_24h_change) {
+      return '0%';
+    }
+    return (
+      Math.abs(Number(token?.price_24h_change || 0) * 100).toFixed(2) + '%'
+    );
   }, [has24hChangeData, token?.price_24h_change]);
 
   const is24hNoChange = useMemo(() => {

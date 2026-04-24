@@ -9499,16 +9499,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/hyperliquid-sdk@npm:1.1.6":
-  version: 1.1.6
-  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.1.6"
+"@rabby-wallet/hyperliquid-sdk@npm:1.1.7":
+  version: 1.1.7
+  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.1.7"
   dependencies:
     "@ethereumjs/util": "npm:9.0.0"
     "@metamask/eth-sig-util": "npm:5.1.0"
     "@msgpack/msgpack": "npm:3.1.2"
     "@noble/hashes": "npm:1.8.0"
     ethereum-cryptography: "npm:2.2.1"
-  checksum: 10/f1aae69387e876fca6f1e947d4c977a892ce92a007b243cb30c4f003c752ab9624072691c7f3b81069213d35ef9d7291bfbf5facb7f1d9d2b9e8bd430c82464c
+  checksum: 10/51f6f55e4861f9c598780e8de10264ca22120c9a0aefe4b343d2690f1c04c5bb314eb5a3c2d71fc514251f3b7a4e048a3717bd874e9f860b6b97617941df76ee
   languageName: node
   linkType: hard
 
@@ -9713,6 +9713,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rabby-wallet/rabby-api@npm:0.9.60":
+  version: 0.9.60
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.60"
+  dependencies:
+    "@rabby-wallet/rabby-sign": "npm:0.4.0"
+    axios: "npm:^0.27.2"
+    axios-rate-limit: "npm:^1.3.0"
+    eth-rpc-errors: "npm:^4.0.3"
+    lodash: "npm:^4.17.21"
+    qss: "npm:^2.0.3"
+  peerDependencies:
+    "@debank/common": ^0.3.9
+    "@rabby-wallet/rabby-sign": ">= 0.3"
+  checksum: 10/dcd677148f563042117387cd7c3204e144b7f8f5ebe390431a60a02b2faecf3e5ec6637f32b46a828154a454afbe2030fa74db5de0be6271adb9c07d8991315e
+  languageName: node
+  linkType: hard
+
 "@rabby-wallet/rabby-logger@npm:0.3.0":
   version: 0.3.0
   resolution: "@rabby-wallet/rabby-logger@npm:0.3.0"
@@ -9751,9 +9768,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.75":
-  version: 0.0.75
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.75"
+"@rabby-wallet/rabby-swap@npm:0.0.76":
+  version: 0.0.76
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.76"
   dependencies:
     "@ethersproject/abi": "npm:^5.7.0"
     axios: "npm:^0.27.2"
@@ -9762,7 +9779,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
-  checksum: 10/bbe19950c0af7080061c43e88e7a7418fc6d7cf806c65f55b05f025e3b464c449ea7b8f1d2b36539016f8ba4731300cf65115501bdaadfd25fe27a7bb51bab99
+  checksum: 10/02529109925906b48f43cc2d676329b6c22bbb90c4784894495326c74b1cb9c566204cd99696ed256277266480f35063f75151a6c9aee48f40ea406e34f6777c
   languageName: node
   linkType: hard
 
@@ -11393,11 +11410,11 @@ __metadata:
 
 "@react-native-menu/menu@patch:@react-native-menu/menu@npm%3A2.0.0#./.yarn/patches/@react-native-menu-menu-npm-2.0.0-15e1fd477a.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 2.0.0
-  resolution: "@react-native-menu/menu@patch:@react-native-menu/menu@npm%3A2.0.0#./.yarn/patches/@react-native-menu-menu-npm-2.0.0-15e1fd477a.patch::version=2.0.0&hash=b67015&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "@react-native-menu/menu@patch:@react-native-menu/menu@npm%3A2.0.0#./.yarn/patches/@react-native-menu-menu-npm-2.0.0-15e1fd477a.patch::version=2.0.0&hash=040b7f&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/bbd63ad91c6fc4b8c39b57f4e6fdfc8320a5ffee9b424fe06fc715216cb3d78c9b29fb66a80251d03a1d1d8e479357ca6b089895105a6f51ae898ef687709061
+  checksum: 10/f125ceef564b71174c9fa1da94094f6bc90328c9d222750ffdc0c63f6485baa1186e214cbfe54158417cfadcf301515b8ee4b3fe12db9e28d9d5e5febca64c9d
   languageName: node
   linkType: hard
 
@@ -38114,15 +38131,15 @@ __metadata:
     "@rabby-wallet/eth-keyring-watch": "npm:*"
     "@rabby-wallet/eth-simple-keyring": "npm:5.1.0"
     "@rabby-wallet/gnosis-sdk": "npm:1.4.8"
-    "@rabby-wallet/hyperliquid-sdk": "npm:1.1.6"
+    "@rabby-wallet/hyperliquid-sdk": "npm:1.1.7"
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": "npm:0.1.14"
-    "@rabby-wallet/rabby-api": "npm:0.9.59"
+    "@rabby-wallet/rabby-api": "npm:0.9.60"
     "@rabby-wallet/rabby-logger": "npm:0.3.0"
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
-    "@rabby-wallet/rabby-swap": "npm:0.0.75"
+    "@rabby-wallet/rabby-swap": "npm:0.0.76"
     "@rabby-wallet/react-native-keychain": "workspace:^"
     "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^"
     "@rabby-wallet/service-address": "workspace:^"
@@ -47721,7 +47738,7 @@ __metadata:
 
 "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::version=1.10.0&hash=9bb0a3&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 1.10.0
-  resolution: "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::version=1.10.0&hash=21cfe7&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::version=1.10.0&hash=515748&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@radix-ui/react-context-menu": "npm:^2.0.1"
     "@radix-ui/react-dropdown-menu": "npm:^2.0.1"
@@ -47731,13 +47748,13 @@ __metadata:
     react: "*"
     react-native: "*"
     react-native-ios-context-menu: ^2.3.2
-  checksum: 10/33df2f04a2116522919692f971216ca409968cab8007a50729259c918e55f69e7c394e89c6824129866d61762462c79a3da05a82e1fd2456acfcbece5122be93
+  checksum: 10/085ddf3599c192fbccdffdf4712424994838da99cf3144cc555bc647e92db404c9d162e5a0da9ed70b73d8fe1d52c0489fbf4f423355b2577e09a81b4b84c21d
   languageName: node
   linkType: hard
 
 "zeego@patch:zeego@patch%3Azeego@npm%253A1.10.0%23./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch%3A%3Aversion=1.10.0&hash=9bb0a3&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#./.yarn/patches/zeego-patch-5b72c1c320.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 1.10.0
-  resolution: "zeego@patch:zeego@patch%3Azeego@npm%253A1.10.0%23./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch%3A%3Aversion=1.10.0&hash=21cfe7&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#./.yarn/patches/zeego-patch-5b72c1c320.patch::version=1.10.0&hash=2d6f92&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "zeego@patch:zeego@patch%3Azeego@npm%253A1.10.0%23./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch%3A%3Aversion=1.10.0&hash=515748&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#./.yarn/patches/zeego-patch-5b72c1c320.patch::version=1.10.0&hash=2d6f92&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@radix-ui/react-context-menu": "npm:^2.0.1"
     "@radix-ui/react-dropdown-menu": "npm:^2.0.1"
@@ -47747,7 +47764,7 @@ __metadata:
     react: "*"
     react-native: "*"
     react-native-ios-context-menu: ^2.3.2
-  checksum: 10/ca20595f470c54ec480ab4600db121972cbd4dfc0b3a22120bc8404de0b77bdc72a2492f86cfed54a7e6a144b2abe778d8f908b06b3087d99d11b519183d17cc
+  checksum: 10/fb80909cf6082990bf7168fab043b892eb8cda0fff7b668523be1721c3e288d290924f0d00fa269afa3cc09a851ce0e14fd7ddf74a5dae655ea3acb80615be76
   languageName: node
   linkType: hard
 

@@ -2231,7 +2231,6 @@
         "subtitle": "wenn dir das Gas ausgeht"
       },
       "depositFailed": "Einzahlung fehlgeschlagen",
-      "depositWith": "Bei einlegen mit",
       "depositNow": "Jetzt einzahlen",
       "gasBalance": "Gas-Balance",
       "switchAccount": "Wechseln Sie das Wallet",
@@ -2949,6 +2948,10 @@
       "selectAccountTitle": "Wählen Sie eine Wallet zum Anmelden aus",
       "more": "Mehr",
       "explorePerps": "Erkunde Perps",
+      "categories": {
+        "favorite": "Favorit",
+        "topVolume": "Top-Volumen"
+      },
       "positions": "Positionen",
       "regionNotSupport": "Das Eröffnen von Positionen wird in Ihrer Region nicht unterstützt.",
       "deleteAgentSuccess": "Agent erfolgreich gelöscht",
