@@ -121,7 +121,7 @@ export const PerpsOriginScreen = () => {
       screen: RootNames.PerpsMarketDetail,
       params: {
         market,
-        fromSource: 'openPosition',
+        fromSource: 'searchPerps',
         showOpenPosition: true,
       },
     });

@@ -100,9 +100,8 @@ export const PerpsSearchScreen: React.FC = () => {
         screen: RootNames.PerpsMarketDetail,
         params: {
           market: coin,
-          fromSource:
-            openFromSource === 'marketDetail' ? 'marketDetail' : 'openPosition',
-          showOpenPosition: openFromSource !== 'marketDetail',
+          fromSource: openFromSource,
+          showOpenPosition: openFromSource === 'openPosition',
           direction: params.direction ?? 'Long',
         },
       });
