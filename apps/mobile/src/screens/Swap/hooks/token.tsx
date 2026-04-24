@@ -3,7 +3,14 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { WrapTokenAddressMap } from '@rabby-wallet/rabby-swap';
 import BigNumber from 'bignumber.js';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { refreshIdAtom, useSetQuoteVisible } from './atom';
 import useAsync from 'react-use/lib/useAsync';
 import { openapi } from '@/core/request';
@@ -222,23 +229,16 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         return p;
       });
 
-      if (
-        shouldScheduleQuotePolling({
-          enabled: enableRefreshRef.current,
-          paused: autoQuoteRefreshPausedRef.current,
-        })
-      ) {
-        expiredTimer.current = setTimeout(() => {
-          if (
-            shouldScheduleQuotePolling({
-              enabled: enableRefreshRef.current,
-              paused: autoQuoteRefreshPausedRef.current,
-            })
-          ) {
-            setRefreshId(e => e + 1);
-          }
-        }, 1000 * 20);
-      }
+      expiredTimer.current = setTimeout(() => {
+        if (
+          shouldScheduleQuotePolling({
+            enabled: enableRefreshRef.current,
+            paused: autoQuoteRefreshPausedRef.current,
+          })
+        ) {
+          setRefreshId(e => e + 1);
+        }
+      }, 1000 * 20);
     },
     [setRefreshId],
   );
@@ -478,6 +478,15 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     () => inSufficientCanGetQuote && !quoteBlockedByClosedMarket,
     [inSufficientCanGetQuote, quoteBlockedByClosedMarket],
   );
+  const canRunQuoteRequest =
+    !!(
+      userAddress &&
+      payToken?.id &&
+      receiveToken?.id &&
+      chain &&
+      Number(payAmount) > 0 &&
+      feeRate
+    ) && canRequestQuote;
 
   useEffect(() => {
     if (autoSlippage) {
@@ -520,17 +529,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   const { error: quotesError, runAsync: _runGetAllQuotes } = useRequest(
     async (currentFetchId: number) => {
-      if (
-        userAddress &&
-        payToken?.id &&
-        receiveToken?.id &&
-        receiveToken &&
-        chain &&
-        Number(payAmount) > 0 &&
-        feeRate &&
-        canRequestQuote &&
-        !isDraggingSlider
-      ) {
+      if (canRunQuoteRequest && !isDraggingSlider) {
         setTokenRefreshId(e => e + 1);
         const limit = rateLimitRef.current?.checkRateLimit();
         setRateLimit(!!limit);
@@ -590,14 +589,14 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     {
       manual: true,
       onFinally(params) {
-        if (params[0] === fetchIdRef.current) {
-          // wait for progress animation finish
-          setTimeout(() => {
+        // wait for progress animation finish
+        setTimeout(() => {
+          if (params[0] === fetchIdRef.current) {
             setQuoteLoading(false);
             setShowMoreVisible(true);
             setFinishedQuotes(0);
-          }, 300);
-        }
+          }
+        }, 300);
       },
     },
   );
@@ -606,26 +605,19 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     wait: rateLimit ? 5000 : 1000,
   });
 
-  useEffect(() => {
-    if (
-      userAddress &&
-      payToken?.id &&
-      receiveToken?.id &&
-      chain &&
-      Number(payAmount) > 0 &&
-      feeRate &&
-      canRequestQuote
-    ) {
-      setFinishedQuotes(0);
+  useLayoutEffect(() => {
+    fetchIdRef.current += 1;
+    setQuotesList([]);
+    setActiveProvider(undefined);
+    setFinishedQuotes(0);
+    if (canRunQuoteRequest) {
       setQuoteLoading(true);
-      fetchIdRef.current += 1;
       runGetAllQuotes(fetchIdRef.current);
     } else {
-      setFinishedQuotes(0);
-      setActiveProvider(undefined);
       setQuoteLoading(false);
     }
   }, [
+    canRunQuoteRequest,
     canRequestQuote,
     refreshId,
     userAddress,
@@ -641,33 +633,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     autoSlippage,
   ]);
 
-  const canUpdateActiveProvider = useMemo(() => {
-    if (
-      userAddress &&
-      payToken?.id &&
-      receiveToken?.id &&
-      receiveToken &&
-      chain &&
-      Number(payAmount) > 0 &&
-      feeRate &&
-      canRequestQuote
-    ) {
-      return true;
-    }
-    return false;
-  }, [
-    canRequestQuote,
-    chain,
-    feeRate,
-    payAmount,
-    payToken?.id,
-    receiveToken,
-    userAddress,
-  ]);
-
-  useEffect(() => {
-    setQuotesList([]);
-  }, [payToken?.id, receiveToken?.id, chain, payAmount]);
+  const canUpdateActiveProvider = canRunQuoteRequest;
 
   useEffect(() => {
     if (

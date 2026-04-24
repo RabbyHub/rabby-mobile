@@ -1985,7 +1985,6 @@
         "title": "在所有鏈上支付 Gas 費用",
         "subtitle": "當你沒有 gas 時"
       },
-      "depositWith": "使用進行存款",
       "switchAccount": "切換錢包",
       "gasBalance": "Gas 余额",
       "depositNow": "立即存款",
