@@ -1032,6 +1032,7 @@ export const usePerpsStore = () => {
       isLogin: !!account,
       currentClearinghouseState: null,
       userAbstraction: UserAbstractionResp.default,
+      localLoadingHistory: [],
     }));
     refreshData();
     subscribeToUserData(account);

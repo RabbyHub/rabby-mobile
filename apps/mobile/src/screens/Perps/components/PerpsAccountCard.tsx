@@ -45,8 +45,10 @@ export const PerpsAccountCard: React.FC = () => {
   }, [spotBalances]);
 
   const isNewUser = React.useMemo(() => {
-    return Number(availableBalance) === 0 && accountValue === 0;
-  }, [availableBalance, accountValue]);
+    return (
+      Number(availableBalance) === 0 && accountValue === 0 && !isUnifiedAccount
+    );
+  }, [availableBalance, accountValue, isUnifiedAccount]);
 
   const [hasClosedLearnMore, setHasClosedLearnMore] = React.useState(true);
   React.useEffect(() => {

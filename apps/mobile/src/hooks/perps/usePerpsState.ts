@@ -350,6 +350,8 @@ export const usePerpsState = () => {
         }),
       );
 
+      // wait 100ms for backend to process approve, then setUnifiedAccount
+      await sleep(100);
       handleSafeSetUnifiedAccount();
       setTimeout(() => {
         handleSafeSetReference();
@@ -716,6 +718,7 @@ export const usePerpsState = () => {
         // 不存在agent wallet,，需要创建新的，同时签名
         await handleLoginWithSignApprove(account);
       }
+      hasCheckedApproveStatus.current = false;
       return true;
     } catch (error: any) {
       console.error('Failed to login Perps account:', error);
