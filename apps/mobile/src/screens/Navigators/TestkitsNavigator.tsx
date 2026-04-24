@@ -1,10 +1,12 @@
 import 'react-native-gesture-handler';
 import { RootNames } from '@/constant/layout';
+import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import {
   DebugLogViewer,
   DevDataSQLite,
+  DevDataWhitelist,
   DevPerf,
   DevSwitches,
   DevUIAccountShowCase,
@@ -32,7 +34,7 @@ const Stack = createNativeStackNavigator();
 // );
 
 export function TestkitsNavigator() {
-  // const { mergeScreenOptions } = useStackScreenConfig();
+  const { mergeScreenOptions2024 } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== TestkitsNavigator Render =========');
 
@@ -86,6 +88,17 @@ export function TestkitsNavigator() {
       />
 
       <Stack.Screen name={RootNames.DevDataSQLite} component={DevDataSQLite} />
+      <Stack.Screen
+        name={RootNames.DevDataWhitelist}
+        component={DevDataWhitelist}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'Whitelist Data',
+            title: 'Whitelist Data',
+          },
+        ])}
+      />
 
       <Stack.Screen
         name={RootNames.DevSwitches}
