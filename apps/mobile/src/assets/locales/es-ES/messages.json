@@ -2366,7 +2366,6 @@
       },
       "gasBalance": "Saldo de Gas",
       "depositFailed": "Depósito fallido",
-      "depositWith": "Depositar con",
       "depositNow": "Depositar ahora",
       "lowBalance": "No tienes suficiente gas. Deposita gas para asegurar que las futuras transacciones transcurran sin problemas.",
       "switchAccount": "Cambiar Wallet",

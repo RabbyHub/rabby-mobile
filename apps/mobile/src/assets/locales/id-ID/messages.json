@@ -1930,7 +1930,6 @@
         "title": "Bayar Biaya Gas di Semua chain",
         "subtitle": "saat kehabisan gas"
       },
-      "depositWith": "Setor dengan",
       "gasBalance": "Saldo Gas",
       "depositFailed": "Setoran gagal",
       "lowBalance": "Anda tidak memiliki cukup gas. Deposit gas untuk memastikan transaksi di masa mendatang berjalan lancar.",

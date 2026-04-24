@@ -1,4 +1,10 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   View,
   FlatList,
@@ -25,6 +31,30 @@ import { Text } from '@/components/Typography';
 import { StyleProp, ViewStyle } from 'react-native';
 
 type GasAccountHistoryState = ReturnType<typeof useGasAccountHistory>;
+type GasAccountPendingHistoryItem =
+  GasAccountHistoryState['txList']['rechargeList'][number];
+type GasAccountConfirmedHistoryItem =
+  GasAccountHistoryState['txList']['list'][number];
+
+const getPendingHistoryKey = ({
+  item,
+  type,
+  index,
+}: {
+  item: GasAccountPendingHistoryItem;
+  type: 'recharge' | 'withdraw';
+  index: number;
+}) =>
+  [
+    'pending',
+    type,
+    item.tx_id || 'no-tx',
+    item.chain_id || 'no-chain',
+    item.user_addr || 'no-user',
+    item.gas_account_id || 'no-gas-account',
+    item.create_at,
+    index,
+  ].join('-');
 
 const HistoryItem = ({
   time,
@@ -134,9 +164,13 @@ export const GasAccountHistory: React.FC<{
   listStyle?: StyleProp<ViewStyle>;
 }> = ({ historyState, style, listStyle }) => {
   const { t } = useTranslation();
-  const { loading, txList, loadMore, noMore } = historyState;
+  const { loading, loadingMore, txList, loadMore, noMore, hasHistory } =
+    historyState;
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const listHeightRef = useRef(0);
+  const contentHeightRef = useRef(0);
+  const hasRechargeHistory = Boolean(txList?.rechargeList.length);
 
   const { bottom } = useSafeAreaInsets();
 
@@ -161,11 +195,36 @@ export const GasAccountHistory: React.FC<{
   );
 
   const ListEndLoader = useCallback(() => {
-    if (noMore) {
+    if (!loadingMore || noMore) {
       return null;
     }
     return <LoadingItem borderT />;
-  }, [noMore]);
+  }, [loadingMore, noMore]);
+
+  const maybeLoadMore = useCallback(() => {
+    if (
+      loading ||
+      loadingMore ||
+      noMore ||
+      !listHeightRef.current ||
+      !contentHeightRef.current
+    ) {
+      return;
+    }
+
+    if (contentHeightRef.current <= listHeightRef.current) {
+      loadMore();
+    }
+  }, [loadMore, loading, loadingMore, noMore]);
+
+  useEffect(() => {
+    maybeLoadMore();
+  }, [
+    maybeLoadMore,
+    txList?.list.length,
+    txList?.rechargeList.length,
+    txList?.withdrawList.length,
+  ]);
 
   const sourceByTxKey = useMemo(() => {
     const map = new Map<string, string | undefined>();
@@ -175,6 +234,11 @@ export const GasAccountHistory: React.FC<{
     return map;
   }, [txList?.list]);
 
+  const shouldShowTopBorder = useCallback(
+    (index: number) => (hasRechargeHistory ? true : index !== 0),
+    [hasRechargeHistory],
+  );
+
   const ListHeaderComponent = useCallback(() => {
     return (
       <>
@@ -183,11 +247,15 @@ export const GasAccountHistory: React.FC<{
             return (
               <HistoryItem
                 isWithdraw={true}
-                key={item.create_at}
+                key={getPendingHistoryKey({
+                  item,
+                  type: 'withdraw',
+                  index,
+                })}
                 time={item.create_at}
                 value={item.amount}
                 sign={'-'}
-                borderT={!txList.rechargeList.length ? index !== 0 : true}
+                borderT={shouldShowTopBorder(index)}
                 isPending={true}
                 source={sourceByTxKey.get(`${item.tx_id}-${item.chain_id}`)}
                 onGiftIconPress={handleGiftIconPress}
@@ -195,10 +263,14 @@ export const GasAccountHistory: React.FC<{
             );
           })}
         {!loading &&
-          txList?.rechargeList?.map(item => {
+          txList?.rechargeList?.map((item, index) => {
             return (
               <HistoryItem
-                key={item.tx_id + item.chain_id}
+                key={getPendingHistoryKey({
+                  item,
+                  type: 'recharge',
+                  index,
+                })}
                 time={item.create_at}
                 value={item.amount}
                 sign={'+'}
@@ -213,43 +285,29 @@ export const GasAccountHistory: React.FC<{
     );
   }, [
     loading,
+    shouldShowTopBorder,
     txList?.rechargeList,
     txList?.withdrawList,
     handleGiftIconPress,
     sourceByTxKey,
   ]);
 
-  const renderItem: ListRenderItem<{
-    id: string;
-    chain_id: string;
-    create_at: number;
-    gas_cost_usd_value: number;
-    gas_account_id: string;
-    tx_id: string;
-    usd_value: number;
-    user_addr: string;
-    history_type: 'tx' | 'recharge' | 'withdraw';
-    source?: string;
-  }> = useCallback(
-    ({ item, index }) => (
-      <HistoryItem
-        time={item.create_at}
-        value={item.usd_value}
-        sign={item.history_type === 'recharge' ? '+' : '-'}
-        borderT={!txList?.rechargeList.length ? index !== 0 : true}
-        source={item.source}
-        onGiftIconPress={handleGiftIconPress}
-      />
-    ),
-    [txList?.rechargeList, handleGiftIconPress],
-  );
+  const renderItem: ListRenderItem<GasAccountConfirmedHistoryItem> =
+    useCallback(
+      ({ item, index }) => (
+        <HistoryItem
+          time={item.create_at}
+          value={item.usd_value}
+          sign={item.history_type === 'recharge' ? '+' : '-'}
+          borderT={shouldShowTopBorder(index)}
+          source={item.source}
+          onGiftIconPress={handleGiftIconPress}
+        />
+      ),
+      [handleGiftIconPress, shouldShowTopBorder],
+    );
 
-  if (
-    !loading &&
-    !txList?.rechargeList.length &&
-    !txList?.withdrawList.length &&
-    !txList?.list.length
-  ) {
+  if (!loading && !hasHistory) {
     return (
       <View
         style={[
@@ -284,6 +342,14 @@ export const GasAccountHistory: React.FC<{
         ]}
         data={txList?.list}
         contentInset={{ bottom: 12 }}
+        onLayout={event => {
+          listHeightRef.current = event.nativeEvent.layout.height;
+          maybeLoadMore();
+        }}
+        onContentSizeChange={(_, height) => {
+          contentHeightRef.current = height;
+          maybeLoadMore();
+        }}
         ListHeaderComponent={ListHeaderComponent}
         renderItem={renderItem}
         extraData={txList?.rechargeList.length}

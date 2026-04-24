@@ -1,22 +1,27 @@
 import ImgEmpty from '@/assets2024/images/gasAccount/empty.png';
 import ImgEmptyDark from '@/assets2024/images/gasAccount/empty-dark.png';
 import { AssetAvatar } from '@/components';
+import { AccountInfoInTokenRow } from '@/components/Token/AccountWidgets';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { Account } from '@/core/services/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { GasAccountAvailableToken } from '@/screens/GasAccount/hooks/useDepositTokenAvailability';
 import { ellipsisAddress } from '@/utils/address';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
+import { findAccountByPriority } from '@/utils/account';
 import { getTokenSymbol } from '@/utils/token';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { Skeleton } from '@rneui/themed';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Keyboard, View, useWindowDimensions } from 'react-native';
+import { devLog } from '@/utils/logger';
 
 const SHEET_MAX_OFFSET = 200;
 const SHEET_BASE_HEIGHT = 138;
@@ -56,12 +61,14 @@ export const GasAccountDepositTokenPicker: React.FC<{
   visible?: boolean;
   onClose?(): void;
   onSelect?(token: GasAccountAvailableToken): void;
+  accounts: Account[];
   availableTokens: GasAccountAvailableToken[];
   isCheckingAvailability?: boolean;
 }> = ({
   visible,
   onClose,
   onSelect,
+  accounts,
   availableTokens,
   isCheckingAvailability = false,
 }) => {
@@ -71,15 +78,16 @@ export const GasAccountDepositTokenPicker: React.FC<{
   });
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { height } = useWindowDimensions();
+  const showLoadingState = isCheckingAvailability && !availableTokens.length;
 
   const snapHeight = useMemo(
     () =>
       getDepositTokenPickerSnapHeight({
         windowHeight: height,
         tokenCount: availableTokens.length,
-        isCheckingAvailability,
+        isCheckingAvailability: showLoadingState,
       }),
-    [availableTokens.length, height, isCheckingAvailability],
+    [availableTokens.length, height, showLoadingState],
   );
 
   useEffect(() => {
@@ -101,6 +109,18 @@ export const GasAccountDepositTokenPicker: React.FC<{
 
   const renderItem = useCallback(
     ({ item }: { item: GasAccountAvailableToken }) => {
+      const ownerAccount = findAccountByPriority(
+        accounts.filter(account =>
+          isSameAddress(account.address, item.owner_addr),
+        ),
+      );
+      if (!ownerAccount) {
+        devLog(
+          `Owner account not found for token ${item.symbol} (${item.owner_addr}) on chain ${item.chain}`,
+        );
+        return null;
+      }
+
       return (
         <CustomTouchableOpacity
           style={styles.tokenCard}
@@ -117,15 +137,7 @@ export const GasAccountDepositTokenPicker: React.FC<{
                 <Text style={styles.tokenSymbol}>{getTokenSymbol(item)}</Text>
               </View>
               <View style={styles.tokenInfoSubTitle}>
-                <WalletIcon
-                  address={item.owner_addr}
-                  width={14}
-                  height={14}
-                  borderRadius={7}
-                />
-                <Text style={styles.addressText}>
-                  {ellipsisAddress(item.owner_addr)}
-                </Text>
+                <AccountInfoInTokenRow ownerAccount={ownerAccount} />
               </View>
             </View>
           </View>
@@ -141,7 +153,7 @@ export const GasAccountDepositTokenPicker: React.FC<{
         </CustomTouchableOpacity>
       );
     },
-    [handleSelect, styles],
+    [accounts, handleSelect, styles],
   );
 
   const loadingList = useMemo(
@@ -178,7 +190,7 @@ export const GasAccountDepositTokenPicker: React.FC<{
         <Text style={styles.title}>
           {t('page.gasAccount.depositPopup.selectToken')}
         </Text>
-        {isCheckingAvailability ? (
+        {showLoadingState ? (
           <View style={styles.loadingWrapper}>{loadingList}</View>
         ) : availableTokens.length ? (
           <>

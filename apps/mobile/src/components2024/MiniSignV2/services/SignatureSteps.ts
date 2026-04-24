@@ -499,22 +499,6 @@ export class SignatureSteps {
       chainId: txs[0].chainId,
     });
 
-    let L1feePromises;
-
-    if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum)) {
-      L1feePromises = Promise.all(
-        tempTxs.map(tx =>
-          apiProvider.fetchEstimatedL1Fee(
-            {
-              txParams: tx,
-              account,
-            },
-            chain.enum,
-          ),
-        ),
-      );
-    }
-
     const preExecProcess = async (index: number) => {
       const buildTx = tempTxs[index];
 
@@ -528,18 +512,6 @@ export class SignatureSteps {
         },
         user_addr: buildTx.from,
       });
-
-      let L1feePromises;
-
-      if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum)) {
-        L1feePromises = apiProvider.fetchEstimatedL1Fee(
-          {
-            txParams: buildTx,
-            account,
-          },
-          chain.enum,
-        );
-      }
 
       const preExecResult = await openapi.preExecTx({
         tx: buildTx,
@@ -590,6 +562,18 @@ export class SignatureSteps {
         gasLimit = _gl;
         recommendGasLimitRatio = _ratio;
       }
+      let L1feePromises;
+
+      if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum)) {
+        L1feePromises = apiProvider.fetchEstimatedL1Fee(
+          {
+            txParams: { ...buildTx, gas: buildTx?.gas || gasLimit } as Tx,
+            account,
+          },
+          chain.enum,
+        );
+      }
+
       const gasCost = await explainGas({
         gasUsed,
         gasPrice: selectedGas.price,

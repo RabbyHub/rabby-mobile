@@ -2156,7 +2156,6 @@
         "title": "ชำระค่า Gas บนทุก Chain",
         "subtitle": "เมื่อคุณหมด Gas"
       },
-      "depositWith": "ฝากด้วย",
       "switchAccount": "เปลี่ยนกระเป๋าเงิน",
       "depositNow": "ฝากตอนนี้",
       "gasBalance": "ยอดก๊าซ",
