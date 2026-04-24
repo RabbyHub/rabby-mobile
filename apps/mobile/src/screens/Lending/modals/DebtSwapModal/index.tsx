@@ -50,6 +50,7 @@ import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
   LendingReportType,
+  LendingSignType,
 } from '@/screens/Transaction/components/type';
 import {
   createGlobalBottomSheetModal2024,
@@ -700,6 +701,10 @@ export default function DebtSwapModal({
         }
 
         let results: string[] = [];
+        const signType =
+          canShowDirectSubmit && !p?.forceFullSign
+            ? LendingSignType.Simplified
+            : LendingSignType.Full;
         if (canShowDirectSubmit && !p?.forceFullSign) {
           try {
             results = await openDirect({
@@ -764,6 +769,7 @@ export default function DebtSwapModal({
           usd_value: usdValue,
           create_at: Date.now(),
           app_version: APP_VERSIONS.fromNative || '0',
+          signType,
         });
         toast.success(
           `${t('page.Lending.debtSwap.actions.title')} ${t(
