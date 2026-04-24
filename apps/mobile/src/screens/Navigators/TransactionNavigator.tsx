@@ -193,7 +193,7 @@ export default function TransactionNavigator() {
           headerStyle: {
             backgroundColor: !isLight
               ? colors2024?.['neutral-bg-1']
-              : colors2024?.['neutral-bg-2'],
+              : colors2024?.['neutral-bg-0'],
           },
         })}
       />
@@ -212,7 +212,7 @@ export default function TransactionNavigator() {
           headerStyle: {
             backgroundColor: !isLight
               ? colors2024?.['neutral-bg-1']
-              : colors2024?.['neutral-bg-2'],
+              : colors2024?.['neutral-bg-0'],
           },
         })}
       />
