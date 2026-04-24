@@ -396,6 +396,7 @@ export const PerpsOpenPositionPopup: React.FC<{
         });
     }
 
+    setIsReviewMode(false);
     onConfirm();
   });
 

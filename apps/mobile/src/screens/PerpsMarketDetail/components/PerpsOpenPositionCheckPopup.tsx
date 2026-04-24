@@ -170,7 +170,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 }}>
                 <View style={styles.listItemMain}>
                   <Text style={styles.label}>
-                    {t('page.perpsDetail.PerpsOpenPositionCheckPopup.size')}
+                    {t('page.perps.historyDetail.tradeValue')}
                   </Text>
                   <RcIconInfoCC
                     width={18}
