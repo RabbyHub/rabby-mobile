@@ -31,6 +31,7 @@ import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { APP_TEST_PWD, APP_VERSIONS, APPLICATION_ID } from '@/constant';
 import {
   RequestGenericPurpose,
+  isBrokenBiometricsEntryError,
   parseKeychainError,
 } from '@/core/apis/keychain';
 import {
@@ -129,7 +130,9 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
   const { isUnlocking } = useUnlockApp();
 
   const checkUnlocked = useCallback(async () => {
-    if (!apisLock.isUnlocked()) return;
+    if (!apisLock.isUnlocked()) {
+      return;
+    }
 
     requestAnimationFrame(() => {
       UnlockUIManager.markUnlockedOnce();
@@ -149,7 +152,9 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
     onSubmit: async (values, helpers) => {
       let errors = await helpers.validateForm();
 
-      if (getFormikErrorsCount(errors)) return;
+      if (getFormikErrorsCount(errors)) {
+        return;
+      }
 
       const { needAlert } = await tipEnableBiometrics(values.password);
       console.debug('needAlert', needAlert);
@@ -274,7 +279,9 @@ export default function UnlockScreen() {
       });
       updateUnlockTime();
     } catch (error: any) {
-      if (__DEV__) console.error(error);
+      if (__DEV__) {
+        console.error(error);
+      }
 
       if (__DEV__ && incToReset() === 0) {
         toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
@@ -284,6 +291,8 @@ export default function UnlockScreen() {
         toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
         setUsingBiometrics(false);
         storeApisBiometrics.toggleBiometrics(false, {});
+      } else if (isBrokenBiometricsEntryError(error)) {
+        toastBiometricsFailed(error.message);
       } else {
         toastBiometricsFailed(t('page.unlock.biometrics.failedAndTipTitle'));
       }
@@ -339,7 +348,9 @@ export default function UnlockScreen() {
     const sub = perfEvents.subscribe('AUTO_TRIGGER_UNLOCK', async () => {
       // wait screen rendered
       await sleep(500);
-      if (!isBiometricsEnabled) return;
+      if (!isBiometricsEnabled) {
+        return;
+      }
 
       await processUnlockWithBiometrics();
     });
@@ -351,7 +362,9 @@ export default function UnlockScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      if (params?.disableAutoTriggerUnlock) return;
+      if (params?.disableAutoTriggerUnlock) {
+        return;
+      }
       UnlockUIManager.triggerAutoUnlock();
     }, [params?.disableAutoTriggerUnlock]),
   );

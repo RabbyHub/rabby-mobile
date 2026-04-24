@@ -69,11 +69,15 @@ yarn-error.log
 .env.local
 .env.hashing
 .env.production
+.env.regression
 
 tmp.iconset
 
 ios/Package
 ios/RabbyMobile/Resources
+ios/RabbyMobile/AppConfig.local.xcconfig
+ios/RabbyMobile/AppConfig.Release.local.xcconfig
+ios/RabbyMobile/AppConfig.Regression.local.xcconfig
 
 /*/deployments/tmp
 

@@ -54,6 +54,10 @@ on:
         required: false
         type: boolean
         default: false
+      NEW_VERSION_NAME:
+        required: false
+        type: string
+        default: ''
 
 defaults:
   run:
@@ -211,13 +215,7 @@ jobs:
         run: |
           echo "REALLY_UPLOAD value: $REALLY_UPLOAD";
           cd apps/mobile;
-          nvm use;
-          yarn install --immutable;
-          if ! bundle check >/dev/null 2>&1; then
-            bundle install;
-          else
-            echo "Ruby bundle already satisfied";
-          fi
+          bash ./scripts/ci/prepare-mobile-build.sh;
 
           OS_TYPE=$(uname -s);
           echo "OS_TYPE is $OS_TYPE";
@@ -286,6 +284,7 @@ jobs:
           GIT_REF_NAME: ${{ github.ref_name }}
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
+          INPUT_NEW_VERSION_NAME: ${{ inputs.NEW_VERSION_NAME }}
 
       # - name: Upload artifact
       #   uses: actions/upload-artifact@v3

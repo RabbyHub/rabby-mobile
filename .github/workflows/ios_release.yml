@@ -23,6 +23,10 @@ on:
           - 'mobile'
           - 'mobile-local'
         default: 'mobile'
+      NEW_VERSION_NAME:
+        required: false
+        type: string
+        default: ''
   workflow_call:
     secrets:
       KEYCHAIN_PASS:
@@ -38,6 +42,7 @@ env:
 jobs:
   setup:
     name: iOS-release-build
+    environment: Production
     strategy:
       matrix:
         include:
@@ -115,8 +120,7 @@ jobs:
       - name: Install dependencies && Build app
         run: |
           cd apps/mobile;
-          yarn install --immutable;
-          yarn postinstall;
+          RABBY_MOBILE_RUN_POSTINSTALL=true bash ./scripts/ci/prepare-mobile-build.sh;
 
           if [ "$INPUT_MOBILE_LOC" != "mobile-local" ]; then
             RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS=${{ secrets.KEYCHAIN_PASS }}
@@ -140,8 +144,9 @@ jobs:
           CONFIGURATION: release
           TYPE: appstore
           RABBY_MOBILE_BUILD_ENV: production
-          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.RABBY_MOBILE_APPLE_TRANSPORT_PASSWORD }}
-          RABBY_MOBILE_PILOT_USERNAME: ${{ secrets.RABBY_MOBILE_PILOT_USERNAME }}
+          RABBY_MOBILE_ASC_API_KEY_ID: ${{ secrets.RABBY_MOBILE_ASC_API_KEY_ID }}
+          RABBY_MOBILE_ASC_API_ISSUER_ID: ${{ secrets.RABBY_MOBILE_ASC_API_ISSUER_ID }}
+          RABBY_MOBILE_ASC_API_PRIVATE_KEY_BASE64: ${{ secrets.RABBY_MOBILE_ASC_API_PRIVATE_KEY_BASE64 }}
           RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
           RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
           RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
@@ -154,6 +159,7 @@ jobs:
           GIT_REF_NAME: ${{ github.ref_name }}
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
+          INPUT_NEW_VERSION_NAME: ${{ inputs.NEW_VERSION_NAME }}
 
       # - name: Upload artifact
       #   uses: actions/upload-artifact@v3

@@ -20,9 +20,16 @@ on:
         required: true
         type: boolean
         default: true
+      UPLOAD_TO_GOOGLE_PLAY_INTERNAL:
+        description: 'Upload the appstore AAB to Google Play internal track as a draft release'
+        required: true
+        type: boolean
+        default: false
   workflow_call:
     secrets:
       RABBY_MOBILE_ANDROID_KEY_STORE:
+        required: true
+      RABBY_MOBILE_ANDROID_STORE_PASSWORD:
         required: true
       RABBY_MOBILE_ANDROID_KEY_PASSWORD:
         required: true
@@ -40,12 +47,15 @@ env:
 jobs:
   release-build:
     name: android-release-build
+    environment: Production
     runs-on:
       - self-hosted
       - mobile
       - Linux
     env:
       RABBY_MOBILE_NM_USE_CACHE: 'true'
+      RABBY_MOBILE_METRO_NODE_MAX_OLD_SPACE_SIZE: '6144'
+      RABBY_MOBILE_METRO_MAX_WORKERS: '4'
     steps:
       - uses: actions/checkout@v3
         with:
@@ -105,16 +115,13 @@ jobs:
 
       - name: Install & Build app
         run: |
-          yarn --version;
-          # yarn setup && yarn postinstall;
-          yarn install --immutable;
-          yarn postinstall;
           cd apps/mobile;
-          yarn postinstall;
+          RABBY_MOBILE_RUN_POSTINSTALL=true bash ./scripts/ci/prepare-mobile-build.sh;
           bundle install;
 
           [ -z $buildchannel ] && export buildchannel=appstore;
-          REALLY_UPLOAD=true ./scripts/deploy-android.sh
+          [ -z "${REALLY_UPLOAD:-}" ] && export REALLY_UPLOAD=true;
+          ./scripts/deploy-android.sh
         env:
           FLATTEN_REFNAME: ${{ steps.actionvars.outputs.flatten_refname }}
           TRIGGER_DATE: ${{ steps.actionvars.outputs.trigger_date }}
@@ -122,6 +129,7 @@ jobs:
           RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
           RABBY_MOBILE_CODE: ${{ secrets.RABBY_MOBILE_CODE2 }}
           RABBY_MOBILE_ANDROID_KEY_STORE: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_STORE }}
+          RABBY_MOBILE_ANDROID_STORE_PASSWORD: ${{ secrets.RABBY_MOBILE_ANDROID_STORE_PASSWORD }}
           RABBY_MOBILE_ANDROID_KEY_PASSWORD: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_PASSWORD }}
           RABBY_MOBILE_ANDROID_KEY_ALIAS: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_ALIAS }}
           RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
@@ -131,6 +139,7 @@ jobs:
           RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
           RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
           RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
+          RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64 }}
           buildchannel: ${{ inputs.buildchannel }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
@@ -141,6 +150,19 @@ jobs:
           GIT_REF_NAME: ${{ github.ref_name }}
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
+
+      - name: Upload appstore AAB to Google Play internal track
+        if: ${{ inputs.buildchannel == 'appstore' && inputs.REALLY_UPLOAD && inputs.UPLOAD_TO_GOOGLE_PLAY_INTERNAL }}
+        run: |
+          cd apps/mobile;
+          bash ./scripts/ci/upload-google-play-internal-track.sh
+        env:
+          RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64 }}
+          RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
+          RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
+          GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GIT_COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+          GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
 
       # - name: Upload artifact
       #   uses: actions/upload-artifact@v3

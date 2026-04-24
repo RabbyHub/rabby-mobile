@@ -85,6 +85,13 @@ export const DevDataSQLite = registerAppScreen<
   name: TESTKITS_PRELOAD_SCREENS.DevDataSQLite,
 });
 
+export const DevDataKeychain = registerAppScreen<
+  typeof import('@/screens/Testkits/DevDataKeychain').default
+>({
+  loader: () => import('@/screens/Testkits/DevDataKeychain'),
+  name: TESTKITS_PRELOAD_SCREENS.DevDataKeychain,
+});
+
 export const DevDataWhitelist = registerAppScreen<
   typeof import('@/screens/Testkits/DevDataWhitelist').default
 >({

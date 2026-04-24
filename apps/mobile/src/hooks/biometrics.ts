@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { BIOMETRY_TYPE } from 'react-native-keychain';
+import { BIOMETRY_TYPE } from '@rabby-wallet/react-native-keychain';
 import { toast, toastLoading } from '@/components2024/Toast';
 import { apisKeychain } from '@/core/apis';
 import {
@@ -7,6 +7,7 @@ import {
   RequestGenericPurpose,
   isAuthenticatedByBiometrics,
   parseKeychainError,
+  type KeychainSupportedBiometryType,
 } from '@/core/apis/keychain';
 import { useTranslation } from 'react-i18next';
 import {
@@ -26,7 +27,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 type BiometricsInfoState = {
   authEnabled: boolean;
-  supportedBiometryType: BIOMETRY_TYPE | null;
+  supportedBiometryType: KeychainSupportedBiometryType;
 };
 const biometricsInfoStore = zCreate<BiometricsInfoState>(() => ({
   authEnabled: isAuthenticatedByBiometrics(),
@@ -78,7 +79,7 @@ const fetchBiometrics = async () => {
 
   isFetchingBiometricsRef.current = true;
   try {
-    let supportedType = null as null | BIOMETRY_TYPE;
+    let supportedType = null as KeychainSupportedBiometryType;
     try {
       supportedType = await apisKeychain.getSupportedBiometryType();
     } catch (error) {

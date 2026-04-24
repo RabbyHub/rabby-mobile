@@ -39,7 +39,7 @@ import {
 import { isEqual } from 'lodash';
 import { svsLayout } from './hooks/useAppLayout';
 import { openapi } from './core/request';
-import { IS_ROZENITE_ENABLED } from './constant/env';
+import { DEFAULT_RABBY_MOBILE_CODE, IS_ROZENITE_ENABLED } from './constant/env';
 import { startSetupAppBeforeRenderDeferred } from './setup-app-before-render';
 
 Safe.openapiService = openapi;
@@ -127,7 +127,7 @@ function SizeWatcher() {
 }
 
 function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
-  const rabbitCode = __DEV__ ? 'RABBY_MOBILE_CODE_DEV' : propRabbitCode;
+  const rabbitCode = __DEV__ ? DEFAULT_RABBY_MOBILE_CODE : propRabbitCode || '';
   useBootstrapApp({ rabbitCode });
 
   return (

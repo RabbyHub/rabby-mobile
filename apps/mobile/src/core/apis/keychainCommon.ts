@@ -1,0 +1,1045 @@
+import { EncryptorAdapter } from '@rabby-wallet/service-keyring';
+import { NativeModules, Platform } from 'react-native';
+
+import i18n from '@/utils/i18n';
+import { DEFAULT_RABBY_MOBILE_CODE } from '@/constant/env';
+import { logger } from '@/utils/logger';
+
+import { keychainMMKV } from '../storage/mmkvInstances';
+import { KEYCHAIN_MMKV_KEYS } from '../storage/mmkvConstants';
+import { appEncryptor } from '../services';
+import * as apisLock from './lock';
+
+export const KEYCHAIN_DEFAULT_SERVICE = 'com.debank';
+export const KEYCHAIN_GENERIC_USER = 'rabbymobile-user';
+const LEGACY_RSA_STORAGE_TYPE = 'KeystoreRSAECB';
+const AES_STORAGE_TYPE = 'KeystoreAESCBC';
+const IOS_KEYCHAIN_STORAGE_TYPE = 'keychain';
+const BROKEN_BIOMETRICS_ENTRY_MESSAGE =
+  'Biometrics data could not be decrypted with the current keychain state. Inspect the keychain debug screen before resetting biometrics.';
+const CANCELSTR = i18n.t('native.authentication.auth_prompt_cancel');
+const isAndroid = Platform.OS === 'android';
+
+export enum KEYCHAIN_AUTH_TYPES {
+  APPLICATION_PASSWORD = 0,
+  BIOMETRICS = 1,
+  PASSCODE = 2,
+  REMEMBER_ME = 3,
+}
+
+export enum RequestGenericPurpose {
+  VERIFY = 1,
+  DECRYPT_PWD = 11,
+}
+
+export const ANDROID_AUTH_PROMPT_POLICIES = {
+  INTERACTIVE_FIRST: 'interactive-first',
+  ALLOW_AUTHENTICATED_SESSION_REUSE: 'allow-authenticated-session-reuse',
+} as const;
+
+export const KEYCHAIN_STORAGE_TYPES = {
+  RSA: LEGACY_RSA_STORAGE_TYPE,
+  AES: AES_STORAGE_TYPE,
+  KC: IOS_KEYCHAIN_STORAGE_TYPE,
+} as const;
+
+export type AndroidAuthPromptPolicy =
+  (typeof ANDROID_AUTH_PROMPT_POLICIES)[keyof typeof ANDROID_AUTH_PROMPT_POLICIES];
+
+export type KeychainStorageType =
+  (typeof KEYCHAIN_STORAGE_TYPES)[keyof typeof KEYCHAIN_STORAGE_TYPES];
+
+export const DEFAULT_ANDROID_AUTH_PROMPT_POLICY =
+  ANDROID_AUTH_PROMPT_POLICIES.INTERACTIVE_FIRST;
+
+export const DEFAULT_ANDROID_KEYCHAIN_STORAGE_TYPE = KEYCHAIN_STORAGE_TYPES.RSA;
+export const DEFAULT_IOS_KEYCHAIN_STORAGE_TYPE = KEYCHAIN_STORAGE_TYPES.KC;
+export const DEFAULT_KEYCHAIN_STORAGE_TYPE = isAndroid
+  ? DEFAULT_ANDROID_KEYCHAIN_STORAGE_TYPE
+  : DEFAULT_IOS_KEYCHAIN_STORAGE_TYPE;
+
+export type KeychainCompatibleOptions = {
+  service?: string;
+  accessible?: unknown;
+  accessControl?: unknown;
+  authenticationType?: unknown;
+  authenticationPrompt?: {
+    title?: string;
+    description?: string;
+    cancel?: string;
+  };
+  rules?: unknown;
+  storage?: string;
+  androidAllowAuthenticatedSessionReuse?: boolean;
+};
+
+export type KeychainCompatibleUserCredentials = {
+  service?: string;
+  username: string;
+  password: string;
+  storage?: string;
+  [key: string]: unknown;
+};
+
+export function coerceKeychainStorageType(
+  storage: unknown,
+): KeychainStorageType {
+  switch (storage) {
+    case KEYCHAIN_STORAGE_TYPES.RSA:
+    case KEYCHAIN_STORAGE_TYPES.AES:
+    case KEYCHAIN_STORAGE_TYPES.KC:
+      return storage;
+    default:
+      return DEFAULT_KEYCHAIN_STORAGE_TYPE;
+  }
+}
+
+function sortKeychainStorageTypes(
+  storages: KeychainStorageType[],
+): KeychainStorageType[] {
+  const order = [
+    KEYCHAIN_STORAGE_TYPES.RSA,
+    KEYCHAIN_STORAGE_TYPES.AES,
+    KEYCHAIN_STORAGE_TYPES.KC,
+  ];
+
+  return [...storages].sort(
+    (left, right) => order.indexOf(left) - order.indexOf(right),
+  );
+}
+
+export type KeychainSupportedBiometryType = string | null;
+
+export type KeychainCompatibleModule = {
+  getGenericPassword: (
+    options: KeychainCompatibleOptions,
+  ) => Promise<false | KeychainCompatibleUserCredentials>;
+  setGenericPassword: (
+    username: string,
+    password: string,
+    options: KeychainCompatibleOptions,
+  ) => Promise<unknown>;
+  resetGenericPassword: (
+    options: KeychainCompatibleOptions,
+  ) => Promise<boolean>;
+  getSupportedBiometryType: () => Promise<KeychainSupportedBiometryType>;
+  ACCESSIBLE: {
+    WHEN_UNLOCKED_THIS_DEVICE_ONLY: unknown;
+  };
+  ACCESS_CONTROL: {
+    BIOMETRY_CURRENT_SET: unknown;
+    DEVICE_PASSCODE: unknown;
+  };
+  AUTHENTICATION_TYPE: {
+    BIOMETRICS: unknown;
+  };
+  SECURITY_RULES: {
+    AUTOMATIC_UPGRADE: unknown;
+  };
+};
+
+export type NativeAndroidKeychainDebugState = {
+  hasCipherStorageMarker: boolean;
+  isCipherStorageMarkerMissing: boolean;
+  storedUsernameBase64: string | null;
+  storedPasswordBase64: string | null;
+  storedCipherStorageMarkerValue: string | null;
+  storedCipherStorageName: string | null;
+  resolvedCipherStorageName: string | null;
+  candidateCipherStorageNames: string[];
+  cipherStorageResolutionStrategy: string | null;
+  usernameByteSize: number | null;
+  passwordByteSize: number | null;
+  keystoreAlias: string | null;
+  hasKeystoreAlias: boolean;
+  keystoreKeyAlgorithm: string | null;
+  keystoreSecurityLevel: string | null;
+  keystoreInsideSecureHardware: boolean | null;
+  keystoreUserAuthenticationRequired: boolean | null;
+  keystoreUserAuthenticationValidityDurationSeconds: number | null;
+  keystoreUserAuthenticationType: number | null;
+  keystoreBlockModes: string | null;
+  keystorePurposes: number | null;
+  keystoreIsCompatibleWithCurrentCipher: boolean | null;
+  keystorePublicKeySha256: string | null;
+  keystoreDebugErrorMessage: string | null;
+};
+
+export type NativeIOSKeychainDebugState = {
+  storageName: string | null;
+  account: string | null;
+  accessGroup: string | null;
+  accessible: string | null;
+  synchronizable: boolean | null;
+  hasAccessControl: boolean;
+  accessControlDescription: string | null;
+  accessControlConstraints: string | null;
+  itemClass: string | null;
+  authenticationUIBlocked: boolean;
+  nativeDebugErrorMessage: string | null;
+};
+
+type NativeKeychainDebugState =
+  | NativeAndroidKeychainDebugState
+  | NativeIOSKeychainDebugState;
+
+type RNKeychainDebugModule = {
+  debugGetGenericPasswordStateForOptions?: (
+    options: KeychainCompatibleOptions,
+  ) => Promise<NativeKeychainDebugState>;
+  debugRemoveCipherStorageMarkerForOptions?: (
+    options: KeychainCompatibleOptions,
+  ) => Promise<boolean>;
+};
+
+type PlainUserCredentials = KeychainCompatibleUserCredentials & {
+  rawPassword?: string;
+};
+
+type DefaultRet =
+  | false
+  | (Omit<PlainUserCredentials, 'password'> & {
+      password?: PlainUserCredentials['password'];
+      actionSuccess?: boolean;
+    });
+
+type KeyChainErrorCode = keyof typeof KEYCHAIN_ERROR_CODES;
+type KeyChainError = Error & {
+  code: KeyChainErrorCode;
+};
+
+type CreateBusinessKeychainApiOptions = {
+  keychainModule: KeychainCompatibleModule;
+  debugNativeModuleName: string;
+  sourceLabel: string;
+};
+
+type SKClsOptions = { encryptor: EncryptorAdapter; salt: string };
+
+const privates = new WeakMap<SecureKeyChainInstance, { salt: string }>();
+const secureKeyChainInstanceRef = {
+  current: null as SecureKeyChainInstance | null,
+};
+
+export type DebugDecryptedKeychainPayload = {
+  password: string;
+};
+
+type KeychainDebugStateBase = {
+  service: string;
+  hasEntry: boolean;
+  hasUsername: boolean;
+  hasPassword: boolean;
+  debugSupported: boolean;
+  debugErrorMessage: string | null;
+  supportedBiometryType: KeychainSupportedBiometryType;
+  authenticationType: KEYCHAIN_AUTH_TYPES;
+  authenticationTypeLabel: string;
+  isAuthenticatedByBiometrics: boolean;
+  sourceLabel: string;
+};
+
+export type AndroidKeychainDebugState = KeychainDebugStateBase &
+  NativeAndroidKeychainDebugState & {
+    platform: 'android';
+  };
+
+export type IOSKeychainDebugState = KeychainDebugStateBase &
+  NativeIOSKeychainDebugState & {
+    platform: 'ios';
+  };
+
+export type KeychainDebugState =
+  | AndroidKeychainDebugState
+  | IOSKeychainDebugState;
+
+function makeKeychainDebugStateBase(
+  service: string,
+  supportedBiometryType: KeychainSupportedBiometryType,
+  sourceLabel: string,
+): KeychainDebugStateBase {
+  return {
+    service,
+    hasEntry: false,
+    hasUsername: false,
+    hasPassword: false,
+    debugSupported: true,
+    debugErrorMessage: null,
+    supportedBiometryType,
+    authenticationType: getAuthenticationType(),
+    authenticationTypeLabel: getAuthenticationTypeLabel(),
+    isAuthenticatedByBiometrics: isAuthenticatedByBiometrics(),
+    sourceLabel,
+  };
+}
+
+function makeAndroidKeychainDebugState(
+  service: string,
+  supportedBiometryType: KeychainSupportedBiometryType,
+  sourceLabel: string,
+): AndroidKeychainDebugState {
+  return {
+    ...makeKeychainDebugStateBase(service, supportedBiometryType, sourceLabel),
+    platform: 'android',
+    hasCipherStorageMarker: false,
+    isCipherStorageMarkerMissing: false,
+    storedUsernameBase64: null,
+    storedPasswordBase64: null,
+    storedCipherStorageMarkerValue: null,
+    storedCipherStorageName: null,
+    resolvedCipherStorageName: null,
+    candidateCipherStorageNames: [],
+    cipherStorageResolutionStrategy: null,
+    usernameByteSize: null,
+    passwordByteSize: null,
+    keystoreAlias: service,
+    hasKeystoreAlias: false,
+    keystoreKeyAlgorithm: null,
+    keystoreSecurityLevel: null,
+    keystoreInsideSecureHardware: null,
+    keystoreUserAuthenticationRequired: null,
+    keystoreUserAuthenticationValidityDurationSeconds: null,
+    keystoreUserAuthenticationType: null,
+    keystoreBlockModes: null,
+    keystorePurposes: null,
+    keystoreIsCompatibleWithCurrentCipher: null,
+    keystorePublicKeySha256: null,
+    keystoreDebugErrorMessage: null,
+  };
+}
+
+function makeIOSKeychainDebugState(
+  service: string,
+  supportedBiometryType: KeychainSupportedBiometryType,
+  sourceLabel: string,
+): IOSKeychainDebugState {
+  return {
+    ...makeKeychainDebugStateBase(service, supportedBiometryType, sourceLabel),
+    platform: 'ios',
+    storageName: IOS_KEYCHAIN_STORAGE_TYPE,
+    account: null,
+    accessGroup: null,
+    accessible: null,
+    synchronizable: null,
+    hasAccessControl: false,
+    accessControlDescription: null,
+    accessControlConstraints: null,
+    itemClass: null,
+    authenticationUIBlocked: false,
+    nativeDebugErrorMessage: null,
+  };
+}
+
+export function getAndroidAuthPromptPolicyOptions(
+  policy: AndroidAuthPromptPolicy = DEFAULT_ANDROID_AUTH_PROMPT_POLICY,
+) {
+  if (
+    !isAndroid ||
+    policy !== ANDROID_AUTH_PROMPT_POLICIES.ALLOW_AUTHENTICATED_SESSION_REUSE
+  ) {
+    return {};
+  }
+
+  return {
+    androidAllowAuthenticatedSessionReuse: true,
+  } as const;
+}
+
+export const KEYCHAIN_ERROR_CODES = {
+  NIL_KEYCHAIN_OBJECT: 'NIL_KEYCHAIN_OBJECT',
+  BROKEN_BIOMETRICS_ENTRY: 'BROKEN_BIOMETRICS_ENTRY',
+} as const;
+
+export class SecureKeyChainInstance {
+  isAuthenticating = false;
+
+  private encryptor: EncryptorAdapter;
+
+  constructor(options: SKClsOptions) {
+    const { encryptor, salt } = options;
+
+    if (!secureKeyChainInstanceRef.current) {
+      privates.set(this, { salt });
+      secureKeyChainInstanceRef.current = this;
+    }
+
+    this.encryptor = encryptor;
+
+    return secureKeyChainInstanceRef.current;
+  }
+
+  async encryptPassword(password: string) {
+    return this.encryptor.encrypt(privates.get(this)?.salt || '', { password });
+  }
+
+  async decryptPassword(encryptedPassword: string) {
+    return this.encryptor.decrypt(
+      privates.get(this)?.salt || '',
+      encryptedPassword,
+    ) as Promise<KeychainCompatibleUserCredentials>;
+  }
+
+  getRabbitCode() {
+    return privates.get(this)?.salt || '';
+  }
+}
+
+export function getAuthenticationType() {
+  const storedType = keychainMMKV.getNumber(
+    KEYCHAIN_MMKV_KEYS.AUTHENTICATION_TYPE,
+  );
+
+  return typeof storedType === 'number'
+    ? storedType
+    : KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD;
+}
+
+export function getAuthenticationTypeLabel(type?: KEYCHAIN_AUTH_TYPES) {
+  const currentType = type ?? getAuthenticationType();
+
+  switch (currentType) {
+    case KEYCHAIN_AUTH_TYPES.BIOMETRICS:
+      return 'BIOMETRICS';
+    case KEYCHAIN_AUTH_TYPES.PASSCODE:
+      return 'PASSCODE';
+    case KEYCHAIN_AUTH_TYPES.REMEMBER_ME:
+      return 'REMEMBER_ME';
+    case KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD:
+    default:
+      return 'APPLICATION_PASSWORD';
+  }
+}
+
+function setAuthenticationType(type?: KEYCHAIN_AUTH_TYPES) {
+  keychainMMKV.set(
+    KEYCHAIN_MMKV_KEYS.AUTHENTICATION_TYPE,
+    type || KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD,
+  );
+}
+
+export function isAuthenticatedByBiometrics() {
+  return getAuthenticationType() === KEYCHAIN_AUTH_TYPES.BIOMETRICS;
+}
+
+function sleep(ms: number = 1000) {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
+}
+
+export function makeSecureKeyChainInstance(
+  options: Omit<SKClsOptions, 'encryptor'>,
+) {
+  if (!secureKeyChainInstanceRef.current) {
+    secureKeyChainInstanceRef.current = new SecureKeyChainInstance({
+      ...options,
+      encryptor: appEncryptor,
+    });
+    Object.freeze(secureKeyChainInstanceRef.current);
+  }
+
+  return secureKeyChainInstanceRef.current;
+}
+
+async function waitInstance() {
+  while (!secureKeyChainInstanceRef.current) {
+    await sleep(200);
+  }
+
+  if (!secureKeyChainInstanceRef.current) {
+    throw new Error('SecureKeyChainInstance is not initialized');
+  }
+
+  return secureKeyChainInstanceRef.current;
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (
+    error &&
+    typeof error === 'object' &&
+    'message' in error &&
+    typeof error.message === 'string'
+  ) {
+    return error.message;
+  }
+
+  return String(error);
+}
+
+const canceledByUserMessages = ['code: 10', 'code: 13', `msg: ${CANCELSTR}`];
+
+export function parseKeychainError(error: any | Error) {
+  const message = getErrorMessage(error);
+  const isCancelledByUser =
+    !!message && canceledByUserMessages.some(slug => message.includes(slug));
+
+  return {
+    isCancelledByUser,
+    sysMessage: message.split('msg:')?.[1]?.trim() || '',
+  };
+}
+
+export function makeKeyChainError(
+  code: KeyChainErrorCode,
+  msg: string,
+  extras?: Record<string, unknown>,
+) {
+  const error = new Error(msg) as KeyChainError & Record<string, unknown>;
+  error.code = code;
+
+  if (extras) {
+    Object.assign(error, extras);
+  }
+
+  return error;
+}
+
+export function isBrokenBiometricsEntryError(error: unknown) {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    error.code === KEYCHAIN_ERROR_CODES.BROKEN_BIOMETRICS_ENTRY
+  );
+}
+
+function isLegacyRsaBlobSize(size: number | null) {
+  return size !== null && size > 0 && size % 256 === 0;
+}
+
+function matchesBrokenAndroidBiometricsEntry(
+  state: KeychainDebugState,
+): boolean {
+  if (state.platform !== 'android') {
+    return false;
+  }
+
+  return (
+    state.hasEntry &&
+    state.hasUsername &&
+    state.hasPassword &&
+    state.resolvedCipherStorageName === LEGACY_RSA_STORAGE_TYPE &&
+    isLegacyRsaBlobSize(state.usernameByteSize) &&
+    isLegacyRsaBlobSize(state.passwordByteSize) &&
+    state.hasKeystoreAlias &&
+    state.keystoreKeyAlgorithm === 'RSA' &&
+    state.keystoreUserAuthenticationRequired === true &&
+    state.keystoreIsCompatibleWithCurrentCipher === true
+  );
+}
+
+export function createBusinessKeychainApi({
+  keychainModule,
+  debugNativeModuleName,
+  sourceLabel,
+}: CreateBusinessKeychainApiOptions) {
+  const DEFAULT_BASE_OPTIONS: KeychainCompatibleOptions = {
+    service: KEYCHAIN_DEFAULT_SERVICE,
+  };
+  const DEFAULT_SET_OPTIONS: KeychainCompatibleOptions = {
+    ...DEFAULT_BASE_OPTIONS,
+  };
+  const DEFAULT_GET_OPTIONS: KeychainCompatibleOptions = {
+    ...DEFAULT_BASE_OPTIONS,
+    authenticationPrompt: {
+      title: i18n.t('native.authentication.auth_prompt_title'),
+      description: i18n.t('native.authentication.auth_prompt_desc'),
+      cancel: i18n.t('native.authentication.auth_prompt_cancel'),
+    },
+    authenticationType: keychainModule.AUTHENTICATION_TYPE.BIOMETRICS,
+    ...(isAndroid && {
+      rules: keychainModule.SECURITY_RULES.AUTOMATIC_UPGRADE,
+    }),
+  };
+  const debugModule = (NativeModules as Record<string, unknown>)[
+    debugNativeModuleName
+  ] as RNKeychainDebugModule | undefined;
+
+  async function callKeychainDebugMethod<R>(
+    method: keyof RNKeychainDebugModule,
+    options: KeychainCompatibleOptions = DEFAULT_BASE_OPTIONS,
+  ): Promise<R> {
+    const debugMethod = debugModule?.[method] as
+      | ((nextOptions: KeychainCompatibleOptions) => Promise<R>)
+      | undefined;
+
+    if (typeof debugMethod !== 'function') {
+      throw new Error(
+        `${debugNativeModuleName}.${String(method)} is unavailable on ${
+          Platform.OS
+        }`,
+      );
+    }
+
+    return debugMethod(options);
+  }
+
+  async function getSupportedStorageTypes(): Promise<KeychainStorageType[]> {
+    if (!isAndroid) {
+      return [KEYCHAIN_STORAGE_TYPES.KC];
+    }
+
+    return sortKeychainStorageTypes([
+      KEYCHAIN_STORAGE_TYPES.RSA,
+      KEYCHAIN_STORAGE_TYPES.AES,
+    ]);
+  }
+
+  async function getKeychainDebugState(
+    service: string = KEYCHAIN_DEFAULT_SERVICE,
+  ): Promise<KeychainDebugState> {
+    const supportedBiometryType = await keychainModule
+      .getSupportedBiometryType()
+      .catch(() => null);
+    if (!isAndroid) {
+      const baseState = makeIOSKeychainDebugState(
+        service,
+        supportedBiometryType,
+        sourceLabel,
+      );
+
+      try {
+        const nativeState =
+          await callKeychainDebugMethod<NativeIOSKeychainDebugState>(
+            'debugGetGenericPasswordStateForOptions',
+            { ...DEFAULT_GET_OPTIONS, service },
+          );
+
+        return {
+          ...baseState,
+          ...nativeState,
+        };
+      } catch (error) {
+        return {
+          ...baseState,
+          debugSupported: false,
+          debugErrorMessage:
+            error instanceof Error ? error.message : String(error),
+        };
+      }
+    }
+
+    const baseState = makeAndroidKeychainDebugState(
+      service,
+      supportedBiometryType,
+      sourceLabel,
+    );
+
+    try {
+      const nativeState =
+        await callKeychainDebugMethod<NativeAndroidKeychainDebugState>(
+          'debugGetGenericPasswordStateForOptions',
+          { ...DEFAULT_GET_OPTIONS, service },
+        );
+
+      return {
+        ...baseState,
+        ...nativeState,
+      };
+    } catch (error) {
+      return {
+        ...baseState,
+        debugSupported: false,
+        debugErrorMessage:
+          error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  async function normalizeRequestGenericPasswordError(error: unknown) {
+    const normalizedError =
+      error instanceof Error ? error : new Error(getErrorMessage(error));
+    const message = getErrorMessage(error);
+    const shouldCheckBrokenBiometricsEntry =
+      isAndroid &&
+      isAuthenticatedByBiometrics() &&
+      message.includes('RSA decrypt failed on both current and legacy paths');
+
+    if (!shouldCheckBrokenBiometricsEntry) {
+      return normalizedError;
+    }
+
+    const debugState = await getKeychainDebugState().catch(() => null);
+    if (!debugState || !matchesBrokenAndroidBiometricsEntry(debugState)) {
+      return normalizedError;
+    }
+
+    return makeKeyChainError(
+      KEYCHAIN_ERROR_CODES.BROKEN_BIOMETRICS_ENTRY,
+      BROKEN_BIOMETRICS_ENTRY_MESSAGE,
+      {
+        debugState,
+        nativeMessage: message,
+      },
+    );
+  }
+
+  function onRequestReturn(instance: SecureKeyChainInstance) {
+    instance.isAuthenticating = false;
+    return null;
+  }
+
+  function shouldUpgradeLegacyAndroidBiometricsStorage(storage?: string) {
+    return (
+      isAndroid &&
+      isAuthenticatedByBiometrics() &&
+      storage === LEGACY_RSA_STORAGE_TYPE
+    );
+  }
+
+  async function upgradeLegacyAndroidBiometricsStorage(
+    plainPassword: string,
+    storage?: string,
+  ) {
+    if (!shouldUpgradeLegacyAndroidBiometricsStorage(storage)) {
+      return;
+    }
+
+    try {
+      await setGenericPassword(plainPassword, KEYCHAIN_AUTH_TYPES.BIOMETRICS);
+    } catch (error) {
+      if (__DEV__) {
+        console.warn(
+          'upgradeLegacyAndroidBiometricsStorage failed',
+          error instanceof Error ? error.message : error,
+        );
+      }
+    }
+  }
+
+  async function decryptStoredPasswordWithRabbitCodeCandidates(
+    instance: SecureKeyChainInstance,
+    encryptedPassword: string,
+  ) {
+    const currentRabbitCode = instance.getRabbitCode();
+    const rabbitCodeCandidates = [
+      currentRabbitCode,
+      DEFAULT_RABBY_MOBILE_CODE,
+    ].filter(
+      (candidate, index, candidates): candidate is string =>
+        !!candidate && candidates.indexOf(candidate) === index,
+    );
+    let lastError: unknown = null;
+
+    for (const rabbitCodeCandidate of rabbitCodeCandidates) {
+      try {
+        const decrypted = (await appEncryptor.decrypt(
+          rabbitCodeCandidate,
+          encryptedPassword,
+        )) as KeychainCompatibleUserCredentials;
+
+        return {
+          decrypted,
+          usedFallbackRabbitCode: rabbitCodeCandidate !== currentRabbitCode,
+        };
+      } catch (error) {
+        lastError = error;
+
+        if (
+          rabbitCodeCandidate === currentRabbitCode &&
+          rabbitCodeCandidates.length > 1
+        ) {
+          logger.info(
+            '[keychain] current rabbitCode failed to decrypt stored credentials, trying fallback candidate',
+            {
+              sourceLabel,
+              candidateCount: rabbitCodeCandidates.length,
+            },
+          );
+        }
+      }
+    }
+
+    throw lastError;
+  }
+
+  async function silentlyUpgradeStoredPasswordPayload(plainPassword: string) {
+    const authType = getAuthenticationType();
+
+    if (authType === KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD) {
+      return;
+    }
+
+    try {
+      await setGenericPassword(plainPassword, authType);
+      logger.info(
+        '[keychain] rewrote stored credentials with the current rabbitCode after fallback decrypt',
+        {
+          sourceLabel,
+          authType,
+        },
+      );
+    } catch (error) {
+      logger.warn(
+        '[keychain] failed to rewrite stored credentials with the current rabbitCode',
+        {
+          sourceLabel,
+          authType,
+          error: getErrorMessage(error),
+        },
+      );
+    }
+  }
+
+  async function requestGenericPassword<T extends RequestGenericPurpose>({
+    purpose = RequestGenericPurpose.VERIFY as T,
+    onPlainPassword,
+    androidAuthPromptPolicy = DEFAULT_ANDROID_AUTH_PROMPT_POLICY,
+  }: {
+    purpose?: T;
+    onPlainPassword?: (password: string) => void | Promise<void>;
+    androidAuthPromptPolicy?: AndroidAuthPromptPolicy;
+  }): Promise<null | DefaultRet> {
+    const instance = await waitInstance();
+
+    try {
+      instance.isAuthenticating = true;
+      const keychainObject = (await keychainModule.getGenericPassword({
+        ...DEFAULT_GET_OPTIONS,
+        ...getAndroidAuthPromptPolicyOptions(androidAuthPromptPolicy),
+      })) as DefaultRet;
+
+      if (!keychainObject) {
+        throw makeKeyChainError(
+          'NIL_KEYCHAIN_OBJECT',
+          'Failed to retrieve keychain object',
+        );
+      }
+
+      if (keychainObject.password) {
+        const encryptedPassword = keychainObject.password;
+        delete keychainObject.password;
+
+        const { decrypted, usedFallbackRabbitCode } =
+          await decryptStoredPasswordWithRabbitCodeCandidates(
+            instance,
+            encryptedPassword,
+          );
+
+        switch (purpose) {
+          case RequestGenericPurpose.VERIFY: {
+            const verifyResult =
+              await apisLock.safeVerifyPasswordAndUpdateUnlockTime(
+                decrypted.password,
+              );
+            if (verifyResult.success) {
+              if (usedFallbackRabbitCode) {
+                await silentlyUpgradeStoredPasswordPayload(decrypted.password);
+              } else {
+                await upgradeLegacyAndroidBiometricsStorage(
+                  decrypted.password,
+                  typeof keychainObject.storage === 'string'
+                    ? keychainObject.storage
+                    : undefined,
+                );
+              }
+            }
+
+            onRequestReturn(instance);
+            return { ...keychainObject, actionSuccess: verifyResult.success };
+          }
+          case RequestGenericPurpose.DECRYPT_PWD: {
+            await onPlainPassword?.(decrypted.password);
+            apisLock.updateUnlockTime();
+            if (usedFallbackRabbitCode) {
+              await silentlyUpgradeStoredPasswordPayload(decrypted.password);
+            } else {
+              await upgradeLegacyAndroidBiometricsStorage(
+                decrypted.password,
+                typeof keychainObject.storage === 'string'
+                  ? keychainObject.storage
+                  : undefined,
+              );
+            }
+            onRequestReturn(instance);
+            return { ...keychainObject, actionSuccess: true };
+          }
+          default: {
+            if (__DEV__) {
+              console.warn('requestGenericPassword: Invalid purpose', purpose);
+            }
+          }
+        }
+      }
+
+      return keychainObject;
+    } catch (error) {
+      instance.isAuthenticating = false;
+      throw await normalizeRequestGenericPasswordError(error);
+    }
+  }
+
+  async function resetGenericPassword() {
+    const result = await keychainModule.resetGenericPassword({
+      service: DEFAULT_BASE_OPTIONS.service,
+    });
+
+    if (result) {
+      setAuthenticationType(KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD);
+    }
+
+    return result;
+  }
+
+  async function debugRemoveCurrentCipherStorageMarker(
+    service: string = KEYCHAIN_DEFAULT_SERVICE,
+  ) {
+    if (!isAndroid) {
+      throw new Error(
+        'Removing the Android keychain cipher storage marker is only supported on Android',
+      );
+    }
+
+    await callKeychainDebugMethod<boolean>(
+      'debugRemoveCipherStorageMarkerForOptions',
+      { ...DEFAULT_BASE_OPTIONS, service },
+    );
+
+    return getKeychainDebugState(service);
+  }
+
+  async function debugWriteMockLegacyBiometricsEntry(
+    plainPassword: string,
+    options?: {
+      omitCipherStorageMarker?: boolean;
+      service?: string;
+    },
+  ) {
+    if (!isAndroid) {
+      throw new Error(
+        'Mock legacy Android keychain data is only supported on Android',
+      );
+    }
+
+    const {
+      omitCipherStorageMarker = true,
+      service = KEYCHAIN_DEFAULT_SERVICE,
+    } = options || {};
+    const instance = await waitInstance();
+    const encryptedPassword = await instance.encryptPassword(plainPassword);
+
+    await keychainModule.setGenericPassword(
+      KEYCHAIN_GENERIC_USER,
+      encryptedPassword,
+      {
+        ...DEFAULT_SET_OPTIONS,
+        service,
+        accessible: keychainModule.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+        accessControl: keychainModule.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
+        storage: LEGACY_RSA_STORAGE_TYPE,
+      },
+    );
+
+    setAuthenticationType(KEYCHAIN_AUTH_TYPES.BIOMETRICS);
+
+    if (omitCipherStorageMarker) {
+      await callKeychainDebugMethod<boolean>(
+        'debugRemoveCipherStorageMarkerForOptions',
+        { ...DEFAULT_BASE_OPTIONS, service },
+      );
+    }
+
+    return getKeychainDebugState(service);
+  }
+
+  async function debugDecryptStoredPasswordPayload(encryptedPassword: string) {
+    const instance = await waitInstance();
+
+    return instance.decryptPassword(
+      encryptedPassword,
+    ) as Promise<DebugDecryptedKeychainPayload>;
+  }
+
+  async function setGenericPassword(
+    password: string,
+    type: KEYCHAIN_AUTH_TYPES = KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+    options?: {
+      storage?: KeychainStorageType;
+    },
+  ) {
+    const authOptions: Partial<KeychainCompatibleOptions> = {
+      accessible: keychainModule.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+    };
+
+    if (type === KEYCHAIN_AUTH_TYPES.BIOMETRICS) {
+      authOptions.accessControl =
+        keychainModule.ACCESS_CONTROL.BIOMETRY_CURRENT_SET;
+    } else if (type === KEYCHAIN_AUTH_TYPES.PASSCODE) {
+      authOptions.accessControl = keychainModule.ACCESS_CONTROL.DEVICE_PASSCODE;
+    } else if (type === KEYCHAIN_AUTH_TYPES.REMEMBER_ME) {
+      // no extra option
+    } else {
+      if (__DEV__) {
+        console.warn('setGenericPassword: Invalid type', type);
+      }
+
+      return resetGenericPassword();
+    }
+
+    const instance = await waitInstance();
+    const encryptedPassword = await instance.encryptPassword(password);
+    await keychainModule.setGenericPassword(
+      KEYCHAIN_GENERIC_USER,
+      encryptedPassword,
+      {
+        ...DEFAULT_SET_OPTIONS,
+        ...authOptions,
+        ...(options?.storage ? { storage: options.storage } : null),
+      },
+    );
+
+    setAuthenticationType(type);
+  }
+
+  function getSupportedBiometryType() {
+    return keychainModule.getSupportedBiometryType();
+  }
+
+  async function clearApplicationPassword(password: string) {
+    return Promise.allSettled([
+      apisLock.clearCustomPassword(password),
+      resetGenericPassword(),
+    ]).then(([appPwdResult, genericPwdResult]) => {
+      return {
+        clearCustomPasswordError:
+          appPwdResult.status === 'rejected'
+            ? new Error('Failed to clear custom password')
+            : appPwdResult.value.error,
+        clearGenericPasswordSuccess: genericPwdResult.status === 'fulfilled',
+      };
+    });
+  }
+
+  return {
+    ANDROID_AUTH_PROMPT_POLICIES,
+    DEFAULT_ANDROID_AUTH_PROMPT_POLICY,
+    KEYCHAIN_DEFAULT_SERVICE,
+    KEYCHAIN_SOURCE_LABEL: sourceLabel,
+    makeSecureKeyChainInstance,
+    getAuthenticationType,
+    getAuthenticationTypeLabel,
+    isAuthenticatedByBiometrics,
+    parseKeychainError,
+    makeKeyChainError,
+    isBrokenBiometricsEntryError,
+    requestGenericPassword,
+    getSupportedBiometryType,
+    getKeychainDebugState,
+    debugRemoveCurrentCipherStorageMarker,
+    getSupportedStorageTypes,
+    debugWriteMockLegacyBiometricsEntry,
+    debugDecryptStoredPasswordPayload,
+    setGenericPassword,
+    resetGenericPassword,
+    clearApplicationPassword,
+  };
+}
+
+export type KeychainBusinessApi = ReturnType<typeof createBusinessKeychainApi>;
+export type KeychainBusinessRequestResult = Awaited<
+  ReturnType<KeychainBusinessApi['requestGenericPassword']>
+>;

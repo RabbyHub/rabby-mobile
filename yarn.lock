@@ -9783,6 +9783,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rabby-wallet/react-native-keychain@workspace:^, @rabby-wallet/react-native-keychain@workspace:packages/react-native-keychain":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/react-native-keychain@workspace:packages/react-native-keychain"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  languageName: unknown
+  linkType: soft
+
 "@rabby-wallet/rn-page-provider@workspace:packages/rn-page-provider":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/rn-page-provider@workspace:packages/rn-page-provider"
@@ -38131,6 +38140,7 @@ __metadata:
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
     "@rabby-wallet/rabby-swap": "npm:0.0.76"
+    "@rabby-wallet/react-native-keychain": "workspace:^"
     "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^"
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
@@ -38259,7 +38269,7 @@ __metadata:
     react-native-ios-context-menu: "npm:1.15.3"
     react-native-keyboard-aware-scroll-view: "npm:^0.9.5"
     react-native-keyboard-controller: "npm:1.18.5"
-    react-native-keychain: "npm:8.2.0"
+    react-native-keychain: "patch:react-native-keychain@npm%3A9.0.0#../../.yarn/patches/react-native-keychain-npm-9.0.0-263546fd9b.patch"
     react-native-linear-gradient: "npm:^2.8.3"
     react-native-localize: "npm:3.3.0"
     react-native-mmkv: "npm:^2.12.2"
@@ -39167,17 +39177,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-keychain@npm:8.2.0":
-  version: 8.2.0
-  resolution: "react-native-keychain@npm:8.2.0"
-  checksum: 10/c8a9c4412a608fe2f2d9789e98881049ead043c18c6def97051b6459f06d0aeacd4663863cd343871ecbc341373a0d0e2ee7f54a041ab07e20bca157eafb83c9
+"react-native-keychain@npm:9.0.0":
+  version: 9.0.0
+  resolution: "react-native-keychain@npm:9.0.0"
+  checksum: 10/17110e12f8ece92462789d0756997a9dd20ef24f7e57f424cc5c08c23a0d83ce201afdb243d5f89de59c6f426abb4089c48617dcad5be0632462e4958e0403d1
   languageName: node
   linkType: hard
 
-"react-native-keychain@patch:react-native-keychain@npm%3A8.2.0#./.yarn/patches/react-native-keychain-npm-8.2.0-ff8c16b501.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 8.2.0
-  resolution: "react-native-keychain@patch:react-native-keychain@npm%3A8.2.0#./.yarn/patches/react-native-keychain-npm-8.2.0-ff8c16b501.patch::version=8.2.0&hash=569699&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  checksum: 10/f478566d1f80a1dab657adb2cb8b0fbc5cc1ec58c61d9d52aebd56ee5733b477f135f911a746943693b1fd6de9a4e1077edfc87e2a62f25f0412d6ef5481d69c
+"react-native-keychain@patch:react-native-keychain@npm%3A9.0.0#../../.yarn/patches/react-native-keychain-npm-9.0.0-263546fd9b.patch::locator=rabby-mobile%40workspace%3Aapps%2Fmobile":
+  version: 9.0.0
+  resolution: "react-native-keychain@patch:react-native-keychain@npm%3A9.0.0#../../.yarn/patches/react-native-keychain-npm-9.0.0-263546fd9b.patch::version=9.0.0&hash=f9da98&locator=rabby-mobile%40workspace%3Aapps%2Fmobile"
+  checksum: 10/8d2981b222bfd2e641f8b5c94b3569daa8130423e6d31f66a848fb9a3333e4afa442ab2282aaac1b3f930ddb4d4fc19159b63d7a738b7997fad6b753cd984724
   languageName: node
   linkType: hard
 
