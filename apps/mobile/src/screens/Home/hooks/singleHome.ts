@@ -69,7 +69,7 @@ function getDefault(): SingleHomeState {
     currentAccount: null,
     selectedChain: null,
     foldChart: true,
-    reachTop: true,
+    reachTop: false,
   };
 }
 const singleHomeState = zCreate<SingleHomeState>(() => getDefault());
@@ -78,13 +78,13 @@ function presetSingHomeAccount(account: Account) {
   singleHomeState.setState(prev => {
     const nextState = {
       ...getDefault(),
+      reachTop: prev.reachTop,
       currentAccount: account,
     };
 
     if (isSameSingleHomeAccount(prev.currentAccount, account)) {
       return {
         ...nextState,
-        reachTop: prev.reachTop,
         foldChart: prev.foldChart,
         selectedChain: prev.selectedChain,
       };
