@@ -7,7 +7,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
-import { ScrollView, TouchableOpacity, View } from 'react-native';
+import { Dimensions, ScrollView, TouchableOpacity, View } from 'react-native';
 import { formatAmount } from '@/utils/number';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
@@ -44,6 +44,11 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/dist/types';
 import { findAccountByPriority } from '@/utils/account';
 import { Account } from '@/core/services/preference';
 import { Text } from '@/components/Typography';
+import { HistoryItemTokenPrice } from '../HistoryItemTokenPrice';
+import { Media } from '@/components/Media';
+import { IconDefaultNFT } from '@/assets/icons/nft';
+import { ellipsisOverflowedText } from '@/utils/text';
+import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
 
 interface Props {
   data: TransactionGroup;
@@ -162,6 +167,171 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
     <>
       <ScrollView style={{ paddingHorizontal: 16 }}>
         <View style={[styles.doubleBox]}>
+          <Text style={styles.swapTitle}>{t('global.from')}</Text>
+          <View style={[styles.swapBoxContainer, { marginBottom: 16 }]}>
+            {([payToken].filter(Boolean) as TokenItem[]).map(token => {
+              const tokenIsNft = token?.id?.length === 32;
+              return (
+                <TouchableOpacity
+                  onPress={() => handleGotoDetail(token as TokenItem)}>
+                  <View style={[styles.swapBox]}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 8,
+                      }}>
+                      {tokenIsNft ? (
+                        <Media
+                          failedPlaceholder={
+                            <IconDefaultNFT width={45} height={45} />
+                          }
+                          type="image_url"
+                          src={
+                            token?.content?.endsWith('.svg')
+                              ? ''
+                              : token?.content
+                          }
+                          thumbnail={
+                            token?.content?.endsWith('.svg')
+                              ? ''
+                              : token?.content
+                          }
+                          mediaStyle={styles.media}
+                          style={styles.media}
+                          playIconSize={12}
+                        />
+                      ) : (
+                        <AssetAvatar
+                          logo={(token as TokenItem)?.logo_url || ''}
+                          size={45}
+                        />
+                      )}
+                      <View
+                        style={[
+                          styles.singleColomnBox,
+                          isFail && styles.isFailBox,
+                        ]}>
+                        <Text
+                          numberOfLines={1}
+                          style={[
+                            styles.tokenAmountText,
+                            styles.isSendTextColor,
+                          ]}>
+                          - {formatTokenAmount(token.amount)}{' '}
+                          {tokenIsNft
+                            ? t('page.singleHome.sectionHeader.Nft')
+                            : ellipsisOverflowedText(
+                                getTokenSymbol(token as TokenItem),
+                                16,
+                              )}
+                        </Text>
+                        <HistoryItemTokenPrice
+                          singlePrice={token?.price}
+                          amount={token.amount}
+                          style={styles.tokenPriceText}
+                        />
+                      </View>
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        width: 26,
+                      }}>
+                      <RcIconSingleArrow
+                        width={26}
+                        height={26}
+                        color={colors2024['neutral-bg-2']}
+                      />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <Text style={styles.swapTitle}>{t('global.to')}</Text>
+          <View style={styles.swapBoxContainer}>
+            {([receiveToken].filter(Boolean) as TokenItem[]).map(token => {
+              const tokenIsNft = token.id?.length === 32;
+              return (
+                <TouchableOpacity
+                  onPress={() => handleGotoDetail(token as TokenItem)}>
+                  <View style={[styles.swapBox]}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 8,
+                      }}>
+                      {tokenIsNft ? (
+                        <Media
+                          failedPlaceholder={
+                            <IconDefaultNFT width={45} height={45} />
+                          }
+                          type="image_url"
+                          src={
+                            token?.content?.endsWith('.svg')
+                              ? ''
+                              : token?.content
+                          }
+                          thumbnail={
+                            token?.content?.endsWith('.svg')
+                              ? ''
+                              : token?.content
+                          }
+                          mediaStyle={styles.media}
+                          style={styles.media}
+                          playIconSize={12}
+                        />
+                      ) : (
+                        <AssetAvatar
+                          logo={(token as TokenItem)?.logo_url || ''}
+                          size={45}
+                        />
+                      )}
+                      <View
+                        style={[
+                          styles.singleColomnBox,
+                          isFail && styles.isFailBox,
+                        ]}>
+                        <Text
+                          numberOfLines={1}
+                          style={[styles.tokenAmountText]}>
+                          + {formatTokenAmount(token.amount)}{' '}
+                          {tokenIsNft
+                            ? t('page.singleHome.sectionHeader.Nft')
+                            : ellipsisOverflowedText(
+                                getTokenSymbol(token as TokenItem),
+                                16,
+                              )}
+                        </Text>
+                        <HistoryItemTokenPrice
+                          singlePrice={token?.price}
+                          amount={token.amount}
+                          style={styles.tokenPriceText}
+                        />
+                      </View>
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        width: 26,
+                      }}>
+                      <RcIconSingleArrow
+                        width={26}
+                        height={26}
+                        color={colors2024['neutral-bg-2']}
+                      />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+        {/* <View style={[styles.doubleBox]}>
           <TouchableOpacity
             style={[styles.fromTokenBox]}
             onPress={() => handleGotoDetail(payToken!)}>
@@ -212,7 +382,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
           <View style={styles.iconSwitchArrow}>
             <RcIconSwitchArrow />
           </View>
-        </View>
+        </View> */}
         <View style={styles.detailContainer}>
           {!data.isPending && data.maxGasTx.completedAt && (
             <View style={styles.detailItem}>
@@ -366,6 +536,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     marginTop: 12,
     borderRadius: 16,
+    paddingVertical: 4,
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
@@ -447,27 +618,26 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   singleBox: {
     width: '100%',
-    height: 92,
+    // height: 92,
     backgroundColor: colors2024['neutral-bg-1'],
     justifyContent: 'space-between',
     alignContent: 'center',
     borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 16,
+    padding: 16,
     flexDirection: 'row',
   },
   tokenAmountText: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '700',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '900',
   },
   usdValue: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '500',
     marginTop: 4,
   },
@@ -485,10 +655,53 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   doubleBox: {
     justifyContent: 'center',
     alignContent: 'center',
-    flexDirection: 'row',
-    height: 110,
-    gap: 10,
+    flexDirection: 'column',
     position: 'relative',
+
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
+    borderRadius: 16,
+    padding: 16,
+  },
+  swapTitle: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  singleColomnBox: {
+    // flex: 1,
+    width: Dimensions.get('window').width - 160,
+    flexDirection: 'column',
+    // alignItems: 'center',
+  },
+  swapBoxContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+  },
+  swapBox: {
+    width: '100%',
+    justifyContent: 'space-between',
+    alignContent: 'center',
+    flexDirection: 'row',
+  },
+
+  tokenPriceText: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+  },
+
+  media: {
+    width: 33,
+    height: 33,
+    borderRadius: 4,
   },
 
   buttonContainer: {
@@ -513,20 +726,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailItem: {
     flexDirection: 'row',
     gap: 8,
-    padding: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   itemTitleText: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '500',
     maxWidth: '45%',
   },
   itemAddressText: {
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,

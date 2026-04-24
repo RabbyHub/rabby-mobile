@@ -8,7 +8,6 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { getAliasName } from '@/core/apis/contact';
-import { ellipsisAddress } from '@/utils/address';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
@@ -35,6 +34,13 @@ export type TokenChangeDataItem = {
   token_id: string;
   price?: number;
   type: 'send' | 'receive' | 'approve';
+};
+
+const ellipsisAddress = (address: string) => {
+  if (!address) {
+    return '';
+  }
+  return address.slice(0, 8) + '...';
 };
 
 export const HistoryItem = React.memo(
@@ -183,11 +189,17 @@ export const HistoryItem = React.memo(
 
           const name = project
             ? project.name
-            : getAliasName(addr) || ellipsisAddress(addr);
+            : getAliasName(addr, {
+                keepEmptyIfNotFound: true,
+              }) || ellipsisAddress(addr);
 
           if (cexInfo) {
             address = (
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}>
                 <Text style={styles.describeText}>{ToText}</Text>
                 <FastImage
                   source={{ uri: cexInfo.logo_url }}
@@ -199,7 +211,8 @@ export const HistoryItem = React.memo(
                   }}
                 />
                 <Text style={styles.describeText}>
-                  {getAliasName(addr) || ellipsisAddress(addr)}
+                  {getAliasName(addr, { keepEmptyIfNotFound: true }) ||
+                    ellipsisAddress(addr)}
                 </Text>
               </View>
             );
@@ -209,7 +222,9 @@ export const HistoryItem = React.memo(
           break;
 
         case HistoryItemCateType.Cancel:
-          address = getAliasName(data.address) || ellipsisAddress(data.address);
+          address =
+            getAliasName(data.address, { keepEmptyIfNotFound: true }) ||
+            ellipsisAddress(data.address);
           break;
         case HistoryItemCateType.Contract:
         case HistoryItemCateType.Revoke:
@@ -221,7 +236,12 @@ export const HistoryItem = React.memo(
       }
 
       return (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+          }}>
           <ChainIconImage
             size={16}
             chainEnum={chainItem?.enum}
@@ -231,7 +251,7 @@ export const HistoryItem = React.memo(
             <Text
               numberOfLines={1}
               ellipsizeMode="tail"
-              style={styles.describeText}>
+              style={[styles.describeText, { flex: 1 }]}>
               {address}
             </Text>
           ) : (
@@ -325,6 +345,8 @@ export const HistoryItem = React.memo(
                 styles.leftContent,
                 {
                   width: noNeedTokenChangeType ? '95%' : '50%',
+                  minWidth: 0,
+                  flex: 1,
                 },
               ]}>
               <HistoryItemTokenArea
@@ -337,9 +359,15 @@ export const HistoryItem = React.memo(
                 style={[
                   styles.textBox,
                   noNeedTokenChangeType && styles.textBoxNotChange,
+                  {
+                    minWidth: 0,
+                    flex: 1,
+                  },
                 ]}>
-                <View style={styles.titleBox}>
-                  <Text style={styles.titleText} numberOfLines={1}>
+                <View style={[styles.titleBox, { minWidth: 0, width: '100%' }]}>
+                  <Text
+                    style={[styles.titleText, { minWidth: 0, flexShrink: 1 }]}
+                    numberOfLines={1}>
                     {formatTitle}
                   </Text>
                   {isScam ? (
@@ -404,6 +432,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
     // width: '55%',
   },
   textBox: {
@@ -496,7 +525,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   txInterAddressExplain: { flexShrink: 1, width: '60%' },
   txInterAddressExplainApprove: { width: '100%' },
-  txChange: { flexShrink: 0, maxWidth: '50%', minWidth: 0 },
+  txChange: {
+    flexShrink: 0,
+    maxWidth: '50%',
+    minWidth: 0,
+  },
   divider: {
     height: 0.5,
     backgroundColor: colors2024['neutral-line'],
