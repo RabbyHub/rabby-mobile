@@ -69,7 +69,7 @@ import {
 import { BridgeSlippage } from './BridgeSlippage';
 import { Text } from '@/components/Typography';
 import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
-import { useBlockSubmitIfFormChangedOnAuth } from '@/hooks/appSettings';
+import { storeApiExpSettingData } from '@/hooks/appSettings';
 import {
   FormAmountMode,
   FormValuesOnSubmit,
@@ -657,9 +657,6 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
 
   const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
 
-  const { blockSubmitIfFormChangedOnAuth } =
-    useBlockSubmitIfFormChangedOnAuth();
-
   const buildFormSnapshot = useCallback(
     (): BridgeFormSnapshot => ({
       amount: amount || '',
@@ -703,7 +700,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   );
 
   const handleBridge = useMemoizedFn(async (p?: { ignoreGasFee?: boolean }) => {
-    if (__DEV__) {
+    if (storeApiExpSettingData.getShouldBlockSubmitIfFormChangedOnAuth()) {
       const snapshot = formValuesRef.current.getSnapshot();
 
       if (!snapshot) {

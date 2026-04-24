@@ -125,6 +125,8 @@ prepare_ios_build_artifacts() {
     return 0
   fi
 
+  ensure_inpage_bridge_assets || return $?
+
   yarn check-nodeengines &&
     yarn ../mobile-local-pages make-theme &&
     yarn ../mobile-local-pages build --mode ios &&

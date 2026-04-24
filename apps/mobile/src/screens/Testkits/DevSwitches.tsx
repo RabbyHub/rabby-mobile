@@ -1186,7 +1186,7 @@ function DevSwitchSubmitFormGuard() {
             styles.secondarySectionTitle,
             { fontSize: 24, marginLeft: 2 },
           ]}>
-          Swap / Bridge Submit Guard
+          Send / Swap / Bridge Submit Guard
         </Text>
       </View>
 
@@ -1204,7 +1204,7 @@ function DevSwitchSubmitFormGuard() {
           <Text style={styles.switchLabel}>
             {blockSubmitIfFormChangedOnAuth
               ? 'Block submit and alert on auth-time form change'
-              : 'Only detect auth-time form change without blocking'}
+              : 'Disable auth-time form change submit guard'}
           </Text>
         </TouchableOpacity>
       </View>

@@ -882,11 +882,13 @@ turbo_android_build_artifacts_ready() {
   builtin_pages_dir="$project_dir/android/app/src/main/assets/custom/builtin-pages"
   fonts_dir="$project_dir/android/app/src/main/assets/fonts"
   local_pages_output_dir="$project_dir/assets/android/builtin-pages"
+  inpage_bridge_asset="$project_dir/android/app/src/main/assets/custom/InpageBridgeWeb3.js"
   worker_bundle="$project_dir/android/app/src/main/assets/threads/worker.thread.bundle"
 
   [ -f "$stamp_file" ] || return 1
   [ "$(cat "$stamp_file" 2>/dev/null)" = "$key" ] || return 1
   [ -f "$worker_bundle" ] || return 1
+  [ -f "$inpage_bridge_asset" ] || return 1
   turbo_dir_has_files "$fonts_dir" || return 1
   turbo_dir_has_files "$custom_assets_dir" || return 1
   turbo_dir_has_files "$builtin_pages_dir" || return 1

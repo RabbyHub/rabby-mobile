@@ -86,7 +86,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     iosForceDisableAlertForSensitiveScene: isNonPublicProductionEnv,
 
     timeTipAboutSeedPhraseAndPrivateKey: 'copy',
-    blockSubmitIfFormChangedOnAuth: __DEV__,
+    blockSubmitIfFormChangedOnAuth: false,
     toastOpenApiHttpErrorStatus: false,
     debugSwapHistorySkipLocalLookup: false,
     debugCurrentKeychainVersion: DEFAULT_CURRENT_KEYCHAIN_VERSION,
@@ -99,6 +99,7 @@ export const storeApiExpSettingData = {
   get: getExpSettingData,
   getCurrentKeychainVersion,
   getDebugKeychainStorageByVersion,
+  getShouldBlockSubmitIfFormChangedOnAuth,
   getTimeTipAboutSeedPhraseAndPrivateKey: () => {
     if (!__DEV__) {
       return 'pasted';
@@ -181,6 +182,10 @@ export function setDebugKeychainStorageForVersion(
   }));
 
   return nextStorage;
+}
+
+function getShouldBlockSubmitIfFormChangedOnAuth() {
+  return __DEV__ && getExpSettingData().blockSubmitIfFormChangedOnAuth;
 }
 
 const KEY = isIOS
