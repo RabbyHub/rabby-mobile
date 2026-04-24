@@ -2745,6 +2745,10 @@
       "title": "永续合约",
       "selectAccountTitle": "選擇一個錢包以登錄",
       "explorePerps": "探索永续合约",
+      "categories": {
+        "favorite": "收藏",
+        "topVolume": "成交量榜"
+      },
       "more": "更多",
       "positions": "持倉",
       "leverageRangeMaxError": "最大杠杆为 {{max}}x",

@@ -50,6 +50,7 @@ import { showToast } from '@/hooks/perps/showToast';
 import { stats } from '@/utils/stats';
 import { APP_VERSIONS } from '@/constant';
 import { Text, TextInput } from '@/components/Typography';
+import { formatPerpsNumber } from '../../../../../../packages/biz-utils/src/isomorphic/biz-number';
 
 export const PerpsOpenPositionPopup: React.FC<{
   visible?: boolean;
@@ -86,6 +87,9 @@ export const PerpsOpenPositionPopup: React.FC<{
       }
     | undefined
   >;
+  quoteAsset?: string;
+  onDepositPress?(): void;
+  onSwapPress?(): void;
 }> = ({
   visible,
   direction: _direction,
@@ -105,6 +109,9 @@ export const PerpsOpenPositionPopup: React.FC<{
   marketDataItem,
   activeAssetCtx,
   currentAssetCtx,
+  quoteAsset = 'USDC',
+  onDepositPress,
+  onSwapPress,
 }) => {
   const currentPerpsAccount = perpsStore(
     useShallow(s => s.currentPerpsAccount),
@@ -389,6 +396,7 @@ export const PerpsOpenPositionPopup: React.FC<{
         });
     }
 
+    setIsReviewMode(false);
     onConfirm();
   });
 
@@ -431,6 +439,8 @@ export const PerpsOpenPositionPopup: React.FC<{
     }
   }, [visible]);
 
+  const displayName = currentAssetCtx?.displayName || coin;
+
   return (
     <>
       <AppBottomSheetModal
@@ -457,10 +467,11 @@ export const PerpsOpenPositionPopup: React.FC<{
 
             <View>
               <AssetPriceInfo
-                coin={coin}
+                coin={displayName}
                 logoUrl={marketDataItem?.logoUrl || ''}
                 activeAssetCtx={activeAssetCtx}
                 currentAssetCtx={marketDataItem}
+                quoteAsset={quoteAsset}
               />
             </View>
 
@@ -518,9 +529,14 @@ export const PerpsOpenPositionPopup: React.FC<{
             {/* Margin Section */}
             <View style={styles.marginSection}>
               <View style={styles.marginLabelWrapper}>
-                <Text style={styles.marginLabel}>
-                  {t('page.perpsDetail.PerpsOpenPositionPopup.margin')}
-                </Text>
+                <View style={styles.marginQuoteLabel}>
+                  <Text style={styles.marginLabel}>
+                    {t('page.perpsDetail.PerpsOpenPositionPopup.margin')}
+                  </Text>
+                  <Text style={styles.marginQuoteLabelText}>
+                    ({quoteAsset})
+                  </Text>
+                </View>
                 <TouchableOpacity
                   style={styles.marginModeButton}
                   onPress={() => {
@@ -556,15 +572,50 @@ export const PerpsOpenPositionPopup: React.FC<{
                       alignItems: 'flex-start',
                     },
                   ])}>
-                  <Text style={styles.marginTitle}>
-                    {formatPerpsUsdValue(
-                      availableBalance,
-                      BigNumber.ROUND_DOWN,
+                  <Text
+                    style={[
+                      styles.marginTitle,
+                      availableBalance < 0.1 && {
+                        color: colors2024['red-default'],
+                      },
+                    ]}>
+                    {formatPerpsNumber(availableBalance, BigNumber.ROUND_DOWN)}
+                  </Text>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}>
+                    <Text
+                      style={[
+                        styles.marginAvailable,
+                        availableBalance < 0.1 && {
+                          color: colors2024['red-default'],
+                        },
+                      ]}>
+                      {t('page.perpsDetail.PerpsOpenPositionPopup.available')}
+                    </Text>
+                    {(availableBalance < 0.1 ||
+                      marginValidation.error === 'insufficient_balance') && (
+                      <TouchableOpacity
+                        onPress={
+                          quoteAsset === 'USDC' ? onDepositPress : onSwapPress
+                        }>
+                        <Text
+                          style={{
+                            color: '#50D2C1',
+                            fontSize: 13,
+                            fontWeight: '700',
+                            fontFamily: 'SF Pro Rounded',
+                          }}>
+                          {quoteAsset === 'USDC'
+                            ? t('page.perps.PerpsSpotSwap.toDepositEntry')
+                            : t('page.perps.PerpsSpotSwap.toSwapEntry')}
+                        </Text>
+                      </TouchableOpacity>
                     )}
-                  </Text>
-                  <Text style={styles.marginAvailable}>
-                    {t('page.perpsDetail.PerpsOpenPositionPopup.available')}
-                  </Text>
+                  </View>
                 </View>
                 <BottomSheetTextInput
                   keyboardType="numeric"
@@ -575,8 +626,8 @@ export const PerpsOpenPositionPopup: React.FC<{
                       : null,
                   ]}
                   placeholderTextColor={colors2024['neutral-info']}
-                  placeholder="$0"
-                  value={Number(margin) > 0 ? displayedValue : ''}
+                  placeholder="0"
+                  value={Number(margin) > 0 ? margin : ''}
                   onChangeText={setMargin}
                 />
               </View>
@@ -708,7 +759,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                       Number(tradeSize) * markPrice,
                       BigNumber.ROUND_DOWN,
                     )}{' '}
-                    = {tradeSize} {formatPerpsCoin(coin)}
+                    = {tradeSize} {formatPerpsCoin(displayName)}
                   </Text>
                 </View>
               </View>
@@ -723,7 +774,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                       )}
                 </Text>
                 <PerpEditTpSlPriceTag
-                  coin={coin}
+                  coin={displayName}
                   actionType="tp"
                   type="openPosition"
                   leverage={leverage}
@@ -754,7 +805,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                       )}
                 </Text>
                 <PerpEditTpSlPriceTag
-                  coin={coin}
+                  coin={displayName}
                   actionType="sl"
                   type="openPosition"
                   leverage={leverage}
@@ -793,7 +844,7 @@ export const PerpsOpenPositionPopup: React.FC<{
       </AppBottomSheetModal>
       <PerpsOpenPositionCheckPopup
         info={{
-          coin: coin,
+          coin: displayName,
           margin,
           direction,
           leverage,
@@ -807,6 +858,7 @@ export const PerpsOpenPositionPopup: React.FC<{
           selectedMarginMode,
           estimatedLiquidationPrice,
           coinLogo,
+          quoteAsset,
         }}
         visible={isReviewMode}
         onClose={() => {
@@ -1186,6 +1238,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       gap: 8,
     },
+    marginQuoteLabel: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+    },
     marginModeButton: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -1207,6 +1264,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontSize: 20,
       lineHeight: 24,
       fontWeight: '800',
+      // marginBottom: 4,
+      color: '#50D2C1',
+      fontFamily: 'SF Pro Rounded',
+    },
+    marginQuoteLabelText: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '500',
       // marginBottom: 4,
       color: '#50D2C1',
       fontFamily: 'SF Pro Rounded',

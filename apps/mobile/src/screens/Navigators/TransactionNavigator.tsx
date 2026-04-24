@@ -30,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 import { PerpsOriginScreen } from '../Perps/index';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
 import { PerpsHistoryScreen } from '../PerpsHistory';
+import { PerpsSearchScreen } from '../PerpsSearch';
 import LendingHistory from '../Lending/components/LendingHistory';
 import LendingScreen from '../Lending';
 import PredictionScreen from '../Prediction';
@@ -387,6 +388,17 @@ export default function TransactionNavigator() {
             fontFamily: 'SF Pro Rounded',
             color: colors['neutral-title-1'],
           },
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
+        })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.PerpsSearch}
+        component={PerpsSearchScreen}
+        options={mergeScreenOptions({
+          headerShown: false,
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
           },

@@ -2571,6 +2571,10 @@
       "title": "영구 계약",
       "selectAccountTitle": "로그인할 지갑 선택",
       "explorePerps": "Perps 탐색하기",
+      "categories": {
+        "favorite": "즐겨찾기",
+        "topVolume": "거래량 상위"
+      },
       "more": "더 보기",
       "positions": "포지션",
       "deleteAgentSuccess": "에이전트가 성공적으로 삭제되었습니다.",

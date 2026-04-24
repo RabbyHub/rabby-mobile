@@ -2846,6 +2846,10 @@
       "selectAccountTitle": "Selecciona una billetera para iniciar sesión",
       "title": "Perpetuos",
       "explorePerps": "Explorar Perps",
+      "categories": {
+        "favorite": "Favorito",
+        "topVolume": "Mayor Volumen"
+      },
       "more": "Más",
       "deleteAgentSuccess": "Agente eliminado con éxito",
       "regionNotSupport": "Abrir posiciones no está soportado en tu región",

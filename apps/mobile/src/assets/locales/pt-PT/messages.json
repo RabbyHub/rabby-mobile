@@ -2949,6 +2949,10 @@
       "title": "Perps",
       "more": "Mais",
       "explorePerps": "Explorar Perps",
+      "categories": {
+        "favorite": "Favorito",
+        "topVolume": "Maior Volume"
+      },
       "positions": "Posições",
       "leverageRangeMinError": "A alavancagem mínima é {{min}}x",
       "deleteAgentSuccess": "Agente eliminado com sucesso",

@@ -45,6 +45,7 @@ export const PerpsAddPositionPopup: React.FC<{
   visible?: boolean;
   coin: string;
   coinLogo: string;
+  availableBalance: number;
   activeAssetCtx: WsActiveAssetCtx['ctx'] | null;
   currentAssetCtx: MarketData | null;
   direction: 'Long' | 'Short';
@@ -60,6 +61,9 @@ export const PerpsAddPositionPopup: React.FC<{
   pnlPercent: number;
   markPrice: number;
   leverageRang: [number, number]; // [min, max]
+  quoteAsset?: string;
+  onDepositPress?(): void;
+  onSwapPress?(): void;
   onCancel: () => void;
   onConfirm: () => void;
   handleAddPosition: (tradeSize: string) => Promise<void>;
@@ -75,6 +79,7 @@ export const PerpsAddPositionPopup: React.FC<{
   marginMode,
   marginUsed,
   liquidationPx,
+  availableBalance,
   handlePressRiskTag,
   leverageRang,
   markPrice,
@@ -82,12 +87,14 @@ export const PerpsAddPositionPopup: React.FC<{
   pnl,
   pnlPercent,
   pxDecimals,
+  quoteAsset = 'USDC',
+  onDepositPress,
+  onSwapPress,
   onCancel,
   onConfirm,
   handleAddPosition,
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
-  const { availableBalance } = usePerpsAccount();
 
   const { styles, colors2024 } = useTheme2024({
     getStyle: getStyle,
@@ -265,6 +272,8 @@ export const PerpsAddPositionPopup: React.FC<{
     }
   }, [visible]);
 
+  const displayName = currentAssetCtx?.displayName || coin;
+
   return (
     <AppBottomSheetModal
       ref={modalRef}
@@ -283,15 +292,16 @@ export const PerpsAddPositionPopup: React.FC<{
               {direction === 'Long'
                 ? t('page.perpsDetail.PerpsAddPositionPopup.addToLong')
                 : t('page.perpsDetail.PerpsAddPositionPopup.addToShort')}{' '}
-              {formatPerpsCoin(coin)}-USD
+              {formatPerpsCoin(displayName)}
             </Text>
           </View>
 
           <AssetPriceInfo
-            coin={coin}
+            coin={displayName}
             logoUrl={coinLogo || ''}
             activeAssetCtx={activeAssetCtx}
             currentAssetCtx={currentAssetCtx}
+            quoteAsset={currentAssetCtx?.quoteAsset}
           />
 
           {/* Coin Info */}
@@ -299,7 +309,9 @@ export const PerpsAddPositionPopup: React.FC<{
             <View style={styles.leftSection}>
               <View style={styles.coinInfoRow}>
                 <AssetAvatar logo={coinLogo} size={28} />
-                <Text style={styles.coinName}>{formatPerpsCoin(coin)}</Text>
+                <Text style={styles.coinName}>
+                  {formatPerpsCoin(displayName)}
+                </Text>
                 <View style={styles.crossTag}>
                   <Text style={styles.crossText}>
                     {marginMode === 'cross'
@@ -352,18 +364,36 @@ export const PerpsAddPositionPopup: React.FC<{
 
           <View style={styles.amountSection}>
             <View style={styles.amountHeader}>
-              <Text style={styles.amountLabel}>
-                {t('page.perpsDetail.PerpsClosePositionPopup.amount')}
-              </Text>
+              <View style={styles.marginQuoteLabel}>
+                <Text style={styles.marginLabel}>
+                  {t('page.perpsDetail.PerpsOpenPositionPopup.margin')}
+                </Text>
+                <Text style={styles.marginQuoteLabelText}>({quoteAsset})</Text>
+              </View>
             </View>
             <View style={styles.amountValueRow}>
               <View style={styles.amountValueContainer}>
                 <Text style={styles.amountValue}>
-                  ${splitNumberByStep(availableBalance.toFixed(2))}
+                  {splitNumberByStep(availableBalance.toFixed(2))}
                 </Text>
-                <Text style={styles.totalLabel}>
-                  {t('page.perpsDetail.PerpsEditMarginPopup.available')}
-                </Text>
+                <View style={styles.availableRow}>
+                  <Text style={styles.totalLabel}>
+                    {t('page.perpsDetail.PerpsEditMarginPopup.available')}
+                  </Text>
+                  {(marginValidation.error === 'insufficient_balance' ||
+                    availableBalance < 0.1) && (
+                    <TouchableOpacity
+                      onPress={
+                        quoteAsset === 'USDC' ? onDepositPress : onSwapPress
+                      }>
+                      <Text style={styles.entryLink}>
+                        {quoteAsset === 'USDC'
+                          ? t('page.perps.PerpsSpotSwap.toDepositEntry')
+                          : t('page.perps.PerpsSpotSwap.toSwapEntry')}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
               <BottomSheetTextInput
                 keyboardType="numeric"
@@ -374,8 +404,8 @@ export const PerpsAddPositionPopup: React.FC<{
                     : null,
                 ]}
                 placeholderTextColor={colors2024['neutral-info']}
-                placeholder="$0"
-                value={Number(margin) > 0 ? displayedValue : ''}
+                placeholder="0"
+                value={Number(margin) > 0 ? margin : ''}
                 onChangeText={setMargin}
               />
             </View>
@@ -407,7 +437,7 @@ export const PerpsAddPositionPopup: React.FC<{
                     Number(tradeSize) * markPrice,
                     BigNumber.ROUND_DOWN,
                   )}{' '}
-                  = {tradeSize} {coin}
+                  = {tradeSize} {formatPerpsCoin(displayName)}
                 </Text>
               </View>
             </View>
@@ -437,7 +467,7 @@ export const PerpsAddPositionPopup: React.FC<{
                     Number(totalSize) * markPrice,
                     BigNumber.ROUND_DOWN,
                   )}{' '}
-                  = {totalSize} {coin}
+                  = {totalSize} {formatPerpsCoin(displayName)}
                 </Text>
               </View>
             </View>
@@ -613,7 +643,28 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 4,
+      // marginBottom: 4,
+    },
+    marginQuoteLabel: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+    },
+    marginLabel: {
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '800',
+      // marginBottom: 4,
+      color: '#50D2C1',
+      fontFamily: 'SF Pro Rounded',
+    },
+    marginQuoteLabelText: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '500',
+      // marginBottom: 4,
+      color: '#50D2C1',
+      fontFamily: 'SF Pro Rounded',
     },
     amountLabel: {
       fontFamily: 'SF Pro Rounded',
@@ -650,6 +701,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'flex-start',
       marginTop: 16,
       // gap: 4,
+    },
+    availableRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    entryLink: {
+      color: '#50D2C1',
+      fontSize: 13,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
     },
     amountValueRow: {
       flexDirection: 'row',

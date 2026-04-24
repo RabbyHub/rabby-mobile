@@ -2702,6 +2702,10 @@
       "selectAccountTitle": "选择一个钱包登录",
       "more": "更多",
       "explorePerps": "探索永续合约",
+      "categories": {
+        "favorite": "收藏",
+        "topVolume": "交易量榜"
+      },
       "positions": "仓位",
       "deleteAgentSuccess": "代理钱包已成功删除",
       "leverageRangeMinError": "最低杠杆为 {{min}}x",
