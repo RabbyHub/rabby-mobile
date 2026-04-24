@@ -2161,7 +2161,8 @@
       "gasBalance": "ยอดก๊าซ",
       "depositFailed": "การถอนเงินล้มเหลว",
       "lowBalance": "คุณไม่มีแก๊สเพียงพอ ฝากแก๊สเพื่อให้การทำธุรกรรมในอนาคตดำเนินไปอย่างราบรื่น",
-      "depositSubmitted": "ฝากเงินเรียบร้อยแล้ว"
+      "depositSubmitted": "ฝากเงินเรียบร้อยแล้ว",
+      "depositWith": "ฝากผ่าน"
     },
     "addChain": {
       "title": "เพิ่มเครือข่ายที่กำหนดเองไปยัง Rabby",
@@ -2325,7 +2326,8 @@
       "price": "ราคา",
       "headerBalanceText": "ยอดเงิน",
       "headerTokenValueText": "ค่าโทเค็น",
-      "copyCA": "ที่อยู่สัญญาโทเค็นได้ถูกคัดลอกแล้ว"
+      "copyCA": "ที่อยู่สัญญาโทเค็นได้ถูกคัดลอกแล้ว",
+      "wallet": "กระเป๋าสตางค์"
     },
     "setting": {
       "aboutUs": "เกี่ยวกับเรา",
@@ -2730,7 +2732,10 @@
         "selectWithdrawToken": "เลือกโทเค็น",
         "hypeGasFeeTooltip": "ค่าธรรมเนียมประมาณ 0.00002 HYPE จะถูกเรียกเก็บเมื่อถอนเข้าสู่ EVM",
         "hypeFeeTip": "ค่าธรรมเนียม : ~${{fee}}",
-        "hypeActivationFeeTooltip": "ค่าธรรมเนียมการเปิดใช้งานครั้งเดียว {{fee}} จะถูกเรียกเก็บโดย Hyperliquid สำหรับการถอน HyperEVM ครั้งแรก。"
+        "hypeActivationFeeTooltip": "ค่าธรรมเนียมการเปิดใช้งานครั้งเดียว {{fee}} จะถูกเรียกเก็บโดย Hyperliquid สำหรับการถอน HyperEVM ครั้งแรก。",
+        "chain": "สายโซ่",
+        "max": "สูงสุด",
+        "selectChain": "เลือกสายโซ่"
       },
       "PerpsWithdrawFeePopup": {
         "title": "ค่าธรรมเนียม",
@@ -2763,7 +2768,10 @@
         "feeTitle": "ค่าธรรมเนียม",
         "feeRabby": "Rabby Wallet",
         "feeHyperliquid": "Hyperliquid",
-        "feeDesc": "เมื่อผู้ใช้ทำการซื้อขาย ทั้ง <1>ค่าธรรมเนียมการซื้อขาย</1> และ <2>ค่าธรรมเนียมผู้สร้าง</2> จะมีผลบังคับใช้งาน"
+        "feeDesc": "เมื่อผู้ใช้ทำการซื้อขาย ทั้ง <1>ค่าธรรมเนียมการซื้อขาย</1> และ <2>ค่าธรรมเนียมผู้สร้าง</2> จะมีผลบังคับใช้งาน",
+        "amount": "จำนวน",
+        "asset": "สินทรัพย์",
+        "action": "การดำเนินการ"
       },
       "PerpsAutoCloseModal": {
         "takeProfit": "ทำกำไร",
@@ -2803,7 +2811,17 @@
         "withdraw": "ถอนเงิน",
         "closeShort": "ปิดสถานะขายสั้น",
         "closeLong": "ปิด Long",
-        "closeShortLiquidation": "ปิดการขายชอร์ต ลิควิดation"
+        "closeShortLiquidation": "ปิดการขายชอร์ต ลิควิดation",
+        "transferToSpot": "โอนไปยัง Spot",
+        "transferToPerps": "โอนไปยัง Perps",
+        "transferDetailTitle": "โอน",
+        "transferActionToSpot": "โอน (จาก Perps ไปยัง Spot)",
+        "transferActionToPerps": "โอน (จาก Spot ไปยัง Perps)",
+        "transferGotIt": "เข้าใจแล้ว",
+        "action": "ดำเนินการ",
+        "asset": "สินทรัพย์",
+        "value": "มูลค่า",
+        "date": "วันที่"
       },
       "PerpsSelectTokenPopup": {
         "title": "เลือกโทเค็นเพื่อนำฝาก",
@@ -2818,7 +2836,8 @@
       },
       "PerpsDepositCard": {
         "deposit": "ฝากเงิน",
-        "availableToTrade": "พร้อมให้เทรด:"
+        "availableToTrade": "พร้อมให้เทรด:",
+        "swap": "สวอป"
       },
       "PerpsAccountSelectorPopup": {
         "activatedAddress": "เปิดใช้งาน",
@@ -2880,6 +2899,42 @@
       },
       "dappSelect": {
         "title": "เลือกผู้ให้บริการ Perps"
+      },
+      "search": {
+        "headerTitle": "ค้นหา Perps",
+        "placeholder": "ค้นหา Perps",
+        "empty": "ไม่พบผลลัพธ์"
+      },
+      "EnableUnifiedAccount": {
+        "title": "เปิดใช้งาน Unified Account",
+        "desc": "Unified Account คือโหมดบัญชีที่แนะนำซึ่งช่วยลดความซับซ้อนในการซื้อขาย ยอด Spot และ Perps จะรวมกันสำหรับโทเค็นทั้งหมด และรองรับ cross margin สำหรับสินทรัพย์ที่ใช้ได้ทั้งหมด",
+        "confirm": "ยืนยัน",
+        "cancel": "ยกเลิก",
+        "importantTips": "หลังจากเปิดใช้งาน Unified Account แล้ว หลักประกัน USDC ทั้งหมดจะถูกใช้เป็น cross margin",
+        "important": "สำคัญ"
+      },
+      "PerpsSpotSwap": {
+        "title": "แลกเปลี่ยน Stablecoins",
+        "from": "จาก",
+        "to": "แลกเปลี่ยนเป็น",
+        "balance": "ยอดคงเหลือ",
+        "swapBtn": "แลกเปลี่ยน",
+        "max": "สูงสุด",
+        "estReceive": "ประมาณการได้รับ: {{amount}} {{coin}}",
+        "estReceiveTooltip": "จำนวนที่ประมาณการได้รับขึ้นอยู่กับความผันผวนของราคาตลาด",
+        "toSwapEntry": "ไปแลกเปลี่ยน→",
+        "toDepositEntry": "ไปฝาก→",
+        "insufficientBalance": "ยอดคงเหลือไม่เพียงพอ",
+        "invalidAmount": "กรุณากรอกจำนวนที่ถูกต้อง",
+        "minimumAmount": "จำนวนขั้นต่ำในการแลกเปลี่ยนคือ {{amount}}"
+      },
+      "PerpMarginModePopup": {
+        "crossRequiresUnified": "Cross margin สำหรับคู่ซื้อขายนี้ต้องการ Unified Account คุณต้องการเปิดใช้งานหรือไม่?"
+      },
+      "PerpsMultiBalance": {
+        "title": "ยอดดุล Hyperliquid",
+        "deposit": "ฝาก",
+        "withdraw": "ถอน"
       }
     },
     "perpsDetail": {
@@ -3050,6 +3105,9 @@
       },
       "guideEntry": {
         "gotIt": "เข้าใจแล้ว"
+      },
+      "PerpsAbout": {
+        "title": "เกี่ยวกับ"
       }
     },
     "devUIBuiltInPages": {
@@ -3519,7 +3577,9 @@
     },
     "Created": "สร้างเสร็จแล้ว",
     "Imported": "นำเข้า",
-    "SavedSeedPhrase": "ฉันได้บันทึก seed phrase เรียบร้อยแล้ว"
+    "SavedSeedPhrase": "ฉันได้บันทึก seed phrase เรียบร้อยแล้ว",
+    "from": "จาก",
+    "to": "ถึง"
   },
   "background": {
     "transactionWatcher": {

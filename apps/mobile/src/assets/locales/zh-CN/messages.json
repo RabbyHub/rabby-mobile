@@ -146,7 +146,9 @@
     },
     "Created": "创建",
     "SavedSeedPhrase": "我已经保存了种子短语",
-    "Imported": "导入的"
+    "Imported": "导入的",
+    "from": "从",
+    "to": "到"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过助记词导入",
@@ -1995,7 +1997,8 @@
       "depositFailed": "存款失败",
       "lowBalance": "您没有足够的 gas。请存入 gas 以确保未来交易顺利进行。",
       "gasBalance": "Gas 余额",
-      "depositSubmitted": "存款已提交"
+      "depositSubmitted": "存款已提交",
+      "depositWith": "存入方式"
     },
     "search": {
       "header": {
@@ -2163,7 +2166,8 @@
       "headerBalanceText": "余额",
       "price": "价格",
       "headerTokenValueText": "代币价值",
-      "copyCA": "Token 合约地址已复制"
+      "copyCA": "Token 合约地址已复制",
+      "wallet": "钱包"
     },
     "customRpc": {
       "add": "修改 RPC URL",
@@ -2600,7 +2604,10 @@
         "selectWithdrawToken": "选择token",
         "hypeFeeTip": "费用 : ~${{fee}}",
         "hypeActivationFeeTooltip": "Hyperliquid 将收取一次性激活费用 {{fee}}，用于首次 HyperEVM 提现。",
-        "hypeGasFeeTooltip": "提取到 EVM 将收取约 0.00002 HYPE 的费用。"
+        "hypeGasFeeTooltip": "提取到 EVM 将收取约 0.00002 HYPE 的费用。",
+        "chain": "链",
+        "max": "最大",
+        "selectChain": "选择链"
       },
       "PerpsWithdrawFeePopup": {
         "btn": "我明白了",
@@ -2633,7 +2640,10 @@
         "feeHyperliquid": "Hyperliquid",
         "feeRabby": "Rabby 钱包",
         "feeDesc": "当用户进行交易时，适用<1>交易费用</1>和<2>构建者费用</2>。",
-        "feeTitle": "费用"
+        "feeTitle": "费用",
+        "amount": "金额",
+        "asset": "资产",
+        "action": "操作"
       },
       "PerpsAutoCloseModal": {
         "takeProfit": "止盈",
@@ -2673,7 +2683,17 @@
         "closeShortSl": "空单止损平仓",
         "closeShortLiquidation": "空仓强平",
         "closeShortTp": "空单止盈平仓",
-        "closeLong": "平仓做多"
+        "closeLong": "平仓做多",
+        "transferToSpot": "转入U本",
+        "transferToPerps": "转入永续",
+        "transferDetailTitle": "划转",
+        "transferActionToSpot": "划转（从永续到U本）",
+        "transferActionToPerps": "划转（从U本到永续）",
+        "transferGotIt": "我知道了",
+        "action": "操作",
+        "asset": "资产",
+        "value": "金额",
+        "date": "日期"
       },
       "PerpsSelectTokenPopup": {
         "title": "选择要存入的 Token",
@@ -2688,7 +2708,8 @@
       },
       "PerpsDepositCard": {
         "availableToTrade": "可交易：",
-        "deposit": "存款"
+        "deposit": "存款",
+        "swap": "兑换"
       },
       "PerpsAccountSelectorPopup": {
         "notActivatedAddress": "未激活",
@@ -2750,6 +2771,42 @@
       },
       "dappSelect": {
         "title": "选择永续合约服务商"
+      },
+      "search": {
+        "headerTitle": "搜索永续合约",
+        "placeholder": "搜索永续合约",
+        "empty": "未找到结果"
+      },
+      "EnableUnifiedAccount": {
+        "title": "启用统一账户",
+        "desc": "统一账户是推荐的账户模式，可简化交易体验。所有代币的现货和永续合约余额将合并，并支持所有可用资产的交叉保证金。",
+        "confirm": "确认",
+        "cancel": "取消",
+        "importantTips": "启用统一账户后，所有 USDC 抵押品将作为交叉保证金使用。",
+        "important": "重要"
+      },
+      "PerpsSpotSwap": {
+        "title": "兑换稳定币",
+        "from": "从",
+        "to": "兑换至",
+        "balance": "余额",
+        "swapBtn": "兑换",
+        "max": "最大",
+        "estReceive": "预计收到：{{amount}} {{coin}}",
+        "estReceiveTooltip": "预计收到的金额受市场价格波动影响。",
+        "toSwapEntry": "兑换→",
+        "toDepositEntry": "充值→",
+        "insufficientBalance": "余额不足",
+        "invalidAmount": "请输入有效金额",
+        "minimumAmount": "最小兑换金额为 {{amount}}"
+      },
+      "PerpMarginModePopup": {
+        "crossRequiresUnified": "此交易对的交叉保证金需要统一账户。您想启用吗？"
+      },
+      "PerpsMultiBalance": {
+        "title": "Hyperliquid 余额",
+        "deposit": "Deposit",
+        "withdraw": "提现"
       }
     },
     "perpsDetail": {
@@ -2920,6 +2977,9 @@
       },
       "guideEntry": {
         "gotIt": "明白了"
+      },
+      "PerpsAbout": {
+        "title": "关于"
       }
     },
     "selectAccountSheetModal": {
