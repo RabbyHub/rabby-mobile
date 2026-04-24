@@ -311,19 +311,32 @@ export const usePerpsState = () => {
     }
   }, []);
 
+  const handleSafeSetDexAbstraction = useCallback(async () => {
+    try {
+      const sdk = apisPerps.getPerpsSDK();
+      const res = await sdk.exchange?.agentEnableDexAbstraction();
+      console.log('handleSafeSetDexAbstraction res', res);
+    } catch (e) {
+      console.log('Failed to handleSafeSetDexAbstraction:', e);
+    }
+  }, []);
+
   const handleSafeSetUnifiedAccount = useCallback(async () => {
     try {
       const sdk = apisPerps.getPerpsSDK();
       await sdk.exchange?.agentSetAbstraction(Abstraction.UNIFIED_ACCOUNT);
     } catch (e) {
       // silent: this is a best-effort post-approve sync
+      // fallback to dex abstraction if unified account setup fails
+      handleSafeSetDexAbstraction();
     } finally {
       // need fetch setAbstraction
       setTimeout(() => {
         fetchUserAbstraction('');
       }, 100);
     }
-  }, []);
+  }, [handleSafeSetDexAbstraction]);
+
   const handleDirectApprove = useCallback(
     async (signActions: SignAction[]): Promise<void> => {
       const sdk = apisPerps.getPerpsSDK();
