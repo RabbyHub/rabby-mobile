@@ -9713,17 +9713,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-
-"@rabby-wallet/rabby-bridge@npm:0.0.2":
-  version: 0.0.2
-  resolution: "@rabby-wallet/rabby-bridge@npm:0.0.2"
-  peerDependencies:
-    "@debank/common": ">=0.3.60"
-    "@rabby-wallet/rabby-api": ">=0.9.58"
-  checksum: 10/82aba0430cd56112b2c05086074b4cc8f227965c9a46213ad3e17d736da1d9a8d4417049eb945db8a32ad7e78584d340bee83bd2765b52c3b53fbff7cccdb2aa
-  languageName: node
-  linkType: hard
-
 "@rabby-wallet/rabby-api@npm:0.9.60":
   version: 0.9.60
   resolution: "@rabby-wallet/rabby-api@npm:0.9.60"
@@ -9738,6 +9727,16 @@ __metadata:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
   checksum: 10/dcd677148f563042117387cd7c3204e144b7f8f5ebe390431a60a02b2faecf3e5ec6637f32b46a828154a454afbe2030fa74db5de0be6271adb9c07d8991315e
+  languageName: node
+  linkType: hard
+
+"@rabby-wallet/rabby-bridge@npm:0.0.2":
+  version: 0.0.2
+  resolution: "@rabby-wallet/rabby-bridge@npm:0.0.2"
+  peerDependencies:
+    "@debank/common": ">=0.3.60"
+    "@rabby-wallet/rabby-api": ">=0.9.58"
+  checksum: 10/82aba0430cd56112b2c05086074b4cc8f227965c9a46213ad3e17d736da1d9a8d4417049eb945db8a32ad7e78584d340bee83bd2765b52c3b53fbff7cccdb2aa
   languageName: node
   linkType: hard
 
