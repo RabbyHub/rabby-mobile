@@ -6,10 +6,38 @@ export const PRELOAD_SCREENS = {
   [RootNames.Settings]: 'SettingsScreen',
 };
 
-export async function preloadSettingsScreen() {
-  if (isCached(PRELOAD_SCREENS[RootNames.Settings])) return;
+export const PRELOAD_NAVIGATORS = {
+  [RootNames.StackTransaction]: RootNames.StackTransaction,
+  [RootNames.SingleAddressStack]: RootNames.SingleAddressStack,
+};
 
-  await preload().component(PRELOAD_SCREENS[RootNames.Settings]);
+async function preloadNamedComponent(name?: string) {
+  if (__DEV__ || !name || isCached(name)) {
+    return;
+  }
+
+  await preload().component(name);
+}
+
+export async function preloadSettingsScreen() {
+  await preloadNamedComponent(PRELOAD_SCREENS[RootNames.Settings]);
+}
+
+export async function preloadHomeEntryNavigator() {
+  return;
+}
+
+export async function preloadTransactionHotNavigator() {
+  // Send / Swap / Bridge currently live under TransactionNavigator.
+  await preloadNamedComponent(PRELOAD_NAVIGATORS[RootNames.StackTransaction]);
+}
+
+export async function preloadSingleAddressNavigator() {
+  await preloadNamedComponent(PRELOAD_NAVIGATORS[RootNames.SingleAddressStack]);
+}
+
+export async function preloadHomeShortcutNavigators() {
+  await Promise.all([preloadSettingsScreen(), preloadSingleAddressNavigator()]);
 }
 
 export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {
@@ -31,7 +59,9 @@ export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {
 };
 
 export async function preloadNonProductionScreens() {
-  if (!isNonPublicProductionEnv) return;
+  if (!isNonPublicProductionEnv) {
+    return;
+  }
 
   console.debug('Preloading non-production screens');
 
