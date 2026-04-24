@@ -532,6 +532,7 @@ const getStyle = createGetStyles2024(
 
     container: {
       flex: 1,
+      minHeight: 0,
     },
     list: {
       paddingHorizontal: 20,

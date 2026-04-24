@@ -99,7 +99,7 @@ export const DappFavoriteList: React.FC<{
         keyExtractor={item => item.url || item.origin}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
-          { flexGrow: 1 },
+          { flexGrow: 1, paddingTop: 12 },
           bookmarkList.length ? null : { justifyContent: 'center' },
         ]}
         ref={scrollableRef}
@@ -162,8 +162,7 @@ export const DappFavoriteList: React.FC<{
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   list: {
-    // paddingHorizontal: 20,
-    paddingTop: 16,
+    // minHeight: 0,
   },
   listItem: {
     marginBottom: 12,

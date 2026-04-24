@@ -17,7 +17,7 @@ import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { useRequest } from 'ahooks';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import React, {
   useCallback,
   useEffect,
@@ -27,6 +27,8 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, TouchableOpacity, View } from 'react-native';
+import { matomoRequestEvent } from '@/utils/analytics';
+import { createDappBySession } from '@/core/apis/dapp';
 
 const LIST_BY_ICON_SIZE = 12;
 const LIST_BY_GAP = 4;
@@ -57,7 +59,7 @@ export const DappInfoPopup: React.FC<{
 
   const modalRef = useRef<AppBottomSheetModal>(null);
 
-  const { dapps } = useDapps();
+  const { dapps, setDapp } = useDapps();
   const origin = useMemo(() => {
     if (!url) {
       return '';
@@ -84,8 +86,6 @@ export const DappInfoPopup: React.FC<{
   const displayUrl = url || dapp?.url || bookmark?.url || origin;
   const displayName = hotDappInfo?.name || dapp?.name || '';
 
-  const bookmarkKey = displayUrl || origin;
-  const isFavorite = !!(bookmarkKey && getBookmark(bookmarkKey));
   const isSkipRemind = !!(origin && dapps[origin]?.isSkipRemind);
 
   const { data: level } = useRequest(
@@ -126,7 +126,7 @@ export const DappInfoPopup: React.FC<{
       return basicDappInfo?.description || dapp?.info?.description || '';
     }
 
-    if (i18n.language === 'zh') {
+    if (i18n.language === 'zh-CN') {
       return hotDappInfo.zh;
     } else {
       return hotDappInfo.en;
@@ -233,31 +233,71 @@ export const DappInfoPopup: React.FC<{
     [],
   );
 
-  const handleFavoritePress = useCallback(() => {
-    if (!bookmarkKey || !origin) {
+  const { bookmarkStore } = useBrowserBookmark();
+
+  const isBookmark = useMemo(() => {
+    if (!url) {
+      return false;
+    }
+    return !!bookmarkStore.ids.find(
+      i => safeGetOrigin(i) === safeGetOrigin(url),
+    );
+  }, [bookmarkStore.ids, url]);
+
+  const handleFavoritePress = useMemoizedFn(() => {
+    if (!url) {
+      return;
+    }
+    if (isBookmark) {
+      removeBookmark(url);
+    } else {
+      if (!dapps[origin]) {
+        setDapp({
+          ...createDappBySession({
+            origin,
+            name: displayName,
+            icon: displayIcon || '',
+          }),
+          isDapp: true,
+        });
+      }
+      addBookmark({
+        url,
+        name: displayName || origin,
+        createdAt: Date.now(),
+      });
+      matomoRequestEvent({
+        category: 'Websites Usage',
+        action: 'Website_Favorite',
+        label: origin,
+      });
+    }
+  });
+
+  const handleToggleSkipRemind = useMemoizedFn(() => {
+    if (!origin) {
       return;
     }
 
-    if (getBookmark(bookmarkKey)) {
-      removeBookmark(bookmarkKey);
-      return;
+    if (!dapps[origin]) {
+      setDapp({
+        ...createDappBySession({
+          origin,
+          name: displayName || '',
+          icon: displayIcon || '',
+        }),
+        origin,
+        isDapp: true,
+        isSkipRemind: !isSkipRemind,
+      });
+    } else {
+      setDapp({
+        ...dapps[origin],
+        origin,
+        isSkipRemind: !isSkipRemind,
+      });
     }
-
-    addBookmark({
-      url: bookmarkKey,
-      name: displayName || origin,
-      icon: displayIcon,
-      createdAt: Date.now(),
-    });
-  }, [
-    addBookmark,
-    bookmarkKey,
-    displayIcon,
-    displayName,
-    getBookmark,
-    origin,
-    removeBookmark,
-  ]);
+  });
 
   useEffect(() => {
     if (visible) {
@@ -310,7 +350,11 @@ export const DappInfoPopup: React.FC<{
                     style={styles.favoriteButton}
                     hitSlop={8}
                     onPress={handleFavoritePress}>
-                    {isFavorite ? <RcIconStarFull /> : <RcIconStar />}
+                    {isBookmark ? (
+                      <RcIconStarFull width={20} height={20} />
+                    ) : (
+                      <RcIconStar width={20} height={20} />
+                    )}
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.dappOrigin} numberOfLines={1}>
@@ -413,18 +457,7 @@ export const DappInfoPopup: React.FC<{
             </View>
             <View style={styles.footer}>
               <View style={styles.checkBoxContainer}>
-                <TouchableOpacity
-                  onPress={() => {
-                    if (!origin) {
-                      return;
-                    }
-
-                    dappService.patchDapps({
-                      [origin]: {
-                        isSkipRemind: !isSkipRemind,
-                      },
-                    });
-                  }}>
+                <TouchableOpacity onPress={handleToggleSkipRemind}>
                   <View style={styles.checkBoxContent}>
                     <CheckBoxRect checked={isSkipRemind} />
                     <Text style={styles.checkBoxText}>
@@ -545,10 +578,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight: _isLight }) => {
       minWidth: 0,
       flex: 1,
     },
-    favoriteButton: {
-      padding: 4,
-      marginRight: -4,
-    },
+    favoriteButton: {},
     openButtonTitle: {
       paddingHorizontal: 8,
     },

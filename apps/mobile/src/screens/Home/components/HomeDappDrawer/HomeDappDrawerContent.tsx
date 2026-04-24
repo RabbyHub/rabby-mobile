@@ -473,7 +473,7 @@ export const HomeDappDrawerContent: React.FC<{
           renderTabBar={renderTabBar}
           tabBarHeight={TAB_BAR_HEIGHT}
           lazy
-          containerStyle={styles.container}
+          containerStyle={styles.tabContainer}
           headerContainerStyle={styles.tabBarWrap}
           initialTabName={activeTab}
           onTabChange={({ tabName }) => {
@@ -637,8 +637,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
     container: {
       flex: 1,
-      // backgroundColor: colors2024['neutral-bg-1'],
     },
+    tabContainer: {},
     headerRight: {
       paddingRight: 4,
       paddingVertical: 4,
@@ -772,12 +772,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     androidTabLabelInactive: {
       color: colors2024['neutral-info'],
     },
-    list: {
-      paddingTop: 8,
-    },
+    list: {},
     listContentContainer: {
       flexGrow: 1,
-      paddingBottom: 12,
+      paddingTop: 8,
+      paddingBottom: 8,
     },
     emptyListContentContainer: {
       justifyContent: 'center',

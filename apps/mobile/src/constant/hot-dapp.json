@@ -3,7 +3,7 @@
     "category": "Predict",
     "name": "Polymarket",
     "origin": "https://polymarket.com",
-    "logo": "https://static.debank.com/image/dapp/logo_url/39285bea96ff15faa1334729d1ef8ca3/39285bea96ff15faa1334729d1ef8ca3.png",
+    "logo": "https://static-assets.rabby.io/files/0b575b9d-b8c7-48e8-84c4-222d4e51043f.png",
     "zh": "全球最大的预测市场,用真实资金交易事件结果与概率。",
     "en": "The world’s largest prediction market, where users trade real-money probabilities on event outcomes."
   },
@@ -19,7 +19,7 @@
     "category": "Predict",
     "name": "Kalshi",
     "origin": "https://kalshi.com",
-    "logo": "https://static.debank.com/image/dapp/logo_url/594d08b3f517ae17e00eb67134519b57/594d08b3f517ae17e00eb67134519b57.png",
+    "logo": "https://static-assets.rabby.io/files/bc0b269c-9737-4414-b957-e80fcd449f86.png",
     "zh": "合规事件交易平台,主打把现实世界事件做成可交易合约。",
     "en": "A regulated event trading platform that turns real-world outcomes into tradable contracts."
   },
@@ -27,7 +27,7 @@
     "category": "Predict",
     "name": "OPINION",
     "origin": "https://www.opinion.trade",
-    "logo": "https://static.debank.com/image/dapp/logo_url/2e7bba28f0f7cceb3d84b64802e00980/2e7bba28f0f7cceb3d84b64802e00980.png",
+    "logo": "https://static-assets.rabby.io/files/ed24a3b5-cb90-499c-b439-ebc425703690.png",
     "zh": "以观点交易为核心的预测型平台,偏向宏观与立场表达类市场。",
     "en": "A prediction-style platform centered on trading opinions, with a focus on macro and narrative-driven markets."
   },
@@ -43,7 +43,7 @@
     "category": "Predict",
     "name": "Probable",
     "origin": "https://probable.markets",
-    "logo": "https://static.debank.com/image/third_party/logo_url/defillama/1be7417e6461f9851dcd2521786d41ba.png",
+    "logo": "https://static-assets.rabby.io/files/30765746-a65c-492b-b520-147b09726684.png",
     "zh": "部署在 BNB Chain 上的去中心化预测市场。",
     "en": "A decentralized prediction market built on BNB Chain."
   },
@@ -83,7 +83,7 @@
     "category": "Perps",
     "name": "StandX",
     "origin": "https://standx.com",
-    "logo": "https://static.debank.com/image/third_party/logo_url/coinmarketcap/f7c62d7fa33dfec3a2d3365792c20f23.png",
+    "logo": "https://static-assets.rabby.io/files/a412611f-3b2f-4c54-b0da-0a519466d958.png",
     "zh": "以可赚收益的 DUSD 保证金为特色的永续合约交易平台。",
     "en": "A perpetuals trading platform distinguished by its yield-bearing DUSD margin model."
   },
@@ -91,7 +91,7 @@
     "category": "RWA",
     "name": "xStocks",
     "origin": "https://xstocks.fi",
-    "logo": null,
+    "logo": "https://static-assets.rabby.io/files/98202a4b-8638-40a1-88e9-d8e684a84007.png",
     "zh": "面向交易所、DEX 和钱包的代币化股票基础设施,把美股和 ETF 带上链。",
     "en": "Tokenized equities infrastructure for exchanges, DEXs, and wallets, bringing stocks and ETFs onchain."
   },
@@ -115,8 +115,8 @@
     "category": "RWA",
     "name": "Midas",
     "origin": "https://midas.app",
-    "logo": "https://static.debank.com/image/third_party/logo_url/debank/140bebfd1d2fae73bfc6222cf38284a4.png",
-    "zh": "主打链上投资产品标准化发行与接入的 RWA/投资平台。",
+    "logo": "https://static-assets.rabby.io/files/c5eeb1fc-4ec0-4522-b17d-ef54831c3ca9.png",
+    "zh": "主打链上投资产品标准化发行与接入的RWA/投资平台。",
     "en": "An investment platform focused on standardized issuance and access for onchain investment products."
   },
   {
@@ -139,7 +139,7 @@
     "category": "DeFi",
     "name": "Pendle",
     "origin": "https://app.pendle.finance",
-    "logo": "https://static.debank.com/image/dapp/logo_url/81297971d7ffd8e2698cefd8de2072dc/81297971d7ffd8e2698cefd8de2072dc.png",
+    "logo": "https://static-assets.rabby.io/files/a9835476-8e59-4cf7-93f8-8bd1c6ef7d0a.png",
     "zh": "以收益拆分和收益率交易为核心的 DeFi 利率市场。",
     "en": "A DeFi rates market built around yield tokenization and yield trading."
   },
@@ -147,7 +147,7 @@
     "category": "DeFi",
     "name": "Curve",
     "origin": "https://www.curve.finance",
-    "logo": "https://static.debank.com/image/dapp/logo_url/9b5695ae1125a207988f850c7003ecff/9b5695ae1125a207988f850c7003ecff.png",
+    "logo": "https://static-assets.rabby.io/files/bb79a65a-71ef-4907-be22-12be8352f34c.png",
     "zh": "以稳定币和同类资产低滑点兑换见长的经典 AMM 协议。",
     "en": "A leading AMM protocol known for low-slippage swaps between stablecoins and similar assets."
   },
@@ -155,7 +155,7 @@
     "category": "DeFi",
     "name": "Spark",
     "origin": "https://spark.fi",
-    "logo": null,
+    "logo": "https://static-assets.rabby.io/files/923fa92f-0e76-453d-a24d-a8f64323ed2c.png",
     "zh": "主打让稳定币生息的 DeFi 平台,聚焦稳定币收益入口。",
     "en": "A DeFi platform focused on putting stablecoins to work and providing accessible yield opportunities."
   },
@@ -179,7 +179,7 @@
     "category": "DeFi",
     "name": "Ethena",
     "origin": "https://ethena.fi",
-    "logo": null,
+    "logo": "https://static-assets.rabby.io/files/6f86deb9-8bc1-426b-a765-ce31dae8f37a.png",
     "zh": "面向互联网经济的数字美元协议,核心产品是 USDe 与 sUSDe。",
     "en": "A digital dollar protocol for the internet economy, centered on USDe and sUSDe."
   },
@@ -195,7 +195,7 @@
     "category": "DeFi",
     "name": "vfat",
     "origin": "https://vfat.io",
-    "logo": "https://static.debank.com/image/third_party/logo_url/debank/140bebfd1d2fae73bfc6222cf38284a4.png",
+    "logo": "https://static-assets.rabby.io/files/d869efee-ece5-4a88-b1e9-8f348da75f5f.png",
     "zh": "集收益聚合、资产看板与 DeFi 工具于一体的多链收益管理平台。",
     "en": "A multi-chain yield management platform combining yield aggregation, portfolio dashboards, and DeFi tools."
   },
@@ -203,7 +203,7 @@
     "category": "DeFi",
     "name": "Stargate",
     "origin": "https://stargate.finance",
-    "logo": "https://static.debank.com/image/dapp/logo_url/7769b47348430f848c0e784c68222478/7769b47348430f848c0e784c68222478.png",
+    "logo": "https://static-assets.rabby.io/files/67515f72-57b2-4f14-979d-cb06f0ae281c.png",
     "zh": "基于 LayerZero 的跨链流动性协议,可跨链转移多种主流资产。",
     "en": "A LayerZero-powered cross-chain liquidity protocol for moving major assets across chains."
   },
@@ -211,7 +211,7 @@
     "category": "DeFi",
     "name": "Relay",
     "origin": "https://relay.link",
-    "logo": "https://static.debank.com/image/dapp/logo_url/872e67bc5a8bddc330b08a3cf1f25879/872e67bc5a8bddc330b08a3cf1f25879.png",
+    "logo": "https://static-assets.rabby.io/files/218ea948-7111-4fb7-b960-2de2308301f3.png",
     "zh": "面向链上经济的跨链基础设施,主打资产跨链转移与执行能力。",
     "en": "Cross-chain infrastructure for the onchain economy, focused on asset transfer and execution across networks."
   },
@@ -259,7 +259,7 @@
     "category": "DEX",
     "name": "LFJ",
     "origin": "https://lfj.gg",
-    "logo": "https://static.debank.com/image/third_party/logo_url/tp/fbea0946449682d2d511de4c83ce7343.png",
+    "logo": "https://static-assets.rabby.io/files/3a0cfd89-32b8-4fb9-bbbe-c3414def6f59.png",
     "zh": "面向链上交易场景的 DEX 品牌,强调更完整的交易体验。",
     "en": "A DEX brand for onchain trading, positioned around a more com plete trading experience."
   },
@@ -275,7 +275,7 @@
     "category": "DEX",
     "name": "Matcha",
     "origin": "https://matcha.xyz",
-    "logo": "https://static.debank.com/image/third_party/logo_url/tp/fbea0946449682d2d511de4c83ce7343.png",
+    "logo": "https://static-assets.rabby.io/files/b4589687-dcde-46f0-9a0d-1264163bcd0b.png",
     "zh": "由 0x 支持的 DEX 聚合交易前端,强调简洁顺畅的兑换体验。",
     "en": "A 0x-powered DEX aggregation frontend focused on a sim ple and smooth trading experience."
   },
@@ -291,7 +291,7 @@
     "category": "DEX",
     "name": "Oku",
     "origin": "https://oku.trade",
-    "logo": "https://static.debank.com/image/dapp/logo_url/34d23ae44090b5694431c24bd961e1f7/34d23ae44090b5694431c24bd961e1f7.png",
+    "logo": "https://static-assets.rabby.io/files/480d47df-d8b5-45b0-9fee-001f36f0647e.png",
     "zh": "覆盖 swap、bridge、borrow、lend 的一站式非托管 DeFi 聚合平台。",
     "en": "A one-stop non-custodial DeFi aggregation platform covering swap, bridge, borrow, and lend."
   },
@@ -299,7 +299,7 @@
     "category": "DEX",
     "name": "OpenOcean",
     "origin": "https://app.openocean.finance",
-    "logo": "https://static.debank.com/image/third_party/logo_url/coinmarketcap/f7c62d7fa33dfec3a2d3365792c20f23.png",
+    "logo": "https://static-assets.rabby.io/files/27dfccea-dd20-40eb-a285-c86477bccc3e.png",
     "zh": "主打最佳兑换回报的加密资产聚合交易平台。",
     "en": "A crypto trading aggregator focused on delivering the best possible swap returns."
   },
@@ -315,7 +315,7 @@
     "category": "DEX",
     "name": "Fly",
     "origin": "https://app.fly.trade",
-    "logo": "https://static.debank.com/image/third_party/logo_url/coinmarketcap/f7c62d7fa33dfec3a2d3365792c20f23.png",
+    "logo": "https://static-assets.rabby.io/files/e97c3f53-4d3b-4c44-9999-159f5b5a8e17.png",
     "zh": "面向链上交易场景的聚合式交易产品。",
     "en": "An aggregated trading product designed for onchain trading use cases."
   },
@@ -331,7 +331,7 @@
     "category": "NFT",
     "name": "Blur",
     "origin": "https://blur.io",
-    "logo": "https://static.debank.com/image/dapp/logo_url/3e852a352d870e42c9cedd1285a4be62/3e852a352d870e42c9cedd1285a4be62.png",
+    "logo": "https://static-assets.rabby.io/files/045512e4-31af-4eeb-bf05-47d08c336204.png",
     "zh": "面向专业交易者的 NFT Marketplace,突出高频与专业化交易体验。",
     "en": "An NFT marketplace for professional traders, built around speed and pro-grade trading workflows."
   },
