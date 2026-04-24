@@ -61,7 +61,7 @@ export const RightMore: React.FC<{
 
   return (
     <>
-      <TouchableOpacity style={{ marginRight: 18 }} onPress={handlePress}>
+      <TouchableOpacity onPress={handlePress}>
         <RcIconFavorite
           width={22}
           height={21}

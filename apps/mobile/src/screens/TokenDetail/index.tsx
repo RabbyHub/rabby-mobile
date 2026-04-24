@@ -46,6 +46,7 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
 import { IconRightCC } from './components/IconRightCC';
+import { TokenDetailWalletCard } from './components/TokenDetailWalletCard';
 
 const isAndroid = Platform.OS === 'android';
 const ScreenWidth = Dimensions.get('window').width;
@@ -176,7 +177,7 @@ const TokenDetailContent = () => {
         unHold
       />
     );
-  }, [token, refreshTag, effectiveAccount?.address]);
+  }, [effectiveAccount?.address, refreshTag, token]);
 
   useFocusEffect(
     useCallback(() => {
@@ -305,6 +306,10 @@ const TokenDetailContent = () => {
           )}
         </View>
 
+        {effectiveAccount ? (
+          <TokenDetailWalletCard account={effectiveAccount} />
+        ) : null}
+
         <View style={[styles.historyHeader]}>
           <Text style={styles.relateTitle}>
             {t('page.tokenDetail.Transaction')}
@@ -316,6 +321,7 @@ const TokenDetailContent = () => {
     amountSum,
     baseTokenInfo,
     colors2024,
+    effectiveAccount,
     handleOpenTokenMarketInfo,
     has24hChangeData,
     is24hNoChange,
@@ -373,7 +379,7 @@ const TokenDetailContent = () => {
       <Tabs.Container
         renderTabBar={() => null}
         tabBarHeight={0}
-        headerHeight={120}
+        headerHeight={260}
         renderHeader={renderHeader}
         headerContainerStyle={styles.headerContainer}
         containerStyle={styles.container}
@@ -441,8 +447,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       overflow: 'hidden',
     },
     balanceOverviewContainer: {
-      paddingLeft: 23,
-      paddingRight: 16,
+      paddingLeft: 12,
+      paddingRight: 12,
+    },
+    headerRightContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    headerAccountSwitcher: {
+      marginRight: 12,
     },
     bottomContainer: {
       width: '100%',
@@ -459,6 +472,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       justifyContent: 'space-between',
       overflow: 'hidden',
+      paddingLeft: 5,
+      paddingRight: 9,
     },
     floatingBarContent: {
       flexDirection: 'column',
@@ -576,7 +591,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     historyHeader: {
       flexDirection: 'row',
-      marginTop: 26,
+      marginTop: 0,
       justifyContent: 'space-between',
       alignItems: 'center',
     },
