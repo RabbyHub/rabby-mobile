@@ -166,7 +166,9 @@ export const PerpsMarketDetailScreen = () => {
       currentPerpsAccount?.type === KEYRING_CLASS.PRIVATE_KEY ||
       currentPerpsAccount?.type === KEYRING_CLASS.MNEMONIC;
     if (isLocalWallet) {
-      handleActionApproveStatus();
+      handleActionApproveStatus({
+        isHideToast: true,
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
