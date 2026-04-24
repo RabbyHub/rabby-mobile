@@ -320,11 +320,10 @@ export const usePerpsState = () => {
     } finally {
       // need fetch setAbstraction
       setTimeout(() => {
-        fetchUserAbstraction(currentPerpsAccount?.address || '');
+        fetchUserAbstraction('');
       }, 100);
     }
-  }, [currentPerpsAccount?.address]);
-
+  }, []);
   const handleDirectApprove = useCallback(
     async (signActions: SignAction[]): Promise<void> => {
       const sdk = apisPerps.getPerpsSDK();
