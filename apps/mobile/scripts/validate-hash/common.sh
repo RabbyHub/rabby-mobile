@@ -21,6 +21,30 @@ repo_yarn() {
   yarn "$@"
 }
 
+run_command_with_log() {
+  local label="$1"
+  local log_file="$2"
+  shift 2
+
+  mkdir -p "$(dirname "$log_file")"
+  : >"$log_file"
+
+  set +e
+  "$@" >"$log_file" 2>&1
+  local command_status=$?
+  set -e
+
+  if [ "$command_status" -ne 0 ]; then
+    echo "❌ ${label} 失败，请检查日志: $log_file"
+    echo "----- ${label} 日志尾部 -----"
+    tail -n 200 "$log_file" || true
+    echo "----- 结束 -----"
+    return "$command_status"
+  fi
+
+  return 0
+}
+
 
 # 此函数将在脚本退出时被调用
 cleanup() {
@@ -158,8 +182,14 @@ setup_environment() {
 install_common_dependencies() {
   echo "⏳ 安装通用依赖 (yarn & bundle)"
   rm -rf node_modules
-  repo_yarn install --immutable >/dev/null
-  bundle install >/dev/null
+  local install_log_dir="$PROJECT_DIR/.hash-validate-logs"
+
+  run_command_with_log "yarn install" "$install_log_dir/yarn-install.log" \
+    repo_yarn install --immutable
+  run_command_with_log "bundle install" "$install_log_dir/bundle-install.log" \
+    bundle install
+
+  rm -rf "$install_log_dir"
   echo "✅ 通用依赖安装完毕"
 }
 

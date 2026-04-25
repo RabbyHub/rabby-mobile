@@ -28,9 +28,17 @@ jobs:
           node-version: 22
 
       - name: 'Setup Ruby & Fastlane'
-        uses: heisenberg-2077/setup-ruby@master
+        uses: ruby/setup-ruby@v1
         with:
           ruby-version: '2.7.4'
+          working-directory: apps/mobile
+
+      - name: Verify Ruby toolchain
+        run: |
+          which ruby
+          ruby -v
+          which bundle
+          bundle -v
 
       - name: 'Setup Java'
         uses: actions/setup-java@v3
@@ -93,9 +101,17 @@ jobs:
           node-version: 22
 
       - name: 'Setup Ruby & Fastlane'
-        uses: heisenberg-2077/setup-ruby@master
+        uses: ruby/setup-ruby@v1
         with:
           ruby-version: '2.7.4'
+          working-directory: apps/mobile
+
+      - name: Verify Ruby toolchain
+        run: |
+          which ruby
+          ruby -v
+          which bundle
+          bundle -v
 
       - name: Validate iOS App
         id: generate_hash
