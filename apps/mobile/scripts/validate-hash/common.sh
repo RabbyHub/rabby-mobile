@@ -25,7 +25,22 @@ repo_yarn() {
 # 此函数将在脚本退出时被调用
 cleanup() {
   local original_exit_code=$?
+  local restore_dir=""
   echo ""
+
+  if [ -n "${ORIGINAL_DIR:-}" ] && [ -d "$ORIGINAL_DIR" ]; then
+    restore_dir="$ORIGINAL_DIR"
+  elif [ -d /tmp ]; then
+    restore_dir="$(cd /tmp && pwd -P)"
+  else
+    restore_dir="/"
+  fi
+
+  # Move out of the temp worktree before deleting it. This matters when the
+  # script is launched from a pre-created /tmp validation checkout.
+  if [ -n "$restore_dir" ]; then
+    cd "$restore_dir" 2>/dev/null || true
+  fi
 
   # 安全检查：确保 WORK_DIR 变量存在且符合预期格式，防止误删
   if [[ -n "$WORK_DIR" && "$WORK_DIR" == *"/validate-rabby-mobile-"* ]]; then
@@ -34,9 +49,6 @@ cleanup() {
   else
     echo "⚠️ 检测到 WORK_DIR 变量不安全或为空，跳过删除步骤"
   fi
-
-  # 恢复到原始目录（这个是之前的 trap 内容）
-  cd "$ORIGINAL_DIR"
 
   exit "$original_exit_code"
 }
@@ -106,6 +118,7 @@ setup_environment() {
   local env_file=".env.hashing"
   local sensitive_vars=(
     "RABBY_MOBILE_KR_PWD" "$RABBY_MOBILE_KR_PWD"
+    "RABBY_MOBILE_CODE" "$RABBY_MOBILE_CODE"
     "RABBY_MOBILE_BUILD_CHANNEL" "appstore"
     "RABBY_MOBILE_FE_SERVICE_URL" ""
   )

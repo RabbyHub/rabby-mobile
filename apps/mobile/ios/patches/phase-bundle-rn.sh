@@ -38,12 +38,15 @@ if [[ "$CONFIGURATION" == "Regression" ]]; then
     exit 1;
   fi
 fi
-if [[ "$CONFIGURATION" == "Release" ]] && [[ "$RABBY_MOBILE_CODE" == "RABBY_MOBILE_CODE_DEV" ]]; then
+if [[ "$APP_ENV" == "hashing" ]] && [[ "$RABBY_MOBILE_CODE" == "RABBY_MOBILE_CODE_DEV" ]]; then
+  echo "[RabbyMobileBuild] hashing mode allows fixed RABBY_MOBILE_CODE_DEV."
+fi
+if [[ "$CONFIGURATION" == "Release" ]] && [[ "$RABBY_MOBILE_CODE" == "RABBY_MOBILE_CODE_DEV" ]] && [[ "$APP_ENV" != "hashing" ]]; then
   echo "[RabbyMobileBuild] Release build is using fallback RABBY_MOBILE_CODE_DEV."
   echo "[RabbyMobileBuild] Run deploy-ios-appstore.sh once or generate ios/RabbyMobile/AppConfig.Release.local.xcconfig with the production RABBY_MOBILE_CODE before packaging."
   exit 1;
 fi
-if [[ "$CONFIGURATION" == "Regression" ]] && [[ "$RABBY_MOBILE_CODE" == "RABBY_MOBILE_CODE_DEV" ]]; then
+if [[ "$CONFIGURATION" == "Regression" ]] && [[ "$RABBY_MOBILE_CODE" == "RABBY_MOBILE_CODE_DEV" ]] && [[ "$APP_ENV" != "hashing" ]]; then
   echo "[RabbyMobileBuild] Regression build is using fallback RABBY_MOBILE_CODE_DEV."
   echo "[RabbyMobileBuild] Run deploy-ios-adhoc.sh once or generate ios/RabbyMobile/AppConfig.Regression.local.xcconfig with the shared regression RABBY_MOBILE_CODE before packaging."
   exit 1;

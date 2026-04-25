@@ -45,7 +45,13 @@ jobs:
         id: generate_hash
         run: |
           cd apps/mobile
-          GENERATED_HASH=$(./scripts/validate-hash/run.sh android | tee /dev/stderr | grep 'Android Hash:' | awk '{print $NF}')
+          ./scripts/validate-hash/run.sh android
+          EXPORT_DIR=$(find . -maxdepth 1 -type d -name 'validation_exports_*' | LC_ALL=C sort | tail -n 1)
+          if [ -z "$EXPORT_DIR" ] || [ ! -f "$EXPORT_DIR/android/build_hashes_android.json" ]; then
+            echo "Failed to find Android hash report"
+            exit 1
+          fi
+          GENERATED_HASH=$(node -e 'const fs=require("fs"); const report=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); process.stdout.write(report.hash);' "$EXPORT_DIR/android/build_hashes_android.json")
           echo "hash=${GENERATED_HASH}" >> $GITHUB_OUTPUT
         env:
           RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
@@ -100,7 +106,13 @@ jobs:
           echo "Testing sort consistency with default locale..."
           printf 'Z\0a\0A\0z\0' | sort -z | xargs -0
           cd apps/mobile
-          GENERATED_HASH=$(./scripts/validate-hash/run.sh ios | tee /dev/stderr | grep 'iOS Hash:' | awk '{print $NF}')
+          ./scripts/validate-hash/run.sh ios
+          EXPORT_DIR=$(find . -maxdepth 1 -type d -name 'validation_exports_*' | LC_ALL=C sort | tail -n 1)
+          if [ -z "$EXPORT_DIR" ] || [ ! -f "$EXPORT_DIR/ios/build_hashes_ios.json" ]; then
+            echo "Failed to find iOS hash report"
+            exit 1
+          fi
+          GENERATED_HASH=$(node -e 'const fs=require("fs"); const report=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); process.stdout.write(report.hash);' "$EXPORT_DIR/ios/build_hashes_ios.json")
           echo "hash=${GENERATED_HASH}" >> $GITHUB_OUTPUT
         env:
           RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
