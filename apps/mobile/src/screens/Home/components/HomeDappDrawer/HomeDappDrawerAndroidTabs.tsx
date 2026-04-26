@@ -2,14 +2,20 @@ import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { range } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
+  FlatList,
   ScrollView,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  Gesture,
+  GestureDetector,
+  NativeGesture,
+} from 'react-native-gesture-handler';
 import Animated, {
   interpolateColor,
   runOnJS,
@@ -105,11 +111,13 @@ const AndroidTabItem: React.FC<{
 export function HomeDappDrawerAndroidTabs<T extends string>({
   tabs,
   initialTabName,
+  drawerScrollableGesture,
   onTabChange,
   renderTabContent,
 }: {
   tabs: readonly HomeDappDrawerAndroidTab<T>[];
   initialTabName?: T;
+  drawerScrollableGesture: NativeGesture;
   onTabChange?: (tab: T) => void;
   renderTabContent: (tab: T) => React.ReactNode;
 }) {
@@ -126,6 +134,8 @@ export function HomeDappDrawerAndroidTabs<T extends string>({
   const initialIndex = useRef(resolvedInitialIndex).current;
   const currentIndex = useSharedValue(initialIndex);
   const indexDecimal = useSharedValue(initialIndex);
+  const touchStartX = useSharedValue(0);
+  const touchStartY = useSharedValue(0);
 
   const initialTabLayouts = useMemo(() => {
     let x = 20;
@@ -219,8 +229,42 @@ export function HomeDappDrawerAndroidTabs<T extends string>({
   const androidSwipeGesture = useMemo(
     () =>
       Gesture.Pan()
-        .activeOffsetX([-16, 16])
-        .failOffsetY([-12, 12])
+        .manualActivation(true)
+        // .simultaneousWithExternalGesture(drawerScrollableGesture)
+        .onTouchesDown(event => {
+          'worklet';
+
+          const touch = event.allTouches[0];
+          if (!touch) {
+            return;
+          }
+
+          touchStartX.value = touch.absoluteX;
+          touchStartY.value = touch.absoluteY;
+        })
+        .onTouchesMove((event, stateManager) => {
+          'worklet';
+
+          const touch = event.allTouches[0];
+          if (!touch) {
+            stateManager.fail();
+            return;
+          }
+
+          const diffX = touch.absoluteX - touchStartX.value;
+          const diffY = touch.absoluteY - touchStartY.value;
+          const absX = Math.abs(diffX);
+          const absY = Math.abs(diffY);
+
+          if (absY > 6 && absY > absX) {
+            stateManager.fail();
+            return;
+          }
+
+          if (absX > 18 && absX > absY * 1.2) {
+            stateManager.activate();
+          }
+        })
         .onUpdate(event => {
           'worklet';
 
@@ -262,7 +306,16 @@ export function HomeDappDrawerAndroidTabs<T extends string>({
             },
           );
         }),
-    [currentIndex, indexDecimal, notifyTabChange, pageWidth, tabs.length],
+    [
+      currentIndex,
+      // drawerScrollableGesture,
+      indexDecimal,
+      notifyTabChange,
+      pageWidth,
+      tabs.length,
+      touchStartX,
+      touchStartY,
+    ],
   );
 
   const pagerTrackStyle = useAnimatedStyle(() => ({
@@ -342,9 +395,13 @@ export function HomeDappDrawerAndroidTabs<T extends string>({
               { width: pageWidth * tabs.length },
               pagerTrackStyle,
             ]}>
+            {/* {renderTabContent('favorite' as T)} */}
+
             {tabs.map(tab => (
               <View
                 key={tab.id}
+                // collapsable={false}
+                // pointerEvents="box-none"
                 style={[styles.androidPagerPage, { width: pageWidth }]}>
                 {renderTabContent(tab.id)}
               </View>
@@ -370,11 +427,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     overflow: 'hidden',
   },
   androidPagerTrack: {
-    flex: 1,
+    // flex: 1,
     flexDirection: 'row',
+    alignItems: 'flex-start',
+    height: '100%',
   },
   androidPagerPage: {
-    flex: 1,
+    height: '100%',
+    overflow: 'hidden',
   },
   androidTabsBarContainer: {
     paddingLeft: 20,

@@ -98,6 +98,7 @@ export const DappFavoriteList: React.FC<{
         style={styles.list}
         keyExtractor={item => item.url || item.origin}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
         contentContainerStyle={[
           { flexGrow: 1, paddingTop: 12 },
           bookmarkList.length ? null : { justifyContent: 'center' },

@@ -297,7 +297,7 @@ export const HomeDappDrawerContent: React.FC<{
     }
   }, [completeEditing, isEditing, startEditing]);
 
-  const renderTabContent = useCallback(
+  const renderTabContent = useMemoizedFn(
     (tabKey: TabKey, isAndroidTab = false) => {
       const contentStyle = isAndroidTab
         ? [styles.content, styles.androidTabContent]
@@ -331,17 +331,6 @@ export const HomeDappDrawerContent: React.FC<{
         </View>
       );
     },
-    [
-      drawerScrollOffsetY,
-      drawerScrollableGesture,
-      handleDappPress,
-      handleRemoveLocal,
-      isEditing,
-      list,
-      scrollableStatus,
-      styles.androidTabContent,
-      styles.content,
-    ],
   );
 
   return (
@@ -366,8 +355,9 @@ export const HomeDappDrawerContent: React.FC<{
         <HomeDappDrawerAndroidTabs
           tabs={tabs}
           initialTabName={activeTab}
+          drawerScrollableGesture={drawerScrollableGesture}
           onTabChange={setActiveTab}
-          renderTabContent={tab => renderTabContent(tab, true)}
+          renderTabContent={renderTabContent}
         />
       ) : (
         <Tabs.Container

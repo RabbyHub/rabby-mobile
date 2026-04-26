@@ -140,6 +140,9 @@ export const HomeDappDrawer: React.FC<{
     triggerImpact();
   }, [scrollableStatus, handleScrollBack]);
   const drawerScrollOffsetY = useSharedValue(0);
+  const drawerGestureStartX = useSharedValue(0);
+  const drawerGestureStartY = useSharedValue(0);
+  const drawerGestureActivationY = useSharedValue(0);
 
   // const scrollHandler = useAnimatedScrollHandler({
   //   onScroll: (event, context) => {
@@ -158,20 +161,72 @@ export const HomeDappDrawer: React.FC<{
   const drawerGesture = useMemo(
     () =>
       Gesture.Pan()
-        .activeOffsetY([
-          -DRAWER_GESTURE_ACTIVE_OFFSET_Y,
-          DRAWER_GESTURE_ACTIVE_OFFSET_Y,
-        ])
-        .failOffsetX([
-          -DRAWER_GESTURE_FAIL_OFFSET_X,
-          DRAWER_GESTURE_FAIL_OFFSET_X,
-        ])
-        // .failOffsetY([
-        //   -DRAWER_GESTURE_FAIL_OFFSET_X,
-        //   DRAWER_GESTURE_FAIL_OFFSET_X,
-        // ])
+        .manualActivation(true)
         .maxPointers(1)
         .shouldCancelWhenOutside(false)
+        .onTouchesDown(event => {
+          'worklet';
+
+          const touch = event.allTouches[0];
+          if (!touch) {
+            return;
+          }
+
+          drawerGestureStartX.value = touch.absoluteX;
+          drawerGestureStartY.value = touch.absoluteY;
+        })
+        .onTouchesMove((event, stateManager) => {
+          'worklet';
+
+          const touch = event.allTouches[0];
+          if (!touch) {
+            stateManager.fail();
+            return;
+          }
+
+          const diffX = touch.absoluteX - drawerGestureStartX.value;
+          const diffY = touch.absoluteY - drawerGestureStartY.value;
+          const absX = Math.abs(diffX);
+          const absY = Math.abs(diffY);
+
+          if (absX > DRAWER_GESTURE_FAIL_OFFSET_X && absX > absY) {
+            stateManager.fail();
+            return;
+          }
+
+          if (absY < DRAWER_GESTURE_ACTIVE_OFFSET_Y || absY < absX * 1.2) {
+            return;
+          }
+
+          const isDraggingDown = diffY > 0;
+          const isDraggingUp = diffY < 0;
+
+          if (drawerScrollOffsetY.value > 0) {
+            if (isExpanded.value && isDraggingDown) {
+              return;
+            }
+
+            stateManager.fail();
+            return;
+          }
+
+          if (isExpanded.value && isDraggingUp) {
+            stateManager.fail();
+            return;
+          }
+
+          if (!isExpanded.value && isDraggingDown) {
+            stateManager.fail();
+            return;
+          }
+
+          stateManager.activate();
+        })
+        .onStart(event => {
+          'worklet';
+
+          drawerGestureActivationY.value = event.translationY;
+        })
         .onChange(event => {
           'worklet';
 
@@ -184,7 +239,9 @@ export const HomeDappDrawer: React.FC<{
           } else {
             scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
           }
-          translateY.value = (height - event.translationY) * -1;
+          const gestureTranslationY =
+            event.translationY - drawerGestureActivationY.value;
+          translateY.value = (height - gestureTranslationY) * -1;
         })
         .onEnd(() => {
           'worklet';
@@ -203,7 +260,15 @@ export const HomeDappDrawer: React.FC<{
             });
           }
         }),
-    [drawerScrollOffsetY.value, height, scrollableStatus, handleScrollBack],
+    [
+      drawerGestureStartX,
+      drawerGestureStartY,
+      drawerGestureActivationY,
+      drawerScrollOffsetY,
+      height,
+      handleScrollBack,
+      scrollableStatus,
+    ],
   );
 
   const drawerScrollableGesture = useMemo(
