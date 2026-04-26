@@ -9,9 +9,7 @@ import React, {
 import {
   FlatListProps,
   FlatList as RNFlatList,
-  ScrollView,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from 'react-native';
 
@@ -31,21 +29,12 @@ import { DappInfo } from '@/core/services/dappService';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import CustomLabel from '@/screens/TokenDetail/components/CustomLabel';
-import {
-  Gesture,
-  GestureDetector,
-  NativeGesture,
-} from 'react-native-gesture-handler';
+import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
 import Animated, {
-  interpolateColor,
-  runOnJS,
   scrollTo,
   useAnimatedRef,
-  useAnimatedStyle,
   useAnimatedProps,
   useAnimatedScrollHandler,
-  useSharedValue,
-  withTiming,
 } from 'react-native-reanimated';
 import {
   homeDrawerAnimateMutable,
@@ -64,6 +53,7 @@ import { useDapps } from '@/hooks/useDapps';
 import { DappFavoriteList } from './DappFavoriteList';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { IS_ANDROID } from '@/core/native/utils';
+import { HomeDappDrawerAndroidTabs } from './HomeDappDrawerAndroidTabs';
 
 type HotDappListItem = (typeof dappList)[number];
 
@@ -103,18 +93,10 @@ const mapHotDappListToDappInfo = ({
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
-const AnimatedText = Animated.createAnimatedComponent(Text);
-const AnimatedFavoriteIcon = Animated.createAnimatedComponent(RcIconFavorite);
 
 const TAB_GAP = 8;
 const FIRST_TAB_GAP = 12;
 export const TAB_BAR_HEIGHT = 28;
-
-const clamp = (value: number, min: number, max: number) => {
-  'worklet';
-
-  return Math.min(Math.max(value, min), max);
-};
 
 const tabs = [
   {
@@ -179,96 +161,18 @@ const useDappTab = () => {
   };
 };
 
-const AndroidTabItem: React.FC<{
-  index: number;
-  label: string;
-  isFavorite?: boolean;
-  onPress: () => void;
-  progress: Animated.SharedValue<number>;
-  styles: any;
-  colors2024: any;
-}> = ({ index, label, isFavorite, onPress, progress, styles, colors2024 }) => {
-  const textStyle = useAnimatedStyle(() => {
-    const distance = Math.min(Math.abs(progress.value - index), 1);
-
-    return {
-      color: interpolateColor(
-        distance,
-        [0, 1],
-        [colors2024['neutral-title-1'], colors2024['neutral-info']],
-      ),
-    };
-  });
-
-  const activeIconProps = useAnimatedProps(() => {
-    const distance = Math.min(Math.abs(progress.value - index), 1);
-
-    return {
-      color: interpolateColor(
-        distance,
-        [0, 1],
-        [colors2024['orange-default'], colors2024['neutral-info']],
-      ),
-    };
-  });
-
-  const inactiveIconStyle = useAnimatedStyle(() => {
-    const distance = Math.min(Math.abs(progress.value - index), 1);
-
-    return {
-      opacity: distance,
-    };
-  });
-
-  return (
-    <TouchableOpacity onPress={onPress} style={styles.androidTabButton}>
-      {isFavorite ? (
-        <View style={styles.favoriteLabelContainer}>
-          <AnimatedFavoriteIcon
-            width={18}
-            height={18}
-            animatedProps={activeIconProps}
-            style={inactiveIconStyle}
-          />
-        </View>
-      ) : (
-        <AnimatedText style={[styles.androidTabLabel, textStyle]}>
-          {label}
-        </AnimatedText>
-      )}
-    </TouchableOpacity>
-  );
-};
-
 export const HomeDappDrawerContent: React.FC<{
   drawerScrollableGesture: NativeGesture;
   drawerScrollOffsetY: Animated.SharedValue<number>;
   scrollableStatus: Animated.SharedValue<SCROLLABLE_STATUS>;
 }> = ({ drawerScrollableGesture, drawerScrollOffsetY, scrollableStatus }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { width } = useWindowDimensions();
-  const androidTabsScrollRef = useRef<ScrollView>(null);
-  const androidPageWidth = Math.max(width, 1);
-  const androidPagerTranslateX = useSharedValue(-androidPageWidth);
 
   const { isExpanded } = homeDrawerAnimateMutable;
   const isDrawerExpanded = useValueFromSharedValue(isExpanded);
   const previousIsDrawerExpandedRef = useRef(isDrawerExpanded);
   const { t } = useTranslation();
   const { activeTab, setActiveTab } = useDappTab();
-  const [androidVisualTab, setAndroidVisualTab] = useState<TabKey>(activeTab);
-  const [androidHeaderTab, setAndroidHeaderTab] = useState<TabKey>(activeTab);
-  const currentAndroidTab = IS_ANDROID ? androidVisualTab : activeTab;
-  const currentAndroidHeaderTab = IS_ANDROID ? androidHeaderTab : activeTab;
-  const activeTabIndex = useMemo(
-    () => tabs.findIndex(tab => tab.id === currentAndroidTab),
-    [currentAndroidTab],
-  );
-  const prevTab = activeTabIndex > 0 ? tabs[activeTabIndex - 1].id : null;
-  const nextTab =
-    activeTabIndex >= 0 && activeTabIndex < tabs.length - 1
-      ? tabs[activeTabIndex + 1].id
-      : null;
   const { openTab } = useBrowser();
   const handleDappPress = useMemoizedFn((item: DappInfo) => {
     openTab(item.url || item.origin, {
@@ -286,19 +190,6 @@ export const HomeDappDrawerContent: React.FC<{
       return item;
     });
   }, []);
-  const [androidTabLayouts, setAndroidTabLayouts] = useState(
-    initialTabItemsLayout,
-  );
-  const [androidTabsViewportWidth, setAndroidTabsViewportWidth] = useState(0);
-  const androidTabsScrollXSV = useSharedValue(0);
-  const androidTabProgress = useSharedValue(
-    activeTabIndex >= 0 ? activeTabIndex : 0,
-  );
-
-  useEffect(() => {
-    setAndroidTabLayouts(initialTabItemsLayout);
-  }, [initialTabItemsLayout]);
-
   const renderTabBar = useCallback(
     (props: any) => (
       <DynamicCustomMaterialTabBar
@@ -386,21 +277,6 @@ export const HomeDappDrawerContent: React.FC<{
     previousIsDrawerExpandedRef.current = isDrawerExpanded;
   }, [isDrawerExpanded, resetEditing]);
 
-  useEffect(() => {
-    androidPagerTranslateX.value = -androidPageWidth;
-  }, [androidPageWidth, androidPagerTranslateX]);
-
-  useEffect(() => {
-    if (IS_ANDROID) {
-      setAndroidVisualTab(prev => (prev === activeTab ? prev : activeTab));
-      setAndroidHeaderTab(prev => (prev === activeTab ? prev : activeTab));
-      androidTabProgress.value =
-        tabs.findIndex(tab => tab.id === activeTab) >= 0
-          ? tabs.findIndex(tab => tab.id === activeTab)
-          : 0;
-    }
-  }, [activeTab, androidTabProgress]);
-
   const completeEditing = useCallback(() => {
     setIsEditing(false);
     removedItems.forEach(url => {
@@ -420,183 +296,6 @@ export const HomeDappDrawerContent: React.FC<{
       startEditing();
     }
   }, [completeEditing, isEditing, startEditing]);
-
-  const handleAndroidTabLayout = useCallback(
-    (index: number, x: number, itemWidth: number) => {
-      setAndroidTabLayouts(prev => {
-        const next = [...prev];
-        const current = next[index];
-        if (current && current.x === x && current.width === itemWidth) {
-          return prev;
-        }
-        next[index] = { x, width: itemWidth };
-        return next;
-      });
-    },
-    [],
-  );
-
-  const scrollAndroidActiveTabIntoView = useCallback(
-    (tab: TabKey) => {
-      const index = tabs.findIndex(item => item.id === tab);
-      const layout = androidTabLayouts[index];
-
-      if (!layout || androidTabsViewportWidth <= 0) {
-        return;
-      }
-
-      const targetX = Math.max(
-        0,
-        layout.x + layout.width / 2 - androidTabsViewportWidth / 2,
-      );
-
-      androidTabsScrollRef.current?.scrollTo({
-        x: targetX,
-        animated: true,
-      });
-    },
-    [androidTabLayouts, androidTabsViewportWidth],
-  );
-
-  const syncAndroidTab = useCallback(
-    (tab: TabKey) => {
-      const nextIndex = tabs.findIndex(item => item.id === tab);
-      androidPagerTranslateX.value = -androidPageWidth;
-      androidTabProgress.value = nextIndex;
-      setAndroidVisualTab(tab);
-      setAndroidHeaderTab(tab);
-      setActiveTab(tab);
-      scrollAndroidActiveTabIntoView(tab);
-    },
-    [
-      androidPageWidth,
-      androidPagerTranslateX,
-      androidTabProgress,
-      scrollAndroidActiveTabIntoView,
-      setActiveTab,
-    ],
-  );
-
-  const androidSwipeGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .activeOffsetX([-16, 16])
-        .failOffsetY([-12, 12])
-        .onUpdate(event => {
-          'worklet';
-
-          const leftLimit = nextTab ? -androidPageWidth * 2 : -androidPageWidth;
-          const rightLimit = prevTab ? 0 : -androidPageWidth;
-          let nextTranslate = -androidPageWidth + event.translationX;
-
-          if (nextTranslate < leftLimit) {
-            nextTranslate = leftLimit + (nextTranslate - leftLimit) * 0.2;
-          }
-          if (nextTranslate > rightLimit) {
-            nextTranslate = rightLimit + (nextTranslate - rightLimit) * 0.2;
-          }
-
-          androidPagerTranslateX.value = nextTranslate;
-          androidTabProgress.value = clamp(
-            activeTabIndex - event.translationX / androidPageWidth,
-            0,
-            tabs.length - 1,
-          );
-        })
-        .onEnd(event => {
-          'worklet';
-
-          const SWIPE_DISTANCE = androidPageWidth * 0.18;
-          const SWIPE_VELOCITY = 600;
-          const shouldSwipeLeft =
-            event.translationX < -SWIPE_DISTANCE ||
-            event.velocityX < -SWIPE_VELOCITY;
-          const shouldSwipeRight =
-            event.translationX > SWIPE_DISTANCE ||
-            event.velocityX > SWIPE_VELOCITY;
-
-          if (shouldSwipeLeft && nextTab) {
-            runOnJS(setAndroidHeaderTab)(nextTab);
-            androidTabProgress.value = withTiming(activeTabIndex + 1, {
-              duration: 180,
-            });
-            androidPagerTranslateX.value = withTiming(
-              -androidPageWidth * 2,
-              { duration: 180 },
-              finished => {
-                if (finished) {
-                  runOnJS(syncAndroidTab)(nextTab);
-                }
-              },
-            );
-            return;
-          }
-
-          if (shouldSwipeRight && prevTab) {
-            runOnJS(setAndroidHeaderTab)(prevTab);
-            androidTabProgress.value = withTiming(activeTabIndex - 1, {
-              duration: 180,
-            });
-            androidPagerTranslateX.value = withTiming(
-              0,
-              { duration: 180 },
-              finished => {
-                if (finished) {
-                  runOnJS(syncAndroidTab)(prevTab);
-                }
-              },
-            );
-            return;
-          }
-
-          androidTabProgress.value = withTiming(activeTabIndex, {
-            duration: 180,
-          });
-          androidPagerTranslateX.value = withTiming(-androidPageWidth, {
-            duration: 180,
-          });
-        }),
-    [
-      androidPageWidth,
-      androidPagerTranslateX,
-      androidTabProgress,
-      activeTabIndex,
-      nextTab,
-      prevTab,
-      syncAndroidTab,
-    ],
-  );
-
-  const androidPagerTrackStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: androidPagerTranslateX.value }],
-  }));
-
-  const androidIndicatorStyle = useAnimatedStyle(() => {
-    const progress = clamp(androidTabProgress.value, 0, tabs.length - 1);
-    const leftIndex = Math.floor(progress);
-    const rightIndex = Math.min(leftIndex + 1, tabs.length - 1);
-    const ratio = progress - leftIndex;
-    const leftLayout =
-      androidTabLayouts[leftIndex] || initialTabItemsLayout[leftIndex];
-    const rightLayout =
-      androidTabLayouts[rightIndex] || initialTabItemsLayout[rightIndex];
-    const translateX =
-      leftLayout.x +
-      (rightLayout.x - leftLayout.x) * ratio -
-      androidTabsScrollXSV.value;
-    const indicatorWidth =
-      leftLayout.width + (rightLayout.width - leftLayout.width) * ratio;
-
-    return {
-      transform: [{ translateX }],
-      width: indicatorWidth,
-    };
-  });
-
-  const androidPagerTabs = useMemo(
-    () => [prevTab, currentAndroidTab, nextTab] as const,
-    [currentAndroidTab, nextTab, prevTab],
-  );
 
   const renderTabContent = useCallback(
     (tabKey: TabKey, isAndroidTab = false) => {
@@ -652,7 +351,7 @@ export const HomeDappDrawerContent: React.FC<{
           {/* {t('page.home.DappDrawer.favorite')} */}
           Websites
         </Text>
-        {currentAndroidHeaderTab === 'favorite' ? (
+        {activeTab === 'favorite' ? (
           <TouchableOpacity
             disabled={!hasData}
             onPress={handle}
@@ -664,72 +363,12 @@ export const HomeDappDrawerContent: React.FC<{
         ) : null}
       </View>
       {IS_ANDROID ? (
-        <>
-          <View style={styles.tabBarWrap}>
-            <ScrollView
-              ref={androidTabsScrollRef}
-              horizontal
-              onLayout={event => {
-                setAndroidTabsViewportWidth(event.nativeEvent.layout.width);
-              }}
-              onScroll={event => {
-                androidTabsScrollXSV.value = event.nativeEvent.contentOffset.x;
-              }}
-              scrollEventThrottle={16}
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.androidTabsBarContainer}>
-              {tabs.map((tabItem, index) => {
-                return (
-                  <View
-                    key={tabItem.id}
-                    onLayout={event => {
-                      const { x, width: itemWidth } = event.nativeEvent.layout;
-                      handleAndroidTabLayout(index, x, itemWidth);
-                    }}
-                    style={[
-                      index === 0
-                        ? styles.androidFirstTabButton
-                        : styles.androidRestTabButton,
-                    ]}>
-                    <AndroidTabItem
-                      index={index}
-                      label={tabItem.label}
-                      isFavorite={tabItem.id === 'favorite'}
-                      onPress={() => syncAndroidTab(tabItem.id)}
-                      progress={androidTabProgress}
-                      styles={styles}
-                      colors2024={colors2024}
-                    />
-                  </View>
-                );
-              })}
-            </ScrollView>
-            <Animated.View
-              style={[styles.androidIndicator, androidIndicatorStyle]}
-            />
-          </View>
-          <View style={styles.androidContent}>
-            <GestureDetector gesture={androidSwipeGesture}>
-              <Animated.View
-                style={[
-                  styles.androidPagerTrack,
-                  { width: androidPageWidth * androidPagerTabs.length },
-                  androidPagerTrackStyle,
-                ]}>
-                {androidPagerTabs.map((tabKey, index) => (
-                  <View
-                    key={tabKey ?? `empty-${index}`}
-                    style={[
-                      styles.androidPagerPage,
-                      { width: androidPageWidth },
-                    ]}>
-                    {tabKey ? renderTabContent(tabKey, true) : null}
-                  </View>
-                ))}
-              </Animated.View>
-            </GestureDetector>
-          </View>
-        </>
+        <HomeDappDrawerAndroidTabs
+          tabs={tabs}
+          initialTabName={activeTab}
+          onTabChange={setActiveTab}
+          renderTabContent={tab => renderTabContent(tab, true)}
+        />
       ) : (
         <Tabs.Container
           renderTabBar={renderTabBar}
@@ -989,50 +628,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingHorizontal: 16,
       paddingTop: TAB_BAR_HEIGHT,
     },
-    androidContent: {
-      flex: 1,
-      overflow: 'hidden',
-    },
-    androidPagerTrack: {
-      flex: 1,
-      flexDirection: 'row',
-    },
-    androidPagerPage: {
-      flex: 1,
-    },
     androidTabContent: {
       paddingTop: 0,
-    },
-    androidTabsBarContainer: {
-      paddingLeft: 20,
-      paddingRight: 20,
-    },
-    androidTabButton: {
-      minWidth: 60,
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: TAB_BAR_HEIGHT,
-      paddingBottom: 4,
-    },
-    androidFirstTabButton: {
-      marginRight: FIRST_TAB_GAP,
-    },
-    androidRestTabButton: {
-      marginRight: TAB_GAP,
-    },
-    androidIndicator: {
-      position: 'absolute',
-      left: 0,
-      bottom: 0,
-      height: 4,
-      borderRadius: 100,
-      backgroundColor: colors2024['neutral-body'],
-    },
-    androidTabLabel: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
     },
     list: {},
     listContentContainer: {
