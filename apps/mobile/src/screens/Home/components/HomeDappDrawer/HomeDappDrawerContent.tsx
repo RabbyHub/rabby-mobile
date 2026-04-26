@@ -37,11 +37,12 @@ import {
   NativeGesture,
 } from 'react-native-gesture-handler';
 import Animated, {
+  interpolateColor,
   runOnJS,
   scrollTo,
+  useAnimatedRef,
   useAnimatedStyle,
   useAnimatedProps,
-  useAnimatedRef,
   useAnimatedScrollHandler,
   useSharedValue,
   withTiming,
@@ -102,10 +103,18 @@ const mapHotDappListToDappInfo = ({
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
+const AnimatedText = Animated.createAnimatedComponent(Text);
+const AnimatedFavoriteIcon = Animated.createAnimatedComponent(RcIconFavorite);
 
 const TAB_GAP = 8;
 const FIRST_TAB_GAP = 12;
 export const TAB_BAR_HEIGHT = 28;
+
+const clamp = (value: number, min: number, max: number) => {
+  'worklet';
+
+  return Math.min(Math.max(value, min), max);
+};
 
 const tabs = [
   {
@@ -170,6 +179,67 @@ const useDappTab = () => {
   };
 };
 
+const AndroidTabItem: React.FC<{
+  index: number;
+  label: string;
+  isFavorite?: boolean;
+  onPress: () => void;
+  progress: Animated.SharedValue<number>;
+  styles: any;
+  colors2024: any;
+}> = ({ index, label, isFavorite, onPress, progress, styles, colors2024 }) => {
+  const textStyle = useAnimatedStyle(() => {
+    const distance = Math.min(Math.abs(progress.value - index), 1);
+
+    return {
+      color: interpolateColor(
+        distance,
+        [0, 1],
+        [colors2024['neutral-title-1'], colors2024['neutral-info']],
+      ),
+    };
+  });
+
+  const activeIconProps = useAnimatedProps(() => {
+    const distance = Math.min(Math.abs(progress.value - index), 1);
+
+    return {
+      color: interpolateColor(
+        distance,
+        [0, 1],
+        [colors2024['orange-default'], colors2024['neutral-info']],
+      ),
+    };
+  });
+
+  const inactiveIconStyle = useAnimatedStyle(() => {
+    const distance = Math.min(Math.abs(progress.value - index), 1);
+
+    return {
+      opacity: distance,
+    };
+  });
+
+  return (
+    <TouchableOpacity onPress={onPress} style={styles.androidTabButton}>
+      {isFavorite ? (
+        <View style={styles.favoriteLabelContainer}>
+          <AnimatedFavoriteIcon
+            width={18}
+            height={18}
+            animatedProps={activeIconProps}
+            style={inactiveIconStyle}
+          />
+        </View>
+      ) : (
+        <AnimatedText style={[styles.androidTabLabel, textStyle]}>
+          {label}
+        </AnimatedText>
+      )}
+    </TouchableOpacity>
+  );
+};
+
 export const HomeDappDrawerContent: React.FC<{
   drawerScrollableGesture: NativeGesture;
   drawerScrollOffsetY: Animated.SharedValue<number>;
@@ -177,6 +247,7 @@ export const HomeDappDrawerContent: React.FC<{
 }> = ({ drawerScrollableGesture, drawerScrollOffsetY, scrollableStatus }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { width } = useWindowDimensions();
+  const androidTabsScrollRef = useRef<ScrollView>(null);
   const androidPageWidth = Math.max(width, 1);
   const androidPagerTranslateX = useSharedValue(-androidPageWidth);
 
@@ -185,9 +256,13 @@ export const HomeDappDrawerContent: React.FC<{
   const previousIsDrawerExpandedRef = useRef(isDrawerExpanded);
   const { t } = useTranslation();
   const { activeTab, setActiveTab } = useDappTab();
+  const [androidVisualTab, setAndroidVisualTab] = useState<TabKey>(activeTab);
+  const [androidHeaderTab, setAndroidHeaderTab] = useState<TabKey>(activeTab);
+  const currentAndroidTab = IS_ANDROID ? androidVisualTab : activeTab;
+  const currentAndroidHeaderTab = IS_ANDROID ? androidHeaderTab : activeTab;
   const activeTabIndex = useMemo(
-    () => tabs.findIndex(tab => tab.id === activeTab),
-    [activeTab],
+    () => tabs.findIndex(tab => tab.id === currentAndroidTab),
+    [currentAndroidTab],
   );
   const prevTab = activeTabIndex > 0 ? tabs[activeTabIndex - 1].id : null;
   const nextTab =
@@ -211,6 +286,18 @@ export const HomeDappDrawerContent: React.FC<{
       return item;
     });
   }, []);
+  const [androidTabLayouts, setAndroidTabLayouts] = useState(
+    initialTabItemsLayout,
+  );
+  const [androidTabsViewportWidth, setAndroidTabsViewportWidth] = useState(0);
+  const androidTabsScrollXSV = useSharedValue(0);
+  const androidTabProgress = useSharedValue(
+    activeTabIndex >= 0 ? activeTabIndex : 0,
+  );
+
+  useEffect(() => {
+    setAndroidTabLayouts(initialTabItemsLayout);
+  }, [initialTabItemsLayout]);
 
   const renderTabBar = useCallback(
     (props: any) => (
@@ -303,6 +390,17 @@ export const HomeDappDrawerContent: React.FC<{
     androidPagerTranslateX.value = -androidPageWidth;
   }, [androidPageWidth, androidPagerTranslateX]);
 
+  useEffect(() => {
+    if (IS_ANDROID) {
+      setAndroidVisualTab(prev => (prev === activeTab ? prev : activeTab));
+      setAndroidHeaderTab(prev => (prev === activeTab ? prev : activeTab));
+      androidTabProgress.value =
+        tabs.findIndex(tab => tab.id === activeTab) >= 0
+          ? tabs.findIndex(tab => tab.id === activeTab)
+          : 0;
+    }
+  }, [activeTab, androidTabProgress]);
+
   const completeEditing = useCallback(() => {
     setIsEditing(false);
     removedItems.forEach(url => {
@@ -323,12 +421,60 @@ export const HomeDappDrawerContent: React.FC<{
     }
   }, [completeEditing, isEditing, startEditing]);
 
+  const handleAndroidTabLayout = useCallback(
+    (index: number, x: number, itemWidth: number) => {
+      setAndroidTabLayouts(prev => {
+        const next = [...prev];
+        const current = next[index];
+        if (current && current.x === x && current.width === itemWidth) {
+          return prev;
+        }
+        next[index] = { x, width: itemWidth };
+        return next;
+      });
+    },
+    [],
+  );
+
+  const scrollAndroidActiveTabIntoView = useCallback(
+    (tab: TabKey) => {
+      const index = tabs.findIndex(item => item.id === tab);
+      const layout = androidTabLayouts[index];
+
+      if (!layout || androidTabsViewportWidth <= 0) {
+        return;
+      }
+
+      const targetX = Math.max(
+        0,
+        layout.x + layout.width / 2 - androidTabsViewportWidth / 2,
+      );
+
+      androidTabsScrollRef.current?.scrollTo({
+        x: targetX,
+        animated: true,
+      });
+    },
+    [androidTabLayouts, androidTabsViewportWidth],
+  );
+
   const syncAndroidTab = useCallback(
     (tab: TabKey) => {
+      const nextIndex = tabs.findIndex(item => item.id === tab);
       androidPagerTranslateX.value = -androidPageWidth;
+      androidTabProgress.value = nextIndex;
+      setAndroidVisualTab(tab);
+      setAndroidHeaderTab(tab);
       setActiveTab(tab);
+      scrollAndroidActiveTabIntoView(tab);
     },
-    [androidPageWidth, androidPagerTranslateX, setActiveTab],
+    [
+      androidPageWidth,
+      androidPagerTranslateX,
+      androidTabProgress,
+      scrollAndroidActiveTabIntoView,
+      setActiveTab,
+    ],
   );
 
   const androidSwipeGesture = useMemo(
@@ -351,6 +497,11 @@ export const HomeDappDrawerContent: React.FC<{
           }
 
           androidPagerTranslateX.value = nextTranslate;
+          androidTabProgress.value = clamp(
+            activeTabIndex - event.translationX / androidPageWidth,
+            0,
+            tabs.length - 1,
+          );
         })
         .onEnd(event => {
           'worklet';
@@ -365,6 +516,10 @@ export const HomeDappDrawerContent: React.FC<{
             event.velocityX > SWIPE_VELOCITY;
 
           if (shouldSwipeLeft && nextTab) {
+            runOnJS(setAndroidHeaderTab)(nextTab);
+            androidTabProgress.value = withTiming(activeTabIndex + 1, {
+              duration: 180,
+            });
             androidPagerTranslateX.value = withTiming(
               -androidPageWidth * 2,
               { duration: 180 },
@@ -378,6 +533,10 @@ export const HomeDappDrawerContent: React.FC<{
           }
 
           if (shouldSwipeRight && prevTab) {
+            runOnJS(setAndroidHeaderTab)(prevTab);
+            androidTabProgress.value = withTiming(activeTabIndex - 1, {
+              duration: 180,
+            });
             androidPagerTranslateX.value = withTiming(
               0,
               { duration: 180 },
@@ -390,6 +549,9 @@ export const HomeDappDrawerContent: React.FC<{
             return;
           }
 
+          androidTabProgress.value = withTiming(activeTabIndex, {
+            duration: 180,
+          });
           androidPagerTranslateX.value = withTiming(-androidPageWidth, {
             duration: 180,
           });
@@ -397,6 +559,8 @@ export const HomeDappDrawerContent: React.FC<{
     [
       androidPageWidth,
       androidPagerTranslateX,
+      androidTabProgress,
+      activeTabIndex,
       nextTab,
       prevTab,
       syncAndroidTab,
@@ -407,9 +571,31 @@ export const HomeDappDrawerContent: React.FC<{
     transform: [{ translateX: androidPagerTranslateX.value }],
   }));
 
+  const androidIndicatorStyle = useAnimatedStyle(() => {
+    const progress = clamp(androidTabProgress.value, 0, tabs.length - 1);
+    const leftIndex = Math.floor(progress);
+    const rightIndex = Math.min(leftIndex + 1, tabs.length - 1);
+    const ratio = progress - leftIndex;
+    const leftLayout =
+      androidTabLayouts[leftIndex] || initialTabItemsLayout[leftIndex];
+    const rightLayout =
+      androidTabLayouts[rightIndex] || initialTabItemsLayout[rightIndex];
+    const translateX =
+      leftLayout.x +
+      (rightLayout.x - leftLayout.x) * ratio -
+      androidTabsScrollXSV.value;
+    const indicatorWidth =
+      leftLayout.width + (rightLayout.width - leftLayout.width) * ratio;
+
+    return {
+      transform: [{ translateX }],
+      width: indicatorWidth,
+    };
+  });
+
   const androidPagerTabs = useMemo(
-    () => [prevTab, activeTab, nextTab] as const,
-    [activeTab, nextTab, prevTab],
+    () => [prevTab, currentAndroidTab, nextTab] as const,
+    [currentAndroidTab, nextTab, prevTab],
   );
 
   const renderTabContent = useCallback(
@@ -466,7 +652,7 @@ export const HomeDappDrawerContent: React.FC<{
           {/* {t('page.home.DappDrawer.favorite')} */}
           Websites
         </Text>
-        {activeTab === 'favorite' ? (
+        {currentAndroidHeaderTab === 'favorite' ? (
           <TouchableOpacity
             disabled={!hasData}
             onPress={handle}
@@ -481,52 +667,46 @@ export const HomeDappDrawerContent: React.FC<{
         <>
           <View style={styles.tabBarWrap}>
             <ScrollView
+              ref={androidTabsScrollRef}
               horizontal
+              onLayout={event => {
+                setAndroidTabsViewportWidth(event.nativeEvent.layout.width);
+              }}
+              onScroll={event => {
+                androidTabsScrollXSV.value = event.nativeEvent.contentOffset.x;
+              }}
+              scrollEventThrottle={16}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.androidTabsBarContainer}>
               {tabs.map((tabItem, index) => {
-                const isActive = activeTab === tabItem.id;
-
                 return (
-                  <TouchableOpacity
+                  <View
                     key={tabItem.id}
-                    onPress={() => syncAndroidTab(tabItem.id)}
+                    onLayout={event => {
+                      const { x, width: itemWidth } = event.nativeEvent.layout;
+                      handleAndroidTabLayout(index, x, itemWidth);
+                    }}
                     style={[
-                      styles.androidTabButton,
                       index === 0
                         ? styles.androidFirstTabButton
                         : styles.androidRestTabButton,
-                      isActive
-                        ? styles.androidTabButtonActive
-                        : styles.androidTabButtonInactive,
                     ]}>
-                    {tabItem.id === 'favorite' ? (
-                      <View style={styles.favoriteLabelContainer}>
-                        <RcIconFavorite
-                          width={18}
-                          height={18}
-                          color={
-                            isActive
-                              ? colors2024['orange-default']
-                              : colors2024['neutral-info']
-                          }
-                        />
-                      </View>
-                    ) : (
-                      <Text
-                        style={[
-                          styles.androidTabLabel,
-                          isActive
-                            ? styles.androidTabLabelActive
-                            : styles.androidTabLabelInactive,
-                        ]}>
-                        {tabItem.label}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
+                    <AndroidTabItem
+                      index={index}
+                      label={tabItem.label}
+                      isFavorite={tabItem.id === 'favorite'}
+                      onPress={() => syncAndroidTab(tabItem.id)}
+                      progress={androidTabProgress}
+                      styles={styles}
+                      colors2024={colors2024}
+                    />
+                  </View>
                 );
               })}
             </ScrollView>
+            <Animated.View
+              style={[styles.androidIndicator, androidIndicatorStyle]}
+            />
           </View>
           <View style={styles.androidContent}>
             <GestureDetector gesture={androidSwipeGesture}>
@@ -831,7 +1011,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       minWidth: 60,
       alignItems: 'center',
       justifyContent: 'center',
-      borderBottomWidth: 4,
       height: TAB_BAR_HEIGHT,
       paddingBottom: 4,
     },
@@ -841,23 +1020,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     androidRestTabButton: {
       marginRight: TAB_GAP,
     },
-    androidTabButtonActive: {
-      borderBottomColor: colors2024['neutral-body'],
-    },
-    androidTabButtonInactive: {
-      borderBottomColor: 'transparent',
+    androidIndicator: {
+      position: 'absolute',
+      left: 0,
+      bottom: 0,
+      height: 4,
+      borderRadius: 100,
+      backgroundColor: colors2024['neutral-body'],
     },
     androidTabLabel: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 16,
       lineHeight: 20,
       fontWeight: '700',
-    },
-    androidTabLabelActive: {
-      color: colors2024['neutral-title-1'],
-    },
-    androidTabLabelInactive: {
-      color: colors2024['neutral-info'],
     },
     list: {},
     listContentContainer: {

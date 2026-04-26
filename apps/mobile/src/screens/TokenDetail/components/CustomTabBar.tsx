@@ -69,6 +69,7 @@ export const DynamicCustomMaterialTabBar = (
         {...props.materialTabBarProps}
         TabItemComponent={renderTabItem}
         indicatorStyle={disableInnerIndicator}
+        scrollEnabled={true}
       />
       <Indicator
         indexDecimal={props.materialTabBarProps.indexDecimal}
