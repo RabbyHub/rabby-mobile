@@ -1,0 +1,362 @@
+[
+  {
+    "category": "Predict",
+    "name": "Polymarket",
+    "origin": "https://polymarket.com",
+    "logo": "https://static-assets.rabby.io/files/0b575b9d-b8c7-48e8-84c4-222d4e51043f.png",
+    "zh": "全球最大的预测市场,用真实资金交易事件结果与概率。",
+    "en": "The world’s largest prediction market, where users trade real-money probabilities on event outcomes."
+  },
+  {
+    "category": "Predict",
+    "name": "Predict Fun",
+    "origin": "https://predict.fun",
+    "logo": "https://static.debank.com/image/dapp/logo_url/36dcf7600703e201d1020785c278b26f/36dcf7600703e201d1020785c278b26f.png",
+    "zh": "BNB Chain 原生预测市场,强调更轻量、更社区化的预测交易体验。",
+    "en": "A BNB Chain-native prediction market focused on a lightweight, community-driven trading experience."
+  },
+  {
+    "category": "Predict",
+    "name": "Kalshi",
+    "origin": "https://kalshi.com",
+    "logo": "https://static-assets.rabby.io/files/bc0b269c-9737-4414-b957-e80fcd449f86.png",
+    "zh": "合规事件交易平台,主打把现实世界事件做成可交易合约。",
+    "en": "A regulated event trading platform that turns real-world outcomes into tradable contracts."
+  },
+  {
+    "category": "Predict",
+    "name": "OPINION",
+    "origin": "https://www.opinion.trade",
+    "logo": "https://static-assets.rabby.io/files/ed24a3b5-cb90-499c-b439-ebc425703690.png",
+    "zh": "以观点交易为核心的预测型平台,偏向宏观与立场表达类市场。",
+    "en": "A prediction-style platform centered on trading opinions, with a focus on macro and narrative-driven markets."
+  },
+  {
+    "category": "Predict",
+    "name": "Limitless Exchange",
+    "origin": "https://limitless.exchange",
+    "logo": "https://static.debank.com/image/dapp/logo_url/46d843bc64c66da4cd2645e143d40c71/46d843bc64c66da4cd2645e143d40c71.png",
+    "zh": "主打无需许可创建和交易事件市场的去中心化预测平台。",
+    "en": "A decentralized prediction platform focused on permissionless market creation and event trading."
+  },
+  {
+    "category": "Predict",
+    "name": "Probable",
+    "origin": "https://probable.markets",
+    "logo": "https://static-assets.rabby.io/files/30765746-a65c-492b-b520-147b09726684.png",
+    "zh": "部署在 BNB Chain 上的去中心化预测市场。",
+    "en": "A decentralized prediction market built on BNB Chain."
+  },
+  {
+    "category": "Predict",
+    "name": "Myriad",
+    "origin": "https://myriad.markets",
+    "logo": "https://static.debank.com/image/dapp/logo_url/a56bf85820246425fface6a20000f0b0/a56bf85820246425fface6a20000f0b0.png",
+    "zh": "围绕多主题事件交易构建的预测市场平台。",
+    "en": "A prediction market platform built around trading across a wide range of event categories."
+  },
+  {
+    "category": "Perps",
+    "name": "Hyperliquid",
+    "origin": "https://app.hyperliquid.xyz",
+    "logo": "https://static.debank.com/image/dapp/logo_url/06166d17b67b2dedc8e9749d79f7ec32/06166d17b67b2dedc8e9749d79f7ec32.png",
+    "zh": "主打极致性能与订单簿体验的链上永续合约交易平台。",
+    "en": "An onchain perpetuals exchange focused on high performance and a native order book trading experience."
+  },
+  {
+    "category": "Perps",
+    "name": "Aster",
+    "origin": "https://www.asterdex.com",
+    "logo": "https://static.debank.com/image/dapp/logo_url/b48bf8dd2dbe46acaa0332516de19089/b48bf8dd2dbe46acaa0332516de19089.png",
+    "zh": "面向所有交易者的下一代永续合约 DEX,强调更专业的衍生品交易体验。",
+    "en": "A next-generation perpetual DEX for all traders, built around a more professional derivatives trading experience."
+  },
+  {
+    "category": "Perps",
+    "name": "Lighter",
+    "origin": "https://app.lighter.xyz",
+    "logo": "https://static.debank.com/image/dapp/logo_url/4464216a32be3baa5df9ed1c45d0d609/4464216a32be3baa5df9ed1c45d0d609.png",
+    "zh": "主打更轻、更快撮合体验的链上交易平台。",
+    "en": "An onchain trading platform focused on a lighter, faster matching and execution experience."
+  },
+  {
+    "category": "Perps",
+    "name": "StandX",
+    "origin": "https://standx.com",
+    "logo": "https://static-assets.rabby.io/files/a412611f-3b2f-4c54-b0da-0a519466d958.png",
+    "zh": "以可赚收益的 DUSD 保证金为特色的永续合约交易平台。",
+    "en": "A perpetuals trading platform distinguished by its yield-bearing DUSD margin model."
+  },
+  {
+    "category": "RWA",
+    "name": "xStocks",
+    "origin": "https://xstocks.fi",
+    "logo": "https://static-assets.rabby.io/files/98202a4b-8638-40a1-88e9-d8e684a84007.png",
+    "zh": "面向交易所、DEX 和钱包的代币化股票基础设施,把美股和 ETF 带上链。",
+    "en": "Tokenized equities infrastructure for exchanges, DEXs, and wallets, bringing stocks and ETFs onchain."
+  },
+  {
+    "category": "RWA",
+    "name": "Ondo",
+    "origin": "https://app.ondo.finance",
+    "logo": "https://static.debank.com/image/dapp/logo_url/72135a375457df895a5eb642c4d51746/72135a375457df895a5eb642c4d51746.png",
+    "zh": "主打把机构级美元收益资产带到链上的 RWA 平台。",
+    "en": "A real-world asset platform focused on bringing institutional-grade dollar yield products onchain."
+  },
+  {
+    "category": "RWA",
+    "name": "Usual",
+    "origin": "https://app.usual.money",
+    "logo": "https://static.debank.com/image/dapp/logo_url/9070216b5c1718a3d62f4fbfcea39b21/9070216b5c1718a3d62f4fbfcea39b21.png",
+    "zh": "围绕稳定币体系构建的 RWA 收益与资产管理入口。",
+    "en": "An RWA yield and asset management platform built around its stablecoin ecosystem."
+  },
+  {
+    "category": "RWA",
+    "name": "Midas",
+    "origin": "https://midas.app",
+    "logo": "https://static-assets.rabby.io/files/c5eeb1fc-4ec0-4522-b17d-ef54831c3ca9.png",
+    "zh": "主打链上投资产品标准化发行与接入的RWA/投资平台。",
+    "en": "An investment platform focused on standardized issuance and access for onchain investment products."
+  },
+  {
+    "category": "RWA",
+    "name": "Maple",
+    "origin": "https://app.maple.finance",
+    "logo": "https://static.debank.com/image/project/logo_url/maple/291ada5f57608eb3975bdf03df3015c4.png",
+    "zh": "面向链上信贷与机构借贷场景的资本市场平台。",
+    "en": "A capital markets platform built for onchain credit and institutional lending."
+  },
+  {
+    "category": "DeFi",
+    "name": "AAVE",
+    "origin": "https://app.aave.com",
+    "logo": "https://static.debank.com/image/dapp/logo_url/b8a5ea5ccf34a9a94fde0e8027135492/b8a5ea5ccf34a9a94fde0e8027135492.png",
+    "zh": "开源流动性协议,是 DeFi 借贷市场的核心基础设施之一。",
+    "en": "An open-source liquidity protocol and one of the core infrastructure layers of DeFi lending."
+  },
+  {
+    "category": "DeFi",
+    "name": "Pendle",
+    "origin": "https://app.pendle.finance",
+    "logo": "https://static-assets.rabby.io/files/a9835476-8e59-4cf7-93f8-8bd1c6ef7d0a.png",
+    "zh": "以收益拆分和收益率交易为核心的 DeFi 利率市场。",
+    "en": "A DeFi rates market built around yield tokenization and yield trading."
+  },
+  {
+    "category": "DeFi",
+    "name": "Curve",
+    "origin": "https://www.curve.finance",
+    "logo": "https://static-assets.rabby.io/files/bb79a65a-71ef-4907-be22-12be8352f34c.png",
+    "zh": "以稳定币和同类资产低滑点兑换见长的经典 AMM 协议。",
+    "en": "A leading AMM protocol known for low-slippage swaps between stablecoins and similar assets."
+  },
+  {
+    "category": "DeFi",
+    "name": "Spark",
+    "origin": "https://spark.fi",
+    "logo": "https://static-assets.rabby.io/files/923fa92f-0e76-453d-a24d-a8f64323ed2c.png",
+    "zh": "主打让稳定币生息的 DeFi 平台,聚焦稳定币收益入口。",
+    "en": "A DeFi platform focused on putting stablecoins to work and providing accessible yield opportunities."
+  },
+  {
+    "category": "DeFi",
+    "name": "Lido",
+    "origin": "https://stake.lido.fi",
+    "logo": "https://static.debank.com/image/dapp/logo_url/57af652b82144416b2b9f83b5c60dfd7/57af652b82144416b2b9f83b5c60dfd7.png",
+    "zh": "质押 ETH 并获得 stETH 的流动性质押协议。",
+    "en": "A liquid staking protocol that lets users stake ETH while receiving stETH."
+  },
+  {
+    "category": "DeFi",
+    "name": "Morpho",
+    "origin": "https://app.morpho.org",
+    "logo": "https://static.debank.com/image/dapp/logo_url/bbaa9a8857a7d2ab0a8205652836a4c6/bbaa9a8857a7d2ab0a8205652836a4c6.png",
+    "zh": "主打更高借贷效率与更优利率匹配的借贷协议。",
+    "en": "A lending protocol designed to improve borrowing efficiency and rate matching."
+  },
+  {
+    "category": "DeFi",
+    "name": "Ethena",
+    "origin": "https://ethena.fi",
+    "logo": "https://static-assets.rabby.io/files/6f86deb9-8bc1-426b-a765-ce31dae8f37a.png",
+    "zh": "面向互联网经济的数字美元协议,核心产品是 USDe 与 sUSDe。",
+    "en": "A digital dollar protocol for the internet economy, centered on USDe and sUSDe."
+  },
+  {
+    "category": "DeFi",
+    "name": "Fluid",
+    "origin": "https://fluid.io",
+    "logo": "https://static.debank.com/image/dapp/logo_url/78b92b47d39670cc3f8c87055aaff9ae/78b92b47d39670cc3f8c87055aaff9ae.png",
+    "zh": "以统一流动性与更高资金效率为卖点的 DeFi 基础设施平台。",
+    "en": "A DeFi infrastructure platform built around unified liquidity and higher capital efficiency."
+  },
+  {
+    "category": "DeFi",
+    "name": "vfat",
+    "origin": "https://vfat.io",
+    "logo": "https://static-assets.rabby.io/files/d869efee-ece5-4a88-b1e9-8f348da75f5f.png",
+    "zh": "集收益聚合、资产看板与 DeFi 工具于一体的多链收益管理平台。",
+    "en": "A multi-chain yield management platform combining yield aggregation, portfolio dashboards, and DeFi tools."
+  },
+  {
+    "category": "DeFi",
+    "name": "Stargate",
+    "origin": "https://stargate.finance",
+    "logo": "https://static-assets.rabby.io/files/67515f72-57b2-4f14-979d-cb06f0ae281c.png",
+    "zh": "基于 LayerZero 的跨链流动性协议,可跨链转移多种主流资产。",
+    "en": "A LayerZero-powered cross-chain liquidity protocol for moving major assets across chains."
+  },
+  {
+    "category": "DeFi",
+    "name": "Relay",
+    "origin": "https://relay.link",
+    "logo": "https://static-assets.rabby.io/files/218ea948-7111-4fb7-b960-2de2308301f3.png",
+    "zh": "面向链上经济的跨链基础设施,主打资产跨链转移与执行能力。",
+    "en": "Cross-chain infrastructure for the onchain economy, focused on asset transfer and execution across networks."
+  },
+  {
+    "category": "DEX",
+    "name": "Uniswap",
+    "origin": "https://app.uniswap.org",
+    "logo": "https://static.debank.com/image/dapp/logo_url/fe004c7bccd24837394c2861a5d4f50c/fe004c7bccd24837394c2861a5d4f50c.png",
+    "zh": "最主流的链上交易入口之一,以 AMM 交易与多链代币兑换为核心。",
+    "en": "One of the most widely used onchain trading venues, centered on AMM swaps and multi-chain token trading."
+  },
+  {
+    "category": "DEX",
+    "name": "PancakeSwap",
+    "origin": "https://pancakeswap.finance",
+    "logo": "https://static.debank.com/image/dapp/logo_url/47366ac53d8be5b8658815a8b2d8b690/47366ac53d8be5b8658815a8b2d8b690.png",
+    "zh": "BNB Chain 代表性 DEX,覆盖兑换、赚币等多类链上交易场景。",
+    "en": "A flagship DEX on BNB Chain that spans swaps, earning products, and broader onchain trading use cases."
+  },
+  {
+    "category": "DEX",
+    "name": "1inch",
+    "origin": "https://1inch.com",
+    "logo": "https://static.debank.com/image/dapp/logo_url/af348fc41a91db595884cf86fc798674/af348fc41a91db595884cf86fc798674.png",
+    "zh": "以找到 DeFi 最优兑换价格为核心卖点的 DEX 聚合器。",
+    "en": "A DEX aggregator best known for finding optimal swap routes and pricing across DeFi."
+  },
+  {
+    "category": "DEX",
+    "name": "Velodrome",
+    "origin": "https://velodrome.finance",
+    "logo": "https://static.debank.com/image/dapp/logo_url/eabfc13510db10c399f6e336b3ac56db/eabfc13510db10c399f6e336b3ac56db.png",
+    "zh": "Optimism 生态代表性 DEX,强调以流动性激励驱动的链上交易市场。",
+    "en": "A flagship DEX in the Optimism ecosystem , built around incentive-driven onchain liquidity markets."
+  },
+  {
+    "category": "DEX",
+    "name": "SushiSwap",
+    "origin": "https://www.sushi.com",
+    "logo": "https://static.debank.com/image/dapp/logo_url/4e9b06f3c3681488239e16d6feab90f7/4e9b06f3c3681488239e16d6feab90f7.png",
+    "zh": "多链 DEX 品牌,核心入口是链上代币兑换。",
+    "en": "A multi-chain DEX brand centered on onchain token swapping."
+  },
+  {
+    "category": "DEX",
+    "name": "LFJ",
+    "origin": "https://lfj.gg",
+    "logo": "https://static-assets.rabby.io/files/3a0cfd89-32b8-4fb9-bbbe-c3414def6f59.png",
+    "zh": "面向链上交易场景的 DEX 品牌,强调更完整的交易体验。",
+    "en": "A DEX brand for onchain trading, positioned around a more com plete trading experience."
+  },
+  {
+    "category": "DEX",
+    "name": "LlamaSwap",
+    "origin": "https://swap.defillama.com",
+    "logo": "https://static.debank.com/image/project/logo_url/arb_defillama/1be7417e6461f9851dcd2521786d41ba.png",
+    "zh": "DefiLlama 提供的聚合式换币入口,主打透明比价与路由。",
+    "en": "A swap aggregator by DefiLlama focused on transparent pricing and route com parison."
+  },
+  {
+    "category": "DEX",
+    "name": "Matcha",
+    "origin": "https://matcha.xyz",
+    "logo": "https://static-assets.rabby.io/files/b4589687-dcde-46f0-9a0d-1264163bcd0b.png",
+    "zh": "由 0x 支持的 DEX 聚合交易前端,强调简洁顺畅的兑换体验。",
+    "en": "A 0x-powered DEX aggregation frontend focused on a sim ple and smooth trading experience."
+  },
+  {
+    "category": "DEX",
+    "name": "Jumper",
+    "origin": "https://jumper.xyz",
+    "logo": "https://static.debank.com/image/dapp/logo_url/e34cbed76d0f3e471938ec2818d317fa/e34cbed76d0f3e471938ec2818d317fa.png",
+    "zh": "多链流动性聚合器,主打为跨链与兑换找到最佳路径。",
+    "en": "A multi-chain liquidity aggregator designed to find the best routes for bridging and swapping."
+  },
+  {
+    "category": "DEX",
+    "name": "Oku",
+    "origin": "https://oku.trade",
+    "logo": "https://static-assets.rabby.io/files/480d47df-d8b5-45b0-9fee-001f36f0647e.png",
+    "zh": "覆盖 swap、bridge、borrow、lend 的一站式非托管 DeFi 聚合平台。",
+    "en": "A one-stop non-custodial DeFi aggregation platform covering swap, bridge, borrow, and lend."
+  },
+  {
+    "category": "DEX",
+    "name": "OpenOcean",
+    "origin": "https://app.openocean.finance",
+    "logo": "https://static-assets.rabby.io/files/27dfccea-dd20-40eb-a285-c86477bccc3e.png",
+    "zh": "主打最佳兑换回报的加密资产聚合交易平台。",
+    "en": "A crypto trading aggregator focused on delivering the best possible swap returns."
+  },
+  {
+    "category": "DEX",
+    "name": "KyberSwap",
+    "origin": "https://kyberswap.com",
+    "logo": "https://static.debank.com/image/dapp/logo_url/0168c8b0aa262c01452d403f2b3cd57f/0168c8b0aa262c01452d403f2b3cd57f.png",
+    "zh": "以聚合流动性和提升交易效率为核心的 DEX 平台。",
+    "en": "A DEX platform built around liquidity aggregation and more efficient onchain trading."
+  },
+  {
+    "category": "DEX",
+    "name": "Fly",
+    "origin": "https://app.fly.trade",
+    "logo": "https://static-assets.rabby.io/files/e97c3f53-4d3b-4c44-9999-159f5b5a8e17.png",
+    "zh": "面向链上交易场景的聚合式交易产品。",
+    "en": "An aggregated trading product designed for onchain trading use cases."
+  },
+  {
+    "category": "NFT",
+    "name": "OpenSea",
+    "origin": "https://opensea.io",
+    "logo": "https://static.debank.com/image/project/logo_url/opensea/4b23246fac2d4ce53bd8e8079844821c.png",
+    "zh": "支持 Token 交易与 NFT 市场的一体化平台。",
+    "en": "An integrated marketplace supporting both token trading and NFTs."
+  },
+  {
+    "category": "NFT",
+    "name": "Blur",
+    "origin": "https://blur.io",
+    "logo": "https://static-assets.rabby.io/files/045512e4-31af-4eeb-bf05-47d08c336204.png",
+    "zh": "面向专业交易者的 NFT Marketplace,突出高频与专业化交易体验。",
+    "en": "An NFT marketplace for professional traders, built around speed and pro-grade trading workflows."
+  },
+  {
+    "category": "NFT",
+    "name": "Element",
+    "origin": "https://element.market",
+    "logo": "https://static.debank.com/image/dapp/logo_url/9c68eb2d51cd82310a38bb7101b217c9/9c68eb2d51cd82310a38bb7101b217c9.png",
+    "zh": "多链 NFT 交易市场,覆盖更广泛的链上 NFT 资产。",
+    "en": "A multi-chain NFT marketplace covering a broader range of onchain NFT assets."
+  },
+  {
+    "category": "NFT",
+    "name": "Zora",
+    "origin": "https://zora.co",
+    "logo": "https://static.debank.com/image/dapp/logo_url/d047b954b7acbc09b4a1049b7908f7b0/d047b954b7acbc09b4a1049b7908f7b0.png",
+    "zh": "以链上内容发布与创作者发行场景为核心的平台。",
+    "en": "A platform centered on onchain content publishing and creator issuance."
+  },
+  {
+    "category": "NFT",
+    "name": "Rarible",
+    "origin": "https://rarible.com",
+    "logo": "https://static.debank.com/image/dapp/logo_url/17b034dc7990b3a5d5bbc56f625700db/17b034dc7990b3a5d5bbc56f625700db.png",
+    "zh": "主打多链 NFT 发行与交易的平台。",
+    "en": "A platform focused on multi-chain NFT issuance and trading."
+  }
+]

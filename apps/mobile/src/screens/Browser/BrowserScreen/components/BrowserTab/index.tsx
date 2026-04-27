@@ -253,6 +253,12 @@ export const BrowserTab = ({
     );
   }, [bookmarkStore.ids, webviewState.resolvedUrl]);
 
+  console.log('BrowserTab render', {
+    isBookmark,
+    url: webviewState.resolvedUrl,
+    bookmarkStore,
+  });
+
   const handleBookmark = useMemoizedFn(() => {
     if (isBookmark) {
       removeBookmark(webviewState.resolvedUrl);

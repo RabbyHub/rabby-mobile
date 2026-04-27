@@ -1,4 +1,5 @@
 import RcIconStarFull from '@/assets/icons/dapp/icon-star-mini-full.svg';
+import hotDappList from '@/constant/hot-dapp.json';
 import { HighlightText } from '@/components2024/HighlightText';
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
@@ -7,6 +8,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import React from 'react';
 import {
+  GestureResponderEvent,
   Image,
   Platform,
   StyleProp,
@@ -16,6 +18,10 @@ import {
 } from 'react-native';
 // import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Text } from '@/components/Typography';
+
+const hotDappIconMap = new Map(
+  hotDappList.map(item => [item.origin, item.logo] as const),
+);
 
 export const BrowserSiteListBy = ({
   data,
@@ -50,21 +56,45 @@ interface DappCardProps {
   isShowFavorite?: boolean;
   isShowBorder?: boolean;
   keyword?: string;
+  ignorePressMoveThreshold?: number;
 }
 
 export const BrowserSiteCard: React.FC<DappCardProps> = ({
   data,
   onPress,
   containerStyle,
+  ignorePressMoveThreshold,
   ...rest
 }) => {
   // const { styles } = useTheme2024({ getStyle });
+  const pressStartRef = React.useRef({ x: 0, y: 0 });
+
+  const handlePressIn = React.useCallback((event: GestureResponderEvent) => {
+    pressStartRef.current = {
+      x: event.nativeEvent.pageX,
+      y: event.nativeEvent.pageY,
+    };
+  }, []);
+
+  const handlePress = React.useCallback(
+    (event: GestureResponderEvent) => {
+      if (ignorePressMoveThreshold) {
+        const diffX = event.nativeEvent.pageX - pressStartRef.current.x;
+        const diffY = event.nativeEvent.pageY - pressStartRef.current.y;
+        if (Math.hypot(diffX, diffY) > ignorePressMoveThreshold) {
+          return;
+        }
+      }
+
+      onPress?.(data);
+    },
+    [data, ignorePressMoveThreshold, onPress],
+  );
 
   return (
     <TouchableOpacity
-      onPress={() => {
-        onPress?.(data);
-      }}
+      onPressIn={handlePressIn}
+      onPress={handlePress}
       style={containerStyle}>
       <BrowserSiteCardInner data={data} {...rest} />
     </TouchableOpacity>
@@ -74,7 +104,6 @@ export const BrowserSiteCard: React.FC<DappCardProps> = ({
 export const BrowserSiteCardInner: React.FC<DappCardProps> = ({
   isActive,
   data,
-  onFavoritePress,
   keyword,
   style,
   isShowDesc = false,
@@ -83,6 +112,7 @@ export const BrowserSiteCardInner: React.FC<DappCardProps> = ({
   isShowBorder = false,
 }) => {
   const { styles } = useTheme2024({ getStyle });
+  const icon = hotDappIconMap.get(data.origin) || data.icon;
 
   // const chain = findChain({ enum: data.chainId });
 
@@ -97,9 +127,9 @@ export const BrowserSiteCardInner: React.FC<DappCardProps> = ({
         <View style={styles.dappIconWraper}>
           <DappIcon
             source={
-              data?.icon
+              icon
                 ? {
-                    uri: data.icon,
+                    uri: icon,
                   }
                 : undefined
             }

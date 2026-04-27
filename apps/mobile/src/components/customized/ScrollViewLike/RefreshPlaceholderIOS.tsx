@@ -95,6 +95,7 @@ export const usePulldownRefreshGesture = <
       .maxPointers(1)
       .onStart(event => {
         startValues.value.startedAtTop = scrollViewYValue.value <= 5;
+        console.log('pan start');
       })
       .onUpdate(event => {
         pullRefresh: {

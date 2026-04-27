@@ -82,6 +82,10 @@ import {
 } from '@/perfs/loadables/navigators';
 import { HomeScreenNavigator } from '@/perfs/loadables/homeRootNavigator';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
+import {
+  DappInfoPopup,
+  GlobalDappInfoPopup,
+} from './screens/Home/components/HomeDappDrawer/HomeDappDrawerPopup';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
@@ -274,6 +278,7 @@ function AppNavigationDeferredGlobals({
         <BottomSheetBrowser />
         <BrowserManagePopup />
         <BrowserFavoritePopup />
+        <GlobalDappInfoPopup />
       </>
     );
   }

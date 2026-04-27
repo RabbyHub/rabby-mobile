@@ -6,7 +6,7 @@ import { v4 as uuid } from 'uuid';
 import { ContentMode } from 'react-native-webview/lib/WebViewTypes';
 
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
-import { browserService } from '@/core/services';
+import { browserService, dappService } from '@/core/services';
 import { Tab } from '@/core/services/browserService';
 import { isGoogle } from '@/utils/browser';
 import {
@@ -96,6 +96,8 @@ type BrowserStateType = {
   searchTabId: string;
   trigger: string;
   isEditingFavorite?: boolean;
+  isShowDappInfo?: boolean;
+  dappInfoUrl?: string;
 };
 
 const browserStateStore = zCreate<BrowserStateType>(() => ({
@@ -103,6 +105,8 @@ const browserStateStore = zCreate<BrowserStateType>(() => ({
   isShowSearch: false,
   isShowManage: false,
   isShowFavorite: false,
+  isShowDappInfo: false,
+  dappInfoUrl: '',
   searchText: '',
   searchTabId: '',
   trigger: '',
@@ -336,11 +340,22 @@ export const browserApis = {
     options?: {
       isDapp?: boolean;
       isNewTab?: boolean;
+      isRemindOpen?: boolean;
     },
   ) => {
     const { isNewTab = false } = options || {};
     if (!url?.trim() || !/^https?:\/\//.test(url)) {
       // switchToTab(emptyTab.id);
+      return;
+    }
+    if (
+      options?.isRemindOpen &&
+      !dappService.getDapp(safeGetOrigin(url))?.isSkipRemind
+    ) {
+      browserApis.setPartialBrowserState({
+        isShowDappInfo: true,
+        dappInfoUrl: url,
+      });
       return;
     }
     const newTab: Tab = {
