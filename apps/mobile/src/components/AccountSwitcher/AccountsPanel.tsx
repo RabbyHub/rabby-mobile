@@ -34,6 +34,11 @@ import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
+
+export type AccountDisabledTipsResolver = (
+  account: Account,
+) => string | undefined;
+
 const SectionCollapsableNav = function ({
   isCollapsed = false,
   title,
@@ -89,6 +94,7 @@ export function AccountsPanelInModal({
   onSwitchSceneAccount,
   token,
   scrollToBottom,
+  getAccountDisabledTips,
 }: // isVisible = false,
 AccountSwitcherAopProps<{
   // isVisible?: boolean;
@@ -100,6 +106,7 @@ AccountSwitcherAopProps<{
   }) => void;
   token?: ITokenItem;
   scrollToBottom(): void;
+  getAccountDisabledTips?: AccountDisabledTipsResolver;
 }>) {
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getPanelStyle,
@@ -251,6 +258,7 @@ AccountSwitcherAopProps<{
                   addressItemProps={{ account }}
                   isCurrent={isCurrent}
                   token={token}
+                  disabledTips={getAccountDisabledTips?.(account)}
                   // isPinned={false}
                   onPressAddress={handlePressAccount}
                   style={[
@@ -268,6 +276,7 @@ AccountSwitcherAopProps<{
       ItemRenderItem,
       finalSceneCurrentAccount,
       handlePressAccount,
+      getAccountDisabledTips,
       isSceneUsingAllAccounts,
       styles.addressItem,
       styles.addressItemTopGap,
@@ -422,6 +431,7 @@ AccountSwitcherAopProps<{
                       token={token}
                       addressItemProps={{ account }}
                       isCurrent={isCurrent}
+                      disabledTips={getAccountDisabledTips?.(account)}
                       onPressAddress={handlePressAccount}
                       style={[
                         styles.addressItem,
@@ -459,6 +469,7 @@ AccountSwitcherAopProps<{
                       token={token}
                       addressItemProps={{ account }}
                       isCurrent={isCurrent}
+                      disabledTips={getAccountDisabledTips?.(account)}
                       onPressAddress={handlePressAccount}
                       style={[
                         styles.addressItem,
@@ -489,6 +500,7 @@ AccountSwitcherAopProps<{
     ItemRenderItem,
     token,
     handlePressAccount,
+    getAccountDisabledTips,
   ]);
 
   const myAddressesList = useCreationWithShallowCompare(() => {
@@ -545,6 +557,7 @@ AccountSwitcherAopProps<{
                     addressItemProps={{ account }}
                     isCurrent={isCurrent}
                     isHideToken={isHideToken}
+                    disabledTips={getAccountDisabledTips?.(account)}
                     onPressAddress={handlePressAccount}
                     style={[
                       styles.addressItem,

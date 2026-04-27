@@ -10,6 +10,7 @@ import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconMarketCC from '@/assets2024/icons/home/IconMarketCC.svg';
+import RcIconConvertDustCC from '@/assets2024/icons/home/IconDustCC.svg';
 
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -688,6 +689,11 @@ export const HomeOverview = React.memo(() => {
           title: t('page.rabbyPoints.title'),
           icon: RcIconPointsCC,
         },
+        {
+          key: MultiHomeFeatTitle.ConvertDust,
+          title: MultiHomeFeatTitle.ConvertDust,
+          icon: RcIconConvertDustCC,
+        },
       ].filter(Boolean) as {
         key: MultiHomeFeatTitle;
         title: string;
@@ -891,6 +897,12 @@ export const HomeOverview = React.memo(() => {
         case MultiHomeFeatTitle.Points:
           navigation.push(RootNames.StackAddress, {
             screen: RootNames.Points,
+            params: {},
+          });
+          break;
+        case MultiHomeFeatTitle.ConvertDust:
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.ConvertDust,
             params: {},
           });
           break;
