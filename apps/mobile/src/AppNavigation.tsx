@@ -62,7 +62,6 @@ import {
   FloatingDiagnosticsPanel,
   GlobalMiniApproval,
   GlobalMiniSignTypedDataPortal,
-  GlobalSearchBottomSheet,
   GlobalSecurityTipStubModal,
   GlobalSignerPortal,
   GlobalTipsPopup,
@@ -270,7 +269,6 @@ function AppNavigationDeferredGlobals({
         <InnerDappWebViewPreloadEntry />
         <BiometricsStubModal />
         <ApprovalTokenDetailSheetModalStub />
-        <GlobalSearchBottomSheet />
         <BottomSheetBrowser />
         <BrowserManagePopup />
         <BrowserFavoritePopup />
