@@ -48,7 +48,7 @@ const mapHotDappListToDappInfo = ({
     return {
       ...dapp,
       origin: item.origin,
-      icon: dapp?.icon || item.logo || '',
+      icon: item.logo || dapp?.icon || '',
       name: item.name,
       chainId: undefined as unknown as DappInfo['chainId'],
       isDapp: true,
@@ -56,7 +56,7 @@ const mapHotDappListToDappInfo = ({
         ...dapp?.info,
         id: item.origin.replace(/^https?:\/\//, ''),
         name: item.name,
-        logo_url: dapp?.icon || item.logo || '',
+        logo_url: item.logo || dapp?.icon || '',
         description: isZh ? item.zh : item.en,
         user_range: '',
         tags: item.category ? [item.category] : [],
