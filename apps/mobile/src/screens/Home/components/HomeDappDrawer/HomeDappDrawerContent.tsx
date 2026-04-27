@@ -18,7 +18,11 @@ import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { DappInfo } from '@/core/services/dappService';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import CustomLabel from '@/screens/TokenDetail/components/CustomLabel';
-import { NativeGesture } from 'react-native-gesture-handler';
+import {
+  Gesture,
+  GestureDetector,
+  NativeGesture,
+} from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 import {
   homeDrawerAnimateMutable,
@@ -261,6 +265,15 @@ export const HomeDappDrawerContent: React.FC<{
     }
   }, [completeEditing, isEditing, startEditing]);
 
+  const headerGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .enabled(IS_ANDROID)
+        .activeOffsetX([-6, 6])
+        .failOffsetY([-8, 8]),
+    [],
+  );
+
   const renderTabContent = useMemoizedFn(
     (tabKey: TabKey, isAndroidTab = false) => {
       const contentStyle = isAndroidTab
@@ -299,19 +312,21 @@ export const HomeDappDrawerContent: React.FC<{
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('page.home.DappDrawer.websites')}</Text>
-        {activeTab === 'favorite' ? (
-          <TouchableOpacity
-            disabled={!hasData}
-            onPress={handle}
-            style={!hasData ? styles.editDisabled : undefined}>
-            <Text style={styles.edit}>
-              {isEditing ? t('global.Done') : t('global.Edit')}
-            </Text>
-          </TouchableOpacity>
-        ) : null}
-      </View>
+      <GestureDetector gesture={headerGesture}>
+        <View style={styles.header}>
+          <Text style={styles.title}>{t('page.home.DappDrawer.websites')}</Text>
+          {activeTab === 'favorite' ? (
+            <TouchableOpacity
+              disabled={!hasData}
+              onPress={handle}
+              style={!hasData ? styles.editDisabled : undefined}>
+              <Text style={styles.edit}>
+                {isEditing ? t('global.Done') : t('global.Edit')}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      </GestureDetector>
       {IS_ANDROID ? (
         <HomeDappDrawerAndroidTabs
           tabs={androidTabs}

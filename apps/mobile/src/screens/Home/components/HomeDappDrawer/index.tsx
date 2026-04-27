@@ -127,6 +127,15 @@ export const HomeDappDrawer: React.FC<{
     }
   }, [onScrollBack]);
 
+  const footerGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .enabled(IS_ANDROID)
+        .activeOffsetX([-6, 6])
+        .failOffsetY([-8, 8]),
+    [],
+  );
+
   const scrollableStatus = useSharedValue<SCROLLABLE_STATUS>(
     SCROLLABLE_STATUS.UNLOCKED,
   );
@@ -482,41 +491,43 @@ export const HomeDappDrawer: React.FC<{
               </View>
             </View>
 
-            <View style={[styles.footer]}>
-              <TouchableOpacity onPress={onPressHome}>
-                <ReactIconHome
-                  width={44}
-                  height={44}
-                  color={colors2024['neutral-title-1']}
-                  backgroundColor={colors2024['neutral-bg-5']}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.fabContainer]}
-                onPress={() => {
-                  setPartialBrowserState({
-                    isShowBrowser: true,
-                    isShowSearch: true,
-                    searchText: '',
-                    searchTabId: '',
-                    trigger: 'home',
-                  });
-                }}>
-                <View style={styles.innerCircle}>
-                  <RcNextSearchCC
-                    width={20}
-                    height={20}
-                    style={styles.icon}
-                    color={colors2024['neutral-secondary']}
+            <GestureDetector gesture={footerGesture}>
+              <View style={[styles.footer]}>
+                <TouchableOpacity onPress={onPressHome}>
+                  <ReactIconHome
+                    width={44}
+                    height={44}
+                    color={colors2024['neutral-title-1']}
+                    backgroundColor={colors2024['neutral-bg-5']}
                   />
-                  <Text style={styles.text}>
-                    {t('page.browser.BrowserSearchEntry.searchWebsite')}
-                  </Text>
-                  <View style={{ width: 20 }} />
-                </View>
-              </TouchableOpacity>
-            </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.fabContainer]}
+                  onPress={() => {
+                    setPartialBrowserState({
+                      isShowBrowser: true,
+                      isShowSearch: true,
+                      searchText: '',
+                      searchTabId: '',
+                      trigger: 'home',
+                    });
+                  }}>
+                  <View style={styles.innerCircle}>
+                    <RcNextSearchCC
+                      width={20}
+                      height={20}
+                      style={styles.icon}
+                      color={colors2024['neutral-secondary']}
+                    />
+                    <Text style={styles.text}>
+                      {t('page.browser.BrowserSearchEntry.searchWebsite')}
+                    </Text>
+                    <View style={{ width: 20 }} />
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </GestureDetector>
           </View>
         </Animated.View>
       </Animated.View>
