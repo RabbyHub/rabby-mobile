@@ -34,6 +34,11 @@ import { useShallow } from 'zustand/react/shallow';
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedSVG = Animated.createAnimatedComponent(Svg);
 const ScreenWidth = Dimensions.get('screen').width;
+const CHART_HORIZONTAL_INSET = 66;
+
+const MAX_NETWORTH_FS = 38;
+const MIN_NETWORTH_FS = 34;
+const NETWORTH_FIT_LEN = 8;
 
 const svIsFoldMultiChart = makeMutable(true);
 
@@ -94,7 +99,7 @@ const ChartContent = memo(function ChartContent({
       {!chartsData.length ? null : !isAnyAddrLoading ? (
         <LineChart
           height={CHART_HEIGHT}
-          width={winWidth - 72}
+          width={winWidth - CHART_HORIZONTAL_INSET}
           shape={d3Shape.curveCatmullRom}
           style={[
             styles.relative,
@@ -306,6 +311,13 @@ const ChartHeader = React.memo(
       };
     }, [isLoss, data, currentIndex, colors2024, styles, hideType]);
 
+    const netWorthFontStyle = useAnimatedStyle(() => {
+      // TODO: should be using adjustFontSizeToFit, fix it upstream first
+      const len = formatNetWorth.value?.length ?? 0;
+      const fs = len <= NETWORTH_FIT_LEN ? MAX_NETWORTH_FS : MIN_NETWORTH_FS;
+      return { fontSize: fs };
+    });
+
     const netWorthAnimatedProps = useAnimatedProps(() => {
       return {
         text: formatNetWorth.value,
@@ -350,11 +362,15 @@ const ChartHeader = React.memo(
       <Animated.View style={rStyles.charHeader}>
         <View style={styles.netWorthContainer}>
           <View
-            style={showNetWorthLoading ? styles.hidden : undefined}
+            style={[
+              styles.netWorthTextContainer,
+              showNetWorthLoading ? styles.hidden : undefined,
+            ]}
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceValue)}>
             <AnimateableText
               style={[
                 styles.netWorth,
+                netWorthFontStyle,
                 hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
               ]}
               animatedProps={netWorthAnimatedProps}
@@ -411,7 +427,7 @@ const ChartHeader = React.memo(
               hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
             ]}>
             {isHidden ? (
-              <Text>***</Text>
+              <Text style={{ color: colors2024['neutral-title-1'] }}>***</Text>
             ) : (
               <>
                 <AnimateableText
@@ -456,8 +472,9 @@ const getStyle = createGetStyles2024(
           alignContent: 'flex-start',
           justifyContent: 'flex-start',
           flexDirection: 'column',
-          maxWidth: Math.max(winWidth, winLayout.value.width) - 72,
-          gap: 6,
+          maxWidth:
+            Math.max(winWidth, winLayout.value.width) - CHART_HORIZONTAL_INSET,
+          gap: 4,
           // ...makeDebugBorder('blue'),
         };
       },
@@ -478,9 +495,8 @@ const getStyle = createGetStyles2024(
         : colors2024['neutral-bg-2'],
     },
     netWorth: {
-      fontSize: 42,
       lineHeight: 46,
-      fontWeight: '900',
+      fontWeight: '800',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
     },
@@ -528,7 +544,7 @@ const getStyle = createGetStyles2024(
       marginBottom: 13,
     },
     loading: {
-      width: ScreenWidth - 72,
+      width: ScreenWidth - CHART_HORIZONTAL_INSET,
       height: 114,
       paddingHorizontal: 0,
     },
@@ -549,6 +565,10 @@ const getStyle = createGetStyles2024(
       justifyContent: 'space-between',
       // ...makeDebugBorder('orange'),
       lineHeight: 46,
+    },
+    netWorthTextContainer: {
+      flex: 1,
+      marginRight: 12,
     },
     hidden: {
       display: 'none',

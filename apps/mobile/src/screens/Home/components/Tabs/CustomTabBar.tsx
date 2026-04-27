@@ -1,16 +1,14 @@
 import { useCallback, useRef } from 'react';
-import { StyleProp, View, ViewStyle } from 'react-native';
+import { View } from 'react-native';
 import {
   MaterialTabBar,
   MaterialTabBarProps,
   MaterialTabItem,
 } from 'react-native-collapsible-tab-view';
-import { AnimatedStyle } from 'react-native-reanimated';
 import { getAddrChainInfo, useAddrTop3Chains } from '../../useChainInfo';
 import { ChainSelector } from '../AssetRenderItems/SectionHeaders';
 import {
   apisSingleHome,
-  useHomeReachTop,
   useSingleHomeAddress,
   useSingleHomeChain,
 } from '../../hooks/singleHome';
@@ -132,7 +130,7 @@ export const DynamicCustomMaterialTabBar = (
   );
 };
 
-const getTabItemStyle = createGetStyles2024(ctx => {
+const getTabItemStyle = createGetStyles2024(() => {
   return {
     tabBar: {
       height: 32,

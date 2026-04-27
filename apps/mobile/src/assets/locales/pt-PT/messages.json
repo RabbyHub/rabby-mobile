@@ -406,7 +406,9 @@
     },
     "Imported": "Importado",
     "Created": "Criado",
-    "SavedSeedPhrase": "Eu salvei a seed phrase."
+    "SavedSeedPhrase": "Eu salvei a seed phrase.",
+    "from": "De",
+    "to": "Para"
   },
   "page": {
     "getStart": {
@@ -2274,7 +2276,8 @@
       "headerTokenValueText": "Valor do Token",
       "price": "Preço",
       "headerBalanceText": "Saldo",
-      "copyCA": "Endereço do contrato do Token copiado"
+      "copyCA": "Endereço do contrato do Token copiado",
+      "wallet": "Carteira"
     },
     "customTestnet": {
       "add": "Adicionar Rede Personalizada",
@@ -2467,12 +2470,12 @@
         "subtitle": "quando ficar sem gas"
       },
       "gasBalance": "Saldo de Gas",
-      "depositWith": "Depósito com",
       "depositNow": "Deposite agora",
       "switchAccount": "Mudar Carteira",
       "depositFailed": "Depósito falhou",
       "lowBalance": "Você não tem gás suficiente. Deposite gás para garantir que as futuras transações ocorram sem problemas.",
-      "depositSubmitted": "Depósito Submetido"
+      "depositSubmitted": "Depósito Submetido",
+      "depositWith": "Depositar via"
     },
     "settingModal": {
       "themeMode": {
@@ -2848,7 +2851,10 @@
         "selectWithdrawToken": "Selecionar token",
         "hypeFeeTip": "Taxa: ~${{fee}}",
         "hypeActivationFeeTooltip": "Uma taxa de ativação única de {{fee}} será cobrada pela Hyperliquid para a primeira retirada do HyperEVM.",
-        "hypeGasFeeTooltip": "Uma taxa de ~0.00002 HYPE será cobrada para retirar para o EVM."
+        "hypeGasFeeTooltip": "Uma taxa de ~0.00002 HYPE será cobrada para retirar para o EVM.",
+        "chain": "Chain",
+        "max": "Máximo",
+        "selectChain": "Selecionar Chain"
       },
       "PerpsWithdrawFeePopup": {
         "title": "Taxa",
@@ -2881,7 +2887,10 @@
         "feeHyperliquid": "Hyperliquid",
         "feeTitle": "Taxa",
         "feeRabby": "Rabby Wallet",
-        "feeDesc": "Quando os utilizadores realizam transações, tanto as <1>taxas de negociação</1> como as <2>taxas de construção</2> se aplicam."
+        "feeDesc": "Quando os utilizadores realizam transações, tanto as <1>taxas de negociação</1> como as <2>taxas de construção</2> se aplicam.",
+        "amount": "Valor",
+        "asset": "Ativo",
+        "action": "Ação"
       },
       "PerpsAutoCloseModal": {
         "takeProfit": "Levar lucro",
@@ -2921,7 +2930,17 @@
         "withdraw": "Retirar",
         "closeShortTp": "Fechar Short Lucro de Toma",
         "closeLong": "Fechar Long",
-        "openLong": "Abrir Longo"
+        "openLong": "Abrir Longo",
+        "transferToSpot": "Transferir para Spot",
+        "transferToPerps": "Transferir para Perps",
+        "transferDetailTitle": "Transferir",
+        "transferActionToSpot": "Transferir (de Perps para Spot)",
+        "transferActionToPerps": "Transferir (de Spot para Perps)",
+        "transferGotIt": "Entendi",
+        "action": "Ação",
+        "asset": "Ativo",
+        "value": "Valor",
+        "date": "Data"
       },
       "PerpsSelectTokenPopup": {
         "title": "Selecionar Token para Depositar",
@@ -2936,7 +2955,8 @@
       },
       "PerpsDepositCard": {
         "availableToTrade": "Disponível para negociar:",
-        "deposit": "Depositar"
+        "deposit": "Depositar",
+        "swap": "Trocar"
       },
       "PerpsAccountSelectorPopup": {
         "notActivatedAddress": "Não Ativado",
@@ -2949,6 +2969,10 @@
       "title": "Perps",
       "more": "Mais",
       "explorePerps": "Explorar Perps",
+      "categories": {
+        "favorite": "Favorito",
+        "topVolume": "Maior Volume"
+      },
       "positions": "Posições",
       "leverageRangeMinError": "A alavancagem mínima é {{min}}x",
       "deleteAgentSuccess": "Agente eliminado com sucesso",
@@ -2994,6 +3018,42 @@
       },
       "dappSelect": {
         "title": "Selecionar Provedor de Perps"
+      },
+      "search": {
+        "headerTitle": "Pesquisar Perps",
+        "placeholder": "Pesquisar Perps",
+        "empty": "Nenhum resultado encontrado"
+      },
+      "EnableUnifiedAccount": {
+        "title": "Ativar Conta Unificada",
+        "desc": "A Conta Unificada é o modo de conta recomendado que simplifica a experiência de negociação. Os saldos de Spot e Perps são fundidos para todos os tokens, e a margem cruzada é suportada em todos os ativos disponíveis.",
+        "confirm": "Confirmar",
+        "cancel": "Cancelar",
+        "importantTips": "Toda a garantia USDC será usada como margem cruzada assim que a Conta Unificada for ativada.",
+        "important": "Importante"
+      },
+      "PerpsSpotSwap": {
+        "title": "Trocar Stablecoins",
+        "from": "De",
+        "to": "Trocar Para",
+        "balance": "Saldo",
+        "swapBtn": "Trocar",
+        "max": "Máx",
+        "estReceive": "Rec. Est.: {{amount}} {{coin}}",
+        "estReceiveTooltip": "O valor estimado a receber está sujeito a flutuações do preço de mercado.",
+        "toSwapEntry": "Para trocar→",
+        "toDepositEntry": "Para depositar→",
+        "insufficientBalance": "Saldo insuficiente",
+        "invalidAmount": "Por favor, insira um valor válido",
+        "minimumAmount": "O valor mínimo de troca é {{amount}}"
+      },
+      "PerpMarginModePopup": {
+        "crossRequiresUnified": "A margem cruzada para este par de negociação requer uma Conta Unificada. Gostaria de ativá-la?"
+      },
+      "PerpsMultiBalance": {
+        "title": "Saldos Hyperliquid",
+        "deposit": "Depositar",
+        "withdraw": "Levantar"
       }
     },
     "perpsDetail": {
@@ -3164,6 +3224,9 @@
       },
       "guideEntry": {
         "gotIt": "Entendi"
+      },
+      "PerpsAbout": {
+        "title": "Sobre"
       }
     },
     "devUIBuiltInPages": {

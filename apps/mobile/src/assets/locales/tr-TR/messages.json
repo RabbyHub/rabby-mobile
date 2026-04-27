@@ -1934,9 +1934,9 @@
       "switchAccount": "Cüzdanı Değiştir",
       "lowBalance": "Yeterli gazınız yok. Gelecekteki işlemlerin sorunsuz geçmesi için gaz depozitosu yapın.",
       "gasBalance": "Gaz Bakiyesi",
-      "depositWith": "Deposit with",
       "depositFailed": "Yatırım başarısız oldu",
-      "depositSubmitted": "Yatırma Gönderildi"
+      "depositSubmitted": "Yatırma Gönderildi",
+      "depositWith": "Şu yolla yatır"
     },
     "tokenDetail": {
       "action": {
@@ -2063,7 +2063,8 @@
       "price": "Fiyat",
       "headerTokenValueText": "Token Değeri",
       "headerBalanceText": "Bakiyeniz",
-      "copyCA": "Token sözleşmesi adresi kopyalandı"
+      "copyCA": "Token sözleşmesi adresi kopyalandı",
+      "wallet": "Cüzdan"
     },
     "approvalsAddressList": {
       "title": "Onaylar"
@@ -2470,7 +2471,10 @@
         "selectWithdrawToken": "Token seçin",
         "hypeFeeTip": "Ücret : ~${{fee}}",
         "hypeGasFeeTooltip": "EVM'ye para çekmek için ~0.00002 HYPE ücreti alınacaktır.",
-        "hypeActivationFeeTooltip": "Hyperliquid, ilk HyperEVM çekimi için {{fee}} tutarında bir defaya mahsus aktivasyon ücreti talep edecektir."
+        "hypeActivationFeeTooltip": "Hyperliquid, ilk HyperEVM çekimi için {{fee}} tutarında bir defaya mahsus aktivasyon ücreti talep edecektir.",
+        "chain": "Zincir",
+        "max": "Maksimum",
+        "selectChain": "Zincir Seç"
       },
       "PerpsWithdrawFeePopup": {
         "title": "Ücret",
@@ -2503,7 +2507,10 @@
         "feeRabby": "Rabby Cüzdan",
         "feeHyperliquid": "Hyperliquid",
         "feeTitle": "Ücret",
-        "feeDesc": "Kullanıcılar işlemlerini gerçekleştirdiğinde, hem <1>trading fees</1> hem de <2>builder fees</2> uygulanır."
+        "feeDesc": "Kullanıcılar işlemlerini gerçekleştirdiğinde, hem <1>trading fees</1> hem de <2>builder fees</2> uygulanır.",
+        "amount": "Miktar",
+        "asset": "Varlık",
+        "action": "Eylem"
       },
       "PerpsAutoCloseModal": {
         "profit": "Kar Sırası",
@@ -2543,7 +2550,17 @@
         "closeShortLiquidation": "Kapat Kısa Tasfiye",
         "closeLongSl": "Close Long zararı durdurma",
         "openShort": "Kısa Pozisyon Aç",
-        "closeShortTp": "Kapat Kısa Kar Al"
+        "closeShortTp": "Kapat Kısa Kar Al",
+        "transferToSpot": "Spot'a Transfer",
+        "transferToPerps": "Perps'a Transfer",
+        "transferDetailTitle": "Transfer",
+        "transferActionToSpot": "Transfer (Perps'tan Spot'a)",
+        "transferActionToPerps": "Transfer (Spot'tan Perps'e)",
+        "transferGotIt": "Anladım",
+        "action": "İşlem",
+        "asset": "Varlık",
+        "value": "Değer",
+        "date": "Tarih"
       },
       "PerpsSelectTokenPopup": {
         "title": "Token Yatırmak İçin Seçin",
@@ -2558,7 +2575,8 @@
       },
       "PerpsDepositCard": {
         "deposit": "Yatırma",
-        "availableToTrade": "Ticaret için mevcut:"
+        "availableToTrade": "Ticaret için mevcut:",
+        "swap": "Takas"
       },
       "PerpsAccountSelectorPopup": {
         "lastUsed": "Son Kullanım",
@@ -2573,6 +2591,10 @@
       "positions": "Pozisyonlar",
       "deleteAgentModal": "Maksimum ajan sayısına ulaştınız. Yeni bir oluşturmak için mevcut bir ajanın silinmesini ister misiniz?",
       "explorePerps": "Perps'ı Keşfet",
+      "categories": {
+        "favorite": "Favori",
+        "topVolume": "En Yüksek Hacim"
+      },
       "leverageRangeMaxError": "Maksimum kaldıraç {{max}}x'dir.",
       "deleteAgentSuccess": "Ajan başarıyla silindi",
       "leverageRangeMinError": "Minimum kaldıraç {{min}}x'dir.",
@@ -2616,6 +2638,42 @@
       },
       "dappSelect": {
         "title": "Perps Sağlayıcısını Seçin"
+      },
+      "search": {
+        "headerTitle": "Perps Araştır",
+        "placeholder": "Perps Araştır",
+        "empty": "Sonuç bulunamadı"
+      },
+      "EnableUnifiedAccount": {
+        "title": "Birleşik Hesabı Etkinleştir",
+        "desc": "Birleşik Hesap, işlem deneyimini basitleştiren önerilen hesap modudur. Spot ve Perps bakiyeleri tüm tokenler için birleştirilir ve tüm mevcut varlıklarda çapraz marj desteklenir.",
+        "confirm": "Onayla",
+        "cancel": "İptal Et",
+        "importantTips": "Birleşik Hesap etkinleştirildiğinde, tüm USDC teminatı çapraz marj olarak kullanılacaktır.",
+        "important": "Önemli"
+      },
+      "PerpsSpotSwap": {
+        "title": "Stablecoin Takası",
+        "from": "Kimden",
+        "to": "Takasa",
+        "balance": "Bakiye",
+        "swapBtn": "Takas",
+        "max": "Maks",
+        "estReceive": "Tah. Alış: {{amount}} {{coin}}",
+        "estReceiveTooltip": "Tahmini alış tutarı piyasa fiyat dalgalanmalarına tabidir.",
+        "toSwapEntry": "Takas etmek için→",
+        "toDepositEntry": "Yatırmak için→",
+        "insufficientBalance": "Yetersiz bakiye",
+        "invalidAmount": "Lütfen geçerli bir tutar girin",
+        "minimumAmount": "Minimum takas tutarı {{amount}}"
+      },
+      "PerpMarginModePopup": {
+        "crossRequiresUnified": "Bu işlem çifti için çapraz marjin Birleşik Bir Hesap gerektirir. Etkinleştirmek ister misiniz?"
+      },
+      "PerpsMultiBalance": {
+        "title": "Hyperliquid Bakiyeleri",
+        "deposit": "Yatır",
+        "withdraw": "Çek"
       }
     },
     "perpsDetail": {
@@ -2786,6 +2844,9 @@
       },
       "guideEntry": {
         "gotIt": "Tamamdır"
+      },
+      "PerpsAbout": {
+        "title": "Hakkında"
       }
     },
     "devUIBuiltInPages": {
@@ -3515,7 +3576,9 @@
     },
     "Imported": "İçe Aktarıldı",
     "Created": "Oluşturuldu",
-    "SavedSeedPhrase": "Seed ifrasını kaydettim."
+    "SavedSeedPhrase": "Seed ifrasını kaydettim.",
+    "from": "Kimden",
+    "to": "Kime"
   },
   "background": {
     "error": {

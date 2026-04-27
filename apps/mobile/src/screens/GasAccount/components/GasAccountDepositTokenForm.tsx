@@ -960,6 +960,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
       {tokenPickerVisible ? (
         <GasAccountDepositTokenPicker
           visible={tokenPickerVisible}
+          accounts={myAccounts}
           availableTokens={availableTokens}
           isCheckingAvailability={isCheckingAvailability}
           onClose={() => setTokenPickerVisible(false)}

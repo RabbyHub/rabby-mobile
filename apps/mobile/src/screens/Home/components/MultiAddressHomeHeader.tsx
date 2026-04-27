@@ -5,22 +5,12 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {
-  Dimensions,
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Dimensions, Platform, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
 
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 
 import addressBalanceStore from '@/store/balance';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -45,7 +35,6 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
-import { RNGHTouchableOpacity } from '@/components/customized/reexports';
 import { computeBalanceChange } from '@/core/apis/balance';
 import { balance24hStore } from '@/store/balance24h';
 import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
@@ -262,12 +251,7 @@ export function MultiAddressHomeHeader(
             }}
           />
         </View>
-        <RNLinearGradient
-          colors={
-            isLight
-              ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
-              : ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0)']
-          }
+        <View
           style={[
             styles.curveBoxChildMH,
             styles.curveBox,
@@ -285,11 +269,11 @@ export function MultiAddressHomeHeader(
             pointerEvents="none"
             colors={
               isLight
-                ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
-                : ['rgba(0, 0, 0, 0.40)', 'rgba(0, 0, 0, 0.10)']
+                ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, .54)']
+                : ['rgba(0, 0, 0, 0.10)', '#232428']
             }
-            start={isLight ? { x: 0.25, y: 0.5 } : { x: 0.02, y: 1.04 }}
-            end={isLight ? { x: 0.75, y: 0.5 } : { x: 1, y: 0.1 }}
+            start={isLight ? { x: 0.25, y: 0.5 } : { x: 1.07, y: 0.42 }}
+            end={isLight ? { x: 0.75, y: 0.5 } : { x: -0.14, y: 0.59 }}
             style={[
               styles.curveCardGradientBg,
               isAnimRunning && styles.curveCardGradientBgWithAnim,
@@ -318,7 +302,7 @@ export function MultiAddressHomeHeader(
               />
             ) : null}
           </TouchableOpacity>
-        </RNLinearGradient>
+        </View>
       </BlurShadowView>
     </View>
   );
@@ -352,13 +336,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       marginTop: 0,
       paddingVertical: 0,
       width: '100%',
-      // ...makeDebugBorder('orange'),
     },
     homecardWrapper: {
       position: 'relative',
       paddingTop: 0,
       backgroundColor: 'transparent',
-      // ...makeDebugBorder('yellow'),
       paddingVertical: 0,
       paddingHorizontal: SIZES.cardLayoutPaddingHorizontal,
       minHeight: SIZES.homecardMinHeight,
@@ -366,7 +348,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       justifyContent: 'center',
       width: '100%',
-      // ...makeDebugBorder('blue'),
     },
     localWebViewWrapper: {
       position: 'absolute',
@@ -375,7 +356,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       left: 0,
       right: 0,
       zIndex: IS_IOS ? 1 : -1,
-      // paddingVertical: 0,
       marginHorizontal:
         isLight && IS_IOS ? 0 : SIZES.cardLayoutPaddingHorizontal,
       borderRadius: SIZES.cardContentRadius,
@@ -403,11 +383,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderWidth: isLight ? curveCardBorderWidth : 0,
       borderColor: 'transparent',
       borderRadius: SIZES.cardContentRadius,
-      // ...makeDevOnlyStyle({
-      //   opacity: 0,
-      // }),
       minWidth: cardMinW,
-      // ...makeDebugBorder('yellow'),
       width: '100%',
       alignItems: 'center',
       position: 'relative',
@@ -427,9 +403,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingVertical: SIZES.curveCardPy,
       paddingHorizontal: 0,
       borderWidth: 0,
-      borderColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-line'],
       backgroundColor: 'transparent',
       // ...makeDebugBorder('purple'),
     },
@@ -443,15 +416,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       left: 0,
       right: 0,
       borderRadius: SIZES.cardContentRadius,
-      ...(!isLight && {
-        borderWidth: 2,
-        borderColor: 'rgba(37, 38, 40, 1)',
-      }),
+      borderWidth: 1,
+      borderColor: isLight ? 'rgba(255, 255, 255, 1)' : 'rgba(35, 36, 40, 1)',
     },
     curveCardGradientBgWithAnim: {
-      ...(!isLight && {
-        borderColor: 'rgba(37, 38, 40, 0.1)',
-      }),
+      borderColor: isLight ? 'rgba(255, 255, 255, .1)' : 'rgba(35, 36, 40, .1)',
     },
     shadowView: {
       ...Platform.select({
@@ -473,15 +442,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
 
     multiChart: {
-      paddingTop: 24,
-      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingHorizontal: 16,
       width: '100%',
       minWidth: cardMinW,
-      // ...makeDebugBorder('purple'),
     },
 
     multiChartNoAccountsFollow: {
-      marginBottom: 24,
+      marginBottom: 20,
     },
 
     accountList: {

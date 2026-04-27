@@ -1,4 +1,5 @@
 import { contactService } from '@/core/services';
+import { AccountInfoEntity } from '@/databases/entities/accountInfo';
 import { batchBalanceWithLocalCache } from '@/databases/hooks/balance';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useCreationWithDeepCompare } from '@/hooks/common/useMemozied';
@@ -6,17 +7,17 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { filterMyAccounts, findAccountByPriority } from '@/utils/account';
 import { ellipsisAddress } from '@/utils/address';
 import { getTokenSettings } from '@/utils/getTokenSettings';
+import { sortWhitelistRecordsForSend } from '@/utils/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { KeyringTypeName } from '@rabby-wallet/keyring-utils/src/types';
-import { groupBy } from 'lodash';
-import { useCallback, useLayoutEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const isSameAddress = addressUtils.isSameAddress;
 
 export const useFindAddressByWhitelist = () => {
   const {
     whitelist,
+    whitelistRecords,
     enable: enabled,
     isAddrOnWhitelist,
   } = useWhitelist({
@@ -121,6 +122,7 @@ export const useFindAddressByWhitelist = () => {
     accounts,
     enabled,
     whitelist,
+    whitelistRecords,
     isAddrOnWhitelist,
     findAccount,
     findAccountWithoutBalance,
@@ -128,11 +130,59 @@ export const useFindAddressByWhitelist = () => {
 };
 
 export function useWhitelistVariedAccounts() {
-  const { accounts, whitelist, isAddrOnWhitelist, findAccountWithoutBalance } =
+  const { accounts, whitelist, whitelistRecords, findAccountWithoutBalance } =
     useFindAddressByWhitelist();
+  const [resolvedAddedAtByAddress, setResolvedAddedAtByAddress] = useState<
+    Record<string, number>
+  >({});
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    const loadAddedAtByAddress = async () => {
+      if (!whitelist.length) {
+        setResolvedAddedAtByAddress({});
+        return;
+      }
+
+      try {
+        const nextResolvedAddedAtByAddress =
+          await AccountInfoEntity.getCreatedAtByAddresses(whitelist);
+
+        if (isCurrent) {
+          setResolvedAddedAtByAddress(nextResolvedAddedAtByAddress);
+        }
+      } catch {
+        if (isCurrent) {
+          setResolvedAddedAtByAddress({});
+        }
+      }
+    };
+
+    loadAddedAtByAddress();
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [whitelist]);
 
   const myAccounts = useCreationWithDeepCompare(() => {
     return filterMyAccounts(accounts);
+  }, [accounts]);
+
+  const accountsByAddress = useCreationWithDeepCompare(() => {
+    return accounts.reduce<Record<string, KeyringAccountWithAlias[]>>(
+      (result, account) => {
+        const key = account.address.toLowerCase();
+        if (!result[key]) {
+          result[key] = [];
+        }
+        result[key].push(account);
+
+        return result;
+      },
+      {},
+    );
   }, [accounts]);
 
   const { list } = useCreationWithDeepCompare(() => {
@@ -140,45 +190,40 @@ export function useWhitelistVariedAccounts() {
       list: [] as KeyringAccountWithAlias[],
     };
 
-    const groupAccounts = groupBy(accounts, item => item.address.toLowerCase());
-    const uniqueAccounts = Object.values(groupAccounts).map(item =>
-      findAccountByPriority(item),
-    );
-    const importAddress: KeyringAccountWithAlias[] = uniqueAccounts
-      .filter(acc => isAddrOnWhitelist(acc.address))
-      .map(acc => ({
-        address: acc.address,
-        aliasName:
-          contactService.getAliasByAddress(acc.address)?.alias ||
-          acc.aliasName ||
-          ellipsisAddress(acc.address),
-        balance: acc.balance || 0,
-        type: acc.brandName as KeyringTypeName,
-        brandName: acc.brandName,
-      }));
-    const importPlainAddress = [
-      ...new Set(importAddress.map(item => item.address)),
-    ];
-    const unimportAddress: KeyringAccountWithAlias[] = whitelist
-      .filter(
-        item => !importPlainAddress.some(plain => isSameAddress(plain, item)),
-      )
-      .map(address => ({
+    ret.list = sortWhitelistRecordsForSend(
+      whitelistRecords,
+      resolvedAddedAtByAddress,
+    ).map(record => {
+      const address = record.address;
+      const aliasName =
+        contactService.getAliasByAddress(address)?.alias ||
+        ellipsisAddress(address);
+      const matchedAccounts = accountsByAddress[address.toLowerCase()] || [];
+
+      if (matchedAccounts.length) {
+        const preferredAccount = findAccountByPriority(matchedAccounts);
+
+        return {
+          ...preferredAccount,
+          aliasName:
+            aliasName ||
+            preferredAccount.aliasName ||
+            ellipsisAddress(preferredAccount.address),
+          balance: preferredAccount.balance || 0,
+        };
+      }
+
+      return {
         address,
-        aliasName:
-          contactService.getAliasByAddress(address)?.alias ||
-          ellipsisAddress(address),
+        aliasName,
         balance: 0,
         type: KEYRING_CLASS.WATCH,
         brandName: KEYRING_CLASS.WATCH,
-      }));
-
-    ret.list = [...unimportAddress, ...importAddress].sort(
-      (a, b) => (b.balance || 0) - (a.balance || 0),
-    );
+      };
+    });
 
     return ret;
-  }, [accounts, whitelist]);
+  }, [accountsByAddress, resolvedAddedAtByAddress, whitelistRecords]);
 
   return {
     list,

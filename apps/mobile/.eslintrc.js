@@ -2,10 +2,18 @@ module.exports = {
   root: true,
   // extends: '@react-native',
   extends: '@react-native-community',
+  plugins: ['import'],
   rules: {
     'react/react-in-jsx-scope': 'off',
     'react-hooks/exhaustive-deps': 'error',
     '@typescript-eslint/no-unused-vars': 'warn',
+    'import/no-cycle': [
+      'warn',
+      {
+        maxDepth: 12,
+        ignoreExternal: true,
+      },
+    ],
     'no-restricted-imports': [
       'error',
       {
@@ -47,5 +55,10 @@ module.exports = {
         ],
       },
     ],
+  },
+  settings: {
+    'import/resolver': {
+      typescript: {},
+    },
   },
 };

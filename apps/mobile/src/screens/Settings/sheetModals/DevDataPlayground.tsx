@@ -82,6 +82,17 @@ export default function DevDataPlaygroundModal({
           );
         },
       },
+      {
+        label: 'Whitelist Data',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevDataWhitelist,
+            }),
+          );
+        },
+      },
       // {
       //   label: 'Clear All SQLite (No restart)',
       //   icon: <RcCode style={styles.labelIcon} />,

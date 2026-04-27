@@ -1721,13 +1721,13 @@
         "title": "すべてのチェーンでGas手数料を支払う",
         "subtitle": "ガスがない場合"
       },
-      "depositWith": "Deposit with",
       "depositNow": "今すぐ入金",
       "switchAccount": "ウォレットを切り替える",
       "depositFailed": "入金に失敗しました",
       "gasBalance": "ガス残高",
       "lowBalance": "ガスが不足しています。今後の取引がスムーズに進むように、ガスを入金してください。",
-      "depositSubmitted": "入金が送信されました"
+      "depositSubmitted": "入金が送信されました",
+      "depositWith": "入金先"
     },
     "customRpc": {
       "closed": "クローズド",
@@ -1977,7 +1977,8 @@
       "price": "価格",
       "headerTokenValueText": "トークンの価値",
       "headerBalanceText": "残高",
-      "copyCA": "トークンコントラクトアドレスがコピーされました"
+      "copyCA": "トークンコントラクトアドレスがコピーされました",
+      "wallet": "ウォレット"
     },
     "customTestnet": {
       "add": "カスタムネットワークを追加",
@@ -2523,7 +2524,10 @@
         "selectWithdrawToken": "トークンを選択してください",
         "hypeFeeTip": "手数料 : ~${{fee}}",
         "hypeGasFeeTooltip": "EVMに引き出すために、約0.00002 HYPEの手数料がかかります。",
-        "hypeActivationFeeTooltip": "Hyperliquidは最初のHyperEVMの引き出しに対して、{{fee}}の一時的なアクティベーション手数料を請求します。"
+        "hypeActivationFeeTooltip": "Hyperliquidは最初のHyperEVMの引き出しに対して、{{fee}}の一時的なアクティベーション手数料を請求します。",
+        "chain": "チェーン",
+        "max": "最大",
+        "selectChain": "チェーンを選択"
       },
       "PerpsWithdrawFeePopup": {
         "title": "手数料",
@@ -2556,7 +2560,10 @@
         "feeTitle": "手数料",
         "feeHyperliquid": "ハイパーリキッド",
         "feeRabby": "Rabbyウォレット",
-        "feeDesc": "ユーザーが取引を行うと、<1>取引手数料</1>と<2>ビルダーフィー</2>が適用されます。"
+        "feeDesc": "ユーザーが取引を行うと、<1>取引手数料</1>と<2>ビルダーフィー</2>が適用されます。",
+        "amount": "金額",
+        "asset": "資産",
+        "action": "アクション"
       },
       "PerpsAutoCloseModal": {
         "takeProfit": "利確",
@@ -2596,7 +2603,17 @@
         "closeShortSl": "ショートをクローズしてストップロスを設定する",
         "closeShortTp": "ショートを閉じて利益確定",
         "closeLongLiquidation": "ロングの清算をクローズ",
-        "closeShort": "ショートをクローズ"
+        "closeShort": "ショートをクローズ",
+        "transferToSpot": "现货への移行",
+        "transferToPerps": "先物への移行",
+        "transferDetailTitle": "移行",
+        "transferActionToSpot": "移行（先物から现货へ）",
+        "transferActionToPerps": "移行（现货から先物へ）",
+        "transferGotIt": "了解",
+        "action": "操作",
+        "asset": "資産",
+        "value": "価値",
+        "date": "日付"
       },
       "PerpsSelectTokenPopup": {
         "title": "入金するトークンを選択してください",
@@ -2611,7 +2628,8 @@
       },
       "PerpsDepositCard": {
         "availableToTrade": "取引可能:",
-        "deposit": "入金"
+        "deposit": "入金",
+        "swap": "スワップ"
       },
       "PerpsAccountSelectorPopup": {
         "hyperliquidBalance": "パープス残高",
@@ -2624,6 +2642,10 @@
       "selectAccountTitle": "ウォレットを選択してログインしてください",
       "more": "もっと見る",
       "explorePerps": "Perpsを探る",
+      "categories": {
+        "favorite": "お気に入り",
+        "topVolume": "取引量上位"
+      },
       "positions": "ポジション",
       "leverageRangeMinError": "最小レバレッジは{{min}}xです。",
       "regionNotSupport": "あなたの地域ではポジションのオープンはサポートされていません",
@@ -2669,6 +2691,42 @@
       },
       "dappSelect": {
         "title": "Perpsプロバイダーを選択してください"
+      },
+      "search": {
+        "headerTitle": "パーペスを検索",
+        "placeholder": "パーペスを検索",
+        "empty": "結果が見つかりません"
+      },
+      "EnableUnifiedAccount": {
+        "title": "統合アカウントを有効にする",
+        "desc": "統合アカウントは、取引体験を簡素化するための推奨アカウントモードです。スポットとPerpsの残高は全トークンで統合され、クロス・マージンが全利用可能な資産でサポートされます。",
+        "confirm": "確認する",
+        "cancel": "キャンセル",
+        "importantTips": "統合アカウントが有効になると、すべてのUSDC担保がクロス・マージンとして使用されます。",
+        "important": "重要"
+      },
+      "PerpsSpotSwap": {
+        "title": "ステーブルコインの交換",
+        "from": "出金元",
+        "to": "交換先",
+        "balance": "残高",
+        "swapBtn": "交換",
+        "max": "MAX",
+        "estReceive": "受取予定: {{amount}} {{coin}}",
+        "estReceiveTooltip": "受取予定金額は市場価格の変動により変動します。",
+        "toSwapEntry": "交換へ→",
+        "toDepositEntry": "入金へ→",
+        "insufficientBalance": "残高不足",
+        "invalidAmount": "有効な金額を入力してください",
+        "minimumAmount": "最小交換金額は {{amount}} です"
+      },
+      "PerpMarginModePopup": {
+        "crossRequiresUnified": "この取引ペアのクロス・マージンには統合アカウントが必要です。有効にしますか？"
+      },
+      "PerpsMultiBalance": {
+        "title": "Hyperliquid 残高",
+        "deposit": "入金",
+        "withdraw": "出金"
       }
     },
     "perpsDetail": {
@@ -2839,6 +2897,9 @@
       },
       "guideEntry": {
         "gotIt": "わかった"
+      },
+      "PerpsAbout": {
+        "title": "概要"
       }
     },
     "devUIBuiltInPages": {
@@ -3293,7 +3354,9 @@
     },
     "Created": "作成されました",
     "Imported": "インポートされた",
-    "SavedSeedPhrase": "シードフレーズを保存しました"
+    "SavedSeedPhrase": "シードフレーズを保存しました",
+    "from": "送信元",
+    "to": "送信先"
   },
   "bluetooth": {
     "powered_off_alert": {

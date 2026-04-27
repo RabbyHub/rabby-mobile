@@ -10,6 +10,7 @@ import { atom, useAtom } from 'jotai';
 import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import {
+  RcCode,
   RcCountdown,
   RcLockWallet,
   RcManagePassword,
@@ -22,6 +23,9 @@ import { APP_FEATURE_SWITCH } from '@/constant';
 import { keyringService } from '@/core/services/shared';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { Text } from '@/components/Typography';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { StackActions } from '@react-navigation/native';
+import { RootNames } from '@/constant/layout';
 
 const walletLockTestItemModalVisibleAtom = atom(false);
 export function useWalletLockTestItemModalVisible() {
@@ -56,6 +60,7 @@ export default function WalletLockTestItemModal({
   }, [visible, toggleShowSheetModal]);
 
   const { styles, colors } = useThemeStyles(getStyles);
+  const navigation = useRabbyAppNavigation();
 
   const handleCancel = useCallback(() => {
     setWalletTestItemModalVisible(false);
@@ -92,6 +97,17 @@ export default function WalletLockTestItemModal({
         disabled: !hasSetupCustomPassword,
         onPress: () => {
           openResetPasswordAndKeyringSheetModal();
+        },
+      },
+      {
+        label: 'Keychain Data',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevDataKeychain,
+            }),
+          );
         },
       },
       {

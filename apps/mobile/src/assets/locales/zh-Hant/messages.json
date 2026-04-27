@@ -155,7 +155,9 @@
     },
     "Imported": "導入",
     "SavedSeedPhrase": "我已保存种子短语",
-    "Created": "已建立"
+    "Created": "已建立",
+    "from": "從",
+    "to": "至"
   },
   "background": {
     "transactionWatcher": {
@@ -1985,13 +1987,13 @@
         "title": "在所有鏈上支付 Gas 費用",
         "subtitle": "當你沒有 gas 時"
       },
-      "depositWith": "使用進行存款",
       "switchAccount": "切換錢包",
       "gasBalance": "Gas 余额",
       "depositNow": "立即存款",
       "depositFailed": "存款失敗",
       "lowBalance": "您沒有足夠的 gas。請存入 gas 以確保未來的交易順利進行。",
-      "depositSubmitted": "存款已提交"
+      "depositSubmitted": "存款已提交",
+      "depositWith": "存入方式"
     },
     "receiveAddressList": {
       "selectChainTitle": "選擇鏈條",
@@ -2122,7 +2124,8 @@
       "price": "價格",
       "headerBalanceText": "餘額",
       "headerTokenValueText": "代幣價值",
-      "copyCA": "令牌合約地址已複製"
+      "copyCA": "令牌合約地址已複製",
+      "wallet": "錢包"
     },
     "customTestnet": {
       "add": "添加自定義網絡",
@@ -2645,7 +2648,10 @@
         "selectWithdrawToken": "選擇代幣",
         "hypeGasFeeTooltip": "提取到 EVM 將收取約 0.00002 HYPE 的手續費",
         "hypeActivationFeeTooltip": "Hyperliquid 將對首次的 HyperEVM 提款收取一次性啟動費用 {{fee}}。",
-        "hypeFeeTip": "費用 : ~${{fee}}"
+        "hypeFeeTip": "費用 : ~${{fee}}",
+        "chain": "鏈",
+        "max": "最大",
+        "selectChain": "選擇鏈"
       },
       "PerpsWithdrawFeePopup": {
         "btn": "我明白了",
@@ -2678,7 +2684,10 @@
         "feeRabby": "Rabby Wallet",
         "feeHyperliquid": "Hyperliquid",
         "feeDesc": "當用戶進行交易時，會收取<1>交易費用</1>和<2>建設者費用</2>。",
-        "feeTitle": "費用"
+        "feeTitle": "費用",
+        "amount": "金額",
+        "asset": "資產",
+        "action": "操作"
       },
       "PerpsAutoCloseModal": {
         "loss": "損失",
@@ -2718,7 +2727,17 @@
         "deposit": "存款",
         "closeShortSl": "平掉做空止损",
         "openShort": "開放做空",
-        "closeLong": "平掉多头"
+        "closeLong": "平掉多头",
+        "transferToSpot": "轉入現貨",
+        "transferToPerps": "轉入永續",
+        "transferDetailTitle": "轉帳",
+        "transferActionToSpot": "轉帳（從永續到現貨）",
+        "transferActionToPerps": "轉帳（從現貨到永續）",
+        "transferGotIt": "我知道了",
+        "action": "操作",
+        "asset": "資產",
+        "value": "金額",
+        "date": "日期"
       },
       "PerpsSelectTokenPopup": {
         "title": "選擇要存入的 Token",
@@ -2733,7 +2752,8 @@
       },
       "PerpsDepositCard": {
         "availableToTrade": "可交易：",
-        "deposit": "存入"
+        "deposit": "存入",
+        "swap": "兌換"
       },
       "PerpsAccountSelectorPopup": {
         "activatedAddress": "已啟用",
@@ -2745,6 +2765,10 @@
       "title": "永续合约",
       "selectAccountTitle": "選擇一個錢包以登錄",
       "explorePerps": "探索永续合约",
+      "categories": {
+        "favorite": "收藏",
+        "topVolume": "成交量榜"
+      },
       "more": "更多",
       "positions": "持倉",
       "leverageRangeMaxError": "最大杠杆为 {{max}}x",
@@ -2791,6 +2815,42 @@
       },
       "dappSelect": {
         "title": "選擇 Perps 提供者"
+      },
+      "search": {
+        "headerTitle": "搜尋 Perps",
+        "placeholder": "搜尋 Perps",
+        "empty": "找不到結果"
+      },
+      "EnableUnifiedAccount": {
+        "title": "啟用統一帳戶",
+        "desc": "統一帳戶是推薦的帳戶模式，可簡化交易體驗。所有代幣的現貨和永續倉位餘額將合併，並支持所有可用資產的交叉保證金。",
+        "confirm": "確認",
+        "cancel": "取消",
+        "importantTips": "一旦啟用統一帳戶，所有 USDC 抵押品將作為交叉保證金使用。",
+        "important": "重要"
+      },
+      "PerpsSpotSwap": {
+        "title": "Swap Stablecoins",
+        "from": "From",
+        "to": "Swap To",
+        "balance": "Balance",
+        "swapBtn": "Swap",
+        "max": "Max",
+        "estReceive": "Est. Receive: {{amount}} {{coin}}",
+        "estReceiveTooltip": "Estimated receive amount is subject to market price fluctuations.",
+        "toSwapEntry": "To swap→",
+        "toDepositEntry": "To deposit→",
+        "insufficientBalance": "Insufficient balance",
+        "invalidAmount": "Please input a valid amount",
+        "minimumAmount": "The minimum swap amount is {{amount}}"
+      },
+      "PerpMarginModePopup": {
+        "crossRequiresUnified": "此交易對的交叉保證金需要統一帳戶。是否要啟用它？"
+      },
+      "PerpsMultiBalance": {
+        "title": "Hyperliquid 餘額",
+        "deposit": "存款",
+        "withdraw": "提取"
       }
     },
     "perpsDetail": {
@@ -2961,6 +3021,9 @@
       },
       "guideEntry": {
         "gotIt": "了解了"
+      },
+      "PerpsAbout": {
+        "title": "關於"
       }
     },
     "devUIBuiltInPages": {

@@ -7,13 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {
-  Platform,
-  ScrollView,
-  Share,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Platform, ScrollView, TouchableOpacity, View } from 'react-native';
 import RNFS from 'react-native-fs';
 import dayjs from 'dayjs';
 import { strFromU8, Unzip, UnzipInflate, unzipSync, zipSync } from 'fflate';
@@ -29,9 +23,9 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { toast } from '@/components2024/Toast';
 import { APP_RUNTIME_ENV } from '@/constant/env';
 import { getOnlineConfig, subscribeOnlineConfig } from '@/core/config/online';
-import RNHelpers from '@/core/native/RNHelpers';
 import { useTheme2024 } from '@/hooks/theme';
 import { APP_FILE_LOGGING_ONLINE_SWITCH } from '@/utils/logging/policy';
+import { shareLocalFile } from '@/utils/shareLocalFile';
 import {
   subscribeAppLogFileSettings,
   useAppLogFileSwitch,
@@ -882,57 +876,29 @@ export default function DebugLogViewerScreen(): JSX.Element {
     }
   }, [busyKey, markError, markInfo, markSuccess, refreshSnapshot]);
 
-  const shareLocalFile = useCallback(
+  const shareLocalFileTarget = useCallback(
     async (file: ShareableFileTarget) => {
       if (!canShareArchive) {
         markInfo('Archive sharing is disabled in production builds');
         return;
       }
 
-      try {
-        if (!(await RNFS.exists(file.path))) {
-          throw new Error(`Share source file missing: ${file.path}`);
-        }
+      const result = await shareLocalFile({
+        path: file.path,
+        name: file.name,
+        mimeType: file.mimeType,
+        title: file.title,
+        subject: file.subject,
+        message: file.message,
+        cleanupPaths: file.cleanupPaths,
+      });
 
-        if (Platform.OS === 'ios') {
-          const result = await Share.share(
-            {
-              title: file.name,
-              url: `file://${file.path}`,
-              message: file.message,
-            },
-            {
-              subject: file.subject,
-            },
-          );
-
-          if (result.action === Share.dismissedAction) {
-            markInfo('Share dismissed');
-          } else {
-            markSuccess(file.successMessage);
-          }
-
-          return;
-        }
-
-        await RNHelpers.shareFile({
-          filePath: file.path,
-          mimeType: file.mimeType,
-          title: file.title,
-          subject: file.subject,
-        });
-        markSuccess(file.successMessage);
-      } finally {
-        if (file.cleanupPaths?.length) {
-          await Promise.allSettled(
-            file.cleanupPaths.map(async path => {
-              if (await RNFS.exists(path)) {
-                await RNFS.unlink(path);
-              }
-            }),
-          );
-        }
+      if (result.dismissed) {
+        markInfo('Share dismissed');
+        return;
       }
+
+      markSuccess(file.successMessage);
     },
     [canShareArchive, markInfo, markSuccess],
   );
@@ -963,7 +929,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
     async (archive: ArchiveFileItem) => {
       const preparedArchive = await prepareArchiveForSharing(archive);
 
-      await shareLocalFile({
+      await shareLocalFileTarget({
         path: preparedArchive.archive.path,
         name: preparedArchive.archive.name,
         mimeType: 'application/zip',
@@ -974,7 +940,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
         cleanupPaths: preparedArchive.cleanupPaths,
       });
     },
-    [prepareArchiveForSharing, shareLocalFile],
+    [prepareArchiveForSharing, shareLocalFileTarget],
   );
 
   const resolveLatestArchiveForSharing =
@@ -1020,7 +986,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
         return;
       }
 
-      await shareLocalFile({
+      await shareLocalFileTarget({
         path: latestArchive.archive.path,
         name: latestArchive.archive.name,
         mimeType: 'application/zip',
@@ -1041,7 +1007,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
     markError,
     markInfo,
     resolveLatestArchiveForSharing,
-    shareLocalFile,
+    shareLocalFileTarget,
   ]);
 
   const handleShareLatestLogFile = useCallback(async () => {
@@ -1075,7 +1041,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
             latestArchive.cleanupPaths,
             latestArchive.preferredLatestLogEntryPath,
           );
-      await shareLocalFile(latestLogFile.shareTarget);
+      await shareLocalFileTarget(latestLogFile.shareTarget);
     } catch (error) {
       markError('Share latest log file', error);
     } finally {
@@ -1087,7 +1053,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
     markError,
     markInfo,
     resolveLatestArchiveForSharing,
-    shareLocalFile,
+    shareLocalFileTarget,
   ]);
 
   const handleOpenArchiveSharePicker = useCallback(async () => {

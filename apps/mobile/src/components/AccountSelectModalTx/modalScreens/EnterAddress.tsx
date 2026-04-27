@@ -30,7 +30,6 @@ import { Button } from '@/components2024/Button';
 import { AddressEditorBadge } from '../AddressEditorBadge';
 import { touchedFeedback } from '@/utils/touch';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { useSortedAccounts } from '@/screens/Address/useSortAddressList';
 import { SearchedAddressItemInSheetModal } from '../AddressItem/SearchedItem';
 import { Account } from '@/core/services/preference';
@@ -448,7 +447,7 @@ export default ScreenPanelEnterAddress;
 
 const SIZES = {
   bottomContentH: 56,
-  bottomContentBottom: IS_IOS ? 48 : 0,
+  bottomContentBottom: 48,
   containerPb: 20,
   itemH: 78,
 };

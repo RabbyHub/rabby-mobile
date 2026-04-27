@@ -138,14 +138,12 @@ export const GasAccountScreen = () => {
     }, [checkAddressesEligibility, isLogin, pendingHardwareAccount]),
   );
 
-  const hasHistory = Boolean(
-    historyState.txList?.rechargeList.length ||
-      historyState.txList?.withdrawList.length ||
-      historyState.txList?.list.length,
-  );
   const showEmptyState =
     (!isLogin && !pendingHardwareAccount) ||
-    (isLogin && !historyState.loading && gasBalance === 0 && !hasHistory);
+    (isLogin &&
+      !historyState.loading &&
+      gasBalance === 0 &&
+      !historyState.hasHistory);
   const emptyStatePrimaryMode = getGasAccountEmptyStatePrimaryMode({
     isLogin,
     hasPendingHardwareAccount: !!pendingHardwareAccount,

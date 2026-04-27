@@ -146,7 +146,9 @@
     },
     "Created": "Создано",
     "Imported": "Импортировано",
-    "SavedSeedPhrase": "Я сохранил посевную фразу"
+    "SavedSeedPhrase": "Я сохранил посевную фразу",
+    "from": "От",
+    "to": "Кому"
   },
   "page": {
     "getStart": {
@@ -2084,8 +2086,8 @@
       "switchAccount": "Переключить кошелек",
       "depositFailed": "Ошибка при депозите",
       "lowBalance": "У вас недостаточно газа. Внесите газ, чтобы обеспечитьSmooth будущие транзакции.",
-      "depositWith": "Депозит с",
-      "depositSubmitted": "Депозит отправлен"
+      "depositSubmitted": "Депозит отправлен",
+      "depositWith": "Пополнение через"
     },
     "tokenDetail": {
       "notSupportedOnChain": "Не поддерживается в этой сети",
@@ -2212,7 +2214,8 @@
       "price": "Цена",
       "headerTokenValueText": "Значение токена",
       "headerBalanceText": "Баланс",
-      "copyCA": "Адрес контракта токена скопирован"
+      "copyCA": "Адрес контракта токена скопирован",
+      "wallet": "Кошелёк"
     },
     "settingModal": {
       "themeMode": {
@@ -2588,7 +2591,10 @@
         "hypeFeeTip": "Плата: ~${{fee}}",
         "hypeGasFeeTooltip": "Комиссия ~0.00002 HYPE будет взиматься за вывод на EVM",
         "selectWithdrawToken": "Выберите токен",
-        "hypeActivationFeeTooltip": "Одноразовая плата за активацию в размере {{fee}} будет взиматься Hyperliquid за первое снятие HyperEVM."
+        "hypeActivationFeeTooltip": "Одноразовая плата за активацию в размере {{fee}} будет взиматься Hyperliquid за первое снятие HyperEVM.",
+        "chain": "Цепочка",
+        "max": "Макс.",
+        "selectChain": "Выберите цепочку"
       },
       "PerpsWithdrawFeePopup": {
         "btn": "Я понял",
@@ -2621,7 +2627,10 @@
         "feeHyperliquid": "Гиперликвидность",
         "feeTitle": "Плата",
         "feeRabby": "Rabby Wallet",
-        "feeDesc": "Когда пользователи совершают сделки, применяются как <1>торговые сборы</1>, так и <2>сборы за построение</2>."
+        "feeDesc": "Когда пользователи совершают сделки, применяются как <1>торговые сборы</1>, так и <2>сборы за построение</2>.",
+        "amount": "Сумма",
+        "asset": "Актив",
+        "action": "Действие"
       },
       "PerpsAutoCloseModal": {
         "takeProfit": "Зафиксировать прибыль",
@@ -2661,7 +2670,17 @@
         "closeShortTp": "Закрыть Short Закрыть прибыль",
         "closeShortSl": "Закрыть Short Стоп-Лосс",
         "openShort": "Открыть Short",
-        "closeLongTp": "Закрыть Long Зафиксировать прибыль"
+        "closeLongTp": "Закрыть Long Зафиксировать прибыль",
+        "transferToSpot": "Перевод на спот",
+        "transferToPerps": "Перевод на Perps",
+        "transferDetailTitle": "Перевод",
+        "transferActionToSpot": "Перевод (с Perps на спот)",
+        "transferActionToPerps": "Перевод (со спота на Perps)",
+        "transferGotIt": "Понятно",
+        "action": "Действие",
+        "asset": "Актив",
+        "value": "Стоимость",
+        "date": "Дата"
       },
       "PerpsSelectTokenPopup": {
         "title": "Выберите токен для депозита",
@@ -2676,7 +2695,8 @@
       },
       "PerpsDepositCard": {
         "deposit": "Депозит",
-        "availableToTrade": "Доступно для торговли:"
+        "availableToTrade": "Доступно для торговли:",
+        "swap": "Обмен"
       },
       "PerpsAccountSelectorPopup": {
         "activatedAddress": "Активировано",
@@ -2689,6 +2709,10 @@
       "selectAccountTitle": "Выберите кошелек для входа",
       "more": "Больше",
       "explorePerps": "Изучить Perps",
+      "categories": {
+        "favorite": "Избранное",
+        "topVolume": "Топ по объёму"
+      },
       "deleteAgentSuccess": "Агент успешно удален",
       "regionNotSupport": "Открытие позиций не поддерживается в вашем регионе.",
       "leverageRangeMaxError": "Максимальное кредитное плечо составляет {{max}}x",
@@ -2734,6 +2758,42 @@
       },
       "dappSelect": {
         "title": "Выберите поставщика Perps"
+      },
+      "search": {
+        "headerTitle": "Поиск Perps",
+        "placeholder": "Поиск Perps",
+        "empty": "Ничего не найдено"
+      },
+      "EnableUnifiedAccount": {
+        "title": "Включить Unified Account",
+        "desc": "Unified Account — это рекомендуемый режим учётной записи, который упрощает торговлю. Балансы спотовой и Perps торговли объединены для всех токенов, а кросс-margin поддерживается для всех доступных активов.",
+        "confirm": "Подтвердить",
+        "cancel": "Отмена",
+        "importantTips": "Вся залоговая поддержка в USDC будет использоваться как кросс-margin после включения Unified Account.",
+        "important": "Важно"
+      },
+      "PerpsSpotSwap": {
+        "title": "Обмен стейблкоинов",
+        "from": "Из",
+        "to": "Обменять на",
+        "balance": "Баланс",
+        "swapBtn": "Обмен",
+        "max": "Макс",
+        "estReceive": "Ожидаемое получение: {{amount}} {{coin}}",
+        "estReceiveTooltip": "Ожидаемая сумма получения подвержена колебаниям рыночной цены.",
+        "toSwapEntry": "Для обмена→",
+        "toDepositEntry": "Для депозита→",
+        "insufficientBalance": "Недостаточный баланс",
+        "invalidAmount": "Пожалуйста, введите корректную сумму",
+        "minimumAmount": "Минимальная сумма обмена: {{amount}}"
+      },
+      "PerpMarginModePopup": {
+        "crossRequiresUnified": "Для этой торговой пары требуется Unified Account с перекрёстной маржой. Хотите включить её?"
+      },
+      "PerpsMultiBalance": {
+        "title": "Балансы Hyperliquid",
+        "deposit": "Пополнение",
+        "withdraw": "Вывод"
       }
     },
     "perpsDetail": {
@@ -2904,6 +2964,9 @@
       },
       "guideEntry": {
         "gotIt": "Понял"
+      },
+      "PerpsAbout": {
+        "title": "О нас"
       }
     },
     "devUIBuiltInPages": {

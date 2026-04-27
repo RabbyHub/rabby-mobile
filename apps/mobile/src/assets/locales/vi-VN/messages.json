@@ -146,7 +146,9 @@
     },
     "Created": "Đã tạo",
     "Imported": "Nhập khẩu",
-    "SavedSeedPhrase": "Tôi đã lưu cụm từ hạt giống."
+    "SavedSeedPhrase": "Tôi đã lưu cụm từ hạt giống.",
+    "from": "Từ",
+    "to": "Đến"
   },
   "page": {
     "transactions": {
@@ -1889,10 +1891,10 @@
       "depositNow": "Nạp ngay",
       "switchAccount": "Chuyển Wallet",
       "depositFailed": "Nạp tiền không thành công",
-      "depositWith": "Gửi tiền với",
       "gasBalance": "Số dư Gas",
       "lowBalance": "Bạn không có đủ gas. Nạp gas để đảm bảo các giao dịch trong tương lai diễn ra suôn sẻ.",
-      "depositSubmitted": "Đã gửi tiền gửi"
+      "depositSubmitted": "Đã gửi tiền gửi",
+      "depositWith": "```json\n{\"u_0\":\"Nạp tiền qua\"}\n```"
     },
     "setting": {
       "aboutUs": "Về Chúng Tôi",
@@ -2048,7 +2050,8 @@
       "price": "Giá",
       "headerTokenValueText": "Giá trị Token",
       "headerBalanceText": "Số dư",
-      "copyCA": "Địa chỉ hợp đồng Token đã được sao chép"
+      "copyCA": "Địa chỉ hợp đồng Token đã được sao chép",
+      "wallet": "Ví"
     },
     "backupPrivateKey": {
       "clickToShow": "Nhấn để hiển thị private key",
@@ -2588,7 +2591,10 @@
         "hypeFeeTip": "Phí : ~${{fee}}",
         "hypeGasFeeTooltip": "Phí khoảng ~0.00002 HYPE sẽ được tính để rút về EVM.",
         "selectWithdrawToken": "Chọn token",
-        "hypeActivationFeeTooltip": "Một khoản phí kích hoạt một lần là {{fee}} sẽ được Hyperliquid tính cho lần rút HyperEVM đầu tiên."
+        "hypeActivationFeeTooltip": "Một khoản phí kích hoạt một lần là {{fee}} sẽ được Hyperliquid tính cho lần rút HyperEVM đầu tiên.",
+        "chain": "Chuỗi",
+        "max": "Tối đa",
+        "selectChain": "Chọn Chuỗi"
       },
       "PerpsWithdrawFeePopup": {
         "btn": "Tôi đã hiểu.",
@@ -2621,7 +2627,10 @@
         "feeHyperliquid": "Hyperliquid",
         "feeRabby": "Rabby Wallet",
         "feeTitle": "Phí",
-        "feeDesc": "Khi người dùng thực hiện giao dịch, cả <1>phí giao dịch</1> và <2>phí người xây dựng</2> đều được áp dụng."
+        "feeDesc": "Khi người dùng thực hiện giao dịch, cả <1>phí giao dịch</1> và <2>phí người xây dựng</2> đều được áp dụng.",
+        "amount": "Số tiền",
+        "asset": "Tài sản",
+        "action": "Hành động"
       },
       "PerpsAutoCloseModal": {
         "profit": "Lợi nhuận",
@@ -2661,7 +2670,17 @@
         "closeShortLiquidation": "Đóng Short Thanh lý",
         "withdraw": "Rút tiền",
         "closeShortTp": "Đóng Short Lấy Lợi Nhuận",
-        "closeShort": "Đóng Short"
+        "closeShort": "Đóng Short",
+        "transferToSpot": "Chuyển sang Spot",
+        "transferToPerps": "Chuyển sang Perps",
+        "transferDetailTitle": "Chuyển",
+        "transferActionToSpot": "Chuyển (từ Perps sang Spot)",
+        "transferActionToPerps": "Chuyển (từ Spot sang Perps)",
+        "transferGotIt": "Tôi đã hiểu",
+        "action": "Hành động",
+        "asset": "Tài sản",
+        "value": "Giá trị",
+        "date": "Ngày"
       },
       "PerpsSelectTokenPopup": {
         "title": "Chọn Token để Gửi",
@@ -2676,7 +2695,8 @@
       },
       "PerpsDepositCard": {
         "deposit": "Nạp tiền",
-        "availableToTrade": "Có sẵn để giao dịch:"
+        "availableToTrade": "Có sẵn để giao dịch:",
+        "swap": "Đổi"
       },
       "PerpsAccountSelectorPopup": {
         "activatedAddress": "Kích hoạt",
@@ -2689,6 +2709,10 @@
       "selectAccountTitle": "Chọn Ví Để Đăng Nhập",
       "more": "Thêm",
       "explorePerps": "Khám phá Perps",
+      "categories": {
+        "favorite": "Yêu thích",
+        "topVolume": "Khối lượng cao nhất"
+      },
       "positions": "Vị trí",
       "deleteAgentSuccess": "Đại lý đã xóa thành công",
       "regionNotSupport": "Việc mở các vị trí không được hỗ trợ ở khu vực của bạn.",
@@ -2734,6 +2758,42 @@
       },
       "dappSelect": {
         "title": "Chọn nhà cung cấp Perps"
+      },
+      "EnableUnifiedAccount": {
+        "title": "Bật Tài khoản Thống nhất",
+        "desc": "Tài khoản Thống nhất là chế độ tài khoản được khuyến nghị giúp đơn giản hóa trải nghiệm giao dịch. Số dư Spot và Perps được gộp cho tất cả token, và cross margin được hỗ trợ trên tất cả tài sản có sẵn.",
+        "confirm": "Xác nhận",
+        "cancel": "Hủy",
+        "importantTips": "Tất cả tài sản thế chấp USDC sẽ được sử dụng làm cross margin sau khi Tài khoản Thống nhất được bật.",
+        "important": "Quan trọng"
+      },
+      "PerpsSpotSwap": {
+        "title": "Đổi Stablecoins",
+        "from": "Từ",
+        "to": "Đổi sang",
+        "balance": "Số dư",
+        "swapBtn": "Đổi",
+        "max": "Tối đa",
+        "estReceive": "Ước tính nhận: {{amount}} {{coin}}",
+        "estReceiveTooltip": "Số tiền ước tính nhận được phụ thuộc vào biến động giá thị trường.",
+        "toSwapEntry": "Để đổi→",
+        "toDepositEntry": "Để nạp→",
+        "insufficientBalance": "Số dư không đủ",
+        "invalidAmount": "Vui lòng nhập số tiền hợp lệ",
+        "minimumAmount": "Số tiền đổi tối thiểu là {{amount}}"
+      },
+      "PerpMarginModePopup": {
+        "crossRequiresUnified": "Cross margin cho cặp giao dịch này yêu cầu Unified Account. Bạn có muốn bật tính năng này không?"
+      },
+      "PerpsMultiBalance": {
+        "title": "Số dư Hyperliquid",
+        "deposit": "Nạp tiền",
+        "withdraw": "Rút tiền"
+      },
+      "search": {
+        "headerTitle": "Tìm kiếm Perps",
+        "placeholder": "Tìm kiếm Perps",
+        "empty": "Không tìm thấy kết quả"
       }
     },
     "perpsDetail": {
@@ -2904,6 +2964,9 @@
       },
       "guideEntry": {
         "gotIt": "Được rồi"
+      },
+      "PerpsAbout": {
+        "title": "Giới thiệu"
       }
     },
     "devUIBuiltInPages": {

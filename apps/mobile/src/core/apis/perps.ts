@@ -78,6 +78,8 @@ class ApisPerps {
   getHasShownPerpsGuidePopup = perpsService.getHasShownPerpsGuidePopup;
   setHasClosedLearnMoreCard = perpsService.setHasClosedLearnMoreCard;
   getHasClosedLearnMoreCard = perpsService.getHasClosedLearnMoreCard;
+  setSelectedKlineInterval = perpsService.setSelectedKlineInterval;
+  getSelectedKlineInterval = perpsService.getSelectedKlineInterval;
   getPerpsAgentWallet = async (masterWallet: string) => {
     return perpsService.getAgentWallet(masterWallet);
   };

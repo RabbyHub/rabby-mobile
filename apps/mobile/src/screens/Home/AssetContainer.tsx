@@ -26,16 +26,6 @@ import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
 import { useAccountHomeShowReceiveTip } from '../Address/components/MultiAssets/hooks';
 
 const ScreenWidth = Dimensions.get('window').width;
-export const icons = {
-  unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
-  unfoldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png'),
-  foldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png'),
-  foldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
-  pinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite_dark.png'),
-  pinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite.png'),
-  unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png'),
-  unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
-};
 
 interface Props {
   onReachTopStatusChange?: (status: boolean) => void;
@@ -59,10 +49,23 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
   const { hasNoData: hasNoCurveData } = useSingleHomeHasNoData();
 
   const handleRefresh = useCallback(async () => {
-    if (!currentAddress) return;
+    if (!currentAddress) {
+      return;
+    }
     apisAddressBalance.triggerUpdate({
       address: currentAddress,
       force: true,
+      fromScene: 'SingleAddressHome',
+    });
+  }, [currentAddress]);
+
+  const handleForegroundRefreshBalance = useCallback(() => {
+    if (!currentAddress) {
+      return;
+    }
+    apisAddressBalance.triggerUpdate({
+      address: currentAddress,
+      force: false,
       fromScene: 'SingleAddressHome',
     });
   }, [currentAddress]);
@@ -84,6 +87,10 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
   const { accountToShowReceiveTip } =
     useAccountHomeShowReceiveTip(currentAccount);
 
+  if (!currentAccount) {
+    return null;
+  }
+
   if (errorNotAssets) {
     return (
       <NetWorkError
@@ -94,7 +101,6 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
     );
   }
 
-  if (!currentAccount) return null;
   if (accountToShowReceiveTip) {
     return <ReceiveOnNoAssets account={accountToShowReceiveTip} />;
   }
@@ -110,18 +116,21 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
       <Tabs.Tab label={renderLabel('Token')} name="tokens">
         <TokenList
           noAssetsOnAnyChain={noAssetsOnAnyChain}
+          onForeground={handleForegroundRefreshBalance}
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
         />
       </Tabs.Tab>
       <Tabs.Tab label={renderLabel('DeFi')} name="defi">
         <PortfolioList
+          onForeground={handleForegroundRefreshBalance}
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
         />
       </Tabs.Tab>
       <Tabs.Tab label={renderLabel('NFT')} name="nft">
         <NFTList
+          onForeground={handleForegroundRefreshBalance}
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
         />

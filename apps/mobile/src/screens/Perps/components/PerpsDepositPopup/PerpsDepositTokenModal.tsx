@@ -6,7 +6,7 @@ import { RootNames } from '@/constant/layout';
 import { ARB_USDC_TOKEN_ITEM } from '@/constant/perps';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { ITokenItem } from '@/store/tokens';
 import { findChain } from '@/utils/chain';
@@ -38,7 +38,7 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
   const isSwap = token?.chain === ARB_USDC_TOKEN_ITEM?.chain;
   const navigation = useRabbyAppNavigation();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { state } = usePerpsStore();
+  const currentPerpsAccount = perpsStore(s => s.currentPerpsAccount);
 
   if (!token) {
     return null;
@@ -92,7 +92,7 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
                 onPress={async () => {
                   await switchSceneCurrentAccount(
                     'MakeTransactionAbout',
-                    state.currentPerpsAccount,
+                    currentPerpsAccount,
                   );
                   if (isSwap) {
                     navigation.navigateDeprecated(RootNames.StackTransaction, {

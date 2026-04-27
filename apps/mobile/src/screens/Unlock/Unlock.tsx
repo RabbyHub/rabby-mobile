@@ -31,6 +31,7 @@ import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { APP_TEST_PWD, APP_VERSIONS, APPLICATION_ID } from '@/constant';
 import {
   RequestGenericPurpose,
+  isBrokenBiometricsEntryError,
   parseKeychainError,
 } from '@/core/apis/keychain';
 import {
@@ -47,7 +48,6 @@ import { Button } from '@/components2024/Button';
 import { NextInput } from '@/components2024/Form/Input';
 import YesIcon from '@/assets2024/icons/common/check.svg';
 import i18next from 'i18next';
-import { RootNames } from '@/constant/layout';
 import { measureTime } from '@/core/utils/statics';
 import { stats } from '@/utils/stats';
 import DeviceInfo from 'react-native-device-info';
@@ -58,6 +58,7 @@ import { TextInput } from '@/components/Typography';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { startUnlockScreenBootstrapWarmups } from '@/setup-app-before-render';
+import { preloadTransactionHotNavigator } from '@/perfs/preloads';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -129,7 +130,9 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
   const { isUnlocking } = useUnlockApp();
 
   const checkUnlocked = useCallback(async () => {
-    if (!apisLock.isUnlocked()) return;
+    if (!apisLock.isUnlocked()) {
+      return;
+    }
 
     requestAnimationFrame(() => {
       UnlockUIManager.markUnlockedOnce();
@@ -149,7 +152,9 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
     onSubmit: async (values, helpers) => {
       let errors = await helpers.validateForm();
 
-      if (getFormikErrorsCount(errors)) return;
+      if (getFormikErrorsCount(errors)) {
+        return;
+      }
 
       const { needAlert } = await tipEnableBiometrics(values.password);
       console.debug('needAlert', needAlert);
@@ -212,6 +217,12 @@ export default function UnlockScreen() {
   const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
     useUnlockForm(navigation);
 
+  React.useEffect(() => {
+    preloadTransactionHotNavigator().catch(error => {
+      console.error('preloadTransactionHotNavigator::error', error);
+    });
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       storeApisBiometrics.fetchBiometrics();
@@ -268,7 +279,9 @@ export default function UnlockScreen() {
       });
       updateUnlockTime();
     } catch (error: any) {
-      if (__DEV__) console.error(error);
+      if (__DEV__) {
+        console.error(error);
+      }
 
       if (__DEV__ && incToReset() === 0) {
         toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
@@ -278,6 +291,8 @@ export default function UnlockScreen() {
         toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
         setUsingBiometrics(false);
         storeApisBiometrics.toggleBiometrics(false, {});
+      } else if (isBrokenBiometricsEntryError(error)) {
+        toastBiometricsFailed(error.message);
       } else {
         toastBiometricsFailed(t('page.unlock.biometrics.failedAndTipTitle'));
       }
@@ -333,7 +348,9 @@ export default function UnlockScreen() {
     const sub = perfEvents.subscribe('AUTO_TRIGGER_UNLOCK', async () => {
       // wait screen rendered
       await sleep(500);
-      if (!isBiometricsEnabled) return;
+      if (!isBiometricsEnabled) {
+        return;
+      }
 
       await processUnlockWithBiometrics();
     });
@@ -345,7 +362,9 @@ export default function UnlockScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      if (params?.disableAutoTriggerUnlock) return;
+      if (params?.disableAutoTriggerUnlock) {
+        return;
+      }
       UnlockUIManager.triggerAutoUnlock();
     }, [params?.disableAutoTriggerUnlock]),
   );

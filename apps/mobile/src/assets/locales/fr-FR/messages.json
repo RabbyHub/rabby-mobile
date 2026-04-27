@@ -1865,11 +1865,11 @@
       },
       "depositNow": "Déposez maintenant",
       "switchAccount": "Changer de portefeuille",
-      "depositWith": "Dépôt avec",
       "depositFailed": "Le dépôt a échoué",
       "gasBalance": "Solde de Gaz",
       "lowBalance": "Vous n'avez pas assez de gas. Déposez du gas pour garantir que vos futures transactions se déroulent sans problème.",
-      "depositSubmitted": "Dépôt soumis"
+      "depositSubmitted": "Dépôt soumis",
+      "depositWith": "Déposer via"
     },
     "tokenDetail": {
       "relateDefi": "Lié au DeFi",
@@ -1996,7 +1996,8 @@
       "price": "Prix",
       "headerTokenValueText": "Valeur du jeton",
       "headerBalanceText": "Solde",
-      "copyCA": "Adresse du contrat de jeton copiée"
+      "copyCA": "Adresse du contrat de jeton copiée",
+      "wallet": "Portefeuille"
     },
     "rabbyPoints": {
       "earn-points": "Gagnez des Points",
@@ -2480,7 +2481,10 @@
         "hypeFeeTip": "Frais : ~${{fee}}",
         "selectWithdrawToken": "Sélectionner un token",
         "hypeActivationFeeTooltip": "Un frais d'activation unique de {{fee}} sera facturé par Hyperliquid pour le premier retrait HyperEVM.",
-        "hypeGasFeeTooltip": "Des frais d'environ ~0,00002 HYPE seront facturés pour retirer vers l'EVM."
+        "hypeGasFeeTooltip": "Des frais d'environ ~0,00002 HYPE seront facturés pour retirer vers l'EVM.",
+        "chain": "Chaîne",
+        "max": "Max",
+        "selectChain": "Sélectionner la chaîne"
       },
       "PerpsWithdrawFeePopup": {
         "title": "Frais",
@@ -2513,7 +2517,10 @@
         "feeTitle": "Frais",
         "feeHyperliquid": "Hyperliquid",
         "feeRabby": "Rabby Wallet",
-        "feeDesc": "Lorsque les utilisateurs effectuent des transactions, des <1>frais de trading</1> et des <2>frais de constructeur</2> s'appliquent."
+        "feeDesc": "Lorsque les utilisateurs effectuent des transactions, des <1>frais de trading</1> et des <2>frais de constructeur</2> s'appliquent.",
+        "amount": "Montant",
+        "asset": "Actif",
+        "action": "Action"
       },
       "PerpsAutoCloseModal": {
         "profit": "Profit",
@@ -2553,7 +2560,17 @@
         "deposit": "Dépôt",
         "closeShortSl": "Fermer Short Stop Loss",
         "openShort": "Ouvrir une position courte",
-        "closeShortLiquidation": "Fermer une position de vente à découvert liquidation"
+        "closeShortLiquidation": "Fermer une position de vente à découvert liquidation",
+        "transferToSpot": "Transférer vers Spot",
+        "transferToPerps": "Transférer vers Perps",
+        "transferDetailTitle": "Transférer",
+        "transferActionToSpot": "Transférer (de Perps vers Spot)",
+        "transferActionToPerps": "Transférer (de Spot vers Perps)",
+        "transferGotIt": "J'ai compris",
+        "action": "Action",
+        "asset": "Actif",
+        "value": "Valeur",
+        "date": "Date"
       },
       "PerpsSelectTokenPopup": {
         "title": "Sélectionner le jeton à déposer",
@@ -2568,7 +2585,8 @@
       },
       "PerpsDepositCard": {
         "availableToTrade": "Disponible à trader :",
-        "deposit": "Dépôt"
+        "deposit": "Dépôt",
+        "swap": "Échanger"
       },
       "PerpsAccountSelectorPopup": {
         "notActivatedAddress": "Non activé",
@@ -2581,6 +2599,10 @@
       "selectAccountTitle": "Sélectionnez un portefeuille pour vous connecter",
       "more": "Plus",
       "explorePerps": "Explorer les Perps",
+      "categories": {
+        "favorite": "Favori",
+        "topVolume": "Volume Principal"
+      },
       "positions": "Positions",
       "deleteAgentSuccess": "Agent supprimé avec succès",
       "regionNotSupport": "L'ouverture de positions n'est pas prise en charge dans votre région.",
@@ -2626,6 +2648,42 @@
       },
       "dappSelect": {
         "title": "Sélectionner le fournisseur de Perps"
+      },
+      "search": {
+        "headerTitle": "Rechercher sur Perps",
+        "placeholder": "Rechercher sur Perps",
+        "empty": "Aucun résultat trouvé"
+      },
+      "EnableUnifiedAccount": {
+        "title": "Activer le compte unifié",
+        "desc": "Le compte unifié est le mode de compte recommandé qui simplifie l'expérience de trading. Les soldes Spot et Perps sont fusionnés pour tous les tokens, et la marge croisée est prise en charge sur tous les actifs disponibles.",
+        "confirm": "Confirmer",
+        "cancel": "Annuler",
+        "importantTips": "Toute la garantie USDC sera utilisée comme marge croisée une fois le compte unifié activé.",
+        "important": "Important"
+      },
+      "PerpsSpotSwap": {
+        "title": "Échanger des Stablecoins",
+        "from": "De",
+        "to": "Échanger en",
+        "balance": "Solde",
+        "swapBtn": "Échanger",
+        "max": "Max",
+        "estReceive": "Réception estimée : {{amount}} {{coin}}",
+        "estReceiveTooltip": "Le montant estimé de réception est soumis aux fluctuations du prix du marché.",
+        "toSwapEntry": "Pour échanger→",
+        "toDepositEntry": "Pour déposer→",
+        "insufficientBalance": "Solde insuffisant",
+        "invalidAmount": "Veuillez saisir un montant valide",
+        "minimumAmount": "Le montant minimum d'échange est {{amount}}"
+      },
+      "PerpMarginModePopup": {
+        "crossRequiresUnified": "La marge croisée pour cette paire de trading nécessite un compte unifié. Voulez-vous l'activer ?"
+      },
+      "PerpsMultiBalance": {
+        "title": "Soldes Hyperliquid",
+        "deposit": "Dépôt",
+        "withdraw": "Retrait"
       }
     },
     "perpsDetail": {
@@ -2796,6 +2854,9 @@
       },
       "guideEntry": {
         "gotIt": "Compris"
+      },
+      "PerpsAbout": {
+        "title": "À propos"
       }
     },
     "devUIBuiltInPages": {
@@ -3545,7 +3606,9 @@
     },
     "Created": "Créé",
     "Imported": "Importé",
-    "SavedSeedPhrase": "J'ai enregistré la seed phrase."
+    "SavedSeedPhrase": "J'ai enregistré la seed phrase.",
+    "from": "De",
+    "to": "À"
   },
   "background": {
     "transactionWatcher": {

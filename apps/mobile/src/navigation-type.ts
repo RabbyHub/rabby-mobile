@@ -161,6 +161,8 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
+  [RootNames.DevDataKeychain]?: {};
+  [RootNames.DevDataWhitelist]?: {};
   [RootNames.DevUIBuiltInPages]?: {};
   [RootNames.DevUIPermissions]?: {};
   [RootNames.DevSwitches]?: {};
@@ -389,9 +391,20 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.PerpsMarketDetail]: {
     market: string;
-    fromSource?: 'homePagePositionList' | 'openPosition' | '';
+    fromSource?:
+      | 'homePagePositionList'
+      | 'openPosition'
+      | 'marketDetail'
+      | 'searchPerps'
+      | '';
     showOpenPosition?: boolean;
     direction?: 'Long' | 'Short';
+  };
+  [RootNames.PerpsSearch]?: {
+    initialTab?: string;
+    openFromSource?: 'openPosition' | 'searchPerps' | 'marketDetail';
+    direction?: 'Long' | 'Short';
+    autoFocus?: boolean;
   };
   [RootNames.Lending]?: {
     tokenAddress?: string;

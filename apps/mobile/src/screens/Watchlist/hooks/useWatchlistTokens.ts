@@ -10,6 +10,7 @@ import {
   watchlistChangeSortAtom,
   watchlistTokenSortAtom,
 } from '../sort';
+import { getWatchlistTopCache } from '../cache';
 
 const chunkArray = (arr: IManageToken[], size: number): IManageToken[][] => {
   const chunks: IManageToken[][] = [];
@@ -19,7 +20,9 @@ const chunkArray = (arr: IManageToken[], size: number): IManageToken[][] => {
   return chunks;
 };
 
-export const watchlistTokensAtom = atom<TokenDetailWithPriceCurve[]>([]);
+export const watchlistTokensAtom = atom<TokenDetailWithPriceCurve[]>(
+  getWatchlistTopCache(),
+);
 
 export const useWatchlistTokens = (onBeforeRefresh?: () => void) => {
   const [data, setData] = useAtom(watchlistTokensAtom);

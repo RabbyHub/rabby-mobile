@@ -45,6 +45,7 @@ import {
   usePulldownRefreshStyles,
 } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { RNGHRefreshControl } from '@/components/customized/reexports';
+import { useAppForeground } from '@/hooks/useAppForeground';
 
 const emptyCacheProtocolItem: ICacheProtocolItem = {
   fold: [],
@@ -67,7 +68,7 @@ export const ProtocolList = () => {
   const chain = selectedChainItem?.chain;
   const [foldDefi, setFoldDefi] = useState(true);
 
-  const { isFocused } = useIsFocusedCurrentTab(TabName.defi);
+  const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.defi);
   const getAccountByAddress = useFindAccountByAddress();
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 
@@ -189,6 +190,19 @@ export const ProtocolList = () => {
   useEffect(() => {
     batchGetProtocols(myTop10Addresses);
   }, [myTop10Addresses]);
+
+  const handleForeground = useCallback(() => {
+    if (isLoading || !isFocusing || !myTop10Addresses) {
+      return;
+    }
+    triggerUpdate(false);
+    batchGetProtocols(myTop10Addresses);
+  }, [isFocusing, isLoading, myTop10Addresses, triggerUpdate]);
+
+  useAppForeground({
+    enabled: isFocusing,
+    onForeground: handleForeground,
+  });
 
   const renderItem = useCallback(
     ({ item }) => {

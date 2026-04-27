@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import {
   ColorSchemeName,
   Appearance,
@@ -80,7 +80,7 @@ function appThemeToColorScheme(appTheme: AppThemeScheme): ColorSchemeName {
 
 const themeModeStore = zustandByMMKV<{ appTheme: AppThemeScheme }>(
   '@AppTheme',
-  { appTheme: 'light' },
+  { appTheme: 'system' },
   {
     storage: MMKVStorageStrategy.compatString,
     migrateFromAtom(ctx) {
@@ -88,7 +88,7 @@ const themeModeStore = zustandByMMKV<{ appTheme: AppThemeScheme }>(
         state: {
           appTheme: (isValidAppTheme(ctx.oldData)
             ? ctx.oldData
-            : 'light') as AppThemeScheme,
+            : 'system') as AppThemeScheme,
         },
         version: 0,
       };

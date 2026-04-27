@@ -6,6 +6,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { RcIconUnknown } from '@/screens/Approvals/icons';
 import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles } from '@/utils/styles';
+import { renderText } from '@/utils/renderNode';
 import { getTokenSymbol } from '@/utils/token';
 import {
   ApproveAction,
@@ -149,11 +150,10 @@ export const GnosisTransactionExplain: React.FC<Props> = ({
     <View style={styles.container}>
       {icon || <RcIconUnknown style={styles.icon} />}
       <View style={styles.content}>
-        {content || (
-          <Text style={styles.explainText}>
-            {t('page.safeQueue.unknownTx')}
-          </Text>
-        )}
+        {renderText(content || t('page.safeQueue.unknownTx'), {
+          style: styles.explainText,
+          numberOfLines: 2,
+        })}
       </View>
       <Button
         title={t('page.safeQueue.viewBtn')}
