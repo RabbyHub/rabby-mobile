@@ -213,6 +213,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   const expiredTimer = useRef<NodeJS.Timeout>(undefined);
   const autoQuoteRefreshPausedRef = useRef(false);
+  const reloadTxRefreshPausedRef = useRef(false);
 
   const inSufficient = useMemo(
     () =>
@@ -416,6 +417,10 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     },
     [setRefreshId],
   );
+
+  const setReloadTxRefreshPaused = useCallback((paused: boolean) => {
+    reloadTxRefreshPausedRef.current = paused;
+  }, []);
 
   // const aggregatorsList = useBridgeSupportedChains(s => s.bridge.aggregatorsList || []);
   const aggregatorsList = useAggregatorsList();
@@ -1066,6 +1071,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       const refresh = () => {
         if (
           autoQuoteRefreshPausedRef.current ||
+          reloadTxRefreshPausedRef.current ||
           isGasAccountDepositFlowActive()
         ) {
           return;
@@ -1124,6 +1130,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
     setSelectedBridgeQuote,
     setAutoQuoteRefreshPaused,
+    setReloadTxRefreshPaused,
     ...slippageObj,
 
     onChangeSlider,

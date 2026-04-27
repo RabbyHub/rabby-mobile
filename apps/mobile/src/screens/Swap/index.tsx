@@ -237,6 +237,7 @@ const Swap = ({
     swapUseSlider,
     clearExpiredTimer,
     setAutoQuoteRefreshPaused,
+    setReloadTxRefreshPaused,
     finishedQuotes,
     inSufficientCanGetQuote,
     quoteBlockedByClosedMarket,
@@ -433,6 +434,7 @@ const Swap = ({
   const gotoSwap = useMemoizedFn(async () => {
     if (!inSufficient && payToken && receiveToken && activeProvider?.quote) {
       try {
+        setReloadTxRefreshPaused(true);
         const receive_token_amount = new BigNumber(
           activeProvider?.quote.toTokenAmount,
         )
@@ -511,6 +513,7 @@ const Swap = ({
       } catch (error) {
         console.error(error);
       } finally {
+        setReloadTxRefreshPaused(false);
         refresh(e => e + 1);
       }
     }
@@ -652,6 +655,7 @@ const Swap = ({
     if (canShowDirectSubmit) {
       try {
         setIsSubmitting(true);
+        setReloadTxRefreshPaused(true);
 
         if (!currentTxs?.length) {
           toast.info('please retry');
@@ -765,9 +769,10 @@ const Swap = ({
           ].includes(error)
         ) {
         } else {
-          gotoSwap();
+          await gotoSwap();
         }
       } finally {
+        setReloadTxRefreshPaused(false);
         setIsSubmitting(false);
         setMiniSignLoading(false);
       }
