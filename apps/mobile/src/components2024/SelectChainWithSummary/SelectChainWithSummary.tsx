@@ -50,7 +50,7 @@ const useChainSeletorList = ({
     matteredChainBalances,
     fetchMatteredChainBalance,
 
-    fetchAllAddressesChainBalance,
+    fetchCoreAddressesChainBalance,
   } = useLoadMatteredChainBalances({
     account,
   });
@@ -61,11 +61,11 @@ const useChainSeletorList = ({
 
   useEffect(() => {
     needAllAddresses
-      ? fetchAllAddressesChainBalance()
+      ? fetchCoreAddressesChainBalance()
       : fetchMatteredChainBalance();
   }, [
     needAllAddresses,
-    fetchAllAddressesChainBalance,
+    fetchCoreAddressesChainBalance,
     fetchMatteredChainBalance,
   ]);
 
