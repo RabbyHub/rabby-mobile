@@ -13,6 +13,7 @@ import { coerceFloat } from '@/utils/number';
 import { zCreate } from '@/core/utils/reexports';
 import addressBalanceStore from '@/store/balance';
 import { useAccountStore } from '@/store/account';
+import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
 
 type MatteredChainBalances = {
   [P in Chain['serverId']]?: DisplayChainWithWhiteLogo;
