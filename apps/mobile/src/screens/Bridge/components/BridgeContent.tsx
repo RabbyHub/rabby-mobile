@@ -304,6 +304,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
 
     clearExpiredTimer,
     setAutoQuoteRefreshPaused,
+    setReloadTxRefreshPaused,
 
     gasList,
     passGasPrice,
@@ -361,6 +362,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
       currentAccount?.address
     ) {
       try {
+        setReloadTxRefreshPaused(true);
         setFetchingBridgeQuote(true);
         const tx = await pRetry(
           () =>
@@ -479,6 +481,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         });
         console.log(error);
       } finally {
+        setReloadTxRefreshPaused(false);
         refresh(e => e + 1);
         setFetchingBridgeQuote(false);
       }
@@ -756,6 +759,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         if (miniSignLoading) {
           return;
         }
+        setReloadTxRefreshPaused(true);
         setMiniSignLoading(true);
         setFetchingBridgeQuote(true);
 
@@ -827,9 +831,10 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
             refresh(e => e + 1);
           }, 10 * 1000);
         } else {
-          gotoBridge();
+          await gotoBridge();
         }
       } finally {
+        setReloadTxRefreshPaused(false);
         setMiniSignLoading(false);
         setFetchingBridgeQuote(false);
       }
