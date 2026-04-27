@@ -72,6 +72,15 @@ export const BrowserFavoritePopup = registerAppScreen<
     })),
 });
 
+export const BottomSheetDappInfoPopup = registerAppScreen<
+  typeof import('@/screens/Browser/BottomSheetBrowser').BottomSheetDappInfoPopup
+>({
+  loader: () =>
+    import('@/screens/Browser/BottomSheetBrowser').then(m => ({
+      default: m.BottomSheetDappInfoPopup,
+    })),
+});
+
 export const ModalsSubmitFeedbackByScreenshotStub = registerAppScreen<
   typeof import('@/components/Screenshot/ScreenshotModal').ModalsSubmitFeedbackByScreenshotStub
 >({
