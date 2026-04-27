@@ -1,4 +1,5 @@
 import RcIconStarFull from '@/assets/icons/dapp/icon-star-mini-full.svg';
+import hotDappList from '@/constant/hot-dapp.json';
 import { HighlightText } from '@/components2024/HighlightText';
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
@@ -17,6 +18,10 @@ import {
 } from 'react-native';
 // import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Text } from '@/components/Typography';
+
+const hotDappIconMap = new Map(
+  hotDappList.map(item => [item.origin, item.logo] as const),
+);
 
 export const BrowserSiteListBy = ({
   data,
@@ -99,7 +104,6 @@ export const BrowserSiteCard: React.FC<DappCardProps> = ({
 export const BrowserSiteCardInner: React.FC<DappCardProps> = ({
   isActive,
   data,
-  onFavoritePress,
   keyword,
   style,
   isShowDesc = false,
@@ -108,6 +112,7 @@ export const BrowserSiteCardInner: React.FC<DappCardProps> = ({
   isShowBorder = false,
 }) => {
   const { styles } = useTheme2024({ getStyle });
+  const icon = hotDappIconMap.get(data.origin) || data.icon;
 
   // const chain = findChain({ enum: data.chainId });
 
@@ -122,9 +127,9 @@ export const BrowserSiteCardInner: React.FC<DappCardProps> = ({
         <View style={styles.dappIconWraper}>
           <DappIcon
             source={
-              data?.icon
+              icon
                 ? {
-                    uri: data.icon,
+                    uri: icon,
                   }
                 : undefined
             }

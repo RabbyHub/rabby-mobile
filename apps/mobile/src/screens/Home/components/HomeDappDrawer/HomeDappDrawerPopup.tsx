@@ -67,6 +67,13 @@ export const DappInfoPopup: React.FC<{
 
     return safeGetOrigin(url) || safeGetOrigin(`https://${url}`) || url;
   }, [url]);
+  const domain = useMemo(() => {
+    if (!origin) {
+      return '';
+    }
+
+    return origin.replace(/^https?:\/\//, '');
+  }, [origin]);
   const dapp = origin ? dapps[origin] : undefined;
   const hotDappInfo = useMemo(() => {
     if (!origin) {
@@ -139,10 +146,10 @@ export const DappInfoPopup: React.FC<{
   ]);
 
   const displayIcon =
-    dapp?.icon ||
-    basicDappInfo?.logo_url ||
-    dapp?.info?.logo_url ||
     hotDappInfo?.logo ||
+    basicDappInfo?.logo_url ||
+    dapp?.icon ||
+    dapp?.info?.logo_url ||
     bookmark?.icon;
 
   const category = hotDappInfo?.category;
@@ -344,7 +351,7 @@ export const DappInfoPopup: React.FC<{
               <View style={styles.dappContent}>
                 <View style={styles.dappContentHeader}>
                   <Text style={[styles.dappTitle]} numberOfLines={1}>
-                    {displayName || origin}
+                    {displayName || domain}
                   </Text>
                   <TouchableOpacity
                     style={styles.favoriteButton}
@@ -417,7 +424,9 @@ export const DappInfoPopup: React.FC<{
                       </Text>
                     ) : null}
                   </View>
-                ) : null}
+                ) : (
+                  <Text style={styles.emptyText}>-</Text>
+                )}
               </View>
               <View style={styles.listItem}>
                 <Text style={styles.listLabel}>Site popularity</Text>
@@ -446,13 +455,19 @@ export const DappInfoPopup: React.FC<{
                       Very Low
                     </Text>
                   </View>
-                ) : null}
+                ) : (
+                  <Text style={styles.emptyText}>-</Text>
+                )}
               </View>
               <View style={styles.listItem}>
                 <Text style={styles.listLabel}>Category</Text>
-                <View style={styles.tag}>
-                  <Text style={styles.tagText}>{category}</Text>
-                </View>
+                {category ? (
+                  <View style={styles.tag}>
+                    <Text style={styles.tagText}>{category}</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.emptyText}>-</Text>
+                )}
               </View>
             </View>
             <View style={styles.footer}>
@@ -471,8 +486,11 @@ export const DappInfoPopup: React.FC<{
                 onPress={() => {
                   onOpenDapp?.(displayUrl || origin);
                 }}
-                title={`Open ${displayName || origin}`}
-                titleStyle={styles.openButtonTitle}
+                title={
+                  <Text numberOfLines={1} style={styles.openButtonTitle}>
+                    {`Open ${displayName || domain}`}
+                  </Text>
+                }
               />
             </View>
           </BottomSheetScrollView>
@@ -581,6 +599,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight: _isLight }) => {
     favoriteButton: {},
     openButtonTitle: {
       paddingHorizontal: 8,
+      textAlign: 'center',
+      width: '100%',
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '700',
+      fontSize: 17,
+      lineHeight: 22,
+      color: colors2024['neutral-InvertHighlight'],
     },
     dappOrigin: {
       marginTop: 4,
@@ -636,6 +661,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight: _isLight }) => {
       borderRadius: 1000,
     },
     listByMore: {
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '500',
+      fontSize: 14,
+      lineHeight: 18,
+      color: colors2024['neutral-secondary'],
+    },
+    emptyText: {
       fontFamily: 'SF Pro Rounded',
       fontWeight: '500',
       fontSize: 14,

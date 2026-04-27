@@ -28,7 +28,7 @@ import {
 import { useAtom } from 'jotai';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useMemoizedFn } from 'ahooks';
-import { browserService } from '@/core/services';
+import { browserService, dappService } from '@/core/services';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { DappFavoriteList } from './DappFavoriteList';
@@ -124,6 +124,16 @@ export const HomeDappDrawerContent: React.FC<{
       isDapp: true,
       isRemindOpen: true,
     });
+    const dapp = dappService.getDapp(item.origin);
+    if (!dapp) {
+      dappService.addDapp(item);
+    } else if (!dapp.isDapp) {
+      dappService.updateDapp({
+        ...dapp,
+        origin: item.origin,
+        isDapp: true,
+      });
+    }
   });
 
   const renderTabBar = useMemoizedFn((props: any) => {
