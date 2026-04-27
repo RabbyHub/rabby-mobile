@@ -96,6 +96,10 @@ list_candidate_env_files() {
   local build_env
   build_env=$(resolve_mobile_build_env 2>/dev/null || true)
 
+  if [ "${APP_ENV:-}" = "hashing" ]; then
+    printf '%s\n' "$current_project_dir/.env.hashing"
+  fi
+
   case "$build_env" in
     production)
       printf '%s\n' \
