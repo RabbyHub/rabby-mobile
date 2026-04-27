@@ -41,6 +41,10 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const ScreenWidth = Dimensions.get('screen').width;
 
+const MAX_NETWORTH_FS = 42;
+const MIN_NETWORTH_FS = 34;
+const NETWORTH_FIT_LEN = 10;
+
 const ZERO_LINE_CHART_DATA: CurvePoint[] = [
   {
     value: 0,
@@ -374,6 +378,12 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
     };
   }, [isLoss, data, currentIndex, colors2024, styles, loading, isInitialized]);
 
+  const netWorthFontStyle = useAnimatedStyle(() => {
+    const len = formatNetWorth.value?.length ?? 0;
+    const fs = len <= NETWORTH_FIT_LEN ? MAX_NETWORTH_FS : MIN_NETWORTH_FS;
+    return { fontSize: fs };
+  });
+
   const netWorthAnimatedProps = useAnimatedProps(() => {
     return {
       text: formatNetWorth.value,
@@ -398,7 +408,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
       <View style={styles.leftContainer}>
         <AnimateableText
           {...makeTestIDProps(E2E_ID.home.singleBalanceValue)}
-          style={styles.netWorth}
+          style={[styles.netWorth, netWorthFontStyle]}
           animatedProps={netWorthAnimatedProps}
         />
         <AnimateableText
@@ -484,6 +494,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'column',
     alignItems: 'flex-start',
     justifyContent: 'center',
+    marginRight: 24,
+    flexShrink: 1,
+    minWidth: 0,
   },
   percentChangeContainer: {
     flexDirection: 'row',
@@ -491,10 +504,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'flex-end',
     alignSelf: 'flex-start',
     marginTop: 16,
+    flexShrink: 0,
     // ...makeDebugBorder(),
   },
   netWorth: {
-    fontSize: 42,
     lineHeight: 46,
     // textAlign: 'center',
     fontWeight: '900',
