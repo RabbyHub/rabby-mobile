@@ -23,6 +23,10 @@ import {
   UpdaterOrPartials,
 } from '@/core/utils/store';
 import { RefLikeObject } from '@/utils/type';
+import {
+  isAppStateInactive,
+  shouldTreatIosAppStateAsBackground,
+} from './lockAppState';
 
 const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
@@ -171,25 +175,21 @@ function tryGetAppStatus() {
 type AppStateState = {
   current: AppStateStatus;
   androidPaused: boolean;
+  iosHasBecomeActiveOnce: boolean;
 };
 
 const appStateStore = zCreate<AppStateState>((set, get) => {
+  const current = tryGetAppStatus();
+
   return {
-    current: tryGetAppStatus(),
+    current,
     androidPaused: false,
+    iosHasBecomeActiveOnce: current === 'active',
   };
 });
 
 function setAppStatus(valOrFunc: UpdaterOrPartials<AppStateState>) {
   appStateStore.setState(prev => resolveValFromUpdater(prev, valOrFunc).newVal);
-}
-
-function isInactive(appStatus: AppStateStatus) {
-  return [
-    'inactive',
-    /* not possible for our ios app, but just write here */
-    'background',
-  ].includes(appStatus);
 }
 
 export function useIsOnBackground() {
@@ -198,10 +198,15 @@ export function useIsOnBackground() {
 
   const isOnBackground = useMemo(() => {
     if (isIOS) {
-      return isInactive(appState.current);
+      return shouldTreatIosAppStateAsBackground(
+        appState.current,
+        appState.iosHasBecomeActiveOnce,
+      );
     }
 
-    return isInactive(appState.current) /*  && appState.androidPaused */;
+    return isAppStateInactive(
+      appState.current,
+    ) /*  && appState.androidPaused */;
   }, [appState]);
 
   return {
@@ -239,7 +244,12 @@ export function startSubscribeAppStateChange() {
       // if (isInactive(nextStatus)) nativeBlockScreen();
       // else nativeUnblockScreen();
 
-      setAppStatus(prev => ({ ...prev, current: nextStatus }));
+      setAppStatus(prev => ({
+        ...prev,
+        current: nextStatus,
+        iosHasBecomeActiveOnce:
+          prev.iosHasBecomeActiveOnce || nextStatus === 'active',
+      }));
     });
 
     return () => {
