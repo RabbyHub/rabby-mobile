@@ -35,6 +35,7 @@
     "loadables:generate-dev:stage": "yarn loadables:generate:stage",
     "loadables:generate:stage": "node ./scripts/generate-loadables-dev.cjs --stage",
     "perf:entry-tree": "node ./perf/print-entry-tree.cjs",
+    "prepublish:release": "node ./scripts/prepublish-release.cjs",
     "prestart": "yarn loadables:generate",
     "prestart:dev": "yarn loadables:generate",
     "prestart:dev:thrifty": "yarn loadables:generate",
