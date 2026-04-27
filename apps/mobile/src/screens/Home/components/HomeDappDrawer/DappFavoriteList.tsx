@@ -123,6 +123,7 @@ export const DappFavoriteList: React.FC<{
                   data={item}
                   onPress={handleDappPress}
                   isShowDesc={false}
+                  ignorePressMoveThreshold={10}
                 />
               </View>
             </View>

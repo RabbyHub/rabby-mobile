@@ -160,106 +160,139 @@ export const HomeDappDrawer: React.FC<{
 
   const drawerGesture = useMemo(
     () =>
-      Gesture.Pan()
-        .manualActivation(true)
-        .maxPointers(1)
-        .shouldCancelWhenOutside(false)
-        .onTouchesDown(event => {
-          'worklet';
+      IS_ANDROID
+        ? Gesture.Pan()
+            .manualActivation(true)
+            .maxPointers(1)
+            .shouldCancelWhenOutside(false)
+            .onTouchesDown(event => {
+              'worklet';
 
-          const touch = event.allTouches[0];
-          if (!touch) {
-            return;
-          }
+              const touch = event.allTouches[0];
+              if (!touch) {
+                return;
+              }
 
-          drawerGestureStartX.value = touch.absoluteX;
-          drawerGestureStartY.value = touch.absoluteY;
-        })
-        .onTouchesMove((event, stateManager) => {
-          'worklet';
+              drawerGestureStartX.value = touch.absoluteX;
+              drawerGestureStartY.value = touch.absoluteY;
+            })
+            .onTouchesMove((event, stateManager) => {
+              'worklet';
 
-          const touch = event.allTouches[0];
-          if (!touch) {
-            stateManager.fail();
-            return;
-          }
+              const touch = event.allTouches[0];
+              if (!touch) {
+                stateManager.fail();
+                return;
+              }
 
-          const diffX = touch.absoluteX - drawerGestureStartX.value;
-          const diffY = touch.absoluteY - drawerGestureStartY.value;
-          const absX = Math.abs(diffX);
-          const absY = Math.abs(diffY);
+              const diffX = touch.absoluteX - drawerGestureStartX.value;
+              const diffY = touch.absoluteY - drawerGestureStartY.value;
+              const absX = Math.abs(diffX);
+              const absY = Math.abs(diffY);
 
-          if (absX > DRAWER_GESTURE_FAIL_OFFSET_X && absX > absY) {
-            stateManager.fail();
-            return;
-          }
+              if (absX > DRAWER_GESTURE_FAIL_OFFSET_X && absX > absY) {
+                stateManager.fail();
+                return;
+              }
 
-          if (absY < DRAWER_GESTURE_ACTIVE_OFFSET_Y || absY < absX * 1.2) {
-            return;
-          }
+              if (absY < DRAWER_GESTURE_ACTIVE_OFFSET_Y || absY < absX * 1.2) {
+                return;
+              }
 
-          const isDraggingDown = diffY > 0;
-          const isDraggingUp = diffY < 0;
+              const isDraggingDown = diffY > 0;
+              const isDraggingUp = diffY < 0;
 
-          if (drawerScrollOffsetY.value > 0) {
-            if (isExpanded.value && isDraggingDown) {
-              return;
-            }
+              if (drawerScrollOffsetY.value > 0) {
+                if (isExpanded.value && isDraggingDown) {
+                  return;
+                }
 
-            stateManager.fail();
-            return;
-          }
+                stateManager.fail();
+                return;
+              }
 
-          if (isExpanded.value && isDraggingUp) {
-            stateManager.fail();
-            return;
-          }
+              if (isExpanded.value && isDraggingUp) {
+                stateManager.fail();
+                return;
+              }
 
-          if (!isExpanded.value && isDraggingDown) {
-            stateManager.fail();
-            return;
-          }
+              if (!isExpanded.value && isDraggingDown) {
+                stateManager.fail();
+                return;
+              }
 
-          stateManager.activate();
-        })
-        .onStart(event => {
-          'worklet';
+              stateManager.activate();
+            })
+            .onStart(event => {
+              'worklet';
 
-          drawerGestureActivationY.value = event.translationY;
-        })
-        .onChange(event => {
-          'worklet';
+              drawerGestureActivationY.value = event.translationY;
+            })
+            .onChange(event => {
+              'worklet';
 
-          if (drawerScrollOffsetY.value > 0) {
-            return;
-          }
+              if (drawerScrollOffsetY.value > 0) {
+                return;
+              }
 
-          if (Math.abs(pullPercent.value) >= 100) {
-            scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
-          } else {
-            scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
-          }
-          const gestureTranslationY =
-            event.translationY - drawerGestureActivationY.value;
-          translateY.value = (height - gestureTranslationY) * -1;
-        })
-        .onEnd(() => {
-          'worklet';
+              if (Math.abs(pullPercent.value) >= 100) {
+                scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+              } else {
+                scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
+              }
+              const gestureTranslationY =
+                event.translationY - drawerGestureActivationY.value;
+              translateY.value = (height - gestureTranslationY) * -1;
+            })
+            .onEnd(() => {
+              'worklet';
 
-          if (translateY.value > (height - getPullThreshold(height)) * -1) {
-            translateY.value = withTiming(0, undefined, () => {
-              scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
-              // runOnJS(resetEditing)();
-            });
-            handleScrollBack();
+              if (translateY.value > (height - getPullThreshold(height)) * -1) {
+                translateY.value = withTiming(0, undefined, () => {
+                  scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+                  // runOnJS(resetEditing)();
+                });
+                handleScrollBack();
 
-            runOnJS(triggerImpact)();
-          } else {
-            translateY.value = withTiming(-height, undefined, () => {
-              scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
-            });
-          }
-        }),
+                runOnJS(triggerImpact)();
+              } else {
+                translateY.value = withTiming(-height, undefined, () => {
+                  scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+                });
+              }
+            })
+        : Gesture.Pan()
+            .onChange(event => {
+              'worklet';
+
+              if (drawerScrollOffsetY.value > 0) {
+                return;
+              }
+
+              if (Math.abs(pullPercent.value) >= 100) {
+                scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+              } else {
+                scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
+              }
+              translateY.value = (height - event.translationY) * -1;
+            })
+            .onEnd(() => {
+              'worklet';
+
+              if (translateY.value > (height - getPullThreshold(height)) * -1) {
+                translateY.value = withTiming(0, undefined, () => {
+                  scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+                  // runOnJS(resetEditing)();
+                });
+                handleScrollBack();
+
+                runOnJS(triggerImpact)();
+              } else {
+                translateY.value = withTiming(-height, undefined, () => {
+                  scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+                });
+              }
+            }),
     [
       drawerGestureStartX,
       drawerGestureStartY,

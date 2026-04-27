@@ -6,93 +6,38 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {
-  FlatListProps,
-  FlatList as RNFlatList,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { atomByMMKV } from '@/core/storage/mmkv';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { MaterialTabBar, Tabs } from 'react-native-collapsible-tab-view';
 
-// import CustomLabel from '../TokenDetail/components/CustomLabel';
-import { DynamicCustomMaterialTabBar } from '../../../TokenDetail/components/CustomTabBar';
-// import { WatchlistContent } from '../Watchlist/WatchlistContent';
-// import { MarketCategoryContent } from './components/MarketCategoryContent';
-// import { useMarketVisibleTokenPriceRefresh } from './hooks/useMarketVisibleTokenPriceRefresh';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { DappInfo } from '@/core/services/dappService';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
-import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import CustomLabel from '@/screens/TokenDetail/components/CustomLabel';
-import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
-import Animated, {
-  scrollTo,
-  useAnimatedRef,
-  useAnimatedProps,
-  useAnimatedScrollHandler,
-} from 'react-native-reanimated';
+import { NativeGesture } from 'react-native-gesture-handler';
+import Animated from 'react-native-reanimated';
 import {
   homeDrawerAnimateMutable,
-  SCROLLABLE_DECELERATION_RATE_MAPPER,
   SCROLLABLE_STATUS,
 } from '../../hooks/useHomeDrawerAnimate';
 
-import dappList from '@/constant/hot-dapp.json';
 import { useAtom } from 'jotai';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useMemoizedFn } from 'ahooks';
 import { browserService } from '@/core/services';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
-import { useDapps } from '@/hooks/useDapps';
 import { DappFavoriteList } from './DappFavoriteList';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { IS_ANDROID } from '@/core/native/utils';
-import { HomeDappDrawerAndroidTabs } from './HomeDappDrawerAndroidTabs';
-
-type HotDappListItem = (typeof dappList)[number];
-
-const mapHotDappListToDappInfo = ({
-  dapps,
-  list,
-  lang,
-}: {
-  dapps: Record<string, DappInfo>;
-  list: HotDappListItem[];
-  lang: string;
-}): DappInfo[] => {
-  const isZh = lang.toLowerCase().startsWith('zh');
-
-  return list.map(item => {
-    const dapp = dapps[item.origin];
-    return {
-      ...dapp,
-      origin: item.origin,
-      icon: dapp?.icon || item.logo || '',
-      name: item.name,
-      chainId: undefined as unknown as DappInfo['chainId'],
-      isDapp: true,
-      info: {
-        ...dapp?.info,
-        id: item.origin.replace(/^https?:\/\//, ''),
-        name: item.name,
-        logo_url: dapp?.icon || item.logo || '',
-        description: isZh ? item.zh : item.en,
-        user_range: '',
-        tags: item.category ? [item.category] : [],
-        chain_ids: [],
-      },
-    };
-  });
-};
-
-const AnimatedFlatList =
-  Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
+import {
+  HomeDappDrawerAndroidTabs,
+  type HomeDappDrawerAndroidTab,
+} from './HomeDappDrawerAndroidTabs';
+import { DappList } from './DappList';
 
 const TAB_GAP = 8;
 const FIRST_TAB_GAP = 12;
@@ -181,44 +126,22 @@ export const HomeDappDrawerContent: React.FC<{
     });
   });
 
-  const initialTabItemsLayout = useMemo(() => {
-    let x = 20;
-    return tabs.map((tab, index) => {
-      const itemWidth = Math.max(60, tab.label.length * 12 + 20);
-      const item = { x, width: itemWidth };
-      x += itemWidth + (index === 0 ? FIRST_TAB_GAP : TAB_GAP);
-      return item;
-    });
-  }, []);
-  const renderTabBar = useCallback(
-    (props: any) => (
-      <DynamicCustomMaterialTabBar
-        materialTabBarProps={{
-          ...props,
-          scrollEnabled: true,
-          tabStyle: styles.tabBar,
-        }}
-        containerStyle={styles.tabsBarContainer}
+  const renderTabBar = useMemoizedFn((props: any) => {
+    return (
+      <MaterialTabBar
+        {...props}
+        scrollEnabled={true}
+        keepActiveTabCentered
+        style={styles.materialTabsBar}
+        contentContainerStyle={styles.materialTabsBarContent}
         indicatorStyle={styles.indicator}
-        initialTabItemsLayout={initialTabItemsLayout}
-        initPaddingLeft={styles.tabsBarContainer?.paddingLeft ?? 0}
-        getTabItemStyle={index =>
-          index === 0 ? styles.firstTabBar : styles.restTabBar
-        }
+        tabStyle={styles.tabBar}
       />
-    ),
-    [
-      initialTabItemsLayout,
-      styles.firstTabBar,
-      styles.indicator,
-      styles.restTabBar,
-      styles.tabBar,
-      styles.tabsBarContainer,
-    ],
-  );
+    );
+  });
 
   const renderFavoriteLabel = useCallback(
-    ({ index, indexDecimal }) => (
+    ({ index, indexDecimal }: any) => (
       <CustomLabel
         index={index}
         indexDecimal={indexDecimal}
@@ -239,6 +162,37 @@ export const HomeDappDrawerContent: React.FC<{
       />
     ),
     [colors2024, styles.favoriteLabelContainer, styles.tabLabel],
+  );
+
+  const renderCategoryLabel = useMemoizedFn(
+    ({ index, indexDecimal, label }) => (
+      <CustomLabel
+        index={index}
+        style={styles.tabLabel}
+        containerStyle={styles.categoryLabelContainer}
+        indexDecimal={indexDecimal}
+        text={label}
+      />
+    ),
+  );
+
+  const androidTabs = useMemo<readonly HomeDappDrawerAndroidTab<TabKey>[]>(
+    () =>
+      tabs.map(tabItem => {
+        if (tabItem.id === 'favorite') {
+          return {
+            ...tabItem,
+            label: renderFavoriteLabel,
+          };
+        }
+
+        return {
+          ...tabItem,
+          label: (props: any) =>
+            renderCategoryLabel({ ...props, label: tabItem.label }),
+        };
+      }),
+    [renderCategoryLabel, renderFavoriteLabel],
   );
 
   const { bookmarkList, removeBookmark } = useBrowserBookmark();
@@ -353,11 +307,12 @@ export const HomeDappDrawerContent: React.FC<{
       </View>
       {IS_ANDROID ? (
         <HomeDappDrawerAndroidTabs
-          tabs={tabs}
+          tabs={androidTabs}
           initialTabName={activeTab}
           drawerScrollableGesture={drawerScrollableGesture}
+          renderTabBar={renderTabBar}
           onTabChange={setActiveTab}
-          renderTabContent={renderTabContent}
+          renderTabContent={tabKey => renderTabContent(tabKey, true)}
         />
       ) : (
         <Tabs.Container
@@ -382,20 +337,16 @@ export const HomeDappDrawerContent: React.FC<{
                   </Tabs.Tab>
                 );
               }
-              const renderCategoryLabel = ({ index, indexDecimal }) => (
-                <CustomLabel
-                  index={index}
-                  style={styles.tabLabel}
-                  containerStyle={styles.categoryLabelContainer}
-                  indexDecimal={indexDecimal}
-                  text={tabItem.label}
-                />
-              );
 
               return (
                 <Tabs.Tab
                   key={tabItem.id}
-                  label={renderCategoryLabel}
+                  label={label =>
+                    renderCategoryLabel({
+                      ...label,
+                      label: tabItem.label,
+                    })
+                  }
                   name={tabItem.id}>
                   {renderTabContent(tabItem.id)}
                 </Tabs.Tab>
@@ -405,117 +356,6 @@ export const HomeDappDrawerContent: React.FC<{
         </Tabs.Container>
       )}
     </View>
-  );
-};
-
-const DappList: React.FC<{
-  drawerScrollableGesture: NativeGesture;
-  drawerScrollOffsetY: Animated.SharedValue<number>;
-  scrollableStatus: Animated.SharedValue<SCROLLABLE_STATUS>;
-  category: string;
-  onDappPress?: (item: DappInfo) => void;
-}> = ({
-  drawerScrollableGesture,
-  drawerScrollOffsetY,
-  scrollableStatus,
-  category,
-  onDappPress,
-}) => {
-  const { styles } = useTheme2024({ getStyle });
-  const lang = useTranslation().i18n.language;
-  const { dapps } = useDapps();
-  const hotDappInfoList = useMemo(
-    () => mapHotDappListToDappInfo({ dapps, list: dappList, lang }),
-    [dapps, lang],
-  );
-
-  const list = useMemo(() => {
-    if (category === 'all') {
-      return hotDappInfoList;
-    }
-    return hotDappInfoList.filter(item => item.info?.tags?.includes(category));
-  }, [category, hotDappInfoList]);
-
-  const scrollableRef = useAnimatedRef<Animated.FlatList<DappInfo>>();
-
-  const animatedProps = useAnimatedProps(() => ({
-    decelerationRate:
-      SCROLLABLE_DECELERATION_RATE_MAPPER[scrollableStatus.value],
-  }));
-
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: event => {
-      'worklet';
-
-      if (scrollableStatus.value === SCROLLABLE_STATUS.LOCKED) {
-        const lockPosition = 0;
-        scrollTo(scrollableRef, 0, lockPosition, false);
-        drawerScrollOffsetY.value = lockPosition;
-        return;
-      }
-      drawerScrollOffsetY.value = event.contentOffset.y;
-    },
-  });
-
-  return (
-    <GestureDetector gesture={drawerScrollableGesture}>
-      <AnimatedFlatList
-        data={list}
-        style={[styles.list]}
-        keyExtractor={item => item.url || item.origin}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.listContentContainer,
-          list.length ? null : styles.emptyListContentContainer,
-        ]}
-        ref={scrollableRef}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
-        animatedProps={animatedProps}
-        renderItem={({ item }) => {
-          return (
-            <View style={styles.listItem}>
-              <View style={styles.listItemContent}>
-                <TouchableOpacity
-                  onPress={() => {
-                    onDappPress?.(item);
-                    matomoRequestEvent({
-                      category: 'Websites Usage',
-                      action: 'Website_Visit_Other',
-                      label: item.origin,
-                    });
-                  }}>
-                  <View style={styles.dappCard}>
-                    <DappIcon
-                      source={
-                        item?.icon
-                          ? {
-                              uri: item.icon,
-                            }
-                          : undefined
-                      }
-                      origin={item.origin}
-                      style={styles.dappIcon}
-                    />
-                    <View style={styles.dappContent}>
-                      <Text style={[styles.dappTitle]} numberOfLines={1}>
-                        {item?.info?.name ||
-                          item.name ||
-                          item.origin.split('://')[1] ||
-                          item.origin}
-                      </Text>
-                      <Text style={styles.dappDesc} numberOfLines={1}>
-                        {item.info?.description || ''}
-                      </Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              </View>
-            </View>
-          );
-        }}
-      />
-    </GestureDetector>
   );
 };
 
@@ -575,6 +415,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flexShrink: 0,
       flex: 0,
       paddingHorizontal: 0,
+      marginHorizontal: 4,
     },
     firstTabBar: {
       marginRight: FIRST_TAB_GAP,
@@ -589,6 +430,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       height: TAB_BAR_HEIGHT,
       backgroundColor: bgColor,
       overflow: 'hidden',
+    },
+    materialTabsBar: {
+      height: TAB_BAR_HEIGHT,
+      maxHeight: TAB_BAR_HEIGHT,
+      flexGrow: 0,
+      flexShrink: 0,
+      backgroundColor: bgColor,
+      borderBottomWidth: 1,
+      borderBottomColor: colors2024['neutral-bg-5'],
+    },
+    materialTabsBarContent: {
+      paddingLeft: 20,
+      backgroundColor: bgColor,
     },
     indicator: {
       backgroundColor: colors2024['neutral-body'],

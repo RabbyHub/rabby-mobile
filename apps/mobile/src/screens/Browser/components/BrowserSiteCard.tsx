@@ -7,6 +7,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import React from 'react';
 import {
+  GestureResponderEvent,
   Image,
   Platform,
   StyleProp,
@@ -50,21 +51,45 @@ interface DappCardProps {
   isShowFavorite?: boolean;
   isShowBorder?: boolean;
   keyword?: string;
+  ignorePressMoveThreshold?: number;
 }
 
 export const BrowserSiteCard: React.FC<DappCardProps> = ({
   data,
   onPress,
   containerStyle,
+  ignorePressMoveThreshold,
   ...rest
 }) => {
   // const { styles } = useTheme2024({ getStyle });
+  const pressStartRef = React.useRef({ x: 0, y: 0 });
+
+  const handlePressIn = React.useCallback((event: GestureResponderEvent) => {
+    pressStartRef.current = {
+      x: event.nativeEvent.pageX,
+      y: event.nativeEvent.pageY,
+    };
+  }, []);
+
+  const handlePress = React.useCallback(
+    (event: GestureResponderEvent) => {
+      if (ignorePressMoveThreshold) {
+        const diffX = event.nativeEvent.pageX - pressStartRef.current.x;
+        const diffY = event.nativeEvent.pageY - pressStartRef.current.y;
+        if (Math.hypot(diffX, diffY) > ignorePressMoveThreshold) {
+          return;
+        }
+      }
+
+      onPress?.(data);
+    },
+    [data, ignorePressMoveThreshold, onPress],
+  );
 
   return (
     <TouchableOpacity
-      onPress={() => {
-        onPress?.(data);
-      }}
+      onPressIn={handlePressIn}
+      onPress={handlePress}
       style={containerStyle}>
       <BrowserSiteCardInner data={data} {...rest} />
     </TouchableOpacity>
