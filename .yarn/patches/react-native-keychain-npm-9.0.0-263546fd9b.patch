@@ -1,7 +1,29 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 2464e9bf38f5c054e2a95ebb17f19d589e795cca..f41393d50207897c69f51e4669fcea8693717418 100755
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -89,7 +89,7 @@ dependencies {
+ 
+   /* version higher 1.1.3 has problems with included soloader packages,
+       https://github.com/facebook/conceal/releases */
+-  implementation "com.facebook.conceal:conceal:1.1.3@aar"
++  // implementation "com.facebook.conceal:conceal:1.1.3@aar"
+ }
+ 
+ if (isNewArchitectureEnabled()) {
 diff --git a/android/src/main/java/com/oblador/keychain/KeychainModule.kt b/android/src/main/java/com/oblador/keychain/KeychainModule.kt
-index 452fd0da07b61791b3e859c04d8f23f5729cbff1..39fdd9dbcfdfaa9d8b098f5cc3a208f6a7915069 100644
+index 452fd0da07b61791b3e859c04d8f23f5729cbff1..afaabff3bb71a1a925c89df90b0f03a6f1dd39df 100644
 --- a/android/src/main/java/com/oblador/keychain/KeychainModule.kt
 +++ b/android/src/main/java/com/oblador/keychain/KeychainModule.kt
+@@ -16,7 +16,7 @@ import com.facebook.react.module.annotations.ReactModule
+ import com.oblador.keychain.cipherStorage.CipherStorage
+ import com.oblador.keychain.cipherStorage.CipherStorage.DecryptionResult
+ import com.oblador.keychain.cipherStorage.CipherStorageBase
+-import com.oblador.keychain.cipherStorage.CipherStorageFacebookConceal
++// import com.oblador.keychain.cipherStorage.CipherStorageFacebookConceal
+ import com.oblador.keychain.cipherStorage.CipherStorageKeystoreAesCbc
+ import com.oblador.keychain.cipherStorage.CipherStorageKeystoreRsaEcb
+ import com.oblador.keychain.decryptionHandler.DecryptionResultHandler
 @@ -72,6 +72,8 @@ class KeychainModule(reactContext: ReactApplicationContext) :
        const val ACCESS_CONTROL = "accessControl"
        const val ACCESS_GROUP = "accessGroup"
@@ -11,6 +33,15 @@ index 452fd0da07b61791b3e859c04d8f23f5729cbff1..39fdd9dbcfdfaa9d8b098f5cc3a208f6
        const val AUTH_PROMPT = "authenticationPrompt"
        const val AUTH_TYPE = "authenticationType"
        const val SERVICE = "service"
+@@ -136,7 +138,7 @@ class KeychainModule(reactContext: ReactApplicationContext) :
+   /** Default constructor. */
+   init {
+     prefsStorage = PrefsStorage(reactContext)
+-    addCipherStorageToMap(CipherStorageFacebookConceal(reactContext))
++    // addCipherStorageToMap(CipherStorageFacebookConceal(reactContext))
+     addCipherStorageToMap(CipherStorageKeystoreAesCbc())
+ 
+     // we have a references to newer api that will fail load of app classes in old androids OS
 @@ -279,7 +281,8 @@ class KeychainModule(reactContext: ReactApplicationContext) :
            } else {
              getCipherStorageByName(storageName)
@@ -257,7 +288,7 @@ index 452fd0da07b61791b3e859c04d8f23f5729cbff1..39fdd9dbcfdfaa9d8b098f5cc3a208f6
      @KnownCiphers
      private fun getSpecificStorageOrDefault(options: ReadableMap?): String? {
 diff --git a/android/src/main/java/com/oblador/keychain/PrefsStorage.kt b/android/src/main/java/com/oblador/keychain/PrefsStorage.kt
-index fe3a003be7fb39e913441a208e6ee24e0984f891..fd02caee8c20437602940d6f7c34ec0dc32adc63 100644
+index fe3a003be7fb39e913441a208e6ee24e0984f891..ad1822cd0d3b795934dd60176f894a7c8234f9e6 100644
 --- a/android/src/main/java/com/oblador/keychain/PrefsStorage.kt
 +++ b/android/src/main/java/com/oblador/keychain/PrefsStorage.kt
 @@ -7,6 +7,7 @@ import com.facebook.react.bridge.ReactApplicationContext
@@ -292,6 +323,15 @@ index fe3a003be7fb39e913441a208e6ee24e0984f891..fd02caee8c20437602940d6f7c34ec0d
    private val prefs: SharedPreferences
  
    init {
+@@ -35,7 +53,7 @@ class PrefsStorage(reactContext: ReactApplicationContext) {
+       // If the CipherStorage name is not found, we assume it is because the entry was written by an
+       // older
+       // version of this library. The older version used Facebook Conceal, so we default to that.
+-      cipherStorageName = KnownCiphers.FB
++      cipherStorageName = KnownCiphers.RSA
+     }
+     return ResultSet(cipherStorageName, bytesForUsername, bytesForPassword)
+   }
 @@ -59,6 +77,58 @@ class PrefsStorage(reactContext: ReactApplicationContext) {
          .apply()
    }
@@ -379,7 +419,7 @@ index fe3a003be7fb39e913441a208e6ee24e0984f891..fd02caee8c20437602940d6f7c34ec0d
 +        return Collections.singletonList(cipherStorageName)
 +      }
 +
-+      return Collections.singletonList(KnownCiphers.FB)
++      return Collections.singletonList(KnownCiphers.RSA)
 +    }
 +
 +    private fun getCipherStorageResolutionStrategyForDebug(
@@ -389,7 +429,7 @@ index fe3a003be7fb39e913441a208e6ee24e0984f891..fd02caee8c20437602940d6f7c34ec0d
 +        return "stored-marker"
 +      }
 +
-+      return "missing-marker/default-facebook-conceal"
++      return "missing-marker/default-rsa"
 +    }
    }
  }
@@ -606,6 +646,203 @@ index 1e6eb4db84e74eba563ccd232ce97c9669dff24b..249550a6dad13a061b372956b462a914
    /** Verify that provided key satisfy minimal needed level. */
    @Throws(GeneralSecurityException::class)
    protected fun validateKeySecurityLevel(level: SecurityLevel, key: Key): Boolean {
+diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageFacebookConceal.kt b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageFacebookConceal.kt
+deleted file mode 100644
+index 68b3eef8e4a7ae4a05c612fd0a5663cc7f104f56..0000000000000000000000000000000000000000
+--- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageFacebookConceal.kt
++++ /dev/null
+@@ -1,191 +0,0 @@
+-package com.oblador.keychain.cipherStorage
+-
+-import android.os.Build
+-import android.security.keystore.KeyGenParameterSpec
+-import android.security.keystore.KeyInfo
+-import android.util.Log
+-import androidx.annotation.NonNull
+-import com.facebook.android.crypto.keychain.AndroidConceal
+-import com.facebook.android.crypto.keychain.SharedPrefsBackedKeyChain
+-import com.facebook.crypto.Crypto
+-import com.facebook.crypto.CryptoConfig
+-import com.facebook.crypto.Entity
+-import com.facebook.react.bridge.AssertionException
+-import com.facebook.react.bridge.ReactApplicationContext
+-import com.oblador.keychain.KeychainModule.KnownCiphers
+-import com.oblador.keychain.SecurityLevel
+-import com.oblador.keychain.decryptionHandler.DecryptionResultHandler
+-import com.oblador.keychain.exceptions.CryptoFailedException
+-import java.security.GeneralSecurityException
+-import java.security.Key
+-
+-/**
+- * @see [Conceal Project](https://github.com/facebook/conceal)
+- * @see
+- *   [Fast Cryptographics](https://medium.com/@ssaurel/make-fast-cryptographic-operations-on-android-with-conceal-77a751e89b8e)
+- */
+-@Suppress("unused", "MemberVisibilityCanBePrivate")
+-class CipherStorageFacebookConceal(@NonNull reactContext: ReactApplicationContext) :
+-    CipherStorageBase() {
+-
+-  companion object {
+-    const val KEYCHAIN_DATA = "RN_KEYCHAIN"
+-  }
+-
+-  private val crypto: Crypto
+-
+-  init {
+-    val keyChain = SharedPrefsBackedKeyChain(reactContext, CryptoConfig.KEY_256)
+-    crypto = AndroidConceal.get().createDefaultCrypto(keyChain)
+-  }
+-
+-  // region Configuration
+-  override fun getCipherStorageName(): String = KnownCiphers.FB
+-
+-  override fun getMinSupportedApiLevel(): Int = Build.VERSION_CODES.JELLY_BEAN
+-
+-  override fun securityLevel(): SecurityLevel = SecurityLevel.ANY
+-
+-  override fun supportsSecureHardware(): Boolean = false
+-
+-  override fun isBiometrySupported(): Boolean = false
+-
+-  // endregion
+-
+-  // region Overrides
+-  @NonNull
+-  @Throws(CryptoFailedException::class)
+-  override fun encrypt(
+-      @NonNull alias: String,
+-      @NonNull username: String,
+-      @NonNull password: String,
+-      @NonNull level: SecurityLevel
+-  ): CipherStorage.EncryptionResult {
+-
+-    throwIfInsufficientLevel(level)
+-    throwIfNoCryptoAvailable()
+-
+-    val usernameEntity = createUsernameEntity(alias)
+-    val passwordEntity = createPasswordEntity(alias)
+-
+-    return try {
+-      val encryptedUsername = crypto.encrypt(username.toByteArray(UTF8), usernameEntity)
+-      val encryptedPassword = crypto.encrypt(password.toByteArray(UTF8), passwordEntity)
+-
+-      CipherStorage.EncryptionResult(encryptedUsername, encryptedPassword, this)
+-    } catch (fail: Throwable) {
+-      throw CryptoFailedException("Encryption failed for alias: $alias", fail)
+-    }
+-  }
+-
+-  @NonNull
+-  @Throws(CryptoFailedException::class)
+-  override fun decrypt(
+-      @NonNull alias: String,
+-      @NonNull username: ByteArray,
+-      @NonNull password: ByteArray,
+-      @NonNull level: SecurityLevel
+-  ): CipherStorage.DecryptionResult {
+-
+-    throwIfInsufficientLevel(level)
+-    throwIfNoCryptoAvailable()
+-
+-    val usernameEntity = createUsernameEntity(alias)
+-    val passwordEntity = createPasswordEntity(alias)
+-
+-    return try {
+-      val decryptedUsername = crypto.decrypt(username, usernameEntity)
+-      val decryptedPassword = crypto.decrypt(password, passwordEntity)
+-
+-      CipherStorage.DecryptionResult(
+-          String(decryptedUsername, UTF8), String(decryptedPassword, UTF8), SecurityLevel.ANY)
+-    } catch (fail: Throwable) {
+-      throw CryptoFailedException("Decryption failed for alias: $alias", fail)
+-    }
+-  }
+-
+-  /** Redirect call to default [decrypt] method. */
+-  override fun decrypt(
+-      @NonNull handler: DecryptionResultHandler,
+-      @NonNull service: String,
+-      @NonNull username: ByteArray,
+-      @NonNull password: ByteArray,
+-      @NonNull level: SecurityLevel
+-  ) {
+-    try {
+-      val results = decrypt(service, username, password, level)
+-      handler.onDecrypt(results, null)
+-    } catch (fail: Throwable) {
+-      handler.onDecrypt(null, fail)
+-    }
+-  }
+-
+-  override fun removeKey(@NonNull alias: String) {
+-    // Facebook Conceal stores only one key across all services, so we cannot
+-    // delete the key (otherwise decryption will fail for encrypted data of other services).
+-    Log.w(LOG_TAG, "CipherStorageFacebookConceal removeKey called. alias: $alias")
+-  }
+-
+-  @NonNull
+-  @Throws(GeneralSecurityException::class)
+-  override fun getKeyGenSpecBuilder(@NonNull alias: String): KeyGenParameterSpec.Builder {
+-    throw CryptoFailedException("Not designed for a call")
+-  }
+-
+-  @NonNull
+-  @Throws(GeneralSecurityException::class)
+-  override fun getKeyGenSpecBuilder(
+-      @NonNull alias: String,
+-      isForTesting: Boolean
+-  ): KeyGenParameterSpec.Builder {
+-    throw CryptoFailedException("Not designed for a call")
+-  }
+-
+-  @NonNull
+-  @Throws(GeneralSecurityException::class)
+-  override fun getKeyInfo(@NonNull key: Key): KeyInfo {
+-    throw CryptoFailedException("Not designed for a call")
+-  }
+-
+-  @NonNull
+-  @Throws(GeneralSecurityException::class)
+-  override fun generateKey(@NonNull spec: KeyGenParameterSpec): Key {
+-    throw CryptoFailedException("Not designed for a call")
+-  }
+-
+-  @NonNull
+-  override fun getEncryptionAlgorithm(): String {
+-    throw AssertionException("Not designed for a call")
+-  }
+-
+-  @NonNull
+-  override fun getEncryptionTransformation(): String {
+-    throw AssertionException("Not designed for a call")
+-  }
+-
+-  /** Verify availability of the Crypto API. */
+-  @Throws(CryptoFailedException::class)
+-  private fun throwIfNoCryptoAvailable() {
+-    if (!crypto.isAvailable) {
+-      throw CryptoFailedException("Crypto is missing")
+-    }
+-  }
+-
+-  // endregion
+-
+-  // region Helper methods
+-  @NonNull
+-  private fun createUsernameEntity(@NonNull alias: String): Entity {
+-    val prefix = getEntityPrefix(alias)
+-    return Entity.create("$prefix user")
+-  }
+-
+-  @NonNull
+-  private fun createPasswordEntity(@NonNull alias: String): Entity {
+-    val prefix = getEntityPrefix(alias)
+-    return Entity.create("$prefix pass")
+-  }
+-
+-  @NonNull private fun getEntityPrefix(@NonNull alias: String): String = "$KEYCHAIN_DATA:$alias"
+-  // endregion
+-}
 diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt
 index 4fd97413c47a7e075365bb4dc86a2c527cc4b11c..255aa6f6d9bf90f5fdf7a371d51c46a4e9749103 100644
 --- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt
@@ -896,7 +1133,7 @@ index 2e431ccde056cee1b338e1bde4d09b981d002ac8..5924add4c0ea1d804670d9335a36a184
                    withUsername:(NSString *)username
                    withPassword:(NSString *)password
 diff --git a/lib/typescript/index.d.ts b/lib/typescript/index.d.ts
-index 2751ab5cf70ac7b106e5b786207aa9970f5f612d..bdbc1c0b01fc83dcf50d86d75b323e00c91b37fc 100644
+index 2751ab5cf70ac7b106e5b786207aa9970f5f612d..258501168f4c7a7b3dec6e9acf1802fb54dd2113 100644
 --- a/lib/typescript/index.d.ts
 +++ b/lib/typescript/index.d.ts
 @@ -124,6 +124,11 @@ export type BaseOptions = {
