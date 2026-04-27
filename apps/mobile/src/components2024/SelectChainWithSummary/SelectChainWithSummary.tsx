@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard, Pressable, View, ViewStyle } from 'react-native';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
-import RcIconNotFindCC from '@/assets2024/icons/address/noFind.svg';
 // import RcIconSearchCC from '@/assets/icons/select-chain/icon-search-cc.svg';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
@@ -14,7 +13,6 @@ import {
   useLoadMatteredChainBalances,
   useMatteredChainBalancesAll,
 } from '@/hooks/accountChainBalance';
-import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { findChainByEnum, varyAndSortChainItems } from '@/utils/chain';
 import NetSwitchTabs, {
   useSwitchNetTab,
@@ -33,7 +31,7 @@ import { Account } from '@/core/services/preference';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { Text, TextInput } from '@/components/Typography';
 
-const useChainSeletorList = ({
+const useChainSelectorList = ({
   supportChains,
   netTabKey,
   needAllAddresses,
@@ -164,7 +162,7 @@ export default function SelectChainWithSummary({
     setSearch,
     matteredList: _matteredList,
     unmatteredList: _unmatteredList,
-  } = useChainSeletorList({
+  } = useChainSelectorList({
     // set undefined to allow all main chains
     supportChains: supportChains,
     needAllAddresses,
