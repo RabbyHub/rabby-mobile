@@ -1,8 +1,9 @@
 import { useEffect, useMemo } from 'react';
 
-import { preferenceService } from '@/core/services';
+import { keyringService, preferenceService } from '@/core/services';
 import { Account } from '@/core/services/preference';
 import { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
+import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
 import {
   DisplayChainWithWhiteLogo,
   formatChainToDisplay,
@@ -122,6 +123,31 @@ const fetchAllAddressesChainBalance = async (): Promise<{
   };
 };
 
+const fetchCoreAddressesChainBalance = async (): Promise<{
+  matteredChainBalances: MatteredChainBalances;
+}> => {
+  const addresses = await keyringService.getAllAddresses();
+  const coreAddresses = Array.from(
+    new Set(
+      addresses
+        .filter(item => CORE_KEYRING_TYPES.includes(item.type as any))
+        .map(item => item.address.toLowerCase()),
+    ),
+  );
+
+  const chainList = mergeChainListsById(
+    coreAddresses.reduce((acc, address) => {
+      acc[address] = getChainListByAddress(address);
+      return acc;
+    }, {} as Record<string, ChainWithBalance[]>),
+  );
+  const matteredChainBalances = buildMatteredChainBalances(chainList);
+
+  return {
+    matteredChainBalances,
+  };
+};
+
 const fetchMatteredChainBalance = async ({
   address,
 }: {
@@ -193,6 +219,7 @@ export function useLoadMatteredChainBalances({
     testnetMatteredChainBalances,
 
     fetchAllAddressesChainBalance,
+    fetchCoreAddressesChainBalance,
 
     fetchMatteredChainBalance,
     /** @deprecated */
