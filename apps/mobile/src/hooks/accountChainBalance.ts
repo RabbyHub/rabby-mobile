@@ -3,6 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { preferenceService } from '@/core/services';
 import { Account } from '@/core/services/preference';
 import { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
+import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
 import {
   DisplayChainWithWhiteLogo,
   formatChainToDisplay,
@@ -206,11 +207,17 @@ export function useLoadMatteredChainBalances({
 
 export function useMatteredChainBalancesAll() {
   const accounts = useAccountStore(s => s.accounts);
-  const balanceSnapshots = addressBalanceStore.useAddressesSnapshot(
-    useMemo(() => {
-      return accounts.map(account => account.address.toLowerCase());
-    }, [accounts]),
-  );
+  const coreAccountAddresses = useMemo(() => {
+    return Array.from(
+      new Set(
+        accounts
+          .filter(account => CORE_KEYRING_TYPES.includes(account.type as any))
+          .map(account => account.address.toLowerCase()),
+      ),
+    );
+  }, [accounts]);
+  const balanceSnapshots =
+    addressBalanceStore.useAddressesSnapshot(coreAccountAddresses);
   const matteredChainBalancesAll = useMemo(
     () =>
       buildMatteredChainBalances(
