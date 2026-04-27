@@ -287,6 +287,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 16,
     lineHeight: 20,
     color: colors2024['neutral-secondary'],
+    minWidth: 0,
+    flex: 1,
   },
 
   dappOriginHighlight: {
@@ -369,6 +371,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flexShrink: 0,
   },
   listByIcon: {
     width: 12,

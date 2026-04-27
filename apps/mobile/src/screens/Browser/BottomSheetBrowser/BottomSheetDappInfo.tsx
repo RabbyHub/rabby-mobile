@@ -7,13 +7,14 @@ import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import hotDappList from '@/constant/hot-dapp.json';
+import { createDappBySession } from '@/core/apis/dapp';
 import { openapi } from '@/core/request';
-import { dappService } from '@/core/services';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useTheme2024 } from '@/hooks/theme';
 import { useDapps } from '@/hooks/useDapps';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
+import { matomoRequestEvent } from '@/utils/analytics';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
@@ -27,8 +28,6 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, TouchableOpacity, View } from 'react-native';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { createDappBySession } from '@/core/apis/dapp';
 
 const LIST_BY_ICON_SIZE = 12;
 const LIST_BY_GAP = 4;
@@ -107,7 +106,7 @@ export const DappInfoPopup: React.FC<{
     {
       refreshDeps: [origin],
       cacheKey: `dapp-getOriginPopularityLevel-${origin}`,
-      staleTime: 10 * 1000,
+      staleTime: 60 * 1000,
     },
   );
 
@@ -124,7 +123,7 @@ export const DappInfoPopup: React.FC<{
     {
       refreshDeps: [origin],
       cacheKey: `dapp-getDappsInfo-${origin}`,
-      staleTime: 10 * 1000,
+      staleTime: 60 * 1000,
     },
   );
 
@@ -474,7 +473,7 @@ export const DappInfoPopup: React.FC<{
               <View style={styles.checkBoxContainer}>
                 <TouchableOpacity onPress={handleToggleSkipRemind}>
                   <View style={styles.checkBoxContent}>
-                    <CheckBoxRect checked={isSkipRemind} />
+                    <CheckBoxRect checked={isSkipRemind} size={18} />
                     <Text style={styles.checkBoxText}>
                       Skip this page next time
                     </Text>
@@ -486,11 +485,7 @@ export const DappInfoPopup: React.FC<{
                 onPress={() => {
                   onOpenDapp?.(displayUrl || origin);
                 }}
-                title={
-                  <Text numberOfLines={1} style={styles.openButtonTitle}>
-                    {`Open ${displayName || domain}`}
-                  </Text>
-                }
+                title={'Open'}
               />
             </View>
           </BottomSheetScrollView>
@@ -500,7 +495,7 @@ export const DappInfoPopup: React.FC<{
   );
 };
 
-export const GlobalDappInfoPopup: React.FC = () => {
+export const BottomSheetDappInfoPopup: React.FC = () => {
   const { browserState, setPartialBrowserState, openTab } = useBrowser();
   return (
     <DappInfoPopup
@@ -556,7 +551,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight: _isLight }) => {
     },
     scrollView: {
       height: '100%',
-      paddingBottom: 56,
+      paddingBottom: 48,
       display: 'flex',
       flexDirection: 'column',
     },
