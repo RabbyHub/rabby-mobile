@@ -300,10 +300,7 @@ export const HomeDappDrawerContent: React.FC<{
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>
-          {/* {t('page.home.DappDrawer.favorite')} */}
-          Websites
-        </Text>
+        <Text style={styles.title}>{t('page.home.DappDrawer.websites')}</Text>
         {activeTab === 'favorite' ? (
           <TouchableOpacity
             disabled={!hasData}

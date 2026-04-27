@@ -391,7 +391,7 @@ export const DappInfoPopup: React.FC<{
                       event.nativeEvent.layout.width,
                     );
                   }}>
-                  Listed by
+                  {t('page.browser.DappInfoPopup.listedBy')}
                 </Text>
                 {collectionList?.length ? (
                   <View
@@ -428,30 +428,32 @@ export const DappInfoPopup: React.FC<{
                 )}
               </View>
               <View style={styles.listItem}>
-                <Text style={styles.listLabel}>Site popularity</Text>
+                <Text style={styles.listLabel}>
+                  {t('page.browser.DappInfoPopup.sitePopularity')}
+                </Text>
 
                 {level === 'high' ? (
                   <View style={[styles.tag, styles.tagHigh]}>
                     <Text style={[styles.tagText, styles.tagTextHigh]}>
-                      High
+                      {t('page.browser.DappInfoPopup.popularLevelHigh')}
                     </Text>
                   </View>
                 ) : level === 'medium' ? (
                   <View style={[styles.tag, styles.tagMedium]}>
                     <Text style={[styles.tagText, styles.tagTextMedium]}>
-                      Medium
+                      {t('page.browser.DappInfoPopup.popularLevelMedium')}
                     </Text>
                   </View>
                 ) : level === 'low' ? (
                   <View style={[styles.tag, styles.tagMedium]}>
                     <Text style={[styles.tagText, styles.tagTextMedium]}>
-                      Low
+                      {t('page.browser.DappInfoPopup.popularLevelLow')}
                     </Text>
                   </View>
                 ) : level === 'very_low' ? (
                   <View style={[styles.tag, styles.tagMedium]}>
                     <Text style={[styles.tagText, styles.tagTextMedium]}>
-                      Very Low
+                      {t('page.browser.DappInfoPopup.popularLevelVeryLow')}
                     </Text>
                   </View>
                 ) : (
@@ -459,7 +461,9 @@ export const DappInfoPopup: React.FC<{
                 )}
               </View>
               <View style={styles.listItem}>
-                <Text style={styles.listLabel}>Category</Text>
+                <Text style={styles.listLabel}>
+                  {t('page.browser.DappInfoPopup.category')}
+                </Text>
                 {category ? (
                   <View style={styles.tag}>
                     <Text style={styles.tagText}>{category}</Text>
@@ -475,7 +479,7 @@ export const DappInfoPopup: React.FC<{
                   <View style={styles.checkBoxContent}>
                     <CheckBoxRect checked={isSkipRemind} size={18} />
                     <Text style={styles.checkBoxText}>
-                      Skip this page next time
+                      {t('page.browser.DappInfoPopup.skipDappInfoNextTime')}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -485,7 +489,7 @@ export const DappInfoPopup: React.FC<{
                 onPress={() => {
                   onOpenDapp?.(displayUrl || origin);
                 }}
-                title={'Open'}
+                title={t('page.browser.DappInfoPopup.openDapp')}
               />
             </View>
           </BottomSheetScrollView>
