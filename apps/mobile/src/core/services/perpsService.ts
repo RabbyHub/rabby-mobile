@@ -8,7 +8,7 @@ import { getRandomBytesSync } from 'ethereum-cryptography/random.js';
 import { secp256k1 } from 'ethereum-cryptography/secp256k1.js';
 import { keyringService } from '@/core/services';
 import { CANDLE_MENU_KEY_V2 } from '@/constant/perps';
-import { Account } from './preference';
+import type { Account } from '@/types/account';
 
 export interface AgentWalletInfo {
   vault: string;

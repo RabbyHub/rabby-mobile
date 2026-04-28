@@ -6,7 +6,7 @@ import { dappService, keyringService, preferenceService } from '../services';
 import rpcFlow from './rpcFlow';
 import internalMethod from './internalMethod';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 
 const IGNORE_CHECK = ['wallet_importAddress'];
 

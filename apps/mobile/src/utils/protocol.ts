@@ -1,4 +1,4 @@
-import { IProtocolItem, IProtocolPortfolio } from '@/store/protocols';
+import type { IProtocolItem, IProtocolPortfolio } from '@/types/assets';
 import {
   ComplexProtocol,
   PortfolioItem,

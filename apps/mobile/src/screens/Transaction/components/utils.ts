@@ -8,7 +8,7 @@ import {
   TxHistoryItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
-import { IManageToken } from '@/core/services/preference';
+import type { IManageToken } from '@/types/assets';
 import {
   SwapTxHistoryItem,
   TransactionHistoryItem,
