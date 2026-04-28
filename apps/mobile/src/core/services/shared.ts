@@ -189,6 +189,9 @@ export const securityEngineService = new SecurityEngineService({
 
 export const autoConnectService = new AutoConnectService({
   dappService,
+  getAccounts: () => keyringService.getAllVisibleAccountsArray(),
+  getRecentTransactions: () => transactionHistoryService.store.transactions,
+  getFallbackAccount: () => preferenceService.getFallbackAccount(),
 });
 
 transactionWatcherService.roll();
