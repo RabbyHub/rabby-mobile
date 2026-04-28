@@ -490,11 +490,16 @@ export const useBatchSwapTask = (options: {
                   result.isSimulationFailed = true;
                 },
               });
-              const res = await openDirect({
-                txs: txsGroup,
-                onPreExecError() {
-                  result.isSimulationFailed = true;
-                },
+              // const res = await openDirect({
+              //   txs: txsGroup,
+              //   onPreExecError() {
+              //     result.isSimulationFailed = true;
+              //   },
+              // });
+              const res = await new Promise<string[]>((resolve, reject) => {
+                setTimeout(() => {
+                  resolve([]);
+                }, 5000);
               });
 
               result.txHash = last(res) || '';

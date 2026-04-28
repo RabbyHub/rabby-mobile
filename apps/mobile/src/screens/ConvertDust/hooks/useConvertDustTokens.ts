@@ -1,13 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useRequest } from 'ahooks';
+import { useEffect, useMemo } from 'react';
 
 import { openapi } from '@/core/request';
 import useTokenList, {
   EMPTY_TOKEN_LIST,
+  getSingleAssetsCacheKey,
   getTokenSelectCacheKey,
+  ITokenItem,
   useTokenListComputedStore,
 } from '@/store/tokens';
-import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { DUST_FILTER_VALUE_MAP, type DustFilter } from '../constant';
+import { useShallow } from 'zustand/shallow';
 
 export function useConvertDustTokenList({
   address,
@@ -21,21 +24,64 @@ export function useConvertDustTokenList({
   selectedFilter: DustFilter;
 }) {
   const lowerAddress = address?.toLowerCase();
-  const addresses = useMemo(() => (address ? [address] : []), [address]);
-  const getTokenList = useTokenList(state => state.getTokenList);
+
+  console.log('useConvertDustTokenList', {
+    address,
+    chainServerId,
+    receiveTokenId,
+    selectedFilter,
+  });
+
+  const emptyResult = useMemo(
+    () => ({
+      unFoldTokens: [] as ITokenItem[],
+      foldTokens: [] as ITokenItem[],
+      scamTokens: [] as ITokenItem[],
+      hasFoldTokens: false,
+    }),
+    [],
+  );
+
+  const registerSingleAssets = useTokenListComputedStore(
+    state => state.registerSingleAssets,
+  );
+
+  const singleAssetsKey = useMemo(() => {
+    if (!address) {
+      return null;
+    }
+    return getSingleAssetsCacheKey(address, chainServerId, false);
+  }, [address, chainServerId]);
+
+  useEffect(() => {
+    if (!address) {
+      return;
+    }
+    registerSingleAssets(address, chainServerId, false);
+  }, [address, chainServerId, registerSingleAssets]);
+
+  const { unFoldTokens, foldTokens, scamTokens, hasFoldTokens } =
+    useTokenListComputedStore(
+      useShallow(state =>
+        singleAssetsKey
+          ? state.singleAssetsCache[singleAssetsKey] || emptyResult
+          : emptyResult,
+      ),
+    );
+
   const isLoading = useTokenList(state => {
     if (!lowerAddress) {
       return false;
     }
     return !!state.isLoadingByAddress[lowerAddress]?.loading;
   });
-  const registerTokenSelect = useTokenListComputedStore(
-    state => state.registerTokenSelect,
-  );
-  const tokenSelectKey = useMemo(
-    () => getTokenSelectCacheKey(addresses, chainServerId),
-    [addresses, chainServerId],
-  );
+  const isAllLoading = useTokenList(state => {
+    if (!lowerAddress) {
+      return false;
+    }
+    return !!state.isLoadingByAddress[lowerAddress]?.allLoading;
+  });
+  const getTokenList = useTokenList(s => s.getTokenList);
 
   useEffect(() => {
     if (!address) {
@@ -44,27 +90,19 @@ export function useConvertDustTokenList({
     getTokenList(address);
   }, [address, getTokenList]);
 
-  useEffect(() => {
-    registerTokenSelect(addresses, chainServerId);
-  }, [addresses, chainServerId, registerTokenSelect]);
+  const tokens = useMemo(() => {
+    return [...unFoldTokens, ...foldTokens, ...scamTokens];
+  }, [unFoldTokens, foldTokens, scamTokens]);
 
-  const tokens = useTokenListComputedStore(
-    state => state.tokenSelectCache[tokenSelectKey] || EMPTY_TOKEN_LIST,
-  );
   const threshold = DUST_FILTER_VALUE_MAP[selectedFilter];
 
   const dustTokens = useMemo(
     () =>
       tokens.filter(token => {
         const usdValue = token.usd_value || token.price * token.amount || 0;
-        return (
-          token.chain === chainServerId &&
-          token.id !== receiveTokenId &&
-          usdValue > 0 &&
-          usdValue < threshold
-        );
+        return token.id !== receiveTokenId && usdValue < threshold;
       }),
-    [chainServerId, receiveTokenId, threshold, tokens],
+    [receiveTokenId, threshold, tokens],
   );
 
   return {
@@ -82,33 +120,28 @@ export function useConvertDustReceiveToken({
   chainServerId?: string;
   nativeTokenAddress?: string;
 }) {
-  const [receiveToken, setReceiveToken] = useState<TokenItem | null>(null);
+  const { data } = useRequest(
+    async () => {
+      if (!address || !chainServerId || !nativeTokenAddress) {
+        return null;
+      }
 
-  useEffect(() => {
-    let cancelled = false;
+      try {
+        return await openapi.getToken(
+          address,
+          chainServerId,
+          nativeTokenAddress,
+        );
+      } catch {
+        return null;
+      }
+    },
+    {
+      refreshDeps: [address, chainServerId, nativeTokenAddress],
+      cacheKey: `useConvertDustReceiveToken-${address}-${chainServerId}-${nativeTokenAddress}`,
+      staleTime: 10 * 1000,
+    },
+  );
 
-    if (!address || !chainServerId || !nativeTokenAddress) {
-      setReceiveToken(null);
-      return;
-    }
-
-    openapi
-      .getToken(address, chainServerId, nativeTokenAddress)
-      .then(token => {
-        if (!cancelled) {
-          setReceiveToken(token);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setReceiveToken(null);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [address, chainServerId, nativeTokenAddress]);
-
-  return receiveToken;
+  return data ?? null;
 }
