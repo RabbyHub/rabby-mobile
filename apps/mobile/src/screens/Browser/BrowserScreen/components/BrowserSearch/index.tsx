@@ -206,9 +206,10 @@ export function BrowserSearch({
         style,
         isTransparent ? styles.transparent : null,
       ]}>
-      <LocalPannableDraggableView>
+      <LocalPannableDraggableView style={styles.searchContent}>
         {!searchText?.trim() ? (
           <BottomSheetScrollView
+            style={styles.searchContent}
             contentContainerStyle={{
               gap: 24,
               paddingHorizontal: 20,
@@ -253,9 +254,6 @@ export function BrowserSearch({
         style={[
           styles.footer,
           {
-            position: 'absolute',
-            right: 0,
-            bottom: 0,
             marginTop: 'auto',
             paddingBottom: bottom || 12,
             // marginBottom:
@@ -313,6 +311,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 24,
     paddingTop: 16,
     paddingHorizontal: 20,
+  },
+  searchContent: {
+    flex: 1,
+    minHeight: 0,
   },
   listItem: {
     display: 'flex',

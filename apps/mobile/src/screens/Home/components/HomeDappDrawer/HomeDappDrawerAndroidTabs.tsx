@@ -24,6 +24,9 @@ const clamp = (value: number, min: number, max: number) => {
   return Math.min(Math.max(value, min), max);
 };
 
+const ANDROID_SWIPE_ACTIVE_OFFSET_X = 4;
+const ANDROID_SWIPE_ACTIVE_RATIO_Y = 0.25;
+
 export type HomeDappDrawerAndroidTab<T extends string> = {
   id: T;
   label?: TabItemProps<T>['label'];
@@ -151,6 +154,8 @@ export function HomeDappDrawerAndroidTabs<T extends string>({
     () =>
       Gesture.Pan()
         .manualActivation(true)
+        .maxPointers(1)
+        .shouldCancelWhenOutside(false)
         .simultaneousWithExternalGesture(drawerScrollableGesture)
         .onTouchesDown(event => {
           'worklet';
@@ -177,12 +182,10 @@ export function HomeDappDrawerAndroidTabs<T extends string>({
           const absX = Math.abs(diffX);
           const absY = Math.abs(diffY);
 
-          if (absY > 6 && absY > absX) {
-            stateManager.fail();
-            return;
-          }
-
-          if (absX > 18 && absX > absY * 1.2) {
+          if (
+            absX > ANDROID_SWIPE_ACTIVE_OFFSET_X &&
+            absX > absY * ANDROID_SWIPE_ACTIVE_RATIO_Y
+          ) {
             stateManager.activate();
           }
         })
