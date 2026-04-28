@@ -174,7 +174,6 @@ const TokenDetailContent = () => {
         }
         isMultiAddress={false}
         refreshTags={refreshTag}
-        unHold
       />
     );
   }, [effectiveAccount?.address, refreshTag, token]);
