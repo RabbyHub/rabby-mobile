@@ -8,7 +8,7 @@ import { Text } from '@/components/Typography';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formatTokenAmount } from '@/utils/number';
+import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import IconGasLevelChecked from '@/assets2024/icons/gas-account/check.svg';
 import type { GasTokenInfo, TempoFeeTokenOption } from '@/utils/tempo';
 
@@ -21,6 +21,21 @@ export const formatTempoGasTokenAmount = (token: TempoFeeTokenOption) => {
         );
 
   return formatTokenAmount(amount.toString(10), 4, true);
+};
+
+const formatTempoGasTokenUsdValue = (token: TempoFeeTokenOption) => {
+  if (typeof token.usd_value === 'number') {
+    return formatUsdValue(token.usd_value);
+  }
+
+  const amount =
+    typeof token.amount === 'number'
+      ? new BigNumber(token.amount)
+      : new BigNumber(token.raw_amount_hex_str || 0, 16).div(
+          new BigNumber(10).pow(token.decimals || 18),
+        );
+
+  return formatUsdValue(amount.times(token.price || 0).toString(10));
 };
 
 export const TempoGasTokenSelectSheet = ({
@@ -108,15 +123,25 @@ export const TempoGasTokenSelectSheet = ({
                       {symbol}
                     </Text>
                   </View>
-                  <View style={styles.tokenBalance}>
-                    <Text
-                      style={[
-                        styles.tokenAmount,
-                        disabled && styles.tokenTextDisabled,
-                      ]}
-                      numberOfLines={1}>
-                      {formatTempoGasTokenAmount(token)}
-                    </Text>
+                  <View style={styles.tokenValue}>
+                    <View style={styles.tokenValueColumn}>
+                      <Text
+                        style={[
+                          styles.tokenUsdValue,
+                          disabled && styles.tokenTextDisabled,
+                        ]}
+                        numberOfLines={1}>
+                        {formatTempoGasTokenUsdValue(token)}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.tokenAmount,
+                          disabled && styles.tokenTextDisabled,
+                        ]}
+                        numberOfLines={1}>
+                        {formatTempoGasTokenAmount(token)}
+                      </Text>
+                    </View>
                     {selected ? <IconGasLevelChecked /> : null}
                   </View>
                 </TouchableOpacity>
@@ -183,17 +208,26 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     lineHeight: 20,
   },
-  tokenBalance: {
+  tokenValue: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     flexShrink: 0,
   },
-  tokenAmount: {
+  tokenValueColumn: {
+    alignItems: 'flex-end',
+  },
+  tokenUsdValue: {
     color: colors2024['neutral-title-1'],
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
+  },
+  tokenAmount: {
+    color: colors2024['neutral-info'],
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 16,
   },
   tokenTextDisabled: {
     color: colors2024['neutral-foot'],
