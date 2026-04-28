@@ -15,7 +15,7 @@ import {
   preferenceService,
 } from '../services';
 import { onSetAddressAlias } from '../services/keyringParams';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 import {
   _getKeyringByType,
   addKeyringToStash,

@@ -6,7 +6,7 @@ import {
 } from '@/constant/tempo';
 import { apiProvider } from '@/core/apis';
 import { openapi } from '@/core/request';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/types/account';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import {
   decodeFunctionResult,

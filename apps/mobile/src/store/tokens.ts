@@ -7,14 +7,19 @@ import { queryTokensCache } from '@/screens/Home/utils/token';
 import { defaultTokenFilter, lpTokenFilter } from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import { preferenceService } from '@/core/services/shared';
-import { TokenDisplayMode } from '@/core/services/preference';
 import { getTokenSymbol } from '@/utils/token';
 import {
   tokenItemEntityToTokenItem,
   tokenItemToITokenItem,
 } from '@/utils/token';
-import { TokenMarketTokenRelatedItem } from '@rabby-wallet/rabby-api/dist/types';
+import type {
+  ITokenItem,
+  TokenAssetsResult,
+  TokenDisplayMode,
+} from '@/types/assets';
 import PQueue from 'p-queue';
+
+export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
 const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
@@ -22,52 +27,6 @@ const waitQueueFinished = (q: PQueue) => {
       resolve(null);
     });
   });
-};
-
-export interface ITokenItem {
-  amount: number;
-  chain: string;
-  decimals: number;
-  display_symbol: string | null;
-  id: string;
-  is_core: boolean | null;
-  is_verified: boolean | null;
-  is_wallet: boolean;
-  logo_url: string;
-  name: string;
-  optimized_symbol: string;
-  price: number;
-  symbol: string;
-  usd_value: number;
-  owner_addr: string;
-  raw_amount?: string;
-  price_24h_change?: number | null;
-  cex_ids: string[];
-  time_at: number;
-  credit_score?: number;
-  is_suspicious?: boolean;
-  is_scam?: boolean;
-  low_credit_score?: boolean;
-  fdv?: number | null;
-  is_infinity?: boolean;
-  content_type?: 'image' | 'image_url' | 'video_url' | 'audio_url';
-  content?: string;
-  inner_id?: string;
-  raw_amount_hex_str?: string;
-  isPin?: boolean;
-  trade_volume_level?: 'low' | 'middle' | 'high';
-  support_market_data?: boolean;
-  protocol_id?: string;
-  launchpad?: TokenMarketTokenRelatedItem | null;
-  asset?: TokenMarketTokenRelatedItem | null;
-  market_status?: string;
-}
-
-type TokenAssetsResult = {
-  unFoldTokens: ITokenItem[];
-  foldTokens: ITokenItem[];
-  scamTokens: ITokenItem[];
-  hasFoldTokens: boolean;
 };
 
 interface TokenListState {

@@ -5,10 +5,10 @@ import { flatten } from 'lodash';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import { openapi } from '@/core/request';
 import { AbstractPortfolioToken } from '../types';
-import { ITokenSetting } from '@/core/services/preference';
+import type { ITokenSetting } from '@/types/assets';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { BalanceEntity } from '@/databases/entities/balance';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/types/assets';
 
 export const queryTokensCache = makeSWRKeyAsyncFunc(
   (user_id: string, isTestnet: boolean = false) => {

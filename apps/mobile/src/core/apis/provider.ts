@@ -25,7 +25,7 @@ import abiCoder, { AbiCoder } from 'web3-eth-abi';
 import { IExtractFromPromise } from '@/utils/type';
 import { findChain } from '@/utils/chain';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 
 function buildTxParams(txMeta) {
   return {
