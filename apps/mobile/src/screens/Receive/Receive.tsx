@@ -18,7 +18,14 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, View, Pressable, Image, ScrollView } from 'react-native';
+import {
+  Modal,
+  View,
+  Pressable,
+  Image,
+  ScrollView,
+  Dimensions,
+} from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import QRCode from 'react-native-qrcode-svg';
 import { default as RcIconMCopy } from '@/assets2024/icons/address/mcopy-cc.svg';
@@ -399,12 +406,14 @@ function ReceiveScreen(): JSX.Element {
   );
 }
 
+const SCREEN_WIDTH = Dimensions.get('window').width;
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   headerTitle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
+    maxWidth: SCREEN_WIDTH - 100,
   },
   screen: {
     backgroundColor: colors2024['neutral-bg-0'],

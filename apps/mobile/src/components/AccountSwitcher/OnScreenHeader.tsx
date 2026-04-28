@@ -139,7 +139,7 @@ const getStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 199,
-      width: SCREEN_WIDTH - 160,
+      width: SCREEN_WIDTH - 120,
       marginTop: -4,
     },
     titleText: {

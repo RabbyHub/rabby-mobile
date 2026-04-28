@@ -218,7 +218,6 @@ export const TokenMarketInfoScreen = () => {
         }
         isMultiAddress={false}
         refreshTags={refreshTag}
-        unHold
       />
     );
   }, [token, refreshTag, finalAccount?.address]);
