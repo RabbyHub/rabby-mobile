@@ -22,13 +22,13 @@ import type {
   AbstractProject,
 } from './screens/Home/types';
 import type { DappInfo } from './core/services/dappService';
-import type { HistoryDisplayItem } from './screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from './types/history';
 import type { TransactionGroup } from './core/services/transactionHistory';
 import {
   ApprovalSpenderItemToBeRevoked,
   AssetApprovalSpender,
 } from './screens/Approvals/useApprovalsPage';
-import { HistoryItemCateType } from './screens/Transaction/components/type';
+import { HistoryItemCateType } from './types/history';
 import type { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
 import type { ITokenItem } from './types/assets';
 

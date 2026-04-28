@@ -16,11 +16,9 @@ import { prepareAppDataSource } from '../imports';
 import {
   CUSTOM_HISTORY_TITLE_TYPE,
   HistoryItemCateType,
-} from '@/screens/Transaction/components/type';
-import {
-  fetchHistoryTokenItem,
-  isNFTTokenId,
-} from '@/screens/Transaction/components/utils';
+  ProjectItemType,
+} from '@/types/history';
+import { fetchHistoryTokenItem, isNFTTokenId } from '@/utils/history';
 import type { IManageToken } from '@/types/assets';
 import {
   GAS_ACCOUNT_RECEIVED_ADDRESS,
@@ -32,12 +30,7 @@ import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
 import { ParseEntity } from '@/core/utils/typeorm';
 
-export type ProjectItemType = {
-  chain: string;
-  id: string;
-  logo_url: string;
-  name: string;
-};
+export type { ProjectItemType } from '@/types/history';
 
 @ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_historyitem)
