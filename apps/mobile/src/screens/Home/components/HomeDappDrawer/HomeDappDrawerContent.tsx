@@ -42,47 +42,57 @@ import {
   type HomeDappDrawerAndroidTab,
 } from './HomeDappDrawerAndroidTabs';
 import { DappList } from './DappList';
-import i18n from '@/utils/i18n';
 
 const TAB_GAP = 8;
 const FIRST_TAB_GAP = 12;
 export const TAB_BAR_HEIGHT = 28;
 
-const tabs = [
-  {
-    id: 'favorite',
-    label: i18n.t('page.home.DappDrawer.tabs.favorite'),
-  },
-  {
-    id: 'all',
-    label: i18n.t('page.home.DappDrawer.tabs.all'),
-  },
-  {
-    id: 'DeFi',
-    label: i18n.t('page.home.DappDrawer.tabs.defi'),
-  },
-  {
-    id: 'RWA',
-    label: i18n.t('page.home.DappDrawer.tabs.rwa'),
-  },
-  {
-    id: 'Perps',
-    label: i18n.t('page.home.DappDrawer.tabs.perps'),
-  },
-  {
-    id: 'Predict',
-    label: i18n.t('page.home.DappDrawer.tabs.predict'),
-  },
-  {
-    id: 'DEX',
-    label: i18n.t('page.home.DappDrawer.tabs.dex'),
-  },
-  {
-    id: 'NFT',
-    label: i18n.t('page.home.DappDrawer.tabs.nft'),
-  },
-] as const;
-type TabKey = (typeof tabs)[number]['id'];
+type TabKey =
+  | 'favorite'
+  | 'all'
+  | 'DeFi'
+  | 'RWA'
+  | 'Perps'
+  | 'Predict'
+  | 'DEX'
+  | 'NFT';
+
+const FavoriteTabLabel = ({
+  index,
+  indexDecimal,
+  activeColor,
+  inactiveColor,
+  tabLabelStyle,
+  containerStyle,
+}: {
+  index: number;
+  indexDecimal: Animated.SharedValue<number>;
+  activeColor: string;
+  inactiveColor: string;
+  tabLabelStyle: React.ComponentProps<typeof CustomLabel>['style'];
+  containerStyle: React.ComponentProps<typeof CustomLabel>['containerStyle'];
+}) => {
+  const indexDecimalValue = useValueFromSharedValue(indexDecimal);
+  const isActive = Math.abs(index - indexDecimalValue) < 0.5;
+
+  return (
+    <CustomLabel
+      index={index}
+      indexDecimal={indexDecimal}
+      text=""
+      style={tabLabelStyle}
+      containerStyle={containerStyle}
+      icon={
+        <RcIconFavorite
+          width={18}
+          height={18}
+          color={isActive ? activeColor : inactiveColor}
+        />
+      }
+    />
+  );
+};
+
 const dappTabAtom = atomByMMKV<TabKey>(
   '@dapp.activeTab',
   browserService.bookmark.selectors.selectTotal() ? 'favorite' : 'all',
@@ -97,15 +107,55 @@ export const dappRemindAtom = atomByMMKV<boolean>('@dapp.remind', true, {
 
 const useDappTab = () => {
   const [storedActiveTab, setStoredActiveTab] = useAtom(dappTabAtom);
+  const { t } = useTranslation();
+  const tabs = useMemo(
+    () =>
+      [
+        {
+          id: 'favorite',
+          label: t('page.home.DappDrawer.tabs.favorite'),
+        },
+        {
+          id: 'all',
+          label: t('page.home.DappDrawer.tabs.all'),
+        },
+        {
+          id: 'DeFi',
+          label: t('page.home.DappDrawer.tabs.defi'),
+        },
+        {
+          id: 'RWA',
+          label: t('page.home.DappDrawer.tabs.rwa'),
+        },
+        {
+          id: 'Perps',
+          label: t('page.home.DappDrawer.tabs.perps'),
+        },
+        {
+          id: 'Predict',
+          label: t('page.home.DappDrawer.tabs.predict'),
+        },
+        {
+          id: 'DEX',
+          label: t('page.home.DappDrawer.tabs.dex'),
+        },
+        {
+          id: 'NFT',
+          label: t('page.home.DappDrawer.tabs.nft'),
+        },
+      ] as const,
+    [t],
+  );
   const activeTab = useMemo(
     () =>
       tabs.some(tab => tab.id === storedActiveTab)
         ? storedActiveTab
         : 'favorite',
-    [storedActiveTab],
+    [storedActiveTab, tabs],
   );
 
   return {
+    tabs,
     activeTab,
     setActiveTab: setStoredActiveTab,
   };
@@ -122,7 +172,7 @@ export const HomeDappDrawerContent: React.FC<{
   const isDrawerExpanded = useValueFromSharedValue(isExpanded);
   const previousIsDrawerExpandedRef = useRef(isDrawerExpanded);
   const { t } = useTranslation();
-  const { activeTab, setActiveTab } = useDappTab();
+  const { activeTab, setActiveTab, tabs } = useDappTab();
   const { openTab } = useBrowser();
   const handleDappPress = useMemoizedFn((item: DappInfo) => {
     openTab(item.url || item.origin, {
@@ -141,39 +191,37 @@ export const HomeDappDrawerContent: React.FC<{
     }
   });
 
-  const renderTabBar = useMemoizedFn((props: any) => {
-    return (
-      <MaterialTabBar
-        {...props}
-        scrollEnabled={true}
-        keepActiveTabCentered
-        style={styles.materialTabsBar}
-        contentContainerStyle={styles.materialTabsBarContent}
-        indicatorStyle={styles.indicator}
-        tabStyle={styles.tabBar}
-      />
-    );
-  });
+  const renderTabBar = useCallback(
+    (props: any) => {
+      return (
+        <MaterialTabBar
+          {...props}
+          scrollEnabled={true}
+          keepActiveTabCentered
+          style={styles.materialTabsBar}
+          contentContainerStyle={styles.materialTabsBarContent}
+          indicatorStyle={styles.indicator}
+          tabStyle={styles.tabBar}
+        />
+      );
+    },
+    [
+      styles.indicator,
+      styles.materialTabsBar,
+      styles.materialTabsBarContent,
+      styles.tabBar,
+    ],
+  );
 
   const renderFavoriteLabel = useCallback(
     ({ index, indexDecimal }: any) => (
-      <CustomLabel
+      <FavoriteTabLabel
         index={index}
         indexDecimal={indexDecimal}
-        text=""
-        style={styles.tabLabel}
+        activeColor={colors2024['orange-default']}
+        inactiveColor={colors2024['neutral-info']}
+        tabLabelStyle={styles.tabLabel}
         containerStyle={styles.favoriteLabelContainer}
-        icon={
-          <RcIconFavorite
-            width={18}
-            height={18}
-            color={
-              Math.abs(index - indexDecimal.value) < 0.5
-                ? colors2024['orange-default']
-                : colors2024['neutral-info']
-            }
-          />
-        }
       />
     ),
     [colors2024, styles.favoriteLabelContainer, styles.tabLabel],
@@ -207,7 +255,7 @@ export const HomeDappDrawerContent: React.FC<{
             renderCategoryLabel({ ...props, label: tabItem.label }),
         };
       }),
-    [renderCategoryLabel, renderFavoriteLabel],
+    [renderCategoryLabel, renderFavoriteLabel, tabs],
   );
 
   const { bookmarkList, removeBookmark } = useBrowserBookmark();
