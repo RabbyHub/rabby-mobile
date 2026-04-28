@@ -894,7 +894,12 @@
         "favorite": "收藏",
         "empty": "没有网站被添加到收藏夹",
         "search": "搜索",
-        "emptyAndroid": "没有dApp添加到收藏夹"
+        "emptyAndroid": "没有dApp添加到收藏夹",
+        "tabs": {
+          "all": "全部",
+          "perps": "永续合约",
+          "predict": "预测市场"
+        }
       },
       "depositAssets": {
         "subtitle": "将资产接收至此钱包",
