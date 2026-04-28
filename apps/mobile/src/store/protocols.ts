@@ -3,8 +3,8 @@ import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { AppChainEntity } from '@/databases/entities/appchain';
 import { syncProtocols, syncSpecificProtocol } from '@/databases/hooks/assets';
 import { getTop10MyAccounts } from '@/core/apis/account';
-import { formatAppChain } from '@/screens/Home/utils/appchain';
-import { reportLendingUserStatusOnce } from '@/screens/Lending/analytics/userStatus';
+import { formatAppChain } from '@/utils/appchain';
+import { reportLendingUserStatusOnce } from '@/utils/lendingUserStatus';
 import { complexProtocol2ProtocolItem } from '@/utils/protocol';
 import type { ICacheProtocolItem, IProtocolItem } from '@/types/assets';
 

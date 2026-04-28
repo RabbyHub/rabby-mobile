@@ -6,14 +6,14 @@ import {
   syncRemoteProtocols,
   syncRemoteProtocol,
 } from '@/databases/sync/assets';
-import { batchQueryNFTsWithLocalCache } from '@/screens/Home/utils/nft';
+import { batchQueryNFTsWithLocalCache } from '@/databases/hooks/nft';
 import {
   batchLoadProjects,
   loadPortfolioSnapshot,
-} from '@/screens/Home/utils/portfolio';
+} from '@/core/apis/portfolio';
 
 import { TokenItemEntity } from '../entities/tokenitem';
-import { formatAppChain, isAppChain } from '@/screens/Home/utils/appchain';
+import { formatAppChain, isAppChain } from '@/utils/appchain';
 import type { IProtocolItem } from '@/types/assets';
 import { complexProtocol2ProtocolItem } from '@/utils/protocol';
 import { useAppChainStore } from '@/store/appchain';

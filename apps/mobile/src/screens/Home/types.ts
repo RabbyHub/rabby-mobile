@@ -1,5 +1,4 @@
 import {
-  NFTItem,
   PortfolioItem,
   PortfolioItemToken,
   CollectionList,
@@ -148,11 +147,7 @@ export type ActionItem =
   | RenterAddressType
   | IScamTokenHeader;
 
-export type DisplayNftItem = NFTItem & {
-  _isFold?: boolean;
-  _isManualFold?: boolean;
-  is_core?: boolean;
-};
+export type { DisplayNftItem } from '@/types/assets';
 export const isSectionHeader = (type: string) => {
   return [
     'asset_header',
