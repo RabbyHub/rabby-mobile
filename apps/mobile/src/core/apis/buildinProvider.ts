@@ -12,7 +12,7 @@ import { getGlobalTmpStore, setGlobalProvider } from './globalProvider';
 import { EVENT_SWITCH_ACCOUNT, eventBus } from '@/utils/events';
 import { CHAINS } from '@debank/common';
 import { underline2Camelcase } from '../utils/common';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 
 interface StateProvider {
   accounts: string[] | null;

@@ -21,7 +21,7 @@ import {
   fetchHistoryTokenItem,
   isNFTTokenId,
 } from '@/screens/Transaction/components/utils';
-import { IManageToken } from '@/core/services/preference';
+import type { IManageToken } from '@/types/assets';
 import {
   GAS_ACCOUNT_RECEIVED_ADDRESS,
   GAS_ACCOUNT_WITHDRAWED_ADDRESS,

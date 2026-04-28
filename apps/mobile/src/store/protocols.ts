@@ -1,4 +1,3 @@
-import { PortfolioItem } from '@rabby-wallet/rabby-api/dist/types';
 import { zCreate } from '@/core/utils/reexports';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { AppChainEntity } from '@/databases/entities/appchain';
@@ -7,36 +6,13 @@ import { getTop10MyAccounts } from '@/core/apis/account';
 import { formatAppChain } from '@/screens/Home/utils/appchain';
 import { reportLendingUserStatusOnce } from '@/screens/Lending/analytics/userStatus';
 import { complexProtocol2ProtocolItem } from '@/utils/protocol';
+import type { ICacheProtocolItem, IProtocolItem } from '@/types/assets';
 
-/**
- * interface for all DeFi data
- */
-export interface IProtocolItem {
-  id: string;
-  name: string;
-  logo?: string;
-  chain?: string;
-  netWorth: number;
-  site_url?: string;
-  owner_addr: string;
-
-  // 仓位数组
-  _portfolios: IProtocolPortfolio[];
-}
-
-export interface IProtocolPortfolio {
-  id: string;
-  name?: string;
-
-  // 用于计算美元总价值、排序
-  _sumTokenRealUsdValue: number;
-
-  // 仓位summary信息
-  netWorth: number;
-
-  // 原始仓位详情
-  _originPortfolio: PortfolioItem;
-}
+export type {
+  ICacheProtocolItem,
+  IProtocolItem,
+  IProtocolPortfolio,
+} from '@/types/assets';
 
 type ProtocolListMap = Record<string, IProtocolItem[]>;
 
@@ -54,10 +30,6 @@ interface ProtocolListState {
   ): void;
 }
 
-export type ICacheProtocolItem = {
-  fold: IProtocolItem[];
-  unFold: IProtocolItem[];
-};
 type ProtocolListComputedState = {
   multiProtocolsCache: Record<string, ICacheProtocolItem>;
   singleProtocolsCache: Record<string, ICacheProtocolItem>;

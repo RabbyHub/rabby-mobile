@@ -17,7 +17,7 @@ import {
   TransactionConfirmedEvent,
 } from '@rabby-wallet/eth-keyring-gnosis';
 import { EVENTS, eventBus } from '@/utils/events';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 import { isEqual, sortBy, uniq, without } from 'lodash';
 import { toChecksumAddress } from '@ethereumjs/util';
 import { hashSafeMessage } from '@safe-global/protocol-kit/dist/src/utils/eip-712';

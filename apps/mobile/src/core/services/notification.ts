@@ -12,7 +12,7 @@ import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
 import { apisAppWin } from './appWin';
 import type { EVENT_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { findChain } from '@/utils/chain';
-import { Account } from './preference';
+import type { Account } from '@/types/account';
 
 export interface Approval {
   id: string;

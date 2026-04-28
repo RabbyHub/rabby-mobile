@@ -9,7 +9,7 @@ import { groupBy } from 'lodash';
 import { findChain } from '@/utils/chain';
 import { requestETHRpc } from './provider';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 
 class ApisTransactionHistory {
   removeLocalPendingTx = ({

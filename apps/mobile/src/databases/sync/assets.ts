@@ -28,7 +28,7 @@ import { TransactionGroup } from '@/core/services/transactionHistory';
 import { removeCexId } from '@/utils/addressCexId';
 import { EvmTotalBalanceResponse } from '../hooks/balance';
 import { setHistoryLoading } from '@/hooks/historyTokenDict';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/types/assets';
 
 export async function syncRemoteTokens(
   address: string,

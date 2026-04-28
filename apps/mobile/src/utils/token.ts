@@ -11,16 +11,16 @@ import { hexToString } from 'web3-utils';
 
 import type { AbstractPortfolioToken } from '@/screens/Home/types';
 import { findChain } from './chain';
-import { CustomTestnetToken } from '@/core/services/customTestnetService';
+import type { CustomTestnetToken } from '@/types/customTestnet';
 import BigNumber from 'bignumber.js';
 import { MINIMUM_GAS_LIMIT } from '@/constant/gas';
 import { calcPercent } from '@/utils/math';
 import { formatUsdValue, formatAmount } from '@/utils/number';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/types/account';
 import { type TokenItemMaybeWithOwner } from '@/databases/hooks/token';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/types/assets';
 import { columnConverter } from '@/databases/entities/_helpers';
 
 export const SMALL_TOKEN_ID = '_SMALL_TOKEN_';
