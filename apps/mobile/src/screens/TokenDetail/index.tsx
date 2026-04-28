@@ -40,7 +40,7 @@ import {
 } from '@/hooks/accountsSwitcher';
 import { AccountSwitcher } from './components/InScreenSwitch';
 import RcIconRightArrowCC from '@/assets2024/icons/copyTrading/IconRightCC.svg';
-import { patchSingleToken } from '@/databases/sync/assets';
+import { patchSingleToken } from '@/databases/sync/token';
 import { BG_FULL_HEIGHT } from '../Home/hooks/useBgSize';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { ITokenItem } from '@/store/tokens';
