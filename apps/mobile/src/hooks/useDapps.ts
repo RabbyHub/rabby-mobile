@@ -1,10 +1,9 @@
-import { sortBy } from 'lodash';
 import { createDappBySession } from '@/core/apis/dapp';
 import { useCallback, useMemo } from 'react';
 
 import { apisDapp } from '@/core/apis';
-import { DappInfo, DappStore } from '@/core/services/dappService';
-import { type Account } from '@/core/services/preference';
+import type { DappInfo, DappStore } from '@/core/services/dappService';
+import type { Account, KeyringAccountWithAlias } from '@/types/account';
 import {
   dappService,
   preferenceService,
@@ -13,10 +12,10 @@ import {
 import { FieldNilable, stringUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom } from 'jotai';
-import { KeyringAccountWithAlias, useAccounts, useMyAccounts } from './account';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { useAccounts } from './account';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { resolveDappAccount } from '@/utils/dappAccount';
 
 const dappServiceStore = zCreate<DappStore>(() => {
   return {
@@ -152,29 +151,12 @@ export const getDappAccount = ({
   dappInfo?: DappInfo;
   accounts: KeyringAccountWithAlias[];
 }) => {
-  let res = accounts.find(
-    acc =>
-      dappInfo?.currentAccount &&
-      isSameAddress(acc.address, dappInfo.currentAccount.address) &&
-      acc.type === dappInfo.currentAccount.type,
-  );
-  if (!res) {
-    const tx = sortBy(
-      transactionHistoryService.store.transactions,
-      item => -item.createdAt,
-    )[0];
-    if (tx) {
-      const txAccount = accounts.find(
-        acc =>
-          isSameAddress(acc.address, tx.address) &&
-          (tx.keyringType ? acc.type === tx.keyringType : true),
-      );
-      if (txAccount) {
-        res = txAccount;
-      }
-    }
-  }
-  return res || accounts[0] || preferenceService.getFallbackAccount();
+  return resolveDappAccount({
+    dappInfo,
+    accounts,
+    transactions: transactionHistoryService.store.transactions,
+    fallbackAccount: preferenceService.getFallbackAccount(),
+  });
 };
 
 export function useGetDappAccount(dappInfo?: DappInfo) {
