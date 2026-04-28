@@ -4,6 +4,7 @@ import { TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SvgProps } from 'react-native-svg';
 import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
+import { AssetAvatar } from '@/components';
 import { Text } from '@/components/Typography';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import { useTheme2024 } from '@/hooks/theme';
@@ -18,6 +19,11 @@ import IconGasTokenActive from '@/assets2024/icons/gas-account/gas-token-active.
 import IconGasAccountActive from '@/assets2024/icons/gas-account/gas-account-active.svg';
 import IconGasCustomRightArrowCC from '@/assets2024/icons/gas-account/right-arrow-cc.svg';
 import IconGasLevelChecked from '@/assets2024/icons/gas-account/check.svg';
+import type { GasTokenInfo, TempoFeeTokenOption } from '@/utils/tempo';
+import {
+  formatTempoGasTokenAmount,
+  TempoGasTokenSelectSheet,
+} from './TempoGasTokenSelectSheet';
 import { calcGasAccountUsd } from './directSignSummary';
 import {
   resolveApprovalGasMethod,
@@ -77,6 +83,11 @@ export const SignMainnetShowMoreGasModal = ({
   freeGasAvailable,
   levelState,
   onEditCustomGas,
+  gasToken,
+  showTempoGasTokenSelector,
+  tempoGasTokenList = [],
+  onSelectTempoGasToken,
+  tempoGasTokenLoading,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -108,6 +119,11 @@ export const SignMainnetShowMoreGasModal = ({
   freeGasAvailable?: boolean;
   levelState: SignMainnetGasLevelState;
   onEditCustomGas?: () => void;
+  gasToken?: GasTokenInfo;
+  showTempoGasTokenSelector?: boolean;
+  tempoGasTokenList?: TempoFeeTokenOption[];
+  onSelectTempoGasToken?: (token: TempoFeeTokenOption) => void;
+  tempoGasTokenLoading?: boolean;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -169,10 +185,6 @@ export const SignMainnetShowMoreGasModal = ({
     });
   }, [contentSize, layout, overlayRect]);
 
-  if (!visible) {
-    return null;
-  }
-
   const handleSelectGas = (gas: GasLevel) => {
     if (gas.level === 'custom') {
       onEditCustomGas?.();
@@ -192,162 +204,241 @@ export const SignMainnetShowMoreGasModal = ({
       ),
     });
   };
+  const [tempoTokenSheetVisible, setTempoTokenSheetVisible] =
+    React.useState(false);
+  const currentTempoToken = React.useMemo(() => {
+    if (!gasToken?.tokenId) {
+      return undefined;
+    }
+
+    return tempoGasTokenList.find(
+      token => token.id.toLowerCase() === gasToken.tokenId.toLowerCase(),
+    );
+  }, [gasToken?.tokenId, tempoGasTokenList]);
+  const currentTempoTokenSymbol =
+    currentTempoToken?.display_symbol ||
+    currentTempoToken?.optimized_symbol ||
+    currentTempoToken?.symbol ||
+    gasToken?.symbol ||
+    '-';
+  const currentTempoTokenLogo =
+    currentTempoToken?.logo_url || gasToken?.logoUrl;
+  const currentTempoTokenAmount = currentTempoToken
+    ? formatTempoGasTokenAmount(currentTempoToken)
+    : '-';
+  const openTempoTokenSheet = React.useCallback(() => {
+    setTempoTokenSheetVisible(true);
+    onClose();
+  }, [onClose]);
+
+  if (!visible && !tempoTokenSheetVisible) {
+    return null;
+  }
 
   return (
-    <SwapModal
-      visible={visible}
-      onCancel={onClose}
-      overlayStyle={styles.overlay}
-      overlayClose>
-      <View
-        ref={overlayRef}
-        pointerEvents="box-none"
-        style={styles.overlayContent}
-        onLayout={measureOverlay}>
-        <View
-          onLayout={event => {
-            const { width, height } = event.nativeEvent.layout;
-            setContentSize({ width, height });
-          }}
-          style={[
-            styles.container,
-            styles.anchoredContainer,
-            position
-              ? {
-                  left: position.left,
-                  top: position.top,
-                }
-              : styles.fallbackContainer,
-          ]}>
-          {shouldHideApprovalGasMethodTabs() ? null : (
-            <View style={styles.header}>
-              <GasMethod
-                active={currentGasMethod === 'native'}
-                onChange={() => onChangeGasMethod?.('native')}
-                ActiveComponent={IconGasTokenActive}
-                BlurComponent={IconGasTokenCC}
-                title={'Use Gas token'}
-              />
-              <GasMethod
-                active={currentGasMethod === 'gasAccount'}
-                onChange={() => onChangeGasMethod?.('gasAccount')}
-                ActiveComponent={IconGasAccountActive}
-                BlurComponent={IconGasAccountCC}
-                title={'Use Gasaccount'}
-              />
-            </View>
-          )}
-          <View>
-            {gasList.map(gas => {
-              const gwei = new BigNumber(gas.price / 1e9).toFixed().slice(0, 8);
-              const levelTitle = t(getGasLevelI18nKey(gas.level));
-              const isActive = selectedGas?.level === gas.level;
-              const isCustom = gas.level === 'custom';
-              const levelNativeInsufficient = isCustom
-                ? false
-                : !!levelState[gas.level]?.nativeNotEnough;
-              const displayMethod = isActive
-                ? resolveApprovalGasMethod({
-                    nativeTokenInsufficient: !!nativeTokenInsufficient,
-                    gasAccountChainSupported: !!gasAccountChainSupported,
-                    noCustomRPC: noCustomRPCEnabled,
-                    freeGasAvailable,
-                    legacyGasMethod: currentGasMethod,
-                  })
-                : resolveApprovalGasLevelMethod({
-                    isCustom,
-                    currentGasMethod,
-                    nativeTokenInsufficient: levelNativeInsufficient,
-                    gasAccountChainSupported: !!gasAccountChainSupported,
-                    noCustomRPC: noCustomRPCEnabled,
-                    freeGasAvailable,
-                  });
-              const isRowLoading = !!levelState[gas.level]?.loading;
-
-              let costUsd =
-                displayMethod === 'native'
-                  ? levelState[gas.level]?.nativeUsd
-                  : levelState[gas.level]?.gasAccount?.[1];
-
-              const isNotEnough = resolveApprovalDisplayedGasLevelNotEnough({
-                isActive,
-                displayMethod,
-                nativeTokenInsufficient: !!nativeTokenInsufficient,
-                gasAccountBalanceEnough: gasAccountCost?.balance_is_enough,
-                levelNativeInsufficient: levelState[gas.level]?.nativeNotEnough,
-                levelGasAccountNotEnough:
-                  levelState[gas.level]?.gasAccount?.[0],
-              });
-
-              costUsd = isActive
-                ? displayMethod === 'gasAccount'
-                  ? calcGasAccountUsd(
-                      (gasAccountCost?.gas_account_cost.estimate_tx_cost || 0) +
-                        (gasAccountCost?.gas_account_cost.gas_cost || 0),
-                    )
-                  : selectedGasCostUsdStr
-                : costUsd;
-
-              if (!costUsd) {
-                costUsd = isActive ? selectedGasCostUsdStr : '-';
-              }
-
-              return (
-                <TouchableOpacity
-                  key={gas.level}
-                  style={[
-                    styles.gasLevel,
-                    !isActive && styles.gasLevelInactive,
-                  ]}
-                  onPress={() => {
-                    if (shouldHideApprovalGasMethodTabs()) {
-                      onChangeGasMethod?.(displayMethod);
+    <>
+      {visible ? (
+        <SwapModal
+          visible={visible}
+          onCancel={onClose}
+          overlayStyle={styles.overlay}
+          overlayClose>
+          <View
+            ref={overlayRef}
+            pointerEvents="box-none"
+            style={styles.overlayContent}
+            onLayout={measureOverlay}>
+            <View
+              onLayout={event => {
+                const { width, height } = event.nativeEvent.layout;
+                setContentSize({ width, height });
+              }}
+              style={[
+                styles.container,
+                styles.anchoredContainer,
+                position
+                  ? {
+                      left: position.left,
+                      top: position.top,
                     }
-                    handleSelectGas(gas);
-                    onClose();
-                  }}>
-                  <View style={styles.levelRow}>
-                    <Text style={styles.level}>{levelTitle}</Text>
-                    {!isCustom && (
-                      <Text style={styles.gwei}> ({gwei} Gwei) </Text>
+                  : styles.fallbackContainer,
+              ]}>
+              {shouldHideApprovalGasMethodTabs() ? null : (
+                <View style={styles.header}>
+                  <GasMethod
+                    active={currentGasMethod === 'native'}
+                    onChange={() => onChangeGasMethod?.('native')}
+                    ActiveComponent={IconGasTokenActive}
+                    BlurComponent={IconGasTokenCC}
+                    title={'Use Gas token'}
+                  />
+                  <GasMethod
+                    active={currentGasMethod === 'gasAccount'}
+                    onChange={() => onChangeGasMethod?.('gasAccount')}
+                    ActiveComponent={IconGasAccountActive}
+                    BlurComponent={IconGasAccountCC}
+                    title={'Use Gasaccount'}
+                  />
+                </View>
+              )}
+              {showTempoGasTokenSelector &&
+              currentGasMethod !== 'gasAccount' ? (
+                <TouchableOpacity
+                  style={styles.tempoTokenCurrentRow}
+                  onPress={openTempoTokenSheet}>
+                  <Text style={styles.tempoTokenSectionTitle}>Gas token</Text>
+                  <View style={styles.tempoTokenCurrentValue}>
+                    {tempoGasTokenLoading && !currentTempoToken ? (
+                      <CustomSkeleton style={styles.tempoLoadingSkeleton} />
+                    ) : (
+                      <>
+                        <AssetAvatar size={20} logo={currentTempoTokenLogo} />
+                        <Text style={styles.tempoTokenSymbol} numberOfLines={1}>
+                          {currentTempoTokenSymbol}
+                        </Text>
+                        <Text style={styles.tempoTokenAmount} numberOfLines={1}>
+                          {currentTempoTokenAmount}
+                        </Text>
+                      </>
                     )}
-                    {isActive && <IconGasLevelChecked />}
+                    <IconGasCustomRightArrowCC
+                      color={colors2024['neutral-foot']}
+                    />
                   </View>
+                </TouchableOpacity>
+              ) : null}
+              <View>
+                {gasList.map(gas => {
+                  const gwei = new BigNumber(gas.price / 1e9)
+                    .toFixed()
+                    .slice(0, 8);
+                  const levelTitle = t(getGasLevelI18nKey(gas.level));
+                  const isActive = selectedGas?.level === gas.level;
+                  const isCustom = gas.level === 'custom';
+                  const levelNativeInsufficient = isCustom
+                    ? false
+                    : !!levelState[gas.level]?.nativeNotEnough;
+                  const displayMethod = isActive
+                    ? resolveApprovalGasMethod({
+                        nativeTokenInsufficient: !!nativeTokenInsufficient,
+                        gasAccountChainSupported: !!gasAccountChainSupported,
+                        noCustomRPC: noCustomRPCEnabled,
+                        freeGasAvailable,
+                        legacyGasMethod: currentGasMethod,
+                      })
+                    : resolveApprovalGasLevelMethod({
+                        isCustom,
+                        currentGasMethod,
+                        nativeTokenInsufficient: levelNativeInsufficient,
+                        gasAccountChainSupported: !!gasAccountChainSupported,
+                        noCustomRPC: noCustomRPCEnabled,
+                        freeGasAvailable,
+                      });
+                  const isRowLoading = !!levelState[gas.level]?.loading;
 
-                  {isCustom ? (
-                    <>
-                      {isActive ? (
+                  let costUsd =
+                    displayMethod === 'native'
+                      ? levelState[gas.level]?.nativeUsd
+                      : levelState[gas.level]?.gasAccount?.[1];
+
+                  const isNotEnough = resolveApprovalDisplayedGasLevelNotEnough(
+                    {
+                      isActive,
+                      displayMethod,
+                      nativeTokenInsufficient: !!nativeTokenInsufficient,
+                      gasAccountBalanceEnough:
+                        gasAccountCost?.balance_is_enough,
+                      levelNativeInsufficient:
+                        levelState[gas.level]?.nativeNotEnough,
+                      levelGasAccountNotEnough:
+                        levelState[gas.level]?.gasAccount?.[0],
+                    },
+                  );
+
+                  costUsd = isActive
+                    ? displayMethod === 'gasAccount'
+                      ? calcGasAccountUsd(
+                          (gasAccountCost?.gas_account_cost.estimate_tx_cost ||
+                            0) +
+                            (gasAccountCost?.gas_account_cost.gas_cost || 0),
+                        )
+                      : selectedGasCostUsdStr
+                    : costUsd;
+
+                  if (!costUsd) {
+                    costUsd = isActive ? selectedGasCostUsdStr : '-';
+                  }
+
+                  return (
+                    <TouchableOpacity
+                      key={gas.level}
+                      style={[
+                        styles.gasLevel,
+                        !isActive && styles.gasLevelInactive,
+                      ]}
+                      onPress={() => {
+                        if (shouldHideApprovalGasMethodTabs()) {
+                          onChangeGasMethod?.(displayMethod);
+                        }
+                        handleSelectGas(gas);
+                        onClose();
+                      }}>
+                      <View style={styles.levelRow}>
+                        <Text style={styles.level}>{levelTitle}</Text>
+                        {!isCustom && (
+                          <Text style={styles.gwei}> ({gwei} Gwei) </Text>
+                        )}
+                        {isActive && <IconGasLevelChecked />}
+                      </View>
+
+                      {isCustom ? (
+                        <>
+                          {isActive ? (
+                            <Text
+                              style={[
+                                styles.usd,
+                                styles.customActiveUsd,
+                                isNotEnough && {
+                                  color: colors2024['red-default'],
+                                },
+                              ]}>
+                              {costUsd}
+                            </Text>
+                          ) : null}
+                          <IconGasCustomRightArrowCC
+                            color={colors2024['neutral-foot']}
+                          />
+                        </>
+                      ) : isRowLoading ? (
+                        <CustomSkeleton style={styles.rowSkeleton} />
+                      ) : (
                         <Text
                           style={[
                             styles.usd,
-                            styles.customActiveUsd,
-                            isNotEnough && { color: colors2024['red-default'] },
+                            isNotEnough && {
+                              color: colors2024['red-default'],
+                            },
                           ]}>
                           {costUsd}
                         </Text>
-                      ) : null}
-                      <IconGasCustomRightArrowCC
-                        color={colors2024['neutral-foot']}
-                      />
-                    </>
-                  ) : isRowLoading ? (
-                    <CustomSkeleton style={styles.rowSkeleton} />
-                  ) : (
-                    <Text
-                      style={[
-                        styles.usd,
-                        isNotEnough && { color: colors2024['red-default'] },
-                      ]}>
-                      {costUsd}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
           </View>
-        </View>
-      </View>
-    </SwapModal>
+        </SwapModal>
+      ) : null}
+      <TempoGasTokenSelectSheet
+        visible={tempoTokenSheetVisible}
+        gasToken={gasToken}
+        tokenList={tempoGasTokenList}
+        loading={tempoGasTokenLoading}
+        onClose={() => setTempoTokenSheetVisible(false)}
+        onSelect={onSelectTempoGasToken}
+      />
+    </>
   );
 };
 
@@ -418,6 +509,50 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
+  },
+  tempoTokenCurrentRow: {
+    minHeight: 42,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderRadius: 6,
+    borderWidth: 0.5,
+    borderColor: colors2024['neutral-line'],
+    backgroundColor: colors2024['neutral-bg-2'],
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+  },
+  tempoTokenCurrentValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 6,
+    flexShrink: 1,
+    marginLeft: 12,
+  },
+  tempoTokenSectionTitle: {
+    color: colors2024['neutral-info'],
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+  },
+  tempoLoadingSkeleton: {
+    width: 40,
+    height: 12,
+    borderRadius: 6,
+  },
+  tempoTokenSymbol: {
+    color: colors2024['neutral-title-1'],
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+  tempoTokenAmount: {
+    color: colors2024['neutral-title-1'],
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 16,
   },
   gasLevel: {
     flexDirection: 'row',

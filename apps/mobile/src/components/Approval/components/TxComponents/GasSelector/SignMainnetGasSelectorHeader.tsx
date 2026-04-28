@@ -27,6 +27,7 @@ import {
   type SignMainnetGasLevelState,
   type SignMainnetSupportedGasLevel,
 } from './signMainnetGasLevelPrefetch';
+import type { TempoFeeTokenOption } from '@/utils/tempo';
 
 type GasSelectorHeaderProps = React.ComponentProps<
   typeof import('./GasSelectorHeader').GasSelectorHeader
@@ -34,6 +35,10 @@ type GasSelectorHeaderProps = React.ComponentProps<
 type SignMainnetGasSelectorHeaderProps = GasSelectorHeaderProps & {
   freeGasAvailable?: boolean;
   noCustomRPC?: boolean;
+  showTempoGasTokenSelector?: boolean;
+  tempoGasTokenList?: TempoFeeTokenOption[];
+  onSelectTempoGasToken?: (token: TempoFeeTokenOption) => void;
+  tempoGasTokenLoading?: boolean;
 };
 
 export const SignMainnetHeaderContent = ({
@@ -70,6 +75,11 @@ export const SignMainnetHeaderContent = ({
   gasFeeListItemStyle,
   gasFeeListItemInnerStyle,
   textColor,
+  gasToken,
+  showTempoGasTokenSelector,
+  tempoGasTokenList,
+  onSelectTempoGasToken,
+  tempoGasTokenLoading,
 }: {
   gasList: GasSelectorHeaderProps['gasList'];
   selectedGas: GasSelectorHeaderProps['selectedGas'];
@@ -104,6 +114,11 @@ export const SignMainnetHeaderContent = ({
   gasFeeListItemStyle?: RNViewProps['style'];
   gasFeeListItemInnerStyle?: RNViewProps['style'];
   textColor?: string;
+  gasToken?: GasSelectorHeaderProps['gasToken'];
+  showTempoGasTokenSelector?: boolean;
+  tempoGasTokenList?: TempoFeeTokenOption[];
+  onSelectTempoGasToken?: (token: TempoFeeTokenOption) => void;
+  tempoGasTokenLoading?: boolean;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -427,6 +442,11 @@ export const SignMainnetHeaderContent = ({
             noCustomRPC={noCustomRPCEnabled}
             freeGasAvailable={freeGasAvailable}
             levelState={levelState}
+            gasToken={gasToken}
+            showTempoGasTokenSelector={showTempoGasTokenSelector}
+            tempoGasTokenList={tempoGasTokenList}
+            onSelectTempoGasToken={onSelectTempoGasToken}
+            tempoGasTokenLoading={tempoGasTokenLoading}
             onEditCustomGas={() => {
               setCustomVisible(true);
             }}
@@ -544,10 +564,15 @@ export const SignMainnetGasSelectorHeader = (
       isHardware={props.isHardware}
       disabled={props.disabled}
       nativeTokenBalance={props.nativeTokenBalance}
+      gasToken={props.gasToken}
       gasPriceMedian={props.gasPriceMedian}
       account={props.account}
       fixedMode={props.fixedMode}
       defaultFixedModeOnCurrentChain={props.defaultFixedModeOnCurrentChain}
+      showTempoGasTokenSelector={props.showTempoGasTokenSelector}
+      tempoGasTokenList={props.tempoGasTokenList}
+      onSelectTempoGasToken={props.onSelectTempoGasToken}
+      tempoGasTokenLoading={props.tempoGasTokenLoading}
     />
   );
 };
