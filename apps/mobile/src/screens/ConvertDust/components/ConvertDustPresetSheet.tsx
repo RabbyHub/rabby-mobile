@@ -102,15 +102,15 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
   },
-  // sheetHandle: {
-  //   backgroundColor: colors2024['neutral-bg-1'],
-  // },
-  // sheetHandleIndicator: {
-  //   width: 50,
-  //   height: 6,
-  //   borderRadius: 100,
-  //   backgroundColor: colors2024['neutral-line'],
-  // },
+  sheetHandle: {
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  sheetHandleIndicator: {
+    width: 50,
+    height: 6,
+    borderRadius: 100,
+    backgroundColor: colors2024['neutral-line'],
+  },
   presetSheet: {
     paddingTop: 20,
     paddingHorizontal: 19,

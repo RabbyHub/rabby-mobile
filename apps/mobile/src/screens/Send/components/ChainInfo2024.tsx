@@ -44,6 +44,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     icon: {
       transform: [{ rotate: '90deg' }],
     },
+    disabled: {
+      opacity: 0.3,
+    },
   };
 });
 
@@ -126,7 +129,7 @@ export function ChainInfo2024({
         style={[styles.container, style]}
         disabled={disabled}
         onPress={createChainModal}>
-        <View style={styles.left}>
+        <View style={[styles.left, disabled && styles.disabled]}>
           <ChainIconImage
             size={24}
             chainEnum={chainEnum}
@@ -140,7 +143,7 @@ export function ChainInfo2024({
             rightArrowIcon
           ) : (
             <ArrowRightSVG
-              style={styles.icon}
+              style={[styles.icon, disabled && styles.disabled]}
               color={colors2024['neutral-title-1']}
             />
           )}

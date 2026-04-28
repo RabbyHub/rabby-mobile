@@ -130,6 +130,7 @@ import {
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { NewTag } from './NewTag';
 import { useHomeFeatureNewTag } from '../hooks/useHomeFeatureNewTag';
+import { useDismissConvertDustBanner } from '../hooks/useConvertDustBanner';
 import { useMemoizedFn } from 'ahooks';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { sleep } from '@/utils/async';
@@ -593,6 +594,7 @@ export const HomeOverview = React.memo(() => {
     getStyle,
   });
   const { pendingTxCount, historyCount } = useHomeHistoryStore();
+  const dismissConvertDustBanner = useDismissConvertDustBanner();
 
   const { width } = useWindowDimensions();
   const itemWidth =
@@ -901,6 +903,7 @@ export const HomeOverview = React.memo(() => {
           });
           break;
         case MultiHomeFeatTitle.ConvertDust:
+          dismissConvertDustBanner();
           navigation.push(RootNames.StackTransaction, {
             screen: RootNames.ConvertDust,
             params: {},
@@ -910,7 +913,7 @@ export const HomeOverview = React.memo(() => {
           break;
       }
     },
-    [handlePressMarket, navigation],
+    [dismissConvertDustBanner, handlePressMarket, navigation],
   );
 
   const generateCustomBadgeIcon = useCallback(

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 
 import RcConvertCC from '@/assets2024/icons/convertDust/convert-cc.svg';
@@ -38,9 +38,20 @@ import {
   useConvertDustTokenList,
 } from './hooks/useConvertDustTokens';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { TransactionNavigatorParamList } from '@/navigation-type';
+import { useDismissConvertDustBanner } from '../Home/hooks/useConvertDustBanner';
+
+type ConvertDustNavigationProp = NativeStackNavigationProp<
+  TransactionNavigatorParamList,
+  'ConvertDust'
+>;
 
 export function ConvertDustScreen(): JSX.Element {
   const { styles } = useTheme2024({ getStyle });
+  const navigation = useNavigation<ConvertDustNavigationProp>();
+  const dismissConvertDustBanner = useDismissConvertDustBanner();
   const { safeOffBottom } = useSafeSizes();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -71,6 +82,16 @@ export function ConvertDustScreen(): JSX.Element {
     account: currentAccount || undefined,
     receiveToken: receiveToken || undefined,
   });
+
+  useEffect(() => {
+    dismissConvertDustBanner();
+  }, [dismissConvertDustBanner]);
+
+  useEffect(() => {
+    navigation.setParams({
+      disableAccountSwitch: task.disabled,
+    });
+  }, [navigation, task.disabled]);
 
   const hasSelectedToken = useMemo(
     () => !!task.list.length,
@@ -199,20 +220,15 @@ export function ConvertDustScreen(): JSX.Element {
       type="bg2"
       overwriteStyle={styles.screen}
       noHeader={false}>
-      <View style={[styles.content, { paddingBottom: safeOffBottom + 100 }]}>
-        <View style={[styles.chainSelectorContainer]}>
-          <ChainInfo2024
-            chainEnum={chainEnum}
-            onChange={handleChainChange}
-            hideTestnetTab
-            account={currentAccount!}
-            style={[
-              styles.chainSelector,
-              task.disabled && styles.chainSelectorDisabled,
-            ]}
-            supportChains={SWAP_SUPPORT_CHAINS}
-          />
-        </View>
+      <View style={[styles.content]}>
+        <ChainInfo2024
+          chainEnum={chainEnum}
+          onChange={handleChainChange}
+          hideTestnetTab
+          account={currentAccount!}
+          supportChains={SWAP_SUPPORT_CHAINS}
+          disabled={task.disabled}
+        />
 
         <LowValueTokenSelector
           disabled={task.disabled}
@@ -315,24 +331,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 12,
-  },
-  chainSelectorDisabled: {
-    opacity: 0.3,
-  },
-  chainSelector: {
-    width: '100%',
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-    backgroundColor: 'transparent',
-  },
-  chainSelectorContainer: {
-    borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-2'],
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   bottomBar: {
     position: 'absolute',

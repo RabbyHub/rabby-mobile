@@ -41,11 +41,15 @@ import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
-function ConvertDustHeaderTitle(ctx: { children: string }) {
+function ConvertDustHeaderTitle(ctx: {
+  children: string;
+  disableSwitch?: boolean;
+}) {
   return (
     <ScreenHeaderAccountSwitcher
       forScene="MakeTransactionAbout"
       titleText={ctx.children}
+      disableSwitch={ctx.disableSwitch}
     />
   );
 }
@@ -334,12 +338,18 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.ConvertDust}
         component={ConvertDustScreen}
-        options={mergeScreenOptions2024([
-          {
-            title: 'Convert Dust',
-            headerTitle: ConvertDustHeaderTitle,
-          },
-        ])}
+        options={({ route }) =>
+          mergeScreenOptions2024([
+            {
+              title: 'Convert Dust',
+              headerTitle: ctx =>
+                ConvertDustHeaderTitle({
+                  ...ctx,
+                  disableSwitch: !!route.params?.disableAccountSwitch,
+                }),
+            },
+          ])
+        }
       />
 
       <TransactionStack.Screen
