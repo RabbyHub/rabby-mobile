@@ -19,6 +19,8 @@ import {
   getTempoFeeTokenInfo,
   isTempoChain,
 } from '@/utils/tempo';
+import { decodeFunctionResult, encodeFunctionData } from 'viem';
+import { Abis as TempoAbis, Addresses as TempoAddresses } from 'viem/tempo';
 
 const GAS_PRICE_DECIMALS = 18;
 
@@ -126,6 +128,62 @@ export const getRecommendNonce = async ({
   if (!chain) {
     throw new Error('chain not found');
   }
+  const normalizedNonceKey = (() => {
+    const nonceKey = (tx as any).nonceKey;
+    if (!isTempoChain(chain.serverId)) {
+      return undefined;
+    }
+    if (typeof nonceKey === 'undefined' || nonceKey === null) {
+      return undefined;
+    }
+    if (typeof nonceKey === 'bigint') {
+      return nonceKey > 0n ? nonceKey : undefined;
+    }
+    if (typeof nonceKey === 'number') {
+      if (!Number.isFinite(nonceKey) || nonceKey <= 0) {
+        return undefined;
+      }
+      return BigInt(Math.trunc(nonceKey));
+    }
+    if (typeof nonceKey === 'string') {
+      const trimmed = nonceKey.trim();
+      if (!trimmed || trimmed === '0x' || trimmed === '0X') {
+        return undefined;
+      }
+      const value = BigInt(trimmed);
+      return value > 0n ? value : undefined;
+    }
+    return undefined;
+  })();
+
+  if (typeof normalizedNonceKey !== 'undefined') {
+    const data = encodeFunctionData({
+      abi: TempoAbis.nonce,
+      functionName: 'getNonce',
+      args: [tx.from as `0x${string}`, normalizedNonceKey],
+    });
+    const result = await apiProvider.requestETHRpc<string>(
+      {
+        method: 'eth_call',
+        params: [
+          {
+            to: TempoAddresses.nonceManager,
+            data,
+          },
+          'latest',
+        ],
+      },
+      chain.serverId,
+      account,
+    );
+    const onChainNonce = decodeFunctionResult({
+      abi: TempoAbis.nonce,
+      functionName: 'getNonce',
+      data: result as `0x${string}`,
+    }) as bigint;
+    return `0x${onChainNonce.toString(16)}`;
+  }
+
   const onChainNonce = await apiProvider.requestETHRpc(
     {
       method: 'eth_getTransactionCount',

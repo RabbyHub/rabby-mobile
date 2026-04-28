@@ -294,7 +294,9 @@ export const generateKeyringWithMnemonic = async (
 };
 
 export const slip39DecodeMnemonics = (secretShares: string[]) => {
-  return HdKeyring.slip39DecodeMnemonics(secretShares);
+  return secretShares.map(secretShare =>
+    HdKeyring.slip39DecodeMnemonic(secretShare),
+  );
 };
 
 export const slip39DecodeMnemonic = (secretShare: string) => {

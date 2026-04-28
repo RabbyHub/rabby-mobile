@@ -19,6 +19,7 @@ import {
 import {
   ExplainTxResponse,
   GasLevel,
+  TokenItem,
   Tx,
   TxPushType,
   MultiAction,
@@ -135,7 +136,17 @@ import {
   GasAccountTopUpResult,
   getBumpedNonceAfterTopUp,
 } from '@/screens/GasAccount/components/topUpContinuation';
-import { GasTokenInfo, isTempoChain } from '@/utils/tempo';
+import {
+  calcTempoMaxGasCostRawAmountIn18,
+  GasTokenInfo,
+  isTempoBatchSupportedAccountType,
+  isTempoChain,
+  listTempoFeeTokenOptionsFromCache,
+  loadTempoFeeTokenOptionsState,
+  TempoFeeTokenOption,
+  TxWithTempoExtras,
+} from '@/utils/tempo';
+import tokenListStore from '@/store/tokens';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -358,6 +369,15 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     reqId,
     safeTxGas,
     authorizationList,
+    type,
+    calls,
+    feeToken,
+    feePayer,
+    feePayerSignature,
+    nonceKey,
+    keyAuthorization,
+    validBefore,
+    validAfter,
   } = useMemo(() => {
     return normalizeTxParams(params.data[0]);
   }, [params.data]);
@@ -401,7 +421,9 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     }
     return result;
   };
-  const [tx, setTx] = useState<Tx & { authorizationList?: any }>({
+  const [tx, setTx] = useState<
+    TxWithTempoExtras<Tx> & { authorizationList?: any }
+  >({
     chainId,
     data: data || '0x', // can not execute with empty string, use 0x instead
     from,
@@ -412,6 +434,15 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     nonce,
     to,
     value,
+    type,
+    calls,
+    feeToken,
+    feePayer,
+    feePayerSignature,
+    nonceKey,
+    keyAuthorization,
+    validBefore,
+    validAfter,
     authorizationList:
       params?.$ctx?.eip7702RevokeAuthorization || authorizationList,
   });
@@ -421,6 +452,12 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   const [maxPriorityFee, setMaxPriorityFee] = useState(0);
   const [nativeTokenBalance, setNativeTokenBalance] = useState('0x0');
   const [gasToken, setGasToken] = useState<GasTokenInfo | undefined>(undefined);
+  const [tempoGasTokenList, setTempoGasTokenList] = useState<
+    TempoFeeTokenOption[]
+  >([]);
+  const [tempoGasTokenLoading, setTempoGasTokenLoading] = useState(false);
+  const [tempoCurrentFeeTokenId, setTempoCurrentFeeTokenId] = useState('');
+  const [, setTempoPreferredFeeTokenId] = useState('');
   const { executeEngine } = useSecurityEngine();
   const [multiActionList, setMultiActionList] = useState<
     ParsedTransactionActionData[]
@@ -571,6 +608,50 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   });
   const gasAccountChainSupported =
     !!gasAccountCost && !gasAccountCost.chain_not_support;
+  const showTempoGasTokenSelector = useMemo(
+    () =>
+      isTempoChain(chain?.serverId) &&
+      gasMethod !== 'gasAccount' &&
+      isTempoBatchSupportedAccountType(currentAccount?.type),
+    [chain?.serverId, currentAccount?.type, gasMethod],
+  );
+
+  const getCachedTokenItems = useMemoizedFn(() => {
+    const tokenList =
+      tokenListStore.getState().tokenListMap[
+        currentAccount.address.toLowerCase()
+      ] || [];
+
+    return tokenList as unknown as TokenItem[];
+  });
+
+  const syncTempoGasTokenState = useMemoizedFn((token: TempoFeeTokenOption) => {
+    setGasToken({
+      tokenId: token.id,
+      symbol: token.display_symbol || token.optimized_symbol || token.symbol,
+      decimals: token.decimals || 18,
+      logoUrl: token.logo_url,
+    });
+    setNativeTokenBalance(
+      new BigNumber(token.raw_amount_hex_str || 0, 16).toFixed(0),
+    );
+  });
+
+  const handleSelectTempoGasToken = useMemoizedFn(
+    (token: TempoFeeTokenOption) => {
+      if (token.isDisabledByTempoGasBalance) {
+        return;
+      }
+
+      const tokenId = token.id;
+      syncTempoGasTokenState(token);
+      setTempoPreferredFeeTokenId(tokenId);
+      setTx(prev => ({
+        ...prev,
+        feeToken: tokenId,
+      }));
+    },
+  );
 
   const checkGasLevelIsNotEnough = useMemoizedFn(
     async (
@@ -708,7 +789,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
           value: tx.value || '0x0',
           // todo
           to: tx.to || '',
-          type: is7702Tx(tx) ? 4 : support1559 ? 2 : undefined,
+          type:
+            tx.type || (is7702Tx(tx as any) ? 4 : support1559 ? 2 : undefined),
           authorizationList:
             params?.$ctx?.eip7702RevokeAuthorization ||
             authorizationList?.map(e => [
@@ -1123,7 +1205,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     if (!isSpeedUp && !isCancel && !isSwap) {
       await preferenceService.updateLastTimeGasSelection(chainId, selected);
     }
-    const transaction: Tx = {
+    const transaction: TxWithTempoExtras<Tx> = {
       from: tx.from,
       to: tx.to,
       data: tx.data,
@@ -1131,6 +1213,15 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       value: tx.value,
       chainId: tx.chainId,
       gas: '',
+      type: tx.type,
+      calls: tx.calls,
+      feeToken: tx.feeToken,
+      feePayer: tx.feePayer,
+      feePayerSignature: tx.feePayerSignature,
+      nonceKey: tx.nonceKey,
+      keyAuthorization: tx.keyAuthorization,
+      validBefore: tx.validBefore,
+      validAfter: tx.validAfter,
     };
     if (support1559) {
       transaction.maxFeePerGas = tx.maxFeePerGas;
@@ -1569,11 +1660,38 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
 
         setNativeTokenBalance(balanceInfo.rawBalance);
         setGasToken(balanceInfo.token);
+        if (isTempoChain(chain.serverId)) {
+          setTempoGasTokenLoading(true);
+          const {
+            options,
+            currentFeeTokenId,
+            preferredTokenId,
+            selectedOption,
+          } = await loadTempoFeeTokenOptionsState({
+            account: currentAccount,
+            userAddress: currentAccount.address,
+            chainServerId: chain.serverId,
+            tokenList: getCachedTokenItems(),
+            txFeeToken: tx.feeToken as string | undefined,
+            maxGasCostRawAmount: gasExplainResponse.maxGasCostRawAmount,
+            maxGasCostRawAmountDecimals: balanceInfo.token.decimals || 18,
+            maxGasCostRawAmountIn18: calcTempoMaxGasCostRawAmountIn18([tx]),
+          });
+
+          setTempoCurrentFeeTokenId(currentFeeTokenId);
+          setTempoPreferredFeeTokenId(preferredTokenId);
+          setTempoGasTokenList(options);
+          if (selectedOption) {
+            syncTempoGasTokenState(selectedOption);
+          }
+        }
       } catch (e) {
         if (await apiCustomRPC.hasCustomRPC(chain.enum)) {
           setIsShowCustomRPCErrorModal(true);
         }
         throw e;
+      } finally {
+        setTempoGasTokenLoading(false);
       }
 
       matomoRequestEvent({
@@ -1652,7 +1770,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       setSelectedGas(gas);
       setSupport1559(is1559);
       if (is1559) {
-        const is7702 = is7702Tx(tx);
+        const is7702 = is7702Tx(tx as any);
         setTx(
           omit(
             {
@@ -1746,6 +1864,90 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!isTempoChain(chain.serverId) || !currentAccount?.address) {
+      setTempoGasTokenList([]);
+      setTempoGasTokenLoading(false);
+      return;
+    }
+
+    let mounted = true;
+    const cachedTokenItems = getCachedTokenItems();
+    const maxGasCostRawAmountIn18 = calcTempoMaxGasCostRawAmountIn18([tx]);
+    const cachedOptions = listTempoFeeTokenOptionsFromCache({
+      tokenList: cachedTokenItems,
+      chainServerId: chain.serverId,
+      maxGasCostRawAmount: gasExplainResponse.maxGasCostRawAmount,
+      maxGasCostRawAmountDecimals: gasToken?.decimals || 18,
+      maxGasCostRawAmountIn18,
+    });
+
+    if (cachedOptions.length) {
+      setTempoGasTokenList(cachedOptions);
+    }
+
+    setTempoGasTokenLoading(true);
+    loadTempoFeeTokenOptionsState({
+      account: currentAccount,
+      userAddress: currentAccount.address,
+      chainServerId: chain.serverId,
+      tokenList: cachedTokenItems,
+      txFeeToken: tx.feeToken as string | undefined,
+      currentFeeTokenId: tempoCurrentFeeTokenId,
+      maxGasCostRawAmount: gasExplainResponse.maxGasCostRawAmount,
+      maxGasCostRawAmountDecimals: gasToken?.decimals || 18,
+      maxGasCostRawAmountIn18,
+    })
+      .then(
+        ({ options, currentFeeTokenId, preferredTokenId, selectedOption }) => {
+          if (!mounted) {
+            return;
+          }
+          setTempoCurrentFeeTokenId(currentFeeTokenId);
+          setTempoPreferredFeeTokenId(preferredTokenId);
+          setTempoGasTokenList(options);
+          if (
+            selectedOption &&
+            gasToken?.tokenId?.toLowerCase() !== selectedOption.id.toLowerCase()
+          ) {
+            syncTempoGasTokenState(selectedOption);
+          }
+          if (
+            selectedOption &&
+            typeof tx.feeToken === 'string' &&
+            tx.feeToken.toLowerCase() !== selectedOption.id.toLowerCase()
+          ) {
+            setTempoPreferredFeeTokenId(selectedOption.id);
+            setTx(prev => ({
+              ...prev,
+              feeToken: selectedOption.id,
+            }));
+          }
+        },
+      )
+      .catch(() => {})
+      .finally(() => {
+        if (mounted) {
+          setTempoGasTokenLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [
+    chain.serverId,
+    currentAccount,
+    currentAccount?.address,
+    gasExplainResponse.maxGasCostRawAmount,
+    gasToken?.decimals,
+    gasToken?.tokenId,
+    getCachedTokenItems,
+    syncTempoGasTokenState,
+    tempoCurrentFeeTokenId,
+    tx,
+  ]);
 
   // useEffect(() => {
   //   if (isReady) {
@@ -1870,11 +2072,13 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                   actionRequireData={actionRequireData}
                   chain={chain}
                   txDetail={txDetail}
-                  raw={{
-                    ...tx,
-                    nonce: realNonce || tx.nonce,
-                    gas: gasLimit!,
-                  }}
+                  raw={
+                    {
+                      ...tx,
+                      nonce: realNonce || tx.nonce,
+                      gas: gasLimit!,
+                    } as any
+                  }
                   onChange={handleTxChange}
                   isSpeedUp={isSpeedUp}
                   engineResults={engineResults}
@@ -2033,6 +2237,10 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                   nativeTokenBalance={nativeTokenBalance}
                   nativeTokenInsufficient={isGasNotEnough}
                   gasToken={gasToken}
+                  showTempoGasTokenSelector={showTempoGasTokenSelector}
+                  tempoGasTokenList={tempoGasTokenList}
+                  onSelectTempoGasToken={handleSelectTempoGasToken}
+                  tempoGasTokenLoading={tempoGasTokenLoading}
                   gasPriceMedian={gasPriceMedian}
                   account={currentAccount}
                   freeGasAvailable={canUseGasLess}
