@@ -1,6 +1,6 @@
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { fromHex, isHex } from 'viem';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 import { keyringService } from '../services/shared';
 
 const AUTO_CONNECT_SILENTLY_ORIGINS = new Set<string>([

@@ -1,7 +1,7 @@
 import cloneDeep from 'lodash/cloneDeep';
 import { keyringService } from '../services';
 import { preferenceService } from '@/core/services/shared';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
 
 const { isSameAddress } = addressUtils;

@@ -14,7 +14,7 @@ import {
   SpotClearinghouseState,
 } from '@rabby-wallet/hyperliquid-sdk';
 import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/types/account';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { apisPerps } from '@/core/apis';
 import { perpsService } from '@/core/services';

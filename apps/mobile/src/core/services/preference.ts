@@ -10,7 +10,7 @@ import createPersistStore, {
   StorageAdapaterOptions,
   StoreServiceBase,
 } from '@rabby-wallet/persist-store';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import type { Account, IPinAddress } from '@/types/account';
 import { BroadcastEvent } from '@/constant/event';
 import KeyringService from '@rabby-wallet/service-keyring';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
@@ -20,25 +20,28 @@ import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { reportActionStats } from '../utils/reportActionStats';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { BALANCE_HIDE_TYPE } from '@/screens/Home/hooks/useHideBalance';
+import { BALANCE_HIDE_TYPE } from '@/constant/balanceHide';
+import type {
+  IDefiOrToken,
+  IManageNft,
+  IManageToken,
+  ITokenManageSettingMap,
+  Token,
+  TokenDisplayMode,
+} from '@/types/assets';
+
+export type { Account, IPinAddress } from '@/types/account';
+export type {
+  IDefiOrToken,
+  IManageNft,
+  IManageToken,
+  ITokenManageSettingMap,
+  ITokenSetting,
+  Token,
+  TokenDisplayMode,
+} from '@/types/assets';
 
 const { isSameAddress } = addressUtils;
-
-// export interface Account {
-//   type: string;
-//   address: string;
-//   brandName: string;
-//   aliasName?: string;
-//   displayBrandName?: string;
-//   index?: number;
-//   balance?: number;
-// }
-export interface Account extends KeyringAccountWithAlias {
-  /**
-   * @description property for HDKeyring and hardware keyring to indicate the index of the account
-   */
-  index?: number | undefined;
-}
 
 export interface ChainGas {
   gasPrice?: number | null; // custom cached gas price
@@ -53,61 +56,6 @@ export interface GasCache {
 
 export interface addedToken {
   [address: string]: string[];
-}
-
-export interface Token {
-  address: string;
-  chain: string;
-}
-
-export type IPinAddress = {
-  brandName: Account['brandName'];
-  address: Account['address'];
-};
-
-export type IManageToken = {
-  chainId: string;
-  tokenId: string;
-};
-
-export type IManageNft = {
-  id: string;
-  chain: string;
-};
-
-export type IDefiOrToken = {
-  id: string;
-  chainid: string;
-  type: 'token' | 'defi';
-};
-
-export type ITokenSetting = {
-  pinedQueue?: IManageToken[]; // maual always true
-  foldTokens?: IManageToken[];
-  unfoldTokens?: IManageToken[];
-  includeDefiAndTokens?: IDefiOrToken[];
-  excludeDefiAndTokens?: IDefiOrToken[];
-  foldNfts?: IManageNft[];
-  unfoldNfts?: IManageNft[];
-  foldDefis?: string[];
-  unFoldDefis?: string[];
-};
-
-export type TokenDisplayMode = 'byAddress' | 'byAsset' | 'bySymbol';
-
-export interface ITokenManageSettingMap {
-  [address: string]: {
-    /** @deprecated will be migrated to store.pinedQueue */
-    pinedQueue?: ITokenSetting['pinedQueue'];
-    /** @deprecated will be migrated to store.foldTokens */
-    foldTokens?: ITokenSetting['foldTokens'];
-    /** @deprecated will be migrated to store.unfoldTokens */
-    unfoldTokens?: ITokenSetting['unfoldTokens'];
-    /** @deprecated will be migrated to store.includeDefiAndTokens */
-    includeDefiAndTokens?: ITokenSetting['includeDefiAndTokens'];
-    /** @deprecated will be migrated to store.excludeDefiAndTokens */
-    excludeDefiAndTokens?: ITokenSetting['excludeDefiAndTokens'];
-  };
 }
 
 export interface PreferenceStore {
