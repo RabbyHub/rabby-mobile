@@ -30,6 +30,8 @@ import { EvmTotalBalanceResponse } from '../hooks/balance';
 import { setHistoryLoading } from '@/hooks/historyTokenDict';
 import type { ITokenItem } from '@/types/assets';
 
+export { patchSingleToken } from './token';
+
 export async function syncRemoteTokens(
   address: string,
   _tokens: TokenItem[] | ITokenItem[],
@@ -400,29 +402,6 @@ export const deleteDBResourceForAddress = async (_address: string) => {
     console.log('deleteDBResourceForAddress', error);
   }
 };
-
-export async function patchSingleToken(address: string, token: TokenItem) {
-  const tokenItem = new TokenItemEntity();
-  TokenItemEntity.fillEntity(tokenItem, address, token);
-  await prepareAppDataSource();
-  await batchSaveWithPQueueAndTransaction(TokenItemEntity, [tokenItem], {
-    owner_addr: address,
-    taskFor: 'token',
-    batchSize: 100,
-    concurrency: 1,
-    noNeedAbort: true,
-  })
-    .then(({ taskSignal, taskKey }) => {
-      if (taskSignal.aborted) {
-        console.warn(`[${taskKey}] patchSingleToken upsertion was aborted.`);
-      } else {
-        console.debug(`[${taskKey}] patchSingleToken upsert tasks created`);
-      }
-    })
-    .catch(error => {
-      console.error('Batch upsert patchSingleToken failed:', error);
-    });
-}
 
 export async function syncBalance(
   address: string,
