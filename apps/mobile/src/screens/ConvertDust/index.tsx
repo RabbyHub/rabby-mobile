@@ -4,8 +4,9 @@ import React, {
   useMemo,
   useRef,
   useState,
+  useTransition,
 } from 'react';
-import { View } from 'react-native';
+import { Alert, BackHandler, Platform, View } from 'react-native';
 
 import RcConvertCC from '@/assets2024/icons/convertDust/convert-cc.svg';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
@@ -44,7 +45,11 @@ import {
   useConvertDustTokenList,
 } from './hooks/useConvertDustTokens';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import {
+  useNavigation,
+  usePreventRemove,
+  useRoute,
+} from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type {
   GetNestedScreenRouteProp,
@@ -52,6 +57,7 @@ import type {
 } from '@/navigation-type';
 import { useDismissConvertDustBanner } from '../Home/hooks/useConvertDustBanner';
 import { ConvertDustEntryGuideModal } from './components/ConvertDustEntryGuideModal';
+import { useTranslation } from 'react-i18next';
 
 type ConvertDustNavigationProp = NativeStackNavigationProp<
   TransactionNavigatorParamList,
@@ -61,6 +67,7 @@ type ConvertDustNavigationProp = NativeStackNavigationProp<
 export function ConvertDustScreen(): JSX.Element {
   const { styles } = useTheme2024({ getStyle });
   const navigation = useNavigation<ConvertDustNavigationProp>();
+  const { t } = useTranslation();
   const route =
     useRoute<
       GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'ConvertDust'>
@@ -266,6 +273,49 @@ export function ConvertDustScreen(): JSX.Element {
       : 'Stop';
   const displayedTokens =
     task.status === 'idle' ? dustTokens : (task.list as ITokenItem[]);
+
+  usePreventRemove(task.status === 'idle', e => {
+    Alert.alert(
+      t('page.approvals.stopTheRevokeProcess'),
+      t('page.approvals.leavingThisPageWillStopTheRevokeProcess'),
+      [
+        {
+          text: t('global.Cancel'),
+          style: 'cancel',
+          onPress: () => {},
+        },
+        {
+          text: t('page.signTx.yes'),
+          style: 'destructive',
+          onPress: () => {
+            navigation.dispatch(e.data.action);
+          },
+        },
+      ],
+    );
+  });
+
+  React.useEffect(() => {
+    if (Platform.OS === 'android') {
+      const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        () => {
+          navigation.goBack();
+          return true;
+        },
+      );
+
+      return () => backHandler.remove();
+    }
+  }, [navigation]);
+
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      task.pause();
+    });
+    return unsubscribe;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task.pause]);
 
   return (
     <NormalScreenContainer2024
