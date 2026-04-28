@@ -1096,7 +1096,18 @@
         "empty": "No website added to favorites",
         "favorite": "Favorite",
         "search": "Search",
-        "websites": "Websites"
+        "websites": "Websites",
+        "tabs": {
+          "__skip_translation": ["favorite", "defi", "dex", "rwa", "nft"],
+          "favorite": "Favorite",
+          "all": "All",
+          "defi": "DeFi",
+          "rwa": "RWA",
+          "perps": "Perps",
+          "predict": "Predict",
+          "dex": "DEX",
+          "nft": "NFT"
+        }
       },
       "depositAssets": {
         "subtitle": "Receive assets to this wallet",

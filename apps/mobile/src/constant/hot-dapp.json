@@ -3,7 +3,7 @@
     "category": "Predict",
     "name": "Polymarket",
     "origin": "https://polymarket.com",
-    "logo": "https://static-assets.rabby.io/files/0b575b9d-b8c7-48e8-84c4-222d4e51043f.png",
+    "logo": "https://static-assets.rabby.io/files/b20294f0-b1c6-44cc-a77d-4da51df7d628.png",
     "zh": "全球最大的预测市场,用真实资金交易事件结果与概率。",
     "en": "The world’s largest prediction market, where users trade real-money probabilities on event outcomes."
   },
@@ -147,7 +147,7 @@
     "category": "DeFi",
     "name": "Curve",
     "origin": "https://www.curve.finance",
-    "logo": "https://static-assets.rabby.io/files/bb79a65a-71ef-4907-be22-12be8352f34c.png",
+    "logo": "https://static-assets.rabby.io/files/076bde88-6a73-4fcf-8b43-2ef9bba2e647.png",
     "zh": "以稳定币和同类资产低滑点兑换见长的经典 AMM 协议。",
     "en": "A leading AMM protocol known for low-slippage swaps between stablecoins and similar assets."
   },
@@ -219,7 +219,7 @@
     "category": "DEX",
     "name": "Uniswap",
     "origin": "https://app.uniswap.org",
-    "logo": "https://static.debank.com/image/dapp/logo_url/fe004c7bccd24837394c2861a5d4f50c/fe004c7bccd24837394c2861a5d4f50c.png",
+    "logo": "https://static-assets.rabby.io/files/288624b9-c928-4919-8620-1fe336f3e375.png",
     "zh": "最主流的链上交易入口之一,以 AMM 交易与多链代币兑换为核心。",
     "en": "One of the most widely used onchain trading venues, centered on AMM swaps and multi-chain token trading."
   },

@@ -42,6 +42,7 @@ import {
   type HomeDappDrawerAndroidTab,
 } from './HomeDappDrawerAndroidTabs';
 import { DappList } from './DappList';
+import i18n from '@/utils/i18n';
 
 const TAB_GAP = 8;
 const FIRST_TAB_GAP = 12;
@@ -50,35 +51,35 @@ export const TAB_BAR_HEIGHT = 28;
 const tabs = [
   {
     id: 'favorite',
-    label: 'Favorite',
+    label: i18n.t('page.home.DappDrawer.tabs.favorite'),
   },
   {
     id: 'all',
-    label: 'All',
+    label: i18n.t('page.home.DappDrawer.tabs.all'),
   },
   {
     id: 'DeFi',
-    label: 'DeFi',
+    label: i18n.t('page.home.DappDrawer.tabs.defi'),
   },
   {
     id: 'RWA',
-    label: 'RWA',
+    label: i18n.t('page.home.DappDrawer.tabs.rwa'),
   },
   {
     id: 'Perps',
-    label: 'Perps',
+    label: i18n.t('page.home.DappDrawer.tabs.perps'),
   },
   {
     id: 'Predict',
-    label: 'Predict',
+    label: i18n.t('page.home.DappDrawer.tabs.predict'),
   },
   {
     id: 'DEX',
-    label: 'DEX',
+    label: i18n.t('page.home.DappDrawer.tabs.dex'),
   },
   {
     id: 'NFT',
-    label: 'NFT',
+    label: i18n.t('page.home.DappDrawer.tabs.nft'),
   },
 ] as const;
 type TabKey = (typeof tabs)[number]['id'];
