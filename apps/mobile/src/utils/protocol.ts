@@ -3,8 +3,17 @@ import {
   ComplexProtocol,
   PortfolioItem,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { columnConverter } from '@/databases/entities/_helpers';
-import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
+import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
+
+type ProtocolEntityLike = {
+  id: string;
+  name: string;
+  logo_url: string;
+  chain: string;
+  site_url: string;
+  owner_addr: string;
+  portfolio_item_list: string | PortfolioItem[];
+};
 
 export const portfolioToIProtocolPortfolio = (
   p: PortfolioItem,
@@ -35,12 +44,14 @@ export const portfolioToIProtocolPortfolio = (
 
 // 来自数据库的协议数据，转换为前端协议数据
 export const protocolEntity2IProtocolItem = (
-  item: ProtocolItemEntity,
+  item: ProtocolEntityLike,
 ): IProtocolItem => {
-  const portfolios = columnConverter.jsonStringToObj(
-    item.portfolio_item_list,
-  ) as unknown as PortfolioItem[];
-  const formatPortfolio = portfolios
+  const portfolios =
+    typeof item.portfolio_item_list === 'string'
+      ? safeParseJSON(item.portfolio_item_list)
+      : item.portfolio_item_list;
+  const portfolioList = portfolios as PortfolioItem[];
+  const formatPortfolio = portfolioList
     .map(portfolioToIProtocolPortfolio)
     .sort((a, b) => b.netWorth - a.netWorth);
   const totalNetWorth = formatPortfolio.reduce(
