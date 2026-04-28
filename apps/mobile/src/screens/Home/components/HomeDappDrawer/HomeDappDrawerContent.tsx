@@ -337,6 +337,7 @@ export const HomeDappDrawerContent: React.FC<{
               drawerScrollOffsetY={drawerScrollOffsetY}
               scrollableStatus={scrollableStatus}
               isEditing={isEditing}
+              isActive={activeTab === tabKey}
               bookmarkList={list}
               onRemoveLocal={handleRemoveLocal}
               onDappPress={handleDappPress}
@@ -352,6 +353,7 @@ export const HomeDappDrawerContent: React.FC<{
             drawerScrollOffsetY={drawerScrollOffsetY}
             scrollableStatus={scrollableStatus}
             category={tabKey}
+            isActive={activeTab === tabKey}
             onDappPress={handleDappPress}
           />
         </View>

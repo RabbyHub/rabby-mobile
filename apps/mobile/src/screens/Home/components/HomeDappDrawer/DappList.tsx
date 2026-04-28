@@ -6,7 +6,7 @@ import { useDapps } from '@/hooks/useDapps';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   FlatList as RNFlatList,
@@ -17,10 +17,12 @@ import {
 } from 'react-native';
 import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
 import Animated, {
+  runOnUI,
   scrollTo,
   useAnimatedProps,
   useAnimatedRef,
   useAnimatedScrollHandler,
+  useSharedValue,
 } from 'react-native-reanimated';
 import {
   SCROLLABLE_DECELERATION_RATE_MAPPER,
@@ -71,12 +73,14 @@ export const DappList: React.FC<{
   drawerScrollOffsetY: Animated.SharedValue<number>;
   scrollableStatus: Animated.SharedValue<SCROLLABLE_STATUS>;
   category: string;
+  isActive?: boolean;
   onDappPress?: (item: DappInfo) => void;
 }> = ({
   drawerScrollableGesture,
   drawerScrollOffsetY,
   scrollableStatus,
   category,
+  isActive = false,
   onDappPress,
 }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -96,6 +100,20 @@ export const DappList: React.FC<{
   }, [category, hotDappInfoList]);
 
   const scrollableRef = useAnimatedRef<Animated.FlatList<DappInfo>>();
+  const localScrollOffsetY = useSharedValue(0);
+  const isActiveShared = useSharedValue(isActive);
+
+  useEffect(() => {
+    isActiveShared.value = isActive;
+
+    if (isActive) {
+      runOnUI(() => {
+        'worklet';
+
+        drawerScrollOffsetY.value = localScrollOffsetY.value;
+      })();
+    }
+  }, [drawerScrollOffsetY, isActive, isActiveShared, localScrollOffsetY]);
 
   const animatedProps = useAnimatedProps(() => ({
     decelerationRate:
@@ -109,10 +127,16 @@ export const DappList: React.FC<{
       if (scrollableStatus.value === SCROLLABLE_STATUS.LOCKED) {
         const lockPosition = 0;
         scrollTo(scrollableRef, 0, lockPosition, false);
-        drawerScrollOffsetY.value = lockPosition;
+        localScrollOffsetY.value = lockPosition;
+        if (isActiveShared.value) {
+          drawerScrollOffsetY.value = lockPosition;
+        }
         return;
       }
-      drawerScrollOffsetY.value = event.contentOffset.y;
+      localScrollOffsetY.value = event.contentOffset.y;
+      if (isActiveShared.value) {
+        drawerScrollOffsetY.value = event.contentOffset.y;
+      }
     },
   });
 
