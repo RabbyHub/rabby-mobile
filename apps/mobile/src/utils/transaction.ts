@@ -25,13 +25,13 @@ import type { IManageToken } from '@/types/assets';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { preferenceService, transactionHistoryService } from '@/core/services';
 import { CustomTxItem } from '@/core/services/transactionHistory';
-import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
+import { ensureHistoryListItemFromDb } from '@/utils/historyDisplay';
 import {
   CUSTOM_HISTORY_TITLE_TYPE,
+  type HistoryDisplayItem,
   HistoryItemCateType,
-} from '@/screens/Transaction/components/type';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
-import { TokenChangeDataItem } from '@/screens/Transaction/components/HistoryItem';
+  type TokenChangeDataItem,
+} from '@/types/history';
 import i18next from 'i18next';
 import { ellipsisOverflowedText } from './text';
 import { getTokenSymbol } from './token';
