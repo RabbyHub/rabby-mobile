@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { View } from 'react-native';
 
 import RcConvertCC from '@/assets2024/icons/convertDust/convert-cc.svg';
@@ -38,10 +44,14 @@ import {
   useConvertDustTokenList,
 } from './hooks/useConvertDustTokens';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { TransactionNavigatorParamList } from '@/navigation-type';
+import type {
+  GetNestedScreenRouteProp,
+  TransactionNavigatorParamList,
+} from '@/navigation-type';
 import { useDismissConvertDustBanner } from '../Home/hooks/useConvertDustBanner';
+import { ConvertDustEntryGuideModal } from './components/ConvertDustEntryGuideModal';
 
 type ConvertDustNavigationProp = NativeStackNavigationProp<
   TransactionNavigatorParamList,
@@ -51,7 +61,16 @@ type ConvertDustNavigationProp = NativeStackNavigationProp<
 export function ConvertDustScreen(): JSX.Element {
   const { styles } = useTheme2024({ getStyle });
   const navigation = useNavigation<ConvertDustNavigationProp>();
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'ConvertDust'>
+    >();
   const dismissConvertDustBanner = useDismissConvertDustBanner();
+  const [entryGuideVisible, setEntryGuideVisible] = useState(false);
+  const allowBackRef = useRef(false);
+  const pendingBackActionRef = useRef<
+    Parameters<typeof navigation.dispatch>[0] | null
+  >(null);
   const { safeOffBottom } = useSafeSizes();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -86,6 +105,39 @@ export function ConvertDustScreen(): JSX.Element {
   useEffect(() => {
     dismissConvertDustBanner();
   }, [dismissConvertDustBanner]);
+
+  useEffect(() => {
+    if (!route.params?.fromHomeConvertDustBanner) {
+      return;
+    }
+
+    const unsubscribe = navigation.addListener('beforeRemove', event => {
+      if (allowBackRef.current) {
+        return;
+      }
+
+      event.preventDefault();
+      pendingBackActionRef.current = event.data.action;
+      setEntryGuideVisible(true);
+    });
+
+    return unsubscribe;
+  }, [navigation, route.params?.fromHomeConvertDustBanner]);
+
+  const handleEntryGuideGotIt = useCallback(() => {
+    setEntryGuideVisible(false);
+    allowBackRef.current = true;
+
+    const pendingAction = pendingBackActionRef.current;
+    pendingBackActionRef.current = null;
+
+    if (pendingAction) {
+      navigation.dispatch(pendingAction);
+      return;
+    }
+
+    navigation.goBack();
+  }, [navigation]);
 
   useEffect(() => {
     navigation.setParams({
@@ -318,6 +370,10 @@ export function ConvertDustScreen(): JSX.Element {
         receiveUsd={task.finalReceive.usd}
         visible={task.status === 'completed'}
         onDone={task.clear}
+      />
+      <ConvertDustEntryGuideModal
+        visible={entryGuideVisible}
+        onGotIt={handleEntryGuideGotIt}
       />
     </NormalScreenContainer2024>
   );

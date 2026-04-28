@@ -47,7 +47,9 @@ export function HomeCenterArea() {
     dismissConvertDustBanner();
     navigation.push(RootNames.StackTransaction, {
       screen: RootNames.ConvertDust,
-      params: {},
+      params: {
+        fromHomeConvertDustBanner: true,
+      },
     });
   }, [dismissConvertDustBanner, navigation]);
 
