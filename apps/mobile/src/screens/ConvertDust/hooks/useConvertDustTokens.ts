@@ -3,13 +3,11 @@ import { useEffect, useMemo } from 'react';
 
 import { openapi } from '@/core/request';
 import useTokenList, {
-  EMPTY_TOKEN_LIST,
   getSingleAssetsCacheKey,
-  getTokenSelectCacheKey,
   ITokenItem,
   useTokenListComputedStore,
 } from '@/store/tokens';
-import { DUST_FILTER_VALUE_MAP, type DustFilter } from '../constant';
+import type { DustFilter } from '../constant';
 import { useShallow } from 'zustand/shallow';
 
 export function useConvertDustTokenList({
@@ -60,26 +58,19 @@ export function useConvertDustTokenList({
     registerSingleAssets(address, chainServerId, false);
   }, [address, chainServerId, registerSingleAssets]);
 
-  const { unFoldTokens, foldTokens, scamTokens, hasFoldTokens } =
-    useTokenListComputedStore(
-      useShallow(state =>
-        singleAssetsKey
-          ? state.singleAssetsCache[singleAssetsKey] || emptyResult
-          : emptyResult,
-      ),
-    );
+  const { unFoldTokens, foldTokens, scamTokens } = useTokenListComputedStore(
+    useShallow(state =>
+      singleAssetsKey
+        ? state.singleAssetsCache[singleAssetsKey] || emptyResult
+        : emptyResult,
+    ),
+  );
 
   const isLoading = useTokenList(state => {
     if (!lowerAddress) {
       return false;
     }
     return !!state.isLoadingByAddress[lowerAddress]?.loading;
-  });
-  const isAllLoading = useTokenList(state => {
-    if (!lowerAddress) {
-      return false;
-    }
-    return !!state.isLoadingByAddress[lowerAddress]?.allLoading;
   });
   const getTokenList = useTokenList(s => s.getTokenList);
 
@@ -94,7 +85,7 @@ export function useConvertDustTokenList({
     return [...unFoldTokens, ...foldTokens, ...scamTokens];
   }, [unFoldTokens, foldTokens, scamTokens]);
 
-  const threshold = DUST_FILTER_VALUE_MAP[selectedFilter];
+  const threshold = selectedFilter.value;
 
   const dustTokens = useMemo(
     () =>

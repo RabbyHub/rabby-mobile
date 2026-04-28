@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
 
 import { AssetAvatar } from '@/components/AssetAvatar';
@@ -9,8 +9,9 @@ import type { ITokenItem } from '@/store/tokens';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenIcon } from '@/utils/tokenIcon';
-import { DUST_FILTERS, type DustFilter } from '../constant';
+import { thresholds, type DustFilter } from '../constant';
 import type { TaskItemStatus } from '../hooks/useBatchSwapTask';
+import { getTokenSymbol } from '@/utils/token';
 
 const getTokenKey = (token: ITokenItem) =>
   `${token.owner_addr}:${token.chain}:${token.id}`;
@@ -48,14 +49,16 @@ function DustTokenRow({
         innerChainStyle={styles.tokenChainBadge}
       />
       <View style={styles.tokenNameColumn}>
-        <Text style={styles.tokenSymbol}>
-          {token.display_symbol || token.optimized_symbol || token.symbol}
+        <Text style={styles.tokenSymbol} numberOfLines={1}>
+          {getTokenSymbol(token)}
         </Text>
       </View>
       <View style={styles.tokenValueColumn}>
-        <Text style={styles.tokenValue}>{formatUsdValue(token.usd_value)}</Text>
-        <Text style={styles.tokenAmount}>
-          {formatTokenAmount(token.amount)} {token.symbol}
+        <Text style={styles.tokenValue} numberOfLines={1}>
+          {formatUsdValue(token.usd_value)}
+        </Text>
+        <Text style={styles.tokenAmount} numberOfLines={1}>
+          {formatTokenAmount(token.amount)}
         </Text>
       </View>
     </Pressable>
@@ -112,6 +115,7 @@ export function LowValueTokenSelector({
   showStatus,
   statusDict,
   tokens,
+  currentTaskIndex,
   onFilterChange,
   onToggleAll,
   onToggleToken,
@@ -124,11 +128,33 @@ export function LowValueTokenSelector({
   showStatus: boolean;
   statusDict: Record<string, TaskItemStatus>;
   tokens: ITokenItem[];
+  currentTaskIndex: number;
   onFilterChange: (filter: DustFilter) => void;
   onToggleAll: () => void;
   onToggleToken: (token: ITokenItem) => void;
 }) {
   const { styles } = useTheme2024({ getStyle });
+  const listRef = useRef<FlatList<ITokenItem>>(null);
+  const pendingIndex = useMemo(() => {
+    if (currentTaskIndex >= 0) {
+      return currentTaskIndex;
+    }
+    return tokens.findIndex(item => statusDict[item.id]?.status === 'pending');
+  }, [currentTaskIndex, statusDict, tokens]);
+
+  useEffect(() => {
+    if (!showStatus || pendingIndex < 0 || pendingIndex >= tokens.length) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      listRef.current?.scrollToIndex({
+        index: pendingIndex,
+        animated: true,
+        viewPosition: 1,
+      });
+    });
+  }, [pendingIndex, showStatus, tokens.length]);
 
   const renderTokenItem = useCallback(
     ({ item }: { item: ITokenItem }) => {
@@ -149,11 +175,11 @@ export function LowValueTokenSelector({
   return (
     <View style={[styles.convertCard, showStatus && styles.convertCardActive]}>
       <View style={[styles.filterRow, showStatus && styles.filterRowDisabled]}>
-        {DUST_FILTERS.map(filter => {
-          const selected = selectedFilter === filter;
+        {thresholds.map(filter => {
+          const selected = selectedFilter.value === filter.value;
           return (
             <Pressable
-              key={filter}
+              key={filter.value}
               onPress={() => onFilterChange(filter)}
               disabled={disabled}
               style={[styles.filterChip, selected && styles.filterChipActive]}>
@@ -162,7 +188,7 @@ export function LowValueTokenSelector({
                   styles.filterText,
                   selected && styles.filterTextActive,
                 ]}>
-                {filter}
+                {filter.label}
               </Text>
             </Pressable>
           );
@@ -189,18 +215,32 @@ export function LowValueTokenSelector({
           <Text style={styles.emptyText}>Loading tokens...</Text>
         ) : tokens.length ? (
           <FlatList
+            ref={listRef}
             style={styles.tokenListScroll}
             data={tokens}
             keyExtractor={getTokenKey}
             renderItem={renderTokenItem}
-            showsVerticalScrollIndicator={false}
+            getItemLayout={(_, index) => ({
+              length: 44,
+              offset: 44 * index,
+              index,
+            })}
+            onScrollToIndexFailed={info => {
+              setTimeout(() => {
+                listRef.current?.scrollToIndex({
+                  index: info.index,
+                  animated: true,
+                  viewPosition: 1,
+                });
+              }, 100);
+            }}
+            showsVerticalScrollIndicator={true}
             contentContainerStyle={styles.tokenListScrollContent}
           />
         ) : (
           <Text style={styles.emptyText}>No dust tokens</Text>
         )}
       </View>
-      {tokens.length > 6 ? <View style={styles.scrollbarThumb} /> : null}
     </View>
   );
 }
@@ -212,7 +252,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 8,
     borderRadius: 16,
     backgroundColor: colors2024['neutral-bg-2'],
-    padding: 12,
+    paddingVertical: 12,
     overflow: 'hidden',
     maxHeight: 396,
   },
@@ -223,17 +263,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     maxHeight: 220,
   },
   filterRow: {
-    height: 30,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
+    paddingHorizontal: 12,
   },
   filterRowDisabled: {
     opacity: 0.3,
   },
   filterChip: {
-    width: 66,
-    height: 30,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
@@ -253,11 +293,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
   },
   listHeader: {
-    height: 34,
-    paddingLeft: 4,
-    paddingRight: 8,
-    paddingTop: 8,
-    paddingBottom: 2,
+    paddingLeft: 16,
+    paddingRight: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -281,11 +318,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   tokenListScroll: {
     flex: 1,
+    paddingLeft: 12,
+    paddingRight: 16,
   },
-  tokenListScrollContent: {
-    gap: 4,
-    paddingBottom: 4,
-  },
+  tokenListScrollContent: {},
   emptyText: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
@@ -296,7 +332,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
   },
   tokenRow: {
-    height: 40,
+    height: 44,
+    paddingVertical: 2,
     paddingLeft: 4,
     paddingRight: 8,
     flexDirection: 'row',
@@ -312,7 +349,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderColor: colors2024['neutral-bg-1'],
   },
   tokenNameColumn: {
-    width: 106,
+    minWidth: 0,
+    flex: 1,
     justifyContent: 'center',
   },
   tokenSymbol: {

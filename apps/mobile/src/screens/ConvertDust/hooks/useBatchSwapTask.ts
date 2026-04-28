@@ -303,11 +303,7 @@ export const useBatchSwapTask = (options: {
   );
   const { getDexQuote } = useQuoteMethods();
 
-  const {
-    openDirect,
-    prefetch,
-    close: closeSign,
-  } = useMiniSigner({
+  const { prefetch, close: closeSign } = useMiniSigner({
     account: account!,
     chainServerId: chain?.serverId || '',
     autoResetGasStoreOnChainChange: true,
@@ -496,7 +492,7 @@ export const useBatchSwapTask = (options: {
               //     result.isSimulationFailed = true;
               //   },
               // });
-              const res = await new Promise<string[]>((resolve, reject) => {
+              const res = await new Promise<string[]>((resolve, _reject) => {
                 setTimeout(() => {
                   resolve([]);
                 }, 5000);

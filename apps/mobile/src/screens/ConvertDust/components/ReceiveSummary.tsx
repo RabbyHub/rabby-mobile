@@ -94,9 +94,9 @@ export function ReceiveSummary({
             <Text
               style={[
                 styles.receiveValue,
-                isConverting && styles.receiveValueConverting,
+                task?.list?.length ? styles.receiveValueConverting : undefined,
               ]}>
-              {formatUsdValue(receiveUsd)}
+              {receiveUsd ? formatUsdValue(receiveUsd) : '$0'}
             </Text>
           </View>
         </View>
@@ -157,7 +157,6 @@ export function ReceiveSummary({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   receiveCard: {
-    height: 80,
     marginTop: 8,
     borderRadius: 16,
     backgroundColor: colors2024['neutral-bg-2'],
@@ -254,21 +253,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 18,
   },
   settingsBlock: {
-    marginTop: 14,
+    marginTop: 12,
     paddingHorizontal: 4,
-    gap: 14,
+    gap: 8,
   },
   settingRow: {
-    minHeight: 18,
+    minHeight: 24,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   settingLabel: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '400',
     lineHeight: 18,
   },
   settingValueWrap: {
@@ -279,7 +278,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   settingValue: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     lineHeight: 18,
   },

@@ -58,6 +58,7 @@ export function ChainInfo2024({
   rightArrowIcon,
   titleStyle,
   account,
+  disabled,
 }: React.PropsWithChildren<
   RNViewProps & {
     chainEnum?: CHAINS_ENUM;
@@ -69,6 +70,7 @@ export function ChainInfo2024({
     rightArrowIcon?: React.ReactNode;
     titleStyle?: StyleProp<TextStyle>;
     account: Account;
+    disabled?: boolean;
   }
 >) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -122,6 +124,7 @@ export function ChainInfo2024({
     <>
       <TouchableOpacity
         style={[styles.container, style]}
+        disabled={disabled}
         onPress={createChainModal}>
         <View style={styles.left}>
           <ChainIconImage

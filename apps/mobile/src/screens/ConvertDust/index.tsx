@@ -29,6 +29,7 @@ import {
   ETH_CHAIN,
   GAS_LIMIT_OPTIONS,
   PRICE_IMPACT_OPTIONS,
+  thresholds,
   type DustFilter,
 } from './constant';
 import { useBatchSwapTask } from './hooks/useBatchSwapTask';
@@ -36,6 +37,7 @@ import {
   useConvertDustReceiveToken,
   useConvertDustTokenList,
 } from './hooks/useConvertDustTokens';
+import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 
 export function ConvertDustScreen(): JSX.Element {
   const { styles } = useTheme2024({ getStyle });
@@ -45,7 +47,9 @@ export function ConvertDustScreen(): JSX.Element {
   });
   const [chainEnum, setChainEnum] = useState(ETH_CHAIN);
   const chain = useFindChain({ enum: chainEnum });
-  const [selectedFilter, setSelectedFilter] = useState<DustFilter>('<$10');
+  const [selectedFilter, setSelectedFilter] = useState<DustFilter>(
+    thresholds[2],
+  );
   const [activeSettingSheet, setActiveSettingSheet] = useState<
     'priceImpact' | 'gasLimit' | null
   >(null);
@@ -196,13 +200,19 @@ export function ConvertDustScreen(): JSX.Element {
       overwriteStyle={styles.screen}
       noHeader={false}>
       <View style={[styles.content, { paddingBottom: safeOffBottom + 100 }]}>
-        <ChainInfo2024
-          chainEnum={chainEnum}
-          onChange={handleChainChange}
-          hideTestnetTab
-          account={currentAccount!}
-          style={styles.chainSelector}
-        />
+        <View style={[styles.chainSelectorContainer]}>
+          <ChainInfo2024
+            chainEnum={chainEnum}
+            onChange={handleChainChange}
+            hideTestnetTab
+            account={currentAccount!}
+            style={[
+              styles.chainSelector,
+              task.disabled && styles.chainSelectorDisabled,
+            ]}
+            supportChains={SWAP_SUPPORT_CHAINS}
+          />
+        </View>
 
         <LowValueTokenSelector
           disabled={task.disabled}
@@ -213,6 +223,7 @@ export function ConvertDustScreen(): JSX.Element {
           showStatus={task.status !== 'idle'}
           statusDict={task.statusDict}
           tokens={displayedTokens}
+          currentTaskIndex={task.currentTaskIndex}
           onFilterChange={handleFilterChange}
           onToggleAll={toggleAll}
           onToggleToken={toggleToken}
@@ -254,13 +265,13 @@ export function ConvertDustScreen(): JSX.Element {
       <ConvertDustPresetSheet
         visible={activeSettingSheet === 'priceImpact'}
         title="Price Impact"
-        value={`${task.config.priceImpact}%`}
+        value={task.config.priceImpact}
         options={PRICE_IMPACT_OPTIONS}
         onCancel={() => setActiveSettingSheet(null)}
         onConfirm={nextValue => {
           task.setConfig(prev => ({
             ...prev,
-            priceImpact: nextValue.replace('%', ''),
+            priceImpact: nextValue,
           }));
           setActiveSettingSheet(null);
         }}
@@ -268,13 +279,13 @@ export function ConvertDustScreen(): JSX.Element {
       <ConvertDustPresetSheet
         visible={activeSettingSheet === 'gasLimit'}
         title="Single Transaction Gas Limit"
-        value={`$${task.config.maxGasCost}`}
+        value={task.config.maxGasCost}
         options={GAS_LIMIT_OPTIONS}
         onCancel={() => setActiveSettingSheet(null)}
         onConfirm={nextValue => {
           task.setConfig(prev => ({
             ...prev,
-            maxGasCost: nextValue.replace('$', ''),
+            maxGasCost: nextValue,
           }));
           setActiveSettingSheet(null);
         }}
@@ -305,14 +316,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 20,
     paddingTop: 12,
   },
+  chainSelectorDisabled: {
+    opacity: 0.3,
+  },
   chainSelector: {
-    height: 58,
+    width: '100%',
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    backgroundColor: 'transparent',
+  },
+  chainSelectorContainer: {
     borderRadius: 16,
     backgroundColor: colors2024['neutral-bg-2'],
+    paddingVertical: 16,
     paddingHorizontal: 16,
+    display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
   bottomBar: {
     position: 'absolute',

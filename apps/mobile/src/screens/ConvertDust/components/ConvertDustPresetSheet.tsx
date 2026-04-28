@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, TouchableOpacity, View } from 'react-native';
 
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
+
+export type ConvertDustPresetOption = {
+  label: string;
+  value: string;
+};
 
 export function ConvertDustPresetSheet({
   visible,
@@ -19,13 +23,12 @@ export function ConvertDustPresetSheet({
   visible: boolean;
   title: string;
   value: string;
-  options: readonly string[];
+  options: readonly ConvertDustPresetOption[];
   onCancel: () => void;
   onConfirm: (value: string) => void;
 }) {
   const modalRef = React.useRef<AppBottomSheetModal>(null);
   const { styles } = useTheme2024({ getStyle });
-  const { safeOffBottom } = useSafeSizes();
   const [draftValue, setDraftValue] = useState(value);
 
   useEffect(() => {
@@ -41,21 +44,19 @@ export function ConvertDustPresetSheet({
     <AppBottomSheetModal
       ref={modalRef}
       index={0}
-      snapPoints={[258 + safeOffBottom]}
+      snapPoints={[258]}
       onDismiss={onCancel}
-      backgroundStyle={styles.sheetBackground}
-      handleStyle={styles.sheetHandle}
-      handleIndicatorStyle={styles.sheetHandleIndicator}>
-      <BottomSheetView
-        style={[styles.presetSheet, { paddingBottom: safeOffBottom + 21 }]}>
+      // backgroundStyle={styles.sheetBackground}
+    >
+      <BottomSheetView style={[styles.presetSheet]}>
         <Text style={styles.presetSheetTitle}>{title}</Text>
         <View style={styles.presetOptions}>
           {options.map(option => {
-            const selected = draftValue === option;
+            const selected = draftValue === option.value;
             return (
               <Pressable
-                key={option}
-                onPress={() => setDraftValue(option)}
+                key={option.value}
+                onPress={() => setDraftValue(option.value)}
                 style={[
                   styles.presetOption,
                   selected && styles.presetOptionActive,
@@ -65,27 +66,28 @@ export function ConvertDustPresetSheet({
                     styles.presetOptionText,
                     selected && styles.presetOptionTextActive,
                   ]}>
-                  {option}
+                  {option.label}
                 </Text>
               </Pressable>
             );
           })}
         </View>
         <View style={styles.presetActions}>
-          <Pressable
+          <TouchableOpacity
             style={[styles.presetActionButton, styles.presetCancelButton]}
             onPress={onCancel}>
             <Text style={[styles.presetActionText, styles.presetCancelText]}>
               Cancel
             </Text>
-          </Pressable>
-          <Pressable
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={[styles.presetActionButton, styles.presetConfirmButton]}
             onPress={() => onConfirm(draftValue)}>
             <Text style={[styles.presetActionText, styles.presetConfirmText]}>
               Confirm
             </Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
       </BottomSheetView>
     </AppBottomSheetModal>
@@ -96,24 +98,28 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sheetBackground: {
     backgroundColor: colors2024['neutral-bg-1'],
   },
-  sheetHandle: {
-    backgroundColor: colors2024['neutral-bg-1'],
+  sheet: {
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
   },
-  sheetHandleIndicator: {
-    width: 50,
-    height: 6,
-    borderRadius: 100,
-    backgroundColor: colors2024['neutral-line'],
-  },
+  // sheetHandle: {
+  //   backgroundColor: colors2024['neutral-bg-1'],
+  // },
+  // sheetHandleIndicator: {
+  //   width: 50,
+  //   height: 6,
+  //   borderRadius: 100,
+  //   backgroundColor: colors2024['neutral-line'],
+  // },
   presetSheet: {
-    paddingTop: 8,
-    paddingHorizontal: 19.5,
+    paddingTop: 20,
+    paddingHorizontal: 19,
   },
   presetSheetTitle: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '800',
     lineHeight: 24,
     textAlign: 'center',
   },
@@ -134,19 +140,22 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
   presetOption: {
     flex: 1,
     height: 40,
-    borderRadius: 10,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-5'],
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   presetOptionActive: {
     backgroundColor: colors2024['brand-light-1'],
+    borderColor: colors2024['brand-light-2'],
   },
   presetOptionText: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '500',
     lineHeight: 18,
   },
   presetOptionTextActive: {
