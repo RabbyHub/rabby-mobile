@@ -1,4 +1,5 @@
 import type {
+  NFTItem,
   PortfolioItem,
   TokenMarketTokenRelatedItem,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -121,4 +122,10 @@ export interface IProtocolPortfolio {
 export type ICacheProtocolItem = {
   fold: IProtocolItem[];
   unFold: IProtocolItem[];
+};
+
+export type DisplayNftItem = NFTItem & {
+  _isFold?: boolean;
+  _isManualFold?: boolean;
+  is_core?: boolean;
 };
