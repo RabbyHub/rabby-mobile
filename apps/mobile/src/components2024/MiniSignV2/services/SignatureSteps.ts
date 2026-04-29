@@ -76,6 +76,7 @@ import miscService from '@/core/services/misc';
 import { requestETHRpc } from '@/core/apis/provider';
 import {
   buildTempoTransaction,
+  isTempoBatchSupportedAccountType,
   isTempoChain,
   shouldUseTempoTransaction,
   toTempoCallsTx,
@@ -105,6 +106,7 @@ const buildMiniSignPreExecTx = (params: {
   gasPrice: string;
   is1559Capable: boolean;
   maxPriorityFee: number;
+  accountType?: string | null;
 }) => {
   const {
     tx,
@@ -115,10 +117,12 @@ const buildMiniSignPreExecTx = (params: {
     gasPrice,
     is1559Capable,
     maxPriorityFee,
+    accountType,
   } = params;
   const shouldUseTempoTx = shouldUseTempoTransaction({
     tx: tx as unknown as Record<string, unknown>,
     chainServerId,
+    accountType,
   });
   const buildTxBase: TxWithTempoExtras<Tx> = {
     chainId,
@@ -151,10 +155,14 @@ const buildMiniSignPreExecTx = (params: {
     : buildTx;
 };
 
-const buildHistoryGasUsedTx = (tx: TxWithTempoExtras<Tx>) => {
+const buildHistoryGasUsedTx = (
+  tx: TxWithTempoExtras<Tx>,
+  accountType?: string | null,
+) => {
   const shouldUseTempoTx = shouldUseTempoTransaction({
     tx: tx as unknown as Record<string, unknown>,
     chainServerId: findChain({ id: tx.chainId })?.serverId,
+    accountType,
   });
 
   if (shouldUseTempoTx) {
@@ -260,8 +268,9 @@ async function computeGasless(params: {
 
 async function computeGasAccount(params: {
   txsCalc: CalcItem[];
+  accountType?: string | null;
 }): Promise<PreparedContext['gasAccount'] | undefined> {
-  const { txsCalc } = params;
+  const { txsCalc, accountType } = params;
   try {
     if (!txsCalc.length) return undefined;
     const sig = gasAccountService.getGasAccountSig();
@@ -270,7 +279,8 @@ async function computeGasAccount(params: {
       sig: sig.sig || '',
       account_id: sig.accountId || txsCalc[0].tx.from,
       tx_list: txsCalc.map(i =>
-        isTempoChain(chain.serverId)
+        isTempoChain(chain.serverId) &&
+        isTempoBatchSupportedAccountType(accountType)
           ? (toTempoCallsTx(i.tx as any, { stripTopLevelData: true }) as any)
           : i.tx,
       ),
@@ -589,6 +599,7 @@ export class SignatureSteps {
         gasPrice: intToHex(selectedGas.price),
         is1559Capable,
         maxPriorityFee,
+        accountType: account.type,
       });
     });
 
@@ -602,7 +613,7 @@ export class SignatureSteps {
       const buildTx = tempTxs[index];
 
       const preparedHistoryGasUsed = openapi.historyGasUsed({
-        tx: buildHistoryGasUsedTx(buildTx) as any,
+        tx: buildHistoryGasUsedTx(buildTx, account.type) as any,
         user_addr: buildTx.from,
       });
 
@@ -704,7 +715,10 @@ export class SignatureSteps {
       txsCalc,
       gasPriceWei: selectedGas.price,
     });
-    const gasAccountTask = computeGasAccount({ txsCalc });
+    const gasAccountTask = computeGasAccount({
+      txsCalc,
+      accountType: account.type,
+    });
     const selectedGasCostTask = SignatureSteps.computeGasCost({
       account,
       chainId: chain.id,
@@ -819,7 +833,10 @@ export class SignatureSteps {
 
     const [gasless, gasAccount] = await Promise.all([
       computeGasless({ txsCalc: nextCalc, gasPriceWei: newGas.price }),
-      computeGasAccount({ txsCalc: nextCalc }),
+      computeGasAccount({
+        txsCalc: nextCalc,
+        accountType: account.type,
+      }),
     ]);
 
     // lightweight re-validation: recompute gas warnings using cached balance
