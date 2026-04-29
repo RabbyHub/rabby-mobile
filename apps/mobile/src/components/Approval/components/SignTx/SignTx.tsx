@@ -457,7 +457,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   >([]);
   const [tempoGasTokenLoading, setTempoGasTokenLoading] = useState(false);
   const [tempoCurrentFeeTokenId, setTempoCurrentFeeTokenId] = useState('');
-  const [, setTempoPreferredFeeTokenId] = useState('');
+  const [tempoPreferredFeeTokenId, setTempoPreferredFeeTokenId] = useState('');
   const { executeEngine } = useSecurityEngine();
   const [multiActionList, setMultiActionList] = useState<
     ParsedTransactionActionData[]
@@ -547,6 +547,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     nativeTokenBalance,
     recommendGasLimitRatio,
     gasTokenDecimals: gasToken?.decimals || 18,
+    gasTokenId: gasToken?.tokenId,
+    tempoPreferredFeeTokenId,
     checkTxValueInBalance,
   });
 
@@ -712,6 +714,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
             account: currentAccount,
             gasTokenDecimals: gasToken?.decimals || 18,
           }),
+        gasTokenId: gasToken?.tokenId,
+        tempoPreferredFeeTokenId,
       });
     },
   );

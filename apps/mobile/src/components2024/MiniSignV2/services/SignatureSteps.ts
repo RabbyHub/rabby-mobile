@@ -286,12 +286,14 @@ function aggregateCheckErrors(params: {
   txsCalc: CalcItem[];
   nativeTokenBalance?: string;
   gasTokenDecimals?: number;
+  gasTokenId?: string;
   checkTxValueInBalance?: boolean;
 }): PreparedContext['checkErrors'] {
   const {
     txsCalc,
     nativeTokenBalance,
     gasTokenDecimals = 18,
+    gasTokenId,
     checkTxValueInBalance = true,
   } = params;
   let checkErrors: PreparedContext['checkErrors'] = [];
@@ -311,6 +313,7 @@ function aggregateCheckErrors(params: {
       isGnosisAccount: false,
       nativeTokenBalance: balanceLeft,
       gasTokenDecimals,
+      gasTokenId,
       checkTxValueInBalance,
     });
     checkErrors = [...checkErrors, ...errs];
@@ -723,6 +726,7 @@ export class SignatureSteps {
       txsCalc,
       nativeTokenBalance,
       gasTokenDecimals,
+      gasTokenId: gasToken?.tokenId,
       checkTxValueInBalance,
     });
     const isGasNotEnough = !!checkErrors?.some(e => e.code === 3001);

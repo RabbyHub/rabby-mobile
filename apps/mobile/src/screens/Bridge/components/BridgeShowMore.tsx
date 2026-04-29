@@ -608,16 +608,51 @@ export const DirectSignGasInfo = ({
   }, [currentAccount?.address]);
   const gasCalcMethod = useCallback(
     async (price: number) => {
-      const nativePrice = ctx?.nativeTokenPrice || 0;
-      const amount =
-        (txsResult || []).reduce(
-          (acc, item) =>
-            acc.plus(new BigNumber(item.gasUsed).times(price).div(1e18)),
-          new BigNumber(0),
-        ) || new BigNumber(0);
-      return { gasCostUsd: amount.times(nativePrice), gasCostAmount: amount };
+      if (!currentAccount) {
+        return {
+          gasCostUsd: new BigNumber(0),
+          gasCostAmount: new BigNumber(0),
+        };
+      }
+
+      const res = await Promise.all(
+        (txsResult || []).map(item =>
+          explainGas({
+            gasUsed: item.gasUsed,
+            gasPrice: price,
+            chainId,
+            nativeTokenPrice:
+              item.preExecResult.native_token.price ||
+              ctx?.nativeTokenPrice ||
+              0,
+            tx: item.tx,
+            gasLimit: item.gasLimit,
+            account: currentAccount,
+            preparedL1Fee: item.L1feeCache,
+            gasTokenDecimals: gasToken.decimals || 18,
+          }),
+        ),
+      );
+
+      return res.reduce(
+        (sum, item) => {
+          sum.gasCostAmount = sum.gasCostAmount.plus(item.gasCostAmount);
+          sum.gasCostUsd = sum.gasCostUsd.plus(item.gasCostUsd);
+          return sum;
+        },
+        {
+          gasCostUsd: new BigNumber(0),
+          gasCostAmount: new BigNumber(0),
+        },
+      );
     },
-    [ctx?.nativeTokenPrice, txsResult],
+    [
+      chainId,
+      ctx?.nativeTokenPrice,
+      currentAccount,
+      gasToken.decimals,
+      txsResult,
+    ],
   );
   const checkGasLevelIsNotEnough = useMemoizedFn(
     (gas, type?: 'gasAccount' | 'native'): Promise<[boolean, number]> => {
@@ -681,6 +716,8 @@ export const DirectSignGasInfo = ({
               isGnosisAccount: false,
               nativeTokenBalance: balance,
               gasTokenDecimals: gasToken.decimals || 18,
+              gasTokenId: gasToken.tokenId,
+              tempoPreferredFeeTokenId: ctx?.tempoPreferredFeeTokenId,
               checkTxValueInBalance,
             });
             const txValueRaw = checkTxValueInBalance
