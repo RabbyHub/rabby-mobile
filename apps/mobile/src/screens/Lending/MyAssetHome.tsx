@@ -33,6 +33,7 @@ import {
   useFetchLendingData,
   useLendingIsLoading,
   useLendingRemoteData,
+  useRefreshLendingWalletBalances,
   useLendingSummary,
   useSelectedMarket,
 } from './hooks';
@@ -77,11 +78,13 @@ const MyAssetHome: React.FC = () => {
   const { reserves } = useLendingRemoteData();
   const { loading: isFetching } = useLendingIsLoading();
   const { fetchData } = useFetchLendingData();
+  const { refreshWalletBalances } = useRefreshLendingWalletBalances();
   const { displayPoolReserves, iUserSummary, apyInfo } = useLendingSummary();
   const route = useRoute<LendingRouteProp>();
   const navigation = useNavigation<LendingNavigationProp>();
   const isFocused = useIsFocused();
   const openedRouteActionKeyRef = useRef<string | null>(null);
+  const restoringPopupRefreshKeyRef = useRef<string | null>(null);
 
   const loading = isFetching || !iUserSummary || !displayPoolReserves;
 
@@ -265,11 +268,24 @@ const MyAssetHome: React.FC = () => {
 
     const popupToRestore = peekLendingActionPopupToRestore();
     if (!popupToRestore) {
+      restoringPopupRefreshKeyRef.current = null;
+      return;
+    }
+
+    const restoreKey = `${popupToRestore.popup}-${
+      popupToRestore.tokenAddress
+    }-${popupToRestore.source || ''}`;
+    if (restoringPopupRefreshKeyRef.current !== restoreKey) {
+      restoringPopupRefreshKeyRef.current = restoreKey;
+      refreshWalletBalances(true).catch(() => {
+        restoringPopupRefreshKeyRef.current = null;
+      });
       return;
     }
 
     const reserve = findReserveByTokenAddress(popupToRestore.tokenAddress);
     if (!reserve) {
+      restoringPopupRefreshKeyRef.current = null;
       clearLendingActionPopupState();
       return;
     }
@@ -281,8 +297,16 @@ const MyAssetHome: React.FC = () => {
       colors2024,
       source: popupToRestore.source,
     });
+    restoringPopupRefreshKeyRef.current = null;
     consumeLendingActionPopupToRestore();
-  }, [colors2024, findReserveByTokenAddress, iUserSummary, isFocused, loading]);
+  }, [
+    colors2024,
+    findReserveByTokenAddress,
+    iUserSummary,
+    isFocused,
+    loading,
+    refreshWalletBalances,
+  ]);
 
   React.useEffect(() => {
     const tokenAddress = route.params?.tokenAddress;
