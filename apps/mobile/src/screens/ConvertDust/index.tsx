@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { BackHandler, Platform, View } from 'react-native';
+import { AppState, BackHandler, Platform, View } from 'react-native';
 
 import RcIconSwitchBtn from '@/assets2024/icons/bridge/IconSwitchBtn.svg';
 import RcIconSwitchBtnDark from '@/assets2024/icons/bridge/IconSwitchBtnDark.svg';
@@ -53,14 +53,20 @@ import type {
 } from '@/navigation-type';
 import { useDismissConvertDustBanner } from '../Home/hooks/useConvertDustBanner';
 import { ConvertDustEntryGuideModal } from './components/ConvertDustEntryGuideModal';
+import { useTranslation } from 'react-i18next';
 
 type ConvertDustNavigationProp = NativeStackNavigationProp<
   TransactionNavigatorParamList,
   'ConvertDust'
 >;
 
-export function ConvertDustScreen(): JSX.Element {
+function ConvertDustContent({
+  currentAccount,
+}: {
+  currentAccount: Account | null;
+}): JSX.Element {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
   const navigation = useNavigation<ConvertDustNavigationProp>();
   const route =
     useRoute<
@@ -76,9 +82,7 @@ export function ConvertDustScreen(): JSX.Element {
     Parameters<typeof navigation.dispatch>[0] | null
   >(null);
   const { safeOffBottom } = useSafeSizes();
-  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
-  });
+
   const [chainEnum, setChainEnum] = useState(ETH_CHAIN);
   const chain = useFindChain({ enum: chainEnum });
   const [selectedFilter, setSelectedFilter] = useState<DustFilter>(
@@ -160,6 +164,22 @@ export function ConvertDustScreen(): JSX.Element {
     route.params?.fromHomeConvertDustBanner,
     taskStatus,
   ]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (taskStatus !== 'active') {
+        return;
+      }
+
+      if (nextAppState.match(/inactive|background/)) {
+        pauseTask();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [pauseTask, taskStatus]);
 
   const handleEntryGuideGotIt = useCallback(() => {
     setEntryGuideVisible(false);
@@ -448,7 +468,7 @@ export function ConvertDustScreen(): JSX.Element {
       />
       <ConvertDustPresetSheet
         visible={activeSettingSheet === 'priceImpact'}
-        title="Price Impact"
+        title={t('page.convertDust.receiveSummary.priceImpact')}
         value={task.config.priceImpact}
         options={PRICE_IMPACT_OPTIONS}
         onCancel={() => setActiveSettingSheet(null)}
@@ -462,7 +482,7 @@ export function ConvertDustScreen(): JSX.Element {
       />
       <ConvertDustPresetSheet
         visible={activeSettingSheet === 'gasLimit'}
-        title="Single Transaction Gas Limit"
+        title={t('page.convertDust.receiveSummary.gasLimit')}
         value={task.config.maxGasCost}
         options={GAS_LIMIT_OPTIONS}
         onCancel={() => setActiveSettingSheet(null)}
@@ -497,6 +517,18 @@ export function ConvertDustScreen(): JSX.Element {
   );
 }
 
+export const ConvertDustScreen = () => {
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
+  return (
+    <ConvertDustContent
+      currentAccount={currentAccount}
+      key={`${currentAccount?.type}-${currentAccount?.address}`}
+    />
+  );
+};
+
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   screen: {
     backgroundColor: colors2024['neutral-bg-1'],
@@ -516,5 +548,3 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     transform: [{ translateY: -23 + 4 }],
   },
 }));
-
-export default ConvertDustScreen;

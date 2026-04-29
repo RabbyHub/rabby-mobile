@@ -64,6 +64,7 @@ export function HomeBanner({
         {onClose ? (
           <TouchableOpacity
             style={styles.closeContainer}
+            hitSlop={6}
             onPress={evt => {
               evt.stopPropagation();
               onClose();

@@ -1,10 +1,9 @@
 import React from 'react';
 import { View } from 'react-native';
-
+import AuthButton from '@/components2024/AuthButton';
 import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import AuthButton from '@/components2024/AuthButton';
 import { useTranslation } from 'react-i18next';
 
 export function ConvertDustBottomBar({
@@ -24,7 +23,7 @@ export function ConvertDustBottomBar({
     <View pointerEvents="box-none" style={[styles.bottomBar]}>
       {status === 'active' ? (
         <Button
-          title={'Stop'}
+          title={t('page.convertDust.bottomBar.stop')}
           height={52}
           disabled={disabled}
           containerStyle={styles.ctaContainer}
@@ -36,7 +35,7 @@ export function ConvertDustBottomBar({
         />
       ) : status === 'completed' ? (
         <Button
-          title={'Done'}
+          title={t('global.Done')}
           height={52}
           disabled={disabled}
           containerStyle={styles.ctaContainer}
@@ -48,7 +47,7 @@ export function ConvertDustBottomBar({
         />
       ) : status === 'paused' ? (
         <Button
-          title={'Continue'}
+          title={t('page.convertDust.bottomBar.continue')}
           height={52}
           disabled={disabled}
           containerStyle={styles.ctaContainer}
@@ -61,7 +60,7 @@ export function ConvertDustBottomBar({
       ) : (
         <AuthButton
           onFinished={onPress}
-          title={'Start convert'}
+          title={t('page.convertDust.bottomBar.start')}
           authTitle={t('page.whitelist.confirmPassword')}
           disabled={disabled}
           height={52}

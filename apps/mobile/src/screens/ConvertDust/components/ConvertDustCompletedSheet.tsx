@@ -1,6 +1,5 @@
-import React, { useEffect } from 'react';
-import { View } from 'react-native';
-
+import successAnimation from '@/assets2024/animations/animation-create-success.min.json';
+import RcIconSwapFailed from '@/assets2024/icons/convertDust/swap-failed.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
@@ -12,9 +11,10 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import type { Chain } from '@debank/common';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import successAnimation from '@/assets2024/animations/animation-create-success.min.json';
-import Lottie, { AnimationObject } from 'lottie-react-native';
-import RcIconSwapFailed from '@/assets2024/icons/convertDust/swap-failed.svg';
+import Lottie from 'lottie-react-native';
+import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { View } from 'react-native';
 
 export function ConvertDustCompletedSheet({
   chain,
@@ -37,6 +37,7 @@ export function ConvertDustCompletedSheet({
 }) {
   const modalRef = React.useRef<AppBottomSheetModal>(null);
   const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
   const { safeOffBottom } = useSafeSizes();
   const receiveTokenSymbol = receiveToken
     ? getTokenSymbol(receiveToken) || 'Unknown'
@@ -55,7 +56,6 @@ export function ConvertDustCompletedSheet({
       ref={modalRef}
       index={0}
       snapPoints={[437]}
-      // enablePanDownToClose={false}
       backgroundStyle={styles.sheetBackground}
       handleStyle={styles.sheetHandle}
       handleIndicatorStyle={styles.sheetHandleIndicator}
@@ -76,7 +76,9 @@ export function ConvertDustCompletedSheet({
               <RcIconSwapFailed width={80} />
             </View>
           )}
-          <Text style={styles.title}>Dust Converted !</Text>
+          <Text style={styles.title}>
+            {t('page.convertDust.completed.title')}
+          </Text>
         </View>
 
         <View style={styles.receiveCard}>
@@ -92,7 +94,8 @@ export function ConvertDustCompletedSheet({
           </View>
           <View style={styles.receiveValueWrap}>
             <Text style={styles.receiveHint}>
-              Received: {formatAmount(receiveAmount)} {receiveTokenSymbol}
+              {t('page.convertDust.completed.receive')}{' '}
+              {formatAmount(receiveAmount)} {receiveTokenSymbol}
             </Text>
             <Text style={styles.receiveValue}>
               +{formatUsdValue(receiveUsd)}
@@ -106,7 +109,7 @@ export function ConvertDustCompletedSheet({
             { paddingBottom: Math.max(38, safeOffBottom) },
           ]}>
           <Button
-            title="Done"
+            title={t('global.Done')}
             height={52}
             containerStyle={styles.buttonContainer}
             buttonStyle={styles.button}

@@ -1,17 +1,19 @@
+import { Skeleton } from '@rneui/themed';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
+  Animated,
+  Easing,
   FlatList,
   TouchableOpacity,
   View,
-  Animated,
-  Easing,
 } from 'react-native';
-import { Skeleton } from '@rneui/themed';
 
+import RcIconClockCC from '@/assets2024/icons/convertDust/clock-cc.svg';
 import RcIconFail from '@/assets2024/icons/convertDust/failed.svg';
 import RcIconPending from '@/assets2024/icons/convertDust/pending.svg';
 import RcIconSuccess from '@/assets2024/icons/convertDust/success.svg';
-import RcIconClockCC from '@/assets2024/icons/convertDust/clock-cc.svg';
+import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
+import RcIconEmptyToken from '@/assets2024/singleHome/empty-token.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components/Typography';
 import { CheckBoxRect } from '@/components2024/CheckBox';
@@ -23,10 +25,9 @@ import { getTokenSymbol } from '@/utils/token';
 import { getTokenIcon } from '@/utils/tokenIcon';
 import { thresholds, type DustFilter } from '../constant';
 import type { TaskItemStatus } from '../hooks/useBatchSwapTask';
-import RcIconEmptyToken from '@/assets2024/singleHome/empty-token.svg';
-import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
 
 import { Tip } from '@/components';
+import { useTranslation } from 'react-i18next';
 
 const getTokenKey = (token: ITokenItem) =>
   `${token.owner_addr}:${token.chain}:${token.id}`;
@@ -196,6 +197,7 @@ export function LowValueTokenSelector({
   onToggleToken: (token: ITokenItem) => void;
 }) {
   const { styles, isLight } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
   const listRef = useRef<FlatList<ITokenItem>>(null);
   const pendingIndex = useMemo(() => {
     if (currentTaskIndex >= 0) {
@@ -266,10 +268,14 @@ export function LowValueTokenSelector({
             <CheckBoxRect checked={hasSelectedToken} size={24} />
           )}
           <Text style={styles.headerText}>
-            {showStatus ? 'Status/Token' : 'Token'}
+            {showStatus
+              ? t('page.convertDust.colStatusToken')
+              : t('page.convertDust.colToken')}
           </Text>
         </TouchableOpacity>
-        <Text style={styles.headerText}>Value/Amount</Text>
+        <Text style={styles.headerText}>
+          {t('page.convertDust.colValueAmount')}
+        </Text>
       </View>
 
       <View style={styles.tokenListWrap}>
@@ -302,7 +308,9 @@ export function LowValueTokenSelector({
         ) : (
           <View style={styles.empty}>
             {isLight ? <RcIconEmptyToken /> : <RcIconEmptyTokenDark />}
-            <Text style={styles.emptyText}>No low-value tokens found</Text>
+            <Text style={styles.emptyText}>
+              {t('page.convertDust.emptyText')}
+            </Text>
           </View>
         )}
       </View>

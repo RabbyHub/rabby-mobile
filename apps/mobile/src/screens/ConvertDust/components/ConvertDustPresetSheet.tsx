@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, TouchableOpacity, View } from 'react-native';
-
+import { TouchableOpacity, View } from 'react-native';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { useTranslation } from 'react-i18next';
 
 export type ConvertDustPresetOption = {
   label: string;
@@ -30,6 +30,7 @@ export function ConvertDustPresetSheet({
   const modalRef = React.useRef<AppBottomSheetModal>(null);
   const { styles } = useTheme2024({ getStyle });
   const [draftValue, setDraftValue] = useState(value);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (visible) {
@@ -77,7 +78,7 @@ export function ConvertDustPresetSheet({
             style={[styles.presetActionButton, styles.presetCancelButton]}
             onPress={onCancel}>
             <Text style={[styles.presetActionText, styles.presetCancelText]}>
-              Cancel
+              {t('global.Cancel')}
             </Text>
           </TouchableOpacity>
 
@@ -85,7 +86,7 @@ export function ConvertDustPresetSheet({
             style={[styles.presetActionButton, styles.presetConfirmButton]}
             onPress={() => onConfirm(draftValue)}>
             <Text style={[styles.presetActionText, styles.presetConfirmText]}>
-              Confirm
+              {t('global.Confirm')}
             </Text>
           </TouchableOpacity>
         </View>

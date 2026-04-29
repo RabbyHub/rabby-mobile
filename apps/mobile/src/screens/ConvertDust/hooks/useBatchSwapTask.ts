@@ -369,7 +369,7 @@ export const useBatchSwapTask = (options: {
               !dexId
             ) {
               throw new Error(
-                t('page.desktopSmallSwap.failReason.quoteUnavailable'),
+                t('page.convertDust.failReason.quoteUnavailable'),
               );
             }
             currentApprovalRef.current = item;
@@ -379,7 +379,7 @@ export const useBatchSwapTask = (options: {
               ...prev,
               [item.id]: {
                 status: 'pending',
-                message: t('page.desktopSmallSwap.status.pending'),
+                message: t('page.convertDust.status.pending'),
               },
             }));
 
@@ -399,7 +399,7 @@ export const useBatchSwapTask = (options: {
             // 获取报价失败
             if (!activeProvider) {
               throw new Error(
-                t('page.desktopSmallSwap.failReason.quoteUnavailable'),
+                t('page.convertDust.failReason.quoteUnavailable'),
               );
             }
 
@@ -410,9 +410,7 @@ export const useBatchSwapTask = (options: {
                 activeProvider.preExecResult.gasUsdValue,
               ).isGreaterThan(config.maxGasCost)
             ) {
-              throw new Error(
-                t('page.desktopSmallSwap.failReason.gasCostTooHigh'),
-              );
+              throw new Error(t('page.convertDust.failReason.gasCostTooHigh'));
             }
 
             const fromUsdBn = new BigNumber(item.amount || 0).times(
@@ -430,7 +428,7 @@ export const useBatchSwapTask = (options: {
             // 价差过大
             if (priceImpact.lte(-priceImpactLimit)) {
               throw new Error(
-                t('page.desktopSmallSwap.failReason.priceImpactTooHigh'),
+                t('page.convertDust.failReason.priceImpactTooHigh'),
               );
             }
 
@@ -454,9 +452,7 @@ export const useBatchSwapTask = (options: {
 
             // 构建交易数据失败
             if (!txs?.length) {
-              throw new Error(
-                t('page.desktopSmallSwap.failReason.submitFailed'),
-              );
+              throw new Error(t('page.convertDust.failReason.submitFailed'));
             }
 
             const result: {
@@ -512,7 +508,7 @@ export const useBatchSwapTask = (options: {
                   });
                 } catch (e) {
                   throw new Error(
-                    t('page.desktopSmallSwap.failReason.transactionFailed'),
+                    t('page.convertDust.failReason.transactionFailed'),
                   );
                 }
               }
@@ -547,15 +543,11 @@ export const useBatchSwapTask = (options: {
             // 预执行失败
             if (result.isSimulationFailed) {
               console.error('simulation failed', result.preExecResult);
-              throw new Error(
-                t('page.desktopSmallSwap.failReason.submitFailed'),
-              );
+              throw new Error(t('page.convertDust.failReason.submitFailed'));
             }
             // 提交交易失败
             if (!result?.txHash) {
-              throw new Error(
-                t('page.desktopSmallSwap.failReason.submitFailed'),
-              );
+              throw new Error(t('page.convertDust.failReason.submitFailed'));
             }
 
             throwIfTaskCancelled();
@@ -568,7 +560,7 @@ export const useBatchSwapTask = (options: {
                 preExecResult: result!.preExecResult,
                 actualReceiveAmount: activeProvider.actualReceiveAmount,
                 txHash: result!.txHash,
-                message: t('page.desktopSmallSwap.status.success'),
+                message: t('page.convertDust.status.success'),
               },
             }));
           } catch (e) {
@@ -586,9 +578,9 @@ export const useBatchSwapTask = (options: {
                   status: 'failed',
                   message:
                     error.message === 'Gas not enough'
-                      ? t('page.desktopSmallSwap.failReason.gasNotEnough')
+                      ? t('page.convertDust.failReason.gasNotEnough')
                       : error.message ||
-                        t('page.desktopSmallSwap.failReason.submitFailed'),
+                        t('page.convertDust.failReason.submitFailed'),
                   createdAt: Date.now(),
                 },
               }));
@@ -625,7 +617,7 @@ export const useBatchSwapTask = (options: {
         dataSource.reduce((dict, item) => {
           dict[item.id] = {
             status: 'idle',
-            message: t('page.desktopSmallSwap.status.idle'),
+            message: t('page.convertDust.status.idle'),
           };
           return dict;
         }, {} as Record<string, TaskItemStatus>),

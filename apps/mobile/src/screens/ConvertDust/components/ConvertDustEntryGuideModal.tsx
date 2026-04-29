@@ -1,11 +1,14 @@
-import React from 'react';
-import { Modal, Pressable, View } from 'react-native';
-
-import { Button } from '@/components2024/Button';
 import { Text } from '@/components/Typography';
+import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { Modal, Pressable, View } from 'react-native';
 import { NewTag } from '../../Home/components/NewTag';
+import GuideImg from '@/assets2024/icons/convertDust/convert-guide-light.png';
+import GuideImgDark from '@/assets2024/icons/convertDust/convert-guide-dark.png';
+import { Image } from 'react-native';
 
 export function ConvertDustEntryGuideModal({
   visible,
@@ -14,7 +17,8 @@ export function ConvertDustEntryGuideModal({
   visible: boolean;
   onGotIt: () => void;
 }) {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, isLight } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
 
   return (
     <Modal
@@ -27,62 +31,32 @@ export function ConvertDustEntryGuideModal({
           style={styles.card}
           onPress={event => event.stopPropagation()}>
           <Text style={styles.title}>
-            You can find Convert Dust{'\n'}👇 here on the Homepage
+            {t('page.convertDust.entryGuide.title')}
           </Text>
 
           <View style={styles.preview}>
-            <View style={styles.previewGrid}>
-              <PreviewTile title="Market" badge="+3.5%" dimmed />
-              <PreviewTile title="Approvals" dimmed />
-              <PreviewTile title="Rabby Points" badge="456" dimmed />
-              <PreviewTile title="Convert Dust" highlight />
-            </View>
+            <Image
+              style={styles.previewImage}
+              source={isLight ? GuideImg : GuideImgDark}
+            />
           </View>
 
-          <Button
-            type="primary"
-            title="Got it"
-            buttonStyle={styles.button}
-            titleStyle={styles.buttonText}
-            onPress={onGotIt}
-          />
+          <View style={styles.footer}>
+            <Button
+              type="primary"
+              title={t('page.convertDust.entryGuide.button')}
+              buttonStyle={styles.button}
+              titleStyle={styles.buttonText}
+              onPress={onGotIt}
+            />
+          </View>
         </Pressable>
       </Pressable>
     </Modal>
   );
 }
 
-function PreviewTile({
-  title,
-  badge,
-  dimmed = false,
-  highlight = false,
-}: {
-  title: string;
-  badge?: string;
-  dimmed?: boolean;
-  highlight?: boolean;
-}) {
-  const { styles } = useTheme2024({ getStyle });
-
-  return (
-    <View
-      style={[
-        styles.previewTile,
-        dimmed && styles.previewTileDimmed,
-        highlight && styles.previewTileHighlight,
-      ]}>
-      <View style={styles.previewIcon} />
-      {badge ? <Text style={styles.previewBadge}>{badge}</Text> : null}
-      <View style={styles.previewTitleRow}>
-        <Text style={styles.previewTitle}>{title}</Text>
-        {highlight ? <NewTag /> : null}
-      </View>
-    </View>
-  );
-}
-
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   mask: {
     flex: 1,
     paddingHorizontal: 19,
@@ -94,10 +68,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     maxWidth: 352,
     borderRadius: 20,
-    paddingHorizontal: 16,
     paddingTop: 32,
     paddingBottom: 32,
     backgroundColor: colors2024['neutral-bg-0'],
+    // backgroundColor: isLight
+    //   ? colors2024['neutral-bg-0']
+    //   : colors2024['neutral-bg-1'],
     alignItems: 'center',
   },
   title: {
@@ -107,84 +83,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '900',
     lineHeight: 24,
     textAlign: 'center',
+    paddingHorizontal: 16,
   },
   preview: {
-    width: 276,
-    height: 163,
-    marginTop: 16,
-    marginBottom: 14,
+    width: '100%',
+    aspectRatio: 1133 / 745,
   },
-  previewGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 9,
+  previewImage: {
+    width: '100%',
+    height: '100%',
   },
-  previewTile: {
-    width: 133,
-    height: 77,
-    borderRadius: 14,
-    padding: 15,
-    backgroundColor: colors2024['neutral-bg-1'],
-    justifyContent: 'space-between',
-    shadowColor: 'rgba(25, 28, 30, 0.04)',
-    shadowOpacity: 1,
-    shadowRadius: 18,
-    shadowOffset: {
-      width: 0,
-      height: 18,
-    },
-    elevation: 4,
-  },
-  previewTileDimmed: {
-    opacity: 0.3,
-  },
-  previewTileHighlight: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    width: 173,
-    height: 100,
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: 'rgba(0, 0, 0, 0.2)',
-    shadowOpacity: 1,
-    shadowRadius: 21,
-    shadowOffset: {
-      width: 0,
-      height: 14,
-    },
-    elevation: 10,
-  },
-  previewIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 10,
-    backgroundColor: colors2024['brand-default-icon'],
-  },
-  previewBadge: {
-    position: 'absolute',
-    top: 15,
-    right: 15,
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 11,
-    fontWeight: '500',
-    lineHeight: 14,
-  },
-  previewTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  previewTitle: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
+  footer: {
+    width: '100%',
+    paddingHorizontal: 16,
+    marginTop: -24,
   },
   button: {
-    width: 319,
+    width: '100%',
     height: 56,
     borderRadius: 12,
   },

@@ -1,9 +1,9 @@
-import React from 'react';
-import { Modal, Pressable, View } from 'react-native';
-
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { Modal, Pressable, View } from 'react-native';
 
 export function ConvertDustStopSheet({
   visible,
@@ -15,6 +15,7 @@ export function ConvertDustStopSheet({
   onStop: () => void;
 }) {
   const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
 
   return (
     <Modal
@@ -24,20 +25,21 @@ export function ConvertDustStopSheet({
       onRequestClose={onContinue}>
       <View style={styles.mask}>
         <View style={styles.card}>
-          <Text style={styles.title}>Stop the current swaps?</Text>
+          <Text style={styles.title}>
+            {t('page.convertDust.stopSheet.title')}
+          </Text>
           <Text style={styles.desc}>
-            If you stop now, any remaining swaps will not be completed. Please
-            note completed swaps cannot be reversed.
+            {t('page.convertDust.stopSheet.desc')}
           </Text>
           <View style={styles.actions}>
             <Pressable style={styles.continueButton} onPress={onContinue}>
               <Text style={[styles.actionText, styles.continueText]}>
-                Continue
+                {t('page.convertDust.stopSheet.continue')}
               </Text>
             </Pressable>
             <Pressable style={styles.stopButton} onPress={onStop}>
               <Text style={[styles.actionText, styles.stopText]}>
-                Stop swap
+                {t('page.convertDust.stopSheet.stop')}
               </Text>
             </Pressable>
           </View>

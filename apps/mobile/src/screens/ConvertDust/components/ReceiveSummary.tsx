@@ -11,6 +11,7 @@ import { getTokenSymbol } from '@/utils/token';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import type { Chain } from '@debank/common';
 import type { BatchSwapTaskType } from '../hooks/useBatchSwapTask';
+import { useTranslation } from 'react-i18next';
 
 function SettingRow({
   label,
@@ -58,6 +59,7 @@ export function ReceiveSummary({
   onOpenPriceImpact: () => void;
 }) {
   const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
   const receiveTokenSymbol = receiveToken
     ? getTokenSymbol(receiveToken) || 'Unknown'
     : 'Unknown';
@@ -85,8 +87,8 @@ export function ReceiveSummary({
           </View>
           <View style={styles.receiveValueWrap}>
             <Text style={styles.receiveHint}>
-              Est.Receive: {formatTokenAmount(receiveAmount)}{' '}
-              {receiveTokenSymbol}
+              {t('page.convertDust.receiveSummary.estimateReceive')}{' '}
+              {formatTokenAmount(receiveAmount)} {receiveTokenSymbol}
             </Text>
             <Text
               style={[
@@ -102,7 +104,9 @@ export function ReceiveSummary({
           <>
             <View style={styles.progressDivider} />
             <View style={styles.progressRow}>
-              <Text style={styles.progressLabel}>Conversion progress</Text>
+              <Text style={styles.progressLabel}>
+                {t('page.convertDust.receiveSummary.progress')}
+              </Text>
               <View style={styles.progressValueWrap}>
                 <View style={styles.progressTokenPair}>
                   {currentToken ? (
@@ -135,13 +139,13 @@ export function ReceiveSummary({
       {isConverting ? null : (
         <View style={styles.settingsBlock}>
           <SettingRow
-            label="Price Impact"
+            label={t('page.convertDust.receiveSummary.priceImpact')}
             value={`${task.config.priceImpact}%`}
             disabled={task.status !== 'idle'}
             onPress={onOpenPriceImpact}
           />
           <SettingRow
-            label="Single Transaction Gas Limit"
+            label={t('page.convertDust.receiveSummary.gasLimit')}
             value={`$${task.config.maxGasCost}`}
             disabled={task.status !== 'idle'}
             onPress={onOpenGasLimit}
