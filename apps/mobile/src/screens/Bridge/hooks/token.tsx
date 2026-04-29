@@ -140,7 +140,7 @@ const useToken = (type: 'from' | 'to') => {
       );
       return { ...data, tokenId: token.id };
     }
-  }, [refreshId, userAddress, token?.id, token?.raw_amount_hex_str, chain]);
+  }, [refreshId, userAddress, token?.id, chain]);
 
   useDebounce(
     () => {
