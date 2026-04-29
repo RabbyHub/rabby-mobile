@@ -50,7 +50,9 @@ import { Linear } from '@/screens/Transaction/components/SkeletonCard';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   filterMyAccounts,
+  isAccountSupportDirectSign,
   isAccountSupportMiniApproval,
+  isHardWareAccountAccountSupportMiniApproval,
   isWatchOrSafeAccount,
 } from '@/utils/account';
 import { findChainByServerID } from '@/utils/chain';
@@ -76,6 +78,7 @@ import { toast } from '@/components2024/Toast';
 import { GasAccountTopUpWaitCallback } from './topUpContinuation';
 import { apiProvider } from '@/core/apis';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
+import AuthButton from '@/components2024/AuthButton';
 
 type DepositAccount = Account;
 
@@ -300,9 +303,14 @@ const GasAccountDepositTokenFormInner: React.FC<{
 
   const openDirectOrFallbackToUI = useCallback(
     async (config: SimpleSignConfig) => {
+      resetGasStore();
+      closeMiniSign();
+      if (
+        isHardWareAccountAccountSupportMiniApproval(selectedOwnerAccount?.type)
+      ) {
+        return await openUI(config);
+      }
       try {
-        resetGasStore();
-        closeMiniSign();
         return await openDirect({
           ...config,
           checkGasFeeTooHigh: true,
@@ -318,7 +326,13 @@ const GasAccountDepositTokenFormInner: React.FC<{
         throw error;
       }
     },
-    [closeMiniSign, openDirect, openUI, resetGasStore],
+    [
+      closeMiniSign,
+      openDirect,
+      openUI,
+      resetGasStore,
+      selectedOwnerAccount?.type,
+    ],
   );
 
   const amountValue = Number(usdValue || 0);
@@ -892,7 +906,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
         <Text style={styles.title}>
           {t('page.gasAccount.depositPopup.gasDepositTitle')}
         </Text>
-
         <View style={styles.formItem}>
           <View style={styles.formItemLabelRow}>
             <Text style={styles.formItemLabel}>
@@ -963,18 +976,29 @@ const GasAccountDepositTokenFormInner: React.FC<{
 
           <View style={styles.bottomContainer}>{bottomContent}</View>
         </View>
-
-        <Button
-          type="primary"
-          loading={loading}
-          disabled={!canSubmit}
-          onPress={handleSubmit}
-          buttonStyle={styles.depositButton}
-          titleStyle={styles.depositButtonTitle}
-          title={t('page.gasAccount.depositPopup.gasDepositButton', {
-            defaultValue: 'Deposit',
-          })}
-        />
+        {isAccountSupportDirectSign(selectedOwnerAccount?.type) ? (
+          <AuthButton
+            authTitle={t('page.whitelist.confirmPassword')}
+            title={t('page.gasAccount.deposit')}
+            onFinished={handleSubmit}
+            disabled={!canSubmit}
+            loading={loading}
+            syncUnlockTime
+            onBeforeAuth={() => {
+              Keyboard.dismiss();
+            }}
+          />
+        ) : (
+          <Button
+            type="primary"
+            loading={loading}
+            disabled={!canSubmit}
+            onPress={handleSubmit}
+            buttonStyle={styles.depositButton}
+            titleStyle={styles.depositButtonTitle}
+            title={t('page.gasAccount.deposit')}
+          />
+        )}
       </BottomSheetView>
 
       {tokenPickerVisible ? (
