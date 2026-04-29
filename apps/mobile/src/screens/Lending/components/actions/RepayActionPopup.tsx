@@ -613,7 +613,6 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
     }
 
     await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
-    onClose?.();
     naviPush(RootNames.StackTransaction, {
       screen: RootNames.Swap,
       params: {
@@ -622,7 +621,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         type: 'Buy',
       },
     });
-  }, [chainEnum, currentAccount, onClose, swapTokenId]);
+  }, [chainEnum, currentAccount, swapTokenId]);
 
   const handleChangeAmount = useCallback(
     (value: string) => {

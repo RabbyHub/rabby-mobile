@@ -4,10 +4,6 @@ import { RefreshControl, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import {
   GlobalModalViewProps,
   MODAL_NAMES,
 } from '@/components2024/GlobalBottomSheetModal/types';
@@ -27,6 +23,7 @@ import { formatApy } from '../../utils/format';
 import { CHAINS_ENUM } from '@debank/common';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { DisplayPoolReserveInfo } from '../../type';
+import { openLendingActionPopup } from '../../utils/actionPopup';
 import { displayGhoForMintableMarket } from '../../utils/supply';
 import { API_ETH_MOCK_ADDRESS } from '../../utils/constant';
 import wrapperToken from '../../config/wrapperToken';
@@ -206,21 +203,11 @@ export const LendingSupplyListContent: React.FC<
       if (!reserve || !userSummary) {
         return;
       }
-      const modalId = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.SUPPLY_ACTION_DETAIL,
+      openLendingActionPopup({
+        popup: 'supply',
         reserve,
         userSummary,
-        onClose: () => {
-          removeGlobalBottomSheetModal2024(modalId);
-        },
-        bottomSheetModalProps: {
-          enableContentPanningGesture: true,
-          enablePanDownToClose: true,
-          enableDismissOnClose: true,
-          handleStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
-          },
-        },
+        colors2024,
       });
     },
     [colors2024, getTargetReserve, iUserSummary],
