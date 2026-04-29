@@ -1,11 +1,11 @@
 import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
 
-import RcCaretDownSmallCC from '@/assets2024/icons/common/caret-down-small-cc.svg';
+import RcCaretDownSmallCC from '@/assets2024/icons/convertDust/polygon-cc.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
-import { formatUsdValue } from '@/utils/number';
+import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -34,11 +34,7 @@ function SettingRow({
       <Text style={styles.settingLabel}>{label}</Text>
       <View style={styles.settingValueWrap}>
         <Text style={styles.settingValue}>{value}</Text>
-        <RcCaretDownSmallCC
-          width={14}
-          height={14}
-          color={colors2024['neutral-title-1']}
-        />
+        <RcCaretDownSmallCC color={colors2024['neutral-title-1']} />
       </View>
     </TouchableOpacity>
   );
@@ -89,7 +85,8 @@ export function ReceiveSummary({
           </View>
           <View style={styles.receiveValueWrap}>
             <Text style={styles.receiveHint}>
-              Est.Receive: {receiveAmount} {receiveTokenSymbol}
+              Est.Receive: {formatTokenAmount(receiveAmount)}{' '}
+              {receiveTokenSymbol}
             </Text>
             <Text
               style={[

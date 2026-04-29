@@ -4,13 +4,12 @@ import React, {
   useMemo,
   useRef,
   useState,
-  useTransition,
 } from 'react';
-import { Alert, BackHandler, Platform, View } from 'react-native';
+import { BackHandler, Platform, View } from 'react-native';
 
-import RcConvertCC from '@/assets2024/icons/convertDust/convert-cc.svg';
+import RcIconSwitchBtn from '@/assets2024/icons/bridge/IconSwitchBtn.svg';
+import RcIconSwitchBtnDark from '@/assets2024/icons/bridge/IconSwitchBtnDark.svg';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
-import { Button } from '@/components2024/Button';
 import { toast } from '@/components2024/Toast';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { CHAINS_ENUM } from '@/constant/chains';
@@ -25,6 +24,7 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { ChainInfo2024 } from '../Send/components/ChainInfo2024';
 import { ConvertDustCompletedSheet } from './components/ConvertDustCompletedSheet';
+import { ConvertDustBottomBar } from './components/ConvertDustBottomBar';
 import { ConvertDustPresetSheet } from './components/ConvertDustPresetSheet';
 import { ConvertDustStopSheet } from './components/ConvertDustStopSheet';
 import { LowValueTokenSelector } from './components/LowValueTokenSelector';
@@ -45,11 +45,7 @@ import {
   useConvertDustTokenList,
 } from './hooks/useConvertDustTokens';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
-import {
-  useNavigation,
-  usePreventRemove,
-  useRoute,
-} from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type {
   GetNestedScreenRouteProp,
@@ -57,7 +53,6 @@ import type {
 } from '@/navigation-type';
 import { useDismissConvertDustBanner } from '../Home/hooks/useConvertDustBanner';
 import { ConvertDustEntryGuideModal } from './components/ConvertDustEntryGuideModal';
-import { useTranslation } from 'react-i18next';
 
 type ConvertDustNavigationProp = NativeStackNavigationProp<
   TransactionNavigatorParamList,
@@ -65,9 +60,8 @@ type ConvertDustNavigationProp = NativeStackNavigationProp<
 >;
 
 export function ConvertDustScreen(): JSX.Element {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
   const navigation = useNavigation<ConvertDustNavigationProp>();
-  const { t } = useTranslation();
   const route =
     useRoute<
       GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'ConvertDust'>
@@ -76,6 +70,9 @@ export function ConvertDustScreen(): JSX.Element {
   const [entryGuideVisible, setEntryGuideVisible] = useState(false);
   const allowBackRef = useRef(false);
   const pendingBackActionRef = useRef<
+    Parameters<typeof navigation.dispatch>[0] | null
+  >(null);
+  const pendingStopBackActionRef = useRef<
     Parameters<typeof navigation.dispatch>[0] | null
   >(null);
   const { safeOffBottom } = useSafeSizes();
@@ -90,46 +87,79 @@ export function ConvertDustScreen(): JSX.Element {
   const [activeSettingSheet, setActiveSettingSheet] = useState<
     'priceImpact' | 'gasLimit' | null
   >(null);
+  const [isCompletedSheetDismissed, setIsCompletedSheetDismissed] =
+    useState(false);
+  const completedSheetClearTimerRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
 
   const receiveToken = useConvertDustReceiveToken({
     address: currentAccount?.address,
     chainServerId: chain?.serverId,
     nativeTokenAddress: chain?.nativeTokenAddress,
   });
-  const { tokens: dustTokens, isLoading: isTokenListLoading } =
-    useConvertDustTokenList({
-      address: currentAccount?.address,
-      chainServerId: chain?.serverId,
-      receiveTokenId: receiveToken?.id,
-      selectedFilter,
-    });
+  const {
+    tokens: dustTokens,
+    isLoading: isTokenListLoading,
+    getTokenList,
+  } = useConvertDustTokenList({
+    address: currentAccount?.address,
+    chainServerId: chain?.serverId,
+    receiveTokenId: receiveToken?.id,
+    selectedFilter,
+  });
   const task = useBatchSwapTask({
     chain: chain || undefined,
     account: currentAccount || undefined,
     receiveToken: receiveToken || undefined,
   });
+  const { status: taskStatus, pause: pauseTask } = task;
+
+  useEffect(() => {
+    if (task.status === 'completed') {
+      setIsCompletedSheetDismissed(false);
+    }
+  }, [task.status]);
+
+  useEffect(() => {
+    return () => {
+      if (completedSheetClearTimerRef.current) {
+        clearTimeout(completedSheetClearTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     dismissConvertDustBanner();
   }, [dismissConvertDustBanner]);
 
   useEffect(() => {
-    if (!route.params?.fromHomeConvertDustBanner) {
-      return;
-    }
-
     const unsubscribe = navigation.addListener('beforeRemove', event => {
       if (allowBackRef.current) {
         return;
       }
 
-      event.preventDefault();
-      pendingBackActionRef.current = event.data.action;
-      setEntryGuideVisible(true);
+      if (taskStatus === 'active') {
+        event.preventDefault();
+        pendingStopBackActionRef.current = event.data.action;
+        pauseTask();
+        return;
+      }
+
+      if (route.params?.fromHomeConvertDustBanner) {
+        event.preventDefault();
+        pendingBackActionRef.current = event.data.action;
+        setEntryGuideVisible(true);
+      }
     });
 
     return unsubscribe;
-  }, [navigation, route.params?.fromHomeConvertDustBanner]);
+  }, [
+    navigation,
+    pauseTask,
+    route.params?.fromHomeConvertDustBanner,
+    taskStatus,
+  ]);
 
   const handleEntryGuideGotIt = useCallback(() => {
     setEntryGuideVisible(false);
@@ -145,6 +175,25 @@ export function ConvertDustScreen(): JSX.Element {
 
     navigation.goBack();
   }, [navigation]);
+
+  const handleStopContinue = useCallback(() => {
+    pendingStopBackActionRef.current = null;
+    task.continue();
+  }, [task]);
+
+  const handleStop = useCallback(() => {
+    task.stop();
+
+    const pendingAction = pendingStopBackActionRef.current;
+    pendingStopBackActionRef.current = null;
+
+    if (!pendingAction) {
+      return;
+    }
+
+    allowBackRef.current = true;
+    navigation.dispatch(pendingAction);
+  }, [navigation, task]);
 
   useEffect(() => {
     navigation.setParams({
@@ -253,11 +302,32 @@ export function ConvertDustScreen(): JSX.Element {
 
     if (task.status === 'completed') {
       task.clear();
+      if (currentAccount?.address) {
+        getTokenList(currentAccount!.address, true);
+      }
       return;
     }
 
     task.pause();
-  }, [isSupportedAccount, task]);
+  }, [currentAccount, getTokenList, isSupportedAccount, task]);
+
+  const handleCompletedDone = useCallback(() => {
+    setIsCompletedSheetDismissed(true);
+
+    if (completedSheetClearTimerRef.current) {
+      clearTimeout(completedSheetClearTimerRef.current);
+    }
+
+    completedSheetClearTimerRef.current = setTimeout(() => {
+      task.clear();
+
+      if (currentAccount?.address) {
+        getTokenList(currentAccount.address, true);
+      }
+
+      completedSheetClearTimerRef.current = null;
+    }, 1000);
+  }, [currentAccount?.address, getTokenList, task]);
 
   const receiveUsd =
     task.status === 'idle' ? task.expectReceive.usd : task.finalReceive.usd;
@@ -265,35 +335,30 @@ export function ConvertDustScreen(): JSX.Element {
     task.status === 'idle'
       ? task.expectReceive.amount
       : task.finalReceive.amount;
-  const ctaTitle =
-    task.status === 'idle'
-      ? 'Start convert'
-      : task.status === 'completed'
-      ? 'Done'
-      : 'Stop';
+
   const displayedTokens =
     task.status === 'idle' ? dustTokens : (task.list as ITokenItem[]);
 
-  usePreventRemove(task.status === 'idle', e => {
-    Alert.alert(
-      t('page.approvals.stopTheRevokeProcess'),
-      t('page.approvals.leavingThisPageWillStopTheRevokeProcess'),
-      [
-        {
-          text: t('global.Cancel'),
-          style: 'cancel',
-          onPress: () => {},
-        },
-        {
-          text: t('page.signTx.yes'),
-          style: 'destructive',
-          onPress: () => {
-            navigation.dispatch(e.data.action);
-          },
-        },
-      ],
-    );
-  });
+  // usePreventRemove(task.status === 'active', e => {
+  //   Alert.alert(
+  //     t('page.approvals.stopTheRevokeProcess'),
+  //     t('page.approvals.leavingThisPageWillStopTheRevokeProcess'),
+  //     [
+  //       {
+  //         text: t('global.Cancel'),
+  //         style: 'cancel',
+  //         onPress: () => {},
+  //       },
+  //       {
+  //         text: t('page.signTx.yes'),
+  //         style: 'destructive',
+  //         onPress: () => {
+  //           navigation.dispatch(e.data.action);
+  //         },
+  //       },
+  //     ],
+  //   );
+  // });
 
   React.useEffect(() => {
     if (Platform.OS === 'android') {
@@ -347,6 +412,16 @@ export function ConvertDustScreen(): JSX.Element {
           onToggleToken={toggleToken}
         />
 
+        <View pointerEvents="none" style={styles.switchBtnLayer}>
+          <View style={styles.switchBtn}>
+            {isLight ? (
+              <RcIconSwitchBtn color={colors2024['neutral-bg-3']} />
+            ) : (
+              <RcIconSwitchBtnDark />
+            )}
+          </View>
+        </View>
+
         <ReceiveSummary
           chain={chain}
           receiveAmount={receiveAmount}
@@ -358,23 +433,14 @@ export function ConvertDustScreen(): JSX.Element {
         />
       </View>
 
-      <View
-        pointerEvents="box-none"
-        style={[styles.bottomBar, { paddingBottom: safeOffBottom + 17 }]}>
-        <Button
-          title={ctaTitle}
-          height={52}
-          disabled={
-            task.status === 'idle' && (!hasSelectedToken || !isSupportedAccount)
-          }
-          icon={<RcConvertCC width={22} height={22} />}
-          containerStyle={styles.ctaContainer}
-          buttonStyle={styles.ctaButton}
-          titleStyle={styles.ctaTitle}
-          onPress={handleStartPress}
-          noShadow
-        />
-      </View>
+      <ConvertDustBottomBar
+        safeOffBottom={safeOffBottom}
+        disabled={
+          task.status === 'idle' && (!hasSelectedToken || !isSupportedAccount)
+        }
+        status={task.status}
+        onPress={handleStartPress}
+      />
 
       <AccountSwitcherModal
         forScene="MakeTransactionAbout"
@@ -410,16 +476,18 @@ export function ConvertDustScreen(): JSX.Element {
       />
       <ConvertDustStopSheet
         visible={task.status === 'paused'}
-        onContinue={task.continue}
-        onStop={task.stop}
+        onContinue={handleStopContinue}
+        onStop={handleStop}
       />
       <ConvertDustCompletedSheet
         chain={chain}
         receiveAmount={task.finalReceive.amount}
         receiveToken={receiveToken}
         receiveUsd={task.finalReceive.usd}
-        visible={task.status === 'completed'}
-        onDone={task.clear}
+        visible={task.status === 'completed' && !isCompletedSheetDismissed}
+        onDone={handleCompletedDone}
+        onCancel={handleCompletedDone}
+        isSuccess={task.isSuccess}
       />
       <ConvertDustEntryGuideModal
         visible={entryGuideVisible}
@@ -438,28 +506,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 20,
     paddingTop: 12,
   },
-  bottomBar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 10,
-    paddingTop: 12,
-    paddingHorizontal: 24,
-    backgroundColor: colors2024['neutral-bg-1'],
+  switchBtnLayer: {
+    height: 0,
+    alignItems: 'center',
+    zIndex: 20,
+    elevation: 20,
   },
-  ctaContainer: {
-    height: 52,
-  },
-  ctaButton: {
-    height: 52,
-    borderRadius: 12,
-  },
-  ctaTitle: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
-    fontWeight: '700',
-    lineHeight: 22,
+  switchBtn: {
+    transform: [{ translateY: -23 + 4 }],
   },
 }));
 

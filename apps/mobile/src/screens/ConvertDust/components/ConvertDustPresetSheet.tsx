@@ -54,7 +54,7 @@ export function ConvertDustPresetSheet({
           {options.map(option => {
             const selected = draftValue === option.value;
             return (
-              <Pressable
+              <TouchableOpacity
                 key={option.value}
                 onPress={() => setDraftValue(option.value)}
                 style={[
@@ -68,7 +68,7 @@ export function ConvertDustPresetSheet({
                   ]}>
                   {option.label}
                 </Text>
-              </Pressable>
+              </TouchableOpacity>
             );
           })}
         </View>

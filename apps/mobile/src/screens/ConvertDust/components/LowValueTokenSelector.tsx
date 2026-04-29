@@ -1,6 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
+import {
+  FlatList,
+  TouchableOpacity,
+  View,
+  Animated,
+  Easing,
+} from 'react-native';
+import { Skeleton } from '@rneui/themed';
 
+import RcIconFail from '@/assets2024/icons/convertDust/failed.svg';
+import RcIconPending from '@/assets2024/icons/convertDust/pending.svg';
+import RcIconSuccess from '@/assets2024/icons/convertDust/success.svg';
+import RcIconClockCC from '@/assets2024/icons/convertDust/clock-cc.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components/Typography';
 import { CheckBoxRect } from '@/components2024/CheckBox';
@@ -8,10 +19,14 @@ import { useTheme2024 } from '@/hooks/theme';
 import type { ITokenItem } from '@/store/tokens';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
+import { getTokenSymbol } from '@/utils/token';
 import { getTokenIcon } from '@/utils/tokenIcon';
 import { thresholds, type DustFilter } from '../constant';
 import type { TaskItemStatus } from '../hooks/useBatchSwapTask';
-import { getTokenSymbol } from '@/utils/token';
+import RcIconEmptyToken from '@/assets2024/singleHome/empty-token.svg';
+import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
+
+import { Tip } from '@/components';
 
 const getTokenKey = (token: ITokenItem) =>
   `${token.owner_addr}:${token.chain}:${token.id}`;
@@ -25,21 +40,21 @@ function DustTokenRow({
 }: {
   token: ITokenItem;
   selected: boolean;
-  status?: TaskItemStatus['status'];
+  status?: TaskItemStatus;
   showStatus?: boolean;
   onPress: () => void;
 }) {
   const { styles } = useTheme2024({ getStyle });
 
   return (
-    <Pressable
+    <TouchableOpacity
       disabled={showStatus}
       onPress={onPress}
       style={[styles.tokenRow, showStatus && styles.tokenRowWithStatus]}>
       {showStatus ? (
-        <TaskStatusIcon status={status} />
+        <TaskStatusIcon taskStatus={status} />
       ) : (
-        <CheckBoxRect checked={selected} size={18} />
+        <CheckBoxRect checked={selected} size={24} />
       )}
       <AssetAvatar
         logo={token.logo_url || getTokenIcon(token.symbol)}
@@ -61,50 +76,97 @@ function DustTokenRow({
           {formatTokenAmount(token.amount)}
         </Text>
       </View>
-    </Pressable>
+    </TouchableOpacity>
   );
 }
 
-function TaskStatusIcon({ status }: { status?: TaskItemStatus['status'] }) {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+const TaskStatusIcon = ({ taskStatus }: { taskStatus?: TaskItemStatus }) => {
+  const { colors2024 } = useTheme2024({ getStyle });
+  const spinValue = useRef(new Animated.Value(0)).current;
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
-  if (status === 'pending') {
+  useEffect(() => {
+    Animated.loop(
+      Animated.timing(spinValue, {
+        toValue: 1,
+        duration: 1000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    ).start();
+  }, [spinValue]);
+
+  if (!taskStatus?.status) {
+    return null;
+  }
+
+  if (taskStatus.status === 'idle') {
     return (
-      <View style={styles.statusIconWrap}>
-        <ActivityIndicator size="small" color={colors2024['orange-default']} />
-      </View>
+      <RcIconClockCC
+        width={24}
+        height={24}
+        color={colors2024['neutral-info']}
+      />
     );
   }
 
-  if (status === 'success') {
+  if (taskStatus?.status === 'pending') {
     return (
-      <View style={styles.statusIconWrap}>
-        <View style={[styles.statusCircle, styles.statusCircleSuccess]}>
-          <Text style={styles.statusSuccessMark}>✓</Text>
-        </View>
-      </View>
+      <Animated.View
+        style={{
+          transform: [{ rotate: spin }],
+        }}>
+        <RcIconPending width={24} height={24} />
+      </Animated.View>
     );
   }
 
-  if (status === 'failed') {
+  if (taskStatus?.status === 'success') {
+    return <RcIconSuccess width={24} height={24} />;
+  }
+
+  if (taskStatus?.status === 'failed') {
     return (
-      <View style={styles.statusIconWrap}>
-        <View style={[styles.statusCircle, styles.statusCircleFailed]}>
-          <Text style={styles.statusFailedMark}>!</Text>
-        </View>
-      </View>
+      <Tip content={taskStatus.message}>
+        <RcIconFail width={24} height={24} />
+      </Tip>
     );
   }
+
+  return null;
+};
+
+const LoadingTokenList = () => {
+  const { styles } = useTheme2024({ getStyle });
 
   return (
-    <View style={styles.statusIconWrap}>
-      <View style={styles.statusClock}>
-        <View style={styles.statusClockHandVertical} />
-        <View style={styles.statusClockHandHorizontal} />
-      </View>
+    <View style={styles.loadingList}>
+      {Array.from({ length: 6 }).map((_, index) => {
+        return (
+          <View key={index} style={styles.loadingRow}>
+            {/* <Skeleton style={styles.loadingBlock} width={24} height={24} /> */}
+            <Skeleton
+              style={styles.loadingBlock}
+              circle
+              width={24}
+              height={24}
+            />
+            <View style={styles.loadingNameColumn}>
+              <Skeleton style={styles.loadingBlock} width={72} height={18} />
+            </View>
+            <View style={styles.loadingValueColumn}>
+              <Skeleton style={styles.loadingBlock} width={64} height={18} />
+              <Skeleton style={styles.loadingBlock} width={48} height={16} />
+            </View>
+          </View>
+        );
+      })}
     </View>
   );
-}
+};
 
 export function LowValueTokenSelector({
   disabled,
@@ -133,7 +195,7 @@ export function LowValueTokenSelector({
   onToggleAll: () => void;
   onToggleToken: (token: ITokenItem) => void;
 }) {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, isLight } = useTheme2024({ getStyle });
   const listRef = useRef<FlatList<ITokenItem>>(null);
   const pendingIndex = useMemo(() => {
     if (currentTaskIndex >= 0) {
@@ -163,7 +225,7 @@ export function LowValueTokenSelector({
         <DustTokenRow
           token={item}
           selected={selectedTokenIds.has(item.id)}
-          status={statusItem?.status}
+          status={statusItem}
           showStatus={showStatus}
           onPress={() => onToggleToken(item)}
         />
@@ -178,7 +240,7 @@ export function LowValueTokenSelector({
         {thresholds.map(filter => {
           const selected = selectedFilter.value === filter.value;
           return (
-            <Pressable
+            <TouchableOpacity
               key={filter.value}
               onPress={() => onFilterChange(filter)}
               disabled={disabled}
@@ -190,29 +252,29 @@ export function LowValueTokenSelector({
                 ]}>
                 {filter.label}
               </Text>
-            </Pressable>
+            </TouchableOpacity>
           );
         })}
       </View>
 
       <View style={styles.listHeader}>
-        <Pressable
+        <TouchableOpacity
           disabled={disabled || showStatus}
           style={styles.tokenHeaderLeft}
           onPress={onToggleAll}>
           {showStatus ? null : (
-            <CheckBoxRect checked={hasSelectedToken} size={18} />
+            <CheckBoxRect checked={hasSelectedToken} size={24} />
           )}
           <Text style={styles.headerText}>
             {showStatus ? 'Status/Token' : 'Token'}
           </Text>
-        </Pressable>
+        </TouchableOpacity>
         <Text style={styles.headerText}>Value/Amount</Text>
       </View>
 
       <View style={styles.tokenListWrap}>
         {isLoading ? (
-          <Text style={styles.emptyText}>Loading tokens...</Text>
+          <LoadingTokenList />
         ) : tokens.length ? (
           <FlatList
             ref={listRef}
@@ -238,7 +300,10 @@ export function LowValueTokenSelector({
             contentContainerStyle={styles.tokenListScrollContent}
           />
         ) : (
-          <Text style={styles.emptyText}>No dust tokens</Text>
+          <View style={styles.empty}>
+            {isLight ? <RcIconEmptyToken /> : <RcIconEmptyTokenDark />}
+            <Text style={styles.emptyText}>No low-value tokens found</Text>
+          </View>
         )}
       </View>
     </View>
@@ -298,6 +363,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    height: 32,
   },
   tokenHeaderLeft: {
     flexDirection: 'row',
@@ -322,14 +388,47 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingRight: 16,
   },
   tokenListScrollContent: {},
+  empty: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+  },
   emptyText: {
+    marginTop: 4,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 20,
-    marginTop: 72,
+    fontSize: 12,
+    fontWeight: '400',
+    lineHeight: 16,
     textAlign: 'center',
+  },
+  loadingList: {
+    paddingLeft: 16,
+    paddingRight: 24,
+  },
+  loadingRow: {
+    height: 44,
+    paddingVertical: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  loadingNameColumn: {
+    minWidth: 0,
+    flex: 1,
+    justifyContent: 'center',
+  },
+  loadingValueColumn: {
+    flex: 1,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  loadingBlock: {
+    borderRadius: 12,
+    backgroundColor: colors2024['neutral-bg-4'],
   },
   tokenRow: {
     height: 44,

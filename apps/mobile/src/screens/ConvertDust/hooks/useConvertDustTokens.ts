@@ -23,13 +23,6 @@ export function useConvertDustTokenList({
 }) {
   const lowerAddress = address?.toLowerCase();
 
-  console.log('useConvertDustTokenList', {
-    address,
-    chainServerId,
-    receiveTokenId,
-    selectedFilter,
-  });
-
   const emptyResult = useMemo(
     () => ({
       unFoldTokens: [] as ITokenItem[],
@@ -97,6 +90,7 @@ export function useConvertDustTokenList({
   );
 
   return {
+    getTokenList,
     tokens: dustTokens,
     isLoading,
   };

@@ -12,6 +12,9 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import type { Chain } from '@debank/common';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import successAnimation from '@/assets2024/animations/animation-create-success.min.json';
+import Lottie, { AnimationObject } from 'lottie-react-native';
+import RcIconSwapFailed from '@/assets2024/icons/convertDust/swap-failed.svg';
 
 export function ConvertDustCompletedSheet({
   chain,
@@ -20,6 +23,8 @@ export function ConvertDustCompletedSheet({
   receiveUsd,
   visible,
   onDone,
+  onCancel,
+  isSuccess,
 }: {
   chain?: Chain | null;
   receiveAmount: number;
@@ -27,6 +32,8 @@ export function ConvertDustCompletedSheet({
   receiveUsd: number;
   visible: boolean;
   onDone: () => void;
+  onCancel?: () => void;
+  isSuccess?: boolean;
 }) {
   const modalRef = React.useRef<AppBottomSheetModal>(null);
   const { styles } = useTheme2024({ getStyle });
@@ -47,14 +54,28 @@ export function ConvertDustCompletedSheet({
     <AppBottomSheetModal
       ref={modalRef}
       index={0}
-      snapPoints={[437 + safeOffBottom]}
-      enablePanDownToClose={false}
+      snapPoints={[437]}
+      // enablePanDownToClose={false}
       backgroundStyle={styles.sheetBackground}
       handleStyle={styles.sheetHandle}
-      handleIndicatorStyle={styles.sheetHandleIndicator}>
+      handleIndicatorStyle={styles.sheetHandleIndicator}
+      onDismiss={onCancel}>
       <View style={styles.sheetContent}>
         <View style={styles.heroBlock}>
-          <View style={styles.iconPlaceholder} />
+          {isSuccess ? (
+            <View style={styles.lottieContainer}>
+              <Lottie
+                source={successAnimation}
+                style={styles.lottie}
+                loop={false}
+                autoPlay
+              />
+            </View>
+          ) : (
+            <View style={styles.failedIconWrap}>
+              <RcIconSwapFailed width={80} />
+            </View>
+          )}
           <Text style={styles.title}>Dust Converted !</Text>
         </View>
 
@@ -80,7 +101,10 @@ export function ConvertDustCompletedSheet({
         </View>
 
         <View
-          style={[styles.buttonWrap, { paddingBottom: safeOffBottom + 17 }]}>
+          style={[
+            styles.buttonWrap,
+            { paddingBottom: Math.max(38, safeOffBottom) },
+          ]}>
           <Button
             title="Done"
             height={52}
@@ -119,14 +143,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 20,
   },
   heroBlock: {
-    height: 187,
+    marginTop: 24,
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 2,
   },
-  iconPlaceholder: {
+  lottieContainer: {
     width: 148,
     height: 141,
+  },
+  lottie: {
+    width: '100%',
+    height: '100%',
+  },
+  failedIconWrap: {
+    marginBottom: 24,
   },
   title: {
     color: '#000000',

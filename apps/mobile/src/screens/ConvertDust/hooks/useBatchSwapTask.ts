@@ -82,6 +82,7 @@ const waitForTxCompleted = async ({
 };
 
 export const getActiveProvider = async ({
+  account,
   chain,
   currentAddress,
   dexId,
@@ -90,6 +91,7 @@ export const getActiveProvider = async ({
   receiveToken,
   slippage = '3',
 }: {
+  account: Account;
   chain: NonNullable<ReturnType<typeof findChain>>;
   currentAddress: string;
   dexId: DEX_ENUM;
@@ -103,8 +105,9 @@ export const getActiveProvider = async ({
     payAmount: string;
     fee: string;
     inSufficient: boolean;
+    account: Account;
     setQuote?: (quote: TDexQuoteData) => void;
-  }) => Promise<TDexQuoteData>;
+  }) => Promise<TDexQuoteData | undefined>;
   payToken: TokenItem;
   receiveToken: TokenItem;
   slippage?: string;
@@ -129,6 +132,7 @@ export const getActiveProvider = async ({
       ? '0'
       : '0.25',
     inSufficient: false,
+    account,
   });
 
   if (!quoteResult?.data || !quoteResult.preExecResult?.isSdkPass) {
@@ -301,9 +305,13 @@ export const useBatchSwapTask = (options: {
   const [currentToken, setCurrentToken] = React.useState<TokenItem | null>(
     null,
   );
-  const { getDexQuote } = useQuoteMethods();
+  const { getSingleQuote } = useQuoteMethods();
 
-  const { prefetch, close: closeSign } = useMiniSigner({
+  const {
+    prefetch,
+    close: closeSign,
+    openDirect,
+  } = useMiniSigner({
     account: account!,
     chainServerId: chain?.serverId || '',
     autoResetGasStoreOnChainChange: true,
@@ -316,6 +324,7 @@ export const useBatchSwapTask = (options: {
   );
 
   const getDexId = useMemoizedFn(() => {
+    console.log('getDexId', { dexList });
     const randomIndex = random(0, dexList.length - 1);
     return dexList[randomIndex] as DEX_ENUM;
   });
@@ -375,15 +384,11 @@ export const useBatchSwapTask = (options: {
             }));
 
             const activeProvider = await getActiveProvider({
+              account: options.account,
               chain: options.chain,
               currentAddress: options.account.address,
               dexId,
-              getSingleQuote: params =>
-                getDexQuote({
-                  ...params,
-                  account: options.account!,
-                  onFinishedQuote: () => undefined,
-                }),
+              getSingleQuote,
               payToken: item,
               receiveToken: options.receiveToken,
               slippage: slippage,
@@ -486,17 +491,17 @@ export const useBatchSwapTask = (options: {
                   result.isSimulationFailed = true;
                 },
               });
-              // const res = await openDirect({
-              //   txs: txsGroup,
-              //   onPreExecError() {
-              //     result.isSimulationFailed = true;
-              //   },
-              // });
-              const res = await new Promise<string[]>((resolve, _reject) => {
-                setTimeout(() => {
-                  resolve([]);
-                }, 5000);
+              const res = await openDirect({
+                txs: txsGroup,
+                onPreExecError() {
+                  result.isSimulationFailed = true;
+                },
               });
+              // const res = await new Promise<string[]>((resolve, _reject) => {
+              //   setTimeout(() => {
+              //     resolve([]);
+              //   }, 10000);
+              // });
 
               result.txHash = last(res) || '';
               if (result.txHash) {
@@ -712,6 +717,13 @@ export const useBatchSwapTask = (options: {
     slippage,
   ]);
 
+  const isSuccess = useMemo(() => {
+    return (
+      status === 'completed' &&
+      !!Object.values(statusDict || {}).find(item => item.status === 'success')
+    );
+  }, [status, statusDict]);
+
   const currentTaskIndex = React.useMemo(() => {
     return list.findIndex(item => statusDict[item.id]?.status === 'pending');
   }, [list, statusDict]);
@@ -727,7 +739,7 @@ export const useBatchSwapTask = (options: {
 
   const stop = useMemoizedFn(() => {
     // cancelRunningTasks();
-    setList([]);
+    // setList([]);
     setCurrentToken(null);
     updateStatus('completed');
   });
@@ -759,6 +771,7 @@ export const useBatchSwapTask = (options: {
     },
     finalReceive,
     disabled,
+    isSuccess,
   };
 };
 
