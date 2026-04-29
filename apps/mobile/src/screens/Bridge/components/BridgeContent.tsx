@@ -77,6 +77,7 @@ import {
   shouldIgnoreAmountChangeInMaxMode,
 } from '@/utils/form';
 import { buildTx as buildBridgeTx } from '@rabby-wallet/rabby-bridge';
+import { useMiniSignerEffectPause } from '@/hooks/useMiniSignerEffectPause';
 
 /** Bridge form snapshot for validation during auth */
 export interface BridgeFormSnapshot {
@@ -663,6 +664,8 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   const canDirectSign = !ctx?.disabledProcess;
 
   const [miniSignLoading, setMiniSignLoading] = useState(false);
+  const shouldPauseMiniSignerEffects =
+    useMiniSignerEffectPause(miniSignLoading);
 
   const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
 
@@ -679,7 +682,10 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
       closeMiniSigner();
       return;
     }
-    if (!canShowDirectSubmit || !currentAccount || !txs?.length) {
+    if (shouldPauseMiniSignerEffects()) {
+      return;
+    }
+    if (!canShowDirectSubmit || !currentAccount?.address || !txs?.length) {
       closeMiniSigner();
       return;
     }
@@ -694,10 +700,11 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   }, [
     canShowDirectSubmit,
     closeMiniSigner,
-    currentAccount,
+    currentAccount?.address,
     isFocused,
     miniSignGa,
     prefetchMiniSigner,
+    shouldPauseMiniSignerEffects,
     txs,
   ]);
 
@@ -867,11 +874,20 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     !quoteList?.length;
 
   useEffect(() => {
+    if (shouldPauseMiniSignerEffects()) {
+      return;
+    }
     if (selectedBridgeQuote && canUseMiniTx) {
       mutateTxs([]);
       runBuildBridgeTxsRef.current = runBuildTxs();
     }
-  }, [runBuildTxs, canUseMiniTx, selectedBridgeQuote, mutateTxs]);
+  }, [
+    runBuildTxs,
+    canUseMiniTx,
+    selectedBridgeQuote,
+    mutateTxs,
+    shouldPauseMiniSignerEffects,
+  ]);
 
   const btnText = useMemo(() => {
     if (showExternalDappTips) {
