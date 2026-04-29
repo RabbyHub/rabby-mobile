@@ -12,6 +12,7 @@ import { CustomMarket } from '@/screens/Lending/config/market';
 import { SvgProps } from 'react-native-svg';
 import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
 import { useSelectedMarket } from '@/screens/Lending/hooks';
+import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
 import { IProtocolPortfolio } from '@/store/protocols';
 import { matomoRequestEvent } from '@/utils/analytics';
 
@@ -91,6 +92,7 @@ export const useProtocolConfig = () => {
           await switchSceneCurrentAccount('Lending', account);
           setMarketKey(marketKey);
         }
+        clearLendingActionPopupState();
 
         navigation.navigate(RootNames.StackTransaction, {
           screen: RootNames.Lending,

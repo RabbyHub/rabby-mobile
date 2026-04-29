@@ -67,11 +67,19 @@ import { ReserveErrorTip } from '../ErrorTip';
 import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
+import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { RootNames } from '@/constant/layout';
+import { naviPush } from '@/utils/navigation';
 
-export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
+type SupplyActionPopupProps = PopupDetailProps & {
+  onBeforeSwapNavigate?: () => void;
+};
+
+export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
   reserve,
   userSummary,
   onClose,
+  onBeforeSwapNavigate,
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
@@ -382,6 +390,41 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     reserve.reserve.formattedPriceInMarketReferenceCurrency,
   ]);
 
+  const showToSwap = useMemo(() => {
+    return new BigNumber(reserve.walletBalance || '0').lte(0);
+  }, [reserve.walletBalance]);
+
+  const swapTokenId = useMemo(() => {
+    if (isNativeToken) {
+      return chainInfo?.nativeTokenAddress || reserve.reserve.underlyingAsset;
+    }
+    return reserve.reserve.underlyingAsset;
+  }, [
+    chainInfo?.nativeTokenAddress,
+    isNativeToken,
+    reserve.reserve.underlyingAsset,
+  ]);
+
+  const handleOpenSwap = useCallback(async () => {
+    if (!currentAccount || !swapTokenId) {
+      return;
+    }
+
+    if (onBeforeSwapNavigate) {
+      onBeforeSwapNavigate();
+    }
+
+    await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
+    naviPush(RootNames.StackTransaction, {
+      screen: RootNames.Swap,
+      params: {
+        chainEnum: chainEnum || CHAINS_ENUM.ETH,
+        tokenId: swapTokenId,
+        type: 'Buy',
+      },
+    });
+  }, [chainEnum, currentAccount, onBeforeSwapNavigate, swapTokenId]);
+
   const txsForMiniApproval: Tx[] = useMemo(() => {
     const list: any[] = [];
     if (approveTxs?.length) {
@@ -556,22 +599,31 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           <Text style={styles.amountHeaderTitle}>
             {t('page.Lending.popup.amount')}
           </Text>
-          <Text
-            style={[
-              styles.amountValueDescription,
-              emptyAmount && styles.amountValueDescriptionDanger,
-            ]}>{`${formatTokenAmount(supplyAmount.amount || '0')}${
-            reserve.reserve.symbol
-          }($${
-            supplyAmount.isLteZero
-              ? '0'
-              : formatAmountValueKMB(supplyAmount.usdValue || '0')
-          }) ${t('page.Lending.popup.available')}`}</Text>
+          <View style={styles.amountHeaderRight}>
+            <Text
+              style={[
+                styles.amountValueDescription,
+                emptyAmount && styles.amountValueDescriptionDanger,
+              ]}>{`${formatTokenAmount(supplyAmount.amount || '0')}${
+              reserve.reserve.symbol
+            }($${
+              supplyAmount.isLteZero
+                ? '0'
+                : formatAmountValueKMB(supplyAmount.usdValue || '0')
+            }) ${t('page.Lending.popup.available')}`}</Text>
+            {showToSwap ? (
+              <Text onPress={handleOpenSwap} style={styles.toSwapText}>
+                {t('page.Lending.popup.toSwap')}→
+              </Text>
+            ) : null}
+          </View>
         </View>
         <TokenAmountInput
           value={amount}
           onChange={v => {
-            if (directSignBtnRef.current?.isAuthInProgress()) return;
+            if (directSignBtnRef.current?.isAuthInProgress()) {
+              return;
+            }
             setAmount(v);
           }}
           symbol={reserve.reserve.symbol}
@@ -607,7 +659,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
             </View>
           )}
 
-          <ReserveErrorTip reserve={reserve} style={{ marginTop: 30 }} />
+          <ReserveErrorTip reserve={reserve} style={styles.reserveErrorTip} />
         </BottomSheetScrollView>
 
         <View style={styles.buttonContainer}>
@@ -694,9 +746,27 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 18,
     color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+    flexShrink: 1,
+    textAlign: 'right',
   },
   amountValueDescriptionDanger: {
     color: ctx.colors2024['red-default'],
+  },
+  amountHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flex: 1,
+    justifyContent: 'flex-end',
+    marginLeft: 12,
+  },
+  toSwapText: {
+    color: ctx.colors2024['brand-default'],
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    flexShrink: 0,
   },
   amountInput: {
     marginTop: 12,
@@ -732,6 +802,9 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  reserveErrorTip: {
+    marginTop: 30,
   },
   title: {
     color: ctx.colors2024['neutral-title-1'],

@@ -19,6 +19,7 @@ import { formatApy, formatListNetWorth } from '../../utils/format';
 import { useLendingSummary, useSelectedMarket } from '../../hooks';
 import { formatTokenAmount } from '@/utils/number';
 import { Text } from '@/components/Typography';
+import { openLendingActionPopup } from '../../utils/actionPopup';
 
 interface BorrowItemProps extends RNViewProps {
   underlyingAsset: string;
@@ -163,20 +164,11 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
     if (!reserve || !userSummary) {
       return;
     }
-    const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.REPAY_ACTION_DETAIL,
+    openLendingActionPopup({
+      popup: 'repay',
       reserve,
       userSummary,
-      onClose: () => {
-        removeGlobalBottomSheetModal2024(modalId);
-      },
-      bottomSheetModalProps: {
-        enableContentPanningGesture: true,
-        rootViewType: 'View',
-        handleStyle: {
-          backgroundColor: colors2024['neutral-bg-1'],
-        },
-      },
+      colors2024,
     });
   };
   const handleSwapDebt = () => {

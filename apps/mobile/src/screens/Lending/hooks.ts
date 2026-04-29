@@ -663,79 +663,78 @@ const preQueryParams: {
 // const setRemoteTaskRef: RefLikeObject<null | ReturnType<
 //   typeof InteractionManager.runAfterInteractions
 // >> = { current: null };
-const globalSets = {
-  setRemoteData: debounce(
-    async (
-      addr: string,
-      marketKey: CustomMarket,
-      valOrFunc: UpdaterOrPartials<RemoteDataState>,
-    ) => {
-      const lendingDataKey = encodeRemoteDataKey(marketKey, addr);
+async function applyRemoteData(
+  addr: string,
+  marketKey: CustomMarket,
+  valOrFunc: UpdaterOrPartials<RemoteDataState>,
+) {
+  const lendingDataKey = encodeRemoteDataKey(marketKey, addr);
 
-      const prev = remoteDataState.getState();
-      const prevData = prev[lendingDataKey] || getInitRemoteData();
-      const { newVal } = resolveValFromUpdater(prevData, valOrFunc, {
-        strict: false,
-      });
+  const prev = remoteDataState.getState();
+  const prevData = prev[lendingDataKey] || getInitRemoteData();
+  const { newVal } = resolveValFromUpdater(prevData, valOrFunc, {
+    strict: false,
+  });
 
-      const formattedReservesAndIncentives =
-        await computeFormattedReservesAndIncentives(newVal);
+  const formattedReservesAndIncentives =
+    await computeFormattedReservesAndIncentives(newVal);
 
-      const iUserSummary = await computeIUserSummary({
-        ...newVal,
-        formattedReserves: formattedReservesAndIncentives.formattedReserves,
-      });
+  const iUserSummary = await computeIUserSummary({
+    ...newVal,
+    formattedReserves: formattedReservesAndIncentives.formattedReserves,
+  });
 
-      const mappedBalances = computeMappedBalances({
-        walletBalances: newVal.walletBalances,
-      });
+  const mappedBalances = computeMappedBalances({
+    walletBalances: newVal.walletBalances,
+  });
 
-      const displayPoolReserves = computeDisplayPoolReserves({
-        ...newVal,
-        iUserSummary: iUserSummary as UserSummary,
+  const displayPoolReserves = computeDisplayPoolReserves({
+    ...newVal,
+    iUserSummary: iUserSummary as UserSummary,
+    mappedBalances: mappedBalances,
+    market: marketKey,
+  });
+
+  const wrapperPoolReserveAndFinalDisplayPoolReserves =
+    computeWrapperPoolReserveAndFinalDisplayPoolReserves({
+      displayPoolReserves: displayPoolReserves,
+      formattedPoolReservesAndIncentives:
+        formattedReservesAndIncentives.formattedPoolReservesAndIncentives,
+      mappedBalances: mappedBalances,
+      reserves: newVal.reserves,
+      market: marketKey,
+    });
+
+  const apyInfo = computeApyInfo({
+    formattedPoolReservesAndIncentives:
+      formattedReservesAndIncentives.formattedPoolReservesAndIncentives,
+    iUserSummary: iUserSummary as UserSummary,
+  });
+
+  console.debug('[perf] lending:: remote data will be set', newVal);
+  remoteDataState.setState({
+    ...prev,
+    [lendingDataKey]: newVal,
+  });
+
+  computedInfoState.setState(prevState => {
+    return {
+      ...prevState,
+      [lendingDataKey]: {
+        formattedReservesAndIncentivesState: formattedReservesAndIncentives,
+        iUserSummary: iUserSummary,
         mappedBalances: mappedBalances,
-        market: jotaiStore.get(marketAtom),
-      });
+        displayPoolReserves: displayPoolReserves,
+        wrapperPoolReserveAndFinalDisplayPoolReserves:
+          wrapperPoolReserveAndFinalDisplayPoolReserves,
+        apyInfo: apyInfo,
+      },
+    };
+  });
+}
 
-      const wrapperPoolReserveAndFinalDisplayPoolReserves =
-        computeWrapperPoolReserveAndFinalDisplayPoolReserves({
-          displayPoolReserves: displayPoolReserves,
-          formattedPoolReservesAndIncentives:
-            formattedReservesAndIncentives.formattedPoolReservesAndIncentives,
-          mappedBalances: mappedBalances,
-          reserves: newVal.reserves,
-          market: jotaiStore.get(marketAtom),
-        });
-
-      const apyInfo = computeApyInfo({
-        formattedPoolReservesAndIncentives:
-          formattedReservesAndIncentives.formattedPoolReservesAndIncentives,
-        iUserSummary: iUserSummary as UserSummary,
-      });
-
-      console.debug('[perf] lending:: remote data will be set', newVal);
-      remoteDataState.setState({
-        ...prev,
-        [lendingDataKey]: newVal,
-      });
-
-      computedInfoState.setState(prev => {
-        return {
-          ...prev,
-          [lendingDataKey]: {
-            formattedReservesAndIncentivesState: formattedReservesAndIncentives,
-            iUserSummary: iUserSummary,
-            mappedBalances: mappedBalances,
-            displayPoolReserves: displayPoolReserves,
-            wrapperPoolReserveAndFinalDisplayPoolReserves:
-              wrapperPoolReserveAndFinalDisplayPoolReserves,
-            apyInfo: apyInfo,
-          },
-        };
-      });
-    },
-    200,
-  ),
+const globalSets = {
+  setRemoteData: debounce(applyRemoteData, 200),
 
   setLoading: (
     loading: boolean,
@@ -767,6 +766,71 @@ const globalSets = {
   },
 };
 
+const refreshLendingWalletBalances = makeSWRKeyAsyncFunc(
+  async (options?: {
+    accountAddress?: string;
+    ignoreLoading?: boolean;
+    marketKey?: CustomMarket;
+  }) => {
+    const {
+      accountAddress = storeApiAccountsSwitcher.getSceneAccountInfo({
+        forScene: 'Lending',
+      }).finalSceneCurrentAccount?.address,
+      ignoreLoading,
+      marketKey: paramMarketKey,
+    } = options || {};
+
+    const requestAddress = accountAddress;
+    if (!requestAddress) {
+      return;
+    }
+
+    const marketKey = paramMarketKey || getMarketKey();
+    const selectedMarketData = getSelectedMarketInfo(marketKey).marketData;
+    const pools = marketKey ? getCachePools(marketKey) : undefined;
+    if (!marketKey || !selectedMarketData || !pools) {
+      return;
+    }
+
+    if (!ignoreLoading) {
+      globalSets.setLoading(true, { address: requestAddress, marketKey });
+    }
+
+    const lendingDataKey = encodeRemoteDataKey(marketKey, requestAddress);
+    const prevData =
+      remoteDataState.getState()[lendingDataKey] || getInitRemoteData();
+
+    try {
+      if (!prevData.reserves || !prevData.userReserves) {
+        const fullData = await fetchContractData(requestAddress, marketKey);
+        await applyRemoteData(requestAddress, marketKey, fullData);
+        return;
+      }
+
+      const walletBalances =
+        await pools.walletBalanceProvider.getUserWalletBalancesForLendingPoolProvider(
+          requestAddress,
+          selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
+        );
+
+      await applyRemoteData(requestAddress, marketKey, prev => ({
+        ...prev,
+        walletBalances,
+      }));
+    } finally {
+      if (!ignoreLoading) {
+        globalSets.setLoading(false, { address: requestAddress, marketKey });
+      }
+    }
+  },
+  ctx => {
+    const { accountAddress, marketKey } = ctx.args[0] || {};
+    return `lendingWalletBalances-${accountAddress || 'no_address'}-${
+      marketKey || 'no_market'
+    }`;
+  },
+);
+
 const fetchLendingData = makeSWRKeyAsyncFunc(
   async (options?: {
     accountAddress?: string;
@@ -788,7 +852,9 @@ const fetchLendingData = makeSWRKeyAsyncFunc(
     }
 
     const marketKey = paramMarketKey || getMarketKey();
-    if (!marketKey) return;
+    if (!marketKey) {
+      return;
+    }
 
     // 用户强制忽略loading、前后params一样
     const isSameParams =
@@ -837,6 +903,7 @@ function getPools() {
 
 export const apisLending = {
   fetchLendingData,
+  refreshLendingWalletBalances,
   setLoading: globalSets.setLoading,
 };
 
@@ -860,6 +927,28 @@ const useFetchLendingData = () => {
 
   return {
     fetchData,
+  };
+};
+
+const useRefreshLendingWalletBalances = () => {
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'Lending',
+  });
+  const { marketKey } = useSelectedMarketKey();
+
+  const refreshWalletBalances = useCallback(
+    (ignoreLoading?: boolean) => {
+      return refreshLendingWalletBalances({
+        accountAddress: currentAccount?.address,
+        ignoreLoading,
+        marketKey,
+      });
+    },
+    [currentAccount?.address, marketKey],
+  );
+
+  return {
+    refreshWalletBalances,
   };
 };
 
@@ -996,4 +1085,9 @@ export function useLendingHF() {
   };
 }
 
-export { useFetchLendingData, useLendingSummary, useRefreshHistoryId };
+export {
+  useFetchLendingData,
+  useLendingSummary,
+  useRefreshHistoryId,
+  useRefreshLendingWalletBalances,
+};

@@ -78,6 +78,9 @@ import { IAvailableRepayToken } from '../RepayTokenModal';
 import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
+import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { RootNames } from '@/constant/layout';
+import { naviPush } from '@/utils/navigation';
 
 export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   reserve,
@@ -593,6 +596,33 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
     reserve.reserve.formattedPriceInMarketReferenceCurrency,
   ]);
 
+  const showToSwap = useMemo(() => {
+    return new BigNumber(selectedRepayToken?.balance || '0').lte(0);
+  }, [selectedRepayToken?.balance]);
+
+  const swapTokenId = useMemo(() => {
+    if (isSameAddress(reserve.reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)) {
+      return chainInfo?.nativeTokenAddress || reserve.reserve.underlyingAsset;
+    }
+    return reserve.reserve.underlyingAsset;
+  }, [chainInfo?.nativeTokenAddress, reserve.reserve.underlyingAsset]);
+
+  const handleOpenSwap = useCallback(async () => {
+    if (!currentAccount || !swapTokenId) {
+      return;
+    }
+
+    await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
+    naviPush(RootNames.StackTransaction, {
+      screen: RootNames.Swap,
+      params: {
+        chainEnum: chainEnum || CHAINS_ENUM.ETH,
+        tokenId: swapTokenId,
+        type: 'Buy',
+      },
+    });
+  }, [chainEnum, currentAccount, swapTokenId]);
+
   const handleChangeAmount = useCallback(
     (value: string) => {
       if (directSignBtnRef.current?.isAuthInProgress()) {
@@ -675,16 +705,23 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
           <Text style={styles.amountHeaderTitle}>
             {t('page.Lending.popup.amount')}
           </Text>
-          <Text
-            style={[
-              styles.amountValueDescription,
-              (repayAmount.amount === '0' || !repayAmount.amount) &&
-                styles.amountValueDescriptionDanger,
-            ]}>{`${formatTokenAmount(repayAmount.amount || '0')} ${
-            reserve.reserve.symbol
-          } ($${formatAmountValueKMB(repayAmount.usdValue || '0')}) ${t(
-            'page.Lending.popup.available',
-          )}`}</Text>
+          <View style={styles.amountHeaderRight}>
+            <Text
+              style={[
+                styles.amountValueDescription,
+                (repayAmount.amount === '0' || !repayAmount.amount) &&
+                  styles.amountValueDescriptionDanger,
+              ]}>{`${formatTokenAmount(repayAmount.amount || '0')} ${
+              reserve.reserve.symbol
+            } ($${formatAmountValueKMB(repayAmount.usdValue || '0')}) ${t(
+              'page.Lending.popup.available',
+            )}`}</Text>
+            {showToSwap ? (
+              <Text onPress={handleOpenSwap} style={styles.toSwapText}>
+                {t('page.Lending.popup.toSwap')}→
+              </Text>
+            ) : null}
+          </View>
         </View>
         <TokenAmountInput
           value={amount}
@@ -969,9 +1006,27 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 18,
     color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+    flexShrink: 1,
+    textAlign: 'right',
   },
   amountValueDescriptionDanger: {
     color: ctx.colors2024['red-default'],
+  },
+  amountHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flex: 1,
+    justifyContent: 'flex-end',
+    marginLeft: 12,
+  },
+  toSwapText: {
+    color: ctx.colors2024['brand-default'],
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    flexShrink: 0,
   },
   amountInput: {
     marginTop: 12,

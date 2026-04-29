@@ -14,6 +14,7 @@ import RcIconMarketCC from '@/assets2024/icons/home/IconMarketCC.svg';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { useAppLanguage } from '@/hooks/lang';
+import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
 import {
   createGetStyles2024,
   makeDebugBorder,
@@ -883,6 +884,7 @@ export const HomeOverview = React.memo(() => {
           });
           break;
         case MultiHomeFeatTitle.Lending:
+          clearLendingActionPopupState();
           navigation.push(RootNames.StackTransaction, {
             screen: RootNames.Lending,
             params: {},
