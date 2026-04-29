@@ -168,15 +168,17 @@ const getStyle = createGetStyles2024(ctx => {
       width: 18,
       height: 18,
       marginRight: 4,
+      flexShrink: 0,
     },
     address: {
       flexShrink: 1,
+      minWidth: 0,
       margin: 4,
       fontFamily: 'SF Pro Rounded',
       fontWeight: '500',
       lineHeight: 20,
       fontSize: 16,
-      maxWidth: '90%',
+      //maxWidth: '90%',
       color: ctx.colors2024['neutral-foot'],
     },
     addressCaretIcon: {

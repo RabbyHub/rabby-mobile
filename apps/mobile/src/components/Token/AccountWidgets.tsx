@@ -42,6 +42,8 @@ const getAccountInfoInTokenRowStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     root: {
       flexShrink: 1,
+      flex: 1,
+      minWidth: 0,
     },
     accountContainer: {
       borderRadius: 12,
@@ -61,6 +63,7 @@ const getAccountInfoInTokenRowStyle = createGetStyles2024(({ colors2024 }) => {
     accountAddress: {
       color: colors2024['neutral-body'],
       fontSize: 14,
+      lineHeight: 16,
       fontWeight: '500',
       fontFamily: 'SF Pro Rounded',
       marginHorizontal: 6,

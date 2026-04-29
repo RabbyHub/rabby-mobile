@@ -748,7 +748,6 @@ export const TokenSelectorSheetModal = ({
                           {showOwnerAccount ? (
                             !ownerAccount ? null : (
                               <AccountInfoInTokenRow
-                                containerStyle={{ marginTop: 2 }}
                                 ownerAccount={ownerAccount}
                               />
                             )
@@ -1180,8 +1179,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     tokenRowTokenWrap: {
       flexShrink: 1,
+      flex: 1,
+      minWidth: 0,
       flexDirection: 'row',
-      maxWidth: '70%',
+      //maxWidth: '70%',
     },
     tokenRowTokenInner: {
       flexShrink: 1,
