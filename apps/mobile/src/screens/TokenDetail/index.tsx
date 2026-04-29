@@ -35,6 +35,7 @@ import { TokenDetailBottomBtns } from './components/BottomBtns';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import {
   ScreenSceneAccountProvider,
+  isSameAccount,
   useSceneAccountInfo,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
@@ -102,7 +103,12 @@ const TokenDetailContent = () => {
     prevSceneAddrRef.current = currAddr;
   }, [currentAccount?.address]);
 
-  const effectiveAccount = acceptSceneAccount
+  const shouldUseSceneAccount =
+    !!currentAccount &&
+    (acceptSceneAccount ||
+      (!!account && isSameAccount(account, currentAccount)));
+
+  const effectiveAccount = shouldUseSceneAccount
     ? currentAccount
     : account || currentAccount;
 
