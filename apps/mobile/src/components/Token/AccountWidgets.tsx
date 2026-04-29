@@ -43,6 +43,7 @@ const getAccountInfoInTokenRowStyle = createGetStyles2024(({ colors2024 }) => {
     root: {
       flexShrink: 1,
       flex: 1,
+      width: '100%',
       minWidth: 0,
     },
     accountContainer: {
@@ -68,6 +69,7 @@ const getAccountInfoInTokenRowStyle = createGetStyles2024(({ colors2024 }) => {
       fontFamily: 'SF Pro Rounded',
       marginHorizontal: 6,
       flexShrink: 1,
+      flex: 1,
       minWidth: 0,
     },
 

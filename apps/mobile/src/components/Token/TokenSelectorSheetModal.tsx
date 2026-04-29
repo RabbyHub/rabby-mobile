@@ -1396,6 +1396,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     tokenInfoColLeftFlex: {
       flexShrink: 1,
+      flex: 1,
+      minWidth: 0,
     },
     tokenInfoColRightFixed: {
       flexShrink: 0,

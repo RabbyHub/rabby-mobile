@@ -162,6 +162,8 @@ const getStyle = createGetStyles2024(ctx => {
     },
     addressItem: {
       flexShrink: 1,
+      flex: 1,
+      minWidth: 0,
     },
     walletIcon: {
       borderRadius: 4,
@@ -172,6 +174,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     address: {
       flexShrink: 1,
+      flex: 1,
       minWidth: 0,
       margin: 4,
       fontFamily: 'SF Pro Rounded',
