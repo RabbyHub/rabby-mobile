@@ -71,10 +71,15 @@ import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 
-export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
+type SupplyActionPopupProps = PopupDetailProps & {
+  onBeforeSwapNavigate?: () => void;
+};
+
+export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
   reserve,
   userSummary,
   onClose,
+  onBeforeSwapNavigate,
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
@@ -405,6 +410,10 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       return;
     }
 
+    if (onBeforeSwapNavigate) {
+      onBeforeSwapNavigate();
+    }
+
     await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
     naviPush(RootNames.StackTransaction, {
       screen: RootNames.Swap,
@@ -414,7 +423,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         type: 'Buy',
       },
     });
-  }, [chainEnum, currentAccount, swapTokenId]);
+  }, [chainEnum, currentAccount, onBeforeSwapNavigate, swapTokenId]);
 
   const txsForMiniApproval: Tx[] = useMemo(() => {
     const list: any[] = [];

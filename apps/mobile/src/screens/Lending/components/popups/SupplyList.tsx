@@ -43,11 +43,12 @@ type SupplyListItem =
 
 type LendingSupplyListContentProps = {
   hideHeader?: boolean;
+  onBeforeSwapNavigate?: () => void;
 };
 
 export const LendingSupplyListContent: React.FC<
   LendingSupplyListContentProps
-> = ({ hideHeader = false }) => {
+> = ({ hideHeader = false, onBeforeSwapNavigate }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { reserves } = useLendingRemoteData();
@@ -208,9 +209,10 @@ export const LendingSupplyListContent: React.FC<
         reserve,
         userSummary,
         colors2024,
+        onBeforeSwapNavigate,
       });
     },
-    [colors2024, getTargetReserve, iUserSummary],
+    [colors2024, getTargetReserve, iUserSummary, onBeforeSwapNavigate],
   );
 
   const ListHeaderComponent = useCallback(() => {
@@ -390,9 +392,13 @@ export const LendingSupplyListContent: React.FC<
 };
 
 const LendingSupplyList: React.FC<
-  GlobalModalViewProps<MODAL_NAMES.LENDING_SUPPLY_LIST>
-> = () => {
-  return <LendingSupplyListContent />;
+  GlobalModalViewProps<MODAL_NAMES.LENDING_SUPPLY_LIST> & {
+    onBeforeSwapNavigate?: () => void;
+  }
+> = ({ onBeforeSwapNavigate }) => {
+  return (
+    <LendingSupplyListContent onBeforeSwapNavigate={onBeforeSwapNavigate} />
+  );
 };
 
 export default LendingSupplyList;

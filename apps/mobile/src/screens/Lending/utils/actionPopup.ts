@@ -44,12 +44,14 @@ export const openLendingActionPopup = ({
   userSummary,
   colors2024,
   source,
+  onBeforeSwapNavigate,
 }: {
   popup: LendingActionPopupType;
   reserve: DisplayPoolReserveInfo;
   userSummary: UserSummary;
   colors2024: Record<string, string>;
   source?: string;
+  onBeforeSwapNavigate?: () => void;
 }) => {
   const descriptor: LendingActionPopupDescriptor = {
     popup,
@@ -57,14 +59,19 @@ export const openLendingActionPopup = ({
     ...(source ? { source } : {}),
   };
 
+  const modalName =
+    popup === 'supply'
+      ? MODAL_NAMES.SUPPLY_ACTION_DETAIL
+      : MODAL_NAMES.REPAY_ACTION_DETAIL;
+
   const modalId = createGlobalBottomSheetModal2024({
-    name:
-      popup === 'supply'
-        ? MODAL_NAMES.SUPPLY_ACTION_DETAIL
-        : MODAL_NAMES.REPAY_ACTION_DETAIL,
+    name: modalName,
     reserve,
     userSummary,
     source: source === 'Portfolio Defi' ? source : undefined,
+    ...(popup === 'supply' && onBeforeSwapNavigate
+      ? { onBeforeSwapNavigate }
+      : {}),
     onClose: () => {
       removeGlobalBottomSheetModal2024(modalId);
     },
@@ -72,7 +79,7 @@ export const openLendingActionPopup = ({
       enableContentPanningGesture: true,
       enablePanDownToClose: true,
       enableDismissOnClose: true,
-      rootViewType: popup === 'repay' ? 'View' : undefined,
+      ...(popup === 'repay' ? { rootViewType: 'View' as const } : {}),
       handleStyle: {
         backgroundColor: colors2024['neutral-bg-1'],
       },

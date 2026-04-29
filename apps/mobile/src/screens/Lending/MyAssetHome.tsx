@@ -165,6 +165,9 @@ const MyAssetHome: React.FC = () => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.LENDING_TOKEN_LIST,
       initialTab: 'supply',
+      onBeforeSwapNavigate: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
       onCancel: () => {
         removeGlobalBottomSheetModal2024(modalId);
       },
