@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
@@ -91,7 +91,8 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
-  const { formattedPoolReservesAndIncentives } = useLendingSummary();
+  const { formattedPoolReservesAndIncentives, getTargetReserve } =
+    useLendingSummary();
   const { isMainnet, chainInfo, chainEnum, selectedMarketData } =
     useSelectedMarket();
   const { pools } = usePoolDataProviderContract();
@@ -104,6 +105,10 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
   const isNativeToken = useMemo(() => {
     return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS);
   }, [reserve.underlyingAsset]);
+
+  const currentReserve = useMemo(() => {
+    return getTargetReserve(reserve.underlyingAsset) || reserve;
+  }, [getTargetReserve, reserve]);
 
   const afterHF = useMemo(() => {
     if (!amount || isZeroAmount(amount)) {
@@ -363,7 +368,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
   ]);
 
   const supplyAmount = useMemo(() => {
-    const myAmount = BigNumber(reserve.walletBalance || '0');
+    const myAmount = BigNumber(currentReserve.walletBalance || '0');
     const poolAmount = BigNumber(reserve.reserve.supplyCap)
       .minus(BigNumber(reserve.reserve.totalLiquidity))
       .multipliedBy(SUPPLY_UI_SAFE_MARGIN);
@@ -384,15 +389,24 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
       usdValue,
     };
   }, [
-    reserve.walletBalance,
+    currentReserve.walletBalance,
     reserve.reserve.supplyCap,
     reserve.reserve.totalLiquidity,
     reserve.reserve.formattedPriceInMarketReferenceCurrency,
   ]);
 
   const showToSwap = useMemo(() => {
-    return new BigNumber(reserve.walletBalance || '0').lte(0);
-  }, [reserve.walletBalance]);
+    return (
+      new BigNumber(currentReserve.walletBalance || '0').lte(0) &&
+      BigNumber(reserve.reserve.supplyCap)
+        .minus(BigNumber(reserve.reserve.totalLiquidity))
+        .gt(0)
+    );
+  }, [
+    currentReserve.walletBalance,
+    reserve.reserve.supplyCap,
+    reserve.reserve.totalLiquidity,
+  ]);
 
   const swapTokenId = useMemo(() => {
     if (isNativeToken) {
@@ -612,9 +626,11 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
                 : formatAmountValueKMB(supplyAmount.usdValue || '0')
             }) ${t('page.Lending.popup.available')}`}</Text>
             {showToSwap ? (
-              <Text onPress={handleOpenSwap} style={styles.toSwapText}>
-                {t('page.Lending.popup.toSwap')}→
-              </Text>
+              <TouchableOpacity activeOpacity={1} onPress={handleOpenSwap}>
+                <Text style={styles.toSwapText}>
+                  {t('page.Lending.popup.toSwap')}→
+                </Text>
+              </TouchableOpacity>
             ) : null}
           </View>
         </View>

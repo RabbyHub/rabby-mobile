@@ -280,7 +280,6 @@ const MyAssetHome: React.FC = () => {
       refreshWalletBalances(true).catch(() => {
         restoringPopupRefreshKeyRef.current = null;
       });
-      return;
     }
 
     const reserve = findReserveByTokenAddress(popupToRestore.tokenAddress);
