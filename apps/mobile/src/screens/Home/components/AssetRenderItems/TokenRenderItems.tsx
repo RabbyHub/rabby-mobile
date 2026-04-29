@@ -881,6 +881,7 @@ const getStyles = createGetStyles2024(ctx => ({
     borderRadius: 16,
     paddingLeft: 12,
     paddingRight: 16,
+    gap: 20,
   },
   tokenSectionHeader: {
     backgroundColor: ctx.isLight
@@ -919,10 +920,12 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   tokenRowTokenWrap: {
     flexShrink: 1,
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     height: '100%',
-    maxWidth: '70%',
+    //maxWidth: '70%',
   },
   tokenHeader: {
     width: '100%',
@@ -981,6 +984,8 @@ const getStyles = createGetStyles2024(ctx => ({
   tokenRowTokenInner: {
     flexShrink: 1,
     justifyContent: 'center',
+    flex: 1,
+    minWidth: 0,
     gap: 2,
   },
   searchTokenExtraInfo: {

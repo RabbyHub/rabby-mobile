@@ -114,11 +114,11 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    flexShrink: 0,
+    flexShrink: 1,
   },
   touchBox: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     flexShrink: 1,
     gap: 6,
@@ -130,6 +130,7 @@ const getStyles = createGetStyles2024(ctx => ({
     borderWidth: 1,
     borderColor: 'transparent',
     overflow: 'visible',
+    flexShrink: 0,
     // ...makeDebugBorder(),
   },
   walletIcon: {
@@ -141,6 +142,8 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   titleText: {
     flexShrink: 1,
+    flex: 1,
+    minWidth: 0,
     color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
