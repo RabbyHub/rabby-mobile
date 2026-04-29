@@ -16,6 +16,7 @@ import { Account } from '@/core/services/preference';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import { useAccounts } from '@/hooks/account';
 import { useMiniSigner } from '@/hooks/useSigner';
+import type { SimpleSignConfig } from '@/hooks/useSigner';
 import { useTheme2024 } from '@/hooks/theme';
 import { Skeleton } from '@rneui/themed';
 import BigNumber from 'bignumber.js';
@@ -74,6 +75,7 @@ import { pollDepositStatus } from '@/core/apis/gasAccount';
 import { toast } from '@/components2024/Toast';
 import { GasAccountTopUpWaitCallback } from './topUpContinuation';
 import { apiProvider } from '@/core/apis';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 
 type DepositAccount = Account;
 
@@ -289,11 +291,35 @@ const GasAccountDepositTokenFormInner: React.FC<{
 
   const {
     openUI,
+    openDirect,
     resetGasStore,
     close: closeMiniSign,
   } = useMiniSigner({
     account: signerAccount,
   });
+
+  const openDirectOrFallbackToUI = useCallback(
+    async (config: SimpleSignConfig) => {
+      try {
+        resetGasStore();
+        closeMiniSign();
+        return await openDirect({
+          ...config,
+          checkGasFeeTooHigh: true,
+        });
+      } catch (error) {
+        if (
+          error === MINI_SIGN_ERROR.CANT_PROCESS ||
+          error === MINI_SIGN_ERROR.GAS_FEE_TOO_HIGH
+        ) {
+          closeMiniSign();
+          return await openUI(config);
+        }
+        throw error;
+      }
+    },
+    [closeMiniSign, openDirect, openUI, resetGasStore],
+  );
 
   const amountValue = Number(usdValue || 0);
   const minDepositUsd = useMemo(
@@ -515,9 +541,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
           const tx = await buildTopUpGasAccount(params);
 
           if (tx) {
-            resetGasStore();
-            closeMiniSign();
-            const res = await openUI({
+            const res = await openDirectOrFallbackToUI({
               txs: [tx],
               autoUseGasFree: true,
               purpose: 'gasAccountTopUp',
@@ -546,9 +570,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
 
         let lastHash = '';
         if (isAccountSupportMiniApproval(selectedOwnerAccount.type)) {
-          resetGasStore();
-          closeMiniSign();
-          const hashes = await openUI({
+          const hashes = await openDirectOrFallbackToUI({
             txs: bridgeTxs,
             autoUseGasFree: true,
             purpose: 'gasAccountTopUp',
@@ -652,15 +674,13 @@ const GasAccountDepositTokenFormInner: React.FC<{
     amountValue,
     bridgeFromTokenAmount,
     bridgeQuote,
-    closeMiniSign,
     ensureGasAccountLogin,
     fetchTopUpUsedNonce,
     onClose,
     onDeposit,
     onWaitDepositResult,
-    openUI,
+    openDirectOrFallbackToUI,
     quoteAmountValue,
-    resetGasStore,
     selectedOwnerAccount,
     selectedToken,
     sendBridgeTxsDirectly,

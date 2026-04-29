@@ -118,6 +118,7 @@ import {
   shouldIgnoreAmountChangeInMaxMode,
 } from '@/utils/form';
 import { Alert } from 'react-native';
+import { useMiniSignerEffectPause } from '@/hooks/useMiniSignerEffectPause';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -940,13 +941,22 @@ const Swap = ({
 
   const showRiskTips =
     isSlippageLow || isSlippageHigh || showLoss || miniSignGasFeeTooHigh;
+  const shouldPauseMiniSignerEffects =
+    useMiniSignerEffectPause(miniSignLoading);
 
   useEffect(() => {
     if (!isFocused) {
       closeMiniSigner();
       return;
     }
-    if (!canShowDirectSubmit || !currentAccount || !currentTxs?.length) {
+    if (shouldPauseMiniSignerEffects()) {
+      return;
+    }
+    if (
+      !canShowDirectSubmit ||
+      !currentAccount?.address ||
+      !currentTxs?.length
+    ) {
       closeMiniSigner();
       return;
     }
@@ -963,20 +973,27 @@ const Swap = ({
     onChangeCheckGasFeeTooHigh,
     isFocused,
     canShowDirectSubmit,
-    currentAccount,
+    currentAccount?.address,
     currentTxs,
     prefetchMiniSigner,
     closeMiniSigner,
     miniSignGa,
+    shouldPauseMiniSignerEffects,
   ]);
 
   useEffect(() => {
+    if (shouldPauseMiniSignerEffects()) {
+      return;
+    }
     if (!activeProvider) {
       mutateTxs([]);
     }
-  }, [activeProvider, mutateTxs]);
+  }, [activeProvider, mutateTxs, shouldPauseMiniSignerEffects]);
 
   useEffect(() => {
+    if (shouldPauseMiniSignerEffects()) {
+      return;
+    }
     if (activeProvider && canShowDirectSubmit) {
       mutateTxs([]);
       runBuildSwapTxs();
@@ -984,9 +1001,10 @@ const Swap = ({
   }, [
     activeProvider,
     canShowDirectSubmit,
-    currentAccount,
+    currentAccount?.address,
     mutateTxs,
     runBuildSwapTxs,
+    shouldPauseMiniSignerEffects,
     swapUseSlider,
   ]);
 
