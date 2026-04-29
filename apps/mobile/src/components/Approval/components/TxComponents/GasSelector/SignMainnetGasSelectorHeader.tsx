@@ -520,6 +520,7 @@ export const SignMainnetHeaderContent = ({
         account={account}
         fixedMode={fixedMode}
         defaultFixedModeOnCurrentChain={defaultFixedModeOnCurrentChain}
+        gasToken={gasToken}
       />
     </>
   );

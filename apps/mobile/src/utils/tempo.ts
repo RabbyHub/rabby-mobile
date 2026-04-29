@@ -344,8 +344,11 @@ export const shouldUseTempoTransaction = (params: {
   if (!isTempoChain(chainServerId)) {
     return false;
   }
+  if (!isTempoBatchSupportedAccountType(accountType)) {
+    return false;
+  }
   if (isGasAccount) {
-    return isTempoBatchSupportedAccountType(accountType);
+    return true;
   }
   return isTempoSpecialTransaction(tx);
 };

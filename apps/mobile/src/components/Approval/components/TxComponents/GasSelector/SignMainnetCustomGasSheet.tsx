@@ -26,7 +26,6 @@ import { Account } from '@/core/services/preference';
 import { apiProvider } from '@/core/apis';
 import { INPUT_NUMBER_RE } from '@/constant/regexp';
 import { calcMaxPriorityFee } from '@/utils/transaction';
-import { calcGasEstimated } from '@/utils/time';
 import { formatGasHeaderUsdValue, formatTokenAmount } from '@/utils/number';
 import { useFindChain } from '@/hooks/useFindChain';
 import { useTheme2024 } from '@/hooks/theme';
@@ -47,6 +46,7 @@ import {
   buildSignMainnetGasChange,
   type SignMainnetGasChange,
 } from './signMainnetCustomGas';
+import type { GasTokenInfo } from '@/utils/tempo';
 
 type GasCalcResult = {
   gasCostUsd: BigNumber;
@@ -101,6 +101,7 @@ export const SignMainnetCustomGasSheet = ({
   account,
   fixedMode,
   defaultFixedModeOnCurrentChain = false,
+  gasToken,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -133,9 +134,10 @@ export const SignMainnetCustomGasSheet = ({
   account: Account;
   fixedMode?: boolean;
   defaultFixedModeOnCurrentChain?: boolean;
+  gasToken?: GasTokenInfo;
 }) => {
   const { t } = useTranslation();
-  const { colors, colors2024, styles } = useTheme2024({ getStyle });
+  const { colors, styles } = useTheme2024({ getStyle });
   const chain = useFindChain({ id: chainId })!;
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -188,6 +190,17 @@ export const SignMainnetCustomGasSheet = ({
     },
   });
 
+  const resolvedGasToken = useMemo(
+    () =>
+      gasToken || {
+        tokenId: chain.nativeTokenAddress,
+        symbol: chain.nativeTokenSymbol,
+        decimals: chain.nativeTokenDecimals || 18,
+        logoUrl: chain.nativeTokenLogo,
+      },
+    [chain, gasToken],
+  );
+
   const gasCostUsdStr = useMemo(() => {
     const bn = new BigNumber(modalExplainGas?.gasCostUsd);
     return formatGasHeaderUsdValue(bn.toString(10));
@@ -199,8 +212,8 @@ export const SignMainnetCustomGasSheet = ({
         new BigNumber(modalExplainGas.gasCostAmount).toString(10),
         6,
         true,
-      )} ${chain?.nativeTokenSymbol}`,
-    [chain?.nativeTokenSymbol, modalExplainGas.gasCostAmount],
+      )} ${resolvedGasToken.symbol}`,
+    [modalExplainGas.gasCostAmount, resolvedGasToken.symbol],
   );
 
   const hasTip = isReal1559 && isHardware;
@@ -481,9 +494,9 @@ export const SignMainnetCustomGasSheet = ({
             <View>
               <Text style={styles.gasSelectorModalAmount}>{gasCostUsdStr}</Text>
               <View style={styles.gasSelectorModalUsdWrap}>
-                {chain.nativeTokenLogo ? (
+                {resolvedGasToken.logoUrl ? (
                   <Image
-                    source={{ uri: chain.nativeTokenLogo }}
+                    source={{ uri: resolvedGasToken.logoUrl }}
                     width={16}
                     height={16}
                     style={StyleSheet.flatten({ borderRadius: 16 })}
@@ -542,11 +555,13 @@ export const SignMainnetCustomGasSheet = ({
                 </Text>
                 <Text style={styles.gasPriceDescBoldText}>
                   {formatTokenAmount(
-                    new BigNumber(nativeTokenBalance).div(1e18).toFixed(),
+                    new BigNumber(nativeTokenBalance)
+                      .div(new BigNumber(10).pow(resolvedGasToken.decimals))
+                      .toFixed(),
                     4,
                     true,
                   )}{' '}
-                  {chain.nativeTokenSymbol}
+                  {resolvedGasToken.symbol}
                 </Text>
               </Text>
             </View>
