@@ -3053,6 +3053,7 @@
       "popup": {
         "amount": "Amount",
         "available": "available",
+        "toSwap": "To swap",
         "title": "Transaction Overview",
         "liquidationAt": "Liquidation at < 1.0",
         "remainingDebt": "Remaining debt"
