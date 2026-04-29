@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, TouchableOpacity } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
@@ -99,7 +99,12 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
 
   const { isMainnet, chainInfo, chainEnum, selectedMarketData } =
     useSelectedMarket();
-  const { formattedPoolReservesAndIncentives } = useLendingSummary();
+  const { formattedPoolReservesAndIncentives, getTargetReserve } =
+    useLendingSummary();
+
+  const currentReserve = useMemo(() => {
+    return getTargetReserve(reserve.underlyingAsset) || reserve;
+  }, [getTargetReserve, reserve]);
 
   const availableRepayTokens = useMemo(() => {
     const poolReserve = formattedPoolReservesAndIncentives.find(item =>
@@ -114,7 +119,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         symbol: poolReserve.symbol,
         aToken: false,
         decimals: poolReserve.decimals,
-        balance: reserve.walletBalance || '0',
+        balance: currentReserve.walletBalance || '0',
       },
     ];
     if (
@@ -128,12 +133,14 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         address: poolReserve.aTokenAddress,
         symbol: `a${poolReserve.symbol}`,
         aToken: true,
-        balance: reserve.underlyingBalance,
+        balance: currentReserve.underlyingBalance,
         decimals: poolReserve.decimals,
       });
     }
     return _tokens;
   }, [
+    currentReserve.underlyingBalance,
+    currentReserve.walletBalance,
     formattedPoolReservesAndIncentives,
     reserve,
     selectedMarketData?.market,
@@ -597,8 +604,12 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   ]);
 
   const showToSwap = useMemo(() => {
-    return new BigNumber(selectedRepayToken?.balance || '0').lte(0);
-  }, [selectedRepayToken?.balance]);
+    return (
+      !isAtTokenRepay &&
+      new BigNumber(selectedRepayToken?.balance || '0').lte(0) &&
+      new BigNumber(reserve.variableBorrows || '0').gt(0)
+    );
+  }, [isAtTokenRepay, reserve.variableBorrows, selectedRepayToken?.balance]);
 
   const swapTokenId = useMemo(() => {
     if (isSameAddress(reserve.reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)) {
@@ -717,9 +728,11 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
               'page.Lending.popup.available',
             )}`}</Text>
             {showToSwap ? (
-              <Text onPress={handleOpenSwap} style={styles.toSwapText}>
-                {t('page.Lending.popup.toSwap')}→
-              </Text>
+              <TouchableOpacity activeOpacity={1} onPress={handleOpenSwap}>
+                <Text style={styles.toSwapText}>
+                  {t('page.Lending.popup.toSwap')}→
+                </Text>
+              </TouchableOpacity>
             ) : null}
           </View>
         </View>
@@ -737,7 +750,8 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
           style={styles.amountInput}
           onClickToken={
             // 有aToken选项，并且有质押余额
-            availableRepayTokens.length > 1 && !!reserve.underlyingBalance
+            availableRepayTokens.length > 1 &&
+            !!currentReserve.underlyingBalance
               ? () => {
                   handleClickToken();
                 }
