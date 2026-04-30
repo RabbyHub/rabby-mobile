@@ -56,6 +56,7 @@ import {
   ApprovalTokenDetailSheetModalStub,
   BackgroundSecureBlurView,
   BottomSheetBrowser,
+  BottomSheetDappInfoPopup,
   BrowserFavoritePopup,
   BrowserManagePopup,
   DuplicateAddressModal,
@@ -274,6 +275,7 @@ function AppNavigationDeferredGlobals({
         <BottomSheetBrowser />
         <BrowserManagePopup />
         <BrowserFavoritePopup />
+        <BottomSheetDappInfoPopup />
       </>
     );
   }

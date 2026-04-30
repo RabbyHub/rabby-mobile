@@ -25,6 +25,7 @@ export interface DappInfo {
   currentAccount?: Account | null;
   favoriteAt?: number | null;
   isDapp?: boolean;
+  isSkipRemind?: boolean;
 }
 
 export type DappStore = {

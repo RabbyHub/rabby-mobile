@@ -1095,7 +1095,19 @@
         "emptyAndroid": "No dApp added to favorites",
         "empty": "No website added to favorites",
         "favorite": "Favorite",
-        "search": "Search"
+        "search": "Search",
+        "websites": "Websites",
+        "tabs": {
+          "__skip_translation": ["favorite", "defi", "dex", "rwa", "nft"],
+          "favorite": "Favorite",
+          "all": "All",
+          "defi": "DeFi",
+          "rwa": "RWA",
+          "perps": "Perps",
+          "predict": "Predict",
+          "dex": "DEX",
+          "nft": "NFT"
+        }
       },
       "depositAssets": {
         "subtitle": "Receive assets to this wallet",
@@ -2397,6 +2409,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "More"
+      },
+      "DappInfoPopup": {
+        "listedBy": "Listed by",
+        "sitePopularity": "Site popularity",
+        "popularLevelHigh": "High",
+        "popularLevelMedium": "Medium",
+        "popularLevelLow": "Low",
+        "popularLevelVeryLow": "Very Low",
+        "category": "Category",
+        "skipDappInfoNextTime": "Skip this page next time",
+        "openDapp": "Open"
       }
     },
     "browserManage": {

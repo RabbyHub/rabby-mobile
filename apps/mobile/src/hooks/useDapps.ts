@@ -75,6 +75,9 @@ export function useDapps() {
     return res;
   }, []);
 
+  /**
+   * @deprecated
+   */
   const updateFavorite = useCallback((id: string, v: boolean) => {
     if (dappService.getDapp(id)) {
       dappService.updateFavorite(id, v);
