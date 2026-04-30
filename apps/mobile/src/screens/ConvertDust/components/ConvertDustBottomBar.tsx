@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 export function ConvertDustBottomBar({
   disabled,
   onPress,
+  safeOffBottom,
   status,
 }: {
   disabled?: boolean;
@@ -20,7 +21,9 @@ export function ConvertDustBottomBar({
   const { t } = useTranslation();
 
   return (
-    <View pointerEvents="box-none" style={[styles.bottomBar]}>
+    <View
+      pointerEvents="box-none"
+      style={[styles.bottomBar, { paddingBottom: safeOffBottom + 17 }]}>
       {status === 'active' ? (
         <Button
           title={t('page.convertDust.bottomBar.stop')}
@@ -72,15 +75,10 @@ export function ConvertDustBottomBar({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   bottomBar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 10,
+    flexShrink: 0,
     paddingTop: 12,
     paddingHorizontal: 24,
     backgroundColor: colors2024['neutral-bg-1'],
-    paddingBottom: 38,
   },
   ctaContainer: {
     height: 52,

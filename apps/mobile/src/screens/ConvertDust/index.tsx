@@ -54,6 +54,7 @@ import type {
 import { useDismissConvertDustBanner } from '../Home/hooks/useConvertDustBanner';
 import { ConvertDustEntryGuideModal } from './components/ConvertDustEntryGuideModal';
 import { useTranslation } from 'react-i18next';
+import { useMount } from 'ahooks';
 
 type ConvertDustNavigationProp = NativeStackNavigationProp<
   TransactionNavigatorParamList,
@@ -297,6 +298,10 @@ function ConvertDustContent({
     },
     [task],
   );
+
+  useMount(() => {
+    handleChainChange(chainEnum);
+  });
 
   const handleFilterChange = useCallback(
     (filter: DustFilter) => {
