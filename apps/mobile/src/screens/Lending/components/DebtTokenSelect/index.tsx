@@ -13,6 +13,7 @@ import AssetItem from './AssetItem';
 import { EmodeCategory } from '../../type';
 import { useMode } from '../../hooks/useMode';
 import { getTokensTo } from '../../utils/swap';
+import { getBorrowUsage } from '../../utils/supply';
 import { SwappableToken } from '../../types/swap';
 import { useLendingSummary, useSelectedMarket } from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -51,9 +52,19 @@ export default function DebtTokenSelectModal({
           chainInfo?.id,
           marketKey,
         )
-          .filter(
-            item => !isSameAddress(item.underlyingAddress, excludeTokenAddress),
-          )
+          .filter(item => {
+            if (isSameAddress(item.underlyingAddress, excludeTokenAddress)) {
+              return false;
+            }
+            const displayPoolReserve = displayPoolReserves.find(x =>
+              isSameAddress(x.underlyingAsset, item.underlyingAddress),
+            );
+            if (!displayPoolReserve) {
+              return true;
+            }
+            const { borrowReached } = getBorrowUsage(displayPoolReserve);
+            return !borrowReached;
+          })
           .map(item => {
             const displayPoolReserve = displayPoolReserves.find(
               x => x.underlyingAsset === item.underlyingAddress,
