@@ -372,6 +372,10 @@ export type TransactionNavigatorParamList = {
     toTokenId?: TokenItem['id'];
   };
   [RootNames.MultiBridge]?: TransactionNavigatorParamList['Bridge'] & object;
+  [RootNames.ConvertDust]?: {
+    disableAccountSwitch?: boolean;
+    fromHomeConvertDustBanner?: boolean;
+  };
   [RootNames.GasAccount]?: {};
   [RootNames.BatchRevoke]: {
     revokeList: ApprovalSpenderItemToBeRevoked[];

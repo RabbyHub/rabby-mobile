@@ -44,6 +44,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     icon: {
       transform: [{ rotate: '90deg' }],
     },
+    disabled: {
+      opacity: 0.3,
+    },
   };
 });
 
@@ -58,6 +61,7 @@ export function ChainInfo2024({
   rightArrowIcon,
   titleStyle,
   account,
+  disabled,
 }: React.PropsWithChildren<
   RNViewProps & {
     chainEnum?: CHAINS_ENUM;
@@ -69,6 +73,7 @@ export function ChainInfo2024({
     rightArrowIcon?: React.ReactNode;
     titleStyle?: StyleProp<TextStyle>;
     account: Account;
+    disabled?: boolean;
   }
 >) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -122,8 +127,9 @@ export function ChainInfo2024({
     <>
       <TouchableOpacity
         style={[styles.container, style]}
+        disabled={disabled}
         onPress={createChainModal}>
-        <View style={styles.left}>
+        <View style={[styles.left, disabled && styles.disabled]}>
           <ChainIconImage
             size={24}
             chainEnum={chainEnum}
@@ -137,7 +143,7 @@ export function ChainInfo2024({
             rightArrowIcon
           ) : (
             <ArrowRightSVG
-              style={styles.icon}
+              style={[styles.icon, disabled && styles.disabled]}
               color={colors2024['neutral-title-1']}
             />
           )}
