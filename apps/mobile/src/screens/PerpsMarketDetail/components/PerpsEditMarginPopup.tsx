@@ -313,6 +313,9 @@ export const PerpsEditMarginPopup: React.FC<{
                   <AssetAvatar logo={coinLogo} size={28} />
                   <Text style={styles.coinName}>
                     {formatPerpsCoin(displayName)}
+                    <Text style={styles.quote}>{`/${
+                      currentAssetCtx?.quoteAsset || 'USDC'
+                    }`}</Text>
                   </Text>
                   <View style={styles.crossTag}>
                     <Text style={styles.crossText}>
@@ -848,6 +851,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
+    },
+    quote: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '500',
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-info'],
     },
     crossText: {
       fontFamily: 'SF Pro Rounded',

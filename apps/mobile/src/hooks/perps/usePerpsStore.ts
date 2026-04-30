@@ -118,6 +118,7 @@ export interface PerpsState {
     availableToTrade: string;
     balances: SpotBalance[];
     balancesMap: Record<string, SpotBalance>;
+    tokenToAvailableAfterMaintenance: [number, string][] | null;
   };
   userAbstraction: UserAbstractionResp;
   openOrders: OpenOrder[];
@@ -146,6 +147,7 @@ export interface PerpsState {
   pollingTimer: NodeJS.Timeout | null;
   fillsOrderTpOrSl: Record<string, 'tp' | 'sl'>;
   favoriteMarkets: string[];
+  marginModeByCoin: Record<string, 'cross' | 'isolated'>;
   homePositionPnl: {
     pnl: number;
     show: boolean;
@@ -171,6 +173,7 @@ export const initialState: PerpsState = {
     availableToTrade: '0',
     balances: [],
     balancesMap: {},
+    tokenToAvailableAfterMaintenance: null,
   },
   userAbstraction: UserAbstractionResp.default,
   hasPermission: true,
@@ -193,6 +196,7 @@ export const initialState: PerpsState = {
   wsSubscriptions: [],
   pollingTimer: null,
   favoriteMarkets: [],
+  marginModeByCoin: {},
   homePositionPnl: {
     pnl: 0,
     accountValue: 0,
@@ -548,6 +552,30 @@ export const addFavoriteMarket = (market: string) => {
   perpsService.addFavoriteMarket(normalizedMarket);
 };
 
+const fetchMarginModeByCoin = async () => {
+  const marginModeByCoin = await perpsService.getMarginModeByCoin();
+  setPerpsState(prev => ({ ...prev, marginModeByCoin }));
+};
+
+export const setMarginModeForCoin = (
+  coin: string,
+  mode: 'cross' | 'isolated',
+) => {
+  if (!coin) {
+    return;
+  }
+  setPerpsState(prev => {
+    if (prev.marginModeByCoin[coin] === mode) {
+      return prev;
+    }
+    return {
+      ...prev,
+      marginModeByCoin: { ...prev.marginModeByCoin, [coin]: mode },
+    };
+  });
+  perpsService.setMarginModeForCoin(coin, mode);
+};
+
 export const removeFavoriteMarket = (market: string) => {
   const normalizedMarket = market.toUpperCase();
   setPerpsState(prev => ({
@@ -710,8 +738,12 @@ const mapLedgerUpdatesToHistory = (
         };
       }
 
-      const { destination, usdcValue, user, destinationDex, sourceDex } =
-        item.delta as any;
+      const {
+        destination = '',
+        usdcValue = '0',
+        user = '',
+        destinationDex,
+      } = item.delta;
       const isWithdrawSend = Object.values(
         HYPE_EVM_BRIDGE_ADDRESS_MAP,
       ).includes(destination);
@@ -729,7 +761,7 @@ const mapLedgerUpdatesToHistory = (
         currentAddress &&
         isSameAddress(destination, currentAddress)
       ) {
-        if (sourceDex === 'spot' || destinationDex === 'spot') {
+        if (user && destination && isSameAddress(user, destination)) {
           return {
             time: item.time,
             hash: item.hash,
@@ -1156,6 +1188,7 @@ export const usePerpsStore = () => {
 
 runIIFEFunc(fetchMarketData);
 runIIFEFunc(fetchFavoriteMarkets);
+runIIFEFunc(fetchMarginModeByCoin);
 
 export function startSubscribePerpsOnAppState() {
   const sdk = apisPerps.getPerpsSDK();
