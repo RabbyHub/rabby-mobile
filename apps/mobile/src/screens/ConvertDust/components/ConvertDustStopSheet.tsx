@@ -1,5 +1,7 @@
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,7 +20,8 @@ export function ConvertDustStopSheet({
   const { t } = useTranslation();
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.convertDustStopSheet}
       visible={visible}
       transparent
       animationType="fade"
@@ -49,7 +52,7 @@ export function ConvertDustStopSheet({
           </View>
         </View>
       </View>
-    </Modal>
+    </TrackedModal>
   );
 }
 

@@ -26,6 +26,8 @@ export const MODAL_GATE_IDS = {
   perpsAgentsLimit: 'perps-agents-limit',
   perpsDepositToken: 'perps-deposit-token',
   perpsEditTpSlPrice: 'perps-edit-tp-sl-price',
+  convertDustEntryGuide: 'convert-dust-entry-guide',
+  convertDustStopSheet: 'convert-dust-stop-sheet',
 } as const;
 
 const modalGateStore = zCreate<ModalGateState>(() => ({

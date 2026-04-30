@@ -9,6 +9,8 @@ import { NewTag } from '../../Home/components/NewTag';
 import GuideImg from '@/assets2024/icons/convertDust/convert-guide-light.png';
 import GuideImgDark from '@/assets2024/icons/convertDust/convert-guide-dark.png';
 import { Image } from 'react-native';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 
 export function ConvertDustEntryGuideModal({
   visible,
@@ -21,7 +23,8 @@ export function ConvertDustEntryGuideModal({
   const { t } = useTranslation();
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.convertDustEntryGuide}
       visible={visible}
       transparent
       animationType="fade"
@@ -52,7 +55,7 @@ export function ConvertDustEntryGuideModal({
           </View>
         </Pressable>
       </Pressable>
-    </Modal>
+    </TrackedModal>
   );
 }
 
