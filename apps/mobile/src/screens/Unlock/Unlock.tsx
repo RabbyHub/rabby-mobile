@@ -1,11 +1,19 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
-import { View, Platform, Keyboard, KeyboardAvoidingView } from 'react-native';
+import {
+  View,
+  Platform,
+  Keyboard,
+  KeyboardAvoidingView,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import * as Yup from 'yup';
 
 import { default as RcRabbyLogoLight } from './icons/icon-with-logo-light.svg';
 import { default as RcRabbyLogoDark } from './icons/icon-with-logo-dark.svg';
+import RcPending from '@/assets2024/icons/swap/loading-cc.svg';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { useTranslation } from 'react-i18next';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
@@ -53,7 +61,6 @@ import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { startUnlockScreenBootstrapWarmups } from '@/setup-app-before-render';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
-import { CircleSpinnerCC } from '@/components2024/CircleSpinner/CircleSpinnerCC';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -63,6 +70,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
+import type { SvgProps } from 'react-native-svg';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -107,7 +115,7 @@ const toastBiometricsFailed = (message?: string) => {
   prevFailedRef.hide?.();
   prevFailedRef.hide = toastFailed(message);
 };
-const toastLoading = toastWithIcon(() => <CircleSpinnerCC size={18} />);
+const toastLoading = toastWithIcon(UnlockToastLoadingIcon);
 const toastUnlocking = () =>
   toastLoading(i18next.t('page.unlock.unlocking'), { duration: 3000 });
 
@@ -118,6 +126,86 @@ function startUnlockWarmups(reason: string) {
   startUnlockScreenBootstrapWarmups().catch(error => {
     console.error(`startUnlockScreenBootstrapWarmups::${reason}::error`, error);
   });
+}
+
+function normalizeSvgSize(size: SvgProps['width'], fallback: number) {
+  if (typeof size === 'number') {
+    return size;
+  }
+
+  if (typeof size === 'string') {
+    const parsed = Number(size);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  return fallback;
+}
+
+function UnlockRnrSpinner(props: {
+  size?: number;
+  color?: string;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const { size = 18, color, style } = props;
+  const { colors2024 } = useTheme2024();
+  const spinValue = useSharedValue(0);
+
+  React.useEffect(() => {
+    spinValue.value = withRepeat(
+      withTiming(1, {
+        duration: 2000,
+        easing: Easing.linear,
+      }),
+      -1,
+      false,
+    );
+
+    return () => {
+      cancelAnimation(spinValue);
+    };
+  }, [spinValue]);
+
+  const spinStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ rotate: `${spinValue.value * 360}deg` }],
+    };
+  });
+
+  return (
+    <Animated.View
+      style={[
+        {
+          width: size,
+          height: size,
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'visible',
+          transformOrigin: 'center',
+        },
+        style,
+        spinStyle,
+      ]}>
+      <RcPending
+        width={size}
+        height={size}
+        color={color || colors2024['neutral-InvertHighlight']}
+      />
+    </Animated.View>
+  );
+}
+
+function UnlockToastLoadingIcon(props: SvgProps) {
+  const size = normalizeSvgSize(props.width, 16);
+
+  return (
+    <UnlockRnrSpinner
+      size={size}
+      color={
+        typeof props.color === 'string' && props.color ? props.color : undefined
+      }
+      style={props.style as StyleProp<ViewStyle>}
+    />
+  );
 }
 
 export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
@@ -187,6 +275,22 @@ function useUnlockForm(_navigation: ReturnType<typeof useRabbyAppNavigation>) {
     });
   }, [t]);
   const { isUnlocking } = useUnlockApp();
+  const [isPasswordUnlockPending, setIsPasswordUnlockPending] =
+    React.useState(false);
+  const passwordSubmitFrameRef = React.useRef<number | null>(null);
+  const passwordSubmittingRef = React.useRef(false);
+  const mountedRef = React.useRef(true);
+
+  React.useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      passwordSubmittingRef.current = false;
+      if (passwordSubmitFrameRef.current) {
+        cancelAnimationFrame(passwordSubmitFrameRef.current);
+        passwordSubmitFrameRef.current = null;
+      }
+    };
+  }, []);
 
   const checkUnlocked = useCallback(async () => {
     if (!apisLock.isUnlocked()) {
@@ -243,8 +347,42 @@ function useUnlockForm(_navigation: ReturnType<typeof useRabbyAppNavigation>) {
   });
 
   const shouldDisabled = !formik.values.password;
+  const submitPassword = React.useCallback(() => {
+    if (
+      shouldDisabled ||
+      passwordSubmittingRef.current ||
+      isPasswordUnlockPending ||
+      isUnlocking
+    ) {
+      return;
+    }
 
-  return { isUnlocking, formik, shouldDisabled, checkUnlocked };
+    passwordSubmittingRef.current = true;
+    setIsPasswordUnlockPending(true);
+    passwordSubmitFrameRef.current = requestAnimationFrame(() => {
+      passwordSubmitFrameRef.current = requestAnimationFrame(() => {
+        passwordSubmitFrameRef.current = null;
+        Promise.resolve(formik.submitForm())
+          .catch(error => {
+            console.error(error);
+          })
+          .finally(() => {
+            passwordSubmittingRef.current = false;
+            if (mountedRef.current) {
+              setIsPasswordUnlockPending(false);
+            }
+          });
+      });
+    });
+  }, [formik, isPasswordUnlockPending, isUnlocking, shouldDisabled]);
+
+  return {
+    isUnlocking: isUnlocking || isPasswordUnlockPending,
+    formik,
+    shouldDisabled,
+    checkUnlocked,
+    submitPassword,
+  };
 }
 
 const unlockFailedRef = { current: 0 };
@@ -273,7 +411,7 @@ export default function UnlockScreen() {
   const {
     computed: { isBiometricsEnabled, isFaceID },
   } = useBiometrics({ autoFetch: true });
-  const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
+  const { isUnlocking, formik, shouldDisabled, checkUnlocked, submitPassword } =
     useUnlockForm(navigation);
 
   useFocusEffect(
@@ -473,9 +611,7 @@ export default function UnlockScreen() {
                   { height: safeSizes.footerHeight },
                 ]}>
                 <Button
-                  loading={isUnlocking}
-                  loadingType="circle"
-                  disabled={shouldDisabled}
+                  disabled={shouldDisabled || isUnlocking}
                   type="primary"
                   {...makeTestIDProps(E2E_ID.unlock.submit)}
                   buttonStyle={[styles.buttonShadow]}
@@ -483,11 +619,16 @@ export default function UnlockScreen() {
                     styles.nextButtonContainer,
                     { height: safeSizes.nextButtonContainerHeight },
                   ]}
-                  title={t('page.unlock.btn.unlock')}
+                  title={
+                    isUnlocking ? (
+                      <UnlockRnrSpinner size={24} />
+                    ) : (
+                      t('page.unlock.btn.unlock')
+                    )
+                  }
                   onPress={evt => {
                     evt.stopPropagation();
-                    formik.handleSubmit();
-                    checkUnlocked();
+                    submitPassword();
                   }}
                 />
               </View>
