@@ -16,6 +16,10 @@ import { navigationRef } from '@/utils/navigation';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { StackActions } from '@react-navigation/native';
 import BigNumber from 'bignumber.js';
+import {
+  buildTempoBatchTransaction,
+  shouldUseTempoBatchTransaction,
+} from '@/utils/tempo';
 
 export const bridgeToken = async (
   {
@@ -58,7 +62,103 @@ export const bridgeToken = async (
       i18n.t('background.error.notFindChain', { payTokenChainServerId }),
     );
   }
+  const shouldBatchTempoBridge = shouldUseTempoBatchTransaction({
+    chainServerId: chainObj.serverId,
+    accountType: account.type,
+    txCount: 1 + Number(shouldApprove) + Number(shouldTwoStepApprove),
+  });
   try {
+    if (shouldBatchTempoBridge) {
+      const txs: Tx[] = [];
+      if (shouldTwoStepApprove) {
+        const res = await approveToken({
+          chainServerId: payTokenChainServerId,
+          id: payTokenId,
+          spender: approveId || to,
+          amount: 0,
+          $ctx: {
+            ga: {
+              ...$ctx?.ga,
+              source: 'approvalAndBridge|tokenApproval',
+            },
+          },
+          gasPrice,
+          extra: { isBridge: true },
+          isBuild: true,
+          account,
+        });
+        txs.push(res.params[0]);
+      }
+
+      if (shouldApprove) {
+        const res = await approveToken({
+          chainServerId: payTokenChainServerId,
+          id: payTokenId,
+          spender: approveId || to,
+          amount: payTokenRawAmount,
+          $ctx: {
+            ga: {
+              ...$ctx?.ga,
+              source: 'approvalAndBridge|tokenApproval',
+            },
+          },
+          gasPrice,
+          extra: { isBridge: true },
+          isBuild: true,
+          account,
+        });
+        txs.push(res.params[0]);
+      }
+
+      if (info) {
+        bridgeService.addTx(chainObj.enum, data, info);
+      }
+      txs.push({
+        from: account.address,
+        to,
+        data: data || '0x',
+        value: `0x${new BigNumber(value || '0').toString(16)}`,
+        chainId: chainObj.id,
+        gasPrice: gasPrice
+          ? `0x${new BigNumber(gasPrice).toString(16)}`
+          : undefined,
+        isBridge: true,
+      } as unknown as Tx);
+
+      await sendRequest({
+        data: {
+          $ctx: {
+            ga: {
+              ...$ctx?.ga,
+              source: 'approvalAndBridge|bridge',
+            },
+          },
+          method: 'eth_sendTransaction',
+          params: [
+            buildTempoBatchTransaction(txs as any, {
+              stripTopLevelData: false,
+            }) as any,
+          ],
+        },
+        session: INTERNAL_REQUEST_SESSION,
+        account,
+      }).then(res => {
+        const hash = res as string;
+        if (addBridgeTxHistoryObj) {
+          transactionHistoryService.addBridgeTxHistory({
+            ...addBridgeTxHistoryObj,
+            hash,
+          });
+        }
+        navigationRef.dispatch(
+          StackActions.replace(RootNames.StackRoot, {
+            screen: RootNames.Home,
+          }),
+        );
+      });
+      return;
+    }
+
     if (shouldTwoStepApprove) {
       await approveToken({
         chainServerId: payTokenChainServerId,
@@ -183,6 +283,11 @@ export const buildBridgeToken = async (
       i18n.t('background.error.notFindChain', { payTokenChainServerId }),
     );
   }
+  const shouldBatchTempoBridge = shouldUseTempoBatchTransaction({
+    chainServerId: chainObj.serverId,
+    accountType: account.type,
+    txCount: 1 + Number(shouldApprove) + Number(shouldTwoStepApprove),
+  });
   const txs: Tx[] = [];
   try {
     if (shouldTwoStepApprove) {
@@ -262,6 +367,14 @@ export const buildBridgeToken = async (
       true,
     );
     txs.push(res.params[0]);
+
+    if (shouldBatchTempoBridge) {
+      return [
+        buildTempoBatchTransaction(txs as any, {
+          stripTopLevelData: false,
+        }) as any,
+      ];
+    }
 
     return txs;
   } catch (e) {
