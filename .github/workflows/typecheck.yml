@@ -86,3 +86,35 @@ jobs:
 
       - name: Run apps/mobile Jest
         run: time yarn workspace rabby-mobile test --runInBand
+
+  mobile_import_cycles:
+    name: apps/mobile import cycles
+    permissions:
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+    runs-on:
+      - ubuntu-latest
+    env:
+      NODE_OPTIONS: '--max_old_space_size=4096'
+      YARN_ENABLE_HARDENED_MODE: '0'
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run apps/mobile Import Cycle Check
+        run: time yarn workspace rabby-mobile lint:cycles
