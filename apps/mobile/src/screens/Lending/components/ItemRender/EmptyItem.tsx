@@ -9,12 +9,8 @@ import { useLendingSummary } from '../../hooks';
 import TokenIcon from '../TokenIcon';
 import { formatApy } from '../../utils/format';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { DisplayPoolReserveInfo } from '../../type';
+import { openLendingActionPopup } from '../../utils/actionPopup';
 import { CHAINS_ENUM } from '@debank/common';
 import { useSelectedMarket } from '../../hooks';
 import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
@@ -59,21 +55,11 @@ const EmptyItem = () => {
       if (!reserve || !userSummary) {
         return;
       }
-      const modalId = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.SUPPLY_ACTION_DETAIL,
+      openLendingActionPopup({
+        popup: 'supply',
         reserve,
         userSummary,
-        onClose: () => {
-          removeGlobalBottomSheetModal2024(modalId);
-        },
-        bottomSheetModalProps: {
-          enableContentPanningGesture: true,
-          enablePanDownToClose: true,
-          enableDismissOnClose: true,
-          handleStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
-          },
-        },
+        colors2024,
       });
     },
     [colors2024, getTargetReserve, iUserSummary],
