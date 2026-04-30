@@ -147,6 +147,7 @@ export interface PerpsState {
   pollingTimer: NodeJS.Timeout | null;
   fillsOrderTpOrSl: Record<string, 'tp' | 'sl'>;
   favoriteMarkets: string[];
+  marginModeByCoin: Record<string, 'cross' | 'isolated'>;
   homePositionPnl: {
     pnl: number;
     show: boolean;
@@ -195,6 +196,7 @@ export const initialState: PerpsState = {
   wsSubscriptions: [],
   pollingTimer: null,
   favoriteMarkets: [],
+  marginModeByCoin: {},
   homePositionPnl: {
     pnl: 0,
     accountValue: 0,
@@ -548,6 +550,30 @@ export const addFavoriteMarket = (market: string) => {
     favoriteMarkets: [...prev.favoriteMarkets, normalizedMarket.toUpperCase()],
   }));
   perpsService.addFavoriteMarket(normalizedMarket);
+};
+
+const fetchMarginModeByCoin = async () => {
+  const marginModeByCoin = await perpsService.getMarginModeByCoin();
+  setPerpsState(prev => ({ ...prev, marginModeByCoin }));
+};
+
+export const setMarginModeForCoin = (
+  coin: string,
+  mode: 'cross' | 'isolated',
+) => {
+  if (!coin) {
+    return;
+  }
+  setPerpsState(prev => {
+    if (prev.marginModeByCoin[coin] === mode) {
+      return prev;
+    }
+    return {
+      ...prev,
+      marginModeByCoin: { ...prev.marginModeByCoin, [coin]: mode },
+    };
+  });
+  perpsService.setMarginModeForCoin(coin, mode);
 };
 
 export const removeFavoriteMarket = (market: string) => {
@@ -1162,6 +1188,7 @@ export const usePerpsStore = () => {
 
 runIIFEFunc(fetchMarketData);
 runIIFEFunc(fetchFavoriteMarkets);
+runIIFEFunc(fetchMarginModeByCoin);
 
 export function startSubscribePerpsOnAppState() {
   const sdk = apisPerps.getPerpsSDK();

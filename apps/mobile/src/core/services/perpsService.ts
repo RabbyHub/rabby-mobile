@@ -50,6 +50,7 @@ export interface PerpsServiceStore {
   };
   favoriteMarkets: string[];
   selectedKlineInterval: CANDLE_MENU_KEY_V2;
+  marginModeByCoin: Record<string, 'cross' | 'isolated'>;
 }
 export interface PerpsServiceMemoryState {
   agentWallets: {
@@ -82,6 +83,7 @@ export class PerpsService {
           hasClosedLearnMoreCard: false,
           favoriteMarkets: [],
           selectedKlineInterval: CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES,
+          marginModeByCoin: {},
         },
       },
       {
@@ -120,6 +122,23 @@ export class PerpsService {
     this.store.favoriteMarkets = this.store.favoriteMarkets.filter(
       m => m !== normalizedMarket,
     );
+  };
+
+  getMarginModeByCoin = async () => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return this.store.marginModeByCoin || {};
+  };
+
+  setMarginModeForCoin = async (coin: string, mode: 'cross' | 'isolated') => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    this.store.marginModeByCoin = {
+      ...this.store.marginModeByCoin,
+      [coin]: mode,
+    };
   };
 
   setHasDoneNewUserProcess = async (hasDone: boolean) => {
