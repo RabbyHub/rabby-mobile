@@ -212,8 +212,10 @@ export default function UnlockScreen() {
   const navigation = useRabbyAppNavigation();
   const { params } = useRoute<GetRootScreenRouteProp<'Unlock'>>();
   const {
+    biometrics: { supportedBiometryType },
     computed: { isBiometricsEnabled, isFaceID },
   } = useBiometrics({ autoFetch: true });
+  const biometricsIconIsFaceID = supportedBiometryType ? isFaceID : undefined;
   const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
     useUnlockForm(navigation);
 
@@ -452,7 +454,7 @@ export default function UnlockScreen() {
                 <TouchableView
                   style={styles.biometricsBtn}
                   onPress={processUnlockWithBiometrics}>
-                  <BiometricsIcon isFaceID={isFaceID} />
+                  <BiometricsIcon isFaceID={biometricsIconIsFaceID} />
                 </TouchableView>
               </View>
             </View>
