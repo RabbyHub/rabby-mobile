@@ -4,9 +4,10 @@ import {
   TEMPO_FEE_TOKEN_DECIMALS,
   TEMPO_PATH_USD_TOKEN,
 } from '@/constant/tempo';
-import { apiProvider } from '@/core/apis';
+import { requestReadOnlyETHRpc } from '@/core/apis/readOnlyRpc';
 import { openapi } from '@/core/request';
 import type { Account } from '@/types/account';
+import { isTempoChain, normalizeTempoChainServerId } from '@/utils/tempoChain';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import BigNumber from 'bignumber.js';
@@ -94,8 +95,9 @@ const TEMPO_FEE_TOKEN_WHITELIST_MAP = new Map(
   TEMPO_FEE_TOKEN_WHITELIST.map(item => [item.tokenId.toLowerCase(), item]),
 );
 
-const normalizeChainServerId = (chainServerId?: string | null) =>
-  (chainServerId || '').toLowerCase();
+export { isTempoChain } from '@/utils/tempoChain';
+
+const normalizeChainServerId = normalizeTempoChainServerId;
 
 const isSameTokenId = (a?: string | null, b?: string | null) => {
   if (!a || !b) {
@@ -213,11 +215,6 @@ const normalizeHexValue = (value?: string | number | bigint) => {
     return '0x0';
   }
   return value;
-};
-
-export const isTempoChain = (chainServerId?: string | null) => {
-  const normalized = normalizeChainServerId(chainServerId);
-  return normalized === normalizeChainServerId(TEMPO_CHAIN_SERVER_ID);
 };
 
 export const calcTempoMaxGasCostRawAmountIn18 = (
@@ -550,7 +547,7 @@ const readAddressByMethod = async (params: {
     args: [userAddress as `0x${string}`],
   });
 
-  const hex = await apiProvider.requestETHRpc<string>(
+  const hex = await requestReadOnlyETHRpc<string>(
     {
       method: 'eth_call',
       params: [
@@ -632,7 +629,7 @@ const readErc20Balance = async (params: {
     args: [userAddress as `0x${string}`],
   });
 
-  const hex = await apiProvider.requestETHRpc<string>(
+  const hex = await requestReadOnlyETHRpc<string>(
     {
       method: 'eth_call',
       params: [
@@ -671,7 +668,7 @@ const readErc20Decimals = async (params: {
       abi: erc20DecimalsAbi,
       functionName: 'decimals',
     });
-    const hex = await apiProvider.requestETHRpc<string>(
+    const hex = await requestReadOnlyETHRpc<string>(
       {
         method: 'eth_call',
         params: [
@@ -711,7 +708,7 @@ const readErc20Symbol = async (params: {
       abi: erc20SymbolAbi,
       functionName: 'symbol',
     });
-    const hex = await apiProvider.requestETHRpc<string>(
+    const hex = await requestReadOnlyETHRpc<string>(
       {
         method: 'eth_call',
         params: [

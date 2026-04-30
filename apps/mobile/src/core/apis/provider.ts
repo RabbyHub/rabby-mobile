@@ -26,7 +26,7 @@ import { IExtractFromPromise } from '@/utils/type';
 import { findChain } from '@/utils/chain';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import type { Account } from '@/types/account';
-import { isTempoChain } from '@/utils/tempo';
+import { isTempoChain } from '@/utils/tempoChain';
 import { decodeFunctionResult, encodeFunctionData } from 'viem';
 import { Abis as TempoAbis, Addresses as TempoAddresses } from 'viem/tempo';
 

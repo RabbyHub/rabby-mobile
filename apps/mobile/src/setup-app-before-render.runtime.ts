@@ -59,7 +59,7 @@ import addressBalanceStore, {
   ensureAccountBalanceSelectionLifecycle,
   startProcessAccountBalanceEvents,
 } from './store/balance';
-import { apisAutoLock } from './core/apis';
+import * as apisAutoLock from './core/apis/autoLock';
 import { startWatchLayoutChange } from './hooks/useAppLayout';
 import { startCareAppNotificationPermissions } from './hooks/appNotification';
 import nftListStore from './store/nfts';
