@@ -21,6 +21,7 @@ import {
 } from '@/core/utils/store';
 import { eventBus, EVENTS } from '@/utils/events';
 import { handleGasAccountLoginSuccess } from '@/utils/gasAccountAnalytics';
+import { setGasAccountStoreApi } from '@/utils/gasAccountStoreApiBridge';
 import { sendPersonalMessage } from '@/utils/sendPersonalMessage';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -704,6 +705,7 @@ export const storeApiGasAccount = {
     return signature;
   },
 };
+setGasAccountStoreApi(storeApiGasAccount);
 
 export const storeApiGasAccountDeposit = {
   fetchBridgeSupportTokenList: fetchGasAccountBridgeSupportTokenList,

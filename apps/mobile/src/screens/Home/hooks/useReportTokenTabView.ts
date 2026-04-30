@@ -1,21 +1,21 @@
 import { useEffect } from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 
-import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
+import { HomeTabName } from '@/hooks/navigation';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 export function useReportTokenTabView(params: {
-  focusedTab?: TabName;
+  focusedTab?: HomeTabName;
   tokenDisplayModeLabel: string;
 }) {
   const { focusedTab, tokenDisplayModeLabel } = params;
   const prevFocusedTab = usePrevious(focusedTab);
 
   useEffect(() => {
-    if (focusedTab !== TabName.token) {
+    if (focusedTab !== HomeTabName.token) {
       return;
     }
-    if (prevFocusedTab === TabName.token) {
+    if (prevFocusedTab === HomeTabName.token) {
       return;
     }
 

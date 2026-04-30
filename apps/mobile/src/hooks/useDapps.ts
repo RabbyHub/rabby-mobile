@@ -4,18 +4,16 @@ import { useCallback, useMemo } from 'react';
 import * as apisDapp from '@/core/apis/dapp';
 import type { DappInfo, DappStore } from '@/core/services/dappService';
 import type { Account, KeyringAccountWithAlias } from '@/types/account';
-import {
-  dappService,
-  preferenceService,
-  transactionHistoryService,
-} from '@/core/services/shared';
+import { dappService } from '@/core/services/shared';
 import { FieldNilable, stringUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom } from 'jotai';
 import { useAccounts } from './account';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import { resolveDappAccount } from '@/utils/dappAccount';
+import { getDappAccount } from '@/core/utils/dappAccount';
+
+export { getDappAccount } from '@/core/utils/dappAccount';
 
 const dappServiceStore = zCreate<DappStore>(() => {
   return {
@@ -146,21 +144,6 @@ export function useDappCurrentAccount() {
 
   return { setDappCurrentAccount };
 }
-
-export const getDappAccount = ({
-  dappInfo,
-  accounts,
-}: {
-  dappInfo?: DappInfo;
-  accounts: KeyringAccountWithAlias[];
-}) => {
-  return resolveDappAccount({
-    dappInfo,
-    accounts,
-    transactions: transactionHistoryService.store.transactions,
-    fallbackAccount: preferenceService.getFallbackAccount(),
-  });
-};
 
 export function useGetDappAccount(dappInfo?: DappInfo) {
   const { accounts } = useAccounts({

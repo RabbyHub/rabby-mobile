@@ -27,7 +27,7 @@ import {
   setOneKeyStatus,
 } from '@/hooks/onekey/useOneKeyStatus';
 import { transactionHistoryService } from '@/core/services';
-import { getMiniSignGasPanelController } from './useMiniSignGasPanel';
+import { getMiniSignGasPanelController } from './MiniSignGasPanelController';
 
 const ETH_GAS_USD_LIMIT = 15;
 const OTHER_GAS_USD_LIMIT = 5;

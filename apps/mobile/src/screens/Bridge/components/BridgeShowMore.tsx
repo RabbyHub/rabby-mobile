@@ -29,10 +29,8 @@ import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { noop } from 'lodash';
 import { WarningText } from './WarningText';
-import {
-  useSignatureInstance,
-  useSignatureStore,
-} from '@/components2024/MiniSignV2';
+import { useSignatureInstance } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
+import { useSignatureStore } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { useGasAccountSign } from '@/screens/GasAccount/hooks/atom';
 import { GasLessActivityToSign } from '@/components/Approval/components/FooterBar/GasLessComponents/GasLessActivityToSign';
 import { GasLessNotEnough } from '@/components/Approval/components/FooterBar/GasLessComponents/GasLessNotEnough';

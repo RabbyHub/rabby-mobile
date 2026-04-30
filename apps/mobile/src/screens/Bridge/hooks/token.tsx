@@ -21,7 +21,7 @@ import { openapi } from '@/core/request';
 import { useRefreshId, useSetQuoteVisible, useSetRefreshId } from './context';
 import { getChainDefaultToken } from '@/constant/swap';
 import { tokenAmountBn } from '@/screens/Swap/utils';
-import { bridgeQuoteScore } from '../components/BridgeQuoteItem';
+import { bridgeQuoteScore } from '../utils/bridgeQuote';
 import BigNumber from 'bignumber.js';
 import { useBridgeSlippage } from './slippage';
 import { isNaN } from 'lodash';
@@ -44,16 +44,9 @@ import { isTokenMarketClosed } from '@/utils/token';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 import { getQuoteList as getBridgeQuoteList } from '@rabby-wallet/rabby-bridge';
 import { convert18RawToTokenRaw, isTempoChain } from '@/utils/tempo';
+import type { SelectedBridgeQuote } from '../types';
 
 export const enableInsufficientQuote = true;
-
-export interface SelectedBridgeQuote extends Omit<BridgeQuote, 'tx'> {
-  shouldApproveToken?: boolean;
-  shouldTwoStepApprove?: boolean;
-  loading?: boolean;
-  tx?: BridgeQuote['tx'];
-  manualClick?: boolean;
-}
 
 export const tokenPriceImpact = (
   fromToken?: TokenItem,

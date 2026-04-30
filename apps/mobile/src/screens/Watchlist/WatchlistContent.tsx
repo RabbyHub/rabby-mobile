@@ -39,7 +39,7 @@ import {
 } from './sort';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { marketRealtimePriceAtom } from '../Market/atom';
-import { TAB_BAR_HEIGHT } from '../Market';
+import { TAB_BAR_HEIGHT } from '../Market/constants';
 import { setWatchlistTopCache } from './cache';
 
 const isAndroid = Platform.OS === 'android';
