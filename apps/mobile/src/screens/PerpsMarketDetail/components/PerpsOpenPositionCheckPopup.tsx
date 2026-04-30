@@ -312,7 +312,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     scrollViewContent: {
       paddingHorizontal: 20,
-      flex: 1,
     },
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],
