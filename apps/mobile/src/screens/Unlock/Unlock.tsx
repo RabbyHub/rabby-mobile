@@ -1,19 +1,11 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
-import {
-  View,
-  Platform,
-  Keyboard,
-  KeyboardAvoidingView,
-  StyleProp,
-  ViewStyle,
-} from 'react-native';
+import { View, Platform, Keyboard, KeyboardAvoidingView } from 'react-native';
 import * as Yup from 'yup';
 
 import { default as RcRabbyLogoLight } from './icons/icon-with-logo-light.svg';
 import { default as RcRabbyLogoDark } from './icons/icon-with-logo-dark.svg';
-import RcPending from '@/assets2024/icons/swap/loading-cc.svg';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { useTranslation } from 'react-i18next';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
@@ -21,7 +13,7 @@ import TouchableView, {
   SilentTouchableView,
 } from '@/components/Touchable/TouchableView';
 import { useFormik } from 'formik';
-import { toast, toastWithIcon } from '@/components2024/Toast';
+import { toast, toastIndicator, toastWithIcon } from '@/components2024/Toast';
 import { apisKeychain, apisLock } from '@/core/apis';
 import {
   UnlockUIManager,
@@ -70,7 +62,6 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import type { SvgProps } from 'react-native-svg';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -115,9 +106,11 @@ const toastBiometricsFailed = (message?: string) => {
   prevFailedRef.hide?.();
   prevFailedRef.hide = toastFailed(message);
 };
-const toastLoading = toastWithIcon(UnlockToastLoadingIcon);
 const toastUnlocking = () =>
-  toastLoading(i18next.t('page.unlock.unlocking'), { duration: 3000 });
+  toastIndicator(i18next.t('page.unlock.unlocking'), {
+    duration: 3000,
+    isTop: true,
+  });
 
 function startUnlockWarmups(reason: string) {
   preloadTransactionHotNavigator().catch(error => {
@@ -126,86 +119,6 @@ function startUnlockWarmups(reason: string) {
   startUnlockScreenBootstrapWarmups().catch(error => {
     console.error(`startUnlockScreenBootstrapWarmups::${reason}::error`, error);
   });
-}
-
-function normalizeSvgSize(size: SvgProps['width'], fallback: number) {
-  if (typeof size === 'number') {
-    return size;
-  }
-
-  if (typeof size === 'string') {
-    const parsed = Number(size);
-    return Number.isFinite(parsed) ? parsed : fallback;
-  }
-
-  return fallback;
-}
-
-function UnlockRnrSpinner(props: {
-  size?: number;
-  color?: string;
-  style?: StyleProp<ViewStyle>;
-}) {
-  const { size = 18, color, style } = props;
-  const { colors2024 } = useTheme2024();
-  const spinValue = useSharedValue(0);
-
-  React.useEffect(() => {
-    spinValue.value = withRepeat(
-      withTiming(1, {
-        duration: 2000,
-        easing: Easing.linear,
-      }),
-      -1,
-      false,
-    );
-
-    return () => {
-      cancelAnimation(spinValue);
-    };
-  }, [spinValue]);
-
-  const spinStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ rotate: `${spinValue.value * 360}deg` }],
-    };
-  });
-
-  return (
-    <Animated.View
-      style={[
-        {
-          width: size,
-          height: size,
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'visible',
-          transformOrigin: 'center',
-        },
-        style,
-        spinStyle,
-      ]}>
-      <RcPending
-        width={size}
-        height={size}
-        color={color || colors2024['neutral-InvertHighlight']}
-      />
-    </Animated.View>
-  );
-}
-
-function UnlockToastLoadingIcon(props: SvgProps) {
-  const size = normalizeSvgSize(props.width, 16);
-
-  return (
-    <UnlockRnrSpinner
-      size={size}
-      color={
-        typeof props.color === 'string' && props.color ? props.color : undefined
-      }
-      style={props.style as StyleProp<ViewStyle>}
-    />
-  );
 }
 
 export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
@@ -619,13 +532,8 @@ export default function UnlockScreen() {
                     styles.nextButtonContainer,
                     { height: safeSizes.nextButtonContainerHeight },
                   ]}
-                  title={
-                    isUnlocking ? (
-                      <UnlockRnrSpinner size={24} />
-                    ) : (
-                      t('page.unlock.btn.unlock')
-                    )
-                  }
+                  loading={isUnlocking}
+                  title={t('page.unlock.btn.unlock')}
                   onPress={evt => {
                     evt.stopPropagation();
                     submitPassword();
