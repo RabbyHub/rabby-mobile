@@ -181,6 +181,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   const expiredTimer = useRef<NodeJS.Timeout>(undefined);
   const autoQuoteRefreshPausedRef = useRef(false);
+  const reloadTxRefreshPausedRef = useRef(false);
 
   const clearExpiredTimer = useCallback(() => {
     if (expiredTimer.current) {
@@ -199,6 +200,10 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     },
     [clearExpiredTimer, setRefreshId],
   );
+
+  const setReloadTxRefreshPaused = useCallback((paused: boolean) => {
+    reloadTxRefreshPausedRef.current = paused;
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -899,6 +904,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       const refresh = () => {
         if (
           autoQuoteRefreshPausedRef.current ||
+          reloadTxRefreshPausedRef.current ||
           isGasAccountDepositFlowActive()
         ) {
           return;
@@ -985,6 +991,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
     clearExpiredTimer,
     setAutoQuoteRefreshPaused,
+    setReloadTxRefreshPaused,
 
     finishedQuotes,
     autoSuggestSlippage,
