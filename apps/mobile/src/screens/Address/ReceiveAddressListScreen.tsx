@@ -12,6 +12,8 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { AccountsPanelInSheetModal } from '@/components/AccountSelector/AccountsPanel';
 import { StackActions } from '@react-navigation/native';
 import { CHAINS_ENUM } from '@/constant/chains';
+import { preloadTransactionHotNavigator } from '@/perfs/preloads';
+import type { Account } from '@/types/account';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -21,6 +23,10 @@ type CurrentAddressProps = NativeStackScreenProps<
 export function ReceiveAddressListScreen(): JSX.Element {
   const { styles } = useTheme2024({ getStyle });
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
+  const isSelectingRef = React.useRef(false);
+  const unlockSelectingTimerRef = React.useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
   const route =
     useRoute<
       GetNestedScreenRouteProp<
@@ -28,27 +34,67 @@ export function ReceiveAddressListScreen(): JSX.Element {
         'ReceiveAddressList'
       >
     >();
-  const handleSelect = async account => {
-    const params: {
-      chainEnum?: CHAINS_ENUM;
-      tokenSymbol?: string;
-    } = {};
-    if (route.params?.chainEnum) {
-      params.chainEnum = route.params.chainEnum;
-    }
-    if (route.params?.tokenSymbol) {
-      params.tokenSymbol = route.params.tokenSymbol;
-    }
-    navigation.dispatch(
-      StackActions.push(RootNames.StackTransaction, {
-        screen: RootNames.Receive,
-        params: {
-          account: account,
-          ...params,
-        },
-      }),
-    );
-  };
+
+  React.useEffect(() => {
+    preloadTransactionHotNavigator().catch(error => {
+      console.error(
+        'preloadTransactionHotNavigator::receiveAddressList::error',
+        error,
+      );
+    });
+
+    return () => {
+      if (unlockSelectingTimerRef.current) {
+        clearTimeout(unlockSelectingTimerRef.current);
+        unlockSelectingTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleSelect = React.useCallback(
+    async (account: Account | null) => {
+      if (!account || isSelectingRef.current) {
+        return;
+      }
+
+      isSelectingRef.current = true;
+
+      try {
+        await preloadTransactionHotNavigator();
+      } catch (error) {
+        console.error(
+          'preloadTransactionHotNavigator::receiveAddressSelect::error',
+          error,
+        );
+      }
+
+      const params: {
+        chainEnum?: CHAINS_ENUM;
+        tokenSymbol?: string;
+      } = {};
+      if (route.params?.chainEnum) {
+        params.chainEnum = route.params.chainEnum;
+      }
+      if (route.params?.tokenSymbol) {
+        params.tokenSymbol = route.params.tokenSymbol;
+      }
+      navigation.dispatch(
+        StackActions.push(RootNames.StackTransaction, {
+          screen: RootNames.Receive,
+          params: {
+            account: account,
+            ...params,
+          },
+        }),
+      );
+
+      unlockSelectingTimerRef.current = setTimeout(() => {
+        isSelectingRef.current = false;
+        unlockSelectingTimerRef.current = null;
+      }, 1000);
+    },
+    [navigation, route.params?.chainEnum, route.params?.tokenSymbol],
+  );
 
   return (
     <NormalScreenContainer2024
