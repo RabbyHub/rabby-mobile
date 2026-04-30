@@ -28,6 +28,7 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, TouchableOpacity, View } from 'react-native';
+import { EVENT_SHOW_BROWSER_DAPP_INFO, eventBus } from '@/utils/events';
 
 const LIST_BY_ICON_SIZE = 12;
 const LIST_BY_GAP = 4;
@@ -312,6 +313,17 @@ export const DappInfoPopup: React.FC<{
       modalRef.current?.close();
     }
   }, [visible]);
+
+  useEffect(() => {
+    const handler = () => {
+      modalRef?.current?.present();
+    };
+    eventBus.addListener(EVENT_SHOW_BROWSER_DAPP_INFO, handler);
+
+    return () => {
+      eventBus.removeListener(EVENT_SHOW_BROWSER_DAPP_INFO, handler);
+    };
+  }, []);
 
   return (
     <AppBottomSheetModal
