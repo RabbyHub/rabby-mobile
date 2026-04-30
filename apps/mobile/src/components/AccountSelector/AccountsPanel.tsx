@@ -101,6 +101,28 @@ function AddressItemInSheetModal({
     toast.success('Copied successfully');
   };
 
+  const handleRowFeedbackLongPress = useCallback(() => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+  }, []);
+  const rowFeedbackLongPressProps = useMemo<
+    Pick<
+      React.ComponentProps<typeof TouchableOpacity>,
+      'delayLongPress' | 'onLongPress'
+    >
+  >(() => {
+    if (isReceive) {
+      return {};
+    }
+
+    return {
+      delayLongPress: 200,
+      onLongPress: handleRowFeedbackLongPress,
+    };
+  }, [handleRowFeedbackLongPress, isReceive]);
+
   return (
     <AddressItemShadowView
       style={isCurrent || isPressing ? styles.active : null}>
@@ -114,17 +136,7 @@ function AddressItemInSheetModal({
         activeOpacity={1}
         onPressIn={() => setIsPressing(true)}
         onPressOut={() => setIsPressing(false)}
-        delayLongPress={isReceive ? undefined : 200}
-        onLongPress={
-          isReceive
-            ? undefined
-            : () => {
-                trigger('impactLight', {
-                  enableVibrateFallback: true,
-                  ignoreAndroidSystemSettings: false,
-                });
-              }
-        }
+        {...rowFeedbackLongPressProps}
         onPress={() => {
           triggerLight();
           defaultPressAction === 'copy'
