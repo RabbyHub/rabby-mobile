@@ -91,17 +91,29 @@ const TokenDetailContent = () => {
   }, []);
 
   const [acceptSceneAccount, setAcceptSceneAccount] = React.useState(false);
-  const prevSceneAddrRef = React.useRef<string | undefined>(undefined);
+  const currentAccountIdentity = React.useMemo(() => {
+    if (!currentAccount) {
+      return undefined;
+    }
+    return [
+      currentAccount.address.toLowerCase(),
+      currentAccount.brandName,
+      currentAccount.type,
+    ].join('-');
+  }, [currentAccount]);
+  const prevSceneAccountIdentityRef = React.useRef<string | undefined>(
+    undefined,
+  );
+
   useEffect(() => {
-    const currAddr = currentAccount?.address;
     if (
-      prevSceneAddrRef.current !== undefined &&
-      prevSceneAddrRef.current !== currAddr
+      prevSceneAccountIdentityRef.current !== undefined &&
+      prevSceneAccountIdentityRef.current !== currentAccountIdentity
     ) {
       setAcceptSceneAccount(true);
     }
-    prevSceneAddrRef.current = currAddr;
-  }, [currentAccount?.address]);
+    prevSceneAccountIdentityRef.current = currentAccountIdentity;
+  }, [currentAccountIdentity]);
 
   const shouldUseSceneAccount =
     !!currentAccount &&
