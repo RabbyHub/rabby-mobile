@@ -1330,7 +1330,13 @@
         "search": "Tìm kiếm",
         "favorite": "Yêu thích",
         "emptyAndroid": "Không có dApp nào được thêm vào danh sách yêu thích",
-        "empty": "Chưa có trang web nào được thêm vào danh sách yêu thích."
+        "empty": "Chưa có trang web nào được thêm vào danh sách yêu thích.",
+        "tabs": {
+          "all": "Tất cả",
+          "perps": "Perps",
+          "predict": "Dự đoán"
+        },
+        "websites": "Trang web"
       },
       "depositAssets": {
         "subtitle": "Nhận tài sản vào ví này",
@@ -2421,6 +2427,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "Thêm"
+      },
+      "DappInfoPopup": {
+        "listedBy": "Liệt kê bởi",
+        "sitePopularity": "Độ phổ biến của trang web",
+        "popularLevelHigh": "Cao",
+        "popularLevelMedium": "Trung bình",
+        "popularLevelLow": "Thấp",
+        "popularLevelVeryLow": "Rất thấp",
+        "category": "Danh mục",
+        "skipDappInfoNextTime": "Bỏ qua trang này lần sau",
+        "openDapp": "Mở"
       }
     },
     "browserManage": {
@@ -3057,7 +3074,8 @@
         "available": "có sẵn",
         "remainingDebt": "Nợ còn lại",
         "title": "Tổng quan giao dịch",
-        "liquidationAt": "Thanh lý tại < 1.0"
+        "liquidationAt": "Thanh lý tại < 1.0",
+        "toSwap": "Để hoán đổi"
       },
       "borrowOverview": {
         "myBorrow": "Cho vay của tôi",
@@ -3253,6 +3271,9 @@
       },
       "dappSelect": {
         "title": "Chọn Nhà Cung Cấp Cho Vay"
+      },
+      "signFallback": {
+        "preExecFailedUseFullSign": "Mô phỏng thất bại. Giao dịch này rất có thể sẽ thất bại do lỗi AAVE."
       }
     },
     "address": {

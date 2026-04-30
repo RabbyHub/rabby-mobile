@@ -990,7 +990,13 @@
         "emptyAndroid": "未將 dApp 加入收藏",
         "search": "搜尋",
         "empty": "尚未將網站加入收藏夾",
-        "favorite": "最愛"
+        "favorite": "最愛",
+        "tabs": {
+          "all": "全部",
+          "perps": "永續",
+          "predict": "預測"
+        },
+        "websites": "網站"
       },
       "depositAssets": {
         "title": "存入資產",
@@ -2478,6 +2484,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "更多"
+      },
+      "DappInfoPopup": {
+        "listedBy": "發布者",
+        "sitePopularity": "網站熱度",
+        "popularLevelHigh": "高",
+        "popularLevelMedium": "中",
+        "popularLevelLow": "低",
+        "popularLevelVeryLow": "非常低",
+        "category": "類別",
+        "skipDappInfoNextTime": "下次跳過此頁面",
+        "openDapp": "開啟"
       }
     },
     "browserManage": {
@@ -3114,7 +3131,8 @@
         "available": "可用",
         "liquidationAt": "清算在 < 1.0",
         "title": "交易概覽",
-        "remainingDebt": "剩餘債務"
+        "remainingDebt": "剩餘債務",
+        "toSwap": "兌換"
       },
       "borrowOverview": {
         "title": "借款詳情",
@@ -3310,6 +3328,9 @@
       },
       "dappSelect": {
         "title": "選擇借貸提供者"
+      },
+      "signFallback": {
+        "preExecFailedUseFullSign": "模擬失敗。此交易很可能因 AAVE 錯誤而失敗。"
       }
     },
     "address": {

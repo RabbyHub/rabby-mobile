@@ -1047,7 +1047,13 @@
         "favorite": "โปรดปราน",
         "search": "ค้นหา",
         "emptyAndroid": "ยังไม่มี dApp ที่เพิ่มลงในรายการที่ชื่นชอบ",
-        "empty": "ไม่มีเว็บไซต์ที่เพิ่มเข้าสู่รายการโปรด"
+        "empty": "ไม่มีเว็บไซต์ที่เพิ่มเข้าสู่รายการโปรด",
+        "tabs": {
+          "all": "ทั้งหมด",
+          "perps": "เพอร์ปส์",
+          "predict": "ทำนาย"
+        },
+        "websites": "เว็บไซต์"
       },
       "depositAssets": {
         "title": "ฝากสินทรัพย์",
@@ -2562,6 +2568,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "เพิ่มเติม"
+      },
+      "DappInfoPopup": {
+        "listedBy": "แสดงโดย",
+        "sitePopularity": "ความนิยมของไซต์",
+        "popularLevelHigh": "สูง",
+        "popularLevelMedium": "ปานกลาง",
+        "popularLevelLow": "ต่ำ",
+        "popularLevelVeryLow": "ต่ำมาก",
+        "category": "หมวดหมู่",
+        "skipDappInfoNextTime": "ข้ามหน้านี้ในครั้งต่อไป",
+        "openDapp": "เปิด"
       }
     },
     "browserManage": {
@@ -3198,7 +3215,8 @@
         "remainingDebt": "หนี้คงเหลือ",
         "title": "ภาพรวมการทำธุรกรรม",
         "liquidationAt": "การชำระบัญชีที่ < 1.0",
-        "available": "ใช้งานได้"
+        "available": "ใช้งานได้",
+        "toSwap": "เพื่อแลกเปลี่ยน"
       },
       "borrowOverview": {
         "borrowCap": "วงเงินยืม",
@@ -3394,6 +3412,9 @@
       },
       "dappSelect": {
         "title": "เลือกผู้ให้กู้"
+      },
+      "signFallback": {
+        "preExecFailedUseFullSign": "การจำลองล้มเหลว ธุรกรรมนี้มีแนวโน้มที่จะล้มเหลวเนื่องจากข้อผิดพลาดของ AAVE"
       }
     },
     "address": {
