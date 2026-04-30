@@ -1,13 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
-import {
-  View,
-  Platform,
-  ActivityIndicator,
-  Keyboard,
-  KeyboardAvoidingView,
-} from 'react-native';
+import { View, Platform, Keyboard, KeyboardAvoidingView } from 'react-native';
 import * as Yup from 'yup';
 
 import { default as RcRabbyLogoLight } from './icons/icon-with-logo-light.svg';
@@ -59,6 +53,16 @@ import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { startUnlockScreenBootstrapWarmups } from '@/setup-app-before-render';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
+import { CircleSpinnerCC } from '@/components2024/CircleSpinner/CircleSpinnerCC';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -103,11 +107,18 @@ const toastBiometricsFailed = (message?: string) => {
   prevFailedRef.hide?.();
   prevFailedRef.hide = toastFailed(message);
 };
-const toastLoading = toastWithIcon(() => (
-  <ActivityIndicator style={{ marginRight: 6 }} />
-));
+const toastLoading = toastWithIcon(() => <CircleSpinnerCC size={18} />);
 const toastUnlocking = () =>
   toastLoading(i18next.t('page.unlock.unlocking'), { duration: 3000 });
+
+function startUnlockWarmups(reason: string) {
+  preloadTransactionHotNavigator().catch(error => {
+    console.error(`preloadTransactionHotNavigator::${reason}::error`, error);
+  });
+  startUnlockScreenBootstrapWarmups().catch(error => {
+    console.error(`startUnlockScreenBootstrapWarmups::${reason}::error`, error);
+  });
+}
 
 export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
   const { isFaceID = isIOS, size = BiometricsIconSize } = props;
@@ -119,8 +130,56 @@ export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
   );
 }
 
+function BreathingBiometricsIcon(props: {
+  isFaceID?: boolean;
+  breathing?: boolean;
+}) {
+  const { isFaceID, breathing = false } = props;
+  const breathValue = useSharedValue(0);
+
+  React.useEffect(() => {
+    if (!breathing) {
+      cancelAnimation(breathValue);
+      breathValue.value = withTiming(0, { duration: 180 });
+      return;
+    }
+
+    breathValue.value = withRepeat(
+      withSequence(
+        withTiming(1, {
+          duration: 900,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        withTiming(0, {
+          duration: 900,
+          easing: Easing.inOut(Easing.ease),
+        }),
+      ),
+      -1,
+      false,
+    );
+
+    return () => {
+      cancelAnimation(breathValue);
+    };
+  }, [breathValue, breathing]);
+
+  const breathStyle = useAnimatedStyle(() => {
+    return {
+      opacity: 1 - breathValue.value * 0.28,
+      transform: [{ scale: 1 + breathValue.value * 0.08 }],
+    };
+  });
+
+  return (
+    <Animated.View style={breathStyle}>
+      <BiometricsIcon isFaceID={isFaceID} />
+    </Animated.View>
+  );
+}
+
 const INIT_DATA = { password: __DEV__ ? (APP_TEST_PWD as string) : '' };
-function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
+function useUnlockForm(_navigation: ReturnType<typeof useRabbyAppNavigation>) {
   const { t } = useTranslation();
   const yupSchema = React.useMemo(() => {
     return Yup.object({
@@ -217,12 +276,6 @@ export default function UnlockScreen() {
   const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
     useUnlockForm(navigation);
 
-  React.useEffect(() => {
-    preloadTransactionHotNavigator().catch(error => {
-      console.error('preloadTransactionHotNavigator::error', error);
-    });
-  }, []);
-
   useFocusEffect(
     useCallback(() => {
       storeApisBiometrics.fetchBiometrics();
@@ -231,25 +284,18 @@ export default function UnlockScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      let timeoutId: ReturnType<typeof setTimeout> | null = null;
       const frameId = requestAnimationFrame(() => {
-        timeoutId = setTimeout(() => {
-          startUnlockScreenBootstrapWarmups().catch(error => {
-            console.error('startUnlockScreenBootstrapWarmups::error', error);
-          });
-        }, 250);
+        startUnlockWarmups('unlock_screen_focus');
       });
 
       return () => {
         cancelAnimationFrame(frameId);
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
       };
     }, []),
   );
 
   const [usingBiometrics, setUsingBiometrics] = useState(isBiometricsEnabled);
+  const [isBiometricsProcessing, setIsBiometricsProcessing] = useState(false);
   const couldSwitchingAuthentication = isBiometricsEnabled;
   const usingPassword = !usingBiometrics || !isBiometricsEnabled;
 
@@ -328,18 +374,17 @@ export default function UnlockScreen() {
       return;
     }
     lockBiometricRef.current = true;
-    if (!isFaceID) {
-      const hideToast = toastUnlocking();
-      await unlockWithBiometrics().finally(() => {
-        checkUnlocked();
-        lockBiometricRef.current = false;
-      });
-      hideToast();
-    } else {
-      await unlockWithBiometrics().finally(() => {
-        checkUnlocked();
-        lockBiometricRef.current = false;
-      });
+    setIsBiometricsProcessing(true);
+    startUnlockWarmups('biometrics_unlock');
+    const hideToast = !isFaceID ? toastUnlocking() : null;
+
+    try {
+      await unlockWithBiometrics();
+    } finally {
+      checkUnlocked();
+      lockBiometricRef.current = false;
+      setIsBiometricsProcessing(false);
+      hideToast?.();
     }
   }, [isFaceID, unlockWithBiometrics, checkUnlocked]);
 
@@ -429,6 +474,7 @@ export default function UnlockScreen() {
                 ]}>
                 <Button
                   loading={isUnlocking}
+                  loadingType="circle"
                   disabled={shouldDisabled}
                   type="primary"
                   {...makeTestIDProps(E2E_ID.unlock.submit)}
@@ -452,7 +498,10 @@ export default function UnlockScreen() {
                 <TouchableView
                   style={styles.biometricsBtn}
                   onPress={processUnlockWithBiometrics}>
-                  <BiometricsIcon isFaceID={isFaceID} />
+                  <BreathingBiometricsIcon
+                    isFaceID={isFaceID}
+                    breathing={isBiometricsProcessing || isUnlocking}
+                  />
                 </TouchableView>
               </View>
             </View>

@@ -1,7 +1,15 @@
 import React from 'react';
-import { Animated, Easing, StyleProp, ViewStyle } from 'react-native';
+import { StyleProp, ViewStyle } from 'react-native';
 import RcPending from '@/assets2024/icons/swap/loading-cc.svg';
 import { useTheme2024 } from '@/hooks/theme';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 
 export const CircleSpinnerCC: React.FC<{
   size?: number;
@@ -9,39 +17,44 @@ export const CircleSpinnerCC: React.FC<{
   style?: StyleProp<ViewStyle>;
 }> = ({ size = 16, color: currentColor, style }) => {
   const { colors2024 } = useTheme2024();
-  const spinValue = React.useRef(new Animated.Value(0)).current;
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
+  const spinValue = useSharedValue(0);
 
   React.useEffect(() => {
-    Animated.loop(
-      Animated.timing(spinValue, {
-        toValue: 1,
+    spinValue.value = withRepeat(
+      withTiming(1, {
         duration: 2000,
         easing: Easing.linear,
-        useNativeDriver: true,
       }),
-    ).start();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      -1,
+      false,
+    );
+
+    return () => {
+      cancelAnimation(spinValue);
+    };
+  }, [spinValue]);
+
+  const spinStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ rotate: `${spinValue.value * 360}deg` }],
+    };
+  });
 
   return (
     <Animated.View
-      style={{
-        transform: [{ rotate: spin }],
-        width: size,
-        height: size,
-      }}>
+      style={[
+        {
+          width: size,
+          height: size,
+        },
+        style,
+        spinStyle,
+      ]}>
       <RcPending
-        style={[
-          {
-            width: size,
-            height: size,
-          },
-          style,
-        ]}
+        style={{
+          width: size,
+          height: size,
+        }}
         color={currentColor || colors2024['neutral-InvertHighlight']}
       />
     </Animated.View>
