@@ -138,6 +138,7 @@ export function BrowserSearch({
           isShowDappInfo: true,
           dappInfoUrl: url,
         });
+        browserApis.forceShowBrowserDappInfo();
         return;
       }
       onOpenURL?.(url, options);
