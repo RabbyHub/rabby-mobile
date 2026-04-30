@@ -469,10 +469,9 @@ export default function UnlockScreen() {
             }}>
             {usingBiometrics
               ? t('page.unlock.btn.switchtype_pwd')
-              : Platform.select({
-                  ios: t('page.unlock.btn.switchtype_faceid'),
-                  android: t('page.unlock.btn.switchtype_fingerprint'),
-                }) || t('page.unlock.btn.switchtype_fingerprint')}
+              : isFaceID
+              ? t('page.unlock.btn.switchtype_faceid')
+              : t('page.unlock.btn.switchtype_fingerprint')}
           </TouchableText>
         </View>
       )}
