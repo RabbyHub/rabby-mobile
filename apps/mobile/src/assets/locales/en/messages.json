@@ -3272,7 +3272,8 @@
       "homeBanner": {
         "title": "Convert Dust",
         "description": "Supports converting small balances into the native token"
-      }
+      },
+      "unsupportedAccountType": "Not support this account type."
     }
   },
   "component": {
