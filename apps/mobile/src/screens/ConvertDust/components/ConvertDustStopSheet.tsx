@@ -33,12 +33,16 @@ export function ConvertDustStopSheet({
           </Text>
           <View style={styles.actions}>
             <Pressable style={styles.continueButton} onPress={onContinue}>
-              <Text style={[styles.actionText, styles.continueText]}>
+              <Text
+                numberOfLines={1}
+                style={[styles.actionText, styles.continueText]}>
                 {t('page.convertDust.stopSheet.continue')}
               </Text>
             </Pressable>
             <Pressable style={styles.stopButton} onPress={onStop}>
-              <Text style={[styles.actionText, styles.stopText]}>
+              <Text
+                numberOfLines={1}
+                style={[styles.actionText, styles.stopText]}>
                 {t('page.convertDust.stopSheet.stop')}
               </Text>
             </Pressable>
@@ -85,10 +89,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
   },
   actions: {
-    width: 313,
     marginTop: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 12,
   },
   continueButton: {
     width: 150,
@@ -97,8 +101,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors2024['neutral-bg-5'],
+    flex: 1,
   },
   stopButton: {
+    flex: 1,
     width: 150,
     height: 48,
     borderRadius: 12,
