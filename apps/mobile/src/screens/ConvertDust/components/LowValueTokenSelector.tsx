@@ -81,7 +81,11 @@ function DustTokenRow({
   );
 }
 
-const TaskStatusIcon = ({ taskStatus }: { taskStatus?: TaskItemStatus }) => {
+export const TaskStatusIcon = ({
+  taskStatus,
+}: {
+  taskStatus?: TaskItemStatus;
+}) => {
   const { colors2024 } = useTheme2024({ getStyle });
   const spinValue = useRef(new Animated.Value(0)).current;
   const spin = spinValue.interpolate({

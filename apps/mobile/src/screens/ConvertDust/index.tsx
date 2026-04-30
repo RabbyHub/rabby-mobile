@@ -489,6 +489,8 @@ function ConvertDustContent({
         onDone={handleCompletedDone}
         onCancel={handleCompletedDone}
         isSuccess={task.isSuccess}
+        taskList={task.list}
+        statusDict={task.statusDict}
       />
       <ConvertDustEntryGuideModal
         visible={entryGuideVisible}

@@ -1,4 +1,5 @@
 import successAnimation from '@/assets2024/animations/animation-create-success.min.json';
+import RcIconCaretDown from '@/assets2024/icons/common/caret-down-small-cc.svg';
 import RcIconSwapFailed from '@/assets2024/icons/convertDust/swap-failed.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -6,15 +7,67 @@ import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { formatAmount, formatUsdValue } from '@/utils/number';
+import {
+  formatAmount,
+  formatTokenAmount,
+  formatUsdValue,
+} from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
+import { getTokenIcon } from '@/utils/tokenIcon';
 import type { Chain } from '@debank/common';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import Lottie from 'lottie-react-native';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { FlatList, TouchableOpacity, View } from 'react-native';
+import { TaskStatusIcon } from './LowValueTokenSelector';
+import type { TaskItemStatus } from '../hooks/useBatchSwapTask';
+
+const DETAIL_ROW_HEIGHT = 44;
+const DEFAULT_SHEET_HEIGHT = 437;
+const COLLAPSED_DETAIL_SHEET_HEIGHT = 520;
+const EXPANDED_DETAIL_SHEET_HEIGHT = 682;
+
+const getTokenKey = (token: TokenItem, index: number) =>
+  `${token.chain}:${token.id}:${index}`;
+
+function ConvertDustDetailRow({
+  status,
+  token,
+}: {
+  status?: TaskItemStatus;
+  token: TokenItem;
+}) {
+  const { styles } = useTheme2024({ getStyle });
+  const usdValue = Number(token.amount || 0) * Number(token.price || 0);
+
+  return (
+    <View style={styles.detailRow}>
+      <TaskStatusIcon taskStatus={status} />
+      <AssetAvatar
+        logo={token.logo_url || getTokenIcon(token.symbol)}
+        size={24}
+        chain={token.chain}
+        chainSize={10}
+        innerChainStyle={styles.detailChainBadge}
+      />
+      <View style={styles.detailNameColumn}>
+        <Text style={styles.detailTokenSymbol} numberOfLines={1}>
+          {getTokenSymbol(token)}
+        </Text>
+      </View>
+      <View style={styles.detailValueColumn}>
+        <Text style={styles.detailValue} numberOfLines={1}>
+          {formatUsdValue(usdValue)}
+        </Text>
+        <Text style={styles.detailAmount} numberOfLines={1}>
+          {formatTokenAmount(token.amount)}
+        </Text>
+      </View>
+    </View>
+  );
+}
 
 export function ConvertDustCompletedSheet({
   chain,
@@ -25,6 +78,8 @@ export function ConvertDustCompletedSheet({
   onDone,
   onCancel,
   isSuccess,
+  taskList = [],
+  statusDict = {},
 }: {
   chain?: Chain | null;
   receiveAmount: number;
@@ -34,28 +89,109 @@ export function ConvertDustCompletedSheet({
   onDone: () => void;
   onCancel?: () => void;
   isSuccess?: boolean;
+  taskList?: TokenItem[];
+  statusDict?: Record<string, TaskItemStatus>;
 }) {
   const modalRef = React.useRef<AppBottomSheetModal>(null);
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { safeOffBottom } = useSafeSizes();
+  const [isDetailExpanded, setIsDetailExpanded] = React.useState(false);
+  const detailListRef = React.useRef<FlatList<TokenItem>>(null);
+  const shouldShowDetail = taskList.length > 0;
+  const snapPoints = React.useMemo(() => {
+    if (!shouldShowDetail) {
+      return [DEFAULT_SHEET_HEIGHT];
+    }
+
+    return [COLLAPSED_DETAIL_SHEET_HEIGHT, EXPANDED_DETAIL_SHEET_HEIGHT];
+  }, [shouldShowDetail]);
+  const firstFailedIndex = React.useMemo(
+    () =>
+      taskList.findIndex(token => statusDict[token.id]?.status === 'failed'),
+    [statusDict, taskList],
+  );
+  const hasFailedTask = firstFailedIndex >= 0;
   const receiveTokenSymbol = receiveToken
     ? getTokenSymbol(receiveToken) || 'Unknown'
     : 'Unknown';
 
   useEffect(() => {
     if (visible) {
+      setIsDetailExpanded(hasFailedTask);
       modalRef.current?.present();
+      if (hasFailedTask) {
+        requestAnimationFrame(() => {
+          modalRef.current?.snapToIndex(1);
+        });
+      }
     } else {
       modalRef.current?.close();
+      setIsDetailExpanded(false);
     }
-  }, [visible]);
+  }, [hasFailedTask, visible]);
+
+  useEffect(() => {
+    if (!visible || !isDetailExpanded) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      modalRef.current?.snapToIndex(1);
+    });
+  }, [isDetailExpanded, visible]);
+
+  const renderDetailItem = React.useCallback(
+    ({ item }: { item: TokenItem }) => (
+      <ConvertDustDetailRow token={item} status={statusDict[item.id]} />
+    ),
+    [statusDict],
+  );
+
+  const scrollToFailedTask = React.useCallback(
+    (animated = true) => {
+      if (!isDetailExpanded || firstFailedIndex < 0) {
+        return;
+      }
+
+      requestAnimationFrame(() => {
+        detailListRef.current?.scrollToIndex({
+          index: firstFailedIndex,
+          animated,
+          viewPosition: 0,
+        });
+      });
+    },
+    [firstFailedIndex, isDetailExpanded],
+  );
+
+  useEffect(() => {
+    if (!visible || !hasFailedTask) {
+      return;
+    }
+
+    scrollToFailedTask(false);
+  }, [hasFailedTask, scrollToFailedTask, visible]);
+
+  const handleExpandDetail = React.useCallback(() => {
+    setIsDetailExpanded(true);
+    requestAnimationFrame(() => {
+      modalRef.current?.snapToIndex(1);
+    });
+  }, []);
+
+  const handleFoldDetail = React.useCallback(() => {
+    setIsDetailExpanded(false);
+    requestAnimationFrame(() => {
+      modalRef.current?.snapToIndex(0);
+    });
+  }, []);
 
   return (
     <AppBottomSheetModal
       ref={modalRef}
-      index={0}
-      snapPoints={[437]}
+      index={isDetailExpanded ? 1 : 0}
+      snapPoints={snapPoints}
       backgroundStyle={styles.sheetBackground}
       handleStyle={styles.sheetHandle}
       handleIndicatorStyle={styles.sheetHandleIndicator}
@@ -105,6 +241,76 @@ export function ConvertDustCompletedSheet({
           </View>
         </View>
 
+        {shouldShowDetail ? (
+          isDetailExpanded ? (
+            <View style={styles.detailPanel}>
+              <View style={styles.detailHeader}>
+                <Text style={styles.detailHeaderText}>
+                  {t('page.convertDust.colStatusToken')}
+                </Text>
+                <Text style={styles.detailHeaderText}>
+                  {t('page.convertDust.colValueAmount')}
+                </Text>
+              </View>
+              <FlatList
+                ref={detailListRef}
+                style={styles.detailList}
+                data={taskList}
+                keyExtractor={getTokenKey}
+                renderItem={renderDetailItem}
+                showsVerticalScrollIndicator
+                getItemLayout={(_, index) => ({
+                  length: DETAIL_ROW_HEIGHT,
+                  offset: DETAIL_ROW_HEIGHT * index,
+                  index,
+                })}
+                onContentSizeChange={() => scrollToFailedTask(false)}
+                onScrollToIndexFailed={info => {
+                  setTimeout(() => {
+                    detailListRef.current?.scrollToIndex({
+                      index: info.index,
+                      animated: false,
+                      viewPosition: 0,
+                    });
+                  }, 100);
+                }}
+              />
+              <TouchableOpacity
+                style={styles.detailToggleInline}
+                onPress={handleFoldDetail}>
+                <Text style={styles.detailToggleText}>
+                  {t('page.convertDust.completed.fold', {
+                    defaultValue: 'Fold',
+                  })}
+                </Text>
+                <RcIconCaretDown
+                  width={10}
+                  height={8}
+                  color={colors2024['neutral-secondary']}
+                  style={styles.detailToggleIconUp}
+                />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.detailToggle}
+              onPress={handleExpandDetail}>
+              <Text style={styles.detailToggleText}>
+                {t('page.convertDust.completed.viewMoreDetail', {
+                  defaultValue: 'View more detail',
+                })}
+              </Text>
+              <RcIconCaretDown
+                width={10}
+                height={8}
+                color={colors2024['neutral-secondary']}
+              />
+            </TouchableOpacity>
+          )
+        ) : null}
+
+        <View style={styles.footerSpacer} />
+
         <View
           style={[
             styles.buttonWrap,
@@ -146,6 +352,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sheetContent: {
     flex: 1,
     paddingHorizontal: 20,
+  },
+  footerSpacer: {
+    flex: 1,
+    minHeight: 12,
   },
   heroBlock: {
     marginTop: 24,
@@ -214,13 +424,109 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '900',
     lineHeight: 32,
   },
-  buttonWrap: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
+  detailToggle: {
+    height: 42,
+    marginTop: 12,
+    borderRadius: 12,
+    backgroundColor: colors2024['neutral-bg-2'],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  detailToggleText: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+  detailToggleIconUp: {
+    transform: [{ rotate: '180deg' }],
+  },
+  detailPanel: {
+    height: 208,
+    marginTop: 12,
+    borderRadius: 12,
     paddingTop: 12,
-    paddingHorizontal: 24,
+    backgroundColor: colors2024['neutral-bg-2'],
+    overflow: 'hidden',
+  },
+  detailHeader: {
+    height: 34,
+    paddingLeft: 16,
+    paddingRight: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  detailHeaderText: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+  },
+  detailList: {
+    flex: 1,
+    paddingLeft: 12,
+    paddingRight: 16,
+  },
+  detailRow: {
+    height: DETAIL_ROW_HEIGHT,
+    paddingVertical: 2,
+    paddingLeft: 4,
+    paddingRight: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  detailChainBadge: {
+    borderWidth: 1,
+    borderColor: colors2024['neutral-bg-1'],
+  },
+  detailNameColumn: {
+    minWidth: 0,
+    flex: 1,
+    justifyContent: 'center',
+  },
+  detailTokenSymbol: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  detailValueColumn: {
+    flex: 1,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  detailValue: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  detailAmount: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+  },
+  detailToggleInline: {
+    height: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  buttonWrap: {
+    paddingTop: 12,
+    paddingHorizontal: 4,
     backgroundColor: colors2024['neutral-bg-1'],
   },
   buttonContainer: {
