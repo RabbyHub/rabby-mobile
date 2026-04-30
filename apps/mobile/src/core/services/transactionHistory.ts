@@ -32,14 +32,14 @@ import { customTestnetTokenToTokenItem, getTokenSymbol } from '@/utils/token';
 import {
   loadTxSaveFromLocalStore,
   txDonePatchTokenAmountInDb,
-} from '@/screens/Transaction/components/utils';
+} from '@/databases/sync/history';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
 import { updateExpiredTime } from '@/databases/sync/utils';
 import { matomoRequestEvent } from '@/utils/analytics';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
-} from '@/screens/Transaction/components/type';
+} from '@/types/history';
 
 export interface TransactionHistoryItem {
   address: string;

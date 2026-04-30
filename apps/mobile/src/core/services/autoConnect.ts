@@ -1,10 +1,16 @@
 import { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { LRUCache } from 'lru-cache';
 import { openapi } from '../request';
-import { getAccountList } from '../apis/account';
-import { getDappAccount } from '@/hooks/useDapps';
 import { findChain } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';
+import type { Account, KeyringAccountWithAlias } from '@/types/account';
+import { resolveDappAccount } from '@/utils/dappAccount';
+
+type RecentTransactionAccount = {
+  address: string;
+  createdAt: number;
+  keyringType?: string;
+};
 
 function asyncMemoize<T extends (...args: any[]) => Promise<any>>(
   method: T,
@@ -42,13 +48,22 @@ const COUNT = 2;
 
 export class AutoConnectService {
   dappService: import('./dappService').DappService;
+  getAccounts: () => Promise<KeyringAccountWithAlias[]>;
+  getRecentTransactions: () => RecentTransactionAccount[];
+  getFallbackAccount: () => Account | undefined | null;
 
   constructor(
     options: StorageAdapaterOptions & {
       dappService: import('./dappService').DappService;
+      getAccounts: () => Promise<KeyringAccountWithAlias[]>;
+      getRecentTransactions: () => RecentTransactionAccount[];
+      getFallbackAccount: () => Account | undefined | null;
     },
   ) {
     this.dappService = options.dappService;
+    this.getAccounts = options.getAccounts;
+    this.getRecentTransactions = options.getRecentTransactions;
+    this.getFallbackAccount = options.getFallbackAccount;
   }
 
   autoConnect = async (origin: string) => {
@@ -80,11 +95,13 @@ export class AutoConnectService {
       ) {
         defaultChain = site.chainId;
       }
-      const { accounts } = await getAccountList();
-      const defaultAccount = getDappAccount({
+      const accounts = await this.getAccounts();
+      const defaultAccount = resolveDappAccount({
         dappInfo: site,
         accounts,
-      })!;
+        transactions: this.getRecentTransactions(),
+        fallbackAccount: this.getFallbackAccount(),
+      });
 
       if (defaultAccount && !defaultChain) {
         const recommendChains = await getRecommendChains(
@@ -135,11 +152,13 @@ export class AutoConnectService {
       ) {
         return;
       }
-      const { accounts } = await getAccountList();
-      const defaultAccount = getDappAccount({
+      const accounts = await this.getAccounts();
+      const defaultAccount = resolveDappAccount({
         dappInfo: site,
         accounts,
-      })!;
+        transactions: this.getRecentTransactions(),
+        fallbackAccount: this.getFallbackAccount(),
+      });
 
       if (defaultAccount) {
         getRecommendChains(defaultAccount.address, origin);

@@ -5,7 +5,7 @@ import type {
   RouteProp,
 } from '@react-navigation/native';
 
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import type { Account, KeyringAccountWithAlias } from '@/types/account';
 import {} from '@react-navigation/bottom-tabs';
 
 import type { RootNames } from './constant/layout';
@@ -22,16 +22,15 @@ import type {
   AbstractProject,
 } from './screens/Home/types';
 import type { DappInfo } from './core/services/dappService';
-import type { HistoryDisplayItem } from './screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from './types/history';
 import type { TransactionGroup } from './core/services/transactionHistory';
-import { Account } from './core/services/preference';
 import {
   ApprovalSpenderItemToBeRevoked,
   AssetApprovalSpender,
 } from './screens/Approvals/useApprovalsPage';
-import { HistoryItemCateType } from './screens/Transaction/components/type';
+import { HistoryItemCateType } from './types/history';
 import type { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
-import { ITokenItem } from './store/tokens';
+import type { ITokenItem } from './types/assets';
 
 /**
  * Learn more about using TypeScript with React Navigation:

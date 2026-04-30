@@ -1,6 +1,6 @@
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useCallback, useMemo } from 'react';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/types/account';
 import {
   isSameAccount,
   useSwitchSceneCurrentAccount,

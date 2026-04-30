@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import { getChain } from '@/utils/chain';
-import { ProjectItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { TxChange } from './TokenChange';
@@ -19,6 +19,9 @@ import { HistoryItemTokenArea } from './HistoryItemTokenArea';
 import { getTokenSymbol } from '@/utils/token';
 import FastImage from 'react-native-fast-image';
 import { Text } from '@/components/Typography';
+import type { TokenChangeDataItem } from '@/types/history';
+
+export type { TokenChangeDataItem } from '@/types/history';
 
 type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
@@ -26,14 +29,6 @@ type HistoryItemProps = {
   isForMultipleAddress?: boolean;
   getCexInfoByAddress?: (address: string) => ProjectItem;
   onPress?: (data: HistoryDisplayItem) => void;
-};
-
-export type TokenChangeDataItem = {
-  amount: number;
-  token?: TokenItem;
-  token_id: string;
-  price?: number;
-  type: 'send' | 'receive' | 'approve';
 };
 
 const ellipsisAddress = (address: string) => {

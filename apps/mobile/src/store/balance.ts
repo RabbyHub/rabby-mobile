@@ -17,7 +17,7 @@ import { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
 import { unionBy } from 'lodash';
 import PQueue from 'p-queue';
 import { useCallback, useMemo, useRef } from 'react';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/types/account';
 import { perfEvents } from '@/core/utils/perf';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';

@@ -1,14 +1,12 @@
 import { preferenceService } from '@/core/services';
+import {
+  BALANCE_HIDE_TYPE as BALANCE_HIDE_TYPE_CONST,
+  type BALANCE_HIDE_TYPE as BalanceHideType,
+} from '@/constant/balanceHide';
 import { atom, useAtom } from 'jotai';
 
-export const BALANCE_HIDE_TYPE = {
-  HIDE: 'HIDE',
-  SHOW: 'SHOW',
-  HALF_HIDE: 'HALF_HIDE',
-} as const;
-
-export type BALANCE_HIDE_TYPE =
-  (typeof BALANCE_HIDE_TYPE)[keyof typeof BALANCE_HIDE_TYPE];
+export const BALANCE_HIDE_TYPE = BALANCE_HIDE_TYPE_CONST;
+export type BALANCE_HIDE_TYPE = BalanceHideType;
 
 const baseHideTypeAtom = atom<BALANCE_HIDE_TYPE>(BALANCE_HIDE_TYPE.SHOW);
 

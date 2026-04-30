@@ -6,7 +6,7 @@ import { t } from 'i18next';
 import { AbiCoder } from 'web3-eth-abi';
 import { addHexPrefix, unpadHexString } from 'ethereumjs-util';
 import { toChecksumAddress } from '@ethereumjs/util';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 
 export async function transferNFT(
   {

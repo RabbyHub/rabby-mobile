@@ -6,7 +6,7 @@ import {
   isHardwareAccount,
 } from '@/core/apis/account';
 import { storeApiGasAccount } from '@/screens/GasAccount/hooks/atom';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/types/account';
 import { makeAvoidParallelAsyncFunc } from '@/core/utils/concurrency';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { KeyringAccount } from '@rabby-wallet/keyring-utils';

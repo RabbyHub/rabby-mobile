@@ -15,7 +15,7 @@ import type {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 import { TX_GAS_LIMIT_CHAIN_MAPPING } from '@/constant/txGasLimit';
 import {
   GasTokenBalanceInfo,
