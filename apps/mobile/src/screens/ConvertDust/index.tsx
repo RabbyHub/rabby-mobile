@@ -45,7 +45,11 @@ import {
   useConvertDustTokenList,
 } from './hooks/useConvertDustTokens';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import {
+  useNavigation,
+  usePreventRemove,
+  useRoute,
+} from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type {
   GetNestedScreenRouteProp,
@@ -138,33 +142,20 @@ function ConvertDustContent({
     dismissConvertDustBanner();
   }, [dismissConvertDustBanner]);
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('beforeRemove', event => {
-      if (allowBackRef.current) {
-        return;
-      }
-
+  usePreventRemove(
+    !allowBackRef.current &&
+      (taskStatus === 'active' || !!route.params?.fromHomeConvertDustBanner),
+    event => {
       if (taskStatus === 'active') {
-        event.preventDefault();
         pendingStopBackActionRef.current = event.data.action;
         pauseTask();
         return;
       }
 
-      if (route.params?.fromHomeConvertDustBanner) {
-        event.preventDefault();
-        pendingBackActionRef.current = event.data.action;
-        setEntryGuideVisible(true);
-      }
-    });
-
-    return unsubscribe;
-  }, [
-    navigation,
-    pauseTask,
-    route.params?.fromHomeConvertDustBanner,
-    taskStatus,
-  ]);
+      pendingBackActionRef.current = event.data.action;
+      setEntryGuideVisible(true);
+    },
+  );
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
