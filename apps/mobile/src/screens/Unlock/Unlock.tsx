@@ -1,13 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
-import {
-  View,
-  Platform,
-  ActivityIndicator,
-  Keyboard,
-  KeyboardAvoidingView,
-} from 'react-native';
+import { View, Platform, Keyboard, KeyboardAvoidingView } from 'react-native';
 import * as Yup from 'yup';
 
 import { default as RcRabbyLogoLight } from './icons/icon-with-logo-light.svg';
@@ -19,7 +13,7 @@ import TouchableView, {
   SilentTouchableView,
 } from '@/components/Touchable/TouchableView';
 import { useFormik } from 'formik';
-import { toast, toastWithIcon } from '@/components2024/Toast';
+import { toast, toastIndicator, toastWithIcon } from '@/components2024/Toast';
 import { apisKeychain, apisLock } from '@/core/apis';
 import {
   UnlockUIManager,
@@ -103,11 +97,11 @@ const toastBiometricsFailed = (message?: string) => {
   prevFailedRef.hide?.();
   prevFailedRef.hide = toastFailed(message);
 };
-const toastLoading = toastWithIcon(() => (
-  <ActivityIndicator style={{ marginRight: 6 }} />
-));
 const toastUnlocking = () =>
-  toastLoading(i18next.t('page.unlock.unlocking'), { duration: 3000 });
+  toastIndicator(i18next.t('page.unlock.unlocking'), {
+    duration: 3000,
+    isTop: true,
+  });
 
 export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
   const { isFaceID = isIOS, size = BiometricsIconSize } = props;
