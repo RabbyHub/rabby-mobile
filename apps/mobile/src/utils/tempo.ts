@@ -137,7 +137,7 @@ const toRawAmountHex = (rawAmount: BigNumber, fallback = '0x0') => {
   return `0x${BigInt(integerRawAmount.toFixed(0)).toString(16)}`;
 };
 
-const convert18RawToTokenRaw = (
+export const convert18RawToTokenRaw = (
   rawAmountIn18: BigNumber,
   tokenDecimals: number,
 ) => {
