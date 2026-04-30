@@ -75,13 +75,7 @@ const useTokenInfo = ({
       );
       return { ...data, tokenId: token.id };
     }
-  }, [
-    tokenRefreshId,
-    userAddress,
-    token?.id,
-    token?.raw_amount_hex_str,
-    chain,
-  ]);
+  }, [tokenRefreshId, userAddress, token?.id, chain]);
 
   useDebounce(
     () => {
