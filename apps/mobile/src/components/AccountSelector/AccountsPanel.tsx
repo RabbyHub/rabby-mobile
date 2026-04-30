@@ -114,13 +114,17 @@ function AddressItemInSheetModal({
         activeOpacity={1}
         onPressIn={() => setIsPressing(true)}
         onPressOut={() => setIsPressing(false)}
-        delayLongPress={200}
-        onLongPress={() => {
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
-        }}
+        delayLongPress={isReceive ? undefined : 200}
+        onLongPress={
+          isReceive
+            ? undefined
+            : () => {
+                trigger('impactLight', {
+                  enableVibrateFallback: true,
+                  ignoreAndroidSystemSettings: false,
+                });
+              }
+        }
         onPress={() => {
           triggerLight();
           defaultPressAction === 'copy'
