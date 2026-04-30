@@ -61,6 +61,7 @@ const getHomeHeaderStyle = createGetStyles2024(({ safeAreaInsets }) => ({
     justifyContent: 'flex-start',
     width: '100%',
     flexShrink: 1,
+    marginRight: 20,
   },
 
   containerRight: {
