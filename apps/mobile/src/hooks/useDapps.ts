@@ -1,7 +1,7 @@
 import { createDappBySession } from '@/core/apis/dapp';
 import { useCallback, useMemo } from 'react';
 
-import { apisDapp } from '@/core/apis';
+import * as apisDapp from '@/core/apis/dapp';
 import type { DappInfo, DappStore } from '@/core/services/dappService';
 import type { Account, KeyringAccountWithAlias } from '@/types/account';
 import {
