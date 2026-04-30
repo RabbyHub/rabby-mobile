@@ -1,28 +1,18 @@
 import React from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { RootNames } from '@/constant/layout';
-import { useNavigation, useRoute } from '@react-navigation/core';
-import {
-  GetNestedScreenRouteProp,
-  RootStackParamsList,
-} from '@/navigation-type';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useRoute } from '@react-navigation/core';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { AccountsPanelInSheetModal } from '@/components/AccountSelector/AccountsPanel';
-import { StackActions } from '@react-navigation/native';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
 import type { Account } from '@/types/account';
-
-type CurrentAddressProps = NativeStackScreenProps<
-  RootStackParamsList,
-  'StackAddress'
->;
+import { naviPush } from '@/utils/navigation';
 
 export function ReceiveAddressListScreen(): JSX.Element {
   const { styles } = useTheme2024({ getStyle });
-  const navigation = useNavigation<CurrentAddressProps['navigation']>();
   const isSelectingRef = React.useRef(false);
   const unlockSelectingTimerRef = React.useRef<ReturnType<
     typeof setTimeout
@@ -52,21 +42,24 @@ export function ReceiveAddressListScreen(): JSX.Element {
   }, []);
 
   const handleSelect = React.useCallback(
-    async (account: Account | null) => {
+    (account: Account | null) => {
       if (!account || isSelectingRef.current) {
         return;
       }
 
       isSelectingRef.current = true;
 
-      try {
-        await preloadTransactionHotNavigator();
-      } catch (error) {
+      if (unlockSelectingTimerRef.current) {
+        clearTimeout(unlockSelectingTimerRef.current);
+        unlockSelectingTimerRef.current = null;
+      }
+
+      preloadTransactionHotNavigator().catch(error => {
         console.error(
           'preloadTransactionHotNavigator::receiveAddressSelect::error',
           error,
         );
-      }
+      });
 
       const params: {
         chainEnum?: CHAINS_ENUM;
@@ -78,22 +71,22 @@ export function ReceiveAddressListScreen(): JSX.Element {
       if (route.params?.tokenSymbol) {
         params.tokenSymbol = route.params.tokenSymbol;
       }
-      navigation.dispatch(
-        StackActions.push(RootNames.StackTransaction, {
+      try {
+        naviPush(RootNames.StackTransaction, {
           screen: RootNames.Receive,
           params: {
             account: account,
             ...params,
           },
-        }),
-      );
-
-      unlockSelectingTimerRef.current = setTimeout(() => {
-        isSelectingRef.current = false;
-        unlockSelectingTimerRef.current = null;
-      }, 1000);
+        });
+      } finally {
+        unlockSelectingTimerRef.current = setTimeout(() => {
+          isSelectingRef.current = false;
+          unlockSelectingTimerRef.current = null;
+        }, 1000);
+      }
     },
-    [navigation, route.params?.chainEnum, route.params?.tokenSymbol],
+    [route.params?.chainEnum, route.params?.tokenSymbol],
   );
 
   return (
