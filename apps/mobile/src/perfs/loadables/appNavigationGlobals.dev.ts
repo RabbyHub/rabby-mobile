@@ -7,7 +7,6 @@ export { AliasNameEditModal } from '@/components2024/AliasNameEditModal/AliasNam
 export { QrCodeModal } from '@/components2024/QrCodeModal/QrCodeModal';
 export { InnerDappWebViewPreloadEntry } from '@/components/WebView/InnerDappWebViewPreloadEntry';
 export { default as ApprovalTokenDetailSheetModalStub } from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
-export { GlobalSearchBottomSheet } from '@/screens/Search/components/SeachBottomSheet';
 export { BottomSheetBrowser } from '@/screens/Browser/BottomSheetBrowser';
 export { BrowserManagePopup } from '@/screens/Browser/BottomSheetBrowser';
 export { BrowserFavoritePopup } from '@/screens/Browser/BottomSheetBrowser';
