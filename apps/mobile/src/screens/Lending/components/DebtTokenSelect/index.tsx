@@ -13,7 +13,7 @@ import AssetItem from './AssetItem';
 import { EmodeCategory } from '../../type';
 import { useMode } from '../../hooks/useMode';
 import { getTokensTo } from '../../utils/swap';
-import { getBorrowUsage } from '../../utils/supply';
+import { getBorrowUsage } from '../../utils/borrow';
 import { SwappableToken } from '../../types/swap';
 import { useLendingSummary, useSelectedMarket } from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
