@@ -710,8 +710,12 @@ const mapLedgerUpdatesToHistory = (
         };
       }
 
-      const { destination, usdcValue, user, destinationDex, sourceDex } =
-        item.delta as any;
+      const {
+        destination = '',
+        usdcValue = '0',
+        user = '',
+        destinationDex,
+      } = item.delta;
       const isWithdrawSend = Object.values(
         HYPE_EVM_BRIDGE_ADDRESS_MAP,
       ).includes(destination);
@@ -729,7 +733,7 @@ const mapLedgerUpdatesToHistory = (
         currentAddress &&
         isSameAddress(destination, currentAddress)
       ) {
-        if (sourceDex === 'spot' || destinationDex === 'spot') {
+        if (user && destination && isSameAddress(user, destination)) {
           return {
             time: item.time,
             hash: item.hash,

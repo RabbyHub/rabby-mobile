@@ -36,22 +36,10 @@ import { PerpsPosition } from './components/PerpsPosition';
 import { usePerpsPosition } from './hooks/usePerpsPosition';
 import { useActiveAssetSubscription } from './hooks/useActiveAssetSubscription';
 import { toast } from '@/components2024/Toast';
-import * as Sentry from '@sentry/react-native';
-import {
-  ARB_USDC_TOKEN_ID,
-  ARB_USDC_TOKEN_SERVER_CHAIN,
-  HYPE_USDC_TOKEN_ID,
-  HYPE_USDC_TOKEN_SERVER_CHAIN,
-  CANDLE_MENU_KEY_V2,
-  PERPS_MAX_NTL_VALUE,
-} from '@/constant/perps';
+import { CANDLE_MENU_KEY_V2, PERPS_MAX_NTL_VALUE } from '@/constant/perps';
 import { PerpsRegionAlert } from '../Perps/components/PerpsRegionAlert';
-import { trigger } from 'react-native-haptic-feedback';
-import { useAppState } from '@react-native-community/hooks';
 
 import { usePerpsPopupState } from '../Perps/hooks/usePerpsPopupState';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { openapi } from '@/core/request';
 
 import Toast from 'react-native-root-toast';
 import { naviReplace } from '@/utils/navigation';
@@ -61,7 +49,6 @@ import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import { showToast } from '@/hooks/perps/showToast';
 import { PerpsAgentsLimitModal } from '../Perps/components/PerpsAgentsLimitModal';
 import { PerpsPositionSkeletonLoader } from '../Perps/components/PerpsSkeletonLoader';
-import { PerpsHeaderRight } from './components/PerpsHeaderRight';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 import { stats } from '@/utils/stats';
 import { getStatsReportSide } from '@/utils/perps';
