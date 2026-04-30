@@ -93,7 +93,7 @@ export function ScreenHeaderAccountSwitcher({
             <AddressItem
               style={styles.addressItem}
               account={finalSceneCurrentAccount}>
-              {({ WalletIcon, WalletAddress }) => {
+              {({ WalletIcon }) => {
                 return (
                   <View style={styles.addressRow}>
                     <WalletIcon style={styles.walletIcon} />
@@ -104,26 +104,39 @@ export function ScreenHeaderAccountSwitcher({
                       {finalSceneCurrentAccount.aliasName ||
                         ellipsisAddress(finalSceneCurrentAccount?.address)}
                     </Text>
+                    {!disableSwitch && (
+                      <IconCom
+                        style={[
+                          styles.addressCaretIcon,
+                          isOpen && styles.reverseCaret,
+                        ]}
+                        width={18}
+                        height={18}
+                        color={colors2024['neutral-bg-4']}
+                      />
+                    )}
                   </View>
                 );
               }}
             </AddressItem>
           )
         ) : (
-          <Text style={styles.address}>
-            {t('component.accountSwitcher.all')}{' '}
-            {t('component.accountSwitcher.screenHeaderSubTitle', {
-              count: len,
-            })}
-          </Text>
-        )}
-        {!disableSwitch && (
-          <IconCom
-            style={[styles.addressCaretIcon, isOpen && styles.reverseCaret]}
-            width={18}
-            height={18}
-            color={colors2024['neutral-bg-4']}
-          />
+          <>
+            <Text style={styles.address}>
+              {t('component.accountSwitcher.all')}{' '}
+              {t('component.accountSwitcher.screenHeaderSubTitle', {
+                count: len,
+              })}
+            </Text>
+            {!disableSwitch && (
+              <IconCom
+                style={[styles.addressCaretIcon, isOpen && styles.reverseCaret]}
+                width={18}
+                height={18}
+                color={colors2024['neutral-bg-4']}
+              />
+            )}
+          </>
         )}
       </View>
     </TouchableView>
@@ -139,7 +152,7 @@ const getStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 199,
-      width: SCREEN_WIDTH - 120,
+      width: SCREEN_WIDTH - 140,
       marginTop: -4,
     },
     titleText: {
@@ -161,9 +174,8 @@ const getStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
     },
     addressItem: {
-      flexShrink: 1,
-      flex: 1,
-      minWidth: 0,
+      maxWidth: '100%',
+      overflow: 'hidden',
     },
     walletIcon: {
       borderRadius: 4,
@@ -174,14 +186,12 @@ const getStyle = createGetStyles2024(ctx => {
     },
     address: {
       flexShrink: 1,
-      flex: 1,
       minWidth: 0,
       margin: 4,
       fontFamily: 'SF Pro Rounded',
       fontWeight: '500',
       lineHeight: 20,
       fontSize: 16,
-      //maxWidth: '90%',
       color: ctx.colors2024['neutral-foot'],
     },
     addressCaretIcon: {
