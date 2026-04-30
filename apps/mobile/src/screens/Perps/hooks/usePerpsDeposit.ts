@@ -84,7 +84,12 @@ export const usePerpsDeposit = ({
         throw new Error('No txs');
       }
 
-      const time = Date.now();
+      // HYPE withdraw goes through `send` ledger update whose server-
+      // side timestamp can be a few dozen ms earlier than the client
+      // clock, leaving the time-based pending filter unable to clear
+      // it. Backdate by 1s to absorb the drift (matches the desktop
+      // deposit handler's `Date.now() - 1000` trick).
+      const time = Date.now() - 1000;
       if (!currentPerpsAccount) {
         return;
       }

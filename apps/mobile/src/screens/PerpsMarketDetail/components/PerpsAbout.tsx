@@ -25,7 +25,7 @@ export const PerpsAbout: React.FC<{
     { refreshDeps: [coin, currentLanguage] },
   );
 
-  const aboutContent = (tokenDetail as unknown as PerpTopTokenV3)?.description;
+  const aboutContent = tokenDetail?.description;
 
   if (!aboutContent) {
     return null;

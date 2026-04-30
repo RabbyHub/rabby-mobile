@@ -36,7 +36,11 @@ import { PERPS_MAX_NTL_VALUE, PERPS_MINI_USD_VALUE } from '@/constant/perps';
 import BigNumber from 'bignumber.js';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
-import { MarketData, perpsStore } from '@/hooks/perps/usePerpsStore';
+import {
+  MarketData,
+  perpsStore,
+  setMarginModeForCoin,
+} from '@/hooks/perps/usePerpsStore';
 import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
 import { PerpsSlider } from './PerpsSlider';
 import { AssetPriceInfo } from './PerpsPriceInfo';
@@ -320,6 +324,12 @@ export const PerpsOpenPositionPopup: React.FC<{
       setLeverage(leverageRang[1]);
       resetInitValue();
       setIsReviewMode(false);
+      // 不允许 cross 时强制 isolated；否则读取按币对持久化的选择，默认 isolated
+      const persisted = perpsStore.getState().marginModeByCoin[coin];
+      const nextMode: 'cross' | 'isolated' = marketDataItem?.onlyIsolated
+        ? 'isolated'
+        : persisted ?? 'isolated';
+      setSelectedMarginMode(nextMode);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
@@ -875,6 +885,7 @@ export const PerpsOpenPositionPopup: React.FC<{
         onConfirm={(mode: 'cross' | 'isolated') => {
           setIsShowMarginModePopup(false);
           setSelectedMarginMode(mode);
+          setMarginModeForCoin(coin, mode);
         }}
       />
     </>
