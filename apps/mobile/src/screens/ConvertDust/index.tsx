@@ -234,17 +234,6 @@ function ConvertDustContent({
     currentAccount?.type === KEYRING_CLASS.PRIVATE_KEY ||
     currentAccount?.type === KEYRING_CLASS.MNEMONIC;
 
-  const getAccountDisabledTips = useCallback((account: Account) => {
-    if (
-      account.type === KEYRING_CLASS.PRIVATE_KEY ||
-      account.type === KEYRING_CLASS.MNEMONIC
-    ) {
-      return undefined;
-    }
-
-    return '该类地址不支持此功能';
-  }, []);
-
   const toggleToken = useCallback(
     (token: ITokenItem) => {
       if (task.disabled) {
@@ -467,10 +456,6 @@ function ConvertDustContent({
         onPress={handleStartPress}
       />
 
-      <AccountSwitcherModal
-        forScene="MakeTransactionAbout"
-        getAccountDisabledTips={getAccountDisabledTips}
-      />
       <ConvertDustPresetSheet
         visible={activeSettingSheet === 'priceImpact'}
         title={t('page.convertDust.receiveSummary.priceImpact')}
@@ -526,11 +511,32 @@ export const ConvertDustScreen = () => {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
+  const { t } = useTranslation();
+  const getAccountDisabledTips = useCallback(
+    (account: Account) => {
+      if (
+        account.type === KEYRING_CLASS.PRIVATE_KEY ||
+        account.type === KEYRING_CLASS.MNEMONIC
+      ) {
+        return undefined;
+      }
+
+      // return '该类地址不支持此功能';
+      return t('page.convertDust.unsupportedAccountType');
+    },
+    [t],
+  );
   return (
-    <ConvertDustContent
-      currentAccount={currentAccount}
-      key={`${currentAccount?.type}-${currentAccount?.address}`}
-    />
+    <>
+      <ConvertDustContent
+        currentAccount={currentAccount}
+        key={`${currentAccount?.type}-${currentAccount?.address}`}
+      />
+      <AccountSwitcherModal
+        forScene="MakeTransactionAbout"
+        getAccountDisabledTips={getAccountDisabledTips}
+      />
+    </>
   );
 };
 
