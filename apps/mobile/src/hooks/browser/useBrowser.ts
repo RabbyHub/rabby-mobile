@@ -11,6 +11,7 @@ import { Tab } from '@/core/services/browserService';
 import { isGoogle } from '@/utils/browser';
 import {
   EVENT_SHOW_BROWSER,
+  EVENT_SHOW_BROWSER_DAPP_INFO,
   EVENT_SHOW_BROWSER_MANAGE,
   eventBus,
 } from '@/utils/events';
@@ -356,6 +357,7 @@ export const browserApis = {
         isShowDappInfo: true,
         dappInfoUrl: url,
       });
+      browserApis.forceShowBrowserDappInfo();
       return;
     }
     const newTab: Tab = {
@@ -408,6 +410,10 @@ export const browserApis = {
 
   forceShowBrowserManage: () => {
     eventBus.emit(EVENT_SHOW_BROWSER_MANAGE, true);
+  },
+
+  forceShowBrowserDappInfo: () => {
+    eventBus.emit(EVENT_SHOW_BROWSER_DAPP_INFO, true);
   },
 
   showBrowser: () => {
