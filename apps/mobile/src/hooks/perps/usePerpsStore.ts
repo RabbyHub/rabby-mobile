@@ -118,6 +118,7 @@ export interface PerpsState {
     availableToTrade: string;
     balances: SpotBalance[];
     balancesMap: Record<string, SpotBalance>;
+    tokenToAvailableAfterMaintenance: [number, string][] | null;
   };
   userAbstraction: UserAbstractionResp;
   openOrders: OpenOrder[];
@@ -171,6 +172,7 @@ export const initialState: PerpsState = {
     availableToTrade: '0',
     balances: [],
     balancesMap: {},
+    tokenToAvailableAfterMaintenance: null,
   },
   userAbstraction: UserAbstractionResp.default,
   hasPermission: true,
