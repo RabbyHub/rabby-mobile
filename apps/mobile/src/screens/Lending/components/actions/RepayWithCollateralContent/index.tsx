@@ -805,6 +805,9 @@ export default function RepayWithCollateral({
               return;
             }
             if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
+              toast.error(
+                t('page.Lending.signFallback.preExecFailedUseFullSign'),
+              );
               await handleRepay({
                 ...p,
                 forceFullSign: true,
