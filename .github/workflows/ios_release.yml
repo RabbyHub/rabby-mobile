@@ -57,7 +57,7 @@ jobs:
       matrix:
         include:
           - host: macOS
-            machine_loc: ${{ inputs.macos_machine_location }}
+            machine_loc: ${{ github.event_name == 'workflow_dispatch' && inputs.macos_machine_location || (contains(github.ref_name, 'mobile-local') && 'mobile-local' || 'mobile') }}
     runs-on:
       - self-hosted
       - ${{ matrix.host }}
@@ -65,7 +65,7 @@ jobs:
     env:
       RABBY_MOBILE_NM_USE_CACHE: 'true'
       XCODE_VER: '26.3'
-      HASH_CHECK: ${{ github.event_name == 'workflow_dispatch' && inputs.HASH_CHECK || false }}
+      HASH_CHECK: ${{ (github.event_name == 'workflow_dispatch' && inputs.HASH_CHECK) || startsWith(github.ref_name, 'ci/ios-release-hash-check-') || false }}
     steps:
       - name: Checkout git repo
         uses: actions/checkout@v4
@@ -178,10 +178,10 @@ jobs:
           INPUT_NEW_VERSION_NAME: ${{ inputs.NEW_VERSION_NAME }}
 
       - name: Upload HASH_CHECK artifact
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.HASH_CHECK }}
+        if: ${{ env.HASH_CHECK == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: ios-release-hash-check-${{ inputs.macos_machine_location }}
+          name: ios-release-hash-check-${{ matrix.machine_loc }}
           path: apps/mobile/release_hash_check_exports_*
           retention-days: 7
 

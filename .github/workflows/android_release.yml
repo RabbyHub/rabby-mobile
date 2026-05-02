@@ -61,7 +61,7 @@ jobs:
       RABBY_MOBILE_NM_USE_CACHE: 'true'
       RABBY_MOBILE_METRO_NODE_MAX_OLD_SPACE_SIZE: '6144'
       RABBY_MOBILE_METRO_MAX_WORKERS: '4'
-      HASH_CHECK: ${{ github.event_name == 'workflow_dispatch' && inputs.HASH_CHECK || false }}
+      HASH_CHECK: ${{ (github.event_name == 'workflow_dispatch' && inputs.HASH_CHECK) || startsWith(github.ref_name, 'ci/android-release-hash-check-') || false }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -162,7 +162,7 @@ jobs:
           GITHUB_REF: ${{ github.ref }}
 
       - name: Upload HASH_CHECK artifact
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.HASH_CHECK }}
+        if: ${{ env.HASH_CHECK == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: android-release-hash-check
