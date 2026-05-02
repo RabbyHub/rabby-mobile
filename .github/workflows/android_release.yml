@@ -25,6 +25,11 @@ on:
         required: true
         type: boolean
         default: false
+      HASH_CHECK:
+        description: 'Build in deterministic release hash-check mode without upload'
+        required: false
+        type: boolean
+        default: false
   workflow_call:
     secrets:
       RABBY_MOBILE_ANDROID_KEY_STORE:
@@ -56,6 +61,7 @@ jobs:
       RABBY_MOBILE_NM_USE_CACHE: 'true'
       RABBY_MOBILE_METRO_NODE_MAX_OLD_SPACE_SIZE: '6144'
       RABBY_MOBILE_METRO_MAX_WORKERS: '4'
+      HASH_CHECK: ${{ github.event_name == 'workflow_dispatch' && inputs.HASH_CHECK || false }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -116,12 +122,16 @@ jobs:
       - name: Install & Build app
         run: |
           cd apps/mobile;
-          RABBY_MOBILE_RUN_POSTINSTALL=true bash ./scripts/ci/prepare-mobile-build.sh;
-          bundle install;
 
           [ -z $buildchannel ] && export buildchannel=appstore;
           [ -z "${REALLY_UPLOAD:-}" ] && export REALLY_UPLOAD=true;
-          ./scripts/deploy-android.sh
+          if [ "$HASH_CHECK" = "true" ]; then
+            ./scripts/release-hash-check.sh android
+          else
+            RABBY_MOBILE_RUN_POSTINSTALL=true bash ./scripts/ci/prepare-mobile-build.sh;
+            bundle install;
+            ./scripts/deploy-android.sh
+          fi
         env:
           FLATTEN_REFNAME: ${{ steps.actionvars.outputs.flatten_refname }}
           TRIGGER_DATE: ${{ steps.actionvars.outputs.trigger_date }}
@@ -151,8 +161,16 @@ jobs:
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
 
+      - name: Upload HASH_CHECK artifact
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.HASH_CHECK }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-hash-check
+          path: apps/mobile/release_hash_check_exports_*
+          retention-days: 7
+
       - name: Upload appstore AAB to Google Play internal track
-        if: ${{ inputs.buildchannel == 'appstore' && inputs.REALLY_UPLOAD && inputs.UPLOAD_TO_GOOGLE_PLAY_INTERNAL }}
+        if: ${{ inputs.buildchannel == 'appstore' && inputs.REALLY_UPLOAD && inputs.UPLOAD_TO_GOOGLE_PLAY_INTERNAL && !inputs.HASH_CHECK }}
         run: |
           cd apps/mobile;
           bash ./scripts/ci/upload-google-play-internal-track.sh

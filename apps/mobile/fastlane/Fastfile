@@ -45,6 +45,10 @@ def hashcheck_prefix_map_xcargs
   }.map { |key, value| "#{key}=#{Shellwords.escape(value)}" }.join(' ')
 end
 
+def release_hash_check?
+  ENV['HASH_CHECK'] == 'true'
+end
+
 platform :ios do
   private_lane :load_app_store_connect_api_key_for_testflight do
     key_id = ENV["RABBY_MOBILE_ASC_API_KEY_ID"]
@@ -222,22 +226,34 @@ platform :ios do
 
   desc "Release for the iOS production"
   lane :appstore do
-      asc_api_key = load_app_store_connect_api_key_for_testflight
       current_version = get_version_number(
         xcodeproj: './ios/RabbyMobile.xcodeproj',
         target: 'RabbyMobile',
         configuration: 'Release'
       )
-      baseline_build_number = latest_testflight_build_number_for_version(
-        api_key: asc_api_key,
-        app_identifier: 'com.debank.rabby-mobile',
-        version: current_version
-      )
-      UI.message("Latest TestFlight build before upload for #{current_version}: #{baseline_build_number}")
-      next_build_number = baseline_build_number + 1
-      UI.message("Will build #{current_version}(#{next_build_number}) for upload")
+      asc_api_key = nil
+      if release_hash_check?
+        next_build_number = (ENV['RABBY_MOBILE_HASH_CHECK_IOS_BUILD_NUMBER'] || get_build_number(
+          xcodeproj: './ios/RabbyMobile.xcodeproj',
+          target: 'RabbyMobile',
+          configuration: 'Release'
+        )).to_i
+        UI.message("HASH_CHECK enabled; will build #{current_version}(#{next_build_number}) without TestFlight upload")
+      else
+        asc_api_key = load_app_store_connect_api_key_for_testflight
+        baseline_build_number = latest_testflight_build_number_for_version(
+          api_key: asc_api_key,
+          app_identifier: 'com.debank.rabby-mobile',
+          version: current_version
+        )
+        UI.message("Latest TestFlight build before upload for #{current_version}: #{baseline_build_number}")
+        next_build_number = baseline_build_number + 1
+        UI.message("Will build #{current_version}(#{next_build_number}) for upload")
+      end
 
       prepare_apple_sign(type: 'appstore')
+      xcode_args = ["CURRENT_PROJECT_VERSION=#{next_build_number}"]
+      xcode_args << hashcheck_prefix_map_xcargs if release_hash_check?
       gym(
         scheme: 'RabbyMobile',
         workspace: './ios/RabbyMobile.xcworkspace',
@@ -252,7 +268,7 @@ platform :ios do
         # suppress_xcode_output: false,
         skip_package_pkg: true,
         export_method: "app-store",
-        xcargs: "CURRENT_PROJECT_VERSION=#{next_build_number}",
+        xcargs: xcode_args.join(' '),
         verbose: true,
         export_options: {
           method: "app-store",
@@ -262,21 +278,23 @@ platform :ios do
             "com.debank.rabby-mobile.RabbyMobileNotification": "RabbyMobileNotificationAppStore"
           }
         })
-      pilot(
-        api_key: asc_api_key,
-        apple_id: '6474381673',
-        ipa: "./ios/Package/appstore/RabbyMobile.ipa",
-        skip_waiting_for_build_processing: true,
-        distribute_only: ENV["RABBY_MOBILE_PILOT_DISTRIBUTE_ONLY"] || false,
-      )
-      unless ENV["RABBY_MOBILE_PILOT_DISTRIBUTE_ONLY"] == 'true'
-        wait_for_uploaded_testflight_build(
+      unless release_hash_check?
+        pilot(
           api_key: asc_api_key,
-          app_identifier: 'com.debank.rabby-mobile',
-          version: current_version,
-          baseline_build_number: baseline_build_number,
-          expected_build_number: next_build_number
+          apple_id: '6474381673',
+          ipa: "./ios/Package/appstore/RabbyMobile.ipa",
+          skip_waiting_for_build_processing: true,
+          distribute_only: ENV["RABBY_MOBILE_PILOT_DISTRIBUTE_ONLY"] || false,
         )
+        unless ENV["RABBY_MOBILE_PILOT_DISTRIBUTE_ONLY"] == 'true'
+          wait_for_uploaded_testflight_build(
+            api_key: asc_api_key,
+            app_identifier: 'com.debank.rabby-mobile',
+            version: current_version,
+            baseline_build_number: baseline_build_number,
+            expected_build_number: next_build_number
+          )
+        end
       end
   end
 end

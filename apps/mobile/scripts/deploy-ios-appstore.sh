@@ -13,8 +13,10 @@ export buildchannel="appstore";
 export BUILD_TARGET_PLATFORM="ios";
 export RABBY_MOBILE_BUILD_ENV="production";
 check_build_params;
-check_s3_params;
-checkout_s3_pub_deployment_params;
+if [ "$HASH_CHECK" != "true" ]; then
+  check_s3_params;
+  checkout_s3_pub_deployment_params;
+fi
 
 # make plist file
 cd $project_dir;
@@ -87,6 +89,11 @@ fi
 if [ ! -f $ouput_dir/RabbyMobile.ipa ]; then
   echo "[deploy-ios-appstore] build failed: $ouput_dir/RabbyMobile.ipa was not created"
   exit 1
+fi
+
+if [ "$HASH_CHECK" == "true" ]; then
+  echo "[deploy-ios-appstore] HASH_CHECK=true, skip App Store/S3 deployment steps."
+  exit 0
 fi
 
 tmp_ipa_extract_dir=$(mktemp -d)
