@@ -256,12 +256,17 @@ platform :ios do
       prepare_apple_sign(type: 'appstore')
       xcode_args = ["CURRENT_PROJECT_VERSION=#{next_build_number}"]
       xcode_args << hashcheck_prefix_map_xcargs if release_hash_check?
+      release_hashcheck_archive_path = release_hash_check? ? "./ios/Package/appstore/RabbyMobile.xcarchive" : nil
+      release_hashcheck_derived_data_path = release_hash_check? ? "./ios/DerivedData/release-hash-check" : nil
+      release_hashcheck_xcconfig = release_hash_check? ? "./ios/RabbyMobile/ValidHash.xcconfig" : nil
       gym(
         scheme: 'RabbyMobile',
         workspace: './ios/RabbyMobile.xcworkspace',
         configuration: 'Release',
         output_directory: "./ios/Package/appstore",
         build_path: "./ios/Package/appstore",
+        archive_path: release_hashcheck_archive_path,
+        derived_data_path: release_hashcheck_derived_data_path,
         destination: "generic/platform=iOS",
         skip_profile_detection: true,
         clean: true,
@@ -271,6 +276,7 @@ platform :ios do
         skip_package_pkg: true,
         export_method: "app-store",
         xcargs: xcode_args.join(' '),
+        xcconfig: release_hashcheck_xcconfig,
         verbose: true,
         export_options: {
           method: "app-store",
@@ -383,10 +389,21 @@ platform :android do
     else
       gradle(task: 'clean', project_dir: './android')
     end
-    build_rabbymobile_app(tasks: ['assembleRelease', 'bundleRelease'], properties: {
+    build_properties = {
       "org.gradle.configuration-cache"=>use_cache ? 'true' : 'false',
       "org.gradle.caching"=>use_cache ? 'true' : 'false',
       "org.gradle.parallel"=>use_cache ? 'true' : 'false',
-    })
+    }
+    if release_hash_check?
+      build_properties.merge!({
+        "org.gradle.daemon"=>false,
+        "org.gradle.configuration-cache"=>false,
+        "org.gradle.caching"=>false,
+        "org.gradle.parallel"=>false,
+        "android.buildfeatures.buildId"=>false,
+        "hashcheck" => true,
+      })
+    end
+    build_rabbymobile_app(tasks: ['assembleRelease', 'bundleRelease'], properties: build_properties)
   end
 end

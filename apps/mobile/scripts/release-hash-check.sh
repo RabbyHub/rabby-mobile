@@ -63,15 +63,61 @@ export RABBY_MOBILE_HASHCHECK_INJECTED_GIT_TIME="${RABBY_MOBILE_HASHCHECK_INJECT
 export RABBY_MOBILE_HASHCHECK_GIT_HASH="$RABBY_MOBILE_HASHCHECK_INJECTED_GIT_HASH"
 export RABBY_MOBILE_HASHCHECK_GIT_TIME="$RABBY_MOBILE_HASHCHECK_INJECTED_GIT_TIME"
 
-if [[ "$platform" == "ios" ]]; then
+prepare_hashing_environment() {
+  local env_file=".env.hashing"
+  local temp_file
+
+  export RABBY_MOBILE_BUILD_ENV=production
+  export buildchannel=appstore
+  export RABBY_MOBILE_KR_PWD=pesudo_for_hashing
+  export RABBY_MOBILE_CODE=RABBY_MOBILE_CODE_DEV
+
+  if [[ -f ".env" ]]; then
+    cp ".env" "$env_file"
+  else
+    : >"$env_file"
+  fi
+
+  local env_overrides=(
+    "RABBY_MOBILE_KR_PWD" "$RABBY_MOBILE_KR_PWD"
+    "RABBY_MOBILE_CODE" "$RABBY_MOBILE_CODE"
+    "RABBY_MOBILE_BUILD_CHANNEL" "appstore"
+    "RABBY_MOBILE_FE_SERVICE_URL" ""
+  )
+
+  for ((i = 0; i < ${#env_overrides[@]}; i += 2)); do
+    local var_name="${env_overrides[i]}"
+    local var_value="${env_overrides[i + 1]}"
+
+    if [[ -z "$var_value" ]]; then
+      var_value="pesudo_for_hashing"
+    fi
+
+    export "$var_name=$var_value"
+
+    temp_file="$(mktemp)"
+    grep -v -E "^[[:space:]]*$var_name=" "$env_file" >"$temp_file" || true
+    mv "$temp_file" "$env_file"
+    printf '%s=%s\n' "$var_name" "$var_value" >>"$env_file"
+  done
+
+  echo "ℹ️ release HASH_CHECK 已生成固定 .env.hashing"
+}
+
+write_ios_xcode_env() {
   {
     echo "export APP_ENV=$APP_ENV"
     echo "unset DEBUG"
-    echo "export RABBY_MOBILE_FE_SERVICE_URL=\"${RABBY_MOBILE_FE_SERVICE_URL:-}\""
+    echo "export RABBY_MOBILE_FE_SERVICE_URL=\"\""
   } >"$mobile_dir/ios/.xcode.env.local"
-fi
+}
 
 cd "$mobile_dir"
+prepare_hashing_environment
+if [[ "$platform" == "ios" ]]; then
+  write_ios_xcode_env
+fi
+
 if [[ "${RABBY_MOBILE_RELEASE_HASH_CHECK_SKIP_PREPARE:-false}" != "true" ]]; then
   echo "ℹ️ 准备 release HASH_CHECK worktree 依赖"
   RABBY_MOBILE_RUN_POSTINSTALL=true bash ./scripts/ci/prepare-mobile-build.sh
