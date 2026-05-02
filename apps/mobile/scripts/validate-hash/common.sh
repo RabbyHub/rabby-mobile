@@ -91,6 +91,15 @@ remove_hashcheck_work_dir() {
 cleanup() {
   local original_exit_code=$?
   local restore_dir=""
+
+  # Bash may inherit EXIT traps into command substitutions/pipeline subshells.
+  # Cleanup must only run in the main validation shell; otherwise report fields
+  # like Gradle/Yarn versions can capture cleanup output and remove the worktree
+  # while the parent script is still writing reports.
+  if [[ "${BASH_SUBSHELL:-0}" != "0" ]]; then
+    exit "$original_exit_code"
+  fi
+
   echo ""
 
   if [ -n "${ORIGINAL_DIR:-}" ] && [ -d "$ORIGINAL_DIR" ]; then
