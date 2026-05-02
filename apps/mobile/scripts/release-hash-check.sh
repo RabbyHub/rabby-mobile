@@ -70,6 +70,7 @@ export RABBY_MOBILE_HASHCHECK_INJECTED_GIT_TIME="${RABBY_MOBILE_HASHCHECK_INJECT
 export RABBY_MOBILE_HASHCHECK_GIT_HASH="$RABBY_MOBILE_HASHCHECK_INJECTED_GIT_HASH"
 export RABBY_MOBILE_HASHCHECK_GIT_TIME="$RABBY_MOBILE_HASHCHECK_INJECTED_GIT_TIME"
 export RABBY_MOBILE_HASH_CHECK_IOS_BUILD_NUMBER="${RABBY_MOBILE_HASH_CHECK_IOS_BUILD_NUMBER:-1}"
+export RABBY_MOBILE_NODE_VERSION="${RABBY_MOBILE_RELEASE_HASH_CHECK_NODE_VERSION:-22.17.1}"
 export RABBY_MOBILE_METRO_MAX_WORKERS="${RABBY_MOBILE_RELEASE_HASH_CHECK_METRO_MAX_WORKERS:-1}"
 export RABBY_MOBILE_METRO_NODE_MAX_OLD_SPACE_SIZE="${RABBY_MOBILE_RELEASE_HASH_CHECK_METRO_NODE_MAX_OLD_SPACE_SIZE:-8192}"
 
@@ -173,8 +174,11 @@ EOF
 else
   aab_path="$mobile_dir/android/app/build/outputs/bundle/release/app-release.aab"
   apk_path="$mobile_dir/android/app/build/outputs/apk/release/app-release.apk"
+  bundle_path="$mobile_dir/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle"
+  module_id_log_path="$mobile_dir/jsModuleId.log"
   aab_hash=""
   apk_hash=""
+  bundle_hash=""
   if [[ -f "$aab_path" ]]; then
     cp "$aab_path" "$export_dir/app-release.aab"
     aab_hash="$(hash_file "$export_dir/app-release.aab")"
@@ -182,6 +186,13 @@ else
   if [[ -f "$apk_path" ]]; then
     cp "$apk_path" "$export_dir/app-release.apk"
     apk_hash="$(hash_file "$export_dir/app-release.apk")"
+  fi
+  if [[ -f "$bundle_path" ]]; then
+    cp "$bundle_path" "$export_dir/main.jsbundle_android"
+    bundle_hash="$(hash_file "$export_dir/main.jsbundle_android")"
+  fi
+  if [[ -f "$module_id_log_path" ]]; then
+    cp "$module_id_log_path" "$export_dir/jsModuleId_android.log"
   fi
   if [[ -z "$aab_hash" && -z "$apk_hash" ]]; then
     echo "❌ Android release HASH_CHECK missing APK/AAB outputs"
@@ -194,6 +205,10 @@ else
   "git_commit_full": "$git_head_full",
   "injected_git_hash": "$RABBY_MOBILE_HASHCHECK_INJECTED_GIT_HASH",
   "injected_git_time": "$RABBY_MOBILE_HASHCHECK_INJECTED_GIT_TIME",
+  "bundle": {
+    "path": "main.jsbundle_android",
+    "hash": "$bundle_hash"
+  },
   "apk": {
     "path": "app-release.apk",
     "hash": "$apk_hash"
