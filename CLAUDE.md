@@ -62,6 +62,7 @@ yarn typecheck
 
 # Import-cycle detection
 yarn lint:cycles
+yarn lint:cycles:eslint
 
 # Jest tests
 yarn test --runInBand
@@ -193,7 +194,7 @@ yarn link-assets
 - Pre-push hook runs `yarn lint`
 - Lint-staged runs on commit for staged files
 - Main branch is `develop`
-- For `apps/mobile` code changes, run `yarn workspace rabby-mobile lint:cycles`, `yarn workspace rabby-mobile typecheck`, and `yarn workspace rabby-mobile test --runInBand` before handoff. If one is intentionally skipped, state the reason.
+- For `apps/mobile` code changes, run the import-cycle suite (`yarn workspace rabby-mobile lint:cycles`, `yarn workspace rabby-mobile lint:cycles:eslint`), `yarn workspace rabby-mobile typecheck`, and `yarn workspace rabby-mobile test --runInBand` before handoff. If one is intentionally skipped, state the reason.
 
 ## File Organization
 

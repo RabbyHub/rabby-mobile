@@ -116,5 +116,8 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Run apps/mobile Import Cycle Check
+      - name: Run apps/mobile Madge Import Cycle Check
         run: time yarn workspace rabby-mobile lint:cycles
+
+      - name: Run apps/mobile ESLint Import Cycle Check
+        run: time yarn workspace rabby-mobile lint:cycles:eslint

@@ -13,6 +13,7 @@ Before handing off code changes in `apps/mobile`, run:
 
 ```bash
 yarn workspace rabby-mobile lint:cycles
+yarn workspace rabby-mobile lint:cycles:eslint
 yarn workspace rabby-mobile typecheck
 yarn workspace rabby-mobile test --runInBand
 ```
@@ -21,6 +22,12 @@ If a change is very small and one of these commands is intentionally skipped,
 state that clearly with the reason. Do not skip `lint:cycles` for code changes
 that alter imports, exports, screen composition, hooks, stores, services, or
 barrel files.
+
+The import-cycle checks intentionally use different engines:
+
+- `lint:cycles` uses Madge for fast graph-level cycle detection.
+- `lint:cycles:eslint` runs `eslint-plugin-import`'s `import/no-cycle` as an
+  error, catching resolver behavior that can differ from Madge.
 
 ## Import-Cycle Rules
 
@@ -55,4 +62,5 @@ The target state is zero circular dependencies from:
 
 ```bash
 yarn workspace rabby-mobile lint:cycles
+yarn workspace rabby-mobile lint:cycles:eslint
 ```
