@@ -166,8 +166,24 @@ run_ios_build_and_hash() {
   rsync -a "$app_path/main.jsbundle" "$export_dir/main.jsbundle_ios"
   mv "$PROJECT_DIR/ios/LinkMap.txt" "$export_dir/LinkMap.txt"
 
-  local xcode_full_version=$(xcodebuild -version) # 直接 head -n 1 还会报错
-  local xcode_version=$(echo "$xcode_full_version" | head -n 1)
+  local xcode_full_version
+  local xcode_version
+  local macos_product_version
+  local macos_build_version
+  local cocoapods_version
+  local clang_version
+  local node_version
+  local yarn_version
+  suspend_cleanup_trap
+  xcode_full_version=$(xcodebuild -version || true) # 直接 head -n 1 还会报错
+  xcode_version=$(echo "$xcode_full_version" | head -n 1)
+  macos_product_version=$(sw_vers -productVersion || true)
+  macos_build_version=$(sw_vers -buildVersion || true)
+  cocoapods_version=$(bundle exec pod --version || true)
+  clang_version=$(clang --version | head -n1 || true)
+  node_version=$(node -v || true)
+  yarn_version=$(cd "$PROJECT_DIR" && yarn -v || true)
+  restore_cleanup_trap
   {
     cat <<EOF
 {
@@ -226,12 +242,12 @@ run_ios_build_and_hash() {
     "broad_path_leak_count": $broad_path_leak_count
   },
   "environment": {
-    "macOS_version": "$(sw_vers -productVersion) ($(sw_vers -buildVersion))",
+    "macOS_version": "$macos_product_version ($macos_build_version)",
     "xcode_version": "$xcode_version",
-    "cocoapods_version": "$(bundle exec pod --version)",
-    "clang_version": "$(clang --version | head -n1)",
-    "node_version": "$(node -v)",
-    "yarn_version": "$(yarn -v)"
+    "cocoapods_version": "$cocoapods_version",
+    "clang_version": "$clang_version",
+    "node_version": "$node_version",
+    "yarn_version": "$yarn_version"
   }
 }
 EOF

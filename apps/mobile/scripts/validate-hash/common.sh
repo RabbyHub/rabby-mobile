@@ -22,7 +22,7 @@ activate_project_ruby() {
   # directory hook has not switched to apps/mobile/.ruby-version yet.
   # shellcheck source=/dev/null
   source "$HOME/.rvm/scripts/rvm"
-  trap cleanup EXIT SIGINT SIGTERM
+  restore_cleanup_trap
   rvm use "$(cat "$PROJECT_DIR/.ruby-version")" >/dev/null
 }
 
@@ -92,14 +92,6 @@ cleanup() {
   local original_exit_code=$?
   local restore_dir=""
 
-  # Bash may inherit EXIT traps into command substitutions/pipeline subshells.
-  # Cleanup must only run in the main validation shell; otherwise report fields
-  # like Gradle/Yarn versions can capture cleanup output and remove the worktree
-  # while the parent script is still writing reports.
-  if [[ "${BASH_SUBSHELL:-0}" != "0" ]]; then
-    exit "$original_exit_code"
-  fi
-
   echo ""
 
   if [ -n "${ORIGINAL_DIR:-}" ] && [ -d "$ORIGINAL_DIR" ]; then
@@ -127,12 +119,20 @@ cleanup() {
   exit "$original_exit_code"
 }
 
+suspend_cleanup_trap() {
+  trap - EXIT SIGINT SIGTERM
+}
+
+restore_cleanup_trap() {
+  trap cleanup EXIT SIGINT SIGTERM
+}
+
 # 函数：设置并准备工作区 (默认使用固定路径 worktree 以保证路径稳定)
 setup_workspace() {
   ORIGINAL_DIR=$(pwd)
   # trap cleanup EXIT 会在脚本退出时（无论成功失败）调用 cleanup 函数
   # 同时它也会捕获 SIGINT (Ctrl+C) 和 SIGTERM
-  trap cleanup EXIT SIGINT SIGTERM
+  restore_cleanup_trap
 
   # 1. 获取当前 Git 仓库的真实物理路径 (pwd -P 会解析所有符号链接)
   local current_repo_real_path=$(cd "$(git rev-parse --show-toplevel)" && pwd -P)
@@ -193,7 +193,7 @@ setup_workspace() {
   activate_project_ruby
   # RVM hooks can reset EXIT traps while switching Ruby versions, so install
   # the cleanup trap again after activation.
-  trap cleanup EXIT SIGINT SIGTERM
+  restore_cleanup_trap
 
   echo "ℹ️ 在以下目录中运行校验: $(pwd)"
   echo "ℹ️ Git 提交版本: $GIT_HEAD_7"
