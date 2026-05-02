@@ -30,6 +30,9 @@ module.exports = api => {
   const fixedHashcheckGitTime =
     process.env.RABBY_MOBILE_HASHCHECK_INJECTED_GIT_TIME ||
     process.env.RABBY_MOBILE_HASHCHECK_GIT_TIME;
+  const resolvedFeServiceUrl = isHashingBuild
+    ? 'pesudo_for_hashing'
+    : process.env.RABBY_MOBILE_FE_SERVICE_URL || '';
 
   api.cache.using(() =>
     JSON.stringify({
@@ -37,6 +40,7 @@ module.exports = api => {
       buildChannel: resolvedBuildChannel,
       buildEnv: resolvedBuildEnv,
       callerName,
+      feServiceUrl: resolvedFeServiceUrl,
       fixedHashcheckGitHash: fixedHashcheckGitHash || '',
       fixedHashcheckGitTime: fixedHashcheckGitTime || '',
       isDevTransform,
@@ -121,8 +125,7 @@ module.exports = api => {
             BUILD_GIT_HASH_TIME: buildGitInfo.BUILD_GIT_HASH_TIME,
             BUILD_GIT_COMMITOR: buildGitInfo.BUILD_GIT_COMMITOR,
           }),
-          'process.env.RABBY_MOBILE_FE_SERVICE_URL':
-            process.env.RABBY_MOBILE_FE_SERVICE_URL || '',
+          'process.env.RABBY_MOBILE_FE_SERVICE_URL': resolvedFeServiceUrl,
         },
       ],
       [
