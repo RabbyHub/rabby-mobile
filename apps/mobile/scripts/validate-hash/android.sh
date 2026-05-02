@@ -51,6 +51,14 @@ run_android_build_and_hash() {
 
   # 导出产物和报告
   mv "$bundle_path" "$export_dir/main.jsbundle_android"
+  local java_version
+  local gradle_version
+  local node_version
+  local yarn_version
+  java_version=$(trap - EXIT SIGINT SIGTERM; java -version 2>&1 | awk -F '"' '/version/ {print $2}')
+  gradle_version=$(trap - EXIT SIGINT SIGTERM; cd "$PROJECT_DIR/android" && ./gradlew --version | grep 'Gradle' | awk '{print $2}')
+  node_version=$(trap - EXIT SIGINT SIGTERM; node -v)
+  yarn_version=$(trap - EXIT SIGINT SIGTERM; yarn -v)
 {
   cat <<EOF
 {
@@ -72,10 +80,10 @@ run_android_build_and_hash() {
   "hash": "$overall_hash",
   "bundle_hash": "$bundle_hash",
   "environment": {
-    "java_version": "$(java -version 2>&1 | awk -F '\"' '/version/ {print $2}')",
-    "gradle_version": "$(cd "$PROJECT_DIR/android" && ./gradlew --version | grep 'Gradle' | awk '{print $2}')",
-    "node_version": "$(node -v)",
-    "yarn_version": "$(yarn -v)"
+    "java_version": "$java_version",
+    "gradle_version": "$gradle_version",
+    "node_version": "$node_version",
+    "yarn_version": "$yarn_version"
   }
 }
 EOF
