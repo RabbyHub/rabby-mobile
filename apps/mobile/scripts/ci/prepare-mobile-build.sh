@@ -10,7 +10,7 @@ ensure_node_runtime() {
 
   if command -v nvm >/dev/null 2>&1; then
     if [ -n "$requested_node_version" ]; then
-      nvm install "$requested_node_version"
+      nvm use "$requested_node_version" || nvm install "$requested_node_version"
       nvm use "$requested_node_version"
     else
       nvm use
@@ -23,7 +23,7 @@ ensure_node_runtime() {
     # shellcheck source=/dev/null
     . "$nvm_dir/nvm.sh"
     if [ -n "$requested_node_version" ]; then
-      nvm install "$requested_node_version"
+      nvm use "$requested_node_version" || nvm install "$requested_node_version"
       nvm use "$requested_node_version"
     else
       nvm use
