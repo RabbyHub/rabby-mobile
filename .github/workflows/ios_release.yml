@@ -81,6 +81,8 @@ jobs:
               -e node_modules
               -e 'apps/*/node_modules'
               -e 'packages/*/node_modules'
+              -e apps/mobile/.bundle
+              -e apps/mobile/vendor/bundle
               -e .yarn/install-state.gz
               -e .yarn/unplugged
             )
