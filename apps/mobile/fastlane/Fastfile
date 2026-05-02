@@ -49,6 +49,10 @@ def release_hash_check?
   ENV['HASH_CHECK'] == 'true'
 end
 
+def skip_testflight_upload?
+  release_hash_check? || ENV['RABBY_MOBILE_SKIP_TESTFLIGHT_UPLOAD'] == 'true' || ENV['SKIP_TESTFLIGHT_UPLOAD'] == 'true'
+end
+
 platform :ios do
   private_lane :load_app_store_connect_api_key_for_testflight do
     key_id = ENV["RABBY_MOBILE_ASC_API_KEY_ID"]
@@ -232,11 +236,11 @@ platform :ios do
         configuration: 'Release'
       )
       asc_api_key = nil
-      if release_hash_check?
-        next_build_number = (ENV['RABBY_MOBILE_HASH_CHECK_IOS_BUILD_NUMBER'] || get_build_number(
+      if skip_testflight_upload?
+        next_build_number = (ENV['RABBY_MOBILE_HASH_CHECK_IOS_BUILD_NUMBER'] || ENV['RABBY_MOBILE_IOS_BUILD_NUMBER'] || get_build_number(
           xcodeproj: './ios/RabbyMobile.xcodeproj'
         )).to_i
-        UI.message("HASH_CHECK enabled; will build #{current_version}(#{next_build_number}) without TestFlight upload")
+        UI.message("TestFlight upload disabled; will build #{current_version}(#{next_build_number}) without App Store Connect upload")
       else
         asc_api_key = load_app_store_connect_api_key_for_testflight
         baseline_build_number = latest_testflight_build_number_for_version(
@@ -276,7 +280,7 @@ platform :ios do
             "com.debank.rabby-mobile.RabbyMobileNotification": "RabbyMobileNotificationAppStore"
           }
         })
-      unless release_hash_check?
+      unless skip_testflight_upload?
         pilot(
           api_key: asc_api_key,
           apple_id: '6474381673',

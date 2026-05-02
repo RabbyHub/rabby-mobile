@@ -32,6 +32,11 @@ on:
         required: false
         type: boolean
         default: false
+      SKIP_TESTFLIGHT_UPLOAD:
+        description: 'Build the App Store IPA but skip TestFlight upload'
+        required: false
+        type: boolean
+        default: false
   workflow_call:
     secrets:
       KEYCHAIN_PASS:
@@ -151,6 +156,7 @@ jobs:
           INPUT_MOBILE_LOC: ${{ inputs.macos_machine_location }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.SENTRY_DISABLE_AUTO_UPLOAD }}
+          RABBY_MOBILE_SKIP_TESTFLIGHT_UPLOAD: ${{ github.event_name == 'workflow_dispatch' && inputs.SKIP_TESTFLIGHT_UPLOAD || false }}
           CONFIGURATION: release
           TYPE: appstore
           RABBY_MOBILE_BUILD_ENV: production
