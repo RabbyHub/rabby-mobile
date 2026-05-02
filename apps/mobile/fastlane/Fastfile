@@ -234,9 +234,7 @@ platform :ios do
       asc_api_key = nil
       if release_hash_check?
         next_build_number = (ENV['RABBY_MOBILE_HASH_CHECK_IOS_BUILD_NUMBER'] || get_build_number(
-          xcodeproj: './ios/RabbyMobile.xcodeproj',
-          target: 'RabbyMobile',
-          configuration: 'Release'
+          xcodeproj: './ios/RabbyMobile.xcodeproj'
         )).to_i
         UI.message("HASH_CHECK enabled; will build #{current_version}(#{next_build_number}) without TestFlight upload")
       else
