@@ -259,6 +259,15 @@ platform :ios do
       release_hashcheck_archive_path = release_hash_check? ? "./ios/Package/appstore/RabbyMobile.xcarchive" : nil
       release_hashcheck_derived_data_path = release_hash_check? ? "./ios/DerivedData/release-hash-check" : nil
       release_hashcheck_xcconfig = release_hash_check? ? "./ios/RabbyMobile/ValidHash.xcconfig" : nil
+      release_export_options = {
+        method: "app-store",
+        signingStyle: 'manual',
+        provisioningProfiles: {
+          "com.debank.rabby-mobile": "RabbyMobileAppStoreOpcode",
+          "com.debank.rabby-mobile.RabbyMobileNotification": "RabbyMobileNotificationAppStore"
+        }
+      }
+      release_export_options[:manageAppVersionAndBuildNumber] = false if release_hash_check?
       gym(
         scheme: 'RabbyMobile',
         workspace: './ios/RabbyMobile.xcworkspace',
@@ -278,14 +287,7 @@ platform :ios do
         xcargs: xcode_args.join(' '),
         xcconfig: release_hashcheck_xcconfig,
         verbose: true,
-        export_options: {
-          method: "app-store",
-          signingStyle: 'manual',
-          provisioningProfiles: {
-            "com.debank.rabby-mobile": "RabbyMobileAppStoreOpcode",
-            "com.debank.rabby-mobile.RabbyMobileNotification": "RabbyMobileNotificationAppStore"
-          }
-        })
+        export_options: release_export_options)
       unless skip_testflight_upload?
         pilot(
           api_key: asc_api_key,
