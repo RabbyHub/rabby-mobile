@@ -49,8 +49,12 @@ mkdir -p "$export_dir"
 
 export HASH_CHECK=true
 export APP_ENV=hashing
-export LANG=C
-export LC_ALL=C
+unset LC_ALL
+export LANG=en_US.UTF-8
+export LC_CTYPE=en_US.UTF-8
+export LC_COLLATE=C
+export LC_NUMERIC=C
+export LC_TIME=C
 export TZ=UTC
 export ZERO_AR_DATE=1
 export SOURCE_DATE_EPOCH="$source_date_epoch"
