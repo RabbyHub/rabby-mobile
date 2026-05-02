@@ -23,12 +23,22 @@ module.exports = api => {
     inputBuildEnv === 'production' ||
     (!inputBuildEnv && ['appstore', 'selfhost'].includes(resolvedBuildChannel));
   const loadableImplExt = isDevTransform ? 'dev' : 'prod';
+  const isHashingBuild = process.env.APP_ENV === 'hashing';
+  const fixedHashcheckGitHash =
+    process.env.RABBY_MOBILE_HASHCHECK_INJECTED_GIT_HASH ||
+    process.env.RABBY_MOBILE_HASHCHECK_GIT_HASH;
+  const fixedHashcheckGitTime =
+    process.env.RABBY_MOBILE_HASHCHECK_INJECTED_GIT_TIME ||
+    process.env.RABBY_MOBILE_HASHCHECK_GIT_TIME;
 
   api.cache.using(() =>
     JSON.stringify({
+      appEnv: process.env.APP_ENV || '',
       buildChannel: resolvedBuildChannel,
       buildEnv: resolvedBuildEnv,
       callerName,
+      fixedHashcheckGitHash: fixedHashcheckGitHash || '',
+      fixedHashcheckGitTime: fixedHashcheckGitTime || '',
       isDevTransform,
       shouldEnableRozenite,
     }),
@@ -36,14 +46,17 @@ module.exports = api => {
 
   const buildGitInfo = (function getBuildEnvVars() {
     const NORMAL_GET_GIT_HASH = `git log --format="%H" -n1`;
-    const BUILD_GIT_HASH_RAW = child_process
-      .execSync(
-        !process.env.LOCAL_PACK
-          ? NORMAL_GET_GIT_HASH
-          : `[[ -z $(git diff) || ! -z $CI ]] && (${NORMAL_GET_GIT_HASH}) || (git log --format="%H-dirty" -n 1)`,
-      )
-      .toString()
-      .trim();
+    const BUILD_GIT_HASH_RAW =
+      isHashingBuild && fixedHashcheckGitHash
+        ? fixedHashcheckGitHash
+        : child_process
+            .execSync(
+              !process.env.LOCAL_PACK
+                ? NORMAL_GET_GIT_HASH
+                : `[[ -z $(git diff) || ! -z $CI ]] && (${NORMAL_GET_GIT_HASH}) || (git log --format="%H-dirty" -n 1)`,
+            )
+            .toString()
+            .trim();
 
     const isDirty = BUILD_GIT_HASH_RAW.endsWith('-dirty');
     const BUILD_GIT_HASH = `${BUILD_GIT_HASH_RAW.slice(0, 8)}${
@@ -51,7 +64,9 @@ module.exports = api => {
     }`;
 
     const BUILD_GIT_HASH_TIME =
-      process.platform === 'win32'
+      isHashingBuild && fixedHashcheckGitTime
+        ? fixedHashcheckGitTime
+        : process.platform === 'win32'
         ? ''
         : child_process
             .execSync(
@@ -63,7 +78,7 @@ module.exports = api => {
 
     const BUILD_TIME = new Date().toISOString();
     const BUILD_GIT_COMMITOR =
-      resolvedBuildChannel !== 'selfhost-reg'
+      isHashingBuild || resolvedBuildChannel !== 'selfhost-reg'
         ? ''
         : child_process
             .execSync('git show --quiet --format="%cn"')

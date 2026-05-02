@@ -1,4 +1,8 @@
 require 'base64'
+require 'shellwords'
+
+MOBILE_PROJECT_ROOT = File.expand_path('..', __dir__)
+REPO_ROOT = File.expand_path('../..', MOBILE_PROJECT_ROOT)
 
 def turbo_build_enabled?
   ENV['RABBY_MOBILE_TURBO_BUILD'] == 'true'
@@ -20,6 +24,25 @@ end
 
 def ios_adhoc_skip_build_archive?
   ENV['RABBY_MOBILE_IOS_SKIP_BUILD_ARCHIVE'] == 'true'
+end
+
+def hashcheck_prefix_map_xcargs
+  developer_dir = ENV['DEVELOPER_DIR']
+  developer_dir = `xcode-select -p`.strip if developer_dir.nil? || developer_dir.empty?
+  repo_root_alt =
+    if REPO_ROOT.start_with?('/private/tmp/')
+      REPO_ROOT.sub('/private/tmp/', '/tmp/')
+    elsif REPO_ROOT.start_with?('/tmp/')
+      REPO_ROOT.sub('/tmp/', '/private/tmp/')
+    else
+      REPO_ROOT
+    end
+
+  {
+    'HASHCHECK_REPO_ROOT' => REPO_ROOT,
+    'HASHCHECK_REPO_ROOT_ALT' => repo_root_alt,
+    'HASHCHECK_DEVELOPER_DIR' => File.expand_path(developer_dir)
+  }.map { |key, value| "#{key}=#{Shellwords.escape(value)}" }.join(' ')
 end
 
 platform :ios do
@@ -191,7 +214,7 @@ platform :ios do
       archive_path: './ios/Package/RabbyMobile.xcarchive',
       skip_codesigning: true,
       # skip_archive: true,
-      # xcargs: "-jobs 1", # 禁用并行编译
+      xcargs: hashcheck_prefix_map_xcargs,
       xcconfig: "./ios/RabbyMobile/ValidHash.xcconfig",
       buildlog_path: './ios/Package'
     )

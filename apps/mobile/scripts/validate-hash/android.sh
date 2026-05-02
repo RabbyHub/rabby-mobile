@@ -51,12 +51,24 @@ run_android_build_and_hash() {
 
   # 导出产物和报告
   mv "$bundle_path" "$export_dir/main.jsbundle_android"
-  {
-    cat <<EOF
+{
+  cat <<EOF
 {
   "platform": "android",
   "build_time": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
   "git_commit": "$GIT_HEAD_7",
+  "git_commit_full": "$RABBY_MOBILE_HASHCHECK_ACTUAL_GIT_HASH",
+  "actual_git": {
+    "commit": "$GIT_HEAD_7",
+    "commit_full": "$RABBY_MOBILE_HASHCHECK_ACTUAL_GIT_HASH",
+    "commit_time": "$RABBY_MOBILE_HASHCHECK_ACTUAL_GIT_TIME"
+  },
+  "injected_git": {
+    "commit_full": "$RABBY_MOBILE_HASHCHECK_INJECTED_GIT_HASH",
+    "commit_time": "$RABBY_MOBILE_HASHCHECK_INJECTED_GIT_TIME",
+    "commit_source": "$RABBY_MOBILE_HASHCHECK_INJECTED_GIT_HASH_SOURCE",
+    "time_source": "$RABBY_MOBILE_HASHCHECK_INJECTED_GIT_TIME_SOURCE"
+  },
   "hash": "$overall_hash",
   "bundle_hash": "$bundle_hash",
   "environment": {
