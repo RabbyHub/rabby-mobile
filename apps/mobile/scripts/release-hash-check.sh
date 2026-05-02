@@ -72,6 +72,14 @@ if [[ "$platform" == "ios" ]]; then
 fi
 
 cd "$mobile_dir"
+if [[ "${RABBY_MOBILE_RELEASE_HASH_CHECK_SKIP_PREPARE:-false}" != "true" ]]; then
+  echo "ℹ️ 准备 release HASH_CHECK worktree 依赖"
+  RABBY_MOBILE_RUN_POSTINSTALL=true bash ./scripts/ci/prepare-mobile-build.sh
+  if [[ -f Gemfile ]]; then
+    bundle check >/dev/null 2>&1 || bundle install
+  fi
+fi
+
 if [[ $# -gt 0 ]]; then
   "$@"
 elif [[ "$platform" == "ios" ]]; then
