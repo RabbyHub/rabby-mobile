@@ -172,7 +172,7 @@ jobs:
           echo "iOS Hash: ${{ needs.build-ios.outputs.ios_hash }}"
 
       - name: Generate Final Hash
-        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.skip_notify_lark }}
+        if: ${{ (github.event_name != 'workflow_dispatch' || !inputs.skip_notify_lark) && !startsWith(github.ref_name, 'publish/hashcheck-skip-notify') }}
         env:
           # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
           GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
