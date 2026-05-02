@@ -5,6 +5,7 @@ apply plugin: "com.google.gms.google-services"
 
 def metroMaxWorkers = System.getenv("RABBY_MOBILE_METRO_MAX_WORKERS")
 def metroNodeMaxOldSpaceSize = System.getenv("RABBY_MOBILE_METRO_NODE_MAX_OLD_SPACE_SIZE")
+def hermesCommandOverride = System.getenv("RABBY_MOBILE_HERMESC_WRAPPER")
 def metroNodeExecutableAndArgs = ["node"]
 def metroExtraPackagerArgs = []
 
@@ -64,6 +65,9 @@ react {
     /* Hermes Commands */
     //   The hermes compiler command to run. By default it is 'hermesc'
     // hermesCommand = "$rootDir/my-custom-hermesc/bin/hermesc"
+    if (hermesCommandOverride) {
+        hermesCommand = hermesCommandOverride
+    }
     //
     //   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
     // hermesFlags = ["-O", "-output-source-map"]

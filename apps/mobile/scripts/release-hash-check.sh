@@ -123,10 +123,60 @@ write_ios_xcode_env() {
   } >"$mobile_dir/ios/.xcode.env.local"
 }
 
+write_android_hermes_wrapper() {
+  local hermes_os_bin
+  local wrapper_path="$mobile_dir/.release-hash-check-hermesc-wrapper.sh"
+
+  case "$(uname -s)" in
+    Darwin) hermes_os_bin="osx-bin" ;;
+    Linux) hermes_os_bin="linux64-bin" ;;
+    *)
+      echo "❌ Unsupported OS for Hermes wrapper: $(uname -s)"
+      exit 1
+      ;;
+  esac
+
+  cat >"$wrapper_path" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+input_path=""
+for arg in "$@"; do
+  if [[ "$arg" != -* && -f "$arg" ]]; then
+    input_path="$arg"
+  fi
+done
+
+if [[ -n "$input_path" && -n "${RABBY_MOBILE_HERMESC_RAW_BUNDLE_PATH:-}" ]]; then
+  mkdir -p "$(dirname "$RABBY_MOBILE_HERMESC_RAW_BUNDLE_PATH")"
+  cp "$input_path" "$RABBY_MOBILE_HERMESC_RAW_BUNDLE_PATH"
+fi
+
+real_hermesc="$RABBY_MOBILE_HERMESC_MOBILE_DIR/node_modules/react-native/sdks/hermesc/$RABBY_MOBILE_HERMESC_OS_BIN/hermesc"
+if [[ ! -x "$real_hermesc" ]]; then
+  real_hermesc="$RABBY_MOBILE_HERMESC_MOBILE_DIR/node_modules/hermes-engine/$RABBY_MOBILE_HERMESC_OS_BIN/hermesc"
+fi
+if [[ ! -x "$real_hermesc" ]]; then
+  echo "❌ Hermes compiler not found for release HASH_CHECK" >&2
+  exit 1
+fi
+
+exec "$real_hermesc" "$@"
+EOF
+  chmod +x "$wrapper_path"
+
+  export RABBY_MOBILE_HERMESC_MOBILE_DIR="$mobile_dir"
+  export RABBY_MOBILE_HERMESC_OS_BIN="$hermes_os_bin"
+  export RABBY_MOBILE_HERMESC_WRAPPER="$wrapper_path"
+  export RABBY_MOBILE_HERMESC_RAW_BUNDLE_PATH="$mobile_dir/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle.raw"
+}
+
 cd "$mobile_dir"
 prepare_hashing_environment
 if [[ "$platform" == "ios" ]]; then
   write_ios_xcode_env
+else
+  write_android_hermes_wrapper
 fi
 
 if [[ "${RABBY_MOBILE_RELEASE_HASH_CHECK_SKIP_PREPARE:-false}" != "true" ]]; then
@@ -175,10 +225,12 @@ else
   aab_path="$mobile_dir/android/app/build/outputs/bundle/release/app-release.aab"
   apk_path="$mobile_dir/android/app/build/outputs/apk/release/app-release.apk"
   bundle_path="$mobile_dir/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle"
+  raw_bundle_path="$mobile_dir/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle.raw"
   module_id_log_path="$mobile_dir/jsModuleId.log"
   aab_hash=""
   apk_hash=""
   bundle_hash=""
+  raw_bundle_hash=""
   if [[ -f "$aab_path" ]]; then
     cp "$aab_path" "$export_dir/app-release.aab"
     aab_hash="$(hash_file "$export_dir/app-release.aab")"
@@ -190,6 +242,10 @@ else
   if [[ -f "$bundle_path" ]]; then
     cp "$bundle_path" "$export_dir/main.jsbundle_android"
     bundle_hash="$(hash_file "$export_dir/main.jsbundle_android")"
+  fi
+  if [[ -f "$raw_bundle_path" ]]; then
+    cp "$raw_bundle_path" "$export_dir/main.raw.jsbundle_android"
+    raw_bundle_hash="$(hash_file "$export_dir/main.raw.jsbundle_android")"
   fi
   if [[ -f "$module_id_log_path" ]]; then
     cp "$module_id_log_path" "$export_dir/jsModuleId_android.log"
@@ -208,6 +264,10 @@ else
   "bundle": {
     "path": "main.jsbundle_android",
     "hash": "$bundle_hash"
+  },
+  "raw_bundle": {
+    "path": "main.raw.jsbundle_android",
+    "hash": "$raw_bundle_hash"
   },
   "apk": {
     "path": "app-release.apk",
