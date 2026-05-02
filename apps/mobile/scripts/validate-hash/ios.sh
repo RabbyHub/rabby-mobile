@@ -182,7 +182,7 @@ run_ios_build_and_hash() {
   cocoapods_version=$(bundle exec pod --version || true)
   clang_version=$(clang --version | head -n1 || true)
   node_version=$(node -v || true)
-  yarn_version=$(cd "$PROJECT_DIR" && yarn -v || true)
+  yarn_version=$(yarn -v || true)
   restore_cleanup_trap
   {
     cat <<EOF

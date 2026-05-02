@@ -57,9 +57,9 @@ run_android_build_and_hash() {
   local yarn_version
   suspend_cleanup_trap
   java_version=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}' || true)
-  gradle_version=$(cd "$PROJECT_DIR/android" && ./gradlew --version | awk '/^Gradle / {print $2; exit}' || true)
+  gradle_version=$("$PROJECT_DIR/android/gradlew" --version | awk '/^Gradle / {print $2; exit}' || true)
   node_version=$(node -v || true)
-  yarn_version=$(cd "$PROJECT_DIR" && yarn -v || true)
+  yarn_version=$(yarn -v || true)
   restore_cleanup_trap
 {
   cat <<EOF
