@@ -23,6 +23,7 @@ jobs:
       android_hash: ${{ steps.generate_hash.outputs.hash }}
     env:
       NODE_OPTIONS: '--max_old_space_size=8192'
+      ANDROID_NDK_VERSION: '27.3.13750724'
 
     steps:
       - name: Checkout repository
@@ -54,6 +55,9 @@ jobs:
 
       - name: 'Setup Android SDK'
         uses: android-actions/setup-android@v3
+
+      - name: 'Setup Android NDK'
+        run: sdkmanager "ndk;${ANDROID_NDK_VERSION}"
 
       - name: Validate Android App
         id: generate_hash

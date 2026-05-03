@@ -50,6 +50,22 @@ run_command_with_log() {
   return 0
 }
 
+hash_directory_contents() {
+  local content_dir="$1"
+  local report_file="$2"
+
+  (
+    cd "$content_dir"
+    find . -type f ! -name ".DS_Store" -print0 |
+      LC_ALL=C LC_COLLATE=C sort -z |
+      while IFS= read -r -d '' rel_path; do
+        local file_hash
+        file_hash="$(shasum -a 256 "$rel_path" | awk '{print $1}')"
+        printf '%s  %s\n' "$file_hash" "${rel_path#./}"
+      done
+  ) | tee "$report_file" | shasum -a 256 | awk '{print $1}'
+}
+
 is_hashcheck_work_dir() {
   local work_dir="${1:-}"
   [[ -n "$work_dir" && "$work_dir" == *"/validate-rabby-mobile-"* ]]
