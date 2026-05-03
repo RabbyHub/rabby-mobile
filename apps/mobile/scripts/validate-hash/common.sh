@@ -319,6 +319,7 @@ install_common_dependencies() {
   if [[ -n "$shared_bundle_path" ]]; then
     export BUNDLE_PATH="$shared_bundle_path"
     echo "ℹ️ 使用 Bundler 缓存目录: $BUNDLE_PATH"
+    bundle config set --local path "$BUNDLE_PATH" >/dev/null
   fi
 
   run_command_with_log "yarn install" "$install_log_dir/yarn-install.log" \
