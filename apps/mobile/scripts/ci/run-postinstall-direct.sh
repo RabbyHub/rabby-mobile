@@ -42,6 +42,10 @@ fi
 echo "1. Build inpage bridge and bundle built-in pages..."
 bash "$repo_dir/packages/rn-webview-bridge/scripts/build-inpage-bridge.sh"
 
+if [ "${RABBY_MOBILE_DISABLE_OPTIONAL_NATIVE_WATCHERS:-${HASH_CHECK:-false}}" = "true" ]; then
+  rm -rf "$repo_dir/node_modules/fsevents" "$local_pages_dir/node_modules/fsevents"
+fi
+
 cd "$local_pages_dir"
 node ./scripts/make-theme.cjs
 node "$(resolve_node_bin "$local_pages_dir" typescript bin/tsc)" -b
