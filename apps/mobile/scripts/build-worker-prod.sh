@@ -32,12 +32,8 @@ resolve_node_bin() {
 
 case "$platform" in
   android)
-    assets_dest="./android/app/src/main/res/"
-    bundle_output="./android/app/src/main/assets/threads/worker.thread.bundle"
     ;;
   ios)
-    assets_dest="./ios"
-    bundle_output="./assets/ios/threads/worker.thread.jsbundle"
     ;;
   *)
     echo "Usage: $0 <android|ios>" >&2
@@ -46,12 +42,6 @@ case "$platform" in
 esac
 
 cd "$project_dir"
-mkdir -p "$(dirname "$bundle_output")"
 
 node_bin="$(resolve_node_bin)"
-"$node_bin" ./node_modules/react-native/cli.js bundle \
-  --dev false \
-  --assets-dest "$assets_dest" \
-  --entry-file worker-src/worker.thread.ts \
-  --platform "$platform" \
-  --bundle-output "$bundle_output"
+"$node_bin" ./scripts/build-worker-prod.js "$platform"
