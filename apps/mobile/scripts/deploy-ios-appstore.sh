@@ -52,12 +52,17 @@ build_appstore() {
   sh ./ios/patches/override-xcconfig-release.sh;
   turbo_prepare_js_dependencies || return $?
   ensure_inpage_bridge_assets || return $?
-  yarn check-nodeengines &&
-    yarn ../mobile-local-pages bundle:all &&
-    yarn link-assets &&
-    yarn buildworker:prod:ios &&
-    yarn syncrnversion
-  build_status=$?
+  if [ "$HASH_CHECK" == "true" ]; then
+    echo "[deploy-ios-appstore] HASH_CHECK=true, skip repeated JS asset preparation."
+    build_status=0
+  else
+    yarn check-nodeengines &&
+      yarn ../mobile-local-pages bundle:all &&
+      yarn link-assets &&
+      yarn buildworker:prod:ios &&
+      yarn syncrnversion
+    build_status=$?
+  fi
 
   if [ $build_status -ne 0 ]; then
     return $build_status
