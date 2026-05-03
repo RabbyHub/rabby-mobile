@@ -458,11 +458,9 @@ normalize_android_release_archive_content() {
       LC_ALL=C LC_COLLATE=C sort |
       while IFS= read -r entry_path; do
         [[ -n "$entry_path" && "$entry_path" != */ ]] || continue
-        case "$entry_path" in
-          META-INF/*|assets/dexopt/baseline.prof|assets/dexopt/baseline.profm|BUNDLE-METADATA/com.android.tools*|BUNDLE-METADATA/com.android.tools*/*)
-            continue
-            ;;
-        esac
+        if should_skip_android_release_archive_entry "$entry_path"; then
+          continue
+        fi
 
         if [[ "$entry_path" == *.so ]]; then
           local so_hash_name
@@ -482,6 +480,18 @@ normalize_android_release_archive_content() {
   printf '%s\n' "$normalized_hash" >"$normalized_hash_report"
   rm -rf "$strip_work_dir"
   printf '%s\n' "$normalized_hash" | shasum -a 256 | awk '{print $1}'
+}
+
+should_skip_android_release_archive_entry() {
+  local entry_path="$1"
+
+  case "$entry_path" in
+    META-INF/*|assets/dexopt/baseline.prof|assets/dexopt/baseline.profm|BUNDLE-METADATA/com.android.tools*|BUNDLE-METADATA/com.android.tools*/*)
+      return 0
+      ;;
+  esac
+
+  return 1
 }
 
 if [[ "$platform" == "ios" ]]; then

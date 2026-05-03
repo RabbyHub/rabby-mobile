@@ -80,6 +80,18 @@ resolve_android_llvm_strip() {
   fi
 }
 
+should_skip_android_apk_entry() {
+  local entry_path="$1"
+
+  case "$entry_path" in
+    META-INF/*|assets/dexopt/baseline.prof|assets/dexopt/baseline.profm)
+      return 0
+      ;;
+  esac
+
+  return 1
+}
+
 normalize_android_apk_content() {
   local apk_path="$1"
   local normalized_hash_report="$2"
@@ -107,11 +119,9 @@ normalize_android_apk_content() {
       LC_ALL=C LC_COLLATE=C sort |
       while IFS= read -r entry_path; do
         [[ -n "$entry_path" && "$entry_path" != */ ]] || continue
-        case "$entry_path" in
-          META-INF/*|assets/dexopt/baseline.prof|assets/dexopt/baseline.profm)
-            continue
-            ;;
-        esac
+        if should_skip_android_apk_entry "$entry_path"; then
+          continue
+        fi
 
         if [[ "$entry_path" == *.so ]]; then
           local so_hash_name
