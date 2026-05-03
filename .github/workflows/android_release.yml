@@ -48,6 +48,7 @@ defaults:
     shell: bash -ieol pipefail {0}
 env:
   BUILD_TARGET_PLATFORM: android
+  ANDROID_NDK_VERSION: '27.3.13750724'
 
 jobs:
   release-build:
@@ -120,6 +121,17 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
+
+      - name: Setup Android NDK for HASH_CHECK
+        if: ${{ env.HASH_CHECK == 'true' }}
+        run: |
+          sdkmanager "ndk;${ANDROID_NDK_VERSION}"
+          llvm_strip_path="$ANDROID_HOME/ndk/${ANDROID_NDK_VERSION}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip"
+          if [ ! -x "$llvm_strip_path" ]; then
+            echo "llvm-strip not found at $llvm_strip_path" >&2
+            exit 1
+          fi
+          echo "RABBY_MOBILE_ANDROID_LLVM_STRIP=$llvm_strip_path" >> "$GITHUB_ENV"
 
       - name: Install & Build app
         run: |
