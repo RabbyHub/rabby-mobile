@@ -160,6 +160,7 @@ jobs:
           [ -z $buildchannel ] && export buildchannel=appstore;
           [ -z "${REALLY_UPLOAD:-}" ] && export REALLY_UPLOAD=true;
           if [ "$HASH_CHECK" = "true" ]; then
+            export RABBY_MOBILE_RELEASE_HASH_CHECK_WORK_ROOT="${RUNNER_WORKSPACE:-/tmp}/rabby-mobile-release-hash-check-worktrees"
             bash ./scripts/release-hash-check.sh android
           else
             RABBY_MOBILE_RUN_POSTINSTALL=true bash ./scripts/ci/prepare-mobile-build.sh;
