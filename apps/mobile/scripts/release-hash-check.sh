@@ -422,7 +422,7 @@ resolve_android_llvm_strip() {
         printf '%s\n' "$candidate"
         return
       fi
-    done < <(find "$search_root" -path '*/toolchains/llvm/prebuilt/*/bin/llvm-strip' -type f 2>/dev/null | LC_ALL=C sort)
+    done < <(find "$search_root" -path '*/toolchains/llvm/prebuilt/*/bin/llvm-strip' \( -type f -o -type l \) 2>/dev/null | LC_ALL=C sort)
   done
 
   if command -v llvm-strip >/dev/null 2>&1; then

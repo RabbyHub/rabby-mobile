@@ -134,7 +134,7 @@ jobs:
             echo "Android NDK not found under $ANDROID_HOME/ndk" >&2
             exit 1
           fi
-          llvm_strip_path="$(find "$ndk_root" -path '*/toolchains/llvm/prebuilt/*/bin/llvm-strip' -type f 2>/dev/null | LC_ALL=C sort | tail -n 1)"
+          llvm_strip_path="$(find "$ndk_root" -path '*/toolchains/llvm/prebuilt/*/bin/llvm-strip' \( -type f -o -type l \) 2>/dev/null | LC_ALL=C sort | tail -n 1)"
           if [ -z "$llvm_strip_path" ] || [ ! -x "$llvm_strip_path" ]; then
             echo "llvm-strip not found under $ndk_root" >&2
             exit 1
