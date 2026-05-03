@@ -29,6 +29,10 @@ cleanup() {
   local original_exit_code=$?
   cd "$source_repo" 2>/dev/null || true
   if [[ -d "$work_dir" ]]; then
+    if [[ "$platform" == "android" && -x "$mobile_dir/android/gradlew" ]]; then
+      echo "ℹ️ 停止 release HASH_CHECK Gradle daemon"
+      (cd "$mobile_dir/android" && ./gradlew --stop >/dev/null 2>&1) || true
+    fi
     echo "ℹ️ 删除 release HASH_CHECK worktree: $work_dir"
     git -C "$source_repo" worktree remove --force "$work_dir" >/dev/null 2>&1 || rm -rf "$work_dir"
     git -C "$source_repo" worktree prune >/dev/null 2>&1 || true

@@ -395,7 +395,9 @@ platform :android do
     if use_cache
       UI.message("Using Gradle cache for playstore build")
     else
-      gradle(task: 'clean', project_dir: './android')
+      clean_options = { task: 'clean', project_dir: './android' }
+      clean_options[:flags] = '--no-daemon' if release_hash_check?
+      gradle(clean_options)
     end
     build_properties = {
       "org.gradle.configuration-cache"=>use_cache ? 'true' : 'false',
