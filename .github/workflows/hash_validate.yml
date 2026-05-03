@@ -95,12 +95,14 @@ jobs:
           RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           path: apps/mobile/validation_exports_*
           name: android-build
           retention-days: 1
 
       - name: Clean logs
+        if: always()
         run: |
           rm -rf apps/mobile/validation_exports_*
 
@@ -164,12 +166,14 @@ jobs:
           RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           path: apps/mobile/validation_exports_*
           name: ios-build
           retention-days: 1
 
       - name: Clean logs
+        if: always()
         run: |
           rm -rf apps/mobile/validation_exports_*
 

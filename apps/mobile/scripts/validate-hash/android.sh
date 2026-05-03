@@ -164,8 +164,29 @@ run_android_build_and_hash() {
   echo "⏳ 执行 Android 构建..."
   bundle exec fastlane android hashcheck destination_path:"$export_dir" >>"$build_log_file" 2>&1
   if [ ! -f "$unsigned_apk_path" ]; then
-    echo "❌ Fastlane 构建失败，未找到未签名的 APK，请检查日志: $build_log_file"
-    exit 1
+    local apk_candidates=()
+    local candidate
+
+    while IFS= read -r candidate; do
+      apk_candidates+=("$candidate")
+    done < <(
+      {
+        find "$export_dir" -maxdepth 1 -type f -name "*.apk" -print 2>/dev/null
+        find "$PROJECT_DIR/android/app/build/outputs/apk/hash" -maxdepth 1 -type f -name "*.apk" -print 2>/dev/null
+      } | LC_ALL=C sort -u
+    )
+
+    if [ "${#apk_candidates[@]}" -eq 1 ]; then
+      echo "ℹ️ 未找到默认 APK 文件名，使用候选 APK: ${apk_candidates[0]}"
+      cp "${apk_candidates[0]}" "$unsigned_apk_path"
+    else
+      echo "❌ Fastlane 构建失败，未找到唯一未签名 APK，请检查日志: $build_log_file"
+      if [ "${#apk_candidates[@]}" -gt 0 ]; then
+        printf '候选 APK:\n'
+        printf '  %s\n' "${apk_candidates[@]}"
+      fi
+      exit 1
+    fi
   fi
   cd "$PROJECT_DIR" || {
     echo "❌ 无法回到 Android hashcheck 项目目录: $PROJECT_DIR"
