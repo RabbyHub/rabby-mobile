@@ -7,6 +7,20 @@ mobile_dir="$(cd "$script_dir/../.." && pwd)"
 repo_dir="$(cd "$mobile_dir/../.." && pwd)"
 local_pages_dir="$repo_dir/apps/mobile-local-pages"
 
+resolve_node_bin() {
+  local package_dir="$1"
+  local package_name="$2"
+  local bin_rel_path="$3"
+  local package_bin="$package_dir/node_modules/$package_name/$bin_rel_path"
+
+  if [ -f "$package_bin" ]; then
+    printf '%s\n' "$package_bin"
+    return 0
+  fi
+
+  printf '%s\n' "$repo_dir/node_modules/$package_name/$bin_rel_path"
+}
+
 echo "Mobile postinstall:"
 
 if [ "${RABBY_MOBILE_SKIP_BUILD_DEPS:-0}" != "1" ]; then
@@ -30,9 +44,9 @@ bash "$repo_dir/packages/rn-webview-bridge/scripts/build-inpage-bridge.sh"
 
 cd "$local_pages_dir"
 node ./scripts/make-theme.cjs
-node "$repo_dir/node_modules/typescript/bin/tsc" -b
-node "$repo_dir/node_modules/vite/bin/vite.js" build --mode android
-node "$repo_dir/node_modules/vite/bin/vite.js" build --mode ios
+node "$(resolve_node_bin "$local_pages_dir" typescript bin/tsc)" -b
+node "$(resolve_node_bin "$local_pages_dir" vite bin/vite.js)" build --mode android
+node "$(resolve_node_bin "$local_pages_dir" vite bin/vite.js)" build --mode ios
 
 cd "$mobile_dir"
 node "$mobile_dir/node_modules/react-native-asset/lib/cli.js"
