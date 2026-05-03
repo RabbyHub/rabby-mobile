@@ -309,11 +309,27 @@ install_common_dependencies() {
     rm -rf node_modules
   fi
   local install_log_dir="$PROJECT_DIR/.hash-validate-logs"
+  local bundle_check_log="$install_log_dir/bundle-check.log"
+  local bundle_install_log="$install_log_dir/bundle-install.log"
+  local shared_bundle_path="${HASHCHECK_BUNDLE_PATH:-}"
+
+  if [[ -z "$shared_bundle_path" && "${HASHCHECK_USING_CURRENT_WORKSPACE:-}" != "true" && -d "$HASHCHECK_SOURCE_REPO/apps/mobile/vendor/bundle" ]]; then
+    shared_bundle_path="$HASHCHECK_SOURCE_REPO/apps/mobile/vendor/bundle"
+  fi
+  if [[ -n "$shared_bundle_path" ]]; then
+    export BUNDLE_PATH="$shared_bundle_path"
+    echo "ℹ️ 使用 Bundler 缓存目录: $BUNDLE_PATH"
+  fi
 
   run_command_with_log "yarn install" "$install_log_dir/yarn-install.log" \
     repo_yarn install --immutable
-  run_command_with_log "bundle install" "$install_log_dir/bundle-install.log" \
-    bundle install
+  mkdir -p "$install_log_dir"
+  if bundle check >"$bundle_check_log" 2>&1; then
+    echo "✅ Bundler 依赖已满足"
+  else
+    run_command_with_log "bundle install" "$bundle_install_log" \
+      bundle install
+  fi
 
   rm -rf "$install_log_dir"
   echo "✅ 通用依赖安装完毕"
