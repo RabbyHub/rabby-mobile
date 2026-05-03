@@ -86,29 +86,51 @@ normalize_android_apk_content() {
   local normalized_dir="$3"
   local llvm_strip_path
   local normalized_hash
+  local strip_work_dir
 
+  # Keep this parameter for the caller contract, but do not unzip the APK into it.
+  # APKs can contain resource entries that differ only by case; extracting to the
+  # default macOS filesystem loses those entries and makes the hash host-dependent.
   rm -rf "$normalized_dir"
-  mkdir -p "$normalized_dir"
-  unzip -qo "$apk_path" -d "$normalized_dir"
 
-  rm -rf "$normalized_dir/META-INF"
-  rm -f "$normalized_dir/assets/dexopt/baseline.prof" "$normalized_dir/assets/dexopt/baseline.profm"
+  strip_work_dir="$(mktemp -d "${TMPDIR:-/tmp}/rabby-android-apk-normalize.XXXXXX")"
 
   llvm_strip_path="$(resolve_android_llvm_strip || true)"
   if [[ -z "$llvm_strip_path" || ! -x "$llvm_strip_path" ]]; then
     echo "❌ Android hash normalization requires llvm-strip, but it was not found" >&2
+    rm -rf "$strip_work_dir"
     return 1
   fi
 
-  find "$normalized_dir" -name "*.so" -type f -print0 |
-    while IFS= read -r -d '' so_path; do
-      chmod u+w "$so_path" 2>/dev/null || true
-      "$llvm_strip_path" --strip-all "$so_path" >/dev/null 2>&1 || true
-    done
+  normalized_hash="$(
+    zipinfo -1 "$apk_path" |
+      LC_ALL=C LC_COLLATE=C sort |
+      while IFS= read -r entry_path; do
+        [[ -n "$entry_path" && "$entry_path" != */ ]] || continue
+        case "$entry_path" in
+          META-INF/* | assets/dexopt/baseline.prof | assets/dexopt/baseline.profm)
+            continue
+            ;;
+        esac
 
-  normalized_hash="$(hash_directory_contents "$normalized_dir" "$normalized_hash_report")"
-  rm -rf "$normalized_dir"
-  printf '%s\n' "$normalized_hash"
+        if [[ "$entry_path" == *.so ]]; then
+          local so_hash_name
+          local so_path
+          so_hash_name="$(printf '%s' "$entry_path" | shasum -a 256 | awk '{print $1}')"
+          so_path="$strip_work_dir/$so_hash_name.so"
+          unzip -p "$apk_path" "$entry_path" >"$so_path"
+          chmod u+w "$so_path" 2>/dev/null || true
+          "$llvm_strip_path" --strip-all "$so_path" >/dev/null 2>&1 || true
+          printf '%s  %s\n' "$(shasum -a 256 "$so_path" | awk '{print $1}')" "$entry_path"
+        else
+          printf '%s  %s\n' "$(unzip -p "$apk_path" "$entry_path" | shasum -a 256 | awk '{print $1}')" "$entry_path"
+        fi
+      done
+  )"
+
+  printf '%s\n' "$normalized_hash" >"$normalized_hash_report"
+  rm -rf "$strip_work_dir"
+  printf '%s\n' "$normalized_hash" | shasum -a 256 | awk '{print $1}'
 }
 
 run_android_build_and_hash() {

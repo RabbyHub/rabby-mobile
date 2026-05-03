@@ -434,38 +434,54 @@ normalize_android_release_archive_content() {
   local archive_path="$1"
   local archive_kind="$2"
   local normalized_hash_report="$3"
-  local normalized_dir="$export_dir/normalized_${archive_kind}_content"
   local llvm_strip_path="${RABBY_MOBILE_ANDROID_LLVM_STRIP:-}"
   local normalized_hash
+  local strip_work_dir
 
-  rm -rf "$normalized_dir"
-  mkdir -p "$normalized_dir"
-  unzip -qo "$archive_path" -d "$normalized_dir"
-
-  rm -rf "$normalized_dir/META-INF"
-  if [[ -d "$normalized_dir/BUNDLE-METADATA" ]]; then
-    find "$normalized_dir/BUNDLE-METADATA" -maxdepth 1 -type d -name 'com.android.tools*' -prune -exec rm -rf {} +
-  fi
-  rm -f "$normalized_dir/assets/dexopt/baseline.prof" "$normalized_dir/assets/dexopt/baseline.profm"
+  # Hash ZIP entries directly instead of extracting the archive. APKs can contain
+  # resource entries that differ only by case, and macOS' default filesystem would
+  # collapse those paths during unzip, making the normalized hash host-dependent.
+  strip_work_dir="$(mktemp -d "${TMPDIR:-/tmp}/rabby-android-release-normalize.XXXXXX")"
 
   if [[ -z "$llvm_strip_path" ]]; then
     llvm_strip_path="$(resolve_android_llvm_strip || true)"
   fi
 
-  if [[ -n "$llvm_strip_path" && -x "$llvm_strip_path" ]]; then
-    find "$normalized_dir" -name "*.so" -type f -print0 |
-      while IFS= read -r -d '' so_path; do
-        chmod u+w "$so_path" 2>/dev/null || true
-        "$llvm_strip_path" --strip-all "$so_path" >/dev/null 2>&1 || true
-      done
-  else
+  if [[ -z "$llvm_strip_path" || ! -x "$llvm_strip_path" ]]; then
     echo "❌ Android release normalization requires llvm-strip, but it was not found" >&2
+    rm -rf "$strip_work_dir"
     return 1
   fi
 
-  normalized_hash="$(hash_directory_contents "$normalized_dir" "$normalized_hash_report")"
-  rm -rf "$normalized_dir"
-  printf '%s\n' "$normalized_hash"
+  normalized_hash="$(
+    zipinfo -1 "$archive_path" |
+      LC_ALL=C LC_COLLATE=C sort |
+      while IFS= read -r entry_path; do
+        [[ -n "$entry_path" && "$entry_path" != */ ]] || continue
+        case "$entry_path" in
+          META-INF/* | assets/dexopt/baseline.prof | assets/dexopt/baseline.profm | BUNDLE-METADATA/com.android.tools* | BUNDLE-METADATA/com.android.tools*/*)
+            continue
+            ;;
+        esac
+
+        if [[ "$entry_path" == *.so ]]; then
+          local so_hash_name
+          local so_path
+          so_hash_name="$(printf '%s' "$entry_path" | shasum -a 256 | awk '{print $1}')"
+          so_path="$strip_work_dir/$so_hash_name.so"
+          unzip -p "$archive_path" "$entry_path" >"$so_path"
+          chmod u+w "$so_path" 2>/dev/null || true
+          "$llvm_strip_path" --strip-all "$so_path" >/dev/null 2>&1 || true
+          printf '%s  %s\n' "$(shasum -a 256 "$so_path" | awk '{print $1}')" "$entry_path"
+        else
+          printf '%s  %s\n' "$(unzip -p "$archive_path" "$entry_path" | shasum -a 256 | awk '{print $1}')" "$entry_path"
+        fi
+      done
+  )"
+
+  printf '%s\n' "$normalized_hash" >"$normalized_hash_report"
+  rm -rf "$strip_work_dir"
+  printf '%s\n' "$normalized_hash" | shasum -a 256 | awk '{print $1}'
 }
 
 if [[ "$platform" == "ios" ]]; then
