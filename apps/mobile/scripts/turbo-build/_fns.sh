@@ -397,8 +397,14 @@ turbo_bundle_with_project_ruby() {
   tb_app_config="$RABBY_MOBILE_TURBO_BUNDLE_APP_CONFIG"
   tb_path="$RABBY_MOBILE_TURBO_BUNDLE_PATH"
   tb_force_ruby_platform="$RABBY_MOBILE_TURBO_BUNDLE_FORCE_RUBY_PLATFORM"
+  tb_bash_flags="-lc"
+  case "${RABBY_MOBILE_TURBO_RVM_LOGIN_SHELL:-true}" in
+    false|0|no|off)
+      tb_bash_flags="-c"
+      ;;
+  esac
 
-  bash -lc '
+  bash "$tb_bash_flags" '
     set -e
     work_dir="$1"
     ruby_target="$2"

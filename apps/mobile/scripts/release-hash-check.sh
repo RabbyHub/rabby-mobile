@@ -77,6 +77,7 @@ export RABBY_MOBILE_HASH_CHECK_IOS_BUILD_NUMBER="${RABBY_MOBILE_HASH_CHECK_IOS_B
 export RABBY_MOBILE_NODE_VERSION="${RABBY_MOBILE_RELEASE_HASH_CHECK_NODE_VERSION:-22.17.1}"
 export RABBY_MOBILE_METRO_MAX_WORKERS="${RABBY_MOBILE_RELEASE_HASH_CHECK_METRO_MAX_WORKERS:-1}"
 export RABBY_MOBILE_METRO_NODE_MAX_OLD_SPACE_SIZE="${RABBY_MOBILE_RELEASE_HASH_CHECK_METRO_NODE_MAX_OLD_SPACE_SIZE:-8192}"
+export RABBY_MOBILE_TURBO_RVM_LOGIN_SHELL=false
 export BUNDLE_PATH="${RABBY_MOBILE_RELEASE_HASH_CHECK_BUNDLE_PATH:-$source_repo/apps/mobile/vendor/bundle}"
 export BUNDLE_FORCE_RUBY_PLATFORM="${BUNDLE_FORCE_RUBY_PLATFORM:-true}"
 mkdir -p "$BUNDLE_PATH"
@@ -90,17 +91,15 @@ prepare_hashing_environment() {
   export RABBY_MOBILE_KR_PWD=pesudo_for_hashing
   export RABBY_MOBILE_CODE=RABBY_MOBILE_CODE_DEV
 
-  if [[ -f ".env" ]]; then
-    cp ".env" "$env_file"
-  else
-    : >"$env_file"
-  fi
+  : >"$env_file"
 
   local env_overrides=(
     "RABBY_MOBILE_KR_PWD" "$RABBY_MOBILE_KR_PWD"
     "RABBY_MOBILE_CODE" "$RABBY_MOBILE_CODE"
     "RABBY_MOBILE_BUILD_CHANNEL" "appstore"
     "RABBY_MOBILE_FE_SERVICE_URL" ""
+    "RABBY_MOBILE_E2E_SILENT_LOGS" "false"
+    "DEV_CONSOLE_URL" ""
   )
 
   for ((i = 0; i < ${#env_overrides[@]}; i += 2)); do
@@ -119,7 +118,8 @@ prepare_hashing_environment() {
     printf '%s=%s\n' "$var_name" "$var_value" >>"$env_file"
   done
 
-  echo "ℹ️ release HASH_CHECK 已生成固定 .env.hashing"
+  cp "$env_file" ".env"
+  echo "ℹ️ release HASH_CHECK 已生成固定 .env / .env.hashing"
 }
 
 write_ios_xcode_env() {
@@ -187,6 +187,10 @@ stop_android_gradle_daemons() {
 
 cd "$mobile_dir"
 prepare_hashing_environment
+if [[ -f Gemfile ]]; then
+  bundle config set --local path "$BUNDLE_PATH" >/dev/null
+  bundle config set --local force_ruby_platform "$BUNDLE_FORCE_RUBY_PLATFORM" >/dev/null
+fi
 if [[ "$platform" == "ios" ]]; then
   write_ios_xcode_env
 else
@@ -356,18 +360,63 @@ normalize_ios_release_content() {
 resolve_android_llvm_strip() {
   local candidate
   local search_roots=()
+  local android_local_properties="$mobile_dir/android/local.properties"
+  local local_sdk_dir
+  local local_ndk_dir
 
   if [[ -n "${ANDROID_NDK_ROOT:-}" ]]; then
     search_roots+=("$ANDROID_NDK_ROOT")
   fi
+  if [[ -n "${ANDROID_NDK_HOME:-}" ]]; then
+    search_roots+=("$ANDROID_NDK_HOME")
+  fi
+  if [[ -n "${ANDROID_NDK:-}" ]]; then
+    search_roots+=("$ANDROID_NDK")
+  fi
+  if [[ -n "${NDK_HOME:-}" ]]; then
+    search_roots+=("$NDK_HOME")
+  fi
+  if [[ -n "${ANDROID_NDK_LATEST_HOME:-}" ]]; then
+    search_roots+=("$ANDROID_NDK_LATEST_HOME")
+  fi
   if [[ -n "${ANDROID_HOME:-}" && -d "$ANDROID_HOME/ndk" ]]; then
     search_roots+=("$ANDROID_HOME/ndk")
+  fi
+  if [[ -n "${ANDROID_HOME:-}" && -d "$ANDROID_HOME/ndk-bundle" ]]; then
+    search_roots+=("$ANDROID_HOME/ndk-bundle")
   fi
   if [[ -n "${ANDROID_SDK_ROOT:-}" && -d "$ANDROID_SDK_ROOT/ndk" ]]; then
     search_roots+=("$ANDROID_SDK_ROOT/ndk")
   fi
+  if [[ -n "${ANDROID_SDK_ROOT:-}" && -d "$ANDROID_SDK_ROOT/ndk-bundle" ]]; then
+    search_roots+=("$ANDROID_SDK_ROOT/ndk-bundle")
+  fi
+  if [[ -f "$android_local_properties" ]]; then
+    local_sdk_dir="$(sed -n 's/^sdk\.dir=//p' "$android_local_properties" | tail -n 1)"
+    local_ndk_dir="$(sed -n 's/^ndk\.dir=//p' "$android_local_properties" | tail -n 1)"
+    if [[ -n "$local_ndk_dir" ]]; then
+      search_roots+=("$local_ndk_dir")
+    fi
+    if [[ -n "$local_sdk_dir" ]]; then
+      search_roots+=("$local_sdk_dir/ndk")
+      search_roots+=("$local_sdk_dir/ndk-bundle")
+    fi
+  fi
+  search_roots+=(
+    "$HOME/Library/Android/sdk/ndk"
+    "$HOME/Library/Android/sdk/ndk-bundle"
+    "$HOME/Android/Sdk/ndk"
+    "$HOME/Android/Sdk/ndk-bundle"
+    "/Users/Shared/Library/Android/sdk/ndk"
+    "/Users/Shared/Library/Android/sdk/ndk-bundle"
+    "/opt/android-sdk/ndk"
+    "/opt/android-sdk/ndk-bundle"
+    "/usr/local/share/android-sdk/ndk"
+    "/usr/local/share/android-sdk/ndk-bundle"
+  )
 
   for search_root in "${search_roots[@]}"; do
+    [[ -d "$search_root" ]] || continue
     while IFS= read -r candidate; do
       if [[ -x "$candidate" ]]; then
         printf '%s\n' "$candidate"
@@ -394,8 +443,9 @@ normalize_android_release_archive_content() {
   unzip -qo "$archive_path" -d "$normalized_dir"
 
   rm -rf "$normalized_dir/META-INF"
-  rm -rf "$normalized_dir/BUNDLE-METADATA/com.android.tools"
-  rm -rf "$normalized_dir/BUNDLE-METADATA/com.android.tools.build.profiles"
+  if [[ -d "$normalized_dir/BUNDLE-METADATA" ]]; then
+    find "$normalized_dir/BUNDLE-METADATA" -maxdepth 1 -type d -name 'com.android.tools*' -prune -exec rm -rf {} +
+  fi
   rm -f "$normalized_dir/assets/dexopt/baseline.prof" "$normalized_dir/assets/dexopt/baseline.profm"
 
   if [[ -z "$llvm_strip_path" ]]; then
@@ -406,10 +456,11 @@ normalize_android_release_archive_content() {
     find "$normalized_dir" -name "*.so" -type f -print0 |
       while IFS= read -r -d '' so_path; do
         chmod u+w "$so_path" 2>/dev/null || true
-        "$llvm_strip_path" --remove-section=.comment "$so_path" >/dev/null 2>&1 || true
+        "$llvm_strip_path" --strip-all "$so_path" >/dev/null 2>&1 || true
       done
   else
-    echo "⚠️ Android release normalization skipped .so .comment stripping because llvm-strip was not found" >&2
+    echo "❌ Android release normalization requires llvm-strip, but it was not found" >&2
+    return 1
   fi
 
   normalized_hash="$(hash_directory_contents "$normalized_dir" "$normalized_hash_report")"
