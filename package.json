@@ -108,7 +108,8 @@
     "@react-native-menu/menu@2.0.0": "patch:@react-native-menu/menu@npm%3A2.0.0#./.yarn/patches/@react-native-menu-menu-npm-2.0.0-15e1fd477a.patch",
     "react-native@0.81.6": "patch:react-native@npm%3A0.81.6#./.yarn/patches/react-native-npm-0.81.6-e0b80aa8aa.patch",
     "lightweight-charts@^5.0.8": "patch:lightweight-charts@npm%3A5.0.8#./.yarn/patches/lightweight-charts-npm-5.0.8-893c5d8ffa.patch",
-    "lightweight-charts@5.0.8": "patch:lightweight-charts@npm%3A5.0.8#./.yarn/patches/lightweight-charts-npm-5.0.8-893c5d8ffa.patch"
+    "lightweight-charts@5.0.8": "patch:lightweight-charts@npm%3A5.0.8#./.yarn/patches/lightweight-charts-npm-5.0.8-893c5d8ffa.patch",
+    "rollup@npm:^4.43.0": "npm:@rollup/wasm-node@4.46.3"
   },
   "dependencies": {
     "@babel/runtime": "^7.20.0",
