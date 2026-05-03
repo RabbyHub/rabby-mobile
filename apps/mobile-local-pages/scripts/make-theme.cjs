@@ -100,7 +100,6 @@ ${
 makeTailwindV4Theme: {
   const themeContent = `
 /* this file is genetared automatically, never modify it manually! */
-@import 'tailwindcss';
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
