@@ -131,6 +131,10 @@ run_android_build_and_hash() {
     echo "❌ Fastlane 构建失败，未找到未签名的 APK，请检查日志: $build_log_file"
     exit 1
   fi
+  cd "$PROJECT_DIR" || {
+    echo "❌ 无法回到 Android hashcheck 项目目录: $PROJECT_DIR"
+    exit 1
+  }
   echo "✅ 构建完成"
 
 # 校验 Metro Module ID (输出到日志)
@@ -155,19 +159,30 @@ run_android_build_and_hash() {
   fi
 
   local bundle_path="$PROJECT_DIR/android/app/build/generated/assets/createBundleHashJsAndAssets/index.android.bundle"
-  local bundle_hash=$(shasum -a 256 "$bundle_path" | awk '{print $1}')
+  local exported_bundle_path="$export_dir/main.jsbundle_android"
+  local bundle_hash
 
-  # 导出产物和报告
-  mv "$bundle_path" "$export_dir/main.jsbundle_android"
+  # 导出产物和报告。部分 Gradle/AGP 版本会在 APK 打包后清理 bundle 中间产物，
+  # 因此中间路径缺失时从 APK 内容提取同一份 bundle。
+  if [[ -f "$bundle_path" ]]; then
+    mv "$bundle_path" "$exported_bundle_path"
+  elif unzip -p "$unsigned_apk_path" assets/index.android.bundle >"$exported_bundle_path"; then
+    :
+  else
+    echo "❌ Android bundle not found in build output or APK"
+    exit 1
+  fi
+  bundle_hash=$(shasum -a 256 "$exported_bundle_path" | awk '{print $1}')
+
   local java_version
   local gradle_version
   local node_version
   local yarn_version
   suspend_cleanup_trap
   java_version=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}' || true)
-  gradle_version=$("$PROJECT_DIR/android/gradlew" --version | awk '/^Gradle / {print $2; exit}' || true)
+  gradle_version=$(cd "$PROJECT_DIR/android" && ./gradlew --version | awk '/^Gradle / {print $2; exit}' || true)
   node_version=$(node -v || true)
-  yarn_version=$(yarn -v || true)
+  yarn_version=$(cd "$PROJECT_DIR" && yarn -v || true)
   restore_cleanup_trap
 {
   cat <<EOF
