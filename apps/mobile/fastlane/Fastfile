@@ -320,12 +320,18 @@ platform :android do
   end
 
   private_lane :build_rabbymobile_app do |opts|
-    gradle(tasks: opts[:tasks], project_dir: './android', properties: {
+    gradle_options = {
+      tasks: opts[:tasks],
+      project_dir: './android',
+      properties: {
       "MYAPP_UPLOAD_STORE_FILE" => "app-upload-key.keystore",
       "MYAPP_UPLOAD_STORE_PASSWORD" => ENV['RABBY_MOBILE_ANDROID_STORE_PASSWORD'],
       "MYAPP_UPLOAD_KEY_ALIAS" => ENV['RABBY_MOBILE_ANDROID_KEY_ALIAS'],
       "MYAPP_UPLOAD_KEY_PASSWORD" => ENV['RABBY_MOBILE_ANDROID_KEY_PASSWORD']
-    }.merge(opts.fetch(:properties, {})))
+      }.merge(opts.fetch(:properties, {}))
+    }
+    gradle_options[:flags] = opts[:flags] if opts[:flags]
+    gradle(gradle_options)
 
     android_version_code = android_get_version_code(gradle_file: "./android/app/build.gradle")
     android_version_name = android_get_version_name(gradle_file: "./android/app/build.gradle")
@@ -333,7 +339,7 @@ platform :android do
 
   desc "Valid android adhoc"
   lane :hashcheck do |options|
-    gradle(task: 'clean', project_dir: './android')
+    gradle(task: 'clean', project_dir: './android', flags: '--no-daemon')
     build_rabbymobile_app(tasks: ['assembleHash'], properties: {
       "org.gradle.daemon"=>false,
       "org.gradle.caching"=>false,
@@ -341,7 +347,7 @@ platform :android do
       "android.useAndroidX"=>true,
       "android.buildfeatures.buildId"=>false,
       "hashcheck" => true,
-    })
+    }, flags: '--no-daemon')
 
     apk_path = lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
 
@@ -406,6 +412,10 @@ platform :android do
         "hashcheck" => true,
       })
     end
-    build_rabbymobile_app(tasks: ['assembleRelease', 'bundleRelease'], properties: build_properties)
+    build_rabbymobile_app(
+      tasks: ['assembleRelease', 'bundleRelease'],
+      properties: build_properties,
+      flags: release_hash_check? ? '--no-daemon' : nil
+    )
   end
 end

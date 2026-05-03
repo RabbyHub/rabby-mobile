@@ -174,12 +174,20 @@ EOF
   export RABBY_MOBILE_HERMESC_RAW_BUNDLE_PATH="$mobile_dir/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle.raw"
 }
 
+stop_android_gradle_daemons() {
+  if [[ -x "$mobile_dir/android/gradlew" ]]; then
+    echo "ℹ️ 停止旧 Gradle daemon，避免复用非 HASH_CHECK 环境"
+    (cd "$mobile_dir/android" && ./gradlew --stop >/dev/null 2>&1) || true
+  fi
+}
+
 cd "$mobile_dir"
 prepare_hashing_environment
 if [[ "$platform" == "ios" ]]; then
   write_ios_xcode_env
 else
   write_android_hermes_wrapper
+  stop_android_gradle_daemons
 fi
 
 if [[ "${RABBY_MOBILE_RELEASE_HASH_CHECK_SKIP_PREPARE:-false}" != "true" ]]; then
