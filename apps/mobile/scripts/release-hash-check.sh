@@ -24,6 +24,11 @@ work_root="${RABBY_MOBILE_RELEASE_HASH_CHECK_WORK_ROOT:-$tmp_root}"
 mkdir -p "$work_root"
 work_root="$(cd "$work_root" && pwd -P)"
 work_dir="$work_root/rabby-mobile-release-hash-check-$platform-$git_head_7"
+work_dir_alt="$work_dir"
+case "$work_dir" in
+  /private/tmp/*) work_dir_alt="/tmp/${work_dir#/private/tmp/}" ;;
+  /tmp/*) work_dir_alt="/private/tmp/${work_dir#/tmp/}" ;;
+esac
 mobile_dir="$work_dir/apps/mobile"
 export_base="${RABBY_MOBILE_RELEASE_HASH_CHECK_EXPORT_ROOT:-$source_repo/apps/mobile}/release_hash_check_exports_$(date '+%Y%m%d-%H%M%S')"
 export_dir="$export_base/$platform"
@@ -57,6 +62,8 @@ mkdir -p "$export_dir"
 export HASH_CHECK=true
 export APP_ENV=hashing
 export RABBY_MOBILE_HASHCHECK_SOURCE_REPO="$source_repo"
+export RABBY_MOBILE_HASHCHECK_WORK_DIR="$work_dir"
+export RABBY_MOBILE_HASHCHECK_WORK_DIR_ALT="$work_dir_alt"
 unset LC_ALL
 export LANG=en_US.UTF-8
 export LC_CTYPE=en_US.UTF-8
