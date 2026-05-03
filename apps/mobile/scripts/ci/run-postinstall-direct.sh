@@ -21,7 +21,41 @@ resolve_node_bin() {
   printf '%s\n' "$repo_dir/node_modules/$package_name/$bin_rel_path"
 }
 
+reuse_hashcheck_native_tools() {
+  local source_repo="${RABBY_MOBILE_HASHCHECK_SOURCE_REPO:-}"
+
+  if [ -z "$source_repo" ] || [ ! -d "$source_repo/node_modules" ]; then
+    return 0
+  fi
+
+  source_repo="$(cd "$source_repo" && pwd -P)"
+  if [ "$source_repo" = "$repo_dir" ]; then
+    return 0
+  fi
+
+  while IFS= read -r -d '' source_path; do
+    local rel_path="${source_path#"$source_repo"/}"
+    local target_path="$repo_dir/$rel_path"
+
+    if [ ! -f "$target_path" ]; then
+      continue
+    fi
+
+    rm -f "$target_path"
+    ln "$source_path" "$target_path" 2>/dev/null || cp -p "$source_path" "$target_path"
+  done < <(
+    find \
+      "$source_repo/node_modules" \
+      "$source_repo/apps/mobile/node_modules" \
+      "$source_repo/apps/mobile-local-pages/node_modules" \
+      -type f \( -name '*.node' -o -path '*/@esbuild/*/bin/esbuild' -o -name hermesc \) \
+      -print0 2>/dev/null
+  )
+}
+
 echo "Mobile postinstall:"
+
+reuse_hashcheck_native_tools
 
 if [ "${RABBY_MOBILE_SKIP_BUILD_DEPS:-0}" != "1" ]; then
   echo "0. Build workspace deps..."

@@ -56,6 +56,7 @@ mkdir -p "$export_dir"
 
 export HASH_CHECK=true
 export APP_ENV=hashing
+export RABBY_MOBILE_HASHCHECK_SOURCE_REPO="$source_repo"
 unset LC_ALL
 export LANG=en_US.UTF-8
 export LC_CTYPE=en_US.UTF-8
