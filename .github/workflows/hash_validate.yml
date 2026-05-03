@@ -59,6 +59,25 @@ jobs:
       - name: 'Setup Android NDK'
         run: sdkmanager "ndk;${ANDROID_NDK_VERSION}"
 
+      - name: 'Configure Android NDK tools'
+        run: |
+          ndk_root="$ANDROID_HOME/ndk/${ANDROID_NDK_VERSION}"
+          if [ ! -d "$ndk_root" ]; then
+            ndk_root="$(find "$ANDROID_HOME/ndk" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | LC_ALL=C sort | tail -n 1)"
+          fi
+          if [ -z "$ndk_root" ] || [ ! -d "$ndk_root" ]; then
+            echo "Android NDK not found under $ANDROID_HOME/ndk" >&2
+            exit 1
+          fi
+          llvm_strip_path="$(find "$ndk_root" -path '*/toolchains/llvm/prebuilt/*/bin/llvm-strip' -type f 2>/dev/null | LC_ALL=C sort | tail -n 1)"
+          if [ -z "$llvm_strip_path" ] || [ ! -x "$llvm_strip_path" ]; then
+            echo "llvm-strip not found under $ndk_root" >&2
+            exit 1
+          fi
+          echo "ANDROID_NDK_HOME=$ndk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_ROOT=$ndk_root" >> "$GITHUB_ENV"
+          echo "RABBY_MOBILE_ANDROID_LLVM_STRIP=$llvm_strip_path" >> "$GITHUB_ENV"
+
       - name: Validate Android App
         id: generate_hash
         run: |
