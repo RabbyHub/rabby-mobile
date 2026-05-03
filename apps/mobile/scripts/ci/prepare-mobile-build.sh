@@ -95,7 +95,7 @@ main() {
   echo "[prepare-mobile-build] yarn: $(yarn --version)"
   local yarn_install_args=(--immutable)
   if [ "${RABBY_MOBILE_YARN_INSTALL_SKIP_BUILDS:-false}" = "true" ]; then
-    yarn_install_args+=(--mode=skip-builds)
+    yarn_install_args+=(--mode=skip-build)
   fi
   yarn install "${yarn_install_args[@]}"
 
