@@ -24,6 +24,12 @@ module.exports = api => {
     (!inputBuildEnv && ['appstore', 'selfhost'].includes(resolvedBuildChannel));
   const loadableImplExt = isDevTransform ? 'dev' : 'prod';
   const isHashingBuild = process.env.APP_ENV === 'hashing';
+  if (isHashingBuild) {
+    process.env.RABBY_MOBILE_KR_PWD = 'pesudo_for_hashing';
+    process.env.RABBY_MOBILE_CODE = 'RABBY_MOBILE_CODE_DEV';
+    process.env.RABBY_MOBILE_BUILD_CHANNEL = 'appstore';
+    process.env.RABBY_MOBILE_FE_SERVICE_URL = 'pesudo_for_hashing';
+  }
   const fixedHashcheckGitHash =
     process.env.RABBY_MOBILE_HASHCHECK_INJECTED_GIT_HASH ||
     process.env.RABBY_MOBILE_HASHCHECK_GIT_HASH;
@@ -33,6 +39,10 @@ module.exports = api => {
   const resolvedFeServiceUrl = isHashingBuild
     ? 'pesudo_for_hashing'
     : process.env.RABBY_MOBILE_FE_SERVICE_URL || '';
+  const dotenvOptions = {
+    moduleName: '@env',
+    ...(isHashingBuild ? { path: '.env.hashing' } : {}),
+  };
 
   api.cache.using(() =>
     JSON.stringify({
@@ -152,7 +162,7 @@ module.exports = api => {
       ],
       ['@babel/plugin-transform-export-namespace-from'],
 
-      ['module:react-native-dotenv', { moduleName: '@env' }],
+      ['module:react-native-dotenv', dotenvOptions],
       ['nativewind/babel', {}],
       ['@babel/plugin-proposal-decorators', { legacy: true }],
       ['@babel/plugin-transform-class-static-block'],
