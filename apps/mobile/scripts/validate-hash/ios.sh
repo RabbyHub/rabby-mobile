@@ -2,6 +2,10 @@
 #!/bin/bash
 # iOS 专属构建和哈希逻辑
 
+first_non_empty_line() {
+  printf '%s\n' "$1" | awk 'NF { print; exit }'
+}
+
 scan_ios_path_leaks() {
   local scan_dir="$1"
   local report_file="$2"
@@ -175,14 +179,34 @@ run_ios_build_and_hash() {
   local node_version
   local yarn_version
   suspend_cleanup_trap
-  xcode_full_version=$(xcodebuild -version || true) # 直接 head -n 1 还会报错
-  xcode_version=$(echo "$xcode_full_version" | head -n 1)
-  macos_product_version=$(sw_vers -productVersion || true)
-  macos_build_version=$(sw_vers -buildVersion || true)
-  cocoapods_version=$(bundle exec pod --version || true)
-  clang_version=$(clang --version | head -n1 || true)
-  node_version=$(node -v || true)
-  yarn_version=$(yarn -v || true)
+  xcode_full_version="$(
+    (
+      trap - EXIT SIGINT SIGTERM
+      xcodebuild -version
+    ) 2>/dev/null || true
+  )"
+  xcode_version="$(first_non_empty_line "$xcode_full_version")"
+  macos_product_version="$(first_non_empty_line "$(sw_vers -productVersion || true)")"
+  macos_build_version="$(first_non_empty_line "$(sw_vers -buildVersion || true)")"
+  cocoapods_version="$(first_non_empty_line "$(
+    (
+      trap - EXIT SIGINT SIGTERM
+      bundle exec pod --version
+    ) 2>/dev/null || true
+  )")"
+  clang_version="$(first_non_empty_line "$(
+    (
+      trap - EXIT SIGINT SIGTERM
+      clang --version
+    ) 2>/dev/null || true
+  )")"
+  node_version="$(first_non_empty_line "$(node -v || true)")"
+  yarn_version="$(first_non_empty_line "$(
+    (
+      trap - EXIT SIGINT SIGTERM
+      yarn -v
+    ) 2>/dev/null || true
+  )")"
   restore_cleanup_trap
   {
     cat <<EOF

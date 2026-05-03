@@ -92,6 +92,10 @@ should_skip_android_apk_entry() {
   return 1
 }
 
+first_non_empty_line() {
+  printf '%s\n' "$1" | awk 'NF { print; exit }'
+}
+
 normalize_android_apk_content() {
   local apk_path="$1"
   local normalized_hash_report="$2"
@@ -211,10 +215,24 @@ run_android_build_and_hash() {
   local node_version
   local yarn_version
   suspend_cleanup_trap
-  java_version=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}' || true)
-  gradle_version=$(cd "$PROJECT_DIR/android" && ./gradlew --version | awk '/^Gradle / {print $2; exit}' || true)
-  node_version=$(node -v || true)
-  yarn_version=$(cd "$PROJECT_DIR" && yarn -v || true)
+  java_version="$(java -version 2>&1 | awk -F '"' '/version/ {print $2; exit}' || true)"
+  gradle_version="$(
+    (
+      trap - EXIT SIGINT SIGTERM
+      cd "$PROJECT_DIR/android" && ./gradlew --version | awk '/^Gradle / {print $2; exit}'
+    ) 2>/dev/null || true
+  )"
+  node_version="$(node -v || true)"
+  yarn_version="$(
+    (
+      trap - EXIT SIGINT SIGTERM
+      cd "$PROJECT_DIR" && yarn -v
+    ) 2>/dev/null || true
+  )"
+  java_version="$(first_non_empty_line "$java_version")"
+  gradle_version="$(first_non_empty_line "$gradle_version")"
+  node_version="$(first_non_empty_line "$node_version")"
+  yarn_version="$(first_non_empty_line "$yarn_version")"
   restore_cleanup_trap
 {
   cat <<EOF
