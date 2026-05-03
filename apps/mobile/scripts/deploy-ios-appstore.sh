@@ -50,12 +50,12 @@ build_appstore() {
   export RABBY_MOBILE_BUILD_ENV="production";
   cd $project_dir;
   sh ./ios/patches/override-xcconfig-release.sh;
-  turbo_prepare_js_dependencies || return $?
-  ensure_inpage_bridge_assets || return $?
   if [ "$HASH_CHECK" == "true" ]; then
     echo "[deploy-ios-appstore] HASH_CHECK=true, skip repeated JS asset preparation."
     build_status=0
   else
+    turbo_prepare_js_dependencies || return $?
+    ensure_inpage_bridge_assets || return $?
     yarn check-nodeengines &&
       yarn ../mobile-local-pages bundle:all &&
       yarn link-assets &&
