@@ -140,7 +140,7 @@ jobs:
           security unlock-keychain -p $RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS login.keychain
 
           if [ "$HASH_CHECK" = "true" ]; then
-            ./scripts/release-hash-check.sh ios
+            bash ./scripts/release-hash-check.sh ios
           else
             RABBY_MOBILE_RUN_POSTINSTALL=true bash ./scripts/ci/prepare-mobile-build.sh;
             ./scripts/deploy-ios-appstore.sh

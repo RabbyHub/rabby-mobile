@@ -150,7 +150,7 @@ jobs:
           [ -z $buildchannel ] && export buildchannel=appstore;
           [ -z "${REALLY_UPLOAD:-}" ] && export REALLY_UPLOAD=true;
           if [ "$HASH_CHECK" = "true" ]; then
-            ./scripts/release-hash-check.sh android
+            bash ./scripts/release-hash-check.sh android
           else
             RABBY_MOBILE_RUN_POSTINSTALL=true bash ./scripts/ci/prepare-mobile-build.sh;
             bundle install;
