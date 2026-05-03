@@ -459,7 +459,7 @@ normalize_android_release_archive_content() {
       while IFS= read -r entry_path; do
         [[ -n "$entry_path" && "$entry_path" != */ ]] || continue
         case "$entry_path" in
-          META-INF/* | assets/dexopt/baseline.prof | assets/dexopt/baseline.profm | BUNDLE-METADATA/com.android.tools* | BUNDLE-METADATA/com.android.tools*/*)
+          META-INF/*|assets/dexopt/baseline.prof|assets/dexopt/baseline.profm|BUNDLE-METADATA/com.android.tools*|BUNDLE-METADATA/com.android.tools*/*)
             continue
             ;;
         esac

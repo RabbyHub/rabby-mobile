@@ -108,7 +108,7 @@ normalize_android_apk_content() {
       while IFS= read -r entry_path; do
         [[ -n "$entry_path" && "$entry_path" != */ ]] || continue
         case "$entry_path" in
-          META-INF/* | assets/dexopt/baseline.prof | assets/dexopt/baseline.profm)
+          META-INF/*|assets/dexopt/baseline.prof|assets/dexopt/baseline.profm)
             continue
             ;;
         esac
