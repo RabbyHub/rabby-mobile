@@ -222,9 +222,9 @@ fi
 if [[ $# -gt 0 ]]; then
   "$@"
 elif [[ "$platform" == "ios" ]]; then
-  ./scripts/deploy-ios-appstore.sh
+  bash ./scripts/deploy-ios-appstore.sh
 else
-  buildchannel="${buildchannel:-appstore}" ./scripts/deploy-android.sh
+  buildchannel="${buildchannel:-appstore}" bash ./scripts/deploy-android.sh
 fi
 
 hash_file() {
