@@ -30,6 +30,16 @@ on:
         required: false
         type: boolean
         default: false
+      HASH_CHECK_GIT_HASH:
+        description: 'Optional git hash injected into HASH_CHECK bundle metadata'
+        required: false
+        type: string
+        default: ''
+      HASH_CHECK_GIT_TIME:
+        description: 'Optional git time injected into HASH_CHECK bundle metadata'
+        required: false
+        type: string
+        default: ''
   workflow_call:
     secrets:
       RABBY_MOBILE_ANDROID_KEY_STORE:
@@ -176,6 +186,8 @@ jobs:
           RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64 }}
           buildchannel: ${{ inputs.buildchannel }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
+          RABBY_MOBILE_HASHCHECK_INJECTED_GIT_HASH: ${{ github.event_name == 'workflow_dispatch' && inputs.HASH_CHECK_GIT_HASH || '' }}
+          RABBY_MOBILE_HASHCHECK_INJECTED_GIT_TIME: ${{ github.event_name == 'workflow_dispatch' && inputs.HASH_CHECK_GIT_TIME || '' }}
           # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
           GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GITHUB_ACTOR: ${{ github.actor }}

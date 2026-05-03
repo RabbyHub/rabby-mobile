@@ -37,6 +37,16 @@ on:
         required: false
         type: boolean
         default: false
+      HASH_CHECK_GIT_HASH:
+        description: 'Optional git hash injected into HASH_CHECK bundle metadata'
+        required: false
+        type: string
+        default: ''
+      HASH_CHECK_GIT_TIME:
+        description: 'Optional git time injected into HASH_CHECK bundle metadata'
+        required: false
+        type: string
+        default: ''
   workflow_call:
     secrets:
       KEYCHAIN_PASS:
@@ -159,6 +169,8 @@ jobs:
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.SENTRY_DISABLE_AUTO_UPLOAD }}
           RABBY_MOBILE_SKIP_TESTFLIGHT_UPLOAD: ${{ github.event_name == 'workflow_dispatch' && inputs.SKIP_TESTFLIGHT_UPLOAD || false }}
+          RABBY_MOBILE_HASHCHECK_INJECTED_GIT_HASH: ${{ github.event_name == 'workflow_dispatch' && inputs.HASH_CHECK_GIT_HASH || '' }}
+          RABBY_MOBILE_HASHCHECK_INJECTED_GIT_TIME: ${{ github.event_name == 'workflow_dispatch' && inputs.HASH_CHECK_GIT_TIME || '' }}
           CONFIGURATION: release
           TYPE: appstore
           RABBY_MOBILE_BUILD_ENV: production

@@ -93,7 +93,11 @@ main() {
 
   echo "[prepare-mobile-build] node: $(node -v)"
   echo "[prepare-mobile-build] yarn: $(yarn --version)"
-  yarn install --immutable
+  local yarn_install_args=(--immutable)
+  if [ "${RABBY_MOBILE_YARN_INSTALL_SKIP_BUILDS:-false}" = "true" ]; then
+    yarn_install_args+=(--mode=skip-builds)
+  fi
+  yarn install "${yarn_install_args[@]}"
 
   local requested_version="${INPUT_NEW_VERSION_NAME:-}"
   if [ -n "$requested_version" ]; then
@@ -102,7 +106,11 @@ main() {
 
   if [ "${RABBY_MOBILE_RUN_POSTINSTALL:-false}" = "true" ]; then
     echo "[prepare-mobile-build] run explicit postinstall"
-    yarn postinstall
+    if [ "${RABBY_MOBILE_POSTINSTALL_DIRECT:-false}" = "true" ]; then
+      bash ./scripts/ci/run-postinstall-direct.sh
+    else
+      yarn postinstall
+    fi
   fi
 }
 
