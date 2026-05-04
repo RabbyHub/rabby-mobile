@@ -76,6 +76,9 @@ export SOURCE_DATE_EPOCH="$source_date_epoch"
 export SENTRY_DISABLE_AUTO_UPLOAD=true
 export REALLY_UPLOAD=false
 export SKIP_NOTIFY_LARK=true
+export FASTLANE_SKIP_UPDATE_CHECK="${FASTLANE_SKIP_UPDATE_CHECK:-1}"
+export FASTLANE_HIDE_CHANGELOG="${FASTLANE_HIDE_CHANGELOG:-1}"
+export FASTLANE_DISABLE_COLORS="${FASTLANE_DISABLE_COLORS:-1}"
 unset DEBUG
 
 export RABBY_MOBILE_HASHCHECK_ACTUAL_GIT_HASH="$git_head_full"
@@ -174,6 +177,39 @@ seed_ios_pods_from_source_repo() {
   rsync -a --delete --exclude build "$source_pods_dir/" "$target_pods_dir/"
 }
 
+prepare_ios_codegen_outputs() {
+  local source_ios_dir="$source_repo/apps/mobile/ios"
+  local source_codegen_dir="$source_ios_dir/build/generated/ios"
+  local target_codegen_dir="$mobile_dir/ios/build/generated/ios"
+  local app_dependency_provider="$target_codegen_dir/RCTAppDependencyProvider.h"
+
+  if [[ -f "$app_dependency_provider" ]]; then
+    return 0
+  fi
+
+  if [[ -d "$source_codegen_dir" ]] &&
+    cmp -s "$mobile_dir/ios/Podfile.lock" "$source_ios_dir/Podfile.lock"; then
+    echo "ℹ️ seed iOS codegen outputs from source checkout for release HASH_CHECK."
+    mkdir -p "$target_codegen_dir"
+    rsync -a --delete "$source_codegen_dir/" "$target_codegen_dir/"
+  fi
+
+  if [[ -f "$app_dependency_provider" ]]; then
+    return 0
+  fi
+
+  echo "ℹ️ generate iOS codegen outputs for release HASH_CHECK."
+  node "$mobile_dir/node_modules/react-native/scripts/generate-codegen-artifacts.js" \
+    -p "$mobile_dir" \
+    -o "$mobile_dir/ios" \
+    -t ios
+
+  if [[ ! -f "$app_dependency_provider" ]]; then
+    echo "❌ iOS codegen output is missing: $app_dependency_provider" >&2
+    exit 1
+  fi
+}
+
 write_android_hermes_wrapper() {
   local hermes_os_bin
   local wrapper_path="$mobile_dir/.release-hash-check-hermesc-wrapper.sh"
@@ -252,6 +288,7 @@ fi
 
 if [[ "$platform" == "ios" ]]; then
   seed_ios_pods_from_source_repo
+  prepare_ios_codegen_outputs
 fi
 
 if [[ $# -gt 0 ]]; then
