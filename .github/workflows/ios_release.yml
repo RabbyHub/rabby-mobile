@@ -97,6 +97,12 @@ jobs:
               -e .yarn/unplugged
             )
           fi
+          if [ "$HASH_CHECK" = "true" ]; then
+            echo "Keep reusable iOS Pods for HASH_CHECK";
+            yarn_exclude_args+=(
+              -e apps/mobile/ios/Pods
+            )
+          fi
 
           git clean -ffdx "${yarn_exclude_args[@]}";
           git reset --hard HEAD;
