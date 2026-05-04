@@ -70,7 +70,7 @@ build_appstore() {
 
   turbo_prepare_ruby_bundle || return $?
 
-  if [ ! -z $CI ]; then
+  if [ ! -z $CI ] && [ "$HASH_CHECK" != "true" ]; then
     cd $project_dir/ios || return 1
     turbo_bundle_pod cache clean --all || return $?
     cd $project_dir || return 1
