@@ -447,6 +447,10 @@ turbo_bundle_pod() {
   turbo_bundle_exec exec ruby -e 'load Gem.bin_path("cocoapods", "pod")' -- "$@"
 }
 
+turbo_bundle_fastlane() {
+  turbo_bundle_exec exec ruby -e 'load Gem.bin_path("fastlane", "fastlane")' -- "$@"
+}
+
 turbo_log() {
   printf '[turbo-build] %s\n' "$*"
 }

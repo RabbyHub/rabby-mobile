@@ -77,7 +77,7 @@ build_appstore() {
   fi
 
   turbo_prepare_cocoapods || return $?
-  turbo_bundle_exec exec fastlane ios appstore
+  turbo_bundle_fastlane ios appstore
 }
 
 if [[ -z $SKIP_BUILD || ! -f $ouput_dir/RabbyMobile.ipa ]]; then

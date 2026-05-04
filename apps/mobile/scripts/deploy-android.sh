@@ -130,7 +130,7 @@ build_selfhost() {
     fi
     echo "[deploy-android] build with fastlane."
     turbo_restore_gradle_state
-    turbo_bundle_exec exec fastlane android selfhost
+    turbo_bundle_fastlane android selfhost
     fastlane_status=$?
     [ $fastlane_status -eq 0 ] && turbo_save_gradle_state
     return $fastlane_status
@@ -162,7 +162,7 @@ build_appstore() {
   if [ $RABBY_HOST_OS != "Windows" ]; then
     echo "[deploy-android] build with fastlane."
     turbo_restore_gradle_state
-    turbo_bundle_exec exec fastlane android playstore
+    turbo_bundle_fastlane android playstore
     fastlane_status=$?
     [ $fastlane_status -eq 0 ] && turbo_save_gradle_state
     return $fastlane_status
