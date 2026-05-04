@@ -146,6 +146,34 @@ write_ios_xcode_env() {
   } >"$mobile_dir/ios/.xcode.env.local"
 }
 
+seed_ios_pods_from_source_repo() {
+  if [[ "${RABBY_MOBILE_RELEASE_HASH_CHECK_SEED_IOS_PODS:-true}" != "true" ]]; then
+    return 0
+  fi
+
+  local source_ios_dir="$source_repo/apps/mobile/ios"
+  local source_pods_dir="$source_ios_dir/Pods"
+  local target_pods_dir="$mobile_dir/ios/Pods"
+
+  if [[ ! -d "$source_pods_dir" || ! -f "$source_pods_dir/Manifest.lock" ]]; then
+    return 0
+  fi
+
+  if ! cmp -s "$mobile_dir/ios/Podfile.lock" "$source_ios_dir/Podfile.lock"; then
+    echo "ℹ️ source Podfile.lock differs from release HASH_CHECK worktree, skip seeding Pods."
+    return 0
+  fi
+
+  if ! cmp -s "$source_ios_dir/Podfile.lock" "$source_pods_dir/Manifest.lock"; then
+    echo "ℹ️ source Pods/Manifest.lock is not up to date, skip seeding Pods."
+    return 0
+  fi
+
+  echo "ℹ️ seed iOS Pods from source checkout for release HASH_CHECK."
+  mkdir -p "$target_pods_dir"
+  rsync -a --delete --exclude build "$source_pods_dir/" "$target_pods_dir/"
+}
+
 write_android_hermes_wrapper() {
   local hermes_os_bin
   local wrapper_path="$mobile_dir/.release-hash-check-hermesc-wrapper.sh"
@@ -220,6 +248,10 @@ if [[ "${RABBY_MOBILE_RELEASE_HASH_CHECK_SKIP_PREPARE:-false}" != "true" ]]; the
   if [[ -f Gemfile ]]; then
     bundle check >/dev/null 2>&1 || bundle install
   fi
+fi
+
+if [[ "$platform" == "ios" ]]; then
+  seed_ios_pods_from_source_repo
 fi
 
 if [[ $# -gt 0 ]]; then

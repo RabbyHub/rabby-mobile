@@ -1217,14 +1217,15 @@ turbo_prepare_ruby_bundle() {
 
 turbo_prepare_cocoapods() {
   turbo_init_env
+
+  if turbo_cocoapods_ready; then
+    turbo_log "cocoapods already up to date"
+    return 0
+  fi
+
   cache_key=$(turbo_compute_cocoapods_cache_key)
 
   if turbo_build_enabled; then
-    if turbo_cocoapods_ready; then
-      turbo_log "cocoapods already up to date"
-      return 0
-    fi
-
     turbo_restore_layer cocoapods "$cache_key" apps/mobile/ios/Pods || true
 
     if turbo_cocoapods_ready; then
