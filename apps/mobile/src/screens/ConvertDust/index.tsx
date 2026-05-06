@@ -83,9 +83,6 @@ function ConvertDustContent({
   const pendingBackActionRef = useRef<
     Parameters<typeof navigation.dispatch>[0] | null
   >(null);
-  const pendingStopBackActionRef = useRef<
-    Parameters<typeof navigation.dispatch>[0] | null
-  >(null);
   const { safeOffBottom } = useSafeSizes();
 
   const [chainEnum, setChainEnum] = useState(ETH_CHAIN);
@@ -147,7 +144,6 @@ function ConvertDustContent({
       (taskStatus === 'active' || !!route.params?.fromHomeConvertDustBanner),
     event => {
       if (taskStatus === 'active') {
-        pendingStopBackActionRef.current = event.data.action;
         pauseTask();
         return;
       }
@@ -189,23 +185,12 @@ function ConvertDustContent({
   }, [navigation]);
 
   const handleStopContinue = useCallback(() => {
-    pendingStopBackActionRef.current = null;
     task.continue();
   }, [task]);
 
   const handleStop = useCallback(() => {
     task.stop();
-
-    const pendingAction = pendingStopBackActionRef.current;
-    pendingStopBackActionRef.current = null;
-
-    if (!pendingAction) {
-      return;
-    }
-
-    allowBackRef.current = true;
-    navigation.dispatch(pendingAction);
-  }, [navigation, task]);
+  }, [task]);
 
   useEffect(() => {
     navigation.setParams({
