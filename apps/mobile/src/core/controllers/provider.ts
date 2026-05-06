@@ -1056,6 +1056,11 @@ class ProviderController extends BaseController {
       throw errObj;
     }
 
+    const serializedSignedTx =
+      typeof signedTx === 'object' && typeof signedTx.serialize === 'function'
+        ? bytesToHex(signedTx.serialize())
+        : undefined;
+
     const txDataWithRSV: any = {
       ...txData,
       ...(isTempoTx
@@ -1274,7 +1279,8 @@ class ProviderController extends BaseController {
           ) {
             const rawTx = isTempoTx
               ? tempoSerializedRawTx
-              : bytesToHex(
+              : serializedSignedTx ||
+                bytesToHex(
                   TransactionFactory.fromTxData(txDataWithRSV, {
                     common,
                   }).serialize(),
@@ -1357,7 +1363,8 @@ class ProviderController extends BaseController {
 
               const rawTx = isTempoTx
                 ? tempoSerializedRawTx
-                : bytesToHex(
+                : serializedSignedTx ||
+                  bytesToHex(
                     TransactionFactory.fromTxData(txDataWithRSV, {
                       common,
                     }).serialize(),
@@ -1444,7 +1451,8 @@ class ProviderController extends BaseController {
           })!;
           const rawTx = isTempoTx
             ? tempoSerializedRawTx
-            : bytesToHex(
+            : serializedSignedTx ||
+              bytesToHex(
                 TransactionFactory.fromTxData(txDataWithRSV, {
                   common,
                 }).serialize(),
