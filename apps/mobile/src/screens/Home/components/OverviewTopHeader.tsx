@@ -37,8 +37,8 @@ import { useMemoizedFn } from 'ahooks';
 import { useHideBalance } from '../hooks/useHideBalance';
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
 import { AddressListScreenButton } from '@/screens/Address/AddressListScreenButton';
-import { formatSmallCurrencyValue } from '@/hooks/useCurve';
 import { useCurrency } from '@/hooks/useCurrency';
+import { formatSmallCurrencyValueParts } from '@/utils/currency';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import Animated, {
@@ -141,7 +141,7 @@ export function TabsTopHeader(): JSX.Element {
   }, [setTokenDisplayMode, tokenDisplayMode]);
 
   const netWorth = useMemo(() => {
-    return formatSmallCurrencyValue(totalBalance, { currency });
+    return formatSmallCurrencyValueParts(totalBalance, { currency }).text;
   }, [currency, totalBalance]);
   const changePercent = useMemo(() => {
     if (!data.changePercent) {
