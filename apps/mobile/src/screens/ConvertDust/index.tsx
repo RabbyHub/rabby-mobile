@@ -399,6 +399,7 @@ function ConvertDustContent({
           hideTestnetTab
           account={currentAccount!}
           supportChains={SWAP_SUPPORT_CHAINS}
+          unsupportedChainMode="hidden"
           disabled={task.disabled}
         />
 

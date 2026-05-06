@@ -55,6 +55,7 @@ export function ChainInfo2024({
   style,
   onChange,
   supportChains,
+  unsupportedChainMode,
   disabledTips,
   hideMainnetTab,
   hideTestnetTab,
@@ -67,6 +68,7 @@ export function ChainInfo2024({
     chainEnum?: CHAINS_ENUM;
     onChange?: (chain: CHAINS_ENUM) => void;
     supportChains?: SelectSortedChainProps['supportChains'];
+    unsupportedChainMode?: SelectSortedChainProps['unsupportedChainMode'];
     disabledTips?: SelectSortedChainProps['disabledTips'];
     hideMainnetTab?: SelectSortedChainProps['hideMainnetTab'];
     hideTestnetTab?: SelectSortedChainProps['hideTestnetTab'];
@@ -98,6 +100,7 @@ export function ChainInfo2024({
       value: chainEnum,
       onClose: removeChainModal,
       supportChains,
+      unsupportedChainMode,
       disabledTips,
       hideMainnetTab,
       hideTestnetTab,
@@ -116,6 +119,7 @@ export function ChainInfo2024({
     chainEnum,
     removeChainModal,
     supportChains,
+    unsupportedChainMode,
     disabledTips,
     hideMainnetTab,
     hideTestnetTab,
