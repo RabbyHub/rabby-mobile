@@ -74,7 +74,7 @@ export function CurrencySelectorPopup({
   const deferredSearchText = useDeferredValue(searchText);
 
   const sortedList = useMemo(() => {
-    const topList = uniq([currency.code, 'USD', 'EUR']);
+    const topList = uniq(['BTC', 'ETH', currency.code, 'USD', 'EUR']);
 
     return [
       ...topList.map(code => {

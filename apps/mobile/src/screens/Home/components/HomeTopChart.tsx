@@ -18,10 +18,7 @@ import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/Cu
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { useCurrency } from '@/hooks/useCurrency';
-import {
-  formatSmallCurrencyValueParts,
-  isCurrencyPrefix,
-} from '@/utils/currency';
+import { formatSmallCurrencyValueParts } from '@/utils/currency';
 import {
   FOLD_ASSETS_HEADER_HEIGHT,
   UNFOLD_ASSETS_HEADER_HEIGHT,
@@ -34,7 +31,7 @@ import {
   useSingleHomeHomeTopChart,
 } from '../hooks/singleHome';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
-import { AnimateableText, Text } from '@/components/Typography';
+import { AnimateableText } from '@/components/Typography';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -42,12 +39,8 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 const ScreenWidth = Dimensions.get('screen').width;
 
 const MAX_NETWORTH_FS = 42;
-const MAX_POSTFIX_NETWORTH_FS = 38;
 const MIN_NETWORTH_FS = 34;
 const NETWORTH_FIT_LEN = 10;
-type DisplayCurvePoint = CurvePoint & {
-  netWorthAmount: string;
-};
 
 const ZERO_LINE_CHART_DATA: CurvePoint[] = [
   {
@@ -257,22 +250,18 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   const isLoss = selectData.isLoss;
   const _data = selectData.list;
 
-  const isPostfixCurrency = !isCurrencyPrefix(currency);
-  const netWorthParts = useMemo(() => {
-    return formatSmallCurrencyValueParts(rawNetWorth, { currency });
+  const netWorth = useMemo(() => {
+    return formatSmallCurrencyValueParts(rawNetWorth, { currency }).text;
   }, [rawNetWorth, currency]);
-  const netWorth = netWorthParts.text;
 
-  const data = useMemo<DisplayCurvePoint[]>(() => {
+  const data = useMemo(() => {
     return (
       _data?.map(item => {
-        const itemNetWorthParts = formatSmallCurrencyValueParts(item.value, {
-          currency,
-        });
         return {
           ...item,
-          netWorth: itemNetWorthParts.text,
-          netWorthAmount: itemNetWorthParts.amountText,
+          netWorth: formatSmallCurrencyValueParts(item.value, {
+            currency,
+          }).text,
         };
       }) || []
     );
@@ -329,22 +318,11 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   const formatNetWorth = useDerivedValue(() => {
     // 如果还没初始化，返回默认值
     if (!isInitialized) {
-      return isPostfixCurrency ? netWorthParts.amountText : netWorth;
+      return netWorth;
     }
 
-    const activeData = data?.[currentIndex?.value];
-    if (isPostfixCurrency) {
-      return activeData?.netWorthAmount || netWorthParts.amountText;
-    }
-    return activeData?.netWorth || netWorth;
-  }, [
-    data,
-    currentIndex,
-    netWorth,
-    netWorthParts.amountText,
-    isInitialized,
-    isPostfixCurrency,
-  ]);
+    return data?.[currentIndex?.value]?.netWorth || netWorth;
+  }, [data, currentIndex, netWorth, isInitialized]);
 
   const lossStyleProps = useAnimatedStyle(() => {
     // 如果还没初始化，使用默认样式
@@ -400,8 +378,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
 
   const netWorthFontStyle = useAnimatedStyle(() => {
     const len = formatNetWorth.value?.length ?? 0;
-    const maxFs = isPostfixCurrency ? MAX_POSTFIX_NETWORTH_FS : MAX_NETWORTH_FS;
-    const fs = len <= NETWORTH_FIT_LEN ? maxFs : MIN_NETWORTH_FS;
+    const fs = len <= NETWORTH_FIT_LEN ? MAX_NETWORTH_FS : MIN_NETWORTH_FS;
     return { fontSize: fs };
   });
 
@@ -409,7 +386,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
     return {
       text: formatNetWorth.value,
     };
-  }, [netWorth, netWorthParts.amountText, isPostfixCurrency]);
+  }, [netWorth]);
   const percentChangeAnimatedProps = useAnimatedProps(() => {
     return {
       text: percentChange.value,
@@ -427,16 +404,11 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   return (
     <View style={[styles.charHeader]}>
       <View style={styles.leftContainer}>
-        <View style={styles.netWorthRow}>
-          <AnimateableText
-            {...makeTestIDProps(E2E_ID.home.singleBalanceValue)}
-            style={[styles.netWorth, netWorthFontStyle]}
-            animatedProps={netWorthAnimatedProps}
-          />
-          {isPostfixCurrency ? (
-            <Text style={styles.netWorthSuffix}>{currency.symbol}</Text>
-          ) : null}
-        </View>
+        <AnimateableText
+          {...makeTestIDProps(E2E_ID.home.singleBalanceValue)}
+          style={[styles.netWorth, netWorthFontStyle]}
+          animatedProps={netWorthAnimatedProps}
+        />
         <AnimateableText
           style={[styles.changeTime, animOpacityStyle]}
           animatedProps={dateTimeAnimatedProps}
@@ -537,19 +509,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 46,
     // textAlign: 'center',
     fontWeight: '900',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  netWorthRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  netWorthSuffix: {
-    marginLeft: 4,
-    marginTop: 15,
-    fontSize: 16,
-    lineHeight: 31,
-    fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },

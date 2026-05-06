@@ -30,24 +30,11 @@ export const HomeAddressItem: React.FC<{
 }> = ({
   style,
   account,
-  updateTime,
   changePercent: prop_changePercent,
   isLoss,
   hideType,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-
-  // const [isPressing, setIsPressing] = React.useState(false);
-
-  // const { curveState } = useCurveDataByAddress(account.address);
-
-  // console.debug(
-  //   '[debug] account.address, curveState?.updateTime, updateTime, (curveState?.updateTime || 0) > (updateTime || 0)',
-  //   account.address,
-  //   curveState?.updateTime,
-  //   updateTime,
-  //   (curveState?.updateTime || 0) > (updateTime || 0),
-  // );
 
   const { balance, isZeroPercentChange, changePercent } = useMemo(() => {
     const ret = {
@@ -59,16 +46,7 @@ export const HomeAddressItem: React.FC<{
     ret.changePercent = prop_changePercent || '0%';
     ret.isZeroPercentChange = ret.changePercent === '0%';
     return ret;
-  }, [
-    // updateTime,
-    // curveState?.updateTime,
-    // curveState?.loadedFromApi,
-    // curveState?.selectData.rawNetWorth,
-    // curveState?.selectData.changePercent,
-    // curveState?.selectData.rawChange,
-    prop_changePercent,
-    account.balance,
-  ]);
+  }, [prop_changePercent, account.balance]);
 
   return (
     <AddressItemContextMenu
@@ -77,8 +55,6 @@ export const HomeAddressItem: React.FC<{
       key={`${account.type}-${account.address}`}
       actions={['copy', 'pin', 'edit']}>
       <TouchableOpacity
-        // onPressIn={() => setIsPressing(true)}
-        // onPressOut={() => setIsPressing(false)}
         style={StyleSheet.flatten([style])}
         delayLongPress={200} // long press delay
         onPress={() => {
