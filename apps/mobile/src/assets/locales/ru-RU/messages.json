@@ -1062,7 +1062,13 @@
         "search": "Поиск",
         "favorite": "Избранное",
         "emptyAndroid": "Нет dApp, добавленных в избранное",
-        "empty": "Нет веб-сайта добавленного в избранное"
+        "empty": "Нет веб-сайта добавленного в избранное",
+        "tabs": {
+          "all": "Все",
+          "perps": "Perps",
+          "predict": "Predict"
+        },
+        "websites": "Веб-сайты"
       },
       "depositAssets": {
         "title": "Внести активы",
@@ -2421,6 +2427,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "Больше"
+      },
+      "DappInfoPopup": {
+        "listedBy": "Размещено",
+        "sitePopularity": "Популярность сайта",
+        "popularLevelHigh": "Высокая",
+        "popularLevelMedium": "Средняя",
+        "popularLevelLow": "Низкая",
+        "popularLevelVeryLow": "Очень низкая",
+        "category": "Категория",
+        "skipDappInfoNextTime": "Пропустить эту страницу в следующий раз",
+        "openDapp": "Открыть"
       }
     },
     "browserManage": {
@@ -3057,7 +3074,8 @@
         "amount": "Количество",
         "remainingDebt": "Остаток задолженности",
         "liquidationAt": "Ликвидация при < 1.0",
-        "title": "Обзор транзакций"
+        "title": "Обзор транзакций",
+        "toSwap": "Обменять"
       },
       "borrowOverview": {
         "borrowCap": "Кредитный лимит",
@@ -3253,6 +3271,9 @@
       },
       "dappSelect": {
         "title": "Выберите поставщика кредитования"
+      },
+      "signFallback": {
+        "preExecFailedUseFullSign": "Симуляция не удалась. Эта транзакция с высокой вероятностью не выполнится из-за ошибок AAVE."
       }
     },
     "address": {

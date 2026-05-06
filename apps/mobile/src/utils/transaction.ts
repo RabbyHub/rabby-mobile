@@ -19,18 +19,20 @@ import abi from 'human-standard-token-abi';
 import { hexToString, isHex, stringToHex } from 'web3-utils';
 import { findChain, getChain } from './chain';
 import i18n from './i18n';
+import { isTempoChain } from './tempo';
 import { openExternalUrl } from '@/core/utils/linking';
-import { Account, IManageToken } from '@/core/services/preference';
+import type { Account } from '@/types/account';
+import type { IManageToken } from '@/types/assets';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { preferenceService, transactionHistoryService } from '@/core/services';
 import { CustomTxItem } from '@/core/services/transactionHistory';
-import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
+import { ensureHistoryListItemFromDb } from '@/utils/historyDisplay';
 import {
   CUSTOM_HISTORY_TITLE_TYPE,
+  type HistoryDisplayItem,
   HistoryItemCateType,
-} from '@/screens/Transaction/components/type';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
-import { TokenChangeDataItem } from '@/screens/Transaction/components/HistoryItem';
+  type TokenChangeDataItem,
+} from '@/types/history';
 import i18next from 'i18next';
 import { ellipsisOverflowedText } from './text';
 import { getTokenSymbol } from './token';
@@ -483,6 +485,8 @@ export const checkGasAndNonce = ({
   isGnosisAccount,
   nativeTokenBalance,
   gasTokenDecimals = GAS_PRICE_DECIMALS,
+  gasTokenId,
+  tempoPreferredFeeTokenId,
   checkTxValueInBalance = true,
 }: {
   recommendGasLimitRatio: number;
@@ -504,6 +508,8 @@ export const checkGasAndNonce = ({
   isSpeedUp: boolean;
   isGnosisAccount: boolean;
   gasTokenDecimals?: number;
+  gasTokenId?: string;
+  tempoPreferredFeeTokenId?: string;
   checkTxValueInBalance?: boolean;
 }) => {
   const errors: {
@@ -559,11 +565,26 @@ export const checkGasAndNonce = ({
     rawAmountToBn(gasExplainResponse.maxGasCostAmount).times(
       pow10(gasTokenDecimals),
     );
+  const chain = findChain({
+    id: tx.chainId,
+  });
+  const txFeeToken = (tx as Tx & { feeToken?: unknown }).feeToken;
+  const tempoFeeToken =
+    tempoPreferredFeeTokenId ||
+    (typeof txFeeToken === 'string' ? txFeeToken : '');
+  const tempoFeeTokenBalanceInsufficient =
+    !!chain &&
+    isTempoChain(chain.serverId) &&
+    !!tempoFeeToken &&
+    !!gasTokenId &&
+    tempoFeeToken.toLowerCase() !== gasTokenId.toLowerCase();
+
   if (
     !isGnosisAccount &&
-    maxGasCostRawAmount
-      .plus(sendNativeTokenRawAmount)
-      .isGreaterThan(balanceRawAmount)
+    (tempoFeeTokenBalanceInsufficient ||
+      maxGasCostRawAmount
+        .plus(sendNativeTokenRawAmount)
+        .isGreaterThan(balanceRawAmount))
   ) {
     errors.push({
       code: 3001,

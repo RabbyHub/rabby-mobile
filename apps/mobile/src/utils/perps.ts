@@ -14,7 +14,7 @@ import {
   SpotClearinghouseState,
 } from '@rabby-wallet/hyperliquid-sdk';
 import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/types/account';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { apisPerps } from '@/core/apis';
 import { perpsService } from '@/core/services';
@@ -168,6 +168,13 @@ export const calLiquidationPrice = (
   // const nationalValue = positionSize * markPrice;
   const maintenance_margin_required = nationalValue * MMR;
   const margin_available = margin - maintenance_margin_required;
+  // When margin_available <= 0 (account hasn't loaded, or an abstraction mode
+  // we haven't mapped surfaces 0 collateral) the formula below produces a
+  // sign-inverted price — short below entry, long above. Bail out so callers
+  // hide the value rather than show a misleading number.
+  if (!Number.isFinite(margin_available) || margin_available <= 0) {
+    return 0;
+  }
   const liq_price =
     markPrice - (side * margin_available) / positionSize / (1 - MMR * side);
   // liq_price = price - side * margin_available / position_size / (1 - l * side)
@@ -319,10 +326,17 @@ export const formatAllDexsClearinghouseState = (
     return acc + Number(item[1]?.withdrawable || 0);
   }, 0);
 
+  let crossMaintenanceMarginUsed = 0;
+  for (const [dexName, state] of allClearinghouseState) {
+    if (!state) {
+      continue;
+    }
+    crossMaintenanceMarginUsed += Number(state.crossMaintenanceMarginUsed || 0);
+  }
+
   return {
     assetPositions: assetPositions,
-    crossMaintenanceMarginUsed:
-      hyperDexState?.crossMaintenanceMarginUsed || '0',
+    crossMaintenanceMarginUsed: crossMaintenanceMarginUsed.toString(),
     crossMarginSummary: hyperDexState?.crossMarginSummary || {},
     marginSummary: {
       ...hyperDexState.marginSummary,
@@ -425,12 +439,24 @@ export const checkPerpsReference = async ({
 };
 
 export const formatSpotState = (spotState: SpotClearinghouseState) => {
+  // `tokenToAvailableAfterMaintenance` is the server-computed net free
+  // collateral per token (after LTV weighting and existing-position MM).
+  // Surfaced raw so consumers can decide how to use it based on the user's
+  // abstraction mode — portfolio margin needs it, unifiedAccount has its own
+  // accounting via stablecoin totals.
+  const tokenToAvailableAfterMaintenance = Array.isArray(
+    spotState?.tokenToAvailableAfterMaintenance,
+  )
+    ? spotState.tokenToAvailableAfterMaintenance ?? null
+    : null;
+
   if (!spotState || !spotState.balances || spotState.balances.length === 0) {
     return {
       accountValue: '0',
       availableToTrade: '0',
       balances: [],
       balancesMap: {},
+      tokenToAvailableAfterMaintenance,
     };
   }
 
@@ -474,6 +500,7 @@ export const formatSpotState = (spotState: SpotClearinghouseState) => {
     availableToTrade: totalAvailable,
     balances,
     balancesMap,
+    tokenToAvailableAfterMaintenance,
   };
 };
 

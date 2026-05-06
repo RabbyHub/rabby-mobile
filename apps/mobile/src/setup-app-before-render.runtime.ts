@@ -26,7 +26,11 @@ import {
   screenshotModalStartSyncNetworth,
   startSubscribeUserDidTakeScreenshot,
 } from './components/Screenshot/hooks';
-import { startSubscribeWhetherPreventScreenshot } from './hooks/native/security';
+import {
+  enableIOSAppSwitcherBlur,
+  startSubscribeIOSAppSwitcherBlur,
+  startSubscribeWhetherPreventScreenshot,
+} from './hooks/native/security';
 import {
   startSubscribeAtSensitiveScene,
   startSubscribeIOSJustScreenshotted,
@@ -92,6 +96,8 @@ startWatchLayoutChange();
 startSubscribeUserDidTakeScreenshot();
 startSubscribeAtSensitiveScene();
 startSubscribeIOSJustScreenshotted();
+startSubscribeIOSAppSwitcherBlur();
+enableIOSAppSwitcherBlur();
 startSubscribeWhetherPreventScreenshot();
 startSubscribeIOSScreenRecording();
 

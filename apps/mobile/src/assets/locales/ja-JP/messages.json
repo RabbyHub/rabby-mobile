@@ -978,7 +978,13 @@
         "favorite": "お気に入り",
         "search": "検索",
         "emptyAndroid": "お気に入りに追加されたdAppはありません",
-        "empty": "お気に入りに追加されたウェブサイトはありません。"
+        "empty": "お気に入りに追加されたウェブサイトはありません。",
+        "tabs": {
+          "all": "すべて",
+          "perps": "Perps",
+          "predict": "予測"
+        },
+        "websites": "ウェブサイト"
       },
       "depositAssets": {
         "title": "資産を入金する",
@@ -2354,6 +2360,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "さらに"
+      },
+      "DappInfoPopup": {
+        "listedBy": "リスト提供者",
+        "sitePopularity": "サイト人気度",
+        "popularLevelHigh": "高",
+        "popularLevelMedium": "中",
+        "popularLevelLow": "低",
+        "popularLevelVeryLow": "非常に低",
+        "category": "カテゴリ",
+        "skipDappInfoNextTime": "次回はこのメッセージをスキップ",
+        "openDapp": "開く"
       }
     },
     "browserManage": {
@@ -2990,7 +3007,8 @@
         "amount": "金額",
         "remainingDebt": "残りの債務",
         "liquidationAt": "1.0未満での清算",
-        "title": "取引概要"
+        "title": "取引概要",
+        "toSwap": "交換する"
       },
       "borrowOverview": {
         "myBorrow": "私の借入",
@@ -3186,6 +3204,9 @@
       },
       "dappSelect": {
         "title": "レンディングプロバイダーを選択してください"
+      },
+      "signFallback": {
+        "preExecFailedUseFullSign": "シミュレーションに失敗しました。このトランザクションはAAVEエラーのため、失敗する可能性が高いです。"
       }
     },
     "address": {

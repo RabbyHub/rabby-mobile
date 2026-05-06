@@ -53,11 +53,20 @@ import { checkGasAndNonce } from '@/utils/transaction';
 import { intToHex } from '@/utils/number';
 import _ from 'lodash';
 import { openapi } from '@/core/request';
-import { isTempoChain } from '@/utils/tempo';
 import {
   buildTopUpResumedTxs,
   GasAccountTopUpResult,
 } from '@/screens/GasAccount/components/topUpContinuation';
+import {
+  calcTempoMaxGasCostRawAmountIn18,
+  isTempoBatchSupportedAccountType,
+  isTempoChain,
+  listTempoFeeTokenOptionsFromCache,
+  loadTempoFeeTokenOptionsState,
+  TempoFeeTokenOption,
+  TxWithTempoExtras,
+} from '@/utils/tempo';
+import tokenListStore from '@/store/tokens';
 
 const RABBY_FEE = '0.25%';
 
@@ -527,13 +536,21 @@ export const DirectSignGasInfo = ({
   };
 
   const currentAccount = config?.account;
-  const txs = ctx?.txs || [];
+  const txs = useMemo(() => ctx?.txs || [], [ctx?.txs]);
   const txsResult = ctx?.txsCalc;
   const currentTx = txs[0];
   const { isSpeedUp, isCancel } = currentTx
     ? normalizeTxParams(currentTx)
     : { isSpeedUp: false, isCancel: false };
   const gasAccountCost = ctx?.gasAccount as any;
+  const [tempoGasTokenList, setTempoGasTokenList] = useState<
+    TempoFeeTokenOption[]
+  >([]);
+  const [tempoGasTokenLoading, setTempoGasTokenLoading] = useState(false);
+  const txFeeToken =
+    ((currentTx as unknown as TxWithTempoExtras | undefined)?.feeToken as
+      | string
+      | undefined) || '';
   const totalGasCost = useMemo(
     () =>
       (txsResult || []).reduce(
@@ -552,18 +569,90 @@ export const DirectSignGasInfo = ({
       ),
     [txsResult],
   );
+  const maxGasCostRawAmount = useMemo(
+    () =>
+      (txsResult || []).reduce(
+        (sum, item) =>
+          sum.plus(new BigNumber(item.gasCost.maxGasCostRawAmount || 0)),
+        new BigNumber(0),
+      ),
+    [txsResult],
+  );
+  const maxGasCostRawAmountText = useMemo(
+    () => maxGasCostRawAmount.toFixed(),
+    [maxGasCostRawAmount],
+  );
+  const maxGasCostRawAmountIn18 = useMemo(
+    () => calcTempoMaxGasCostRawAmountIn18(txs),
+    [txs],
+  );
+  const maxGasCostRawAmountIn18Text = useMemo(
+    () => maxGasCostRawAmountIn18.toFixed(),
+    [maxGasCostRawAmountIn18],
+  );
+  const currentTempoTokenId =
+    txFeeToken || ctx?.tempoPreferredFeeTokenId || gasToken.tokenId || '';
+  const showTempoGasTokenSelector =
+    !!chain &&
+    isTempoChain(chain.serverId) &&
+    ctx?.gasMethod !== 'gasAccount' &&
+    isTempoBatchSupportedAccountType(currentAccount?.type);
+  const getCachedTokenItems = useCallback(() => {
+    if (!currentAccount?.address) {
+      return [];
+    }
+
+    return (tokenListStore.getState().tokenListMap[
+      currentAccount.address.toLowerCase()
+    ] || []) as unknown as TokenItem[];
+  }, [currentAccount?.address]);
   const gasCalcMethod = useCallback(
     async (price: number) => {
-      const nativePrice = ctx?.nativeTokenPrice || 0;
-      const amount =
-        (txsResult || []).reduce(
-          (acc, item) =>
-            acc.plus(new BigNumber(item.gasUsed).times(price).div(1e18)),
-          new BigNumber(0),
-        ) || new BigNumber(0);
-      return { gasCostUsd: amount.times(nativePrice), gasCostAmount: amount };
+      if (!currentAccount) {
+        return {
+          gasCostUsd: new BigNumber(0),
+          gasCostAmount: new BigNumber(0),
+        };
+      }
+
+      const res = await Promise.all(
+        (txsResult || []).map(item =>
+          explainGas({
+            gasUsed: item.gasUsed,
+            gasPrice: price,
+            chainId,
+            nativeTokenPrice:
+              item.preExecResult.native_token.price ||
+              ctx?.nativeTokenPrice ||
+              0,
+            tx: item.tx,
+            gasLimit: item.gasLimit,
+            account: currentAccount,
+            preparedL1Fee: item.L1feeCache,
+            gasTokenDecimals: gasToken.decimals || 18,
+          }),
+        ),
+      );
+
+      return res.reduce(
+        (sum, item) => {
+          sum.gasCostAmount = sum.gasCostAmount.plus(item.gasCostAmount);
+          sum.gasCostUsd = sum.gasCostUsd.plus(item.gasCostUsd);
+          return sum;
+        },
+        {
+          gasCostUsd: new BigNumber(0),
+          gasCostAmount: new BigNumber(0),
+        },
+      );
     },
-    [ctx?.nativeTokenPrice, txsResult],
+    [
+      chainId,
+      ctx?.nativeTokenPrice,
+      currentAccount,
+      gasToken.decimals,
+      txsResult,
+    ],
   );
   const checkGasLevelIsNotEnough = useMemoizedFn(
     (gas, type?: 'gasAccount' | 'native'): Promise<[boolean, number]> => {
@@ -627,6 +716,8 @@ export const DirectSignGasInfo = ({
               isGnosisAccount: false,
               nativeTokenBalance: balance,
               gasTokenDecimals: gasToken.decimals || 18,
+              gasTokenId: gasToken.tokenId,
+              tempoPreferredFeeTokenId: ctx?.tempoPreferredFeeTokenId,
               checkTxValueInBalance,
             });
             const txValueRaw = checkTxValueInBalance
@@ -685,6 +776,96 @@ export const DirectSignGasInfo = ({
     },
     [instance],
   );
+
+  const handleSelectTempoGasToken = useCallback(
+    async (
+      token: TempoFeeTokenOption,
+      options?: Parameters<typeof instance.setTempoFeeToken>[1],
+    ) => {
+      instance.setTempoFeeToken(token, options);
+      if (ctx?.selectedGas) {
+        await handleGasChange(ctx.selectedGas as any);
+      }
+    },
+    [ctx?.selectedGas, handleGasChange, instance],
+  );
+
+  useEffect(() => {
+    if (!currentAccount?.address || !chain || !showTempoGasTokenSelector) {
+      setTempoGasTokenList([]);
+      setTempoGasTokenLoading(false);
+      return;
+    }
+
+    let mounted = true;
+    const cachedTokenItems = getCachedTokenItems();
+    const cachedOptions = listTempoFeeTokenOptionsFromCache({
+      tokenList: cachedTokenItems,
+      chainServerId: chain.serverId,
+      maxGasCostRawAmount,
+      maxGasCostRawAmountDecimals: gasToken.decimals || 18,
+      maxGasCostRawAmountIn18,
+    });
+
+    if (cachedOptions.length) {
+      setTempoGasTokenList(cachedOptions);
+    }
+
+    setTempoGasTokenLoading(true);
+    loadTempoFeeTokenOptionsState({
+      account: currentAccount,
+      userAddress: currentAccount.address,
+      chainServerId: chain.serverId,
+      tokenList: cachedTokenItems,
+      txFeeToken,
+      maxGasCostRawAmount,
+      maxGasCostRawAmountDecimals: gasToken.decimals || 18,
+      maxGasCostRawAmountIn18,
+    })
+      .then(({ options, preferredTokenId, selectedOption }) => {
+        if (!mounted) {
+          return;
+        }
+        setTempoGasTokenList(options);
+        if (
+          selectedOption &&
+          currentTempoTokenId.toLowerCase() !== selectedOption.id.toLowerCase()
+        ) {
+          const shouldApplyFallbackFeeToken =
+            !!txFeeToken &&
+            txFeeToken.toLowerCase() !== selectedOption.id.toLowerCase();
+          handleSelectTempoGasToken(selectedOption, {
+            applyFeeToken: shouldApplyFallbackFeeToken,
+            tempoPreferredFeeTokenId: preferredTokenId,
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (mounted) {
+          setTempoGasTokenLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [
+    chain,
+    chain?.serverId,
+    currentAccount,
+    currentAccount?.address,
+    currentTempoTokenId,
+    gasToken.decimals,
+    getCachedTokenItems,
+    handleSelectTempoGasToken,
+    maxGasCostRawAmount,
+    maxGasCostRawAmountIn18,
+    maxGasCostRawAmountIn18Text,
+    maxGasCostRawAmountText,
+    showTempoGasTokenSelector,
+    txFeeToken,
+  ]);
 
   const handleChangeGasAccount = useMemoizedFn(async () => {
     await handleChangeGasMethod('gasAccount');
@@ -823,6 +1004,11 @@ export const DirectSignGasInfo = ({
           is1559={!!ctx?.is1559}
           isHardware={false}
           nativeTokenBalance={ctx?.nativeTokenBalance || '0x0'}
+          gasToken={gasToken}
+          showTempoGasTokenSelector={showTempoGasTokenSelector}
+          tempoGasTokenList={tempoGasTokenList}
+          onSelectTempoGasToken={handleSelectTempoGasToken}
+          tempoGasTokenLoading={tempoGasTokenLoading}
           gasPriceMedian={ctx?.gasPriceMedian || null}
           gas={totalGasCost}
           gasCalcMethod={gasCalcMethod}

@@ -74,9 +74,113 @@ import {
 import { t } from 'i18next';
 import miscService from '@/core/services/misc';
 import { requestETHRpc } from '@/core/apis/provider';
-import { isTempoChain } from '@/utils/tempo';
+import {
+  buildTempoTransaction,
+  isTempoBatchSupportedAccountType,
+  isTempoChain,
+  shouldUseTempoTransaction,
+  toTempoCallsTx,
+  TxWithTempoExtras,
+} from '@/utils/tempo';
 import { resolveMiniSignSubmitGasMode } from '../state/gasPaymentState';
 import { shouldAutoSwitchToApprovalGasAccount } from '@/components/Approval/components/TxComponents/GasSelector/approvalGasDisplay';
+
+const pickTempoTxFields = (tx: TxWithTempoExtras<Tx>) => ({
+  type: tx.type,
+  calls: tx.calls,
+  feeToken: tx.feeToken,
+  feePayer: tx.feePayer,
+  feePayerSignature: tx.feePayerSignature,
+  nonceKey: tx.nonceKey,
+  keyAuthorization: tx.keyAuthorization,
+  validBefore: tx.validBefore,
+  validAfter: tx.validAfter,
+});
+
+const buildMiniSignPreExecTx = (params: {
+  tx: TxWithTempoExtras<Tx>;
+  chainId: number;
+  chainServerId: string;
+  gas: string;
+  nonce: string;
+  gasPrice: string;
+  is1559Capable: boolean;
+  maxPriorityFee: number;
+  accountType?: string | null;
+}) => {
+  const {
+    tx,
+    chainId,
+    chainServerId,
+    gas,
+    nonce,
+    gasPrice,
+    is1559Capable,
+    maxPriorityFee,
+    accountType,
+  } = params;
+  const shouldUseTempoTx = shouldUseTempoTransaction({
+    tx: tx as unknown as Record<string, unknown>,
+    chainServerId,
+    accountType,
+  });
+  const buildTxBase: TxWithTempoExtras<Tx> = {
+    chainId,
+    data: tx.data || '0x',
+    from: tx.from,
+    gas,
+    nonce,
+    to: tx.to,
+    value: tx.value,
+    gasPrice,
+    ...(shouldUseTempoTx ? pickTempoTxFields(tx) : {}),
+  };
+
+  let buildTx = buildTxBase;
+  if (is1559Capable) {
+    buildTx = {
+      ...(convertLegacyTo1559(buildTxBase) as TxWithTempoExtras<Tx>),
+      ...(shouldUseTempoTx ? pickTempoTxFields(tx) : {}),
+    };
+    buildTx.maxPriorityFeePerGas =
+      maxPriorityFee < 0
+        ? buildTx.maxFeePerGas
+        : intToHex(Math.round(maxPriorityFee));
+  }
+
+  return shouldUseTempoTx
+    ? (buildTempoTransaction(buildTx as any, {
+        stripTopLevelData: true,
+      }) as unknown as TxWithTempoExtras<Tx>)
+    : buildTx;
+};
+
+const buildHistoryGasUsedTx = (
+  tx: TxWithTempoExtras<Tx>,
+  accountType?: string | null,
+) => {
+  const shouldUseTempoTx = shouldUseTempoTransaction({
+    tx: tx as unknown as Record<string, unknown>,
+    chainServerId: findChain({ id: tx.chainId })?.serverId,
+    accountType,
+  });
+
+  if (shouldUseTempoTx) {
+    return {
+      ...tx,
+      nonce: tx.nonce || '0x1',
+      gas: tx.gas || '',
+    };
+  }
+
+  return {
+    ...tx,
+    nonce: tx.nonce || '0x1',
+    data: tx.data,
+    value: tx.value || '0x0',
+    gas: tx.gas || '',
+  };
+};
 
 const rawAmountToBn = (
   value: string | number | BigNumber | null | undefined,
@@ -164,14 +268,22 @@ async function computeGasless(params: {
 
 async function computeGasAccount(params: {
   txsCalc: CalcItem[];
+  accountType?: string | null;
 }): Promise<PreparedContext['gasAccount'] | undefined> {
-  const { txsCalc } = params;
+  const { txsCalc, accountType } = params;
   try {
+    if (!txsCalc.length) return undefined;
     const sig = gasAccountService.getGasAccountSig();
+    const chain = findChain({ id: txsCalc[0]?.tx.chainId })!;
     const res = await openapi.checkGasAccountTxs({
       sig: sig.sig || '',
       account_id: sig.accountId || txsCalc[0].tx.from,
-      tx_list: txsCalc.map(i => i.tx),
+      tx_list: txsCalc.map(i =>
+        isTempoChain(chain.serverId) &&
+        isTempoBatchSupportedAccountType(accountType)
+          ? (toTempoCallsTx(i.tx as any, { stripTopLevelData: true }) as any)
+          : i.tx,
+      ),
     });
     return res as any;
   } catch (e) {
@@ -184,12 +296,14 @@ function aggregateCheckErrors(params: {
   txsCalc: CalcItem[];
   nativeTokenBalance?: string;
   gasTokenDecimals?: number;
+  gasTokenId?: string;
   checkTxValueInBalance?: boolean;
 }): PreparedContext['checkErrors'] {
   const {
     txsCalc,
     nativeTokenBalance,
     gasTokenDecimals = 18,
+    gasTokenId,
     checkTxValueInBalance = true,
   } = params;
   let checkErrors: PreparedContext['checkErrors'] = [];
@@ -209,6 +323,7 @@ function aggregateCheckErrors(params: {
       isGnosisAccount: false,
       nativeTokenBalance: balanceLeft,
       gasTokenDecimals,
+      gasTokenId,
       checkTxValueInBalance,
     });
     checkErrors = [...checkErrors, ...errs];
@@ -468,29 +583,24 @@ export class SignatureSteps {
       false,
     );
 
-    const tempTxs: Tx[] = txs.map((e, index) => {
+    const tempTxs: TxWithTempoExtras<Tx>[] = txs.map((e, index) => {
       const normalizedTx = normalizeTxParams(e);
-      let buildTx: Tx = {
+      return buildMiniSignPreExecTx({
+        tx: {
+          ...normalizedTx,
+          ...pickTempoTxFields(e as TxWithTempoExtras<Tx>),
+        } as TxWithTempoExtras<Tx>,
         chainId,
-        data: normalizedTx.data || '0x', // can not execute with empty string, use 0x instead
-        from: normalizedTx.from,
-        gas: normalizedTx.gas || e.gasLimit,
+        chainServerId: chain.serverId,
+        gas: normalizedTx.gas || e.gasLimit || '',
         nonce:
           normalizedTx.nonce ||
           intToHex(new BigNumber(baseRecommendNonce).plus(index).toNumber()),
-        to: normalizedTx.to,
-        value: normalizedTx.value,
         gasPrice: intToHex(selectedGas.price),
-      };
-
-      if (is1559Capable) {
-        buildTx = convertLegacyTo1559(buildTx) as any;
-        (buildTx as any).maxPriorityFeePerGas =
-          maxPriorityFee < 0
-            ? (buildTx as any).maxFeePerGas
-            : intToHex(Math.round(maxPriorityFee));
-      }
-      return buildTx;
+        is1559Capable,
+        maxPriorityFee,
+        accountType: account.type,
+      });
     });
 
     const pending_tx_list_promise = apisTransactionHistory.getPendingTxs({
@@ -503,13 +613,7 @@ export class SignatureSteps {
       const buildTx = tempTxs[index];
 
       const preparedHistoryGasUsed = openapi.historyGasUsed({
-        tx: {
-          ...buildTx,
-          nonce: buildTx.nonce || '0x1', // set a mock nonce for explain if dapp not set it
-          data: buildTx.data,
-          value: buildTx.value || '0x0',
-          gas: buildTx.gas || '', // set gas limit if dapp not set
-        },
+        tx: buildHistoryGasUsedTx(buildTx, account.type) as any,
         user_addr: buildTx.from,
       });
 
@@ -587,7 +691,7 @@ export class SignatureSteps {
       });
 
       nativeTokenPrice = preExecResult.native_token.price;
-      const finalTx = { ...buildTx, gas: gasLimit } as Tx;
+      const finalTx = { ...buildTx, gas: gasLimit } as TxWithTempoExtras<Tx>;
       return {
         tx: finalTx,
         gasUsed,
@@ -611,7 +715,10 @@ export class SignatureSteps {
       txsCalc,
       gasPriceWei: selectedGas.price,
     });
-    const gasAccountTask = computeGasAccount({ txsCalc });
+    const gasAccountTask = computeGasAccount({
+      txsCalc,
+      accountType: account.type,
+    });
     const selectedGasCostTask = SignatureSteps.computeGasCost({
       account,
       chainId: chain.id,
@@ -633,6 +740,7 @@ export class SignatureSteps {
       txsCalc,
       nativeTokenBalance,
       gasTokenDecimals,
+      gasTokenId: gasToken?.tokenId,
       checkTxValueInBalance,
     });
     const isGasNotEnough = !!checkErrors?.some(e => e.code === 3001);
@@ -725,7 +833,10 @@ export class SignatureSteps {
 
     const [gasless, gasAccount] = await Promise.all([
       computeGasless({ txsCalc: nextCalc, gasPriceWei: newGas.price }),
-      computeGasAccount({ txsCalc: nextCalc }),
+      computeGasAccount({
+        txsCalc: nextCalc,
+        accountType: account.type,
+      }),
     ]);
 
     // lightweight re-validation: recompute gas warnings using cached balance

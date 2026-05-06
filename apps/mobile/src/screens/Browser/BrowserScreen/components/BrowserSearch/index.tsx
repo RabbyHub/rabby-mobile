@@ -35,6 +35,9 @@ import { BrowserHot } from './BrowserHot';
 import { BrowserFavorite } from './BrowserFavorite';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LocalPannableDraggableView } from '@/components/customized/BottomSheetDraggableView';
+import { dappService } from '@/core/services';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { browserApis } from '@/hooks/browser/useBrowser';
 
 export function BrowserSearch({
   onClose,
@@ -120,10 +123,24 @@ export function BrowserSearch({
   });
 
   const handleOpenUrl = useMemoizedFn(
-    async (url: string, options?: { isDirect?: boolean }) => {
+    async (
+      url: string,
+      options?: { isDirect?: boolean; isRemindOpen?: boolean },
+    ) => {
       isOpenURLRef.current = true;
       Keyboard.dismiss();
       await waitKeyboardHide();
+      if (
+        options?.isRemindOpen &&
+        !dappService.getDapp(safeGetOrigin(url))?.isSkipRemind
+      ) {
+        browserApis.setPartialBrowserState({
+          isShowDappInfo: true,
+          dappInfoUrl: url,
+        });
+        browserApis.forceShowBrowserDappInfo();
+        return;
+      }
       onOpenURL?.(url, options);
     },
   );
@@ -190,9 +207,10 @@ export function BrowserSearch({
         style,
         isTransparent ? styles.transparent : null,
       ]}>
-      <LocalPannableDraggableView>
+      <LocalPannableDraggableView style={styles.searchContent}>
         {!searchText?.trim() ? (
           <BottomSheetScrollView
+            style={styles.searchContent}
             contentContainerStyle={{
               gap: 24,
               paddingHorizontal: 20,
@@ -205,7 +223,9 @@ export function BrowserSearch({
                   isInBottomSheet
                   list={browserHistoryList}
                   onPress={dapp => {
-                    handleOpenUrl(dapp.url || dapp.origin);
+                    handleOpenUrl(dapp.url || dapp.origin, {
+                      isRemindOpen: true,
+                    });
                     if (dapp.origin) {
                       matomoRequestEvent({
                         category: 'Websites Usage',
@@ -235,9 +255,6 @@ export function BrowserSearch({
         style={[
           styles.footer,
           {
-            position: 'absolute',
-            right: 0,
-            bottom: 0,
             marginTop: 'auto',
             paddingBottom: bottom || 12,
             // marginBottom:
@@ -295,6 +312,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 24,
     paddingTop: 16,
     paddingHorizontal: 20,
+  },
+  searchContent: {
+    flex: 1,
+    minHeight: 0,
   },
   listItem: {
     display: 'flex',

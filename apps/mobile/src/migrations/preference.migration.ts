@@ -2,7 +2,7 @@ import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { makeStoreMigration } from './_fns.store';
 import { makeServiceMigration } from './_fns.service';
 
-import type { IDefiOrToken, IManageToken } from '@/core/services/preference';
+import type { IDefiOrToken, IManageToken } from '@/types/assets';
 import { urlUtils } from '@rabby-wallet/base-utils';
 
 export const preferenceStoreMigration = makeStoreMigration({

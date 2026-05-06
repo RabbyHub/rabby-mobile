@@ -953,7 +953,13 @@
         "favorite": "Favori",
         "search": "Recherche",
         "empty": "Aucun site web ajouté aux favoris",
-        "emptyAndroid": "Aucun dApp ajouté aux favoris"
+        "emptyAndroid": "Aucun dApp ajouté aux favoris",
+        "tabs": {
+          "all": "Tout",
+          "perps": "Perps",
+          "predict": "Prédiction"
+        },
+        "websites": "Sites web"
       },
       "depositAssets": {
         "title": "Déposer des actifs",
@@ -2311,6 +2317,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "Plus"
+      },
+      "DappInfoPopup": {
+        "listedBy": "Listé par",
+        "sitePopularity": "Popularité du site",
+        "popularLevelHigh": "Élevé",
+        "popularLevelMedium": "Moyen",
+        "popularLevelLow": "Faible",
+        "popularLevelVeryLow": "Très faible",
+        "category": "Catégorie",
+        "skipDappInfoNextTime": "Ne plus afficher cette page",
+        "openDapp": "Ouvrir"
       }
     },
     "browserManage": {
@@ -2947,7 +2964,8 @@
         "amount": "Montant",
         "remainingDebt": "Dette restante",
         "liquidationAt": "Liquidation à < 1.0",
-        "title": "Aperçu de la transaction"
+        "title": "Aperçu de la transaction",
+        "toSwap": "Échanger"
       },
       "borrowOverview": {
         "myBorrow": "Mon Emprunt",
@@ -3143,6 +3161,9 @@
       },
       "dappSelect": {
         "title": "Sélectionner le Fournisseur de Prêts"
+      },
+      "signFallback": {
+        "preExecFailedUseFullSign": "Échec de la simulation. Cette transaction est très susceptible d'échouer en raison d'erreurs AAVE."
       }
     },
     "address": {

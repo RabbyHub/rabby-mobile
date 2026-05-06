@@ -10,6 +10,49 @@ export function getGlobalScreenCapturable() {
   return globalScreenCapturableRef.current;
 }
 
+type IosAppSwitcherBlurState = {
+  visible: boolean;
+};
+
+const iosAppSwitcherBlurStore = zCreate<IosAppSwitcherBlurState>(() => ({
+  visible: false,
+}));
+
+function setIOSAppSwitcherBlurVisible(visible: boolean) {
+  iosAppSwitcherBlurStore.setState(prev => {
+    if (prev.visible === visible) {
+      return prev;
+    }
+
+    return {
+      ...prev,
+      visible,
+    };
+  });
+}
+
+export function useIOSAppSwitcherBlurVisible() {
+  return iosAppSwitcherBlurStore(s => s.visible);
+}
+
+export function enableIOSAppSwitcherBlur() {
+  if (!IS_IOS) {
+    return;
+  }
+
+  RNScreenshotPrevent.setAppSwitcherBlurEnabled(true);
+}
+
+export function startSubscribeIOSAppSwitcherBlur() {
+  if (!IS_IOS) {
+    return;
+  }
+
+  return RNScreenshotPrevent.iosOnAppSwitcherBlurChanged(ctx => {
+    setIOSAppSwitcherBlurVisible(!!ctx.visible);
+  });
+}
+
 export function startSubscribeWhetherPreventScreenshot() {
   perfEvents.subscribe('CHANGE_PREVENT_SCREENSHOT', (isPrevented: boolean) => {
     globalScreenCapturableRef.current = !isPrevented;
@@ -42,7 +85,9 @@ export function setIOSScreenCapture(
     const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
       strict: true,
     });
-    if (!changed) return prev;
+    if (!changed) {
+      return prev;
+    }
 
     return { ...prev, ...newVal };
   });

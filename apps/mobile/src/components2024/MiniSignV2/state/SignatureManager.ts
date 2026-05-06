@@ -1,5 +1,6 @@
-import type { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
+import type { GasLevel, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import BigNumber from 'bignumber.js';
 
 import type {
   SignatureAction,
@@ -642,6 +643,64 @@ export class SignatureManager {
       type: 'UPDATE_CTX',
       fingerprint,
       ctx: { ...ctx, gasMethod: method } as SignerCtx,
+    });
+  }
+
+  public setTempoFeeToken(
+    token: TokenItem,
+    options?: {
+      applyFeeToken?: boolean;
+      tempoPreferredFeeTokenId?: string;
+    },
+  ) {
+    const { ctx, fingerprint } = this.state;
+    if (!ctx || !fingerprint) {
+      return;
+    }
+    const shouldApplyFeeToken =
+      ctx.gasMethod !== 'gasAccount' && options?.applyFeeToken !== false;
+    const tokenId = token.id;
+
+    const txs = ctx.txs.map(tx => {
+      const next = { ...tx } as Tx & { feeToken?: string };
+      if (shouldApplyFeeToken) {
+        next.feeToken = tokenId;
+      }
+      return next as Tx;
+    });
+
+    const txsCalc = ctx.txsCalc.map(item => {
+      const nextTx = { ...item.tx } as Tx & { feeToken?: string };
+      if (shouldApplyFeeToken) {
+        nextTx.feeToken = tokenId;
+      }
+      return {
+        ...item,
+        tx: nextTx as Tx,
+      };
+    });
+
+    this.dispatch({
+      type: 'UPDATE_CTX',
+      fingerprint,
+      ctx: {
+        ...ctx,
+        txs,
+        txsCalc,
+        gasToken: {
+          tokenId,
+          symbol: token.display_symbol || token.symbol,
+          decimals: token.decimals || 18,
+          logoUrl: token.logo_url,
+        },
+        nativeTokenBalance: new BigNumber(
+          token.raw_amount_hex_str || 0,
+          16,
+        ).toFixed(0),
+        tempoPreferredFeeTokenId:
+          options?.tempoPreferredFeeTokenId ||
+          (shouldApplyFeeToken ? tokenId : ctx.tempoPreferredFeeTokenId),
+      } as SignerCtx,
     });
   }
 

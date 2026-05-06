@@ -56,13 +56,13 @@ import {
   ApprovalTokenDetailSheetModalStub,
   BackgroundSecureBlurView,
   BottomSheetBrowser,
+  BottomSheetDappInfoPopup,
   BrowserFavoritePopup,
   BrowserManagePopup,
   DuplicateAddressModal,
   FloatingDiagnosticsPanel,
   GlobalMiniApproval,
   GlobalMiniSignTypedDataPortal,
-  GlobalSearchBottomSheet,
   GlobalSecurityTipStubModal,
   GlobalSignerPortal,
   GlobalTipsPopup,
@@ -270,10 +270,10 @@ function AppNavigationDeferredGlobals({
         <InnerDappWebViewPreloadEntry />
         <BiometricsStubModal />
         <ApprovalTokenDetailSheetModalStub />
-        <GlobalSearchBottomSheet />
         <BottomSheetBrowser />
         <BrowserManagePopup />
         <BrowserFavoritePopup />
+        <BottomSheetDappInfoPopup />
       </>
     );
   }

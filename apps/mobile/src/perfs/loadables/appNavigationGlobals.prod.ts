@@ -45,15 +45,6 @@ export const ApprovalTokenDetailSheetModalStub = registerAppScreen<
     import('@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub'),
 });
 
-export const GlobalSearchBottomSheet = registerAppScreen<
-  typeof import('@/screens/Search/components/SeachBottomSheet').GlobalSearchBottomSheet
->({
-  loader: () =>
-    import('@/screens/Search/components/SeachBottomSheet').then(m => ({
-      default: m.GlobalSearchBottomSheet,
-    })),
-});
-
 export const BottomSheetBrowser = registerAppScreen<
   typeof import('@/screens/Browser/BottomSheetBrowser').BottomSheetBrowser
 >({
@@ -78,6 +69,15 @@ export const BrowserFavoritePopup = registerAppScreen<
   loader: () =>
     import('@/screens/Browser/BottomSheetBrowser').then(m => ({
       default: m.BrowserFavoritePopup,
+    })),
+});
+
+export const BottomSheetDappInfoPopup = registerAppScreen<
+  typeof import('@/screens/Browser/BottomSheetBrowser').BottomSheetDappInfoPopup
+>({
+  loader: () =>
+    import('@/screens/Browser/BottomSheetBrowser').then(m => ({
+      default: m.BottomSheetDappInfoPopup,
     })),
 });
 

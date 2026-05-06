@@ -1,5 +1,6 @@
 import { BUILD_CHANNEL } from '@/constant/env';
-import { preferenceService } from '@/core/services';
+import { appStorage } from '@/core/storage/mmkv';
+import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import firebaseAnalytics from '@react-native-firebase/analytics';
 
 export const analytics = firebaseAnalytics();
@@ -9,6 +10,15 @@ import { Platform } from 'react-native';
 
 const ANALYTICS_PATH = 'https://matomo.debank.com/matomo.php';
 const genExtensionId = customAlphabet('1234567890abcdef', 16);
+type AnalyticsPreferenceStore = {
+  extensionId?: string;
+};
+
+const getStoredPreference = () =>
+  appStorage.getItem(APP_STORE_NAMES.preference) as
+    | AnalyticsPreferenceStore
+    | null
+    | undefined;
 
 async function postData(url = '', params: URLSearchParams) {
   const response = await fetch(`${url}?${params.toString()}`, {
@@ -18,10 +28,13 @@ async function postData(url = '', params: URLSearchParams) {
   return response;
 }
 
-let extensionId = preferenceService.getPreference('extensionId') as string;
+let extensionId = getStoredPreference()?.extensionId;
 if (!extensionId) {
   extensionId = genExtensionId();
-  preferenceService.setPreference({ extensionId });
+  appStorage.setItem(APP_STORE_NAMES.preference, {
+    ...(getStoredPreference() || {}),
+    extensionId,
+  });
 }
 
 const getParams = async () => {

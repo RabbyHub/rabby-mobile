@@ -27,6 +27,8 @@ import { BrowserManage } from '../BrowserScreen/components/BrowserManage';
 import { BrowserHandler } from './BrowserHandler';
 import { BrowserFavoriteManage } from '../BrowserScreen/components/BrowserFavoriteManage';
 
+export { BottomSheetDappInfoPopup } from './BottomSheetDappInfo';
+
 export const BottomSheetBrowser = () => {
   const { safeOffScreenTop } = useSafeSizes();
   const { browserState, setPartialBrowserState, onHideBrowser, terminateTabs } =

@@ -1241,7 +1241,13 @@
         "favorite": "Favorit",
         "search": "Suche",
         "empty": "Keine Website zu den Favoriten hinzugefügt",
-        "emptyAndroid": "Keine dApp zu den Favoriten hinzugefügt"
+        "emptyAndroid": "Keine dApp zu den Favoriten hinzugefügt",
+        "tabs": {
+          "all": "Alle",
+          "perps": "Perps",
+          "predict": "Prognosen"
+        },
+        "websites": "Webseiten"
       },
       "depositAssets": {
         "subtitle": "Vermögen in diese Wallet empfangen",
@@ -2681,6 +2687,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "Mehr"
+      },
+      "DappInfoPopup": {
+        "listedBy": "Aufgelistet von",
+        "sitePopularity": "Seitenbeliebtheit",
+        "popularLevelHigh": "Hoch",
+        "popularLevelMedium": "Mittel",
+        "popularLevelLow": "Niedrig",
+        "popularLevelVeryLow": "Sehr niedrig",
+        "category": "Kategorie",
+        "skipDappInfoNextTime": "Diese Seite beim nächsten Mal überspringen",
+        "openDapp": "Öffnen"
       }
     },
     "browserManage": {
@@ -3317,7 +3334,8 @@
         "amount": "Betrag",
         "remainingDebt": "Verbleibende Schulden",
         "title": "Transaktionsübersicht",
-        "liquidationAt": "Liquidation bei < 1,0"
+        "liquidationAt": "Liquidation bei < 1,0",
+        "toSwap": "Zum Tauschen"
       },
       "borrowOverview": {
         "myBorrow": "Mein Kredit",
@@ -3513,6 +3531,9 @@
       },
       "dappSelect": {
         "title": "Wählen Sie den Kreditgeber aus"
+      },
+      "signFallback": {
+        "preExecFailedUseFullSign": "Simulation fehlgeschlagen. Diese Transaktion wird sehr wahrscheinlich aufgrund von AAVE-Fehlern fehlschlagen."
       }
     },
     "address": {

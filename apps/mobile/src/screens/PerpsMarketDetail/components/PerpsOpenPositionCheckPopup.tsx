@@ -257,7 +257,11 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </TouchableOpacity>
               <View>
                 <Text style={styles.value}>
-                  ${splitNumberByStep(Number(estimatedLiquidationPrice))}
+                  {Number(estimatedLiquidationPrice) <= 0
+                    ? '-'
+                    : `$${splitNumberByStep(
+                        Number(estimatedLiquidationPrice),
+                      )}`}
                 </Text>
               </View>
             </View>
@@ -308,7 +312,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     scrollViewContent: {
       paddingHorizontal: 20,
-      flex: 1,
     },
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],

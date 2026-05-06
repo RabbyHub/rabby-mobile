@@ -1073,7 +1073,13 @@
         "empty": "Tidak ada situs web yang ditambahkan ke favorit",
         "emptyAndroid": "Tidak ada dApp yang ditambahkan ke favorit",
         "search": "Cari",
-        "favorite": "Favorit"
+        "favorite": "Favorit",
+        "tabs": {
+          "all": "Semua",
+          "perps": "Perps",
+          "predict": "Predict"
+        },
+        "websites": "Situs web"
       },
       "depositAssets": {
         "subtitle": "Terima aset ke dompet ini",
@@ -2301,6 +2307,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "Lebih banyak"
+      },
+      "DappInfoPopup": {
+        "listedBy": "Ditulis oleh",
+        "sitePopularity": "Popularitas situs",
+        "popularLevelHigh": "Tinggi",
+        "popularLevelMedium": "Sedang",
+        "popularLevelLow": "Rendah",
+        "popularLevelVeryLow": "Sangat Rendah",
+        "category": "Kategori",
+        "skipDappInfoNextTime": "Lewati halaman ini lain kali",
+        "openDapp": "Buka"
       }
     },
     "browserManage": {
@@ -2937,7 +2954,8 @@
         "amount": "Jumlah",
         "title": "Ringkasan Transaksi",
         "liquidationAt": "Likuidasi pada < 1.0",
-        "remainingDebt": "Hutang yang tersisa"
+        "remainingDebt": "Hutang yang tersisa",
+        "toSwap": "Untuk menukar"
       },
       "borrowOverview": {
         "myBorrow": "Pinjamanku",
@@ -3133,6 +3151,9 @@
       },
       "dappSelect": {
         "title": "Pilih Penyedia Peminjaman"
+      },
+      "signFallback": {
+        "preExecFailedUseFullSign": "Simulasi Gagal. Transaksi ini kemungkinan besar akan gagal karena kesalahan AAVE."
       }
     },
     "address": {

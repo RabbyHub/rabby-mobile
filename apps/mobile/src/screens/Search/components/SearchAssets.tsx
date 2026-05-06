@@ -32,7 +32,6 @@ import { add0x, ellipsisAddress } from '@/utils/address';
 import { isValidHexAddress } from '@metamask/utils';
 import { IManageToken } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
-import { toast } from '@/components2024/Toast';
 import { useFocusEffect } from '@react-navigation/native';
 import { TokenItemSkeleton } from '@/screens/Watchlist/components/TokenItem';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -81,29 +80,6 @@ export const SearchAssets: React.FC<Props> = ({
       setWatchlistTokenList(res.pinedQueue || []);
     });
   }, []);
-
-  const handlePressFavorite = useCallback(
-    (tokenId: string, chainId: string) => {
-      if (
-        watchlistTokenList.some(
-          t => t.chainId === chainId && t.tokenId === tokenId,
-        )
-      ) {
-        preferenceService.removePinedToken({
-          chainId: chainId,
-          tokenId: tokenId,
-        });
-        toast.success(t('page.watchlist.toast.remove'));
-      } else {
-        preferenceService.pinToken({
-          chainId: chainId,
-          tokenId: tokenId,
-        });
-      }
-      fetchPinedTokenList();
-    },
-    [fetchPinedTokenList, t, watchlistTokenList],
-  );
 
   useFocusEffect(fetchPinedTokenList);
 

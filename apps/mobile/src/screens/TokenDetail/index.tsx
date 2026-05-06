@@ -35,12 +35,13 @@ import { TokenDetailBottomBtns } from './components/BottomBtns';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import {
   ScreenSceneAccountProvider,
+  isSameAccount,
   useSceneAccountInfo,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
 import { AccountSwitcher } from './components/InScreenSwitch';
 import RcIconRightArrowCC from '@/assets2024/icons/copyTrading/IconRightCC.svg';
-import { patchSingleToken } from '@/databases/sync/assets';
+import { patchSingleToken } from '@/databases/sync/token';
 import { BG_FULL_HEIGHT } from '../Home/hooks/useBgSize';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { ITokenItem } from '@/store/tokens';
@@ -90,19 +91,36 @@ const TokenDetailContent = () => {
   }, []);
 
   const [acceptSceneAccount, setAcceptSceneAccount] = React.useState(false);
-  const prevSceneAddrRef = React.useRef<string | undefined>(undefined);
+  const currentAccountIdentity = React.useMemo(() => {
+    if (!currentAccount) {
+      return undefined;
+    }
+    return [
+      currentAccount.address.toLowerCase(),
+      currentAccount.brandName,
+      currentAccount.type,
+    ].join('-');
+  }, [currentAccount]);
+  const prevSceneAccountIdentityRef = React.useRef<string | undefined>(
+    undefined,
+  );
+
   useEffect(() => {
-    const currAddr = currentAccount?.address;
     if (
-      prevSceneAddrRef.current !== undefined &&
-      prevSceneAddrRef.current !== currAddr
+      prevSceneAccountIdentityRef.current !== undefined &&
+      prevSceneAccountIdentityRef.current !== currentAccountIdentity
     ) {
       setAcceptSceneAccount(true);
     }
-    prevSceneAddrRef.current = currAddr;
-  }, [currentAccount?.address]);
+    prevSceneAccountIdentityRef.current = currentAccountIdentity;
+  }, [currentAccountIdentity]);
 
-  const effectiveAccount = acceptSceneAccount
+  const shouldUseSceneAccount =
+    !!currentAccount &&
+    (acceptSceneAccount ||
+      (!!account && isSameAccount(account, currentAccount)));
+
+  const effectiveAccount = shouldUseSceneAccount
     ? currentAccount
     : account || currentAccount;
 
@@ -174,7 +192,6 @@ const TokenDetailContent = () => {
         }
         isMultiAddress={false}
         refreshTags={refreshTag}
-        unHold
       />
     );
   }, [effectiveAccount?.address, refreshTag, token]);

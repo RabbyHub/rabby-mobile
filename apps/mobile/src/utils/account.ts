@@ -1,6 +1,5 @@
 import { contactService } from '@/core/services';
-import { Account } from '@/core/services/preference';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import type { Account, KeyringAccountWithAlias } from '@/types/account';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { ellipsisAddress } from './address';
 

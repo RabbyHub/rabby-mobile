@@ -1,5 +1,5 @@
 import { apiProvider } from '@/core/apis';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/types/account';
 import { matomoRequestEvent } from './analytics';
 import { eventBus, EVENTS } from './events';
 import { stats } from './stats';

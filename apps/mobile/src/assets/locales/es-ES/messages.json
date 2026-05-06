@@ -1137,7 +1137,13 @@
         "favorite": "Favorito",
         "emptyAndroid": "No hay dApp añadida a favoritos",
         "search": "Buscar",
-        "empty": "Ningún sitio web añadido a favoritos"
+        "empty": "Ningún sitio web añadido a favoritos",
+        "tabs": {
+          "all": "Todos",
+          "perps": "Perps",
+          "predict": "Predecir"
+        },
+        "websites": "Sitios web"
       },
       "depositAssets": {
         "subtitle": "Recibe activos en esta wallet",
@@ -2577,6 +2583,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "Más"
+      },
+      "DappInfoPopup": {
+        "listedBy": "Listado por",
+        "sitePopularity": "Popularidad del sitio",
+        "popularLevelHigh": "Alta",
+        "popularLevelMedium": "Media",
+        "popularLevelLow": "Baja",
+        "popularLevelVeryLow": "Muy baja",
+        "category": "Categoría",
+        "skipDappInfoNextTime": "Omitir esta página la próxima vez",
+        "openDapp": "Abrir"
       }
     },
     "browserManage": {
@@ -3213,7 +3230,8 @@
         "available": "disponible",
         "remainingDebt": "Deuda pendiente",
         "title": "Resumen de Transacciones",
-        "liquidationAt": "Liquidación en < 1.0"
+        "liquidationAt": "Liquidación en < 1.0",
+        "toSwap": "Intercambiar"
       },
       "borrowOverview": {
         "title": "Detalles del préstamo",
@@ -3409,6 +3427,9 @@
       },
       "dappSelect": {
         "title": "Seleccionar Proveedor de Préstamos"
+      },
+      "signFallback": {
+        "preExecFailedUseFullSign": "Simulación fallida. Esta transacción muy probablemente fallará debido a errores de AAVE."
       }
     },
     "address": {

@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, TouchableOpacity } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
@@ -78,6 +78,9 @@ import { IAvailableRepayToken } from '../RepayTokenModal';
 import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
+import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { RootNames } from '@/constant/layout';
+import { naviPush } from '@/utils/navigation';
 
 export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   reserve,
@@ -96,7 +99,12 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
 
   const { isMainnet, chainInfo, chainEnum, selectedMarketData } =
     useSelectedMarket();
-  const { formattedPoolReservesAndIncentives } = useLendingSummary();
+  const { formattedPoolReservesAndIncentives, getTargetReserve } =
+    useLendingSummary();
+
+  const currentReserve = useMemo(() => {
+    return getTargetReserve(reserve.underlyingAsset) || reserve;
+  }, [getTargetReserve, reserve]);
 
   const availableRepayTokens = useMemo(() => {
     const poolReserve = formattedPoolReservesAndIncentives.find(item =>
@@ -111,7 +119,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         symbol: poolReserve.symbol,
         aToken: false,
         decimals: poolReserve.decimals,
-        balance: reserve.walletBalance || '0',
+        balance: currentReserve.walletBalance || '0',
       },
     ];
     if (
@@ -125,12 +133,14 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         address: poolReserve.aTokenAddress,
         symbol: `a${poolReserve.symbol}`,
         aToken: true,
-        balance: reserve.underlyingBalance,
+        balance: currentReserve.underlyingBalance,
         decimals: poolReserve.decimals,
       });
     }
     return _tokens;
   }, [
+    currentReserve.underlyingBalance,
+    currentReserve.walletBalance,
     formattedPoolReservesAndIncentives,
     reserve,
     selectedMarketData?.market,
@@ -593,6 +603,37 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
     reserve.reserve.formattedPriceInMarketReferenceCurrency,
   ]);
 
+  const showToSwap = useMemo(() => {
+    return (
+      !isAtTokenRepay &&
+      new BigNumber(selectedRepayToken?.balance || '0').lte(0) &&
+      new BigNumber(reserve.variableBorrows || '0').gt(0)
+    );
+  }, [isAtTokenRepay, reserve.variableBorrows, selectedRepayToken?.balance]);
+
+  const swapTokenId = useMemo(() => {
+    if (isSameAddress(reserve.reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)) {
+      return chainInfo?.nativeTokenAddress || reserve.reserve.underlyingAsset;
+    }
+    return reserve.reserve.underlyingAsset;
+  }, [chainInfo?.nativeTokenAddress, reserve.reserve.underlyingAsset]);
+
+  const handleOpenSwap = useCallback(async () => {
+    if (!currentAccount || !swapTokenId) {
+      return;
+    }
+
+    await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
+    naviPush(RootNames.StackTransaction, {
+      screen: RootNames.Swap,
+      params: {
+        chainEnum: chainEnum || CHAINS_ENUM.ETH,
+        tokenId: swapTokenId,
+        type: 'Buy',
+      },
+    });
+  }, [chainEnum, currentAccount, swapTokenId]);
+
   const handleChangeAmount = useCallback(
     (value: string) => {
       if (directSignBtnRef.current?.isAuthInProgress()) {
@@ -675,16 +716,25 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
           <Text style={styles.amountHeaderTitle}>
             {t('page.Lending.popup.amount')}
           </Text>
-          <Text
-            style={[
-              styles.amountValueDescription,
-              (repayAmount.amount === '0' || !repayAmount.amount) &&
-                styles.amountValueDescriptionDanger,
-            ]}>{`${formatTokenAmount(repayAmount.amount || '0')} ${
-            reserve.reserve.symbol
-          } ($${formatAmountValueKMB(repayAmount.usdValue || '0')}) ${t(
-            'page.Lending.popup.available',
-          )}`}</Text>
+          <View style={styles.amountHeaderRight}>
+            <Text
+              style={[
+                styles.amountValueDescription,
+                (repayAmount.amount === '0' || !repayAmount.amount) &&
+                  styles.amountValueDescriptionDanger,
+              ]}>{`${formatTokenAmount(repayAmount.amount || '0')} ${
+              reserve.reserve.symbol
+            } ($${formatAmountValueKMB(repayAmount.usdValue || '0')}) ${t(
+              'page.Lending.popup.available',
+            )}`}</Text>
+            {showToSwap ? (
+              <TouchableOpacity activeOpacity={1} onPress={handleOpenSwap}>
+                <Text style={styles.toSwapText}>
+                  {t('page.Lending.popup.toSwap')}→
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
         </View>
         <TokenAmountInput
           value={amount}
@@ -700,7 +750,8 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
           style={styles.amountInput}
           onClickToken={
             // 有aToken选项，并且有质押余额
-            availableRepayTokens.length > 1 && !!reserve.underlyingBalance
+            availableRepayTokens.length > 1 &&
+            !!currentReserve.underlyingBalance
               ? () => {
                   handleClickToken();
                 }
@@ -969,9 +1020,27 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 18,
     color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+    flexShrink: 1,
+    textAlign: 'right',
   },
   amountValueDescriptionDanger: {
     color: ctx.colors2024['red-default'],
+  },
+  amountHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flex: 1,
+    justifyContent: 'flex-end',
+    marginLeft: 12,
+  },
+  toSwapText: {
+    color: ctx.colors2024['brand-default'],
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    flexShrink: 0,
   },
   amountInput: {
     marginTop: 12,

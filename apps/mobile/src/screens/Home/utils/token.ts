@@ -5,22 +5,12 @@ import { flatten } from 'lodash';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import { openapi } from '@/core/request';
 import { AbstractPortfolioToken } from '../types';
-import { ITokenSetting } from '@/core/services/preference';
+import type { ITokenSetting } from '@/types/assets';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { BalanceEntity } from '@/databases/entities/balance';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/types/assets';
 
-export const queryTokensCache = makeSWRKeyAsyncFunc(
-  (user_id: string, isTestnet: boolean = false) => {
-    return requestOpenApiWithChainId(
-      ({ openapi }) => openapi.getCachedTokenList(user_id),
-      {
-        isTestnet,
-      },
-    );
-  },
-  ctx => [`${ctx.args[0]}-${ctx.args[1]}`],
-);
+export { queryTokensCache } from '@/core/apis/tokenCache';
 
 export const batchQueryTokens = makeSWRKeyAsyncFunc(
   async (

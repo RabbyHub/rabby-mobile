@@ -42,7 +42,7 @@ import {
   SCROLLABLE_STATUS,
   homeDrawerAnimateMutable,
   getScrollContainerPb,
-} from '../hooks/useHomeDrawerAnimate';
+} from '../../hooks/useHomeDrawerAnimate';
 import { triggerImpact } from '@/utils/common';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
@@ -52,9 +52,14 @@ import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { Text } from '@/components/Typography';
+import MarketScreen from '@/screens/Market';
+import { HomeDappDrawerContent } from './HomeDappDrawerContent';
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
+
+const DRAWER_GESTURE_ACTIVE_OFFSET_Y = 8;
+const DRAWER_GESTURE_FAIL_OFFSET_X = 12;
 
 const { pullPercent, isExpanded, translateY, swipeUpHintHeight } =
   homeDrawerAnimateMutable;
@@ -122,6 +127,15 @@ export const HomeDappDrawer: React.FC<{
     }
   }, [onScrollBack]);
 
+  const footerGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .enabled(IS_ANDROID)
+        .activeOffsetX([-6, 6])
+        .failOffsetY([-8, 8]),
+    [],
+  );
+
   const scrollableStatus = useSharedValue<SCROLLABLE_STATUS>(
     SCROLLABLE_STATUS.UNLOCKED,
   );
@@ -135,67 +149,167 @@ export const HomeDappDrawer: React.FC<{
     triggerImpact();
   }, [scrollableStatus, handleScrollBack]);
   const drawerScrollOffsetY = useSharedValue(0);
-  const scrollableRef = useAnimatedRef<Animated.FlatList<DappInfo>>();
+  const drawerGestureStartX = useSharedValue(0);
+  const drawerGestureStartY = useSharedValue(0);
+  const drawerGestureActivationY = useSharedValue(0);
 
-  const animatedProps = useAnimatedProps(() => ({
-    decelerationRate:
-      SCROLLABLE_DECELERATION_RATE_MAPPER[scrollableStatus.value],
-  }));
+  // const scrollHandler = useAnimatedScrollHandler({
+  //   onScroll: (event, context) => {
+  //     'worklet';
 
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event, context) => {
-      'worklet';
-
-      if (scrollableStatus.value === SCROLLABLE_STATUS.LOCKED) {
-        const lockPosition = 0;
-        scrollTo(scrollableRef, 0, lockPosition, false);
-        drawerScrollOffsetY.value = lockPosition;
-        return;
-      }
-      drawerScrollOffsetY.value = event.contentOffset.y;
-    },
-  });
+  //     if (scrollableStatus.value === SCROLLABLE_STATUS.LOCKED) {
+  //       const lockPosition = 0;
+  //       scrollTo(scrollableRef, 0, lockPosition, false);
+  //       drawerScrollOffsetY.value = lockPosition;
+  //       return;
+  //     }
+  //     drawerScrollOffsetY.value = event.contentOffset.y;
+  //   },
+  // });
 
   const drawerGesture = useMemo(
     () =>
-      Gesture.Pan()
-        .onChange(event => {
-          'worklet';
+      IS_ANDROID
+        ? Gesture.Pan()
+            .manualActivation(true)
+            .maxPointers(1)
+            .shouldCancelWhenOutside(false)
+            .onTouchesDown(event => {
+              'worklet';
 
-          if (drawerScrollOffsetY.value > 0) {
-            return;
-          }
+              const touch = event.allTouches[0];
+              if (!touch) {
+                return;
+              }
 
-          if (Math.abs(pullPercent.value) >= 100) {
-            scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
-          } else {
-            scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
-          }
-          translateY.value = (height - event.translationY) * -1;
-        })
-        .onEnd(() => {
-          'worklet';
+              drawerGestureStartX.value = touch.absoluteX;
+              drawerGestureStartY.value = touch.absoluteY;
+            })
+            .onTouchesMove((event, stateManager) => {
+              'worklet';
 
-          if (translateY.value > (height - getPullThreshold(height)) * -1) {
-            translateY.value = withTiming(0, undefined, () => {
-              scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
-              runOnJS(resetEditing)();
-            });
-            handleScrollBack();
+              const touch = event.allTouches[0];
+              if (!touch) {
+                stateManager.fail();
+                return;
+              }
 
-            runOnJS(triggerImpact)();
-          } else {
-            translateY.value = withTiming(-height, undefined, () => {
-              scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
-            });
-          }
-        }),
+              const diffX = touch.absoluteX - drawerGestureStartX.value;
+              const diffY = touch.absoluteY - drawerGestureStartY.value;
+              const absX = Math.abs(diffX);
+              const absY = Math.abs(diffY);
+
+              if (absX > DRAWER_GESTURE_FAIL_OFFSET_X && absX > absY) {
+                stateManager.fail();
+                return;
+              }
+
+              if (absY < DRAWER_GESTURE_ACTIVE_OFFSET_Y || absY < absX * 1.2) {
+                return;
+              }
+
+              const isDraggingDown = diffY > 0;
+              const isDraggingUp = diffY < 0;
+
+              if (drawerScrollOffsetY.value > 0) {
+                if (isExpanded.value && isDraggingDown) {
+                  return;
+                }
+
+                stateManager.fail();
+                return;
+              }
+
+              if (isExpanded.value && isDraggingUp) {
+                stateManager.fail();
+                return;
+              }
+
+              if (!isExpanded.value && isDraggingDown) {
+                stateManager.fail();
+                return;
+              }
+
+              stateManager.activate();
+            })
+            .onStart(event => {
+              'worklet';
+
+              drawerGestureActivationY.value = event.translationY;
+            })
+            .onChange(event => {
+              'worklet';
+
+              if (drawerScrollOffsetY.value > 0) {
+                return;
+              }
+
+              if (Math.abs(pullPercent.value) >= 100) {
+                scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+              } else {
+                scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
+              }
+              const gestureTranslationY =
+                event.translationY - drawerGestureActivationY.value;
+              translateY.value = (height - gestureTranslationY) * -1;
+            })
+            .onEnd(() => {
+              'worklet';
+
+              if (translateY.value > (height - getPullThreshold(height)) * -1) {
+                translateY.value = withTiming(0, undefined, () => {
+                  scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+                  // runOnJS(resetEditing)();
+                });
+                handleScrollBack();
+
+                runOnJS(triggerImpact)();
+              } else {
+                translateY.value = withTiming(-height, undefined, () => {
+                  scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+                });
+              }
+            })
+        : Gesture.Pan()
+            .onChange(event => {
+              'worklet';
+
+              if (drawerScrollOffsetY.value > 0) {
+                return;
+              }
+
+              if (Math.abs(pullPercent.value) >= 100) {
+                scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+              } else {
+                scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
+              }
+              translateY.value = (height - event.translationY) * -1;
+            })
+            .onEnd(() => {
+              'worklet';
+
+              if (translateY.value > (height - getPullThreshold(height)) * -1) {
+                translateY.value = withTiming(0, undefined, () => {
+                  scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+                  // runOnJS(resetEditing)();
+                });
+                handleScrollBack();
+
+                runOnJS(triggerImpact)();
+              } else {
+                translateY.value = withTiming(-height, undefined, () => {
+                  scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+                });
+              }
+            }),
     [
-      drawerScrollOffsetY.value,
+      drawerGestureStartX,
+      drawerGestureStartY,
+      drawerGestureActivationY,
+      drawerScrollOffsetY,
       height,
-      resetEditing,
-      scrollableStatus,
       handleScrollBack,
+      scrollableStatus,
     ],
   );
 
@@ -282,7 +396,7 @@ export const HomeDappDrawer: React.FC<{
           <View style={styles.page}>
             <View style={styles.favoritesList}>
               <View style={styles.container}>
-                <View style={styles.header}>
+                {/* <View style={styles.header}>
                   <Text style={styles.title}>
                     {t('page.home.DappDrawer.favorite')}
                   </Text>
@@ -294,8 +408,13 @@ export const HomeDappDrawer: React.FC<{
                       {isEditing ? t('global.Done') : t('global.Edit')}
                     </Text>
                   </TouchableOpacity>
-                </View>
-                <GestureDetector gesture={drawerScrollableGesture}>
+                </View> */}
+                <HomeDappDrawerContent
+                  drawerScrollableGesture={drawerScrollableGesture}
+                  drawerScrollOffsetY={drawerScrollOffsetY}
+                  scrollableStatus={scrollableStatus}
+                />
+                {/* <GestureDetector gesture={drawerScrollableGesture}>
                   <AnimatedFlatList
                     data={list}
                     style={[styles.list]}
@@ -368,45 +487,47 @@ export const HomeDappDrawer: React.FC<{
                       </View>
                     }
                   />
-                </GestureDetector>
+                </GestureDetector> */}
               </View>
             </View>
 
-            <View style={[styles.footer]}>
-              <TouchableOpacity onPress={onPressHome}>
-                <ReactIconHome
-                  width={44}
-                  height={44}
-                  color={colors2024['neutral-title-1']}
-                  backgroundColor={colors2024['neutral-bg-5']}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.fabContainer]}
-                onPress={() => {
-                  setPartialBrowserState({
-                    isShowBrowser: true,
-                    isShowSearch: true,
-                    searchText: '',
-                    searchTabId: '',
-                    trigger: 'home',
-                  });
-                }}>
-                <View style={styles.innerCircle}>
-                  <RcNextSearchCC
-                    width={20}
-                    height={20}
-                    style={styles.icon}
-                    color={colors2024['neutral-secondary']}
+            <GestureDetector gesture={footerGesture}>
+              <View style={[styles.footer]}>
+                <TouchableOpacity onPress={onPressHome}>
+                  <ReactIconHome
+                    width={44}
+                    height={44}
+                    color={colors2024['neutral-title-1']}
+                    backgroundColor={colors2024['neutral-bg-5']}
                   />
-                  <Text style={styles.text}>
-                    {t('page.browser.BrowserSearchEntry.searchWebsite')}
-                  </Text>
-                  <View style={{ width: 20 }} />
-                </View>
-              </TouchableOpacity>
-            </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.fabContainer]}
+                  onPress={() => {
+                    setPartialBrowserState({
+                      isShowBrowser: true,
+                      isShowSearch: true,
+                      searchText: '',
+                      searchTabId: '',
+                      trigger: 'home',
+                    });
+                  }}>
+                  <View style={styles.innerCircle}>
+                    <RcNextSearchCC
+                      width={20}
+                      height={20}
+                      style={styles.icon}
+                      color={colors2024['neutral-secondary']}
+                    />
+                    <Text style={styles.text}>
+                      {t('page.browser.BrowserSearchEntry.searchWebsite')}
+                    </Text>
+                    <View style={{ width: 20 }} />
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </GestureDetector>
           </View>
         </Animated.View>
       </Animated.View>
@@ -520,6 +641,7 @@ const getStyle = createGetStyles2024(
 
     container: {
       flex: 1,
+      minHeight: 0,
     },
     list: {
       paddingHorizontal: 20,

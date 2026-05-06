@@ -118,6 +118,7 @@ import {
   shouldIgnoreAmountChangeInMaxMode,
 } from '@/utils/form';
 import { Alert } from 'react-native';
+import { useMiniSignerEffectPause } from '@/hooks/useMiniSignerEffectPause';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -237,6 +238,7 @@ const Swap = ({
     swapUseSlider,
     clearExpiredTimer,
     setAutoQuoteRefreshPaused,
+    setReloadTxRefreshPaused,
     finishedQuotes,
     inSufficientCanGetQuote,
     quoteBlockedByClosedMarket,
@@ -433,6 +435,7 @@ const Swap = ({
   const gotoSwap = useMemoizedFn(async () => {
     if (!inSufficient && payToken && receiveToken && activeProvider?.quote) {
       try {
+        setReloadTxRefreshPaused(true);
         const receive_token_amount = new BigNumber(
           activeProvider?.quote.toTokenAmount,
         )
@@ -511,6 +514,7 @@ const Swap = ({
       } catch (error) {
         console.error(error);
       } finally {
+        setReloadTxRefreshPaused(false);
         refresh(e => e + 1);
       }
     }
@@ -652,6 +656,7 @@ const Swap = ({
     if (canShowDirectSubmit) {
       try {
         setIsSubmitting(true);
+        setReloadTxRefreshPaused(true);
 
         if (!currentTxs?.length) {
           toast.info('please retry');
@@ -765,9 +770,10 @@ const Swap = ({
           ].includes(error)
         ) {
         } else {
-          gotoSwap();
+          await gotoSwap();
         }
       } finally {
+        setReloadTxRefreshPaused(false);
         setIsSubmitting(false);
         setMiniSignLoading(false);
       }
@@ -935,13 +941,22 @@ const Swap = ({
 
   const showRiskTips =
     isSlippageLow || isSlippageHigh || showLoss || miniSignGasFeeTooHigh;
+  const shouldPauseMiniSignerEffects =
+    useMiniSignerEffectPause(miniSignLoading);
 
   useEffect(() => {
     if (!isFocused) {
       closeMiniSigner();
       return;
     }
-    if (!canShowDirectSubmit || !currentAccount || !currentTxs?.length) {
+    if (shouldPauseMiniSignerEffects()) {
+      return;
+    }
+    if (
+      !canShowDirectSubmit ||
+      !currentAccount?.address ||
+      !currentTxs?.length
+    ) {
       closeMiniSigner();
       return;
     }
@@ -958,20 +973,27 @@ const Swap = ({
     onChangeCheckGasFeeTooHigh,
     isFocused,
     canShowDirectSubmit,
-    currentAccount,
+    currentAccount?.address,
     currentTxs,
     prefetchMiniSigner,
     closeMiniSigner,
     miniSignGa,
+    shouldPauseMiniSignerEffects,
   ]);
 
   useEffect(() => {
+    if (shouldPauseMiniSignerEffects()) {
+      return;
+    }
     if (!activeProvider) {
       mutateTxs([]);
     }
-  }, [activeProvider, mutateTxs]);
+  }, [activeProvider, mutateTxs, shouldPauseMiniSignerEffects]);
 
   useEffect(() => {
+    if (shouldPauseMiniSignerEffects()) {
+      return;
+    }
     if (activeProvider && canShowDirectSubmit) {
       mutateTxs([]);
       runBuildSwapTxs();
@@ -979,9 +1001,10 @@ const Swap = ({
   }, [
     activeProvider,
     canShowDirectSubmit,
-    currentAccount,
+    currentAccount?.address,
     mutateTxs,
     runBuildSwapTxs,
+    shouldPauseMiniSignerEffects,
     swapUseSlider,
   ]);
 

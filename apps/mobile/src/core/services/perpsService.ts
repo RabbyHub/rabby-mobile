@@ -6,9 +6,13 @@ import { bytesToHex, publicToAddress } from '@ethereumjs/util';
 import { SendApproveParams } from '@rabby-wallet/hyperliquid-sdk';
 import { getRandomBytesSync } from 'ethereum-cryptography/random.js';
 import { secp256k1 } from 'ethereum-cryptography/secp256k1.js';
-import { keyringService } from '@/core/services';
 import { CANDLE_MENU_KEY_V2 } from '@/constant/perps';
-import { Account } from './preference';
+import type { Account } from '@/types/account';
+
+type KeyringCrypto = {
+  decryptWithPassword: <T>(value: string) => Promise<T>;
+  encryptWithPassword: <T>(value: T) => Promise<string>;
+};
 
 export interface AgentWalletInfo {
   vault: string;
@@ -50,6 +54,7 @@ export interface PerpsServiceStore {
   };
   favoriteMarkets: string[];
   selectedKlineInterval: CANDLE_MENU_KEY_V2;
+  marginModeByCoin: Record<string, 'cross' | 'isolated'>;
 }
 export interface PerpsServiceMemoryState {
   agentWallets: {
@@ -61,12 +66,16 @@ export interface PerpsServiceMemoryState {
 
 export class PerpsService {
   private store?: PerpsServiceStore;
+  private keyringCrypto: KeyringCrypto;
   private memoryState: PerpsServiceMemoryState = {
     agentWallets: {},
     unlockPromise: null,
   };
 
-  constructor(options: StorageAdapaterOptions) {
+  constructor(
+    options: StorageAdapaterOptions & { keyringCrypto: KeyringCrypto },
+  ) {
+    this.keyringCrypto = options.keyringCrypto;
     this.store = createPersistStore<PerpsServiceStore>(
       {
         name: APP_STORE_NAMES.perps,
@@ -82,6 +91,7 @@ export class PerpsService {
           hasClosedLearnMoreCard: false,
           favoriteMarkets: [],
           selectedKlineInterval: CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES,
+          marginModeByCoin: {},
         },
       },
       {
@@ -120,6 +130,23 @@ export class PerpsService {
     this.store.favoriteMarkets = this.store.favoriteMarkets.filter(
       m => m !== normalizedMarket,
     );
+  };
+
+  getMarginModeByCoin = async () => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return this.store.marginModeByCoin || {};
+  };
+
+  setMarginModeForCoin = async (coin: string, mode: 'cross' | 'isolated') => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    this.store.marginModeByCoin = {
+      ...this.store.marginModeByCoin,
+      [coin]: mode,
+    };
   };
 
   setHasDoneNewUserProcess = async (hasDone: boolean) => {
@@ -235,7 +262,9 @@ export class PerpsService {
       if (this.store.agentVaults) {
         const vaultsMap: {
           [address: string]: string;
-        } = await keyringService.decryptWithPassword(this.store.agentVaults);
+        } = await this.keyringCrypto.decryptWithPassword(
+          this.store.agentVaults,
+        );
 
         // Format data for memory state
         for (const masterAddress in vaultsMap) {
@@ -300,14 +329,16 @@ export class PerpsService {
 
     let vaultsMap: { [address: string]: string } = {};
     if (this.store.agentVaults) {
-      vaultsMap = await keyringService.decryptWithPassword(
+      vaultsMap = await this.keyringCrypto.decryptWithPassword(
         this.store.agentVaults,
       );
     }
 
     vaultsMap[normalizedAddress] = vault;
 
-    const encryptedVaults = await keyringService.encryptWithPassword(vaultsMap);
+    const encryptedVaults = await this.keyringCrypto.encryptWithPassword(
+      vaultsMap,
+    );
 
     // Update store
     this.store.agentVaults = encryptedVaults;
@@ -406,14 +437,16 @@ export class PerpsService {
 
     let vaultsMap: { [address: string]: string } = {};
     if (this.store.agentVaults) {
-      vaultsMap = await keyringService.decryptWithPassword(
+      vaultsMap = await this.keyringCrypto.decryptWithPassword(
         this.store.agentVaults,
       );
     }
 
     delete vaultsMap[normalizedAddress];
 
-    const encryptedVaults = await keyringService.encryptWithPassword(vaultsMap);
+    const encryptedVaults = await this.keyringCrypto.encryptWithPassword(
+      vaultsMap,
+    );
 
     this.store.agentVaults = encryptedVaults;
     const updatedPreferences = { ...this.store.agentPreferences };

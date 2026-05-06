@@ -4,13 +4,13 @@ import { sendToken } from './token';
 import { openapi } from '../request';
 import * as Sentry from '@sentry/react-native';
 import { t } from 'i18next';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 import BigNumber from 'bignumber.js';
 import { getERC20Allowance } from './provider';
 import { approveToken } from './approvals';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { GasAccountBridgeQuote, Tx } from '@rabby-wallet/rabby-api/dist/types';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/types/assets';
 
 type GasAccountBridgeToken = Pick<
   ITokenItem,

@@ -5,6 +5,7 @@ import createPersistStore, {
 import { TokenItem, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '../request';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
+import { getTxMatchData } from '@/utils/tempo';
 
 export type BridgeRecord = {
   aggregator_id: string;
@@ -106,7 +107,7 @@ export class BridgeService {
 
   postBridge = (chain: CHAINS_ENUM, hash: string, tx: Tx) => {
     const { postBridgeHistory } = openapi;
-    const key = `${chain}-${tx.data}`;
+    const key = `${chain}-${getTxMatchData(tx as any)}`;
     const data = { ...this.txQuotes };
     const quoteInfo = data[key];
     if (quoteInfo) {

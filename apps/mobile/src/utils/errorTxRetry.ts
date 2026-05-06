@@ -1,5 +1,5 @@
 import { getRecommendNonce } from '@/core/apis/provider';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/types/account';
 import { t } from 'i18next';
 import { hexToNumber, isHex } from 'viem';
 import { intToHex } from './number';

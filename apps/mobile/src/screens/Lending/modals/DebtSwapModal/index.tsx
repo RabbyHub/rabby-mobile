@@ -725,6 +725,9 @@ export default function DebtSwapModal({
               return;
             }
             if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
+              toast.error(
+                t('page.Lending.signFallback.preExecFailedUseFullSign'),
+              );
               await handleSwap({
                 ...p,
                 forceFullSign: true,

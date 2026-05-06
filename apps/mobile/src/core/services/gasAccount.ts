@@ -2,7 +2,7 @@ import createPersistStore, {
   StorageAdapaterOptions,
 } from '@rabby-wallet/persist-store';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
-import { Account } from './preference';
+import type { Account } from '@/types/account';
 import { openapi } from '../request';
 import dayjs from 'dayjs';
 

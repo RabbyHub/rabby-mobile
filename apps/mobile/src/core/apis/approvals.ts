@@ -11,7 +11,7 @@ import { AbiCoder } from 'web3-eth-abi';
 import { requestETHRpc } from './provider';
 import { isZeroAddress, toChecksumAddress } from '@ethereumjs/util';
 import { decodeAbiParameters } from 'viem';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 
 export async function approveToken({
   chainServerId,

@@ -1073,7 +1073,13 @@
         "search": "Arama",
         "favorite": "Favori",
         "emptyAndroid": "Favorilere eklenmiş dApp yok.",
-        "empty": "Favorilere eklenmiş hiçbir web sitesi yok."
+        "empty": "Favorilere eklenmiş hiçbir web sitesi yok.",
+        "tabs": {
+          "all": "Tümü",
+          "perps": "Vadeli",
+          "predict": "Tahmin"
+        },
+        "websites": "Web Siteleri"
       },
       "depositAssets": {
         "subtitle": "Bu cüzdana varlık alınız",
@@ -2301,6 +2307,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "Daha Fazla"
+      },
+      "DappInfoPopup": {
+        "listedBy": "Tarafından Listelendi",
+        "sitePopularity": "Site Popülerliği",
+        "popularLevelHigh": "Yüksek",
+        "popularLevelMedium": "Orta",
+        "popularLevelLow": "Düşük",
+        "popularLevelVeryLow": "Çok Düşük",
+        "category": "Kategori",
+        "skipDappInfoNextTime": "Bir dahaki sefere bu sayfayı atla",
+        "openDapp": "Aç"
       }
     },
     "browserManage": {
@@ -2937,7 +2954,8 @@
         "amount": "Miktar",
         "title": "İşlem Genel Görünümü",
         "remainingDebt": "Kalan borç",
-        "liquidationAt": "< 1.0'da Tasfiye"
+        "liquidationAt": "< 1.0'da Tasfiye",
+        "toSwap": "Takas et"
       },
       "borrowOverview": {
         "borrowCap": "Kredi Limiti",
@@ -3133,6 +3151,9 @@
       },
       "dappSelect": {
         "title": "Kredilendirme Sağlayıcısı Seçin"
+      },
+      "signFallback": {
+        "preExecFailedUseFullSign": "Simülasyon Başarısız. Bu işlem büyük olasılıkla AAVE hataları nedeniyle başarısız olacak."
       }
     },
     "address": {

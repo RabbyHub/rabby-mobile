@@ -226,7 +226,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     right: 0,
   },
   accountItemExtra: {
-    marginLeft: 'auto',
+    marginLeft: 12,
   },
   percent: {
     fontSize: 14,

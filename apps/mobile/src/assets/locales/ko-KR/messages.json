@@ -829,7 +829,13 @@
         "search": "검색",
         "favorite": "즐겨찾기",
         "emptyAndroid": "즐겨찾기에 추가된 dApp이 없습니다.",
-        "empty": "즐겨찾기에 추가된 웹사이트가 없습니다."
+        "empty": "즐겨찾기에 추가된 웹사이트가 없습니다.",
+        "tabs": {
+          "all": "전체",
+          "perps": "퍼프",
+          "predict": "예측"
+        },
+        "websites": "웹사이트"
       },
       "depositAssets": {
         "title": "자산 입금",
@@ -2302,6 +2308,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "더 보기"
+      },
+      "DappInfoPopup": {
+        "listedBy": "수록된",
+        "sitePopularity": "인기도",
+        "popularLevelHigh": "높음",
+        "popularLevelMedium": "보통",
+        "popularLevelLow": "낮음",
+        "popularLevelVeryLow": "매우 낮음",
+        "category": "카테고리",
+        "skipDappInfoNextTime": "다음에 이 페이지 건너뛰기",
+        "openDapp": "열기"
       }
     },
     "browserManage": {
@@ -2938,7 +2955,8 @@
         "amount": "금액",
         "remainingDebt": "남은 부채",
         "title": "거래 개요",
-        "liquidationAt": "< 1.0에서 청산"
+        "liquidationAt": "< 1.0에서 청산",
+        "toSwap": "스왑"
       },
       "borrowOverview": {
         "myBorrow": "내 빌리기",
@@ -3134,6 +3152,9 @@
       },
       "dappSelect": {
         "title": "대출 제공자 선택"
+      },
+      "signFallback": {
+        "preExecFailedUseFullSign": "시뮬레이션 실패. 이 거래는 AAVE 오류로 인해 실패할 가능성이 높습니다."
       }
     },
     "address": {

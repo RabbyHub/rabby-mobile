@@ -54,7 +54,7 @@ import RpcCache from '../services/rpcCache';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { SAFE_RPC_METHODS } from '@/constant/rpc';
 import BaseController from './base';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 import BigNumber from 'bignumber.js';
 // import { formatTxMetaForRpcResult } from 'background/utils/tx';
 import { findChain, findChainByEnum } from '@/utils/chain';
@@ -63,14 +63,14 @@ import { eventBus, EVENTS } from '@/utils/events';
 import { sessionService } from '../services/shared';
 import { BroadcastEvent } from '@/constant/event';
 import { createDappBySession } from '../apis/dapp';
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { stats } from '@/utils/stats';
 import { StatsData } from '../services/notification';
 import { ethers } from 'ethers';
 import { getGlobalProvider } from '../apis/globalProvider';
 import { bytesToHex } from '@ethereumjs/util';
-import { CustomTestnetTokenBase } from '../services/customTestnetService';
+import type { CustomTestnetTokenBase } from '@/types/customTestnet';
 // import { updateExpiredTime } from '@/databases/sync/assets';
 import { PENDGING_TIME } from '@/constant/expireTime';
 import { isString } from 'lodash';
@@ -78,9 +78,15 @@ import { updateExpiredTime } from '@/databases/sync/utils';
 import { assertProviderRequest } from '../utils/assertProviderRequest';
 import { ProviderRequest } from './type';
 import { hexToNumber, isAddress, toHex } from 'viem';
+import { Transaction as ViemTempoTransaction } from 'viem/tempo';
 import { add0x } from '@/utils/address';
 import { removeLeadingZeroes } from '@/utils/7702';
 import { handleGasAccountLoginSuccess } from '@/utils/gasAccountAnalytics';
+import {
+  shouldUseTempoTransaction,
+  TempoTxCall,
+  TxWithTempoExtras,
+} from '@/utils/tempo';
 // import eventBus from '@/eventBus';
 
 const SIGN_TIMEOUT = 100;
@@ -113,6 +119,303 @@ const covertToHex = (data: Buffer | bigint) => {
     return `0x${data.toString(16)}`;
   }
   return bufferToHex(data);
+};
+
+const toBigIntSafe = (value: unknown): bigint | undefined => {
+  if (value === null || typeof value === 'undefined') {
+    return undefined;
+  }
+  try {
+    if (typeof value === 'bigint') {
+      return value;
+    }
+    if (typeof value === 'number') {
+      return BigInt(value);
+    }
+    if (typeof value === 'string') {
+      if (!value.length) {
+        return undefined;
+      }
+      return BigInt(value);
+    }
+  } catch {
+    return undefined;
+  }
+  return undefined;
+};
+
+const toNumberSafe = (value: unknown): number | undefined => {
+  if (value === null || typeof value === 'undefined') {
+    return undefined;
+  }
+  if (typeof value === 'number') {
+    return value;
+  }
+  if (typeof value === 'string' && value.length) {
+    try {
+      return Number(BigInt(value));
+    } catch {
+      return Number(value);
+    }
+  }
+  return undefined;
+};
+
+const omitUndefined = <T extends Record<string, any>>(obj: T) => {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => typeof value !== 'undefined'),
+  ) as Partial<T>;
+};
+
+const isSimpleOrHdKeyringType = (type?: string) => {
+  return type === KEYRING_TYPE.SimpleKeyring || type === KEYRING_TYPE.HdKeyring;
+};
+
+const normalizeHexValue = (value: unknown) => {
+  if (value === null || typeof value === 'undefined') {
+    return undefined;
+  }
+  if (typeof value === 'string') {
+    if (!value.length || value === '0x' || value === '0X') {
+      return '0x0';
+    }
+    return value;
+  }
+  return value;
+};
+
+const optionalValue = <T>(value: T | null | undefined) => {
+  return value === null || typeof value === 'undefined' ? undefined : value;
+};
+
+const normalizeSerializedTxHex = (serializedTx?: string) => {
+  if (!serializedTx || typeof serializedTx !== 'string') {
+    return undefined;
+  }
+  let normalized = serializedTx.trim();
+  if (/^0x0x/i.test(normalized)) {
+    normalized = `0x${normalized.slice(4)}`;
+  }
+  return normalized as `0x${string}`;
+};
+
+const normalizeTempoCalls = (params: {
+  approvalRes: TxWithTempoExtras<ApprovalRes>;
+  txParams: Record<string, any>;
+}): TempoTxCall[] => {
+  const { approvalRes, txParams } = params;
+  const typedApprovalRes = approvalRes as any;
+
+  const rawCalls =
+    Array.isArray(typedApprovalRes.calls) && typedApprovalRes.calls.length
+      ? typedApprovalRes.calls
+      : [
+          {
+            to: approvalRes.to ?? txParams.to,
+            data:
+              typeof approvalRes.data !== 'undefined'
+                ? approvalRes.data
+                : txParams.data,
+            value:
+              typeof approvalRes.value !== 'undefined'
+                ? approvalRes.value
+                : txParams.value,
+          },
+        ];
+
+  return rawCalls.map((call: any) =>
+    omitUndefined({
+      to: call?.to ?? approvalRes.to ?? txParams.to,
+      data:
+        typeof call?.data !== 'undefined'
+          ? call.data
+          : typeof approvalRes.data !== 'undefined'
+          ? approvalRes.data
+          : txParams.data,
+      value: normalizeHexValue(
+        typeof call?.value !== 'undefined'
+          ? call.value
+          : typeof approvalRes.value !== 'undefined'
+          ? approvalRes.value
+          : txParams.value,
+      ),
+    }),
+  );
+};
+
+const toTempoRpcQuantity = (value: unknown) => {
+  if (value === null || typeof value === 'undefined') {
+    return undefined;
+  }
+  if (typeof value === 'string') {
+    return normalizeHexValue(value);
+  }
+  if (typeof value === 'bigint' || typeof value === 'number') {
+    return toHex(value);
+  }
+  return undefined;
+};
+
+const buildTempoSubmitTxFromSerialized = (params: {
+  serializedTx?: `0x${string}`;
+  approvalRes: ApprovalRes;
+  fallbackCalls?: Array<Record<string, any>>;
+  shouldIgnoreFeeToken?: boolean;
+}) => {
+  const { serializedTx, approvalRes, fallbackCalls, shouldIgnoreFeeToken } =
+    params;
+  const normalizedSerializedTx = normalizeSerializedTxHex(serializedTx);
+  if (!normalizedSerializedTx) {
+    return undefined;
+  }
+  if (!/^0x[0-9a-fA-F]+$/.test(normalizedSerializedTx)) {
+    return undefined;
+  }
+  if (!normalizedSerializedTx.toLowerCase().startsWith('0x76')) {
+    return undefined;
+  }
+
+  let parsed: any;
+  try {
+    parsed = ViemTempoTransaction.deserialize(normalizedSerializedTx) as any;
+  } catch {
+    return undefined;
+  }
+
+  const calls = Array.isArray(parsed?.calls)
+    ? parsed.calls.map((call: any) =>
+        omitUndefined({
+          to: call?.to,
+          data: call?.data,
+          value: toTempoRpcQuantity(call?.value),
+        }),
+      )
+    : (fallbackCalls || []).map(call =>
+        omitUndefined({
+          to: call?.to,
+          data: call?.data,
+          value: normalizeHexValue(call?.value),
+        }),
+      );
+
+  return omitUndefined({
+    chainId:
+      typeof parsed?.chainId === 'number'
+        ? parsed.chainId
+        : Number(approvalRes.chainId),
+    type: '0x76',
+    from: parsed?.from || approvalRes.from,
+    gas: toTempoRpcQuantity(parsed?.gas),
+    gasLimit: toTempoRpcQuantity(parsed?.gas),
+    gasPrice: toTempoRpcQuantity(parsed?.gasPrice),
+    maxFeePerGas: toTempoRpcQuantity(parsed?.maxFeePerGas),
+    maxPriorityFeePerGas: toTempoRpcQuantity(parsed?.maxPriorityFeePerGas),
+    nonce: toTempoRpcQuantity(parsed?.nonce),
+    calls,
+    nonceKey: toTempoRpcQuantity(parsed?.nonceKey),
+    keyAuthorization:
+      typeof parsed?.keyAuthorization === 'undefined'
+        ? (approvalRes as any).keyAuthorization
+        : parsed.keyAuthorization,
+    validBefore: toTempoRpcQuantity(parsed?.validBefore),
+    validAfter: toTempoRpcQuantity(parsed?.validAfter),
+    feePayerSignature: optionalValue(parsed?.feePayerSignature),
+    feeToken: shouldIgnoreFeeToken
+      ? undefined
+      : (parsed?.feeToken as any) || (approvalRes as any).feeToken,
+  } as any);
+};
+
+const buildTempoSubmitTxFallback = (params: {
+  approvalRes: ApprovalRes;
+  fallbackCalls?: Array<Record<string, any>>;
+  shouldIgnoreFeeToken?: boolean;
+}) => {
+  const { approvalRes, fallbackCalls, shouldIgnoreFeeToken } = params;
+  return omitUndefined({
+    chainId: approvalRes.chainId,
+    type: '0x76',
+    from: approvalRes.from,
+    gas: approvalRes.gas,
+    gasLimit: approvalRes.gasLimit || approvalRes.gas,
+    gasPrice: approvalRes.gasPrice,
+    maxFeePerGas: approvalRes.maxFeePerGas,
+    maxPriorityFeePerGas: approvalRes.maxPriorityFeePerGas,
+    nonce: approvalRes.nonce,
+    calls: (fallbackCalls || []).map(call =>
+      omitUndefined({
+        to: call?.to,
+        data: call?.data,
+        value: normalizeHexValue(call?.value),
+      }),
+    ),
+    nonceKey: (approvalRes as any).nonceKey,
+    keyAuthorization: (approvalRes as any).keyAuthorization,
+    validBefore: (approvalRes as any).validBefore,
+    validAfter: (approvalRes as any).validAfter,
+    feePayerSignature: optionalValue((approvalRes as any).feePayerSignature),
+    feeToken: shouldIgnoreFeeToken ? undefined : (approvalRes as any).feeToken,
+  } as any);
+};
+
+const parseTempoSignature = (signature: string) => {
+  const signatureHex = add0x(signature);
+  if (!isHexString(signatureHex) || signatureHex.length < 132) {
+    throw new Error('invalid tempo signature');
+  }
+  const rHex = `0x${signatureHex.slice(2, 66)}`;
+  const sHex = `0x${signatureHex.slice(66, 130)}`;
+  const v = parseInt(signatureHex.slice(130, 132), 16);
+  const yParity = v === 27 || v === 28 ? v - 27 : v & 1;
+
+  return {
+    r: BigInt(rHex),
+    s: BigInt(sHex),
+    v: BigInt(v),
+    yParity,
+  };
+};
+
+const normalizeTempoSecp256k1Signature = (signature: unknown) => {
+  if (signature === null || typeof signature === 'undefined') {
+    return signature;
+  }
+
+  if (typeof signature === 'string') {
+    const parsed = parseTempoSignature(signature);
+    return {
+      r: parsed.r,
+      s: parsed.s,
+      yParity: parsed.yParity,
+    };
+  }
+
+  if (typeof signature !== 'object') {
+    return undefined;
+  }
+
+  const sig = signature as any;
+  const r = toBigIntSafe(sig.r);
+  const s = toBigIntSafe(sig.s);
+  const yParityCandidate = toNumberSafe(
+    typeof sig.yParity !== 'undefined' ? sig.yParity : sig.v,
+  );
+  const yParity =
+    typeof yParityCandidate === 'number'
+      ? yParityCandidate >= 27
+        ? yParityCandidate - 27
+        : yParityCandidate
+      : undefined;
+
+  if (
+    typeof r === 'bigint' &&
+    typeof s === 'bigint' &&
+    typeof yParity === 'number'
+  ) {
+    return { r, s, yParity };
+  }
+
+  return undefined;
 };
 
 export interface AddEthereumChainParams {
@@ -481,6 +784,7 @@ class ProviderController extends BaseController {
     const sig = approvalRes.sig;
     const logId = approvalRes?.logId || '';
     const isGasAccount = approvalRes.isGasAccount || false;
+    const approvalTxType = approvalRes.type;
 
     const eip7702Revoke = options?.data?.$ctx?.eip7702Revoke || false;
     const eip7702RevokeAuthorization =
@@ -508,6 +812,23 @@ class ProviderController extends BaseController {
 
     let is1559 = is1559Tx(approvalRes);
     const is7702 = is7702Tx(approvalRes);
+    const chainForTx = findChain({
+      id: approvalRes.chainId,
+    });
+    const isTempoTx = shouldUseTempoTransaction({
+      tx: {
+        ...txParams,
+        ...approvalRes,
+        type: (txParams as any).type ?? approvalTxType,
+      },
+      chainServerId: chainForTx?.serverId,
+      isGasAccount,
+      accountType: currentAccount.type,
+    });
+
+    if ((eip7702Revoke || is7702) && origin !== INTERNAL_REQUEST_ORIGIN) {
+      throw new Error('not support 7702');
+    }
 
     if (is7702 && !(eip7702Revoke || isSpeedUp)) {
       throw new Error('not support 7702');
@@ -517,7 +838,8 @@ class ProviderController extends BaseController {
       is1559 &&
       approvalRes.maxFeePerGas === approvalRes.maxPriorityFeePerGas &&
       !eip7702Revoke &&
-      !is7702
+      !is7702 &&
+      !isTempoTx
     ) {
       // fallback to legacy transaction if maxFeePerGas is equal to maxPriorityFeePerGas
       approvalRes.gasPrice = approvalRes.maxFeePerGas;
@@ -530,8 +852,11 @@ class ProviderController extends BaseController {
       { hardfork: Hardfork.Prague, eips: [7702] },
     );
     const txData = { ...approvalRes, gasLimit: approvalRes.gas };
-    if (is1559) {
+    if (is1559 && !isTempoTx) {
       txData.type = '0x2';
+    }
+    if (isTempoTx) {
+      txData.type = '0x76';
     }
     if (
       (is7702 && isSpeedUp) ||
@@ -581,9 +906,11 @@ class ProviderController extends BaseController {
         delete approvalRes.gasPrice;
       }
     }
-    const tx = TransactionFactory.fromTxData(txData as FeeMarketEIP1559TxData, {
-      common,
-    });
+    const tx = isTempoTx
+      ? null
+      : TransactionFactory.fromTxData(txData as FeeMarketEIP1559TxData, {
+          common,
+        });
     let opts;
     opts = extra;
     if (currentAccount.type === KEYRING_TYPE.GnosisKeyring) {
@@ -642,13 +969,83 @@ class ProviderController extends BaseController {
     };
 
     let signedTx;
+    let tempoSerializedRawTx: `0x${string}` | undefined;
+    const tempoCalls = isTempoTx
+      ? normalizeTempoCalls({
+          approvalRes,
+          txParams: txParams as Record<string, any>,
+        })
+      : undefined;
+    const shouldUseKeyringTempoSign =
+      isTempoTx && isSimpleOrHdKeyringType(currentAccount.type);
     try {
-      signedTx = await keyringService.signTransaction(
-        keyring,
-        tx,
-        txParams.from,
-        opts,
-      );
+      if (isTempoTx) {
+        const typedApprovalRes = approvalRes as any;
+        const shouldBackendSponsorTempo = isGasAccount || isGasLess;
+        const normalizedFeePayerSignature = normalizeTempoSecp256k1Signature(
+          typedApprovalRes.feePayerSignature,
+        );
+        const normalizedTxValue = normalizeHexValue(approvalRes.value);
+        const normalizedTempoGas = approvalRes.gas || approvalRes.gasLimit;
+        const has1559FeeFields =
+          typeof approvalRes.maxFeePerGas !== 'undefined' ||
+          typeof approvalRes.maxPriorityFeePerGas !== 'undefined';
+        const tempoTxData: any = omitUndefined({
+          chainId: Number(approvalRes.chainId),
+          type: '0x76',
+          from: txParams.from,
+          to: approvalRes.to ?? (txParams as any).to,
+          data:
+            typeof approvalRes.data !== 'undefined'
+              ? approvalRes.data
+              : (txParams as any).data,
+          value: normalizedTxValue,
+          calls: tempoCalls,
+          gas: normalizedTempoGas,
+          gasPrice: has1559FeeFields ? undefined : approvalRes.gasPrice,
+          maxFeePerGas: approvalRes.maxFeePerGas,
+          maxPriorityFeePerGas: approvalRes.maxPriorityFeePerGas,
+          nonce: approvalRes.nonce,
+          nonceKey: typedApprovalRes.nonceKey,
+          keyAuthorization: typedApprovalRes.keyAuthorization,
+          validBefore: typedApprovalRes.validBefore,
+          validAfter: typedApprovalRes.validAfter,
+          authorizationList: typedApprovalRes.authorizationList,
+          feePayerSignature: optionalValue(normalizedFeePayerSignature),
+          feePayer:
+            shouldBackendSponsorTempo ||
+            (typedApprovalRes.feePayer === true &&
+              typeof typedApprovalRes.feePayerSignature === 'undefined')
+              ? true
+              : undefined,
+          feeToken: shouldBackendSponsorTempo
+            ? undefined
+            : typedApprovalRes.feeToken,
+        });
+
+        if (!shouldUseKeyringTempoSign) {
+          throw new Error(
+            'tempo transaction is only supported for private key and mnemonic keyrings',
+          );
+        }
+        signedTx = await keyringService.signTransaction(
+          keyring,
+          tempoTxData,
+          txParams.from,
+          opts,
+        );
+        tempoSerializedRawTx = (signedTx as any).serializedTransaction;
+        if (!tempoSerializedRawTx) {
+          throw new Error('tempo transaction serialize failed');
+        }
+      } else {
+        signedTx = await keyringService.signTransaction(
+          keyring,
+          tx,
+          txParams.from,
+          opts,
+        );
+      }
     } catch (e: any) {
       const errObj =
         typeof e === 'object'
@@ -661,9 +1058,13 @@ class ProviderController extends BaseController {
 
     const txDataWithRSV: any = {
       ...txData,
-      r: addHexPrefix(signedTx.r),
-      s: addHexPrefix(signedTx.s),
-      v: addHexPrefix(signedTx.v),
+      ...(isTempoTx
+        ? {}
+        : {
+            r: addHexPrefix(signedTx.r),
+            s: addHexPrefix(signedTx.s),
+            v: addHexPrefix(signedTx.v),
+          }),
     };
 
     try {
@@ -861,11 +1262,26 @@ class ProviderController extends BaseController {
         validateGasPriceRange(approvalRes);
         let hash: string | undefined = undefined;
         let reqId: string | undefined = undefined;
-        if (!findChain({ enum: chain })?.isTestnet) {
-          if (customRPCService.hasCustomRPC(chain)) {
-            const tx = TransactionFactory.fromTxData(txDataWithRSV, { common });
-
-            const rawTx = bytesToHex(tx.serialize());
+        if (
+          !findChain({ enum: chain })?.isTestnet ||
+          isGasAccount ||
+          isGasLess
+        ) {
+          if (
+            customRPCService.hasCustomRPC(chain) &&
+            !isGasAccount &&
+            !isGasLess
+          ) {
+            const rawTx = isTempoTx
+              ? tempoSerializedRawTx
+              : bytesToHex(
+                  TransactionFactory.fromTxData(txDataWithRSV, {
+                    common,
+                  }).serialize(),
+                );
+            if (!rawTx) {
+              throw new Error('tempo transaction serialize failed');
+            }
             hash = await customRPCService.requestCustomRPC(
               chain,
               'eth_sendRawTransaction',
@@ -874,15 +1290,33 @@ class ProviderController extends BaseController {
             onTransactionCreated({ hash, reqId, pushType });
           } else {
             const chainServerId = findChain({ enum: chain })!.serverId;
+            const tempoSubmitTx = isTempoTx
+              ? (omitUndefined({
+                  ...((buildTempoSubmitTxFromSerialized({
+                    serializedTx: tempoSerializedRawTx,
+                    approvalRes,
+                    fallbackCalls: tempoCalls,
+                    shouldIgnoreFeeToken: isGasAccount,
+                  }) ||
+                    buildTempoSubmitTxFallback({
+                      approvalRes,
+                      fallbackCalls: tempoCalls,
+                      shouldIgnoreFeeToken: isGasAccount,
+                    })) as any),
+                  r: covertToHex(signedTx.r),
+                  s: covertToHex(signedTx.s),
+                  v: covertToHex(signedTx.v),
+                }) as any)
+              : undefined;
             const params: Parameters<typeof openapi.submitTxV2>[0] = {
               context: {
-                tx: {
+                tx: (tempoSubmitTx || {
                   ...approvalRes,
                   r: covertToHex(signedTx.r),
                   s: covertToHex(signedTx.s),
                   v: covertToHex(signedTx.v),
                   value: approvalRes.value || '0x0',
-                },
+                }) as Tx,
                 origin,
                 log_id: logId,
               },
@@ -921,10 +1355,16 @@ class ProviderController extends BaseController {
             if (defaultRPC?.txPushToRPC && !isGasLess && !isGasAccount) {
               let fePushedFailed = false;
 
-              const tx = TransactionFactory.fromTxData(txDataWithRSV, {
-                common,
-              });
-              const rawTx = bytesToHex(tx.serialize());
+              const rawTx = isTempoTx
+                ? tempoSerializedRawTx
+                : bytesToHex(
+                    TransactionFactory.fromTxData(txDataWithRSV, {
+                      common,
+                    }).serialize(),
+                  );
+              if (!rawTx) {
+                throw new Error('tempo transaction serialize failed');
+              }
 
               try {
                 const [fePushedHash, url] =
@@ -1002,8 +1442,16 @@ class ProviderController extends BaseController {
           const chainData = findChain({
             enum: chain,
           })!;
-          const tx = TransactionFactory.fromTxData(txDataWithRSV, { common });
-          const rawTx = bytesToHex(tx.serialize());
+          const rawTx = isTempoTx
+            ? tempoSerializedRawTx
+            : bytesToHex(
+                TransactionFactory.fromTxData(txDataWithRSV, {
+                  common,
+                }).serialize(),
+              );
+          if (!rawTx) {
+            throw new Error('tempo transaction serialize failed');
+          }
           const client = customTestnetService.getClient(chainData.id);
 
           hash = await client?.request({
