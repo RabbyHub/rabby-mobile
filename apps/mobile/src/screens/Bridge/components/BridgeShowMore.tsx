@@ -4,6 +4,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -103,6 +104,7 @@ const BridgeShowMore = ({
   sourceAlwaysShow,
   insufficient,
   onDepositPopupVisibleChange,
+  onSettingsVisibleChange,
 }: {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -140,10 +142,32 @@ const BridgeShowMore = ({
   sourceAlwaysShow?: boolean;
   textColor?: string;
   onDepositPopupVisibleChange?: (visible: boolean) => void;
+  onSettingsVisibleChange?: (visible: boolean) => void;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [lossImpactOpen, setLossImpactOpen] = useState(false);
+  const [slippageSettingsOpen, setSlippageSettingsOpen] = useState(false);
+  const [gasSettingsOpen, setGasSettingsOpen] = useState(false);
+  const settingsVisible = slippageSettingsOpen || gasSettingsOpen;
+  const settingsVisibleRef = useRef(settingsVisible);
+
+  useEffect(() => {
+    if (settingsVisibleRef.current === settingsVisible) {
+      return;
+    }
+
+    settingsVisibleRef.current = settingsVisible;
+    onSettingsVisibleChange?.(settingsVisible);
+  }, [onSettingsVisibleChange, settingsVisible]);
+
+  useEffect(() => {
+    return () => {
+      if (settingsVisibleRef.current) {
+        onSettingsVisibleChange?.(false);
+      }
+    };
+  }, [onSettingsVisibleChange]);
 
   const data = useMemo(() => {
     if (quoteLoading || (!sourceLogo && !sourceName)) {
@@ -342,6 +366,7 @@ const BridgeShowMore = ({
             noQuote={!sourceLogo && !sourceName}
             chainServeId={fromToken?.chain}
             onDepositPopupVisibleChange={onDepositPopupVisibleChange}
+            onSettingsVisibleChange={setGasSettingsOpen}
           />
         ) : null}
 
@@ -359,6 +384,7 @@ const BridgeShowMore = ({
             isWrapToken={isWrapToken}
             recommendValue={recommendValue}
             loading={quoteLoading}
+            onOpenChange={setSlippageSettingsOpen}
           />
         ) : null}
       </View>
@@ -398,6 +424,7 @@ const BridgeShowMore = ({
             isWrapToken={isWrapToken}
             recommendValue={recommendValue}
             loading={quoteLoading}
+            onOpenChange={setSlippageSettingsOpen}
           />
         )}
 
@@ -446,6 +473,7 @@ export const DirectSignGasInfo = ({
   gasFeeListItemInnerStyle,
   textColor,
   onDepositPopupVisibleChange,
+  onSettingsVisibleChange,
 }: {
   supportDirectSign: boolean;
   loading: boolean;
@@ -456,6 +484,7 @@ export const DirectSignGasInfo = ({
   gasFeeListItemInnerStyle?: RNViewProps['style'];
   textColor?: string;
   onDepositPopupVisibleChange?: (visible: boolean) => void;
+  onSettingsVisibleChange?: (visible: boolean) => void;
 } & RNViewProps) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
@@ -1019,6 +1048,7 @@ export const DirectSignGasInfo = ({
           )}
           nativeTokenInsufficient={isGasNotEnough}
           freeGasAvailable={canUseGasLess}
+          onSettingsVisibleChange={onSettingsVisibleChange}
         />
       ) : (
         <ListItem

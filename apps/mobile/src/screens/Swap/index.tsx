@@ -119,6 +119,11 @@ import {
 } from '@/utils/form';
 import { Alert } from 'react-native';
 import { useMiniSignerEffectPause } from '@/hooks/useMiniSignerEffectPause';
+import {
+  hasQuotePollingPauseReason,
+  type QuotePollingPauseReasonState,
+  updateQuotePollingPauseReason,
+} from '@/utils/quotePolling';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -247,6 +252,47 @@ const Swap = ({
   } = useTokenPair({
     account: currentAccount!,
   });
+  const quotePollingPauseReasonsRef = useRef<QuotePollingPauseReasonState>({});
+  const setQuotePollingPauseReason = useCallback(
+    (reason: string, paused: boolean) => {
+      const wasPaused = hasQuotePollingPauseReason(
+        quotePollingPauseReasonsRef.current,
+      );
+
+      quotePollingPauseReasonsRef.current = updateQuotePollingPauseReason({
+        state: quotePollingPauseReasonsRef.current,
+        reason,
+        paused,
+      });
+
+      const isPaused = hasQuotePollingPauseReason(
+        quotePollingPauseReasonsRef.current,
+      );
+
+      if (wasPaused !== isPaused) {
+        setAutoQuoteRefreshPaused(isPaused);
+      }
+    },
+    [setAutoQuoteRefreshPaused],
+  );
+  const setShowMoreSettingsQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      setQuotePollingPauseReason('show-more-settings', paused);
+    },
+    [setQuotePollingPauseReason],
+  );
+  const setNoQuoteSlippageQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      setQuotePollingPauseReason('no-quote-slippage', paused);
+    },
+    [setQuotePollingPauseReason],
+  );
+  const setDepositQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      setQuotePollingPauseReason('gas-account-deposit', paused);
+    },
+    [setQuotePollingPauseReason],
+  );
 
   const chainServerId = useMemo(() => {
     return findChainByEnum(chain)?.serverId || CHAINS[chain].serverId;
@@ -1246,6 +1292,7 @@ const Swap = ({
                     type="swap"
                     loading={quoteLoading}
                     autoSuggestSlippage={autoSuggestSlippage}
+                    onOpenChange={setNoQuoteSlippageQuoteRefreshPaused}
                   />
                 </View>
               </>
@@ -1301,7 +1348,10 @@ const Swap = ({
                         ? undefined
                         : slippageValidInfo?.suggest_slippage
                     }
-                    onDepositPopupVisibleChange={setAutoQuoteRefreshPaused}
+                    onDepositPopupVisibleChange={setDepositQuoteRefreshPaused}
+                    onSettingsVisibleChange={
+                      setShowMoreSettingsQuoteRefreshPaused
+                    }
                   />
                 </View>
               )}

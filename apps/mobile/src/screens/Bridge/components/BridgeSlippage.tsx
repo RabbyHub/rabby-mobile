@@ -44,6 +44,7 @@ interface SlippageProps {
   isWrapToken?: boolean;
   autoSuggestSlippage?: string;
   loading?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const SlippageItem = (props: TouchableOpacityProps & { active?: boolean }) => {
@@ -97,11 +98,14 @@ export const BridgeSlippage = (props: SlippageProps) => {
     isWrapToken,
     autoSuggestSlippage,
     loading,
+    onOpenChange,
   } = props;
   const [slippageOpen, setSlippageOpen] = useState(false);
   const [customInputValue, setCustomInputValue] = useState(value);
   const customInputFocusedRef = useRef(false);
   const skipNextBlurCommitRef = useRef(false);
+  const mountedRef = useRef(false);
+  const slippageOpenRef = useRef(slippageOpen);
 
   const [minimumSlippage, maximumSlippage] = useMemo(() => {
     if (type === 'swap') {
@@ -215,6 +219,25 @@ export const BridgeSlippage = (props: SlippageProps) => {
       setSlippageOpen(true);
     }
   }, [tips]);
+
+  useEffect(() => {
+    slippageOpenRef.current = slippageOpen;
+
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      return;
+    }
+
+    onOpenChange?.(slippageOpen);
+  }, [onOpenChange, slippageOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (slippageOpenRef.current) {
+        onOpenChange?.(false);
+      }
+    };
+  }, [onOpenChange]);
 
   useEffect(() => {
     if (!customInputFocusedRef.current) {

@@ -80,6 +80,7 @@ export const SignMainnetHeaderContent = ({
   tempoGasTokenList,
   onSelectTempoGasToken,
   tempoGasTokenLoading,
+  onSettingsVisibleChange,
 }: {
   gasList: GasSelectorHeaderProps['gasList'];
   selectedGas: GasSelectorHeaderProps['selectedGas'];
@@ -119,6 +120,7 @@ export const SignMainnetHeaderContent = ({
   tempoGasTokenList?: TempoFeeTokenOption[];
   onSelectTempoGasToken?: (token: TempoFeeTokenOption) => void;
   tempoGasTokenLoading?: boolean;
+  onSettingsVisibleChange?: (visible: boolean) => void;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -127,6 +129,8 @@ export const SignMainnetHeaderContent = ({
   const [showMoreOpen, setShowMoreOpen] = useState(false);
   const [autoOpenSignal, setAutoOpenSignal] = useState(0);
   const hasOpenedOnceRef = useRef(false);
+  const settingsVisible = showMoreOpen || customVisible;
+  const settingsVisibleRef = useRef(settingsVisible);
   const noCustomRPCEnabled = noCustomRPC ?? true;
   const displayGasMethod = resolveApprovalGasMethod({
     nativeTokenInsufficient: !!nativeTokenInsufficient,
@@ -222,6 +226,23 @@ export const SignMainnetHeaderContent = ({
   useEffect(() => {
     levelStateRef.current = levelState;
   }, [levelState]);
+
+  useEffect(() => {
+    if (settingsVisibleRef.current === settingsVisible) {
+      return;
+    }
+
+    settingsVisibleRef.current = settingsVisible;
+    onSettingsVisibleChange?.(settingsVisible);
+  }, [onSettingsVisibleChange, settingsVisible]);
+
+  useEffect(() => {
+    return () => {
+      if (settingsVisibleRef.current) {
+        onSettingsVisibleChange?.(false);
+      }
+    };
+  }, [onSettingsVisibleChange]);
 
   useEffect(() => {
     activeLevelRequestsRef.current = {};
