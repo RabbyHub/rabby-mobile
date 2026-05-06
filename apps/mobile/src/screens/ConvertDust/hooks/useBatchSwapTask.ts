@@ -730,7 +730,7 @@ export const useBatchSwapTask = (options: {
   });
 
   const stop = useMemoizedFn(() => {
-    // cancelRunningTasks();
+    cancelRunningTasks();
     // setList([]);
     setCurrentToken(null);
     updateStatus('completed');

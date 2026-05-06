@@ -5,17 +5,21 @@ import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
+import { Account } from '@/types/account';
+import { Tip } from '@/components';
 
 export function ConvertDustBottomBar({
   disabled,
   onPress,
   safeOffBottom,
   status,
+  isSupportedAccount,
 }: {
   disabled?: boolean;
   safeOffBottom: number;
   onPress: () => void;
   status?: 'idle' | 'completed' | 'active' | 'paused';
+  isSupportedAccount?: boolean;
 }) {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -24,7 +28,21 @@ export function ConvertDustBottomBar({
     <View
       pointerEvents="box-none"
       style={[styles.bottomBar, { paddingBottom: safeOffBottom + 17 }]}>
-      {status === 'active' ? (
+      {!isSupportedAccount ? (
+        <Tip content={t('page.convertDust.unsupportedAccount')}>
+          <Button
+            title={t('page.convertDust.bottomBar.start')}
+            height={52}
+            disabled
+            containerStyle={styles.ctaContainer}
+            buttonStyle={styles.ctaButton}
+            titleStyle={styles.ctaTitle}
+            onPress={onPress}
+            noShadow
+            type="primary"
+          />
+        </Tip>
+      ) : status === 'active' ? (
         <Button
           title={t('page.convertDust.bottomBar.stop')}
           height={52}

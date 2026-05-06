@@ -444,6 +444,7 @@ function ConvertDustContent({
         disabled={
           task.status === 'idle' && (!hasSelectedToken || !isSupportedAccount)
         }
+        isSupportedAccount={isSupportedAccount}
         status={task.status}
         onPress={handleStartPress}
       />
