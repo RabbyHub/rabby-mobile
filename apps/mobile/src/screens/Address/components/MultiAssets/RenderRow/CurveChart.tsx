@@ -3,8 +3,8 @@ import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
 import { CurvePoint } from '@/hooks/useCurve';
 import {
+  formatCurrencyValueParts,
   formatSmallCurrencyValueParts,
-  isCurrencyPrefix,
 } from '@/utils/currency';
 import React, { memo, useMemo } from 'react';
 import { Dimensions, Pressable, useWindowDimensions, View } from 'react-native';
@@ -34,7 +34,6 @@ import { Text, AnimateableText } from '@/components/Typography';
 import { useHomePortfolioStore } from '@/screens/Home/hooks/useHomePortfolioSummary';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useShallow } from 'zustand/react/shallow';
-import { formatUsdValue } from '@/utils/number';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedSVG = Animated.createAnimatedComponent(Svg);
@@ -44,9 +43,6 @@ const CHART_HORIZONTAL_INSET = 66;
 const MAX_NETWORTH_FS = 38;
 const MIN_NETWORTH_FS = 34;
 const NETWORTH_FIT_LEN = 8;
-type DisplayCurvePoint = CurvePoint & {
-  netWorthAmount: string;
-};
 
 const svIsFoldMultiChart = makeMutable(true);
 
@@ -229,7 +225,6 @@ const ChartHeader = React.memo(
     };
     const { currentIndex } = LineChart.useChart();
     const { currency } = useCurrency();
-    const isPostfixCurrency = !isCurrencyPrefix(currency);
     const debouncedRawChange = useDebouncedValue(rawChange, 300);
     const showNetWorthLoading = useMemo(() => {
       return showBalanceLoadingWithoutLocal;
@@ -238,25 +233,26 @@ const ChartHeader = React.memo(
     const showChangeLoading =
       showNetWorthLoading || showChangeLoadingWithoutLocal;
 
-    const netWorthParts = useMemo(() => {
-      return formatSmallCurrencyValueParts(rawNetWorth, { currency });
+    const netWorth = useMemo(() => {
+      return formatSmallCurrencyValueParts(rawNetWorth, { currency }).text;
     }, [currency, rawNetWorth]);
-    const netWorth = netWorthParts.text;
     const change = useMemo(() => {
-      return formatUsdValue(Math.abs(debouncedRawChange));
-    }, [debouncedRawChange]);
+      return formatCurrencyValueParts(Math.abs(debouncedRawChange), {
+        currency,
+      }).text;
+    }, [currency, debouncedRawChange]);
 
-    const data = useMemo<DisplayCurvePoint[]>(() => {
+    const data = useMemo(() => {
       return (
         _data?.map(item => {
-          const itemNetWorthParts = formatSmallCurrencyValueParts(item.value, {
-            currency,
-          });
           return {
             ...item,
-            netWorth: itemNetWorthParts.text,
-            netWorthAmount: itemNetWorthParts.amountText,
-            change: formatUsdValue(Math.abs(item.rawChange)),
+            netWorth: formatSmallCurrencyValueParts(item.value, {
+              currency,
+            }).text,
+            change: formatCurrencyValueParts(Math.abs(item.rawChange), {
+              currency,
+            }).text,
           };
         }) || []
       );
@@ -298,21 +294,10 @@ const ChartHeader = React.memo(
         return '******';
       }
       if (svIsFoldMultiChart.value) {
-        return isPostfixCurrency ? netWorthParts.amountText : netWorth;
+        return netWorth;
       }
-      const activeData = data?.[currentIndex?.value];
-      if (isPostfixCurrency) {
-        return activeData?.netWorthAmount || netWorthParts.amountText;
-      }
-      return activeData?.netWorth || netWorth;
-    }, [
-      data,
-      currentIndex,
-      netWorth,
-      netWorthParts.amountText,
-      hideType,
-      isPostfixCurrency,
-    ]);
+      return data?.[currentIndex?.value]?.netWorth || netWorth;
+    }, [data, currentIndex, netWorth, hideType]);
 
     const lossStyleProps = useAnimatedStyle(() => {
       if (hideType === 'HIDE') {
@@ -349,7 +334,7 @@ const ChartHeader = React.memo(
       return {
         text: formatNetWorth.value,
       };
-    }, [netWorth, netWorthParts.amountText, hideType, isPostfixCurrency]);
+    }, [netWorth, hideType]);
 
     const percentChangeAnimatedProps = useAnimatedProps(() => {
       return {
@@ -394,25 +379,14 @@ const ChartHeader = React.memo(
               showNetWorthLoading ? styles.hidden : undefined,
             ]}
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceValue)}>
-            <View style={styles.netWorthInline}>
-              <AnimateableText
-                style={[
-                  styles.netWorth,
-                  netWorthFontStyle,
-                  hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
-                ]}
-                animatedProps={netWorthAnimatedProps}
-              />
-              {isPostfixCurrency && !isHidden ? (
-                <Text
-                  style={[
-                    styles.netWorthSuffix,
-                    hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
-                  ]}>
-                  {currency.symbol}
-                </Text>
-              ) : null}
-            </View>
+            <AnimateableText
+              style={[
+                styles.netWorth,
+                netWorthFontStyle,
+                hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
+              ]}
+              animatedProps={netWorthAnimatedProps}
+            />
           </View>
 
           <Skeleton
@@ -535,19 +509,6 @@ const getStyle = createGetStyles2024(
     netWorth: {
       lineHeight: 46,
       fontWeight: '800',
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-    },
-    netWorthInline: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-    },
-    netWorthSuffix: {
-      marginLeft: 4,
-      marginTop: 15,
-      fontSize: 16,
-      lineHeight: 31,
-      fontWeight: '700',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
     },
