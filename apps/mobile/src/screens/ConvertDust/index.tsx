@@ -59,6 +59,16 @@ import { useDismissConvertDustBanner } from '../Home/hooks/useConvertDustBanner'
 import { ConvertDustEntryGuideModal } from './components/ConvertDustEntryGuideModal';
 import { useTranslation } from 'react-i18next';
 import { useMount } from 'ahooks';
+import { atomByMMKV } from '@/core/storage/mmkv';
+import { useAtom } from 'jotai';
+
+const activeFilterAtom = atomByMMKV<DustFilter>(
+  '@convertDust.activeFilter',
+  thresholds[2],
+  {
+    getOnInit: true,
+  },
+);
 
 type ConvertDustNavigationProp = NativeStackNavigationProp<
   TransactionNavigatorParamList,
@@ -83,16 +93,11 @@ function ConvertDustContent({
   const pendingBackActionRef = useRef<
     Parameters<typeof navigation.dispatch>[0] | null
   >(null);
-  const pendingStopBackActionRef = useRef<
-    Parameters<typeof navigation.dispatch>[0] | null
-  >(null);
   const { safeOffBottom } = useSafeSizes();
 
   const [chainEnum, setChainEnum] = useState(ETH_CHAIN);
   const chain = useFindChain({ enum: chainEnum });
-  const [selectedFilter, setSelectedFilter] = useState<DustFilter>(
-    thresholds[2],
-  );
+  const [selectedFilter, setSelectedFilter] = useAtom(activeFilterAtom);
   const [activeSettingSheet, setActiveSettingSheet] = useState<
     'priceImpact' | 'gasLimit' | null
   >(null);
@@ -147,7 +152,6 @@ function ConvertDustContent({
       (taskStatus === 'active' || !!route.params?.fromHomeConvertDustBanner),
     event => {
       if (taskStatus === 'active') {
-        pendingStopBackActionRef.current = event.data.action;
         pauseTask();
         return;
       }
@@ -189,23 +193,12 @@ function ConvertDustContent({
   }, [navigation]);
 
   const handleStopContinue = useCallback(() => {
-    pendingStopBackActionRef.current = null;
     task.continue();
   }, [task]);
 
   const handleStop = useCallback(() => {
     task.stop();
-
-    const pendingAction = pendingStopBackActionRef.current;
-    pendingStopBackActionRef.current = null;
-
-    if (!pendingAction) {
-      return;
-    }
-
-    allowBackRef.current = true;
-    navigation.dispatch(pendingAction);
-  }, [navigation, task]);
+  }, [task]);
 
   useEffect(() => {
     navigation.setParams({
@@ -220,6 +213,12 @@ function ConvertDustContent({
   const selectedTokenIds = useMemo(
     () => new Set(task.list.map(token => token.id)),
     [task.list],
+  );
+  const hasSelectedAllTokens = useMemo(
+    () =>
+      !!dustTokens.length &&
+      dustTokens.every(token => selectedTokenIds.has(token.id)),
+    [dustTokens, selectedTokenIds],
   );
   const isSupportedAccount =
     currentAccount?.type === KEYRING_CLASS.PRIVATE_KEY ||
@@ -252,13 +251,13 @@ function ConvertDustContent({
       return;
     }
 
-    if (hasSelectedToken) {
+    if (hasSelectedAllTokens) {
       task.init([]);
       return;
     }
 
     task.init(dustTokens as TokenItem[]);
-  }, [dustTokens, hasSelectedToken, task]);
+  }, [dustTokens, hasSelectedAllTokens, task]);
 
   const handleChainChange = useCallback(
     (nextChainEnum: CHAINS_ENUM) => {
@@ -291,12 +290,12 @@ function ConvertDustContent({
       setSelectedFilter(filter);
       task.clear();
     },
-    [task],
+    [setSelectedFilter, task],
   );
 
   const handleStartPress = useCallback(() => {
     if (!isSupportedAccount) {
-      toast.info('该类地址不支持此功能');
+      // toast.info('该类地址不支持此功能');
       return;
     }
 
@@ -405,7 +404,7 @@ function ConvertDustContent({
 
         <LowValueTokenSelector
           disabled={task.disabled}
-          hasSelectedToken={hasSelectedToken}
+          hasSelectedAllTokens={hasSelectedAllTokens}
           isLoading={isTokenListLoading}
           selectedFilter={selectedFilter}
           selectedTokenIds={selectedTokenIds}

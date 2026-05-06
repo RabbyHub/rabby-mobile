@@ -24,8 +24,13 @@ import { useTranslation } from 'react-i18next';
 import { Dimensions, FlatList, TouchableOpacity, View } from 'react-native';
 import { TaskStatusIcon } from './LowValueTokenSelector';
 import type { TaskItemStatus } from '../hooks/useBatchSwapTask';
+import { LocalPannableDraggableView } from '@/components/customized/BottomSheetDraggableView';
 
 const DETAIL_ROW_HEIGHT = 44;
+const DETAIL_HEADER_HEIGHT = 34;
+const DETAIL_PANEL_PADDING_TOP = 12;
+const DETAIL_TOGGLE_HEIGHT = 30;
+const DETAIL_MAX_VISIBLE_ROWS = 3;
 
 const getTokenKey = (token: TokenItem, index: number) =>
   `${token.chain}:${token.id}:${index}`;
@@ -97,6 +102,15 @@ export function ConvertDustCompletedSheet({
   const [isDetailExpanded, setIsDetailExpanded] = React.useState(false);
   const detailListRef = React.useRef<FlatList<TokenItem>>(null);
   const shouldShowDetail = taskList.length > 0;
+  const detailPanelHeight = React.useMemo(() => {
+    const visibleRows = Math.min(taskList.length, DETAIL_MAX_VISIBLE_ROWS);
+    return (
+      DETAIL_PANEL_PADDING_TOP +
+      DETAIL_HEADER_HEIGHT +
+      DETAIL_ROW_HEIGHT * visibleRows +
+      DETAIL_TOGGLE_HEIGHT
+    );
+  }, [taskList.length]);
   const firstFailedIndex = React.useMemo(
     () =>
       taskList.findIndex(token => statusDict[token.id]?.status === 'failed'),
@@ -161,59 +175,62 @@ export function ConvertDustCompletedSheet({
     <AppBottomSheetModal
       ref={modalRef}
       enableDynamicSizing
+      enableContentPanningGesture={false}
       maxDynamicContentSize={Dimensions.get('screen').height * 0.9}
       backgroundStyle={styles.sheetBackground}
       handleStyle={styles.sheetHandle}
       handleIndicatorStyle={styles.sheetHandleIndicator}
       onDismiss={onCancel}>
       <BottomSheetView style={styles.sheetContent}>
-        <View style={styles.heroBlock}>
-          {isSuccess ? (
-            <View style={styles.lottieContainer}>
-              <Lottie
-                source={successAnimation}
-                style={styles.lottie}
-                loop={false}
-                autoPlay
-              />
-            </View>
-          ) : (
-            <View style={styles.failedIconWrap}>
-              <RcIconSwapFailed width={80} />
-            </View>
-          )}
-          <Text style={styles.title}>
-            {isSuccess
-              ? t('page.convertDust.completed.title')
-              : t('page.convertDust.completed.failedTitle')}
-          </Text>
-        </View>
+        <LocalPannableDraggableView>
+          <View style={styles.heroBlock}>
+            {isSuccess ? (
+              <View style={styles.lottieContainer}>
+                <Lottie
+                  source={successAnimation}
+                  style={styles.lottie}
+                  loop={false}
+                  autoPlay
+                />
+              </View>
+            ) : (
+              <View style={styles.failedIconWrap}>
+                <RcIconSwapFailed width={80} />
+              </View>
+            )}
+            <Text style={styles.title}>
+              {isSuccess
+                ? t('page.convertDust.completed.title')
+                : t('page.convertDust.completed.failedTitle')}
+            </Text>
+          </View>
 
-        <View style={styles.receiveCard}>
-          <View style={styles.receiveTokenWrap}>
-            <AssetAvatar
-              logo={receiveToken?.logo_url}
-              size={46}
-              chain={chain?.serverId}
-              chainSize={18}
-              innerChainStyle={styles.receiveChainBadge}
-            />
-            <Text style={styles.receiveSymbol}>{receiveTokenSymbol}</Text>
+          <View style={styles.receiveCard}>
+            <View style={styles.receiveTokenWrap}>
+              <AssetAvatar
+                logo={receiveToken?.logo_url}
+                size={46}
+                chain={chain?.serverId}
+                chainSize={18}
+                innerChainStyle={styles.receiveChainBadge}
+              />
+              <Text style={styles.receiveSymbol}>{receiveTokenSymbol}</Text>
+            </View>
+            <View style={styles.receiveValueWrap}>
+              <Text style={styles.receiveHint}>
+                {t('page.convertDust.completed.receive')}{' '}
+                {formatAmount(receiveAmount)} {receiveTokenSymbol}
+              </Text>
+              <Text style={styles.receiveValue}>
+                +{formatUsdValue(receiveUsd)}
+              </Text>
+            </View>
           </View>
-          <View style={styles.receiveValueWrap}>
-            <Text style={styles.receiveHint}>
-              {t('page.convertDust.completed.receive')}{' '}
-              {formatAmount(receiveAmount)} {receiveTokenSymbol}
-            </Text>
-            <Text style={styles.receiveValue}>
-              +{formatUsdValue(receiveUsd)}
-            </Text>
-          </View>
-        </View>
+        </LocalPannableDraggableView>
 
         {shouldShowDetail ? (
           isDetailExpanded ? (
-            <View style={styles.detailPanel}>
+            <View style={[styles.detailPanel, { height: detailPanelHeight }]}>
               <View style={styles.detailHeader}>
                 <Text style={styles.detailHeaderText}>
                   {t('page.convertDust.colStatusToken')}
@@ -234,8 +251,10 @@ export function ConvertDustCompletedSheet({
                   offset: DETAIL_ROW_HEIGHT * index,
                   index,
                 })}
+                nestedScrollEnabled
                 onContentSizeChange={() => scrollToFailedTask(false)}
                 onScrollToIndexFailed={info => {
+                  console.log('scrollToIndexFailed', info);
                   setTimeout(() => {
                     detailListRef.current?.scrollToIndex({
                       index: info.index,
@@ -403,7 +422,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     transform: [{ rotate: '180deg' }],
   },
   detailPanel: {
-    height: 208,
     marginTop: 12,
     borderRadius: 12,
     paddingTop: 12,
