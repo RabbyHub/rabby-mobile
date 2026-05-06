@@ -4,11 +4,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, Pressable, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  formatSmallCurrencyValue,
-  type CurvePoint,
-  warmupCurveForAddress,
-} from '@/hooks/useCurve';
+import { type CurvePoint, warmupCurveForAddress } from '@/hooks/useCurve';
 import { E2E_ID } from '@/constant/e2e';
 import Animated, {
   Easing,
@@ -23,6 +19,10 @@ import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { useCurrency } from '@/hooks/useCurrency';
 import {
+  formatSmallCurrencyValueParts,
+  isCurrencyPrefix,
+} from '@/utils/currency';
+import {
   FOLD_ASSETS_HEADER_HEIGHT,
   UNFOLD_ASSETS_HEADER_HEIGHT,
 } from '@/constant/layout';
@@ -34,7 +34,7 @@ import {
   useSingleHomeHomeTopChart,
 } from '../hooks/singleHome';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
-import { AnimateableText } from '@/components/Typography';
+import { AnimateableText, Text } from '@/components/Typography';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -42,8 +42,12 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 const ScreenWidth = Dimensions.get('screen').width;
 
 const MAX_NETWORTH_FS = 42;
+const MAX_POSTFIX_NETWORTH_FS = 38;
 const MIN_NETWORTH_FS = 34;
 const NETWORTH_FIT_LEN = 10;
+type DisplayCurvePoint = CurvePoint & {
+  netWorthAmount: string;
+};
 
 const ZERO_LINE_CHART_DATA: CurvePoint[] = [
   {
@@ -239,7 +243,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
   const [isInitialized, setIsInitialized] = useState(false);
-  const { currency, formatCurrentCurrency } = useCurrency();
+  const { currency } = useCurrency();
 
   const {
     balanceLoadingWithoutLocal: loading,
@@ -253,21 +257,26 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   const isLoss = selectData.isLoss;
   const _data = selectData.list;
 
-  const netWorth = useMemo(() => {
-    return formatSmallCurrencyValue(rawNetWorth, { currency });
+  const isPostfixCurrency = !isCurrencyPrefix(currency);
+  const netWorthParts = useMemo(() => {
+    return formatSmallCurrencyValueParts(rawNetWorth, { currency });
   }, [rawNetWorth, currency]);
+  const netWorth = netWorthParts.text;
 
-  const data = useMemo(() => {
+  const data = useMemo<DisplayCurvePoint[]>(() => {
     return (
       _data?.map(item => {
+        const itemNetWorthParts = formatSmallCurrencyValueParts(item.value, {
+          currency,
+        });
         return {
           ...item,
-          netWorth: formatSmallCurrencyValue(item.value, { currency }),
-          change: formatCurrentCurrency(item.rawChange),
+          netWorth: itemNetWorthParts.text,
+          netWorthAmount: itemNetWorthParts.amountText,
         };
       }) || []
     );
-  }, [_data, currency, formatCurrentCurrency]);
+  }, [_data, currency]);
 
   useEffect(() => {
     // 延迟初始化动画计算
@@ -320,11 +329,22 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   const formatNetWorth = useDerivedValue(() => {
     // 如果还没初始化，返回默认值
     if (!isInitialized) {
-      return netWorth;
+      return isPostfixCurrency ? netWorthParts.amountText : netWorth;
     }
 
-    return data?.[currentIndex?.value]?.netWorth || netWorth;
-  }, [data, currentIndex, netWorth, isInitialized]);
+    const activeData = data?.[currentIndex?.value];
+    if (isPostfixCurrency) {
+      return activeData?.netWorthAmount || netWorthParts.amountText;
+    }
+    return activeData?.netWorth || netWorth;
+  }, [
+    data,
+    currentIndex,
+    netWorth,
+    netWorthParts.amountText,
+    isInitialized,
+    isPostfixCurrency,
+  ]);
 
   const lossStyleProps = useAnimatedStyle(() => {
     // 如果还没初始化，使用默认样式
@@ -380,7 +400,8 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
 
   const netWorthFontStyle = useAnimatedStyle(() => {
     const len = formatNetWorth.value?.length ?? 0;
-    const fs = len <= NETWORTH_FIT_LEN ? MAX_NETWORTH_FS : MIN_NETWORTH_FS;
+    const maxFs = isPostfixCurrency ? MAX_POSTFIX_NETWORTH_FS : MAX_NETWORTH_FS;
+    const fs = len <= NETWORTH_FIT_LEN ? maxFs : MIN_NETWORTH_FS;
     return { fontSize: fs };
   });
 
@@ -388,7 +409,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
     return {
       text: formatNetWorth.value,
     };
-  }, [netWorth]);
+  }, [netWorth, netWorthParts.amountText, isPostfixCurrency]);
   const percentChangeAnimatedProps = useAnimatedProps(() => {
     return {
       text: percentChange.value,
@@ -406,11 +427,16 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   return (
     <View style={[styles.charHeader]}>
       <View style={styles.leftContainer}>
-        <AnimateableText
-          {...makeTestIDProps(E2E_ID.home.singleBalanceValue)}
-          style={[styles.netWorth, netWorthFontStyle]}
-          animatedProps={netWorthAnimatedProps}
-        />
+        <View style={styles.netWorthRow}>
+          <AnimateableText
+            {...makeTestIDProps(E2E_ID.home.singleBalanceValue)}
+            style={[styles.netWorth, netWorthFontStyle]}
+            animatedProps={netWorthAnimatedProps}
+          />
+          {isPostfixCurrency ? (
+            <Text style={styles.netWorthSuffix}>{currency.symbol}</Text>
+          ) : null}
+        </View>
         <AnimateableText
           style={[styles.changeTime, animOpacityStyle]}
           animatedProps={dateTimeAnimatedProps}
@@ -511,6 +537,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 46,
     // textAlign: 'center',
     fontWeight: '900',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  netWorthRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  netWorthSuffix: {
+    marginLeft: 4,
+    marginTop: 15,
+    fontSize: 16,
+    lineHeight: 31,
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },

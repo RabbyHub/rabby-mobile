@@ -1,7 +1,11 @@
 import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
-import { CurvePoint, formatSmallCurrencyValue } from '@/hooks/useCurve';
+import { CurvePoint } from '@/hooks/useCurve';
+import {
+  formatSmallCurrencyValueParts,
+  isCurrencyPrefix,
+} from '@/utils/currency';
 import React, { memo, useMemo } from 'react';
 import { Dimensions, Pressable, useWindowDimensions, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -30,6 +34,7 @@ import { Text, AnimateableText } from '@/components/Typography';
 import { useHomePortfolioStore } from '@/screens/Home/hooks/useHomePortfolioSummary';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useShallow } from 'zustand/react/shallow';
+import { formatUsdValue } from '@/utils/number';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedSVG = Animated.createAnimatedComponent(Svg);
@@ -39,6 +44,9 @@ const CHART_HORIZONTAL_INSET = 66;
 const MAX_NETWORTH_FS = 38;
 const MIN_NETWORTH_FS = 34;
 const NETWORTH_FIT_LEN = 8;
+type DisplayCurvePoint = CurvePoint & {
+  netWorthAmount: string;
+};
 
 const svIsFoldMultiChart = makeMutable(true);
 
@@ -220,7 +228,8 @@ const ChartHeader = React.memo(
       charHeader: useAnimatedStyle(reanimatedStyles.charHeader),
     };
     const { currentIndex } = LineChart.useChart();
-    const { currency, formatCurrentCurrency } = useCurrency();
+    const { currency } = useCurrency();
+    const isPostfixCurrency = !isCurrencyPrefix(currency);
     const debouncedRawChange = useDebouncedValue(rawChange, 300);
     const showNetWorthLoading = useMemo(() => {
       return showBalanceLoadingWithoutLocal;
@@ -229,24 +238,29 @@ const ChartHeader = React.memo(
     const showChangeLoading =
       showNetWorthLoading || showChangeLoadingWithoutLocal;
 
-    const netWorth = useMemo(() => {
-      return formatSmallCurrencyValue(rawNetWorth, { currency });
+    const netWorthParts = useMemo(() => {
+      return formatSmallCurrencyValueParts(rawNetWorth, { currency });
     }, [currency, rawNetWorth]);
+    const netWorth = netWorthParts.text;
     const change = useMemo(() => {
-      return formatCurrentCurrency(Math.abs(debouncedRawChange));
-    }, [formatCurrentCurrency, debouncedRawChange]);
+      return formatUsdValue(Math.abs(debouncedRawChange));
+    }, [debouncedRawChange]);
 
-    const data = useMemo(() => {
+    const data = useMemo<DisplayCurvePoint[]>(() => {
       return (
         _data?.map(item => {
+          const itemNetWorthParts = formatSmallCurrencyValueParts(item.value, {
+            currency,
+          });
           return {
             ...item,
-            netWorth: formatSmallCurrencyValue(item.value, { currency }),
-            change: formatCurrentCurrency(item.rawChange),
+            netWorth: itemNetWorthParts.text,
+            netWorthAmount: itemNetWorthParts.amountText,
+            change: formatUsdValue(Math.abs(item.rawChange)),
           };
         }) || []
       );
-    }, [_data, currency, formatCurrentCurrency]);
+    }, [_data, currency]);
 
     const percentChange = useDerivedValue(() => {
       if (hideType === 'HIDE') {
@@ -280,12 +294,25 @@ const ChartHeader = React.memo(
     }, [data, currentIndex, netWorth]);
 
     const formatNetWorth = useDerivedValue(() => {
-      return hideType === 'HIDE'
-        ? '******'
-        : svIsFoldMultiChart.value
-        ? netWorth
-        : data?.[currentIndex?.value]?.netWorth || netWorth;
-    }, [data, currentIndex, netWorth, hideType]);
+      if (hideType === 'HIDE') {
+        return '******';
+      }
+      if (svIsFoldMultiChart.value) {
+        return isPostfixCurrency ? netWorthParts.amountText : netWorth;
+      }
+      const activeData = data?.[currentIndex?.value];
+      if (isPostfixCurrency) {
+        return activeData?.netWorthAmount || netWorthParts.amountText;
+      }
+      return activeData?.netWorth || netWorth;
+    }, [
+      data,
+      currentIndex,
+      netWorth,
+      netWorthParts.amountText,
+      hideType,
+      isPostfixCurrency,
+    ]);
 
     const lossStyleProps = useAnimatedStyle(() => {
       if (hideType === 'HIDE') {
@@ -322,7 +349,7 @@ const ChartHeader = React.memo(
       return {
         text: formatNetWorth.value,
       };
-    });
+    }, [netWorth, netWorthParts.amountText, hideType, isPostfixCurrency]);
 
     const percentChangeAnimatedProps = useAnimatedProps(() => {
       return {
@@ -367,14 +394,25 @@ const ChartHeader = React.memo(
               showNetWorthLoading ? styles.hidden : undefined,
             ]}
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceValue)}>
-            <AnimateableText
-              style={[
-                styles.netWorth,
-                netWorthFontStyle,
-                hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
-              ]}
-              animatedProps={netWorthAnimatedProps}
-            />
+            <View style={styles.netWorthInline}>
+              <AnimateableText
+                style={[
+                  styles.netWorth,
+                  netWorthFontStyle,
+                  hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
+                ]}
+                animatedProps={netWorthAnimatedProps}
+              />
+              {isPostfixCurrency && !isHidden ? (
+                <Text
+                  style={[
+                    styles.netWorthSuffix,
+                    hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
+                  ]}>
+                  {currency.symbol}
+                </Text>
+              ) : null}
+            </View>
           </View>
 
           <Skeleton
@@ -497,6 +535,19 @@ const getStyle = createGetStyles2024(
     netWorth: {
       lineHeight: 46,
       fontWeight: '800',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    netWorthInline: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+    },
+    netWorthSuffix: {
+      marginLeft: 4,
+      marginTop: 15,
+      fontSize: 16,
+      lineHeight: 31,
+      fontWeight: '700',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
     },

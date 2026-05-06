@@ -21,7 +21,6 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { isTabsSwiping, useAccountInfo } from './hooks';
-import { useCurrency } from '@/hooks/useCurrency';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { HomeTabName as TabName } from '@/hooks/navigation';
@@ -98,7 +97,6 @@ export const TokenList = () => {
   const [foldScam, setFoldScam] = useState(true);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
 
-  const { currency } = useCurrency();
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
 
   const getAccountByAddress = useFindAccountByAddress();
@@ -161,8 +159,8 @@ export const TokenList = () => {
       .reduce((total, item) => {
         return total + item.usd_value;
       }, 0);
-    return formatNetworth(usdValue * currency.usd_rate, false, currency.symbol);
-  }, [foldTokens, currency]);
+    return formatNetworth(usdValue);
+  }, [foldTokens]);
 
   useEffect(() => {
     batchGetTokenList(myTop10Addresses);
