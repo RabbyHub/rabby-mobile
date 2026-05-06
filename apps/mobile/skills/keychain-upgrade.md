@@ -115,15 +115,16 @@ Implication:
 
 ## Current Repo Integration Notes
 
-Today this repo uses two keychain lines:
+Today this repo keeps two keychain lines available:
 
-1. Business path:
-   [`@rabby-wallet/react-native-keychain`](../../../packages/react-native-keychain)
-
-2. Default keychain probe/debug path:
+1. Default business path:
    [`react-native-keychain@9.x`](../src/core/apis/keychain.ts)
 
-Business code still imports the local fork explicitly as `v8_2_0`, for example:
+2. Legacy Rabby fork for fallback and migration comparison:
+   [`@rabby-wallet/react-native-keychain`](../../../packages/react-native-keychain)
+
+Business code still imports the local fork explicitly as `v8_2_0` for the
+debug switch and migration tools, for example:
 
 - [`src/core/apis/keychainV8_2_0.ts`](../src/core/apis/keychainV8_2_0.ts)
 - [`src/hooks/biometrics.ts`](../src/hooks/biometrics.ts)
