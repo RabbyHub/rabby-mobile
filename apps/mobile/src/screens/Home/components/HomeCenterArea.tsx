@@ -66,7 +66,7 @@ export function HomeCenterArea() {
       rateGuideOnHome: false as boolean,
       offlineChainData: false as boolean,
       tipScreenshot: false as boolean,
-      convertDustBanner: shouldShowConvertDustBanner,
+      convertDustBanner: false as boolean,
     };
 
     // Wait for account check to complete before deciding what to show
@@ -82,11 +82,18 @@ export function HomeCenterArea() {
     if (accountToShowReceiveTip || forceShowDepositAssetsCard) {
       blocks.soloAccountToShowReceiveTip = true;
     } else {
-      if (hasCompletedTransaction && hasOfflineChainData)
-        blocks.offlineChainData = true;
-      if (hasCompletedTransaction && !viewedScreenShotReportTip)
-        blocks.tipScreenshot = true;
-      else if (shouldShowRateGuideOnHome) blocks.rateGuideOnHome = true;
+      if (shouldShowConvertDustBanner) {
+        blocks.convertDustBanner = true;
+      } else {
+        if (hasCompletedTransaction && hasOfflineChainData) {
+          blocks.offlineChainData = true;
+        }
+        if (hasCompletedTransaction && !viewedScreenShotReportTip) {
+          blocks.tipScreenshot = true;
+        } else if (shouldShowRateGuideOnHome) {
+          blocks.rateGuideOnHome = true;
+        }
+      }
     }
 
     const visibleEls = Object.values(blocks);
@@ -115,15 +122,6 @@ export function HomeCenterArea() {
           : styles.contentBetweenHeaderAndMatrix,
         onlyOneContent ? styles.contentBetweenHeaderAndMatrixOnlyOne : null,
       ]}>
-      {blocksVisibility.convertDustBanner && (
-        <Animated.View entering={FadeInUp.duration(200)}>
-          <ConvertDustBanner
-            onPress={handlePressConvertDustBanner}
-            onClose={dismissConvertDustBanner}
-          />
-        </Animated.View>
-      )}
-
       {blocksVisibility.offlineChainData && (
         <Animated.View entering={FadeInUp.duration(200)}>
           <OfflineChainNotify data={offlineChainData} />
@@ -153,11 +151,20 @@ export function HomeCenterArea() {
           <RateModal /* totalBalanceText={combineData.netWorth} */ />
         </Animated.View>
       )}
+
+      {blocksVisibility.convertDustBanner && (
+        <Animated.View entering={FadeInUp.duration(200)}>
+          <ConvertDustBanner
+            onPress={handlePressConvertDustBanner}
+            onClose={dismissConvertDustBanner}
+          />
+        </Animated.View>
+      )}
     </View>
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(() => ({
   contentBetweenHeaderAndMatrix: {
     marginTop: 12,
     marginBottom: 12,
