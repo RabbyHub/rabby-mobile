@@ -7,6 +7,7 @@ import { TextProps } from 'react-native';
 import { DefaultStyle } from 'react-native-reanimated/lib/typescript/hook/commonTypes';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
+import { AnimatedText } from '@/components/Typography';
 
 interface CustomLabelProps {
   index: number;
@@ -51,9 +52,7 @@ const CustomLabel = ({
   });
   return (
     <Animated.View style={[styles.container, wrapperStyle]}>
-      <Animated.Text style={[styles.label, stylez, style]}>
-        {text}
-      </Animated.Text>
+      <AnimatedText style={[styles.label, stylez, style]}>{text}</AnimatedText>
     </Animated.View>
   );
 };
