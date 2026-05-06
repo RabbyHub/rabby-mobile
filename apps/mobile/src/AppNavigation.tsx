@@ -82,6 +82,7 @@ import {
 } from '@/perfs/loadables/navigators';
 import { HomeScreenNavigator } from '@/perfs/loadables/homeRootNavigator';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
+import { NEED_DEVSETTINGBLOCKS } from './constant';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
@@ -251,6 +252,10 @@ function AppNavigationDeferredGlobals({
   enabled: boolean;
 }) {
   if (!enabled) {
+    if (slot === 'overlay' && NEED_DEVSETTINGBLOCKS) {
+      return <FloatingDiagnosticsPanel />;
+    }
+
     return null;
   }
 
@@ -301,8 +306,11 @@ export default function AppNavigation() {
 
   const colors = useThemeColors();
 
-  const { isAppUnlocked } = useAppUnlocked();
-  const initialRouteName = isAppUnlocked
+  const { isAppUnlocked, hasVisibleAccounts, hasStoredKeyrings } =
+    useAppUnlocked();
+  const initialRouteName = hasVisibleAccounts
+    ? RootNames.StackRoot
+    : isAppUnlocked || !hasStoredKeyrings
     ? RootNames.StackGetStarted
     : RootNames.Unlock;
   const shouldRenderDeferredGlobals =

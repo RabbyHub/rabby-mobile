@@ -94,7 +94,7 @@ export function SelectAddressSheetModal({
         cancelText: t('global.Cancel'),
         title: t('component.Contact.ListModal.authModal.title'),
         validationHandler: async (password: string) =>
-          apisLock.throwErrorIfInvalidPwd(password),
+          apisLock.verifyPasswordOrUnlock(password),
         onFinished() {
           setWhitelist(localWhiteList);
           setEditing(!isEditing);

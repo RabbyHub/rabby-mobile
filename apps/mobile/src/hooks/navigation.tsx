@@ -55,7 +55,11 @@ import {
   txResultToToHistoryDisplayItem,
 } from '@/utils/transaction';
 // import { SampleNotifiedTxResult } from '@/core/notifications/sample-data';
-import { preferenceService, transactionHistoryService } from '@/core/services';
+import {
+  keyringService,
+  preferenceService,
+  transactionHistoryService,
+} from '@/core/services';
 import { browserApis } from './browser/useBrowser';
 import { notificationOpenapi } from '@/core/notifications/openapi';
 import { toast, toastLoading } from '@/components2024/Toast';
@@ -97,10 +101,10 @@ autoLockEvent.addListener('timeout', ctx => {
   const routeName = navigationRouteStore.getState().currentRouteName;
 
   const atUnlock = routeName === RootNames.Unlock;
-  if (!atUnlock) {
-    requestLockWalletAndBackToUnlockScreen();
-  } else {
+  if (atUnlock) {
     ctx.delayLock();
+  } else {
+    requestLockWalletAndBackToHomeScreen();
   }
 });
 
@@ -460,17 +464,24 @@ export const resetNavigationOnTopOfHome: typeof naviReplace = (
   apisHomeTabIndex.setTabIndex(0);
 };
 
+export const requestLockWallet = makeAvoidParallelAsyncFunc(async () => {
+  const lockInfo = await apisLock.getRabbyLockInfo();
+  const result = { canLockWallet: false };
+  if (!lockInfo.isUseCustomPwd) return result;
+
+  const isUnlocked = apisLock.isUnlocked();
+  if (isUnlocked) {
+    result.canLockWallet = true;
+    await apisLock.lockWallet();
+  }
+
+  return result;
+});
+
 export const requestLockWalletAndBackToUnlockScreen =
   makeAvoidParallelAsyncFunc(async () => {
-    const lockInfo = await apisLock.getRabbyLockInfo();
-    const result = { canLockWallet: false };
-    if (!lockInfo.isUseCustomPwd) return result;
-
-    const isUnlocked = apisLock.isUnlocked();
-    if (isUnlocked) {
-      result.canLockWallet = true;
-      await apisLock.lockWallet();
-    }
+    const result = await requestLockWallet();
+    if (!result.canLockWallet) return result;
 
     console.debug('will back to unlock screen');
     const navigation = getReadyNavigationInstance();
@@ -478,6 +489,25 @@ export const requestLockWalletAndBackToUnlockScreen =
 
     return result;
   });
+
+export const requestLockWalletAndBackToHomeScreen = makeAvoidParallelAsyncFunc(
+  async () => {
+    const result = await requestLockWallet();
+    if (!result.canLockWallet) return result;
+
+    console.debug('will back to home screen');
+    const navigation = getReadyNavigationInstance();
+    if (navigation) {
+      const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
+      resetNavigationTo(
+        navigation,
+        hasAccountsInKeyring ? 'Home' : 'GetStarted',
+      );
+    }
+
+    return result;
+  },
+);
 
 type ResetNaviOnUIUnlockFn = (ctx: {
   navigation: NavigationInstance;
@@ -494,9 +524,9 @@ const unlockUIState = {
   finishedUnlockResetNav: false,
   resetNaviOnTopOfHomeWhenUnlockRef: null as null | ResetNaviOnUIUnlockFn,
 };
-// keyringService.addListener('lock', () => {
-//   unlockUIState.finishedUnlockResetNav = false;
-// });
+keyringService.addListener('lock', () => {
+  unlockUIState.finishedUnlockResetNav = false;
+});
 export class UnlockUIManager {
   static triggerAutoUnlock(delay = 500) {
     const action = () => {
@@ -534,6 +564,10 @@ export class UnlockUIManager {
         return ret;
       };
     }
+  }
+
+  static clearQueuedResetNaviOnTopOfHomeWhenUnlock() {
+    unlockUIState.resetNaviOnTopOfHomeWhenUnlockRef = null;
   }
 
   static async resetNavOnUIUnlock() {
@@ -842,114 +876,95 @@ export function startSubscribeRemoteNotification() {
             return null;
           });
 
-        UnlockUIManager.triggerAutoUnlock();
+        const foundAccount = await findMyAccountByOwnerAddress(ownerAddress);
+        const hideToastRef = {
+          current: toastLoading(i18next.t('notifications.loadingTransaction'), {
+            duration: 3 * 1000,
+          }),
+        };
 
-        UnlockUIManager.queueResetNaviOnTopOfHomeWhenUnlock(async ctx => {
-          const foundAccount = await findMyAccountByOwnerAddress(ownerAddress);
-          const hideToastRef = {
-            current: toastLoading(
-              i18next.t('notifications.loadingTransaction'),
-              {
-                duration: 3 * 1000,
-              },
-            ),
-          };
-
-          const earlyReturn = (shouldExecuteDefaultAction = false) => {
-            earlyReturnL1();
-            hideToastRef.current();
-            if (shouldExecuteDefaultAction) {
-              ctx.defaultAction?.();
-            }
-          };
-
-          if (!foundAccount) {
-            console.debug(
-              '[notifications] [startSubscribeRemoteNotification] No matched account found for ownerAddress:',
-              ownerAddress,
-            );
-            toast.error(i18next.t('notifications.noTransactionOwnerAddress'), {
-              duration: 8 * 1000,
-              hideOnPress: true,
-            });
-            return earlyReturn(true);
-          }
-
-          const txDetail = await txDetailPromise;
-
-          console.debug('[notifications] txDetail', txDetail);
-
-          if (!txDetail) {
-            const warnMsg = `[notifications] [startSubscribeRemoteNotification] No tx detail found for txHash: ${parsedData.txInfo?.txHash} on chainId: ${parsedData.txInfo?.chainServerId}`;
-            console.warn(warnMsg);
-
-            const currentRouteName =
-              navigationRouteStore.getState().currentRouteName;
-            const needReplace = currentRouteName === RootNames.History;
-            const naviFn = ctx.defaultAction
-              ? resetNavigationOnTopOfHome
-              : needReplace
-              ? naviReplace
-              : naviPush;
-
-            await switchSceneCurrentAccount('History', foundAccount);
-            hideToastRef.current();
-            naviFn(RootNames.StackTransaction, {
-              screen: RootNames.History,
-              params: {
-                isForMultipleAddress: false,
-              },
-            });
-
-            return earlyReturn(false);
-          }
-
+        const earlyReturn = () => {
+          earlyReturnL1();
           hideToastRef.current();
+        };
 
-          const pinedQueue = preferenceService.getPinToken();
-          const customTxItemsMap =
-            transactionHistoryService.getCustomTxItemMap();
-          const historyDisplayItem = txResultToToHistoryDisplayItem({
-            address: parsedData.txInfo?.ownerAddress || '',
-            res: txDetail,
-            pinedQueue,
-            customTxItemsMap,
-          })[0];
+        if (!foundAccount) {
           console.debug(
-            '[notifications] [startSubscribeRemoteNotification] received parsedData',
-            historyDisplayItem,
+            '[notifications] [startSubscribeRemoteNotification] No matched account found for ownerAddress:',
+            ownerAddress,
           );
-          if (!historyDisplayItem) {
-            toast.show(i18next.t('notifications.noTransactionDetail'), {
-              duration: 8 * 1000,
-              hideOnPress: true,
-            });
-            return earlyReturn(true);
-          }
-          earlyReturn(false);
+          toast.error(i18next.t('notifications.noTransactionOwnerAddress'), {
+            duration: 8 * 1000,
+            hideOnPress: true,
+          });
+          return earlyReturn();
+        }
+
+        const txDetail = await txDetailPromise;
+
+        console.debug('[notifications] txDetail', txDetail);
+
+        if (!txDetail) {
+          const warnMsg = `[notifications] [startSubscribeRemoteNotification] No tx detail found for txHash: ${parsedData.txInfo?.txHash} on chainId: ${parsedData.txInfo?.chainServerId}`;
+          console.warn(warnMsg);
 
           const currentRouteName =
             navigationRouteStore.getState().currentRouteName;
-          const needReplace = currentRouteName === RootNames.HistoryDetail;
+          const needReplace = currentRouteName === RootNames.History;
+          const naviFn = needReplace ? naviReplace : naviPush;
 
-          const naviFn = ctx.defaultAction
-            ? resetNavigationOnTopOfHome
-            : needReplace
-            ? naviReplace
-            : naviPush;
+          await switchSceneCurrentAccount('History', foundAccount);
+          hideToastRef.current();
           naviFn(RootNames.StackTransaction, {
-            screen: RootNames.HistoryDetail,
+            screen: RootNames.History,
             params: {
               isForMultipleAddress: false,
-              data: historyDisplayItem,
-              title:
-                prepareTxHistoryDisplayUIData(historyDisplayItem).formatTitle,
-              treatSmallAssetsAsScam: false,
             },
           });
 
-          perfEvents.emit('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS');
+          return earlyReturn();
+        }
+
+        hideToastRef.current();
+
+        const pinedQueue = preferenceService.getPinToken();
+        const customTxItemsMap = transactionHistoryService.getCustomTxItemMap();
+        const historyDisplayItem = txResultToToHistoryDisplayItem({
+          address: parsedData.txInfo?.ownerAddress || '',
+          res: txDetail,
+          pinedQueue,
+          customTxItemsMap,
+        })[0];
+        console.debug(
+          '[notifications] [startSubscribeRemoteNotification] received parsedData',
+          historyDisplayItem,
+        );
+        if (!historyDisplayItem) {
+          toast.show(i18next.t('notifications.noTransactionDetail'), {
+            duration: 8 * 1000,
+            hideOnPress: true,
+          });
+          return earlyReturn();
+        }
+        earlyReturn();
+
+        const currentRouteName =
+          navigationRouteStore.getState().currentRouteName;
+        const needReplace = currentRouteName === RootNames.HistoryDetail;
+
+        const naviFn = needReplace ? naviReplace : naviPush;
+        naviFn(RootNames.StackTransaction, {
+          screen: RootNames.HistoryDetail,
+          params: {
+            isForMultipleAddress: false,
+            data: historyDisplayItem,
+            title:
+              prepareTxHistoryDisplayUIData(historyDisplayItem).formatTitle,
+            treatSmallAssetsAsScam: false,
+          },
         });
+
+        perfEvents.emit('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS');
       });
     },
   );

@@ -22,7 +22,7 @@ import {
   stashKeyrings,
   requestKeyring,
 } from './keyring';
-import { throwErrorIfInvalidPwd } from './lock';
+import { verifyPasswordOrUnlock } from './lock';
 
 /**
  * Formats a mnemonic string by trimming, splitting by whitespace/comma/newline, and rejoining.
@@ -72,7 +72,7 @@ export function validateAndCleanMnemonic(mnemonic: string): string {
 }
 
 export const getMnemonics = async (password: string, address: string) => {
-  await throwErrorIfInvalidPwd(password);
+  await verifyPasswordOrUnlock(password);
   const keyring = await keyringService.getKeyringForAccount(
     address,
     KEYRING_CLASS.MNEMONIC,

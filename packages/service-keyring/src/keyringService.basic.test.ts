@@ -1,6 +1,7 @@
 import * as sinon from 'sinon';
 
 import { KeyringService } from './keyringService';
+import mockEncryptor from '../test/mock-encryptor';
 
 const password = 'password123';
 
@@ -8,7 +9,7 @@ describe('KeyringService setup', () => {
   let keyringService: KeyringService;
 
   beforeAll(() => {
-    keyringService = new KeyringService({});
+    keyringService = new KeyringService({ encryptor: mockEncryptor as any });
   });
 
   afterEach(() => {
@@ -30,7 +31,9 @@ describe('KeyringService setup', () => {
   describe('setLocked', () => {
     it('setLocked correctly sets lock state', async () => {
       await keyringService.setLocked();
-      expect(keyringService.password).toBeNull();
+      await expect(keyringService.persistAllKeyrings()).rejects.toThrow(
+        'KeyringService - password is not a string',
+      );
       expect(keyringService.memStore.getState().isUnlocked).toBe(false);
       expect(keyringService.keyrings).toHaveLength(0);
     });
@@ -48,7 +51,7 @@ describe('keyringService', () => {
   let keyringService: KeyringService;
 
   beforeEach(async () => {
-    keyringService = new KeyringService();
+    keyringService = new KeyringService({ encryptor: mockEncryptor as any });
     keyringService.loadStore({});
     await keyringService.boot(password);
     await keyringService.clearKeyrings();

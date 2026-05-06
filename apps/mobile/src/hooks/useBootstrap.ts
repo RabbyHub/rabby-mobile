@@ -105,12 +105,34 @@ export function useInitializeAppOnTop() {
       sendUserAddressEvent();
 
       doInitializeApis();
-      storeApiAccounts.fetchAccounts();
+      storeApiAccounts.fetchAccounts().then(accounts => {
+        storeApiLock.setAppLock(prev => ({
+          ...prev,
+          appUnlocked: true,
+          hasVisibleAccounts: accounts.length > 0,
+          hasStoredKeyrings:
+            accounts.length > 0 ||
+            keyringService.hasVault() ||
+            keyringService.hasEncryptedKeyringData() ||
+            keyringService.hasUnencryptedKeyringData(),
+        }));
+      });
       perpsService.unlockAgentWallets();
     };
     const onLock = () => {
       storeApiLock.setAppLock(prev => ({ ...prev, appUnlocked: false }));
-      storeApiAccounts.fetchAccounts();
+      storeApiAccounts.fetchAccounts().then(accounts => {
+        storeApiLock.setAppLock(prev => ({
+          ...prev,
+          appUnlocked: false,
+          hasVisibleAccounts: accounts.length > 0,
+          hasStoredKeyrings:
+            accounts.length > 0 ||
+            keyringService.hasVault() ||
+            keyringService.hasEncryptedKeyringData() ||
+            keyringService.hasUnencryptedKeyringData(),
+        }));
+      });
       setBrowserState({
         isShowBrowser: false,
         isShowSearch: false,

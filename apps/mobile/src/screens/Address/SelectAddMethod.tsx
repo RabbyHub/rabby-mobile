@@ -33,6 +33,10 @@ import { replaceToFirst } from '@/utils/navigation';
 import { toast } from '@/components2024/Toast';
 import { setAccountNeedsBackupReminder } from '@/hooks/account';
 import { useImportAddressProc } from '@/hooks/address/useNewUser';
+import {
+  ensureWalletUnlocked,
+  isWalletUnlockCancelled,
+} from '@/utils/walletUnlock';
 
 type SelectAddMethodProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -47,6 +51,23 @@ function SelectAddMethod(): JSX.Element {
   const { seedPhraseList } = useSeedPhrase();
   const { setConfirmCB } = useImportAddressProc();
   const creatingRef = useRef(false);
+
+  const ensureUnlockedForAction = React.useCallback(async () => {
+    if (keyringService.isUnlocked()) {
+      return true;
+    }
+
+    try {
+      await ensureWalletUnlocked();
+      return true;
+    } catch (error) {
+      if (isWalletUnlockCancelled(error)) {
+        return false;
+      }
+
+      throw error;
+    }
+  }, []);
 
   const handleCreateNewSeed = React.useCallback(async () => {
     if (creatingRef.current) {
@@ -106,6 +127,10 @@ function SelectAddMethod(): JSX.Element {
   }, []);
 
   const onPressCreateWallet = React.useCallback(async () => {
+    if (!(await ensureUnlockedForAction())) {
+      return;
+    }
+
     if (seedPhraseList.length > 0) {
       if (
         await shouldRedirectToSetPasswordBefore2024({
@@ -137,9 +162,14 @@ function SelectAddMethod(): JSX.Element {
     navigation,
     handleCreateNewSeed,
     setConfirmCB,
+    ensureUnlockedForAction,
   ]);
 
   const onPressImportSeedPhrase = React.useCallback(async () => {
+    if (!(await ensureUnlockedForAction())) {
+      return;
+    }
+
     setConfirmCB(async () => {
       navigation.replace(RootNames.ImportSecret, {
         initialTab: 'seedPhrase',
@@ -158,9 +188,18 @@ function SelectAddMethod(): JSX.Element {
       initialTab: 'seedPhrase',
       flow: 'in_app',
     });
-  }, [navigation, shouldRedirectToSetPasswordBefore2024, setConfirmCB]);
+  }, [
+    navigation,
+    shouldRedirectToSetPasswordBefore2024,
+    setConfirmCB,
+    ensureUnlockedForAction,
+  ]);
 
   const onPressImportPrivateKey = React.useCallback(async () => {
+    if (!(await ensureUnlockedForAction())) {
+      return;
+    }
+
     setConfirmCB(async () => {
       navigation.replace(RootNames.ImportSecret, {
         initialTab: 'privateKey',
@@ -179,23 +218,40 @@ function SelectAddMethod(): JSX.Element {
       initialTab: 'privateKey',
       flow: 'in_app',
     });
-  }, [navigation, shouldRedirectToSetPasswordBefore2024, setConfirmCB]);
+  }, [
+    navigation,
+    shouldRedirectToSetPasswordBefore2024,
+    setConfirmCB,
+    ensureUnlockedForAction,
+  ]);
 
-  const onPressHardwareWallet = React.useCallback(() => {
+  const onPressHardwareWallet = React.useCallback(async () => {
+    if (!(await ensureUnlockedForAction())) {
+      return;
+    }
+
     navigation.navigate(RootNames.StackAddress, {
       screen: RootNames.ImportHardwareAddress,
     });
-  }, [navigation]);
+  }, [navigation, ensureUnlockedForAction]);
 
-  const onPressRestoreRabby = React.useCallback(() => {
+  const onPressRestoreRabby = React.useCallback(async () => {
+    if (!(await ensureUnlockedForAction())) {
+      return;
+    }
+
     navigation.navigate(RootNames.ImportRabbyWallet, {
       flow: 'in_app',
     });
-  }, [navigation]);
+  }, [navigation, ensureUnlockedForAction]);
 
-  const onPressMoreOptions = React.useCallback(() => {
+  const onPressMoreOptions = React.useCallback(async () => {
+    if (!(await ensureUnlockedForAction())) {
+      return;
+    }
+
     navigation.navigate(RootNames.MoreImportMethods);
-  }, [navigation]);
+  }, [navigation, ensureUnlockedForAction]);
 
   return (
     <NormalScreenContainer overwriteStyle={styles.wrapper}>

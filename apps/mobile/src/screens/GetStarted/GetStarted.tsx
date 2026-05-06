@@ -9,7 +9,6 @@ import { Button } from '@/components2024/Button';
 import { useMemoizedFn } from 'ahooks';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { useAppUnlocked } from '@/hooks/useLock';
 import { createGetStyles2024 } from '@/utils/styles';
 import TouchableText from '@/components/Touchable/TouchableText';
 import {
@@ -25,6 +24,10 @@ import { Text } from '@/components/Typography';
 import ChevronRightSmallCC from '@/assets/icons/common/right-2-cc.svg';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import {
+  ensureWalletUnlocked,
+  isWalletUnlockCancelled,
+} from '@/utils/walletUnlock';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -75,13 +78,26 @@ function NewUserGetStartedScreen() {
     if (!getStarted.processedInit) {
       return;
     }
-    if (!keyringService.isUnlocked()) {
-      navigateDeprecated(RootNames.Unlock);
-      return;
-    }
 
     navigateDeprecated(RootNames.StackRoot, { screen: RootNames.Home });
   }, [getStarted.processedInit]);
+
+  const ensureUnlockedForAction = useCallback(async () => {
+    if (keyringService.isUnlocked()) {
+      return true;
+    }
+
+    try {
+      await ensureWalletUnlocked();
+      return true;
+    } catch (error) {
+      if (isWalletUnlockCancelled(error)) {
+        return false;
+      }
+
+      throw error;
+    }
+  }, []);
 
   const { startCreateAddressProc, resetCreateAddressProc } =
     useCreateAddressProc();
@@ -98,8 +114,7 @@ function NewUserGetStartedScreen() {
     if (!getStarted.processedInit) {
       return;
     }
-    if (!keyringService.isUnlocked()) {
-      navigateDeprecated(RootNames.Unlock);
+    if (!(await ensureUnlockedForAction())) {
       return;
     }
 
@@ -108,14 +123,17 @@ function NewUserGetStartedScreen() {
       REPORT_TIMEOUT_ACTION_KEY.CLICK_CREATE_NEW_ADDRESS,
     );
     navigateDeprecated(RootNames.SetupWallet);
-  }, [getStarted.processedInit, startCreateAddressProc]);
+  }, [
+    ensureUnlockedForAction,
+    getStarted.processedInit,
+    startCreateAddressProc,
+  ]);
 
   const handleGoToImport = useCallback(async () => {
     if (!getStarted.processedInit) {
       return;
     }
-    if (!keyringService.isUnlocked()) {
-      navigateDeprecated(RootNames.Unlock);
+    if (!(await ensureUnlockedForAction())) {
       return;
     }
 
@@ -123,14 +141,13 @@ function NewUserGetStartedScreen() {
       REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS,
     );
     navigateDeprecated(RootNames.SelectImportMethod);
-  }, [getStarted.processedInit]);
+  }, [ensureUnlockedForAction, getStarted.processedInit]);
 
   const handleGoToSyncExtension = useCallback(async () => {
     if (!getStarted.processedInit) {
       return;
     }
-    if (!keyringService.isUnlocked()) {
-      navigateDeprecated(RootNames.Unlock);
+    if (!(await ensureUnlockedForAction())) {
       return;
     }
 
@@ -138,7 +155,7 @@ function NewUserGetStartedScreen() {
     preferenceService.setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
     );
-  }, [getStarted.processedInit]);
+  }, [ensureUnlockedForAction, getStarted.processedInit]);
 
   const initAccounts = useMemoizedFn(async () => {
     setGetStarted(prev => ({ ...prev, processedInit: false }));
@@ -155,13 +172,10 @@ function NewUserGetStartedScreen() {
     }
   });
 
-  const { isAppUnlocked } = useAppUnlocked();
   useFocusEffect(
     useCallback(() => {
-      if (isAppUnlocked) {
-        initAccounts();
-      }
-    }, [isAppUnlocked, initAccounts]),
+      initAccounts();
+    }, [initAccounts]),
   );
 
   const { bottom, top } = useSafeAreaInsets();

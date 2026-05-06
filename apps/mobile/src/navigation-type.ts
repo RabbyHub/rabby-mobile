@@ -51,6 +51,8 @@ export type RootStackParamsList = {
   [RootNames.NotFound]?: {};
   [RootNames.Unlock]?: {
     disableAutoTriggerUnlock?: boolean;
+    allowCancel?: boolean;
+    unlockRequestId?: number;
   };
   SetupWallet?:
     | { seedPhraseVaultId: string }

@@ -35,7 +35,7 @@ export type ValidationBehaviorProps = {
 };
 
 const DefaultValidationPassword: ValidationBehaviorProps['validationHandler'] &
-  object = throwErrorIfInvalidPwd;
+  object = verifyPasswordOrUnlock;
 const noop = () => {};
 
 export function parseValidationBehavior(props?: ValidationBehaviorProps) {
@@ -81,6 +81,18 @@ export async function throwErrorIfInvalidPwd(password: string) {
   } catch (error) {
     throw new Error(ERRORS.INCORRECT_PASSWORD);
   }
+}
+
+export async function verifyPasswordOrUnlock(password: string) {
+  if (keyringService.isUnlocked()) {
+    return throwErrorIfInvalidPwd(password);
+  }
+
+  const result = await unlockWallet(password);
+  if (result.error) {
+    throw new Error(result.formFieldError || ERRORS.INCORRECT_PASSWORD);
+  }
+  updateUnlockTime();
 }
 
 export async function setupWalletPassword(newPassword: string) {
@@ -255,6 +267,8 @@ async function tryAutoUnlockRabbyMobile() {
   try {
     if (lockInfo.isUseBuiltInPwd && !keyringService.isUnlocked()) {
       await keyringService.submitPassword(RABBY_MOBILE_KR_PWD);
+    } else if (!keyringService.isUnlocked()) {
+      await keyringService.restoreUnencryptedKeyrings();
     }
   } catch (e) {
     console.error('[tryAutoUnlockRabbyMobile]');
@@ -358,10 +372,10 @@ export const safeVerifyPasswordAndUpdateUnlockTime =
   makeLockApiWithUpdateUnlockTime(safeVerifyPassword);
 
 export function subscribeAppLock(fn: () => any) {
-  keyringService.on('locked', fn);
+  keyringService.on('lock', fn);
 
   const dispose = () => {
-    keyringService.off('locked', fn);
+    keyringService.off('lock', fn);
   };
 
   return dispose;

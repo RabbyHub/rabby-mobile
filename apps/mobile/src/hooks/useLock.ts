@@ -29,11 +29,15 @@ const isIOS = Platform.OS === 'ios';
 
 type AppLockState = {
   appUnlocked: boolean;
+  hasVisibleAccounts: boolean;
+  hasStoredKeyrings: boolean;
   pwdStatus: PasswordStatus;
 };
 const zAppLockStore = zCreate<AppLockState>((set, get) => {
   return {
     appUnlocked: false,
+    hasVisibleAccounts: false,
+    hasStoredKeyrings: false,
     pwdStatus: PasswordStatus.Unknown,
   };
 });
@@ -60,6 +64,8 @@ export function useSetAppLock() {
 export function useAppUnlocked() {
   return {
     isAppUnlocked: zAppLockStore(state => state.appUnlocked),
+    hasVisibleAccounts: zAppLockStore(state => state.hasVisibleAccounts),
+    hasStoredKeyrings: zAppLockStore(state => state.hasStoredKeyrings),
     getIsAppUnlocked,
     setAppLock,
   };
@@ -85,8 +91,15 @@ export const getTriedUnlock = async () => {
   return apisLock
     .tryAutoUnlockRabbyMobileWithUpdateUnlockTime()
     .then(async result => {
+      const accounts = await keyringService.getAllVisibleAccountsArray();
       setAppLock({
         appUnlocked: keyringService.isUnlocked(),
+        hasVisibleAccounts: accounts.length > 0,
+        hasStoredKeyrings:
+          accounts.length > 0 ||
+          keyringService.hasVault() ||
+          keyringService.hasEncryptedKeyringData() ||
+          keyringService.hasUnencryptedKeyringData(),
         pwdStatus: result.lockInfo.pwdStatus,
       });
       return result;
@@ -107,9 +120,16 @@ const fetchLockInfo = makeAvoidParallelAsyncFunc(async () => {
 
   try {
     const response = await apisLock.getRabbyLockInfo();
+    const accounts = await keyringService.getAllVisibleAccountsArray();
 
     setAppLock({
       appUnlocked: keyringService.isUnlocked(),
+      hasVisibleAccounts: accounts.length > 0,
+      hasStoredKeyrings:
+        accounts.length > 0 ||
+        keyringService.hasVault() ||
+        keyringService.hasEncryptedKeyringData() ||
+        keyringService.hasUnencryptedKeyringData(),
       pwdStatus: response.pwdStatus,
     });
 

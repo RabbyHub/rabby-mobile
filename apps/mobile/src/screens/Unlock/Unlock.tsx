@@ -53,6 +53,7 @@ import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { startUnlockScreenBootstrapWarmups } from '@/setup-app-before-render';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
+import { cancelPendingWalletUnlock } from '@/utils/walletUnlock';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -363,9 +364,22 @@ export default function UnlockScreen() {
     }, [params?.disableAutoTriggerUnlock]),
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        if (params?.allowCancel && !apisLock.isUnlocked()) {
+          cancelPendingWalletUnlock(params.unlockRequestId);
+        }
+      };
+    }, [params?.allowCancel, params?.unlockRequestId]),
+  );
+
   const { registerPreventEffect } = usePreventGoBack({
     navigation,
-    shouldGoback: useCallback(() => apisLock.isUnlocked(), []),
+    shouldGoback: useCallback(
+      () => Boolean(params?.allowCancel) || apisLock.isUnlocked(),
+      [params?.allowCancel],
+    ),
   });
 
   useFocusEffect(registerPreventEffect);

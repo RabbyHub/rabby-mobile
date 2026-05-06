@@ -35,7 +35,7 @@ export const useAuth = (params?: {
   }, [syncUnlockTime, _onFinished]);
 
   const validationHandler = password => {
-    return apisLock.throwErrorIfInvalidPwd(password);
+    return apisLock.verifyPasswordOrUnlock(password);
   };
   const unlockWithBiometrics = useMemoizedFn(async () => {
     onBeforeAuth?.();
@@ -53,7 +53,7 @@ export const useAuth = (params?: {
             reject();
           },
           validationHandler(password) {
-            return apisLock.throwErrorIfInvalidPwd(password);
+            return apisLock.verifyPasswordOrUnlock(password);
           },
         });
       }
@@ -82,7 +82,7 @@ export const useAuth = (params?: {
             reject();
           },
           validationHandler(password) {
-            return apisLock.throwErrorIfInvalidPwd(password);
+            return apisLock.verifyPasswordOrUnlock(password);
           },
         });
       }
