@@ -7,7 +7,7 @@ import {
 } from 'react-native-gesture-handler';
 import AnimateableTextImpl from 'react-native-animateable-text';
 import { Text as RNEUITextImpl } from '@rneui/base';
-import { createAnimatedComponent } from 'react-native-reanimated/src/createAnimatedComponent';
+import Animated from 'react-native-reanimated';
 
 // Since createAnimatedComponent return type is ComponentClass that has the props of the argument,
 // but not things like NativeMethods, etc. we need to add them manually by extending the type.
@@ -47,7 +47,7 @@ export const AnimateableText = withDefaults(AnimateableTextImpl, {
 export const RNEUIText = withDefaults(RNEUITextImpl, {
   allowFontScaling: false,
 });
-export const AnimatedText = createAnimatedComponent(Text);
+export const AnimatedText = Animated.createAnimatedComponent(Text);
 
 export type TextInput = React.ComponentRef<typeof TextInput>;
 export type Text = React.ComponentRef<typeof Text>;
