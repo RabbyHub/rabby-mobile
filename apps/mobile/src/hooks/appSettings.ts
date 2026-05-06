@@ -26,7 +26,7 @@ export const CURRENT_KEYCHAIN_VERSION_VALUES = ['8.2.0-fork', '9.0.0'] as const;
 export type CurrentKeychainVersion =
   (typeof CURRENT_KEYCHAIN_VERSION_VALUES)[number];
 
-const DEFAULT_CURRENT_KEYCHAIN_VERSION: CurrentKeychainVersion = '8.2.0-fork';
+const DEFAULT_CURRENT_KEYCHAIN_VERSION: CurrentKeychainVersion = '9.0.0';
 const DEFAULT_DEBUG_KEYCHAIN_STORAGE: KeychainStorageType =
   DEFAULT_KEYCHAIN_STORAGE_TYPE;
 

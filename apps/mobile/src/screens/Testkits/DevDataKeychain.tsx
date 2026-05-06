@@ -60,13 +60,14 @@ const KEYCHAIN_VERSION_OPTIONS = [
     key: '8.2.0-fork',
     label: '8.2.0-fork',
     sourceLabel: apisKeychainV8_2_0.KEYCHAIN_SOURCE_LABEL,
-    description: 'Local fork that matches the current business path.',
+    description: 'Local fork kept as a legacy comparison and fallback path.',
   },
   {
     key: '9.0.0',
     label: '9.0.0',
     sourceLabel: apisKeychainV9_0_0.KEYCHAIN_SOURCE_LABEL,
-    description: 'Official package wrapped with Rabby business logic.',
+    description:
+      'Official package wrapped with the default Rabby business logic.',
   },
 ] as const;
 
