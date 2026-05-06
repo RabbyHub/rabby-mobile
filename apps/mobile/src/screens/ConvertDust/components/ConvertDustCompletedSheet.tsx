@@ -17,20 +17,20 @@ import { getTokenSymbol } from '@/utils/token';
 import { getTokenIcon } from '@/utils/tokenIcon';
 import type { Chain } from '@debank/common';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import {
-  BottomSheetDraggableView,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import Lottie from 'lottie-react-native';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dimensions, FlatList, TouchableOpacity, View } from 'react-native';
 import { TaskStatusIcon } from './LowValueTokenSelector';
 import type { TaskItemStatus } from '../hooks/useBatchSwapTask';
-import { IS_ANDROID } from '@/core/native/utils';
 import { LocalPannableDraggableView } from '@/components/customized/BottomSheetDraggableView';
 
 const DETAIL_ROW_HEIGHT = 44;
+const DETAIL_HEADER_HEIGHT = 34;
+const DETAIL_PANEL_PADDING_TOP = 12;
+const DETAIL_TOGGLE_HEIGHT = 30;
+const DETAIL_MAX_VISIBLE_ROWS = 3;
 
 const getTokenKey = (token: TokenItem, index: number) =>
   `${token.chain}:${token.id}:${index}`;
@@ -102,6 +102,15 @@ export function ConvertDustCompletedSheet({
   const [isDetailExpanded, setIsDetailExpanded] = React.useState(false);
   const detailListRef = React.useRef<FlatList<TokenItem>>(null);
   const shouldShowDetail = taskList.length > 0;
+  const detailPanelHeight = React.useMemo(() => {
+    const visibleRows = Math.min(taskList.length, DETAIL_MAX_VISIBLE_ROWS);
+    return (
+      DETAIL_PANEL_PADDING_TOP +
+      DETAIL_HEADER_HEIGHT +
+      DETAIL_ROW_HEIGHT * visibleRows +
+      DETAIL_TOGGLE_HEIGHT
+    );
+  }, [taskList.length]);
   const firstFailedIndex = React.useMemo(
     () =>
       taskList.findIndex(token => statusDict[token.id]?.status === 'failed'),
@@ -221,7 +230,7 @@ export function ConvertDustCompletedSheet({
 
         {shouldShowDetail ? (
           isDetailExpanded ? (
-            <View style={styles.detailPanel}>
+            <View style={[styles.detailPanel, { height: detailPanelHeight }]}>
               <View style={styles.detailHeader}>
                 <Text style={styles.detailHeaderText}>
                   {t('page.convertDust.colStatusToken')}
@@ -413,7 +422,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     transform: [{ rotate: '180deg' }],
   },
   detailPanel: {
-    height: 208,
     marginTop: 12,
     borderRadius: 12,
     paddingTop: 12,
