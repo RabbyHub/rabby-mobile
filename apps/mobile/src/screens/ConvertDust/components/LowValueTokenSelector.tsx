@@ -175,7 +175,7 @@ const LoadingTokenList = () => {
 
 export function LowValueTokenSelector({
   disabled,
-  hasSelectedToken,
+  hasSelectedAllTokens,
   isLoading,
   selectedFilter,
   selectedTokenIds,
@@ -188,7 +188,7 @@ export function LowValueTokenSelector({
   onToggleToken,
 }: {
   disabled?: boolean;
-  hasSelectedToken: boolean;
+  hasSelectedAllTokens: boolean;
   isLoading: boolean;
   selectedFilter: DustFilter;
   selectedTokenIds: Set<string>;
@@ -269,7 +269,7 @@ export function LowValueTokenSelector({
           style={styles.tokenHeaderLeft}
           onPress={onToggleAll}>
           {showStatus ? null : (
-            <CheckBoxRect checked={hasSelectedToken} size={24} />
+            <CheckBoxRect checked={hasSelectedAllTokens} size={24} />
           )}
           <Text style={styles.headerText}>
             {showStatus

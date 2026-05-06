@@ -206,6 +206,12 @@ function ConvertDustContent({
     () => new Set(task.list.map(token => token.id)),
     [task.list],
   );
+  const hasSelectedAllTokens = useMemo(
+    () =>
+      !!dustTokens.length &&
+      dustTokens.every(token => selectedTokenIds.has(token.id)),
+    [dustTokens, selectedTokenIds],
+  );
   const isSupportedAccount =
     currentAccount?.type === KEYRING_CLASS.PRIVATE_KEY ||
     currentAccount?.type === KEYRING_CLASS.MNEMONIC;
@@ -237,13 +243,13 @@ function ConvertDustContent({
       return;
     }
 
-    if (hasSelectedToken) {
+    if (hasSelectedAllTokens) {
       task.init([]);
       return;
     }
 
     task.init(dustTokens as TokenItem[]);
-  }, [dustTokens, hasSelectedToken, task]);
+  }, [dustTokens, hasSelectedAllTokens, task]);
 
   const handleChainChange = useCallback(
     (nextChainEnum: CHAINS_ENUM) => {
@@ -390,7 +396,7 @@ function ConvertDustContent({
 
         <LowValueTokenSelector
           disabled={task.disabled}
-          hasSelectedToken={hasSelectedToken}
+          hasSelectedAllTokens={hasSelectedAllTokens}
           isLoading={isTokenListLoading}
           selectedFilter={selectedFilter}
           selectedTokenIds={selectedTokenIds}
