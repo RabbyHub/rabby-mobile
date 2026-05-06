@@ -3303,7 +3303,8 @@
         "title": "Convert Dust",
         "description": "Supports converting small balances into the native token"
       },
-      "unsupportedAccountType": "Not support this account type."
+      "unsupportedAccountType": "Not support this account type.",
+      "unsupportedAccount": "Currently only private key and seed phrase addresses are supported."
     }
   },
   "component": {

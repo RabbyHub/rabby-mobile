@@ -399,6 +399,7 @@ function ConvertDustContent({
           hideTestnetTab
           account={currentAccount!}
           supportChains={SWAP_SUPPORT_CHAINS}
+          unsupportedChainMode="hidden"
           disabled={task.disabled}
         />
 
@@ -443,6 +444,7 @@ function ConvertDustContent({
         disabled={
           task.status === 'idle' && (!hasSelectedToken || !isSupportedAccount)
         }
+        isSupportedAccount={isSupportedAccount}
         status={task.status}
         onPress={handleStartPress}
       />
