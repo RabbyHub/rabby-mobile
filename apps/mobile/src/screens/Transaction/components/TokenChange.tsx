@@ -7,7 +7,7 @@ import { getTokenSymbol } from '@/utils/token';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ellipsisOverflowedText } from '@/utils/text';
-import { TokenChangeDataItem } from './HistoryItem';
+import type { TokenChangeDataItem } from '@/types/history';
 import { Text } from '@/components/Typography';
 
 const TxChangeItem = ({

@@ -27,7 +27,7 @@ import {
 } from '@/components2024/DirectSignBtn';
 import { Account } from '@/core/services/preference';
 import { RiskType, sortRisksDesc, useRisks } from '@/components/SendLike/risk';
-import { useSignatureStore } from '@/components2024/MiniSignV2';
+import { useSignatureStore } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { BottomRiskTip } from '@/components/SendLike/BottomRiskTip';
 import { resolveBgColorByType } from '@/components2024/ScreenContainer/LinearGradientContainer';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';

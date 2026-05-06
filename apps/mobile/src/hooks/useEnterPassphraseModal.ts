@@ -1,5 +1,5 @@
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
-import { apiMnemonic } from '@/core/apis';
+import * as apiMnemonic from '@/core/apis/mnemonic';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 

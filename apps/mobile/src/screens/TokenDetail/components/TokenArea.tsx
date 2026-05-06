@@ -7,7 +7,7 @@ import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import { ArrowCircleCC } from '@/assets2024/icons/address';
-import { TokenFromAddressItem } from '..';
+import type { TokenFromAddressItem } from '../types';
 import { CombineTokensItem } from '@/screens/Home/hooks/store';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { ellipsisAddress } from '@/utils/address';

@@ -2,13 +2,12 @@ import { keyringService, preferenceService } from '../services/shared';
 
 import { ethers } from 'ethers';
 // import { preferenceService } from '../service';
-// import { EthereumProvider } from './buildinProvider';
 import { Chain } from '@/constant/chains';
 import { findChain } from '@/utils/chain';
 import Safe, { SafeMessage } from '@rabby-wallet/gnosis-sdk';
 import { t } from 'i18next';
 import { isAddress } from 'web3-utils';
-import buildinProvider, { EthereumProvider } from './buildinProvider';
+import { builtinEthereumProvider, EthereumProvider } from './ethereumProvider';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKeyring } from './keyring';
 import {
@@ -273,17 +272,15 @@ class ApisSafe {
   ) => {
     const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
     if (keyring) {
-      buildinProvider.currentProvider.currentAccount = account.address;
-      buildinProvider.currentProvider.currentAccountType = account.type;
-      buildinProvider.currentProvider.currentAccountBrand = account.brandName;
-      buildinProvider.currentProvider.chainId = networkId;
+      builtinEthereumProvider.currentAccount = account.address;
+      builtinEthereumProvider.currentAccountType = account.type;
+      builtinEthereumProvider.currentAccountBrand = account.brandName;
+      builtinEthereumProvider.chainId = networkId;
       return keyring.validateTransaction(
         {
           address: account.address,
           transaction: tx,
-          provider: new ethers.providers.Web3Provider(
-            buildinProvider.currentProvider,
-          ),
+          provider: new ethers.providers.Web3Provider(builtinEthereumProvider),
           version,
           networkId,
         },
@@ -436,17 +433,15 @@ class ApisSafe {
   signGnosisTransaction = async (account: Account) => {
     const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
     if (keyring.currentTransaction && keyring.safeInstance) {
-      buildinProvider.currentProvider.currentAccount = account.address;
-      buildinProvider.currentProvider.currentAccountType = account.type;
-      buildinProvider.currentProvider.currentAccountBrand = account.brandName;
-      buildinProvider.currentProvider.chainId = keyring.safeInstance.network;
+      builtinEthereumProvider.currentAccount = account.address;
+      builtinEthereumProvider.currentAccountType = account.type;
+      builtinEthereumProvider.currentAccountBrand = account.brandName;
+      builtinEthereumProvider.chainId = keyring.safeInstance.network;
       return keyring.confirmTransaction({
         safeAddress: keyring.safeInstance.safeAddress,
         transaction: keyring.currentTransaction,
         networkId: keyring.safeInstance.network,
-        provider: new ethers.providers.Web3Provider(
-          buildinProvider.currentProvider,
-        ),
+        provider: new ethers.providers.Web3Provider(builtinEthereumProvider),
       });
     }
   };
@@ -463,17 +458,15 @@ class ApisSafe {
   execGnosisTransaction = async (account: Account) => {
     const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
     if (keyring.currentTransaction && keyring.safeInstance) {
-      buildinProvider.currentProvider.currentAccount = account.address;
-      buildinProvider.currentProvider.currentAccountType = account.type;
-      buildinProvider.currentProvider.currentAccountBrand = account.brandName;
-      buildinProvider.currentProvider.chainId = keyring.safeInstance.network;
+      builtinEthereumProvider.currentAccount = account.address;
+      builtinEthereumProvider.currentAccountType = account.type;
+      builtinEthereumProvider.currentAccountBrand = account.brandName;
+      builtinEthereumProvider.chainId = keyring.safeInstance.network;
       await keyring.execTransaction({
         safeAddress: keyring.safeInstance.safeAddress,
         transaction: keyring.currentTransaction,
         networkId: keyring.safeInstance.network,
-        provider: new ethers.providers.Web3Provider(
-          buildinProvider.currentProvider,
-        ),
+        provider: new ethers.providers.Web3Provider(builtinEthereumProvider),
       });
     }
   };

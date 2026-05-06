@@ -57,10 +57,8 @@ import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
-import {
-  useSignatureStoreOf,
-  SignatureInstanceProvider,
-} from '@/components2024/MiniSignV2';
+import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
+import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { CHAINS_ENUM } from '@debank/common';
 import { ReserveDataHumanized } from '@aave/contract-helpers';
 import { stats } from '@/utils/stats';

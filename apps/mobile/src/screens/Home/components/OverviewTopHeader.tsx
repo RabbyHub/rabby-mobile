@@ -47,13 +47,16 @@ import Animated, {
   SharedValue,
   useAnimatedStyle,
 } from 'react-native-reanimated';
-import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
+import {
+  apisHomeTabIndex,
+  HomeTabName,
+  useHomeTabIndex,
+} from '@/hooks/navigation';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
 import useTokenList from '@/store/tokens';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
-import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
 import { Text } from '@/components/Typography';
 import { useReportTokenTabView } from '../hooks/useReportTokenTabView';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
@@ -115,7 +118,7 @@ export function TabsTopHeader(): JSX.Element {
   const setTokenDisplayMode = useTokenList(s => s.setTokenDisplayMode);
 
   const showRightArea = useMemo(() => {
-    return focusedTab !== TabName.token;
+    return focusedTab !== HomeTabName.token;
   }, [focusedTab]);
   const tokenDisplayModeLabel = useMemo(() => {
     if (tokenDisplayMode === 'bySymbol') {

@@ -36,11 +36,11 @@ import CoboSafeModificationDelegatedAddress from './CoboSafeModificationDelegate
 import CoboSafeModificationRule from './CoboSafeModificationRule';
 import CoboSafeModificationTokenApproval from './CoboSafeModificationTokenApproval';
 import { CommonAction } from '../CommonAction';
-import { getActionsStyle } from '../Actions';
+import { getActionsStyle } from '../Actions/styles';
 import { Card } from '../Actions/components/Card';
 import { OriginInfo } from '../OriginInfo';
 import { Divide } from '../Actions/components/Divide';
-import { getMessageStyles } from '../TextActions';
+import { getMessageStyles } from '../TextActions/styles';
 import LogoWithText from '../Actions/components/LogoWithText';
 import { Col, Row } from '../Actions/components/Table';
 import useCommonStyle from '../../hooks/useCommonStyle';
