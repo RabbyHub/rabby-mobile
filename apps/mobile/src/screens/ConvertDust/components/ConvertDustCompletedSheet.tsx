@@ -1,5 +1,5 @@
 import successAnimation from '@/assets2024/animations/animation-create-success.min.json';
-import RcIconCaretDown from '@/assets2024/icons/common/caret-down-small-cc.svg';
+import RcIconDownCC from '@/assets2024/icons/convertDust/down-cc.svg';
 import RcIconSwapFailed from '@/assets2024/icons/convertDust/swap-failed.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -17,17 +17,15 @@ import { getTokenSymbol } from '@/utils/token';
 import { getTokenIcon } from '@/utils/tokenIcon';
 import type { Chain } from '@debank/common';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import Lottie from 'lottie-react-native';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, TouchableOpacity, View } from 'react-native';
+import { Dimensions, FlatList, TouchableOpacity, View } from 'react-native';
 import { TaskStatusIcon } from './LowValueTokenSelector';
 import type { TaskItemStatus } from '../hooks/useBatchSwapTask';
 
 const DETAIL_ROW_HEIGHT = 44;
-const DEFAULT_SHEET_HEIGHT = 437;
-const COLLAPSED_DETAIL_SHEET_HEIGHT = 520;
-const EXPANDED_DETAIL_SHEET_HEIGHT = 682;
 
 const getTokenKey = (token: TokenItem, index: number) =>
   `${token.chain}:${token.id}:${index}`;
@@ -99,13 +97,6 @@ export function ConvertDustCompletedSheet({
   const [isDetailExpanded, setIsDetailExpanded] = React.useState(false);
   const detailListRef = React.useRef<FlatList<TokenItem>>(null);
   const shouldShowDetail = taskList.length > 0;
-  const snapPoints = React.useMemo(() => {
-    if (!shouldShowDetail) {
-      return [DEFAULT_SHEET_HEIGHT];
-    }
-
-    return [COLLAPSED_DETAIL_SHEET_HEIGHT, EXPANDED_DETAIL_SHEET_HEIGHT];
-  }, [shouldShowDetail]);
   const firstFailedIndex = React.useMemo(
     () =>
       taskList.findIndex(token => statusDict[token.id]?.status === 'failed'),
@@ -120,26 +111,11 @@ export function ConvertDustCompletedSheet({
     if (visible) {
       setIsDetailExpanded(hasFailedTask);
       modalRef.current?.present();
-      if (hasFailedTask) {
-        requestAnimationFrame(() => {
-          modalRef.current?.snapToIndex(1);
-        });
-      }
     } else {
       modalRef.current?.close();
       setIsDetailExpanded(false);
     }
   }, [hasFailedTask, visible]);
-
-  useEffect(() => {
-    if (!visible || !isDetailExpanded) {
-      return;
-    }
-
-    requestAnimationFrame(() => {
-      modalRef.current?.snapToIndex(1);
-    });
-  }, [isDetailExpanded, visible]);
 
   const renderDetailItem = React.useCallback(
     ({ item }: { item: TokenItem }) => (
@@ -175,28 +151,22 @@ export function ConvertDustCompletedSheet({
 
   const handleExpandDetail = React.useCallback(() => {
     setIsDetailExpanded(true);
-    requestAnimationFrame(() => {
-      modalRef.current?.snapToIndex(1);
-    });
   }, []);
 
   const handleFoldDetail = React.useCallback(() => {
     setIsDetailExpanded(false);
-    requestAnimationFrame(() => {
-      modalRef.current?.snapToIndex(0);
-    });
   }, []);
 
   return (
     <AppBottomSheetModal
       ref={modalRef}
-      index={isDetailExpanded ? 1 : 0}
-      snapPoints={snapPoints}
+      enableDynamicSizing
+      maxDynamicContentSize={Dimensions.get('screen').height * 0.9}
       backgroundStyle={styles.sheetBackground}
       handleStyle={styles.sheetHandle}
       handleIndicatorStyle={styles.sheetHandleIndicator}
       onDismiss={onCancel}>
-      <View style={styles.sheetContent}>
+      <BottomSheetView style={styles.sheetContent}>
         <View style={styles.heroBlock}>
           {isSuccess ? (
             <View style={styles.lottieContainer}>
@@ -279,13 +249,9 @@ export function ConvertDustCompletedSheet({
                 style={styles.detailToggleInline}
                 onPress={handleFoldDetail}>
                 <Text style={styles.detailToggleText}>
-                  {t('page.convertDust.completed.fold', {
-                    defaultValue: 'Fold',
-                  })}
+                  {t('page.convertDust.completed.fold')}
                 </Text>
-                <RcIconCaretDown
-                  width={10}
-                  height={8}
+                <RcIconDownCC
                   color={colors2024['neutral-secondary']}
                   style={styles.detailToggleIconUp}
                 />
@@ -296,15 +262,9 @@ export function ConvertDustCompletedSheet({
               style={styles.detailToggle}
               onPress={handleExpandDetail}>
               <Text style={styles.detailToggleText}>
-                {t('page.convertDust.completed.viewMoreDetail', {
-                  defaultValue: 'View more detail',
-                })}
+                {t('page.convertDust.completed.viewMoreDetail')}
               </Text>
-              <RcIconCaretDown
-                width={10}
-                height={8}
-                color={colors2024['neutral-secondary']}
-              />
+              <RcIconDownCC color={colors2024['neutral-secondary']} />
             </TouchableOpacity>
           )
         ) : null}
@@ -326,7 +286,7 @@ export function ConvertDustCompletedSheet({
             noShadow
           />
         </View>
-      </View>
+      </BottomSheetView>
     </AppBottomSheetModal>
   );
 }
@@ -350,12 +310,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: '#D1D4DB',
   },
   sheetContent: {
-    flex: 1,
     paddingHorizontal: 20,
   },
   footerSpacer: {
-    flex: 1,
-    minHeight: 12,
+    height: 20,
   },
   heroBlock: {
     marginTop: 24,

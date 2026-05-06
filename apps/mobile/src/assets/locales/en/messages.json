@@ -3285,7 +3285,9 @@
       "completed": {
         "title": "Dust Converted !",
         "receive": "Received:",
-        "failedTitle": "Conversion Ended"
+        "failedTitle": "Conversion Ended",
+        "viewMoreDetail": "View more detail",
+        "fold": "Fold"
       },
       "entryGuide": {
         "title": "You can find Convert Dust \n👇 here on the Homepage",
