@@ -121,7 +121,7 @@ function ConvertDustContent({
   } = useConvertDustTokenList({
     address: currentAccount?.address,
     chainServerId: chain?.serverId,
-    receiveTokenId: receiveToken?.id,
+    receiveTokenId: chain?.nativeTokenAddress,
     selectedFilter,
   });
   const task = useBatchSwapTask({
