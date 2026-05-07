@@ -25,6 +25,7 @@ export enum KEYCHAIN_AUTH_TYPES {
   BIOMETRICS = 1,
   PASSCODE = 2,
   REMEMBER_ME = 3,
+  BIOMETRICS_OR_PASSCODE = 4,
 }
 
 export enum RequestGenericPurpose {
@@ -129,9 +130,11 @@ export type KeychainCompatibleModule = {
   ACCESS_CONTROL: {
     BIOMETRY_CURRENT_SET: unknown;
     DEVICE_PASSCODE: unknown;
+    BIOMETRY_ANY_OR_DEVICE_PASSCODE: unknown;
   };
   AUTHENTICATION_TYPE: {
     BIOMETRICS: unknown;
+    DEVICE_PASSCODE_OR_BIOMETRICS: unknown;
   };
   SECURITY_RULES: {
     AUTOMATIC_UPGRADE: unknown;
@@ -404,6 +407,8 @@ export function getAuthenticationTypeLabel(type?: KEYCHAIN_AUTH_TYPES) {
       return 'PASSCODE';
     case KEYCHAIN_AUTH_TYPES.REMEMBER_ME:
       return 'REMEMBER_ME';
+    case KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE:
+      return 'BIOMETRICS_OR_PASSCODE';
     case KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD:
     default:
       return 'APPLICATION_PASSWORD';
@@ -418,7 +423,11 @@ function setAuthenticationType(type?: KEYCHAIN_AUTH_TYPES) {
 }
 
 export function isAuthenticatedByBiometrics() {
-  return getAuthenticationType() === KEYCHAIN_AUTH_TYPES.BIOMETRICS;
+  const type = getAuthenticationType();
+  return (
+    type === KEYCHAIN_AUTH_TYPES.BIOMETRICS ||
+    type === KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE
+  );
 }
 
 function sleep(ms: number = 1000) {
@@ -550,7 +559,8 @@ export function createBusinessKeychainApi({
       description: i18n.t('native.authentication.auth_prompt_desc'),
       cancel: i18n.t('native.authentication.auth_prompt_cancel'),
     },
-    authenticationType: keychainModule.AUTHENTICATION_TYPE.BIOMETRICS,
+    authenticationType:
+      keychainModule.AUTHENTICATION_TYPE.DEVICE_PASSCODE_OR_BIOMETRICS,
     ...(isAndroid && {
       rules: keychainModule.SECURITY_RULES.AUTOMATIC_UPGRADE,
     }),
@@ -970,6 +980,9 @@ export function createBusinessKeychainApi({
         keychainModule.ACCESS_CONTROL.BIOMETRY_CURRENT_SET;
     } else if (type === KEYCHAIN_AUTH_TYPES.PASSCODE) {
       authOptions.accessControl = keychainModule.ACCESS_CONTROL.DEVICE_PASSCODE;
+    } else if (type === KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE) {
+      authOptions.accessControl =
+        keychainModule.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE;
     } else if (type === KEYCHAIN_AUTH_TYPES.REMEMBER_ME) {
       // no extra option
     } else {
