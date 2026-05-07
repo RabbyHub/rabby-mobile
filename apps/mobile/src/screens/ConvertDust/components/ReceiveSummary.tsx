@@ -87,7 +87,9 @@ export function ReceiveSummary({
           </View>
           <View style={styles.receiveValueWrap}>
             <Text style={styles.receiveHint}>
-              {t('page.convertDust.receiveSummary.estimateReceive')}{' '}
+              {task?.status === 'idle'
+                ? t('page.convertDust.receiveSummary.estimateReceive')
+                : t('page.convertDust.receiveSummary.actualReceive')}{' '}
               {formatTokenAmount(receiveAmount)} {receiveTokenSymbol}
             </Text>
             <Text

@@ -3268,6 +3268,11 @@
         "submitFailed": "Fail to submit transactions",
         "gasNotEnough": "Insufficient Gas"
       },
+      "status": {
+        "pending": "Swapping",
+        "idle": "Waiting to swap",
+        "success": "Swap successful"
+      },
       "colToken": "Token",
       "colStatusToken": "Status/Token",
       "emptyText": "No low-value tokens found",
@@ -3275,7 +3280,8 @@
         "progress": "Conversion progress",
         "priceImpact": "Price Impact Cap",
         "gasLimit": "Single Transaction Gas Limit",
-        "estimateReceive": "Est.Receive:"
+        "estimateReceive": "Est.Receive:",
+        "actualReceive": "Receive"
       },
       "bottomBar": {
         "stop": "Stop",
