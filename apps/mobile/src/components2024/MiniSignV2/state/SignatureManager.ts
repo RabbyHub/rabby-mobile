@@ -435,7 +435,12 @@ export class SignatureManager {
     });
   }
 
-  public async send(retry?: boolean) {
+  public async send(
+    options?: boolean | { retry?: boolean; isHideErrorUI?: boolean },
+  ) {
+    const retry = typeof options === 'boolean' ? options : options?.retry;
+    const isHideErrorUI =
+      typeof options === 'boolean' ? undefined : options?.isHideErrorUI;
     const { ctx, config, fingerprint } = this.state;
     if (!ctx || !config || !fingerprint) {
       throw new Error('Signature is not ready');
@@ -476,6 +481,11 @@ export class SignatureManager {
         return hashes;
       }
       if (res.error) {
+        if (isHideErrorUI) {
+          this.rejectPending(res.error.description);
+          return res;
+        }
+
         this.dispatch({
           type: 'SEND_FAILURE',
           fingerprint,
@@ -581,7 +591,10 @@ export class SignatureManager {
     return;
   }
 
-  public async openDirect(request: SignatureRequest) {
+  public async openDirect(
+    request: SignatureRequest,
+    opts?: { isHideErrorUI?: boolean },
+  ) {
     const fingerprint = this.getFingerprint(request.txs);
     const resultPromise = this.createResultPromise();
     if (this.state.status === 'prefetch_failure') {
@@ -621,7 +634,9 @@ export class SignatureManager {
       });
 
       await this.checkHardWareConnected(() =>
-        this.send().catch(() => undefined),
+        this.send({ isHideErrorUI: opts?.isHideErrorUI }).catch(
+          () => undefined,
+        ),
       );
     } catch (error) {
       const message = createErrorMessage(error);
