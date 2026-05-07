@@ -667,7 +667,9 @@ export const useBatchSwapTask = (options: {
     if (!options.receiveToken?.price) {
       return '0';
     }
-    return formatAmount(expectReceiveUsd / options.receiveToken.price);
+    return new BigNumber(expectReceiveUsd)
+      .div(options.receiveToken.price)
+      .toString(10);
   }, [expectReceiveUsd, options.receiveToken]);
 
   const finalReceive = useMemo(() => {
