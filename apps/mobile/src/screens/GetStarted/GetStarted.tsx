@@ -1,5 +1,13 @@
-import React, { useCallback, useState } from 'react';
-import { View, Dimensions, Image, TouchableOpacity } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Dimensions, TouchableOpacity } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+  interpolate,
+} from 'react-native-reanimated';
+import Lottie from 'lottie-react-native';
 
 import { RootNames } from '@/constant/layout';
 import { keyringService, preferenceService } from '@/core/services';
@@ -26,33 +34,31 @@ import ChevronRightSmallCC from '@/assets/icons/common/right-2-cc.svg';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import StartScreenAnimation from '@/assets2024/animations/start-screen-animation.min.json';
+import StartScreenAnimationDark from '@/assets2024/animations/start-screen-animation-dark.min.json';
 
-// Hero background images
-import heroBgLight from '@/assets/images/get-started/hero-bg-light.png';
-import heroBgDark from '@/assets/images/get-started/hero-bg-dark.png';
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Logo images
 import logoLight from '@/assets/images/get-started/logo-light.png';
 import logoDark from '@/assets/images/get-started/logo-dark.png';
 
-// Actual image dimensions: 1179 x 1284
-const HERO_IMAGE_ASPECT_RATIO = 1284 / 1179;
+// Lottie animation dimensions
+const HERO_ASPECT_RATIO = 452 / 393;
 
-// Hero illustration component using PNG background
+// Hero illustration component using Lottie animation
 const HeroIllustration = ({ isLight }: { isLight: boolean }) => {
   const { styles } = useTheme2024({ getStyle });
 
-  // Calculate height based on image aspect ratio
-  const heroHeight = Math.ceil(SCREEN_WIDTH * HERO_IMAGE_ASPECT_RATIO);
+  const heroHeight = Math.ceil(SCREEN_WIDTH * HERO_ASPECT_RATIO);
 
   return (
     <View style={[styles.heroContainer, { height: heroHeight }]}>
-      {/* Hero background image - aligned to bottom so top gets cropped */}
-      <Image
-        source={isLight ? heroBgLight : heroBgDark}
+      <Lottie
+        source={isLight ? StartScreenAnimation : StartScreenAnimationDark}
         style={[styles.heroBackground, { height: heroHeight }]}
-        resizeMode="cover"
+        loop={false}
+        autoPlay
       />
     </View>
   );
@@ -166,13 +172,44 @@ function NewUserGetStartedScreen() {
 
   const { bottom, top } = useSafeAreaInsets();
 
+  const logoOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    logoOpacity.value = withTiming(1, {
+      duration: 600,
+      easing: Easing.bezier(0.7, -0.4, 0.4, 1.4),
+    });
+  }, [logoOpacity]);
+
+  const logoAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: logoOpacity.value,
+  }));
+
+  const contentProgress = useSharedValue(1);
+
+  useEffect(() => {
+    contentProgress.value = 0;
+    contentProgress.value = withTiming(1, {
+      duration: 600,
+      easing: Easing.bezier(0.7, -0.4, 0.4, 1.4),
+    });
+  }, [contentProgress]);
+
+  const contentAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateY: interpolate(contentProgress.value, [0, 1], [60, 0]),
+      },
+    ],
+  }));
+
   return (
     <View style={styles.screen}>
       {/* Header with logo - positioned right next to status bar, horizontally centered */}
       <View style={[styles.logoWrapper, { top: top + 6 }]}>
-        <Image
+        <Animated.Image
           source={isLight ? logoLight : logoDark}
-          style={styles.logoImage}
+          style={[styles.logoImage, logoAnimatedStyle]}
           resizeMode="contain"
         />
       </View>
@@ -181,86 +218,91 @@ function NewUserGetStartedScreen() {
         {/* Hero Illustration - crops from top on short screens */}
         <HeroIllustration isLight={isLight} />
 
-        {/* Text Content */}
-        <View style={styles.textContent}>
-          <Text style={styles.title}>{t('page.getStart.welcomeTitle')}</Text>
-          <Text style={styles.subtitle}>{t('global.appDescription')}</Text>
-        </View>
+        <Animated.View style={contentAnimatedStyle}>
+          {/* Text Content */}
+          <View style={styles.textContent}>
+            <Text style={styles.title}>{t('page.getStart.welcomeTitle')}</Text>
+            <Text style={styles.subtitle}>{t('global.appDescription')}</Text>
+          </View>
 
-        {/* Spacer to push bottom actions to screen bottom */}
-        <View style={styles.spacer} />
+          {/* Spacer to push bottom actions to screen bottom */}
+          <View style={styles.spacer} />
 
-        {/* Bottom Actions */}
-        <View
-          style={[
-            styles.bottomActions,
-            { paddingBottom: Math.max(bottom, 16) },
-          ]}>
-          {!getStarted.localHasAccounts ? (
-            <>
+          {/* Bottom Actions */}
+          <View
+            style={[
+              styles.bottomActions,
+              { paddingBottom: Math.max(bottom, 16) },
+            ]}>
+            {!getStarted.localHasAccounts ? (
+              <>
+                <TouchableOpacity
+                  style={styles.syncLink}
+                  disabled={
+                    !getStarted.processedInit || getStarted.localHasAccounts
+                  }
+                  onPress={handleGoToSyncExtension}>
+                  <View style={styles.syncLinkContent}>
+                    <Text style={styles.syncLinkText}>
+                      {t('page.getStart.alreadyUseRabby')}
+                    </Text>
+                    <ChevronRightSmallCC
+                      color={colors2024['neutral-secondary']}
+                    />
+                  </View>
+                </TouchableOpacity>
+                <Button
+                  type="primary"
+                  title={t('page.getStart.createNewAddress')}
+                  disabled={
+                    !getStarted.processedInit || getStarted.localHasAccounts
+                  }
+                  onPress={handleGoToCreate}
+                />
+                <Button
+                  disabled={
+                    !getStarted.processedInit || getStarted.localHasAccounts
+                  }
+                  type="ghost"
+                  title={t('page.getStart.alreadyHaveAddress')}
+                  onPress={handleGoToImport}
+                  buttonStyle={styles.secondaryButton}
+                  {...makeTestIDProps(E2E_ID.onboarding.welcomeImportExisting)}
+                />
+              </>
+            ) : (
               <Button
                 type="primary"
-                title={t('page.getStart.createNewAddress')}
+                title={t('page.getStart.goToHome') || 'Go to Home'}
                 disabled={
-                  !getStarted.processedInit || getStarted.localHasAccounts
+                  !getStarted.processedInit || !getStarted.localHasAccounts
                 }
-                onPress={handleGoToCreate}
+                onPress={handleGoToHome}
               />
-              <Button
-                disabled={
-                  !getStarted.processedInit || getStarted.localHasAccounts
-                }
-                type="ghost"
-                title={t('page.getStart.alreadyHaveAddress')}
-                onPress={handleGoToImport}
-                buttonStyle={styles.secondaryButton}
-                {...makeTestIDProps(E2E_ID.onboarding.welcomeImportExisting)}
-              />
-              <TouchableOpacity
-                style={styles.syncLink}
-                disabled={
-                  !getStarted.processedInit || getStarted.localHasAccounts
-                }
-                onPress={handleGoToSyncExtension}>
-                <View style={styles.syncLinkContent}>
-                  <Text style={styles.syncLinkText}>
-                    {t('page.getStart.alreadyUseRabby')}
-                  </Text>
-                  <ChevronRightSmallCC
-                    color={colors2024['neutral-secondary']}
-                  />
-                </View>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <Button
-              type="primary"
-              title={t('page.getStart.goToHome') || 'Go to Home'}
-              disabled={
-                !getStarted.processedInit || !getStarted.localHasAccounts
-              }
-              onPress={handleGoToHome}
-            />
-          )}
+            )}
 
-          {isNonPublicProductionEnv && (
-            <TouchableText
-              style={[styles.testLink, { color: colors2024['orange-default'] }]}
-              disabled={
-                !getStarted.processedInit || getStarted.localHasAccounts
-              }
-              onPress={() => {
-                navigation.dispatch(
-                  StackActions.push(RootNames.StackSettings, {
-                    screen: RootNames.Settings,
-                    params: {},
-                  }),
-                );
-              }}>
-              {'(Test Only) Enter Settings >'}
-            </TouchableText>
-          )}
-        </View>
+            {isNonPublicProductionEnv && (
+              <TouchableText
+                style={[
+                  styles.testLink,
+                  { color: colors2024['orange-default'] },
+                ]}
+                disabled={
+                  !getStarted.processedInit || getStarted.localHasAccounts
+                }
+                onPress={() => {
+                  navigation.dispatch(
+                    StackActions.push(RootNames.StackSettings, {
+                      screen: RootNames.Settings,
+                      params: {},
+                    }),
+                  );
+                }}>
+                {'(Test Only) Enter Settings >'}
+              </TouchableText>
+            )}
+          </View>
+        </Animated.View>
       </View>
     </View>
   );
@@ -279,8 +321,8 @@ const getStyle = createGetStyles2024(ctx => ({
     alignItems: 'center',
   },
   logoImage: {
-    width: 159,
-    height: 33,
+    width: 178,
+    height: 37,
   },
   contentContainer: {
     flex: 1,
@@ -292,7 +334,8 @@ const getStyle = createGetStyles2024(ctx => ({
     overflow: 'hidden',
   },
   heroBackground: {
-    width: SCREEN_WIDTH,
+    marginLeft: -12,
+    width: SCREEN_WIDTH + 24,
   },
   textContent: {
     alignItems: 'center',
@@ -301,11 +344,10 @@ const getStyle = createGetStyles2024(ctx => ({
   title: {
     fontFamily: 'SF Pro Rounded',
     fontWeight: '800',
-    fontSize: 28,
-    lineHeight: 36,
+    fontSize: 36,
     textAlign: 'center',
     color: ctx.colors2024['neutral-title-1'],
-    marginBottom: 12,
+    marginBottom: 8,
   },
   subtitle: {
     fontFamily: 'SF Pro Rounded',
@@ -322,14 +364,14 @@ const getStyle = createGetStyles2024(ctx => ({
   bottomActions: {
     paddingHorizontal: 24,
     paddingTop: 16,
-    gap: 16,
+    gap: 12,
   },
   secondaryButton: {
     backgroundColor: ctx.colors2024['brand-light-1'],
     borderWidth: 0,
   },
   syncLink: {
-    marginTop: 8,
+    marginBottom: 8,
   },
   syncLinkContent: {
     flexDirection: 'row',
@@ -339,7 +381,8 @@ const getStyle = createGetStyles2024(ctx => ({
   syncLinkText: {
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
-    fontSize: 17,
+    fontSize: 16,
+    lineHeight: 20,
     color: ctx.colors2024['neutral-secondary'],
   },
   testLink: {
