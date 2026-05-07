@@ -1,7 +1,6 @@
 import { Account } from '@/core/services/preference';
 import { DEX } from '@/constant/swap';
 import { eventBus, EVENTS } from '@/utils/events';
-import { formatAmount } from '@/utils/number';
 import { getRpcTxReceipt } from '@/core/utils/tx';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { findChain } from '@/utils/chain';
@@ -602,6 +601,10 @@ export const useBatchSwapTask = (options: {
   );
 
   const start = React.useCallback(() => {
+    if (!list.length) {
+      return;
+    }
+
     updateStatus('active');
 
     for (const item of list) {

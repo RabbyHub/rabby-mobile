@@ -304,6 +304,10 @@ function ConvertDustContent({
     }
 
     if (task.status === 'idle') {
+      if (!hasSelectedToken) {
+        return;
+      }
+
       task.start();
       return;
     }
@@ -317,7 +321,13 @@ function ConvertDustContent({
     }
 
     task.pause();
-  }, [currentAccount, getTokenList, isSupportedAccount, task]);
+  }, [
+    currentAccount,
+    getTokenList,
+    hasSelectedToken,
+    isSupportedAccount,
+    task,
+  ]);
 
   const handleCompletedDone = useCallback(() => {
     setIsCompletedSheetDismissed(true);
