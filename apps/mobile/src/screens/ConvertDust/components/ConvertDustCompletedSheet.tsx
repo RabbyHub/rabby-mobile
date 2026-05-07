@@ -22,7 +22,13 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import Lottie from 'lottie-react-native';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, FlatList, TouchableOpacity, View } from 'react-native';
+import {
+  Dimensions,
+  FlatList,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { TaskStatusIcon } from './LowValueTokenSelector';
 import type { TaskItemStatus } from '../hooks/useBatchSwapTask';
 import { LocalPannableDraggableView } from '@/components/customized/BottomSheetDraggableView';
@@ -32,6 +38,8 @@ const DETAIL_HEADER_HEIGHT = 34;
 const DETAIL_PANEL_PADDING_TOP = 12;
 const DETAIL_TOGGLE_HEIGHT = 30;
 const DETAIL_MAX_VISIBLE_ROWS = 3;
+const SMALL_SCREEN_HEIGHT = 647;
+const SMALL_LOTTIE_SIZE = 96;
 
 const getTokenKey = (token: TokenItem, index: number) =>
   `${token.chain}:${token.id}:${index}`;
@@ -100,9 +108,11 @@ export function ConvertDustCompletedSheet({
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { safeOffBottom } = useSafeSizes();
+  const { height: windowHeight } = useWindowDimensions();
   const [isDetailExpanded, setIsDetailExpanded] = React.useState(false);
   const detailListRef = React.useRef<FlatList<TokenItem>>(null);
   const shouldShowDetail = taskList.length > 0;
+  const isSmallScreen = windowHeight < SMALL_SCREEN_HEIGHT;
   const detailPanelHeight = React.useMemo(() => {
     const visibleRows = Math.min(taskList.length, DETAIL_MAX_VISIBLE_ROWS);
     return (
@@ -178,16 +188,21 @@ export function ConvertDustCompletedSheet({
       ref={modalRef}
       enableDynamicSizing
       enableContentPanningGesture={false}
-      maxDynamicContentSize={Dimensions.get('screen').height * 0.9}
+      maxDynamicContentSize={Dimensions.get('screen').height * 0.98}
       backgroundStyle={styles.sheetBackground}
       handleStyle={styles.sheetHandle}
       handleIndicatorStyle={styles.sheetHandleIndicator}
       onDismiss={onCancel}>
       <BottomSheetView style={styles.sheetContent}>
         <LocalPannableDraggableView>
-          <View style={styles.heroBlock}>
+          <View
+            style={[styles.heroBlock, isSmallScreen && styles.heroBlockSmall]}>
             {isSuccess ? (
-              <View style={styles.lottieContainer}>
+              <View
+                style={[
+                  styles.lottieContainer,
+                  isSmallScreen && styles.lottieContainerSmall,
+                ]}>
                 <Lottie
                   source={successAnimation}
                   style={styles.lottie}
@@ -196,8 +211,12 @@ export function ConvertDustCompletedSheet({
                 />
               </View>
             ) : (
-              <View style={styles.failedIconWrap}>
-                <RcIconSwapFailed width={80} />
+              <View
+                style={[
+                  styles.failedIconWrap,
+                  isSmallScreen && styles.failedIconWrapSmall,
+                ]}>
+                <RcIconSwapFailed width={isSmallScreen ? 64 : 80} />
               </View>
             )}
             <Text style={styles.title}>
@@ -290,7 +309,12 @@ export function ConvertDustCompletedSheet({
           )
         ) : null}
 
-        <View style={styles.footerSpacer} />
+        <View
+          style={[
+            styles.footerSpacer,
+            isSmallScreen && styles.footerSpacerSmall,
+          ]}
+        />
 
         <View
           style={[
@@ -336,13 +360,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   footerSpacer: {
     height: 20,
   },
+  footerSpacerSmall: {
+    height: 8,
+  },
   heroBlock: {
     marginTop: 24,
     alignItems: 'center',
   },
+  heroBlockSmall: {
+    marginTop: 12,
+  },
   lottieContainer: {
     width: 148,
     height: 141,
+  },
+  lottieContainerSmall: {
+    width: SMALL_LOTTIE_SIZE,
+    height: SMALL_LOTTIE_SIZE,
   },
   lottie: {
     width: '100%',
@@ -350,6 +384,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   failedIconWrap: {
     marginBottom: 24,
+  },
+  failedIconWrapSmall: {
+    marginBottom: 12,
   },
   title: {
     color: colors2024['neutral-title-1'],
