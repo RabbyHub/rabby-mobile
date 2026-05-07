@@ -27,6 +27,7 @@ import {
 import { twoStepChains } from '../../Swap/hooks/twoStepSwap';
 import { buildDexSwap } from '../../Swap/hooks/swap';
 import { DEFAULT_MAX_GAS_COST, DEFAULT_PRICE_IMPACT } from '../constant';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 export { FailedCode } from '@/utils/sendTransaction';
 
 const TASK_CANCELLED_ERROR_NAME = 'BatchSwapTaskCancelled';
@@ -564,7 +565,7 @@ export const useBatchSwapTask = (options: {
               },
             }));
           } catch (e) {
-            const error = e as Error;
+            const error = e as any;
             if (error?.name === TASK_CANCELLED_ERROR_NAME) {
               return;
             }
@@ -577,9 +578,9 @@ export const useBatchSwapTask = (options: {
                 [item.id]: {
                   status: 'failed',
                   message:
-                    error.message === 'Gas not enough'
+                    error === MINI_SIGN_ERROR.GAS_NOT_ENOUGH
                       ? t('page.convertDust.failReason.gasNotEnough')
-                      : error.message ||
+                      : error?.message ||
                         t('page.convertDust.failReason.submitFailed'),
                   createdAt: Date.now(),
                 },

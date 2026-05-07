@@ -37,6 +37,7 @@ export const MINI_SIGN_ERROR = {
   PREFETCH_FAILURE: 'prepare failure',
   USER_CANCELLED: 'User cancelled',
   CANT_PROCESS: 'Can not process',
+  GAS_NOT_ENOUGH: 'Gas not enough',
 };
 
 type Subscriber = (state: SignatureFlowState) => void;
@@ -440,8 +441,13 @@ export class SignatureManager {
       throw new Error('Signature is not ready');
     }
     if (!this.canProcess()) {
-      this.rejectPending(MINI_SIGN_ERROR.CANT_PROCESS);
-      throw MINI_SIGN_ERROR.CANT_PROCESS;
+      if (ctx.isGasNotEnough) {
+        this.rejectPending(MINI_SIGN_ERROR.GAS_NOT_ENOUGH);
+        throw MINI_SIGN_ERROR.GAS_NOT_ENOUGH;
+      } else {
+        this.rejectPending(MINI_SIGN_ERROR.CANT_PROCESS);
+        throw MINI_SIGN_ERROR.CANT_PROCESS;
+      }
     }
     const opId = this.markRun(fingerprint);
     this.dispatch({ type: 'SEND_START', fingerprint });
