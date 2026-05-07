@@ -717,8 +717,8 @@ export const useBatchSwapTask = (options: {
   }, [status, statusDict]);
 
   const currentTaskIndex = React.useMemo(() => {
-    return list.findIndex(item => statusDict[item.id]?.status === 'pending');
-  }, [list, statusDict]);
+    return list.findIndex(item => currentToken?.id === item.id);
+  }, [list, currentToken]);
 
   const clear = useMemoizedFn(() => {
     cancelRunningTasks();
