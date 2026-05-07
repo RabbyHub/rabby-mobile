@@ -9,13 +9,35 @@ import { uniqueId } from 'lodash';
 
 import { sleep } from '@/utils/async';
 import { globalSheetModalEvents } from '@/components2024/GlobalBottomSheetModal/event';
+import { makeGlobalBottomSheetSingletonRegistry } from '@/core/services/globalBottomSheetSingleton';
+
+const globalBottomSheetSingletonRegistry =
+  makeGlobalBottomSheetSingletonRegistry<MODAL_ID>();
+
+globalSheetModalEvents.on(EVENT_NAMES.REMOVE, id => {
+  globalBottomSheetSingletonRegistry.releaseId(id);
+});
+
+globalSheetModalEvents.on(EVENT_NAMES.DISMISS, id => {
+  globalBottomSheetSingletonRegistry.releaseId(id);
+});
 
 const createGlobalBottomSheetModal = <T extends MODAL_NAMES = MODAL_NAMES>(
   params: CreateParams<T>,
 ) => {
-  params.name = params.name ?? MODAL_NAMES.APPROVAL;
-  const id = `${params.name}_${uniqueId(`gBm_`)}` as MODAL_ID;
-  globalSheetModalEvents.emit(EVENT_NAMES.CREATE, id, params);
+  const nextParams = {
+    ...params,
+    name: params.name ?? MODAL_NAMES.APPROVAL,
+  };
+  const activeId = globalBottomSheetSingletonRegistry.getActiveId(nextParams);
+  if (activeId) {
+    globalSheetModalEvents.emit(EVENT_NAMES.PRESENT, activeId);
+    return activeId;
+  }
+
+  const id = `${nextParams.name}_${uniqueId(`gBm_`)}` as MODAL_ID;
+  globalBottomSheetSingletonRegistry.bindActiveId(id, nextParams);
+  globalSheetModalEvents.emit(EVENT_NAMES.CREATE, id, nextParams);
 
   return id as MODAL_ID;
 };
@@ -74,6 +96,7 @@ const removeAllGlobalBottomSheetModals = (
   if (removeAllFn) {
     const { waitMaxtime, ...removeParams } = params || {};
     removeAllFn(removeParams);
+    globalBottomSheetSingletonRegistry.clear();
   }
 };
 

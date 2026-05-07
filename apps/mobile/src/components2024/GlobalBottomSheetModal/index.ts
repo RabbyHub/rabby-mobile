@@ -3,7 +3,6 @@ import { globalSheetModalEvents } from './event';
 import { apisAppWin2024 } from '@/core/services2024/appWin';
 import { keyringService } from '@/core/services/shared';
 import { uiRefreshTimeout } from '@/core/apis/autoLock';
-import { debounce } from 'lodash';
 
 class IdSet<T = any> extends Set<T> {
   add(id: T) {
@@ -28,14 +27,8 @@ keyringService.on('lock', () => {
   });
 });
 
-export const createGlobalBottomSheetModal2024 = debounce(
-  apisAppWin2024.createGlobalBottomSheetModal,
-  200,
-  {
-    leading: true,
-    trailing: false,
-  },
-) as typeof apisAppWin2024.createGlobalBottomSheetModal;
+export const createGlobalBottomSheetModal2024 =
+  apisAppWin2024.createGlobalBottomSheetModal;
 export const removeGlobalBottomSheetModal2024 =
   apisAppWin2024.removeGlobalBottomSheetModal;
 export const globalBottomSheetModalAddListener2024 =
