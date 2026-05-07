@@ -11,6 +11,7 @@ import { RootNames } from '@/constant/layout';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { shouldRedirectToSetPasswordBefore2024 } from '@/hooks/useLock';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
@@ -50,9 +51,6 @@ export const SeedPhraseRestoreFromCloud2024: React.FC<Props> = ({
           return;
         }
 
-        setStep('backup_downloading');
-        await new Promise(resolve => setTimeout(resolve, 500));
-
         if (
           await shouldRedirect2SetPassword?.({
             backScreen: RootNames.ImportSuccess2024,
@@ -68,6 +66,15 @@ export const SeedPhraseRestoreFromCloud2024: React.FC<Props> = ({
           onDone();
           return;
         }
+
+        if (!(await ensureWalletUnlockedForAction())) {
+          setStep('backup_unlock');
+          return;
+        }
+
+        setStep('backup_downloading');
+        await new Promise(resolve => setTimeout(resolve, 500));
+
         await apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen2024(arr);
         onDone();
       } catch (e) {

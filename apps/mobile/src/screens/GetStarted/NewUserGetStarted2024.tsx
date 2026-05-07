@@ -28,10 +28,7 @@ import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Text } from '@/components/Typography';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
-import {
-  ensureWalletUnlocked,
-  isWalletUnlockCancelled,
-} from '@/utils/walletUnlock';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 function GetStartedScreen2024(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -53,23 +50,6 @@ function GetStartedScreen2024(): JSX.Element {
     navigateDeprecated(RootNames.StackRoot, { screen: RootNames.Home });
   }, [getStaretd.processedInit]);
 
-  const ensureUnlockedForAction = useCallback(async () => {
-    if (keyringService.isUnlocked()) {
-      return true;
-    }
-
-    try {
-      await ensureWalletUnlocked();
-      return true;
-    } catch (error) {
-      if (isWalletUnlockCancelled(error)) {
-        return false;
-      }
-
-      throw error;
-    }
-  }, []);
-
   const { startCreateAddressProc, resetCreateAddressProc } =
     useCreateAddressProc();
   const { resetImportAddressProc } = useImportAddressProc();
@@ -85,7 +65,7 @@ function GetStartedScreen2024(): JSX.Element {
     if (!getStaretd.processedInit) {
       return;
     }
-    if (!(await ensureUnlockedForAction())) {
+    if (!(await ensureWalletUnlockedForAction())) {
       return;
     }
 
@@ -99,33 +79,22 @@ function GetStartedScreen2024(): JSX.Element {
         isFirstCreate: true,
       },
     });
-  }, [
-    ensureUnlockedForAction,
-    getStaretd.processedInit,
-    startCreateAddressProc,
-  ]);
+  }, [getStaretd.processedInit, startCreateAddressProc]);
 
   const handleGoToImport = useCallback(async () => {
     if (!getStaretd.processedInit) {
       return;
     }
-    if (!(await ensureUnlockedForAction())) {
-      return;
-    }
-
     preferenceService.setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS,
     );
     navigateDeprecated(RootNames.StackAddress, {
       screen: RootNames.ImportMethods,
     });
-  }, [ensureUnlockedForAction, getStaretd.processedInit]);
+  }, [getStaretd.processedInit]);
 
   const handleGoToSyncExtension = useCallback(async () => {
     if (!getStaretd.processedInit) {
-      return;
-    }
-    if (!(await ensureUnlockedForAction())) {
       return;
     }
 
@@ -135,7 +104,7 @@ function GetStartedScreen2024(): JSX.Element {
     preferenceService.setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
     );
-  }, [ensureUnlockedForAction, getStaretd.processedInit]);
+  }, [getStaretd.processedInit]);
 
   const navigation = useRabbyAppNavigation();
 

@@ -31,6 +31,19 @@ export function isWalletUnlockCancelled(error: unknown) {
   );
 }
 
+export async function ensureWalletUnlockedForAction() {
+  try {
+    await ensureWalletUnlocked();
+    return true;
+  } catch (error) {
+    if (isWalletUnlockCancelled(error)) {
+      return false;
+    }
+
+    throw error;
+  }
+}
+
 export function cancelPendingWalletUnlock(unlockRequestId?: number) {
   if (!pendingWalletUnlock) {
     return;

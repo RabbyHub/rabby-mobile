@@ -24,10 +24,7 @@ import { Text } from '@/components/Typography';
 import ChevronRightSmallCC from '@/assets/icons/common/right-2-cc.svg';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
-import {
-  ensureWalletUnlocked,
-  isWalletUnlockCancelled,
-} from '@/utils/walletUnlock';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -82,23 +79,6 @@ function NewUserGetStartedScreen() {
     navigateDeprecated(RootNames.StackRoot, { screen: RootNames.Home });
   }, [getStarted.processedInit]);
 
-  const ensureUnlockedForAction = useCallback(async () => {
-    if (keyringService.isUnlocked()) {
-      return true;
-    }
-
-    try {
-      await ensureWalletUnlocked();
-      return true;
-    } catch (error) {
-      if (isWalletUnlockCancelled(error)) {
-        return false;
-      }
-
-      throw error;
-    }
-  }, []);
-
   const { startCreateAddressProc, resetCreateAddressProc } =
     useCreateAddressProc();
   const { resetImportAddressProc } = useImportAddressProc();
@@ -114,7 +94,7 @@ function NewUserGetStartedScreen() {
     if (!getStarted.processedInit) {
       return;
     }
-    if (!(await ensureUnlockedForAction())) {
+    if (!(await ensureWalletUnlockedForAction())) {
       return;
     }
 
@@ -123,31 +103,20 @@ function NewUserGetStartedScreen() {
       REPORT_TIMEOUT_ACTION_KEY.CLICK_CREATE_NEW_ADDRESS,
     );
     navigateDeprecated(RootNames.SetupWallet);
-  }, [
-    ensureUnlockedForAction,
-    getStarted.processedInit,
-    startCreateAddressProc,
-  ]);
+  }, [getStarted.processedInit, startCreateAddressProc]);
 
   const handleGoToImport = useCallback(async () => {
     if (!getStarted.processedInit) {
       return;
     }
-    if (!(await ensureUnlockedForAction())) {
-      return;
-    }
-
     preferenceService.setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS,
     );
     navigateDeprecated(RootNames.SelectImportMethod);
-  }, [ensureUnlockedForAction, getStarted.processedInit]);
+  }, [getStarted.processedInit]);
 
   const handleGoToSyncExtension = useCallback(async () => {
     if (!getStarted.processedInit) {
-      return;
-    }
-    if (!(await ensureUnlockedForAction())) {
       return;
     }
 
@@ -155,7 +124,7 @@ function NewUserGetStartedScreen() {
     preferenceService.setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
     );
-  }, [ensureUnlockedForAction, getStarted.processedInit]);
+  }, [getStarted.processedInit]);
 
   const initAccounts = useMemoizedFn(async () => {
     setGetStarted(prev => ({ ...prev, processedInit: false }));

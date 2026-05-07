@@ -32,6 +32,7 @@ import { NoNewAddressesModal } from './components/NoNewAddresses';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Text } from '@/components/Typography';
 import { mergeWhitelistAddresses } from '@/utils/whitelist';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 export const SyncExtensionPasswordScreen = () => {
   const { t } = useTranslation();
@@ -244,9 +245,15 @@ export const SyncExtensionPasswordScreen = () => {
       if (shouldAsk) {
         const success = await setUpPassword();
 
-        if (success) {
-          toast.success(t('page.createPassword.setUpSuccess'));
+        if (!success) {
+          setLoading(false);
+          return;
         }
+
+        toast.success(t('page.createPassword.setUpSuccess'));
+      } else if (!(await ensureWalletUnlockedForAction())) {
+        setLoading(false);
+        return;
       }
 
       const newAccounts = await keyringService.syncExtensionData(vault as any);
