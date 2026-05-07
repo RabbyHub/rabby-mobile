@@ -481,6 +481,16 @@ export const TokenSelectorSheetModal = ({
     );
   }, [isLoading]);
 
+  const confirmTokenSelection = useCallback(
+    (token: ITokenItem) => {
+      // Parent onConfirm updates the selected token. Close here instead of
+      // collapsing afterwards, otherwise collapse can win the close animation.
+      toggleShowSheetModal(false);
+      onConfirm(token);
+    },
+    [onConfirm, toggleShowSheetModal],
+  );
+
   const longPressTriggered = useRef(false);
   const renderItemRenderComponent = useCallback<
     ListRenderItem<TokenListItem[][number]>
@@ -554,8 +564,7 @@ export const TokenSelectorSheetModal = ({
                   {
                     text: t('component.TokenSelector.riskDetected.proceedBtn'),
                     onPress: () => {
-                      onConfirm(token);
-                      toggleShowSheetModal('collapse');
+                      confirmTokenSelection(token);
                     },
                   },
                 ],
@@ -591,8 +600,7 @@ export const TokenSelectorSheetModal = ({
                       if (alertDisabledToken()) {
                         return true;
                       }
-                      onConfirm(token);
-                      toggleShowSheetModal('collapse');
+                      confirmTokenSelection(token);
                     }}>
                     <ExternalTokenRow
                       decimalPrecision
@@ -673,8 +681,7 @@ export const TokenSelectorSheetModal = ({
                     if (alertDisabledToken()) {
                       return true;
                     }
-                    onConfirm(token);
-                    toggleShowSheetModal('collapse');
+                    confirmTokenSelection(token);
                   }}
                   style={[
                     styles.tokenItemOuter,
@@ -863,7 +870,7 @@ export const TokenSelectorSheetModal = ({
       t,
       cexList,
       disabledTips,
-      onConfirm,
+      confirmTokenSelection,
       toggleShowSheetModal,
     ],
   );
