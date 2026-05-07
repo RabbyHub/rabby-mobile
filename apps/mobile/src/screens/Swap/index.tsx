@@ -275,15 +275,9 @@ const Swap = ({
     },
     [setAutoQuoteRefreshPaused],
   );
-  const setShowMoreSettingsQuoteRefreshPaused = useCallback(
+  const setSlippageOptionsQuoteRefreshPaused = useCallback(
     (paused: boolean) => {
-      setQuotePollingPauseReason('show-more-settings', paused);
-    },
-    [setQuotePollingPauseReason],
-  );
-  const setNoQuoteSlippageQuoteRefreshPaused = useCallback(
-    (paused: boolean) => {
-      setQuotePollingPauseReason('no-quote-slippage', paused);
+      setQuotePollingPauseReason('slippage-options', paused);
     },
     [setQuotePollingPauseReason],
   );
@@ -1292,7 +1286,7 @@ const Swap = ({
                     type="swap"
                     loading={quoteLoading}
                     autoSuggestSlippage={autoSuggestSlippage}
-                    onOpenChange={setNoQuoteSlippageQuoteRefreshPaused}
+                    onOptionsOpenChange={setSlippageOptionsQuoteRefreshPaused}
                   />
                 </View>
               </>
@@ -1349,8 +1343,8 @@ const Swap = ({
                         : slippageValidInfo?.suggest_slippage
                     }
                     onDepositPopupVisibleChange={setDepositQuoteRefreshPaused}
-                    onSettingsVisibleChange={
-                      setShowMoreSettingsQuoteRefreshPaused
+                    onSlippageOptionsOpenChange={
+                      setSlippageOptionsQuoteRefreshPaused
                     }
                   />
                 </View>

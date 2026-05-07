@@ -346,15 +346,9 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     },
     [setAutoQuoteRefreshPaused],
   );
-  const setShowMoreSettingsQuoteRefreshPaused = useCallback(
+  const setSlippageOptionsQuoteRefreshPaused = useCallback(
     (paused: boolean) => {
-      setQuotePollingPauseReason('show-more-settings', paused);
-    },
-    [setQuotePollingPauseReason],
-  );
-  const setNoQuoteSlippageQuoteRefreshPaused = useCallback(
-    (paused: boolean) => {
-      setQuotePollingPauseReason('no-quote-slippage', paused);
+      setQuotePollingPauseReason('slippage-options', paused);
     },
     [setQuotePollingPauseReason],
   );
@@ -1141,8 +1135,8 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                     bestQuoteId?.bridgeId === selectedBridgeQuote.bridge_id
                   }
                   onDepositPopupVisibleChange={setDepositQuoteRefreshPaused}
-                  onSettingsVisibleChange={
-                    setShowMoreSettingsQuoteRefreshPaused
+                  onSlippageOptionsOpenChange={
+                    setSlippageOptionsQuoteRefreshPaused
                   }
                 />
               )}
@@ -1175,7 +1169,9 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                         setIsCustomSlippage={setIsCustomSlippage}
                         type="bridge"
                         loading={quoteLoading}
-                        onOpenChange={setNoQuoteSlippageQuoteRefreshPaused}
+                        onOptionsOpenChange={
+                          setSlippageOptionsQuoteRefreshPaused
+                        }
                       />
                     </View>
                   </>
