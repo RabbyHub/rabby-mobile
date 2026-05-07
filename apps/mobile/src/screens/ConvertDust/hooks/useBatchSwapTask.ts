@@ -493,6 +493,7 @@ export const useBatchSwapTask = (options: {
                 onPreExecError() {
                   result.isSimulationFailed = true;
                 },
+                autoUseGasFree: true,
               });
               // const res = await new Promise<string[]>((resolve, _reject) => {
               //   setTimeout(() => {
