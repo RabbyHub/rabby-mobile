@@ -30,6 +30,7 @@ import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureMana
 export { FailedCode } from '@/utils/sendTransaction';
 
 const TASK_CANCELLED_ERROR_NAME = 'BatchSwapTaskCancelled';
+const TX_RECEIPT_POLL_INTERVAL = 5000;
 
 const getTokenRawAmount = (token: TokenItem) =>
   new BigNumber(token.raw_amount_hex_str || 0, 16);
@@ -55,29 +56,65 @@ const waitForTxCompleted = async ({
   chainServerId: string;
 }) => {
   return await new Promise((resolve, reject) => {
-    const unsubscribe = () =>
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let isSettled = false;
+    let isChecking = false;
+
+    const cleanup = () => {
+      isSettled = true;
       eventBus.removeListener(EVENTS.TX_COMPLETED, handler);
-    const resolveReceipt = async () => {
-      const res = await getRpcTxReceipt(chainServerId, hash);
-      if (res.code !== 0) {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+
+    const scheduleNextCheck = () => {
+      if (isSettled || timer) {
         return;
       }
+
+      timer = setTimeout(() => {
+        timer = null;
+        checkReceipt();
+      }, TX_RECEIPT_POLL_INTERVAL);
+    };
+
+    const checkReceipt = async () => {
+      if (isSettled || isChecking) {
+        return;
+      }
+
+      isChecking = true;
+      const res = await getRpcTxReceipt(chainServerId, hash);
+      isChecking = false;
+
+      if (isSettled) {
+        return;
+      }
+
+      if (res.code !== 0) {
+        scheduleNextCheck();
+        return;
+      }
+
+      cleanup();
 
       if (res.status) {
         resolve(true);
       } else {
         reject(new Error('tx failed'));
       }
-      unsubscribe();
     };
+
     const handler = (res: { hash?: string }) => {
       if (res?.hash === hash) {
-        resolveReceipt();
+        checkReceipt();
       }
     };
 
     eventBus.addListener(EVENTS.TX_COMPLETED, handler);
-    resolveReceipt();
+    checkReceipt();
   });
 };
 
