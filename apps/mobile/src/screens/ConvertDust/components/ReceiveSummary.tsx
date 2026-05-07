@@ -5,7 +5,7 @@ import RcCaretDownSmallCC from '@/assets2024/icons/convertDust/polygon-cc.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
-import { formatTokenAmount, formatUsdValue } from '@/utils/number';
+import { formatAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -90,7 +90,7 @@ export function ReceiveSummary({
               {task?.status === 'idle'
                 ? t('page.convertDust.receiveSummary.estimateReceive')
                 : t('page.convertDust.receiveSummary.actualReceive')}{' '}
-              {formatTokenAmount(receiveAmount)} {receiveTokenSymbol}
+              {formatAmount(receiveAmount)} {receiveTokenSymbol}
             </Text>
             <Text
               style={[

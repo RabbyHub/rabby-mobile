@@ -27,6 +27,7 @@ import {
 import { twoStepChains } from '../../Swap/hooks/twoStepSwap';
 import { buildDexSwap } from '../../Swap/hooks/swap';
 import { DEFAULT_MAX_GAS_COST, DEFAULT_PRICE_IMPACT } from '../constant';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 export { FailedCode } from '@/utils/sendTransaction';
 
 const TASK_CANCELLED_ERROR_NAME = 'BatchSwapTaskCancelled';
@@ -492,6 +493,8 @@ export const useBatchSwapTask = (options: {
                 onPreExecError() {
                   result.isSimulationFailed = true;
                 },
+                isHideErrorUI: true,
+                autoUseGasFree: true,
               });
               // const res = await new Promise<string[]>((resolve, _reject) => {
               //   setTimeout(() => {
@@ -564,7 +567,7 @@ export const useBatchSwapTask = (options: {
               },
             }));
           } catch (e) {
-            const error = e as Error;
+            const error = e as any;
             if (error?.name === TASK_CANCELLED_ERROR_NAME) {
               return;
             }
@@ -577,9 +580,9 @@ export const useBatchSwapTask = (options: {
                 [item.id]: {
                   status: 'failed',
                   message:
-                    error.message === 'Gas not enough'
+                    error === MINI_SIGN_ERROR.GAS_NOT_ENOUGH
                       ? t('page.convertDust.failReason.gasNotEnough')
-                      : error.message ||
+                      : error?.message ||
                         t('page.convertDust.failReason.submitFailed'),
                   createdAt: Date.now(),
                 },
@@ -665,7 +668,9 @@ export const useBatchSwapTask = (options: {
     if (!options.receiveToken?.price) {
       return '0';
     }
-    return formatAmount(expectReceiveUsd / options.receiveToken.price);
+    return new BigNumber(expectReceiveUsd)
+      .div(options.receiveToken.price)
+      .toString(10);
   }, [expectReceiveUsd, options.receiveToken]);
 
   const finalReceive = useMemo(() => {
@@ -730,7 +735,7 @@ export const useBatchSwapTask = (options: {
   });
 
   const stop = useMemoizedFn(() => {
-    cancelRunningTasks();
+    // cancelRunningTasks();
     // setList([]);
     setCurrentToken(null);
     updateStatus('completed');

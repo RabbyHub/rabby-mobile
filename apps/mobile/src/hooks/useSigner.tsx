@@ -22,6 +22,7 @@ export type SimpleSignConfig = {
   txs?: Tx[];
   buildTxs?: () => Promise<Tx[] | undefined>;
   gasSelection?: GasSelectionOptions;
+  isHideErrorUI?: boolean;
 } & Omit<SignerConfig, 'account'>;
 
 export const useMiniSigner = ({
@@ -249,12 +250,15 @@ export const useMiniSigner = ({
       if (!payload) {
         throw new Error('No transactions to sign');
       }
-      return instance.openDirect({
-        txs: payload.txs,
-        config: payload.signerConfig,
-        enableSecurityEngine: false,
-        gasSelection: payload.gasSelection,
-      });
+      return instance.openDirect(
+        {
+          txs: payload.txs,
+          config: payload.signerConfig,
+          enableSecurityEngine: false,
+          gasSelection: payload.gasSelection,
+        },
+        { isHideErrorUI: cfg.isHideErrorUI },
+      );
     },
   );
 

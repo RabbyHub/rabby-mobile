@@ -63,7 +63,7 @@ export function useConvertDustTokenList({
     if (!lowerAddress) {
       return false;
     }
-    return !!state.isLoadingByAddress[lowerAddress]?.loading;
+    return !!state.isLoadingByAddress[lowerAddress]?.allLoading;
   });
   const getTokenList = useTokenList(s => s.getTokenList);
 
