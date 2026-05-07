@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { StyleSheet, View, PressableProps } from 'react-native';
 import { Platform, StatusBar, Pressable } from 'react-native';
 import Tooltip, { TooltipProps } from 'react-native-walkthrough-tooltip';
@@ -28,7 +28,15 @@ type TipProps<T extends PressableComponent> = Omit<TooltipProps, 'content'> & {
   noPressable?: boolean;
 };
 
-export const Tip = <T extends PressableComponent = 'RNPressable'>({
+const destroyListeners = new Set<() => void>();
+
+function destroyTips() {
+  destroyListeners.forEach(listener => {
+    listener();
+  });
+}
+
+const TipBase = <T extends PressableComponent = 'RNPressable'>({
   as: propAs = 'RNPressable' as T,
   content,
   tooltipStyle,
@@ -44,6 +52,14 @@ export const Tip = <T extends PressableComponent = 'RNPressable'>({
   const { colors, styles } = useThemeStyles(getStyle);
 
   const { on, turnOn, turnOff } = useSwitch();
+
+  useEffect(() => {
+    destroyListeners.add(turnOff);
+
+    return () => {
+      destroyListeners.delete(turnOff);
+    };
+  }, [turnOff]);
 
   const PressableComponent =
     propAs === 'RNPressable' ? Pressable : RNGHPressable;
@@ -128,6 +144,10 @@ export const Tip = <T extends PressableComponent = 'RNPressable'>({
     </Tooltip>
   );
 };
+
+export const Tip = Object.assign(TipBase, {
+  destroy: destroyTips,
+});
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({

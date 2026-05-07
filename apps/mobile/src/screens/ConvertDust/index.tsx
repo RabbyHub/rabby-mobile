@@ -10,7 +10,6 @@ import { AppState, BackHandler, Platform, View } from 'react-native';
 import RcIconSwitchBtn from '@/assets2024/icons/bridge/IconSwitchBtn.svg';
 import RcIconSwitchBtnDark from '@/assets2024/icons/bridge/IconSwitchBtnDark.svg';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
-import { toast } from '@/components2024/Toast';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { CHAINS_ENUM } from '@/constant/chains';
 import type { Account } from '@/core/services/preference';
@@ -93,6 +92,9 @@ function ConvertDustContent({
   const pendingBackActionRef = useRef<
     Parameters<typeof navigation.dispatch>[0] | null
   >(null);
+  const pendingStopBackActionRef = useRef<
+    Parameters<typeof navigation.dispatch>[0] | null
+  >(null);
   const { safeOffBottom } = useSafeSizes();
 
   const [chainEnum, setChainEnum] = useState(ETH_CHAIN);
@@ -152,6 +154,7 @@ function ConvertDustContent({
       (taskStatus === 'active' || !!route.params?.fromHomeConvertDustBanner),
     event => {
       if (taskStatus === 'active') {
+        pendingStopBackActionRef.current = event.data.action;
         pauseTask();
         return;
       }
@@ -193,6 +196,7 @@ function ConvertDustContent({
   }, [navigation]);
 
   const handleStopContinue = useCallback(() => {
+    pendingStopBackActionRef.current = null;
     task.continue();
   }, [task]);
 
@@ -317,9 +321,24 @@ function ConvertDustContent({
 
   const handleCompletedDone = useCallback(() => {
     setIsCompletedSheetDismissed(true);
+    const pendingStopBackAction = pendingStopBackActionRef.current;
+    pendingStopBackActionRef.current = null;
 
     if (completedSheetClearTimerRef.current) {
       clearTimeout(completedSheetClearTimerRef.current);
+      completedSheetClearTimerRef.current = null;
+    }
+
+    if (pendingStopBackAction) {
+      task.clear();
+
+      if (currentAccount?.address) {
+        getTokenList(currentAccount.address, true);
+      }
+
+      allowBackRef.current = true;
+      navigation.dispatch(pendingStopBackAction);
+      return;
     }
 
     completedSheetClearTimerRef.current = setTimeout(() => {
@@ -331,7 +350,7 @@ function ConvertDustContent({
 
       completedSheetClearTimerRef.current = null;
     }, 1000);
-  }, [currentAccount?.address, getTokenList, task]);
+  }, [currentAccount?.address, getTokenList, navigation, task]);
 
   const receiveUsd =
     task.status === 'idle' ? task.expectReceive.usd : task.finalReceive.usd;
