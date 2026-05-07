@@ -2,6 +2,7 @@ import successAnimation from '@/assets2024/animations/animation-create-success.m
 import RcIconDownCC from '@/assets2024/icons/convertDust/down-cc.svg';
 import RcIconSwapFailed from '@/assets2024/icons/convertDust/swap-failed.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
+import { Tip } from '@/components';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
@@ -123,6 +124,7 @@ export function ConvertDustCompletedSheet({
 
   useEffect(() => {
     if (visible) {
+      Tip.destroy();
       setIsDetailExpanded(hasFailedTask);
       modalRef.current?.present();
     } else {
