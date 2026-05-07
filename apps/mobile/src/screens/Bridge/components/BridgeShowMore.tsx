@@ -101,6 +101,7 @@ const BridgeShowMore = ({
   sourceAlwaysShow,
   insufficient,
   onDepositPopupVisibleChange,
+  onSlippageOptionsOpenChange,
 }: {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -138,6 +139,7 @@ const BridgeShowMore = ({
   sourceAlwaysShow?: boolean;
   textColor?: string;
   onDepositPopupVisibleChange?: (visible: boolean) => void;
+  onSlippageOptionsOpenChange?: (open: boolean) => void;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -357,6 +359,7 @@ const BridgeShowMore = ({
             isWrapToken={isWrapToken}
             recommendValue={recommendValue}
             loading={quoteLoading}
+            onOptionsOpenChange={onSlippageOptionsOpenChange}
           />
         ) : null}
       </View>
@@ -396,6 +399,7 @@ const BridgeShowMore = ({
             isWrapToken={isWrapToken}
             recommendValue={recommendValue}
             loading={quoteLoading}
+            onOptionsOpenChange={onSlippageOptionsOpenChange}
           />
         )}
 
