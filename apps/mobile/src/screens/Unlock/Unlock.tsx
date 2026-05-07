@@ -51,8 +51,6 @@ import { GetRootScreenRouteProp } from '@/navigation-type';
 import { TextInput } from '@/components/Typography';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
-import { startUnlockScreenBootstrapWarmups } from '@/setup-app-before-render';
-import { preloadTransactionHotNavigator } from '@/perfs/preloads';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -114,7 +112,7 @@ export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
 }
 
 const INIT_DATA = { password: __DEV__ ? (APP_TEST_PWD as string) : '' };
-function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
+function useUnlockForm() {
   const { t } = useTranslation();
   const yupSchema = React.useMemo(() => {
     return Yup.object({
@@ -209,13 +207,16 @@ export default function UnlockScreen() {
     computed: { isBiometricsEnabled, isFaceID },
   } = useBiometrics({ autoFetch: true });
   const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
-    useUnlockForm(navigation);
+    useUnlockForm();
 
-  React.useEffect(() => {
-    preloadTransactionHotNavigator().catch(error => {
-      console.error('preloadTransactionHotNavigator::error', error);
-    });
-  }, []);
+  // Android biometric startup diagnostic:
+  // Disable Unlock-screen warmups while testing whether cold-start preload work
+  // interferes with the first BiometricPrompt session.
+  // React.useEffect(() => {
+  //   preloadTransactionHotNavigator().catch(error => {
+  //     console.error('preloadTransactionHotNavigator::error', error);
+  //   });
+  // }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -223,25 +224,25 @@ export default function UnlockScreen() {
     }, []),
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      let timeoutId: ReturnType<typeof setTimeout> | null = null;
-      const frameId = requestAnimationFrame(() => {
-        timeoutId = setTimeout(() => {
-          startUnlockScreenBootstrapWarmups().catch(error => {
-            console.error('startUnlockScreenBootstrapWarmups::error', error);
-          });
-        }, 250);
-      });
-
-      return () => {
-        cancelAnimationFrame(frameId);
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-      };
-    }, []),
-  );
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  //     const frameId = requestAnimationFrame(() => {
+  //       timeoutId = setTimeout(() => {
+  //         startUnlockScreenBootstrapWarmups().catch(error => {
+  //           console.error('startUnlockScreenBootstrapWarmups::error', error);
+  //         });
+  //       }, 250);
+  //     });
+  //
+  //     return () => {
+  //       cancelAnimationFrame(frameId);
+  //       if (timeoutId) {
+  //         clearTimeout(timeoutId);
+  //       }
+  //     };
+  //   }, []),
+  // );
 
   const [usingBiometrics, setUsingBiometrics] = useState(isBiometricsEnabled);
   const couldSwitchingAuthentication = isBiometricsEnabled;
@@ -372,7 +373,7 @@ export default function UnlockScreen() {
 
   return (
     <SilentTouchableView
-      style={{ height: '100%', flex: 1 }}
+      style={styles.rootTouchable}
       viewProps={{
         style: styles.container,
       }}
@@ -486,6 +487,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => {
       height: '100%',
       backgroundColor: colors2024['neutral-bg-1'],
       position: 'relative',
+    },
+    rootTouchable: {
+      flex: 1,
+      height: '100%',
     },
     innerContainer: {
       backgroundColor: colors2024['neutral-bg-1'],
