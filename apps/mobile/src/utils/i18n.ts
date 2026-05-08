@@ -15,6 +15,7 @@ import pt_PT from '@/assets/locales/pt-PT/messages.json';
 import id_ID from '@/assets/locales/id-ID/messages.json';
 import tr_TR from '@/assets/locales/tr-TR/messages.json';
 import codeConfig from '@/assets/locales/index.json';
+import { APP_RUNTIME_ENV } from '@/constant/env';
 
 declare global {
   var __RABBY_I18N__: typeof i18n | undefined;
@@ -104,8 +105,13 @@ export function addResourceBundle(locale: SupportedLang) {
 
 addResourceBundle('en-US' as SupportedLang);
 
-// Exposed for the Metro-injected live preview runtime.
-globalThis.__RABBY_I18N__ = i18n;
+const shouldExposeI18nGlobal =
+  APP_RUNTIME_ENV === 'development' || APP_RUNTIME_ENV === 'regression';
+
+if (shouldExposeI18nGlobal) {
+  // Exposed for the Metro-injected live preview runtime.
+  globalThis.__RABBY_I18N__ = i18n;
+}
 
 i18n.on('languageChanged', function (lng: string) {
   addResourceBundle(filterSupportedLang(lng));
