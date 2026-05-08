@@ -94,15 +94,28 @@ export const TaskStatusIcon = ({
   });
 
   useEffect(() => {
-    Animated.loop(
+    if (taskStatus?.status !== 'pending') {
+      spinValue.stopAnimation();
+      spinValue.setValue(0);
+      return;
+    }
+
+    const animation = Animated.loop(
       Animated.timing(spinValue, {
         toValue: 1,
         duration: 1000,
         easing: Easing.linear,
         useNativeDriver: true,
       }),
-    ).start();
-  }, [spinValue]);
+    );
+
+    animation.start();
+
+    return () => {
+      animation.stop();
+      spinValue.setValue(0);
+    };
+  }, [spinValue, taskStatus?.status]);
 
   if (!taskStatus?.status) {
     return null;
