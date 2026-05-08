@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
   ApprovalGasMethod,
   resolveApprovalGasMethod,
@@ -26,6 +26,7 @@ export const useEffectiveApprovalGasMethod = ({
   gasMethod,
   setGasMethod,
 }: Params) => {
+  const autoSwitchedGasAccountRef = useRef(false);
   const shouldPreferGasAccountImmediately =
     shouldAutoSwitchToApprovalGasAccount({
       nativeTokenInsufficient: isGasNotEnough,
@@ -53,13 +54,36 @@ export const useEffectiveApprovalGasMethod = ({
   );
 
   useEffect(() => {
+    if (!shouldPreferGasAccountImmediately) {
+      autoSwitchedGasAccountRef.current = false;
+    }
+  }, [shouldPreferGasAccountImmediately]);
+
+  useEffect(() => {
     if (
       !isReady ||
-      (isFirstGasLessLoading && !shouldPreferGasAccountImmediately) ||
-      gasMethod === effectiveApprovalGasMethod
+      (isFirstGasLessLoading && !shouldPreferGasAccountImmediately)
     ) {
       return;
     }
+
+    if (shouldPreferGasAccountImmediately) {
+      if (gasMethod === 'gasAccount') {
+        autoSwitchedGasAccountRef.current = true;
+        return;
+      }
+      if (autoSwitchedGasAccountRef.current) {
+        return;
+      }
+      autoSwitchedGasAccountRef.current = true;
+      setGasMethod('gasAccount');
+      return;
+    }
+
+    if (gasMethod === effectiveApprovalGasMethod) {
+      return;
+    }
+
     setGasMethod(effectiveApprovalGasMethod);
   }, [
     shouldPreferGasAccountImmediately,

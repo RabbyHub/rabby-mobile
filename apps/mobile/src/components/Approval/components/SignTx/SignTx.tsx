@@ -2210,6 +2210,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                   noCustomRPC={noCustomRPC}
                   gasMethod={gasMethod}
                   onChangeGasMethod={setGasMethod}
+                  showGasMethodShortcut
                   pushType={pushInfo.type}
                   disabled={isGnosisAccount || isCoboArugsAccount}
                   isReady={isReady}

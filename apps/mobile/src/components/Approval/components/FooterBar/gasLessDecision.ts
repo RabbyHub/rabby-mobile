@@ -21,3 +21,39 @@ export const shouldShowGasLessNotEnough = ({
   payGasByGasAccount: boolean;
   canUseGasLess: boolean;
 }) => showGasLess && isGasNotEnough && !payGasByGasAccount && !canUseGasLess;
+
+export const resolveGasAccountAutoSwitchOnce = ({
+  shouldAutoSwitch,
+  payGasByGasAccount,
+  hasAutoSwitched,
+}: {
+  shouldAutoSwitch: boolean;
+  payGasByGasAccount: boolean;
+  hasAutoSwitched: boolean;
+}) => {
+  if (!shouldAutoSwitch) {
+    return {
+      shouldSwitch: false,
+      nextHasAutoSwitched: false,
+    };
+  }
+
+  if (payGasByGasAccount) {
+    return {
+      shouldSwitch: false,
+      nextHasAutoSwitched: true,
+    };
+  }
+
+  if (hasAutoSwitched) {
+    return {
+      shouldSwitch: false,
+      nextHasAutoSwitched: true,
+    };
+  }
+
+  return {
+    shouldSwitch: true,
+    nextHasAutoSwitched: true,
+  };
+};
