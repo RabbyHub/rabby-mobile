@@ -673,6 +673,10 @@ export const useBatchSwapTask = (options: {
   );
 
   const pause = React.useCallback(() => {
+    if (statusRef.current !== 'active') {
+      return;
+    }
+
     queueRef.current.pause();
     updateStatus('paused');
   }, [updateStatus]);
