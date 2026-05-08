@@ -2,7 +2,6 @@ import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { trigger } from 'react-native-haptic-feedback';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
 import { Card } from '@/components2024/Card';
@@ -130,14 +129,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         onPressIn={() => setIsPressing(true)}
         onPressOut={() => setIsPressing(false)}
         style={StyleSheet.flatten([styles.root])}
-        delayLongPress={200} // long press delay
-        onPress={onSelect}
-        onLongPress={() => {
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
-        }}>
+        onPress={onSelect}>
         <Card
           style={StyleSheet.flatten([
             styles.card,
