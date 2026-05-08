@@ -1132,7 +1132,8 @@
         "predict": "Prever",
         "meme": "Memecoin",
         "market": "Mercado",
-        "gasDeposit": "Depósito de Gas"
+        "gasDeposit": "Depósito de Gas",
+        "convertDust": "Converter Pó"
       },
       "swipeUp": {
         "desc": "Deslize para cima para explorar websites",

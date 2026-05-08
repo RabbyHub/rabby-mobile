@@ -817,7 +817,8 @@
         "predict": "예측하다",
         "meme": "밈코인",
         "market": "시장",
-        "gasDeposit": "가스 예치"
+        "gasDeposit": "가스 예치",
+        "convertDust": "소액 전환"
       },
       "swipeUp": {
         "desc": "위로 스와이프하여 웹사이트 탐색하기",

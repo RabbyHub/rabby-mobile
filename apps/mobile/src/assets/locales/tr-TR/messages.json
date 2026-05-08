@@ -1061,7 +1061,8 @@
         "predict": "Tahmin Et",
         "meme": "Memecoin",
         "market": "Pazar",
-        "gasDeposit": "Gaz Dekontörü"
+        "gasDeposit": "Gaz Dekontörü",
+        "convertDust": "Küçük Bakiyeleri Dönüştür"
       },
       "swipeUp": {
         "descAndroid": "dApp'leri keşfetmek için tıklayın",
@@ -3139,7 +3140,9 @@
         },
         "repayWith": "Teminat ile geri ödemek için",
         "collateralNotEnough": "Teminat bakiyeniz seçilen tutardan daha düşük.",
-        "toRepay": "Beklenen geri ödeme tutarı"
+        "toRepay": "Beklenen geri ödeme tutarı",
+        "insufficientLiquidity": "Insufficient liquidity.",
+        "frozenCollateral": "This asset is frozen due to an Aave community decision."
       },
       "repayWithAToken": {
         "header": {

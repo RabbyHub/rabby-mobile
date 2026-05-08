@@ -966,7 +966,8 @@
         "predict": "予測する",
         "meme": "メモリコイン",
         "market": "市場",
-        "gasDeposit": "ガスデポジット"
+        "gasDeposit": "ガスデポジット",
+        "convertDust": "ダスト変換"
       },
       "swipeUp": {
         "descAndroidMore": "クリックしてさらに多くのdAppsを探索する",

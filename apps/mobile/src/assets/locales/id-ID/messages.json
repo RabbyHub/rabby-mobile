@@ -1061,7 +1061,8 @@
         "predict": "Prediksi",
         "meme": "Memecoin",
         "market": "Pasar",
-        "gasDeposit": "Setoran Gas"
+        "gasDeposit": "Setoran Gas",
+        "convertDust": "Konversi Dust"
       },
       "swipeUp": {
         "descMore": "Geser ke atas untuk menjelajahi lebih banyak situs web",

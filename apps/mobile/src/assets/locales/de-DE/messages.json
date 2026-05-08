@@ -1229,7 +1229,8 @@
         "predict": "Vorhersagen",
         "meme": "Memecoin",
         "market": "Markt",
-        "gasDeposit": "Gas Einzahlung"
+        "gasDeposit": "Gas Einzahlung",
+        "convertDust": "Dust umwandeln"
       },
       "swipeUp": {
         "descAndroidMore": "Klicken Sie, um weitere dApps zu erkunden",

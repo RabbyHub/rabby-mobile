@@ -1035,7 +1035,8 @@
         "predict": "คาดการณ์",
         "meme": "Memecoin",
         "market": "ตลาด",
-        "gasDeposit": "เงินฝากแก๊ส"
+        "gasDeposit": "เงินฝากแก๊ส",
+        "convertDust": "แปลง Dust"
       },
       "swipeUp": {
         "descAndroid": "คลิกเพื่อสำรวจ dApps",

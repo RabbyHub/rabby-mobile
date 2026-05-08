@@ -1318,7 +1318,8 @@
         "predict": "Dự đoán",
         "meme": "Memecoin",
         "market": "Thị trường",
-        "gasDeposit": "Tiền gửi Gas"
+        "gasDeposit": "Tiền gửi Gas",
+        "convertDust": "Chuyển đổi Dust"
       },
       "swipeUp": {
         "descMore": "Kéo lên để khám phá thêm nhiều trang web",
