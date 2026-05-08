@@ -30,7 +30,7 @@ import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Text } from '@/components/Typography';
-import ChevronRightSmallCC from '@/assets/icons/common/right-2-cc.svg';
+import ChevronRightSmallCC from '@/assets/icons/common/chevron-right-small-cc.svg';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
@@ -218,7 +218,8 @@ function NewUserGetStartedScreen() {
         {/* Hero Illustration - crops from top on short screens */}
         <HeroIllustration isLight={isLight} />
 
-        <Animated.View style={contentAnimatedStyle}>
+        <Animated.View
+          style={[contentAnimatedStyle, { flexShrink: 0, flexGrow: 1 }]}>
           {/* Text Content */}
           <View style={styles.textContent}>
             <Text style={styles.title}>{t('page.getStart.welcomeTitle')}</Text>
@@ -232,7 +233,7 @@ function NewUserGetStartedScreen() {
           <View
             style={[
               styles.bottomActions,
-              { paddingBottom: Math.max(bottom, 16) },
+              { flexShrink: 0, paddingBottom: Math.max(bottom, 16) },
             ]}>
             {!getStarted.localHasAccounts ? (
               <>
@@ -254,6 +255,7 @@ function NewUserGetStartedScreen() {
                 <Button
                   type="primary"
                   title={t('page.getStart.createNewAddress')}
+                  titleStyle={{ fontSize: 18 }}
                   disabled={
                     !getStarted.processedInit || getStarted.localHasAccounts
                   }
@@ -265,6 +267,7 @@ function NewUserGetStartedScreen() {
                   }
                   type="ghost"
                   title={t('page.getStart.alreadyHaveAddress')}
+                  titleStyle={{ fontSize: 18 }}
                   onPress={handleGoToImport}
                   buttonStyle={styles.secondaryButton}
                   {...makeTestIDProps(E2E_ID.onboarding.welcomeImportExisting)}
@@ -274,6 +277,7 @@ function NewUserGetStartedScreen() {
               <Button
                 type="primary"
                 title={t('page.getStart.goToHome') || 'Go to Home'}
+                titleStyle={{ fontSize: 18 }}
                 disabled={
                   !getStarted.processedInit || !getStarted.localHasAccounts
                 }
@@ -332,6 +336,7 @@ const getStyle = createGetStyles2024(ctx => ({
     flexShrink: 1,
     justifyContent: 'flex-end',
     overflow: 'hidden',
+    marginTop: -20,
   },
   heroBackground: {
     marginLeft: -12,
@@ -347,6 +352,7 @@ const getStyle = createGetStyles2024(ctx => ({
     fontSize: 36,
     textAlign: 'center',
     color: ctx.colors2024['neutral-title-1'],
+    paddingTop: 10,
     marginBottom: 8,
   },
   subtitle: {
@@ -377,6 +383,7 @@ const getStyle = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
   },
   syncLinkText: {
     fontFamily: 'SF Pro Rounded',
