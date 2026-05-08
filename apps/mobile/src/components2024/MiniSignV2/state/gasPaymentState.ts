@@ -1,4 +1,4 @@
-import { shouldAutoSwitchToApprovalGasAccount } from '@/components/Approval/components/TxComponents/GasSelector/approvalGasDisplay';
+import { resolveApprovalGasMethod } from '@/components/Approval/components/TxComponents/GasSelector/approvalGasDisplay';
 
 type MiniSignGasState = {
   gasMethod?: 'native' | 'gasAccount';
@@ -19,12 +19,15 @@ export const isMiniSignGasAccountChainSupported = (
   state: Pick<MiniSignGasState, 'gasAccount'>,
 ) => !!state.gasAccount && !state.gasAccount.chain_not_support;
 
-const shouldAutoSwitchToGasAccount = (state: MiniSignGasState) => {
-  return shouldAutoSwitchToApprovalGasAccount({
+const resolveMiniSignGasMethod = (state: MiniSignGasState) => {
+  const currentGasMethod = state.gasMethod ?? 'native';
+
+  return resolveApprovalGasMethod({
     nativeTokenInsufficient: !!state.isGasNotEnough,
     freeGasAvailable: !!state.gasless?.is_gasless,
     gasAccountChainSupported: isMiniSignGasAccountChainSupported(state),
     noCustomRPC: !!state.noCustomRPC,
+    legacyGasMethod: currentGasMethod,
   });
 };
 
@@ -32,9 +35,7 @@ export const normalizeMiniSignGasState = <T extends MiniSignGasState>(
   state: T,
 ): T => {
   const currentGasMethod = state.gasMethod ?? 'native';
-  const nextGasMethod = shouldAutoSwitchToGasAccount(state)
-    ? 'gasAccount'
-    : 'native';
+  const nextGasMethod = resolveMiniSignGasMethod(state);
   const nextUseGasless =
     nextGasMethod === 'gasAccount' ? false : !!state.useGasless;
 
