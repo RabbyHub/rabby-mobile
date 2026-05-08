@@ -613,6 +613,7 @@ const handleSelectDefaultAccount = async (accounts: Account[]) => {
       setHomePositionPnl(pnl);
       sdk.initAccount(account.address);
       subscribeToUserData(account);
+      fetchUserAbstraction(account.address);
     };
 
     if (recentlyAccount && selectedItem) {
