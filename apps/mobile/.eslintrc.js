@@ -35,6 +35,12 @@ module.exports = {
               "Please import Text/TextInput from '@/components/Typography' instead",
           },
           {
+            name: 'react-native',
+            importNames: ['Modal'],
+            message:
+              "Please import TrackedModal from '@/components/Modal/TrackedModal' instead of importing Modal directly from react-native",
+          },
+          {
             name: 'react-native-gesture-handler',
             importNames: ['Text', 'TextInput'],
             message:

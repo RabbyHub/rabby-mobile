@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
-import { View, Dimensions, TouchableOpacity, Modal } from 'react-native';
+import { View, Dimensions, TouchableOpacity } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import { AssetAvatar } from '@/components';
 import { useLongPressTokenAtom } from '../hooks';
@@ -18,6 +18,8 @@ import { RootNames } from '@/constant/layout';
 import { navigateDeprecated } from '@/utils/navigation';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { Text } from '@/components/Typography';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 
 export const TokenInfoPopup = () => {
   const windowWidth = Dimensions.get('window').width;
@@ -57,7 +59,8 @@ export const TokenInfoPopup = () => {
   }, [usdValue]);
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.swapTokenInfo}
       transparent
       visible={longPressToken.visible}
       animationType="none"
@@ -150,7 +153,7 @@ export const TokenInfoPopup = () => {
           </TouchableOpacity>
         )}
       </View>
-    </Modal>
+    </TrackedModal>
   );
 };
 

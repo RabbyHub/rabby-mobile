@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Modal, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
 import { findChainByServerID } from '@/utils/chain';
@@ -12,6 +12,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { RcIconExternalLinkCC } from '@/assets/icons/common';
 import RcIconWaring from '@/assets2024/icons/swap/waring.svg';
 import { Text } from '@/components/Typography';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 
 export const useLowCreditState = () => {
   const [lowCreditToken, setLowCreditToken] = useState<TokenItem>();
@@ -56,7 +58,8 @@ export const LowCreditModal: React.FC<LowCreditModalProps> = ({
   }
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.swapLowCredit}
       transparent={true}
       visible={visible}
       animationType="fade"
@@ -103,7 +106,7 @@ export const LowCreditModal: React.FC<LowCreditModalProps> = ({
           />
         </View>
       </View>
-    </Modal>
+    </TrackedModal>
   );
 };
 
