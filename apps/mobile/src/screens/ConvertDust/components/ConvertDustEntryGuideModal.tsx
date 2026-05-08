@@ -4,7 +4,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { NewTag } from '../../Home/components/NewTag';
 import GuideImg from '@/assets2024/icons/convertDust/convert-guide-light.png';
 import GuideImgDark from '@/assets2024/icons/convertDust/convert-guide-dark.png';

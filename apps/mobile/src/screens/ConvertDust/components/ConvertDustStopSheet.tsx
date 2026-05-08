@@ -5,7 +5,7 @@ import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 export function ConvertDustStopSheet({
   visible,

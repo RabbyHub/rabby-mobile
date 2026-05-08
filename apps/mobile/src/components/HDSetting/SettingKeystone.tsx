@@ -3,7 +3,7 @@ import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import {
   isLoadedAtom,
   MainContainer,
@@ -17,7 +17,9 @@ import { useThemeColors } from '@/hooks/theme';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import { TouchableOpacity } from '@gorhom/bottom-sheet';
 import { Button } from '@/components';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { Text } from '@/components/Typography';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -211,7 +213,11 @@ export const SettingKeystone: React.FC<{
         </View>
         <RcIconArrowRight />
       </TouchableOpacity>
-      <Modal visible={visible} transparent animationType="fade">
+      <TrackedModal
+        modalId={MODAL_GATE_IDS.hdKeystoneSwitchDevice}
+        visible={visible}
+        transparent
+        animationType="fade">
         <View style={styles.modalMask}>
           <View style={styles.modal}>
             <Text style={styles.modalTitle}>
@@ -246,7 +252,7 @@ export const SettingKeystone: React.FC<{
             </View>
           </View>
         </View>
-      </Modal>
+      </TrackedModal>
     </MainContainer>
   );
 };
