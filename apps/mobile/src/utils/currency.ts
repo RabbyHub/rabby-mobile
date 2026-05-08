@@ -1,5 +1,9 @@
 import { USD_CURRENCY } from '@/constant/currency';
-import { formatNumber, splitNumberByStep } from '@/utils/number';
+import {
+  formatNumber,
+  formatTokenAmount,
+  splitNumberByStep,
+} from '@/utils/number';
 import type { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 
@@ -43,9 +47,6 @@ const joinCurrencyValueParts = (
   };
 };
 
-const trimFixed = (value: BigNumber, decimals: number) =>
-  value.toFixed(decimals).replace(/\.?0+$/u, '');
-
 const formatPostfixCurrencyAmount = (value: BigNumber) => {
   const absValue = value.absoluteValue();
 
@@ -53,41 +54,14 @@ const formatPostfixCurrencyAmount = (value: BigNumber) => {
     return '0';
   }
 
-  if (absValue.gte(1000000)) {
-    return formatNumber(absValue, 2, {}, true);
-  }
-
-  if (absValue.gte(1000)) {
-    return splitNumberByStep(
-      absValue.decimalPlaces(0, BigNumber.ROUND_FLOOR).toString(),
-    );
-  }
-
-  if (absValue.gte(10)) {
-    return splitNumberByStep(trimFixed(absValue, 1));
-  }
-
-  if (absValue.gte(1)) {
-    return splitNumberByStep(trimFixed(absValue, 2));
-  }
-
-  return trimFixed(absValue, 4);
+  return formatTokenAmount(absValue.toFixed());
 };
 
 const formatPostfixCurrencyValueParts = (
   value: BigNumber,
   currency: CurrencyItem,
 ): CurrencyValueParts => {
-  const absValue = value.absoluteValue();
   const sign = value.lt(0) ? '-' : '';
-
-  if (!absValue.isZero() && absValue.lt(0.0001)) {
-    return joinCurrencyValueParts('0.0001', {
-      currency,
-      sign,
-      lessThan: true,
-    });
-  }
 
   return joinCurrencyValueParts(formatPostfixCurrencyAmount(value), {
     currency,
