@@ -11,7 +11,6 @@ import * as Sentry from '@sentry/react-native';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 
-import { IDisplayedAccountWithBalance } from '@/hooks/accountToDisplay';
 import { contactService, keyringService, preferenceService } from '../services';
 import addressBalanceStore from '@/store/balance';
 
@@ -20,6 +19,7 @@ import { requestKeyring } from './keyring';
 import { isEqual } from 'lodash';
 import type {
   Account,
+  IDisplayedAccountWithBalance,
   IPinAddress,
   KeyringAccountWithAlias,
 } from '@/types/account';

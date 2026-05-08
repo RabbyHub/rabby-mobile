@@ -5,7 +5,7 @@ import { View, Animated, Easing, StyleSheet } from 'react-native';
 import { Card } from '../Card';
 import RcPending from '@/assets/icons/swap/pending.svg';
 import RcIconFail from '@/assets2024/icons/history/IconFail.svg';
-import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
+import { TxStatusItem } from '@/screens/Transaction/components/TxStatusItem';
 import { Text } from '@/components/Typography';
 
 interface Props {

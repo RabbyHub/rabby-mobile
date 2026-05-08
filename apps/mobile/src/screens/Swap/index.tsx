@@ -101,10 +101,8 @@ import {
 } from '@/components2024/DirectSignBtn';
 import useDebounce from 'react-use/lib/useDebounce';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
-import {
-  useSignatureStoreOf,
-  SignatureInstanceProvider,
-} from '@/components2024/MiniSignV2';
+import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
+import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { BridgeSlippage } from '../Bridge/components/BridgeSlippage';
 import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
 import { APP_VERSIONS } from '@/constant';

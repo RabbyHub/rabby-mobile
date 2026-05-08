@@ -21,13 +21,13 @@ import { MarketCategoryContent } from './components/MarketCategoryContent';
 import { useMarketVisibleTokenPriceRefresh } from './hooks/useMarketVisibleTokenPriceRefresh';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { TAB_BAR_HEIGHT } from './constants';
 
 const isAndroid = Platform.OS === 'android';
 
 type MarketTabKey = 'watchlist' | string;
 const TAB_GAP = 8;
 const FIRST_TAB_GAP = 12;
-export const TAB_BAR_HEIGHT = 28;
 
 const marketTabAtom = atomByMMKV<MarketTabKey>(
   '@market.activeTab',

@@ -26,7 +26,7 @@ import { deleteCurveCache } from '@/utils/24balanceCurveCache';
 import { preferenceService, transactionHistoryService } from '@/core/services';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { removeCexId } from '@/utils/addressCexId';
-import { EvmTotalBalanceResponse } from '../hooks/balance';
+import type { EvmTotalBalanceResponse } from '../hooks/balance';
 import { setHistoryLoading } from '@/hooks/historyTokenDict';
 import type { ITokenItem } from '@/types/assets';
 

@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { RelatedDeFiType } from '..';
+import type { RelatedDeFiType } from '../types';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { ArrowCircleCC } from '@/assets2024/icons/address';

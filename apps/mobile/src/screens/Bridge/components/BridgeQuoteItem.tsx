@@ -2,7 +2,8 @@ import React, { useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
-import { SelectedBridgeQuote, useSetQuoteVisible } from '../hooks';
+import { useSetQuoteVisible } from '../hooks/context';
+import type { SelectedBridgeQuote } from '../types';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar, Tip } from '@/components';
 import { QuoteLogo } from './QuoteLogo';
@@ -13,6 +14,7 @@ import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import RcIconLock from '@/assets2024/icons/bridge/IconLock.svg';
 // import RcIconDurationCC from '@/assets/icons/bridge/duration.svg';
 import { Text } from '@/components/Typography';
+import { bridgeQuoteEstimatedValueBn } from '../utils/bridgeQuote';
 
 interface QuoteItemProps extends SelectedBridgeQuote {
   payAmount: string;
@@ -27,36 +29,6 @@ interface QuoteItemProps extends SelectedBridgeQuote {
   inSufficient?: boolean;
   currentSelectedQuote?: SelectedBridgeQuote;
 }
-
-export const bridgeQuoteEstimatedValueBn = (
-  quote: SelectedBridgeQuote,
-  receiveToken: TokenItem,
-) => {
-  return new BigNumber(quote.to_token_amount)
-    .times(receiveToken.price || 1)
-    .minus(quote.gas_fee.usd_value);
-};
-
-const PER_MINUTE_TIME_COST = 20000; // $20k USD per minute time cost
-/**
- * Best quote scoring formula: score = amount_usd - gas_fee_usd - time_cost_usd
- * Time cost per minute = amount_usd / 20K, capped at $1 USD
- */
-export const bridgeQuoteScore = (
-  quote: SelectedBridgeQuote,
-  receiveToken: TokenItem,
-) => {
-  const amountUsd = new BigNumber(quote.to_token_amount).times(
-    receiveToken.price || 1,
-  );
-  const gasFeeUsd = new BigNumber(quote.gas_fee.usd_value);
-  const durationMinutes = Math.ceil(quote.duration / 60);
-  const timeCostUsd = BigNumber.min(
-    amountUsd.div(PER_MINUTE_TIME_COST).times(durationMinutes),
-    1,
-  );
-  return amountUsd.minus(gasFeeUsd).minus(timeCostUsd);
-};
 
 export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
   const { currentSelectedQuote, ...others } = props;

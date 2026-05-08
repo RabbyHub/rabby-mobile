@@ -1,7 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import { getChain } from '@/utils/chain';
 import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
-import { HistoryDisplayItem } from '../MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/types/history';
 import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { TxChange } from './TokenChange';
 import React, { useCallback, useEffect, useMemo } from 'react';
@@ -11,7 +11,7 @@ import { getAliasName } from '@/core/apis/contact';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
-import { TxStatusItem } from '../HistoryDetailScreen';
+import { TxStatusItem } from './TxStatusItem';
 import { useTranslation } from 'react-i18next';
 import { CUSTOM_HISTORY_TITLE_TYPE, HistoryItemCateType } from './type';
 import ChainIconImage from '@/components/Chain/ChainIconImage';

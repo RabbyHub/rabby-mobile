@@ -4,9 +4,8 @@ import {
   CollectionList,
   WithdrawAction,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { KeyringAccountWithAlias } from '@/hooks/account';
-import { NftItemWithCollection } from './hooks/nft';
-import { IProtocolItem } from '@/store/protocols';
+import type { KeyringAccountWithAlias } from '@/types/account';
+import type { DisplayNftItem, IProtocolItem } from '@/types/assets';
 // curve
 export type ChartLine = {
   value: number;
@@ -101,6 +100,10 @@ export type CombineDefi = {
 export type CombineCollection = CollectionList & {
   address: string;
 };
+
+export type NftItemWithCollection =
+  | (DisplayNftItem & { address?: string })
+  | (CollectionList & { address?: string });
 
 export type CombineNft = {
   type: 'unfold_nft' | 'fold_nft';

@@ -20,7 +20,7 @@ import {
   HYPE_EVM_BRIDGE_ADDRESS_MAP,
   HYPE_CORE_DEPOSIT_WALLET,
 } from '@/constant/perps';
-import { apisPerps } from '@/core/apis';
+import { apisPerps } from '@/core/apis/perps';
 import {
   formatAllDexsClearinghouseState,
   formatMarkData,

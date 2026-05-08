@@ -28,7 +28,6 @@ import {
 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useMeasureLayoutForHomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
-import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
 import {
   getComputedChainInfo,
@@ -53,6 +52,7 @@ import {
   TabbarLabels,
 } from '@/hooks/navigation';
 import CustomLabel from './Tabs/CustomLabel';
+import { getHomeTabIndicatorWidth } from '../utils/homeTabIndicator';
 
 type ItemLayout = {
   width: number;
@@ -174,14 +174,6 @@ const leftHitSlopTop = 50;
 const leftHitSlopBottom = 4;
 const rightHitSlopTop = 50;
 const rightHitSlopBottom = 4;
-
-export function getHomeTabIndicatorWidth(winWidth: number) {
-  'worklet';
-  // const winWidth = Dimensions.get('window').width;
-  const indicatorWidth = (winWidth - 52) / 2;
-
-  return indicatorWidth;
-}
 
 const indicatorStyles = createGetStyles2024(
   {
@@ -395,7 +387,7 @@ function AssetsTabBar() {
 
   return (
     <Animated.View
-      pointerEvents={focusedTab === TabName.overview ? 'none' : 'auto'}
+      pointerEvents={focusedTab === HomeTabName.overview ? 'none' : 'auto'}
       style={[styles.portfolioContainer, stylez, tabbarContainerStyle]}>
       {/* <CustomLabel.Slider indexDecimal={indexDecimal} /> */}
       {AssetsTabLabels.map(({ index, label }) => {

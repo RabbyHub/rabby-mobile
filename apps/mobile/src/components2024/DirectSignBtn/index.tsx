@@ -19,7 +19,8 @@ import React, {
 } from 'react';
 import { Button } from '../Button';
 import { CheckBoxRect } from '../CheckBox';
-import { SignatureFlowState, useSignatureStore } from '../MiniSignV2';
+import type { SignatureFlowState } from '../MiniSignV2/state/types';
+import { useSignatureStore } from '../MiniSignV2/state/useSignatureStore';
 import { Text } from '@/components/Typography';
 
 export type DirectSignBtnMethods = {

@@ -16,7 +16,7 @@ import { getGasLevelI18nKey } from '@/utils/trans';
 import { getAnchoredPopoverPosition } from '@/utils/anchoredPopover';
 import { calcGasAccountUsd } from '@/components/Approval/components/TxComponents/GasSelector/directSignSummary';
 import { useMiniSignFixedMode } from '@/hooks/miniSignGasStore';
-import type { SignatureFlowState } from '@/components2024/MiniSignV2';
+import type { SignatureFlowState } from '@/components2024/MiniSignV2/state/types';
 import type { MiniSignGasPanelInfo } from '@/components2024/MiniSignV2/state/useMiniSignGasPanel';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
 import { Text } from '@/components/Typography';
