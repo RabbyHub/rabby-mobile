@@ -456,16 +456,18 @@ export const useBatchSwapTask = (options: {
               activeProvider.actualReceiveAmount || 0,
             ).times(options.receiveToken?.price || 0);
 
-            const priceImpact = toUsdBn
-              .minus(fromUsdBn)
-              .div(fromUsdBn)
-              .times(100);
+            if (fromUsdBn.gt(0)) {
+              const priceImpact = toUsdBn
+                .minus(fromUsdBn)
+                .div(fromUsdBn)
+                .times(100);
 
-            // 价差过大
-            if (priceImpact.lte(-priceImpactLimit)) {
-              throw new Error(
-                t('page.convertDust.failReason.priceImpactTooHigh'),
-              );
+              // 价差过大
+              if (priceImpact.lte(-priceImpactLimit)) {
+                throw new Error(
+                  t('page.convertDust.failReason.priceImpactTooHigh'),
+                );
+              }
             }
 
             const txs = await buildSwapTxs({
