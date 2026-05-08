@@ -17,8 +17,11 @@ const AssetItem = ({
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const isZeroBorrowed = token.balance === '0';
+  const disabled = !!token.supplyCapReached || token.isFrozen;
   return (
-    <TouchableOpacity style={styles.item} onPress={onPress}>
+    <TouchableOpacity
+      style={[styles.item, disabled && styles.itemDisabled]}
+      onPress={onPress}>
       <View style={styles.left}>
         <TokenIcon size={46} chainSize={0} tokenSymbol={token.symbol} />
         <View style={styles.symbolContainer}>
@@ -62,6 +65,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
     borderRadius: 16,
     marginTop: 8,
+  },
+  itemDisabled: {
+    opacity: 0.45,
   },
   ava: {
     width: 46,
