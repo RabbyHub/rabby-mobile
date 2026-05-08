@@ -31,6 +31,7 @@ export { FailedCode } from '@/utils/sendTransaction';
 
 const TASK_CANCELLED_ERROR_NAME = 'BatchSwapTaskCancelled';
 const TX_RECEIPT_POLL_INTERVAL = 5000;
+const TX_RECEIPT_TIMEOUT = 60 * 1000;
 
 const getTokenRawAmount = (token: TokenItem) =>
   new BigNumber(token.raw_amount_hex_str || 0, 16);
@@ -51,12 +52,15 @@ const createTaskCancelledError = () => {
 const waitForTxCompleted = async ({
   hash,
   chainServerId,
+  isTaskCancelled,
 }: {
   hash: string;
   chainServerId: string;
+  isTaskCancelled?: () => boolean;
 }) => {
   return await new Promise((resolve, reject) => {
     let timer: ReturnType<typeof setTimeout> | null = null;
+    let timeoutTimer: ReturnType<typeof setTimeout> | null = null;
     let isSettled = false;
     let isChecking = false;
 
@@ -67,6 +71,24 @@ const waitForTxCompleted = async ({
         clearTimeout(timer);
         timer = null;
       }
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer);
+        timeoutTimer = null;
+      }
+    };
+
+    const rejectWithCleanup = (error: Error) => {
+      cleanup();
+      reject(error);
+    };
+
+    const rejectIfCancelled = () => {
+      if (!isTaskCancelled?.()) {
+        return false;
+      }
+
+      rejectWithCleanup(createTaskCancelledError());
+      return true;
     };
 
     const scheduleNextCheck = () => {
@@ -81,29 +103,37 @@ const waitForTxCompleted = async ({
     };
 
     const checkReceipt = async () => {
-      if (isSettled || isChecking) {
+      if (isSettled || isChecking || rejectIfCancelled()) {
         return;
       }
 
-      isChecking = true;
-      const res = await getRpcTxReceipt(chainServerId, hash);
-      isChecking = false;
+      try {
+        isChecking = true;
+        const res = await getRpcTxReceipt(chainServerId, hash);
+        isChecking = false;
 
-      if (isSettled) {
-        return;
-      }
+        if (isSettled || rejectIfCancelled()) {
+          return;
+        }
 
-      if (res.code !== 0) {
+        if (res.code !== 0) {
+          scheduleNextCheck();
+          return;
+        }
+
+        cleanup();
+
+        if (res.status) {
+          resolve(true);
+        } else {
+          reject(new Error('tx failed'));
+        }
+      } catch (error) {
+        isChecking = false;
+        if (isSettled || rejectIfCancelled()) {
+          return;
+        }
         scheduleNextCheck();
-        return;
-      }
-
-      cleanup();
-
-      if (res.status) {
-        resolve(true);
-      } else {
-        reject(new Error('tx failed'));
       }
     };
 
@@ -113,6 +143,9 @@ const waitForTxCompleted = async ({
       }
     };
 
+    timeoutTimer = setTimeout(() => {
+      rejectWithCleanup(new Error('tx receipt timeout'));
+    }, TX_RECEIPT_TIMEOUT);
     eventBus.addListener(EVENTS.TX_COMPLETED, handler);
     checkReceipt();
   });
@@ -543,8 +576,13 @@ export const useBatchSwapTask = (options: {
                   await waitForTxCompleted({
                     hash: result.txHash,
                     chainServerId: options.chain.serverId,
+                    isTaskCancelled,
                   });
                 } catch (e) {
+                  if ((e as any)?.name === TASK_CANCELLED_ERROR_NAME) {
+                    throw e;
+                  }
+
                   throw new Error(
                     t('page.convertDust.failReason.transactionFailed'),
                   );
