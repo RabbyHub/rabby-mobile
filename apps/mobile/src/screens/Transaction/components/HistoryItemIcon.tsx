@@ -135,9 +135,9 @@ export const HistoryItemIcon = ({
     case HistoryItemCateType.Revoke:
     case HistoryItemCateType.Recieve:
       const singeToken = token as TokenItem;
-      const singleSize = isInDetail ? 58 : 46;
+      const singleSize = 46;
       return (
-        <View style={[styles.imageBox, isInDetail && styles.imageBoxInDetail]}>
+        <View style={[styles.imageBox]}>
           {isNft ? (
             <Media
               failedPlaceholder={
