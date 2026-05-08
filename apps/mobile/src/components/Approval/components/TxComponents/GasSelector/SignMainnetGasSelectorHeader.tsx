@@ -1,10 +1,19 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, View, ViewProps as RNViewProps } from 'react-native';
+import {
+  Pressable,
+  TouchableOpacity,
+  View,
+  ViewProps as RNViewProps,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import RcIconInfoCC from '@/assets2024/icons/offlineChain/info-cc.svg';
+import { default as RcIconGasActive } from '@/assets/icons/sign/tx/gas-active.svg';
+import { default as RcIconGasBlurCC } from '@/assets/icons/sign/tx/gas-blur-cc.svg';
+import { default as RcIconGasAccountBlurCC } from '@/assets/icons/sign/tx/gas-account-blur-cc.svg';
+import { default as RcIconGasAccountActive } from '@/assets/icons/sign/tx/gas-account-active.svg';
 import { Tip } from '@/components';
-import { useTheme2024 } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { DirectSignGasInfoUI } from '@/screens/Bridge/components/DirectSignGasInfoUI';
 import { getGasLevelI18nKey } from '@/utils/trans';
@@ -28,6 +37,7 @@ import {
   type SignMainnetSupportedGasLevel,
 } from './signMainnetGasLevelPrefetch';
 import type { TempoFeeTokenOption } from '@/utils/tempo';
+import { SvgProps } from 'react-native-svg';
 
 type GasSelectorHeaderProps = React.ComponentProps<
   typeof import('./GasSelectorHeader').GasSelectorHeader
@@ -35,6 +45,7 @@ type GasSelectorHeaderProps = React.ComponentProps<
 type SignMainnetGasSelectorHeaderProps = GasSelectorHeaderProps & {
   freeGasAvailable?: boolean;
   noCustomRPC?: boolean;
+  showGasMethodShortcut?: boolean;
   showTempoGasTokenSelector?: boolean;
   tempoGasTokenList?: TempoFeeTokenOption[];
   onSelectTempoGasToken?: (token: TempoFeeTokenOption) => void;
@@ -76,6 +87,7 @@ export const SignMainnetHeaderContent = ({
   gasFeeListItemInnerStyle,
   textColor,
   gasToken,
+  showGasMethodShortcut,
   showTempoGasTokenSelector,
   tempoGasTokenList,
   onSelectTempoGasToken,
@@ -116,6 +128,7 @@ export const SignMainnetHeaderContent = ({
   gasFeeListItemInnerStyle?: RNViewProps['style'];
   textColor?: string;
   gasToken?: GasSelectorHeaderProps['gasToken'];
+  showGasMethodShortcut?: boolean;
   showTempoGasTokenSelector?: boolean;
   tempoGasTokenList?: TempoFeeTokenOption[];
   onSelectTempoGasToken?: (token: TempoFeeTokenOption) => void;
@@ -163,6 +176,13 @@ export const SignMainnetHeaderContent = ({
   const summaryValueColor = isSummaryNotEnough
     ? colors2024['red-default']
     : textColor;
+  const gasMethodShortcut =
+    showGasMethodShortcut && gasMethod && onChangeGasMethod && !disabled ? (
+      <GasMethodShortcut
+        gasMethod={gasMethod}
+        onChangeGasMethod={onChangeGasMethod}
+      />
+    ) : null;
   const supportedLevels = useMemo(
     () =>
       gasList.filter(
@@ -434,7 +454,8 @@ export const SignMainnetHeaderContent = ({
         empty={isHeaderError}
         emptyText={t('page.signTx.failToFetchGasCost')}
         chainId={chainId}
-        label={t('page.transactions.detail.GasFee')}
+        label={gasMethodShortcut ? null : t('page.transactions.detail.GasFee')}
+        labelPrefix={gasMethodShortcut}
         levelText={t(getGasLevelI18nKey(selectedGas?.level || 'normal'))}
         valueText={summary.primaryText}
         textColor={textColor}
@@ -600,7 +621,83 @@ export const SignMainnetGasSelectorHeader = (
       tempoGasTokenList={props.tempoGasTokenList}
       onSelectTempoGasToken={props.onSelectTempoGasToken}
       tempoGasTokenLoading={props.tempoGasTokenLoading}
+      showGasMethodShortcut={props.showGasMethodShortcut}
     />
+  );
+};
+
+const GasMethodShortcut = ({
+  gasMethod,
+  onChangeGasMethod,
+}: {
+  gasMethod: 'native' | 'gasAccount';
+  onChangeGasMethod: (value: 'native' | 'gasAccount') => void;
+}) => {
+  const colors = useThemeColors();
+
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        padding: 2,
+        borderRadius: 6,
+        borderWidth: 0.5,
+        borderStyle: 'solid',
+        borderColor: colors['neutral-line'],
+        marginRight: 12,
+      }}>
+      <GasMethod
+        active={gasMethod === 'native'}
+        onChange={() => {
+          onChangeGasMethod('native');
+        }}
+        ActiveComponent={RcIconGasActive}
+        BlurComponent={RcIconGasBlurCC}
+      />
+
+      <GasMethod
+        active={gasMethod === 'gasAccount'}
+        onChange={() => {
+          onChangeGasMethod('gasAccount');
+        }}
+        ActiveComponent={RcIconGasAccountActive}
+        BlurComponent={RcIconGasAccountBlurCC}
+      />
+    </View>
+  );
+};
+
+const GasMethod = (props: {
+  active: boolean;
+  onChange: () => void;
+  ActiveComponent: React.FC<SvgProps>;
+  BlurComponent: React.FC<SvgProps>;
+}) => {
+  const { active, onChange, ActiveComponent, BlurComponent } = props;
+  const colors = useThemeColors();
+  return (
+    <TouchableOpacity
+      style={{
+        width: 32,
+        height: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 4,
+        backgroundColor: active ? colors['blue-light-1'] : 'transparent',
+      }}
+      onPress={onChange}>
+      <ActiveComponent
+        style={{
+          display: active ? 'flex' : 'none',
+        }}
+      />
+      <BlurComponent
+        color={colors['neutral-foot']}
+        style={{
+          display: active ? 'none' : 'flex',
+        }}
+      />
+    </TouchableOpacity>
   );
 };
 
