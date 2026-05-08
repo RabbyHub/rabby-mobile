@@ -68,7 +68,10 @@ import RepayWithCollateral from './RepayWithCollateralContent';
 import { getCollateralToken, getFromToken } from '../../utils/swap';
 import { isSupportRepayWithCollateral } from './RepayWithCollateralContent/utils';
 import wrapperToken from '../../config/wrapperToken';
-import { displayGhoForMintableMarket } from '../../utils/supply';
+import {
+  displayGhoForMintableMarket,
+  getSupplyCapData,
+} from '../../utils/supply';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -868,7 +871,10 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     const collateralTokens = displayPoolReserves
       .filter(
         item =>
-          !isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
+          !isSameAddress(
+            item.underlyingAsset,
+            reserve?.underlyingAsset || '',
+          ) && !getSupplyCapData(item).supplyCapReached,
       )
       .sort((a, b) => {
         return BigNumber(b.underlyingBalanceUSD).comparedTo(
@@ -904,7 +910,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
             displayReserve?.underlyingAsset || '',
           );
     });
-    if (!r || !chainInfo?.id) {
+    if (!r || !chainInfo?.id || r.isFrozen) {
       return undefined;
     }
     return getCollateralToken(

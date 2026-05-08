@@ -18,6 +18,8 @@ import { useLendingSummary, useSelectedMarket } from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { Text } from '@/components/Typography';
+import { getSupplyCapData } from '../../utils/supply';
+import { toast } from '@/components2024/Toast';
 
 export type EModeCategoryDisplay = EmodeCategory & {
   available: boolean; // indicates if the user can enter this category
@@ -52,8 +54,12 @@ export default function CollateralTokenSelectModal({
             );
             return {
               ...item,
+              supplyCapReached: displayPoolReserve
+                ? getSupplyCapData(displayPoolReserve).supplyCapReached
+                : false,
               baseLTVasCollateral:
                 displayPoolReserve?.reserve.baseLTVasCollateral,
+              isFrozen: !!(displayPoolReserve?.reserve as any)?.isFrozen,
               totalBorrowsUSD: displayPoolReserve?.totalBorrowsUSD,
               walletBalanceUSD: displayPoolReserve?.walletBalanceUSD,
               underlyingUsdValue:
@@ -171,7 +177,26 @@ export default function CollateralTokenSelectModal({
                   isSectionFirst && styles.sectionFirst,
                   isSectionLast && styles.sectionLast,
                 ]}>
-                <AssetItem token={item} onPress={() => onChange(item)} />
+                <AssetItem
+                  token={item}
+                  onPress={() => {
+                    if (item.supplyCapReached) {
+                      toast.info(
+                        t(
+                          'page.Lending.repayWithCollateral.insufficientLiquidity',
+                        ),
+                      );
+                      return;
+                    }
+                    if (item.isFrozen) {
+                      toast.info(
+                        t('page.Lending.repayWithCollateral.frozenCollateral'),
+                      );
+                      return;
+                    }
+                    onChange(item);
+                  }}
+                />
               </View>
             );
           }}
