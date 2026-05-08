@@ -267,7 +267,7 @@
       "sync": "扫描 Rabby 插件同步钱包",
       "createNewAddress": "创建新钱包",
       "alreadyUseRabby": "我已有 Rabby 钱包",
-      "welcomeTitle": "欢迎使用 Rabby 钱包"
+      "welcomeTitle": "欢迎使用\nRabby 钱包"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "输入您的助记词"
