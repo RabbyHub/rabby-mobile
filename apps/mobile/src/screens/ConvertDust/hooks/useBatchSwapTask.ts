@@ -361,7 +361,6 @@ export const useBatchSwapTask = (options: {
   );
 
   const getDexId = useMemoizedFn(() => {
-    console.log('getDexId', { dexList });
     const randomIndex = random(0, dexList.length - 1);
     return dexList[randomIndex] as DEX_ENUM;
   });
@@ -516,11 +515,9 @@ export const useBatchSwapTask = (options: {
               await prefetch({
                 txs: txsGroup,
                 onPreExecChange(p) {
-                  console.log('preExec change', p);
                   result.preExecResult = p;
                 },
                 onPreExecError() {
-                  console.log('preExec error');
                   result.isSimulationFailed = true;
                 },
               });
@@ -577,11 +574,9 @@ export const useBatchSwapTask = (options: {
             //     source: 'swap',
             //   },
             // });
-            console.log('sendTransaction result', result);
             throwIfTaskCancelled();
             // 预执行失败
             if (result.isSimulationFailed) {
-              console.error('simulation failed', result.preExecResult);
               throw new Error(t('page.convertDust.failReason.submitFailed'));
             }
             // 提交交易失败
@@ -608,8 +603,6 @@ export const useBatchSwapTask = (options: {
               return;
             }
 
-            console.log('batch swap task error', error);
-            console.error('transaction error', error, error.message);
             if (!isTaskCancelled()) {
               setStatusDict(prev => ({
                 ...prev,
