@@ -3316,7 +3316,9 @@
         },
         "repayWith": "抵押品以偿还",
         "collateralNotEnough": "您的抵押余额低于所选金额。",
-        "toRepay": "預期償還金額"
+        "toRepay": "預期償還金額",
+        "insufficientLiquidity": "流動性不足。",
+        "frozenCollateral": "此資產因 Aave 社群決議而被凍結。"
       },
       "repayWithAToken": {
         "header": {
@@ -3397,6 +3399,63 @@
       "createWalletError": "無法創建錢包",
       "setPasswordTip": "設置密碼以保護您的錢包",
       "walletReady": "您的錢包已準備好 🚀"
+    },
+    "convertDust": {
+      "failReason": {
+        "missingRequiredParams": "缺少必要參數",
+        "quoteUnavailable": "獲取報價失敗",
+        "gasCostTooHigh": "超過 Gas 費用限制",
+        "priceImpactTooHigh": "價格影響過高",
+        "buildSwapTxsFailed": "建立交換 txs 失敗",
+        "sendSwapTxFailed": "發送交換 tx 失敗",
+        "transactionFailed": "交易失敗",
+        "submitFailed": "提交交易失敗",
+        "gasNotEnough": "Gas 不足"
+      },
+      "status": {
+        "pending": "交換中",
+        "idle": "等待交換",
+        "success": "交換成功"
+      },
+      "receiveSummary": {
+        "progress": "轉換進度",
+        "priceImpact": "價格影響上限",
+        "gasLimit": "單筆交易 Gas 上限",
+        "estimateReceive": "預計收到：",
+        "actualReceive": "收到"
+      },
+      "bottomBar": {
+        "stop": "停止",
+        "continue": "繼續",
+        "start": "開始轉換"
+      },
+      "completed": {
+        "title": "粉塵已轉換！",
+        "receive": "已收到：",
+        "failedTitle": "轉換已結束",
+        "viewMoreDetail": "查看更多詳情",
+        "fold": "摺疊"
+      },
+      "entryGuide": {
+        "title": "你可以找到 Convert Dust \n👇 在首頁上",
+        "button": "知道了"
+      },
+      "stopSheet": {
+        "title": "停止目前的兌換？",
+        "desc": "如果現在停止，剩餘的兌換將不會完成。請注意，已完成的兌換無法撤銷。",
+        "continue": "繼續",
+        "stop": "停止兌換"
+      },
+      "homeBanner": {
+        "title": "轉換灰塵",
+        "description": "支援將小額餘額轉換為原生代幣"
+      },
+      "colValueAmount": "價值/金額",
+      "colToken": "代币",
+      "colStatusToken": "狀態/代幣",
+      "emptyText": "找不到低價值代幣",
+      "unsupportedAccountType": "不支援此帳戶類型。",
+      "unsupportedAccount": "目前僅支援私鑰和助記詞地址。"
     }
   },
   "component": {

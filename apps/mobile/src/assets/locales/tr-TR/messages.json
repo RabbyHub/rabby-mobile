@@ -3220,6 +3220,63 @@
       "common": {
         "orYouCanCreateNewWallet": "Ya da <clickable>yeni bir cüzdan oluşturun</clickable> diyebilirsiniz."
       }
+    },
+    "convertDust": {
+      "failReason": {
+        "missingRequiredParams": "Gerekli parametreler eksik",
+        "quoteUnavailable": "Fiyat teklifi alınamadı",
+        "gasCostTooHigh": "Gas ücret limiti aşıldı",
+        "priceImpactTooHigh": "Yüksek fiyat etkisi",
+        "buildSwapTxsFailed": "Takas işlemleri oluşturulamadı",
+        "sendSwapTxFailed": "Takas işlemi gönderilemedi",
+        "transactionFailed": "İşlem başarısız oldu",
+        "submitFailed": "İşlemler gönderilemedi",
+        "gasNotEnough": "Yetersiz Gas"
+      },
+      "status": {
+        "pending": "Takas ediliyor",
+        "idle": "Takas bekleniyor",
+        "success": "Takas başarılı"
+      },
+      "receiveSummary": {
+        "progress": "Dönüştürme ilerlemesi",
+        "priceImpact": "Fiyat Etkisi Limiti",
+        "gasLimit": "Tek İşlem Gas Limiti",
+        "estimateReceive": "Tah. Alım:",
+        "actualReceive": "Al"
+      },
+      "bottomBar": {
+        "stop": "Durdur",
+        "continue": "Devam",
+        "start": "Dönüştürmeyi Başlat"
+      },
+      "completed": {
+        "title": "Toz Dönüştürüldü !",
+        "receive": "Alındı:",
+        "failedTitle": "Dönüşüm Sona Erdi",
+        "viewMoreDetail": "Daha fazla detay görüntüle",
+        "fold": "Katla"
+      },
+      "entryGuide": {
+        "title": "Convert Dust'ı burada bulabilirsiniz\n👇 Anasayfa'da",
+        "button": "Tamam"
+      },
+      "stopSheet": {
+        "title": "Mevcut takasları durdur?",
+        "desc": "Şimdi durdurursanız, kalan takaslar tamamlanmayacaktır. Lütfen tamamlanan takasların geri alınamayacağını unutmayın.",
+        "continue": "Devam et",
+        "stop": "Takası durdur"
+      },
+      "homeBanner": {
+        "title": "Küçük Bakiyeleri Dönüştür",
+        "description": "Küçük bakiyeleri native token'e dönüştürmeyi destekler"
+      },
+      "colValueAmount": "Değer/Miktar",
+      "colToken": "Jeton",
+      "colStatusToken": "Durum/Token",
+      "emptyText": "Düşük değerli token bulunamadı",
+      "unsupportedAccountType": "Bu hesap türü desteklenmiyor.",
+      "unsupportedAccount": "Şu anda yalnızca private key ve seed phrase adresleri desteklenmektedir."
     }
   },
   "component": {

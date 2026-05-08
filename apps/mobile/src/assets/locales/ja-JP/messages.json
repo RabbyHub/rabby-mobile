@@ -3192,7 +3192,9 @@
         },
         "toRepay": "返済予定額",
         "repayWith": "担保として返済するための",
-        "collateralNotEnough": "選択した金額よりも担保残高が低いです。"
+        "collateralNotEnough": "選択した金額よりも担保残高が低いです。",
+        "insufficientLiquidity": "流動性が不足しています。",
+        "frozenCollateral": "この資産はAaveコミュニティの決定により凍結されています。"
       },
       "repayWithAToken": {
         "header": {
@@ -3273,6 +3275,63 @@
       "createWalletError": "ウォレットの作成に失敗しました",
       "walletReady": "あなたのウォレットが準備できました 🚀",
       "setPasswordTip": "ウォレットを保護するためにパスワードを設定してください。"
+    },
+    "convertDust": {
+      "failReason": {
+        "missingRequiredParams": "必須パラメータが不足しています",
+        "quoteUnavailable": "見積もりの取得に失敗しました",
+        "gasCostTooHigh": "Gas手数料上限を超えています",
+        "priceImpactTooHigh": "価格への影響が大きいです",
+        "buildSwapTxsFailed": "スワップ取引の構築に失敗しました",
+        "sendSwapTxFailed": "スワップトランザクションの送信に失敗しました",
+        "transactionFailed": "トランザクションが失敗しました",
+        "submitFailed": "トランザクションの送信に失敗しました",
+        "gasNotEnough": "Gasが不十分です"
+      },
+      "status": {
+        "pending": "スワッピング中",
+        "idle": "交換待ち",
+        "success": "交換完了"
+      },
+      "receiveSummary": {
+        "progress": "変換進捗",
+        "priceImpact": "価格影響上限",
+        "gasLimit": "単一トランザクションのガスリミット",
+        "estimateReceive": "推定受取：",
+        "actualReceive": "受取"
+      },
+      "bottomBar": {
+        "stop": "停止",
+        "continue": "続ける",
+        "start": "変換を開始"
+      },
+      "completed": {
+        "title": "ダスト変換完了！",
+        "receive": "受信：",
+        "failedTitle": "変換終了",
+        "viewMoreDetail": "詳細を見る",
+        "fold": "折りたたむ"
+      },
+      "entryGuide": {
+        "title": "Convert Dust は\n👇 ホーム画面から見つけられます",
+        "button": "了解"
+      },
+      "stopSheet": {
+        "title": "現在のスワッピングを停止しますか？",
+        "desc": "今停止すると、残りのスワッピングは完了しません。完了したスワッピングは取り消せないことに注意してください。",
+        "continue": "続ける",
+        "stop": "スワッピングを停止"
+      },
+      "homeBanner": {
+        "title": "ダスト変換",
+        "description": "少額残高をネイティブトークンに変換できます"
+      },
+      "colValueAmount": "価値/金額",
+      "colToken": "トークン",
+      "colStatusToken": "ステータス/トークン",
+      "emptyText": "価値の低いトークンが見つかりませんでした",
+      "unsupportedAccountType": "このアカウントタイプには対応していません。",
+      "unsupportedAccount": "現在、秘密鍵とシードフレーズのアドレスのみ対応しています。"
     }
   },
   "global": {

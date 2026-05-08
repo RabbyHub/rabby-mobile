@@ -3269,7 +3269,9 @@
         },
         "repayWith": "抵押物以偿还",
         "collateralNotEnough": "您的抵押余额低于所选金额。",
-        "toRepay": "预计还款金额"
+        "toRepay": "预计还款金额",
+        "insufficientLiquidity": "流动性不足。",
+        "frozenCollateral": "该资产因 Aave 社区决定而被冻结。"
       },
       "repayWithAToken": {
         "header": {
@@ -3350,6 +3352,63 @@
       "createWalletError": "创建钱包失败",
       "walletReady": "您的钱包已准备好 🚀",
       "setPasswordTip": "设置密码以保护您的钱包"
+    },
+    "convertDust": {
+      "failReason": {
+        "missingRequiredParams": "缺少必要参数",
+        "quoteUnavailable": "获取报价失败",
+        "gasCostTooHigh": "超过 gas 费用上限",
+        "priceImpactTooHigh": "价格影响过高",
+        "buildSwapTxsFailed": "构建交换交易失败",
+        "sendSwapTxFailed": "发送交换交易失败",
+        "transactionFailed": "交易失败",
+        "submitFailed": "提交交易失败",
+        "gasNotEnough": "Gas 不足"
+      },
+      "status": {
+        "pending": "兑换中",
+        "idle": "等待兑换",
+        "success": "兑换成功"
+      },
+      "receiveSummary": {
+        "progress": "兑换进度",
+        "priceImpact": "价格影响上限",
+        "gasLimit": "单笔交易 Gas 上限",
+        "estimateReceive": "预计收到：",
+        "actualReceive": "收到"
+      },
+      "bottomBar": {
+        "stop": "停止",
+        "continue": "继续",
+        "start": "开始转换"
+      },
+      "completed": {
+        "title": "粉尘已转换！",
+        "receive": "已收到：",
+        "failedTitle": "转换已结束",
+        "viewMoreDetail": "查看更多详情",
+        "fold": "折叠"
+      },
+      "entryGuide": {
+        "title": "您可以在首页找到 Dust 转换 \n👇",
+        "button": "知道了"
+      },
+      "stopSheet": {
+        "title": "停止当前的交换？",
+        "desc": "如果现在停止，任何剩余的交换都不会完成。请注意，已完成的交换无法撤销。",
+        "continue": "继续",
+        "stop": "停止交换"
+      },
+      "homeBanner": {
+        "title": "清理零头",
+        "description": "支持将小额余额转换为原生代币"
+      },
+      "colValueAmount": "价值/金额",
+      "colToken": "代币",
+      "colStatusToken": "状态/代币",
+      "emptyText": "未找到低价值代币",
+      "unsupportedAccountType": "不支持此账户类型。",
+      "unsupportedAccount": "目前仅支持私钥和助记词地址。"
     }
   },
   "component": {
