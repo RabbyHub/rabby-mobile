@@ -4,12 +4,11 @@ import RcIconChecked from '@/assets/icons/select-chain/icon-checked.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { formatCurrency } from '@/utils/number';
 import { RPCStatusBadge } from '@/components/Chain/RPCStatusBadge';
 import type { ChainListItem } from './index';
 import { useFindChain } from '@/hooks/useFindChain';
-import { useCurrency } from '@/hooks/useCurrency';
 import { Text } from '@/components/Typography';
+import { formatNetworth } from '@/utils/math';
 export default function ChainItem({
   data,
   value,
@@ -25,8 +24,6 @@ export default function ChainItem({
   const chainItem = useFindChain({
     serverId: data.chain || null,
   });
-  const { currency } = useCurrency();
-
   const isSelected = value && value.chain === data?.chain;
   return (
     <TouchableView
@@ -63,9 +60,7 @@ export default function ChainItem({
             <View style={styles.chainSummary}>
               <View style={styles.selectChainItemBalance}>
                 <Text style={styles.usdValueText}>
-                  {formatCurrency(data.total || 0, {
-                    currency,
-                  })}
+                  {formatNetworth(data.total || 0)}
                 </Text>
                 <Text style={styles.percentageText}>
                   {`${Math.floor(data.percentage)}%`}

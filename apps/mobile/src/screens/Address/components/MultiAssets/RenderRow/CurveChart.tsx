@@ -1,7 +1,11 @@
 import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
-import { CurvePoint, formatSmallCurrencyValue } from '@/hooks/useCurve';
+import { CurvePoint } from '@/hooks/useCurve';
+import {
+  formatCurrencyValueParts,
+  formatSmallCurrencyValueParts,
+} from '@/utils/currency';
 import React, { memo, useMemo } from 'react';
 import { Dimensions, Pressable, useWindowDimensions, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -220,7 +224,7 @@ const ChartHeader = React.memo(
       charHeader: useAnimatedStyle(reanimatedStyles.charHeader),
     };
     const { currentIndex } = LineChart.useChart();
-    const { currency, formatCurrentCurrency } = useCurrency();
+    const { currency } = useCurrency();
     const debouncedRawChange = useDebouncedValue(rawChange, 300);
     const showNetWorthLoading = useMemo(() => {
       return showBalanceLoadingWithoutLocal;
@@ -230,23 +234,29 @@ const ChartHeader = React.memo(
       showNetWorthLoading || showChangeLoadingWithoutLocal;
 
     const netWorth = useMemo(() => {
-      return formatSmallCurrencyValue(rawNetWorth, { currency });
+      return formatSmallCurrencyValueParts(rawNetWorth, { currency }).text;
     }, [currency, rawNetWorth]);
     const change = useMemo(() => {
-      return formatCurrentCurrency(Math.abs(debouncedRawChange));
-    }, [formatCurrentCurrency, debouncedRawChange]);
+      return formatCurrencyValueParts(Math.abs(debouncedRawChange), {
+        currency,
+      }).text;
+    }, [currency, debouncedRawChange]);
 
     const data = useMemo(() => {
       return (
         _data?.map(item => {
           return {
             ...item,
-            netWorth: formatSmallCurrencyValue(item.value, { currency }),
-            change: formatCurrentCurrency(item.rawChange),
+            netWorth: formatSmallCurrencyValueParts(item.value, {
+              currency,
+            }).text,
+            change: formatCurrencyValueParts(Math.abs(item.rawChange), {
+              currency,
+            }).text,
           };
         }) || []
       );
-    }, [_data, currency, formatCurrentCurrency]);
+    }, [_data, currency]);
 
     const percentChange = useDerivedValue(() => {
       if (hideType === 'HIDE') {
@@ -280,11 +290,13 @@ const ChartHeader = React.memo(
     }, [data, currentIndex, netWorth]);
 
     const formatNetWorth = useDerivedValue(() => {
-      return hideType === 'HIDE'
-        ? '******'
-        : svIsFoldMultiChart.value
-        ? netWorth
-        : data?.[currentIndex?.value]?.netWorth || netWorth;
+      if (hideType === 'HIDE') {
+        return '******';
+      }
+      if (svIsFoldMultiChart.value) {
+        return netWorth;
+      }
+      return data?.[currentIndex?.value]?.netWorth || netWorth;
     }, [data, currentIndex, netWorth, hideType]);
 
     const lossStyleProps = useAnimatedStyle(() => {
@@ -322,7 +334,7 @@ const ChartHeader = React.memo(
       return {
         text: formatNetWorth.value,
       };
-    });
+    }, [netWorth, hideType]);
 
     const percentChangeAnimatedProps = useAnimatedProps(() => {
       return {
