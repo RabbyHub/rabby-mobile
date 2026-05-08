@@ -1083,7 +1083,8 @@
         "meme": "Memecoin",
         "lending": "Lending",
         "predict": "Predict",
-        "perpsMarketList": "More Perps"
+        "perpsMarketList": "More Perps",
+        "convertDust": "Convert Dust"
       },
       "swipeUp": {
         "desc": "Swipe up to explore websites",
