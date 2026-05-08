@@ -104,7 +104,7 @@ autoLockEvent.addListener('timeout', ctx => {
   if (atUnlock) {
     ctx.delayLock();
   } else {
-    requestLockWalletAndBackToHomeScreen();
+    requestExpireUnlockSessionAndBackToUnlockScreen();
   }
 });
 
@@ -484,6 +484,26 @@ export const requestLockWalletAndBackToUnlockScreen =
     if (!result.canLockWallet) return result;
 
     console.debug('will back to unlock screen');
+    const navigation = getReadyNavigationInstance();
+    if (navigation) resetNavigationTo(navigation, 'Unlock');
+
+    return result;
+  });
+
+export const requestExpireUnlockSessionAndBackToUnlockScreen =
+  makeAvoidParallelAsyncFunc(async () => {
+    const lockInfo = await apisLock.getRabbyLockInfo();
+    const result = { canLockWallet: false };
+    if (!lockInfo.isUseCustomPwd) return result;
+
+    if (apisLock.isUnlocked()) {
+      result.canLockWallet = true;
+      await apisLock.lockWallet();
+    } else {
+      apisLock.clearUnlockTime();
+    }
+
+    console.debug('will expire unlock session and back to unlock screen');
     const navigation = getReadyNavigationInstance();
     if (navigation) resetNavigationTo(navigation, 'Unlock');
 

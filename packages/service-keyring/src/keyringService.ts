@@ -538,6 +538,16 @@ export class KeyringService extends RNEventEmitter {
     }
   }
 
+  private assertCanPersistKeyringMutation(keyring: { type: string }) {
+    if (!isSensitiveKeyringType(keyring.type)) {
+      return;
+    }
+
+    if (!this.#password || typeof this.#password !== 'string') {
+      throw new Error('background.error.unlock');
+    }
+  }
+
   hasVault() {
     return Boolean(this.store.getState().vault);
   }
@@ -801,6 +811,12 @@ export class KeyringService extends RNEventEmitter {
   addNewAccount(
     selectedKeyring: KeyringInstance | KeyringIntf,
   ): Promise<string[] | AccountItemWithBrandQueryResult[]> {
+    try {
+      this.assertCanPersistKeyringMutation(selectedKeyring);
+    } catch (error) {
+      return Promise.reject(error);
+    }
+
     let _accounts: string[] | AccountItemWithBrandQueryResult[] = [];
 
     return selectedKeyring
@@ -852,6 +868,8 @@ export class KeyringService extends RNEventEmitter {
    * @param address
    */
   async exportAccount(address: string): Promise<string> {
+    this.assertUnlocked();
+
     try {
       return this.getKeyringForAccount(address).then(keyring => {
         return keyring.exportAccount(normalizeAddress(address));
@@ -985,6 +1003,8 @@ export class KeyringService extends RNEventEmitter {
   ): Promise<any> {
     return this.getKeyringForAccount(address, type)
       .then(async keyring => {
+        this.assertCanPersistKeyringMutation(keyring);
+
         // Not all the keyrings support this, so we have to check
         if (typeof keyring.removeAccount === 'function') {
           keyring.removeAccount(address, brand);
@@ -1022,6 +1042,13 @@ export class KeyringService extends RNEventEmitter {
   }
 
   removeKeyringByPublicKey(publicKey: string) {
+    const keyring = (this.keyrings as KeyringIntf[]).find(
+      item => item.publicKey === publicKey,
+    );
+    if (keyring) {
+      this.assertCanPersistKeyringMutation(keyring);
+    }
+
     this.keyrings = (this.keyrings as KeyringIntf[]).filter(item => {
       if (item.publicKey) {
         return item.publicKey !== publicKey;
@@ -1039,6 +1066,8 @@ export class KeyringService extends RNEventEmitter {
   async addKeyring<T extends KeyringInstance>(
     keyring: KeyringInstance,
   ): Promise<string[] | T | boolean> {
+    this.assertCanPersistKeyringMutation(keyring);
+
     return keyring
       .getAccounts()
       .then(accounts => {
@@ -1669,6 +1698,10 @@ export class KeyringService extends RNEventEmitter {
   }
 
   async syncExtensionData(vault: KeyringSerializedData[]) {
+    if (!this.#password || typeof this.#password !== 'string') {
+      throw new Error('background.error.unlock');
+    }
+
     // restore mnemonic keyring
     const newVault = vault.map(item => {
       if (item.type === KEYRING_TYPE.HdKeyring) {
@@ -1685,17 +1718,15 @@ export class KeyringService extends RNEventEmitter {
 
     let oldKeyringSerializedData: KeyringSerializedData[] = [];
 
-    if (this.#password !== undefined) {
-      const encryptedVault = this.store.getState().vault;
-      if (!encryptedVault) {
-        throw new Error('Cannot unlock without a previous vault');
-      }
-
-      oldKeyringSerializedData = (await this.encryptor.decrypt(
-        this.#password!,
-        encryptedVault,
-      )) as KeyringSerializedData[];
+    const encryptedVault = this.store.getState().vault;
+    if (!encryptedVault) {
+      throw new Error('Cannot unlock without a previous vault');
     }
+
+    oldKeyringSerializedData = (await this.encryptor.decrypt(
+      this.#password,
+      encryptedVault,
+    )) as KeyringSerializedData[];
 
     const allAccounts = await this.getAllVisibleAccountsArray();
 

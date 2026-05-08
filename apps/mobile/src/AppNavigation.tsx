@@ -306,10 +306,17 @@ export default function AppNavigation() {
 
   const colors = useThemeColors();
 
-  const { isAppUnlocked, hasVisibleAccounts, hasStoredKeyrings } =
-    useAppUnlocked();
+  const {
+    isAppUnlocked,
+    isUnlockSessionValid,
+    hasVisibleAccounts,
+    hasStoredKeyrings,
+  } = useAppUnlocked();
+  const canSkipInitialUnlock = isAppUnlocked || isUnlockSessionValid;
   const initialRouteName = hasVisibleAccounts
-    ? RootNames.StackRoot
+    ? canSkipInitialUnlock
+      ? RootNames.StackRoot
+      : RootNames.Unlock
     : isAppUnlocked || !hasStoredKeyrings
     ? RootNames.StackGetStarted
     : RootNames.Unlock;

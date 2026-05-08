@@ -16,6 +16,7 @@ import {
   JSBridgeHarden,
 } from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
+import { apisLock } from '@/core/apis';
 import { loadSecurityChain } from './global';
 import { getTriedUnlock, storeApiLock } from './useLock';
 import SplashScreen from 'react-native-splash-screen';
@@ -101,7 +102,11 @@ export function useInitializeAppOnTop() {
   React.useEffect(() => {
     const onUnlock = () => {
       console.debug('useBootstrap::onUnlock');
-      storeApiLock.setAppLock(prev => ({ ...prev, appUnlocked: true }));
+      storeApiLock.setAppLock(prev => ({
+        ...prev,
+        appUnlocked: true,
+        isUnlockSessionValid: apisLock.isUnlockSessionValid(),
+      }));
       sendUserAddressEvent();
 
       doInitializeApis();
@@ -109,6 +114,7 @@ export function useInitializeAppOnTop() {
         storeApiLock.setAppLock(prev => ({
           ...prev,
           appUnlocked: true,
+          isUnlockSessionValid: apisLock.isUnlockSessionValid(),
           hasVisibleAccounts: accounts.length > 0,
           hasStoredKeyrings:
             accounts.length > 0 ||
@@ -120,11 +126,16 @@ export function useInitializeAppOnTop() {
       perpsService.unlockAgentWallets();
     };
     const onLock = () => {
-      storeApiLock.setAppLock(prev => ({ ...prev, appUnlocked: false }));
+      storeApiLock.setAppLock(prev => ({
+        ...prev,
+        appUnlocked: false,
+        isUnlockSessionValid: apisLock.isUnlockSessionValid(),
+      }));
       storeApiAccounts.fetchAccounts().then(accounts => {
         storeApiLock.setAppLock(prev => ({
           ...prev,
           appUnlocked: false,
+          isUnlockSessionValid: apisLock.isUnlockSessionValid(),
           hasVisibleAccounts: accounts.length > 0,
           hasStoredKeyrings:
             accounts.length > 0 ||

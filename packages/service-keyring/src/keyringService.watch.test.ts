@@ -195,5 +195,53 @@ describe('keyringService support eth-keyring-watch', () => {
         ]),
       );
     });
+
+    it('rejects locked sensitive addKeyring before mutating runtime', async () => {
+      await keyringService.setLocked();
+
+      const getAccounts = sinon.spy(async () => [TEST_HD_ADDR]);
+      const hdKeyring = {
+        type: KEYRING_TYPE.HdKeyring,
+        getAccounts,
+      };
+
+      await expect(keyringService.addKeyring(hdKeyring as any)).rejects.toThrow(
+        'background.error.unlock',
+      );
+      expect(getAccounts.called).toBe(false);
+      expect(keyringService.keyrings).toHaveLength(0);
+    });
+
+    it('rejects locked sensitive addNewAccount before mutating keyring', async () => {
+      await keyringService.setLocked();
+
+      const addAccounts = sinon.spy(async () => [TEST_HD_ADDR]);
+      const hdKeyring = {
+        type: KEYRING_TYPE.HdKeyring,
+        addAccounts,
+      };
+
+      await expect(
+        keyringService.addNewAccount(hdKeyring as any),
+      ).rejects.toThrow('background.error.unlock');
+      expect(addAccounts.called).toBe(false);
+      expect(keyringService.keyrings).toHaveLength(0);
+    });
+
+    it('rejects locked extension sync before touching vault data', async () => {
+      await keyringService.setLocked();
+
+      await expect(keyringService.syncExtensionData([])).rejects.toThrow(
+        'background.error.unlock',
+      );
+    });
+
+    it('rejects locked private key export', async () => {
+      await keyringService.setLocked();
+
+      await expect(keyringService.exportAccount(TEST_HD_ADDR)).rejects.toThrow(
+        'background.error.unlock',
+      );
+    });
   });
 });

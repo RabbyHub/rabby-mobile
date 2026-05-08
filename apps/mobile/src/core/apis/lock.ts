@@ -10,6 +10,10 @@ import {
 } from '../utils/unlockRateLimit';
 import { runIIFEFunc } from '../utils/store';
 import { perfEvents } from '../utils/perf';
+import {
+  getPersistedUnlockSessionExpireTime,
+  refreshAutolockTimeout,
+} from './autoLock';
 
 export const enum PasswordStatus {
   Unknown = -1,
@@ -85,7 +89,9 @@ export async function throwErrorIfInvalidPwd(password: string) {
 
 export async function verifyPasswordOrUnlock(password: string) {
   if (keyringService.isUnlocked()) {
-    return throwErrorIfInvalidPwd(password);
+    await throwErrorIfInvalidPwd(password);
+    updateUnlockTime();
+    return;
   }
 
   const result = await unlockWallet(password);
@@ -331,6 +337,7 @@ async function unlockWallet(password: string) {
 
 export async function lockWallet() {
   await keyringService.setLocked();
+  clearUnlockTime();
   sessionService.broadcastEvent(BroadcastEvent.accountsChanged, []);
   sessionService.broadcastEvent(BroadcastEvent.lock);
 }
@@ -341,8 +348,16 @@ const { EventEmitter: UnlockTimeEvent } = makeEEClass<{
 export const unlockTimeEvent = new UnlockTimeEvent();
 
 const unlockTimeRef = {
-  current: 0,
+  current: normalizeUnlockTime(
+    preferenceService.getPreference('lastUnlockTime'),
+  ),
 };
+
+function normalizeUnlockTime(time: unknown) {
+  return typeof time === 'number' && Number.isFinite(time) && time > 0
+    ? time
+    : 0;
+}
 
 export function getUnlockTime() {
   return unlockTimeRef.current;
@@ -351,25 +366,58 @@ export function getUnlockTime() {
 export async function updateUnlockTime() {
   const time = Date.now();
   unlockTimeRef.current = time;
+  preferenceService.setPreference({
+    lastUnlockTime: time,
+  });
+  refreshAutolockTimeout();
   unlockTimeEvent.emit('updated', time);
+}
+
+export function clearUnlockTime() {
+  unlockTimeRef.current = 0;
+  preferenceService.setPreference({
+    lastUnlockTime: 0,
+    unlockSessionExpireTime: 0,
+  });
+  unlockTimeEvent.emit('updated', 0);
+}
+
+export function isUnlockSessionValid(now = Date.now()) {
+  const unlockTime = getUnlockTime();
+  if (!unlockTime) return false;
+  if (unlockTime > now) return false;
+
+  const expireTime = getPersistedUnlockSessionExpireTime();
+  if (expireTime === -1) return true;
+
+  return expireTime > now;
 }
 
 function makeLockApiWithUpdateUnlockTime<T extends (...args: any[]) => any>(
   fn: T,
+  shouldUpdateUnlockTime: (
+    result: Awaited<ReturnType<T>>,
+  ) => boolean | Promise<boolean> = () => true,
 ): T {
-  return function (...args) {
-    const res = fn(...args);
-    updateUnlockTime();
+  return async function (...args) {
+    const res = await fn(...args);
+    if (await shouldUpdateUnlockTime(res)) {
+      updateUnlockTime();
+    }
     return res;
   } as T;
 }
 
 export const tryAutoUnlockRabbyMobileWithUpdateUnlockTime =
-  makeLockApiWithUpdateUnlockTime(tryAutoUnlockRabbyMobile);
-export const unlockWalletWithUpdateUnlockTime =
-  makeLockApiWithUpdateUnlockTime(unlockWallet);
+  makeLockApiWithUpdateUnlockTime(tryAutoUnlockRabbyMobile, () =>
+    keyringService.isUnlocked(),
+  );
+export const unlockWalletWithUpdateUnlockTime = makeLockApiWithUpdateUnlockTime(
+  unlockWallet,
+  result => !result.error,
+);
 export const safeVerifyPasswordAndUpdateUnlockTime =
-  makeLockApiWithUpdateUnlockTime(safeVerifyPassword);
+  makeLockApiWithUpdateUnlockTime(safeVerifyPassword, result => result.success);
 
 export function subscribeAppLock(fn: () => any) {
   keyringService.on('lock', fn);

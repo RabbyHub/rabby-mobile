@@ -98,6 +98,14 @@ export interface PreferenceStore {
    * auto lock time in minutes
    */
   autoLockTime?: number;
+  /**
+   * Last successful wallet unlock/authentication timestamp.
+   */
+  lastUnlockTime?: number;
+  /**
+   * Expire timestamp for the current unlock session. -1 means never expire.
+   */
+  unlockSessionExpireTime?: number;
   hiddenBalance?: boolean;
   isShowTestnet?: boolean;
   // themeMode?: DARK_MODE_TYPE;
@@ -207,6 +215,8 @@ export class PreferenceService extends StoreServiceBase<
         hiddenBalance: false,
         isShowTestnet: false,
         autoLockTime: DEFAULT_AUTO_LOCK_MINUTES,
+        lastUnlockTime: 0,
+        unlockSessionExpireTime: 0,
         // themeMode: DARK_MODE_TYPE.light,
         addressSortStore: {
           ...defaultAddressSortStore,
