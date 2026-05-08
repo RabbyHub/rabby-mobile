@@ -57,6 +57,9 @@ describe('currency utils', () => {
     expect(formatSmallCurrencyValueParts(50, { currency: btc }).text).toBe(
       '0.0005 BTC',
     );
+    expect(formatSmallCurrencyValueParts(1, { currency: btc }).text).toBe(
+      '0.0\u20841 BTC',
+    );
     expect(
       formatSmallCurrencyValueParts(1_260_000, { currency: btc }).text,
     ).toBe('12.6 BTC');
