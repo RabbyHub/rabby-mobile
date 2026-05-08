@@ -3326,10 +3326,10 @@
         "token": "代币"
       },
       "tabs": {
-        "stock": "库存",
+        "stock": "股票",
         "watchlist": "观察列表",
-        "memecoin": "Memecoin",
-        "commodities": "商品"
+        "memecoin": "Meme",
+        "commodities": "大宗商品"
       },
       "noOpen": "未开启",
       "marketNotOpenTooltip": "市场尚未开放"

@@ -45,7 +45,7 @@ const MARKET_TABS: { id: string; name: string; sort_fields: string[] }[] = [
   },
   {
     id: 'meme',
-    name: 'Memecoin',
+    name: 'Meme',
     sort_fields: ['volume_24h', 'fdv', 'price_change_24h'],
   },
   {
@@ -125,6 +125,14 @@ export default function MarketScreen() {
     };
   }, [storedActiveTab]);
 
+  const marketTabLabelMap = useMemo(
+    () => ({
+      stock: t('page.market.tabs.stock'),
+      commodities: t('page.market.tabs.commodities'),
+    }),
+    [t],
+  );
+
   const tabs = useMemo(
     () => [
       {
@@ -133,11 +141,11 @@ export default function MarketScreen() {
       },
       ...MARKET_TABS.map(category => ({
         key: category.id,
-        label: category.name,
+        label: marketTabLabelMap[category.id] ?? category.name,
         sortFields: category.sort_fields,
       })),
     ],
-    [t],
+    [marketTabLabelMap, t],
   );
 
   const initialTabItemsLayout = useMemo(() => {
@@ -234,7 +242,7 @@ export default function MarketScreen() {
                 style={styles.tabLabel}
                 containerStyle={styles.categoryLabelContainer}
                 indexDecimal={indexDecimal}
-                text={category.name}
+                text={marketTabLabelMap[category.id] ?? category.name}
               />
             );
 
