@@ -20,6 +20,7 @@ export const CheckBoxRect = ({
         color={colors2024['neutral-body']}
         style={iconStyle}
         testID={testID}
+        width={size}
         accessibilityLabel={accessibilityLabel}
       />
     );
@@ -30,6 +31,7 @@ export const CheckBoxRect = ({
       color={colors2024['blue-default']}
       style={iconStyle}
       testID={testID}
+      width={size}
       accessibilityLabel={accessibilityLabel}
     />
   );

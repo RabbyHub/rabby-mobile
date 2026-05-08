@@ -29,6 +29,7 @@ export default function MixedFlatChainList({
   matteredList = [],
   unmatteredList = [],
   supportChains,
+  unsupportedChainMode = 'disabled',
   disabledTips = 'Not supported',
   account: currentAccount,
 }: RNViewProps & {
@@ -38,6 +39,7 @@ export default function MixedFlatChainList({
   unmatteredList?: Chain[];
   needAllAddresses?: boolean;
   supportChains?: CHAINS_ENUM[];
+  unsupportedChainMode?: 'disabled' | 'hidden';
   onScrollBeginDrag?:
     | ((event: NativeSyntheticEvent<NativeScrollEvent>) => void)
     | undefined;
@@ -132,11 +134,15 @@ export default function MixedFlatChainList({
       ListFooterComponent={<View style={{ height: 32 }} />}
       keyExtractor={(item, idx) => `${item.enum}-${idx}`}
       renderItem={({ item, index, section }) => {
-        const isSectionFirst = index === 0;
-        const isSectionLast = index === section.data.length - 1;
-        const disabled = supportChains
+        const unsupported = supportChains
           ? !supportChains.includes(item.enum)
           : false;
+        if (unsupportedChainMode === 'hidden' && unsupported) {
+          return null;
+        }
+
+        const isSectionFirst = index === 0;
+        const isSectionLast = index === section.data.length - 1;
         return (
           <View
             style={[
@@ -148,7 +154,7 @@ export default function MixedFlatChainList({
               data={item}
               value={value}
               onPress={onChange}
-              disabled={disabled}
+              disabled={unsupported}
               disabledTips={disabledTips}
               tokens={orderBy(
                 tokenListMap[item.serverId],
@@ -167,7 +173,7 @@ export default function MixedFlatChainList({
 
 const RADIUS_VALUE = 24;
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(() => ({
   sectionFirst: {
     borderTopLeftRadius: RADIUS_VALUE,
     borderTopRightRadius: RADIUS_VALUE,

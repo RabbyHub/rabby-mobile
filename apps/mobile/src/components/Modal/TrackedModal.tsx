@@ -1,4 +1,5 @@
 import React from 'react';
+// eslint-disable-next-line no-restricted-imports -- TrackedModal is the wrapper around React Native Modal.
 import { Modal as RNModal, ModalProps as RNModalProps } from 'react-native';
 
 import { useRegisterBlockingModal } from '@/utils/modalGate';
