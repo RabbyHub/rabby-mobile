@@ -352,6 +352,12 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     },
     [setQuotePollingPauseReason],
   );
+  const setGasSettingsQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      setQuotePollingPauseReason('gas-settings', paused);
+    },
+    [setQuotePollingPauseReason],
+  );
   const setDepositQuoteRefreshPaused = useCallback(
     (paused: boolean) => {
       setQuotePollingPauseReason('gas-account-deposit', paused);
@@ -1138,6 +1144,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                   onSlippageOptionsOpenChange={
                     setSlippageOptionsQuoteRefreshPaused
                   }
+                  onGasSettingsOpenChange={setGasSettingsQuoteRefreshPaused}
                 />
               )}
             {showClosedMarketTip && (

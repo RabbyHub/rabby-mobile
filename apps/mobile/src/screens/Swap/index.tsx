@@ -281,6 +281,12 @@ const Swap = ({
     },
     [setQuotePollingPauseReason],
   );
+  const setGasSettingsQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      setQuotePollingPauseReason('gas-settings', paused);
+    },
+    [setQuotePollingPauseReason],
+  );
   const setDepositQuoteRefreshPaused = useCallback(
     (paused: boolean) => {
       setQuotePollingPauseReason('gas-account-deposit', paused);
@@ -1346,6 +1352,7 @@ const Swap = ({
                     onSlippageOptionsOpenChange={
                       setSlippageOptionsQuoteRefreshPaused
                     }
+                    onGasSettingsOpenChange={setGasSettingsQuoteRefreshPaused}
                   />
                 </View>
               )}

@@ -104,6 +104,7 @@ const BridgeShowMore = ({
   insufficient,
   onDepositPopupVisibleChange,
   onSlippageOptionsOpenChange,
+  onGasSettingsOpenChange,
 }: {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -142,6 +143,7 @@ const BridgeShowMore = ({
   textColor?: string;
   onDepositPopupVisibleChange?: (visible: boolean) => void;
   onSlippageOptionsOpenChange?: (open: boolean) => void;
+  onGasSettingsOpenChange?: (open: boolean) => void;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -344,6 +346,7 @@ const BridgeShowMore = ({
             noQuote={!sourceLogo && !sourceName}
             chainServeId={fromToken?.chain}
             onDepositPopupVisibleChange={onDepositPopupVisibleChange}
+            onGasSettingsOpenChange={onGasSettingsOpenChange}
           />
         ) : null}
 
@@ -450,6 +453,7 @@ export const DirectSignGasInfo = ({
   gasFeeListItemInnerStyle,
   textColor,
   onDepositPopupVisibleChange,
+  onGasSettingsOpenChange,
 }: {
   supportDirectSign: boolean;
   loading: boolean;
@@ -460,6 +464,7 @@ export const DirectSignGasInfo = ({
   gasFeeListItemInnerStyle?: RNViewProps['style'];
   textColor?: string;
   onDepositPopupVisibleChange?: (visible: boolean) => void;
+  onGasSettingsOpenChange?: (open: boolean) => void;
 } & RNViewProps) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
@@ -1023,6 +1028,7 @@ export const DirectSignGasInfo = ({
           )}
           nativeTokenInsufficient={isGasNotEnough}
           freeGasAvailable={canUseGasLess}
+          onGasSettingsOpenChange={onGasSettingsOpenChange}
         />
       ) : (
         <ListItem
