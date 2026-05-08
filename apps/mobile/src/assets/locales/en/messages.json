@@ -3220,6 +3220,8 @@
           "title": "Repay with {{collateral}}"
         },
         "collateralNotEnough": "Your collateral balance is lower than the selected amount.",
+        "insufficientLiquidity": "Insufficient liquidity.",
+        "frozenCollateral": "This asset is frozen due to an Aave community decision.",
         "overview": {
           "title": "Transaction Overview",
           "borrowValueAfter": "Borrow balance after repay",
