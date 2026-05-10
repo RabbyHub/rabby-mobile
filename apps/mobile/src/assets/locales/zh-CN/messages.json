@@ -882,7 +882,8 @@
         "predict": "预测",
         "meme": "Memecoin",
         "market": "市场",
-        "gasDeposit": "Gas 充值"
+        "gasDeposit": "Gas 充值",
+        "convertDust": "小额资产归集"
       },
       "swipeUp": {
         "descAndroid": "点击探索 dApps",

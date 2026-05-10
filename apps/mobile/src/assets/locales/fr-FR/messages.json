@@ -941,7 +941,8 @@
         "predict": "Prédire",
         "meme": "Memecoin",
         "market": "Marché",
-        "gasDeposit": "Dépôt de Gas"
+        "gasDeposit": "Dépôt de Gas",
+        "convertDust": "Convertir la poussière"
       },
       "swipeUp": {
         "descAndroid": "Cliquez pour explorer les dApps",
@@ -3283,7 +3284,12 @@
       "colStatusToken": "Statut/Jeton",
       "emptyText": "Aucun jeton de faible valeur trouvé",
       "unsupportedAccountType": "Ce type de compte n'est pas pris en charge.",
-      "unsupportedAccount": "Actuellement, seules les adresses de clé privée et de phrase de récupération sont prises en charge."
+      "unsupportedAccount": "Actuellement, seules les adresses de clé privée et de phrase de récupération sont prises en charge.",
+      "bottomBar": {
+        "stop": "Arrêter",
+        "continue": "Continuer",
+        "start": "Démarrer la conversion"
+      }
     }
   },
   "native": {

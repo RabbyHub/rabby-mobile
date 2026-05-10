@@ -978,7 +978,8 @@
         "predict": "預測",
         "meme": "Memecoin",
         "market": "市場",
-        "gasDeposit": "Gas Deposit"
+        "gasDeposit": "Gas Deposit",
+        "convertDust": "轉換灰塵"
       },
       "swipeUp": {
         "descAndroidMore": "點擊探索更多 dApps",

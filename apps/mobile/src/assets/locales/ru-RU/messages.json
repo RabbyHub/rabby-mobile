@@ -1050,7 +1050,8 @@
         "predict": "Предсказать",
         "meme": "Мемкоин",
         "market": "Рынок",
-        "gasDeposit": "Газовый депозит"
+        "gasDeposit": "Газовый депозит",
+        "convertDust": "Convert Dust"
       },
       "swipeUp": {
         "descAndroidMore": "Нажмите, чтобы узнать больше о dApps",
@@ -3392,7 +3393,13 @@
       "homeBanner": {
         "title": "Convert Dust",
         "description": "Supports converting small balances into the native token"
-      }
+      },
+      "colValueAmount": "Стоимость/Сумма",
+      "colToken": "Токен",
+      "colStatusToken": "Статус/Токен",
+      "emptyText": "Низкоценные токены не найдены",
+      "unsupportedAccountType": "Этот тип аккаунта не поддерживается.",
+      "unsupportedAccount": "В настоящее время поддерживаются только адреса с закрытым ключом и seed-фразой."
     }
   },
   "component": {

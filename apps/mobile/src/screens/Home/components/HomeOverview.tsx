@@ -694,7 +694,7 @@ export const HomeOverview = React.memo(() => {
         },
         {
           key: MultiHomeFeatTitle.ConvertDust,
-          title: MultiHomeFeatTitle.ConvertDust,
+          title: t('page.home.services.convertDust'),
           icon: RcIconConvertDustCC,
         },
       ].filter(Boolean) as {

@@ -1125,7 +1125,8 @@
         "predict": "Predecir",
         "meme": "Memecoin",
         "market": "Mercado",
-        "gasDeposit": "Depósito de Gas"
+        "gasDeposit": "Depósito de Gas",
+        "convertDust": "Convertir Polvo"
       },
       "swipeUp": {
         "descAndroidMore": "Haz clic para explorar más dApps",
