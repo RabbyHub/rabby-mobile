@@ -1,9 +1,5 @@
-import {
-  accountEvents,
-  fetchAllAccounts,
-  KeyringAccountWithAlias,
-} from '@/core/apis/account';
-import { apiMnemonic } from '@/core/apis';
+import { accountEvents, fetchAllAccounts } from '@/core/apis/account';
+import * as apiMnemonic from '@/core/apis/mnemonic';
 import { getAllAccounts, removeAddress } from '@/core/apis/address';
 import { AccountInfoEntity } from '@/databases/entities/accountInfo';
 import { EntityAccountBase } from '@/databases/entities/base';
@@ -12,7 +8,11 @@ import { deleteDBResourceForAddress } from '@/databases/sync/assets';
 import { BaseStore } from './_base';
 import { InteractionManager } from 'react-native';
 import { isEqual } from 'lodash';
-import { Account, IPinAddress } from '@/core/services/preference';
+import type {
+  Account,
+  IPinAddress,
+  KeyringAccountWithAlias,
+} from '@/types/account';
 import {
   keyringService,
   preferenceService,

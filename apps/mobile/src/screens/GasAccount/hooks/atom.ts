@@ -21,6 +21,7 @@ import {
 } from '@/core/utils/store';
 import { eventBus, EVENTS } from '@/utils/events';
 import { handleGasAccountLoginSuccess } from '@/utils/gasAccountAnalytics';
+import { setGasAccountStoreApi } from '@/utils/gasAccountStoreApiBridge';
 import { sendPersonalMessage } from '@/utils/sendPersonalMessage';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -403,6 +404,16 @@ const createHistoryRefreshRequestId = () => {
 };
 const isLatestHistoryRefreshRequest = (requestId: number) =>
   requestId === latestHistoryRefreshRequestId;
+const isCurrentHistorySession = ({
+  sig,
+  accountId,
+}: {
+  sig?: string;
+  accountId?: string;
+}) => {
+  const latestSession = gasAccountStore.getState().session;
+  return latestSession.sig === sig && latestSession.accountId === accountId;
+};
 
 const refreshHistory = async () => {
   if (!isGasAccountHistoryRefreshEnabled) {
@@ -440,12 +451,10 @@ const refreshHistory = async () => {
       limit: 10,
     });
 
-    const latestSession = gasAccountStore.getState().session;
     if (
       !isGasAccountHistoryRefreshEnabled ||
       !isLatestHistoryRefreshRequest(requestId) ||
-      latestSession.sig !== sig ||
-      latestSession.accountId !== accountId
+      !isCurrentHistorySession({ sig, accountId })
     ) {
       return undefined;
     }
@@ -474,12 +483,10 @@ const refreshHistory = async () => {
 
     return data;
   } catch (error) {
-    const latestSession = gasAccountStore.getState().session;
     if (
       !isGasAccountHistoryRefreshEnabled ||
       !isLatestHistoryRefreshRequest(requestId) ||
-      latestSession.sig !== sig ||
-      latestSession.accountId !== accountId
+      !isCurrentHistorySession({ sig, accountId })
     ) {
       return undefined;
     }
@@ -493,16 +500,14 @@ async function loadMoreHistory() {
   const state = gasAccountStore.getState();
   const { sig, accountId } = state.session;
   const { history } = state;
+  const hasLoadedAllHistory = history.totalCount <= history.list.length;
 
   if (
     !sig ||
     !accountId ||
     history.loadingMore ||
     history.status === 'refreshing' ||
-    history.totalCount <=
-      history.list.length +
-        history.rechargeList.length +
-        history.withdrawList.length
+    hasLoadedAllHistory
   ) {
     return;
   }
@@ -519,16 +524,23 @@ async function loadMoreHistory() {
     const data = await openapi.getGasAccountHistory({
       sig,
       account_id: accountId,
-      start: history.list.length > 0 ? history.list.length : 0,
+      start: history.list.length,
       limit: 10,
     });
+
+    if (!isCurrentHistorySession({ sig, accountId })) {
+      return;
+    }
 
     gasAccountStore.setState(prev => ({
       ...prev,
       history: {
         ...prev.history,
         list: [...prev.history.list, ...(data.history_list || [])],
-        totalCount: data.pagination.total,
+        totalCount:
+          (data.history_list?.length || 0) > 0
+            ? data.pagination.total
+            : prev.history.list.length,
         loadingMore: false,
         status: 'ready',
         lastFetchedAt: Date.now(),
@@ -536,13 +548,10 @@ async function loadMoreHistory() {
     }));
 
     const latestHistory = gasAccountStore.getState().history;
-    const hasLoadedAllHistory =
-      latestHistory.totalCount <=
-      latestHistory.list.length +
-        latestHistory.rechargeList.length +
-        latestHistory.withdrawList.length;
+    const latestHistoryExhausted =
+      latestHistory.totalCount <= latestHistory.list.length;
 
-    if (hasLoadedAllHistory) {
+    if (latestHistoryExhausted) {
       storeApiGasAccount.refreshSnapshot().catch(error => {
         console.error(
           'refreshSnapshot after loadMoreHistory complete error',
@@ -696,6 +705,7 @@ export const storeApiGasAccount = {
     return signature;
   },
 };
+setGasAccountStoreApi(storeApiGasAccount);
 
 export const storeApiGasAccountDeposit = {
   fetchBridgeSupportTokenList: fetchGasAccountBridgeSupportTokenList,

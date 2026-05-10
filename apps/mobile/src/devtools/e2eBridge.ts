@@ -35,6 +35,8 @@ import { getLatestNavigationName, naviPush } from '@/utils/navigation';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 import { getIsFoldMultiChart } from '@/screens/Address/components/MultiAssets/RenderRow/CurveChart';
 import { getRecentSendPendingTxData } from '@/screens/Send/hooks/useRecentSend';
+import { whitelistService } from '@/core/services';
+import { setWhitelist as setWhitelistState } from '@/hooks/whitelist';
 
 type DevtoolsMethod = (...args: any[]) => unknown;
 
@@ -668,6 +670,17 @@ const bridgeMethods = {
   getSendScreenSnapshot() {
     return buildSendScreenSnapshot();
   },
+  async clearWhitelistData() {
+    whitelistService.enableWhitelist();
+    await setWhitelistState([]);
+
+    return {
+      ok: true,
+      enabled: await whitelistService.isWhitelistEnabled(),
+      whitelist: await whitelistService.getWhitelist(),
+      routeName: getLatestNavigationName() || null,
+    };
+  },
   setSendAmount(amount?: string | number) {
     const nextAmount = String(amount ?? '').trim();
 
@@ -704,6 +717,7 @@ runDevIIFEFunc(() => {
     getSingleHomeSnapshot: () => bridgeMethods.getSingleHomeSnapshot(),
     openSendScreen: input => bridgeMethods.openSendScreen(input as never),
     getSendScreenSnapshot: () => bridgeMethods.getSendScreenSnapshot(),
+    clearWhitelistData: () => bridgeMethods.clearWhitelistData(),
     setSendAmount: amount => bridgeMethods.setSendAmount(amount as never),
   };
 

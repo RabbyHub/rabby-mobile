@@ -27,7 +27,8 @@ import { RevokeNFTRequireData } from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
-import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
+import { AddressItemInDetail } from '../../HistoryDetailScreen';
+import { TxStatusItem } from '../TxStatusItem';
 import { HistoryItemIcon } from '../HistoryItemIcon';
 import { HistoryItemCateType } from '../type';
 import { Account } from '@/core/services/preference';
@@ -119,8 +120,8 @@ export const RevokeNFT: React.FC<Props> = ({
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <RcIconSingleArrow
-              width={32}
-              height={32}
+              width={26}
+              height={26}
               color={colors2024['neutral-bg-2']}
             />
           </View>
@@ -264,6 +265,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     marginTop: 20,
     borderRadius: 16,
+    paddingVertical: 4,
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
@@ -335,31 +337,29 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   singleBox: {
     width: '100%',
-    height: 92,
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
     justifyContent: 'space-between',
     alignContent: 'center',
     borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 16,
+    padding: 16,
     flexDirection: 'row',
   },
   tokenAmountText: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '700',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '900',
   },
   usdValue: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '500',
-    marginTop: 4,
+    marginTop: 2,
   },
   mutliBox: {
     width: '100%',
@@ -398,20 +398,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailItem: {
     flexDirection: 'row',
     gap: 8,
-    padding: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   itemTitleText: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '500',
     maxWidth: '45%',
   },
   itemAddressText: {
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,

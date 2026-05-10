@@ -9,7 +9,7 @@ import {
 import Toast, { ToastOptions } from 'react-native-root-toast';
 import { SvgProps } from 'react-native-svg';
 
-import { Text } from '@/components';
+import { Text } from '@/components/Typography';
 import {
   RcIconInfoCC,
   IconTick,

@@ -3,7 +3,14 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { WrapTokenAddressMap } from '@rabby-wallet/rabby-swap';
 import BigNumber from 'bignumber.js';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { refreshIdAtom, useSetQuoteVisible } from './atom';
 import useAsync from 'react-use/lib/useAsync';
 import { openapi } from '@/core/request';
@@ -23,6 +30,7 @@ import { getSwapAutoSlippageValue, useSlippageStore } from './slippage';
 import { useLowCreditState } from '../components/LowCreditModal';
 import { trigger } from 'react-native-haptic-feedback';
 import { apiProvider } from '@/core/apis';
+import { getGasTokenBalance } from '@/core/apis/transactions';
 import { isSwapWrapToken } from '../utils';
 import { RequestRateLimiter } from './rateLimit';
 import { useFocusEffect } from '@react-navigation/native';
@@ -32,6 +40,7 @@ import { useAutoSlippageEffect } from './autoSlippageEffect';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import { shouldScheduleQuotePolling } from '@/utils/quotePolling';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
+import { convert18RawToTokenRaw, isTempoChain } from '@/utils/tempo';
 
 export const enableInsufficientQuote = true;
 
@@ -66,13 +75,7 @@ const useTokenInfo = ({
       );
       return { ...data, tokenId: token.id };
     }
-  }, [
-    tokenRefreshId,
-    userAddress,
-    token?.id,
-    token?.raw_amount_hex_str,
-    chain,
-  ]);
+  }, [tokenRefreshId, userAddress, token?.id, chain]);
 
   useDebounce(
     () => {
@@ -174,6 +177,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   const expiredTimer = useRef<NodeJS.Timeout>(undefined);
   const autoQuoteRefreshPausedRef = useRef(false);
+  const reloadTxRefreshPausedRef = useRef(false);
 
   const clearExpiredTimer = useCallback(() => {
     if (expiredTimer.current) {
@@ -192,6 +196,10 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     },
     [clearExpiredTimer, setRefreshId],
   );
+
+  const setReloadTxRefreshPaused = useCallback((paused: boolean) => {
+    reloadTxRefreshPausedRef.current = paused;
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -222,23 +230,16 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         return p;
       });
 
-      if (
-        shouldScheduleQuotePolling({
-          enabled: enableRefreshRef.current,
-          paused: autoQuoteRefreshPausedRef.current,
-        })
-      ) {
-        expiredTimer.current = setTimeout(() => {
-          if (
-            shouldScheduleQuotePolling({
-              enabled: enableRefreshRef.current,
-              paused: autoQuoteRefreshPausedRef.current,
-            })
-          ) {
-            setRefreshId(e => e + 1);
-          }
-        }, 1000 * 20);
-      }
+      expiredTimer.current = setTimeout(() => {
+        if (
+          shouldScheduleQuotePolling({
+            enabled: enableRefreshRef.current,
+            paused: autoQuoteRefreshPausedRef.current,
+          })
+        ) {
+          setRefreshId(e => e + 1);
+        }
+      }, 1000 * 20);
     },
     [setRefreshId],
   );
@@ -378,6 +379,41 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     return false;
   }, [chainInfo?.nativeTokenAddress, payToken]);
 
+  const isTempoSwapChain = useMemo(
+    () => isTempoChain(chainInfo.serverId),
+    [chainInfo.serverId],
+  );
+
+  const { value: tempoGasTokenInfo, loading: isTempoGasTokenLoading } =
+    useAsync(async () => {
+      if (!userAddress || !isTempoSwapChain) {
+        return null;
+      }
+
+      return getGasTokenBalance({
+        account,
+        address: userAddress,
+        chainId: chainInfo.id,
+      });
+    }, [account, userAddress, chainInfo.id, refreshId, isTempoSwapChain]);
+
+  const payTokenIsTempoFeeToken = useMemo(() => {
+    if (
+      !isTempoSwapChain ||
+      !payToken?.id ||
+      !tempoGasTokenInfo?.token.tokenId
+    ) {
+      return false;
+    }
+
+    return isSameAddress(payToken.id, tempoGasTokenInfo.token.tokenId);
+  }, [isTempoSwapChain, payToken?.id, tempoGasTokenInfo?.token.tokenId]);
+
+  const payTokenIsGasToken = useMemo(
+    () => payTokenIsNativeToken || payTokenIsTempoFeeToken,
+    [payTokenIsNativeToken, payTokenIsTempoFeeToken],
+  );
+
   /* Gas */
 
   const [passGasPrice, setUseGasPrice] = useState(false);
@@ -387,7 +423,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     [chain],
   );
 
-  const { value: gasList } = useAsync(() => {
+  const { value: gasList, loading: isGasMarketLoading } = useAsync(() => {
     return apiProvider.gasMarketV2(
       {
         chainId: chainInfo.serverId,
@@ -405,6 +441,24 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     () => findChainByEnum(chain)?.nativeTokenDecimals || 1e18,
     [chain],
   );
+
+  const gasTokenDecimals = useMemo(() => {
+    if (payTokenIsNativeToken) {
+      return nativeTokenDecimals;
+    }
+
+    if (payTokenIsTempoFeeToken) {
+      return tempoGasTokenInfo?.token.decimals || payToken?.decimals || 18;
+    }
+
+    return undefined;
+  }, [
+    nativeTokenDecimals,
+    payTokenIsNativeToken,
+    payTokenIsTempoFeeToken,
+    payToken?.decimals,
+    tempoGasTokenInfo?.token.decimals,
+  ]);
 
   /* Gas end */
 
@@ -478,6 +532,15 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     () => inSufficientCanGetQuote && !quoteBlockedByClosedMarket,
     [inSufficientCanGetQuote, quoteBlockedByClosedMarket],
   );
+  const canRunQuoteRequest =
+    !!(
+      userAddress &&
+      payToken?.id &&
+      receiveToken?.id &&
+      chain &&
+      Number(payAmount) > 0 &&
+      feeRate
+    ) && canRequestQuote;
 
   useEffect(() => {
     if (autoSlippage) {
@@ -520,17 +583,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   const { error: quotesError, runAsync: _runGetAllQuotes } = useRequest(
     async (currentFetchId: number) => {
-      if (
-        userAddress &&
-        payToken?.id &&
-        receiveToken?.id &&
-        receiveToken &&
-        chain &&
-        Number(payAmount) > 0 &&
-        feeRate &&
-        canRequestQuote &&
-        !isDraggingSlider
-      ) {
+      if (canRunQuoteRequest && !isDraggingSlider) {
         setTokenRefreshId(e => e + 1);
         const limit = rateLimitRef.current?.checkRateLimit();
         setRateLimit(!!limit);
@@ -590,14 +643,14 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     {
       manual: true,
       onFinally(params) {
-        if (params[0] === fetchIdRef.current) {
-          // wait for progress animation finish
-          setTimeout(() => {
+        // wait for progress animation finish
+        setTimeout(() => {
+          if (params[0] === fetchIdRef.current) {
             setQuoteLoading(false);
             setShowMoreVisible(true);
             setFinishedQuotes(0);
-          }, 300);
-        }
+          }
+        }, 300);
       },
     },
   );
@@ -606,26 +659,19 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     wait: rateLimit ? 5000 : 1000,
   });
 
-  useEffect(() => {
-    if (
-      userAddress &&
-      payToken?.id &&
-      receiveToken?.id &&
-      chain &&
-      Number(payAmount) > 0 &&
-      feeRate &&
-      canRequestQuote
-    ) {
-      setFinishedQuotes(0);
+  useLayoutEffect(() => {
+    fetchIdRef.current += 1;
+    setQuotesList([]);
+    setActiveProvider(undefined);
+    setFinishedQuotes(0);
+    if (canRunQuoteRequest) {
       setQuoteLoading(true);
-      fetchIdRef.current += 1;
       runGetAllQuotes(fetchIdRef.current);
     } else {
-      setFinishedQuotes(0);
-      setActiveProvider(undefined);
       setQuoteLoading(false);
     }
   }, [
+    canRunQuoteRequest,
     canRequestQuote,
     refreshId,
     userAddress,
@@ -641,33 +687,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     autoSlippage,
   ]);
 
-  const canUpdateActiveProvider = useMemo(() => {
-    if (
-      userAddress &&
-      payToken?.id &&
-      receiveToken?.id &&
-      receiveToken &&
-      chain &&
-      Number(payAmount) > 0 &&
-      feeRate &&
-      canRequestQuote
-    ) {
-      return true;
-    }
-    return false;
-  }, [
-    canRequestQuote,
-    chain,
-    feeRate,
-    payAmount,
-    payToken?.id,
-    receiveToken,
-    userAddress,
-  ]);
-
-  useEffect(() => {
-    setQuotesList([]);
-  }, [payToken?.id, receiveToken?.id, chain, payAmount]);
+  const canUpdateActiveProvider = canRunQuoteRequest;
 
   useEffect(() => {
     if (
@@ -848,31 +868,57 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   const [isDraggingSlider, setIsDraggingSlider] = useState<boolean>(false);
 
   const handleSlider100 = useCallback(() => {
-    if (payToken) {
-      setUseGasPrice(false);
-      setPayAmount(tokenAmountBn(payToken).toString(10));
+    if (!payToken) {
+      return;
     }
-    if (payTokenIsNativeToken && payToken) {
-      if (normalGasPrice) {
-        const val = tokenAmountBn(payToken).minus(
-          new BigNumber(gasLimit)
-            .times(normalGasPrice)
-            .div(10 ** nativeTokenDecimals),
-        );
-        if (!val.lt(0)) {
-          setUseGasPrice(true);
-        }
-        setPayAmount(
-          val.lt(0) ? tokenAmountBn(payToken).toString(10) : val.toString(10),
-        );
+
+    setUseGasPrice(false);
+    const fullAmount = tokenAmountBn(payToken);
+    if (
+      payTokenIsGasToken &&
+      gasTokenDecimals !== undefined &&
+      normalGasPrice
+    ) {
+      const val = fullAmount.minus(
+        convert18RawToTokenRaw(
+          new BigNumber(gasLimit).times(normalGasPrice),
+          gasTokenDecimals,
+        ).div(new BigNumber(10).pow(gasTokenDecimals)),
+      );
+      if (!val.lt(0)) {
+        setUseGasPrice(true);
       }
+      setPayAmount(val.lt(0) ? fullAmount.toString(10) : val.toString(10));
+      return;
     }
+
+    setPayAmount(fullAmount.toString(10));
   }, [
     payToken,
-    payTokenIsNativeToken,
-    normalGasPrice,
+    payTokenIsGasToken,
+    gasTokenDecimals,
     gasLimit,
-    nativeTokenDecimals,
+    normalGasPrice,
+  ]);
+
+  useEffect(() => {
+    if (
+      slider === 100 &&
+      swapUseSlider &&
+      payToken?.amount &&
+      !isGasMarketLoading &&
+      (!isTempoSwapChain || !isTempoGasTokenLoading)
+    ) {
+      handleSlider100();
+    }
+  }, [
+    slider,
+    swapUseSlider,
+    payToken?.amount,
+    isGasMarketLoading,
+    isTempoSwapChain,
+    isTempoGasTokenLoading,
+    handleSlider100,
   ]);
 
   const previousSlider = useRef<number>(0);
@@ -933,6 +979,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       const refresh = () => {
         if (
           autoQuoteRefreshPausedRef.current ||
+          reloadTxRefreshPausedRef.current ||
           isGasAccountDepositFlowActive()
         ) {
           return;
@@ -1019,6 +1066,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
     clearExpiredTimer,
     setAutoQuoteRefreshPaused,
+    setReloadTxRefreshPaused,
 
     finishedQuotes,
     autoSuggestSlippage,

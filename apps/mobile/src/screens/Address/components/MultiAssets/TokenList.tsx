@@ -21,10 +21,9 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { isTabsSwiping, useAccountInfo } from './hooks';
-import { useCurrency } from '@/hooks/useCurrency';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
-import { TabName } from './TabsMultiAssets';
+import { HomeTabName as TabName } from '@/hooks/navigation';
 import useTokenList, {
   getMultiAssetsCacheKey,
   ITokenItem,
@@ -46,6 +45,8 @@ import {
   usePulldownRefreshStyles,
 } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { RNGHRefreshControl } from '@/components/customized/reexports';
+import { useAppForeground } from '@/hooks/useAppForeground';
+import addressBalanceStore from '@/store/balance';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -96,11 +97,12 @@ export const TokenList = () => {
   const [foldScam, setFoldScam] = useState(true);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
 
-  const { currency } = useCurrency();
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
 
   const getAccountByAddress = useFindAccountByAddress();
-  const { isFocused } = useIsFocusedCurrentTab(TabName.token);
+  const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
+
+  const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
 
   const emptyResult = useMemo(
     () => ({
@@ -157,12 +159,25 @@ export const TokenList = () => {
       .reduce((total, item) => {
         return total + item.usd_value;
       }, 0);
-    return formatNetworth(usdValue * currency.usd_rate, false, currency.symbol);
-  }, [foldTokens, currency]);
+    return formatNetworth(usdValue);
+  }, [foldTokens]);
 
   useEffect(() => {
     batchGetTokenList(myTop10Addresses);
   }, [myTop10Addresses]);
+
+  const handleForeground = useCallback(() => {
+    if (isLoading || !isFocusing || !myTop10Addresses) {
+      return;
+    }
+    triggerUpdate(false);
+    batchGetTokenList(myTop10Addresses);
+  }, [isFocusing, isLoading, myTop10Addresses, triggerUpdate]);
+
+  useAppForeground({
+    enabled: isFocusing,
+    onForeground: handleForeground,
+  });
 
   const hasNoAssets =
     tokens.length + foldTokens.length + scamTokens.length === 0 &&

@@ -7,7 +7,11 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { formatPercent } from '@/screens/Home/utils/price';
-import { formatUsdValue, splitNumberByStep } from '@/utils/number';
+import {
+  formatPerpsNumber,
+  formatUsdValue,
+  splitNumberByStep,
+} from '@/utils/number';
 import { formatPerpsCoin } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
@@ -38,6 +42,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     slTriggerPx: string;
     selectedMarginMode: 'cross' | 'isolated';
     estimatedLiquidationPrice: string | number;
+    quoteAsset?: string;
   };
 }> = ({ visible, onClose, info, onConfirm }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
@@ -108,7 +113,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </View>
               <View style={styles.coinContainer}>
                 <AssetAvatar size={24} logo={coinLogo} />
-                <Text style={styles.value}>{formatPerpsCoin(coin)} - USD</Text>
+                <Text style={styles.value}>{formatPerpsCoin(coin)}</Text>
+                <Text style={styles.quote}>/{info.quoteAsset || 'USDC'}</Text>
               </View>
             </View>
             <View style={styles.listItem}>
@@ -140,12 +146,22 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </View>
             </View>
             <View style={styles.listItem}>
+              <View style={styles.listItemMain}>
+                <Text style={styles.label}>
+                  {t('page.perpsDetail.PerpsOpenPositionCheckPopup.size')}
+                </Text>
+              </View>
+              <View>
+                <Text style={styles.value}>
+                  {tradeSize} {formatPerpsCoin(coin)}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.listItem}>
               <TouchableOpacity
                 onPress={() => {
                   showTipsPopup({
-                    title: t(
-                      'page.perpsDetail.PerpsOpenPositionCheckPopup.size',
-                    ),
+                    title: t('page.perps.historyDetail.tradeValue'),
                     desc: t(
                       'page.perpsDetail.PerpsOpenPositionCheckPopup.sizeTips',
                     ),
@@ -154,7 +170,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 }}>
                 <View style={styles.listItemMain}>
                   <Text style={styles.label}>
-                    {t('page.perpsDetail.PerpsOpenPositionCheckPopup.size')}
+                    {t('page.perps.historyDetail.tradeValue')}
                   </Text>
                   <RcIconInfoCC
                     width={18}
@@ -165,8 +181,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </TouchableOpacity>
               <View>
                 <Text style={styles.value}>
-                  {formatUsdValue(Number(tradeAmount))} = {tradeSize}{' '}
-                  {formatPerpsCoin(coin)}
+                  {formatPerpsNumber(Number(tradeAmount))}{' '}
+                  {info.quoteAsset || 'USDC'}
                 </Text>
               </View>
             </View>
@@ -203,7 +219,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
             <View style={styles.listItem}>
               <View style={styles.listItemMain}>
                 <Text style={styles.label}>
-                  {formatPerpsCoin(coin)}-USD{' '}
+                  {formatPerpsCoin(coin)}-{info.quoteAsset || 'USDC'}{' '}
                   {t('page.perpsDetail.PerpsOpenPositionCheckPopup.price')}
                 </Text>
               </View>
@@ -241,7 +257,11 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </TouchableOpacity>
               <View>
                 <Text style={styles.value}>
-                  ${splitNumberByStep(Number(estimatedLiquidationPrice))}
+                  {Number(estimatedLiquidationPrice) <= 0
+                    ? '-'
+                    : `$${splitNumberByStep(
+                        Number(estimatedLiquidationPrice),
+                      )}`}
                 </Text>
               </View>
             </View>
@@ -292,7 +312,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     scrollViewContent: {
       paddingHorizontal: 20,
-      flex: 1,
     },
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],
@@ -371,17 +390,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['neutral-info'],
     },
     value: {
+      marginLeft: 6,
       fontFamily: 'SF Pro Rounded',
       fontSize: 16,
       lineHeight: 20,
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
     },
+    quote: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: colors2024['neutral-info'],
+    },
     coinContainer: {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 6,
+      // gap: 6,
     },
     tagContainer: {
       paddingVertical: 2,

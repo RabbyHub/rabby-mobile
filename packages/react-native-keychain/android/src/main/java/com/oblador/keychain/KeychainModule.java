@@ -1,0 +1,1154 @@
+package com.rabbywallet.keychain;
+
+import android.content.Context;
+import android.os.Build;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringDef;
+import androidx.biometric.BiometricManager;
+import androidx.biometric.BiometricPrompt.PromptInfo;
+import android.security.keystore.UserNotAuthenticatedException;
+
+import com.facebook.react.bridge.ActivityEventListener;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.BaseActivityEventListener;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.Promise;
+import com.facebook.react.bridge.ReactApplicationContext;
+import com.facebook.react.bridge.ReactContextBaseJavaModule;
+import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.WritableMap;
+import com.rabbywallet.keychain.PrefsStorage.ResultSet;
+import com.rabbywallet.keychain.cipherStorage.CipherStorage;
+import com.rabbywallet.keychain.cipherStorage.CipherStorage.DecryptionResult;
+import com.rabbywallet.keychain.cipherStorage.CipherStorage.EncryptionResult;
+import com.rabbywallet.keychain.cipherStorage.CipherStorageBase;
+// import com.rabbywallet.keychain.cipherStorage.CipherStorageFacebookConceal;
+import com.rabbywallet.keychain.cipherStorage.CipherStorageKeystoreAesCbc;
+import com.rabbywallet.keychain.cipherStorage.CipherStorageKeystoreRsaEcb;
+import com.rabbywallet.keychain.decryptionHandler.DecryptionResultHandler;
+import com.rabbywallet.keychain.decryptionHandler.DecryptionResultHandlerProvider;
+import com.rabbywallet.keychain.exceptions.CryptoFailedException;
+import com.rabbywallet.keychain.exceptions.EmptyParameterException;
+import com.rabbywallet.keychain.exceptions.KeyStoreAccessException;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import javax.crypto.Cipher;
+import android.app.Activity;
+import android.app.KeyguardManager;
+import android.content.Intent;
+
+import static com.facebook.react.bridge.Arguments.makeNativeArray;
+
+@SuppressWarnings({"unused", "WeakerAccess", "SameParameterValue"})
+public class KeychainModule extends ReactContextBaseJavaModule {
+  //region Constants
+  public static final String KEYCHAIN_MODULE = "RNRabbyKeychainManager";
+  public static final String FINGERPRINT_SUPPORTED_NAME = "Fingerprint";
+  public static final String FACE_SUPPORTED_NAME = "Face";
+  public static final String IRIS_SUPPORTED_NAME = "Iris";
+  public static final String EMPTY_STRING = "";
+  public static final String WARMING_UP_ALIAS = "rabbyKeychainWarmingUp";
+  public static final String E_CRYPTO_FAILED = "E_CRYPTO_FAILED";
+  public static final String E_USER_AUTH_FAILED = "E_USER_DIDNT_AUTH";
+
+  private static final String LOG_TAG = KeychainModule.class.getSimpleName();
+
+  private KeyguardManager mKeyguardManager;
+  final ReactApplicationContext mReactContext;
+
+  private String mUsername;
+  private String mPassword;
+  private Promise mPromise;
+  private ReadableMap mOptions;
+  private String mCurrentAction;
+
+  public static final String AUTH_PROMPT_TITLE_KEY = "authenticationPromptTitle";
+  public static final String AUTH_PROMPT_DESC_KEY = "authenticationPromptDesc";
+
+  private static final int REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS = 42;
+
+  @StringDef({AccessControl.NONE
+    , AccessControl.USER_PRESENCE
+    , AccessControl.BIOMETRY_ANY
+    , AccessControl.BIOMETRY_CURRENT_SET
+    , AccessControl.DEVICE_PASSCODE
+    , AccessControl.APPLICATION_PASSWORD
+    , AccessControl.BIOMETRY_ANY_OR_DEVICE_PASSCODE
+    , AccessControl.BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE})
+
+  @interface AccessControl {
+    String NONE = "None";
+    String USER_PRESENCE = "UserPresence";
+    String BIOMETRY_ANY = "BiometryAny";
+    String BIOMETRY_CURRENT_SET = "BiometryCurrentSet";
+    String DEVICE_PASSCODE = "DevicePasscode";
+    String APPLICATION_PASSWORD = "ApplicationPassword";
+    String BIOMETRY_ANY_OR_DEVICE_PASSCODE = "BiometryAnyOrDevicePasscode";
+    String BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE = "BiometryCurrentSetOrDevicePasscode";
+  }
+
+  @interface AuthPromptOptions {
+    String TITLE = "title";
+    String SUBTITLE = "subtitle";
+    String DESCRIPTION = "description";
+    String CANCEL = "cancel";
+  }
+
+  /** Options mapping keys. */
+  @interface Maps {
+    String ACCESS_CONTROL = "accessControl";
+    String ACCESS_GROUP = "accessGroup";
+    String ACCESSIBLE = "accessible";
+    String ANDROID_ALLOW_AUTHENTICATED_SESSION_REUSE =
+      "androidAllowAuthenticatedSessionReuse";
+    String AUTH_PROMPT = "authenticationPrompt";
+    String AUTH_TYPE = "authenticationType";
+    String SERVICE = "service";
+    String SECURITY_LEVEL = "securityLevel";
+    String RULES = "rules";
+
+    String USERNAME = "username";
+    String PASSWORD = "password";
+    String STORAGE = "storage";
+  }
+
+  /** Known error codes. */
+  @interface Errors {
+    String E_EMPTY_PARAMETERS = "E_EMPTY_PARAMETERS";
+    String E_CRYPTO_FAILED = "E_CRYPTO_FAILED";
+    String E_KEYSTORE_ACCESS_ERROR = "E_KEYSTORE_ACCESS_ERROR";
+    String E_SUPPORTED_BIOMETRY_ERROR = "E_SUPPORTED_BIOMETRY_ERROR";
+    /** Raised for unexpected errors. */
+    String E_UNKNOWN_ERROR = "E_UNKNOWN_ERROR";
+  }
+
+  /** Supported ciphers. */
+  @StringDef({KnownCiphers.FB, KnownCiphers.AES, KnownCiphers.RSA})
+  public @interface KnownCiphers {
+    /** Facebook conceal compatibility lib in use. {@deprecated} */
+    String FB = "FacebookConceal";
+    /** AES encryption. */
+    String AES = "KeystoreAESCBC";
+    /** Biometric + RSA. */
+    String RSA = "KeystoreRSAECB";
+  }
+
+  /** Secret manipulation rules. */
+  @StringDef({Rules.AUTOMATIC_UPGRADE, Rules.NONE})
+  @interface Rules {
+    String NONE = "none";
+    String AUTOMATIC_UPGRADE = "automaticUpgradeToMoreSecuredStorage";
+  }
+  //endregion
+
+  //region Members
+  /** Name-to-instance lookup map. */
+  private final Map<String, CipherStorage> cipherStorageMap = new HashMap<>();
+  /** Shared preferences storage. */
+  private final PrefsStorage prefsStorage;
+  //endregion
+
+  //region Initialization
+
+  /** Default constructor. */
+  public KeychainModule(@NonNull final ReactApplicationContext reactContext) {
+    super(reactContext);
+    mReactContext = reactContext;
+
+    prefsStorage = new PrefsStorage(reactContext);
+
+    // addCipherStorageToMap(new CipherStorageFacebookConceal(reactContext));
+    addCipherStorageToMap(new CipherStorageKeystoreAesCbc());
+
+    // we have a references to newer api that will fail load of app classes in old androids OS
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+      addCipherStorageToMap(new CipherStorageKeystoreRsaEcb());
+    }
+
+    reactContext.addActivityEventListener(mActivityEventListener);
+  }
+
+  /** Allow initialization in chain. */
+  public static KeychainModule withWarming(@NonNull final ReactApplicationContext reactContext) {
+    final KeychainModule instance = new KeychainModule(reactContext);
+
+    // force initialization of the crypto api in background thread
+    final Thread warmingUp = new Thread(instance::internalWarmingBestCipher, "rabby-keychain-warming-up");
+    warmingUp.setDaemon(true);
+    warmingUp.start();
+
+    return instance;
+  }
+
+  /** cipher (crypto api) warming up logic. force java load classes and intializations. */
+  private void internalWarmingBestCipher() {
+    try {
+      final long startTime = System.nanoTime();
+
+      Log.v(KEYCHAIN_MODULE, "warming up started at " + startTime);
+      final CipherStorageBase best = (CipherStorageBase) getCipherStorageForCurrentAPILevel();
+      final Cipher instance = best.getCachedInstance();
+      final boolean isSecure = best.supportsSecureHardware();
+      final SecurityLevel requiredLevel = isSecure ? SecurityLevel.SECURE_HARDWARE : SecurityLevel.SECURE_SOFTWARE;
+      best.generateKeyAndStoreUnderAlias(WARMING_UP_ALIAS, requiredLevel, false);
+      best.getKeyStoreAndLoad();
+
+      Log.v(KEYCHAIN_MODULE, "warming up takes: " +
+        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime) +
+        " ms");
+    } catch (Throwable ex) {
+      Log.e(KEYCHAIN_MODULE, "warming up failed!", ex);
+    }
+  }
+  //endregion
+
+  //region Overrides
+
+  /** {@inheritDoc} */
+  @Override
+  @NonNull
+  public String getName() {
+    return KEYCHAIN_MODULE;
+  }
+
+  /** {@inheritDoc} */
+  @NonNull
+  @Override
+  public Map<String, Object> getConstants() {
+    final Map<String, Object> constants = new HashMap<>();
+
+    constants.put(SecurityLevel.ANY.jsName(), SecurityLevel.ANY.name());
+    constants.put(SecurityLevel.SECURE_SOFTWARE.jsName(), SecurityLevel.SECURE_SOFTWARE.name());
+    constants.put(SecurityLevel.SECURE_HARDWARE.jsName(), SecurityLevel.SECURE_HARDWARE.name());
+
+    return constants;
+  }
+  //endregion
+
+  private final ActivityEventListener mActivityEventListener = new BaseActivityEventListener() {
+    @Override
+    public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent intent) {
+      if (requestCode == REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS) {
+        // Challenge completed, proceed with using cipher
+        if (resultCode == Activity.RESULT_OK) {
+          if (Objects.equals(mCurrentAction, "set")) {
+            setGenericPasswordForOptions(mOptions, mUsername, mPassword, mPromise);
+          } else {
+            getGenericPasswordForOptions(mOptions, mPromise);
+          }
+        } else {
+          // The user canceled or didn’t complete the lock screen
+          // operation. Go to error/cancellation flow.
+          mPromise.reject(E_USER_AUTH_FAILED, new Exception("Error: Cancel"));
+        }
+      }
+
+      mCurrentAction = null;
+      mOptions = null;
+      mUsername = null;
+      mPassword = null;
+    }
+  };
+
+  public void handleUserNotAuthenticatedException(Promise promise) {
+    String authPromptTitle = null;
+    String authPromptDesc = null;
+    if (mOptions != null) {
+      if (mOptions.hasKey(AUTH_PROMPT_TITLE_KEY)) {
+        authPromptTitle = mOptions.getString(AUTH_PROMPT_TITLE_KEY);
+      }
+
+      if (mOptions.hasKey(AUTH_PROMPT_DESC_KEY)) {
+        authPromptDesc = mOptions.getString(AUTH_PROMPT_DESC_KEY);
+      }
+    }
+    Intent intent = mKeyguardManager.createConfirmDeviceCredentialIntent(authPromptTitle, authPromptDesc);
+    if (intent != null) {
+      Activity currentActivity = getCurrentActivity();
+      Objects.requireNonNull(currentActivity).startActivityForResult(intent, REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS);
+    }
+  }
+
+  //region React Methods
+  protected void setGenericPassword(@NonNull final String alias,
+                                    @NonNull final String username,
+                                    @NonNull final String password,
+                                    @Nullable final ReadableMap options,
+                                    @NonNull final Promise promise) {
+    try {
+      mKeyguardManager = (KeyguardManager) mReactContext.getSystemService(mReactContext.KEYGUARD_SERVICE);
+
+      throwIfEmptyLoginPassword(username, password);
+
+      final SecurityLevel level = getSecurityLevelOrDefault(options);
+      final CipherStorage storage = getSelectedStorage(options);
+
+      throwIfInsufficientLevel(storage, level);
+
+      final String accessControl = getAccessControlOrDefault(options);
+      final EncryptionResult result = storage.encrypt(alias, username, password, level, mKeyguardManager.isKeyguardSecure() ? accessControl : null);
+      prefsStorage.storeEncryptedEntry(alias, result);
+
+      final WritableMap results = Arguments.createMap();
+      results.putString(Maps.SERVICE, alias);
+      results.putString(Maps.STORAGE, storage.getCipherStorageName());
+
+      promise.resolve(results);
+    } catch (EmptyParameterException e) {
+      Log.e(KEYCHAIN_MODULE, e.getMessage(), e);
+
+      promise.reject(Errors.E_EMPTY_PARAMETERS, e);
+    } catch (CryptoFailedException e) {
+      if (e.getCause() != null && Objects.equals(e.getCause().getMessage(), "User not authenticated")) {
+        mPromise = promise;
+        mUsername = username;
+        mPassword = password;
+        mOptions = options;
+        mCurrentAction = "set";
+        this.handleUserNotAuthenticatedException(promise);
+      } else {
+        Log.e(KEYCHAIN_MODULE, e.getMessage());
+        promise.reject(E_CRYPTO_FAILED, e);
+      }
+    } catch (Throwable fail) {
+      Log.e(KEYCHAIN_MODULE, fail.getMessage(), fail);
+
+      promise.reject(Errors.E_UNKNOWN_ERROR, fail);
+    }
+  }
+
+  @ReactMethod
+  public void setGenericPasswordForOptions(@Nullable final ReadableMap options,
+                                           @NonNull final String username,
+                                           @NonNull final String password,
+                                           @NonNull final Promise promise) {
+    final String service = getServiceOrDefault(options);
+    setGenericPassword(service, username, password, options, promise);
+  }
+
+  /** Get Cipher storage instance based on user provided options. */
+  @NonNull
+  private CipherStorage getSelectedStorage(@Nullable final ReadableMap options)
+    throws CryptoFailedException {
+    final String accessControl = getAccessControlOrDefault(options);
+    final boolean useBiometry = getUseBiometry(accessControl);
+    final String cipherName = getSpecificStorageOrDefault(options);
+
+    CipherStorage result = null;
+
+    if (null != cipherName) {
+      result = getCipherStorageByName(cipherName);
+    }
+
+    // attempt to access none existing storage will force fallback logic.
+    if (null == result) {
+      result = getCipherStorageForCurrentAPILevel(useBiometry);
+    }
+
+    return result;
+  }
+
+  protected void getGenericPassword(@NonNull final String alias,
+                                    @Nullable final ReadableMap options,
+                                    @NonNull final Promise promise) {
+    try {
+      final ResultSet resultSet = prefsStorage.getEncryptedEntry(alias);
+
+      if (resultSet == null) {
+        Log.e(KEYCHAIN_MODULE, "No entry found for service: " + alias);
+        promise.resolve(false);
+        return;
+      }
+
+      final String storageName = resultSet.cipherStorageName;
+      final String rules = getSecurityRulesOrDefault(options);
+      final boolean allowAuthenticatedSessionReuse =
+        getAndroidAllowAuthenticatedSessionReuseOrDefault(options);
+
+      if (mKeyguardManager == null) {
+        mKeyguardManager = (KeyguardManager) mReactContext.getSystemService(mReactContext.KEYGUARD_SERVICE);
+      }
+
+      final PromptInfo promptInfo = getPromptInfo(options);
+
+      CipherStorage cipher = null;
+
+      // Only check for upgradable ciphers for FacebookConseal as that
+      // is the only cipher that can be upgraded
+      if (rules.equals(Rules.AUTOMATIC_UPGRADE) && storageName.equals(KnownCiphers.FB)){
+        // get the best storage
+        final String accessControl = getAccessControlOrDefault(options);
+        final boolean useBiometry = getUseBiometry(accessControl);
+        cipher = getCipherStorageForCurrentAPILevel(useBiometry);
+      } else {
+        cipher = getCipherStorageByName(storageName);
+      }
+
+      final DecryptionResult decryptionResult = decryptCredentials(
+        alias,
+        cipher,
+        resultSet,
+        rules,
+        promptInfo,
+        allowAuthenticatedSessionReuse
+      );
+
+      final WritableMap credentials = Arguments.createMap();
+      credentials.putString(Maps.SERVICE, alias);
+      credentials.putString(Maps.USERNAME, decryptionResult.username);
+      credentials.putString(Maps.PASSWORD, decryptionResult.password);
+      credentials.putString(Maps.STORAGE, cipher.getCipherStorageName());
+
+      promise.resolve(credentials);
+    } catch (KeyStoreAccessException e) {
+      Log.e(KEYCHAIN_MODULE, e.getMessage());
+
+      promise.reject(Errors.E_KEYSTORE_ACCESS_ERROR, e);
+    } catch (CryptoFailedException e) {
+      if (e.getCause() != null && e.getCause().getMessage() == "User not authenticated") {
+        mOptions = options;
+        mPromise = promise;
+        mCurrentAction = "get";
+        this.handleUserNotAuthenticatedException(promise);
+      } else {
+        Log.e(KEYCHAIN_MODULE, e.getMessage());
+        promise.reject(E_CRYPTO_FAILED, e);
+      }
+    } catch (Throwable fail) {
+      Log.e(KEYCHAIN_MODULE, fail.getMessage(), fail);
+
+      promise.reject(Errors.E_UNKNOWN_ERROR, fail);
+    }
+  }
+
+  @ReactMethod
+  public void getAllGenericPasswordServices(@NonNull final Promise promise) {
+    try {
+      Collection<String> services = doGetAllGenericPasswordServices();
+      promise.resolve(makeNativeArray(services.toArray()));
+
+    } catch (KeyStoreAccessException e) {
+      promise.reject(Errors.E_KEYSTORE_ACCESS_ERROR, e);
+    }
+  }
+
+  private Collection<String> doGetAllGenericPasswordServices() throws KeyStoreAccessException {
+    final Set<String> cipherNames = prefsStorage.getUsedCipherNames();
+
+    Collection<CipherStorage> ciphers = new ArrayList<>(cipherNames.size());
+    for (String storageName : cipherNames) {
+      final CipherStorage cipherStorage = getCipherStorageByName(storageName);
+      ciphers.add(cipherStorage);
+    }
+
+    Set<String> result = new HashSet<>();
+    for (CipherStorage cipher : ciphers) {
+      Set<String> aliases = cipher.getAllKeys();
+      for (String alias : aliases) {
+          if (!alias.equals(WARMING_UP_ALIAS)) {
+              result.add(alias);
+          }
+      }
+    }
+
+    return result;
+  }
+
+  @ReactMethod
+  public void getGenericPasswordForOptions(@Nullable final ReadableMap options,
+                                           @NonNull final Promise promise) {
+    final String service = getServiceOrDefault(options);
+    getGenericPassword(service, options, promise);
+  }
+
+  protected void resetGenericPassword(@NonNull final String alias,
+                                      @NonNull final Promise promise) {
+    try {
+      // First we clean up the cipher storage (using the cipher storage that was used to store the entry)
+      final ResultSet resultSet = prefsStorage.getEncryptedEntry(alias);
+
+      if (resultSet != null) {
+        final CipherStorage cipherStorage = getCipherStorageByName(resultSet.cipherStorageName);
+
+        if (cipherStorage != null) {
+          cipherStorage.removeKey(alias);
+        }
+      }
+      // And then we remove the entry in the shared preferences
+      prefsStorage.removeEntry(alias);
+
+      promise.resolve(true);
+    } catch (KeyStoreAccessException e) {
+      Log.e(KEYCHAIN_MODULE, e.getMessage());
+
+      promise.reject(Errors.E_KEYSTORE_ACCESS_ERROR, e);
+    } catch (Throwable fail) {
+      Log.e(KEYCHAIN_MODULE, fail.getMessage(), fail);
+
+      promise.reject(Errors.E_UNKNOWN_ERROR, fail);
+    }
+  }
+
+  @ReactMethod
+  public void resetGenericPasswordForOptions(@Nullable final ReadableMap options,
+                                             @NonNull final Promise promise) {
+    final String service = getServiceOrDefault(options);
+    resetGenericPassword(service, promise);
+  }
+
+  @ReactMethod
+  public void hasInternetCredentialsForServer(@NonNull final String server,
+                                              @NonNull final Promise promise) {
+    final String alias = getAliasOrDefault(server);
+
+    final ResultSet resultSet = prefsStorage.getEncryptedEntry(alias);
+
+    if (resultSet == null) {
+      Log.e(KEYCHAIN_MODULE, "No entry found for service: " + alias);
+      promise.resolve(false);
+      return;
+    }
+
+    final WritableMap results = Arguments.createMap();
+    results.putString(Maps.SERVICE, alias);
+    results.putString(Maps.STORAGE, resultSet.cipherStorageName);
+
+    promise.resolve(results);
+  }
+
+  @ReactMethod
+  public void setInternetCredentialsForServer(@NonNull final String server,
+                                              @NonNull final String username,
+                                              @NonNull final String password,
+                                              @Nullable final ReadableMap options,
+                                              @NonNull final Promise promise) {
+    setGenericPassword(server, username, password, options, promise);
+  }
+
+  @ReactMethod
+  public void getInternetCredentialsForServer(@NonNull final String server,
+                                              @Nullable final ReadableMap options,
+                                              @NonNull final Promise promise) {
+    getGenericPassword(server, options, promise);
+  }
+
+  @ReactMethod
+  public void resetInternetCredentialsForServer(@NonNull final String server,
+                                                @NonNull final Promise promise) {
+    resetGenericPassword(server, promise);
+  }
+
+  @ReactMethod
+  public void getSupportedBiometryType(@NonNull final Promise promise) {
+    try {
+      String reply = null;
+
+      if (!DeviceAvailability.isStrongBiometricAuthAvailable(getReactApplicationContext())) {
+        reply = null;
+      } else {
+        if (isFingerprintAuthAvailable()) {
+          reply = FINGERPRINT_SUPPORTED_NAME;
+        } else if (isFaceAuthAvailable()) {
+          reply = FACE_SUPPORTED_NAME;
+        } else if (isIrisAuthAvailable()) {
+          reply = IRIS_SUPPORTED_NAME;
+        }
+      }
+
+      promise.resolve(reply);
+    } catch (Exception e) {
+      Log.e(KEYCHAIN_MODULE, e.getMessage(), e);
+
+      promise.reject(Errors.E_SUPPORTED_BIOMETRY_ERROR, e);
+    } catch (Throwable fail) {
+      Log.e(KEYCHAIN_MODULE, fail.getMessage(), fail);
+
+      promise.reject(Errors.E_UNKNOWN_ERROR, fail);
+    }
+  }
+
+  @ReactMethod
+  public void debugGetGenericPasswordStateForOptions(@Nullable final ReadableMap options,
+                                                     @NonNull final Promise promise) {
+    try {
+      final String service = getServiceOrDefault(options);
+      final PrefsStorage.DebugEntry debugEntry = prefsStorage.getDebugEntry(service);
+      final CipherStorageBase rsaStorage = (CipherStorageBase) getCipherStorageByName(KnownCiphers.RSA);
+      final CipherStorageBase.StoredKeyDebugInfo keyDebugInfo =
+        rsaStorage != null ? rsaStorage.getKeyDebugInfo(service) : null;
+
+      final WritableMap result = Arguments.createMap();
+      result.putString(Maps.SERVICE, debugEntry.service);
+      result.putBoolean("hasEntry", debugEntry.hasEntry);
+      result.putBoolean("hasUsername", debugEntry.hasUsername);
+      result.putBoolean("hasPassword", debugEntry.hasPassword);
+      result.putBoolean("hasCipherStorageMarker", debugEntry.hasCipherStorageMarker);
+      result.putBoolean("isCipherStorageMarkerMissing", debugEntry.hasEntry && !debugEntry.hasCipherStorageMarker);
+
+      if (debugEntry.storedUsernameBase64 != null) {
+        result.putString("storedUsernameBase64", debugEntry.storedUsernameBase64);
+      } else {
+        result.putNull("storedUsernameBase64");
+      }
+      if (debugEntry.storedPasswordBase64 != null) {
+        result.putString("storedPasswordBase64", debugEntry.storedPasswordBase64);
+      } else {
+        result.putNull("storedPasswordBase64");
+      }
+      if (debugEntry.storedCipherStorageMarkerValue != null) {
+        result.putString("storedCipherStorageMarkerValue", debugEntry.storedCipherStorageMarkerValue);
+      } else {
+        result.putNull("storedCipherStorageMarkerValue");
+      }
+      if (debugEntry.storedCipherStorageName != null) {
+        result.putString("storedCipherStorageName", debugEntry.storedCipherStorageName);
+      } else {
+        result.putNull("storedCipherStorageName");
+      }
+      if (debugEntry.resolvedCipherStorageName != null) {
+        result.putString("resolvedCipherStorageName", debugEntry.resolvedCipherStorageName);
+      } else {
+        result.putNull("resolvedCipherStorageName");
+      }
+
+      final com.facebook.react.bridge.WritableArray candidateCipherStorageNames = Arguments.createArray();
+      for (String candidate : debugEntry.candidateCipherStorageNames) {
+        candidateCipherStorageNames.pushString(candidate);
+      }
+      result.putArray("candidateCipherStorageNames", candidateCipherStorageNames);
+
+      if (debugEntry.cipherStorageResolutionStrategy != null) {
+        result.putString("cipherStorageResolutionStrategy", debugEntry.cipherStorageResolutionStrategy);
+      } else {
+        result.putNull("cipherStorageResolutionStrategy");
+      }
+
+      if (debugEntry.usernameByteSize != null) {
+        result.putInt("usernameByteSize", debugEntry.usernameByteSize);
+      } else {
+        result.putNull("usernameByteSize");
+      }
+      if (debugEntry.passwordByteSize != null) {
+        result.putInt("passwordByteSize", debugEntry.passwordByteSize);
+      } else {
+        result.putNull("passwordByteSize");
+      }
+
+      if (keyDebugInfo != null) {
+        result.putString("keystoreAlias", keyDebugInfo.alias);
+        result.putBoolean("hasKeystoreAlias", keyDebugInfo.hasAlias);
+        if (keyDebugInfo.keyAlgorithm != null) {
+          result.putString("keystoreKeyAlgorithm", keyDebugInfo.keyAlgorithm);
+        } else {
+          result.putNull("keystoreKeyAlgorithm");
+        }
+        if (keyDebugInfo.securityLevelName != null) {
+          result.putString("keystoreSecurityLevel", keyDebugInfo.securityLevelName);
+        } else {
+          result.putNull("keystoreSecurityLevel");
+        }
+        if (keyDebugInfo.isInsideSecureHardware != null) {
+          result.putBoolean("keystoreInsideSecureHardware", keyDebugInfo.isInsideSecureHardware);
+        } else {
+          result.putNull("keystoreInsideSecureHardware");
+        }
+        if (keyDebugInfo.isUserAuthenticationRequired != null) {
+          result.putBoolean("keystoreUserAuthenticationRequired", keyDebugInfo.isUserAuthenticationRequired);
+        } else {
+          result.putNull("keystoreUserAuthenticationRequired");
+        }
+        if (keyDebugInfo.userAuthenticationValidityDurationSeconds != null) {
+          result.putInt(
+            "keystoreUserAuthenticationValidityDurationSeconds",
+            keyDebugInfo.userAuthenticationValidityDurationSeconds
+          );
+        } else {
+          result.putNull("keystoreUserAuthenticationValidityDurationSeconds");
+        }
+        if (keyDebugInfo.userAuthenticationType != null) {
+          result.putInt("keystoreUserAuthenticationType", keyDebugInfo.userAuthenticationType);
+        } else {
+          result.putNull("keystoreUserAuthenticationType");
+        }
+        if (keyDebugInfo.blockModes != null) {
+          result.putString("keystoreBlockModes", TextUtils.join(",", keyDebugInfo.blockModes));
+        } else {
+          result.putNull("keystoreBlockModes");
+        }
+        if (keyDebugInfo.purposes != null) {
+          result.putInt("keystorePurposes", keyDebugInfo.purposes);
+        } else {
+          result.putNull("keystorePurposes");
+        }
+        if (keyDebugInfo.isCompatibleWithCurrentCipher != null) {
+          result.putBoolean("keystoreIsCompatibleWithCurrentCipher", keyDebugInfo.isCompatibleWithCurrentCipher);
+        } else {
+          result.putNull("keystoreIsCompatibleWithCurrentCipher");
+        }
+        if (keyDebugInfo.publicKeySha256 != null) {
+          result.putString("keystorePublicKeySha256", keyDebugInfo.publicKeySha256);
+        } else {
+          result.putNull("keystorePublicKeySha256");
+        }
+        if (keyDebugInfo.errorMessage != null) {
+          result.putString("keystoreDebugErrorMessage", keyDebugInfo.errorMessage);
+        } else {
+          result.putNull("keystoreDebugErrorMessage");
+        }
+      } else {
+        result.putString("keystoreAlias", service);
+        result.putBoolean("hasKeystoreAlias", false);
+        result.putNull("keystoreKeyAlgorithm");
+        result.putNull("keystoreSecurityLevel");
+        result.putNull("keystoreInsideSecureHardware");
+        result.putNull("keystoreUserAuthenticationRequired");
+        result.putNull("keystoreUserAuthenticationValidityDurationSeconds");
+        result.putNull("keystoreUserAuthenticationType");
+        result.putNull("keystoreBlockModes");
+        result.putNull("keystorePurposes");
+        result.putNull("keystoreIsCompatibleWithCurrentCipher");
+        result.putNull("keystorePublicKeySha256");
+        result.putNull("keystoreDebugErrorMessage");
+      }
+
+      promise.resolve(result);
+    } catch (Throwable fail) {
+      Log.e(KEYCHAIN_MODULE, fail.getMessage(), fail);
+      promise.reject(Errors.E_UNKNOWN_ERROR, fail);
+    }
+  }
+
+  @ReactMethod
+  public void debugRemoveCipherStorageMarkerForOptions(@Nullable final ReadableMap options,
+                                                       @NonNull final Promise promise) {
+    try {
+      final String service = getServiceOrDefault(options);
+      promise.resolve(prefsStorage.removeCipherStorageMarker(service));
+    } catch (Throwable fail) {
+      Log.e(KEYCHAIN_MODULE, fail.getMessage(), fail);
+      promise.reject(Errors.E_UNKNOWN_ERROR, fail);
+    }
+  }
+
+  @ReactMethod
+  public void getSecurityLevel(@Nullable final ReadableMap options,
+                               @NonNull final Promise promise) {
+    // DONE (olku): if forced biometry than we should return security level = HARDWARE if it supported
+    final String accessControl = getAccessControlOrDefault(options);
+    final boolean useBiometry = getUseBiometry(accessControl);
+
+    promise.resolve(getSecurityLevel(useBiometry).name());
+  }
+  //endregion
+
+  //region Helpers
+
+  /** Get service value from options. */
+  @NonNull
+  private static String getServiceOrDefault(@Nullable final ReadableMap options) {
+    String service = null;
+
+    if (null != options && options.hasKey(Maps.SERVICE)) {
+      service = options.getString(Maps.SERVICE);
+    }
+
+    return getAliasOrDefault(service);
+  }
+
+  /** Get automatic secret manipulation rules, default: No upgrade. */
+  @Rules
+  @NonNull
+  private static String getSecurityRulesOrDefault(@Nullable final ReadableMap options) {
+    return getSecurityRulesOrDefault(options, Rules.NONE);
+  }
+
+  /** Get automatic secret manipulation rules. */
+  @Rules
+  @NonNull
+  private static String getSecurityRulesOrDefault(@Nullable final ReadableMap options,
+                                                  @Rules @NonNull final String rule) {
+    String rules = null;
+
+    if (null != options && options.hasKey(Maps.RULES)) {
+      rules = options.getString(Maps.RULES);
+    }
+
+    if (null == rules) return rule;
+
+    return rules;
+  }
+
+  private static boolean getAndroidAllowAuthenticatedSessionReuseOrDefault(
+    @Nullable final ReadableMap options
+  ) {
+    if (
+      null != options &&
+      options.hasKey(Maps.ANDROID_ALLOW_AUTHENTICATED_SESSION_REUSE)
+    ) {
+      return options.getBoolean(Maps.ANDROID_ALLOW_AUTHENTICATED_SESSION_REUSE);
+    }
+
+    return false;
+  }
+
+  /** Extract user specified storage from options. */
+  @KnownCiphers
+  @Nullable
+  private static String getSpecificStorageOrDefault(@Nullable final ReadableMap options) {
+    String storageName = null;
+
+    if (null != options && options.hasKey(Maps.STORAGE)) {
+      storageName = options.getString(Maps.STORAGE);
+    }
+
+    return storageName;
+  }
+
+  /** Get access control value from options or fallback to {@link AccessControl#NONE}. */
+  @AccessControl
+  @NonNull
+  private static String getAccessControlOrDefault(@Nullable final ReadableMap options) {
+    return getAccessControlOrDefault(options, AccessControl.NONE);
+  }
+
+  /** Get access control value from options or fallback to default. */
+  @AccessControl
+  @NonNull
+  private static String getAccessControlOrDefault(@Nullable final ReadableMap options,
+                                                  @AccessControl @NonNull final String fallback) {
+    String accessControl = null;
+
+    if (null != options && options.hasKey(Maps.ACCESS_CONTROL)) {
+      accessControl = options.getString(Maps.ACCESS_CONTROL);
+    }
+
+    if (null == accessControl) return fallback;
+
+    return accessControl;
+  }
+
+  /** Get security level from options or fallback {@link SecurityLevel#ANY} value. */
+  @NonNull
+  private static SecurityLevel getSecurityLevelOrDefault(@Nullable final ReadableMap options) {
+    return getSecurityLevelOrDefault(options, SecurityLevel.ANY.name());
+  }
+
+  /** Get security level from options or fallback to default value. */
+  @NonNull
+  private static SecurityLevel getSecurityLevelOrDefault(@Nullable final ReadableMap options,
+                                                         @NonNull final String fallback) {
+    String minimalSecurityLevel = null;
+
+    if (null != options && options.hasKey(Maps.SECURITY_LEVEL)) {
+      minimalSecurityLevel = options.getString(Maps.SECURITY_LEVEL);
+    }
+
+    if (null == minimalSecurityLevel) minimalSecurityLevel = fallback;
+
+    return SecurityLevel.valueOf(minimalSecurityLevel);
+  }
+  //endregion
+
+  //region Implementation
+
+  /** Is provided access control string matching biometry use request? */
+  public static boolean getUseBiometry(@AccessControl @Nullable final String accessControl) {
+    return AccessControl.BIOMETRY_ANY.equals(accessControl)
+      || AccessControl.BIOMETRY_CURRENT_SET.equals(accessControl)
+      || AccessControl.BIOMETRY_ANY_OR_DEVICE_PASSCODE.equals(accessControl)
+      || AccessControl.BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE.equals(accessControl);
+  }
+
+  private void addCipherStorageToMap(@NonNull final CipherStorage cipherStorage) {
+    cipherStorageMap.put(cipherStorage.getCipherStorageName(), cipherStorage);
+  }
+
+  /** Extract user specified prompt info from options. */
+  @NonNull
+  private static PromptInfo getPromptInfo(@Nullable final ReadableMap options) {
+    final ReadableMap promptInfoOptionsMap = (options != null && options.hasKey(Maps.AUTH_PROMPT)) ? options.getMap(Maps.AUTH_PROMPT) : null;
+
+    final PromptInfo.Builder promptInfoBuilder = new PromptInfo.Builder();
+    if (null != promptInfoOptionsMap && promptInfoOptionsMap.hasKey(AuthPromptOptions.TITLE)) {
+      String promptInfoTitle = promptInfoOptionsMap.getString(AuthPromptOptions.TITLE);
+      promptInfoBuilder.setTitle(promptInfoTitle);
+    }
+    if (null != promptInfoOptionsMap && promptInfoOptionsMap.hasKey(AuthPromptOptions.SUBTITLE)) {
+      String promptInfoSubtitle = promptInfoOptionsMap.getString(AuthPromptOptions.SUBTITLE);
+      promptInfoBuilder.setSubtitle(promptInfoSubtitle);
+    }
+    if (null != promptInfoOptionsMap && promptInfoOptionsMap.hasKey(AuthPromptOptions.DESCRIPTION)) {
+      String promptInfoDescription = promptInfoOptionsMap.getString(AuthPromptOptions.DESCRIPTION);
+      promptInfoBuilder.setDescription(promptInfoDescription);
+    }
+    if (null != promptInfoOptionsMap && promptInfoOptionsMap.hasKey(AuthPromptOptions.CANCEL)) {
+      String promptInfoNegativeButton = promptInfoOptionsMap.getString(AuthPromptOptions.CANCEL);
+      promptInfoBuilder.setNegativeButtonText(promptInfoNegativeButton);
+    }
+
+    /* PromptInfo is only used in Biometric-enabled RSA storage and can only be unlocked by a strong biometric */
+    promptInfoBuilder.setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG);
+
+    /* Bypass confirmation to avoid KeyStore unlock timeout being exceeded when using passive biometrics */
+    promptInfoBuilder.setConfirmationRequired(false);
+
+    final PromptInfo promptInfo = promptInfoBuilder.build();
+
+    return promptInfo;
+  }
+
+  /**
+   * Extract credentials from current storage. In case if current storage is not matching
+   * results set then executed migration.
+   */
+  @NonNull
+  private DecryptionResult decryptCredentials(@NonNull final String alias,
+                                              @NonNull final CipherStorage current,
+                                              @NonNull final ResultSet resultSet,
+                                              @Rules @NonNull final String rules,
+                                              @NonNull final PromptInfo promptInfo,
+                                              final boolean allowAuthenticatedSessionReuse)
+    throws CryptoFailedException, KeyStoreAccessException {
+    final String storageName = resultSet.cipherStorageName;
+
+    // The encrypted data is encrypted using the current CipherStorage, so we just decrypt and return
+    if (storageName.equals(current.getCipherStorageName())) {
+      return decryptToResult(
+        alias,
+        current,
+        resultSet,
+        promptInfo,
+        allowAuthenticatedSessionReuse
+      );
+    }
+
+    // The encrypted data is encrypted using an older CipherStorage, so we need to decrypt the data first,
+    // then encrypt it using the current CipherStorage, then store it again and return
+    final CipherStorage oldStorage = getCipherStorageByName(storageName);
+    if (null == oldStorage) {
+      throw new KeyStoreAccessException("Wrong cipher storage name '" + storageName + "' or cipher not available");
+    }
+
+    // decrypt using the older cipher storage
+    final DecryptionResult decryptionResult = decryptToResult(
+      alias,
+      oldStorage,
+      resultSet,
+      promptInfo,
+      allowAuthenticatedSessionReuse
+    );
+
+    if (Rules.AUTOMATIC_UPGRADE.equals(rules)) {
+      try {
+        // encrypt using the current cipher storage
+        migrateCipherStorage(alias, current, oldStorage, decryptionResult);
+      } catch (CryptoFailedException e) {
+        Log.w(KEYCHAIN_MODULE, "Migrating to a less safe storage is not allowed. Keeping the old one");
+      }
+    }
+
+    return decryptionResult;
+  }
+
+  /** Try to decrypt with provided storage. */
+  @NonNull
+  private DecryptionResult decryptToResult(@NonNull final String alias,
+                                           @NonNull final CipherStorage storage,
+                                           @NonNull final ResultSet resultSet,
+                                           @NonNull final PromptInfo promptInfo,
+                                           final boolean allowAuthenticatedSessionReuse)
+  throws CryptoFailedException {
+    final DecryptionResultHandler handler = getInteractiveHandler(storage, promptInfo);
+    storage.decryptWithPromptPolicy(
+      handler,
+      alias,
+      resultSet.username,
+      resultSet.password,
+      SecurityLevel.ANY,
+      allowAuthenticatedSessionReuse
+    );
+
+    CryptoFailedException.reThrowOnError(handler.getError());
+
+    if (null == handler.getResult()) {
+      throw new CryptoFailedException("No decryption results and no error. Something deeply wrong!");
+    }
+
+    return handler.getResult();
+  }
+
+  /** Get instance of handler that resolves access to the keystore on system request. */
+  @NonNull
+  protected DecryptionResultHandler getInteractiveHandler(@NonNull final CipherStorage current, @NonNull final PromptInfo promptInfo) {
+    ReactApplicationContext reactContext = getReactApplicationContext();
+
+    return DecryptionResultHandlerProvider.getHandler(reactContext, current, promptInfo);
+  }
+
+  /** Remove key from old storage and add it to the new storage. */
+  /* package */ void migrateCipherStorage(@NonNull final String service,
+                                          @NonNull final CipherStorage newCipherStorage,
+                                          @NonNull final CipherStorage oldCipherStorage,
+                                          @NonNull final DecryptionResult decryptionResult)
+    throws KeyStoreAccessException, CryptoFailedException {
+
+    // don't allow to degrade security level when transferring, the new
+    // storage should be as safe as the old one.
+    final EncryptionResult encryptionResult = newCipherStorage.encrypt(
+      service, decryptionResult.username, decryptionResult.password,
+      decryptionResult.getSecurityLevel(), null);
+
+    // store the encryption result
+    prefsStorage.storeEncryptedEntry(service, encryptionResult);
+
+    // clean up the old cipher storage
+    oldCipherStorage.removeKey(service);
+  }
+
+  /**
+   * The "Current" CipherStorage is the cipherStorage with the highest API level that is
+   * lower than or equal to the current API level
+   */
+  @NonNull
+  /* package */ CipherStorage getCipherStorageForCurrentAPILevel() throws CryptoFailedException {
+    return getCipherStorageForCurrentAPILevel(true);
+  }
+
+  /**
+   * The "Current" CipherStorage is the cipherStorage with the highest API level that is
+   * lower than or equal to the current API level. Parameter allow to reduce level.
+   */
+  @NonNull
+  /* package */ CipherStorage getCipherStorageForCurrentAPILevel(final boolean useBiometry)
+    throws CryptoFailedException {
+    final int currentApiLevel = Build.VERSION.SDK_INT;
+    final boolean isBiometry = useBiometry && (isFingerprintAuthAvailable() || isFaceAuthAvailable() || isIrisAuthAvailable());
+    CipherStorage foundCipher = null;
+
+    for (CipherStorage variant : cipherStorageMap.values()) {
+      Log.d(KEYCHAIN_MODULE, "Probe cipher storage: " + variant.getClass().getSimpleName());
+
+      // Is the cipherStorage supported on the current API level?
+      final int minApiLevel = variant.getMinSupportedApiLevel();
+      final int capabilityLevel = variant.getCapabilityLevel();
+      final boolean isSupportedApi = (minApiLevel <= currentApiLevel);
+
+      // API not supported
+      if (!isSupportedApi) continue;
+
+      // Is the API level better than the one we previously selected (if any)?
+      if (foundCipher != null && capabilityLevel < foundCipher.getCapabilityLevel()) continue;
+
+      // if biometric supported but not configured properly than skip
+      if (variant.isBiometrySupported() && !isBiometry) continue;
+
+      // remember storage with the best capabilities
+      foundCipher = variant;
+    }
+
+    if (foundCipher == null) {
+      throw new CryptoFailedException("Unsupported Android SDK " + Build.VERSION.SDK_INT);
+    }
+
+    Log.d(KEYCHAIN_MODULE, "Selected storage: " + foundCipher.getClass().getSimpleName());
+
+    return foundCipher;
+  }
+
+  /** Throw exception in case of empty credentials providing. */
+  public static void throwIfEmptyLoginPassword(@Nullable final String username,
+                                               @Nullable final String password)
+    throws EmptyParameterException {
+    if (TextUtils.isEmpty(username) || TextUtils.isEmpty(password)) {
+      throw new EmptyParameterException("you passed empty or null username/password");
+    }
+  }
+
+  /** Throw exception if required security level does not match storage provided security level. */
+  public static void throwIfInsufficientLevel(@NonNull final CipherStorage storage,
+                                              @NonNull final SecurityLevel level)
+    throws CryptoFailedException {
+    if (storage.securityLevel().satisfiesSafetyThreshold(level)) {
+      return;
+    }
+
+    throw new CryptoFailedException(
+      String.format(
+        "Cipher Storage is too weak. Required security level is: %s, but only %s is provided",
+        level.name(),
+        storage.securityLevel().name()));
+  }
+
+  /** Extract cipher by it unique name. {@link CipherStorage#getCipherStorageName()}. */
+  @Nullable
+  /* package */ CipherStorage getCipherStorageByName(@KnownCiphers @NonNull final String knownName) {
+    return cipherStorageMap.get(knownName);
+  }
+
+  /** True - if fingerprint hardware available and configured, otherwise false. */
+  /* package */ boolean isFingerprintAuthAvailable() {
+    return DeviceAvailability.isStrongBiometricAuthAvailable(getReactApplicationContext()) && DeviceAvailability.isFingerprintAuthAvailable(getReactApplicationContext());
+  }
+
+  /** True - if face recognition hardware available and configured, otherwise false. */
+  /* package */ boolean isFaceAuthAvailable() {
+    return DeviceAvailability.isStrongBiometricAuthAvailable(getReactApplicationContext()) && DeviceAvailability.isFaceAuthAvailable(getReactApplicationContext());
+  }
+
+  /** True - if iris recognition hardware available and configured, otherwise false. */
+  /* package */ boolean isIrisAuthAvailable() {
+    return DeviceAvailability.isStrongBiometricAuthAvailable(getReactApplicationContext()) && DeviceAvailability.isIrisAuthAvailable(getReactApplicationContext());
+  }
+
+  /** Is secured hardware a part of current storage or not. */
+  /* package */ boolean isSecureHardwareAvailable() {
+    try {
+      return getCipherStorageForCurrentAPILevel().supportsSecureHardware();
+    } catch (CryptoFailedException e) {
+      return false;
+    }
+  }
+
+  /** Resolve storage to security level it provides. */
+  @NonNull
+  private SecurityLevel getSecurityLevel(final boolean useBiometry) {
+    try {
+      final CipherStorage storage = getCipherStorageForCurrentAPILevel(useBiometry);
+
+      if (!storage.securityLevel().satisfiesSafetyThreshold(SecurityLevel.SECURE_SOFTWARE)) {
+        return SecurityLevel.ANY;
+      }
+
+      if (storage.supportsSecureHardware()) {
+        return SecurityLevel.SECURE_HARDWARE;
+      }
+
+      return SecurityLevel.SECURE_SOFTWARE;
+    } catch (CryptoFailedException e) {
+      Log.w(KEYCHAIN_MODULE, "Security Level Exception: " + e.getMessage(), e);
+
+      return SecurityLevel.ANY;
+    }
+  }
+
+  @NonNull
+  private static String getAliasOrDefault(@Nullable final String service) {
+    return service == null ? EMPTY_STRING : service;
+  }
+  //endregion
+}

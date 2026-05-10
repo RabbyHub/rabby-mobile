@@ -108,7 +108,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
                 ]}
                 numberOfLines={1}
                 ellipsizeMode="tail">
-                {title || ellipsisOverflowedText(getTokenSymbol(token), 15)}
+                {title || getTokenSymbol(token)}
               </Text>
               {isLpToken(token) && (
                 <View style={styles.lpTokenIconContainer}>
@@ -139,7 +139,7 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     width: screenWidth - 140,
   },
   container: {
-    width: screenWidth - 140,
+    width: screenWidth - 100,
     marginLeft: 0,
     display: 'flex',
     flexDirection: 'column',
@@ -159,6 +159,7 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   tokenSymbol: {
     flexShrink: 1,
+    minWidth: 0,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
@@ -203,12 +204,14 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   middleContainer: {
     flexShrink: 1,
+    flex: 1,
     minWidth: 0,
   },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flex: 1,
   },
   copy: {
     width: 12,

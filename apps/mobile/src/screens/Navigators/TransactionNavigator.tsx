@@ -21,6 +21,7 @@ import Swap from '../Swap';
 import ApprovalsScreen from '../Approvals';
 import ReceiveScreen from '../Receive/Receive';
 import { Bridge } from '../Bridge';
+import { ConvertDustScreen } from '../ConvertDust';
 import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import MultiAddressHistory from '../Transaction/MultiAddressHistory';
@@ -30,6 +31,7 @@ import { useTranslation } from 'react-i18next';
 import { PerpsOriginScreen } from '../Perps/index';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
 import { PerpsHistoryScreen } from '../PerpsHistory';
+import { PerpsSearchScreen } from '../PerpsSearch';
 import LendingHistory from '../Lending/components/LendingHistory';
 import LendingScreen from '../Lending';
 import PredictionScreen from '../Prediction';
@@ -38,6 +40,19 @@ import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
+
+function ConvertDustHeaderTitle(ctx: {
+  children: string;
+  disableSwitch?: boolean;
+}) {
+  return (
+    <ScreenHeaderAccountSwitcher
+      forScene="MakeTransactionAbout"
+      titleText={ctx.children}
+      disableSwitch={ctx.disableSwitch}
+    />
+  );
+}
 
 export default function TransactionNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
@@ -192,7 +207,7 @@ export default function TransactionNavigator() {
           headerStyle: {
             backgroundColor: !isLight
               ? colors2024?.['neutral-bg-1']
-              : colors2024?.['neutral-bg-2'],
+              : colors2024?.['neutral-bg-0'],
           },
         })}
       />
@@ -211,7 +226,7 @@ export default function TransactionNavigator() {
           headerStyle: {
             backgroundColor: !isLight
               ? colors2024?.['neutral-bg-1']
-              : colors2024?.['neutral-bg-2'],
+              : colors2024?.['neutral-bg-0'],
           },
         })}
       />
@@ -321,6 +336,23 @@ export default function TransactionNavigator() {
       />
 
       <TransactionStack.Screen
+        name={RootNames.ConvertDust}
+        component={ConvertDustScreen}
+        options={({ route }) =>
+          mergeScreenOptions2024([
+            {
+              title: 'Convert Dust',
+              headerTitle: ctx =>
+                ConvertDustHeaderTitle({
+                  ...ctx,
+                  disableSwitch: !!route.params?.disableAccountSwitch,
+                }),
+            },
+          ])
+        }
+      />
+
+      <TransactionStack.Screen
         name={RootNames.GasAccount}
         component={GasAccountScreen}
         options={mergeScreenOptions({
@@ -387,6 +419,17 @@ export default function TransactionNavigator() {
             fontFamily: 'SF Pro Rounded',
             color: colors['neutral-title-1'],
           },
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
+        })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.PerpsSearch}
+        component={PerpsSearchScreen}
+        options={mergeScreenOptions({
+          headerShown: false,
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
           },

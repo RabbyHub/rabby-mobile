@@ -32,44 +32,19 @@ import createPersistStore, {
 import { updateChainStore } from '@/constant/chains';
 import { appStorage } from '../storage/mmkv';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
-import { matomoRequestEvent } from '@/utils/analytics';
+import type {
+  CustomTestnetToken,
+  CustomTestnetTokenBase,
+  TestnetChain,
+  TestnetChainBase,
+} from '@/types/customTestnet';
 
-export interface TestnetChainBase {
-  id: number;
-  name: string;
-  nativeTokenSymbol: string;
-  rpcUrl: string;
-  scanLink?: string;
-}
-
-export interface TestnetChain extends TestnetChainBase {
-  nativeTokenAddress: string;
-  hex: string;
-  network: string;
-  enum: CHAINS_ENUM;
-  serverId: string;
-  nativeTokenLogo: string;
-  eip: Record<string, any>;
-  nativeTokenDecimals: number;
-  scanLink: string;
-  isTestnet?: boolean;
-  logo: string;
-  whiteLogo?: string;
-  needEstimateGas?: boolean;
-  severity: number;
-}
-
-export interface CustomTestnetTokenBase {
-  id: string;
-  chainId: number;
-  symbol: string;
-  decimals: number;
-}
-
-export interface CustomTestnetToken extends CustomTestnetTokenBase {
-  amount: number;
-  rawAmount: string;
-}
+export type {
+  CustomTestnetToken,
+  CustomTestnetTokenBase,
+  TestnetChain,
+  TestnetChainBase,
+} from '@/types/customTestnet';
 
 export type CutsomTestnetServiceStore = {
   customTestnet: Record<string, TestnetChain>;
@@ -82,6 +57,15 @@ let idCounter = Math.floor(Math.random() * MAX);
 function getUniqueId(): number {
   idCounter = (idCounter + 1) % MAX;
   return idCounter;
+}
+
+async function reportCustomNetworkStatus(value: number) {
+  const { matomoRequestEvent } = await import('@/utils/analytics');
+  matomoRequestEvent({
+    category: 'Custom Network',
+    action: 'Custom Network Status',
+    value,
+  });
 }
 
 export class CustomTestnetService {
@@ -188,11 +172,7 @@ export class CustomTestnetService {
     this.syncChainList();
 
     if (this.getList().length) {
-      matomoRequestEvent({
-        category: 'Custom Network',
-        action: 'Custom Network Status',
-        value: this.getList().length,
-      });
+      reportCustomNetworkStatus(this.getList().length);
     }
     return this.store.customTestnet[chain.id];
   };
@@ -205,11 +185,7 @@ export class CustomTestnetService {
     delete this.chains[chainId];
     this.syncChainList();
     if (this.getList().length) {
-      matomoRequestEvent({
-        category: 'Custom Network',
-        action: 'Custom Network Status',
-        value: this.getList().length,
-      });
+      reportCustomNetworkStatus(this.getList().length);
     }
   };
 

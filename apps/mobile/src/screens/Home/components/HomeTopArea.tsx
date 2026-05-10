@@ -6,9 +6,7 @@ import { View } from 'react-native';
 import { HomeTopChart } from './HomeTopChart';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { CenterBg } from './BgComponents';
-import useCurrentBalance, {
-  apisAddressBalance,
-} from '@/hooks/useCurrentBalance';
+import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import {
   useHomeReachTop,
   useSingleHomeAddress,
@@ -33,13 +31,15 @@ export const HomeTopArea = () => {
 
   return (
     <View style={[styles.container]}>
-      {reachTop ? null : <CenterBg />}
+      {reachTop ? <CenterBg /> : null}
       <GlobalWarning
         hasError={isDisConnect}
         description={t('component.globalWarning.networkError.globalDesc')}
         style={styles.globalWarning}
         onRefresh={() => {
-          if (!currentAddress) return;
+          if (!currentAddress) {
+            return;
+          }
           apisAddressBalance.triggerUpdate({
             address: currentAddress,
             force: true,

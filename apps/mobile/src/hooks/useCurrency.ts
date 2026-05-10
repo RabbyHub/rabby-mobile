@@ -3,7 +3,7 @@ import { CurrencyServiceStore } from '@/core/services/currencyService';
 import { currencyService } from '@/core/services/shared';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import { formatCurrency } from '@/utils/number';
+import { formatCurrencyValueParts } from '@/utils/currency';
 import { useMemoizedFn } from 'ahooks';
 import { useCallback, useMemo } from 'react';
 
@@ -60,10 +60,7 @@ export function useCurrency() {
 
   const formatCurrentCurrency = useCallback(
     (value: string | number) => {
-      return formatCurrency(value, {
-        // currency
-        currency: currency,
-      });
+      return formatCurrencyValueParts(value, { currency }).text;
     },
     [currency],
   );

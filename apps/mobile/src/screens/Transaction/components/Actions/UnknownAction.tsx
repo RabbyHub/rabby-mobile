@@ -21,7 +21,8 @@ import { openTxExternalUrl } from '@/utils/transaction';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
-import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
+import { AddressItemInDetail } from '../../HistoryDetailScreen';
+import { TxStatusItem } from '../TxStatusItem';
 import { BalanceChange } from './components/BalanceChange';
 import { Account } from '@/core/services/preference';
 import { Text } from '@/components/Typography';
@@ -239,29 +240,27 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   singleBox: {
     width: '100%',
-    height: 92,
     backgroundColor: colors2024['neutral-bg-1'],
     justifyContent: 'space-between',
     alignContent: 'center',
     borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 16,
+    padding: 16,
     flexDirection: 'row',
   },
   tokenAmountText: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '700',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '900',
   },
   usdValue: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '500',
-    marginTop: 4,
+    marginTop: 2,
   },
   mutliBox: {
     width: '100%',

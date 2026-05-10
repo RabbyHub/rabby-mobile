@@ -14,7 +14,6 @@ import AddAddressIcon from '@/assets2024/icons/common/add-address.svg';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import IcRightArrow from '@/assets2024/icons/common/IcRightArrow.svg';
 import { useCallback, useMemo, useState } from 'react';
-import { useCurrency } from '@/hooks/useCurrency';
 import BigNumber from 'bignumber.js';
 import { splitNumberByStep } from '@/utils/number';
 import { Text } from '@/components/Typography';
@@ -33,20 +32,18 @@ export const SeedPhraseGroup: React.FC<Props> = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const { currency } = useCurrency();
 
   const allAddrBalance = (data?.list || []).reduce((pre, now) => {
     return pre.plus(now.balance);
   }, new BigNumber(0));
 
   const totalValue = useMemo(() => {
-    const b = allAddrBalance.times(currency.usd_rate);
-    return `${currency.symbol}${splitNumberByStep(
-      b.isGreaterThan(10)
-        ? b.decimalPlaces(0, BigNumber.ROUND_FLOOR).toString()
-        : b.toFixed(2),
+    return `$${splitNumberByStep(
+      allAddrBalance.isGreaterThan(10)
+        ? allAddrBalance.decimalPlaces(0, BigNumber.ROUND_FLOOR).toString()
+        : allAddrBalance.toFixed(2),
     )}`;
-  }, [allAddrBalance, currency.symbol, currency.usd_rate]);
+  }, [allAddrBalance]);
 
   const [isFold, setFold] = useState(false);
 

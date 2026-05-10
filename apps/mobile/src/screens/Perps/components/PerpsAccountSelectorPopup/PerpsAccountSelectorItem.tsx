@@ -222,6 +222,8 @@ const getStyle = createGetStyles2024(ctx => {
       color: colors2024['neutral-foot'],
       fontFamily: 'SF Pro Rounded',
       flexShrink: 1,
+      flex: 1,
+      minWidth: 0,
     },
     walletIcon: {},
     centerInfo: {

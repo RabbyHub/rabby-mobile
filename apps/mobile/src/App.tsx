@@ -39,7 +39,8 @@ import {
 import { isEqual } from 'lodash';
 import { svsLayout } from './hooks/useAppLayout';
 import { openapi } from './core/request';
-import { IS_ROZENITE_ENABLED } from './constant/env';
+import { DEFAULT_RABBY_MOBILE_CODE, IS_ROZENITE_ENABLED } from './constant/env';
+import { startSetupAppBeforeRenderDeferred } from './setup-app-before-render';
 
 Safe.openapiService = openapi;
 
@@ -65,7 +66,6 @@ const RozeniteDevTools = IS_ROZENITE_ENABLED
 
 const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   useInitializeAppOnTop();
-
   useSetupServiceStub();
   useUniversalLinkOnTop();
   useIAPListener();
@@ -75,7 +75,29 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
 
   const { couldRender } = useAppCouldRender();
 
-  const safeAreaInsets = useSafeAreaInsets();
+  React.useEffect(() => {
+    if (!couldRender) {
+      return;
+    }
+
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const frameId = requestAnimationFrame(() => {
+      timeoutId = setTimeout(() => {
+        startSetupAppBeforeRenderDeferred('main_screen_could_render').catch(
+          error => {
+            console.error('startSetupAppBeforeRenderDeferred::error', error);
+          },
+        );
+      }, 120);
+    });
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [couldRender]);
 
   return (
     <AppProvider
@@ -83,7 +105,7 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
       <RerenderDetector name="UnderAppProvider" />
       <BottomSheetModalProvider>
         <ScreenSceneAccountProvider>
-          {couldRender && <MemoziedAppNav />}
+          {couldRender ? <MemoziedAppNav /> : null}
         </ScreenSceneAccountProvider>
       </BottomSheetModalProvider>
     </AppProvider>
@@ -95,7 +117,9 @@ function SizeWatcher() {
 
   useEffect(() => {
     const prevInsets = svsLayout.insets.value;
-    if (isEqual(prevInsets, insets)) return;
+    if (isEqual(prevInsets, insets)) {
+      return;
+    }
     svsLayout.insets.value = insets;
   }, [insets]);
 
@@ -103,7 +127,7 @@ function SizeWatcher() {
 }
 
 function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
-  const rabbitCode = __DEV__ ? 'RABBY_MOBILE_CODE_DEV' : propRabbitCode;
+  const rabbitCode = __DEV__ ? DEFAULT_RABBY_MOBILE_CODE : propRabbitCode || '';
   useBootstrapApp({ rabbitCode });
 
   return (

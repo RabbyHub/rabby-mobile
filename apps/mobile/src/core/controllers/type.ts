@@ -1,4 +1,4 @@
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 
 export type MobileContext = {
   fromTabId?: string;

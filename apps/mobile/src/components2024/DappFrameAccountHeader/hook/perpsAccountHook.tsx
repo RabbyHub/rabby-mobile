@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 
-import { INNER_DAPP_LIST } from '@/components2024/DappFrameAccountHeader';
+import { INNER_DAPP_LIST } from '../constants';
 import { Account } from '@/core/services/preference';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useTranslation } from 'react-i18next';

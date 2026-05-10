@@ -941,7 +941,8 @@
         "predict": "Prédire",
         "meme": "Memecoin",
         "market": "Marché",
-        "gasDeposit": "Dépôt de Gas"
+        "gasDeposit": "Dépôt de Gas",
+        "convertDust": "Convertir la poussière"
       },
       "swipeUp": {
         "descAndroid": "Cliquez pour explorer les dApps",
@@ -953,7 +954,13 @@
         "favorite": "Favori",
         "search": "Recherche",
         "empty": "Aucun site web ajouté aux favoris",
-        "emptyAndroid": "Aucun dApp ajouté aux favoris"
+        "emptyAndroid": "Aucun dApp ajouté aux favoris",
+        "tabs": {
+          "all": "Tout",
+          "perps": "Perps",
+          "predict": "Prédiction"
+        },
+        "websites": "Sites web"
       },
       "depositAssets": {
         "title": "Déposer des actifs",
@@ -1865,11 +1872,11 @@
       },
       "depositNow": "Déposez maintenant",
       "switchAccount": "Changer de portefeuille",
-      "depositWith": "Dépôt avec",
       "depositFailed": "Le dépôt a échoué",
       "gasBalance": "Solde de Gaz",
       "lowBalance": "Vous n'avez pas assez de gas. Déposez du gas pour garantir que vos futures transactions se déroulent sans problème.",
-      "depositSubmitted": "Dépôt soumis"
+      "depositSubmitted": "Dépôt soumis",
+      "depositWith": "Déposer via"
     },
     "tokenDetail": {
       "relateDefi": "Lié au DeFi",
@@ -1996,7 +2003,8 @@
       "price": "Prix",
       "headerTokenValueText": "Valeur du jeton",
       "headerBalanceText": "Solde",
-      "copyCA": "Adresse du contrat de jeton copiée"
+      "copyCA": "Adresse du contrat de jeton copiée",
+      "wallet": "Portefeuille"
     },
     "rabbyPoints": {
       "earn-points": "Gagnez des Points",
@@ -2310,6 +2318,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "Plus"
+      },
+      "DappInfoPopup": {
+        "listedBy": "Listé par",
+        "sitePopularity": "Popularité du site",
+        "popularLevelHigh": "Élevé",
+        "popularLevelMedium": "Moyen",
+        "popularLevelLow": "Faible",
+        "popularLevelVeryLow": "Très faible",
+        "category": "Catégorie",
+        "skipDappInfoNextTime": "Ne plus afficher cette page",
+        "openDapp": "Ouvrir"
       }
     },
     "browserManage": {
@@ -2480,7 +2499,10 @@
         "hypeFeeTip": "Frais : ~${{fee}}",
         "selectWithdrawToken": "Sélectionner un token",
         "hypeActivationFeeTooltip": "Un frais d'activation unique de {{fee}} sera facturé par Hyperliquid pour le premier retrait HyperEVM.",
-        "hypeGasFeeTooltip": "Des frais d'environ ~0,00002 HYPE seront facturés pour retirer vers l'EVM."
+        "hypeGasFeeTooltip": "Des frais d'environ ~0,00002 HYPE seront facturés pour retirer vers l'EVM.",
+        "chain": "Chaîne",
+        "max": "Max",
+        "selectChain": "Sélectionner la chaîne"
       },
       "PerpsWithdrawFeePopup": {
         "title": "Frais",
@@ -2513,7 +2535,10 @@
         "feeTitle": "Frais",
         "feeHyperliquid": "Hyperliquid",
         "feeRabby": "Rabby Wallet",
-        "feeDesc": "Lorsque les utilisateurs effectuent des transactions, des <1>frais de trading</1> et des <2>frais de constructeur</2> s'appliquent."
+        "feeDesc": "Lorsque les utilisateurs effectuent des transactions, des <1>frais de trading</1> et des <2>frais de constructeur</2> s'appliquent.",
+        "amount": "Montant",
+        "asset": "Actif",
+        "action": "Action"
       },
       "PerpsAutoCloseModal": {
         "profit": "Profit",
@@ -2553,7 +2578,17 @@
         "deposit": "Dépôt",
         "closeShortSl": "Fermer Short Stop Loss",
         "openShort": "Ouvrir une position courte",
-        "closeShortLiquidation": "Fermer une position de vente à découvert liquidation"
+        "closeShortLiquidation": "Fermer une position de vente à découvert liquidation",
+        "transferToSpot": "Transférer vers Spot",
+        "transferToPerps": "Transférer vers Perps",
+        "transferDetailTitle": "Transférer",
+        "transferActionToSpot": "Transférer (de Perps vers Spot)",
+        "transferActionToPerps": "Transférer (de Spot vers Perps)",
+        "transferGotIt": "J'ai compris",
+        "action": "Action",
+        "asset": "Actif",
+        "value": "Valeur",
+        "date": "Date"
       },
       "PerpsSelectTokenPopup": {
         "title": "Sélectionner le jeton à déposer",
@@ -2568,7 +2603,8 @@
       },
       "PerpsDepositCard": {
         "availableToTrade": "Disponible à trader :",
-        "deposit": "Dépôt"
+        "deposit": "Dépôt",
+        "swap": "Échanger"
       },
       "PerpsAccountSelectorPopup": {
         "notActivatedAddress": "Non activé",
@@ -2581,6 +2617,10 @@
       "selectAccountTitle": "Sélectionnez un portefeuille pour vous connecter",
       "more": "Plus",
       "explorePerps": "Explorer les Perps",
+      "categories": {
+        "favorite": "Favori",
+        "topVolume": "Volume Principal"
+      },
       "positions": "Positions",
       "deleteAgentSuccess": "Agent supprimé avec succès",
       "regionNotSupport": "L'ouverture de positions n'est pas prise en charge dans votre région.",
@@ -2626,6 +2666,42 @@
       },
       "dappSelect": {
         "title": "Sélectionner le fournisseur de Perps"
+      },
+      "search": {
+        "headerTitle": "Rechercher sur Perps",
+        "placeholder": "Rechercher sur Perps",
+        "empty": "Aucun résultat trouvé"
+      },
+      "EnableUnifiedAccount": {
+        "title": "Activer le compte unifié",
+        "desc": "Le compte unifié est le mode de compte recommandé qui simplifie l'expérience de trading. Les soldes Spot et Perps sont fusionnés pour tous les tokens, et la marge croisée est prise en charge sur tous les actifs disponibles.",
+        "confirm": "Confirmer",
+        "cancel": "Annuler",
+        "importantTips": "Toute la garantie USDC sera utilisée comme marge croisée une fois le compte unifié activé.",
+        "important": "Important"
+      },
+      "PerpsSpotSwap": {
+        "title": "Échanger des Stablecoins",
+        "from": "De",
+        "to": "Échanger en",
+        "balance": "Solde",
+        "swapBtn": "Échanger",
+        "max": "Max",
+        "estReceive": "Réception estimée : {{amount}} {{coin}}",
+        "estReceiveTooltip": "Le montant estimé de réception est soumis aux fluctuations du prix du marché.",
+        "toSwapEntry": "Pour échanger→",
+        "toDepositEntry": "Pour déposer→",
+        "insufficientBalance": "Solde insuffisant",
+        "invalidAmount": "Veuillez saisir un montant valide",
+        "minimumAmount": "Le montant minimum d'échange est {{amount}}"
+      },
+      "PerpMarginModePopup": {
+        "crossRequiresUnified": "La marge croisée pour cette paire de trading nécessite un compte unifié. Voulez-vous l'activer ?"
+      },
+      "PerpsMultiBalance": {
+        "title": "Soldes Hyperliquid",
+        "deposit": "Dépôt",
+        "withdraw": "Retrait"
       }
     },
     "perpsDetail": {
@@ -2796,6 +2872,9 @@
       },
       "guideEntry": {
         "gotIt": "Compris"
+      },
+      "PerpsAbout": {
+        "title": "À propos"
       }
     },
     "devUIBuiltInPages": {
@@ -2886,7 +2965,8 @@
         "amount": "Montant",
         "remainingDebt": "Dette restante",
         "liquidationAt": "Liquidation à < 1.0",
-        "title": "Aperçu de la transaction"
+        "title": "Aperçu de la transaction",
+        "toSwap": "Échanger"
       },
       "borrowOverview": {
         "myBorrow": "Mon Emprunt",
@@ -3070,7 +3150,9 @@
         "collateralNotEnough": "Votre solde de collatéral est inférieur au montant sélectionné.",
         "action": {
           "title": "Remboursez avec {{collateral}}"
-        }
+        },
+        "insufficientLiquidity": "Liquidité insuffisante.",
+        "frozenCollateral": "Cet actif est gelé en raison d'une décision de la communauté Aave."
       },
       "repayWithAToken": {
         "header": {
@@ -3082,6 +3164,9 @@
       },
       "dappSelect": {
         "title": "Sélectionner le Fournisseur de Prêts"
+      },
+      "signFallback": {
+        "preExecFailedUseFullSign": "Échec de la simulation. Cette transaction est très susceptible d'échouer en raison d'erreurs AAVE."
       }
     },
     "address": {
@@ -3148,6 +3233,63 @@
       "walletReady": "Votre portefeuille est prêt 🚀",
       "setPasswordTip": "Définissez un mot de passe pour sécuriser votre wallet",
       "createWalletError": "Échec de la création du wallet"
+    },
+    "convertDust": {
+      "failReason": {
+        "missingRequiredParams": "Paramètres requis manquants",
+        "quoteUnavailable": "Échec de la récupération du devis",
+        "gasCostTooHigh": "Dépasse la limite de frais de gaz",
+        "priceImpactTooHigh": "Impact élevé sur le prix",
+        "buildSwapTxsFailed": "Échec de la construction des txs d'échange",
+        "sendSwapTxFailed": "Échec de l'envoi de la tx d'échange",
+        "transactionFailed": "Transaction échouée",
+        "submitFailed": "Échec de la soumission des transactions",
+        "gasNotEnough": "Gaz insuffisant"
+      },
+      "status": {
+        "pending": "Échange en cours",
+        "idle": "En attente d'échange",
+        "success": "Échange réussi"
+      },
+      "receiveSummary": {
+        "progress": "Progression de la conversion",
+        "priceImpact": "Plafond d'impact sur le prix",
+        "gasLimit": "Limite de Gas pour transaction unique",
+        "estimateReceive": "Est.Réception:",
+        "actualReceive": "Recevoir"
+      },
+      "completed": {
+        "title": "Poussière convertie !",
+        "receive": "Reçu :",
+        "failedTitle": "Conversion terminée",
+        "viewMoreDetail": "Voir plus de détails",
+        "fold": "Réduire"
+      },
+      "entryGuide": {
+        "title": "Vous pouvez trouver Convert Dust \n👇 ici sur la page d'accueil",
+        "button": "Compris"
+      },
+      "stopSheet": {
+        "title": "Arrêter les swaps en cours ?",
+        "desc": "Si vous arrêtez maintenant, les swaps restants ne seront pas terminés. Veuillez noter que les swaps terminés ne peuvent pas être annulés.",
+        "continue": "Continuer",
+        "stop": "Arrêter le swap"
+      },
+      "homeBanner": {
+        "title": "Convertir la poussière",
+        "description": "Prend en charge la conversion des petits soldes en token natif"
+      },
+      "colValueAmount": "Valeur/Montant",
+      "colToken": "Jeton",
+      "colStatusToken": "Statut/Jeton",
+      "emptyText": "Aucun jeton de faible valeur trouvé",
+      "unsupportedAccountType": "Ce type de compte n'est pas pris en charge.",
+      "unsupportedAccount": "Actuellement, seules les adresses de clé privée et de phrase de récupération sont prises en charge.",
+      "bottomBar": {
+        "stop": "Arrêter",
+        "continue": "Continuer",
+        "start": "Démarrer la conversion"
+      }
     }
   },
   "native": {
@@ -3545,7 +3687,9 @@
     },
     "Created": "Créé",
     "Imported": "Importé",
-    "SavedSeedPhrase": "J'ai enregistré la seed phrase."
+    "SavedSeedPhrase": "J'ai enregistré la seed phrase.",
+    "from": "De",
+    "to": "À"
   },
   "background": {
     "transactionWatcher": {

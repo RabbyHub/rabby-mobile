@@ -91,7 +91,9 @@ export const EndBg = () => {
   const { reachTop } = useHomeReachTop();
   const { isDecrease } = useSingleHomeIsDecrease();
 
-  if (!reachTop) return null;
+  if (!reachTop) {
+    return null;
+  }
 
   return (
     <ImageBackground

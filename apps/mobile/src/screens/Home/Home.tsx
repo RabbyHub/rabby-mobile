@@ -61,6 +61,7 @@ const getHomeHeaderStyle = createGetStyles2024(({ safeAreaInsets }) => ({
     justifyContent: 'flex-start',
     width: '100%',
     flexShrink: 1,
+    marginRight: 20,
   },
 
   containerRight: {
@@ -86,7 +87,7 @@ function SingleAddressHome(): JSX.Element {
 
   const handleReachTopStatusChange = React.useCallback(
     (status: boolean) => {
-      apisSingleHome.setReachTop(!status);
+      apisSingleHome.setReachTop(status);
       Animated.timing(fadeAnim, {
         toValue: status ? 1 : 0,
         duration: 100,

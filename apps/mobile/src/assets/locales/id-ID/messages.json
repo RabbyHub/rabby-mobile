@@ -1061,7 +1061,8 @@
         "predict": "Prediksi",
         "meme": "Memecoin",
         "market": "Pasar",
-        "gasDeposit": "Setoran Gas"
+        "gasDeposit": "Setoran Gas",
+        "convertDust": "Konversi Dust"
       },
       "swipeUp": {
         "descMore": "Geser ke atas untuk menjelajahi lebih banyak situs web",
@@ -1073,7 +1074,13 @@
         "empty": "Tidak ada situs web yang ditambahkan ke favorit",
         "emptyAndroid": "Tidak ada dApp yang ditambahkan ke favorit",
         "search": "Cari",
-        "favorite": "Favorit"
+        "favorite": "Favorit",
+        "tabs": {
+          "all": "Semua",
+          "perps": "Perps",
+          "predict": "Predict"
+        },
+        "websites": "Situs web"
       },
       "depositAssets": {
         "subtitle": "Terima aset ke dompet ini",
@@ -1930,13 +1937,13 @@
         "title": "Bayar Biaya Gas di Semua chain",
         "subtitle": "saat kehabisan gas"
       },
-      "depositWith": "Setor dengan",
       "gasBalance": "Saldo Gas",
       "depositFailed": "Setoran gagal",
       "lowBalance": "Anda tidak memiliki cukup gas. Deposit gas untuk memastikan transaksi di masa mendatang berjalan lancar.",
       "switchAccount": "Ganti Dompet",
       "depositNow": "Deposit Sekarang",
-      "depositSubmitted": "Setoran Terkirim"
+      "depositSubmitted": "Setoran Terkirim",
+      "depositWith": "Setor melalui"
     },
     "tokenDetail": {
       "action": {
@@ -2063,7 +2070,8 @@
       "headerBalanceText": "Saldo",
       "price": "Harga",
       "headerTokenValueText": "Nilai Token",
-      "copyCA": "Alamat kontrak Token telah disalin"
+      "copyCA": "Alamat kontrak Token telah disalin",
+      "wallet": "Dompet"
     },
     "approvalsAddressList": {
       "title": "Persetujuan"
@@ -2300,6 +2308,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "Lebih banyak"
+      },
+      "DappInfoPopup": {
+        "listedBy": "Ditulis oleh",
+        "sitePopularity": "Popularitas situs",
+        "popularLevelHigh": "Tinggi",
+        "popularLevelMedium": "Sedang",
+        "popularLevelLow": "Rendah",
+        "popularLevelVeryLow": "Sangat Rendah",
+        "category": "Kategori",
+        "skipDappInfoNextTime": "Lewati halaman ini lain kali",
+        "openDapp": "Buka"
       }
     },
     "browserManage": {
@@ -2470,7 +2489,10 @@
         "selectWithdrawToken": "Pilih token",
         "hypeFeeTip": "Biaya : ~${{fee}}",
         "hypeActivationFeeTooltip": "Biaya aktivasi satu kali sebesar {{fee}} akan dikenakan oleh Hyperliquid untuk penarikan HyperEVM pertama.",
-        "hypeGasFeeTooltip": "Biaya ~0.00002 HYPE akan dikenakan untuk menarik ke EVM"
+        "hypeGasFeeTooltip": "Biaya ~0.00002 HYPE akan dikenakan untuk menarik ke EVM",
+        "chain": "Chain",
+        "max": "Maks",
+        "selectChain": "Pilih Chain"
       },
       "PerpsWithdrawFeePopup": {
         "title": "Biaya",
@@ -2503,7 +2525,10 @@
         "feeRabby": "Rabby Wallet",
         "feeTitle": "Biaya",
         "feeHyperliquid": "Hyperliquid",
-        "feeDesc": "Ketika pengguna melakukan perdagangan, baik <1>biaya perdagangan</1> maupun <2>biaya pembuat</2> berlaku."
+        "feeDesc": "Ketika pengguna melakukan perdagangan, baik <1>biaya perdagangan</1> maupun <2>biaya pembuat</2> berlaku.",
+        "amount": "Jumlah",
+        "asset": "Aset",
+        "action": "Tindakan"
       },
       "PerpsAutoCloseModal": {
         "stopLossTipsLong": "Harga stop loss harus lebih rendah dari harga saat ini",
@@ -2543,7 +2568,17 @@
         "closeShortSl": "Tutup Short Stop Loss",
         "openShort": "Buka Short",
         "closeLongLiquidation": "Tutup Long Likuidasi",
-        "closeShort": "Tutup Short"
+        "closeShort": "Tutup Short",
+        "transferToSpot": "Transfer ke Spot",
+        "transferToPerps": "Transfer ke Perps",
+        "transferDetailTitle": "Transfer",
+        "transferActionToSpot": "Transfer (dari Perps ke Spot)",
+        "transferActionToPerps": "Transfer (dari Spot ke Perps)",
+        "transferGotIt": "Saya Paham",
+        "action": "Aksi",
+        "asset": "Aset",
+        "value": "Nilai",
+        "date": "Tanggal"
       },
       "PerpsSelectTokenPopup": {
         "title": "Pilih Token untuk Setor",
@@ -2558,7 +2593,8 @@
       },
       "PerpsDepositCard": {
         "deposit": "Setor",
-        "availableToTrade": "Tersedia untuk diperdagangkan:"
+        "availableToTrade": "Tersedia untuk diperdagangkan:",
+        "swap": "Tukar"
       },
       "PerpsAccountSelectorPopup": {
         "notActivatedAddress": "Tidak Diaktifkan",
@@ -2570,6 +2606,10 @@
       "title": "Perps",
       "selectAccountTitle": "Pilih Dompet untuk Masuk",
       "explorePerps": "Jelajahi Perps",
+      "categories": {
+        "favorite": "Favorit",
+        "topVolume": "Volume Teratas"
+      },
       "leverageRangeMaxError": "Leverage maksimum adalah {{max}}x",
       "deleteAgentSuccess": "Agen berhasil dihapus",
       "regionNotSupport": "Membuka posisi tidak didukung di wilayah Anda",
@@ -2616,6 +2656,42 @@
       },
       "dappSelect": {
         "title": "Pilih Penyedia Perps"
+      },
+      "search": {
+        "headerTitle": "Cari Perps",
+        "placeholder": "Cari Perps",
+        "empty": "Tidak ada hasil ditemukan"
+      },
+      "EnableUnifiedAccount": {
+        "title": "Aktifkan Akun Terpadu",
+        "desc": "Akun Terpadu adalah mode akun yang direkomendasikan yang menyederhanakan pengalaman trading. Saldo Spot dan Perps digabungkan untuk semua token, dan cross margin didukung pada semua aset yang tersedia.",
+        "confirm": "Konfirmasi",
+        "cancel": "Batal",
+        "importantTips": "Semua kolateral USDC akan digunakan sebagai cross margin begitu Akun Terpadu diaktifkan.",
+        "important": "Penting"
+      },
+      "PerpsSpotSwap": {
+        "title": "Tukar Stablecoin",
+        "from": "Dari",
+        "to": "Tukar Ke",
+        "balance": "Saldo",
+        "swapBtn": "Tukar",
+        "max": "Maks",
+        "estReceive": "Perkiraan Terima: {{amount}} {{coin}}",
+        "estReceiveTooltip": "Perkiraan jumlah yang diterima tergantung pada fluktuasi harga pasar.",
+        "toSwapEntry": "Untuk menukar→",
+        "toDepositEntry": "Untuk menyimpan→",
+        "insufficientBalance": "Saldo tidak cukup",
+        "invalidAmount": "Silakan masukkan jumlah yang valid",
+        "minimumAmount": "Jumlah swap minimum adalah {{amount}}"
+      },
+      "PerpMarginModePopup": {
+        "crossRequiresUnified": "Cross margin untuk pasangan trading ini memerlukan Akun Terpadu. Apakah Anda ingin mengaktifkannya?"
+      },
+      "PerpsMultiBalance": {
+        "title": "Saldo Hyperliquid",
+        "deposit": "Setor",
+        "withdraw": "Tarik"
       }
     },
     "perpsDetail": {
@@ -2786,6 +2862,9 @@
       },
       "guideEntry": {
         "gotIt": "Diambil!"
+      },
+      "PerpsAbout": {
+        "title": "Tentang"
       }
     },
     "devUIBuiltInPages": {
@@ -2876,7 +2955,8 @@
         "amount": "Jumlah",
         "title": "Ringkasan Transaksi",
         "liquidationAt": "Likuidasi pada < 1.0",
-        "remainingDebt": "Hutang yang tersisa"
+        "remainingDebt": "Hutang yang tersisa",
+        "toSwap": "Untuk menukar"
       },
       "borrowOverview": {
         "myBorrow": "Pinjamanku",
@@ -3060,7 +3140,9 @@
         },
         "toRepay": "Jumlah yang diharapkan untuk dilunasi",
         "collateralNotEnough": "Saldo jaminan Anda lebih rendah dari jumlah yang dipilih.",
-        "repayWith": "Jaminan untuk dibayar kembali dengan"
+        "repayWith": "Jaminan untuk dibayar kembali dengan",
+        "insufficientLiquidity": "Likuiditas tidak mencukupi.",
+        "frozenCollateral": "Aset ini dibekukan karena keputusan komunitas Aave."
       },
       "repayWithAToken": {
         "header": {
@@ -3072,6 +3154,9 @@
       },
       "dappSelect": {
         "title": "Pilih Penyedia Peminjaman"
+      },
+      "signFallback": {
+        "preExecFailedUseFullSign": "Simulasi Gagal. Transaksi ini kemungkinan besar akan gagal karena kesalahan AAVE."
       }
     },
     "address": {
@@ -3138,6 +3223,63 @@
       "createWalletError": "Gagal membuat dompet",
       "walletReady": "Dompet Anda sudah siap 🚀",
       "setPasswordTip": "Atur kata sandi untuk mengamankan dompet Anda"
+    },
+    "convertDust": {
+      "failReason": {
+        "missingRequiredParams": "Parameter wajib tidak ada",
+        "quoteUnavailable": "Gagal mengambil kutipan",
+        "gasCostTooHigh": "Melebihi batas biaya gas",
+        "priceImpactTooHigh": "Dampak harga tinggi",
+        "buildSwapTxsFailed": "Gagal membangun txs swap",
+        "sendSwapTxFailed": "Gagal mengirim tx swap",
+        "transactionFailed": "Transaksi gagal",
+        "submitFailed": "Gagal提交 transaksi",
+        "gasNotEnough": "Gas tidak cukup"
+      },
+      "status": {
+        "pending": "Bertukar",
+        "idle": "Menunggu untuk bertukar",
+        "success": "Pertukaran berhasil"
+      },
+      "receiveSummary": {
+        "progress": "Kemajuan Konversi",
+        "priceImpact": "Batas Dampak Harga",
+        "gasLimit": "Batas Gas Transaksi Tunggal",
+        "estimateReceive": "Perkiraan Terima:",
+        "actualReceive": "Terima"
+      },
+      "bottomBar": {
+        "stop": "Berhenti",
+        "continue": "Lanjutkan",
+        "start": "Mulai konversi"
+      },
+      "completed": {
+        "title": "Dust Dikonversi !",
+        "receive": "Diterima:",
+        "failedTitle": "Konversi Berakhir",
+        "viewMoreDetail": "Lihat detail lainnya",
+        "fold": "Lipat"
+      },
+      "entryGuide": {
+        "title": "Anda dapat menemukan Convert Dust \n👇 di sini di Beranda",
+        "button": "Mengerti"
+      },
+      "stopSheet": {
+        "title": "Hentikan swap saat ini?",
+        "desc": "Jika Anda berhenti sekarang, swap yang tersisa tidak akan diselesaikan. Perlu diketahui bahwa swap yang telah selesai tidak dapat dibatalkan.",
+        "continue": "Lanjutkan",
+        "stop": "Hentikan swap"
+      },
+      "homeBanner": {
+        "title": "Konversi Dust",
+        "description": "Mendukung konversi saldo kecil menjadi token asli"
+      },
+      "colValueAmount": "Value/Amount",
+      "colToken": "Token",
+      "colStatusToken": "Status/Token",
+      "emptyText": "No low-value tokens found",
+      "unsupportedAccountType": "Not support this account type.",
+      "unsupportedAccount": "Currently only private key and seed phrase addresses are supported."
     }
   },
   "component": {
@@ -3515,7 +3657,9 @@
     },
     "Imported": "Diimpor ",
     "Created": "Dibuat",
-    "SavedSeedPhrase": "Saya telah menyimpan seed phrase"
+    "SavedSeedPhrase": "Saya telah menyimpan seed phrase",
+    "from": "Dari",
+    "to": "Ke"
   },
   "background": {
     "error": {

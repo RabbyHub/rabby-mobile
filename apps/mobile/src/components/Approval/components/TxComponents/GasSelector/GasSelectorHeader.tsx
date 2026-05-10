@@ -70,7 +70,7 @@ import { CheckBoxRect } from '@/components2024/CheckBox';
 import {
   useMiniSignGasPanelController,
   useMiniSignGasPanelState,
-} from '@/components2024/MiniSignV2';
+} from '@/components2024/MiniSignV2/state/useMiniSignGasPanel';
 import { Text, RNGHTextInput as TextInput } from '@/components/Typography';
 import { GasTokenInfo } from '@/utils/tempo';
 import { useGasAccountSign } from '@/screens/GasAccount/hooks/atom';

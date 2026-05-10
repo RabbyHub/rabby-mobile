@@ -12,6 +12,10 @@ import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { Text } from '@/components/Typography';
+import { SPOT_STABLE_COIN_NAME } from '../PerpsSpotSwapPopup';
+import RcIconUSDT from '@/assets2024/icons/perps/IconUSDT.svg';
+import RcIconUSDH from '@/assets2024/icons/perps/IconUSDH.svg';
+import RcIconUSDE from '@/assets2024/icons/perps/IconUSDE.svg';
 
 export interface PerpsHistoryItemProps {
   fill: WsFill;
@@ -30,8 +34,23 @@ const PerpsHistoryItemComponent: React.FC<PerpsHistoryItemProps> = ({
   const { t } = useTranslation();
 
   const { coin, closedPnl: _closedPnl, dir, fee, px } = fill as WsFill;
-
+  const staleCoinName = useMemo(() => {
+    if (coin === SPOT_STABLE_COIN_NAME.USDT) {
+      return 'USDT';
+    }
+    if (coin === SPOT_STABLE_COIN_NAME.USDE) {
+      return 'USDE';
+    }
+    if (coin === SPOT_STABLE_COIN_NAME.USDH) {
+      return 'USDH';
+    }
+    return '';
+  }, [coin]);
   const titleString = useMemo(() => {
+    if (staleCoinName) {
+      return fill?.dir + ' ' + staleCoinName;
+    }
+
     const isLiquidation = Boolean(fill?.liquidation);
     if (fill?.dir === 'Close Long') {
       if (orderTpOrSl === 'tp') {
@@ -64,9 +83,10 @@ const PerpsHistoryItemComponent: React.FC<PerpsHistoryItemProps> = ({
       return t('page.perps.history.openShort');
     }
     return fill?.dir;
-  }, [fill?.dir, fill?.liquidation, orderTpOrSl, t]);
+  }, [fill?.dir, fill?.liquidation, orderTpOrSl, t, staleCoinName]);
 
   const itemData = marketData[coin];
+  const quoteAsset = itemData?.quoteAsset || 'USDC';
   const logoUrl = itemData?.logoUrl;
   const pxDecimals = itemData?.pxDecimals;
   const isClose = (dir === 'Close Long' || dir === 'Close Short') && _closedPnl;
@@ -75,12 +95,32 @@ const PerpsHistoryItemComponent: React.FC<PerpsHistoryItemProps> = ({
   const closedPnl = Number(_closedPnl) - Number(fee);
   const pnlValue = closedPnl ? closedPnl : 0;
 
+  const isStableCoinTrade = Boolean(staleCoinName);
+
+  const StableCoinAvatar = useMemo(() => {
+    if (!isStableCoinTrade) {
+      return null;
+    }
+
+    const componentsMap: Record<string, React.ReactNode> = {
+      USDT: <RcIconUSDT width={46} height={46} />,
+      USDH: <RcIconUSDH width={46} height={46} />,
+      USDE: <RcIconUSDE width={46} height={46} />,
+    };
+
+    return componentsMap[staleCoinName] || null;
+  }, [isStableCoinTrade, staleCoinName]);
+
   return (
     <TouchableOpacity onPress={() => onPress?.(fill)}>
       <View style={styles.card}>
         <View style={styles.iconContainer}>
-          <AssetAvatar logo={logoUrl} logoStyle={styles.icon} size={46} />
-          {direction === 'Long' ? (
+          {isStableCoinTrade ? (
+            StableCoinAvatar
+          ) : (
+            <AssetAvatar logo={logoUrl} logoStyle={styles.icon} size={46} />
+          )}
+          {isStableCoinTrade ? null : direction === 'Long' ? (
             <RcIconLong
               style={styles.directionIcon}
               bgColor={colors2024['neutral-bg-1']}
@@ -99,9 +139,14 @@ const PerpsHistoryItemComponent: React.FC<PerpsHistoryItemProps> = ({
             <Text style={styles.name}>{titleString}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.coin}>
-              {formatPerpsCoin(coin)}-USD @${Number(px).toFixed(pxDecimals)}
-            </Text>
+            {isStableCoinTrade ? (
+              <Text style={styles.coin}>{t('page.swap.Completed')}</Text>
+            ) : (
+              <Text style={styles.coin}>
+                {formatPerpsCoin(coin)}-{quoteAsset} @$
+                {Number(px).toFixed(pxDecimals)}
+              </Text>
+            )}
           </View>
         </View>
         <View style={styles.extra}>

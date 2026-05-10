@@ -14,7 +14,7 @@ import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { useTheme2024 } from '@/hooks/theme';
 
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { useSignatureStore } from '@/components2024/MiniSignV2';
+import { useSignatureStore } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { Account } from '@/core/services/preference';
 import { RiskType, sortRisksDesc, useRisks } from '@/components/SendLike/risk';

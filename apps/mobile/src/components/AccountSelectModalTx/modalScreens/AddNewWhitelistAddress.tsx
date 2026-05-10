@@ -12,6 +12,7 @@ import { navigateDeprecated } from '@/utils/navigation';
 import { isValidHexAddress, Hex } from '@metamask/utils';
 import {
   Keyboard,
+  Platform,
   TouchableOpacity,
   View,
   TouchableWithoutFeedback,
@@ -57,7 +58,6 @@ import { SelectAccountSheetModalSizes } from '../layout';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { touchedFeedback } from '@/utils/touch';
-import { IS_IOS } from '@/core/native/utils';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -83,9 +83,14 @@ export const ScreenAddNewWhitelistAddress = ({
   const [input, setInput] = useState(newValue);
   const [isCex, setIsCex] = useState(false);
   const [aliasName, setAliasName] = useState('');
+  const [isAliasEditing, setIsAliasEditing] = useState(false);
+  const [aliasSelection, setAliasSelection] = useState<
+    { start: number; end: number } | undefined
+  >();
   const [cex, setCex] = useState<ProjectItem | undefined>();
   const [error, setError] = useState<INPUT_ERROR>();
   const [loading, setLoading] = useState(false);
+  const aliasInputRef = useRef<any>(null);
 
   const { list } = useCexSupportList();
 
@@ -189,6 +194,18 @@ export const ScreenAddNewWhitelistAddress = ({
     setError(undefined);
     setInput(text);
   }, []);
+  const focusAliasInputAtEnd = useCallback(() => {
+    const position = aliasName.length;
+    setAliasSelection({ start: position, end: position });
+    setIsAliasEditing(true);
+  }, [aliasName.length]);
+  const handleAliasSelectionChange = useCallback(() => {
+    setAliasSelection(undefined);
+  }, []);
+  const handleAliasBlur = useCallback(() => {
+    setIsAliasEditing(false);
+    setAliasSelection(undefined);
+  }, []);
   const openSendHistory = useCallback(() => {
     touchedFeedback();
     fnNavTo('select-from-history');
@@ -243,6 +260,8 @@ export const ScreenAddNewWhitelistAddress = ({
     setIsCex(false);
     setCex(undefined);
     setAliasName('');
+    setIsAliasEditing(false);
+    setAliasSelection(undefined);
     if (isValidHexAddress(input as Hex)) {
       const aliasInfo = contactService.getAliasByAddress(input);
       setAliasName(aliasInfo?.isDefaultAlias ? '' : aliasInfo?.alias || '');
@@ -260,9 +279,25 @@ export const ScreenAddNewWhitelistAddress = ({
     setIsCex(false);
     setLoading(false);
     setAliasName('');
+    setIsAliasEditing(false);
+    setAliasSelection(undefined);
     setCex(undefined);
   }, []);
   useAlertAddress(input, onRepeatAdd);
+
+  useEffect(() => {
+    if (!isAliasEditing) {
+      return;
+    }
+
+    const frameId = requestAnimationFrame(() => {
+      aliasInputRef.current?.focus?.();
+    });
+
+    return () => cancelAnimationFrame(frameId);
+  }, [isAliasEditing]);
+
+  const aliasNamePlaceholder = t('page.whitelist.placeholder.name');
 
   return (
     <View style={[styles.container, { paddingBottom: safeSizes.containerPb }]}>
@@ -355,21 +390,51 @@ export const ScreenAddNewWhitelistAddress = ({
               {t('page.whitelist.header.name')}
             </Text>
           </View>
-          <NextInput
-            as="BottomSheetTextInput"
-            style={styles.editContainer}
-            inputStyle={styles.aliasName}
-            tipText={''}
-            hasError={!!error}
-            inputProps={{
-              placeholder: t('page.whitelist.placeholder.name'),
-              placeholderTextColor: colors2024['neutral-secondary'],
-              value: aliasName,
-              onChangeText: setAliasName,
-            }}
-            containerStyle={styles.nameInput}
-            fieldErrorTextStyle={styles.error}
-          />
+          {isAliasEditing ? (
+            <NextInput
+              ref={aliasInputRef}
+              as="BottomSheetTextInput"
+              style={styles.editContainer}
+              inputStyle={styles.aliasName}
+              tipText={''}
+              hasError={!!error}
+              inputProps={{
+                placeholder: aliasNamePlaceholder,
+                placeholderTextColor: colors2024['neutral-secondary'],
+                value: aliasName,
+                onChangeText: setAliasName,
+                multiline: false,
+                numberOfLines: 1,
+                maxLength: 80,
+                selection: aliasSelection,
+                onSelectionChange: handleAliasSelectionChange,
+                onBlur: handleAliasBlur,
+                onFocus: focusAliasInputAtEnd,
+              }}
+              containerStyle={styles.nameInput}
+              fieldErrorTextStyle={styles.error}
+            />
+          ) : (
+            <TouchableOpacity
+              activeOpacity={1}
+              style={[
+                styles.editContainer,
+                styles.nameInput,
+                styles.aliasDisplayContainer,
+              ]}
+              onPress={focusAliasInputAtEnd}>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[
+                  styles.aliasName,
+                  styles.aliasDisplayText,
+                  !aliasName && styles.aliasNamePlaceholder,
+                ]}>
+                {aliasName || aliasNamePlaceholder}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
         <View style={styles.exChangeContent}>
           <View style={styles.header}>
@@ -437,7 +502,7 @@ export default ScreenAddNewWhitelistAddress;
 
 const SIZES = {
   bottomContentH: 56,
-  bottomContentBottom: IS_IOS ? 48 : 0,
+  bottomContentBottom: 48,
   containerPb: 20,
 };
 const getStyles = createGetStyles2024(ctx => ({
@@ -524,14 +589,31 @@ const getStyles = createGetStyles2024(ctx => ({
     fontWeight: '400',
     color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
+    paddingVertical: 0,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+        textAlignVertical: 'center',
+      },
+    }),
   },
   editContainer: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'transparent',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     height: 58,
+    width: '100%',
+  },
+  aliasDisplayContainer: {
+    justifyContent: 'center',
+  },
+  aliasDisplayText: {
+    flex: 1,
+    paddingHorizontal: 12,
   },
   exChangeContent: {
     width: '100%',

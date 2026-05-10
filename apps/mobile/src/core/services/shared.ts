@@ -35,7 +35,8 @@ import SimpleKeyring from '@rabby-wallet/eth-simple-keyring';
 import HDKeyring from '@rabby-wallet/eth-hd-keyring';
 import { HDKeyringService } from './hdKeyringService';
 export { customTestnetService } from './customTestnetService';
-export { customRPCService } from './customRPCService';
+import { customRPCService } from './customRPCService';
+export { customRPCService };
 import { BridgeService } from './bridge';
 import { GasAccountService } from './gasAccount';
 import { BrowserHistoryService } from './browserHistoryService';
@@ -54,6 +55,7 @@ import { perfEvents } from '../utils/perf';
 import { KeyringIntf } from '@rabby-wallet/keyring-utils';
 import { AutoConnectService } from './autoConnect';
 import { openapi } from '../request';
+import { setTxRpcClient } from '../utils/tx';
 
 migrateAppStorage(appStorage);
 
@@ -80,6 +82,7 @@ function try_catch_issue_on_preference({
 
 try_catch_issue_on_preference({ pos: 'before_preference' });
 GnosisKeyring.setOpenapiService(openapi);
+setTxRpcClient(payload => customRPCService.defaultEthRPC(payload));
 
 const keyringClasses = [
   MockWalletConnectKeyring,
@@ -189,6 +192,9 @@ export const securityEngineService = new SecurityEngineService({
 
 export const autoConnectService = new AutoConnectService({
   dappService,
+  getAccounts: () => keyringService.getAllVisibleAccountsArray(),
+  getRecentTransactions: () => transactionHistoryService.store.transactions,
+  getFallbackAccount: () => preferenceService.getFallbackAccount(),
 });
 
 transactionWatcherService.roll();
@@ -257,6 +263,10 @@ export const syncChainService = new SyncChainService({
 
 export const perpsService = new PerpsService({
   storageAdapter: appStorage,
+  keyringCrypto: {
+    decryptWithPassword: value => keyringService.decryptWithPassword(value),
+    encryptWithPassword: value => keyringService.encryptWithPassword(value),
+  },
 });
 
 export const lendingService = new LendingService({

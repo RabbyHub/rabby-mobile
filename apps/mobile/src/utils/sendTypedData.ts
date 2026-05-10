@@ -1,4 +1,4 @@
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/types/account';
 import { matomoRequestEvent } from './analytics';
 import { stats } from './stats';
 import { getKRCategoryByType } from './transaction';

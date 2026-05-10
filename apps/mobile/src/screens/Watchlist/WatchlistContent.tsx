@@ -39,7 +39,8 @@ import {
 } from './sort';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { marketRealtimePriceAtom } from '../Market/atom';
-import { TAB_BAR_HEIGHT } from '../Market';
+import { TAB_BAR_HEIGHT } from '../Market/constants';
+import { setWatchlistTopCache } from './cache';
 
 const isAndroid = Platform.OS === 'android';
 const VIEWABILITY_CONFIG = {
@@ -138,6 +139,10 @@ export function WatchlistContent({
     () => sortWatchlistTokens(watchlistTokens, tokenSort, changeSort),
     [watchlistTokens, tokenSort, changeSort],
   );
+
+  useEffect(() => {
+    setWatchlistTopCache(list);
+  }, [list]);
 
   const handleOpenTokenDetail = useCallback(
     (token: TokenDetailWithPriceCurve) => {

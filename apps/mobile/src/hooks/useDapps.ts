@@ -1,22 +1,19 @@
-import { sortBy } from 'lodash';
 import { createDappBySession } from '@/core/apis/dapp';
 import { useCallback, useMemo } from 'react';
 
-import { apisDapp } from '@/core/apis';
-import { DappInfo, DappStore } from '@/core/services/dappService';
-import { type Account } from '@/core/services/preference';
-import {
-  dappService,
-  preferenceService,
-  transactionHistoryService,
-} from '@/core/services/shared';
+import * as apisDapp from '@/core/apis/dapp';
+import type { DappInfo, DappStore } from '@/core/services/dappService';
+import type { Account, KeyringAccountWithAlias } from '@/types/account';
+import { dappService } from '@/core/services/shared';
 import { FieldNilable, stringUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom } from 'jotai';
-import { KeyringAccountWithAlias, useAccounts, useMyAccounts } from './account';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { useAccounts } from './account';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { getDappAccount } from '@/core/utils/dappAccount';
+
+export { getDappAccount } from '@/core/utils/dappAccount';
 
 const dappServiceStore = zCreate<DappStore>(() => {
   return {
@@ -75,6 +72,9 @@ export function useDapps() {
     return res;
   }, []);
 
+  /**
+   * @deprecated
+   */
   const updateFavorite = useCallback((id: string, v: boolean) => {
     if (dappService.getDapp(id)) {
       dappService.updateFavorite(id, v);
@@ -144,38 +144,6 @@ export function useDappCurrentAccount() {
 
   return { setDappCurrentAccount };
 }
-
-export const getDappAccount = ({
-  dappInfo,
-  accounts,
-}: {
-  dappInfo?: DappInfo;
-  accounts: KeyringAccountWithAlias[];
-}) => {
-  let res = accounts.find(
-    acc =>
-      dappInfo?.currentAccount &&
-      isSameAddress(acc.address, dappInfo.currentAccount.address) &&
-      acc.type === dappInfo.currentAccount.type,
-  );
-  if (!res) {
-    const tx = sortBy(
-      transactionHistoryService.store.transactions,
-      item => -item.createdAt,
-    )[0];
-    if (tx) {
-      const txAccount = accounts.find(
-        acc =>
-          isSameAddress(acc.address, tx.address) &&
-          (tx.keyringType ? acc.type === tx.keyringType : true),
-      );
-      if (txAccount) {
-        res = txAccount;
-      }
-    }
-  }
-  return res || accounts[0] || preferenceService.getFallbackAccount();
-};
 
 export function useGetDappAccount(dappInfo?: DappInfo) {
   const { accounts } = useAccounts({

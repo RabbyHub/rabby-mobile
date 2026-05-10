@@ -413,7 +413,7 @@ const Details = ({
             </Text>
             <Text style={styles.timeAtItem}>{formatTime(item.time_at)}</Text>
           </View>
-          <Text style={styles.indexItem}>{formatPrice(item.price)}</Text>
+          <Text style={styles.indexItem}>${formatPrice(item.price)}</Text>
           <Text style={styles.ratioItem}>
             {formatAmountValueKMB(item.amount)}
           </Text>
@@ -422,7 +422,7 @@ const Details = ({
               styles.amountItem,
               isBuy ? styles.amountItemGreen : styles.amountItemRed,
             ]}>
-            {formatUsdValueKMB(item.usd_value)}
+            {formatUsdValueKMB(item.usd_value, 2)}
           </Text>
           <View style={styles.addressItem}>
             <AddressView address={item.user_addr} />

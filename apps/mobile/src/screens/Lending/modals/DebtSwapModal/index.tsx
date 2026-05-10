@@ -42,14 +42,13 @@ import { formatSpeicalAmount, formatTokenAmount } from '@/utils/number';
 import { WarningText } from '@/screens/Bridge/components/WarningText';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
-import {
-  useSignatureStoreOf,
-  SignatureInstanceProvider,
-} from '@/components2024/MiniSignV2';
+import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
+import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
   LendingReportType,
+  LendingSignType,
 } from '@/screens/Transaction/components/type';
 import {
   createGlobalBottomSheetModal2024,
@@ -700,6 +699,10 @@ export default function DebtSwapModal({
         }
 
         let results: string[] = [];
+        const signType =
+          canShowDirectSubmit && !p?.forceFullSign
+            ? LendingSignType.Simplified
+            : LendingSignType.Full;
         if (canShowDirectSubmit && !p?.forceFullSign) {
           try {
             results = await openDirect({
@@ -720,6 +723,9 @@ export default function DebtSwapModal({
               return;
             }
             if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
+              toast.error(
+                t('page.Lending.signFallback.preExecFailedUseFullSign'),
+              );
               await handleSwap({
                 ...p,
                 forceFullSign: true,
@@ -764,6 +770,7 @@ export default function DebtSwapModal({
           usd_value: usdValue,
           create_at: Date.now(),
           app_version: APP_VERSIONS.fromNative || '0',
+          signType,
         });
         toast.success(
           `${t('page.Lending.debtSwap.actions.title')} ${t(

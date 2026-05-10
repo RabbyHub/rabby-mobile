@@ -235,6 +235,8 @@ PODS:
     - Yoga
   - OpenSSL-Universal (3.3.3001)
   - PromisesObjC (2.4.0)
+  - RabbyRNKeychain (8.2.0-rabby.0):
+    - React-Core
   - RCT-Folly (2024.11.18.00):
     - boost
     - DoubleConversion
@@ -2904,8 +2906,34 @@ PODS:
     - React-Core
   - RNInAppBrowser (3.7.0):
     - React-Core
-  - RNKeychain (8.2.0):
+  - RNKeychain (9.0.0):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
     - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - RNLocalize (3.3.0):
     - React-Core
   - RNNotifee (9.1.8):
@@ -3209,6 +3237,7 @@ DEPENDENCIES:
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - lottie-react-native (from `../node_modules/lottie-react-native`)
   - "op-sqlite (from `../node_modules/@op-engineering/op-sqlite`)"
+  - "RabbyRNKeychain (from `../node_modules/@rabby-wallet/react-native-keychain`)"
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
   - RCTRequired (from `../node_modules/react-native/Libraries/Required`)
@@ -3375,6 +3404,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/lottie-react-native"
   op-sqlite:
     :path: "../node_modules/@op-engineering/op-sqlite"
+  RabbyRNKeychain:
+    :path: "../node_modules/@rabby-wallet/react-native-keychain"
   RCT-Folly:
     :podspec: "../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec"
   RCTDeprecation:
@@ -3630,6 +3661,7 @@ SPEC CHECKSUMS:
   op-sqlite: 559e7d37fe743edcc74f45bb49cab6259e30a144
   OpenSSL-Universal: 6082b0bf950e5636fe0d78def171184e2b3899c2
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
+  RabbyRNKeychain: cc2d4ef9630a23dd2a9d72ba3532d54a2fb58c66
   RCT-Folly: 59ec0ac1f2f39672a0c6e6cecdd39383b764646f
   RCTDeprecation: d4ef510f229cea15314176aee5e3ba10064a8496
   RCTRequired: 1e41b794629558f6626e2bc39c166ac0ec1c5878
@@ -3728,7 +3760,7 @@ SPEC CHECKSUMS:
   RNGoogleSignin: ee2938633d996756819e3212c8e0f7f696b380d0
   RNIap: cc6ad44185936b2ced74691b154cc9c322a2cb5a
   RNInAppBrowser: e36d6935517101ccba0e875bac8ad7b0cb655364
-  RNKeychain: bfe3d12bf4620fe488771c414530bf16e88f3678
+  RNKeychain: 97a516965876c44ea8d46f94114de9cb67a832ee
   RNLocalize: 298e85ce16540a11de40c1a588ead39fc5e9a072
   RNNotifee: 4a6ee5c7deaf00e005050052d73ee6315dff7ec9
   RNPermissions: a5d0a96eddf4b155c1af78a66ca7f63b1e0146eb

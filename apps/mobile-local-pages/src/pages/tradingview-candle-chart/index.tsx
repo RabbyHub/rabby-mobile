@@ -72,6 +72,97 @@ chartState.description = { ...defaultDescription };
 
 // DOM Elements
 const containerEl = document.getElementById('container') as HTMLDivElement;
+containerEl.style.position = 'relative';
+
+let hasRenderableData = false;
+
+const loadingOverlay = document.createElement('div');
+loadingOverlay.style.position = 'absolute';
+loadingOverlay.style.inset = '0';
+loadingOverlay.style.display = 'flex';
+loadingOverlay.style.alignItems = 'stretch';
+loadingOverlay.style.justifyContent = 'stretch';
+loadingOverlay.style.pointerEvents = 'none';
+loadingOverlay.style.background = chartState.colors.background;
+loadingOverlay.style.zIndex = '20';
+
+const loadingChart = document.createElement('div');
+loadingChart.style.width = '100%';
+loadingChart.style.height = '100%';
+loadingChart.style.borderRadius = '20px';
+loadingChart.style.background = chartState.colors.border;
+loadingChart.style.position = 'relative';
+loadingChart.style.overflow = 'hidden';
+
+const loadingLogo = document.createElement('div');
+loadingLogo.style.position = 'absolute';
+loadingLogo.style.left = '12px';
+loadingLogo.style.bottom = '12px';
+loadingLogo.style.width = '88px';
+loadingLogo.style.height = '20px';
+loadingLogo.style.borderRadius = '10px';
+loadingLogo.style.background = chartState.colors.border;
+loadingLogo.style.boxShadow = `0 0 0 1px ${chartState.colors.background} inset`;
+
+loadingChart.appendChild(loadingLogo);
+loadingOverlay.appendChild(loadingChart);
+containerEl.appendChild(loadingOverlay);
+
+function updateLoadingSkeletonTheme(colors: ChartColors) {
+  loadingOverlay.style.background = colors.background;
+  loadingChart.style.background = colors.border;
+  loadingLogo.style.background = colors.border;
+  loadingLogo.style.boxShadow = `0 0 0 1px ${colors.background} inset`;
+}
+
+function setLoadingOverlayVisible(visible: boolean) {
+  loadingOverlay.style.display = visible ? 'flex' : 'none';
+  if (visible && chartState.tooltip) {
+    chartState.tooltip.style.display = 'none';
+  }
+}
+
+function resetPriceLines() {
+  if (chartState.candlestickSeries) {
+    Object.values(chartState.priceLineContainers).forEach(line => {
+      if (line) {
+        chartState.candlestickSeries!.removePriceLine(line);
+      }
+    });
+  }
+
+  chartState.priceLineContainers = {
+    tp: null,
+    sl: null,
+    liquidation: null,
+    entry: null,
+  };
+}
+
+function clearChartData() {
+  chartState.currentData = [];
+  chartState.isInitialDataLoad = true;
+  chartState.lastDataKey = null;
+  chartState.currentExtremes = null;
+
+  if (chartState.clearMarkers) {
+    chartState.clearMarkers.setMarkers([]);
+    chartState.clearMarkers = null;
+  }
+
+  resetPriceLines();
+
+  if (chartState.candlestickSeries) {
+    chartState.candlestickSeries.setData([]);
+    chartState.candlestickSeries.priceScale().applyOptions({
+      scaleMargins: { top: 0, bottom: 0 },
+    });
+  }
+
+  if (chartState.volumeSeries) {
+    chartState.volumeSeries.setData([]);
+  }
+}
 
 // Create tooltip element
 const tooltip = document.createElement('div');
@@ -460,13 +551,22 @@ function handleSetCandlestickData(
 ) {
   chartState.noTime = !!message.noTime;
 
-  if (!chartState.chart || !message.data?.length) return;
+  if (!chartState.chart) return;
+
+  if (!message.data?.length) {
+    hasRenderableData = false;
+    clearChartData();
+    setLoadingOverlayVisible(true);
+    return;
+  }
 
   if (!chartState.candlestickSeries) {
     createCandlestickSeries();
   }
 
   if (chartState.candlestickSeries) {
+    hasRenderableData = true;
+    setLoadingOverlayVisible(false);
     chartState.currentData = message.data;
     chartState.candlestickSeries.setData(message.data);
 
@@ -512,6 +612,8 @@ function handleSetCandlestickData(
 // Handle UPDATE_CANDLESTICK_DATA message
 function handleUpdateCandlestickData(data: TradingViewCandlestickData) {
   if (!chartState.chart || !chartState.candlestickSeries || !data) return;
+  hasRenderableData = true;
+  setLoadingOverlayVisible(false);
   chartState.candlestickSeries.update(data);
 }
 
@@ -525,6 +627,7 @@ function handleUpdateTPSLPriceLines(data: TPSLPriceLines) {
 function handleUpdateTheme(colors: ChartColors, description: ChartDescription) {
   chartState.colors = colors;
   chartState.description = description;
+  updateLoadingSkeletonTheme(colors);
 
   if (chartState.chart) {
     chartState.chart.applyOptions({
@@ -542,6 +645,9 @@ function handleUpdateTheme(colors: ChartColors, description: ChartDescription) {
   if (chartState.tooltip) {
     chartState.tooltip.style.background = colors.tooltip.bg;
   }
+
+  containerEl.style.background = colors.background;
+  document.body.style.background = colors.background;
 }
 
 // Handle messages from RN
@@ -624,6 +730,9 @@ function init() {
     containerEl.style.background =
       chartState.colors?.background || getChartColors().background;
   }
+  document.body.style.background =
+    chartState.colors?.background || getChartColors().background;
+  setLoadingOverlayVisible(!hasRenderableData);
 
   // Add event listeners
   window.addEventListener('messageFromRN', handleMessage as EventListener);

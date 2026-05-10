@@ -146,7 +146,9 @@
     },
     "Imported": "Importiert",
     "Created": "Erstellt",
-    "SavedSeedPhrase": "Ich habe den Seed-Phrase gespeichert."
+    "SavedSeedPhrase": "Ich habe den Seed-Phrase gespeichert.",
+    "from": "Von",
+    "to": "An"
   },
   "component": {
     "accountSwitcher": {
@@ -1227,7 +1229,8 @@
         "predict": "Vorhersagen",
         "meme": "Memecoin",
         "market": "Markt",
-        "gasDeposit": "Gas Einzahlung"
+        "gasDeposit": "Gas Einzahlung",
+        "convertDust": "Dust umwandeln"
       },
       "swipeUp": {
         "descAndroidMore": "Klicken Sie, um weitere dApps zu erkunden",
@@ -1239,7 +1242,13 @@
         "favorite": "Favorit",
         "search": "Suche",
         "empty": "Keine Website zu den Favoriten hinzugefügt",
-        "emptyAndroid": "Keine dApp zu den Favoriten hinzugefügt"
+        "emptyAndroid": "Keine dApp zu den Favoriten hinzugefügt",
+        "tabs": {
+          "all": "Alle",
+          "perps": "Perps",
+          "predict": "Prognosen"
+        },
+        "websites": "Webseiten"
       },
       "depositAssets": {
         "subtitle": "Vermögen in diese Wallet empfangen",
@@ -2231,12 +2240,12 @@
         "subtitle": "wenn dir das Gas ausgeht"
       },
       "depositFailed": "Einzahlung fehlgeschlagen",
-      "depositWith": "Bei einlegen mit",
       "depositNow": "Jetzt einzahlen",
       "gasBalance": "Gas-Balance",
       "switchAccount": "Wechseln Sie das Wallet",
       "lowBalance": "Sie haben nicht genügend Gas. Tätigen Sie eine Gas-Einzahlung, um sicherzustellen, dass zukünftige Transaktionen reibungslos verlaufen.",
-      "depositSubmitted": "Einzahlung eingereicht"
+      "depositSubmitted": "Einzahlung eingereicht",
+      "depositWith": "Einzahlung über"
     },
     "search": {
       "sectionHeader": {
@@ -2400,7 +2409,8 @@
       "price": "Preis",
       "headerTokenValueText": "Token-Wert",
       "headerBalanceText": "Guthaben",
-      "copyCA": "Token-Vertrag-Adresse kopiert"
+      "copyCA": "Token-Vertrag-Adresse kopiert",
+      "wallet": "Wallet"
     },
     "setting": {
       "currentVersion": "Aktuelle Version",
@@ -2678,6 +2688,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "Mehr"
+      },
+      "DappInfoPopup": {
+        "listedBy": "Aufgelistet von",
+        "sitePopularity": "Seitenbeliebtheit",
+        "popularLevelHigh": "Hoch",
+        "popularLevelMedium": "Mittel",
+        "popularLevelLow": "Niedrig",
+        "popularLevelVeryLow": "Sehr niedrig",
+        "category": "Kategorie",
+        "skipDappInfoNextTime": "Diese Seite beim nächsten Mal überspringen",
+        "openDapp": "Öffnen"
       }
     },
     "browserManage": {
@@ -2848,7 +2869,10 @@
         "hypeFeeTip": "Gebühr: ~${{fee}}",
         "selectWithdrawToken": "Token auswählen",
         "hypeGasFeeTooltip": "Eine Gebühr von ~0,00002 HYPE wird für Abhebungen auf die EVM erhoben.",
-        "hypeActivationFeeTooltip": "Eine einmalige Aktivierungsgebühr von {{fee}} wird von Hyperliquid für die erste HyperEVM-Abhebung erhoben."
+        "hypeActivationFeeTooltip": "Eine einmalige Aktivierungsgebühr von {{fee}} wird von Hyperliquid für die erste HyperEVM-Abhebung erhoben.",
+        "chain": "Chain",
+        "max": "Max",
+        "selectChain": "Chain auswählen"
       },
       "PerpsWithdrawFeePopup": {
         "btn": "Ich habe es verstanden",
@@ -2881,7 +2905,10 @@
         "feeHyperliquid": "Hyperliquid",
         "feeTitle": "Gebühr",
         "feeRabby": "Rabby Wallet",
-        "feeDesc": "Wenn Benutzer Trades platzieren, gelten sowohl <1>Handelsgebühren</1> als auch <2>Builder-Gebühren</2>."
+        "feeDesc": "Wenn Benutzer Trades platzieren, gelten sowohl <1>Handelsgebühren</1> als auch <2>Builder-Gebühren</2>.",
+        "amount": "Betrag",
+        "asset": "Vermögenswert",
+        "action": "Aktion"
       },
       "PerpsAutoCloseModal": {
         "loss": "Verlust",
@@ -2921,7 +2948,17 @@
         "openShort": "Open Short",
         "closeShort": "Short schließen",
         "closeLongLiquidation": "Long schließen Liquidation",
-        "closeLongSl": "Close Long Stop-Loss"
+        "closeLongSl": "Close Long Stop-Loss",
+        "transferToSpot": "Auf Spot überweisen",
+        "transferToPerps": "Auf Perps überweisen",
+        "transferDetailTitle": "Überweisung",
+        "transferActionToSpot": "Überweisung (von Perps zu Spot)",
+        "transferActionToPerps": "Überweisung (von Spot zu Perps)",
+        "transferGotIt": "Verstanden",
+        "action": "Aktion",
+        "asset": "Vermögenswert",
+        "value": "Wert",
+        "date": "Datum"
       },
       "PerpsSelectTokenPopup": {
         "title": "Token auswählen, um einzuzahlen",
@@ -2936,7 +2973,8 @@
       },
       "PerpsDepositCard": {
         "deposit": "Einzahlen",
-        "availableToTrade": "Verfügbar zum Handel:"
+        "availableToTrade": "Verfügbar zum Handel:",
+        "swap": "Tauschen"
       },
       "PerpsAccountSelectorPopup": {
         "noPosition": "Keine Position",
@@ -2949,6 +2987,10 @@
       "selectAccountTitle": "Wählen Sie eine Wallet zum Anmelden aus",
       "more": "Mehr",
       "explorePerps": "Erkunde Perps",
+      "categories": {
+        "favorite": "Favorit",
+        "topVolume": "Top-Volumen"
+      },
       "positions": "Positionen",
       "regionNotSupport": "Das Eröffnen von Positionen wird in Ihrer Region nicht unterstützt.",
       "deleteAgentSuccess": "Agent erfolgreich gelöscht",
@@ -2994,6 +3036,42 @@
       },
       "dappSelect": {
         "title": "Wählen Sie Perps-Anbieter"
+      },
+      "search": {
+        "headerTitle": "Perps suchen",
+        "placeholder": "Perps suchen",
+        "empty": "Keine Ergebnisse gefunden"
+      },
+      "EnableUnifiedAccount": {
+        "title": "Einheitliches Konto aktivieren",
+        "desc": "Einheitliches Konto ist der empfohlene Kontomodus, der das Handelserlebnis vereinfacht. Spot- und Perps-Guthaben werden für alle Token zusammengelegt, und Cross-Margin wird für alle verfügbaren Assets unterstützt.",
+        "confirm": "Bestätigen",
+        "cancel": "Abbrechen",
+        "importantTips": "Alle USDC-Sicherheiten werden als Cross-Margin verwendet, sobald das einheitliche Konto aktiviert ist.",
+        "important": "Wichtig"
+      },
+      "PerpsSpotSwap": {
+        "title": "Stablecoins tauschen",
+        "from": "Von",
+        "to": "Tauschen zu",
+        "balance": "Guthaben",
+        "swapBtn": "Tauschen",
+        "max": "Max",
+        "estReceive": "Gesch. Erhalt: {{amount}} {{coin}}",
+        "estReceiveTooltip": "Der geschätzte Erhaltungsbetrag unterliegt Marktkursschwankungen.",
+        "toSwapEntry": "Zum Tauschen→",
+        "toDepositEntry": "Zur Einzahlung→",
+        "insufficientBalance": "Unzureichendes Guthaben",
+        "invalidAmount": "Bitte geben Sie einen gültigen Betrag ein",
+        "minimumAmount": "Der Mindesttauschbetrag beträgt {{amount}}"
+      },
+      "PerpMarginModePopup": {
+        "crossRequiresUnified": "Kreuzmargin für dieses Handelspaar erfordert ein einheitliches Konto. Möchten Sie es aktivieren?"
+      },
+      "PerpsMultiBalance": {
+        "title": "Hyperliquid-Guthaben",
+        "deposit": "Einzahlung",
+        "withdraw": "Auszahlung"
       }
     },
     "perpsDetail": {
@@ -3164,6 +3242,9 @@
       },
       "guideEntry": {
         "gotIt": "Verstanden"
+      },
+      "PerpsAbout": {
+        "title": "Über"
       }
     },
     "devUIBuiltInPages": {
@@ -3254,7 +3335,8 @@
         "amount": "Betrag",
         "remainingDebt": "Verbleibende Schulden",
         "title": "Transaktionsübersicht",
-        "liquidationAt": "Liquidation bei < 1,0"
+        "liquidationAt": "Liquidation bei < 1,0",
+        "toSwap": "Zum Tauschen"
       },
       "borrowOverview": {
         "myBorrow": "Mein Kredit",
@@ -3438,7 +3520,9 @@
         },
         "repayWith": "Sicherheiten zur Rückzahlung mit",
         "toRepay": "Erwarteter Rückzahlungsbetrag",
-        "collateralNotEnough": "Ihr Sicherheitensaldo ist niedriger als der ausgewählte Betrag."
+        "collateralNotEnough": "Ihr Sicherheitensaldo ist niedriger als der ausgewählte Betrag.",
+        "insufficientLiquidity": "Unzureichende Liquidität.",
+        "frozenCollateral": "Dieses Asset ist aufgrund einer Aave-Gemeinschaftsentscheidung eingefroren."
       },
       "repayWithAToken": {
         "header": {
@@ -3450,6 +3534,9 @@
       },
       "dappSelect": {
         "title": "Wählen Sie den Kreditgeber aus"
+      },
+      "signFallback": {
+        "preExecFailedUseFullSign": "Simulation fehlgeschlagen. Diese Transaktion wird sehr wahrscheinlich aufgrund von AAVE-Fehlern fehlschlagen."
       }
     },
     "address": {
@@ -3516,6 +3603,63 @@
       "createWalletError": "Fehlgeschlagen beim Erstellen der Wallet",
       "walletReady": "Ihre Wallet ist bereit 🚀",
       "setPasswordTip": "Setzen Sie ein Passwort, um Ihre Wallet zu sichern."
+    },
+    "convertDust": {
+      "failReason": {
+        "missingRequiredParams": "Erforderliche Parameter fehlen",
+        "quoteUnavailable": "Angebotsabruf fehlgeschlagen",
+        "gasCostTooHigh": "Gasgebührenlimit überschritten",
+        "priceImpactTooHigh": "Hohe Preisauswirkung",
+        "buildSwapTxsFailed": "Swap-Transaktionen konnten nicht erstellt werden",
+        "sendSwapTxFailed": "Swap-Transaktion konnte nicht gesendet werden",
+        "transactionFailed": "Transaktion fehlgeschlagen",
+        "submitFailed": "Transaktionen konnten nicht übermittelt werden",
+        "gasNotEnough": "Unzureichendes Gas"
+      },
+      "status": {
+        "pending": "Wird getauscht",
+        "idle": "Warte auf Tausch",
+        "success": "Tausch erfolgreich"
+      },
+      "receiveSummary": {
+        "progress": "Konvertierungsfortschritt",
+        "priceImpact": "Preisauswirkungsobergrenze",
+        "gasLimit": "Gas-Limit für einzelne Transaktion",
+        "estimateReceive": "Gesch. Empfang:",
+        "actualReceive": "Empfangen"
+      },
+      "bottomBar": {
+        "stop": "Stoppen",
+        "continue": "Weiter",
+        "start": "Konvertierung starten"
+      },
+      "completed": {
+        "title": "Staub konvertiert !",
+        "receive": "Erhalten:",
+        "failedTitle": "Konvertierung beendet",
+        "viewMoreDetail": "Mehr Details anzeigen",
+        "fold": "Einklappen"
+      },
+      "entryGuide": {
+        "title": "Du findest Convert Dust \n👇 hier auf der Startseite",
+        "button": "Verstanden"
+      },
+      "stopSheet": {
+        "title": "Aktuelle Swaps stoppen?",
+        "desc": "Wenn Sie jetzt stoppen, werden keine verbleibenden Swaps abgeschlossen. Bitte beachten Sie, dass abgeschlossene Swaps nicht rückgängig gemacht werden können.",
+        "continue": "Fortfahren",
+        "stop": "Swap stoppen"
+      },
+      "homeBanner": {
+        "title": "Dust umwandeln",
+        "description": "Unterstützt die Konvertierung kleiner Guthaben in das native Token"
+      },
+      "colValueAmount": "Wert/Betrag",
+      "colToken": "Token",
+      "colStatusToken": "Status/Token",
+      "emptyText": "Keine Token mit niedrigem Wert gefunden",
+      "unsupportedAccountType": "Dieser Kontotyp wird nicht unterstützt.",
+      "unsupportedAccount": "Derzeit werden nur Private-Key- und Seed-Phrase-Adressen unterstützt."
     }
   },
   "constant": {
