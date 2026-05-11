@@ -626,11 +626,12 @@ export const useQuoteMethods = () => {
 
   const [supportedDEXList] = useSwapSupportedDexList();
 
-  const getAllQuotes = React.useCallback(
+  const _getAllQuotes = React.useCallback(
     async (
       params: Omit<getDexQuoteParams, 'dexId'> & {
-        setQuote: (quote: TDexQuoteData) => void;
-        onFinishedQuote: () => void;
+        setQuote?: (quote: TDexQuoteData) => void;
+        onFinishedQuote?: () => void;
+        dexId?: DEX_ENUM;
       },
     ) => {
       const chainObj = findChainByEnum(params.chain)!;
@@ -681,6 +682,7 @@ export const useQuoteMethods = () => {
           ...params,
           dexId: DEX_ENUM.WRAPTOKEN,
           account: params.account,
+          onFinishedQuote: params.onFinishedQuote || (() => undefined),
           sharedTasks: {
             preFetched: sharedPreFetched,
             recommendNonceTask: sharedRecommendNonceTask || undefined,
@@ -688,15 +690,18 @@ export const useQuoteMethods = () => {
         });
       }
 
-      return Promise.all([
-        ...(
-          Object.keys(DEX).filter(e =>
+      const dexList = params.dexId
+        ? ([params.dexId] as DEX_ENUM[])
+        : (Object.keys(DEX).filter(e =>
             supportedDEXList.includes(e),
-          ) as DEX_ENUM[]
-        ).map(dexId =>
+          ) as DEX_ENUM[]);
+
+      return Promise.all([
+        ...dexList.map(dexId =>
           getDexQuote({
             ...params,
             dexId,
+            onFinishedQuote: params.onFinishedQuote || (() => undefined),
             sharedTasks: {
               preFetched: sharedPreFetched,
               recommendNonceTask: sharedRecommendNonceTask || undefined,
@@ -714,6 +719,31 @@ export const useQuoteMethods = () => {
     ],
   );
 
+  const getAllQuotes = React.useCallback(
+    async (
+      params: Omit<getDexQuoteParams, 'dexId'> & {
+        setQuote: (quote: TDexQuoteData) => void;
+        onFinishedQuote: () => void;
+      },
+    ) => {
+      return _getAllQuotes(params);
+    },
+    [_getAllQuotes],
+  );
+
+  const getSingleQuote = React.useCallback(
+    async (
+      params: getDexQuoteParams & {
+        setQuote?: (quote: TDexQuoteData) => void;
+        onFinishedQuote?: () => void;
+      },
+    ) => {
+      const quotes = await _getAllQuotes(params);
+      return Array.isArray(quotes) ? quotes[0] : quotes;
+    },
+    [_getAllQuotes],
+  );
+
   return {
     validSlippage,
     getSwapList,
@@ -722,6 +752,7 @@ export const useQuoteMethods = () => {
     getTokenApproveStatus,
     getDexQuote,
     getAllQuotes,
+    getSingleQuote,
     swapViewList,
   };
 };

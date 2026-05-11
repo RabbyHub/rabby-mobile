@@ -25,7 +25,10 @@ import abiCoder, { AbiCoder } from 'web3-eth-abi';
 import { IExtractFromPromise } from '@/utils/type';
 import { findChain } from '@/utils/chain';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
+import { getRecommendNonce } from './recommendNonce';
+
+export { getRecommendNonce } from './recommendNonce';
 
 function buildTxParams(txMeta) {
   return {
@@ -202,34 +205,6 @@ export const fetchEstimatedL1Fee = async (
     return scrollL1FeeEstimate(txParams, account);
   }
   return Promise.resolve('0x0');
-};
-
-export const getRecommendNonce = async ({
-  from,
-  chainId,
-  account,
-}: {
-  from: string;
-  chainId: number;
-  account: Account | null;
-}) => {
-  const chain = findChain({
-    id: chainId,
-  });
-  if (!chain) {
-    throw new Error(t('background.error.invalidChainId'));
-  }
-  const onChainNonce = await requestETHRpc(
-    {
-      method: 'eth_getTransactionCount',
-      params: [from, 'latest'],
-    },
-    chain.serverId,
-    account,
-  );
-  const localNonce =
-    (await transactionHistoryService.getNonceByChain(from, chainId)) || 0;
-  return `0x${BigNumber.max(onChainNonce, localNonce).toString(16)}`;
 };
 
 export const getERC20Allowance = async (

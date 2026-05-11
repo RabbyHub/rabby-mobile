@@ -9,11 +9,58 @@ import {
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
-import { apisAutoLock } from '@/core/apis';
+import * as apisAutoLock from '@/core/apis/autoLock';
+import {
+  KEYCHAIN_STORAGE_TYPES,
+  DEFAULT_KEYCHAIN_STORAGE_TYPE,
+  coerceKeychainStorageType,
+  type KeychainStorageType,
+} from '@/core/apis/keychainCommon';
 import { preferenceService } from '@/core/services';
 import { useCallback, useMemo } from 'react';
 
 const isIOS = DeviceUtils.isIOS();
+
+export const CURRENT_KEYCHAIN_VERSION_VALUES = ['8.2.0-fork', '9.0.0'] as const;
+
+export type CurrentKeychainVersion =
+  (typeof CURRENT_KEYCHAIN_VERSION_VALUES)[number];
+
+const DEFAULT_CURRENT_KEYCHAIN_VERSION: CurrentKeychainVersion = '8.2.0-fork';
+const DEFAULT_DEBUG_KEYCHAIN_STORAGE: KeychainStorageType =
+  DEFAULT_KEYCHAIN_STORAGE_TYPE;
+
+function coerceCurrentKeychainVersion(
+  version: unknown,
+): CurrentKeychainVersion {
+  return version === '9.0.0' ? '9.0.0' : DEFAULT_CURRENT_KEYCHAIN_VERSION;
+}
+
+type DebugKeychainStorageByVersion = Record<
+  CurrentKeychainVersion,
+  KeychainStorageType
+>;
+
+function makeDefaultDebugKeychainStorageByVersion(): DebugKeychainStorageByVersion {
+  return {
+    '8.2.0-fork': DEFAULT_DEBUG_KEYCHAIN_STORAGE,
+    '9.0.0': DEFAULT_DEBUG_KEYCHAIN_STORAGE,
+  };
+}
+
+function coerceDebugKeychainStorageByVersion(
+  value: unknown,
+): DebugKeychainStorageByVersion {
+  const raw =
+    value && typeof value === 'object'
+      ? (value as Partial<Record<CurrentKeychainVersion, unknown>>)
+      : null;
+
+  return {
+    '8.2.0-fork': coerceKeychainStorageType(raw?.['8.2.0-fork']),
+    '9.0.0': coerceKeychainStorageType(raw?.['9.0.0']),
+  };
+}
 
 type ScreenshotSettings = {
   androidForceAllowScreenCapture: boolean;
@@ -23,6 +70,8 @@ type ScreenshotSettings = {
   blockSubmitIfFormChangedOnAuth: boolean;
   toastOpenApiHttpErrorStatus: boolean;
   debugSwapHistorySkipLocalLookup: boolean;
+  debugCurrentKeychainVersion: CurrentKeychainVersion;
+  debugKeychainStorageByVersion: DebugKeychainStorageByVersion;
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
   '@ExperimentalSettings',
@@ -37,15 +86,20 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     iosForceDisableAlertForSensitiveScene: isNonPublicProductionEnv,
 
     timeTipAboutSeedPhraseAndPrivateKey: 'copy',
-    blockSubmitIfFormChangedOnAuth: __DEV__,
+    blockSubmitIfFormChangedOnAuth: false,
     toastOpenApiHttpErrorStatus: false,
     debugSwapHistorySkipLocalLookup: false,
+    debugCurrentKeychainVersion: DEFAULT_CURRENT_KEYCHAIN_VERSION,
+    debugKeychainStorageByVersion: makeDefaultDebugKeychainStorageByVersion(),
   },
 );
 
 export const storeApiExpSettingData = {
   set: setExpSettingData,
   get: getExpSettingData,
+  getCurrentKeychainVersion,
+  getDebugKeychainStorageByVersion,
+  getShouldBlockSubmitIfFormChangedOnAuth,
   getTimeTipAboutSeedPhraseAndPrivateKey: () => {
     if (!__DEV__) {
       return 'pasted';
@@ -68,6 +122,70 @@ function setExpSettingData(valOrFunc: UpdaterOrPartials<ScreenshotSettings>) {
 
 function getExpSettingData() {
   return experimentalSettingsStore.getState();
+}
+
+export function getCurrentKeychainVersion(): CurrentKeychainVersion {
+  if (!isNonPublicProductionEnv) {
+    return DEFAULT_CURRENT_KEYCHAIN_VERSION;
+  }
+
+  return coerceCurrentKeychainVersion(
+    experimentalSettingsStore.getState().debugCurrentKeychainVersion,
+  );
+}
+
+export function setCurrentKeychainVersion(version: CurrentKeychainVersion) {
+  const nextVersion = coerceCurrentKeychainVersion(version);
+
+  if (!isNonPublicProductionEnv) {
+    return DEFAULT_CURRENT_KEYCHAIN_VERSION;
+  }
+
+  setExpSettingData(prev => ({
+    ...prev,
+    debugCurrentKeychainVersion: nextVersion,
+  }));
+
+  return nextVersion;
+}
+
+export function getDebugKeychainStorageByVersion(): DebugKeychainStorageByVersion {
+  return coerceDebugKeychainStorageByVersion(
+    experimentalSettingsStore.getState().debugKeychainStorageByVersion,
+  );
+}
+
+export function getDebugKeychainStorageForVersion(
+  version: CurrentKeychainVersion,
+): KeychainStorageType {
+  return getDebugKeychainStorageByVersion()[version];
+}
+
+export function setDebugKeychainStorageForVersion(
+  version: CurrentKeychainVersion,
+  storage: KeychainStorageType,
+) {
+  const nextStorage = coerceKeychainStorageType(storage);
+
+  if (!isNonPublicProductionEnv) {
+    return DEFAULT_DEBUG_KEYCHAIN_STORAGE;
+  }
+
+  setExpSettingData(prev => ({
+    ...prev,
+    debugKeychainStorageByVersion: {
+      ...coerceDebugKeychainStorageByVersion(
+        prev.debugKeychainStorageByVersion,
+      ),
+      [version]: nextStorage,
+    },
+  }));
+
+  return nextStorage;
+}
+
+function getShouldBlockSubmitIfFormChangedOnAuth() {
+  return __DEV__ && getExpSettingData().blockSubmitIfFormChangedOnAuth;
 }
 
 const KEY = isIOS
@@ -448,5 +566,54 @@ export function useDebugSwapHistorySkipLocalLookup() {
   return {
     debugSwapHistorySkipLocalLookup,
     toggleDebugSwapHistorySkipLocalLookup,
+  };
+}
+
+export function useCurrentKeychainVersion() {
+  const debugCurrentKeychainVersion = experimentalSettingsStore(
+    s => s.debugCurrentKeychainVersion,
+  );
+
+  const setDebugCurrentKeychainVersion = useCallback(
+    (nextVersion: CurrentKeychainVersion) => {
+      return setCurrentKeychainVersion(nextVersion);
+    },
+    [],
+  );
+
+  return {
+    currentKeychainVersion: getCurrentKeychainVersion(),
+    debugCurrentKeychainVersion: coerceCurrentKeychainVersion(
+      debugCurrentKeychainVersion,
+    ),
+    canSwitchCurrentKeychainVersion: isNonPublicProductionEnv,
+    setCurrentKeychainVersion: setDebugCurrentKeychainVersion,
+    currentKeychainVersionOptions: CURRENT_KEYCHAIN_VERSION_VALUES,
+  };
+}
+
+export function useDebugKeychainStorage() {
+  const debugKeychainStorageByVersion = experimentalSettingsStore(
+    s => s.debugKeychainStorageByVersion,
+  );
+
+  const setStorageForVersion = useCallback(
+    (version: CurrentKeychainVersion, nextStorage: KeychainStorageType) => {
+      return setDebugKeychainStorageForVersion(version, nextStorage);
+    },
+    [],
+  );
+
+  return {
+    debugKeychainStorageByVersion: coerceDebugKeychainStorageByVersion(
+      debugKeychainStorageByVersion,
+    ),
+    canSwitchDebugKeychainStorage: isNonPublicProductionEnv,
+    setDebugKeychainStorageForVersion: setStorageForVersion,
+    debugKeychainStorageOptions: [
+      KEYCHAIN_STORAGE_TYPES.RSA,
+      KEYCHAIN_STORAGE_TYPES.AES,
+      KEYCHAIN_STORAGE_TYPES.KC,
+    ] as KeychainStorageType[],
   };
 }

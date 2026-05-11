@@ -1,5 +1,5 @@
 import { openapi } from '@/core/request';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/types/account';
 import { gasAccountService } from '@/core/services/shared';
 import { matomoRequestEvent } from '@/utils/analytics';
 

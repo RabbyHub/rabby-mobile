@@ -26,10 +26,7 @@ import { requestKeyring } from '@/core/apis/keyring';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
-import {
-  isNewlyInputTextSameWithContentFromClipboard,
-  onPastedSensitiveData,
-} from '@/utils/clipboard';
+import { onPastedSensitiveData } from '@/utils/clipboard';
 import { Text } from '@/components/Typography';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -393,9 +390,10 @@ export const ImportSecret = ({ route }: ScreenProps) => {
                   ),
                   onChangeText: handleInputChange,
                 }}
+                // eslint-disable-next-line react/no-unstable-nested-components
                 customIcon={ctx => (
                   <TouchableOpacity
-                    style={ctx.wrapperStyle}
+                    style={[ctx.wrapperStyle, styles.scanButtonHitArea]}
                     onPress={() => {
                       navigateDeprecated(RootNames.Scanner);
                     }}>
@@ -496,6 +494,16 @@ const getStyles = createGetStyles2024(ctx => ({
   textArea: {
     marginTop: 14,
     paddingHorizontal: 20,
+  },
+  scanButtonHitArea: {
+    right: 0,
+    bottom: 0,
+    width: 32,
+    height: 32,
+    paddingRight: 14,
+    paddingBottom: 14,
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
   },
   pasteButton: {
     marginTop: 50,

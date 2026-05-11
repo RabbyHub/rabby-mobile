@@ -283,28 +283,23 @@ const NextInputComponent = ({
   const containerTestID = viewProps.testID ?? inputProps?.testID;
   const containerAccessibilityLabel =
     viewProps.accessibilityLabel ?? inputProps?.accessibilityLabel;
-  const shouldUseFocusableTestWrapper = !!(
+  const shouldAttachContainerA11y = !!(
     containerTestID || containerAccessibilityLabel
   );
   const normalizedInputProps = useMemo(() => {
-    if (!shouldUseFocusableTestWrapper || !inputProps) {
+    if (!shouldAttachContainerA11y || !inputProps) {
       return inputProps;
     }
 
-    const {
-      testID: _testID,
-      accessibilityLabel: _accessibilityLabel,
-      ...rest
-    } = inputProps;
+    const rest = { ...inputProps };
+    delete rest.testID;
+    delete rest.accessibilityLabel;
 
     return rest;
-  }, [inputProps, shouldUseFocusableTestWrapper]);
+  }, [inputProps, shouldAttachContainerA11y]);
 
   const needPatchTouchEvent = isAndroid && disableNestedTouchEventOnAndroid;
-  const WrapperComp =
-    needPatchTouchEvent || shouldUseFocusableTestWrapper
-      ? Pressable
-      : React.Fragment;
+  const WrapperComp = needPatchTouchEvent ? Pressable : React.Fragment;
   const shouldAttachContainerA11yToView = WrapperComp === React.Fragment;
 
   return (

@@ -15,6 +15,7 @@ import {
 } from '@/constant/swap';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { findChainByServerID } from '@/utils/chain';
+import { getTxMatchData } from '@/utils/tempo';
 
 export type ViewKey = keyof typeof CEX | keyof typeof DEX;
 
@@ -284,7 +285,7 @@ export class SwapService {
   ) => {
     const { postSwap } = openapi;
     const { txQuotes } = this;
-    const key = `${chain}-${tx.data}`;
+    const key = `${chain}-${getTxMatchData(tx as any)}`;
     const quoteInfo = txQuotes[key];
     if (quoteInfo) {
       delete txQuotes[key];

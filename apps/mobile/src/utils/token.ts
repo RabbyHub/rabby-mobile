@@ -11,17 +11,16 @@ import { hexToString } from 'web3-utils';
 
 import type { AbstractPortfolioToken } from '@/screens/Home/types';
 import { findChain } from './chain';
-import { CustomTestnetToken } from '@/core/services/customTestnetService';
+import type { CustomTestnetToken } from '@/types/customTestnet';
 import BigNumber from 'bignumber.js';
 import { MINIMUM_GAS_LIMIT } from '@/constant/gas';
 import { calcPercent } from '@/utils/math';
 import { formatUsdValue, formatAmount } from '@/utils/number';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
-import { Account } from '@/core/services/preference';
+import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
+import type { Account } from '@/types/account';
 import { type TokenItemMaybeWithOwner } from '@/databases/hooks/token';
-import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { ITokenItem } from '@/store/tokens';
-import { columnConverter } from '@/databases/entities/_helpers';
+import type { ITokenItem } from '@/types/assets';
 
 export const SMALL_TOKEN_ID = '_SMALL_TOKEN_';
 export const geTokenDecimals = async (
@@ -470,22 +469,27 @@ export function checkIfTokenBalanceEnough(
 }
 
 export const tokenItemEntityToTokenItem = (
-  token: TokenItemEntity,
+  token: Omit<ITokenItem, 'usd_value' | 'cex_ids' | 'launchpad' | 'asset'> & {
+    usd_value?: number;
+    cex_ids?: string | string[] | null;
+    launchpad?: string | TokenItem['launchpad'];
+    asset?: string | TokenItem['asset'];
+  },
 ): ITokenItem => {
   return {
     ...token,
     usd_value: token.price * token.amount,
     cex_ids:
       typeof token.cex_ids === 'string' // TODO: 处理干净后移除兼容逻辑
-        ? columnConverter.jsonStringToObj(token.cex_ids)
-        : token.cex_ids,
+        ? safeParseJSON(token.cex_ids) || []
+        : token.cex_ids || [],
     launchpad:
       typeof token.launchpad === 'string'
-        ? columnConverter.jsonStringToObj(token.launchpad)
+        ? safeParseJSON(token.launchpad)
         : token.launchpad,
     asset:
       typeof token.asset === 'string'
-        ? columnConverter.jsonStringToObj(token.asset)
+        ? safeParseJSON(token.asset)
         : token.asset,
   };
 };

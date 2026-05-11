@@ -1,0 +1,4 @@
+android/build/
+build/
+.gradle/
+ios/build/

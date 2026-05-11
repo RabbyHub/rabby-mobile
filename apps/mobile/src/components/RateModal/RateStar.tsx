@@ -3,7 +3,7 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import LottieView from 'lottie-react-native';
 import { trigger } from 'react-native-haptic-feedback';
 
-import StarCC from './icons/star-cc.svg';
+import { RcIconStarCC } from '@/assets2024/icons/rateModal';
 import { coerceInteger } from '@/utils/number';
 
 import AnimationStar from './animations/star.json';
@@ -88,7 +88,7 @@ function PressableStar({
           />
         </View>
       ) : (
-        <StarCC width={size} height={size} color={staticColor} />
+        <RcIconStarCC width={size} height={size} color={staticColor} />
       )}
     </TouchableOpacity>
   );

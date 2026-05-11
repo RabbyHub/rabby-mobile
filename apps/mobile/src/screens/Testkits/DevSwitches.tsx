@@ -992,6 +992,27 @@ function DevTestHomeCenterArea() {
           <Text style={styles.switchLabel}>Force Show Offchain Notify</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={[styles.switchRowWrapper, { marginTop: 12 }]}
+          onPress={() => {
+            setMockData(prev => ({
+              ...prev,
+              forceShowDepositAssetsCard: !prev.forceShowDepositAssetsCard,
+            }));
+          }}>
+          <AppSwitch2024
+            onPress={evt => evt.stopPropagation()}
+            value={mockData.forceShowDepositAssetsCard}
+            onValueChange={value => {
+              setMockData(prev => ({
+                ...prev,
+                forceShowDepositAssetsCard: value,
+              }));
+            }}
+          />
+          <Text style={styles.switchLabel}>Force Show Deposit Assets Card</Text>
+        </TouchableOpacity>
+
         <Button
           title={'Exposure Rate Guide'}
           type="ghost"
@@ -1186,7 +1207,7 @@ function DevSwitchSubmitFormGuard() {
             styles.secondarySectionTitle,
             { fontSize: 24, marginLeft: 2 },
           ]}>
-          Swap / Bridge Submit Guard
+          Send / Swap / Bridge Submit Guard
         </Text>
       </View>
 
@@ -1204,7 +1225,7 @@ function DevSwitchSubmitFormGuard() {
           <Text style={styles.switchLabel}>
             {blockSubmitIfFormChangedOnAuth
               ? 'Block submit and alert on auth-time form change'
-              : 'Only detect auth-time form change without blocking'}
+              : 'Disable auth-time form change submit guard'}
           </Text>
         </TouchableOpacity>
       </View>

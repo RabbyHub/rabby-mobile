@@ -155,7 +155,9 @@
     },
     "Imported": "導入",
     "SavedSeedPhrase": "我已保存种子短语",
-    "Created": "已建立"
+    "Created": "已建立",
+    "from": "從",
+    "to": "至"
   },
   "background": {
     "transactionWatcher": {
@@ -976,7 +978,8 @@
         "predict": "預測",
         "meme": "Memecoin",
         "market": "市場",
-        "gasDeposit": "Gas Deposit"
+        "gasDeposit": "Gas Deposit",
+        "convertDust": "轉換灰塵"
       },
       "swipeUp": {
         "descAndroidMore": "點擊探索更多 dApps",
@@ -988,7 +991,13 @@
         "emptyAndroid": "未將 dApp 加入收藏",
         "search": "搜尋",
         "empty": "尚未將網站加入收藏夾",
-        "favorite": "最愛"
+        "favorite": "最愛",
+        "tabs": {
+          "all": "全部",
+          "perps": "永續",
+          "predict": "預測"
+        },
+        "websites": "網站"
       },
       "depositAssets": {
         "title": "存入資產",
@@ -1985,13 +1994,13 @@
         "title": "在所有鏈上支付 Gas 費用",
         "subtitle": "當你沒有 gas 時"
       },
-      "depositWith": "使用進行存款",
       "switchAccount": "切換錢包",
       "gasBalance": "Gas 余额",
       "depositNow": "立即存款",
       "depositFailed": "存款失敗",
       "lowBalance": "您沒有足夠的 gas。請存入 gas 以確保未來的交易順利進行。",
-      "depositSubmitted": "存款已提交"
+      "depositSubmitted": "存款已提交",
+      "depositWith": "存入方式"
     },
     "receiveAddressList": {
       "selectChainTitle": "選擇鏈條",
@@ -2122,7 +2131,8 @@
       "price": "價格",
       "headerBalanceText": "餘額",
       "headerTokenValueText": "代幣價值",
-      "copyCA": "令牌合約地址已複製"
+      "copyCA": "令牌合約地址已複製",
+      "wallet": "錢包"
     },
     "customTestnet": {
       "add": "添加自定義網絡",
@@ -2475,6 +2485,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "更多"
+      },
+      "DappInfoPopup": {
+        "listedBy": "發布者",
+        "sitePopularity": "網站熱度",
+        "popularLevelHigh": "高",
+        "popularLevelMedium": "中",
+        "popularLevelLow": "低",
+        "popularLevelVeryLow": "非常低",
+        "category": "類別",
+        "skipDappInfoNextTime": "下次跳過此頁面",
+        "openDapp": "開啟"
       }
     },
     "browserManage": {
@@ -2645,7 +2666,10 @@
         "selectWithdrawToken": "選擇代幣",
         "hypeGasFeeTooltip": "提取到 EVM 將收取約 0.00002 HYPE 的手續費",
         "hypeActivationFeeTooltip": "Hyperliquid 將對首次的 HyperEVM 提款收取一次性啟動費用 {{fee}}。",
-        "hypeFeeTip": "費用 : ~${{fee}}"
+        "hypeFeeTip": "費用 : ~${{fee}}",
+        "chain": "鏈",
+        "max": "最大",
+        "selectChain": "選擇鏈"
       },
       "PerpsWithdrawFeePopup": {
         "btn": "我明白了",
@@ -2678,7 +2702,10 @@
         "feeRabby": "Rabby Wallet",
         "feeHyperliquid": "Hyperliquid",
         "feeDesc": "當用戶進行交易時，會收取<1>交易費用</1>和<2>建設者費用</2>。",
-        "feeTitle": "費用"
+        "feeTitle": "費用",
+        "amount": "金額",
+        "asset": "資產",
+        "action": "操作"
       },
       "PerpsAutoCloseModal": {
         "loss": "損失",
@@ -2718,7 +2745,17 @@
         "deposit": "存款",
         "closeShortSl": "平掉做空止损",
         "openShort": "開放做空",
-        "closeLong": "平掉多头"
+        "closeLong": "平掉多头",
+        "transferToSpot": "轉入現貨",
+        "transferToPerps": "轉入永續",
+        "transferDetailTitle": "轉帳",
+        "transferActionToSpot": "轉帳（從永續到現貨）",
+        "transferActionToPerps": "轉帳（從現貨到永續）",
+        "transferGotIt": "我知道了",
+        "action": "操作",
+        "asset": "資產",
+        "value": "金額",
+        "date": "日期"
       },
       "PerpsSelectTokenPopup": {
         "title": "選擇要存入的 Token",
@@ -2733,7 +2770,8 @@
       },
       "PerpsDepositCard": {
         "availableToTrade": "可交易：",
-        "deposit": "存入"
+        "deposit": "存入",
+        "swap": "兌換"
       },
       "PerpsAccountSelectorPopup": {
         "activatedAddress": "已啟用",
@@ -2745,6 +2783,10 @@
       "title": "永续合约",
       "selectAccountTitle": "選擇一個錢包以登錄",
       "explorePerps": "探索永续合约",
+      "categories": {
+        "favorite": "收藏",
+        "topVolume": "成交量榜"
+      },
       "more": "更多",
       "positions": "持倉",
       "leverageRangeMaxError": "最大杠杆为 {{max}}x",
@@ -2791,6 +2833,42 @@
       },
       "dappSelect": {
         "title": "選擇 Perps 提供者"
+      },
+      "search": {
+        "headerTitle": "搜尋 Perps",
+        "placeholder": "搜尋 Perps",
+        "empty": "找不到結果"
+      },
+      "EnableUnifiedAccount": {
+        "title": "啟用統一帳戶",
+        "desc": "統一帳戶是推薦的帳戶模式，可簡化交易體驗。所有代幣的現貨和永續倉位餘額將合併，並支持所有可用資產的交叉保證金。",
+        "confirm": "確認",
+        "cancel": "取消",
+        "importantTips": "一旦啟用統一帳戶，所有 USDC 抵押品將作為交叉保證金使用。",
+        "important": "重要"
+      },
+      "PerpsSpotSwap": {
+        "title": "Swap Stablecoins",
+        "from": "From",
+        "to": "Swap To",
+        "balance": "Balance",
+        "swapBtn": "Swap",
+        "max": "Max",
+        "estReceive": "Est. Receive: {{amount}} {{coin}}",
+        "estReceiveTooltip": "Estimated receive amount is subject to market price fluctuations.",
+        "toSwapEntry": "To swap→",
+        "toDepositEntry": "To deposit→",
+        "insufficientBalance": "Insufficient balance",
+        "invalidAmount": "Please input a valid amount",
+        "minimumAmount": "The minimum swap amount is {{amount}}"
+      },
+      "PerpMarginModePopup": {
+        "crossRequiresUnified": "此交易對的交叉保證金需要統一帳戶。是否要啟用它？"
+      },
+      "PerpsMultiBalance": {
+        "title": "Hyperliquid 餘額",
+        "deposit": "存款",
+        "withdraw": "提取"
       }
     },
     "perpsDetail": {
@@ -2961,6 +3039,9 @@
       },
       "guideEntry": {
         "gotIt": "了解了"
+      },
+      "PerpsAbout": {
+        "title": "關於"
       }
     },
     "devUIBuiltInPages": {
@@ -3051,7 +3132,8 @@
         "available": "可用",
         "liquidationAt": "清算在 < 1.0",
         "title": "交易概覽",
-        "remainingDebt": "剩餘債務"
+        "remainingDebt": "剩餘債務",
+        "toSwap": "兌換"
       },
       "borrowOverview": {
         "title": "借款詳情",
@@ -3235,7 +3317,9 @@
         },
         "repayWith": "抵押品以偿还",
         "collateralNotEnough": "您的抵押余额低于所选金额。",
-        "toRepay": "預期償還金額"
+        "toRepay": "預期償還金額",
+        "insufficientLiquidity": "流動性不足。",
+        "frozenCollateral": "此資產因 Aave 社群決議而被凍結。"
       },
       "repayWithAToken": {
         "header": {
@@ -3247,6 +3331,9 @@
       },
       "dappSelect": {
         "title": "選擇借貸提供者"
+      },
+      "signFallback": {
+        "preExecFailedUseFullSign": "模擬失敗。此交易很可能因 AAVE 錯誤而失敗。"
       }
     },
     "address": {
@@ -3313,6 +3400,63 @@
       "createWalletError": "無法創建錢包",
       "setPasswordTip": "設置密碼以保護您的錢包",
       "walletReady": "您的錢包已準備好 🚀"
+    },
+    "convertDust": {
+      "failReason": {
+        "missingRequiredParams": "缺少必要參數",
+        "quoteUnavailable": "獲取報價失敗",
+        "gasCostTooHigh": "超過 Gas 費用限制",
+        "priceImpactTooHigh": "價格影響過高",
+        "buildSwapTxsFailed": "建立交換 txs 失敗",
+        "sendSwapTxFailed": "發送交換 tx 失敗",
+        "transactionFailed": "交易失敗",
+        "submitFailed": "提交交易失敗",
+        "gasNotEnough": "Gas 不足"
+      },
+      "status": {
+        "pending": "交換中",
+        "idle": "等待交換",
+        "success": "交換成功"
+      },
+      "receiveSummary": {
+        "progress": "轉換進度",
+        "priceImpact": "價格影響上限",
+        "gasLimit": "單筆交易 Gas 上限",
+        "estimateReceive": "預計收到：",
+        "actualReceive": "收到"
+      },
+      "bottomBar": {
+        "stop": "停止",
+        "continue": "繼續",
+        "start": "開始轉換"
+      },
+      "completed": {
+        "title": "粉塵已轉換！",
+        "receive": "已收到：",
+        "failedTitle": "轉換已結束",
+        "viewMoreDetail": "查看更多詳情",
+        "fold": "摺疊"
+      },
+      "entryGuide": {
+        "title": "你可以找到 Convert Dust \n👇 在首頁上",
+        "button": "知道了"
+      },
+      "stopSheet": {
+        "title": "停止目前的兌換？",
+        "desc": "如果現在停止，剩餘的兌換將不會完成。請注意，已完成的兌換無法撤銷。",
+        "continue": "繼續",
+        "stop": "停止兌換"
+      },
+      "homeBanner": {
+        "title": "轉換灰塵",
+        "description": "支援將小額餘額轉換為原生代幣"
+      },
+      "colValueAmount": "價值/金額",
+      "colToken": "代币",
+      "colStatusToken": "狀態/代幣",
+      "emptyText": "找不到低價值代幣",
+      "unsupportedAccountType": "不支援此帳戶類型。",
+      "unsupportedAccount": "目前僅支援私鑰和助記詞地址。"
     }
   },
   "component": {

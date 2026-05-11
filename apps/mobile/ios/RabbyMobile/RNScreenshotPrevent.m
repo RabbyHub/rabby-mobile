@@ -5,9 +5,20 @@
 @implementation RNScreenshotPrevent {
     BOOL hasListeners;
     BOOL enabled;
+    BOOL appSwitcherBlurEnabled;
     UIImageView *obfuscatingView;
     UITextField *secureField;
     // UIImageView *imageView;
+}
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        appSwitcherBlurEnabled = YES;
+    }
+
+    return self;
 }
 
 // To export a module named RNScreenshotPrevent
@@ -16,6 +27,7 @@ RCT_EXPORT_MODULE();
     return @[
       @"userDidTakeScreenshot",
       @"screenCapturedChanged",
+      @"appSwitcherBlurChanged",
       @"preventScreenshotChanged",
       @"androidOnLifeCycleChanged" // robust, not really used
     ];
@@ -111,37 +123,58 @@ RCT_EXPORT_MODULE();
 
 #pragma mark - App Notification Methods
 
+- (void)emitAppSwitcherBlurChanged:(BOOL)visible {
+    if (hasListeners) {
+        // The JS overlay owns the normal app-switcher blur presentation so we only
+        // emit a deterministic lifecycle signal here and avoid depending on RN AppState.
+        [self sendEventWithName:@"appSwitcherBlurChanged" body:@{@"visible": @(visible)}];
+    }
+}
+
 /** displays blurry view when app becomes inactive */
 - (void)handleAppStateResignActive {
-    if (self->enabled) {
-        UIWindow    *keyWindow = [UIApplication sharedApplication].keyWindow;
-        UIImageView *blurredScreenImageView = [[UIImageView alloc] initWithFrame:keyWindow.bounds];
-
-        UIGraphicsBeginImageContext(keyWindow.bounds.size);
-        [keyWindow drawViewHierarchyInRect:keyWindow.frame afterScreenUpdates:NO];
-        UIImage *viewImage = UIGraphicsGetImageFromCurrentImageContext();
-        UIGraphicsEndImageContext();
-
-        blurredScreenImageView.image = [viewImage applyLightEffect];
-
-        self->obfuscatingView = blurredScreenImageView;
-        [keyWindow addSubview:self->obfuscatingView];
+    if (!(self->enabled || self->appSwitcherBlurEnabled)) {
+        return;
     }
+
+    if (self->appSwitcherBlurEnabled) {
+        [self emitAppSwitcherBlurChanged:YES];
+    }
+
+    // Keep the legacy native snapshot blur only for the prevent-screenshot flow.
+    // In regular backgrounding, JS renders the designed BlurView overlay instead.
+    if (!self->enabled || self->obfuscatingView) {
+        return;
+    }
+
+    UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
+    if (!keyWindow) {
+        return;
+    }
+
+    UIImageView *blurredScreenImageView = [[UIImageView alloc] initWithFrame:keyWindow.bounds];
+
+    UIGraphicsBeginImageContext(keyWindow.bounds.size);
+    [keyWindow drawViewHierarchyInRect:keyWindow.frame afterScreenUpdates:NO];
+    UIImage *viewImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+
+    blurredScreenImageView.image = [viewImage applyLightEffect];
+
+    self->obfuscatingView = blurredScreenImageView;
+    [keyWindow addSubview:self->obfuscatingView];
 }
 
 /** removes blurry view when app becomes active */
 - (void)handleAppStateActive {
-    if  (self->obfuscatingView) {
-        [UIView animateWithDuration: 0.3
-                         animations: ^ {
-                             self->obfuscatingView.alpha = 0;
-                         }
-                         completion: ^(BOOL finished) {
-                             [self->obfuscatingView removeFromSuperview];
-                             self->obfuscatingView = nil;
-                         }
-         ];
+    if (self->obfuscatingView) {
+        [self->obfuscatingView removeFromSuperview];
+        self->obfuscatingView = nil;
     }
+
+    // Mirror the resign-active signal so JS can hide the app-switcher overlay
+    // without relying on the RN AppState transition timing.
+    [self emitAppSwitcherBlurChanged:NO];
 }
 
 /** sends screenshot taken event into app */
@@ -274,6 +307,10 @@ RCT_EXPORT_METHOD(togglePreventScreenshot:(BOOL) isPrevent) {
           // [[NSNotificationCenter defaultCenter]removeObserver:UIScreenCapturedDidChangeNotification];
       });
     }
+}
+
+RCT_EXPORT_METHOD(setAppSwitcherBlurEnabled:(BOOL)isEnabled) {
+    self->appSwitcherBlurEnabled = isEnabled;
 }
 
 RCT_EXPORT_METHOD(iosProtectFromScreenRecording) {

@@ -5,7 +5,7 @@ import type {
   RouteProp,
 } from '@react-navigation/native';
 
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import type { Account, KeyringAccountWithAlias } from '@/types/account';
 import {} from '@react-navigation/bottom-tabs';
 
 import type { RootNames } from './constant/layout';
@@ -22,16 +22,15 @@ import type {
   AbstractProject,
 } from './screens/Home/types';
 import type { DappInfo } from './core/services/dappService';
-import type { HistoryDisplayItem } from './screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from './types/history';
 import type { TransactionGroup } from './core/services/transactionHistory';
-import { Account } from './core/services/preference';
 import {
   ApprovalSpenderItemToBeRevoked,
   AssetApprovalSpender,
 } from './screens/Approvals/useApprovalsPage';
-import { HistoryItemCateType } from './screens/Transaction/components/type';
+import { HistoryItemCateType } from './types/history';
 import type { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
-import { ITokenItem } from './store/tokens';
+import type { ITokenItem } from './types/assets';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -161,6 +160,8 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
+  [RootNames.DevDataKeychain]?: {};
+  [RootNames.DevDataWhitelist]?: {};
   [RootNames.DevUIBuiltInPages]?: {};
   [RootNames.DevUIPermissions]?: {};
   [RootNames.DevSwitches]?: {};
@@ -371,6 +372,10 @@ export type TransactionNavigatorParamList = {
     toTokenId?: TokenItem['id'];
   };
   [RootNames.MultiBridge]?: TransactionNavigatorParamList['Bridge'] & object;
+  [RootNames.ConvertDust]?: {
+    disableAccountSwitch?: boolean;
+    fromHomeConvertDustBanner?: boolean;
+  };
   [RootNames.GasAccount]?: {};
   [RootNames.BatchRevoke]: {
     revokeList: ApprovalSpenderItemToBeRevoked[];
@@ -389,9 +394,20 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.PerpsMarketDetail]: {
     market: string;
-    fromSource?: 'homePagePositionList' | 'openPosition' | '';
+    fromSource?:
+      | 'homePagePositionList'
+      | 'openPosition'
+      | 'marketDetail'
+      | 'searchPerps'
+      | '';
     showOpenPosition?: boolean;
     direction?: 'Long' | 'Short';
+  };
+  [RootNames.PerpsSearch]?: {
+    initialTab?: string;
+    openFromSource?: 'openPosition' | 'searchPerps' | 'marketDetail';
+    direction?: 'Long' | 'Short';
+    autoFocus?: boolean;
   };
   [RootNames.Lending]?: {
     tokenAddress?: string;

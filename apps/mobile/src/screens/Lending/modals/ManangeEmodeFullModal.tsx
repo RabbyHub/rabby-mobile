@@ -16,10 +16,8 @@ import { transactionHistoryService } from '@/core/services';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import {
-  useSignatureStoreOf,
-  SignatureInstanceProvider,
-} from '@/components2024/MiniSignV2';
+import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
+import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import {

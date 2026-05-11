@@ -1,14 +1,18 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname $script_dir)
 
 . $script_dir/fns.sh --source-only
 . $script_dir/fast-build/_fns.sh --source-only
+. $script_dir/libs/node-runtime.sh
 . $script_dir/turbo-build/_fns.sh --source-only
+
+ensure_mobile_node_runtime
 
 export buildchannel="selfhost-reg";
 export BUILD_TARGET_PLATFORM="ios";
+export RABBY_MOBILE_BUILD_ENV="regression";
 check_build_params;
 check_s3_params;
 checkout_s3_pub_deployment_params;
@@ -120,6 +124,8 @@ prepare_ios_build_artifacts() {
     turbo_log "ios build artifacts already up to date"
     return 0
   fi
+
+  ensure_inpage_bridge_assets || return $?
 
   yarn check-nodeengines &&
     yarn ../mobile-local-pages make-theme &&

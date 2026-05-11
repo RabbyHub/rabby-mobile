@@ -26,7 +26,11 @@ export function DappFirstSearchResult({
 }: {
   data: DappInfo[];
   searchText: string;
-  onOpenURL?(url: string, options?: { isDirect?: boolean }): void;
+  onOpenURL?(
+    url: string,
+    options?: { isDirect?: boolean; isRemindOpen?: boolean },
+  ): void;
+
   isValidDomain?: boolean;
   style?: ViewProps['style'];
 }) {
@@ -40,7 +44,9 @@ export function DappFirstSearchResult({
     if (!dappService.getDapp(safeGetOrigin(dapp.url || dapp.origin))?.isDapp) {
       dappService.updateDapp(dapp);
     }
-    onOpenURL?.(dapp.url || dapp.origin);
+    onOpenURL?.(dapp.url || dapp.origin, {
+      isRemindOpen: true,
+    });
     if (dapp.origin) {
       matomoRequestEvent({
         category: 'Websites Usage',
@@ -151,7 +157,10 @@ export function BrowserSearchResult({
 }: {
   data: DappInfo[];
   searchText: string;
-  onOpenURL?(url: string, options?: { isDirect?: boolean }): void;
+  onOpenURL?(
+    url: string,
+    options?: { isDirect?: boolean; isRemindOpen?: boolean },
+  ): void;
   isValidDomain?: boolean;
   isInBottomSheet?: boolean;
   showOtherResults?: boolean;
@@ -164,23 +173,22 @@ export function BrowserSearchResult({
 
   const { t } = useTranslation();
 
-  const handlePress = useMemoizedFn(
-    (dapp: DappInfo, options?: { isDirect?: boolean }) => {
-      if (
-        !dappService.getDapp(safeGetOrigin(dapp.url || dapp.origin))?.isDapp
-      ) {
-        dappService.updateDapp(dapp);
-      }
-      onOpenURL?.(dapp.url || dapp.origin, options);
-      if (dapp.origin) {
-        matomoRequestEvent({
-          category: 'Websites Usage',
-          action: 'Website_Visit_Search Results',
-          label: dapp.origin,
-        });
-      }
-    },
-  );
+  const handlePress = useMemoizedFn((dapp: DappInfo) => {
+    if (!dappService.getDapp(safeGetOrigin(dapp.url || dapp.origin))?.isDapp) {
+      dappService.updateDapp(dapp);
+    }
+
+    onOpenURL?.(dapp.url || dapp.origin, {
+      isRemindOpen: true,
+    });
+    if (dapp.origin) {
+      matomoRequestEvent({
+        category: 'Websites Usage',
+        action: 'Website_Visit_Search Results',
+        label: dapp.origin,
+      });
+    }
+  });
 
   return (
     <Component

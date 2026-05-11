@@ -2,8 +2,8 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import WatchKeyring from '@rabby-wallet/eth-keyring-watch';
 
-import { isSameAccount } from '@/hooks/accountsSwitcher';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import { isSameAccount } from '@/utils/isSameAccount';
+import type { KeyringAccountWithAlias } from '@/types/account';
 import {
   contactService,
   dappService,

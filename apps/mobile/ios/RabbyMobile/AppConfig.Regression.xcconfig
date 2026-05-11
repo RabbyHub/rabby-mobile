@@ -1,0 +1,9 @@
+//
+//  AppConfig.Regression.xcconfig
+//  RabbyMobile
+//
+//  Regression wrapper for local build overrides.
+//
+
+#include "AppConfig.xcconfig"
+#include? "AppConfig.Regression.local.xcconfig"

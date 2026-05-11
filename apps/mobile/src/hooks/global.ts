@@ -11,7 +11,9 @@ const AppContext = React.createContext<{
 export const AppProvider = AppContext.Provider;
 
 export function loadSecurityChain({ rabbitCode }: { rabbitCode: string }) {
-  if (securityChainRef.current && rabbitCode) return securityChainRef.current;
+  if (securityChainRef.current && rabbitCode) {
+    return securityChainRef.current;
+  }
 
   return (securityChainRef.current = makeSecureKeyChainInstance({
     salt: rabbitCode,
@@ -19,7 +21,7 @@ export function loadSecurityChain({ rabbitCode }: { rabbitCode: string }) {
 }
 
 export function useAppSecurityChain() {
-  const { securityChain } = React.useContext(AppContext);
+  const { rabbitCode, securityChain } = React.useContext(AppContext);
 
-  return { securityChain };
+  return { rabbitCode, securityChain };
 }

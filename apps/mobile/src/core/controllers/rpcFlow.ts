@@ -32,10 +32,10 @@ import { hexToNumber, isHex } from 'viem';
 import { intToHex } from '@/utils/number';
 import BigNumber from 'bignumber.js';
 import { getAccountList } from '../apis/account';
-import { getDappAccount } from '@/hooks/useDapps';
+import { getDappAccount } from '@/core/utils/dappAccount';
 import { shouldAutoConnect, shouldAutoPersonalSign } from './autoConnect';
 import { openapi } from '../request';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 
 export const resemblesETHAddress = (str: string): boolean => {
   return str.length === 42;

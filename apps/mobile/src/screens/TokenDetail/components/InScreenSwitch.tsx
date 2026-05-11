@@ -78,12 +78,12 @@ function AccountSwitcherComponent({
       )}
       {!disableSwitch && (
         <CaretArrowIconCC
-          dir={!isOpen ? 'down' : 'down'}
-          style={[styles.addressCaretIcon]}
-          width={20}
-          height={20}
-          bgColor="transparent"
-          lineColor={colors2024['neutral-foot']}
+          dir="down"
+          style={styles.addressCaretIcon}
+          width={18}
+          height={18}
+          bgColor={colors2024['neutral-bg-5']}
+          lineColor={colors2024['neutral-title-1']}
         />
       )}
     </Pressable>
@@ -95,9 +95,12 @@ export const AccountSwitcher = memo(AccountSwitcherComponent);
 const getStyle = createGetStyles2024(ctx => {
   return {
     container: {
-      borderRadius: 6,
-      padding: 6,
+      borderRadius: 8,
+      paddingHorizontal: 8,
+      paddingVertical: 6,
       backgroundColor: ctx.colors2024['neutral-bg-5'],
+      borderWidth: 1,
+      borderColor: ctx.colors2024['neutral-line'],
       flexDirection: 'row',
       alignItems: 'center',
       alignSelf: 'flex-start',
@@ -134,8 +137,9 @@ const getStyle = createGetStyles2024(ctx => {
       flexShrink: 1,
     },
     addressCaretIcon: {
-      marginLeft: 0,
-      width: 20,
+      marginLeft: 2,
+      width: 18,
+      height: 18,
       flexShrink: 0,
     },
     reverseCaret: {

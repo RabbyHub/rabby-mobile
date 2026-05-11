@@ -23,8 +23,7 @@ export function TipFeedbackByScreenshot({ style }: RNViewProps) {
 
   return (
     <View style={[styles.container, style]}>
-      <RcBgBug style={styles.iconBgBug} />
-      <View style={[styles.line, { marginBottom: 4 }]}>
+      <View style={styles.line}>
         <Text style={styles.title}>
           {IS_IOS ? (
             <Text style={styles.textBulb}>💡</Text>
@@ -55,18 +54,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       marginHorizontal: ScreenLayouts.homeHorizontalPadding,
 
       position: 'relative',
-      height: 76,
-      // paddingVertical: 16,
-      paddingHorizontal: 12,
+      paddingVertical: 10,
+      paddingLeft: 16,
+      paddingRight: 10,
       borderRadius: 12,
 
       flexDirection: 'column',
       justifyContent: 'center',
 
-      borderWidth: 1,
-      borderStyle: 'solid',
-      borderColor: colors2024['brand-light-1'],
-      backgroundColor: colors2024['brand-light-1'],
+      backgroundColor: colors2024['neutral-line'],
     },
 
     iconBgBug: {
@@ -77,15 +73,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
 
     closeIcon: {
-      width: 22,
-      height: 22,
+      width: 16,
+      height: 16,
       color: colors2024['neutral-title-1'],
     },
 
     line: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       // ...makeDebugBorder(),
     },
 
@@ -102,16 +98,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
 
     title: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 18,
+      fontSize: 16,
       fontWeight: 700,
-      // lineHeight: 22,
       color: colors2024['neutral-title-1'],
     },
 
     description: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
-      fontWeight: 400,
+      fontWeight: 500,
       lineHeight: 18,
       color: colors2024['neutral-foot'],
     },

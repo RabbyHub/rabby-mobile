@@ -5,6 +5,8 @@ set -e
 script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname $(dirname $script_dir))
 
+. "$project_dir/scripts/fns.sh" --source-only
+
 WITH_ENVIRONMENT="$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh"
 REACT_NATIVE_XCODE="$REACT_NATIVE_PATH/scripts/react-native-xcode.sh"
 SENTRY_XCODE="../node_modules/@sentry/react-native/scripts/sentry-xcode.sh"
@@ -20,6 +22,7 @@ echo "[RabbyMobileBuild] NODE_BINARY is $NODE_BINARY"
 
 echo "[RabbyMobileBuild] customize build environment vars"
 echo "[RabbyMobileBuild] CONFIGURATION is $CONFIGURATION"
+load_env_var_from_candidate_files RABBY_MOBILE_CODE
 if [[ "$CONFIGURATION" == "Release" ]]; then
   [ -z $RABBY_MOBILE_BUILD_ENV ] && export RABBY_MOBILE_BUILD_ENV="production"
   [ -z $buildchannel ] && export buildchannel="appstore"
@@ -27,6 +30,26 @@ if [[ "$CONFIGURATION" == "Release" ]]; then
     echo "[RabbyMobileBuild] no RABBY_MOBILE_CODE set, abort bundle"
     exit 1;
   fi
+fi
+if [[ "$CONFIGURATION" == "Regression" ]]; then
+  [ -z $RABBY_MOBILE_BUILD_ENV ] && export RABBY_MOBILE_BUILD_ENV="regression"
+  if [ -z $RABBY_MOBILE_CODE ]; then
+    echo "[RabbyMobileBuild] no RABBY_MOBILE_CODE set, abort bundle"
+    exit 1;
+  fi
+fi
+if [[ "$APP_ENV" == "hashing" ]] && [[ "$RABBY_MOBILE_CODE" == "RABBY_MOBILE_CODE_DEV" ]]; then
+  echo "[RabbyMobileBuild] hashing mode allows fixed RABBY_MOBILE_CODE_DEV."
+fi
+if [[ "$CONFIGURATION" == "Release" ]] && [[ "$RABBY_MOBILE_CODE" == "RABBY_MOBILE_CODE_DEV" ]] && [[ "$APP_ENV" != "hashing" ]]; then
+  echo "[RabbyMobileBuild] Release build is using fallback RABBY_MOBILE_CODE_DEV."
+  echo "[RabbyMobileBuild] Run deploy-ios-appstore.sh once or generate ios/RabbyMobile/AppConfig.Release.local.xcconfig with the production RABBY_MOBILE_CODE before packaging."
+  exit 1;
+fi
+if [[ "$CONFIGURATION" == "Regression" ]] && [[ "$RABBY_MOBILE_CODE" == "RABBY_MOBILE_CODE_DEV" ]] && [[ "$APP_ENV" != "hashing" ]]; then
+  echo "[RabbyMobileBuild] Regression build is using fallback RABBY_MOBILE_CODE_DEV."
+  echo "[RabbyMobileBuild] Run deploy-ios-adhoc.sh once or generate ios/RabbyMobile/AppConfig.Regression.local.xcconfig with the shared regression RABBY_MOBILE_CODE before packaging."
+  exit 1;
 fi
 echo "[RabbyMobileBuild] buildchannel is $buildchannel"
 
@@ -37,6 +60,14 @@ check_env_file() {
     env_file="$project_dir/.env.hashing"
   elif [ "$CONFIGURATION" == "Release" ]; then
     env_file="$project_dir/.env.production"
+  elif [ "$CONFIGURATION" == "Regression" ]; then
+    if [ -f "$project_dir/.env.regression" ]; then
+      env_file="$project_dir/.env.regression"
+    elif [ -f "$project_dir/.env.local" ]; then
+      env_file="$project_dir/.env.local"
+    else
+      env_file="$project_dir/.env"
+    fi
   elif [ -f "$project_dir/.env.local" ]; then
     env_file="$project_dir/.env.local"
   fi

@@ -1,6 +1,6 @@
 const mockGetRecommendNonce = jest.fn();
 
-jest.mock('@/core/apis/provider', () => ({
+jest.mock('@/core/apis/recommendNonce', () => ({
   getRecommendNonce: (...args: unknown[]) => mockGetRecommendNonce(...args),
 }));
 

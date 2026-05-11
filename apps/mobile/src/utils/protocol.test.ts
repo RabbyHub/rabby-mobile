@@ -1,16 +1,10 @@
-const mockJsonStringToObj = jest.fn();
+const mockSafeParseJSON = jest.fn();
 
 function loadProtocolModule() {
   jest.resetModules();
 
-  jest.doMock('@/databases/entities/_helpers', () => ({
-    columnConverter: {
-      jsonStringToObj: (value: string) => mockJsonStringToObj(value),
-    },
-  }));
-
-  jest.doMock('@/databases/entities/portocolItem', () => ({
-    ProtocolItemEntity: class ProtocolItemEntity {},
+  jest.doMock('@rabby-wallet/base-utils/dist/isomorphic/string', () => ({
+    safeParseJSON: (value: string) => mockSafeParseJSON(value),
   }));
 
   return require('./protocol') as typeof import('./protocol');
@@ -18,7 +12,7 @@ function loadProtocolModule() {
 
 describe('protocol utils', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    mockSafeParseJSON.mockReset();
   });
 
   it('portfolioToIProtocolPortfolio sums token worth and signed real usd value', () => {
@@ -44,7 +38,7 @@ describe('protocol utils', () => {
   });
 
   it('protocolEntity2IProtocolItem converts and sorts portfolios by net worth', () => {
-    mockJsonStringToObj.mockReturnValue([
+    mockSafeParseJSON.mockReturnValue([
       {
         pool: { id: 'p-small' },
         name: 'Small',
@@ -68,7 +62,7 @@ describe('protocol utils', () => {
       portfolio_item_list: 'raw-json',
     } as any);
 
-    expect(mockJsonStringToObj).toHaveBeenCalledWith('raw-json');
+    expect(mockSafeParseJSON).toHaveBeenCalledWith('raw-json');
     expect(result.netWorth).toBe(11);
     expect(result._portfolios.map(item => item.id)).toEqual([
       'p-large',

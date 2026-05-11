@@ -1,6 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useEffect, useMemo, useRef } from 'react';
-import { SelectedBridgeQuote, useSetRefreshId } from '../hooks';
+import { useSetRefreshId } from '../hooks/context';
+import type { SelectedBridgeQuote } from '../types';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
@@ -12,7 +13,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { RcIconEmptyCC } from '@/assets/icons/gnosis';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import RcIconRefreshCC from '@/assets2024/icons/bridge/IconRefreshCC.svg';
-import { BridgeQuoteItem, bridgeQuoteScore } from './BridgeQuoteItem';
+import { BridgeQuoteItem } from './BridgeQuoteItem';
+import { bridgeQuoteScore } from '../utils/bridgeQuote';
 import { QuoteLoading } from './loading';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { Text } from '@/components/Typography';

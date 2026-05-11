@@ -1,15 +1,15 @@
 import React from 'react';
-import { BlurView, BlurViewProps } from '@react-native-community/blur';
+import { BlurView } from '@react-native-community/blur';
 
 import { useGetBinaryMode, useThemeStyles } from '@/hooks/theme';
+import { RootNames } from '@/constant/layout';
+import { useCurrentRouteName } from '@/hooks/navigation';
+import { useIOSAppSwitcherBlurVisible } from '@/hooks/native/security';
 import { createGetStyles } from '@/utils/styles';
 import { useIsOnBackground } from '@/hooks/useLock';
-import { useCurrentRouteName } from '@/hooks/navigation';
-import { RootNames } from '@/constant/layout';
-import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import { View } from 'react-native';
+import { IS_ANDROID } from '@/core/native/utils';
 
-const getBlurModalStyles = createGetStyles(colors => {
+const getBlurModalStyles = createGetStyles(() => {
   return {
     container: {
       position: 'absolute',
@@ -18,33 +18,22 @@ const getBlurModalStyles = createGetStyles(colors => {
       bottom: 0,
       right: 0,
     },
-
-    iosView: {
-      backgroundColor: colors['neutral-bg-1'],
-    },
   };
 });
 
-const BLUR_FREE_ROOT_NAMES = [RootNames.Unlock] as const;
-
 export function BackgroundSecureBlurView() {
   const { styles } = useThemeStyles(getBlurModalStyles);
-
   const appThemeMode = useGetBinaryMode();
-
   const { currentRouteName } = useCurrentRouteName();
-  const { isOnBackground } = useIsOnBackground();
+  const visible = useIOSAppSwitcherBlurVisible();
 
-  if (!isOnBackground || IS_ANDROID) return null;
-  if (
-    currentRouteName &&
-    BLUR_FREE_ROOT_NAMES.includes(currentRouteName as any)
-  )
+  if (!visible || IS_ANDROID) {
     return null;
+  }
 
-  // if (IS_IOS) {
-  //   return <View style={[styles.container, styles.iosView]} />;
-  // }
+  if (currentRouteName === RootNames.Unlock) {
+    return null;
+  }
 
   return (
     <BlurView
@@ -63,7 +52,9 @@ export function SafeTipModalBlurView() {
 
   const { isOnBackground } = useIsOnBackground();
 
-  if (!isOnBackground) return null;
+  if (!isOnBackground) {
+    return null;
+  }
 
   return (
     <BlurView

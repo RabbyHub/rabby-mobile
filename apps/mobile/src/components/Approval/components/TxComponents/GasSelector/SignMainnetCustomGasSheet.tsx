@@ -26,7 +26,6 @@ import { Account } from '@/core/services/preference';
 import { apiProvider } from '@/core/apis';
 import { INPUT_NUMBER_RE } from '@/constant/regexp';
 import { calcMaxPriorityFee } from '@/utils/transaction';
-import { calcGasEstimated } from '@/utils/time';
 import { formatGasHeaderUsdValue, formatTokenAmount } from '@/utils/number';
 import { useFindChain } from '@/hooks/useFindChain';
 import { useTheme2024 } from '@/hooks/theme';
@@ -47,6 +46,7 @@ import {
   buildSignMainnetGasChange,
   type SignMainnetGasChange,
 } from './signMainnetCustomGas';
+import type { GasTokenInfo } from '@/utils/tempo';
 
 type GasCalcResult = {
   gasCostUsd: BigNumber;
@@ -101,6 +101,7 @@ export const SignMainnetCustomGasSheet = ({
   account,
   fixedMode,
   defaultFixedModeOnCurrentChain = false,
+  gasToken,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -133,9 +134,10 @@ export const SignMainnetCustomGasSheet = ({
   account: Account;
   fixedMode?: boolean;
   defaultFixedModeOnCurrentChain?: boolean;
+  gasToken?: GasTokenInfo;
 }) => {
   const { t } = useTranslation();
-  const { colors, colors2024, styles } = useTheme2024({ getStyle });
+  const { colors, styles } = useTheme2024({ getStyle });
   const chain = useFindChain({ id: chainId })!;
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -149,12 +151,14 @@ export const SignMainnetCustomGasSheet = ({
   const [checkedFixedMode, setCheckedFixedMode] = useState(
     defaultFixedModeOnCurrentChain,
   );
-  const [maxPriorityFee, setMaxPriorityFee] = useState<number | undefined>(
+  const [maxPriorityFee, setMaxPriorityFee] = useState<string | undefined>(
     rawSelectedGas
-      ? (rawSelectedGas.priority_price === null
-          ? rawSelectedGas.price
-          : rawSelectedGas.priority_price) / 1e9
-      : 0,
+      ? String(
+          (rawSelectedGas.priority_price === null
+            ? rawSelectedGas.price
+            : rawSelectedGas.priority_price) / 1e9,
+        )
+      : '0',
   );
   const [isReal1559, setIsReal1559] = useState(false);
   const hasCustomPriorityFee = useRef(false);
@@ -186,6 +190,17 @@ export const SignMainnetCustomGasSheet = ({
     },
   });
 
+  const resolvedGasToken = useMemo(
+    () =>
+      gasToken || {
+        tokenId: chain.nativeTokenAddress,
+        symbol: chain.nativeTokenSymbol,
+        decimals: chain.nativeTokenDecimals || 18,
+        logoUrl: chain.nativeTokenLogo,
+      },
+    [chain, gasToken],
+  );
+
   const gasCostUsdStr = useMemo(() => {
     const bn = new BigNumber(modalExplainGas?.gasCostUsd);
     return formatGasHeaderUsdValue(bn.toString(10));
@@ -197,8 +212,8 @@ export const SignMainnetCustomGasSheet = ({
         new BigNumber(modalExplainGas.gasCostAmount).toString(10),
         6,
         true,
-      )} ${chain?.nativeTokenSymbol}`,
-    [chain?.nativeTokenSymbol, modalExplainGas.gasCostAmount],
+      )} ${resolvedGasToken.symbol}`,
+    [modalExplainGas.gasCostAmount, resolvedGasToken.symbol],
   );
 
   const hasTip = isReal1559 && isHardware;
@@ -290,12 +305,13 @@ export const SignMainnetCustomGasSheet = ({
     if (!is1559) {
       return;
     }
+    const maxPriorityFeeNumber = Number(maxPriorityFee || 0);
     if (selectedGas?.level === 'custom') {
-      setIsReal1559(Number(customGas) !== maxPriorityFee);
+      setIsReal1559(Number(customGas) !== maxPriorityFeeNumber);
       return;
     }
     if (selectedGas) {
-      setIsReal1559(selectedGas.price / 1e9 !== maxPriorityFee);
+      setIsReal1559(selectedGas.price / 1e9 !== maxPriorityFeeNumber);
     }
   }, [customGas, is1559, maxPriorityFee, selectedGas]);
 
@@ -324,11 +340,14 @@ export const SignMainnetCustomGasSheet = ({
       isSpeedUp || isCancel,
     );
 
-    setMaxPriorityFee((prevFee = priorityPrice / 1e9) => {
+    setMaxPriorityFee(prevFee => {
       if (hasCustomPriorityFee.current) {
-        priorityPrice = Math.min(selectedGas.price, prevFee * 1e9);
+        priorityPrice = Math.min(
+          selectedGas.price,
+          Number(prevFee || priorityPrice / 1e9) * 1e9,
+        );
       }
-      return priorityPrice / 1e9;
+      return String(priorityPrice / 1e9);
     });
   }, [
     chainId,
@@ -389,6 +408,9 @@ export const SignMainnetCustomGasSheet = ({
   };
 
   const handleMaxPriorityFeeChange = (val: string) => {
+    if (!INPUT_NUMBER_RE.test(val)) {
+      return;
+    }
     let priorityFeeMax = selectedGas ? selectedGas.price / 1e9 : 0;
 
     if (selectedGas?.level === 'custom' && customGas !== undefined) {
@@ -401,16 +423,16 @@ export const SignMainnetCustomGasSheet = ({
     }
 
     const num = Number(val);
-    if (num < 0) {
+    if (Number.isNaN(num) || num < 0) {
       return;
     }
     if (num > priorityFeeMax) {
-      setMaxPriorityFee(priorityFeeMax);
+      setMaxPriorityFee(String(priorityFeeMax));
       return;
     }
 
     hasCustomPriorityFee.current = true;
-    setMaxPriorityFee(num);
+    setMaxPriorityFee(val);
   };
 
   const handleConfirm = () => {
@@ -423,7 +445,7 @@ export const SignMainnetCustomGasSheet = ({
         gas: selectedGas,
         gasLimit: Number(gasLimit),
         nonce: Number(nonce),
-        maxPriorityFeeGwei: maxPriorityFee ?? 0,
+        maxPriorityFeeGwei: Number(maxPriorityFee || 0),
         customGasGwei:
           selectedGas.level === 'custom' ? Number(customGas || 0) : undefined,
         fixedMode: checkedFixedMode,
@@ -472,9 +494,9 @@ export const SignMainnetCustomGasSheet = ({
             <View>
               <Text style={styles.gasSelectorModalAmount}>{gasCostUsdStr}</Text>
               <View style={styles.gasSelectorModalUsdWrap}>
-                {chain.nativeTokenLogo ? (
+                {resolvedGasToken.logoUrl ? (
                   <Image
-                    source={{ uri: chain.nativeTokenLogo }}
+                    source={{ uri: resolvedGasToken.logoUrl }}
                     width={16}
                     height={16}
                     style={StyleSheet.flatten({ borderRadius: 16 })}
@@ -533,11 +555,13 @@ export const SignMainnetCustomGasSheet = ({
                 </Text>
                 <Text style={styles.gasPriceDescBoldText}>
                   {formatTokenAmount(
-                    new BigNumber(nativeTokenBalance).div(1e18).toFixed(),
+                    new BigNumber(nativeTokenBalance)
+                      .div(new BigNumber(10).pow(resolvedGasToken.decimals))
+                      .toFixed(),
                     4,
                     true,
                   )}{' '}
-                  {chain.nativeTokenSymbol}
+                  {resolvedGasToken.symbol}
                 </Text>
               </Text>
             </View>

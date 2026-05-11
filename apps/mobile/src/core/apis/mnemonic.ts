@@ -15,7 +15,7 @@ import {
   preferenceService,
 } from '../services';
 import { onSetAddressAlias } from '../services/keyringParams';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 import {
   _getKeyringByType,
   addKeyringToStash,
@@ -294,7 +294,9 @@ export const generateKeyringWithMnemonic = async (
 };
 
 export const slip39DecodeMnemonics = (secretShares: string[]) => {
-  return HdKeyring.slip39DecodeMnemonics(secretShares);
+  return secretShares.map(secretShare =>
+    HdKeyring.slip39DecodeMnemonic(secretShare),
+  );
 };
 
 export const slip39DecodeMnemonic = (secretShare: string) => {

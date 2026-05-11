@@ -1,7 +1,11 @@
 import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
-import { CurvePoint, formatSmallCurrencyValue } from '@/hooks/useCurve';
+import { CurvePoint } from '@/hooks/useCurve';
+import {
+  formatCurrencyValueParts,
+  formatSmallCurrencyValueParts,
+} from '@/utils/currency';
 import React, { memo, useEffect, useMemo } from 'react';
 import { Dimensions, Pressable, useWindowDimensions, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -34,6 +38,11 @@ import { useShallow } from 'zustand/react/shallow';
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedSVG = Animated.createAnimatedComponent(Svg);
 const ScreenWidth = Dimensions.get('screen').width;
+const CHART_HORIZONTAL_INSET = 66;
+
+const MAX_NETWORTH_FS = 38;
+const MIN_NETWORTH_FS = 34;
+const NETWORTH_FIT_LEN = 8;
 
 const svIsFoldMultiChart = makeMutable(true);
 
@@ -94,7 +103,7 @@ const ChartContent = memo(function ChartContent({
       {!chartsData.length ? null : !isAnyAddrLoading ? (
         <LineChart
           height={CHART_HEIGHT}
-          width={winWidth - 72}
+          width={winWidth - CHART_HORIZONTAL_INSET}
           shape={d3Shape.curveCatmullRom}
           style={[
             styles.relative,
@@ -226,7 +235,7 @@ const ChartHeader = React.memo(
       charHeader: useAnimatedStyle(reanimatedStyles.charHeader),
     };
     const { currentIndex } = LineChart.useChart();
-    const { currency, formatCurrentCurrency } = useCurrency();
+    const { currency } = useCurrency();
     const debouncedRawChange = useDebouncedValue(rawChange, 300);
     const showNetWorthLoading = useMemo(() => {
       return showBalanceLoadingWithoutLocal;
@@ -236,23 +245,29 @@ const ChartHeader = React.memo(
       showNetWorthLoading || showChangeLoadingWithoutLocal;
 
     const netWorth = useMemo(() => {
-      return formatSmallCurrencyValue(rawNetWorth, { currency });
+      return formatSmallCurrencyValueParts(rawNetWorth, { currency }).text;
     }, [currency, rawNetWorth]);
     const change = useMemo(() => {
-      return formatCurrentCurrency(Math.abs(debouncedRawChange));
-    }, [formatCurrentCurrency, debouncedRawChange]);
+      return formatCurrencyValueParts(Math.abs(debouncedRawChange), {
+        currency,
+      }).text;
+    }, [currency, debouncedRawChange]);
 
     const data = useMemo(() => {
       return (
         _data?.map(item => {
           return {
             ...item,
-            netWorth: formatSmallCurrencyValue(item.value, { currency }),
-            change: formatCurrentCurrency(item.rawChange),
+            netWorth: formatSmallCurrencyValueParts(item.value, {
+              currency,
+            }).text,
+            change: formatCurrencyValueParts(Math.abs(item.rawChange), {
+              currency,
+            }).text,
           };
         }) || []
       );
-    }, [_data, currency, formatCurrentCurrency]);
+    }, [_data, currency]);
 
     const percentChange = useDerivedValue(() => {
       if (hideType === 'HIDE') {
@@ -286,11 +301,13 @@ const ChartHeader = React.memo(
     }, [data, currentIndex, netWorth]);
 
     const formatNetWorth = useDerivedValue(() => {
-      return hideType === 'HIDE'
-        ? '******'
-        : svIsFoldMultiChart.value
-        ? netWorth
-        : data?.[currentIndex?.value]?.netWorth || netWorth;
+      if (hideType === 'HIDE') {
+        return '******';
+      }
+      if (svIsFoldMultiChart.value) {
+        return netWorth;
+      }
+      return data?.[currentIndex?.value]?.netWorth || netWorth;
     }, [data, currentIndex, netWorth, hideType]);
 
     const lossStyleProps = useAnimatedStyle(() => {
@@ -317,11 +334,18 @@ const ChartHeader = React.memo(
       };
     }, [isLoss, data, currentIndex, colors2024, styles, hideType]);
 
+    const netWorthFontStyle = useAnimatedStyle(() => {
+      // TODO: should be using adjustFontSizeToFit, fix it upstream first
+      const len = formatNetWorth.value?.length ?? 0;
+      const fs = len <= NETWORTH_FIT_LEN ? MAX_NETWORTH_FS : MIN_NETWORTH_FS;
+      return { fontSize: fs };
+    });
+
     const netWorthAnimatedProps = useAnimatedProps(() => {
       return {
         text: formatNetWorth.value,
       };
-    });
+    }, [netWorth, hideType]);
 
     const percentChangeAnimatedProps = useAnimatedProps(() => {
       return {
@@ -361,11 +385,15 @@ const ChartHeader = React.memo(
       <Animated.View style={rStyles.charHeader}>
         <View style={styles.netWorthContainer}>
           <View
-            style={showNetWorthLoading ? styles.hidden : undefined}
+            style={[
+              styles.netWorthTextContainer,
+              showNetWorthLoading ? styles.hidden : undefined,
+            ]}
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceValue)}>
             <AnimateableText
               style={[
                 styles.netWorth,
+                netWorthFontStyle,
                 hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
               ]}
               animatedProps={netWorthAnimatedProps}
@@ -426,7 +454,7 @@ const ChartHeader = React.memo(
               hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
             ]}>
             {isHidden ? (
-              <Text>***</Text>
+              <Text style={{ color: colors2024['neutral-title-1'] }}>***</Text>
             ) : (
               <>
                 <AnimateableText
@@ -473,8 +501,9 @@ const getStyle = createGetStyles2024(
           alignContent: 'flex-start',
           justifyContent: 'flex-start',
           flexDirection: 'column',
-          maxWidth: Math.max(winWidth, winLayout.value.width) - 72,
-          gap: 6,
+          maxWidth:
+            Math.max(winWidth, winLayout.value.width) - CHART_HORIZONTAL_INSET,
+          gap: 4,
           // ...makeDebugBorder('blue'),
         };
       },
@@ -495,9 +524,8 @@ const getStyle = createGetStyles2024(
         : colors2024['neutral-bg-2'],
     },
     netWorth: {
-      fontSize: 42,
       lineHeight: 46,
-      fontWeight: '900',
+      fontWeight: '800',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
     },
@@ -545,7 +573,7 @@ const getStyle = createGetStyles2024(
       marginBottom: 13,
     },
     loading: {
-      width: ScreenWidth - 72,
+      width: ScreenWidth - CHART_HORIZONTAL_INSET,
       height: 114,
       paddingHorizontal: 0,
     },
@@ -566,6 +594,10 @@ const getStyle = createGetStyles2024(
       justifyContent: 'space-between',
       // ...makeDebugBorder('orange'),
       lineHeight: 46,
+    },
+    netWorthTextContainer: {
+      flex: 1,
+      marginRight: 12,
     },
     hidden: {
       display: 'none',

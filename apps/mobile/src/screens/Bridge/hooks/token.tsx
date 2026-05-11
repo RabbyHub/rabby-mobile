@@ -4,7 +4,14 @@ import { formatSpeicalAmount, formatUsdValue } from '@/utils/number';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { BridgeQuote, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 // import { useAsyncFn, useDebounce } from 'react-use';
 import useAsync from 'react-use/lib/useAsync';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
@@ -14,7 +21,7 @@ import { openapi } from '@/core/request';
 import { useRefreshId, useSetQuoteVisible, useSetRefreshId } from './context';
 import { getChainDefaultToken } from '@/constant/swap';
 import { tokenAmountBn } from '@/screens/Swap/utils';
-import { bridgeQuoteScore } from '../components/BridgeQuoteItem';
+import { bridgeQuoteScore } from '../utils/bridgeQuote';
 import BigNumber from 'bignumber.js';
 import { useBridgeSlippage } from './slippage';
 import { isNaN } from 'lodash';
@@ -22,6 +29,7 @@ import { useLoadMatteredChainBalances } from '@/hooks/accountChainBalance';
 import { useAggregatorsList, useBridgeSupportedChains } from './atom';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { apiProvider } from '@/core/apis';
+import { getGasTokenBalance } from '@/core/apis/transactions';
 import { useMount } from 'ahooks';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
@@ -34,16 +42,11 @@ import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { shouldScheduleQuotePolling } from '@/utils/quotePolling';
 import { isTokenMarketClosed } from '@/utils/token';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
+import { getQuoteList as getBridgeQuoteList } from '@rabby-wallet/rabby-bridge';
+import { convert18RawToTokenRaw, isTempoChain } from '@/utils/tempo';
+import type { SelectedBridgeQuote } from '../types';
 
 export const enableInsufficientQuote = true;
-
-export interface SelectedBridgeQuote extends Omit<BridgeQuote, 'tx'> {
-  shouldApproveToken?: boolean;
-  shouldTwoStepApprove?: boolean;
-  loading?: boolean;
-  tx?: BridgeQuote['tx'];
-  manualClick?: boolean;
-}
 
 export const tokenPriceImpact = (
   fromToken?: TokenItem,
@@ -132,7 +135,7 @@ const useToken = (type: 'from' | 'to') => {
       );
       return { ...data, tokenId: token.id };
     }
-  }, [refreshId, userAddress, token?.id, token?.raw_amount_hex_str, chain]);
+  }, [refreshId, userAddress, token?.id, chain]);
 
   useDebounce(
     () => {
@@ -205,6 +208,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   const expiredTimer = useRef<NodeJS.Timeout>(undefined);
   const autoQuoteRefreshPausedRef = useRef(false);
+  const reloadTxRefreshPausedRef = useRef(false);
 
   const inSufficient = useMemo(
     () =>
@@ -409,6 +413,10 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     [setRefreshId],
   );
 
+  const setReloadTxRefreshPaused = useCallback((paused: boolean) => {
+    reloadTxRefreshPausedRef.current = paused;
+  }, []);
+
   // const aggregatorsList = useBridgeSupportedChains(s => s.bridge.aggregatorsList || []);
   const aggregatorsList = useAggregatorsList();
 
@@ -449,7 +457,30 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     [fromChain],
   );
 
-  const { value: gasList } = useAsync(() => {
+  const isTempoBridgeChain = useMemo(
+    () => isTempoChain(chainInfo.serverId),
+    [chainInfo.serverId],
+  );
+
+  const { value: tempoGasTokenInfo, loading: isTempoGasTokenLoading } =
+    useAsync(async () => {
+      if (!currentAccount?.address || !isTempoBridgeChain) {
+        return null;
+      }
+
+      return getGasTokenBalance({
+        account: currentAccount,
+        address: currentAccount.address,
+        chainId: chainInfo.id,
+      });
+    }, [
+      currentAccount,
+      currentAccount?.address,
+      chainInfo.id,
+      isTempoBridgeChain,
+    ]);
+
+  const { value: gasList, loading: isGasMarketLoading } = useAsync(() => {
     return apiProvider.gasMarketV2(
       {
         chainId: chainInfo.serverId,
@@ -484,38 +515,81 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     return false;
   }, [chainInfo?.nativeTokenAddress, fromToken]);
 
+  const fromTokenIsTempoFeeToken = useMemo(() => {
+    if (
+      !isTempoBridgeChain ||
+      !fromToken?.id ||
+      !tempoGasTokenInfo?.token.tokenId
+    ) {
+      return false;
+    }
+
+    return isSameAddress(fromToken.id, tempoGasTokenInfo.token.tokenId);
+  }, [fromToken?.id, isTempoBridgeChain, tempoGasTokenInfo?.token.tokenId]);
+
+  const fromTokenIsGasToken = useMemo(
+    () => payTokenIsNativeToken || fromTokenIsTempoFeeToken,
+    [payTokenIsNativeToken, fromTokenIsTempoFeeToken],
+  );
+
+  const gasTokenDecimals = useMemo(() => {
+    if (payTokenIsNativeToken) {
+      return nativeTokenDecimals;
+    }
+
+    if (fromTokenIsTempoFeeToken) {
+      return tempoGasTokenInfo?.token.decimals || fromToken?.decimals || 18;
+    }
+
+    return undefined;
+  }, [
+    fromToken?.decimals,
+    fromTokenIsTempoFeeToken,
+    nativeTokenDecimals,
+    payTokenIsNativeToken,
+    tempoGasTokenInfo?.token.decimals,
+  ]);
+
   const handleSlider100 = useCallback(() => {
-    if (fromToken) {
-      setUseGasPrice(false);
-      setAmount(tokenAmountBn(fromToken).toString(10));
+    if (!fromToken) {
+      return;
     }
-    if (payTokenIsNativeToken && fromToken) {
-      if (normalGasPrice) {
-        const val = tokenAmountBn(fromToken).minus(
-          new BigNumber(gasLimit)
-            .times(normalGasPrice)
-            .div(10 ** nativeTokenDecimals),
-        );
-        if (!val.lt(0)) {
-          setUseGasPrice(true);
-        }
-        setAmount(
-          val.lt(0) ? tokenAmountBn(fromToken).toString(10) : val.toString(10),
-        );
+
+    setUseGasPrice(false);
+    const fullAmount = tokenAmountBn(fromToken);
+    if (
+      fromTokenIsGasToken &&
+      gasTokenDecimals !== undefined &&
+      normalGasPrice
+    ) {
+      const val = fullAmount.minus(
+        convert18RawToTokenRaw(
+          new BigNumber(gasLimit).times(normalGasPrice),
+          gasTokenDecimals,
+        ).div(new BigNumber(10).pow(gasTokenDecimals)),
+      );
+      if (!val.lt(0)) {
+        setUseGasPrice(true);
       }
+      setAmount(val.lt(0) ? fullAmount.toString(10) : val.toString(10));
+      return;
     }
+
+    setAmount(fullAmount.toString(10));
   }, [
     fromToken,
+    fromTokenIsGasToken,
     gasLimit,
-    nativeTokenDecimals,
+    gasTokenDecimals,
     normalGasPrice,
-    payTokenIsNativeToken,
   ]);
 
   const {
     onChangeSlider,
     slider,
     setSlider,
+    useSlider,
+    setUseSlider,
     isDraggingSlider,
     setIsDraggingSlider,
   } = useSwapBridgeSlider({
@@ -545,47 +619,45 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         }
       }
       setUseGasPrice(false);
+      setUseSlider(false);
       setAmount(v);
       if (Number(v) > 0) {
         setPending(true);
       }
     },
-    [fromToken, setSlider],
+    [fromToken, setSlider, setUseSlider],
   );
 
   const handleMax = useCallback(() => {
     setUseGasPrice(false);
 
-    if (payTokenIsNativeToken && fromToken) {
-      if (normalGasPrice) {
-        const val = tokenAmountBn(fromToken).minus(
-          new BigNumber(gasLimit)
-            .times(normalGasPrice)
-            .div(10 ** nativeTokenDecimals),
-        );
-        if (!val.lt(0)) {
-          setUseGasPrice(true);
-        }
-        setAmount(
-          val.lt(0) ? tokenAmountBn(fromToken).toString(10) : val.toString(10),
-        );
-        setSlider(100);
-      }
-    }
-
-    if (!payTokenIsNativeToken && fromToken) {
+    if (fromToken) {
       isMaxRef.current = true;
-      handleAmountChange?.(tokenAmountBn(fromToken)?.toString(10));
+      setUseSlider(true);
+      handleSlider100();
+      setSlider(100);
       setClickMaxBtnCount(e => e + 1);
     }
+  }, [fromToken, handleSlider100, setSlider, setUseSlider]);
+
+  useEffect(() => {
+    if (
+      slider === 100 &&
+      useSlider &&
+      fromToken?.amount &&
+      !isGasMarketLoading &&
+      (!isTempoBridgeChain || !isTempoGasTokenLoading)
+    ) {
+      handleSlider100();
+    }
   }, [
-    payTokenIsNativeToken,
-    fromToken,
-    normalGasPrice,
-    gasLimit,
-    nativeTokenDecimals,
-    setSlider,
-    handleAmountChange,
+    slider,
+    useSlider,
+    fromToken?.amount,
+    isGasMarketLoading,
+    isTempoBridgeChain,
+    isTempoGasTokenLoading,
+    handleSlider100,
   ]);
 
   const fillRecommendFromToken = useCallback(() => {
@@ -596,6 +668,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         setFromToken(recommendFromToken);
         setAmount('');
         setSlider(0);
+        setUseSlider(false);
         setIsDraggingSlider(false);
       }
     }
@@ -604,6 +677,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     wrappedSwitchFromChain,
     setFromToken,
     setSlider,
+    setUseSlider,
     setIsDraggingSlider,
   ]);
 
@@ -641,13 +715,13 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         const getQUoteV2 = async (alternativeToken?: TokenItem) =>
           await Promise.allSettled(
             aggregatorsList.map(async bridgeAggregator => {
-              const data = await openapi
-                .getBridgeQuoteV2({
-                  aggregator_id: bridgeAggregator.id,
-                  user_addr: userAddress,
-                  from_chain_id: alternativeToken?.chain || fromToken.chain,
-                  from_token_id: alternativeToken?.id || fromToken.id,
-                  from_token_raw_amount: alternativeToken
+              const data = await getBridgeQuoteList(
+                bridgeAggregator.id,
+                {
+                  userAddress,
+                  fromChainId: alternativeToken?.chain || fromToken.chain,
+                  fromTokenId: alternativeToken?.id || fromToken.id,
+                  fromTokenRawAmount: alternativeToken
                     ? new BigNumber(amount)
                         .times(fromToken.price)
                         .div(alternativeToken.price)
@@ -658,27 +732,28 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
                         .times(10 ** fromToken.decimals)
                         .toFixed(0, 1)
                         .toString(),
-                  to_chain_id: toToken.chain,
-                  to_token_id: toToken.id,
+                  toChainId: toToken.chain,
+                  toTokenId: toToken.id,
                   slippage: new BigNumber(slippageObj.slippageState)
                     .div(100)
                     .toString(10),
-                })
-                .catch(e => {
-                  if (
-                    currentFetchId === fetchIdRef.current &&
-                    !alternativeToken
-                  ) {
-                    stats.report('bridgeQuoteResult', {
-                      aggregatorIds: bridgeAggregator.id,
-                      fromChainId: fromToken.chain,
-                      fromTokenId: fromToken.id,
-                      toTokenId: toToken.id,
-                      toChainId: toToken.chain,
-                      status: 'fail',
-                    });
-                  }
-                });
+                },
+                openapi,
+              ).catch(e => {
+                if (
+                  currentFetchId === fetchIdRef.current &&
+                  !alternativeToken
+                ) {
+                  stats.report('bridgeQuoteResult', {
+                    aggregatorIds: bridgeAggregator.id,
+                    fromChainId: fromToken.chain,
+                    fromTokenId: fromToken.id,
+                    toTokenId: toToken.id,
+                    toChainId: toToken.chain,
+                    status: 'fail',
+                  });
+                }
+              });
 
               if (alternativeToken) {
                 if (
@@ -851,6 +926,23 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   const [pending, setPending] = useState(false);
 
+  useLayoutEffect(() => {
+    fetchIdRef.current += 1;
+    setQuotesList([]);
+    setRecommendFromToken(undefined);
+    setSelectedBridgeQuote(undefined);
+    setPending(false);
+  }, [
+    userAddress,
+    fromToken?.id,
+    toToken?.id,
+    fromChain,
+    toChain,
+    amount,
+    slippageObj.slippage,
+    setSelectedBridgeQuote,
+  ]);
+
   useEffect(() => {
     if (
       canRequestQuote &&
@@ -941,6 +1033,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     const firstChainEnum = firstChain?.enum || CHAINS_ENUM.ETH;
     setAmount('');
     setSlider(0);
+    setUseSlider(false);
     setIsDraggingSlider(false);
     // 只有在没有导航状态且未初始化时才设置 chain
     if (!navState?.chainEnum && !isFromChainInitializedRef.current) {
@@ -993,6 +1086,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     fetchOrderedChainList,
     supportedChains,
     setSlider,
+    setUseSlider,
     setIsDraggingSlider,
     navState?.chainEnum,
     wrappedSwitchFromChain,
@@ -1032,14 +1126,16 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   useEffect(() => {
     setAmount('');
     setSlider(0);
+    setUseSlider(false);
     setIsDraggingSlider(false);
-  }, [fromChain, setIsDraggingSlider, setSlider]);
+  }, [fromChain, setIsDraggingSlider, setSlider, setUseSlider]);
 
   useFocusEffect(
     useCallback(() => {
       const refresh = () => {
         if (
           autoQuoteRefreshPausedRef.current ||
+          reloadTxRefreshPausedRef.current ||
           isGasAccountDepositFlowActive()
         ) {
           return;
@@ -1098,6 +1194,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
     setSelectedBridgeQuote,
     setAutoQuoteRefreshPaused,
+    setReloadTxRefreshPaused,
     ...slippageObj,
 
     onChangeSlider,

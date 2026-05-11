@@ -24,14 +24,17 @@ export const buildSignMainnetGasChange = ({
   customGasGwei,
   fixedMode,
 }: BuildSignMainnetGasChangeParams): SignMainnetGasChange => {
+  const maxPriorityFee = Number(maxPriorityFeeGwei || 0) * 1e9;
+
   if (gas.level === 'custom') {
     return {
       ...gas,
       level: 'custom',
       price: Number(customGasGwei || 0) * 1e9,
+      priority_price: maxPriorityFee,
       gasLimit,
       nonce,
-      maxPriorityFee: Number(maxPriorityFeeGwei || 0) * 1e9,
+      maxPriorityFee,
       fixedMode,
     };
   }
@@ -41,6 +44,7 @@ export const buildSignMainnetGasChange = ({
     gasLimit,
     nonce,
     level: gas.level,
-    maxPriorityFee: Number(maxPriorityFeeGwei || 0) * 1e9,
+    priority_price: maxPriorityFee,
+    maxPriorityFee,
   };
 };

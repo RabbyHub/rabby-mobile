@@ -19,6 +19,8 @@ import {
   getTempoFeeTokenInfo,
   isTempoChain,
 } from '@/utils/tempo';
+import { decodeFunctionResult, encodeFunctionData } from 'viem';
+import { Abis as TempoAbis, Addresses as TempoAddresses } from 'viem/tempo';
 
 const GAS_PRICE_DECIMALS = 18;
 
@@ -126,6 +128,62 @@ export const getRecommendNonce = async ({
   if (!chain) {
     throw new Error('chain not found');
   }
+  const normalizedNonceKey = (() => {
+    const nonceKey = (tx as any).nonceKey;
+    if (!isTempoChain(chain.serverId)) {
+      return undefined;
+    }
+    if (typeof nonceKey === 'undefined' || nonceKey === null) {
+      return undefined;
+    }
+    if (typeof nonceKey === 'bigint') {
+      return nonceKey > 0n ? nonceKey : undefined;
+    }
+    if (typeof nonceKey === 'number') {
+      if (!Number.isFinite(nonceKey) || nonceKey <= 0) {
+        return undefined;
+      }
+      return BigInt(Math.trunc(nonceKey));
+    }
+    if (typeof nonceKey === 'string') {
+      const trimmed = nonceKey.trim();
+      if (!trimmed || trimmed === '0x' || trimmed === '0X') {
+        return undefined;
+      }
+      const value = BigInt(trimmed);
+      return value > 0n ? value : undefined;
+    }
+    return undefined;
+  })();
+
+  if (typeof normalizedNonceKey !== 'undefined') {
+    const data = encodeFunctionData({
+      abi: TempoAbis.nonce,
+      functionName: 'getNonce',
+      args: [tx.from as `0x${string}`, normalizedNonceKey],
+    });
+    const result = await apiProvider.requestETHRpc<string>(
+      {
+        method: 'eth_call',
+        params: [
+          {
+            to: TempoAddresses.nonceManager,
+            data,
+          },
+          'latest',
+        ],
+      },
+      chain.serverId,
+      account,
+    );
+    const onChainNonce = decodeFunctionResult({
+      abi: TempoAbis.nonce,
+      functionName: 'getNonce',
+      data: result as `0x${string}`,
+    }) as bigint;
+    return `0x${onChainNonce.toString(16)}`;
+  }
+
   const onChainNonce = await apiProvider.requestETHRpc(
     {
       method: 'eth_getTransactionCount',
@@ -358,6 +416,8 @@ export const checkGasAndNonce = ({
   isGnosisAccount,
   nativeTokenBalance,
   gasTokenDecimals = GAS_PRICE_DECIMALS,
+  gasTokenId,
+  tempoPreferredFeeTokenId,
   checkTxValueInBalance = true,
 }: {
   recommendGasLimitRatio: number;
@@ -372,6 +432,8 @@ export const checkGasAndNonce = ({
   isSpeedUp: boolean;
   isGnosisAccount: boolean;
   gasTokenDecimals?: number;
+  gasTokenId?: string;
+  tempoPreferredFeeTokenId?: string;
   checkTxValueInBalance?: boolean;
 }) => {
   const errors: {
@@ -427,12 +489,26 @@ export const checkGasAndNonce = ({
     rawAmountToBn(gasExplainResponse.maxGasCostAmount).times(
       pow10(gasTokenDecimals),
     );
+  const chain = findChain({
+    id: tx.chainId,
+  });
+  const txFeeToken = (tx as Tx & { feeToken?: unknown }).feeToken;
+  const tempoFeeToken =
+    tempoPreferredFeeTokenId ||
+    (typeof txFeeToken === 'string' ? txFeeToken : '');
+  const tempoFeeTokenBalanceInsufficient =
+    !!chain &&
+    isTempoChain(chain.serverId) &&
+    !!tempoFeeToken &&
+    !!gasTokenId &&
+    tempoFeeToken.toLowerCase() !== gasTokenId.toLowerCase();
 
   if (
     !isGnosisAccount &&
-    maxGasCostRawAmount
-      .plus(sendNativeTokenRawAmount)
-      .isGreaterThan(balanceRawAmount)
+    (tempoFeeTokenBalanceInsufficient ||
+      maxGasCostRawAmount
+        .plus(sendNativeTokenRawAmount)
+        .isGreaterThan(balanceRawAmount))
   ) {
     errors.push({
       code: 3001,
@@ -465,6 +541,8 @@ export const useCheckGasAndNonce = ({
   isGnosisAccount,
   nativeTokenBalance,
   gasTokenDecimals = GAS_PRICE_DECIMALS,
+  gasTokenId,
+  tempoPreferredFeeTokenId,
   checkTxValueInBalance = true,
 }: Parameters<typeof checkGasAndNonce>[0]) => {
   return useMemo(
@@ -482,6 +560,8 @@ export const useCheckGasAndNonce = ({
         isGnosisAccount,
         nativeTokenBalance,
         gasTokenDecimals,
+        gasTokenId,
+        tempoPreferredFeeTokenId,
         checkTxValueInBalance,
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -497,6 +577,8 @@ export const useCheckGasAndNonce = ({
       isGnosisAccount,
       nativeTokenBalance,
       gasTokenDecimals,
+      gasTokenId,
+      tempoPreferredFeeTokenId,
       checkTxValueInBalance,
     ],
   );
@@ -577,6 +659,8 @@ export const checkNativeLevelInsufficient = async ({
   nativeTokenBalance,
   explainGasFn,
   gasTokenDecimals = GAS_PRICE_DECIMALS,
+  gasTokenId,
+  tempoPreferredFeeTokenId,
   checkTxValueInBalance = true,
 }: {
   tx: Tx;
@@ -594,6 +678,8 @@ export const checkNativeLevelInsufficient = async ({
   isGnosisAccount: boolean;
   nativeTokenBalance: string;
   gasTokenDecimals?: number;
+  gasTokenId?: string;
+  tempoPreferredFeeTokenId?: string;
   checkTxValueInBalance?: boolean;
   explainGasFn: (params: {
     gasUsed: number;
@@ -627,6 +713,8 @@ export const checkNativeLevelInsufficient = async ({
       isGnosisAccount,
       nativeTokenBalance,
       gasTokenDecimals,
+      gasTokenId,
+      tempoPreferredFeeTokenId,
       checkTxValueInBalance,
     }).some(item => item.code === 3001),
     0,

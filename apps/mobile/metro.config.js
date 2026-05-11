@@ -7,6 +7,26 @@ const {
   wrapWithReanimatedMetroConfig,
 } = require('react-native-reanimated/metro-config');
 
+const {
+  createI18nLivePreviewSerializer,
+} = require('./scripts/i18n-live-preview/metro-serializer');
+
+const withI18nLivePreview = config => {
+  if (!['1', 'true'].includes(process.env.I18N_LIVE_PREVIEW || '')) {
+    return config;
+  }
+
+  return {
+    ...config,
+    serializer: {
+      ...config.serializer,
+      customSerializer: createI18nLivePreviewSerializer({
+        upstreamSerializer: config.serializer?.customSerializer,
+      }),
+    },
+  };
+};
+
 const defaultConfig = getDefaultConfig(__dirname);
 const {
   assetExts,
@@ -227,6 +247,7 @@ const config = {
 };
 
 const mergedConfig = compose(
+  withI18nLivePreview,
   process.env.APP_ENV === 'hashing' ? withStableHash : withSentryConfig,
   wrapWithReanimatedMetroConfig,
   withPackageExportsDisabled,

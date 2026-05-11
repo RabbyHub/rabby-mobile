@@ -19,8 +19,9 @@ const TAB_KEYS: LendingTokenListTab[] = ['supply', 'borrow'];
 const LendingTokenList: React.FC<
   GlobalModalViewProps<MODAL_NAMES.LENDING_TOKEN_LIST> & {
     initialTab?: LendingTokenListTab;
+    onBeforeSwapNavigate?: () => void;
   }
-> = ({ initialTab = 'supply' }) => {
+> = ({ initialTab = 'supply', onBeforeSwapNavigate }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const pagerRef = useRef<PagerView>(null);
@@ -74,7 +75,10 @@ const LendingTokenList: React.FC<
           ref={pagerRef}
           style={styles.pager}>
           <View collapsable={false} key="supply" style={styles.page}>
-            <LendingSupplyListContent hideHeader />
+            <LendingSupplyListContent
+              hideHeader
+              onBeforeSwapNavigate={onBeforeSwapNavigate}
+            />
           </View>
           <View collapsable={false} key="borrow" style={styles.page}>
             <LendingBorrowListContent hideHeader />

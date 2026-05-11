@@ -1,7 +1,7 @@
 import { makeJsEEClass } from '@/core/services/_utils';
 import type { Multi24hBalanceState } from '@/store/balance24h';
-import { ContactBookStore } from '@rabby-wallet/service-address';
-import { Account, PreferenceStore } from '../services/preference';
+import type { ContactBookStore } from '@rabby-wallet/service-address';
+import type { PreferenceStore } from '../services/preference';
 
 export type PerfEventBusListeners = {
   EVENT_ROUTE_CHANGE: (ctx: {

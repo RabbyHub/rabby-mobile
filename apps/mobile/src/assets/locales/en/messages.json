@@ -1083,7 +1083,8 @@
         "meme": "Memecoin",
         "lending": "Lending",
         "predict": "Predict",
-        "perpsMarketList": "More Perps"
+        "perpsMarketList": "More Perps",
+        "convertDust": "Convert Dust"
       },
       "swipeUp": {
         "desc": "Swipe up to explore websites",
@@ -1095,7 +1096,19 @@
         "emptyAndroid": "No dApp added to favorites",
         "empty": "No website added to favorites",
         "favorite": "Favorite",
-        "search": "Search"
+        "search": "Search",
+        "websites": "Websites",
+        "tabs": {
+          "__skip_translation": ["favorite", "defi", "dex", "rwa", "nft"],
+          "favorite": "Favorite",
+          "all": "All",
+          "defi": "DeFi",
+          "rwa": "RWA",
+          "perps": "Perps",
+          "predict": "Predict",
+          "dex": "DEX",
+          "nft": "NFT"
+        }
       },
       "depositAssets": {
         "subtitle": "Receive assets to this wallet",
@@ -1881,7 +1894,6 @@
     "gasAccount": {
       "deposit": "Deposit",
       "depositNow": "Deposit Now",
-      "depositWith": "Deposit with",
       "withdraw": "Withdraw",
       "noBalance": "No balance",
       "gasExceed": "GasAccount balance cannot exceed $1000",
@@ -2011,12 +2023,14 @@
       "gasBalance": "Gas Balance",
       "lowBalance": "You don't have enough gas. Deposit gas to ensure future transactions go smoothly.",
       "switchAccount": "Switch Wallet",
-      "depositFailed": "Deposit failed"
+      "depositFailed": "Deposit failed",
+      "depositWith": "Deposit via"
     },
     "tokenDetail": {
       "headerBalanceText": "Balance",
       "headerTokenValueText": "Token Value",
       "balance": "Balance",
+      "wallet": "Wallet",
       "Mybalance": "Token Balance",
       "Introduction": "Introduction",
       "Info": "Info",
@@ -2396,6 +2410,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "More"
+      },
+      "DappInfoPopup": {
+        "listedBy": "Listed by",
+        "sitePopularity": "Site popularity",
+        "popularLevelHigh": "High",
+        "popularLevelMedium": "Medium",
+        "popularLevelLow": "Low",
+        "popularLevelVeryLow": "Very Low",
+        "category": "Category",
+        "skipDappInfoNextTime": "Skip this page next time",
+        "openDapp": "Open"
       }
     },
     "browserManage": {
@@ -2560,7 +2585,10 @@
         "hypeFeeTip": "Fee : ~${{fee}}",
         "hypeActivationFeeTooltip": "A one-time activation fee of {{fee}} will be charged by Hyperliquid for first HyperEVM withdrawal.",
         "hypeGasFeeTooltip": "A fee of ~0.00002 HYPE will be charged to withdraw to the EVM",
-        "selectWithdrawToken": "Select token"
+        "selectWithdrawToken": "Select token",
+        "chain": "Chain",
+        "max": "Max",
+        "selectChain": "Select Chain"
       },
       "PerpsWithdrawFeePopup": {
         "title": "Fee",
@@ -2569,6 +2597,9 @@
       },
       "historyDetail": {
         "date": "Date",
+        "amount": "Amount",
+        "asset": "Asset",
+        "action": "Action",
         "price": "Price",
         "size": "Size",
         "tradeValue": "Trade Value",
@@ -2621,6 +2652,15 @@
       "closeAll": "Close All",
       "explorePerps": "Explore Perps",
       "more": "More",
+      "categories": {
+        "favorite": "Favorite",
+        "topVolume": "Top Volume"
+      },
+      "search": {
+        "headerTitle": "Search Perps",
+        "placeholder": "Search Perps",
+        "empty": "No results found"
+      },
       "history": {
         "title": "History",
         "closeLongTp": "Close Long Take Profit",
@@ -2638,7 +2678,17 @@
           "pending": "Pending"
         },
         "deposit": "Deposit",
-        "withdraw": "Withdraw"
+        "withdraw": "Withdraw",
+        "transferToSpot": "Transfer to Spot",
+        "transferToPerps": "Transfer to Perps",
+        "transferDetailTitle": "Transfer",
+        "transferActionToSpot": "Transfer (from Perps to Spot)",
+        "transferActionToPerps": "Transfer (from Spot to Perps)",
+        "transferGotIt": "I Got it",
+        "action": "Action",
+        "asset": "Asset",
+        "value": "Value",
+        "date": "Date"
       },
       "PerpsSelectTokenPopup": {
         "token": "Token",
@@ -2654,7 +2704,39 @@
       },
       "PerpsDepositCard": {
         "availableToTrade": "Available to trade: ",
-        "deposit": "Deposit"
+        "deposit": "Deposit",
+        "swap": "Swap"
+      },
+      "EnableUnifiedAccount": {
+        "title": "Enable Unified Account",
+        "desc": "Unified Account is the recommended account mode that simplifies the trading experience. Spot and Perps balances are merged for all tokens, and cross margin is supported on all available assets.",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "importantTips": "All USDC collateral will be used as cross margin once Unified Account is enabled.",
+        "important": "Important"
+      },
+      "PerpsSpotSwap": {
+        "title": "Swap Stablecoins",
+        "from": "From",
+        "to": "Swap To",
+        "balance": "Balance",
+        "swapBtn": "Swap",
+        "max": "Max",
+        "estReceive": "Est. Receive: {{amount}} {{coin}}",
+        "estReceiveTooltip": "Estimated receive amount is subject to market price fluctuations.",
+        "toSwapEntry": "To swap→",
+        "toDepositEntry": "To deposit→",
+        "insufficientBalance": "Insufficient balance",
+        "invalidAmount": "Please input a valid amount",
+        "minimumAmount": "The minimum swap amount is {{amount}}"
+      },
+      "PerpMarginModePopup": {
+        "crossRequiresUnified": "Cross margin for this trading pair requires a Unified Account. Would you like to enable it?"
+      },
+      "PerpsMultiBalance": {
+        "title": "Hyperliquid Balances",
+        "deposit": "Deposit",
+        "withdraw": "Withdraw"
       },
       "regionNotSupport": "Opening positions is not supported in your region",
       "deleteAgentModal": "You’ve reached the maximum number of agents. Would you delete an existing agent to create a new one?",
@@ -2843,6 +2925,9 @@
         "entryPrice": "Entry Price:",
         "setTpPrice": "Set Take-Profit Price",
         "setSlPrice": "Set Stop-Loss Price"
+      },
+      "PerpsAbout": {
+        "title": "About"
       }
     },
     "perpsHistory": {
@@ -2992,6 +3077,7 @@
       "popup": {
         "amount": "Amount",
         "available": "available",
+        "toSwap": "To swap",
         "title": "Transaction Overview",
         "liquidationAt": "Liquidation at < 1.0",
         "remainingDebt": "Remaining debt"
@@ -3135,6 +3221,8 @@
           "title": "Repay with {{collateral}}"
         },
         "collateralNotEnough": "Your collateral balance is lower than the selected amount.",
+        "insufficientLiquidity": "Insufficient liquidity.",
+        "frozenCollateral": "This asset is frozen due to an Aave community decision.",
         "overview": {
           "title": "Transaction Overview",
           "borrowValueAfter": "Borrow balance after repay",
@@ -3143,6 +3231,9 @@
         "button": {
           "repay": "Repay"
         }
+      },
+      "signFallback": {
+        "preExecFailedUseFullSign": "Simulation Failed. This transaction is very likely to fail due to AAVE errors."
       },
       "hfTips": {
         "desc": "If it drops below 1.0, your collateral may be liquidated.",
@@ -3166,6 +3257,63 @@
       "walletBalance": "Wallet/Balance",
       "netWorth": "Net worth",
       "selectAWallet": "Select a Wallet"
+    },
+    "convertDust": {
+      "colValueAmount": "Value/Amount",
+      "failReason": {
+        "missingRequiredParams": "Missing required parameters",
+        "quoteUnavailable": "Fail to fetch quote",
+        "gasCostTooHigh": "Exceed gas fee limit",
+        "priceImpactTooHigh": "High price impact",
+        "buildSwapTxsFailed": "Failed to build swap txs",
+        "sendSwapTxFailed": "Failed to send swap tx",
+        "transactionFailed": "Transaction failed",
+        "submitFailed": "Fail to submit transactions",
+        "gasNotEnough": "Insufficient Gas"
+      },
+      "status": {
+        "pending": "Swapping",
+        "idle": "Waiting to swap",
+        "success": "Swap successful"
+      },
+      "colToken": "Token",
+      "colStatusToken": "Status/Token",
+      "emptyText": "No low-value tokens found",
+      "receiveSummary": {
+        "progress": "Conversion progress",
+        "priceImpact": "Price Impact Cap",
+        "gasLimit": "Single Transaction Gas Limit",
+        "estimateReceive": "Est.Receive:",
+        "actualReceive": "Receive"
+      },
+      "bottomBar": {
+        "stop": "Stop",
+        "continue": "Continue",
+        "start": "Start convert"
+      },
+      "completed": {
+        "title": "Dust Converted !",
+        "receive": "Received:",
+        "failedTitle": "Conversion Ended",
+        "viewMoreDetail": "View more details",
+        "fold": "Fold"
+      },
+      "entryGuide": {
+        "title": "You can find Convert Dust \n👇 here on the Homepage",
+        "button": "Got it"
+      },
+      "stopSheet": {
+        "title": "Stop the current swaps?",
+        "desc": "If you stop now, any remaining swaps will not be completed. Please note completed swaps cannot be reversed.",
+        "continue": "Continue",
+        "stop": "Stop swap"
+      },
+      "homeBanner": {
+        "title": "Convert Dust",
+        "description": "Supports converting small balances into the native token"
+      },
+      "unsupportedAccountType": "Not support this account type.",
+      "unsupportedAccount": "Currently only private key and seed phrase addresses are supported."
     }
   },
   "component": {
@@ -3558,7 +3706,9 @@
         "copiedPrivateKey": "Private key copied. The clipboard will clear in 1 minute.",
         "pasted_and_cleared": "Pasted and clipboard cleared"
       }
-    }
+    },
+    "from": "From",
+    "to": "To"
   },
   "background": {
     "error": {

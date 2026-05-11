@@ -74,7 +74,9 @@ const AssetOrder = ({
 
   const handleClickRule = (id: string) => {
     const rule = rules.find(item => item.id === id);
-    if (!rule) return;
+    if (!rule) {
+      return;
+    }
     const result = engineResultMap[id];
     openRuleDrawer({
       ruleConfig: rule,
@@ -130,7 +132,9 @@ const AssetOrder = ({
               </ViewMore>
             ))}
             {actionData.payNFTList.length <= 0 &&
-              actionData.payTokenList.length <= 0 && <>-</>}
+              actionData.payTokenList.length <= 0 && (
+                <Text style={commonStyle.primaryText}>-</Text>
+              )}
           </Row>
         </Col>
         <Col>

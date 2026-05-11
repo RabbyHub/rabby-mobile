@@ -1,0 +1,99 @@
+buildscript {
+  repositories {
+    maven {
+      url 'https://plugins.gradle.org/m2/'
+    }
+  }
+  dependencies {
+    classpath 'com.adarshr:gradle-test-logger-plugin:2.0.0'
+  }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: "com.adarshr.test-logger"
+
+def safeExtGet(prop, fallback) {
+  rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+}
+
+android {
+  // Conditional for compatibility with AGP <4.2.
+  if (project.android.hasProperty("namespace")) {
+    namespace = "com.rabbywallet.keychain"
+  }
+  compileSdkVersion safeExtGet('compileSdkVersion', 31)
+  buildToolsVersion safeExtGet('buildToolsVersion', '31.0.0')
+
+  defaultConfig {
+    minSdkVersion safeExtGet('minSdkVersion', 21)
+    compileSdkVersion safeExtGet('compileSdkVersion', 31)
+    targetSdkVersion safeExtGet('targetSdkVersion', 31)
+    versionCode 1
+    versionName "1.0"
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+
+
+  lintOptions {
+    abortOnError false
+  }
+
+  testOptions {
+    unitTests {
+      includeAndroidResources = true
+    }
+  }
+}
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  implementation 'com.facebook.react:react-native:+'
+
+  implementation 'androidx.appcompat:appcompat:1.4.2'
+  implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+
+  // https://mvnrepository.com/artifact/androidx.biometric/biometric
+  implementation 'androidx.biometric:biometric:1.1.0@aar'
+
+  // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-viewmodel
+  // Needed for BiometricPrompt in androidx.biometric
+  implementation "androidx.lifecycle:lifecycle-viewmodel:2.3.1@aar"
+
+  // https://mvnrepository.com/artifact/androidx.fragment/fragment
+  // Needed for BiometricPrompt in androidx.biometric
+  implementation "androidx.fragment:fragment:1.3.2@aar"
+
+  // /* version higher 1.1.3 has problems with included soloader packages,
+  //     https://github.com/facebook/conceal/releases */
+  // implementation "com.facebook.conceal:conceal:1.1.3@aar"
+
+  /* Unit Testing Frameworks */
+  testImplementation 'junit:junit:4.13.2'
+
+  /* Mockito, https://mvnrepository.com/artifact/org.mockito/mockito-inline */
+  testImplementation 'org.mockito:mockito-inline:4.0.0'
+
+  /* https://mvnrepository.com/artifact/org.hamcrest/hamcrest/2.1 */
+  testImplementation 'org.hamcrest:hamcrest:2.2'
+
+  /* http://robolectric.org/getting-started/ */
+  testImplementation("org.robolectric:robolectric:4.7.3")
+
+  /* https://mvnrepository.com/artifact/androidx.test.ext/junit */
+  testImplementation "androidx.test.ext:junit:1.1.4-alpha05"
+
+  /* https://mvnrepository.com/artifact/androidx.test/core */
+  testImplementation 'androidx.test:core:1.4.1-alpha05'
+  testImplementation "androidx.test:runner:1.5.0-alpha02"
+  testImplementation "androidx.test:monitor:1.6.0-alpha02"
+
+  // Uncomment for including JRE implementation of crypto api (that is used in Robolectric tests)
+  // testImplementation fileTree(dir: "${System.properties.get("java.home")}/lib", include: ["jce.jar"])
+}

@@ -12,6 +12,7 @@ import { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import { useTranslation } from 'react-i18next';
 import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
+import { PerpsDisplayCoinName } from '../PerpsDisplayCoinName';
 
 export const PerpsPositionItem: React.FC<{
   item: PositionAndOpenOrder['position'];
@@ -87,10 +88,10 @@ export const PerpsPositionItem: React.FC<{
         {/* Left section: icon + coin info */}
         <View style={styles.leftSection}>
           <View style={styles.coinInfoRow}>
-            <AssetAvatar logo={logoUrl} size={28} style={styles.icon} />
+            <AssetAvatar logo={logoUrl} size={28} logoStyle={styles.icon} />
             <View style={styles.coinInfo}>
               <View style={styles.coinNameRow}>
-                <Text style={styles.coinName}>{formatPerpsCoin(coin)}</Text>
+                <PerpsDisplayCoinName item={marketData} coin={coin} />
                 <View style={styles.crossTag}>
                   <Text style={styles.crossText}>
                     {leverageType === 'cross'
@@ -120,7 +121,7 @@ export const PerpsPositionItem: React.FC<{
                 {side} {leverageText}
               </Text>
             </View>
-            {!hasStopLoss && (
+            {!hasStopLoss && marketData && (
               <DistanceToLiquidationTag
                 liquidationPrice={liquidationPx}
                 markPrice={marketData?.markPx}
@@ -174,9 +175,7 @@ export const PerpsPositionItem: React.FC<{
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 16,
     // paddingHorizontal: 14,
     paddingVertical: 14,
@@ -202,7 +201,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 6,
   },
   icon: {
+    width: 28,
+    height: 28,
     backgroundColor: 'white',
+    flexShrink: 0,
     borderRadius: 1000,
   },
   coinNameRow: {

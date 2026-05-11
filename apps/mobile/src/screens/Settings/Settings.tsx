@@ -157,6 +157,7 @@ import {
   trackSettingsTxNotification,
 } from '@/utils/analytics0331';
 import { Text } from '@/components/Typography';
+import { useAppSecurityChain } from '@/hooks/global';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -199,7 +200,11 @@ function getInnerDappPreloadStrategyLabel(strategy: string) {
   }
 }
 
-function AlertBuildInfo() {
+function AlertBuildInfo({
+  rabbitCodeLen,
+}: {
+  rabbitCodeLen?: number | null;
+} = {}) {
   const commonInfos = [
     `Build Channel: ${BUILD_CHANNEL}`,
     `Runtime Env: ${APP_RUNTIME_ENV}`,
@@ -208,6 +213,7 @@ function AlertBuildInfo() {
         'YYYY-MM-DD HH:mm:ss',
       )}`,
     `Commit Hash: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
+    `rabbit_code_len: ${rabbitCodeLen ?? 'unknown'}`,
     '   ',
     `Hermes Engine: ${IS_HERMES_ENABLED ? 'Enabled' : 'Disabled'}`,
     `Strip Console: ${IS_CONSOLE_STRIPPED ? 'Enabled' : 'Disabled'}`,
@@ -673,7 +679,11 @@ function SettingsBlocks() {
   );
 }
 
-function DevSettingsBlocks() {
+function DevSettingsBlocks({
+  onShowBuildInfo,
+}: {
+  onShowBuildInfo: () => void;
+}) {
   const { colors } = useTheme2024({ getStyle: getStyles });
   const navigation = useRabbyAppNavigation();
 
@@ -720,9 +730,7 @@ function DevSettingsBlocks() {
             {
               label: 'Build Info',
               icon: RcInfo,
-              onPress: () => {
-                AlertBuildInfo();
-              },
+              onPress: onShowBuildInfo,
               rightNode: (
                 <Text style={{ color: colors['neutral-body'] }}>
                   {BUILD_CHANNEL} - {BUILD_GIT_INFO.BUILD_GIT_HASH}
@@ -987,6 +995,11 @@ function DevSettingsBlocks() {
 
 export default function SettingsScreen(): JSX.Element {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const { rabbitCode } = useAppSecurityChain();
+  const rabbitCodeLen = rabbitCode?.length ?? null;
+  const handleShowBuildInfo = useCallback(() => {
+    AlertBuildInfo({ rabbitCodeLen });
+  }, [rabbitCodeLen]);
 
   useFocusEffect(
     useCallback(() => {
@@ -1000,7 +1013,7 @@ export default function SettingsScreen(): JSX.Element {
 
   const { bottom } = useSafeAreaInsets();
 
-  const { handlePress } = useMultiPress({ onMultiPress: AlertBuildInfo });
+  const { handlePress } = useMultiPress({ onMultiPress: handleShowBuildInfo });
 
   return (
     <RootScreenContainer
@@ -1020,7 +1033,9 @@ export default function SettingsScreen(): JSX.Element {
           { paddingBottom: 12 + bottom },
         ]}>
         <SettingsBlocks />
-        {NEED_DEVSETTINGBLOCKS && <DevSettingsBlocks />}
+        {NEED_DEVSETTINGBLOCKS && (
+          <DevSettingsBlocks onShowBuildInfo={handleShowBuildInfo} />
+        )}
         <TouchableOpacity onPress={handlePress} activeOpacity={1}>
           <View style={[styles.bottomFooter]}>
             <RcFooterLogo />

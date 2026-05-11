@@ -3,7 +3,7 @@ import abiCoderInst, { AbiCoder } from 'web3-eth-abi';
 import provider from '../controllers';
 import { ProviderRequest } from '../controllers/type';
 import { setGlobalTmpStore } from './globalProvider';
-import { Account } from '../services/preference';
+import type { Account } from '@/types/account';
 
 export function sendRequest<T = any>(
   {

@@ -817,7 +817,8 @@
         "predict": "예측하다",
         "meme": "밈코인",
         "market": "시장",
-        "gasDeposit": "가스 예치"
+        "gasDeposit": "가스 예치",
+        "convertDust": "소액 전환"
       },
       "swipeUp": {
         "desc": "위로 스와이프하여 웹사이트 탐색하기",
@@ -829,7 +830,13 @@
         "search": "검색",
         "favorite": "즐겨찾기",
         "emptyAndroid": "즐겨찾기에 추가된 dApp이 없습니다.",
-        "empty": "즐겨찾기에 추가된 웹사이트가 없습니다."
+        "empty": "즐겨찾기에 추가된 웹사이트가 없습니다.",
+        "tabs": {
+          "all": "전체",
+          "perps": "퍼프",
+          "predict": "예측"
+        },
+        "websites": "웹사이트"
       },
       "depositAssets": {
         "title": "자산 입금",
@@ -1618,9 +1625,9 @@
       "depositNow": "지금 입금하기",
       "switchAccount": "지갑 전환",
       "depositFailed": "입금 실패",
-      "depositWith": "입금하기 위해",
       "lowBalance": "가스가 충분하지 않습니다. 향후 거래가 원활하게 진행될 수 있도록 가스를 입금하세요.",
-      "depositSubmitted": "입금 제출됨"
+      "depositSubmitted": "입금 제출됨",
+      "depositWith": "입금 via"
     },
     "approvalsAddressList": {
       "title": "승인"
@@ -2066,7 +2073,8 @@
       "price": "가격",
       "headerTokenValueText": "토큰 가치",
       "headerBalanceText": "잔액",
-      "copyCA": "토큰 계약 주소가 복사되었습니다."
+      "copyCA": "토큰 계약 주소가 복사되었습니다.",
+      "wallet": "지갑"
     },
     "setting": {
       "screenTitle": "설정",
@@ -2301,6 +2309,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "더 보기"
+      },
+      "DappInfoPopup": {
+        "listedBy": "수록된",
+        "sitePopularity": "인기도",
+        "popularLevelHigh": "높음",
+        "popularLevelMedium": "보통",
+        "popularLevelLow": "낮음",
+        "popularLevelVeryLow": "매우 낮음",
+        "category": "카테고리",
+        "skipDappInfoNextTime": "다음에 이 페이지 건너뛰기",
+        "openDapp": "열기"
       }
     },
     "browserManage": {
@@ -2471,7 +2490,10 @@
         "hypeFeeTip": "수수료 : ~${{fee}}",
         "hypeGasFeeTooltip": "EVM으로 출금할 때 ~0.00002 HYPE의 수수료가 부과됩니다.",
         "selectWithdrawToken": "토큰 선택",
-        "hypeActivationFeeTooltip": "HyperEVM 최초 출금 시 Hyperliquid에서 {{fee}}의 일회성 활성화 수수료가 부과됩니다."
+        "hypeActivationFeeTooltip": "HyperEVM 최초 출금 시 Hyperliquid에서 {{fee}}의 일회성 활성화 수수료가 부과됩니다.",
+        "chain": "체인",
+        "max": "최대",
+        "selectChain": "체인 선택"
       },
       "PerpsWithdrawFeePopup": {
         "btn": "알겠어요",
@@ -2504,7 +2526,10 @@
         "feeTitle": "수수료",
         "feeRabby": "래비 월렛",
         "feeHyperliquid": "하이퍼리퀴드",
-        "feeDesc": "사용자가 거래를 할 때, <1>거래 수수료</1>와 <2>빌더 수수료</2>가 모두 적용됩니다."
+        "feeDesc": "사용자가 거래를 할 때, <1>거래 수수료</1>와 <2>빌더 수수료</2>가 모두 적용됩니다.",
+        "amount": "금액",
+        "asset": "자산",
+        "action": "작업"
       },
       "PerpsAutoCloseModal": {
         "loss": "손실",
@@ -2544,7 +2569,17 @@
         "withdraw": "출금",
         "openLong": "롱 포지션 열기",
         "closeLong": "Long 청산",
-        "closeShortSl": "숏 청산 손절매"
+        "closeShortSl": "숏 청산 손절매",
+        "transferToSpot": "스팟으로 이전",
+        "transferToPerps": "Perpetuals로 이전",
+        "transferDetailTitle": "이전",
+        "transferActionToSpot": "(Perpetuals에서 스팟으로 이전)",
+        "transferActionToPerps": "(스팟에서 Perpetuals으로 이전)",
+        "transferGotIt": "알겠습니다",
+        "action": "작업",
+        "asset": "자산",
+        "value": "금액",
+        "date": "날짜"
       },
       "PerpsSelectTokenPopup": {
         "title": "토큰 선택하여 입금",
@@ -2559,7 +2594,8 @@
       },
       "PerpsDepositCard": {
         "availableToTrade": "거래 가능:",
-        "deposit": "입금"
+        "deposit": "입금",
+        "swap": "스왑"
       },
       "PerpsAccountSelectorPopup": {
         "lastUsed": "마지막 사용",
@@ -2571,6 +2607,10 @@
       "title": "영구 계약",
       "selectAccountTitle": "로그인할 지갑 선택",
       "explorePerps": "Perps 탐색하기",
+      "categories": {
+        "favorite": "즐겨찾기",
+        "topVolume": "거래량 상위"
+      },
       "more": "더 보기",
       "positions": "포지션",
       "deleteAgentSuccess": "에이전트가 성공적으로 삭제되었습니다.",
@@ -2617,6 +2657,42 @@
       },
       "dappSelect": {
         "title": "Perps 제공자 선택"
+      },
+      "search": {
+        "headerTitle": "퍼프 검색",
+        "placeholder": "퍼프 검색",
+        "empty": "결과 없음"
+      },
+      "EnableUnifiedAccount": {
+        "title": "통합 계정 활성화",
+        "desc": "통합 계정은 거래 경험을 간소화하는 권장 계정 모드입니다. 현물 및 Perps 잔액은 모든 토큰에 대해 병합되며, 모든 사용 가능한 자산에 대해 교차 마진이 지원됩니다.",
+        "confirm": "확인",
+        "cancel": "취소",
+        "importantTips": "통합 계정이 활성화되면 모든 USDC 담보가 교차 마진으로 사용됩니다.",
+        "important": "중요"
+      },
+      "PerpsSpotSwap": {
+        "title": "스테이블코인 스왑",
+        "from": "보내는 곳",
+        "to": "스왑 대상",
+        "balance": "잔액",
+        "swapBtn": "스왑",
+        "max": "최대",
+        "estReceive": "예상 수령: {{amount}} {{coin}}",
+        "estReceiveTooltip": "예상 수령 금액은 시장 가격 변동에 따라 달라질 수 있습니다.",
+        "toSwapEntry": "스왑하려면→",
+        "toDepositEntry": "입금하려면→",
+        "insufficientBalance": "잔액 부족",
+        "invalidAmount": "유효한 금액을 입력해 주세요",
+        "minimumAmount": "최소 스왑 금액은 {{amount}}"
+      },
+      "PerpMarginModePopup": {
+        "crossRequiresUnified": "이 거래 쌍의 크로스 마진은 통합 계정이 필요합니다. 활성화하시겠습니까?"
+      },
+      "PerpsMultiBalance": {
+        "title": "Hyperliquid 잔고",
+        "deposit": "입금",
+        "withdraw": "출금"
       }
     },
     "perpsDetail": {
@@ -2787,6 +2863,9 @@
       },
       "guideEntry": {
         "gotIt": "알겠어요"
+      },
+      "PerpsAbout": {
+        "title": "소개"
       }
     },
     "devUIBuiltInPages": {
@@ -2877,7 +2956,8 @@
         "amount": "금액",
         "remainingDebt": "남은 부채",
         "title": "거래 개요",
-        "liquidationAt": "< 1.0에서 청산"
+        "liquidationAt": "< 1.0에서 청산",
+        "toSwap": "스왑"
       },
       "borrowOverview": {
         "myBorrow": "내 빌리기",
@@ -3061,7 +3141,9 @@
         },
         "repayWith": "상환할 담보",
         "collateralNotEnough": "귀하의 담보 잔액이 선택한 금액보다 낮습니다.",
-        "toRepay": "상환 예상 금액"
+        "toRepay": "상환 예상 금액",
+        "insufficientLiquidity": "유동성이 부족합니다.",
+        "frozenCollateral": "이 자산은 Aave 커뮤니티 결정으로 인해 동결되었습니다."
       },
       "repayWithAToken": {
         "header": {
@@ -3073,6 +3155,9 @@
       },
       "dappSelect": {
         "title": "대출 제공자 선택"
+      },
+      "signFallback": {
+        "preExecFailedUseFullSign": "시뮬레이션 실패. 이 거래는 AAVE 오류로 인해 실패할 가능성이 높습니다."
       }
     },
     "address": {
@@ -3139,6 +3224,63 @@
       "walletReady": "당신의 지갑이 준비되었습니다 🚀",
       "createWalletError": "지갑 생성 실패",
       "setPasswordTip": "지갑을 보호하기 위해 비밀번호를 설정하세요."
+    },
+    "convertDust": {
+      "failReason": {
+        "missingRequiredParams": "필수 매개변수 누락",
+        "quoteUnavailable": "견적 가져오기 실패",
+        "gasCostTooHigh": "가스비 제한 초과",
+        "priceImpactTooHigh": "높은 가격 영향",
+        "buildSwapTxsFailed": "스왑 트랜잭션 생성 실패",
+        "sendSwapTxFailed": "스왑 트랜잭션 전송 실패",
+        "transactionFailed": "트랜잭션 실패",
+        "submitFailed": "트랜잭션 제출 실패",
+        "gasNotEnough": "가스 부족"
+      },
+      "status": {
+        "pending": "스왑 중",
+        "idle": "스왑 대기 중",
+        "success": "스왑 완료"
+      },
+      "receiveSummary": {
+        "progress": "전환 진행률",
+        "priceImpact": "가격 충격 상한",
+        "gasLimit": "단일 트랜잭션 Gas 제한",
+        "estimateReceive": "예상 수령:",
+        "actualReceive": "수령"
+      },
+      "bottomBar": {
+        "stop": "중지",
+        "continue": "계속",
+        "start": "전환 시작"
+      },
+      "completed": {
+        "title": "먼지 전환 완료!",
+        "receive": "수신:",
+        "failedTitle": "전환 종료",
+        "viewMoreDetail": "더 많은 상세 정보 보기",
+        "fold": "접기"
+      },
+      "entryGuide": {
+        "title": "Convert Dust \n👇는 홈페이지에서 찾을 수 있습니다",
+        "button": "알겠습니다"
+      },
+      "stopSheet": {
+        "title": "현재 스왑을 중단하시겠습니까?",
+        "desc": "지금 중단하면 남은 스왑이 완료되지 않습니다. 완료된 스왑은 취소할 수 없으므로 주의하시기 바랍니다.",
+        "continue": "계속",
+        "stop": "스왑 중단"
+      },
+      "homeBanner": {
+        "title": "소액 전환",
+        "description": "소액 잔액을 네이티브 토큰으로 전환하는 것을 지원합니다"
+      },
+      "colValueAmount": "값/금액",
+      "colToken": "토큰",
+      "colStatusToken": "상태/토큰",
+      "emptyText": "가치가 낮은 토큰을 찾을 수 없습니다",
+      "unsupportedAccountType": "이 계정 유형은 지원하지 않습니다.",
+      "unsupportedAccount": "현재 개인 키와 시드 구문 주소만 지원됩니다."
     }
   },
   "global": {
@@ -3241,7 +3383,9 @@
     },
     "Imported": "가져온",
     "Created": "생성됨",
-    "SavedSeedPhrase": "나는 시드 구문을 저장했습니다."
+    "SavedSeedPhrase": "나는 시드 구문을 저장했습니다.",
+    "from": "보내는",
+    "to": "받는"
   },
   "native": {
     "biometrics": {

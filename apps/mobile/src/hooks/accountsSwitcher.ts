@@ -7,6 +7,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { RootNames } from '@/constant/layout';
 import { Platform } from 'react-native';
 import { sortAccountList } from '@/utils/sortAccountList';
+import { isSameAccount } from '@/utils/isSameAccount';
 import {
   AccountSwitcherScene,
   makeSceneAccount,
@@ -15,6 +16,8 @@ import {
   zResetSceneAccountInfo,
   zSetSceneAccountInfo,
 } from './sceneAccountInfoAtom';
+
+export { isSameAccount };
 
 export type PropsForAccountSwitchScreen<T extends void | object = void> = {
   isForMultipleAddress?: boolean;
@@ -220,19 +223,6 @@ export function useSwitchSceneCurrentAccount() {
     switchSceneSigningAccount,
     toggleUseAllAccountsOnScene,
   };
-}
-
-export function isSameAccount(
-  account: Account,
-  saccount?: SceneAccount | null,
-) {
-  if (!saccount) return false;
-
-  return (
-    saccount?.address?.toLowerCase() === account.address.toLowerCase() &&
-    saccount?.brandName === account.brandName &&
-    saccount?.type === account.type
-  );
 }
 
 const ScenesSupportAllAccounts: AccountSwitcherScene[] = [

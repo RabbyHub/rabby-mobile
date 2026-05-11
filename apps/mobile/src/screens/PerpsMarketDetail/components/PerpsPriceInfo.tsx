@@ -18,6 +18,7 @@ interface AssetPriceInfoProps {
   activeAssetCtx?: WsActiveAssetCtx['ctx'] | null;
   currentAssetCtx?: MarketData | null;
   logoUrl: string;
+  quoteAsset?: string;
 }
 
 export const AssetPriceInfo = ({
@@ -25,6 +26,7 @@ export const AssetPriceInfo = ({
   logoUrl,
   activeAssetCtx,
   currentAssetCtx,
+  quoteAsset = 'USDC',
 }: AssetPriceInfoProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const markPrice = useMemo(() => {
@@ -52,7 +54,8 @@ export const AssetPriceInfo = ({
   return (
     <View style={styles.section}>
       <AssetAvatar logo={logoUrl} logoStyle={styles.icon} size={24} />
-      <Text style={styles.name}>{formatPerpsCoin(coin)}-USD</Text>
+      <Text style={styles.name}>{formatPerpsCoin(coin)}</Text>
+      <Text style={styles.quote}>{`/${quoteAsset}`}</Text>
       <Text
         style={[
           styles.price,
@@ -70,22 +73,30 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   section: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
     flex: 1,
     flexDirection: 'row',
   },
   price: {
+    marginLeft: 4,
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
   },
   name: {
+    marginLeft: 4,
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
+  },
+  quote: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-info'],
   },
   icon: {
     width: 24,

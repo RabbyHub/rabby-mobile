@@ -140,6 +140,9 @@ export const PerpsPosition: React.FC<{
     return null;
   }
 
+  const displayName = currentAssetCtx?.displayName || coin;
+  const quoteAsset = currentAssetCtx?.quoteAsset || 'USDC';
+
   return (
     <>
       <View style={styles.section}>
@@ -289,10 +292,10 @@ export const PerpsPosition: React.FC<{
                     setEditMarginVisible(true);
                   }}>
                   <Text style={[styles.tagText]}>
-                    $
                     {splitNumberByStep(
                       Number(positionData?.marginUsed || 0).toFixed(2),
-                    )}
+                    )}{' '}
+                    {quoteAsset}
                   </Text>
                   <IconPerpEdit
                     width={16}
@@ -326,7 +329,7 @@ export const PerpsPosition: React.FC<{
               <View style={styles.tagWrapper}>
                 <PerpEditTpSlPriceTag
                   handleActionApproveStatus={handleActionApproveStatus}
-                  coin={coin}
+                  coin={displayName}
                   actionType="tp"
                   type="hasPosition"
                   entryPrice={positionData?.entryPrice}
@@ -416,7 +419,7 @@ export const PerpsPosition: React.FC<{
               <View style={styles.tagWrapper}>
                 <PerpEditTpSlPriceTag
                   leverage={positionData?.leverage}
-                  coin={coin}
+                  coin={displayName}
                   actionType="sl"
                   handleActionApproveStatus={handleActionApproveStatus}
                   type="hasPosition"
@@ -510,17 +513,29 @@ export const PerpsPosition: React.FC<{
             </View>
           </View>
           <View style={styles.listItem}>
+            <View style={styles.listItemMain}>
+              <Text style={styles.label}>
+                {t('page.perpsDetail.PerpsPosition.size')}
+              </Text>
+            </View>
+            <View>
+              <Text style={styles.value}>
+                {positionData?.size} {formatPerpsCoin(displayName)}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.listItem}>
             <TouchableOpacity
               onPress={() => {
                 showTipsPopup({
-                  title: t('page.perpsDetail.PerpsPosition.size'),
+                  title: t('page.perps.historyDetail.tradeValue'),
                   desc: t('page.perpsDetail.PerpsPosition.sizeTips'),
                   buttonType: 'hyperliquid',
                 });
               }}>
               <View style={styles.listItemMain}>
                 <Text style={styles.label}>
-                  {t('page.perpsDetail.PerpsPosition.size')}
+                  {t('page.perps.historyDetail.tradeValue')}
                 </Text>
                 <RcIconInfoCC
                   width={18}
@@ -531,11 +546,10 @@ export const PerpsPosition: React.FC<{
             </TouchableOpacity>
             <View>
               <Text style={styles.value}>
-                $
                 {splitNumberByStep(
                   Number(positionData?.positionValue || 0).toFixed(2),
                 )}{' '}
-                = {positionData?.size} {formatPerpsCoin(coin)}
+                {quoteAsset}
               </Text>
             </View>
           </View>
@@ -551,7 +565,7 @@ export const PerpsPosition: React.FC<{
               </Text>
             </View>
           </View>
-          <View style={styles.listItem}>
+          {/* <View style={styles.listItem}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
                 {t('page.perpsDetail.PerpsPosition.marginMode')}
@@ -564,7 +578,7 @@ export const PerpsPosition: React.FC<{
                   : t('page.perpsDetail.PerpsPosition.isolated')}
               </Text>
             </View>
-          </View>
+          </View> */}
           <View style={styles.listItem}>
             <TouchableOpacity
               onPress={() => {

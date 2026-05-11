@@ -11,14 +11,18 @@ import * as Sentry from '@sentry/react-native';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 
-import { IDisplayedAccountWithBalance } from '@/hooks/accountToDisplay';
 import { contactService, keyringService, preferenceService } from '../services';
 import addressBalanceStore from '@/store/balance';
 
 import { getAddressCacheBalance } from './balance';
 import { requestKeyring } from './keyring';
 import { isEqual } from 'lodash';
-import { type IPinAddress, type Account } from '../services/preference';
+import type {
+  Account,
+  IDisplayedAccountWithBalance,
+  IPinAddress,
+  KeyringAccountWithAlias,
+} from '@/types/account';
 import { makeAvoidParallelAsyncFunc } from '../utils/concurrency';
 
 import BigNumber from 'bignumber.js';
@@ -107,11 +111,7 @@ export async function getAllAccountsToDisplay() {
   return result;
 }
 
-export type KeyringAccountWithAlias = KeyringAccount & {
-  aliasName?: string;
-  balance?: number;
-  evmBalance?: number;
-};
+export type { KeyringAccountWithAlias } from '@/types/account';
 
 /**
  * @description if new fetched accounts are same from the existing ones, return the existing ones

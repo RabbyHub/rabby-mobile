@@ -16,6 +16,7 @@ import { Account } from '@/core/services/preference';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import { useAccounts } from '@/hooks/account';
 import { useMiniSigner } from '@/hooks/useSigner';
+import type { SimpleSignConfig } from '@/hooks/useSigner';
 import { useTheme2024 } from '@/hooks/theme';
 import { Skeleton } from '@rneui/themed';
 import BigNumber from 'bignumber.js';
@@ -49,7 +50,9 @@ import { Linear } from '@/screens/Transaction/components/SkeletonCard';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   filterMyAccounts,
+  isAccountSupportDirectSign,
   isAccountSupportMiniApproval,
+  isHardWareAccountAccountSupportMiniApproval,
   isWatchOrSafeAccount,
 } from '@/utils/account';
 import { findChainByServerID } from '@/utils/chain';
@@ -74,6 +77,8 @@ import { pollDepositStatus } from '@/core/apis/gasAccount';
 import { toast } from '@/components2024/Toast';
 import { GasAccountTopUpWaitCallback } from './topUpContinuation';
 import { apiProvider } from '@/core/apis';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
+import AuthButton from '@/components2024/AuthButton';
 
 type DepositAccount = Account;
 
@@ -289,11 +294,46 @@ const GasAccountDepositTokenFormInner: React.FC<{
 
   const {
     openUI,
+    openDirect,
     resetGasStore,
     close: closeMiniSign,
   } = useMiniSigner({
     account: signerAccount,
   });
+
+  const openDirectOrFallbackToUI = useCallback(
+    async (config: SimpleSignConfig) => {
+      resetGasStore();
+      closeMiniSign();
+      if (
+        isHardWareAccountAccountSupportMiniApproval(selectedOwnerAccount?.type)
+      ) {
+        return await openUI(config);
+      }
+      try {
+        return await openDirect({
+          ...config,
+          checkGasFeeTooHigh: true,
+        });
+      } catch (error) {
+        if (
+          error === MINI_SIGN_ERROR.CANT_PROCESS ||
+          error === MINI_SIGN_ERROR.GAS_FEE_TOO_HIGH
+        ) {
+          closeMiniSign();
+          return await openUI(config);
+        }
+        throw error;
+      }
+    },
+    [
+      closeMiniSign,
+      openDirect,
+      openUI,
+      resetGasStore,
+      selectedOwnerAccount?.type,
+    ],
+  );
 
   const amountValue = Number(usdValue || 0);
   const minDepositUsd = useMemo(
@@ -515,9 +555,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
           const tx = await buildTopUpGasAccount(params);
 
           if (tx) {
-            resetGasStore();
-            closeMiniSign();
-            const res = await openUI({
+            const res = await openDirectOrFallbackToUI({
               txs: [tx],
               autoUseGasFree: true,
               purpose: 'gasAccountTopUp',
@@ -546,9 +584,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
 
         let lastHash = '';
         if (isAccountSupportMiniApproval(selectedOwnerAccount.type)) {
-          resetGasStore();
-          closeMiniSign();
-          const hashes = await openUI({
+          const hashes = await openDirectOrFallbackToUI({
             txs: bridgeTxs,
             autoUseGasFree: true,
             purpose: 'gasAccountTopUp',
@@ -652,15 +688,13 @@ const GasAccountDepositTokenFormInner: React.FC<{
     amountValue,
     bridgeFromTokenAmount,
     bridgeQuote,
-    closeMiniSign,
     ensureGasAccountLogin,
     fetchTopUpUsedNonce,
     onClose,
     onDeposit,
     onWaitDepositResult,
-    openUI,
+    openDirectOrFallbackToUI,
     quoteAmountValue,
-    resetGasStore,
     selectedOwnerAccount,
     selectedToken,
     sendBridgeTxsDirectly,
@@ -872,7 +906,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
         <Text style={styles.title}>
           {t('page.gasAccount.depositPopup.gasDepositTitle')}
         </Text>
-
         <View style={styles.formItem}>
           <View style={styles.formItemLabelRow}>
             <Text style={styles.formItemLabel}>
@@ -943,23 +976,35 @@ const GasAccountDepositTokenFormInner: React.FC<{
 
           <View style={styles.bottomContainer}>{bottomContent}</View>
         </View>
-
-        <Button
-          type="primary"
-          loading={loading}
-          disabled={!canSubmit}
-          onPress={handleSubmit}
-          buttonStyle={styles.depositButton}
-          titleStyle={styles.depositButtonTitle}
-          title={t('page.gasAccount.depositPopup.gasDepositButton', {
-            defaultValue: 'Deposit',
-          })}
-        />
+        {isAccountSupportDirectSign(selectedOwnerAccount?.type) ? (
+          <AuthButton
+            authTitle={t('page.whitelist.confirmPassword')}
+            title={t('page.gasAccount.deposit')}
+            onFinished={handleSubmit}
+            disabled={!canSubmit}
+            loading={loading}
+            syncUnlockTime
+            onBeforeAuth={() => {
+              Keyboard.dismiss();
+            }}
+          />
+        ) : (
+          <Button
+            type="primary"
+            loading={loading}
+            disabled={!canSubmit}
+            onPress={handleSubmit}
+            buttonStyle={styles.depositButton}
+            titleStyle={styles.depositButtonTitle}
+            title={t('page.gasAccount.deposit')}
+          />
+        )}
       </BottomSheetView>
 
       {tokenPickerVisible ? (
         <GasAccountDepositTokenPicker
           visible={tokenPickerVisible}
+          accounts={myAccounts}
           availableTokens={availableTokens}
           isCheckingAvailability={isCheckingAvailability}
           onClose={() => setTokenPickerVisible(false)}
