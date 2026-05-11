@@ -1,6 +1,6 @@
 {
   "name": "rabby-mobile",
-  "version": "0.6.69",
+  "version": "0.6.70",
   "private": true,
   "repository": {
     "type": "git",
@@ -28,6 +28,7 @@
     "link-assets": "react-native-asset && sh ./scripts/fns.sh reset_builtin_assets && sh ./scripts/fns.sh build_worker_if_not_exist",
     "lint": "eslint ./src --ext .js,.jsx,.ts,.tsx",
     "lint:commit:fix": "eslint ./src --quiet --fix --ext .js,.jsx,.ts,.tsx --max-warnings=-1",
+    "lint:cycles:eslint": "eslint ./src --ext .js,.jsx,.ts,.tsx --quiet --rule '{\"import/no-cycle\":[\"error\",{\"maxDepth\":12,\"ignoreExternal\":true}]}'",
     "lint:cycles": "madge --circular --extensions ts,tsx --ts-config ./tsconfig.json --exclude '(^\\.\\./\\.\\./packages/.*/dist|\\.d\\.ts$)' ./index.js",
     "lint:fix": "eslint ./src --fix --ext .js,.jsx,.ts,.tsx",
     "loadables:generate": "node ./scripts/generate-loadables-dev.cjs",
@@ -97,7 +98,7 @@
     "@rabby-wallet/object-multiplex": "workspace:^",
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/rabby-action": "0.1.14",
-    "@rabby-wallet/rabby-api": "0.9.60",
+    "@rabby-wallet/rabby-api": "0.9.61",
     "@rabby-wallet/rabby-bridge": "0.0.2",
     "@rabby-wallet/rabby-logger": "0.3.0",
     "@rabby-wallet/rabby-security-engine": "2.0.12",

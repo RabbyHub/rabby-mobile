@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { View } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
@@ -20,11 +20,16 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useAccountHomeShowReceiveTip } from '@/screens/Address/components/MultiAssets/hooks';
 import { useMockDataForHomeCenterArea } from '../hooks/homeCenterArea';
 import { DepositAssetsCard } from './DepositAssetsCard';
+import { ConvertDustBanner } from './ConvertDustBanner';
+import { useConvertDustBanner } from '../hooks/useConvertDustBanner';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { RootNames } from '@/constant/layout';
 
 export function HomeCenterArea() {
   const { styles } = useTheme2024({
     getStyle,
   });
+  const navigation = useRabbyAppNavigation();
 
   const { accountToShowReceiveTip, isLoadingAccountToShowReceiveTip } =
     useAccountHomeShowReceiveTip();
@@ -33,8 +38,20 @@ export function HomeCenterArea() {
   const txCount = rateGuideLastExposureState(state => state.txCount);
   const { mockData } = useMockDataForHomeCenterArea();
   const forceShowDepositAssetsCard = mockData?.forceShowDepositAssetsCard;
+  const { shouldShowConvertDustBanner, dismissConvertDustBanner } =
+    useConvertDustBanner();
 
   const { viewedHomeTip: viewedScreenShotReportTip } = useViewedHomeTip();
+
+  const handlePressConvertDustBanner = useCallback(() => {
+    dismissConvertDustBanner();
+    navigation.push(RootNames.StackTransaction, {
+      screen: RootNames.ConvertDust,
+      params: {
+        fromHomeConvertDustBanner: true,
+      },
+    });
+  }, [dismissConvertDustBanner, navigation]);
 
   const { blocksVisibility, noBetweenContent, onlyOneContent } = useMemo(() => {
     const hasOfflineChainData = !!(
@@ -49,6 +66,7 @@ export function HomeCenterArea() {
       rateGuideOnHome: false as boolean,
       offlineChainData: false as boolean,
       tipScreenshot: false as boolean,
+      convertDustBanner: false as boolean,
     };
 
     // Wait for account check to complete before deciding what to show
@@ -64,11 +82,18 @@ export function HomeCenterArea() {
     if (accountToShowReceiveTip || forceShowDepositAssetsCard) {
       blocks.soloAccountToShowReceiveTip = true;
     } else {
-      if (hasCompletedTransaction && hasOfflineChainData)
-        blocks.offlineChainData = true;
-      if (hasCompletedTransaction && !viewedScreenShotReportTip)
-        blocks.tipScreenshot = true;
-      else if (shouldShowRateGuideOnHome) blocks.rateGuideOnHome = true;
+      if (shouldShowConvertDustBanner) {
+        blocks.convertDustBanner = true;
+      } else {
+        if (hasCompletedTransaction && hasOfflineChainData) {
+          blocks.offlineChainData = true;
+        }
+        if (hasCompletedTransaction && !viewedScreenShotReportTip) {
+          blocks.tipScreenshot = true;
+        } else if (shouldShowRateGuideOnHome) {
+          blocks.rateGuideOnHome = true;
+        }
+      }
     }
 
     const visibleEls = Object.values(blocks);
@@ -80,6 +105,7 @@ export function HomeCenterArea() {
     };
   }, [
     shouldShowRateGuideOnHome,
+    shouldShowConvertDustBanner,
     offlineChainData,
     accountToShowReceiveTip,
     viewedScreenShotReportTip,
@@ -125,11 +151,20 @@ export function HomeCenterArea() {
           <RateModal /* totalBalanceText={combineData.netWorth} */ />
         </Animated.View>
       )}
+
+      {blocksVisibility.convertDustBanner && (
+        <Animated.View entering={FadeInUp.duration(200)}>
+          <ConvertDustBanner
+            onPress={handlePressConvertDustBanner}
+            onClose={dismissConvertDustBanner}
+          />
+        </Animated.View>
+      )}
     </View>
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(() => ({
   contentBetweenHeaderAndMatrix: {
     marginTop: 12,
     marginBottom: 12,

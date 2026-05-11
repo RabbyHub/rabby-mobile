@@ -1,5 +1,6 @@
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
-import { apisAutoLock, apisLock } from '@/core/apis';
+import * as apisAutoLock from '@/core/apis/autoLock';
+import * as apisLock from '@/core/apis/lock';
 import { autoLockEvent } from '@/core/apis/autoLock';
 import { unlockTimeEvent } from '@/core/apis/lock';
 import { preferenceService } from '@/core/services';

@@ -1035,7 +1035,8 @@
         "predict": "คาดการณ์",
         "meme": "Memecoin",
         "market": "ตลาด",
-        "gasDeposit": "เงินฝากแก๊ส"
+        "gasDeposit": "เงินฝากแก๊ส",
+        "convertDust": "แปลง Dust"
       },
       "swipeUp": {
         "descAndroid": "คลิกเพื่อสำรวจ dApps",
@@ -3400,7 +3401,9 @@
         },
         "repayWith": "หลักประกันสำหรับการชำระคืนด้วย",
         "collateralNotEnough": "ยอดเงินค้ำประกันของคุณต่ำกว่าจำนวนที่เลือก",
-        "toRepay": "จำนวนที่คาดว่าจะต้องชำระคืน"
+        "toRepay": "จำนวนที่คาดว่าจะต้องชำระคืน",
+        "insufficientLiquidity": "สภาพคล่องไม่เพียงพอ",
+        "frozenCollateral": "สินทรัพย์นี้ถูกระงับเนื่องจากการตัดสินใจของชุมชน Aave"
       },
       "repayWithAToken": {
         "header": {
@@ -3481,6 +3484,63 @@
       "createWalletError": "การสร้างกระเป๋าเงินล้มเหลว",
       "walletReady": "กระเป๋าเงินของคุณพร้อมแล้ว 🚀",
       "setPasswordTip": "ตั้งรหัสผ่านเพื่อป้องกันกระเป๋าเงินของคุณ"
+    },
+    "convertDust": {
+      "failReason": {
+        "missingRequiredParams": "ขาดพารามิเตอร์ที่จำเป็น",
+        "quoteUnavailable": "ไม่สามารถดึงข้อเสนอราคา",
+        "gasCostTooHigh": "เกินขีดจำกัดค่าธรรมเนียม Gas",
+        "priceImpactTooHigh": "ราคาได้รับผลกระทบสูง",
+        "buildSwapTxsFailed": "ไม่สามารถสร้างธุรกรรม Swap",
+        "sendSwapTxFailed": "ไม่สามารถส่งธุรกรรม Swap",
+        "transactionFailed": "ธุรกรรมล้มเหลว",
+        "submitFailed": "ไม่สามารถส่งธุรกรรม",
+        "gasNotEnough": "Gas ไม่เพียงพอ"
+      },
+      "status": {
+        "pending": "กำลังสวอป",
+        "idle": "รอการสวอป",
+        "success": "สวอปสำเร็จ"
+      },
+      "receiveSummary": {
+        "progress": "ความคืบหน้าในการแปลง",
+        "priceImpact": "เพดานผลกระทบต่อราคา",
+        "gasLimit": "ขีดจำกัดแก๊สต่อธุรกรรมเดียว",
+        "estimateReceive": "รับโดยประมาณ:",
+        "actualReceive": "รับ"
+      },
+      "bottomBar": {
+        "stop": "หยุด",
+        "continue": "ดำเนินการต่อ",
+        "start": "เริ่มแลกเปลี่ยน"
+      },
+      "completed": {
+        "title": "แปลงฝุ่นเสร็จสิ้น!",
+        "receive": "ได้รับ:",
+        "failedTitle": "การแปลงสิ้นสุดแล้ว",
+        "viewMoreDetail": "ดูรายละเอียดเพิ่มเติม",
+        "fold": "ย่อ"
+      },
+      "entryGuide": {
+        "title": "คุณสามารถค้นหา Convert Dust \n👇 ที่นี่บนหน้าแรก",
+        "button": "เข้าใจแล้ว"
+      },
+      "stopSheet": {
+        "title": "หยุดการแลกเปลี่ยนปัจจุบันหรือไม่?",
+        "desc": "หากคุณหยุดตอนนี้ การแลกเปลี่ยนที่เหลืออยู่จะไม่เสร็จสิ้น โปรดทราบว่าการแลกเปลี่ยนที่เสร็จสิ้นแล้วไม่สามารถย้อนกลับได้",
+        "continue": "ดำเนินต่อ",
+        "stop": "หยุดการแลกเปลี่ยน"
+      },
+      "homeBanner": {
+        "title": "แปลง Dust",
+        "description": "รองรับการแปลงยอดคงเหลือที่น้อยเป็นโทเค็นเนทีฟ"
+      },
+      "colValueAmount": "มูลค่า/จำนวน",
+      "colToken": "โทเค็น",
+      "colStatusToken": "สถานะ/โทเค็น",
+      "emptyText": "ไม่พบโทเค็นที่มีมูลค่าต่ำ",
+      "unsupportedAccountType": "ไม่รองรับประเภทบัญชีนี้",
+      "unsupportedAccount": "ขณะนี้รองรับเฉพาะที่อยู่แบบคีย์ส่วนตัวและวลีเมล็ดพันธุ์เท่านั้น"
     }
   },
   "native": {

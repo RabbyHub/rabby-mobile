@@ -1083,7 +1083,8 @@
         "meme": "Memecoin",
         "lending": "Lending",
         "predict": "Predict",
-        "perpsMarketList": "More Perps"
+        "perpsMarketList": "More Perps",
+        "convertDust": "Convert Dust"
       },
       "swipeUp": {
         "desc": "Swipe up to explore websites",
@@ -3220,6 +3221,8 @@
           "title": "Repay with {{collateral}}"
         },
         "collateralNotEnough": "Your collateral balance is lower than the selected amount.",
+        "insufficientLiquidity": "Insufficient liquidity.",
+        "frozenCollateral": "This asset is frozen due to an Aave community decision.",
         "overview": {
           "title": "Transaction Overview",
           "borrowValueAfter": "Borrow balance after repay",
@@ -3254,6 +3257,63 @@
       "walletBalance": "Wallet/Balance",
       "netWorth": "Net worth",
       "selectAWallet": "Select a Wallet"
+    },
+    "convertDust": {
+      "colValueAmount": "Value/Amount",
+      "failReason": {
+        "missingRequiredParams": "Missing required parameters",
+        "quoteUnavailable": "Fail to fetch quote",
+        "gasCostTooHigh": "Exceed gas fee limit",
+        "priceImpactTooHigh": "High price impact",
+        "buildSwapTxsFailed": "Failed to build swap txs",
+        "sendSwapTxFailed": "Failed to send swap tx",
+        "transactionFailed": "Transaction failed",
+        "submitFailed": "Fail to submit transactions",
+        "gasNotEnough": "Insufficient Gas"
+      },
+      "status": {
+        "pending": "Swapping",
+        "idle": "Waiting to swap",
+        "success": "Swap successful"
+      },
+      "colToken": "Token",
+      "colStatusToken": "Status/Token",
+      "emptyText": "No low-value tokens found",
+      "receiveSummary": {
+        "progress": "Conversion progress",
+        "priceImpact": "Price Impact Cap",
+        "gasLimit": "Single Transaction Gas Limit",
+        "estimateReceive": "Est.Receive:",
+        "actualReceive": "Receive"
+      },
+      "bottomBar": {
+        "stop": "Stop",
+        "continue": "Continue",
+        "start": "Start convert"
+      },
+      "completed": {
+        "title": "Dust Converted !",
+        "receive": "Received:",
+        "failedTitle": "Conversion Ended",
+        "viewMoreDetail": "View more details",
+        "fold": "Fold"
+      },
+      "entryGuide": {
+        "title": "You can find Convert Dust \n👇 here on the Homepage",
+        "button": "Got it"
+      },
+      "stopSheet": {
+        "title": "Stop the current swaps?",
+        "desc": "If you stop now, any remaining swaps will not be completed. Please note completed swaps cannot be reversed.",
+        "continue": "Continue",
+        "stop": "Stop swap"
+      },
+      "homeBanner": {
+        "title": "Convert Dust",
+        "description": "Supports converting small balances into the native token"
+      },
+      "unsupportedAccountType": "Not support this account type.",
+      "unsupportedAccount": "Currently only private key and seed phrase addresses are supported."
     }
   },
   "component": {

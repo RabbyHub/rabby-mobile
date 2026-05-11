@@ -1,5 +1,5 @@
 import { accountEvents, fetchAllAccounts } from '@/core/apis/account';
-import { apiMnemonic } from '@/core/apis';
+import * as apiMnemonic from '@/core/apis/mnemonic';
 import { getAllAccounts, removeAddress } from '@/core/apis/address';
 import { AccountInfoEntity } from '@/databases/entities/accountInfo';
 import { EntityAccountBase } from '@/databases/entities/base';

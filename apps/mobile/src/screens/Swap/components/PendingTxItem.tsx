@@ -16,7 +16,7 @@ import { getAliasName } from '@/core/apis/contact';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
-import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
+import { TxStatusItem } from '@/screens/Transaction/components/TxStatusItem';
 import { ellipsisAddress } from '@/utils/address';
 import { findChain } from '@/utils/chain';
 import { naviPush } from '@/utils/navigation';

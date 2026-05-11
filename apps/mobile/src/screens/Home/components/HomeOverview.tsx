@@ -10,6 +10,7 @@ import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconMarketCC from '@/assets2024/icons/home/IconMarketCC.svg';
+import RcIconConvertDustCC from '@/assets2024/icons/home/IconDustCC.svg';
 
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -130,6 +131,7 @@ import {
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { NewTag } from './NewTag';
 import { useHomeFeatureNewTag } from '../hooks/useHomeFeatureNewTag';
+import { useDismissConvertDustBanner } from '../hooks/useConvertDustBanner';
 import { useMemoizedFn } from 'ahooks';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { sleep } from '@/utils/async';
@@ -593,6 +595,7 @@ export const HomeOverview = React.memo(() => {
     getStyle,
   });
   const { pendingTxCount, historyCount } = useHomeHistoryStore();
+  const dismissConvertDustBanner = useDismissConvertDustBanner();
 
   const { width } = useWindowDimensions();
   const itemWidth =
@@ -688,6 +691,11 @@ export const HomeOverview = React.memo(() => {
           key: MultiHomeFeatTitle.Points,
           title: t('page.rabbyPoints.title'),
           icon: RcIconPointsCC,
+        },
+        {
+          key: MultiHomeFeatTitle.ConvertDust,
+          title: t('page.home.services.convertDust'),
+          icon: RcIconConvertDustCC,
         },
       ].filter(Boolean) as {
         key: MultiHomeFeatTitle;
@@ -896,11 +904,18 @@ export const HomeOverview = React.memo(() => {
             params: {},
           });
           break;
+        case MultiHomeFeatTitle.ConvertDust:
+          dismissConvertDustBanner();
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.ConvertDust,
+            params: {},
+          });
+          break;
         default:
           break;
       }
     },
-    [handlePressMarket, navigation],
+    [dismissConvertDustBanner, handlePressMarket, navigation],
   );
 
   const generateCustomBadgeIcon = useCallback(

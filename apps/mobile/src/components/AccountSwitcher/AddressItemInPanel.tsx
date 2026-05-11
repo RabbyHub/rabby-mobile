@@ -17,6 +17,7 @@ import { TokenDetailHeaderArea } from '@/screens/TokenDetail/components/HeaderAr
 import { formatPrice, formatTokenAmount } from '@/utils/number';
 import { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
+import { toast } from '@/components2024/Toast';
 const MY_ADDRESS_LIMIT = 3;
 export const AddressItemSizes = {
   radiusValue: 20,
@@ -42,6 +43,7 @@ export function AddressItemInPanel({
   renderRight,
   renderNameAddon,
   checkIconPosition = 'right',
+  disabledTips,
   onPressAddress: proponPressAddress,
 }: {
   addressItemProps: AddressItemProps & { account: Account };
@@ -49,6 +51,7 @@ export function AddressItemInPanel({
   onPressAddress?: (account: Account) => void;
   token?: ITokenItem;
   isHideToken?: boolean;
+  disabledTips?: string;
   rightText?: string;
   rightAddon?: React.ReactNode;
   renderRight?: (ctx: {
@@ -70,8 +73,12 @@ export function AddressItemInPanel({
 
   const { account } = addressItemProps;
   const onPressAddress = useCallback(() => {
+    if (disabledTips) {
+      toast.info(disabledTips);
+      return;
+    }
     proponPressAddress?.(account);
-  }, [account, proponPressAddress]);
+  }, [account, disabledTips, proponPressAddress]);
 
   const { tokenList: tokens } = useTopTokensForAddress({
     accountAddress: account?.address,
@@ -130,6 +137,7 @@ export function AddressItemInPanel({
             styles.addressItemContainer,
             isCurrent && styles.addressItemContainerCurrent,
             isPressing && styles.containerPressing,
+            disabledTips && styles.addressItemContainerDisabled,
           ])}
           activeOpacity={1}
           delayLongPress={200} // long press delay
@@ -221,6 +229,7 @@ export function AddressItemInPanelForTokenDetail({
   token,
   renderNameAddon,
   checkIconPosition = 'right',
+  disabledTips,
   onPressAddress: _onPressAddress,
 }: {
   addressItemProps: AddressItemProps & { account: Account };
@@ -228,6 +237,7 @@ export function AddressItemInPanelForTokenDetail({
   token?: ITokenItem;
   onPressAddress?: (account: Account) => void;
   isHideToken?: boolean;
+  disabledTips?: string;
   renderNameAddon?: (ctx: {
     account: Account;
     isCurrent?: boolean;
@@ -260,8 +270,12 @@ export function AddressItemInPanelForTokenDetail({
     return node;
   }, [account, isCurrent, renderNameAddon, styles.nameAddonText]);
   const onPressAddress = useCallback(() => {
+    if (disabledTips) {
+      toast.info(disabledTips);
+      return;
+    }
     _onPressAddress?.(account);
-  }, [account, _onPressAddress]);
+  }, [account, disabledTips, _onPressAddress]);
 
   const usdValue = useMemo(() => {
     const _usdValue = (token?.price || 0) * (tokenAmount || 0);
@@ -282,6 +296,7 @@ export function AddressItemInPanelForTokenDetail({
             styles.addressItemContainer,
             isCurrent && styles.addressItemContainerCurrent,
             isPressing && styles.containerPressing,
+            disabledTips && styles.addressItemContainerDisabled,
           ])}
           activeOpacity={1}
           delayLongPress={200} // long press delay
@@ -375,6 +390,9 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     },
     addressItemContainerCurrent: {
       backgroundColor: ctx.colors2024['brand-light-1'],
+    },
+    addressItemContainerDisabled: {
+      opacity: 0.4,
     },
     addressItemInner: {
       flexDirection: 'row',

@@ -40,7 +40,7 @@ import {
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
-import { TabName } from './TabsMultiAssets';
+import { HomeTabName as TabName } from '@/hooks/navigation';
 import { ListRenderSeparator } from './RenderRow/Common';
 import {
   createGlobalBottomSheetModal2024,

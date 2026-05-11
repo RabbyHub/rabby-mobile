@@ -26,7 +26,6 @@ import {
   TokenRowSectionLpTokenHeader,
   TokenRowV2,
 } from './components/AssetRenderItems';
-import { useCurrency } from '@/hooks/useCurrency';
 import {
   useSingleHomeAccount,
   useSingleHomeChain,
@@ -88,7 +87,6 @@ export const TokenList = ({
   const { t } = useTranslation();
   const { currentAccount } = useSingleHomeAccount();
   const { selectedChain } = useSingleHomeChain();
-  const { currency } = useCurrency();
 
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
@@ -189,8 +187,8 @@ export const TokenList = ({
     const usdValue = foldTokens
       .filter(item => item.is_core)
       .reduce((total, item) => total + item.usd_value, 0);
-    return formatNetworth(usdValue * currency.usd_rate, false, currency.symbol);
-  }, [currency.symbol, currency.usd_rate, foldTokens]);
+    return formatNetworth(usdValue);
+  }, [foldTokens]);
 
   const dataList = useMemo(() => {
     const items: TokenListItem[] = [];

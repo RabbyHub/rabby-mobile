@@ -1,4 +1,4 @@
-import {
+import type {
   AllDexsClearinghouseState,
   MarketData,
 } from '@/hooks/perps/usePerpsStore';
@@ -16,7 +16,7 @@ import {
 import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
 import type { Account } from '@/types/account';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { apisPerps } from '@/core/apis';
+import { apisPerps } from '@/core/apis/perps';
 import { perpsService } from '@/core/services';
 import { PerpTopTokenV3 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';

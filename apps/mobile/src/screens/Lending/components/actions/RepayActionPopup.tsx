@@ -55,10 +55,8 @@ import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
-import {
-  useSignatureStoreOf,
-  SignatureInstanceProvider,
-} from '@/components2024/MiniSignV2';
+import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
+import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { CHAINS_ENUM } from '@debank/common';
 import {
   API_ETH_MOCK_ADDRESS,
@@ -68,7 +66,10 @@ import RepayWithCollateral from './RepayWithCollateralContent';
 import { getCollateralToken, getFromToken } from '../../utils/swap';
 import { isSupportRepayWithCollateral } from './RepayWithCollateralContent/utils';
 import wrapperToken from '../../config/wrapperToken';
-import { displayGhoForMintableMarket } from '../../utils/supply';
+import {
+  displayGhoForMintableMarket,
+  getSupplyCapData,
+} from '../../utils/supply';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -868,7 +869,10 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     const collateralTokens = displayPoolReserves
       .filter(
         item =>
-          !isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
+          !isSameAddress(
+            item.underlyingAsset,
+            reserve?.underlyingAsset || '',
+          ) && !getSupplyCapData(item).supplyCapReached,
       )
       .sort((a, b) => {
         return BigNumber(b.underlyingBalanceUSD).comparedTo(
@@ -904,7 +908,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
             displayReserve?.underlyingAsset || '',
           );
     });
-    if (!r || !chainInfo?.id) {
+    if (!r || !chainInfo?.id || r.isFrozen) {
       return undefined;
     }
     return getCollateralToken(

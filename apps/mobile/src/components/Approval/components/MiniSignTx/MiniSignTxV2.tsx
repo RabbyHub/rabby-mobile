@@ -8,7 +8,7 @@ import {
   GasSelectorResponse,
 } from '../TxComponents/GasSelector/GasSelectorHeader';
 import { useTranslation } from 'react-i18next';
-import { MiniSecurityHeader } from '@/components2024/MiniSignV2';
+import { MiniSecurityHeader } from '@/components2024/MiniSignV2/components/MiniSecurityHeader';
 import type { SignatureFlowState } from '@/components2024/MiniSignV2/state/types';
 import type { SignatureManager } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { useSignatureStore } from '@/components2024/MiniSignV2/state/useSignatureStore';

@@ -1,4 +1,4 @@
-import { getRecommendNonce } from '@/core/apis/provider';
+import { getRecommendNonce } from '@/core/apis/recommendNonce';
 import type { Account } from '@/types/account';
 import { t } from 'i18next';
 import { hexToNumber, isHex } from 'viem';
