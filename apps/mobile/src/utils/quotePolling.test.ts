@@ -1,4 +1,5 @@
 import {
+  getQuotePollingResumeDelay,
   hasQuotePollingPauseReason,
   shouldScheduleQuotePolling,
   updateQuotePollingPauseReason,
@@ -15,6 +16,29 @@ describe('quotePolling', () => {
     expect(shouldScheduleQuotePolling({ enabled: false, paused: false })).toBe(
       false,
     );
+  });
+
+  it('resumes polling at the existing deadline instead of immediately', () => {
+    expect(
+      getQuotePollingResumeDelay({
+        deadline: 2000,
+        now: 1250,
+      }),
+    ).toBe(750);
+
+    expect(
+      getQuotePollingResumeDelay({
+        deadline: 2000,
+        now: 2500,
+      }),
+    ).toBe(0);
+
+    expect(
+      getQuotePollingResumeDelay({
+        deadline: null,
+        now: 2500,
+      }),
+    ).toBeNull();
   });
 
   it('keeps polling paused until all pause reasons are cleared', () => {

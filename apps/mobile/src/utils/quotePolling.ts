@@ -6,6 +6,20 @@ export const shouldScheduleQuotePolling = ({
   paused: boolean;
 }) => enabled && !paused;
 
+export const getQuotePollingResumeDelay = ({
+  deadline,
+  now = Date.now(),
+}: {
+  deadline?: number | null;
+  now?: number;
+}) => {
+  if (!deadline) {
+    return null;
+  }
+
+  return Math.max(deadline - now, 0);
+};
+
 export type QuotePollingPauseReasonState = Record<string, true>;
 
 export const updateQuotePollingPauseReason = ({
