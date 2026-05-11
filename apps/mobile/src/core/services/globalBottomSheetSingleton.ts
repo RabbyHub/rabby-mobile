@@ -1,5 +1,6 @@
 type SingletonCreateOptions = {
   name: string;
+  approvalComponent?: string;
   allowMultipleInstances?: boolean;
   singletonKey?: string;
 };
@@ -14,7 +15,12 @@ export function makeGlobalBottomSheetSingletonRegistry<
       return null;
     }
 
-    return `${options.name}:${options.singletonKey || 'default'}`;
+    const discriminator =
+      options.name === 'APPROVAL'
+        ? options.approvalComponent || options.singletonKey || 'default'
+        : options.singletonKey || 'default';
+
+    return `${options.name}:${discriminator}`;
   };
 
   const getActiveId = (options: SingletonCreateOptions) => {

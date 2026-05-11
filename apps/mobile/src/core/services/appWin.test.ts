@@ -80,4 +80,41 @@ describe('legacy apisAppWin global bottom sheet singleton', () => {
     expect(secondId).not.toBe(firstId);
     expect(createdIds).toEqual([firstId, secondId]);
   });
+
+  it('separates approval modals by approvalComponent', () => {
+    const {
+      apisAppWin,
+      APPROVAL_MODAL_NAMES,
+      EVENT_NAMES,
+      MODAL_NAMES,
+      globalSheetModalEvents,
+    } = loadLegacyAppWinModule();
+    const createdIds: string[] = [];
+    const presentedIds: string[] = [];
+
+    globalSheetModalEvents.on(EVENT_NAMES.CREATE, id => {
+      createdIds.push(id);
+    });
+    globalSheetModalEvents.on(EVENT_NAMES.PRESENT, id => {
+      presentedIds.push(id);
+    });
+
+    const signTxId = apisAppWin.createGlobalBottomSheetModal({
+      name: MODAL_NAMES.APPROVAL,
+      approvalComponent: APPROVAL_MODAL_NAMES.SignTx,
+    });
+    const sameSignTxId = apisAppWin.createGlobalBottomSheetModal({
+      name: MODAL_NAMES.APPROVAL,
+      approvalComponent: APPROVAL_MODAL_NAMES.SignTx,
+    });
+    const waitingId = apisAppWin.createGlobalBottomSheetModal({
+      name: MODAL_NAMES.APPROVAL,
+      approvalComponent: APPROVAL_MODAL_NAMES.PrivatekeyWaiting,
+    });
+
+    expect(sameSignTxId).toBe(signTxId);
+    expect(waitingId).not.toBe(signTxId);
+    expect(createdIds).toEqual([signTxId, waitingId]);
+    expect(presentedIds).toEqual([signTxId]);
+  });
 });
