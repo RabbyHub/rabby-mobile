@@ -7,10 +7,7 @@ import React, {
 } from 'react';
 
 import { makeTxPageBackgroundColors, RootNames } from '@/constant/layout';
-import {
-  HistoryItemEntity,
-  ProjectItemType,
-} from '@/databases/entities/historyItem';
+import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
 import { preferenceService, transactionHistoryService } from '@/core/services';
 import { findChain, findChainByServerID } from '@/utils/chain';
@@ -27,13 +24,10 @@ import { last, unionBy, orderBy, debounce } from 'lodash';
 import { View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import {
-  TokenItem,
   TxAllHistoryResult,
-  TxHistoryItem,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { HistoryList } from './components/HistoryGroupList';
-import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
@@ -62,56 +56,13 @@ import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
-import {
-  CUSTOM_HISTORY_TITLE_TYPE,
-  HistoryItemCateType,
-} from './components/type';
 import { Text } from '@/components/Typography';
+import type { HistoryDisplayItem } from '@/types/history';
+
+export type { HistoryDisplayItem } from '@/types/history';
 
 const _PAGE_COUNT = 200;
 const REALL_TIME_API_PAGE_COUNT = 20;
-
-export interface HistoryDisplayItem extends Omit<TxHistoryItem, 'tx'> {
-  // projectDict: TxHistoryResult['project_dict'];
-  // cateDict: TxHistoryResult['cate_dict'];
-  // tokenDict: TxHistoryResult['token_dict'];
-  tx:
-    | (TxHistoryItem['tx'] & {
-        id?: string;
-      })
-    | null;
-  receives: {
-    amount: number;
-    from_addr: string;
-    token_id: string;
-    price?: number;
-    token: TokenItem;
-  }[];
-  sends: {
-    amount: number;
-    to_addr: string;
-    token_id: string;
-    price?: number;
-    token: TokenItem;
-  }[];
-  time_at: number;
-  token_approve: {
-    spender: string;
-    token_id: string;
-    value: number;
-    price?: number;
-    token?: TokenItem;
-  } | null;
-  address: string;
-  project_item: ProjectItemType | null;
-  key: string;
-  isSmallUsdTx?: boolean; // is will be filtered small tx
-  cateDict?: Record<string, string>;
-  account?: KeyringAccountWithAlias;
-  isShowSuccess?: boolean;
-  historyType: HistoryItemCateType;
-  historyCustomType?: CUSTOM_HISTORY_TITLE_TYPE;
-}
 
 interface IFetchHistory {
   last: number;
@@ -749,7 +700,7 @@ const HistoryScreen = ({ isForMultipleAddress = true }) => {
   const { styles } = useTheme2024({ getStyle });
 
   return (
-    <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
+    <NormalScreenContainer2024 type="bg0" overwriteStyle={styles.container}>
       {isForMultipleAddress && (
         <AccountSwitcherModal
           forScene="MultiHistory"

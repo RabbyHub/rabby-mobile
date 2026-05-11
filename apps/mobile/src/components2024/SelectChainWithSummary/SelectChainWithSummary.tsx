@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard, Pressable, View, ViewStyle } from 'react-native';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
-import RcIconNotFindCC from '@/assets2024/icons/address/noFind.svg';
 // import RcIconSearchCC from '@/assets/icons/select-chain/icon-search-cc.svg';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
@@ -14,7 +13,6 @@ import {
   useLoadMatteredChainBalances,
   useMatteredChainBalancesAll,
 } from '@/hooks/accountChainBalance';
-import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { findChainByEnum, varyAndSortChainItems } from '@/utils/chain';
 import NetSwitchTabs, {
   useSwitchNetTab,
@@ -33,7 +31,7 @@ import { Account } from '@/core/services/preference';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { Text, TextInput } from '@/components/Typography';
 
-const useChainSeletorList = ({
+const useChainSelectorList = ({
   supportChains,
   netTabKey,
   needAllAddresses,
@@ -127,6 +125,7 @@ export type SelectSortedChainProps = {
   value?: CHAINS_ENUM | null;
   onChange?: (value: CHAINS_ENUM) => void;
   supportChains?: CHAINS_ENUM[];
+  unsupportedChainMode?: 'disabled' | 'hidden';
   disabledTips?: string | ((ctx: { chain: Chain }) => string);
   hideTestnetTab?: boolean;
   hideMainnetTab?: boolean;
@@ -141,6 +140,7 @@ export default function SelectChainWithSummary({
   value,
   onChange,
   supportChains,
+  unsupportedChainMode = 'disabled',
   disabledTips,
   hideTestnetTab = false,
   hideMainnetTab = false,
@@ -164,7 +164,7 @@ export default function SelectChainWithSummary({
     setSearch,
     matteredList: _matteredList,
     unmatteredList: _unmatteredList,
-  } = useChainSeletorList({
+  } = useChainSelectorList({
     // set undefined to allow all main chains
     supportChains: supportChains,
     needAllAddresses,
@@ -173,13 +173,32 @@ export default function SelectChainWithSummary({
   });
 
   const [matteredList, unmatteredList] = useMemo(() => {
-    if (excludeChains?.length) {
-      return [_matteredList, _unmatteredList].map(chains =>
-        chains.filter(e => !excludeChains.includes(e.enum)),
-      ) as [Chain[], Chain[]];
-    }
-    return [_matteredList, _unmatteredList];
-  }, [excludeChains, _matteredList, _unmatteredList]);
+    const filterChain = (chain: Chain) => {
+      if (excludeChains?.includes(chain.enum)) {
+        return false;
+      }
+
+      if (
+        unsupportedChainMode === 'hidden' &&
+        supportChains &&
+        !supportChains.includes(chain.enum)
+      ) {
+        return false;
+      }
+
+      return true;
+    };
+
+    return [_matteredList, _unmatteredList].map(chains =>
+      chains.filter(filterChain),
+    ) as [Chain[], Chain[]];
+  }, [
+    excludeChains,
+    _matteredList,
+    _unmatteredList,
+    supportChains,
+    unsupportedChainMode,
+  ]);
 
   useEffect(() => {
     const chain = findChainByEnum(value ?? undefined);
@@ -281,6 +300,7 @@ export default function SelectChainWithSummary({
             value={value ?? undefined}
             onChange={onChange}
             supportChains={supportChains}
+            unsupportedChainMode={unsupportedChainMode}
             disabledTips={disabledTips}
             account={account}
           />

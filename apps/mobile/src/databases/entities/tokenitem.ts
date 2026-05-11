@@ -20,7 +20,7 @@ import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_TOKEN_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
 import { tokenItemEntityToTokenItem } from '@/utils/token';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/types/assets';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
 import { ParseEntity } from '@/core/utils/typeorm';

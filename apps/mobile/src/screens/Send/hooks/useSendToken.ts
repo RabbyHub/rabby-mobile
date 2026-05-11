@@ -78,6 +78,7 @@ import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { useSwapBridgeSlider } from '@/screens/Swap/hooks/slider';
+import { storeApiExpSettingData } from '@/hooks/appSettings';
 import { tokenAmountBn } from '@/screens/Swap/utils';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { ExtractAtomValueType, IExtractFromPromise } from '@/utils/type';
@@ -585,7 +586,6 @@ export function useSendTokenForm({
   currentAccount: Account | null;
 }) {
   const { t } = useTranslation();
-
   const sendTokenEventsRef = useRef(new EventEmitter());
   const { switchAccountOnSelectedToken } =
     useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
@@ -1116,7 +1116,7 @@ export function useSendTokenForm({
     }: FormSendToken & {
       isForceSignTx?: boolean;
     }) => {
-      if (__DEV__) {
+      if (storeApiExpSettingData.getShouldBlockSubmitIfFormChangedOnAuth()) {
         const snapshot = formValuesRef.current.getSnapshot();
 
         if (!snapshot) {

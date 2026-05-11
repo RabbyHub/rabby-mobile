@@ -21,7 +21,7 @@ import {
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { CHAINS_ENUM } from '@/constant/chains';
-import { SignatureInstanceProvider } from '@/components2024/MiniSignV2';
+import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
 import {
   apiSendToken,
   getSendChainToken,

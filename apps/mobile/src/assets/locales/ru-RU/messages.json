@@ -146,7 +146,9 @@
     },
     "Created": "Создано",
     "Imported": "Импортировано",
-    "SavedSeedPhrase": "Я сохранил посевную фразу"
+    "SavedSeedPhrase": "Я сохранил посевную фразу",
+    "from": "От",
+    "to": "Кому"
   },
   "page": {
     "getStart": {
@@ -1048,7 +1050,8 @@
         "predict": "Предсказать",
         "meme": "Мемкоин",
         "market": "Рынок",
-        "gasDeposit": "Газовый депозит"
+        "gasDeposit": "Газовый депозит",
+        "convertDust": "Convert Dust"
       },
       "swipeUp": {
         "descAndroidMore": "Нажмите, чтобы узнать больше о dApps",
@@ -1060,7 +1063,13 @@
         "search": "Поиск",
         "favorite": "Избранное",
         "emptyAndroid": "Нет dApp, добавленных в избранное",
-        "empty": "Нет веб-сайта добавленного в избранное"
+        "empty": "Нет веб-сайта добавленного в избранное",
+        "tabs": {
+          "all": "Все",
+          "perps": "Perps",
+          "predict": "Predict"
+        },
+        "websites": "Веб-сайты"
       },
       "depositAssets": {
         "title": "Внести активы",
@@ -2084,8 +2093,8 @@
       "switchAccount": "Переключить кошелек",
       "depositFailed": "Ошибка при депозите",
       "lowBalance": "У вас недостаточно газа. Внесите газ, чтобы обеспечитьSmooth будущие транзакции.",
-      "depositWith": "Депозит с",
-      "depositSubmitted": "Депозит отправлен"
+      "depositSubmitted": "Депозит отправлен",
+      "depositWith": "Пополнение через"
     },
     "tokenDetail": {
       "notSupportedOnChain": "Не поддерживается в этой сети",
@@ -2212,7 +2221,8 @@
       "price": "Цена",
       "headerTokenValueText": "Значение токена",
       "headerBalanceText": "Баланс",
-      "copyCA": "Адрес контракта токена скопирован"
+      "copyCA": "Адрес контракта токена скопирован",
+      "wallet": "Кошелёк"
     },
     "settingModal": {
       "themeMode": {
@@ -2418,6 +2428,17 @@
       },
       "BrowserFavoriteInHome": {
         "more": "Больше"
+      },
+      "DappInfoPopup": {
+        "listedBy": "Размещено",
+        "sitePopularity": "Популярность сайта",
+        "popularLevelHigh": "Высокая",
+        "popularLevelMedium": "Средняя",
+        "popularLevelLow": "Низкая",
+        "popularLevelVeryLow": "Очень низкая",
+        "category": "Категория",
+        "skipDappInfoNextTime": "Пропустить эту страницу в следующий раз",
+        "openDapp": "Открыть"
       }
     },
     "browserManage": {
@@ -2588,7 +2609,10 @@
         "hypeFeeTip": "Плата: ~${{fee}}",
         "hypeGasFeeTooltip": "Комиссия ~0.00002 HYPE будет взиматься за вывод на EVM",
         "selectWithdrawToken": "Выберите токен",
-        "hypeActivationFeeTooltip": "Одноразовая плата за активацию в размере {{fee}} будет взиматься Hyperliquid за первое снятие HyperEVM."
+        "hypeActivationFeeTooltip": "Одноразовая плата за активацию в размере {{fee}} будет взиматься Hyperliquid за первое снятие HyperEVM.",
+        "chain": "Цепочка",
+        "max": "Макс.",
+        "selectChain": "Выберите цепочку"
       },
       "PerpsWithdrawFeePopup": {
         "btn": "Я понял",
@@ -2621,7 +2645,10 @@
         "feeHyperliquid": "Гиперликвидность",
         "feeTitle": "Плата",
         "feeRabby": "Rabby Wallet",
-        "feeDesc": "Когда пользователи совершают сделки, применяются как <1>торговые сборы</1>, так и <2>сборы за построение</2>."
+        "feeDesc": "Когда пользователи совершают сделки, применяются как <1>торговые сборы</1>, так и <2>сборы за построение</2>.",
+        "amount": "Сумма",
+        "asset": "Актив",
+        "action": "Действие"
       },
       "PerpsAutoCloseModal": {
         "takeProfit": "Зафиксировать прибыль",
@@ -2661,7 +2688,17 @@
         "closeShortTp": "Закрыть Short Закрыть прибыль",
         "closeShortSl": "Закрыть Short Стоп-Лосс",
         "openShort": "Открыть Short",
-        "closeLongTp": "Закрыть Long Зафиксировать прибыль"
+        "closeLongTp": "Закрыть Long Зафиксировать прибыль",
+        "transferToSpot": "Перевод на спот",
+        "transferToPerps": "Перевод на Perps",
+        "transferDetailTitle": "Перевод",
+        "transferActionToSpot": "Перевод (с Perps на спот)",
+        "transferActionToPerps": "Перевод (со спота на Perps)",
+        "transferGotIt": "Понятно",
+        "action": "Действие",
+        "asset": "Актив",
+        "value": "Стоимость",
+        "date": "Дата"
       },
       "PerpsSelectTokenPopup": {
         "title": "Выберите токен для депозита",
@@ -2676,7 +2713,8 @@
       },
       "PerpsDepositCard": {
         "deposit": "Депозит",
-        "availableToTrade": "Доступно для торговли:"
+        "availableToTrade": "Доступно для торговли:",
+        "swap": "Обмен"
       },
       "PerpsAccountSelectorPopup": {
         "activatedAddress": "Активировано",
@@ -2689,6 +2727,10 @@
       "selectAccountTitle": "Выберите кошелек для входа",
       "more": "Больше",
       "explorePerps": "Изучить Perps",
+      "categories": {
+        "favorite": "Избранное",
+        "topVolume": "Топ по объёму"
+      },
       "deleteAgentSuccess": "Агент успешно удален",
       "regionNotSupport": "Открытие позиций не поддерживается в вашем регионе.",
       "leverageRangeMaxError": "Максимальное кредитное плечо составляет {{max}}x",
@@ -2734,6 +2776,42 @@
       },
       "dappSelect": {
         "title": "Выберите поставщика Perps"
+      },
+      "search": {
+        "headerTitle": "Поиск Perps",
+        "placeholder": "Поиск Perps",
+        "empty": "Ничего не найдено"
+      },
+      "EnableUnifiedAccount": {
+        "title": "Включить Unified Account",
+        "desc": "Unified Account — это рекомендуемый режим учётной записи, который упрощает торговлю. Балансы спотовой и Perps торговли объединены для всех токенов, а кросс-margin поддерживается для всех доступных активов.",
+        "confirm": "Подтвердить",
+        "cancel": "Отмена",
+        "importantTips": "Вся залоговая поддержка в USDC будет использоваться как кросс-margin после включения Unified Account.",
+        "important": "Важно"
+      },
+      "PerpsSpotSwap": {
+        "title": "Обмен стейблкоинов",
+        "from": "Из",
+        "to": "Обменять на",
+        "balance": "Баланс",
+        "swapBtn": "Обмен",
+        "max": "Макс",
+        "estReceive": "Ожидаемое получение: {{amount}} {{coin}}",
+        "estReceiveTooltip": "Ожидаемая сумма получения подвержена колебаниям рыночной цены.",
+        "toSwapEntry": "Для обмена→",
+        "toDepositEntry": "Для депозита→",
+        "insufficientBalance": "Недостаточный баланс",
+        "invalidAmount": "Пожалуйста, введите корректную сумму",
+        "minimumAmount": "Минимальная сумма обмена: {{amount}}"
+      },
+      "PerpMarginModePopup": {
+        "crossRequiresUnified": "Для этой торговой пары требуется Unified Account с перекрёстной маржой. Хотите включить её?"
+      },
+      "PerpsMultiBalance": {
+        "title": "Балансы Hyperliquid",
+        "deposit": "Пополнение",
+        "withdraw": "Вывод"
       }
     },
     "perpsDetail": {
@@ -2904,6 +2982,9 @@
       },
       "guideEntry": {
         "gotIt": "Понял"
+      },
+      "PerpsAbout": {
+        "title": "О нас"
       }
     },
     "devUIBuiltInPages": {
@@ -2994,7 +3075,8 @@
         "amount": "Количество",
         "remainingDebt": "Остаток задолженности",
         "liquidationAt": "Ликвидация при < 1.0",
-        "title": "Обзор транзакций"
+        "title": "Обзор транзакций",
+        "toSwap": "Обменять"
       },
       "borrowOverview": {
         "borrowCap": "Кредитный лимит",
@@ -3178,7 +3260,9 @@
         },
         "repayWith": "Залог для погашения с",
         "collateralNotEnough": "Ваш баланс залога ниже выбранной суммы.",
-        "toRepay": "Ожидаемая сумма для погашения"
+        "toRepay": "Ожидаемая сумма для погашения",
+        "insufficientLiquidity": "Недостаточная ликвидность.",
+        "frozenCollateral": "Этот актив заморожен по решению сообщества Aave."
       },
       "repayWithAToken": {
         "header": {
@@ -3190,6 +3274,9 @@
       },
       "dappSelect": {
         "title": "Выберите поставщика кредитования"
+      },
+      "signFallback": {
+        "preExecFailedUseFullSign": "Симуляция не удалась. Эта транзакция с высокой вероятностью не выполнится из-за ошибок AAVE."
       }
     },
     "address": {
@@ -3256,6 +3343,63 @@
       "createWalletError": "Не удалось создать кошелек",
       "setPasswordTip": "Установите пароль для защиты вашего кошелька",
       "walletReady": "Ваш кошелек готов 🚀"
+    },
+    "convertDust": {
+      "failReason": {
+        "missingRequiredParams": "Отсутствуют обязательные параметры",
+        "quoteUnavailable": "Не удалось получить котировку",
+        "gasCostTooHigh": "Превышен лимит комиссии за газ",
+        "priceImpactTooHigh": "Высокое влияние на цену",
+        "buildSwapTxsFailed": "Не удалось создать транзакции обмена",
+        "sendSwapTxFailed": "Не удалось отправить транзакцию обмена",
+        "transactionFailed": "Транзакция не выполнена",
+        "submitFailed": "Не удалось отправить транзакции",
+        "gasNotEnough": "Недостаточно газа"
+      },
+      "status": {
+        "pending": "Обмен",
+        "idle": "Ожидание обмена",
+        "success": "Обмен успешен"
+      },
+      "receiveSummary": {
+        "progress": "Прогресс конвертации",
+        "priceImpact": "Лимит влияния на цену",
+        "gasLimit": "Лимит газа одной транзакции",
+        "estimateReceive": "Ожидаемое получение:",
+        "actualReceive": "Получить"
+      },
+      "bottomBar": {
+        "stop": "Стоп",
+        "continue": "Продолжить",
+        "start": "Начать конвертацию"
+      },
+      "completed": {
+        "title": "Dust Converted !",
+        "receive": "Received:",
+        "failedTitle": "Conversion Ended",
+        "viewMoreDetail": "View more details",
+        "fold": "Fold"
+      },
+      "entryGuide": {
+        "title": "Вы можете найти Convert Dust \n👇 здесь на Главной странице",
+        "button": "Понятно"
+      },
+      "stopSheet": {
+        "title": "Остановить текущие свопы?",
+        "desc": "Если вы остановитесь сейчас, оставшиеся свопы не будут выполнены. Обратите внимание, что завершённые свопы нельзя отменить.",
+        "continue": "Продолжить",
+        "stop": "Остановить своп"
+      },
+      "homeBanner": {
+        "title": "Convert Dust",
+        "description": "Supports converting small balances into the native token"
+      },
+      "colValueAmount": "Стоимость/Сумма",
+      "colToken": "Токен",
+      "colStatusToken": "Статус/Токен",
+      "emptyText": "Низкоценные токены не найдены",
+      "unsupportedAccountType": "Этот тип аккаунта не поддерживается.",
+      "unsupportedAccount": "В настоящее время поддерживаются только адреса с закрытым ключом и seed-фразой."
     }
   },
   "component": {

@@ -20,6 +20,15 @@ module.exports = {
         ios: null,
       },
     },
+    '@rabby-wallet/react-native-keychain': {
+      platforms: {
+        android: {
+          packageImportPath:
+            'import com.rabbywallet.keychain.RabbyKeychainPackage;',
+          packageInstance: 'new RabbyKeychainPackage()',
+        },
+      },
+    },
     ...(process.env.NO_FLIPPER
       ? { 'react-native-flipper': { platforms: { ios: null } } }
       : {}),

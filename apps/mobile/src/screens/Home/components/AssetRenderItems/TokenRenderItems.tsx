@@ -41,8 +41,6 @@ import { ellipsisAddress } from '@/utils/address';
 import { ExchangeLogos } from './ExchangeLogos';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { formatNetworth } from '@/utils/math';
-import BigNumber from 'bignumber.js';
-import { useCurrency } from '@/hooks/useCurrency';
 import { StyleProp } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { AccountOverview } from '../AccountOverview';
@@ -99,7 +97,6 @@ export const TokenRow = memo(
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
     const { t } = useTranslation();
     const [showContextMenu, setShowContextMenu] = React.useState(IS_ANDROID);
-    const { currency } = useCurrency();
     const showAccount = !!account;
     const percentColor = useMemo(() => {
       if (
@@ -210,13 +207,7 @@ export const TokenRow = memo(
                   (data._usdValue || 0) > 0 &&
                   styles.exclude,
               ]}>
-              {formatNetworth(
-                new BigNumber(data._usdValue || 0)
-                  .times(currency.usd_rate)
-                  .toNumber(),
-                false,
-                currency.symbol,
-              )}
+              {formatNetworth(data._usdValue || 0)}
             </Text>
             {showAccount ? (
               <Text
@@ -273,8 +264,6 @@ export const TokenRow = memo(
       hideFoldTag,
       showAccount,
       account,
-      currency.usd_rate,
-      currency.symbol,
       percentColor,
       handleShowExcludeTips,
       colors2024,
@@ -325,7 +314,6 @@ export const TokenRowV2 = memo(
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
     const { t } = useTranslation();
-    const { currency } = useCurrency();
     const showAccount = !!account;
     const percentColor = useMemo(() => {
       if (
@@ -421,13 +409,7 @@ export const TokenRowV2 = memo(
               styles.tokenRowAmount,
               scene === 'portfolio' && !data.is_core ? styles.exclude : null,
             ]}>
-            {formatNetworth(
-              new BigNumber(data.usd_value || 0)
-                .times(currency.usd_rate)
-                .toNumber(),
-              false,
-              currency.symbol,
-            )}
+            {formatNetworth(data.usd_value || 0)}
           </Text>
           {showAccount ? (
             <View style={styles.priceInfo}>
@@ -881,6 +863,7 @@ const getStyles = createGetStyles2024(ctx => ({
     borderRadius: 16,
     paddingLeft: 12,
     paddingRight: 16,
+    gap: 20,
   },
   tokenSectionHeader: {
     backgroundColor: ctx.isLight
@@ -919,10 +902,12 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   tokenRowTokenWrap: {
     flexShrink: 1,
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     height: '100%',
-    maxWidth: '70%',
+    //maxWidth: '70%',
   },
   tokenHeader: {
     width: '100%',
@@ -939,7 +924,7 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 20,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    maxWidth: 150,
+    maxWidth: '100%',
     // ...makeDebugBorder(),
   },
   lpTokenIconContainer: {
@@ -981,6 +966,8 @@ const getStyles = createGetStyles2024(ctx => ({
   tokenRowTokenInner: {
     flexShrink: 1,
     justifyContent: 'center',
+    flex: 1,
+    minWidth: 0,
     gap: 2,
   },
   searchTokenExtraInfo: {

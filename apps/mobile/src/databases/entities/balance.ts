@@ -4,7 +4,7 @@ import { EntityAddressAssetBase } from './base';
 import { BALANCE_EXPIRED_TIME } from '@/constant/expireTime';
 import { prepareAppDataSource } from '../imports';
 import { columnConverter } from './_helpers';
-import { EvmTotalBalanceResponse } from '../hooks/balance';
+import type { EvmTotalBalanceResponse } from '../hooks/balance';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
 import { ParseEntity } from '@/core/utils/typeorm';

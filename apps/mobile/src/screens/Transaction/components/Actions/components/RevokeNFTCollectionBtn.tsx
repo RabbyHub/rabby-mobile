@@ -169,8 +169,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   label: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '500',
     marginRight: 'auto',
   },

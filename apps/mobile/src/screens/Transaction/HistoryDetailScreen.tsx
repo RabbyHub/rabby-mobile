@@ -1,24 +1,9 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import {
-  Animated,
-  Easing,
-  ScrollView,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
-import RcIconSuccess from '@/assets2024/icons/history/IconSuccess.svg';
-import RcIconPending from '@/assets2024/icons/history/IconPending.svg';
 import RcIconScamTips from '@/assets2024/icons/history/IconScamTips.svg';
 import RcIconRightCC from '@/assets2024/icons/history/IconRightArrowCC.svg';
-import RcIconFail from '@/assets2024/icons/history/IconFail.svg';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 
@@ -54,82 +39,7 @@ import FastImage from 'react-native-fast-image';
 import { useAccountSelectModalCtx } from '@/components/AccountSelectModalTx/hooks';
 import { apisSingleHome } from '../Home/hooks/singleHome';
 import { Text } from '@/components/Typography';
-
-export const TxStatusItem = ({
-  status,
-  withText,
-  isPending,
-  showSuccess,
-}: {
-  showSuccess?: boolean;
-  isPending?: boolean;
-  status: number;
-  withText?: boolean;
-}) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
-  const spinValue = useRef(new Animated.Value(0)).current;
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.timing(spinValue, {
-        toValue: 1,
-        duration: 1000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
-    ).start();
-  }, [spinValue]);
-
-  if (isPending) {
-    return (
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Animated.View
-          style={{
-            transform: [{ rotate: spin }],
-          }}>
-          <RcIconPending width={18} height={18} />
-        </Animated.View>
-        {withText && (
-          <Text
-            style={[
-              styles.statuItemText,
-              { color: colors2024['orange-default'] },
-            ]}>
-            {t('page.transactions.detail.Pending')}
-          </Text>
-        )}
-      </View>
-    );
-  }
-
-  return status === 1 ? (
-    !withText && !showSuccess ? null : (
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <RcIconSuccess width={18} height={18} />
-        {withText && (
-          <Text style={styles.statuItemText}>
-            {t('page.transactions.detail.Succeeded')}
-          </Text>
-        )}
-      </View>
-    )
-  ) : (
-    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <RcIconFail width={18} height={18} />
-      {withText && (
-        <Text
-          style={[styles.statuItemText, { color: colors2024['red-default'] }]}>
-          {t('page.transactions.detail.Failed')}
-        </Text>
-      )}
-    </View>
-  );
-};
+import { TxStatusItem } from './components/TxStatusItem';
 
 export const AddressItemInDetail = ({
   address,
@@ -413,7 +323,7 @@ function HistoryDetailScreen(): JSX.Element {
 
   return (
     <NormalScreenContainer2024
-      type={!isLight ? 'bg1' : 'bg2'}
+      type={!isLight ? 'bg1' : 'bg0'}
       style={[styles.container]}>
       {isScam ? (
         <View style={styles.scamContainerWrapper}>
@@ -635,6 +545,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailContainer: {
     width: '100%',
     marginTop: 12,
+    paddingVertical: 4,
     borderRadius: 16,
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
@@ -655,20 +566,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailItem: {
     flexDirection: 'row',
     // gap: 4,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   itemTitleText: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '500',
     maxWidth: '45%',
   },
   itemAddressText: {
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'right',
     width: 170,

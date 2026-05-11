@@ -21,7 +21,6 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { Modal } from 'react-native';
 import { IS_IOS } from '@/core/native/utils';
 import { FormInput } from '@/components/Form/Input';
 import {
@@ -30,6 +29,8 @@ import {
 } from '@/core/utils/devServerSettings';
 import { ENABLE_REACTOTRON } from '@/core/utils/reactotron-plugins/featureFlag';
 import { Text, TextInput } from '@/components/Typography';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 
 const modalVisibleAtom = atom(false);
 
@@ -158,7 +159,8 @@ export function DevModalDevServer() {
   }, [visible]);
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.devServerSettings}
       visible={visible}
       transparent
       animationType="fade"
@@ -237,7 +239,7 @@ export function DevModalDevServer() {
           </View>
         </KeyboardAvoidingView>
       </AutoLockView>
-    </Modal>
+    </TrackedModal>
   );
 }
 

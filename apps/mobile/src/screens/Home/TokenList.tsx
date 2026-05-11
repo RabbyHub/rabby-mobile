@@ -26,7 +26,6 @@ import {
   TokenRowSectionLpTokenHeader,
   TokenRowV2,
 } from './components/AssetRenderItems';
-import { useCurrency } from '@/hooks/useCurrency';
 import {
   useSingleHomeAccount,
   useSingleHomeChain,
@@ -38,6 +37,7 @@ import useTokenList, {
   useTokenListComputedStore,
 } from '@/store/tokens';
 import { formatNetworth } from '@/utils/math';
+import { useAppForeground } from '@/hooks/useAppForeground';
 
 type TokenListItem =
   | {
@@ -68,6 +68,7 @@ type TokenListItem =
 
 interface Props {
   noAssetsOnAnyChain: boolean;
+  onForeground?: () => void;
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
 }
@@ -76,6 +77,7 @@ const SPACING_HEIGHT = 8;
 
 export const TokenList = ({
   noAssetsOnAnyChain,
+  onForeground,
   onRefresh,
   onReachTopStatusChange,
 }: Props) => {
@@ -85,7 +87,6 @@ export const TokenList = ({
   const { t } = useTranslation();
   const { currentAccount } = useSingleHomeAccount();
   const { selectedChain } = useSingleHomeChain();
-  const { currency } = useCurrency();
 
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
@@ -154,12 +155,30 @@ export const TokenList = ({
   });
   const getTokenList = useTokenList(s => s.getTokenList);
 
-  useEffect(() => {
-    if (!isFocused || !currentAddress) {
+  const refreshTokenList = useCallback(() => {
+    if (!currentAddress) {
       return;
     }
     getTokenList(currentAddress);
-  }, [currentAddress, getTokenList, isFocused]);
+  }, [currentAddress, getTokenList]);
+
+  useEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+    refreshTokenList();
+  }, [isFocused, refreshTokenList]);
+
+  useAppForeground({
+    enabled: isFocused,
+    onForeground: () => {
+      if (isLoading || isAllLoading || !isFocused || !currentAddress) {
+        return;
+      }
+      onForeground?.();
+      refreshTokenList();
+    },
+  });
 
   const { selectData } = useSingleHomeSelectData();
   const noAnyAssets = !selectData.rawNetWorth || noAssetsOnAnyChain;
@@ -168,8 +187,8 @@ export const TokenList = ({
     const usdValue = foldTokens
       .filter(item => item.is_core)
       .reduce((total, item) => total + item.usd_value, 0);
-    return formatNetworth(usdValue * currency.usd_rate, false, currency.symbol);
-  }, [currency.symbol, currency.usd_rate, foldTokens]);
+    return formatNetworth(usdValue);
+  }, [foldTokens]);
 
   const dataList = useMemo(() => {
     const items: TokenListItem[] = [];

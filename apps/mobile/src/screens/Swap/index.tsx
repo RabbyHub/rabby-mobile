@@ -101,16 +101,14 @@ import {
 } from '@/components2024/DirectSignBtn';
 import useDebounce from 'react-use/lib/useDebounce';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
-import {
-  useSignatureStoreOf,
-  SignatureInstanceProvider,
-} from '@/components2024/MiniSignV2';
+import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
+import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { BridgeSlippage } from '../Bridge/components/BridgeSlippage';
 import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
 import { APP_VERSIONS } from '@/constant';
 import { stats } from '@/utils/stats';
 import { Text } from '@/components/Typography';
-import { useBlockSubmitIfFormChangedOnAuth } from '@/hooks/appSettings';
+import { storeApiExpSettingData } from '@/hooks/appSettings';
 import {
   FormAmountMode,
   FormValuesOnSubmit,
@@ -118,6 +116,7 @@ import {
   shouldIgnoreAmountChangeInMaxMode,
 } from '@/utils/form';
 import { Alert } from 'react-native';
+import { useMiniSignerEffectPause } from '@/hooks/useMiniSignerEffectPause';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -237,6 +236,7 @@ const Swap = ({
     swapUseSlider,
     clearExpiredTimer,
     setAutoQuoteRefreshPaused,
+    setReloadTxRefreshPaused,
     finishedQuotes,
     inSufficientCanGetQuote,
     quoteBlockedByClosedMarket,
@@ -261,9 +261,6 @@ const Swap = ({
     () => (autoSlippage ? autoSuggestSlippage : _slippage),
     [_slippage, autoSlippage, autoSuggestSlippage],
   );
-
-  const { blockSubmitIfFormChangedOnAuth } =
-    useBlockSubmitIfFormChangedOnAuth();
 
   const {
     isSupportedChain,
@@ -436,6 +433,7 @@ const Swap = ({
   const gotoSwap = useMemoizedFn(async () => {
     if (!inSufficient && payToken && receiveToken && activeProvider?.quote) {
       try {
+        setReloadTxRefreshPaused(true);
         const receive_token_amount = new BigNumber(
           activeProvider?.quote.toTokenAmount,
         )
@@ -514,6 +512,7 @@ const Swap = ({
       } catch (error) {
         console.error(error);
       } finally {
+        setReloadTxRefreshPaused(false);
         refresh(e => e + 1);
       }
     }
@@ -615,7 +614,7 @@ const Swap = ({
   );
 
   const handleSwap = useMemoizedFn(async (p?: { ignoreGasFee?: boolean }) => {
-    if (__DEV__) {
+    if (storeApiExpSettingData.getShouldBlockSubmitIfFormChangedOnAuth()) {
       const snapshot = formValuesRef.current.getSnapshot();
 
       if (!snapshot) {
@@ -655,6 +654,7 @@ const Swap = ({
     if (canShowDirectSubmit) {
       try {
         setIsSubmitting(true);
+        setReloadTxRefreshPaused(true);
 
         if (!currentTxs?.length) {
           toast.info('please retry');
@@ -768,9 +768,10 @@ const Swap = ({
           ].includes(error)
         ) {
         } else {
-          gotoSwap();
+          await gotoSwap();
         }
       } finally {
+        setReloadTxRefreshPaused(false);
         setIsSubmitting(false);
         setMiniSignLoading(false);
       }
@@ -938,13 +939,22 @@ const Swap = ({
 
   const showRiskTips =
     isSlippageLow || isSlippageHigh || showLoss || miniSignGasFeeTooHigh;
+  const shouldPauseMiniSignerEffects =
+    useMiniSignerEffectPause(miniSignLoading);
 
   useEffect(() => {
     if (!isFocused) {
       closeMiniSigner();
       return;
     }
-    if (!canShowDirectSubmit || !currentAccount || !currentTxs?.length) {
+    if (shouldPauseMiniSignerEffects()) {
+      return;
+    }
+    if (
+      !canShowDirectSubmit ||
+      !currentAccount?.address ||
+      !currentTxs?.length
+    ) {
       closeMiniSigner();
       return;
     }
@@ -961,20 +971,27 @@ const Swap = ({
     onChangeCheckGasFeeTooHigh,
     isFocused,
     canShowDirectSubmit,
-    currentAccount,
+    currentAccount?.address,
     currentTxs,
     prefetchMiniSigner,
     closeMiniSigner,
     miniSignGa,
+    shouldPauseMiniSignerEffects,
   ]);
 
   useEffect(() => {
+    if (shouldPauseMiniSignerEffects()) {
+      return;
+    }
     if (!activeProvider) {
       mutateTxs([]);
     }
-  }, [activeProvider, mutateTxs]);
+  }, [activeProvider, mutateTxs, shouldPauseMiniSignerEffects]);
 
   useEffect(() => {
+    if (shouldPauseMiniSignerEffects()) {
+      return;
+    }
     if (activeProvider && canShowDirectSubmit) {
       mutateTxs([]);
       runBuildSwapTxs();
@@ -982,9 +999,10 @@ const Swap = ({
   }, [
     activeProvider,
     canShowDirectSubmit,
-    currentAccount,
+    currentAccount?.address,
     mutateTxs,
     runBuildSwapTxs,
+    shouldPauseMiniSignerEffects,
     swapUseSlider,
   ]);
 

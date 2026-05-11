@@ -72,7 +72,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
         list.slice(0, 10).map(async item => {
           try {
             const info = getClearinghouseStateByMap(item.address);
-            if (info && Number(info.withdrawable || 0) === 0) {
+            if (info && Number(info.withdrawable || 0) < 1) {
               try {
                 const sdk = apisPerps.getPerpsSDK();
                 const userAbstraction = await sdk.info.getUserAbstraction(

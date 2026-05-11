@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { View } from 'react-native';
+import { View, Alert } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';
@@ -62,21 +62,20 @@ import {
 } from '@/components2024/DirectSignBtn';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
-import {
-  useSignatureStoreOf,
-  SignatureInstanceProvider,
-} from '@/components2024/MiniSignV2';
+import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
+import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { BridgeSlippage } from './BridgeSlippage';
 import { Text } from '@/components/Typography';
 import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
-import { useBlockSubmitIfFormChangedOnAuth } from '@/hooks/appSettings';
+import { storeApiExpSettingData } from '@/hooks/appSettings';
 import {
   FormAmountMode,
   FormValuesOnSubmit,
   createAmountComparer,
   shouldIgnoreAmountChangeInMaxMode,
 } from '@/utils/form';
-import { Alert } from 'react-native';
+import { buildTx as buildBridgeTx } from '@rabby-wallet/rabby-bridge';
+import { useMiniSignerEffectPause } from '@/hooks/useMiniSignerEffectPause';
 
 /** Bridge form snapshot for validation during auth */
 export interface BridgeFormSnapshot {
@@ -304,6 +303,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
 
     clearExpiredTimer,
     setAutoQuoteRefreshPaused,
+    setReloadTxRefreshPaused,
 
     gasList,
     passGasPrice,
@@ -361,24 +361,28 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
       currentAccount?.address
     ) {
       try {
+        setReloadTxRefreshPaused(true);
         setFetchingBridgeQuote(true);
         const tx = await pRetry(
           () =>
-            openapi.buildBridgeTx({
-              aggregator_id: selectedBridgeQuote.aggregator.id,
-              bridge_id: selectedBridgeQuote.bridge_id,
-              from_token_id: fromToken.id,
-              user_addr: currentAccount?.address,
-              from_chain_id: fromToken.chain,
-              from_token_raw_amount: new BigNumber(amount)
-                .times(10 ** fromToken.decimals)
-                .toFixed(0, 1)
-                .toString(),
-              to_chain_id: toToken.chain,
-              to_token_id: toToken.id,
-              slippage: new BigNumber(slippageState).div(100).toString(10),
-              quote_key: JSON.stringify(selectedBridgeQuote.quote_key || {}),
-            }),
+            buildBridgeTx(
+              selectedBridgeQuote.aggregator.id,
+              {
+                bridgeId: selectedBridgeQuote.bridge_id,
+                userAddress: currentAccount?.address,
+                fromChainId: fromToken.chain,
+                fromTokenId: fromToken.id,
+                fromTokenRawAmount: new BigNumber(amount)
+                  .times(10 ** fromToken.decimals)
+                  .toFixed(0, 1)
+                  .toString(),
+                toChainId: toToken.chain,
+                toTokenId: toToken.id,
+                slippage: new BigNumber(slippageState).div(100).toString(10),
+                quoteKey: selectedBridgeQuote.quote_key || {},
+              },
+              openapi,
+            ),
           { retries: 1 },
         );
         stats.report('bridgeQuoteResult', {
@@ -476,6 +480,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         });
         console.log(error);
       } finally {
+        setReloadTxRefreshPaused(false);
         refresh(e => e + 1);
         setFetchingBridgeQuote(false);
       }
@@ -491,21 +496,24 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
       currentAccount?.address
     ) {
       try {
-        const tx = await openapi.buildBridgeTx({
-          aggregator_id: selectedBridgeQuote.aggregator.id,
-          bridge_id: selectedBridgeQuote.bridge_id,
-          from_token_id: fromToken.id,
-          user_addr: currentAccount?.address,
-          from_chain_id: fromToken.chain,
-          from_token_raw_amount: new BigNumber(amount)
-            .times(10 ** fromToken.decimals)
-            .toFixed(0, 1)
-            .toString(),
-          to_chain_id: toToken.chain,
-          to_token_id: toToken.id,
-          slippage: new BigNumber(slippageState).div(100).toString(10),
-          quote_key: JSON.stringify(selectedBridgeQuote.quote_key || {}),
-        });
+        const tx = await buildBridgeTx(
+          selectedBridgeQuote.aggregator.id,
+          {
+            bridgeId: selectedBridgeQuote.bridge_id,
+            userAddress: currentAccount?.address,
+            fromChainId: fromToken.chain,
+            fromTokenId: fromToken.id,
+            fromTokenRawAmount: new BigNumber(amount)
+              .times(10 ** fromToken.decimals)
+              .toFixed(0, 1)
+              .toString(),
+            toChainId: toToken.chain,
+            toTokenId: toToken.id,
+            slippage: new BigNumber(slippageState).div(100).toString(10),
+            quoteKey: selectedBridgeQuote.quote_key || {},
+          },
+          openapi,
+        );
         stats.report('bridgeQuoteResult', {
           aggregatorIds: selectedBridgeQuote.aggregator.id,
           bridgeId: selectedBridgeQuote.bridge_id,
@@ -654,11 +662,10 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   const canDirectSign = !ctx?.disabledProcess;
 
   const [miniSignLoading, setMiniSignLoading] = useState(false);
+  const shouldPauseMiniSignerEffects =
+    useMiniSignerEffectPause(miniSignLoading);
 
   const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
-
-  const { blockSubmitIfFormChangedOnAuth } =
-    useBlockSubmitIfFormChangedOnAuth();
 
   const buildFormSnapshot = useCallback(
     (): BridgeFormSnapshot => ({
@@ -673,7 +680,10 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
       closeMiniSigner();
       return;
     }
-    if (!canShowDirectSubmit || !currentAccount || !txs?.length) {
+    if (shouldPauseMiniSignerEffects()) {
+      return;
+    }
+    if (!canShowDirectSubmit || !currentAccount?.address || !txs?.length) {
       closeMiniSigner();
       return;
     }
@@ -688,10 +698,11 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   }, [
     canShowDirectSubmit,
     closeMiniSigner,
-    currentAccount,
+    currentAccount?.address,
     isFocused,
     miniSignGa,
     prefetchMiniSigner,
+    shouldPauseMiniSignerEffects,
     txs,
   ]);
 
@@ -703,7 +714,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   );
 
   const handleBridge = useMemoizedFn(async (p?: { ignoreGasFee?: boolean }) => {
-    if (__DEV__) {
+    if (storeApiExpSettingData.getShouldBlockSubmitIfFormChangedOnAuth()) {
       const snapshot = formValuesRef.current.getSnapshot();
 
       if (!snapshot) {
@@ -753,6 +764,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         if (miniSignLoading) {
           return;
         }
+        setReloadTxRefreshPaused(true);
         setMiniSignLoading(true);
         setFetchingBridgeQuote(true);
 
@@ -824,9 +836,10 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
             refresh(e => e + 1);
           }, 10 * 1000);
         } else {
-          gotoBridge();
+          await gotoBridge();
         }
       } finally {
+        setReloadTxRefreshPaused(false);
         setMiniSignLoading(false);
         setFetchingBridgeQuote(false);
       }
@@ -859,11 +872,20 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     !quoteList?.length;
 
   useEffect(() => {
+    if (shouldPauseMiniSignerEffects()) {
+      return;
+    }
     if (selectedBridgeQuote && canUseMiniTx) {
       mutateTxs([]);
       runBuildBridgeTxsRef.current = runBuildTxs();
     }
-  }, [runBuildTxs, canUseMiniTx, selectedBridgeQuote, mutateTxs]);
+  }, [
+    runBuildTxs,
+    canUseMiniTx,
+    selectedBridgeQuote,
+    mutateTxs,
+    shouldPauseMiniSignerEffects,
+  ]);
 
   const btnText = useMemo(() => {
     if (showExternalDappTips) {

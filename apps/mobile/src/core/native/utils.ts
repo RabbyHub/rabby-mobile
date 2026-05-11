@@ -23,6 +23,7 @@ interface NativeModulesStatic {
     startScreenCaptureDetection: () => Promise<void>;
     stopScreenCaptureDetection: () => Promise<void>;
     togglePreventScreenshot: (isPrevent: boolean) => void;
+    setAppSwitcherBlurEnabled: (isEnabled: boolean) => void;
     iosIsBeingCaptured(): boolean;
     // iosToggleBlurView(isProtected: boolean): void;
     iosProtectFromScreenRecording(): Promise<void>;

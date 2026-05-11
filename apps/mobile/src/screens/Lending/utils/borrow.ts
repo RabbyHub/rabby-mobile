@@ -7,6 +7,7 @@ import {
 import { FormattedReserveEMode } from '@aave/math-utils/dist/esm/formatters/emode';
 import { ethers } from 'ethers';
 import BigNumber from 'bignumber.js';
+import { DisplayPoolReserveInfo } from '../type';
 
 // Subset of ComputedReserveData
 interface PoolReserveBorrowSubset {
@@ -150,3 +151,14 @@ export function assetCanBeBorrowedByUser(
   }
   return true;
 }
+
+export const getBorrowUsage = (asset: DisplayPoolReserveInfo) => {
+  let borrowUsage: number = asset
+    ? valueToBigNumber(asset.reserve.totalDebt)
+        .dividedBy(asset.reserve.borrowCap)
+        .toNumber() * 100
+    : 0;
+  borrowUsage = borrowUsage === Infinity ? 0 : borrowUsage;
+  const borrowReached = borrowUsage >= 99.9999;
+  return { borrowUsage, borrowReached };
+};

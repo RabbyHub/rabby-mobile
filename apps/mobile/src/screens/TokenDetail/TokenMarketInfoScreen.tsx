@@ -125,7 +125,6 @@ export const TokenMarketInfoScreen = () => {
   const route =
     useRoute<GetRootScreenNavigationProps<'TokenMarketInfo'>['route']>();
   const { token, account, tokenSelectType, from } = route.params || {};
-  console.log('token', token);
   const { styles, isLight, colors2024 } = useTheme2024({
     getStyle,
   });
@@ -218,7 +217,6 @@ export const TokenMarketInfoScreen = () => {
         }
         isMultiAddress={false}
         refreshTags={refreshTag}
-        unHold
       />
     );
   }, [token, refreshTag, finalAccount?.address]);

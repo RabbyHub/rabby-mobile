@@ -12,7 +12,7 @@ import { IconDefaultNFT } from '@/assets/icons/nft';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { HistoryItemCateType } from './type';
-import { TokenChangeDataItem } from './HistoryItem';
+import type { TokenChangeDataItem } from '@/types/history';
 import { isNFTTokenId } from './utils';
 
 interface ItemIconProps {

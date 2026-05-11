@@ -42,26 +42,21 @@ import { runOnJS } from 'react-native-reanimated';
 import { getItemId } from './utils/listRenderId';
 import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
 import { Text } from '@/components/Typography';
-
-export const icons = {
-  unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
-  unfoldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png'),
-  foldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png'),
-  foldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
-  pinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite_dark.png'),
-  pinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite.png'),
-  unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png'),
-  unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
-};
+import { useAppForeground } from '@/hooks/useAppForeground';
 
 interface Props {
+  onForeground?: () => void;
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
 
-const NFTListInner = ({ onRefresh, onReachTopStatusChange }: Props) => {
+const NFTListInner = ({
+  onForeground,
+  onRefresh,
+  onReachTopStatusChange,
+}: Props) => {
   const { styles, isLight, colors2024 } = useTheme2024({
     getStyle: getStyles,
   });
@@ -83,11 +78,26 @@ const NFTListInner = ({ onRefresh, onReachTopStatusChange }: Props) => {
     isLoading: loadingNft,
   } = useQueryNft(userAddr, false);
 
+  const refreshNftList = useCallback(() => {
+    reloadNftList?.();
+  }, [reloadNftList]);
+
   useEffect(() => {
     if (isFocused) {
-      reloadNftList?.();
+      refreshNftList();
     }
-  }, [isFocused, reloadNftList, currentAccount?.address]);
+  }, [isFocused, refreshNftList]);
+
+  useAppForeground({
+    enabled: isFocused,
+    onForeground: () => {
+      if (loadingNft || !isFocused || !userAddr) {
+        return;
+      }
+      onForeground?.();
+      refreshNftList();
+    },
+  });
 
   const nftList = useMemo(() => {
     return _rawNftList.filter(item =>

@@ -21,11 +21,50 @@ repo_yarn() {
   yarn "$@"
 }
 
+run_command_with_log() {
+  local label="$1"
+  local log_file="$2"
+  shift 2
+
+  mkdir -p "$(dirname "$log_file")"
+  : >"$log_file"
+
+  set +e
+  "$@" >"$log_file" 2>&1
+  local command_status=$?
+  set -e
+
+  if [ "$command_status" -ne 0 ]; then
+    echo "❌ ${label} 失败，请检查日志: $log_file"
+    echo "----- ${label} 日志尾部 -----"
+    tail -n 200 "$log_file" || true
+    echo "----- 结束 -----"
+    return "$command_status"
+  fi
+
+  return 0
+}
+
 
 # 此函数将在脚本退出时被调用
 cleanup() {
   local original_exit_code=$?
+  local restore_dir=""
   echo ""
+
+  if [ -n "${ORIGINAL_DIR:-}" ] && [ -d "$ORIGINAL_DIR" ]; then
+    restore_dir="$ORIGINAL_DIR"
+  elif [ -d /tmp ]; then
+    restore_dir="$(cd /tmp && pwd -P)"
+  else
+    restore_dir="/"
+  fi
+
+  # Move out of the temp worktree before deleting it. This matters when the
+  # script is launched from a pre-created /tmp validation checkout.
+  if [ -n "$restore_dir" ]; then
+    cd "$restore_dir" 2>/dev/null || true
+  fi
 
   # 安全检查：确保 WORK_DIR 变量存在且符合预期格式，防止误删
   if [[ -n "$WORK_DIR" && "$WORK_DIR" == *"/validate-rabby-mobile-"* ]]; then
@@ -34,9 +73,6 @@ cleanup() {
   else
     echo "⚠️ 检测到 WORK_DIR 变量不安全或为空，跳过删除步骤"
   fi
-
-  # 恢复到原始目录（这个是之前的 trap 内容）
-  cd "$ORIGINAL_DIR"
 
   exit "$original_exit_code"
 }
@@ -106,6 +142,7 @@ setup_environment() {
   local env_file=".env.hashing"
   local sensitive_vars=(
     "RABBY_MOBILE_KR_PWD" "$RABBY_MOBILE_KR_PWD"
+    "RABBY_MOBILE_CODE" "$RABBY_MOBILE_CODE"
     "RABBY_MOBILE_BUILD_CHANNEL" "appstore"
     "RABBY_MOBILE_FE_SERVICE_URL" ""
   )
@@ -145,8 +182,14 @@ setup_environment() {
 install_common_dependencies() {
   echo "⏳ 安装通用依赖 (yarn & bundle)"
   rm -rf node_modules
-  repo_yarn install --immutable >/dev/null
-  bundle install >/dev/null
+  local install_log_dir="$PROJECT_DIR/.hash-validate-logs"
+
+  run_command_with_log "yarn install" "$install_log_dir/yarn-install.log" \
+    repo_yarn install --immutable
+  run_command_with_log "bundle install" "$install_log_dir/bundle-install.log" \
+    bundle install
+
+  rm -rf "$install_log_dir"
   echo "✅ 通用依赖安装完毕"
 }
 

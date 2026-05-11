@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import {
   Keyboard,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   TouchableOpacity,
   View,
@@ -19,6 +18,8 @@ import { toast } from '@/components2024/Toast';
 import { useSlTpUsdInput } from '@/hooks/useUsdInput';
 import { formatPerpsCoin } from '@/utils/perps';
 import { Text, TextInput } from '@/components/Typography';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 
 interface Props {
   visible?: boolean;
@@ -225,7 +226,8 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
   }, [visible]);
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.perpsAutoClose}
       transparent={true}
       visible={visible}
       animationType="fade"
@@ -344,7 +346,7 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
           </TouchableOpacity>
         </TouchableOpacity>
       </KeyboardAvoidingView>
-    </Modal>
+    </TrackedModal>
   );
 };
 

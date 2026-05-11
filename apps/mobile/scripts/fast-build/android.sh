@@ -11,6 +11,7 @@ work_dir=$script_dir/.fast-build-work
 
 android_payload_inputs_ready() {
   [ -f "$project_dir/android/app/src/main/assets/threads/worker.thread.bundle" ] || return 1
+  [ -f "$project_dir/android/app/src/main/assets/custom/InpageBridgeWeb3.js" ] || return 1
   find "$project_dir/android/app/src/main/assets/custom" -type f -print -quit 2>/dev/null | grep -q .
 }
 

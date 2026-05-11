@@ -8,12 +8,12 @@ import {
   GasSelectorResponse,
 } from '../TxComponents/GasSelector/GasSelectorHeader';
 import { useTranslation } from 'react-i18next';
-import { MiniSecurityHeader } from '@/components2024/MiniSignV2';
+import { MiniSecurityHeader } from '@/components2024/MiniSignV2/components/MiniSecurityHeader';
 import type { SignatureFlowState } from '@/components2024/MiniSignV2/state/types';
 import type { SignatureManager } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { useSignatureStore } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { useSignatureInstance } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useGasAccountSign } from '@/screens/GasAccount/hooks/atom';
 import { findChain } from '@/utils/chain';
 import { useMemoizedFn } from 'ahooks';
@@ -33,8 +33,18 @@ import {
   buildTopUpResumedTxs,
   GasAccountTopUpResult,
 } from '@/screens/GasAccount/components/topUpContinuation';
-import { isTempoChain } from '@/utils/tempo';
+import {
+  calcTempoMaxGasCostRawAmountIn18,
+  isTempoBatchSupportedAccountType,
+  isTempoChain,
+  listTempoFeeTokenOptionsFromCache,
+  loadTempoFeeTokenOptionsState,
+  TempoFeeTokenOption,
+  TxWithTempoExtras,
+} from '@/utils/tempo';
 import { SignMainnetGasSelectorHeader } from '../TxComponents/GasSelector/SignMainnetGasSelectorHeader';
+import tokenListStore from '@/store/tokens';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
 const rawAmountToBn = (
   value: string | number | BigNumber | null | undefined,
@@ -142,6 +152,142 @@ const MiniSignTxV2 = ({
   };
   const checkTxValueInBalance = !isTempoChain(chain?.serverId);
   const support1559 = !!ctx?.is1559;
+  const [tempoGasTokenList, setTempoGasTokenList] = useState<
+    TempoFeeTokenOption[]
+  >([]);
+  const [tempoGasTokenLoading, setTempoGasTokenLoading] = useState(false);
+  const txFeeToken =
+    ((ctx?.txs?.[0] as unknown as TxWithTempoExtras | undefined)?.feeToken as
+      | string
+      | undefined) || '';
+  const maxGasCostRawAmount = useMemo(
+    () =>
+      (ctx?.txsCalc || []).reduce(
+        (sum, item) =>
+          sum.plus(new BigNumber(item.gasCost.maxGasCostRawAmount || 0)),
+        new BigNumber(0),
+      ),
+    [ctx?.txsCalc],
+  );
+  const maxGasCostRawAmountText = useMemo(
+    () => maxGasCostRawAmount.toFixed(),
+    [maxGasCostRawAmount],
+  );
+  const maxGasCostRawAmountIn18 = useMemo(
+    () => calcTempoMaxGasCostRawAmountIn18(ctx?.txs || []),
+    [ctx?.txs],
+  );
+  const maxGasCostRawAmountIn18Text = useMemo(
+    () => maxGasCostRawAmountIn18.toFixed(),
+    [maxGasCostRawAmountIn18],
+  );
+  const currentTempoTokenId =
+    txFeeToken || ctx?.tempoPreferredFeeTokenId || gasToken.tokenId || '';
+  const showTempoGasTokenSelector =
+    !!chain &&
+    isTempoChain(chain.serverId) &&
+    ctx?.gasMethod !== 'gasAccount' &&
+    isTempoBatchSupportedAccountType(currentAccount?.type);
+
+  const getCachedTokenItems = useCallback(() => {
+    if (!currentAccount?.address) {
+      return [];
+    }
+
+    return (tokenListStore.getState().tokenListMap[
+      currentAccount.address.toLowerCase()
+    ] || []) as unknown as TokenItem[];
+  }, [currentAccount?.address]);
+
+  const handleSelectTempoGasToken = useCallback(
+    async (
+      token: TempoFeeTokenOption,
+      options?: Parameters<typeof instance.setTempoFeeToken>[1],
+    ) => {
+      instance.setTempoFeeToken(token, options);
+      if (ctx?.selectedGas) {
+        await instance.updateGasLevel(ctx.selectedGas as any);
+      }
+    },
+    [ctx?.selectedGas, instance],
+  );
+
+  useEffect(() => {
+    if (!currentAccount?.address || !chain || !showTempoGasTokenSelector) {
+      setTempoGasTokenList([]);
+      setTempoGasTokenLoading(false);
+      return;
+    }
+
+    let mounted = true;
+    const cachedTokenItems = getCachedTokenItems();
+    const cachedOptions = listTempoFeeTokenOptionsFromCache({
+      tokenList: cachedTokenItems,
+      chainServerId: chain.serverId,
+      maxGasCostRawAmount,
+      maxGasCostRawAmountDecimals: gasToken.decimals || 18,
+      maxGasCostRawAmountIn18,
+    });
+
+    if (cachedOptions.length) {
+      setTempoGasTokenList(cachedOptions);
+    }
+
+    setTempoGasTokenLoading(true);
+    loadTempoFeeTokenOptionsState({
+      account: currentAccount,
+      userAddress: currentAccount.address,
+      chainServerId: chain.serverId,
+      tokenList: cachedTokenItems,
+      txFeeToken,
+      maxGasCostRawAmount,
+      maxGasCostRawAmountDecimals: gasToken.decimals || 18,
+      maxGasCostRawAmountIn18,
+    })
+      .then(({ options, preferredTokenId, selectedOption }) => {
+        if (!mounted) {
+          return;
+        }
+        setTempoGasTokenList(options);
+        if (
+          selectedOption &&
+          currentTempoTokenId.toLowerCase() !== selectedOption.id.toLowerCase()
+        ) {
+          const shouldApplyFallbackFeeToken =
+            !!txFeeToken &&
+            txFeeToken.toLowerCase() !== selectedOption.id.toLowerCase();
+          handleSelectTempoGasToken(selectedOption, {
+            applyFeeToken: shouldApplyFallbackFeeToken,
+            tempoPreferredFeeTokenId: preferredTokenId,
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (mounted) {
+          setTempoGasTokenLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [
+    chain,
+    chain?.serverId,
+    currentAccount,
+    currentAccount?.address,
+    currentTempoTokenId,
+    gasToken.decimals,
+    getCachedTokenItems,
+    handleSelectTempoGasToken,
+    maxGasCostRawAmount,
+    maxGasCostRawAmountIn18,
+    maxGasCostRawAmountIn18Text,
+    maxGasCostRawAmountText,
+    showTempoGasTokenSelector,
+    txFeeToken,
+  ]);
 
   const checkGasLevelIsNotEnough = useMemoizedFn(
     (
@@ -207,6 +353,8 @@ const MiniSignTxV2 = ({
               isGnosisAccount: false,
               nativeTokenBalance: balance,
               gasTokenDecimals: gasToken.decimals || 18,
+              gasTokenId: gasToken.tokenId,
+              tempoPreferredFeeTokenId: ctx?.tempoPreferredFeeTokenId,
               checkTxValueInBalance,
             });
             const txValueRaw = checkTxValueInBalance
@@ -261,7 +409,9 @@ const MiniSignTxV2 = ({
     instance.toggleGasless(value);
   };
   const handleConfirm = () => {
-    if (!ctx?.txsCalc?.length) return;
+    if (!ctx?.txsCalc?.length) {
+      return;
+    }
     instance.send().catch(() => undefined);
   };
 
@@ -516,6 +666,10 @@ const MiniSignTxV2 = ({
                 engineResults={engineResults?.engineResult}
                 nativeTokenBalance={nativeTokenBalance}
                 gasToken={gasToken}
+                showTempoGasTokenSelector={showTempoGasTokenSelector}
+                tempoGasTokenList={tempoGasTokenList}
+                onSelectTempoGasToken={handleSelectTempoGasToken}
+                tempoGasTokenLoading={tempoGasTokenLoading}
                 gasPriceMedian={gasPriceMedian}
                 gas={totalGasCost}
                 gasCalcMethod={gasCalcMethod}

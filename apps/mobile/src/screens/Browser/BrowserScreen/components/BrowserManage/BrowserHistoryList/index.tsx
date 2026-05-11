@@ -28,7 +28,9 @@ export const BrowserHistoryList = ({
   const { removeBookmark, addBookmark, getBookmark } = useBrowserBookmark();
 
   const handlePress = useMemoizedFn((dappInfo: DappInfo) => {
-    openTab(dappInfo.url || dappInfo.origin);
+    openTab(dappInfo.url || dappInfo.origin, {
+      isRemindOpen: true,
+    });
     if (dappInfo.origin) {
       matomoRequestEvent({
         category: 'Websites Usage',

@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
@@ -48,6 +48,7 @@ import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
   LendingReportType,
+  LendingSignType,
 } from '@/screens/Transaction/components/type';
 import { transactionHistoryService } from '@/core/services';
 import { useRefreshHistoryId } from '../../hooks';
@@ -56,21 +57,27 @@ import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
-import {
-  useSignatureStoreOf,
-  SignatureInstanceProvider,
-} from '@/components2024/MiniSignV2';
+import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
+import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { SUPPLY_UI_SAFE_MARGIN } from '../../utils/constant';
 import { CHAINS_ENUM } from '@debank/common';
 import { ReserveErrorTip } from '../ErrorTip';
 import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
+import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { RootNames } from '@/constant/layout';
+import { naviPush } from '@/utils/navigation';
 
-export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
+type SupplyActionPopupProps = PopupDetailProps & {
+  onBeforeSwapNavigate?: () => void;
+};
+
+export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
   reserve,
   userSummary,
   onClose,
+  onBeforeSwapNavigate,
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
@@ -82,7 +89,8 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
-  const { formattedPoolReservesAndIncentives } = useLendingSummary();
+  const { formattedPoolReservesAndIncentives, getTargetReserve } =
+    useLendingSummary();
   const { isMainnet, chainInfo, chainEnum, selectedMarketData } =
     useSelectedMarket();
   const { pools } = usePoolDataProviderContract();
@@ -95,6 +103,10 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   const isNativeToken = useMemo(() => {
     return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS);
   }, [reserve.underlyingAsset]);
+
+  const currentReserve = useMemo(() => {
+    return getTargetReserve(reserve.underlyingAsset) || reserve;
+  }, [getTargetReserve, reserve]);
 
   const afterHF = useMemo(() => {
     if (!amount || isZeroAmount(amount)) {
@@ -354,7 +366,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   ]);
 
   const supplyAmount = useMemo(() => {
-    const myAmount = BigNumber(reserve.walletBalance || '0');
+    const myAmount = BigNumber(currentReserve.walletBalance || '0');
     const poolAmount = BigNumber(reserve.reserve.supplyCap)
       .minus(BigNumber(reserve.reserve.totalLiquidity))
       .multipliedBy(SUPPLY_UI_SAFE_MARGIN);
@@ -375,11 +387,55 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       usdValue,
     };
   }, [
-    reserve.walletBalance,
+    currentReserve.walletBalance,
     reserve.reserve.supplyCap,
     reserve.reserve.totalLiquidity,
     reserve.reserve.formattedPriceInMarketReferenceCurrency,
   ]);
+
+  const showToSwap = useMemo(() => {
+    return (
+      new BigNumber(currentReserve.walletBalance || '0').lte(0) &&
+      BigNumber(reserve.reserve.supplyCap)
+        .minus(BigNumber(reserve.reserve.totalLiquidity))
+        .gt(0)
+    );
+  }, [
+    currentReserve.walletBalance,
+    reserve.reserve.supplyCap,
+    reserve.reserve.totalLiquidity,
+  ]);
+
+  const swapTokenId = useMemo(() => {
+    if (isNativeToken) {
+      return chainInfo?.nativeTokenAddress || reserve.reserve.underlyingAsset;
+    }
+    return reserve.reserve.underlyingAsset;
+  }, [
+    chainInfo?.nativeTokenAddress,
+    isNativeToken,
+    reserve.reserve.underlyingAsset,
+  ]);
+
+  const handleOpenSwap = useCallback(async () => {
+    if (!currentAccount || !swapTokenId) {
+      return;
+    }
+
+    if (onBeforeSwapNavigate) {
+      onBeforeSwapNavigate();
+    }
+
+    await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
+    naviPush(RootNames.StackTransaction, {
+      screen: RootNames.Swap,
+      params: {
+        chainEnum: chainEnum || CHAINS_ENUM.ETH,
+        tokenId: swapTokenId,
+        type: 'Buy',
+      },
+    });
+  }, [chainEnum, currentAccount, onBeforeSwapNavigate, swapTokenId]);
 
   const txsForMiniApproval: Tx[] = useMemo(() => {
     const list: any[] = [];
@@ -420,6 +476,10 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           throw new Error('no txs');
         }
         let results: string[] = [];
+        const signType =
+          canShowDirectSubmit && !forceFullSign
+            ? LendingSignType.Simplified
+            : LendingSignType.Full;
         if (canShowDirectSubmit && !forceFullSign) {
           try {
             results = await openDirect({
@@ -486,6 +546,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           usd_value: usdValue,
           create_at: Date.now(),
           app_version: APP_VERSIONS.fromNative || '0',
+          signType,
         });
 
         refresh();
@@ -550,22 +611,33 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           <Text style={styles.amountHeaderTitle}>
             {t('page.Lending.popup.amount')}
           </Text>
-          <Text
-            style={[
-              styles.amountValueDescription,
-              emptyAmount && styles.amountValueDescriptionDanger,
-            ]}>{`${formatTokenAmount(supplyAmount.amount || '0')}${
-            reserve.reserve.symbol
-          }($${
-            supplyAmount.isLteZero
-              ? '0'
-              : formatAmountValueKMB(supplyAmount.usdValue || '0')
-          }) ${t('page.Lending.popup.available')}`}</Text>
+          <View style={styles.amountHeaderRight}>
+            <Text
+              style={[
+                styles.amountValueDescription,
+                emptyAmount && styles.amountValueDescriptionDanger,
+              ]}>{`${formatTokenAmount(supplyAmount.amount || '0')}${
+              reserve.reserve.symbol
+            }($${
+              supplyAmount.isLteZero
+                ? '0'
+                : formatAmountValueKMB(supplyAmount.usdValue || '0')
+            }) ${t('page.Lending.popup.available')}`}</Text>
+            {showToSwap ? (
+              <TouchableOpacity activeOpacity={1} onPress={handleOpenSwap}>
+                <Text style={styles.toSwapText}>
+                  {t('page.Lending.popup.toSwap')}→
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
         </View>
         <TokenAmountInput
           value={amount}
           onChange={v => {
-            if (directSignBtnRef.current?.isAuthInProgress()) return;
+            if (directSignBtnRef.current?.isAuthInProgress()) {
+              return;
+            }
             setAmount(v);
           }}
           symbol={reserve.reserve.symbol}
@@ -601,7 +673,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
             </View>
           )}
 
-          <ReserveErrorTip reserve={reserve} style={{ marginTop: 30 }} />
+          <ReserveErrorTip reserve={reserve} style={styles.reserveErrorTip} />
         </BottomSheetScrollView>
 
         <View style={styles.buttonContainer}>
@@ -688,9 +760,27 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 18,
     color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+    flexShrink: 1,
+    textAlign: 'right',
   },
   amountValueDescriptionDanger: {
     color: ctx.colors2024['red-default'],
+  },
+  amountHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flex: 1,
+    justifyContent: 'flex-end',
+    marginLeft: 12,
+  },
+  toSwapText: {
+    color: ctx.colors2024['brand-default'],
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    flexShrink: 0,
   },
   amountInput: {
     marginTop: 12,
@@ -726,6 +816,9 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  reserveErrorTip: {
+    marginTop: 30,
   },
   title: {
     color: ctx.colors2024['neutral-title-1'],

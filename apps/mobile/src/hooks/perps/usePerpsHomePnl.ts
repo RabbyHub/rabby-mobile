@@ -8,13 +8,13 @@ export const usePerpsHomePnl = () => {
       homePositionPnl: s.homePositionPnl,
     })),
   );
-  const { accountValue } = usePerpsAccount();
+  const { availableBalance } = usePerpsAccount();
 
   return {
     perpsPositionInfo: {
       ...homePositionPnl,
-      show: homePositionPnl.show || Number(accountValue) > 0,
-      accountValue: Number(accountValue),
+      show: homePositionPnl.show || Number(availableBalance) > 0,
+      availableBalance: Number(availableBalance),
     },
   };
 };

@@ -22,6 +22,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import wrapperToken from '../../config/wrapperToken';
 import { Text } from '@/components/Typography';
 import { colord } from 'colord';
+import { openLendingActionPopup } from '../../utils/actionPopup';
 
 interface SupplyItemProps extends RNViewProps {
   underlyingAsset: string;
@@ -100,21 +101,11 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
     if (!reserve || !userSummary) {
       return;
     }
-    const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.SUPPLY_ACTION_DETAIL,
+    openLendingActionPopup({
+      popup: 'supply',
       reserve,
       userSummary,
-      onClose: () => {
-        removeGlobalBottomSheetModal2024(modalId);
-      },
-      bottomSheetModalProps: {
-        enableContentPanningGesture: true,
-        enablePanDownToClose: true,
-        enableDismissOnClose: true,
-        handleStyle: {
-          backgroundColor: colors2024['neutral-bg-1'],
-        },
-      },
+      colors2024,
     });
   }, [colors2024, reserve, userSummary]);
 

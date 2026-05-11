@@ -1,0 +1,42 @@
+{
+  "name": "@rabby-wallet/react-native-keychain",
+  "version": "8.2.0-rabby.0",
+  "private": true,
+  "description": "Local source fork of react-native-keychain 8.2.0 for Rabby Mobile",
+  "main": "index.js",
+  "types": "typings/react-native-keychain.d.ts",
+  "files": [
+    "android",
+    "index.js",
+    "RNKeychainManager",
+    "typings",
+    "RabbyRNKeychain.podspec",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "react-native",
+    "ios",
+    "android",
+    "keychain",
+    "keystore"
+  ],
+  "author": {
+    "name": "Rabby Mobile",
+    "email": "mobile@rabby.io"
+  },
+  "homepage": "https://github.com/RabbyHub/rabby-mobile",
+  "bugs": {
+    "url": "https://github.com/RabbyHub/rabby-mobile/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RabbyHub/rabby-mobile.git",
+    "directory": "packages/react-native-keychain"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  }
+}

@@ -5,67 +5,39 @@ import {
   NavigationContainer,
   NavigationIndependentTree,
 } from '@react-navigation/native';
-import React, { useCallback, useMemo, useRef } from 'react';
-import { Appearance, BackHandler, ColorSchemeName } from 'react-native';
+import React, { useCallback } from 'react';
+import { BackHandler } from 'react-native';
 import * as Sentry from '@sentry/react-native';
-import { useAppTheme, useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useAppTheme, useThemeColors } from '@/hooks/theme';
 
 import { navigationRef } from '@/utils/navigation';
-import {
-  DEFAULT_NAVBAR_FONT_SIZE,
-  getScreenStatusBarConf,
-  RootNames,
-} from './constant/layout';
+import { RootNames } from './constant/layout';
 import { apisHomeTabIndex, useStackScreenConfig } from './hooks/navigation';
 import { analytics, matomoLogScreenView } from './utils/analytics';
 
-import {
-  TestkitsNavigator,
-  AddressNavigator,
-  SettingNavigator,
-  GetStartedNavigator,
-  HomeScreenNavigator,
-  TransactionNavigator,
-  SingleAddressNavigator,
-  DappsNavigator,
-  HomeNonTabNavigator,
-} from './screens/Navigators/index.eager';
-
-import usePrevious from 'ahooks/lib/usePrevious';
-import {
-  AppStatusBar,
-  useTuneStatusBarOnRouteChange,
-} from './components/AppStatusBar';
+import { AppStatusBar } from './components/AppStatusBar';
 import AutoLockView from './components/AutoLockView';
-import { BackgroundSecureBlurView } from './components/customized/BlurViews';
 import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
-import { GlobalSecurityTipStubModal } from './components/Security/SecurityTipStubModal';
 import { GlobalBottomSheetModal2024 } from './components2024/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import { useAppUnlocked } from './hooks/useLock';
 
 import type {
   AccountNavigatorParamList,
-  DappsNavigatorParamsList,
-  HomeNavigatorParamsList,
   RootStackParamsList,
 } from './navigation-type';
-
-import { DuplicateAddressModal } from './screens/Address/components/DuplicateAddressModal';
-
-import { AliasNameEditModal } from './components2024/AliasNameEditModal/AliasNameEditModal';
-import { QrCodeModal } from './components2024/QrCodeModal/QrCodeModal';
-import { FloatingDiagnosticsPanel } from './screens/Settings/components/FloatingDiagnosticsPanel';
 
 // import { GlobalAccountSwitcherStub } from './components/AccountSwitcher/SheetModal';
 import { toast } from './components2024/Toast';
 import RNHelpers from './core/native/RNHelpers';
-import { IS_ANDROID, IS_IOS } from './core/native/utils';
-
+import { IS_IOS } from './core/native/utils';
 import {
-  FavoriteDappsScreen,
-  NotFoundScreen,
   MyBundleScreen,
-} from '@/screens/index.lazy';
+  NFTDetailScreen,
+  NotFoundScreen,
+  ScannerScreen,
+  TokenDetailScreen,
+  TokenMarketInfoScreen,
+} from '@/perfs/loadables/screens';
 import UnlockScreen from '@/screens/Unlock/Unlock';
 import SetupWallet from '@/screens/Address/SetupWallet';
 import SelectImportMethod from '@/screens/Address/SelectImportMethod';
@@ -74,37 +46,44 @@ import { ImportSecret } from '@/screens/Address/ImportSecret';
 import MoreImportMethods from '@/screens/Address/MoreImportMethods';
 import SelectAddMethod from '@/screens/Address/SelectAddMethod';
 import Backup from '@/screens/Address/Backup';
-import {
-  ScannerScreen,
-  TokenDetailScreen,
-  NFTDetailScreen,
-} from '@/screens/index.eager';
 import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
-import ApprovalTokenDetailSheetModalStub from './components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
-import { GlobalMiniApproval } from './components/Approval/components/MiniSignTx/GlobalMiniApproval';
-import { GlobalSignerPortal } from './components2024/MiniSignV2/components/GlobalSignerPortal';
 import { perfEvents } from './core/utils/perf';
-import {
-  BottomSheetBrowser,
-  BrowserFavoritePopup,
-  BrowserManagePopup,
-} from './screens/Browser/BottomSheetBrowser';
-import { TokenMarketInfoScreen } from './screens/TokenDetail/TokenMarketInfoScreen';
-import { ModalsSubmitFeedbackByScreenshotStub } from './components/Screenshot/ScreenshotModal';
-import { GlobalTipsPopup } from './components2024/GlobalTipsPopup';
-import { GlobalMiniSignTypedDataPortal } from './components/Approval/components/MiniSignTypedData/GlobalMiniSignTypedDataPortal';
-import { GlobalSearchBottomSheet } from './screens/Search/components/SeachBottomSheet';
-import { ToggleCollateralModal } from './screens/Lending/modals/ToggleCollateralModal';
 import { RefLikeObject } from './utils/type';
 import { useRendererDetect } from './components/Perf/PerfDetector';
-import DeviceInfo from 'react-native-device-info';
-import { coerceNumber } from './utils/coerce';
-import { useAppCouldRender } from './hooks/useBootstrap';
-import { InnerDappWebViewPreloadEntry } from './components/WebView/InnerDappWebViewPreloadEntry';
 import { useTranslation } from 'react-i18next';
+import {
+  AliasNameEditModal,
+  ApprovalTokenDetailSheetModalStub,
+  BackgroundSecureBlurView,
+  BottomSheetBrowser,
+  BottomSheetDappInfoPopup,
+  BrowserFavoritePopup,
+  BrowserManagePopup,
+  DuplicateAddressModal,
+  FloatingDiagnosticsPanel,
+  GlobalMiniApproval,
+  GlobalMiniSignTypedDataPortal,
+  GlobalSecurityTipStubModal,
+  GlobalSignerPortal,
+  GlobalTipsPopup,
+  InnerDappWebViewPreloadEntry,
+  ModalsSubmitFeedbackByScreenshotStub,
+  QrCodeModal,
+  ToggleCollateralModal,
+} from '@/perfs/loadables/appNavigationGlobals';
+import {
+  AddressNavigator,
+  DappsNavigator,
+  HomeNonTabNavigator,
+  SettingNavigator,
+  SingleAddressNavigator,
+  TestkitsNavigator,
+  TransactionNavigator,
+} from '@/perfs/loadables/navigators';
+import { HomeScreenNavigator } from '@/perfs/loadables/homeRootNavigator';
+import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
-
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
 
 const RootAnimOptions: React.ComponentProps<
@@ -152,16 +131,6 @@ function atHomeFirstTab() {
   return atHome() && apisHomeTabIndex.isHomeAtFirstTab();
 }
 
-const isAndroidGte16 = (() => {
-  try {
-    const androiVersion = DeviceInfo.getSystemVersion();
-    return IS_ANDROID && coerceNumber(androiVersion?.split('.')[0]) >= 16;
-  } catch (error) {
-    console.error(error);
-    return false;
-  }
-})();
-
 const PREVENT_GESTURE_BOOL = true;
 
 function useDetermineExitAppOnPressBack() {
@@ -170,7 +139,9 @@ function useDetermineExitAppOnPressBack() {
      * in fact, BackHandler.addEventListener('hardwareBackPress', backAction) is not working on iOS,
      * we just put it here for the sake of robustness.
      */
-    if (IS_IOS) return;
+    if (IS_IOS) {
+      return;
+    }
 
     const backAction = () => {
       if (atHome()) {
@@ -257,6 +228,72 @@ const onStateChange: React.ComponentProps<
 };
 
 const routeNameRef: RefLikeObject<string | undefined | null> = { current: '' };
+
+type DeferredGlobalsSlot = 'navigation-pre' | 'navigation-post' | 'overlay';
+
+function useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked: boolean) {
+  const [hasUnlockedOnce, setHasUnlockedOnce] = React.useState(isAppUnlocked);
+
+  React.useEffect(() => {
+    if (isAppUnlocked) {
+      setHasUnlockedOnce(true);
+    }
+  }, [isAppUnlocked]);
+
+  return hasUnlockedOnce;
+}
+
+function AppNavigationDeferredGlobals({
+  slot,
+  enabled,
+}: {
+  slot: DeferredGlobalsSlot;
+  enabled: boolean;
+}) {
+  if (!enabled) {
+    return null;
+  }
+
+  if (slot === 'navigation-pre') {
+    return (
+      <>
+        <DuplicateAddressModal />
+        <AliasNameEditModal />
+        <QrCodeModal />
+      </>
+    );
+  }
+
+  if (slot === 'navigation-post') {
+    return (
+      <>
+        <InnerDappWebViewPreloadEntry />
+        <BiometricsStubModal />
+        <ApprovalTokenDetailSheetModalStub />
+        <BottomSheetBrowser />
+        <BrowserManagePopup />
+        <BrowserFavoritePopup />
+        <BottomSheetDappInfoPopup />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <ModalsSubmitFeedbackByScreenshotStub />
+      <ToggleCollateralModal />
+
+      {/** @warning put all business stub components before this modal */}
+      <GlobalSecurityTipStubModal />
+      <FloatingDiagnosticsPanel />
+      <GlobalMiniApproval />
+      <GlobalMiniSignTypedDataPortal />
+      <GlobalTipsPopup />
+      <GlobalSignerPortal />
+    </>
+  );
+}
+
 export default function AppNavigation() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   const { binaryTheme: colorScheme } = useAppTheme({ isAppTop: true });
@@ -268,40 +305,28 @@ export default function AppNavigation() {
   const initialRouteName = isAppUnlocked
     ? RootNames.StackGetStarted
     : RootNames.Unlock;
+  const shouldRenderDeferredGlobals =
+    useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked);
 
   const onReady = useCallback<
     React.ComponentProps<typeof NavigationContainer>['onReady'] & object
   >(() => {
     const readyRootName = navigationRef.getCurrentRoute()?.name!;
-
-    requestAnimationFrame(() => {
-      perfEvents.emit('APP_NAVIGATION_READY', {
-        readyRootName,
-      });
-      onRouteChange(readyRootName);
-
-      analytics.logScreenView({
-        screen_name: readyRootName,
-        screen_class: readyRootName,
-      });
-      matomoLogScreenView({ name: readyRootName });
+    perfEvents.emit('APP_NAVIGATION_READY', {
+      readyRootName,
     });
+    onRouteChange(readyRootName);
+
+    analytics.logScreenView({
+      screen_name: readyRootName,
+      screen_class: readyRootName,
+    });
+    matomoLogScreenView({ name: readyRootName });
   }, []);
 
   useDetermineExitAppOnPressBack();
 
   useRendererDetect({ name: 'AppNavigation' });
-
-  console.debug(
-    'routeNameRef.current, colorScheme',
-    routeNameRef.current,
-    colorScheme,
-    navigationRef.current,
-  );
-
-  // const { couldRender } = useAppCouldRender();
-
-  // if (!couldRender) return null;
 
   return (
     <AutoLockView.ForAppNav
@@ -318,9 +343,10 @@ export default function AppNavigation() {
           onReady={onReady}
           onStateChange={onStateChange}
           theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <DuplicateAddressModal />
-          <AliasNameEditModal />
-          <QrCodeModal />
+          <AppNavigationDeferredGlobals
+            slot="navigation-pre"
+            enabled={shouldRenderDeferredGlobals}
+          />
           <RootStack.Navigator
             screenOptions={{
               ...RootAnimOptions,
@@ -401,7 +427,7 @@ export default function AppNavigation() {
               component={AddressNavigator}
             />
             <RootStack.Screen
-              name="SetupWallet"
+              name={RootNames.SetupWallet}
               component={SetupWallet}
               options={{ headerShown: false }}
             />
@@ -555,26 +581,17 @@ export default function AppNavigation() {
               />
             </RootStack.Group>
           </RootStack.Navigator>
-          <InnerDappWebViewPreloadEntry />
-          <BiometricsStubModal />
-          <ApprovalTokenDetailSheetModalStub />
-          <GlobalSearchBottomSheet />
-          <BottomSheetBrowser />
-          <BrowserManagePopup />
-          <BrowserFavoritePopup />
+          <AppNavigationDeferredGlobals
+            slot="navigation-post"
+            enabled={shouldRenderDeferredGlobals}
+          />
         </NavigationContainer>
       </NavigationIndependentTree>
-      <ModalsSubmitFeedbackByScreenshotStub />
-      <ToggleCollateralModal />
-
-      {/** @warning put all business stub components before this modal */}
-      <GlobalSecurityTipStubModal />
+      <AppNavigationDeferredGlobals
+        slot="overlay"
+        enabled={shouldRenderDeferredGlobals}
+      />
       <BackgroundSecureBlurView />
-      <FloatingDiagnosticsPanel />
-      <GlobalMiniApproval />
-      <GlobalMiniSignTypedDataPortal />
-      <GlobalTipsPopup />
-      <GlobalSignerPortal />
     </AutoLockView.ForAppNav>
   );
 }
@@ -582,7 +599,6 @@ export default function AppNavigation() {
 function AccountNavigator() {
   const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
-  // console.log('============== AccountsNavigator Render =========');
 
   return (
     <AccountStack.Navigator

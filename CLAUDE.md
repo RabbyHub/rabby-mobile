@@ -13,6 +13,11 @@ This is a **React Native cryptocurrency wallet mobile app** (Rabby Mobile) organ
 
 ## Local Playbooks
 
+- For `apps/mobile` Google Play upload or Android store-release preflight work, read `apps/mobile/skills/google-play-release.md` and keep the public workflow centered on `./scripts/google-play.sh upload-internal-track`; keep private inspection/report helpers under `.codex`.
+- For `apps/mobile` debug export or local file sharing flows, read `apps/mobile/skills/file-share.md` and prefer `src/utils/shareLocalFile.ts` over screen-local platform branching.
+- For `apps/mobile` debug, probe, or migration-diagnostics screens, read `apps/mobile/skills/debug-pages.md` and keep the page focused on live state while moving instructions into help sheets and bulk actions into an actions sheet.
+- For `apps/mobile` keychain patching or upgrade work, read `apps/mobile/skills/keychain-upgrade.md` before changing Android fallback behavior, authentication policy, or package wiring.
+- For `apps/mobile` code changes, read `apps/mobile/skills/import-cycles.md` and keep import-cycle detection, TypeScript typecheck, and Jest as the required self-validation set before handoff.
 - For `apps/mobile` store, hooks, or Home-path performance work, read `apps/mobile/skills/perf-hooks.md` before changing selector boundaries or exposing large store state to React consumers. It captures the local rules around scene-picked minimal state, scene-level derived data, and limiting render fan-out.
 
 ## Common Commands
@@ -54,6 +59,13 @@ yarn android
 
 # TypeScript type checking
 yarn typecheck
+
+# Import-cycle detection
+yarn lint:cycles
+yarn lint:cycles:eslint
+
+# Jest tests
+yarn test --runInBand
 
 # Build web worker
 yarn buildworker
@@ -182,6 +194,7 @@ yarn link-assets
 - Pre-push hook runs `yarn lint`
 - Lint-staged runs on commit for staged files
 - Main branch is `develop`
+- For `apps/mobile` code changes, run the import-cycle suite (`yarn workspace rabby-mobile lint:cycles`, `yarn workspace rabby-mobile lint:cycles:eslint`), `yarn workspace rabby-mobile typecheck`, and `yarn workspace rabby-mobile test --runInBand` before handoff. If one is intentionally skipped, state the reason.
 
 ## File Organization
 

@@ -18,7 +18,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, View, Pressable, Image, ScrollView } from 'react-native';
+import { View, Pressable, Image, ScrollView, Dimensions } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import QRCode from 'react-native-qrcode-svg';
 import { default as RcIconMCopy } from '@/assets2024/icons/address/mcopy-cc.svg';
@@ -43,6 +43,8 @@ import {
   useOfflineChain,
 } from '@/screens/Home/components/OfflineChainNotify';
 import { rateGuideLastExposureState } from '@/components/RateModal/hooks';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 
 function ReceiveScreen(): JSX.Element {
   const [selectedChain, setSelectedChain] = useState<CHAINS_ENUM | null>(null);
@@ -370,7 +372,8 @@ function ReceiveScreen(): JSX.Element {
           </View>
         </ScrollView>
 
-        <Modal
+        <TrackedModal
+          modalId={MODAL_GATE_IDS.receiveWatchMode}
           visible={isShowWatchModeModal}
           onRequestClose={() => {
             setIsShowWatchModeModal(false);
@@ -393,18 +396,20 @@ function ReceiveScreen(): JSX.Element {
               />
             </View>
           </View>
-        </Modal>
+        </TrackedModal>
       </View>
     </FooterButtonScreenContainer>
   );
 }
 
+const SCREEN_WIDTH = Dimensions.get('window').width;
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   headerTitle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
+    maxWidth: SCREEN_WIDTH - 100,
   },
   screen: {
     backgroundColor: colors2024['neutral-bg-0'],

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Keyboard, PanResponder, View, ViewProps } from 'react-native';
 
-import { apisAutoLock } from '@/core/apis';
+import * as apisAutoLock from '@/core/apis/autoLock';
 import { getLatestNavigationName } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import {

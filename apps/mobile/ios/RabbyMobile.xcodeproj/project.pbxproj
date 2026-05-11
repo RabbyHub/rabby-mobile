@@ -79,6 +79,8 @@
 		01BBE0192C387B8C0033D12B /* UIImage+ImageEffects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIImage+ImageEffects.h"; path = "RabbyMobile/UIImage+ImageEffects.h"; sourceTree = "<group>"; };
 		01BBE01E2C3889BB0033D12B /* ScreenShield.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ScreenShield.swift; path = RabbyMobile/ScreenShield.swift; sourceTree = "<group>"; };
 		01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = AppConfig.xcconfig; path = RabbyMobile/AppConfig.xcconfig; sourceTree = "<group>"; };
+		01C69DDB2C2C93CA007C7A6E /* AppConfig.Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = AppConfig.Release.xcconfig; path = RabbyMobile/AppConfig.Release.xcconfig; sourceTree = "<group>"; };
+		01C69DDC2C2C93CA007C7A6E /* AppConfig.Regression.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = AppConfig.Regression.xcconfig; path = RabbyMobile/AppConfig.Regression.xcconfig; sourceTree = "<group>"; };
 		01D18D942C804A750067DA5F /* RabbyMobileDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = RabbyMobileDebug.entitlements; path = RabbyMobile/RabbyMobileDebug.entitlements; sourceTree = "<group>"; };
 		01D49C742CBE7D5E008C5EE2 /* RNTimeChanged.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RNTimeChanged.h; path = RabbyMobile/RNTimeChanged.h; sourceTree = "<group>"; };
 		01D49C752CBE7D5E008C5EE2 /* RNTimeChanged.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = RNTimeChanged.mm; path = RabbyMobile/RNTimeChanged.mm; sourceTree = "<group>"; };
@@ -222,6 +224,8 @@
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB71A68108700A75B9A /* main.m */,
 				01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */,
+				01C69DDB2C2C93CA007C7A6E /* AppConfig.Release.xcconfig */,
+				01C69DDC2C2C93CA007C7A6E /* AppConfig.Regression.xcconfig */,
 			);
 			name = RabbyMobile;
 			sourceTree = "<group>";
@@ -697,7 +701,7 @@
 		};
 		0169DF5C2D1286360098402E /* Regression */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */;
+			baseConfigurationReference = 01C69DDC2C2C93CA007C7A6E /* AppConfig.Regression.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CC = "";
@@ -1144,7 +1148,7 @@
 		};
 		83CBBA211A601CBA00E9B192 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */;
+			baseConfigurationReference = 01C69DDB2C2C93CA007C7A6E /* AppConfig.Release.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CC = "";

@@ -31,6 +31,15 @@ type SingleHomeState = {
   reachTop: boolean;
 };
 
+function isSameSingleHomeAccount(prev: Account | null, next: Account) {
+  return (
+    !!prev &&
+    prev.address.toLowerCase() === next.address.toLowerCase() &&
+    prev.type === next.type &&
+    prev.brandName === next.brandName
+  );
+}
+
 function shouldKeepPreviousSelectData(
   prev: ReturnType<typeof makeDefaultSelectData> | null,
   next: ReturnType<typeof makeDefaultSelectData>,
@@ -66,9 +75,22 @@ function getDefault(): SingleHomeState {
 const singleHomeState = zCreate<SingleHomeState>(() => getDefault());
 
 function presetSingHomeAccount(account: Account) {
-  singleHomeState.setState({
-    ...getDefault(),
-    currentAccount: account,
+  singleHomeState.setState(prev => {
+    const nextState = {
+      ...getDefault(),
+      reachTop: prev.reachTop,
+      currentAccount: account,
+    };
+
+    if (isSameSingleHomeAccount(prev.currentAccount, account)) {
+      return {
+        ...nextState,
+        foldChart: prev.foldChart,
+        selectedChain: prev.selectedChain,
+      };
+    }
+
+    return nextState;
   });
 }
 export const apisSingleHome = {

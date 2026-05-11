@@ -10,27 +10,20 @@ import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconMarketCC from '@/assets2024/icons/home/IconMarketCC.svg';
+import RcIconConvertDustCC from '@/assets2024/icons/home/IconDustCC.svg';
 
-import RcIconAsterCC from '@/assets2024/icons/home/IconAsterCC.svg';
-import RcIconLighterCC from '@/assets2024/icons/home/IconLighterCC.svg';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
+import { useAppLanguage } from '@/hooks/lang';
+import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
 import {
   createGetStyles2024,
   makeDebugBorder,
   makeDevOnlyStyle,
 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
-  ActivityIndicator,
-  AppState,
   Dimensions,
   ScrollView,
   StyleSheet,
@@ -44,7 +37,6 @@ import Animated, {
   clamp,
   Extrapolate,
   interpolate,
-  makeMutable,
   runOnJS,
   runOnUI,
   scrollTo,
@@ -52,7 +44,6 @@ import Animated, {
   useAnimatedRef,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -140,6 +131,7 @@ import {
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { NewTag } from './NewTag';
 import { useHomeFeatureNewTag } from '../hooks/useHomeFeatureNewTag';
+import { useDismissConvertDustBanner } from '../hooks/useConvertDustBanner';
 import { useMemoizedFn } from 'ahooks';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { sleep } from '@/utils/async';
@@ -515,33 +507,33 @@ const getStyle = createGetStyles2024(
     },
 
     gridItem: {
-      borderWidth: 2,
-      borderColor: isLight
-        ? colors2024['neutral-InvertHighlight']
-        : 'transparent',
       backgroundColor: isLight
-        ? colord(colors2024['neutral-bg-1']).alpha(0.86).toRgbString()
+        ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
       width: '48%', // default
       minWidth: 0,
       borderRadius: 16,
       flexShrink: 0,
-      padding: 16,
+      padding: 20,
+      paddingBottom: 16,
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'center',
       // height: 86,
-      gap: 8,
+      gap: 12,
       position: 'relative',
       // ...makeDebugBorder(),
     },
     gridText: {
       color: colors2024['neutral-title-1'],
-      fontWeight: '500',
+      fontWeight: '700',
       fontSize: 16,
       lineHeight: 20,
       textAlign: 'left',
       fontFamily: 'SF Pro Rounded',
+    },
+    gridTextZh: {
+      fontSize: 15,
     },
     titleWithNewTagRow: {
       flexDirection: 'row',
@@ -603,6 +595,7 @@ export const HomeOverview = React.memo(() => {
     getStyle,
   });
   const { pendingTxCount, historyCount } = useHomeHistoryStore();
+  const dismissConvertDustBanner = useDismissConvertDustBanner();
 
   const { width } = useWindowDimensions();
   const itemWidth =
@@ -661,12 +654,12 @@ export const HomeOverview = React.memo(() => {
           key: MultiHomeFeatTitle.Lending,
           title: t('page.home.services.lending'),
           icon: RcIconLending,
-          color: colors2024['brand-default-icon'],
         },
         {
-          key: MultiHomeFeatTitle.Points,
-          title: t('page.rabbyPoints.title'),
-          icon: RcIconPointsCC,
+          key: MultiHomeFeatTitle.GasAccount,
+          title: t('page.home.services.gasDeposit'),
+          icon: RcIconGasAccountCC,
+          showGiftIcon: isEligible,
         },
         {
           key: MultiHomeFeatTitle.History,
@@ -674,6 +667,11 @@ export const HomeOverview = React.memo(() => {
           icon: RcIconHistoryCC,
           badge: historyCount?.fail || historyCount?.success,
           isSuccess: !historyCount?.fail,
+        },
+        {
+          key: MultiHomeFeatTitle.Market,
+          title: t('page.home.services.market'),
+          icon: RcIconMarketCC,
         },
         {
           key: MultiHomeFeatTitle.Approvals,
@@ -685,22 +683,20 @@ export const HomeOverview = React.memo(() => {
         //   title: MultiHomeFeatTitle.TEST_DAPP,
         //   icon: RcIconDapps,
         // },
-
-        {
-          key: MultiHomeFeatTitle.Market,
-          title: t('page.home.services.market'),
-          icon: RcIconMarketCC,
-        },
-        {
-          key: MultiHomeFeatTitle.GasAccount,
-          title: t('page.home.services.gasDeposit'),
-          icon: RcIconGasAccountCC,
-          showGiftIcon: isEligible,
-        },
         // {
         //   title: MultiHomeFeatTitle.Ecosystem,
         //   icon: RcIconEcosystem,
         // },
+        {
+          key: MultiHomeFeatTitle.Points,
+          title: t('page.rabbyPoints.title'),
+          icon: RcIconPointsCC,
+        },
+        {
+          key: MultiHomeFeatTitle.ConvertDust,
+          title: t('page.home.services.convertDust'),
+          icon: RcIconConvertDustCC,
+        },
       ].filter(Boolean) as {
         key: MultiHomeFeatTitle;
         title: string;
@@ -710,14 +706,7 @@ export const HomeOverview = React.memo(() => {
         isSuccess?: boolean;
         showGiftIcon?: boolean;
       }[],
-    [
-      t,
-      colors2024,
-      historyCount?.fail,
-      historyCount?.success,
-      alertInfo.total,
-      isEligible,
-    ],
+    [t, historyCount?.fail, historyCount?.success, alertInfo.total, isEligible],
   );
 
   useFetchCexInfo();
@@ -903,6 +892,7 @@ export const HomeOverview = React.memo(() => {
           });
           break;
         case MultiHomeFeatTitle.Lending:
+          clearLendingActionPopupState();
           navigation.push(RootNames.StackTransaction, {
             screen: RootNames.Lending,
             params: {},
@@ -914,11 +904,18 @@ export const HomeOverview = React.memo(() => {
             params: {},
           });
           break;
+        case MultiHomeFeatTitle.ConvertDust:
+          dismissConvertDustBanner();
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.ConvertDust,
+            params: {},
+          });
+          break;
         default:
           break;
       }
     },
-    [handlePressMarket, navigation],
+    [dismissConvertDustBanner, handlePressMarket, navigation],
   );
 
   const generateCustomBadgeIcon = useCallback(
@@ -1107,9 +1104,11 @@ const HomeMenuItem: React.FC<HomeMenuItemProps> = ({
   onPress,
   renderBadge,
 }) => {
-  const { styles, colors2024 } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
+  const { currentLanguage } = useAppLanguage();
+  const isZhLang = currentLanguage === 'zh-CN' || currentLanguage === 'zh-Hant';
   const { shouldShowNewTag, markVisited } = useHomeFeatureNewTag(el.key);
 
   const handlePress = useCallback(() => {
@@ -1133,13 +1132,19 @@ const HomeMenuItem: React.FC<HomeMenuItemProps> = ({
           <el.icon
             width={28}
             height={28}
-            color={el.color || colors2024['brand-default-icon']}
+            color={
+              el.color ||
+              (isLight ? colors2024['brand-default-icon'] : '#7084FF')
+            }
           />
         </View>
         <View style={styles.rightBadgeWrapper}>{renderBadge(el)}</View>
       </View>
       <View style={styles.titleWithNewTagRow}>
-        <Text style={styles.gridText} numberOfLines={1} ellipsizeMode="tail">
+        <Text
+          style={[styles.gridText, isZhLang && styles.gridTextZh]}
+          numberOfLines={1}
+          ellipsizeMode="tail">
           {el.title}
         </Text>
         {shouldShowNewTag ? (
