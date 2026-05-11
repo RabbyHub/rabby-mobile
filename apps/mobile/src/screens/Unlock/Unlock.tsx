@@ -1,7 +1,13 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
-import { View, Platform, Keyboard, KeyboardAvoidingView } from 'react-native';
+import {
+  View,
+  Platform,
+  Keyboard,
+  KeyboardAvoidingView,
+  InteractionManager,
+} from 'react-native';
 import * as Yup from 'yup';
 
 import { default as RcRabbyLogoLight } from './icons/icon-with-logo-light.svg';
@@ -90,6 +96,55 @@ const LAYOUTS = {
 
 const isIOS = Platform.OS === 'ios';
 const BiometricsIconSize = 76;
+const UNLOCK_SCREEN_WARMUP_DELAY_MS = 250;
+const POST_UNLOCK_WARMUP_DELAY_MS = 800;
+
+const unlockWarmupsStateRef = {
+  promise: null as Promise<void> | null,
+};
+
+function startUnlockWarmups(reason: string) {
+  if (unlockWarmupsStateRef.promise) {
+    return unlockWarmupsStateRef.promise;
+  }
+
+  unlockWarmupsStateRef.promise = Promise.allSettled([
+    startUnlockScreenBootstrapWarmups(),
+    preloadTransactionHotNavigator(),
+  ]).then(results => {
+    results.forEach(result => {
+      if (result.status === 'rejected') {
+        console.error(`startUnlockWarmups::${reason}::error`, result.reason);
+      }
+    });
+  });
+
+  return unlockWarmupsStateRef.promise;
+}
+
+function scheduleUnlockWarmupsAfterInteractions(
+  reason: string,
+  delayMs: number,
+) {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const interactionHandle = InteractionManager.runAfterInteractions(() => {
+    timeoutId = setTimeout(() => {
+      startUnlockWarmups(reason).catch(error => {
+        console.error(
+          `scheduleUnlockWarmupsAfterInteractions::${reason}`,
+          error,
+        );
+      });
+    }, delayMs);
+  });
+
+  return () => {
+    interactionHandle.cancel?.();
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  };
+}
 
 const prevFailedRef = { hide: null as (() => void) | null };
 const toastFailed = toastWithIcon(RcIconInfoForToast);
@@ -114,7 +169,10 @@ export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
 }
 
 const INIT_DATA = { password: __DEV__ ? (APP_TEST_PWD as string) : '' };
-function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
+function useUnlockForm(
+  navigation: ReturnType<typeof useRabbyAppNavigation>,
+  onUnlocked?: () => void,
+) {
   const { t } = useTranslation();
   const yupSchema = React.useMemo(() => {
     return Yup.object({
@@ -134,7 +192,8 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
     });
 
     storeApisUnlock.afterLeaveFromUnlock();
-  }, []);
+    onUnlocked?.();
+  }, [onUnlocked]);
 
   const { tipEnableBiometrics } = useTipedUserEnableBiometrics();
 
@@ -208,14 +267,16 @@ export default function UnlockScreen() {
   const {
     computed: { isBiometricsEnabled, isFaceID },
   } = useBiometrics({ autoFetch: true });
-  const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
-    useUnlockForm(navigation);
-
-  React.useEffect(() => {
-    preloadTransactionHotNavigator().catch(error => {
-      console.error('preloadTransactionHotNavigator::error', error);
-    });
+  const schedulePostUnlockWarmups = React.useCallback(() => {
+    scheduleUnlockWarmupsAfterInteractions(
+      'post_unlock',
+      POST_UNLOCK_WARMUP_DELAY_MS,
+    );
   }, []);
+  const { isUnlocking, formik, shouldDisabled, checkUnlocked } = useUnlockForm(
+    navigation,
+    schedulePostUnlockWarmups,
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -225,13 +286,17 @@ export default function UnlockScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      if (isBiometricsEnabled && !params?.disableAutoTriggerUnlock) {
+        return;
+      }
+
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
       const frameId = requestAnimationFrame(() => {
         timeoutId = setTimeout(() => {
-          startUnlockScreenBootstrapWarmups().catch(error => {
-            console.error('startUnlockScreenBootstrapWarmups::error', error);
+          startUnlockWarmups('unlock_screen_focus').catch(error => {
+            console.error('startUnlockWarmups::unlock_screen_focus', error);
           });
-        }, 250);
+        }, UNLOCK_SCREEN_WARMUP_DELAY_MS);
       });
 
       return () => {
@@ -240,7 +305,7 @@ export default function UnlockScreen() {
           clearTimeout(timeoutId);
         }
       };
-    }, []),
+    }, [isBiometricsEnabled, params?.disableAutoTriggerUnlock]),
   );
 
   const [usingBiometrics, setUsingBiometrics] = useState(isBiometricsEnabled);
