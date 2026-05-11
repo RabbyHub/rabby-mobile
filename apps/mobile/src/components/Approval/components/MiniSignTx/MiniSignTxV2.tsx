@@ -640,6 +640,7 @@ const MiniSignTxV2 = ({
                 noCustomRPC={noCustomRPC}
                 gasMethod={gasMethod}
                 onChangeGasMethod={setGasMethod}
+                showGasMethodShortcut
                 pushType={pushType}
                 isDisabledGasPopup={task.status !== 'idle'}
                 disabled={false}

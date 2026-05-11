@@ -4,6 +4,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -35,6 +36,7 @@ import { useGasAccountSign } from '@/screens/GasAccount/hooks/atom';
 import { GasLessActivityToSign } from '@/components/Approval/components/FooterBar/GasLessComponents/GasLessActivityToSign';
 import { GasLessNotEnough } from '@/components/Approval/components/FooterBar/GasLessComponents/GasLessNotEnough';
 import {
+  resolveGasAccountAutoSwitchOnce,
   shouldAutoSwitchToGasAccountFromGasless,
   shouldShowGasLessNotEnough,
 } from '@/components/Approval/components/FooterBar/gasLessDecision';
@@ -892,27 +894,27 @@ export const DirectSignGasInfo = ({
   );
 
   const showGasFeeTooHighTips = ctx?.gasFeeTooHigh && !loading && !noQuote;
+  const shouldAutoSwitchGasAccount = shouldAutoSwitchToGasAccountFromGasless({
+    showGasLess,
+    isGasNotEnough,
+    canUseGasLess,
+    canGotoUseGasAccount: !!canGotoUseGasAccount,
+  });
+  const hasAutoSwitchedGasAccountRef = useRef(false);
 
   useEffect(() => {
-    if (
-      shouldAutoSwitchToGasAccountFromGasless({
-        showGasLess,
-        isGasNotEnough,
-        canUseGasLess,
-        canGotoUseGasAccount: !!canGotoUseGasAccount,
-      }) &&
-      !payGasByGasAccount
-    ) {
+    const decision = resolveGasAccountAutoSwitchOnce({
+      shouldAutoSwitch: shouldAutoSwitchGasAccount,
+      payGasByGasAccount: !!payGasByGasAccount,
+      hasAutoSwitched: hasAutoSwitchedGasAccountRef.current,
+    });
+
+    hasAutoSwitchedGasAccountRef.current = decision.nextHasAutoSwitched;
+
+    if (decision.shouldSwitch) {
       handleChangeGasMethod('gasAccount');
     }
-  }, [
-    canGotoUseGasAccount,
-    canUseGasLess,
-    handleChangeGasMethod,
-    isGasNotEnough,
-    payGasByGasAccount,
-    showGasLess,
-  ]);
+  }, [handleChangeGasMethod, payGasByGasAccount, shouldAutoSwitchGasAccount]);
 
   if (!supportDirectSign) {
     return null;

@@ -32,6 +32,7 @@ const isValidTriggerLayout = (
 
 type DirectSignGasInfoUIProps = {
   label?: React.ReactNode;
+  labelPrefix?: React.ReactNode;
   leftIcon?: React.ReactNode;
   loading: boolean;
   empty?: boolean;
@@ -56,6 +57,7 @@ type DirectSignGasInfoUIProps = {
 
 export const DirectSignGasInfoUI = ({
   label = 'Gas Fee',
+  labelPrefix,
   leftIcon,
   loading,
   empty,
@@ -193,6 +195,7 @@ export const DirectSignGasInfoUI = ({
         name={<>{label}</>}
         style={listItemStyle}
         innerStyle={listItemInnerStyle}
+        LabelPrefix={labelPrefix}
         LeftIcon={leftIcon}>
         {!loading && !empty ? (
           <TouchableOpacity
@@ -258,18 +261,21 @@ function ListItem({
   style,
   innerStyle,
   children,
+  LabelPrefix,
   LeftIcon,
 }: {
   name: React.ReactNode;
   style?: RNViewProps['style'];
   innerStyle?: RNViewProps['style'];
   children: React.ReactNode;
+  LabelPrefix?: React.ReactNode;
   LeftIcon?: React.ReactNode;
 }) {
   const { styles } = useTheme2024({ getStyle });
   return (
     <View style={[styles.listItemContainer, style]}>
       <View style={[styles.listItemInner, innerStyle]}>
+        {LabelPrefix}
         <Text style={styles.listItemText}>{name}</Text>
         {LeftIcon}
       </View>
