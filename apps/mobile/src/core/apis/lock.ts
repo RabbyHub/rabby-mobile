@@ -300,7 +300,7 @@ async function unlockWallet(password: string) {
   }
 
   try {
-    await keyringService.verifyPassword(password);
+    await keyringService.submitPassword(password);
     resetMultipleFailed();
   } catch (err) {
     unlockResult.error = ERRORS.INCORRECT_PASSWORD;
@@ -308,7 +308,6 @@ async function unlockWallet(password: string) {
     return unlockResult;
   }
 
-  await keyringService.submitPassword(password);
   preferenceService.initCurrentAccount();
   sessionService.broadcastEvent(BroadcastEvent.unlock);
 

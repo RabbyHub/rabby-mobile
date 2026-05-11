@@ -45,19 +45,33 @@ const unlockApp = async (password: string) => {
   setUnlockState(prev => ({ ...prev, status: UNLOCK_STATE.UNLOCKING }));
 
   try {
-    return await apisLock.unlockWalletWithUpdateUnlockTime(password);
-  } finally {
+    const result = await apisLock.unlockWalletWithUpdateUnlockTime(password);
+    if (result.error) {
+      setUnlockState(prev => ({ ...prev, status: UNLOCK_STATE.IDLE }));
+    }
+    return result;
+  } catch (error) {
     setUnlockState(prev => ({ ...prev, status: UNLOCK_STATE.IDLE }));
+    throw error;
   }
 };
 
 const afterLeaveFromUnlock = () => {
-  setUnlockState(prev => ({ ...prev, hasLeftFromUnlock: true }));
+  setUnlockState(prev => ({
+    ...prev,
+    hasLeftFromUnlock: true,
+    status: UNLOCK_STATE.IDLE,
+  }));
+};
+
+const resetUnlocking = () => {
+  setUnlockState(prev => ({ ...prev, status: UNLOCK_STATE.IDLE }));
 };
 
 export const storeApisUnlock = {
   unlockApp,
   afterLeaveFromUnlock,
+  resetUnlocking,
 };
 
 export function useUnlockApp() {

@@ -548,6 +548,12 @@ export class UnlockUIManager {
         navigationRouteStore.getState().currentRouteName !== RootNames.Unlock
       )
         return;
+      if (hasUnlockOnce) {
+        resetNavigationTo(navigation, 'Home');
+        unlockUIState.finishedUnlockResetNav = true;
+        return;
+      }
+
       const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
 
       resetNavigationTo(

@@ -397,24 +397,26 @@ export class KeyringService extends RNEventEmitter {
       return this.memStore.getState();
     }
 
-    this._isSubmittingPassword = true;
-    await this.verifyPassword(password);
-    this.#password = password;
     try {
-      this.keyrings = await this.unlockKeyrings(password);
-    } catch {
-      //
-    } finally {
+      this._isSubmittingPassword = true;
+      await this.verifyPassword(password);
+      this.#password = password;
+      try {
+        this.keyrings = await this.unlockKeyrings(password);
+      } catch {
+        //
+      }
       this._setUnlocked({ scene: 'unlock' });
+
+      // force store unencrypted keyring data if not exist
+      if (!this.store.getState().unencryptedKeyringData) {
+        await this.persistAllKeyrings();
+      }
+
+      return this.fullUpdate();
+    } finally {
       this._isSubmittingPassword = false;
     }
-
-    // force store unencrypted keyring data if not exist
-    if (!this.store.getState().unencryptedKeyringData) {
-      await this.persistAllKeyrings();
-    }
-
-    return this.fullUpdate();
   }
 
   /**

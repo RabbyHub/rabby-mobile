@@ -146,6 +146,12 @@ function scheduleUnlockWarmupsAfterInteractions(
   };
 }
 
+function nextFrame() {
+  return new Promise<void>(resolve => {
+    requestAnimationFrame(() => resolve());
+  });
+}
+
 const prevFailedRef = { hide: null as (() => void) | null };
 const toastFailed = toastWithIcon(RcIconInfoForToast);
 const toastBiometricsFailed = (message?: string) => {
@@ -154,7 +160,6 @@ const toastBiometricsFailed = (message?: string) => {
 };
 const toastUnlocking = () =>
   toastIndicator(i18next.t('page.unlock.unlocking'), {
-    duration: 3000,
     isTop: true,
   });
 
@@ -186,11 +191,18 @@ function useUnlockForm(
       return;
     }
 
-    requestAnimationFrame(() => {
-      UnlockUIManager.markUnlockedOnce();
-      UnlockUIManager.resetNavOnUIUnlock();
+    await new Promise<void>((resolve, reject) => {
+      requestAnimationFrame(() => {
+        Promise.resolve()
+          .then(async () => {
+            UnlockUIManager.markUnlockedOnce();
+            await UnlockUIManager.resetNavOnUIUnlock();
+          })
+          .then(resolve, reject);
+      });
     });
 
+    await nextFrame();
     storeApisUnlock.afterLeaveFromUnlock();
     onUnlocked?.();
   }, [onUnlocked]);
@@ -226,11 +238,12 @@ function useUnlockForm(
           toast.show(result.toastError || result.error);
         } else {
           updateUnlockTime();
+          await checkUnlocked();
         }
       } catch (error) {
         console.error(error);
+        storeApisUnlock.resetUnlocking();
       } finally {
-        checkUnlocked();
         hideToast?.();
       }
     },
@@ -266,7 +279,7 @@ export default function UnlockScreen() {
   const { params } = useRoute<GetRootScreenRouteProp<'Unlock'>>();
   const {
     computed: { isBiometricsEnabled, isFaceID },
-  } = useBiometrics({ autoFetch: true });
+  } = useBiometrics();
   const schedulePostUnlockWarmups = React.useCallback(() => {
     scheduleUnlockWarmupsAfterInteractions(
       'post_unlock',
@@ -276,12 +289,6 @@ export default function UnlockScreen() {
   const { isUnlocking, formik, shouldDisabled, checkUnlocked } = useUnlockForm(
     navigation,
     schedulePostUnlockWarmups,
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      storeApisBiometrics.fetchBiometrics();
-    }, []),
   );
 
   useFocusEffect(
@@ -334,6 +341,8 @@ export default function UnlockScreen() {
           if (result.error) {
             throw new Error(result.error);
           }
+
+          await checkUnlocked();
         },
       });
       updateUnlockTime();
@@ -341,6 +350,8 @@ export default function UnlockScreen() {
       if (__DEV__) {
         console.error(error);
       }
+
+      storeApisUnlock.resetUnlocking();
 
       if (__DEV__ && incToReset() === 0) {
         toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
@@ -379,7 +390,7 @@ export default function UnlockScreen() {
         }
       }
     }
-  }, [t]);
+  }, [checkUnlocked, t]);
 
   const lockBiometricRef = React.useRef(false);
   const processUnlockWithBiometrics = useCallback(async () => {
@@ -390,17 +401,15 @@ export default function UnlockScreen() {
     if (!isFaceID) {
       const hideToast = toastUnlocking();
       await unlockWithBiometrics().finally(() => {
-        checkUnlocked();
         lockBiometricRef.current = false;
       });
       hideToast();
     } else {
       await unlockWithBiometrics().finally(() => {
-        checkUnlocked();
         lockBiometricRef.current = false;
       });
     }
-  }, [isFaceID, unlockWithBiometrics, checkUnlocked]);
+  }, [isFaceID, unlockWithBiometrics]);
 
   useLayoutEffect(() => {
     incToReset(true);
