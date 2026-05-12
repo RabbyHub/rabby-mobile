@@ -164,6 +164,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevDataWhitelist]?: {};
   [RootNames.DevUIBuiltInPages]?: {};
   [RootNames.DevUIPermissions]?: {};
+  [RootNames.DevCapabilityFile]?: {};
   [RootNames.DevSwitches]?: {};
   [RootNames.DevPerf]?: {};
 };
