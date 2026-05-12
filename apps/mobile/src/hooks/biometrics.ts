@@ -136,7 +136,7 @@ const toggleBiometrics = async <T extends boolean>(
 
       await apisKeychain.setGenericPassword(
         validatedPassword,
-        authenticationType ?? KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+        authenticationType ?? KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
       );
       const requestResult = await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.VERIFY,
