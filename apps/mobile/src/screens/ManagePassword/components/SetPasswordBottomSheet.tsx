@@ -96,7 +96,11 @@ const SetPasswordBottomSheet: React.FC<SetPasswordBottomSheetProps> = ({
       snapPoints={[440 + insets.bottom]}
       onDismiss={onClose}
       keyboardBehavior="interactive"
-      keyboardBlurBehavior="restore">
+      keyboardBlurBehavior="restore"
+      style={{
+        overflow: 'hidden',
+        borderRadius: 32,
+      }}>
       <View style={styles.container}>
         <Text style={styles.title}>
           {t('page.createPassword.title', 'Set Password')}
