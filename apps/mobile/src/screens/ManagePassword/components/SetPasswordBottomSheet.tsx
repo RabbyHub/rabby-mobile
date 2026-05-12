@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
+
+import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import * as Yup from 'yup';
 
-import { AppBottomSheetModal, Button } from '@/components';
+import { Button } from '@/components2024/Button';
+import { AppBottomSheetModal } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { NextInput } from '@/components2024/Form/Input';
@@ -15,6 +17,7 @@ import {
   validateFormikSchema,
 } from '@/utils/patch';
 import YesIcon from '@/assets2024/icons/common/check.svg';
+import RcIconLock from '@/assets2024/icons/common/lock-cc.svg';
 import { useTranslation } from 'react-i18next';
 
 export type SetPasswordBottomSheetProps = {
@@ -93,7 +96,8 @@ const SetPasswordBottomSheet: React.FC<SetPasswordBottomSheetProps> = ({
     <AppBottomSheetModal
       ref={sheetModalRef}
       index={0}
-      snapPoints={[440 + insets.bottom]}
+      enableDynamicSizing={true}
+      enableContentPanningGesture={false}
       onDismiss={onClose}
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
@@ -101,78 +105,84 @@ const SetPasswordBottomSheet: React.FC<SetPasswordBottomSheetProps> = ({
         overflow: 'hidden',
         borderRadius: 32,
       }}>
-      <View style={styles.container}>
+      <BottomSheetView
+        style={[styles.container, { paddingBottom: insets.bottom || 20 }]}>
         <Text style={styles.title}>
           {t('page.createPassword.title', 'Set Password')}
         </Text>
         <Text style={styles.subtitle}>
           {t(
             'page.createPassword.subTitle',
-            'It will be used to unlock your wallet and encrypt local data',
+            'This password unlocks your wallet and encrypts your data on this device. It cannot be recovered. If lost, you will need to reset and re-import your wallet.',
           )}
         </Text>
 
         <View style={styles.inputGroup}>
-          <NextInput.Password
-            fieldName={t('page.createPassword.Newpassword')}
-            containerStyle={styles.inputStyle}
-            inputStyle={styles.inputPadding}
-            fieldNameStyle={styles.fieldNameStyle}
-            inputProps={{
-              value: formik.values.password,
-              secureTextEntry: true,
-              inputMode: 'text',
-              returnKeyType: 'done',
-              placeholder: '',
-              onChangeText(text) {
-                formik.setFieldValue('password', text, true);
-              },
-            }}
-            hasError={Boolean(formik.errors.password)}
-            tipText={
-              formik.errors.password ||
-              t('page.nextComponent.createNewAddress.passwordMin')
-            }
-            tipIcon={
-              !formik.errors.password &&
-              formik.values.password && <YesIcon width={12} height={12} />
-            }
-          />
+          <View style={styles.inputFieldWrap}>
+            <NextInput.Password
+              as={'BottomSheetTextInput'}
+              fieldName={t('page.createPassword.Newpassword')}
+              containerStyle={styles.inputStyle}
+              inputStyle={styles.inputPadding}
+              fieldNameStyle={styles.fieldNameStyle}
+              inputProps={{
+                value: formik.values.password,
+                secureTextEntry: true,
+                inputMode: 'text',
+                returnKeyType: 'done',
+                placeholder: '',
+                onChangeText(text) {
+                  formik.setFieldValue('password', text, true);
+                },
+              }}
+              hasError={Boolean(formik.errors.password)}
+              tipText={
+                formik.errors.password ||
+                t('page.nextComponent.createNewAddress.passwordMin')
+              }
+              tipIcon={
+                !formik.errors.password &&
+                formik.values.password && <YesIcon width={12} height={12} />
+              }
+            />
+          </View>
 
-          <NextInput.Password
-            fieldName={t('page.createPassword.ConfirmPassword')}
-            style={{ marginTop: 20 }}
-            containerStyle={styles.inputStyle}
-            inputStyle={styles.inputPadding}
-            fieldNameStyle={styles.fieldNameStyle}
-            inputProps={{
-              value: formik.values.confirmPassword,
-              secureTextEntry: true,
-              inputMode: 'text',
-              returnKeyType: 'done',
-              placeholder: '',
-              onChangeText(text) {
-                formik.setFieldValue('confirmPassword', text, true);
-              },
-            }}
-            hasError={Boolean(
-              formik.values.confirmPassword && formik.errors.confirmPassword,
-            )}
-            tipText={
-              formik.values.confirmPassword && !formik.errors.password
-                ? formik.errors.confirmPassword ||
-                  t('page.nextComponent.createNewAddress.confirmPasswordTips')
-                : undefined
-            }
-            tipIcon={
-              !formik.errors.password &&
-              formik.values.password &&
-              !formik.errors.confirmPassword &&
-              formik.values.confirmPassword && (
-                <YesIcon width={12} height={12} />
-              )
-            }
-          />
+          <View style={styles.inputFieldWrap}>
+            <NextInput.Password
+              as={'BottomSheetTextInput'}
+              fieldName={t('page.createPassword.ConfirmPassword')}
+              containerStyle={styles.inputStyle}
+              inputStyle={styles.inputPadding}
+              fieldNameStyle={styles.fieldNameStyle}
+              inputProps={{
+                value: formik.values.confirmPassword,
+                secureTextEntry: true,
+                inputMode: 'text',
+                returnKeyType: 'done',
+                placeholder: '',
+                onChangeText(text) {
+                  formik.setFieldValue('confirmPassword', text, true);
+                },
+              }}
+              hasError={Boolean(
+                formik.values.confirmPassword && formik.errors.confirmPassword,
+              )}
+              tipText={
+                formik.values.confirmPassword && !formik.errors.password
+                  ? formik.errors.confirmPassword ||
+                    t('page.nextComponent.createNewAddress.confirmPasswordTips')
+                  : undefined
+              }
+              tipIcon={
+                !formik.errors.password &&
+                formik.values.password &&
+                !formik.errors.confirmPassword &&
+                formik.values.confirmPassword && (
+                  <YesIcon width={12} height={12} />
+                )
+              }
+            />
+          </View>
         </View>
 
         <Button
@@ -180,10 +190,12 @@ const SetPasswordBottomSheet: React.FC<SetPasswordBottomSheetProps> = ({
           loading={loading}
           containerStyle={styles.btnContainer}
           type="primary"
+          height={52}
+          titleStyle={{ fontSize: 18 }}
           title={t('global.Confirm')}
           onPress={handleConfirm}
         />
-      </View>
+      </BottomSheetView>
     </AppBottomSheetModal>
   );
 };
@@ -194,7 +206,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     paddingHorizontal: 24,
     paddingTop: 24,
-    flex: 1,
   },
   title: {
     color: colors2024['neutral-title-1'],
@@ -215,6 +226,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   inputGroup: {
     marginTop: 30,
     flexDirection: 'column',
+    gap: 24,
+  },
+  inputFieldWrap: {
+    height: 76,
   },
   inputStyle: {
     borderWidth: 0,
@@ -229,6 +244,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   btnContainer: {
     width: '100%',
-    marginTop: 24,
+    marginTop: 30,
   },
 }));

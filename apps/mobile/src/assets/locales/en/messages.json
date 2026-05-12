@@ -1769,7 +1769,7 @@
       "ConfirmPassword": "Confirm password",
       "biometricsFail": "Enable biometrics fail",
       "title": "Set Password",
-      "subTitle": "It will be used to unlock your wallet and encrypt local data",
+      "subTitle": "This password unlocks your wallet and encrypts your data on this device. It cannot be recovered. If lost, you will need to reset and re-import your wallet.",
       "passwordRequired": "Please input Password",
       "passwordMin": "Password must be at least 8 characters long",
       "passwordPlaceholder": "Password must be at least 8 characters long",
