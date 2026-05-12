@@ -8,6 +8,7 @@ import {
 } from '@/core/utils/devServerSettings';
 import mmkvPlugin from '@/core/utils/reactotron-plugins/react-native-mmkv';
 import opSQLitePlugin from '@/core/utils/reactotron-plugins/op-sqlite';
+import { ENABLE_REACTOTRON } from '@/core/utils/reactotron-plugins/featureFlag';
 import {
   reactotronEvents,
   waitTronReady,
@@ -15,6 +16,10 @@ import {
 import { setupCustomCommands } from '@/core/utils/reactotron-plugins/_setup';
 
 export async function setupReactotronConnection() {
+  if (!ENABLE_REACTOTRON) {
+    return null;
+  }
+
   let persistedHostname = '';
   let scriptHostname = '';
   try {
@@ -83,7 +88,7 @@ export async function setupReactotronConnection() {
   return client;
 }
 
-if (__DEV__) {
+if (__DEV__ && ENABLE_REACTOTRON) {
   setTimeout(() => {
     setupReactotronConnection();
   }, 100);
