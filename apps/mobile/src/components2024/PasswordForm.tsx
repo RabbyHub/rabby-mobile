@@ -184,7 +184,9 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
 
   return (
     <View style={styles.container}>
-      {topTip && <Text style={styles.topTipText}>{topTip}</Text>}
+      {!isBiometricMode && topTip && (
+        <Text style={styles.topTipText}>{topTip}</Text>
+      )}
 
       {!isBiometricMode && (
         <View style={styles.inputHorizontalGroup}>
