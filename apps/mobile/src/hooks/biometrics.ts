@@ -106,11 +106,14 @@ const fetchBiometrics = async () => {
 
 const toggleBiometrics = async <T extends boolean>(
   nextEnabled: T,
-  input: { tipLoading?: boolean } & (T extends true
+  input: {
+    tipLoading?: boolean;
+    authenticationType?: KEYCHAIN_AUTH_TYPES;
+  } & (T extends true
     ? { validatedPassword: string }
     : { validatedPassword?: undefined }),
 ) => {
-  const { validatedPassword, tipLoading } = input;
+  const { validatedPassword, tipLoading, authenticationType } = input;
   let changed = false;
 
   const hideToast = !tipLoading
@@ -133,7 +136,7 @@ const toggleBiometrics = async <T extends boolean>(
 
       await apisKeychain.setGenericPassword(
         validatedPassword,
-        KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+        authenticationType ?? KEYCHAIN_AUTH_TYPES.BIOMETRICS,
       );
       const requestResult = await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.VERIFY,
