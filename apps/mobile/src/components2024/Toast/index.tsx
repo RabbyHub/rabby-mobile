@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   StyleProp,
   TextStyle,
+  Dimensions,
 } from 'react-native';
 import Toast, { ToastOptions } from 'react-native-root-toast';
 import { SvgProps } from 'react-native-svg';
@@ -296,6 +297,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       alignItems: 'center',
       justifyContent: 'center',
       paddingHorizontal: 12,
+      maxWidth: Dimensions.get('window').width - 32,
       maxHeight: '100%',
       minHeight: TOAST_MIN_H,
       paddingVertical: IS_IOS ? 10 : 8,
