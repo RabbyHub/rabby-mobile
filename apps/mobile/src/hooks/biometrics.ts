@@ -57,7 +57,7 @@ export function useBiometricsComputed() {
   const computed = useMemo(() => {
     const isFaceID = supportedBiometryType === BIOMETRY_TYPE.FACE_ID;
     return {
-      isBiometricsEnabled: authEnabled && !!supportedBiometryType,
+      isBiometricsEnabled: authEnabled,
       settingsAuthEnabled: authEnabled,
       couldSetupBiometrics: !!supportedBiometryType,
       supportedBiometryType,
@@ -94,7 +94,7 @@ const fetchBiometrics = async () => {
       return {
         ...prev,
         supportedBiometryType: supportedType,
-        authEnabled: supportedType ? isAuthenticatedByBiometrics() : false,
+        authEnabled: isAuthenticatedByBiometrics(),
       };
     });
   } catch (error) {
