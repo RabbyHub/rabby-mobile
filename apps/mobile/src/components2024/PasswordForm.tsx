@@ -16,6 +16,8 @@ import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { useBiometrics } from '@/hooks/biometrics';
 import { Text } from '@/components/Typography';
 import YesIcon from '@/assets2024/icons/common/check.svg';
+import RcIconKeychainFaceIdCC from '@/assets2024/icons/common/fack_id.svg';
+import RcIconKeychainFingerprintCC from '@/assets2024/icons/common/fingerprint.svg';
 import { useShowUserAgreementLikeModal } from '@/screens/ManagePassword/components/UserAgreementLikeModalInner2024';
 import { APP_TEST_PWD } from '@/constant';
 import { E2E_ID } from '@/constant/e2e';
@@ -87,7 +89,7 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
   const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
 
   const {
-    computed: { defaultTypeLabel, couldSetupBiometrics },
+    computed: { defaultTypeLabel, couldSetupBiometrics, isFaceID },
   } = useBiometrics({ autoFetch: true });
 
   const isBiometricMode = couldSetupBiometrics && !showPasswordFallback;
@@ -321,7 +323,28 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
         loading={loading}
         containerStyle={styles.btnContainer}
         type="primary"
-        title={submitButtonTitle || t('global.Done')}
+        title={
+          isBiometricMode
+            ? t('page.createPassword.setWallet')
+            : submitButtonTitle || t('global.Done')
+        }
+        icon={
+          isBiometricMode ? (
+            isFaceID ? (
+              <RcIconKeychainFaceIdCC
+                color={colors2024['neutral-InvertHighlight']}
+                width={22}
+                height={22}
+              />
+            ) : (
+              <RcIconKeychainFingerprintCC
+                color={colors2024['neutral-InvertHighlight']}
+                width={22}
+                height={22}
+              />
+            )
+          ) : undefined
+        }
         {...makeTestIDProps(E2E_ID.onboarding.setPasswordSubmit)}
         onPress={handlePress}
       />
