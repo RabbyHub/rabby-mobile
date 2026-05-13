@@ -12,6 +12,8 @@ import * as apisLock from './lock';
 
 export const KEYCHAIN_DEFAULT_SERVICE = 'com.debank';
 export const KEYCHAIN_GENERIC_USER = 'rabbymobile-user';
+const KEYCHAIN_TRUSTED_VAULT_KEY_SERVICE = `${KEYCHAIN_DEFAULT_SERVICE}.trusted-vault-key`;
+const KEYCHAIN_TRUSTED_VAULT_KEY_USER = 'rabbymobile-vault-key';
 const LEGACY_RSA_STORAGE_TYPE = 'KeystoreRSAECB';
 const AES_STORAGE_TYPE = 'KeystoreAESCBC';
 const IOS_KEYCHAIN_STORAGE_TYPE = 'keychain';
@@ -691,6 +693,107 @@ export function createBusinessKeychainApi({
     return null;
   }
 
+  function getAuthOptionsForType(type: KEYCHAIN_AUTH_TYPES) {
+    const authOptions: Partial<KeychainCompatibleOptions> = {
+      accessible: keychainModule.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+    };
+
+    if (type === KEYCHAIN_AUTH_TYPES.BIOMETRICS) {
+      authOptions.accessControl =
+        keychainModule.ACCESS_CONTROL.BIOMETRY_CURRENT_SET;
+    } else if (type === KEYCHAIN_AUTH_TYPES.PASSCODE) {
+      authOptions.accessControl = keychainModule.ACCESS_CONTROL.DEVICE_PASSCODE;
+    } else if (type !== KEYCHAIN_AUTH_TYPES.REMEMBER_ME) {
+      return null;
+    }
+
+    return authOptions;
+  }
+
+  async function resetTrustedVaultKeyString() {
+    try {
+      await keychainModule.resetGenericPassword({
+        service: KEYCHAIN_TRUSTED_VAULT_KEY_SERVICE,
+      });
+    } catch (error) {
+      logger.warn('[keychain] failed to reset trusted vault key string', {
+        sourceLabel,
+        error: getErrorMessage(error),
+      });
+    }
+  }
+
+  async function setTrustedVaultKeyString(
+    vaultKeyString: string,
+    type: KEYCHAIN_AUTH_TYPES,
+  ) {
+    const authOptions = getAuthOptionsForType(type);
+
+    if (!authOptions) {
+      await resetTrustedVaultKeyString();
+      return;
+    }
+
+    await keychainModule.setGenericPassword(
+      KEYCHAIN_TRUSTED_VAULT_KEY_USER,
+      vaultKeyString,
+      {
+        ...DEFAULT_SET_OPTIONS,
+        ...authOptions,
+        service: KEYCHAIN_TRUSTED_VAULT_KEY_SERVICE,
+      },
+    );
+  }
+
+  async function getTrustedVaultKeyString() {
+    if (getAuthenticationType() === KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD) {
+      return undefined;
+    }
+
+    try {
+      const trustedVaultKeyObject = (await keychainModule.getGenericPassword({
+        ...DEFAULT_GET_OPTIONS,
+        service: KEYCHAIN_TRUSTED_VAULT_KEY_SERVICE,
+        ...getAndroidAuthPromptPolicyOptions(
+          ANDROID_AUTH_PROMPT_POLICIES.ALLOW_AUTHENTICATED_SESSION_REUSE,
+        ),
+      })) as DefaultRet;
+
+      if (
+        trustedVaultKeyObject &&
+        typeof trustedVaultKeyObject.password === 'string'
+      ) {
+        return trustedVaultKeyObject.password;
+      }
+    } catch (error) {
+      logger.info('[keychain] trusted vault key string is unavailable', {
+        sourceLabel,
+        error: getErrorMessage(error),
+      });
+    }
+
+    return undefined;
+  }
+
+  async function attachTrustedVaultKeyString(
+    credentials: KeychainCompatibleUserCredentials,
+  ): Promise<KeychainCompatibleUserCredentials> {
+    if (credentials.vaultKeyString) {
+      return credentials;
+    }
+
+    const vaultKeyString = await getTrustedVaultKeyString();
+
+    if (!vaultKeyString) {
+      return credentials;
+    }
+
+    return {
+      ...credentials,
+      vaultKeyString,
+    };
+  }
+
   function shouldUpgradeLegacyAndroidBiometricsStorage(storage?: string) {
     return (
       isAndroid &&
@@ -866,20 +969,25 @@ export function createBusinessKeychainApi({
             return { ...keychainObject, actionSuccess: verifyResult.success };
           }
           case RequestGenericPurpose.DECRYPT_PWD: {
-            await onPlainPassword?.(decrypted.password, decrypted);
+            const credentialsWithVaultKey =
+              await attachTrustedVaultKeyString(decrypted);
+            await onPlainPassword?.(
+              credentialsWithVaultKey.password,
+              credentialsWithVaultKey,
+            );
             apisLock.updateUnlockTime();
             if (usedFallbackRabbitCode) {
               await silentlyUpgradeStoredPasswordPayload(
-                decrypted.password,
-                decrypted,
+                credentialsWithVaultKey.password,
+                credentialsWithVaultKey,
               );
             } else {
               await upgradeLegacyAndroidBiometricsStorage(
-                decrypted.password,
+                credentialsWithVaultKey.password,
                 typeof keychainObject.storage === 'string'
                   ? keychainObject.storage
                   : undefined,
-                decrypted,
+                credentialsWithVaultKey,
               );
             }
             onRequestReturn(instance);
@@ -904,6 +1012,7 @@ export function createBusinessKeychainApi({
     const result = await keychainModule.resetGenericPassword({
       service: DEFAULT_BASE_OPTIONS.service,
     });
+    await resetTrustedVaultKeyString();
 
     if (result) {
       setAuthenticationType(KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD);
@@ -989,18 +1098,9 @@ export function createBusinessKeychainApi({
       vaultKeyString?: string;
     },
   ) {
-    const authOptions: Partial<KeychainCompatibleOptions> = {
-      accessible: keychainModule.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-    };
+    const authOptions = getAuthOptionsForType(type);
 
-    if (type === KEYCHAIN_AUTH_TYPES.BIOMETRICS) {
-      authOptions.accessControl =
-        keychainModule.ACCESS_CONTROL.BIOMETRY_CURRENT_SET;
-    } else if (type === KEYCHAIN_AUTH_TYPES.PASSCODE) {
-      authOptions.accessControl = keychainModule.ACCESS_CONTROL.DEVICE_PASSCODE;
-    } else if (type === KEYCHAIN_AUTH_TYPES.REMEMBER_ME) {
-      // no extra option
-    } else {
+    if (!authOptions) {
       if (__DEV__) {
         console.warn('setGenericPassword: Invalid type', type);
       }
@@ -1009,9 +1109,7 @@ export function createBusinessKeychainApi({
     }
 
     const instance = await waitInstance();
-    const encryptedPassword = await instance.encryptPassword(password, {
-      vaultKeyString: options?.vaultKeyString,
-    });
+    const encryptedPassword = await instance.encryptPassword(password);
     await keychainModule.setGenericPassword(
       KEYCHAIN_GENERIC_USER,
       encryptedPassword,
@@ -1023,10 +1121,14 @@ export function createBusinessKeychainApi({
     );
 
     setAuthenticationType(type);
+
+    if (options?.vaultKeyString) {
+      await setTrustedVaultKeyString(options.vaultKeyString, type);
+    }
   }
 
   async function cacheTrustedVaultKeyString(
-    password: string,
+    _password: string,
     vaultKeyString: string,
   ) {
     const authType = getAuthenticationType();
@@ -1035,9 +1137,7 @@ export function createBusinessKeychainApi({
       return;
     }
 
-    await setGenericPassword(password, authType, {
-      vaultKeyString,
-    });
+    await setTrustedVaultKeyString(vaultKeyString, authType);
   }
 
   function getSupportedBiometryType() {
