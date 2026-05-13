@@ -3403,7 +3403,7 @@
       }
     },
     "AuthenticationModal": {
-      "passwordPlaceholder": "Enter password"
+      "passwordPlaceholder": "Enter password to Confirm"
     },
     "Contact": {
       "EditModal": {

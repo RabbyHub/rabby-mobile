@@ -154,6 +154,8 @@ function FooterButtonGroup({
           title={t('global.Cancel')}
           containerStyle={footerStyles.btnContainer}
           type="ghost"
+          height={48}
+          titleStyle={{ fontSize: 18 }}
           onPress={onCancel ?? noop}
           {...cancelButtonProps}
         />
@@ -175,6 +177,8 @@ function FooterButtonGroup({
               footerStyles.btnContainer,
               hideCancelButton && footerStyles.fullWidthBtnContainer,
             ])}
+            height={48}
+            titleStyle={{ fontSize: 18 }}
             onPress={onConfirm}
             disabled={disabled}
             {...confirmButtonProps}
@@ -188,25 +192,25 @@ function FooterButtonGroup({
 const getFooterStyle = createGetStyles2024(() => {
   return {
     buttonGroup: {
-      paddingHorizontal: 24,
-      paddingVertical: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
     },
 
     singleButtonGroup: {
-      paddingHorizontal: 24,
+      paddingHorizontal: 16,
     },
 
     btnContainer: {
       flex: 1,
-      height: 56,
+      height: 48,
     },
 
     fullWidthBtnContainer: {
       flex: 1,
-      height: 56,
+      height: 48,
     },
 
     btnGap: {
