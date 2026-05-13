@@ -1,4 +1,5 @@
 import React, { type Ref, useImperativeHandle, useState, useRef } from 'react';
+import { Alert } from 'react-native';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { SwitchToggleType } from '@/components';
 import { useBiometrics } from '@/hooks/biometrics';
@@ -41,24 +42,43 @@ function useToggleBiometricsEnabled() {
         return;
       }
 
-      // Existing flow (enabling or normal disabling)
+      // Non-auto-gen disable: system confirm popup
+      if (!nextEnabled) {
+        Alert.alert(
+          t('component.AuthenticationModals.biometrics.disable', {
+            bioType: computed.defaultTypeLabel,
+          }),
+          undefined,
+          [
+            { text: t('global.cancel'), style: 'cancel' },
+            {
+              text: t('global.confirm'),
+              onPress: async () => {
+                const changed = await toggleBiometrics(false, {});
+                if (changed) {
+                  await onToggleSuccess?.(false);
+                }
+              },
+            },
+          ],
+        );
+        return;
+      }
+
+      // Enabling biometrics: needs password verification
       AuthenticationModal.show({
         confirmText: t('global.confirm'),
         cancelText: t('global.cancel'),
-        title: nextEnabled
-          ? t('component.AuthenticationModals.biometrics.enable', {
-              bioType: computed.defaultTypeLabel,
-            })
-          : t('component.AuthenticationModals.biometrics.disable', {
-              bioType: computed.defaultTypeLabel,
-            }),
-        authType: nextEnabled ? ['password'] : ['none'],
+        title: t('component.AuthenticationModals.biometrics.enable', {
+          bioType: computed.defaultTypeLabel,
+        }),
+        authType: ['password'],
         async onFinished({ getValidatedPassword }) {
-          const changed = await toggleBiometrics(nextEnabled, {
+          const changed = await toggleBiometrics(true, {
             validatedPassword: getValidatedPassword(),
           });
           if (changed) {
-            await onToggleSuccess?.(nextEnabled);
+            await onToggleSuccess?.(true);
           }
         },
       });
