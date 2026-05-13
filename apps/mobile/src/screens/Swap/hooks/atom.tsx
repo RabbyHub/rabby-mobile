@@ -2,13 +2,18 @@ import {
   TokenItem,
   TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { atom, useAtom } from 'jotai';
+import { atom, useAtom, useSetAtom } from 'jotai';
 
+const quoteVisibleAtom = atom(false);
 const rabbyFeeVisibleAtom = atom({ visible: false } as {
   visible: boolean;
   dexFeeDesc?: string;
   dexName?: string;
 });
+
+export const useQuoteVisible = () => useAtom(quoteVisibleAtom);
+
+export const useSetQuoteVisible = () => useSetAtom(quoteVisibleAtom);
 
 export const useRabbyFeeVisible = () => useAtom(rabbyFeeVisibleAtom);
 
