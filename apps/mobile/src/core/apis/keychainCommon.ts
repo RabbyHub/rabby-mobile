@@ -20,6 +20,21 @@ const BROKEN_BIOMETRICS_ENTRY_MESSAGE =
 const CANCELSTR = i18n.t('native.authentication.auth_prompt_cancel');
 const isAndroid = Platform.OS === 'android';
 
+function traceAndroidKeychainPerf(
+  event: string,
+  data: Record<string, unknown> = {},
+) {
+  if (
+    !isAndroid ||
+    process.env.NODE_ENV === 'test' ||
+    process.env.JEST_WORKER_ID
+  ) {
+    return;
+  }
+
+  console.info('[RabbyUnlockPerf:keychain]', event, data);
+}
+
 export enum KEYCHAIN_AUTH_TYPES {
   APPLICATION_PASSWORD = 0,
   BIOMETRICS = 1,
@@ -77,6 +92,8 @@ export type KeychainCompatibleUserCredentials = {
   service?: string;
   username: string;
   password: string;
+  vaultKeyString?: string;
+  vaultDataKeyString?: string;
   storage?: string;
   [key: string]: unknown;
 };
@@ -223,6 +240,8 @@ const secureKeyChainInstanceRef = {
 
 export type DebugDecryptedKeychainPayload = {
   password: string;
+  vaultKeyString?: string;
+  vaultDataKeyString?: string;
 };
 
 type KeychainDebugStateBase = {
@@ -368,8 +387,14 @@ export class SecureKeyChainInstance {
     return secureKeyChainInstanceRef.current;
   }
 
-  async encryptPassword(password: string) {
-    return this.encryptor.encrypt(privates.get(this)?.salt || '', { password });
+  async encryptPassword(
+    password: string,
+    credentialsPatch: Partial<KeychainCompatibleUserCredentials> = {},
+  ) {
+    return this.encryptor.encrypt(privates.get(this)?.salt || '', {
+      ...credentialsPatch,
+      password,
+    });
   }
 
   async decryptPassword(encryptedPassword: string) {
@@ -687,20 +712,25 @@ export function createBusinessKeychainApi({
     return (
       isAndroid &&
       isAuthenticatedByBiometrics() &&
-      storage === LEGACY_RSA_STORAGE_TYPE
+      storage === LEGACY_RSA_STORAGE_TYPE &&
+      DEFAULT_ANDROID_KEYCHAIN_STORAGE_TYPE !== LEGACY_RSA_STORAGE_TYPE
     );
   }
 
   async function upgradeLegacyAndroidBiometricsStorage(
     plainPassword: string,
     storage?: string,
+    credentialsPatch: Partial<KeychainCompatibleUserCredentials> = {},
   ) {
     if (!shouldUpgradeLegacyAndroidBiometricsStorage(storage)) {
       return;
     }
 
     try {
-      await setGenericPassword(plainPassword, KEYCHAIN_AUTH_TYPES.BIOMETRICS);
+      await setGenericPassword(plainPassword, KEYCHAIN_AUTH_TYPES.BIOMETRICS, {
+        vaultKeyString: credentialsPatch.vaultKeyString,
+        vaultDataKeyString: credentialsPatch.vaultDataKeyString,
+      });
     } catch (error) {
       if (__DEV__) {
         console.warn(
@@ -757,7 +787,10 @@ export function createBusinessKeychainApi({
     throw lastError;
   }
 
-  async function silentlyUpgradeStoredPasswordPayload(plainPassword: string) {
+  async function silentlyUpgradeStoredPasswordPayload(
+    plainPassword: string,
+    credentialsPatch: Partial<KeychainCompatibleUserCredentials> = {},
+  ) {
     const authType = getAuthenticationType();
 
     if (authType === KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD) {
@@ -765,7 +798,10 @@ export function createBusinessKeychainApi({
     }
 
     try {
-      await setGenericPassword(plainPassword, authType);
+      await setGenericPassword(plainPassword, authType, {
+        vaultKeyString: credentialsPatch.vaultKeyString,
+        vaultDataKeyString: credentialsPatch.vaultDataKeyString,
+      });
       logger.info(
         '[keychain] rewrote stored credentials with the current rabbitCode after fallback decrypt',
         {
@@ -791,17 +827,42 @@ export function createBusinessKeychainApi({
     androidAuthPromptPolicy = DEFAULT_ANDROID_AUTH_PROMPT_POLICY,
   }: {
     purpose?: T;
-    onPlainPassword?: (password: string) => void | Promise<void>;
+    onPlainPassword?: (
+      password: string,
+      credentials: KeychainCompatibleUserCredentials,
+    ) => void | Promise<void>;
     androidAuthPromptPolicy?: AndroidAuthPromptPolicy;
   }): Promise<null | DefaultRet> {
     const instance = await waitInstance();
+    const startedAt = Date.now();
+    traceAndroidKeychainPerf('request_start', {
+      sourceLabel,
+      purpose,
+      androidAuthPromptPolicy,
+    });
 
     try {
       instance.isAuthenticating = true;
+      traceAndroidKeychainPerf('native_get_start', {
+        sourceLabel,
+        elapsedMs: Date.now() - startedAt,
+      });
       const keychainObject = (await keychainModule.getGenericPassword({
         ...DEFAULT_GET_OPTIONS,
         ...getAndroidAuthPromptPolicyOptions(androidAuthPromptPolicy),
       })) as DefaultRet;
+      traceAndroidKeychainPerf('native_get_end', {
+        sourceLabel,
+        elapsedMs: Date.now() - startedAt,
+        hasPassword:
+          !!keychainObject &&
+          'password' in keychainObject &&
+          !!keychainObject.password,
+        storage:
+          keychainObject && 'storage' in keychainObject
+            ? keychainObject.storage
+            : undefined,
+      });
 
       if (!keychainObject) {
         throw makeKeyChainError(
@@ -814,11 +875,20 @@ export function createBusinessKeychainApi({
         const encryptedPassword = keychainObject.password;
         delete keychainObject.password;
 
+        traceAndroidKeychainPerf('app_decrypt_start', {
+          sourceLabel,
+          elapsedMs: Date.now() - startedAt,
+        });
         const { decrypted, usedFallbackRabbitCode } =
           await decryptStoredPasswordWithRabbitCodeCandidates(
             instance,
             encryptedPassword,
           );
+        traceAndroidKeychainPerf('app_decrypt_end', {
+          sourceLabel,
+          elapsedMs: Date.now() - startedAt,
+          usedFallbackRabbitCode,
+        });
 
         switch (purpose) {
           case RequestGenericPurpose.VERIFY: {
@@ -828,14 +898,30 @@ export function createBusinessKeychainApi({
               );
             if (verifyResult.success) {
               if (usedFallbackRabbitCode) {
-                await silentlyUpgradeStoredPasswordPayload(decrypted.password);
+                await silentlyUpgradeStoredPasswordPayload(
+                  decrypted.password,
+                  decrypted,
+                );
               } else {
+                traceAndroidKeychainPerf('legacy_storage_upgrade_start', {
+                  sourceLabel,
+                  elapsedMs: Date.now() - startedAt,
+                  storage:
+                    typeof keychainObject.storage === 'string'
+                      ? keychainObject.storage
+                      : undefined,
+                });
                 await upgradeLegacyAndroidBiometricsStorage(
                   decrypted.password,
                   typeof keychainObject.storage === 'string'
                     ? keychainObject.storage
                     : undefined,
+                  decrypted,
                 );
+                traceAndroidKeychainPerf('legacy_storage_upgrade_end', {
+                  sourceLabel,
+                  elapsedMs: Date.now() - startedAt,
+                });
               }
             }
 
@@ -843,19 +929,47 @@ export function createBusinessKeychainApi({
             return { ...keychainObject, actionSuccess: verifyResult.success };
           }
           case RequestGenericPurpose.DECRYPT_PWD: {
-            await onPlainPassword?.(decrypted.password);
+            traceAndroidKeychainPerf('on_plain_password_start', {
+              sourceLabel,
+              elapsedMs: Date.now() - startedAt,
+            });
+            await onPlainPassword?.(decrypted.password, decrypted);
+            traceAndroidKeychainPerf('on_plain_password_end', {
+              sourceLabel,
+              elapsedMs: Date.now() - startedAt,
+            });
             apisLock.updateUnlockTime();
             if (usedFallbackRabbitCode) {
-              await silentlyUpgradeStoredPasswordPayload(decrypted.password);
+              await silentlyUpgradeStoredPasswordPayload(
+                decrypted.password,
+                decrypted,
+              );
             } else {
+              traceAndroidKeychainPerf('legacy_storage_upgrade_start', {
+                sourceLabel,
+                elapsedMs: Date.now() - startedAt,
+                storage:
+                  typeof keychainObject.storage === 'string'
+                    ? keychainObject.storage
+                    : undefined,
+              });
               await upgradeLegacyAndroidBiometricsStorage(
                 decrypted.password,
                 typeof keychainObject.storage === 'string'
                   ? keychainObject.storage
                   : undefined,
+                decrypted,
               );
+              traceAndroidKeychainPerf('legacy_storage_upgrade_end', {
+                sourceLabel,
+                elapsedMs: Date.now() - startedAt,
+              });
             }
             onRequestReturn(instance);
+            traceAndroidKeychainPerf('request_success', {
+              sourceLabel,
+              elapsedMs: Date.now() - startedAt,
+            });
             return { ...keychainObject, actionSuccess: true };
           }
           default: {
@@ -869,6 +983,11 @@ export function createBusinessKeychainApi({
       return keychainObject;
     } catch (error) {
       instance.isAuthenticating = false;
+      traceAndroidKeychainPerf('request_error', {
+        sourceLabel,
+        elapsedMs: Date.now() - startedAt,
+        error: getErrorMessage(error),
+      });
       throw await normalizeRequestGenericPasswordError(error);
     }
   }
@@ -959,6 +1078,8 @@ export function createBusinessKeychainApi({
     type: KEYCHAIN_AUTH_TYPES = KEYCHAIN_AUTH_TYPES.BIOMETRICS,
     options?: {
       storage?: KeychainStorageType;
+      vaultKeyString?: string;
+      vaultDataKeyString?: string;
     },
   ) {
     const authOptions: Partial<KeychainCompatibleOptions> = {
@@ -981,7 +1102,10 @@ export function createBusinessKeychainApi({
     }
 
     const instance = await waitInstance();
-    const encryptedPassword = await instance.encryptPassword(password);
+    const encryptedPassword = await instance.encryptPassword(password, {
+      vaultKeyString: options?.vaultKeyString,
+      vaultDataKeyString: options?.vaultDataKeyString,
+    });
     await keychainModule.setGenericPassword(
       KEYCHAIN_GENERIC_USER,
       encryptedPassword,
@@ -993,6 +1117,44 @@ export function createBusinessKeychainApi({
     );
 
     setAuthenticationType(type);
+  }
+
+  async function cacheTrustedVaultKeyString(
+    password: string,
+    vaultKeyString: string,
+    options?: {
+      vaultDataKeyString?: string;
+    },
+  ) {
+    const authType = getAuthenticationType();
+
+    if (authType === KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD) {
+      return;
+    }
+
+    await setGenericPassword(password, authType, {
+      vaultKeyString,
+      vaultDataKeyString: options?.vaultDataKeyString,
+    });
+  }
+
+  async function cacheTrustedVaultDataKeyString(
+    password: string,
+    vaultDataKeyString: string,
+    options?: {
+      vaultKeyString?: string;
+    },
+  ) {
+    const authType = getAuthenticationType();
+
+    if (authType === KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD) {
+      return;
+    }
+
+    await setGenericPassword(password, authType, {
+      vaultKeyString: options?.vaultKeyString,
+      vaultDataKeyString,
+    });
   }
 
   function getSupportedBiometryType() {
@@ -1034,6 +1196,8 @@ export function createBusinessKeychainApi({
     debugWriteMockLegacyBiometricsEntry,
     debugDecryptStoredPasswordPayload,
     setGenericPassword,
+    cacheTrustedVaultKeyString,
+    cacheTrustedVaultDataKeyString,
     resetGenericPassword,
     clearApplicationPassword,
   };

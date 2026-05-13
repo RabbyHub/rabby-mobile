@@ -59,6 +59,7 @@ import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { startUnlockScreenBootstrapWarmups } from '@/setup-app-before-render';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
+import { logger } from '@/utils/logger';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -95,9 +96,11 @@ const LAYOUTS = {
 };
 
 const isIOS = Platform.OS === 'ios';
+const isAndroid = Platform.OS === 'android';
 const BiometricsIconSize = 76;
 const UNLOCK_SCREEN_WARMUP_DELAY_MS = 250;
 const POST_UNLOCK_WARMUP_DELAY_MS = 800;
+const POST_UNLOCK_UI_READY_DELAY_MS = 350;
 
 const unlockWarmupsStateRef = {
   promise: null as Promise<void> | null,
@@ -152,6 +155,24 @@ function nextFrame() {
   });
 }
 
+function notifyUnlockUIReadyAfterHomePaint() {
+  if (!isAndroid) {
+    apisLock.notifyUserManuallyUnlockUIReady();
+    return;
+  }
+
+  traceAndroidUnlockPerf('unlock_ui_ready_notify_deferred_start', {
+    delayMs: POST_UNLOCK_UI_READY_DELAY_MS,
+  });
+
+  InteractionManager.runAfterInteractions(() => {
+    setTimeout(() => {
+      traceAndroidUnlockPerf('unlock_ui_ready_notify_deferred_fire');
+      apisLock.notifyUserManuallyUnlockUIReady();
+    }, POST_UNLOCK_UI_READY_DELAY_MS);
+  });
+}
+
 const prevFailedRef = { hide: null as (() => void) | null };
 const toastFailed = toastWithIcon(RcIconInfoForToast);
 const toastBiometricsFailed = (message?: string) => {
@@ -162,6 +183,18 @@ const toastUnlocking = () =>
   toastIndicator(i18next.t('page.unlock.unlocking'), {
     isTop: true,
   });
+
+function traceAndroidUnlockPerf(
+  event: string,
+  data: Record<string, unknown> = {},
+) {
+  if (!isAndroid) {
+    return;
+  }
+
+  logger.info(`[RabbyUnlockPerf:unlock] ${event}`, data);
+  console.info('[RabbyUnlockPerf:unlock]', event, data);
+}
 
 export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
   const { isFaceID = isIOS, size = BiometricsIconSize } = props;
@@ -191,6 +224,9 @@ function useUnlockForm(
       return;
     }
 
+    storeApisUnlock.startLeaveFromUnlock();
+    traceAndroidUnlockPerf('unlock_ui_leave_start');
+
     await new Promise<void>((resolve, reject) => {
       requestAnimationFrame(() => {
         Promise.resolve()
@@ -204,6 +240,8 @@ function useUnlockForm(
 
     await nextFrame();
     storeApisUnlock.afterLeaveFromUnlock();
+    traceAndroidUnlockPerf('unlock_ui_leave_end');
+    notifyUnlockUIReadyAfterHomePaint();
     onUnlocked?.();
   }, [onUnlocked]);
 
@@ -329,24 +367,118 @@ export default function UnlockScreen() {
   const { onTouchInputAway } = useInputBlurOnTouchaway(passwordInputRef);
 
   const unlockWithBiometrics = useCallback(async () => {
+    const startedAt = Date.now();
+    const hidePostAuthToastRef = {
+      current: null as null | (() => void),
+    };
     try {
+      traceAndroidUnlockPerf('request_biometrics_start', {
+        isFaceID,
+      });
       await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.DECRYPT_PWD,
-        onPlainPassword: async password => {
-          measureTime.start('UnlockWithBiometrics');
-          const result = await storeApisUnlock.unlockApp(password);
-          const timeResult = measureTime.end('UnlockWithBiometrics');
-          reportUnlockTime(timeResult.diff, 'biometrics');
-
-          if (result.error) {
-            throw new Error(result.error);
+        onPlainPassword: async (password, credentials) => {
+          traceAndroidUnlockPerf('on_plain_password', {
+            elapsedMs: Date.now() - startedAt,
+            hasTrustedVaultKeyString: !!credentials?.vaultKeyString,
+          });
+          if (!isFaceID) {
+            hidePostAuthToastRef.current = toastUnlocking();
           }
+          measureTime.start('UnlockWithBiometrics');
+          try {
+            traceAndroidUnlockPerf('unlock_app_start', {
+              elapsedMs: Date.now() - startedAt,
+            });
+            const result = await storeApisUnlock.unlockApp(password, {
+              trustedPassword: isAndroid,
+              trustedVaultKeyString:
+                isAndroid && typeof credentials?.vaultKeyString === 'string'
+                  ? credentials.vaultKeyString
+                  : undefined,
+              trustedVaultDataKeyString:
+                isAndroid && typeof credentials?.vaultDataKeyString === 'string'
+                  ? credentials.vaultDataKeyString
+                  : undefined,
+              deferMemStoreKeyringsUpdate: isAndroid,
+              onTrustedVaultKeyString: isAndroid
+                ? vaultKeyString => {
+                    if (credentials) {
+                      credentials.vaultKeyString = vaultKeyString;
+                    }
+                    traceAndroidUnlockPerf('cache_trusted_vault_key_string', {
+                      elapsedMs: Date.now() - startedAt,
+                    });
+                    return apisKeychain.cacheTrustedVaultKeyString(
+                      password,
+                      vaultKeyString,
+                      {
+                        vaultDataKeyString:
+                          typeof credentials?.vaultDataKeyString === 'string'
+                            ? credentials.vaultDataKeyString
+                            : undefined,
+                      },
+                    );
+                  }
+                : undefined,
+              onTrustedVaultDataKeyString: isAndroid
+                ? vaultDataKeyString => {
+                    if (credentials) {
+                      credentials.vaultDataKeyString = vaultDataKeyString;
+                    }
+                    traceAndroidUnlockPerf(
+                      'cache_trusted_vault_data_key_string',
+                      {
+                        elapsedMs: Date.now() - startedAt,
+                      },
+                    );
+                    return apisKeychain.cacheTrustedVaultDataKeyString(
+                      password,
+                      vaultDataKeyString,
+                      {
+                        vaultKeyString:
+                          typeof credentials?.vaultKeyString === 'string'
+                            ? credentials.vaultKeyString
+                            : undefined,
+                      },
+                    );
+                  }
+                : undefined,
+            });
+            const timeResult = measureTime.end('UnlockWithBiometrics');
+            reportUnlockTime(timeResult.diff, 'biometrics');
 
-          await checkUnlocked();
+            traceAndroidUnlockPerf('unlock_app_end', {
+              elapsedMs: Date.now() - startedAt,
+              unlockMs: timeResult.diff,
+              hasError: !!result.error,
+            });
+
+            if (result.error) {
+              throw new Error(result.error);
+            }
+
+            await checkUnlocked();
+            traceAndroidUnlockPerf('check_unlocked_end', {
+              elapsedMs: Date.now() - startedAt,
+            });
+          } finally {
+            hidePostAuthToastRef.current?.();
+            hidePostAuthToastRef.current = null;
+          }
         },
+      });
+      traceAndroidUnlockPerf('request_biometrics_end', {
+        elapsedMs: Date.now() - startedAt,
       });
       updateUnlockTime();
     } catch (error: any) {
+      hidePostAuthToastRef.current?.();
+      traceAndroidUnlockPerf('request_biometrics_error', {
+        elapsedMs: Date.now() - startedAt,
+        code: error?.code,
+        message: error?.message,
+      });
       if (__DEV__) {
         console.error(error);
       }
@@ -390,7 +522,7 @@ export default function UnlockScreen() {
         }
       }
     }
-  }, [checkUnlocked, t]);
+  }, [checkUnlocked, isFaceID, t]);
 
   const lockBiometricRef = React.useRef(false);
   const processUnlockWithBiometrics = useCallback(async () => {
@@ -398,7 +530,7 @@ export default function UnlockScreen() {
       return;
     }
     lockBiometricRef.current = true;
-    if (!isFaceID) {
+    if (!isFaceID && !isAndroid) {
       const hideToast = toastUnlocking();
       await unlockWithBiometrics().finally(() => {
         lockBiometricRef.current = false;

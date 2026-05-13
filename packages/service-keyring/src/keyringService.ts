@@ -39,6 +39,7 @@ const UNENCRYPTED_IGNORE_KEYRING = [
 type KeyringState = {
   booted?: string;
   vault?: string;
+  shardedVault?: ShardedKeyringVaultState;
   unencryptedKeyringData?: KeyringSerializedData[];
   hasEncryptedKeyringData: boolean;
 };
@@ -73,6 +74,148 @@ export type KeyringEventAccount = {
   address: string;
   type: KeyringTypeName;
   brandName: string;
+};
+
+export type SubmitPasswordOptions = {
+  /**
+   * The password came from a trusted OS-protected source, e.g. Android
+   * biometric keychain. In this case vault decryption is enough validation.
+   */
+  trustedPassword?: boolean;
+  /**
+   * OS-protected exported encryptor key for the current vault.
+   * When valid, this lets biometric unlock skip PBKDF2 derivation.
+   */
+  trustedVaultKeyString?: string;
+  /**
+   * OS-protected exported data key for the sharded vault format.
+   * This lets biometric unlock skip password KDF and avoid the legacy whole-vault path.
+   */
+  trustedVaultDataKeyString?: string;
+  /**
+   * Called after password-based vault decrypt so callers can persist the
+   * exported key for the next biometric unlock.
+   */
+  onTrustedVaultKeyString?: (vaultKeyString: string) => void | Promise<void>;
+  onTrustedVaultDataKeyString?: (vaultDataKeyString: string) => void | Promise<void>;
+  /**
+   * Defer the display/memStore keyring refresh until the unlock UI has left.
+   */
+  deferMemStoreKeyringsUpdate?: boolean;
+};
+
+type UnlockKeyringsOptions = {
+  trustedVaultKeyString?: string;
+  trustedVaultDataKeyString?: string;
+  onTrustedVaultKeyString?: (vaultKeyString: string) => void | Promise<void>;
+  onTrustedVaultDataKeyString?: (vaultDataKeyString: string) => void | Promise<void>;
+  deferMemStoreKeyringsUpdate?: boolean;
+  traceStartedAt?: number;
+};
+
+export type ShardedKeyringVaultRecord = {
+  id: string;
+  keyringType: KeyringTypeName;
+  index: number;
+  encryptedData: string;
+  cipherBytes: number;
+  plainBytesHint: number;
+};
+
+export type ShardedKeyringVaultState = {
+  version: 1;
+  createdAt: number;
+  updatedAt: number;
+  sourceVaultHash: string;
+  sourceVaultBytes: number;
+  wrappedDataKey: string;
+  records: ShardedKeyringVaultRecord[];
+  manifest: {
+    recordCount: number;
+    keyringTypes: Record<string, number>;
+    encryptedBytes: number;
+    plainBytesHint: number;
+  };
+};
+
+export type KeyringVaultStorageDebugState = {
+  legacy: {
+    hasVault: boolean;
+    vaultBytes: number;
+    vaultHash: string | null;
+    hasBooted: boolean;
+    hasUnencryptedKeyringData: boolean;
+    unencryptedKeyringCount: number;
+    hasEncryptedKeyringData: boolean;
+  };
+  sharded: {
+    hasVault: boolean;
+    freshForLegacyVault: boolean;
+    version: number | null;
+    sourceVaultHash: string | null;
+    sourceVaultBytes: number;
+    wrappedDataKeyBytes: number;
+    recordCount: number;
+    encryptedBytes: number;
+    plainBytesHint: number;
+    keyringTypes: Record<string, number>;
+    records: Array<{
+      id: string;
+      keyringType: KeyringTypeName;
+      index: number;
+      cipherBytes: number;
+      plainBytesHint: number;
+    }>;
+  };
+};
+
+export type KeyringVaultTimingResult = {
+  label: string;
+  success: boolean;
+  durationMs: number;
+  error?: string;
+  keyringCount?: number;
+  recordCount?: number;
+  source?: 'legacy' | 'sharded';
+};
+
+function traceUnlockPerf(event: string, data: Record<string, unknown> = {}) {
+  const navigatorProduct = (
+    globalThis as { navigator?: { product?: string } }
+  ).navigator?.product;
+
+  if (navigatorProduct !== 'ReactNative') {
+    return;
+  }
+
+  console.info('[RabbyUnlockPerf:keyringService]', event, data);
+}
+
+function getUtf8ByteLength(value: string) {
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.byteLength(value, 'utf8');
+  }
+
+  return unescape(encodeURIComponent(value)).length;
+}
+
+function hashString(value: string) {
+  let hash = 2166136261;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return `fnv1a32:${(hash >>> 0).toString(16).padStart(8, '0')}`;
+}
+
+function getErrorText(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function nowMs() {
+  return Date.now();
 }
 
 export class KeyringService extends RNEventEmitter {
@@ -140,6 +283,7 @@ export class KeyringService extends RNEventEmitter {
     this.store = new ObservableStore({
       booted: initState.booted || undefined,
       vault: initState.vault || undefined,
+      shardedVault: initState.shardedVault || undefined,
       unencryptedKeyringData: initState.unencryptedKeyringData || undefined,
       hasEncryptedKeyringData: initState.hasEncryptedKeyringData || false,
     });
@@ -392,28 +536,90 @@ export class KeyringService extends RNEventEmitter {
    * @param password - The keyring controller password.
    * @returns A Promise that resolves to the state.
    */
-  async submitPassword(password: string): Promise<MemStoreState> {
+  async submitPassword(
+    password: string,
+    options: SubmitPasswordOptions = {},
+  ): Promise<MemStoreState> {
     if (this._isSubmittingPassword) {
       return this.memStore.getState();
     }
 
+    const startedAt = Date.now();
+    const encryptedVault = this.store.getState().vault;
+    const hasVault = !!encryptedVault;
+    const trustedPassword = !!options.trustedPassword;
+    const shouldVerifyBeforeUnlock = !trustedPassword || !hasVault;
+
     try {
+      traceUnlockPerf('submit_password_start', {
+        trustedPassword,
+        hasVault,
+      });
       this._isSubmittingPassword = true;
-      await this.verifyPassword(password);
+
+      if (shouldVerifyBeforeUnlock) {
+        traceUnlockPerf('verify_password_start', {
+          elapsedMs: Date.now() - startedAt,
+        });
+        await this.verifyPassword(password);
+        traceUnlockPerf('verify_password_end', {
+          elapsedMs: Date.now() - startedAt,
+        });
+      } else {
+        traceUnlockPerf('verify_password_skipped', {
+          elapsedMs: Date.now() - startedAt,
+        });
+      }
+
       this.#password = password;
       try {
-        this.keyrings = await this.unlockKeyrings(password);
-      } catch {
-        //
+        traceUnlockPerf('unlock_keyrings_start', {
+          elapsedMs: Date.now() - startedAt,
+        });
+        this.keyrings = await this.unlockKeyrings(password, {
+          trustedVaultKeyString: options.trustedVaultKeyString,
+          trustedVaultDataKeyString: options.trustedVaultDataKeyString,
+          onTrustedVaultKeyString: options.onTrustedVaultKeyString,
+          onTrustedVaultDataKeyString: options.onTrustedVaultDataKeyString,
+          deferMemStoreKeyringsUpdate: options.deferMemStoreKeyringsUpdate,
+          traceStartedAt: startedAt,
+        });
+        traceUnlockPerf('unlock_keyrings_end', {
+          elapsedMs: Date.now() - startedAt,
+          keyringCount: this.keyrings.length,
+        });
+      } catch (error) {
+        traceUnlockPerf('unlock_keyrings_error', {
+          elapsedMs: Date.now() - startedAt,
+          trustedPassword,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        if (trustedPassword && hasVault) {
+          throw error;
+        }
       }
       this._setUnlocked({ scene: 'unlock' });
+      traceUnlockPerf('set_unlocked', {
+        elapsedMs: Date.now() - startedAt,
+      });
 
       // force store unencrypted keyring data if not exist
       if (!this.store.getState().unencryptedKeyringData) {
+        traceUnlockPerf('persist_missing_unencrypted_start', {
+          elapsedMs: Date.now() - startedAt,
+        });
         await this.persistAllKeyrings();
+        traceUnlockPerf('persist_missing_unencrypted_end', {
+          elapsedMs: Date.now() - startedAt,
+        });
       }
 
-      return this.fullUpdate();
+      const result = this.fullUpdate();
+      traceUnlockPerf('submit_password_end', {
+        elapsedMs: Date.now() - startedAt,
+      });
+
+      return result;
     } finally {
       this._isSubmittingPassword = false;
     }
@@ -759,6 +965,216 @@ export class KeyringService extends RNEventEmitter {
       });
   }
 
+  private canUseShardedVault() {
+    return (
+      typeof this.encryptor.generateExportedKeyString === 'function' &&
+      typeof this.encryptor.encryptWithExportedKey === 'function'
+    );
+  }
+
+  private getLegacyVaultHash(encryptedVault?: string) {
+    return encryptedVault ? hashString(encryptedVault) : null;
+  }
+
+  private isShardedVaultFreshForLegacyVault(
+    shardedVault: ShardedKeyringVaultState | undefined,
+    encryptedVault: string | undefined,
+  ) {
+    if (!shardedVault || !encryptedVault) {
+      return false;
+    }
+
+    return shardedVault.sourceVaultHash === this.getLegacyVaultHash(encryptedVault);
+  }
+
+  private async buildShardedVaultFromSerializedKeyrings(
+    password: string,
+    serializedKeyrings: KeyringSerializedData[],
+    encryptedVault: string,
+  ): Promise<{
+    shardedVault: ShardedKeyringVaultState;
+    vaultDataKeyString: string;
+  } | null> {
+    if (!this.canUseShardedVault()) {
+      return null;
+    }
+
+    const generateExportedKeyString = this.encryptor.generateExportedKeyString!;
+    const encryptWithExportedKey = this.encryptor.encryptWithExportedKey!;
+    const createdAt = Date.now();
+    const vaultDataKeyString = await generateExportedKeyString();
+    const records = await Promise.all(
+      serializedKeyrings.map(async (serialized, index) => {
+        const plainText = JSON.stringify(serialized);
+        const encryptedData = await encryptWithExportedKey(
+          serialized,
+          vaultDataKeyString,
+        );
+        return {
+          id: `${createdAt}:${index}:${serialized.type}`,
+          keyringType: serialized.type,
+          index,
+          encryptedData,
+          cipherBytes: getUtf8ByteLength(encryptedData),
+          plainBytesHint: getUtf8ByteLength(plainText),
+        } as ShardedKeyringVaultRecord;
+      }),
+    );
+    const keyringTypes = records.reduce<Record<string, number>>(
+      (result, record) => {
+        result[record.keyringType] = (result[record.keyringType] || 0) + 1;
+        return result;
+      },
+      {},
+    );
+    const wrappedDataKey = await this.encryptor.encrypt(
+      password,
+      vaultDataKeyString,
+    );
+    const shardedVault: ShardedKeyringVaultState = {
+      version: 1,
+      createdAt,
+      updatedAt: Date.now(),
+      sourceVaultHash: hashString(encryptedVault),
+      sourceVaultBytes: getUtf8ByteLength(encryptedVault),
+      wrappedDataKey,
+      records,
+      manifest: {
+        recordCount: records.length,
+        keyringTypes,
+        encryptedBytes: records.reduce(
+          (sum, record) => sum + record.cipherBytes,
+          0,
+        ),
+        plainBytesHint: records.reduce(
+          (sum, record) => sum + record.plainBytesHint,
+          0,
+        ),
+      },
+    };
+
+    return {
+      shardedVault,
+      vaultDataKeyString,
+    };
+  }
+
+  private async decryptShardedVaultRecords(
+    shardedVault: ShardedKeyringVaultState,
+    vaultDataKeyString: string,
+    options: {
+      limit?: number;
+      restore?: boolean;
+    } = {},
+  ) {
+    const limit = options.limit ?? shardedVault.records.length;
+    const targetRecords = shardedVault.records.slice(0, limit);
+    const serializedKeyrings = await Promise.all(
+      targetRecords.map(record =>
+        this.encryptor.decryptWithExportedKey(
+          record.encryptedData,
+          vaultDataKeyString,
+        ) as Promise<KeyringSerializedData>,
+      ),
+    );
+
+    if (options.restore !== false) {
+      await this._restoreKeyringsFromVault(serializedKeyrings);
+    }
+
+    return serializedKeyrings;
+  }
+
+  private async unwrapShardedVaultDataKey(
+    password: string,
+    shardedVault: ShardedKeyringVaultState,
+  ) {
+    return this.encryptor.decrypt(
+      password,
+      shardedVault.wrappedDataKey,
+    ) as Promise<string>;
+  }
+
+  private async persistShardedVaultSnapshot(
+    password: string,
+    serializedKeyrings: KeyringSerializedData[],
+    encryptedVault: string,
+  ) {
+    const result = await this.buildShardedVaultFromSerializedKeyrings(
+      password,
+      serializedKeyrings,
+      encryptedVault,
+    );
+
+    if (!result) {
+      return null;
+    }
+
+    this.store.updateState({
+      shardedVault: result.shardedVault,
+    });
+
+    return result;
+  }
+
+  private scheduleShardedVaultMigrationAfterLegacyUnlock(options: {
+    password: string;
+    vault: unknown;
+    encryptedVault: string;
+    onTrustedVaultDataKeyString?: (vaultDataKeyString: string) => void | Promise<void>;
+    elapsedMs?: () => number | undefined;
+  }) {
+    if (!Array.isArray(options.vault)) {
+      return;
+    }
+
+    const shardedVault = this.store.getState().shardedVault;
+    if (this.isShardedVaultFreshForLegacyVault(shardedVault, options.encryptedVault)) {
+      if (shardedVault && options.onTrustedVaultDataKeyString) {
+        Promise.resolve()
+          .then(async () => {
+            const vaultDataKeyString = await this.unwrapShardedVaultDataKey(
+              options.password,
+              shardedVault,
+            );
+            await options.onTrustedVaultDataKeyString?.(vaultDataKeyString);
+          })
+          .catch(error => {
+            traceUnlockPerf('persist_cached_existing_vault_data_key_error', {
+              elapsedMs: options.elapsedMs?.(),
+              error: getErrorText(error),
+            });
+          });
+      }
+      return;
+    }
+
+    Promise.resolve()
+      .then(async () => {
+        traceUnlockPerf('sharded_vault_shadow_write_start', {
+          elapsedMs: options.elapsedMs?.(),
+        });
+        const result = await this.persistShardedVaultSnapshot(
+          options.password,
+          options.vault as KeyringSerializedData[],
+          options.encryptedVault,
+        );
+        if (result?.vaultDataKeyString) {
+          await options.onTrustedVaultDataKeyString?.(result.vaultDataKeyString);
+        }
+        traceUnlockPerf('sharded_vault_shadow_write_end', {
+          elapsedMs: options.elapsedMs?.(),
+          recordCount: result?.shardedVault.manifest.recordCount,
+        });
+      })
+      .catch(error => {
+        traceUnlockPerf('sharded_vault_shadow_write_error', {
+          elapsedMs: options.elapsedMs?.(),
+          error: getErrorText(error),
+        });
+      });
+  }
+
   /**
    * Persist All Keyrings
    *
@@ -810,9 +1226,22 @@ export class KeyringService extends RNEventEmitter {
       this.#password as string,
       serializedKeyrings as unknown as Buffer,
     );
+    const shardedVaultResult = await this.buildShardedVaultFromSerializedKeyrings(
+      this.#password as string,
+      serializedKeyrings,
+      encryptedString,
+    ).catch(error => {
+      traceUnlockPerf('persist_sharded_vault_error', {
+        error: getErrorText(error),
+      });
+      return null;
+    });
 
     this.store.updateState({
       vault: encryptedString,
+      ...(shardedVaultResult
+        ? { shardedVault: shardedVaultResult.shardedVault }
+        : null),
       unencryptedKeyringData,
       hasEncryptedKeyringData,
     });
@@ -827,7 +1256,10 @@ export class KeyringService extends RNEventEmitter {
    * initializing the persisted keyrings to RAM.
    * @param password
    */
-  async unlockKeyrings(password: string): Promise<any[]> {
+  async unlockKeyrings(
+    password: string,
+    options: UnlockKeyringsOptions = {},
+  ): Promise<any[]> {
     const encryptedVault = this.store.getState().vault;
     if (!encryptedVault) {
       // throw new Error(i18n.t('background.error.canNotUnlock'));
@@ -835,13 +1267,336 @@ export class KeyringService extends RNEventEmitter {
     }
 
     await this.clearKeyrings();
-    const vault = await this.encryptor.decrypt(password, encryptedVault);
-    // TODO: FIXME
-    await Promise.all(
-      Array.from(vault as any).map(this._restoreKeyring.bind(this) as any),
-    );
-    await this._updateMemStoreKeyrings();
+    const elapsedMs = () =>
+      options.traceStartedAt ? Date.now() - options.traceStartedAt : undefined;
+    let vault: unknown = null;
+    const shardedVault = this.store.getState().shardedVault;
+
+    if (
+      options.trustedVaultDataKeyString &&
+      this.isShardedVaultFreshForLegacyVault(shardedVault, encryptedVault)
+    ) {
+      try {
+        traceUnlockPerf('decrypt_sharded_vault_with_cached_key_start', {
+          elapsedMs: elapsedMs(),
+        });
+        await this.decryptShardedVaultRecords(
+          shardedVault!,
+          options.trustedVaultDataKeyString,
+          {
+            restore: true,
+          },
+        );
+        traceUnlockPerf('decrypt_sharded_vault_end', {
+          elapsedMs: elapsedMs(),
+          recordCount: shardedVault!.manifest.recordCount,
+          usedCachedDataKey: !!options.trustedVaultDataKeyString,
+        });
+        if (options.deferMemStoreKeyringsUpdate) {
+          traceUnlockPerf('memstore_keyrings_update_deferred', {
+            elapsedMs: elapsedMs(),
+          });
+        } else {
+          await this._updateMemStoreKeyrings();
+        }
+        return this.keyrings;
+      } catch (error) {
+        await this.clearKeyrings();
+        traceUnlockPerf('decrypt_sharded_vault_error', {
+          elapsedMs: elapsedMs(),
+          error: getErrorText(error),
+        });
+      }
+    }
+
+    if (options.trustedVaultKeyString) {
+      try {
+        traceUnlockPerf('decrypt_vault_with_cached_key_start', {
+          elapsedMs: elapsedMs(),
+        });
+        vault = await this.encryptor.decryptWithExportedKey(
+          encryptedVault,
+          options.trustedVaultKeyString,
+        );
+        traceUnlockPerf('decrypt_vault_with_cached_key_end', {
+          elapsedMs: elapsedMs(),
+        });
+      } catch (error) {
+        traceUnlockPerf('decrypt_vault_with_cached_key_error', {
+          elapsedMs: elapsedMs(),
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    if (!vault) {
+      traceUnlockPerf('decrypt_vault_with_password_start', {
+        elapsedMs: elapsedMs(),
+      });
+      const decryptDetail = await this.encryptor.decryptWithDetail(
+        password,
+        encryptedVault,
+      );
+      vault = decryptDetail.vault;
+      traceUnlockPerf('decrypt_vault_with_password_end', {
+        elapsedMs: elapsedMs(),
+        hasExportedKeyString: !!decryptDetail.exportedKeyString,
+      });
+
+      const exportedKeyString = decryptDetail.exportedKeyString;
+      if (exportedKeyString) {
+        Promise.resolve()
+          .then(() => options.onTrustedVaultKeyString?.(exportedKeyString))
+          .catch(error => {
+            traceUnlockPerf('persist_cached_vault_key_error', {
+              elapsedMs: elapsedMs(),
+              error: error instanceof Error ? error.message : String(error),
+            });
+          });
+      }
+    }
+
+    this.scheduleShardedVaultMigrationAfterLegacyUnlock({
+      password,
+      vault,
+      encryptedVault,
+      onTrustedVaultDataKeyString: options.onTrustedVaultDataKeyString,
+      elapsedMs,
+    });
+
+    await this._restoreKeyringsFromVault(vault);
+    if (options.deferMemStoreKeyringsUpdate) {
+      traceUnlockPerf('memstore_keyrings_update_deferred', {
+        elapsedMs: elapsedMs(),
+      });
+    } else {
+      await this._updateMemStoreKeyrings();
+    }
     return this.keyrings;
+  }
+
+  async refreshMemStoreKeyrings(): Promise<MemStoreState> {
+    await this._updateMemStoreKeyrings();
+    return this.fullUpdate();
+  }
+
+  getVaultStorageDebugState(): KeyringVaultStorageDebugState {
+    const state = this.store.getState();
+    const legacyVault = state.vault;
+    const shardedVault = state.shardedVault;
+
+    return {
+      legacy: {
+        hasVault: !!legacyVault,
+        vaultBytes: legacyVault ? getUtf8ByteLength(legacyVault) : 0,
+        vaultHash: legacyVault ? hashString(legacyVault) : null,
+        hasBooted: !!state.booted,
+        hasUnencryptedKeyringData: !!state.unencryptedKeyringData,
+        unencryptedKeyringCount: state.unencryptedKeyringData?.length || 0,
+        hasEncryptedKeyringData: !!state.hasEncryptedKeyringData,
+      },
+      sharded: {
+        hasVault: !!shardedVault,
+        freshForLegacyVault: this.isShardedVaultFreshForLegacyVault(
+          shardedVault,
+          legacyVault,
+        ),
+        version: shardedVault?.version || null,
+        sourceVaultHash: shardedVault?.sourceVaultHash || null,
+        sourceVaultBytes: shardedVault?.sourceVaultBytes || 0,
+        wrappedDataKeyBytes: shardedVault
+          ? getUtf8ByteLength(shardedVault.wrappedDataKey)
+          : 0,
+        recordCount: shardedVault?.manifest.recordCount || 0,
+        encryptedBytes: shardedVault?.manifest.encryptedBytes || 0,
+        plainBytesHint: shardedVault?.manifest.plainBytesHint || 0,
+        keyringTypes: shardedVault?.manifest.keyringTypes || {},
+        records:
+          shardedVault?.records.map(record => ({
+            id: record.id,
+            keyringType: record.keyringType,
+            index: record.index,
+            cipherBytes: record.cipherBytes,
+            plainBytesHint: record.plainBytesHint,
+          })) || [],
+      },
+    };
+  }
+
+  async debugMigrateShardedVault(password: string) {
+    const encryptedVault = this.store.getState().vault;
+    if (!encryptedVault) {
+      throw new Error('Cannot migrate without a legacy vault');
+    }
+
+    const startedAt = nowMs();
+    const decryptDetail = await this.encryptor.decryptWithDetail(
+      password,
+      encryptedVault,
+    );
+    if (!Array.isArray(decryptDetail.vault)) {
+      throw new Error('Legacy vault is not a keyring array');
+    }
+
+    const result = await this.persistShardedVaultSnapshot(
+      password,
+      decryptDetail.vault as KeyringSerializedData[],
+      encryptedVault,
+    );
+    if (!result) {
+      throw new Error('Current encryptor does not support sharded vaults');
+    }
+
+    return {
+      durationMs: nowMs() - startedAt,
+      recordCount: result.shardedVault.manifest.recordCount,
+      vaultDataKeyString: result.vaultDataKeyString,
+      storage: this.getVaultStorageDebugState(),
+    };
+  }
+
+  private async measureRestorePath(
+    label: string,
+    source: KeyringVaultTimingResult['source'],
+    fn: () => Promise<{ vault: KeyringSerializedData[]; recordCount?: number }>,
+  ): Promise<KeyringVaultTimingResult> {
+    const previousKeyrings = this.keyrings;
+    const startedAt = nowMs();
+
+    try {
+      this.keyrings = [];
+      const result = await fn();
+      await this._restoreKeyringsFromVault(result.vault);
+      return {
+        label,
+        source,
+        success: true,
+        durationMs: nowMs() - startedAt,
+        keyringCount: this.keyrings.length,
+        recordCount: result.recordCount ?? result.vault.length,
+      };
+    } catch (error) {
+      return {
+        label,
+        source,
+        success: false,
+        durationMs: nowMs() - startedAt,
+        error: getErrorText(error),
+      };
+    } finally {
+      this.keyrings = previousKeyrings;
+    }
+  }
+
+  async debugMeasureUnlockPaths(options: {
+    password?: string;
+    trustedVaultDataKeyString?: string;
+  }): Promise<KeyringVaultTimingResult[]> {
+    const state = this.store.getState();
+    const encryptedVault = state.vault;
+    const shardedVault = state.shardedVault;
+    const results: KeyringVaultTimingResult[] = [];
+
+    if (encryptedVault && options.password) {
+      results.push(
+        await this.measureRestorePath('legacy: password full restore', 'legacy', async () => {
+          const detail = await this.encryptor.decryptWithDetail(
+            options.password!,
+            encryptedVault,
+          );
+          return {
+            vault: detail.vault as KeyringSerializedData[],
+          };
+        }),
+      );
+    } else {
+      results.push({
+        label: 'legacy: password full restore',
+        source: 'legacy',
+        success: false,
+        durationMs: 0,
+        error: encryptedVault ? 'Missing password' : 'Missing legacy vault',
+      });
+    }
+
+    if (!shardedVault) {
+      results.push({
+        label: 'sharded: manifest only',
+        source: 'sharded',
+        success: false,
+        durationMs: 0,
+        error: 'Missing sharded vault',
+      });
+      return results;
+    }
+
+    const manifestStartedAt = nowMs();
+    results.push({
+      label: 'sharded: manifest only',
+      source: 'sharded',
+      success: true,
+      durationMs: nowMs() - manifestStartedAt,
+      recordCount: shardedVault.manifest.recordCount,
+    });
+
+    if (options.password) {
+      results.push(
+        await this.measureRestorePath('sharded: password full restore', 'sharded', async () => {
+          const vaultDataKeyString = await this.unwrapShardedVaultDataKey(
+            options.password!,
+            shardedVault,
+          );
+          const vault = await this.decryptShardedVaultRecords(
+            shardedVault,
+            vaultDataKeyString,
+            { restore: false },
+          );
+          return {
+            vault,
+            recordCount: shardedVault.manifest.recordCount,
+          };
+        }),
+      );
+    }
+
+    if (options.trustedVaultDataKeyString) {
+      results.push(
+        await this.measureRestorePath(
+          'sharded: cached dataKey full restore',
+          'sharded',
+          async () => {
+            const vault = await this.decryptShardedVaultRecords(
+              shardedVault,
+              options.trustedVaultDataKeyString!,
+              { restore: false },
+            );
+            return {
+              vault,
+              recordCount: shardedVault.manifest.recordCount,
+            };
+          },
+        ),
+      );
+      results.push(
+        await this.measureRestorePath(
+          'sharded: cached dataKey first record',
+          'sharded',
+          async () => {
+            const vault = await this.decryptShardedVaultRecords(
+              shardedVault,
+              options.trustedVaultDataKeyString!,
+              { limit: 1, restore: false },
+            );
+            return {
+              vault,
+              recordCount: 1,
+            };
+          },
+        ),
+      );
+    }
+
+    return results;
   }
 
   /**
@@ -857,6 +1612,16 @@ export class KeyringService extends RNEventEmitter {
     const keyring = await this._restoreKeyring(serialized);
     await this._updateMemStoreKeyrings();
     return keyring;
+  }
+
+  private async _restoreKeyringsFromVault(vault: unknown) {
+    if (!Array.isArray(vault)) {
+      throw new Error('KeyringService - vault is not a keyring array');
+    }
+
+    await Promise.all(
+      vault.map(serialized => this._restoreKeyring(serialized)),
+    );
   }
 
   /**

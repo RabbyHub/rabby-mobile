@@ -3,6 +3,7 @@ export * as apisLock from './lock';
 export * as apisAutoLock from './autoLock';
 export * as apisKeychain from './keychain';
 export * as apisKeychainDebug from './keychainDebug';
+export * as apisKeyringVaultDebug from './keyringVaultDebug';
 export * as apisKeychainV8_2_0 from './keychainV8_2_0';
 export * as apisKeychainV9_0_0 from './keychainV9_0_0';
 export * as apisDapp from './dapp';
