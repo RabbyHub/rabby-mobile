@@ -1,11 +1,13 @@
 package com.rabbywallet.keychain.decryptionHandler;
 
 import android.os.Build;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.biometric.BiometricPrompt;
 
 import com.facebook.react.bridge.ReactApplicationContext;
+import com.rabbywallet.keychain.DeviceAvailability;
 import com.rabbywallet.keychain.cipherStorage.CipherStorage;
 
 import java.util.Arrays;
@@ -13,6 +15,7 @@ import java.util.Arrays;
 // NOTE: the logic for handling OnePlus bug is taken from the following forum post:
 // https://forums.oneplus.com/threads/oneplus-7-pro-fingerprint-biometricprompt-does-not-show.1035821/#post-21710422
 public class DecryptionResultHandlerProvider {
+  private static final String PERF_TAG = "RabbyKeychainPerf";
   private static final String ONE_PLUS_BRAND = "oneplus";
   private static final String[] ONE_PLUS_MODELS_WITHOUT_BIOMETRIC_BUG = {
     "A0001", // OnePlus One
@@ -30,11 +33,24 @@ public class DecryptionResultHandlerProvider {
       !Arrays.asList(ONE_PLUS_MODELS_WITHOUT_BIOMETRIC_BUG).contains(Build.MODEL);
   }
 
+  private static boolean shouldUseManualRetry(@NonNull ReactApplicationContext reactContext) {
+    return hasOnePlusBiometricBug() || DeviceAvailability.isFingerprintAuthAvailable(reactContext);
+  }
+
   public static DecryptionResultHandler getHandler(@NonNull ReactApplicationContext reactContext,
                                                    @NonNull final CipherStorage storage,
                                                    @NonNull final BiometricPrompt.PromptInfo promptInfo) {
     if (storage.isBiometrySupported()) {
-      if (hasOnePlusBiometricBug()) {
+      final boolean useManualRetry = shouldUseManualRetry(reactContext);
+      Log.i(
+        PERF_TAG,
+        "select_handler storage=" + storage.getCipherStorageName() +
+          " manualRetry=" + useManualRetry +
+          " brand=" + Build.BRAND +
+          " model=" + Build.MODEL +
+          " fingerprint=" + DeviceAvailability.isFingerprintAuthAvailable(reactContext)
+      );
+      if (useManualRetry) {
         return new DecryptionResultHandlerInteractiveBiometricManualRetry(reactContext, storage, promptInfo);
       }
 
