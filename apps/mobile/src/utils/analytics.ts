@@ -3,15 +3,64 @@ import { appStorage } from '@/core/storage/mmkv';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import firebaseAnalytics from '@react-native-firebase/analytics';
 
-export const analytics = firebaseAnalytics();
-
 import { customAlphabet, nanoid } from 'nanoid';
 import { Platform } from 'react-native';
 
 const ANALYTICS_PATH = 'https://matomo.debank.com/matomo.php';
 const genExtensionId = customAlphabet('1234567890abcdef', 16);
+type FirebaseAnalyticsModule = ReturnType<typeof firebaseAnalytics>;
 type AnalyticsPreferenceStore = {
   extensionId?: string;
+};
+
+let firebaseAnalyticsInstance: FirebaseAnalyticsModule | null | undefined;
+let firebaseAnalyticsUnavailableLogged = false;
+
+function logFirebaseAnalyticsUnavailable(error: unknown) {
+  if (firebaseAnalyticsUnavailableLogged) {
+    return;
+  }
+  firebaseAnalyticsUnavailableLogged = true;
+  console.warn('[analytics] Firebase analytics unavailable', error);
+}
+
+function getFirebaseAnalytics() {
+  if (firebaseAnalyticsInstance !== undefined) {
+    return firebaseAnalyticsInstance;
+  }
+
+  try {
+    firebaseAnalyticsInstance = firebaseAnalytics();
+  } catch (error) {
+    firebaseAnalyticsInstance = null;
+    logFirebaseAnalyticsUnavailable(error);
+  }
+
+  return firebaseAnalyticsInstance;
+}
+
+async function safeFirebaseAnalyticsCall<T>(
+  callback: (instance: FirebaseAnalyticsModule) => Promise<T>,
+) {
+  const instance = getFirebaseAnalytics();
+  if (!instance) {
+    return undefined;
+  }
+
+  try {
+    return await callback(instance);
+  } catch (error) {
+    logFirebaseAnalyticsUnavailable(error);
+    return undefined;
+  }
+}
+
+export const analytics = {
+  logEvent: (...args: Parameters<FirebaseAnalyticsModule['logEvent']>) =>
+    safeFirebaseAnalyticsCall(instance => instance.logEvent(...args)),
+  logScreenView: (
+    ...args: Parameters<FirebaseAnalyticsModule['logScreenView']>
+  ) => safeFirebaseAnalyticsCall(instance => instance.logScreenView(...args)),
 };
 
 const getStoredPreference = () =>

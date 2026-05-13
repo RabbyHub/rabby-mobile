@@ -113,7 +113,7 @@ export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
   );
 }
 
-const INIT_DATA = { password: __DEV__ ? (APP_TEST_PWD as string) : '' };
+const INIT_DATA = { password: APP_TEST_PWD };
 function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
   const { t } = useTranslation();
   const yupSchema = React.useMemo(() => {

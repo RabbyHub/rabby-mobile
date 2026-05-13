@@ -16,7 +16,7 @@ export async function connectPushServerOnBootstrap() {
     const { pushToken: token } = await registerForPushNotifications();
     pushToken = token;
   } catch (error) {
-    console.error('Failed to register for push notifications:', error);
+    console.warn('Failed to register for push notifications:', error);
   }
   console.debug('[connectFeService] pushToken', pushToken);
 
