@@ -106,12 +106,11 @@ export const GlobalBottomSheetModal = () => {
         };
         modalRefs.current[id] = newModal.ref;
 
-        setTimeout(() => {
-          handlePresent(id);
-        }, 100);
-
         return [...prev, newModal];
       });
+      setTimeout(() => {
+        handlePresent(id);
+      }, 0);
     },
     [getApproval, handlePresent],
   );

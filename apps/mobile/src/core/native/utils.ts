@@ -25,7 +25,8 @@ type NativeModulesStatic = {
     import('./specs/NativeRNThread').Methods;
 };
 
-const isTurboModuleEnabled = (global as any).__turboModuleProxy != null;
+export const isTurboModuleEnabled = () =>
+  (global as any).__turboModuleProxy != null;
 
 type EventEmitterDef = Record<string, EventEmitter<any>>;
 export type EventEmitterRecordToListeners<T extends EventEmitterDef> = {
@@ -56,7 +57,7 @@ export function resolveNativeModule<T extends NativeModuleNames>(name: T) {
     '- You rebuilt the app after native code changed\n' +
     '- You are not using Expo managed workflow\n';
 
-  const nModule = isTurboModuleEnabled
+  const nModule = isTurboModuleEnabled()
     ? TurboNativeModules[name] || NativeModules[name]
     : NativeModules[name];
 
