@@ -3484,6 +3484,7 @@
     "AuthenticationModals": {
       "biometrics": {
         "enable": "Enter the Password\nto Enable {{ bioType }}",
+        "confirmToDisable": "Confirm to disable {{ bioType }}?",
         "disable": "Disable {{ bioType }}",
         "enableTip": "Enable {{ bioType }} to unlock Rabby",
         "disableTip": "Disable {{ bioType }} to unlock Rabby"

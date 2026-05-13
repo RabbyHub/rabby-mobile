@@ -45,14 +45,14 @@ function useToggleBiometricsEnabled() {
       // Non-auto-gen disable: system confirm popup
       if (!nextEnabled) {
         Alert.alert(
-          t('component.AuthenticationModals.biometrics.disable', {
+          t('component.AuthenticationModals.biometrics.confirmToDisable', {
             bioType: computed.defaultTypeLabel,
           }),
           undefined,
           [
-            { text: t('global.cancel'), style: 'cancel' },
+            { text: t('global.cancel') || 'Cancel' },
             {
-              text: t('global.confirm'),
+              text: 'Yes',
               onPress: async () => {
                 const changed = await toggleBiometrics(false, {});
                 if (changed) {
