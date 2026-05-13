@@ -77,6 +77,7 @@ export type KeychainCompatibleUserCredentials = {
   service?: string;
   username: string;
   password: string;
+  vaultKeyString?: string;
   storage?: string;
   [key: string]: unknown;
 };
@@ -223,6 +224,7 @@ const secureKeyChainInstanceRef = {
 
 export type DebugDecryptedKeychainPayload = {
   password: string;
+  vaultKeyString?: string;
 };
 
 type KeychainDebugStateBase = {
@@ -368,8 +370,14 @@ export class SecureKeyChainInstance {
     return secureKeyChainInstanceRef.current;
   }
 
-  async encryptPassword(password: string) {
-    return this.encryptor.encrypt(privates.get(this)?.salt || '', { password });
+  async encryptPassword(
+    password: string,
+    credentialsPatch: Partial<KeychainCompatibleUserCredentials> = {},
+  ) {
+    return this.encryptor.encrypt(privates.get(this)?.salt || '', {
+      ...credentialsPatch,
+      password,
+    });
   }
 
   async decryptPassword(encryptedPassword: string) {
@@ -694,13 +702,16 @@ export function createBusinessKeychainApi({
   async function upgradeLegacyAndroidBiometricsStorage(
     plainPassword: string,
     storage?: string,
+    credentialsPatch: Partial<KeychainCompatibleUserCredentials> = {},
   ) {
     if (!shouldUpgradeLegacyAndroidBiometricsStorage(storage)) {
       return;
     }
 
     try {
-      await setGenericPassword(plainPassword, KEYCHAIN_AUTH_TYPES.BIOMETRICS);
+      await setGenericPassword(plainPassword, KEYCHAIN_AUTH_TYPES.BIOMETRICS, {
+        vaultKeyString: credentialsPatch.vaultKeyString,
+      });
     } catch (error) {
       if (__DEV__) {
         console.warn(
@@ -757,7 +768,10 @@ export function createBusinessKeychainApi({
     throw lastError;
   }
 
-  async function silentlyUpgradeStoredPasswordPayload(plainPassword: string) {
+  async function silentlyUpgradeStoredPasswordPayload(
+    plainPassword: string,
+    credentialsPatch: Partial<KeychainCompatibleUserCredentials> = {},
+  ) {
     const authType = getAuthenticationType();
 
     if (authType === KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD) {
@@ -765,7 +779,9 @@ export function createBusinessKeychainApi({
     }
 
     try {
-      await setGenericPassword(plainPassword, authType);
+      await setGenericPassword(plainPassword, authType, {
+        vaultKeyString: credentialsPatch.vaultKeyString,
+      });
       logger.info(
         '[keychain] rewrote stored credentials with the current rabbitCode after fallback decrypt',
         {
@@ -791,7 +807,10 @@ export function createBusinessKeychainApi({
     androidAuthPromptPolicy = DEFAULT_ANDROID_AUTH_PROMPT_POLICY,
   }: {
     purpose?: T;
-    onPlainPassword?: (password: string) => void | Promise<void>;
+    onPlainPassword?: (
+      password: string,
+      credentials: KeychainCompatibleUserCredentials,
+    ) => void | Promise<void>;
     androidAuthPromptPolicy?: AndroidAuthPromptPolicy;
   }): Promise<null | DefaultRet> {
     const instance = await waitInstance();
@@ -828,13 +847,17 @@ export function createBusinessKeychainApi({
               );
             if (verifyResult.success) {
               if (usedFallbackRabbitCode) {
-                await silentlyUpgradeStoredPasswordPayload(decrypted.password);
+                await silentlyUpgradeStoredPasswordPayload(
+                  decrypted.password,
+                  decrypted,
+                );
               } else {
                 await upgradeLegacyAndroidBiometricsStorage(
                   decrypted.password,
                   typeof keychainObject.storage === 'string'
                     ? keychainObject.storage
                     : undefined,
+                  decrypted,
                 );
               }
             }
@@ -843,16 +866,20 @@ export function createBusinessKeychainApi({
             return { ...keychainObject, actionSuccess: verifyResult.success };
           }
           case RequestGenericPurpose.DECRYPT_PWD: {
-            await onPlainPassword?.(decrypted.password);
+            await onPlainPassword?.(decrypted.password, decrypted);
             apisLock.updateUnlockTime();
             if (usedFallbackRabbitCode) {
-              await silentlyUpgradeStoredPasswordPayload(decrypted.password);
+              await silentlyUpgradeStoredPasswordPayload(
+                decrypted.password,
+                decrypted,
+              );
             } else {
               await upgradeLegacyAndroidBiometricsStorage(
                 decrypted.password,
                 typeof keychainObject.storage === 'string'
                   ? keychainObject.storage
                   : undefined,
+                decrypted,
               );
             }
             onRequestReturn(instance);
@@ -959,6 +986,7 @@ export function createBusinessKeychainApi({
     type: KEYCHAIN_AUTH_TYPES = KEYCHAIN_AUTH_TYPES.BIOMETRICS,
     options?: {
       storage?: KeychainStorageType;
+      vaultKeyString?: string;
     },
   ) {
     const authOptions: Partial<KeychainCompatibleOptions> = {
@@ -981,7 +1009,9 @@ export function createBusinessKeychainApi({
     }
 
     const instance = await waitInstance();
-    const encryptedPassword = await instance.encryptPassword(password);
+    const encryptedPassword = await instance.encryptPassword(password, {
+      vaultKeyString: options?.vaultKeyString,
+    });
     await keychainModule.setGenericPassword(
       KEYCHAIN_GENERIC_USER,
       encryptedPassword,
@@ -993,6 +1023,21 @@ export function createBusinessKeychainApi({
     );
 
     setAuthenticationType(type);
+  }
+
+  async function cacheTrustedVaultKeyString(
+    password: string,
+    vaultKeyString: string,
+  ) {
+    const authType = getAuthenticationType();
+
+    if (authType === KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD) {
+      return;
+    }
+
+    await setGenericPassword(password, authType, {
+      vaultKeyString,
+    });
   }
 
   function getSupportedBiometryType() {
@@ -1034,6 +1079,7 @@ export function createBusinessKeychainApi({
     debugWriteMockLegacyBiometricsEntry,
     debugDecryptStoredPasswordPayload,
     setGenericPassword,
+    cacheTrustedVaultKeyString,
     resetGenericPassword,
     clearApplicationPassword,
   };

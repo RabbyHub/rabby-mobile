@@ -21,6 +21,9 @@ export const enum PasswordStatus {
 
 export type UIAuthType = 'none' | 'password' | 'biometrics';
 export type UnlockWalletOptions = {
+  trustedPassword?: boolean;
+  trustedVaultKeyString?: string;
+  onTrustedVaultKeyString?: (vaultKeyString: string) => void | Promise<void>;
   deferMemStoreKeyringsUpdate?: boolean;
 };
 export type ValidationBehaviorOnFinishedContext = {
@@ -339,6 +342,9 @@ async function unlockWallet(
     await (keyringService as KeyringServiceWithUnlockOptions).submitPassword(
       password,
       {
+        trustedPassword: options.trustedPassword,
+        trustedVaultKeyString: options.trustedVaultKeyString,
+        onTrustedVaultKeyString: options.onTrustedVaultKeyString,
         deferMemStoreKeyringsUpdate: options.deferMemStoreKeyringsUpdate,
       },
     );

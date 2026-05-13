@@ -76,6 +76,21 @@ export type KeyringEventAccount = {
 };
 
 export type SubmitPasswordOptions = {
+  /**
+   * The password came from a trusted OS-protected source, e.g. Android
+   * biometric keychain. In this case vault decryption is enough validation.
+   */
+  trustedPassword?: boolean;
+  /**
+   * OS-protected exported encryptor key for the current vault.
+   * When valid, this lets biometric unlock skip PBKDF2 derivation.
+   */
+  trustedVaultKeyString?: string;
+  /**
+   * Called after password-based vault decrypt so callers can persist the
+   * exported key for the next biometric unlock.
+   */
+  onTrustedVaultKeyString?: (vaultKeyString: string) => void | Promise<void>;
   deferMemStoreKeyringsUpdate?: boolean;
 };
 
@@ -409,16 +424,27 @@ export class KeyringService extends RNEventEmitter {
       return this.memStore.getState();
     }
 
+    const encryptedVault = this.store.getState().vault;
+    const hasVault = !!encryptedVault;
+    const trustedPassword = !!options.trustedPassword;
+    const shouldVerifyBeforeUnlock = !trustedPassword || !hasVault;
+
     try {
       this._isSubmittingPassword = true;
-      await this.verifyPassword(password);
+      if (shouldVerifyBeforeUnlock) {
+        await this.verifyPassword(password);
+      }
       this.#password = password;
       try {
         this.keyrings = await this.unlockKeyrings(password, {
+          trustedVaultKeyString: options.trustedVaultKeyString,
+          onTrustedVaultKeyString: options.onTrustedVaultKeyString,
           deferMemStoreKeyringsUpdate: options.deferMemStoreKeyringsUpdate,
         });
-      } catch {
-        //
+      } catch (error) {
+        if (trustedPassword && hasVault) {
+          throw error;
+        }
       }
       this._setUnlocked({ scene: 'unlock' });
 
@@ -856,7 +882,37 @@ export class KeyringService extends RNEventEmitter {
     }
 
     await this.clearKeyrings();
-    const vault = await this.encryptor.decrypt(password, encryptedVault);
+    let vault: unknown = null;
+
+    if (options.trustedVaultKeyString) {
+      try {
+        vault = await this.encryptor.decryptWithExportedKey(
+          encryptedVault,
+          options.trustedVaultKeyString,
+        );
+      } catch {
+        vault = null;
+      }
+    }
+
+    if (!vault) {
+      const decryptDetail = await this.encryptor.decryptWithDetail(
+        password,
+        encryptedVault,
+      );
+      vault = decryptDetail.vault;
+
+      if (decryptDetail.exportedKeyString) {
+        Promise.resolve()
+          .then(() =>
+            options.onTrustedVaultKeyString?.(decryptDetail.exportedKeyString!),
+          )
+          .catch(() => {
+            // The cache is only a fast path for future unlocks.
+          });
+      }
+    }
+
     // TODO: FIXME
     await Promise.all(
       Array.from(vault as any).map(this._restoreKeyring.bind(this) as any),

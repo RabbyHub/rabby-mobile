@@ -383,9 +383,10 @@ export default function UnlockScreen() {
       });
       await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.DECRYPT_PWD,
-        onPlainPassword: async password => {
+        onPlainPassword: async (password, credentials) => {
           traceAndroidUnlockPerf('on_plain_password', {
             elapsedMs: Date.now() - startedAt,
+            hasTrustedVaultKeyString: !!credentials?.vaultKeyString,
           });
           if (!isFaceID) {
             hidePostAuthToastRef.current = toastUnlocking();
@@ -396,7 +397,26 @@ export default function UnlockScreen() {
               elapsedMs: Date.now() - startedAt,
             });
             const result = await storeApisUnlock.unlockApp(password, {
+              trustedPassword: isAndroid,
+              trustedVaultKeyString:
+                isAndroid && typeof credentials?.vaultKeyString === 'string'
+                  ? credentials.vaultKeyString
+                  : undefined,
               deferMemStoreKeyringsUpdate: isAndroid,
+              onTrustedVaultKeyString: isAndroid
+                ? vaultKeyString => {
+                    if (credentials) {
+                      credentials.vaultKeyString = vaultKeyString;
+                    }
+                    traceAndroidUnlockPerf('cache_trusted_vault_key_string', {
+                      elapsedMs: Date.now() - startedAt,
+                    });
+                    return apisKeychain.cacheTrustedVaultKeyString(
+                      password,
+                      vaultKeyString,
+                    );
+                  }
+                : undefined,
             });
             const timeResult = measureTime.end('UnlockWithBiometrics');
             reportUnlockTime(timeResult.diff, 'biometrics');
