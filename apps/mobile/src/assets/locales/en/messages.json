@@ -3483,8 +3483,8 @@
     },
     "AuthenticationModals": {
       "biometrics": {
-        "enable": "Enable {{ bioType }}",
-        "disable": "Disable {{ bioType }}",
+        "enable": "Enter the Password\nto Enable {{ bioType }}",
+        "disable": "Enter the Password\nto Disable {{ bioType }}",
         "enableTip": "Enable {{ bioType }} to unlock Rabby",
         "disableTip": "Disable {{ bioType }} to unlock Rabby"
       },
