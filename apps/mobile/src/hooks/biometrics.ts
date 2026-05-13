@@ -16,7 +16,8 @@ import {
 } from '@/core/apis/lock';
 import { Vibration } from 'react-native';
 import { IExtractFromPromise } from '@/utils/type';
-import { IS_IOS } from '@/core/native/utils';
+import { IS_IOS, IS_ANDROID } from '@/core/native/utils';
+import DeviceInfo from 'react-native-device-info';
 import { zCreate } from '@/core/utils/reexports';
 import {
   resolveValFromUpdater,
@@ -47,6 +48,42 @@ runIIFEFunc(() => {
   });
 });
 
+function iPhoneHasFaceID(): boolean {
+  if (!IS_IOS) return false;
+  const model = DeviceInfo.getModel();
+  // SE models — Touch ID only
+  if (model.includes('iPhone SE')) return false;
+  // iPhone X, XS, XR, XS Max — all have Face ID
+  if (model.includes('iPhone X')) return true;
+  // Parse iPhone generation number from model name like "iPhone 12 Pro"
+  const match = model.match(/iPhone\s+(\d+)/);
+  if (match) {
+    return Number(match[1]) >= 11; // iPhone 11+ all have Face ID
+  }
+  // iPad: Pro models (2018+) and Air 4th gen+ have Face ID
+  if (model.includes('iPad Pro')) return true;
+  if (model.includes('iPad Air')) {
+    const airMatch = model.match(/(\d+)th/);
+    if (airMatch && Number(airMatch[1]) >= 4) return true;
+  }
+  return false;
+}
+
+/**
+ * Returns the biometry type based on hardware capability, regardless of
+ * enrollment state or permission. Falls back to the OS-reported type when
+ * biometrics are enrolled and permission is granted.
+ */
+function getHardwareBiometryType(): KeychainSupportedBiometryType {
+  if (IS_IOS) {
+    return iPhoneHasFaceID() ? 'FaceID' : 'TouchID';
+  }
+  if (IS_ANDROID) {
+    return 'Fingerprint';
+  }
+  return null;
+}
+
 export function useBiometricsComputed() {
   const authEnabled = biometricsInfoStore(s => s.authEnabled);
   const supportedBiometryType = biometricsInfoStore(
@@ -55,7 +92,9 @@ export function useBiometricsComputed() {
   const { t } = useTranslation();
 
   const computed = useMemo(() => {
-    const isFaceID = supportedBiometryType === BIOMETRY_TYPE.FACE_ID;
+    // Prefer OS-reported type (enrolled + permission granted), fall back to hardware
+    const effectiveType = supportedBiometryType || getHardwareBiometryType();
+    const isFaceID = effectiveType === BIOMETRY_TYPE.FACE_ID;
     return {
       isBiometricsEnabled: authEnabled && !!supportedBiometryType,
       settingsAuthEnabled: authEnabled,
