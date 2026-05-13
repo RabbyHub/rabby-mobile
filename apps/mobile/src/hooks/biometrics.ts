@@ -50,22 +50,15 @@ runIIFEFunc(() => {
 
 function iPhoneHasFaceID(): boolean {
   if (!IS_IOS) return false;
-  const model = DeviceInfo.getModel();
-  // SE models — Touch ID only
-  if (model.includes('iPhone SE')) return false;
-  // iPhone X, XS, XR, XS Max — all have Face ID
-  if (model.includes('iPhone X')) return true;
-  // Parse iPhone generation number from model name like "iPhone 12 Pro"
-  const match = model.match(/iPhone\s+(\d+)/);
-  if (match) {
-    return Number(match[1]) >= 11; // iPhone 11+ all have Face ID
-  }
-  // iPad: Pro models (2018+) and Air 4th gen+ have Face ID
-  if (model.includes('iPad Pro')) return true;
-  if (model.includes('iPad Air')) {
-    const airMatch = model.match(/(\d+)th/);
-    if (airMatch && Number(airMatch[1]) >= 4) return true;
-  }
+  const model = DeviceInfo.getDeviceId();
+  // Match iPhone10,3 / iPhone10,6 (iPhone X) and anything iPhone11+ except SE
+  const match = model.match(/^iPhone(\d+),(\d+)$/);
+  if (!match) return false;
+  const [, major, minor] = match.map(Number);
+  // iPhone SE 2nd gen = iPhone12,8, SE 3rd gen = iPhone14,6 — Touch ID only
+  if (model === 'iPhone12,8' || model === 'iPhone14,6') return false;
+  if (major > 10) return true;
+  if (major === 10 && (minor === 3 || minor === 6)) return true; // iPhone X
   return false;
 }
 
