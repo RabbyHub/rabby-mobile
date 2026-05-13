@@ -129,7 +129,7 @@ function FooterButtonGroup({
   >;
 }) {
   const { t } = useTranslation();
-  const { styles: footerStyles } = useTheme2024({
+  const { styles: footerStyles, colors2024 } = useTheme2024({
     getStyle: getFooterStyle,
   });
 
@@ -153,9 +153,15 @@ function FooterButtonGroup({
         <Button
           title={t('global.Cancel')}
           containerStyle={footerStyles.btnContainer}
-          type="ghost"
+          buttonStyle={{
+            backgroundColor: colors2024['neutral-bg-5'],
+            borderWidth: 0,
+          }}
           height={48}
-          titleStyle={{ fontSize: 18 }}
+          titleStyle={{
+            fontSize: 18,
+            color: colors2024['neutral-title-1'],
+          }}
           onPress={onCancel ?? noop}
           {...cancelButtonProps}
         />
