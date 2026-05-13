@@ -6,70 +6,32 @@ import {
   Platform,
   UIManager,
 } from 'react-native';
-import type {
-  NativeAccessibleVisualMediaList,
-  NativeAccessibleVisualMediaQueryOptions,
-  NativeFileCapabilityRequestOptions,
-  NativeFileCapabilitySnapshot,
-} from './fileCapability';
+import type { EventEmitter } from 'react-native/Libraries/Types/CodegenTypes';
+import { TurboNativeModules } from './specs';
+import { NativeModuleNames } from './specs/types';
 
-interface NativeModulesStatic {
-  ReactNativeSecurity: /* NativeModule &  */ {
-    blockScreen(): void;
-    unblockScreen(): void;
-  };
-  RNScreenshotPrevent: NativeModule & {
-    scanScreenshotDirectory: () => void;
-    startScreenCaptureDetection: () => Promise<void>;
-    stopScreenCaptureDetection: () => Promise<void>;
-    togglePreventScreenshot: (isPrevent: boolean) => void;
-    setAppSwitcherBlurEnabled: (isEnabled: boolean) => void;
-    iosIsBeingCaptured(): boolean;
-    // iosToggleBlurView(isProtected: boolean): void;
-    iosProtectFromScreenRecording(): Promise<void>;
-    iosUnprotectFromScreenRecording(): Promise<void>;
-  };
-  RNTimeChanged: NativeModule & {
-    exitAppForSecurity(): void;
-  };
-  RNHelpers: NativeModule & {
-    forceExitApp(): void;
-    shareFile?(options: {
-      filePath: string;
-      mimeType?: string;
-      title?: string;
-      subject?: string;
-    }): Promise<void>;
-    /**
-     * @description try to set a file to not be backed up by iCloud
-     * @param filePath
-     */
-    iosExcludeFileFromBackup?(filePath: string): Promise<boolean>;
-    // /**
-    //  * @description try to set a directory's files(including files in subdirectories) to not be backed up by iCloud
-    //  */
-    // iosExcludeDirectoryFromBackup?(directoryPath: string): Promise<boolean>;
-  };
-  RNFileHelpers: NativeModule & {
-    getFileCapabilitySnapshot?(): Promise<NativeFileCapabilitySnapshot>;
-    requestVisualMediaAccess?(
-      options?: NativeFileCapabilityRequestOptions,
-    ): Promise<NativeFileCapabilitySnapshot>;
-    listAccessibleVisualMedia?(
-      options?: NativeAccessibleVisualMediaQueryOptions,
-    ): Promise<NativeAccessibleVisualMediaList>;
-  };
-  RNThread: NativeModule & {
-    startThread(
-      jsFilePath: string,
-      options?: {
-        usePackedResource?: true | string;
-      },
-    ): Promise<number>;
-    stopThread(threadId: number): void;
-    postThreadMessage(threadId: number, message: string): void;
-  };
-}
+type NativeModulesStatic = {
+  [NativeModuleNames.ReactNativeSecurity]: NativeModule &
+    import('./specs/NativeReactNativeSecurity').Methods;
+  [NativeModuleNames.RNScreenshotPrevent]: NativeModule &
+    import('./specs/NativeRNScreenshotPrevent').Methods;
+  [NativeModuleNames.RNTimeChanged]: NativeModule &
+    import('./specs/NativeRNTimeChanged').Methods;
+  [NativeModuleNames.RNHelpers]: NativeModule &
+    import('./specs/NativeRNHelpers').Methods;
+  [NativeModuleNames.RNFileHelpers]: NativeModule &
+    import('./specs/NativeRNFileHelpers').Methods;
+  [NativeModuleNames.RNThread]: NativeModule &
+    import('./specs/NativeRNThread').Methods;
+};
+
+export const isTurboModuleEnabled = () =>
+  (global as any).__turboModuleProxy != null;
+
+type EventEmitterDef = Record<string, EventEmitter<any>>;
+export type EventEmitterRecordToListeners<T extends EventEmitterDef> = {
+  [K in keyof T]: Parameters<T[K]>[0];
+};
 
 export const IS_ANDROID = Platform.OS === 'android';
 export const IS_IOS = Platform.OS === 'ios';
@@ -89,15 +51,15 @@ if (IS_ANDROID) {
     UIManager.setLayoutAnimationEnabledExperimental(false);
 }
 
-export function resolveNativeModule<T extends keyof NativeModulesStatic>(
-  name: T,
-) {
+export function resolveNativeModule<T extends NativeModuleNames>(name: T) {
   const NATIVE_ERROR =
     `The native module '${name}' doesn't seem to be added. Make sure: \n\n` +
     '- You rebuilt the app after native code changed\n' +
     '- You are not using Expo managed workflow\n';
 
-  const nModule = NativeModules[name];
+  const nModule = isTurboModuleEnabled()
+    ? TurboNativeModules[name] || NativeModules[name]
+    : NativeModules[name];
 
   const module: NativeModulesStatic[T] = nModule
     ? nModule

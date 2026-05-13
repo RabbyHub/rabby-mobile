@@ -4,7 +4,7 @@ import { last, noop } from 'lodash';
 import { TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { apiProvider } from '@/core/apis';
+import { sendRequest } from '@/core/apis/sendRequest';
 import { useTheme2024 } from '@/hooks/theme';
 import { toast } from '@/components2024/Toast';
 import { Button } from '@/components2024/Button';
@@ -258,7 +258,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
           }
         } else {
           for (const tx of manageEmodeTx) {
-            const result = await apiProvider.sendRequest({
+            const result = await sendRequest({
               data: {
                 method: 'eth_sendTransaction',
                 params: [tx],

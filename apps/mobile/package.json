@@ -303,6 +303,14 @@
   "installConfig": {
     "hoistingLimits": "workspaces"
   },
+  "codegenConfig": {
+    "name": "RabbyMobileSpec",
+    "type": "modules",
+    "jsSrcsDir": "src/core/native/specs",
+    "android": {
+      "javaPackageName": "com.debank.rabbymobile"
+    }
+  },
   "op-sqlite": {
     "performanceMode": true,
     "sqliteFlags": "-DSQLITE_ENABLE_MATH_FUNCTIONS"

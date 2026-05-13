@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { PopulatedTransaction } from 'ethers';
 
-import { apiProvider } from '@/core/apis';
+import { sendRequest } from '@/core/apis/sendRequest';
 import { useTheme2024 } from '@/hooks/theme';
 import { toast } from '@/components2024/Toast';
 import { Button } from '@/components2024/Button';
@@ -735,7 +735,7 @@ export default function DebtSwapModal({
           }
         } else {
           for (const tx of currentTxs) {
-            const hash = await apiProvider.sendRequest({
+            const hash = await sendRequest({
               data: {
                 method: 'eth_sendTransaction',
                 params: [tx],

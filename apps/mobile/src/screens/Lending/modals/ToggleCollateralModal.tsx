@@ -31,7 +31,7 @@ import {
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
 import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
-import { apiProvider } from '@/core/apis';
+import { sendRequest } from '@/core/apis/sendRequest';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { last, noop } from 'lodash';
 import { transactionHistoryService } from '@/core/services';
@@ -332,7 +332,7 @@ function ToggleCollateralContent({}: {}) {
         } else {
           setIsShowToggleCollateralModal(false);
           for (const tx of txs) {
-            const result = await apiProvider.sendRequest({
+            const result = await sendRequest({
               data: {
                 method: 'eth_sendTransaction',
                 params: [tx],

@@ -151,7 +151,10 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   ]);
 
   return (
-    <CustomTouchableOpacity hitSlop={historyHitSlop} onPress={openHistory}>
+    <CustomTouchableOpacity
+      as="RNGHTouchableOpacity"
+      hitSlop={historyHitSlop}
+      onPress={openHistory}>
       {pendingTxCount > 0 ? (
         <View
           style={{ marginRight: 16, position: 'relative', paddingVertical: 4 }}>
@@ -212,7 +215,10 @@ export const SingleHomeRightArea = () => {
   return (
     <>
       <HeaderRightHistory />
-      <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
+      <CustomTouchableOpacity
+        as="RNGHTouchableOpacity"
+        hitSlop={hitSlop}
+        onPress={onPress}>
         <RcIconSettingCC
           width={20}
           height={20}
