@@ -190,7 +190,10 @@ describe('core/apis/keychainV8_2_0', () => {
       currentRabbitCode,
       'RABBY_MOBILE_CODE_DEV',
     ]);
-    expect(onPlainPassword).toHaveBeenCalledWith('plain-password');
+    expect(onPlainPassword).toHaveBeenCalledWith(
+      'plain-password',
+      expect.objectContaining({ password: 'plain-password' }),
+    );
     expect(mockUpdateUnlockTime).toHaveBeenCalled();
     expect(mockEncrypt).toHaveBeenCalledWith(currentRabbitCode, {
       password: 'plain-password',
@@ -199,7 +202,7 @@ describe('core/apis/keychainV8_2_0', () => {
     expect(result?.actionSuccess).toBe(true);
   });
 
-  it('keeps automatic-upgrade reads on Android for legacy biometrics entries', async () => {
+  it('keeps automatic-upgrade reads on Android without rewriting RSA entries to the same storage', async () => {
     const {
       module,
       mockGetGenericPassword,
@@ -220,18 +223,7 @@ describe('core/apis/keychainV8_2_0', () => {
     expect(mockSafeVerifyPasswordAndUpdateUnlockTime).toHaveBeenCalledWith(
       'plain-password',
     );
-    expect(mockSetGenericPassword).toHaveBeenCalledWith(
-      'rabbymobile-user',
-      'enc:plain-password',
-      expect.objectContaining({
-        service: 'com.debank',
-        accessible: 'AccessibleWhenUnlockedThisDeviceOnly',
-        accessControl: 'BiometryCurrentSet',
-      }),
-    );
-    expect(mockSetGenericPassword.mock.calls[0]?.[2]).not.toHaveProperty(
-      'storage',
-    );
+    expect(mockSetGenericPassword).not.toHaveBeenCalled();
     expect(result?.actionSuccess).toBe(true);
   });
 

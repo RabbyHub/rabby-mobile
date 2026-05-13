@@ -39,6 +39,26 @@ async function _decryptWithKey(encryptedData: any, key: string, lib?: string) {
   return Aes.decrypt(encryptedData.cipher, key, encryptedData.iv, algorithms);
 }
 
+type ExportedRNEncryptorKey = {
+  version: 1 | 2;
+  salt: string;
+  key: string;
+};
+
+function parseExportedKey(exportedKeyString: string): ExportedRNEncryptorKey {
+  const exportedKey = JSON.parse(exportedKeyString) as ExportedRNEncryptorKey;
+
+  if (
+    (exportedKey.version !== 1 && exportedKey.version !== 2) ||
+    typeof exportedKey.salt !== 'string' ||
+    !exportedKey.key
+  ) {
+    throw new Error('Invalid exported RNEncryptor key');
+  }
+
+  return exportedKey;
+}
+
 export default class RNEncryptor implements EncryptorAdapter {
   key = null;
 
@@ -70,5 +90,58 @@ export default class RNEncryptor implements EncryptorAdapter {
     const data = await _decryptWithKey(encryptedData, key);
 
     return JSON.parse(data);
+  }
+
+  async decryptWithDetail(password: string, encryptedString: string) {
+    const encryptedData = JSON.parse(encryptedString);
+    const key = await _keyFromPassword(password, encryptedData.salt);
+    const data = await _decryptWithKey(encryptedData, key);
+    const exportedKey: ExportedRNEncryptorKey = {
+      version: 1,
+      salt: encryptedData.salt,
+      key,
+    };
+
+    return {
+      vault: JSON.parse(data),
+      exportedKeyString: JSON.stringify(exportedKey),
+      salt: encryptedData.salt,
+    };
+  }
+
+  async decryptWithExportedKey(
+    encryptedString: string,
+    exportedKeyString: string,
+  ) {
+    const encryptedData = JSON.parse(encryptedString);
+    const exportedKey = parseExportedKey(exportedKeyString);
+
+    if (exportedKey.salt !== encryptedData.salt) {
+      throw new Error('Invalid exported RNEncryptor key');
+    }
+
+    const data = await _decryptWithKey(encryptedData, exportedKey.key);
+    return JSON.parse(data);
+  }
+
+  async generateExportedKeyString() {
+    const exportedKey: ExportedRNEncryptorKey = {
+      version: 2,
+      salt: await _generateSalt(16),
+      key: await Aes.randomKey(32),
+    };
+
+    return JSON.stringify(exportedKey);
+  }
+
+  async encryptWithExportedKey(object: any, exportedKeyString: string) {
+    const exportedKey = parseExportedKey(exportedKeyString);
+    const result = await _encryptWithKey(
+      JSON.stringify(object),
+      exportedKey.key,
+    );
+    result.salt = exportedKey.salt;
+
+    return JSON.stringify(result);
   }
 }

@@ -74,5 +74,9 @@ export const debugWriteMockLegacyBiometricsEntry =
 export const debugDecryptStoredPasswordPayload =
   keychainApi.debugDecryptStoredPasswordPayload;
 export const setGenericPassword = keychainApi.setGenericPassword;
+export const cacheTrustedVaultKeyString =
+  keychainApi.cacheTrustedVaultKeyString;
+export const cacheTrustedVaultDataKeyString =
+  keychainApi.cacheTrustedVaultDataKeyString;
 export const resetGenericPassword = keychainApi.resetGenericPassword;
 export const clearApplicationPassword = keychainApi.clearApplicationPassword;
