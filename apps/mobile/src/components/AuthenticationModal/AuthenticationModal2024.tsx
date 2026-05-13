@@ -587,7 +587,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => {
       fontWeight: '800',
       fontFamily: 'SF Pro Rounded',
       paddingTop: 12,
-      marginBottom: 13,
+      marginBottom: 30,
       textAlign: 'center',
     },
     description: {
