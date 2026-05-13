@@ -292,7 +292,9 @@ export default function DevDataKeyringVaultScreen(): JSX.Element {
           />
           <InfoRow
             label="unencrypted"
-            value={`${storageState?.legacy.unencryptedKeyringCount || 0} records`}
+            value={`${
+              storageState?.legacy.unencryptedKeyringCount || 0
+            } records`}
           />
         </Section>
 
