@@ -50,9 +50,9 @@ function useToggleBiometricsEnabled() {
           }),
           undefined,
           [
-            { text: t('page.unlock.enableBiometricAlert.no') },
+            { text: t('page.unlock.biometrics.enableBiometricAlert.no') },
             {
-              text: t('page.unlock.enableBiometricAlert.yes'),
+              text: t('page.unlock.biometrics.enableBiometricAlert.yes'),
               onPress: async () => {
                 const changed = await toggleBiometrics(false, {});
                 if (changed) {
