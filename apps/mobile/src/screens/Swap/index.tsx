@@ -49,10 +49,7 @@ import {
   useSwapUnlimitedAllowance,
   useTokenPair,
 } from './hooks';
-import {
-  refreshIdAtom,
-  useRabbyFeeVisible,
-} from './hooks/atom';
+import { refreshIdAtom, useRabbyFeeVisible } from './hooks/atom';
 import { buildDexSwap, dexSwap } from './hooks/swap';
 import { Button } from '@/components2024/Button';
 import {
@@ -1151,7 +1148,9 @@ const Swap = ({
                 onChangeSlider={onChangeSlider}
                 value={payAmount}
                 onValueChange={value => {
-                  if (directSignBtnRef.current?.isAuthInProgress()) return;
+                  if (directSignBtnRef.current?.isAuthInProgress()) {
+                    return;
+                  }
                   handleAmountChange(value);
                 }}
                 token={payToken}
