@@ -9,6 +9,7 @@ import { Button } from '@/components2024/Button';
 import { AppBottomSheetModal } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { NextInput } from '@/components2024/Form/Input';
 import { Text } from '@/components/Typography';
 import {
@@ -34,7 +35,7 @@ const SetPasswordBottomSheet: React.FC<SetPasswordBottomSheetProps> = ({
   loading = false,
 }) => {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const insets = useSafeAreaInsets();
   const sheetModalRef = useRef<BottomSheetModal>(null);
 
@@ -101,10 +102,10 @@ const SetPasswordBottomSheet: React.FC<SetPasswordBottomSheetProps> = ({
       onDismiss={onClose}
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
-      style={{
-        overflow: 'hidden',
-        borderRadius: 32,
-      }}>
+      {...makeBottomSheetProps({
+        colors: colors2024,
+        linearGradientType: isLight ? 'bg0' : 'bg1',
+      })}>
       <BottomSheetView
         style={[styles.container, { paddingBottom: insets.bottom || 20 }]}>
         <Text style={styles.title}>
