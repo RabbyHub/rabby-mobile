@@ -259,10 +259,19 @@ export default function DevDataKeyringVaultScreen(): JSX.Element {
         <Text style={styles.areaTitle}>Keyring Vault</Text>
 
         <Section title="Storage">
-          <InfoRow label="hasVault" value={formatBoolean(storageState?.hasVault)} />
-          <InfoRow label="vaultBytes" value={formatBytes(storageState?.vaultBytes)} />
+          <InfoRow
+            label="hasVault"
+            value={formatBoolean(storageState?.hasVault)}
+          />
+          <InfoRow
+            label="vaultBytes"
+            value={formatBytes(storageState?.vaultBytes)}
+          />
           <InfoRow label="vaultHash" value={storageState?.vaultHash || '-'} />
-          <InfoRow label="hasBooted" value={formatBoolean(storageState?.hasBooted)} />
+          <InfoRow
+            label="hasBooted"
+            value={formatBoolean(storageState?.hasBooted)}
+          />
           <InfoRow
             label="unencrypted"
             value={`${storageState?.unencryptedKeyringCount || 0} records`}

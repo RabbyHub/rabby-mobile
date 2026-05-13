@@ -969,8 +969,9 @@ export function createBusinessKeychainApi({
             return { ...keychainObject, actionSuccess: verifyResult.success };
           }
           case RequestGenericPurpose.DECRYPT_PWD: {
-            const credentialsWithVaultKey =
-              await attachTrustedVaultKeyString(decrypted);
+            const credentialsWithVaultKey = await attachTrustedVaultKeyString(
+              decrypted,
+            );
             await onPlainPassword?.(
               credentialsWithVaultKey.password,
               credentialsWithVaultKey,
