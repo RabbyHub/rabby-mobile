@@ -155,7 +155,6 @@ function FooterButtonGroup({
           containerStyle={footerStyles.btnContainer}
           buttonStyle={{
             backgroundColor: colors2024['neutral-bg-5'],
-            borderWidth: 0,
           }}
           height={48}
           titleStyle={{

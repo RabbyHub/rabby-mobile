@@ -3,7 +3,7 @@ import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { SwitchToggleType } from '@/components';
 import { useBiometrics } from '@/hooks/biometrics';
 import { useWalletPasswordInfo } from '@/screens/ManagePassword/useManagePassword';
-import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
+import { AuthenticationModal2024 as AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal2024';
 import { useTranslation } from 'react-i18next';
 import { apisKeychain, apisLock } from '@/core/apis';
 import { RequestGenericPurpose } from '@/core/apis/keychain';
