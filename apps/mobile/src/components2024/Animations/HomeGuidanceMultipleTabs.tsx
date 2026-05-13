@@ -26,7 +26,7 @@ import {
   makeDebugBorder,
   makeDevOnlyStyle,
 } from '@/utils/styles';
-import { IS_IOS, isTurboModuleEnabled } from '@/core/native/utils';
+import { IS_IOS } from '@/core/native/utils';
 
 import RcIconMultiTabGestureCC from './icons/MultiTabGesture-cc.svg';
 import RcIconMultiTabArrow from './icons/MultiTabArrow.svg';
@@ -363,7 +363,7 @@ export const HomeGuidanceMultipleTabs = ({
   };
 
   if (!secondaryIndicatorAbsLayout) return null;
-  if ((IS_IOS || isTurboModuleEnabled()) && !debouncedVisible) return null;
+  if (IS_IOS && !debouncedVisible) return null;
 
   return (
     // <GestureDetector gesture={panRightToLeftGesture} />

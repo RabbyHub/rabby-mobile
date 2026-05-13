@@ -461,10 +461,11 @@ diff --git a/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewMana
 index 5bae4aa9e66897473a9083a2c9320c99d72e80d7..456547621a60911296e878fe45d9aa55ae6ebf80 100644
 --- a/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java
 +++ b/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java
-@@ -331,6 +331,11 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper>
+@@ -331,6 +331,12 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper>
          mRNCWebViewManagerImpl.setWebviewDebuggingEnabled(view, value);
      }
  
++    @Override
 +    @ReactProp(name = "disableJsPromptLike")
 +    public void setDisableJsPromptLike(RNCWebViewWrapper view, boolean value) {
 +        mRNCWebViewManagerImpl.setDisableJsPromptLike(view, value);

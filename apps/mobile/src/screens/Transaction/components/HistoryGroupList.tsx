@@ -239,7 +239,7 @@ export const HistoryList = ({
       }
       onEndReached={loadMore}
       onEndReachedThreshold={0.5}
-      removeClippedSubviews={false}
+      removeClippedSubviews={true}
       ListFooterComponent={
         loadingMore ? (
           <>

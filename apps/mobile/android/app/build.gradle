@@ -8,10 +8,6 @@ def metroNodeMaxOldSpaceSize = System.getenv("RABBY_MOBILE_METRO_NODE_MAX_OLD_SP
 def metroNodeExecutableAndArgs = ["node"]
 def metroExtraPackagerArgs = []
 
-def isNewArchitectureEnabled() {
-    return rootProject.hasProperty("newArchEnabled") && rootProject.getProperty("newArchEnabled") == "true"
-}
-
 if (metroNodeMaxOldSpaceSize) {
     metroNodeExecutableAndArgs += ["--max-old-space-size=${metroNodeMaxOldSpaceSize}"]
 }
@@ -190,14 +186,7 @@ android {
     }
     sourceSets {
         main {
-            if (isNewArchitectureEnabled()) {
-                java.srcDirs += [
-                    "src/newarch",
-                    "${project.buildDir}/generated/source/codegen/java",
-                ]
-            } else {
-                java.srcDirs += ["src/oldarch"]
-            }
+            java.srcDirs += ["src/oldarch"]
         }
     }
 }

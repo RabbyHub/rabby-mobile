@@ -1,9 +1,6 @@
 import { makeRnEEClass, resolveNativeModule } from './utils';
-import { NativeModuleNames } from './specs/types';
 
-const { RNTimeChanged: nativeModule } = resolveNativeModule(
-  NativeModuleNames.RNTimeChanged,
-);
+const { RNTimeChanged: nativeModule } = resolveNativeModule('RNTimeChanged');
 
 type Listeners = {
   onTimeChanged: (ctx: {
