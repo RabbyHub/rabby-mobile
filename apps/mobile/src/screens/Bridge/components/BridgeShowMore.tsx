@@ -765,9 +765,11 @@ export const DirectSignGasInfo = ({
   );
 
   const handleChangeGasMethod = useCallback(
-    async (method: 'native' | 'gasAccount') => {
+    async (method: 'native' | 'gasAccount', options?: { manual?: boolean }) => {
       try {
-        instance.setGasMethod(method);
+        instance.setGasMethod(method, {
+          manual: options?.manual ?? true,
+        });
       } catch (error) {
         console.error('Gas method change error:', error);
       }
@@ -897,7 +899,7 @@ export const DirectSignGasInfo = ({
       });
 
       instance.replaceTxs(nextTxs);
-      instance.setGasMethod('gasAccount');
+      instance.setGasMethod('gasAccount', { manual: true });
       handleGasChange(ctx?.selectedGas);
     },
   );
@@ -921,7 +923,7 @@ export const DirectSignGasInfo = ({
     hasAutoSwitchedGasAccountRef.current = decision.nextHasAutoSwitched;
 
     if (decision.shouldSwitch) {
-      handleChangeGasMethod('gasAccount');
+      handleChangeGasMethod('gasAccount', { manual: false });
     }
   }, [handleChangeGasMethod, payGasByGasAccount, shouldAutoSwitchGasAccount]);
 

@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Pressable,
   TouchableOpacity,
@@ -29,7 +35,7 @@ import { formatGasHeaderUsdValue } from '@/utils/number';
 import { useGasAccountSign } from '@/screens/GasAccount/hooks/atom';
 import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 import {
-  shouldAutoOpenSignMainnetGasModal,
+  resolveSignMainnetAutoGasSelection,
   resolveSignMainnetGasLevelFetchNeeds,
   resolveSignMainnetGasLevelFetchMode,
   shouldFetchSignMainnetGasLevel,
@@ -80,6 +86,7 @@ export const SignMainnetHeaderContent = ({
   nativeTokenBalance,
   gasPriceMedian,
   account,
+  manuallyChangeGasLimit = false,
   fixedMode,
   defaultFixedModeOnCurrentChain,
   style,
@@ -121,6 +128,7 @@ export const SignMainnetHeaderContent = ({
   nativeTokenBalance: GasSelectorHeaderProps['nativeTokenBalance'];
   gasPriceMedian: GasSelectorHeaderProps['gasPriceMedian'];
   account: GasSelectorHeaderProps['account'];
+  manuallyChangeGasLimit?: GasSelectorHeaderProps['manuallyChangeGasLimit'];
   fixedMode: GasSelectorHeaderProps['fixedMode'];
   defaultFixedModeOnCurrentChain: GasSelectorHeaderProps['defaultFixedModeOnCurrentChain'];
   style?: RNViewProps['style'];
@@ -140,7 +148,6 @@ export const SignMainnetHeaderContent = ({
   const [gasAccountTipVisible, setGasAccountTipVisible] = useState(false);
   const [customVisible, setCustomVisible] = useState(false);
   const [showMoreOpen, setShowMoreOpen] = useState(false);
-  const [autoOpenSignal, setAutoOpenSignal] = useState(0);
   const hasOpenedOnceRef = useRef(false);
   const gasSettingsOpen = showMoreOpen || customVisible;
   const gasSettingsOpenRef = useRef(gasSettingsOpen);
@@ -198,6 +205,25 @@ export const SignMainnetHeaderContent = ({
   const selectedSupportedLevel = supportedLevels.find(
     gasLevel => gasLevel.level === selectedGas?.level,
   )?.level;
+  const selectedGasPriceFingerprint =
+    selectedGas && selectedSupportedLevel
+      ? [
+          selectedSupportedLevel,
+          String(selectedGas.price ?? ''),
+          String(selectedGas.priority_price ?? ''),
+          String(selectedGas.base_fee ?? ''),
+        ].join(':')
+      : null;
+  const initialGasPriceFingerprintRef = useRef<string | null>(null);
+  if (!initialGasPriceFingerprintRef.current && selectedGasPriceFingerprint) {
+    initialGasPriceFingerprintRef.current = selectedGasPriceFingerprint;
+  }
+  const hasGasPriceChangedAfterInit =
+    !!initialGasPriceFingerprintRef.current &&
+    !!selectedGasPriceFingerprint &&
+    initialGasPriceFingerprintRef.current !== selectedGasPriceFingerprint;
+  const autoDowngradeEnabled =
+    !manuallyChangeGasLimit && !hasGasPriceChangedAfterInit;
   const gasAccountUsable =
     gasAccountMethodSupported && !!gasAccountCost?.balance_is_enough;
   const isHeaderLoading = !isReady;
@@ -274,6 +300,22 @@ export const SignMainnetHeaderContent = ({
     setLevelState({});
   }, [levelFetchContextKey]);
 
+  const buildGasChange = useCallback(
+    (gasLevel: (typeof supportedLevels)[number]) => ({
+      ...gasLevel,
+      gasLimit: Number(gasLimit),
+      nonce: Number(nonce),
+      level: gasLevel.level,
+      maxPriorityFee: calcMaxPriorityFee(
+        gasList,
+        gasLevel,
+        chainId || 0,
+        !!(isCancel || isSpeedUp),
+      ),
+    }),
+    [chainId, gasLimit, gasList, isCancel, isSpeedUp, nonce],
+  );
+
   useEffect(() => {
     const contextId = ++fetchContextIdRef.current;
 
@@ -325,18 +367,7 @@ export const SignMainnetHeaderContent = ({
       };
       patchLevelState(gasLevel.level, { loading: true });
 
-      const gasChange = {
-        ...gasLevel,
-        gasLimit: Number(gasLimit),
-        nonce: Number(nonce),
-        level: gasLevel.level,
-        maxPriorityFee: calcMaxPriorityFee(
-          gasList,
-          gasLevel,
-          chainId || 0,
-          !!(isCancel || isSpeedUp),
-        ),
-      };
+      const gasChange = buildGasChange(gasLevel);
 
       Promise.all([
         needsNative
@@ -393,62 +424,64 @@ export const SignMainnetHeaderContent = ({
     });
   }, [
     chainId,
+    buildGasChange,
     checkGasLevelIsNotEnough,
     fetchMode,
     gasAccountMethodSupported,
     gasAccountCost,
     gasAccountUsable,
     gasCalcMethod,
-    gasLimit,
-    gasList,
-    isCancel,
     isReady,
-    isSpeedUp,
     nativeTokenInsufficient,
-    nonce,
     selectedSupportedLevel,
     showMoreOpen,
     supportedLevels,
     levelFetchContextKey,
   ]);
 
+  const autoGasSelection = resolveSignMainnetAutoGasSelection({
+    fetchMode,
+    autoDowngradeEnabled,
+    selectedSupportedLevel,
+    nativeTokenInsufficient: !!nativeTokenInsufficient,
+    gasAccountUsable,
+    gasAccountChainSupported: gasAccountMethodSupported,
+    levelState,
+  });
+
   useEffect(() => {
-    if (
-      showMoreOpen ||
-      hasOpenedOnceRef.current ||
-      !shouldAutoOpenSignMainnetGasModal({
-        fetchMode,
-        selectedSupportedLevel,
-        nativeTokenInsufficient: !!nativeTokenInsufficient,
-        gasAccountUsable,
-        gasAccountChainSupported: gasAccountMethodSupported,
-        levelState,
-      })
-    ) {
+    if (showMoreOpen || hasOpenedOnceRef.current || !autoGasSelection) {
+      return;
+    }
+
+    const targetGasLevel = supportedLevels.find(
+      gasLevel => gasLevel.level === autoGasSelection.level,
+    );
+    if (!targetGasLevel) {
       return;
     }
 
     hasOpenedOnceRef.current = true;
-    setAutoOpenSignal(signal => signal + 1);
+    if (gasMethod !== autoGasSelection.gasMethod) {
+      onChangeGasMethod?.(autoGasSelection.gasMethod);
+    }
+    if (selectedSupportedLevel !== autoGasSelection.level) {
+      onChange(buildGasChange(targetGasLevel));
+    }
   }, [
-    fetchMode,
-    gasAccountMethodSupported,
-    gasAccountUsable,
-    levelState,
-    nativeTokenInsufficient,
+    autoGasSelection,
+    buildGasChange,
+    gasMethod,
+    onChange,
+    onChangeGasMethod,
     selectedSupportedLevel,
     showMoreOpen,
+    supportedLevels,
   ]);
-
-  console.log('SignMainnetHeaderContent', {
-    displayGasMethod,
-    levelState,
-  });
 
   return (
     <>
       <DirectSignGasInfoUI
-        autoOpenSignal={autoOpenSignal}
         style={style}
         loading={isHeaderLoading}
         empty={isHeaderError}
@@ -615,6 +648,7 @@ export const SignMainnetGasSelectorHeader = (
       gasToken={props.gasToken}
       gasPriceMedian={props.gasPriceMedian}
       account={props.account}
+      manuallyChangeGasLimit={props.manuallyChangeGasLimit}
       fixedMode={props.fixedMode}
       defaultFixedModeOnCurrentChain={props.defaultFixedModeOnCurrentChain}
       showTempoGasTokenSelector={props.showTempoGasTokenSelector}

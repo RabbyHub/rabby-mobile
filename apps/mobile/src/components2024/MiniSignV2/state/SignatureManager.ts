@@ -28,6 +28,10 @@ import {
 } from '@/hooks/onekey/useOneKeyStatus';
 import { transactionHistoryService } from '@/core/services';
 import { getMiniSignGasPanelController } from './MiniSignGasPanelController';
+import {
+  getManualMiniSignGasMethodState,
+  type PreservedManualMiniSignGasMethodState,
+} from './gasPaymentState';
 
 const ETH_GAS_USD_LIMIT = 15;
 const OTHER_GAS_USD_LIMIT = 5;
@@ -69,6 +73,7 @@ export class SignatureManager {
   private seq = 0;
   private pendingCtx = new Map<string, Promise<SignerCtx>>();
   private notifyScheduled = false;
+  private manualGasMethodState?: PreservedManualMiniSignGasMethodState;
 
   private pendingResult: {
     resolve: (hashes: string[]) => void;
@@ -117,6 +122,13 @@ export class SignatureManager {
       : OTHER_GAS_USD_LIMIT;
   }
 
+  private getPreservedManualGasMethodState() {
+    return (
+      this.manualGasMethodState ||
+      getManualMiniSignGasMethodState(this.state.ctx)
+    );
+  }
+
   private isGasFeeTooHighFor(
     ctx?: SignerCtx | null,
     config?: SignerConfig | null,
@@ -155,7 +167,11 @@ export class SignatureManager {
     );
   }
 
-  private ensureContext(request: SignatureRequest, opId?: number) {
+  private ensureContext(
+    request: SignatureRequest,
+    opId?: number,
+    preservedManualGasMethod?: PreservedManualMiniSignGasMethodState,
+  ) {
     const fingerprint = this.getFingerprint(request.txs);
 
     this.dispatch({ type: 'SET_CONFIG', payload: request.config });
@@ -171,7 +187,11 @@ export class SignatureManager {
     const cached = this.pendingCtx.get(fingerprint);
     if (cached) return cached;
     const currentOpId = this.markRun(fingerprint, opId);
-    const skeleton = this.createSkeletonCtx(request.txs, fingerprint);
+    const skeleton = this.createSkeletonCtx(
+      request.txs,
+      fingerprint,
+      preservedManualGasMethod || this.getPreservedManualGasMethodState(),
+    );
 
     this.dispatch({
       type: 'PREFETCH_START',
@@ -215,7 +235,11 @@ export class SignatureManager {
     return promise;
   }
 
-  private createSkeletonCtx(txs: Tx[], fingerprint: string): SignerCtx {
+  private createSkeletonCtx(
+    txs: Tx[],
+    fingerprint: string,
+    preservedManualGasMethod?: PreservedManualMiniSignGasMethodState,
+  ): SignerCtx {
     const chainId = txs[0]?.chainId || 0;
     return {
       fingerprint,
@@ -233,8 +257,10 @@ export class SignatureManager {
       gasless: undefined,
       gasAccount: undefined,
       engineResults: undefined,
-      gasMethod: 'native',
-      useGasless: false,
+      gasMethod: preservedManualGasMethod?.gasMethod || 'native',
+      gasMethodManuallyChanged:
+        preservedManualGasMethod?.gasMethodManuallyChanged,
+      useGasless: preservedManualGasMethod?.useGasless || false,
       noCustomRPC: undefined,
       supportedAddrType: undefined,
       error: undefined,
@@ -314,8 +340,9 @@ export class SignatureManager {
   };
 
   public prefetch(request: SignatureRequest) {
+    const preservedManualGasMethod = this.getPreservedManualGasMethodState();
     this.close();
-    return this.ensureContext(request);
+    return this.ensureContext(request, undefined, preservedManualGasMethod);
   }
 
   public async openUI(request: SignatureRequest) {
@@ -326,7 +353,11 @@ export class SignatureManager {
     const prepared =
       this.pendingCtx.get(fingerprint) || this.ensureContext(request, opId);
 
-    const skeleton = this.createSkeletonCtx(request.txs, fingerprint);
+    const skeleton = this.createSkeletonCtx(
+      request.txs,
+      fingerprint,
+      this.getPreservedManualGasMethodState(),
+    );
     this.dispatch({ type: 'OPEN_UI_SKELETON', fingerprint, ctx: skeleton });
 
     try {
@@ -655,16 +686,41 @@ export class SignatureManager {
       fingerprint,
       ctx: { ...ctx, useGasless } as SignerCtx,
     });
+    if (ctx.gasMethodManuallyChanged && ctx.gasMethod === 'native') {
+      this.manualGasMethodState = getManualMiniSignGasMethodState({
+        ...ctx,
+        useGasless,
+      });
+    }
   }
 
-  public setGasMethod(method: 'native' | 'gasAccount') {
+  public setGasMethod(
+    method: 'native' | 'gasAccount',
+    options?: { manual?: boolean },
+  ) {
     const { ctx, fingerprint } = this.state;
     if (!ctx || !fingerprint) return;
+    if (options?.manual === false && ctx.gasMethodManuallyChanged) {
+      return;
+    }
+    const nextCtx = {
+      ...ctx,
+      gasMethod: method,
+      gasMethodManuallyChanged:
+        options?.manual === true ? true : ctx.gasMethodManuallyChanged,
+    } as SignerCtx;
+    if (options?.manual === true) {
+      this.manualGasMethodState = getManualMiniSignGasMethodState(nextCtx);
+    }
     this.dispatch({
       type: 'UPDATE_CTX',
       fingerprint,
-      ctx: { ...ctx, gasMethod: method } as SignerCtx,
+      ctx: nextCtx,
     });
+  }
+
+  public clearManualGasMethodState() {
+    this.manualGasMethodState = undefined;
   }
 
   public setTempoFeeToken(

@@ -1,7 +1,8 @@
 import { resolveApprovalGasMethod } from '@/components/Approval/components/TxComponents/GasSelector/approvalGasDisplay';
 
-type MiniSignGasState = {
+export type MiniSignGasState = {
   gasMethod?: 'native' | 'gasAccount';
+  gasMethodManuallyChanged?: boolean;
   useGasless?: boolean;
   noCustomRPC?: boolean;
   isGasNotEnough?: boolean;
@@ -12,6 +13,11 @@ type MiniSignGasState = {
     chain_not_support?: boolean;
   } | null;
 };
+
+export type PreservedManualMiniSignGasMethodState = Pick<
+  MiniSignGasState,
+  'gasMethod' | 'gasMethodManuallyChanged' | 'useGasless'
+>;
 
 export type MiniSignSubmitGasMode = 'native' | 'gasAccount' | 'gasless';
 
@@ -50,6 +56,37 @@ export const normalizeMiniSignGasState = <T extends MiniSignGasState>(
     ...state,
     gasMethod: nextGasMethod,
     useGasless: nextUseGasless,
+  };
+};
+
+export const preserveManualMiniSignGasMethod = <T extends MiniSignGasState>(
+  previousState: MiniSignGasState | undefined,
+  nextState: T,
+): T => {
+  const preservedState = getManualMiniSignGasMethodState(previousState);
+  if (!preservedState?.gasMethod) {
+    return nextState;
+  }
+
+  return {
+    ...nextState,
+    gasMethod: preservedState.gasMethod,
+    gasMethodManuallyChanged: true,
+    useGasless: preservedState.useGasless,
+  };
+};
+
+export const getManualMiniSignGasMethodState = (
+  state: MiniSignGasState | undefined,
+): PreservedManualMiniSignGasMethodState | undefined => {
+  if (!state?.gasMethodManuallyChanged || !state.gasMethod) {
+    return undefined;
+  }
+
+  return {
+    gasMethod: state.gasMethod,
+    gasMethodManuallyChanged: true,
+    useGasless: state.gasMethod === 'gasAccount' ? false : state.useGasless,
   };
 };
 
