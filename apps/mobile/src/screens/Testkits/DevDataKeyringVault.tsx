@@ -150,19 +150,46 @@ export default function DevDataKeyringVaultScreen(): JSX.Element {
     [refresh],
   );
 
+  const primeTrustedVaultKeyString = useCallback(
+    async (plainPassword: string) => {
+      const trustedVaultKeyString =
+        await apisKeyringVaultDebug.exportTrustedVaultKeyString(plainPassword);
+      await apisKeychain.cacheTrustedVaultKeyString(
+        plainPassword,
+        trustedVaultKeyString,
+      );
+      return trustedVaultKeyString;
+    },
+    [],
+  );
+
   const handleMeasurePassword = useCallback(() => {
     runAction('Measure password path', async () => {
       assertVault(storageState);
       assertPassword(password);
-      setTimings(
-        await apisKeyringVaultDebug.measureUnlockPaths({
-          password,
-          measurePassword: true,
-          measureCachedKey: false,
-        }),
-      );
+      const nextTimings = await apisKeyringVaultDebug.measureUnlockPaths({
+        password,
+        measurePassword: true,
+        measureCachedKey: false,
+      });
+
+      setTimings(nextTimings);
+
+      if (nextTimings.some(item => item.success)) {
+        try {
+          await primeTrustedVaultKeyString(password);
+          setLastBiometricHasCachedKey(true);
+          setLastMessage('Cached key primed from the password path.');
+        } catch (error) {
+          setLastMessage(
+            `Password path measured, but cache prime failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          );
+        }
+      }
     });
-  }, [password, runAction, storageState]);
+  }, [password, primeTrustedVaultKeyString, runAction, storageState]);
 
   const handleMeasureCachedKey = useCallback(() => {
     runAction('Measure cached-key path', async () => {
@@ -171,11 +198,22 @@ export default function DevDataKeyringVaultScreen(): JSX.Element {
 
       await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.DECRYPT_PWD,
-        onPlainPassword: async (_plainPassword, credentials) => {
-          const trustedVaultKeyString =
+        onPlainPassword: async (plainPassword, credentials) => {
+          let trustedVaultKeyString =
             typeof credentials?.vaultKeyString === 'string'
               ? credentials.vaultKeyString
               : undefined;
+          let primedCachedKey = false;
+
+          if (!trustedVaultKeyString) {
+            trustedVaultKeyString = await primeTrustedVaultKeyString(
+              plainPassword,
+            );
+            if (credentials) {
+              credentials.vaultKeyString = trustedVaultKeyString;
+            }
+            primedCachedKey = true;
+          }
 
           setLastBiometricHasCachedKey(!!trustedVaultKeyString);
           measured = true;
@@ -186,6 +224,12 @@ export default function DevDataKeyringVaultScreen(): JSX.Element {
               measureCachedKey: true,
             }),
           );
+
+          if (primedCachedKey) {
+            setLastMessage(
+              'Cached key was missing; generated and cached it before measuring.',
+            );
+          }
         },
       });
 
@@ -193,7 +237,7 @@ export default function DevDataKeyringVaultScreen(): JSX.Element {
         throw new Error('Biometrics did not return a password payload.');
       }
     });
-  }, [runAction, storageState]);
+  }, [primeTrustedVaultKeyString, runAction, storageState]);
 
   const storageText = useMemo(
     () => formatJson(storageState || {}),

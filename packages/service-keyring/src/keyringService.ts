@@ -989,6 +989,25 @@ export class KeyringService extends RNEventEmitter {
     };
   }
 
+  async debugExportTrustedVaultKeyString(password: string): Promise<string> {
+    const encryptedVault = this.store.getState().vault;
+
+    if (!encryptedVault) {
+      throw new Error('Missing vault');
+    }
+
+    const detail = await this.encryptor.decryptWithDetail(
+      password,
+      encryptedVault,
+    );
+
+    if (!detail.exportedKeyString) {
+      throw new Error('Missing exported vault key');
+    }
+
+    return detail.exportedKeyString;
+  }
+
   private async measureVaultRestorePath(
     label: string,
     source: KeyringVaultTimingResult['source'],

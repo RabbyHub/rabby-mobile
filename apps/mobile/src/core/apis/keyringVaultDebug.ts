@@ -25,6 +25,7 @@ type KeyringServiceWithVaultDebug = typeof keyringService & {
       keyringCount?: number;
     }>
   >;
+  debugExportTrustedVaultKeyString: (password: string) => Promise<string>;
 };
 
 const vaultDebugService = keyringService as KeyringServiceWithVaultDebug;
@@ -40,4 +41,8 @@ export function measureUnlockPaths(options: {
   measureCachedKey?: boolean;
 }) {
   return vaultDebugService.debugMeasureUnlockPaths(options);
+}
+
+export function exportTrustedVaultKeyString(password: string) {
+  return vaultDebugService.debugExportTrustedVaultKeyString(password);
 }
