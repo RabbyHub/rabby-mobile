@@ -95,7 +95,7 @@ const MiniSignTxV2 = ({
   const handleChangeGasMethod = useCallback(
     async (method: 'native' | 'gasAccount') => {
       try {
-        instance.setGasMethod(method);
+        instance.setGasMethod(method, { manual: true });
       } catch (error) {
         console.error('Gas method change error:', error);
       }
@@ -137,7 +137,7 @@ const MiniSignTxV2 = ({
       if (ctx.selectedGas) {
         await handleGasChange(ctx.selectedGas as any);
       }
-      instance.setGasMethod('gasAccount');
+      instance.setGasMethod('gasAccount', { manual: true });
     },
   );
 

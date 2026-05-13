@@ -49,6 +49,7 @@ export const useMiniSigner = ({
 
   useEffect(() => {
     return () => {
+      instance.clearManualGasMethodState();
       registry.destroy(instance.instanceId);
     };
   }, [instance]);
@@ -92,12 +93,16 @@ export const useMiniSigner = ({
   }, [resetGasStore]);
 
   const previousChainServerIdRef = useRef(chainServerId);
+  const previousAccountKeyRef = useRef(
+    `${account?.type || ''}:${account?.address || ''}`,
+  );
 
   useEffect(() => {
     if (!autoResetGasStoreOnChainChange) return;
     if (previousChainServerIdRef.current === chainServerId) return;
 
     previousChainServerIdRef.current = chainServerId;
+    instance.clearManualGasMethodState();
 
     if (miniGasLevel === 'custom') {
       resetGasStore();
@@ -105,9 +110,18 @@ export const useMiniSigner = ({
   }, [
     autoResetGasStoreOnChainChange,
     chainServerId,
+    instance,
     miniGasLevel,
     resetGasStore,
   ]);
+
+  useEffect(() => {
+    const accountKey = `${account?.type || ''}:${account?.address || ''}`;
+    if (previousAccountKeyRef.current === accountKey) return;
+
+    previousAccountKeyRef.current = accountKey;
+    instance.clearManualGasMethodState();
+  }, [account?.address, account?.type, instance]);
 
   const updateMiniGasStore = useCallback(
     (params: {

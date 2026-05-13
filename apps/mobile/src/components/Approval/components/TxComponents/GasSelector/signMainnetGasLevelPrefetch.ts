@@ -74,39 +74,39 @@ export const shouldFetchSignMainnetGasLevel = ({
   );
 };
 
-export const hasUsableSiblingSignMainnetGasLevel = ({
-  selectedSupportedLevel,
+const isNativeGasLevelUsable = (
+  state?: SignMainnetGasLevelState[SignMainnetSupportedGasLevel],
+) => state?.nativeNotEnough === false;
+
+const isGasAccountGasLevelUsable = ({
+  state,
   gasAccountChainSupported,
-  levelState,
 }: {
-  selectedSupportedLevel?: SignMainnetSupportedGasLevel;
+  state?: SignMainnetGasLevelState[SignMainnetSupportedGasLevel];
   gasAccountChainSupported: boolean;
-  levelState: SignMainnetGasLevelState;
 }) =>
-  SIGN_MAINNET_SUPPORTED_GAS_LEVELS.some(level => {
-    if (level === selectedSupportedLevel) {
-      return false;
-    }
+  !!(
+    gasAccountChainSupported &&
+    state?.gasAccount &&
+    state.gasAccount[0] === false
+  );
 
-    const state = levelState[level];
-    if (!state) {
-      return false;
-    }
+const getSignMainnetDowngradeLevels = (
+  selectedSupportedLevel: SignMainnetSupportedGasLevel,
+) => {
+  const selectedIndex = SIGN_MAINNET_SUPPORTED_GAS_LEVELS.indexOf(
+    selectedSupportedLevel,
+  );
 
-    if (state.nativeUsd !== undefined && state.nativeNotEnough === false) {
-      return true;
-    }
+  return SIGN_MAINNET_SUPPORTED_GAS_LEVELS.slice(
+    0,
+    selectedIndex + 1,
+  ).reverse();
+};
 
-    return !!(
-      gasAccountChainSupported &&
-      state.nativeNotEnough === true &&
-      state.gasAccount &&
-      state.gasAccount[0] === false
-    );
-  });
-
-export const shouldAutoOpenSignMainnetGasModal = ({
+export const resolveSignMainnetAutoGasSelection = ({
   fetchMode,
+  autoDowngradeEnabled = true,
   selectedSupportedLevel,
   nativeTokenInsufficient,
   gasAccountUsable,
@@ -114,17 +114,62 @@ export const shouldAutoOpenSignMainnetGasModal = ({
   levelState,
 }: {
   fetchMode: 'idle' | 'prefetch' | 'open';
+  autoDowngradeEnabled?: boolean;
   selectedSupportedLevel?: SignMainnetSupportedGasLevel;
   nativeTokenInsufficient: boolean;
   gasAccountUsable: boolean;
   gasAccountChainSupported: boolean;
   levelState: SignMainnetGasLevelState;
-}) =>
-  fetchMode === 'prefetch' &&
-  nativeTokenInsufficient &&
-  !gasAccountUsable &&
-  hasUsableSiblingSignMainnetGasLevel({
-    selectedSupportedLevel,
-    gasAccountChainSupported,
-    levelState,
-  });
+}): null | {
+  gasMethod: 'native' | 'gasAccount';
+  level: SignMainnetSupportedGasLevel;
+} => {
+  if (
+    fetchMode !== 'prefetch' ||
+    !autoDowngradeEnabled ||
+    !selectedSupportedLevel ||
+    !nativeTokenInsufficient ||
+    gasAccountUsable
+  ) {
+    return null;
+  }
+
+  const levelsToCheck = getSignMainnetDowngradeLevels(selectedSupportedLevel);
+
+  for (const level of levelsToCheck) {
+    const state = levelState[level];
+
+    if (level !== selectedSupportedLevel) {
+      if (state?.nativeNotEnough === undefined) {
+        return null;
+      }
+
+      if (isNativeGasLevelUsable(state)) {
+        return {
+          gasMethod: 'native',
+          level,
+        };
+      }
+    }
+
+    if (gasAccountChainSupported) {
+      if (!state?.gasAccount) {
+        return null;
+      }
+
+      if (
+        isGasAccountGasLevelUsable({
+          state,
+          gasAccountChainSupported,
+        })
+      ) {
+        return {
+          gasMethod: 'gasAccount',
+          level,
+        };
+      }
+    }
+  }
+
+  return null;
+};
