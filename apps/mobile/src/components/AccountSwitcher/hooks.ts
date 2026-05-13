@@ -203,7 +203,7 @@ export function startFetchOnceTop5TokensForAllAccounts() {
     fetchTop5TokensForAllAccountsOnce();
     sub.remove();
   };
-  const sub = perfEvents.subscribe('USER_MANUALLY_UNLOCK', onUnlock);
+  const sub = perfEvents.subscribe('USER_MANUALLY_UNLOCK_UI_READY', onUnlock);
 }
 
 export function useTopTokensForAddress(options?: {

@@ -1,7 +1,13 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
-import { View, Platform, Keyboard, KeyboardAvoidingView } from 'react-native';
+import {
+  View,
+  Platform,
+  Keyboard,
+  KeyboardAvoidingView,
+  InteractionManager,
+} from 'react-native';
 import * as Yup from 'yup';
 
 import { default as RcRabbyLogoLight } from './icons/icon-with-logo-light.svg';
@@ -53,6 +59,7 @@ import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { startUnlockScreenBootstrapWarmups } from '@/setup-app-before-render';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
+import { logger } from '@/utils/logger';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -89,7 +96,82 @@ const LAYOUTS = {
 };
 
 const isIOS = Platform.OS === 'ios';
+const isAndroid = Platform.OS === 'android';
 const BiometricsIconSize = 76;
+const UNLOCK_SCREEN_WARMUP_DELAY_MS = 250;
+const POST_UNLOCK_WARMUP_DELAY_MS = 800;
+const POST_UNLOCK_UI_READY_DELAY_MS = 350;
+
+const unlockWarmupsStateRef = {
+  promise: null as Promise<void> | null,
+};
+
+function startUnlockWarmups(reason: string) {
+  if (unlockWarmupsStateRef.promise) {
+    return unlockWarmupsStateRef.promise;
+  }
+
+  unlockWarmupsStateRef.promise = Promise.allSettled([
+    startUnlockScreenBootstrapWarmups(),
+    preloadTransactionHotNavigator(),
+  ]).then(results => {
+    results.forEach(result => {
+      if (result.status === 'rejected') {
+        console.error(`startUnlockWarmups::${reason}::error`, result.reason);
+      }
+    });
+  });
+
+  return unlockWarmupsStateRef.promise;
+}
+
+function scheduleUnlockWarmupsAfterInteractions(
+  reason: string,
+  delayMs: number,
+) {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const interactionHandle = InteractionManager.runAfterInteractions(() => {
+    timeoutId = setTimeout(() => {
+      startUnlockWarmups(reason).catch(error => {
+        console.error(
+          `scheduleUnlockWarmupsAfterInteractions::${reason}`,
+          error,
+        );
+      });
+    }, delayMs);
+  });
+
+  return () => {
+    interactionHandle.cancel?.();
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  };
+}
+
+function nextFrame() {
+  return new Promise<void>(resolve => {
+    requestAnimationFrame(() => resolve());
+  });
+}
+
+function notifyUnlockUIReadyAfterHomePaint() {
+  if (!isAndroid) {
+    apisLock.notifyUserManuallyUnlockUIReady();
+    return;
+  }
+
+  traceAndroidUnlockPerf('unlock_ui_ready_notify_deferred_start', {
+    delayMs: POST_UNLOCK_UI_READY_DELAY_MS,
+  });
+
+  InteractionManager.runAfterInteractions(() => {
+    setTimeout(() => {
+      traceAndroidUnlockPerf('unlock_ui_ready_notify_deferred_fire');
+      apisLock.notifyUserManuallyUnlockUIReady();
+    }, POST_UNLOCK_UI_READY_DELAY_MS);
+  });
+}
 
 const prevFailedRef = { hide: null as (() => void) | null };
 const toastFailed = toastWithIcon(RcIconInfoForToast);
@@ -99,9 +181,20 @@ const toastBiometricsFailed = (message?: string) => {
 };
 const toastUnlocking = () =>
   toastIndicator(i18next.t('page.unlock.unlocking'), {
-    duration: 3000,
     isTop: true,
   });
+
+function traceAndroidUnlockPerf(
+  event: string,
+  data: Record<string, unknown> = {},
+) {
+  if (!isAndroid) {
+    return;
+  }
+
+  logger.info(`[RabbyUnlockPerf:unlock] ${event}`, data);
+  console.info('[RabbyUnlockPerf:unlock]', event, data);
+}
 
 export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
   const { isFaceID = isIOS, size = BiometricsIconSize } = props;
@@ -114,7 +207,10 @@ export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
 }
 
 const INIT_DATA = { password: __DEV__ ? (APP_TEST_PWD as string) : '' };
-function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
+function useUnlockForm(
+  navigation: ReturnType<typeof useRabbyAppNavigation>,
+  onUnlocked?: () => void,
+) {
   const { t } = useTranslation();
   const yupSchema = React.useMemo(() => {
     return Yup.object({
@@ -128,13 +224,26 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
       return;
     }
 
-    requestAnimationFrame(() => {
-      UnlockUIManager.markUnlockedOnce();
-      UnlockUIManager.resetNavOnUIUnlock();
+    storeApisUnlock.startLeaveFromUnlock();
+    traceAndroidUnlockPerf('unlock_ui_leave_start');
+
+    await new Promise<void>((resolve, reject) => {
+      requestAnimationFrame(() => {
+        Promise.resolve()
+          .then(async () => {
+            UnlockUIManager.markUnlockedOnce();
+            await UnlockUIManager.resetNavOnUIUnlock();
+          })
+          .then(resolve, reject);
+      });
     });
 
+    await nextFrame();
     storeApisUnlock.afterLeaveFromUnlock();
-  }, []);
+    traceAndroidUnlockPerf('unlock_ui_leave_end');
+    notifyUnlockUIReadyAfterHomePaint();
+    onUnlocked?.();
+  }, [onUnlocked]);
 
   const { tipEnableBiometrics } = useTipedUserEnableBiometrics();
 
@@ -167,11 +276,12 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
           toast.show(result.toastError || result.error);
         } else {
           updateUnlockTime();
+          await checkUnlocked();
         }
       } catch (error) {
         console.error(error);
+        storeApisUnlock.resetUnlocking();
       } finally {
-        checkUnlocked();
         hideToast?.();
       }
     },
@@ -208,14 +318,16 @@ export default function UnlockScreen() {
   const {
     computed: { isBiometricsEnabled, isFaceID },
   } = useBiometrics({ autoFetch: true });
-  const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
-    useUnlockForm(navigation);
-
-  React.useEffect(() => {
-    preloadTransactionHotNavigator().catch(error => {
-      console.error('preloadTransactionHotNavigator::error', error);
-    });
+  const schedulePostUnlockWarmups = React.useCallback(() => {
+    scheduleUnlockWarmupsAfterInteractions(
+      'post_unlock',
+      POST_UNLOCK_WARMUP_DELAY_MS,
+    );
   }, []);
+  const { isUnlocking, formik, shouldDisabled, checkUnlocked } = useUnlockForm(
+    navigation,
+    schedulePostUnlockWarmups,
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -225,13 +337,17 @@ export default function UnlockScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      if (isBiometricsEnabled && !params?.disableAutoTriggerUnlock) {
+        return;
+      }
+
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
       const frameId = requestAnimationFrame(() => {
         timeoutId = setTimeout(() => {
-          startUnlockScreenBootstrapWarmups().catch(error => {
-            console.error('startUnlockScreenBootstrapWarmups::error', error);
+          startUnlockWarmups('unlock_screen_focus').catch(error => {
+            console.error('startUnlockWarmups::unlock_screen_focus', error);
           });
-        }, 250);
+        }, UNLOCK_SCREEN_WARMUP_DELAY_MS);
       });
 
       return () => {
@@ -240,7 +356,7 @@ export default function UnlockScreen() {
           clearTimeout(timeoutId);
         }
       };
-    }, []),
+    }, [isBiometricsEnabled, params?.disableAutoTriggerUnlock]),
   );
 
   const [usingBiometrics, setUsingBiometrics] = useState(isBiometricsEnabled);
@@ -257,25 +373,70 @@ export default function UnlockScreen() {
   const { onTouchInputAway } = useInputBlurOnTouchaway(passwordInputRef);
 
   const unlockWithBiometrics = useCallback(async () => {
+    const startedAt = Date.now();
+    const hidePostAuthToastRef = {
+      current: null as null | (() => void),
+    };
     try {
+      traceAndroidUnlockPerf('request_biometrics_start', {
+        isFaceID,
+      });
       await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.DECRYPT_PWD,
         onPlainPassword: async password => {
+          traceAndroidUnlockPerf('on_plain_password', {
+            elapsedMs: Date.now() - startedAt,
+          });
+          if (!isFaceID) {
+            hidePostAuthToastRef.current = toastUnlocking();
+          }
           measureTime.start('UnlockWithBiometrics');
-          const result = await storeApisUnlock.unlockApp(password);
-          const timeResult = measureTime.end('UnlockWithBiometrics');
-          reportUnlockTime(timeResult.diff, 'biometrics');
+          try {
+            traceAndroidUnlockPerf('unlock_app_start', {
+              elapsedMs: Date.now() - startedAt,
+            });
+            const result = await storeApisUnlock.unlockApp(password, {
+              deferMemStoreKeyringsUpdate: isAndroid,
+            });
+            const timeResult = measureTime.end('UnlockWithBiometrics');
+            reportUnlockTime(timeResult.diff, 'biometrics');
 
-          if (result.error) {
-            throw new Error(result.error);
+            traceAndroidUnlockPerf('unlock_app_end', {
+              elapsedMs: Date.now() - startedAt,
+              unlockMs: timeResult.diff,
+              hasError: !!result.error,
+            });
+
+            if (result.error) {
+              throw new Error(result.error);
+            }
+
+            await checkUnlocked();
+            traceAndroidUnlockPerf('check_unlocked_end', {
+              elapsedMs: Date.now() - startedAt,
+            });
+          } finally {
+            hidePostAuthToastRef.current?.();
+            hidePostAuthToastRef.current = null;
           }
         },
       });
+      traceAndroidUnlockPerf('request_biometrics_end', {
+        elapsedMs: Date.now() - startedAt,
+      });
       updateUnlockTime();
     } catch (error: any) {
+      hidePostAuthToastRef.current?.();
+      traceAndroidUnlockPerf('request_biometrics_error', {
+        elapsedMs: Date.now() - startedAt,
+        code: error?.code,
+        message: error?.message,
+      });
       if (__DEV__) {
         console.error(error);
       }
+
+      storeApisUnlock.resetUnlocking();
 
       if (__DEV__ && incToReset() === 0) {
         toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
@@ -314,7 +475,7 @@ export default function UnlockScreen() {
         }
       }
     }
-  }, [t]);
+  }, [checkUnlocked, isFaceID, t]);
 
   const lockBiometricRef = React.useRef(false);
   const processUnlockWithBiometrics = useCallback(async () => {
@@ -322,20 +483,18 @@ export default function UnlockScreen() {
       return;
     }
     lockBiometricRef.current = true;
-    if (!isFaceID) {
+    if (!isFaceID && !isAndroid) {
       const hideToast = toastUnlocking();
       await unlockWithBiometrics().finally(() => {
-        checkUnlocked();
         lockBiometricRef.current = false;
       });
       hideToast();
     } else {
       await unlockWithBiometrics().finally(() => {
-        checkUnlocked();
         lockBiometricRef.current = false;
       });
     }
-  }, [isFaceID, unlockWithBiometrics, checkUnlocked]);
+  }, [isFaceID, unlockWithBiometrics]);
 
   useLayoutEffect(() => {
     incToReset(true);

@@ -26,7 +26,6 @@ import {
 import type { RootStackParamsList } from '@/navigation-type';
 import { setIOSScreenCapture } from './native/security';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
-import * as apisAccount from '@/core/apis/account';
 import * as apisLock from '@/core/apis/lock';
 import { IS_IOS } from '@/core/native/utils';
 import {
@@ -550,12 +549,13 @@ export class UnlockUIManager {
         navigationRouteStore.getState().currentRouteName !== RootNames.Unlock
       )
         return;
-      const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
+      if (hasUnlockOnce) {
+        resetNavigationTo(navigation, 'Home');
+        unlockUIState.finishedUnlockResetNav = true;
+        return;
+      }
 
-      resetNavigationTo(
-        navigation,
-        !hasAccountsInKeyring && !hasUnlockOnce ? 'GetStarted' : 'Home',
-      );
+      resetNavigationTo(navigation, 'Home');
       unlockUIState.finishedUnlockResetNav = true;
     };
     if (unlockUIState.resetNaviOnTopOfHomeWhenUnlockRef) {

@@ -58,6 +58,7 @@ import static com.facebook.react.bridge.Arguments.makeNativeArray;
 public class KeychainModule extends ReactContextBaseJavaModule {
   //region Constants
   public static final String KEYCHAIN_MODULE = "RNRabbyKeychainManager";
+  public static final String PERF_TAG = "RabbyKeychainPerf";
   public static final String FINGERPRINT_SUPPORTED_NAME = "Fingerprint";
   public static final String FACE_SUPPORTED_NAME = "Face";
   public static final String IRIS_SUPPORTED_NAME = "Iris";
@@ -379,6 +380,13 @@ public class KeychainModule extends ReactContextBaseJavaModule {
       final String rules = getSecurityRulesOrDefault(options);
       final boolean allowAuthenticatedSessionReuse =
         getAndroidAllowAuthenticatedSessionReuseOrDefault(options);
+      Log.i(
+        PERF_TAG,
+        "get_generic_password_start service=" + alias +
+          " storage=" + storageName +
+          " rules=" + rules +
+          " allowSessionReuse=" + allowAuthenticatedSessionReuse
+      );
 
       if (mKeyguardManager == null) {
         mKeyguardManager = (KeyguardManager) mReactContext.getSystemService(mReactContext.KEYGUARD_SERVICE);
@@ -414,12 +422,19 @@ public class KeychainModule extends ReactContextBaseJavaModule {
       credentials.putString(Maps.PASSWORD, decryptionResult.password);
       credentials.putString(Maps.STORAGE, cipher.getCipherStorageName());
 
+      Log.i(
+        PERF_TAG,
+        "get_generic_password_resolve service=" + alias +
+          " storage=" + cipher.getCipherStorageName()
+      );
       promise.resolve(credentials);
     } catch (KeyStoreAccessException e) {
+      Log.i(PERF_TAG, "get_generic_password_error service=" + alias + " error=KeyStoreAccessException");
       Log.e(KEYCHAIN_MODULE, e.getMessage());
 
       promise.reject(Errors.E_KEYSTORE_ACCESS_ERROR, e);
     } catch (CryptoFailedException e) {
+      Log.i(PERF_TAG, "get_generic_password_error service=" + alias + " error=CryptoFailedException");
       if (e.getCause() != null && e.getCause().getMessage() == "User not authenticated") {
         mOptions = options;
         mPromise = promise;
@@ -430,6 +445,7 @@ public class KeychainModule extends ReactContextBaseJavaModule {
         promise.reject(E_CRYPTO_FAILED, e);
       }
     } catch (Throwable fail) {
+      Log.i(PERF_TAG, "get_generic_password_error service=" + alias + " error=" + fail.getClass().getSimpleName());
       Log.e(KEYCHAIN_MODULE, fail.getMessage(), fail);
 
       promise.reject(Errors.E_UNKNOWN_ERROR, fail);

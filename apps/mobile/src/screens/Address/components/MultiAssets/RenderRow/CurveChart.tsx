@@ -30,6 +30,7 @@ import { refreshDayCurve } from '@/store/curve24h';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { useHomeStartupReady } from '@/core/utils/homeStartupReady';
 import { Text, AnimateableText } from '@/components/Typography';
 import { useHomePortfolioStore } from '@/screens/Home/hooks/useHomePortfolioSummary';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
@@ -158,10 +159,14 @@ export const MultiChart = memo(function MultiChart({
       isCurveAnyAddrLoading: state.isCurveAnyAddrLoading,
     })),
   );
+  const startupReady = useHomeStartupReady();
 
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
-  const chartsData = curveList;
+  const chartsData = startupReady ? curveList : [];
+  const showBalanceLoading = !startupReady || showBalanceLoadingWithoutLocal;
+  const showChangeLoading = !startupReady || showChangeLoadingWithoutLocal;
+  const isCurveLoading = !startupReady || isCurveAnyAddrLoading;
 
   useEffect(() => {
     if (!canToggle24hCurve) {
@@ -188,16 +193,18 @@ export const MultiChart = memo(function MultiChart({
             isLoss={changeData.isLoss}
             data={chartsData}
             hideType={hideType}
-            matteredAccountCount={matteredAccountLength}
             canToggle24hCurve={canToggle24hCurve}
-            showBalanceLoadingWithoutLocal={showBalanceLoadingWithoutLocal}
-            showChangeLoadingWithoutLocal={showChangeLoadingWithoutLocal}
+            matteredAccountCount={
+              startupReady ? matteredAccountLength : undefined
+            }
+            showBalanceLoadingWithoutLocal={showBalanceLoading}
+            showChangeLoadingWithoutLocal={showChangeLoading}
           />
           <ChartContent
             data={chartsData}
             hideType={hideType}
             isLoss={changeData.isLoss}
-            isAnyAddrLoading={isCurveAnyAddrLoading}
+            isAnyAddrLoading={isCurveLoading}
           />
         </LineChart.Provider>
       </View>

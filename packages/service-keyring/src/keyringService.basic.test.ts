@@ -30,7 +30,7 @@ describe('KeyringService setup', () => {
   describe('setLocked', () => {
     it('setLocked correctly sets lock state', async () => {
       await keyringService.setLocked();
-      expect(keyringService.password).toBeNull();
+      expect((keyringService as any).password).toBeNull();
       expect(keyringService.memStore.getState().isUnlocked).toBe(false);
       expect(keyringService.keyrings).toHaveLength(0);
     });
@@ -66,6 +66,18 @@ describe('keyringService', () => {
 
       await keyringService.submitPassword(password);
       expect(spy.calledOnce).toBe(true);
+    });
+
+    it('resets the submitting guard when password verification fails', async () => {
+      await keyringService.setLocked();
+
+      await expect(
+        keyringService.submitPassword('wrong-password'),
+      ).rejects.toThrow();
+      expect((keyringService as any)._isSubmittingPassword).toBe(false);
+
+      await keyringService.submitPassword(password);
+      expect(keyringService.memStore.getState().isUnlocked).toBe(true);
     });
   });
 });

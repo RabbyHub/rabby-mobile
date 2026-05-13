@@ -73,7 +73,11 @@ export type KeyringEventAccount = {
   address: string;
   type: KeyringTypeName;
   brandName: string;
-}
+};
+
+export type SubmitPasswordOptions = {
+  deferMemStoreKeyringsUpdate?: boolean;
+};
 
 export class KeyringService extends RNEventEmitter {
   //
@@ -372,7 +376,12 @@ export class KeyringService extends RNEventEmitter {
    *
    * @fires KeyringController#unlock
    */
-  private _setUnlocked(options: { scene: 'unlock' | 'finish:importPrivateKey' | 'finish:createKeyringWithMnemonics' }): void {
+  private _setUnlocked(options: {
+    scene:
+      | 'unlock'
+      | 'finish:importPrivateKey'
+      | 'finish:createKeyringWithMnemonics';
+  }): void {
     this.memStore.updateState({ isUnlocked: true });
     this.emit('unlock', { scene: options.scene });
   }
@@ -392,29 +401,36 @@ export class KeyringService extends RNEventEmitter {
    * @param password - The keyring controller password.
    * @returns A Promise that resolves to the state.
    */
-  async submitPassword(password: string): Promise<MemStoreState> {
+  async submitPassword(
+    password: string,
+    options: SubmitPasswordOptions = {},
+  ): Promise<MemStoreState> {
     if (this._isSubmittingPassword) {
       return this.memStore.getState();
     }
 
-    this._isSubmittingPassword = true;
-    await this.verifyPassword(password);
-    this.#password = password;
     try {
-      this.keyrings = await this.unlockKeyrings(password);
-    } catch {
-      //
-    } finally {
+      this._isSubmittingPassword = true;
+      await this.verifyPassword(password);
+      this.#password = password;
+      try {
+        this.keyrings = await this.unlockKeyrings(password, {
+          deferMemStoreKeyringsUpdate: options.deferMemStoreKeyringsUpdate,
+        });
+      } catch {
+        //
+      }
       this._setUnlocked({ scene: 'unlock' });
+
+      // force store unencrypted keyring data if not exist
+      if (!this.store.getState().unencryptedKeyringData) {
+        await this.persistAllKeyrings();
+      }
+
+      return this.fullUpdate();
+    } finally {
       this._isSubmittingPassword = false;
     }
-
-    // force store unencrypted keyring data if not exist
-    if (!this.store.getState().unencryptedKeyringData) {
-      await this.persistAllKeyrings();
-    }
-
-    return this.fullUpdate();
   }
 
   /**
@@ -694,7 +710,11 @@ export class KeyringService extends RNEventEmitter {
         // Not all the keyrings support this, so we have to check
         if (typeof keyring.removeAccount === 'function') {
           keyring.removeAccount(address, brand);
-          const accountLike: KeyringEventAccount = { address, type, brandName: brand || '' };
+          const accountLike: KeyringEventAccount = {
+            address,
+            type,
+            brandName: brand || '',
+          };
           this.emit('removedAccount', accountLike);
           const currentKeyring = keyring;
           return [await keyring.getAccounts(), currentKeyring];
@@ -825,7 +845,10 @@ export class KeyringService extends RNEventEmitter {
    * initializing the persisted keyrings to RAM.
    * @param password
    */
-  async unlockKeyrings(password: string): Promise<any[]> {
+  async unlockKeyrings(
+    password: string,
+    options: SubmitPasswordOptions = {},
+  ): Promise<any[]> {
     const encryptedVault = this.store.getState().vault;
     if (!encryptedVault) {
       // throw new Error(i18n.t('background.error.canNotUnlock'));
@@ -838,8 +861,15 @@ export class KeyringService extends RNEventEmitter {
     await Promise.all(
       Array.from(vault as any).map(this._restoreKeyring.bind(this) as any),
     );
-    await this._updateMemStoreKeyrings();
+    if (!options.deferMemStoreKeyringsUpdate) {
+      await this._updateMemStoreKeyrings();
+    }
     return this.keyrings;
+  }
+
+  async refreshMemStoreKeyrings(): Promise<MemStoreState> {
+    await this._updateMemStoreKeyrings();
+    return this.fullUpdate();
   }
 
   /**
@@ -1171,7 +1201,9 @@ export class KeyringService extends RNEventEmitter {
         //   return null;
         // })
         .then(this.persistAllKeyrings.bind(this))
-        .then(() => this._setUnlocked({ scene: 'finish:createKeyringWithMnemonics' }))
+        .then(() =>
+          this._setUnlocked({ scene: 'finish:createKeyringWithMnemonics' }),
+        )
         .then(this.fullUpdate.bind(this))
         .then(() => keyring)
     );
