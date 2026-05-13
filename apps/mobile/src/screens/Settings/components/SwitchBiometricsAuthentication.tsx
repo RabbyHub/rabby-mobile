@@ -52,7 +52,7 @@ function useToggleBiometricsEnabled() {
           [
             { text: t('global.cancelButton') },
             {
-              text: t('global.Confirm'),
+              text: t('global.yes'),
               onPress: async () => {
                 const changed = await toggleBiometrics(false, {});
                 if (changed) {
