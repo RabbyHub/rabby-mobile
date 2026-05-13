@@ -75,6 +75,25 @@ export type KeyringEventAccount = {
   brandName: string;
 };
 
+export type KeyringVaultStorageDebugState = {
+  hasVault: boolean;
+  vaultBytes: number;
+  vaultHash: string | null;
+  hasBooted: boolean;
+  hasUnencryptedKeyringData: boolean;
+  unencryptedKeyringCount: number;
+  hasEncryptedKeyringData: boolean;
+};
+
+export type KeyringVaultTimingResult = {
+  label: string;
+  source: 'password' | 'cachedKey';
+  success: boolean;
+  durationMs: number;
+  error?: string;
+  keyringCount?: number;
+};
+
 export type SubmitPasswordOptions = {
   /**
    * The password came from a trusted OS-protected source, e.g. Android
@@ -93,6 +112,33 @@ export type SubmitPasswordOptions = {
   onTrustedVaultKeyString?: (vaultKeyString: string) => void | Promise<void>;
   deferMemStoreKeyringsUpdate?: boolean;
 };
+
+function getUtf8ByteLength(value: string) {
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.byteLength(value, 'utf8');
+  }
+
+  return unescape(encodeURIComponent(value)).length;
+}
+
+function hashString(value: string) {
+  let hash = 2166136261;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return `fnv1a32:${(hash >>> 0).toString(16).padStart(8, '0')}`;
+}
+
+function getErrorText(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function nowMs() {
+  return Date.now();
+}
 
 export class KeyringService extends RNEventEmitter {
   //
@@ -926,6 +972,119 @@ export class KeyringService extends RNEventEmitter {
   async refreshMemStoreKeyrings(): Promise<MemStoreState> {
     await this._updateMemStoreKeyrings();
     return this.fullUpdate();
+  }
+
+  getVaultStorageDebugState(): KeyringVaultStorageDebugState {
+    const state = this.store.getState();
+    const vault = state.vault;
+
+    return {
+      hasVault: !!vault,
+      vaultBytes: vault ? getUtf8ByteLength(vault) : 0,
+      vaultHash: vault ? hashString(vault) : null,
+      hasBooted: !!state.booted,
+      hasUnencryptedKeyringData: !!state.unencryptedKeyringData,
+      unencryptedKeyringCount: state.unencryptedKeyringData?.length || 0,
+      hasEncryptedKeyringData: state.hasEncryptedKeyringData,
+    };
+  }
+
+  private async measureVaultRestorePath(
+    label: string,
+    source: KeyringVaultTimingResult['source'],
+    fn: () => Promise<KeyringSerializedData[]>,
+  ): Promise<KeyringVaultTimingResult> {
+    const previousKeyrings = this.keyrings;
+    const startedAt = nowMs();
+
+    try {
+      this.keyrings = [];
+      const vault = await fn();
+      await Promise.all(
+        Array.from(vault).map(this._restoreKeyring.bind(this) as any),
+      );
+
+      return {
+        label,
+        source,
+        success: true,
+        durationMs: nowMs() - startedAt,
+        keyringCount: this.keyrings.length,
+      };
+    } catch (error) {
+      return {
+        label,
+        source,
+        success: false,
+        durationMs: nowMs() - startedAt,
+        error: getErrorText(error),
+      };
+    } finally {
+      this.keyrings = previousKeyrings;
+    }
+  }
+
+  async debugMeasureUnlockPaths(options: {
+    password?: string;
+    trustedVaultKeyString?: string;
+    measurePassword?: boolean;
+    measureCachedKey?: boolean;
+  }): Promise<KeyringVaultTimingResult[]> {
+    const encryptedVault = this.store.getState().vault;
+    const results: KeyringVaultTimingResult[] = [];
+    const measurePassword =
+      options.measurePassword ?? typeof options.password === 'string';
+    const measureCachedKey =
+      options.measureCachedKey ??
+      typeof options.trustedVaultKeyString === 'string';
+
+    if (measurePassword && encryptedVault && options.password) {
+      results.push(
+        await this.measureVaultRestorePath(
+          'password: PBKDF2 + full restore',
+          'password',
+          async () => {
+            const detail = await this.encryptor.decryptWithDetail(
+              options.password!,
+              encryptedVault,
+            );
+            return detail.vault as KeyringSerializedData[];
+          },
+        ),
+      );
+    } else if (measurePassword) {
+      results.push({
+        label: 'password: PBKDF2 + full restore',
+        source: 'password',
+        success: false,
+        durationMs: 0,
+        error: encryptedVault ? 'Missing password' : 'Missing vault',
+      });
+    }
+
+    if (measureCachedKey && encryptedVault && options.trustedVaultKeyString) {
+      results.push(
+        await this.measureVaultRestorePath(
+          'cached key: full restore',
+          'cachedKey',
+          async () =>
+            (await this.encryptor.decryptWithExportedKey(
+              encryptedVault,
+              options.trustedVaultKeyString!,
+            )) as KeyringSerializedData[],
+        ),
+      );
+    } else if (measureCachedKey) {
+      results.push({
+        label: 'cached key: full restore',
+        source: 'cachedKey',
+        success: false,
+        durationMs: 0,
+        error: encryptedVault ? 'Missing cached key' : 'Missing vault',
+      });
+    }
+
+    return results;
   }
 
   /**
