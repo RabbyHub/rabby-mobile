@@ -317,7 +317,7 @@ export default function UnlockScreen() {
   const { params } = useRoute<GetRootScreenRouteProp<'Unlock'>>();
   const {
     computed: { isBiometricsEnabled, isFaceID },
-  } = useBiometrics();
+  } = useBiometrics({ autoFetch: true });
   const schedulePostUnlockWarmups = React.useCallback(() => {
     scheduleUnlockWarmupsAfterInteractions(
       'post_unlock',
@@ -327,6 +327,12 @@ export default function UnlockScreen() {
   const { isUnlocking, formik, shouldDisabled, checkUnlocked } = useUnlockForm(
     navigation,
     schedulePostUnlockWarmups,
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      storeApisBiometrics.fetchBiometrics();
+    }, []),
   );
 
   useFocusEffect(
