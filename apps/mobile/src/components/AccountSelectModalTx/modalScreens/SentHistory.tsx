@@ -63,6 +63,7 @@ export const ScreenSentHistory = ({
             data={item.data}
             isForMultipleAddress={isForMultipleAddress}
             getCexInfoByAddress={getCexInfoByAddress}
+            account={currentAccount}
             // onPress={onPresssItem}
           />
         </>

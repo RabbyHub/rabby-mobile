@@ -20,6 +20,7 @@ import { getTokenSymbol } from '@/utils/token';
 import FastImage from 'react-native-fast-image';
 import { Text } from '@/components/Typography';
 import type { TokenChangeDataItem } from '@/types/history';
+import { Account } from '@/types/account';
 
 export type { TokenChangeDataItem } from '@/types/history';
 
@@ -29,6 +30,7 @@ type HistoryItemProps = {
   isForMultipleAddress?: boolean;
   getCexInfoByAddress?: (address: string) => ProjectItem;
   onPress?: (data: HistoryDisplayItem) => void;
+  account?: Account | null;
 };
 
 const ellipsisAddress = (address: string) => {
@@ -45,6 +47,7 @@ export const HistoryItem = React.memo(
     isForMultipleAddress,
     onPress,
     getCexInfoByAddress,
+    account,
   }: HistoryItemProps) => {
     const { t } = useTranslation();
     const isFailed = data.tx?.status === 0;
@@ -276,9 +279,10 @@ export const HistoryItem = React.memo(
           data,
           title: formatTitle,
           treatSmallAssetsAsScam: true,
+          account,
         },
       });
-    }, [onPress, navigation, isForMultipleAddress, data, formatTitle]);
+    }, [onPress, navigation, isForMultipleAddress, data, formatTitle, account]);
 
     const noNeedTokenChangeType = useMemo(
       () =>
