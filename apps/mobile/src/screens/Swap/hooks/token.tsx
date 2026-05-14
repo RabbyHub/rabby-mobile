@@ -11,7 +11,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { refreshIdAtom, useSetQuoteVisible } from './atom';
+import { refreshIdAtom } from './atom';
 import useAsync from 'react-use/lib/useAsync';
 import { openapi } from '@/core/request';
 import useDebounce from 'react-use/lib/useDebounce';
@@ -132,6 +132,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   const setRefreshId = useSetAtom(refreshIdAtom);
 
   const [showMoreVisible, setShowMoreVisible] = useState(false);
+  const [quotesListVisible, setQuotesListVisible] = useState(false);
 
   const {
     initialSelectedChain,
@@ -853,12 +854,14 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   const { setSwapSortIncludeGasFee } = useSwapSettings();
 
-  const openQuote = useSetQuoteVisible();
-
   const openQuotesList = useCallback(() => {
-    openQuote(true);
+    setQuotesListVisible(true);
     setSwapSortIncludeGasFee(true);
-  }, [openQuote, setSwapSortIncludeGasFee]);
+  }, [setSwapSortIncludeGasFee]);
+
+  const closeQuotesList = useCallback(() => {
+    setQuotesListVisible(false);
+  }, []);
 
   useEffect(() => {
     clearExpiredTimer();
@@ -1099,6 +1102,8 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
     //quote
     openQuotesList,
+    closeQuotesList,
+    quotesListVisible,
     quoteLoading,
     quoteList,
     currentProvider,

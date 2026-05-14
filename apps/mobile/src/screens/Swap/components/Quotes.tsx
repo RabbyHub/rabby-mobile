@@ -53,6 +53,8 @@ export const Quotes = ({
   list,
   activeName,
   inSufficient,
+  visible: _visible,
+  onClose,
   ...other
 }: QuotesProps) => {
   const colors = useThemeColors();
@@ -153,6 +155,7 @@ export const Quotes = ({
               name: t('page.swap.wrap-contract'),
               logo: other?.receiveToken?.logo_url,
             }}
+            onCloseQuoteList={onClose}
             {...other}
           />
         ) : (
@@ -199,6 +202,7 @@ export const Quotes = ({
               quoteProviderInfo={
                 DEX_WITH_WRAP[name as keyof typeof DEX_WITH_WRAP]
               }
+              onCloseQuoteList={onClose}
               {...other}
             />
           );
@@ -285,6 +289,7 @@ export const Quotes = ({
               quoteProviderInfo={
                 DEX_WITH_WRAP[name as keyof typeof DEX_WITH_WRAP]
               }
+              onCloseQuoteList={onClose}
               {...other}
             />
           );
@@ -297,6 +302,7 @@ export const Quotes = ({
 export const QuoteList = (props: QuotesProps) => {
   const { visible, onClose, loading } = props;
   const bottomRef = useRef<BottomSheetModalMethods>(null);
+  const presentedRef = useRef(false);
 
   const refresh = useSetAtom(refreshIdAtom);
 
@@ -310,11 +316,19 @@ export const QuoteList = (props: QuotesProps) => {
 
   useEffect(() => {
     if (visible) {
-      bottomRef.current?.present();
-    } else {
+      if (!presentedRef.current) {
+        presentedRef.current = true;
+        bottomRef.current?.present();
+      }
+    } else if (presentedRef.current) {
       bottomRef.current?.dismiss();
     }
   }, [visible]);
+
+  const handleDismiss = React.useCallback(() => {
+    presentedRef.current = false;
+    onClose();
+  }, [onClose]);
 
   const {
     styles,
@@ -347,7 +361,7 @@ export const QuoteList = (props: QuotesProps) => {
     <AppBottomSheetModal
       snapPoints={['90%']}
       ref={bottomRef}
-      onDismiss={onClose}
+      onDismiss={handleDismiss}
       enableDismissOnClose
       {...makeBottomSheetProps({
         colors: colors2024,
