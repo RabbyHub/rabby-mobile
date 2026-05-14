@@ -104,6 +104,7 @@ export const SignMainnetHeaderContent = ({
   tempoPreferredFeeTokenId,
   onAutoChangeGasMethod,
   disableAutoGasLevelSwitch = false,
+  onGasSettingsOpenChange,
 }: {
   gasList: GasSelectorHeaderProps['gasList'];
   selectedGas: GasSelectorHeaderProps['selectedGas'];
@@ -147,12 +148,16 @@ export const SignMainnetHeaderContent = ({
   tempoPreferredFeeTokenId?: string;
   onAutoChangeGasMethod?: (value: 'native' | 'gasAccount') => void;
   disableAutoGasLevelSwitch?: boolean;
+  onGasSettingsOpenChange?: (open: boolean) => void;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [gasAccountTipVisible, setGasAccountTipVisible] = useState(false);
   const [customVisible, setCustomVisible] = useState(false);
   const [showMoreOpen, setShowMoreOpen] = useState(false);
+  const gasSettingsOpen = showMoreOpen || customVisible;
+  const gasSettingsOpenRef = useRef(gasSettingsOpen);
+  const onGasSettingsOpenChangeRef = useRef(onGasSettingsOpenChange);
   const noCustomRPCEnabled = noCustomRPC ?? true;
   const displayGasMethod = resolveApprovalGasMethod({
     nativeTokenInsufficient: !!nativeTokenInsufficient,
@@ -312,6 +317,27 @@ export const SignMainnetHeaderContent = ({
   useEffect(() => {
     levelStateRef.current = levelState;
   }, [levelState]);
+
+  useEffect(() => {
+    onGasSettingsOpenChangeRef.current = onGasSettingsOpenChange;
+  }, [onGasSettingsOpenChange]);
+
+  useEffect(() => {
+    if (gasSettingsOpenRef.current === gasSettingsOpen) {
+      return;
+    }
+
+    gasSettingsOpenRef.current = gasSettingsOpen;
+    onGasSettingsOpenChangeRef.current?.(gasSettingsOpen);
+  }, [gasSettingsOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (gasSettingsOpenRef.current) {
+        onGasSettingsOpenChangeRef.current?.(false);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     activeLevelRequestsRef.current = {};
