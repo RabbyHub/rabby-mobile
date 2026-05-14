@@ -1,45 +1,48 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useCallback, useMemo, useState } from 'react';
-import { ScrollView, TouchableOpacity, View } from 'react-native';
-import { useTheme2024 } from '@/hooks/theme';
-import RcIconScamTips from '@/assets2024/icons/history/IconScamTips.svg';
 import RcIconRightCC from '@/assets2024/icons/history/IconRightArrowCC.svg';
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import RcIconScamTips from '@/assets2024/icons/history/IconScamTips.svg';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import { useTheme2024 } from '@/hooks/theme';
+import React, { useCallback, useMemo } from 'react';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
 
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
-import { toast } from '@/components2024/Toast';
-import { createGetStyles2024 } from '@/utils/styles';
-import { formatAmount } from '@/utils/number';
-import { formatIntlTimestamp } from '@/utils/time';
-import { useRoute } from '@react-navigation/native';
-import { getAliasName } from '@/core/apis/contact';
-import { ellipsisAddress } from '@/utils/address';
-import ChainIconImage from '@/components/Chain/ChainIconImage';
-import { getChain } from '@/utils/chain';
-import { openTxExternalUrl } from '@/utils/transaction';
-import { HistoryTokenList } from './components/HistoryTokenList';
-import { getApproveTokeName } from './components/utils';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
-import { HistoryBottomBtn } from './components/HistoryBottomBtn';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { AssetAvatar } from '@/components';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { ellipsisOverflowedText } from '@/utils/text';
-import { useTranslation } from 'react-i18next';
-import { RevokeTokenBtn } from './components/Actions/components/RevokeTokenBtn';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { HistoryItemCateType } from './components/type';
-import { findAccountByPriority } from '@/utils/account';
-import { useGetCexList } from './hook';
-import FastImage from 'react-native-fast-image';
 import { useAccountSelectModalCtx } from '@/components/AccountSelectModalTx/hooks';
-import { apisSingleHome } from '../Home/hooks/singleHome';
+import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
+import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { Text } from '@/components/Typography';
+import { toast } from '@/components2024/Toast';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { getAliasName } from '@/core/apis/contact';
+import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
+import { findAccountByPriority } from '@/utils/account';
+import { ellipsisAddress } from '@/utils/address';
+import { getChain } from '@/utils/chain';
+import { formatAmount } from '@/utils/number';
+import { createGetStyles2024 } from '@/utils/styles';
+import { ellipsisOverflowedText } from '@/utils/text';
+import { formatIntlTimestamp } from '@/utils/time';
+import { openTxExternalUrl } from '@/utils/transaction';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
+import FastImage from 'react-native-fast-image';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { apisSingleHome } from '../Home/hooks/singleHome';
+import { RevokeTokenBtn } from './components/Actions/components/RevokeTokenBtn';
+import { HistoryBottomBtn } from './components/HistoryBottomBtn';
+import { HistoryTokenList } from './components/HistoryTokenList';
 import { TxStatusItem } from './components/TxStatusItem';
+import { HistoryItemCateType } from './components/type';
+import { getApproveTokeName } from './components/utils';
+import { useGetCexList } from './hook';
 
 export const AddressItemInDetail = ({
   address,
@@ -52,13 +55,18 @@ export const AddressItemInDetail = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
+  const account = useMemo(
+    () => accounts.find(item => isSameAddress(item.address, address)),
+    [accounts, address],
+  );
   const disableNavigate = useMemo(() => {
     if (propdisableNavigate) {
       return true;
     }
 
-    return !accounts.find(account => isSameAddress(account.address, address));
-  }, [propdisableNavigate, accounts, address]);
+    return !account;
+  }, [propdisableNavigate, account]);
+
   const { getCexInfoByAddress } = useGetCexList();
   const cexInfo = useMemo(() => {
     return getCexInfoByAddress(address);
@@ -67,18 +75,16 @@ export const AddressItemInDetail = ({
   const accountSelectCtx = useAccountSelectModalCtx();
 
   const handleGoAddressDetail = useCallback(() => {
-    const idx = accounts.findIndex(account =>
-      isSameAddress(account.address, address),
-    );
-
-    if (idx > -1) {
-      if (accountSelectCtx.isUnderContext) accountSelectCtx.fnCloseModal();
-      apisSingleHome.navigateToSingleHome(accounts[idx]);
+    if (account) {
+      if (accountSelectCtx.isUnderContext) {
+        accountSelectCtx.fnCloseModal();
+      }
+      apisSingleHome.navigateToSingleHome(account);
     } else {
       // popup
       console.debug('itemAliaName press open popup', address);
     }
-  }, [accounts, address, accountSelectCtx]);
+  }, [account, accountSelectCtx, address]);
 
   return (
     <View>
@@ -88,7 +94,7 @@ export const AddressItemInDetail = ({
         onPress={handleGoAddressDetail}>
         <View style={{ alignItems: 'flex-end', flexDirection: 'column' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {cexInfo?.logo_url && (
+            {cexInfo?.logo_url ? (
               <FastImage
                 source={{ uri: cexInfo.logo_url }}
                 style={{
@@ -98,7 +104,18 @@ export const AddressItemInDetail = ({
                   marginRight: 4,
                 }}
               />
-            )}
+            ) : account ? (
+              <WalletIcon
+                type={account.type}
+                address={account.address}
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 4,
+                  marginRight: 4,
+                }}
+              />
+            ) : null}
             <Text
               numberOfLines={1}
               ellipsizeMode="tail"
@@ -112,6 +129,15 @@ export const AddressItemInDetail = ({
                 color={colors2024['neutral-foot']}
               />
             )}
+            {!account ? (
+              <CopyAddressIcon
+                address={address}
+                color={colors2024['neutral-secondary']}
+                style={{
+                  marginLeft: 4,
+                }}
+              />
+            ) : null}
           </View>
           <Text style={styles.itemAddressText}>{address}</Text>
         </View>
@@ -130,6 +156,7 @@ function HistoryDetailScreen(): JSX.Element {
     isForMultipleAddress,
     title,
     treatSmallAssetsAsScam = false,
+    account,
   } = route.params || {};
 
   const { t } = useTranslation();
@@ -148,11 +175,13 @@ function HistoryDetailScreen(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const getHeaderTitle = React.useCallback(() => {
     return (
-      <HeaderTitleText2024 style={styles.headerTitleStyle}>
-        {title || t('page.transactions.itemTitle.Default')}
-      </HeaderTitleText2024>
+      <ScreenHeaderAccountSwitcher
+        forScene="HistoryDetail"
+        titleText={title || t('page.transactions.itemTitle.Default')}
+        disableSwitch={true}
+      />
     );
-  }, [title, styles.headerTitleStyle, t]);
+  }, [title, t]);
 
   React.useEffect(() => {
     setNavigationOptions({
@@ -320,6 +349,21 @@ function HistoryDetailScreen(): JSX.Element {
     }
     return account;
   }, [accounts, data.address]);
+
+  const currentAccount = useMemo(() => {
+    return (
+      account ||
+      accounts.find(item => isSameAddress(item.address, data.address))
+    );
+  }, [account, accounts, data.address]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (currentAccount) {
+        switchSceneCurrentAccount('HistoryDetail', currentAccount);
+      }
+    }, [currentAccount]),
+  );
 
   return (
     <NormalScreenContainer2024
