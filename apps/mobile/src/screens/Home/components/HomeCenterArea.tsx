@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { View } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
@@ -41,6 +41,15 @@ export function HomeCenterArea() {
   const { shouldShowConvertDustBanner, dismissConvertDustBanner } =
     useConvertDustBanner();
 
+  const prevAccountToShowReceiveTipRef = useRef(accountToShowReceiveTip);
+  if (!isLoadingAccountToShowReceiveTip) {
+    prevAccountToShowReceiveTipRef.current = accountToShowReceiveTip;
+  }
+
+  const displayAccount = isLoadingAccountToShowReceiveTip
+    ? prevAccountToShowReceiveTipRef.current
+    : accountToShowReceiveTip;
+
   const { viewedHomeTip: viewedScreenShotReportTip } = useViewedHomeTip();
 
   const handlePressConvertDustBanner = useCallback(() => {
@@ -69,13 +78,16 @@ export function HomeCenterArea() {
       convertDustBanner: false as boolean,
     };
 
-    // Wait for account check to complete before deciding what to show
+    // Preserve previous account tip during refresh to prevent flickering
     if (isLoadingAccountToShowReceiveTip) {
-      // Show nothing while loading to prevent flickering
+      const hasPreviousTip = !!prevAccountToShowReceiveTipRef.current;
       return {
-        blocksVisibility: blocks,
-        noBetweenContent: true,
-        onlyOneContent: false,
+        blocksVisibility: {
+          ...blocks,
+          soloAccountToShowReceiveTip: hasPreviousTip,
+        },
+        noBetweenContent: !hasPreviousTip,
+        onlyOneContent: hasPreviousTip,
       };
     }
 
@@ -130,7 +142,7 @@ export function HomeCenterArea() {
 
       {blocksVisibility.soloAccountToShowReceiveTip && (
         <Animated.View entering={FadeInUp.duration(200)}>
-          <DepositAssetsCard account={accountToShowReceiveTip || null} />
+          <DepositAssetsCard account={displayAccount || null} />
         </Animated.View>
       )}
 
