@@ -874,10 +874,42 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
   };
 
   fetchTotalBalance = makeSWRKeyAsyncFunc(
-    async (fetchType: 'from_cache' | 'from_api') => {
+    async (fetchType: FetchTotalBalanceType) => {
       const retBalances = {} as Record<string, BalanceAccountType>;
       try {
         console.debug('[perf] fetchTotalBalance:: fetchType', fetchType);
+
+        if (fetchType === 'from_local_cache') {
+          const current = balanceAccountsStore.getState();
+          if (!current.selectedAddresses.length) {
+            return retBalances;
+          }
+
+          const nextBalance = buildBalanceAccountsFromSelectedState(
+            current.balance,
+            addressBalanceStore.getAddressValueMap(),
+            current.selectedAddresses,
+          );
+          const derivedState = buildSelectedBalanceDerivedState(
+            current.selectedAddresses,
+            nextBalance,
+          );
+
+          setAccountsBalanceState(
+            prev => ({
+              ...prev,
+              balance: nextBalance,
+              hasResolvedSelection:
+                prev.hasResolvedSelection || derivedState.hasAnyBalanceValue,
+              ...derivedState,
+            }),
+            {
+              source: 'manual_refresh',
+            },
+          );
+
+          return nextBalance;
+        }
 
         const selectionSnapshot = await getAccountBalanceSelectionSnapshot();
         if (!selectionSnapshot) {
@@ -928,19 +960,25 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     }, []);
 
     const triggerUpdate = useCallback(
-      async (forceFromApi?: boolean) => {
-        const isForceFetchFromApi = isNeedFetchData() || forceFromApi;
+      async (options?: boolean | AccountsBalanceTriggerOptions) => {
+        const forceFromApi =
+          typeof options === 'boolean' ? options : !!options?.forceFromApi;
+        const localOnly = typeof options === 'object' && !!options.localOnly;
+        const preferCache =
+          typeof options === 'object' && !!options.preferCache;
+        const isForceFetchFromApi =
+          !localOnly && !preferCache && (forceFromApi || isNeedFetchData());
+        const fetchType: FetchTotalBalanceType = localOnly
+          ? 'from_local_cache'
+          : isForceFetchFromApi
+          ? 'from_api'
+          : 'from_cache';
 
-        console.debug(
-          '[perf] triggerUpdate fetchTotalBalance',
-          isForceFetchFromApi ? 'from_api' : 'from_cache',
-        );
+        console.debug('[perf] triggerUpdate fetchTotalBalance', fetchType);
         if (forceFromApi) {
           lastTimeStamps.current = Date.now();
         }
-        return this.fetchTotalBalance(
-          isForceFetchFromApi ? 'from_api' : 'from_cache',
-        );
+        return this.fetchTotalBalance(fetchType);
       },
       [isNeedFetchData],
     );
@@ -983,6 +1021,14 @@ type AccountBalanceSelectionSnapshotGetter =
   () => Promise<AccountBalanceSelectionSnapshot>;
 
 export type LoadBalanceStage = 'idle' | 'loading' | 'finished';
+
+type FetchTotalBalanceType = 'from_local_cache' | 'from_cache' | 'from_api';
+
+type AccountsBalanceTriggerOptions = {
+  forceFromApi?: boolean;
+  preferCache?: boolean;
+  localOnly?: boolean;
+};
 
 type AccountsBalanceChangeSource =
   | 'manual_refresh'
@@ -1180,8 +1226,8 @@ function buildBalanceAccountsFromSelectedState(
 
     acc[address] = {
       address,
-      balance: latest?.totalBalance || 0,
-      evmBalance: latest?.evmBalance || 0,
+      balance: latest?.totalBalance ?? prev?.balance ?? 0,
+      evmBalance: latest?.evmBalance ?? prev?.evmBalance ?? 0,
       type: prev?.type || ('' as KeyringTypeName),
       brandName: prev?.brandName || '',
       aliasName: prev?.aliasName,
@@ -1310,7 +1356,7 @@ export function startProcessAddressBalanceEvents() {
     });
   });
 
-  perfEvents.subscribe('USER_MANUALLY_UNLOCK', async () => {
+  perfEvents.subscribe('USER_MANUALLY_UNLOCK_UI_READY', async () => {
     syncBalanceAccountStore();
   });
 

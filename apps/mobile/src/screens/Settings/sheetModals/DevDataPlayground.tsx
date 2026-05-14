@@ -93,6 +93,17 @@ export default function DevDataPlaygroundModal({
           );
         },
       },
+      {
+        label: 'Keyring Vault',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevDataKeyringVault,
+            }),
+          );
+        },
+      },
       // {
       //   label: 'Clear All SQLite (No restart)',
       //   icon: <RcCode style={styles.labelIcon} />,

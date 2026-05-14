@@ -10,6 +10,12 @@ import { AppState, View } from 'react-native';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import * as apisAccount from '@/core/apis/account';
 import { browserService, preferenceService } from '@/core/services';
+import {
+  resetHomeStartupReady,
+  scheduleHomeStartupReady,
+  traceHomeStartupReady,
+  useHomePostStartupReady,
+} from '@/core/utils/homeStartupReady';
 import { apisHomeTabIndex, resetNavigationTo } from '@/hooks/navigation';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { getReadyNavigationInstance } from '@/utils/navigation';
@@ -41,43 +47,71 @@ const detectHasAccounts = async () => {
   return result;
 };
 
-function MultiAddressHome(): JSX.Element {
-  const { styles, colors2024, isLight } = useTheme2024({
-    getStyle,
-  });
-  const appThemeConfig = useAppThemeConfig();
-  const isLoss = useHomePortfolioStore(state => state.changeData.isLoss);
-  useRendererDetect({ name: 'MultiAddressHome' });
-
+function HomeDeferredLifecycle() {
   useInitDetectDBAssets();
   useTrack0331HomeActiveSnapshots();
 
-  const trackGasAccountActive = useCallback(() => {
-    trackGasAccountActiveStatusOncePerDay().catch(error => {
-      console.error('trackGasAccountActiveStatusOncePerDay error', error);
-    });
+  return null;
+}
+
+function HomeStartupReadyScheduler() {
+  useEffect(() => {
+    resetHomeStartupReady();
+    traceHomeStartupReady('home_mount');
+
+    return scheduleHomeStartupReady();
   }, []);
 
+  return null;
+}
+
+function HomePostStartupEffects({
+  appThemeConfig,
+  trackGasAccountActive,
+}: {
+  appThemeConfig: ReturnType<typeof useAppThemeConfig>;
+  trackGasAccountActive: () => void;
+}) {
+  const homePostStartupReady = useHomePostStartupReady();
+
   useEffect(() => {
-    setTimeout(() => {
+    if (!homePostStartupReady) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
       deleteLongTimeCurveCache();
       deleteLongTime24hBalanceCache();
     }, 0);
-  }, []);
+
+    return () => clearTimeout(timeoutId);
+  }, [homePostStartupReady]);
 
   useFocusEffect(
     useCallback(() => {
+      if (!homePostStartupReady) {
+        return;
+      }
+
       (async () => {
+        traceHomeStartupReady('home_has_visible_accounts_start');
         const { redirectAction } = await detectHasAccounts();
+        traceHomeStartupReady('home_has_visible_accounts_end', {
+          shouldRedirect: !!redirectAction,
+        });
         if (redirectAction) {
           redirectAction();
         }
       })();
-    }, []),
+    }, [homePostStartupReady]),
   );
 
   useFocusEffect(
     useCallback(() => {
+      if (!homePostStartupReady) {
+        return;
+      }
+
       trackGasAccountActive();
 
       const subscription = AppState.addEventListener('change', state => {
@@ -89,28 +123,40 @@ function MultiAddressHome(): JSX.Element {
       return () => {
         subscription.remove();
       };
-    }, [trackGasAccountActive]),
+    }, [homePostStartupReady, trackGasAccountActive]),
   );
 
   useFocusEffect(
     useCallback(() => {
+      if (!homePostStartupReady) {
+        return;
+      }
+
       storeApiGasAccount.scheduleSnapshotRefresh({
         reason: 'home_focus',
       });
       autoLoginGasAccountIfNeeded().catch(error => {
         console.error('autoLoginGasAccountIfNeeded error', error);
       });
-    }, []),
+    }, [homePostStartupReady]),
   );
 
   useEffect(() => {
+    if (!homePostStartupReady) {
+      return;
+    }
+
     matomoRequestEvent({
       category: 'ThemeMode',
       action: `ThemeMode_${appThemeConfig}`,
     });
-  }, [appThemeConfig]);
+  }, [appThemeConfig, homePostStartupReady]);
 
   useEffect(() => {
+    if (!homePostStartupReady) {
+      return;
+    }
+
     const lastReportTime =
       preferenceService.getPreference('lastReportTime') || 0;
     if (!lastReportTime || !dayjs(lastReportTime).isToday()) {
@@ -142,6 +188,32 @@ function MultiAddressHome(): JSX.Element {
         }`,
       });
     }
+  }, [homePostStartupReady]);
+
+  if (!homePostStartupReady) {
+    return null;
+  }
+
+  return (
+    <>
+      <HomeDeferredLifecycle />
+      <HomeGuidanceMultipleTabs />
+    </>
+  );
+}
+
+function MultiAddressHome(): JSX.Element {
+  const { styles, colors2024, isLight } = useTheme2024({
+    getStyle,
+  });
+  const appThemeConfig = useAppThemeConfig();
+  const isLoss = useHomePortfolioStore(state => state.changeData.isLoss);
+  useRendererDetect({ name: 'MultiAddressHome' });
+
+  const trackGasAccountActive = useCallback(() => {
+    trackGasAccountActiveStatusOncePerDay().catch(error => {
+      console.error('trackGasAccountActiveStatusOncePerDay error', error);
+    });
   }, []);
 
   useEffect(() => {
@@ -176,7 +248,11 @@ function MultiAddressHome(): JSX.Element {
         <TabsMultiAssets />
       </View>
 
-      <HomeGuidanceMultipleTabs />
+      <HomeStartupReadyScheduler />
+      <HomePostStartupEffects
+        appThemeConfig={appThemeConfig}
+        trackGasAccountActive={trackGasAccountActive}
+      />
 
       <TmpHomeRefresher />
     </NormalScreenContainer2024>
