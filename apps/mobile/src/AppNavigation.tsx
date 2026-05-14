@@ -6,7 +6,7 @@ import {
   NavigationIndependentTree,
 } from '@react-navigation/native';
 import React, { useCallback } from 'react';
-import { BackHandler, InteractionManager } from 'react-native';
+import { BackHandler, InteractionManager, StyleSheet } from 'react-native';
 import * as Sentry from '@sentry/react-native';
 import { useAppTheme, useThemeColors } from '@/hooks/theme';
 
@@ -325,6 +325,32 @@ export default function AppNavigation() {
   const colors = useThemeColors();
 
   const { isAppUnlocked } = useAppUnlocked();
+  const navigationBackgroundColor = colors['neutral-bg-2'];
+  const navigationTheme = React.useMemo(() => {
+    const baseTheme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
+
+    return {
+      ...baseTheme,
+      colors: {
+        ...baseTheme.colors,
+        background: navigationBackgroundColor,
+        card: navigationBackgroundColor,
+      },
+    };
+  }, [colorScheme, navigationBackgroundColor]);
+  const rootScreenContentStyle = React.useMemo(
+    () => ({
+      backgroundColor: navigationBackgroundColor,
+    }),
+    [navigationBackgroundColor],
+  );
+  const appNavigationRootStyle = React.useMemo(
+    () => [
+      styles.appNavigationRoot,
+      { backgroundColor: navigationBackgroundColor },
+    ],
+    [navigationBackgroundColor],
+  );
   const initialRouteName = isAppUnlocked
     ? RootNames.StackGetStarted
     : RootNames.Unlock;
@@ -352,8 +378,7 @@ export default function AppNavigation() {
   useRendererDetect({ name: 'AppNavigation' });
 
   return (
-    <AutoLockView.ForAppNav
-      style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
+    <AutoLockView.ForAppNav style={appNavigationRootStyle}>
       <AppStatusBar __isTop__ />
       <GlobalBottomSheetModal />
       <GlobalBottomSheetModal2024 />
@@ -365,7 +390,7 @@ export default function AppNavigation() {
           // key={userId}
           onReady={onReady}
           onStateChange={onStateChange}
-          theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          theme={navigationTheme}>
           <AppNavigationDeferredGlobals
             slot="navigation-pre"
             enabled={shouldRenderDeferredGlobals}
@@ -375,6 +400,7 @@ export default function AppNavigation() {
               ...RootAnimOptions,
               headerShown: false,
               navigationBarColor: 'transparent',
+              contentStyle: rootScreenContentStyle,
               freezeOnBlur: false,
             }}
             initialRouteName={initialRouteName}>
@@ -618,6 +644,12 @@ export default function AppNavigation() {
     </AutoLockView.ForAppNav>
   );
 }
+
+const styles = StyleSheet.create({
+  appNavigationRoot: {
+    flex: 1,
+  },
+});
 
 function AccountNavigator() {
   const { mergeScreenOptions } = useStackScreenConfig();
