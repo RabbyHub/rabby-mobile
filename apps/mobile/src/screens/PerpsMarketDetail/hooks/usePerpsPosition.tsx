@@ -1,15 +1,13 @@
 import { apisPerps } from '@/core/apis';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
-import {
-  perpsStore,
-  setAccountNeedApproveAgent,
-} from '@/hooks/perps/usePerpsStore';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { judgeIsUserAgentIsExpired } from '@/hooks/perps/judgeAgentExpired';
 import { useMemoizedFn } from 'ahooks';
 import * as Sentry from '@sentry/react-native';
 import { Dimensions, Platform } from 'react-native';
 import { PERPS_BUILDER_INFO } from '@/constant/perps';
 import { sleep } from '@/utils/async';
-import { OrderResponse } from '@rabby-wallet/hyperliquid-sdk';
+import { OpenOrder, OrderResponse } from '@rabby-wallet/hyperliquid-sdk';
 import { showToast } from '@/hooks/perps/showToast';
 import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
@@ -22,26 +20,6 @@ export const usePerpsPosition = () => {
     // '.15' -> '0.15'
     return px ? Number(px).toString() : undefined;
   };
-
-  const judgeIsUserAgentIsExpired = useMemoizedFn(
-    async (errorMessage: string) => {
-      const masterAddress = currentPerpsAccount?.address;
-      if (!masterAddress) {
-        return false;
-      }
-
-      const agentWalletPreference = await apisPerps.getAgentWalletPreference(
-        masterAddress,
-      );
-      const agentAddress = agentWalletPreference?.agentAddress;
-      if (agentAddress && errorMessage.includes(agentAddress)) {
-        console.warn('handle action agent is expired, logout');
-        showToast('Agent is expired, please try again', 'error');
-        setAccountNeedApproveAgent(true);
-        return true;
-      }
-    },
-  );
 
   const handleCancelOrder = useMemoizedFn(
     async (oid: number, coin: string, actionType: 'tp' | 'sl') => {
@@ -82,6 +60,61 @@ export const usePerpsPosition = () => {
       }
     },
   );
+
+  // Single round-trip for both single-cancel and "Cancel All". Returns true
+  // when ≥1 order succeeded; on expired agent the dedicated toast already
+  // fired so we suppress the generic failure one.
+  const handleCancelLimitOrders = useMemoizedFn(async (orders: OpenOrder[]) => {
+    if (!orders.length) {
+      return false;
+    }
+    try {
+      const sdk = apisPerps.getPerpsSDK();
+      const res = await sdk.exchange?.cancelOrder(
+        orders.map(o => ({ oid: o.oid, coin: o.coin })),
+      );
+      const statuses = res?.response.data.statuses ?? [];
+      const okCount = statuses.filter(
+        item => (item as unknown as string) === 'success',
+      ).length;
+      const failCount = statuses.length - okCount;
+
+      if (okCount > 0 && failCount === 0) {
+        showToast(
+          orders.length === 1
+            ? 'Limit order canceled'
+            : `${okCount} limit orders canceled`,
+          'success',
+        );
+        return true;
+      }
+      if (okCount > 0) {
+        showToast(`${okCount} canceled, ${failCount} failed`, 'success');
+        Sentry.captureException(
+          new Error(
+            'cancel limit orders partial failure: ' + JSON.stringify(res),
+          ),
+        );
+        return true;
+      }
+      showToast('Cancel limit order failed', 'error');
+      Sentry.captureException(
+        new Error('cancel limit orders all failed: ' + JSON.stringify(res)),
+      );
+      return false;
+    } catch (e: any) {
+      const expired = await judgeIsUserAgentIsExpired(e?.message || '');
+      if (expired) {
+        return false;
+      }
+      console.error('cancel limit order error', e);
+      showToast('Cancel limit order failed', 'error');
+      Sentry.captureException(
+        new Error('cancel limit order error: ' + JSON.stringify(e)),
+      );
+      return false;
+    }
+  });
 
   const handleUpdateMargin = useMemoizedFn(
     async (coin: string, action: 'add' | 'reduce', margin: number) => {
@@ -399,6 +432,7 @@ export const usePerpsPosition = () => {
     handleSetAutoClose,
     handleUpdateMargin,
     handleCancelOrder,
+    handleCancelLimitOrders,
     handleStableCoinOrder,
   };
 };

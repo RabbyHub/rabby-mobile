@@ -45,6 +45,7 @@ import Toast from 'react-native-root-toast';
 import { naviReplace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
+import { PerpsLimitOrdersForCoin } from './components/PerpsLimitOrdersForCoin';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import { showToast } from '@/hooks/perps/showToast';
 import { PerpsAgentsLimitModal } from '../Perps/components/PerpsAgentsLimitModal';
@@ -489,6 +490,13 @@ export const PerpsMarketDetailScreen = () => {
               />
             ) : null}
           </View>
+          {!hasPosition && (
+            <PerpsLimitOrdersForCoin
+              coin={coin}
+              leverage={activeAssetData?.leverage ?? null}
+              handleActionApproveStatus={handleActionApproveStatus}
+            />
+          )}
           {!isInitialized ? (
             <PerpsPositionSkeletonLoader />
           ) : (
@@ -520,6 +528,13 @@ export const PerpsMarketDetailScreen = () => {
               leverageMax={currentAssetCtx?.maxLeverage || 5}
               handleCancelAutoClose={handleCancelAutoClose}
               handleUpdateMargin={handleUpdateMargin}
+            />
+          )}
+          {hasPosition && (
+            <PerpsLimitOrdersForCoin
+              coin={coin}
+              leverage={activeAssetData?.leverage ?? null}
+              handleActionApproveStatus={handleActionApproveStatus}
             />
           )}
           {!hasPosition && <PerpsAbout coin={coin} />}

@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -22,6 +23,7 @@ import { Account } from '@/core/services/preference';
 import { usePerpsDeposit } from './hooks/usePerpsDeposit';
 import { PerpsMarketHomeList } from './components/PerpsMarketSection/PerpsMarketHomeList';
 import { PerpsPositionSection } from './components/PerpsPositionSection';
+import { PerpsLimitOrdersSection } from './components/PerpsLimitOrdersSection';
 import { PerpsPopupGroup } from './components/PerpsPopupGroup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
 import { PerpsNativeHeader } from './components/PerpsHeaderTitle';
@@ -263,6 +265,12 @@ export const PerpsOriginScreen = () => {
                   }
                 }}
               />
+              <View style={{ marginTop: 24 }}>
+                <PerpsLimitOrdersSection
+                  positionAndOpenOrders={positionAndOpenOrders}
+                  handleActionApproveStatus={handleActionApproveStatus}
+                />
+              </View>
 
               <PerpsMarketHomeList onItemPress={handleHomeItemPress} />
               <View style={styles.emptyPadding} />

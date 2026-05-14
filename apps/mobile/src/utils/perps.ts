@@ -12,6 +12,7 @@ import {
   MarginTable,
   ClearinghouseState,
   SpotClearinghouseState,
+  OpenOrder,
 } from '@rabby-wallet/hyperliquid-sdk';
 import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
 import type { Account } from '@/types/account';
@@ -528,3 +529,32 @@ export const handleDisplayFundingPayments = (fundingPayments: string) => {
 // Hyperliquid spot balance keys: USDT is keyed as 'USDT0' on the spot side.
 export const getSpotBalanceKey = (asset: string): string =>
   asset === 'USDT' ? 'USDT0' : asset;
+
+export const isLimitOrder = (order: OpenOrder): boolean => {
+  return (
+    !order.isTrigger && !order.isPositionTpsl && order.orderType === 'Limit'
+  );
+};
+
+export const computeFilledPct = (origSz: string, sz: string): number => {
+  const orig = new BigNumber(origSz || 0);
+  if (orig.isZero()) {
+    return 0;
+  }
+  const filled = orig.minus(sz || 0);
+  return filled.div(orig).times(100).toNumber();
+};
+
+export const computeMarginUsage = (
+  limitPx: string,
+  origSz: string,
+  leverage: number,
+): number => {
+  if (!leverage || leverage <= 0) {
+    return 0;
+  }
+  return new BigNumber(limitPx || 0)
+    .times(origSz || 0)
+    .div(leverage)
+    .toNumber();
+};
