@@ -114,7 +114,7 @@ export const BottomBtns = ({
       },
     },
     {
-      title: 'Approvals',
+      title: t('page.home.services.approvals'),
       key: t('page.home.services.approvals'),
       iconColor: colors2024['red-default'],
       Icon: RcIconApprovalCC,
