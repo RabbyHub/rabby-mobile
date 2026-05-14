@@ -46,6 +46,10 @@ export function HomeCenterArea() {
     prevAccountToShowReceiveTipRef.current = accountToShowReceiveTip;
   }
 
+  const displayAccount = isLoadingAccountToShowReceiveTip
+    ? prevAccountToShowReceiveTipRef.current
+    : accountToShowReceiveTip;
+
   const { viewedHomeTip: viewedScreenShotReportTip } = useViewedHomeTip();
 
   const handlePressConvertDustBanner = useCallback(() => {
@@ -138,7 +142,7 @@ export function HomeCenterArea() {
 
       {blocksVisibility.soloAccountToShowReceiveTip && (
         <Animated.View entering={FadeInUp.duration(200)}>
-          <DepositAssetsCard account={accountToShowReceiveTip || null} />
+          <DepositAssetsCard account={displayAccount || null} />
         </Animated.View>
       )}
 
