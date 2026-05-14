@@ -307,6 +307,7 @@ export type TransactionNavigatorParamList = {
      * @default false
      */
     treatSmallAssetsAsScam?: boolean;
+    account?: Account | null;
   };
   [RootNames.HistoryLocalDetail]: {
     data: TransactionGroup;
@@ -316,6 +317,7 @@ export type TransactionNavigatorParamList = {
     type?: HistoryItemCateType;
     onPressAddToWhitelistButton?: (data: SendAction) => void;
     isInSendHistory?: boolean;
+    account?: Account | null;
   };
   [RootNames.Send]?:
     | {

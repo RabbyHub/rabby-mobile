@@ -674,6 +674,7 @@ function History({
           loadingMore={loadingMore}
           refreshLoading={isNeedFetchFromApi && loading}
           isForMultipleAddress={isForMultipleAddress}
+          account={isSceneUsingAllAccounts ? null : finalSceneCurrentAccount}
           loadMore={() => {
             // avoid exec multi times loadMore
             if (loadingMore || noMore) {

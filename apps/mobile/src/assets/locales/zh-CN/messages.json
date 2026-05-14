@@ -3409,7 +3409,8 @@
       "colStatusToken": "状态/代币",
       "emptyText": "未找到低价值代币",
       "unsupportedAccountType": "不支持此账户类型。",
-      "unsupportedAccount": "目前仅支持私钥和助记词地址。"
+      "unsupportedAccount": "目前仅支持私钥和助记词地址。",
+      "title": "小额资产归集"
     }
   },
   "component": {

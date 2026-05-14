@@ -590,6 +590,7 @@ function SendScreen({
                     <PendingTxItem
                       isForMultipleAddress={isForMultipleAddress}
                       data={localPendingTxData!}
+                      account={currentAccount}
                       type="send"
                       clearLocalPendingTxData={clearLocalPendingTxData}
                     />

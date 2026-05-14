@@ -44,6 +44,7 @@ import { naviPush } from '@/utils/navigation';
 import FastImage from 'react-native-fast-image';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { Text } from '@/components/Typography';
+import { Account } from '@/types/account';
 
 export type HistoryLocalDetailParams = GetNestedScreenRouteProp<
   'TransactionNavigatorParamList',
@@ -61,6 +62,7 @@ export const TransactionItem = ({
   onPressAddToWhitelistButton,
   closeHistoryPopup,
   getCexInfoByAddress,
+  account,
 }: {
   historySuccessList?: string[];
   isForMultipleAddress?: boolean;
@@ -72,6 +74,7 @@ export const TransactionItem = ({
   onPressItem?: (ctx: HistoryLocalDetailParams) => void;
   onPressAddToWhitelistButton?: (data: SendAction) => void;
   closeHistoryPopup?: () => void;
+  account?: Account | null;
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -458,17 +461,19 @@ export const TransactionItem = ({
         canCancel,
         title: formatTitle,
         onPressAddToWhitelistButton: onPressAddToWhitelistButton,
+        account,
       },
     });
   }, [
     onPressItem,
-    isForMultipleAddress,
-    canCancel,
-    data,
-    formatTitle,
-    formatType,
     isInSendHistory,
+    isForMultipleAddress,
+    data,
+    formatType,
+    canCancel,
+    formatTitle,
     onPressAddToWhitelistButton,
+    account,
     closeHistoryPopup,
   ]);
 
