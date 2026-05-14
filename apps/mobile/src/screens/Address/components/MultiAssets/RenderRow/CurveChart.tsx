@@ -133,8 +133,10 @@ const ChartContent = memo(function ChartContent({
 export const MultiChart = memo(function MultiChart({
   hideType,
   style,
+  onPressNetWorth,
 }: {
   hideType: BALANCE_HIDE_TYPE;
+  onPressNetWorth?: () => void;
 } & RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
   const {
@@ -183,6 +185,7 @@ export const MultiChart = memo(function MultiChart({
             matteredAccountCount={matteredAccountLength}
             showBalanceLoadingWithoutLocal={showBalanceLoadingWithoutLocal}
             showChangeLoadingWithoutLocal={showChangeLoadingWithoutLocal}
+            onPressNetWorth={onPressNetWorth}
           />
           <ChartContent
             data={chartsData}
@@ -206,6 +209,7 @@ interface IHeaderProps {
   matteredAccountCount?: number;
   showBalanceLoadingWithoutLocal: boolean;
   showChangeLoadingWithoutLocal: boolean;
+  onPressNetWorth?: () => void;
 }
 const ChartHeader = React.memo(
   ({
@@ -218,6 +222,7 @@ const ChartHeader = React.memo(
     matteredAccountCount,
     showBalanceLoadingWithoutLocal,
     showChangeLoadingWithoutLocal,
+    onPressNetWorth,
   }: IHeaderProps) => {
     const { reanimatedStyles, styles, colors2024 } = useTheme2024({ getStyle });
     const rStyles = {
@@ -373,11 +378,12 @@ const ChartHeader = React.memo(
     return (
       <Animated.View style={rStyles.charHeader}>
         <View style={styles.netWorthContainer}>
-          <View
+          <Pressable
             style={[
               styles.netWorthTextContainer,
               showNetWorthLoading ? styles.hidden : undefined,
             ]}
+            onPress={onPressNetWorth}
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceValue)}>
             <AnimateableText
               style={[
@@ -387,7 +393,7 @@ const ChartHeader = React.memo(
               ]}
               animatedProps={netWorthAnimatedProps}
             />
-          </View>
+          </Pressable>
 
           <Skeleton
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceLoading)}
