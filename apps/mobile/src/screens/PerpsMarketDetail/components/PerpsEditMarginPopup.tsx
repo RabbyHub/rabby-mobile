@@ -300,11 +300,8 @@ export const PerpsEditMarginPopup: React.FC<{
             </View>
             <View>
               <AssetPriceInfo
-                coin={displayName}
-                logoUrl={coinLogo!}
                 activeAssetCtx={activeAssetCtx}
                 currentAssetCtx={currentAssetCtx}
-                quoteAsset={currentAssetCtx?.quoteAsset}
               />
             </View>
             <View style={styles.card}>

@@ -347,6 +347,7 @@ export const PerpsPosition: React.FC<{
                   liqPrice={Number(positionData?.liquidationPrice || 0)}
                   pxDecimals={pxDecimals}
                   szDecimals={szDecimals}
+                  quoteAsset={quoteAsset}
                   handleCancelAutoClose={async () => {
                     await handleCancelAutoClose('tp');
                   }}
@@ -437,6 +438,7 @@ export const PerpsPosition: React.FC<{
                   liqPrice={Number(positionData?.liquidationPrice || 0)}
                   pxDecimals={pxDecimals}
                   szDecimals={szDecimals}
+                  quoteAsset={quoteAsset}
                   handleCancelAutoClose={async () => {
                     await handleCancelAutoClose('sl');
                   }}

@@ -297,11 +297,8 @@ export const PerpsAddPositionPopup: React.FC<{
           </View>
 
           <AssetPriceInfo
-            coin={displayName}
-            logoUrl={coinLogo || ''}
             activeAssetCtx={activeAssetCtx}
             currentAssetCtx={currentAssetCtx}
-            quoteAsset={currentAssetCtx?.quoteAsset}
           />
 
           {/* Coin Info */}

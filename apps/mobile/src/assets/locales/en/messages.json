@@ -2930,8 +2930,12 @@
         "priceBelow": "Price below",
         "youGain": "You Gain",
         "youLoss": "You Loss",
+        "youGainRoi": "You Gain (ROI)",
+        "youLossRoi": "You Loss (ROI)",
         "currentPrice": "Current {{price}}",
         "EntryAndCurrentPrice": "Entry {{entryPrice}}  Current {{price}}",
+        "currentPriceTpl": "Current <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "Entry <1>{{entryPrice}}</1>  Current <2>{{price}}</2>",
         "takeProfitWhen": "Take Profit When",
         "stopLossWhen": "Stop Loss When",
         "slPrice": "Stop Loss Price",
@@ -2940,6 +2944,9 @@
         "entryPrice": "Entry Price:",
         "setTpPrice": "Set Take-Profit Price",
         "setSlPrice": "Set Stop-Loss Price"
+      },
+      "PerpsPriceInfo": {
+        "current": "Current"
       },
       "PerpsAbout": {
         "title": "About"

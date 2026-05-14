@@ -43,7 +43,6 @@ import {
 } from '@/hooks/perps/usePerpsStore';
 import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
 import { PerpsSlider } from './PerpsSlider';
-import { AssetPriceInfo } from './PerpsPriceInfo';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
 import { PerpMarginModePopup } from './PerpMarginModePopup';
@@ -475,16 +474,6 @@ export const PerpsOpenPositionPopup: React.FC<{
               </Text>
             </View>
 
-            <View>
-              <AssetPriceInfo
-                coin={displayName}
-                logoUrl={marketDataItem?.logoUrl || ''}
-                activeAssetCtx={activeAssetCtx}
-                currentAssetCtx={marketDataItem}
-                quoteAsset={quoteAsset}
-              />
-            </View>
-
             {/* Long/Short Toggle */}
             <View style={styles.directionToggle}>
               <TouchableOpacity
@@ -796,6 +785,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                   liqPrice={Number(estimatedLiquidationPrice)}
                   pxDecimals={pxDecimals}
                   szDecimals={szDecimals}
+                  quoteAsset={quoteAsset}
                   handleCancelAutoClose={async () => {
                     setTpTriggerPx('');
                   }}
@@ -827,6 +817,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                   liqPrice={Number(estimatedLiquidationPrice)}
                   pxDecimals={pxDecimals}
                   szDecimals={szDecimals}
+                  quoteAsset={quoteAsset}
                   handleCancelAutoClose={async () => {
                     setSlTriggerPx('');
                   }}
