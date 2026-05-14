@@ -7,6 +7,7 @@ import {
   GasSelectorHeader,
   GasSelectorResponse,
 } from '../TxComponents/GasSelector/GasSelectorHeader';
+import type { ApprovalGasMethod } from '../TxComponents/GasSelector/approvalGasDisplay';
 import { useTranslation } from 'react-i18next';
 import { MiniSecurityHeader } from '@/components2024/MiniSignV2/components/MiniSecurityHeader';
 import type { SignatureFlowState } from '@/components2024/MiniSignV2/state/types';
@@ -44,7 +45,10 @@ import {
 } from '@/utils/tempo';
 import { SignMainnetGasSelectorHeader } from '../TxComponents/GasSelector/SignMainnetGasSelectorHeader';
 import tokenListStore from '@/store/tokens';
-import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type {
+  GasAccountCheckResult,
+  TokenItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 
 const rawAmountToBn = (
   value: string | number | BigNumber | null | undefined,
@@ -91,11 +95,30 @@ const MiniSignTxV2 = ({
     status === 'prefetching' || status === 'signing' || !ctx?.txsCalc.length;
 
   const { sig, accountId: gasAccountAddress } = useGasAccountSign();
+  const [manualGasMethod, setManualGasMethod] = useState<
+    ApprovalGasMethod | undefined
+  >(undefined);
 
-  const handleChangeGasMethod = useCallback(
-    async (method: 'native' | 'gasAccount') => {
+  useEffect(() => {
+    setManualGasMethod(undefined);
+  }, [ctx?.fingerprint]);
+
+  const handleAutoChangeGasMethod = useCallback(
+    async (method: ApprovalGasMethod) => {
       try {
         instance.setGasMethod(method);
+      } catch (error) {
+        console.error('Gas method change error:', error);
+      }
+    },
+    [instance],
+  );
+
+  const handleChangeGasMethod = useCallback(
+    async (method: ApprovalGasMethod) => {
+      setManualGasMethod(method);
+      try {
+        instance.setGasMethod(method, { manual: true });
       } catch (error) {
         console.error('Gas method change error:', error);
       }
@@ -137,7 +160,8 @@ const MiniSignTxV2 = ({
       if (ctx.selectedGas) {
         await handleGasChange(ctx.selectedGas as any);
       }
-      instance.setGasMethod('gasAccount');
+      setManualGasMethod('gasAccount');
+      instance.setGasMethod('gasAccount', { manual: true });
     },
   );
 
@@ -186,7 +210,7 @@ const MiniSignTxV2 = ({
   const showTempoGasTokenSelector =
     !!chain &&
     isTempoChain(chain.serverId) &&
-    ctx?.gasMethod !== 'gasAccount' &&
+    (manualGasMethod ?? ctx?.gasMethod) !== 'gasAccount' &&
     isTempoBatchSupportedAccountType(currentAccount?.type);
 
   const getCachedTokenItems = useCallback(() => {
@@ -293,7 +317,7 @@ const MiniSignTxV2 = ({
     (
       gas: GasSelectorResponse,
       type?: 'gasAccount' | 'native',
-    ): Promise<[boolean, number]> => {
+    ): Promise<[boolean, number, GasAccountCheckResult?]> => {
       const initdTxs = ctx?.txsCalc || [];
       let _txsResult = initdTxs;
       if (!isReady || !initdTxs.length) {
@@ -388,6 +412,7 @@ const MiniSignTxV2 = ({
               !gasAccountRes.balance_is_enough,
               (gasAccountRes.gas_account_cost.estimate_tx_cost || 0) +
                 (gasAccountRes.gas_account_cost?.gas_cost || 0),
+              gasAccountRes,
             ];
           });
       });
@@ -489,7 +514,8 @@ const MiniSignTxV2 = ({
 
   const showGasLess = isReady && (isGasNotEnough || !!gasLessConfig);
 
-  const noCustomRPC = !!ctx?.noCustomRPC;
+  const noCustomRPC = ctx?.noCustomRPC ?? true;
+  const effectiveGasMethod = manualGasMethod ?? ctx?.gasMethod;
 
   const canGotoUseGasAccount =
     // isSupportedAddr &&
@@ -506,7 +532,7 @@ const MiniSignTxV2 = ({
     !ctx?.gasAccount.chain_not_support;
 
   const gasAccountCanPay =
-    ctx?.gasMethod === 'gasAccount' &&
+    effectiveGasMethod === 'gasAccount' &&
     // isSupportedAddr &&
     noCustomRPC &&
     !!ctx?.gasAccount?.balance_is_enough &&
@@ -574,7 +600,7 @@ const MiniSignTxV2 = ({
 
   console.log('SignMainnetHeaderContent  tx render', {
     ctx,
-    gasMethod,
+    gasMethod: effectiveGasMethod,
   });
 
   return (
@@ -638,8 +664,11 @@ const MiniSignTxV2 = ({
                 tx={txs[0]!}
                 gasAccountCost={gasAccountCost}
                 noCustomRPC={noCustomRPC}
-                gasMethod={gasMethod}
+                gasMethod={effectiveGasMethod}
                 onChangeGasMethod={setGasMethod}
+                onAutoChangeGasMethod={handleAutoChangeGasMethod}
+                disableAutoGasLevelSwitch={!!manualGasMethod}
+                showGasMethodShortcut={false}
                 pushType={pushType}
                 isDisabledGasPopup={task.status !== 'idle'}
                 disabled={false}
@@ -668,6 +697,7 @@ const MiniSignTxV2 = ({
                 gasToken={gasToken}
                 showTempoGasTokenSelector={showTempoGasTokenSelector}
                 tempoGasTokenList={tempoGasTokenList}
+                tempoPreferredFeeTokenId={ctx?.tempoPreferredFeeTokenId}
                 onSelectTempoGasToken={handleSelectTempoGasToken}
                 tempoGasTokenLoading={tempoGasTokenLoading}
                 gasPriceMedian={gasPriceMedian}
@@ -684,10 +714,11 @@ const MiniSignTxV2 = ({
         }
         isSwap={isSwap}
         noCustomRPC={noCustomRPC}
-        gasMethod={gasMethod}
+        gasMethod={effectiveGasMethod}
         gasAccountCost={gasAccountCost}
         isFirstGasCostLoading={!ctx?.txsCalc.length}
         isFirstGasLessLoading={!ctx?.txsCalc.length}
+        disableAutoGasAccountSwitch={!!manualGasMethod}
         gasAccountCanPay={gasAccountCanPay}
         canGotoUseGasAccount={canGotoUseGasAccount}
         canDepositUseGasAccount={canDepositUseGasAccount}
