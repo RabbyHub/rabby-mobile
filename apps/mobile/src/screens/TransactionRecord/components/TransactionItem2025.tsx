@@ -38,13 +38,19 @@ import {
 import { TokenChangeDataItem } from '@/screens/Transaction/components/HistoryItem';
 import { HistoryItemTokenArea } from '@/screens/Transaction/components/HistoryItemTokenArea';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
-import { ellipsisAddress } from '@/utils/address';
 import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
 import { naviPush } from '@/utils/navigation';
 import FastImage from 'react-native-fast-image';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { Text } from '@/components/Typography';
 import { Account } from '@/types/account';
+
+const ellipsisAddress = (address: string) => {
+  if (!address) {
+    return '';
+  }
+  return address.slice(0, 8) + '...';
+};
 
 export type HistoryLocalDetailParams = GetNestedScreenRouteProp<
   'TransactionNavigatorParamList',
@@ -385,13 +391,19 @@ export const TransactionItem = ({
                   }}
                 />
                 <Text style={styles.describeText}>
-                  {getAliasName(addr) || ellipsisAddress(addr)}
+                  {getAliasName(addr, {
+                    keepEmptyIfNotFound: true,
+                  }) || ellipsisAddress(addr)}
                 </Text>
               </View>
             );
             break;
           } else {
-            address = ToText + (getAliasName(addr) || ellipsisAddress(addr));
+            address =
+              ToText +
+              (getAliasName(addr, {
+                keepEmptyIfNotFound: true,
+              }) || ellipsisAddress(addr));
           }
         }
         break;
@@ -409,7 +421,11 @@ export const TransactionItem = ({
           ?.requiredData as ApproveTokenRequireData;
         const name = appRequireData?.protocol?.name;
         address =
-          name || getAliasName(data.address) || ellipsisAddress(data.address);
+          name ||
+          getAliasName(data.address, {
+            keepEmptyIfNotFound: true,
+          }) ||
+          ellipsisAddress(data.address);
         break;
       // case HistoryItemCateType.Cancel:
       // default:
