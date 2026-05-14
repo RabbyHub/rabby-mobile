@@ -11,9 +11,11 @@ import { OpenOrder, OrderResponse } from '@rabby-wallet/hyperliquid-sdk';
 import { showToast } from '@/hooks/perps/showToast';
 import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
+import { useTranslation } from 'react-i18next';
 
 export const usePerpsPosition = () => {
   const currentPerpsAccount = perpsStore(s => s.currentPerpsAccount);
+  const { t } = useTranslation();
 
   const formatTriggerPx = (px?: string) => {
     // avoid '.15' input error from hy validator
@@ -82,14 +84,22 @@ export const usePerpsPosition = () => {
       if (okCount > 0 && failCount === 0) {
         showToast(
           orders.length === 1
-            ? 'Limit order canceled'
-            : `${okCount} limit orders canceled`,
+            ? t('page.perps.cancelOrderToast.singleSuccess')
+            : t('page.perps.cancelOrderToast.multiSuccess', {
+                count: okCount,
+              }),
           'success',
         );
         return true;
       }
       if (okCount > 0) {
-        showToast(`${okCount} canceled, ${failCount} failed`, 'success');
+        showToast(
+          t('page.perps.cancelOrderToast.partial', {
+            okCount,
+            failCount,
+          }),
+          'success',
+        );
         Sentry.captureException(
           new Error(
             'cancel limit orders partial failure: ' + JSON.stringify(res),
@@ -97,7 +107,7 @@ export const usePerpsPosition = () => {
         );
         return true;
       }
-      showToast('Cancel limit order failed', 'error');
+      showToast(t('page.perps.cancelOrderToast.failed'), 'error');
       Sentry.captureException(
         new Error('cancel limit orders all failed: ' + JSON.stringify(res)),
       );
@@ -108,7 +118,7 @@ export const usePerpsPosition = () => {
         return false;
       }
       console.error('cancel limit order error', e);
-      showToast('Cancel limit order failed', 'error');
+      showToast(t('page.perps.cancelOrderToast.failed'), 'error');
       Sentry.captureException(
         new Error('cancel limit order error: ' + JSON.stringify(e)),
       );

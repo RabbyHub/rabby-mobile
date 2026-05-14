@@ -2656,6 +2656,12 @@
         "buy": "Buy",
         "sell": "Sell"
       },
+      "cancelOrderToast": {
+        "singleSuccess": "Limit order canceled",
+        "multiSuccess": "{{count}} limit orders canceled",
+        "partial": "{{okCount}} canceled, {{failCount}} failed",
+        "failed": "Cancel limit order failed"
+      },
       "PerpsDepositTokenModal": {
         "goSwapDesc": "Only USDC on Arbitrum is supported for direct deposit. Please swap your current token to USDC before depositing.",
         "goBridgeDesc": "Only USDC on Arbitrum is supported for direct deposit. Please bridge your current token to USDC on Arbitrum before depositing.",
