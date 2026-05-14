@@ -33,6 +33,7 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
+import { apisHomeTabIndex } from '@/hooks/navigation';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 import { computeBalanceChange } from '@/core/apis/balance';
@@ -290,6 +291,9 @@ export function MultiAddressHomeHeader(
             }}>
             <MultiChart
               hideType={hideType}
+              onPressNetWorth={() => {
+                apisHomeTabIndex.homeTabScrollerRef.current?.setIndex(1);
+              }}
               style={[
                 styles.multiChart,
                 !pinnedAccountList?.length && styles.multiChartNoAccountsFollow,
