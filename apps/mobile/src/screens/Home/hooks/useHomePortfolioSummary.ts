@@ -22,6 +22,7 @@ type HomePortfolioState = {
   hasFetchedAccounts: boolean;
   isFetchingAccounts: boolean;
   matteredAccountLength: number;
+  canToggle24hCurve: boolean;
   isPendingDisplayAddresses: boolean;
   totalBalance: number;
   changeData: HomeChangeData;
@@ -110,6 +111,7 @@ function buildInitialState(): HomePortfolioState {
     hasFetchedAccounts: false,
     isFetchingAccounts: false,
     matteredAccountLength: 0,
+    canToggle24hCurve: false,
     isPendingDisplayAddresses: true,
     totalBalance: 0,
     changeData: EMPTY_HOME_CHANGE_DATA,
@@ -132,6 +134,7 @@ function isSameState(prev: HomePortfolioState, next: HomePortfolioState) {
     prev.hasFetchedAccounts === next.hasFetchedAccounts &&
     prev.isFetchingAccounts === next.isFetchingAccounts &&
     prev.matteredAccountLength === next.matteredAccountLength &&
+    prev.canToggle24hCurve === next.canToggle24hCurve &&
     prev.isPendingDisplayAddresses === next.isPendingDisplayAddresses &&
     prev.totalBalance === next.totalBalance &&
     prev.changeData.rawChange === next.changeData.rawChange &&
@@ -185,6 +188,8 @@ function buildHomePortfolioState(): HomePortfolioState {
 
     return flow.isLoading;
   });
+  const canToggle24hCurve =
+    balanceState.hasResolvedSelection && displayAddresses.length > 0;
   const isChangeAnyLoading =
     scene24hState.sceneLoading.Home ||
     scene24hState.sceneComputing.Home ||
@@ -230,6 +235,7 @@ function buildHomePortfolioState(): HomePortfolioState {
     hasFetchedAccounts: accountState.hasFetchedAccounts,
     isFetchingAccounts: accountState.isFetchingAccounts,
     matteredAccountLength: balanceState.matteredAccountLength,
+    canToggle24hCurve,
     isPendingDisplayAddresses,
     totalBalance: balanceState.totalBalance,
     changeData,
