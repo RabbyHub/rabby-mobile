@@ -17,13 +17,6 @@ const TabBarComponent = () => null;
 
 export function HomeScreenNavigator() {
   const colors = useThemeColors();
-  const sceneBackgroundColor = colors['neutral-bg-2'];
-  const sceneStyle = React.useMemo(
-    () => ({
-      backgroundColor: sceneBackgroundColor,
-    }),
-    [sceneBackgroundColor],
-  );
 
   if (__DEV__) {
     console.debug('[BottomTabNavigator] Render');
@@ -57,7 +50,6 @@ export function HomeScreenNavigator() {
               fontSize: DEFAULT_NAVBAR_FONT_SIZE,
             },
             // headerTransparent: true,
-            sceneStyle,
           }
         }
         tabBar={TabBarComponent}>
