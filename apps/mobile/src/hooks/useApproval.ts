@@ -37,7 +37,7 @@ export const useApproval = () => {
 
     setTimeout(() => {
       if (data && enablePopup(data.type)) {
-        return showPopup();
+        return showPopup(data.uiRequestComponent);
       }
 
       closePopup();
