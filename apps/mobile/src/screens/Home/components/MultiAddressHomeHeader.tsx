@@ -36,7 +36,9 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 import { computeBalanceChange } from '@/core/apis/balance';
+import { useHomeStartupReady } from '@/core/utils/homeStartupReady';
 import { balance24hStore } from '@/store/balance24h';
+import { useShallow } from 'zustand/react/shallow';
 import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
 
 function MultiPinnedAddressList({
@@ -134,7 +136,25 @@ export function MultiAddressHomeHeader(
   } & RNViewProps,
 ): JSX.Element {
   const { style, onRefresh } = props;
-  const data = useHomePortfolioStore(state => state.changeData);
+  const {
+    changeData: data,
+    showBalanceLoadingWithoutLocal,
+    showChangeLoadingWithoutLocal,
+    isCurveAnyAddrLoading,
+  } = useHomePortfolioStore(
+    useShallow(state => ({
+      changeData: state.changeData,
+      showBalanceLoadingWithoutLocal: state.showBalanceLoadingWithoutLocal,
+      showChangeLoadingWithoutLocal: state.showChangeLoadingWithoutLocal,
+      isCurveAnyAddrLoading: state.isCurveAnyAddrLoading,
+    })),
+  );
+  const startupReady = useHomeStartupReady();
+  const shouldCoverLocalWebViewLoading =
+    !startupReady ||
+    showBalanceLoadingWithoutLocal ||
+    showChangeLoadingWithoutLocal ||
+    isCurveAnyAddrLoading;
 
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
@@ -288,6 +308,9 @@ export function MultiAddressHomeHeader(
             onPress={() => {
               handleWalletsListPress();
             }}>
+            {shouldCoverLocalWebViewLoading ? (
+              <View pointerEvents="none" style={styles.curveCardCenterMask} />
+            ) : null}
             <MultiChart
               hideType={hideType}
               style={[
@@ -405,6 +428,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderWidth: 0,
       backgroundColor: 'transparent',
       // ...makeDebugBorder('purple'),
+    },
+    curveCardCenterMask: {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      borderRadius: SIZES.cardContentRadius,
+      backgroundColor: isLight ? colors2024['neutral-bg-0'] : '#232428',
     },
     noAddressCard: {
       paddingBottom: 20,
