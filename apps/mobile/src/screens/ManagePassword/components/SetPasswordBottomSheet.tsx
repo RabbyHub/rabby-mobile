@@ -19,7 +19,10 @@ import {
 } from '@/utils/patch';
 import YesIcon from '@/assets2024/icons/common/check.svg';
 import RcIconLock from '@/assets2024/icons/common/lock-cc.svg';
+import RcIconKeychainFaceIdCC from '@/assets2024/icons/common/fack_id.svg';
+import RcIconKeychainFingerprintCC from '@/assets2024/icons/common/fingerprint.svg';
 import { useTranslation } from 'react-i18next';
+import { useBiometricsComputed } from '@/hooks/biometrics';
 
 export type SetPasswordBottomSheetProps = {
   visible: boolean;
@@ -37,6 +40,7 @@ const SetPasswordBottomSheet: React.FC<SetPasswordBottomSheetProps> = ({
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const insets = useSafeAreaInsets();
+  const { isFaceID } = useBiometricsComputed();
   const sheetModalRef = useRef<BottomSheetModal>(null);
 
   useEffect(() => {
@@ -107,7 +111,10 @@ const SetPasswordBottomSheet: React.FC<SetPasswordBottomSheetProps> = ({
         linearGradientType: isLight ? 'bg0' : 'bg1',
       })}>
       <BottomSheetView
-        style={[styles.container, { paddingBottom: insets.bottom || 20 }]}>
+        style={[
+          styles.container,
+          { paddingBottom: Math.max(insets.bottom, 24) },
+        ]}>
         <Text style={styles.title}>
           {t('page.createPassword.title', 'Set Password')}
         </Text>
@@ -194,6 +201,21 @@ const SetPasswordBottomSheet: React.FC<SetPasswordBottomSheetProps> = ({
           height={52}
           titleStyle={{ fontSize: 18 }}
           title={t('global.Confirm')}
+          icon={
+            isFaceID ? (
+              <RcIconKeychainFaceIdCC
+                color={colors2024['neutral-InvertHighlight']}
+                width={24}
+                height={24}
+              />
+            ) : (
+              <RcIconKeychainFingerprintCC
+                color={colors2024['neutral-InvertHighlight']}
+                width={24}
+                height={24}
+              />
+            )
+          }
           onPress={handleConfirm}
         />
       </BottomSheetView>
