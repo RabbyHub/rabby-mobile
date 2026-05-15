@@ -280,20 +280,18 @@ export function MultiAddressHomeHeader(
               isAnimRunning && styles.curveCardGradientBgWithAnim,
             ]}
           />
-          <TouchableOpacity
+          <View
             style={[
               styles.curveCard,
               styles.shadowView,
               // !pinnedAccountList.length && styles.noAddressCard,
-            ]}
-            onPress={() => {
-              handleWalletsListPress();
-            }}>
+            ]}>
             <MultiChart
               hideType={hideType}
               onPressNetWorth={() => {
                 apisHomeTabIndex.homeTabScrollerRef.current?.setIndex(1);
               }}
+              onPressWalletList={handleWalletsListPress}
               style={[
                 styles.multiChart,
                 !pinnedAccountList?.length && styles.multiChartNoAccountsFollow,
@@ -305,7 +303,7 @@ export function MultiAddressHomeHeader(
                 pinnedAccountList={pinnedAccountList}
               />
             ) : null}
-          </TouchableOpacity>
+          </View>
         </View>
       </BlurShadowView>
     </View>
