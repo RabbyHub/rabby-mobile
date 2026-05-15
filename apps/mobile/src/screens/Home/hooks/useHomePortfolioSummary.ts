@@ -20,7 +20,6 @@ type HomePortfolioState = {
   hasFetchedAccounts: boolean;
   isFetchingAccounts: boolean;
   matteredAccountLength: number;
-  isPendingMatteredAccountLength: boolean;
   isPendingDisplayAddresses: boolean;
   totalBalance: number;
   changeData: HomeChangeData;
@@ -92,7 +91,6 @@ function buildInitialState(): HomePortfolioState {
     hasFetchedAccounts: false,
     isFetchingAccounts: false,
     matteredAccountLength: 0,
-    isPendingMatteredAccountLength: true,
     isPendingDisplayAddresses: true,
     totalBalance: 0,
     changeData: EMPTY_HOME_CHANGE_DATA,
@@ -115,8 +113,6 @@ function isSameState(prev: HomePortfolioState, next: HomePortfolioState) {
     prev.hasFetchedAccounts === next.hasFetchedAccounts &&
     prev.isFetchingAccounts === next.isFetchingAccounts &&
     prev.matteredAccountLength === next.matteredAccountLength &&
-    prev.isPendingMatteredAccountLength ===
-      next.isPendingMatteredAccountLength &&
     prev.isPendingDisplayAddresses === next.isPendingDisplayAddresses &&
     prev.totalBalance === next.totalBalance &&
     prev.changeData.rawChange === next.changeData.rawChange &&
@@ -192,8 +188,6 @@ function buildHomePortfolioState(): HomePortfolioState {
     hasFetchedAccounts: accountState.hasFetchedAccounts,
     isFetchingAccounts: accountState.isFetchingAccounts,
     matteredAccountLength: balanceState.matteredAccountLength,
-    isPendingMatteredAccountLength:
-      !balanceState.hasResolvedMatteredAccountLength,
     isPendingDisplayAddresses,
     totalBalance: balanceState.totalBalance,
     changeData,

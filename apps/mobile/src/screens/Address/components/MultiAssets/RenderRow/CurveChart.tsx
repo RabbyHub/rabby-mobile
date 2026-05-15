@@ -146,7 +146,6 @@ export const MultiChart = memo(function MultiChart({
     changeData,
     totalBalance,
     matteredAccountLength,
-    isPendingMatteredAccountLength,
     showBalanceLoadingWithoutLocal,
     showChangeLoadingWithoutLocal,
     isCurveAnyAddrLoading,
@@ -156,7 +155,6 @@ export const MultiChart = memo(function MultiChart({
       changeData: state.changeData,
       totalBalance: state.totalBalance,
       matteredAccountLength: state.matteredAccountLength,
-      isPendingMatteredAccountLength: state.isPendingMatteredAccountLength,
       showBalanceLoadingWithoutLocal: state.showBalanceLoadingWithoutLocal,
       showChangeLoadingWithoutLocal: state.showChangeLoadingWithoutLocal,
       isCurveAnyAddrLoading: state.isCurveAnyAddrLoading,
@@ -187,7 +185,6 @@ export const MultiChart = memo(function MultiChart({
             data={chartsData}
             hideType={hideType}
             matteredAccountCount={matteredAccountLength}
-            isMatteredAccountCountPending={isPendingMatteredAccountLength}
             showBalanceLoadingWithoutLocal={showBalanceLoadingWithoutLocal}
             showChangeLoadingWithoutLocal={showChangeLoadingWithoutLocal}
             onPressNetWorth={onPressNetWorth}
@@ -212,8 +209,7 @@ interface IHeaderProps {
   isLoss: boolean;
   data: CurvePoint[];
   hideType: BALANCE_HIDE_TYPE;
-  matteredAccountCount: number;
-  isMatteredAccountCountPending: boolean;
+  matteredAccountCount?: number;
   showBalanceLoadingWithoutLocal: boolean;
   showChangeLoadingWithoutLocal: boolean;
   onPressNetWorth?: () => void;
@@ -228,7 +224,6 @@ const ChartHeader = React.memo(
     hideType,
     data: _data,
     matteredAccountCount,
-    isMatteredAccountCountPending,
     showBalanceLoadingWithoutLocal,
     showChangeLoadingWithoutLocal,
     onPressNetWorth,
@@ -247,8 +242,6 @@ const ChartHeader = React.memo(
     const changePercent = useDebouncedValue(_changePercent, 300);
     const showChangeLoading =
       showNetWorthLoading || showChangeLoadingWithoutLocal;
-    const displayMatteredAccountCount =
-      matteredAccountCount >= 10 ? '10' : String(matteredAccountCount);
 
     const netWorth = useMemo(() => {
       return formatSmallCurrencyValueParts(rawNetWorth, { currency }).text;
@@ -426,18 +419,11 @@ const ChartHeader = React.memo(
             onPress={onPressWalletList}
             hitSlop={8}>
             <RcIconSmallWalletCC color={colors2024['neutral-title-1']} />
-            {isMatteredAccountCountPending ? (
-              <Skeleton
-                width={18}
-                height={16}
-                style={styles.accountCountSkeleton}
-                LinearGradientComponent={LoadingLinear}
-              />
-            ) : (
-              <Text style={styles.accountText}>
-                {displayMatteredAccountCount}
-              </Text>
-            )}
+            <Text style={styles.accountText}>
+              {matteredAccountCount && matteredAccountCount >= 10
+                ? '10'
+                : matteredAccountCount}
+            </Text>
             <RcIconSmallArrowCC color={colors2024['neutral-title-1']} />
           </Pressable>
         </View>
@@ -645,10 +631,6 @@ const getStyle = createGetStyles2024(
       lineHeight: 20,
       fontFamily: 'SF Pro Rounded',
       paddingLeft: 6,
-    },
-    accountCountSkeleton: {
-      marginLeft: 6,
-      borderRadius: 4,
     },
     percentChangeContainer: {
       // flexDirection: 'row',
