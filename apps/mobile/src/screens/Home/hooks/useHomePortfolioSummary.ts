@@ -20,7 +20,7 @@ type HomePortfolioState = {
   hasFetchedAccounts: boolean;
   isFetchingAccounts: boolean;
   matteredAccountLength: number;
-  canToggle24hCurve: boolean;
+  isPendingMatteredAccountLength: boolean;
   isPendingDisplayAddresses: boolean;
   totalBalance: number;
   changeData: HomeChangeData;
@@ -92,7 +92,7 @@ function buildInitialState(): HomePortfolioState {
     hasFetchedAccounts: false,
     isFetchingAccounts: false,
     matteredAccountLength: 0,
-    canToggle24hCurve: false,
+    isPendingMatteredAccountLength: true,
     isPendingDisplayAddresses: true,
     totalBalance: 0,
     changeData: EMPTY_HOME_CHANGE_DATA,
@@ -115,7 +115,8 @@ function isSameState(prev: HomePortfolioState, next: HomePortfolioState) {
     prev.hasFetchedAccounts === next.hasFetchedAccounts &&
     prev.isFetchingAccounts === next.isFetchingAccounts &&
     prev.matteredAccountLength === next.matteredAccountLength &&
-    prev.canToggle24hCurve === next.canToggle24hCurve &&
+    prev.isPendingMatteredAccountLength ===
+      next.isPendingMatteredAccountLength &&
     prev.isPendingDisplayAddresses === next.isPendingDisplayAddresses &&
     prev.totalBalance === next.totalBalance &&
     prev.changeData.rawChange === next.changeData.rawChange &&
@@ -158,8 +159,6 @@ function buildHomePortfolioState(): HomePortfolioState {
   const scene24hAddrLoading = displayAddresses.some(address => {
     return !!scene24hState.sceneAddrLoading[`Home-${address.toLowerCase()}`];
   });
-  const canToggle24hCurve =
-    balanceState.hasResolvedSelection && displayAddresses.length > 0;
   const isChangeAnyLoading =
     !is24hSceneMatched ||
     scene24hState.sceneLoading.Home ||
@@ -193,7 +192,8 @@ function buildHomePortfolioState(): HomePortfolioState {
     hasFetchedAccounts: accountState.hasFetchedAccounts,
     isFetchingAccounts: accountState.isFetchingAccounts,
     matteredAccountLength: balanceState.matteredAccountLength,
-    canToggle24hCurve,
+    isPendingMatteredAccountLength:
+      !balanceState.hasResolvedMatteredAccountLength,
     isPendingDisplayAddresses,
     totalBalance: balanceState.totalBalance,
     changeData,

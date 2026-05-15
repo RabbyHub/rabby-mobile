@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { TwpStepApproveModal } from '@/screens/Swap/components/TwoStepApproveModal';
 import BigNumber from 'bignumber.js';
 import { QuoteList } from './BridgeQuotes';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { BridgeHeader, BridgeHeaderRef } from './BridgeHeader';
 import { openapi } from '@/core/request';
@@ -80,12 +81,6 @@ import {
   type QuotePollingPauseReasonState,
   updateQuotePollingPauseReason,
 } from '@/utils/quotePolling';
-import { useSafeSizes } from '@/hooks/useAppLayout';
-
-const FOOTER_BUTTON_HEIGHT = 56;
-const FOOTER_PADDING_TOP = 16;
-const FOOTER_PADDING_BOTTOM = 24;
-const FOOTER_RISK_TIP_HEIGHT = 40;
 
 /** Bridge form snapshot for validation during auth */
 export interface BridgeFormSnapshot {
@@ -100,12 +95,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
   container: {
     flex: 1,
-    overflow: 'visible',
-  },
-  scrollContent: {
-    flexGrow: 1,
     paddingTop: 16,
-    paddingBottom: 24,
     overflow: 'visible',
   },
   noRecoomedTokenText: {
@@ -206,11 +196,13 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     color: colors['neutral-foot'],
   },
   buttonContainer: {
-    flexShrink: 0,
+    position: 'absolute',
+    left: 0,
+    bottom: 0,
+    // height: 140,
     backgroundColor: colors2024['neutral-bg-1'],
     width: '100%',
-    paddingHorizontal: 20,
-    paddingTop: FOOTER_PADDING_TOP,
+    padding: 20,
   },
   btnTitle: {
     color: colors['neutral-title-2'],
@@ -222,7 +214,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
 
 export const BridgeContent = ({ isForMultipleAddress = false }) => {
   const { t } = useTranslation();
-  const { safeOffBottom } = useSafeSizes();
+  const { bottom } = useSafeAreaInsets();
   const { styles } = useTheme2024({ getStyle });
   const headerRef = useRef<BridgeHeaderRef>(null);
   const { setNavigationOptions } = useSafeSetNavigationOptions();
@@ -1006,16 +998,6 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
 
   const showRiskTips =
     isSlippageHigh || isSlippageLow || showLoss || miniSignGasFeeTooHigh;
-  const showDirectSignRiskTips =
-    showRiskTips && !btnDisabled && !miniSignLoading;
-  const footerMinHeight =
-    FOOTER_BUTTON_HEIGHT +
-    FOOTER_PADDING_TOP +
-    FOOTER_PADDING_BOTTOM +
-    safeOffBottom +
-    (canShowDirectSubmit && showDirectSignRiskTips
-      ? FOOTER_RISK_TIP_HEIGHT
-      : 0);
 
   const [scrollEnabled, setScrollEnabled] = useState(true);
 
@@ -1027,7 +1009,9 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         )}
         <KeyboardAwareScrollView
           style={styles.container}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={{
+            paddingBottom: 150 + bottom + (showRiskTips ? 26 : 0),
+          }}
           enableOnAndroid
           scrollEnabled={scrollEnabled}
           extraHeight={200}
@@ -1217,8 +1201,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
           style={[
             styles.buttonContainer,
             {
-              minHeight: footerMinHeight,
-              paddingBottom: FOOTER_PADDING_BOTTOM + safeOffBottom,
+              paddingBottom: Math.max(bottom, 50),
             },
           ]}>
           <Tip
@@ -1251,7 +1234,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                 }}
                 account={currentAccount}
                 showHardWalletProcess
-                showRiskTips={showDirectSignRiskTips}
+                showRiskTips={showRiskTips && !btnDisabled && !miniSignLoading}
                 loading={miniSignLoading}
                 showTextOnLoading
               />
