@@ -49,11 +49,7 @@ import {
   useSwapUnlimitedAllowance,
   useTokenPair,
 } from './hooks';
-import {
-  refreshIdAtom,
-  useQuoteVisible,
-  useRabbyFeeVisible,
-} from './hooks/atom';
+import { refreshIdAtom, useRabbyFeeVisible } from './hooks/atom';
 import { buildDexSwap, dexSwap } from './hooks/swap';
 import { Button } from '@/components2024/Button';
 import {
@@ -184,8 +180,6 @@ const Swap = ({
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
 
-  const [visible, setVisible] = useQuoteVisible();
-
   const [unlimitedAllowance] = useSwapUnlimitedAllowance();
 
   const userAddress = currentAccount?.address;
@@ -217,6 +211,8 @@ const Swap = ({
     feeRate,
 
     openQuotesList,
+    closeQuotesList,
+    quotesListVisible,
     quoteLoading,
     quoteList,
 
@@ -1155,7 +1151,9 @@ const Swap = ({
                 onChangeSlider={onChangeSlider}
                 value={payAmount}
                 onValueChange={value => {
-                  if (directSignBtnRef.current?.isAuthInProgress()) return;
+                  if (directSignBtnRef.current?.isAuthInProgress()) {
+                    return;
+                  }
                   handleAmountChange(value);
                 }}
                 token={payToken}
@@ -1444,10 +1442,8 @@ const Swap = ({
           <QuoteList
             list={quoteList}
             loading={quoteLoading}
-            visible={visible}
-            onClose={() => {
-              setVisible(false);
-            }}
+            visible={quotesListVisible}
+            onClose={closeQuotesList}
             userAddress={userAddress}
             chain={chain}
             slippage={slippage}

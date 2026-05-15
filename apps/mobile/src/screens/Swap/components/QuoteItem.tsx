@@ -11,7 +11,6 @@ import {
   QuotePreExecResultInfo,
   QuoteProvider,
   isSwapWrapToken,
-  useSetQuoteVisible,
   useSwapSettings,
 } from '../hooks';
 
@@ -48,6 +47,7 @@ export interface QuoteItemProps {
   >;
   sortIncludeGasFee: boolean;
   onPress?: () => void;
+  onCloseQuoteList?: () => void;
 }
 
 export const DexQuoteItem = (
@@ -80,12 +80,11 @@ export const DexQuoteItem = (
     onErrQuote,
     onlyShow,
     onPress,
+    onCloseQuoteList,
   } = props;
 
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-
-  const openSwapQuote = useSetQuoteVisible();
 
   const { sortIncludeGasFee } = useSwapSettings();
 
@@ -298,7 +297,7 @@ export const DexQuoteItem = (
       preExecResult: preExecResult,
     });
 
-    openSwapQuote(false);
+    onCloseQuoteList?.();
   }, [
     gasFeeTooHigh,
     inSufficient,
@@ -308,7 +307,7 @@ export const DexQuoteItem = (
     quote,
     preExecResult,
     receiveToken.decimals,
-    openSwapQuote,
+    onCloseQuoteList,
     handleTips,
   ]);
 
