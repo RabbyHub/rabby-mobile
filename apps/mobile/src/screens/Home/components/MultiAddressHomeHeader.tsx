@@ -165,6 +165,7 @@ export function MultiAddressHomeHeader(
   const [hideType] = useHideBalance();
 
   const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
+  const [isLocalWebViewReady, setIsLocalWebViewReady] = useState(false);
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
@@ -261,16 +262,26 @@ export function MultiAddressHomeHeader(
           style={[
             styles.localWebViewWrapper,
             couldRenderLocalWebView ? styles.localWebViewWrapperShow : {},
+            isLocalWebViewReady ? styles.localWebViewWrapperReady : {},
           ]}>
-          <LocalWebView
-            ref={gasketWebViewRef}
-            style={[styles.curveBoxChildMH, styles.localWebView]}
-            entryPath={'/pages/gasket-blurview.html'}
-            // forceUseLocalResource
-            webviewSize={{
-              width: styles.localWebView.minWidth,
-            }}
-          />
+          {couldRenderLocalWebView ? (
+            <LocalWebView
+              ref={gasketWebViewRef}
+              style={[styles.curveBoxChildMH, styles.localWebView]}
+              entryPath={'/pages/gasket-blurview.html'}
+              // forceUseLocalResource
+              webviewSize={{
+                width: styles.localWebView.minWidth,
+              }}
+              startInLoadingState={false}
+              renderLoading={() => (
+                <View style={styles.localWebViewLoadingFallback} />
+              )}
+              onLoadEnd={() => {
+                setIsLocalWebViewReady(true);
+              }}
+            />
+          ) : null}
         </View>
         <View
           style={[
@@ -385,6 +396,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         isLight && IS_IOS ? 0 : SIZES.cardLayoutPaddingHorizontal,
       borderRadius: SIZES.cardContentRadius,
       display: 'none',
+      opacity: 0,
+      overflow: 'hidden',
       // it helps to check the position of webview wrapper
       // if you see .localWebViewWrapper not filled by content in .curveBox, the sizes are wrong
       // uncomment below line to see the border
@@ -397,6 +410,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     localWebViewWrapperShow: {
       display: 'flex',
+    },
+    localWebViewWrapperReady: {
+      opacity: 1,
+    },
+    localWebViewLoadingFallback: {
+      flex: 1,
+      backgroundColor: 'transparent',
     },
     curveBoxWrapperLoading: {},
     curveBoxChildMH: {
