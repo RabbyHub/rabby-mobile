@@ -20,16 +20,12 @@ import usePrevious from 'react-use/lib/usePrevious';
 import Animated, {
   cancelAnimation,
   Easing,
-  useAnimatedProps,
+  useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, {
-  Defs,
-  LinearGradient as SvgLinearGradient,
-  Rect,
-  Stop,
-} from 'react-native-svg';
+import MaskedView from '@react-native-masked-view/masked-view';
+import Svg, { Path } from 'react-native-svg';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -62,15 +58,54 @@ import { useShallow } from 'zustand/react/shallow';
 import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
 import { useDebugHomeGasketNegativeGlow } from '@/hooks/appSettings';
 
-const AnimatedRect = Animated.createAnimatedComponent(Rect);
+const CONIC_SEGMENT_COUNT = 96;
+const CONIC_PEAK_DEG = 180;
+const CONIC_GLOW_PEAK_DEG = 90;
+const CONIC_SPREAD_DEG = 90;
+const GASKET_BORDER_WIDTH = 2;
+const GASKET_GLOW_BORDER_WIDTH = 5;
 
-function getRoundedRectPerimeter(width: number, height: number, radius: number) {
-  const normalizedRadius = Math.min(radius, width / 2, height / 2);
+function getConicOpacity(angleDeg: number, peakDeg: number) {
+  const diff = Math.abs(((angleDeg - peakDeg + 540) % 360) - 180);
+  return Math.max(0, 1 - diff / CONIC_SPREAD_DEG);
+}
 
-  return (
-    2 * (width + height - 4 * normalizedRadius) +
-    2 * Math.PI * normalizedRadius
-  );
+function getConicPoint(
+  centerX: number,
+  centerY: number,
+  radius: number,
+  angleDeg: number,
+) {
+  const rad = (angleDeg * Math.PI) / 180;
+
+  return {
+    x: centerX + Math.sin(rad) * radius,
+    y: centerY - Math.cos(rad) * radius,
+  };
+}
+
+function makeConicSectorPath({
+  centerX,
+  centerY,
+  radius,
+  startDeg,
+  endDeg,
+}: {
+  centerX: number;
+  centerY: number;
+  radius: number;
+  startDeg: number;
+  endDeg: number;
+}) {
+  const start = getConicPoint(centerX, centerY, radius, startDeg);
+  const end = getConicPoint(centerX, centerY, radius, endDeg);
+
+  return [
+    `M ${centerX} ${centerY}`,
+    `L ${start.x} ${start.y}`,
+    `A ${radius} ${radius} 0 0 1 ${end.x} ${end.y}`,
+    'Z',
+  ].join(' ');
 }
 
 function NativeGasketGlow({
@@ -93,21 +128,61 @@ function NativeGasketGlow({
   style?: StyleProp<ViewStyle>;
 }) {
   const progress = useSharedValue(0);
-  const glowStrokeWidth = 6;
-  const borderStrokeWidth = 2;
-  const inset = borderStrokeWidth / 2;
-  const rectWidth = Math.max(0, width - inset * 2);
-  const rectHeight = Math.max(0, height - inset * 2);
-  const rectRadius = Math.max(0, radius - inset / 2);
-  const perimeter = getRoundedRectPerimeter(rectWidth, rectHeight, rectRadius);
-  const dashLength = Math.min(
-    perimeter * 0.36,
-    Math.max(120, rectWidth * 0.55),
+  const gradientSize = Math.ceil(Math.sqrt(width * width + height * height));
+  const gradientOffsetX = (width - gradientSize) / 2;
+  const gradientOffsetY = (height - gradientSize) / 2;
+  const colorRgb = isPositive ? '88, 198, 105' : '227, 73, 53';
+  const mainOpacity = isLight ? 0.6 : 0.4;
+  const glowOpacity = isLight ? 0.18 : 0.14;
+  const center = gradientSize / 2;
+  const sectorRadius = gradientSize;
+  const sectorStep = 360 / CONIC_SEGMENT_COUNT;
+  const conicSectors = useMemo(
+    () =>
+      Array.from({ length: CONIC_SEGMENT_COUNT }, (_, index) => {
+        const startDeg = index * sectorStep;
+        const endDeg = startDeg + sectorStep;
+        const midDeg = startDeg + sectorStep / 2;
+        const mainAlpha =
+          getConicOpacity(midDeg, CONIC_PEAK_DEG) * mainOpacity;
+        const glowAlpha =
+          getConicOpacity(midDeg, CONIC_GLOW_PEAK_DEG) * glowOpacity;
+        const d = makeConicSectorPath({
+          centerX: center,
+          centerY: center,
+          radius: sectorRadius,
+          startDeg,
+          endDeg,
+        });
+
+        return {
+          key: `${startDeg}`,
+          d,
+          mainFill: `rgba(${colorRgb}, ${mainAlpha})`,
+          glowFill: `rgba(${colorRgb}, ${glowAlpha})`,
+          mainAlpha,
+          glowAlpha,
+        };
+      }).filter(item => item.mainAlpha > 0.001 || item.glowAlpha > 0.001),
+    [
+      center,
+      colorRgb,
+      glowOpacity,
+      mainOpacity,
+      sectorRadius,
+      sectorStep,
+    ],
   );
-  const dashGap = Math.max(0, perimeter - dashLength);
-  const animatedProps = useAnimatedProps(() => ({
-    strokeDashoffset: -progress.value * perimeter,
-  }));
+  const glowRotatingCanvasStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ rotate: `${progress.value * 360}deg` }],
+    };
+  });
+  const mainRotatingCanvasStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ rotate: `${progress.value * 360}deg` }],
+    };
+  });
 
   useEffect(() => {
     cancelAnimation(progress);
@@ -127,63 +202,81 @@ function NativeGasketGlow({
     };
   }, [durationMs, progress, running]);
 
-  if (!running || rectWidth <= 0 || rectHeight <= 0) {
+  if (!running || width <= 0 || height <= 0) {
     return null;
   }
 
-  const activeColor = isPositive ? 'rgb(88, 198, 105)' : 'rgb(227, 73, 53)';
-  const gradientId = isPositive
-    ? 'home-gasket-positive-gradient'
-    : 'home-gasket-negative-gradient';
-  const mainOpacity = isLight ? 0.62 : 0.42;
-  const glowOpacity = isLight ? 0.18 : 0.16;
-
   return (
     <View pointerEvents="none" style={[stylesNativeGasket.container, style]}>
-      <Svg width={width} height={height}>
-        <Defs>
-          <SvgLinearGradient
-            id={gradientId}
-            x1="0"
-            y1="0"
-            x2={width}
-            y2={height}>
-            <Stop offset="0%" stopColor={activeColor} stopOpacity="0" />
-            <Stop offset="45%" stopColor={activeColor} stopOpacity="1" />
-            <Stop offset="100%" stopColor={activeColor} stopOpacity="0" />
-          </SvgLinearGradient>
-        </Defs>
-        <AnimatedRect
-          animatedProps={animatedProps}
-          x={inset}
-          y={inset}
-          width={rectWidth}
-          height={rectHeight}
-          rx={rectRadius}
-          ry={rectRadius}
-          fill="none"
-          stroke={`url(#${gradientId})`}
-          strokeWidth={glowStrokeWidth}
-          strokeLinecap="round"
-          strokeDasharray={`${dashLength} ${dashGap}`}
-          opacity={glowOpacity}
-        />
-        <AnimatedRect
-          animatedProps={animatedProps}
-          x={inset}
-          y={inset}
-          width={rectWidth}
-          height={rectHeight}
-          rx={rectRadius}
-          ry={rectRadius}
-          fill="none"
-          stroke={`url(#${gradientId})`}
-          strokeWidth={borderStrokeWidth}
-          strokeLinecap="round"
-          strokeDasharray={`${dashLength} ${dashGap}`}
-          opacity={mainOpacity}
-        />
-      </Svg>
+      <MaskedView
+        androidRenderingMode="hardware"
+        style={StyleSheet.absoluteFill}
+        maskElement={
+          <View style={[stylesNativeGasket.maskRoot, { width, height }]}>
+            <View
+              style={[
+                stylesNativeGasket.maskRing,
+                {
+                  borderRadius: radius,
+                  borderWidth: GASKET_GLOW_BORDER_WIDTH,
+                },
+              ]}
+            />
+          </View>
+        }>
+        <Animated.View
+          style={[
+            stylesNativeGasket.conicCanvas,
+            {
+              width: gradientSize,
+              height: gradientSize,
+              left: gradientOffsetX,
+              top: gradientOffsetY,
+            },
+            glowRotatingCanvasStyle,
+          ]}>
+          <Svg width={gradientSize} height={gradientSize}>
+            {conicSectors.map(item => (
+              <Path key={`glow-${item.key}`} d={item.d} fill={item.glowFill} />
+            ))}
+          </Svg>
+        </Animated.View>
+      </MaskedView>
+
+      <MaskedView
+        androidRenderingMode="hardware"
+        style={StyleSheet.absoluteFill}
+        maskElement={
+          <View style={[stylesNativeGasket.maskRoot, { width, height }]}>
+            <View
+              style={[
+                stylesNativeGasket.maskRing,
+                {
+                  borderRadius: radius,
+                  borderWidth: GASKET_BORDER_WIDTH,
+                },
+              ]}
+            />
+          </View>
+        }>
+        <Animated.View
+          style={[
+            stylesNativeGasket.conicCanvas,
+            {
+              width: gradientSize,
+              height: gradientSize,
+              left: gradientOffsetX,
+              top: gradientOffsetY,
+            },
+            mainRotatingCanvasStyle,
+          ]}>
+          <Svg width={gradientSize} height={gradientSize}>
+            {conicSectors.map(item => (
+              <Path key={`main-${item.key}`} d={item.d} fill={item.mainFill} />
+            ))}
+          </Svg>
+        </Animated.View>
+      </MaskedView>
     </View>
   );
 }
@@ -191,6 +284,17 @@ function NativeGasketGlow({
 const stylesNativeGasket = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
+  },
+  maskRoot: {
+    backgroundColor: 'transparent',
+  },
+  maskRing: {
+    ...StyleSheet.absoluteFillObject,
+    borderColor: 'black',
+    backgroundColor: 'transparent',
+  },
+  conicCanvas: {
+    position: 'absolute',
   },
 });
 
@@ -541,7 +645,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       bottom: 0,
       left: 0,
       right: 0,
-      zIndex: 1,
+      zIndex: 3,
       borderRadius: SIZES.cardContentRadius,
       overflow: 'hidden',
     },
