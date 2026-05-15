@@ -131,10 +131,9 @@ function HistoryLocalDetailScreen(): JSX.Element {
   }, [accounts, data.address, data.keyringType]);
 
   const currentAccount = useMemo(() => {
-    return (
-      account ||
-      accounts.find(item => isSameAddress(item.address, data.address))
-    );
+    return account && isSameAddress(account.address, data.address)
+      ? account
+      : accounts.find(item => isSameAddress(item.address, data.address));
   }, [account, accounts, data.address]);
 
   useFocusEffect(
