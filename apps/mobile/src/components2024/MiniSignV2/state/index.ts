@@ -3,8 +3,8 @@ import { signatureManager } from './SignatureManager';
 export * from './types';
 export { SignatureManager, signatureManager } from './SignatureManager';
 export { useSignatureStore, useSignatureStoreOf } from './useSignatureStore';
+export { getMiniSignGasPanelController } from './MiniSignGasPanelController';
 export {
-  getMiniSignGasPanelController,
   useMiniSignGasPanelController,
   useMiniSignGasPanelState,
 } from './useMiniSignGasPanel';

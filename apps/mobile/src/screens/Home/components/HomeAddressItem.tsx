@@ -1,4 +1,3 @@
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
@@ -13,18 +12,13 @@ import {
 import { ArrowCircleCC } from '@/assets2024/icons/address';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { useCurrency } from '@/hooks/useCurrency';
 import { AddressItemContextMenu } from '@/screens/Address/components/AddressItemContextMenu';
 import { trigger } from 'react-native-haptic-feedback';
 import { BALANCE_HIDE_TYPE } from '../hooks/useHideBalance';
-import BigNumber from 'bignumber.js';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { apisSingleHome } from '../hooks/singleHome';
-import {
-  formatSmallCurrencyValue,
-  useCurveDataByAddress,
-} from '@/hooks/useCurve';
 import { Text } from '@/components/Typography';
+import { formatSmallCurrencyValue } from '@/hooks/useCurve';
 
 export const HomeAddressItem: React.FC<{
   account: KeyringAccountWithAlias;
@@ -36,65 +30,23 @@ export const HomeAddressItem: React.FC<{
 }> = ({
   style,
   account,
-  updateTime,
   changePercent: prop_changePercent,
   isLoss,
   hideType,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
-  // const [isPressing, setIsPressing] = React.useState(false);
-  const { currency } = useCurrency();
-
-  // const { curveState } = useCurveDataByAddress(account.address);
-
-  // console.debug(
-  //   '[debug] account.address, curveState?.updateTime, updateTime, (curveState?.updateTime || 0) > (updateTime || 0)',
-  //   account.address,
-  //   curveState?.updateTime,
-  //   updateTime,
-  //   (curveState?.updateTime || 0) > (updateTime || 0),
-  // );
-
   const { balance, isZeroPercentChange, changePercent } = useMemo(() => {
     const ret = {
-      balance: '',
+      balance: formatSmallCurrencyValue(0),
       isZeroPercentChange: false,
       changePercent: '0%',
     };
-    // if (
-    //   curveState?.loadedFromApi &&
-    //   (curveState?.updateTime || 0) > (updateTime || 0)
-    // ) {
-    //   ret.balance = formatSmallCurrencyValue(
-    //     curveState?.selectData.rawNetWorth,
-    //     {
-    //       currency: currency,
-    //     },
-    //   );
-    //   ret.changePercent = curveState?.selectData.changePercent;
-    //   ret.isZeroPercentChange = curveState?.selectData.rawChange === 0;
-    //   return ret;
-    // }
-
-    const b = new BigNumber(account.balance || 0);
-    ret.balance = formatSmallCurrencyValue(b.toNumber(), {
-      currency: currency,
-    });
+    ret.balance = formatSmallCurrencyValue(Number(account.balance || 0));
     ret.changePercent = prop_changePercent || '0%';
     ret.isZeroPercentChange = ret.changePercent === '0%';
     return ret;
-  }, [
-    // updateTime,
-    // curveState?.updateTime,
-    // curveState?.loadedFromApi,
-    // curveState?.selectData.rawNetWorth,
-    // curveState?.selectData.changePercent,
-    // curveState?.selectData.rawChange,
-    prop_changePercent,
-    account.balance,
-    currency,
-  ]);
+  }, [prop_changePercent, account.balance]);
 
   return (
     <AddressItemContextMenu
@@ -103,8 +55,6 @@ export const HomeAddressItem: React.FC<{
       key={`${account.type}-${account.address}`}
       actions={['copy', 'pin', 'edit']}>
       <TouchableOpacity
-        // onPressIn={() => setIsPressing(true)}
-        // onPressOut={() => setIsPressing(false)}
         style={StyleSheet.flatten([style])}
         delayLongPress={200} // long press delay
         onPress={() => {

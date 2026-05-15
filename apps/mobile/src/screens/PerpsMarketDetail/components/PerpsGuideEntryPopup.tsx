@@ -1,7 +1,9 @@
 import React from 'react';
-import { Image, Modal, View } from 'react-native';
+import { Image, View } from 'react-native';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
@@ -21,7 +23,8 @@ export const PerpsGuideEntryPopup: React.FC<Props> = ({ visible, onClose }) => {
   const { t } = useTranslation();
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.perpsGuideEntry}
       transparent={true}
       visible={!!visible}
       animationType="fade"
@@ -47,7 +50,7 @@ export const PerpsGuideEntryPopup: React.FC<Props> = ({ visible, onClose }) => {
           />
         </View>
       </View>
-    </Modal>
+    </TrackedModal>
   );
 };
 

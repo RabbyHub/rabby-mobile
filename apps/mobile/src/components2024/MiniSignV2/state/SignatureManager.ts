@@ -27,7 +27,7 @@ import {
   setOneKeyStatus,
 } from '@/hooks/onekey/useOneKeyStatus';
 import { transactionHistoryService } from '@/core/services';
-import { getMiniSignGasPanelController } from './useMiniSignGasPanel';
+import { getMiniSignGasPanelController } from './MiniSignGasPanelController';
 
 const ETH_GAS_USD_LIMIT = 15;
 const OTHER_GAS_USD_LIMIT = 5;
@@ -37,6 +37,7 @@ export const MINI_SIGN_ERROR = {
   PREFETCH_FAILURE: 'prepare failure',
   USER_CANCELLED: 'User cancelled',
   CANT_PROCESS: 'Can not process',
+  GAS_NOT_ENOUGH: 'Gas not enough',
 };
 
 type Subscriber = (state: SignatureFlowState) => void;
@@ -68,6 +69,8 @@ export class SignatureManager {
   private seq = 0;
   private pendingCtx = new Map<string, Promise<SignerCtx>>();
   private notifyScheduled = false;
+  private manualGasMethod?: SignerCtx['gasMethod'];
+  private manualGasFingerprint?: string;
 
   private pendingResult: {
     resolve: (hashes: string[]) => void;
@@ -139,6 +142,30 @@ export class SignatureManager {
     this.pendingCtx.clear();
   }
 
+  private getManualGasMethod(fingerprint?: string) {
+    return fingerprint && this.manualGasFingerprint === fingerprint
+      ? this.manualGasMethod
+      : undefined;
+  }
+
+  private withManualGasMethod(ctx: SignerCtx, fingerprint = ctx.fingerprint) {
+    const manualGasMethod = this.getManualGasMethod(fingerprint);
+    return manualGasMethod
+      ? ({
+          ...ctx,
+          gasMethod: manualGasMethod,
+          manualGasMethod,
+          useGasless: manualGasMethod === 'gasAccount' ? false : ctx.useGasless,
+        } as SignerCtx)
+      : ctx;
+  }
+
+  private bindManualGasMethodToFingerprint(fingerprint: string) {
+    if (this.manualGasMethod) {
+      this.manualGasFingerprint = fingerprint;
+    }
+  }
+
   private markRun(fingerprint: string, currentPendingId?: number) {
     if (currentPendingId && this.run?.fingerprint === fingerprint) {
       return currentPendingId;
@@ -156,6 +183,7 @@ export class SignatureManager {
 
   private ensureContext(request: SignatureRequest, opId?: number) {
     const fingerprint = this.getFingerprint(request.txs);
+    this.bindManualGasMethodToFingerprint(fingerprint);
 
     this.dispatch({ type: 'SET_CONFIG', payload: request.config });
 
@@ -164,13 +192,18 @@ export class SignatureManager {
       this.state.ctx &&
       this.state.status !== 'error'
     ) {
-      return Promise.resolve(this.state.ctx);
+      return Promise.resolve(
+        this.withManualGasMethod(this.state.ctx, fingerprint),
+      );
     }
 
     const cached = this.pendingCtx.get(fingerprint);
     if (cached) return cached;
     const currentOpId = this.markRun(fingerprint, opId);
-    const skeleton = this.createSkeletonCtx(request.txs, fingerprint);
+    const skeleton = this.withManualGasMethod(
+      this.createSkeletonCtx(request.txs, fingerprint),
+      fingerprint,
+    );
 
     this.dispatch({
       type: 'PREFETCH_START',
@@ -187,10 +220,15 @@ export class SignatureManager {
         gasSelection: request.gasSelection,
       })
       .then(ctx => {
+        const nextCtx = this.withManualGasMethod(ctx, fingerprint);
         if (this.isActive(currentOpId, fingerprint)) {
-          this.dispatch({ type: 'PREFETCH_SUCCESS', fingerprint, ctx });
+          this.dispatch({
+            type: 'PREFETCH_SUCCESS',
+            fingerprint,
+            ctx: nextCtx,
+          });
         }
-        return ctx;
+        return nextCtx;
       })
       .catch(error => {
         console.error('PREFETCH_FAILURE error', error);
@@ -313,19 +351,27 @@ export class SignatureManager {
   };
 
   public prefetch(request: SignatureRequest) {
-    this.close();
+    const fingerprint = this.getFingerprint(request.txs);
+
+    this.close({ preserveManualGasMethod: true });
+    this.bindManualGasMethodToFingerprint(fingerprint);
+
     return this.ensureContext(request);
   }
 
   public async openUI(request: SignatureRequest) {
     const fingerprint = this.getFingerprint(request.txs);
+    this.bindManualGasMethodToFingerprint(fingerprint);
     const opId = this.markRun(fingerprint);
     this.dispatch({ type: 'SET_CONFIG', payload: request.config });
 
     const prepared =
       this.pendingCtx.get(fingerprint) || this.ensureContext(request, opId);
 
-    const skeleton = this.createSkeletonCtx(request.txs, fingerprint);
+    const skeleton = this.withManualGasMethod(
+      this.createSkeletonCtx(request.txs, fingerprint),
+      fingerprint,
+    );
     this.dispatch({ type: 'OPEN_UI_SKELETON', fingerprint, ctx: skeleton });
 
     try {
@@ -337,8 +383,9 @@ export class SignatureManager {
         prepared,
       });
       if (!this.isActive(opId, fingerprint)) return ctx;
-      this.dispatch({ type: 'OPEN_UI_SUCCESS', fingerprint, ctx });
-      return ctx;
+      const nextCtx = this.withManualGasMethod(ctx, fingerprint);
+      this.dispatch({ type: 'OPEN_UI_SUCCESS', fingerprint, ctx: nextCtx });
+      return nextCtx;
     } catch (error) {
       if (!this.isActive(opId, fingerprint)) return;
       const message = createErrorMessage(error);
@@ -393,7 +440,20 @@ export class SignatureManager {
 
       const nextCtx = await nextCtxPromise;
       if (!this.isActive(opId, fingerprint)) return;
-      this.dispatch({ type: 'UPDATE_CTX', fingerprint, ctx: nextCtx });
+      const latestCtx =
+        this.state.fingerprint === fingerprint ? this.state.ctx : undefined;
+      const manualGasMethod = this.getManualGasMethod(fingerprint);
+      this.dispatch({
+        type: 'UPDATE_CTX',
+        fingerprint,
+        ctx: {
+          ...nextCtx,
+          gasMethod:
+            manualGasMethod ?? latestCtx?.gasMethod ?? nextCtx.gasMethod,
+          manualGasMethod: manualGasMethod ?? latestCtx?.manualGasMethod,
+          useGasless: latestCtx?.useGasless ?? nextCtx.useGasless,
+        } as SignerCtx,
+      });
     } catch (error) {
       if (!this.isActive(opId, fingerprint)) return;
       throw error instanceof Error ? error : new Error(String(error));
@@ -434,20 +494,35 @@ export class SignatureManager {
     });
   }
 
-  public async send(retry?: boolean) {
+  public async send(
+    options?: boolean | { retry?: boolean; isHideErrorUI?: boolean },
+  ) {
+    const retry = typeof options === 'boolean' ? options : options?.retry;
+    const isHideErrorUI =
+      typeof options === 'boolean' ? undefined : options?.isHideErrorUI;
     const { ctx, config, fingerprint } = this.state;
     if (!ctx || !config || !fingerprint) {
       throw new Error('Signature is not ready');
     }
     if (!this.canProcess()) {
-      this.rejectPending(MINI_SIGN_ERROR.CANT_PROCESS);
-      throw MINI_SIGN_ERROR.CANT_PROCESS;
+      if (ctx.isGasNotEnough) {
+        this.rejectPending(MINI_SIGN_ERROR.GAS_NOT_ENOUGH);
+        throw MINI_SIGN_ERROR.GAS_NOT_ENOUGH;
+      } else {
+        this.rejectPending(MINI_SIGN_ERROR.CANT_PROCESS);
+        throw MINI_SIGN_ERROR.CANT_PROCESS;
+      }
     }
     const opId = this.markRun(fingerprint);
     this.dispatch({ type: 'SEND_START', fingerprint });
     try {
+      const latestCtx =
+        this.state.fingerprint === fingerprint && this.state.ctx
+          ? this.state.ctx
+          : ctx;
+      const sendCtx = this.withManualGasMethod(latestCtx, fingerprint);
       const res = await signatureService.send({
-        ctx,
+        ctx: sendCtx,
         config,
         retry,
         onSigningTxCreated: signingTxId => {
@@ -470,6 +545,11 @@ export class SignatureManager {
         return hashes;
       }
       if (res.error) {
+        if (isHideErrorUI) {
+          this.rejectPending(res.error.description);
+          return res;
+        }
+
         this.dispatch({
           type: 'SEND_FAILURE',
           fingerprint,
@@ -501,7 +581,11 @@ export class SignatureManager {
     this.signingTxIds.clear();
   }
 
-  public reset() {
+  public reset(options?: { preserveManualGasMethod?: boolean }) {
+    if (!options?.preserveManualGasMethod) {
+      this.manualGasMethod = undefined;
+      this.manualGasFingerprint = undefined;
+    }
     this.clearRunState();
     this.seq++;
     getMiniSignGasPanelController(this).reset();
@@ -517,8 +601,13 @@ export class SignatureManager {
     this.dispatch({ type: 'SET_CONFIG', payload: config });
   }
 
-  public close() {
-    this.reset();
+  public close(options?: { preserveManualGasMethod?: boolean }) {
+    this.reset(options);
+  }
+
+  public clearManualGasMethod() {
+    this.manualGasMethod = undefined;
+    this.manualGasFingerprint = undefined;
   }
 
   private async checkHardWareConnected(cb: () => void) {
@@ -575,8 +664,12 @@ export class SignatureManager {
     return;
   }
 
-  public async openDirect(request: SignatureRequest) {
+  public async openDirect(
+    request: SignatureRequest,
+    opts?: { isHideErrorUI?: boolean },
+  ) {
     const fingerprint = this.getFingerprint(request.txs);
+    this.bindManualGasMethodToFingerprint(fingerprint);
     const resultPromise = this.createResultPromise();
     if (this.state.status === 'prefetch_failure') {
       this.rejectPending(MINI_SIGN_ERROR.PREFETCH_FAILURE);
@@ -587,7 +680,10 @@ export class SignatureManager {
     this.dispatch({
       type: 'UPDATE_CTX',
       fingerprint,
-      ctx: { ...this.state.ctx, mode: 'direct' } as SignerCtx,
+      ctx: this.withManualGasMethod(
+        { ...this.state.ctx, mode: 'direct' } as SignerCtx,
+        fingerprint,
+      ),
     });
 
     try {
@@ -611,11 +707,16 @@ export class SignatureManager {
       this.dispatch({
         type: 'UPDATE_CTX',
         fingerprint,
-        ctx: { ...this.state.ctx, mode: 'direct' } as SignerCtx,
+        ctx: this.withManualGasMethod(
+          { ...this.state.ctx, mode: 'direct' } as SignerCtx,
+          fingerprint,
+        ),
       });
 
       await this.checkHardWareConnected(() =>
-        this.send().catch(() => undefined),
+        this.send({ isHideErrorUI: opts?.isHideErrorUI }).catch(
+          () => undefined,
+        ),
       );
     } catch (error) {
       const message = createErrorMessage(error);
@@ -636,13 +737,29 @@ export class SignatureManager {
     });
   }
 
-  public setGasMethod(method: 'native' | 'gasAccount') {
+  public setGasMethod(
+    method: 'native' | 'gasAccount',
+    options?: { manual?: boolean },
+  ) {
     const { ctx, fingerprint } = this.state;
     if (!ctx || !fingerprint) return;
+    if (options?.manual) {
+      this.manualGasMethod = method;
+      this.manualGasFingerprint = fingerprint;
+    }
+    const nextGasMethod = this.getManualGasMethod(fingerprint) ?? method;
     this.dispatch({
       type: 'UPDATE_CTX',
       fingerprint,
-      ctx: { ...ctx, gasMethod: method } as SignerCtx,
+      ctx: {
+        ...ctx,
+        gasMethod: nextGasMethod,
+        manualGasMethod:
+          this.manualGasFingerprint === fingerprint
+            ? this.manualGasMethod
+            : ctx.manualGasMethod,
+        useGasless: nextGasMethod === 'gasAccount' ? false : ctx.useGasless,
+      } as SignerCtx,
     });
   }
 

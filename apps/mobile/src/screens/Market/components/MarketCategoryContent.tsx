@@ -26,7 +26,7 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import WatchListHeader from '../../Watchlist/components/TokenHeader';
 import { marketRealtimePriceAtom } from '../atom';
 import { useSetAtom } from 'jotai';
-import { TAB_BAR_HEIGHT } from '..';
+import { TAB_BAR_HEIGHT } from '../constants';
 
 const isAndroid = Platform.OS === 'android';
 const VIEWABILITY_CONFIG = {

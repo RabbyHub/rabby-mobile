@@ -3,7 +3,6 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
-import { AbstractProject } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useRequest } from 'ahooks';
@@ -21,7 +20,6 @@ import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { formatPrice } from '@/utils/number';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenDetailHistoryList } from './components/HistoryList';
 import { isFromBackAtom } from '../Swap/hooks/atom';
@@ -48,22 +46,10 @@ import { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
 import { IconRightCC } from './components/IconRightCC';
 import { TokenDetailWalletCard } from './components/TokenDetailWalletCard';
+export type { RelatedDeFiType, TokenFromAddressItem } from './types';
 
 const isAndroid = Platform.OS === 'android';
 const ScreenWidth = Dimensions.get('window').width;
-
-export type TokenFromAddressItem = {
-  address: string;
-  amountStr: string;
-  amount: number;
-  type: KEYRING_TYPE;
-  aliasName: string;
-};
-
-export type RelatedDeFiType = AbstractProject & {
-  amount: number;
-  address: string;
-};
 
 const TokenDetailContent = () => {
   const route =
@@ -233,7 +219,7 @@ const TokenDetailContent = () => {
       <View style={styles.balanceOverviewContainer}>
         <AccountSwitcher forScene="TokenDetail" disableSwitch={false} />
         <View style={styles.balanceOverviewContent}>
-          <BalanceOverview usdValue={usdValue} amount={amountSum} />
+          <BalanceOverview usdValue={usdValue} amount={amountSum || 0} />
           {!baseTokenInfo ? null : (
             <Pressable
               style={[

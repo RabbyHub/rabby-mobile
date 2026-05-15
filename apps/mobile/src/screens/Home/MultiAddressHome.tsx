@@ -8,7 +8,7 @@ import React, { useCallback, useEffect } from 'react';
 import { AppState, View } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { apisAccount } from '@/core/apis';
+import * as apisAccount from '@/core/apis/account';
 import { browserService, preferenceService } from '@/core/services';
 import { apisHomeTabIndex, resetNavigationTo } from '@/hooks/navigation';
 import { matomoRequestEvent } from '@/utils/analytics';

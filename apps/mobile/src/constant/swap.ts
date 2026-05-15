@@ -21,6 +21,7 @@ const LogoKyberSwap = require('@/assets/icons/swap/kyberswap.png');
 const LogoOdos = require('@/assets/icons/swap/odos.png');
 const LogoMagpie = require('@/assets/icons/swap/magpie.jpg');
 const LogoUni = require('@/assets/icons/swap/uniswap.png');
+const LogoSushi = require('@/assets/icons/swap/sushi.png');
 
 const LogoTokenDefault = require('@/assets/icons/swap/token-default.svg');
 
@@ -88,6 +89,12 @@ export const DEX = {
     logo: LogoUni,
     name: 'Uniswap',
     chains: DEX_SUPPORT_CHAINS[DEX_ENUM.UNI],
+  },
+  [DEX_ENUM.SUSHI]: {
+    id: DEX_ENUM.SUSHI,
+    logo: LogoSushi,
+    name: 'Sushi',
+    chains: DEX_SUPPORT_CHAINS[DEX_ENUM.SUSHI],
   },
 };
 

@@ -27,7 +27,7 @@ import { getTokenSymbol } from '@/utils/token';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
-import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
+import { TxStatusItem } from '@/screens/Transaction/components/TxStatusItem';
 import { getAliasName } from '@/core/apis/contact';
 import { findChain } from '@/utils/chain';
 import { transactionHistoryService } from '@/core/services';
@@ -38,12 +38,19 @@ import {
 import { TokenChangeDataItem } from '@/screens/Transaction/components/HistoryItem';
 import { HistoryItemTokenArea } from '@/screens/Transaction/components/HistoryItemTokenArea';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
-import { ellipsisAddress } from '@/utils/address';
 import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
 import { naviPush } from '@/utils/navigation';
 import FastImage from 'react-native-fast-image';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { Text } from '@/components/Typography';
+import { Account } from '@/types/account';
+
+const ellipsisAddress = (address: string) => {
+  if (!address) {
+    return '';
+  }
+  return address.slice(0, 8) + '...';
+};
 
 export type HistoryLocalDetailParams = GetNestedScreenRouteProp<
   'TransactionNavigatorParamList',
@@ -61,6 +68,7 @@ export const TransactionItem = ({
   onPressAddToWhitelistButton,
   closeHistoryPopup,
   getCexInfoByAddress,
+  account,
 }: {
   historySuccessList?: string[];
   isForMultipleAddress?: boolean;
@@ -72,6 +80,7 @@ export const TransactionItem = ({
   onPressItem?: (ctx: HistoryLocalDetailParams) => void;
   onPressAddToWhitelistButton?: (data: SendAction) => void;
   closeHistoryPopup?: () => void;
+  account?: Account | null;
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -382,13 +391,19 @@ export const TransactionItem = ({
                   }}
                 />
                 <Text style={styles.describeText}>
-                  {getAliasName(addr) || ellipsisAddress(addr)}
+                  {getAliasName(addr, {
+                    keepEmptyIfNotFound: true,
+                  }) || ellipsisAddress(addr)}
                 </Text>
               </View>
             );
             break;
           } else {
-            address = ToText + (getAliasName(addr) || ellipsisAddress(addr));
+            address =
+              ToText +
+              (getAliasName(addr, {
+                keepEmptyIfNotFound: true,
+              }) || ellipsisAddress(addr));
           }
         }
         break;
@@ -406,7 +421,11 @@ export const TransactionItem = ({
           ?.requiredData as ApproveTokenRequireData;
         const name = appRequireData?.protocol?.name;
         address =
-          name || getAliasName(data.address) || ellipsisAddress(data.address);
+          name ||
+          getAliasName(data.address, {
+            keepEmptyIfNotFound: true,
+          }) ||
+          ellipsisAddress(data.address);
         break;
       // case HistoryItemCateType.Cancel:
       // default:
@@ -458,17 +477,19 @@ export const TransactionItem = ({
         canCancel,
         title: formatTitle,
         onPressAddToWhitelistButton: onPressAddToWhitelistButton,
+        account,
       },
     });
   }, [
     onPressItem,
-    isForMultipleAddress,
-    canCancel,
-    data,
-    formatTitle,
-    formatType,
     isInSendHistory,
+    isForMultipleAddress,
+    data,
+    formatType,
+    canCancel,
+    formatTitle,
     onPressAddToWhitelistButton,
+    account,
     closeHistoryPopup,
   ]);
 

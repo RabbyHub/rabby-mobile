@@ -14,9 +14,12 @@ import {
 import { SendRequireData } from '@rabby-wallet/rabby-action/dist/types/actionRequireData';
 import { getAliasName } from '@/core/apis/contact';
 import { TransactionGroup } from '@/core/services/transactionHistory';
-import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import {
+  switchSceneCurrentAccount,
+  useSceneAccountInfo,
+} from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
-import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
+import { TxStatusItem } from '@/screens/Transaction/components/TxStatusItem';
 import { ellipsisAddress } from '@/utils/address';
 import { findChain } from '@/utils/chain';
 import { naviPush } from '@/utils/navigation';
@@ -35,16 +38,19 @@ import { noop } from 'lodash';
 import useAsync from 'react-use/lib/useAsync';
 import useMount from 'react-use/lib/useMount';
 import { Text } from '@/components/Typography';
+import { Account } from '@/types/account';
 export const PendingTxItem = ({
   data,
   clearLocalPendingTxData,
   isForMultipleAddress,
   type,
+  account,
 }: {
   data: SwapTxHistoryItem | SendTxHistoryItem | ApproveTokenTxHistoryItem;
   clearLocalPendingTxData: () => void;
   isForMultipleAddress: boolean;
   type: 'send' | 'swap' | 'approveSwap';
+  account?: Account | null;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -95,6 +101,7 @@ export const PendingTxItem = ({
           type === 'send'
             ? t('page.transactions.itemTitle.Send')
             : t('page.transactions.itemTitle.Swap'),
+        account,
       },
     });
   });

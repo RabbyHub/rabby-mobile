@@ -1,6 +1,5 @@
 import { usePerpsHomePnl } from '@/hooks/perps/usePerpsHomePnl';
 import { useTheme2024 } from '@/hooks/theme';
-import { useCurrency } from '@/hooks/useCurrency';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { useCurrentInnerDappTypeValue } from '@/hooks/useInnerDappValue';
 import { formatUsdValue } from '@/utils/number';
@@ -12,7 +11,6 @@ import { RNGHText as Text } from '@/components/Typography';
 const PerpsPnlByHyperliquid: React.FC<{}> = () => {
   const { perpsPositionInfo } = usePerpsHomePnl();
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { formatCurrentCurrency } = useCurrency();
   const { type } = perpsPositionInfo;
 
   return perpsPositionInfo.show ? (
@@ -23,11 +21,11 @@ const PerpsPnlByHyperliquid: React.FC<{}> = () => {
           perpsPositionInfo.pnl > 0 ? styles.green : styles.red,
         ]}>
         {perpsPositionInfo.pnl >= 0 ? '+' : '-'}
-        {formatCurrentCurrency(Math.abs(perpsPositionInfo.pnl))}
+        {formatUsdValue(Math.abs(perpsPositionInfo.pnl))}
       </Text>
     ) : Number(perpsPositionInfo.availableBalance) > 0 ? (
       <Text style={styles.accountValue}>
-        {formatCurrentCurrency(perpsPositionInfo.availableBalance)}
+        {formatUsdValue(perpsPositionInfo.availableBalance)}
       </Text>
     ) : null
   ) : null;

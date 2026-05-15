@@ -40,6 +40,7 @@ export const AccountSwitcherInfos = {
 
   History: makeSceneAccount(),
   MultiHistory: makeSceneAccount(),
+  HistoryDetail: makeSceneAccount(),
 
   Receive: makeSceneAccount(),
   GasAccount: makeSceneAccount(),

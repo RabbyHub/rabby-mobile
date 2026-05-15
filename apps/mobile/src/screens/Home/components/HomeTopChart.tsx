@@ -4,11 +4,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, Pressable, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  formatSmallCurrencyValue,
-  type CurvePoint,
-  warmupCurveForAddress,
-} from '@/hooks/useCurve';
+import { type CurvePoint, warmupCurveForAddress } from '@/hooks/useCurve';
 import { E2E_ID } from '@/constant/e2e';
 import Animated, {
   Easing,
@@ -22,6 +18,7 @@ import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/Cu
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { useCurrency } from '@/hooks/useCurrency';
+import { formatSmallCurrencyValueParts } from '@/utils/currency';
 import {
   FOLD_ASSETS_HEADER_HEIGHT,
   UNFOLD_ASSETS_HEADER_HEIGHT,
@@ -239,7 +236,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
   const [isInitialized, setIsInitialized] = useState(false);
-  const { currency, formatCurrentCurrency } = useCurrency();
+  const { currency } = useCurrency();
 
   const {
     balanceLoadingWithoutLocal: loading,
@@ -254,7 +251,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   const _data = selectData.list;
 
   const netWorth = useMemo(() => {
-    return formatSmallCurrencyValue(rawNetWorth, { currency });
+    return formatSmallCurrencyValueParts(rawNetWorth, { currency }).text;
   }, [rawNetWorth, currency]);
 
   const data = useMemo(() => {
@@ -262,12 +259,13 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
       _data?.map(item => {
         return {
           ...item,
-          netWorth: formatSmallCurrencyValue(item.value, { currency }),
-          change: formatCurrentCurrency(item.rawChange),
+          netWorth: formatSmallCurrencyValueParts(item.value, {
+            currency,
+          }).text,
         };
       }) || []
     );
-  }, [_data, currency, formatCurrentCurrency]);
+  }, [_data, currency]);
 
   useEffect(() => {
     // 延迟初始化动画计算

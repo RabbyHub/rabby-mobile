@@ -166,7 +166,7 @@
         "cancel": "取消了一笔待处理的交易"
       },
       "itemTitle": {
-        "Approve": "已批准",
+        "Approve": "已授权",
         "Default": "交互",
         "Send": "已发送",
         "Swap": "已兑换",
@@ -209,18 +209,18 @@
         "RevokeToken": "撤销 Token",
         "Chain": "链",
         "name": "名称",
-        "ApproveToken": "批准 token",
+        "ApproveToken": "授权 token",
         "RevokeFrom": "从中撤销",
         "SpeedUp": "加速",
         "InteractionResults": "交互结果",
-        "ApproveTo": "批准给",
+        "ApproveTo": "授权给",
         "InteractedContract": "已交互合约",
         "To": "至",
         "PurchaseFrom": "购买自",
         "Name": "名称",
         "WillReceive": "将收到：≈ {{token}}",
         "BuyAgain": "再次购买",
-        "totalApprovedAmount": "当前批准金额",
+        "totalApprovedAmount": "当前授权金额",
         "Collection": "收藏",
         "AddToWhitelist": "添加至白名单",
         "RecipientAddress": "接收方钱包",
@@ -267,7 +267,7 @@
       "sync": "扫描 Rabby 插件同步钱包",
       "createNewAddress": "创建新钱包",
       "alreadyUseRabby": "我已有 Rabby 钱包",
-      "welcomeTitle": "欢迎使用 Rabby 钱包"
+      "welcomeTitle": "欢迎使用\nRabby 钱包"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "输入您的助记词"
@@ -289,7 +289,7 @@
       "nftCollection": "NFT Collection",
       "nftCollectionApprove": {
         "title": "NFT Collection Approval",
-        "approveCollection": "批准集合"
+        "approveCollection": "授权集合"
       },
       "contractAddress": "合约地址",
       "noMark": "无标记",
@@ -438,7 +438,7 @@
       "markRemoved": "马克已移除",
       "myNativeTokenBalance": "我的 Gas 余额：",
       "nftApprove": {
-        "approveNFT": "批准 NFT",
+        "approveNFT": "授权 NFT",
         "nftContractTrustValueTip": "信任价值是指此合约支出的最高 NFT 价值。低信任价值表示风险或 180 天未活动。",
         "title": "NFT 授权"
       },
@@ -549,11 +549,11 @@
       },
       "tokenApprove": {
         "deployTimeLessThan": "< {{value}} 天",
-        "approveToken": "批准代币",
+        "approveToken": "授权代币",
         "myBalance": "我的余额",
         "eoaAddress": "EOA",
-        "approveTo": "批准至",
-        "amountPopupTitle": "批准数量",
+        "approveTo": "授权至",
+        "amountPopupTitle": "授权数量",
         "contractTrustValueTip": "信任值是指该合约所花费的总资产价值。信任值低可能表示风险或180天不活跃。",
         "title": "Token Approval",
         "flagByRabby": "由 Rabby 标记"
@@ -585,7 +585,7 @@
         "priceDiff": "价格差异",
         "poolPrice": "池价格"
       },
-      "gasSetting": "气体设置"
+      "gasSetting": "Gas 设置"
     },
     "activities": {
       "signedTx": {
@@ -638,8 +638,8 @@
         "explain": {
           "send": "发送 {{amount}} {{symbol}}",
           "unknown": "未知交易",
-          "cancelNFTCollectionApproval": "取消 {{protocol}} 的 NFT 收藏批准",
-          "approve": "批准 {{protocol}} 的 {{count}} 个 {{token}}",
+          "cancelNFTCollectionApproval": "取消 {{protocol}} 的 NFT 收藏授权",
+          "approve": "授权 {{protocol}} 的 {{count}} 个 {{token}}",
           "nftCollectionApproval": "{{protocol}} 的 NFT Collection 授权",
           "cancel": "取消对{{protocol}}的{{token}}授权",
           "cancelSingleNFTApproval": "取消 {{protocol}} 的单个 NFT 授权",
@@ -882,7 +882,8 @@
         "predict": "预测",
         "meme": "Memecoin",
         "market": "市场",
-        "gasDeposit": "Gas 充值"
+        "gasDeposit": "Gas 充值",
+        "convertDust": "小额资产归集"
       },
       "swipeUp": {
         "descAndroid": "点击探索 dApps",
@@ -935,7 +936,7 @@
       "detail-tx": "详情",
       "liquidity": "流动性",
       "To": "至",
-      "approve-and-bridge": "批准并跨链",
+      "approve-and-bridge": "授权并跨链",
       "for-available-quote": "获取可用报价",
       "From": "来自",
       "the-following-bridge-route-are-found": "找到以下费率",
@@ -959,7 +960,7 @@
       "token": "Token",
       "est-difference": "预估差异：",
       "gas-x-price": "Gas 价格：{{price}} Gwei。",
-      "need-to-approve-token-before-bridge": "在跨链之前需要批准代币",
+      "need-to-approve-token-before-bridge": "在跨链之前需要授权代币",
       "price-impact": "价格影响",
       "bridgeTo": "跨链到",
       "loss-tips": "您正在损失 {{usd}}。请尝试不同的金额。",
@@ -1025,12 +1026,12 @@
             "contractTrustValueDanger": "合同信任价值 < $10,000",
             "button": "我知道了。",
             "revokeRecenet": "最近撤销（24小时）：{{ count }}",
-            "revokeTrendsValueDanger": "最近的撤销数量是新批准用户数量的 4 倍以上。",
-            "revokeNewApproved": "新批准用户（24小时）：{{ count }}",
+            "revokeTrendsValueDanger": "最近的撤销数量是新授权用户数量的 4 倍以上。",
+            "revokeNewApproved": "新授权用户（24小时）：{{ count }}",
             "contractTrustValueWarning": "合约信任价值 < $100,000",
             "normalTrustValueDanger": "合约信任价值：{{ contractUsdText }}",
             "revokeWarningTitle": "合约24小时Revoke的数量是Revoke的两倍",
-            "revokeTrendsValueWarning": "最近撤销的数量是新批准用户数量的两倍多。",
+            "revokeTrendsValueWarning": "最近撤销的数量是新授权用户数量的两倍多。",
             "contractTrustValue": "信任价值是指此合约花费的资产总价值。信任价值低表明存在风险或者180天不活跃。",
             "revokeDangerTitle": "合约 24h 撤销趋势 > 4"
           }
@@ -1039,7 +1040,7 @@
           "columnCell": {
             "approvedAmount": {
               "tipMyBalance": "我的余额",
-              "tipApprovedAmount": "批准金额"
+              "tipApprovedAmount": "授权金额"
             }
           }
         }
@@ -1055,7 +1056,7 @@
         "simulationFailed": "模拟失败",
         "defaultFailed": "交易失败",
         "approvalCount_one": "{{count}} 授权",
-        "approvalCount_other": "{{count}} 个批准"
+        "approvalCount_other": "{{count}} 个授权"
       },
       "errorReason": {
         "title": "无法撤销"
@@ -1067,10 +1068,10 @@
       "unknownContract": "未知合约",
       "contractAddress": "合约地址",
       "selectAll": "选择全部",
-      "approvedContracts": "已批准资产金额与余额",
+      "approvedContracts": "已授权资产金额与余额",
       "myBalance": "我的余额",
       "unselectAll": "取消全选",
-      "approvedAssets": "已批准的合约和金额",
+      "approvedAssets": "已授权的合约和金额",
       "continueRevoke": "继续",
       "approvedAssetsAndAmount": "审核的资产和数量",
       "gasFee": "Gas费用",
@@ -1090,7 +1091,7 @@
       "chain": "链",
       "no-transaction-records": "没有交易记录",
       "from": "来自",
-      "approve-swap": "批准并兑换",
+      "approve-swap": "授权并兑换",
       "hidden-no-quote-rates_one": "{{count}} 汇率不可用",
       "no-quote-found": "未找到报价",
       "to": "至",
@@ -1102,7 +1103,7 @@
       "search-by-name-address": "通过名称 / 地址搜索",
       "hidden-no-quote-rates_other": "{{count}} 汇率不可用",
       "actual-slippage": "实际滑点：",
-      "slippage-tolerance": "价格滑点容忍度",
+      "slippage-tolerance": "价格滑点",
       "insufficient": "余额不足：",
       "no-slippage-for-wrap": "Wrap 无滑点",
       "select-token": "选择代币",
@@ -1130,7 +1131,7 @@
       },
       "recommend-slippage": "为了防止抢先交易，我们建议滑点为<2>{{ slippage }}</2>%",
       "pendingTip": "交易已提交。如果交易长时间处于挂起状态，您可以尝试在设置中清除挂起。",
-      "need-to-approve-token-before-swap": "需先批准代币再进行兑换",
+      "need-to-approve-token-before-swap": "需先授权代币再进行兑换",
       "low-slippage-may-cause-failed-transactions-due-to-high-volatility": "低滑点可能由于高波动性导致交易失败",
       "rabbyFee": {
         "button": "明白了",
@@ -1146,7 +1147,7 @@
       "historyTitle": "Swap 历史记录",
       "selectChainModalTitle": "选择链",
       "results": "结果",
-      "approve": "批准",
+      "approve": "授权",
       "market-closed": "市场未开放：不支持下单。"
     },
     "dashboard": {
@@ -1678,7 +1679,7 @@
         },
         "title": "选择如何替换此交易"
       },
-      "approvalExplain": "批准 {{protocol}} 的 {{counts}} {{token}}",
+      "approvalExplain": "授权 {{protocol}} 的 {{counts}} {{token}}",
       "sameNonceWarning": "这些交易存在冲突，因为它们使用了相同的 nonce。执行其中一个将自动替换其他交易。",
       "cancelExplain": "取消 {{protocol}} 的 {{token}} 授权",
       "action": {
@@ -3046,7 +3047,7 @@
       },
       "repayDetail": {
         "actions": "还款",
-        "approveAndRepay": "批准和还款",
+        "approveAndRepay": "授权和还款",
         "tabs": {
           "collateral": "抵押品还款",
           "wallet": "钱包余额还款"
@@ -3055,7 +3056,7 @@
       },
       "supplyDetail": {
         "actions": "存款",
-        "approveAndSupply": "批准与存款",
+        "approveAndSupply": "授权与存款",
         "availableToBorrow": "可借款",
         "supplyAPY": "存款 APY",
         "unavailable": "不可用",
@@ -3071,7 +3072,7 @@
       },
       "borrowDetail": {
         "actions": "借款",
-        "approveAndBorrow": "批准并借入",
+        "approveAndBorrow": "授权并借入",
         "almostReachedWarning": "该资产的协议借款上限为100%。进一步借款不可用。",
         "almostReachedError": "可借用的最大金额受限，因为协议借款上限几乎已达到。",
         "swapDebt": "兑换",
@@ -3269,7 +3270,9 @@
         },
         "repayWith": "抵押物以偿还",
         "collateralNotEnough": "您的抵押余额低于所选金额。",
-        "toRepay": "预计还款金额"
+        "toRepay": "预计还款金额",
+        "insufficientLiquidity": "流动性不足。",
+        "frozenCollateral": "该资产因 Aave 社区决定而被冻结。"
       },
       "repayWithAToken": {
         "header": {
@@ -3326,10 +3329,10 @@
         "token": "代币"
       },
       "tabs": {
-        "stock": "库存",
+        "stock": "股票",
         "watchlist": "观察列表",
-        "memecoin": "Memecoin",
-        "commodities": "商品"
+        "memecoin": "Meme",
+        "commodities": "大宗商品"
       },
       "noOpen": "未开启",
       "marketNotOpenTooltip": "市场尚未开放"
@@ -3350,6 +3353,64 @@
       "createWalletError": "创建钱包失败",
       "walletReady": "您的钱包已准备好 🚀",
       "setPasswordTip": "设置密码以保护您的钱包"
+    },
+    "convertDust": {
+      "failReason": {
+        "missingRequiredParams": "缺少必要参数",
+        "quoteUnavailable": "获取报价失败",
+        "gasCostTooHigh": "超过 gas 费用上限",
+        "priceImpactTooHigh": "价格影响过高",
+        "buildSwapTxsFailed": "构建交换交易失败",
+        "sendSwapTxFailed": "发送交换交易失败",
+        "transactionFailed": "交易失败",
+        "submitFailed": "提交交易失败",
+        "gasNotEnough": "Gas 不足"
+      },
+      "status": {
+        "pending": "兑换中",
+        "idle": "等待兑换",
+        "success": "兑换成功"
+      },
+      "receiveSummary": {
+        "progress": "兑换进度",
+        "priceImpact": "价格影响上限",
+        "gasLimit": "单笔交易 Gas 上限",
+        "estimateReceive": "预计收到：",
+        "actualReceive": "收到"
+      },
+      "bottomBar": {
+        "stop": "停止",
+        "continue": "继续",
+        "start": "开始转换"
+      },
+      "completed": {
+        "title": "小额资产已转换！",
+        "receive": "已收到：",
+        "failedTitle": "转换已结束",
+        "viewMoreDetail": "查看更多详情",
+        "fold": "折叠"
+      },
+      "entryGuide": {
+        "title": "您可以在首页找到 Dust 转换 \n👇",
+        "button": "知道了"
+      },
+      "stopSheet": {
+        "title": "停止当前的交换？",
+        "desc": "如果现在停止，任何剩余的交换都不会完成。请注意，已完成的交换无法撤销。",
+        "continue": "继续",
+        "stop": "停止交换"
+      },
+      "homeBanner": {
+        "title": "清理零头",
+        "description": "支持将小额余额转换为原生代币"
+      },
+      "colValueAmount": "价值/金额",
+      "colToken": "代币",
+      "colStatusToken": "状态/代币",
+      "emptyText": "未找到低价值代币",
+      "unsupportedAccountType": "不支持此账户类型。",
+      "unsupportedAccount": "目前仅支持私钥和助记词地址。",
+      "title": "小额资产归集"
     }
   },
   "component": {
@@ -3518,7 +3579,7 @@
         "desc2": "将资金添加到您的 GasAccount，并用于任何交易。签名时，选择使用原生代币或 GasAccount 支付燃料费用，随时切换。",
         "desc3": "Rabby Wallet 不收取额外费用。您只需为您的交易支付 gas 费用，并为从 GasAccount 发送 gas 到您的地址支付少量 gas。",
         "desc1": "GasAccount是一种新的支付手续费的方式。您可以使用一个账户为所有链上的所有地址覆盖手续费，而无需在每条链上使用本地代币。简单、可选，并且永远不会出现没有手续费的情况。",
-        "desc4": "GasAccount 无需合约批准或权限。您将资金存入 Rabby 的 GasAccount 地址，Rabby 在需要时将燃料发送到您的地址。设计上完全安全。"
+        "desc4": "GasAccount 无需合约授权或权限。您将资金存入 Rabby 的 GasAccount 地址，Rabby 在需要时将燃料发送到您的地址。设计上完全安全。"
       }
     },
     "ReserveGasPopup": {

@@ -20,6 +20,7 @@ if (!__DEV__) {
 import './src/utils/logging/install';
 import './global';
 import './src/setup-app';
+import { ENABLE_REACTOTRON } from './src/core/utils/reactotron-plugins/featureFlag';
 
 if (process.env.WITH_ROZENITE === 'true') {
   const {
@@ -28,7 +29,7 @@ if (process.env.WITH_ROZENITE === 'true') {
   withOnBootNetworkActivityRecording();
 }
 
-if (__DEV__) {
+if (__DEV__ && ENABLE_REACTOTRON) {
   import('./ReactotronConfig');
 }
 

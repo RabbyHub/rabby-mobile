@@ -31,7 +31,7 @@ import {
   use24hCurveData,
   useDateCurveData,
 } from './useCurve';
-import { RelatedDeFiType, TokenFromAddressItem } from '../..';
+import type { RelatedDeFiType, TokenFromAddressItem } from '../../types';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTranslation } from 'react-i18next';
 import { unionBy } from 'lodash';

@@ -10,7 +10,7 @@ import {
   runDevIIFEFunc,
   UpdaterOrPartials,
 } from '@/core/utils/store';
-import { apisAccount } from '@/core/apis';
+import * as apisAccount from '@/core/apis/account';
 import { storeApiGasAccount } from '@/screens/GasAccount/hooks/atom';
 
 runDevIIFEFunc(() => {

@@ -1050,7 +1050,8 @@
         "predict": "Предсказать",
         "meme": "Мемкоин",
         "market": "Рынок",
-        "gasDeposit": "Газовый депозит"
+        "gasDeposit": "Газовый депозит",
+        "convertDust": "Convert Dust"
       },
       "swipeUp": {
         "descAndroidMore": "Нажмите, чтобы узнать больше о dApps",
@@ -3259,7 +3260,9 @@
         },
         "repayWith": "Залог для погашения с",
         "collateralNotEnough": "Ваш баланс залога ниже выбранной суммы.",
-        "toRepay": "Ожидаемая сумма для погашения"
+        "toRepay": "Ожидаемая сумма для погашения",
+        "insufficientLiquidity": "Недостаточная ликвидность.",
+        "frozenCollateral": "Этот актив заморожен по решению сообщества Aave."
       },
       "repayWithAToken": {
         "header": {
@@ -3340,6 +3343,63 @@
       "createWalletError": "Не удалось создать кошелек",
       "setPasswordTip": "Установите пароль для защиты вашего кошелька",
       "walletReady": "Ваш кошелек готов 🚀"
+    },
+    "convertDust": {
+      "failReason": {
+        "missingRequiredParams": "Отсутствуют обязательные параметры",
+        "quoteUnavailable": "Не удалось получить котировку",
+        "gasCostTooHigh": "Превышен лимит комиссии за газ",
+        "priceImpactTooHigh": "Высокое влияние на цену",
+        "buildSwapTxsFailed": "Не удалось создать транзакции обмена",
+        "sendSwapTxFailed": "Не удалось отправить транзакцию обмена",
+        "transactionFailed": "Транзакция не выполнена",
+        "submitFailed": "Не удалось отправить транзакции",
+        "gasNotEnough": "Недостаточно газа"
+      },
+      "status": {
+        "pending": "Обмен",
+        "idle": "Ожидание обмена",
+        "success": "Обмен успешен"
+      },
+      "receiveSummary": {
+        "progress": "Прогресс конвертации",
+        "priceImpact": "Лимит влияния на цену",
+        "gasLimit": "Лимит газа одной транзакции",
+        "estimateReceive": "Ожидаемое получение:",
+        "actualReceive": "Получить"
+      },
+      "bottomBar": {
+        "stop": "Стоп",
+        "continue": "Продолжить",
+        "start": "Начать конвертацию"
+      },
+      "completed": {
+        "title": "Dust Converted !",
+        "receive": "Received:",
+        "failedTitle": "Conversion Ended",
+        "viewMoreDetail": "View more details",
+        "fold": "Fold"
+      },
+      "entryGuide": {
+        "title": "Вы можете найти Convert Dust \n👇 здесь на Главной странице",
+        "button": "Понятно"
+      },
+      "stopSheet": {
+        "title": "Остановить текущие свопы?",
+        "desc": "Если вы остановитесь сейчас, оставшиеся свопы не будут выполнены. Обратите внимание, что завершённые свопы нельзя отменить.",
+        "continue": "Продолжить",
+        "stop": "Остановить своп"
+      },
+      "homeBanner": {
+        "title": "Convert Dust",
+        "description": "Supports converting small balances into the native token"
+      },
+      "colValueAmount": "Стоимость/Сумма",
+      "colToken": "Токен",
+      "colStatusToken": "Статус/Токен",
+      "emptyText": "Низкоценные токены не найдены",
+      "unsupportedAccountType": "Этот тип аккаунта не поддерживается.",
+      "unsupportedAccount": "В настоящее время поддерживаются только адреса с закрытым ключом и seed-фразой."
     }
   },
   "component": {
