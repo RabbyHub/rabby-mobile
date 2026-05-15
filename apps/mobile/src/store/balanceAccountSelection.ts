@@ -130,6 +130,10 @@ async function initAccountBalanceSelectionLifecycle() {
 }
 
 export async function ensureAccountBalanceSelectionLifecycle() {
+  if (!keyringService.isUnlocked()) {
+    return;
+  }
+
   if (accountBalanceSelectionLifecycleStateRef.promise) {
     return accountBalanceSelectionLifecycleStateRef.promise;
   }
@@ -152,9 +156,15 @@ export function startProcessAccountBalanceEvents() {
 
   startProcessAddressBalanceEvents();
 
-  keyringService.once('unlock', () => {
+  const ensureSelectionLifecycle = () => {
     ensureAccountBalanceSelectionLifecycle().catch(error => {
       console.error('ensureAccountBalanceSelectionLifecycle::error', error);
     });
-  });
+  };
+
+  if (keyringService.isUnlocked()) {
+    ensureSelectionLifecycle();
+  }
+
+  keyringService.on('unlock', ensureSelectionLifecycle);
 }
