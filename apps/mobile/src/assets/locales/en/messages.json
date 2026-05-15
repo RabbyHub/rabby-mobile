@@ -3611,6 +3611,7 @@
     "appName": "Rabby Wallet",
     "appDescription": "Your go-to wallet for Ethereum and EVM",
     "copy": "Copy",
+    "copiedSuccessfully": "Copied successfully",
     "copied": "Copied",
     "confirm": "Confirm",
     "next": "Next",

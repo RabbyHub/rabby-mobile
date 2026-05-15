@@ -28,6 +28,7 @@ import {
 } from 'react-native-gesture-handler';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Text, TextInput } from '@/components/Typography';
+import { useTranslation } from 'react-i18next';
 
 export interface Props extends Omit<TextInputProps, 'style'> {
   style?: StyleProp<ViewStyle>;
@@ -63,6 +64,7 @@ export const NextSearchBar = ({
   as = 'TextInput',
   ...rest
 }: Props & { ref?: Ref<NextSearchBarMethods> }) => {
+  const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
@@ -155,7 +157,7 @@ export const NextSearchBar = ({
             onCancel?.();
             inputRef?.current?.blur();
           }}>
-          <Text style={styles.cancelText}>Cancel</Text>
+          <Text style={styles.cancelText}>{t('global.Cancel')}</Text>
         </TouchableOpacity>
       ) : null}
     </View>
