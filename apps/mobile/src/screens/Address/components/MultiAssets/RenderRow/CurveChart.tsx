@@ -6,7 +6,7 @@ import {
   formatCurrencyValueParts,
   formatSmallCurrencyValueParts,
 } from '@/utils/currency';
-import React, { memo, useEffect, useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { Dimensions, Pressable, useWindowDimensions, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import Animated, {
@@ -146,7 +146,6 @@ export const MultiChart = memo(function MultiChart({
     changeData,
     totalBalance,
     matteredAccountLength,
-    canToggle24hCurve,
     showBalanceLoadingWithoutLocal,
     showChangeLoadingWithoutLocal,
     isCurveAnyAddrLoading,
@@ -156,7 +155,6 @@ export const MultiChart = memo(function MultiChart({
       changeData: state.changeData,
       totalBalance: state.totalBalance,
       matteredAccountLength: state.matteredAccountLength,
-      canToggle24hCurve: state.canToggle24hCurve,
       showBalanceLoadingWithoutLocal: state.showBalanceLoadingWithoutLocal,
       showChangeLoadingWithoutLocal: state.showChangeLoadingWithoutLocal,
       isCurveAnyAddrLoading: state.isCurveAnyAddrLoading,
@@ -166,12 +164,6 @@ export const MultiChart = memo(function MultiChart({
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
   const chartsData = curveList;
-
-  useEffect(() => {
-    if (!canToggle24hCurve) {
-      setIsFoldMultiChart(true);
-    }
-  }, [canToggle24hCurve]);
 
   return (
     <View
@@ -193,7 +185,6 @@ export const MultiChart = memo(function MultiChart({
             data={chartsData}
             hideType={hideType}
             matteredAccountCount={matteredAccountLength}
-            canToggle24hCurve={canToggle24hCurve}
             showBalanceLoadingWithoutLocal={showBalanceLoadingWithoutLocal}
             showChangeLoadingWithoutLocal={showChangeLoadingWithoutLocal}
             onPressNetWorth={onPressNetWorth}
@@ -219,7 +210,6 @@ interface IHeaderProps {
   data: CurvePoint[];
   hideType: BALANCE_HIDE_TYPE;
   matteredAccountCount?: number;
-  canToggle24hCurve: boolean;
   showBalanceLoadingWithoutLocal: boolean;
   showChangeLoadingWithoutLocal: boolean;
   onPressNetWorth?: () => void;
@@ -234,7 +224,6 @@ const ChartHeader = React.memo(
     hideType,
     data: _data,
     matteredAccountCount,
-    canToggle24hCurve,
     showBalanceLoadingWithoutLocal,
     showChangeLoadingWithoutLocal,
     onPressNetWorth,
@@ -449,11 +438,7 @@ const ChartHeader = React.memo(
         ) : (
           <Pressable
             {...makeTestIDProps(E2E_ID.home.portfolioCurveToggle)}
-            disabled={!canToggle24hCurve}
             onPress={e => {
-              if (!canToggle24hCurve) {
-                return;
-              }
               e.stopPropagation();
               const nextValue = !svIsFoldMultiChart.value;
               svIsFoldMultiChart.value = nextValue;
@@ -482,24 +467,22 @@ const ChartHeader = React.memo(
                   style={styles.changeTime}
                   animatedProps={dateTimeAnimatedProps}
                 />
-                {canToggle24hCurve ? (
-                  <View style={styles.percentChangeContainer}>
-                    <AnimatedSVG
-                      style={animatedSvgStyle}
-                      width={16}
-                      height={16}
-                      viewBox="0 0 24 24"
-                      fill="none">
-                      <AnimatedPath
-                        d="M8.4 4.80005L15.6 12L8.4 19.2"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        animatedProps={arrowStrokeProps}
-                      />
-                    </AnimatedSVG>
-                  </View>
-                ) : null}
+                <View style={styles.percentChangeContainer}>
+                  <AnimatedSVG
+                    style={animatedSvgStyle}
+                    width={16}
+                    height={16}
+                    viewBox="0 0 24 24"
+                    fill="none">
+                    <AnimatedPath
+                      d="M8.4 4.80005L15.6 12L8.4 19.2"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      animatedProps={arrowStrokeProps}
+                    />
+                  </AnimatedSVG>
+                </View>
               </>
             )}
           </Pressable>
