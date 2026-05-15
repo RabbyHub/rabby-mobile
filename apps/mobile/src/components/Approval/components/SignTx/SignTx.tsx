@@ -2257,58 +2257,60 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
           <FooterBar
             isSwap={isSwap}
             Header={
-              <View style={{ paddingBottom: 12 }}>
-                <SignMainnetGasSelectorHeader
-                  tx={tx}
-                  gasAccountCost={gasAccountCost}
-                  noCustomRPC={noCustomRPC}
-                  gasMethod={effectiveGasMethod}
-                  onChangeGasMethod={handleManualChangeGasMethod}
-                  onAutoChangeGasMethod={handleAutoChangeGasMethod}
-                  disableAutoGasLevelSwitch={!!manualGasMethod}
-                  pushType={pushInfo.type}
-                  disabled={isGnosisAccount || isCoboArugsAccount}
-                  isReady={isReady}
-                  gasLimit={gasLimit}
-                  noUpdate={isCancel || isSpeedUp}
-                  gasList={gasList}
-                  selectedGas={selectedGas}
-                  version={txDetail.pre_exec_version}
-                  gas={{
-                    error: txDetail.gas.error,
-                    success: txDetail.gas.success,
-                    gasCostUsd: gasExplainResponse.gasCostUsd,
-                    gasCostAmount: gasExplainResponse.gasCostAmount,
-                  }}
-                  gasCalcMethod={gasCalcMethod}
-                  recommendGasLimit={recommendGasLimit}
-                  recommendNonce={recommendNonce}
-                  chainId={chainId}
-                  onChange={handleGasChange}
-                  nonce={realNonce || tx.nonce}
-                  disableNonce={isSpeedUp || isCancel}
-                  isSpeedUp={isSpeedUp}
-                  isCancel={isCancel}
-                  is1559={support1559}
-                  isHardware={isHardware}
-                  manuallyChangeGasLimit={manuallyChangeGasLimit}
-                  errors={checkErrors}
-                  engineResults={engineResults}
-                  nativeTokenBalance={nativeTokenBalance}
-                  nativeTokenInsufficient={isGasNotEnough}
-                  gasToken={gasToken}
-                  showTempoGasTokenSelector={showTempoGasTokenSelector}
-                  tempoGasTokenList={tempoGasTokenList}
-                  tempoPreferredFeeTokenId={tempoPreferredFeeTokenId}
-                  onSelectTempoGasToken={handleSelectTempoGasToken}
-                  tempoGasTokenLoading={tempoGasTokenLoading}
-                  gasPriceMedian={gasPriceMedian}
-                  account={currentAccount}
-                  freeGasAvailable={canUseGasLess}
-                  directSubmit
-                  checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
-                />
-              </View>
+              isGnosisAccount ? null : (
+                <View style={{ paddingBottom: 12 }}>
+                  <SignMainnetGasSelectorHeader
+                    tx={tx}
+                    gasAccountCost={gasAccountCost}
+                    noCustomRPC={noCustomRPC}
+                    gasMethod={effectiveGasMethod}
+                    onChangeGasMethod={handleManualChangeGasMethod}
+                    onAutoChangeGasMethod={handleAutoChangeGasMethod}
+                    disableAutoGasLevelSwitch={!!manualGasMethod}
+                    pushType={pushInfo.type}
+                    disabled={isGnosisAccount || isCoboArugsAccount}
+                    isReady={isReady}
+                    gasLimit={gasLimit}
+                    noUpdate={isCancel || isSpeedUp}
+                    gasList={gasList}
+                    selectedGas={selectedGas}
+                    version={txDetail.pre_exec_version}
+                    gas={{
+                      error: txDetail.gas.error,
+                      success: txDetail.gas.success,
+                      gasCostUsd: gasExplainResponse.gasCostUsd,
+                      gasCostAmount: gasExplainResponse.gasCostAmount,
+                    }}
+                    gasCalcMethod={gasCalcMethod}
+                    recommendGasLimit={recommendGasLimit}
+                    recommendNonce={recommendNonce}
+                    chainId={chainId}
+                    onChange={handleGasChange}
+                    nonce={realNonce || tx.nonce}
+                    disableNonce={isSpeedUp || isCancel}
+                    isSpeedUp={isSpeedUp}
+                    isCancel={isCancel}
+                    is1559={support1559}
+                    isHardware={isHardware}
+                    manuallyChangeGasLimit={manuallyChangeGasLimit}
+                    errors={checkErrors}
+                    engineResults={engineResults}
+                    nativeTokenBalance={nativeTokenBalance}
+                    nativeTokenInsufficient={isGasNotEnough}
+                    gasToken={gasToken}
+                    showTempoGasTokenSelector={showTempoGasTokenSelector}
+                    tempoGasTokenList={tempoGasTokenList}
+                    tempoPreferredFeeTokenId={tempoPreferredFeeTokenId}
+                    onSelectTempoGasToken={handleSelectTempoGasToken}
+                    tempoGasTokenLoading={tempoGasTokenLoading}
+                    gasPriceMedian={gasPriceMedian}
+                    account={currentAccount}
+                    freeGasAvailable={canUseGasLess}
+                    directSubmit
+                    checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
+                  />
+                </View>
+              )
             }
             noCustomRPC={noCustomRPC}
             gasMethod={effectiveGasMethod}

@@ -14,7 +14,13 @@ import type { SignatureFlowState } from '@/components2024/MiniSignV2/state/types
 import type { SignatureManager } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { useSignatureStore } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { useSignatureInstance } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useGasAccountSign } from '@/screens/GasAccount/hooks/atom';
 import { findChain } from '@/utils/chain';
 import { useMemoizedFn } from 'ahooks';
@@ -98,10 +104,29 @@ const MiniSignTxV2 = ({
   const [manualGasMethod, setManualGasMethod] = useState<
     ApprovalGasMethod | undefined
   >(undefined);
+  const manualGasScopeKey = useMemo(() => {
+    if (!currentAccount?.address || !ctx?.chainId) {
+      return '';
+    }
+
+    return `${currentAccount.type}:${currentAccount.address}:${ctx.chainId}`;
+  }, [ctx?.chainId, currentAccount?.address, currentAccount?.type]);
+  const manualGasScopeKeyRef = useRef('');
 
   useEffect(() => {
-    setManualGasMethod(undefined);
-  }, [ctx?.fingerprint]);
+    if (!manualGasScopeKey) {
+      return;
+    }
+
+    if (
+      manualGasScopeKeyRef.current &&
+      manualGasScopeKeyRef.current !== manualGasScopeKey
+    ) {
+      setManualGasMethod(undefined);
+    }
+
+    manualGasScopeKeyRef.current = manualGasScopeKey;
+  }, [manualGasScopeKey]);
 
   const handleAutoChangeGasMethod = useCallback(
     async (method: ApprovalGasMethod) => {
@@ -668,7 +693,7 @@ const MiniSignTxV2 = ({
                 onChangeGasMethod={setGasMethod}
                 onAutoChangeGasMethod={handleAutoChangeGasMethod}
                 disableAutoGasLevelSwitch={!!manualGasMethod}
-                showGasMethodShortcut={false}
+                showGasMethodShortcut
                 pushType={pushType}
                 isDisabledGasPopup={task.status !== 'idle'}
                 disabled={false}
