@@ -135,9 +135,11 @@ export const MultiChart = memo(function MultiChart({
   hideType,
   style,
   onPressNetWorth,
+  onPressWalletList,
 }: {
   hideType: BALANCE_HIDE_TYPE;
   onPressNetWorth?: () => void;
+  onPressWalletList?: () => void;
 } & RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
   const {
@@ -202,6 +204,7 @@ export const MultiChart = memo(function MultiChart({
             showBalanceLoadingWithoutLocal={showBalanceLoading}
             showChangeLoadingWithoutLocal={showChangeLoading}
             onPressNetWorth={onPressNetWorth}
+            onPressWalletList={onPressWalletList}
           />
           <ChartContent
             data={chartsData}
@@ -227,6 +230,7 @@ interface IHeaderProps {
   showBalanceLoadingWithoutLocal: boolean;
   showChangeLoadingWithoutLocal: boolean;
   onPressNetWorth?: () => void;
+  onPressWalletList?: () => void;
 }
 const ChartHeader = React.memo(
   ({
@@ -241,6 +245,7 @@ const ChartHeader = React.memo(
     showBalanceLoadingWithoutLocal,
     showChangeLoadingWithoutLocal,
     onPressNetWorth,
+    onPressWalletList,
   }: IHeaderProps) => {
     const { reanimatedStyles, styles, colors2024 } = useTheme2024({ getStyle });
     const rStyles = {
@@ -424,7 +429,13 @@ const ChartHeader = React.memo(
             LinearGradientComponent={LoadingLinear}
           />
 
-          <View style={[styles.accountBg]}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.accountBg,
+              pressed && { opacity: 0.6 },
+            ]}
+            onPress={onPressWalletList}
+            hitSlop={8}>
             <RcIconSmallWalletCC color={colors2024['neutral-title-1']} />
             <Text style={styles.accountText}>
               {matteredAccountCount && matteredAccountCount >= 10
@@ -432,7 +443,7 @@ const ChartHeader = React.memo(
                 : matteredAccountCount}
             </Text>
             <RcIconSmallArrowCC color={colors2024['neutral-title-1']} />
-          </View>
+          </Pressable>
         </View>
         {showChangeLoading ? (
           <Skeleton
