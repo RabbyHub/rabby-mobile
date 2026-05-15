@@ -320,6 +320,7 @@ export const TokenDetailHistoryList = ({
         loadingMore={loadingMore}
         refreshLoading={loading}
         isForMultipleAddress={false}
+        account={finalAccount}
         appendBottom={300}
         style={styles.overwriteListContainer}
         moreLoadingLength={5}
