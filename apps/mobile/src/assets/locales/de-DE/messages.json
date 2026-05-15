@@ -148,7 +148,8 @@
     "Created": "Erstellt",
     "SavedSeedPhrase": "Ich habe den Seed-Phrase gespeichert.",
     "from": "Von",
-    "to": "An"
+    "to": "An",
+    "copiedSuccessfully": "Erfolgreich kopiert"
   },
   "component": {
     "accountSwitcher": {
@@ -3659,7 +3660,8 @@
       "colStatusToken": "Status/Token",
       "emptyText": "Keine Token mit niedrigem Wert gefunden",
       "unsupportedAccountType": "Dieser Kontotyp wird nicht unterstützt.",
-      "unsupportedAccount": "Derzeit werden nur Private-Key- und Seed-Phrase-Adressen unterstützt."
+      "unsupportedAccount": "Derzeit werden nur Private-Key- und Seed-Phrase-Adressen unterstützt.",
+      "title": "Dust umwandeln"
     }
   },
   "constant": {

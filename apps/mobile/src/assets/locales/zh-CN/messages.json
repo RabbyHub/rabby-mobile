@@ -148,7 +148,8 @@
     "SavedSeedPhrase": "我已经保存了种子短语",
     "Imported": "导入的",
     "from": "从",
-    "to": "到"
+    "to": "到",
+    "copiedSuccessfully": "已复制"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过助记词导入",

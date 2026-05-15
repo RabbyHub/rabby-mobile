@@ -157,7 +157,8 @@
     "SavedSeedPhrase": "我已保存种子短语",
     "Created": "已建立",
     "from": "從",
-    "to": "至"
+    "to": "至",
+    "copiedSuccessfully": "複製成功"
   },
   "background": {
     "transactionWatcher": {
@@ -3456,7 +3457,8 @@
       "colStatusToken": "狀態/代幣",
       "emptyText": "找不到低價值代幣",
       "unsupportedAccountType": "不支援此帳戶類型。",
-      "unsupportedAccount": "目前僅支援私鑰和助記詞地址。"
+      "unsupportedAccount": "目前僅支援私鑰和助記詞地址。",
+      "title": "轉換灰塵"
     }
   },
   "component": {

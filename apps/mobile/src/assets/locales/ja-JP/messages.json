@@ -3332,7 +3332,8 @@
       "colStatusToken": "ステータス/トークン",
       "emptyText": "価値の低いトークンが見つかりませんでした",
       "unsupportedAccountType": "このアカウントタイプには対応していません。",
-      "unsupportedAccount": "現在、秘密鍵とシードフレーズのアドレスのみ対応しています。"
+      "unsupportedAccount": "現在、秘密鍵とシードフレーズのアドレスのみ対応しています。",
+      "title": "ダスト変換"
     }
   },
   "global": {
@@ -3437,7 +3438,8 @@
     "Imported": "インポートされた",
     "SavedSeedPhrase": "シードフレーズを保存しました",
     "from": "送信元",
-    "to": "送信先"
+    "to": "送信先",
+    "copiedSuccessfully": "コピーしました"
   },
   "bluetooth": {
     "powered_off_alert": {

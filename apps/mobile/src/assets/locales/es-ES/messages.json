@@ -3555,7 +3555,8 @@
       "colStatusToken": "Estado/Token",
       "emptyText": "No se encontraron tokens de bajo valor",
       "unsupportedAccountType": "No se admite este tipo de cuenta.",
-      "unsupportedAccount": "Actualmente solo se admiten direcciones de clave privada y frase semilla."
+      "unsupportedAccount": "Actualmente solo se admiten direcciones de clave privada y frase semilla.",
+      "title": "Convertir Polvo"
     }
   },
   "global": {
@@ -3660,7 +3661,8 @@
     "Created": "Creado",
     "SavedSeedPhrase": "He guardado la frase semilla",
     "from": "Desde",
-    "to": "Hacia"
+    "to": "Hacia",
+    "copiedSuccessfully": "Copiado con éxito"
   },
   "bluetooth": {
     "powered_off_alert": {
