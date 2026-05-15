@@ -115,7 +115,11 @@ export const DynamicCustomMaterialTabBar = (
   }, []);
 
   return (
-    <View style={styles.tabsBarContainer}>
+    <View
+      style={styles.tabsBarContainer}
+      onTouchStart={event => {
+        event.stopPropagation();
+      }}>
       <MaterialTabBar
         {...props}
         TabItemComponent={TabItem}
