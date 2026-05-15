@@ -5,9 +5,31 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Dimensions, Platform, TouchableOpacity, View } from 'react-native';
+import {
+  Dimensions,
+  LayoutChangeEvent,
+  Platform,
+  StyleProp,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedProps,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import Svg, {
+  Defs,
+  LinearGradient as SvgLinearGradient,
+  Rect,
+  Stop,
+} from 'react-native-svg';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -23,8 +45,6 @@ import { sortBy } from 'lodash';
 import RNLinearGradient from 'react-native-linear-gradient';
 import { BALANCE_HIDE_TYPE, useHideBalance } from '../hooks/useHideBalance';
 import { HomeAddressItem } from './HomeAddressItem';
-import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
-import { IS_IOS } from '@/core/native/utils';
 import {
   MultiChart,
   setIsFoldMultiChart,
@@ -40,6 +60,138 @@ import { useHomeStartupReady } from '@/core/utils/homeStartupReady';
 import { balance24hStore } from '@/store/balance24h';
 import { useShallow } from 'zustand/react/shallow';
 import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
+
+const AnimatedRect = Animated.createAnimatedComponent(Rect);
+
+function getRoundedRectPerimeter(width: number, height: number, radius: number) {
+  const normalizedRadius = Math.min(radius, width / 2, height / 2);
+
+  return (
+    2 * (width + height - 4 * normalizedRadius) +
+    2 * Math.PI * normalizedRadius
+  );
+}
+
+function NativeGasketGlow({
+  width,
+  height,
+  radius,
+  running,
+  durationMs,
+  isPositive,
+  isLight,
+  style,
+}: {
+  width: number;
+  height: number;
+  radius: number;
+  running: boolean;
+  durationMs: number;
+  isPositive: boolean;
+  isLight: boolean;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const progress = useSharedValue(0);
+  const glowStrokeWidth = 10;
+  const borderStrokeWidth = 2;
+  const inset = glowStrokeWidth / 2 + 1;
+  const rectWidth = Math.max(0, width - inset * 2);
+  const rectHeight = Math.max(0, height - inset * 2);
+  const rectRadius = Math.max(0, radius - inset / 2);
+  const perimeter = getRoundedRectPerimeter(rectWidth, rectHeight, rectRadius);
+  const dashLength = Math.min(
+    perimeter * 0.36,
+    Math.max(120, rectWidth * 0.55),
+  );
+  const dashGap = Math.max(0, perimeter - dashLength);
+  const animatedProps = useAnimatedProps(() => ({
+    strokeDashoffset: -progress.value * perimeter,
+  }));
+
+  useEffect(() => {
+    cancelAnimation(progress);
+    progress.value = 0;
+
+    if (!running) {
+      return;
+    }
+
+    progress.value = withTiming(1, {
+      duration: durationMs,
+      easing: Easing.linear,
+    });
+
+    return () => {
+      cancelAnimation(progress);
+    };
+  }, [durationMs, progress, running]);
+
+  if (!running || rectWidth <= 0 || rectHeight <= 0) {
+    return null;
+  }
+
+  const activeColor = isPositive ? 'rgb(88, 198, 105)' : 'rgb(227, 73, 53)';
+  const gradientId = isPositive
+    ? 'home-gasket-positive-gradient'
+    : 'home-gasket-negative-gradient';
+  const mainOpacity = isLight ? 0.62 : 0.42;
+  const glowOpacity = isLight ? 0.18 : 0.16;
+
+  return (
+    <View pointerEvents="none" style={[stylesNativeGasket.container, style]}>
+      <Svg width={width} height={height}>
+        <Defs>
+          <SvgLinearGradient
+            id={gradientId}
+            x1="0"
+            y1="0"
+            x2={width}
+            y2={height}>
+            <Stop offset="0%" stopColor={activeColor} stopOpacity="0" />
+            <Stop offset="45%" stopColor={activeColor} stopOpacity="1" />
+            <Stop offset="100%" stopColor={activeColor} stopOpacity="0" />
+          </SvgLinearGradient>
+        </Defs>
+        <AnimatedRect
+          animatedProps={animatedProps}
+          x={inset}
+          y={inset}
+          width={rectWidth}
+          height={rectHeight}
+          rx={rectRadius}
+          ry={rectRadius}
+          fill="none"
+          stroke={`url(#${gradientId})`}
+          strokeWidth={glowStrokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={`${dashLength} ${dashGap}`}
+          opacity={glowOpacity}
+        />
+        <AnimatedRect
+          animatedProps={animatedProps}
+          x={inset}
+          y={inset}
+          width={rectWidth}
+          height={rectHeight}
+          rx={rectRadius}
+          ry={rectRadius}
+          fill="none"
+          stroke={`url(#${gradientId})`}
+          strokeWidth={borderStrokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={`${dashLength} ${dashGap}`}
+          opacity={mainOpacity}
+        />
+      </Svg>
+    </View>
+  );
+}
+
+const stylesNativeGasket = StyleSheet.create({
+  container: {
+    ...StyleSheet.absoluteFillObject,
+  },
+});
 
 function MultiPinnedAddressList({
   pinnedAccountList,
@@ -150,7 +302,7 @@ export function MultiAddressHomeHeader(
     })),
   );
   const startupReady = useHomeStartupReady();
-  const shouldCoverLocalWebViewLoading =
+  const shouldCoverHomeCardLoading =
     !startupReady ||
     showBalanceLoadingWithoutLocal ||
     showChangeLoadingWithoutLocal ||
@@ -163,20 +315,16 @@ export function MultiAddressHomeHeader(
   const pinnedAccountList = usePinnedAccountList();
   const [hideType] = useHideBalance();
 
-  const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
-  const [isLocalWebViewReady, setIsLocalWebViewReady] = useState(false);
-
-  const gasketWebViewRef = useRef<LocalWebView>(null);
+  const [gasketSize, setGasketSize] = useState({ width: 0, height: 0 });
 
   const { loadBalanceFromApiStage } =
     addressBalanceStore.useLoadBalanceFromApiStage();
   const previousLoading = usePrevious(loadBalanceFromApiStage);
   const [isAnimRunning, setIsAnimRunning] = useState(false);
   const animTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const animationDurationMs = Platform.OS === 'ios' ? 2000 : 2500;
   useEffect(() => {
     if (!__DEV__ && data.isLoss) return;
-
-    const durationMs = IS_IOS ? 2000 : 2500;
 
     if (
       data.rawChange &&
@@ -184,25 +332,30 @@ export function MultiAddressHomeHeader(
       previousLoading === 'loading'
     ) {
       setIsAnimRunning(true);
-      gasketWebViewRef.current?.sendMessage?.({
-        type: 'GASKETVIEW:TOGGLE_LOADING',
-        info: {
-          loading: previousLoading,
-          isPositive: !data.isLoss,
-        },
-        animationDurationMs: durationMs,
-        animationGradientBorderRadius: SIZES.cardContentRadius,
-      });
-    }
 
-    if (animTimerRef.current) {
-      clearTimeout(animTimerRef.current);
+      if (animTimerRef.current) {
+        clearTimeout(animTimerRef.current);
+      }
+      animTimerRef.current = setTimeout(
+        () => setIsAnimRunning(false),
+        animationDurationMs,
+      );
     }
-    animTimerRef.current = setTimeout(
-      () => setIsAnimRunning(false),
-      durationMs,
-    );
-  }, [data.isLoss, data.rawChange, loadBalanceFromApiStage, previousLoading]);
+  }, [
+    animationDurationMs,
+    data.isLoss,
+    data.rawChange,
+    loadBalanceFromApiStage,
+    previousLoading,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (animTimerRef.current) {
+        clearTimeout(animTimerRef.current);
+      }
+    };
+  }, []);
 
   const modalRef =
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>(undefined);
@@ -257,45 +410,37 @@ export function MultiAddressHomeHeader(
           style: [styles.homecardWrapper],
         }}>
         <View
-          pointerEvents="none"
-          style={[
-            styles.localWebViewWrapper,
-            couldRenderLocalWebView ? styles.localWebViewWrapperShow : {},
-            isLocalWebViewReady ? styles.localWebViewWrapperReady : {},
-          ]}>
-          {couldRenderLocalWebView ? (
-            <LocalWebView
-              ref={gasketWebViewRef}
-              style={[styles.curveBoxChildMH, styles.localWebView]}
-              entryPath={'/pages/gasket-blurview.html'}
-              // forceUseLocalResource
-              webviewSize={{
-                width: styles.localWebView.minWidth,
-              }}
-              startInLoadingState={false}
-              renderLoading={() => (
-                <View style={styles.localWebViewLoadingFallback} />
-              )}
-              onLoadEnd={() => {
-                setIsLocalWebViewReady(true);
-              }}
-            />
-          ) : null}
-        </View>
-        <View
           style={[
             styles.curveBoxChildMH,
             styles.curveBox,
             // loading && styles.curveBoxLoading,
             {},
           ]}
-          onLayout={event => {
-            if (IS_IOS) {
-              setTimeout(() => setCouldRenderLocalWebView(true), 500);
-            } else {
-              setCouldRenderLocalWebView(true);
-            }
+          onLayout={(event: LayoutChangeEvent) => {
+            const { width, height } = event.nativeEvent.layout;
+
+            setGasketSize(prev => {
+              if (prev.width === width && prev.height === height) {
+                return prev;
+              }
+
+              return { width, height };
+            });
           }}>
+          <NativeGasketGlow
+            width={gasketSize.width}
+            height={gasketSize.height}
+            radius={SIZES.cardContentRadius}
+            running={isAnimRunning}
+            durationMs={animationDurationMs}
+            isPositive={!data.isLoss}
+            isLight={isLight}
+            style={[
+              styles.curveBoxChildMH,
+              styles.nativeGasketGlow,
+              isAnimRunning && styles.nativeGasketGlowActive,
+            ]}
+          />
           <RNLinearGradient
             pointerEvents="none"
             colors={
@@ -319,7 +464,7 @@ export function MultiAddressHomeHeader(
             onPress={() => {
               handleWalletsListPress();
             }}>
-            {shouldCoverLocalWebViewLoading ? (
+            {shouldCoverHomeCardLoading ? (
               <View pointerEvents="none" style={styles.curveCardCenterMask} />
             ) : null}
             <MultiChart
@@ -383,38 +528,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'center',
       width: '100%',
     },
-    localWebViewWrapper: {
+    nativeGasketGlow: {
       position: 'absolute',
       top: 0,
       bottom: 0,
       left: 0,
       right: 0,
-      zIndex: IS_IOS ? 1 : -1,
-      marginHorizontal:
-        isLight && IS_IOS ? 0 : SIZES.cardLayoutPaddingHorizontal,
+      zIndex: 1,
       borderRadius: SIZES.cardContentRadius,
-      display: 'none',
-      opacity: 0,
       overflow: 'hidden',
-      // it helps to check the position of webview wrapper
-      // if you see .localWebViewWrapper not filled by content in .curveBox, the sizes are wrong
-      // uncomment below line to see the border
-      // ...makeDebugBorder('green'),
     },
-    localWebView: {
-      minWidth: cardMinW,
-      marginHorizontal: 'auto',
-      backgroundColor: 'transparent',
-    },
-    localWebViewWrapperShow: {
-      display: 'flex',
-    },
-    localWebViewWrapperReady: {
+    nativeGasketGlowActive: {
       opacity: 1,
-    },
-    localWebViewLoadingFallback: {
-      flex: 1,
-      backgroundColor: 'transparent',
     },
     curveBoxWrapperLoading: {},
     curveBoxChildMH: {
@@ -441,6 +566,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       position: 'relative',
       width: '100%',
       maxWidth: '100%',
+      zIndex: 2,
       borderRadius: 0,
       minHeight: SIZES.curveCardMinHeight,
       paddingVertical: SIZES.curveCardPy,
