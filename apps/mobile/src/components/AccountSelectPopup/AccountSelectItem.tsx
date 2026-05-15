@@ -1,5 +1,6 @@
 import { RcIconCheckedCC } from '@/assets/icons/common';
-import { apiProvider } from '@/core/apis';
+import { Text } from '@/components/Typography';
+import { getGasTokenBalance } from '@/core/apis/transactions';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
@@ -12,7 +13,6 @@ import React, { useEffect, useMemo } from 'react';
 import { View } from 'react-native';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { AddressViewer } from '../AddressViewer';
-import { Text } from '@/components/Typography';
 
 interface AccountItemProps {
   account: KeyringAccountWithAlias;
@@ -38,20 +38,24 @@ export const AccountSelectItem = ({
     id: +networkId,
   });
 
-  const { data: nativeTokenBalance, runAsync: runFetchBalance } = useRequest(
+  const { data: gasTokenBalance, runAsync: runFetchBalance } = useRequest(
     async () => {
       if (!chain || !checked) {
         return;
       }
-      const balanceInWei = await apiProvider.requestETHRpc(
-        {
-          method: 'eth_getBalance',
-          params: [account.address, 'latest'],
-        },
-        chain.serverId,
+
+      const balance = await getGasTokenBalance({
+        address: account.address,
+        chainId: chain.id,
         account,
-      );
-      return new BigNumber(balanceInWei).div(1e18).toFixed();
+      });
+
+      return {
+        amount: new BigNumber(balance.rawBalance)
+          .div(new BigNumber(10).pow(balance.token.decimals))
+          .toFixed(),
+        symbol: balance.token.symbol,
+      };
     },
     {
       manual: true,
@@ -59,14 +63,14 @@ export const AccountSelectItem = ({
   );
 
   useEffect(() => {
-    if (checked && nativeTokenBalance == null) {
+    if (checked && gasTokenBalance == null) {
       runFetchBalance();
     }
   }, [
     checked,
     chain?.serverId,
     account.address,
-    nativeTokenBalance,
+    gasTokenBalance,
     runFetchBalance,
   ]);
 
@@ -94,10 +98,10 @@ export const AccountSelectItem = ({
         />
       </View>
       <View style={styles.extra}>
-        {nativeTokenBalance != null ? (
+        {gasTokenBalance != null ? (
           <Text className="text-12 text-r-neutral-body native-token-balance">
-            {`${formatTokenAmount(nativeTokenBalance)} ${
-              chain?.nativeTokenSymbol || 'ETH'
+            {`${formatTokenAmount(gasTokenBalance.amount)} ${
+              gasTokenBalance.symbol || chain?.nativeTokenSymbol || 'ETH'
             }`}
           </Text>
         ) : null}
