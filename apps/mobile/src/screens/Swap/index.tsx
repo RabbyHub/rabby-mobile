@@ -34,7 +34,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, View } from 'react-native';
+import { Alert, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import useMount from 'react-use/lib/useMount';
 import { ChainInfo2024 } from '../Send/components/ChainInfo2024';
@@ -115,9 +115,12 @@ import {
   createAmountComparer,
   shouldIgnoreAmountChangeInMaxMode,
 } from '@/utils/form';
-import { Alert } from 'react-native';
 import { useMiniSignerEffectPause } from '@/hooks/useMiniSignerEffectPause';
-const isAndroid = Platform.OS === 'android';
+
+const FOOTER_BUTTON_HEIGHT = 56;
+const FOOTER_PADDING_TOP = 16;
+const FOOTER_PADDING_BOTTOM = 24;
+const FOOTER_RISK_TIP_HEIGHT = 40;
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -939,6 +942,15 @@ const Swap = ({
 
   const showRiskTips =
     isSlippageLow || isSlippageHigh || showLoss || miniSignGasFeeTooHigh;
+  const showDirectSignRiskTips = showRiskTips && !swapBtnDisabled;
+  const footerMinHeight =
+    FOOTER_BUTTON_HEIGHT +
+    FOOTER_PADDING_TOP +
+    FOOTER_PADDING_BOTTOM +
+    safeOffBottom +
+    (canShowDirectSubmit && showDirectSignRiskTips
+      ? FOOTER_RISK_TIP_HEIGHT
+      : 0);
   const shouldPauseMiniSignerEffects =
     useMiniSignerEffectPause(miniSignLoading);
 
@@ -1108,18 +1120,9 @@ const Swap = ({
           <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
         )}
         <KeyboardAwareScrollView
-          style={[
-            styles.container,
-
-            {
-              marginBottom:
-                112 +
-                (isAndroid ? 20 + safeOffBottom : 0) +
-                (showRiskTips ? 26 : 0),
-            },
-          ]}
+          style={styles.container}
           ref={keyboardAwareRef}
-          // contentContainerStyle={styles.container}
+          contentContainerStyle={styles.scrollContent}
           enableOnAndroid
           extraHeight={200}
           keyboardOpeningTime={0}>
@@ -1348,7 +1351,10 @@ const Swap = ({
         <View
           style={[
             styles.buttonContainer,
-            isAndroid && { paddingBottom: safeOffBottom },
+            {
+              minHeight: footerMinHeight,
+              paddingBottom: FOOTER_PADDING_BOTTOM + safeOffBottom,
+            },
           ]}>
           <Tip
             content={
@@ -1389,7 +1395,7 @@ const Swap = ({
                   }}
                   account={currentAccount}
                   showHardWalletProcess
-                  showRiskTips={showRiskTips && !swapBtnDisabled}
+                  showRiskTips={showDirectSignRiskTips}
                 />
               ) : (
                 <Button
@@ -1502,6 +1508,9 @@ Swap.ForMultipleAddress = ForMultipleAddress;
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   content: {
     minHeight: 300,
@@ -1644,13 +1653,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   buttonContainer: {
-    position: 'absolute',
-    left: 0,
-    bottom: 0,
+    flexShrink: 0,
     paddingHorizontal: 24,
+    paddingTop: FOOTER_PADDING_TOP,
     backgroundColor: colors2024['neutral-bg-1'],
     width: '100%',
-    marginBottom: 56,
   },
   approveContainer: {
     flexDirection: 'row',
