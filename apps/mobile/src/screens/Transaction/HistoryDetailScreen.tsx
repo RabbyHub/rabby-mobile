@@ -177,11 +177,15 @@ function HistoryDetailScreen(): JSX.Element {
     return (
       <ScreenHeaderAccountSwitcher
         forScene="HistoryDetail"
-        titleText={title || t('page.transactions.itemTitle.Default')}
+        titleText={
+          <Text style={styles.headerTitleStyle} numberOfLines={1}>
+            {title || t('page.transactions.itemTitle.Default')}
+          </Text>
+        }
         disableSwitch={true}
       />
     );
-  }, [title, t]);
+  }, [styles.headerTitleStyle, title, t]);
 
   React.useEffect(() => {
     setNavigationOptions({

@@ -31,6 +31,7 @@ import { Send } from './components/Actions/Send';
 import { Swap } from './components/Actions/Swap';
 import { UnknownAction } from './components/Actions/UnknownAction';
 import { HistoryItemCateType } from './components/type';
+import { Text } from '@/components/Typography';
 
 function HistoryLocalDetailScreen(): JSX.Element {
   const route =
@@ -83,11 +84,15 @@ function HistoryLocalDetailScreen(): JSX.Element {
     return (
       <ScreenHeaderAccountSwitcher
         forScene="HistoryDetail"
-        titleText={title || t('page.transactions.itemTitle.Default')}
+        titleText={
+          <Text style={styles.headerTitleStyle} numberOfLines={1}>
+            {title || t('page.transactions.itemTitle.Default')}
+          </Text>
+        }
         disableSwitch={true}
       />
     );
-  }, [title, t]);
+  }, [styles.headerTitleStyle, title, t]);
 
   useEffect(() => {
     if (!data.isPending) {
