@@ -155,7 +155,10 @@ export const HistoryTokenList = ({
         });
       } else {
         navigateDeprecated(RootNames.TokenDetail, {
-          token: tokenItemToITokenItem(singeToken as TokenItem, ''),
+          token: {
+            ...tokenItemToITokenItem(singeToken as TokenItem, ''),
+            amount: 0,
+          },
           needUseCacheToken: true,
           isSingleAddress: !isForMultipleAddress,
           account: currentAccount,
