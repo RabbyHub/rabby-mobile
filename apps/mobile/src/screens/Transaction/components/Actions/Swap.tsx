@@ -124,7 +124,10 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
 
   const handleGotoDetail = useMemoizedFn((token: TokenItem) => {
     naviPush(RootNames.TokenDetail, {
-      token: tokenItemToITokenItem(token, ''),
+      token: {
+        ...tokenItemToITokenItem(token as TokenItem, ''),
+        amount: 0,
+      },
       needUseCacheToken: true,
       isSingleAddress,
       account,

@@ -136,7 +136,10 @@ export const Send: React.FC<Props> = ({
   const handleGotoTokenDetail = useMemoizedFn(() => {
     if (accountSelectCtx.isUnderContext) accountSelectCtx.fnCloseModal();
     naviPush(RootNames.TokenDetail, {
-      token: tokenItemToITokenItem(actionData.token, ''),
+      token: {
+        ...tokenItemToITokenItem(actionData.token as TokenItem, ''),
+        amount: 0,
+      },
       needUseCacheToken: true,
       isSingleAddress,
       account,

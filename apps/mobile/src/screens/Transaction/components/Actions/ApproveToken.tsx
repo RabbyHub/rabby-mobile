@@ -135,7 +135,10 @@ export const ApproveToken: React.FC<Props> = ({
 
   const handleGotoTokenDetail = useMemoizedFn(() => {
     naviPush(RootNames.TokenDetail, {
-      token: tokenItemToITokenItem(actionData.token, ''),
+      token: {
+        ...tokenItemToITokenItem(actionData.token as TokenItem, ''),
+        amount: 0,
+      },
       account,
       needUseCacheToken: true,
       isSingleAddress,
