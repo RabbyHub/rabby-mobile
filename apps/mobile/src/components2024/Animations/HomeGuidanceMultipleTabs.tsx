@@ -463,8 +463,7 @@ const getStyle = createGetStyles2024(
           paddingTop: 0,
           justifyContent: 'center',
           alignItems: 'center',
-          top:
-            safeAreaInsets.value.top + HOME_TOP_HEADER_SIZES.headerHeight,
+          top: safeAreaInsets.value.top + HOME_TOP_HEADER_SIZES.headerHeight,
         };
       },
     },
