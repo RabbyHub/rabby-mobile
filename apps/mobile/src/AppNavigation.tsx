@@ -14,6 +14,7 @@ import { navigationRef } from '@/utils/navigation';
 import { RootNames } from './constant/layout';
 import { apisHomeTabIndex, useStackScreenConfig } from './hooks/navigation';
 import { analytics, matomoLogScreenView } from './utils/analytics';
+import * as apisAccount from './core/apis/account';
 
 import { AppStatusBar } from './components/AppStatusBar';
 import AutoLockView from './components/AutoLockView';
@@ -85,6 +86,56 @@ import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
+
+type AppInitialRouteName =
+  | typeof RootNames.StackGetStarted
+  | typeof RootNames.StackRoot
+  | typeof RootNames.Unlock;
+
+function useAppInitialRouteName(isAppUnlocked: boolean) {
+  const [initialRouteName, setInitialRouteName] =
+    React.useState<AppInitialRouteName | null>(() =>
+      isAppUnlocked ? null : RootNames.Unlock,
+    );
+
+  React.useEffect(() => {
+    if (!isAppUnlocked) {
+      setInitialRouteName(prev => prev || RootNames.Unlock);
+      return;
+    }
+    if (initialRouteName) {
+      return;
+    }
+
+    let cancelled = false;
+
+    apisAccount
+      .hasVisibleAccounts()
+      .then(hasVisibleAccounts => {
+        if (cancelled) {
+          return;
+        }
+
+        setInitialRouteName(
+          hasVisibleAccounts
+            ? RootNames.StackRoot
+            : RootNames.StackGetStarted,
+        );
+      })
+      .catch(error => {
+        console.error('useAppInitialRouteName::error', error);
+        if (!cancelled) {
+          setInitialRouteName(RootNames.StackRoot);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialRouteName, isAppUnlocked]);
+
+  return initialRouteName;
+}
 
 const RootAnimOptions: React.ComponentProps<
   typeof RootStack.Navigator
@@ -325,9 +376,7 @@ export default function AppNavigation() {
   const colors = useThemeColors();
 
   const { isAppUnlocked } = useAppUnlocked();
-  const initialRouteName = isAppUnlocked
-    ? RootNames.StackGetStarted
-    : RootNames.Unlock;
+  const initialRouteName = useAppInitialRouteName(isAppUnlocked);
   const shouldRenderDeferredGlobals =
     useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked);
 
@@ -350,6 +399,15 @@ export default function AppNavigation() {
   useDetermineExitAppOnPressBack();
 
   useRendererDetect({ name: 'AppNavigation' });
+
+  if (!initialRouteName) {
+    return (
+      <AutoLockView.ForAppNav
+        style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
+        <AppStatusBar __isTop__ />
+      </AutoLockView.ForAppNav>
+    );
+  }
 
   return (
     <AutoLockView.ForAppNav
