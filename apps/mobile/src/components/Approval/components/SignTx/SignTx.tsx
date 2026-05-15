@@ -18,6 +18,7 @@ import {
 } from '@rabby-wallet/keyring-utils';
 import {
   ExplainTxResponse,
+  GasAccountCheckResult,
   GasLevel,
   TokenItem,
   Tx,
@@ -109,6 +110,7 @@ import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { GasSelectorResponse } from '../TxComponents/GasSelector/GasSelectorHeader';
 import { SignMainnetGasSelectorHeader } from '../TxComponents/GasSelector/SignMainnetGasSelectorHeader';
 import { useEffectiveApprovalGasMethod } from '../TxComponents/GasSelector/useEffectiveApprovalGasMethod';
+import type { ApprovalGasMethod } from '../TxComponents/GasSelector/approvalGasDisplay';
 import { SignAdvancedSettings } from '../SignAdvancedSettings';
 import { BroadcastMode } from '../BroadcastMode';
 import { useFindChain } from '@/hooks/useFindChain';
@@ -578,6 +580,9 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   }, [currentAccountType, t]);
 
   const [noCustomRPC, setNoCustomRPC] = useState(true);
+  const [manualGasMethod, setManualGasMethod] = useState<
+    ApprovalGasMethod | undefined
+  >(undefined);
 
   const txs = useMemo(() => {
     return [
@@ -589,12 +594,42 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       },
     ] as Tx[];
   }, [tx, realNonce, gasLimit]);
+  const gasMethodScopeKey = useMemo(
+    () =>
+      [
+        chainId,
+        currentAccount.address,
+        currentAccount.type,
+        isCancel ? 'cancel' : '',
+        isSpeedUp ? 'speedup' : '',
+        tx.data || '',
+        tx.from || '',
+        tx.to || '',
+        tx.value || '',
+      ].join('|'),
+    [
+      chainId,
+      currentAccount.address,
+      currentAccount.type,
+      isCancel,
+      isSpeedUp,
+      tx.data,
+      tx.from,
+      tx.to,
+      tx.value,
+    ],
+  );
+
+  useEffect(() => {
+    setManualGasMethod(undefined);
+  }, [gasMethodScopeKey]);
 
   const {
     gasAccountCost,
     gasMethod,
     setGasMethod,
     gasAccountCanPay,
+    canUseGasAccount,
     canGotoUseGasAccount,
     canDepositUseGasAccount,
     gasAccountCostFn,
@@ -608,14 +643,31 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     isSupportedAddr,
     currentAccount,
   });
-  const gasAccountChainSupported =
-    !!gasAccountCost && !gasAccountCost.chain_not_support;
+  const effectiveGasMethod = manualGasMethod ?? gasMethod;
+  const effectiveGasAccountCanPay =
+    effectiveGasMethod === 'gasAccount' && gasAccountCanPay;
+  const gasAccountChainSupported = !!canUseGasAccount;
+  const handleAutoChangeGasMethod = useMemoizedFn(
+    (method: ApprovalGasMethod) => {
+      setGasMethod(method);
+      if (method === 'gasAccount') {
+        setUseGasLess(false);
+      }
+    },
+  );
+  const handleManualChangeGasMethod = useMemoizedFn(
+    (method: ApprovalGasMethod) => {
+      setManualGasMethod(method);
+      setGasMethod(method);
+      setUseGasLess(false);
+    },
+  );
   const showTempoGasTokenSelector = useMemo(
     () =>
       isTempoChain(chain?.serverId) &&
-      gasMethod !== 'gasAccount' &&
+      effectiveGasMethod !== 'gasAccount' &&
       isTempoBatchSupportedAccountType(currentAccount?.type),
-    [chain?.serverId, currentAccount?.type, gasMethod],
+    [chain?.serverId, currentAccount?.type, effectiveGasMethod],
   );
 
   const getCachedTokenItems = useMemoizedFn(() => {
@@ -659,7 +711,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     async (
       gas: GasSelectorResponse,
       type: 'gasAccount' | 'native' = 'native',
-    ): Promise<[boolean, number]> => {
+    ): Promise<[boolean, number, GasAccountCheckResult?]> => {
       if (!isReady) {
         return [true, 0];
       }
@@ -727,8 +779,10 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     gasAccountChainSupported,
     noCustomRPC,
     canUseGasLess: !!canUseGasLess,
+    manualGasMethod,
     gasMethod,
-    setGasMethod,
+    setGasMethod: handleAutoChangeGasMethod,
+    autoSwitchKey: gasMethodScopeKey,
   });
 
   useEffect(() => {
@@ -1291,8 +1345,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         pushType: pushInfo.type,
         lowGasDeadline: pushInfo.lowGasDeadline,
         reqId,
-        isGasLess: gasMethod === 'native' ? useGasLess : false,
-        isGasAccount: gasAccountCanPay,
+        isGasLess: effectiveGasMethod === 'native' ? useGasLess : false,
+        isGasAccount: effectiveGasAccountCanPay,
         sig,
       });
 
@@ -2020,7 +2074,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       }
 
       await gasAccountCostFn();
-      setGasMethod('gasAccount');
+      handleManualChangeGasMethod('gasAccount');
     },
   );
 
@@ -2054,9 +2108,9 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   }
 
   console.log('SignMainnetHeaderContent signTx render', {
-    gasMethod,
-    isGasLess: gasMethod === 'native' ? useGasLess : false,
-    isGasAccount: gasAccountCanPay,
+    gasMethod: effectiveGasMethod,
+    isGasLess: effectiveGasMethod === 'native' ? useGasLess : false,
+    isGasAccount: effectiveGasAccountCanPay,
   });
 
   return (
@@ -2203,62 +2257,67 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
           <FooterBar
             isSwap={isSwap}
             Header={
-              <View style={{ paddingBottom: 12 }}>
-                <SignMainnetGasSelectorHeader
-                  tx={tx}
-                  gasAccountCost={gasAccountCost}
-                  noCustomRPC={noCustomRPC}
-                  gasMethod={gasMethod}
-                  onChangeGasMethod={setGasMethod}
-                  pushType={pushInfo.type}
-                  disabled={isGnosisAccount || isCoboArugsAccount}
-                  isReady={isReady}
-                  gasLimit={gasLimit}
-                  noUpdate={isCancel || isSpeedUp}
-                  gasList={gasList}
-                  selectedGas={selectedGas}
-                  version={txDetail.pre_exec_version}
-                  gas={{
-                    error: txDetail.gas.error,
-                    success: txDetail.gas.success,
-                    gasCostUsd: gasExplainResponse.gasCostUsd,
-                    gasCostAmount: gasExplainResponse.gasCostAmount,
-                  }}
-                  gasCalcMethod={gasCalcMethod}
-                  recommendGasLimit={recommendGasLimit}
-                  recommendNonce={recommendNonce}
-                  chainId={chainId}
-                  onChange={handleGasChange}
-                  nonce={realNonce || tx.nonce}
-                  disableNonce={isSpeedUp || isCancel}
-                  isSpeedUp={isSpeedUp}
-                  isCancel={isCancel}
-                  is1559={support1559}
-                  isHardware={isHardware}
-                  manuallyChangeGasLimit={manuallyChangeGasLimit}
-                  errors={checkErrors}
-                  engineResults={engineResults}
-                  nativeTokenBalance={nativeTokenBalance}
-                  nativeTokenInsufficient={isGasNotEnough}
-                  gasToken={gasToken}
-                  showTempoGasTokenSelector={showTempoGasTokenSelector}
-                  tempoGasTokenList={tempoGasTokenList}
-                  onSelectTempoGasToken={handleSelectTempoGasToken}
-                  tempoGasTokenLoading={tempoGasTokenLoading}
-                  gasPriceMedian={gasPriceMedian}
-                  account={currentAccount}
-                  freeGasAvailable={canUseGasLess}
-                  directSubmit
-                  checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
-                />
-              </View>
+              isGnosisAccount ? null : (
+                <View style={{ paddingBottom: 12 }}>
+                  <SignMainnetGasSelectorHeader
+                    tx={tx}
+                    gasAccountCost={gasAccountCost}
+                    noCustomRPC={noCustomRPC}
+                    gasMethod={effectiveGasMethod}
+                    onChangeGasMethod={handleManualChangeGasMethod}
+                    onAutoChangeGasMethod={handleAutoChangeGasMethod}
+                    disableAutoGasLevelSwitch={!!manualGasMethod}
+                    pushType={pushInfo.type}
+                    disabled={isGnosisAccount || isCoboArugsAccount}
+                    isReady={isReady}
+                    gasLimit={gasLimit}
+                    noUpdate={isCancel || isSpeedUp}
+                    gasList={gasList}
+                    selectedGas={selectedGas}
+                    version={txDetail.pre_exec_version}
+                    gas={{
+                      error: txDetail.gas.error,
+                      success: txDetail.gas.success,
+                      gasCostUsd: gasExplainResponse.gasCostUsd,
+                      gasCostAmount: gasExplainResponse.gasCostAmount,
+                    }}
+                    gasCalcMethod={gasCalcMethod}
+                    recommendGasLimit={recommendGasLimit}
+                    recommendNonce={recommendNonce}
+                    chainId={chainId}
+                    onChange={handleGasChange}
+                    nonce={realNonce || tx.nonce}
+                    disableNonce={isSpeedUp || isCancel}
+                    isSpeedUp={isSpeedUp}
+                    isCancel={isCancel}
+                    is1559={support1559}
+                    isHardware={isHardware}
+                    manuallyChangeGasLimit={manuallyChangeGasLimit}
+                    errors={checkErrors}
+                    engineResults={engineResults}
+                    nativeTokenBalance={nativeTokenBalance}
+                    nativeTokenInsufficient={isGasNotEnough}
+                    gasToken={gasToken}
+                    showTempoGasTokenSelector={showTempoGasTokenSelector}
+                    tempoGasTokenList={tempoGasTokenList}
+                    tempoPreferredFeeTokenId={tempoPreferredFeeTokenId}
+                    onSelectTempoGasToken={handleSelectTempoGasToken}
+                    tempoGasTokenLoading={tempoGasTokenLoading}
+                    gasPriceMedian={gasPriceMedian}
+                    account={currentAccount}
+                    freeGasAvailable={canUseGasLess}
+                    directSubmit
+                    checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
+                  />
+                </View>
+              )
             }
             noCustomRPC={noCustomRPC}
-            gasMethod={gasMethod}
+            gasMethod={effectiveGasMethod}
             gasAccountCost={gasAccountCost}
             isFirstGasCostLoading={isFirstGasCostLoading}
             isFirstGasLessLoading={isFirstGasLessLoading}
-            gasAccountCanPay={gasAccountCanPay}
+            gasAccountCanPay={effectiveGasAccountCanPay}
             canGotoUseGasAccount={canGotoUseGasAccount}
             canDepositUseGasAccount={canDepositUseGasAccount}
             disableGasAccountDeposit={isGasAccountTopUpFlow}
@@ -2273,7 +2332,9 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
             isWalletConnect={
               currentAccountType === KEYRING_TYPE.WalletConnectKeyring
             }
-            onChangeGasAccount={() => setGasMethod('gasAccount')}
+            onChangeGasAccount={() => {
+              handleManualChangeGasMethod('gasAccount');
+            }}
             isWatchAddr={
               currentAccountType === KEYRING_TYPE.WatchAddressKeyring
             }

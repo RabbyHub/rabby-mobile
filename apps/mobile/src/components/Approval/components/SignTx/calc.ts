@@ -1,5 +1,5 @@
 import { TransactionGroup } from '@/core/services/transactionHistory';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import { GasAccountCheckResult, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { useEffect, useMemo, useState } from 'react';
 import { openapi } from '@/core/request';
@@ -734,8 +734,9 @@ export const checkGasAccountLevelInsufficient = async ({
     valid: boolean;
     cost: number;
     errors: SignTxCheckError[];
+    result?: GasAccountCheckResult;
   }>;
-}): Promise<[boolean, number]> => {
+}): Promise<[boolean, number, GasAccountCheckResult?]> => {
   const gasAccountValidation = await validateGasAccountLevel([
     {
       ...tx,
@@ -744,5 +745,9 @@ export const checkGasAccountLevelInsufficient = async ({
     } as Tx,
   ]);
 
-  return [!gasAccountValidation.valid, gasAccountValidation.cost];
+  return [
+    !gasAccountValidation.valid,
+    gasAccountValidation.cost,
+    gasAccountValidation.result,
+  ];
 };
