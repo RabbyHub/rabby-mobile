@@ -278,7 +278,10 @@ export const useMiniSigner = ({
     instance.updateConfig(partial);
   });
 
-  const close = useMemoizedFn(() => instance.close());
+  const close = useMemoizedFn(
+    (options?: Parameters<SignatureManager['close']>[0]) =>
+      instance.close(options),
+  );
   return {
     openDirect,
     openUI,

@@ -729,8 +729,12 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     if (shouldPauseMiniSignerEffects()) {
       return;
     }
-    if (!canShowDirectSubmit || !currentAccount?.address || !txs?.length) {
+    if (!canShowDirectSubmit || !currentAccount?.address) {
       closeMiniSigner();
+      return;
+    }
+    if (!txs?.length) {
+      closeMiniSigner({ preserveManualGasMethod: true });
       return;
     }
     prefetchMiniSigner({

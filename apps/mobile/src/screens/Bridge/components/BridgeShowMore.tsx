@@ -4,6 +4,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -492,10 +493,33 @@ export const DirectSignGasInfo = ({
   const [manualGasMethod, setManualGasMethod] = useState<
     ApprovalGasMethod | undefined
   >(undefined);
+  const accountAddress = config?.account?.address;
+  const accountType = config?.account?.type;
+  const manualGasScopeKey = useMemo(() => {
+    const scopeChainId = ctx?.chainId || chainId;
+
+    if (!accountAddress || !scopeChainId) {
+      return '';
+    }
+
+    return `${accountType}:${accountAddress}:${scopeChainId}`;
+  }, [accountAddress, accountType, chainId, ctx?.chainId]);
+  const manualGasScopeKeyRef = useRef('');
 
   useEffect(() => {
-    setManualGasMethod(undefined);
-  }, [ctx?.fingerprint]);
+    if (!manualGasScopeKey) {
+      return;
+    }
+
+    if (
+      manualGasScopeKeyRef.current &&
+      manualGasScopeKeyRef.current !== manualGasScopeKey
+    ) {
+      setManualGasMethod(undefined);
+    }
+
+    manualGasScopeKeyRef.current = manualGasScopeKey;
+  }, [manualGasScopeKey]);
 
   let gasLessConfig =
     canUseGasLess && ctx?.gasless?.promotion

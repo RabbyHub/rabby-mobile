@@ -992,12 +992,12 @@ const Swap = ({
     if (shouldPauseMiniSignerEffects()) {
       return;
     }
-    if (
-      !canShowDirectSubmit ||
-      !currentAccount?.address ||
-      !currentTxs?.length
-    ) {
+    if (!canShowDirectSubmit || !currentAccount?.address) {
       closeMiniSigner();
+      return;
+    }
+    if (!currentTxs?.length) {
+      closeMiniSigner({ preserveManualGasMethod: true });
       return;
     }
     onChangeCheckGasFeeTooHigh(true);
