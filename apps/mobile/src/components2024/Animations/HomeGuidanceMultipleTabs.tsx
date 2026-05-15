@@ -58,6 +58,7 @@ import AnimSwipeRightToViewAllAssets from './animations/swipe-right-to-view-all-
 import { zCreate } from '@/core/utils/reexports';
 import { UpdaterOrPartials } from '@/core/utils/store';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
+import { ThemeColors2024 } from '@/constant/theme';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { getHomeTabIndicatorWidth } from '@/screens/Home/utils/homeTabIndicator';
 import { Text } from '@/components/Typography';
@@ -563,14 +564,14 @@ function DefaultBeforeNode({
 const getDefaultBeforeNodeStyle = createGetStyles2024(
   {
     reanimatedStyles: {
-      rightIndicator: ({ colors2024, winLayout }) => {
+      rightIndicator: ({ winLayout }) => {
         'worklet';
 
         return {
           width: getHomeTabIndicatorWidth(winLayout.value.width),
           position: 'absolute',
           right: 0,
-          backgroundColor: colors2024['neutral-line'],
+          backgroundColor: ThemeColors2024.light['neutral-InvertHighlight'],
         };
       },
     },
