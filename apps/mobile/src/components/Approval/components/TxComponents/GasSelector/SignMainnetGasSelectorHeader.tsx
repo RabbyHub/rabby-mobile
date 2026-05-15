@@ -56,6 +56,7 @@ type SignMainnetGasSelectorHeaderProps = GasSelectorHeaderProps & {
   tempoGasTokenList?: TempoFeeTokenOption[];
   onSelectTempoGasToken?: (token: TempoFeeTokenOption) => void;
   tempoGasTokenLoading?: boolean;
+  onGasSettingsOpenChange?: (open: boolean) => void;
   tempoPreferredFeeTokenId?: string;
   onAutoChangeGasMethod?: (value: 'native' | 'gasAccount') => void;
   disableAutoGasLevelSwitch?: boolean;
@@ -101,6 +102,7 @@ export const SignMainnetHeaderContent = ({
   tempoGasTokenList,
   onSelectTempoGasToken,
   tempoGasTokenLoading,
+  onGasSettingsOpenChange,
   tempoPreferredFeeTokenId,
   onAutoChangeGasMethod,
   disableAutoGasLevelSwitch = false,
@@ -144,6 +146,7 @@ export const SignMainnetHeaderContent = ({
   tempoGasTokenList?: TempoFeeTokenOption[];
   onSelectTempoGasToken?: (token: TempoFeeTokenOption) => void;
   tempoGasTokenLoading?: boolean;
+  onGasSettingsOpenChange?: (open: boolean) => void;
   tempoPreferredFeeTokenId?: string;
   onAutoChangeGasMethod?: (value: 'native' | 'gasAccount') => void;
   disableAutoGasLevelSwitch?: boolean;
@@ -153,6 +156,11 @@ export const SignMainnetHeaderContent = ({
   const [gasAccountTipVisible, setGasAccountTipVisible] = useState(false);
   const [customVisible, setCustomVisible] = useState(false);
   const [showMoreOpen, setShowMoreOpen] = useState(false);
+  const [autoOpenSignal, setAutoOpenSignal] = useState(0);
+  const hasOpenedOnceRef = useRef(false);
+  const gasSettingsOpen = showMoreOpen || customVisible;
+  const gasSettingsOpenRef = useRef(gasSettingsOpen);
+  const onGasSettingsOpenChangeRef = useRef(onGasSettingsOpenChange);
   const noCustomRPCEnabled = noCustomRPC ?? true;
   const displayGasMethod = resolveApprovalGasMethod({
     nativeTokenInsufficient: !!nativeTokenInsufficient,
@@ -312,6 +320,27 @@ export const SignMainnetHeaderContent = ({
   useEffect(() => {
     levelStateRef.current = levelState;
   }, [levelState]);
+
+  useEffect(() => {
+    onGasSettingsOpenChangeRef.current = onGasSettingsOpenChange;
+  }, [onGasSettingsOpenChange]);
+
+  useEffect(() => {
+    if (gasSettingsOpenRef.current === gasSettingsOpen) {
+      return;
+    }
+
+    gasSettingsOpenRef.current = gasSettingsOpen;
+    onGasSettingsOpenChangeRef.current?.(gasSettingsOpen);
+  }, [gasSettingsOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (gasSettingsOpenRef.current) {
+        onGasSettingsOpenChangeRef.current?.(false);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     activeLevelRequestsRef.current = {};
@@ -738,6 +767,7 @@ export const SignMainnetGasSelectorHeader = (
       showGasMethodShortcut={props.showGasMethodShortcut}
       onAutoChangeGasMethod={props.onAutoChangeGasMethod}
       disableAutoGasLevelSwitch={props.disableAutoGasLevelSwitch}
+      onGasSettingsOpenChange={props.onGasSettingsOpenChange}
     />
   );
 };

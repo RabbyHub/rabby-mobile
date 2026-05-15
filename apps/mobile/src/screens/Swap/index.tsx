@@ -34,7 +34,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, View } from 'react-native';
+import { Alert, Platform, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import useMount from 'react-use/lib/useMount';
 import { ChainInfo2024 } from '../Send/components/ChainInfo2024';
@@ -112,6 +112,12 @@ import {
   shouldIgnoreAmountChangeInMaxMode,
 } from '@/utils/form';
 import { useMiniSignerEffectPause } from '@/hooks/useMiniSignerEffectPause';
+import {
+  hasQuotePollingPauseReason,
+  type QuotePollingPauseReasonState,
+  updateQuotePollingPauseReason,
+} from '@/utils/quotePolling';
+const isAndroid = Platform.OS === 'android';
 
 const FOOTER_BUTTON_HEIGHT = 56;
 const FOOTER_PADDING_TOP = 16;
@@ -244,6 +250,47 @@ const Swap = ({
   } = useTokenPair({
     account: currentAccount!,
   });
+  const quotePollingPauseReasonsRef = useRef<QuotePollingPauseReasonState>({});
+  const setQuotePollingPauseReason = useCallback(
+    (reason: string, paused: boolean) => {
+      const wasPaused = hasQuotePollingPauseReason(
+        quotePollingPauseReasonsRef.current,
+      );
+
+      quotePollingPauseReasonsRef.current = updateQuotePollingPauseReason({
+        state: quotePollingPauseReasonsRef.current,
+        reason,
+        paused,
+      });
+
+      const isPaused = hasQuotePollingPauseReason(
+        quotePollingPauseReasonsRef.current,
+      );
+
+      if (wasPaused !== isPaused) {
+        setAutoQuoteRefreshPaused(isPaused);
+      }
+    },
+    [setAutoQuoteRefreshPaused],
+  );
+  const setSlippageOptionsQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      setQuotePollingPauseReason('slippage-options', paused);
+    },
+    [setQuotePollingPauseReason],
+  );
+  const setGasSettingsQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      setQuotePollingPauseReason('gas-settings', paused);
+    },
+    [setQuotePollingPauseReason],
+  );
+  const setDepositQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      setQuotePollingPauseReason('gas-account-deposit', paused);
+    },
+    [setQuotePollingPauseReason],
+  );
 
   const chainServerId = useMemo(() => {
     return findChainByEnum(chain)?.serverId || CHAINS[chain].serverId;
@@ -1245,6 +1292,7 @@ const Swap = ({
                     type="swap"
                     loading={quoteLoading}
                     autoSuggestSlippage={autoSuggestSlippage}
+                    onOptionsOpenChange={setSlippageOptionsQuoteRefreshPaused}
                   />
                 </View>
               </>
@@ -1300,7 +1348,11 @@ const Swap = ({
                         ? undefined
                         : slippageValidInfo?.suggest_slippage
                     }
-                    onDepositPopupVisibleChange={setAutoQuoteRefreshPaused}
+                    onDepositPopupVisibleChange={setDepositQuoteRefreshPaused}
+                    onSlippageOptionsOpenChange={
+                      setSlippageOptionsQuoteRefreshPaused
+                    }
+                    onGasSettingsOpenChange={setGasSettingsQuoteRefreshPaused}
                   />
                 </View>
               )}
