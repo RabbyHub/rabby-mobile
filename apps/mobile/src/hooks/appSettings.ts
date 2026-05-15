@@ -70,6 +70,7 @@ type ScreenshotSettings = {
   blockSubmitIfFormChangedOnAuth: boolean;
   toastOpenApiHttpErrorStatus: boolean;
   debugSwapHistorySkipLocalLookup: boolean;
+  debugHomeGasketNegativeGlow: boolean;
   debugCurrentKeychainVersion: CurrentKeychainVersion;
   debugKeychainStorageByVersion: DebugKeychainStorageByVersion;
 };
@@ -89,6 +90,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     blockSubmitIfFormChangedOnAuth: false,
     toastOpenApiHttpErrorStatus: false,
     debugSwapHistorySkipLocalLookup: false,
+    debugHomeGasketNegativeGlow: false,
     debugCurrentKeychainVersion: DEFAULT_CURRENT_KEYCHAIN_VERSION,
     debugKeychainStorageByVersion: makeDefaultDebugKeychainStorageByVersion(),
   },
@@ -566,6 +568,44 @@ export function useDebugSwapHistorySkipLocalLookup() {
   return {
     debugSwapHistorySkipLocalLookup,
     toggleDebugSwapHistorySkipLocalLookup,
+  };
+}
+
+export function useDebugHomeGasketNegativeGlow() {
+  const debugHomeGasketNegativeGlow = experimentalSettingsStore(
+    s => !!s.debugHomeGasketNegativeGlow,
+  );
+
+  const toggleDebugHomeGasketNegativeGlow = useCallback(
+    (nextVal?: boolean) => {
+      if (!isNonPublicProductionEnv) {
+        return false;
+      }
+
+      let finalValue = false;
+      setExpSettingData(prev => {
+        finalValue =
+          typeof nextVal === 'boolean'
+            ? nextVal
+            : !prev.debugHomeGasketNegativeGlow;
+
+        return {
+          ...prev,
+          debugHomeGasketNegativeGlow: finalValue,
+        };
+      });
+
+      return finalValue;
+    },
+    [],
+  );
+
+  return {
+    debugHomeGasketNegativeGlow: isNonPublicProductionEnv
+      ? debugHomeGasketNegativeGlow
+      : false,
+    canDebugHomeGasketNegativeGlow: isNonPublicProductionEnv,
+    toggleDebugHomeGasketNegativeGlow,
   };
 }
 

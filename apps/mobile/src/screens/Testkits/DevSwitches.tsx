@@ -37,6 +37,7 @@ import {
 import {
   storeApiExpSettingData,
   useBlockSubmitIfFormChangedOnAuth,
+  useDebugHomeGasketNegativeGlow,
   useDebugSwapHistorySkipLocalLookup,
   useExpScreenCapture,
   useIosForceDisableAlertForSensitiveScene,
@@ -949,6 +950,11 @@ function DevTestHomeCenterArea() {
   const { clearOfflineChainTips } = useMockClearOfflineChainTips();
   const { viewedHomeTip, mockResetViewedHomeTip } = useViewedHomeTip();
   const { multiTabs20251205Viewed } = useGuidanceShown();
+  const {
+    debugHomeGasketNegativeGlow,
+    canDebugHomeGasketNegativeGlow,
+    toggleDebugHomeGasketNegativeGlow,
+  } = useDebugHomeGasketNegativeGlow();
   const [isShow0331SnapshotModal, setIsShow0331SnapshotModal] = useState(false);
 
   useEffect(() => {
@@ -1046,6 +1052,30 @@ function DevTestHomeCenterArea() {
 
       <View
         style={[styles.secondarySectionContent, { flexDirection: 'column' }]}>
+        <TouchableOpacity
+          style={styles.switchRowWrapper}
+          disabled={!canDebugHomeGasketNegativeGlow}
+          onPress={() => {
+            toggleDebugHomeGasketNegativeGlow();
+          }}>
+          <AppSwitch2024
+            value={debugHomeGasketNegativeGlow}
+            disabled={!canDebugHomeGasketNegativeGlow}
+            onPress={evt => evt.stopPropagation()}
+            onValueChange={toggleDebugHomeGasketNegativeGlow}
+          />
+          <Text style={styles.switchLabel}>
+            {debugHomeGasketNegativeGlow
+              ? 'Show red home gasket glow when balance decreases'
+              : 'Only show green home gasket glow when balance increases'}
+          </Text>
+        </TouchableOpacity>
+
+        <Text style={[styles.metaLabel, { marginTop: 4 }]}>
+          Regression-only debug switch. Production packages always disable the
+          red decrease animation.
+        </Text>
+
         <Button
           title={'Reset Home Multiple Tabs Guide'}
           type="ghost"

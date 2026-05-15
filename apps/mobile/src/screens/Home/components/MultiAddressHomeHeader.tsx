@@ -60,6 +60,7 @@ import { useHomeStartupReady } from '@/core/utils/homeStartupReady';
 import { balance24hStore } from '@/store/balance24h';
 import { useShallow } from 'zustand/react/shallow';
 import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
+import { useDebugHomeGasketNegativeGlow } from '@/hooks/appSettings';
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
@@ -92,9 +93,9 @@ function NativeGasketGlow({
   style?: StyleProp<ViewStyle>;
 }) {
   const progress = useSharedValue(0);
-  const glowStrokeWidth = 10;
+  const glowStrokeWidth = 6;
   const borderStrokeWidth = 2;
-  const inset = glowStrokeWidth / 2 + 1;
+  const inset = borderStrokeWidth / 2;
   const rectWidth = Math.max(0, width - inset * 2);
   const rectHeight = Math.max(0, height - inset * 2);
   const rectRadius = Math.max(0, radius - inset / 2);
@@ -311,6 +312,7 @@ export function MultiAddressHomeHeader(
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { isDisConnect } = useGlobalStatus();
+  const { debugHomeGasketNegativeGlow } = useDebugHomeGasketNegativeGlow();
 
   const pinnedAccountList = usePinnedAccountList();
   const [hideType] = useHideBalance();
@@ -324,13 +326,24 @@ export function MultiAddressHomeHeader(
   const animTimerRef = useRef<NodeJS.Timeout | null>(null);
   const animationDurationMs = Platform.OS === 'ios' ? 2000 : 2500;
   useEffect(() => {
-    if (!__DEV__ && data.isLoss) return;
+    const shouldRunGasketGlow = !data.isLoss || debugHomeGasketNegativeGlow;
 
     if (
       data.rawChange &&
       loadBalanceFromApiStage !== 'loading' &&
       previousLoading === 'loading'
     ) {
+      if (!shouldRunGasketGlow) {
+        setIsAnimRunning(false);
+
+        if (animTimerRef.current) {
+          clearTimeout(animTimerRef.current);
+          animTimerRef.current = null;
+        }
+
+        return;
+      }
+
       setIsAnimRunning(true);
 
       if (animTimerRef.current) {
@@ -343,6 +356,7 @@ export function MultiAddressHomeHeader(
     }
   }, [
     animationDurationMs,
+    debugHomeGasketNegativeGlow,
     data.isLoss,
     data.rawChange,
     loadBalanceFromApiStage,
@@ -427,20 +441,6 @@ export function MultiAddressHomeHeader(
               return { width, height };
             });
           }}>
-          <NativeGasketGlow
-            width={gasketSize.width}
-            height={gasketSize.height}
-            radius={SIZES.cardContentRadius}
-            running={isAnimRunning}
-            durationMs={animationDurationMs}
-            isPositive={!data.isLoss}
-            isLight={isLight}
-            style={[
-              styles.curveBoxChildMH,
-              styles.nativeGasketGlow,
-              isAnimRunning && styles.nativeGasketGlowActive,
-            ]}
-          />
           <RNLinearGradient
             pointerEvents="none"
             colors={
@@ -450,10 +450,17 @@ export function MultiAddressHomeHeader(
             }
             start={isLight ? { x: 0.25, y: 0.5 } : { x: 1.07, y: 0.42 }}
             end={isLight ? { x: 0.75, y: 0.5 } : { x: -0.14, y: 0.59 }}
-            style={[
-              styles.curveCardGradientBg,
-              isAnimRunning && styles.curveCardGradientBgWithAnim,
-            ]}
+            style={styles.curveCardGradientBg}
+          />
+          <NativeGasketGlow
+            width={gasketSize.width}
+            height={gasketSize.height}
+            radius={SIZES.cardContentRadius}
+            running={isAnimRunning}
+            durationMs={animationDurationMs}
+            isPositive={!data.isLoss}
+            isLight={isLight}
+            style={[styles.curveBoxChildMH, styles.nativeGasketGlow]}
           />
           <TouchableOpacity
             style={[
@@ -538,9 +545,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderRadius: SIZES.cardContentRadius,
       overflow: 'hidden',
     },
-    nativeGasketGlowActive: {
-      opacity: 1,
-    },
     curveBoxWrapperLoading: {},
     curveBoxChildMH: {
       minHeight: SIZES.curveBoxMinHeight,
@@ -593,12 +597,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       bottom: 0,
       left: 0,
       right: 0,
+      zIndex: 0,
       borderRadius: SIZES.cardContentRadius,
       borderWidth: 1,
       borderColor: isLight ? 'rgba(255, 255, 255, 1)' : 'rgba(35, 36, 40, 1)',
-    },
-    curveCardGradientBgWithAnim: {
-      borderColor: isLight ? 'rgba(255, 255, 255, .1)' : 'rgba(35, 36, 40, .1)',
     },
     shadowView: {
       ...Platform.select({
