@@ -29,6 +29,7 @@ export type SetPasswordBottomSheetProps = {
   onConfirm(password: string): Promise<void>;
   onClose(): void;
   loading?: boolean;
+  showBiometricIcon?: boolean;
 };
 
 const SetPasswordBottomSheet: React.FC<SetPasswordBottomSheetProps> = ({
@@ -36,6 +37,7 @@ const SetPasswordBottomSheet: React.FC<SetPasswordBottomSheetProps> = ({
   onConfirm,
   onClose,
   loading = false,
+  showBiometricIcon,
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
@@ -202,19 +204,21 @@ const SetPasswordBottomSheet: React.FC<SetPasswordBottomSheetProps> = ({
           titleStyle={{ fontSize: 18 }}
           title={t('global.Confirm')}
           icon={
-            isFaceID ? (
-              <RcIconKeychainFaceIdCC
-                color={colors2024['neutral-InvertHighlight']}
-                width={24}
-                height={24}
-              />
-            ) : (
-              <RcIconKeychainFingerprintCC
-                color={colors2024['neutral-InvertHighlight']}
-                width={24}
-                height={24}
-              />
-            )
+            showBiometricIcon ? (
+              isFaceID ? (
+                <RcIconKeychainFaceIdCC
+                  color={colors2024['neutral-InvertHighlight']}
+                  width={24}
+                  height={24}
+                />
+              ) : (
+                <RcIconKeychainFingerprintCC
+                  color={colors2024['neutral-InvertHighlight']}
+                  width={24}
+                  height={24}
+                />
+              )
+            ) : undefined
           }
           onPress={handleConfirm}
         />

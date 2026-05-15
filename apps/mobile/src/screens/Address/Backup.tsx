@@ -311,6 +311,7 @@ function Backup(): JSX.Element {
       <SetPasswordBottomSheet
         visible={showSetPasswordSheet}
         loading={setPasswordLoading}
+        showBiometricIcon
         onConfirm={handleSetPasswordAndUpload}
         onClose={() => setShowSetPasswordSheet(false)}
       />
