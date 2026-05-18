@@ -1,4 +1,4 @@
-import { BaseStore } from './_base';
+import { BaseStore, BaseStoreOptions } from './_base';
 import {
   buildResourceFlowResourceId,
   removeResourceFlowResourceSnapshot,
@@ -91,11 +91,14 @@ export class ObservableResourceStore<TValue> extends BaseStore<
 > {
   private requestSequence = 0;
 
-  constructor(private readonly family: string) {
-    super({
-      valueMap: {},
-      metaMap: {},
-    });
+  constructor(private readonly family: string, options?: BaseStoreOptions) {
+    super(
+      {
+        valueMap: {},
+        metaMap: {},
+      },
+      options,
+    );
   }
 
   private syncDebugSnapshot(resourceKey: string) {

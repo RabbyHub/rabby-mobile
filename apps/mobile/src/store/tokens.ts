@@ -1,7 +1,7 @@
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { queryTokensCache } from '@/core/apis/tokenCache';
 import { openapi } from '@/core/request';
-import { zCreate } from '@/core/utils/reexports';
+import { mCreate, zCreate } from '@/core/utils/reexports';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { syncRemoteTokens } from '@/databases/sync/assets';
 import { defaultTokenFilter, lpTokenFilter } from '@/utils/lpToken';
@@ -18,6 +18,8 @@ import type {
   TokenDisplayMode,
 } from '@/types/assets';
 import PQueue from 'p-queue';
+import { ResourceBaseStore } from './_resourceBase';
+import type { ObservableResourceValueSource } from './_resourceFlow';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
@@ -182,6 +184,358 @@ export const getPerpsTokenSelectCacheKey = (address: string) =>
 export const getChainSelectorCacheKey = (addresses: string[]) =>
   getAddressesKey(addresses);
 
+export type TokenEntityId = string & {
+  readonly __tokenEntityId: unique symbol;
+};
+
+export type TokenGroupId = string & {
+  readonly __tokenGroupId: unique symbol;
+};
+
+export type TokenAssetsIndexRow =
+  | {
+      type: 'token';
+      tokenId: TokenEntityId;
+    }
+  | {
+      type: 'group';
+      groupId: TokenGroupId;
+    };
+
+export type TokenAssetsIndexResult = {
+  unFoldRows: TokenAssetsIndexRow[];
+  foldRows: TokenAssetsIndexRow[];
+  scamRows: TokenAssetsIndexRow[];
+  unFoldTokenIds: TokenEntityId[];
+  foldTokenIds: TokenEntityId[];
+  scamTokenIds: TokenEntityId[];
+  scamTokenPreviewLogoUrls: string[];
+  foldCoreUsdValue: number;
+  hasFoldTokens: boolean;
+};
+
+export type TokenGroupResourceValue = {
+  groupKey: string;
+  primaryTokenId: TokenEntityId;
+  memberTokenIds: TokenEntityId[];
+  summary: ITokenItem;
+};
+
+const TOKEN_ENTITY_RESOURCE_FAMILY = 'token.entity';
+const TOKEN_GROUP_RESOURCE_FAMILY = 'token.group';
+
+const createEmptyAssetsIndexResult = (): TokenAssetsIndexResult => ({
+  unFoldRows: [],
+  foldRows: [],
+  scamRows: [],
+  unFoldTokenIds: [],
+  foldTokenIds: [],
+  scamTokenIds: [],
+  scamTokenPreviewLogoUrls: [],
+  foldCoreUsdValue: 0,
+  hasFoldTokens: false,
+});
+
+export const buildTokenEntityId = (
+  token: Pick<ITokenItem, 'owner_addr' | 'chain' | 'id'>,
+): TokenEntityId =>
+  [
+    token.owner_addr.toLowerCase(),
+    token.chain.toLowerCase(),
+    token.id.toLowerCase(),
+  ].join(':') as TokenEntityId;
+
+const getTokenListFromTokenMap = (
+  tokenListMap: TokenListState['tokenListMap'],
+) => Object.values(tokenListMap).flat();
+
+class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
+  constructor() {
+    super(TOKEN_ENTITY_RESOURCE_FAMILY, { mutative: true });
+  }
+
+  upsertTokens = (
+    tokens: ITokenItem[],
+    source: ObservableResourceValueSource = 'remote',
+    options?: {
+      pruneMissing?: boolean;
+    },
+  ) => {
+    if (!tokens.length && !options?.pruneMissing) {
+      return;
+    }
+
+    const entries = new Map<TokenEntityId, ITokenItem>();
+    tokens.forEach(token => {
+      entries.set(buildTokenEntityId(token), token);
+    });
+
+    const now = Date.now();
+    const prev = this.getState();
+    const changedTokens: Array<{
+      tokenId: TokenEntityId;
+      token: ITokenItem;
+      meta: (typeof prev.metaMap)[string];
+    }> = [];
+
+    entries.forEach((token, tokenId) => {
+      const prevToken = prev.valueMap[tokenId];
+      const prevMeta = prev.metaMap[tokenId];
+      const isTokenChanged = prevToken !== token;
+
+      if (!prevMeta || isTokenChanged) {
+        changedTokens.push({
+          tokenId,
+          token,
+          meta: {
+            family: TOKEN_ENTITY_RESOURCE_FAMILY,
+            resourceKey: tokenId,
+            hasValue: true,
+            version: Math.max(prevMeta?.version || 0, 0) + 1,
+            sourceOfCurrentValue: source,
+            isHydrating: false,
+            isFetchingRemote: false,
+            persistStatus: prevMeta?.persistStatus || 'idle',
+            localTargets: prevMeta?.localTargets || [],
+            activeRemoteRequestId: undefined,
+            lastHydratedAt:
+              source === 'hydrate' ? now : prevMeta?.lastHydratedAt,
+            lastRemoteAt: source === 'remote' ? now : prevMeta?.lastRemoteAt,
+            lastPersistAt: prevMeta?.lastPersistAt,
+            lastError: prevMeta?.lastError,
+          },
+        });
+      }
+    });
+
+    const removedTokenIds = options?.pruneMissing
+      ? Array.from(
+          new Set([
+            ...Object.keys(prev.valueMap),
+            ...Object.keys(prev.metaMap),
+          ]),
+        ).filter(tokenId => !entries.has(tokenId as TokenEntityId))
+      : [];
+
+    if (!changedTokens.length && !removedTokenIds.length) {
+      return;
+    }
+
+    this.mutateState(draft => {
+      changedTokens.forEach(({ tokenId, token, meta }) => {
+        draft.valueMap[tokenId] = token;
+        draft.metaMap[tokenId] = meta;
+      });
+
+      removedTokenIds.forEach(tokenId => {
+        delete draft.valueMap[tokenId];
+        delete draft.metaMap[tokenId];
+      });
+    });
+  };
+
+  syncFromTokenListMap = (
+    tokenListMap: TokenListState['tokenListMap'],
+    source: ObservableResourceValueSource = 'remote',
+  ) => {
+    this.upsertTokens(getTokenListFromTokenMap(tokenListMap), source, {
+      pruneMissing: true,
+    });
+  };
+}
+
+class TokenGroupResourceStore extends ResourceBaseStore<TokenGroupResourceValue> {
+  constructor() {
+    super(TOKEN_GROUP_RESOURCE_FAMILY, { mutative: true });
+  }
+
+  upsertGroups = (
+    groups: Array<{ groupId: TokenGroupId; value: TokenGroupResourceValue }>,
+    source: ObservableResourceValueSource = 'remote',
+  ) => {
+    if (!groups.length) {
+      return;
+    }
+
+    const now = Date.now();
+    const prev = this.getState();
+    const changedGroups: Array<{
+      groupId: TokenGroupId;
+      value: TokenGroupResourceValue;
+      meta: (typeof prev.metaMap)[string];
+    }> = [];
+
+    groups.forEach(({ groupId, value }) => {
+      const prevValue = prev.valueMap[groupId];
+      const prevMeta = prev.metaMap[groupId];
+      const isValueChanged = prevValue !== value;
+
+      if (!prevMeta || isValueChanged) {
+        changedGroups.push({
+          groupId,
+          value,
+          meta: {
+            family: TOKEN_GROUP_RESOURCE_FAMILY,
+            resourceKey: groupId,
+            hasValue: true,
+            version: Math.max(prevMeta?.version || 0, 0) + 1,
+            sourceOfCurrentValue: source,
+            isHydrating: false,
+            isFetchingRemote: false,
+            persistStatus: prevMeta?.persistStatus || 'idle',
+            localTargets: prevMeta?.localTargets || [],
+            activeRemoteRequestId: undefined,
+            lastHydratedAt:
+              source === 'hydrate' ? now : prevMeta?.lastHydratedAt,
+            lastRemoteAt: source === 'remote' ? now : prevMeta?.lastRemoteAt,
+            lastPersistAt: prevMeta?.lastPersistAt,
+            lastError: prevMeta?.lastError,
+          },
+        });
+      }
+    });
+
+    if (!changedGroups.length) {
+      return;
+    }
+
+    this.mutateState(draft => {
+      changedGroups.forEach(({ groupId, value, meta }) => {
+        draft.valueMap[groupId] = value;
+        draft.metaMap[groupId] = meta;
+      });
+    });
+  };
+}
+
+export const tokenEntityResourceStore = new TokenEntityResourceStore();
+export const tokenGroupResourceStore = new TokenGroupResourceStore();
+
+export const useTokenEntity = (tokenId?: TokenEntityId) =>
+  tokenEntityResourceStore.useValue(tokenId);
+
+export const useTokenGroup = (groupId?: TokenGroupId) =>
+  tokenGroupResourceStore.useValue(groupId);
+
+export const getTokenAssetsIndexRowKey = (row: TokenAssetsIndexRow) => {
+  if (row.type === 'group') {
+    return `group-${row.groupId}`;
+  }
+  return `token-${row.tokenId}`;
+};
+
+const getTokenRuntimeGroupItems = (token: ITokenItem) =>
+  (token as { groupItems?: ITokenItem[] }).groupItems;
+
+const getTokenRuntimeGroupKey = (token: ITokenItem) =>
+  (token as { groupKey?: string }).groupKey;
+
+const stripTokenRuntimeGroupFields = (token: ITokenItem): ITokenItem => {
+  const rest = {
+    ...(token as ITokenItem & {
+      groupItems?: ITokenItem[];
+      groupKey?: string;
+    }),
+  };
+  delete rest.groupItems;
+  delete rest.groupKey;
+
+  return rest;
+};
+
+const buildTokenGroupId = (
+  listKey: string,
+  section: 'unfold' | 'fold' | 'scam',
+  token: ITokenItem,
+): TokenGroupId => {
+  const groupKey = getTokenRuntimeGroupKey(token) || buildTokenEntityId(token);
+  return `${listKey}::${section}::${groupKey}` as TokenGroupId;
+};
+
+const buildTokenAssetsIndexRows = (
+  tokens: ITokenItem[],
+  section: 'unfold' | 'fold' | 'scam',
+  listKey?: string,
+) => {
+  const groups: Array<{
+    groupId: TokenGroupId;
+    value: TokenGroupResourceValue;
+  }> = [];
+  const rows = tokens.map(token => {
+    const groupItems = getTokenRuntimeGroupItems(token);
+
+    if (listKey && groupItems?.length) {
+      const groupId = buildTokenGroupId(listKey, section, token);
+      const memberTokenIds = groupItems.map(buildTokenEntityId);
+      groups.push({
+        groupId,
+        value: {
+          groupKey: getTokenRuntimeGroupKey(token) || groupId,
+          primaryTokenId: buildTokenEntityId(token),
+          memberTokenIds,
+          summary: stripTokenRuntimeGroupFields(token),
+        },
+      });
+      return {
+        type: 'group',
+        groupId,
+      } satisfies TokenAssetsIndexRow;
+    }
+
+    return {
+      type: 'token',
+      tokenId: buildTokenEntityId(token),
+    } satisfies TokenAssetsIndexRow;
+  });
+
+  if (groups.length) {
+    const groupTokens = tokens.flatMap(token => {
+      return getTokenRuntimeGroupItems(token) || [];
+    });
+    tokenEntityResourceStore.upsertTokens(groupTokens);
+    tokenGroupResourceStore.upsertGroups(groups);
+  }
+
+  return rows;
+};
+
+const buildTokenAssetsIndexResult = (
+  result: TokenAssetsResult,
+  listKey?: string,
+): TokenAssetsIndexResult => {
+  const unFoldRows = buildTokenAssetsIndexRows(
+    result.unFoldTokens,
+    'unfold',
+    listKey,
+  );
+  const foldRows = buildTokenAssetsIndexRows(
+    result.foldTokens,
+    'fold',
+    listKey,
+  );
+  const scamRows = buildTokenAssetsIndexRows(
+    result.scamTokens,
+    'scam',
+    listKey,
+  );
+
+  return {
+    unFoldRows,
+    foldRows,
+    scamRows,
+    unFoldTokenIds: result.unFoldTokens.map(buildTokenEntityId),
+    foldTokenIds: result.foldTokens.map(buildTokenEntityId),
+    scamTokenIds: result.scamTokens.map(buildTokenEntityId),
+    scamTokenPreviewLogoUrls: result.scamTokens
+      .slice(0, 3)
+      .map(token => token.logo_url),
+    foldCoreUsdValue: result.foldTokens
+      .filter(token => token.is_core)
+      .reduce((total, token) => total + (token.usd_value || 0), 0),
+    hasFoldTokens: result.hasFoldTokens,
+  };
+};
+
 type AggregatedTokenItem = ITokenItem & {
   groupKey: string;
   groupItems: ITokenItem[];
@@ -297,6 +651,30 @@ const computeMultiAssets = (
   };
 };
 
+const computeMultiAssetsIndex = (
+  tokenListMap: TokenListState['tokenListMap'],
+  addresses: string[],
+  chainServerId?: string,
+  isLpTokenEnabled?: boolean,
+  tokenDisplayMode?: TokenDisplayMode,
+  listKey?: string,
+): TokenAssetsIndexResult => {
+  if (!addresses.length) {
+    return createEmptyAssetsIndexResult();
+  }
+
+  return buildTokenAssetsIndexResult(
+    computeMultiAssets(
+      tokenListMap,
+      addresses,
+      chainServerId,
+      isLpTokenEnabled,
+      tokenDisplayMode,
+    ),
+    listKey,
+  );
+};
+
 const computeSingleAssets = (
   tokenListMap: TokenListState['tokenListMap'],
   address: string,
@@ -358,6 +736,21 @@ const computeSingleAssets = (
         ),
         scamTokens: scamTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
       };
+};
+
+const computeSingleAssetsIndex = (
+  tokenListMap: TokenListState['tokenListMap'],
+  address: string,
+  chainServerId?: string,
+  isLpTokenEnabled?: boolean,
+): TokenAssetsIndexResult => {
+  if (!address) {
+    return createEmptyAssetsIndexResult();
+  }
+
+  return buildTokenAssetsIndexResult(
+    computeSingleAssets(tokenListMap, address, chainServerId, isLpTokenEnabled),
+  );
 };
 
 const computeTokenSelect = (
@@ -699,8 +1092,8 @@ const tokenListStore = zCreate<TokenListState>(set => ({
 }));
 
 type TokenListComputedState = {
-  multiAssetsCache: Record<string, TokenAssetsResult>;
-  singleAssetsCache: Record<string, TokenAssetsResult>;
+  multiAssetsIndexCache: Record<string, TokenAssetsIndexResult>;
+  singleAssetsIndexCache: Record<string, TokenAssetsIndexResult>;
   tokenSelectCache: Record<string, ITokenItem[]>;
   perpsTokenSelectCache: Record<string, ITokenItem[]>;
   chainSelectorCache: Record<string, ITokenItem[]>;
@@ -725,7 +1118,7 @@ type TokenListComputedState = {
   registerChainSelector: (addresses: string[]) => string;
 };
 
-const multiAssetsCacheParams = new Map<
+const multiAssetsIndexCacheParams = new Map<
   string,
   {
     addresses: string[];
@@ -734,7 +1127,7 @@ const multiAssetsCacheParams = new Map<
     tokenDisplayMode?: TokenDisplayMode;
   }
 >();
-const singleAssetsCacheParams = new Map<
+const singleAssetsIndexCacheParams = new Map<
   string,
   {
     address: string;
@@ -753,24 +1146,25 @@ const tokenSelectCacheParams = new Map<
 >();
 const perpsTokenSelectCacheParams = new Map<string, { address: string }>();
 const chainSelectorCacheParams = new Map<string, { addresses: string[] }>();
-const multiAssetsCacheOrder: string[] = [];
-const singleAssetsCacheOrder: string[] = [];
+const multiAssetsIndexCacheOrder: string[] = [];
+const singleAssetsIndexCacheOrder: string[] = [];
 const tokenSelectCacheOrder: string[] = [];
 const perpsTokenSelectCacheOrder: string[] = [];
 const chainSelectorCacheOrder: string[] = [];
 
-const removeKeysFromCache = <T extends Record<string, unknown>>(
-  cache: T,
+const upsertRecordCache = <T>(
+  cache: Record<string, T>,
+  key: string,
+  value: T,
   keys: string[],
 ) => {
-  if (!keys.length) {
-    return cache;
-  }
-  const next = { ...cache };
-  keys.forEach(key => {
-    delete next[key];
+  return mCreate(cache, draft => {
+    const record = draft as Record<string, T>;
+    record[key] = value;
+    keys.forEach(removedKey => {
+      delete record[removedKey];
+    });
   });
-  return next;
 };
 
 const touchCacheParams = <T>(
@@ -804,8 +1198,8 @@ const touchCacheParams = <T>(
 export const EMPTY_TOKEN_LIST = [];
 export const useTokenListComputedStore = zCreate<TokenListComputedState>(
   set => ({
-    multiAssetsCache: {},
-    singleAssetsCache: {},
+    multiAssetsIndexCache: {},
+    singleAssetsIndexCache: {},
     tokenSelectCache: {},
     perpsTokenSelectCache: {},
     chainSelectorCache: {},
@@ -822,8 +1216,8 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
         tokenDisplayMode,
       );
       const removedKeys = touchCacheParams(
-        multiAssetsCacheParams,
-        multiAssetsCacheOrder,
+        multiAssetsIndexCacheParams,
+        multiAssetsIndexCacheOrder,
         key,
         {
           addresses,
@@ -833,18 +1227,19 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
         },
       );
       const tokenListMap = tokenListStore.getState().tokenListMap;
+      tokenEntityResourceStore.syncFromTokenListMap(tokenListMap);
       set(state => ({
-        multiAssetsCache: removeKeysFromCache(
-          {
-            ...state.multiAssetsCache,
-            [key]: computeMultiAssets(
-              tokenListMap,
-              addresses,
-              chainServerId,
-              isLpTokenEnabled,
-              tokenDisplayMode,
-            ),
-          },
+        multiAssetsIndexCache: upsertRecordCache(
+          state.multiAssetsIndexCache,
+          key,
+          computeMultiAssetsIndex(
+            tokenListMap,
+            addresses,
+            chainServerId,
+            isLpTokenEnabled,
+            tokenDisplayMode,
+            key,
+          ),
           removedKeys,
         ),
       }));
@@ -857,8 +1252,8 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
         isLpTokenEnabled,
       );
       const removedKeys = touchCacheParams(
-        singleAssetsCacheParams,
-        singleAssetsCacheOrder,
+        singleAssetsIndexCacheParams,
+        singleAssetsIndexCacheOrder,
         key,
         {
           address,
@@ -867,17 +1262,17 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
         },
       );
       const tokenListMap = tokenListStore.getState().tokenListMap;
+      tokenEntityResourceStore.syncFromTokenListMap(tokenListMap);
       set(state => ({
-        singleAssetsCache: removeKeysFromCache(
-          {
-            ...state.singleAssetsCache,
-            [key]: computeSingleAssets(
-              tokenListMap,
-              address,
-              chainServerId,
-              isLpTokenEnabled,
-            ),
-          },
+        singleAssetsIndexCache: upsertRecordCache(
+          state.singleAssetsIndexCache,
+          key,
+          computeSingleAssetsIndex(
+            tokenListMap,
+            address,
+            chainServerId,
+            isLpTokenEnabled,
+          ),
           removedKeys,
         ),
       }));
@@ -903,17 +1298,16 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
       );
       const tokenListMap = tokenListStore.getState().tokenListMap;
       set(state => ({
-        tokenSelectCache: removeKeysFromCache(
-          {
-            ...state.tokenSelectCache,
-            [key]: computeTokenSelect(
-              tokenListMap,
-              addresses,
-              chainServerId,
-              keyword,
-              isLpTokenEnabled,
-            ),
-          },
+        tokenSelectCache: upsertRecordCache(
+          state.tokenSelectCache,
+          key,
+          computeTokenSelect(
+            tokenListMap,
+            addresses,
+            chainServerId,
+            keyword,
+            isLpTokenEnabled,
+          ),
           removedKeys,
         ),
       }));
@@ -934,11 +1328,10 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
       );
       const tokenListMap = tokenListStore.getState().tokenListMap;
       set(state => ({
-        perpsTokenSelectCache: removeKeysFromCache(
-          {
-            ...state.perpsTokenSelectCache,
-            [key]: computePerpsTokenSelect(tokenListMap, address),
-          },
+        perpsTokenSelectCache: upsertRecordCache(
+          state.perpsTokenSelectCache,
+          key,
+          computePerpsTokenSelect(tokenListMap, address),
           removedKeys,
         ),
       }));
@@ -956,11 +1349,10 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
       );
       const tokenListMap = tokenListStore.getState().tokenListMap;
       set(state => ({
-        chainSelectorCache: removeKeysFromCache(
-          {
-            ...state.chainSelectorCache,
-            [key]: computeChainSelector(tokenListMap, addresses),
-          },
+        chainSelectorCache: upsertRecordCache(
+          state.chainSelectorCache,
+          key,
+          computeChainSelector(tokenListMap, addresses),
           removedKeys,
         ),
       }));
@@ -972,20 +1364,23 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
 const rebuildComputedCaches = (
   tokenListMap: TokenListState['tokenListMap'],
 ) => {
-  const multiAssetsCache: Record<string, TokenAssetsResult> = {};
-  multiAssetsCacheParams.forEach((params, key) => {
-    multiAssetsCache[key] = computeMultiAssets(
+  tokenEntityResourceStore.syncFromTokenListMap(tokenListMap);
+
+  const multiAssetsIndexCache: Record<string, TokenAssetsIndexResult> = {};
+  multiAssetsIndexCacheParams.forEach((params, key) => {
+    multiAssetsIndexCache[key] = computeMultiAssetsIndex(
       tokenListMap,
       params.addresses,
       params.chainServerId,
       params.isLpTokenEnabled,
       params.tokenDisplayMode,
+      key,
     );
   });
 
-  const singleAssetsCache: Record<string, TokenAssetsResult> = {};
-  singleAssetsCacheParams.forEach((params, key) => {
-    singleAssetsCache[key] = computeSingleAssets(
+  const singleAssetsIndexCache: Record<string, TokenAssetsIndexResult> = {};
+  singleAssetsIndexCacheParams.forEach((params, key) => {
+    singleAssetsIndexCache[key] = computeSingleAssetsIndex(
       tokenListMap,
       params.address,
       params.chainServerId,
@@ -1021,8 +1416,8 @@ const rebuildComputedCaches = (
   });
 
   useTokenListComputedStore.setState({
-    multiAssetsCache,
-    singleAssetsCache,
+    multiAssetsIndexCache,
+    singleAssetsIndexCache,
     tokenSelectCache,
     perpsTokenSelectCache,
     chainSelectorCache,
