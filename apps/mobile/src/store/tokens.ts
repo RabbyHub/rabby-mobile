@@ -1,7 +1,7 @@
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { queryTokensCache } from '@/core/apis/tokenCache';
 import { openapi } from '@/core/request';
-import { zCreate } from '@/core/utils/reexports';
+import { mCreate, zCreate } from '@/core/utils/reexports';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { syncRemoteTokens } from '@/databases/sync/assets';
 import { defaultTokenFilter, lpTokenFilter } from '@/utils/lpToken';
@@ -406,14 +406,14 @@ const getTokenRuntimeGroupKey = (token: ITokenItem) =>
   (token as { groupKey?: string }).groupKey;
 
 const stripTokenRuntimeGroupFields = (token: ITokenItem): ITokenItem => {
-  const {
-    groupItems: _groupItems,
-    groupKey: _groupKey,
-    ...rest
-  } = token as ITokenItem & {
-    groupItems?: ITokenItem[];
-    groupKey?: string;
+  const rest = {
+    ...(token as ITokenItem & {
+      groupItems?: ITokenItem[];
+      groupKey?: string;
+    }),
   };
+  delete rest.groupItems;
+  delete rest.groupKey;
 
   return rest;
 };
@@ -1067,9 +1067,7 @@ const tokenListStore = zCreate<TokenListState>(set => ({
 }));
 
 type TokenListComputedState = {
-  multiAssetsCache: Record<string, TokenAssetsResult>;
   multiAssetsIndexCache: Record<string, TokenAssetsIndexResult>;
-  singleAssetsCache: Record<string, TokenAssetsResult>;
   singleAssetsIndexCache: Record<string, TokenAssetsIndexResult>;
   tokenSelectCache: Record<string, ITokenItem[]>;
   perpsTokenSelectCache: Record<string, ITokenItem[]>;
@@ -1095,7 +1093,7 @@ type TokenListComputedState = {
   registerChainSelector: (addresses: string[]) => string;
 };
 
-const multiAssetsCacheParams = new Map<
+const multiAssetsIndexCacheParams = new Map<
   string,
   {
     addresses: string[];
@@ -1104,7 +1102,7 @@ const multiAssetsCacheParams = new Map<
     tokenDisplayMode?: TokenDisplayMode;
   }
 >();
-const singleAssetsCacheParams = new Map<
+const singleAssetsIndexCacheParams = new Map<
   string,
   {
     address: string;
@@ -1123,24 +1121,25 @@ const tokenSelectCacheParams = new Map<
 >();
 const perpsTokenSelectCacheParams = new Map<string, { address: string }>();
 const chainSelectorCacheParams = new Map<string, { addresses: string[] }>();
-const multiAssetsCacheOrder: string[] = [];
-const singleAssetsCacheOrder: string[] = [];
+const multiAssetsIndexCacheOrder: string[] = [];
+const singleAssetsIndexCacheOrder: string[] = [];
 const tokenSelectCacheOrder: string[] = [];
 const perpsTokenSelectCacheOrder: string[] = [];
 const chainSelectorCacheOrder: string[] = [];
 
-const removeKeysFromCache = <T extends Record<string, unknown>>(
-  cache: T,
+const upsertRecordCache = <T>(
+  cache: Record<string, T>,
+  key: string,
+  value: T,
   keys: string[],
 ) => {
-  if (!keys.length) {
-    return cache;
-  }
-  const next = { ...cache };
-  keys.forEach(key => {
-    delete next[key];
+  return mCreate(cache, draft => {
+    const record = draft as Record<string, T>;
+    record[key] = value;
+    keys.forEach(removedKey => {
+      delete record[removedKey];
+    });
   });
-  return next;
 };
 
 const touchCacheParams = <T>(
@@ -1174,9 +1173,7 @@ const touchCacheParams = <T>(
 export const EMPTY_TOKEN_LIST = [];
 export const useTokenListComputedStore = zCreate<TokenListComputedState>(
   set => ({
-    multiAssetsCache: {},
     multiAssetsIndexCache: {},
-    singleAssetsCache: {},
     singleAssetsIndexCache: {},
     tokenSelectCache: {},
     perpsTokenSelectCache: {},
@@ -1194,8 +1191,8 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
         tokenDisplayMode,
       );
       const removedKeys = touchCacheParams(
-        multiAssetsCacheParams,
-        multiAssetsCacheOrder,
+        multiAssetsIndexCacheParams,
+        multiAssetsIndexCacheOrder,
         key,
         {
           addresses,
@@ -1207,31 +1204,17 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
       const tokenListMap = tokenListStore.getState().tokenListMap;
       tokenEntityResourceStore.syncFromTokenListMap(tokenListMap);
       set(state => ({
-        multiAssetsCache: removeKeysFromCache(
-          {
-            ...state.multiAssetsCache,
-            [key]: computeMultiAssets(
-              tokenListMap,
-              addresses,
-              chainServerId,
-              isLpTokenEnabled,
-              tokenDisplayMode,
-            ),
-          },
-          removedKeys,
-        ),
-        multiAssetsIndexCache: removeKeysFromCache(
-          {
-            ...state.multiAssetsIndexCache,
-            [key]: computeMultiAssetsIndex(
-              tokenListMap,
-              addresses,
-              chainServerId,
-              isLpTokenEnabled,
-              tokenDisplayMode,
-              key,
-            ),
-          },
+        multiAssetsIndexCache: upsertRecordCache(
+          state.multiAssetsIndexCache,
+          key,
+          computeMultiAssetsIndex(
+            tokenListMap,
+            addresses,
+            chainServerId,
+            isLpTokenEnabled,
+            tokenDisplayMode,
+            key,
+          ),
           removedKeys,
         ),
       }));
@@ -1244,8 +1227,8 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
         isLpTokenEnabled,
       );
       const removedKeys = touchCacheParams(
-        singleAssetsCacheParams,
-        singleAssetsCacheOrder,
+        singleAssetsIndexCacheParams,
+        singleAssetsIndexCacheOrder,
         key,
         {
           address,
@@ -1256,28 +1239,15 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
       const tokenListMap = tokenListStore.getState().tokenListMap;
       tokenEntityResourceStore.syncFromTokenListMap(tokenListMap);
       set(state => ({
-        singleAssetsCache: removeKeysFromCache(
-          {
-            ...state.singleAssetsCache,
-            [key]: computeSingleAssets(
-              tokenListMap,
-              address,
-              chainServerId,
-              isLpTokenEnabled,
-            ),
-          },
-          removedKeys,
-        ),
-        singleAssetsIndexCache: removeKeysFromCache(
-          {
-            ...state.singleAssetsIndexCache,
-            [key]: computeSingleAssetsIndex(
-              tokenListMap,
-              address,
-              chainServerId,
-              isLpTokenEnabled,
-            ),
-          },
+        singleAssetsIndexCache: upsertRecordCache(
+          state.singleAssetsIndexCache,
+          key,
+          computeSingleAssetsIndex(
+            tokenListMap,
+            address,
+            chainServerId,
+            isLpTokenEnabled,
+          ),
           removedKeys,
         ),
       }));
@@ -1303,17 +1273,16 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
       );
       const tokenListMap = tokenListStore.getState().tokenListMap;
       set(state => ({
-        tokenSelectCache: removeKeysFromCache(
-          {
-            ...state.tokenSelectCache,
-            [key]: computeTokenSelect(
-              tokenListMap,
-              addresses,
-              chainServerId,
-              keyword,
-              isLpTokenEnabled,
-            ),
-          },
+        tokenSelectCache: upsertRecordCache(
+          state.tokenSelectCache,
+          key,
+          computeTokenSelect(
+            tokenListMap,
+            addresses,
+            chainServerId,
+            keyword,
+            isLpTokenEnabled,
+          ),
           removedKeys,
         ),
       }));
@@ -1334,11 +1303,10 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
       );
       const tokenListMap = tokenListStore.getState().tokenListMap;
       set(state => ({
-        perpsTokenSelectCache: removeKeysFromCache(
-          {
-            ...state.perpsTokenSelectCache,
-            [key]: computePerpsTokenSelect(tokenListMap, address),
-          },
+        perpsTokenSelectCache: upsertRecordCache(
+          state.perpsTokenSelectCache,
+          key,
+          computePerpsTokenSelect(tokenListMap, address),
           removedKeys,
         ),
       }));
@@ -1356,11 +1324,10 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
       );
       const tokenListMap = tokenListStore.getState().tokenListMap;
       set(state => ({
-        chainSelectorCache: removeKeysFromCache(
-          {
-            ...state.chainSelectorCache,
-            [key]: computeChainSelector(tokenListMap, addresses),
-          },
+        chainSelectorCache: upsertRecordCache(
+          state.chainSelectorCache,
+          key,
+          computeChainSelector(tokenListMap, addresses),
           removedKeys,
         ),
       }));
@@ -1374,16 +1341,8 @@ const rebuildComputedCaches = (
 ) => {
   tokenEntityResourceStore.syncFromTokenListMap(tokenListMap);
 
-  const multiAssetsCache: Record<string, TokenAssetsResult> = {};
   const multiAssetsIndexCache: Record<string, TokenAssetsIndexResult> = {};
-  multiAssetsCacheParams.forEach((params, key) => {
-    multiAssetsCache[key] = computeMultiAssets(
-      tokenListMap,
-      params.addresses,
-      params.chainServerId,
-      params.isLpTokenEnabled,
-      params.tokenDisplayMode,
-    );
+  multiAssetsIndexCacheParams.forEach((params, key) => {
     multiAssetsIndexCache[key] = computeMultiAssetsIndex(
       tokenListMap,
       params.addresses,
@@ -1394,15 +1353,8 @@ const rebuildComputedCaches = (
     );
   });
 
-  const singleAssetsCache: Record<string, TokenAssetsResult> = {};
   const singleAssetsIndexCache: Record<string, TokenAssetsIndexResult> = {};
-  singleAssetsCacheParams.forEach((params, key) => {
-    singleAssetsCache[key] = computeSingleAssets(
-      tokenListMap,
-      params.address,
-      params.chainServerId,
-      params.isLpTokenEnabled,
-    );
+  singleAssetsIndexCacheParams.forEach((params, key) => {
     singleAssetsIndexCache[key] = computeSingleAssetsIndex(
       tokenListMap,
       params.address,
@@ -1439,9 +1391,7 @@ const rebuildComputedCaches = (
   });
 
   useTokenListComputedStore.setState({
-    multiAssetsCache,
     multiAssetsIndexCache,
-    singleAssetsCache,
     singleAssetsIndexCache,
     tokenSelectCache,
     perpsTokenSelectCache,
