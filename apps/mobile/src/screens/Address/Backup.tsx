@@ -32,6 +32,7 @@ import { preferenceService } from '@/core/services';
 import { storeApisBiometrics, useBiometricsComputed } from '@/hooks/biometrics';
 import SetPasswordBottomSheet from '@/screens/ManagePassword/components/SetPasswordBottomSheet';
 import { useCloudBackup } from '@/components/SeedPhraseBackupToCloud2024/useCloudBackup';
+import { toast } from '@/components2024/Toast';
 
 type BackupScreenRouteProp = RouteProp<
   RootStackParamsList,
@@ -105,14 +106,14 @@ function Backup(): JSX.Element {
           validatedPassword: newPassword,
         });
         await handleUpload(newPassword, seedPhraseData);
+        setShowSetPasswordSheet(false);
       } catch {
-        // Stay on sheet on failure
+        toast.show(t('page.addressDetail.backupFailed'));
       } finally {
         setSetPasswordLoading(false);
-        setShowSetPasswordSheet(false);
       }
     },
-    [address, handleUpload],
+    [address, handleUpload, t],
   );
 
   // Get auth modal labels based on actual/current auth type

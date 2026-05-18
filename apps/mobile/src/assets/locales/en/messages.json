@@ -1635,6 +1635,7 @@
       "remove-from-whitelist": "Remove from Whitelist",
       "backup-private-key": "Backup Private Key",
       "backup-seed-phrase": "Backup Seed Phrase",
+      "backupFailed": "Backup failed, please try again",
       "verify-password": "Verify password",
       "verify-password-before-backup": "Verify your Rabby password before the backup",
       "verify-face-id": "Verify Face ID",
