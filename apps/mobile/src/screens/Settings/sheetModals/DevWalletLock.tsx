@@ -21,6 +21,16 @@ import { requestLockWalletAndBackToUnlockScreen } from '@/hooks/navigation';
 import { LastUnlockTimeLabel } from '../components/LockAbout';
 import { APP_FEATURE_SWITCH } from '@/constant';
 import { keyringService } from '@/core/services/shared';
+import {
+  setGenericPassword,
+  resetGenericPassword,
+  requestGenericPassword,
+  RequestGenericPurpose,
+  KEYCHAIN_AUTH_TYPES,
+  getAuthenticationType,
+  getAuthenticationTypeLabel,
+} from '@/core/apis/keychain';
+import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { Text } from '@/components/Typography';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
@@ -127,6 +137,98 @@ export default function WalletLockTestItemModal({
           const keyringData =
             await keyringService.DEV_GET_UNENCRYPTED_KEYRING_DATA();
           Alert.alert('Unencrypted Keyring Data', JSON.stringify(keyringData));
+        },
+      },
+      {
+        label: 'Keychain Auth Playground',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          const currentType = getAuthenticationType();
+          const currentLabel = getAuthenticationTypeLabel();
+          const options: Array<{
+            label: string;
+            type: KEYCHAIN_AUTH_TYPES;
+            requiresPassword?: boolean;
+          }> = [
+            {
+              label: 'Biometrics (BIOMETRY_CURRENT_SET)',
+              type: KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+              requiresPassword: true,
+            },
+            {
+              label: 'Biometrics+Passcode (BIOMETRY_ANY_OR_DEVICE_PASSCODE)',
+              type: KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
+              requiresPassword: true,
+            },
+            {
+              label: 'Passcode only (DEVICE_PASSCODE)',
+              type: KEYCHAIN_AUTH_TYPES.PASSCODE,
+              requiresPassword: true,
+            },
+            {
+              label: 'Remember Me (no access control)',
+              type: KEYCHAIN_AUTH_TYPES.REMEMBER_ME,
+              requiresPassword: true,
+            },
+            {
+              label: 'Reset keychain entry',
+              type: KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD,
+            },
+          ];
+
+          Alert.alert(
+            'Keychain Auth Playground',
+            `Current: ${currentLabel} (${currentType})\n\nSelect an auth type to test:`,
+            [
+              ...options.map(opt => ({
+                text: opt.label,
+                onPress: async () => {
+                  if (!opt.requiresPassword) {
+                    await resetGenericPassword();
+                    Alert.alert('Reset', 'Keychain entry cleared');
+                    return;
+                  }
+                  AuthenticationModal.show({
+                    confirmText: 'Store',
+                    title: `Store password as ${opt.label}`,
+                    authType: ['password'],
+                    async onFinished({ getValidatedPassword }) {
+                      const password = getValidatedPassword();
+                      try {
+                        await setGenericPassword(password, opt.type);
+                        Alert.alert(
+                          'Success',
+                          `${opt.label} — stored successfully`,
+                        );
+                      } catch (e: any) {
+                        Alert.alert('Error', e?.message || String(e));
+                      }
+                    },
+                  });
+                },
+              })),
+              { text: 'Cancel', style: 'cancel' },
+            ],
+          );
+        },
+      },
+      {
+        label: 'Get Stored Password',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: async () => {
+          try {
+            const result = await requestGenericPassword({
+              purpose: RequestGenericPurpose.DECRYPT_PWD,
+              onPlainPassword: (password: string) => {
+                Alert.alert('Retrieved Password', password);
+              },
+            });
+            if (!result || !result.actionSuccess) {
+              Alert.alert('Error', 'Failed to retrieve password from keychain');
+            }
+          } catch (e: any) {
+            Alert.alert('Error', e?.message || String(e));
+          }
         },
       },
     ];

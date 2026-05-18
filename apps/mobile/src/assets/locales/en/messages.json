@@ -1769,7 +1769,7 @@
       "ConfirmPassword": "Confirm password",
       "biometricsFail": "Enable biometrics fail",
       "title": "Set Password",
-      "subTitle": "It will be used to unlock your wallet and encrypt local data",
+      "subTitle": "This password unlocks your wallet and encrypts your data on this device. It cannot be recovered. If lost, you will need to reset and re-import your wallet.",
       "passwordRequired": "Please input Password",
       "passwordMin": "Password must be at least 8 characters long",
       "passwordPlaceholder": "Password must be at least 8 characters long",
@@ -1779,7 +1779,8 @@
       "confirmError": "Passwords do not match",
       "agree": "I have read and agree to the<1/> <2>Terms of Use</2>",
       "confirmTitle": "Confirm password",
-      "confirmModalDesc": "Please store your password properly. Once lost, it cannot be changed or recovered by Rabby."
+      "confirmModalDesc": "Please store your password properly. Once lost, it cannot be changed or recovered by Rabby.",
+      "setWallet": "Set Wallet"
     },
     "importSafe": {
       "title": "Add Safe address",
@@ -3403,7 +3404,7 @@
       }
     },
     "AuthenticationModal": {
-      "passwordPlaceholder": "Enter password"
+      "passwordPlaceholder": "Enter password to Confirm"
     },
     "Contact": {
       "EditModal": {
@@ -3483,8 +3484,8 @@
     },
     "AuthenticationModals": {
       "biometrics": {
-        "enable": "Enable {{ bioType }}",
-        "disable": "Disable {{ bioType }}",
+        "enable": "Enter the Password\nto Enable {{ bioType }}",
+        "disable": "Confirm to disable {{ bioType }}?",
         "enableTip": "Enable {{ bioType }} to unlock Rabby",
         "disableTip": "Disable {{ bioType }} to unlock Rabby"
       },
