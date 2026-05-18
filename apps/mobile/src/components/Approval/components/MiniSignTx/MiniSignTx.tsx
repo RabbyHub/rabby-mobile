@@ -1147,22 +1147,26 @@ export const MiniSignTx = ({
         },
       >(
         items: T[],
+        nextTxs: Tx[],
       ) => {
-        const nextTxs = buildTopUpResumedTxs({
-          txs: items.map(item => item.tx),
-          originalAccountAddress: currentAccount.address,
-          originalChainServerId: chain.serverId,
-          topUpResult: result,
-        });
-
         return items.map((item, index) => ({
           ...item,
-          tx: nextTxs[index] || item.tx,
+          tx: {
+            ...item.tx,
+            nonce: nextTxs[index]?.nonce ?? item.tx.nonce,
+          },
         }));
       };
 
-      setTxsResult(prev => patchCalcItems(prev));
-      setInitdTxs(prev => patchCalcItems(prev));
+      const resumedTxs = await buildTopUpResumedTxs({
+        txs: (txsResult.length ? txsResult : initdTxs).map(item => item.tx),
+        originalAccount: currentAccount,
+        originalChainServerId: chain.serverId,
+        topUpResult: result,
+      });
+
+      setTxsResult(prev => patchCalcItems(prev, resumedTxs));
+      setInitdTxs(prev => patchCalcItems(prev, resumedTxs));
       await gasAccountCostFn();
 
       handleManualChangeGasMethod('gasAccount');

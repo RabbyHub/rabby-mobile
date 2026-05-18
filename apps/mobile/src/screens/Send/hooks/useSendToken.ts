@@ -2129,7 +2129,7 @@ export function useSendTokenForm({
     currentAccount?.type,
     chainItem?.isTestnet,
     toAddress,
-    currentAccount,
+    currentAccount?.address,
   ]);
 
   useEffect(() => {
@@ -2154,6 +2154,7 @@ export function useSendTokenForm({
     stableAmountValue,
     formValues.messageDataForSendToEoa,
     formValues.messageDataForContractCall,
+    currentAccount?.address,
     currentAccount?.type,
     prepareDirectSubmitMiniTx,
   ]);

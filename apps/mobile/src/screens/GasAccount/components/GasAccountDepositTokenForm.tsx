@@ -316,13 +316,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
           checkGasFeeTooHigh: true,
         });
       } catch (error) {
-        if (
-          error === MINI_SIGN_ERROR.CANT_PROCESS ||
-          error === MINI_SIGN_ERROR.GAS_FEE_TOO_HIGH
-        ) {
-          closeMiniSign();
-          return await openUI(config);
-        }
         throw error;
       }
     },
@@ -503,22 +496,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
     [],
   );
 
-  const fetchTopUpUsedNonce = useCallback(
-    async (txHash: string, chainServerId: string, account: DepositAccount) => {
-      const tx = await apiProvider.requestETHRpc<{ nonce?: string }>(
-        {
-          method: 'eth_getTransactionByHash',
-          params: [txHash],
-        },
-        chainServerId,
-        account,
-      );
-
-      return tx?.nonce;
-    },
-    [],
-  );
-
   const handleSubmit = useCallback(async () => {
     if (!selectedToken || !selectedOwnerAccount || !amountValidation.isValid) {
       return;
@@ -555,17 +532,24 @@ const GasAccountDepositTokenFormInner: React.FC<{
           const tx = await buildTopUpGasAccount(params);
 
           if (tx) {
-            const res = await openDirectOrFallbackToUI({
-              txs: [tx],
-              autoUseGasFree: true,
-              purpose: 'gasAccountTopUp',
-            });
-            const hash = res?.[0];
-            await afterTopUpGasAccount({
-              ...params,
-              tx: hash,
-            });
-            depositTxHash = hash || '';
+            try {
+              const res = await openDirectOrFallbackToUI({
+                txs: [tx],
+                autoUseGasFree: true,
+                purpose: 'gasAccountTopUp',
+              });
+              const hash = res?.[0];
+              await afterTopUpGasAccount({
+                ...params,
+                tx: hash,
+              });
+              depositTxHash = hash || '';
+            } catch (error) {
+              if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
+                throw error;
+              }
+              depositTxHash = (await topUpGasAccount(params)) || '';
+            }
           }
         } else {
           depositTxHash = (await topUpGasAccount(params)) || '';
@@ -584,12 +568,22 @@ const GasAccountDepositTokenFormInner: React.FC<{
 
         let lastHash = '';
         if (isAccountSupportMiniApproval(selectedOwnerAccount.type)) {
-          const hashes = await openDirectOrFallbackToUI({
-            txs: bridgeTxs,
-            autoUseGasFree: true,
-            purpose: 'gasAccountTopUp',
-          });
-          lastHash = hashes?.[hashes.length - 1] || '';
+          try {
+            const hashes = await openDirectOrFallbackToUI({
+              txs: bridgeTxs,
+              autoUseGasFree: true,
+              purpose: 'gasAccountTopUp',
+            });
+            lastHash = hashes?.[hashes.length - 1] || '';
+          } catch (error) {
+            if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
+              throw error;
+            }
+            lastHash = await sendBridgeTxsDirectly(
+              bridgeTxs,
+              selectedOwnerAccount,
+            );
+          }
         } else {
           lastHash = await sendBridgeTxsDirectly(
             bridgeTxs,
@@ -626,16 +620,11 @@ const GasAccountDepositTokenFormInner: React.FC<{
         if (success !== 'cancel') {
           if (success) {
             storeApiGasAccount.markSnapshotDirty('deposit_confirmed');
-            const usedNonce = await fetchTopUpUsedNonce(
-              depositTxHash,
-              selectedToken.chain,
-              selectedOwnerAccount,
-            );
+
             await onWaitDepositResult({
               type: 'token',
               ownerAddress: selectedOwnerAccount.address,
               chainServerId: selectedToken.chain,
-              usedNonce,
             });
             await onDeposit?.();
           } else {
@@ -689,7 +678,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
     bridgeFromTokenAmount,
     bridgeQuote,
     ensureGasAccountLogin,
-    fetchTopUpUsedNonce,
     onClose,
     onDeposit,
     onWaitDepositResult,
