@@ -16,3 +16,37 @@ index 7d8f8e64fc0f53a730da8d3ffa4a7c1f85a53f28..aa26f6200e896d6c8b4453f4a7bab693
                  # Check if it contains the RCTNewArchEnabled key
                  if info_plist["RCTNewArchEnabled"] and info_plist["RCTNewArchEnabled"] == new_arch_enabled
                      next
+diff --git a/sdks/hermes-engine/hermes-utils.rb b/sdks/hermes-engine/hermes-utils.rb
+index d3e478d6e9d9b7b03e40ce7988af5d8dcd391b93..9de86f2a2dca2e5bf95576a464d6607dd67c459e 100644
+--- a/sdks/hermes-engine/hermes-utils.rb
++++ b/sdks/hermes-engine/hermes-utils.rb
+@@ -65,6 +65,11 @@ def hermes_source_type(version, react_native_path)
+         return HermesEngineSourceType::DOWNLOAD_PREBUILD_RELEASE_TARBALL
+     end
+-
++
++    if stable_release_version?(version)
++        hermes_log("Release artifact probe failed; using stable release tarball URL for #{version}.")
++        return HermesEngineSourceType::DOWNLOAD_PREBUILD_RELEASE_TARBALL
++    end
++
+     if nightly_artifact_exists(version)
+         return HermesEngineSourceType::DOWNLOAD_PREBUILT_NIGHTLY_TARBALL
+     end
+@@ -98,7 +103,13 @@ def release_artifact_exists(version)
+ end
+-
++
+ def nightly_artifact_exists(version)
+-    return hermes_artifact_exists(nightly_tarball_url(version).gsub("\\", ""))
++    tarball_url = nightly_tarball_url(version).gsub("\\", "")
++    return false if tarball_url == ""
++    return hermes_artifact_exists(tarball_url)
++end
++
++def stable_release_version?(version)
++    return version.match?(/^\d+\.\d+\.\d+$/)
+ end
+-
++
+ def podspec_source(source_type, version, react_native_path)
