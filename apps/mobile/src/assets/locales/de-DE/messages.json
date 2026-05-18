@@ -581,7 +581,7 @@
           "cancelSingleNFTApproval": "Einzelne NFT-Zulassung für {{protocol}} widerrufen",
           "cancelNFTCollectionApproval": "Widerrufen Sie die Genehmigung der NFT-Sammlung für {{protocol}}.",
           "unknown": "Unbekannte Transaktion",
-          "nftCollectionApproval": "{{protocol}} 的 NFT Collection 批准",
+          "nftCollectionApproval": "NFT-Collection-Genehmigung für {{protocol}}",
           "singleNFTApproval": "Einzelne NFT-Zulassung für {{protocol}}",
           "approve": "Genehmigen Sie {{count}} {{token}} für {{protocol}}"
         },
