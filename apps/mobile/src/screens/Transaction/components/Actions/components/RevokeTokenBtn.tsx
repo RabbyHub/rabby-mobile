@@ -142,11 +142,13 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
           <Button
             loading={loading}
             disabled={!allowance}
-            buttonStyle={[styles.ghostButton]}
-            titleStyle={[
-              styles.ghostTitle,
-              !allowance && styles.ghostDisableButton,
-            ]}
+            // buttonStyle={[styles.ghostButton]}
+            // titleStyle={
+            //   [
+            //     styles.ghostTitle,
+            //     !allowance && styles.ghostDisableButton,
+            //   ]
+            // }
             onPress={handleRevoke}
             type={'primary'}
             title={t('page.transactions.detail.Revoke')}

@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useCallback, useMemo } from 'react';
+import React, { ReactNode, useCallback, useMemo } from 'react';
 import BigNumber from 'bignumber.js';
 import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
 import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
@@ -42,6 +42,7 @@ interface ItemProps {
   sends: HistoryDisplayItem['sends'];
   isForMultipleAddress?: boolean;
   account: Account;
+  extra?: ReactNode;
 }
 
 const TokenItemInlist = ({
@@ -136,6 +137,7 @@ export const HistoryTokenList = ({
   approve,
   isForMultipleAddress,
   account: currentAccount,
+  extra,
 }: ItemProps) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -204,55 +206,62 @@ export const HistoryTokenList = ({
 
       return (
         <TouchableOpacity onPress={() => handlePress(singeToken!, tokenIsNft)}>
-          <View style={[styles.singleBox]}>
-            <View
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <HistoryItemIcon
-                isInDetail={true}
-                type={type}
-                token={singeToken as TokenItem}
-                isNft={tokenIsNft}
-              />
+          <View style={styles.card}>
+            <View style={[styles.singleBox]}>
               <View
-                style={[styles.singleColomnBox, isFail && styles.isFailBox]}>
-                <Text
-                  numberOfLines={1}
-                  style={[
-                    styles.tokenAmountText,
-                    (isSend || isGasDeposit) && styles.isSendTextColor,
-                    isApprove && styles.tokenApproveAmountText,
-                  ]}>
-                  {!isApprove && (isSend || isGasDeposit ? '- ' : '+ ')}
-                  {tokenIsNft ? singleAmount : appvoveAmmountStr}{' '}
-                  {tokenIsNft
-                    ? t('page.singleHome.sectionHeader.Nft')
-                    : ellipsisOverflowedText(
-                        getTokenSymbol(singeToken as TokenItem),
-                        16,
-                      )}
-                </Text>
-                {Boolean(!tokenIsNft && singleAmount && !isUnlimited) && (
-                  <HistoryItemTokenPrice
-                    tokenId={tokenId}
-                    chainId={chain}
-                    singlePrice={
-                      singlePrice ?? (singeToken as TokenItem)?.price
-                    }
-                    address={currentAccount?.address!}
-                    amount={singleAmount!}
-                    style={styles.tokenPriceText}
-                  />
-                )}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <HistoryItemIcon
+                  isInDetail={true}
+                  type={type}
+                  token={singeToken as TokenItem}
+                  isNft={tokenIsNft}
+                />
+                <View
+                  style={[styles.singleColomnBox, isFail && styles.isFailBox]}>
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.tokenAmountText,
+                      (isSend || isGasDeposit) && styles.isSendTextColor,
+                      isApprove && styles.tokenApproveAmountText,
+                    ]}>
+                    {!isApprove && (isSend || isGasDeposit ? '- ' : '+ ')}
+                    {tokenIsNft ? singleAmount : appvoveAmmountStr}{' '}
+                    {tokenIsNft
+                      ? t('page.singleHome.sectionHeader.Nft')
+                      : ellipsisOverflowedText(
+                          getTokenSymbol(singeToken as TokenItem),
+                          16,
+                        )}
+                  </Text>
+                  {Boolean(!tokenIsNft && singleAmount && !isUnlimited) && (
+                    <HistoryItemTokenPrice
+                      tokenId={tokenId}
+                      chainId={chain}
+                      singlePrice={
+                        singlePrice ?? (singeToken as TokenItem)?.price
+                      }
+                      address={currentAccount?.address!}
+                      amount={singleAmount!}
+                      style={styles.tokenPriceText}
+                    />
+                  )}
+                </View>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  width: 32,
+                }}>
+                <RcIconSingleArrow
+                  width={26}
+                  height={26}
+                  color={colors2024['neutral-bg-2']}
+                />
               </View>
             </View>
-            <View
-              style={{ flexDirection: 'row', alignItems: 'center', width: 32 }}>
-              <RcIconSingleArrow
-                width={26}
-                height={26}
-                color={colors2024['neutral-bg-2']}
-              />
-            </View>
+            {extra}
           </View>
         </TouchableOpacity>
       );
@@ -438,6 +447,11 @@ export const HistoryTokenList = ({
       return (
         hasList && (
           <View style={[styles.mutliBox]}>
+            <View style={styles.detailContainerHeader}>
+              <Text style={styles.detailContainerTitle}>
+                {t('page.transactions.detail.interactionResults')}
+              </Text>
+            </View>
             {sends?.map(({ token_id, amount, price, token: iToken }) => (
               <TokenItemInlist
                 key={token_id}
@@ -583,18 +597,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     height: 110,
   },
-  singleBox: {
+  card: {
     width: '100%',
-    // height: 92,
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
+    borderRadius: 16,
+  },
+  singleBox: {
     justifyContent: 'space-between',
     alignContent: 'center',
-    borderRadius: 16,
-    padding: 16,
     flexDirection: 'row',
+    padding: 16,
   },
+
   swapBoxContainer: {
     display: 'flex',
     flexDirection: 'column',
@@ -614,10 +630,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
     alignContent: 'center',
     borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     // flexDirection: 'row',
-    gap: 12,
+    gap: 16,
+  },
+  detailContainerHeader: {
+    paddingBottom: 8,
+  },
+  detailContainerTitle: {
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
   },
   iconTR: {
     position: 'absolute',

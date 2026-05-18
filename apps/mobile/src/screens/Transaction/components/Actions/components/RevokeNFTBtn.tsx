@@ -133,11 +133,11 @@ export const RevokeNFTBtn = ({ nft, spender, account }: Props) => {
           <Button
             // loading={btnLoading}
             disabled={!isApproved}
-            buttonStyle={[styles.ghostButton]}
-            titleStyle={[
-              styles.ghostTitle,
-              !isApproved && styles.ghostDisableButton,
-            ]}
+            // buttonStyle={[styles.ghostButton]}
+            // titleStyle={[
+            //   styles.ghostTitle,
+            //   !isApproved && styles.ghostDisableButton,
+            // ]}
             onPress={handleRevoke}
             type={'primary'}
             title={`${t('page.transactions.detail.Revoke')}`}

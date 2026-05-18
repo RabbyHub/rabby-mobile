@@ -124,6 +124,11 @@ export const RevokeToken: React.FC<Props> = ({
         </View>
       </TouchableOpacity>
       <View style={styles.detailContainer}>
+        <View style={styles.detailContainerHeader}>
+          <Text style={styles.detailContainerTitle}>
+            {t('page.transactions.detail.TransactionDetails')}
+          </Text>
+        </View>
         {!data.isPending && data.maxGasTx.completedAt && (
           <View style={styles.detailItem}>
             <Text style={styles.itemTitleText}>
@@ -256,12 +261,24 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailContainer: {
     // flex: 1,
     width: '100%',
-    marginTop: 20,
+    marginTop: 12,
     borderRadius: 16,
-    paddingVertical: 4,
+    paddingTop: 12,
+    paddingBottom: 4,
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
+  },
+  detailContainerHeader: {
+    marginBottom: 8,
+    paddingHorizontal: 16,
+  },
+  detailContainerTitle: {
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
   },
   ghostButton: {
     backgroundColor: colors2024['neutral-bg-2'],
@@ -328,16 +345,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     height: 110,
   },
-  singleBox: {
+  card: {
     width: '100%',
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
+    borderRadius: 16,
+  },
+  singleBox: {
     justifyContent: 'space-between',
     alignContent: 'center',
-    borderRadius: 16,
-    padding: 16,
     flexDirection: 'row',
+    padding: 16,
   },
   tokenAmountText: {
     color: colors2024['green-default'],
@@ -387,6 +406,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  extraItem: {
+    flexDirection: 'row',
+    padding: 12,
+    backgroundColor: colors2024['neutral-bg-2'],
+    borderRadius: 12,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginHorizontal: 12,
+    marginBottom: 12,
   },
   detailItem: {
     flexDirection: 'row',

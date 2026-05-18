@@ -161,51 +161,68 @@ export const Send: React.FC<Props> = ({
           },
         ]}>
         <TouchableOpacity onPress={handleGotoTokenDetail}>
-          <View style={[styles.singleBox]}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 8,
-                width: '100%',
-                flexShrink: 1,
-              }}>
-              <HistoryItemIcon
-                isInDetail={true}
-                type={HistoryItemCateType.Send}
-                token={actionData.token}
-                isNft={false}
-              />
-              <View style={[styles.colomnBox]}>
-                <View style={styles.tokenSymbolBox}>
-                  <Text
-                    style={[styles.tokenAmountText, styles.isSendTextColor]}
-                    numberOfLines={1}
-                    ellipsizeMode="tail">
-                    - {sendAmount}{' '}
-                    {/* {getTokenSymbol(actionData.token as TokenItem).repeat(__DEV__ ? 1000 : 1)} */}
-                    {getTokenSymbol(actionData.token as TokenItem).repeat(1)}
-                  </Text>
+          <View style={styles.card}>
+            <View style={[styles.singleBox]}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                  width: '100%',
+                  flexShrink: 1,
+                }}>
+                <HistoryItemIcon
+                  isInDetail={true}
+                  type={HistoryItemCateType.Send}
+                  token={actionData.token}
+                  isNft={false}
+                />
+                <View style={[styles.colomnBox]}>
+                  <View style={styles.tokenSymbolBox}>
+                    <Text
+                      style={[styles.tokenAmountText, styles.isSendTextColor]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail">
+                      - {sendAmount}{' '}
+                      {/* {getTokenSymbol(actionData.token as TokenItem).repeat(__DEV__ ? 1000 : 1)} */}
+                      {getTokenSymbol(actionData.token as TokenItem).repeat(1)}
+                    </Text>
+                  </View>
+                  <Text style={styles.usdValue}>≈{sendUsdValue}</Text>
                 </View>
-                <Text style={styles.usdValue}>≈{sendUsdValue}</Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  flexShrink: 0,
+                  width: 26,
+                }}>
+                <RcIconSingleArrow
+                  width={26}
+                  height={26}
+                  color={colors2024['neutral-bg-2']}
+                />
               </View>
             </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                flexShrink: 0,
-                width: 26,
-              }}>
-              <RcIconSingleArrow
-                width={26}
-                height={26}
-                color={colors2024['neutral-bg-2']}
+            <View style={styles.extraItem}>
+              <Text style={styles.itemTitleText}>
+                {t('page.transactions.detail.To')}
+              </Text>
+              <AddressItemInDetail
+                address={actionData.to}
+                accounts={unionAccounts}
+                // disableNavigate={isUnderModalContext}
               />
             </View>
           </View>
         </TouchableOpacity>
         <View style={styles.detailContainer}>
+          <View style={styles.detailContainerHeader}>
+            <Text style={styles.detailContainerTitle}>
+              {t('page.transactions.detail.TransactionDetails')}
+            </Text>
+          </View>
           {!data.isPending && data.maxGasTx.completedAt && (
             <View style={styles.detailItem}>
               <Text style={styles.itemTitleText}>
@@ -386,10 +403,22 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     marginTop: 12,
     borderRadius: 16,
-    paddingVertical: 4,
+    paddingTop: 12,
+    paddingBottom: 4,
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
+  },
+  detailContainerHeader: {
+    marginBottom: 8,
+    paddingHorizontal: 16,
+  },
+  detailContainerTitle: {
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
   },
   inModalBsContainer: {
     // flexShrink: 1,
@@ -481,17 +510,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     height: 110,
   },
-  singleBox: {
+  card: {
     width: '100%',
-    // height: 92,
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
+    borderRadius: 16,
+  },
+  singleBox: {
     justifyContent: 'space-between',
     alignContent: 'center',
-    borderRadius: 16,
-    padding: 16,
     flexDirection: 'row',
+    padding: 16,
   },
   tokenAmountText: {
     color: colors2024['green-default'],
@@ -555,6 +585,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  extraItem: {
+    flexDirection: 'row',
+    padding: 12,
+    backgroundColor: colors2024['neutral-bg-2'],
+    borderRadius: 12,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginHorizontal: 12,
+    marginBottom: 12,
   },
   detailItem: {
     flexDirection: 'row',

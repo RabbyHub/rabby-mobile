@@ -148,44 +148,89 @@ export const ApproveToken: React.FC<Props> = ({
   return (
     <>
       <TouchableOpacity onPress={handleGotoTokenDetail}>
-        <View style={[styles.singleBox]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <HistoryItemIcon
-              isInDetail={true}
-              type={HistoryItemCateType.Approve}
-              token={actionData.token}
-              isNft={false}
-            />
-            <View style={[styles.colomnBox]}>
-              {isUnlimited ? (
-                <>
-                  <Text
-                    style={[styles.tokenAmountText, styles.isSendTextColor]}>
-                    {approveAmount} {getTokenSymbol(actionData.token)}
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Text
-                    style={[styles.tokenAmountText, styles.isSendTextColor]}>
-                    {approveAmount}{' '}
-                    {getTokenSymbol(actionData.token as TokenItem)}
-                  </Text>
-                  <Text style={styles.usdValue}>≈{approveUsdValue}</Text>
-                </>
-              )}
+        <View style={styles.card}>
+          <View style={[styles.singleBox]}>
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <HistoryItemIcon
+                isInDetail={true}
+                type={HistoryItemCateType.Approve}
+                token={actionData.token}
+                isNft={false}
+              />
+              <View style={[styles.colomnBox]}>
+                {isUnlimited ? (
+                  <>
+                    <Text
+                      style={[styles.tokenAmountText, styles.isSendTextColor]}>
+                      {approveAmount} {getTokenSymbol(actionData.token)}
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Text
+                      style={[styles.tokenAmountText, styles.isSendTextColor]}>
+                      {approveAmount}{' '}
+                      {getTokenSymbol(actionData.token as TokenItem)}
+                    </Text>
+                    <Text style={styles.usdValue}>≈{approveUsdValue}</Text>
+                  </>
+                )}
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <RcIconSingleArrow
+                width={26}
+                height={26}
+                color={colors2024['neutral-bg-2']}
+              />
             </View>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <RcIconSingleArrow
-              width={26}
-              height={26}
-              color={colors2024['neutral-bg-2']}
-            />
+          <View style={styles.extraItem}>
+            <Text style={styles.itemTitleText}>
+              {t('page.transactions.detail.ApproveTo')}
+            </Text>
+            <ViewMore
+              type="spender"
+              data={{
+                ...requireData,
+                spender: actionData.spender,
+                chain,
+              }}>
+              <View style={{ alignItems: 'flex-end' }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}>
+                  <AssetAvatar
+                    logo={requireData?.protocol?.logo_url}
+                    size={16}
+                  />
+                  <Text style={[styles.itemContentText]}>
+                    {requireData?.protocol?.name || t('global.Unknown')}
+                  </Text>
+                  <RcIconRightCC
+                    width={14}
+                    height={14}
+                    color={colors2024['neutral-foot']}
+                  />
+                </View>
+                <Text style={styles.itemAddressText}>
+                  {ellipsisAddress(actionData.spender)}
+                </Text>
+              </View>
+            </ViewMore>
           </View>
         </View>
       </TouchableOpacity>
       <View style={styles.detailContainer}>
+        <View style={styles.detailContainerHeader}>
+          <Text style={styles.detailContainerTitle}>
+            {t('page.transactions.detail.TransactionDetails')}
+          </Text>
+        </View>
         {!data.isPending && data.maxGasTx.completedAt && (
           <View style={styles.detailItem}>
             <Text style={styles.itemTitleText}>
@@ -331,12 +376,24 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailContainer: {
     // flex: 1,
     width: '100%',
-    marginTop: 20,
+    marginTop: 12,
     borderRadius: 16,
-    paddingVertical: 4,
+    paddingTop: 12,
+    paddingBottom: 4,
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
+  },
+  detailContainerHeader: {
+    marginBottom: 8,
+    paddingHorizontal: 16,
+  },
+  detailContainerTitle: {
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
   },
   ghostButton: {
     backgroundColor: colors2024['neutral-bg-2'],
@@ -403,16 +460,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     height: 110,
   },
-  singleBox: {
+  card: {
     width: '100%',
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
+    borderRadius: 16,
+  },
+  singleBox: {
     justifyContent: 'space-between',
     alignContent: 'center',
-    borderRadius: 16,
-    padding: 16,
     flexDirection: 'row',
+    padding: 16,
   },
   tokenAmountText: {
     color: colors2024['green-default'],
@@ -462,6 +521,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  extraItem: {
+    flexDirection: 'row',
+    padding: 12,
+    backgroundColor: colors2024['neutral-bg-2'],
+    borderRadius: 12,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginHorizontal: 12,
+    marginBottom: 12,
   },
   detailItem: {
     flexDirection: 'row',
