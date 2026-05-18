@@ -55,7 +55,7 @@ export function useIsNewlyAddedAccount(account: KeyringAccount) {
   };
 }
 
-import { apiMnemonic } from '@/core/apis';
+import * as apiMnemonic from '@/core/apis/mnemonic';
 
 /**
  * Gets the base public key for an HD keyring account (seed phrase identifier).

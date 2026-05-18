@@ -21,6 +21,7 @@ import Swap from '../Swap';
 import ApprovalsScreen from '../Approvals';
 import ReceiveScreen from '../Receive/Receive';
 import { Bridge } from '../Bridge';
+import { ConvertDustScreen } from '../ConvertDust';
 import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import MultiAddressHistory from '../Transaction/MultiAddressHistory';
@@ -39,6 +40,19 @@ import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
+
+function ConvertDustHeaderTitle(ctx: {
+  children: string;
+  disableSwitch?: boolean;
+}) {
+  return (
+    <ScreenHeaderAccountSwitcher
+      forScene="MakeTransactionAbout"
+      titleText={ctx.children}
+      disableSwitch={ctx.disableSwitch}
+    />
+  );
+}
 
 export default function TransactionNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
@@ -319,6 +333,23 @@ export default function TransactionNavigator() {
             },
           },
         ])}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.ConvertDust}
+        component={ConvertDustScreen}
+        options={({ route }) =>
+          mergeScreenOptions2024([
+            {
+              title: t('page.convertDust.title'),
+              headerTitle: ctx =>
+                ConvertDustHeaderTitle({
+                  ...ctx,
+                  disableSwitch: !!route.params?.disableAccountSwitch,
+                }),
+            },
+          ])
+        }
       />
 
       <TransactionStack.Screen

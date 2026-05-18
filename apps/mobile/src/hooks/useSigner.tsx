@@ -3,7 +3,10 @@ import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn } from 'ahooks';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { omit } from 'lodash';
-import { GasSelectionOptions, SignerConfig } from '@/components2024/MiniSignV2';
+import type {
+  GasSelectionOptions,
+  SignerConfig,
+} from '@/components2024/MiniSignV2/domain/types';
 import { SignatureManager } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { registry } from '@/components2024/MiniSignV2/state/SignatureManagerRegistry';
 import { Account } from '@/core/services/preference';
@@ -19,6 +22,7 @@ export type SimpleSignConfig = {
   txs?: Tx[];
   buildTxs?: () => Promise<Tx[] | undefined>;
   gasSelection?: GasSelectionOptions;
+  isHideErrorUI?: boolean;
 } & Omit<SignerConfig, 'account'>;
 
 export const useMiniSigner = ({
@@ -88,8 +92,17 @@ export const useMiniSigner = ({
   }, [resetGasStore]);
 
   const previousChainServerIdRef = useRef(chainServerId);
+  const signerScopeKey = `${account?.type || ''}:${account?.address || ''}:${
+    chainServerId || ''
+  }`;
+  const previousSignerScopeKeyRef = useRef(signerScopeKey);
 
   useEffect(() => {
+    if (previousSignerScopeKeyRef.current !== signerScopeKey) {
+      previousSignerScopeKeyRef.current = signerScopeKey;
+      instance.clearManualGasMethod();
+    }
+
     if (!autoResetGasStoreOnChainChange) return;
     if (previousChainServerIdRef.current === chainServerId) return;
 
@@ -101,8 +114,10 @@ export const useMiniSigner = ({
   }, [
     autoResetGasStoreOnChainChange,
     chainServerId,
+    instance,
     miniGasLevel,
     resetGasStore,
+    signerScopeKey,
   ]);
 
   const updateMiniGasStore = useCallback(
@@ -212,7 +227,7 @@ export const useMiniSigner = ({
   const prefetch = useMemoizedFn(async (cfg: SimpleSignConfig) => {
     const payload = await prepareSignerPayload(cfg);
     if (!payload) {
-      instance.close();
+      instance.close({ preserveManualGasMethod: true });
       return;
     }
 
@@ -246,12 +261,15 @@ export const useMiniSigner = ({
       if (!payload) {
         throw new Error('No transactions to sign');
       }
-      return instance.openDirect({
-        txs: payload.txs,
-        config: payload.signerConfig,
-        enableSecurityEngine: false,
-        gasSelection: payload.gasSelection,
-      });
+      return instance.openDirect(
+        {
+          txs: payload.txs,
+          config: payload.signerConfig,
+          enableSecurityEngine: false,
+          gasSelection: payload.gasSelection,
+        },
+        { isHideErrorUI: cfg.isHideErrorUI },
+      );
     },
   );
 
@@ -260,7 +278,10 @@ export const useMiniSigner = ({
     instance.updateConfig(partial);
   });
 
-  const close = useMemoizedFn(() => instance.close());
+  const close = useMemoizedFn(
+    (options?: Parameters<SignatureManager['close']>[0]) =>
+      instance.close(options),
+  );
   return {
     openDirect,
     openUI,

@@ -9,7 +9,7 @@ import {
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
-import { apisAutoLock } from '@/core/apis';
+import * as apisAutoLock from '@/core/apis/autoLock';
 import {
   KEYCHAIN_STORAGE_TYPES,
   DEFAULT_KEYCHAIN_STORAGE_TYPE,

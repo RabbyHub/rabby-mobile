@@ -148,7 +148,8 @@
     "Imported": "Nhập khẩu",
     "SavedSeedPhrase": "Tôi đã lưu cụm từ hạt giống.",
     "from": "Từ",
-    "to": "Đến"
+    "to": "Đến",
+    "copiedSuccessfully": "Sao chép thành công"
   },
   "page": {
     "transactions": {
@@ -1318,7 +1319,8 @@
         "predict": "Dự đoán",
         "meme": "Memecoin",
         "market": "Thị trường",
-        "gasDeposit": "Tiền gửi Gas"
+        "gasDeposit": "Tiền gửi Gas",
+        "convertDust": "Chuyển đổi Dust"
       },
       "swipeUp": {
         "descMore": "Kéo lên để khám phá thêm nhiều trang web",
@@ -3259,7 +3261,9 @@
         },
         "toRepay": "Số tiền kỳ vọng để trả nợ",
         "collateralNotEnough": "Số dư tài sản thế chấp của bạn thấp hơn số tiền đã chọn.",
-        "repayWith": "Tài sản thế chấp để trả lại với"
+        "repayWith": "Tài sản thế chấp để trả lại với",
+        "insufficientLiquidity": "Không đủ thanh khoản.",
+        "frozenCollateral": "Tài sản này đã bị đóng băng do quyết định của cộng đồng Aave."
       },
       "repayWithAToken": {
         "header": {
@@ -3340,6 +3344,64 @@
       "walletReady": "Ví của bạn đã sẵn sàng 🚀",
       "setPasswordTip": "Đặt một mật khẩu để bảo vệ ví của bạn",
       "createWalletError": "Không thể tạo ví"
+    },
+    "convertDust": {
+      "failReason": {
+        "missingRequiredParams": "Thiếu tham số bắt buộc",
+        "quoteUnavailable": "Lấy báo giá thất bại",
+        "gasCostTooHigh": "Vượt quá giới hạn phí gas",
+        "priceImpactTooHigh": "Tác động giá cao",
+        "buildSwapTxsFailed": "Tạo giao dịch swap thất bại",
+        "sendSwapTxFailed": "Gửi giao dịch swap thất bại",
+        "transactionFailed": "Giao dịch thất bại",
+        "submitFailed": "Gửi giao dịch thất bại",
+        "gasNotEnough": "Không đủ Gas"
+      },
+      "status": {
+        "pending": "Đang hoán đổi",
+        "idle": "Đang chờ hoán đổi",
+        "success": "Hoán đổi thành công"
+      },
+      "receiveSummary": {
+        "progress": "Tiến trình chuyển đổi",
+        "priceImpact": "Giới hạn tác động giá",
+        "gasLimit": "Giới hạn Gas giao dịch đơn",
+        "estimateReceive": "Est.Nhận:",
+        "actualReceive": "Nhận"
+      },
+      "bottomBar": {
+        "stop": "Dừng lại",
+        "continue": "Tiếp tục",
+        "start": "Bắt đầu chuyển đổi"
+      },
+      "completed": {
+        "title": "Đã chuyển đổi Dust !",
+        "receive": "Đã nhận:",
+        "failedTitle": "Chuyển đổi kết thúc",
+        "viewMoreDetail": "Xem thêm chi tiết",
+        "fold": "Thu gọn"
+      },
+      "entryGuide": {
+        "title": "Bạn có thể tìm thấy Convert Dust \n👇 ở đây trên Trang chủ",
+        "button": "Được rồi"
+      },
+      "stopSheet": {
+        "title": "Dừng các giao dịch hoán đổi hiện tại?",
+        "desc": "Nếu bạn dừng ngay bây giờ, mọi giao dịch hoán đổi còn lại sẽ không được hoàn thành. Xin lưu ý rằng các giao dịch hoán đổi đã hoàn thành không thể bị hoàn tác.",
+        "continue": "Tiếp tục",
+        "stop": "Dừng hoán đổi"
+      },
+      "homeBanner": {
+        "title": "Chuyển đổi Dust",
+        "description": "Hỗ trợ chuyển đổi số dư nhỏ thành token gốc"
+      },
+      "colValueAmount": "Giá trị/Số tiền",
+      "colToken": "Token",
+      "colStatusToken": "Trạng thái/Token",
+      "emptyText": "Không tìm thấy token giá trị thấp",
+      "unsupportedAccountType": "Không hỗ trợ loại tài khoản này.",
+      "unsupportedAccount": "Hiện chỉ hỗ trợ địa chỉ khóa riêng tư và cụm từ hạt giống.",
+      "title": "Chuyển đổi Dust"
     }
   },
   "component": {

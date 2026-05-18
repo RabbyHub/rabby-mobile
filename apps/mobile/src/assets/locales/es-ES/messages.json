@@ -1125,7 +1125,8 @@
         "predict": "Predecir",
         "meme": "Memecoin",
         "market": "Mercado",
-        "gasDeposit": "Depósito de Gas"
+        "gasDeposit": "Depósito de Gas",
+        "convertDust": "Convertir Polvo"
       },
       "swipeUp": {
         "descAndroidMore": "Haz clic para explorar más dApps",
@@ -3415,7 +3416,9 @@
         },
         "collateralNotEnough": "Su saldo de colateral es menor que la cantidad seleccionada.",
         "toRepay": "Cantidad esperada a reembolsar",
-        "repayWith": "Colateral para reembolsar con"
+        "repayWith": "Colateral para reembolsar con",
+        "insufficientLiquidity": "Liquidez insuficiente.",
+        "frozenCollateral": "Este activo está congelado debido a una decisión de la comunidad de Aave."
       },
       "repayWithAToken": {
         "header": {
@@ -3496,6 +3499,64 @@
       "walletReady": "Tu wallet está lista 🚀",
       "setPasswordTip": "Establece una contraseña para asegurar tu wallet",
       "createWalletError": "Error al crear la wallet"
+    },
+    "convertDust": {
+      "failReason": {
+        "missingRequiredParams": "Faltan parámetros requeridos",
+        "quoteUnavailable": "Error al obtener la cotización",
+        "gasCostTooHigh": "Excede el límite de tarifa de gas",
+        "priceImpactTooHigh": "Alto impacto en el precio",
+        "buildSwapTxsFailed": "Error al construir txs de intercambio",
+        "sendSwapTxFailed": "Error al enviar tx de intercambio",
+        "transactionFailed": "La transacción falló",
+        "submitFailed": "Error al enviar transacciones",
+        "gasNotEnough": "Gas insuficiente"
+      },
+      "status": {
+        "pending": "Intercambiando",
+        "idle": "Esperando para intercambiar",
+        "success": "Intercambio exitoso"
+      },
+      "receiveSummary": {
+        "progress": "Progreso de conversión",
+        "priceImpact": "Límite de impacto de precio",
+        "gasLimit": "Límite de gas de transacción única",
+        "estimateReceive": "Recib. est.:",
+        "actualReceive": "Recibir"
+      },
+      "bottomBar": {
+        "stop": "Detener",
+        "continue": "Continuar",
+        "start": "Comenzar a convertir"
+      },
+      "completed": {
+        "title": "Polvo convertido",
+        "receive": "Recibido:",
+        "failedTitle": "Conversión finalizada",
+        "viewMoreDetail": "Ver más detalles",
+        "fold": "Contraer"
+      },
+      "entryGuide": {
+        "title": "Puedes encontrar Convert Dust \n👇 aquí en la Página de Inicio",
+        "button": "Entendido"
+      },
+      "stopSheet": {
+        "title": "¿Detener los swaps actuales?",
+        "desc": "Si detienes ahora, los swaps restantes no se completarán. Ten en cuenta que los swaps completados no se pueden revertir.",
+        "continue": "Continuar",
+        "stop": "Detener swap"
+      },
+      "homeBanner": {
+        "title": "Convertir Polvo",
+        "description": "Soporta la conversión de pequeños saldos al token nativo"
+      },
+      "colValueAmount": "Valor/Cantidad",
+      "colToken": "Token",
+      "colStatusToken": "Estado/Token",
+      "emptyText": "No se encontraron tokens de bajo valor",
+      "unsupportedAccountType": "No se admite este tipo de cuenta.",
+      "unsupportedAccount": "Actualmente solo se admiten direcciones de clave privada y frase semilla.",
+      "title": "Convertir Polvo"
     }
   },
   "global": {
@@ -3600,7 +3661,8 @@
     "Created": "Creado",
     "SavedSeedPhrase": "He guardado la frase semilla",
     "from": "Desde",
-    "to": "Hacia"
+    "to": "Hacia",
+    "copiedSuccessfully": "Copiado con éxito"
   },
   "bluetooth": {
     "powered_off_alert": {

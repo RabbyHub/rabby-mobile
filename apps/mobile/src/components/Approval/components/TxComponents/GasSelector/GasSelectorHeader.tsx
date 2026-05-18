@@ -9,7 +9,12 @@ import React, {
 import { useTranslation } from 'react-i18next';
 import { calcMaxPriorityFee } from '@/utils/transaction';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { GasLevel, Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  GasAccountCheckResult,
+  GasLevel,
+  Tx,
+  TxPushType,
+} from '@rabby-wallet/rabby-api/dist/types';
 import {
   Image,
   Keyboard,
@@ -70,7 +75,7 @@ import { CheckBoxRect } from '@/components2024/CheckBox';
 import {
   useMiniSignGasPanelController,
   useMiniSignGasPanelState,
-} from '@/components2024/MiniSignV2';
+} from '@/components2024/MiniSignV2/state/useMiniSignGasPanel';
 import { Text, RNGHTextInput as TextInput } from '@/components/Typography';
 import { GasTokenInfo } from '@/utils/tempo';
 import { useGasAccountSign } from '@/screens/GasAccount/hooks/atom';
@@ -144,7 +149,7 @@ interface GasSelectorProps {
   checkGasLevelIsNotEnough?: (
     gas: GasSelectorResponse,
     type?: 'gasAccount' | 'native',
-  ) => Promise<[boolean, number]>;
+  ) => Promise<[boolean, number, GasAccountCheckResult?]>;
   account: Account;
   fixedMode?: boolean;
   defaultFixedModeOnCurrentChain?: boolean;

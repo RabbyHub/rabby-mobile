@@ -7,7 +7,7 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { patchSingleToken } from '@/databases/sync/token';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { RelatedDeFiType, TokenFromAddressItem } from '.';
+import type { RelatedDeFiType, TokenFromAddressItem } from './types';
 import { unionBy } from 'lodash';
 import { formatPrice } from '@/utils/number';
 import {
@@ -144,7 +144,7 @@ export const useTokenBalance = ({
   const amountSum = useMemo(() => {
     let deFiAmount = 0;
     relateDefiList?.forEach(item => {
-      deFiAmount += item.amount;
+      deFiAmount += item.amount || 0;
     });
 
     if (isSingleAddress) {
@@ -157,7 +157,7 @@ export const useTokenBalance = ({
         item.address.toLowerCase(),
       );
       const totalTokenAmount = amountUnionBy.reduce((acc, item) => {
-        return acc + item.amount;
+        return acc + (item.amount || 0);
       }, 0);
 
       return totalTokenAmount + deFiAmount;

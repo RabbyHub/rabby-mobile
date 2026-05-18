@@ -41,8 +41,6 @@ import { ellipsisAddress } from '@/utils/address';
 import { ExchangeLogos } from './ExchangeLogos';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { formatNetworth } from '@/utils/math';
-import BigNumber from 'bignumber.js';
-import { useCurrency } from '@/hooks/useCurrency';
 import { StyleProp } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { AccountOverview } from '../AccountOverview';
@@ -99,7 +97,6 @@ export const TokenRow = memo(
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
     const { t } = useTranslation();
     const [showContextMenu, setShowContextMenu] = React.useState(IS_ANDROID);
-    const { currency } = useCurrency();
     const showAccount = !!account;
     const percentColor = useMemo(() => {
       if (
@@ -210,13 +207,7 @@ export const TokenRow = memo(
                   (data._usdValue || 0) > 0 &&
                   styles.exclude,
               ]}>
-              {formatNetworth(
-                new BigNumber(data._usdValue || 0)
-                  .times(currency.usd_rate)
-                  .toNumber(),
-                false,
-                currency.symbol,
-              )}
+              {formatNetworth(data._usdValue || 0)}
             </Text>
             {showAccount ? (
               <Text
@@ -273,8 +264,6 @@ export const TokenRow = memo(
       hideFoldTag,
       showAccount,
       account,
-      currency.usd_rate,
-      currency.symbol,
       percentColor,
       handleShowExcludeTips,
       colors2024,
@@ -325,7 +314,6 @@ export const TokenRowV2 = memo(
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
     const { t } = useTranslation();
-    const { currency } = useCurrency();
     const showAccount = !!account;
     const percentColor = useMemo(() => {
       if (
@@ -421,13 +409,7 @@ export const TokenRowV2 = memo(
               styles.tokenRowAmount,
               scene === 'portfolio' && !data.is_core ? styles.exclude : null,
             ]}>
-            {formatNetworth(
-              new BigNumber(data.usd_value || 0)
-                .times(currency.usd_rate)
-                .toNumber(),
-              false,
-              currency.symbol,
-            )}
+            {formatNetworth(data.usd_value || 0)}
           </Text>
           {showAccount ? (
             <View style={styles.priceInfo}>

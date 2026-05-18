@@ -125,6 +125,7 @@ export type SelectSortedChainProps = {
   value?: CHAINS_ENUM | null;
   onChange?: (value: CHAINS_ENUM) => void;
   supportChains?: CHAINS_ENUM[];
+  unsupportedChainMode?: 'disabled' | 'hidden';
   disabledTips?: string | ((ctx: { chain: Chain }) => string);
   hideTestnetTab?: boolean;
   hideMainnetTab?: boolean;
@@ -139,6 +140,7 @@ export default function SelectChainWithSummary({
   value,
   onChange,
   supportChains,
+  unsupportedChainMode = 'disabled',
   disabledTips,
   hideTestnetTab = false,
   hideMainnetTab = false,
@@ -171,13 +173,32 @@ export default function SelectChainWithSummary({
   });
 
   const [matteredList, unmatteredList] = useMemo(() => {
-    if (excludeChains?.length) {
-      return [_matteredList, _unmatteredList].map(chains =>
-        chains.filter(e => !excludeChains.includes(e.enum)),
-      ) as [Chain[], Chain[]];
-    }
-    return [_matteredList, _unmatteredList];
-  }, [excludeChains, _matteredList, _unmatteredList]);
+    const filterChain = (chain: Chain) => {
+      if (excludeChains?.includes(chain.enum)) {
+        return false;
+      }
+
+      if (
+        unsupportedChainMode === 'hidden' &&
+        supportChains &&
+        !supportChains.includes(chain.enum)
+      ) {
+        return false;
+      }
+
+      return true;
+    };
+
+    return [_matteredList, _unmatteredList].map(chains =>
+      chains.filter(filterChain),
+    ) as [Chain[], Chain[]];
+  }, [
+    excludeChains,
+    _matteredList,
+    _unmatteredList,
+    supportChains,
+    unsupportedChainMode,
+  ]);
 
   useEffect(() => {
     const chain = findChainByEnum(value ?? undefined);
@@ -279,6 +300,7 @@ export default function SelectChainWithSummary({
             value={value ?? undefined}
             onChange={onChange}
             supportChains={supportChains}
+            unsupportedChainMode={unsupportedChainMode}
             disabledTips={disabledTips}
             account={account}
           />

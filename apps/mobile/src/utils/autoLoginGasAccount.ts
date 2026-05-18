@@ -5,13 +5,13 @@ import {
   filterDirectlySignableAccounts,
   isHardwareAccount,
 } from '@/core/apis/account';
-import { storeApiGasAccount } from '@/screens/GasAccount/hooks/atom';
 import type { Account } from '@/types/account';
 import { makeAvoidParallelAsyncFunc } from '@/core/utils/concurrency';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { KeyringAccount } from '@rabby-wallet/keyring-utils';
 import type { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 import type { GasAccountBalanceAccount } from '@/screens/GasAccount/hooks/state';
+import { getGasAccountStoreApi } from './gasAccountStoreApiBridge';
 
 let hasAttemptedAutoLogin = false;
 
@@ -92,7 +92,7 @@ function mergeAccountsWithGasBalance(nextAccounts: GasAccountBalanceAccount[]) {
     }
   });
 
-  storeApiGasAccount.setAccountsWithGasAccountBalance(merged);
+  getGasAccountStoreApi().setAccountsWithGasAccountBalance(merged);
 }
 
 async function loginAutoDetectedAccount(account?: KeyringAccount) {
@@ -100,6 +100,7 @@ async function loginAutoDetectedAccount(account?: KeyringAccount) {
     return false;
   }
 
+  const storeApiGasAccount = getGasAccountStoreApi();
   await storeApiGasAccount.loginGasAccount(account as Account);
   storeApiGasAccount.clearPendingHardwareAccount();
   return true;
@@ -110,7 +111,7 @@ function setPendingHardwareAccount(account?: KeyringAccount) {
     return;
   }
 
-  storeApiGasAccount.setPendingHardwareAccount({
+  getGasAccountStoreApi().setPendingHardwareAccount({
     address: account.address,
     type: account.type,
     brandName: account.brandName,
@@ -131,13 +132,13 @@ export const refreshAccountsWithGasAccountBalance = makeAvoidParallelAsyncFunc(
     try {
       const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
       if (!sortedAccounts.length) {
-        storeApiGasAccount.setAccountsWithGasAccountBalance([]);
+        getGasAccountStoreApi().setAccountsWithGasAccountBalance([]);
         return [];
       }
 
       const allWithBalance = await findAccountsWithBalance(sortedAccounts);
       const mapped = toGasAccountBalanceAccounts(allWithBalance);
-      storeApiGasAccount.setAccountsWithGasAccountBalance(mapped);
+      getGasAccountStoreApi().setAccountsWithGasAccountBalance(mapped);
       return mapped;
     } catch (error) {
       console.error('refreshAccountsWithGasAccountBalance error', error);
@@ -151,7 +152,7 @@ export async function autoLoginGasAccountIfNeeded() {
     return;
   }
 
-  const { sig } = storeApiGasAccount.getSession() || {};
+  const { sig } = getGasAccountStoreApi().getSession() || {};
   if (sig) {
     hasAttemptedAutoLogin = true;
     return;
@@ -194,7 +195,7 @@ export const checkAddedAccountsGasAccountIfNeeded = makeAvoidParallelAsyncFunc(
       return;
     }
 
-    const { sig } = storeApiGasAccount.getSession() || {};
+    const { sig } = getGasAccountStoreApi().getSession() || {};
     if (sig) {
       return;
     }

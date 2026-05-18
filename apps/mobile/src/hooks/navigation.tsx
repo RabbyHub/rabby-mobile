@@ -26,7 +26,8 @@ import {
 import type { RootStackParamsList } from '@/navigation-type';
 import { setIOSScreenCapture } from './native/security';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
-import { apisAccount, apisLock } from '@/core/apis';
+import * as apisAccount from '@/core/apis/account';
+import * as apisLock from '@/core/apis/lock';
 import { IS_IOS } from '@/core/native/utils';
 import {
   atSensitiveSceneState,

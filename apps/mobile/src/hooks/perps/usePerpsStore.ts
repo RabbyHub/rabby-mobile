@@ -20,7 +20,7 @@ import {
   HYPE_EVM_BRIDGE_ADDRESS_MAP,
   HYPE_CORE_DEPOSIT_WALLET,
 } from '@/constant/perps';
-import { apisPerps } from '@/core/apis';
+import { apisPerps } from '@/core/apis/perps';
 import {
   formatAllDexsClearinghouseState,
   formatMarkData,
@@ -613,6 +613,7 @@ const handleSelectDefaultAccount = async (accounts: Account[]) => {
       setHomePositionPnl(pnl);
       sdk.initAccount(account.address);
       subscribeToUserData(account);
+      fetchUserAbstraction(account.address);
     };
 
     if (recentlyAccount && selectedItem) {

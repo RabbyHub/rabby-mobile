@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Platform, TouchableOpacity, View } from 'react-native';
+import { View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   apiSendToken,
@@ -9,15 +9,11 @@ import {
   useSendTokenInternalContext,
   useSendTokenScreenChainToken,
 } from '../hooks/useSendToken';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { ModalConfirmAllowTransfer } from '@/components/Address/SheetModalConfirmAllowTransfer';
 import { ModalAddToContacts } from '@/components/Address/SheetModalAddToContacts';
 import { apiBalance } from '@/core/apis';
-import { useSafeAndroidBottomSizes, useSafeSizes } from '@/hooks/useAppLayout';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
 
@@ -27,7 +23,7 @@ import {
 } from '@/components2024/DirectSignBtn';
 import { Account } from '@/core/services/preference';
 import { RiskType, sortRisksDesc, useRisks } from '@/components/SendLike/risk';
-import { useSignatureStore } from '@/components2024/MiniSignV2';
+import { useSignatureStore } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { BottomRiskTip } from '@/components/SendLike/BottomRiskTip';
 import { resolveBgColorByType } from '@/components2024/ScreenContainer/LinearGradientContainer';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
@@ -36,11 +32,10 @@ import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { Text } from '@/components/Typography';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 
-const isAndroid = Platform.OS === 'android';
-
 export default function BottomArea({ account }: { account: Account | null }) {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
+  const { safeOffBottom } = useSafeSizes();
 
   const { handleSubmit } = useSendTokenFormik();
 
@@ -207,7 +202,12 @@ export default function BottomArea({ account }: { account: Account | null }) {
     !canSubmit || (!!mostImportantRisks.length && !agreeRequiredChecked);
 
   return (
-    <View onLayout={onBottomAreaLayout} style={[styles.bottomDockArea]}>
+    <View
+      onLayout={onBottomAreaLayout}
+      style={[
+        styles.bottomDockArea,
+        { paddingBottom: SIZES.containerPb + safeOffBottom },
+      ]}>
       <BottomRiskTip
         loadingRisks={loadingRisks}
         mostImportantRisks={mostImportantRisks}
@@ -260,6 +260,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
           }
           loading={isSubmitLoading}
           type={'primary'}
+          balanceIconSpacing
           syncUnlockTime
           account={account}
           showHardWalletProcess
@@ -311,32 +312,21 @@ export default function BottomArea({ account }: { account: Account | null }) {
 
 const SIZES = {
   containerPt: 16,
-  containerPb: 48,
-  // height: 220,
-  bottom: 48,
+  containerPb: 24,
 };
 
-const getStyle = createGetStyles2024(
-  ({ safeAreaInsets, isLight, colors, colors2024 }) => {
-    return {
-      bottomDockArea: {
-        bottom: 0,
-        width: '100%',
-        paddingHorizontal: 24,
-        position: 'absolute',
-        paddingTop: SIZES.containerPt,
-        paddingBottom: SIZES.containerPb + safeAreaInsets.bottom,
-        backgroundColor: resolveBgColorByType('bg1', {
-          isLight: isLight ?? true,
-          colors,
-          colors2024,
-        }),
-        // ...makeDebugBorder(),
-        // ...makeDevOnlyStyle({
-        //   backgroundColor: 'blue',
-        // }),
-        // height: SIZES.height,
-      },
-    };
-  },
-);
+const getStyle = createGetStyles2024(({ isLight, colors, colors2024 }) => {
+  return {
+    bottomDockArea: {
+      width: '100%',
+      paddingHorizontal: 24,
+      flexShrink: 0,
+      paddingTop: SIZES.containerPt,
+      backgroundColor: resolveBgColorByType('bg1', {
+        isLight: isLight ?? true,
+        colors,
+        colors2024,
+      }),
+    },
+  };
+});

@@ -2,6 +2,7 @@ import { shouldAutoSwitchToApprovalGasAccount } from '@/components/Approval/comp
 
 type MiniSignGasState = {
   gasMethod?: 'native' | 'gasAccount';
+  manualGasMethod?: 'native' | 'gasAccount';
   useGasless?: boolean;
   noCustomRPC?: boolean;
   isGasNotEnough?: boolean;
@@ -31,6 +32,24 @@ const shouldAutoSwitchToGasAccount = (state: MiniSignGasState) => {
 export const normalizeMiniSignGasState = <T extends MiniSignGasState>(
   state: T,
 ): T => {
+  if (state.manualGasMethod) {
+    const nextUseGasless =
+      state.manualGasMethod === 'gasAccount' ? false : !!state.useGasless;
+
+    if (
+      state.gasMethod === state.manualGasMethod &&
+      nextUseGasless === !!state.useGasless
+    ) {
+      return state;
+    }
+
+    return {
+      ...state,
+      gasMethod: state.manualGasMethod,
+      useGasless: nextUseGasless,
+    };
+  }
+
   const currentGasMethod = state.gasMethod ?? 'native';
   const nextGasMethod = shouldAutoSwitchToGasAccount(state)
     ? 'gasAccount'

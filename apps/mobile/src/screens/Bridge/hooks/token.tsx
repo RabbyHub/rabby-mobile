@@ -21,7 +21,7 @@ import { openapi } from '@/core/request';
 import { useRefreshId, useSetQuoteVisible, useSetRefreshId } from './context';
 import { getChainDefaultToken } from '@/constant/swap';
 import { tokenAmountBn } from '@/screens/Swap/utils';
-import { bridgeQuoteScore } from '../components/BridgeQuoteItem';
+import { bridgeQuoteScore } from '../utils/bridgeQuote';
 import BigNumber from 'bignumber.js';
 import { useBridgeSlippage } from './slippage';
 import { isNaN } from 'lodash';
@@ -39,21 +39,15 @@ import { eventBus, EVENTS } from '@/utils/events';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
-import { shouldScheduleQuotePolling } from '@/utils/quotePolling';
+import { getQuotePollingResumeDelay } from '@/utils/quotePolling';
 import { isTokenMarketClosed } from '@/utils/token';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 import { getQuoteList as getBridgeQuoteList } from '@rabby-wallet/rabby-bridge';
 import { convert18RawToTokenRaw, isTempoChain } from '@/utils/tempo';
+import type { SelectedBridgeQuote } from '../types';
 
 export const enableInsufficientQuote = true;
-
-export interface SelectedBridgeQuote extends Omit<BridgeQuote, 'tx'> {
-  shouldApproveToken?: boolean;
-  shouldTwoStepApprove?: boolean;
-  loading?: boolean;
-  tx?: BridgeQuote['tx'];
-  manualClick?: boolean;
-}
+const BRIDGE_QUOTE_REFRESH_INTERVAL = 1000 * 30;
 
 export const tokenPriceImpact = (
   fromToken?: TokenItem,
@@ -214,6 +208,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   >();
 
   const expiredTimer = useRef<NodeJS.Timeout>(undefined);
+  const autoQuoteRefreshDeadlineRef = useRef<number | null>(null);
   const autoQuoteRefreshPausedRef = useRef(false);
   const reloadTxRefreshPausedRef = useRef(false);
 
@@ -376,48 +371,89 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   const [quoteList, setQuotesList] = useState<SelectedBridgeQuote[]>([]);
 
-  const setSelectedBridgeQuote = useCallback(
-    (quote?: SelectedBridgeQuote) => {
-      if (!quote?.manualClick && expiredTimer.current) {
-        clearTimeout(expiredTimer.current);
+  const stopExpiredTimer = useCallback(() => {
+    if (expiredTimer.current) {
+      clearTimeout(expiredTimer.current);
+      expiredTimer.current = undefined;
+    }
+  }, []);
+
+  const clearExpiredTimer = useCallback(() => {
+    stopExpiredTimer();
+    autoQuoteRefreshDeadlineRef.current = null;
+  }, [stopExpiredTimer]);
+
+  const runScheduledQuoteRefresh = useCallback(() => {
+    expiredTimer.current = undefined;
+
+    if (autoQuoteRefreshPausedRef.current) {
+      return;
+    }
+
+    autoQuoteRefreshDeadlineRef.current = null;
+    setRefreshId(e => e + 1);
+  }, [setRefreshId]);
+
+  const scheduleQuoteRefresh = useCallback(
+    (delay: number) => {
+      stopExpiredTimer();
+      autoQuoteRefreshDeadlineRef.current = Date.now() + delay;
+
+      if (autoQuoteRefreshPausedRef.current) {
+        return;
       }
 
-      if (
-        !quote?.manualClick &&
-        quote &&
-        shouldScheduleQuotePolling({
-          enabled: true,
-          paused: autoQuoteRefreshPausedRef.current,
-        })
-      ) {
-        expiredTimer.current = setTimeout(() => {
-          if (
-            shouldScheduleQuotePolling({
-              enabled: true,
-              paused: autoQuoteRefreshPausedRef.current,
-            })
-          ) {
-            setRefreshId(e => e + 1);
-          }
-        }, 1000 * 30);
+      expiredTimer.current = setTimeout(runScheduledQuoteRefresh, delay);
+    },
+    [runScheduledQuoteRefresh, stopExpiredTimer],
+  );
+
+  const resumeQuoteRefresh = useCallback(() => {
+    const delay = getQuotePollingResumeDelay({
+      deadline: autoQuoteRefreshDeadlineRef.current,
+    });
+
+    if (delay === null) {
+      return;
+    }
+
+    if (delay <= 0) {
+      runScheduledQuoteRefresh();
+      return;
+    }
+
+    stopExpiredTimer();
+    expiredTimer.current = setTimeout(runScheduledQuoteRefresh, delay);
+  }, [runScheduledQuoteRefresh, stopExpiredTimer]);
+
+  const setSelectedBridgeQuote = useCallback(
+    (quote?: SelectedBridgeQuote) => {
+      if (!quote?.manualClick) {
+        clearExpiredTimer();
+      }
+
+      if (!quote?.manualClick && quote) {
+        scheduleQuoteRefresh(BRIDGE_QUOTE_REFRESH_INTERVAL);
       }
       setOriSelectedBridgeQuote(quote);
     },
-    [setRefreshId],
+    [clearExpiredTimer, scheduleQuoteRefresh],
   );
 
   const setAutoQuoteRefreshPaused = useCallback(
     (paused: boolean) => {
-      autoQuoteRefreshPausedRef.current = paused;
-      if (paused) {
-        if (expiredTimer.current) {
-          clearTimeout(expiredTimer.current);
-        }
+      if (autoQuoteRefreshPausedRef.current === paused) {
         return;
       }
-      setRefreshId(e => e + 1);
+
+      autoQuoteRefreshPausedRef.current = paused;
+      if (paused) {
+        stopExpiredTimer();
+        return;
+      }
+      resumeQuoteRefresh();
     },
-    [setRefreshId],
+    [resumeQuoteRefresh, stopExpiredTimer],
   );
 
   const setReloadTxRefreshPaused = useCallback((paused: boolean) => {
@@ -452,12 +488,6 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     }
     return false;
   }, [fromToken, toToken, amount, selectedBridgeQuote]);
-
-  const clearExpiredTimer = useCallback(() => {
-    if (expiredTimer.current) {
-      clearTimeout(expiredTimer.current);
-    }
-  }, []);
 
   const chainInfo = useMemo(
     () => findChainByEnum(fromChain) || CHAINS[fromChain || 'ETH'],

@@ -148,7 +148,8 @@
     "Created": "Erstellt",
     "SavedSeedPhrase": "Ich habe den Seed-Phrase gespeichert.",
     "from": "Von",
-    "to": "An"
+    "to": "An",
+    "copiedSuccessfully": "Erfolgreich kopiert"
   },
   "component": {
     "accountSwitcher": {
@@ -1229,7 +1230,8 @@
         "predict": "Vorhersagen",
         "meme": "Memecoin",
         "market": "Markt",
-        "gasDeposit": "Gas Einzahlung"
+        "gasDeposit": "Gas Einzahlung",
+        "convertDust": "Dust umwandeln"
       },
       "swipeUp": {
         "descAndroidMore": "Klicken Sie, um weitere dApps zu erkunden",
@@ -3519,7 +3521,9 @@
         },
         "repayWith": "Sicherheiten zur Rückzahlung mit",
         "toRepay": "Erwarteter Rückzahlungsbetrag",
-        "collateralNotEnough": "Ihr Sicherheitensaldo ist niedriger als der ausgewählte Betrag."
+        "collateralNotEnough": "Ihr Sicherheitensaldo ist niedriger als der ausgewählte Betrag.",
+        "insufficientLiquidity": "Unzureichende Liquidität.",
+        "frozenCollateral": "Dieses Asset ist aufgrund einer Aave-Gemeinschaftsentscheidung eingefroren."
       },
       "repayWithAToken": {
         "header": {
@@ -3600,6 +3604,64 @@
       "createWalletError": "Fehlgeschlagen beim Erstellen der Wallet",
       "walletReady": "Ihre Wallet ist bereit 🚀",
       "setPasswordTip": "Setzen Sie ein Passwort, um Ihre Wallet zu sichern."
+    },
+    "convertDust": {
+      "failReason": {
+        "missingRequiredParams": "Erforderliche Parameter fehlen",
+        "quoteUnavailable": "Angebotsabruf fehlgeschlagen",
+        "gasCostTooHigh": "Gasgebührenlimit überschritten",
+        "priceImpactTooHigh": "Hohe Preisauswirkung",
+        "buildSwapTxsFailed": "Swap-Transaktionen konnten nicht erstellt werden",
+        "sendSwapTxFailed": "Swap-Transaktion konnte nicht gesendet werden",
+        "transactionFailed": "Transaktion fehlgeschlagen",
+        "submitFailed": "Transaktionen konnten nicht übermittelt werden",
+        "gasNotEnough": "Unzureichendes Gas"
+      },
+      "status": {
+        "pending": "Wird getauscht",
+        "idle": "Warte auf Tausch",
+        "success": "Tausch erfolgreich"
+      },
+      "receiveSummary": {
+        "progress": "Konvertierungsfortschritt",
+        "priceImpact": "Preisauswirkungsobergrenze",
+        "gasLimit": "Gas-Limit für einzelne Transaktion",
+        "estimateReceive": "Gesch. Empfang:",
+        "actualReceive": "Empfangen"
+      },
+      "bottomBar": {
+        "stop": "Stoppen",
+        "continue": "Weiter",
+        "start": "Konvertierung starten"
+      },
+      "completed": {
+        "title": "Staub konvertiert !",
+        "receive": "Erhalten:",
+        "failedTitle": "Konvertierung beendet",
+        "viewMoreDetail": "Mehr Details anzeigen",
+        "fold": "Einklappen"
+      },
+      "entryGuide": {
+        "title": "Du findest Convert Dust \n👇 hier auf der Startseite",
+        "button": "Verstanden"
+      },
+      "stopSheet": {
+        "title": "Aktuelle Swaps stoppen?",
+        "desc": "Wenn Sie jetzt stoppen, werden keine verbleibenden Swaps abgeschlossen. Bitte beachten Sie, dass abgeschlossene Swaps nicht rückgängig gemacht werden können.",
+        "continue": "Fortfahren",
+        "stop": "Swap stoppen"
+      },
+      "homeBanner": {
+        "title": "Dust umwandeln",
+        "description": "Unterstützt die Konvertierung kleiner Guthaben in das native Token"
+      },
+      "colValueAmount": "Wert/Betrag",
+      "colToken": "Token",
+      "colStatusToken": "Status/Token",
+      "emptyText": "Keine Token mit niedrigem Wert gefunden",
+      "unsupportedAccountType": "Dieser Kontotyp wird nicht unterstützt.",
+      "unsupportedAccount": "Derzeit werden nur Private-Key- und Seed-Phrase-Adressen unterstützt.",
+      "title": "Dust umwandeln"
     }
   },
   "constant": {

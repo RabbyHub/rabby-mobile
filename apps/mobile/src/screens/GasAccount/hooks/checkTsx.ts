@@ -65,14 +65,15 @@ export const useGasAccountTxsCheck = ({
     [sig, accountId, isReady, txs],
   );
 
-  const gasAccountCanPay =
-    gasMethod === 'gasAccount' &&
+  const canUseGasAccount =
     isSupportedAddr &&
     noCustomRPC &&
     !!gasAccountCost?.balance_is_enough &&
     !gasAccountCost.chain_not_support &&
     !!gasAccountCost.is_gas_account &&
     !gasAccountCost.err_msg;
+
+  const gasAccountCanPay = gasMethod === 'gasAccount' && canUseGasAccount;
 
   const canGotoUseGasAccount =
     isSupportedAddr &&
@@ -93,6 +94,7 @@ export const useGasAccountTxsCheck = ({
     isGasAccountLogin,
     setIsGasAccountLogin,
     gasAccountCanPay,
+    canUseGasAccount,
     canGotoUseGasAccount,
     canDepositUseGasAccount,
     gasAccountCostFn,

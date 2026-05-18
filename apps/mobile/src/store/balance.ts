@@ -3,7 +3,7 @@ import { keyringService } from '@/core/services';
 import { makeJsEEClass } from '@/core/services/_utils';
 import { ORM_TABLE_NAMES } from '@/databases/constant';
 import { BalanceEntity } from '@/databases/entities/balance';
-import { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
+import type { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
 import { syncBalance } from '@/databases/sync/assets';
 import { HOME_REFRESH_INTERVAL } from '@/constant/home';
 import { appStorage } from '@/core/storage/mmkv';
@@ -14,7 +14,6 @@ import {
   KeyringTypeName,
 } from '@rabby-wallet/keyring-utils';
 import { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
-import { unionBy } from 'lodash';
 import PQueue from 'p-queue';
 import { useCallback, useMemo, useRef } from 'react';
 import type { Account } from '@/types/account';
@@ -880,11 +879,11 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       try {
         console.debug('[perf] fetchTotalBalance:: fetchType', fetchType);
 
-        const { getAccountList } = await import('@/core/apis/account');
-        const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
-        const caredAccounts = sortedAccounts;
-        const { selectedAccounts, selectedAddresses } =
-          await pickSelectedAccountsFromSortedAccounts(caredAccounts);
+        const selectionSnapshot = await getAccountBalanceSelectionSnapshot();
+        if (!selectionSnapshot) {
+          return retBalances;
+        }
+        const { selectedAccounts, selectedAddresses } = selectionSnapshot;
 
         if (selectedAccounts.length) {
           await this.batchGetTotalBalance(
@@ -898,22 +897,12 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
           );
         }
 
-        const balanceValueMap = this.getAddressValueMap();
         Object.assign(
           retBalances,
-          buildBalanceAccountsFromList(selectedAccounts, balanceValueMap),
-        );
-        setAccountsBalanceState(
-          {
-            balance: retBalances,
-            selectedAddresses,
-            hasResolvedSelection: true,
-            matteredAccountLength: caredAccounts.length,
-            ...buildSelectedBalanceDerivedState(selectedAddresses, retBalances),
-          },
-          {
+          await applyAccountBalanceSelectionSnapshot(selectionSnapshot, {
+            hydrate: false,
             source: 'manual_refresh',
-          },
+          }),
         );
       } catch (e) {
         console.error('fetchTotalBalance  error', e);
@@ -984,6 +973,15 @@ export type AccountsBalanceState = {
   isAnyBalanceFetchingRemote: boolean;
 };
 
+export type AccountBalanceSelectionSnapshot = {
+  selectedAccounts: Account[];
+  selectedAddresses: string[];
+  matteredAccountLength: number;
+};
+
+type AccountBalanceSelectionSnapshotGetter =
+  () => Promise<AccountBalanceSelectionSnapshot>;
+
 export type LoadBalanceStage = 'idle' | 'loading' | 'finished';
 
 type AccountsBalanceChangeSource =
@@ -1027,7 +1025,26 @@ export const balanceAccountsStore = zCreate(
 export const accountsBalanceEvents = new AccountsBalanceEE();
 
 const CACHE_TIME = HOME_REFRESH_INTERVAL;
-let hasStartedAccountBalanceLifecycle = false;
+let hasStartedAddressBalanceLifecycle = false;
+let accountBalanceSelectionSnapshotGetter: AccountBalanceSelectionSnapshotGetter | null =
+  null;
+
+export function setAccountBalanceSelectionSnapshotGetter(
+  getter: AccountBalanceSelectionSnapshotGetter,
+) {
+  accountBalanceSelectionSnapshotGetter = getter;
+}
+
+async function getAccountBalanceSelectionSnapshot() {
+  if (!accountBalanceSelectionSnapshotGetter) {
+    if (__DEV__) {
+      console.warn('account balance selection snapshot getter is not ready');
+    }
+    return null;
+  }
+
+  return accountBalanceSelectionSnapshotGetter();
+}
 
 function getCachedHomeTop10Addresses() {
   const cached = appStorage.getItem(APP_MMKV_WEAK_KEYS.HOME_TOP10_ADDRESSES) as
@@ -1209,127 +1226,43 @@ function buildSelectedBalanceDerivedState(
   );
 }
 
-async function pickSelectedAccountsFromSortedAccounts(
-  sortedAccounts: Account[],
-) {
-  const { filterOutTop10Accounts } = await import('@/core/apis/account');
-  const { top10Accounts, top10Addresses } = filterOutTop10Accounts(
-    sortedAccounts,
-    {
-      gatherSameAddress: false,
-    },
-  );
-
-  return {
-    selectedAccounts: unionBy(top10Accounts, account =>
-      account.address.toLowerCase(),
-    ),
-    selectedAddresses: top10Addresses.map(address => address.toLowerCase()),
-  };
-}
-
-async function getMatteredAccountsSnapshot() {
-  const { getAccountList } = await import('@/core/apis/account');
-  const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
-  const matteredAccountLength = sortedAccounts.length;
-  const { selectedAccounts, selectedAddresses } =
-    await pickSelectedAccountsFromSortedAccounts(sortedAccounts);
-
-  return {
+export async function applyAccountBalanceSelectionSnapshot(
+  {
     selectedAccounts,
     selectedAddresses,
     matteredAccountLength,
-  };
-}
-
-async function warmupSelectedAccountsBalance(selectedAccounts: Account[]) {
-  await addressBalanceStore.hydrateCachedBalancesForAccounts(selectedAccounts);
-}
-
-const accountBalanceSelectionLifecycleStateRef = {
-  promise: null as Promise<void> | null,
-  hasSubscribed: false,
-  prevSelectionSignature: '',
-};
-
-async function initAccountBalanceSelectionLifecycle() {
-  console.time('initAccountBalanceSelectionLifecycle');
-
-  try {
-    const { default: accountStore } = await import('./account');
-
-    const syncSelectionFromAccounts = async () => {
-      const { selectedAccounts, selectedAddresses, matteredAccountLength } =
-        await getMatteredAccountsSnapshot();
-      await warmupSelectedAccountsBalance(selectedAccounts);
-      const nextBalance = buildBalanceAccountsFromList(
-        selectedAccounts,
-        addressBalanceStore.getAddressValueMap(),
-      );
-
-      setAccountsBalanceState(
-        prev => ({
-          ...prev,
-          balance: nextBalance,
-          selectedAddresses,
-          hasResolvedSelection: true,
-          matteredAccountLength,
-          ...buildSelectedBalanceDerivedState(selectedAddresses, nextBalance),
-        }),
-        {
-          source: 'accounts_changed',
-        },
-      );
-    };
-
-    if (!accountBalanceSelectionLifecycleStateRef.hasSubscribed) {
-      accountBalanceSelectionLifecycleStateRef.hasSubscribed = true;
-
-      accountStore.subscribe(state => {
-        const accountsSignature = state.accounts
-          .map(
-            account =>
-              `${account.address.toLowerCase()}::${account.type}::${
-                account.brandName
-              }`,
-          )
-          .sort()
-          .join('|');
-        const pinSignature = state.pinnedAddresses
-          .map(item => `${item.address.toLowerCase()}::${item.brandName}`)
-          .join('|');
-        const nextSignature = `${accountsSignature}##${pinSignature}`;
-
-        if (
-          nextSignature ===
-          accountBalanceSelectionLifecycleStateRef.prevSelectionSignature
-        ) {
-          return;
-        }
-
-        accountBalanceSelectionLifecycleStateRef.prevSelectionSignature =
-          nextSignature;
-        void syncSelectionFromAccounts();
-      });
-    }
-
-    await syncSelectionFromAccounts();
-  } finally {
-    console.timeEnd('initAccountBalanceSelectionLifecycle');
-  }
-}
-
-export async function ensureAccountBalanceSelectionLifecycle() {
-  if (accountBalanceSelectionLifecycleStateRef.promise) {
-    return accountBalanceSelectionLifecycleStateRef.promise;
+  }: AccountBalanceSelectionSnapshot,
+  options: {
+    hydrate: boolean;
+    source: AccountsBalanceChangeSource;
+  },
+) {
+  if (options.hydrate) {
+    await addressBalanceStore.hydrateCachedBalancesForAccounts(
+      selectedAccounts,
+    );
   }
 
-  const promise = initAccountBalanceSelectionLifecycle().catch(error => {
-    accountBalanceSelectionLifecycleStateRef.promise = null;
-    throw error;
-  });
-  accountBalanceSelectionLifecycleStateRef.promise = promise;
-  await promise;
+  const nextBalance = buildBalanceAccountsFromList(
+    selectedAccounts,
+    addressBalanceStore.getAddressValueMap(),
+  );
+
+  setAccountsBalanceState(
+    prev => ({
+      ...prev,
+      balance: nextBalance,
+      selectedAddresses,
+      hasResolvedSelection: true,
+      matteredAccountLength,
+      ...buildSelectedBalanceDerivedState(selectedAddresses, nextBalance),
+    }),
+    {
+      source: options.source,
+    },
+  );
+
+  return nextBalance;
 }
 
 export const syncBalanceAccountStore = () => {
@@ -1355,11 +1288,11 @@ export const syncBalanceAccountStore = () => {
   );
 };
 
-export function startProcessAccountBalanceEvents() {
-  if (hasStartedAccountBalanceLifecycle) {
+export function startProcessAddressBalanceEvents() {
+  if (hasStartedAddressBalanceLifecycle) {
     return;
   }
-  hasStartedAccountBalanceLifecycle = true;
+  hasStartedAddressBalanceLifecycle = true;
 
   keyringService.on('removedAccount', async account => {
     const addresses = await keyringService.getAllAddresses();
@@ -1379,12 +1312,6 @@ export function startProcessAccountBalanceEvents() {
 
   perfEvents.subscribe('USER_MANUALLY_UNLOCK', async () => {
     syncBalanceAccountStore();
-  });
-
-  keyringService.once('unlock', () => {
-    ensureAccountBalanceSelectionLifecycle().catch(error => {
-      console.error('ensureAccountBalanceSelectionLifecycle::error', error);
-    });
   });
 
   addressBalanceStore.subscribe(() => {

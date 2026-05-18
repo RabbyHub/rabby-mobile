@@ -12,7 +12,7 @@ import { HistoryItem } from './HistoryItem';
 import { SkeletonCard } from './SkeletonCard';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import { TransactionGroup } from '@/core/services/transactionHistory';
-import { HistoryDisplayItem } from '../MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/types/history';
 import { Empty } from '../components/Empty';
 import { formatTimestamp } from '@/utils/time';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -23,6 +23,7 @@ import { useGetCexList } from '../hook';
 import { useMemoizedFn } from 'ahooks';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { Text } from '@/components/Typography';
+import { Account } from '@/types/account';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -81,6 +82,7 @@ export const HistoryList = ({
   onRefresh,
   onPresssItem,
   isForMultipleAddress = true,
+  account,
   isNeedFetchFromApi,
   appendBottom,
   moreLoadingLength = 1,
@@ -104,6 +106,7 @@ export const HistoryList = ({
   moreLoadingLength?: number;
   tabList?: boolean;
   style?: StyleProp<ViewStyle>;
+  account?: Account | null;
   ref?: Ref<{ scrollToTop: () => void }>;
 }) => {
   const flatListRef = useRef<FlatList>(null);
@@ -158,6 +161,7 @@ export const HistoryList = ({
             isForMultipleAddress={isForMultipleAddress}
             getCexInfoByAddress={getCexInfoByAddress}
             onPress={onPresssItem}
+            account={account}
           />
         </>
       );
@@ -193,6 +197,7 @@ export const HistoryList = ({
             data={item.data}
             canCancel={canCancel}
             onRefresh={onRefresh}
+            account={account}
           />
         </>
       );

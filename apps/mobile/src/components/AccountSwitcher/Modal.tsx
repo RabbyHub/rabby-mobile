@@ -24,12 +24,16 @@ export function AccountSwitcherModal({
   forScene,
   token,
   panelLinearGradientProps,
+  getAccountDisabledTips,
 }: AccountSwitcherAopProps<{
   inScreen?: boolean;
   token?: ITokenItem;
   panelLinearGradientProps?: React.ComponentProps<
     typeof AccountsPanelInModal
   >['linearContainerProps'];
+  getAccountDisabledTips?: React.ComponentProps<
+    typeof AccountsPanelInModal
+  >['getAccountDisabledTips'];
 }>) {
   const { isVisible, toggleSceneVisible } = useAccountSceneVisible(forScene);
   const modalRef = useRef<AppBottomSheetModal>(null);
@@ -87,6 +91,7 @@ export function AccountSwitcherModal({
               forScene={forScene}
               scrollToBottom={scrollToBottom}
               token={token}
+              getAccountDisabledTips={getAccountDisabledTips}
             />
           </View>
         </AutoLockView>

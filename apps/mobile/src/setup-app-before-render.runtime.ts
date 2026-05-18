@@ -55,11 +55,12 @@ import {
 } from './store/curve24h';
 import useProtocolListStore from './store/protocols';
 import { useAppChainStore } from './store/appchain';
-import addressBalanceStore, {
+import addressBalanceStore from './store/balance';
+import {
   ensureAccountBalanceSelectionLifecycle,
   startProcessAccountBalanceEvents,
-} from './store/balance';
-import { apisAutoLock } from './core/apis';
+} from './store/balanceAccountSelection';
+import * as apisAutoLock from './core/apis/autoLock';
 import { startWatchLayoutChange } from './hooks/useAppLayout';
 import { startCareAppNotificationPermissions } from './hooks/appNotification';
 import nftListStore from './store/nfts';

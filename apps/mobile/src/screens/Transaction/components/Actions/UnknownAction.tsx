@@ -21,7 +21,8 @@ import { openTxExternalUrl } from '@/utils/transaction';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
-import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
+import { AddressItemInDetail } from '../../HistoryDetailScreen';
+import { TxStatusItem } from '../TxStatusItem';
 import { BalanceChange } from './components/BalanceChange';
 import { Account } from '@/core/services/preference';
 import { Text } from '@/components/Typography';
@@ -166,7 +167,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailContainer: {
     // flex: 1,
     width: '100%',
-    marginTop: 20,
+    marginTop: 12,
     borderRadius: 16,
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']

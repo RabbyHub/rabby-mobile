@@ -1061,7 +1061,8 @@
         "predict": "Prediksi",
         "meme": "Memecoin",
         "market": "Pasar",
-        "gasDeposit": "Setoran Gas"
+        "gasDeposit": "Setoran Gas",
+        "convertDust": "Konversi Dust"
       },
       "swipeUp": {
         "descMore": "Geser ke atas untuk menjelajahi lebih banyak situs web",
@@ -3139,7 +3140,9 @@
         },
         "toRepay": "Jumlah yang diharapkan untuk dilunasi",
         "collateralNotEnough": "Saldo jaminan Anda lebih rendah dari jumlah yang dipilih.",
-        "repayWith": "Jaminan untuk dibayar kembali dengan"
+        "repayWith": "Jaminan untuk dibayar kembali dengan",
+        "insufficientLiquidity": "Likuiditas tidak mencukupi.",
+        "frozenCollateral": "Aset ini dibekukan karena keputusan komunitas Aave."
       },
       "repayWithAToken": {
         "header": {
@@ -3220,6 +3223,64 @@
       "createWalletError": "Gagal membuat dompet",
       "walletReady": "Dompet Anda sudah siap 🚀",
       "setPasswordTip": "Atur kata sandi untuk mengamankan dompet Anda"
+    },
+    "convertDust": {
+      "failReason": {
+        "missingRequiredParams": "Parameter wajib tidak ada",
+        "quoteUnavailable": "Gagal mengambil kutipan",
+        "gasCostTooHigh": "Melebihi batas biaya gas",
+        "priceImpactTooHigh": "Dampak harga tinggi",
+        "buildSwapTxsFailed": "Gagal membangun txs swap",
+        "sendSwapTxFailed": "Gagal mengirim tx swap",
+        "transactionFailed": "Transaksi gagal",
+        "submitFailed": "Gagal提交 transaksi",
+        "gasNotEnough": "Gas tidak cukup"
+      },
+      "status": {
+        "pending": "Bertukar",
+        "idle": "Menunggu untuk bertukar",
+        "success": "Pertukaran berhasil"
+      },
+      "receiveSummary": {
+        "progress": "Kemajuan Konversi",
+        "priceImpact": "Batas Dampak Harga",
+        "gasLimit": "Batas Gas Transaksi Tunggal",
+        "estimateReceive": "Perkiraan Terima:",
+        "actualReceive": "Terima"
+      },
+      "bottomBar": {
+        "stop": "Berhenti",
+        "continue": "Lanjutkan",
+        "start": "Mulai konversi"
+      },
+      "completed": {
+        "title": "Dust Dikonversi !",
+        "receive": "Diterima:",
+        "failedTitle": "Konversi Berakhir",
+        "viewMoreDetail": "Lihat detail lainnya",
+        "fold": "Lipat"
+      },
+      "entryGuide": {
+        "title": "Anda dapat menemukan Convert Dust \n👇 di sini di Beranda",
+        "button": "Mengerti"
+      },
+      "stopSheet": {
+        "title": "Hentikan swap saat ini?",
+        "desc": "Jika Anda berhenti sekarang, swap yang tersisa tidak akan diselesaikan. Perlu diketahui bahwa swap yang telah selesai tidak dapat dibatalkan.",
+        "continue": "Lanjutkan",
+        "stop": "Hentikan swap"
+      },
+      "homeBanner": {
+        "title": "Konversi Dust",
+        "description": "Mendukung konversi saldo kecil menjadi token asli"
+      },
+      "colValueAmount": "Value/Amount",
+      "colToken": "Token",
+      "colStatusToken": "Status/Token",
+      "emptyText": "No low-value tokens found",
+      "unsupportedAccountType": "Not support this account type.",
+      "unsupportedAccount": "Currently only private key and seed phrase addresses are supported.",
+      "title": "Konversi Dust"
     }
   },
   "component": {
@@ -3599,7 +3660,8 @@
     "Created": "Dibuat",
     "SavedSeedPhrase": "Saya telah menyimpan seed phrase",
     "from": "Dari",
-    "to": "Ke"
+    "to": "Ke",
+    "copiedSuccessfully": "Berhasil disalin"
   },
   "background": {
     "error": {

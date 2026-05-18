@@ -1,44 +1,37 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import { ScrollView, View } from 'react-native';
-import { useInterval, useMemoizedFn, useMount, useRequest } from 'ahooks';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { createGetStyles2024 } from '@/utils/styles';
-import { StackActions, useRoute } from '@react-navigation/native';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
+import { useInterval } from 'ahooks';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import { ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import { transactionHistoryService } from '@/core/services';
-import { CHAINS_ENUM } from '@debank/common';
-import { findMaxGasTx } from '@/core/utils/tx';
-import BigNumber from 'bignumber.js';
-import { ApproveToken } from './components/Actions/ApproveToken';
+import { TransactionGroup } from '@/core/services/transactionHistory';
+import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
+import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
+import { findAccountByPriority } from '@/utils/account';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { useTranslation } from 'react-i18next';
 import { ApproveNFT } from './components/Actions/ApproveNFT';
 import { ApproveNFTCollection } from './components/Actions/ApproveNFTCollection';
+import { ApproveToken } from './components/Actions/ApproveToken';
+import { CancelTx } from './components/Actions/CancelTx';
+import { DeployContact } from './components/Actions/DeployContract';
 import { RevokeNFT } from './components/Actions/RevokeNFT';
 import { RevokeNFTCollection } from './components/Actions/RevokeNFTCollection';
 import { RevokeToken } from './components/Actions/RevokeToken';
-import { CancelTx } from './components/Actions/CancelTx';
-import { DeployContact } from './components/Actions/DeployContract';
-import { Swap } from './components/Actions/Swap';
 import { Send } from './components/Actions/Send';
-import { useTranslation } from 'react-i18next';
+import { Swap } from './components/Actions/Swap';
 import { UnknownAction } from './components/Actions/UnknownAction';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
-import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { findAccountByPriority } from '@/utils/account';
 import { HistoryItemCateType } from './components/type';
+import { Text } from '@/components/Typography';
 
 function HistoryLocalDetailScreen(): JSX.Element {
   const route =
@@ -55,6 +48,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
     title,
     type,
     onPressAddToWhitelistButton,
+    account,
   } = route.params || {};
   const [data, setData] = React.useState<TransactionGroup>(_data);
   const isPending = useMemo(() => data.isPending, [data]);
@@ -88,11 +82,17 @@ function HistoryLocalDetailScreen(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const getHeaderTitle = React.useCallback(() => {
     return (
-      <HeaderTitleText2024 style={styles.headerTitleStyle}>
-        {title || t('page.transactions.itemTitle.Default')}
-      </HeaderTitleText2024>
+      <ScreenHeaderAccountSwitcher
+        forScene="HistoryDetail"
+        titleText={
+          <Text style={styles.headerTitleStyle} numberOfLines={1}>
+            {title || t('page.transactions.itemTitle.Default')}
+          </Text>
+        }
+        disableSwitch={true}
+      />
     );
-  }, [title, styles.headerTitleStyle, t]);
+  }, [styles.headerTitleStyle, title, t]);
 
   useEffect(() => {
     if (!data.isPending) {
@@ -134,6 +134,20 @@ function HistoryLocalDetailScreen(): JSX.Element {
     }
     return account;
   }, [accounts, data.address, data.keyringType]);
+
+  const currentAccount = useMemo(() => {
+    return account && isSameAddress(account.address, data.address)
+      ? account
+      : accounts.find(item => isSameAddress(item.address, data.address));
+  }, [account, accounts, data.address]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (currentAccount) {
+        switchSceneCurrentAccount('HistoryDetail', currentAccount);
+      }
+    }, [currentAccount]),
+  );
 
   const isSelfScrollAction =
     needUseSwap || !!data.maxGasTx?.action?.actionData?.send;

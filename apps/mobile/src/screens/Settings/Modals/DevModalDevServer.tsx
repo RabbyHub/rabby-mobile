@@ -21,14 +21,16 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { Modal } from 'react-native';
 import { IS_IOS } from '@/core/native/utils';
 import { FormInput } from '@/components/Form/Input';
 import {
   useDevServerSettings,
   DevServerScene,
 } from '@/core/utils/devServerSettings';
+import { ENABLE_REACTOTRON } from '@/core/utils/reactotron-plugins/featureFlag';
 import { Text, TextInput } from '@/components/Typography';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 
 const modalVisibleAtom = atom(false);
 
@@ -73,6 +75,10 @@ const SCENE_CONFIGS: SceneConfig[] = [
     portSuffix: ':3000',
   },
 ];
+
+const VISIBLE_SCENE_CONFIGS = ENABLE_REACTOTRON
+  ? SCENE_CONFIGS
+  : SCENE_CONFIGS.filter(config => config.key !== DevServerScene.REACTOTRON);
 
 export function DevModalDevServer() {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -123,8 +129,7 @@ export function DevModalDevServer() {
   }, [setVisible]);
 
   const handleConfirm = useCallback(() => {
-    // Save all 3 scenes
-    SCENE_CONFIGS.forEach(({ key }) => {
+    VISIBLE_SCENE_CONFIGS.forEach(({ key }) => {
       setDevServerHost(key, hosts[key]);
     });
     setVisible(false);
@@ -136,11 +141,12 @@ export function DevModalDevServer() {
 
   const handleUnifiedHostChange = useCallback((value: string) => {
     setUnifiedHost(value);
-    // Update all 3 hosts
-    setHosts({
-      [DevServerScene.LOCAL_WEBVIEW]: value,
-      [DevServerScene.REACTOTRON]: value,
-      [DevServerScene.FE_PUSH_SERVICE]: value,
+    setHosts(prev => {
+      const nextHosts = { ...prev };
+      VISIBLE_SCENE_CONFIGS.forEach(({ key }) => {
+        nextHosts[key] = value;
+      });
+      return nextHosts;
     });
   }, []);
 
@@ -153,7 +159,8 @@ export function DevModalDevServer() {
   }, [visible]);
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.devServerSettings}
       visible={visible}
       transparent
       animationType="fade"
@@ -200,26 +207,29 @@ export function DevModalDevServer() {
               {/* Divider */}
               <View style={styles.divider} />
 
-              {SCENE_CONFIGS.map(({ key, label, placeholder, portSuffix }) => (
-                <View key={key} style={styles.inputBlock}>
-                  <Text style={styles.fieldTitle}>{label}</Text>
-                  <View style={styles.inputRow}>
-                    <FormInput
-                      containerStyle={styles.textInputContainer}
-                      clearable={!unifiedEditEnabled}
-                      inputProps={{
-                        style: styles.textInput,
-                        placeholderTextColor: colors2024['neutral-foot'],
-                        placeholder,
-                        value: hosts[key],
-                        onChangeText: (value: string) => updateHost(key, value),
-                        editable: !unifiedEditEnabled,
-                      }}
-                    />
-                    <Text style={styles.portSuffix}>{portSuffix}</Text>
+              {VISIBLE_SCENE_CONFIGS.map(
+                ({ key, label, placeholder, portSuffix }) => (
+                  <View key={key} style={styles.inputBlock}>
+                    <Text style={styles.fieldTitle}>{label}</Text>
+                    <View style={styles.inputRow}>
+                      <FormInput
+                        containerStyle={styles.textInputContainer}
+                        clearable={!unifiedEditEnabled}
+                        inputProps={{
+                          style: styles.textInput,
+                          placeholderTextColor: colors2024['neutral-foot'],
+                          placeholder,
+                          value: hosts[key],
+                          onChangeText: (value: string) =>
+                            updateHost(key, value),
+                          editable: !unifiedEditEnabled,
+                        }}
+                      />
+                      <Text style={styles.portSuffix}>{portSuffix}</Text>
+                    </View>
                   </View>
-                </View>
-              ))}
+                ),
+              )}
             </ScrollView>
             <FooterButtonGroup
               style={styles.footer}
@@ -229,7 +239,7 @@ export function DevModalDevServer() {
           </View>
         </KeyboardAvoidingView>
       </AutoLockView>
-    </Modal>
+    </TrackedModal>
   );
 }
 

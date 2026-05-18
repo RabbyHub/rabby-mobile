@@ -1,8 +1,12 @@
 import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
-import { CurvePoint, formatSmallCurrencyValue } from '@/hooks/useCurve';
-import React, { memo, useMemo } from 'react';
+import { CurvePoint } from '@/hooks/useCurve';
+import {
+  formatCurrencyValueParts,
+  formatSmallCurrencyValueParts,
+} from '@/utils/currency';
+import React, { memo, useEffect, useMemo } from 'react';
 import { Dimensions, Pressable, useWindowDimensions, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import Animated, {
@@ -129,8 +133,12 @@ const ChartContent = memo(function ChartContent({
 export const MultiChart = memo(function MultiChart({
   hideType,
   style,
+  onPressNetWorth,
+  onPressWalletList,
 }: {
   hideType: BALANCE_HIDE_TYPE;
+  onPressNetWorth?: () => void;
+  onPressWalletList?: () => void;
 } & RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
   const {
@@ -138,6 +146,7 @@ export const MultiChart = memo(function MultiChart({
     changeData,
     totalBalance,
     matteredAccountLength,
+    canToggle24hCurve,
     showBalanceLoadingWithoutLocal,
     showChangeLoadingWithoutLocal,
     isCurveAnyAddrLoading,
@@ -147,6 +156,7 @@ export const MultiChart = memo(function MultiChart({
       changeData: state.changeData,
       totalBalance: state.totalBalance,
       matteredAccountLength: state.matteredAccountLength,
+      canToggle24hCurve: state.canToggle24hCurve,
       showBalanceLoadingWithoutLocal: state.showBalanceLoadingWithoutLocal,
       showChangeLoadingWithoutLocal: state.showChangeLoadingWithoutLocal,
       isCurveAnyAddrLoading: state.isCurveAnyAddrLoading,
@@ -156,6 +166,12 @@ export const MultiChart = memo(function MultiChart({
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
   const chartsData = curveList;
+
+  useEffect(() => {
+    if (!canToggle24hCurve) {
+      setIsFoldMultiChart(true);
+    }
+  }, [canToggle24hCurve]);
 
   return (
     <View
@@ -177,8 +193,11 @@ export const MultiChart = memo(function MultiChart({
             data={chartsData}
             hideType={hideType}
             matteredAccountCount={matteredAccountLength}
+            canToggle24hCurve={canToggle24hCurve}
             showBalanceLoadingWithoutLocal={showBalanceLoadingWithoutLocal}
             showChangeLoadingWithoutLocal={showChangeLoadingWithoutLocal}
+            onPressNetWorth={onPressNetWorth}
+            onPressWalletList={onPressWalletList}
           />
           <ChartContent
             data={chartsData}
@@ -200,8 +219,11 @@ interface IHeaderProps {
   data: CurvePoint[];
   hideType: BALANCE_HIDE_TYPE;
   matteredAccountCount?: number;
+  canToggle24hCurve: boolean;
   showBalanceLoadingWithoutLocal: boolean;
   showChangeLoadingWithoutLocal: boolean;
+  onPressNetWorth?: () => void;
+  onPressWalletList?: () => void;
 }
 const ChartHeader = React.memo(
   ({
@@ -212,15 +234,18 @@ const ChartHeader = React.memo(
     hideType,
     data: _data,
     matteredAccountCount,
+    canToggle24hCurve,
     showBalanceLoadingWithoutLocal,
     showChangeLoadingWithoutLocal,
+    onPressNetWorth,
+    onPressWalletList,
   }: IHeaderProps) => {
     const { reanimatedStyles, styles, colors2024 } = useTheme2024({ getStyle });
     const rStyles = {
       charHeader: useAnimatedStyle(reanimatedStyles.charHeader),
     };
     const { currentIndex } = LineChart.useChart();
-    const { currency, formatCurrentCurrency } = useCurrency();
+    const { currency } = useCurrency();
     const debouncedRawChange = useDebouncedValue(rawChange, 300);
     const showNetWorthLoading = useMemo(() => {
       return showBalanceLoadingWithoutLocal;
@@ -230,23 +255,29 @@ const ChartHeader = React.memo(
       showNetWorthLoading || showChangeLoadingWithoutLocal;
 
     const netWorth = useMemo(() => {
-      return formatSmallCurrencyValue(rawNetWorth, { currency });
+      return formatSmallCurrencyValueParts(rawNetWorth, { currency }).text;
     }, [currency, rawNetWorth]);
     const change = useMemo(() => {
-      return formatCurrentCurrency(Math.abs(debouncedRawChange));
-    }, [formatCurrentCurrency, debouncedRawChange]);
+      return formatCurrencyValueParts(Math.abs(debouncedRawChange), {
+        currency,
+      }).text;
+    }, [currency, debouncedRawChange]);
 
     const data = useMemo(() => {
       return (
         _data?.map(item => {
           return {
             ...item,
-            netWorth: formatSmallCurrencyValue(item.value, { currency }),
-            change: formatCurrentCurrency(item.rawChange),
+            netWorth: formatSmallCurrencyValueParts(item.value, {
+              currency,
+            }).text,
+            change: formatCurrencyValueParts(Math.abs(item.rawChange), {
+              currency,
+            }).text,
           };
         }) || []
       );
-    }, [_data, currency, formatCurrentCurrency]);
+    }, [_data, currency]);
 
     const percentChange = useDerivedValue(() => {
       if (hideType === 'HIDE') {
@@ -280,11 +311,13 @@ const ChartHeader = React.memo(
     }, [data, currentIndex, netWorth]);
 
     const formatNetWorth = useDerivedValue(() => {
-      return hideType === 'HIDE'
-        ? '******'
-        : svIsFoldMultiChart.value
-        ? netWorth
-        : data?.[currentIndex?.value]?.netWorth || netWorth;
+      if (hideType === 'HIDE') {
+        return '******';
+      }
+      if (svIsFoldMultiChart.value) {
+        return netWorth;
+      }
+      return data?.[currentIndex?.value]?.netWorth || netWorth;
     }, [data, currentIndex, netWorth, hideType]);
 
     const lossStyleProps = useAnimatedStyle(() => {
@@ -322,7 +355,7 @@ const ChartHeader = React.memo(
       return {
         text: formatNetWorth.value,
       };
-    });
+    }, [netWorth, hideType]);
 
     const percentChangeAnimatedProps = useAnimatedProps(() => {
       return {
@@ -361,11 +394,12 @@ const ChartHeader = React.memo(
     return (
       <Animated.View style={rStyles.charHeader}>
         <View style={styles.netWorthContainer}>
-          <View
+          <Pressable
             style={[
               styles.netWorthTextContainer,
               showNetWorthLoading ? styles.hidden : undefined,
             ]}
+            onPress={onPressNetWorth}
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceValue)}>
             <AnimateableText
               style={[
@@ -375,7 +409,7 @@ const ChartHeader = React.memo(
               ]}
               animatedProps={netWorthAnimatedProps}
             />
-          </View>
+          </Pressable>
 
           <Skeleton
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceLoading)}
@@ -388,7 +422,13 @@ const ChartHeader = React.memo(
             LinearGradientComponent={LoadingLinear}
           />
 
-          <View style={[styles.accountBg]}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.accountBg,
+              pressed && { opacity: 0.6 },
+            ]}
+            onPress={onPressWalletList}
+            hitSlop={8}>
             <RcIconSmallWalletCC color={colors2024['neutral-title-1']} />
             <Text style={styles.accountText}>
               {matteredAccountCount && matteredAccountCount >= 10
@@ -396,7 +436,7 @@ const ChartHeader = React.memo(
                 : matteredAccountCount}
             </Text>
             <RcIconSmallArrowCC color={colors2024['neutral-title-1']} />
-          </View>
+          </Pressable>
         </View>
         {showChangeLoading ? (
           <Skeleton
@@ -409,7 +449,11 @@ const ChartHeader = React.memo(
         ) : (
           <Pressable
             {...makeTestIDProps(E2E_ID.home.portfolioCurveToggle)}
+            disabled={!canToggle24hCurve}
             onPress={e => {
+              if (!canToggle24hCurve) {
+                return;
+              }
               e.stopPropagation();
               const nextValue = !svIsFoldMultiChart.value;
               svIsFoldMultiChart.value = nextValue;
@@ -438,22 +482,24 @@ const ChartHeader = React.memo(
                   style={styles.changeTime}
                   animatedProps={dateTimeAnimatedProps}
                 />
-                <View style={styles.percentChangeContainer}>
-                  <AnimatedSVG
-                    style={animatedSvgStyle}
-                    width={16}
-                    height={16}
-                    viewBox="0 0 24 24"
-                    fill="none">
-                    <AnimatedPath
-                      d="M8.4 4.80005L15.6 12L8.4 19.2"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      animatedProps={arrowStrokeProps}
-                    />
-                  </AnimatedSVG>
-                </View>
+                {canToggle24hCurve ? (
+                  <View style={styles.percentChangeContainer}>
+                    <AnimatedSVG
+                      style={animatedSvgStyle}
+                      width={16}
+                      height={16}
+                      viewBox="0 0 24 24"
+                      fill="none">
+                      <AnimatedPath
+                        d="M8.4 4.80005L15.6 12L8.4 19.2"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        animatedProps={arrowStrokeProps}
+                      />
+                    </AnimatedSVG>
+                  </View>
+                ) : null}
               </>
             )}
           </Pressable>
