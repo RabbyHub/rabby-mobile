@@ -6,11 +6,13 @@ import { RcIconInfoCC } from '@/assets/icons/common';
 export const RcIconFaceId = makeThemeIconFromCC(
   RcIconKeychainFaceIdCC,
   'neutral-body',
+  { allowColorProp: true },
 );
 
 export const RcIconFingerprint = makeThemeIconFromCC(
   RcIconKeychainFingerprintCC,
   'neutral-body',
+  { allowColorProp: true },
 );
 
 export const RcIconInfoForToast = makeThemeIconFromCC(
