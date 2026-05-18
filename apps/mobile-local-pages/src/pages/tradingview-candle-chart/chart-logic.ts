@@ -4,27 +4,28 @@ import {
   type ChartDescription,
   type TPSLPriceLines,
 } from './types';
+import BigNumber from 'bignumber.js';
 import { createSeriesMarkers } from 'lightweight-charts/standalone';
 
 // Format utilities
 const Sub_Numbers = '₀₁₂₃₄₅₆₇₈₉';
 
 export function formatLittleNumber(num: string | number, minLen = 6): string {
-  const numStr = String(num);
-  if (numStr.length >= minLen) {
-    const s = Number(num).toPrecision(4);
-    const ss = s.replace(/^0\.(0*)?(?:.*)/, (_, z) => {
-      const zeroLength = z?.length || 0;
+  const bn = new BigNumber(num);
+  if (bn.toFixed().length >= minLen) {
+    const s = bn.precision(4).toFormat();
+    const ss = s.replace(/^0.(0*)?(?:.*)/u, (_, z: string) => {
+      const zeroLength = z.length;
       const sub = String(zeroLength)
         .split('')
-        .map(x => Sub_Numbers[parseInt(x)])
+        .map(x => Sub_Numbers[Number(x)])
         .join('');
       const end = s.slice(zeroLength + 2);
       return '0.0' + sub + end;
     });
     return ss;
   }
-  return numStr;
+  return String(num);
 }
 
 export function formatPrice(v: number): string {
