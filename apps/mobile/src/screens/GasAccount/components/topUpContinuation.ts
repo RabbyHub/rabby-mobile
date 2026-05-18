@@ -1,5 +1,9 @@
+import { getRecommendNonce } from '@/core/apis/recommendNonce';
+import type { Account } from '@/types/account';
+import { findChainByServerID } from '@/utils/chain';
+import type { TxWithTempoExtras } from '@/utils/tempo';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 
 export type GasAccountTopUpResult =
@@ -7,7 +11,6 @@ export type GasAccountTopUpResult =
       type: 'token';
       ownerAddress: string;
       chainServerId: string;
-      usedNonce?: string;
     }
   | {
       type: 'pay';
@@ -36,105 +39,111 @@ export const shouldUpdateOriginalTxNonceAfterTopUp = ({
   );
 };
 
-const incrementNonce = (nonce: string) => {
-  const toHex = (value: BigNumber) => `0x${value.toString(16)}`;
-
+const parseNonce = (nonce: string) => {
   if (nonce.startsWith('0x')) {
-    return toHex(new BigNumber(nonce.slice(2), 16).plus(1));
+    return new BigNumber(nonce.slice(2), 16);
   }
 
-  return toHex(new BigNumber(nonce).plus(1));
+  return new BigNumber(nonce);
 };
 
-const normalizeNonce = (nonce: string) => {
-  if (nonce.startsWith('0x')) {
-    return nonce.toLowerCase();
+const incrementNonce = (nonce: string, step = 1) =>
+  `0x${parseNonce(nonce).plus(step).toString(16)}`;
+
+const getTxNonceKey = (tx?: Tx) =>
+  (tx as TxWithTempoExtras<Tx> | undefined)?.nonceKey as
+    | string
+    | number
+    | bigint
+    | undefined;
+
+export const getTopUpResumedNonce = async ({
+  tx,
+  originalAccount,
+  originalChainServerId,
+  topUpResult,
+}: {
+  tx?: Tx;
+  originalAccount: Account;
+  originalChainServerId: string;
+  topUpResult: GasAccountTopUpResult;
+}) => {
+  if (
+    !shouldUpdateOriginalTxNonceAfterTopUp({
+      originalAccountAddress: originalAccount.address,
+      originalChainServerId,
+      topUpResult,
+    })
+  ) {
+    return undefined;
   }
 
-  return `0x${new BigNumber(nonce).toString(16)}`;
+  const chainId = findChainByServerID(originalChainServerId)?.id;
+  if (!chainId) {
+    return undefined;
+  }
+
+  return getRecommendNonce({
+    from: originalAccount.address,
+    chainId,
+    account: originalAccount,
+    nonceKey: getTxNonceKey(tx),
+  });
 };
 
-export const getBumpedNonceAfterTopUp = ({
+export const getBumpedNonceAfterTopUp = async ({
   currentNonce,
-  originalAccountAddress,
+  tx,
+  originalAccount,
   originalChainServerId,
   topUpResult,
 }: {
   currentNonce?: string;
-  originalAccountAddress: string;
+  tx?: Tx;
+  originalAccount: Account;
   originalChainServerId: string;
   topUpResult: GasAccountTopUpResult;
 }) => {
-  const usedNonce =
-    topUpResult.type === 'token' ? topUpResult.usedNonce : undefined;
+  const resumedNonce = await getTopUpResumedNonce({
+    tx,
+    originalAccount,
+    originalChainServerId,
+    topUpResult,
+  });
 
-  if (!currentNonce || !usedNonce) {
-    return currentNonce;
-  }
-
-  if (
-    !shouldUpdateOriginalTxNonceAfterTopUp({
-      originalAccountAddress,
-      originalChainServerId,
-      topUpResult,
-    })
-  ) {
-    return currentNonce;
-  }
-
-  if (normalizeNonce(currentNonce) !== normalizeNonce(usedNonce)) {
-    return currentNonce;
-  }
-
-  return incrementNonce(currentNonce);
+  return resumedNonce ?? currentNonce;
 };
 
-export const buildTopUpResumedTxs = ({
+export const buildTopUpResumedTxs = async ({
   txs,
-  originalAccountAddress,
+  originalAccount,
   originalChainServerId,
   topUpResult,
 }: {
   txs: Tx[];
-  originalAccountAddress: string;
+  originalAccount: Account;
   originalChainServerId: string;
   topUpResult: GasAccountTopUpResult;
 }) => {
-  if (
-    !shouldUpdateOriginalTxNonceAfterTopUp({
-      originalAccountAddress,
-      originalChainServerId,
-      topUpResult,
-    })
-  ) {
+  if (!txs.length) {
     return txs;
   }
 
-  const usedNonce =
-    topUpResult.type === 'token' ? topUpResult.usedNonce : undefined;
+  const resumedNonce = await getTopUpResumedNonce({
+    tx: txs[0],
+    originalAccount,
+    originalChainServerId,
+    topUpResult,
+  });
 
-  if (!usedNonce) {
+  if (!resumedNonce) {
     return txs;
   }
 
-  const firstExplicitNonce = txs.find(tx => tx.nonce)?.nonce;
-
-  if (!firstExplicitNonce) {
-    return txs;
-  }
-
-  if (normalizeNonce(firstExplicitNonce) !== normalizeNonce(usedNonce)) {
-    return txs;
-  }
-
-  return txs.map(tx => {
-    if (!tx.nonce) {
-      return tx;
-    }
-
+  return txs.map((tx, index) => {
     return {
       ...tx,
-      nonce: incrementNonce(tx.nonce),
+      nonce: incrementNonce(resumedNonce, index),
     };
   });
 };
