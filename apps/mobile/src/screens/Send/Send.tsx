@@ -10,7 +10,6 @@ import {
   View,
   TouchableWithoutFeedback,
   Keyboard,
-  ScrollView,
 } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -94,18 +93,7 @@ import { type ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
-import Animated, {
-  runOnJS,
-  useAnimatedReaction,
-  useAnimatedRef,
-  useAnimatedStyle,
-  useSharedValue,
-} from 'react-native-reanimated';
 import { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
-
-const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
-  KeyboardAwareScrollView,
-);
 
 const EMPTY_TOKEN_ITEM = {
   decimals: 18,
@@ -250,7 +238,6 @@ function SendScreen({
     setReloadTxRefreshPaused,
     onBottomAreaLayout,
     scrollViewRef,
-    scrollViewStyle,
     scrollToBottom,
 
     checkCexSupport,
@@ -559,13 +546,17 @@ function SendScreen({
                 sendTokenEvents.emit(SendTokenEvents.ON_PRESS_DISMISS);
                 Keyboard.dismiss();
               }}>
-              <ScrollView contentContainerStyle={styles.sendScreen}>
-                <AnimatedKeyboardAwareScrollView
+              <View style={styles.sendScreen}>
+                <KeyboardAwareScrollView
                   innerRef={instance => {
                     scrollViewRef.current =
                       instance as unknown as KeyboardAwareScrollView;
                   }}
-                  contentContainerStyle={[styles.mainContent, scrollViewStyle]}>
+                  style={styles.scrollArea}
+                  contentContainerStyle={styles.mainContent}
+                  enableOnAndroid
+                  extraHeight={200}
+                  keyboardOpeningTime={0}>
                   {/* FromToSection */}
                   <View>
                     {/* From */}
@@ -590,13 +581,14 @@ function SendScreen({
                     <PendingTxItem
                       isForMultipleAddress={isForMultipleAddress}
                       data={localPendingTxData!}
+                      account={currentAccount}
                       type="send"
                       clearLocalPendingTxData={clearLocalPendingTxData}
                     />
                   )}
-                </AnimatedKeyboardAwareScrollView>
+                </KeyboardAwareScrollView>
                 <BottomArea account={currentAccount} />
-              </ScrollView>
+              </View>
             </TouchableWithoutFeedback>
             <TokenInfoPopup />
             <BlockedAddressDialog
@@ -644,16 +636,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       marginTop: 8,
     },
     sendScreen: {
-      flexDirection: 'column',
-      justifyContent: 'space-between',
       flex: 1,
+      flexDirection: 'column',
       paddingTop: 16,
-      position: 'relative',
-      height: '100%',
+    },
+    scrollArea: {
+      flex: 1,
     },
     mainContent: {
       paddingHorizontal: 24,
-      paddingBottom: 280,
+      paddingBottom: 24,
     },
     balance: {
       marginTop: 24,

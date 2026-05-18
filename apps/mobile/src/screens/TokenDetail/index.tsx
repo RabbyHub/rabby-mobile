@@ -219,7 +219,7 @@ const TokenDetailContent = () => {
       <View style={styles.balanceOverviewContainer}>
         <AccountSwitcher forScene="TokenDetail" disableSwitch={false} />
         <View style={styles.balanceOverviewContent}>
-          <BalanceOverview usdValue={usdValue} amount={amountSum} />
+          <BalanceOverview usdValue={usdValue} amount={amountSum || 0} />
           {!baseTokenInfo ? null : (
             <Pressable
               style={[

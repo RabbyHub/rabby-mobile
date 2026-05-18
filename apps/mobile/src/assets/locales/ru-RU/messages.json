@@ -148,7 +148,8 @@
     "Imported": "Импортировано",
     "SavedSeedPhrase": "Я сохранил посевную фразу",
     "from": "От",
-    "to": "Кому"
+    "to": "Кому",
+    "copiedSuccessfully": "Успешно скопировано"
   },
   "page": {
     "getStart": {
@@ -3399,7 +3400,8 @@
       "colStatusToken": "Статус/Токен",
       "emptyText": "Низкоценные токены не найдены",
       "unsupportedAccountType": "Этот тип аккаунта не поддерживается.",
-      "unsupportedAccount": "В настоящее время поддерживаются только адреса с закрытым ключом и seed-фразой."
+      "unsupportedAccount": "В настоящее время поддерживаются только адреса с закрытым ключом и seed-фразой.",
+      "title": "Convert Dust"
     }
   },
   "component": {

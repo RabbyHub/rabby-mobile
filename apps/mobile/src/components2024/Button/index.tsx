@@ -52,6 +52,7 @@ export type ButtonProps = Omit<
       noShadow?: boolean;
       icon?: ReactNode | ((ctx: { titleStyle?: TextStyle }) => ReactNode);
       iconRight?: ReactNode | ((ctx: { titleStyle?: TextStyle }) => ReactNode);
+      balanceIconSpacing?: boolean;
       showTextOnLoading?: boolean;
       loadingType?: 'indicator' | 'circle';
     },
@@ -76,6 +77,7 @@ export const Button = ({
   disabledTitleStyle,
   icon,
   iconRight,
+  balanceIconSpacing = false,
   ViewComponent = View,
   ...rest
 }: ButtonProps) => {
@@ -238,6 +240,13 @@ export const Button = ({
     return i;
   }, [icon, iconRight, titleStyle]);
 
+  const hiddenIconNode = useMemo(() => {
+    if (!React.isValidElement(iconNode)) {
+      return iconNode;
+    }
+    return React.cloneElement(iconNode);
+  }, [iconNode]);
+
   return (
     <View
       style={StyleSheet.flatten([
@@ -287,6 +296,18 @@ export const Button = ({
                 renderText(textNode, {
                   style: titleStyle,
                 })}
+              {balanceIconSpacing && iconNode && !iconRight && !!textNode && (
+                <View
+                  pointerEvents="none"
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  style={StyleSheet.flatten([
+                    styles.iconContainer,
+                    styles.hiddenIconContainer,
+                  ])}>
+                  {hiddenIconNode}
+                </View>
+              )}
               {iconNode && iconRight && (
                 <View style={StyleSheet.flatten([styles.iconContainer])}>
                   {iconNode}
@@ -334,6 +355,9 @@ const getStyle = createGetStyles2024(ctx => ({
   },
   iconContainer: {
     marginHorizontal: 8,
+  },
+  hiddenIconContainer: {
+    opacity: 0,
   },
   loading: {
     marginVertical: 2,

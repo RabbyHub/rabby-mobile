@@ -236,7 +236,7 @@ function ReceiveScreen(): JSX.Element {
       return;
     }
     triggerLight();
-    toast.success('Copied successfully');
+    toast.success(t('global.copiedSuccessfully'));
     copyAddress();
   };
 

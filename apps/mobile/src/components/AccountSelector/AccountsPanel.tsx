@@ -81,6 +81,7 @@ function AddressItemInSheetModal({
   /** @deprecated */
   isReceive?: boolean;
 } & RNViewProps) {
+  const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({
     getStyle: getAddressItemInPanelStyle,
   });
@@ -98,7 +99,7 @@ function AddressItemInSheetModal({
       return;
     }
     Clipboard.setString(account.address);
-    toast.success('Copied successfully');
+    toast.success(t('global.copiedSuccessfully'));
   };
 
   const handleRowFeedbackLongPress = useCallback(() => {

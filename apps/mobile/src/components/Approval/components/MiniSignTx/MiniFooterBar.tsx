@@ -78,6 +78,7 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   directSubmit?: boolean;
   account: Account;
   miniType?: 'tx' | 'typedData';
+  disableAutoGasAccountSwitch?: boolean;
   showCheckSecurityBtn?: boolean;
   showCheckSecurityBtnDisabled?: boolean;
   showCheckSecurity?: boolean;
@@ -243,6 +244,7 @@ export const MiniFooterBar: React.FC<Props> = ({
   directSubmit,
   account,
   miniType: miniSignType = 'tx',
+  disableAutoGasAccountSwitch = false,
   showCheckSecurityBtnDisabled,
   showCheckSecurityBtn,
   showCheckSecurity,
@@ -290,6 +292,7 @@ export const MiniFooterBar: React.FC<Props> = ({
       isSetGasMethodRef.current = true;
 
       if (
+        !disableAutoGasAccountSwitch &&
         shouldAutoSwitchToGasAccountFromGasless({
           showGasLess,
           isGasNotEnough: !!isGasNotEnough,
@@ -324,6 +327,7 @@ export const MiniFooterBar: React.FC<Props> = ({
     }
   }, [
     account?.type,
+    disableAutoGasAccountSwitch,
     gasAccountCost,
     directSubmit,
     canGotoUseGasAccount,

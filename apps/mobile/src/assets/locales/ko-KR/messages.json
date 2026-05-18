@@ -3280,7 +3280,8 @@
       "colStatusToken": "상태/토큰",
       "emptyText": "가치가 낮은 토큰을 찾을 수 없습니다",
       "unsupportedAccountType": "이 계정 유형은 지원하지 않습니다.",
-      "unsupportedAccount": "현재 개인 키와 시드 구문 주소만 지원됩니다."
+      "unsupportedAccount": "현재 개인 키와 시드 구문 주소만 지원됩니다.",
+      "title": "소액 전환"
     }
   },
   "global": {
@@ -3385,7 +3386,8 @@
     "Created": "생성됨",
     "SavedSeedPhrase": "나는 시드 구문을 저장했습니다.",
     "from": "보내는",
-    "to": "받는"
+    "to": "받는",
+    "copiedSuccessfully": "복사되었습니다"
   },
   "native": {
     "biometrics": {

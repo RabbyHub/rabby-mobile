@@ -3289,7 +3289,8 @@
         "stop": "Arrêter",
         "continue": "Continuer",
         "start": "Démarrer la conversion"
-      }
+      },
+      "title": "Convertir la poussière"
     }
   },
   "native": {
@@ -3689,7 +3690,8 @@
     "Imported": "Importé",
     "SavedSeedPhrase": "J'ai enregistré la seed phrase.",
     "from": "De",
-    "to": "À"
+    "to": "À",
+    "copiedSuccessfully": "Copié avec succès"
   },
   "background": {
     "transactionWatcher": {

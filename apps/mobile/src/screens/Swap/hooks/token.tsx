@@ -11,7 +11,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { refreshIdAtom, useSetQuoteVisible } from './atom';
+import { refreshIdAtom } from './atom';
 import useAsync from 'react-use/lib/useAsync';
 import { openapi } from '@/core/request';
 import useDebounce from 'react-use/lib/useDebounce';
@@ -38,13 +38,17 @@ import { eventBus, EVENTS } from '@/utils/events';
 import { Account } from '@/core/services/preference';
 import { useAutoSlippageEffect } from './autoSlippageEffect';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
-import { shouldScheduleQuotePolling } from '@/utils/quotePolling';
+import {
+  getQuotePollingResumeDelay,
+  shouldScheduleQuotePolling,
+} from '@/utils/quotePolling';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 import { convert18RawToTokenRaw, isTempoChain } from '@/utils/tempo';
 
 export const enableInsufficientQuote = true;
 
 const sliderHapticTriggerNumbers = [0, 50, 100];
+const SWAP_QUOTE_REFRESH_INTERVAL = 1000 * 20;
 
 const { isSameAddress } = addressUtils;
 
@@ -128,6 +132,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   const setRefreshId = useSetAtom(refreshIdAtom);
 
   const [showMoreVisible, setShowMoreVisible] = useState(false);
+  const [quotesListVisible, setQuotesListVisible] = useState(false);
 
   const {
     initialSelectedChain,
@@ -176,25 +181,88 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   >();
 
   const expiredTimer = useRef<NodeJS.Timeout>(undefined);
+  const autoQuoteRefreshDeadlineRef = useRef<number | null>(null);
   const autoQuoteRefreshPausedRef = useRef(false);
   const reloadTxRefreshPausedRef = useRef(false);
+  const enableRefreshRef = useRef(false);
 
-  const clearExpiredTimer = useCallback(() => {
+  const stopExpiredTimer = useCallback(() => {
     if (expiredTimer.current) {
       clearTimeout(expiredTimer.current);
+      expiredTimer.current = undefined;
     }
   }, []);
 
-  const setAutoQuoteRefreshPaused = useCallback(
-    (paused: boolean) => {
-      autoQuoteRefreshPausedRef.current = paused;
-      if (paused) {
-        clearExpiredTimer();
+  const clearExpiredTimer = useCallback(() => {
+    stopExpiredTimer();
+    autoQuoteRefreshDeadlineRef.current = null;
+  }, [stopExpiredTimer]);
+
+  const runScheduledQuoteRefresh = useCallback(() => {
+    expiredTimer.current = undefined;
+
+    if (autoQuoteRefreshPausedRef.current) {
+      return;
+    }
+
+    autoQuoteRefreshDeadlineRef.current = null;
+    if (
+      shouldScheduleQuotePolling({
+        enabled: enableRefreshRef.current,
+        paused: false,
+      })
+    ) {
+      setRefreshId(e => e + 1);
+    }
+  }, [setRefreshId]);
+
+  const scheduleQuoteRefresh = useCallback(
+    (delay: number) => {
+      stopExpiredTimer();
+      autoQuoteRefreshDeadlineRef.current = Date.now() + delay;
+
+      if (autoQuoteRefreshPausedRef.current) {
         return;
       }
-      setRefreshId(e => e + 1);
+
+      expiredTimer.current = setTimeout(runScheduledQuoteRefresh, delay);
     },
-    [clearExpiredTimer, setRefreshId],
+    [runScheduledQuoteRefresh, stopExpiredTimer],
+  );
+
+  const resumeQuoteRefresh = useCallback(() => {
+    const delay = getQuotePollingResumeDelay({
+      deadline: autoQuoteRefreshDeadlineRef.current,
+    });
+
+    if (delay === null) {
+      return;
+    }
+
+    if (delay <= 0) {
+      runScheduledQuoteRefresh();
+      return;
+    }
+
+    stopExpiredTimer();
+    expiredTimer.current = setTimeout(runScheduledQuoteRefresh, delay);
+  }, [runScheduledQuoteRefresh, stopExpiredTimer]);
+
+  const setAutoQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      if (autoQuoteRefreshPausedRef.current === paused) {
+        return;
+      }
+
+      autoQuoteRefreshPausedRef.current = paused;
+      if (paused) {
+        stopExpiredTimer();
+        return;
+      }
+
+      resumeQuoteRefresh();
+    },
+    [resumeQuoteRefresh, stopExpiredTimer],
   );
 
   const setReloadTxRefreshPaused = useCallback((paused: boolean) => {
@@ -208,15 +276,11 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const enableRefreshRef = useRef(false);
-
   const setActiveProvider: React.Dispatch<
     React.SetStateAction<QuoteProvider | undefined>
   > = useCallback(
     p => {
-      if (expiredTimer.current) {
-        clearTimeout(expiredTimer.current);
-      }
+      clearExpiredTimer();
 
       setOriActiveProvider(pre => {
         enableRefreshRef.current = p ? true : false;
@@ -230,18 +294,9 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         return p;
       });
 
-      expiredTimer.current = setTimeout(() => {
-        if (
-          shouldScheduleQuotePolling({
-            enabled: enableRefreshRef.current,
-            paused: autoQuoteRefreshPausedRef.current,
-          })
-        ) {
-          setRefreshId(e => e + 1);
-        }
-      }, 1000 * 20);
+      scheduleQuoteRefresh(SWAP_QUOTE_REFRESH_INTERVAL);
     },
-    [setRefreshId],
+    [clearExpiredTimer, scheduleQuoteRefresh],
   );
 
   const [payToken, setPayToken] = useTokenInfo({
@@ -799,18 +854,25 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   const { setSwapSortIncludeGasFee } = useSwapSettings();
 
-  const openQuote = useSetQuoteVisible();
-
   const openQuotesList = useCallback(() => {
-    openQuote(true);
+    setQuotesListVisible(true);
     setSwapSortIncludeGasFee(true);
-  }, [openQuote, setSwapSortIncludeGasFee]);
+  }, [setSwapSortIncludeGasFee]);
+
+  const closeQuotesList = useCallback(() => {
+    setQuotesListVisible(false);
+  }, []);
 
   useEffect(() => {
-    if (expiredTimer.current) {
-      clearTimeout(expiredTimer.current);
-    }
-  }, [payToken?.id, receiveToken?.id, chain, payAmount, setActiveProvider]);
+    clearExpiredTimer();
+  }, [
+    payToken?.id,
+    receiveToken?.id,
+    chain,
+    payAmount,
+    clearExpiredTimer,
+    setActiveProvider,
+  ]);
 
   useEffect(() => {
     setActiveProvider(undefined);
@@ -824,11 +886,11 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   useEffect(() => {
     if (!canRequestQuote) {
-      clearTimeout(expiredTimer.current);
+      clearExpiredTimer();
       setQuotesList([]);
       setActiveProvider(undefined);
     }
-  }, [canRequestQuote, setActiveProvider]);
+  }, [canRequestQuote, clearExpiredTimer, setActiveProvider]);
 
   const search = {};
   const [searchObj] = useState<{
@@ -1040,6 +1102,8 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
     //quote
     openQuotesList,
+    closeQuotesList,
+    quotesListVisible,
     quoteLoading,
     quoteList,
     currentProvider,
