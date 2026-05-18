@@ -1,6 +1,9 @@
 import { openapi } from '@/core/request';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
-import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type {
+  GasAccountCheckResult,
+  Tx,
+} from '@rabby-wallet/rabby-api/dist/types';
 import type { SignTxCheckError } from './calc';
 
 const GAS_ACCOUNT_CHAIN_NOT_SUPPORTED = 4001;
@@ -77,6 +80,7 @@ export const checkGasAccountLevelValidation = async ({
   valid: boolean;
   cost: number;
   errors: SignTxCheckError[];
+  result?: GasAccountCheckResult;
 }> => {
   if (!isReady || !txs.length || !sig || !gasAccountAddress) {
     return {
@@ -112,6 +116,7 @@ export const checkGasAccountLevelValidation = async ({
         (res.gas_account_cost?.estimate_tx_cost || 0) +
         (res.gas_account_cost?.gas_cost || 0),
       errors,
+      result: res,
     };
   } catch (error: any) {
     return {

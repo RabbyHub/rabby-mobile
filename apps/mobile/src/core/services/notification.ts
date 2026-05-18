@@ -396,7 +396,12 @@ export class NotificationService extends Events {
       this.notifyWindowId = null;
     }
     this.notifyWindowId =
-      apisAppWin.createGlobalBottomSheetModal(winProps) ?? null;
+      apisAppWin.createGlobalBottomSheetModal({
+        ...winProps,
+        approvalComponent:
+          winProps?.approvalComponent ??
+          this.currentApproval?.data.approvalComponent,
+      }) ?? null;
   };
 
   setCurrentRequestDeferFn = (fn: (isRetry?: boolean) => void) => {

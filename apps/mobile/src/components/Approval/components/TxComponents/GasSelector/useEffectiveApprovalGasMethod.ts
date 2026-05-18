@@ -1,9 +1,9 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
-  ApprovalGasMethod,
   resolveApprovalGasMethod,
   shouldAutoSwitchToApprovalGasAccount,
 } from './approvalGasDisplay';
+import type { ApprovalGasMethod } from './approvalGasDisplay';
 
 type Params = {
   isReady: boolean;
@@ -12,8 +12,10 @@ type Params = {
   gasAccountChainSupported: boolean;
   noCustomRPC: boolean;
   canUseGasLess: boolean;
+  manualGasMethod?: ApprovalGasMethod;
   gasMethod: ApprovalGasMethod;
   setGasMethod: (method: ApprovalGasMethod) => void;
+  autoSwitchKey?: string | number;
 };
 
 export const useEffectiveApprovalGasMethod = ({
@@ -23,9 +25,23 @@ export const useEffectiveApprovalGasMethod = ({
   gasAccountChainSupported,
   noCustomRPC,
   canUseGasLess,
+  manualGasMethod,
   gasMethod,
   setGasMethod,
+  autoSwitchKey,
 }: Params) => {
+  const didAutoSwitchRef = useRef(false);
+  const autoSwitchKeyRef = useRef(autoSwitchKey);
+
+  useEffect(() => {
+    if (autoSwitchKeyRef.current === autoSwitchKey) {
+      return;
+    }
+
+    autoSwitchKeyRef.current = autoSwitchKey;
+    didAutoSwitchRef.current = false;
+  }, [autoSwitchKey]);
+
   const shouldPreferGasAccountImmediately =
     shouldAutoSwitchToApprovalGasAccount({
       nativeTokenInsufficient: isGasNotEnough,
@@ -34,32 +50,39 @@ export const useEffectiveApprovalGasMethod = ({
       noCustomRPC,
     });
 
-  const effectiveApprovalGasMethod = useMemo(
-    () =>
-      resolveApprovalGasMethod({
-        nativeTokenInsufficient: isGasNotEnough,
-        gasAccountChainSupported,
-        noCustomRPC,
-        freeGasAvailable: canUseGasLess,
-        legacyGasMethod: gasMethod,
-      }),
-    [
-      canUseGasLess,
+  const effectiveApprovalGasMethod = useMemo(() => {
+    if (manualGasMethod) {
+      return manualGasMethod;
+    }
+
+    return resolveApprovalGasMethod({
+      mode: 'native_insufficient_prefers_gasAccount',
+      nativeTokenInsufficient: isGasNotEnough,
       gasAccountChainSupported,
-      gasMethod,
-      isGasNotEnough,
       noCustomRPC,
-    ],
-  );
+      freeGasAvailable: canUseGasLess,
+      legacyGasMethod: gasMethod,
+    });
+  }, [
+    canUseGasLess,
+    gasAccountChainSupported,
+    gasMethod,
+    isGasNotEnough,
+    manualGasMethod,
+    noCustomRPC,
+  ]);
 
   useEffect(() => {
     if (
       !isReady ||
+      manualGasMethod ||
+      didAutoSwitchRef.current ||
       (isFirstGasLessLoading && !shouldPreferGasAccountImmediately) ||
       gasMethod === effectiveApprovalGasMethod
     ) {
       return;
     }
+    didAutoSwitchRef.current = true;
     setGasMethod(effectiveApprovalGasMethod);
   }, [
     shouldPreferGasAccountImmediately,
@@ -67,6 +90,7 @@ export const useEffectiveApprovalGasMethod = ({
     gasMethod,
     isFirstGasLessLoading,
     isReady,
+    manualGasMethod,
     setGasMethod,
   ]);
 

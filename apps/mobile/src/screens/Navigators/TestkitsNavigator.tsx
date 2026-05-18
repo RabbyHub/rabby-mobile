@@ -5,6 +5,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import {
   DebugLogViewer,
+  DevCapabilityFile,
   DevDataSQLite,
   DevDataKeychain,
   DevDataWhitelist,
@@ -86,6 +87,17 @@ export function TestkitsNavigator() {
       <Stack.Screen
         name={RootNames.DevUIPermissions}
         component={DevUIPermissions}
+      />
+      <Stack.Screen
+        name={RootNames.DevCapabilityFile}
+        component={DevCapabilityFile}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'File Capability',
+            title: 'File Capability',
+          },
+        ])}
       />
 
       <Stack.Screen name={RootNames.DevDataSQLite} component={DevDataSQLite} />

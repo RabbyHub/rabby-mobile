@@ -4,6 +4,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -17,7 +18,10 @@ import {
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { useTranslation } from 'react-i18next';
 import { getTokenSymbol } from '@/utils/token';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  GasAccountCheckResult,
+  TokenItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { BridgeSlippage, useSlippageTooLowOrTooHigh } from './BridgeSlippage';
 import { tokenPriceImpact } from '../hooks/token';
 import { AppSwitch, AssetAvatar } from '@/components';
@@ -43,6 +47,7 @@ import { useMemoizedFn } from 'ahooks';
 import IconBestQuoteTag from '@/assets2024/icons/bridge/IconBestQuoteTag.svg';
 import { Text } from '@/components/Typography';
 import { SignMainnetHeaderContent } from '@/components/Approval/components/TxComponents/GasSelector/SignMainnetGasSelectorHeader';
+import type { ApprovalGasMethod } from '@/components/Approval/components/TxComponents/GasSelector/approvalGasDisplay';
 import { useMiniSignFixedMode } from '@/hooks/miniSignGasStore';
 import BigNumber from 'bignumber.js';
 import { normalizeTxParams } from '@/components/Approval/components/SignTx/util';
@@ -101,6 +106,8 @@ const BridgeShowMore = ({
   sourceAlwaysShow,
   insufficient,
   onDepositPopupVisibleChange,
+  onSlippageOptionsOpenChange,
+  onGasSettingsOpenChange,
 }: {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -138,6 +145,8 @@ const BridgeShowMore = ({
   sourceAlwaysShow?: boolean;
   textColor?: string;
   onDepositPopupVisibleChange?: (visible: boolean) => void;
+  onSlippageOptionsOpenChange?: (open: boolean) => void;
+  onGasSettingsOpenChange?: (open: boolean) => void;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -340,6 +349,7 @@ const BridgeShowMore = ({
             noQuote={!sourceLogo && !sourceName}
             chainServeId={fromToken?.chain}
             onDepositPopupVisibleChange={onDepositPopupVisibleChange}
+            onGasSettingsOpenChange={onGasSettingsOpenChange}
           />
         ) : null}
 
@@ -357,6 +367,7 @@ const BridgeShowMore = ({
             isWrapToken={isWrapToken}
             recommendValue={recommendValue}
             loading={quoteLoading}
+            onOptionsOpenChange={onSlippageOptionsOpenChange}
           />
         ) : null}
       </View>
@@ -396,6 +407,7 @@ const BridgeShowMore = ({
             isWrapToken={isWrapToken}
             recommendValue={recommendValue}
             loading={quoteLoading}
+            onOptionsOpenChange={onSlippageOptionsOpenChange}
           />
         )}
 
@@ -444,6 +456,7 @@ export const DirectSignGasInfo = ({
   gasFeeListItemInnerStyle,
   textColor,
   onDepositPopupVisibleChange,
+  onGasSettingsOpenChange,
 }: {
   supportDirectSign: boolean;
   loading: boolean;
@@ -454,6 +467,7 @@ export const DirectSignGasInfo = ({
   gasFeeListItemInnerStyle?: RNViewProps['style'];
   textColor?: string;
   onDepositPopupVisibleChange?: (visible: boolean) => void;
+  onGasSettingsOpenChange?: (open: boolean) => void;
 } & RNViewProps) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
@@ -475,7 +489,37 @@ export const DirectSignGasInfo = ({
   const isReady = (ctx?.txsCalc?.length || 0) > 0;
   const isGasNotEnough = !!ctx?.isGasNotEnough;
   const canUseGasLess = !!ctx?.gasless?.is_gasless;
-  const noCustomRPC = !!ctx?.noCustomRPC;
+  const noCustomRPC = ctx?.noCustomRPC ?? true;
+  const [manualGasMethod, setManualGasMethod] = useState<
+    ApprovalGasMethod | undefined
+  >(undefined);
+  const accountAddress = config?.account?.address;
+  const accountType = config?.account?.type;
+  const manualGasScopeKey = useMemo(() => {
+    const scopeChainId = ctx?.chainId || chainId;
+
+    if (!accountAddress || !scopeChainId) {
+      return '';
+    }
+
+    return `${accountType}:${accountAddress}:${scopeChainId}`;
+  }, [accountAddress, accountType, chainId, ctx?.chainId]);
+  const manualGasScopeKeyRef = useRef('');
+
+  useEffect(() => {
+    if (!manualGasScopeKey) {
+      return;
+    }
+
+    if (
+      manualGasScopeKeyRef.current &&
+      manualGasScopeKeyRef.current !== manualGasScopeKey
+    ) {
+      setManualGasMethod(undefined);
+    }
+
+    manualGasScopeKeyRef.current = manualGasScopeKey;
+  }, [manualGasScopeKey]);
 
   let gasLessConfig =
     canUseGasLess && ctx?.gasless?.promotion
@@ -496,7 +540,8 @@ export const DirectSignGasInfo = ({
     !!ctx?.gasAccount.is_gas_account;
 
   const showGasLess = isReady && (isGasNotEnough || !!gasLessConfig);
-  const payGasByGasAccount = ctx?.gasMethod === 'gasAccount';
+  const effectiveGasMethod = manualGasMethod ?? ctx?.gasMethod;
+  const payGasByGasAccount = effectiveGasMethod === 'gasAccount';
 
   const showGasLessToSign = showGasLess && !payGasByGasAccount && canUseGasLess;
 
@@ -511,7 +556,7 @@ export const DirectSignGasInfo = ({
     !ctx?.gasAccount.chain_not_support;
 
   const gasAccountCanPay =
-    ctx?.gasMethod === 'gasAccount' &&
+    effectiveGasMethod === 'gasAccount' &&
     // isSupportedAddr &&
     noCustomRPC &&
     !!ctx?.gasAccount?.balance_is_enough &&
@@ -593,7 +638,7 @@ export const DirectSignGasInfo = ({
   const showTempoGasTokenSelector =
     !!chain &&
     isTempoChain(chain.serverId) &&
-    ctx?.gasMethod !== 'gasAccount' &&
+    effectiveGasMethod !== 'gasAccount' &&
     isTempoBatchSupportedAccountType(currentAccount?.type);
   const getCachedTokenItems = useCallback(() => {
     if (!currentAccount?.address) {
@@ -653,7 +698,10 @@ export const DirectSignGasInfo = ({
     ],
   );
   const checkGasLevelIsNotEnough = useMemoizedFn(
-    (gas, type?: 'gasAccount' | 'native'): Promise<[boolean, number]> => {
+    (
+      gas,
+      type?: 'gasAccount' | 'native',
+    ): Promise<[boolean, number, GasAccountCheckResult?]> => {
       const initialTxs = ctx?.txsCalc || [];
       let nextTxs = initialTxs;
 
@@ -748,15 +796,28 @@ export const DirectSignGasInfo = ({
             !gasAccountRes.balance_is_enough,
             (gasAccountRes.gas_account_cost.estimate_tx_cost || 0) +
               (gasAccountRes.gas_account_cost?.gas_cost || 0),
+            gasAccountRes,
           ]);
       });
     },
   );
 
-  const handleChangeGasMethod = useCallback(
-    async (method: 'native' | 'gasAccount') => {
+  const handleAutoChangeGasMethod = useCallback(
+    async (method: ApprovalGasMethod) => {
       try {
         instance.setGasMethod(method);
+      } catch (error) {
+        console.error('Gas method change error:', error);
+      }
+    },
+    [instance],
+  );
+
+  const handleChangeGasMethod = useCallback(
+    async (method: ApprovalGasMethod) => {
+      setManualGasMethod(method);
+      try {
+        instance.setGasMethod(method, { manual: true });
       } catch (error) {
         console.error('Gas method change error:', error);
       }
@@ -886,7 +947,8 @@ export const DirectSignGasInfo = ({
       });
 
       instance.replaceTxs(nextTxs);
-      instance.setGasMethod('gasAccount');
+      setManualGasMethod('gasAccount');
+      instance.setGasMethod('gasAccount', { manual: true });
       handleGasChange(ctx?.selectedGas);
     },
   );
@@ -894,6 +956,10 @@ export const DirectSignGasInfo = ({
   const showGasFeeTooHighTips = ctx?.gasFeeTooHigh && !loading && !noQuote;
 
   useEffect(() => {
+    if (manualGasMethod) {
+      return;
+    }
+
     if (
       shouldAutoSwitchToGasAccountFromGasless({
         showGasLess,
@@ -903,13 +969,14 @@ export const DirectSignGasInfo = ({
       }) &&
       !payGasByGasAccount
     ) {
-      handleChangeGasMethod('gasAccount');
+      handleAutoChangeGasMethod('gasAccount');
     }
   }, [
     canGotoUseGasAccount,
     canUseGasLess,
-    handleChangeGasMethod,
+    handleAutoChangeGasMethod,
     isGasNotEnough,
+    manualGasMethod,
     payGasByGasAccount,
     showGasLess,
   ]);
@@ -986,8 +1053,11 @@ export const DirectSignGasInfo = ({
           defaultFixedModeOnCurrentChain={fixedModeOnCurrentChain}
           tx={currentTx}
           gasAccountCost={gasAccountCost}
-          gasMethod={ctx?.gasMethod}
+          gasMethod={effectiveGasMethod}
           onChangeGasMethod={handleChangeGasMethod}
+          onAutoChangeGasMethod={handleAutoChangeGasMethod}
+          disableAutoGasLevelSwitch={!!manualGasMethod}
+          showGasMethodShortcut={false}
           disabled={false}
           isReady={isReady}
           gasLimit={ctx?.txs?.[0]?.gas}
@@ -1005,6 +1075,7 @@ export const DirectSignGasInfo = ({
           gasToken={gasToken}
           showTempoGasTokenSelector={showTempoGasTokenSelector}
           tempoGasTokenList={tempoGasTokenList}
+          tempoPreferredFeeTokenId={ctx?.tempoPreferredFeeTokenId}
           onSelectTempoGasToken={handleSelectTempoGasToken}
           tempoGasTokenLoading={tempoGasTokenLoading}
           gasPriceMedian={ctx?.gasPriceMedian || null}
@@ -1017,6 +1088,7 @@ export const DirectSignGasInfo = ({
           )}
           nativeTokenInsufficient={isGasNotEnough}
           freeGasAvailable={canUseGasLess}
+          onGasSettingsOpenChange={onGasSettingsOpenChange}
         />
       ) : (
         <ListItem

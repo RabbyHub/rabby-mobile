@@ -34,7 +34,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, View } from 'react-native';
+import { Alert, Platform, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import useMount from 'react-use/lib/useMount';
 import { ChainInfo2024 } from '../Send/components/ChainInfo2024';
@@ -49,11 +49,7 @@ import {
   useSwapUnlimitedAllowance,
   useTokenPair,
 } from './hooks';
-import {
-  refreshIdAtom,
-  useQuoteVisible,
-  useRabbyFeeVisible,
-} from './hooks/atom';
+import { refreshIdAtom, useRabbyFeeVisible } from './hooks/atom';
 import { buildDexSwap, dexSwap } from './hooks/swap';
 import { Button } from '@/components2024/Button';
 import {
@@ -115,8 +111,12 @@ import {
   createAmountComparer,
   shouldIgnoreAmountChangeInMaxMode,
 } from '@/utils/form';
-import { Alert } from 'react-native';
 import { useMiniSignerEffectPause } from '@/hooks/useMiniSignerEffectPause';
+import {
+  hasQuotePollingPauseReason,
+  type QuotePollingPauseReasonState,
+  updateQuotePollingPauseReason,
+} from '@/utils/quotePolling';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -181,8 +181,6 @@ const Swap = ({
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
 
-  const [visible, setVisible] = useQuoteVisible();
-
   const [unlimitedAllowance] = useSwapUnlimitedAllowance();
 
   const userAddress = currentAccount?.address;
@@ -214,6 +212,8 @@ const Swap = ({
     feeRate,
 
     openQuotesList,
+    closeQuotesList,
+    quotesListVisible,
     quoteLoading,
     quoteList,
 
@@ -245,6 +245,47 @@ const Swap = ({
   } = useTokenPair({
     account: currentAccount!,
   });
+  const quotePollingPauseReasonsRef = useRef<QuotePollingPauseReasonState>({});
+  const setQuotePollingPauseReason = useCallback(
+    (reason: string, paused: boolean) => {
+      const wasPaused = hasQuotePollingPauseReason(
+        quotePollingPauseReasonsRef.current,
+      );
+
+      quotePollingPauseReasonsRef.current = updateQuotePollingPauseReason({
+        state: quotePollingPauseReasonsRef.current,
+        reason,
+        paused,
+      });
+
+      const isPaused = hasQuotePollingPauseReason(
+        quotePollingPauseReasonsRef.current,
+      );
+
+      if (wasPaused !== isPaused) {
+        setAutoQuoteRefreshPaused(isPaused);
+      }
+    },
+    [setAutoQuoteRefreshPaused],
+  );
+  const setSlippageOptionsQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      setQuotePollingPauseReason('slippage-options', paused);
+    },
+    [setQuotePollingPauseReason],
+  );
+  const setGasSettingsQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      setQuotePollingPauseReason('gas-settings', paused);
+    },
+    [setQuotePollingPauseReason],
+  );
+  const setDepositQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      setQuotePollingPauseReason('gas-account-deposit', paused);
+    },
+    [setQuotePollingPauseReason],
+  );
 
   const chainServerId = useMemo(() => {
     return findChainByEnum(chain)?.serverId || CHAINS[chain].serverId;
@@ -950,12 +991,12 @@ const Swap = ({
     if (shouldPauseMiniSignerEffects()) {
       return;
     }
-    if (
-      !canShowDirectSubmit ||
-      !currentAccount?.address ||
-      !currentTxs?.length
-    ) {
+    if (!canShowDirectSubmit || !currentAccount?.address) {
       closeMiniSigner();
+      return;
+    }
+    if (!currentTxs?.length) {
+      closeMiniSigner({ preserveManualGasMethod: true });
       return;
     }
     onChangeCheckGasFeeTooHigh(true);
@@ -1152,7 +1193,9 @@ const Swap = ({
                 onChangeSlider={onChangeSlider}
                 value={payAmount}
                 onValueChange={value => {
-                  if (directSignBtnRef.current?.isAuthInProgress()) return;
+                  if (directSignBtnRef.current?.isAuthInProgress()) {
+                    return;
+                  }
                   handleAmountChange(value);
                 }}
                 token={payToken}
@@ -1244,6 +1287,7 @@ const Swap = ({
                     type="swap"
                     loading={quoteLoading}
                     autoSuggestSlippage={autoSuggestSlippage}
+                    onOptionsOpenChange={setSlippageOptionsQuoteRefreshPaused}
                   />
                 </View>
               </>
@@ -1299,7 +1343,11 @@ const Swap = ({
                         ? undefined
                         : slippageValidInfo?.suggest_slippage
                     }
-                    onDepositPopupVisibleChange={setAutoQuoteRefreshPaused}
+                    onDepositPopupVisibleChange={setDepositQuoteRefreshPaused}
+                    onSlippageOptionsOpenChange={
+                      setSlippageOptionsQuoteRefreshPaused
+                    }
+                    onGasSettingsOpenChange={setGasSettingsQuoteRefreshPaused}
                   />
                 </View>
               )}
@@ -1438,10 +1486,8 @@ const Swap = ({
           <QuoteList
             list={quoteList}
             loading={quoteLoading}
-            visible={visible}
-            onClose={() => {
-              setVisible(false);
-            }}
+            visible={quotesListVisible}
+            onClose={closeQuotesList}
             userAddress={userAddress}
             chain={chain}
             slippage={slippage}

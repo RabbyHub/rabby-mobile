@@ -341,7 +341,7 @@ export default function TransactionNavigator() {
         options={({ route }) =>
           mergeScreenOptions2024([
             {
-              title: 'Convert Dust',
+              title: t('page.convertDust.title'),
               headerTitle: ctx =>
                 ConvertDustHeaderTitle({
                   ...ctx,

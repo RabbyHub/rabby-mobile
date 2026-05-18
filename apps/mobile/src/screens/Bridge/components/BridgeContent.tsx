@@ -76,6 +76,11 @@ import {
 } from '@/utils/form';
 import { buildTx as buildBridgeTx } from '@rabby-wallet/rabby-bridge';
 import { useMiniSignerEffectPause } from '@/hooks/useMiniSignerEffectPause';
+import {
+  hasQuotePollingPauseReason,
+  type QuotePollingPauseReasonState,
+  updateQuotePollingPauseReason,
+} from '@/utils/quotePolling';
 
 /** Bridge form snapshot for validation during auth */
 export interface BridgeFormSnapshot {
@@ -316,6 +321,47 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     slider,
     onChangeSlider,
   } = useBridge(isForMultipleAddress);
+  const quotePollingPauseReasonsRef = useRef<QuotePollingPauseReasonState>({});
+  const setQuotePollingPauseReason = useCallback(
+    (reason: string, paused: boolean) => {
+      const wasPaused = hasQuotePollingPauseReason(
+        quotePollingPauseReasonsRef.current,
+      );
+
+      quotePollingPauseReasonsRef.current = updateQuotePollingPauseReason({
+        state: quotePollingPauseReasonsRef.current,
+        reason,
+        paused,
+      });
+
+      const isPaused = hasQuotePollingPauseReason(
+        quotePollingPauseReasonsRef.current,
+      );
+
+      if (wasPaused !== isPaused) {
+        setAutoQuoteRefreshPaused(isPaused);
+      }
+    },
+    [setAutoQuoteRefreshPaused],
+  );
+  const setSlippageOptionsQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      setQuotePollingPauseReason('slippage-options', paused);
+    },
+    [setQuotePollingPauseReason],
+  );
+  const setGasSettingsQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      setQuotePollingPauseReason('gas-settings', paused);
+    },
+    [setQuotePollingPauseReason],
+  );
+  const setDepositQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      setQuotePollingPauseReason('gas-account-deposit', paused);
+    },
+    [setQuotePollingPauseReason],
+  );
 
   const chains = useMemo(
     () => [toChain, fromChain].filter(e => !!e) as CHAINS_ENUM[],
@@ -683,8 +729,12 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     if (shouldPauseMiniSignerEffects()) {
       return;
     }
-    if (!canShowDirectSubmit || !currentAccount?.address || !txs?.length) {
+    if (!canShowDirectSubmit || !currentAccount?.address) {
       closeMiniSigner();
+      return;
+    }
+    if (!txs?.length) {
+      closeMiniSigner({ preserveManualGasMethod: true });
       return;
     }
     prefetchMiniSigner({
@@ -1092,7 +1142,11 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                       selectedBridgeQuote.aggregator.id &&
                     bestQuoteId?.bridgeId === selectedBridgeQuote.bridge_id
                   }
-                  onDepositPopupVisibleChange={setAutoQuoteRefreshPaused}
+                  onDepositPopupVisibleChange={setDepositQuoteRefreshPaused}
+                  onSlippageOptionsOpenChange={
+                    setSlippageOptionsQuoteRefreshPaused
+                  }
+                  onGasSettingsOpenChange={setGasSettingsQuoteRefreshPaused}
                 />
               )}
             {showClosedMarketTip && (
@@ -1124,6 +1178,9 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                         setIsCustomSlippage={setIsCustomSlippage}
                         type="bridge"
                         loading={quoteLoading}
+                        onOptionsOpenChange={
+                          setSlippageOptionsQuoteRefreshPaused
+                        }
                       />
                     </View>
                   </>

@@ -78,6 +78,13 @@ export const DevUIPermissions = registerAppScreen<
   name: TESTKITS_PRELOAD_SCREENS.DevUIPermissions,
 });
 
+export const DevCapabilityFile = registerAppScreen<
+  typeof import('@/screens/Testkits/DevCapabilityFile').default
+>({
+  loader: () => import('@/screens/Testkits/DevCapabilityFile'),
+  name: TESTKITS_PRELOAD_SCREENS.DevCapabilityFile,
+});
+
 export const DevDataSQLite = registerAppScreen<
   typeof import('@/screens/Testkits/DevDataSQLite').default
 >({

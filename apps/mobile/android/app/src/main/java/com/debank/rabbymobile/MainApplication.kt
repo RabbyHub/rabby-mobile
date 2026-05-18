@@ -25,6 +25,7 @@ class MainApplication : Application(), ReactApplication {
               add(RNScreenshotPreventPackage())
               add(RNTimeChangedPackage())
               add(RNHelpersPackage())
+              add(RNFileHelpersPackage())
               add(RNThreadPackage())
             }
 

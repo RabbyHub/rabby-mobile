@@ -10,10 +10,10 @@ import i18next from 'i18next';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import DeviceUtils from './device';
 
-export async function goToSystemSettingsFor(target?: Permission) {
+export async function goToSystemSettingsFor(_target?: Permission) {
   if (Platform.OS !== 'android') {
     Linking.openURL('app-settings:'); // iOS 特有 scheme
-    console.warn(`goToSystemSettingsFor is only supported on Android`);
+    console.warn('goToSystemSettingsFor is only supported on Android');
   }
 
   // const packageName = APPLICATION_ID;
@@ -23,9 +23,9 @@ export async function goToSystemSettingsFor(target?: Permission) {
 
 export class PerAndroid {
   static requiredPermissions = [
-    DeviceUtils.isGteAndroid(14) &&
+    DeviceUtils.isGteAndroid(13) &&
       PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
-    DeviceUtils.isGteAndroid(14) &&
+    DeviceUtils.isGteAndroid(13) &&
       PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
     DeviceUtils.isGteAndroid(14) &&
       PermissionsAndroid.PERMISSIONS.READ_MEDIA_VISUAL_USER_SELECTED,
@@ -36,7 +36,7 @@ export class PerAndroid {
     // PermissionsAndroid.PERMISSIONS.BLUETOOTH_ADMIN,
     PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
     DeviceUtils.isAndroid() &&
-      !DeviceUtils.isGteAndroid(14) &&
+      !DeviceUtils.isGteAndroid(13) &&
       PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
     DeviceUtils.isGteAndroid(13) &&
       PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
@@ -156,10 +156,10 @@ export class PerAndroid {
 
   static async applyAndroidPermission(
     target: Permission,
-    options?: { checkFirst?: boolean },
+    _options?: { checkFirst?: boolean },
   ) {
     if (Platform.OS !== 'android') {
-      throw new Error(`applyAndroidPermission is only supported on Android`);
+      throw new Error('applyAndroidPermission is only supported on Android');
     }
 
     const rationale = PerAndroid.getRationaleForPermission(target);
@@ -170,8 +170,8 @@ export class PerAndroid {
     return PermissionsAndroid.request(target, rationale);
   }
 
-  static async goToSystemSettingsFor(target?: Permission) {
-    return goToSystemSettingsFor(target);
+  static async goToSystemSettingsFor(_target?: Permission) {
+    return goToSystemSettingsFor(_target);
   }
 
   static formatAndroidPermission(permission: Permission) {

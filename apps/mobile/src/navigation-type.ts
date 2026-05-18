@@ -164,6 +164,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevDataWhitelist]?: {};
   [RootNames.DevUIBuiltInPages]?: {};
   [RootNames.DevUIPermissions]?: {};
+  [RootNames.DevCapabilityFile]?: {};
   [RootNames.DevSwitches]?: {};
   [RootNames.DevPerf]?: {};
 };
@@ -307,6 +308,7 @@ export type TransactionNavigatorParamList = {
      * @default false
      */
     treatSmallAssetsAsScam?: boolean;
+    account?: Account | null;
   };
   [RootNames.HistoryLocalDetail]: {
     data: TransactionGroup;
@@ -316,6 +318,7 @@ export type TransactionNavigatorParamList = {
     type?: HistoryItemCateType;
     onPressAddToWhitelistButton?: (data: SendAction) => void;
     isInSendHistory?: boolean;
+    account?: Account | null;
   };
   [RootNames.Send]?:
     | {

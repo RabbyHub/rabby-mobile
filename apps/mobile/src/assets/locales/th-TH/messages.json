@@ -3540,7 +3540,8 @@
       "colStatusToken": "สถานะ/โทเค็น",
       "emptyText": "ไม่พบโทเค็นที่มีมูลค่าต่ำ",
       "unsupportedAccountType": "ไม่รองรับประเภทบัญชีนี้",
-      "unsupportedAccount": "ขณะนี้รองรับเฉพาะที่อยู่แบบคีย์ส่วนตัวและวลีเมล็ดพันธุ์เท่านั้น"
+      "unsupportedAccount": "ขณะนี้รองรับเฉพาะที่อยู่แบบคีย์ส่วนตัวและวลีเมล็ดพันธุ์เท่านั้น",
+      "title": "แปลง Dust"
     }
   },
   "native": {
@@ -3660,7 +3661,8 @@
     "Imported": "นำเข้า",
     "SavedSeedPhrase": "ฉันได้บันทึก seed phrase เรียบร้อยแล้ว",
     "from": "จาก",
-    "to": "ถึง"
+    "to": "ถึง",
+    "copiedSuccessfully": "คัดลอกสำเร็จ"
   },
   "background": {
     "transactionWatcher": {

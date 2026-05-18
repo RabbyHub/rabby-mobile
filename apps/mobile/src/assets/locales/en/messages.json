@@ -3314,7 +3314,8 @@
         "description": "Supports converting small balances into the native token"
       },
       "unsupportedAccountType": "Not support this account type.",
-      "unsupportedAccount": "Currently only private key and seed phrase addresses are supported."
+      "unsupportedAccount": "Currently only private key and seed phrase addresses are supported.",
+      "title": "Convert Dust"
     }
   },
   "component": {
@@ -3611,6 +3612,7 @@
     "appName": "Rabby Wallet",
     "appDescription": "Your go-to wallet for Ethereum and EVM",
     "copy": "Copy",
+    "copiedSuccessfully": "Copied successfully",
     "copied": "Copied",
     "confirm": "Confirm",
     "next": "Next",

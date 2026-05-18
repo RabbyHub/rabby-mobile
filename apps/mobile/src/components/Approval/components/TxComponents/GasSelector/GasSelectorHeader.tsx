@@ -9,7 +9,12 @@ import React, {
 import { useTranslation } from 'react-i18next';
 import { calcMaxPriorityFee } from '@/utils/transaction';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { GasLevel, Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  GasAccountCheckResult,
+  GasLevel,
+  Tx,
+  TxPushType,
+} from '@rabby-wallet/rabby-api/dist/types';
 import {
   Image,
   Keyboard,
@@ -144,7 +149,7 @@ interface GasSelectorProps {
   checkGasLevelIsNotEnough?: (
     gas: GasSelectorResponse,
     type?: 'gasAccount' | 'native',
-  ) => Promise<[boolean, number]>;
+  ) => Promise<[boolean, number, GasAccountCheckResult?]>;
   account: Account;
   fixedMode?: boolean;
   defaultFixedModeOnCurrentChain?: boolean;

@@ -148,7 +148,8 @@
     "SavedSeedPhrase": "我已经保存了种子短语",
     "Imported": "导入的",
     "from": "从",
-    "to": "到"
+    "to": "到",
+    "copiedSuccessfully": "已复制"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过助记词导入",
@@ -3384,7 +3385,7 @@
         "start": "开始转换"
       },
       "completed": {
-        "title": "粉尘已转换！",
+        "title": "小额资产已转换！",
         "receive": "已收到：",
         "failedTitle": "转换已结束",
         "viewMoreDetail": "查看更多详情",
@@ -3409,7 +3410,8 @@
       "colStatusToken": "状态/代币",
       "emptyText": "未找到低价值代币",
       "unsupportedAccountType": "不支持此账户类型。",
-      "unsupportedAccount": "目前仅支持私钥和助记词地址。"
+      "unsupportedAccount": "目前仅支持私钥和助记词地址。",
+      "title": "小额资产归集"
     }
   },
   "component": {
