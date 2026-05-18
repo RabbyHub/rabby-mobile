@@ -148,7 +148,8 @@
     "Imported": "Nhập khẩu",
     "SavedSeedPhrase": "Tôi đã lưu cụm từ hạt giống.",
     "from": "Từ",
-    "to": "Đến"
+    "to": "Đến",
+    "copiedSuccessfully": "Sao chép thành công"
   },
   "page": {
     "transactions": {
@@ -3399,7 +3400,8 @@
       "colStatusToken": "Trạng thái/Token",
       "emptyText": "Không tìm thấy token giá trị thấp",
       "unsupportedAccountType": "Không hỗ trợ loại tài khoản này.",
-      "unsupportedAccount": "Hiện chỉ hỗ trợ địa chỉ khóa riêng tư và cụm từ hạt giống."
+      "unsupportedAccount": "Hiện chỉ hỗ trợ địa chỉ khóa riêng tư và cụm từ hạt giống.",
+      "title": "Chuyển đổi Dust"
     }
   },
   "component": {

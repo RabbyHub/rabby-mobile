@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Dimensions, Platform, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Platform, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
 
@@ -33,6 +33,7 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
+import { apisHomeTabIndex } from '@/hooks/navigation';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 import { computeBalanceChange } from '@/core/apis/balance';
@@ -310,20 +311,21 @@ export function MultiAddressHomeHeader(
               isAnimRunning && styles.curveCardGradientBgWithAnim,
             ]}
           />
-          <TouchableOpacity
+          <View
             style={[
               styles.curveCard,
               styles.shadowView,
               // !pinnedAccountList.length && styles.noAddressCard,
-            ]}
-            onPress={() => {
-              handleWalletsListPress();
-            }}>
+            ]}>
             {shouldCoverLocalWebViewLoading ? (
               <View pointerEvents="none" style={styles.curveCardCenterMask} />
             ) : null}
             <MultiChart
               hideType={hideType}
+              onPressNetWorth={() => {
+                apisHomeTabIndex.homeTabScrollerRef.current?.setIndex(1);
+              }}
+              onPressWalletList={handleWalletsListPress}
               style={[
                 styles.multiChart,
                 !pinnedAccountList?.length && styles.multiChartNoAccountsFollow,
@@ -335,7 +337,7 @@ export function MultiAddressHomeHeader(
                 pinnedAccountList={pinnedAccountList}
               />
             ) : null}
-          </TouchableOpacity>
+          </View>
         </View>
       </BlurShadowView>
     </View>

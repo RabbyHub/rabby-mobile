@@ -3279,7 +3279,8 @@
       "colStatusToken": "Status/Token",
       "emptyText": "No low-value tokens found",
       "unsupportedAccountType": "Not support this account type.",
-      "unsupportedAccount": "Currently only private key and seed phrase addresses are supported."
+      "unsupportedAccount": "Currently only private key and seed phrase addresses are supported.",
+      "title": "Konversi Dust"
     }
   },
   "component": {
@@ -3659,7 +3660,8 @@
     "Created": "Dibuat",
     "SavedSeedPhrase": "Saya telah menyimpan seed phrase",
     "from": "Dari",
-    "to": "Ke"
+    "to": "Ke",
+    "copiedSuccessfully": "Berhasil disalin"
   },
   "background": {
     "error": {

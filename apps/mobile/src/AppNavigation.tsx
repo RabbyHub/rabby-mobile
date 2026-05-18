@@ -117,9 +117,7 @@ function useAppInitialRouteName(isAppUnlocked: boolean) {
         }
 
         setInitialRouteName(
-          hasVisibleAccounts
-            ? RootNames.StackRoot
-            : RootNames.StackGetStarted,
+          hasVisibleAccounts ? RootNames.StackRoot : RootNames.StackGetStarted,
         );
       })
       .catch(error => {

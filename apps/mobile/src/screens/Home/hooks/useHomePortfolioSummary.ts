@@ -1,4 +1,5 @@
 import { zCreate } from '@/core/utils/reexports';
+import { filterMyAccounts } from '@/core/apis/account';
 import accountStore from '@/store/account';
 import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import {
@@ -22,6 +23,7 @@ type HomePortfolioState = {
   hasFetchedAccounts: boolean;
   isFetchingAccounts: boolean;
   matteredAccountLength: number;
+  isPendingMatteredAccountLength: boolean;
   isPendingDisplayAddresses: boolean;
   totalBalance: number;
   changeData: HomeChangeData;
@@ -110,6 +112,7 @@ function buildInitialState(): HomePortfolioState {
     hasFetchedAccounts: false,
     isFetchingAccounts: false,
     matteredAccountLength: 0,
+    isPendingMatteredAccountLength: true,
     isPendingDisplayAddresses: true,
     totalBalance: 0,
     changeData: EMPTY_HOME_CHANGE_DATA,
@@ -132,6 +135,8 @@ function isSameState(prev: HomePortfolioState, next: HomePortfolioState) {
     prev.hasFetchedAccounts === next.hasFetchedAccounts &&
     prev.isFetchingAccounts === next.isFetchingAccounts &&
     prev.matteredAccountLength === next.matteredAccountLength &&
+    prev.isPendingMatteredAccountLength ===
+      next.isPendingMatteredAccountLength &&
     prev.isPendingDisplayAddresses === next.isPendingDisplayAddresses &&
     prev.totalBalance === next.totalBalance &&
     prev.changeData.rawChange === next.changeData.rawChange &&
@@ -161,6 +166,12 @@ function buildHomePortfolioState(): HomePortfolioState {
   const currentBalanceMap = addressBalanceStore.getAddressValueMap();
   const balance24hMap = balance24hStore.getAddress24hBalanceMap();
   const displayAddressSignature = getAddressSetSignature(displayAddresses);
+  const canUseFetchedAccountLength =
+    !balanceState.hasResolvedMatteredAccountLength &&
+    accountState.hasFetchedAccounts;
+  const matteredAccountLength = canUseFetchedAccountLength
+    ? filterMyAccounts(accountState.accounts).length
+    : balanceState.matteredAccountLength;
   const isCurveSceneMatched =
     getAddressSetSignature(sceneCurveState.addresses.Home) ===
     displayAddressSignature;
@@ -229,7 +240,10 @@ function buildHomePortfolioState(): HomePortfolioState {
     hasResolvedSelection: balanceState.hasResolvedSelection,
     hasFetchedAccounts: accountState.hasFetchedAccounts,
     isFetchingAccounts: accountState.isFetchingAccounts,
-    matteredAccountLength: balanceState.matteredAccountLength,
+    matteredAccountLength,
+    isPendingMatteredAccountLength:
+      !balanceState.hasResolvedMatteredAccountLength &&
+      !canUseFetchedAccountLength,
     isPendingDisplayAddresses,
     totalBalance: balanceState.totalBalance,
     changeData,

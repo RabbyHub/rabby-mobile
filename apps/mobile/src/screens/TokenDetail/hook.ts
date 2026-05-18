@@ -144,7 +144,7 @@ export const useTokenBalance = ({
   const amountSum = useMemo(() => {
     let deFiAmount = 0;
     relateDefiList?.forEach(item => {
-      deFiAmount += item.amount;
+      deFiAmount += item.amount || 0;
     });
 
     if (isSingleAddress) {
@@ -157,7 +157,7 @@ export const useTokenBalance = ({
         item.address.toLowerCase(),
       );
       const totalTokenAmount = amountUnionBy.reduce((acc, item) => {
-        return acc + item.amount;
+        return acc + (item.amount || 0);
       }, 0);
 
       return totalTokenAmount + deFiAmount;

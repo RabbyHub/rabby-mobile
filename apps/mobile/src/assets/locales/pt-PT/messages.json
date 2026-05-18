@@ -408,7 +408,8 @@
     "Created": "Criado",
     "SavedSeedPhrase": "Eu salvei a seed phrase.",
     "from": "De",
-    "to": "Para"
+    "to": "Para",
+    "copiedSuccessfully": "Copiado com sucesso"
   },
   "page": {
     "getStart": {
@@ -3659,7 +3660,8 @@
       "colStatusToken": "Estado/Token",
       "emptyText": "Nenhum token de baixo valor encontrado",
       "unsupportedAccountType": "Não suporta este tipo de conta.",
-      "unsupportedAccount": "Atualmente apenas são suportados endereços de chave privada e frase-semente."
+      "unsupportedAccount": "Atualmente apenas são suportados endereços de chave privada e frase-semente.",
+      "title": "Converter Pó"
     }
   },
   "constant": {

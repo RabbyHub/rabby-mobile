@@ -134,8 +134,12 @@ const ChartContent = memo(function ChartContent({
 export const MultiChart = memo(function MultiChart({
   hideType,
   style,
+  onPressNetWorth,
+  onPressWalletList,
 }: {
   hideType: BALANCE_HIDE_TYPE;
+  onPressNetWorth?: () => void;
+  onPressWalletList?: () => void;
 } & RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
   const {
@@ -143,6 +147,7 @@ export const MultiChart = memo(function MultiChart({
     changeData,
     totalBalance,
     matteredAccountLength,
+    isPendingMatteredAccountLength,
     showBalanceLoadingWithoutLocal,
     showChangeLoadingWithoutLocal,
     isCurveAnyAddrLoading,
@@ -152,6 +157,7 @@ export const MultiChart = memo(function MultiChart({
       changeData: state.changeData,
       totalBalance: state.totalBalance,
       matteredAccountLength: state.matteredAccountLength,
+      isPendingMatteredAccountLength: state.isPendingMatteredAccountLength,
       showBalanceLoadingWithoutLocal: state.showBalanceLoadingWithoutLocal,
       showChangeLoadingWithoutLocal: state.showChangeLoadingWithoutLocal,
       isCurveAnyAddrLoading: state.isCurveAnyAddrLoading,
@@ -185,11 +191,14 @@ export const MultiChart = memo(function MultiChart({
             isLoss={changeData.isLoss}
             data={chartsData}
             hideType={hideType}
-            matteredAccountCount={
-              startupReady ? matteredAccountLength : undefined
+            matteredAccountCount={matteredAccountLength}
+            isMatteredAccountCountPending={
+              !startupReady || isPendingMatteredAccountLength
             }
             showBalanceLoadingWithoutLocal={showBalanceLoading}
             showChangeLoadingWithoutLocal={showChangeLoading}
+            onPressNetWorth={onPressNetWorth}
+            onPressWalletList={onPressWalletList}
           />
           <ChartContent
             data={chartsData}
@@ -210,9 +219,12 @@ interface IHeaderProps {
   isLoss: boolean;
   data: CurvePoint[];
   hideType: BALANCE_HIDE_TYPE;
-  matteredAccountCount?: number;
+  matteredAccountCount: number;
+  isMatteredAccountCountPending: boolean;
   showBalanceLoadingWithoutLocal: boolean;
   showChangeLoadingWithoutLocal: boolean;
+  onPressNetWorth?: () => void;
+  onPressWalletList?: () => void;
 }
 const ChartHeader = React.memo(
   ({
@@ -223,8 +235,11 @@ const ChartHeader = React.memo(
     hideType,
     data: _data,
     matteredAccountCount,
+    isMatteredAccountCountPending,
     showBalanceLoadingWithoutLocal,
     showChangeLoadingWithoutLocal,
+    onPressNetWorth,
+    onPressWalletList,
   }: IHeaderProps) => {
     const { reanimatedStyles, styles, colors2024 } = useTheme2024({ getStyle });
     const rStyles = {
@@ -239,6 +254,8 @@ const ChartHeader = React.memo(
     const changePercent = useDebouncedValue(_changePercent, 300);
     const showChangeLoading =
       showNetWorthLoading || showChangeLoadingWithoutLocal;
+    const displayMatteredAccountCount =
+      matteredAccountCount >= 10 ? '10' : String(matteredAccountCount);
 
     const netWorth = useMemo(() => {
       return formatSmallCurrencyValueParts(rawNetWorth, { currency }).text;
@@ -380,11 +397,12 @@ const ChartHeader = React.memo(
     return (
       <Animated.View style={rStyles.charHeader}>
         <View style={styles.netWorthContainer}>
-          <View
+          <Pressable
             style={[
               styles.netWorthTextContainer,
               showNetWorthLoading ? styles.hidden : undefined,
             ]}
+            onPress={onPressNetWorth}
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceValue)}>
             <AnimateableText
               style={[
@@ -394,7 +412,7 @@ const ChartHeader = React.memo(
               ]}
               animatedProps={netWorthAnimatedProps}
             />
-          </View>
+          </Pressable>
 
           <Skeleton
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceLoading)}
@@ -407,15 +425,28 @@ const ChartHeader = React.memo(
             LinearGradientComponent={LoadingLinear}
           />
 
-          <View style={[styles.accountBg]}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.accountBg,
+              pressed && { opacity: 0.6 },
+            ]}
+            onPress={onPressWalletList}
+            hitSlop={8}>
             <RcIconSmallWalletCC color={colors2024['neutral-title-1']} />
-            <Text style={styles.accountText}>
-              {matteredAccountCount && matteredAccountCount >= 10
-                ? '10'
-                : matteredAccountCount}
-            </Text>
+            {isMatteredAccountCountPending ? (
+              <Skeleton
+                width={18}
+                height={16}
+                style={styles.accountCountSkeleton}
+                LinearGradientComponent={LoadingLinear}
+              />
+            ) : (
+              <Text style={styles.accountText}>
+                {displayMatteredAccountCount}
+              </Text>
+            )}
             <RcIconSmallArrowCC color={colors2024['neutral-title-1']} />
-          </View>
+          </Pressable>
         </View>
         {showChangeLoading ? (
           <Skeleton
@@ -621,6 +652,10 @@ const getStyle = createGetStyles2024(
       lineHeight: 20,
       fontFamily: 'SF Pro Rounded',
       paddingLeft: 6,
+    },
+    accountCountSkeleton: {
+      marginLeft: 6,
+      borderRadius: 4,
     },
     percentChangeContainer: {
       // flexDirection: 'row',

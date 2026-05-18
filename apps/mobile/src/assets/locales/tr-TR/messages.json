@@ -3279,7 +3279,8 @@
       "colStatusToken": "Durum/Token",
       "emptyText": "Düşük değerli token bulunamadı",
       "unsupportedAccountType": "Bu hesap türü desteklenmiyor.",
-      "unsupportedAccount": "Şu anda yalnızca private key ve seed phrase adresleri desteklenmektedir."
+      "unsupportedAccount": "Şu anda yalnızca private key ve seed phrase adresleri desteklenmektedir.",
+      "title": "Küçük Bakiyeleri Dönüştür"
     }
   },
   "component": {
@@ -3659,7 +3660,8 @@
     "Created": "Oluşturuldu",
     "SavedSeedPhrase": "Seed ifrasını kaydettim.",
     "from": "Kimden",
-    "to": "Kime"
+    "to": "Kime",
+    "copiedSuccessfully": "Başarıyla kopyalandı"
   },
   "background": {
     "error": {

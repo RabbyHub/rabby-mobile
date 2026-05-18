@@ -9,6 +9,7 @@ import useTokenList, {
 } from '@/store/tokens';
 import type { DustFilter } from '../constant';
 import { useShallow } from 'zustand/shallow';
+import { findChain, makeTokenFromChain } from '@/utils/chain';
 
 export function useConvertDustTokenList({
   address,
@@ -105,6 +106,17 @@ export function useConvertDustReceiveToken({
   chainServerId?: string;
   nativeTokenAddress?: string;
 }) {
+  const chainInfo = useMemo(
+    () =>
+      findChain({
+        serverId: chainServerId,
+      }),
+    [chainServerId],
+  );
+  const fallbackReceiveToken = useMemo(
+    () => (chainInfo ? makeTokenFromChain(chainInfo) : null),
+    [chainInfo],
+  );
   const { data } = useRequest(
     async () => {
       if (!address || !chainServerId || !nativeTokenAddress) {
@@ -128,5 +140,5 @@ export function useConvertDustReceiveToken({
     },
   );
 
-  return data ?? null;
+  return data ?? fallbackReceiveToken;
 }

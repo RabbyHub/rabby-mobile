@@ -18,6 +18,7 @@ import CustomLabel from './components/Tabs/CustomLabel';
 import { useAddrChainLength } from './useChainInfo';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import {
+  apisSingleHome,
   useSingleHomeAccount,
   useSingleHomeHasNoData,
 } from './hooks/singleHome';
@@ -111,6 +112,12 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
       headerHeight={0}
       renderHeader={renderHeader}
       tabBarHeight={32}
+      onTabChange={() => {
+        setTimeout(() => {
+          apisSingleHome.setFoldChart(true);
+          // 延迟部分时间，避免tab下面layout计算和顶部高度变化重叠
+        }, 150);
+      }}
       renderTabBar={DynamicCustomMaterialTabBar}
       headerContainerStyle={styles.tabBarWrap}>
       <Tabs.Tab label={renderLabel('Token')} name="tokens">

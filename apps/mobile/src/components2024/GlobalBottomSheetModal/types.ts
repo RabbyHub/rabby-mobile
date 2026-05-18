@@ -126,6 +126,17 @@ type CreateParamsBase<T extends MODAL_NAMES = MODAL_NAMES> = {
    * @description specify whether to disable screenshot report before modal close
    */
   screenshotReportFreeBeforeModalClose?: boolean;
+  /**
+   * @description global sheets are singleton by modal name by default. Set this
+   * only when the same modal name intentionally needs multiple active instances.
+   * @default false
+   */
+  allowMultipleInstances?: boolean;
+  /**
+   * @description optional discriminator for singleton reuse when one modal name
+   * needs separate singleton buckets.
+   */
+  singletonKey?: string;
 };
 
 export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> =
