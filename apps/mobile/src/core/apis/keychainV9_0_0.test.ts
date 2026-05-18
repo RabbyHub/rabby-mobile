@@ -63,7 +63,7 @@ describe('core/apis/keychainV9_0_0', () => {
     jest.doMock('react-native', () => ({
       Platform: { OS: 'android' },
       NativeModules: {
-        RNKeychainManager: {
+        RNRabbyKeychainV9Manager: {
           debugGetGenericPasswordStateForOptions:
             mockDebugGetGenericPasswordStateForOptions,
           debugRemoveCipherStorageMarkerForOptions:
@@ -71,7 +71,7 @@ describe('core/apis/keychainV9_0_0', () => {
         },
       },
     }));
-    jest.doMock('react-native-keychain', () => {
+    jest.doMock('@rabby-wallet/react-native-keychain-9', () => {
       const OfficialKeychain = {
         getGenericPassword: mockGetGenericPassword,
         setGenericPassword: mockSetGenericPassword,
