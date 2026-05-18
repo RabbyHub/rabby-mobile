@@ -12,6 +12,7 @@ import {
   MarginTable,
   ClearinghouseState,
   SpotClearinghouseState,
+  OpenOrder,
 } from '@rabby-wallet/hyperliquid-sdk';
 import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
 import type { Account } from '@/types/account';
@@ -528,3 +529,66 @@ export const handleDisplayFundingPayments = (fundingPayments: string) => {
 // Hyperliquid spot balance keys: USDT is keyed as 'USDT0' on the spot side.
 export const getSpotBalanceKey = (asset: string): string =>
   asset === 'USDT' ? 'USDT0' : asset;
+
+export const isLimitOrder = (order: OpenOrder): boolean => {
+  return (
+    !order.isTrigger && !order.isPositionTpsl && order.orderType === 'Limit'
+  );
+};
+
+export const computeFilledPct = (origSz: string, sz: string): number => {
+  const orig = new BigNumber(origSz || 0);
+  if (orig.isZero()) {
+    return 0;
+  }
+  const filled = orig.minus(sz || 0);
+  return filled.div(orig).times(100).toNumber();
+};
+
+export const computeMarginUsage = (
+  limitPx: string,
+  origSz: string,
+  leverage: number,
+): number => {
+  if (!leverage || leverage <= 0) {
+    return 0;
+  }
+  return new BigNumber(limitPx || 0)
+    .times(origSz || 0)
+    .div(leverage)
+    .toNumber();
+};
+
+/**
+ * Absolute deviation of a user-entered limit price from the current mark price,
+ * expressed as a unit ratio (0.05 == 5%). Returns Infinity for non-numeric input
+ * or a zero/negative mark so callers always trip the block threshold safely.
+ */
+export const computeLimitPriceDeviation = (
+  limitPx: string,
+  markPx: number,
+): number => {
+  const limit = Number(limitPx);
+  if (!Number.isFinite(limit) || !markPx || markPx <= 0) {
+    return Infinity;
+  }
+  return Math.abs(limit - markPx) / markPx;
+};
+
+/**
+ * True when a limit-open order would cross the spread at submission time and
+ * therefore likely execute immediately. Long ≥ mark, Short ≤ mark.
+ */
+export const isMarketableLimit = (params: {
+  direction: 'Long' | 'Short';
+  limitPx: string;
+  markPx: number;
+}): boolean => {
+  const limit = Number(params.limitPx);
+  if (!Number.isFinite(limit) || limit <= 0) {
+    return false;
+  }
+  return params.direction === 'Long'
+    ? limit >= params.markPx
+    : limit <= params.markPx;
+};

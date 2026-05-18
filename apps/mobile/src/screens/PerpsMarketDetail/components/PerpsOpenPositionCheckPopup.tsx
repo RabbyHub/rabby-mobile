@@ -12,7 +12,8 @@ import {
   formatUsdValue,
   splitNumberByStep,
 } from '@/utils/number';
-import { formatPerpsCoin } from '@/utils/perps';
+import { PerpsOpenOrderType } from '@/constant/perps';
+import { formatPerpsCoin, isMarketableLimit } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   BottomSheetScrollView,
@@ -43,6 +44,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     selectedMarginMode: 'cross' | 'isolated';
     estimatedLiquidationPrice: string | number;
     quoteAsset?: string;
+    orderType?: PerpsOpenOrderType;
+    limitPx?: string;
   };
 }> = ({ visible, onClose, info, onConfirm }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
@@ -68,9 +71,21 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     tpTriggerPx,
     slTriggerPx,
     selectedMarginMode,
+    orderType = 'market',
+    limitPx,
   } = info;
 
   const { t } = useTranslation();
+
+  // Derive marketable flag locally: a limit-open order that would cross the
+  // current mark price will likely fill immediately. Only meaningful when
+  // orderType === 'limit' and a price is set.
+  const isMarketable = useMemo(() => {
+    if (orderType !== 'limit' || !limitPx) {
+      return false;
+    }
+    return isMarketableLimit({ direction, limitPx, markPx: markPrice });
+  }, [orderType, limitPx, direction, markPrice]);
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
@@ -100,7 +115,9 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
         <BottomSheetScrollView contentContainerStyle={styles.scrollViewContent}>
           <View>
             <Text style={styles.title}>
-              {t('page.perpsDetail.PerpsOpenPositionCheckPopup.title')}
+              {orderType === 'limit'
+                ? t('page.perpsDetail.PerpsOpenPositionCheckPopup.limitTitle')
+                : t('page.perpsDetail.PerpsOpenPositionCheckPopup.marketTitle')}
             </Text>
           </View>
 
@@ -229,6 +246,22 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 </Text>
               </View>
             </View>
+            {orderType === 'limit' && limitPx ? (
+              <View style={styles.listItem}>
+                <View style={styles.listItemMain}>
+                  <Text style={styles.label}>
+                    {t(
+                      'page.perpsDetail.PerpsOpenPositionCheckPopup.limitPrice',
+                    )}
+                  </Text>
+                </View>
+                <View>
+                  <Text style={styles.value}>
+                    ${splitNumberByStep(limitPx)}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
             <View style={styles.listItem}>
               <TouchableOpacity
                 onPress={() => {
@@ -268,10 +301,21 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
           </View>
         </BottomSheetScrollView>
         <View style={styles.footer}>
+          {isMarketable ? (
+            <Text style={styles.marketableWarning}>
+              {t(
+                'page.perpsDetail.PerpsOpenPositionCheckPopup.mayExecuteImmediately',
+              )}
+            </Text>
+          ) : null}
           <Button
             type="hyperliquid"
             title={
-              direction === 'Long'
+              orderType === 'limit'
+                ? t(
+                    'page.perpsDetail.PerpsOpenPositionCheckPopup.setLimitOrderBtn',
+                  )
+                : direction === 'Long'
                 ? t('page.perpsDetail.action.long')
                 : t('page.perpsDetail.action.short')
             }
@@ -318,6 +362,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingTop: 16,
       paddingHorizontal: 16,
       paddingBottom: 56,
+    },
+    marketableWarning: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors2024['orange-default'],
+      textAlign: 'center',
+      // marginTop: 4,
+      marginBottom: 12,
+      paddingHorizontal: 20,
     },
     title: {
       fontFamily: 'SF Pro Rounded',
@@ -392,8 +447,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     value: {
       marginLeft: 6,
       fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
+      fontSize: 14,
+      lineHeight: 18,
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
     },

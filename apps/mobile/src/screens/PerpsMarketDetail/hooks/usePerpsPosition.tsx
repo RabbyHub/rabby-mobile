@@ -1,47 +1,31 @@
 import { apisPerps } from '@/core/apis';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
-import {
-  perpsStore,
-  setAccountNeedApproveAgent,
-} from '@/hooks/perps/usePerpsStore';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { judgeIsUserAgentIsExpired } from '@/hooks/perps/judgeAgentExpired';
 import { useMemoizedFn } from 'ahooks';
 import * as Sentry from '@sentry/react-native';
 import { Dimensions, Platform } from 'react-native';
-import { PERPS_BUILDER_INFO } from '@/constant/perps';
+import {
+  PERPS_BUILDER_INFO,
+  PERPS_LIMIT_TIF_DEFAULT,
+  type PerpsOpenOrderType,
+} from '@/constant/perps';
 import { sleep } from '@/utils/async';
-import { OrderResponse } from '@rabby-wallet/hyperliquid-sdk';
+import { OpenOrder, OrderResponse } from '@rabby-wallet/hyperliquid-sdk';
 import { showToast } from '@/hooks/perps/showToast';
 import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
+import { useTranslation } from 'react-i18next';
 
 export const usePerpsPosition = () => {
   const currentPerpsAccount = perpsStore(s => s.currentPerpsAccount);
+  const { t } = useTranslation();
 
   const formatTriggerPx = (px?: string) => {
     // avoid '.15' input error from hy validator
     // '.15' -> '0.15'
     return px ? Number(px).toString() : undefined;
   };
-
-  const judgeIsUserAgentIsExpired = useMemoizedFn(
-    async (errorMessage: string) => {
-      const masterAddress = currentPerpsAccount?.address;
-      if (!masterAddress) {
-        return false;
-      }
-
-      const agentWalletPreference = await apisPerps.getAgentWalletPreference(
-        masterAddress,
-      );
-      const agentAddress = agentWalletPreference?.agentAddress;
-      if (agentAddress && errorMessage.includes(agentAddress)) {
-        console.warn('handle action agent is expired, logout');
-        showToast('Agent is expired, please try again', 'error');
-        setAccountNeedApproveAgent(true);
-        return true;
-      }
-    },
-  );
 
   const handleCancelOrder = useMemoizedFn(
     async (oid: number, coin: string, actionType: 'tp' | 'sl') => {
@@ -82,6 +66,69 @@ export const usePerpsPosition = () => {
       }
     },
   );
+
+  // Single round-trip for both single-cancel and "Cancel All". Returns true
+  // when ≥1 order succeeded; on expired agent the dedicated toast already
+  // fired so we suppress the generic failure one.
+  const handleCancelLimitOrders = useMemoizedFn(async (orders: OpenOrder[]) => {
+    if (!orders.length) {
+      return false;
+    }
+    try {
+      const sdk = apisPerps.getPerpsSDK();
+      const res = await sdk.exchange?.cancelOrder(
+        orders.map(o => ({ oid: o.oid, coin: o.coin })),
+      );
+      const statuses = res?.response.data.statuses ?? [];
+      const okCount = statuses.filter(
+        item => (item as unknown as string) === 'success',
+      ).length;
+      const failCount = statuses.length - okCount;
+
+      if (okCount > 0 && failCount === 0) {
+        showToast(
+          orders.length === 1
+            ? t('page.perps.cancelOrderToast.singleSuccess')
+            : t('page.perps.cancelOrderToast.multiSuccess', {
+                count: okCount,
+              }),
+          'success',
+        );
+        return true;
+      }
+      if (okCount > 0) {
+        showToast(
+          t('page.perps.cancelOrderToast.partial', {
+            okCount,
+            failCount,
+          }),
+          'success',
+        );
+        Sentry.captureException(
+          new Error(
+            'cancel limit orders partial failure: ' + JSON.stringify(res),
+          ),
+        );
+        return true;
+      }
+      showToast(t('page.perps.cancelOrderToast.failed'), 'error');
+      Sentry.captureException(
+        new Error('cancel limit orders all failed: ' + JSON.stringify(res)),
+      );
+      return false;
+    } catch (e: any) {
+      const expired = await judgeIsUserAgentIsExpired(e?.message || '');
+      if (expired) {
+        return false;
+      }
+      console.error('cancel limit order error', e);
+      showToast(t('page.perps.cancelOrderToast.failed'), 'error');
+      Sentry.captureException(
+        new Error('cancel limit order error: ' + JSON.stringify(e)),
+      );
+      return false;
+    }
+  });
 
   const handleUpdateMargin = useMemoizedFn(
     async (coin: string, action: 'add' | 'reduce', margin: number) => {
@@ -244,6 +291,8 @@ export const usePerpsPosition = () => {
       tpTriggerPx?: string;
       slTriggerPx?: string;
       isAddingPosition?: boolean;
+      orderType?: PerpsOpenOrderType;
+      limitPx?: string;
     }) => {
       try {
         const sdk = apisPerps.getPerpsSDK();
@@ -256,6 +305,8 @@ export const usePerpsPosition = () => {
           midPx,
           tpTriggerPx,
           slTriggerPx,
+          orderType = 'market',
+          limitPx,
         } = params;
         if (!params.isAddingPosition) {
           await sdk.exchange?.updateLeverage({
@@ -265,21 +316,37 @@ export const usePerpsPosition = () => {
           });
         }
 
-        const promises = [
-          sdk.exchange?.marketOrderOpen({
-            coin,
-            isBuy: direction === 'Long',
-            size,
-            midPx,
-            builder: PERPS_BUILDER_INFO,
-          }),
-        ];
-
-        // avoid '.15' input error from hy validator
         const formattedTpTriggerPx = formatTriggerPx(tpTriggerPx);
         const formattedSlTriggerPx = formatTriggerPx(slTriggerPx);
 
-        if (tpTriggerPx || slTriggerPx) {
+        const openCall =
+          orderType === 'limit' && limitPx
+            ? sdk.exchange?.limitOrderOpen({
+                coin,
+                isBuy: direction === 'Long',
+                size,
+                limitPx,
+                tif: PERPS_LIMIT_TIF_DEFAULT,
+                // Intentionally not forwarding tpTriggerPx / slTriggerPx in
+                // limit mode: TP/SL state may carry over from a previous
+                // market-mode session and the UI is hidden in limit mode, so
+                // the user has no chance to confirm them — passing them
+                // through would attach stale triggers to the limit order.
+                builder: PERPS_BUILDER_INFO,
+              })
+            : sdk.exchange?.marketOrderOpen({
+                coin,
+                isBuy: direction === 'Long',
+                size,
+                midPx,
+                builder: PERPS_BUILDER_INFO,
+              });
+
+        const promises = [openCall];
+
+        // Market-open keeps the separate bindTpsl call. limitOrderOpen already
+        // accepts tpTriggerPx / slTriggerPx natively, so no second call.
+        if (orderType === 'market' && (tpTriggerPx || slTriggerPx)) {
           promises.push(
             (async () => {
               await sleep(10); // little delay to ensure nonce is correct
@@ -298,30 +365,52 @@ export const usePerpsPosition = () => {
         const results = await Promise.all(promises);
         const res = results[0];
         const filled = res?.response?.data?.statuses[0]?.filled;
+        const resting = res?.response?.data?.statuses[0]?.resting;
+
         if (filled) {
           const { totalSz, avgPx } = filled;
           const msg = `Opened ${direction} ${formatPerpsCoin(
             coin,
-          )}-USD: Size ${totalSz} at Price $${avgPx}`;
+          )}: Size ${totalSz} at Price $${avgPx}`;
           showToast(msg, 'success');
           return res?.response?.data?.statuses[0]?.filled as {
             totalSz: string;
             avgPx: string;
             oid: number;
           };
-        } else {
-          const msg = res?.response?.data?.statuses[0]?.error;
-          showToast(msg || 'open position error', 'error');
-          Sentry.captureException(
-            new Error(
-              'PERPS open position noFills' +
-                'params: ' +
-                JSON.stringify(params) +
-                'res: ' +
-                JSON.stringify(res),
-            ),
-          );
         }
+
+        if (orderType === 'limit' && resting) {
+          // Limit orders frequently rest in the book instead of filling. Treat as
+          // success and surface a "placed" toast; downstream stats code keys off
+          // the returned shape so we fake an avgPx using limitPx.
+          showToast(
+            t('page.perpsDetail.PerpsOpenPositionPopup.limitOrderPlacedToast', {
+              direction,
+              coin: formatPerpsCoin(coin),
+              size,
+              price: limitPx,
+            }),
+            'success',
+          );
+          return {
+            totalSz: size,
+            avgPx: limitPx ?? '0',
+            oid: resting.oid,
+          };
+        }
+
+        const msg = res?.response?.data?.statuses[0]?.error;
+        showToast(msg || 'open position error', 'error');
+        Sentry.captureException(
+          new Error(
+            'PERPS open position noFills' +
+              'params: ' +
+              JSON.stringify(params) +
+              'res: ' +
+              JSON.stringify(res),
+          ),
+        );
       } catch (error: any) {
         const isExpired = await judgeIsUserAgentIsExpired(error?.message || '');
         if (isExpired) {
@@ -399,6 +488,7 @@ export const usePerpsPosition = () => {
     handleSetAutoClose,
     handleUpdateMargin,
     handleCancelOrder,
+    handleCancelLimitOrders,
     handleStableCoinOrder,
   };
 };

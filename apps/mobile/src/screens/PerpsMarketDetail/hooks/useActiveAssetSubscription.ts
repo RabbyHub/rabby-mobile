@@ -3,6 +3,7 @@ import { AppState, AppStateStatus } from 'react-native';
 import { useMemoizedFn } from 'ahooks';
 import { apisPerps } from '@/core/apis';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { writeActiveAssetDataToCache } from '@/hooks/perps/useActiveAssetDataCache';
 import {
   WsActiveAssetCtx,
   WsActiveAssetData,
@@ -53,6 +54,8 @@ export const useActiveAssetSubscription = (coin: string) => {
           return;
         }
         setActiveAssetData(data);
+        // Keep home cache hot so returning to home avoids a REST round-trip.
+        writeActiveAssetDataToCache(data.coin, address, data);
       },
     );
     return unsubscribe;
@@ -61,6 +64,10 @@ export const useActiveAssetSubscription = (coin: string) => {
   const subscribeAll = useMemoizedFn(() => {
     unsubCtxRef.current?.();
     unsubDataRef.current?.();
+    // Avoid leaking previous coin's leverage into the new coin's marginUsage
+    // between coin switch and the first WS push.
+    setActiveAssetCtx(null);
+    setActiveAssetData(null);
     unsubCtxRef.current = subscribeCtx();
     unsubDataRef.current = subscribeData();
   });

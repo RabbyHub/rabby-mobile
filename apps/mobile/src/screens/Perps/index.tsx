@@ -22,6 +22,7 @@ import { Account } from '@/core/services/preference';
 import { usePerpsDeposit } from './hooks/usePerpsDeposit';
 import { PerpsMarketHomeList } from './components/PerpsMarketSection/PerpsMarketHomeList';
 import { PerpsPositionSection } from './components/PerpsPositionSection';
+import { PerpsLimitOrdersSection } from './components/PerpsLimitOrdersSection';
 import { PerpsPopupGroup } from './components/PerpsPopupGroup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
 import { PerpsNativeHeader } from './components/PerpsHeaderTitle';
@@ -262,6 +263,11 @@ export const PerpsOriginScreen = () => {
                     });
                   }
                 }}
+              />
+              <PerpsLimitOrdersSection
+                isHome={true}
+                positionAndOpenOrders={positionAndOpenOrders}
+                handleActionApproveStatus={handleActionApproveStatus}
               />
 
               <PerpsMarketHomeList onItemPress={handleHomeItemPress} />
