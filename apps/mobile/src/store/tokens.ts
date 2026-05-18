@@ -257,8 +257,11 @@ class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
   upsertTokens = (
     tokens: ITokenItem[],
     source: ObservableResourceValueSource = 'remote',
+    options?: {
+      pruneMissing?: boolean;
+    },
   ) => {
-    if (!tokens.length) {
+    if (!tokens.length && !options?.pruneMissing) {
       return;
     }
 
@@ -270,47 +273,57 @@ class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
     const now = Date.now();
     this.setState(prev => {
       let changed = false;
-      const valueMap = { ...prev.valueMap };
-      const metaMap = { ...prev.metaMap };
 
-      entries.forEach((token, tokenId) => {
-        const prevToken = prev.valueMap[tokenId];
-        const prevMeta = prev.metaMap[tokenId];
-        const isTokenChanged = prevToken !== token;
+      const next = mCreate(prev, draft => {
+        entries.forEach((token, tokenId) => {
+          const prevToken = prev.valueMap[tokenId];
+          const prevMeta = prev.metaMap[tokenId];
+          const isTokenChanged = prevToken !== token;
 
-        if (isTokenChanged) {
-          valueMap[tokenId] = token;
-          changed = true;
-        }
+          if (isTokenChanged) {
+            draft.valueMap[tokenId] = token;
+            changed = true;
+          }
 
-        if (!prevMeta || isTokenChanged) {
-          metaMap[tokenId] = {
-            family: TOKEN_ENTITY_RESOURCE_FAMILY,
-            resourceKey: tokenId,
-            hasValue: true,
-            version: Math.max(prevMeta?.version || 0, 0) + 1,
-            sourceOfCurrentValue: source,
-            isHydrating: false,
-            isFetchingRemote: false,
-            persistStatus: prevMeta?.persistStatus || 'idle',
-            localTargets: prevMeta?.localTargets || [],
-            activeRemoteRequestId: undefined,
-            lastHydratedAt:
-              source === 'hydrate' ? now : prevMeta?.lastHydratedAt,
-            lastRemoteAt: source === 'remote' ? now : prevMeta?.lastRemoteAt,
-            lastPersistAt: prevMeta?.lastPersistAt,
-            lastError: prevMeta?.lastError,
-          };
-          changed = true;
+          if (!prevMeta || isTokenChanged) {
+            draft.metaMap[tokenId] = {
+              family: TOKEN_ENTITY_RESOURCE_FAMILY,
+              resourceKey: tokenId,
+              hasValue: true,
+              version: Math.max(prevMeta?.version || 0, 0) + 1,
+              sourceOfCurrentValue: source,
+              isHydrating: false,
+              isFetchingRemote: false,
+              persistStatus: prevMeta?.persistStatus || 'idle',
+              localTargets: prevMeta?.localTargets || [],
+              activeRemoteRequestId: undefined,
+              lastHydratedAt:
+                source === 'hydrate' ? now : prevMeta?.lastHydratedAt,
+              lastRemoteAt: source === 'remote' ? now : prevMeta?.lastRemoteAt,
+              lastPersistAt: prevMeta?.lastPersistAt,
+              lastError: prevMeta?.lastError,
+            };
+            changed = true;
+          }
+        });
+
+        if (options?.pruneMissing) {
+          Object.keys(prev.valueMap).forEach(tokenId => {
+            if (!entries.has(tokenId as TokenEntityId)) {
+              delete draft.valueMap[tokenId];
+              changed = true;
+            }
+          });
+          Object.keys(prev.metaMap).forEach(tokenId => {
+            if (!entries.has(tokenId as TokenEntityId)) {
+              delete draft.metaMap[tokenId];
+              changed = true;
+            }
+          });
         }
       });
 
-      return changed
-        ? {
-            valueMap,
-            metaMap,
-          }
-        : prev;
+      return changed ? next : prev;
     });
   };
 
@@ -318,7 +331,9 @@ class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
     tokenListMap: TokenListState['tokenListMap'],
     source: ObservableResourceValueSource = 'remote',
   ) => {
-    this.upsertTokens(getTokenListFromTokenMap(tokenListMap), source);
+    this.upsertTokens(getTokenListFromTokenMap(tokenListMap), source, {
+      pruneMissing: true,
+    });
   };
 }
 
@@ -338,47 +353,42 @@ class TokenGroupResourceStore extends ResourceBaseStore<TokenGroupResourceValue>
     const now = Date.now();
     this.setState(prev => {
       let changed = false;
-      const valueMap = { ...prev.valueMap };
-      const metaMap = { ...prev.metaMap };
 
-      groups.forEach(({ groupId, value }) => {
-        const prevValue = prev.valueMap[groupId];
-        const prevMeta = prev.metaMap[groupId];
-        const isValueChanged = prevValue !== value;
+      const next = mCreate(prev, draft => {
+        groups.forEach(({ groupId, value }) => {
+          const prevValue = prev.valueMap[groupId];
+          const prevMeta = prev.metaMap[groupId];
+          const isValueChanged = prevValue !== value;
 
-        if (isValueChanged) {
-          valueMap[groupId] = value;
-          changed = true;
-        }
+          if (isValueChanged) {
+            draft.valueMap[groupId] = value;
+            changed = true;
+          }
 
-        if (!prevMeta || isValueChanged) {
-          metaMap[groupId] = {
-            family: TOKEN_GROUP_RESOURCE_FAMILY,
-            resourceKey: groupId,
-            hasValue: true,
-            version: Math.max(prevMeta?.version || 0, 0) + 1,
-            sourceOfCurrentValue: source,
-            isHydrating: false,
-            isFetchingRemote: false,
-            persistStatus: prevMeta?.persistStatus || 'idle',
-            localTargets: prevMeta?.localTargets || [],
-            activeRemoteRequestId: undefined,
-            lastHydratedAt:
-              source === 'hydrate' ? now : prevMeta?.lastHydratedAt,
-            lastRemoteAt: source === 'remote' ? now : prevMeta?.lastRemoteAt,
-            lastPersistAt: prevMeta?.lastPersistAt,
-            lastError: prevMeta?.lastError,
-          };
-          changed = true;
-        }
+          if (!prevMeta || isValueChanged) {
+            draft.metaMap[groupId] = {
+              family: TOKEN_GROUP_RESOURCE_FAMILY,
+              resourceKey: groupId,
+              hasValue: true,
+              version: Math.max(prevMeta?.version || 0, 0) + 1,
+              sourceOfCurrentValue: source,
+              isHydrating: false,
+              isFetchingRemote: false,
+              persistStatus: prevMeta?.persistStatus || 'idle',
+              localTargets: prevMeta?.localTargets || [],
+              activeRemoteRequestId: undefined,
+              lastHydratedAt:
+                source === 'hydrate' ? now : prevMeta?.lastHydratedAt,
+              lastRemoteAt: source === 'remote' ? now : prevMeta?.lastRemoteAt,
+              lastPersistAt: prevMeta?.lastPersistAt,
+              lastError: prevMeta?.lastError,
+            };
+            changed = true;
+          }
+        });
       });
 
-      return changed
-        ? {
-            valueMap,
-            metaMap,
-          }
-        : prev;
+      return changed ? next : prev;
     });
   };
 }
