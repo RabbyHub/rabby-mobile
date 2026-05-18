@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Dimensions, Platform, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Platform, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
 
@@ -37,7 +37,9 @@ import { apisHomeTabIndex } from '@/hooks/navigation';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 import { computeBalanceChange } from '@/core/apis/balance';
+import { useHomeStartupReady } from '@/core/utils/homeStartupReady';
 import { balance24hStore } from '@/store/balance24h';
+import { useShallow } from 'zustand/react/shallow';
 import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
 
 function MultiPinnedAddressList({
@@ -135,7 +137,25 @@ export function MultiAddressHomeHeader(
   } & RNViewProps,
 ): JSX.Element {
   const { style, onRefresh } = props;
-  const data = useHomePortfolioStore(state => state.changeData);
+  const {
+    changeData: data,
+    showBalanceLoadingWithoutLocal,
+    showChangeLoadingWithoutLocal,
+    isCurveAnyAddrLoading,
+  } = useHomePortfolioStore(
+    useShallow(state => ({
+      changeData: state.changeData,
+      showBalanceLoadingWithoutLocal: state.showBalanceLoadingWithoutLocal,
+      showChangeLoadingWithoutLocal: state.showChangeLoadingWithoutLocal,
+      isCurveAnyAddrLoading: state.isCurveAnyAddrLoading,
+    })),
+  );
+  const startupReady = useHomeStartupReady();
+  const shouldCoverLocalWebViewLoading =
+    !startupReady ||
+    showBalanceLoadingWithoutLocal ||
+    showChangeLoadingWithoutLocal ||
+    isCurveAnyAddrLoading;
 
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
@@ -145,6 +165,7 @@ export function MultiAddressHomeHeader(
   const [hideType] = useHideBalance();
 
   const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
+  const [isLocalWebViewReady, setIsLocalWebViewReady] = useState(false);
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
@@ -241,16 +262,26 @@ export function MultiAddressHomeHeader(
           style={[
             styles.localWebViewWrapper,
             couldRenderLocalWebView ? styles.localWebViewWrapperShow : {},
+            isLocalWebViewReady ? styles.localWebViewWrapperReady : {},
           ]}>
-          <LocalWebView
-            ref={gasketWebViewRef}
-            style={[styles.curveBoxChildMH, styles.localWebView]}
-            entryPath={'/pages/gasket-blurview.html'}
-            // forceUseLocalResource
-            webviewSize={{
-              width: styles.localWebView.minWidth,
-            }}
-          />
+          {couldRenderLocalWebView ? (
+            <LocalWebView
+              ref={gasketWebViewRef}
+              style={[styles.curveBoxChildMH, styles.localWebView]}
+              entryPath={'/pages/gasket-blurview.html'}
+              // forceUseLocalResource
+              webviewSize={{
+                width: styles.localWebView.minWidth,
+              }}
+              startInLoadingState={false}
+              renderLoading={() => (
+                <View style={styles.localWebViewLoadingFallback} />
+              )}
+              onLoadEnd={() => {
+                setIsLocalWebViewReady(true);
+              }}
+            />
+          ) : null}
         </View>
         <View
           style={[
@@ -286,6 +317,9 @@ export function MultiAddressHomeHeader(
               styles.shadowView,
               // !pinnedAccountList.length && styles.noAddressCard,
             ]}>
+            {shouldCoverLocalWebViewLoading ? (
+              <View pointerEvents="none" style={styles.curveCardCenterMask} />
+            ) : null}
             <MultiChart
               hideType={hideType}
               onPressNetWorth={() => {
@@ -362,6 +396,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         isLight && IS_IOS ? 0 : SIZES.cardLayoutPaddingHorizontal,
       borderRadius: SIZES.cardContentRadius,
       display: 'none',
+      opacity: 0,
+      overflow: 'hidden',
       // it helps to check the position of webview wrapper
       // if you see .localWebViewWrapper not filled by content in .curveBox, the sizes are wrong
       // uncomment below line to see the border
@@ -374,6 +410,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     localWebViewWrapperShow: {
       display: 'flex',
+    },
+    localWebViewWrapperReady: {
+      opacity: 1,
+    },
+    localWebViewLoadingFallback: {
+      flex: 1,
+      backgroundColor: 'transparent',
     },
     curveBoxWrapperLoading: {},
     curveBoxChildMH: {
@@ -407,6 +450,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderWidth: 0,
       backgroundColor: 'transparent',
       // ...makeDebugBorder('purple'),
+    },
+    curveCardCenterMask: {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      borderRadius: SIZES.cardContentRadius,
+      backgroundColor: isLight ? colors2024['neutral-bg-0'] : '#232428',
     },
     noAddressCard: {
       paddingBottom: 20,

@@ -37,6 +37,14 @@ export function useHomeHistoryStore() {
   };
 }
 
+export function useHomePendingTxCount() {
+  return homeHistoryStore(s => s.pendingTxCount);
+}
+
+export function useHomeHistoryCount() {
+  return homeHistoryStore(s => s.historyCount);
+}
+
 function setHistoryCount(
   valOrFunc: UpdaterOrPartials<HomeHistoryState['historyCount']>,
 ) {

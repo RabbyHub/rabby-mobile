@@ -30,6 +30,7 @@ import { refreshDayCurve } from '@/store/curve24h';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { useHomeStartupReady } from '@/core/utils/homeStartupReady';
 import { Text, AnimateableText } from '@/components/Typography';
 import { useHomePortfolioStore } from '@/screens/Home/hooks/useHomePortfolioSummary';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
@@ -162,10 +163,14 @@ export const MultiChart = memo(function MultiChart({
       isCurveAnyAddrLoading: state.isCurveAnyAddrLoading,
     })),
   );
+  const startupReady = useHomeStartupReady();
 
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
-  const chartsData = curveList;
+  const chartsData = startupReady ? curveList : [];
+  const showBalanceLoading = !startupReady || showBalanceLoadingWithoutLocal;
+  const showChangeLoading = !startupReady || showChangeLoadingWithoutLocal;
+  const isCurveLoading = !startupReady || isCurveAnyAddrLoading;
 
   return (
     <View
@@ -187,9 +192,11 @@ export const MultiChart = memo(function MultiChart({
             data={chartsData}
             hideType={hideType}
             matteredAccountCount={matteredAccountLength}
-            isMatteredAccountCountPending={isPendingMatteredAccountLength}
-            showBalanceLoadingWithoutLocal={showBalanceLoadingWithoutLocal}
-            showChangeLoadingWithoutLocal={showChangeLoadingWithoutLocal}
+            isMatteredAccountCountPending={
+              !startupReady || isPendingMatteredAccountLength
+            }
+            showBalanceLoadingWithoutLocal={showBalanceLoading}
+            showChangeLoadingWithoutLocal={showChangeLoading}
             onPressNetWorth={onPressNetWorth}
             onPressWalletList={onPressWalletList}
           />
@@ -197,7 +204,7 @@ export const MultiChart = memo(function MultiChart({
             data={chartsData}
             hideType={hideType}
             isLoss={changeData.isLoss}
-            isAnyAddrLoading={isCurveAnyAddrLoading}
+            isAnyAddrLoading={isCurveLoading}
           />
         </LineChart.Provider>
       </View>

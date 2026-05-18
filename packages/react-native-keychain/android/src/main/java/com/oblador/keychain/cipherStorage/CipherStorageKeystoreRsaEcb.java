@@ -133,6 +133,11 @@ public class CipherStorageKeystoreRsaEcb extends CipherStorageBase {
     final String safeAlias = getDefaultAliasIfEmpty(alias, getDefaultAliasServiceName());
     final AtomicInteger retries = new AtomicInteger(1);
     Key key = null;
+    Log.i(
+      KeychainModule.PERF_TAG,
+      "rsa_decrypt_with_prompt_policy alias=" + safeAlias +
+        " allowSessionReuse=" + allowAuthenticatedSessionReuse
+    );
 
     try {
       key = extractGeneratedKey(safeAlias, level, retries, false);
