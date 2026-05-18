@@ -91,12 +91,14 @@ describe('core/apis/keychainDebug', () => {
       KEYCHAIN_STORAGE_TYPES: {
         RSA: 'KeystoreRSAECB',
         AES: 'KeystoreAESCBC',
+        AES_GCM: 'KeystoreAESGCM',
         KC: 'keychain',
       },
       coerceKeychainStorageType: jest.fn((storage?: string) => {
         switch (storage) {
           case 'KeystoreRSAECB':
           case 'KeystoreAESCBC':
+          case 'KeystoreAESGCM':
           case 'keychain':
             return storage;
           default:
@@ -220,6 +222,7 @@ describe('core/apis/keychainDebug', () => {
     expect(result).toEqual([
       module.KEYCHAIN_STORAGE_TYPES.RSA,
       module.KEYCHAIN_STORAGE_TYPES.AES,
+      module.KEYCHAIN_STORAGE_TYPES.AES_GCM,
     ]);
   });
 
@@ -288,6 +291,7 @@ describe('core/apis/keychainDebug', () => {
       KEYCHAIN_STORAGE_TYPES: {
         RSA: 'KeystoreRSAECB',
         AES: 'KeystoreAESCBC',
+        AES_GCM: 'KeystoreAESGCM',
         KC: 'keychain',
       },
       getAuthenticationType: jest.fn(() => 1),

@@ -16,6 +16,7 @@ const KEYCHAIN_TRUSTED_VAULT_KEY_SERVICE = `${KEYCHAIN_DEFAULT_SERVICE}.trusted-
 const KEYCHAIN_TRUSTED_VAULT_KEY_USER = 'rabbymobile-vault-key';
 const LEGACY_RSA_STORAGE_TYPE = 'KeystoreRSAECB';
 const AES_STORAGE_TYPE = 'KeystoreAESCBC';
+const AES_GCM_STORAGE_TYPE = 'KeystoreAESGCM';
 const IOS_KEYCHAIN_STORAGE_TYPE = 'keychain';
 const BROKEN_BIOMETRICS_ENTRY_MESSAGE =
   'Biometrics data could not be decrypted with the current keychain state. Inspect the keychain debug screen before resetting biometrics.';
@@ -43,6 +44,7 @@ export const ANDROID_AUTH_PROMPT_POLICIES = {
 export const KEYCHAIN_STORAGE_TYPES = {
   RSA: LEGACY_RSA_STORAGE_TYPE,
   AES: AES_STORAGE_TYPE,
+  AES_GCM: AES_GCM_STORAGE_TYPE,
   KC: IOS_KEYCHAIN_STORAGE_TYPE,
 } as const;
 
@@ -91,6 +93,7 @@ export function coerceKeychainStorageType(
   switch (storage) {
     case KEYCHAIN_STORAGE_TYPES.RSA:
     case KEYCHAIN_STORAGE_TYPES.AES:
+    case KEYCHAIN_STORAGE_TYPES.AES_GCM:
     case KEYCHAIN_STORAGE_TYPES.KC:
       return storage;
     default:
@@ -104,6 +107,7 @@ function sortKeychainStorageTypes(
   const order = [
     KEYCHAIN_STORAGE_TYPES.RSA,
     KEYCHAIN_STORAGE_TYPES.AES,
+    KEYCHAIN_STORAGE_TYPES.AES_GCM,
     KEYCHAIN_STORAGE_TYPES.KC,
   ];
 
@@ -218,6 +222,7 @@ type CreateBusinessKeychainApiOptions = {
   keychainModule: KeychainCompatibleModule;
   debugNativeModuleName: string;
   sourceLabel: string;
+  supportedAndroidStorageTypes?: KeychainStorageType[];
 };
 
 type SKClsOptions = { encryptor: EncryptorAdapter; salt: string };
@@ -555,6 +560,7 @@ export function createBusinessKeychainApi({
   keychainModule,
   debugNativeModuleName,
   sourceLabel,
+  supportedAndroidStorageTypes,
 }: CreateBusinessKeychainApiOptions) {
   const DEFAULT_BASE_OPTIONS: KeychainCompatibleOptions = {
     service: KEYCHAIN_DEFAULT_SERVICE,
@@ -604,8 +610,10 @@ export function createBusinessKeychainApi({
     }
 
     return sortKeychainStorageTypes([
-      KEYCHAIN_STORAGE_TYPES.RSA,
-      KEYCHAIN_STORAGE_TYPES.AES,
+      ...(supportedAndroidStorageTypes || [
+        KEYCHAIN_STORAGE_TYPES.RSA,
+        KEYCHAIN_STORAGE_TYPES.AES,
+      ]),
     ]);
   }
 

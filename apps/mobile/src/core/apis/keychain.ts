@@ -5,6 +5,7 @@ import {
 
 import * as apisKeychainV8_2_0 from './keychainV8_2_0';
 import * as apisKeychainV9_0_0 from './keychainV9_0_0';
+import * as apisKeychainV10_0_0 from './keychainV10_0_0';
 import {
   ANDROID_AUTH_PROMPT_POLICIES,
   KEYCHAIN_STORAGE_TYPES,
@@ -59,7 +60,15 @@ export {
 };
 
 function getKeychainApiByVersion(version: CurrentKeychainVersion) {
-  return version === '9.0.0' ? apisKeychainV9_0_0 : apisKeychainV8_2_0;
+  switch (version) {
+    case '10.0.0':
+      return apisKeychainV10_0_0;
+    case '9.0.0':
+      return apisKeychainV9_0_0;
+    case '8.2.0-fork':
+    default:
+      return apisKeychainV8_2_0;
+  }
 }
 
 export function getCurrentKeychainApi(): KeychainBusinessApi {
