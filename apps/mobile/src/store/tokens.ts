@@ -251,7 +251,7 @@ const getTokenListFromTokenMap = (
 
 class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
   constructor() {
-    super(TOKEN_ENTITY_RESOURCE_FAMILY);
+    super(TOKEN_ENTITY_RESOURCE_FAMILY, { mutative: true });
   }
 
   upsertTokens = (
@@ -271,59 +271,66 @@ class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
     });
 
     const now = Date.now();
-    this.setState(prev => {
-      let changed = false;
+    const prev = this.getState();
+    const changedTokens: Array<{
+      tokenId: TokenEntityId;
+      token: ITokenItem;
+      meta: (typeof prev.metaMap)[string];
+    }> = [];
 
-      const next = mCreate(prev, draft => {
-        entries.forEach((token, tokenId) => {
-          const prevToken = prev.valueMap[tokenId];
-          const prevMeta = prev.metaMap[tokenId];
-          const isTokenChanged = prevToken !== token;
+    entries.forEach((token, tokenId) => {
+      const prevToken = prev.valueMap[tokenId];
+      const prevMeta = prev.metaMap[tokenId];
+      const isTokenChanged = prevToken !== token;
 
-          if (isTokenChanged) {
-            draft.valueMap[tokenId] = token;
-            changed = true;
-          }
-
-          if (!prevMeta || isTokenChanged) {
-            draft.metaMap[tokenId] = {
-              family: TOKEN_ENTITY_RESOURCE_FAMILY,
-              resourceKey: tokenId,
-              hasValue: true,
-              version: Math.max(prevMeta?.version || 0, 0) + 1,
-              sourceOfCurrentValue: source,
-              isHydrating: false,
-              isFetchingRemote: false,
-              persistStatus: prevMeta?.persistStatus || 'idle',
-              localTargets: prevMeta?.localTargets || [],
-              activeRemoteRequestId: undefined,
-              lastHydratedAt:
-                source === 'hydrate' ? now : prevMeta?.lastHydratedAt,
-              lastRemoteAt: source === 'remote' ? now : prevMeta?.lastRemoteAt,
-              lastPersistAt: prevMeta?.lastPersistAt,
-              lastError: prevMeta?.lastError,
-            };
-            changed = true;
-          }
+      if (!prevMeta || isTokenChanged) {
+        changedTokens.push({
+          tokenId,
+          token,
+          meta: {
+            family: TOKEN_ENTITY_RESOURCE_FAMILY,
+            resourceKey: tokenId,
+            hasValue: true,
+            version: Math.max(prevMeta?.version || 0, 0) + 1,
+            sourceOfCurrentValue: source,
+            isHydrating: false,
+            isFetchingRemote: false,
+            persistStatus: prevMeta?.persistStatus || 'idle',
+            localTargets: prevMeta?.localTargets || [],
+            activeRemoteRequestId: undefined,
+            lastHydratedAt:
+              source === 'hydrate' ? now : prevMeta?.lastHydratedAt,
+            lastRemoteAt: source === 'remote' ? now : prevMeta?.lastRemoteAt,
+            lastPersistAt: prevMeta?.lastPersistAt,
+            lastError: prevMeta?.lastError,
+          },
         });
+      }
+    });
 
-        if (options?.pruneMissing) {
-          Object.keys(prev.valueMap).forEach(tokenId => {
-            if (!entries.has(tokenId as TokenEntityId)) {
-              delete draft.valueMap[tokenId];
-              changed = true;
-            }
-          });
-          Object.keys(prev.metaMap).forEach(tokenId => {
-            if (!entries.has(tokenId as TokenEntityId)) {
-              delete draft.metaMap[tokenId];
-              changed = true;
-            }
-          });
-        }
+    const removedTokenIds = options?.pruneMissing
+      ? Array.from(
+          new Set([
+            ...Object.keys(prev.valueMap),
+            ...Object.keys(prev.metaMap),
+          ]),
+        ).filter(tokenId => !entries.has(tokenId as TokenEntityId))
+      : [];
+
+    if (!changedTokens.length && !removedTokenIds.length) {
+      return;
+    }
+
+    this.mutateState(draft => {
+      changedTokens.forEach(({ tokenId, token, meta }) => {
+        draft.valueMap[tokenId] = token;
+        draft.metaMap[tokenId] = meta;
       });
 
-      return changed ? next : prev;
+      removedTokenIds.forEach(tokenId => {
+        delete draft.valueMap[tokenId];
+        delete draft.metaMap[tokenId];
+      });
     });
   };
 
@@ -339,7 +346,7 @@ class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
 
 class TokenGroupResourceStore extends ResourceBaseStore<TokenGroupResourceValue> {
   constructor() {
-    super(TOKEN_GROUP_RESOURCE_FAMILY);
+    super(TOKEN_GROUP_RESOURCE_FAMILY, { mutative: true });
   }
 
   upsertGroups = (
@@ -351,44 +358,52 @@ class TokenGroupResourceStore extends ResourceBaseStore<TokenGroupResourceValue>
     }
 
     const now = Date.now();
-    this.setState(prev => {
-      let changed = false;
+    const prev = this.getState();
+    const changedGroups: Array<{
+      groupId: TokenGroupId;
+      value: TokenGroupResourceValue;
+      meta: (typeof prev.metaMap)[string];
+    }> = [];
 
-      const next = mCreate(prev, draft => {
-        groups.forEach(({ groupId, value }) => {
-          const prevValue = prev.valueMap[groupId];
-          const prevMeta = prev.metaMap[groupId];
-          const isValueChanged = prevValue !== value;
+    groups.forEach(({ groupId, value }) => {
+      const prevValue = prev.valueMap[groupId];
+      const prevMeta = prev.metaMap[groupId];
+      const isValueChanged = prevValue !== value;
 
-          if (isValueChanged) {
-            draft.valueMap[groupId] = value;
-            changed = true;
-          }
-
-          if (!prevMeta || isValueChanged) {
-            draft.metaMap[groupId] = {
-              family: TOKEN_GROUP_RESOURCE_FAMILY,
-              resourceKey: groupId,
-              hasValue: true,
-              version: Math.max(prevMeta?.version || 0, 0) + 1,
-              sourceOfCurrentValue: source,
-              isHydrating: false,
-              isFetchingRemote: false,
-              persistStatus: prevMeta?.persistStatus || 'idle',
-              localTargets: prevMeta?.localTargets || [],
-              activeRemoteRequestId: undefined,
-              lastHydratedAt:
-                source === 'hydrate' ? now : prevMeta?.lastHydratedAt,
-              lastRemoteAt: source === 'remote' ? now : prevMeta?.lastRemoteAt,
-              lastPersistAt: prevMeta?.lastPersistAt,
-              lastError: prevMeta?.lastError,
-            };
-            changed = true;
-          }
+      if (!prevMeta || isValueChanged) {
+        changedGroups.push({
+          groupId,
+          value,
+          meta: {
+            family: TOKEN_GROUP_RESOURCE_FAMILY,
+            resourceKey: groupId,
+            hasValue: true,
+            version: Math.max(prevMeta?.version || 0, 0) + 1,
+            sourceOfCurrentValue: source,
+            isHydrating: false,
+            isFetchingRemote: false,
+            persistStatus: prevMeta?.persistStatus || 'idle',
+            localTargets: prevMeta?.localTargets || [],
+            activeRemoteRequestId: undefined,
+            lastHydratedAt:
+              source === 'hydrate' ? now : prevMeta?.lastHydratedAt,
+            lastRemoteAt: source === 'remote' ? now : prevMeta?.lastRemoteAt,
+            lastPersistAt: prevMeta?.lastPersistAt,
+            lastError: prevMeta?.lastError,
+          },
         });
-      });
+      }
+    });
 
-      return changed ? next : prev;
+    if (!changedGroups.length) {
+      return;
+    }
+
+    this.mutateState(draft => {
+      changedGroups.forEach(({ groupId, value, meta }) => {
+        draft.valueMap[groupId] = value;
+        draft.metaMap[groupId] = meta;
+      });
     });
   };
 }
