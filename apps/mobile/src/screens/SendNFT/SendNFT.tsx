@@ -1,6 +1,13 @@
 import React from 'react';
 import { View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import Animated, {
+  runOnJS,
+  useAnimatedReaction,
+  useAnimatedRef,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
@@ -8,7 +15,7 @@ import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { StackActions, useRoute } from '@react-navigation/native';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
-import { NFTSection } from './Section';
+import { NFTSection, SendNFTSection } from './Section';
 import ToAddressControl2024 from '@/screens/SendNFT/components/ToAddressControl2024';
 import FromAddressControl2024 from '@/screens/SendNFT/components/FromAddressControl';
 import {
@@ -26,6 +33,11 @@ import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ShowMoreOnSendNFT } from './components/ShowMoreOnSendNFT';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { Text } from '@/components/Typography';
+
+const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
+  KeyboardAwareScrollView,
+);
 
 export default function SendNFT() {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -69,6 +81,7 @@ export default function SendNFT() {
     scrollviewRef,
     handleIgnoreGasFeeChange,
     onBottomAreaLayout,
+    scrollViewStyle,
     scrollToBottom,
 
     whitelistEnabled,
@@ -171,16 +184,12 @@ export default function SendNFT() {
         <NormalScreenContainer2024 type="bg1">
           <AccountSwitcherModal forScene="SendNFT" inScreen />
           <View style={styles.sendNFTScreen}>
-            <KeyboardAwareScrollView
+            <AnimatedKeyboardAwareScrollView
               innerRef={instance => {
                 scrollviewRef.current =
                   instance as unknown as KeyboardAwareScrollView;
               }}
-              style={styles.scrollArea}
-              contentContainerStyle={styles.mainContent}
-              enableOnAndroid
-              extraHeight={200}
-              keyboardOpeningTime={0}>
+              contentContainerStyle={[styles.mainContent, scrollViewStyle]}>
               {/* From */}
               <FromAddressControl2024 disableSwitch={true} />
 
@@ -194,7 +203,7 @@ export default function SendNFT() {
                 chainItem={chainItem}
               />
               <ShowMoreOnSendNFT chainServeId={chainItem?.serverId || ''} />
-            </KeyboardAwareScrollView>
+            </AnimatedKeyboardAwareScrollView>
             <BottomArea account={account} />
           </View>
         </NormalScreenContainer2024>
@@ -212,16 +221,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   sendNFTScreen: {
     width: '100%',
-    flex: 1,
+    height: '100%',
     flexDirection: 'column',
     backgroundColor: colors2024['neutral-bg-1'],
-  },
-  scrollArea: {
-    flex: 1,
+    justifyContent: 'space-between',
   },
   mainContent: {
     paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingBottom: 308,
   },
 
   buttonContainer: {

@@ -6,7 +6,7 @@ import {
   formatCurrencyValueParts,
   formatSmallCurrencyValueParts,
 } from '@/utils/currency';
-import React, { memo, useEffect, useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { Dimensions, Pressable, useWindowDimensions, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import Animated, {
@@ -146,7 +146,7 @@ export const MultiChart = memo(function MultiChart({
     changeData,
     totalBalance,
     matteredAccountLength,
-    canToggle24hCurve,
+    isPendingMatteredAccountLength,
     showBalanceLoadingWithoutLocal,
     showChangeLoadingWithoutLocal,
     isCurveAnyAddrLoading,
@@ -156,7 +156,7 @@ export const MultiChart = memo(function MultiChart({
       changeData: state.changeData,
       totalBalance: state.totalBalance,
       matteredAccountLength: state.matteredAccountLength,
-      canToggle24hCurve: state.canToggle24hCurve,
+      isPendingMatteredAccountLength: state.isPendingMatteredAccountLength,
       showBalanceLoadingWithoutLocal: state.showBalanceLoadingWithoutLocal,
       showChangeLoadingWithoutLocal: state.showChangeLoadingWithoutLocal,
       isCurveAnyAddrLoading: state.isCurveAnyAddrLoading,
@@ -166,12 +166,6 @@ export const MultiChart = memo(function MultiChart({
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
   const chartsData = curveList;
-
-  useEffect(() => {
-    if (!canToggle24hCurve) {
-      setIsFoldMultiChart(true);
-    }
-  }, [canToggle24hCurve]);
 
   return (
     <View
@@ -193,7 +187,7 @@ export const MultiChart = memo(function MultiChart({
             data={chartsData}
             hideType={hideType}
             matteredAccountCount={matteredAccountLength}
-            canToggle24hCurve={canToggle24hCurve}
+            isMatteredAccountCountPending={isPendingMatteredAccountLength}
             showBalanceLoadingWithoutLocal={showBalanceLoadingWithoutLocal}
             showChangeLoadingWithoutLocal={showChangeLoadingWithoutLocal}
             onPressNetWorth={onPressNetWorth}
@@ -218,8 +212,8 @@ interface IHeaderProps {
   isLoss: boolean;
   data: CurvePoint[];
   hideType: BALANCE_HIDE_TYPE;
-  matteredAccountCount?: number;
-  canToggle24hCurve: boolean;
+  matteredAccountCount: number;
+  isMatteredAccountCountPending: boolean;
   showBalanceLoadingWithoutLocal: boolean;
   showChangeLoadingWithoutLocal: boolean;
   onPressNetWorth?: () => void;
@@ -234,7 +228,7 @@ const ChartHeader = React.memo(
     hideType,
     data: _data,
     matteredAccountCount,
-    canToggle24hCurve,
+    isMatteredAccountCountPending,
     showBalanceLoadingWithoutLocal,
     showChangeLoadingWithoutLocal,
     onPressNetWorth,
@@ -253,6 +247,8 @@ const ChartHeader = React.memo(
     const changePercent = useDebouncedValue(_changePercent, 300);
     const showChangeLoading =
       showNetWorthLoading || showChangeLoadingWithoutLocal;
+    const displayMatteredAccountCount =
+      matteredAccountCount >= 10 ? '10' : String(matteredAccountCount);
 
     const netWorth = useMemo(() => {
       return formatSmallCurrencyValueParts(rawNetWorth, { currency }).text;
@@ -430,11 +426,18 @@ const ChartHeader = React.memo(
             onPress={onPressWalletList}
             hitSlop={8}>
             <RcIconSmallWalletCC color={colors2024['neutral-title-1']} />
-            <Text style={styles.accountText}>
-              {matteredAccountCount && matteredAccountCount >= 10
-                ? '10'
-                : matteredAccountCount}
-            </Text>
+            {isMatteredAccountCountPending ? (
+              <Skeleton
+                width={18}
+                height={16}
+                style={styles.accountCountSkeleton}
+                LinearGradientComponent={LoadingLinear}
+              />
+            ) : (
+              <Text style={styles.accountText}>
+                {displayMatteredAccountCount}
+              </Text>
+            )}
             <RcIconSmallArrowCC color={colors2024['neutral-title-1']} />
           </Pressable>
         </View>
@@ -449,11 +452,7 @@ const ChartHeader = React.memo(
         ) : (
           <Pressable
             {...makeTestIDProps(E2E_ID.home.portfolioCurveToggle)}
-            disabled={!canToggle24hCurve}
             onPress={e => {
-              if (!canToggle24hCurve) {
-                return;
-              }
               e.stopPropagation();
               const nextValue = !svIsFoldMultiChart.value;
               svIsFoldMultiChart.value = nextValue;
@@ -482,24 +481,22 @@ const ChartHeader = React.memo(
                   style={styles.changeTime}
                   animatedProps={dateTimeAnimatedProps}
                 />
-                {canToggle24hCurve ? (
-                  <View style={styles.percentChangeContainer}>
-                    <AnimatedSVG
-                      style={animatedSvgStyle}
-                      width={16}
-                      height={16}
-                      viewBox="0 0 24 24"
-                      fill="none">
-                      <AnimatedPath
-                        d="M8.4 4.80005L15.6 12L8.4 19.2"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        animatedProps={arrowStrokeProps}
-                      />
-                    </AnimatedSVG>
-                  </View>
-                ) : null}
+                <View style={styles.percentChangeContainer}>
+                  <AnimatedSVG
+                    style={animatedSvgStyle}
+                    width={16}
+                    height={16}
+                    viewBox="0 0 24 24"
+                    fill="none">
+                    <AnimatedPath
+                      d="M8.4 4.80005L15.6 12L8.4 19.2"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      animatedProps={arrowStrokeProps}
+                    />
+                  </AnimatedSVG>
+                </View>
               </>
             )}
           </Pressable>
@@ -648,6 +645,10 @@ const getStyle = createGetStyles2024(
       lineHeight: 20,
       fontFamily: 'SF Pro Rounded',
       paddingLeft: 6,
+    },
+    accountCountSkeleton: {
+      marginLeft: 6,
+      borderRadius: 4,
     },
     percentChangeContainer: {
       // flexDirection: 'row',

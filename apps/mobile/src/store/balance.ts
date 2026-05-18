@@ -965,6 +965,7 @@ export type AccountsBalanceState = {
   balance: Record<string, BalanceAccountType>;
   selectedAddresses: string[];
   hasResolvedSelection: boolean;
+  hasResolvedMatteredAccountLength: boolean;
   matteredAccountLength: number;
   totalBalance: number;
   hasAnyBalanceValue: boolean;
@@ -1013,6 +1014,7 @@ export const balanceAccountsStore = zCreate(
     balance: {},
     selectedAddresses: getCachedHomeTop10Addresses(),
     hasResolvedSelection: false,
+    hasResolvedMatteredAccountLength: false,
     matteredAccountLength: 0,
     totalBalance: 0,
     hasAnyBalanceValue: false,
@@ -1254,6 +1256,7 @@ export async function applyAccountBalanceSelectionSnapshot(
       balance: nextBalance,
       selectedAddresses,
       hasResolvedSelection: true,
+      hasResolvedMatteredAccountLength: true,
       matteredAccountLength,
       ...buildSelectedBalanceDerivedState(selectedAddresses, nextBalance),
     }),

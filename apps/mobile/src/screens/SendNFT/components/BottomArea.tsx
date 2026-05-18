@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { Button } from '@/components2024/Button';
 import {
   useSendNFTFormik,
@@ -10,10 +10,10 @@ import { useTranslation } from 'react-i18next';
 import { ModalConfirmAllowTransfer } from '@/components/Address/SheetModalConfirmAllowTransfer';
 import { ModalAddToContacts } from '@/components/Address/SheetModalAddToContacts';
 import { apiBalance } from '@/core/apis';
-import { useSafeSizes } from '@/hooks/useAppLayout';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { useTheme2024 } from '@/hooks/theme';
 
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useSignatureStore } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { Account } from '@/core/services/preference';
@@ -28,7 +28,6 @@ export default function BottomArea({ account }: { account: Account | null }) {
   const { t } = useTranslation();
 
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { safeOffBottom } = useSafeSizes();
 
   const { handleSubmit } = useSendNFTFormik();
 
@@ -159,12 +158,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
     !canSubmit || (!!mostImportantRisks.length && !agreeRequiredChecked);
 
   return (
-    <View
-      onLayout={onBottomAreaLayout}
-      style={[
-        styles.bottomDockArea,
-        { paddingBottom: SIZES.containerPb + safeOffBottom },
-      ]}>
+    <View onLayout={onBottomAreaLayout} style={[styles.bottomDockArea]}>
       <BottomRiskTip
         loadingRisks={loadingRisks}
         mostImportantRisks={mostImportantRisks}
@@ -200,7 +194,6 @@ export default function BottomArea({ account }: { account: Account | null }) {
           }
           loading={isSubmitLoading}
           type={'primary'}
-          balanceIconSpacing
           syncUnlockTime
           account={account}
           showHardWalletProcess
@@ -250,21 +243,28 @@ export default function BottomArea({ account }: { account: Account | null }) {
 
 export const SIZES = {
   containerPt: 16,
-  containerPb: 24,
+  containerPb: 48,
+  // height: 308,
+  bottom: 48,
 };
 
-const getStyles = createGetStyles2024(({ colors2024, isLight, colors }) => {
-  return {
-    bottomDockArea: {
-      width: '100%',
-      paddingHorizontal: 24,
-      flexShrink: 0,
-      paddingTop: SIZES.containerPt,
-      backgroundColor: resolveBgColorByType('bg1', {
-        isLight: isLight ?? true,
-        colors,
-        colors2024,
-      }),
-    },
-  };
-});
+const getStyles = createGetStyles2024(
+  ({ colors2024, safeAreaInsets, isLight, colors }) => {
+    return {
+      bottomDockArea: {
+        bottom: 0,
+        width: '100%',
+        paddingHorizontal: 24,
+        position: 'absolute',
+        paddingTop: SIZES.containerPt,
+        paddingBottom: SIZES.containerPb + safeAreaInsets.bottom,
+        backgroundColor: resolveBgColorByType('bg1', {
+          isLight: isLight ?? true,
+          colors,
+          colors2024,
+        }),
+        // ...makeDebugBorder(),
+      },
+    };
+  },
+);
