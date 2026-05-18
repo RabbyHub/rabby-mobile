@@ -199,11 +199,21 @@ function traceAndroidUnlockPerf(
 
 export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
   const { isFaceID = isIOS, size = BiometricsIconSize } = props;
+  const { colors2024 } = useTheme2024();
 
   return isFaceID ? (
-    <RcIconFaceId strokeWidth={2} width={size} height={size} />
+    <RcIconFaceId
+      strokeWidth={2}
+      width={size}
+      height={size}
+      color={colors2024['brand-default']}
+    />
   ) : (
-    <RcIconFingerprint width={size} height={size} />
+    <RcIconFingerprint
+      width={size}
+      height={size}
+      color={colors2024['brand-default']}
+    />
   );
 }
 
