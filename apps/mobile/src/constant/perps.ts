@@ -232,3 +232,16 @@ export const SWAP_REQUIRED_QUOTE_ASSETS: PerpsQuoteAsset[] = [
 ];
 
 export const PERPS_LOW_BALANCE_THRESHOLD = 0.1;
+
+// --- Limit-order open flow (perps) ---
+
+export type PerpsOpenOrderType = 'market' | 'limit';
+
+/** Show a system-level confirm when |limit - mark| / mark >= this. */
+export const PERPS_LIMIT_PRICE_CONFIRM_PCT = 0.05;
+
+/** Block the Set button (and never let the order reach Check) when deviation >= this. */
+export const PERPS_LIMIT_PRICE_BLOCK_PCT = 0.1;
+
+/** Default Time-In-Force for user-placed limit opens — Good-Till-Cancel. */
+export const PERPS_LIMIT_TIF_DEFAULT = 'Gtc' as const;

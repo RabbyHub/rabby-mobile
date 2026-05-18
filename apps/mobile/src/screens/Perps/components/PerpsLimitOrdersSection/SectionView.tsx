@@ -16,10 +16,12 @@ import { usePerpsPosition } from '@/screens/PerpsMarketDetail/hooks/usePerpsPosi
 type Props = {
   rows: LimitOrderRow[];
   handleActionApproveStatus: () => Promise<void>;
+  isHome?: boolean;
 };
 
 export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
   rows,
+  isHome,
   handleActionApproveStatus,
 }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -60,7 +62,7 @@ export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isHome && styles.homeContainer]}>
       <View style={styles.sectionHeader}>
         <View style={styles.sectionTitleRow}>
           <View style={styles.sectionTitleBar} />
@@ -100,6 +102,10 @@ export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {},
+  homeContainer: {
+    // Add any specific styles for the home container if needed
+    marginTop: 24,
+  },
   sectionHeader: {
     marginBottom: 12,
     paddingHorizontal: 4,

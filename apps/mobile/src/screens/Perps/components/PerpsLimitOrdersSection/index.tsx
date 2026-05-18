@@ -8,16 +8,19 @@ import { useHomeLimitOrders } from '../../hooks/useLimitOrders';
 type Props = {
   positionAndOpenOrders?: PositionAndOpenOrder[];
   handleActionApproveStatus: () => Promise<void>;
+  isHome?: boolean;
 };
 
 export const PerpsLimitOrdersSection: React.FC<Props> = ({
   positionAndOpenOrders,
   handleActionApproveStatus,
+  isHome,
 }) => {
   const rows = useHomeLimitOrders(positionAndOpenOrders);
   return (
     <PerpsLimitOrdersSectionView
       rows={rows}
+      isHome={isHome}
       handleActionApproveStatus={handleActionApproveStatus}
     />
   );

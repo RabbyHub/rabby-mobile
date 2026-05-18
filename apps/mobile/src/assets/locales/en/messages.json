@@ -2872,6 +2872,8 @@
         "addToShort": "Add to Short"
       },
       "PerpsOpenPositionPopup": {
+        "title": "Open {{coin}}/{{quoteAsset}} Position",
+        "limitOrderPlacedToast": "Limit {{direction}} {{coin}}: Size {{size}} placed at ${{price}}",
         "onlyIsolated": "Only isolated margin is supported for this token",
         "margin": "Margin",
         "upTo": "Up to",
@@ -2892,10 +2894,17 @@
         "stopLossWhenPriceAbove": "Stop Loss When Price Above",
         "stopLossWhen": "Stop Loss When",
         "slPrice": "Stop-Loss Price",
-        "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
+        "sizeTips": "The total value or quantity of your trade, set by margin and leverage.",
+        "orderType": "Order Type",
+        "orderTypeMarket": "Market",
+        "orderTypeLimit": "Limit",
+        "limitPrice": "Limit Price",
+        "currentPrice": "Current Price"
       },
       "PerpsOpenPositionCheckPopup": {
         "title": "Check Order",
+        "limitTitle": "Check Limit Order",
+        "marketTitle": "Check Market Order",
         "perps": "Perps",
         "initialMargin": " Initial Margin",
         "direction": "Direction",
@@ -2915,7 +2924,10 @@
         "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage.",
         "marginCross": "Margin(Cross)",
-        "margin": "Margin(Isolated)"
+        "margin": "Margin(Isolated)",
+        "limitPrice": "Limit Price",
+        "mayExecuteImmediately": "This limit order may execute immediately",
+        "setLimitOrderBtn": "Set Limit Order"
       },
       "action": {
         "closePosition": "Close {{direction}} Position",
@@ -2950,6 +2962,17 @@
         "entryPrice": "Entry Price:",
         "setTpPrice": "Set Take-Profit Price",
         "setSlPrice": "Set Stop-Loss Price"
+      },
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "Set Limit Buy Price",
+        "setLimitSellPrice": "Set Limit Sell Price",
+        "marketLabel": "Mid",
+        "setBtn": "Set",
+        "blockError": "Order price exceeds the 10% price protection limit.",
+        "confirmTitle": "Review Limit Price",
+        "confirmMessage": "Limit price is 5%+ away from market price",
+        "confirmContinue": "Continue",
+        "confirmCancel": "Cancel"
       },
       "PerpsPriceInfo": {
         "current": "Current"

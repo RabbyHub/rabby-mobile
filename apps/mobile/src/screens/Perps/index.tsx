@@ -1,4 +1,3 @@
-/* eslint-disable react-native/no-inline-styles */
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -265,12 +264,11 @@ export const PerpsOriginScreen = () => {
                   }
                 }}
               />
-              <View style={{ marginTop: 24 }}>
-                <PerpsLimitOrdersSection
-                  positionAndOpenOrders={positionAndOpenOrders}
-                  handleActionApproveStatus={handleActionApproveStatus}
-                />
-              </View>
+              <PerpsLimitOrdersSection
+                isHome={true}
+                positionAndOpenOrders={positionAndOpenOrders}
+                handleActionApproveStatus={handleActionApproveStatus}
+              />
 
               <PerpsMarketHomeList onItemPress={handleHomeItemPress} />
               <View style={styles.emptyPadding} />
