@@ -279,6 +279,7 @@ const indicatorStyles = createGetStyles2024(
     };
   },
 );
+const PLACE_HOLDER_STYLE = { width: 90, height: 32 };
 
 function SideChainSelector() {
   const { isLight, colors2024 } = useTheme2024();
@@ -333,6 +334,10 @@ function SideChainSelector() {
   );
 
   const top3Chains = useTop3Chains();
+
+  if (!top3Chains.length && !selectedChainItem) {
+    return <View style={PLACE_HOLDER_STYLE} />;
+  }
 
   return (
     <ChainSelector
