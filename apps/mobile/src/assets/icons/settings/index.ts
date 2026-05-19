@@ -71,6 +71,12 @@ export const RcTermsOfUse = makeThemeIcon2024FromCC(RcTermsOfUseCC, ctx => ({
 import { default as RcLockCC } from './lock-cc.svg';
 export const RcLock = makeThemeIconFromCC(RcLockCC, 'neutral-body');
 
+import { default as RcAutolockCC } from './autolock.svg';
+export const RcAutolock = makeThemeIcon2024FromCC(RcAutolockCC, ctx => ({
+  onLight: ctx.colors2024['brand-default'],
+  onDark: ctx.colors2024['brand-default'],
+}));
+
 import { default as RcCountdownCC } from './countdown-cc.svg';
 export const RcCountdown = makeThemeIconFromCC(RcCountdownCC, 'neutral-body');
 

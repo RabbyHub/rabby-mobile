@@ -119,6 +119,7 @@ function useToggleBiometricsEnabled() {
   return {
     isBiometricsEnabled: computed.isBiometricsEnabled,
     couldSetupBiometrics: computed.couldSetupBiometrics,
+    isUsingDevicePasscode: computed.isUsingDevicePasscode,
     requestToggleBiometricsEnabled,
     sheetVisible,
     sheetLoading,
@@ -143,6 +144,7 @@ export const SwitchBiometricsAuthentication = ({
     sheetLoading,
     handleSheetConfirm,
     setSheetVisible,
+    isUsingDevicePasscode,
   } = useToggleBiometricsEnabled();
 
   useImperativeHandle(ref, () => ({
@@ -162,7 +164,7 @@ export const SwitchBiometricsAuthentication = ({
         {...props}
         circleSize={20}
         disabled={!hasSetupCustomPassword || !couldSetupBiometrics}
-        value={!!isBiometricsEnabled}
+        value={!!isBiometricsEnabled || isUsingDevicePasscode}
         changeValueImmediately={false}
         onValueChange={enabled => {
           requestToggleBiometricsEnabled(enabled, onToggleSuccess);
