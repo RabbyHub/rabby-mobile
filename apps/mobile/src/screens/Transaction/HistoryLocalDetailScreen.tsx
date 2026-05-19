@@ -222,18 +222,13 @@ function HistoryLocalDetailScreen(): JSX.Element {
   );
 
   return (
-    <NormalScreenContainer2024
-      type={!isLight ? 'bg1' : 'bg0'}
-      style={{
-        paddingTop: isSelfScrollAction ? 24 : 0,
-      }}>
+    <NormalScreenContainer2024 type={!isLight ? 'bg1' : 'bg0'}>
       {isSelfScrollAction ? (
         actionElement
       ) : (
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{
-            paddingTop: 24,
             paddingBottom: bottom,
             paddingHorizontal: 16,
           }}

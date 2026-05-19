@@ -1,6 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import { RcIconExternalLinkCC, RcIconRightCC } from '@/assets/icons/common';
-import ChainIconImage from '@/components/Chain/ChainIconImage';
+import { RcIconRightCC } from '@/assets/icons/common';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -8,7 +7,6 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { Dimensions, ScrollView, TouchableOpacity, View } from 'react-native';
-import { formatAmount } from '@/utils/number';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
 import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
@@ -18,7 +16,6 @@ import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
 import { naviPush } from '@/utils/navigation';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { openTxExternalUrl } from '@/utils/transaction';
@@ -31,14 +28,11 @@ import {
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
-import { AddressItemInDetail } from '../../HistoryDetailScreen';
-import { TxStatusItem } from '../TxStatusItem';
 import { Button } from '@/components2024/Button';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { StackActions } from '@react-navigation/native';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { ellipsisAddress } from '@/utils/address';
-import { formatIntlTimestamp } from '@/utils/time';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/dist/types';
@@ -50,6 +44,10 @@ import { Media } from '@/components/Media';
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import { ellipsisOverflowedText } from '@/utils/text';
 import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
+import {
+  ActionDetailItem,
+  ActionDetailSection,
+} from './components/ActionDetailSection';
 
 interface Props {
   data: TransactionGroup;
@@ -103,16 +101,6 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
     () => data.isFailed || data.isSubmitFailed || data.isWithdrawed,
     [data.isFailed, data.isSubmitFailed, data.isWithdrawed],
   );
-
-  const handleOpenTxId = useMemoizedFn(() => {
-    const tx = data.maxGasTx.hash;
-
-    if (chain?.scanLink) {
-      openTxExternalUrl({ chain, txHash: tx });
-    } else {
-      toast.error('Unknown chain');
-    }
-  });
 
   const handleOpenTxAddress = useMemoizedFn((address: string) => {
     if (chain?.scanLink) {
@@ -387,66 +375,9 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
             <RcIconSwitchArrow />
           </View>
         </View> */}
-        <View style={styles.detailContainer}>
-          <View style={styles.detailContainerHeader}>
-            <Text style={styles.detailContainerTitle}>
-              {t('page.transactions.detail.TransactionDetails')}
-            </Text>
-          </View>
-          {!data.isPending && data.maxGasTx.completedAt && (
-            <View style={styles.detailItem}>
-              <Text style={styles.itemTitleText}>
-                {t('page.transactions.detail.Date')}
-              </Text>
-              <View>
-                <Text style={styles.itemContentText}>
-                  {formatIntlTimestamp(data?.maxGasTx.completedAt)}
-                </Text>
-              </View>
-            </View>
-          )}
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.Status')}
-            </Text>
-            <View>
-              <TxStatusItem
-                status={data.isFailed ? 0 : 1}
-                isPending={data.isPending}
-                withText={true}
-              />
-            </View>
-          </View>
-          {data.isPending ? <TransactionPendingDetail data={data} /> : null}
-
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.Chain')}
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 4 }}>
-              <ChainIconImage
-                size={16}
-                chainEnum={chain?.enum}
-                isShowRPCStatus={true}
-              />
-              <Text style={[styles.itemContentText]}>{chain?.name}</Text>
-            </View>
-          </View>
-
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.From')}
-            </Text>
-            <AddressItemInDetail
-              address={data.maxGasTx.address}
-              accounts={unionAccounts}
-            />
-          </View>
-
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.InteractedContract')}
-            </Text>
+        <ActionDetailSection data={data} chain={chain} accounts={unionAccounts}>
+          <ActionDetailItem
+            label={t('page.transactions.detail.InteractedContract')}>
             <TouchableOpacity
               style={{ alignItems: 'flex-end' }}
               onPress={() => handleOpenTxAddress(requireData?.id || '')}>
@@ -470,38 +401,8 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
                 {ellipsisAddress(requireData?.id || '')}
               </Text>
             </TouchableOpacity>
-          </View>
-
-          {Boolean(data.maxGasTx?.gasUSDValue) && (
-            <View style={styles.detailItem}>
-              <Text style={styles.itemTitleText}>
-                {t('page.transactions.detail.GasFee')}
-              </Text>
-              <Text style={styles.itemContentText}>
-                {formatAmount(data.maxGasTx?.gasTokenCount!)}{' '}
-                {data.maxGasTx?.gasTokenSymbol || ''} ($
-                {formatAmount(data.maxGasTx?.gasUSDValue ?? 0)})
-              </Text>
-            </View>
-          )}
-
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>Hash</Text>
-            <TouchableOpacity
-              disabled={!chain?.scanLink}
-              onPress={handleOpenTxId}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <Text style={[styles.itemContentText]}>
-                {ellipsisAddress(data.maxGasTx.hash!)}
-              </Text>
-              <RcIconExternalLinkCC
-                width={14}
-                height={14}
-                color={colors2024['neutral-foot']}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
+          </ActionDetailItem>
+        </ActionDetailSection>
       </ScrollView>
       {isLocalSwap && (
         <View style={[styles.buttonContainer, { paddingBottom: bottom + 27 }]}>
@@ -540,28 +441,6 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  detailContainer: {
-    // flex: 1,
-    width: '100%',
-    marginTop: 12,
-    borderRadius: 16,
-    paddingTop: 12,
-    paddingBottom: 4,
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
-  },
-  detailContainerHeader: {
-    marginBottom: 8,
-    paddingHorizontal: 16,
-  },
-  detailContainerTitle: {
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-  },
   ghostButton: {
     backgroundColor: colors2024['neutral-bg-2'],
     borderColor: colors2024['neutral-info'],
@@ -662,17 +541,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
     marginTop: 4,
   },
-  mutliBox: {
-    width: '100%',
-    backgroundColor: colors2024['neutral-bg-1'],
-    justifyContent: 'center',
-    alignContent: 'center',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 16,
-    // flexDirection: 'row',
-    gap: 12,
-  },
   doubleBox: {
     justifyContent: 'center',
     alignContent: 'center',
@@ -739,27 +607,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     paddingHorizontal: 16,
   },
-  itemAliaName: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  detailItem: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  itemTitleText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    maxWidth: '45%',
-  },
   itemAddressText: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
@@ -774,22 +621,4 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     fontWeight: '700',
   },
-  headerTitleStyle: {
-    color: colors2024['neutral-title-1'],
-    fontWeight: '800',
-    fontSize: 20,
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 24,
-  },
-
-  statuItemText: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    marginLeft: 4,
-  },
-
-  headerItem: {},
 }));
