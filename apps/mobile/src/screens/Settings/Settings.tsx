@@ -161,6 +161,8 @@ import {
 } from '@/utils/analytics0331';
 import { Text } from '@/components/Typography';
 import { useAppSecurityChain } from '@/hooks/global';
+import { useToggleShowUnlockStatusBar } from '@/hooks/appSettings';
+import { SwitchShowFloatingUnlockStatusBar } from './components/SwitchFloatingView';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -725,6 +727,7 @@ function DevSettingsBlocks({
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
   const { setDevServerSettingsModalVisible } = useDevServerModalVisible();
   const currentAccount = preferenceService.getFallbackAccount();
+  const { toggleShowUnlockStatusBar } = useToggleShowUnlockStatusBar();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -784,6 +787,19 @@ function DevSettingsBlocks({
               onPress: async () => {
                 setWalletTestItemModalVisible(true);
               },
+            },
+            {
+              label: 'Show Unlock Status Bar',
+              icon: RcLockWallet,
+              onPress: () => {
+                toggleShowUnlockStatusBar();
+              },
+              rightNode: (
+                <SwitchShowFloatingUnlockStatusBar
+                  onPress={evt => evt.stopPropagation()}
+                />
+              ),
+              visible: NEED_DEVSETTINGBLOCKS,
             },
             {
               label: 'Regression Switches',

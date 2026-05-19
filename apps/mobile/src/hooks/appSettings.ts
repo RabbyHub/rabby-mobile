@@ -458,6 +458,13 @@ const showFloatingViewStore = zCreate<{
   collapsed: true,
   ui_showAutoLockCountdown: false,
 }));
+
+const floatingUnlockStatusBarStore = zustandByMMKV<{
+  enabled: boolean;
+}>('@FloatingUnlockStatusBar', {
+  enabled: false,
+});
+
 function setShowFloatingView(
   valOrFunc: UpdaterOrPartials<{
     collapsed: boolean;
@@ -487,14 +494,18 @@ const toggleCollapsed = (nextEnabled?: boolean) => {
 
 export function useFloatingView() {
   const floatingView = showFloatingViewStore(s => s);
+  const showUnlockStatusBar = floatingUnlockStatusBarStore(
+    s => isNonPublicProductionEnv && s.enabled,
+  );
 
   return {
     collapsed: floatingView.collapsed,
     showAutoLockCountdown: floatingView.ui_showAutoLockCountdown,
+    showUnlockStatusBar,
     toggleCollapsed,
-    shouldShow: Object.entries(floatingView).some(
-      ([k, v]) => k.startsWith('ui_') && v,
-    ),
+    shouldShow:
+      showUnlockStatusBar ||
+      Object.entries(floatingView).some(([k, v]) => k.startsWith('ui_') && v),
   };
 }
 
@@ -518,6 +529,39 @@ export function useToggleShowAutoLockCountdown() {
   return {
     showAutoLockCountdown: ui_showAutoLockCountdown,
     toggleShowAutoLockCountdown,
+  };
+}
+
+const toggleShowUnlockStatusBar = (nextEnabled?: boolean) => {
+  if (!isNonPublicProductionEnv) {
+    return false;
+  }
+
+  let finalValue = false;
+  floatingUnlockStatusBarStore.setState(prev => {
+    if (typeof nextEnabled !== 'boolean') {
+      nextEnabled = !prev.enabled;
+    }
+
+    finalValue = nextEnabled;
+
+    return {
+      ...prev,
+      enabled: finalValue,
+    };
+  });
+
+  return finalValue;
+};
+
+export function useToggleShowUnlockStatusBar() {
+  const showUnlockStatusBar = floatingUnlockStatusBarStore(
+    s => isNonPublicProductionEnv && s.enabled,
+  );
+
+  return {
+    showUnlockStatusBar,
+    toggleShowUnlockStatusBar,
   };
 }
 

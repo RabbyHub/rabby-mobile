@@ -23,6 +23,10 @@ import { eventBus, EVENTS } from '@/utils/events';
 import { handleGasAccountLoginSuccess } from '@/utils/gasAccountAnalytics';
 import { setGasAccountStoreApi } from '@/utils/gasAccountStoreApiBridge';
 import { sendPersonalMessage } from '@/utils/sendPersonalMessage';
+import {
+  ensureWalletUnlocked,
+  isWalletUnlockCancelled,
+} from '@/utils/walletUnlock';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { GasAccountBridgeToken } from '@rabby-wallet/rabby-api/dist/types';
@@ -660,6 +664,21 @@ export const storeApiGasAccount = {
 
     let signature = '';
     if (noSignType) {
+      try {
+        await ensureWalletUnlocked();
+      } catch (error) {
+        if (isWalletUnlockCancelled(error)) {
+          gasAccountStore.setState(prev =>
+            updateSessionState(prev, {
+              status: 'idle',
+            }),
+          );
+          return '';
+        }
+
+        throw error;
+      }
+
       const { txHash } = await sendPersonalMessage({
         data: [text, selectAccount.address],
         account: selectAccount,

@@ -80,7 +80,7 @@ export const useDeleteAccountModal = () => {
           onFinished?.();
         },
         validationHandler: async (password: string) => {
-          await apisLock.throwErrorIfInvalidPwd(password);
+          await apisLock.verifyPasswordOrUnlock(password);
 
           if (account.type === KEYRING_TYPE.HdKeyring) {
             await invokeEnterPassphrase(account.address);
