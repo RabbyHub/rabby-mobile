@@ -314,13 +314,6 @@ export const PerpsEditMarginPopup: React.FC<{
                       currentAssetCtx?.quoteAsset || 'USDC'
                     }`}</Text>
                   </Text>
-                  <View style={styles.crossTag}>
-                    <Text style={styles.crossText}>
-                      {marginMode === 'cross'
-                        ? t('page.perpsDetail.PerpsPosition.cross')
-                        : t('page.perpsDetail.PerpsPosition.isolated')}
-                    </Text>
-                  </View>
                 </View>
                 <View style={styles.tagRow}>
                   <View
@@ -343,11 +336,13 @@ export const PerpsEditMarginPopup: React.FC<{
                       {direction} {`${leverage}x`}
                     </Text>
                   </View>
-                  {/* <DistanceToLiquidationTag
-                    liquidationPrice={liquidationPx}
-                    markPrice={markPrice}
-                    onPress={handlePressRiskTag}
-                  /> */}
+                  <View style={styles.crossTag}>
+                    <Text style={styles.crossText}>
+                      {marginMode === 'cross'
+                        ? t('page.perpsDetail.PerpsPosition.cross')
+                        : t('page.perpsDetail.PerpsPosition.isolated')}
+                    </Text>
+                  </View>
                 </View>
               </View>
               <View style={styles.rightSection}>

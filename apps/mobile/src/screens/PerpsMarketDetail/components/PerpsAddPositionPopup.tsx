@@ -309,13 +309,6 @@ export const PerpsAddPositionPopup: React.FC<{
                 <Text style={styles.coinName}>
                   {formatPerpsCoin(displayName)}
                 </Text>
-                <View style={styles.crossTag}>
-                  <Text style={styles.crossText}>
-                    {marginMode === 'cross'
-                      ? t('page.perpsDetail.PerpsPosition.cross')
-                      : t('page.perpsDetail.PerpsPosition.isolated')}
-                  </Text>
-                </View>
               </View>
               <View style={styles.tagRow}>
                 <View
@@ -334,6 +327,13 @@ export const PerpsAddPositionPopup: React.FC<{
                       direction === 'Long' ? styles.longText : styles.shortText,
                     ]}>
                     {direction} {`${leverage}x`}
+                  </Text>
+                </View>
+                <View style={styles.crossTag}>
+                  <Text style={styles.crossText}>
+                    {marginMode === 'cross'
+                      ? t('page.perpsDetail.PerpsPosition.cross')
+                      : t('page.perpsDetail.PerpsPosition.isolated')}
                   </Text>
                 </View>
                 <DistanceToLiquidationTag

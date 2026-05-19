@@ -118,13 +118,6 @@ const AssetPositionItem = ({
                   {formatPerpsCoin(item.displayName || coin)}
                 </Text>
                 <Text style={styles.quote}>{`/${item.quoteAsset}`}</Text>
-                <View style={styles.crossTag}>
-                  <Text style={styles.crossText}>
-                    {leverageType === 'cross'
-                      ? t('page.perpsDetail.PerpsPosition.cross')
-                      : t('page.perpsDetail.PerpsPosition.isolated')}
-                  </Text>
-                </View>
               </View>
             </View>
           </View>
@@ -145,6 +138,13 @@ const AssetPositionItem = ({
                   side === 'Long' ? styles.longText : styles.shortText,
                 ]}>
                 {side} {leverageText}
+              </Text>
+            </View>
+            <View style={styles.crossTag}>
+              <Text style={styles.crossText}>
+                {leverageType === 'cross'
+                  ? t('page.perpsDetail.PerpsPosition.cross')
+                  : t('page.perpsDetail.PerpsPosition.isolated')}
               </Text>
             </View>
             <DistanceToLiquidationTag

@@ -92,13 +92,6 @@ export const PerpsPositionItem: React.FC<{
             <View style={styles.coinInfo}>
               <View style={styles.coinNameRow}>
                 <PerpsDisplayCoinName item={marketData} coin={coin} />
-                <View style={styles.crossTag}>
-                  <Text style={styles.crossText}>
-                    {leverageType === 'cross'
-                      ? t('page.perpsDetail.PerpsPosition.cross')
-                      : t('page.perpsDetail.PerpsPosition.isolated')}
-                  </Text>
-                </View>
               </View>
             </View>
           </View>
@@ -119,6 +112,13 @@ export const PerpsPositionItem: React.FC<{
                   side === 'Long' ? styles.longText : styles.shortText,
                 ]}>
                 {side} {leverageText}
+              </Text>
+            </View>
+            <View style={styles.crossTag}>
+              <Text style={styles.crossText}>
+                {leverageType === 'cross'
+                  ? t('page.perpsDetail.PerpsPosition.cross')
+                  : t('page.perpsDetail.PerpsPosition.isolated')}
               </Text>
             </View>
             {!hasStopLoss && marketData && (
