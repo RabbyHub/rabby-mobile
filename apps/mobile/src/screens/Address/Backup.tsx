@@ -97,7 +97,10 @@ function Backup(): JSX.Element {
           address,
         );
 
-        const result = await apisLock.updateWalletPassword(autoGenPassword, newPassword);
+        const result = await apisLock.updateWalletPassword(
+          autoGenPassword,
+          newPassword,
+        );
         if (result.error) {
           throw new Error(result.error);
         }
