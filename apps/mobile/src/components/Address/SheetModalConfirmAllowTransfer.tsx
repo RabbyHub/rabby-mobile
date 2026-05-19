@@ -97,7 +97,7 @@ export function ModalConfirmAllowTransfer({
 
   const onValidatedPassword = useCallback(
     async (validatedPassword: string) => {
-      await apisLock.verifyPasswordOrUnlock(validatedPassword);
+      await apisLock.throwErrorIfInvalidPwd(validatedPassword);
 
       if (toAddr && confirmToAddToWhitelist) {
         await addWhitelist(toAddr, { hasValidated: isUseCustomPwd });

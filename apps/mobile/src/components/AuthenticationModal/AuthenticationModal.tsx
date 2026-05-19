@@ -217,7 +217,7 @@ const getFooterStyle = createGetStyles(colors => {
 });
 
 const DFLT_VALIDATE = async (password: string) => {
-  return apisLock.verifyPasswordOrUnlock(password);
+  return apisLock.throwErrorIfInvalidPwd(password);
 };
 
 export const AuthenticationModal = ({

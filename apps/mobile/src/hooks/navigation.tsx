@@ -26,7 +26,6 @@ import {
 import type { RootStackParamsList } from '@/navigation-type';
 import { setIOSScreenCapture } from './native/security';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
-import * as apisAccount from '@/core/apis/account';
 import * as apisLock from '@/core/apis/lock';
 import { IS_IOS } from '@/core/native/utils';
 import {
@@ -56,11 +55,7 @@ import {
   txResultToToHistoryDisplayItem,
 } from '@/utils/transaction';
 // import { SampleNotifiedTxResult } from '@/core/notifications/sample-data';
-import {
-  keyringService,
-  preferenceService,
-  transactionHistoryService,
-} from '@/core/services';
+import { preferenceService, transactionHistoryService } from '@/core/services';
 import { browserApis } from './browser/useBrowser';
 import { notificationOpenapi } from '@/core/notifications/openapi';
 import { toast, toastLoading } from '@/components2024/Toast';
@@ -102,10 +97,10 @@ autoLockEvent.addListener('timeout', ctx => {
   const routeName = navigationRouteStore.getState().currentRouteName;
 
   const atUnlock = routeName === RootNames.Unlock;
-  if (atUnlock) {
-    ctx.delayLock();
+  if (!atUnlock) {
+    requestLockWalletAndBackToUnlockScreen();
   } else {
-    requestExpireUnlockSessionAndBackToUnlockScreen();
+    ctx.delayLock();
   }
 });
 
@@ -465,24 +460,17 @@ export const resetNavigationOnTopOfHome: typeof naviReplace = (
   apisHomeTabIndex.setTabIndex(0);
 };
 
-export const requestLockWallet = makeAvoidParallelAsyncFunc(async () => {
-  const lockInfo = await apisLock.getRabbyLockInfo();
-  const result = { canLockWallet: false };
-  if (!lockInfo.isUseCustomPwd) return result;
-
-  const isUnlocked = apisLock.isUnlocked();
-  if (isUnlocked) {
-    result.canLockWallet = true;
-    await apisLock.lockWallet();
-  }
-
-  return result;
-});
-
 export const requestLockWalletAndBackToUnlockScreen =
   makeAvoidParallelAsyncFunc(async () => {
-    const result = await requestLockWallet();
-    if (!result.canLockWallet) return result;
+    const lockInfo = await apisLock.getRabbyLockInfo();
+    const result = { canLockWallet: false };
+    if (!lockInfo.isUseCustomPwd) return result;
+
+    const isUnlocked = apisLock.isUnlocked();
+    if (isUnlocked) {
+      result.canLockWallet = true;
+      await apisLock.lockWallet();
+    }
 
     console.debug('will back to unlock screen');
     const navigation = getReadyNavigationInstance();
@@ -490,45 +478,6 @@ export const requestLockWalletAndBackToUnlockScreen =
 
     return result;
   });
-
-export const requestExpireUnlockSessionAndBackToUnlockScreen =
-  makeAvoidParallelAsyncFunc(async () => {
-    const lockInfo = await apisLock.getRabbyLockInfo();
-    const result = { canLockWallet: false };
-    if (!lockInfo.isUseCustomPwd) return result;
-
-    if (apisLock.isUnlocked()) {
-      result.canLockWallet = true;
-      await apisLock.lockWallet();
-    } else {
-      apisLock.clearUnlockTime();
-    }
-
-    console.debug('will expire unlock session and back to unlock screen');
-    const navigation = getReadyNavigationInstance();
-    if (navigation) resetNavigationTo(navigation, 'Unlock');
-
-    return result;
-  });
-
-export const requestLockWalletAndBackToHomeScreen = makeAvoidParallelAsyncFunc(
-  async () => {
-    const result = await requestLockWallet();
-    if (!result.canLockWallet) return result;
-
-    console.debug('will back to home screen');
-    const navigation = getReadyNavigationInstance();
-    if (navigation) {
-      const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
-      resetNavigationTo(
-        navigation,
-        hasAccountsInKeyring ? 'Home' : 'GetStarted',
-      );
-    }
-
-    return result;
-  },
-);
 
 type ResetNaviOnUIUnlockFn = (ctx: {
   navigation: NavigationInstance;
@@ -545,9 +494,9 @@ const unlockUIState = {
   finishedUnlockResetNav: false,
   resetNaviOnTopOfHomeWhenUnlockRef: null as null | ResetNaviOnUIUnlockFn,
 };
-keyringService.addListener('lock', () => {
-  unlockUIState.finishedUnlockResetNav = false;
-});
+// keyringService.addListener('lock', () => {
+//   unlockUIState.finishedUnlockResetNav = false;
+// });
 export class UnlockUIManager {
   static triggerAutoUnlock(delay = 500) {
     const action = () => {
@@ -566,15 +515,12 @@ export class UnlockUIManager {
     unlockUIState.unlockOnceRef = true;
   }
 
-  static queueResetNaviOnTopOfHomeWhenUnlock(
-    fn: ResetNaviOnUIUnlockFn,
-    options?: { forceWaitUnlock?: boolean },
-  ) {
+  static queueResetNaviOnTopOfHomeWhenUnlock(fn: ResetNaviOnUIUnlockFn) {
     const navigation = getReadyNavigationInstance();
     if (!navigation) return;
 
     // previous reset nav has been processed, do it immediately
-    if (unlockUIState.finishedUnlockResetNav && !options?.forceWaitUnlock) {
+    if (unlockUIState.finishedUnlockResetNav) {
       fn({
         navigation,
         hasUnlockOnce: unlockUIState.unlockOnceRef,
@@ -588,10 +534,6 @@ export class UnlockUIManager {
         return ret;
       };
     }
-  }
-
-  static clearQueuedResetNaviOnTopOfHomeWhenUnlock() {
-    unlockUIState.resetNaviOnTopOfHomeWhenUnlockRef = null;
   }
 
   static async resetNavOnUIUnlock() {
@@ -864,9 +806,6 @@ export function startSubscribeRemoteNotification() {
 
   const notificationProcessQueue = new PQueue({ concurrency: 1 });
 
-  const canOpenNotificationTransaction = () =>
-    apisLock.isUnlocked() || apisLock.isUnlockSessionValid();
-
   notificationEvents.subscribe(
     'onParsedReceivedData',
     async ({ parsedData }) => {
@@ -904,9 +843,9 @@ export function startSubscribeRemoteNotification() {
             return null;
           });
 
-        const openNotificationTransaction = async (ctx?: {
-          defaultAction?: () => void;
-        }) => {
+        UnlockUIManager.triggerAutoUnlock();
+
+        UnlockUIManager.queueResetNaviOnTopOfHomeWhenUnlock(async ctx => {
           const foundAccount = await findMyAccountByOwnerAddress(ownerAddress);
           const hideToastRef = {
             current: toastLoading(
@@ -921,7 +860,7 @@ export function startSubscribeRemoteNotification() {
             earlyReturnL1();
             hideToastRef.current();
             if (shouldExecuteDefaultAction) {
-              ctx?.defaultAction?.();
+              ctx.defaultAction?.();
             }
           };
 
@@ -948,7 +887,11 @@ export function startSubscribeRemoteNotification() {
             const currentRouteName =
               navigationRouteStore.getState().currentRouteName;
             const needReplace = currentRouteName === RootNames.History;
-            const naviFn = needReplace ? naviReplace : naviPush;
+            const naviFn = ctx.defaultAction
+              ? resetNavigationOnTopOfHome
+              : needReplace
+              ? naviReplace
+              : naviPush;
 
             await switchSceneCurrentAccount('History', foundAccount);
             hideToastRef.current();
@@ -990,7 +933,11 @@ export function startSubscribeRemoteNotification() {
             navigationRouteStore.getState().currentRouteName;
           const needReplace = currentRouteName === RootNames.HistoryDetail;
 
-          const naviFn = needReplace ? naviReplace : naviPush;
+          const naviFn = ctx.defaultAction
+            ? resetNavigationOnTopOfHome
+            : needReplace
+            ? naviReplace
+            : naviPush;
           naviFn(RootNames.StackTransaction, {
             screen: RootNames.HistoryDetail,
             params: {
@@ -1003,23 +950,7 @@ export function startSubscribeRemoteNotification() {
           });
 
           perfEvents.emit('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS');
-        };
-
-        if (canOpenNotificationTransaction()) {
-          await openNotificationTransaction();
-          return earlyReturnL1();
-        }
-
-        UnlockUIManager.queueResetNaviOnTopOfHomeWhenUnlock(
-          ctx =>
-            openNotificationTransaction({
-              defaultAction: ctx.defaultAction,
-            }),
-          { forceWaitUnlock: true },
-        );
-        await requestExpireUnlockSessionAndBackToUnlockScreen();
-        UnlockUIManager.triggerAutoUnlock();
-        return earlyReturnL1();
+        });
       });
     },
   );

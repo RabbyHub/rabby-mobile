@@ -17,6 +17,7 @@ import { Button } from '@/components2024/Button';
 import { useMemoizedFn } from 'ahooks';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { useAppUnlocked } from '@/hooks/useLock';
 import { createGetStyles2024 } from '@/utils/styles';
 import TouchableText from '@/components/Touchable/TouchableText';
 import {
@@ -32,7 +33,6 @@ import { Text } from '@/components/Typography';
 import ChevronRightSmallCC from '@/assets/icons/common/chevron-right-small-cc.svg';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
-import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 import StartScreenAnimation from '@/assets2024/animations/start-screen-animation.min.json';
 import StartScreenAnimationDark from '@/assets2024/animations/start-screen-animation-dark.min.json';
@@ -81,6 +81,10 @@ function NewUserGetStartedScreen() {
     if (!getStarted.processedInit) {
       return;
     }
+    if (!keyringService.isUnlocked()) {
+      navigateDeprecated(RootNames.Unlock);
+      return;
+    }
 
     navigateDeprecated(RootNames.StackRoot, { screen: RootNames.Home });
   }, [getStarted.processedInit]);
@@ -100,7 +104,8 @@ function NewUserGetStartedScreen() {
     if (!getStarted.processedInit) {
       return;
     }
-    if (!(await ensureWalletUnlockedForAction())) {
+    if (!keyringService.isUnlocked()) {
+      navigateDeprecated(RootNames.Unlock);
       return;
     }
 
@@ -115,6 +120,11 @@ function NewUserGetStartedScreen() {
     if (!getStarted.processedInit) {
       return;
     }
+    if (!keyringService.isUnlocked()) {
+      navigateDeprecated(RootNames.Unlock);
+      return;
+    }
+
     preferenceService.setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS,
     );
@@ -123,6 +133,10 @@ function NewUserGetStartedScreen() {
 
   const handleGoToSyncExtension = useCallback(async () => {
     if (!getStarted.processedInit) {
+      return;
+    }
+    if (!keyringService.isUnlocked()) {
+      navigateDeprecated(RootNames.Unlock);
       return;
     }
 
@@ -147,10 +161,13 @@ function NewUserGetStartedScreen() {
     }
   });
 
+  const { isAppUnlocked } = useAppUnlocked();
   useFocusEffect(
     useCallback(() => {
-      initAccounts();
-    }, [initAccounts]),
+      if (isAppUnlocked) {
+        initAccounts();
+      }
+    }, [isAppUnlocked, initAccounts]),
   );
 
   const { bottom, top } = useSafeAreaInsets();

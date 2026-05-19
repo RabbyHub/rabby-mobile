@@ -61,7 +61,6 @@ import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { startUnlockScreenBootstrapWarmups } from '@/setup-app-before-render';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
 import { logger } from '@/utils/logger';
-import { cancelPendingWalletUnlock } from '@/utils/walletUnlock';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -572,22 +571,9 @@ export default function UnlockScreen() {
     }, [params?.disableAutoTriggerUnlock]),
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      return () => {
-        if (params?.allowCancel && !apisLock.isUnlocked()) {
-          cancelPendingWalletUnlock(params.unlockRequestId);
-        }
-      };
-    }, [params?.allowCancel, params?.unlockRequestId]),
-  );
-
   const { registerPreventEffect } = usePreventGoBack({
     navigation,
-    shouldGoback: useCallback(
-      () => Boolean(params?.allowCancel) || apisLock.isUnlocked(),
-      [params?.allowCancel],
-    ),
+    shouldGoback: useCallback(() => apisLock.isUnlocked(), []),
   });
 
   useFocusEffect(registerPreventEffect);

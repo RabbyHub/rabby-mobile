@@ -33,7 +33,6 @@ import { replaceToFirst } from '@/utils/navigation';
 import { toast } from '@/components2024/Toast';
 import { setAccountNeedsBackupReminder } from '@/hooks/account';
 import { useImportAddressProc } from '@/hooks/address/useNewUser';
-import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 type SelectAddMethodProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -107,10 +106,6 @@ function SelectAddMethod(): JSX.Element {
   }, []);
 
   const onPressCreateWallet = React.useCallback(async () => {
-    if (!(await ensureWalletUnlockedForAction())) {
-      return;
-    }
-
     if (seedPhraseList.length > 0) {
       if (
         await shouldRedirectToSetPasswordBefore2024({
@@ -145,10 +140,6 @@ function SelectAddMethod(): JSX.Element {
   ]);
 
   const onPressImportSeedPhrase = React.useCallback(async () => {
-    if (!(await ensureWalletUnlockedForAction())) {
-      return;
-    }
-
     setConfirmCB(async () => {
       navigation.replace(RootNames.ImportSecret, {
         initialTab: 'seedPhrase',
@@ -170,10 +161,6 @@ function SelectAddMethod(): JSX.Element {
   }, [navigation, shouldRedirectToSetPasswordBefore2024, setConfirmCB]);
 
   const onPressImportPrivateKey = React.useCallback(async () => {
-    if (!(await ensureWalletUnlockedForAction())) {
-      return;
-    }
-
     setConfirmCB(async () => {
       navigation.replace(RootNames.ImportSecret, {
         initialTab: 'privateKey',
@@ -194,19 +181,19 @@ function SelectAddMethod(): JSX.Element {
     });
   }, [navigation, shouldRedirectToSetPasswordBefore2024, setConfirmCB]);
 
-  const onPressHardwareWallet = React.useCallback(async () => {
+  const onPressHardwareWallet = React.useCallback(() => {
     navigation.navigate(RootNames.StackAddress, {
       screen: RootNames.ImportHardwareAddress,
     });
   }, [navigation]);
 
-  const onPressRestoreRabby = React.useCallback(async () => {
+  const onPressRestoreRabby = React.useCallback(() => {
     navigation.navigate(RootNames.ImportRabbyWallet, {
       flow: 'in_app',
     });
   }, [navigation]);
 
-  const onPressMoreOptions = React.useCallback(async () => {
+  const onPressMoreOptions = React.useCallback(() => {
     navigation.navigate(RootNames.MoreImportMethods);
   }, [navigation]);
 

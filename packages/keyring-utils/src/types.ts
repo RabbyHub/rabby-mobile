@@ -78,7 +78,6 @@ export type KeyringAccount = {
   type: KeyringTypeName;
   realBrandName?: string;
   realBrandUrl?: string;
-  hdPathBasePublicKey?: string;
 };
 
 export const KEYRING_CLASS = {

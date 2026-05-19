@@ -123,7 +123,7 @@ const toggleWhitelist = async (bool: boolean) => {
       ? t('page.dashboard.settings.enableWhitelistTip')
       : t('page.dashboard.settings.disableWhitelistTip'),
     validationHandler: async (password: string) => {
-      return apisLock.verifyPasswordOrUnlock(password);
+      return apisLock.throwErrorIfInvalidPwd(password);
     },
     async onFinished() {
       if (bool) {
@@ -165,7 +165,7 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
           title: t('page.addressDetail.add-to-whitelist'),
           onFinished,
           validationHandler(password) {
-            return apisLock.verifyPasswordOrUnlock(password);
+            return apisLock.throwErrorIfInvalidPwd(password);
           },
         });
       }

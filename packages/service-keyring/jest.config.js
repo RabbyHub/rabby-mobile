@@ -14,15 +14,6 @@ module.exports = merge(baseConfig, {
   // The display name when running multiple projects
   displayName,
 
-  moduleNameMapper: {
-    '^react-native-quick-crypto$':
-      '<rootDir>/test/react-native-quick-crypto.mock.js',
-    '^@craftzdog/react-native-buffer$':
-      '<rootDir>/test/react-native-buffer.mock.js',
-  },
-
-  setupFiles: ['<rootDir>/test/setup.js'],
-
   // An object that configures minimum threshold enforcement for coverage results
   coverageThreshold: {
     global: {

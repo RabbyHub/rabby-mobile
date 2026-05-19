@@ -42,9 +42,3 @@ export async function startUnlockScreenBootstrapWarmups() {
     await loadSetupBeforeRenderRuntime('unlock_screen_bootstrap_warmups')
   ).startUnlockScreenBootstrapWarmups();
 }
-
-export async function startReadableAccountBootstrapWarmups() {
-  return (
-    await loadSetupBeforeRenderRuntime('readable_account_bootstrap_warmups')
-  ).startReadableAccountBootstrapWarmups();
-}

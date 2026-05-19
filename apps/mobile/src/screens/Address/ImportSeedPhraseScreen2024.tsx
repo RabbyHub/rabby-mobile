@@ -43,7 +43,6 @@ import {
   onPastedSensitiveData,
 } from '@/utils/clipboard';
 import { Text } from '@/components/Typography';
-import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 const getStyles = createGetStyles2024(ctx => ({
   screen: {
@@ -282,11 +281,6 @@ export const ImportSeedPhraseScreen2024 = () => {
       setConfirmCB(importSeedPhrase);
       return;
     }
-
-    if (!(await ensureWalletUnlockedForAction())) {
-      return;
-    }
-
     setImporting(true);
     importToastHiddenRef.current = toast.show('Importing...', {
       duration: 100000,

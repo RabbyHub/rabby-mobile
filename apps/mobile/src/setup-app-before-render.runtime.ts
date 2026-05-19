@@ -154,7 +154,7 @@ export const startInitPersistedStores = async () => {
   await promise;
 };
 
-export async function startReadableAccountBootstrapWarmups() {
+export async function startUnlockScreenBootstrapWarmups() {
   const results = await Promise.allSettled([
     startInitPersistedStores(),
     ensureAccountBalanceSelectionLifecycle(),
@@ -162,16 +162,9 @@ export async function startReadableAccountBootstrapWarmups() {
 
   results.forEach(result => {
     if (result.status === 'rejected') {
-      console.error(
-        'startReadableAccountBootstrapWarmups::error',
-        result.reason,
-      );
+      console.error('startUnlockScreenBootstrapWarmups::error', result.reason);
     }
   });
-}
-
-export async function startUnlockScreenBootstrapWarmups() {
-  return startReadableAccountBootstrapWarmups();
 }
 
 const initUnlockedStoresStateRef = {

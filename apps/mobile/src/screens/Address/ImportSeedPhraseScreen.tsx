@@ -17,7 +17,6 @@ import { toast } from '@/components2024/Toast';
 import { useFocusEffect } from '@react-navigation/native';
 import * as bip39 from '@scure/bip39';
 import * as import_english from '@scure/bip39/wordlists/english';
-import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -139,11 +138,7 @@ export const ImportSeedPhraseScreen = () => {
       });
   }, [duplicateAddressModal, mnemonics, passphrase]);
 
-  const handleConfirm = React.useCallback(async () => {
-    if (!(await ensureWalletUnlockedForAction())) {
-      return;
-    }
-
+  const handleConfirm = React.useCallback(() => {
     setImporting(true);
     importToastHiddenRef.current = toast.show('Importing...', {
       duration: 100000,

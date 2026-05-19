@@ -13,7 +13,6 @@ import {
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { Text } from '@/components/Typography';
-import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 interface Props {
   account: KeyringAccountWithAlias;
@@ -27,10 +26,6 @@ export const SeedPhraseBar: React.FC<Props> = ({ account, onCancel }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const goToHDManager = async () => {
-    if (!(await ensureWalletUnlockedForAction())) {
-      return;
-    }
-
     const passphrase = await invokeEnterPassphrase(address);
     const mnemonics = await apiMnemonic.getMnemonicByAddress(address)!;
     const result = await apiMnemonic.generateKeyringWithMnemonic(

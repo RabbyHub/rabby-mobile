@@ -41,7 +41,6 @@ import { Button } from '../Button';
 import { resetNavigationOnTopOfHome } from '@/hooks/navigation';
 import i18next from 'i18next';
 import { Text } from '@/components/Typography';
-import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 const { isSameAddress } = addressUtils;
 
@@ -388,13 +387,6 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
   const importToastHiddenRef = React.useRef<() => void>(() => {});
 
   const handleConfirm = React.useCallback(async () => {
-    if (
-      params.type === KEYRING_TYPE.HdKeyring &&
-      !(await ensureWalletUnlockedForAction())
-    ) {
-      return;
-    }
-
     setImporting(true);
     importToastHiddenRef.current = toast.show(
       i18next.t('page.newAddress.importing'),
