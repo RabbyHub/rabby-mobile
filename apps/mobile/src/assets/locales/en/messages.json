@@ -134,7 +134,9 @@
         "Simulation Results": "Simulation Results",
         "totalApprovedAmount": "Current Approved Amount",
         "PurchaseFrom": "Purchased from",
-        "WillReceive": "Will Receive: ≈ {{token}}"
+        "WillReceive": "Will Receive: ≈ {{token}}",
+        "TransactionDetails": "Transaction Details",
+        "interactionResults": "Interaction Results"
       },
       "empty": {
         "title": "No transactions",

@@ -5,7 +5,13 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import React, { useCallback, useMemo } from 'react';
-import { ScrollView, TouchableOpacity, View } from 'react-native';
+import {
+  ScrollView,
+  StyleProp,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from 'react-native';
 
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { AssetAvatar } from '@/components';
@@ -119,7 +125,11 @@ export const AddressItemInDetail = ({
             <Text
               numberOfLines={1}
               ellipsizeMode="tail"
-              style={[styles.itemContentText, styles.itemContentTextAliasName]}>
+              style={[
+                styles.itemContentText,
+                styles.itemContentTextAliasName,
+                { marginRight: 4 },
+              ]}>
               {getAliasName(address) || ellipsisAddress(address)}
             </Text>
             {!disableNavigate && (
@@ -132,10 +142,7 @@ export const AddressItemInDetail = ({
             {!account ? (
               <CopyAddressIcon
                 address={address}
-                color={colors2024['neutral-secondary']}
-                style={{
-                  marginLeft: 4,
-                }}
+                color={colors2024['neutral-foot']}
               />
             ) : null}
           </View>
@@ -295,9 +302,9 @@ function HistoryDetailScreen(): JSX.Element {
   }, [formatType]);
 
   const ProjecRenderItem = useCallback(
-    (titleText: string) => {
+    (titleText: string, style?: StyleProp<ViewStyle>) => {
       return formatProject ? (
-        <View style={styles.detailItem}>
+        <View style={[style ? style : styles.detailItem]}>
           <Text style={styles.itemTitleText}>{titleText}</Text>
           <TouchableOpacity
             style={{ alignItems: 'flex-end' }}
@@ -401,8 +408,39 @@ function HistoryDetailScreen(): JSX.Element {
           token={formatToken}
           status={status}
           account={txAccount}
+          extra={
+            [HistoryItemCateType.Send].includes(formatType) &&
+            Boolean(toAddr) ? (
+              <View style={styles.extraItem}>
+                <Text style={styles.itemTitleText}>
+                  {t('page.transactions.detail.To')}
+                </Text>
+                <AddressItemInDetail address={toAddr!} accounts={accounts} />
+              </View>
+            ) : [HistoryItemCateType.Recieve].includes(formatType) &&
+              Boolean(fromAddr) ? (
+              <View style={styles.extraItem}>
+                <Text style={styles.itemTitleText}>
+                  {t('page.transactions.detail.From')}
+                </Text>
+                <AddressItemInDetail address={fromAddr!} accounts={accounts} />
+              </View>
+            ) : isApproveOrRevoke ? (
+              ProjecRenderItem(
+                formatType === HistoryItemCateType.Approve
+                  ? t('page.transactions.detail.ApproveTo')
+                  : t('page.transactions.detail.RevokeFrom'),
+                styles.extraItem,
+              )
+            ) : null
+          }
         />
         <View style={[styles.detailContainer, styles.detailContainerLastOne]}>
+          <View style={styles.detailContainerHeader}>
+            <Text style={styles.detailContainerTitle}>
+              {t('page.transactions.detail.TransactionDetails')}
+            </Text>
+          </View>
           <View style={styles.detailItem}>
             <Text style={styles.itemTitleText}>
               {t('page.transactions.detail.Date')}
@@ -592,11 +630,23 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailContainer: {
     width: '100%',
     marginTop: 12,
-    paddingVertical: 4,
     borderRadius: 16,
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  detailContainerHeader: {
+    marginBottom: 8,
+    paddingHorizontal: 16,
+  },
+  detailContainerTitle: {
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
   },
   detailContainerLastOne: {
     marginBottom: 20,
@@ -609,6 +659,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  extraItem: {
+    flexDirection: 'row',
+    padding: 12,
+    backgroundColor: colors2024['neutral-bg-2'],
+    borderRadius: 12,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginHorizontal: 12,
+    marginBottom: 12,
   },
   detailItem: {
     flexDirection: 'row',

@@ -205,8 +205,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
   },
   mediaInDetail: {
-    width: 58,
-    height: 58,
+    width: 46,
+    height: 46,
     borderRadius: 8,
   },
   media: {

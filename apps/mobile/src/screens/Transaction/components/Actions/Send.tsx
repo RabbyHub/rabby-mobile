@@ -1,14 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
-import { RcIconExternalLinkCC } from '@/assets/icons/common';
 import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
-import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
-import {
-  formatAmount,
-  formatTokenAmount,
-  formatUsdValue,
-} from '@/utils/number';
+import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { SendAction, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -17,26 +11,20 @@ import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
-import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
 import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
-import { ellipsisAddress } from '@/utils/address';
 import { naviPush } from '@/utils/navigation';
-import { openTxExternalUrl } from '@/utils/transaction';
 import { SendRequireData } from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { AddressItemInDetail } from '../../HistoryDetailScreen';
-import { TxStatusItem } from '../TxStatusItem';
 import { HistoryItemIcon } from '../HistoryItemIcon';
 import { Button } from '@/components2024/Button';
 import { HistoryItemCateType } from '../type';
 import { CHAINS_ENUM } from '@/constant/chains';
-import { formatIntlTimestamp } from '@/utils/time';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useWhitelist } from '@/hooks/whitelist';
 import { Tip } from '@/components/Tip';
@@ -54,6 +42,10 @@ import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
+import {
+  ActionDetailItem,
+  ActionDetailSection,
+} from './components/ActionDetailSection';
 
 interface Props {
   data: TransactionGroup;
@@ -68,7 +60,7 @@ export const Send: React.FC<Props> = ({
   onPressAddToWhitelistButton,
   account,
 }) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { safeSizes } = useSafeAndroidBottomSizes({
     inModalContainerPb:
@@ -122,16 +114,6 @@ export const Send: React.FC<Props> = ({
 
   const { isAddrOnWhitelist } = useWhitelist();
 
-  const handleOpenTxId = useMemoizedFn(() => {
-    const tx = data.maxGasTx.hash;
-
-    if (chain?.scanLink) {
-      openTxExternalUrl({ chain, txHash: tx });
-    } else {
-      toast.error('Unknown chain');
-    }
-  });
-
   const accountSelectCtx = useAccountSelectModalCtx();
   const handleGotoTokenDetail = useMemoizedFn(() => {
     if (accountSelectCtx.isUnderContext) accountSelectCtx.fnCloseModal();
@@ -161,143 +143,71 @@ export const Send: React.FC<Props> = ({
           },
         ]}>
         <TouchableOpacity onPress={handleGotoTokenDetail}>
-          <View style={[styles.singleBox]}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 8,
-                width: '100%',
-                flexShrink: 1,
-              }}>
-              <HistoryItemIcon
-                isInDetail={true}
-                type={HistoryItemCateType.Send}
-                token={actionData.token}
-                isNft={false}
-              />
-              <View style={[styles.colomnBox]}>
-                <View style={styles.tokenSymbolBox}>
-                  <Text
-                    style={[styles.tokenAmountText, styles.isSendTextColor]}
-                    numberOfLines={1}
-                    ellipsizeMode="tail">
-                    - {sendAmount}{' '}
-                    {/* {getTokenSymbol(actionData.token as TokenItem).repeat(__DEV__ ? 1000 : 1)} */}
-                    {getTokenSymbol(actionData.token as TokenItem).repeat(1)}
-                  </Text>
+          <View style={styles.card}>
+            <View style={[styles.singleBox]}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                  width: '100%',
+                  flexShrink: 1,
+                }}>
+                <HistoryItemIcon
+                  isInDetail={true}
+                  type={HistoryItemCateType.Send}
+                  token={actionData.token}
+                  isNft={false}
+                />
+                <View style={[styles.colomnBox]}>
+                  <View style={styles.tokenSymbolBox}>
+                    <Text
+                      style={[styles.tokenAmountText, styles.isSendTextColor]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail">
+                      - {sendAmount}{' '}
+                      {/* {getTokenSymbol(actionData.token as TokenItem).repeat(__DEV__ ? 1000 : 1)} */}
+                      {getTokenSymbol(actionData.token as TokenItem).repeat(1)}
+                    </Text>
+                  </View>
+                  <Text style={styles.usdValue}>≈{sendUsdValue}</Text>
                 </View>
-                <Text style={styles.usdValue}>≈{sendUsdValue}</Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  flexShrink: 0,
+                  width: 26,
+                }}>
+                <RcIconSingleArrow
+                  width={26}
+                  height={26}
+                  color={colors2024['neutral-bg-2']}
+                />
               </View>
             </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                flexShrink: 0,
-                width: 26,
-              }}>
-              <RcIconSingleArrow
-                width={26}
-                height={26}
-                color={colors2024['neutral-bg-2']}
+            <View style={styles.extraItem}>
+              <Text style={styles.itemTitleText}>
+                {t('page.transactions.detail.To')}
+              </Text>
+              <AddressItemInDetail
+                address={actionData.to}
+                accounts={unionAccounts}
+                // disableNavigate={isUnderModalContext}
               />
             </View>
           </View>
         </TouchableOpacity>
-        <View style={styles.detailContainer}>
-          {!data.isPending && data.maxGasTx.completedAt && (
-            <View style={styles.detailItem}>
-              <Text style={styles.itemTitleText}>
-                {t('page.transactions.detail.Date')}
-              </Text>
-              <View>
-                <Text style={styles.itemContentText}>
-                  {formatIntlTimestamp(data?.maxGasTx.completedAt)}
-                </Text>
-              </View>
-            </View>
-          )}
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.Status')}
-            </Text>
-            <View>
-              <TxStatusItem
-                status={data.isFailed ? 0 : 1}
-                isPending={data.isPending}
-                withText={true}
-              />
-            </View>
-          </View>
-          {data.isPending ? <TransactionPendingDetail data={data} /> : null}
-
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.Chain')}
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 4 }}>
-              <ChainIconImage
-                size={16}
-                chainEnum={chain?.enum}
-                isShowRPCStatus={true}
-              />
-              <Text style={[styles.itemContentText]}>{chain?.name}</Text>
-            </View>
-          </View>
-
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.From')}
-            </Text>
-            <AddressItemInDetail
-              address={data.maxGasTx.address}
-              accounts={unionAccounts}
-              // disableNavigate={isUnderModalContext}
-            />
-          </View>
-
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.To')}
-            </Text>
+        <ActionDetailSection data={data} chain={chain} accounts={unionAccounts}>
+          <ActionDetailItem label={t('page.transactions.detail.To')}>
             <AddressItemInDetail
               address={actionData.to}
               accounts={unionAccounts}
               // disableNavigate={isUnderModalContext}
             />
-          </View>
-
-          {Boolean(data.maxGasTx?.gasUSDValue) && (
-            <View style={styles.detailItem}>
-              <Text style={styles.itemTitleText}>
-                {t('page.transactions.detail.GasFee')}
-              </Text>
-              <Text style={styles.itemContentText}>
-                {formatAmount(data.maxGasTx?.gasTokenCount!)}{' '}
-                {data.maxGasTx?.gasTokenSymbol || ''} ($
-                {formatAmount(data.maxGasTx?.gasUSDValue ?? 0)})
-              </Text>
-            </View>
-          )}
-
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>Hash</Text>
-            <TouchableOpacity
-              disabled={!chain?.scanLink}
-              onPress={handleOpenTxId}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <Text style={[styles.itemContentText]}>
-                {ellipsisAddress(data.maxGasTx.hash!)}
-              </Text>
-              <RcIconExternalLinkCC
-                width={14}
-                height={14}
-                color={colors2024['neutral-foot']}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
+          </ActionDetailItem>
+        </ActionDetailSection>
       </ViewComp>
       <View
         style={[
@@ -381,16 +291,6 @@ const SIZES = {
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  detailContainer: {
-    // flex: 1,
-    width: '100%',
-    marginTop: 12,
-    borderRadius: 16,
-    paddingVertical: 4,
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
-  },
   inModalBsContainer: {
     // flexShrink: 1,
     paddingBottom: SIZES.buttonHeight + 12,
@@ -481,17 +381,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     height: 110,
   },
-  singleBox: {
+  card: {
     width: '100%',
-    // height: 92,
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
+    borderRadius: 16,
+  },
+  singleBox: {
     justifyContent: 'space-between',
     alignContent: 'center',
-    borderRadius: 16,
-    padding: 16,
     flexDirection: 'row',
+    padding: 16,
   },
   tokenAmountText: {
     color: colors2024['green-default'],
@@ -504,25 +405,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       width: '75%',
     }),
   },
-  mutliBox: {
-    width: '100%',
-    backgroundColor: colors2024['neutral-bg-1'],
-    justifyContent: 'center',
-    alignContent: 'center',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 16,
-    gap: 12,
-  },
-  doubleBox: {
-    justifyContent: 'center',
-    alignContent: 'center',
-    flexDirection: 'row',
-    height: 110,
-    gap: 10,
-    position: 'relative',
-  },
-
   buttonContainer: {
     backgroundColor: !isLight
       ? colors2024['neutral-bg-1']
@@ -551,18 +433,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 0,
     // ...makeDebugBorder('yellow'),
   },
-  itemAliaName: {
+  extraItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  detailItem: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    padding: 12,
+    backgroundColor: colors2024['neutral-bg-2'],
+    borderRadius: 12,
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    marginHorizontal: 12,
+    marginBottom: 12,
   },
   itemTitleText: {
     color: colors2024['neutral-secondary'],
@@ -572,36 +451,4 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
     maxWidth: '45%',
   },
-  itemAddressText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
-  },
-  itemContentText: {
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-  },
-  headerTitleStyle: {
-    color: colors2024['neutral-title-1'],
-    fontWeight: '800',
-    fontSize: 20,
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 24,
-  },
-
-  statuItemText: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    marginLeft: 4,
-  },
-
-  headerItem: {},
 }));

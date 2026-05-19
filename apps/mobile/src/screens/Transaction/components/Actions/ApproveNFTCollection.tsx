@@ -1,7 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import { RcIconExternalLinkCC, RcIconRightCC } from '@/assets/icons/common';
 import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
-import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -11,30 +9,25 @@ import { TouchableOpacity, View } from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
-import ViewMore from '@/components/Approval/components/Actions/components/ViewMore';
-import { AssetAvatar } from '@/components/AssetAvatar';
-import { toast } from '@/components2024/Toast';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
-import { ellipsisAddress } from '@/utils/address';
-import { openTxExternalUrl } from '@/utils/transaction';
 import { ApproveNFTRequireData } from '@rabby-wallet/rabby-action';
-import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
-import { AddressItemInDetail } from '../../HistoryDetailScreen';
-import { TxStatusItem } from '../TxStatusItem';
 import { HistoryItemIcon } from '../HistoryItemIcon';
 import { HistoryItemCateType } from '../type';
 import { RevokeNFTCollectionBtn } from './components/RevokeNFTCollectionBtn';
-import { formatIntlTimestamp } from '@/utils/time';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { findAccountByPriority } from '@/utils/account';
-import { formatAmount } from '@/utils/number';
 import { Account } from '@/core/services/preference';
 import { Text } from '@/components/Typography';
+import {
+  ActionDetailItem,
+  ActionDetailSection,
+  ActionDetailText,
+} from './components/ActionDetailSection';
+import { ActionSpenderView } from './components/ActionSpenderView';
 
 interface Props {
   data: TransactionGroup;
@@ -91,16 +84,6 @@ export const ApproveNFTCollection: React.FC<Props> = ({
     return account;
   }, [accounts, data.address, data.keyringType]);
 
-  const handleOpenTxId = useMemoizedFn(() => {
-    const tx = data.maxGasTx.hash;
-
-    if (chain?.scanLink) {
-      openTxExternalUrl({ chain, txHash: tx });
-    } else {
-      toast.error('Unknown chain');
-    }
-  });
-
   // const handleGotoDetail = useMemoizedFn(() => {
   //   naviPush(RootNames.NftDetail, {
   //     token: actionData.nft,
@@ -114,7 +97,7 @@ export const ApproveNFTCollection: React.FC<Props> = ({
 
   return (
     <>
-      <TouchableOpacity>
+      <View style={[styles.card]}>
         <View style={[styles.singleBox]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {/* todo  */}
@@ -148,135 +131,33 @@ export const ApproveNFTCollection: React.FC<Props> = ({
             />
           </View> */}
         </View>
-      </TouchableOpacity>
-      <View style={styles.detailContainer}>
-        {!data.isPending && data.maxGasTx.completedAt && (
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.Date')}
-            </Text>
-            <View>
-              <Text style={styles.itemContentText}>
-                {formatIntlTimestamp(data?.maxGasTx.completedAt)}
-              </Text>
-            </View>
-          </View>
-        )}
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {t('page.transactions.detail.Status')}
-          </Text>
-          <View>
-            <TxStatusItem
-              status={data.isFailed ? 0 : 1}
-              isPending={data.isPending}
-              withText={true}
-            />
-          </View>
-        </View>
-        {data.isPending ? <TransactionPendingDetail data={data} /> : null}
 
-        <View style={styles.detailItem}>
+        <View style={styles.extraItem}>
           <Text style={styles.itemTitleText}>
             {t('page.transactions.detail.ApproveTo')}
           </Text>
-          <ViewMore
-            type="nftSpender"
-            data={{
-              ...requireData,
-              spender: actionData.spender,
-              chain,
-            }}>
-            <View style={{ alignItems: 'flex-end' }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 4,
-                }}>
-                <AssetAvatar logo={requireData?.protocol?.logo_url} size={16} />
-                <Text style={[styles.itemContentText]}>
-                  {requireData?.protocol?.name || t('global.Unknown')}
-                </Text>
-                <RcIconRightCC
-                  width={14}
-                  height={14}
-                  color={colors2024['neutral-foot']}
-                />
-              </View>
-              <Text style={styles.itemAddressText}>
-                {ellipsisAddress(actionData.spender)}
-              </Text>
-            </View>
-          </ViewMore>
-        </View>
-
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {t('page.transactions.detail.name')}
-          </Text>
-          <Text
-            style={styles.itemContentText}
-            numberOfLines={1}
-            ellipsizeMode="tail">
-            {actionData?.collection?.name || '-'}
-          </Text>
-        </View>
-
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {t('page.transactions.detail.Chain')}
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 4 }}>
-            <ChainIconImage
-              size={16}
-              chainEnum={chain?.enum}
-              isShowRPCStatus={true}
-            />
-            <Text style={[styles.itemContentText]}>{chain?.name}</Text>
-          </View>
-        </View>
-
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {t('page.transactions.detail.From')}
-          </Text>
-          <AddressItemInDetail
-            address={data.maxGasTx.address}
-            accounts={unionAccounts}
+          <ActionSpenderView
+            requireData={requireData}
+            spender={actionData.spender}
+            chain={chain}
           />
         </View>
-
-        {Boolean(data.maxGasTx?.gasUSDValue) && (
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.GasFee')}
-            </Text>
-            <Text style={styles.itemContentText}>
-              {formatAmount(data.maxGasTx?.gasTokenCount!)}{' '}
-              {data.maxGasTx?.gasTokenSymbol || ''} ($
-              {formatAmount(data.maxGasTx?.gasUSDValue ?? 0)})
-            </Text>
-          </View>
-        )}
-
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>Hash</Text>
-          <TouchableOpacity
-            disabled={!chain?.scanLink}
-            onPress={handleOpenTxId}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-            <Text style={[styles.itemContentText]}>
-              {ellipsisAddress(data.maxGasTx.hash!)}
-            </Text>
-            <RcIconExternalLinkCC
-              width={14}
-              height={14}
-              color={colors2024['neutral-foot']}
-            />
-          </TouchableOpacity>
-        </View>
       </View>
+      <ActionDetailSection data={data} chain={chain} accounts={unionAccounts}>
+        <ActionDetailItem label={t('page.transactions.detail.ApproveTo')}>
+          <ActionSpenderView
+            requireData={requireData}
+            spender={actionData.spender}
+            chain={chain}
+          />
+        </ActionDetailItem>
+
+        <ActionDetailItem label={t('page.transactions.detail.name')}>
+          <ActionDetailText numberOfLines={1} ellipsizeMode="tail">
+            {actionData?.collection?.name || '-'}
+          </ActionDetailText>
+        </ActionDetailItem>
+      </ActionDetailSection>
       {data.isPending ? null : (
         <RevokeNFTCollectionBtn
           collection={actionData.collection}
@@ -289,91 +170,24 @@ export const ApproveNFTCollection: React.FC<Props> = ({
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  detailContainer: {
-    // flex: 1,
-    width: '100%',
-    marginTop: 20,
-    borderRadius: 16,
-    paddingVertical: 4,
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
-  },
-  ghostButton: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderColor: colors2024['neutral-info'],
-  },
-  primaryButton: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderColor: colors2024['brand-default'],
-  },
-  primaryTitle: {
-    color: colors2024['brand-default'],
-  },
-  ghostTitle: {
-    color: colors2024['neutral-title-1'],
-  },
-  iconSwitchArrow: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 200,
-    width: 45,
-    height: 45,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'absolute',
-    left: '50%',
-    top: '50%',
-    marginLeft: -22,
-    marginTop: -22,
-  },
-  tokenAmountTextList: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: '700',
-  },
   colomnBox: {
     flexDirection: 'column',
   },
   isSendTextColor: {
     color: colors2024['neutral-title-1'],
   },
-  isFailBox: {
-    opacity: 0.3,
-  },
-  image: {
-    width: 46,
-    height: 46,
-  },
-  fromTokenBox: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
-    flex: 1,
-    height: 110,
-    gap: 10,
-  },
-  toTokenBox: {
-    gap: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
-    flex: 1,
-    height: 110,
-  },
-  singleBox: {
+  card: {
     width: '100%',
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
+    borderRadius: 16,
+  },
+  singleBox: {
     justifyContent: 'space-between',
     alignContent: 'center',
-    borderRadius: 16,
-    padding: 16,
     flexDirection: 'row',
+    padding: 16,
   },
   tokenAmountText: {
     color: colors2024['green-default'],
@@ -390,47 +204,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
     marginTop: 2,
   },
-  mutliBox: {
-    width: '100%',
-    backgroundColor: colors2024['neutral-bg-1'],
-    justifyContent: 'center',
-    alignContent: 'center',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 16,
-    // flexDirection: 'row',
-    gap: 12,
-  },
-  doubleBox: {
-    justifyContent: 'center',
-    alignContent: 'center',
-    flexDirection: 'row',
-    height: 110,
-    gap: 10,
-    position: 'relative',
-  },
 
-  buttonContainer: {
-    position: 'absolute',
+  extraItem: {
     flexDirection: 'row',
-    height: 60,
-    bottom: 40,
-    width: '100%',
-    gap: 16,
-    left: 16,
-  },
-  itemAliaName: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  detailItem: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    padding: 12,
+    backgroundColor: colors2024['neutral-bg-2'],
+    borderRadius: 12,
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    marginHorizontal: 12,
+    marginBottom: 12,
   },
   itemTitleText: {
     color: colors2024['neutral-secondary'],
@@ -440,36 +223,4 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
     maxWidth: '45%',
   },
-  itemAddressText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
-  },
-  itemContentText: {
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-  },
-  headerTitleStyle: {
-    color: colors2024['neutral-title-1'],
-    fontWeight: '800',
-    fontSize: 20,
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 24,
-  },
-
-  statuItemText: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    marginLeft: 4,
-  },
-
-  headerItem: {},
 }));
