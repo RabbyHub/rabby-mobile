@@ -84,6 +84,7 @@ import {
 import { HomeScreenNavigator } from '@/perfs/loadables/homeRootNavigator';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 import { NEED_DEVSETTINGBLOCKS } from './constant';
+import { startReadableAccountBootstrapWarmups } from './setup-app-before-render';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
@@ -293,6 +294,32 @@ function useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked: boolean) {
   return hasUnlockedOnce;
 }
 
+function useReadableAccountWarmupsOnHomeVisible({
+  shouldWarmupReadableAccounts,
+  hasVisibleAccounts,
+}: {
+  shouldWarmupReadableAccounts: boolean;
+  hasVisibleAccounts: boolean;
+}) {
+  const startedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (
+      startedRef.current ||
+      !shouldWarmupReadableAccounts ||
+      !hasVisibleAccounts
+    ) {
+      return;
+    }
+
+    startedRef.current = true;
+    startReadableAccountBootstrapWarmups().catch(error => {
+      startedRef.current = false;
+      console.error('useReadableAccountWarmupsOnHomeVisible::error', error);
+    });
+  }, [shouldWarmupReadableAccounts, hasVisibleAccounts]);
+}
+
 function AppNavigationDeferredGlobals({
   slot,
   enabled,
@@ -372,6 +399,10 @@ export default function AppNavigation() {
     : RootNames.Unlock;
   const shouldRenderDeferredGlobals =
     useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked);
+  useReadableAccountWarmupsOnHomeVisible({
+    shouldWarmupReadableAccounts: !isAppUnlocked && isUnlockSessionValid,
+    hasVisibleAccounts,
+  });
 
   const onReady = useCallback<
     React.ComponentProps<typeof NavigationContainer>['onReady'] & object
