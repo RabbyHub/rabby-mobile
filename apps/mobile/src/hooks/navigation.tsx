@@ -566,12 +566,15 @@ export class UnlockUIManager {
     unlockUIState.unlockOnceRef = true;
   }
 
-  static queueResetNaviOnTopOfHomeWhenUnlock(fn: ResetNaviOnUIUnlockFn) {
+  static queueResetNaviOnTopOfHomeWhenUnlock(
+    fn: ResetNaviOnUIUnlockFn,
+    options?: { forceWaitUnlock?: boolean },
+  ) {
     const navigation = getReadyNavigationInstance();
     if (!navigation) return;
 
     // previous reset nav has been processed, do it immediately
-    if (unlockUIState.finishedUnlockResetNav) {
+    if (unlockUIState.finishedUnlockResetNav && !options?.forceWaitUnlock) {
       fn({
         navigation,
         hasUnlockOnce: unlockUIState.unlockOnceRef,
@@ -860,6 +863,9 @@ export function startSubscribeRemoteNotification() {
 
   const notificationProcessQueue = new PQueue({ concurrency: 1 });
 
+  const canOpenNotificationTransaction = () =>
+    apisLock.isUnlocked() || apisLock.isUnlockSessionValid();
+
   notificationEvents.subscribe(
     'onParsedReceivedData',
     async ({ parsedData }) => {
@@ -897,95 +903,122 @@ export function startSubscribeRemoteNotification() {
             return null;
           });
 
-        const foundAccount = await findMyAccountByOwnerAddress(ownerAddress);
-        const hideToastRef = {
-          current: toastLoading(i18next.t('notifications.loadingTransaction'), {
-            duration: 3 * 1000,
-          }),
-        };
+        const openNotificationTransaction = async (ctx?: {
+          defaultAction?: () => void;
+        }) => {
+          const foundAccount = await findMyAccountByOwnerAddress(ownerAddress);
+          const hideToastRef = {
+            current: toastLoading(
+              i18next.t('notifications.loadingTransaction'),
+              {
+                duration: 3 * 1000,
+              },
+            ),
+          };
 
-        const earlyReturn = () => {
-          earlyReturnL1();
+          const earlyReturn = (shouldExecuteDefaultAction = false) => {
+            earlyReturnL1();
+            hideToastRef.current();
+            if (shouldExecuteDefaultAction) {
+              ctx?.defaultAction?.();
+            }
+          };
+
+          if (!foundAccount) {
+            console.debug(
+              '[notifications] [startSubscribeRemoteNotification] No matched account found for ownerAddress:',
+              ownerAddress,
+            );
+            toast.error(i18next.t('notifications.noTransactionOwnerAddress'), {
+              duration: 8 * 1000,
+              hideOnPress: true,
+            });
+            return earlyReturn(true);
+          }
+
+          const txDetail = await txDetailPromise;
+
+          console.debug('[notifications] txDetail', txDetail);
+
+          if (!txDetail) {
+            const warnMsg = `[notifications] [startSubscribeRemoteNotification] No tx detail found for txHash: ${parsedData.txInfo?.txHash} on chainId: ${parsedData.txInfo?.chainServerId}`;
+            console.warn(warnMsg);
+
+            const currentRouteName =
+              navigationRouteStore.getState().currentRouteName;
+            const needReplace = currentRouteName === RootNames.History;
+            const naviFn = needReplace ? naviReplace : naviPush;
+
+            await switchSceneCurrentAccount('History', foundAccount);
+            hideToastRef.current();
+            naviFn(RootNames.StackTransaction, {
+              screen: RootNames.History,
+              params: {
+                isForMultipleAddress: false,
+              },
+            });
+
+            return earlyReturn(false);
+          }
+
           hideToastRef.current();
-        };
 
-        if (!foundAccount) {
+          const pinedQueue = preferenceService.getPinToken();
+          const customTxItemsMap =
+            transactionHistoryService.getCustomTxItemMap();
+          const historyDisplayItem = txResultToToHistoryDisplayItem({
+            address: parsedData.txInfo?.ownerAddress || '',
+            res: txDetail,
+            pinedQueue,
+            customTxItemsMap,
+          })[0];
           console.debug(
-            '[notifications] [startSubscribeRemoteNotification] No matched account found for ownerAddress:',
-            ownerAddress,
+            '[notifications] [startSubscribeRemoteNotification] received parsedData',
+            historyDisplayItem,
           );
-          toast.error(i18next.t('notifications.noTransactionOwnerAddress'), {
-            duration: 8 * 1000,
-            hideOnPress: true,
-          });
-          return earlyReturn();
-        }
-
-        const txDetail = await txDetailPromise;
-
-        console.debug('[notifications] txDetail', txDetail);
-
-        if (!txDetail) {
-          const warnMsg = `[notifications] [startSubscribeRemoteNotification] No tx detail found for txHash: ${parsedData.txInfo?.txHash} on chainId: ${parsedData.txInfo?.chainServerId}`;
-          console.warn(warnMsg);
+          if (!historyDisplayItem) {
+            toast.show(i18next.t('notifications.noTransactionDetail'), {
+              duration: 8 * 1000,
+              hideOnPress: true,
+            });
+            return earlyReturn(true);
+          }
+          earlyReturn(false);
 
           const currentRouteName =
             navigationRouteStore.getState().currentRouteName;
-          const needReplace = currentRouteName === RootNames.History;
-          const naviFn = needReplace ? naviReplace : naviPush;
+          const needReplace = currentRouteName === RootNames.HistoryDetail;
 
-          await switchSceneCurrentAccount('History', foundAccount);
-          hideToastRef.current();
+          const naviFn = needReplace ? naviReplace : naviPush;
           naviFn(RootNames.StackTransaction, {
-            screen: RootNames.History,
+            screen: RootNames.HistoryDetail,
             params: {
               isForMultipleAddress: false,
+              data: historyDisplayItem,
+              title:
+                prepareTxHistoryDisplayUIData(historyDisplayItem).formatTitle,
+              treatSmallAssetsAsScam: false,
             },
           });
 
-          return earlyReturn();
+          perfEvents.emit('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS');
+        };
+
+        if (canOpenNotificationTransaction()) {
+          await openNotificationTransaction();
+          return earlyReturnL1();
         }
 
-        hideToastRef.current();
-
-        const pinedQueue = preferenceService.getPinToken();
-        const customTxItemsMap = transactionHistoryService.getCustomTxItemMap();
-        const historyDisplayItem = txResultToToHistoryDisplayItem({
-          address: parsedData.txInfo?.ownerAddress || '',
-          res: txDetail,
-          pinedQueue,
-          customTxItemsMap,
-        })[0];
-        console.debug(
-          '[notifications] [startSubscribeRemoteNotification] received parsedData',
-          historyDisplayItem,
+        UnlockUIManager.queueResetNaviOnTopOfHomeWhenUnlock(
+          ctx =>
+            openNotificationTransaction({
+              defaultAction: ctx.defaultAction,
+            }),
+          { forceWaitUnlock: true },
         );
-        if (!historyDisplayItem) {
-          toast.show(i18next.t('notifications.noTransactionDetail'), {
-            duration: 8 * 1000,
-            hideOnPress: true,
-          });
-          return earlyReturn();
-        }
-        earlyReturn();
-
-        const currentRouteName =
-          navigationRouteStore.getState().currentRouteName;
-        const needReplace = currentRouteName === RootNames.HistoryDetail;
-
-        const naviFn = needReplace ? naviReplace : naviPush;
-        naviFn(RootNames.StackTransaction, {
-          screen: RootNames.HistoryDetail,
-          params: {
-            isForMultipleAddress: false,
-            data: historyDisplayItem,
-            title:
-              prepareTxHistoryDisplayUIData(historyDisplayItem).formatTitle,
-            treatSmallAssetsAsScam: false,
-          },
-        });
-
-        perfEvents.emit('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS');
+        await requestExpireUnlockSessionAndBackToUnlockScreen();
+        UnlockUIManager.triggerAutoUnlock();
+        return earlyReturnL1();
       });
     },
   );
