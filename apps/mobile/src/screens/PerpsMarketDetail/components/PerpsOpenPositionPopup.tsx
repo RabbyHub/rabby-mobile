@@ -166,11 +166,9 @@ export const PerpsOpenPositionPopup: React.FC<{
   const [limitPx, setLimitPx] = React.useState<string>('');
   const leverageInputRef = useRef<TextInput>(null);
 
-  // Entry price used to derive size, notional, and liquidation under the
-  // chosen order type. Market falls back to markPrice (the displayed current);
-  // limit uses the user's limitPx so size/USD/liq match what they'll actually
-  // execute at. Limit with an empty/zero limitPx (transient state) falls back
-  // to markPrice so derived values stay sane.
+  // Entry price for derived size / notional / liquidation: user's limitPx in
+  // limit mode, markPrice otherwise (also the fallback during transient empty
+  // limitPx).
   const effectivePx = React.useMemo(() => {
     if (orderType === 'limit' && limitPx && Number(limitPx) > 0) {
       return Number(limitPx);
@@ -376,17 +374,19 @@ export const PerpsOpenPositionPopup: React.FC<{
       orderType,
       limitPx: orderType === 'limit' ? limitPx : undefined,
     });
-    setCurrentTpOrSl({
-      tpPrice: tpTriggerPx ? Number(tpTriggerPx).toString() : undefined,
-      slPrice: slTriggerPx ? Number(slTriggerPx).toString() : undefined,
-    });
+    orderType === 'market' &&
+      setCurrentTpOrSl({
+        tpPrice: tpTriggerPx ? Number(tpTriggerPx).toString() : undefined,
+        slPrice: slTriggerPx ? Number(slTriggerPx).toString() : undefined,
+      });
     if (res) {
+      const isLimit = orderType === 'limit';
       const { avgPx, totalSz } = res;
       const isBuy = direction === 'Long';
       stats.report('perpsTradeHistory', {
         created_at: new Date().getTime(),
         user_addr: currentPerpsAccount?.address || '',
-        trade_type: 'open position',
+        trade_type: isLimit ? 'open position limit' : 'open position',
         leverage: leverage.toString(),
         trade_side: getStatsReportSide(isBuy, false),
         margin_mode: selectedMarginMode === 'cross' ? 'cross' : 'isolated',
@@ -399,6 +399,7 @@ export const PerpsOpenPositionPopup: React.FC<{
         address_type: currentPerpsAccount?.type || '',
       });
       tpTriggerPx &&
+        !isLimit &&
         stats.report('perpsTradeHistory', {
           created_at: new Date().getTime(),
           user_addr: currentPerpsAccount?.address || '',
@@ -415,6 +416,7 @@ export const PerpsOpenPositionPopup: React.FC<{
           address_type: currentPerpsAccount?.type || '',
         });
       slTriggerPx &&
+        !isLimit &&
         stats.report('perpsTradeHistory', {
           created_at: new Date().getTime(),
           user_addr: currentPerpsAccount?.address || '',

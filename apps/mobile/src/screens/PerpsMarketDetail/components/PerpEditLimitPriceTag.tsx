@@ -72,15 +72,17 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
     [limitPrice, markPrice],
   );
 
+  const hasValue = Number(limitPrice) > 0;
+
   const blockedByProtection =
-    Number(limitPrice) > 0 && deviation >= PERPS_LIMIT_PRICE_BLOCK_PCT;
+    hasValue && deviation >= PERPS_LIMIT_PRICE_BLOCK_PCT;
 
   const needsConfirm =
-    Number(limitPrice) > 0 &&
+    hasValue &&
     deviation >= PERPS_LIMIT_PRICE_CONFIRM_PCT &&
     deviation < PERPS_LIMIT_PRICE_BLOCK_PCT;
 
-  const isValid = Number(limitPrice) > 0 && !blockedByProtection;
+  const isValid = hasValue && !blockedByProtection;
 
   const handleQuickPress = useMemoizedFn(
     (opt: (typeof QUICK_OPTIONS)[number]) => {
@@ -130,31 +132,16 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
     handleSet();
   });
 
-  // Mount/dismiss the bottom sheet via ref; matches AppBottomSheetModal pattern.
   useEffect(() => {
     if (modalVisible) {
       modalRef.current?.present();
+      if (initLimitPrice) {
+        setLimitPrice(initLimitPrice);
+      } else {
+        handleQuickPress({ label: 'Mid', pct: 'mid' });
+      }
     } else {
       modalRef.current?.close();
-    }
-  }, [modalVisible]);
-
-  // Auto-fill on first open: existing value wins, otherwise default to mid.
-  useEffect(() => {
-    if (!modalVisible) {
-      return;
-    }
-    if (initLimitPrice) {
-      setLimitPrice(initLimitPrice);
-    } else {
-      handleQuickPress({ label: 'Mid', pct: 'mid' });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modalVisible]);
-
-  // Reset on close.
-  useEffect(() => {
-    if (!modalVisible) {
       setLimitPrice('');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -208,7 +195,7 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
                   ])}
                   placeholder="$0"
                   placeholderTextColor={colors2024['neutral-info']}
-                  value={displayedValue ? `${displayedValue}` : ''}
+                  value={displayedValue}
                   onChangeText={v => handleInputChange(v.replace(/^\$/, ''))}
                 />
                 <View style={styles.errorRow}>
