@@ -2250,6 +2250,7 @@
       "faceId": "Face ID",
       "touchId": "Touch ID",
       "fingerPrint": "Fingerprint",
+      "useDevicePassword": "Use device password",
       "autoLockTime": "Auto lock time",
       "addCustomNetwork": "Add Custom Network",
       "modifyRPCURL": "Modify RPC URL",
