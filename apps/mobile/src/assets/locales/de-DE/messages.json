@@ -3312,7 +3312,7 @@
         "availableToBorrow": "Verfügbar zum Ausleihen",
         "collateralization": "Besicherung",
         "enabled": "Aktiviert",
-        "supplyBalance": "Versorgungsbilanz",
+        "supplyBalance": "Eingezahlter Saldo",
         "unavailable": "Nicht verfügbar",
         "isolatedTips": "Ihre bestehenden Kredit-/Leihvermögen werden nicht unterstützt.",
         "supplied": "Geliefert"

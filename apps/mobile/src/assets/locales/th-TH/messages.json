@@ -367,7 +367,7 @@
         "Simulation Results": "ผลการจำลอง"
       },
       "empty": {
-        "desc": "ไม่พบธุรกรรมบน<1>supported chains</1>",
+        "desc": "ไม่พบธุรกรรมบน<1>เชนที่รองรับ</1>",
         "title": "ไม่มีธุรกรรม"
       },
       "txHistory": {
