@@ -98,13 +98,6 @@ export const PerpsLimitOrderItem: React.FC<Props> = ({
             <View style={styles.coinNameRow}>
               <Text style={styles.sideText}>{sideText}</Text>
               <PerpsDisplayCoinName item={marketData} coin={order.coin} />
-              <View style={styles.crossTag}>
-                <Text style={styles.crossText}>
-                  {leverageType === 'cross'
-                    ? t('page.perpsDetail.PerpsPosition.cross')
-                    : t('page.perpsDetail.PerpsPosition.isolated')}
-                </Text>
-              </View>
             </View>
           </View>
           <View style={styles.tagRow}>
@@ -124,6 +117,13 @@ export const PerpsLimitOrderItem: React.FC<Props> = ({
                 ]}>
                 {directionText}
                 {leverageText ? ` ${leverageText}` : ''}
+              </Text>
+            </View>
+            <View style={styles.crossTag}>
+              <Text style={styles.crossText}>
+                {leverageType === 'cross'
+                  ? t('page.perpsDetail.PerpsPosition.cross')
+                  : t('page.perpsDetail.PerpsPosition.isolated')}
               </Text>
             </View>
             <Text style={styles.limitPriceText}>{limitPriceText}</Text>

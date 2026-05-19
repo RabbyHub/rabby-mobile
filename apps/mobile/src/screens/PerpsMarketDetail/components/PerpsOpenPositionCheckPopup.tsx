@@ -77,9 +77,6 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
 
   const { t } = useTranslation();
 
-  // Derive marketable flag locally: a limit-open order that would cross the
-  // current mark price will likely fill immediately. Only meaningful when
-  // orderType === 'limit' and a price is set.
   const isMarketable = useMemo(() => {
     if (orderType !== 'limit' || !limitPx) {
       return false;
@@ -370,7 +367,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '500',
       color: colors2024['orange-default'],
       textAlign: 'center',
-      // marginTop: 4,
       marginBottom: 12,
       paddingHorizontal: 20,
     },

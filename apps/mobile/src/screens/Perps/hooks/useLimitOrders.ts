@@ -49,7 +49,7 @@ export const useHomeLimitOrders = (
         fetchedMap[order.coin]?.leverage ??
         null;
       const marginUsage = lev
-        ? computeMarginUsage(order.limitPx, order.origSz, lev.value)
+        ? computeMarginUsage(order.limitPx, order.sz, lev.value)
         : 0;
       return { order, leverage: lev, marginUsage };
     });
@@ -70,7 +70,7 @@ export const useDetailLimitOrders = (
         order,
         leverage,
         marginUsage: leverage
-          ? computeMarginUsage(order.limitPx, order.origSz, leverage.value)
+          ? computeMarginUsage(order.limitPx, order.sz, leverage.value)
           : 0,
       }));
     return sortBy(list, r => -r.marginUsage);

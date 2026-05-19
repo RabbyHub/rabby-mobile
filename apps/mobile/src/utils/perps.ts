@@ -317,7 +317,12 @@ export const formatAllDexsClearinghouseState = (
   if (!allClearinghouseState || !allClearinghouseState[0]) {
     return null;
   }
-  const hyperDexState = allClearinghouseState[0][1];
+  // Hyper is the basis for the aggregate's marginSummary / time. WS pushes
+  // hyper at index 0 by HL convention, but callers that rebuild from a Map
+  // (insertion-order) can deliver it in any position — find by name.
+  const hyperDexState =
+    allClearinghouseState.find(([name]) => name === '')?.[1] ??
+    allClearinghouseState[0][1];
 
   const assetPositions = allClearinghouseState
     .map(item => item[1]?.assetPositions || [])
@@ -328,11 +333,18 @@ export const formatAllDexsClearinghouseState = (
   }, 0);
 
   let crossMaintenanceMarginUsed = 0;
-  for (const [dexName, state] of allClearinghouseState) {
+  // time = max across all dexes, not just hyper — otherwise a sub-dex-only
+  // refresh wouldn't advance the aggregate timestamp and downstream
+  // freshness guards would reject the update.
+  let maxTime = 0;
+  for (const [, state] of allClearinghouseState) {
     if (!state) {
       continue;
     }
     crossMaintenanceMarginUsed += Number(state.crossMaintenanceMarginUsed || 0);
+    if ((state.time ?? 0) > maxTime) {
+      maxTime = state.time;
+    }
   }
 
   return {
@@ -343,7 +355,7 @@ export const formatAllDexsClearinghouseState = (
       ...hyperDexState.marginSummary,
       accountValue: calcAccountValueByAllDexs(allClearinghouseState).toString(),
     },
-    time: hyperDexState?.time || 0,
+    time: maxTime,
     withdrawable: withdrawable.toString(),
   };
 };
@@ -545,16 +557,19 @@ export const computeFilledPct = (origSz: string, sz: string): number => {
   return filled.div(orig).times(100).toNumber();
 };
 
+// `sz` is the *remaining* open size of the order — for partially filled
+// orders this is `order.sz`, not `order.origSz`, so margin usage reflects the
+// live notional still sitting on the book.
 export const computeMarginUsage = (
   limitPx: string,
-  origSz: string,
+  sz: string,
   leverage: number,
 ): number => {
   if (!leverage || leverage <= 0) {
     return 0;
   }
   return new BigNumber(limitPx || 0)
-    .times(origSz || 0)
+    .times(sz || 0)
     .div(leverage)
     .toNumber();
 };
