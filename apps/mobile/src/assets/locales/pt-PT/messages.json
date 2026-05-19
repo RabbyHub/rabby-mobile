@@ -488,7 +488,7 @@
       },
       "empty": {
         "title": "Sem transações",
-        "desc": "Sem transações encontradas em <1>supported chains</1>"
+        "desc": "Sem transações encontradas em <1>cadeias suportadas</1>"
       },
       "txHistory": {
         "tipInputData": "A transação inclui uma mensagem",
