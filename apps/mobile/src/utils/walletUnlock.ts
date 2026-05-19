@@ -1,9 +1,10 @@
-import { AuthenticationModal2024 } from '@/components/AuthenticationModal/AuthenticationModal2024';
-import { apisKeychain, apisLock } from '@/core/apis';
+import * as apisKeychain from '@/core/apis/keychain';
+import * as apisLock from '@/core/apis/lock';
 import {
   isAuthenticatedByBiometrics,
   RequestGenericPurpose,
 } from '@/core/apis/keychain';
+import { setWalletUnlockRequester } from '@/utils/walletUnlockGuard';
 
 type PendingWalletUnlock = {
   id: number;
@@ -42,6 +43,19 @@ export async function ensureWalletUnlockedForAction() {
 
     throw error;
   }
+}
+
+export function withWalletUnlockForAction<TArgs extends unknown[], TResult>(
+  fn: (...args: TArgs) => Promise<TResult>,
+  onCancel: (...args: TArgs) => TResult | Promise<TResult>,
+) {
+  return async (...args: TArgs) => {
+    if (!(await ensureWalletUnlockedForAction())) {
+      return onCancel(...args);
+    }
+
+    return fn(...args);
+  };
 }
 
 export function cancelPendingWalletUnlock(unlockRequestId?: number) {
@@ -135,6 +149,9 @@ export async function ensureWalletUnlocked() {
       console.error(error);
     }
 
+    const { AuthenticationModal2024 } = await import(
+      '@/components/AuthenticationModal/AuthenticationModal2024'
+    );
     const { hideModal } = await AuthenticationModal2024.show({
       title: 'Unlock Rabby Wallet',
       authType: ['password'],
@@ -155,3 +172,5 @@ export async function ensureWalletUnlocked() {
 
   return promise;
 }
+
+setWalletUnlockRequester(ensureWalletUnlocked);

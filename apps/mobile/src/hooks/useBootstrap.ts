@@ -16,12 +16,13 @@ import {
   JSBridgeHarden,
 } from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
-import { apisLock } from '@/core/apis';
+import { apisLock, apisPerps } from '@/core/apis';
 import { loadSecurityChain } from './global';
 import { getTriedUnlock, storeApiLock } from './useLock';
 import SplashScreen from 'react-native-splash-screen';
 import { storeApiAccounts } from './account';
 import { storeApisBiometrics } from './biometrics';
+import { apisPerpsStore } from './perps/usePerpsStore';
 // import { browserStateAtom } from './browser/useBrowser';
 import { apisSafe } from '@/core/apis/safe';
 import { RefLikeObject } from '@/utils/type';
@@ -152,6 +153,9 @@ export function useInitializeAppOnTop() {
         searchTabId: '',
         trigger: '',
       });
+      perpsService.lockAgentWallets();
+      apisPerpsStore.logout();
+      apisPerps.destroyPerpsSDK();
     };
     const sub = perfEvents.subscribe('USER_MANUALLY_UNLOCK', onUnlock);
     keyringService.on('lock', onLock);

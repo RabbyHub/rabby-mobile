@@ -23,6 +23,11 @@ import {
   requestKeyring,
 } from './keyring';
 import { verifyPasswordOrUnlock } from './lock';
+import {
+  ensureWalletUnlocked,
+  isWalletUnlockRequired,
+  withWalletUnlock,
+} from '@/utils/walletUnlockGuard';
 
 /**
  * Formats a mnemonic string by trimming, splitting by whitespace/comma/newline, and rejoining.
@@ -83,14 +88,28 @@ export const getMnemonics = async (password: string, address: string) => {
   return seedWords;
 };
 export const generateMnemonic = () => keyringService.generateMnemonic();
-export const getPreMnemonics = () => keyringService.getPreMnemonics();
-export const generatePreMnemonic = () => keyringService.generatePreMnemonic();
-export const removePreMnemonics = () => keyringService.removePreMnemonics();
-export const createKeyringWithMnemonics = async (mnemonic: string) => {
-  const keyring = await keyringService.createKeyringWithMnemonics(mnemonic);
-  keyringService.removePreMnemonics();
-  // return this._setCurrentAccountFromKeyring(keyring);
+export const getPreMnemonics = async () => {
+  try {
+    return await keyringService.getPreMnemonics();
+  } catch (error) {
+    if (!isWalletUnlockRequired(error)) {
+      throw error;
+    }
+    await ensureWalletUnlocked();
+    return keyringService.getPreMnemonics();
+  }
 };
+export const generatePreMnemonic = withWalletUnlock(() =>
+  keyringService.generatePreMnemonic(),
+);
+export const removePreMnemonics = () => keyringService.removePreMnemonics();
+export const createKeyringWithMnemonics = withWalletUnlock(
+  async (mnemonic: string) => {
+    const keyring = await keyringService.createKeyringWithMnemonics(mnemonic);
+    keyringService.removePreMnemonics();
+    // return this._setCurrentAccountFromKeyring(keyring);
+  },
+);
 
 export const getKeyringByMnemonic = (
   mnemonic: string,
@@ -150,13 +169,15 @@ const removeMnemonicKeyringFromStash = keyring => {
   }
 };
 
-export const removeMnemonicsKeyRingByPublicKey = async (publicKey: string) => {
-  const keyring = getMnemonicKeyRingFromPublicKey(publicKey);
-  await keyringService.removeKeyringByPublicKey(publicKey);
-  if (keyring) {
-    removeMnemonicKeyringFromStash(keyring);
-  }
-};
+export const removeMnemonicsKeyRingByPublicKey = withWalletUnlock(
+  async (publicKey: string) => {
+    const keyring = getMnemonicKeyRingFromPublicKey(publicKey);
+    await keyringService.removeKeyringByPublicKey(publicKey);
+    if (keyring) {
+      removeMnemonicKeyringFromStash(keyring);
+    }
+  },
+);
 
 const getMnemonicKeyRingFromPublicKey = (publicKey: string) => {
   const targetKeyring = keyringService.keyrings?.find(item => {
@@ -279,7 +300,7 @@ export const generateKeyringWithMnemonic = async (
   if (!HdKeyring.validateMnemonic(mnemonic)) {
     throw new Error(t('background.error.invalidMnemonic'));
   }
-  keyringService.assertUnlocked();
+  await ensureWalletUnlocked();
 
   // If import twice use same keyring
   let keyring = getKeyringByMnemonic(mnemonic, passphrase);
@@ -350,7 +371,7 @@ export const addKeyringAndactiveAndPersistAccounts = async (
   addAlias: boolean,
 ) => {
   try {
-    keyringService.assertUnlocked();
+    await ensureWalletUnlocked();
 
     const Keyring = keyringService.getKeyringClassForType(
       KEYRING_CLASS.MNEMONIC,
@@ -397,7 +418,7 @@ export const activeAndPersistAccountsByMnemonics = async (
   accountsToImport: Required<Pick<Account, 'address'>>[],
   addDefaultAlias = false,
 ) => {
-  keyringService.assertUnlocked();
+  await ensureWalletUnlocked();
 
   const keyring = getKeyringByMnemonic(mnemonics, passphrase);
 
@@ -453,6 +474,8 @@ export const activeAndPersistAccountsByMnemonics = async (
 };
 
 export const getKeyringAccountsByAddress = async (address: string) => {
+  await ensureWalletUnlocked();
+
   const keyring = _getMnemonicKeyringByAddress(address);
   if (!keyring) {
     throw new Error(t('background.error.notFoundKeyringByAddress'));

@@ -51,14 +51,18 @@ export const useAccountsInfo = (
   }, [address, type]);
 
   const fetchMnemonicsAccount = useCallback(async () => {
-    const info = await apiMnemonic.getMnemonicAddressInfo(address);
-    if (info) {
-      setAccount({
-        address,
-        index: info.index + 1,
-        hdPathType: info.hdPathType as any,
-        hdPathTypeLabel: LedgerHDPathTypeLabel[info.hdPathType],
-      });
+    try {
+      const info = await apiMnemonic.getMnemonicAddressInfo(address);
+      if (info) {
+        setAccount({
+          address,
+          index: info.index + 1,
+          hdPathType: info.hdPathType as any,
+          hdPathTypeLabel: LedgerHDPathTypeLabel[info.hdPathType],
+        });
+      }
+    } catch {
+      setAccount(undefined);
     }
   }, [address]);
 

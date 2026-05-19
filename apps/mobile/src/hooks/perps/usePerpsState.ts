@@ -40,6 +40,8 @@ import { useTranslation } from 'react-i18next';
 import { sleep } from '@/utils/async';
 import { useShallow } from 'zustand/react/shallow';
 import { usePerpsAccount } from './usePerpsAccount';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import { apisLock } from '@/core/apis';
 type SignActionType =
   | 'approveAgent'
   | 'approveBuilderFee'
@@ -550,6 +552,10 @@ export const usePerpsState = () => {
         if (!initAccount) {
           return false;
         }
+        if (!apisLock.isUnlocked()) {
+          setInitialized(true);
+          return false;
+        }
         const { vault, agentAddress } =
           await apisPerps.getOrCreatePerpsAgentWallet(initAccount.address);
         const sdk = apisPerps.getPerpsSDK();
@@ -584,6 +590,7 @@ export const usePerpsState = () => {
     fetchMarketData,
     ensureLoginApproveSign,
     setInitialized,
+    resetAccountState,
     fetchPerpPermission,
   ]);
 
@@ -672,6 +679,10 @@ export const usePerpsState = () => {
 
   const login = useMemoizedFn(async (account: Account) => {
     try {
+      if (!(await ensureWalletUnlockedForAction())) {
+        return false;
+      }
+
       const sdk = apisPerps.getPerpsSDK();
       const res = await apisPerps.getPerpsAgentWallet(account.address);
       const agentAddress = res?.preference?.agentAddress || '';

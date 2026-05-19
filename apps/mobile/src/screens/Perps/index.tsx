@@ -75,7 +75,10 @@ export const PerpsOriginScreen = () => {
   const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
 
   const handleLogin = useMemoizedFn(async (v: Account) => {
-    await login(v);
+    const success = await login(v);
+    if (!success) {
+      return;
+    }
     setPopupState(prev => ({
       ...prev,
       isShowLoginPopup: false,

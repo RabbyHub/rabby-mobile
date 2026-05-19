@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { _setCurrentAccountFromKeyring } from './keyring';
 import { verifyPasswordOrUnlock } from './lock';
 import { accountEvents } from './account';
+import { withWalletUnlock } from '@/utils/walletUnlockGuard';
 
 /**
  * Validates and cleans a private key string.
@@ -40,16 +41,21 @@ export const getPrivateKey = async (
   return await keyring.exportAccount(address);
 };
 
+const importCleanPrivateKey = withWalletUnlock(
+  async (cleanedPrivateKey: string) => {
+    const keyring = await keyringService.importPrivateKey(cleanedPrivateKey);
+    const accounts = await _setCurrentAccountFromKeyring(keyring);
+
+    // accountEvents.emit('ACCOUNT_ADDED', {
+    //   accounts,
+    //   scene: 'privateKey',
+    // });
+
+    return accounts;
+  },
+);
+
 export const importPrivateKey = async (data: string) => {
   const cleanedPrivateKey = validateAndCleanPrivateKey(data);
-
-  const keyring = await keyringService.importPrivateKey(cleanedPrivateKey);
-  const accounts = await _setCurrentAccountFromKeyring(keyring);
-
-  // accountEvents.emit('ACCOUNT_ADDED', {
-  //   accounts,
-  //   scene: 'privateKey',
-  // });
-
-  return accounts;
+  return importCleanPrivateKey(cleanedPrivateKey);
 };
