@@ -21,6 +21,8 @@ export const useActiveAssetSubscription = (coin: string) => {
   const [activeAssetData, setActiveAssetData] =
     useState<WsActiveAssetData | null>(null);
 
+  const currentAddress = perpsStore(s => s.currentPerpsAccount?.address);
+
   const coinRef = useRef(coin);
   useEffect(() => {
     coinRef.current = coin;
@@ -53,6 +55,12 @@ export const useActiveAssetSubscription = (coin: string) => {
         if (coinRef.current !== data.coin) {
           return;
         }
+        // Late frame after account switch: don't leak old-account leverage into
+        // the new account's cache, even if the WS hasn't finished unsubscribing.
+        const liveAddress = perpsStore.getState().currentPerpsAccount?.address;
+        if (liveAddress !== address) {
+          return;
+        }
         setActiveAssetData(data);
         // Keep home cache hot so returning to home avoids a REST round-trip.
         writeActiveAssetDataToCache(data.coin, address, data);
@@ -79,13 +87,14 @@ export const useActiveAssetSubscription = (coin: string) => {
     unsubDataRef.current = () => {};
   });
 
-  // Subscribe when coin changes
+  // Resubscribe on coin or account switch so the WS itself is bound to the
+  // right address; the in-callback guard above only covers late frames.
   useEffect(() => {
     subscribeAll();
     return () => {
       unsubscribeAll();
     };
-  }, [coin, subscribeAll, unsubscribeAll]);
+  }, [coin, currentAddress, subscribeAll, unsubscribeAll]);
 
   // Re-subscribe when app returns to foreground
   useEffect(() => {

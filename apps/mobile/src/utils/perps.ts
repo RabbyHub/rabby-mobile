@@ -545,16 +545,19 @@ export const computeFilledPct = (origSz: string, sz: string): number => {
   return filled.div(orig).times(100).toNumber();
 };
 
+// `sz` is the *remaining* open size of the order — for partially filled
+// orders this is `order.sz`, not `order.origSz`, so margin usage reflects the
+// live notional still sitting on the book.
 export const computeMarginUsage = (
   limitPx: string,
-  origSz: string,
+  sz: string,
   leverage: number,
 ): number => {
   if (!leverage || leverage <= 0) {
     return 0;
   }
   return new BigNumber(limitPx || 0)
-    .times(origSz || 0)
+    .times(sz || 0)
     .div(leverage)
     .toNumber();
 };

@@ -64,10 +64,10 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
   const filledPct = computeFilledPct(order.origSz, order.sz);
   const time = dayjs(order.timestamp).format('YYYY-MM-DD HH:mm');
   const quoteAsset = marketData?.quoteAsset || 'USDC';
-  const notional = new BigNumber(order.limitPx || 0).times(order.origSz || 0);
+  const notional = new BigNumber(order.limitPx || 0).times(order.sz || 0);
   const sizeText = `${splitNumberByStep(
     notional.toFixed(2),
-  )} ${quoteAsset} = ${splitNumberByStep(order.origSz)} ${name}`;
+  )} ${quoteAsset} = ${splitNumberByStep(order.sz)} ${name}`;
   const limitPriceText = `@ $${splitNumberByStep(order.limitPx)}`;
   const marginUsageText = leverage ? formatUsdValue(marginUsage) : '-';
 
