@@ -67,7 +67,7 @@ export const PerpsOriginScreen = () => {
     handleSafeSetReference,
     setInitialized,
   } = usePerpsState();
-  const { handleClosePosition, handleStableCoinOrder } = usePerpsPosition();
+  const { handleCloseAllPositions, handleStableCoinOrder } = usePerpsPosition();
 
   const [, setPopupState] = usePerpsPopupState();
 
@@ -229,17 +229,19 @@ export const PerpsOriginScreen = () => {
                 handleCloseRiskPopup={handleCloseRiskPopup}
                 positionAndOpenOrders={positionAndOpenOrders}
                 handleActionApproveStatus={handleActionApproveStatus}
-                onClosePosition={async position => {
-                  const marketDataItem =
-                    perpsStore.getState().marketDataMap[position.coin];
-                  const res = await handleClosePosition({
-                    coin: position.coin,
-                    size: Math.abs(Number(position.szi || 0)).toString() || '0',
-                    direction: Number(position.szi || 0) > 0 ? 'Long' : 'Short',
-                    price: marketDataItem?.markPx || '0',
-                  });
-                  if (res) {
-                    const { avgPx, totalSz } = res;
+                onCloseAllPositions={async () => {
+                  const clearinghouseState =
+                    perpsStore.getState().currentClearinghouseState;
+                  if (!clearinghouseState) {
+                    return;
+                  }
+                  const filledResults = await handleCloseAllPositions(
+                    clearinghouseState,
+                  );
+                  if (!filledResults) {
+                    return;
+                  }
+                  for (const { filled, position } of filledResults) {
                     const isBuy = Number(position.szi || 0) > 0;
                     stats.report('perpsTradeHistory', {
                       created_at: new Date().getTime(),
@@ -252,10 +254,10 @@ export const PerpsOriginScreen = () => {
                           ? 'cross'
                           : 'isolated',
                       coin: position.coin,
-                      size: totalSz,
-                      price: avgPx,
-                      trade_usd_value: new BigNumber(avgPx)
-                        .times(totalSz)
+                      size: filled.totalSz,
+                      price: filled.avgPx,
+                      trade_usd_value: new BigNumber(filled.avgPx)
+                        .times(filled.totalSz)
                         .toFixed(2),
                       service_provider: 'hyperliquid',
                       app_version: APP_VERSIONS.fromNative || '0',

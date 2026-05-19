@@ -1,6 +1,13 @@
 import { apisPerps } from '@/core/apis';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
-import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import {
+  fetchAllDexsClearinghouseStateHttp,
+  fetchClearinghouseStateHttp,
+  fetchPositionOpenOrdersHttp,
+  fetchPositionOpenOrdersHttpForDexes,
+  getDexByCoin,
+  perpsStore,
+} from '@/hooks/perps/usePerpsStore';
 import { judgeIsUserAgentIsExpired } from '@/hooks/perps/judgeAgentExpired';
 import { useMemoizedFn } from 'ahooks';
 import * as Sentry from '@sentry/react-native';
@@ -11,7 +18,12 @@ import {
   type PerpsOpenOrderType,
 } from '@/constant/perps';
 import { sleep } from '@/utils/async';
-import { OpenOrder, OrderResponse } from '@rabby-wallet/hyperliquid-sdk';
+import {
+  AssetPosition,
+  ClearinghouseState,
+  OpenOrder,
+  OrderResponse,
+} from '@rabby-wallet/hyperliquid-sdk';
 import { showToast } from '@/hooks/perps/showToast';
 import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
@@ -85,6 +97,13 @@ export const usePerpsPosition = () => {
       ).length;
       const failCount = statuses.length - okCount;
 
+      if (okCount > 0) {
+        // Cancel-All on Home can span multiple dexes — refresh just those.
+        fetchPositionOpenOrdersHttpForDexes(
+          orders.map(o => getDexByCoin(o.coin)),
+        );
+      }
+
       if (okCount > 0 && failCount === 0) {
         showToast(
           orders.length === 1
@@ -142,6 +161,7 @@ export const usePerpsPosition = () => {
           value: marginNormalized,
         });
         if (res?.status === 'ok') {
+          fetchClearinghouseStateHttp(getDexByCoin(coin));
           showToast(actionText + ' successfully', 'success');
         } else {
           showToast(
@@ -192,6 +212,7 @@ export const usePerpsPosition = () => {
           (nextCurrentTpOrSl.tpPrice = formattedTpTriggerPx);
         formattedSlTriggerPx &&
           (nextCurrentTpOrSl.slPrice = formattedSlTriggerPx);
+        fetchPositionOpenOrdersHttp(getDexByCoin(coin));
         showToast(autoCloseText + ' set successfully', 'success');
         return true;
       } catch (error: any) {
@@ -239,6 +260,7 @@ export const usePerpsPosition = () => {
           const msg = `Closed ${direction} ${formatPerpsCoin(
             coin,
           )}-USD: Size ${totalSz} at Price $${avgPx}`;
+          fetchClearinghouseStateHttp(getDexByCoin(coin));
           showToast(msg, 'success');
           return res?.response?.data?.statuses[0]?.filled as {
             totalSz: string;
@@ -367,11 +389,13 @@ export const usePerpsPosition = () => {
         const filled = res?.response?.data?.statuses[0]?.filled;
         const resting = res?.response?.data?.statuses[0]?.resting;
 
+        const dex = getDexByCoin(coin);
         if (filled) {
           const { totalSz, avgPx } = filled;
           const msg = `Opened ${direction} ${formatPerpsCoin(
             coin,
           )}: Size ${totalSz} at Price $${avgPx}`;
+          fetchClearinghouseStateHttp(dex);
           showToast(msg, 'success');
           return res?.response?.data?.statuses[0]?.filled as {
             totalSz: string;
@@ -384,6 +408,7 @@ export const usePerpsPosition = () => {
           // Limit orders frequently rest in the book instead of filling. Treat as
           // success and surface a "placed" toast; downstream stats code keys off
           // the returned shape so we fake an avgPx using limitPx.
+          fetchPositionOpenOrdersHttp(dex);
           showToast(
             t('page.perpsDetail.PerpsOpenPositionPopup.limitOrderPlacedToast', {
               direction,
@@ -482,9 +507,68 @@ export const usePerpsPosition = () => {
     },
   );
 
+  // One multiOrder of reduce-only IOC limits — one signature for all positions.
+  const handleCloseAllPositions = useMemoizedFn(
+    async (clearinghouseState: ClearinghouseState) => {
+      try {
+        const sdk = apisPerps.getPerpsSDK();
+        const res = await sdk.exchange?.closeAllPositions(
+          clearinghouseState,
+          undefined,
+          PERPS_BUILDER_INFO,
+        );
+        const statuses = res?.response?.data?.statuses ?? [];
+        // SDK iterates assetPositions in order and skips szi === 0, so the
+        // statuses array aligns 1:1 with this filtered list.
+        const closableAssets: AssetPosition[] =
+          clearinghouseState.assetPositions.filter(
+            ap => parseFloat(ap.position.szi) !== 0,
+          );
+        const filledResults: {
+          filled: { totalSz: string; avgPx: string; oid: number };
+          position: AssetPosition['position'];
+        }[] = [];
+        statuses.forEach((s, i) => {
+          const filled = (s as any).filled;
+          const position = closableAssets[i]?.position;
+          if (filled && position) {
+            filledResults.push({ filled, position });
+          }
+        });
+
+        if (filledResults.length === 0) {
+          const firstErr = statuses.map(s => (s as any).error).find(Boolean);
+          showToast(String(firstErr || 'close all error'), 'error');
+          Sentry.captureException(
+            new Error('PERPS close all noFills res: ' + JSON.stringify(res)),
+          );
+          return null;
+        }
+
+        // closeAllPositions can span all dexes — refresh the full set so
+        // sub-dex positions also reflect the close.
+        fetchAllDexsClearinghouseStateHttp();
+        showToast('Closed all position successfully', 'success');
+        return filledResults;
+      } catch (e: any) {
+        const isExpired = await judgeIsUserAgentIsExpired(e?.message || '');
+        if (isExpired) {
+          return null;
+        }
+        console.error('close all positions error', e);
+        showToast(e?.message || 'close all positions error', 'error');
+        Sentry.captureException(
+          new Error('close all positions error: ' + JSON.stringify(e)),
+        );
+        return null;
+      }
+    },
+  );
+
   return {
     handleOpenPosition,
     handleClosePosition,
+    handleCloseAllPositions,
     handleSetAutoClose,
     handleUpdateMargin,
     handleCancelOrder,
