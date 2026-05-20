@@ -7,12 +7,10 @@ import React, {
 } from 'react';
 import { Dimensions, Platform, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import usePrevious from 'react-use/lib/usePrevious';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
-import addressBalanceStore from '@/store/balance';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 import { BlurShadowView } from '@/components2024/BluerShadow';
@@ -138,13 +136,11 @@ export function MultiAddressHomeHeader(
 ): JSX.Element {
   const { style, onRefresh } = props;
   const {
-    changeData: data,
     showBalanceLoadingWithoutLocal,
     showChangeLoadingWithoutLocal,
     isCurveAnyAddrLoading,
   } = useHomePortfolioStore(
     useShallow(state => ({
-      changeData: state.changeData,
       showBalanceLoadingWithoutLocal: state.showBalanceLoadingWithoutLocal,
       showChangeLoadingWithoutLocal: state.showChangeLoadingWithoutLocal,
       isCurveAnyAddrLoading: state.isCurveAnyAddrLoading,
@@ -166,44 +162,6 @@ export function MultiAddressHomeHeader(
 
   const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
   const [isLocalWebViewReady, setIsLocalWebViewReady] = useState(false);
-
-  const gasketWebViewRef = useRef<LocalWebView>(null);
-
-  const { loadBalanceFromApiStage } =
-    addressBalanceStore.useLoadBalanceFromApiStage();
-  const previousLoading = usePrevious(loadBalanceFromApiStage);
-  const [isAnimRunning, setIsAnimRunning] = useState(false);
-  const animTimerRef = useRef<NodeJS.Timeout | null>(null);
-  useEffect(() => {
-    if (!__DEV__ && data.isLoss) return;
-
-    const durationMs = IS_IOS ? 2000 : 2500;
-
-    if (
-      data.rawChange &&
-      loadBalanceFromApiStage !== 'loading' &&
-      previousLoading === 'loading'
-    ) {
-      setIsAnimRunning(true);
-      gasketWebViewRef.current?.sendMessage?.({
-        type: 'GASKETVIEW:TOGGLE_LOADING',
-        info: {
-          loading: previousLoading,
-          isPositive: !data.isLoss,
-        },
-        animationDurationMs: durationMs,
-        animationGradientBorderRadius: SIZES.cardContentRadius,
-      });
-    }
-
-    if (animTimerRef.current) {
-      clearTimeout(animTimerRef.current);
-    }
-    animTimerRef.current = setTimeout(
-      () => setIsAnimRunning(false),
-      durationMs,
-    );
-  }, [data.isLoss, data.rawChange, loadBalanceFromApiStage, previousLoading]);
 
   const modalRef =
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>(undefined);
@@ -266,7 +224,6 @@ export function MultiAddressHomeHeader(
           ]}>
           {couldRenderLocalWebView ? (
             <LocalWebView
-              ref={gasketWebViewRef}
               style={[styles.curveBoxChildMH, styles.localWebView]}
               entryPath={'/pages/gasket-blurview.html'}
               // forceUseLocalResource
@@ -290,7 +247,7 @@ export function MultiAddressHomeHeader(
             // loading && styles.curveBoxLoading,
             {},
           ]}
-          onLayout={event => {
+          onLayout={() => {
             if (IS_IOS) {
               setTimeout(() => setCouldRenderLocalWebView(true), 500);
             } else {
@@ -306,10 +263,7 @@ export function MultiAddressHomeHeader(
             }
             start={isLight ? { x: 0.25, y: 0.5 } : { x: 1.07, y: 0.42 }}
             end={isLight ? { x: 0.75, y: 0.5 } : { x: -0.14, y: 0.59 }}
-            style={[
-              styles.curveCardGradientBg,
-              isAnimRunning && styles.curveCardGradientBgWithAnim,
-            ]}
+            style={styles.curveCardGradientBg}
           />
           <View
             style={[
@@ -362,7 +316,6 @@ const SIZES = {
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
-  const curveBoxBorderWidth = 1;
   const curveCardBorderWidth = !isLight ? 2 : 1;
   const cardMinW =
     Dimensions.get('window').width - SIZES.cardLayoutPaddingHorizontal * 2;
@@ -472,9 +425,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderRadius: SIZES.cardContentRadius,
       borderWidth: 1,
       borderColor: isLight ? 'rgba(255, 255, 255, 1)' : 'rgba(35, 36, 40, 1)',
-    },
-    curveCardGradientBgWithAnim: {
-      borderColor: isLight ? 'rgba(255, 255, 255, .1)' : 'rgba(35, 36, 40, .1)',
     },
     shadowView: {
       ...Platform.select({
