@@ -276,7 +276,7 @@
         "GasFee": "Gas Fee",
         "SendAgain": "再次發送",
         "Chain": "鏈",
-        "InteractedContract": "已交互合約",
+        "InteractedContract": "",
         "ViewOn": "查看",
         "RevokeToken": "收回 Token",
         "RevokeFrom": "從...撤銷",

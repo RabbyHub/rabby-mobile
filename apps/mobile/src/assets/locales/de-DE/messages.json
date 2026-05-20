@@ -457,7 +457,7 @@
         "RevokeToken": "Token widerrufen",
         "GasFee": "Gasgebühr",
         "Revoke": "Zurückziehen",
-        "InteractedContract": "In Kontakt stehender Vertrag",
+        "InteractedContract": "",
         "From": "Von",
         "SwapAgain": "Erneut tauschen",
         "Unknown": "Unbekannt",

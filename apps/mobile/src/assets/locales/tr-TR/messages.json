@@ -93,7 +93,7 @@
         "RevokeToken": "Token İptal Et",
         "PurchaseFrom": "Satın alındıdan",
         "RevokeFrom": "Revokeden",
-        "InteractedContract": "Etkileşimde bulunan sözleşme",
+        "InteractedContract": "",
         "ApproveTo": "Onayla",
         "Revoke": "İptal Et",
         "InteractionResults": "Etkileşim Sonuçları",

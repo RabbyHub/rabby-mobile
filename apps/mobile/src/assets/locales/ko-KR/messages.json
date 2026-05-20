@@ -85,7 +85,7 @@
         "ApproveTo": "승인하기",
         "Date": "날짜",
         "RevokeFrom": "에서 철회",
-        "InteractedContract": "상호작용된 계약",
+        "InteractedContract": "",
         "RevokeToken": "토큰 취소",
         "name": "이름",
         "BuyAgain": "다시 구매하기",

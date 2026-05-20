@@ -5,7 +5,7 @@ import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
@@ -31,6 +31,7 @@ import {
   ActionDetailText,
 } from './components/ActionDetailSection';
 import { ActionSpenderView } from './components/ActionSpenderView';
+import { ProjectItemInDetail } from '../ProjectItemInDetail';
 
 interface Props {
   data: TransactionGroup;
@@ -96,43 +97,49 @@ export const ApproveNFT: React.FC<Props> = ({
     });
   });
 
+  console.log('approve nft render', data, actionData);
+
   if (!chain) {
     return null;
   }
 
   return (
     <>
-      <TouchableOpacity onPress={handleGotoDetail}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}>
         <View style={styles.card}>
-          <View style={[styles.singleBox]}>
-            <View
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <HistoryItemIcon
-                isInDetail={true}
-                type={HistoryItemCateType.Approve}
-                token={actionData.nft as unknown as TokenItem}
-                isNft={true}
-              />
-              <View style={[styles.colomnBox]}>
-                <>
-                  <Text
-                    style={[styles.tokenAmountText, styles.isSendTextColor]}
-                    numberOfLines={1}
-                    ellipsizeMode="tail">
-                    {/* todo amount */}
-                    {actionData?.nft?.amount || 1} NFT
-                  </Text>
-                </>
+          <TouchableOpacity onPress={handleGotoDetail}>
+            <View style={[styles.singleBox]}>
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <HistoryItemIcon
+                  isInDetail={true}
+                  type={HistoryItemCateType.Approve}
+                  token={actionData.nft as unknown as TokenItem}
+                  isNft={true}
+                />
+                <View style={[styles.colomnBox]}>
+                  <>
+                    <Text
+                      style={[styles.tokenAmountText, styles.isSendTextColor]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail">
+                      {/* todo amount */}
+                      {actionData?.nft?.amount || 1} NFT
+                    </Text>
+                  </>
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <RcIconSingleArrow
+                  width={26}
+                  height={26}
+                  color={colors2024['neutral-bg-2']}
+                />
               </View>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <RcIconSingleArrow
-                width={26}
-                height={26}
-                color={colors2024['neutral-bg-2']}
-              />
-            </View>
-          </View>
+          </TouchableOpacity>
           <View style={styles.extraItem}>
             <Text style={styles.itemTitleText}>
               {t('page.transactions.detail.ApproveTo')}
@@ -144,22 +151,21 @@ export const ApproveNFT: React.FC<Props> = ({
             />
           </View>
         </View>
-      </TouchableOpacity>
-      <ActionDetailSection data={data} chain={chain} accounts={unionAccounts}>
-        <ActionDetailItem label={t('page.transactions.detail.ApproveTo')}>
-          <ActionSpenderView
-            requireData={requireData}
-            spender={actionData.spender}
+        <ActionDetailSection data={data} chain={chain} accounts={unionAccounts}>
+          <ActionDetailItem label={t('page.transactions.detail.name')}>
+            <ActionDetailText numberOfLines={1} ellipsizeMode="tail">
+              {actionData?.nft?.name || '-'}
+            </ActionDetailText>
+          </ActionDetailItem>
+          <ProjectItemInDetail
+            title={t('page.transactions.detail.InteractedContract')}
+            name={actionData.nft?.collection?.name}
+            logo={actionData.nft?.collection?.logo_url}
+            address={actionData.nft?.contract_id}
             chain={chain}
           />
-        </ActionDetailItem>
-
-        <ActionDetailItem label={t('page.transactions.detail.name')}>
-          <ActionDetailText numberOfLines={1} ellipsizeMode="tail">
-            {actionData?.nft?.name || '-'}
-          </ActionDetailText>
-        </ActionDetailItem>
-      </ActionDetailSection>
+        </ActionDetailSection>
+      </ScrollView>
       {data.isPending ? null : (
         <RevokeNFTBtn
           nft={actionData.nft}
@@ -172,6 +178,9 @@ export const ApproveNFT: React.FC<Props> = ({
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  scrollView: {
+    paddingHorizontal: 16,
+  },
   colomnBox: {
     flexDirection: 'column',
   },

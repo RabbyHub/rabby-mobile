@@ -5,7 +5,7 @@ import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
@@ -28,6 +28,7 @@ import {
   ActionDetailText,
 } from './components/ActionDetailSection';
 import { ActionSpenderView } from './components/ActionSpenderView';
+import { ProjectItemInDetail } from '../ProjectItemInDetail';
 
 interface Props {
   data: TransactionGroup;
@@ -91,73 +92,79 @@ export const ApproveNFTCollection: React.FC<Props> = ({
   //   });
   // });
 
+  console.log('ApproveNFTCollection actionData', data, actionData);
+
   if (!chain) {
     return null;
   }
 
   return (
     <>
-      <View style={[styles.card]}>
-        <View style={[styles.singleBox]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            {/* todo  */}
-            <HistoryItemIcon
-              isInDetail={true}
-              type={HistoryItemCateType.Approve}
-              token={
-                {
-                  ...actionData.collection,
-                  content: (actionData.collection as any)?.logo_url,
-                } as unknown as TokenItem
-              }
-              isNft={true}
-            />
-            <View style={[styles.colomnBox]}>
-              <>
-                <Text
-                  style={[styles.tokenAmountText, styles.isSendTextColor]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  1 NFT Collection
-                </Text>
-              </>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}>
+        <View style={[styles.card]}>
+          <View style={[styles.singleBox]}>
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              {/* todo  */}
+              <HistoryItemIcon
+                isInDetail={true}
+                type={HistoryItemCateType.Approve}
+                token={
+                  {
+                    ...actionData.collection,
+                    content: (actionData.collection as any)?.logo_url,
+                  } as unknown as TokenItem
+                }
+                isNft={true}
+              />
+              <View style={[styles.colomnBox]}>
+                <>
+                  <Text
+                    style={[styles.tokenAmountText, styles.isSendTextColor]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
+                    1 NFT Collection
+                  </Text>
+                </>
+              </View>
             </View>
-          </View>
-          {/* <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {/* <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <RcIconSingleArrow
               width={32}
               height={32}
               color={colors2024['neutral-bg-2']}
             />
           </View> */}
-        </View>
+          </View>
 
-        <View style={styles.extraItem}>
-          <Text style={styles.itemTitleText}>
-            {t('page.transactions.detail.ApproveTo')}
-          </Text>
-          <ActionSpenderView
-            requireData={requireData}
-            spender={actionData.spender}
+          <View style={styles.extraItem}>
+            <Text style={styles.itemTitleText}>
+              {t('page.transactions.detail.ApproveTo')}
+            </Text>
+            <ActionSpenderView
+              requireData={requireData}
+              spender={actionData.spender}
+              chain={chain}
+            />
+          </View>
+        </View>
+        <ActionDetailSection data={data} chain={chain} accounts={unionAccounts}>
+          <ActionDetailItem label={t('page.transactions.detail.name')}>
+            <ActionDetailText numberOfLines={1} ellipsizeMode="tail">
+              {actionData?.collection?.name || '-'}
+            </ActionDetailText>
+          </ActionDetailItem>
+          <ProjectItemInDetail
+            title={t('page.transactions.detail.InteractedContract')}
+            name={actionData.collection.name}
+            logo={(actionData.collection as any).logo_url}
+            address={actionData.collection.id}
             chain={chain}
           />
-        </View>
-      </View>
-      <ActionDetailSection data={data} chain={chain} accounts={unionAccounts}>
-        <ActionDetailItem label={t('page.transactions.detail.ApproveTo')}>
-          <ActionSpenderView
-            requireData={requireData}
-            spender={actionData.spender}
-            chain={chain}
-          />
-        </ActionDetailItem>
-
-        <ActionDetailItem label={t('page.transactions.detail.name')}>
-          <ActionDetailText numberOfLines={1} ellipsizeMode="tail">
-            {actionData?.collection?.name || '-'}
-          </ActionDetailText>
-        </ActionDetailItem>
-      </ActionDetailSection>
+        </ActionDetailSection>
+      </ScrollView>
       {data.isPending ? null : (
         <RevokeNFTCollectionBtn
           collection={actionData.collection}
@@ -170,6 +177,9 @@ export const ApproveNFTCollection: React.FC<Props> = ({
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  scrollView: {
+    paddingHorizontal: 16,
+  },
   colomnBox: {
     flexDirection: 'column',
   },

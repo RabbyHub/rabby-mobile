@@ -5,16 +5,9 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import React, { useCallback, useMemo } from 'react';
-import {
-  ScrollView,
-  StyleProp,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
 
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
-import { AssetAvatar } from '@/components';
 import { useAccountSelectModalCtx } from '@/components/AccountSelectModalTx/hooks';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
@@ -40,7 +33,6 @@ import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import FastImage from 'react-native-fast-image';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apisSingleHome } from '../Home/hooks/singleHome';
 import { RevokeTokenBtn } from './components/Actions/components/RevokeTokenBtn';
 import { HistoryBottomBtn } from './components/HistoryBottomBtn';
@@ -49,6 +41,9 @@ import { TxStatusItem } from './components/TxStatusItem';
 import { HistoryItemCateType } from './components/type';
 import { getApproveTokeName } from './components/utils';
 import { useGetCexList } from './hook';
+import { isAddress } from 'viem';
+import { getTokenSymbol } from '@/utils/token';
+import { ProjectItemInDetail } from './components/ProjectItemInDetail';
 
 export const AddressItemInDetail = ({
   address,
@@ -171,14 +166,6 @@ function HistoryDetailScreen(): JSX.Element {
 
   const isScam = data.is_scam || (data.isSmallUsdTx && treatSmallAssetsAsScam);
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const { bottom: safeBottomInset } = useSafeAreaInsets();
-  const buttonContainerStyle = useMemo(() => {
-    return [
-      styles.buttonContainerStyle,
-      { marginBottom: Math.max(safeBottomInset, 24) },
-    ];
-  }, [styles.buttonContainerStyle, safeBottomInset]);
-
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const getHeaderTitle = React.useCallback(() => {
     return (
@@ -301,51 +288,6 @@ function HistoryDetailScreen(): JSX.Element {
     );
   }, [formatType]);
 
-  const ProjecRenderItem = useCallback(
-    (titleText: string, style?: StyleProp<ViewStyle>) => {
-      return formatProject ? (
-        <View style={[style ? style : styles.detailItem]}>
-          <Text style={styles.itemTitleText}>{titleText}</Text>
-          <TouchableOpacity
-            style={{ alignItems: 'flex-end' }}
-            onPress={() =>
-              onOpenTxId(undefined, data.tx?.to_addr || data.other_addr || '')
-            }>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 4,
-              }}>
-              <AssetAvatar logo={formatProject?.logo_url} size={16} />
-              <Text style={[styles.itemContentText]}>
-                {formatProject?.name}
-              </Text>
-              <RcIconJumpCC
-                width={14}
-                height={14}
-                color={colors2024['neutral-foot']}
-              />
-            </View>
-            <Text style={styles.itemAddressText}>
-              {ellipsisAddress(data.tx?.to_addr || data.other_addr || '')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      ) : null;
-    },
-    [
-      data,
-      styles.detailItem,
-      formatProject,
-      styles.itemAddressText,
-      styles.itemContentText,
-      styles.itemTitleText,
-      colors2024,
-      onOpenTxId,
-    ],
-  );
-
   const txAccount = useMemo(() => {
     let account: KeyringAccountWithAlias | undefined;
     const canUseAccountList = accounts.filter(acc => {
@@ -375,6 +317,55 @@ function HistoryDetailScreen(): JSX.Element {
     }, [currentAccount]),
   );
 
+  const contractInfo = useMemo(() => {
+    if (data.cate_id === 'send' || data.cate_id === 'receive') {
+      const token = [...data.sends, ...data.receives]?.[0]?.token;
+      if (
+        token &&
+        isAddress(token.id) &&
+        isSameAddress(token.id, data.tx?.to_addr || '')
+      ) {
+        return {
+          name: getTokenSymbol(token),
+          logo: token.logo_url,
+          address: token.id,
+        };
+      }
+      return null;
+    }
+    if (data.cate_id === 'approve' && data.token_approve) {
+      const token = data.token_approve.token;
+      if (
+        token &&
+        isAddress(token.id) &&
+        isSameAddress(token.id, data.tx?.to_addr || '')
+      ) {
+        return {
+          name: getTokenSymbol(token),
+          logo: token.logo_url,
+          address: token.id,
+        };
+      }
+    }
+    // check this
+    return {
+      name: data.project_item?.name || '',
+      logo: data.project_item?.logo_url || '',
+      address: data.tx?.to_addr || '',
+    };
+  }, [data]);
+
+  const hasBottomBtn = useMemo(() => {
+    return (
+      (data.cate_id === 'approve' &&
+        data.token_approve &&
+        data.token_approve.token) ||
+      !(data.cate_id === 'approve' && data.token_approve)
+    );
+  }, [data.cate_id, data.token_approve]);
+
+  console.log('HistoryDetailScreen render', data);
+
   return (
     <NormalScreenContainer2024
       type={!isLight ? 'bg1' : 'bg0'}
@@ -396,7 +387,12 @@ function HistoryDetailScreen(): JSX.Element {
           </View>
         </View>
       ) : null}
-      <ScrollView style={[styles.scrollView]}>
+      <ScrollView
+        style={[
+          styles.scrollView,
+          hasBottomBtn ? null : styles.scrollViewWithoutBottomBtn,
+        ]}
+        showsVerticalScrollIndicator={false}>
         <HistoryTokenList
           data={data}
           isForMultipleAddress={isForMultipleAddress}
@@ -409,16 +405,21 @@ function HistoryDetailScreen(): JSX.Element {
           status={status}
           account={txAccount}
           extra={
-            [HistoryItemCateType.Send].includes(formatType) &&
-            Boolean(toAddr) ? (
+            [
+              HistoryItemCateType.Send,
+              HistoryItemCateType.GAS_DEPOSIT,
+            ].includes(formatType) && Boolean(toAddr) ? (
               <View style={styles.extraItem}>
                 <Text style={styles.itemTitleText}>
                   {t('page.transactions.detail.To')}
                 </Text>
                 <AddressItemInDetail address={toAddr!} accounts={accounts} />
               </View>
-            ) : [HistoryItemCateType.Recieve].includes(formatType) &&
-              Boolean(fromAddr) ? (
+            ) : [
+                HistoryItemCateType.Recieve,
+                HistoryItemCateType.GAS_WITHDRAW,
+                HistoryItemCateType.GAS_RECEIVED,
+              ].includes(formatType) && Boolean(fromAddr) ? (
               <View style={styles.extraItem}>
                 <Text style={styles.itemTitleText}>
                   {t('page.transactions.detail.From')}
@@ -426,12 +427,18 @@ function HistoryDetailScreen(): JSX.Element {
                 <AddressItemInDetail address={fromAddr!} accounts={accounts} />
               </View>
             ) : isApproveOrRevoke ? (
-              ProjecRenderItem(
-                formatType === HistoryItemCateType.Approve
-                  ? t('page.transactions.detail.ApproveTo')
-                  : t('page.transactions.detail.RevokeFrom'),
-                styles.extraItem,
-              )
+              <ProjectItemInDetail
+                title={
+                  formatType === HistoryItemCateType.Approve
+                    ? t('page.transactions.detail.ApproveTo')
+                    : t('page.transactions.detail.RevokeFrom')
+                }
+                style={styles.extraItem}
+                name={formatProject?.name || ''}
+                logo={formatProject?.logo_url || ''}
+                address={data.token_approve?.spender || ''}
+                chain={data.chain}
+              />
             ) : null
           }
         />
@@ -492,12 +499,7 @@ function HistoryDetailScreen(): JSX.Element {
               </View>
             </>
           )}
-          {isApproveOrRevoke &&
-            ProjecRenderItem(
-              formatType === HistoryItemCateType.Approve
-                ? t('page.transactions.detail.ApproveTo')
-                : t('page.transactions.detail.RevokeFrom'),
-            )}
+
           {formatType === HistoryItemCateType.Approve && (
             <View style={styles.detailItem}>
               <Text style={styles.itemTitleText}>
@@ -511,31 +513,52 @@ function HistoryDetailScreen(): JSX.Element {
               </Text>
             </View>
           )}
-          {Boolean(fromAddr) && (
+          {data.tx?.from_addr ? (
             <View style={styles.detailItem}>
               <Text style={styles.itemTitleText}>
                 {t('page.transactions.detail.From')}
               </Text>
-              <AddressItemInDetail address={fromAddr!} accounts={accounts} />
+              <AddressItemInDetail
+                address={data.tx?.from_addr}
+                accounts={accounts}
+              />
             </View>
-          )}
-          {(formatType === HistoryItemCateType.Send ||
-            formatType === HistoryItemCateType.GAS_WITHDRAW ||
-            formatType === HistoryItemCateType.GAS_RECEIVED ||
-            formatType === HistoryItemCateType.GAS_DEPOSIT ||
-            formatType === HistoryItemCateType.Recieve) &&
-            Boolean(toAddr) && (
-              <View style={styles.detailItem}>
-                <Text style={styles.itemTitleText}>
-                  {formatType === HistoryItemCateType.GAS_RECEIVED ||
-                  formatType === HistoryItemCateType.GAS_WITHDRAW ||
-                  formatType === HistoryItemCateType.Recieve
-                    ? t('page.transactions.detail.RecipientAddress')
-                    : t('page.transactions.detail.To')}
-                </Text>
-                <AddressItemInDetail address={toAddr!} accounts={accounts} />
-              </View>
-            )}
+          ) : null}
+
+          {contractInfo && data.tx?.name ? (
+            <ProjectItemInDetail
+              title={t('page.transactions.detail.InteractedContract')}
+              name={contractInfo.name}
+              logo={contractInfo.logo}
+              address={contractInfo.address}
+              chain={data.chain}
+            />
+          ) : data.tx?.to_addr ? (
+            <View style={styles.detailItem}>
+              <Text style={styles.itemTitleText}>
+                {t('page.transactions.detail.To')}
+              </Text>
+              <AddressItemInDetail
+                address={data.tx?.to_addr}
+                accounts={accounts}
+              />
+            </View>
+          ) : null}
+
+          {data.tx?.name ? (
+            <View style={styles.detailItem}>
+              <Text style={styles.itemTitleText}>
+                {t('page.transactions.detail.Operation')}
+              </Text>
+
+              <Text
+                style={[styles.itemContentText, styles.operationText]}
+                numberOfLines={1}>
+                {data.tx?.name}
+              </Text>
+            </View>
+          ) : null}
+
           <View style={styles.detailItem}>
             <Text style={styles.itemTitleText}>
               {t('page.transactions.detail.Chain')}
@@ -564,8 +587,7 @@ function HistoryDetailScreen(): JSX.Element {
             )} USD`}</Text> */}
             </View>
           )}
-          {!isApproveOrRevoke &&
-            ProjecRenderItem(t('page.transactions.detail.InteractedContract'))}
+
           {data.id && (
             <View style={styles.detailItem}>
               <Text style={styles.itemTitleText}>Hash</Text>
@@ -585,20 +607,17 @@ function HistoryDetailScreen(): JSX.Element {
             </View>
           )}
         </View>
-        {data.cate_id === 'approve' &&
-        data.token_approve &&
-        data.token_approve.token ? (
-          <RevokeTokenBtn
-            style={{
-              marginTop: -8,
-              marginBottom: 20,
-            }}
-            token={data.token_approve?.token}
-            spender={data.token_approve?.spender}
-            account={txAccount}
-          />
-        ) : null}
       </ScrollView>
+
+      {data.cate_id === 'approve' &&
+      data.token_approve &&
+      data.token_approve.token ? (
+        <RevokeTokenBtn
+          token={data.token_approve?.token}
+          spender={data.token_approve?.spender}
+          account={txAccount}
+        />
+      ) : null}
 
       {!(data.cate_id === 'approve' && data.token_approve) ? (
         <HistoryBottomBtn
@@ -610,7 +629,6 @@ function HistoryDetailScreen(): JSX.Element {
           status={status || 0}
           data={data}
           isForMultipleAddress={isForMultipleAddress}
-          buttonContainerStyle={buttonContainerStyle}
           account={txAccount}
         />
       ) : null}
@@ -620,135 +638,140 @@ function HistoryDetailScreen(): JSX.Element {
 
 const PADDING_HORIZONTAL = 16;
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  container: { height: '100%', paddingTop: 24, paddingBottom: 24 },
-  scrollView: {
-    // height: '100%',
-    paddingHorizontal: PADDING_HORIZONTAL,
-    flex: 1,
-  },
-  detailContainer: {
-    width: '100%',
-    marginTop: 12,
-    borderRadius: 16,
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
-    paddingTop: 12,
-    paddingBottom: 4,
-  },
-  detailContainerHeader: {
-    marginBottom: 8,
-    paddingHorizontal: 16,
-  },
-  detailContainerTitle: {
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-  },
-  detailContainerLastOne: {
-    marginBottom: 20,
-  },
-  buttonContainerStyle: {
-    paddingHorizontal: PADDING_HORIZONTAL,
-    flexShrink: 0,
-  },
-  itemAliaName: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  extraItem: {
-    flexDirection: 'row',
-    padding: 12,
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 12,
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginHorizontal: 12,
-    marginBottom: 12,
-  },
-  detailItem: {
-    flexDirection: 'row',
-    // gap: 4,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  itemTitleText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    maxWidth: '45%',
-  },
-  itemAddressText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'right',
-    width: 170,
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
-  },
-  itemContentText: {
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-  },
-  itemContentTextAliasName: {
-    maxWidth: 180,
-  },
-  headerTitleStyle: {
-    color: colors2024['neutral-title-1'],
-    fontWeight: '800',
-    fontSize: 20,
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 24,
-  },
-  scamContainerWrapper: {
-    paddingHorizontal: PADDING_HORIZONTAL,
-  },
-  scamContainer: {
-    borderRadius: 6,
-    backgroundColor: colors2024['neutral-bg-5'],
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    flexDirection: 'row',
-    width: '100%',
-    gap: 2,
-    marginBottom: 12,
-  },
-  scamText: {
-    fontFamily: 'SF Pro Rounded',
-    fontWeight: '700',
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-body'],
-  },
-  scamTipsText: {
-    fontFamily: 'SF Pro Rounded',
-    fontWeight: '400',
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-foot'],
-  },
-  statuItemText: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    marginLeft: 4,
-  },
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    container: { height: '100%', paddingTop: 24 },
+    scrollView: {
+      // height: '100%',
+      paddingHorizontal: PADDING_HORIZONTAL,
+      flex: 1,
+    },
+    scrollViewWithoutBottomBtn: {
+      marginBottom: Math.max(safeAreaInsets.bottom, 36),
+    },
+    detailContainer: {
+      width: '100%',
+      marginTop: 12,
+      borderRadius: 16,
+      backgroundColor: !isLight
+        ? colors2024['neutral-bg-2']
+        : colors2024['neutral-bg-1'],
+      paddingTop: 12,
+      paddingBottom: 4,
+    },
+    detailContainerHeader: {
+      marginBottom: 8,
+      paddingHorizontal: 16,
+    },
+    detailContainerTitle: {
+      color: colors2024['neutral-body'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+    },
+    detailContainerLastOne: {
+      marginBottom: 20,
+    },
 
-  headerItem: {},
-}));
+    itemAliaName: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    extraItem: {
+      flexDirection: 'row',
+      padding: 12,
+      backgroundColor: colors2024['neutral-bg-2'],
+      borderRadius: 12,
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginHorizontal: 12,
+      marginBottom: 12,
+    },
+    detailItem: {
+      flexDirection: 'row',
+      // gap: 4,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+    },
+    itemTitleText: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      maxWidth: '45%',
+    },
+    itemAddressText: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      textAlign: 'right',
+      width: 170,
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '400',
+    },
+    itemContentText: {
+      color: colors2024['neutral-body'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+    },
+    operationText: {
+      textTransform: 'capitalize',
+    },
+    itemContentTextAliasName: {
+      maxWidth: 180,
+    },
+    headerTitleStyle: {
+      color: colors2024['neutral-title-1'],
+      fontWeight: '800',
+      fontSize: 20,
+      fontFamily: 'SF Pro Rounded',
+      lineHeight: 24,
+    },
+    scamContainerWrapper: {
+      paddingHorizontal: PADDING_HORIZONTAL,
+    },
+    scamContainer: {
+      borderRadius: 6,
+      backgroundColor: colors2024['neutral-bg-5'],
+      paddingHorizontal: 16,
+      paddingVertical: 6,
+      flexDirection: 'row',
+      width: '100%',
+      gap: 2,
+      marginBottom: 12,
+    },
+    scamText: {
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '700',
+      fontSize: 14,
+      lineHeight: 18,
+      color: colors2024['neutral-body'],
+    },
+    scamTipsText: {
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '400',
+      fontSize: 14,
+      lineHeight: 18,
+      color: colors2024['neutral-foot'],
+    },
+    statuItemText: {
+      color: colors2024['green-default'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+      marginLeft: 4,
+    },
+
+    headerItem: {},
+  }),
+);
 
 export { HistoryDetailScreen };

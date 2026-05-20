@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import { RcIconExternalLinkCC } from '@/assets/icons/common';
+import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { Text } from '@/components/Typography';
 import { toast } from '@/components2024/Toast';
@@ -73,7 +73,7 @@ export const ActionDetailSection = ({
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const handleOpenTxId = useMemoizedFn(() => {
-    const tx = data.maxGasTx.hash;
+    const tx = data.maxGasTx?.hash;
 
     if (chain?.scanLink) {
       openTxExternalUrl({ chain, txHash: tx });
@@ -89,13 +89,11 @@ export const ActionDetailSection = ({
           {t('page.transactions.detail.TransactionDetails')}
         </Text>
       </View>
-      {!data.isPending && data.maxGasTx.completedAt && (
+      {!data.isPending && data.maxGasTx?.completedAt && (
         <ActionDetailItem label={t('page.transactions.detail.Date')}>
-          <View>
-            <ActionDetailText>
-              {formatIntlTimestamp(data.maxGasTx.completedAt)}
-            </ActionDetailText>
-          </View>
+          <ActionDetailText>
+            {formatIntlTimestamp(data.maxGasTx?.completedAt)}
+          </ActionDetailText>
         </ActionDetailItem>
       )}
       <ActionDetailItem label={t('page.transactions.detail.Status')}>
@@ -109,6 +107,22 @@ export const ActionDetailSection = ({
       </ActionDetailItem>
       {data.isPending ? <TransactionPendingDetail data={data} /> : null}
 
+      <ActionDetailItem label={t('page.transactions.detail.From')}>
+        <AddressItemInDetail
+          address={data.maxGasTx?.address}
+          accounts={accounts}
+        />
+      </ActionDetailItem>
+
+      {children}
+
+      {data.maxGasTx?.explain?.abi?.func ? (
+        <ActionDetailItem label={t('page.transactions.detail.Operation')}>
+          <ActionDetailText style={styles.operationText}>
+            {data.maxGasTx?.explain?.abi?.func}
+          </ActionDetailText>
+        </ActionDetailItem>
+      ) : null}
       <ActionDetailItem label={t('page.transactions.detail.Chain')}>
         <View style={{ flexDirection: 'row', gap: 4 }}>
           <ChainIconImage
@@ -119,15 +133,6 @@ export const ActionDetailSection = ({
           <ActionDetailText>{chain?.name}</ActionDetailText>
         </View>
       </ActionDetailItem>
-
-      <ActionDetailItem label={t('page.transactions.detail.From')}>
-        <AddressItemInDetail
-          address={data.maxGasTx.address}
-          accounts={accounts}
-        />
-      </ActionDetailItem>
-
-      {children}
 
       {Boolean(data.maxGasTx?.gasUSDValue) && (
         <ActionDetailItem label={t('page.transactions.detail.GasFee')}>
@@ -145,9 +150,9 @@ export const ActionDetailSection = ({
           onPress={handleOpenTxId}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
           <ActionDetailText>
-            {ellipsisAddress(data.maxGasTx.hash!)}
+            {ellipsisAddress(data.maxGasTx?.hash!)}
           </ActionDetailText>
-          <RcIconExternalLinkCC
+          <RcIconJumpCC
             width={14}
             height={14}
             color={colors2024['neutral-foot']}
@@ -168,6 +173,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
+    marginBottom: 16,
   },
   detailContainerHeader: {
     marginBottom: 8,
@@ -186,7 +192,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 12,
     paddingHorizontal: 16,
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   itemTitleText: {
     color: colors2024['neutral-secondary'],
@@ -202,5 +208,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '700',
+  },
+  operationText: {
+    textTransform: 'capitalize',
   },
 }));

@@ -36,7 +36,9 @@ export const RevokeApprovalCard = ({
         {loading ? (
           <Skeleton width={80} height={16} />
         ) : (
-          <Text style={styles.value}>{value}</Text>
+          <Text style={styles.value} numberOfLines={1}>
+            {value}
+          </Text>
         )}
       </View>
       <View style={styles.buttonContainer}>
@@ -69,36 +71,38 @@ export const RevokeApprovalCard = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  card: {
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
-    marginTop: 12,
-  },
-  cardHeader: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
-  },
-  label: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    marginRight: 'auto',
-  },
-  value: {
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-  },
-  buttonContainer: {},
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    card: {
+      paddingTop: 16,
+      paddingHorizontal: 20,
+      paddingBottom: Math.max(safeAreaInsets.bottom, 36),
+      backgroundColor: !isLight
+        ? colors2024['neutral-bg-2']
+        : colors2024['neutral-bg-1'],
+    },
+    cardHeader: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      marginBottom: 16,
+    },
+    label: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      marginRight: 'auto',
+    },
+    value: {
+      color: colors2024['neutral-body'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+    },
+    buttonContainer: {},
+  }),
+);

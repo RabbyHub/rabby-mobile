@@ -370,7 +370,7 @@
         "RevokeFrom": "Revocar desde",
         "InteractionResults": "Resultados de Interacción",
         "ApproveTo": "Aprobar para",
-        "InteractedContract": "Contrato interactuado",
+        "InteractedContract": "",
         "Name": "Nombre",
         "totalApprovedAmount": "Cantidad Aprobada Actual",
         "BuyAgain": "Comprar de nuevo",

@@ -7,7 +7,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
@@ -34,6 +34,7 @@ import {
   ActionDetailText,
 } from './components/ActionDetailSection';
 import { ActionSpenderView } from './components/ActionSpenderView';
+import { ProjectItemInDetail } from '../ProjectItemInDetail';
 
 interface Props {
   data: TransactionGroup;
@@ -128,45 +129,55 @@ export const ApproveToken: React.FC<Props> = ({
 
   return (
     <>
-      <TouchableOpacity onPress={handleGotoTokenDetail}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}>
         <View style={styles.card}>
-          <View style={[styles.singleBox]}>
-            <View
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <HistoryItemIcon
-                isInDetail={true}
-                type={HistoryItemCateType.Approve}
-                token={actionData.token}
-                isNft={false}
-              />
-              <View style={[styles.colomnBox]}>
-                {isUnlimited ? (
-                  <>
-                    <Text
-                      style={[styles.tokenAmountText, styles.isSendTextColor]}>
-                      {approveAmount} {getTokenSymbol(actionData.token)}
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <Text
-                      style={[styles.tokenAmountText, styles.isSendTextColor]}>
-                      {approveAmount}{' '}
-                      {getTokenSymbol(actionData.token as TokenItem)}
-                    </Text>
-                    <Text style={styles.usdValue}>≈{approveUsdValue}</Text>
-                  </>
-                )}
+          <TouchableOpacity onPress={handleGotoTokenDetail}>
+            <View style={[styles.singleBox]}>
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <HistoryItemIcon
+                  isInDetail={true}
+                  type={HistoryItemCateType.Approve}
+                  token={actionData.token}
+                  isNft={false}
+                />
+                <View style={[styles.colomnBox]}>
+                  {isUnlimited ? (
+                    <>
+                      <Text
+                        style={[
+                          styles.tokenAmountText,
+                          styles.isSendTextColor,
+                        ]}>
+                        {approveAmount} {getTokenSymbol(actionData.token)}
+                      </Text>
+                    </>
+                  ) : (
+                    <>
+                      <Text
+                        style={[
+                          styles.tokenAmountText,
+                          styles.isSendTextColor,
+                        ]}>
+                        {approveAmount}{' '}
+                        {getTokenSymbol(actionData.token as TokenItem)}
+                      </Text>
+                      <Text style={styles.usdValue}>≈{approveUsdValue}</Text>
+                    </>
+                  )}
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <RcIconSingleArrow
+                  width={26}
+                  height={26}
+                  color={colors2024['neutral-bg-2']}
+                />
               </View>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <RcIconSingleArrow
-                width={26}
-                height={26}
-                color={colors2024['neutral-bg-2']}
-              />
-            </View>
-          </View>
+          </TouchableOpacity>
           <View style={styles.extraItem}>
             <Text style={styles.itemTitleText}>
               {t('page.transactions.detail.ApproveTo')}
@@ -178,28 +189,27 @@ export const ApproveToken: React.FC<Props> = ({
             />
           </View>
         </View>
-      </TouchableOpacity>
-      <ActionDetailSection data={data} chain={chain} accounts={unionAccounts}>
-        <ActionDetailItem label={t('page.transactions.detail.ApproveTo')}>
-          <ActionSpenderView
-            requireData={requireData}
-            spender={actionData.spender}
+        <ActionDetailSection data={data} chain={chain} accounts={unionAccounts}>
+          <ActionDetailItem label={t('page.transactions.detail.ApproveToken')}>
+            <ActionDetailText>
+              {isUnlimited ? (
+                t('page.transactions.detail.Unlimited')
+              ) : (
+                <>
+                  {approveAmount} {getTokenSymbol(actionData.token)}
+                </>
+              )}
+            </ActionDetailText>
+          </ActionDetailItem>
+          <ProjectItemInDetail
+            title={t('page.transactions.detail.InteractedContract')}
+            name={getTokenSymbol(actionData.token)}
+            logo={actionData.token.logo_url}
+            address={actionData.token.id}
             chain={chain}
           />
-        </ActionDetailItem>
-
-        <ActionDetailItem label={t('page.transactions.detail.ApproveToken')}>
-          <ActionDetailText>
-            {isUnlimited ? (
-              t('page.transactions.detail.Unlimited')
-            ) : (
-              <>
-                {approveAmount} {getTokenSymbol(actionData.token)}
-              </>
-            )}
-          </ActionDetailText>
-        </ActionDetailItem>
-      </ActionDetailSection>
+        </ActionDetailSection>
+      </ScrollView>
       {data.isPending ? null : (
         <RevokeTokenBtn
           token={actionData.token}
@@ -212,6 +222,9 @@ export const ApproveToken: React.FC<Props> = ({
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  scrollView: {
+    paddingHorizontal: 16,
+  },
   colomnBox: {
     flexDirection: 'column',
   },

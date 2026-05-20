@@ -209,7 +209,7 @@
         "ApproveTo": "Подтвердить для",
         "From": "От",
         "RevokeFrom": "Отозвать из",
-        "InteractedContract": "Взаимодействующий контракт",
+        "InteractedContract": "",
         "Chain": "Цепь",
         "ApproveToken": "Одобрить токен",
         "Succeeded": "Успешно",
