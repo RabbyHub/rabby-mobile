@@ -6,6 +6,9 @@ import { findChain } from '@/utils/chain';
 import { unionBy } from 'lodash';
 import React, { useMemo } from 'react';
 import { ActionDetailSection } from './components/ActionDetailSection';
+import { ScrollView } from 'react-native-gesture-handler';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 
 interface Props {
   data: TransactionGroup;
@@ -32,7 +35,20 @@ export const DeployContact: React.FC<Props> = ({ data }) => {
     return unionBy(list, account => account.address.toLowerCase());
   }, [list]);
 
+  const { styles } = useTheme2024({ getStyle });
+
   return (
-    <ActionDetailSection data={data} chain={chain} accounts={unionAccounts} />
+    <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ActionDetailSection data={data} chain={chain} accounts={unionAccounts} />
+    </ScrollView>
   );
 };
+
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    scrollView: {
+      paddingHorizontal: 16,
+      paddingBottom: Math.max(safeAreaInsets.bottom, 24),
+    },
+  }),
+);

@@ -46,6 +46,7 @@ import {
   ActionDetailItem,
   ActionDetailSection,
 } from './components/ActionDetailSection';
+import { ProjectItemInDetail } from '../ProjectItemInDetail';
 
 interface Props {
   data: TransactionGroup;
@@ -128,6 +129,11 @@ export const Send: React.FC<Props> = ({
     });
   });
 
+  const isNativeToken =
+    actionData.token?.id && actionData.token.id === chain?.nativeTokenAddress;
+
+  console.log('Send render', { data });
+
   const ViewComp = accountSelectCtx.isUnderContext
     ? BottomSheetScrollView
     : ScrollView;
@@ -136,14 +142,15 @@ export const Send: React.FC<Props> = ({
     <>
       <ViewComp
         style={{ paddingHorizontal: 16 }}
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           accountSelectCtx.isUnderContext && styles.inModalBsContainer,
           accountSelectCtx.isUnderContext && {
             paddingBottom: safeSizes.inModalContainerPb,
           },
         ]}>
-        <TouchableOpacity onPress={handleGotoTokenDetail}>
-          <View style={styles.card}>
+        <View style={styles.card}>
+          <TouchableOpacity onPress={handleGotoTokenDetail}>
             <View style={[styles.singleBox]}>
               <View
                 style={{
@@ -187,31 +194,40 @@ export const Send: React.FC<Props> = ({
                 />
               </View>
             </View>
-            <View style={styles.extraItem}>
-              <Text style={styles.itemTitleText}>
-                {t('page.transactions.detail.To')}
-              </Text>
-              <AddressItemInDetail
-                address={actionData.to}
-                accounts={unionAccounts}
-                // disableNavigate={isUnderModalContext}
-              />
-            </View>
-          </View>
-        </TouchableOpacity>
-        <ActionDetailSection data={data} chain={chain} accounts={unionAccounts}>
-          <ActionDetailItem label={t('page.transactions.detail.To')}>
+          </TouchableOpacity>
+          <View style={styles.extraItem}>
+            <Text style={styles.itemTitleText}>
+              {t('page.transactions.detail.To')}
+            </Text>
             <AddressItemInDetail
               address={actionData.to}
               accounts={unionAccounts}
               // disableNavigate={isUnderModalContext}
             />
-          </ActionDetailItem>
+          </View>
+        </View>
+        <ActionDetailSection data={data} chain={chain} accounts={unionAccounts}>
+          {isNativeToken ? (
+            <ActionDetailItem label={t('page.transactions.detail.To')}>
+              <AddressItemInDetail
+                address={actionData.to}
+                accounts={unionAccounts}
+                // disableNavigate={isUnderModalContext}
+              />
+            </ActionDetailItem>
+          ) : (
+            <ProjectItemInDetail
+              title={t('page.transactions.detail.InteractedContract')}
+              name={getTokenSymbol(actionData.token)}
+              logo={actionData.token.logo_url}
+              address={actionData.token.id}
+              chain={chain}
+            />
+          )}
         </ActionDetailSection>
       </ViewComp>
       <View
         style={[
-          styles.buttonContainer,
           accountSelectCtx.isUnderContext
             ? StyleSheet.flatten([
                 styles.inModalButtonContainer,
@@ -223,11 +239,10 @@ export const Send: React.FC<Props> = ({
                     : 0,
                 },
               ])
-            : {},
+            : styles.buttonContainer,
         ]}>
         <View
           style={[
-            { flex: 1 },
             accountSelectCtx.isUnderContext && styles.inModalButtonInner,
             // accountSelectCtx.isUnderContext && { height: safeSizes.inModalButtonContainerHeight }
           ]}>
@@ -290,165 +305,170 @@ const SIZES = {
   containerPb: 12,
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  inModalBsContainer: {
-    // flexShrink: 1,
-    paddingBottom: SIZES.buttonHeight + 12,
-    justifyContent: 'flex-end',
-  },
-  ghostButton: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderColor: colors2024['neutral-info'],
-  },
-  primaryButton: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderColor: colors2024['brand-default'],
-  },
-  primaryTitle: {
-    color: colors2024['brand-default'],
-  },
-  ghostTitle: {
-    color: colors2024['neutral-title-1'],
-  },
-  iconSwitchArrow: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 200,
-    width: 45,
-    height: 45,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'absolute',
-    left: '50%',
-    top: '50%',
-    marginLeft: -22,
-    marginTop: -22,
-  },
-  tokenAmountTextList: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: '700',
-  },
-  colomnBox: {
-    flexDirection: 'column',
-    overflow: 'hidden',
-    width: '100%',
-  },
-  tokenSymbolBox: {
-    flexDirection: 'row',
-    ...(IS_IOS
-      ? {
-          maxWidth: '70%',
-        }
-      : {
-          width: '100%',
-        }),
-  },
-  usdValue: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    marginTop: 2,
-  },
-  isSendTextColor: {
-    color: colors2024['neutral-title-1'],
-  },
-  isFailBox: {
-    opacity: 0.3,
-  },
-  image: {
-    width: 46,
-    height: 46,
-  },
-  fromTokenBox: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
-    flex: 1,
-    height: 110,
-    gap: 10,
-  },
-  toTokenBox: {
-    gap: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
-    flex: 1,
-    height: 110,
-  },
-  card: {
-    width: '100%',
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
-    borderRadius: 16,
-  },
-  singleBox: {
-    justifyContent: 'space-between',
-    alignContent: 'center',
-    flexDirection: 'row',
-    padding: 16,
-  },
-  tokenAmountText: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '900',
-    maxWidth: '100%',
-    ...(IS_ANDROID && {
-      width: '75%',
-    }),
-  },
-  buttonContainer: {
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    flexDirection: 'row',
-    paddingTop: 0,
-    marginTop: 16,
-    bottom: 0,
-    width: '100%',
-    paddingBottom: SIZES.bottomContentBottom,
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  inModalButtonContainer: {
-    position: 'absolute',
-    marginTop: 0,
-    width: '100%',
-    height: SIZES.containerPt + SIZES.buttonHeight + SIZES.bottomContentBottom,
-    bottom: SIZES.bottomContentBottom,
-    // ...makeDebugBorder(),
-    paddingTop: SIZES.containerPt,
-  },
-  inModalButtonInner: {
-    height: '100%',
-    width: '100%',
-    flex: 0,
-    // ...makeDebugBorder('yellow'),
-  },
-  extraItem: {
-    flexDirection: 'row',
-    padding: 12,
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 12,
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginHorizontal: 12,
-    marginBottom: 12,
-  },
-  itemTitleText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    maxWidth: '45%',
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    inModalBsContainer: {
+      // flexShrink: 1,
+      paddingBottom: SIZES.buttonHeight + 12,
+      justifyContent: 'flex-end',
+    },
+    ghostButton: {
+      backgroundColor: colors2024['neutral-bg-2'],
+      borderColor: colors2024['neutral-info'],
+    },
+    primaryButton: {
+      backgroundColor: colors2024['neutral-bg-2'],
+      borderColor: colors2024['brand-default'],
+    },
+    primaryTitle: {
+      color: colors2024['brand-default'],
+    },
+    ghostTitle: {
+      color: colors2024['neutral-title-1'],
+    },
+    iconSwitchArrow: {
+      backgroundColor: colors2024['neutral-bg-2'],
+      borderRadius: 200,
+      width: 45,
+      height: 45,
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      marginLeft: -22,
+      marginTop: -22,
+    },
+    tokenAmountTextList: {
+      color: colors2024['green-default'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 18,
+      lineHeight: 22,
+      fontWeight: '700',
+    },
+    colomnBox: {
+      flexDirection: 'column',
+      overflow: 'hidden',
+      width: '100%',
+    },
+    tokenSymbolBox: {
+      flexDirection: 'row',
+      ...(IS_IOS
+        ? {
+            maxWidth: '70%',
+          }
+        : {
+            width: '100%',
+          }),
+    },
+    usdValue: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      marginTop: 2,
+    },
+    isSendTextColor: {
+      color: colors2024['neutral-title-1'],
+    },
+    isFailBox: {
+      opacity: 0.3,
+    },
+    image: {
+      width: 46,
+      height: 46,
+    },
+    fromTokenBox: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 16,
+      backgroundColor: colors2024['neutral-bg-1'],
+      flex: 1,
+      height: 110,
+      gap: 10,
+    },
+    toTokenBox: {
+      gap: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 16,
+      backgroundColor: colors2024['neutral-bg-1'],
+      flex: 1,
+      height: 110,
+    },
+    card: {
+      width: '100%',
+      backgroundColor: !isLight
+        ? colors2024['neutral-bg-2']
+        : colors2024['neutral-bg-1'],
+      borderRadius: 16,
+    },
+    singleBox: {
+      justifyContent: 'space-between',
+      alignContent: 'center',
+      flexDirection: 'row',
+      padding: 16,
+    },
+    tokenAmountText: {
+      color: colors2024['green-default'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '900',
+      maxWidth: '100%',
+      ...(IS_ANDROID && {
+        width: '75%',
+      }),
+    },
+    buttonContainer: {
+      paddingTop: 12,
+      paddingHorizontal: 20,
+      paddingBottom: Math.max(safeAreaInsets.bottom, 36),
+      backgroundColor: !isLight
+        ? colors2024['neutral-bg-2']
+        : colors2024['neutral-bg-1'],
+    },
+    inModalButtonContainer: {
+      backgroundColor: !isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+      flexDirection: 'row',
+      paddingBottom: SIZES.bottomContentBottom,
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      position: 'absolute',
+      marginTop: 0,
+      width: '100%',
+      height:
+        SIZES.containerPt + SIZES.buttonHeight + SIZES.bottomContentBottom,
+      bottom: SIZES.bottomContentBottom,
+      // ...makeDebugBorder(),
+      paddingTop: SIZES.containerPt,
+    },
+    inModalButtonInner: {
+      height: '100%',
+      width: '100%',
+      flex: 0,
+      // ...makeDebugBorder('yellow'),
+    },
+    extraItem: {
+      flexDirection: 'row',
+      padding: 12,
+      backgroundColor: colors2024['neutral-bg-2'],
+      borderRadius: 12,
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginHorizontal: 12,
+      marginBottom: 12,
+    },
+    itemTitleText: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      maxWidth: '45%',
+    },
+  }),
+);

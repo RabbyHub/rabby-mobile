@@ -54,7 +54,6 @@ function HistoryLocalDetailScreen(): JSX.Element {
   const isPending = useMemo(() => data.isPending, [data]);
   const isFailed = useMemo(() => data.isFailed, [data]);
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const { bottom } = useSafeAreaInsets();
   const { t } = useTranslation();
 
   const fetchRefreshData = useCallback(() => {
@@ -149,9 +148,6 @@ function HistoryLocalDetailScreen(): JSX.Element {
     }, [currentAccount]),
   );
 
-  const isSelfScrollAction =
-    needUseSwap || !!data.maxGasTx?.action?.actionData?.send;
-
   const actionElement = data.maxGasTx?.action?.actionData?.approveToken ? (
     <ApproveToken
       data={data}
@@ -223,19 +219,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
 
   return (
     <NormalScreenContainer2024 type={!isLight ? 'bg1' : 'bg0'}>
-      {isSelfScrollAction ? (
-        actionElement
-      ) : (
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{
-            paddingBottom: bottom,
-            paddingHorizontal: 16,
-          }}
-          showsVerticalScrollIndicator={false}>
-          {actionElement}
-        </ScrollView>
-      )}
+      {actionElement}
     </NormalScreenContainer2024>
   );
 }

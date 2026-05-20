@@ -36,7 +36,7 @@ export const ActionSpenderView = ({ requireData, spender, chain }: Props) => {
     <TouchableOpacity
       disabled={!spender}
       onPress={handleOpenSpender}
-      style={{ alignItems: 'flex-end' }}>
+      style={{ alignItems: 'flex-end', minWidth: 0, flexShrink: 1 }}>
       <View style={{ alignItems: 'flex-end' }}>
         <View
           style={{
@@ -54,7 +54,7 @@ export const ActionSpenderView = ({ requireData, spender, chain }: Props) => {
             color={colors2024['neutral-foot']}
           />
         </View>
-        <Text style={styles.itemAddressText}>{ellipsisAddress(spender)}</Text>
+        <Text style={styles.itemAddressText}>{spender}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -67,6 +67,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '400',
+    textAlign: 'right',
+    width: 170,
   },
   itemContentText: {
     color: colors2024['neutral-body'],

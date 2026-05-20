@@ -5,7 +5,7 @@ import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
@@ -27,6 +27,7 @@ import {
   ActionDetailText,
 } from './components/ActionDetailSection';
 import { ActionSpenderView } from './components/ActionSpenderView';
+import { ProjectItemInDetail } from '../ProjectItemInDetail';
 
 interface Props {
   data: TransactionGroup;
@@ -81,120 +82,129 @@ export const RevokeNFT: React.FC<Props> = ({
 
   return (
     <>
-      <TouchableOpacity onPress={handleGotoDetail}>
-        <View style={styles.card}>
-          <View style={[styles.singleBox]}>
-            <View
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <HistoryItemIcon
-                isInDetail={true}
-                type={HistoryItemCateType.Approve}
-                token={actionData.nft as unknown as TokenItem}
-                isNft={true}
-              />
-              <View style={[styles.colomnBox]}>
-                <>
-                  <Text
-                    style={[styles.tokenAmountText, styles.isSendTextColor]}
-                    numberOfLines={1}
-                    ellipsizeMode="tail">
-                    {/* todo amount */}
-                    {actionData?.nft?.amount || 1} NFT
-                  </Text>
-                </>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}>
+        <TouchableOpacity onPress={handleGotoDetail}>
+          <View style={styles.card}>
+            <View style={[styles.singleBox]}>
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <HistoryItemIcon
+                  isInDetail={true}
+                  type={HistoryItemCateType.Approve}
+                  token={actionData.nft as unknown as TokenItem}
+                  isNft={true}
+                />
+                <View style={[styles.colomnBox]}>
+                  <>
+                    <Text
+                      style={[styles.tokenAmountText, styles.isSendTextColor]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail">
+                      {/* todo amount */}
+                      {actionData?.nft?.amount || 1} NFT
+                    </Text>
+                  </>
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <RcIconSingleArrow
+                  width={26}
+                  height={26}
+                  color={colors2024['neutral-bg-2']}
+                />
               </View>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <RcIconSingleArrow
-                width={26}
-                height={26}
-                color={colors2024['neutral-bg-2']}
+            <View style={styles.extraItem}>
+              <Text style={styles.itemTitleText}>
+                {t('page.transactions.detail.RevokeFrom')}
+              </Text>
+              <ActionSpenderView
+                requireData={requireData}
+                spender={actionData.spender}
+                chain={chain}
               />
             </View>
           </View>
-          <View style={styles.extraItem}>
-            <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.RevokeFrom')}
-            </Text>
-            <ActionSpenderView
-              requireData={requireData}
-              spender={actionData.spender}
-              chain={chain}
-            />
-          </View>
-        </View>
-      </TouchableOpacity>
-      <ActionDetailSection data={data} chain={chain} accounts={unionAccounts}>
-        <ActionDetailItem label={t('page.transactions.detail.RevokeFrom')}>
-          <ActionSpenderView
-            requireData={requireData}
-            spender={actionData.spender}
+        </TouchableOpacity>
+        <ActionDetailSection data={data} chain={chain} accounts={unionAccounts}>
+          <ActionDetailItem label={t('page.transactions.detail.name')}>
+            <ActionDetailText numberOfLines={1} ellipsizeMode="tail">
+              {actionData?.nft?.name || '-'}
+            </ActionDetailText>
+          </ActionDetailItem>
+          <ProjectItemInDetail
+            title={t('page.transactions.detail.InteractedContract')}
+            name={actionData.nft?.collection?.name}
+            logo={actionData.nft?.collection?.logo_url}
+            address={actionData.nft?.contract_id}
             chain={chain}
           />
-        </ActionDetailItem>
-
-        <ActionDetailItem label={t('page.transactions.detail.name')}>
-          <ActionDetailText numberOfLines={1} ellipsizeMode="tail">
-            {actionData?.nft?.name || '-'}
-          </ActionDetailText>
-        </ActionDetailItem>
-      </ActionDetailSection>
+        </ActionDetailSection>
+      </ScrollView>
     </>
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  colomnBox: {
-    flexDirection: 'column',
-  },
-  isSendTextColor: {
-    color: colors2024['neutral-title-1'],
-  },
-  card: {
-    width: '100%',
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
-    borderRadius: 16,
-  },
-  singleBox: {
-    justifyContent: 'space-between',
-    alignContent: 'center',
-    flexDirection: 'row',
-    padding: 16,
-  },
-  tokenAmountText: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '900',
-  },
-  usdValue: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    marginTop: 2,
-  },
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    scrollView: {
+      paddingHorizontal: 16,
+      paddingBottom: Math.max(safeAreaInsets.bottom, 24),
+    },
+    colomnBox: {
+      flexDirection: 'column',
+    },
+    isSendTextColor: {
+      color: colors2024['neutral-title-1'],
+    },
+    card: {
+      width: '100%',
+      backgroundColor: !isLight
+        ? colors2024['neutral-bg-2']
+        : colors2024['neutral-bg-1'],
+      borderRadius: 16,
+    },
+    singleBox: {
+      justifyContent: 'space-between',
+      alignContent: 'center',
+      flexDirection: 'row',
+      padding: 16,
+    },
+    tokenAmountText: {
+      color: colors2024['green-default'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '900',
+    },
+    usdValue: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      marginTop: 2,
+    },
 
-  extraItem: {
-    flexDirection: 'row',
-    padding: 12,
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 12,
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginHorizontal: 12,
-    marginBottom: 12,
-  },
-  itemTitleText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    maxWidth: '45%',
-  },
-}));
+    extraItem: {
+      flexDirection: 'row',
+      padding: 12,
+      backgroundColor: colors2024['neutral-bg-2'],
+      borderRadius: 12,
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginHorizontal: 12,
+      marginBottom: 12,
+    },
+    itemTitleText: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      maxWidth: '45%',
+    },
+  }),
+);

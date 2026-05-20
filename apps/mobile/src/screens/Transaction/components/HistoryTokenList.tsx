@@ -205,8 +205,9 @@ export const HistoryTokenList = ({
       const tokenIsNft = tokenId?.length === 32;
 
       return (
-        <TouchableOpacity onPress={() => handlePress(singeToken!, tokenIsNft)}>
-          <View style={styles.card}>
+        <View style={styles.card}>
+          <TouchableOpacity
+            onPress={() => handlePress(singeToken!, tokenIsNft)}>
             <View style={[styles.singleBox]}>
               <View
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -261,9 +262,9 @@ export const HistoryTokenList = ({
                 />
               </View>
             </View>
-            {extra}
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+          {extra}
+        </View>
       );
 
     case HistoryItemCateType.Bridge:
