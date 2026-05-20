@@ -8,7 +8,7 @@ import RcIconApprovalDark from '@/assets2024/icons/history/IconApproveDark.svg';
 import RcIconReceive from '@/assets2024/icons/history/IconReceive.svg';
 import RcIconReceiveDark from '@/assets2024/icons/history/IconReceiveDark.svg';
 import RcIconRevoke from '@/assets2024/icons/history/IconRevoke.svg';
-import RcIconRevokeDark from '@/assets2024/icons/history/IconApproveDark.svg';
+import RcIconRevokeDark from '@/assets2024/icons/history/IconRevokeDark.svg';
 import RcIconContract from '@/assets2024/icons/history/IconContract.svg';
 import RcIconDefault from '@/assets2024/icons/history/IconDefault.svg';
 import RcIconCancel from '@/assets2024/icons/history/IconCancel.svg';
@@ -45,6 +45,7 @@ export const HistoryItemIcon = ({
   isNft,
   isInDetail,
 }: ItemIconProps) => {
+  console.log('HistoryItemIcon render', { type, isInDetail });
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const RcSingleTokenBrIcon = useMemo(() => {
     const size = isInDetail ? 24 : 20;

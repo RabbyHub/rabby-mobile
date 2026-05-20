@@ -263,7 +263,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   extraItem: {
     flexDirection: 'row',
     padding: 12,
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
     borderRadius: 12,
     justifyContent: 'space-between',
     alignItems: 'flex-start',

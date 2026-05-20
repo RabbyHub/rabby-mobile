@@ -211,6 +211,11 @@ function HistoryDetailScreen(): JSX.Element {
     return data.historyType;
   }, [data.historyType, data.receives, data.sends]);
 
+  console.log('HistoryDetailScreen render', data, {
+    historyType: data.historyType,
+    formatType,
+  });
+
   const { formatToken, isNft } = useMemo(() => {
     const cate = formatType;
     const isDoubleToken =
@@ -252,9 +257,11 @@ function HistoryDetailScreen(): JSX.Element {
   const fromAddr = data.tx?.from_addr;
   const toAddr =
     formatType === HistoryItemCateType.Recieve ||
+    formatType === HistoryItemCateType.GAS_WITHDRAW ||
     formatType === HistoryItemCateType.Buy
       ? data.address
-      : formatType === HistoryItemCateType.Send
+      : formatType === HistoryItemCateType.Send ||
+        formatType === HistoryItemCateType.GAS_DEPOSIT
       ? data.sends[0].to_addr
       : data.tx?.to_addr;
   const usdGasFee = data.tx?.eth_gas_fee;
@@ -320,30 +327,32 @@ function HistoryDetailScreen(): JSX.Element {
   const contractInfo = useMemo(() => {
     if (data.cate_id === 'send' || data.cate_id === 'receive') {
       const token = [...data.sends, ...data.receives]?.[0]?.token;
+      const contractId = (token as any).contract_id || token?.id;
       if (
         token &&
-        isAddress(token.id) &&
-        isSameAddress(token.id, data.tx?.to_addr || '')
+        isAddress(contractId) &&
+        isSameAddress(contractId, data.tx?.to_addr || '')
       ) {
         return {
           name: getTokenSymbol(token),
           logo: token.logo_url,
-          address: token.id,
+          address: data.tx?.to_addr,
         };
       }
       return null;
     }
     if (data.cate_id === 'approve' && data.token_approve) {
       const token = data.token_approve.token;
+      const contractId = (token as any).contract_id || token?.id;
       if (
         token &&
-        isAddress(token.id) &&
-        isSameAddress(token.id, data.tx?.to_addr || '')
+        isAddress(contractId) &&
+        isSameAddress(contractId, data.tx?.to_addr || '')
       ) {
         return {
           name: getTokenSymbol(token),
           logo: token.logo_url,
-          address: token.id,
+          address: data.tx?.to_addr,
         };
       }
     }
@@ -682,7 +691,9 @@ const getStyle = createGetStyles2024(
     extraItem: {
       flexDirection: 'row',
       padding: 12,
-      backgroundColor: colors2024['neutral-bg-2'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-2']
+        : colors2024['neutral-bg-1'],
       borderRadius: 12,
       justifyContent: 'space-between',
       alignItems: 'flex-start',
