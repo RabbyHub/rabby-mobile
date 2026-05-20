@@ -276,7 +276,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   container: {
     paddingHorizontal: 20,
-    paddingTop: 4,
+    paddingTop: 12,
   },
   header: {
     marginBottom: 16,
@@ -313,14 +313,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 16,
     paddingTop: 20,
-    paddingBottom: 8,
+    paddingBottom: 12,
     paddingHorizontal: 16,
     marginBottom: 12,
   },
   priceInput: {
     ...(Platform.OS === 'ios' && { fontFamily: 'SF Pro Rounded' }),
-    fontSize: 32,
-    lineHeight: 38,
+    fontSize: 36,
+    lineHeight: 42,
     fontWeight: '900',
     width: '100%',
     color: colors2024['neutral-title-1'],

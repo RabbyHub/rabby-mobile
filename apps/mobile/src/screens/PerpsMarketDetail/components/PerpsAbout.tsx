@@ -64,9 +64,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 16,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-5']
-      : colors2024['neutral-bg-3'],
+    backgroundColor: colors2024['neutral-bg-3'],
   },
   desc: {
     fontFamily: 'SF Pro Rounded',

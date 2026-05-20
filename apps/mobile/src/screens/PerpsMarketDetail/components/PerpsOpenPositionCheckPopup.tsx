@@ -251,7 +251,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 </View>
                 <View>
                   <Text style={styles.value}>
-                    ${splitNumberByStep(limitPx)}
+                    @ ${splitNumberByStep(limitPx)}
                   </Text>
                 </View>
               </View>

@@ -11,11 +11,15 @@ import { Text } from '@/components/Typography';
 interface AssetPriceInfoProps {
   activeAssetCtx?: WsActiveAssetCtx['ctx'] | null;
   currentAssetCtx?: MarketData | null;
+  displayName: string;
+  quoteAsset: string;
 }
 
 export const AssetPriceInfo = ({
   activeAssetCtx,
   currentAssetCtx,
+  displayName,
+  quoteAsset,
 }: AssetPriceInfoProps) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -26,7 +30,7 @@ export const AssetPriceInfo = ({
   return (
     <View style={styles.section}>
       <Text style={styles.quote}>
-        {t('page.perpsDetail.PerpsPriceInfo.current')}
+        {displayName}/{quoteAsset}
       </Text>
       <Text style={styles.price}>{`$${splitNumberByStep(markPrice)}`}</Text>
     </View>

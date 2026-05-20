@@ -147,9 +147,12 @@ export const PerpsPosition: React.FC<{
     <>
       <View style={styles.section}>
         <View style={styles.header}>
-          <Text style={styles.title}>
-            {t('page.perpsDetail.PerpsPosition.title')}
-          </Text>
+          <View style={styles.sectionTitleRow}>
+            <View style={styles.sectionTitleBar} />
+            <Text style={styles.title}>
+              {t('page.perpsDetail.PerpsPosition.title')}
+            </Text>
+          </View>
           <View
             style={[
               styles.leverageTag,
@@ -275,7 +278,7 @@ export const PerpsPosition: React.FC<{
           )}
         </View>
         <View style={[styles.header, styles.paddingTopHeader]}>
-          <Text style={styles.title}>
+          <Text style={styles.subTitle}>
             {t('page.perpsDetail.PerpsPosition.settings')}
           </Text>
         </View>
@@ -502,7 +505,7 @@ export const PerpsPosition: React.FC<{
           </View>
         </View>
         <View style={[styles.header, styles.paddingTopHeader]}>
-          <Text style={styles.title}>
+          <Text style={styles.subTitle}>
             {t('page.perpsDetail.PerpsPosition.details')}
           </Text>
         </View>
@@ -655,11 +658,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 6,
     flexDirection: 'row',
   },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  sectionTitleBar: {
+    width: 4,
+    height: 20,
+    borderRadius: 100,
+    backgroundColor: '#50D2C1',
+  },
   title: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     lineHeight: 22,
     fontWeight: '900',
+    color: colors2024['neutral-title-1'],
+  },
+  subTitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
   },
   unrealizedPnlTitle: {
@@ -738,9 +755,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   list: {
     borderRadius: 16,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-2'],
   },
   listItemContainer: {
     padding: 16,

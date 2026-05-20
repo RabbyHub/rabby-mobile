@@ -53,6 +53,7 @@ import { PerpEditLimitPriceTag } from './PerpEditLimitPriceTag';
 import { PerpsSlider } from './PerpsSlider';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
+import IconOrderTypeSwitch from '@/assets2024/icons/perps/IconOrderTypeSwitch.svg';
 import { PerpMarginModePopup } from './PerpMarginModePopup';
 import { useShallow } from 'zustand/shallow';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
@@ -558,8 +559,7 @@ export const PerpsOpenPositionPopup: React.FC<{
               <Text style={styles.title}>
                 {t('page.perpsDetail.PerpsOpenPositionPopup.title', {
                   coin: formatPerpsCoin(displayName),
-                  quoteAsset,
-                  defaultValue: 'Open {{coin}}/{{quoteAsset}} Position',
+                  defaultValue: 'Open {{coin}} Position',
                 })}
               </Text>
             </View>
@@ -852,7 +852,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                           'page.perpsDetail.PerpsOpenPositionPopup.orderTypeLimit',
                         )}
                   </Text>
-                  <IconPerpEdit color="#50D2C1" />
+                  <IconOrderTypeSwitch width={14} height={14} />
                 </TouchableOpacity>
               </View>
               {orderType === 'limit' ? (
@@ -873,6 +873,8 @@ export const PerpsOpenPositionPopup: React.FC<{
                   />
                 </View>
               ) : null}
+            </View>
+            <View style={styles.list}>
               <View style={styles.listItem}>
                 <TouchableOpacity
                   onPress={() => {
@@ -1111,6 +1113,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
+      marginTop: 12,
       fontWeight: '900',
       color: colors2024['neutral-title-1'],
       marginBottom: 6,
@@ -1174,7 +1177,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      padding: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
       justifyContent: 'space-between',
     },
     listItemRow: {
@@ -1386,19 +1390,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingHorizontal: 4,
       paddingLeft: 6,
       borderRadius: 4,
-      backgroundColor: 'rgba(80, 210, 193, 0.12)',
+      backgroundColor: colors2024['neutral-line'],
     },
     orderTypeToggle: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
+      // paddingHorizontal: 6,
+      // paddingVertical: 2,
     },
     orderTypeToggleText: {
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '700',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '900',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
     },

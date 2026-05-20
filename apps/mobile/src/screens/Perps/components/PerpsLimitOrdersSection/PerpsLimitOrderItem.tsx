@@ -150,7 +150,7 @@ export const PerpsLimitOrderItem: React.FC<Props> = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 16,
@@ -182,7 +182,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   crossTag: {
     borderRadius: 4,
     paddingHorizontal: 4,
-    paddingVertical: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 20,
     backgroundColor: colors2024['neutral-bg-5'],
   },
   crossText: {
