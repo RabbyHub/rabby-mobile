@@ -13,6 +13,7 @@ import {
   formatPerpsPct,
   formatTpOrSlPrice,
   getStatsReportSide,
+  isMarketableLimit,
 } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
@@ -166,6 +167,8 @@ export const PerpsOpenPositionPopup: React.FC<{
   const [limitPx, setLimitPx] = React.useState<string>('');
   const leverageInputRef = useRef<TextInput>(null);
 
+  const displayName = currentAssetCtx?.displayName || coin;
+
   // Entry price for derived size / notional / liquidation: user's limitPx in
   // limit mode, markPrice otherwise (also the fallback during transient empty
   // limitPx).
@@ -199,9 +202,19 @@ export const PerpsOpenPositionPopup: React.FC<{
     return Number(tradeAmount / effectivePx).toFixed(szDecimals);
   }, [effectivePx, tradeAmount, szDecimals]);
 
+  // Marketable limit fills immediately at mark, so liq uses markPrice as the
+  // true entry price (not limitPx, which is just the user's price ceiling).
+  const isMarketable = React.useMemo(
+    () =>
+      orderType === 'limit' &&
+      isMarketableLimit({ direction, limitPx, markPx: markPrice }),
+    [orderType, limitPx, direction, markPrice],
+  );
+
   // 计算预估清算价格
   const estimatedLiquidationPrice = React.useMemo(() => {
-    if (!effectivePx || !leverage) {
+    const entryPx = isMarketable ? markPrice : effectivePx;
+    if (!entryPx || !leverage) {
       return 0;
     }
 
@@ -209,14 +222,16 @@ export const PerpsOpenPositionPopup: React.FC<{
 
     const maxLeverage = leverageRang[1];
     return calLiquidationPrice(
-      effectivePx,
+      entryPx,
       Number(realMargin),
       direction,
       Number(tradeSize),
-      Number(tradeSize) * effectivePx,
+      Number(tradeSize) * entryPx,
       maxLeverage,
     ).toFixed(pxDecimals);
   }, [
+    isMarketable,
+    markPrice,
     effectivePx,
     crossMargin,
     selectedMarginMode,
@@ -231,6 +246,52 @@ export const PerpsOpenPositionPopup: React.FC<{
   const bothFee = React.useMemo(() => {
     return providerFee + PERPS_EXCHANGE_FEE_NUMBER;
   }, [providerFee]);
+
+  // Snapshot of everything CheckPopup needs to render the confirm page.
+  // Memoized so the child's props identity is stable across unrelated re-renders.
+  const checkSummary = React.useMemo(
+    () => ({
+      coin: displayName,
+      margin,
+      direction,
+      leverage,
+      tradeAmount: Number(tradeSize) * effectivePx,
+      tradeSize,
+      markPrice,
+      providerFee,
+      bothFee,
+      // TP/SL UI is hidden in limit mode; suppress display here too.
+      tpTriggerPx: tpTriggerPx && orderType === 'market' ? tpTriggerPx : '',
+      slTriggerPx: slTriggerPx && orderType === 'market' ? slTriggerPx : '',
+      selectedMarginMode,
+      estimatedLiquidationPrice,
+      coinLogo,
+      quoteAsset,
+      orderType,
+      limitPx,
+      isMarketable,
+    }),
+    [
+      displayName,
+      margin,
+      direction,
+      leverage,
+      tradeSize,
+      effectivePx,
+      markPrice,
+      providerFee,
+      bothFee,
+      tpTriggerPx,
+      slTriggerPx,
+      selectedMarginMode,
+      estimatedLiquidationPrice,
+      coinLogo,
+      quoteAsset,
+      orderType,
+      limitPx,
+      isMarketable,
+    ],
+  );
 
   // 验证 margin 输入
   const marginValidation = React.useMemo(() => {
@@ -476,8 +537,6 @@ export const PerpsOpenPositionPopup: React.FC<{
       modalRef.current?.close();
     }
   }, [visible]);
-
-  const displayName = currentAssetCtx?.displayName || coin;
 
   return (
     <>
@@ -934,25 +993,7 @@ export const PerpsOpenPositionPopup: React.FC<{
         </AutoLockView>
       </AppBottomSheetModal>
       <PerpsOpenPositionCheckPopup
-        info={{
-          coin: displayName,
-          margin,
-          direction,
-          leverage,
-          tradeAmount: Number(tradeSize) * effectivePx,
-          tradeSize,
-          markPrice,
-          providerFee,
-          bothFee,
-          tpTriggerPx: tpTriggerPx && orderType === 'market' ? tpTriggerPx : '',
-          slTriggerPx: slTriggerPx && orderType === 'market' ? slTriggerPx : '',
-          selectedMarginMode,
-          estimatedLiquidationPrice,
-          coinLogo,
-          quoteAsset,
-          orderType,
-          limitPx,
-        }}
+        summary={checkSummary}
         visible={isReviewMode}
         onClose={() => {
           setIsReviewMode(false);
