@@ -159,7 +159,10 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
         handleQuickPress({ label: 'Mid', pct: 'mid' });
       }
     } else {
-      modalRef.current?.close();
+      // dismiss() removes the modal from gorhom's stack; close() only plays
+      // the animation. Without dismiss, a subsequent present() on a sibling
+      // modal (e.g. CheckPopup) can reorder the stack and re-show this one.
+      modalRef.current?.dismiss();
       setLimitPrice('');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
