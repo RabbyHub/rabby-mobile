@@ -69,6 +69,9 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
     notional.toFixed(2),
   )} ${quoteAsset} = ${splitNumberByStep(order.sz)} ${name}`;
   const limitPriceText = `@ $${splitNumberByStep(order.limitPx)}`;
+  const currentPriceText = marketData?.markPx
+    ? `$${splitNumberByStep(marketData.markPx)}`
+    : '-';
   const marginUsageText = leverage ? formatUsdValue(marginUsage) : '-';
 
   return (
@@ -93,6 +96,7 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
                 t('page.perps.limitOrderDetail.filled'),
                 `${filledPct.toFixed(0)}%`,
               ],
+              [t('page.perps.limitOrderDetail.currentPrice'), currentPriceText],
               [t('page.perps.limitOrderDetail.limitPrice'), limitPriceText],
               [t('page.perps.limitOrderDetail.marginUsage'), marginUsageText],
             ] as Array<[string, string]>

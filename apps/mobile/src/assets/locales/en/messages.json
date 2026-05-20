@@ -2650,6 +2650,7 @@
         "time": "Time",
         "size": "Size",
         "filled": "Filled",
+        "currentPrice": "Current Price",
         "limitPrice": "Limit Price",
         "marginUsage": "Margin Usage",
         "cancelLimitOrder": "Cancel Limit Order",
