@@ -23,7 +23,7 @@ const PerpsPnlByHyperliquid: React.FC<{}> = () => {
         {perpsPositionInfo.pnl >= 0 ? '+' : '-'}
         {formatUsdValue(Math.abs(perpsPositionInfo.pnl))}
       </Text>
-    ) : Number(perpsPositionInfo.availableBalance) > 0 ? (
+    ) : Number(perpsPositionInfo.availableBalance) >= 0 ? (
       <Text style={styles.accountValue}>
         {formatUsdValue(perpsPositionInfo.availableBalance)}
       </Text>
