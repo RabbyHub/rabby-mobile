@@ -118,7 +118,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     position: 'absolute',
     left: '50%',
     top: '50%',
-    transform: [{ translateX: -30 }, { translateY: -30 }],
+    transform: [{ translateX: -18 }, { translateY: -18 }],
   },
   switchButton: {
     padding: 10,

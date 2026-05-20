@@ -58,36 +58,38 @@ export function HeaderAccountSwitcher({
 
   return (
     <View style={[styles.accountSelectorContainer, style]}>
-      <TouchableOpacity
-        disabled={disableSwitch}
-        style={styles.accountSelector}
-        onPress={() => {
-          const nextVisible = !isVisible;
-          toggleSceneVisible(forScene, nextVisible);
-          if (nextVisible) {
-            preFetchData();
-          }
-        }}>
-        <WalletIcon
-          width={18}
-          height={18}
-          type={finalSceneCurrentAccount.brandName}
-          address={finalSceneCurrentAccount.address}
-        />
-        <Text style={styles.accountName} numberOfLines={1}>
-          {accountName}
-        </Text>
-        {!disableSwitch && (
-          <CaretArrowIconCC
-            dir="down"
-            style={isVisible ? styles.reverseCaret : null}
+      <View style={styles.accountSelectorWidthLimiter}>
+        <TouchableOpacity
+          disabled={disableSwitch}
+          style={styles.accountSelector}
+          onPress={() => {
+            const nextVisible = !isVisible;
+            toggleSceneVisible(forScene, nextVisible);
+            if (nextVisible) {
+              preFetchData();
+            }
+          }}>
+          <WalletIcon
             width={18}
             height={18}
-            bgColor={colors2024['neutral-bg-5']}
-            lineColor={colors2024['neutral-title-1']}
+            type={finalSceneCurrentAccount.brandName}
+            address={finalSceneCurrentAccount.address}
           />
-        )}
-      </TouchableOpacity>
+          <Text style={styles.accountName} numberOfLines={1}>
+            {accountName}
+          </Text>
+          {!disableSwitch && (
+            <CaretArrowIconCC
+              dir="down"
+              style={isVisible ? styles.reverseCaret : null}
+              width={18}
+              height={18}
+              bgColor={colors2024['neutral-bg-5']}
+              lineColor={colors2024['neutral-title-1']}
+            />
+          )}
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -95,12 +97,18 @@ export function HeaderAccountSwitcher({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   accountSelectorContainer: {
     flexShrink: 1,
+    minWidth: 0,
+  },
+  accountSelectorWidthLimiter: {
+    width: '100%',
+    maxWidth: 160,
+    alignSelf: 'flex-end',
   },
   accountSelector: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    maxWidth: 128,
+    width: '100%',
     backgroundColor: colors2024['neutral-bg-5'],
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],

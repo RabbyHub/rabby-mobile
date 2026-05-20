@@ -8,6 +8,7 @@ import React, {
 import { Pressable, View } from 'react-native';
 import { Tabs, type CollapsibleRef } from 'react-native-collapsible-tab-view';
 import { useRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { HeaderAccountSwitcher } from '@/components/AccountSwitcher/HeaderAccountSwitcher';
@@ -41,6 +42,8 @@ const TABS: { key: SwapBridgeTab; title: string }[] = [
   { key: 'bridge', title: 'Bridge' },
   // 这两个 tab 不需要翻译，确保长度固定
 ];
+
+const HEADER_HEIGHT = 58;
 
 const getInitialTab = (route: SwapBridgeRoute): SwapBridgeTab => {
   const activeTab = route.params?.activeTab;
@@ -96,12 +99,46 @@ function SwapBridgeHeaderRight({
 
   return (
     <View style={styles.headerRight}>
-      <HeaderAccountSwitcher forScene="MakeTransactionAbout" />
+      <HeaderAccountSwitcher
+        forScene="MakeTransactionAbout"
+        style={styles.headerAccountSwitcher}
+      />
       {activeTab === 'swap' ? (
         <SwapHeader isForMultipleAddress={isForMultipleAddress} />
       ) : (
         <BridgeHeader />
       )}
+    </View>
+  );
+}
+
+function SwapBridgeNativeHeader({
+  activeTab,
+  isForMultipleAddress,
+  onTabPress,
+}: {
+  activeTab: SwapBridgeTab;
+  isForMultipleAddress: boolean;
+  onTabPress: (tab: SwapBridgeTab) => void;
+}) {
+  const { styles } = useTheme2024({ getStyle });
+  const { top } = useSafeAreaInsets();
+
+  return (
+    <View style={[styles.headerOuter, { marginTop: top }]}>
+      <View style={styles.headerInner}>
+        <View style={styles.headerLeft}>
+          <HeaderBackPressable style={styles.headerBackButton} />
+          <SwapBridgeHeaderTitle
+            activeTab={activeTab}
+            onTabPress={onTabPress}
+          />
+        </View>
+        <SwapBridgeHeaderRight
+          activeTab={activeTab}
+          isForMultipleAddress={isForMultipleAddress}
+        />
+      </View>
     </View>
   );
 }
@@ -128,44 +165,23 @@ function SwapBridgeScreen({
     [activeTab],
   );
 
-  const renderHeaderTitle = useCallback(
+  const renderHeader = useCallback(
     () => (
-      <SwapBridgeHeaderTitle
+      <SwapBridgeNativeHeader
         activeTab={activeTab}
+        isForMultipleAddress={isForMultipleAddress}
         onTabPress={handleTabPress}
       />
     ),
-    [activeTab, handleTabPress],
-  );
-
-  const renderHeaderLeft = useCallback(
-    () => (
-      <View style={styles.headerLeft}>
-        <HeaderBackPressable />
-        {renderHeaderTitle()}
-      </View>
-    ),
-    [renderHeaderTitle, styles.headerLeft],
-  );
-
-  const renderHeaderRight = useCallback(
-    () => (
-      <SwapBridgeHeaderRight
-        activeTab={activeTab}
-        isForMultipleAddress={isForMultipleAddress}
-      />
-    ),
-    [activeTab, isForMultipleAddress],
+    [activeTab, handleTabPress, isForMultipleAddress],
   );
 
   useEffect(() => {
     setNavigationOptions({
       title: '',
-      headerTitle: () => null,
-      headerLeft: renderHeaderLeft,
-      headerRight: renderHeaderRight,
+      header: renderHeader,
     });
-  }, [renderHeaderLeft, renderHeaderRight, setNavigationOptions]);
+  }, [renderHeader, setNavigationOptions]);
 
   const renderTabBar = useCallback(() => null, []);
 
@@ -174,7 +190,6 @@ function SwapBridgeScreen({
       <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
       <Tabs.Container
         ref={tabsRef}
-        lazy
         renderTabBar={renderTabBar}
         tabBarHeight={0}
         containerStyle={styles.container}
@@ -218,6 +233,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     backgroundColor: colors2024['neutral-bg-1'],
   },
+  headerOuter: {
+    height: HEADER_HEIGHT,
+    paddingHorizontal: 12,
+    paddingRight: 16,
+    paddingVertical: 10,
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  headerInner: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minWidth: 0,
+  },
   headerTabs: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -227,6 +256,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 0,
+  },
+  headerBackButton: {
+    marginLeft: 0,
+    paddingLeft: 0,
   },
   headerTab: {
     height: 36,
@@ -250,8 +284,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingRight: 2,
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  headerAccountSwitcher: {
+    flex: 1,
+    minWidth: 0,
   },
 }));
 

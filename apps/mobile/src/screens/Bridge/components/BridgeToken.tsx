@@ -31,7 +31,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
 import { BubbleWithText } from '@/screens/Swap/components/Slider';
-import { Text, TextInput } from '@/components/Typography';
+import { Text } from '@/components/Typography';
+import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInput';
 
 const hiddenSlider = false;
 
@@ -253,6 +254,48 @@ const BridgeToken = ({
 
       <View style={styles.body}>
         <View style={styles.inputContainer}>
+          {valueLoading && skeletonLoading ? (
+            <CustomSkeleton
+              animation="wave"
+              LinearGradientComponent={Linear}
+              style={styles.skeleton}
+            />
+          ) : isToToken ? (
+            <Text
+              numberOfLines={1}
+              style={StyleSheet.flatten([
+                styles.input,
+                styles.inputLeft,
+                (showNoQuote || !value) && styles.showNoQuoteText,
+                valueLoading && styles.loadingOpacity,
+              ])}>
+              {showNoQuote ? t('page.bridge.no-quote') : value?.toString() || 0}
+            </Text>
+          ) : (
+            <View style={[styles.inputBox]}>
+              <AutoShrinkAmountTextInput
+                contextMenuHidden={disabled}
+                editable={!disabled}
+                numberOfLines={1}
+                multiline={false}
+                textAlign="left"
+                keyboardType="numeric"
+                inputMode="decimal"
+                placeholderTextColor={colors2024['neutral-info']}
+                style={[
+                  styles.input,
+                  styles.inputLeft,
+                  inSufficient && styles.insufficientInput,
+                ]}
+                placeholder={'0'}
+                scrollEnabled={true}
+                value={value?.toString()}
+                onChangeText={inputChange}
+                ref={inputCallbackRef}
+              />
+            </View>
+          )}
+          <View style={styles.vecticalLine} />
           <View style={styles.tokenSelectBox}>
             {/* {isFromToken && !value && (
               <TouchableOpacity
@@ -285,47 +328,13 @@ const BridgeToken = ({
                 // supportChains={supportedChains}
               />
             )}
-            <View style={styles.vecticalLine} />
           </View>
-          {valueLoading && skeletonLoading ? (
-            <CustomSkeleton
-              animation="wave"
-              LinearGradientComponent={Linear}
-              style={styles.skeleton}
-            />
-          ) : isToToken ? (
-            <Text
-              numberOfLines={1}
-              style={StyleSheet.flatten([
-                styles.input,
-                (showNoQuote || !value) && styles.showNoQuoteText,
-                valueLoading && styles.loadingOpacity,
-              ])}>
-              {showNoQuote ? t('page.bridge.no-quote') : value?.toString() || 0}
-            </Text>
-          ) : (
-            <View style={[styles.inputBox]}>
-              <TextInput
-                contextMenuHidden={disabled}
-                editable={!disabled}
-                numberOfLines={1}
-                multiline={false}
-                textAlign="right"
-                keyboardType="numeric"
-                inputMode="decimal"
-                placeholderTextColor={colors2024['neutral-info']}
-                style={[styles.input, inSufficient && styles.insufficientInput]}
-                placeholder={'0'}
-                scrollEnabled={true}
-                value={value?.toString()}
-                onChangeText={inputChange}
-                ref={inputCallbackRef}
-              />
-            </View>
-          )}
         </View>
         {
           <View style={[styles.footer, valueLoading && styles.loadingOpacity]}>
+            <View style={styles.balanceContainer}>
+              {<Text style={styles.value}>{useValue}</Text>}
+            </View>
             <View style={styles.balanceContainer}>
               {
                 <View style={styles.balanceWrapper}>
@@ -352,9 +361,6 @@ const BridgeToken = ({
                   </Text>
                 </View>
               }
-            </View>
-            <View style={styles.balanceContainer}>
-              {<Text style={styles.value}>{useValue}</Text>}
             </View>
           </View>
         }
@@ -388,6 +394,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   maxBtnBox: {
     borderRadius: 8,
@@ -441,6 +448,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     height: 56,
     alignItems: 'center',
+    minWidth: 0,
   },
   showNoQuoteText: {
     color: colors2024['neutral-info'],
@@ -466,6 +474,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingLeft: 0,
     borderWidth: 0,
     overflow: 'hidden',
+  },
+  inputLeft: {
+    textAlign: 'left',
   },
   insufficientInput: {
     color: colors2024['red-default'],

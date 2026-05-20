@@ -60,7 +60,6 @@ import {
 } from '@/hooks/accountsSwitcher';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { SwapTokenItem } from '../Swap/components/Token';
-import { Divider } from '@rneui/themed';
 import BridgeSwitchBtn from '../Bridge/components/BridgeSwitchBtn';
 import BridgeShowMore from '../Bridge/components/BridgeShowMore';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
@@ -1197,87 +1196,85 @@ const Swap = ({
                 <Text style={styles.label}>{t('page.swap.token')}</Text>
               </View>
             </View>
-            <View
-              style={{
-                borderRadius: 16,
-                backgroundColor: colors2024['neutral-bg-2'],
-                position: 'relative',
-              }}>
-              <SwapTokenItem
-                disabled={!isSupportedChain}
-                inSufficient={inSufficient}
-                slider={slider}
-                onChangeSlider={onChangeSlider}
-                value={payAmount}
-                onValueChange={value => {
-                  if (directSignBtnRef.current?.isAuthInProgress()) {
-                    return;
+            <View style={styles.swapTokenContainer}>
+              <View style={styles.swapTokenCard}>
+                <SwapTokenItem
+                  disabled={!isSupportedChain}
+                  inSufficient={inSufficient}
+                  slider={slider}
+                  onChangeSlider={onChangeSlider}
+                  value={payAmount}
+                  onValueChange={value => {
+                    if (directSignBtnRef.current?.isAuthInProgress()) {
+                      return;
+                    }
+                    handleAmountChange(value);
+                  }}
+                  token={payToken}
+                  onTokenChange={token => {
+                    const chainItem = findChainByServerID(token.chain);
+                    const normalSetChainToken = () => {
+                      if (chainItem?.enum !== chain) {
+                        switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
+                        setReceiveToken(undefined);
+                      }
+                      setPayToken(token);
+                    };
+
+                    if (!isForMultipleAddress) {
+                      normalSetChainToken();
+                    } else {
+                      switchAccountOnSelectedToken({
+                        token,
+                        currentAccount,
+                      });
+                      normalSetChainToken();
+                    }
+                  }}
+                  account={currentAccount}
+                  chainId={chainServerId}
+                  type={'from'}
+                  excludeTokens={
+                    receiveToken?.id ? [receiveToken?.id] : undefined
                   }
-                  handleAmountChange(value);
-                }}
-                token={payToken}
-                onTokenChange={token => {
-                  const chainItem = findChainByServerID(token.chain);
-                  const normalSetChainToken = () => {
+                />
+              </View>
+
+              <View style={styles.swapTokenCard}>
+                <SwapTokenItem
+                  valueLoading={quoteLoading}
+                  token={receiveToken}
+                  onTokenChange={token => {
+                    const chainItem = findChainByServerID(token.chain);
                     if (chainItem?.enum !== chain) {
                       switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
-                      setReceiveToken(undefined);
+                      setPayToken(undefined);
                     }
-                    setPayToken(token);
-                  };
+                    setReceiveToken(token);
 
-                  if (!isForMultipleAddress) {
-                    normalSetChainToken();
-                  } else {
-                    switchAccountOnSelectedToken({
-                      token,
-                      currentAccount,
-                    });
-                    normalSetChainToken();
+                    if (token?.low_credit_score) {
+                      setLowCreditToken(token);
+                      setLowCreditVisible(true);
+                    }
+                  }}
+                  value={
+                    !activeProvider
+                      ? ''
+                      : activeProvider?.actualReceiveAmount
+                      ? activeProvider?.actualReceiveAmount + ''
+                      : isWrapToken
+                      ? payAmount
+                      : '0'
                   }
-                }}
-                account={currentAccount}
-                chainId={chainServerId}
-                type={'from'}
-                excludeTokens={
-                  receiveToken?.id ? [receiveToken?.id] : undefined
-                }
-              />
-              <Divider color={colors2024['neutral-line']} />
-
-              <SwapTokenItem
-                valueLoading={quoteLoading}
-                token={receiveToken}
-                onTokenChange={token => {
-                  const chainItem = findChainByServerID(token.chain);
-                  if (chainItem?.enum !== chain) {
-                    switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
-                    setPayToken(undefined);
-                  }
-                  setReceiveToken(token);
-
-                  if (token?.low_credit_score) {
-                    setLowCreditToken(token);
-                    setLowCreditVisible(true);
-                  }
-                }}
-                value={
-                  !activeProvider
-                    ? ''
-                    : activeProvider?.actualReceiveAmount
-                    ? activeProvider?.actualReceiveAmount + ''
-                    : isWrapToken
-                    ? payAmount
-                    : '0'
-                }
-                account={currentAccount}
-                chainId={chainServerId}
-                type={'to'}
-                currentQuote={activeProvider}
-                // placeholder={t('page.swap.search-by-name-address')}
-                excludeTokens={payToken?.id ? [payToken?.id] : undefined}
-                finishedQuotes={finishedQuotes}
-              />
+                  account={currentAccount}
+                  chainId={chainServerId}
+                  type={'to'}
+                  currentQuote={activeProvider}
+                  // placeholder={t('page.swap.search-by-name-address')}
+                  excludeTokens={payToken?.id ? [payToken?.id] : undefined}
+                  finishedQuotes={finishedQuotes}
+                />
+              </View>
               <BridgeSwitchBtn
                 onPress={exchangeToken}
                 style={styles.arrowWrapper}
@@ -1614,16 +1611,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   flex1: {
     width: 128,
   },
+  swapTokenContainer: {
+    position: 'relative',
+    gap: 10,
+  },
+  swapTokenCard: {
+    borderRadius: 16,
+    backgroundColor: colors2024['neutral-bg-2'],
+    overflow: 'hidden',
+  },
   arrowWrapper: {
     position: 'absolute',
     left: '50%',
     top: '50%',
-    transform: [{ translateX: -45 / 2 }, { translateY: -45 / 2 }],
-  },
-  arrow: {
-    marginHorizontal: 8,
-    width: 20,
-    height: 20,
+    zIndex: 1,
+    transform: [{ translateX: -18 }, { translateY: -18 }],
   },
   amountInContainer: {
     flexDirection: 'row',

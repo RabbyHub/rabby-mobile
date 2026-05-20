@@ -9,7 +9,7 @@ import {
   formatUsdValue,
 } from '@/utils/number';
 import BigNumber from 'bignumber.js';
-import { Divider, Slider } from '@rneui/themed';
+import { Slider } from '@rneui/themed';
 
 import TokenSelect, { TokenSelectInst } from './TokenSelect';
 import SwapToTokenSelect from './SwapToTokenSelect';
@@ -29,7 +29,8 @@ import { Account } from '@/core/services/preference';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import usePrevious from 'react-use/lib/usePrevious';
 import { ITokenItem } from '@/store/tokens';
-import { Text, TextInput } from '@/components/Typography';
+import { Text } from '@/components/Typography';
+import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInput';
 
 interface SwapTokenItemProps {
   type: 'from' | 'to';
@@ -220,11 +221,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
       </View>
 
       <View style={styles.inputContainer}>
-        <View
-          style={{
-            flexDirection: 'row',
-            gap: 12,
-          }}>
+        <View style={styles.tokenSelectBox}>
           {isFrom ? (
             <TokenSelect
               ref={openTokenModalRef}
@@ -249,7 +246,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
             />
           )}
 
-          <Divider color={colors2024['neutral-line']} />
+          <View style={styles.vecticalLine} />
         </View>
 
         {valueLoading && skeletonLoading ? (
@@ -259,7 +256,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
             style={styles.skeleton}
           />
         ) : isFrom ? (
-          <TextInput
+          <AutoShrinkAmountTextInput
             editable={!disabled}
             contextMenuHidden={disabled}
             numberOfLines={1}
@@ -387,9 +384,24 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minWidth: 0,
     marginTop: 12,
     marginBottom: 14,
     height: 36,
+  },
+  tokenSelectBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  vecticalLine: {
+    marginLeft: 12,
+    marginRight: 12,
+    borderWidth: 0,
+    borderLeftWidth: 1,
+    width: 0,
+    height: 27,
+    borderColor: colors2024['neutral-line'],
   },
 
   bottom: {
