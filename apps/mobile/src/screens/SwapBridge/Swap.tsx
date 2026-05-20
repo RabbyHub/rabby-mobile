@@ -2,6 +2,7 @@ import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { RootNames } from '@/constant/layout';
 import { DEX_WITH_WRAP, getChainDefaultToken } from '@/constant/swap';
 import {
   preferenceService,
@@ -38,19 +39,19 @@ import { Alert, Platform, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import useMount from 'react-use/lib/useMount';
 import { ChainInfo2024 } from '../Send/components/ChainInfo2024';
-import { SwapHeader } from './components/Header';
-import { LowCreditModal } from './components/LowCreditModal';
-import { QuoteList } from './components/Quotes';
-import { TwpStepApproveModal } from './components/TwoStepApproveModal';
+import { SwapHeader } from '../Swap/components/Header';
+import { LowCreditModal } from '../Swap/components/LowCreditModal';
+import { QuoteList } from '../Swap/components/Quotes';
+import { TwpStepApproveModal } from '../Swap/components/TwoStepApproveModal';
 import {
   useDetectLoss,
   usePollSwapPendingNumber,
   useSlippageStore,
   useSwapUnlimitedAllowance,
   useTokenPair,
-} from './hooks';
-import { refreshIdAtom, useRabbyFeeVisible } from './hooks/atom';
-import { buildDexSwap, dexSwap } from './hooks/swap';
+} from '../Swap/hooks';
+import { refreshIdAtom, useRabbyFeeVisible } from '../Swap/hooks/atom';
+import { buildDexSwap, dexSwap } from '../Swap/hooks/swap';
 import { Button } from '@/components2024/Button';
 import {
   PropsForAccountSwitchScreen,
@@ -58,19 +59,18 @@ import {
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { SwapTokenItem } from './components/Token';
-import { Divider } from '@rneui/themed';
+import { SwapTokenItem } from '../Swap/components/Token';
 import BridgeSwitchBtn from '../Bridge/components/BridgeSwitchBtn';
 import BridgeShowMore from '../Bridge/components/BridgeShowMore';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
-import { useSwapRecentToTokens } from './hooks/recent';
+import { useSwapRecentToTokens } from '../Swap/hooks/recent';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 import {
   GetNestedScreenRouteProp,
   RootStackParamsList,
   TransactionNavigatorParamList,
 } from '@/navigation-type';
-import { TokenInfoPopup } from './components/TokenInfoPopup';
+import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import {
@@ -84,13 +84,13 @@ import { isAccountSupportMiniApproval } from '@/utils/account';
 import {
   ApprovePendingTxItem,
   PendingTxItem,
-} from './components/PendingTxItem';
+} from '../Swap/components/PendingTxItem';
 import { toast } from '@/components2024/Toast';
 import { last } from 'lodash';
 import { SwapTxHistoryItem } from '@/core/services/transactionHistory';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { useTwoStepSwap } from './hooks/twoStepSwap';
+import { useTwoStepSwap } from '../Swap/hooks/twoStepSwap';
 import {
   DirectSignBtn,
   DirectSignBtnMethods,
@@ -120,13 +120,23 @@ import {
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
-  NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
+  NativeStackScreenProps<
+    TransactionNavigatorParamList,
+    typeof RootNames.SwapBridge
+  >,
   NativeStackScreenProps<RootStackParamsList>
 >;
 
+type SwapProps = PropsForAccountSwitchScreen<{
+  disableHeaderRight?: boolean;
+  disableAccountSwitcherModal?: boolean;
+}>;
+
 const Swap = ({
   isForMultipleAddress = false,
-}: PropsForAccountSwitchScreen) => {
+  disableHeaderRight = false,
+  disableAccountSwitcherModal = false,
+}: SwapProps) => {
   /** Swap form snapshot for validation during auth */
   interface SwapFormSnapshot {
     amount: string;
@@ -173,10 +183,13 @@ const Swap = ({
     [isForMultipleAddress, clearSwapHistoryRedDot],
   );
   useEffect(() => {
+    if (disableHeaderRight) {
+      return;
+    }
     setNavigationOptions({
       headerRight,
     });
-  }, [headerRight, setNavigationOptions]);
+  }, [disableHeaderRight, headerRight, setNavigationOptions]);
 
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
@@ -350,7 +363,10 @@ const Swap = ({
   );
   const route =
     useRoute<
-      GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'Swap'>
+      GetNestedScreenRouteProp<
+        'TransactionNavigatorParamList',
+        typeof RootNames.SwapBridge | typeof RootNames.MultiSwapBridge
+      >
     >();
   const navState = route.params;
 
@@ -1145,7 +1161,7 @@ const Swap = ({
   return (
     <SignatureInstanceProvider instance={instance}>
       <NormalScreenContainer2024 type="bg1">
-        {isForMultipleAddress && (
+        {isForMultipleAddress && !disableAccountSwitcherModal && (
           <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
         )}
         <KeyboardAwareScrollView
@@ -1180,87 +1196,85 @@ const Swap = ({
                 <Text style={styles.label}>{t('page.swap.token')}</Text>
               </View>
             </View>
-            <View
-              style={{
-                borderRadius: 16,
-                backgroundColor: colors2024['neutral-bg-2'],
-                position: 'relative',
-              }}>
-              <SwapTokenItem
-                disabled={!isSupportedChain}
-                inSufficient={inSufficient}
-                slider={slider}
-                onChangeSlider={onChangeSlider}
-                value={payAmount}
-                onValueChange={value => {
-                  if (directSignBtnRef.current?.isAuthInProgress()) {
-                    return;
+            <View style={styles.swapTokenContainer}>
+              <View style={styles.swapTokenCard}>
+                <SwapTokenItem
+                  disabled={!isSupportedChain}
+                  inSufficient={inSufficient}
+                  slider={slider}
+                  onChangeSlider={onChangeSlider}
+                  value={payAmount}
+                  onValueChange={value => {
+                    if (directSignBtnRef.current?.isAuthInProgress()) {
+                      return;
+                    }
+                    handleAmountChange(value);
+                  }}
+                  token={payToken}
+                  onTokenChange={token => {
+                    const chainItem = findChainByServerID(token.chain);
+                    const normalSetChainToken = () => {
+                      if (chainItem?.enum !== chain) {
+                        switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
+                        setReceiveToken(undefined);
+                      }
+                      setPayToken(token);
+                    };
+
+                    if (!isForMultipleAddress) {
+                      normalSetChainToken();
+                    } else {
+                      switchAccountOnSelectedToken({
+                        token,
+                        currentAccount,
+                      });
+                      normalSetChainToken();
+                    }
+                  }}
+                  account={currentAccount}
+                  chainId={chainServerId}
+                  type={'from'}
+                  excludeTokens={
+                    receiveToken?.id ? [receiveToken?.id] : undefined
                   }
-                  handleAmountChange(value);
-                }}
-                token={payToken}
-                onTokenChange={token => {
-                  const chainItem = findChainByServerID(token.chain);
-                  const normalSetChainToken = () => {
+                />
+              </View>
+
+              <View style={styles.swapTokenCard}>
+                <SwapTokenItem
+                  valueLoading={quoteLoading}
+                  token={receiveToken}
+                  onTokenChange={token => {
+                    const chainItem = findChainByServerID(token.chain);
                     if (chainItem?.enum !== chain) {
                       switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
-                      setReceiveToken(undefined);
+                      setPayToken(undefined);
                     }
-                    setPayToken(token);
-                  };
+                    setReceiveToken(token);
 
-                  if (!isForMultipleAddress) {
-                    normalSetChainToken();
-                  } else {
-                    switchAccountOnSelectedToken({
-                      token,
-                      currentAccount,
-                    });
-                    normalSetChainToken();
+                    if (token?.low_credit_score) {
+                      setLowCreditToken(token);
+                      setLowCreditVisible(true);
+                    }
+                  }}
+                  value={
+                    !activeProvider
+                      ? ''
+                      : activeProvider?.actualReceiveAmount
+                      ? activeProvider?.actualReceiveAmount + ''
+                      : isWrapToken
+                      ? payAmount
+                      : '0'
                   }
-                }}
-                account={currentAccount}
-                chainId={chainServerId}
-                type={'from'}
-                excludeTokens={
-                  receiveToken?.id ? [receiveToken?.id] : undefined
-                }
-              />
-              <Divider color={colors2024['neutral-line']} />
-
-              <SwapTokenItem
-                valueLoading={quoteLoading}
-                token={receiveToken}
-                onTokenChange={token => {
-                  const chainItem = findChainByServerID(token.chain);
-                  if (chainItem?.enum !== chain) {
-                    switchChain(chainItem?.enum || CHAINS_ENUM.ETH);
-                    setPayToken(undefined);
-                  }
-                  setReceiveToken(token);
-
-                  if (token?.low_credit_score) {
-                    setLowCreditToken(token);
-                    setLowCreditVisible(true);
-                  }
-                }}
-                value={
-                  !activeProvider
-                    ? ''
-                    : activeProvider?.actualReceiveAmount
-                    ? activeProvider?.actualReceiveAmount + ''
-                    : isWrapToken
-                    ? payAmount
-                    : '0'
-                }
-                account={currentAccount}
-                chainId={chainServerId}
-                type={'to'}
-                currentQuote={activeProvider}
-                // placeholder={t('page.swap.search-by-name-address')}
-                excludeTokens={payToken?.id ? [payToken?.id] : undefined}
-                finishedQuotes={finishedQuotes}
-              />
+                  account={currentAccount}
+                  chainId={chainServerId}
+                  type={'to'}
+                  currentQuote={activeProvider}
+                  // placeholder={t('page.swap.search-by-name-address')}
+                  excludeTokens={payToken?.id ? [payToken?.id] : undefined}
+                  finishedQuotes={finishedQuotes}
+                />
+              </View>
               <BridgeSwitchBtn
                 onPress={exchangeToken}
                 style={styles.arrowWrapper}
@@ -1535,8 +1549,8 @@ const ForMultipleAddress = (
     <ScreenSceneAccountProvider
       value={{
         forScene: 'MakeTransactionAbout',
-        ofScreen: 'MultiSwap',
-        sceneScreenRenderId: `${sceneCurrentAccountDepKey}-MultiSwap`,
+        ofScreen: 'MultiSwapBridge',
+        sceneScreenRenderId: `${sceneCurrentAccountDepKey}-MultiSwapBridge`,
       }}>
       <Swap {...props} isForMultipleAddress />
     </ScreenSceneAccountProvider>
@@ -1597,16 +1611,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   flex1: {
     width: 128,
   },
+  swapTokenContainer: {
+    position: 'relative',
+    gap: 10,
+  },
+  swapTokenCard: {
+    borderRadius: 16,
+    backgroundColor: colors2024['neutral-bg-2'],
+    overflow: 'hidden',
+  },
   arrowWrapper: {
     position: 'absolute',
     left: '50%',
     top: '50%',
-    transform: [{ translateX: -45 / 2 }, { translateY: -45 / 2 }],
-  },
-  arrow: {
-    marginHorizontal: 8,
-    width: 20,
-    height: 20,
+    zIndex: 1,
+    transform: [{ translateX: -18 }, { translateY: -18 }],
   },
   amountInContainer: {
     flexDirection: 'row',

@@ -310,8 +310,8 @@ const TokenSelect = ({
 
     return (
       forScene === 'MakeTransactionAbout' &&
-      ((RootNames.MultiBridge === ofScreen && type === 'bridgeFrom') ||
-        (RootNames.MultiSwap === ofScreen && type === 'swapFrom'))
+      RootNames.MultiSwapBridge === ofScreen &&
+      (type === 'bridgeFrom' || type === 'swapFrom')
     );
   }, [queryConds.keyword, currentAccount?.type, forScene, ofScreen, type]);
 
