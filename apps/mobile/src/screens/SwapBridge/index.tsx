@@ -193,6 +193,7 @@ function SwapBridgeScreen({
         renderTabBar={renderTabBar}
         tabBarHeight={0}
         containerStyle={styles.container}
+        pagerProps={{ scrollEnabled: false }}
         initialTabName={initialTab}
         onTabChange={({ tabName }) => {
           setActiveTab(tabName as SwapBridgeTab);

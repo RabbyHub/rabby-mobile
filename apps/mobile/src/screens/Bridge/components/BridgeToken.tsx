@@ -1,10 +1,12 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
-import {
-  View,
-  TouchableOpacity,
-  StyleSheet,
-  useWindowDimensions,
-} from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
@@ -25,12 +27,7 @@ import { Account } from '@/core/services/preference';
 import { TokenItemMaybeWithOwner } from '@/databases/hooks/token';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import useAutoFocusInput from '@/hooks/useAutoFocusInput';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-} from 'react-native-reanimated';
-import { IS_ANDROID } from '@/core/native/utils';
-import { BubbleWithText } from '@/screens/Swap/components/Slider';
+import { SliderBubblePortal } from '@/screens/Swap/components/Slider';
 import { Text } from '@/components/Typography';
 import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInput';
 
@@ -158,42 +155,23 @@ const BridgeToken = ({
     );
   }, [colors2024]);
 
-  const showBubble = useSharedValue(false);
-
-  const { width } = useWindowDimensions();
-
-  const sliderStyle = useAnimatedStyle(
-    () => ({
-      opacity: showBubble.value ? 1 : 0,
-      display: showBubble.value ? 'flex' : 'none',
-      position: 'absolute',
-      top: IS_ANDROID ? -72 : -60,
-      left: 0,
-      height: 70,
-      width,
-      transform: [
-        {
-          translateX: 0 - width / 2 + (IS_ANDROID ? 7 : 6),
-        },
-      ],
-    }),
-    [width],
-  );
+  const [isSliderBubbleVisible, setIsSliderBubbleVisible] = useState(false);
+  const sliderThumbRef = useRef<View>(null);
 
   const onSlidingStart = useCallback(() => {
     if (!disabled) {
-      showBubble.value = true;
+      setIsSliderBubbleVisible(true);
       onSliderScrollEnabledChange?.(false);
     }
-  }, [showBubble, disabled, onSliderScrollEnabledChange]);
+  }, [disabled, onSliderScrollEnabledChange]);
 
   const onAfterChangeSlider = useCallback(
     (v: number) => {
       onChangeSlider?.(v, true);
-      showBubble.value = false;
+      setIsSliderBubbleVisible(false);
       onSliderScrollEnabledChange?.(true);
     },
-    [onChangeSlider, showBubble, onSliderScrollEnabledChange],
+    [onChangeSlider, onSliderScrollEnabledChange],
   );
 
   useEffect(() => {
@@ -236,16 +214,17 @@ const BridgeToken = ({
               thumbProps={{
                 children: (
                   <View>
-                    <View style={[styles.outerThumb, { position: 'relative' }]}>
+                    <View ref={sliderThumbRef} style={styles.outerThumb}>
                       <View style={styles.innerThumb} />
-
-                      <Animated.View style={sliderStyle}>
-                        <BubbleWithText slide={slider || 0} />
-                      </Animated.View>
                     </View>
                   </View>
                 ),
               }}
+            />
+            <SliderBubblePortal
+              anchorRef={sliderThumbRef}
+              slide={slider || 0}
+              visible={isSliderBubbleVisible}
             />
             <Text style={styles.sliderValue}>{slider}%</Text>
           </View>

@@ -100,7 +100,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     minWidth: 0,
   },
   accountSelectorWidthLimiter: {
-    width: '100%',
     maxWidth: 160,
     alignSelf: 'flex-end',
   },
@@ -108,7 +107,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    width: '100%',
+    maxWidth: 160,
     backgroundColor: colors2024['neutral-bg-5'],
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],

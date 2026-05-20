@@ -1,7 +1,7 @@
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { QuoteProvider } from '../hooks';
 import { useTranslation } from 'react-i18next';
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { tokenAmountBn } from '../utils';
 import {
   formatSpeicalAmount,
@@ -16,15 +16,10 @@ import SwapToTokenSelect from './SwapToTokenSelect';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-} from 'react-native-reanimated';
-import { BubbleWithText } from './Slider';
-import { IS_ANDROID } from '@/core/native/utils';
+import { SliderBubblePortal } from './Slider';
 import { Account } from '@/core/services/preference';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import usePrevious from 'react-use/lib/usePrevious';
@@ -114,40 +109,21 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
     [onValueChange],
   );
 
-  const showBubble = useSharedValue(false);
-
-  const { width } = useWindowDimensions();
-
-  const sliderStyle = useAnimatedStyle(
-    () => ({
-      opacity: showBubble.value ? 1 : 0,
-      display: showBubble.value ? 'flex' : 'none',
-      position: 'absolute',
-      top: IS_ANDROID ? -72 : -60,
-      left: 0,
-      height: 70,
-      width,
-      transform: [
-        {
-          translateX: 0 - width / 2 + (IS_ANDROID ? 7 : 6),
-        },
-      ],
-    }),
-    [width],
-  );
+  const [isSliderBubbleVisible, setIsSliderBubbleVisible] = useState(false);
+  const sliderThumbRef = useRef<View>(null);
 
   const onSlidingStart = useCallback(() => {
     if (!disabled) {
-      showBubble.value = true;
+      setIsSliderBubbleVisible(true);
     }
-  }, [showBubble, disabled]);
+  }, [disabled]);
 
   const onAfterChangeSlider = useCallback(
     (v: number) => {
       onChangeSlider?.(v, true);
-      showBubble.value = false;
+      setIsSliderBubbleVisible(false);
     },
-    [onChangeSlider, showBubble],
+    [onChangeSlider],
   );
 
   const prevToken = usePrevious(token);
@@ -204,16 +180,17 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
               thumbProps={{
                 children: (
                   <View>
-                    <View style={[styles.outerThumb, { position: 'relative' }]}>
+                    <View ref={sliderThumbRef} style={styles.outerThumb}>
                       <View style={styles.innerThumb} />
-
-                      <Animated.View style={sliderStyle}>
-                        <BubbleWithText slide={slider || 0} />
-                      </Animated.View>
                     </View>
                   </View>
                 ),
               }}
+            />
+            <SliderBubblePortal
+              anchorRef={sliderThumbRef}
+              slide={slider || 0}
+              visible={isSliderBubbleVisible}
             />
             <Text style={styles.sliderValue}>{slider}%</Text>
           </View>
