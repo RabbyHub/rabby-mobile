@@ -1939,7 +1939,7 @@
       },
       "depositNow": "Şimdi Yatırın",
       "switchAccount": "Cüzdanı Değiştir",
-      "lowBalance": "Yeterli gazınız yok. Gelecekteki işlemlerin sorunsuz geçmesi için gaz depozitosu yapın.",
+      "lowBalance": "Yeterli gazınız yok (<$1.00). Gelecekteki işlemlerin sorunsuz geçmesi için gaz depozitosu yapın.",
       "gasBalance": "Gaz Bakiyesi",
       "depositFailed": "Yatırım başarısız oldu",
       "depositSubmitted": "Yatırma Gönderildi",
