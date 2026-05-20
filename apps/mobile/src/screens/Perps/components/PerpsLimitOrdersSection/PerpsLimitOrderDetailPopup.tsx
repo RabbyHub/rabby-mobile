@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
+import { useMemoizedFn } from 'ahooks';
 import dayjs from 'dayjs';
 import { Leverage, OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 
@@ -23,7 +24,7 @@ type Props = {
   marginUsage?: number;
   marketData?: MarketData;
   onClose: () => void;
-  onCancel: () => void;
+  onCancel: () => void | Promise<void>;
 };
 
 export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
@@ -38,14 +39,30 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const modalRef = useRef<AppBottomSheetModal>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   useEffect(() => {
     if (!visible) {
       modalRef.current?.close();
+      // Reset in case modal was dismissed while a cancel was still inflight,
+      // so the next opened order doesn't show a stale spinner.
+      setCancelLoading(false);
     } else {
       modalRef.current?.present();
     }
   }, [visible]);
+
+  const handleCancel = useMemoizedFn(async () => {
+    if (cancelLoading) {
+      return;
+    }
+    setCancelLoading(true);
+    try {
+      await onCancel();
+    } finally {
+      setCancelLoading(false);
+    }
+  });
 
   if (!order) {
     return null;
@@ -69,6 +86,9 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
     notional.toFixed(2),
   )} ${quoteAsset} = ${splitNumberByStep(order.sz)} ${name}`;
   const limitPriceText = `@ $${splitNumberByStep(order.limitPx)}`;
+  const currentPriceText = marketData?.markPx
+    ? `$${splitNumberByStep(marketData.markPx)}`
+    : '-';
   const marginUsageText = leverage ? formatUsdValue(marginUsage) : '-';
 
   return (
@@ -93,6 +113,7 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
                 t('page.perps.limitOrderDetail.filled'),
                 `${filledPct.toFixed(0)}%`,
               ],
+              [t('page.perps.limitOrderDetail.currentPrice'), currentPriceText],
               [t('page.perps.limitOrderDetail.limitPrice'), limitPriceText],
               [t('page.perps.limitOrderDetail.marginUsage'), marginUsageText],
             ] as Array<[string, string]>
@@ -108,7 +129,8 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
           <Button
             type="hyperliquid"
             title={t('page.perps.limitOrderDetail.cancelLimitOrder')}
-            onPress={onCancel}
+            onPress={handleCancel}
+            loading={cancelLoading}
             containerStyle={{ width: '100%' }}
             titleStyle={styles.btnText}
           />
@@ -118,7 +140,7 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     paddingHorizontal: 20,
     flex: 1,
@@ -134,7 +156,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   rows: {
     paddingVertical: 12,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     borderRadius: 12,
     paddingHorizontal: 16,
   },

@@ -6,6 +6,7 @@ type RuntimeInfo = {
   language?: string;
   isDark: boolean;
   i18nTexts?: Record<string, string>;
+  backGroundColor?: string;
   // colors2024: import('@rabby-wallet/base-utils').AppColors2024Variants;
 };
 

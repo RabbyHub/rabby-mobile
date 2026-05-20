@@ -714,7 +714,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: isLight ? colors2024['neutral-title-1'] : '#50D2C1',
   },
   paddingTopHeader: {
-    marginTop: 12,
+    marginTop: 0,
   },
   unrealizedPnl: {
     fontFamily: 'SF Pro Rounded',

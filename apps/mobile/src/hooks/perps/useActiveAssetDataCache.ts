@@ -29,6 +29,26 @@ export const writeActiveAssetDataToCache = (
   cache.set(buildKey(address, coin), { data, fetchedAt: Date.now() });
 };
 
+// Synchronous read for callers that need an immediate value without triggering
+// a REST round-trip — e.g. seeding the detail-screen state with whatever home
+// already fetched, before the WS pushes its first frame.
+export const readActiveAssetDataFromCache = (
+  coin: string,
+  address: string,
+): ActiveAssetData | null => {
+  if (!coin || !address) {
+    return null;
+  }
+  const cached = cache.get(buildKey(address, coin));
+  if (!cached) {
+    return null;
+  }
+  if (Date.now() - cached.fetchedAt >= TTL_MS) {
+    return null;
+  }
+  return cached.data;
+};
+
 export const fetchActiveAssetDataWithCache = async (
   coin: string,
   address: string,

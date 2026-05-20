@@ -122,10 +122,12 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </View>
               <View style={styles.coinContainer}>
                 <AssetAvatar size={24} logo={coinLogo} />
-                <Text style={styles.value}>{formatPerpsCoin(coin)}</Text>
-                <Text style={styles.quote}>
-                  /{summary.quoteAsset || 'USDC'}
+                <Text style={styles.value}>
+                  {formatPerpsCoin(coin)}-{summary.quoteAsset || 'USDC'}
                 </Text>
+                {/* <Text style={styles.quote}>
+                  /{summary.quoteAsset || 'USDC'}
+                </Text> */}
               </View>
             </View>
             <View style={styles.listItem}>
@@ -447,8 +449,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     quote: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
+      fontSize: 14,
+      lineHeight: 18,
       fontWeight: '700',
       color: colors2024['neutral-info'],
     },
