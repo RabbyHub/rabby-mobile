@@ -13,7 +13,7 @@ import {
   splitNumberByStep,
 } from '@/utils/number';
 import { PerpsOpenOrderType } from '@/constant/perps';
-import { formatPerpsCoin, isMarketableLimit } from '@/utils/perps';
+import { formatPerpsCoin } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   BottomSheetScrollView,
@@ -28,7 +28,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
   visible?: boolean;
   onClose?(): void;
   onConfirm?(): Promise<void>;
-  info: {
+  summary: {
     coin: string;
     coinLogo?: string;
     margin: string;
@@ -46,8 +46,9 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     quoteAsset?: string;
     orderType?: PerpsOpenOrderType;
     limitPx?: string;
+    isMarketable?: boolean;
   };
-}> = ({ visible, onClose, info, onConfirm }) => {
+}> = ({ visible, onClose, summary, onConfirm }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
   const [loading, setLoading] = React.useState<boolean>(false);
   const { styles, colors2024, isLight } = useTheme2024({
@@ -73,16 +74,10 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     selectedMarginMode,
     orderType = 'market',
     limitPx,
-  } = info;
+    isMarketable = false,
+  } = summary;
 
   const { t } = useTranslation();
-
-  const isMarketable = useMemo(() => {
-    if (orderType !== 'limit' || !limitPx) {
-      return false;
-    }
-    return isMarketableLimit({ direction, limitPx, markPx: markPrice });
-  }, [orderType, limitPx, direction, markPrice]);
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
@@ -128,7 +123,9 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               <View style={styles.coinContainer}>
                 <AssetAvatar size={24} logo={coinLogo} />
                 <Text style={styles.value}>{formatPerpsCoin(coin)}</Text>
-                <Text style={styles.quote}>/{info.quoteAsset || 'USDC'}</Text>
+                <Text style={styles.quote}>
+                  /{summary.quoteAsset || 'USDC'}
+                </Text>
               </View>
             </View>
             <View style={styles.listItem}>
@@ -196,7 +193,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               <View>
                 <Text style={styles.value}>
                   {formatPerpsNumber(Number(tradeAmount))}{' '}
-                  {info.quoteAsset || 'USDC'}
+                  {summary.quoteAsset || 'USDC'}
                 </Text>
               </View>
             </View>
@@ -233,7 +230,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
             <View style={styles.listItem}>
               <View style={styles.listItemMain}>
                 <Text style={styles.label}>
-                  {formatPerpsCoin(coin)}-{info.quoteAsset || 'USDC'}{' '}
+                  {formatPerpsCoin(coin)}-{summary.quoteAsset || 'USDC'}{' '}
                   {t('page.perpsDetail.PerpsOpenPositionCheckPopup.price')}
                 </Text>
               </View>
@@ -254,7 +251,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 </View>
                 <View>
                   <Text style={styles.value}>
-                    ${splitNumberByStep(limitPx)}
+                    @ ${splitNumberByStep(limitPx)}
                   </Text>
                 </View>
               </View>

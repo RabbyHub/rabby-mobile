@@ -2878,7 +2878,7 @@
         "addToShort": "Add to Short"
       },
       "PerpsOpenPositionPopup": {
-        "title": "Open {{coin}}/{{quoteAsset}} Position",
+        "title": "Open {{coin}} Position",
         "limitOrderPlacedToast": "Limit {{direction}} {{coin}}: Size {{size}} placed at ${{price}}",
         "onlyIsolated": "Only isolated margin is supported for this token",
         "margin": "Margin",

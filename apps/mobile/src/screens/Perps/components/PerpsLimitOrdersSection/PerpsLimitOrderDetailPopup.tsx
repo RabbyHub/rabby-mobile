@@ -127,6 +127,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     fontWeight: '800',
+    marginTop: 6,
     color: colors2024['neutral-title-1'],
     textAlign: 'center',
     marginBottom: 16,
@@ -159,14 +160,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   buttonContainer: {
     paddingTop: 24,
-    marginTop: 20,
+    marginTop: 8,
     marginBottom: 48,
   },
   btnText: {
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
-    fontWeight: '600',
-    lineHeight: 24,
+    fontWeight: '700',
+    lineHeight: 22,
   },
 }));

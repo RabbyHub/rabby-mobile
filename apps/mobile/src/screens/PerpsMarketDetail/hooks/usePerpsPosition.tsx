@@ -79,75 +79,82 @@ export const usePerpsPosition = () => {
     },
   );
 
-  // Single round-trip for both single-cancel and "Cancel All". Returns true
-  // when ≥1 order succeeded; on expired agent the dedicated toast already
-  // fired so we suppress the generic failure one.
-  const handleCancelLimitOrders = useMemoizedFn(async (orders: OpenOrder[]) => {
-    if (!orders.length) {
-      return false;
-    }
-    try {
-      const sdk = apisPerps.getPerpsSDK();
-      const res = await sdk.exchange?.cancelOrder(
-        orders.map(o => ({ oid: o.oid, coin: o.coin })),
-      );
-      const statuses = res?.response.data.statuses ?? [];
-      const okCount = statuses.filter(
-        item => (item as unknown as string) === 'success',
-      ).length;
-      const failCount = statuses.length - okCount;
-
-      if (okCount > 0) {
-        // Cancel-All on Home can span multiple dexes — refresh just those.
-        fetchPositionOpenOrdersHttpForDexes(
-          orders.map(o => getDexByCoin(o.coin)),
-        );
+  // Single round-trip for both single-cancel and "Cancel All". Returns the
+  // oids that the SDK confirmed cancelled; callers use this to scope stats /
+  // UI updates (empty array = all failed or agent expired).
+  const handleCancelLimitOrders = useMemoizedFn(
+    async (orders: OpenOrder[]): Promise<number[]> => {
+      if (!orders.length) {
+        return [];
       }
+      try {
+        const sdk = apisPerps.getPerpsSDK();
+        const res = await sdk.exchange?.cancelOrder(
+          orders.map(o => ({ oid: o.oid, coin: o.coin })),
+        );
+        const statuses = res?.response.data.statuses ?? [];
+        const cancelledOids = statuses
+          .map((s, i) =>
+            (s as unknown as string) === 'success'
+              ? orders[i]?.oid ?? null
+              : null,
+          )
+          .filter((o): o is number => o != null);
+        const okCount = cancelledOids.length;
+        const failCount = statuses.length - okCount;
 
-      if (okCount > 0 && failCount === 0) {
-        showToast(
-          orders.length === 1
-            ? t('page.perps.cancelOrderToast.singleSuccess')
-            : t('page.perps.cancelOrderToast.multiSuccess', {
-                count: okCount,
-              }),
-          'success',
-        );
-        return true;
-      }
-      if (okCount > 0) {
-        showToast(
-          t('page.perps.cancelOrderToast.partial', {
-            okCount,
-            failCount,
-          }),
-          'success',
-        );
+        if (okCount > 0) {
+          // Cancel-All on Home can span multiple dexes — refresh just those.
+          fetchPositionOpenOrdersHttpForDexes(
+            orders.map(o => getDexByCoin(o.coin)),
+          );
+        }
+
+        if (okCount > 0 && failCount === 0) {
+          showToast(
+            orders.length === 1
+              ? t('page.perps.cancelOrderToast.singleSuccess')
+              : t('page.perps.cancelOrderToast.multiSuccess', {
+                  count: okCount,
+                }),
+            'success',
+          );
+          return cancelledOids;
+        }
+        if (okCount > 0) {
+          showToast(
+            t('page.perps.cancelOrderToast.partial', {
+              okCount,
+              failCount,
+            }),
+            'success',
+          );
+          Sentry.captureException(
+            new Error(
+              'cancel limit orders partial failure: ' + JSON.stringify(res),
+            ),
+          );
+          return cancelledOids;
+        }
+        showToast(t('page.perps.cancelOrderToast.failed'), 'error');
         Sentry.captureException(
-          new Error(
-            'cancel limit orders partial failure: ' + JSON.stringify(res),
-          ),
+          new Error('cancel limit orders all failed: ' + JSON.stringify(res)),
         );
-        return true;
+        return [];
+      } catch (e: any) {
+        const expired = await judgeIsUserAgentIsExpired(e?.message || '');
+        if (expired) {
+          return [];
+        }
+        console.error('cancel limit order error', e);
+        showToast(t('page.perps.cancelOrderToast.failed'), 'error');
+        Sentry.captureException(
+          new Error('cancel limit order error: ' + JSON.stringify(e)),
+        );
+        return [];
       }
-      showToast(t('page.perps.cancelOrderToast.failed'), 'error');
-      Sentry.captureException(
-        new Error('cancel limit orders all failed: ' + JSON.stringify(res)),
-      );
-      return false;
-    } catch (e: any) {
-      const expired = await judgeIsUserAgentIsExpired(e?.message || '');
-      if (expired) {
-        return false;
-      }
-      console.error('cancel limit order error', e);
-      showToast(t('page.perps.cancelOrderToast.failed'), 'error');
-      Sentry.captureException(
-        new Error('cancel limit order error: ' + JSON.stringify(e)),
-      );
-      return false;
-    }
-  });
+    },
+  );
 
   const handleUpdateMargin = useMemoizedFn(
     async (coin: string, action: 'add' | 'reduce', margin: number) => {

@@ -555,7 +555,9 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   crossTag: {
     borderRadius: 4,
     paddingHorizontal: 4,
-    paddingVertical: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 20,
     backgroundColor: colors2024['neutral-bg-5'],
     marginLeft: 6,
   },

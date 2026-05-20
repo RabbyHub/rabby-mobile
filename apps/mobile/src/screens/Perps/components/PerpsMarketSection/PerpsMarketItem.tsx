@@ -91,8 +91,8 @@ export const PerpsMarketItem = React.memo(
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: 16,
+    paddingHorizontal: 4,
     // backgroundColor: isLight
     //   ? colors2024['neutral-bg-1']
     //   : colors2024['neutral-bg-3'],

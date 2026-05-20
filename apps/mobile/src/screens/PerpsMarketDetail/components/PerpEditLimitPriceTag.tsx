@@ -25,7 +25,7 @@ import {
 } from '@/constant/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
-import { useMemoizedFn, useRequest } from 'ahooks';
+import { useDebounceFn, useMemoizedFn, useRequest } from 'ahooks';
 import IconPerpEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
 import { useSlTpUsdInput } from '@/hooks/useUsdInput';
 import { Text } from '@/components/Typography';
@@ -74,15 +74,23 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
 
   const hasValue = Number(limitPrice) > 0;
 
-  const blockedByProtection =
-    hasValue && deviation >= PERPS_LIMIT_PRICE_BLOCK_PCT;
+  // Debounce so the red error doesn't flash on every keystroke.
+  const [debouncedDeviation, setDebouncedDeviation] = React.useState(deviation);
+  const { run: scheduleDeviationSync, cancel: cancelDeviationSync } =
+    useDebounceFn(setDebouncedDeviation, { wait: 300 });
+  useEffect(() => {
+    if (!hasValue) {
+      cancelDeviationSync();
+      setDebouncedDeviation(0);
+      return;
+    }
+    scheduleDeviationSync(deviation);
+  }, [deviation, hasValue, scheduleDeviationSync, cancelDeviationSync]);
 
-  const needsConfirm =
-    hasValue &&
-    deviation >= PERPS_LIMIT_PRICE_CONFIRM_PCT &&
-    deviation < PERPS_LIMIT_PRICE_BLOCK_PCT;
+  const showBlockedError =
+    hasValue && debouncedDeviation >= PERPS_LIMIT_PRICE_BLOCK_PCT;
 
-  const isValid = hasValue && !blockedByProtection;
+  const isValid = hasValue && !showBlockedError;
 
   const handleQuickPress = useMemoizedFn(
     (opt: (typeof QUICK_OPTIONS)[number]) => {
@@ -108,10 +116,20 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
   );
 
   const handleConfirmPress = useMemoizedFn(() => {
-    if (!isValid || loading) {
+    if (loading || !hasValue) {
       return;
     }
-    if (needsConfirm) {
+    // Flush so the user sees the error tied to the value they just entered.
+    cancelDeviationSync();
+    setDebouncedDeviation(deviation);
+
+    if (deviation >= PERPS_LIMIT_PRICE_BLOCK_PCT) {
+      return;
+    }
+    if (
+      deviation >= PERPS_LIMIT_PRICE_CONFIRM_PCT &&
+      deviation < PERPS_LIMIT_PRICE_BLOCK_PCT
+    ) {
       Alert.alert(
         t('page.perpsDetail.PerpEditLimitPriceTag.confirmTitle'),
         t('page.perpsDetail.PerpEditLimitPriceTag.confirmMessage'),
@@ -191,7 +209,7 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
                   keyboardType="numeric"
                   style={StyleSheet.flatten([
                     styles.priceInput,
-                    blockedByProtection ? styles.inputError : null,
+                    showBlockedError ? styles.inputError : null,
                   ])}
                   placeholder="$0"
                   placeholderTextColor={colors2024['neutral-info']}
@@ -199,7 +217,7 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
                   onChangeText={v => handleInputChange(v.replace(/^\$/, ''))}
                 />
                 <View style={styles.errorRow}>
-                  {blockedByProtection ? (
+                  {showBlockedError ? (
                     <Text style={styles.errorMsg}>
                       {t('page.perpsDetail.PerpEditLimitPriceTag.blockError')}
                     </Text>
@@ -258,7 +276,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   container: {
     paddingHorizontal: 20,
-    paddingTop: 4,
+    paddingTop: 12,
   },
   header: {
     marginBottom: 16,
@@ -295,14 +313,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 16,
     paddingTop: 20,
-    paddingBottom: 8,
+    paddingBottom: 12,
     paddingHorizontal: 16,
     marginBottom: 12,
   },
   priceInput: {
     ...(Platform.OS === 'ios' && { fontFamily: 'SF Pro Rounded' }),
-    fontSize: 32,
-    lineHeight: 38,
+    fontSize: 36,
+    lineHeight: 42,
     fontWeight: '900',
     width: '100%',
     color: colors2024['neutral-title-1'],

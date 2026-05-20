@@ -28,6 +28,7 @@ export const PerpsDisplayCoinName: React.FC<{
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flexDirection: 'row',
+    alignItems: 'flex-end',
   },
   base: {
     fontFamily: 'SF Pro Rounded',
