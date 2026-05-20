@@ -1,11 +1,5 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import { Dimensions, Platform, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { Platform, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -21,8 +15,6 @@ import { sortBy } from 'lodash';
 import RNLinearGradient from 'react-native-linear-gradient';
 import { BALANCE_HIDE_TYPE, useHideBalance } from '../hooks/useHideBalance';
 import { HomeAddressItem } from './HomeAddressItem';
-import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
-import { IS_IOS } from '@/core/native/utils';
 import {
   MultiChart,
   setIsFoldMultiChart,
@@ -139,9 +131,6 @@ export function MultiAddressHomeHeader(
   const pinnedAccountList = usePinnedAccountList();
   const [hideType] = useHideBalance();
 
-  const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
-  const [isLocalWebViewReady, setIsLocalWebViewReady] = useState(false);
-
   const modalRef =
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>(undefined);
 
@@ -195,44 +184,12 @@ export function MultiAddressHomeHeader(
           style: [styles.homecardWrapper],
         }}>
         <View
-          pointerEvents="none"
-          style={[
-            styles.localWebViewWrapper,
-            couldRenderLocalWebView ? styles.localWebViewWrapperShow : {},
-            isLocalWebViewReady ? styles.localWebViewWrapperReady : {},
-          ]}>
-          {couldRenderLocalWebView ? (
-            <LocalWebView
-              style={[styles.curveBoxChildMH, styles.localWebView]}
-              entryPath={'/pages/gasket-blurview.html'}
-              // forceUseLocalResource
-              webviewSize={{
-                width: styles.localWebView.minWidth,
-              }}
-              startInLoadingState={false}
-              renderLoading={() => (
-                <View style={styles.localWebViewLoadingFallback} />
-              )}
-              onLoadEnd={() => {
-                setIsLocalWebViewReady(true);
-              }}
-            />
-          ) : null}
-        </View>
-        <View
           style={[
             styles.curveBoxChildMH,
             styles.curveBox,
             // loading && styles.curveBoxLoading,
             {},
-          ]}
-          onLayout={() => {
-            if (IS_IOS) {
-              setTimeout(() => setCouldRenderLocalWebView(true), 500);
-            } else {
-              setCouldRenderLocalWebView(true);
-            }
-          }}>
+          ]}>
           <RNLinearGradient
             pointerEvents="none"
             colors={
@@ -293,8 +250,6 @@ const SIZES = {
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   const curveCardBorderWidth = !isLight ? 2 : 1;
-  const cardMinW =
-    Dimensions.get('window').width - SIZES.cardLayoutPaddingHorizontal * 2;
 
   return {
     container: {
@@ -313,39 +268,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       justifyContent: 'center',
       width: '100%',
-    },
-    localWebViewWrapper: {
-      position: 'absolute',
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
-      zIndex: IS_IOS ? 1 : -1,
-      marginHorizontal:
-        isLight && IS_IOS ? 0 : SIZES.cardLayoutPaddingHorizontal,
-      borderRadius: SIZES.cardContentRadius,
-      display: 'none',
-      opacity: 0,
-      overflow: 'hidden',
-      // it helps to check the position of webview wrapper
-      // if you see .localWebViewWrapper not filled by content in .curveBox, the sizes are wrong
-      // uncomment below line to see the border
-      // ...makeDebugBorder('green'),
-    },
-    localWebView: {
-      minWidth: cardMinW,
-      marginHorizontal: 'auto',
-      backgroundColor: 'transparent',
-    },
-    localWebViewWrapperShow: {
-      display: 'flex',
-    },
-    localWebViewWrapperReady: {
-      opacity: 1,
-    },
-    localWebViewLoadingFallback: {
-      flex: 1,
-      backgroundColor: 'transparent',
+      maxWidth: '100%',
     },
     curveBoxWrapperLoading: {},
     curveBoxChildMH: {
@@ -357,8 +280,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderWidth: isLight ? curveCardBorderWidth : 0,
       borderColor: 'transparent',
       borderRadius: SIZES.cardContentRadius,
-      minWidth: cardMinW,
       width: '100%',
+      maxWidth: '100%',
+      alignSelf: 'stretch',
       alignItems: 'center',
       position: 'relative',
     },
@@ -416,7 +340,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingTop: 16,
       paddingHorizontal: 16,
       width: '100%',
-      minWidth: cardMinW,
+      maxWidth: '100%',
     },
 
     multiChartNoAccountsFollow: {
