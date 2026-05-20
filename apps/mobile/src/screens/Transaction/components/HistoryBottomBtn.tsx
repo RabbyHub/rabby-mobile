@@ -170,9 +170,10 @@ export const HistoryBottomBtn = ({
               navigation.dispatch(
                 StackActions.push(RootNames.StackTransaction, {
                   screen: isForMultipleAddress
-                    ? RootNames.MultiSwap
-                    : RootNames.Swap,
+                    ? RootNames.MultiSwapBridge
+                    : RootNames.SwapBridge,
                   params: {
+                    activeTab: 'swap',
                     swapAgain: true,
                     chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
                     swapTokenId: [sends[0]?.token_id, receives[0]?.token_id],

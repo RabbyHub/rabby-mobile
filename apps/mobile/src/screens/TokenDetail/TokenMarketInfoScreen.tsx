@@ -283,8 +283,9 @@ export const TokenMarketInfoScreen = () => {
         });
       }
       navigation.push(RootNames.StackTransaction, {
-        screen: account ? RootNames.Swap : RootNames.MultiSwap,
+        screen: account ? RootNames.SwapBridge : RootNames.MultiSwapBridge,
         params: {
+          activeTab: 'swap',
           chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
           tokenId: token?.id,
           type: tokenSelectType === 'swapTo' ? 'Buy' : type,
@@ -312,8 +313,9 @@ export const TokenMarketInfoScreen = () => {
       // 关闭弹窗隐藏
       setIsFromBack(false);
       navigation.push(RootNames.StackTransaction, {
-        screen: account ? RootNames.Bridge : RootNames.MultiBridge,
+        screen: account ? RootNames.SwapBridge : RootNames.MultiSwapBridge,
         params: {
+          activeTab: 'bridge',
           toChainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
           toTokenId: token?.id,
         },

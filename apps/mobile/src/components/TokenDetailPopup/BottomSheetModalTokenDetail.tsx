@@ -764,8 +764,9 @@ export const BottomSheetModalTokenDetail = ({
             nextTxRedirectAccount || null,
           );
           navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.Swap,
+            screen: RootNames.SwapBridge,
             params: {
+              activeTab: 'swap',
               chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
               tokenId: token?._tokenId,
             },

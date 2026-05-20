@@ -105,8 +105,9 @@ export const TokenDetailBottomBtns = ({
         await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
         setIsFromBack(false);
         navigation.navigateDeprecated(RootNames.StackTransaction, {
-          screen: RootNames.Bridge,
+          screen: RootNames.SwapBridge,
           params: {
+            activeTab: 'bridge',
             chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
             tokenId: token?.id,
           },
@@ -133,8 +134,9 @@ export const TokenDetailBottomBtns = ({
     await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
     setIsFromBack(false);
     navigation.navigateDeprecated(RootNames.StackTransaction, {
-      screen: RootNames.Swap,
+      screen: RootNames.SwapBridge,
       params: {
+        activeTab: 'swap',
         chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
         tokenId: token?.id,
         type: tokenSelectType === 'swapTo' ? 'Buy' : 'Sell',

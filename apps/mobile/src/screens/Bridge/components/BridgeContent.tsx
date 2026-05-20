@@ -212,7 +212,15 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
 }));
 
-export const BridgeContent = ({ isForMultipleAddress = false }) => {
+export const BridgeContent = ({
+  isForMultipleAddress = false,
+  disableHeaderRight = false,
+  disableAccountSwitcherModal = false,
+}: {
+  isForMultipleAddress?: boolean;
+  disableHeaderRight?: boolean;
+  disableAccountSwitcherModal?: boolean;
+}) => {
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const { styles } = useTheme2024({ getStyle });
@@ -261,10 +269,13 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     [clearBridgeHistoryRedDot],
   );
   useEffect(() => {
+    if (disableHeaderRight) {
+      return;
+    }
     setNavigationOptions({
       headerRight: Header,
     });
-  }, [Header, setNavigationOptions]);
+  }, [Header, disableHeaderRight, setNavigationOptions]);
 
   const {
     fromChain,
@@ -1004,7 +1015,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   return (
     <SignatureInstanceProvider instance={instance}>
       <NormalScreenContainer overwriteStyle={styles.screen}>
-        {isForMultipleAddress && (
+        {isForMultipleAddress && !disableAccountSwitcherModal && (
           <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
         )}
         <KeyboardAwareScrollView

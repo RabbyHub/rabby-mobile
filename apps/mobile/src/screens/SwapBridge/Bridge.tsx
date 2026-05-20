@@ -5,21 +5,32 @@ import {
 } from '@/hooks/accountsSwitcher';
 import React from 'react';
 import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
-import { BridgeContent } from './components/BridgeContent';
+import { BridgeContent } from '../Bridge/components/BridgeContent';
 import {
   QuoteVisibleProvider,
   RefreshIdProvider,
   SettingVisibleProvider,
-} from './hooks';
+} from '../Bridge/hooks';
+
+type BridgeProps = PropsForAccountSwitchScreen<{
+  disableHeaderRight?: boolean;
+  disableAccountSwitcherModal?: boolean;
+}>;
 
 export const Bridge = ({
   isForMultipleAddress,
-}: PropsForAccountSwitchScreen) => {
+  disableHeaderRight,
+  disableAccountSwitcherModal,
+}: BridgeProps) => {
   return (
     <SettingVisibleProvider>
       <RefreshIdProvider>
         <QuoteVisibleProvider>
-          <BridgeContent isForMultipleAddress={isForMultipleAddress} />
+          <BridgeContent
+            isForMultipleAddress={isForMultipleAddress}
+            disableHeaderRight={disableHeaderRight}
+            disableAccountSwitcherModal={disableAccountSwitcherModal}
+          />
         </QuoteVisibleProvider>
       </RefreshIdProvider>
       <TokenInfoPopup />
@@ -40,8 +51,8 @@ const ForMultipleAddress = (
     <ScreenSceneAccountProvider
       value={{
         forScene: 'MakeTransactionAbout',
-        ofScreen: 'MultiBridge',
-        sceneScreenRenderId: `${sceneCurrentAccountDepKey}-MultiBridge`,
+        ofScreen: 'MultiSwapBridge',
+        sceneScreenRenderId: `${sceneCurrentAccountDepKey}-MultiSwapBridge`,
       }}>
       <Bridge {...props} isForMultipleAddress />
     </ScreenSceneAccountProvider>
