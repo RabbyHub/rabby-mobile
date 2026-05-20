@@ -211,11 +211,6 @@ function HistoryDetailScreen(): JSX.Element {
     return data.historyType;
   }, [data.historyType, data.receives, data.sends]);
 
-  console.log('HistoryDetailScreen render', data, {
-    historyType: data.historyType,
-    formatType,
-  });
-
   const { formatToken, isNft } = useMemo(() => {
     const cate = formatType;
     const isDoubleToken =
@@ -372,8 +367,6 @@ function HistoryDetailScreen(): JSX.Element {
       !(data.cate_id === 'approve' && data.token_approve)
     );
   }, [data.cate_id, data.token_approve]);
-
-  console.log('HistoryDetailScreen render', data);
 
   return (
     <NormalScreenContainer2024
