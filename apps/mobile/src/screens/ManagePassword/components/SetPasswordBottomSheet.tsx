@@ -136,7 +136,6 @@ const SetPasswordBottomSheet: React.FC<SetPasswordBottomSheetProps> = ({
               inputStyle={styles.inputPadding}
               fieldNameStyle={styles.fieldNameStyle}
               inputProps={{
-                value: formik.values.password,
                 secureTextEntry: true,
                 inputMode: 'text',
                 returnKeyType: 'done',
@@ -165,7 +164,6 @@ const SetPasswordBottomSheet: React.FC<SetPasswordBottomSheetProps> = ({
               inputStyle={styles.inputPadding}
               fieldNameStyle={styles.fieldNameStyle}
               inputProps={{
-                value: formik.values.confirmPassword,
                 secureTextEntry: true,
                 inputMode: 'text',
                 returnKeyType: 'done',
