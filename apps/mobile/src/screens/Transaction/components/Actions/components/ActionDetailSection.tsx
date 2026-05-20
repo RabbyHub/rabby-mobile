@@ -182,8 +182,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailContainerTitle: {
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
   },
   detailItem: {

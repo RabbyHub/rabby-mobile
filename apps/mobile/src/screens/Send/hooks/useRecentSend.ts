@@ -220,7 +220,10 @@ export const fetchLocalSendPendingTx = (address: string) => {
   // });
 
   // return txs.sort((a, b) => b.createdAt - a.createdAt)[0];
-  return transactionHistoryService.getRecentPendingTxHistory(address, 'send');
+  return transactionHistoryService.getRecentPendingTxHistory(
+    address,
+    'send',
+  ) as SendTxHistoryItem | null;
 };
 
 const localPendingTxDataAtom = atom<SendTxHistoryItem | null>(null);
