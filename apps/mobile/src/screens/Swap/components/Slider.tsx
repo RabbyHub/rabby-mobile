@@ -4,8 +4,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { RootSiblingPortal } from 'react-native-root-siblings';
 import { Text } from '@/components/Typography';
+import { IS_ANDROID } from '@/core/native/utils';
 
-const BUBBLE_OFFSET_TOP = 66;
+const BUBBLE_OFFSET_TOP = IS_ANDROID ? 32 : 66;
 const BUBBLE_PORTAL_Z_INDEX = 9999;
 
 export const BubbleWithText = ({ slide }: { slide: number }) => {
