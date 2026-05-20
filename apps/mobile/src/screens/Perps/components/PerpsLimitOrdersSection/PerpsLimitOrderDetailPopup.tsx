@@ -118,7 +118,7 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     paddingHorizontal: 20,
     flex: 1,
@@ -134,7 +134,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   rows: {
     paddingVertical: 12,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     borderRadius: 12,
     paddingHorizontal: 16,
   },
