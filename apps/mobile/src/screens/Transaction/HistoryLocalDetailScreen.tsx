@@ -312,9 +312,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tokenAmountText: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '700',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '800',
   },
   mutliBox: {
     width: '100%',

@@ -45,6 +45,11 @@ export const UnknownAction: React.FC<Props> = ({
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
+  console.log('UnknownAction render', {
+    data,
+    chain,
+  });
+
   return (
     <>
       <ScrollView

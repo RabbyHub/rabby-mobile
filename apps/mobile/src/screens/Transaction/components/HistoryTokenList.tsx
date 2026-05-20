@@ -79,7 +79,7 @@ const TokenItemInlist = ({
           {isNft ? (
             <Media
               failedPlaceholder={<IconDefaultNFT width={33} height={33} />}
-              type="image_url"
+              type={token?.content_type || 'image_url'}
               src={token?.content?.endsWith('.svg') ? '' : token?.content}
               thumbnail={token?.content?.endsWith('.svg') ? '' : token?.content}
               mediaStyle={styles.media}
@@ -100,7 +100,7 @@ const TokenItemInlist = ({
               ]}>
               {isSend ? '-' : '+'} {isNft ? amount : formatTokenAmount(amount)}{' '}
               {isNft
-                ? t('page.singleHome.sectionHeader.Nft')
+                ? token?.name || t('page.singleHome.sectionHeader.Nft')
                 : ellipsisOverflowedText(
                     getTokenSymbol(token as TokenItem),
                     16,
@@ -229,7 +229,8 @@ export const HistoryTokenList = ({
                     {!isApprove && (isSend || isGasDeposit ? '- ' : '+ ')}
                     {tokenIsNft ? singleAmount : appvoveAmmountStr}{' '}
                     {tokenIsNft
-                      ? t('page.singleHome.sectionHeader.Nft')
+                      ? singeToken?.name ||
+                        t('page.singleHome.sectionHeader.Nft')
                       : ellipsisOverflowedText(
                           getTokenSymbol(singeToken as TokenItem),
                           16,
@@ -291,7 +292,7 @@ export const HistoryTokenList = ({
                           failedPlaceholder={
                             <IconDefaultNFT width={45} height={45} />
                           }
-                          type="image_url"
+                          type={token?.content_type || 'image_url'}
                           src={
                             token?.content?.endsWith('.svg')
                               ? ''
@@ -325,7 +326,8 @@ export const HistoryTokenList = ({
                           ]}>
                           - {formatTokenAmount(item.amount)}{' '}
                           {tokenIsNft
-                            ? t('page.singleHome.sectionHeader.Nft')
+                            ? item.token?.name ||
+                              t('page.singleHome.sectionHeader.Nft')
                             : ellipsisOverflowedText(
                                 getTokenSymbol(token as TokenItem),
                                 16,
@@ -375,7 +377,7 @@ export const HistoryTokenList = ({
                           failedPlaceholder={
                             <IconDefaultNFT width={45} height={45} />
                           }
-                          type="image_url"
+                          type={token?.content_type || 'image_url'}
                           src={
                             token?.content?.endsWith('.svg')
                               ? ''
@@ -406,7 +408,8 @@ export const HistoryTokenList = ({
                           style={[styles.tokenAmountText]}>
                           + {formatTokenAmount(item.amount)}{' '}
                           {tokenIsNft
-                            ? t('page.singleHome.sectionHeader.Nft')
+                            ? item.token?.name ||
+                              t('page.singleHome.sectionHeader.Nft')
                             : ellipsisOverflowedText(
                                 getTokenSymbol(token as TokenItem),
                                 16,
@@ -497,16 +500,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenApproveAmountText: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '700',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '800',
   },
   tokenAmountTextList: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: '700',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '800',
   },
   tokenPriceText: {
     color: colors2024['neutral-secondary'],
@@ -642,8 +645,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailContainerTitle: {
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
   },
   iconTR: {

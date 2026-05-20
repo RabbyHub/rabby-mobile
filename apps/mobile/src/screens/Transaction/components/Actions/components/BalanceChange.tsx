@@ -98,8 +98,10 @@ const NFTBalanceChange = ({
                 mediaStyle={styles.nftIcon}
                 style={styles.nftIcon}
               />
-              <Text style={[styles.changeText, styles.changeTextPositive]}>
-                + {formatAmount(item.amount, 0)}{' '}
+              <Text
+                style={[styles.changeText, styles.changeTextPositive]}
+                numberOfLines={1}>
+                + {formatAmount(item.amount, 0)}
                 {item.collection ? item.collection.name : item.name}
               </Text>
             </View>
@@ -133,7 +135,7 @@ const NFTBalanceChange = ({
                 mediaStyle={styles.nftIcon}
                 style={styles.nftIcon}
               />
-              <Text style={styles.changeText}>
+              <Text style={styles.changeText} numberOfLines={1}>
                 - {formatAmount(item.amount, 0)}{' '}
                 {item.collection ? item.collection.name : item.name}
               </Text>
@@ -215,11 +217,18 @@ export const BalanceChange = ({
 
   return (
     <View style={[styles.tokenBalanceChange, containerStyle]}>
-      <View style={styles.tokenBalanceChangeHeader}>
-        <Text style={styles.titleText}>
-          {successTitle || t('page.transactions.detail.InteractionResults')}
-        </Text>
-      </View>
+      {[
+        ...data.send_token_list,
+        ...data.send_nft_list,
+        ...data.receive_nft_list,
+        ...data.receive_token_list,
+      ].length > 1 ? (
+        <View style={styles.tokenBalanceChangeHeader}>
+          <Text style={styles.titleText}>
+            {successTitle || t('page.transactions.detail.InteractionResults')}
+          </Text>
+        </View>
+      ) : null}
       <View style={styles.list}>
         {sendTokenList?.map(token => (
           <TouchableOpacity
@@ -230,7 +239,7 @@ export const BalanceChange = ({
             }}>
             <View style={styles.logoWithText}>
               <AssetAvatar logo={token.logo_url} size={33} />
-              <Text style={styles.changeText}>
+              <Text style={styles.changeText} numberOfLines={1}>
                 - {formatTokenAmount(token.amount)}{' '}
                 {ellipsisOverflowedText(getTokenSymbol(token), 12)}
               </Text>
@@ -255,7 +264,9 @@ export const BalanceChange = ({
             }}>
             <View style={styles.logoWithText}>
               <AssetAvatar logo={token.logo_url} size={33} />
-              <Text style={[styles.changeText, styles.changeTextPositive]}>
+              <Text
+                style={[styles.changeText, styles.changeTextPositive]}
+                numberOfLines={1}>
                 + {formatTokenAmount(token.amount)}{' '}
                 {ellipsisOverflowedText(getTokenSymbol(token), 12)}
               </Text>
@@ -320,6 +331,8 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,
+      minWidth: 0,
+      flex: 1,
     },
 
     titleText: {
@@ -335,7 +348,9 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '900',
+      fontWeight: '800',
+      flexShrink: 1,
+      minWidth: 0,
     },
 
     changeTextPositive: {

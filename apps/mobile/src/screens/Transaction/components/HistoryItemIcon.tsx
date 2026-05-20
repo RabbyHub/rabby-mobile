@@ -144,7 +144,7 @@ export const HistoryItemIcon = ({
               failedPlaceholder={
                 <IconDefaultNFT width={singleSize} height={singleSize} />
               }
-              type="image_url"
+              type={singeToken?.content_type || 'image_url'}
               src={
                 singeToken?.content?.endsWith('.svg') ? '' : singeToken?.content
               }

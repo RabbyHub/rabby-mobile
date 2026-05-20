@@ -368,6 +368,10 @@ function HistoryDetailScreen(): JSX.Element {
     );
   }, [data.cate_id, data.token_approve]);
 
+  console.log('HistoryDetailScreen render', {
+    data,
+  });
+
   return (
     <NormalScreenContainer2024
       type={!isLight ? 'bg1' : 'bg0'}
@@ -468,7 +472,7 @@ function HistoryDetailScreen(): JSX.Element {
               <TxStatusItem status={status} withText={true} />
             </View>
           </View>
-          {isNft && Boolean(formatToken) && (
+          {/* {isNft && Boolean(formatToken) && (
             <>
               <View style={styles.detailItem}>
                 <Text style={styles.itemTitleText}>
@@ -500,7 +504,7 @@ function HistoryDetailScreen(): JSX.Element {
                 </View>
               </View>
             </>
-          )}
+          )} */}
 
           {formatType === HistoryItemCateType.Approve && (
             <View style={styles.detailItem}>
@@ -668,8 +672,8 @@ const getStyle = createGetStyles2024(
     detailContainerTitle: {
       color: colors2024['neutral-body'],
       fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      lineHeight: 18,
+      fontSize: 16,
+      lineHeight: 20,
       fontWeight: '700',
     },
     detailContainerLastOne: {
