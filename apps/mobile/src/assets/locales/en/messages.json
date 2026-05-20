@@ -2021,7 +2021,7 @@
         "item3": "Supports all transactions"
       },
       "gasBalance": "Gas Balance",
-      "lowBalance": "You don't have enough gas. Deposit gas to ensure future transactions go smoothly.",
+      "lowBalance": "You don't have enough gas (<$1.00). Deposit gas to ensure future transactions go smoothly.",
       "switchAccount": "Switch Wallet",
       "depositFailed": "Deposit failed",
       "depositWith": "Deposit via"

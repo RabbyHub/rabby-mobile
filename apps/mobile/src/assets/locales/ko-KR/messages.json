@@ -1625,7 +1625,7 @@
       "depositNow": "지금 입금하기",
       "switchAccount": "지갑 전환",
       "depositFailed": "입금 실패",
-      "lowBalance": "가스가 충분하지 않습니다. 향후 거래가 원활하게 진행될 수 있도록 가스를 입금하세요.",
+      "lowBalance": "가스가 충분하지 않습니다(<$1.00). 향후 거래가 원활하게 진행될 수 있도록 가스를 입금하세요.",
       "depositSubmitted": "입금 제출됨",
       "depositWith": "입금 via"
     },

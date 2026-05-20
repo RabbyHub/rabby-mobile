@@ -2244,7 +2244,7 @@
       "depositNow": "Jetzt einzahlen",
       "gasBalance": "Gas-Balance",
       "switchAccount": "Wechseln Sie das Wallet",
-      "lowBalance": "Sie haben nicht genügend Gas. Tätigen Sie eine Gas-Einzahlung, um sicherzustellen, dass zukünftige Transaktionen reibungslos verlaufen.",
+      "lowBalance": "Sie haben nicht genügend Gas (<$1.00). Tätigen Sie eine Gas-Einzahlung, um sicherzustellen, dass zukünftige Transaktionen reibungslos verlaufen.",
       "depositSubmitted": "Einzahlung eingereicht",
       "depositWith": "Einzahlung über"
     },

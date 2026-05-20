@@ -1874,7 +1874,7 @@
       "switchAccount": "Changer de portefeuille",
       "depositFailed": "Le dépôt a échoué",
       "gasBalance": "Solde de Gaz",
-      "lowBalance": "Vous n'avez pas assez de gas. Déposez du gas pour garantir que vos futures transactions se déroulent sans problème.",
+      "lowBalance": "Vous n'avez pas assez de gas (<$1.00). Déposez du gas pour garantir que vos futures transactions se déroulent sans problème.",
       "depositSubmitted": "Dépôt soumis",
       "depositWith": "Déposer via"
     },
