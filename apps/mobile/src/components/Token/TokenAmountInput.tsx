@@ -15,6 +15,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { ITokenCheck, TokenSelectorProps } from './TokenSelectorSheetModal';
 import { formatSpeicalAmount, splitNumberByStep } from '@/utils/number';
 import { NumericInput } from '../Form/NumbericInput';
+import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInput';
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { useTranslation } from 'react-i18next';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
@@ -168,6 +169,7 @@ export const TokenAmountInput = ({
           />
         ) : (
           <NumericInput
+            TextInputComponent={AutoShrinkAmountTextInput}
             style={[
               inlinePrize && !!valueText && styles.inputHasInlinePrize,
               styles.input,
