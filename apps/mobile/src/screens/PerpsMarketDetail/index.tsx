@@ -539,7 +539,7 @@ export const PerpsMarketDetailScreen = () => {
           {hasPosition && (
             <PerpsLimitOrdersForCoin
               coin={coin}
-              leverage={activeAssetData?.leverage ?? null}
+              leverage={currentPosition?.position.leverage ?? null}
               handleActionApproveStatus={handleActionApproveStatus}
             />
           )}

@@ -3,7 +3,10 @@ import { AppState, AppStateStatus } from 'react-native';
 import { useMemoizedFn } from 'ahooks';
 import { apisPerps } from '@/core/apis';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
-import { writeActiveAssetDataToCache } from '@/hooks/perps/useActiveAssetDataCache';
+import {
+  readActiveAssetDataFromCache,
+  writeActiveAssetDataToCache,
+} from '@/hooks/perps/useActiveAssetDataCache';
 import {
   WsActiveAssetCtx,
   WsActiveAssetData,
@@ -18,8 +21,14 @@ export const useActiveAssetSubscription = (coin: string) => {
   const [activeAssetCtx, setActiveAssetCtx] = useState<
     WsActiveAssetCtx['ctx'] | null
   >(null);
+  // Seed from REST cache (home/other screens may have filled it already), so
+  // the first render has a leverage/markPx/etc instead of waiting on the WS.
   const [activeAssetData, setActiveAssetData] =
-    useState<WsActiveAssetData | null>(null);
+    useState<WsActiveAssetData | null>(() => {
+      const address = perpsStore.getState().currentPerpsAccount?.address;
+      if (!address) return null;
+      return readActiveAssetDataFromCache(coin, address);
+    });
 
   const currentAddress = perpsStore(s => s.currentPerpsAccount?.address);
 
@@ -73,9 +82,14 @@ export const useActiveAssetSubscription = (coin: string) => {
     unsubCtxRef.current?.();
     unsubDataRef.current?.();
     // Avoid leaking previous coin's leverage into the new coin's marginUsage
-    // between coin switch and the first WS push.
+    // between coin switch and the first WS push. Seed from REST cache when
+    // available so margin/leverage stay populated across coin/account switches
+    // and foreground returns; WS push will overwrite as soon as it lands.
     setActiveAssetCtx(null);
-    setActiveAssetData(null);
+    const address = perpsStore.getState().currentPerpsAccount?.address;
+    setActiveAssetData(
+      address ? readActiveAssetDataFromCache(coinRef.current, address) : null,
+    );
     unsubCtxRef.current = subscribeCtx();
     unsubDataRef.current = subscribeData();
   });
