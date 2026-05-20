@@ -1,18 +1,10 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import { Dimensions, Platform, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { Platform, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import usePrevious from 'react-use/lib/usePrevious';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
-import addressBalanceStore from '@/store/balance';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 import { BlurShadowView } from '@/components2024/BluerShadow';
@@ -23,8 +15,6 @@ import { sortBy } from 'lodash';
 import RNLinearGradient from 'react-native-linear-gradient';
 import { BALANCE_HIDE_TYPE, useHideBalance } from '../hooks/useHideBalance';
 import { HomeAddressItem } from './HomeAddressItem';
-import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
-import { IS_IOS } from '@/core/native/utils';
 import {
   MultiChart,
   setIsFoldMultiChart,
@@ -37,10 +27,7 @@ import { apisHomeTabIndex } from '@/hooks/navigation';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 import { computeBalanceChange } from '@/core/apis/balance';
-import { useHomeStartupReady } from '@/core/utils/homeStartupReady';
 import { balance24hStore } from '@/store/balance24h';
-import { useShallow } from 'zustand/react/shallow';
-import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
 
 function MultiPinnedAddressList({
   pinnedAccountList,
@@ -137,73 +124,12 @@ export function MultiAddressHomeHeader(
   } & RNViewProps,
 ): JSX.Element {
   const { style, onRefresh } = props;
-  const {
-    changeData: data,
-    showBalanceLoadingWithoutLocal,
-    showChangeLoadingWithoutLocal,
-    isCurveAnyAddrLoading,
-  } = useHomePortfolioStore(
-    useShallow(state => ({
-      changeData: state.changeData,
-      showBalanceLoadingWithoutLocal: state.showBalanceLoadingWithoutLocal,
-      showChangeLoadingWithoutLocal: state.showChangeLoadingWithoutLocal,
-      isCurveAnyAddrLoading: state.isCurveAnyAddrLoading,
-    })),
-  );
-  const startupReady = useHomeStartupReady();
-  const shouldCoverLocalWebViewLoading =
-    !startupReady ||
-    showBalanceLoadingWithoutLocal ||
-    showChangeLoadingWithoutLocal ||
-    isCurveAnyAddrLoading;
-
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { isDisConnect } = useGlobalStatus();
 
   const pinnedAccountList = usePinnedAccountList();
   const [hideType] = useHideBalance();
-
-  const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
-  const [isLocalWebViewReady, setIsLocalWebViewReady] = useState(false);
-
-  const gasketWebViewRef = useRef<LocalWebView>(null);
-
-  const { loadBalanceFromApiStage } =
-    addressBalanceStore.useLoadBalanceFromApiStage();
-  const previousLoading = usePrevious(loadBalanceFromApiStage);
-  const [isAnimRunning, setIsAnimRunning] = useState(false);
-  const animTimerRef = useRef<NodeJS.Timeout | null>(null);
-  useEffect(() => {
-    if (!__DEV__ && data.isLoss) return;
-
-    const durationMs = IS_IOS ? 2000 : 2500;
-
-    if (
-      data.rawChange &&
-      loadBalanceFromApiStage !== 'loading' &&
-      previousLoading === 'loading'
-    ) {
-      setIsAnimRunning(true);
-      gasketWebViewRef.current?.sendMessage?.({
-        type: 'GASKETVIEW:TOGGLE_LOADING',
-        info: {
-          loading: previousLoading,
-          isPositive: !data.isLoss,
-        },
-        animationDurationMs: durationMs,
-        animationGradientBorderRadius: SIZES.cardContentRadius,
-      });
-    }
-
-    if (animTimerRef.current) {
-      clearTimeout(animTimerRef.current);
-    }
-    animTimerRef.current = setTimeout(
-      () => setIsAnimRunning(false),
-      durationMs,
-    );
-  }, [data.isLoss, data.rawChange, loadBalanceFromApiStage, previousLoading]);
 
   const modalRef =
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>(undefined);
@@ -258,45 +184,12 @@ export function MultiAddressHomeHeader(
           style: [styles.homecardWrapper],
         }}>
         <View
-          pointerEvents="none"
-          style={[
-            styles.localWebViewWrapper,
-            couldRenderLocalWebView ? styles.localWebViewWrapperShow : {},
-            isLocalWebViewReady ? styles.localWebViewWrapperReady : {},
-          ]}>
-          {couldRenderLocalWebView ? (
-            <LocalWebView
-              ref={gasketWebViewRef}
-              style={[styles.curveBoxChildMH, styles.localWebView]}
-              entryPath={'/pages/gasket-blurview.html'}
-              // forceUseLocalResource
-              webviewSize={{
-                width: styles.localWebView.minWidth,
-              }}
-              startInLoadingState={false}
-              renderLoading={() => (
-                <View style={styles.localWebViewLoadingFallback} />
-              )}
-              onLoadEnd={() => {
-                setIsLocalWebViewReady(true);
-              }}
-            />
-          ) : null}
-        </View>
-        <View
           style={[
             styles.curveBoxChildMH,
             styles.curveBox,
             // loading && styles.curveBoxLoading,
             {},
-          ]}
-          onLayout={event => {
-            if (IS_IOS) {
-              setTimeout(() => setCouldRenderLocalWebView(true), 500);
-            } else {
-              setCouldRenderLocalWebView(true);
-            }
-          }}>
+          ]}>
           <RNLinearGradient
             pointerEvents="none"
             colors={
@@ -306,10 +199,7 @@ export function MultiAddressHomeHeader(
             }
             start={isLight ? { x: 0.25, y: 0.5 } : { x: 1.07, y: 0.42 }}
             end={isLight ? { x: 0.75, y: 0.5 } : { x: -0.14, y: 0.59 }}
-            style={[
-              styles.curveCardGradientBg,
-              isAnimRunning && styles.curveCardGradientBgWithAnim,
-            ]}
+            style={styles.curveCardGradientBg}
           />
           <View
             style={[
@@ -317,9 +207,6 @@ export function MultiAddressHomeHeader(
               styles.shadowView,
               // !pinnedAccountList.length && styles.noAddressCard,
             ]}>
-            {shouldCoverLocalWebViewLoading ? (
-              <View pointerEvents="none" style={styles.curveCardCenterMask} />
-            ) : null}
             <MultiChart
               hideType={hideType}
               onPressNetWorth={() => {
@@ -362,10 +249,7 @@ const SIZES = {
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
-  const curveBoxBorderWidth = 1;
   const curveCardBorderWidth = !isLight ? 2 : 1;
-  const cardMinW =
-    Dimensions.get('window').width - SIZES.cardLayoutPaddingHorizontal * 2;
 
   return {
     container: {
@@ -384,39 +268,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       justifyContent: 'center',
       width: '100%',
-    },
-    localWebViewWrapper: {
-      position: 'absolute',
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
-      zIndex: IS_IOS ? 1 : -1,
-      marginHorizontal:
-        isLight && IS_IOS ? 0 : SIZES.cardLayoutPaddingHorizontal,
-      borderRadius: SIZES.cardContentRadius,
-      display: 'none',
-      opacity: 0,
-      overflow: 'hidden',
-      // it helps to check the position of webview wrapper
-      // if you see .localWebViewWrapper not filled by content in .curveBox, the sizes are wrong
-      // uncomment below line to see the border
-      // ...makeDebugBorder('green'),
-    },
-    localWebView: {
-      minWidth: cardMinW,
-      marginHorizontal: 'auto',
-      backgroundColor: 'transparent',
-    },
-    localWebViewWrapperShow: {
-      display: 'flex',
-    },
-    localWebViewWrapperReady: {
-      opacity: 1,
-    },
-    localWebViewLoadingFallback: {
-      flex: 1,
-      backgroundColor: 'transparent',
+      maxWidth: '100%',
     },
     curveBoxWrapperLoading: {},
     curveBoxChildMH: {
@@ -428,8 +280,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderWidth: isLight ? curveCardBorderWidth : 0,
       borderColor: 'transparent',
       borderRadius: SIZES.cardContentRadius,
-      minWidth: cardMinW,
       width: '100%',
+      maxWidth: '100%',
+      alignSelf: 'stretch',
       alignItems: 'center',
       position: 'relative',
     },
@@ -451,15 +304,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: 'transparent',
       // ...makeDebugBorder('purple'),
     },
-    curveCardCenterMask: {
-      position: 'absolute',
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
-      borderRadius: SIZES.cardContentRadius,
-      backgroundColor: isLight ? colors2024['neutral-bg-0'] : '#232428',
-    },
     noAddressCard: {
       paddingBottom: 20,
     },
@@ -472,9 +316,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderRadius: SIZES.cardContentRadius,
       borderWidth: 1,
       borderColor: isLight ? 'rgba(255, 255, 255, 1)' : 'rgba(35, 36, 40, 1)',
-    },
-    curveCardGradientBgWithAnim: {
-      borderColor: isLight ? 'rgba(255, 255, 255, .1)' : 'rgba(35, 36, 40, .1)',
     },
     shadowView: {
       ...Platform.select({
@@ -499,7 +340,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingTop: 16,
       paddingHorizontal: 16,
       width: '100%',
-      minWidth: cardMinW,
+      maxWidth: '100%',
     },
 
     multiChartNoAccountsFollow: {
