@@ -55,6 +55,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInput';
 
 import { SwapType } from '../../types/swap';
 import DebtSwapModalOverview from './Overview';
@@ -92,7 +93,7 @@ import {
   getToAmountAfterSlippage,
 } from './warning';
 import BridgeSwitchBtn from '@/screens/Bridge/components/BridgeSwitchBtn';
-import { Text, TextInput } from '@/components/Typography';
+import { Text } from '@/components/Typography';
 import { stats } from '@/utils/stats';
 
 interface DebtSwapModalProps {
@@ -887,7 +888,7 @@ export default function DebtSwapModal({
               </View>
 
               <View style={styles.tokenBody}>
-                <TextInput
+                <AutoShrinkAmountTextInput
                   style={styles.amountInput}
                   value={fromAmount}
                   onChangeText={onInputChange}
@@ -1360,8 +1361,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-line'],
   },
   arrowContainer: {
-    width: 45,
-    height: 45,
+    width: 36,
+    height: 36,
     borderRadius: 22.5,
     backgroundColor: colors2024['neutral-bg-1'],
     justifyContent: 'center',
@@ -1372,7 +1373,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'absolute',
     left: '50%',
     top: '50%',
-    transform: [{ translateX: -45 / 2 }, { translateY: -45 / 2 }],
+    transform: [{ translateX: -18 }, { translateY: -18 }],
   },
   arrowText: {
     fontSize: 22,

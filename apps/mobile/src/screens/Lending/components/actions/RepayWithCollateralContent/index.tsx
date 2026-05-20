@@ -55,6 +55,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInput';
 
 import { SwapType } from '../../../types/swap';
 import TokenIcon from '../../TokenIcon';
@@ -92,7 +93,7 @@ import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { ethers, PopulatedTransaction } from 'ethers';
 import { DEFAULT_REPAY_WITH_COLLATERAL_SLIPPAGE } from './utils';
 import RepayWithCollateralOverview from './Overview';
-import { Text, TextInput } from '@/components/Typography';
+import { Text } from '@/components/Typography';
 import { stats } from '@/utils/stats';
 
 interface RepayWithCollateralProps {
@@ -951,7 +952,7 @@ export default function RepayWithCollateral({
             </View>
 
             <View style={styles.tokenBody}>
-              <TextInput
+              <AutoShrinkAmountTextInput
                 style={styles.amountInput}
                 value={repayAmount}
                 onChangeText={onInputChange}
@@ -1418,8 +1419,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-line'],
   },
   arrowContainer: {
-    width: 45,
-    height: 45,
+    width: 36,
+    height: 36,
     borderRadius: 22.5,
     backgroundColor: colors2024['neutral-bg-1'],
     justifyContent: 'center',
@@ -1430,7 +1431,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'absolute',
     left: '50%',
     top: '50%',
-    transform: [{ translateX: -45 / 2 }, { translateY: -45 / 2 }],
+    transform: [{ translateX: -18 }, { translateY: -18 }],
   },
   arrowText: {
     fontSize: 22,
