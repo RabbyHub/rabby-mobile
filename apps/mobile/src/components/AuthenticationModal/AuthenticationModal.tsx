@@ -6,7 +6,7 @@ import { apisKeychain, apisLock } from '@/core/apis';
 import { preferenceService } from '@/core/services';
 import { IS_IOS } from '@/core/native/utils';
 import { useThemeStyles } from '@/hooks/theme';
-import { usePasswordStatus } from '@/hooks/useLock';
+import { useLoadLockInfo, usePasswordStatus } from '@/hooks/useLock';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import type { ValidationBehaviorProps } from '@/core/apis/lock';
 
@@ -244,7 +244,7 @@ export const AuthenticationModal = ({
     footerButtonGroupMb: 12,
   });
 
-  const { isUseCustomPwd } = usePasswordStatus();
+  const { isUseCustomPwd } = useLoadLockInfo({ autoFetch: true });
   const bioComputed = useBiometricsComputed();
 
   const [checklistState, setChecklistState] = React.useState<boolean[]>(
