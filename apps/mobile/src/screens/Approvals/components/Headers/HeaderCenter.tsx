@@ -6,6 +6,7 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Text } from '@/components/Typography';
+import { ellipsisAddress } from '@/utils/address';
 
 interface IProps {
   isSearching?: boolean;
@@ -32,7 +33,8 @@ export const HeaderCenter = (props: IProps) => {
             borderRadius={6}
           />
           <Text numberOfLines={1} ellipsizeMode="tail" style={styles.titleText}>
-            {props.currentAccount?.aliasName || props.currentAccount?.brandName}
+            {props.currentAccount?.aliasName ||
+              ellipsisAddress(props.currentAccount?.address || '')}
           </Text>
         </View>
       )}
