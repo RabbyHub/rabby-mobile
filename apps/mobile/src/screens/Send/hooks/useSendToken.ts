@@ -2156,6 +2156,7 @@ export function useSendTokenForm({
     formValues.messageDataForContractCall,
     currentAccount?.address,
     currentAccount?.type,
+    currentAccount?.address,
     prepareDirectSubmitMiniTx,
   ]);
 
