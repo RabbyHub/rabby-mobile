@@ -17,6 +17,7 @@ import { getClearinghouseStateByMap } from '@/hooks/perps/usePerpsStore';
 import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
 import { formatSpotState } from '@/utils/perps';
 import { Text } from '@/components/Typography';
+import { useEnablePerpsWatchAddress } from '@/hooks/appSettings';
 
 export const PerpsAccountSelectorPopup: React.FC<{
   visible?: boolean;
@@ -61,13 +62,23 @@ export const PerpsAccountSelectorPopup: React.FC<{
     },
   );
 
-  const { myAddresses } = useAccountSelectorList({
+  const { myAddresses, watchAddresses } = useAccountSelectorList({
     selectedAccount: value,
   });
 
+  const { enablePerpsWatchAddress } = useEnablePerpsWatchAddress();
+
+  const addresses = useMemo(
+    () =>
+      enablePerpsWatchAddress
+        ? [...myAddresses, ...watchAddresses]
+        : myAddresses,
+    [enablePerpsWatchAddress, myAddresses, watchAddresses],
+  );
+
   const { data: _data, runAsync: runFetchPerpsInfo } = useRequest(
     async () => {
-      const list = uniqBy(myAddresses, i => i.address.toLowerCase());
+      const list = uniqBy(addresses, i => i.address.toLowerCase());
       const res = await Promise.all(
         list.slice(0, 10).map(async item => {
           try {
@@ -104,7 +115,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
 
       const resDict = keyBy(res, item => item.address.toLowerCase());
 
-      const listWithInfo = myAddresses.map(account => {
+      const listWithInfo = addresses.map(account => {
         const item = resDict[account.address.toLowerCase()];
         return {
           account,
@@ -120,7 +131,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
     },
     {
       manual: true,
-      cacheKey: `PerpsAccountSelectorPopup-fetchPerpsInfo-${myAddresses
+      cacheKey: `PerpsAccountSelectorPopup-fetchPerpsInfo-${addresses
         .map(i => i.address)
         .join('-')}`,
       // cacheTime: 10 * 1000,
@@ -129,8 +140,8 @@ export const PerpsAccountSelectorPopup: React.FC<{
   );
 
   const data = useMemo(() => {
-    return _data ?? myAddresses.map(account => ({ account, info: null }));
-  }, [_data, myAddresses]);
+    return _data ?? addresses.map(account => ({ account, info: null }));
+  }, [_data, addresses]);
 
   const [tmpSelectAccount, setTmpSelectAccount] = useState<Account | null>(
     value || null,
