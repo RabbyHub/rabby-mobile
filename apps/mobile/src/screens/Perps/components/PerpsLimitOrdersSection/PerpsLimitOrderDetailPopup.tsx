@@ -16,7 +16,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { formatPerpsDisplayName, computeFilledPct } from '@/utils/perps';
 import BigNumber from 'bignumber.js';
-import { MarketData } from '@/hooks/perps/usePerpsStore';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 
@@ -41,7 +41,7 @@ type Props = {
   order?: OpenOrder | null;
   leverage?: Leverage | null;
   marginUsage?: number;
-  marketData?: MarketData;
+  disableCoinNavigation?: boolean;
   onClose: () => void;
   onCancel: () => void | Promise<void>;
 };
@@ -51,7 +51,7 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
   order,
   leverage,
   marginUsage = 0,
-  marketData,
+  disableCoinNavigation,
   onClose,
   onCancel,
 }) => {
@@ -60,6 +60,10 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
   const navigation = useRabbyAppNavigation();
   const modalRef = useRef<AppBottomSheetModal>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const coin = order?.coin;
+  const marketData = perpsStore(s =>
+    coin ? s.marketDataMap[coin] : undefined,
+  );
 
   useEffect(() => {
     if (!visible) {
@@ -89,6 +93,11 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
       return;
     }
     onClose();
+    // Detail-page caller has its rows pre-filtered to the current coin, so
+    // navigating here would only push a duplicate of the current screen.
+    if (disableCoinNavigation) {
+      return;
+    }
     navigation.push(RootNames.StackTransaction, {
       screen: RootNames.PerpsMarketDetail,
       params: {
