@@ -3,8 +3,6 @@ import { NativeModules, Platform } from 'react-native';
 
 import i18n from '@/utils/i18n';
 import {
-  ANDROID_AUTH_PROMPT_POLICIES,
-  DEFAULT_ANDROID_AUTH_PROMPT_POLICY,
   KEYCHAIN_STORAGE_TYPES,
   getAuthenticationType,
   getAuthenticationTypeLabel,

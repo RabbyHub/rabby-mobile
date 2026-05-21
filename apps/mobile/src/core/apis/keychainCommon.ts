@@ -23,6 +23,18 @@ const BROKEN_BIOMETRICS_ENTRY_MESSAGE =
 const CANCELSTR = i18n.t('native.authentication.auth_prompt_cancel');
 const isAndroid = Platform.OS === 'android';
 
+function traceAndroidKeychainPerf(
+  event: string,
+  data: Record<string, unknown> = {},
+) {
+  if (!isAndroid) {
+    return;
+  }
+
+  logger.info(`[RabbyUnlockPerf:keychain] ${event}`, data);
+  console.info('[RabbyUnlockPerf:keychain]', event, data);
+}
+
 export enum KEYCHAIN_AUTH_TYPES {
   APPLICATION_PASSWORD = 0,
   BIOMETRICS = 1,
@@ -771,6 +783,9 @@ export function createBusinessKeychainApi({
       return undefined;
     }
 
+    const startedAt = Date.now();
+    traceAndroidKeychainPerf('trusted_vault_key_lookup_start');
+
     try {
       const trustedVaultKeyObject = (await keychainModule.getGenericPassword({
         ...DEFAULT_GET_OPTIONS,
@@ -784,15 +799,27 @@ export function createBusinessKeychainApi({
         trustedVaultKeyObject &&
         typeof trustedVaultKeyObject.password === 'string'
       ) {
+        traceAndroidKeychainPerf('trusted_vault_key_lookup_end', {
+          elapsedMs: Date.now() - startedAt,
+          hit: true,
+        });
         return trustedVaultKeyObject.password;
       }
     } catch (error) {
+      traceAndroidKeychainPerf('trusted_vault_key_lookup_error', {
+        elapsedMs: Date.now() - startedAt,
+        error: getErrorMessage(error),
+      });
       logger.info('[keychain] trusted vault key string is unavailable', {
         sourceLabel,
         error: getErrorMessage(error),
       });
     }
 
+    traceAndroidKeychainPerf('trusted_vault_key_lookup_end', {
+      elapsedMs: Date.now() - startedAt,
+      hit: false,
+    });
     return undefined;
   }
 
@@ -929,6 +956,7 @@ export function createBusinessKeychainApi({
     purpose = RequestGenericPurpose.VERIFY as T,
     onPlainPassword,
     androidAuthPromptPolicy = DEFAULT_ANDROID_AUTH_PROMPT_POLICY,
+    shouldAttachTrustedVaultKeyString = true,
   }: {
     purpose?: T;
     onPlainPassword?: (
@@ -936,15 +964,30 @@ export function createBusinessKeychainApi({
       credentials: KeychainCompatibleUserCredentials,
     ) => void | Promise<void>;
     androidAuthPromptPolicy?: AndroidAuthPromptPolicy;
+    shouldAttachTrustedVaultKeyString?: boolean;
   }): Promise<null | DefaultRet> {
     const instance = await waitInstance();
+    const startedAt = Date.now();
 
     try {
       instance.isAuthenticating = true;
+      traceAndroidKeychainPerf('request_generic_password_start', {
+        purpose,
+        androidAuthPromptPolicy,
+        shouldAttachTrustedVaultKeyString,
+      });
       const keychainObject = (await keychainModule.getGenericPassword({
         ...DEFAULT_GET_OPTIONS,
         ...getAndroidAuthPromptPolicyOptions(androidAuthPromptPolicy),
       })) as DefaultRet;
+      traceAndroidKeychainPerf('request_generic_password_native_end', {
+        elapsedMs: Date.now() - startedAt,
+        hasPassword: !!keychainObject && !!keychainObject.password,
+        storage:
+          keychainObject && typeof keychainObject.storage === 'string'
+            ? keychainObject.storage
+            : undefined,
+      });
 
       if (!keychainObject) {
         throw makeKeyChainError(
@@ -957,11 +1000,19 @@ export function createBusinessKeychainApi({
         const encryptedPassword = keychainObject.password;
         delete keychainObject.password;
 
+        traceAndroidKeychainPerf('decrypt_password_payload_start', {
+          elapsedMs: Date.now() - startedAt,
+        });
         const { decrypted, usedFallbackRabbitCode } =
           await decryptStoredPasswordWithRabbitCodeCandidates(
             instance,
             encryptedPassword,
           );
+        traceAndroidKeychainPerf('decrypt_password_payload_end', {
+          elapsedMs: Date.now() - startedAt,
+          usedFallbackRabbitCode,
+          hasEmbeddedVaultKeyString: !!decrypted.vaultKeyString,
+        });
 
         switch (purpose) {
           case RequestGenericPurpose.VERIFY: {
@@ -990,13 +1041,32 @@ export function createBusinessKeychainApi({
             return { ...keychainObject, actionSuccess: verifyResult.success };
           }
           case RequestGenericPurpose.DECRYPT_PWD: {
-            const credentialsWithVaultKey = await attachTrustedVaultKeyString(
-              decrypted,
-            );
+            const credentialsWithVaultKey = shouldAttachTrustedVaultKeyString
+              ? await attachTrustedVaultKeyString(decrypted)
+              : decrypted;
+            if (
+              !shouldAttachTrustedVaultKeyString &&
+              !credentialsWithVaultKey.vaultKeyString
+            ) {
+              traceAndroidKeychainPerf('trusted_vault_key_lookup_skipped', {
+                elapsedMs: Date.now() - startedAt,
+                reason: 'unlock_critical_path',
+              });
+            }
+            traceAndroidKeychainPerf('plain_password_callback_start', {
+              elapsedMs: Date.now() - startedAt,
+              hasTrustedVaultKeyString:
+                !!credentialsWithVaultKey.vaultKeyString,
+            });
             await onPlainPassword?.(
               credentialsWithVaultKey.password,
               credentialsWithVaultKey,
             );
+            traceAndroidKeychainPerf('plain_password_callback_end', {
+              elapsedMs: Date.now() - startedAt,
+              hasTrustedVaultKeyString:
+                !!credentialsWithVaultKey.vaultKeyString,
+            });
             apisLock.updateUnlockTime();
             if (usedFallbackRabbitCode) {
               await silentlyUpgradeStoredPasswordPayload(
@@ -1013,6 +1083,10 @@ export function createBusinessKeychainApi({
               );
             }
             onRequestReturn(instance);
+            traceAndroidKeychainPerf('request_generic_password_end', {
+              elapsedMs: Date.now() - startedAt,
+              actionSuccess: true,
+            });
             return { ...keychainObject, actionSuccess: true };
           }
           default: {
@@ -1025,6 +1099,10 @@ export function createBusinessKeychainApi({
 
       return keychainObject;
     } catch (error) {
+      traceAndroidKeychainPerf('request_generic_password_error', {
+        elapsedMs: Date.now() - startedAt,
+        error: getErrorMessage(error),
+      });
       instance.isAuthenticating = false;
       throw await normalizeRequestGenericPasswordError(error);
     }
@@ -1118,6 +1196,7 @@ export function createBusinessKeychainApi({
     options?: {
       storage?: KeychainStorageType;
       vaultKeyString?: string;
+      skipTrustedVaultKeyStringWrite?: boolean;
     },
   ) {
     const authOptions = getAuthOptionsForType(type);
@@ -1131,7 +1210,11 @@ export function createBusinessKeychainApi({
     }
 
     const instance = await waitInstance();
-    const encryptedPassword = await instance.encryptPassword(password);
+    const encryptedPassword = await instance.encryptPassword(password, {
+      ...(options?.vaultKeyString
+        ? { vaultKeyString: options.vaultKeyString }
+        : null),
+    });
     await keychainModule.setGenericPassword(
       KEYCHAIN_GENERIC_USER,
       encryptedPassword,
@@ -1144,13 +1227,13 @@ export function createBusinessKeychainApi({
 
     setAuthenticationType(type);
 
-    if (options?.vaultKeyString) {
+    if (options?.vaultKeyString && !options.skipTrustedVaultKeyStringWrite) {
       await setTrustedVaultKeyString(options.vaultKeyString, type);
     }
   }
 
   async function cacheTrustedVaultKeyString(
-    _password: string,
+    password: string,
     vaultKeyString: string,
   ) {
     const authType = getAuthenticationType();
@@ -1159,7 +1242,30 @@ export function createBusinessKeychainApi({
       return;
     }
 
+    const startedAt = Date.now();
+    traceAndroidKeychainPerf('trusted_vault_key_cache_start', {
+      authType,
+    });
+
     await setTrustedVaultKeyString(vaultKeyString, authType);
+    traceAndroidKeychainPerf('trusted_vault_key_cache_separate_done', {
+      elapsedMs: Date.now() - startedAt,
+    });
+
+    try {
+      await setGenericPassword(password, authType, {
+        vaultKeyString,
+        skipTrustedVaultKeyStringWrite: true,
+      });
+      traceAndroidKeychainPerf('trusted_vault_key_cache_primary_done', {
+        elapsedMs: Date.now() - startedAt,
+      });
+    } catch (error) {
+      traceAndroidKeychainPerf('trusted_vault_key_cache_primary_error', {
+        elapsedMs: Date.now() - startedAt,
+        error: getErrorMessage(error),
+      });
+    }
   }
 
   function getSupportedBiometryType() {
