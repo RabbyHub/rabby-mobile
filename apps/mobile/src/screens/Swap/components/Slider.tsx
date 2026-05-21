@@ -1,15 +1,31 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { RootSiblingPortal } from 'react-native-root-siblings';
 import { Text } from '@/components/Typography';
-import { IS_ANDROID } from '@/core/native/utils';
 
-const BUBBLE_OFFSET_TOP = IS_ANDROID ? 32 : 66;
 const BUBBLE_PORTAL_Z_INDEX = 9999;
+const BUBBLE_HORIZONTAL_MARGIN = 8;
+const ARROW_HORIZONTAL_MARGIN = 16;
+const BUBBLE_VERTICAL_OFFSET = 5;
 
-export const BubbleWithText = ({ slide }: { slide: number }) => {
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(Math.max(value, min), max);
+
+export const BubbleWithText = ({
+  slide,
+  arrowOffsetX = 0,
+}: {
+  slide: number;
+  arrowOffsetX?: number;
+}) => {
   const { styles } = useTheme2024({ getStyle: getBubbleStyles });
 
   return (
@@ -19,7 +35,11 @@ export const BubbleWithText = ({ slide }: { slide: number }) => {
           {slide}%
         </Text>
       </View>
-      <View style={styles.arrowWrapper}>
+      <View
+        style={[
+          styles.arrowWrapper,
+          { transform: [{ translateX: arrowOffsetX }] },
+        ]}>
         <View style={styles.arrowBorder}>
           <View style={styles.arrowInner} />
         </View>
@@ -37,54 +57,121 @@ export const SliderBubblePortal = ({
   slide: number;
   visible: boolean;
 }) => {
-  const { width } = useWindowDimensions();
+  const rootRef = useRef<View>(null);
   const [anchorPosition, setAnchorPosition] = useState<{
     x: number;
     y: number;
   } | null>(null);
+  const [portalFrame, setPortalFrame] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const [bubbleSize, setBubbleSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
 
   const measureAnchor = useCallback(() => {
-    anchorRef.current?.measureInWindow((x, y, anchorWidth) => {
+    anchorRef.current?.measureInWindow((x, y, anchorWidth, anchorHeight) => {
       setAnchorPosition({
         x: x + anchorWidth / 2,
-        y,
+        y: y + anchorHeight / 2,
       });
     });
   }, [anchorRef]);
 
+  const measurePortal = useCallback(() => {
+    rootRef.current?.measureInWindow((x, y, width, height) => {
+      setPortalFrame({ x, y, width, height });
+    });
+  }, []);
+
+  const bubblePosition = useMemo(() => {
+    if (!anchorPosition || !portalFrame || !bubbleSize) {
+      return null;
+    }
+
+    const anchorX = anchorPosition.x - portalFrame.x;
+    const anchorY = anchorPosition.y - portalFrame.y;
+    const maxLeft = Math.max(
+      BUBBLE_HORIZONTAL_MARGIN,
+      portalFrame.width - bubbleSize.width - BUBBLE_HORIZONTAL_MARGIN,
+    );
+    const left = clamp(
+      anchorX - bubbleSize.width / 2,
+      BUBBLE_HORIZONTAL_MARGIN,
+      maxLeft,
+    );
+    const maxArrowOffset = Math.max(
+      0,
+      bubbleSize.width / 2 - ARROW_HORIZONTAL_MARGIN,
+    );
+
+    return {
+      left,
+      top: Math.max(0, anchorY - bubbleSize.height - BUBBLE_VERTICAL_OFFSET),
+      arrowOffsetX: clamp(
+        anchorX - (left + bubbleSize.width / 2),
+        -maxArrowOffset,
+        maxArrowOffset,
+      ),
+    };
+  }, [anchorPosition, bubbleSize, portalFrame]);
+
   useEffect(() => {
     if (!visible) {
       setAnchorPosition(null);
+      setPortalFrame(null);
       return;
     }
 
-    const frame = requestAnimationFrame(measureAnchor);
+    const frame = requestAnimationFrame(() => {
+      measurePortal();
+      measureAnchor();
+    });
 
     return () => {
       cancelAnimationFrame(frame);
     };
-  }, [measureAnchor, slide, visible]);
+  }, [measureAnchor, measurePortal, slide, visible]);
 
-  if (!visible || !anchorPosition) {
+  const handleRootLayout = useCallback(() => {
+    measurePortal();
+  }, [measurePortal]);
+
+  const handleBubbleLayout = useCallback((event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    setBubbleSize({ width, height });
+  }, []);
+
+  if (!visible) {
     return null;
   }
 
   return (
     <RootSiblingPortal>
-      <View pointerEvents="none" style={portalStyles.root}>
+      <View
+        ref={rootRef}
+        pointerEvents="none"
+        style={portalStyles.root}
+        onLayout={handleRootLayout}>
         <View
+          onLayout={handleBubbleLayout}
           style={[
-            portalStyles.bubbleRow,
-            {
-              top: Math.max(0, anchorPosition.y - BUBBLE_OFFSET_TOP),
-              transform: [
-                {
-                  translateX: anchorPosition.x - width / 2,
-                },
-              ],
-            },
+            portalStyles.bubble,
+            bubblePosition
+              ? {
+                  left: bubblePosition.left,
+                  top: bubblePosition.top,
+                }
+              : portalStyles.hiddenBubble,
           ]}>
-          <BubbleWithText slide={slide} />
+          <BubbleWithText
+            slide={slide}
+            arrowOffsetX={bubblePosition?.arrowOffsetX}
+          />
         </View>
       </View>
     </RootSiblingPortal>
@@ -97,11 +184,13 @@ const portalStyles = StyleSheet.create({
     zIndex: BUBBLE_PORTAL_Z_INDEX,
     elevation: BUBBLE_PORTAL_Z_INDEX,
   },
-  bubbleRow: {
+  bubble: {
     position: 'absolute',
+  },
+  hiddenBubble: {
     left: 0,
-    right: 0,
-    alignItems: 'center',
+    top: 0,
+    opacity: 0,
   },
 });
 

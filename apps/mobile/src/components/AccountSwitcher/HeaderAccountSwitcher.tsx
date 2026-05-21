@@ -16,6 +16,22 @@ import { Text } from '@/components/Typography';
 
 import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
 
+const formatDefaultAliasInHeader = (address: string) => {
+  const prefixLength = /^0x/i.test(address) ? 2 : 0;
+  return `${address.slice(0, prefixLength + 6)}...${address.slice(-4)}`;
+};
+
+const getHeaderAccountName = (address: string, aliasName?: string) => {
+  // 产品需求：这个场景为了能展示完整备注针对默认备注的地址单独处理成前 6 后 4 展示
+  const fallbackAlias =
+    apiContact.getAliasName(address) || ellipsisAddress(address);
+  const finalAlias = aliasName || fallbackAlias;
+
+  return finalAlias.toLowerCase() === ellipsisAddress(address).toLowerCase()
+    ? formatDefaultAliasInHeader(address)
+    : finalAlias;
+};
+
 export function HeaderAccountSwitcher({
   forScene,
   disableSwitch = false,
@@ -45,10 +61,9 @@ export function HeaderAccountSwitcher({
       return '';
     }
 
-    return (
-      finalSceneCurrentAccount.aliasName ||
-      apiContact.getAliasName(finalSceneCurrentAccount.address) ||
-      ellipsisAddress(finalSceneCurrentAccount.address)
+    return getHeaderAccountName(
+      finalSceneCurrentAccount.address,
+      finalSceneCurrentAccount.aliasName,
     );
   }, [finalSceneCurrentAccount]);
 
@@ -100,14 +115,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     minWidth: 0,
   },
   accountSelectorWidthLimiter: {
-    maxWidth: 160,
+    maxWidth: 170,
     alignSelf: 'flex-end',
   },
   accountSelector: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    maxWidth: 160,
+    maxWidth: 170,
     backgroundColor: colors2024['neutral-bg-5'],
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
@@ -120,7 +135,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-foot'],
     flexShrink: 1,
   },
   reverseCaret: {

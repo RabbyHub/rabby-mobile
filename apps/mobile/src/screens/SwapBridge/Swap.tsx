@@ -117,7 +117,12 @@ import {
   type QuotePollingPauseReasonState,
   updateQuotePollingPauseReason,
 } from '@/utils/quotePolling';
+import ArrowDownSVG from '@/assets/icons/swap/icon-arrow-down-with-bg.svg';
+
 const isAndroid = Platform.OS === 'android';
+const BOTTOM_BUTTON_HEIGHT = 56;
+const BOTTOM_BUTTON_HORIZONTAL_PADDING = 20;
+const BOTTOM_BUTTON_BOTTOM_OFFSET = 56;
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<
@@ -1190,6 +1195,9 @@ const Swap = ({
               // supportChains={SWAP_SUPPORT_CHAINS}
               hideTestnetTab
               account={currentAccount!}
+              rightArrowIcon={
+                <ArrowDownSVG color={colors2024['neutral-line']} />
+              }
             />
             <View style={styles.swapContainer}>
               <View style={styles.flex1}>
@@ -1410,7 +1418,10 @@ const Swap = ({
         <View
           style={[
             styles.buttonContainer,
-            isAndroid && { paddingBottom: safeOffBottom },
+            {
+              paddingBottom:
+                BOTTOM_BUTTON_BOTTOM_OFFSET + (isAndroid ? safeOffBottom : 0),
+            },
           ]}>
           <Tip
             content={
@@ -1424,6 +1435,7 @@ const Swap = ({
                   ref={directSignBtnRef}
                   // refresh  risk check
                   key={`${refreshId}-${chain}-${payToken?.id}-${receiveToken?.id}-${payAmount}-${activeProvider?.quote?.tx?.data}-${isApprove}`}
+                  height={BOTTOM_BUTTON_HEIGHT}
                   loading={miniSignLoading}
                   loadingType="circle"
                   showTextOnLoading
@@ -1455,6 +1467,7 @@ const Swap = ({
                 />
               ) : (
                 <Button
+                  height={BOTTOM_BUTTON_HEIGHT}
                   onPress={() => {
                     if (!isSupportedChain && !externalDapps.length) {
                       return;
@@ -1571,8 +1584,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingBottom: 30,
   },
   label: {
-    fontSize: 17,
-    lineHeight: 22,
+    fontSize: 15,
+    lineHeight: 18,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
@@ -1712,10 +1725,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'absolute',
     left: 0,
     bottom: 0,
-    paddingHorizontal: 24,
+    paddingHorizontal: BOTTOM_BUTTON_HORIZONTAL_PADDING,
     backgroundColor: colors2024['neutral-bg-1'],
     width: '100%',
-    marginBottom: 56,
   },
   approveContainer: {
     flexDirection: 'row',
