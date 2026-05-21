@@ -260,7 +260,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 2,
   },
   headerTabText: {
     fontFamily: 'SF Pro Rounded',
