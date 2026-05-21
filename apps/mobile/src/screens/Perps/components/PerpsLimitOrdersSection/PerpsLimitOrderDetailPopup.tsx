@@ -146,16 +146,16 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
                 t('page.perps.limitOrderDetail.filled'),
                 `${filledPct.toFixed(0)}%`,
               ],
-              [t('page.perps.limitOrderDetail.currentPrice'), currentPriceText],
               [
-                t('page.perps.limitOrderDetail.limitPrice'),
-                limitPriceText,
-                'limitPrice',
+                t('page.perps.limitOrderDetail.currentPrice'),
+                currentPriceText,
+                'currentPrice',
               ],
+              [t('page.perps.limitOrderDetail.limitPrice'), limitPriceText],
               [t('page.perps.limitOrderDetail.marginUsage'), marginUsageText],
             ] as Array<[string, string, string?]>
           ).map(([label, value, key]) =>
-            key === 'limitPrice' ? (
+            key === 'currentPrice' ? (
               <View key={label} style={styles.row}>
                 <Text style={styles.rowLabel}>{label}</Text>
                 <TouchableOpacity
