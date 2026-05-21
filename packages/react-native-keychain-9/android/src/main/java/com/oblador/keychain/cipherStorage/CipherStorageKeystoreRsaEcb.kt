@@ -20,6 +20,7 @@ import java.security.InvalidKeyException
 import java.security.Key
 import java.security.KeyFactory
 import java.security.KeyPairGenerator
+import java.security.KeyStore
 import java.security.KeyStoreException
 import java.security.NoSuchAlgorithmException
 import java.security.spec.InvalidKeySpecException
@@ -194,14 +195,40 @@ class CipherStorageKeystoreRsaEcb : CipherStorageBase() {
       generateKeyAndStoreUnderAlias(alias, level)
     }
 
-    val kf = KeyFactory.getInstance(ALGORITHM_RSA)
-    val certificate = store.getCertificate(alias)
-    val publicKey = certificate.publicKey
-    val keySpec = X509EncodedKeySpec(publicKey.encoded)
-    val key = kf.generatePublic(keySpec)
+    val key = extractPublicEncryptionKeyOrRecreate(alias, store, level)
 
     return CipherStorage.EncryptionResult(
         encryptString(key, username), encryptString(key, password), this)
+  }
+
+  @Throws(GeneralSecurityException::class)
+  private fun extractPublicEncryptionKey(alias: String, store: KeyStore): Key {
+    val kf = KeyFactory.getInstance(ALGORITHM_RSA)
+    val certificate =
+        store.getCertificate(alias)
+            ?: throw KeyStoreAccessException("Could not get certificate for service $alias")
+    val publicKey =
+        certificate.publicKey
+            ?: throw KeyStoreAccessException("Could not get publicKey for service $alias")
+    val keySpec = X509EncodedKeySpec(publicKey.encoded)
+
+    return kf.generatePublic(keySpec)
+  }
+
+  @Throws(GeneralSecurityException::class)
+  private fun extractPublicEncryptionKeyOrRecreate(
+      alias: String,
+      store: KeyStore,
+      level: SecurityLevel
+  ): Key {
+    try {
+      return extractPublicEncryptionKey(alias, store)
+    } catch (fail: Throwable) {
+      Log.w(LOG_TAG, "Recreating invalid RSA key for service $alias", fail)
+      store.deleteEntry(alias)
+      generateKeyAndStoreUnderAlias(alias, level)
+      return extractPublicEncryptionKey(alias, store)
+    }
   }
 
   /** Get builder for encryption and decryption operations with required user Authentication. */
@@ -226,7 +253,7 @@ class CipherStorageKeystoreRsaEcb : CipherStorageBase() {
 
     val keySize = if (isForTesting) ENCRYPTION_KEY_SIZE_WHEN_TESTING else ENCRYPTION_KEY_SIZE
 
-    val validityDuration = 1
+    val validityDuration = 5
     val keyGenParameterSpecBuilder =
         KeyGenParameterSpec.Builder(alias, purposes)
             .setBlockModes(BLOCK_MODE_ECB)
