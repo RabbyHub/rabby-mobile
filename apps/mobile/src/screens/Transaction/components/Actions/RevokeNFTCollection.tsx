@@ -91,6 +91,7 @@ export const RevokeNFTCollection: React.FC<Props> = ({
                   {
                     ...actionData.collection,
                     content: (actionData.collection as any)?.logo_url,
+                    chain: chain.serverId,
                   } as unknown as TokenItem
                 }
                 isNft={true}
@@ -126,11 +127,11 @@ export const RevokeNFTCollection: React.FC<Props> = ({
           </View>
         </View>
         <ActionDetailSection data={data} chain={chain} accounts={unionAccounts}>
-          <ActionDetailItem label={t('page.transactions.detail.name')}>
+          {/* <ActionDetailItem label={t('page.transactions.detail.name')}>
             <ActionDetailText numberOfLines={1} ellipsizeMode="tail">
               {actionData?.collection?.name || '-'}
             </ActionDetailText>
-          </ActionDetailItem>
+          </ActionDetailItem> */}
           <ProjectItemInDetail
             title={t('page.transactions.detail.InteractedContract')}
             name={actionData.collection.name}

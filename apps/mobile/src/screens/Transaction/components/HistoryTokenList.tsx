@@ -29,6 +29,7 @@ import { Account } from '@/core/services/preference';
 import { isArray } from 'lodash';
 import { Dimensions } from 'react-native';
 import { Text } from '@/components/Typography';
+import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';
 
 interface ItemProps {
   status: number;
@@ -75,29 +76,44 @@ const TokenItemInlist = ({
             flexDirection: 'row',
             alignItems: 'center',
             gap: 8,
+            flex: 1,
+            minWidth: 0,
           }}>
-          {isNft ? (
-            <Media
-              failedPlaceholder={<IconDefaultNFT width={33} height={33} />}
-              type={token?.content_type || 'image_url'}
-              src={token?.content?.endsWith('.svg') ? '' : token?.content}
-              thumbnail={token?.content?.endsWith('.svg') ? '' : token?.content}
-              mediaStyle={styles.media}
-              style={styles.media}
-              playIconSize={12}
+          <View>
+            {isNft ? (
+              <Media
+                failedPlaceholder={<IconDefaultNFT width={33} height={33} />}
+                type={token?.content_type || 'image_url'}
+                src={token?.content?.endsWith('.svg') ? '' : token?.content}
+                thumbnail={
+                  token?.content?.endsWith('.svg') ? '' : token?.content
+                }
+                mediaStyle={styles.media}
+                style={styles.media}
+                playIconSize={12}
+              />
+            ) : (
+              <AssetAvatar
+                logo={(token as TokenItem)?.logo_url || ''}
+                size={33}
+              />
+            )}
+            <ChainIconFastImage
+              style={[
+                styles.tokenChainIcon,
+                { bottom: 0, right: 0, width: 14, height: 14 },
+              ]}
+              size={14}
+              chainServerId={token.chain}
             />
-          ) : (
-            <AssetAvatar
-              logo={(token as TokenItem)?.logo_url || ''}
-              size={33}
-            />
-          )}
-          <View style={[styles.colomnBox]}>
+          </View>
+          <View style={[styles.colomnBox, { minWidth: 0, flexShrink: 1 }]}>
             <Text
               style={[
                 styles.tokenAmountTextList,
                 isSend && styles.isSendTextColor,
-              ]}>
+              ]}
+              numberOfLines={1}>
               {isSend ? '-' : '+'} {isNft ? amount : formatTokenAmount(amount)}{' '}
               {isNft
                 ? token?.name || t('page.singleHome.sectionHeader.Nft')
@@ -287,32 +303,39 @@ export const HistoryTokenList = ({
                         alignItems: 'center',
                         gap: 8,
                       }}>
-                      {tokenIsNft ? (
-                        <Media
-                          failedPlaceholder={
-                            <IconDefaultNFT width={45} height={45} />
-                          }
-                          type={token?.content_type || 'image_url'}
-                          src={
-                            token?.content?.endsWith('.svg')
-                              ? ''
-                              : token?.content
-                          }
-                          thumbnail={
-                            token?.content?.endsWith('.svg')
-                              ? ''
-                              : token?.content
-                          }
-                          mediaStyle={styles.media}
-                          style={styles.media}
-                          playIconSize={12}
+                      <View>
+                        {tokenIsNft ? (
+                          <Media
+                            failedPlaceholder={
+                              <IconDefaultNFT width={45} height={45} />
+                            }
+                            type={token?.content_type || 'image_url'}
+                            src={
+                              token?.content?.endsWith('.svg')
+                                ? ''
+                                : token?.content
+                            }
+                            thumbnail={
+                              token?.content?.endsWith('.svg')
+                                ? ''
+                                : token?.content
+                            }
+                            mediaStyle={styles.media}
+                            style={styles.media}
+                            playIconSize={12}
+                          />
+                        ) : (
+                          <AssetAvatar
+                            logo={(token as TokenItem)?.logo_url || ''}
+                            size={45}
+                          />
+                        )}
+                        <ChainIconFastImage
+                          style={styles.tokenChainIcon}
+                          size={20}
+                          chainServerId={token.chain}
                         />
-                      ) : (
-                        <AssetAvatar
-                          logo={(token as TokenItem)?.logo_url || ''}
-                          size={45}
-                        />
-                      )}
+                      </View>
                       <View
                         style={[
                           styles.singleColomnBox,
@@ -372,32 +395,39 @@ export const HistoryTokenList = ({
                         alignItems: 'center',
                         gap: 8,
                       }}>
-                      {tokenIsNft ? (
-                        <Media
-                          failedPlaceholder={
-                            <IconDefaultNFT width={45} height={45} />
-                          }
-                          type={token?.content_type || 'image_url'}
-                          src={
-                            token?.content?.endsWith('.svg')
-                              ? ''
-                              : token?.content
-                          }
-                          thumbnail={
-                            token?.content?.endsWith('.svg')
-                              ? ''
-                              : token?.content
-                          }
-                          mediaStyle={styles.media}
-                          style={styles.media}
-                          playIconSize={12}
+                      <View>
+                        {tokenIsNft ? (
+                          <Media
+                            failedPlaceholder={
+                              <IconDefaultNFT width={45} height={45} />
+                            }
+                            type={token?.content_type || 'image_url'}
+                            src={
+                              token?.content?.endsWith('.svg')
+                                ? ''
+                                : token?.content
+                            }
+                            thumbnail={
+                              token?.content?.endsWith('.svg')
+                                ? ''
+                                : token?.content
+                            }
+                            mediaStyle={styles.media}
+                            style={styles.media}
+                            playIconSize={12}
+                          />
+                        ) : (
+                          <AssetAvatar
+                            logo={(token as TokenItem)?.logo_url || ''}
+                            size={45}
+                          />
+                        )}
+                        <ChainIconFastImage
+                          style={styles.tokenChainIcon}
+                          size={20}
+                          chainServerId={token.chain}
                         />
-                      ) : (
-                        <AssetAvatar
-                          logo={(token as TokenItem)?.logo_url || ''}
-                          size={45}
-                        />
-                      )}
+                      </View>
                       <View
                         style={[
                           styles.singleColomnBox,
@@ -682,5 +712,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  tokenChainIcon: {
+    position: 'absolute',
+    right: -1,
+    bottom: -1,
+    width: 20,
+    height: 20,
+    borderWidth: 1,
+    borderColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
+    borderRadius: 1000,
   },
 }));

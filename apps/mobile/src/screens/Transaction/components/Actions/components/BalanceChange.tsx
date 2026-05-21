@@ -30,6 +30,7 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Account } from '@/core/services/preference';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { Text } from '@/components/Typography';
+import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';
 
 const NFTBalanceChange = ({
   data,
@@ -87,17 +88,26 @@ const NFTBalanceChange = ({
               handleGotoDetail(item);
             }}>
             <View style={styles.logoWithText}>
-              <Media
-                failedPlaceholder={
-                  <IconDefaultNFT width="100%" height="100%" />
-                }
-                type={item?.content_type}
-                src={item?.content?.endsWith('.svg') ? '' : item?.content}
-                thumbnail={item?.content?.endsWith('.svg') ? '' : item?.content}
-                playIconSize={18}
-                mediaStyle={styles.nftIcon}
-                style={styles.nftIcon}
-              />
+              <View>
+                <Media
+                  failedPlaceholder={
+                    <IconDefaultNFT width="100%" height="100%" />
+                  }
+                  type={item?.content_type}
+                  src={item?.content?.endsWith('.svg') ? '' : item?.content}
+                  thumbnail={
+                    item?.content?.endsWith('.svg') ? '' : item?.content
+                  }
+                  playIconSize={18}
+                  mediaStyle={styles.nftIcon}
+                  style={styles.nftIcon}
+                />
+                <ChainIconFastImage
+                  style={styles.tokenChainIcon}
+                  size={14}
+                  chainServerId={item.chain}
+                />
+              </View>
               <Text
                 style={[styles.changeText, styles.changeTextPositive]}
                 numberOfLines={1}>
@@ -124,17 +134,26 @@ const NFTBalanceChange = ({
               handleGotoDetail(item);
             }}>
             <View style={styles.logoWithText}>
-              <Media
-                failedPlaceholder={
-                  <IconDefaultNFT width="100%" height="100%" />
-                }
-                type={item?.content_type}
-                src={item?.content?.endsWith('.svg') ? '' : item?.content}
-                thumbnail={item?.content?.endsWith('.svg') ? '' : item?.content}
-                playIconSize={18}
-                mediaStyle={styles.nftIcon}
-                style={styles.nftIcon}
-              />
+              <View>
+                <Media
+                  failedPlaceholder={
+                    <IconDefaultNFT width="100%" height="100%" />
+                  }
+                  type={item?.content_type}
+                  src={item?.content?.endsWith('.svg') ? '' : item?.content}
+                  thumbnail={
+                    item?.content?.endsWith('.svg') ? '' : item?.content
+                  }
+                  playIconSize={18}
+                  mediaStyle={styles.nftIcon}
+                  style={styles.nftIcon}
+                />
+                <ChainIconFastImage
+                  style={styles.tokenChainIcon}
+                  size={14}
+                  chainServerId={item.chain}
+                />
+              </View>
               <Text style={styles.changeText} numberOfLines={1}>
                 - {formatAmount(item.amount, 0)}{' '}
                 {item.collection ? item.collection.name : item.name}
@@ -238,7 +257,14 @@ export const BalanceChange = ({
               handleGotoDetail(token);
             }}>
             <View style={styles.logoWithText}>
-              <AssetAvatar logo={token.logo_url} size={33} />
+              <View>
+                <AssetAvatar logo={token.logo_url} size={34} />
+                <ChainIconFastImage
+                  style={styles.tokenChainIcon}
+                  size={14}
+                  chainServerId={token.chain}
+                />
+              </View>
               <Text style={styles.changeText} numberOfLines={1}>
                 - {formatTokenAmount(token.amount)}{' '}
                 {ellipsisOverflowedText(getTokenSymbol(token), 12)}
@@ -263,7 +289,14 @@ export const BalanceChange = ({
               handleGotoDetail(token);
             }}>
             <View style={styles.logoWithText}>
-              <AssetAvatar logo={token.logo_url} size={33} />
+              <View>
+                <AssetAvatar logo={token.logo_url} size={34} />
+                <ChainIconFastImage
+                  style={styles.tokenChainIcon}
+                  size={14}
+                  chainServerId={token.chain}
+                />
+              </View>
               <Text
                 style={[styles.changeText, styles.changeTextPositive]}
                 numberOfLines={1}>
@@ -381,9 +414,21 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => {
       color: colors['neutral-title-1'],
     },
     nftIcon: {
-      width: 33,
-      height: 33,
-      borderRadius: 2,
+      width: 34,
+      height: 34,
+      borderRadius: 8,
+    },
+    tokenChainIcon: {
+      position: 'absolute',
+      right: 0,
+      bottom: 0,
+      width: 14,
+      height: 14,
+      borderWidth: 1,
+      borderColor: !isLight
+        ? colors2024['neutral-bg-2']
+        : colors2024['neutral-bg-1'],
+      borderRadius: 1000,
     },
   };
 });
