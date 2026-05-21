@@ -18,6 +18,7 @@ interface TokenAmountInputProps {
   symbol: string;
   value?: string;
   tokenAmount: number;
+  tokenDecimals?: number;
   price?: number;
   chain: CHAINS_ENUM;
   onChange?(amount: string): void;
@@ -29,11 +30,37 @@ interface TokenAmountInputProps {
   onClickToken?: () => void;
 }
 
+const truncateAmountToDecimals = (
+  inputValue: string,
+  tokenDecimals: number,
+) => {
+  const decimalsLimit =
+    Number.isFinite(tokenDecimals) && tokenDecimals > 0
+      ? Math.floor(tokenDecimals)
+      : 0;
+  const [whole, decimals] = inputValue.split('.');
+
+  if (decimals === undefined) {
+    return inputValue;
+  }
+
+  if (decimalsLimit === 0) {
+    return whole;
+  }
+
+  if (decimals.length <= decimalsLimit) {
+    return inputValue;
+  }
+
+  return `${whole}.${decimals.slice(0, decimalsLimit)}`;
+};
+
 export const TokenAmountInput = ({
   symbol,
   value,
   price = 1,
   tokenAmount,
+  tokenDecimals,
   onChange,
   chain,
   inlinePrize,
@@ -69,19 +96,44 @@ export const TokenAmountInput = ({
     );
   }, [colors2024]);
 
-  const handleChangeText = useMemo(
+  const formatAmountInput = useCallback(
+    (v: string) => {
+      const formatted = formatSpeicalAmount(v);
+      return tokenDecimals === undefined
+        ? formatted
+        : truncateAmountToDecimals(formatted, tokenDecimals);
+    },
+    [tokenDecimals],
+  );
+
+  const debouncedChangeText = useMemo(
     () =>
       debounce((v: string) => {
-        onChange?.(formatSpeicalAmount(v));
+        onChange?.(v);
       }, 200),
     [onChange],
   );
 
+  const handleChangeText = useCallback(
+    (v: string) => {
+      const formatted = formatAmountInput(v);
+
+      if (formatted !== v) {
+        debouncedChangeText.cancel();
+        onChange?.(formatted);
+        return false;
+      }
+
+      debouncedChangeText(formatted);
+    },
+    [debouncedChangeText, formatAmountInput, onChange],
+  );
+
   useEffect(() => {
     return () => {
-      handleChangeText.cancel();
+      debouncedChangeText.cancel();
     };
-  }, [handleChangeText]);
+  }, [debouncedChangeText]);
 
   const showTokenSelect = useMemo(() => {
     return !!onClickToken;
