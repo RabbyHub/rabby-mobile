@@ -59,6 +59,8 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
   const [modalVisible, setModalVisible] = React.useState(false);
+  // Guards against phantom taps re-opening the modal during the close animation.
+  const isPresentingRef = useRef(false);
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const {
@@ -105,6 +107,26 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
     setLimitPrice(v);
   });
 
+  useEffect(() => {
+    if (modalVisible) {
+      if (isPresentingRef.current) {
+        return;
+      }
+      isPresentingRef.current = true;
+      modalRef.current?.present();
+      if (initLimitPrice) {
+        setLimitPrice(initLimitPrice);
+      } else {
+        handleQuickPress({ label: 'Mid', pct: 'mid' });
+      }
+    } else {
+      // dismiss() (not close()) so a sibling popup's present() can't reorder
+      // the gorhom stack and re-show this modal.
+      modalRef.current?.dismiss();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalVisible]);
+
   const { runAsync: handleSet, loading } = useRequest(
     async () => {
       await handleSetLimitPx(limitPrice);
@@ -150,24 +172,6 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
     handleSet();
   });
 
-  useEffect(() => {
-    if (modalVisible) {
-      modalRef.current?.present();
-      if (initLimitPrice) {
-        setLimitPrice(initLimitPrice);
-      } else {
-        handleQuickPress({ label: 'Mid', pct: 'mid' });
-      }
-    } else {
-      // dismiss() removes the modal from gorhom's stack; close() only plays
-      // the animation. Without dismiss, a subsequent present() on a sibling
-      // modal (e.g. CheckPopup) can reorder the stack and re-show this one.
-      modalRef.current?.dismiss();
-      setLimitPrice('');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modalVisible]);
-
   const title =
     direction === 'Long'
       ? t('page.perpsDetail.PerpEditLimitPriceTag.setLimitBuyPrice')
@@ -177,7 +181,12 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
     <>
       <TouchableOpacity
         style={styles.tagContainer}
-        onPress={() => setModalVisible(true)}>
+        onPress={() => {
+          if (isPresentingRef.current) {
+            return;
+          }
+          setModalVisible(true);
+        }}>
         <Text style={[styles.tagText]}>
           {initLimitPrice ? `@ $${splitNumberByStep(initLimitPrice)}` : '-'}
         </Text>
@@ -193,7 +202,13 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
         })}
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore"
-        onDismiss={() => setModalVisible(false)}>
+        onDismiss={() => {
+          // Cleared here (not in the useEffect false branch) so the guard
+          // outlives the close animation.
+          isPresentingRef.current = false;
+          setModalVisible(false);
+          setLimitPrice('');
+        }}>
         <BottomSheetView>
           <AutoLockView style={styles.container}>
             <View style={styles.header}>
