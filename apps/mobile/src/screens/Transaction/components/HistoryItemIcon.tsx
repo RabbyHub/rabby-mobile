@@ -28,6 +28,7 @@ import { IconDefaultNFT } from '@/assets/icons/nft';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { HistoryItemCateType } from './type';
+import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';
 
 interface ItemIconProps {
   className?: string;
@@ -47,84 +48,6 @@ export const HistoryItemIcon = ({
 }: ItemIconProps) => {
   console.log('HistoryItemIcon render', { type, isInDetail });
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const RcSingleTokenBrIcon = useMemo(() => {
-    const size = isInDetail ? 24 : 20;
-    const IconApprove = !isLight ? (
-      <RcIconApprovalDark
-        width={size}
-        height={size}
-        color={
-          !isLight ? colors2024['neutral-bg-2'] : colors2024['neutral-bg-1']
-        }
-        style={[styles.iconBR]}
-      />
-    ) : (
-      <RcIconApproval
-        width={size}
-        height={size}
-        color={colors2024['neutral-bg-1']}
-        style={[styles.iconBR]}
-      />
-    );
-    const IconSend = !isLight ? (
-      <RcIconSendDark
-        width={size}
-        height={size}
-        style={[styles.iconBR]}
-        color={colors2024['neutral-bg-2']}
-      />
-    ) : (
-      <RcIconSend
-        width={size}
-        height={size}
-        style={[styles.iconBR]}
-        color={colors2024['neutral-bg-1']}
-      />
-    );
-    const IconRecieve = !isLight ? (
-      <RcIconReceiveDark
-        width={size}
-        height={size}
-        color={colors2024['neutral-bg-2']}
-        style={[styles.iconBR]}
-      />
-    ) : (
-      <RcIconReceive
-        style={[styles.iconBR]}
-        width={size}
-        height={size}
-        color={
-          !isLight ? colors2024['neutral-bg-2'] : colors2024['neutral-bg-1']
-        }
-      />
-    );
-    const IconRevoke = !isLight ? (
-      <RcIconRevokeDark
-        width={size}
-        height={size}
-        style={[styles.iconBR]}
-        color={
-          !isLight ? colors2024['neutral-bg-2'] : colors2024['neutral-bg-1']
-        }
-      />
-    ) : (
-      <RcIconRevoke
-        width={size}
-        height={size}
-        style={[styles.iconBR]}
-        color={
-          !isLight ? colors2024['neutral-bg-2'] : colors2024['neutral-bg-1']
-        }
-      />
-    );
-
-    return {
-      [HistoryItemCateType.Approve]: IconApprove,
-      [HistoryItemCateType.Send]: IconSend,
-      [HistoryItemCateType.Recieve]: IconRecieve,
-      [HistoryItemCateType.Revoke]: IconRevoke,
-    };
-  }, [isInDetail, colors2024, styles, isLight]);
 
   // if (iconUri) {
   switch (type) {
@@ -158,7 +81,11 @@ export const HistoryItemIcon = ({
           ) : (
             <AssetAvatar logo={singeToken?.logo_url} size={singleSize} />
           )}
-          {RcSingleTokenBrIcon[type]}
+          <ChainIconFastImage
+            style={styles.tokenChainIcon}
+            size={20}
+            chainServerId={singeToken.chain}
+          />
         </View>
       );
 
@@ -246,5 +173,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     bottom: -4,
     width: 20,
     height: 20,
+  },
+  tokenChainIcon: {
+    position: 'absolute',
+    right: -1,
+    bottom: -1,
+    width: 20,
+    height: 20,
+    borderWidth: 1,
+    borderColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
+    borderRadius: 1000,
   },
 }));

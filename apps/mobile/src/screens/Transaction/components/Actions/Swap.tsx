@@ -49,6 +49,7 @@ import {
   ActionDetailSection,
 } from './components/ActionDetailSection';
 import { ProjectItemInDetail } from '../ProjectItemInDetail';
+import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';
 
 interface Props {
   data: TransactionGroup;
@@ -178,32 +179,39 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
                         alignItems: 'center',
                         gap: 8,
                       }}>
-                      {tokenIsNft ? (
-                        <Media
-                          failedPlaceholder={
-                            <IconDefaultNFT width={45} height={45} />
-                          }
-                          type="image_url"
-                          src={
-                            token?.content?.endsWith('.svg')
-                              ? ''
-                              : token?.content
-                          }
-                          thumbnail={
-                            token?.content?.endsWith('.svg')
-                              ? ''
-                              : token?.content
-                          }
-                          mediaStyle={styles.media}
-                          style={styles.media}
-                          playIconSize={12}
+                      <View>
+                        {tokenIsNft ? (
+                          <Media
+                            failedPlaceholder={
+                              <IconDefaultNFT width={45} height={45} />
+                            }
+                            type="image_url"
+                            src={
+                              token?.content?.endsWith('.svg')
+                                ? ''
+                                : token?.content
+                            }
+                            thumbnail={
+                              token?.content?.endsWith('.svg')
+                                ? ''
+                                : token?.content
+                            }
+                            mediaStyle={styles.media}
+                            style={styles.media}
+                            playIconSize={12}
+                          />
+                        ) : (
+                          <AssetAvatar
+                            logo={(token as TokenItem)?.logo_url || ''}
+                            size={45}
+                          />
+                        )}
+                        <ChainIconFastImage
+                          style={[styles.tokenChainIcon]}
+                          size={14}
+                          chainServerId={token.chain}
                         />
-                      ) : (
-                        <AssetAvatar
-                          logo={(token as TokenItem)?.logo_url || ''}
-                          size={45}
-                        />
-                      )}
+                      </View>
                       <View
                         style={[
                           styles.singleColomnBox,
@@ -261,32 +269,39 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
                         alignItems: 'center',
                         gap: 8,
                       }}>
-                      {tokenIsNft ? (
-                        <Media
-                          failedPlaceholder={
-                            <IconDefaultNFT width={45} height={45} />
-                          }
-                          type="image_url"
-                          src={
-                            token?.content?.endsWith('.svg')
-                              ? ''
-                              : token?.content
-                          }
-                          thumbnail={
-                            token?.content?.endsWith('.svg')
-                              ? ''
-                              : token?.content
-                          }
-                          mediaStyle={styles.media}
-                          style={styles.media}
-                          playIconSize={12}
+                      <View>
+                        {tokenIsNft ? (
+                          <Media
+                            failedPlaceholder={
+                              <IconDefaultNFT width={45} height={45} />
+                            }
+                            type="image_url"
+                            src={
+                              token?.content?.endsWith('.svg')
+                                ? ''
+                                : token?.content
+                            }
+                            thumbnail={
+                              token?.content?.endsWith('.svg')
+                                ? ''
+                                : token?.content
+                            }
+                            mediaStyle={styles.media}
+                            style={styles.media}
+                            playIconSize={12}
+                          />
+                        ) : (
+                          <AssetAvatar
+                            logo={(token as TokenItem)?.logo_url || ''}
+                            size={45}
+                          />
+                        )}
+                        <ChainIconFastImage
+                          style={[styles.tokenChainIcon]}
+                          size={14}
+                          chainServerId={token.chain}
                         />
-                      ) : (
-                        <AssetAvatar
-                          logo={(token as TokenItem)?.logo_url || ''}
-                          size={45}
-                        />
-                      )}
+                      </View>
                       <View
                         style={[
                           styles.singleColomnBox,
@@ -301,7 +316,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
                             : ellipsisOverflowedText(
                                 getTokenSymbol(token as TokenItem),
                                 16,
-                              )}
+                              )}{' '}
                         </Text>
                         <HistoryItemTokenPrice
                           singlePrice={token?.price}
@@ -550,6 +565,18 @@ const getStyle = createGetStyles2024(
       fontSize: 14,
       lineHeight: 18,
       fontWeight: '700',
+    },
+    tokenChainIcon: {
+      position: 'absolute',
+      right: -1,
+      bottom: -1,
+      width: 20,
+      height: 20,
+      borderWidth: 1,
+      borderColor: !isLight
+        ? colors2024['neutral-bg-2']
+        : colors2024['neutral-bg-1'],
+      borderRadius: 1000,
     },
   }),
 );

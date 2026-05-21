@@ -115,6 +115,7 @@ export const ApproveNFTCollection: React.FC<Props> = ({
                   {
                     ...actionData.collection,
                     content: (actionData.collection as any)?.logo_url,
+                    chain: chain.serverId,
                   } as unknown as TokenItem
                 }
                 isNft={true}

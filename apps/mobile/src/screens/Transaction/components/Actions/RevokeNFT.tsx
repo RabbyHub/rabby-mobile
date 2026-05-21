@@ -129,11 +129,11 @@ export const RevokeNFT: React.FC<Props> = ({
           </View>
         </TouchableOpacity>
         <ActionDetailSection data={data} chain={chain} accounts={unionAccounts}>
-          <ActionDetailItem label={t('page.transactions.detail.name')}>
+          {/* <ActionDetailItem label={t('page.transactions.detail.name')}>
             <ActionDetailText numberOfLines={1} ellipsizeMode="tail">
               {actionData?.nft?.name || '-'}
             </ActionDetailText>
-          </ActionDetailItem>
+          </ActionDetailItem> */}
           <ProjectItemInDetail
             title={t('page.transactions.detail.InteractedContract')}
             name={actionData.nft?.collection?.name}
