@@ -1,7 +1,13 @@
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { QuoteProvider } from '../hooks';
 import { useTranslation } from 'react-i18next';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { tokenAmountBn } from '../utils';
 import {
   formatSpeicalAmount,
@@ -131,19 +137,24 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
 
   const prevToken = usePrevious(token);
 
-  if (
+  const shouldSyncAmountWithToken =
     isFrom &&
-    slider &&
+    !!slider &&
     Number(value) === 0 &&
-    onChangeSlider &&
+    !!onChangeSlider &&
     prevToken?.chain === token?.chain &&
     prevToken?.id === token?.id &&
     (token?.amount !== prevToken?.amount ||
-      token?.raw_amount_hex_str !== prevToken?.raw_amount_hex_str)
-  ) {
+      token?.raw_amount_hex_str !== prevToken?.raw_amount_hex_str);
+
+  useEffect(() => {
+    if (!shouldSyncAmountWithToken || !slider) {
+      return;
+    }
+
     console.debug('sync amount with token', slider);
     onAfterChangeSlider(slider);
-  }
+  }, [onAfterChangeSlider, shouldSyncAmountWithToken, slider]);
 
   const Linear = useCallback(() => {
     return (
