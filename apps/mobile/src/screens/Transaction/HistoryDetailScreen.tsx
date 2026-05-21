@@ -164,7 +164,7 @@ function HistoryDetailScreen(): JSX.Element {
   const { t } = useTranslation();
   const status = useMemo(() => data.tx?.status ?? 1, [data]);
 
-  const isScam = data.is_scam || (data.isSmallUsdTx && treatSmallAssetsAsScam);
+  const isScam = data.is_scam;
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const getHeaderTitle = React.useCallback(() => {
