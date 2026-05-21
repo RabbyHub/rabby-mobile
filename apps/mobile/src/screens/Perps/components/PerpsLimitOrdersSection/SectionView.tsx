@@ -30,7 +30,6 @@ export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const marketDataMap = perpsStore(s => s.marketDataMap);
   const currentPerpsAccount = perpsStore(s => s.currentPerpsAccount);
   const { handleCancelLimitOrders } = usePerpsPosition();
   const [activeRow, setActiveRow] = useState<LimitOrderRow | null>(null);
@@ -117,7 +116,6 @@ export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
             order={row.order}
             leverage={row.leverage}
             marginUsage={row.marginUsage}
-            marketData={marketDataMap[row.order.coin]}
             onPress={() => setActiveRow(row)}
           />
         ))}
@@ -128,7 +126,6 @@ export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
         order={activeRow?.order}
         leverage={activeRow?.leverage}
         marginUsage={activeRow?.marginUsage}
-        marketData={activeRow ? marketDataMap[activeRow.order.coin] : undefined}
         onClose={() => setActiveRow(null)}
         onCancel={handleConfirmSingleCancel}
       />

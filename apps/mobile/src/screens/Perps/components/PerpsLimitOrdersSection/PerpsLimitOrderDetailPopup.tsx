@@ -16,7 +16,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { formatPerpsDisplayName, computeFilledPct } from '@/utils/perps';
 import BigNumber from 'bignumber.js';
-import { MarketData } from '@/hooks/perps/usePerpsStore';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 
@@ -41,7 +41,6 @@ type Props = {
   order?: OpenOrder | null;
   leverage?: Leverage | null;
   marginUsage?: number;
-  marketData?: MarketData;
   onClose: () => void;
   onCancel: () => void | Promise<void>;
 };
@@ -51,7 +50,6 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
   order,
   leverage,
   marginUsage = 0,
-  marketData,
   onClose,
   onCancel,
 }) => {
@@ -60,6 +58,10 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
   const navigation = useRabbyAppNavigation();
   const modalRef = useRef<AppBottomSheetModal>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const coin = order?.coin;
+  const marketData = perpsStore(s =>
+    coin ? s.marketDataMap[coin] : undefined,
+  );
 
   useEffect(() => {
     if (!visible) {

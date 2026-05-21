@@ -10,7 +10,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { computeFilledPct } from '@/utils/perps';
-import { MarketData } from '@/hooks/perps/usePerpsStore';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { PerpsDisplayCoinName } from '../PerpsDisplayCoinName';
 
 // Circle progress ring. percent in [0, 100], filled clockwise from 12 o'clock.
@@ -63,7 +63,6 @@ export type Props = {
   order: OpenOrder;
   leverage: Leverage | null;
   marginUsage: number;
-  marketData?: MarketData;
   onPress: () => void;
 };
 
@@ -71,11 +70,11 @@ export const PerpsLimitOrderItem: React.FC<Props> = ({
   order,
   leverage,
   marginUsage,
-  marketData,
   onPress,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const marketData = perpsStore(s => s.marketDataMap[order.coin]);
 
   // Hyperliquid: side === 'B' means Bid → Buy → Long visual.
   const isBuy = order.side === 'B';
