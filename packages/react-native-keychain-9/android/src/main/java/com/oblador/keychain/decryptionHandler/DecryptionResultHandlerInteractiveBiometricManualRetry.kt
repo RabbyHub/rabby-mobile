@@ -24,7 +24,7 @@ class DecryptionResultHandlerInteractiveBiometricManualRetry(
 
   /** Manually cancel current (invisible) authentication to clear the fragment. */
   private fun cancelPresentedAuthentication() {
-    Log.d(LOG_TAG, "Cancelling authentication")
+    traceNativeInfo("manual_retry_cancel_authentication")
     if (presentedPrompt == null) {
       return
     }
@@ -41,6 +41,9 @@ class DecryptionResultHandlerInteractiveBiometricManualRetry(
   /** Called when an unrecoverable error has been encountered and the operation is complete. */
   override fun onAuthenticationError(errorCode: Int, @NonNull errString: CharSequence) {
     if (didFailBiometric) {
+      traceNativeWarn(
+          "manual_retry_after_authentication_error",
+          mapOf("code" to errorCode, "message" to errString.toString()))
       this.presentedPrompt = null
       this.didFailBiometric = false
       retryAuthentication()
@@ -56,6 +59,7 @@ class DecryptionResultHandlerInteractiveBiometricManualRetry(
    */
   override fun onAuthenticationFailed() {
     Log.d(LOG_TAG, "Authentication failed: biometric not recognized.")
+    traceNativeWarn("manual_retry_authentication_failed")
     if (presentedPrompt != null) {
       this.didFailBiometric = true
       cancelPresentedAuthentication()
@@ -75,17 +79,23 @@ class DecryptionResultHandlerInteractiveBiometricManualRetry(
 
     // Code can be executed only from MAIN thread
     if (Thread.currentThread() != Looper.getMainLooper().thread) {
+      traceNativeInfo(
+          "manual_retry_start_authentication_post_to_main",
+          mapOf("thread" to Thread.currentThread().name))
       activity.runOnUiThread { startAuthentication() }
       waitResult()
       return
     }
 
+    traceNativeInfo(
+        "manual_retry_start_authentication_on_main",
+        mapOf("thread" to Thread.currentThread().name))
     this.presentedPrompt = authenticateWithPrompt(activity)
   }
 
   /** Trigger interactive authentication without invoking another waitResult() */
   protected fun retryAuthentication() {
-    Log.d(LOG_TAG, "Retrying biometric authentication.")
+    traceNativeInfo("manual_retry_retry_authentication")
 
     val activity = getCurrentActivity()
 

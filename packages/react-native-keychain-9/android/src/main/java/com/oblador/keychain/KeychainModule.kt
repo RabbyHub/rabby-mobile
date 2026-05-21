@@ -338,6 +338,16 @@ class KeychainModule(reactContext: ReactApplicationContext) :
     getGenericPassword(service, options, promise)
   }
 
+  @ReactMethod
+  fun addListener(eventName: String) {
+    // Required by NativeEventEmitter. Events are emitted only when JS subscribes.
+  }
+
+  @ReactMethod
+  fun removeListeners(count: Int) {
+    // Required by NativeEventEmitter. Native side does not keep per-listener state.
+  }
+
   private fun resetGenericPassword(alias: String, promise: Promise) {
     try {
       // First we clean up the cipher storage (using the cipher storage that was used to store the

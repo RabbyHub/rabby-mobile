@@ -11,6 +11,8 @@ import androidx.fragment.app.FragmentActivity
 import com.facebook.react.bridge.AssertionException
 import com.facebook.react.bridge.ReactApplicationContext
 import com.rabbywallet.keychain9.DeviceAvailability
+import com.rabbywallet.keychain9.KeychainModule
+import com.rabbywallet.keychain9.RabbyNativeLogger
 import com.rabbywallet.keychain9.cipherStorage.CipherStorage
 import com.rabbywallet.keychain9.cipherStorage.CipherStorage.DecryptionContext
 import com.rabbywallet.keychain9.cipherStorage.CipherStorage.DecryptionResult
@@ -43,11 +45,25 @@ open class DecryptionResultHandlerInteractiveBiometric(
   private val UNLOCK_PERF_TAG = "RabbyUnlockPerf:keychain-native"
   private val AUTH_SUCCESS_DECRYPT_RETRY_DELAY_MS = 120L
 
+  fun traceNativeInfo(event: String, data: Map<String, Any?> = emptyMap()) {
+    RabbyNativeLogger.info(
+        reactContext, KeychainModule.KEYCHAIN_MODULE, UNLOCK_PERF_TAG, event, data)
+  }
+
+  fun traceNativeWarn(
+      event: String,
+      data: Map<String, Any?> = emptyMap(),
+      error: Throwable? = null
+  ) {
+    RabbyNativeLogger.warn(
+        reactContext, KeychainModule.KEYCHAIN_MODULE, UNLOCK_PERF_TAG, event, data, error)
+  }
+
   override fun askAccessPermissions(@NonNull context: DecryptionContext) {
     this.context = context
-    Log.i(
-        LOG_TAG,
-        "[$UNLOCK_PERF_TAG] ask_access_permissions alias=${context.keyAlias} thread=${Thread.currentThread().name}")
+    traceNativeInfo(
+        "ask_access_permissions",
+        mapOf("alias" to context.keyAlias, "thread" to Thread.currentThread().name))
 
     if (!DeviceAvailability.isPermissionsGranted(reactContext)) {
       val failure =
@@ -72,28 +88,34 @@ open class DecryptionResultHandlerInteractiveBiometric(
 
   /** Called when an unrecoverable error has been encountered and the operation is complete. */
   override fun onAuthenticationError(errorCode: Int, @NonNull errString: CharSequence) {
-    Log.w(
-        LOG_TAG,
-        "[$UNLOCK_PERF_TAG] authentication_error code=$errorCode msg=$errString")
+    traceNativeWarn(
+        "authentication_error",
+        mapOf("code" to errorCode, "message" to errString.toString()))
     val error = CryptoFailedException("code: $errorCode, msg: $errString")
     onDecrypt(null, error)
+  }
+
+  override fun onAuthenticationFailed() {
+    traceNativeWarn(
+        "authentication_failed",
+        mapOf("alias" to context?.keyAlias, "thread" to Thread.currentThread().name))
   }
 
   /** Called when a biometric is recognized. */
   override fun onAuthenticationSucceeded(@NonNull result: BiometricPrompt.AuthenticationResult) {
     try {
       context ?: throw NullPointerException("Decrypt context is not assigned yet.")
-      Log.i(
-          LOG_TAG,
-          "[$UNLOCK_PERF_TAG] authentication_succeeded alias=${context!!.keyAlias} thread=${Thread.currentThread().name}")
+      traceNativeInfo(
+          "authentication_succeeded",
+          mapOf("alias" to context!!.keyAlias, "thread" to Thread.currentThread().name))
 
       val decrypted = decryptContextWithAuthWindowRetry()
 
       onDecrypt(decrypted, null)
     } catch (fail: Throwable) {
-      Log.w(
-          LOG_TAG,
-          "[$UNLOCK_PERF_TAG] authentication_succeeded_decrypt_failed error=${fail.javaClass.simpleName} msg=${fail.message}",
+      traceNativeWarn(
+          "authentication_succeeded_decrypt_failed",
+          mapOf("error" to fail.javaClass.simpleName, "message" to fail.message),
           fail)
       onDecrypt(null, fail)
     }
@@ -115,22 +137,29 @@ open class DecryptionResultHandlerInteractiveBiometric(
         throw fail
       }
 
-      Log.w(
-          LOG_TAG,
-          "[$UNLOCK_PERF_TAG] authentication_succeeded_decrypt_user_not_authenticated_retry delayMs=$AUTH_SUCCESS_DECRYPT_RETRY_DELAY_MS alias=${context?.keyAlias}",
+      traceNativeWarn(
+          "authentication_succeeded_decrypt_user_not_authenticated_retry",
+          mapOf(
+              "delayMs" to AUTH_SUCCESS_DECRYPT_RETRY_DELAY_MS,
+              "alias" to context?.keyAlias,
+              "error" to fail.javaClass.simpleName,
+              "message" to fail.message),
           fail)
       SystemClock.sleep(AUTH_SUCCESS_DECRYPT_RETRY_DELAY_MS)
 
       return try {
         val retryResult = decryptContext()
-        Log.i(
-            LOG_TAG,
-            "[$UNLOCK_PERF_TAG] authentication_succeeded_decrypt_retry_success alias=${context?.keyAlias}")
+        traceNativeInfo(
+            "authentication_succeeded_decrypt_retry_success",
+            mapOf("alias" to context?.keyAlias))
         retryResult
       } catch (retryFail: Throwable) {
-        Log.w(
-            LOG_TAG,
-            "[$UNLOCK_PERF_TAG] authentication_succeeded_decrypt_retry_failed error=${retryFail.javaClass.simpleName} msg=${retryFail.message} alias=${context?.keyAlias}",
+        traceNativeWarn(
+            "authentication_succeeded_decrypt_retry_failed",
+            mapOf(
+                "error" to retryFail.javaClass.simpleName,
+                "message" to retryFail.message,
+                "alias" to context?.keyAlias),
             retryFail)
         throw retryFail
       }
@@ -162,17 +191,16 @@ open class DecryptionResultHandlerInteractiveBiometric(
 
     // Code can be executed only from MAIN thread
     if (Thread.currentThread() != Looper.getMainLooper().thread) {
-      Log.i(
-          LOG_TAG,
-          "[$UNLOCK_PERF_TAG] start_authentication_post_to_main thread=${Thread.currentThread().name}")
+      traceNativeInfo(
+          "start_authentication_post_to_main",
+          mapOf("thread" to Thread.currentThread().name))
       activity.runOnUiThread { startAuthentication() }
       waitResult()
       return
     }
 
-    Log.i(
-        LOG_TAG,
-        "[$UNLOCK_PERF_TAG] start_authentication_on_main thread=${Thread.currentThread().name}")
+    traceNativeInfo(
+        "start_authentication_on_main", mapOf("thread" to Thread.currentThread().name))
     authenticateWithPrompt(activity)
   }
 
@@ -182,7 +210,8 @@ open class DecryptionResultHandlerInteractiveBiometric(
   }
 
   protected fun authenticateWithPrompt(@NonNull activity: FragmentActivity): BiometricPrompt {
-    Log.i(LOG_TAG, "[$UNLOCK_PERF_TAG] authenticate_with_prompt activity=${activity.javaClass.simpleName}")
+    traceNativeInfo(
+        "authenticate_with_prompt", mapOf("activity" to activity.javaClass.simpleName))
     val prompt = BiometricPrompt(activity, executor, this)
     prompt.authenticate(this.promptInfo)
     return prompt

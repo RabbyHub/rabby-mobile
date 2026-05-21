@@ -7,6 +7,7 @@ import { logger } from '@/utils/logger';
 
 import { keychainMMKV } from '../storage/mmkvInstances';
 import { KEYCHAIN_MMKV_KEYS } from '../storage/mmkvConstants';
+import { bindNativeLoggerBridge } from '../native/nativeLogger';
 import { appEncryptor } from '../services';
 import * as apisLock from './lock';
 
@@ -574,6 +575,11 @@ export function createBusinessKeychainApi({
   sourceLabel,
   supportedAndroidStorageTypes,
 }: CreateBusinessKeychainApiOptions) {
+  bindNativeLoggerBridge({
+    nativeModuleName: debugNativeModuleName,
+    sourceLabel,
+  });
+
   const DEFAULT_BASE_OPTIONS: KeychainCompatibleOptions = {
     service: KEYCHAIN_DEFAULT_SERVICE,
   };

@@ -2,6 +2,7 @@ package com.rabbywallet.keychain9.cipherStorage
 
 import android.annotation.SuppressLint
 import android.os.Build
+import android.os.SystemClock
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
@@ -12,6 +13,7 @@ import com.rabbywallet.keychain9.KeychainModule
 import com.rabbywallet.keychain9.SecurityLevel
 import com.rabbywallet.keychain9.decryptionHandler.DecryptionResultHandler
 import com.rabbywallet.keychain9.decryptionHandler.DecryptionResultHandlerNonInteractive
+import com.rabbywallet.keychain9.decryptionHandler.DecryptionResultHandlerInteractiveBiometric
 import com.rabbywallet.keychain9.exceptions.CryptoFailedException
 import com.rabbywallet.keychain9.exceptions.KeyStoreAccessException
 import java.io.IOException
@@ -148,6 +150,7 @@ class CipherStorageKeystoreRsaEcb : CipherStorageBase() {
 
       val context =
           CipherStorage.DecryptionContext(safeAlias, extractedKey, password, username)
+      runInteractivePromptPreflight(handler, safeAlias, extractedKey, username)
       handler.askAccessPermissions(context)
     } catch (ex: UserNotAuthenticatedException) {
       Log.d(LOG_TAG, "Unlock of keystore is needed. Error: ${ex.message}", ex)
@@ -159,6 +162,42 @@ class CipherStorageKeystoreRsaEcb : CipherStorageBase() {
     } catch (fail: Throwable) {
       // any other exception treated as a failure
       handler.onDecrypt(null, fail)
+    }
+  }
+
+  private fun runInteractivePromptPreflight(
+      handler: DecryptionResultHandler,
+      safeAlias: String,
+      key: Key,
+      username: ByteArray
+  ) {
+    val interactiveHandler = handler as? DecryptionResultHandlerInteractiveBiometric ?: return
+    val startedAt = SystemClock.elapsedRealtime()
+
+    interactiveHandler.traceNativeInfo(
+        "interactive_preflight_decrypt_start", mapOf("alias" to safeAlias))
+
+    try {
+      decryptBytes(key, username)
+      interactiveHandler.traceNativeWarn(
+          "interactive_preflight_decrypt_unexpected_success",
+          mapOf("alias" to safeAlias, "elapsedMs" to SystemClock.elapsedRealtime() - startedAt))
+    } catch (authRequired: UserNotAuthenticatedException) {
+      interactiveHandler.traceNativeInfo(
+          "interactive_preflight_auth_required",
+          mapOf(
+              "alias" to safeAlias,
+              "elapsedMs" to SystemClock.elapsedRealtime() - startedAt,
+              "message" to authRequired.message))
+    } catch (fail: Throwable) {
+      interactiveHandler.traceNativeWarn(
+          "interactive_preflight_decrypt_failed",
+          mapOf(
+              "alias" to safeAlias,
+              "elapsedMs" to SystemClock.elapsedRealtime() - startedAt,
+              "error" to fail.javaClass.simpleName,
+              "message" to fail.message),
+          fail)
     }
   }
 
