@@ -150,7 +150,7 @@ export const SwitchBiometricsAuthentication = ({
   useImperativeHandle(ref, () => ({
     toggle: async (enabled?: boolean) => {
       await requestToggleBiometricsEnabled(
-        enabled ?? !isBiometricsEnabled,
+        enabled ?? (!isBiometricsEnabled && !isUsingDevicePasscode),
         onToggleSuccess,
       );
     },
