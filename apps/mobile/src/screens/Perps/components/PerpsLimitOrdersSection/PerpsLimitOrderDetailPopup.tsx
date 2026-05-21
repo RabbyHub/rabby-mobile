@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
+import Svg, { Path, Rect } from 'react-native-svg';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { useMemoizedFn } from 'ahooks';
@@ -16,6 +17,24 @@ import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { formatPerpsDisplayName, computeFilledPct } from '@/utils/perps';
 import BigNumber from 'bignumber.js';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { RootNames } from '@/constant/layout';
+
+const LimitPriceArrow: React.FC<{ bg: string; stroke: string }> = ({
+  bg,
+  stroke,
+}) => (
+  <Svg width={16} height={16} viewBox="0 0 16 16" fill="none">
+    <Rect width={16} height={16} rx={8} fill={bg} />
+    <Path
+      d="M7 4.3335L11 8.00016L7 11.6668"
+      stroke={stroke}
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
 
 type Props = {
   visible: boolean;
@@ -38,6 +57,7 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const navigation = useRabbyAppNavigation();
   const modalRef = useRef<AppBottomSheetModal>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
 
@@ -62,6 +82,19 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
     } finally {
       setCancelLoading(false);
     }
+  });
+
+  const handleGoToMarketDetail = useMemoizedFn(() => {
+    if (!order) {
+      return;
+    }
+    onClose();
+    navigation.push(RootNames.StackTransaction, {
+      screen: RootNames.PerpsMarketDetail,
+      params: {
+        market: order.coin,
+      },
+    });
   });
 
   if (!order) {
@@ -114,15 +147,39 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
                 `${filledPct.toFixed(0)}%`,
               ],
               [t('page.perps.limitOrderDetail.currentPrice'), currentPriceText],
-              [t('page.perps.limitOrderDetail.limitPrice'), limitPriceText],
+              [
+                t('page.perps.limitOrderDetail.limitPrice'),
+                limitPriceText,
+                'limitPrice',
+              ],
               [t('page.perps.limitOrderDetail.marginUsage'), marginUsageText],
-            ] as Array<[string, string]>
-          ).map(([label, value]) => (
-            <View key={label} style={styles.row}>
-              <Text style={styles.rowLabel}>{label}</Text>
-              <Text style={styles.rowValue}>{value}</Text>
-            </View>
-          ))}
+            ] as Array<[string, string, string?]>
+          ).map(([label, value, key]) =>
+            key === 'limitPrice' ? (
+              <View key={label} style={styles.row}>
+                <Text style={styles.rowLabel}>{label}</Text>
+                <TouchableOpacity
+                  style={styles.limitPriceValue}
+                  onPress={handleGoToMarketDetail}
+                  activeOpacity={0.6}>
+                  <Text style={styles.rowValue}>{value}</Text>
+                  <LimitPriceArrow
+                    bg={
+                      isLight
+                        ? colors2024['neutral-bg-2']
+                        : colors2024['neutral-bg-4']
+                    }
+                    stroke={colors2024['neutral-foot']}
+                  />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View key={label} style={styles.row}>
+                <Text style={styles.rowLabel}>{label}</Text>
+                <Text style={styles.rowValue}>{value}</Text>
+              </View>
+            ),
+          )}
         </View>
 
         <View style={styles.buttonContainer}>
@@ -181,6 +238,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
+  },
+  limitPriceValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
   buttonContainer: {
     paddingTop: 24,
