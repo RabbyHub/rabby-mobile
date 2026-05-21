@@ -214,7 +214,7 @@ export const HistoryTokenList = ({
         ? isUnlimited
           ? t('page.transactions.detail.Unlimited')
           : formatTokenAmount(singleAmount || 0)
-        : '0';
+        : '';
       const singeToken = isArray(token) ? token[0] : token;
       const isSend = type === HistoryItemCateType.Send;
       const isGasDeposit = type === HistoryItemCateType.GAS_DEPOSIT;

@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/Typography';
+import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { toast } from '@/components2024/Toast';
@@ -50,7 +50,7 @@ function makeContactServiceSnapshot(): ContactServiceSnapshot {
       return {
         storeKey: key,
         address,
-        remark: aliasItem?.alias || legacyContact?.name || '',
+        remark: aliasItem ? aliasItem.alias : legacyContact?.name || '',
         isDefaultAlias: !!aliasItem?.isDefaultAlias,
         legacyContactName: legacyContact?.name,
         hasAliasRecord: !!aliasItem,
@@ -137,14 +137,21 @@ function SummaryCard({ snapshot }: { snapshot: ContactServiceSnapshot }) {
 function ContactAddressCard({
   item,
   index,
+  onSaveRemark,
 }: {
   item: ContactAddressRow;
   index: number;
+  onSaveRemark(address: string, remark: string): void;
 }) {
-  const { styles } = useTheme2024({
+  const { styles, colors2024 } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
   });
+  const [draftRemark, setDraftRemark] = useState(item.remark);
+
+  useEffect(() => {
+    setDraftRemark(item.remark);
+  }, [item.address, item.remark]);
 
   return (
     <View style={styles.addressCard}>
@@ -170,9 +177,27 @@ function ContactAddressCard({
       </View>
 
       <Text style={styles.remarkLabel}>Remark</Text>
-      <Text style={styles.remarkValue} selectable>
-        {item.remark || '-'}
-      </Text>
+      <TextInput
+        style={styles.remarkInput}
+        value={draftRemark}
+        onChangeText={setDraftRemark}
+        placeholder="Empty remark"
+        placeholderTextColor={colors2024['neutral-info']}
+        autoCapitalize="none"
+        autoCorrect={false}
+        multiline
+        textAlignVertical="top"
+      />
+      <Button
+        title="Save Remark"
+        type="ghost"
+        height={36}
+        containerStyle={styles.saveRemarkButton}
+        titleStyle={styles.saveRemarkButtonTitle}
+        onPress={() => {
+          onSaveRemark(item.address, draftRemark);
+        }}
+      />
 
       <Text style={styles.fieldLabel}>Address</Text>
       <Text style={styles.addressValue} selectable>
@@ -248,6 +273,18 @@ function DevDataContactService(): JSX.Element {
     toast.success('Copied');
   }, [rawJson]);
 
+  const saveRemark = useCallback(
+    (address: string, remark: string) => {
+      contactService.updateAlias({
+        address,
+        name: remark,
+      });
+      refreshSnapshot();
+      toast.success('Saved');
+    },
+    [refreshSnapshot],
+  );
+
   return (
     <FooterButtonScreenContainer
       as="View"
@@ -279,6 +316,7 @@ function DevDataContactService(): JSX.Element {
                 key={`${item.storeKey}-${item.address}`}
                 item={item}
                 index={index}
+                onSaveRemark={saveRemark}
               />
             ))}
           </View>
@@ -410,12 +448,28 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     lineHeight: 16,
   },
-  remarkValue: {
+  remarkInput: {
     marginTop: 4,
+    minHeight: 48,
+    maxHeight: 120,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+    backgroundColor: colors2024['neutral-bg-2'],
     color: colors2024['neutral-title-1'],
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 22,
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+  saveRemarkButton: {
+    marginTop: 8,
+    width: 128,
+  },
+  saveRemarkButtonTitle: {
+    fontSize: 14,
+    lineHeight: 18,
   },
   fieldLabel: {
     marginTop: 10,
