@@ -16,8 +16,7 @@ import {
 } from '@/core/apis/lock';
 import { Vibration } from 'react-native';
 import { IExtractFromPromise } from '@/utils/type';
-import { IS_IOS, IS_ANDROID } from '@/core/native/utils';
-import DeviceInfo from 'react-native-device-info';
+import { IS_IOS } from '@/core/native/utils';
 import { preferenceService } from '@/core/services';
 import { zCreate } from '@/core/utils/reexports';
 import {
@@ -49,35 +48,6 @@ runIIFEFunc(() => {
   });
 });
 
-function iPhoneHasFaceID(): boolean {
-  if (!IS_IOS) return false;
-  const model = DeviceInfo.getDeviceId();
-  // Match iPhone10,3 / iPhone10,6 (iPhone X) and anything iPhone11+ except SE
-  const match = model.match(/^iPhone(\d+),(\d+)$/);
-  if (!match) return false;
-  const [, major, minor] = match.map(Number);
-  // iPhone SE 2nd gen = iPhone12,8, SE 3rd gen = iPhone14,6 — Touch ID only
-  if (model === 'iPhone12,8' || model === 'iPhone14,6') return false;
-  if (major > 10) return true;
-  if (major === 10 && (minor === 3 || minor === 6)) return true; // iPhone X
-  return false;
-}
-
-/**
- * Returns the biometry type based on hardware capability, regardless of
- * enrollment state or permission. Falls back to the OS-reported type when
- * biometrics are enrolled and permission is granted.
- */
-function getHardwareBiometryType(): KeychainSupportedBiometryType {
-  if (IS_IOS) {
-    return iPhoneHasFaceID() ? 'FaceID' : 'TouchID';
-  }
-  if (IS_ANDROID) {
-    return 'Fingerprint';
-  }
-  return null;
-}
-
 export function useBiometricsComputed() {
   const authEnabled = biometricsInfoStore(s => s.authEnabled);
   const supportedBiometryType = biometricsInfoStore(
@@ -86,9 +56,7 @@ export function useBiometricsComputed() {
   const { t } = useTranslation();
 
   const computed = useMemo(() => {
-    // Prefer OS-reported type (enrolled + permission granted), fall back to hardware
-    const effectiveType = supportedBiometryType || getHardwareBiometryType();
-    const isFaceID = effectiveType === BIOMETRY_TYPE.FACE_ID;
+    const isFaceID = supportedBiometryType === BIOMETRY_TYPE.FACE_ID;
 
     // When password is auto-generated and biometrics have no permission/enrollment,
     // the user relies on device passcode for authentication
