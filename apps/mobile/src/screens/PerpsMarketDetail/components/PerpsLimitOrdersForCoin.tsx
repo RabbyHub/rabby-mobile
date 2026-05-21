@@ -20,6 +20,7 @@ export const PerpsLimitOrdersForCoin: React.FC<Props> = ({
     <PerpsLimitOrdersSectionView
       rows={rows}
       handleActionApproveStatus={handleActionApproveStatus}
+      disableCoinNavigation
     />
   );
 };

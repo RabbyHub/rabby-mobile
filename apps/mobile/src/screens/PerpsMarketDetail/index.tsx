@@ -281,10 +281,8 @@ export const PerpsMarketDetailScreen = () => {
     return !!currentPosition;
   }, [currentPosition]);
 
-  const openOrders = perpsStore(s => s.openOrders);
-  const hasLimitOrders = useMemo(
-    () => (openOrders || []).some(o => o.coin === coin && isLimitOrder(o)),
-    [openOrders, coin],
+  const hasLimitOrders = perpsStore(s =>
+    (s.openOrders || []).some(o => o.coin === coin && isLimitOrder(o)),
   );
 
   const { accountValue, isUnifiedAccount, getAvailableByAsset } =
