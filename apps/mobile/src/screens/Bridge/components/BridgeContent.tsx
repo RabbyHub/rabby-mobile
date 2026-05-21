@@ -89,9 +89,10 @@ export interface BridgeFormSnapshot {
   amountMode?: FormAmountMode;
 }
 
-const BOTTOM_BUTTON_HEIGHT = 56;
+const BOTTOM_BUTTON_HEIGHT = 58;
+const BOTTOM_BUTTON_TITLE_FONT_SIZE = 18;
 const BOTTOM_BUTTON_HORIZONTAL_PADDING = 20;
-const BOTTOM_BUTTON_BOTTOM_OFFSET = 56;
+const BOTTOM_BUTTON_BOTTOM_OFFSET = 36;
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -210,6 +211,9 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
   btnTitle: {
     color: colors['neutral-title-2'],
+  },
+  bottomButtonTitle: {
+    fontSize: BOTTOM_BUTTON_TITLE_FONT_SIZE,
   },
   marketClosedTip: {
     marginHorizontal: 24,
@@ -1231,6 +1235,7 @@ export const BridgeContent = ({
                 ref={directSignBtnRef}
                 key={`${selectedBridgeQuote?.aggregator.id}-${selectedBridgeQuote?.bridge?.id}-${refreshId}`}
                 height={BOTTOM_BUTTON_HEIGHT}
+                titleStyle={styles.bottomButtonTitle}
                 authTitle={t('page.whitelist.confirmPassword')}
                 title={t('global.confirm')}
                 loadingType="circle"
@@ -1260,7 +1265,7 @@ export const BridgeContent = ({
                 height={BOTTOM_BUTTON_HEIGHT}
                 onPress={handleConfirm}
                 title={btnText}
-                titleStyle={styles.btnTitle}
+                titleStyle={[styles.btnTitle, styles.bottomButtonTitle]}
                 loading={fetchingBridgeQuote}
                 disabled={
                   !isSupportedChain && externalDapps.length > 0

@@ -120,9 +120,10 @@ import {
 import ArrowDownSVG from '@/assets/icons/swap/icon-arrow-down-with-bg.svg';
 
 const isAndroid = Platform.OS === 'android';
-const BOTTOM_BUTTON_HEIGHT = 56;
+const BOTTOM_BUTTON_HEIGHT = 58;
+const BOTTOM_BUTTON_TITLE_FONT_SIZE = 18;
 const BOTTOM_BUTTON_HORIZONTAL_PADDING = 20;
-const BOTTOM_BUTTON_BOTTOM_OFFSET = 56;
+const BOTTOM_BUTTON_BOTTOM_OFFSET = 36;
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<
@@ -1436,6 +1437,7 @@ const Swap = ({
                   // refresh  risk check
                   key={`${refreshId}-${chain}-${payToken?.id}-${receiveToken?.id}-${payAmount}-${activeProvider?.quote?.tx?.data}-${isApprove}`}
                   height={BOTTOM_BUTTON_HEIGHT}
+                  titleStyle={styles.bottomButtonTitle}
                   loading={miniSignLoading}
                   loadingType="circle"
                   showTextOnLoading
@@ -1468,6 +1470,7 @@ const Swap = ({
               ) : (
                 <Button
                   height={BOTTOM_BUTTON_HEIGHT}
+                  titleStyle={styles.bottomButtonTitle}
                   onPress={() => {
                     if (!isSupportedChain && !externalDapps.length) {
                       return;
@@ -1728,6 +1731,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: BOTTOM_BUTTON_HORIZONTAL_PADDING,
     backgroundColor: colors2024['neutral-bg-1'],
     width: '100%',
+  },
+  bottomButtonTitle: {
+    fontSize: BOTTOM_BUTTON_TITLE_FONT_SIZE,
   },
   approveContainer: {
     flexDirection: 'row',

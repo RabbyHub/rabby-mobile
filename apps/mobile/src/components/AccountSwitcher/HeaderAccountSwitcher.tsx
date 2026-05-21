@@ -97,8 +97,8 @@ export function HeaderAccountSwitcher({
             <CaretArrowIconCC
               dir="down"
               style={isVisible ? styles.reverseCaret : null}
-              width={18}
-              height={18}
+              width={14}
+              height={14}
               bgColor={colors2024['neutral-bg-5']}
               lineColor={colors2024['neutral-title-1']}
             />

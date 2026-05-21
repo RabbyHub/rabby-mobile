@@ -323,7 +323,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 16,
     paddingVertical: 16,
     backgroundColor: 'transparent',
-    height: 134,
+    // height: 134,
   },
   top: {
     flexDirection: 'row',
@@ -357,6 +357,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro',
   },
   input: {
+    fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
     fontSize: 28,
     fontWeight: '700',
@@ -377,7 +378,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     minWidth: 0,
     marginTop: 9,
-    marginBottom: 9,
+    marginBottom: 6,
     height: 36,
   },
   tokenSelectBox: {
