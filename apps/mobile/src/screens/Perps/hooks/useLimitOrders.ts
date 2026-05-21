@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { sortBy } from 'lodash';
+import { useShallow } from 'zustand/react/shallow';
 import { OpenOrder, Leverage } from '@rabby-wallet/hyperliquid-sdk';
 import { perpsStore, PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
 import { useActiveAssetDataMap } from '@/hooks/perps/useActiveAssetDataCache';
@@ -15,11 +16,10 @@ export type LimitOrderRow = {
 export const useHomeLimitOrders = (
   positionAndOpenOrders?: PositionAndOpenOrder[],
 ): LimitOrderRow[] => {
-  const openOrders = perpsStore(s => s.openOrders);
-
-  const limits = useMemo(
-    () => (openOrders || []).filter(isLimitOrder),
-    [openOrders],
+  // Filter inside the selector + shallow-eq the result so non-limit-order
+  // updates (e.g. market-order fills) don't propagate to consumers.
+  const limits = perpsStore(
+    useShallow(s => (s.openOrders || []).filter(isLimitOrder)),
   );
 
   const positionLevByCoin = useMemo(() => {
@@ -62,17 +62,21 @@ export const useDetailLimitOrders = (
   coin: string,
   leverage: Leverage | null,
 ): LimitOrderRow[] => {
-  const openOrders = perpsStore(s => s.openOrders);
+  // Filter to this coin's limit orders inside the selector + shallow-eq so
+  // updates on other coins don't cascade into this consumer.
+  const coinLimitOrders = perpsStore(
+    useShallow(s =>
+      (s.openOrders || []).filter(o => o.coin === coin && isLimitOrder(o)),
+    ),
+  );
   return useMemo(() => {
-    const list = (openOrders || [])
-      .filter(o => o.coin === coin && isLimitOrder(o))
-      .map(order => ({
-        order,
-        leverage,
-        marginUsage: leverage
-          ? computeMarginUsage(order.limitPx, order.sz, leverage.value)
-          : 0,
-      }));
+    const list = coinLimitOrders.map(order => ({
+      order,
+      leverage,
+      marginUsage: leverage
+        ? computeMarginUsage(order.limitPx, order.sz, leverage.value)
+        : 0,
+    }));
     return sortBy(list, r => -r.marginUsage);
-  }, [openOrders, coin, leverage]);
+  }, [coinLimitOrders, leverage]);
 };
