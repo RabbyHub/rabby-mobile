@@ -1894,7 +1894,8 @@
         "txSending": "Sending signing request",
         "txSendings": "Sending signing request({{current}}/{{total}})"
       },
-      "fixedModeText": "Fixed Mode: Always use your custom gas setting"
+      "fixedModeText": "Fixed Mode: Always use your custom gas setting",
+      "fixedModeTag": "Fixed mode"
     },
     "gasAccount": {
       "deposit": "Deposit",
