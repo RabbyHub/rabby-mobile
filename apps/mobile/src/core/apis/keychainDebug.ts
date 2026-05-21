@@ -1,13 +1,12 @@
 import OfficialKeychain, {
   type BaseOptions,
-  type Options,
+  type GetOptions,
+  type SetOptions,
 } from 'react-native-keychain';
 import { NativeModules, Platform } from 'react-native';
 
 import i18n from '@/utils/i18n';
 import {
-  ANDROID_AUTH_PROMPT_POLICIES,
-  DEFAULT_ANDROID_AUTH_PROMPT_POLICY,
   KEYCHAIN_STORAGE_TYPES,
   getAuthenticationType,
   getAuthenticationTypeLabel,
@@ -44,12 +43,14 @@ type NativeKeychainDebugState =
   | NativeAndroidKeychainDebugState
   | NativeIOSKeychainDebugState;
 
+type DebugOptions = BaseOptions & Partial<GetOptions & SetOptions>;
+
 type KeychainDebugModule = {
   debugGetGenericPasswordStateForOptions?: (
-    options: BaseOptions,
+    options: DebugOptions,
   ) => Promise<NativeKeychainDebugState>;
   debugRemoveCipherStorageMarkerForOptions?: (
-    options: BaseOptions,
+    options: DebugOptions,
   ) => Promise<boolean>;
 };
 
@@ -57,7 +58,7 @@ const DEFAULT_BASE_OPTIONS: BaseOptions = {
   service: KEYCHAIN_DEFAULT_SERVICE,
 };
 
-const DEFAULT_GET_OPTIONS: Options = {
+const DEFAULT_GET_OPTIONS: GetOptions = {
   ...DEFAULT_BASE_OPTIONS,
   authenticationPrompt: {
     title: i18n.t('native.authentication.auth_prompt_title'),
@@ -70,7 +71,7 @@ const DEFAULT_GET_OPTIONS: Options = {
   }),
 };
 
-const DEFAULT_BIOMETRIC_SET_OPTIONS: Options = {
+const DEFAULT_BIOMETRIC_SET_OPTIONS: SetOptions = {
   service: KEYCHAIN_DEFAULT_SERVICE,
   accessible: OfficialKeychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
   accessControl: OfficialKeychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
@@ -95,8 +96,8 @@ function sortKeychainStorageTypes(
 
 function toOfficialStorageType(
   storage?: KeychainStorageType,
-): BaseOptions['storage'] | undefined {
-  return storage as BaseOptions['storage'] | undefined;
+): SetOptions['storage'] | undefined {
+  return storage as SetOptions['storage'] | undefined;
 }
 
 function makeBaseStateCommon(service: string) {
@@ -166,10 +167,10 @@ function makeIOSBaseState(service: string): IOSKeychainDebugState {
 
 async function callDebugMethod<R>(
   method: keyof KeychainDebugModule,
-  options: BaseOptions,
+  options: DebugOptions,
 ): Promise<R> {
   const debugMethod = RNKeychainDebugManager?.[method] as
-    | ((nextOptions: BaseOptions) => Promise<R>)
+    | ((nextOptions: DebugOptions) => Promise<R>)
     | undefined;
 
   if (typeof debugMethod !== 'function') {

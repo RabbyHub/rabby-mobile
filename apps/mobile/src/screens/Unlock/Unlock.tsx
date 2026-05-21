@@ -179,6 +179,15 @@ const toastBiometricsFailed = (message?: string) => {
   prevFailedRef.hide?.();
   prevFailedRef.hide = toastFailed(message);
 };
+const toastBiometricsAuthenticating = (isFaceIDAuth: boolean) =>
+  toastWithIcon(() => <BiometricsIcon isFaceID={isFaceIDAuth} size={16} />)(
+    i18next.t('page.unlock.unlocking'),
+    {
+      duration: 100000,
+      hideOnPress: false,
+      position: toast.positions.TOP + 80,
+    },
+  );
 const toastUnlocking = () =>
   toastIndicator(i18next.t('page.unlock.unlocking'), {
     isTop: true,
@@ -374,6 +383,9 @@ export default function UnlockScreen() {
 
   const unlockWithBiometrics = useCallback(async () => {
     const startedAt = Date.now();
+    const hideAuthToastRef = {
+      current: null as null | (() => void),
+    };
     const hidePostAuthToastRef = {
       current: null as null | (() => void),
     };
@@ -381,15 +393,27 @@ export default function UnlockScreen() {
       traceAndroidUnlockPerf('request_biometrics_start', {
         isFaceID,
       });
+      if (isAndroid && !isFaceID) {
+        hideAuthToastRef.current = toastBiometricsAuthenticating(isFaceID);
+        traceAndroidUnlockPerf('biometrics_auth_toast_show', {
+          elapsedMs: Date.now() - startedAt,
+        });
+      }
       await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.DECRYPT_PWD,
+        shouldAttachTrustedVaultKeyString: !isAndroid,
         onPlainPassword: async (password, credentials) => {
           traceAndroidUnlockPerf('on_plain_password', {
             elapsedMs: Date.now() - startedAt,
             hasTrustedVaultKeyString: !!credentials?.vaultKeyString,
           });
+          hideAuthToastRef.current?.();
+          hideAuthToastRef.current = null;
           if (!isFaceID) {
             hidePostAuthToastRef.current = toastUnlocking();
+            traceAndroidUnlockPerf('post_auth_unlock_toast_show', {
+              elapsedMs: Date.now() - startedAt,
+            });
           }
           measureTime.start('UnlockWithBiometrics');
           try {
@@ -446,7 +470,10 @@ export default function UnlockScreen() {
       });
       updateUnlockTime();
     } catch (error: any) {
+      hideAuthToastRef.current?.();
+      hideAuthToastRef.current = null;
       hidePostAuthToastRef.current?.();
+      hidePostAuthToastRef.current = null;
       traceAndroidUnlockPerf('request_biometrics_error', {
         elapsedMs: Date.now() - startedAt,
         code: error?.code,
