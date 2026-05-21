@@ -1,6 +1,8 @@
 package com.rabbywallet.keychain9.decryptionHandler
 
 import android.os.Looper
+import android.os.SystemClock
+import android.security.keystore.UserNotAuthenticatedException
 import android.util.Log
 import androidx.annotation.NonNull
 import androidx.annotation.Nullable
@@ -38,9 +40,14 @@ open class DecryptionResultHandlerInteractiveBiometric(
 
   /** Logging tag. */
   protected val LOG_TAG = DecryptionResultHandlerInteractiveBiometric::class.java.simpleName
+  private val UNLOCK_PERF_TAG = "RabbyUnlockPerf:keychain-native"
+  private val AUTH_SUCCESS_DECRYPT_RETRY_DELAY_MS = 120L
 
   override fun askAccessPermissions(@NonNull context: DecryptionContext) {
     this.context = context
+    Log.i(
+        LOG_TAG,
+        "[$UNLOCK_PERF_TAG] ask_access_permissions alias=${context.keyAlias} thread=${Thread.currentThread().name}")
 
     if (!DeviceAvailability.isPermissionsGranted(reactContext)) {
       val failure =
@@ -65,6 +72,9 @@ open class DecryptionResultHandlerInteractiveBiometric(
 
   /** Called when an unrecoverable error has been encountered and the operation is complete. */
   override fun onAuthenticationError(errorCode: Int, @NonNull errString: CharSequence) {
+    Log.w(
+        LOG_TAG,
+        "[$UNLOCK_PERF_TAG] authentication_error code=$errorCode msg=$errString")
     val error = CryptoFailedException("code: $errorCode, msg: $errString")
     onDecrypt(null, error)
   }
@@ -73,16 +83,77 @@ open class DecryptionResultHandlerInteractiveBiometric(
   override fun onAuthenticationSucceeded(@NonNull result: BiometricPrompt.AuthenticationResult) {
     try {
       context ?: throw NullPointerException("Decrypt context is not assigned yet.")
+      Log.i(
+          LOG_TAG,
+          "[$UNLOCK_PERF_TAG] authentication_succeeded alias=${context!!.keyAlias} thread=${Thread.currentThread().name}")
 
-      val decrypted =
-          DecryptionResult(
-              storage.decryptBytes(context!!.key, context!!.username),
-              storage.decryptBytes(context!!.key, context!!.password))
+      val decrypted = decryptContextWithAuthWindowRetry()
 
       onDecrypt(decrypted, null)
     } catch (fail: Throwable) {
+      Log.w(
+          LOG_TAG,
+          "[$UNLOCK_PERF_TAG] authentication_succeeded_decrypt_failed error=${fail.javaClass.simpleName} msg=${fail.message}",
+          fail)
       onDecrypt(null, fail)
     }
+  }
+
+  private fun decryptContext(): DecryptionResult {
+    context ?: throw NullPointerException("Decrypt context is not assigned yet.")
+
+    return DecryptionResult(
+        storage.decryptBytes(context!!.key, context!!.username),
+        storage.decryptBytes(context!!.key, context!!.password))
+  }
+
+  private fun decryptContextWithAuthWindowRetry(): DecryptionResult {
+    try {
+      return decryptContext()
+    } catch (fail: Throwable) {
+      if (!isUserNotAuthenticated(fail)) {
+        throw fail
+      }
+
+      Log.w(
+          LOG_TAG,
+          "[$UNLOCK_PERF_TAG] authentication_succeeded_decrypt_user_not_authenticated_retry delayMs=$AUTH_SUCCESS_DECRYPT_RETRY_DELAY_MS alias=${context?.keyAlias}",
+          fail)
+      SystemClock.sleep(AUTH_SUCCESS_DECRYPT_RETRY_DELAY_MS)
+
+      return try {
+        val retryResult = decryptContext()
+        Log.i(
+            LOG_TAG,
+            "[$UNLOCK_PERF_TAG] authentication_succeeded_decrypt_retry_success alias=${context?.keyAlias}")
+        retryResult
+      } catch (retryFail: Throwable) {
+        Log.w(
+            LOG_TAG,
+            "[$UNLOCK_PERF_TAG] authentication_succeeded_decrypt_retry_failed error=${retryFail.javaClass.simpleName} msg=${retryFail.message} alias=${context?.keyAlias}",
+            retryFail)
+        throw retryFail
+      }
+    }
+  }
+
+  private fun isUserNotAuthenticated(error: Throwable): Boolean {
+    var cursor: Throwable? = error
+    while (cursor != null) {
+      if (cursor is UserNotAuthenticatedException) {
+        return true
+      }
+
+      val message = cursor.message
+      if (
+          message?.contains("User not authenticated", ignoreCase = true) == true ||
+              message?.contains("Key user not authenticated", ignoreCase = true) == true) {
+        return true
+      }
+      cursor = cursor.cause
+    }
+
+    return false
   }
 
   /** Trigger interactive authentication. */
@@ -91,11 +162,17 @@ open class DecryptionResultHandlerInteractiveBiometric(
 
     // Code can be executed only from MAIN thread
     if (Thread.currentThread() != Looper.getMainLooper().thread) {
+      Log.i(
+          LOG_TAG,
+          "[$UNLOCK_PERF_TAG] start_authentication_post_to_main thread=${Thread.currentThread().name}")
       activity.runOnUiThread { startAuthentication() }
       waitResult()
       return
     }
 
+    Log.i(
+        LOG_TAG,
+        "[$UNLOCK_PERF_TAG] start_authentication_on_main thread=${Thread.currentThread().name}")
     authenticateWithPrompt(activity)
   }
 
@@ -105,6 +182,7 @@ open class DecryptionResultHandlerInteractiveBiometric(
   }
 
   protected fun authenticateWithPrompt(@NonNull activity: FragmentActivity): BiometricPrompt {
+    Log.i(LOG_TAG, "[$UNLOCK_PERF_TAG] authenticate_with_prompt activity=${activity.javaClass.simpleName}")
     val prompt = BiometricPrompt(activity, executor, this)
     prompt.authenticate(this.promptInfo)
     return prompt
