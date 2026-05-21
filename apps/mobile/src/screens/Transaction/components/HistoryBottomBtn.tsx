@@ -18,7 +18,7 @@ import { StackActions } from '@react-navigation/native';
 import { useRequest } from 'ahooks';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
 import { HistoryItemCateType } from './type';
 
 interface ItemProps {
@@ -83,7 +83,7 @@ export const HistoryBottomBtn = ({
     const viewStyle = StyleSheet.flatten([
       styles.buttonContainer,
       buttonContainerStyle,
-    ]);
+    ]) as ViewStyle;
     return {
       btnContainerViewStyle: viewStyle,
       buttonStyle: { height: viewStyle.height || 56 },
