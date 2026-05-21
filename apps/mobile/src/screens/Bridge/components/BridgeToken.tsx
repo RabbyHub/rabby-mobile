@@ -29,7 +29,10 @@ import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import useAutoFocusInput from '@/hooks/useAutoFocusInput';
 import { SliderBubblePortal } from '@/screens/Swap/components/Slider';
 import { Text } from '@/components/Typography';
-import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInput';
+import {
+  AutoShrinkAmountText,
+  AutoShrinkAmountTextInput,
+} from '@/components/AutoShrinkAmountTextInput';
 
 const hiddenSlider = false;
 
@@ -240,7 +243,7 @@ const BridgeToken = ({
               style={styles.skeleton}
             />
           ) : isToToken ? (
-            <Text
+            <AutoShrinkAmountText
               numberOfLines={1}
               style={StyleSheet.flatten([
                 styles.input,
@@ -249,7 +252,7 @@ const BridgeToken = ({
                 valueLoading && styles.loadingOpacity,
               ])}>
               {showNoQuote ? t('page.bridge.no-quote') : value?.toString() || 0}
-            </Text>
+            </AutoShrinkAmountText>
           ) : (
             <View style={[styles.inputBox]}>
               <AutoShrinkAmountTextInput
@@ -448,7 +451,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
     // height: 36,
-    lineHeight: 36,
+    // lineHeight: 36,
     includeFontPadding: false,
     paddingLeft: 0,
     borderWidth: 0,

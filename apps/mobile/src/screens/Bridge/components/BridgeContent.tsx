@@ -81,12 +81,17 @@ import {
   type QuotePollingPauseReasonState,
   updateQuotePollingPauseReason,
 } from '@/utils/quotePolling';
+import { IS_ANDROID } from '@/core/native/utils';
 
 /** Bridge form snapshot for validation during auth */
 export interface BridgeFormSnapshot {
   amount: string;
   amountMode?: FormAmountMode;
 }
+
+const BOTTOM_BUTTON_HEIGHT = 56;
+const BOTTOM_BUTTON_HORIZONTAL_PADDING = 20;
+const BOTTOM_BUTTON_BOTTOM_OFFSET = 56;
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -199,10 +204,9 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     position: 'absolute',
     left: 0,
     bottom: 0,
-    // height: 140,
     backgroundColor: colors2024['neutral-bg-1'],
     width: '100%',
-    padding: 20,
+    paddingHorizontal: BOTTOM_BUTTON_HORIZONTAL_PADDING,
   },
   btnTitle: {
     color: colors['neutral-title-2'],
@@ -1212,7 +1216,8 @@ export const BridgeContent = ({
           style={[
             styles.buttonContainer,
             {
-              paddingBottom: Math.max(bottom, 50),
+              paddingBottom:
+                BOTTOM_BUTTON_BOTTOM_OFFSET + (IS_ANDROID ? bottom : 0),
             },
           ]}>
           <Tip
@@ -1225,6 +1230,7 @@ export const BridgeContent = ({
               <DirectSignBtn
                 ref={directSignBtnRef}
                 key={`${selectedBridgeQuote?.aggregator.id}-${selectedBridgeQuote?.bridge?.id}-${refreshId}`}
+                height={BOTTOM_BUTTON_HEIGHT}
                 authTitle={t('page.whitelist.confirmPassword')}
                 title={t('global.confirm')}
                 loadingType="circle"
@@ -1251,6 +1257,7 @@ export const BridgeContent = ({
               />
             ) : (
               <Button
+                height={BOTTOM_BUTTON_HEIGHT}
                 onPress={handleConfirm}
                 title={btnText}
                 titleStyle={styles.btnTitle}
@@ -1291,33 +1298,6 @@ export const BridgeContent = ({
             currentSelectedQuote={selectedBridgeQuote}
           />
         ) : null}
-
-        {/* <MiniApproval
-        visible={isShowSign}
-        txs={txs}
-        ga={{
-          category: 'Bridge',
-          source: 'bridge',
-          // trigger: rbiSource,
-        }}
-        onReject={() => {
-          setIsShowSign(false);
-          refresh(e => e + 1);
-          mutateTxs([]);
-        }}
-        onResolve={() => {
-          setTimeout(() => {
-            setIsShowSign(false);
-            mutateTxs([]);
-
-            navigation.dispatch(
-              StackActions.replace(RootNames.StackRoot, {
-                screen: RootNames.Home,
-              }),
-            );
-          }, 500);
-        }}
-      /> */}
       </NormalScreenContainer>
     </SignatureInstanceProvider>
   );

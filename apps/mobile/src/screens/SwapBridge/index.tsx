@@ -1,12 +1,5 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import { Pressable, View } from 'react-native';
-import { Tabs, type CollapsibleRef } from 'react-native-collapsible-tab-view';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -149,7 +142,6 @@ function SwapBridgeScreen({
   const route = useRoute<SwapBridgeRoute>();
   const initialTab = useMemo(() => getInitialTab(route), [route]);
   const [activeTab, setActiveTab] = useState<SwapBridgeTab>(initialTab);
-  const tabsRef = useRef<CollapsibleRef>(undefined);
   const { styles } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
@@ -159,7 +151,6 @@ function SwapBridgeScreen({
         return;
       }
 
-      tabsRef.current?.jumpToTab(tab);
       setActiveTab(tab);
     },
     [activeTab],
@@ -183,42 +174,39 @@ function SwapBridgeScreen({
     });
   }, [renderHeader, setNavigationOptions]);
 
-  const renderTabBar = useCallback(() => null, []);
-
   return (
     <View style={styles.container}>
       <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
-      <Tabs.Container
-        ref={tabsRef}
-        renderTabBar={renderTabBar}
-        tabBarHeight={0}
-        containerStyle={styles.container}
-        pagerProps={{ scrollEnabled: false }}
-        initialTabName={initialTab}
-        onTabChange={({ tabName }) => {
-          setActiveTab(tabName as SwapBridgeTab);
-        }}>
-        <Tabs.Tab name="swap">
-          {isForMultipleAddress ? (
-            <Swap.ForMultipleAddress
-              disableHeaderRight
-              disableAccountSwitcherModal
-            />
-          ) : (
-            <Swap disableHeaderRight disableAccountSwitcherModal />
-          )}
-        </Tabs.Tab>
-        <Tabs.Tab name="bridge">
-          {isForMultipleAddress ? (
-            <Bridge.ForMultipleAddress
-              disableHeaderRight
-              disableAccountSwitcherModal
-            />
-          ) : (
-            <Bridge disableHeaderRight disableAccountSwitcherModal />
-          )}
-        </Tabs.Tab>
-      </Tabs.Container>
+      <View
+        pointerEvents={activeTab === 'swap' ? 'auto' : 'none'}
+        style={[
+          styles.tabScene,
+          activeTab !== 'swap' && styles.inactiveTabScene,
+        ]}>
+        {isForMultipleAddress ? (
+          <Swap.ForMultipleAddress
+            disableHeaderRight
+            disableAccountSwitcherModal
+          />
+        ) : (
+          <Swap disableHeaderRight disableAccountSwitcherModal />
+        )}
+      </View>
+      <View
+        pointerEvents={activeTab === 'bridge' ? 'auto' : 'none'}
+        style={[
+          styles.tabScene,
+          activeTab !== 'bridge' && styles.inactiveTabScene,
+        ]}>
+        {isForMultipleAddress ? (
+          <Bridge.ForMultipleAddress
+            disableHeaderRight
+            disableAccountSwitcherModal
+          />
+        ) : (
+          <Bridge disableHeaderRight disableAccountSwitcherModal />
+        )}
+      </View>
     </View>
   );
 }
@@ -233,6 +221,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flex: 1,
     backgroundColor: colors2024['neutral-bg-1'],
+  },
+  tabScene: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  inactiveTabScene: {
+    display: 'none',
   },
   headerOuter: {
     height: HEADER_HEIGHT,
@@ -251,8 +245,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerTabs: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginLeft: 4,
+    gap: 8,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -288,7 +281,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     minWidth: 0,
     justifyContent: 'flex-end',
-    gap: 12,
+    gap: 8,
   },
   headerAccountSwitcher: {
     flex: 1,
