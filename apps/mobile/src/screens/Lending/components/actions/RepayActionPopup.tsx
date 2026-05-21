@@ -745,6 +745,9 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
             handleChangeAmount('-1');
           }}
           tokenAmount={Number(repayAmount.amount || '0')}
+          tokenDecimals={
+            selectedRepayToken?.decimals ?? reserve.reserve.decimals
+          }
           price={Number(
             reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
           )}

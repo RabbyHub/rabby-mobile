@@ -457,6 +457,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
             handleChangeAmount('-1');
           }}
           tokenAmount={withdrawAmount}
+          tokenDecimals={reserve.reserve.decimals}
           price={Number(
             reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
           )}
