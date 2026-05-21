@@ -913,6 +913,12 @@ const tokenListStore = zCreate<TokenListState>(set => ({
     const lowerAddresses = Array.from(
       new Set(addresses.map(item => item.toLowerCase())),
     );
+    if (!lowerAddresses.length) {
+      set(() => ({ isLoading: true }));
+      await new Promise(resolve => setTimeout(resolve, 0));
+      set(() => ({ tokenListMap: {}, isLoading: false }));
+      return;
+    }
     if (!force) {
       const isExpired = await isDataExpiredBatch(lowerAddresses);
       if (!isExpired) {
@@ -930,7 +936,7 @@ const tokenListStore = zCreate<TokenListState>(set => ({
             res[key] = [transformedToken];
           }
         }
-        set(() => ({ tokenListMap: res }));
+        set(() => ({ tokenListMap: res, isLoading: false }));
         return;
       }
     }
