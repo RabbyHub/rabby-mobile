@@ -41,6 +41,7 @@ type Props = {
   order?: OpenOrder | null;
   leverage?: Leverage | null;
   marginUsage?: number;
+  disableCoinNavigation?: boolean;
   onClose: () => void;
   onCancel: () => void | Promise<void>;
 };
@@ -50,6 +51,7 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
   order,
   leverage,
   marginUsage = 0,
+  disableCoinNavigation,
   onClose,
   onCancel,
 }) => {
@@ -91,6 +93,11 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
       return;
     }
     onClose();
+    // Detail-page caller has its rows pre-filtered to the current coin, so
+    // navigating here would only push a duplicate of the current screen.
+    if (disableCoinNavigation) {
+      return;
+    }
     navigation.push(RootNames.StackTransaction, {
       screen: RootNames.PerpsMarketDetail,
       params: {

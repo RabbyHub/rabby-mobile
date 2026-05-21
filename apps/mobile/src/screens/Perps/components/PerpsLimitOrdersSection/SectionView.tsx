@@ -21,11 +21,13 @@ type Props = {
   rows: LimitOrderRow[];
   handleActionApproveStatus: () => Promise<void>;
   isHome?: boolean;
+  disableCoinNavigation?: boolean;
 };
 
 export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
   rows,
   isHome,
+  disableCoinNavigation,
   handleActionApproveStatus,
 }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -126,6 +128,7 @@ export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
         order={activeRow?.order}
         leverage={activeRow?.leverage}
         marginUsage={activeRow?.marginUsage}
+        disableCoinNavigation={disableCoinNavigation}
         onClose={() => setActiveRow(null)}
         onCancel={handleConfirmSingleCancel}
       />
