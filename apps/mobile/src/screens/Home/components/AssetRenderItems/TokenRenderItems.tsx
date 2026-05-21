@@ -364,7 +364,7 @@ export const TokenRowV2 = memo(
 
     const amountContent = (
       <Text numberOfLines={1} ellipsizeMode="tail" style={styles.amountStr}>
-        {formatAmount(data.amount)}
+        {formatAmount(data.amount, 4, true)}
       </Text>
     );
 

@@ -25,7 +25,10 @@ import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import usePrevious from 'react-use/lib/usePrevious';
 import { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
-import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInput';
+import {
+  AutoShrinkAmountText,
+  AutoShrinkAmountTextInput,
+} from '@/components/AutoShrinkAmountTextInput';
 
 interface SwapTokenItemProps {
   type: 'from' | 'to';
@@ -253,14 +256,14 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
             ]}
           />
         ) : (
-          <Text
+          <AutoShrinkAmountText
             numberOfLines={1}
             style={StyleSheet.flatten([
               styles.input,
               valueLoading && styles.loadingOpacity,
             ])}>
             {value ? formatTokenAmount(value) : '0'}
-          </Text>
+          </AutoShrinkAmountText>
         )}
       </View>
 
@@ -306,7 +309,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 16,
     backgroundColor: 'transparent',
     height: 134,
@@ -362,8 +365,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     minWidth: 0,
-    marginTop: 12,
-    marginBottom: 14,
+    marginTop: 9,
+    marginBottom: 9,
     height: 36,
   },
   tokenSelectBox: {
