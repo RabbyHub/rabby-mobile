@@ -473,7 +473,7 @@
         "RevokeToken": "Revogar Token",
         "name": "Nome",
         "Status": "Status",
-        "InteractedContract": "",
+        "InteractedContract": "Interação com (Para)",
         "InteractionResults": "Resultados de Interação",
         "ApproveTo": "Aprovar para",
         "BuyAgain": "Comprar Novamente",
@@ -484,7 +484,9 @@
         "WillReceive": "Receberá: ≈ {{token}}",
         "AddToWhitelist": "Adicionar à Lista Branca",
         "RecipientAddress": "Carteira de destinatário",
-        "Simulation Results": "Resultados da Simulação"
+        "Simulation Results": "Resultados da Simulação",
+        "TransactionDetails": "Detalhes da transação",
+        "Operation": "Operação"
       },
       "empty": {
         "title": "Sem transações",
@@ -2092,7 +2094,8 @@
         "txSendings": "A enviar pedido de assinatura ({{current}}/{{total}})",
         "txCreated": "Transação criada"
       },
-      "fixedModeText": "Modo Fixo: Use sempre a sua configuração de gás personalizada"
+      "fixedModeText": "Modo Fixo: Use sempre a sua configuração de gás personalizada",
+      "fixedModeTag": "Modo fixo"
     },
     "addChain": {
       "desc": "Rabby não pode verificar a segurança das redes personalizadas. Por favor, adicione apenas redes confiáveis.",
@@ -3512,7 +3515,8 @@
         "debtSwapSelector": {
           "header": {
             "borrow": "Meus empréstimos",
-            "assets": "Token/Saldo"
+            "assets": "Token/Saldo",
+            "apy": "APY"
           },
           "title": "Selecionar Token de Empréstimo"
         },

@@ -92,7 +92,7 @@
         "PurchaseFrom": "Dibeli dari",
         "Collection": "Koleksi",
         "RevokeFrom": "Cabut dari",
-        "InteractedContract": "",
+        "InteractedContract": "Interaksi dengan (Ke)",
         "Unlimited": "Tanpa Batas",
         "BuyAgain": "Beli Lagi",
         "From": "Dari",
@@ -100,7 +100,9 @@
         "GasFee": "Biaya Gas",
         "AddToWhitelist": "Tambahkan ke Daftar Putih",
         "RecipientAddress": "Dompet penerima",
-        "Simulation Results": "Hasil Simulasi"
+        "Simulation Results": "Hasil Simulasi",
+        "TransactionDetails": "Detail transaksi",
+        "Operation": "Operasi"
       },
       "empty": {
         "title": "Tidak ada transaksi",
@@ -1808,7 +1810,8 @@
         "txCreated": "Transaksi dibuat"
       },
       "signWithLedger": "Tanda Tangan",
-      "fixedModeText": "Mode Tetap: Selalu gunakan pengaturan gas kustom Anda"
+      "fixedModeText": "Mode Tetap: Selalu gunakan pengaturan gas kustom Anda",
+      "fixedModeTag": "Mode tetap"
     },
     "gasAccount": {
       "history": {
@@ -3131,7 +3134,8 @@
         "debtSwapSelector": {
           "header": {
             "borrow": "Peminjaman saya",
-            "assets": "Token/Balance"
+            "assets": "Token/Balance",
+            "apy": "APY"
           },
           "title": "Pilih Token Pinjam"
         },

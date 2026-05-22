@@ -276,7 +276,7 @@
         "GasFee": "Gas Fee",
         "SendAgain": "再次發送",
         "Chain": "鏈",
-        "InteractedContract": "",
+        "InteractedContract": "互動對象（To）",
         "ViewOn": "查看",
         "RevokeToken": "收回 Token",
         "RevokeFrom": "從...撤銷",
@@ -292,7 +292,9 @@
         "PurchaseFrom": "購買自",
         "AddToWhitelist": "加入白名單",
         "RecipientAddress": "收款錢包",
-        "Simulation Results": "模擬結果"
+        "Simulation Results": "模擬結果",
+        "TransactionDetails": "交易詳情",
+        "Operation": "操作"
       },
       "empty": {
         "title": "沒有交易",
@@ -2176,7 +2178,8 @@
         "txSigned": "已簽名。創建交易",
         "txSendings": "發送簽名請求（{{current}}/{{total}}）"
       },
-      "fixedModeText": "固定模式：始終使用您的自定義 gas 設定"
+      "fixedModeText": "固定模式：始終使用您的自定義 gas 設定",
+      "fixedModeTag": "固定模式"
     },
     "addChain": {
       "title": "添加自定義網絡到 Rabby",
@@ -3309,7 +3312,8 @@
         "debtSwapSelector": {
           "header": {
             "assets": "代幣/餘額",
-            "borrow": "我的借款"
+            "borrow": "我的借款",
+            "apy": "APY"
           },
           "title": "選擇借入代幣"
         },

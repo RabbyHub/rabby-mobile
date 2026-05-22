@@ -93,14 +93,16 @@
         "RevokeToken": "Token İptal Et",
         "PurchaseFrom": "Satın alındıdan",
         "RevokeFrom": "Revokeden",
-        "InteractedContract": "",
+        "InteractedContract": "Etkileşim kurulan (Kime)",
         "ApproveTo": "Onayla",
         "Revoke": "İptal Et",
         "InteractionResults": "Etkileşim Sonuçları",
         "Pending": "Beklemede",
         "AddToWhitelist": "Beyaz Listeye Ekle",
         "RecipientAddress": "Alıcı cüzdan",
-        "Simulation Results": "Simülasyon Sonuçları"
+        "Simulation Results": "Simülasyon Sonuçları",
+        "TransactionDetails": "İşlem ayrıntıları",
+        "Operation": "İşlem"
       },
       "empty": {
         "title": "Hiç işlem yok",
@@ -1808,7 +1810,8 @@
         "txSigned": "İmzalandı. İşlem oluşturuluyor"
       },
       "signWithLedger": "İmza",
-      "fixedModeText": "Sabit Mod: Her zaman özel gaz ayarınızı kullanın"
+      "fixedModeText": "Sabit Mod: Her zaman özel gaz ayarınızı kullanın",
+      "fixedModeTag": "Sabit mod"
     },
     "gasAccount": {
       "history": {
@@ -3131,7 +3134,8 @@
         "debtSwapSelector": {
           "header": {
             "assets": "Token/Bakiye",
-            "borrow": "Benim borçlarım"
+            "borrow": "Benim borçlarım",
+            "apy": "APY"
           },
           "title": "Borç Alınacak Token'ı Seçin"
         },

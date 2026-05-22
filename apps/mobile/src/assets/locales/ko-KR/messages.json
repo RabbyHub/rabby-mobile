@@ -85,7 +85,7 @@
         "ApproveTo": "승인하기",
         "Date": "날짜",
         "RevokeFrom": "에서 철회",
-        "InteractedContract": "",
+        "InteractedContract": "상호작용 대상(To)",
         "RevokeToken": "토큰 취소",
         "name": "이름",
         "BuyAgain": "다시 구매하기",
@@ -96,7 +96,9 @@
         "Name": "이름",
         "AddToWhitelist": "화이트리스트에 추가",
         "RecipientAddress": "수신 지갑",
-        "Simulation Results": "시뮬레이션 결과"
+        "Simulation Results": "시뮬레이션 결과",
+        "TransactionDetails": "트랜잭션 세부 정보",
+        "Operation": "작업"
       },
       "empty": {
         "desc": "<1> 지원되는 체인 </1>에서 거래를 찾을 수 없습니다.",
@@ -1482,7 +1484,8 @@
         "txCreated": "트랜잭션 생성됨",
         "txSendings": "서명 요청 전송 중({{current}}/{{total}})"
       },
-      "fixedModeText": "고정 모드: 항상 사용자 정의 가스 설정 사용"
+      "fixedModeText": "고정 모드: 항상 사용자 정의 가스 설정 사용",
+      "fixedModeTag": "고정 모드"
     },
     "addChain": {
       "desc": "Rabby는 사용자 정의 네트워크의 보안을 확인할 수 없습니다. 신뢰할 수 있는 네트워크만 추가하십시오.",
@@ -3132,7 +3135,8 @@
         "debtSwapSelector": {
           "header": {
             "assets": "토큰/잔액",
-            "borrow": "내 차입"
+            "borrow": "내 차입",
+            "apy": "APY"
           },
           "title": "대출 토큰 선택"
         },

@@ -457,7 +457,7 @@
         "RevokeToken": "Token widerrufen",
         "GasFee": "Gasgebühr",
         "Revoke": "Zurückziehen",
-        "InteractedContract": "",
+        "InteractedContract": "Interaktion mit (An)",
         "From": "Von",
         "SwapAgain": "Erneut tauschen",
         "Unknown": "Unbekannt",
@@ -476,7 +476,9 @@
         "BuyAgain": "Erneut kaufen",
         "AddToWhitelist": "Zur Whitelist hinzufügen",
         "RecipientAddress": "Empfänger-Wallet",
-        "Simulation Results": "Simulations Ergebnisse"
+        "Simulation Results": "Simulations Ergebnisse",
+        "TransactionDetails": "Transaktionsdetails",
+        "Operation": "Vorgang"
       },
       "empty": {
         "title": "Keine Transaktionen",
@@ -2450,7 +2452,8 @@
         "txSigned": "Signiert. Transaktion wird erstellt",
         "txCreated": "Transaktion erstellt"
       },
-      "fixedModeText": "Festgelegter Modus: Verwenden Sie immer Ihre benutzerdefinierte Gas-Einstellung"
+      "fixedModeText": "Festgelegter Modus: Verwenden Sie immer Ihre benutzerdefinierte Gas-Einstellung",
+      "fixedModeTag": "Fester Modus"
     },
     "customTestnet": {
       "currency": "Währung",
@@ -3512,7 +3515,8 @@
         "debtSwapSelector": {
           "header": {
             "borrow": "Meine Ausleihen",
-            "assets": "Token/Guthaben"
+            "assets": "Token/Guthaben",
+            "apy": "APY"
           },
           "title": "Wählen Sie das Kredit-Token aus"
         },

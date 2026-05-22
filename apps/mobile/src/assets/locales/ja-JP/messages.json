@@ -144,7 +144,7 @@
         "RevokeToken": "トークンの無効化",
         "Unknown": "不明",
         "RevokeFrom": "から取消",
-        "InteractedContract": "",
+        "InteractedContract": "インタラクト先（To）",
         "Status": "ステータス",
         "GasFee": "Gas Fee",
         "SwapAgain": "再スワップ",
@@ -156,7 +156,9 @@
         "PurchaseFrom": "から購入",
         "AddToWhitelist": "ホワイトリストに追加",
         "RecipientAddress": "受取財布",
-        "Simulation Results": "シミュレーション結果"
+        "Simulation Results": "シミュレーション結果",
+        "TransactionDetails": "トランザクション詳細",
+        "Operation": "操作"
       },
       "empty": {
         "desc": "<1>サポートされているチェーン</1>で取引が見つかりませんでした。",
@@ -1802,7 +1804,8 @@
         "txCreated": "トランザクションが作成されました",
         "txSending": "署名リクエストを送信中"
       },
-      "fixedModeText": "固定モード: カスタムガス設定を常に使用する"
+      "fixedModeText": "固定モード: カスタムガス設定を常に使用する",
+      "fixedModeTag": "固定モード"
     },
     "backupSeedPhrase": {
       "qrCodePopupTitle": "QR Code",
@@ -3184,7 +3187,8 @@
         "debtSwapSelector": {
           "header": {
             "borrow": "私の借入",
-            "assets": "トークン/残高"
+            "assets": "トークン/残高",
+            "apy": "APY"
           },
           "title": "借入トークンを選択"
         },

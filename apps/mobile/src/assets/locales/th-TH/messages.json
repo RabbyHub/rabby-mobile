@@ -350,7 +350,7 @@
         "SpeedUp": "เร่งความเร็ว",
         "Unlimited": "ไม่จำกัด",
         "RevokeFrom": "เพิกถอนจาก",
-        "InteractedContract": "",
+        "InteractedContract": "โต้ตอบกับ (ถึง)",
         "ApproveTo": "อนุมัติให้",
         "name": "ชื่อ",
         "InteractionResults": "ผลลัพธ์ของการโต้ตอบ",
@@ -364,7 +364,9 @@
         "totalApprovedAmount": "จำนวนเงินที่อนุมัติในปัจจุบัน",
         "AddToWhitelist": "เพิ่มลงในรายการขาว",
         "RecipientAddress": "กระเป๋าเงินผู้รับ",
-        "Simulation Results": "ผลการจำลอง"
+        "Simulation Results": "ผลการจำลอง",
+        "TransactionDetails": "รายละเอียดธุรกรรม",
+        "Operation": "การดำเนินการ"
       },
       "empty": {
         "desc": "ไม่พบธุรกรรมบน<1>เชนที่รองรับ</1>",
@@ -2009,7 +2011,8 @@
         "txSending": "กำลังส่งคำขอลงนาม",
         "txSigned": "ลงนามแล้ว กำลังสร้างธุรกรรม"
       },
-      "fixedModeText": "โหมดคงที่: ใช้การตั้งค่าก๊าซที่กำหนดเองของคุณเสมอ"
+      "fixedModeText": "โหมดคงที่: ใช้การตั้งค่าก๊าซที่กำหนดเองของคุณเสมอ",
+      "fixedModeTag": "โหมดคงที่"
     },
     "singleHome": {
       "sectionHeader": {
@@ -3392,7 +3395,8 @@
         "debtSwapSelector": {
           "header": {
             "assets": "โทเคน/ยอดคงเหลือ",
-            "borrow": "การกู้ยืมของฉัน"
+            "borrow": "การกู้ยืมของฉัน",
+            "apy": "APY"
           },
           "title": "เลือกเหรียญยืม"
         },

@@ -100,7 +100,7 @@
         "Unlimited": "Illimité",
         "InteractionResults": "Résultats d'interaction",
         "RevokeFrom": "Révoquer de",
-        "InteractedContract": "",
+        "InteractedContract": "Interaction avec (À)",
         "name": "Nom",
         "SendAgain": "Envoyer à nouveau",
         "Unknown": "Inconnu",
@@ -113,7 +113,9 @@
         "BuyAgain": "Acheter à nouveau",
         "AddToWhitelist": "Ajouter à la liste blanche",
         "RecipientAddress": "Portefeuille du destinataire",
-        "Simulation Results": "Résultats de simulation"
+        "Simulation Results": "Résultats de simulation",
+        "TransactionDetails": "Détails de la transaction",
+        "Operation": "Opération"
       },
       "empty": {
         "title": "Aucune transaction",
@@ -1665,7 +1667,8 @@
         "txCreated": "Transaction créée",
         "txSendings": "Envoi de la demande de signature ({{current}}/{{total}})"
       },
-      "fixedModeText": "Mode Fixe : Utilisez toujours votre paramètre de gaz personnalisé"
+      "fixedModeText": "Mode Fixe : Utilisez toujours votre paramètre de gaz personnalisé",
+      "fixedModeTag": "Mode fixe"
     },
     "sign": {
       "transactionSpeed": "Vitesse de Transaction"
@@ -3141,7 +3144,8 @@
         "debtSwapSelector": {
           "header": {
             "assets": "Token/Balance",
-            "borrow": "Mes emprunts"
+            "borrow": "Mes emprunts",
+            "apy": "APY"
           },
           "title": "Sélectionner le Token d'emprunt"
         },
