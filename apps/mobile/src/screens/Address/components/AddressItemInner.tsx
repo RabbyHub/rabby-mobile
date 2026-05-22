@@ -47,7 +47,7 @@ export const AddressItemInner = (props: AddressItemProps) => {
 
   const isWalletConnect = wallet?.type === KEYRING_TYPE.WalletConnectKeyring;
 
-  const walletName = wallet?.aliasName || wallet?.brandName;
+  const walletName = wallet?.aliasName || ellipsisAddress(wallet.address);
   const walletNameIndex = '';
   const address = ellipsisAddress(wallet.address);
   const usdValue = `$${splitNumberByStep(wallet.balance?.toFixed(2) || 0)}`;

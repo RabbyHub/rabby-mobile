@@ -55,8 +55,8 @@ export const Quotes = ({
   const { sortIncludeGasFee } = useSwapSettings();
 
   const sortedList = useMemo(
-    () => [
-      ...(list?.sort((a, b) => {
+    () =>
+      [...(list || [])].sort((a, b) => {
         const getNumber = (quote: typeof a) => {
           const price = other.receiveToken.price ? other.receiveToken.price : 0;
           if (inSufficient) {
@@ -86,8 +86,7 @@ export const Quotes = ({
           return new BigNumber(receiveTokenAmount).times(price);
         };
         return getNumber(b).minus(getNumber(a)).toNumber();
-      }) || []),
-    ],
+      }),
     [inSufficient, list, other.receiveToken, sortIncludeGasFee],
   );
 
@@ -107,7 +106,7 @@ export const Quotes = ({
 
     return [
       inSufficient
-        ? new BigNumber(bestQuote.data?.toTokenAmount || 0)
+        ? new BigNumber(bestQuote?.data?.toTokenAmount || 0)
             .div(
               10 **
                 (bestQuote?.data?.toTokenDecimals ||

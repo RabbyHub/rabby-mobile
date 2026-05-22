@@ -364,9 +364,10 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
               navigation.dispatch(
                 StackActions.push(RootNames.StackTransaction, {
                   screen: !isSingleAddress
-                    ? RootNames.MultiSwap
-                    : RootNames.Swap,
+                    ? RootNames.MultiSwapBridge
+                    : RootNames.SwapBridge,
                   params: {
+                    activeTab: 'swap',
                     swapAgain: true,
                     chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
                     swapTokenId: [

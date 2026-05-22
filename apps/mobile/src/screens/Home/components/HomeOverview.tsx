@@ -835,8 +835,10 @@ export const HomeOverview = React.memo(() => {
         case MultiHomeFeatTitle.Swap:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiSwap,
-              params: {},
+              screen: RootNames.MultiSwapBridge,
+              params: {
+                activeTab: 'swap',
+              },
             }),
           );
 
@@ -844,8 +846,10 @@ export const HomeOverview = React.memo(() => {
         case MultiHomeFeatTitle.Bridge:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiBridge,
-              params: {},
+              screen: RootNames.MultiSwapBridge,
+              params: {
+                activeTab: 'bridge',
+              },
             }),
           );
           break;

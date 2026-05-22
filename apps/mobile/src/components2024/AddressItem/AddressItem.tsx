@@ -65,8 +65,8 @@ export const AddressItem = (props: AddressItemProps) => {
   );
 
   const walletName = useMemo(
-    () => account?.aliasName || account?.brandName,
-    [account?.aliasName, account?.brandName],
+    () => account?.aliasName || ellipsisAddress(account.address),
+    [account?.aliasName, account.address],
   );
 
   const address = useMemo(
