@@ -14,7 +14,7 @@ const BalanceOverview: React.FC<Props> = ({ usdValue, amount }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.amount}>{formatAmountValueKMB(amount)}</Text>
+      <Text style={styles.amount}>{formatAmountValueKMB(amount, 4, true)}</Text>
       <View style={styles.usdValueContainer}>
         <Text style={styles.usdValue}>≈${usdValue}</Text>
       </View>

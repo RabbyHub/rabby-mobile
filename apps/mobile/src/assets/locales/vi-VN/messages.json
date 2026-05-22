@@ -206,7 +206,7 @@
         "RevokeToken": "Thu hồi Token",
         "InteractionResults": "Kết quả Tương tác",
         "GasFee": "Phí Gas",
-        "InteractedContract": "Hợp đồng đã tương tác",
+        "InteractedContract": "",
         "ApproveTo": "Phê duyệt tới",
         "WillReceive": "Sẽ Nhận: ≈ {{token}}",
         "Name": "Tên",
@@ -220,7 +220,7 @@
       },
       "empty": {
         "title": "Không có giao dịch",
-        "desc": "Không tìm thấy giao dịch nào trên <1>supported chains</1>"
+        "desc": "Không tìm thấy giao dịch nào trên <1>các chain được hỗ trợ</1>"
       },
       "txHistory": {
         "tipInputData": "Giao dịch bao gồm một tin nhắn",
@@ -1902,7 +1902,7 @@
       "gasBalance": "Số dư Gas",
       "lowBalance": "Bạn không có đủ gas. Nạp gas để đảm bảo các giao dịch trong tương lai diễn ra suôn sẻ.",
       "depositSubmitted": "Đã gửi tiền gửi",
-      "depositWith": "```json\n{\"u_0\":\"Nạp tiền qua\"}\n```"
+      "depositWith": "Nạp tiền qua"
     },
     "setting": {
       "aboutUs": "Về Chúng Tôi",

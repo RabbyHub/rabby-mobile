@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useCallback, useMemo } from 'react';
+import React, { ReactNode, useCallback, useMemo } from 'react';
 import BigNumber from 'bignumber.js';
 import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
 import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
@@ -29,6 +29,7 @@ import { Account } from '@/core/services/preference';
 import { isArray } from 'lodash';
 import { Dimensions } from 'react-native';
 import { Text } from '@/components/Typography';
+import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';
 
 interface ItemProps {
   status: number;
@@ -42,6 +43,7 @@ interface ItemProps {
   sends: HistoryDisplayItem['sends'];
   isForMultipleAddress?: boolean;
   account: Account;
+  extra?: ReactNode;
 }
 
 const TokenItemInlist = ({
@@ -74,32 +76,47 @@ const TokenItemInlist = ({
             flexDirection: 'row',
             alignItems: 'center',
             gap: 8,
+            flex: 1,
+            minWidth: 0,
           }}>
-          {isNft ? (
-            <Media
-              failedPlaceholder={<IconDefaultNFT width={33} height={33} />}
-              type="image_url"
-              src={token?.content?.endsWith('.svg') ? '' : token?.content}
-              thumbnail={token?.content?.endsWith('.svg') ? '' : token?.content}
-              mediaStyle={styles.media}
-              style={styles.media}
-              playIconSize={12}
+          <View>
+            {isNft ? (
+              <Media
+                failedPlaceholder={<IconDefaultNFT width={33} height={33} />}
+                type={token?.content_type || 'image_url'}
+                src={token?.content?.endsWith('.svg') ? '' : token?.content}
+                thumbnail={
+                  token?.content?.endsWith('.svg') ? '' : token?.content
+                }
+                mediaStyle={styles.media}
+                style={styles.media}
+                playIconSize={12}
+              />
+            ) : (
+              <AssetAvatar
+                logo={(token as TokenItem)?.logo_url || ''}
+                size={33}
+              />
+            )}
+            <ChainIconFastImage
+              style={[
+                styles.tokenChainIcon,
+                { bottom: 0, right: 0, width: 14, height: 14 },
+              ]}
+              size={14}
+              chainServerId={token.chain}
             />
-          ) : (
-            <AssetAvatar
-              logo={(token as TokenItem)?.logo_url || ''}
-              size={33}
-            />
-          )}
-          <View style={[styles.colomnBox]}>
+          </View>
+          <View style={[styles.colomnBox, { minWidth: 0, flexShrink: 1 }]}>
             <Text
               style={[
                 styles.tokenAmountTextList,
                 isSend && styles.isSendTextColor,
-              ]}>
+              ]}
+              numberOfLines={1}>
               {isSend ? '-' : '+'} {isNft ? amount : formatTokenAmount(amount)}{' '}
               {isNft
-                ? t('page.singleHome.sectionHeader.Nft')
+                ? token?.name || t('page.singleHome.sectionHeader.Nft')
                 : ellipsisOverflowedText(
                     getTokenSymbol(token as TokenItem),
                     16,
@@ -136,6 +153,7 @@ export const HistoryTokenList = ({
   approve,
   isForMultipleAddress,
   account: currentAccount,
+  extra,
 }: ItemProps) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -196,65 +214,74 @@ export const HistoryTokenList = ({
         ? isUnlimited
           ? t('page.transactions.detail.Unlimited')
           : formatTokenAmount(singleAmount || 0)
-        : '0';
+        : '';
       const singeToken = isArray(token) ? token[0] : token;
       const isSend = type === HistoryItemCateType.Send;
       const isGasDeposit = type === HistoryItemCateType.GAS_DEPOSIT;
       const tokenIsNft = tokenId?.length === 32;
 
       return (
-        <TouchableOpacity onPress={() => handlePress(singeToken!, tokenIsNft)}>
-          <View style={[styles.singleBox]}>
-            <View
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <HistoryItemIcon
-                isInDetail={true}
-                type={type}
-                token={singeToken as TokenItem}
-                isNft={tokenIsNft}
-              />
+        <View style={styles.card}>
+          <TouchableOpacity
+            onPress={() => handlePress(singeToken!, tokenIsNft)}>
+            <View style={[styles.singleBox]}>
               <View
-                style={[styles.singleColomnBox, isFail && styles.isFailBox]}>
-                <Text
-                  numberOfLines={1}
-                  style={[
-                    styles.tokenAmountText,
-                    (isSend || isGasDeposit) && styles.isSendTextColor,
-                    isApprove && styles.tokenApproveAmountText,
-                  ]}>
-                  {!isApprove && (isSend || isGasDeposit ? '- ' : '+ ')}
-                  {tokenIsNft ? singleAmount : appvoveAmmountStr}{' '}
-                  {tokenIsNft
-                    ? t('page.singleHome.sectionHeader.Nft')
-                    : ellipsisOverflowedText(
-                        getTokenSymbol(singeToken as TokenItem),
-                        16,
-                      )}
-                </Text>
-                {Boolean(!tokenIsNft && singleAmount && !isUnlimited) && (
-                  <HistoryItemTokenPrice
-                    tokenId={tokenId}
-                    chainId={chain}
-                    singlePrice={
-                      singlePrice ?? (singeToken as TokenItem)?.price
-                    }
-                    address={currentAccount?.address!}
-                    amount={singleAmount!}
-                    style={styles.tokenPriceText}
-                  />
-                )}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <HistoryItemIcon
+                  isInDetail={true}
+                  type={type}
+                  token={singeToken as TokenItem}
+                  isNft={tokenIsNft}
+                />
+                <View
+                  style={[styles.singleColomnBox, isFail && styles.isFailBox]}>
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.tokenAmountText,
+                      (isSend || isGasDeposit) && styles.isSendTextColor,
+                      isApprove && styles.tokenApproveAmountText,
+                    ]}>
+                    {!isApprove && (isSend || isGasDeposit ? '- ' : '+ ')}
+                    {tokenIsNft ? singleAmount : appvoveAmmountStr}{' '}
+                    {tokenIsNft
+                      ? singeToken?.name ||
+                        t('page.singleHome.sectionHeader.Nft')
+                      : ellipsisOverflowedText(
+                          getTokenSymbol(singeToken as TokenItem),
+                          16,
+                        )}
+                  </Text>
+                  {Boolean(!tokenIsNft && singleAmount && !isUnlimited) && (
+                    <HistoryItemTokenPrice
+                      tokenId={tokenId}
+                      chainId={chain}
+                      singlePrice={
+                        singlePrice ?? (singeToken as TokenItem)?.price
+                      }
+                      address={currentAccount?.address!}
+                      amount={singleAmount!}
+                      style={styles.tokenPriceText}
+                    />
+                  )}
+                </View>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  width: 32,
+                }}>
+                <RcIconSingleArrow
+                  width={26}
+                  height={26}
+                  color={colors2024['neutral-bg-2']}
+                />
               </View>
             </View>
-            <View
-              style={{ flexDirection: 'row', alignItems: 'center', width: 32 }}>
-              <RcIconSingleArrow
-                width={26}
-                height={26}
-                color={colors2024['neutral-bg-2']}
-              />
-            </View>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+          {extra}
+        </View>
       );
 
     case HistoryItemCateType.Bridge:
@@ -276,32 +303,39 @@ export const HistoryTokenList = ({
                         alignItems: 'center',
                         gap: 8,
                       }}>
-                      {tokenIsNft ? (
-                        <Media
-                          failedPlaceholder={
-                            <IconDefaultNFT width={45} height={45} />
-                          }
-                          type="image_url"
-                          src={
-                            token?.content?.endsWith('.svg')
-                              ? ''
-                              : token?.content
-                          }
-                          thumbnail={
-                            token?.content?.endsWith('.svg')
-                              ? ''
-                              : token?.content
-                          }
-                          mediaStyle={styles.media}
-                          style={styles.media}
-                          playIconSize={12}
+                      <View>
+                        {tokenIsNft ? (
+                          <Media
+                            failedPlaceholder={
+                              <IconDefaultNFT width={45} height={45} />
+                            }
+                            type={token?.content_type || 'image_url'}
+                            src={
+                              token?.content?.endsWith('.svg')
+                                ? ''
+                                : token?.content
+                            }
+                            thumbnail={
+                              token?.content?.endsWith('.svg')
+                                ? ''
+                                : token?.content
+                            }
+                            mediaStyle={styles.media}
+                            style={styles.media}
+                            playIconSize={12}
+                          />
+                        ) : (
+                          <AssetAvatar
+                            logo={(token as TokenItem)?.logo_url || ''}
+                            size={45}
+                          />
+                        )}
+                        <ChainIconFastImage
+                          style={styles.tokenChainIcon}
+                          size={20}
+                          chainServerId={token.chain}
                         />
-                      ) : (
-                        <AssetAvatar
-                          logo={(token as TokenItem)?.logo_url || ''}
-                          size={45}
-                        />
-                      )}
+                      </View>
                       <View
                         style={[
                           styles.singleColomnBox,
@@ -315,7 +349,8 @@ export const HistoryTokenList = ({
                           ]}>
                           - {formatTokenAmount(item.amount)}{' '}
                           {tokenIsNft
-                            ? t('page.singleHome.sectionHeader.Nft')
+                            ? item.token?.name ||
+                              t('page.singleHome.sectionHeader.Nft')
                             : ellipsisOverflowedText(
                                 getTokenSymbol(token as TokenItem),
                                 16,
@@ -360,32 +395,39 @@ export const HistoryTokenList = ({
                         alignItems: 'center',
                         gap: 8,
                       }}>
-                      {tokenIsNft ? (
-                        <Media
-                          failedPlaceholder={
-                            <IconDefaultNFT width={45} height={45} />
-                          }
-                          type="image_url"
-                          src={
-                            token?.content?.endsWith('.svg')
-                              ? ''
-                              : token?.content
-                          }
-                          thumbnail={
-                            token?.content?.endsWith('.svg')
-                              ? ''
-                              : token?.content
-                          }
-                          mediaStyle={styles.media}
-                          style={styles.media}
-                          playIconSize={12}
+                      <View>
+                        {tokenIsNft ? (
+                          <Media
+                            failedPlaceholder={
+                              <IconDefaultNFT width={45} height={45} />
+                            }
+                            type={token?.content_type || 'image_url'}
+                            src={
+                              token?.content?.endsWith('.svg')
+                                ? ''
+                                : token?.content
+                            }
+                            thumbnail={
+                              token?.content?.endsWith('.svg')
+                                ? ''
+                                : token?.content
+                            }
+                            mediaStyle={styles.media}
+                            style={styles.media}
+                            playIconSize={12}
+                          />
+                        ) : (
+                          <AssetAvatar
+                            logo={(token as TokenItem)?.logo_url || ''}
+                            size={45}
+                          />
+                        )}
+                        <ChainIconFastImage
+                          style={styles.tokenChainIcon}
+                          size={20}
+                          chainServerId={token.chain}
                         />
-                      ) : (
-                        <AssetAvatar
-                          logo={(token as TokenItem)?.logo_url || ''}
-                          size={45}
-                        />
-                      )}
+                      </View>
                       <View
                         style={[
                           styles.singleColomnBox,
@@ -396,7 +438,8 @@ export const HistoryTokenList = ({
                           style={[styles.tokenAmountText]}>
                           + {formatTokenAmount(item.amount)}{' '}
                           {tokenIsNft
-                            ? t('page.singleHome.sectionHeader.Nft')
+                            ? item.token?.name ||
+                              t('page.singleHome.sectionHeader.Nft')
                             : ellipsisOverflowedText(
                                 getTokenSymbol(token as TokenItem),
                                 16,
@@ -438,6 +481,11 @@ export const HistoryTokenList = ({
       return (
         hasList && (
           <View style={[styles.mutliBox]}>
+            <View style={styles.detailContainerHeader}>
+              <Text style={styles.detailContainerTitle}>
+                {t('page.transactions.detail.InteractionResults')}
+              </Text>
+            </View>
             {sends?.map(({ token_id, amount, price, token: iToken }) => (
               <TokenItemInlist
                 key={token_id}
@@ -482,16 +530,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenApproveAmountText: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '700',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '800',
   },
   tokenAmountTextList: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: '700',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '800',
   },
   tokenPriceText: {
     color: colors2024['neutral-secondary'],
@@ -583,18 +631,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     height: 110,
   },
-  singleBox: {
+  card: {
     width: '100%',
-    // height: 92,
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
+    borderRadius: 16,
+  },
+  singleBox: {
     justifyContent: 'space-between',
     alignContent: 'center',
-    borderRadius: 16,
-    padding: 16,
     flexDirection: 'row',
+    padding: 16,
   },
+
   swapBoxContainer: {
     display: 'flex',
     flexDirection: 'column',
@@ -614,10 +664,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
     alignContent: 'center',
     borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     // flexDirection: 'row',
-    gap: 12,
+    gap: 16,
+  },
+  detailContainerHeader: {
+    paddingBottom: 8,
+  },
+  detailContainerTitle: {
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
   },
   iconTR: {
     position: 'absolute',
@@ -652,5 +712,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  tokenChainIcon: {
+    position: 'absolute',
+    right: -1,
+    bottom: -1,
+    width: 20,
+    height: 20,
+    borderWidth: 1,
+    borderColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
+    borderRadius: 1000,
   },
 }));

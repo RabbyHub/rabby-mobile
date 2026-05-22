@@ -215,7 +215,7 @@
         "SpeedUp": "加速",
         "InteractionResults": "交互结果",
         "ApproveTo": "授权给",
-        "InteractedContract": "已交互合约",
+        "InteractedContract": "",
         "To": "至",
         "PurchaseFrom": "购买自",
         "Name": "名称",

@@ -473,7 +473,7 @@
         "RevokeToken": "Revogar Token",
         "name": "Nome",
         "Status": "Status",
-        "InteractedContract": "Contrato interagido",
+        "InteractedContract": "",
         "InteractionResults": "Resultados de Interação",
         "ApproveTo": "Aprovar para",
         "BuyAgain": "Comprar Novamente",
@@ -488,7 +488,7 @@
       },
       "empty": {
         "title": "Sem transações",
-        "desc": "Sem transações encontradas em <1>supported chains</1>"
+        "desc": "Sem transações encontradas em <1>cadeias suportadas</1>"
       },
       "txHistory": {
         "tipInputData": "A transação inclui uma mensagem",

@@ -192,6 +192,10 @@ export const SignMainnetHeaderContent = ({
   const summaryValueColor = isSummaryNotEnough
     ? colors2024['red-default']
     : textColor;
+  const showCustomFixedModeTag =
+    !!fixedMode &&
+    selectedGas?.level === 'custom' &&
+    !!defaultFixedModeOnCurrentChain;
   const gasMethodShortcut =
     showGasMethodShortcut && gasMethod && onChangeGasMethod && !disabled ? (
       <GasMethodShortcut
@@ -631,6 +635,7 @@ export const SignMainnetHeaderContent = ({
             noCustomRPC={noCustomRPCEnabled}
             freeGasAvailable={freeGasAvailable}
             levelState={levelState}
+            showCustomFixedModeTag={showCustomFixedModeTag}
             gasToken={gasToken}
             showTempoGasTokenSelector={showTempoGasTokenSelector}
             tempoGasTokenList={tempoGasTokenList}
