@@ -11,12 +11,14 @@ export const HOME_TOP_HEADER_SIZES = {
   headerIndicatorHeight: 6,
   headerOffsetAfterIndicator: 12,
   headerTabItemHeight: 32,
+  headerTabItemPaddingBottom: IS_ANDROID ? 0 : 4,
   headerOffsetAfterTabItem: 12,
   get tabItemLineHeight() {
     return (
       HOME_TOP_HEADER_SIZES.headerIndicatorHeight +
       HOME_TOP_HEADER_SIZES.headerOffsetAfterIndicator +
       HOME_TOP_HEADER_SIZES.headerTabItemHeight +
+      HOME_TOP_HEADER_SIZES.headerTabItemPaddingBottom +
       HOME_TOP_HEADER_SIZES.headerOffsetAfterTabItem
     );
   },

@@ -144,6 +144,10 @@ type TokenListItem =
   | {
       type: 'empty-assets';
       data: string;
+    }
+  | {
+      type: 'loading-skeleton';
+      data: string;
     };
 
 const { batchGetTokenList } = useTokenList.getState();
@@ -347,7 +351,7 @@ export const TokenList = () => {
 
   const onRefresh = useCallback(async () => {
     try {
-      batchGetTokenList(myTop10Addresses, true);
+      await batchGetTokenList(myTop10Addresses, true);
     } catch (error) {
       console.error('Refresh failed:', error);
     }
@@ -355,6 +359,18 @@ export const TokenList = () => {
 
   const dataList = useMemo(() => {
     const items: TokenListItem[] = [];
+    const hasNoTokenItems =
+      tokenRows.length + foldRows.length + scamRows.length === 0;
+
+    if (isLoading && hasNoTokenItems) {
+      items.push(
+        ...Array.from({ length: 5 }, (_, index) => ({
+          type: 'loading-skeleton' as const,
+          data: `index-token-${index.toString()}`,
+        })),
+      );
+      return items;
+    }
 
     if (hasNoAssets) {
       items.push({
@@ -406,6 +422,7 @@ export const TokenList = () => {
     foldHideList,
     foldScam,
     hasNoAssets,
+    isLoading,
     scamTokenPreviewLogoUrls,
     t,
   ]);
@@ -474,6 +491,8 @@ export const TokenList = () => {
               type={'empty-assets'}
             />
           );
+        case 'loading-skeleton':
+          return <MemoizedItemLoader style={styles.loadingItem} />;
         default:
           return null;
       }
@@ -501,6 +520,9 @@ export const TokenList = () => {
     }
     if (item.type === 'empty-assets') {
       return `empty-assets-${item.data}`;
+    }
+    if (item.type === 'loading-skeleton') {
+      return `loading-skeleton-${item.data}`;
     }
     return item.type;
   }, []);
@@ -596,6 +618,7 @@ const getStyles = createGetStyles2024(() => ({
   },
   loadingItem: {
     height: ASSETS_ITEM_HEIGHT_NEW,
+    marginBottom: 8,
   },
   rowWrap: {
     height: ASSETS_ITEM_HEIGHT_NEW,
