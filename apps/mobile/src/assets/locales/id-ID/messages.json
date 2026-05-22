@@ -2440,6 +2440,28 @@
       "title": "Sejarah"
     },
     "perps": {
+      "limitOrders": "Limit Order",
+      "cancelAll": "Batalkan Semua",
+      "cancelAllOrdersConfirmTitle": "Konfirmasi Batalkan SEMUA Order",
+      "cancelAllOrdersConfirmMessage": "Semua Limit Order Anda akan dibatalkan",
+      "limitOrderDetail": {
+        "title": "Limit {{side}} {{pair}}",
+        "time": "Waktu",
+        "size": "Ukuran",
+        "filled": "Terisi",
+        "currentPrice": "Harga Saat Ini",
+        "limitPrice": "Harga Limit",
+        "marginUsage": "Penggunaan Margin",
+        "cancelLimitOrder": "Batalkan Limit Order",
+        "buy": "Beli",
+        "sell": "Jual"
+      },
+      "cancelOrderToast": {
+        "singleSuccess": "Limit order dibatalkan",
+        "multiSuccess": "{{count}} limit order dibatalkan",
+        "partial": "{{okCount}} dibatalkan, {{failCount}} gagal",
+        "failed": "Gagal membatalkan limit order"
+      },
       "PerpsCard": {
         "withdrawBtn": "Tarik",
         "available": "Tersedia",
@@ -2695,6 +2717,20 @@
       }
     },
     "perpsDetail": {
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "Atur Harga Limit Beli",
+        "setLimitSellPrice": "Atur Harga Limit Jual",
+        "marketLabel": "Mid",
+        "setBtn": "Atur",
+        "blockError": "Harga order melebihi batas perlindungan harga 10%.",
+        "confirmTitle": "Tinjau Harga Limit",
+        "confirmMessage": "Harga limit 5%+ jauh dari harga pasar",
+        "confirmContinue": "Lanjutkan",
+        "confirmCancel": "Batal"
+      },
+      "PerpsPriceInfo": {
+        "current": "Saat Ini"
+      },
       "PerpsPosition": {
         "isolated": "Isolasi",
         "liqPrice": "Liq.Harga",
@@ -2760,6 +2796,13 @@
         "rabbyFeeTipsV2": "Biaya Rabby: 0,02%"
       },
       "PerpsOpenPositionPopup": {
+        "title": "Buka Posisi {{coin}}",
+        "limitOrderPlacedToast": "Limit {{direction}} {{coin}}: Ukuran {{size}} ditempatkan pada ${{price}}",
+        "orderType": "Jenis Pesanan",
+        "orderTypeMarket": "Pasar",
+        "orderTypeLimit": "Limit",
+        "limitPrice": "Harga Limit",
+        "currentPrice": "Harga Saat Ini",
         "minimumOrderSize": "Ukuran pesanan minimum adalah $10",
         "tpPrice": "Harga Ambil Keuntungan",
         "insufficientBalance": "Saldo tidak cukup",
@@ -2783,6 +2826,11 @@
         "onlyIsolated": "Hanya margin terisolasi yang didukung untuk token ini"
       },
       "PerpsOpenPositionCheckPopup": {
+        "limitTitle": "Periksa Limit Order",
+        "marketTitle": "Periksa Market Order",
+        "limitPrice": "Harga Limit",
+        "mayExecuteImmediately": "Limit order ini mungkin langsung dieksekusi",
+        "setLimitOrderBtn": "Pasang Limit Order",
         "direction": "Arah",
         "tpPrice": "Harga Ambil Keuntungan",
         "btn": "Buka Posisi {{direction}}",
@@ -2830,6 +2878,10 @@
         "takeProfitWhen": "Ambil Keuntungan Ketika",
         "currentPrice": "Saat ini {{price}}",
         "takeProfitExpectedPNL": "Ambil keuntungan PNL yang diharapkan",
+        "youGainRoi": "Anda Mendapatkan (ROI)",
+        "youLossRoi": "Anda Rugi (ROI)",
+        "currentPriceTpl": "Saat ini <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "Masuk <1>{{entryPrice}}</1>  Saat Ini <2>{{price}}</2>",
         "EntryAndCurrentPrice": "Masuk {{entryPrice}}  Saat Ini {{price}}"
       },
       "PerpsEditMarginPopup": {

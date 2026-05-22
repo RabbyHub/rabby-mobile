@@ -2440,6 +2440,28 @@
       "title": "Geçmiş"
     },
     "perps": {
+      "limitOrders": "Limit Emirler",
+      "cancelAll": "Tümünü İptal Et",
+      "cancelAllOrdersConfirmTitle": "Tüm Emirlerin İptalini Onayla",
+      "cancelAllOrdersConfirmMessage": "Tüm Limit Emirleriniz iptal edilecektir",
+      "limitOrderDetail": {
+        "title": "Limit {{side}} {{pair}}",
+        "time": "Zaman",
+        "size": "Boyut",
+        "filled": "Doldurulan",
+        "currentPrice": "Mevcut Fiyat",
+        "limitPrice": "Limit Fiyatı",
+        "marginUsage": "Marj Kullanımı",
+        "cancelLimitOrder": "Limit Emri İptal Et",
+        "buy": "Al",
+        "sell": "Sat"
+      },
+      "cancelOrderToast": {
+        "singleSuccess": "Limit emir iptal edildi",
+        "multiSuccess": "{{count}} limit emir iptal edildi",
+        "partial": "{{okCount}} iptal edildi, {{failCount}} başarısız",
+        "failed": "Limit emir iptal edilemedi"
+      },
       "PerpsCard": {
         "depositBtn": "Para Yatırma",
         "loginBtn": "Perps'a Giriş Yap",
@@ -2695,6 +2717,20 @@
       }
     },
     "perpsDetail": {
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "Limit Alış Fiyatını Belirle",
+        "setLimitSellPrice": "Limit Satış Fiyatını Belirle",
+        "marketLabel": "Orta",
+        "setBtn": "Belirle",
+        "blockError": "Emir fiyatı %10 fiyat koruma limitini aşıyor.",
+        "confirmTitle": "Limit Fiyatını İncele",
+        "confirmMessage": "Limit fiyatı, piyasa fiyatından %5 veya daha fazla uzakta",
+        "confirmContinue": "Devam Et",
+        "confirmCancel": "İptal Et"
+      },
+      "PerpsPriceInfo": {
+        "current": "Mevcut"
+      },
       "PerpsPosition": {
         "slPrice": "Zarar Durdurma Fiyatı",
         "justMargin": "Marjinal",
@@ -2760,6 +2796,13 @@
         "rabbyFeeTipsV2": "Rabby ücreti: 0.02%"
       },
       "PerpsOpenPositionPopup": {
+        "title": "{{coin}} Pozisyonu Aç",
+        "limitOrderPlacedToast": "Limit {{direction}} {{coin}}: Boyut {{size}}, ${{price}} fiyatından yerleştirildi",
+        "orderType": "Emir Türü",
+        "orderTypeMarket": "Piyasa",
+        "orderTypeLimit": "Limit",
+        "limitPrice": "Limit Fiyatı",
+        "currentPrice": "Mevcut Fiyat",
         "maximumOrderSize": "Maksimum emir büyüklüğü {{amount}}'dir.",
         "tpPrice": "Kar Alım Fiyatı",
         "sizeTips": "Ticaretinizin toplam değeri veya miktarı, marj ve kaldıraçla belirlenir.",
@@ -2783,6 +2826,11 @@
         "onlyIsolated": "Bu token için yalnızca izole marj desteklenmektedir."
       },
       "PerpsOpenPositionCheckPopup": {
+        "limitTitle": "Limit Emri Kontrol Et",
+        "marketTitle": "Piyasa Emri Kontrol Et",
+        "limitPrice": "Limit Fiyatı",
+        "mayExecuteImmediately": "Bu limit emir hemen gerçekleşebilir",
+        "setLimitOrderBtn": "Limit Emri Belirle",
         "direction": "Yön",
         "slPrice": "Zarar Durdurma Fiyatı",
         "perps": "Perps",
@@ -2830,6 +2878,10 @@
         "takeProfitExpectedPNL": "Kar al, beklenen PNL",
         "stopLossWhen": "Zarar Durdurulduğunda",
         "priceBelow": "Fiyat altında",
+        "youGainRoi": "Kazanç (ROI)",
+        "youLossRoi": "Kayıp (ROI)",
+        "currentPriceTpl": "Mevcut <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "Giriş <1>{{entryPrice}}</1>  Mevcut <2>{{price}}</2>",
         "EntryAndCurrentPrice": "Giriş {{entryPrice}}  Mevcut {{price}}"
       },
       "PerpsEditMarginPopup": {

@@ -2701,6 +2701,28 @@
       "title": "ประวัติศาสตร์"
     },
     "perps": {
+      "limitOrders": "คำสั่งซื้อขายแบบ Limit",
+      "cancelAll": "ยกเลิกทั้งหมด",
+      "cancelAllOrdersConfirmTitle": "ยืนยันการยกเลิกคำสั่ง Limit ทั้งหมด",
+      "cancelAllOrdersConfirmMessage": "คำสั่ง Limit ทั้งหมดของคุณจะถูกยกเลิก",
+      "limitOrderDetail": {
+        "title": "Limit {{side}} {{pair}}",
+        "time": "เวลา",
+        "size": "ขนาด",
+        "filled": "ที่เติมเต็มแล้ว",
+        "currentPrice": "ราคาปัจจุบัน",
+        "limitPrice": "ราคา Limit",
+        "marginUsage": "การใช้มาร์จิ้น",
+        "cancelLimitOrder": "ยกเลิกคำสั่ง Limit",
+        "buy": "ซื้อ",
+        "sell": "ขาย"
+      },
+      "cancelOrderToast": {
+        "singleSuccess": "ยกเลิกคำสั่ง Limit แล้ว",
+        "multiSuccess": "ยกเลิกคำสั่ง Limit แล้ว {{count}} รายการ",
+        "partial": "ยกเลิกสำเร็จ {{okCount}} รายการ, ล้มเหลว {{failCount}} รายการ",
+        "failed": "การยกเลิกคำสั่ง Limit ล้มเหลว"
+      },
       "PerpsCard": {
         "withdrawBtn": "ถอนเงิน",
         "loginBtn": "เข้าสู่ระบบเพื่อซื้อขาย Perps",
@@ -2956,6 +2978,20 @@
       }
     },
     "perpsDetail": {
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "ตั้งราคา Limit สำหรับซื้อ",
+        "setLimitSellPrice": "ตั้งราคา Limit สำหรับขาย",
+        "marketLabel": "Mid",
+        "setBtn": "ตั้ง",
+        "blockError": "ราคาคำสั่งเกินขีดจำกัดการป้องกันราคา 10%",
+        "confirmTitle": "ตรวจสอบราคา Limit",
+        "confirmMessage": "ราคา Limit ห่างจากราคาตลาดมากกว่า 5%",
+        "confirmContinue": "ดำเนินการต่อ",
+        "confirmCancel": "ยกเลิก"
+      },
+      "PerpsPriceInfo": {
+        "current": "ปัจจุบัน"
+      },
       "PerpsPosition": {
         "marginCross": "มาร์จิ้น (ข้าม)",
         "markPrice": "ราคา Mark",
@@ -3021,6 +3057,13 @@
         "rabbyFeeTipsV2": "ค่าธรรมเนียม Rabby: 0.02%"
       },
       "PerpsOpenPositionPopup": {
+        "title": "เปิดตำแหน่ง {{coin}}",
+        "limitOrderPlacedToast": "Limit {{direction}} {{coin}}: ขนาด {{size}} วางที่ ${{price}}",
+        "orderType": "ประเภทคำสั่ง",
+        "orderTypeMarket": "Market",
+        "orderTypeLimit": "Limit",
+        "limitPrice": "ราคา Limit",
+        "currentPrice": "ราคาปัจจุบัน",
         "size": "ขนาด",
         "slPrice": "ราคา Stop-Loss",
         "leverage": "เลเวอเรจ",
@@ -3044,6 +3087,11 @@
         "onlyIsolated": "เฉพาะอัตรากำไรที่แยกออกเท่านั้นที่รองรับสำหรับโทเค็นนี้"
       },
       "PerpsOpenPositionCheckPopup": {
+        "limitTitle": "ตรวจสอบคำสั่ง Limit",
+        "marketTitle": "ตรวจสอบคำสั่ง Market",
+        "limitPrice": "ราคา Limit",
+        "mayExecuteImmediately": "คำสั่ง Limit นี้อาจดำเนินการทันที",
+        "setLimitOrderBtn": "ตั้งคำสั่ง Limit",
         "fee": "ค่าธรรมเนียม",
         "size": "ขนาด",
         "btn": "เปิดตำแหน่ง {{direction}}",
@@ -3089,6 +3137,10 @@
         "priceBelow": "ราคาอยู่ต่ำกว่า",
         "currentPrice": "ปัจจุบัน {{price}}",
         "stopLossExpectedPNL": "คาดการณ์ PNL ที่หยุดการขาดทุน",
+        "youGainRoi": "คุณได้รับ (ROI)",
+        "youLossRoi": "คุณขาดทุน (ROI)",
+        "currentPriceTpl": "ปัจจุบัน <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "เข้า <1>{{entryPrice}}</1>  ปัจจุบัน <2>{{price}}</2>",
         "EntryAndCurrentPrice": "เข้า {{entryPrice}} ปัจจุบัน {{price}}",
         "takeProfitWhen": "ทำกำไรเมื่อ",
         "stopLossWhen": "หยุดการขาดทุนเมื่อ"

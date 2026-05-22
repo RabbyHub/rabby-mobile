@@ -3020,6 +3020,28 @@
         "liqDistanceTipsShort": "Subir <1>{{distance}}</1> irá ativar a liquidação.",
         "liqDistanceTipsLong": "Descer <1>{{distance}}</1> acionará a liquidação."
       },
+      "limitOrders": "Ordens Limitadas",
+      "cancelAll": "Cancelar Todas",
+      "cancelAllOrdersConfirmTitle": "Confirmar Cancelar TODAS as Ordens",
+      "cancelAllOrdersConfirmMessage": "Todas as suas Ordens Limitadas serão canceladas",
+      "limitOrderDetail": {
+        "title": "Limite {{side}} {{pair}}",
+        "time": "Hora",
+        "size": "Tamanho",
+        "filled": "Preenchido",
+        "currentPrice": "Preço Atual",
+        "limitPrice": "Preço Limite",
+        "marginUsage": "Utilização de Margem",
+        "cancelLimitOrder": "Cancelar Ordem Limitada",
+        "buy": "Comprar",
+        "sell": "Vender"
+      },
+      "cancelOrderToast": {
+        "singleSuccess": "Ordem limitada cancelada",
+        "multiSuccess": "{{count}} ordens limitadas canceladas",
+        "partial": "{{okCount}} canceladas, {{failCount}} falhadas",
+        "failed": "Falha ao cancelar ordem limitada"
+      },
       "closeAll": "Fechar Tudo",
       "closeAllConfirmMessage": "Todas as suas posições abertas serão fechadas ao preço de mercado.",
       "closeAllConfirmTitle": "Confirmar Fechar Todas as Posições",
@@ -3076,6 +3098,20 @@
       }
     },
     "perpsDetail": {
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "Definir Preço Limite de Compra",
+        "setLimitSellPrice": "Definir Preço Limite de Venda",
+        "marketLabel": "Mid",
+        "setBtn": "Definir",
+        "blockError": "O preço da ordem excede o limite de proteção de preço de 10%.",
+        "confirmTitle": "Rever Preço Limite",
+        "confirmMessage": "O preço limite está 5%+ acima do preço de mercado",
+        "confirmContinue": "Continuar",
+        "confirmCancel": "Cancelar"
+      },
+      "PerpsPriceInfo": {
+        "current": "Atual"
+      },
       "PerpsPosition": {
         "cross": "Cruz",
         "pnl": "PNL",
@@ -3141,6 +3177,13 @@
         "rabbyFeeTipsV2": "Taxa Rabby: 0,02%"
       },
       "PerpsOpenPositionPopup": {
+        "title": "Abrir Posição {{coin}}",
+        "limitOrderPlacedToast": "Limite {{direction}} {{coin}}: Tamanho {{size}} colocado a ${{price}}",
+        "orderType": "Tipo de Ordem",
+        "orderTypeMarket": "Mercado",
+        "orderTypeLimit": "Limitada",
+        "limitPrice": "Preço Limite",
+        "currentPrice": "Preço Atual",
         "sizeTips": "O valor total ou a quantidade da sua negociação, definido pela margem e pela alavancagem.",
         "autoClose": "Fechar Automaticamente",
         "minimumOrderSize": "O tamanho mínimo do pedido é de 10 $.",
@@ -3164,6 +3207,11 @@
         "onlyIsolated": "Apenas margem isolada é suportada para este token."
       },
       "PerpsOpenPositionCheckPopup": {
+        "limitTitle": "Verificar Ordem Limitada",
+        "marketTitle": "Verificar Ordem de Mercado",
+        "limitPrice": "Preço Limite",
+        "mayExecuteImmediately": "Esta ordem limitada pode ser executada imediatamente",
+        "setLimitOrderBtn": "Definir Ordem Limitada",
         "initialMargin": "Margem Inicial",
         "perps": "Perps",
         "size": "Tamanho",
@@ -3211,7 +3259,11 @@
         "youGain": "Você Ganha",
         "priceAbove": "Preço acima",
         "currentPrice": "Preço atual {{price}}",
-        "takeProfitWhen": "Levar Lucro Quando"
+        "takeProfitWhen": "Levar Lucro Quando",
+        "youGainRoi": "Você Ganha (ROI)",
+        "youLossRoi": "Você Perde (ROI)",
+        "currentPriceTpl": "Atual <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "Entrada <1>{{entryPrice}}</1>  Atual <2>{{price}}</2>"
       },
       "PerpsEditMarginPopup": {
         "title": "Ajustar margem",

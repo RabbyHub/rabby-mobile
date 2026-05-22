@@ -2574,6 +2574,28 @@
       "builtInPageTitle": "内建页面"
     },
     "perps": {
+      "limitOrders": "限价单",
+      "cancelAll": "取消全部",
+      "cancelAllOrdersConfirmTitle": "确认取消所有订单",
+      "cancelAllOrdersConfirmMessage": "您所有的限价单将被取消",
+      "limitOrderDetail": {
+        "title": "限价{{side}} {{pair}}",
+        "time": "时间",
+        "size": "数量",
+        "filled": "已成交",
+        "currentPrice": "当前价格",
+        "limitPrice": "限价",
+        "marginUsage": "占用保证金",
+        "cancelLimitOrder": "取消限价单",
+        "buy": "买入",
+        "sell": "卖出"
+      },
+      "cancelOrderToast": {
+        "singleSuccess": "限价单已取消",
+        "multiSuccess": "{{count}} 笔限价单已取消",
+        "partial": "{{okCount}} 笔已取消，{{failCount}} 笔失败",
+        "failed": "取消限价单失败"
+      },
       "PerpsCard": {
         "depositBtn": "存款",
         "withdrawBtn": "提取",
@@ -2829,6 +2851,20 @@
       }
     },
     "perpsDetail": {
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "设置限价买入价格",
+        "setLimitSellPrice": "设置限价卖出价格",
+        "marketLabel": "中间价",
+        "setBtn": "设置",
+        "blockError": "订单价格超出 10% 的价格保护限制。",
+        "confirmTitle": "确认限价",
+        "confirmMessage": "限价与市场价格偏差超过 5%",
+        "confirmContinue": "继续",
+        "confirmCancel": "取消"
+      },
+      "PerpsPriceInfo": {
+        "current": "当前"
+      },
       "PerpsPosition": {
         "title": "仓位",
         "tpPrice": "止盈价格",
@@ -2894,6 +2930,13 @@
         "rabbyFeeTipsV2": "Rabby 费用：0.02%"
       },
       "PerpsOpenPositionPopup": {
+        "title": "开 {{coin}} 仓位",
+        "limitOrderPlacedToast": "限价{{direction}} {{coin}}：数量 {{size}} 已以 ${{price}} 挂单",
+        "orderType": "订单类型",
+        "orderTypeMarket": "市价",
+        "orderTypeLimit": "限价",
+        "limitPrice": "限价",
+        "currentPrice": "当前价格",
         "leverage": "杠杆",
         "margin": "保证金",
         "size": "仓位",
@@ -2917,6 +2960,11 @@
         "onlyIsolated": "仅支持该代币的隔离保证金"
       },
       "PerpsOpenPositionCheckPopup": {
+        "limitTitle": "确认限价单",
+        "marketTitle": "确认市价单",
+        "limitPrice": "限价",
+        "mayExecuteImmediately": "此限价单可能立即成交",
+        "setLimitOrderBtn": "挂限价单",
         "price": "价格",
         "tpPrice": "止盈价格",
         "size": "仓位",
@@ -2962,6 +3010,10 @@
         "stopLossExpectedPNL": "预估亏损",
         "priceBelow": "价格低于此值时触发",
         "youGain": "预期收益",
+        "youGainRoi": "预期收益（ROI）",
+        "youLossRoi": "预期亏损（ROI）",
+        "currentPriceTpl": "当前 <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "入场 <1>{{entryPrice}}</1>  当前 <2>{{price}}</2>",
         "currentPrice": "当前 {{price}}",
         "EntryAndCurrentPrice": "入场 {{entryPrice}}  当前 {{price}}",
         "takeProfitWhen": "止盈设置"

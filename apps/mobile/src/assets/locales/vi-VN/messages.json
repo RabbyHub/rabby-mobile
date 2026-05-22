@@ -2561,6 +2561,28 @@
       "title": "Lịch sử"
     },
     "perps": {
+      "limitOrders": "Lệnh Giới Hạn",
+      "cancelAll": "Hủy Tất Cả",
+      "cancelAllOrdersConfirmTitle": "Xác Nhận Hủy TẤT CẢ Lệnh",
+      "cancelAllOrdersConfirmMessage": "Tất cả Lệnh Giới Hạn của bạn sẽ bị hủy",
+      "limitOrderDetail": {
+        "title": "Lệnh Giới Hạn {{side}} {{pair}}",
+        "time": "Thời gian",
+        "size": "Kích thước",
+        "filled": "Đã khớp",
+        "currentPrice": "Giá hiện tại",
+        "limitPrice": "Giá giới hạn",
+        "marginUsage": "Sử dụng ký quỹ",
+        "cancelLimitOrder": "Hủy lệnh giới hạn",
+        "buy": "Mua",
+        "sell": "Bán"
+      },
+      "cancelOrderToast": {
+        "singleSuccess": "Lệnh giới hạn đã được hủy",
+        "multiSuccess": "{{count}} lệnh giới hạn đã được hủy",
+        "partial": "{{okCount}} đã hủy, {{failCount}} thất bại",
+        "failed": "Hủy lệnh giới hạn thất bại"
+      },
       "PerpsCard": {
         "title": "Giao dịch Perps",
         "depositBtn": "Nạp tiền",
@@ -2816,6 +2838,20 @@
       }
     },
     "perpsDetail": {
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "Đặt Giá Mua Giới Hạn",
+        "setLimitSellPrice": "Đặt Giá Bán Giới Hạn",
+        "marketLabel": "Mid",
+        "setBtn": "Đặt",
+        "blockError": "Giá lệnh vượt quá giới hạn bảo vệ giá 10%.",
+        "confirmTitle": "Xem xét Giá Giới Hạn",
+        "confirmMessage": "Giá giới hạn cách giá thị trường hơn 5%",
+        "confirmContinue": "Tiếp tục",
+        "confirmCancel": "Hủy"
+      },
+      "PerpsPriceInfo": {
+        "current": "Hiện tại"
+      },
       "PerpsPosition": {
         "title": "Vị trí",
         "marginCross": "Margin (Giao chéo)",
@@ -2881,6 +2917,13 @@
         "rabbyFeeTipsV2": "Phí Rabby: 0.02%"
       },
       "PerpsOpenPositionPopup": {
+        "title": "Mở Vị Thế {{coin}}",
+        "limitOrderPlacedToast": "Lệnh giới hạn {{direction}} {{coin}}: Kích thước {{size}} đặt tại ${{price}}",
+        "orderType": "Loại Lệnh",
+        "orderTypeMarket": "Thị Trường",
+        "orderTypeLimit": "Giới Hạn",
+        "limitPrice": "Giá giới hạn",
+        "currentPrice": "Giá hiện tại",
         "leverage": "Đòn bẩy",
         "slPrice": "Giá Dừng Lỗ",
         "size": "Kích thước",
@@ -2904,6 +2947,11 @@
         "onlyIsolated": "Chỉ có margin cô lập được hỗ trợ cho token này"
       },
       "PerpsOpenPositionCheckPopup": {
+        "limitTitle": "Kiểm Tra Lệnh Giới Hạn",
+        "marketTitle": "Kiểm Tra Lệnh Thị Trường",
+        "limitPrice": "Giá giới hạn",
+        "mayExecuteImmediately": "Lệnh giới hạn này có thể được thực hiện ngay lập tức",
+        "setLimitOrderBtn": "Đặt Lệnh Giới Hạn",
         "fee": "Phí",
         "price": "Giá",
         "title": "Kiểm tra Đơn hàng",
@@ -2951,6 +2999,10 @@
         "currentPrice": "Giá hiện tại {{price}}",
         "stopLossExpectedPNL": "Dừng lỗ lãi dự kiến",
         "takeProfitExpectedPNL": "Lợi nhuận kỳ vọng khi chốt lời",
+        "youGainRoi": "Bạn Được Hưởng (ROI)",
+        "youLossRoi": "Bạn Thua Lỗ (ROI)",
+        "currentPriceTpl": "Hiện tại <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "Vào lệnh <1>{{entryPrice}}</1>  Hiện tại <2>{{price}}</2>",
         "EntryAndCurrentPrice": "Giá vào {{entryPrice}}  Giá hiện tại {{price}}"
       },
       "PerpsEditMarginPopup": {

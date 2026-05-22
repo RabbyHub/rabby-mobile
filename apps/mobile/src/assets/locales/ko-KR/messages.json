@@ -2441,6 +2441,28 @@
       "title": "역사"
     },
     "perps": {
+      "limitOrders": "지정가 주문",
+      "cancelAll": "전체 취소",
+      "cancelAllOrdersConfirmTitle": "모든 주문 취소 확인",
+      "cancelAllOrdersConfirmMessage": "모든 지정가 주문이 취소됩니다",
+      "limitOrderDetail": {
+        "title": "지정가 {{side}} {{pair}}",
+        "time": "시간",
+        "size": "크기",
+        "filled": "체결",
+        "currentPrice": "현재 가격",
+        "limitPrice": "지정가",
+        "marginUsage": "증거금 사용",
+        "cancelLimitOrder": "지정가 주문 취소",
+        "buy": "매수",
+        "sell": "매도"
+      },
+      "cancelOrderToast": {
+        "singleSuccess": "지정가 주문이 취소되었습니다",
+        "multiSuccess": "{{count}}개의 지정가 주문이 취소되었습니다",
+        "partial": "{{okCount}}개 취소됨, {{failCount}}개 실패",
+        "failed": "지정가 주문 취소 실패"
+      },
       "PerpsCard": {
         "withdrawBtn": "출금",
         "loginBtn": "영구 계약 거래에 로그인",
@@ -2696,6 +2718,20 @@
       }
     },
     "perpsDetail": {
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "지정가 매수가 설정",
+        "setLimitSellPrice": "지정가 매도가 설정",
+        "marketLabel": "중간가",
+        "setBtn": "설정",
+        "blockError": "주문 가격이 10% 가격 보호 한도를 초과했습니다.",
+        "confirmTitle": "지정가 검토",
+        "confirmMessage": "지정가가 시장 가격보다 5% 이상 차이납니다",
+        "confirmContinue": "계속",
+        "confirmCancel": "취소"
+      },
+      "PerpsPriceInfo": {
+        "current": "현재"
+      },
       "PerpsPosition": {
         "title": "포지션",
         "direction": "방향",
@@ -2761,6 +2797,13 @@
         "rabbyFeeTipsV2": "Rabby 수수료: 0.02%"
       },
       "PerpsOpenPositionPopup": {
+        "title": "{{coin}} 포지션 열기",
+        "limitOrderPlacedToast": "지정가 {{direction}} {{coin}}: 크기 {{size}}, ${{price}}에 주문 완료",
+        "orderType": "주문 유형",
+        "orderTypeMarket": "시장가",
+        "orderTypeLimit": "지정가",
+        "limitPrice": "지정가",
+        "currentPrice": "현재 가격",
         "minimumOrderSize": "최소 주문 크기는 $10입니다.",
         "margin": "마진",
         "invalidNumber": "유효한 번호를 입력하십시오",
@@ -2784,6 +2827,11 @@
         "onlyIsolated": "이 토큰에 대해서는 격리 마진만 지원됩니다."
       },
       "PerpsOpenPositionCheckPopup": {
+        "limitTitle": "지정가 주문 확인",
+        "marketTitle": "시장가 주문 확인",
+        "limitPrice": "지정가",
+        "mayExecuteImmediately": "이 지정가 주문은 즉시 체결될 수 있습니다",
+        "setLimitOrderBtn": "지정가 주문 설정",
         "initialMargin": "초기 증거금",
         "estLqPrice": "예상 청산 가격",
         "direction": "방향",
@@ -2831,7 +2879,11 @@
         "stopLossExpectedPNL": "손실 방지 예상 PNL",
         "youLoss": "당신의 손실",
         "stopLossWhen": "손절매 시",
-        "takeProfitWhen": "이익 실현 시"
+        "takeProfitWhen": "이익 실현 시",
+        "youGainRoi": "수익 (ROI)",
+        "youLossRoi": "손실 (ROI)",
+        "currentPriceTpl": "현재 <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "진입 <1>{{entryPrice}}</1>  현재 <2>{{price}}</2>"
       },
       "PerpsEditMarginPopup": {
         "title": "마진 조정",
