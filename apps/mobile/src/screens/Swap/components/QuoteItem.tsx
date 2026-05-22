@@ -16,7 +16,7 @@ import {
 
 import { AssetAvatar } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
-import { formatAmount, formatUsdValue } from '@/utils/number';
+import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
@@ -62,7 +62,6 @@ export const DexQuoteItem = (
     isLoading,
     quote,
     name: dexId,
-    loading,
     bestQuoteAmount,
     bestQuoteGasUsd,
     payToken,
@@ -92,112 +91,60 @@ export const DexQuoteItem = (
 
   const halfBetterRateString = '';
 
-  const [receiveOrErrorContent, bestQuotePercent, disabled, receivedTokenUsd] =
+  const { receiveAmount, diffPercent, disabled, receivedTokenUsd, errorText } =
     useMemo(() => {
-      let receiveOrErrorContent: React.ReactNode = null;
-      let bestQuotePercent: React.ReactNode = null;
       let disable = false;
-      let receivedTokenUsd: string | null = null;
-      let diffUsd: React.ReactNode = null;
+      let error: string | null = null;
+      let percentText = '';
 
       const actualReceiveAmount = new BigNumber(quote?.toTokenAmount || 0)
         .div(10 ** (quote?.toTokenDecimals || receiveToken.decimals))
         .toString();
+      const receiveAmountValue =
+        actualReceiveAmount || (dexId === 'WrapToken' ? payAmount : '0');
+      const bestQuoteAmountBn = new BigNumber(bestQuoteAmount);
+      const receivedTokenAmountBn = new BigNumber(receiveAmountValue);
 
-      if (actualReceiveAmount || dexId === 'WrapToken') {
-        const receiveAmount =
-          actualReceiveAmount || (dexId === 'WrapToken' ? payAmount : 0);
-        const bestQuoteAmountBn = new BigNumber(bestQuoteAmount);
-        const receivedTokeAmountBn = new BigNumber(receiveAmount);
+      const receivedUsdBn = receivedTokenAmountBn
+        .times(receiveToken.price)
+        .minus(sortIncludeGasFee ? preExecResult?.gasUsdValue || 0 : 0);
 
-        const receivedUsdBn = receivedTokeAmountBn
-          .times(receiveToken.price)
-          .minus(sortIncludeGasFee ? preExecResult?.gasUsdValue || 0 : 0);
+      const bestQuoteUsdBn = bestQuoteAmountBn
+        .times(receiveToken.price)
+        .minus(sortIncludeGasFee ? bestQuoteGasUsd : 0);
 
-        const bestQuoteUsdBn = bestQuoteAmountBn
-          .times(receiveToken.price)
-          .minus(sortIncludeGasFee ? bestQuoteGasUsd : 0);
-
-        let percent = receivedUsdBn
-          .minus(bestQuoteUsdBn)
-          .div(bestQuoteUsdBn)
-          .abs()
-          .times(100);
-
-        if (!receiveToken.price) {
-          percent = receivedTokeAmountBn
-            .minus(bestQuoteAmountBn)
-            .div(bestQuoteAmountBn)
-            .abs()
-            .times(100);
-        }
-
-        receivedTokenUsd = formatUsdValue(
-          receivedTokeAmountBn.times(receiveToken.price || 0).toString(10),
-        );
-
-        diffUsd = formatUsdValue(
-          receivedUsdBn.minus(bestQuoteUsdBn).toString(10),
-        );
-
-        const s = formatAmount(receivedTokeAmountBn.toString(10));
-        receiveOrErrorContent = (
-          <Text style={styles.middleDefaultText}>{s}</Text>
-        );
-
-        bestQuotePercent = (
-          <View
-            style={[
-              styles.percent,
-              {
-                backgroundColor: !isBestQuote
-                  ? colors2024['red-light-1']
-                  : colors2024['green-light-1'],
-              },
-            ]}>
-            <Text
-              style={[
-                styles.percentText,
-                {
-                  color: !isBestQuote
-                    ? colors2024['red-default']
-                    : colors2024['green-default'],
-                },
-              ]}>
-              {isBestQuote
-                ? t('page.swap.best')
-                : `-${percent.toFixed(2, BigNumber.ROUND_DOWN)}%`}
-            </Text>
-          </View>
-        );
+      if (!isBestQuote) {
+        const baseBn = receiveToken.price ? bestQuoteUsdBn : bestQuoteAmountBn;
+        const currentBn = receiveToken.price
+          ? receivedUsdBn
+          : receivedTokenAmountBn;
+        const percent = baseBn.isZero()
+          ? new BigNumber(0)
+          : currentBn.minus(baseBn).div(baseBn).abs().times(100);
+        percentText = `-${percent.toFixed(2, BigNumber.ROUND_DOWN)}%`;
       }
 
+      const usdValue = formatUsdValue(
+        receivedTokenAmountBn.times(receiveToken.price || 0).toString(10),
+      );
+
       if (!quote?.toTokenAmount) {
-        bestQuotePercent = null;
-        receiveOrErrorContent = (
-          <Text style={styles.failedTipText}>
-            {t('page.swap.unable-to-fetch-the-price')}
-          </Text>
-        );
         disable = true;
+        error = t('page.swap.unable-to-fetch-the-price');
       }
 
       if (!isSdkDataPass && !!preExecResult) {
         disable = true;
-        receiveOrErrorContent = (
-          <Text style={styles.failedTipText}>
-            {t('page.swap.security-verification-failed')}
-          </Text>
-        );
-        bestQuotePercent = null;
+        error = t('page.swap.security-verification-failed');
       }
-      return [
-        receiveOrErrorContent,
-        bestQuotePercent,
-        disable,
-        receivedTokenUsd,
-        diffUsd,
-      ];
+
+      return {
+        receiveAmount: receiveAmountValue,
+        diffPercent: percentText,
+        disabled: disable,
+        receivedTokenUsd: usdValue,
+        errorText: error,
+      };
     }, [
       quote?.toTokenAmount,
       quote?.toTokenDecimals,
@@ -210,12 +157,7 @@ export const DexQuoteItem = (
       bestQuoteAmount,
       sortIncludeGasFee,
       bestQuoteGasUsd,
-      styles.middleDefaultText,
-      styles.percent,
-      styles.percentText,
-      styles.failedTipText,
       isBestQuote,
-      colors2024,
       t,
     ]);
 
@@ -343,28 +285,16 @@ export const DexQuoteItem = (
     return null;
   }
 
+  const showQuoteDetails = !disabled && !inSufficient;
+
   return (
     <TouchableOpacity
       activeOpacity={inSufficient || gasFeeTooHigh ? 1 : 0.2}
       style={[
         styles.dexContainer,
-        {
-          position: 'relative',
-          backgroundColor: !(disabled || inSufficient || gasFeeTooHigh)
-            ? colors2024['neutral-bg-1']
-            : colors2024['neutral-bg-1'],
-          borderColor: !(disabled || inSufficient || gasFeeTooHigh)
-            ? colors2024['neutral-line']
-            : colors2024['neutral-line'],
-          borderWidth: 1,
-        },
-        isErrorQuote && {
-          // height: 52,
-          borderWidth: 1,
-          paddingHorizontal: 16,
-          paddingTop: 14,
-          paddingBottom: 14,
-        },
+        onlyShow ? styles.onlyShow : styles.normal,
+        inSufficient && styles.insufficient,
+        isErrorQuote && styles.errorQuote,
       ]}
       onPress={() => {
         if (onlyShow) {
@@ -373,162 +303,189 @@ export const DexQuoteItem = (
         }
         handleClick();
       }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: disabled ? 0 : 10,
-        }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-          }}>
+      <View style={styles.topRow}>
+        <View style={styles.leftSection}>
           <QuoteLogo
             loaded
             logo={quoteProviderInfo.logo}
             isLoading={isLoading}
           />
-          <Text style={styles.nameText}>{quoteProviderInfo.name}</Text>
+          <Text style={styles.nameText} numberOfLines={1} ellipsizeMode="tail">
+            {quoteProviderInfo.name}
+          </Text>
           {!!preExecResult?.shouldApproveToken && (
             <TouchableOpacity onPress={() => handleTips('approve')}>
               <ImgLock width={16} height={16} />
             </TouchableOpacity>
           )}
+          {!onlyShow && isBestQuote && (
+            <View style={styles.bestInlineTag}>
+              <Text style={styles.bestInlineTagText}>
+                {t('page.swap.best')}
+              </Text>
+            </View>
+          )}
         </View>
-        {/* top left end */}
 
-        {/* top right */}
-        <View
-          style={[
-            {
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 8,
-            },
-          ]}>
-          {!disabled && <AssetAvatar size={20} logo={receiveToken.logo_url} />}
-          {receiveOrErrorContent}
+        <View style={styles.rightSection}>
+          {showQuoteDetails && (
+            <AssetAvatar size={20} logo={receiveToken.logo_url} />
+          )}
+          {errorText ? (
+            <Text style={styles.failedTipText}>{errorText}</Text>
+          ) : (
+            <Text
+              style={styles.middleDefaultText}
+              numberOfLines={1}
+              ellipsizeMode="tail">
+              {formatTokenAmount(receiveAmount)}
+            </Text>
+          )}
         </View>
       </View>
 
-      <View
-        style={
-          disabled
-            ? { display: 'none' }
-            : {
-                // flex: 1,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }
-        }>
+      <View style={!showQuoteDetails ? { display: 'none' } : styles.bottomRow}>
         <View
           style={[
-            {
-              flexDirection: 'row',
-              gap: 4,
-              alignItems: 'center',
-              paddingLeft: 4,
-            },
+            styles.feeSection,
             gasFeeTooHigh && {
               backgroundColor: colors2024['red-light'],
             },
           ]}>
-          {!disabled && !inSufficient && (
-            <>
-              <Text
-                style={[
-                  styles.gasUsd,
-                  gasFeeTooHigh && { color: colors2024['red-default'] },
-                ]}>
-                Gas: {preExecResult?.gasUsd}
-              </Text>
-            </>
-          )}
+          <Text
+            style={[
+              styles.gasUsd,
+              gasFeeTooHigh && { color: colors2024['red-default'] },
+            ]}>
+            Gas: {preExecResult?.gasUsd}
+          </Text>
         </View>
 
-        <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-          {disabled ? (
-            <>{bestQuotePercent}</>
-          ) : (
-            <>
-              <Text style={styles.receivedTokenUsd}>
-                {isWrapToken
-                  ? `≈ ${receivedTokenUsd}`
-                  : t('page.swap.usd-after-fees', {
-                      usd: receivedTokenUsd,
-                    })}
-              </Text>
-            </>
-          )}
+        <View style={styles.estimatedValueSection}>
+          <Text style={styles.receivedTokenUsd} numberOfLines={1}>
+            {isWrapToken
+              ? `≈ ${receivedTokenUsd}`
+              : t('page.swap.usd-after-fees', {
+                  usd: receivedTokenUsd,
+                })}
+          </Text>
         </View>
       </View>
-      {!disabled && !onlyShow ? (
-        <View
-          style={[
-            styles.bestQuotePercentContainer,
-            isBestQuote && styles.bestQuotePercentContainerIsBest,
-          ]}>
-          {bestQuotePercent}
+
+      {!disabled && !onlyShow && !isBestQuote && !!diffPercent ? (
+        <View style={styles.diffBadge}>
+          <Text style={styles.diffBadgeText}>{diffPercent}</Text>
         </View>
       ) : null}
     </TouchableOpacity>
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   dexContainer: {
     position: 'relative',
-    paddingLeft: 25,
-    paddingRight: 17,
-    paddingTop: 36,
-    paddingBottom: 30,
+    flexDirection: 'column',
     justifyContent: 'center',
-    borderRadius: 20,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    gap: 2,
+    overflow: 'hidden',
   },
   onlyShow: {
     backgroundColor: 'transparent',
     height: 'auto',
-    shadowColor: 'transparent',
-    shadowOffset: undefined,
-    shadowOpacity: 0,
-    shadowRadius: 0,
+    padding: 0,
     borderWidth: 0,
     borderRadius: 0,
   },
-  percent: {
-    marginLeft: 30,
-    paddingVertical: 4,
-    paddingHorizontal: 6,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
+  normal: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
-  percentText: {
-    fontSize: 12,
-    lineHeight: 14,
+  insufficient: {
+    opacity: 0.5,
+  },
+  errorQuote: {
+    minHeight: 52,
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
+  },
+  leftSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+    overflow: 'hidden',
+    marginRight: 20,
+  },
+  rightSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    justifyContent: 'flex-end',
+    flexShrink: 0,
+    maxWidth: '55%',
+  },
+  nameText: {
+    flexShrink: 1,
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '500',
+    color: colors2024['neutral-title-1'],
+  },
+  bestInlineTag: {
+    backgroundColor: colors2024['brand-default'],
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  bestInlineTagText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-InvertHighlight'],
   },
   failedTipText: {
     fontSize: 14,
     fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-body'],
-    lineHeight: 16,
+    lineHeight: 18,
   },
-
-  nameText: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
+  middleDefaultText: {
+    width: 'auto',
+    color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 18,
   },
-
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 4,
+  },
+  feeSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,
+    gap: 4,
+  },
   gasUsd: {
     color: colors2024['neutral-secondary'],
     fontSize: 14,
@@ -536,56 +493,36 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '400',
     lineHeight: 18,
   },
+  estimatedValueSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    flexShrink: 1,
+    justifyContent: 'flex-end',
+  },
   receivedTokenUsd: {
     color: colors2024['neutral-foot'],
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '400',
     lineHeight: 16,
+    textAlign: 'right',
   },
-
-  middleDefaultText: {
-    width: 'auto',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
-  },
-
-  disabledContentWrapper: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 6,
-    backgroundColor: colors2024['neutral-black'],
-    justifyContent: 'center',
-  },
-
-  disabledContentView: {
-    flexDirection: 'row',
-    gap: 4,
-    paddingLeft: 12,
-    alignItems: 'center',
-  },
-  disabledContentBtnText: {
-    color: colors2024['blue-default'],
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'left',
-    paddingLeft: 12 + 12 + 4,
-    lineHeight: 17,
-  },
-  bestQuotePercentContainer: {
+  diffBadge: {
     position: 'absolute',
     top: -1,
-    left: 0,
+    right: 0,
+    borderRadius: 0,
+    borderBottomLeftRadius: 8,
     paddingHorizontal: 6,
     paddingVertical: 1,
-    borderTopLeftRadius: 4,
-    borderBottomRightRadius: 4,
+    backgroundColor: colors2024['red-light-1'],
   },
-  bestQuotePercentContainerIsBest: {},
+  diffBadgeText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    color: colors2024['red-default'],
+  },
 }));
