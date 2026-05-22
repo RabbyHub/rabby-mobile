@@ -15,7 +15,7 @@ export function formatLittleNumber(num: string | number, minLen = 6): string {
   if (bn.toFixed().length >= minLen) {
     const s = bn.precision(4).toFormat();
     const ss = s.replace(/^0.(0*)?(?:.*)/u, (_, z: string) => {
-      const zeroLength = z.length;
+      const zeroLength = z?.length || 0;
       const sub = String(zeroLength)
         .split('')
         .map(x => Sub_Numbers[Number(x)])
