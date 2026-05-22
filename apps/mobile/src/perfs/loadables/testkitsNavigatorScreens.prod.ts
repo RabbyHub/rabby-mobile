@@ -106,6 +106,13 @@ export const DevDataKeyringVault = registerAppScreen<
   name: TESTKITS_PRELOAD_SCREENS.DevDataKeyringVault,
 });
 
+export const DevDataContactService = registerAppScreen<
+  typeof import('@/screens/Testkits/DevDataContactService').default
+>({
+  loader: () => import('@/screens/Testkits/DevDataContactService'),
+  name: TESTKITS_PRELOAD_SCREENS.DevDataContactService,
+});
+
 export const DevDataWhitelist = registerAppScreen<
   typeof import('@/screens/Testkits/DevDataWhitelist').default
 >({

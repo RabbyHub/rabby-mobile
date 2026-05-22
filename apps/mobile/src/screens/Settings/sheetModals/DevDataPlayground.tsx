@@ -104,6 +104,17 @@ export default function DevDataPlaygroundModal({
           );
         },
       },
+      {
+        label: 'Contact Service',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevDataContactService,
+            }),
+          );
+        },
+      },
       // {
       //   label: 'Clear All SQLite (No restart)',
       //   icon: <RcCode style={styles.labelIcon} />,

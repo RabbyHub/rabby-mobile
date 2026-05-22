@@ -6,6 +6,7 @@ import { createCustomNativeStackNavigator as createNativeStackNavigator } from '
 import {
   DebugLogViewer,
   DevCapabilityFile,
+  DevDataContactService,
   DevDataSQLite,
   DevDataKeychain,
   DevDataKeyringVault,
@@ -121,6 +122,17 @@ export function TestkitsNavigator() {
             headerShown: true,
             headerTitle: 'Keyring Vault',
             title: 'Keyring Vault',
+          },
+        ])}
+      />
+      <Stack.Screen
+        name={RootNames.DevDataContactService}
+        component={DevDataContactService}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'Contact Service',
+            title: 'Contact Service',
           },
         ])}
       />

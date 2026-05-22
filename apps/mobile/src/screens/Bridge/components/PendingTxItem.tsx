@@ -727,10 +727,11 @@ const PendingStatusDetail = ({
           onClose();
           naviPush(RootNames.StackTransaction, {
             screen:
-              ofScreen === RootNames.MultiBridge
-                ? RootNames.MultiSwap
-                : RootNames.Swap,
+              ofScreen === RootNames.MultiSwapBridge
+                ? RootNames.MultiSwapBridge
+                : RootNames.SwapBridge,
             params: {
+              activeTab: 'swap',
               chainEnum: findChain({ serverId: data.toToken?.chain })?.enum,
               swapTokenId: [data.actualToToken?.id, data.toToken.id],
               swapAgain: true,
@@ -742,10 +743,11 @@ const PendingStatusDetail = ({
           onClose();
           naviPush(RootNames.StackTransaction, {
             screen:
-              ofScreen === RootNames.MultiBridge
-                ? RootNames.MultiSwap
-                : RootNames.Swap,
+              ofScreen === RootNames.MultiSwapBridge
+                ? RootNames.MultiSwapBridge
+                : RootNames.SwapBridge,
             params: {
+              activeTab: 'swap',
               chainEnum: findChain({ serverId: data.toToken?.chain })?.enum,
               tokenId: data.actualToToken?.id,
               isFromSwap: true,

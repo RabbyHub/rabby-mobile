@@ -352,33 +352,36 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
         </ActionDetailSection>
       </ScrollView>
       {isLocalSwap && (
-        <View style={[styles.buttonContainer]}>
-          <Button
-            onPress={async () => {
-              await switchSceneCurrentAccount(
-                'MakeTransactionAbout',
-                !isSingleAddress && fromAddrIsImported
-                  ? fromAddrIsImported
-                  : account || null,
-              );
-              navigation.dispatch(
-                StackActions.push(RootNames.StackTransaction, {
-                  screen: !isSingleAddress
-                    ? RootNames.MultiSwap
-                    : RootNames.Swap,
-                  params: {
-                    swapAgain: true,
-                    chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-                    swapTokenId: [
-                      actionData?.payToken?.id,
-                      actionData?.receiveToken?.id,
-                    ],
-                  },
-                }),
-              );
-            }}
-            title={t('page.transactions.detail.SwapAgain')}
-          />
+        <View style={[styles.buttonContainer, { paddingBottom: bottom + 27 }]}>
+          <View style={{ flex: 1 }}>
+            <Button
+              onPress={async () => {
+                await switchSceneCurrentAccount(
+                  'MakeTransactionAbout',
+                  !isSingleAddress && fromAddrIsImported
+                    ? fromAddrIsImported
+                    : account || null,
+                );
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackTransaction, {
+                    screen: !isSingleAddress
+                      ? RootNames.MultiSwapBridge
+                      : RootNames.SwapBridge,
+                    params: {
+                      activeTab: 'swap',
+                      swapAgain: true,
+                      chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+                      swapTokenId: [
+                        actionData?.payToken?.id,
+                        actionData?.receiveToken?.id,
+                      ],
+                    },
+                  }),
+                );
+              }}
+              title={t('page.transactions.detail.SwapAgain')}
+            />
+          </View>
         </View>
       )}
     </>

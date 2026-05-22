@@ -6,6 +6,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatSpeicalAmount, splitNumberByStep } from '@/utils/number';
 import { NumericInput } from '@/components/Form/NumbericInput';
+import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInput';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import LinearGradient from 'react-native-linear-gradient';
 import TokenIcon from '../TokenIcon';
@@ -105,6 +106,7 @@ export const TokenAmountInput = ({
             />
           ) : (
             <NumericInput
+              TextInputComponent={AutoShrinkAmountTextInput}
               style={[
                 inlinePrize && !!valueText && styles.inputHasInlinePrize,
                 styles.input,
@@ -226,8 +228,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       color: colors2024['neutral-title-1'],
       marginLeft: 8,
       flex: 1,
+      height: 36,
+      lineHeight: 36,
       paddingTop: 0,
       paddingBottom: 0,
+      textAlignVertical: 'center',
+      includeFontPadding: false,
+      overflow: 'hidden',
     },
     inputHasInlinePrize: {
       // ...makeDebugBorder(),

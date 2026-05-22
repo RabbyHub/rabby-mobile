@@ -15,10 +15,8 @@ import { RootNames } from '@/constant/layout';
 import { perfEvents } from '@/core/utils/perf';
 
 const DON_AUTO_RESET_GAS_SCREEN = [
-  RootNames.Swap,
-  RootNames.MultiSwap,
-  RootNames.Bridge,
-  RootNames.MultiBridge,
+  RootNames.SwapBridge,
+  RootNames.MultiSwapBridge,
   RootNames.Send,
   RootNames.MultiSend,
 ] as string[];
