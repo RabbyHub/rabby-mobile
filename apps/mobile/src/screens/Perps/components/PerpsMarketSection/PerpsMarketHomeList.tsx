@@ -4,7 +4,6 @@ import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { usePerpsGroupedMarketData } from '../../hooks/usePerpsGroupedMarketData';
 import { PerpsMarketItem } from './PerpsMarketItem';
 import { PerpsCategorySectionHeader } from './PerpsCategorySectionHeader';
-import { PerpsSearchInlineInput } from './PerpsSearchInlineInput';
 
 type Props = {
   onItemPress: (market: string) => void;
@@ -24,7 +23,7 @@ const PerpsMarketHomeListComponent: React.FC<Props> = ({ onItemPress }) => {
     <>
       {visibleHome.map((cat, catIdx) => (
         <View key={cat.id}>
-          <PerpsCategorySectionHeader cfg={cat.cfg} />
+          <PerpsCategorySectionHeader cfg={cat.cfg} showSearch={catIdx === 0} />
           {cat.items.map((item, i) => (
             <PerpsMarketItem
               key={`${cat.id}-${item.name}`}
@@ -33,7 +32,6 @@ const PerpsMarketHomeListComponent: React.FC<Props> = ({ onItemPress }) => {
               onPress={() => onItemPress(item.name)}
             />
           ))}
-          {catIdx === 0 && <PerpsSearchInlineInput />}
         </View>
       ))}
     </>

@@ -44,6 +44,7 @@ type LocalWebViewProps = WebViewProps & {
    */
   disableHttpRequest?: boolean;
   i18nTexts?: Record<string, string>;
+  backGroundColor?: string;
 };
 
 function defaultOnShouldStartLoadWithRequest(
@@ -76,6 +77,7 @@ export const LocalWebView = ({
   forceUseLocalResource: prop_forceUseLocalResource = !__DEV__,
   disableHttpRequest = !__DEV__,
   i18nTexts = {},
+  backGroundColor,
   ...webviewProps
 }: LocalWebViewProps & { ref?: Ref<LocalWebView> }) => {
   const { styles, isLight } = useTheme2024({ getStyle });
@@ -187,6 +189,7 @@ export const LocalWebView = ({
       isDark: !isLight,
       language: currentLanguage,
       i18nTexts: deepComparedI18nText,
+      backGroundColor,
     });
   }, [
     webviewSource.baseUrl,
@@ -194,6 +197,7 @@ export const LocalWebView = ({
     isLight,
     currentLanguage,
     deepComparedI18nText,
+    backGroundColor,
   ]);
   useEffect(() => {
     sendMessageToWebview(webviewRef.current, {

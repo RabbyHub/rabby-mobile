@@ -2618,6 +2618,28 @@
       "title": "歷史"
     },
     "perps": {
+      "limitOrders": "限價單",
+      "cancelAll": "全部取消",
+      "cancelAllOrdersConfirmTitle": "確認取消所有訂單",
+      "cancelAllOrdersConfirmMessage": "您所有的限價單將被取消",
+      "limitOrderDetail": {
+        "title": "限價{{side}} {{pair}}",
+        "time": "時間",
+        "size": "大小",
+        "filled": "已成交",
+        "currentPrice": "目前價格",
+        "limitPrice": "限價",
+        "marginUsage": "保證金佔用",
+        "cancelLimitOrder": "取消限價單",
+        "buy": "買入",
+        "sell": "賣出"
+      },
+      "cancelOrderToast": {
+        "singleSuccess": "限價單已取消",
+        "multiSuccess": "已取消 {{count}} 個限價單",
+        "partial": "{{okCount}} 個已取消，{{failCount}} 個失敗",
+        "failed": "取消限價單失敗"
+      },
       "PerpsCard": {
         "available": "可用",
         "learnBtn": "了解永续合约",
@@ -2873,6 +2895,20 @@
       }
     },
     "perpsDetail": {
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "設置限價買入價格",
+        "setLimitSellPrice": "設置限價賣出價格",
+        "marketLabel": "中間價",
+        "setBtn": "設置",
+        "blockError": "訂單價格超過 10% 的價格保護限制。",
+        "confirmTitle": "確認限價",
+        "confirmMessage": "限價與市場價格相差 5% 以上",
+        "confirmContinue": "繼續",
+        "confirmCancel": "取消"
+      },
+      "PerpsPriceInfo": {
+        "current": "目前"
+      },
       "PerpsPosition": {
         "title": "持倉",
         "direction": "方向",
@@ -2938,6 +2974,13 @@
         "rabbyFeeTipsV2": "Rabby 手续費：0.02%"
       },
       "PerpsOpenPositionPopup": {
+        "title": "開啟 {{coin}} 持倉",
+        "limitOrderPlacedToast": "限價{{direction}} {{coin}}：大小 {{size}} 已以 ${{price}} 掛單",
+        "orderType": "訂單類型",
+        "orderTypeMarket": "市價",
+        "orderTypeLimit": "限價",
+        "limitPrice": "限價",
+        "currentPrice": "目前價格",
         "leverage": "杠杆",
         "margin": "保證金",
         "size": "大小",
@@ -2961,6 +3004,11 @@
         "onlyIsolated": "此代幣只支援逐倉保證金。"
       },
       "PerpsOpenPositionCheckPopup": {
+        "limitTitle": "確認限價單",
+        "marketTitle": "確認市價單",
+        "limitPrice": "限價",
+        "mayExecuteImmediately": "此限價單可能立即成交",
+        "setLimitOrderBtn": "設置限價單",
         "size": "大小",
         "initialMargin": "初始保证金",
         "direction": "方向",
@@ -3006,6 +3054,10 @@
         "currentPrice": "當前 {{price}}",
         "priceBelow": "價格低於",
         "stopLossExpectedPNL": "止损预期盈亏",
+        "youGainRoi": "你獲得（ROI）",
+        "youLossRoi": "你虧損（ROI）",
+        "currentPriceTpl": "當前 <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "進場 <1>{{entryPrice}}</1>  當前 <2>{{price}}</2>",
         "EntryAndCurrentPrice": "進場 {{entryPrice}}  當前 {{price}}",
         "stopLossWhen": "停損條件",
         "takeProfitWhen": "達成利潤時"

@@ -13,7 +13,7 @@ export const usePerpsHomePnl = () => {
   return {
     perpsPositionInfo: {
       ...homePositionPnl,
-      show: homePositionPnl.show || Number(availableBalance) > 0,
+      show: true,
       availableBalance: Number(availableBalance),
     },
   };

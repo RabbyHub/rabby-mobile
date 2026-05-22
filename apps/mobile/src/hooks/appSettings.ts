@@ -75,6 +75,7 @@ type ScreenshotSettings = {
   debugSwapHistorySkipLocalLookup: boolean;
   [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: CurrentKeychainVersion;
   debugKeychainStorageByVersion: DebugKeychainStorageByVersion;
+  enablePerpsWatchAddress: boolean;
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
   '@ExperimentalSettings',
@@ -94,6 +95,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     debugSwapHistorySkipLocalLookup: false,
     [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: DEFAULT_CURRENT_KEYCHAIN_VERSION,
     debugKeychainStorageByVersion: makeDefaultDebugKeychainStorageByVersion(),
+    enablePerpsWatchAddress: false,
   },
 );
 
@@ -569,6 +571,26 @@ export function useDebugSwapHistorySkipLocalLookup() {
   return {
     debugSwapHistorySkipLocalLookup,
     toggleDebugSwapHistorySkipLocalLookup,
+  };
+}
+
+export function useEnablePerpsWatchAddress() {
+  const enablePerpsWatchAddress = experimentalSettingsStore(
+    s => s.enablePerpsWatchAddress,
+  );
+
+  const toggleEnablePerpsWatchAddress = useCallback((nextVal?: boolean) => {
+    setExpSettingData(prev => ({
+      ...prev,
+      enablePerpsWatchAddress:
+        typeof nextVal === 'boolean' ? nextVal : !prev.enablePerpsWatchAddress,
+    }));
+  }, []);
+
+  return {
+    enablePerpsWatchAddress:
+      isNonPublicProductionEnv && enablePerpsWatchAddress,
+    toggleEnablePerpsWatchAddress,
   };
 }
 

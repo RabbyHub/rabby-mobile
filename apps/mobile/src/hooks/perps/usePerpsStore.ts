@@ -7,6 +7,7 @@ import {
   ClearinghouseState,
   MarginSummary,
   OpenOrder,
+  PerpDexsResponse,
   UserAbstractionResp,
   UserNonFundingLedgerUpdates,
   WsFill,
@@ -49,6 +50,22 @@ import BigNumber from 'bignumber.js';
 
 let perpsTopTokenCache: PerpTopTokenV3[] = [];
 let perpsCategoryCache: PerpTopTokenCategory[] = [];
+
+// Per-dex raw snapshots, source of truth for rebuilding the aggregated
+// `currentClearinghouseState`. Stale frames (older `time`) never win.
+// Key '' === hyper native dex.
+const dexClearinghouseStatesCache = new Map<string, ClearinghouseState>();
+
+// Per-dex openOrders. openOrders has no server-side time, so HTTP simply
+// overwrites the matching bucket; WS pushes overwrite all buckets.
+const dexOpenOrdersCache = new Map<string, OpenOrder[]>();
+
+// HIP-3 dex roster, populated lazily by fetchMarketData.
+let perpDexsCache: PerpDexsResponse | null = null;
+
+// Falls back to hyper ('') when marketDataMap hasn't loaded yet.
+export const getDexByCoin = (coin: string): string =>
+  perpsStore.getState().marketDataMap[coin]?.dexId ?? '';
 
 // 保持原有的接口定义
 export interface PositionAndOpenOrder extends AssetPosition {
@@ -363,13 +380,16 @@ export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
   const pnl = clearinghouseState
     ? formatPositionPnl(clearinghouseState)
     : initialState.homePositionPnl;
+  // Otherwise the next HTTP refresh rebuilds the aggregate with the
+  // previous account's sub-dex data still in the cache.
+  dexClearinghouseStatesCache.clear();
+  dexOpenOrdersCache.clear();
   setPerpsState(prev => ({
     ...prev,
     currentPerpsAccount: payload,
     isLogin: !!payload,
     isInitialized: false,
     isUserDataReady: false,
-    // Clear stale user-scoped state so init waits for fresh WS push for the new account.
     currentClearinghouseState: null,
     homePositionPnl: pnl,
   }));
@@ -515,6 +535,7 @@ const fetchMarketData = async () => {
     }
 
     // perpDexs failure is degradable
+    perpDexsCache = perpDexs ?? null;
     const dexIdMap: Record<number, string> = {};
     (perpDexs ?? []).forEach((dex, idx) => {
       dexIdMap[idx] = dex?.name ?? '';
@@ -915,14 +936,20 @@ export const subscribeToUserData = (account: Account) => {
       if (!isSameAddress(user, address)) {
         return;
       }
-      const currentClearinghouseState =
-        formatAllDexsClearinghouseState(clearinghouseStates);
-      setPerpsState(prev => ({
-        ...prev,
-        homePositionPnl: formatPositionPnl(currentClearinghouseState!),
-        currentClearinghouseState: currentClearinghouseState,
-        isUserDataReady: true,
-      }));
+      // Cache is the single source of truth — both WS and HTTP funnel
+      // through here, time-guarded per dex. Rebuild + commit aggregate via
+      // the shared flush so the React state write also gets the guard.
+      for (const [dexName, state] of clearinghouseStates) {
+        if (!state) {
+          continue;
+        }
+        const prevDex = dexClearinghouseStatesCache.get(dexName);
+        if (prevDex && (state.time ?? 0) <= (prevDex.time ?? 0)) {
+          continue;
+        }
+        dexClearinghouseStatesCache.set(dexName, state);
+      }
+      flushAggregatedClearinghouseState();
     });
 
   const { unsubscribe: unsubscribeSpotState } = sdk.ws.subscribeToSpotState(
@@ -943,6 +970,23 @@ export const subscribeToUserData = (account: Account) => {
       const { orders, user } = data;
       if (!isSameAddress(user, address) || !orders) {
         return;
+      }
+      // Bucket by dex so a single-dex HTTP refresh can overwrite just its
+      // bucket without losing other dexes' orders.
+      const marketDataMap = perpsStore.getState().marketDataMap;
+      const buckets = new Map<string, OpenOrder[]>();
+      for (const order of orders) {
+        const dexName = marketDataMap[order.coin]?.dexId ?? '';
+        const list = buckets.get(dexName);
+        if (list) {
+          list.push(order);
+        } else {
+          buckets.set(dexName, [order]);
+        }
+      }
+      dexOpenOrdersCache.clear();
+      for (const [dexName, list] of buckets) {
+        dexOpenOrdersCache.set(dexName, list);
       }
 
       setPerpsState(prev => ({ ...prev, openOrders: orders }));
@@ -997,6 +1041,165 @@ export const subscribeToUserData = (account: Account) => {
       unsubscribeUserNonFundingLedgerUpdates,
     ];
   });
+};
+
+// Returns true when the cache changed; callers batch the setState flush.
+const fetchAndCacheClearinghouseForDex = async (
+  dex: string,
+  expectedAddress: string,
+): Promise<boolean> => {
+  const sdk = apisPerps.getPerpsSDK();
+  let state: ClearinghouseState;
+  try {
+    state = await sdk.info.getClearingHouseState(
+      expectedAddress,
+      dex || undefined,
+    );
+  } catch (e) {
+    console.error('[fetchClearinghouseStateHttp] failed', dex, e);
+    return false;
+  }
+  // Account switched during the await — drop the response.
+  if (perpsStore.getState().currentPerpsAccount?.address !== expectedAddress) {
+    return false;
+  }
+  const prevDex = dexClearinghouseStatesCache.get(dex);
+  if (prevDex && (state.time ?? 0) <= (prevDex.time ?? 0)) {
+    return false;
+  }
+  dexClearinghouseStatesCache.set(dex, state);
+  return true;
+};
+
+const flushAggregatedClearinghouseState = () => {
+  const entries = Array.from(dexClearinghouseStatesCache.entries());
+  const aggregated = formatAllDexsClearinghouseState(entries);
+  if (!aggregated) {
+    return;
+  }
+  setPerpsState(prev => {
+    if (
+      prev.currentClearinghouseState &&
+      (aggregated.time ?? 0) <= (prev.currentClearinghouseState.time ?? 0)
+    ) {
+      return prev;
+    }
+    return {
+      ...prev,
+      currentClearinghouseState: aggregated,
+      homePositionPnl: formatPositionPnl(aggregated),
+      isUserDataReady: true,
+    };
+  });
+};
+
+export const fetchClearinghouseStateHttp = async (dex: string) => {
+  const account = perpsStore.getState().currentPerpsAccount;
+  if (!account?.address) {
+    return;
+  }
+  const touched = await fetchAndCacheClearinghouseForDex(dex, account.address);
+  if (touched) {
+    flushAggregatedClearinghouseState();
+  }
+};
+
+const fetchAndCacheOpenOrdersForDex = async (
+  dex: string,
+  expectedAddress: string,
+): Promise<boolean> => {
+  const sdk = apisPerps.getPerpsSDK();
+  let orders: OpenOrder[];
+  try {
+    orders = await sdk.info.getFrontendOpenOrders(
+      expectedAddress,
+      dex || undefined,
+    );
+  } catch (e) {
+    console.error('[fetchPositionOpenOrdersHttp] failed', dex, e);
+    return false;
+  }
+  if (perpsStore.getState().currentPerpsAccount?.address !== expectedAddress) {
+    return false;
+  }
+  dexOpenOrdersCache.set(dex, orders);
+  return true;
+};
+
+const flushAggregatedOpenOrders = () => {
+  const flattened = Array.from(dexOpenOrdersCache.values()).flat();
+  setPerpsState(prev => ({ ...prev, openOrders: flattened }));
+};
+
+// No server-side time guard for openOrders: callers fire this after the
+// SDK has confirmed the mutating action, and WS reconciles any drift quickly.
+export const fetchPositionOpenOrdersHttp = async (dex: string) => {
+  const account = perpsStore.getState().currentPerpsAccount;
+  if (!account?.address) {
+    return;
+  }
+  const touched = await fetchAndCacheOpenOrdersForDex(dex, account.address);
+  if (touched) {
+    flushAggregatedOpenOrders();
+  }
+};
+
+// For multi-dex callers (cancel-all on Home): one flush, not N renders.
+export const fetchPositionOpenOrdersHttpForDexes = async (dexes: string[]) => {
+  const account = perpsStore.getState().currentPerpsAccount;
+  if (!account?.address) {
+    return;
+  }
+  const unique = Array.from(new Set(dexes));
+  if (unique.length === 0) {
+    return;
+  }
+  const address = account.address;
+  const results = await Promise.all(
+    unique.map(dex => fetchAndCacheOpenOrdersForDex(dex, address)),
+  );
+  if (results.some(Boolean)) {
+    flushAggregatedOpenOrders();
+  }
+};
+
+const collectAllDexes = (): string[] => {
+  const dexes = (perpDexsCache ?? []).map(d => d?.name ?? '');
+  if (dexes.length === 0) {
+    dexes.push('');
+  }
+  return dexes;
+};
+
+// One flush, not N renders.
+export const fetchAllDexsClearinghouseStateHttp = async () => {
+  const account = perpsStore.getState().currentPerpsAccount;
+  if (!account?.address) {
+    return;
+  }
+  const address = account.address;
+  const results = await Promise.all(
+    collectAllDexes().map(dex =>
+      fetchAndCacheClearinghouseForDex(dex, address),
+    ),
+  );
+  if (results.some(Boolean)) {
+    flushAggregatedClearinghouseState();
+  }
+};
+
+export const fetchAllDexsPositionOpenOrdersHttp = async () => {
+  const account = perpsStore.getState().currentPerpsAccount;
+  if (!account?.address) {
+    return;
+  }
+  const address = account.address;
+  const results = await Promise.all(
+    collectAllDexes().map(dex => fetchAndCacheOpenOrdersForDex(dex, address)),
+  );
+  if (results.some(Boolean)) {
+    flushAggregatedOpenOrders();
+  }
 };
 
 export const apisPerpsStore = {
@@ -1058,6 +1261,10 @@ export const usePerpsStore = () => {
   });
 
   const loginPerpsAccount = useMemoizedFn(async (account: Account) => {
+    // Otherwise the first HTTP refresh would rebuild the aggregate with
+    // the previous account's sub-dex data still in the cache.
+    dexClearinghouseStatesCache.clear();
+    dexOpenOrdersCache.clear();
     apisPerps.setPerpsCurrentAccount(account);
     setPerpsState(prev => ({
       ...prev,
@@ -1079,23 +1286,13 @@ export const usePerpsStore = () => {
     console.log('loginPerpsAccount success', account.address);
   });
 
-  // may can remove
-  const fetchClearinghouseState = useMemoizedFn(async () => {
-    const sdk = apisPerps.getPerpsSDK();
-    try {
-      // const clearinghouseState = await sdk.info.getClearingHouseState();
-      // updatePositionsWithClearinghouse(clearinghouseState);
-    } catch (error) {
-      console.error('Failed to fetch clearinghouse state:', error);
-    }
-  });
+  const fetchClearinghouseState = useMemoizedFn((dex: string = '') =>
+    fetchClearinghouseStateHttp(dex),
+  );
 
-  // maybe can remove
-  const fetchPositionOpenOrders = useMemoizedFn(async () => {
-    const sdk = apisPerps.getPerpsSDK();
-    // const openOrders = await sdk.info.getFrontendOpenOrders();
-    // updateOpenOrders(openOrders);
-  });
+  const fetchPositionOpenOrders = useMemoizedFn((dex: string = '') =>
+    fetchPositionOpenOrdersHttp(dex),
+  );
 
   const fetchUserHistoricalOrders = useMemoizedFn(async () => {
     try {
