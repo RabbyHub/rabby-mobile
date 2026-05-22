@@ -1339,6 +1339,14 @@ export class KeyringService extends RNEventEmitter {
 
     await this._updateMemStoreKeyrings();
 
+    addedAccounts.forEach(account => {
+      this.emit('newAccount', {
+        address: account.address,
+        brandName: account.brandName || account.type,
+        type: (account.type || account.brandName) as KeyringTypeName,
+      });
+    });
+
     return addedAccounts;
   }
 
