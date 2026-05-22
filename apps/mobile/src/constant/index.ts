@@ -128,6 +128,7 @@ export const APP_TEST_PWD = __DEV__ ? '11111111' : '';
 
 export const APP_FEATURE_SWITCH = {
   customizePassword: true,
+  showBiometricUnlockProgressToast: false,
   get biometricsAuth() {
     return !!this.customizePassword;
   },
