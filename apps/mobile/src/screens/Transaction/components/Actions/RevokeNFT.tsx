@@ -21,11 +21,7 @@ import { HistoryItemIcon } from '../HistoryItemIcon';
 import { HistoryItemCateType } from '../type';
 import { Account } from '@/core/services/preference';
 import { Text } from '@/components/Typography';
-import {
-  ActionDetailItem,
-  ActionDetailSection,
-  ActionDetailText,
-} from './components/ActionDetailSection';
+import { ActionDetailSection } from './components/ActionDetailSection';
 import { ActionSpenderView } from './components/ActionSpenderView';
 import { ProjectItemInDetail } from '../ProjectItemInDetail';
 
@@ -92,7 +88,7 @@ export const RevokeNFT: React.FC<Props> = ({
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <HistoryItemIcon
                   isInDetail={true}
-                  type={HistoryItemCateType.Approve}
+                  type={HistoryItemCateType.Revoke}
                   token={actionData.nft as unknown as TokenItem}
                   isNft={true}
                 />
@@ -124,6 +120,7 @@ export const RevokeNFT: React.FC<Props> = ({
                 requireData={requireData}
                 spender={actionData.spender}
                 chain={chain}
+                type="nftSpender"
               />
             </View>
           </View>

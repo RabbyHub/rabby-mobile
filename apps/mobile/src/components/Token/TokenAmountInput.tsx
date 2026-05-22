@@ -328,8 +328,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       color: colors2024['neutral-title-1'],
       // marginLeft: 7,
       flex: 1,
+      height: 36,
+      lineHeight: 36,
       paddingTop: 0,
       paddingBottom: 0,
+      textAlignVertical: 'center',
+      includeFontPadding: false,
+      overflow: 'hidden',
     },
     inputHasInlinePrize: {
       // ...makeDebugBorder(),

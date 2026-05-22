@@ -483,7 +483,7 @@ export const HistoryTokenList = ({
           <View style={[styles.mutliBox]}>
             <View style={styles.detailContainerHeader}>
               <Text style={styles.detailContainerTitle}>
-                {t('page.transactions.detail.interactionResults')}
+                {t('page.transactions.detail.InteractionResults')}
               </Text>
             </View>
             {sends?.map(({ token_id, amount, price, token: iToken }) => (

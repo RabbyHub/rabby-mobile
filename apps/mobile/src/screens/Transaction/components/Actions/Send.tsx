@@ -20,7 +20,7 @@ import { useMemoizedFn } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
-import { AddressItemInDetail } from '../../HistoryDetailScreen';
+import { AddressItemInDetail } from '../AddressItemInDetail';
 import { HistoryItemIcon } from '../HistoryItemIcon';
 import { Button } from '@/components2024/Button';
 import { HistoryItemCateType } from '../type';
@@ -131,8 +131,6 @@ export const Send: React.FC<Props> = ({
 
   const isNativeToken =
     actionData.token?.id && actionData.token.id === chain?.nativeTokenAddress;
-
-  console.log('Send render', { data });
 
   const ViewComp = accountSelectCtx.isUnderContext
     ? BottomSheetScrollView

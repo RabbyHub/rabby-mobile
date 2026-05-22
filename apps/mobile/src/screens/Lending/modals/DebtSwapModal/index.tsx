@@ -899,7 +899,7 @@ export default function DebtSwapModal({
                   multiline={false}
                   spellCheck={false}
                   inputMode="decimal"
-                  scrollEnabled={true}
+                  scrollEnabled={false}
                   placeholderTextColor={colors2024['neutral-info']}
                 />
                 {slider !== 100 && (
@@ -1322,6 +1322,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'left',
     minWidth: 100,
     flex: 1,
+    height: 36,
+    lineHeight: 36,
+    paddingVertical: 0,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    overflow: 'hidden',
   },
   amountDisplay: {
     fontSize: 28,

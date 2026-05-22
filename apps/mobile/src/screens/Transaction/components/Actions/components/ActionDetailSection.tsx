@@ -16,7 +16,7 @@ import { useMemoizedFn } from 'ahooks';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
-import { AddressItemInDetail } from '../../../HistoryDetailScreen';
+import { AddressItemInDetail } from '../../AddressItemInDetail';
 import { TxStatusItem } from '../../TxStatusItem';
 
 type Chain = NonNullable<ReturnType<typeof findChain>>;

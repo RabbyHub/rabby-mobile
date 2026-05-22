@@ -46,7 +46,6 @@ export const HistoryItemIcon = ({
   isNft,
   isInDetail,
 }: ItemIconProps) => {
-  console.log('HistoryItemIcon render', { type, isInDetail });
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   // if (iconUri) {

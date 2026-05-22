@@ -97,8 +97,6 @@ export const ApproveNFT: React.FC<Props> = ({
     });
   });
 
-  console.log('approve nft render', data, actionData);
-
   if (!chain) {
     return null;
   }
@@ -148,6 +146,7 @@ export const ApproveNFT: React.FC<Props> = ({
               requireData={requireData}
               spender={actionData.spender}
               chain={chain}
+              type="nftSpender"
             />
           </View>
         </View>

@@ -11,7 +11,7 @@ export const HOME_TOP_HEADER_SIZES = {
   headerIndicatorHeight: 6,
   headerOffsetAfterIndicator: 12,
   headerTabItemHeight: 32,
-  headerTabItemPaddingBottom: 4,
+  headerTabItemPaddingBottom: IS_ANDROID ? 0 : 4,
   headerOffsetAfterTabItem: 12,
   get tabItemLineHeight() {
     return (

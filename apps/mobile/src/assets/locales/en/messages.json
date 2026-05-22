@@ -136,7 +136,6 @@
         "PurchaseFrom": "Purchased from",
         "WillReceive": "Will Receive: ≈ {{token}}",
         "TransactionDetails": "Transaction Details",
-        "interactionResults": "Interaction Results",
         "Operation": "Operation"
       },
       "empty": {

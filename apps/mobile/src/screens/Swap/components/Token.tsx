@@ -258,7 +258,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
             inputMode="decimal"
             placeholder="0"
             value={value}
-            scrollEnabled={true}
+            scrollEnabled={false}
             placeholderTextColor={colors2024['neutral-info']}
             onChangeText={onInputChange}
             style={[
@@ -364,8 +364,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingLeft: 0,
     borderWidth: 0,
     flex: 1,
+    height: 36,
+    lineHeight: 36,
     textAlign: 'right',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
     padding: 0,
+    overflow: 'hidden',
   },
 
   inSufficient: {
