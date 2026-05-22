@@ -1999,7 +1999,7 @@
       "gasBalance": "Gas 余额",
       "depositNow": "立即存款",
       "depositFailed": "存款失敗",
-      "lowBalance": "您沒有足夠的 gas。請存入 gas 以確保未來的交易順利進行。",
+      "lowBalance": "您的 gas 不足（<$1.00）。請存入 gas 以確保未來的交易順利進行。",
       "depositSubmitted": "存款已提交",
       "depositWith": "存入方式"
     },

@@ -1732,7 +1732,7 @@
       "switchAccount": "ウォレットを切り替える",
       "depositFailed": "入金に失敗しました",
       "gasBalance": "ガス残高",
-      "lowBalance": "ガスが不足しています。今後の取引がスムーズに進むように、ガスを入金してください。",
+      "lowBalance": "ガスが不足しています（<$1.00）。今後の取引がスムーズに進むように、ガスを入金してください。",
       "depositSubmitted": "入金が送信されました",
       "depositWith": "入金先"
     },
