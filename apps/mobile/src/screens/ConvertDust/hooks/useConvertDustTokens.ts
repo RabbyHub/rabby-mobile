@@ -5,6 +5,8 @@ import { openapi } from '@/core/request';
 import useTokenList, {
   getSingleAssetsCacheKey,
   ITokenItem,
+  TokenEntityId,
+  tokenEntityResourceStore,
   useTokenListComputedStore,
 } from '@/store/tokens';
 import type { DustFilter } from '../constant';
@@ -26,9 +28,9 @@ export function useConvertDustTokenList({
 
   const emptyResult = useMemo(
     () => ({
-      unFoldTokens: [] as ITokenItem[],
-      foldTokens: [] as ITokenItem[],
-      scamTokens: [] as ITokenItem[],
+      unFoldTokenIds: [] as TokenEntityId[],
+      foldTokenIds: [] as TokenEntityId[],
+      scamTokenIds: [] as TokenEntityId[],
       hasFoldTokens: false,
     }),
     [],
@@ -52,13 +54,20 @@ export function useConvertDustTokenList({
     registerSingleAssets(address, chainServerId, false);
   }, [address, chainServerId, registerSingleAssets]);
 
-  const { unFoldTokens, foldTokens, scamTokens } = useTokenListComputedStore(
-    useShallow(state =>
-      singleAssetsKey
-        ? state.singleAssetsCache[singleAssetsKey] || emptyResult
-        : emptyResult,
-    ),
-  );
+  const { unFoldTokenIds, foldTokenIds, scamTokenIds } =
+    useTokenListComputedStore(
+      useShallow(state =>
+        singleAssetsKey
+          ? state.singleAssetsIndexCache[singleAssetsKey] || emptyResult
+          : emptyResult,
+      ),
+    );
+
+  const tokens = useMemo(() => {
+    return [...unFoldTokenIds, ...foldTokenIds, ...scamTokenIds]
+      .map(tokenId => tokenEntityResourceStore.getValue(tokenId))
+      .filter((token): token is ITokenItem => !!token);
+  }, [foldTokenIds, scamTokenIds, unFoldTokenIds]);
 
   const isLoading = useTokenList(state => {
     if (!lowerAddress) {
@@ -74,10 +83,6 @@ export function useConvertDustTokenList({
     }
     getTokenList(address);
   }, [address, getTokenList]);
-
-  const tokens = useMemo(() => {
-    return [...unFoldTokens, ...foldTokens, ...scamTokens];
-  }, [unFoldTokens, foldTokens, scamTokens]);
 
   const threshold = selectedFilter.value;
 
