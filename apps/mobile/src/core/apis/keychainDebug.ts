@@ -1,8 +1,4 @@
-import OfficialKeychain, {
-  type BaseOptions,
-  type GetOptions,
-  type SetOptions,
-} from 'react-native-keychain';
+import OfficialKeychain, { type BaseOptions } from 'react-native-keychain';
 import { NativeModules, Platform } from 'react-native';
 
 import i18n from '@/utils/i18n';
@@ -43,7 +39,14 @@ type NativeKeychainDebugState =
   | NativeAndroidKeychainDebugState
   | NativeIOSKeychainDebugState;
 
-type DebugOptions = BaseOptions & Partial<GetOptions & SetOptions>;
+type GetGenericPasswordOptions = NonNullable<
+  Parameters<typeof OfficialKeychain.getGenericPassword>[0]
+>;
+type SetGenericPasswordOptions = NonNullable<
+  Parameters<typeof OfficialKeychain.setGenericPassword>[2]
+>;
+type DebugOptions = BaseOptions &
+  Partial<GetGenericPasswordOptions & SetGenericPasswordOptions>;
 
 type KeychainDebugModule = {
   debugGetGenericPasswordStateForOptions?: (
@@ -58,7 +61,7 @@ const DEFAULT_BASE_OPTIONS: BaseOptions = {
   service: KEYCHAIN_DEFAULT_SERVICE,
 };
 
-const DEFAULT_GET_OPTIONS: GetOptions = {
+const DEFAULT_GET_OPTIONS: GetGenericPasswordOptions = {
   ...DEFAULT_BASE_OPTIONS,
   authenticationPrompt: {
     title: i18n.t('native.authentication.auth_prompt_title'),
@@ -71,7 +74,7 @@ const DEFAULT_GET_OPTIONS: GetOptions = {
   }),
 };
 
-const DEFAULT_BIOMETRIC_SET_OPTIONS: SetOptions = {
+const DEFAULT_BIOMETRIC_SET_OPTIONS: SetGenericPasswordOptions = {
   service: KEYCHAIN_DEFAULT_SERVICE,
   accessible: OfficialKeychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
   accessControl: OfficialKeychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
@@ -96,8 +99,8 @@ function sortKeychainStorageTypes(
 
 function toOfficialStorageType(
   storage?: KeychainStorageType,
-): SetOptions['storage'] | undefined {
-  return storage as SetOptions['storage'] | undefined;
+): SetGenericPasswordOptions['storage'] | undefined {
+  return storage as SetGenericPasswordOptions['storage'] | undefined;
 }
 
 function makeBaseStateCommon(service: string) {
