@@ -126,7 +126,7 @@
         "ApproveToken": "Approve token",
         "ApproveTo": "Approve to",
         "RevokeFrom": "Revoke from",
-        "InteractedContract": "Interacted contract",
+        "InteractedContract": "Interacted with (To)",
         "RecipientAddress": "Recipient wallet",
         "name": "Name",
         "RevokeToken": "Revoke Token",
@@ -134,7 +134,9 @@
         "Simulation Results": "Simulation Results",
         "totalApprovedAmount": "Current Approved Amount",
         "PurchaseFrom": "Purchased from",
-        "WillReceive": "Will Receive: ≈ {{token}}"
+        "WillReceive": "Will Receive: ≈ {{token}}",
+        "TransactionDetails": "Transaction Details",
+        "Operation": "Operation"
       },
       "empty": {
         "title": "No transactions",

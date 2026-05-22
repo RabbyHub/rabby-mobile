@@ -151,7 +151,9 @@ export const PendingTxItem = ({
                     size={25}
                     innerChainStyle={styles.innerChainStyle}
                   />
-                  <Text style={styles.titleText}>{sendTitleTextStr}</Text>
+                  <Text style={styles.titleText} numberOfLines={1}>
+                    {sendTitleTextStr}
+                  </Text>
                 </>
               ) : type === 'send' ? (
                 <>
@@ -162,7 +164,9 @@ export const PendingTxItem = ({
                     size={25}
                     innerChainStyle={styles.innerChainStyle}
                   />
-                  <Text style={styles.titleText}>{sendTitleTextStr}</Text>
+                  <Text style={styles.titleText} numberOfLines={1}>
+                    {sendTitleTextStr}
+                  </Text>
                 </>
               ) : (
                 <>
@@ -173,12 +177,12 @@ export const PendingTxItem = ({
                     size={25}
                     innerChainStyle={styles.innerChainStyle}
                   />
-                  <Text style={styles.titleText}>
+                  <Text style={styles.titleText} numberOfLines={1}>
                     {` ${getTokenSymbol(
                       (data as SwapTxHistoryItem)?.fromToken,
                     )}`}
                   </Text>
-                  <Text style={styles.titleText}>{'→'}</Text>
+                  <Text style={styles.arrowText}>{'→'}</Text>
                   <AssetAvatar
                     logo={(data as SwapTxHistoryItem)?.toToken?.logo_url}
                     chain={(data as SwapTxHistoryItem)?.toToken?.chain}
@@ -186,7 +190,7 @@ export const PendingTxItem = ({
                     size={25}
                     innerChainStyle={styles.innerChainStyle}
                   />
-                  <Text style={styles.titleText}>
+                  <Text style={styles.titleText} numberOfLines={1}>
                     {getTokenSymbol((data as SwapTxHistoryItem)?.toToken)}
                   </Text>
                 </>
@@ -279,6 +283,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 20,
   },
   IconContainer: {
     position: 'relative',
@@ -333,6 +338,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   mainContainer: {
     gap: 2,
+    minWidth: 0,
+    width: '100%',
   },
   arrowIcon: {
     width: 16,
@@ -342,6 +349,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    width: '100%',
+    minWidth: 0,
   },
   subTitleText: {
     color: colors2024['neutral-secondary'],
@@ -356,23 +365,31 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     gap: 4,
   },
-  titleText: {
+  arrowText: {
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
   },
+  titleText: {
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    flexShrink: 1,
+  },
   leftContainer: {
     gap: 12,
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   rightContainer: {
     justifyContent: 'center',
     alignItems: 'flex-end',
     gap: 2,
-    flex: 1,
   },
   statusContainer: {
     flexDirection: 'row',

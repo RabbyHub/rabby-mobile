@@ -1,37 +1,25 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Tip } from '@/components';
-import {
-  NFTItem,
-  TokenItem,
-  TxDisplayItem,
-} from '@rabby-wallet/rabby-api/dist/types';
-import { addressUtils } from '@rabby-wallet/base-utils';
-import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
-import { numberWithCommasIsLtOne } from '@/utils/number';
-import { getTokenSymbol } from '@/utils/token';
-import { useTranslation } from 'react-i18next';
-import { RootNames } from '@/constant/layout';
-import { Button } from '@/components2024/Button';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { StackActions } from '@react-navigation/native';
-import { findChain, findChainByServerID } from '@/utils/chain';
-import { CHAINS_ENUM } from '@debank/common';
-import { approveToken, revokeNFTApprove } from '@/core/apis/approvals';
-import { resetNavigationTo } from '@/hooks/navigation';
-import type { HistoryDisplayItem } from '@/types/history';
-import { fetchHistoryTokenUUId } from './utils';
-import { useMyAccounts } from '@/hooks/account';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { HistoryItemCateType } from './type';
-import { useSendRoutes } from '@/hooks/useSendRoutes';
-import { useRequest } from 'ahooks';
+import { Button } from '@/components2024/Button';
+import { RootNames } from '@/constant/layout';
 import { transactionHistoryService } from '@/core/services';
 import { Account } from '@/core/services/preference';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
+import { useMyAccounts } from '@/hooks/account';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { useTheme2024 } from '@/hooks/theme';
+import type { HistoryDisplayItem } from '@/types/history';
 import { findAccountByPriority } from '@/utils/account';
+import { findChain, findChainByServerID } from '@/utils/chain';
 import { naviPush } from '@/utils/navigation';
+import { createGetStyles2024 } from '@/utils/styles';
+import { CHAINS_ENUM } from '@debank/common';
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
+import { StackActions } from '@react-navigation/native';
+import { useRequest } from 'ahooks';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, View, ViewStyle } from 'react-native';
+import { HistoryItemCateType } from './type';
 
 interface ItemProps {
   status: number;
@@ -95,7 +83,7 @@ export const HistoryBottomBtn = ({
     const viewStyle = StyleSheet.flatten([
       styles.buttonContainer,
       buttonContainerStyle,
-    ]);
+    ]) as ViewStyle;
     return {
       btnContainerViewStyle: viewStyle,
       buttonStyle: { height: viewStyle.height || 56 },
@@ -107,15 +95,17 @@ export const HistoryBottomBtn = ({
     [transactionTxs],
   );
 
+  const PlaceHolder = <View style={styles.placeholder} />;
+
   if (!fromAddrIsImported) {
-    return null;
+    return PlaceHolder;
   }
 
   switch (type) {
     case HistoryItemCateType.Send: {
       const isLocalSend = source === 'sendNFT' || source === 'sendToken';
       if (!isLocalSend) {
-        return null;
+        return PlaceHolder;
       }
 
       const isNft = sends[0]?.token_id?.length === 32;
@@ -147,12 +137,12 @@ export const HistoryBottomBtn = ({
       );
     }
     case HistoryItemCateType.Recieve:
-      return null;
+      return PlaceHolder;
     case HistoryItemCateType.Swap:
       const isLocalSwap =
         source === 'approvalAndSwap|swap' || source === 'swap';
       if (!isLocalSwap) {
-        return null;
+        return <View style={styles.placeholder} />;
       }
 
       return (
@@ -189,36 +179,34 @@ export const HistoryBottomBtn = ({
     case HistoryItemCateType.Bridge:
     case HistoryItemCateType.UnKnown:
     default:
-      return null;
+      return PlaceHolder;
   }
-  // return <RcIconDefault style={[styles.image, style]} />;
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  tokenAmountText: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '700',
-  },
-  ghostButton: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderColor: colors2024['neutral-info'],
-  },
-  ghostDisableButton: {
-    color: colors2024['neutral-info'],
-  },
-  ghostTitle: {
-    color: colors2024['neutral-title-1'],
-  },
-  buttonContainer: {
-    // ...makeDebugBorder(),
-    position: 'relative',
-    flexShrink: 0,
-    height: 56,
-    marginBottom: 0,
-    width: '100%',
-    gap: 16,
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    tokenAmountText: {
+      color: colors2024['green-default'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 28,
+      lineHeight: 36,
+      fontWeight: '700',
+    },
+    buttonContainer: {
+      paddingTop: 12,
+      paddingHorizontal: 20,
+      paddingBottom: Math.max(safeAreaInsets.bottom, 36),
+      backgroundColor: !isLight
+        ? colors2024['neutral-bg-2']
+        : colors2024['neutral-bg-1'],
+      position: 'relative',
+      flexShrink: 0,
+      width: '100%',
+      gap: 16,
+    },
+    placeholder: {
+      minHeight: Math.max(safeAreaInsets.bottom, 24),
+      flexShrink: 0,
+    },
+  }),
+);

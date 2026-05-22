@@ -54,7 +54,6 @@ function HistoryLocalDetailScreen(): JSX.Element {
   const isPending = useMemo(() => data.isPending, [data]);
   const isFailed = useMemo(() => data.isFailed, [data]);
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const { bottom } = useSafeAreaInsets();
   const { t } = useTranslation();
 
   const fetchRefreshData = useCallback(() => {
@@ -149,9 +148,6 @@ function HistoryLocalDetailScreen(): JSX.Element {
     }, [currentAccount]),
   );
 
-  const isSelfScrollAction =
-    needUseSwap || !!data.maxGasTx?.action?.actionData?.send;
-
   const actionElement = data.maxGasTx?.action?.actionData?.approveToken ? (
     <ApproveToken
       data={data}
@@ -222,25 +218,8 @@ function HistoryLocalDetailScreen(): JSX.Element {
   );
 
   return (
-    <NormalScreenContainer2024
-      type={!isLight ? 'bg1' : 'bg0'}
-      style={{
-        paddingTop: isSelfScrollAction ? 24 : 0,
-      }}>
-      {isSelfScrollAction ? (
-        actionElement
-      ) : (
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{
-            paddingTop: 24,
-            paddingBottom: bottom,
-            paddingHorizontal: 16,
-          }}
-          showsVerticalScrollIndicator={false}>
-          {actionElement}
-        </ScrollView>
-      )}
+    <NormalScreenContainer2024 type={!isLight ? 'bg1' : 'bg0'}>
+      {actionElement}
     </NormalScreenContainer2024>
   );
 }
@@ -333,9 +312,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tokenAmountText: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '700',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '800',
   },
   mutliBox: {
     width: '100%',
@@ -401,7 +380,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   headerTitleStyle: {
     color: colors2024['neutral-title-1'],
-    fontWeight: '900',
+    fontWeight: '800',
     fontSize: 20,
     fontFamily: 'SF Pro Rounded',
     lineHeight: 24,

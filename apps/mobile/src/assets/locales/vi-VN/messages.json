@@ -206,7 +206,7 @@
         "RevokeToken": "Thu hồi Token",
         "InteractionResults": "Kết quả Tương tác",
         "GasFee": "Phí Gas",
-        "InteractedContract": "Hợp đồng đã tương tác",
+        "InteractedContract": "",
         "ApproveTo": "Phê duyệt tới",
         "WillReceive": "Sẽ Nhận: ≈ {{token}}",
         "Name": "Tên",
