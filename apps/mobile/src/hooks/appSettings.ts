@@ -21,7 +21,11 @@ import { useCallback, useMemo } from 'react';
 
 const isIOS = DeviceUtils.isIOS();
 
-export const CURRENT_KEYCHAIN_VERSION_VALUES = ['8.2.0-fork', '9.0.0'] as const;
+export const CURRENT_KEYCHAIN_VERSION_VALUES = [
+  '8.2.0-fork',
+  '9.0.0',
+  '10.0.0',
+] as const;
 
 export type CurrentKeychainVersion =
   (typeof CURRENT_KEYCHAIN_VERSION_VALUES)[number];
@@ -36,7 +40,11 @@ const DEFAULT_DEBUG_KEYCHAIN_STORAGE: KeychainStorageType =
 function coerceCurrentKeychainVersion(
   version: unknown,
 ): CurrentKeychainVersion {
-  return version === '9.0.0' ? '9.0.0' : DEFAULT_CURRENT_KEYCHAIN_VERSION;
+  return CURRENT_KEYCHAIN_VERSION_VALUES.includes(
+    version as CurrentKeychainVersion,
+  )
+    ? (version as CurrentKeychainVersion)
+    : DEFAULT_CURRENT_KEYCHAIN_VERSION;
 }
 
 type DebugKeychainStorageByVersion = Record<
@@ -48,6 +56,7 @@ function makeDefaultDebugKeychainStorageByVersion(): DebugKeychainStorageByVersi
   return {
     '8.2.0-fork': DEFAULT_DEBUG_KEYCHAIN_STORAGE,
     '9.0.0': DEFAULT_DEBUG_KEYCHAIN_STORAGE,
+    '10.0.0': DEFAULT_DEBUG_KEYCHAIN_STORAGE,
   };
 }
 
@@ -62,6 +71,7 @@ function coerceDebugKeychainStorageByVersion(
   return {
     '8.2.0-fork': coerceKeychainStorageType(raw?.['8.2.0-fork']),
     '9.0.0': coerceKeychainStorageType(raw?.['9.0.0']),
+    '10.0.0': coerceKeychainStorageType(raw?.['10.0.0']),
   };
 }
 
@@ -617,6 +627,7 @@ export function useDebugKeychainStorage() {
     debugKeychainStorageOptions: [
       KEYCHAIN_STORAGE_TYPES.RSA,
       KEYCHAIN_STORAGE_TYPES.AES,
+      KEYCHAIN_STORAGE_TYPES.AES_GCM,
       KEYCHAIN_STORAGE_TYPES.KC,
     ] as KeychainStorageType[],
   };

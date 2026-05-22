@@ -1,11 +1,13 @@
 describe('core/apis/keychain current facade', () => {
-  const setup = async (version: '8.2.0-fork' | '9.0.0') => {
+  const setup = async (version: '8.2.0-fork' | '9.0.0' | '10.0.0') => {
     jest.resetModules();
 
     const mockV8RequestGenericPassword = jest.fn(async () => 'v8-request');
     const mockV9RequestGenericPassword = jest.fn(async () => 'v9-request');
+    const mockV10RequestGenericPassword = jest.fn(async () => 'v10-request');
     const mockV8ResetGenericPassword = jest.fn(async () => true);
     const mockV9ResetGenericPassword = jest.fn(async () => true);
+    const mockV10ResetGenericPassword = jest.fn(async () => true);
 
     jest.doMock('@/hooks/appSettings', () => ({
       getCurrentKeychainVersion: jest.fn(() => version),
@@ -69,6 +71,26 @@ describe('core/apis/keychain current facade', () => {
         clearGenericPasswordSuccess: true,
       })),
     }));
+    jest.doMock('./keychainV10_0_0', () => ({
+      KEYCHAIN_SOURCE_LABEL: 'v10-label',
+      makeSecureKeyChainInstance: jest.fn(() => 'v10-instance'),
+      requestGenericPassword: mockV10RequestGenericPassword,
+      getSupportedBiometryType: jest.fn(async () => 'Fingerprint'),
+      getKeychainDebugState: jest.fn(async () => ({
+        sourceLabel: 'v10-label',
+      })),
+      debugRemoveCurrentCipherStorageMarker: jest.fn(async () => true),
+      debugWriteMockLegacyBiometricsEntry: jest.fn(async () => true),
+      debugDecryptStoredPasswordPayload: jest.fn(async () => ({
+        password: 'v10',
+      })),
+      setGenericPassword: jest.fn(async () => undefined),
+      resetGenericPassword: mockV10ResetGenericPassword,
+      clearApplicationPassword: jest.fn(async () => ({
+        clearCustomPasswordError: null,
+        clearGenericPasswordSuccess: true,
+      })),
+    }));
 
     let module!: typeof import('./keychain');
     jest.isolateModules(() => {
@@ -79,8 +101,10 @@ describe('core/apis/keychain current facade', () => {
       module,
       mockV8RequestGenericPassword,
       mockV9RequestGenericPassword,
+      mockV10RequestGenericPassword,
       mockV8ResetGenericPassword,
       mockV9ResetGenericPassword,
+      mockV10ResetGenericPassword,
     };
   };
 
@@ -89,8 +113,10 @@ describe('core/apis/keychain current facade', () => {
       module,
       mockV8RequestGenericPassword,
       mockV9RequestGenericPassword,
+      mockV10RequestGenericPassword,
       mockV8ResetGenericPassword,
       mockV9ResetGenericPassword,
+      mockV10ResetGenericPassword,
     } = await setup('8.2.0-fork');
 
     const requestResult = await module.requestGenericPassword({
@@ -103,8 +129,10 @@ describe('core/apis/keychain current facade', () => {
     expect(module.getCurrentKeychainSourceLabel()).toBe('v8-label');
     expect(mockV8RequestGenericPassword).toHaveBeenCalled();
     expect(mockV9RequestGenericPassword).not.toHaveBeenCalled();
+    expect(mockV10RequestGenericPassword).not.toHaveBeenCalled();
     expect(mockV8ResetGenericPassword).toHaveBeenCalled();
     expect(mockV9ResetGenericPassword).not.toHaveBeenCalled();
+    expect(mockV10ResetGenericPassword).not.toHaveBeenCalled();
   });
 
   it('routes facade calls to the configured v9 implementation', async () => {
@@ -112,8 +140,10 @@ describe('core/apis/keychain current facade', () => {
       module,
       mockV8RequestGenericPassword,
       mockV9RequestGenericPassword,
+      mockV10RequestGenericPassword,
       mockV8ResetGenericPassword,
       mockV9ResetGenericPassword,
+      mockV10ResetGenericPassword,
     } = await setup('9.0.0');
 
     const requestResult = await module.requestGenericPassword({
@@ -126,7 +156,36 @@ describe('core/apis/keychain current facade', () => {
     expect(module.getCurrentKeychainSourceLabel()).toBe('v9-label');
     expect(mockV8RequestGenericPassword).not.toHaveBeenCalled();
     expect(mockV9RequestGenericPassword).toHaveBeenCalled();
+    expect(mockV10RequestGenericPassword).not.toHaveBeenCalled();
     expect(mockV8ResetGenericPassword).not.toHaveBeenCalled();
     expect(mockV9ResetGenericPassword).toHaveBeenCalled();
+    expect(mockV10ResetGenericPassword).not.toHaveBeenCalled();
+  });
+
+  it('routes facade calls to the configured v10 implementation', async () => {
+    const {
+      module,
+      mockV8RequestGenericPassword,
+      mockV9RequestGenericPassword,
+      mockV10RequestGenericPassword,
+      mockV8ResetGenericPassword,
+      mockV9ResetGenericPassword,
+      mockV10ResetGenericPassword,
+    } = await setup('10.0.0');
+
+    const requestResult = await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.DECRYPT_PWD,
+    });
+    const resetResult = await module.resetGenericPassword();
+
+    expect(requestResult).toBe('v10-request');
+    expect(resetResult).toBe(true);
+    expect(module.getCurrentKeychainSourceLabel()).toBe('v10-label');
+    expect(mockV8RequestGenericPassword).not.toHaveBeenCalled();
+    expect(mockV9RequestGenericPassword).not.toHaveBeenCalled();
+    expect(mockV10RequestGenericPassword).toHaveBeenCalled();
+    expect(mockV8ResetGenericPassword).not.toHaveBeenCalled();
+    expect(mockV9ResetGenericPassword).not.toHaveBeenCalled();
+    expect(mockV10ResetGenericPassword).toHaveBeenCalled();
   });
 });
