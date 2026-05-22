@@ -400,6 +400,7 @@ function AssetsTabBar() {
         return (
           <Pressable
             key={key}
+            style={styles.assetTabItem}
             onPress={() => {
               apisHomeTabIndex.setTabIndex(index, true);
             }}>
@@ -524,5 +525,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     //   backgroundColor: colors2024['red-light-1'],
     // }),
     // height: HOME_TOP_HEADER_SIZES.tabItemLineHeight,
+  },
+  assetTabItem: {
+    paddingBottom: HOME_TOP_HEADER_SIZES.headerTabItemPaddingBottom,
   },
 }));
