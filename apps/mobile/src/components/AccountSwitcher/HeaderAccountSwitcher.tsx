@@ -111,12 +111,12 @@ export function HeaderAccountSwitcher({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   accountSelectorContainer: {
+    maxWidth: 170,
     flexShrink: 1,
     minWidth: 0,
   },
   accountSelectorWidthLimiter: {
-    width: '100%',
-    maxWidth: 160,
+    maxWidth: '100%',
     minWidth: 0,
     flexShrink: 1,
     alignSelf: 'flex-end',
@@ -125,8 +125,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    width: '100%',
-    maxWidth: 160,
+    maxWidth: '100%',
     minWidth: 0,
     backgroundColor: colors2024['neutral-bg-5'],
     borderWidth: 1,
