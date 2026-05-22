@@ -387,7 +387,7 @@ function AssetsTabBar() {
 
   return (
     <Animated.View
-      pointerEvents={focusedTab === HomeTabName.overview ? 'none' : 'auto'}
+      // pointerEvents={focusedTab === HomeTabName.overview ? 'none' : 'auto'}
       style={[styles.portfolioContainer, stylez, tabbarContainerStyle]}>
       {/* <CustomLabel.Slider indexDecimal={indexDecimal} /> */}
       {AssetsTabLabels.map(({ index, label }) => {
