@@ -939,9 +939,9 @@ export const DirectSignGasInfo = ({
         return;
       }
 
-      const nextTxs = buildTopUpResumedTxs({
+      const nextTxs = await buildTopUpResumedTxs({
         txs: ctx.txs,
-        originalAccountAddress: config.account.address,
+        originalAccount: config.account,
         originalChainServerId: chain.serverId,
         topUpResult: result,
       });

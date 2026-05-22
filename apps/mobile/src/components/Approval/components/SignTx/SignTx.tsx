@@ -2062,9 +2062,10 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
 
   const handleTopUpWaitResult = useMemoizedFn(
     async (result: GasAccountTopUpResult) => {
-      const nextNonce = getBumpedNonceAfterTopUp({
+      const nextNonce = await getBumpedNonceAfterTopUp({
         currentNonce: realNonce || tx.nonce,
-        originalAccountAddress: currentAccount.address,
+        tx,
+        originalAccount: currentAccount,
         originalChainServerId: chain.serverId,
         topUpResult: result,
       });
