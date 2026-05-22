@@ -157,8 +157,6 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
 
   const isLocalSwap = source === 'approvalAndSwap|swap' || source === 'swap';
 
-  console.log('Swap actionData', data, actionData);
-
   return (
     <>
       <ScrollView

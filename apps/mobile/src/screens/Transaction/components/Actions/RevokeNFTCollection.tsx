@@ -17,11 +17,7 @@ import { HistoryItemIcon } from '../HistoryItemIcon';
 import { HistoryItemCateType } from '../type';
 import { Account } from '@/core/services/preference';
 import { Text } from '@/components/Typography';
-import {
-  ActionDetailItem,
-  ActionDetailSection,
-  ActionDetailText,
-} from './components/ActionDetailSection';
+import { ActionDetailSection } from './components/ActionDetailSection';
 import { ActionSpenderView } from './components/ActionSpenderView';
 import { ProjectItemInDetail } from '../ProjectItemInDetail';
 
@@ -31,10 +27,7 @@ interface Props {
   account?: Account;
 }
 
-export const RevokeNFTCollection: React.FC<Props> = ({
-  data,
-  isSingleAddress,
-}) => {
+export const RevokeNFTCollection: React.FC<Props> = ({ data }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
@@ -86,7 +79,7 @@ export const RevokeNFTCollection: React.FC<Props> = ({
               {/* todo  */}
               <HistoryItemIcon
                 isInDetail={true}
-                type={HistoryItemCateType.Approve}
+                type={HistoryItemCateType.Revoke}
                 token={
                   {
                     ...actionData.collection,
@@ -123,6 +116,7 @@ export const RevokeNFTCollection: React.FC<Props> = ({
               requireData={requireData}
               spender={actionData.spender}
               chain={chain}
+              type="nftSpender"
             />
           </View>
         </View>

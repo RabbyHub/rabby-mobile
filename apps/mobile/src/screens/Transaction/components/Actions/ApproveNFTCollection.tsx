@@ -92,8 +92,6 @@ export const ApproveNFTCollection: React.FC<Props> = ({
   //   });
   // });
 
-  console.log('ApproveNFTCollection actionData', data, actionData);
-
   if (!chain) {
     return null;
   }
@@ -148,6 +146,7 @@ export const ApproveNFTCollection: React.FC<Props> = ({
               requireData={requireData}
               spender={actionData.spender}
               chain={chain}
+              type="nftSpender"
             />
           </View>
         </View>
