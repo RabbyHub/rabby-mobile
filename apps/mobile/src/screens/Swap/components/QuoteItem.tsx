@@ -45,6 +45,7 @@ export interface QuoteItemProps {
   setActiveProvider?: React.Dispatch<
     React.SetStateAction<QuoteProvider | undefined>
   >;
+  currentProvider?: QuoteProvider;
   sortIncludeGasFee: boolean;
   onPress?: () => void;
   onCloseQuoteList?: () => void;
@@ -75,6 +76,7 @@ export const DexQuoteItem = (
     preExecResult,
     quoteProviderInfo,
     setActiveProvider,
+    currentProvider,
     onlyShowErrorQuote,
     onErrQuote,
     onlyShow,
@@ -285,7 +287,12 @@ export const DexQuoteItem = (
     return null;
   }
 
-  const showQuoteDetails = !disabled && !inSufficient;
+  const showQuoteDetails = !disabled;
+  const isActive =
+    !onlyShow &&
+    !onlyShowErrorQuote &&
+    !!currentProvider &&
+    currentProvider.name === dexId;
 
   return (
     <TouchableOpacity
@@ -293,6 +300,7 @@ export const DexQuoteItem = (
       style={[
         styles.dexContainer,
         onlyShow ? styles.onlyShow : styles.normal,
+        isActive && styles.active,
         inSufficient && styles.insufficient,
         isErrorQuote && styles.errorQuote,
       ]}
@@ -352,13 +360,15 @@ export const DexQuoteItem = (
               backgroundColor: colors2024['red-light'],
             },
           ]}>
-          <Text
-            style={[
-              styles.gasUsd,
-              gasFeeTooHigh && { color: colors2024['red-default'] },
-            ]}>
-            Gas: {preExecResult?.gasUsd}
-          </Text>
+          {!inSufficient && preExecResult?.gasUsd ? (
+            <Text
+              style={[
+                styles.gasUsd,
+                gasFeeTooHigh && { color: colors2024['red-default'] },
+              ]}>
+              Gas: {preExecResult.gasUsd}
+            </Text>
+          ) : null}
         </View>
 
         <View style={styles.estimatedValueSection}>
@@ -405,6 +415,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
+  },
+  active: {
+    backgroundColor: colors2024['brand-light-1'],
+    borderColor: colors2024['brand-light-2'],
   },
   insufficient: {
     opacity: 0.5,
