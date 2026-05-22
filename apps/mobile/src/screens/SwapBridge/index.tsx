@@ -20,6 +20,7 @@ import { Bridge } from './Bridge';
 import { BridgeHeader } from '../Bridge/components/BridgeHeader';
 import Swap from './Swap';
 import { SwapHeader } from '../Swap/components/Header';
+import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 
 type SwapBridgeRoute = GetNestedScreenRouteProp<
   'TransactionNavigatorParamList',
@@ -207,6 +208,7 @@ function SwapBridgeScreen({
           <Bridge disableHeaderRight disableAccountSwitcherModal />
         )}
       </View>
+      <TokenInfoPopup />
     </View>
   );
 }

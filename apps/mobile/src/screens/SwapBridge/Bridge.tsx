@@ -4,7 +4,6 @@ import {
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
 import React from 'react';
-import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { BridgeContent } from '../Bridge/components/BridgeContent';
 import {
   QuoteVisibleProvider,
@@ -33,7 +32,6 @@ export const Bridge = ({
           />
         </QuoteVisibleProvider>
       </RefreshIdProvider>
-      <TokenInfoPopup />
     </SettingVisibleProvider>
   );
 };
