@@ -473,7 +473,7 @@
         "RevokeToken": "Revogar Token",
         "name": "Nome",
         "Status": "Status",
-        "InteractedContract": "Contrato interagido",
+        "InteractedContract": "",
         "InteractionResults": "Resultados de Interação",
         "ApproveTo": "Aprovar para",
         "BuyAgain": "Comprar Novamente",
