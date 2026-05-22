@@ -39,14 +39,22 @@ type NativeKeychainDebugState =
   | NativeAndroidKeychainDebugState
   | NativeIOSKeychainDebugState;
 
-type GetGenericPasswordOptions = NonNullable<
-  Parameters<typeof OfficialKeychain.getGenericPassword>[0]
->;
-type SetGenericPasswordOptions = NonNullable<
-  Parameters<typeof OfficialKeychain.setGenericPassword>[2]
->;
-type DebugOptions = BaseOptions &
-  Partial<GetGenericPasswordOptions & SetGenericPasswordOptions>;
+type KeychainDebugOptions = BaseOptions & {
+  accessControl?: (typeof OfficialKeychain.ACCESS_CONTROL)[keyof typeof OfficialKeychain.ACCESS_CONTROL];
+  accessible?: (typeof OfficialKeychain.ACCESSIBLE)[keyof typeof OfficialKeychain.ACCESSIBLE];
+  authenticationPrompt?:
+    | string
+    | {
+        title?: string;
+        subtitle?: string;
+        description?: string;
+        cancel?: string;
+      };
+  authenticationType?: (typeof OfficialKeychain.AUTHENTICATION_TYPE)[keyof typeof OfficialKeychain.AUTHENTICATION_TYPE];
+  rules?: (typeof OfficialKeychain.SECURITY_RULES)[keyof typeof OfficialKeychain.SECURITY_RULES];
+  storage?: (typeof OfficialKeychain.STORAGE_TYPE)[keyof typeof OfficialKeychain.STORAGE_TYPE];
+};
+type DebugOptions = KeychainDebugOptions;
 
 type KeychainDebugModule = {
   debugGetGenericPasswordStateForOptions?: (
@@ -61,7 +69,7 @@ const DEFAULT_BASE_OPTIONS: BaseOptions = {
   service: KEYCHAIN_DEFAULT_SERVICE,
 };
 
-const DEFAULT_GET_OPTIONS: GetGenericPasswordOptions = {
+const DEFAULT_GET_OPTIONS: KeychainDebugOptions = {
   ...DEFAULT_BASE_OPTIONS,
   authenticationPrompt: {
     title: i18n.t('native.authentication.auth_prompt_title'),
@@ -74,7 +82,7 @@ const DEFAULT_GET_OPTIONS: GetGenericPasswordOptions = {
   }),
 };
 
-const DEFAULT_BIOMETRIC_SET_OPTIONS: SetGenericPasswordOptions = {
+const DEFAULT_BIOMETRIC_SET_OPTIONS: KeychainDebugOptions = {
   service: KEYCHAIN_DEFAULT_SERVICE,
   accessible: OfficialKeychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
   accessControl: OfficialKeychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
@@ -99,8 +107,8 @@ function sortKeychainStorageTypes(
 
 function toOfficialStorageType(
   storage?: KeychainStorageType,
-): SetGenericPasswordOptions['storage'] | undefined {
-  return storage as SetGenericPasswordOptions['storage'] | undefined;
+): KeychainDebugOptions['storage'] | undefined {
+  return storage as KeychainDebugOptions['storage'] | undefined;
 }
 
 function makeBaseStateCommon(service: string) {
@@ -254,7 +262,7 @@ export async function readGenericPassword(
     ...DEFAULT_GET_OPTIONS,
     service,
     ...getAndroidAuthPromptPolicyOptions(options?.androidAuthPromptPolicy),
-  });
+  } as Parameters<typeof OfficialKeychain.getGenericPassword>[0]);
 }
 
 export async function writeBiometricsEntry(
@@ -270,7 +278,7 @@ export async function writeBiometricsEntry(
     ...(options?.storage
       ? { storage: toOfficialStorageType(options.storage) }
       : null),
-  });
+  } as Parameters<typeof OfficialKeychain.setGenericPassword>[2]);
 }
 
 export async function getSupportedStorageTypes(): Promise<
