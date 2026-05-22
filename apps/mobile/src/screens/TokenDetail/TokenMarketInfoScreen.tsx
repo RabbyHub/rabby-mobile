@@ -541,7 +541,7 @@ export const TokenMarketInfoScreen = () => {
             style={styles.innerContainer}>
             {!!account && (
               <HeaderBalanceCard
-                amount={formatAmountValueKMB(amountSum)}
+                amount={formatAmountValueKMB(amountSum, 4, true)}
                 usdValue={usdValue}
                 percentChange={percentChange}
                 isLoss={isLoss}
