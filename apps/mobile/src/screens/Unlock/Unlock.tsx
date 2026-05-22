@@ -28,7 +28,12 @@ import {
 } from '@/hooks/navigation';
 import { getFormikErrorsCount } from '@/utils/patch';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
-import { APP_TEST_PWD, APP_VERSIONS, APPLICATION_ID } from '@/constant';
+import {
+  APP_FEATURE_SWITCH,
+  APP_TEST_PWD,
+  APP_VERSIONS,
+  APPLICATION_ID,
+} from '@/constant';
 import {
   RequestGenericPurpose,
   isBrokenBiometricsEntryError,
@@ -393,7 +398,11 @@ export default function UnlockScreen() {
       traceAndroidUnlockPerf('request_biometrics_start', {
         isFaceID,
       });
-      if (isAndroid && !isFaceID) {
+      if (
+        APP_FEATURE_SWITCH.showBiometricUnlockProgressToast &&
+        isAndroid &&
+        !isFaceID
+      ) {
         hideAuthToastRef.current = toastBiometricsAuthenticating(isFaceID);
         traceAndroidUnlockPerf('biometrics_auth_toast_show', {
           elapsedMs: Date.now() - startedAt,
@@ -409,7 +418,10 @@ export default function UnlockScreen() {
           });
           hideAuthToastRef.current?.();
           hideAuthToastRef.current = null;
-          if (!isFaceID) {
+          if (
+            APP_FEATURE_SWITCH.showBiometricUnlockProgressToast &&
+            !isFaceID
+          ) {
             hidePostAuthToastRef.current = toastUnlocking();
             traceAndroidUnlockPerf('post_auth_unlock_toast_show', {
               elapsedMs: Date.now() - startedAt,
