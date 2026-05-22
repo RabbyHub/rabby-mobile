@@ -437,6 +437,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
             setAmount(availableToBorrow.amount || '0');
           }}
           tokenAmount={Number(availableToBorrow.amount || '0')}
+          tokenDecimals={reserve.reserve.decimals}
           price={Number(
             reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
           )}
