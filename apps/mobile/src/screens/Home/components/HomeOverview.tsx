@@ -92,7 +92,6 @@ import { PointsBadge } from '../../Points/components/PointsBadge';
 import { HomeCenterArea } from '../components/HomeCenterArea';
 import { HomeDappDrawer } from '../components/HomeDappDrawer';
 import { HomePendingBadge } from '../components/HomePending';
-import { ETHStatus, refreshETHStatus } from '../components/ETHStatus';
 import { LendingHF } from '../components/LendingHF';
 import { MultiAddressHomeHeader } from '../components/MultiAddressHomeHeader';
 import { PerpsPnl } from '../components/PerpsPnl';
@@ -770,7 +769,6 @@ export const HomeOverview = React.memo(() => {
       return;
     }
 
-    refreshETHStatus();
     perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
     return Promise.all([
       // force update balance from server api
@@ -803,7 +801,6 @@ export const HomeOverview = React.memo(() => {
 
   // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
   const handlePressMarket = useCallback(() => {
-    refreshETHStatus();
     navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
       screen: RootNames.Market,
       params: {},
@@ -927,10 +924,6 @@ export const HomeOverview = React.memo(() => {
       isSuccess?: boolean;
       showGiftIcon?: boolean;
     }) => {
-      if (el.key === MultiHomeFeatTitle.Market) {
-        return <ETHStatus />;
-      }
-
       if (el.key === MultiHomeFeatTitle.Perps) {
         return <PerpsPnl />;
       }
