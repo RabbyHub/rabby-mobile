@@ -28,6 +28,7 @@ export const PerpsDisplayCoinName: React.FC<{
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flexDirection: 'row',
+    alignItems: 'flex-end',
   },
   base: {
     fontFamily: 'SF Pro Rounded',
@@ -38,8 +39,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   quote: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '700',
     color: colors2024['neutral-info'],
   },

@@ -1,70 +1,38 @@
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
-import { useTipsPopup } from '@/hooks/useTipsPopup';
-import { formatPercent, formatUsdValueKMB } from '@/screens/Home/utils/price';
 import { createGetStyles2024 } from '@/utils/styles';
-import BigNumber from 'bignumber.js';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, View } from 'react-native';
+import { View } from 'react-native';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
-import { AssetAvatar } from '@/components';
 import { splitNumberByStep } from '@/utils/number';
-import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
 
 interface AssetPriceInfoProps {
-  coin: string;
   activeAssetCtx?: WsActiveAssetCtx['ctx'] | null;
   currentAssetCtx?: MarketData | null;
-  logoUrl: string;
-  quoteAsset?: string;
+  displayName: string;
+  quoteAsset: string;
 }
 
 export const AssetPriceInfo = ({
-  coin,
-  logoUrl,
   activeAssetCtx,
   currentAssetCtx,
-  quoteAsset = 'USDC',
+  displayName,
+  quoteAsset,
 }: AssetPriceInfoProps) => {
+  const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const markPrice = useMemo(() => {
     return Number(activeAssetCtx?.markPx || currentAssetCtx?.markPx || 0);
   }, [activeAssetCtx, currentAssetCtx]);
 
-  const dayDelta = useMemo(() => {
-    const prevDayPx = Number(
-      activeAssetCtx?.prevDayPx || currentAssetCtx?.prevDayPx || 0,
-    );
-    return markPrice - prevDayPx;
-  }, [activeAssetCtx, markPrice, currentAssetCtx]);
-
-  const isPositiveChange = useMemo(() => {
-    return dayDelta >= 0;
-  }, [dayDelta]);
-
-  const dayDeltaPercent = useMemo(() => {
-    const prevDayPx = Number(
-      activeAssetCtx?.prevDayPx || currentAssetCtx?.prevDayPx || 0,
-    );
-    return dayDelta / prevDayPx;
-  }, [activeAssetCtx, currentAssetCtx, dayDelta]);
-
   return (
     <View style={styles.section}>
-      <AssetAvatar logo={logoUrl} logoStyle={styles.icon} size={24} />
-      <Text style={styles.name}>{formatPerpsCoin(coin)}</Text>
-      <Text style={styles.quote}>{`/${quoteAsset}`}</Text>
-      <Text
-        style={[
-          styles.price,
-          isPositiveChange ? styles.positive : styles.negative,
-        ]}>
-        {`${splitNumberByStep(markPrice)} (${
-          isPositiveChange ? '+' : ''
-        }${formatPercent(dayDeltaPercent, 2)})`}
+      <Text style={styles.quote}>
+        {displayName}/{quoteAsset}
       </Text>
+      <Text style={styles.price}>{`$${splitNumberByStep(markPrice)}`}</Text>
     </View>
   );
 };
@@ -78,10 +46,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   price: {
     marginLeft: 4,
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
   },
   name: {
     marginLeft: 4,
@@ -92,11 +61,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
   },
   quote: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-info'],
+    color: colors2024['neutral-secondary'],
   },
   icon: {
     width: 24,
