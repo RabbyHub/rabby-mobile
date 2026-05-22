@@ -9,6 +9,7 @@ import {
   DevDataContactService,
   DevDataSQLite,
   DevDataKeychain,
+  DevDataKeyringVault,
   DevDataWhitelist,
   DevPerf,
   DevSwitches,
@@ -110,6 +111,17 @@ export function TestkitsNavigator() {
             headerShown: true,
             headerTitle: 'Keychain Data',
             title: 'Keychain Data',
+          },
+        ])}
+      />
+      <Stack.Screen
+        name={RootNames.DevDataKeyringVault}
+        component={DevDataKeyringVault}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'Keyring Vault',
+            title: 'Keyring Vault',
           },
         ])}
       />

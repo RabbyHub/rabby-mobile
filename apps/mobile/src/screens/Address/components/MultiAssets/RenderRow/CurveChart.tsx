@@ -7,7 +7,7 @@ import {
   formatSmallCurrencyValueParts,
 } from '@/utils/currency';
 import React, { memo, useMemo } from 'react';
-import { Dimensions, Pressable, useWindowDimensions, View } from 'react-native';
+import { Pressable, useWindowDimensions, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import Animated, {
   Easing,
@@ -30,6 +30,7 @@ import { refreshDayCurve } from '@/store/curve24h';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { useHomeStartupReady } from '@/core/utils/homeStartupReady';
 import { Text, AnimateableText } from '@/components/Typography';
 import { useHomePortfolioStore } from '@/screens/Home/hooks/useHomePortfolioSummary';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
@@ -37,7 +38,6 @@ import { useShallow } from 'zustand/react/shallow';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedSVG = Animated.createAnimatedComponent(Svg);
-const ScreenWidth = Dimensions.get('screen').width;
 const CHART_HORIZONTAL_INSET = 66;
 
 const MAX_NETWORTH_FS = 38;
@@ -162,10 +162,14 @@ export const MultiChart = memo(function MultiChart({
       isCurveAnyAddrLoading: state.isCurveAnyAddrLoading,
     })),
   );
+  const startupReady = useHomeStartupReady();
 
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
-  const chartsData = curveList;
+  const chartsData = startupReady ? curveList : [];
+  const showBalanceLoading = !startupReady || showBalanceLoadingWithoutLocal;
+  const showChangeLoading = !startupReady || showChangeLoadingWithoutLocal;
+  const isCurveLoading = !startupReady || isCurveAnyAddrLoading;
 
   return (
     <View
@@ -187,9 +191,11 @@ export const MultiChart = memo(function MultiChart({
             data={chartsData}
             hideType={hideType}
             matteredAccountCount={matteredAccountLength}
-            isMatteredAccountCountPending={isPendingMatteredAccountLength}
-            showBalanceLoadingWithoutLocal={showBalanceLoadingWithoutLocal}
-            showChangeLoadingWithoutLocal={showChangeLoadingWithoutLocal}
+            isMatteredAccountCountPending={
+              !startupReady || isPendingMatteredAccountLength
+            }
+            showBalanceLoadingWithoutLocal={showBalanceLoading}
+            showChangeLoadingWithoutLocal={showChangeLoading}
             onPressNetWorth={onPressNetWorth}
             onPressWalletList={onPressWalletList}
           />
@@ -197,7 +203,7 @@ export const MultiChart = memo(function MultiChart({
             data={chartsData}
             hideType={hideType}
             isLoss={changeData.isLoss}
-            isAnyAddrLoading={isCurveAnyAddrLoading}
+            isAnyAddrLoading={isCurveLoading}
           />
         </LineChart.Provider>
       </View>
@@ -234,10 +240,7 @@ const ChartHeader = React.memo(
     onPressNetWorth,
     onPressWalletList,
   }: IHeaderProps) => {
-    const { reanimatedStyles, styles, colors2024 } = useTheme2024({ getStyle });
-    const rStyles = {
-      charHeader: useAnimatedStyle(reanimatedStyles.charHeader),
-    };
+    const { styles, colors2024 } = useTheme2024({ getStyle });
     const { currentIndex } = LineChart.useChart();
     const { currency } = useCurrency();
     const debouncedRawChange = useDebouncedValue(rawChange, 300);
@@ -388,7 +391,7 @@ const ChartHeader = React.memo(
     }, [hideType]);
 
     return (
-      <Animated.View style={rStyles.charHeader}>
+      <Animated.View style={styles.charHeader}>
         <View style={styles.netWorthContainer}>
           <Pressable
             style={[
@@ -505,155 +508,145 @@ const ChartHeader = React.memo(
     );
   },
 );
-const winWidth = Dimensions.get('window').width;
-const getStyle = createGetStyles2024(
-  {
-    reanimatedStyles: {
-      charHeader: ({ colors2024: _colors2024, winLayout }) => {
-        'worklet';
-        return {
-          alignContent: 'flex-start',
-          justifyContent: 'flex-start',
-          flexDirection: 'column',
-          maxWidth:
-            Math.max(winWidth, winLayout.value.width) - CHART_HORIZONTAL_INSET,
-          gap: 4,
-          // ...makeDebugBorder('blue'),
-        };
-      },
-    },
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  charHeader: {
+    alignContent: 'flex-start',
+    justifyContent: 'flex-start',
+    flexDirection: 'column',
+    width: '100%',
+    maxWidth: '100%',
+    gap: 4,
+    // ...makeDebugBorder('blue'),
   },
-  ({ colors2024, isLight }) => ({
-    skeleton: {
-      marginTop: 20,
-      borderRadius: 8,
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-    },
-    skeletonNetWorth: {
-      borderRadius: 8,
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-    },
-    netWorth: {
-      lineHeight: 46,
-      fontWeight: '800',
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-    },
-    changeSection: {
-      flexDirection: 'row',
-      gap: 2,
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-    },
-    changeValue: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
-      color: colors2024['green-default'],
-      fontFamily: 'SF Pro Rounded',
-    },
-    changePercent: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
-      color: colors2024['green-default'],
-      fontFamily: 'SF Pro Rounded',
-    },
-    changeTime: {
-      fontSize: 16,
-      fontWeight: '400',
-      lineHeight: 20,
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      marginLeft: 4,
-    },
-    container: {
-      maxWidth: '100%',
-      // height: HEADER_CHART_HEIGHT,
-      paddingHorizontal: 0,
-      // backgroundColor: isLight
-      //   ? colors2024['neutral-bg-0']
-      //   : colors2024['neutral-bg-1'],
-      overflow: 'hidden',
-      // ...makeDebugBorder('red'),
-    },
-    chartContainer: {},
-    globalWarning: {
-      marginHorizontal: 16,
-      marginBottom: 13,
-    },
-    loading: {
-      width: ScreenWidth - CHART_HORIZONTAL_INSET,
-      height: 114,
-      paddingHorizontal: 0,
-    },
-    relative: { position: 'relative' },
-    bg: {
-      position: 'absolute',
-      left: 0,
-      width: ScreenWidth,
-      height: 32,
-      zIndex: -100,
-    },
-    balanceOpacity: {
-      opacity: 0.2,
-    },
-    netWorthContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      // ...makeDebugBorder('orange'),
-      lineHeight: 46,
-    },
-    netWorthTextContainer: {
-      flex: 1,
-      marginRight: 12,
-    },
-    hidden: {
-      display: 'none',
-    },
-    accountBg: {
-      minWidth: 74,
-      padding: 8,
-      paddingLeft: 11,
-      borderRadius: 10,
-      backgroundColor: isLight
-        ? colors2024['neutral-line']
-        : colors2024['brand-default'],
-      shadowColor: colors2024['brand-light-1'],
-      shadowOffset: { width: 0, height: 9.411 },
-      shadowOpacity: 0.1,
-      shadowRadius: 22.587,
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 30,
-      // position: 'absolute',
-      // top: 28,
-      // right: 20,
-      // elevation: 500,
-    },
-    accountText: {
-      fontSize: 16,
-      fontWeight: '700',
-      textAlign: 'left',
-      color: colors2024['neutral-title-1'],
-      lineHeight: 20,
-      fontFamily: 'SF Pro Rounded',
-      paddingLeft: 6,
-    },
-    accountCountSkeleton: {
-      marginLeft: 6,
-      borderRadius: 4,
-    },
-    percentChangeContainer: {
-      // flexDirection: 'row',
-      // alignItems: 'center',
-      // justifyContent: 'flex-end',
-    },
-  }),
-);
+  skeleton: {
+    marginTop: 20,
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
+  skeletonNetWorth: {
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
+  netWorth: {
+    lineHeight: 46,
+    fontWeight: '800',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  changeSection: {
+    flexDirection: 'row',
+    gap: 2,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  changeValue: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: colors2024['green-default'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  changePercent: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: colors2024['green-default'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  changeTime: {
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 20,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    marginLeft: 4,
+  },
+  container: {
+    maxWidth: '100%',
+    // height: HEADER_CHART_HEIGHT,
+    paddingHorizontal: 0,
+    // backgroundColor: isLight
+    //   ? colors2024['neutral-bg-0']
+    //   : colors2024['neutral-bg-1'],
+    overflow: 'hidden',
+    // ...makeDebugBorder('red'),
+  },
+  chartContainer: {},
+  globalWarning: {
+    marginHorizontal: 16,
+    marginBottom: 13,
+  },
+  loading: {
+    width: '100%',
+    height: 114,
+    paddingHorizontal: 0,
+  },
+  relative: { position: 'relative' },
+  bg: {
+    position: 'absolute',
+    left: 0,
+    width: '100%',
+    height: 32,
+    zIndex: -100,
+  },
+  balanceOpacity: {
+    opacity: 0.2,
+  },
+  netWorthContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // ...makeDebugBorder('orange'),
+    lineHeight: 46,
+  },
+  netWorthTextContainer: {
+    flex: 1,
+    marginRight: 12,
+  },
+  hidden: {
+    display: 'none',
+  },
+  accountBg: {
+    minWidth: 74,
+    padding: 8,
+    paddingLeft: 11,
+    borderRadius: 10,
+    backgroundColor: isLight
+      ? colors2024['neutral-line']
+      : colors2024['brand-default'],
+    shadowColor: colors2024['brand-light-1'],
+    shadowOffset: { width: 0, height: 9.411 },
+    shadowOpacity: 0.1,
+    shadowRadius: 22.587,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 30,
+    // position: 'absolute',
+    // top: 28,
+    // right: 20,
+    // elevation: 500,
+  },
+  accountText: {
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'left',
+    color: colors2024['neutral-title-1'],
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+    paddingLeft: 6,
+  },
+  accountCountSkeleton: {
+    marginLeft: 6,
+    borderRadius: 4,
+  },
+  percentChangeContainer: {
+    // flexDirection: 'row',
+    // alignItems: 'center',
+    // justifyContent: 'flex-end',
+  },
+}));

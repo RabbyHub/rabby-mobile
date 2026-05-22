@@ -1147,7 +1147,7 @@ export type FetchTotalBalanceOptions = {
   reason?: 'selection_changed' | 'balance_changed' | 'manual_refresh';
 };
 
-function computeCombined24hBalanceData(input: {
+export function computeCombined24hBalanceData(input: {
   addresses: string[];
   multi24hBalance: Multi24hBalance;
   balanceMap: Record<

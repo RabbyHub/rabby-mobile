@@ -52,7 +52,7 @@ function setEligibilityData(
   });
 }
 
-const checkAddressesEligibility = makeAvoidParallelAsyncFunc(
+export const checkGasAccountAddressesEligibility = makeAvoidParallelAsyncFunc(
   async (force = false) => {
     try {
       const doReturn = (gifts: ClaimedGiftAddress[]) => {
@@ -87,16 +87,20 @@ const checkAddressesEligibility = makeAvoidParallelAsyncFunc(
   },
 );
 
-export const useGasAccountEligibility = () => {
-  const { accounts } = useAccounts({ disableAutoFetch: true });
-  const currentEligibleAddress = gasAccountState(s => s.currentEligibleAddress);
-
-  const isEligible = gasAccountState(
+export const useGasAccountGiftEligibility = () => {
+  return gasAccountState(
     s =>
       s.currentEligibleAddress !== undefined &&
       !s.gasAccountSig?.sig &&
       !s.hasClaimedGift,
   );
+};
+
+export const useGasAccountEligibility = () => {
+  const { accounts } = useAccounts({ disableAutoFetch: true });
+  const currentEligibleAddress = gasAccountState(s => s.currentEligibleAddress);
+
+  const isEligible = useGasAccountGiftEligibility();
 
   const claimGift = useCallback(
     async (address: string) => {
@@ -161,7 +165,7 @@ export const useGasAccountEligibility = () => {
   return {
     isEligible,
     currentEligibleAddress,
-    checkAddressesEligibility,
+    checkAddressesEligibility: checkGasAccountAddressesEligibility,
     claimGift,
   };
 };
