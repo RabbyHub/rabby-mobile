@@ -1050,7 +1050,7 @@
         "search": "Cari Token",
         "dapps": "Dapps",
         "more": "Lebih banyak",
-        "queue": "排队",
+        "queue": "Antrean",
         "websites": "Situs Web",
         "approvals": "Persetujuan",
         "copyTrading": "Copy Trading",
@@ -1597,7 +1597,7 @@
         "title": "Dompet berikut tidak termasuk dalam Total Saldo",
         "helpDescription2": "Anda dapat menekan lama untuk menyematkan dompet dan menyesuaikan dompet mana yang disertakan.",
         "helpDescription1": "Untuk memastikan pembaruan data yang tepat waktu dan akurat, hanya 10 dompet terbaik Anda yang termasuk dalam Total Balance dan Portfolio.",
-        "helpTitle": "Dompet yang排在前10名之后",
+        "helpTitle": "Dompet yang berada di peringkat di bawah 10 besar",
         "notTop10Address": "Dompet yang terdaftar di bawah 10 besar"
       },
       "backup": "Cadangan",
@@ -3233,7 +3233,7 @@
         "buildSwapTxsFailed": "Gagal membangun txs swap",
         "sendSwapTxFailed": "Gagal mengirim tx swap",
         "transactionFailed": "Transaksi gagal",
-        "submitFailed": "Gagal提交 transaksi",
+        "submitFailed": "Gagal mengirim transaksi",
         "gasNotEnough": "Gas tidak cukup"
       },
       "status": {

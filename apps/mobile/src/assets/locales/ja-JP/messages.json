@@ -185,7 +185,7 @@
       "NotShowAllTransactionsToast": "隠された取引が隠蔽されました",
       "TransactionAlert": {
         "clearPendingSuccess": "ローカルの保留中のトランザクションが削除されました",
-        "clearPendingText": "{{chainName}} トランザクション ({{nonces}}) は 3 分以上保留中です。ローカルで <6>保留をクリア</6> して、トランザクションを再送信できます。",
+        "clearPendingText": "{{chainName}} トランザクション ({{nonces}}) は 3 分以上保留中です。<5></5> <6>ローカルの保留をクリア</6> <7></7> して、トランザクションを再送信できます。",
         "skipNonceText": "Nonce #{{nonce}} は {{chainName}} チェーンでスキップされました。これにより、保留中のトランザクションが発生する可能性があります。<5></5> <6>トランザクションを送信</6> <7></7>して解決してください。"
       },
       "HideScamTransactions": "詐欺取引を非表示にする",
@@ -1015,7 +1015,7 @@
         "importAddress": "ウォレットをインポートする",
         "selectAddMethod": "メソッドを追加を選択してください",
         "seedPhraseOrPrivateKey": "シードフレーズまたはプライベートキー",
-        "restoreRabbyWallet": "Rabby 钱包を復元",
+        "restoreRabbyWallet": "Rabbyウォレットを復元",
         "moreOptions": "その他のオプション"
       },
       "createNewAddress": {
@@ -1663,7 +1663,7 @@
         "tipsBtn": "理解しました",
         "to": "に",
         "amount": "量",
-        "destinationChain": "送金先链",
+        "destinationChain": "送金先チェーン",
         "selectChain": "チェーンを選択",
         "title": "引き出し",
         "withdrawalLimit": "引き出し制限",
@@ -1752,7 +1752,7 @@
         "quickAdd": "Chainlistから素早く追加",
         "title": "カスタムネットワークを追加"
       },
-      "desc": "一旦修改，自定义RPC将替换Rabby的节点。要继续使用Rabby的节点，请删除自定义RPC。"
+      "desc": "変更すると、カスタムRPCはRabbyのノードを置き換えます。Rabbyのノードを引き続き使用するには、カスタムRPCを削除してください。"
     },
     "approvalsAddressList": {
       "title": "承認事項"
@@ -2346,7 +2346,7 @@
       },
       "HyperliquidInvitePopup": {
         "btn": "今すぐ参加",
-        "title": "ハイパーリキッド紹介プログラム",
+        "title": "Hyperliquid紹介プログラム",
         "desc": "今すぐRabbyのコードを使って、Hyperliquidの手数料が<1>4%割引</1>になります。",
         "asterTitle": "Aster 紹介プログラム",
         "asterDesc": "今すぐRabbyのコードを使って、Asterの手数料で<1>4%の割引</1>を受けましょう。"
@@ -2696,12 +2696,12 @@
       "closeAll": "すべて閉じる",
       "closeAllConfirmMessage": "すべてのオープンポジションは、市場価格でクローズされます。",
       "assetPage": {
-        "hyperliquidPosition": "ハイパーリキッドポジション"
+        "hyperliquidPosition": "Hyperliquidポジション"
       },
       "invitePopup": {
         "activateNow": "今すぐアクティブ化",
         "title": "Hyperliquidの手数料を節約する",
-        "hyperliquidFee": "ハイパーリキッド取引手数料。",
+        "hyperliquidFee": "Hyperliquid取引手数料。",
         "activateFailed": "失敗しました",
         "description": "Rabbyのコードを使用して有効にします",
         "activatedSuccess": "4%のHyperliquid手数料節約が有効化されました",
@@ -2855,7 +2855,7 @@
         "liquidationPriceTips": "マージンが維持マージンレベルを下回ったときに、さらなる損失を防ぐために取引所によってあなたのポジションが自動的にクローズされる価格です。",
         "free": "無料",
         "rabbyFee": "Rabby手数料",
-        "providerFee": "ハイパーリキッド手数料",
+        "providerFee": "Hyperliquid手数料",
         "marginCross": "マージン（クロス）"
       },
       "action": {
@@ -2996,7 +2996,7 @@
       "borrowDetail": {
         "actions": "借りる",
         "approveAndBorrow": "承認と借入",
-        "almostReachedError": "借入可能的最大金额受到限制，因为协议借入上限已接近。",
+        "almostReachedError": "プロトコルの借入上限に近づいているため、借入可能な最大金額が制限されています。",
         "almostReachedWarning": "この資産のプロトコル借入上限は100%です。これ以上の借入はできません。",
         "swapDebt": "スワップ",
         "borrowed": "借入した",
@@ -3057,7 +3057,7 @@
         "lqDesc": "清算が発生した場合、清算業者は借り手のために未払いの借入額の最大50%を返済します。その見返りとして、彼らは担保を割引価格で購入し、その差額（清算ペナルティ）をボーナスとして保持できます。",
         "isolatedTitle": "資産は担保として使用できません。",
         "isolatedDesc": "この資産は、他の資産の担保を借入に供給できないアイソレーションモードでのみ担保として使用できます。アイソレーションモードで担保として使用される資産は、特定の借入限度額にのみ借り入れることができます。",
-        "isolatedSupplyDesc": "担保使用受到限制，因为处于隔离模式。",
+        "isolatedSupplyDesc": "アイソレーションモードのため、担保の使用が制限されています。",
         "globalIsolatedDesc": "隔離モードでは、他の資産を担保として提供することはできません。グローバルな債務上限は、孤立した資産の借入能力を制限します。隔離モードから退出するには、別の資産を借りる前にUNIを担保として無効にしてください。",
         "maxLTV": "最大LTV比率は、特定の担保の最大借入能力を表します。たとえば、担保のLTVが75%の場合、ユーザーは1 ETHの担保ごとに、主通貨で最大0.75のETHを借りることができます。"
       },

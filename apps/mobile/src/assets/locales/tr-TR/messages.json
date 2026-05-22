@@ -846,7 +846,7 @@
       },
       "revokeModal": {
         "paused": "Duraklatıldı",
-        "gasNotEnough": "Gas göndermek için yetersiz。",
+        "gasNotEnough": "Gas göndermek için yetersiz.",
         "simulationFailed": "Simülasyon Başarısız",
         "gasTooHigh": "Gaz ücreti yüksek",
         "submitTxFailed": "Gönderim Başarısız",
@@ -1020,7 +1020,7 @@
       "formChangedTitle": "Form Değiştirildi",
       "formChangedAmount": "Miktar değişti, muhtemelen sistem klavyesinden şifre otomatik doldurma nedeniyle. Lütfen kontrol edin ve doğru miktarı yeniden girin.",
       "best-subtitle": "En iyi teklif, tahmini toplam maliyet (Gas ücretleri dahil) ve teslimat hızının birleşimiyle belirlenir.",
-      "swap-best-subtitle": "En iyi teklif, döviz kuru ve gas ücretleri dahil olmak üzere en düşük tahmini toplam maliyet ile belirlenir。"
+      "swap-best-subtitle": "En iyi teklif, döviz kuru ve Gas ücretleri dahil olmak üzere en düşük tahmini toplam maliyet ile belirlenir."
     },
     "manageAddress": {
       "watch-address": "Adres İzle",
@@ -1061,7 +1061,7 @@
         "predict": "Tahmin Et",
         "meme": "Memecoin",
         "market": "Pazar",
-        "gasDeposit": "Gaz Dekontörü",
+        "gasDeposit": "Gas Yatırma",
         "convertDust": "Küçük Bakiyeleri Dönüştür"
       },
       "swipeUp": {

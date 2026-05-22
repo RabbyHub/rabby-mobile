@@ -382,7 +382,7 @@
         "Simulation Results": "Resultados de la simulación"
       },
       "empty": {
-        "desc": "No se encontraron transacciones en <1>supported chains</1>",
+        "desc": "No se encontraron transacciones en <1>cadenas compatibles</1>",
         "title": "Sin transacciones"
       },
       "txHistory": {
@@ -3206,7 +3206,7 @@
         "approveAndSupply": "Aprobar y Suministrar",
         "availableToBorrow": "Disponible para pedir prestado",
         "enabled": "Habilitado",
-        "supplyBalance": "Suministro de saldo",
+        "supplyBalance": "Saldo suministrado",
         "collateralization": "Colateralización",
         "isolatedTips": "Los activos de préstamo/endeudamiento existentes no son compatibles.",
         "unavailable": "No disponible",
