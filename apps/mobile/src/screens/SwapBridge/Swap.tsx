@@ -119,7 +119,7 @@ import {
 import ArrowDownSVG from '@/assets/icons/swap/icon-arrow-down-with-bg.svg';
 
 const isAndroid = Platform.OS === 'android';
-const BOTTOM_BUTTON_HEIGHT = 58;
+const BOTTOM_BUTTON_HEIGHT = 52;
 const BOTTOM_BUTTON_TITLE_FONT_SIZE = 18;
 const BOTTOM_BUTTON_HORIZONTAL_PADDING = 20;
 const BOTTOM_BUTTON_BOTTOM_OFFSET = 36;

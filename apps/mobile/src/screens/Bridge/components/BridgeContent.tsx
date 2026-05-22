@@ -89,7 +89,7 @@ export interface BridgeFormSnapshot {
   amountMode?: FormAmountMode;
 }
 
-const BOTTOM_BUTTON_HEIGHT = 58;
+const BOTTOM_BUTTON_HEIGHT = 52;
 const BOTTOM_BUTTON_TITLE_FONT_SIZE = 18;
 const BOTTOM_BUTTON_HORIZONTAL_PADDING = 20;
 const BOTTOM_BUTTON_BOTTOM_OFFSET = 36;
