@@ -376,6 +376,23 @@ export default function UnlockScreen() {
   const [usingBiometrics, setUsingBiometrics] = useState(isBiometricsEnabled);
   const couldSwitchingAuthentication = isBiometricsEnabled;
   const usingPassword = !usingBiometrics || !isBiometricsEnabled;
+  const usingPasswordRef = React.useRef(usingPassword);
+  const biometricActionIdRef = React.useRef(0);
+  const lockBiometricRef = React.useRef(false);
+
+  React.useEffect(() => {
+    usingPasswordRef.current = usingPassword;
+  }, [usingPassword]);
+
+  const cancelPendingBiometricUnlock = useCallback(() => {
+    biometricActionIdRef.current += 1;
+  }, []);
+
+  const isBiometricActionActive = useCallback((actionId: number) => {
+    return (
+      actionId === biometricActionIdRef.current && !usingPasswordRef.current
+    );
+  }, []);
 
   const { safeSizes } = useSafeAndroidBottomSizes({
     containerPaddingBottom: 0,
@@ -386,178 +403,220 @@ export default function UnlockScreen() {
   const passwordInputRef = React.useRef<TextInput>(null);
   const { onTouchInputAway } = useInputBlurOnTouchaway(passwordInputRef);
 
-  const unlockWithBiometrics = useCallback(async () => {
-    const startedAt = Date.now();
-    const hideAuthToastRef = {
-      current: null as null | (() => void),
-    };
-    const hidePostAuthToastRef = {
-      current: null as null | (() => void),
-    };
-    try {
-      traceAndroidUnlockPerf('request_biometrics_start', {
-        isFaceID,
-      });
-      if (
-        APP_FEATURE_SWITCH.showBiometricUnlockProgressToast &&
-        isAndroid &&
-        !isFaceID
-      ) {
-        hideAuthToastRef.current = toastBiometricsAuthenticating(isFaceID);
-        traceAndroidUnlockPerf('biometrics_auth_toast_show', {
-          elapsedMs: Date.now() - startedAt,
-        });
+  const unlockWithBiometrics = useCallback(
+    async (actionId: number) => {
+      if (!isBiometricActionActive(actionId) || apisLock.isUnlocked()) {
+        return;
       }
-      await apisKeychain.requestGenericPassword({
-        purpose: RequestGenericPurpose.DECRYPT_PWD,
-        shouldAttachTrustedVaultKeyString: !isAndroid,
-        onPlainPassword: async (password, credentials) => {
-          traceAndroidUnlockPerf('on_plain_password', {
+
+      const startedAt = Date.now();
+      const hideAuthToastRef = {
+        current: null as null | (() => void),
+      };
+      const hidePostAuthToastRef = {
+        current: null as null | (() => void),
+      };
+
+      try {
+        traceAndroidUnlockPerf('request_biometrics_start', {
+          isFaceID,
+        });
+        if (
+          APP_FEATURE_SWITCH.showBiometricUnlockProgressToast &&
+          isAndroid &&
+          !isFaceID
+        ) {
+          hideAuthToastRef.current = toastBiometricsAuthenticating(isFaceID);
+          traceAndroidUnlockPerf('biometrics_auth_toast_show', {
             elapsedMs: Date.now() - startedAt,
-            hasTrustedVaultKeyString: !!credentials?.vaultKeyString,
           });
-          hideAuthToastRef.current?.();
-          hideAuthToastRef.current = null;
-          if (!isFaceID) {
-            hidePostAuthToastRef.current = toastUnlocking();
-            traceAndroidUnlockPerf('post_auth_unlock_toast_show', {
-              elapsedMs: Date.now() - startedAt,
-            });
-          }
-          measureTime.start('UnlockWithBiometrics');
-          try {
-            traceAndroidUnlockPerf('unlock_app_start', {
-              elapsedMs: Date.now() - startedAt,
-            });
-            const result = await storeApisUnlock.unlockApp(password, {
-              trustedPassword: isAndroid,
-              trustedVaultKeyString:
-                isAndroid && typeof credentials?.vaultKeyString === 'string'
-                  ? credentials.vaultKeyString
-                  : undefined,
-              deferMemStoreKeyringsUpdate: isAndroid,
-              onTrustedVaultKeyString: isAndroid
-                ? vaultKeyString => {
-                    if (credentials) {
-                      credentials.vaultKeyString = vaultKeyString;
-                    }
-                    traceAndroidUnlockPerf('cache_trusted_vault_key_string', {
-                      elapsedMs: Date.now() - startedAt,
-                    });
-                    return apisKeychain.cacheTrustedVaultKeyString(
-                      password,
-                      vaultKeyString,
-                    );
-                  }
-                : undefined,
-            });
-            const timeResult = measureTime.end('UnlockWithBiometrics');
-            reportUnlockTime(timeResult.diff, 'biometrics');
-
-            traceAndroidUnlockPerf('unlock_app_end', {
-              elapsedMs: Date.now() - startedAt,
-              unlockMs: timeResult.diff,
-              hasError: !!result.error,
-            });
-
-            if (result.error) {
-              throw new Error(result.error);
+        }
+        await apisKeychain.requestGenericPassword({
+          purpose: RequestGenericPurpose.DECRYPT_PWD,
+          shouldAttachTrustedVaultKeyString: !isAndroid,
+          onPlainPassword: async (password, credentials) => {
+            if (!isBiometricActionActive(actionId)) {
+              hideAuthToastRef.current?.();
+              hideAuthToastRef.current = null;
+              return;
             }
 
-            await checkUnlocked();
-            traceAndroidUnlockPerf('check_unlocked_end', {
+            traceAndroidUnlockPerf('on_plain_password', {
               elapsedMs: Date.now() - startedAt,
+              hasTrustedVaultKeyString: !!credentials?.vaultKeyString,
             });
-          } finally {
-            hidePostAuthToastRef.current?.();
-            hidePostAuthToastRef.current = null;
-          }
-        },
-      });
-      traceAndroidUnlockPerf('request_biometrics_end', {
-        elapsedMs: Date.now() - startedAt,
-      });
-      updateUnlockTime();
-    } catch (error: any) {
-      hideAuthToastRef.current?.();
-      hideAuthToastRef.current = null;
-      hidePostAuthToastRef.current?.();
-      hidePostAuthToastRef.current = null;
-      traceAndroidUnlockPerf('request_biometrics_error', {
-        elapsedMs: Date.now() - startedAt,
-        code: error?.code,
-        message: error?.message,
-      });
-      if (__DEV__) {
-        console.error(error);
-      }
+            hideAuthToastRef.current?.();
+            hideAuthToastRef.current = null;
+            if (!isFaceID) {
+              hidePostAuthToastRef.current = toastUnlocking();
+              traceAndroidUnlockPerf('post_auth_unlock_toast_show', {
+                elapsedMs: Date.now() - startedAt,
+              });
+            }
 
-      storeApisUnlock.resetUnlocking();
+            measureTime.start('UnlockWithBiometrics');
+            try {
+              traceAndroidUnlockPerf('unlock_app_start', {
+                elapsedMs: Date.now() - startedAt,
+              });
+              const result = await storeApisUnlock.unlockApp(password, {
+                trustedPassword: isAndroid,
+                trustedVaultKeyString:
+                  isAndroid && typeof credentials?.vaultKeyString === 'string'
+                    ? credentials.vaultKeyString
+                    : undefined,
+                deferMemStoreKeyringsUpdate: isAndroid,
+                onTrustedVaultKeyString: isAndroid
+                  ? vaultKeyString => {
+                      if (credentials) {
+                        credentials.vaultKeyString = vaultKeyString;
+                      }
+                      traceAndroidUnlockPerf('cache_trusted_vault_key_string', {
+                        elapsedMs: Date.now() - startedAt,
+                      });
+                      return apisKeychain.cacheTrustedVaultKeyString(
+                        password,
+                        vaultKeyString,
+                      );
+                    }
+                  : undefined,
+              });
+              const timeResult = measureTime.end('UnlockWithBiometrics');
+              reportUnlockTime(timeResult.diff, 'biometrics');
 
-      if (__DEV__ && incToReset() === 0) {
-        toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
-        setUsingBiometrics(false);
-        storeApisBiometrics.toggleBiometrics(false, {});
-      } else if (error.code === 'NIL_KEYCHAIN_OBJECT') {
-        toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
-        setUsingBiometrics(false);
-        storeApisBiometrics.toggleBiometrics(false, {});
-      } else if (isBrokenBiometricsEntryError(error)) {
-        toastBiometricsFailed(error.message);
-      } else {
-        toastBiometricsFailed(t('page.unlock.biometrics.failedAndTipTitle'));
-      }
+              traceAndroidUnlockPerf('unlock_app_end', {
+                elapsedMs: Date.now() - startedAt,
+                unlockMs: timeResult.diff,
+                hasError: !!result.error,
+              });
 
-      // leave here for debug
-      if (__DEV__) {
-        console.debug(
-          'error.code: %s; error.name: %s; error.message: %s',
-          error.code,
-          error.name,
-          error.message,
-        );
+              if (result.error) {
+                throw new Error(result.error);
+              }
 
-        if (
-          ['decrypt_fail' /* iOS */, 'E_CRYPTO_FAILED' /* Android */].includes(
+              await checkUnlocked();
+              traceAndroidUnlockPerf('check_unlocked_end', {
+                elapsedMs: Date.now() - startedAt,
+              });
+            } finally {
+              hidePostAuthToastRef.current?.();
+              hidePostAuthToastRef.current = null;
+            }
+          },
+        });
+        if (!isBiometricActionActive(actionId)) {
+          return;
+        }
+        traceAndroidUnlockPerf('request_biometrics_end', {
+          elapsedMs: Date.now() - startedAt,
+        });
+        updateUnlockTime();
+      } catch (error: any) {
+        hideAuthToastRef.current?.();
+        hideAuthToastRef.current = null;
+        hidePostAuthToastRef.current?.();
+        hidePostAuthToastRef.current = null;
+        if (!isBiometricActionActive(actionId)) {
+          return;
+        }
+        traceAndroidUnlockPerf('request_biometrics_error', {
+          elapsedMs: Date.now() - startedAt,
+          code: error?.code,
+          message: error?.message,
+        });
+
+        if (__DEV__) {
+          console.error(error);
+        }
+
+        storeApisUnlock.resetUnlocking();
+
+        if (__DEV__ && incToReset() === 0) {
+          toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
+          setUsingBiometrics(false);
+          storeApisBiometrics.toggleBiometrics(false, {});
+        } else if (error.code === 'NIL_KEYCHAIN_OBJECT') {
+          toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
+          setUsingBiometrics(false);
+          storeApisBiometrics.toggleBiometrics(false, {});
+        } else if (isBrokenBiometricsEntryError(error)) {
+          toastBiometricsFailed(error.message);
+        } else {
+          toastBiometricsFailed(t('page.unlock.biometrics.failedAndTipTitle'));
+        }
+
+        // leave here for debug
+        if (__DEV__) {
+          console.debug(
+            'error.code: %s; error.name: %s; error.message: %s',
             error.code,
-          )
-        ) {
-          const parsedInfo = parseKeychainError(error);
-          if (__DEV__ && parsedInfo.sysMessage) {
-            parsedInfo.isCancelledByUser
-              ? console.warn(parsedInfo.sysMessage)
-              : console.error(parsedInfo.sysMessage);
+            error.name,
+            error.message,
+          );
+
+          if (
+            [
+              'decrypt_fail' /* iOS */,
+              'E_CRYPTO_FAILED' /* Android */,
+            ].includes(error.code)
+          ) {
+            const parsedInfo = parseKeychainError(error);
+            if (__DEV__ && parsedInfo.sysMessage) {
+              parsedInfo.isCancelledByUser
+                ? console.warn(parsedInfo.sysMessage)
+                : console.error(parsedInfo.sysMessage);
+            }
           }
         }
       }
-    }
-  }, [checkUnlocked, isFaceID, t]);
+    },
+    [checkUnlocked, isBiometricActionActive, isFaceID, t],
+  );
 
-  const lockBiometricRef = React.useRef(false);
   const processUnlockWithBiometrics = useCallback(async () => {
-    if (lockBiometricRef.current) {
+    if (
+      lockBiometricRef.current ||
+      usingPasswordRef.current ||
+      apisLock.isUnlocked()
+    ) {
       return;
     }
+    const actionId = biometricActionIdRef.current + 1;
+    biometricActionIdRef.current = actionId;
     lockBiometricRef.current = true;
+    const unlockBiometricsIfActive = () => {
+      if (!isBiometricActionActive(actionId)) {
+        return Promise.resolve();
+      }
+      return unlockWithBiometrics(actionId);
+    };
+    const releaseBiometricLock = () => {
+      checkUnlocked();
+      lockBiometricRef.current = false;
+    };
+
     if (!isFaceID && !isAndroid) {
       const hideToast = toastUnlocking();
-      await unlockWithBiometrics().finally(() => {
-        lockBiometricRef.current = false;
+      await unlockBiometricsIfActive().finally(() => {
+        releaseBiometricLock();
+        hideToast();
       });
-      hideToast();
     } else {
-      await unlockWithBiometrics().finally(() => {
-        lockBiometricRef.current = false;
-      });
+      await unlockBiometricsIfActive().finally(releaseBiometricLock);
     }
-  }, [isFaceID, unlockWithBiometrics]);
+  }, [isFaceID, isBiometricActionActive, unlockWithBiometrics, checkUnlocked]);
 
   useLayoutEffect(() => {
     incToReset(true);
     const sub = perfEvents.subscribe('AUTO_TRIGGER_UNLOCK', async () => {
+      const pendingActionId = biometricActionIdRef.current;
       // wait screen rendered
       await sleep(500);
-      if (!isBiometricsEnabled) {
+      if (
+        pendingActionId !== biometricActionIdRef.current ||
+        !isBiometricsEnabled ||
+        usingPasswordRef.current
+      ) {
         return;
       }
 
@@ -649,6 +708,7 @@ export default function UnlockScreen() {
                   title={t('page.unlock.btn.unlock')}
                   onPress={evt => {
                     evt.stopPropagation();
+                    cancelPendingBiometricUnlock();
                     formik.handleSubmit();
                     checkUnlocked();
                   }}
@@ -680,6 +740,7 @@ export default function UnlockScreen() {
             )}
             style={styles.switchingAuthTypeButton}
             onPress={() => {
+              cancelPendingBiometricUnlock();
               setUsingBiometrics(prev => !prev);
             }}>
             {usingBiometrics
