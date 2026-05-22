@@ -88,7 +88,6 @@ import {
 import { BrowserOrPerpsPosition } from './BrowserOrPerpsPosition';
 import { GasAccountBadge } from '../../GasAccount/components/GasAccountBadge';
 import { apisLending } from '../../Lending/hooks';
-import { PointsBadge } from '../../Points/components/PointsBadge';
 import { HomeCenterArea } from '../components/HomeCenterArea';
 import { HomeDappDrawer } from '../components/HomeDappDrawer';
 import { HomePendingBadge } from '../components/HomePending';
@@ -943,10 +942,6 @@ export const HomeOverview = React.memo(() => {
 
       if (el.key === MultiHomeFeatTitle.Lending) {
         return <LendingHF />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.Points) {
-        return <PointsBadge />;
       }
 
       if (el.key === MultiHomeFeatTitle.GasAccount) {

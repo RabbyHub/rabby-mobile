@@ -1939,7 +1939,7 @@
       },
       "gasBalance": "Saldo Gas",
       "depositFailed": "Setoran gagal",
-      "lowBalance": "Anda tidak memiliki cukup gas. Deposit gas untuk memastikan transaksi di masa mendatang berjalan lancar.",
+      "lowBalance": "Anda tidak memiliki cukup gas (<$1.00). Deposit gas untuk memastikan transaksi di masa mendatang berjalan lancar.",
       "switchAccount": "Ganti Dompet",
       "depositNow": "Deposit Sekarang",
       "depositSubmitted": "Setoran Terkirim",
