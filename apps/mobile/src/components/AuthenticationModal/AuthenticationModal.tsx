@@ -244,7 +244,9 @@ export const AuthenticationModal = ({
     footerButtonGroupMb: 12,
   });
 
-  const { isUseCustomPwd } = useLoadLockInfo({ autoFetch: true });
+  useLoadLockInfo({ autoFetch: true });
+
+  const { isUseCustomPwd } = usePasswordStatus();
   const bioComputed = useBiometricsComputed();
 
   const [checklistState, setChecklistState] = React.useState<boolean[]>(
