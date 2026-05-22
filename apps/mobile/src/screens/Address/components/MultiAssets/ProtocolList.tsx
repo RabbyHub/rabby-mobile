@@ -1,31 +1,27 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 
 import { useTheme2024 } from '@/hooks/theme';
 import {
   FullDefiRenderItem,
   TokenRowSectionHeader,
 } from '@/screens/Home/components/AssetRenderItems';
-import { ActionItem } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
-import { GestureDetector, RefreshControl } from 'react-native-gesture-handler';
-import { getItemId } from '@/screens/Home/utils/listRenderId';
+import { GestureDetector } from 'react-native-gesture-handler';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import useLoadMoreData from './hooks/useLoadMoreData';
 import { HomeTabName as TabName } from '@/hooks/navigation';
-import {
-  ListRenderFooter as ListRenderFooterComponent,
-  ListRenderSeparator,
-} from './RenderRow/Common';
+import { ListRenderSeparator } from './RenderRow/Common';
 import { useFindAccountByAddress, useIsFocusedCurrentTab } from './hooks/share';
-import { getAllDefiCount } from '@/screens/Home/utils/converAssets';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
 import useProtocols, {
   getMultiProtocolsCacheKey,
-  ICacheProtocolItem,
+  ProtocolAssetsIndexResult,
+  ProtocolEntityId,
+  useProtocolEntity,
   useProtocolListComputedStore,
 } from '@/store/protocols';
 import { useShallow } from 'zustand/react/shallow';
@@ -47,9 +43,10 @@ import {
 import { RNGHRefreshControl } from '@/components/customized/reexports';
 import { useAppForeground } from '@/hooks/useAppForeground';
 
-const emptyCacheProtocolItem: ICacheProtocolItem = {
-  fold: [],
-  unFold: [],
+const emptyProtocolIndexResult: ProtocolAssetsIndexResult = {
+  foldIds: [],
+  unFoldIds: [],
+  foldDeFiValue: '',
 };
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
@@ -58,6 +55,63 @@ const MemoizedEmptyAssets = React.memo(EmptyAssets);
 export const MemoizedDefiItemLoader = React.memo(DefiItemLoader);
 
 const { batchGetProtocols } = useProtocols.getState();
+
+type ProtocolListItem =
+  | {
+      type: 'unfold_defi' | 'fold_defi';
+      protocolId: ProtocolEntityId;
+    }
+  | {
+      type: 'toggle_defi_fold';
+      data: string;
+    }
+  | {
+      type: 'empty-defi';
+      data: string;
+    }
+  | {
+      type: 'loading-defi-skeleton';
+      data: string;
+    };
+
+const ProtocolResourceRow = React.memo(
+  ({
+    protocolId,
+    showAccount,
+    style,
+    disableAction,
+    defaultExpand,
+    getAccountByAddress,
+  }: {
+    protocolId: ProtocolEntityId;
+    showAccount: boolean;
+    style?: React.ComponentProps<typeof FullDefiRenderItem>['style'];
+    disableAction: boolean;
+    defaultExpand: boolean;
+    getAccountByAddress(address?: string): KeyringAccountWithAlias | undefined;
+  }) => {
+    const data = useProtocolEntity(protocolId);
+
+    if (!data) {
+      return <MemoizedDefiItemLoader />;
+    }
+
+    return (
+      <MemoizedFullDefiRenderItem
+        data={data}
+        showAccount={showAccount}
+        style={style}
+        disableAction={disableAction}
+        defaultExpand={defaultExpand}
+        account={
+          getAccountByAddress(
+            data.owner_addr,
+          ) as unknown as KeyringAccountWithAlias
+        }
+      />
+    );
+  },
+);
 
 export const ProtocolList = () => {
   const { t } = useTranslation();
@@ -83,50 +137,46 @@ export const ProtocolList = () => {
   const multiProtocols = useProtocolListComputedStore(
     useShallow(
       state =>
-        state.multiProtocolsCache[multiProtocolsKey] || emptyCacheProtocolItem,
+        state.multiProtocolsIndexCache[multiProtocolsKey] ||
+        emptyProtocolIndexResult,
     ),
   );
 
   const isLoading = useProtocols(state => state.isLoading);
 
-  const {
-    data: portfoliosData,
-    loadMore: loadMorePortfolios,
-    hasMore: hasMorePortfolios,
-  } = useLoadMoreData(multiProtocols.unFold);
+  const { data: unFoldProtocolIds, loadMore: loadMorePortfolios } =
+    useLoadMoreData(multiProtocols.unFoldIds);
 
   const shouldDefaultExpand = useMemo(
-    () => multiProtocols.unFold.length <= 5,
-    [multiProtocols.unFold.length],
+    () => multiProtocols.unFoldIds.length <= 5,
+    [multiProtocols.unFoldIds.length],
   );
 
   const portfolioListData = useMemo(() => {
-    const foldDeFiList: ActionItem[] = multiProtocols.fold.map(item => ({
-      type: 'fold_defi',
-      data: item,
-    }));
-
-    const foldDeFiValue = getAllDefiCount(multiProtocols.fold);
+    const foldDeFiList: ProtocolListItem[] = multiProtocols.foldIds.map(
+      protocolId => ({
+        type: 'fold_defi',
+        protocolId,
+      }),
+    );
 
     const itemData: Array<{
       show: boolean;
-      data: ActionItem[];
+      data: ProtocolListItem[];
     }> = [
       {
         show: true,
-        data: [
-          ...portfoliosData.map(item => ({
-            type: 'unfold_defi' as const,
-            data: item,
-          })),
-        ],
+        data: unFoldProtocolIds.map(protocolId => ({
+          type: 'unfold_defi',
+          protocolId,
+        })),
       },
       {
         show: !!foldDeFiList.length,
         data: [
           {
             type: 'toggle_defi_fold',
-            data: foldDeFiValue,
+            data: multiProtocols.foldDeFiValue,
           },
           ...(foldDefi ? [] : foldDeFiList),
         ],
@@ -134,8 +184,8 @@ export const ProtocolList = () => {
       {
         show:
           !!isLoading &&
-          !multiProtocols.unFold.length &&
-          !multiProtocols.fold.length,
+          !multiProtocols.unFoldIds.length &&
+          !multiProtocols.foldIds.length,
         data: Array.from({ length: 2 }, (_, index) => ({
           type: 'loading-defi-skeleton',
           data: index.toString(),
@@ -144,8 +194,8 @@ export const ProtocolList = () => {
       {
         show:
           !isLoading &&
-          multiProtocols.unFold.length === 0 &&
-          multiProtocols.fold.length === 0,
+          multiProtocols.unFoldIds.length === 0 &&
+          multiProtocols.foldIds.length === 0,
         data: [
           {
             type: 'empty-defi',
@@ -164,21 +214,22 @@ export const ProtocolList = () => {
     foldDefi,
     isLoading,
     t,
-    multiProtocols.fold,
-    multiProtocols.unFold.length,
-    portfoliosData,
+    multiProtocols.foldDeFiValue,
+    multiProtocols.foldIds,
+    multiProtocols.unFoldIds.length,
+    unFoldProtocolIds,
   ]);
 
   const hasNotAssets = useMemo(() => {
     return (
-      multiProtocols.unFold.length === 0 &&
-      multiProtocols.fold.length === 0 &&
+      multiProtocols.unFoldIds.length === 0 &&
+      multiProtocols.foldIds.length === 0 &&
       !isLoading &&
       isFocused
     );
   }, [
-    multiProtocols.fold.length,
-    multiProtocols.unFold.length,
+    multiProtocols.foldIds.length,
+    multiProtocols.unFoldIds.length,
     isLoading,
     isFocused,
   ]);
@@ -206,29 +257,25 @@ export const ProtocolList = () => {
 
   const renderItem = useCallback(
     ({ item }) => {
-      const { type, data } = item as ActionItem;
+      const { type } = item as ProtocolListItem;
       switch (type) {
         case 'unfold_defi':
         case 'fold_defi':
           return (
-            <MemoizedFullDefiRenderItem
-              data={data}
+            <ProtocolResourceRow
+              protocolId={item.protocolId}
               showAccount
               style={styles.fullDefi}
               disableAction={isLoading}
               defaultExpand={type === 'fold_defi' ? false : shouldDefaultExpand}
-              account={
-                getAccountByAddress(
-                  data?.owner_addr,
-                ) as unknown as KeyringAccountWithAlias
-              }
+              getAccountByAddress={getAccountByAddress}
             />
           );
         case 'toggle_defi_fold':
           return (
             <TokenRowSectionHeader
               style={styles.tokenSectionHeader}
-              str={data}
+              str={item.data}
               fold={foldDefi}
               onPressFold={() => setFoldDefi(pre => !pre)}
             />
@@ -237,7 +284,7 @@ export const ProtocolList = () => {
           return (
             <MemoizedEmptyAssets
               style={styles.emptyAssets}
-              desc={data}
+              desc={item.data}
               type={type}
             />
           );
@@ -259,13 +306,12 @@ export const ProtocolList = () => {
     ],
   );
 
-  const ListRenderFooter = useCallback(() => {
-    return hasMorePortfolios ? (
-      <MemoizedDefiItemLoader style={[styles.loadingMore]} />
-    ) : (
-      <ListRenderFooterComponent />
-    );
-  }, [hasMorePortfolios, styles.loadingMore]);
+  const keyExtractor = useCallback((item: ProtocolListItem) => {
+    if (item.type === 'unfold_defi' || item.type === 'fold_defi') {
+      return `${item.type}-${item.protocolId}`;
+    }
+    return `${item.type}-${'data' in item ? item.data || '' : ''}`;
+  }, []);
 
   const onRefresh = useCallback(async () => {
     try {
@@ -319,7 +365,7 @@ export const ProtocolList = () => {
   return (
     <GestureDetector gesture={panGestureRef.current}>
       <TabsFlatList
-        keyExtractor={getItemId}
+        keyExtractor={keyExtractor}
         data={
           hasNotAssets
             ? [
@@ -348,7 +394,6 @@ export const ProtocolList = () => {
             />
           </>
         }
-        // ListFooterComponent={ListRenderFooter}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
         style={[

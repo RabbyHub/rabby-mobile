@@ -3,7 +3,6 @@ import { ListRenderItem, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { createGetStyles2024 } from '@/utils/styles';
-import { ActionItem } from './types';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
@@ -24,24 +23,75 @@ import {
 } from 'react-native-collapsible-tab-view';
 import { useAnimatedReaction } from 'react-native-reanimated';
 import { runOnJS } from 'react-native-reanimated';
-import { getItemId } from './utils/listRenderId';
 import useLoadMoreData from '../Address/components/MultiAssets/hooks/useLoadMoreData';
 import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
-import { getAllDefiCount } from './utils/converAssets';
 import useProtocols, {
   getSingleProtocolsCacheKey,
-  ICacheProtocolItem,
+  ProtocolAssetsIndexResult,
+  ProtocolEntityId,
+  useProtocolEntity,
   useProtocolListComputedStore,
 } from '@/store/protocols';
 import { useShallow } from 'zustand/react/shallow';
 import { useAppForeground } from '@/hooks/useAppForeground';
 
-const emptyCacheProtocolItem: ICacheProtocolItem = {
-  fold: [],
-  unFold: [],
+const emptyProtocolIndexResult: ProtocolAssetsIndexResult = {
+  foldIds: [],
+  unFoldIds: [],
+  foldDeFiValue: '',
 };
 
 const MemoFullDefiRenderItem = memo(FullDefiRenderItem);
+
+type PortfolioListItem =
+  | {
+      type: 'unfold_defi' | 'fold_defi';
+      protocolId: ProtocolEntityId;
+    }
+  | {
+      type: 'toggle_defi_fold';
+      data: string;
+    }
+  | {
+      type: 'empty-defi';
+      data: string;
+    }
+  | {
+      type: 'loading-defi-skeleton';
+      data: string;
+    };
+
+const ProtocolResourceRow = memo(
+  ({
+    protocolId,
+    showAccount,
+    disableAction,
+    defaultExpand,
+    account,
+  }: {
+    protocolId: ProtocolEntityId;
+    showAccount: boolean;
+    disableAction: boolean;
+    defaultExpand: boolean;
+    account?: React.ComponentProps<typeof FullDefiRenderItem>['account'];
+  }) => {
+    const data = useProtocolEntity(protocolId);
+
+    if (!data) {
+      return <DefiItemLoader />;
+    }
+
+    return (
+      <MemoFullDefiRenderItem
+        data={data}
+        showAccount={showAccount}
+        disableAction={disableAction}
+        defaultExpand={defaultExpand}
+        account={account}
+      />
+    );
+  },
+);
 
 interface Props {
   onForeground?: () => void;
@@ -98,53 +148,46 @@ export const PortfolioList = ({
     state => state.registerSingleProtocols,
   );
 
-  const _portfolios = useProtocolListComputedStore(
+  const protocolIndexResult = useProtocolListComputedStore(
     useShallow(state =>
       singleProtocolsKey
-        ? state.singleProtocolsCache[singleProtocolsKey] ||
-          emptyCacheProtocolItem
-        : emptyCacheProtocolItem,
+        ? state.singleProtocolsIndexCache[singleProtocolsKey] ||
+          emptyProtocolIndexResult
+        : emptyProtocolIndexResult,
     ),
   );
 
-  const filteredPortfolios = useMemo(() => {
-    const foldList = _portfolios?.fold || [];
-    const unFoldList = _portfolios?.unFold || [];
-    const foldDeFiValue = getAllDefiCount(foldList);
-    return {
-      unFoldList,
-      foldList,
-      foldDeFiValue,
-    };
-  }, [_portfolios]);
-
   const {
-    data: portfolios,
+    data: unFoldProtocolIds,
     loadMore: loadMorePortfolios,
     hasMore: hasMorePortfolios,
-  } = useLoadMoreData(filteredPortfolios.unFoldList);
+  } = useLoadMoreData(protocolIndexResult.unFoldIds);
 
   const shouldDefaultExpand = useMemo(
-    () => filteredPortfolios.unFoldList.length <= 5,
-    [filteredPortfolios.unFoldList.length],
+    () => protocolIndexResult.unFoldIds.length <= 5,
+    [protocolIndexResult.unFoldIds.length],
   );
 
   const dataList = useMemo(() => {
-    const unFoldDefiList: ActionItem[] = portfolios.map(item => ({
-      type: 'unfold_defi',
-      data: item,
-    }));
+    const hasProtocolRows =
+      unFoldProtocolIds.length > 0 || protocolIndexResult.foldIds.length > 0;
+    const unFoldDefiList: PortfolioListItem[] = unFoldProtocolIds.map(
+      protocolId => ({
+        type: 'unfold_defi',
+        protocolId,
+      }),
+    );
 
-    const foldDeFiList: ActionItem[] = filteredPortfolios.foldList.map(
-      item => ({
+    const foldDeFiList: PortfolioListItem[] = protocolIndexResult.foldIds.map(
+      protocolId => ({
         type: 'fold_defi',
-        data: item,
+        protocolId,
       }),
     );
 
     const itemData: Array<{
       show: boolean;
-      data: ActionItem[];
+      data: PortfolioListItem[];
     }> = [
       {
         show: true,
@@ -155,24 +198,20 @@ export const PortfolioList = ({
         data: [
           {
             type: 'toggle_defi_fold',
-            data: filteredPortfolios.foldDeFiValue,
+            data: protocolIndexResult.foldDeFiValue,
           },
           ...(foldDefi ? [] : foldDeFiList),
         ],
       },
       {
-        show:
-          !!loadingPortfolio && !portfolios.length && !unFoldDefiList.length,
+        show: !!loadingPortfolio && !hasProtocolRows,
         data: Array.from({ length: 2 }, (_, index) => ({
           type: 'loading-defi-skeleton',
           data: 'index-defi' + index.toString(),
         })),
       },
       {
-        show:
-          !loadingPortfolio &&
-          portfolios.length === 0 &&
-          unFoldDefiList.length === 0,
+        show: !loadingPortfolio && !hasProtocolRows,
         data: [
           {
             type: 'empty-defi',
@@ -188,12 +227,12 @@ export const PortfolioList = ({
       .map(item => item.data)
       .flat();
   }, [
-    filteredPortfolios.foldDeFiValue,
-    filteredPortfolios.foldList,
     foldDefi,
     loadingPortfolio,
-    portfolios,
+    protocolIndexResult.foldDeFiValue,
+    protocolIndexResult.foldIds,
     t,
+    unFoldProtocolIds,
   ]);
 
   const refreshPortfolioList = useCallback(() => {
@@ -227,15 +266,15 @@ export const PortfolioList = ({
     registerSingleProtocols(lowerAddress, selectedChain);
   }, [lowerAddress, selectedChain, registerSingleProtocols]);
 
-  const renderItem = useCallback<ListRenderItem<ActionItem>>(
+  const renderItem = useCallback<ListRenderItem<PortfolioListItem>>(
     props => {
       const { item: _data } = props;
-      const { type, data } = _data;
+      const { type } = _data;
       switch (type) {
         case 'unfold_defi':
           return (
-            <MemoFullDefiRenderItem
-              data={data}
+            <ProtocolResourceRow
+              protocolId={_data.protocolId}
               showAccount={false}
               disableAction={loadingPortfolio}
               defaultExpand={shouldDefaultExpand}
@@ -246,15 +285,15 @@ export const PortfolioList = ({
           return (
             <TokenRowSectionHeader
               style={styles.tokenSectionHeader}
-              str={data}
+              str={_data.data}
               fold={foldDefi}
               onPressFold={() => setFoldDefi(pre => !pre)}
             />
           );
         case 'fold_defi':
           return (
-            <MemoFullDefiRenderItem
-              data={data}
+            <ProtocolResourceRow
+              protocolId={_data.protocolId}
               showAccount={false}
               disableAction={loadingPortfolio}
               defaultExpand={false}
@@ -265,7 +304,7 @@ export const PortfolioList = ({
           return (
             <EmptyAssets
               style={styles.emptyAssets}
-              desc={data || ''}
+              desc={_data.data || ''}
               type={type}
             />
           );
@@ -284,6 +323,13 @@ export const PortfolioList = ({
       styles.tokenSectionHeader,
     ],
   );
+
+  const keyExtractor = useCallback((item: PortfolioListItem) => {
+    if (item.type === 'unfold_defi' || item.type === 'fold_defi') {
+      return `${item.type}-${item.protocolId}`;
+    }
+    return `${item.type}-${'data' in item ? item.data || '' : ''}`;
+  }, []);
   const ListRenderSeparator = useCallback(() => {
     return <View style={{ height: SPACING_HEIGHT }} />;
   }, []);
@@ -319,7 +365,7 @@ export const PortfolioList = ({
     <View style={styles.container}>
       <Tabs.FlatList
         data={dataList}
-        keyExtractor={getItemId}
+        keyExtractor={keyExtractor}
         renderItem={renderItem}
         // estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
         ItemSeparatorComponent={ListRenderSeparator}
