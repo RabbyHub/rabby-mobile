@@ -1,5 +1,4 @@
 /* eslint-disable react-native/no-inline-styles */
-import RcIconRightCC from '@/assets2024/icons/history/IconRightArrowCC.svg';
 import RcIconScamTips from '@/assets2024/icons/history/IconScamTips.svg';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
@@ -8,15 +7,11 @@ import React, { useCallback, useMemo } from 'react';
 import { ScrollView, TouchableOpacity, View } from 'react-native';
 
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
-import { useAccountSelectModalCtx } from '@/components/AccountSelectModalTx/hooks';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
-import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { Text } from '@/components/Typography';
 import { toast } from '@/components2024/Toast';
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { getAliasName } from '@/core/apis/contact';
 import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { findAccountByPriority } from '@/utils/account';
@@ -24,142 +19,30 @@ import { ellipsisAddress } from '@/utils/address';
 import { getChain } from '@/utils/chain';
 import { formatAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { ellipsisOverflowedText } from '@/utils/text';
 import { formatIntlTimestamp } from '@/utils/time';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import FastImage from 'react-native-fast-image';
-import { apisSingleHome } from '../Home/hooks/singleHome';
 import { RevokeTokenBtn } from './components/Actions/components/RevokeTokenBtn';
+import { AddressItemInDetail } from './components/AddressItemInDetail';
 import { HistoryBottomBtn } from './components/HistoryBottomBtn';
 import { HistoryTokenList } from './components/HistoryTokenList';
 import { TxStatusItem } from './components/TxStatusItem';
 import { HistoryItemCateType } from './components/type';
 import { getApproveTokeName } from './components/utils';
-import { useGetCexList } from './hook';
 import { isAddress } from 'viem';
 import { getTokenSymbol } from '@/utils/token';
 import { ProjectItemInDetail } from './components/ProjectItemInDetail';
-
-export const AddressItemInDetail = ({
-  address,
-  accounts,
-  disableNavigate: propdisableNavigate = false,
-}: {
-  address: string;
-  accounts: KeyringAccountWithAlias[];
-  disableNavigate?: boolean;
-}) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
-
-  const account = useMemo(
-    () => accounts.find(item => isSameAddress(item.address, address)),
-    [accounts, address],
-  );
-  const disableNavigate = useMemo(() => {
-    if (propdisableNavigate) {
-      return true;
-    }
-
-    return !account;
-  }, [propdisableNavigate, account]);
-
-  const { getCexInfoByAddress } = useGetCexList();
-  const cexInfo = useMemo(() => {
-    return getCexInfoByAddress(address);
-  }, [address, getCexInfoByAddress]);
-
-  const accountSelectCtx = useAccountSelectModalCtx();
-
-  const handleGoAddressDetail = useCallback(() => {
-    if (account) {
-      if (accountSelectCtx.isUnderContext) {
-        accountSelectCtx.fnCloseModal();
-      }
-      apisSingleHome.navigateToSingleHome(account);
-    } else {
-      // popup
-      console.debug('itemAliaName press open popup', address);
-    }
-  }, [account, accountSelectCtx, address]);
-
-  return (
-    <View>
-      <TouchableOpacity
-        disabled={disableNavigate}
-        style={styles.itemAliaName}
-        onPress={handleGoAddressDetail}>
-        <View style={{ alignItems: 'flex-end', flexDirection: 'column' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {cexInfo?.logo_url ? (
-              <FastImage
-                source={{ uri: cexInfo.logo_url }}
-                style={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: 4,
-                  marginRight: 4,
-                }}
-              />
-            ) : account ? (
-              <WalletIcon
-                type={account.type}
-                address={account.address}
-                style={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: 4,
-                  marginRight: 4,
-                }}
-              />
-            ) : null}
-            <Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              style={[
-                styles.itemContentText,
-                styles.itemContentTextAliasName,
-                { marginRight: 4 },
-              ]}>
-              {getAliasName(address) || ellipsisAddress(address)}
-            </Text>
-            {!disableNavigate && (
-              <RcIconRightCC
-                width={12}
-                height={12}
-                color={colors2024['neutral-foot']}
-              />
-            )}
-            {!account ? (
-              <CopyAddressIcon
-                address={address}
-                color={colors2024['neutral-foot']}
-              />
-            ) : null}
-          </View>
-          <Text style={styles.itemAddressText}>{address}</Text>
-        </View>
-      </TouchableOpacity>
-    </View>
-  );
-};
 
 function HistoryDetailScreen(): JSX.Element {
   const route =
     useRoute<
       GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'HistoryDetail'>
     >();
-  const {
-    data,
-    isForMultipleAddress,
-    title,
-    treatSmallAssetsAsScam = false,
-    account,
-  } = route.params || {};
+  const { data, isForMultipleAddress, title, account } = route.params || {};
 
   const { t } = useTranslation();
   const status = useMemo(() => data.tx?.status ?? 1, [data]);
@@ -211,7 +94,7 @@ function HistoryDetailScreen(): JSX.Element {
     return data.historyType;
   }, [data.historyType, data.receives, data.sends]);
 
-  const { formatToken, isNft } = useMemo(() => {
+  const { formatToken } = useMemo(() => {
     const cate = formatType;
     const isDoubleToken =
       cate === HistoryItemCateType.Swap || cate === HistoryItemCateType.Bridge;
@@ -234,17 +117,12 @@ function HistoryDetailScreen(): JSX.Element {
           ? data.sends[0]
           : data.receives[0];
 
-      const tokenId = isApprove
-        ? (data.token_approve?.token_id as string)
-        : commonItem?.token_id;
-      const tokenIsNft = tokenId?.length === 32;
       const token = isApprove ? data.token_approve?.token : commonItem?.token;
       return {
         formatToken: {
           ...token,
           amount: commonItem?.amount || data.token_approve?.value || 0,
         } as TokenItem,
-        isNft: tokenIsNft,
       };
     }
   }, [data, formatType]);
@@ -367,10 +245,6 @@ function HistoryDetailScreen(): JSX.Element {
       !(data.cate_id === 'approve' && data.token_approve)
     );
   }, [data.cate_id, data.token_approve]);
-
-  console.log('HistoryDetailScreen render', {
-    data,
-  });
 
   return (
     <NormalScreenContainer2024
@@ -680,11 +554,6 @@ const getStyle = createGetStyles2024(
       marginBottom: 20,
     },
 
-    itemAliaName: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-    },
     extraItem: {
       flexDirection: 'row',
       padding: 12,
@@ -713,15 +582,6 @@ const getStyle = createGetStyles2024(
       fontWeight: '500',
       maxWidth: '45%',
     },
-    itemAddressText: {
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      textAlign: 'right',
-      width: 170,
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '400',
-    },
     itemContentText: {
       color: colors2024['neutral-body'],
       fontFamily: 'SF Pro Rounded',
@@ -731,9 +591,6 @@ const getStyle = createGetStyles2024(
     },
     operationText: {
       textTransform: 'capitalize',
-    },
-    itemContentTextAliasName: {
-      maxWidth: 180,
     },
     headerTitleStyle: {
       color: colors2024['neutral-title-1'],

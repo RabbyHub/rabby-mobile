@@ -4,7 +4,6 @@ import { AssetAvatar } from '@/components';
 import { Text } from '@/components/Typography';
 import { toast } from '@/components2024/Toast';
 import { useTheme2024 } from '@/hooks/theme';
-import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
 import { openTxExternalUrl } from '@/utils/transaction';
 import React, { useCallback } from 'react';
