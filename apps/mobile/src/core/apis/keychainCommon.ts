@@ -4,6 +4,7 @@ import { NativeModules, Platform } from 'react-native';
 import i18n from '@/utils/i18n';
 import { DEFAULT_RABBY_MOBILE_CODE } from '@/constant/env';
 import { logger } from '@/utils/logger';
+import { toast } from '@/components2024/Toast';
 
 import { keychainMMKV } from '../storage/mmkvInstances';
 import { KEYCHAIN_MMKV_KEYS } from '../storage/mmkvConstants';
@@ -879,7 +880,12 @@ export function createBusinessKeychainApi({
       return keychainObject;
     } catch (error) {
       instance.isAuthenticating = false;
-      throw await normalizeRequestGenericPasswordError(error);
+      const normalizedError = await normalizeRequestGenericPasswordError(error);
+      const parsedInfo = parseKeychainError(normalizedError);
+      if (!parsedInfo.isCancelledByUser) {
+        toast.show(getErrorMessage(normalizedError));
+      }
+      throw normalizedError;
     }
   }
 
