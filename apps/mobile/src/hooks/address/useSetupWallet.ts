@@ -18,6 +18,7 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 import { apisHomeTabIndex } from '@/hooks/navigation';
 import { useBiometrics } from '@/hooks/biometrics';
+import { fetchLockInfo } from '@/hooks/useLock';
 import { toast } from '@/components2024/Toast';
 import { PasswordFormValues } from '@/components2024/PasswordForm';
 import i18n from '@/utils/i18n';
@@ -256,7 +257,10 @@ async function submitCreateWallet(
     needsBackupReminder: true,
   });
 
-  // 7. Show success toast (will appear on Home page after navigation due to delay)
+  // 7. Refresh lock info before navigating
+  await fetchLockInfo();
+
+  // 8. Show success toast (will appear on Home page after navigation due to delay)
   toast.success(
     i18n.t('page.importSuccess.success', {
       type: i18n.t('global.WalletCreated'),
@@ -267,7 +271,7 @@ async function submitCreateWallet(
     },
   );
 
-  // 8. Navigate directly to Home
+  // 9. Navigate directly to Home
   apisSingleHome.navigateToSingleHome(
     {
       address,
@@ -381,7 +385,10 @@ async function submitImportSeedPhrase(
     scene: 'memonics',
   });
 
-  // 9. Show success toast (will appear on Home page after navigation due to delay)
+  // 9. Refresh lock info before navigating
+  await fetchLockInfo();
+
+  // 10. Show success toast (will appear on Home page after navigation due to delay)
   toast.success(
     i18n.t('page.importSuccess.success', {
       type: i18n.t('global.WalletImported'),
@@ -392,7 +399,7 @@ async function submitImportSeedPhrase(
     },
   );
 
-  // 10. Navigate directly to Home
+  // 11. Navigate directly to Home
   apisSingleHome.navigateToSingleHome(
     {
       address,
@@ -491,7 +498,10 @@ async function submitImportPrivateKey(
     scene: 'privateKey',
   });
 
-  // 8. Show success toast (will appear on Home page after navigation due to delay)
+  // 8. Refresh lock info before navigating
+  await fetchLockInfo();
+
+  // 9. Show success toast (will appear on Home page after navigation due to delay)
   toast.success(
     i18n.t('page.importSuccess.success', {
       type: i18n.t('global.Imported'),
@@ -502,7 +512,7 @@ async function submitImportPrivateKey(
     },
   );
 
-  // 9. Navigate directly to Home
+  // 10. Navigate directly to Home
   apisSingleHome.navigateToSingleHome(
     {
       address,

@@ -158,7 +158,10 @@ const toggleBiometrics = async <T extends boolean>(
       }
     }
   } catch (error: any) {
-    if (nextEnabled) await reset();
+    if (nextEnabled) {
+      await reset();
+      return false;
+    }
 
     const parsedInfo = parseKeychainError(error);
     if (parsedInfo.isCancelledByUser || (__DEV__ && parsedInfo.sysMessage)) {
