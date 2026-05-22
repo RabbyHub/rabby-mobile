@@ -70,7 +70,6 @@ import {
   RootStackParamsList,
   TransactionNavigatorParamList,
 } from '@/navigation-type';
-import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import {
@@ -1543,8 +1542,6 @@ const Swap = ({
           visible={lowCreditVisible}
           onCancel={() => setLowCreditVisible(false)}
         />
-
-        <TokenInfoPopup />
       </NormalScreenContainer2024>
     </SignatureInstanceProvider>
   );
