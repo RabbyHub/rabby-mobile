@@ -97,11 +97,13 @@ function SwapBridgeHeaderRight({
         forScene="MakeTransactionAbout"
         style={styles.headerAccountSwitcher}
       />
-      {activeTab === 'swap' ? (
-        <SwapHeader isForMultipleAddress={isForMultipleAddress} />
-      ) : (
-        <BridgeHeader />
-      )}
+      <View style={styles.headerAction}>
+        {activeTab === 'swap' ? (
+          <SwapHeader isForMultipleAddress={isForMultipleAddress} />
+        ) : (
+          <BridgeHeader />
+        )}
+      </View>
     </View>
   );
 }
@@ -280,6 +282,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    flexShrink: 1,
     minWidth: 0,
     justifyContent: 'flex-end',
     gap: 8,
@@ -287,6 +290,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerAccountSwitcher: {
     flex: 1,
     minWidth: 0,
+  },
+  headerAction: {
+    flexShrink: 0,
   },
 }));
 
