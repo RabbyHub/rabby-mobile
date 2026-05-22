@@ -1259,6 +1259,7 @@ export const MiniSignTx = ({
             ) : null}
             <View style={styles.gasSelectorWrapper}>
               <SignMainnetGasSelectorHeader
+                showGasMethodShortcut
                 fixedMode
                 defaultFixedModeOnCurrentChain={fixedModeOnCurrentChain}
                 tx={txs[0]}
@@ -1268,7 +1269,6 @@ export const MiniSignTx = ({
                 onChangeGasMethod={handleManualChangeGasMethod}
                 onAutoChangeGasMethod={handleAutoChangeGasMethod}
                 disableAutoGasLevelSwitch={!!manualGasMethod}
-                showGasMethodShortcut={false}
                 pushType={pushInfo.type}
                 isDisabledGasPopup={task.status !== 'idle'}
                 disabled={false}
