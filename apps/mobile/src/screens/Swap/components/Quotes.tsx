@@ -1,11 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
-import {
-  RcIconSwapChecked,
-  RcIconSwapHiddenArrow,
-  RcIconSwapUnchecked,
-} from '@/assets/icons/swap';
+import { RcIconSwapHiddenArrow } from '@/assets/icons/swap';
 import { AppBottomSheetModal } from '@/components';
-import { Radio } from '@/components/Radio';
 import { DEX_WITH_WRAP } from '@/constant/swap';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -27,8 +22,6 @@ import {
   QuoteItemProps as QuoteItemPropsOld,
 } from './QuoteItem';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import LinearGradient from 'react-native-linear-gradient';
-import RcIconLoading from '@/assets2024/icons/bridge/IconLoading.svg';
 import { IS_ANDROID } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
 
@@ -51,7 +44,6 @@ interface QuotesProps
 
 export const Quotes = ({
   list,
-  activeName,
   inSufficient,
   visible: _visible,
   onClose,
@@ -133,7 +125,7 @@ export const Quotes = ({
     const dex = sortedList.find(e => e.isDex) as TDexQuoteData | undefined;
 
     return (
-      <View style={{ paddingHorizontal: 20 }}>
+      <View style={{ paddingHorizontal: 12 }}>
         {dex ? (
           <DexQuoteItemOld
             inSufficient={inSufficient}
@@ -180,7 +172,7 @@ export const Quotes = ({
     );
   }
   return (
-    <View style={{ paddingHorizontal: 20 }}>
+    <View style={{ paddingHorizontal: 12 }}>
       <View style={{ gap: 12 }}>
         {sortedList.map((params, idx) => {
           const { name, data, isDex } = params;
@@ -312,8 +304,6 @@ export const QuoteList = (props: QuotesProps) => {
 
   const { t } = useTranslation();
 
-  const { sortIncludeGasFee, setSwapSortIncludeGasFee } = useSwapSettings();
-
   useEffect(() => {
     if (visible) {
       if (!presentedRef.current) {
@@ -359,7 +349,7 @@ export const QuoteList = (props: QuotesProps) => {
 
   return (
     <AppBottomSheetModal
-      snapPoints={['90%']}
+      snapPoints={['78%']}
       ref={bottomRef}
       onDismiss={handleDismiss}
       enableDismissOnClose
@@ -435,7 +425,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 14,
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '700',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
     color: colors2024['neutral-title-1'],
