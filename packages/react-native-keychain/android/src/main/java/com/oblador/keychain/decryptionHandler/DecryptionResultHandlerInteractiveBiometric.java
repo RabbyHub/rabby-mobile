@@ -1,6 +1,7 @@
 package com.rabbywallet.keychain.decryptionHandler;
 
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -19,8 +20,12 @@ import com.rabbywallet.keychain.exceptions.CryptoFailedException;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class DecryptionResultHandlerInteractiveBiometric extends BiometricPrompt.AuthenticationCallback implements DecryptionResultHandler {
+  protected static final String PERF_TAG = "RabbyKeychainPerf";
+  private static final AtomicLong TRACE_SEQUENCE = new AtomicLong();
+
   protected CipherStorage.DecryptionResult result;
   protected Throwable error;
   protected final ReactApplicationContext reactContext;
@@ -28,6 +33,8 @@ public class DecryptionResultHandlerInteractiveBiometric extends BiometricPrompt
   protected final Executor executor = Executors.newSingleThreadExecutor();
   protected CipherStorage.DecryptionContext context;
   protected BiometricPrompt.PromptInfo promptInfo;
+  protected final long traceId = TRACE_SEQUENCE.incrementAndGet();
+  protected final long traceStartedAtMs = SystemClock.elapsedRealtime();
 
   /** Logging tag. */
   protected static final String LOG_TAG = DecryptionResultHandlerInteractiveBiometric.class.getSimpleName();
@@ -39,16 +46,29 @@ public class DecryptionResultHandlerInteractiveBiometric extends BiometricPrompt
     this.reactContext = reactContext;
     this.storage = (CipherStorageBase) storage;
     this.promptInfo = promptInfo;
+    trace("handler_created");
+  }
+
+  protected void trace(@NonNull final String event) {
+    Log.i(
+      PERF_TAG,
+      "bio#" + traceId +
+        " +" + (SystemClock.elapsedRealtime() - traceStartedAtMs) + "ms " +
+        event +
+        " storage=" + storage.getCipherStorageName()
+    );
   }
 
   @Override
   public void askAccessPermissions(@NonNull final DecryptionContext context) {
     this.context = context;
+    trace("ask_access_permissions");
 
     if (!DeviceAvailability.isPermissionsGranted(reactContext)) {
       final CryptoFailedException failure = new CryptoFailedException(
         "Could not start fingerprint Authentication. No permissions granted.");
 
+      trace("permissions_denied");
       onDecrypt(null, failure);
     } else {
       startAuthentication();
@@ -59,6 +79,8 @@ public class DecryptionResultHandlerInteractiveBiometric extends BiometricPrompt
   public void onDecrypt(@Nullable final DecryptionResult decryptionResult, @Nullable final Throwable error) {
     this.result = decryptionResult;
     this.error = error;
+    trace("on_decrypt result=" + (decryptionResult != null) +
+      " error=" + (error == null ? "none" : error.getClass().getSimpleName()));
 
     synchronized (this) {
       notifyAll();
@@ -80,14 +102,22 @@ public class DecryptionResultHandlerInteractiveBiometric extends BiometricPrompt
   /** Called when an unrecoverable error has been encountered and the operation is complete. */
   @Override
   public void onAuthenticationError(final int errorCode, @NonNull final CharSequence errString) {
+    trace("on_authentication_error code=" + errorCode + " msg=" + errString);
     final CryptoFailedException error = new CryptoFailedException("code: " + errorCode + ", msg: " + errString);
 
     onDecrypt(null, error);
   }
 
+  /** Called when a biometric is presented but not recognized. */
+  @Override
+  public void onAuthenticationFailed() {
+    trace("on_authentication_failed");
+  }
+
   /** Called when a biometric is recognized. */
   @Override
   public void onAuthenticationSucceeded(@NonNull final BiometricPrompt.AuthenticationResult result) {
+    trace("on_authentication_succeeded");
     try {
       if (null == context) throw new NullPointerException("Decrypt context is not assigned yet.");
 
@@ -98,6 +128,7 @@ public class DecryptionResultHandlerInteractiveBiometric extends BiometricPrompt
 
       onDecrypt(decrypted, null);
     } catch (Throwable fail) {
+      trace("on_authentication_succeeded_decrypt_failed error=" + fail.getClass().getSimpleName());
       onDecrypt(null, fail);
     }
   }
@@ -108,11 +139,13 @@ public class DecryptionResultHandlerInteractiveBiometric extends BiometricPrompt
 
     // code can be executed only from MAIN thread
     if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
+      trace("start_authentication_post_to_main");
       activity.runOnUiThread(this::startAuthentication);
       waitResult();
       return;
     }
 
+    trace("start_authentication_on_main");
     authenticateWithPrompt(activity);
   }
 
@@ -124,8 +157,10 @@ public class DecryptionResultHandlerInteractiveBiometric extends BiometricPrompt
   }
 
   protected BiometricPrompt authenticateWithPrompt(@NonNull final FragmentActivity activity) {
+    trace("authenticate_with_prompt_start");
     final BiometricPrompt prompt = new BiometricPrompt(activity, executor, this);
     prompt.authenticate(this.promptInfo);
+    trace("authenticate_with_prompt_called");
 
     return prompt;
   }
@@ -136,7 +171,7 @@ public class DecryptionResultHandlerInteractiveBiometric extends BiometricPrompt
     if (Thread.currentThread() == Looper.getMainLooper().getThread())
       throw new AssertionException("method should not be executed from MAIN thread");
 
-    Log.i(LOG_TAG, "blocking thread. waiting for done UI operation.");
+    trace("wait_result_blocking_thread");
 
     try {
       synchronized (this) {
@@ -146,6 +181,6 @@ public class DecryptionResultHandlerInteractiveBiometric extends BiometricPrompt
       /* shutdown sequence */
     }
 
-    Log.i(LOG_TAG, "unblocking thread.");
+    trace("wait_result_unblocked_thread");
   }
 }

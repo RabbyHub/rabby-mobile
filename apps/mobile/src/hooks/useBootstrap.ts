@@ -102,6 +102,8 @@ export function useInitializeAppOnTop() {
     const onUnlock = () => {
       console.debug('useBootstrap::onUnlock');
       storeApiLock.setAppLock(prev => ({ ...prev, appUnlocked: true }));
+    };
+    const onUnlockUIReady = () => {
       sendUserAddressEvent();
 
       doInitializeApis();
@@ -121,10 +123,15 @@ export function useInitializeAppOnTop() {
       });
     };
     const sub = perfEvents.subscribe('USER_MANUALLY_UNLOCK', onUnlock);
+    const subUIReady = perfEvents.subscribe(
+      'USER_MANUALLY_UNLOCK_UI_READY',
+      onUnlockUIReady,
+    );
     keyringService.on('lock', onLock);
 
     return () => {
       sub.remove();
+      subUIReady.remove();
       keyringService.off('lock', onLock);
     };
   }, []);
@@ -134,7 +141,7 @@ export function useInitializeAppOnTop() {
       apisSafe.syncAllGnosisNetworks();
       doInitializeApis();
     };
-    const sub = perfEvents.subscribe('USER_MANUALLY_UNLOCK', onUnlock);
+    const sub = perfEvents.subscribe('USER_MANUALLY_UNLOCK_UI_READY', onUnlock);
 
     return () => {
       sub.remove();
@@ -143,7 +150,7 @@ export function useInitializeAppOnTop() {
 }
 
 export function subscribeUnlockToFetchAccounts() {
-  perfEvents.subscribe('USER_MANUALLY_UNLOCK', async () => {
+  perfEvents.subscribe('USER_MANUALLY_UNLOCK_UI_READY', async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();
     if (!accounts?.length) {
       replace(RootNames.StackGetStarted, {

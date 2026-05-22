@@ -3,12 +3,14 @@ describe('core/apis/keychainV8_2_0', () => {
     storage?: string;
     authType?: number;
     salt?: string;
+    trustedVaultKeyString?: string | null;
   }) => {
     jest.resetModules();
     const {
       storage = 'KeystoreRSAECB',
       authType = 1,
       salt = 'salt',
+      trustedVaultKeyString = null,
     } = options || {};
 
     const mockEncrypt = jest.fn(
@@ -17,12 +19,29 @@ describe('core/apis/keychainV8_2_0', () => {
       },
     );
     const mockDecrypt = jest.fn(async () => ({ password: 'plain-password' }));
-    const mockGetGenericPassword = jest.fn(async () => ({
-      service: 'com.debank',
-      username: 'rabbymobile-user',
-      password: 'enc:plain-password',
-      storage,
-    }));
+    const mockGetGenericPassword = jest.fn(
+      async (keychainOptions?: { service?: string }) => {
+        if (keychainOptions?.service === 'com.debank.trusted-vault-key') {
+          if (!trustedVaultKeyString) {
+            return false;
+          }
+
+          return {
+            service: 'com.debank.trusted-vault-key',
+            username: 'rabbymobile-vault-key',
+            password: trustedVaultKeyString,
+            storage,
+          };
+        }
+
+        return {
+          service: 'com.debank',
+          username: 'rabbymobile-user',
+          password: 'enc:plain-password',
+          storage,
+        };
+      },
+    );
     const mockSetGenericPassword = jest.fn(async () => true);
     const mockResetGenericPassword = jest.fn(async () => true);
     const mockDebugGetGenericPasswordStateForOptions = jest.fn(async () => ({
@@ -190,7 +209,10 @@ describe('core/apis/keychainV8_2_0', () => {
       currentRabbitCode,
       'RABBY_MOBILE_CODE_DEV',
     ]);
-    expect(onPlainPassword).toHaveBeenCalledWith('plain-password');
+    expect(onPlainPassword).toHaveBeenCalledWith(
+      'plain-password',
+      expect.objectContaining({ password: 'plain-password' }),
+    );
     expect(mockUpdateUnlockTime).toHaveBeenCalled();
     expect(mockEncrypt).toHaveBeenCalledWith(currentRabbitCode, {
       password: 'plain-password',

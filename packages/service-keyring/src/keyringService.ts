@@ -73,6 +73,71 @@ export type KeyringEventAccount = {
   address: string;
   type: KeyringTypeName;
   brandName: string;
+};
+
+export type KeyringVaultStorageDebugState = {
+  hasVault: boolean;
+  vaultBytes: number;
+  vaultHash: string | null;
+  hasBooted: boolean;
+  hasUnencryptedKeyringData: boolean;
+  unencryptedKeyringCount: number;
+  hasEncryptedKeyringData: boolean;
+};
+
+export type KeyringVaultTimingResult = {
+  label: string;
+  source: 'password' | 'cachedKey';
+  success: boolean;
+  durationMs: number;
+  error?: string;
+  keyringCount?: number;
+};
+
+export type SubmitPasswordOptions = {
+  /**
+   * The password came from a trusted OS-protected source, e.g. Android
+   * biometric keychain. In this case vault decryption is enough validation.
+   */
+  trustedPassword?: boolean;
+  /**
+   * OS-protected exported encryptor key for the current vault.
+   * When valid, this lets biometric unlock skip PBKDF2 derivation.
+   */
+  trustedVaultKeyString?: string;
+  /**
+   * Called after password-based vault decrypt so callers can persist the
+   * exported key for the next biometric unlock.
+   */
+  onTrustedVaultKeyString?: (vaultKeyString: string) => void | Promise<void>;
+  deferMemStoreKeyringsUpdate?: boolean;
+};
+
+function getUtf8ByteLength(value: string) {
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.byteLength(value, 'utf8');
+  }
+
+  return unescape(encodeURIComponent(value)).length;
+}
+
+function hashString(value: string) {
+  let hash = 2166136261;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return `fnv1a32:${(hash >>> 0).toString(16).padStart(8, '0')}`;
+}
+
+function getErrorText(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function nowMs() {
+  return Date.now();
 }
 
 export class KeyringService extends RNEventEmitter {
@@ -372,7 +437,12 @@ export class KeyringService extends RNEventEmitter {
    *
    * @fires KeyringController#unlock
    */
-  private _setUnlocked(options: { scene: 'unlock' | 'finish:importPrivateKey' | 'finish:createKeyringWithMnemonics' }): void {
+  private _setUnlocked(options: {
+    scene:
+      | 'unlock'
+      | 'finish:importPrivateKey'
+      | 'finish:createKeyringWithMnemonics';
+  }): void {
     this.memStore.updateState({ isUnlocked: true });
     this.emit('unlock', { scene: options.scene });
   }
@@ -392,29 +462,47 @@ export class KeyringService extends RNEventEmitter {
    * @param password - The keyring controller password.
    * @returns A Promise that resolves to the state.
    */
-  async submitPassword(password: string): Promise<MemStoreState> {
+  async submitPassword(
+    password: string,
+    options: SubmitPasswordOptions = {},
+  ): Promise<MemStoreState> {
     if (this._isSubmittingPassword) {
       return this.memStore.getState();
     }
 
-    this._isSubmittingPassword = true;
-    await this.verifyPassword(password);
-    this.#password = password;
+    const encryptedVault = this.store.getState().vault;
+    const hasVault = !!encryptedVault;
+    const trustedPassword = !!options.trustedPassword;
+    const shouldVerifyBeforeUnlock = !trustedPassword || !hasVault;
+
     try {
-      this.keyrings = await this.unlockKeyrings(password);
-    } catch {
-      //
-    } finally {
+      this._isSubmittingPassword = true;
+      if (shouldVerifyBeforeUnlock) {
+        await this.verifyPassword(password);
+      }
+      this.#password = password;
+      try {
+        this.keyrings = await this.unlockKeyrings(password, {
+          trustedVaultKeyString: options.trustedVaultKeyString,
+          onTrustedVaultKeyString: options.onTrustedVaultKeyString,
+          deferMemStoreKeyringsUpdate: options.deferMemStoreKeyringsUpdate,
+        });
+      } catch (error) {
+        if (trustedPassword && hasVault) {
+          throw error;
+        }
+      }
       this._setUnlocked({ scene: 'unlock' });
+
+      // force store unencrypted keyring data if not exist
+      if (!this.store.getState().unencryptedKeyringData) {
+        await this.persistAllKeyrings();
+      }
+
+      return this.fullUpdate();
+    } finally {
       this._isSubmittingPassword = false;
     }
-
-    // force store unencrypted keyring data if not exist
-    if (!this.store.getState().unencryptedKeyringData) {
-      await this.persistAllKeyrings();
-    }
-
-    return this.fullUpdate();
   }
 
   /**
@@ -694,7 +782,11 @@ export class KeyringService extends RNEventEmitter {
         // Not all the keyrings support this, so we have to check
         if (typeof keyring.removeAccount === 'function') {
           keyring.removeAccount(address, brand);
-          const accountLike: KeyringEventAccount = { address, type, brandName: brand || '' };
+          const accountLike: KeyringEventAccount = {
+            address,
+            type,
+            brandName: brand || '',
+          };
           this.emit('removedAccount', accountLike);
           const currentKeyring = keyring;
           return [await keyring.getAccounts(), currentKeyring];
@@ -825,7 +917,10 @@ export class KeyringService extends RNEventEmitter {
    * initializing the persisted keyrings to RAM.
    * @param password
    */
-  async unlockKeyrings(password: string): Promise<any[]> {
+  async unlockKeyrings(
+    password: string,
+    options: SubmitPasswordOptions = {},
+  ): Promise<any[]> {
     const encryptedVault = this.store.getState().vault;
     if (!encryptedVault) {
       // throw new Error(i18n.t('background.error.canNotUnlock'));
@@ -833,13 +928,182 @@ export class KeyringService extends RNEventEmitter {
     }
 
     await this.clearKeyrings();
-    const vault = await this.encryptor.decrypt(password, encryptedVault);
+    let vault: unknown = null;
+
+    if (options.trustedVaultKeyString) {
+      try {
+        vault = await this.encryptor.decryptWithExportedKey(
+          encryptedVault,
+          options.trustedVaultKeyString,
+        );
+      } catch {
+        vault = null;
+      }
+    }
+
+    if (!vault) {
+      const decryptDetail = await this.encryptor.decryptWithDetail(
+        password,
+        encryptedVault,
+      );
+      vault = decryptDetail.vault;
+
+      if (decryptDetail.exportedKeyString) {
+        Promise.resolve()
+          .then(() =>
+            options.onTrustedVaultKeyString?.(decryptDetail.exportedKeyString!),
+          )
+          .catch(() => {
+            // The cache is only a fast path for future unlocks.
+          });
+      }
+    }
+
     // TODO: FIXME
     await Promise.all(
       Array.from(vault as any).map(this._restoreKeyring.bind(this) as any),
     );
-    await this._updateMemStoreKeyrings();
+    if (!options.deferMemStoreKeyringsUpdate) {
+      await this._updateMemStoreKeyrings();
+    }
     return this.keyrings;
+  }
+
+  async refreshMemStoreKeyrings(): Promise<MemStoreState> {
+    await this._updateMemStoreKeyrings();
+    return this.fullUpdate();
+  }
+
+  getVaultStorageDebugState(): KeyringVaultStorageDebugState {
+    const state = this.store.getState();
+    const vault = state.vault;
+
+    return {
+      hasVault: !!vault,
+      vaultBytes: vault ? getUtf8ByteLength(vault) : 0,
+      vaultHash: vault ? hashString(vault) : null,
+      hasBooted: !!state.booted,
+      hasUnencryptedKeyringData: !!state.unencryptedKeyringData,
+      unencryptedKeyringCount: state.unencryptedKeyringData?.length || 0,
+      hasEncryptedKeyringData: state.hasEncryptedKeyringData,
+    };
+  }
+
+  async debugExportTrustedVaultKeyString(password: string): Promise<string> {
+    const encryptedVault = this.store.getState().vault;
+
+    if (!encryptedVault) {
+      throw new Error('Missing vault');
+    }
+
+    const detail = await this.encryptor.decryptWithDetail(
+      password,
+      encryptedVault,
+    );
+
+    if (!detail.exportedKeyString) {
+      throw new Error('Missing exported vault key');
+    }
+
+    return detail.exportedKeyString;
+  }
+
+  private async measureVaultRestorePath(
+    label: string,
+    source: KeyringVaultTimingResult['source'],
+    fn: () => Promise<KeyringSerializedData[]>,
+  ): Promise<KeyringVaultTimingResult> {
+    const previousKeyrings = this.keyrings;
+    const startedAt = nowMs();
+
+    try {
+      this.keyrings = [];
+      const vault = await fn();
+      await Promise.all(
+        Array.from(vault).map(this._restoreKeyring.bind(this) as any),
+      );
+
+      return {
+        label,
+        source,
+        success: true,
+        durationMs: nowMs() - startedAt,
+        keyringCount: this.keyrings.length,
+      };
+    } catch (error) {
+      return {
+        label,
+        source,
+        success: false,
+        durationMs: nowMs() - startedAt,
+        error: getErrorText(error),
+      };
+    } finally {
+      this.keyrings = previousKeyrings;
+    }
+  }
+
+  async debugMeasureUnlockPaths(options: {
+    password?: string;
+    trustedVaultKeyString?: string;
+    measurePassword?: boolean;
+    measureCachedKey?: boolean;
+  }): Promise<KeyringVaultTimingResult[]> {
+    const encryptedVault = this.store.getState().vault;
+    const results: KeyringVaultTimingResult[] = [];
+    const measurePassword =
+      options.measurePassword ?? typeof options.password === 'string';
+    const measureCachedKey =
+      options.measureCachedKey ??
+      typeof options.trustedVaultKeyString === 'string';
+
+    if (measurePassword && encryptedVault && options.password) {
+      results.push(
+        await this.measureVaultRestorePath(
+          'password: PBKDF2 + full restore',
+          'password',
+          async () => {
+            const detail = await this.encryptor.decryptWithDetail(
+              options.password!,
+              encryptedVault,
+            );
+            return detail.vault as KeyringSerializedData[];
+          },
+        ),
+      );
+    } else if (measurePassword) {
+      results.push({
+        label: 'password: PBKDF2 + full restore',
+        source: 'password',
+        success: false,
+        durationMs: 0,
+        error: encryptedVault ? 'Missing password' : 'Missing vault',
+      });
+    }
+
+    if (measureCachedKey && encryptedVault && options.trustedVaultKeyString) {
+      results.push(
+        await this.measureVaultRestorePath(
+          'cached key: full restore',
+          'cachedKey',
+          async () =>
+            (await this.encryptor.decryptWithExportedKey(
+              encryptedVault,
+              options.trustedVaultKeyString!,
+            )) as KeyringSerializedData[],
+        ),
+      );
+    } else if (measureCachedKey) {
+      results.push({
+        label: 'cached key: full restore',
+        source: 'cachedKey',
+        success: false,
+        durationMs: 0,
+        error: encryptedVault ? 'Missing cached key' : 'Missing vault',
+      });
+    }
+
+    return results;
   }
 
   /**
@@ -1171,7 +1435,9 @@ export class KeyringService extends RNEventEmitter {
         //   return null;
         // })
         .then(this.persistAllKeyrings.bind(this))
-        .then(() => this._setUnlocked({ scene: 'finish:createKeyringWithMnemonics' }))
+        .then(() =>
+          this._setUnlocked({ scene: 'finish:createKeyringWithMnemonics' }),
+        )
         .then(this.fullUpdate.bind(this))
         .then(() => keyring)
     );

@@ -5,7 +5,7 @@ import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { useBiometrics } from '@/hooks/biometrics';
 import { toast } from '@/components2024/Toast';
 import { Alert } from 'react-native';
-import { UnlockResultErrors } from '@/core/apis/lock';
+import { UnlockResultErrors, UnlockWalletOptions } from '@/core/apis/lock';
 import { t } from 'i18next';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
@@ -14,6 +14,7 @@ import { useShallow } from 'zustand/react/shallow';
 export enum UNLOCK_STATE {
   IDLE = 0,
   UNLOCKING = 1,
+  LEAVING = 2,
 }
 
 type UnlockState = {
@@ -38,26 +39,55 @@ function setUnlockState(valOrFunc: UpdaterOrPartials<UnlockState>) {
   });
 }
 
-const unlockApp = async (password: string) => {
+const unlockApp = async (
+  password: string,
+  options: UnlockWalletOptions = {},
+) => {
   if (unlockStateStore.getState().status !== UNLOCK_STATE.IDLE)
     return { error: '' } as UnlockResultErrors;
 
   setUnlockState(prev => ({ ...prev, status: UNLOCK_STATE.UNLOCKING }));
 
   try {
-    return await apisLock.unlockWalletWithUpdateUnlockTime(password);
-  } finally {
+    const result = await apisLock.unlockWalletWithUpdateUnlockTime(
+      password,
+      options,
+    );
+    if (result.error) {
+      setUnlockState(prev => ({ ...prev, status: UNLOCK_STATE.IDLE }));
+    }
+    return result;
+  } catch (error) {
     setUnlockState(prev => ({ ...prev, status: UNLOCK_STATE.IDLE }));
+    throw error;
   }
 };
 
 const afterLeaveFromUnlock = () => {
-  setUnlockState(prev => ({ ...prev, hasLeftFromUnlock: true }));
+  setUnlockState(prev => ({
+    ...prev,
+    hasLeftFromUnlock: true,
+    status: UNLOCK_STATE.IDLE,
+  }));
+};
+
+const startLeaveFromUnlock = () => {
+  setUnlockState(prev => ({
+    ...prev,
+    hasLeftFromUnlock: true,
+    status: UNLOCK_STATE.LEAVING,
+  }));
+};
+
+const resetUnlocking = () => {
+  setUnlockState(prev => ({ ...prev, status: UNLOCK_STATE.IDLE }));
 };
 
 export const storeApisUnlock = {
   unlockApp,
+  startLeaveFromUnlock,
   afterLeaveFromUnlock,
+  resetUnlocking,
 };
 
 export function useUnlockApp() {

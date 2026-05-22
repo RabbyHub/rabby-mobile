@@ -112,6 +112,10 @@ export const setGenericPassword = (
   ...args: Parameters<typeof apisKeychainV8_2_0.setGenericPassword>
 ) => getCurrentKeychainApi().setGenericPassword(...args);
 
+export const cacheTrustedVaultKeyString = (
+  ...args: Parameters<typeof apisKeychainV8_2_0.cacheTrustedVaultKeyString>
+) => getCurrentKeychainApi().cacheTrustedVaultKeyString(...args);
+
 export const resetGenericPassword = (
   ...args: Parameters<typeof apisKeychainV8_2_0.resetGenericPassword>
 ) => getCurrentKeychainApi().resetGenericPassword(...args);

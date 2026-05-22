@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { atom, useAtom } from 'jotai';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  storeApiAccounts,
+  useAccounts,
+} from '@/hooks/account';
 import { openapi } from '@/core/request';
 import { ApprovalStatus } from '@rabby-wallet/rabby-api/dist/types';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -167,13 +171,97 @@ const alertQueue = new PQueue({
   concurrency: 10,
 });
 
+function getDisplayAccounts(accounts: KeyringAccountWithAlias[]) {
+  return accounts.filter(acc => !FILTER_ACCOUNT_TYPES.includes(acc.type));
+}
+
+async function refreshApprovalAlertCountsForAccounts(
+  displayAccounts: KeyringAccountWithAlias[],
+) {
+  try {
+    if (!displayAccounts.length) {
+      return;
+    }
+    if (approvalsAlertStore.getState().loading) {
+      return;
+    }
+    const address2count: IApprovalsAlert['address2count'] = {};
+    let total = 0;
+    setAlertInfo(pre => ({
+      ...pre,
+      loading: true,
+    }));
+    displayAccounts.forEach(acc => {
+      alertQueue.add(async () => {
+        try {
+          const data = await openapi.approvalStatus(acc.address);
+          if (data) {
+            const alertCount = data.reduce(
+              (pre, now) =>
+                pre +
+                now.nft_approval_danger_cnt +
+                now.token_approval_danger_cnt,
+              0,
+            );
+            address2count[acc.address] = alertCount;
+            total += alertCount;
+          }
+        } catch (error) {
+          console.error(`Error fetching approval amount for ${acc.address}:`, {
+            error,
+          });
+        }
+      });
+    });
+
+    await waitQueueFinished(alertQueue);
+
+    setAlertInfo({
+      total,
+      address2count,
+      loading: false,
+    });
+  } catch (error) {
+    console.error('get all alert info error', error);
+    setAlertInfo({
+      total: 0,
+      address2count: {},
+      loading: false,
+    });
+  }
+}
+
+export function useApprovalAlertTotal() {
+  return approvalsAlertStore(s => s.total);
+}
+
+export function triggerApprovalAlertCounts(cacheTime: number) {
+  const currentTime = Date.now();
+  const diff = currentTime - lastTimeStamps;
+  if (diff <= cacheTime) {
+    return;
+  }
+  lastTimeStamps = currentTime;
+
+  refreshApprovalAlertCountsForAccounts(
+    getDisplayAccounts(storeApiAccounts.getAccounts()),
+  );
+}
+
+export function forceUpdateApprovalAlertCounts() {
+  lastTimeStamps = Date.now();
+  return refreshApprovalAlertCountsForAccounts(
+    getDisplayAccounts(storeApiAccounts.getAccounts()),
+  );
+}
+
 export const useApprovalAlertCounts = (cacheTime: number) => {
   const alertInfo = approvalsAlertStore(s => s);
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
   const displayAccounts = useCreationWithShallowCompare(
-    () => accounts.filter(acc => !FILTER_ACCOUNT_TYPES.includes(acc.type)),
+    () => getDisplayAccounts(accounts),
     [accounts],
   );
 
@@ -188,58 +276,7 @@ export const useApprovalAlertCounts = (cacheTime: number) => {
   });
 
   const getAllApprovalInfo = useCallback(async () => {
-    try {
-      if (!displayAccounts.length) {
-        return;
-      }
-      if (approvalsAlertStore.getState().loading) {
-        return;
-      }
-      const address2count = {};
-      let total = 0;
-      setAlertInfo(pre => ({
-        ...pre,
-        loading: true,
-      }));
-      displayAccounts.forEach(acc => {
-        alertQueue.add(async () => {
-          try {
-            const data = await openapi.approvalStatus(acc.address);
-            if (data) {
-              const alertCount = data.reduce(
-                (pre, now) =>
-                  pre +
-                  now.nft_approval_danger_cnt +
-                  now.token_approval_danger_cnt,
-                0,
-              );
-              address2count[acc.address] = alertCount;
-              total += alertCount;
-            }
-          } catch (error) {
-            console.error(
-              `Error fetching approval amount for ${acc.address}:`,
-              error,
-            );
-          }
-        });
-      });
-
-      await waitQueueFinished(alertQueue);
-
-      setAlertInfo({
-        total,
-        address2count,
-        loading: false,
-      });
-    } catch (error) {
-      console.error('get all alert info error', error);
-      setAlertInfo({
-        total: 0,
-        address2count: {},
-        loading: false,
-      });
-    }
+    return refreshApprovalAlertCountsForAccounts(displayAccounts);
   }, [displayAccounts]);
 
   const triggerUpdate = useMemoizedFn(() => {
