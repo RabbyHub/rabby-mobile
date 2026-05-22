@@ -2481,7 +2481,7 @@
       "depositNow": "Deposite agora",
       "switchAccount": "Mudar Carteira",
       "depositFailed": "Depósito falhou",
-      "lowBalance": "Você não tem gás suficiente. Deposite gás para garantir que as futuras transações ocorram sem problemas.",
+      "lowBalance": "Você não tem gás suficiente (<$1.00). Deposite gás para garantir que as futuras transações ocorram sem problemas.",
       "depositSubmitted": "Depósito Submetido",
       "depositWith": "Depositar via"
     },

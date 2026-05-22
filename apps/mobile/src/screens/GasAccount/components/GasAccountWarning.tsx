@@ -15,7 +15,7 @@ export const GasAccountWarning: React.FC<{
   const { t } = useTranslation();
   const DEFAULT_MESSAGE = t('page.gasAccount.lowBalance');
 
-  if (balance && Number(balance) > 0.1) {
+  if (Number(balance ?? 0) >= 1) {
     return null;
   }
   return (
