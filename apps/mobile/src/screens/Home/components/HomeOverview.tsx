@@ -795,10 +795,6 @@ function DeferredHomeMenuBadge({
     return <LendingHF />;
   }
 
-  if (el.key === MultiHomeFeatTitle.Points) {
-    return <PointsBadge />;
-  }
-
   if (el.key === MultiHomeFeatTitle.GasAccount) {
     return <GasAccountMenuBadge />;
   }
