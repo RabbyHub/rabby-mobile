@@ -117,6 +117,11 @@ export const TokenAmountInput = ({
   const handleChangeText = useCallback(
     (v: string) => {
       const formatted = formatAmountInput(v);
+      if (formatted >= tokenAmount && tokenAmount > 0) {
+        debouncedChangeText.cancel();
+        handleClickMaxButton?.();
+        return false;
+      }
 
       if (formatted !== v) {
         debouncedChangeText.cancel();
@@ -126,7 +131,13 @@ export const TokenAmountInput = ({
 
       debouncedChangeText(formatted);
     },
-    [debouncedChangeText, formatAmountInput, onChange],
+    [
+      debouncedChangeText,
+      formatAmountInput,
+      handleClickMaxButton,
+      onChange,
+      tokenAmount,
+    ],
   );
 
   useEffect(() => {
