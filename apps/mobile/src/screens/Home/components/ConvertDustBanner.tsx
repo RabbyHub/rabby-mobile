@@ -37,15 +37,7 @@ export function ConvertDustBanner({
           }
           content={
             <Text style={styles.desc}>
-              {t('page.convertDust.homeBanner.description')}
-              <Text style={styles.inlineArrowIcon}>
-                {' '}
-                <RcIconArrowRightCC
-                  color={colors2024['neutral-secondary']}
-                  width={10}
-                  height={10}
-                />
-              </Text>
+              {t('page.convertDust.homeBanner.description')} &gt;
             </Text>
           }
           contentStyle={styles.content}

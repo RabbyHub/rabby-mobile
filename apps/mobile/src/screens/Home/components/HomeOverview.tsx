@@ -96,14 +96,14 @@ import { isTabsSwiping } from '../../Address/components/MultiAssets/hooks';
 import { BrowserOrPerpsPosition } from './BrowserOrPerpsPosition';
 import { GasAccountBadge } from '../../GasAccount/components/GasAccountBadge';
 import { apisLending } from '../../Lending/hooks';
-import { PointsBadge } from '../../Points/components/PointsBadge';
 import { HomeCenterArea } from '../components/HomeCenterArea';
 import { HomeDappDrawer } from '../components/HomeDappDrawer';
+import { ETHStatus } from '../components/ETHStatus';
 import { HomePendingBadge } from '../components/HomePending';
-import { ETHStatus, refreshETHStatus } from '../components/ETHStatus';
 import { LendingHF } from '../components/LendingHF';
 import { MultiAddressHomeHeader } from '../components/MultiAddressHomeHeader';
 import { PerpsPnl } from '../components/PerpsPnl';
+import { PointsBadge } from '../../Points/components/PointsBadge';
 import {
   refreshSuccessAndFailList,
   resetFetchHistoryTxCount,
@@ -952,7 +952,6 @@ export const HomeOverview = React.memo(() => {
       return;
     }
 
-    refreshETHStatus();
     perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
     return Promise.all([
       // force update balance from server api
@@ -987,7 +986,6 @@ export const HomeOverview = React.memo(() => {
 
   // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
   const handlePressMarket = useCallback(() => {
-    refreshETHStatus();
     navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
       screen: RootNames.Market,
       params: {},
@@ -1023,8 +1021,10 @@ export const HomeOverview = React.memo(() => {
         case MultiHomeFeatTitle.Swap:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiSwap,
-              params: {},
+              screen: RootNames.MultiSwapBridge,
+              params: {
+                activeTab: 'swap',
+              },
             }),
           );
 
@@ -1032,8 +1032,10 @@ export const HomeOverview = React.memo(() => {
         case MultiHomeFeatTitle.Bridge:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiBridge,
-              params: {},
+              screen: RootNames.MultiSwapBridge,
+              params: {
+                activeTab: 'bridge',
+              },
             }),
           );
           break;

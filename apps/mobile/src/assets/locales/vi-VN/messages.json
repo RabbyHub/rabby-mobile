@@ -206,7 +206,7 @@
         "RevokeToken": "Thu hồi Token",
         "InteractionResults": "Kết quả Tương tác",
         "GasFee": "Phí Gas",
-        "InteractedContract": "Hợp đồng đã tương tác",
+        "InteractedContract": "Tương tác với (Đến)",
         "ApproveTo": "Phê duyệt tới",
         "WillReceive": "Sẽ Nhận: ≈ {{token}}",
         "Name": "Tên",
@@ -216,11 +216,13 @@
         "BuyAgain": "Mua lại",
         "AddToWhitelist": "Thêm vào Danh sách Trắng",
         "RecipientAddress": "Ví nhận",
-        "Simulation Results": "Kết quả mô phỏng"
+        "Simulation Results": "Kết quả mô phỏng",
+        "TransactionDetails": "Chi tiết giao dịch",
+        "Operation": "Hoạt động"
       },
       "empty": {
         "title": "Không có giao dịch",
-        "desc": "Không tìm thấy giao dịch nào trên <1>supported chains</1>"
+        "desc": "Không tìm thấy giao dịch nào trên <1>các chain được hỗ trợ</1>"
       },
       "txHistory": {
         "tipInputData": "Giao dịch bao gồm một tin nhắn",
@@ -1722,7 +1724,8 @@
         "txSigned": "Đã ký. Đang tạo giao dịch",
         "txSendings": "Đang gửi yêu cầu ký ({{current}}/{{total}})"
       },
-      "fixedModeText": "Chế độ cố định: Luôn sử dụng cài đặt gas tùy chỉnh của bạn"
+      "fixedModeText": "Chế độ cố định: Luôn sử dụng cài đặt gas tùy chỉnh của bạn",
+      "fixedModeTag": "Chế độ cố định"
     },
     "search": {
       "sectionHeader": {
@@ -1900,9 +1903,9 @@
       "switchAccount": "Chuyển Wallet",
       "depositFailed": "Nạp tiền không thành công",
       "gasBalance": "Số dư Gas",
-      "lowBalance": "Bạn không có đủ gas. Nạp gas để đảm bảo các giao dịch trong tương lai diễn ra suôn sẻ.",
+      "lowBalance": "Bạn không có đủ gas (<$1.00). Nạp gas để đảm bảo các giao dịch trong tương lai diễn ra suôn sẻ.",
       "depositSubmitted": "Đã gửi tiền gửi",
-      "depositWith": "```json\n{\"u_0\":\"Nạp tiền qua\"}\n```"
+      "depositWith": "Nạp tiền qua"
     },
     "setting": {
       "aboutUs": "Về Chúng Tôi",
@@ -2561,6 +2564,28 @@
       "title": "Lịch sử"
     },
     "perps": {
+      "limitOrders": "Lệnh Giới Hạn",
+      "cancelAll": "Hủy Tất Cả",
+      "cancelAllOrdersConfirmTitle": "Xác Nhận Hủy TẤT CẢ Lệnh",
+      "cancelAllOrdersConfirmMessage": "Tất cả Lệnh Giới Hạn của bạn sẽ bị hủy",
+      "limitOrderDetail": {
+        "title": "Lệnh Giới Hạn {{side}} {{pair}}",
+        "time": "Thời gian",
+        "size": "Kích thước",
+        "filled": "Đã khớp",
+        "currentPrice": "Giá hiện tại",
+        "limitPrice": "Giá giới hạn",
+        "marginUsage": "Sử dụng ký quỹ",
+        "cancelLimitOrder": "Hủy lệnh giới hạn",
+        "buy": "Mua",
+        "sell": "Bán"
+      },
+      "cancelOrderToast": {
+        "singleSuccess": "Lệnh giới hạn đã được hủy",
+        "multiSuccess": "{{count}} lệnh giới hạn đã được hủy",
+        "partial": "{{okCount}} đã hủy, {{failCount}} thất bại",
+        "failed": "Hủy lệnh giới hạn thất bại"
+      },
       "PerpsCard": {
         "title": "Giao dịch Perps",
         "depositBtn": "Nạp tiền",
@@ -2816,6 +2841,20 @@
       }
     },
     "perpsDetail": {
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "Đặt Giá Mua Giới Hạn",
+        "setLimitSellPrice": "Đặt Giá Bán Giới Hạn",
+        "marketLabel": "Mid",
+        "setBtn": "Đặt",
+        "blockError": "Giá lệnh vượt quá giới hạn bảo vệ giá 10%.",
+        "confirmTitle": "Xem xét Giá Giới Hạn",
+        "confirmMessage": "Giá giới hạn cách giá thị trường hơn 5%",
+        "confirmContinue": "Tiếp tục",
+        "confirmCancel": "Hủy"
+      },
+      "PerpsPriceInfo": {
+        "current": "Hiện tại"
+      },
       "PerpsPosition": {
         "title": "Vị trí",
         "marginCross": "Margin (Giao chéo)",
@@ -2881,6 +2920,13 @@
         "rabbyFeeTipsV2": "Phí Rabby: 0.02%"
       },
       "PerpsOpenPositionPopup": {
+        "title": "Mở Vị Thế {{coin}}",
+        "limitOrderPlacedToast": "Lệnh giới hạn {{direction}} {{coin}}: Kích thước {{size}} đặt tại ${{price}}",
+        "orderType": "Loại Lệnh",
+        "orderTypeMarket": "Thị Trường",
+        "orderTypeLimit": "Giới Hạn",
+        "limitPrice": "Giá giới hạn",
+        "currentPrice": "Giá hiện tại",
         "leverage": "Đòn bẩy",
         "slPrice": "Giá Dừng Lỗ",
         "size": "Kích thước",
@@ -2904,6 +2950,11 @@
         "onlyIsolated": "Chỉ có margin cô lập được hỗ trợ cho token này"
       },
       "PerpsOpenPositionCheckPopup": {
+        "limitTitle": "Kiểm Tra Lệnh Giới Hạn",
+        "marketTitle": "Kiểm Tra Lệnh Thị Trường",
+        "limitPrice": "Giá giới hạn",
+        "mayExecuteImmediately": "Lệnh giới hạn này có thể được thực hiện ngay lập tức",
+        "setLimitOrderBtn": "Đặt Lệnh Giới Hạn",
         "fee": "Phí",
         "price": "Giá",
         "title": "Kiểm tra Đơn hàng",
@@ -2951,6 +3002,10 @@
         "currentPrice": "Giá hiện tại {{price}}",
         "stopLossExpectedPNL": "Dừng lỗ lãi dự kiến",
         "takeProfitExpectedPNL": "Lợi nhuận kỳ vọng khi chốt lời",
+        "youGainRoi": "Bạn Được Hưởng (ROI)",
+        "youLossRoi": "Bạn Thua Lỗ (ROI)",
+        "currentPriceTpl": "Hiện tại <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "Vào lệnh <1>{{entryPrice}}</1>  Hiện tại <2>{{price}}</2>",
         "EntryAndCurrentPrice": "Giá vào {{entryPrice}}  Giá hiện tại {{price}}"
       },
       "PerpsEditMarginPopup": {
@@ -3200,7 +3255,8 @@
         "debtSwapSelector": {
           "header": {
             "assets": "Token/Số dư",
-            "borrow": "Các khoản vay của tôi"
+            "borrow": "Các khoản vay của tôi",
+            "apy": "APY"
           },
           "title": "Chọn Token Vay"
         },

@@ -12,6 +12,7 @@ import {
   MarginTable,
   ClearinghouseState,
   SpotClearinghouseState,
+  OpenOrder,
 } from '@rabby-wallet/hyperliquid-sdk';
 import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
 import type { Account } from '@/types/account';
@@ -316,7 +317,12 @@ export const formatAllDexsClearinghouseState = (
   if (!allClearinghouseState || !allClearinghouseState[0]) {
     return null;
   }
-  const hyperDexState = allClearinghouseState[0][1];
+  // Hyper is the basis for the aggregate's marginSummary / time. WS pushes
+  // hyper at index 0 by HL convention, but callers that rebuild from a Map
+  // (insertion-order) can deliver it in any position — find by name.
+  const hyperDexState =
+    allClearinghouseState.find(([name]) => name === '')?.[1] ??
+    allClearinghouseState[0][1];
 
   const assetPositions = allClearinghouseState
     .map(item => item[1]?.assetPositions || [])
@@ -327,11 +333,18 @@ export const formatAllDexsClearinghouseState = (
   }, 0);
 
   let crossMaintenanceMarginUsed = 0;
-  for (const [dexName, state] of allClearinghouseState) {
+  // time = max across all dexes, not just hyper — otherwise a sub-dex-only
+  // refresh wouldn't advance the aggregate timestamp and downstream
+  // freshness guards would reject the update.
+  let maxTime = 0;
+  for (const [, state] of allClearinghouseState) {
     if (!state) {
       continue;
     }
     crossMaintenanceMarginUsed += Number(state.crossMaintenanceMarginUsed || 0);
+    if ((state.time ?? 0) > maxTime) {
+      maxTime = state.time;
+    }
   }
 
   return {
@@ -342,7 +355,7 @@ export const formatAllDexsClearinghouseState = (
       ...hyperDexState.marginSummary,
       accountValue: calcAccountValueByAllDexs(allClearinghouseState).toString(),
     },
-    time: hyperDexState?.time || 0,
+    time: maxTime,
     withdrawable: withdrawable.toString(),
   };
 };
@@ -528,3 +541,69 @@ export const handleDisplayFundingPayments = (fundingPayments: string) => {
 // Hyperliquid spot balance keys: USDT is keyed as 'USDT0' on the spot side.
 export const getSpotBalanceKey = (asset: string): string =>
   asset === 'USDT' ? 'USDT0' : asset;
+
+export const isLimitOrder = (order: OpenOrder): boolean => {
+  return (
+    !order.isTrigger && !order.isPositionTpsl && order.orderType === 'Limit'
+  );
+};
+
+export const computeFilledPct = (origSz: string, sz: string): number => {
+  const orig = new BigNumber(origSz || 0);
+  if (orig.isZero()) {
+    return 0;
+  }
+  const filled = orig.minus(sz || 0);
+  return filled.div(orig).times(100).toNumber();
+};
+
+// `sz` is the *remaining* open size of the order — for partially filled
+// orders this is `order.sz`, not `order.origSz`, so margin usage reflects the
+// live notional still sitting on the book.
+export const computeMarginUsage = (
+  limitPx: string,
+  sz: string,
+  leverage: number,
+): number => {
+  if (!leverage || leverage <= 0) {
+    return 0;
+  }
+  return new BigNumber(limitPx || 0)
+    .times(sz || 0)
+    .div(leverage)
+    .toNumber();
+};
+
+/**
+ * Absolute deviation of a user-entered limit price from the current mark price,
+ * expressed as a unit ratio (0.05 == 5%). Returns Infinity for non-numeric input
+ * or a zero/negative mark so callers always trip the block threshold safely.
+ */
+export const computeLimitPriceDeviation = (
+  limitPx: string,
+  markPx: number,
+): number => {
+  const limit = Number(limitPx);
+  if (!Number.isFinite(limit) || !markPx || markPx <= 0) {
+    return Infinity;
+  }
+  return Math.abs(limit - markPx) / markPx;
+};
+
+/**
+ * True when a limit-open order would cross the spread at submission time and
+ * therefore likely execute immediately. Long ≥ mark, Short ≤ mark.
+ */
+export const isMarketableLimit = (params: {
+  direction: 'Long' | 'Short';
+  limitPx: string;
+  markPx: number;
+}): boolean => {
+  const limit = Number(params.limitPx);
+  if (!Number.isFinite(limit) || limit <= 0) {
+    return false;
+  }
+  return params.direction === 'Long'
+    ? limit >= params.markPx
+    : limit <= params.markPx;
+};

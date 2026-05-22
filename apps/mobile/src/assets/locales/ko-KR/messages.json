@@ -85,7 +85,7 @@
         "ApproveTo": "승인하기",
         "Date": "날짜",
         "RevokeFrom": "에서 철회",
-        "InteractedContract": "상호작용된 계약",
+        "InteractedContract": "상호작용 대상(To)",
         "RevokeToken": "토큰 취소",
         "name": "이름",
         "BuyAgain": "다시 구매하기",
@@ -96,7 +96,9 @@
         "Name": "이름",
         "AddToWhitelist": "화이트리스트에 추가",
         "RecipientAddress": "수신 지갑",
-        "Simulation Results": "시뮬레이션 결과"
+        "Simulation Results": "시뮬레이션 결과",
+        "TransactionDetails": "트랜잭션 세부 정보",
+        "Operation": "작업"
       },
       "empty": {
         "desc": "<1> 지원되는 체인 </1>에서 거래를 찾을 수 없습니다.",
@@ -904,7 +906,7 @@
       "formChangedTitle": "양식 변경됨",
       "formChangedAmount": "금액이 변경되었습니다. 시스템 키보드의 비밀번호 자동 완성으로 인한 것일 수 있습니다. 올바른 금액을 다시 확인하고 입력해 주세요.",
       "best-subtitle": "최선의 견적은 예상 총 비용(Gas 수수료 포함)과 전달 속도의 조합으로 결정됩니다.",
-      "swap-best-subtitle": "```json\n{\"u_0\":\"최적의気配는 추정된 총 비용(환율 및 가스비를 포함)이 가장 낮은 것으로 결정됩니다.\"}\n```"
+      "swap-best-subtitle": "최적 견적은 환율과 가스비를 포함한 예상 총비용이 가장 낮은 항목으로 결정됩니다."
     },
     "manageAddress": {
       "confirm": "확인",
@@ -1482,7 +1484,8 @@
         "txCreated": "트랜잭션 생성됨",
         "txSendings": "서명 요청 전송 중({{current}}/{{total}})"
       },
-      "fixedModeText": "고정 모드: 항상 사용자 정의 가스 설정 사용"
+      "fixedModeText": "고정 모드: 항상 사용자 정의 가스 설정 사용",
+      "fixedModeTag": "고정 모드"
     },
     "addChain": {
       "desc": "Rabby는 사용자 정의 네트워크의 보안을 확인할 수 없습니다. 신뢰할 수 있는 네트워크만 추가하십시오.",
@@ -1625,7 +1628,7 @@
       "depositNow": "지금 입금하기",
       "switchAccount": "지갑 전환",
       "depositFailed": "입금 실패",
-      "lowBalance": "가스가 충분하지 않습니다. 향후 거래가 원활하게 진행될 수 있도록 가스를 입금하세요.",
+      "lowBalance": "가스가 충분하지 않습니다(<$1.00). 향후 거래가 원활하게 진행될 수 있도록 가스를 입금하세요.",
       "depositSubmitted": "입금 제출됨",
       "depositWith": "입금 via"
     },
@@ -2441,6 +2444,28 @@
       "title": "역사"
     },
     "perps": {
+      "limitOrders": "지정가 주문",
+      "cancelAll": "전체 취소",
+      "cancelAllOrdersConfirmTitle": "모든 주문 취소 확인",
+      "cancelAllOrdersConfirmMessage": "모든 지정가 주문이 취소됩니다",
+      "limitOrderDetail": {
+        "title": "지정가 {{side}} {{pair}}",
+        "time": "시간",
+        "size": "크기",
+        "filled": "체결",
+        "currentPrice": "현재 가격",
+        "limitPrice": "지정가",
+        "marginUsage": "증거금 사용",
+        "cancelLimitOrder": "지정가 주문 취소",
+        "buy": "매수",
+        "sell": "매도"
+      },
+      "cancelOrderToast": {
+        "singleSuccess": "지정가 주문이 취소되었습니다",
+        "multiSuccess": "{{count}}개의 지정가 주문이 취소되었습니다",
+        "partial": "{{okCount}}개 취소됨, {{failCount}}개 실패",
+        "failed": "지정가 주문 취소 실패"
+      },
       "PerpsCard": {
         "withdrawBtn": "출금",
         "loginBtn": "영구 계약 거래에 로그인",
@@ -2696,6 +2721,20 @@
       }
     },
     "perpsDetail": {
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "지정가 매수가 설정",
+        "setLimitSellPrice": "지정가 매도가 설정",
+        "marketLabel": "중간가",
+        "setBtn": "설정",
+        "blockError": "주문 가격이 10% 가격 보호 한도를 초과했습니다.",
+        "confirmTitle": "지정가 검토",
+        "confirmMessage": "지정가가 시장 가격보다 5% 이상 차이납니다",
+        "confirmContinue": "계속",
+        "confirmCancel": "취소"
+      },
+      "PerpsPriceInfo": {
+        "current": "현재"
+      },
       "PerpsPosition": {
         "title": "포지션",
         "direction": "방향",
@@ -2761,6 +2800,13 @@
         "rabbyFeeTipsV2": "Rabby 수수료: 0.02%"
       },
       "PerpsOpenPositionPopup": {
+        "title": "{{coin}} 포지션 열기",
+        "limitOrderPlacedToast": "지정가 {{direction}} {{coin}}: 크기 {{size}}, ${{price}}에 주문 완료",
+        "orderType": "주문 유형",
+        "orderTypeMarket": "시장가",
+        "orderTypeLimit": "지정가",
+        "limitPrice": "지정가",
+        "currentPrice": "현재 가격",
         "minimumOrderSize": "최소 주문 크기는 $10입니다.",
         "margin": "마진",
         "invalidNumber": "유효한 번호를 입력하십시오",
@@ -2784,6 +2830,11 @@
         "onlyIsolated": "이 토큰에 대해서는 격리 마진만 지원됩니다."
       },
       "PerpsOpenPositionCheckPopup": {
+        "limitTitle": "지정가 주문 확인",
+        "marketTitle": "시장가 주문 확인",
+        "limitPrice": "지정가",
+        "mayExecuteImmediately": "이 지정가 주문은 즉시 체결될 수 있습니다",
+        "setLimitOrderBtn": "지정가 주문 설정",
         "initialMargin": "초기 증거금",
         "estLqPrice": "예상 청산 가격",
         "direction": "방향",
@@ -2831,7 +2882,11 @@
         "stopLossExpectedPNL": "손실 방지 예상 PNL",
         "youLoss": "당신의 손실",
         "stopLossWhen": "손절매 시",
-        "takeProfitWhen": "이익 실현 시"
+        "takeProfitWhen": "이익 실현 시",
+        "youGainRoi": "수익 (ROI)",
+        "youLossRoi": "손실 (ROI)",
+        "currentPriceTpl": "현재 <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "진입 <1>{{entryPrice}}</1>  현재 <2>{{price}}</2>"
       },
       "PerpsEditMarginPopup": {
         "title": "마진 조정",
@@ -3080,7 +3135,8 @@
         "debtSwapSelector": {
           "header": {
             "assets": "토큰/잔액",
-            "borrow": "내 차입"
+            "borrow": "내 차입",
+            "apy": "APY"
           },
           "title": "대출 토큰 선택"
         },

@@ -256,7 +256,7 @@
         "LendingManageEMode": "開啟 E-Mode",
         "LendingManageEModeDisable": "關閉 E-Mode",
         "LendingDebtSwap": "債務交換",
-        "LendingRepayWithCollateral": "用抵押品偿还"
+        "LendingRepayWithCollateral": "用抵押品償還"
       },
       "detail": {
         "Unknown": "未知",
@@ -276,7 +276,7 @@
         "GasFee": "Gas Fee",
         "SendAgain": "再次發送",
         "Chain": "鏈",
-        "InteractedContract": "已交互合約",
+        "InteractedContract": "互動對象（To）",
         "ViewOn": "查看",
         "RevokeToken": "收回 Token",
         "RevokeFrom": "從...撤銷",
@@ -292,11 +292,13 @@
         "PurchaseFrom": "購買自",
         "AddToWhitelist": "加入白名單",
         "RecipientAddress": "收款錢包",
-        "Simulation Results": "模擬結果"
+        "Simulation Results": "模擬結果",
+        "TransactionDetails": "交易詳情",
+        "Operation": "操作"
       },
       "empty": {
         "title": "沒有交易",
-        "desc": "未在<1>supported chains</1>上找到交易。"
+        "desc": "未在<1>支援的鏈</1>上找到交易。"
       },
       "txHistory": {
         "parseInputDataError": "解析消息失敗",
@@ -320,8 +322,8 @@
       "ShowAllTransactionsToast": "隱藏交易已顯示",
       "NotShowAllTransactionsToast": "隱藏交易已隱藏",
       "TransactionAlert": {
-        "clearPendingSuccess": "本地待处理交易已移除",
-        "clearPendingText": "{{chainName}} 交易 ({{nonces}}) 已待处理超过 3 分钟。您可以 <5></5> <6>本地清除待处理</6> <7></7> 并重新提交交易。",
+        "clearPendingSuccess": "本地待處理交易已移除",
+        "clearPendingText": "{{chainName}} 交易 ({{nonces}}) 已待處理超過 3 分鐘。您可以 <5></5> <6>本地清除待處理</6> <7></7> 並重新提交交易。",
         "skipNonceText": "Nonce #{{nonce}} 在 {{chainName}} 鏈上被跳過。這可能導致前面的交易待處理。<5></5> <6>提交一筆 tx</6> <7></7> 在鏈上以解決此問題。"
       },
       "HideScamTransactions": "隱藏詐騙交易",
@@ -428,7 +430,7 @@
       "signedTx": {
         "message": {
           "cancelSuccess": "已取消",
-          "deleteSuccess": "本地待处理交易已移除"
+          "deleteSuccess": "本地待處理交易已移除"
         },
         "common": {
           "unknownProtocol": "未知協議",
@@ -448,7 +450,7 @@
               "desc": "在廣播之前取消，無需 gas 費"
             },
             "removeLocalPendingTx": {
-              "title": "清除本地待处理事项",
+              "title": "清除本地待處理事項",
               "desc": "從介面中移除待處理交易"
             }
           }
@@ -483,9 +485,9 @@
           "titleLastThreeMonths": "90天內無交易紀錄"
         },
         "CancelTxConfirmPopup": {
-          "title": "清除本地待处理项",
+          "title": "清除本地待處理項",
           "desc": "這將從您的介面中移除待處理的交易。您可以隨後發起新的交易。",
-          "warning": "被移除的交易仍然可能在链上被确认，除非它被替换。"
+          "warning": "被移除的交易仍然可能在鏈上被確認，除非它被替換。"
         }
       }
     },
@@ -1491,7 +1493,7 @@
       "markAsBlockToast": "標記為「已阻止」",
       "connectBtn": "連接",
       "flagByScamSniffer": "被 ScamSniffer 標記",
-      "noWebsite": "抱歉，我无法协助翻译这段内容，因为您没有提供原始文本。如果您可以提供需要翻译的具体文案，我将很乐意为您提供帮助。",
+      "noWebsite": "無",
       "connectWallet": "連接錢包"
     },
     "addToken": {
@@ -1999,7 +2001,7 @@
       "gasBalance": "Gas 余额",
       "depositNow": "立即存款",
       "depositFailed": "存款失敗",
-      "lowBalance": "您沒有足夠的 gas。請存入 gas 以確保未來的交易順利進行。",
+      "lowBalance": "您的 gas 不足（<$1.00）。請存入 gas 以確保未來的交易順利進行。",
       "depositSubmitted": "存款已提交",
       "depositWith": "存入方式"
     },
@@ -2176,7 +2178,8 @@
         "txSigned": "已簽名。創建交易",
         "txSendings": "發送簽名請求（{{current}}/{{total}}）"
       },
-      "fixedModeText": "固定模式：始終使用您的自定義 gas 設定"
+      "fixedModeText": "固定模式：始終使用您的自定義 gas 設定",
+      "fixedModeTag": "固定模式"
     },
     "addChain": {
       "title": "添加自定義網絡到 Rabby",
@@ -2250,7 +2253,7 @@
       "feedback": "反饋",
       "faceId": "Face ID",
       "addCustomNetwork": "新增自定義網路",
-      "clearPending": "清除本地待处理项",
+      "clearPending": "清除本地待處理項",
       "touchId": "Touch ID",
       "autoLockTime": "自動鎖定時間",
       "themeMode": "主題模式",
@@ -2264,8 +2267,8 @@
       "currentLanguage": "當前語言",
       "appCache": "清除應用程式快取",
       "clearPendingResetDesc": "還要重置我的本地 nonce 數據和簽名記錄",
-      "clearPendingToast": "本地待处理交易已移除",
-      "clearPendingWarning": "移除的交易可能仍然会在链上被确认，除非它被替换。",
+      "clearPendingToast": "本地待處理交易已移除",
+      "clearPendingWarning": "移除的交易可能仍然會在鏈上被確認，除非它被替換。",
       "clearBrowserData": "清除瀏覽器數據",
       "searchCurrency": "搜尋貨幣",
       "currency": "貨幣",
@@ -2618,6 +2621,28 @@
       "title": "歷史"
     },
     "perps": {
+      "limitOrders": "限價單",
+      "cancelAll": "全部取消",
+      "cancelAllOrdersConfirmTitle": "確認取消所有訂單",
+      "cancelAllOrdersConfirmMessage": "您所有的限價單將被取消",
+      "limitOrderDetail": {
+        "title": "限價{{side}} {{pair}}",
+        "time": "時間",
+        "size": "大小",
+        "filled": "已成交",
+        "currentPrice": "目前價格",
+        "limitPrice": "限價",
+        "marginUsage": "保證金佔用",
+        "cancelLimitOrder": "取消限價單",
+        "buy": "買入",
+        "sell": "賣出"
+      },
+      "cancelOrderToast": {
+        "singleSuccess": "限價單已取消",
+        "multiSuccess": "已取消 {{count}} 個限價單",
+        "partial": "{{okCount}} 個已取消，{{failCount}} 個失敗",
+        "failed": "取消限價單失敗"
+      },
       "PerpsCard": {
         "available": "可用",
         "learnBtn": "了解永续合约",
@@ -2732,7 +2757,7 @@
       "history": {
         "status": {
           "completed": "已完成",
-          "pending": "待处理"
+          "pending": "待處理"
         },
         "title": "歷史",
         "closeLongSl": "平仓多单止损",
@@ -2821,7 +2846,7 @@
       "closeAllConfirmTitle": "確認關閉所有持倉",
       "closeAllConfirmMessage": "所有您的未平仓头寸将以市场价格平仓。",
       "assetPage": {
-        "hyperliquidPosition": "Hyperliquid 位置"
+        "hyperliquidPosition": "Hyperliquid 倉位"
       },
       "invitePopup": {
         "activateFailed": "失敗",
@@ -2873,6 +2898,20 @@
       }
     },
     "perpsDetail": {
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "設置限價買入價格",
+        "setLimitSellPrice": "設置限價賣出價格",
+        "marketLabel": "中間價",
+        "setBtn": "設置",
+        "blockError": "訂單價格超過 10% 的價格保護限制。",
+        "confirmTitle": "確認限價",
+        "confirmMessage": "限價與市場價格相差 5% 以上",
+        "confirmContinue": "繼續",
+        "confirmCancel": "取消"
+      },
+      "PerpsPriceInfo": {
+        "current": "目前"
+      },
       "PerpsPosition": {
         "title": "持倉",
         "direction": "方向",
@@ -2903,7 +2942,7 @@
         "unrealizedPnl": "未实现PNL",
         "marginMode": "保證金模式",
         "positionValue": "持倉價值",
-        "realizedPnl": "已实现盈虧",
+        "realizedPnl": "已實現盈虧",
         "details": "詳情",
         "fundingTipsBold": "這顯示自從該持倉開設以來您總共的資金結算。<bold>綠色（正向）</bold>值意味著您從其他交易者那裡賺取了利益，而<bold>紅色（負向）</bold>值則是您支付給他們的資金成本。",
         "crossTips": "在跨保证金模式下，单个头寸的强制平仓价格仅供参考。"
@@ -2938,6 +2977,13 @@
         "rabbyFeeTipsV2": "Rabby 手续費：0.02%"
       },
       "PerpsOpenPositionPopup": {
+        "title": "開啟 {{coin}} 持倉",
+        "limitOrderPlacedToast": "限價{{direction}} {{coin}}：大小 {{size}} 已以 ${{price}} 掛單",
+        "orderType": "訂單類型",
+        "orderTypeMarket": "市價",
+        "orderTypeLimit": "限價",
+        "limitPrice": "限價",
+        "currentPrice": "目前價格",
         "leverage": "杠杆",
         "margin": "保證金",
         "size": "大小",
@@ -2958,9 +3004,14 @@
         "minMargin": "最低保证金为 {{amount}}",
         "maxMargin": "最高保证金为 {{amount}}",
         "upTo": "高達",
-        "onlyIsolated": "此代幣只支援孤立保證金。"
+        "onlyIsolated": "此代幣只支援逐倉保證金。"
       },
       "PerpsOpenPositionCheckPopup": {
+        "limitTitle": "確認限價單",
+        "marketTitle": "確認市價單",
+        "limitPrice": "限價",
+        "mayExecuteImmediately": "此限價單可能立即成交",
+        "setLimitOrderBtn": "設置限價單",
         "size": "大小",
         "initialMargin": "初始保证金",
         "direction": "方向",
@@ -3006,6 +3057,10 @@
         "currentPrice": "當前 {{price}}",
         "priceBelow": "價格低於",
         "stopLossExpectedPNL": "止损预期盈亏",
+        "youGainRoi": "你獲得（ROI）",
+        "youLossRoi": "你虧損（ROI）",
+        "currentPriceTpl": "當前 <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "進場 <1>{{entryPrice}}</1>  當前 <2>{{price}}</2>",
         "EntryAndCurrentPrice": "進場 {{entryPrice}}  當前 {{price}}",
         "stopLossWhen": "停損條件",
         "takeProfitWhen": "達成利潤時"
@@ -3108,8 +3163,8 @@
         "supplyAPY": "供應 APY",
         "actions": "供應",
         "unavailable": "不提供",
-        "supplyBalance": "供應餘額",
-        "isolatedTips": "您现有的借贷资产不被支持。",
+        "supplyBalance": "存款餘額",
+        "isolatedTips": "您現有的借貸資產不被支援。",
         "collateralization": "抵押化",
         "enabled": "已啟用",
         "supplied": "供應"
@@ -3121,11 +3176,11 @@
       "borrowDetail": {
         "approveAndBorrow": "批准和借款",
         "actions": "借入",
-        "almostReachedError": "可借贷的最大金额受到限制，因为协议借贷上限即将达到。",
+        "almostReachedError": "可借貸的最大金額受到限制，因為協議借貸上限即將達到。",
         "almostReachedWarning": "該資產的協議借貸上限為 100%。進一步借貸不可用。",
         "swapDebt": "交換",
         "borrowed": "借入",
-        "noSupplyDesc": "要借款，您需要提供资产作为抵押。",
+        "noSupplyDesc": "要借款，您需要提供資產作為抵押。",
         "noSupplyPrefix": "無供應："
       },
       "popup": {
@@ -3158,10 +3213,10 @@
       },
       "risk": {
         "checkbox": "我了解警告並想繼續。",
-        "withdrawWarning": "提取该金额将使您的健康因子下降到风险清算的水平。",
-        "warning": "借用此金额将使您的健康因子降低到风险水平，可能面临清算。",
-        "toggleCollateralWarning": "禁用该资产作为抵押将会将您的健康因子降低到一个风险水平，可能面临清算。",
-        "emodeBlockWarning": "禁用 E-mode 将使您的健康因子下降到风险清算的水平。",
+        "withdrawWarning": "提取該金額將使您的健康因子下降到有清算風險的水平。",
+        "warning": "借用此金額將使您的健康因子降低到風險水平，可能面臨清算。",
+        "toggleCollateralWarning": "禁用該資產作為抵押將會使您的健康因子降低到風險水平，可能面臨清算。",
+        "emodeBlockWarning": "禁用 E-mode 將使您的健康因子下降到有清算風險的水平。",
         "blockEmodeWarning": "您無法禁用 E-Mode，因為這可能導致清算。要退出 E-Mode，請提供或償還借入的頭寸。"
       },
       "lqDescription": {
@@ -3171,19 +3226,19 @@
         "below1desc": "您的倉位面臨被平倉的風險。",
         "below1title": "健康因子 ≤ 1.0：",
         "over3desc": "您的資產是安全的",
-        "warningText": "您的健康因子太低。为避免清算：\n1. 偿还部分或全部贷款\n2. 添加更多抵押品",
+        "warningText": "您的健康因子太低。為避免清算：\n1. 償還部分或全部貸款\n2. 添加更多抵押品",
         "introText": "您的健康因子顯示您的借貸狀況有多安全。如果它下降得太低，您的擔保品可能會被清算。",
-        "liquidation": "清算：如果您的健康因子降至 1.0 以下，您的部分抵押品可能会被自动出售以偿还债务。将会适用清算罚款，导致您部分抵押品的损失。"
+        "liquidation": "清算：如果您的健康因子降至 1.0 以下，您的部分抵押品可能會被自動出售以償還債務。將會適用清算罰款，導致您部分抵押品的損失。"
       },
       "modalDesc": {
         "availableToBorrow": "可借用",
         "maxAmount": "這是您根據所有提供的抵押品可以借用的最大金額。您的總借款能力是通過將每個抵押資產的市場價值與其最大貸款價值比（Max LTV）相乘，然後將結果相加來計算的。",
-        "availableToBorrowDesc": "您可以根据您提供的抵押品进行借款，直到达到借款上限。",
+        "availableToBorrowDesc": "您可以根據您提供的抵押品進行借款，直到達到借款上限。",
         "lqDesc": "當清算發生時，清算人會代表借款人償還最多 50% 的未償還借款金額。作為回報，他們可以以折扣價格購買抵押品，並將差額（清算罰金）作為獎勵保留。",
         "isolatedTitle": "資產無法用作擔保品",
         "isolatedDesc": "此資產僅能在獨立模式下用作抵押，此時您無法提供其他資產抵押來進行借款。在獨立模式下用作抵押的資產僅能借出特定的債務上限。",
-        "isolatedSupplyDesc": "抵押品的使用受到隔离模式的限制。",
-        "globalIsolatedDesc": "在隔离模式下，您无法将其他资产作为抵押品。全球债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借入其他资产之前禁用UNI作为抵押品。",
+        "isolatedSupplyDesc": "抵押品的使用受到隔離模式的限制。",
+        "globalIsolatedDesc": "在隔離模式下，您無法將其他資產作為抵押品。全域債務上限限制了隔離資產的借貸能力。要退出隔離模式，請在借入其他資產之前禁用 UNI 作為抵押品。",
         "maxLTV": "最大 LTV 比率表示特定抵押品的最大借款能力。例如，如果一个抵押品的 LTV 为 75%，用户可以在每 1 ETH 抵押品的情况下，借出最多 0.75 值的主币 ETH。"
       },
       "supplied": "供應",
@@ -3198,20 +3253,20 @@
       "hfTitle": "健康因子",
       "estNetApy": "預估淨年利率",
       "toggleCollateralDetail": {
-        "disable": "禁用 {{asset}} 作为抵押品",
+        "disable": "禁用 {{asset}} 作為抵押品",
         "enable": "啟用 {{asset}} 作為抵押品",
         "error": "AAVE 服務出現一些錯誤。請稍後再試。",
         "actions": "切換 {{asset}} 擔保品"
       },
       "toggleCollateralModal": {
-        "exitIsolationModeTitle": "退出隔离模式",
+        "exitIsolationModeTitle": "退出隔離模式",
         "enableIsolationModeTitle": "啟用隔離模式",
         "closeTitle": "檢查禁用",
         "openTitle": "審核啟用",
-        "riskToLiquidationText": "您无法将此货币的使用模式切换为抵押模式，因为这将导致抵押品催缴。",
-        "exitIsolationModeDesc": "您将退出隔离模式，其他代币现在可以用作抵押。",
-        "closeDesc": "禁用此资产作为抵押会影响您的借款能力和健康因子。",
-        "enableIsolationModeDesc": "您正在进入隔离模式。在隔离模式下，您无法使用其他资产作为抵押品。全局债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借用其他资产之前禁用 CRV 作为抵押品。",
+        "riskToLiquidationText": "您無法將此貨幣的使用模式切換為抵押模式，因為這將導致抵押品催繳。",
+        "exitIsolationModeDesc": "您將退出隔離模式，其他代幣現在可以用作抵押。",
+        "closeDesc": "禁用此資產作為抵押會影響您的借款能力和健康因子。",
+        "enableIsolationModeDesc": "您正在進入隔離模式。在隔離模式下，您無法使用其他資產作為抵押品。全域債務上限限制了隔離資產的借貸能力。要退出隔離模式，請在借用其他資產之前禁用 CRV 作為抵押品。",
         "openDesc": "啟用這個資產作為抵押品將增加你的借貸能力和健康因子。然而，如果你的健康因子降到 1 之下，它可能會被清算。",
         "toggleRiskTexts": {
           "doNotHaveSuppliesInThisCurrency": "您在此货币中没有供应。",
@@ -3257,7 +3312,8 @@
         "debtSwapSelector": {
           "header": {
             "assets": "代幣/餘額",
-            "borrow": "我的借款"
+            "borrow": "我的借款",
+            "apy": "APY"
           },
           "title": "選擇借入代幣"
         },

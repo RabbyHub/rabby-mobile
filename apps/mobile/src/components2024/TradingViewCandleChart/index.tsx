@@ -307,6 +307,7 @@ const TradingViewCandleChart = ({
         webviewSize={{ height }}
         onMessage={handleWebViewMessage}
         onError={handleWebViewError}
+        backGroundColor={backGroundColor}
         i18nTexts={{
           'component.kline.tp': t('component.kline.tp'),
           'component.kline.entry': t('component.kline.entry'),

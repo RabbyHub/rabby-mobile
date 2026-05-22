@@ -1,4 +1,10 @@
-import { useState, useCallback, useEffect, type Ref } from 'react';
+import {
+  useState,
+  useCallback,
+  useEffect,
+  type ElementType,
+  type Ref,
+} from 'react';
 import { StyleSheet, TextInputProps, TextStyle } from 'react-native';
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
@@ -16,11 +22,16 @@ type BottomSheetTextInputProps = React.ComponentProps<
   typeof BottomSheetTextInput
 >;
 
+type NumericInputComponentProps = TextInputProps & {
+  ref?: Ref<TextInput>;
+};
+
 type NumericInputProps = Omit<TextInputProps, 'onChangeText'> & {
   value?: string | number;
   onChangeText?: (value: string) => void | boolean;
   min?: number;
   max?: number;
+  TextInputComponent?: ElementType<NumericInputComponentProps>;
 };
 
 function correctInputToNumber<T extends number | string>(
@@ -58,10 +69,12 @@ export const NumericInput = ({
   min,
   max,
   keyboardType = 'decimal-pad',
+  TextInputComponent = TextInput,
   ref,
   ...props
 }: NumericInputProps & { ref?: Ref<TextInput> }) => {
   const { styles } = useThemeStyles(getInputStyles);
+  const Input = TextInputComponent;
   const [internalValue, setInternalValue] = useState(
     correctInputToNumber(value, { min, max }).toString(),
   );
@@ -84,7 +97,7 @@ export const NumericInput = ({
   }, [value, min, max]);
 
   return (
-    <TextInput
+    <Input
       {...props}
       keyboardType={keyboardType}
       ref={ref}

@@ -4,13 +4,15 @@ import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import RcArrowRight2CC from '@/assets2024/icons/copyTrading/IconRrightArrowCC.svg';
+import RcIconSearchCC from '@/assets2024/icons/perps/IconSearchCC.svg';
 import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { PerpsCategoryConfig } from '../../constants/perpsCategories';
 
 export const PerpsCategorySectionHeader: React.FC<{
   cfg: PerpsCategoryConfig;
-}> = ({ cfg }) => {
+  showSearch?: boolean;
+}> = ({ cfg, showSearch }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const handlePress = () => {
@@ -20,6 +22,17 @@ export const PerpsCategorySectionHeader: React.FC<{
         initialTab: cfg.id,
         openFromSource: 'searchPerps',
         autoFocus: false,
+      },
+    });
+  };
+
+  const handleSearchPress = () => {
+    naviPush(RootNames.StackTransaction, {
+      screen: RootNames.PerpsSearch,
+      params: {
+        openFromSource: 'searchPerps',
+        autoFocus: true,
+        initialTab: 'topVolume',
       },
     });
   };
@@ -37,6 +50,15 @@ export const PerpsCategorySectionHeader: React.FC<{
           color={colors2024['neutral-title-1']}
         />
       </TouchableOpacity>
+      {showSearch ? (
+        <TouchableOpacity hitSlop={8} onPress={handleSearchPress}>
+          <RcIconSearchCC
+            width={20}
+            height={20}
+            color={colors2024['neutral-foot']}
+          />
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 };
@@ -48,11 +70,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 4,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   touchable: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 4,
   },
   title: {

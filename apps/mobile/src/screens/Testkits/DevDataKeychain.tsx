@@ -255,6 +255,7 @@ type KeychainDebugExportPayload = {
   current: {
     effectiveVersion: CurrentKeychainVersion;
     configuredVersion: CurrentKeychainVersion;
+    configuredVersionField: string;
     canSwitchCurrentKeychainVersion: boolean;
     sourceLabel: string;
     defaultAndroidAuthPromptPolicy: AndroidAuthPromptPolicy;
@@ -1191,6 +1192,7 @@ export default function DevDataKeychain(): JSX.Element {
   const {
     currentKeychainVersion,
     debugCurrentKeychainVersion,
+    debugCurrentKeychainVersionField,
     canSwitchCurrentKeychainVersion,
     setCurrentKeychainVersion,
   } = useCurrentKeychainVersion();
@@ -2103,6 +2105,7 @@ export default function DevDataKeychain(): JSX.Element {
       current: {
         effectiveVersion: currentKeychainVersion,
         configuredVersion: debugCurrentKeychainVersion,
+        configuredVersionField: debugCurrentKeychainVersionField,
         canSwitchCurrentKeychainVersion,
         sourceLabel: apisKeychain.getCurrentKeychainSourceLabel(),
         defaultAndroidAuthPromptPolicy:
@@ -2186,6 +2189,7 @@ export default function DevDataKeychain(): JSX.Element {
       currentKeychainVersion,
       debugKeychainStorageByVersion,
       debugCurrentKeychainVersion,
+      debugCurrentKeychainVersionField,
       effectiveStorageByVersion,
       includeSecretFieldsInExport,
       rabbitCode,
@@ -3140,6 +3144,11 @@ export default function DevDataKeychain(): JSX.Element {
             />
           </View>
           <StatusRow label="Effective" value={currentKeychainVersion} />
+          <StatusRow
+            label="Debug Field"
+            value={debugCurrentKeychainVersionField}
+            selectable
+          />
           <StatusRow
             label="Source"
             value={apisKeychain.getCurrentKeychainSourceLabel()}

@@ -318,7 +318,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     useRoute<
       GetNestedScreenRouteProp<
         'TransactionNavigatorParamList',
-        typeof RootNames.Bridge | typeof RootNames.MultiBridge
+        typeof RootNames.SwapBridge | typeof RootNames.MultiSwapBridge
       >
     >();
   const navState = route.params;

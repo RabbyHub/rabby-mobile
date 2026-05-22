@@ -14,7 +14,7 @@ import { useSwapHistory, useSwapTxHistoryVisible } from '../hooks/history';
 import { SwapHistoryItem } from '@/components2024/HistoryItem/SwapHistoryItem';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { navigateDeprecated } from '@/utils/navigation';
+import { naviPush } from '@/utils/navigation';
 import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
 import { syncSingleAddress } from '@/databases/hooks/history';
 import IconEmpty from '@/assets2024/images/lending/empty.png';
@@ -271,7 +271,7 @@ export const SwapTxHistory = ({
         });
         if (historyItem) {
           onDismiss();
-          navigateDeprecated(RootNames.StackTransaction, {
+          naviPush(RootNames.StackTransaction, {
             screen: RootNames.HistoryDetail,
             params: {
               isForMultipleAddress,
@@ -294,7 +294,7 @@ export const SwapTxHistory = ({
           .find(i => i.txs[0]?.hash === txId);
         if (itemData) {
           onDismiss();
-          navigateDeprecated(RootNames.StackTransaction, {
+          naviPush(RootNames.StackTransaction, {
             screen: RootNames.HistoryLocalDetail,
             params: {
               isForMultipleAddress,
@@ -344,7 +344,7 @@ export const SwapTxHistory = ({
 
       if (historyDisplayItem) {
         onDismiss();
-        navigateDeprecated(RootNames.StackTransaction, {
+        naviPush(RootNames.StackTransaction, {
           screen: RootNames.HistoryDetail,
           params: {
             isForMultipleAddress,

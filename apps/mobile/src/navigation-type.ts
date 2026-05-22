@@ -44,6 +44,24 @@ export type FromSceneParam = {
   symbol?: string;
 };
 
+export type SwapBridgeTab = 'swap' | 'bridge';
+
+export type SwapBridgeParams = {
+  activeTab?: SwapBridgeTab;
+  chainEnum?: CHAINS_ENUM | undefined;
+  tokenId?: TokenItem['id'];
+  type?: 'Buy' | 'Sell';
+  address?: string;
+  swapAgain?: boolean;
+  swapTokenId?: TokenItem['id'][];
+  isSwapToTokenDetail?: boolean;
+  isFromSwap?: boolean;
+  isFromCopyTrading?: boolean;
+  from?: FromSceneParam;
+  toChainEnum?: CHAINS_ENUM;
+  toTokenId?: TokenItem['id'];
+};
+
 export type RootStackParamsList = {
   [RootNames.StackRoot]?: NavigatorScreenParams<HomeNavigatorParamsList>;
   [RootNames.StackHomeNonTab]?: NavigatorScreenParams<HomeNonTabNavigatorParamsList>;
@@ -162,6 +180,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevDataSQLite]?: {};
   [RootNames.DevDataKeychain]?: {};
   [RootNames.DevDataKeyringVault]?: {};
+  [RootNames.DevDataContactService]?: {};
   [RootNames.DevDataWhitelist]?: {};
   [RootNames.DevUIBuiltInPages]?: {};
   [RootNames.DevUIPermissions]?: {};
@@ -345,19 +364,8 @@ export type TransactionNavigatorParamList = {
     addressBrandName?: string;
     addrDesc?: AddrDescResponse['desc'];
   };
-  [RootNames.Swap]?: {
-    chainEnum?: CHAINS_ENUM | undefined;
-    tokenId?: TokenItem['id'];
-    type?: 'Buy' | 'Sell';
-    address?: string;
-    swapAgain?: boolean;
-    swapTokenId?: TokenItem['id'][];
-    isSwapToTokenDetail?: boolean;
-    isFromSwap?: boolean;
-    isFromCopyTrading?: boolean;
-    from?: FromSceneParam;
-  };
-  [RootNames.MultiSwap]?: TransactionNavigatorParamList['Swap'] & object;
+  [RootNames.SwapBridge]?: SwapBridgeParams;
+  [RootNames.MultiSwapBridge]?: SwapBridgeParams & object;
   [RootNames.GnosisTransactionQueue]: {
     account: Account;
   };
@@ -369,13 +377,6 @@ export type TransactionNavigatorParamList = {
   [RootNames.Approvals]: {
     account: Account;
   };
-  [RootNames.Bridge]?: {
-    chainEnum?: CHAINS_ENUM | undefined;
-    tokenId?: TokenItem['id'];
-    toChainEnum?: CHAINS_ENUM;
-    toTokenId?: TokenItem['id'];
-  };
-  [RootNames.MultiBridge]?: TransactionNavigatorParamList['Bridge'] & object;
   [RootNames.ConvertDust]?: {
     disableAccountSwitch?: boolean;
     fromHomeConvertDustBanner?: boolean;

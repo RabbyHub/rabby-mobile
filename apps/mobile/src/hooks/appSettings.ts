@@ -26,6 +26,9 @@ export const CURRENT_KEYCHAIN_VERSION_VALUES = ['8.2.0-fork', '9.0.0'] as const;
 export type CurrentKeychainVersion =
   (typeof CURRENT_KEYCHAIN_VERSION_VALUES)[number];
 
+export const DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD =
+  'debugCurrentKeychainVersion20260518' as const;
+
 const DEFAULT_CURRENT_KEYCHAIN_VERSION: CurrentKeychainVersion = '9.0.0';
 const DEFAULT_DEBUG_KEYCHAIN_STORAGE: KeychainStorageType =
   DEFAULT_KEYCHAIN_STORAGE_TYPE;
@@ -70,8 +73,9 @@ type ScreenshotSettings = {
   blockSubmitIfFormChangedOnAuth: boolean;
   toastOpenApiHttpErrorStatus: boolean;
   debugSwapHistorySkipLocalLookup: boolean;
-  debugCurrentKeychainVersion: CurrentKeychainVersion;
+  [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: CurrentKeychainVersion;
   debugKeychainStorageByVersion: DebugKeychainStorageByVersion;
+  enablePerpsWatchAddress: boolean;
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
   '@ExperimentalSettings',
@@ -89,8 +93,9 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     blockSubmitIfFormChangedOnAuth: false,
     toastOpenApiHttpErrorStatus: false,
     debugSwapHistorySkipLocalLookup: false,
-    debugCurrentKeychainVersion: DEFAULT_CURRENT_KEYCHAIN_VERSION,
+    [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: DEFAULT_CURRENT_KEYCHAIN_VERSION,
     debugKeychainStorageByVersion: makeDefaultDebugKeychainStorageByVersion(),
+    enablePerpsWatchAddress: false,
   },
 );
 
@@ -130,7 +135,7 @@ export function getCurrentKeychainVersion(): CurrentKeychainVersion {
   }
 
   return coerceCurrentKeychainVersion(
-    experimentalSettingsStore.getState().debugCurrentKeychainVersion,
+    experimentalSettingsStore.getState()[DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD],
   );
 }
 
@@ -143,7 +148,7 @@ export function setCurrentKeychainVersion(version: CurrentKeychainVersion) {
 
   setExpSettingData(prev => ({
     ...prev,
-    debugCurrentKeychainVersion: nextVersion,
+    [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: nextVersion,
   }));
 
   return nextVersion;
@@ -569,9 +574,29 @@ export function useDebugSwapHistorySkipLocalLookup() {
   };
 }
 
+export function useEnablePerpsWatchAddress() {
+  const enablePerpsWatchAddress = experimentalSettingsStore(
+    s => s.enablePerpsWatchAddress,
+  );
+
+  const toggleEnablePerpsWatchAddress = useCallback((nextVal?: boolean) => {
+    setExpSettingData(prev => ({
+      ...prev,
+      enablePerpsWatchAddress:
+        typeof nextVal === 'boolean' ? nextVal : !prev.enablePerpsWatchAddress,
+    }));
+  }, []);
+
+  return {
+    enablePerpsWatchAddress:
+      isNonPublicProductionEnv && enablePerpsWatchAddress,
+    toggleEnablePerpsWatchAddress,
+  };
+}
+
 export function useCurrentKeychainVersion() {
   const debugCurrentKeychainVersion = experimentalSettingsStore(
-    s => s.debugCurrentKeychainVersion,
+    s => s[DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD],
   );
 
   const setDebugCurrentKeychainVersion = useCallback(
@@ -589,6 +614,7 @@ export function useCurrentKeychainVersion() {
     canSwitchCurrentKeychainVersion: isNonPublicProductionEnv,
     setCurrentKeychainVersion: setDebugCurrentKeychainVersion,
     currentKeychainVersionOptions: CURRENT_KEYCHAIN_VERSION_VALUES,
+    debugCurrentKeychainVersionField: DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD,
   };
 }
 
