@@ -246,6 +246,23 @@ export default function UnlockScreen() {
   const [usingBiometrics, setUsingBiometrics] = useState(isBiometricsEnabled);
   const couldSwitchingAuthentication = isBiometricsEnabled;
   const usingPassword = !usingBiometrics || !isBiometricsEnabled;
+  const usingPasswordRef = React.useRef(usingPassword);
+  const biometricActionIdRef = React.useRef(0);
+  const lockBiometricRef = React.useRef(false);
+
+  React.useEffect(() => {
+    usingPasswordRef.current = usingPassword;
+  }, [usingPassword]);
+
+  const cancelPendingBiometricUnlock = useCallback(() => {
+    biometricActionIdRef.current += 1;
+  }, []);
+
+  const isBiometricActionActive = useCallback((actionId: number) => {
+    return (
+      actionId === biometricActionIdRef.current && !usingPasswordRef.current
+    );
+  }, []);
 
   const { safeSizes } = useSafeAndroidBottomSizes({
     containerPaddingBottom: 0,
@@ -256,93 +273,129 @@ export default function UnlockScreen() {
   const passwordInputRef = React.useRef<TextInput>(null);
   const { onTouchInputAway } = useInputBlurOnTouchaway(passwordInputRef);
 
-  const unlockWithBiometrics = useCallback(async () => {
-    try {
-      await apisKeychain.requestGenericPassword({
-        purpose: RequestGenericPurpose.DECRYPT_PWD,
-        onPlainPassword: async password => {
-          measureTime.start('UnlockWithBiometrics');
-          const result = await storeApisUnlock.unlockApp(password);
-          const timeResult = measureTime.end('UnlockWithBiometrics');
-          reportUnlockTime(timeResult.diff, 'biometrics');
-
-          if (result.error) {
-            throw new Error(result.error);
-          }
-        },
-      });
-      updateUnlockTime();
-    } catch (error: any) {
-      if (__DEV__) {
-        console.error(error);
+  const unlockWithBiometrics = useCallback(
+    async (actionId: number) => {
+      if (!isBiometricActionActive(actionId) || apisLock.isUnlocked()) {
+        return;
       }
 
-      if (__DEV__ && incToReset() === 0) {
-        toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
-        setUsingBiometrics(false);
-        storeApisBiometrics.toggleBiometrics(false, {});
-      } else if (error.code === 'NIL_KEYCHAIN_OBJECT') {
-        toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
-        setUsingBiometrics(false);
-        storeApisBiometrics.toggleBiometrics(false, {});
-      } else if (isBrokenBiometricsEntryError(error)) {
-        toastBiometricsFailed(error.message);
-      } else {
-        toastBiometricsFailed(t('page.unlock.biometrics.failedAndTipTitle'));
-      }
+      try {
+        await apisKeychain.requestGenericPassword({
+          purpose: RequestGenericPurpose.DECRYPT_PWD,
+          onPlainPassword: async password => {
+            if (!isBiometricActionActive(actionId)) {
+              return;
+            }
 
-      // leave here for debug
-      if (__DEV__) {
-        console.debug(
-          'error.code: %s; error.name: %s; error.message: %s',
-          error.code,
-          error.name,
-          error.message,
-        );
+            measureTime.start('UnlockWithBiometrics');
+            const result = await storeApisUnlock.unlockApp(password);
+            const timeResult = measureTime.end('UnlockWithBiometrics');
+            reportUnlockTime(timeResult.diff, 'biometrics');
 
-        if (
-          ['decrypt_fail' /* iOS */, 'E_CRYPTO_FAILED' /* Android */].includes(
+            if (result.error) {
+              throw new Error(result.error);
+            }
+          },
+        });
+        if (!isBiometricActionActive(actionId)) {
+          return;
+        }
+        updateUnlockTime();
+      } catch (error: any) {
+        if (!isBiometricActionActive(actionId)) {
+          return;
+        }
+
+        if (__DEV__) {
+          console.error(error);
+        }
+
+        if (__DEV__ && incToReset() === 0) {
+          toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
+          setUsingBiometrics(false);
+          storeApisBiometrics.toggleBiometrics(false, {});
+        } else if (error.code === 'NIL_KEYCHAIN_OBJECT') {
+          toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
+          setUsingBiometrics(false);
+          storeApisBiometrics.toggleBiometrics(false, {});
+        } else if (isBrokenBiometricsEntryError(error)) {
+          toastBiometricsFailed(error.message);
+        } else {
+          toastBiometricsFailed(t('page.unlock.biometrics.failedAndTipTitle'));
+        }
+
+        // leave here for debug
+        if (__DEV__) {
+          console.debug(
+            'error.code: %s; error.name: %s; error.message: %s',
             error.code,
-          )
-        ) {
-          const parsedInfo = parseKeychainError(error);
-          if (__DEV__ && parsedInfo.sysMessage) {
-            parsedInfo.isCancelledByUser
-              ? console.warn(parsedInfo.sysMessage)
-              : console.error(parsedInfo.sysMessage);
+            error.name,
+            error.message,
+          );
+
+          if (
+            [
+              'decrypt_fail' /* iOS */,
+              'E_CRYPTO_FAILED' /* Android */,
+            ].includes(error.code)
+          ) {
+            const parsedInfo = parseKeychainError(error);
+            if (__DEV__ && parsedInfo.sysMessage) {
+              parsedInfo.isCancelledByUser
+                ? console.warn(parsedInfo.sysMessage)
+                : console.error(parsedInfo.sysMessage);
+            }
           }
         }
       }
-    }
-  }, [t]);
+    },
+    [isBiometricActionActive, t],
+  );
 
-  const lockBiometricRef = React.useRef(false);
   const processUnlockWithBiometrics = useCallback(async () => {
-    if (lockBiometricRef.current) {
+    if (
+      lockBiometricRef.current ||
+      usingPasswordRef.current ||
+      apisLock.isUnlocked()
+    ) {
       return;
     }
+    const actionId = biometricActionIdRef.current + 1;
+    biometricActionIdRef.current = actionId;
     lockBiometricRef.current = true;
+    const unlockBiometricsIfActive = () => {
+      if (!isBiometricActionActive(actionId)) {
+        return Promise.resolve();
+      }
+      return unlockWithBiometrics(actionId);
+    };
+    const releaseBiometricLock = () => {
+      checkUnlocked();
+      lockBiometricRef.current = false;
+    };
+
     if (!isFaceID) {
       const hideToast = toastUnlocking();
-      await unlockWithBiometrics().finally(() => {
-        checkUnlocked();
-        lockBiometricRef.current = false;
+      await unlockBiometricsIfActive().finally(() => {
+        releaseBiometricLock();
+        hideToast();
       });
-      hideToast();
     } else {
-      await unlockWithBiometrics().finally(() => {
-        checkUnlocked();
-        lockBiometricRef.current = false;
-      });
+      await unlockBiometricsIfActive().finally(releaseBiometricLock);
     }
-  }, [isFaceID, unlockWithBiometrics, checkUnlocked]);
+  }, [isFaceID, isBiometricActionActive, unlockWithBiometrics, checkUnlocked]);
 
   useLayoutEffect(() => {
     incToReset(true);
     const sub = perfEvents.subscribe('AUTO_TRIGGER_UNLOCK', async () => {
+      const pendingActionId = biometricActionIdRef.current;
       // wait screen rendered
       await sleep(500);
-      if (!isBiometricsEnabled) {
+      if (
+        pendingActionId !== biometricActionIdRef.current ||
+        !isBiometricsEnabled ||
+        usingPasswordRef.current
+      ) {
         return;
       }
 
@@ -434,6 +487,7 @@ export default function UnlockScreen() {
                   title={t('page.unlock.btn.unlock')}
                   onPress={evt => {
                     evt.stopPropagation();
+                    cancelPendingBiometricUnlock();
                     formik.handleSubmit();
                     checkUnlocked();
                   }}
@@ -465,6 +519,7 @@ export default function UnlockScreen() {
             )}
             style={styles.switchingAuthTypeButton}
             onPress={() => {
+              cancelPendingBiometricUnlock();
               setUsingBiometrics(prev => !prev);
             }}>
             {usingBiometrics

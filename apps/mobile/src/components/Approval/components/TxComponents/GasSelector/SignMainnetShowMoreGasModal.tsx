@@ -84,6 +84,7 @@ export const SignMainnetShowMoreGasModal = ({
   levelState,
   onEditCustomGas,
   gasToken,
+  showCustomFixedModeTag,
   showTempoGasTokenSelector,
   tempoGasTokenList = [],
   onSelectTempoGasToken,
@@ -120,6 +121,7 @@ export const SignMainnetShowMoreGasModal = ({
   levelState: SignMainnetGasLevelState;
   onEditCustomGas?: () => void;
   gasToken?: GasTokenInfo;
+  showCustomFixedModeTag?: boolean;
   showTempoGasTokenSelector?: boolean;
   tempoGasTokenList?: TempoFeeTokenOption[];
   onSelectTempoGasToken?: (token: TempoFeeTokenOption) => void;
@@ -315,6 +317,8 @@ export const SignMainnetShowMoreGasModal = ({
                   const levelTitle = t(getGasLevelI18nKey(gas.level));
                   const isActive = selectedGas?.level === gas.level;
                   const isCustom = gas.level === 'custom';
+                  const showFixedModeTag =
+                    isCustom && isActive && !!showCustomFixedModeTag;
                   const levelNativeInsufficient = isCustom
                     ? false
                     : !!levelState[gas.level]?.nativeNotEnough;
@@ -385,6 +389,11 @@ export const SignMainnetShowMoreGasModal = ({
                       }}>
                       <View style={styles.levelRow}>
                         <Text style={styles.level}>{levelTitle}</Text>
+                        {showFixedModeTag ? (
+                          <Text style={styles.fixedModeTag}>
+                            {t('page.miniSignFooterBar.fixedModeTag')}
+                          </Text>
+                        ) : null}
                         {!isCustom && (
                           <Text style={styles.gwei}> ({gwei} Gwei) </Text>
                         )}
@@ -578,6 +587,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontSize: 13,
     fontWeight: '500',
+    lineHeight: 16,
+  },
+  fixedModeTag: {
+    color: colors2024['brand-default'],
+    fontSize: 10,
+    fontWeight: '500',
+    lineHeight: 12,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: colors2024['brand-light-1'],
+    overflow: 'hidden',
+    marginLeft: 6,
+    marginRight: 6,
   },
   gwei: {
     color: colors2024['neutral-info'],

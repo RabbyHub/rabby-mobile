@@ -1,6 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import { RcIconExternalLinkCC, RcIconRightCC } from '@/assets/icons/common';
-import ChainIconImage from '@/components/Chain/ChainIconImage';
+import { RcIconRightCC } from '@/assets/icons/common';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -8,7 +7,6 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { Dimensions, ScrollView, TouchableOpacity, View } from 'react-native';
-import { formatAmount } from '@/utils/number';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
 import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
@@ -18,7 +16,6 @@ import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
 import { naviPush } from '@/utils/navigation';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { openTxExternalUrl } from '@/utils/transaction';
@@ -31,14 +28,11 @@ import {
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
-import { AddressItemInDetail } from '../../HistoryDetailScreen';
-import { TxStatusItem } from '../TxStatusItem';
 import { Button } from '@/components2024/Button';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { StackActions } from '@react-navigation/native';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { ellipsisAddress } from '@/utils/address';
-import { formatIntlTimestamp } from '@/utils/time';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/dist/types';
@@ -50,6 +44,12 @@ import { Media } from '@/components/Media';
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import { ellipsisOverflowedText } from '@/utils/text';
 import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
+import {
+  ActionDetailItem,
+  ActionDetailSection,
+} from './components/ActionDetailSection';
+import { ProjectItemInDetail } from '../ProjectItemInDetail';
+import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';
 
 interface Props {
   data: TransactionGroup;
@@ -69,7 +69,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
         id: data.chainId,
       }) || undefined;
 
-    if (!data.maxGasTx.action) {
+    if (!data.maxGasTx?.action) {
       return {
         maxGasTx: data.maxGasTx,
         actionData: undefined,
@@ -104,16 +104,6 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
     [data.isFailed, data.isSubmitFailed, data.isWithdrawed],
   );
 
-  const handleOpenTxId = useMemoizedFn(() => {
-    const tx = data.maxGasTx.hash;
-
-    if (chain?.scanLink) {
-      openTxExternalUrl({ chain, txHash: tx });
-    } else {
-      toast.error('Unknown chain');
-    }
-  });
-
   const handleOpenTxAddress = useMemoizedFn((address: string) => {
     if (chain?.scanLink) {
       openTxExternalUrl({ chain, address });
@@ -146,18 +136,18 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
       return (
         (actionData?.minReceive as ReceiveTokenItem) ||
         actionData?.receiveToken ||
-        data.maxGasTx.explain?.balance_change?.receive_token_list[0]
+        data.maxGasTx?.explain?.balance_change?.receive_token_list[0]
       );
     }
     return (
       actionData?.receiveToken ||
-      data.maxGasTx.explain?.balance_change?.receive_token_list[0]
+      data.maxGasTx?.explain?.balance_change?.receive_token_list[0]
     );
-  }, [actionData, data.maxGasTx.explain?.balance_change?.receive_token_list]);
+  }, [actionData, data.maxGasTx?.explain?.balance_change?.receive_token_list]);
 
   const payToken: TokenItem | undefined =
     actionData?.payToken ||
-    data.maxGasTx.explain?.balance_change?.send_token_list[0];
+    data.maxGasTx?.explain?.balance_change?.send_token_list[0];
 
   if (!chain) {
     return null;
@@ -169,7 +159,9 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
 
   return (
     <>
-      <ScrollView style={{ paddingHorizontal: 16 }}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}>
         <View style={[styles.doubleBox]}>
           <Text style={styles.swapTitle}>{t('global.from')}</Text>
           <View style={[styles.swapBoxContainer, { marginBottom: 16 }]}>
@@ -185,32 +177,39 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
                         alignItems: 'center',
                         gap: 8,
                       }}>
-                      {tokenIsNft ? (
-                        <Media
-                          failedPlaceholder={
-                            <IconDefaultNFT width={45} height={45} />
-                          }
-                          type="image_url"
-                          src={
-                            token?.content?.endsWith('.svg')
-                              ? ''
-                              : token?.content
-                          }
-                          thumbnail={
-                            token?.content?.endsWith('.svg')
-                              ? ''
-                              : token?.content
-                          }
-                          mediaStyle={styles.media}
-                          style={styles.media}
-                          playIconSize={12}
+                      <View>
+                        {tokenIsNft ? (
+                          <Media
+                            failedPlaceholder={
+                              <IconDefaultNFT width={45} height={45} />
+                            }
+                            type="image_url"
+                            src={
+                              token?.content?.endsWith('.svg')
+                                ? ''
+                                : token?.content
+                            }
+                            thumbnail={
+                              token?.content?.endsWith('.svg')
+                                ? ''
+                                : token?.content
+                            }
+                            mediaStyle={styles.media}
+                            style={styles.media}
+                            playIconSize={12}
+                          />
+                        ) : (
+                          <AssetAvatar
+                            logo={(token as TokenItem)?.logo_url || ''}
+                            size={45}
+                          />
+                        )}
+                        <ChainIconFastImage
+                          style={[styles.tokenChainIcon]}
+                          size={14}
+                          chainServerId={token.chain}
                         />
-                      ) : (
-                        <AssetAvatar
-                          logo={(token as TokenItem)?.logo_url || ''}
-                          size={45}
-                        />
-                      )}
+                      </View>
                       <View
                         style={[
                           styles.singleColomnBox,
@@ -268,32 +267,39 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
                         alignItems: 'center',
                         gap: 8,
                       }}>
-                      {tokenIsNft ? (
-                        <Media
-                          failedPlaceholder={
-                            <IconDefaultNFT width={45} height={45} />
-                          }
-                          type="image_url"
-                          src={
-                            token?.content?.endsWith('.svg')
-                              ? ''
-                              : token?.content
-                          }
-                          thumbnail={
-                            token?.content?.endsWith('.svg')
-                              ? ''
-                              : token?.content
-                          }
-                          mediaStyle={styles.media}
-                          style={styles.media}
-                          playIconSize={12}
+                      <View>
+                        {tokenIsNft ? (
+                          <Media
+                            failedPlaceholder={
+                              <IconDefaultNFT width={45} height={45} />
+                            }
+                            type="image_url"
+                            src={
+                              token?.content?.endsWith('.svg')
+                                ? ''
+                                : token?.content
+                            }
+                            thumbnail={
+                              token?.content?.endsWith('.svg')
+                                ? ''
+                                : token?.content
+                            }
+                            mediaStyle={styles.media}
+                            style={styles.media}
+                            playIconSize={12}
+                          />
+                        ) : (
+                          <AssetAvatar
+                            logo={(token as TokenItem)?.logo_url || ''}
+                            size={45}
+                          />
+                        )}
+                        <ChainIconFastImage
+                          style={[styles.tokenChainIcon]}
+                          size={14}
+                          chainServerId={token.chain}
                         />
-                      ) : (
-                        <AssetAvatar
-                          logo={(token as TokenItem)?.logo_url || ''}
-                          size={45}
-                        />
-                      )}
+                      </View>
                       <View
                         style={[
                           styles.singleColomnBox,
@@ -308,7 +314,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
                             : ellipsisOverflowedText(
                                 getTokenSymbol(token as TokenItem),
                                 16,
-                              )}
+                              )}{' '}
                         </Text>
                         <HistoryItemTokenPrice
                           singlePrice={token?.price}
@@ -335,444 +341,241 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
             })}
           </View>
         </View>
-        {/* <View style={[styles.doubleBox]}>
-          <TouchableOpacity
-            style={[styles.fromTokenBox]}
-            onPress={() => handleGotoDetail(payToken!)}>
-            <AssetAvatar
-              logo={payToken?.logo_url}
-              size={42}
-              chain={payToken?.chain}
-              chainSize={16}
-            />
-            <View style={[styles.rowBox, isFail && styles.isFailBox]}>
-              <Text
-                style={[styles.tokenAmountTextList, styles.isSendTextColor]}>
-                {'-'} {formatTokenAmount(payToken?.amount ?? 0)}{' '}
-                {getTokenSymbol(payToken as TokenItem)}
-              </Text>
-              <RcIconRightCC
-                color={colors2024['neutral-foot']}
-                width={18}
-                height={18}
-              />
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.toTokenBox]}
-            onPress={() => handleGotoDetail(receiveToken!)}>
-            <AssetAvatar
-              logo={receiveToken?.logo_url}
-              size={42}
-              chain={receiveToken?.chain}
-              chainSize={16}
-            />
-            <View style={[styles.rowBox, isFail && styles.isFailBox]}>
-              <Text style={[styles.tokenAmountTextList]}>
-                {'+'}{' '}
-                {formatTokenAmount(
-                  (receiveToken as ReceiveTokenItem)?.amount ||
-                    (receiveToken as ReceiveTokenItem)?.min_amount,
-                )}{' '}
-                {getTokenSymbol(receiveToken as TokenItem)}
-              </Text>
-              <RcIconRightCC
-                color={colors2024['green-default']}
-                width={18}
-                height={18}
-              />
-            </View>
-          </TouchableOpacity>
-          <View style={styles.iconSwitchArrow}>
-            <RcIconSwitchArrow />
-          </View>
-        </View> */}
-        <View style={styles.detailContainer}>
-          {!data.isPending && data.maxGasTx.completedAt && (
-            <View style={styles.detailItem}>
-              <Text style={styles.itemTitleText}>
-                {t('page.transactions.detail.Date')}
-              </Text>
-              <View>
-                <Text style={styles.itemContentText}>
-                  {formatIntlTimestamp(data?.maxGasTx.completedAt)}
-                </Text>
-              </View>
-            </View>
-          )}
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.Status')}
-            </Text>
-            <View>
-              <TxStatusItem
-                status={data.isFailed ? 0 : 1}
-                isPending={data.isPending}
-                withText={true}
-              />
-            </View>
-          </View>
-          {data.isPending ? <TransactionPendingDetail data={data} /> : null}
-
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.Chain')}
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 4 }}>
-              <ChainIconImage
-                size={16}
-                chainEnum={chain?.enum}
-                isShowRPCStatus={true}
-              />
-              <Text style={[styles.itemContentText]}>{chain?.name}</Text>
-            </View>
-          </View>
-
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.From')}
-            </Text>
-            <AddressItemInDetail
-              address={data.maxGasTx.address}
-              accounts={unionAccounts}
-            />
-          </View>
-
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.InteractedContract')}
-            </Text>
-            <TouchableOpacity
-              style={{ alignItems: 'flex-end' }}
-              onPress={() => handleOpenTxAddress(requireData?.id || '')}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 4,
-                }}>
-                <AssetAvatar logo={requireData?.protocol?.logo_url} size={16} />
-                <Text style={[styles.itemContentText]}>
-                  {requireData?.protocol?.name}
-                </Text>
-                <RcIconJumpCC
-                  width={14}
-                  height={14}
-                  color={colors2024['neutral-foot']}
-                />
-              </View>
-              <Text style={styles.itemAddressText}>
-                {ellipsisAddress(requireData?.id || '')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {Boolean(data.maxGasTx?.gasUSDValue) && (
-            <View style={styles.detailItem}>
-              <Text style={styles.itemTitleText}>
-                {t('page.transactions.detail.GasFee')}
-              </Text>
-              <Text style={styles.itemContentText}>
-                {formatAmount(data.maxGasTx?.gasTokenCount!)}{' '}
-                {data.maxGasTx?.gasTokenSymbol || ''} ($
-                {formatAmount(data.maxGasTx?.gasUSDValue ?? 0)})
-              </Text>
-            </View>
-          )}
-
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>Hash</Text>
-            <TouchableOpacity
-              disabled={!chain?.scanLink}
-              onPress={handleOpenTxId}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <Text style={[styles.itemContentText]}>
-                {ellipsisAddress(data.maxGasTx.hash!)}
-              </Text>
-              <RcIconExternalLinkCC
-                width={14}
-                height={14}
-                color={colors2024['neutral-foot']}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
+        <ActionDetailSection data={data} chain={chain} accounts={unionAccounts}>
+          <ProjectItemInDetail
+            title={t('page.transactions.detail.InteractedContract')}
+            name={requireData?.protocol?.name}
+            logo={requireData?.protocol?.logo_url}
+            address={requireData?.id}
+            chain={chain}
+          />
+        </ActionDetailSection>
       </ScrollView>
       {isLocalSwap && (
-        <View style={[styles.buttonContainer, { paddingBottom: bottom + 27 }]}>
-          <View style={{ flex: 1 }}>
-            <Button
-              onPress={async () => {
-                await switchSceneCurrentAccount(
-                  'MakeTransactionAbout',
-                  !isSingleAddress && fromAddrIsImported
-                    ? fromAddrIsImported
-                    : account || null,
-                );
-                navigation.dispatch(
-                  StackActions.push(RootNames.StackTransaction, {
-                    screen: !isSingleAddress
-                      ? RootNames.MultiSwap
-                      : RootNames.Swap,
-                    params: {
-                      swapAgain: true,
-                      chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-                      swapTokenId: [
-                        actionData?.payToken?.id,
-                        actionData?.receiveToken?.id,
-                      ],
-                    },
-                  }),
-                );
-              }}
-              title={t('page.transactions.detail.SwapAgain')}
-            />
-          </View>
+        <View style={[styles.buttonContainer]}>
+          <Button
+            onPress={async () => {
+              await switchSceneCurrentAccount(
+                'MakeTransactionAbout',
+                !isSingleAddress && fromAddrIsImported
+                  ? fromAddrIsImported
+                  : account || null,
+              );
+              navigation.dispatch(
+                StackActions.push(RootNames.StackTransaction, {
+                  screen: !isSingleAddress
+                    ? RootNames.MultiSwapBridge
+                    : RootNames.SwapBridge,
+                  params: {
+                    activeTab: 'swap',
+                    swapAgain: true,
+                    chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+                    swapTokenId: [
+                      actionData?.payToken?.id,
+                      actionData?.receiveToken?.id,
+                    ],
+                  },
+                }),
+              );
+            }}
+            title={t('page.transactions.detail.SwapAgain')}
+          />
         </View>
       )}
     </>
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  detailContainer: {
-    // flex: 1,
-    width: '100%',
-    marginTop: 12,
-    borderRadius: 16,
-    paddingVertical: 4,
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
-  },
-  ghostButton: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderColor: colors2024['neutral-info'],
-  },
-  primaryButton: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderColor: colors2024['brand-default'],
-  },
-  primaryTitle: {
-    color: colors2024['brand-default'],
-  },
-  ghostTitle: {
-    color: colors2024['neutral-title-1'],
-  },
-  iconSwitchArrow: {
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    borderRadius: 200,
-    width: 45,
-    height: 45,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'absolute',
-    left: '50%',
-    top: '50%',
-    marginLeft: -22,
-    marginTop: -22,
-  },
-  tokenAmountTextList: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: '700',
-  },
-  rowBox: {
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  colomnBox: {
-    flexDirection: 'column',
-  },
-  isSendTextColor: {
-    color: colors2024['neutral-title-1'],
-  },
-  isFailBox: {
-    opacity: 0.3,
-  },
-  image: {
-    width: 46,
-    height: 46,
-  },
-  fromTokenBox: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 16,
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
-    flex: 1,
-    height: 110,
-    gap: 10,
-  },
-  toTokenBox: {
-    gap: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 16,
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
-    flex: 1,
-    height: 110,
-  },
-  singleBox: {
-    width: '100%',
-    // height: 92,
-    backgroundColor: colors2024['neutral-bg-1'],
-    justifyContent: 'space-between',
-    alignContent: 'center',
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: 'row',
-  },
-  tokenAmountText: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '900',
-  },
-  usdValue: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    marginTop: 4,
-  },
-  mutliBox: {
-    width: '100%',
-    backgroundColor: colors2024['neutral-bg-1'],
-    justifyContent: 'center',
-    alignContent: 'center',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 16,
-    // flexDirection: 'row',
-    gap: 12,
-  },
-  doubleBox: {
-    justifyContent: 'center',
-    alignContent: 'center',
-    flexDirection: 'column',
-    position: 'relative',
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    scrollView: {
+      paddingHorizontal: 16,
+    },
+    ghostButton: {
+      backgroundColor: colors2024['neutral-bg-2'],
+      borderColor: colors2024['neutral-info'],
+    },
+    primaryButton: {
+      backgroundColor: colors2024['neutral-bg-2'],
+      borderColor: colors2024['brand-default'],
+    },
+    primaryTitle: {
+      color: colors2024['brand-default'],
+    },
+    ghostTitle: {
+      color: colors2024['neutral-title-1'],
+    },
+    iconSwitchArrow: {
+      backgroundColor: !isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+      borderRadius: 200,
+      width: 45,
+      height: 45,
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      marginLeft: -22,
+      marginTop: -22,
+    },
+    tokenAmountTextList: {
+      color: colors2024['green-default'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 18,
+      lineHeight: 22,
+      fontWeight: '700',
+    },
+    rowBox: {
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
+    colomnBox: {
+      flexDirection: 'column',
+    },
+    isSendTextColor: {
+      color: colors2024['neutral-title-1'],
+    },
+    isFailBox: {
+      opacity: 0.3,
+    },
+    image: {
+      width: 46,
+      height: 46,
+    },
+    fromTokenBox: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 16,
+      backgroundColor: !isLight
+        ? colors2024['neutral-bg-2']
+        : colors2024['neutral-bg-1'],
+      flex: 1,
+      height: 110,
+      gap: 10,
+    },
+    toTokenBox: {
+      gap: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 16,
+      backgroundColor: !isLight
+        ? colors2024['neutral-bg-2']
+        : colors2024['neutral-bg-1'],
+      flex: 1,
+      height: 110,
+    },
+    singleBox: {
+      width: '100%',
+      // height: 92,
+      backgroundColor: colors2024['neutral-bg-1'],
+      justifyContent: 'space-between',
+      alignContent: 'center',
+      borderRadius: 16,
+      padding: 16,
+      flexDirection: 'row',
+    },
+    tokenAmountText: {
+      color: colors2024['green-default'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '800',
+    },
+    usdValue: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      marginTop: 4,
+    },
+    doubleBox: {
+      justifyContent: 'center',
+      alignContent: 'center',
+      flexDirection: 'column',
+      position: 'relative',
 
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
-    borderRadius: 16,
-    padding: 16,
-  },
-  swapTitle: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  singleColomnBox: {
-    // flex: 1,
-    width: Dimensions.get('window').width - 160,
-    flexDirection: 'column',
-    // alignItems: 'center',
-  },
-  swapBoxContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 8,
-  },
-  swapBox: {
-    width: '100%',
-    justifyContent: 'space-between',
-    alignContent: 'center',
-    flexDirection: 'row',
-  },
+      backgroundColor: !isLight
+        ? colors2024['neutral-bg-2']
+        : colors2024['neutral-bg-1'],
+      borderRadius: 16,
+      padding: 16,
+    },
+    swapTitle: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      marginBottom: 8,
+    },
+    singleColomnBox: {
+      // flex: 1,
+      width: Dimensions.get('window').width - 160,
+      flexDirection: 'column',
+      // alignItems: 'center',
+    },
+    swapBoxContainer: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 8,
+    },
+    swapBox: {
+      width: '100%',
+      justifyContent: 'space-between',
+      alignContent: 'center',
+      flexDirection: 'row',
+    },
 
-  tokenPriceText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-  },
+    tokenPriceText: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+    },
 
-  media: {
-    width: 33,
-    height: 33,
-    borderRadius: 4,
-  },
+    media: {
+      width: 33,
+      height: 33,
+      borderRadius: 4,
+    },
 
-  buttonContainer: {
-    backgroundColor: !isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    flexDirection: 'row',
-    // height: 120,
-    // marginTop: 12,
-    bottom: 0,
-    width: '100%',
-    paddingTop: 20,
-    paddingBottom: 27,
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  itemAliaName: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  detailItem: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  itemTitleText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    maxWidth: '45%',
-  },
-  itemAddressText: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
-  },
-  itemContentText: {
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-  },
-  headerTitleStyle: {
-    color: colors2024['neutral-title-1'],
-    fontWeight: '800',
-    fontSize: 20,
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 24,
-  },
-
-  statuItemText: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    marginLeft: 4,
-  },
-
-  headerItem: {},
-}));
+    buttonContainer: {
+      paddingTop: 12,
+      paddingHorizontal: 20,
+      paddingBottom: Math.max(safeAreaInsets.bottom, 36),
+      backgroundColor: !isLight
+        ? colors2024['neutral-bg-2']
+        : colors2024['neutral-bg-1'],
+    },
+    itemAddressText: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '400',
+    },
+    itemContentText: {
+      color: colors2024['neutral-body'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+    },
+    tokenChainIcon: {
+      position: 'absolute',
+      right: -1,
+      bottom: -1,
+      width: 20,
+      height: 20,
+      borderWidth: 1,
+      borderColor: !isLight
+        ? colors2024['neutral-bg-2']
+        : colors2024['neutral-bg-1'],
+      borderRadius: 1000,
+    },
+  }),
+);

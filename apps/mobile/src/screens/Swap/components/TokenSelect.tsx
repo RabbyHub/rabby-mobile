@@ -310,8 +310,8 @@ const TokenSelect = ({
 
     return (
       forScene === 'MakeTransactionAbout' &&
-      ((RootNames.MultiBridge === ofScreen && type === 'bridgeFrom') ||
-        (RootNames.MultiSwap === ofScreen && type === 'swapFrom'))
+      RootNames.MultiSwapBridge === ofScreen &&
+      (type === 'bridgeFrom' || type === 'swapFrom')
     );
   }, [queryConds.keyword, currentAccount?.type, forScene, ofScreen, type]);
 
@@ -473,13 +473,9 @@ const TokenSelect = ({
 };
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   wrapper: {
-    borderRadius: 12,
+    borderRadius: 100,
     // TODO: backgroundColor: colors2024['neutral-card-2'],
     backgroundColor: colors2024['neutral-line'],
-    // backgroundColor: colors2024['neutral-bg-2'],
-
-    // paddingLeft: 16,
-    // paddingRight: 12,
     padding: 4,
     height: 34,
     flexDirection: 'row',
@@ -487,7 +483,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
   },
   bridgeWrapper: {
-    borderRadius: 12,
+    borderRadius: 100,
     backgroundColor: colors2024['neutral-line'],
     padding: 4,
     flexDirection: 'row',

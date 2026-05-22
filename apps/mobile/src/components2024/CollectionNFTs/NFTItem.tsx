@@ -45,7 +45,7 @@ export const Item = ({ item, onPress }: ItemProps) => {
       onPress={onPress}>
       <Media
         failedPlaceholder={<IconDefaultNFT width="100%" height="100%" />}
-        type="image_url"
+        type={item?.content_type || MEDIA_TYPE.IMAGE_URL}
         src={isSvgURL ? '' : item?.content}
         thumbnail={isSvgURL ? '' : item?.content}
         mediaStyle={styles.images}

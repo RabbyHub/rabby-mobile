@@ -93,14 +93,16 @@
         "RevokeToken": "Token İptal Et",
         "PurchaseFrom": "Satın alındıdan",
         "RevokeFrom": "Revokeden",
-        "InteractedContract": "Etkileşimde bulunan sözleşme",
+        "InteractedContract": "Etkileşim kurulan (Kime)",
         "ApproveTo": "Onayla",
         "Revoke": "İptal Et",
         "InteractionResults": "Etkileşim Sonuçları",
         "Pending": "Beklemede",
         "AddToWhitelist": "Beyaz Listeye Ekle",
         "RecipientAddress": "Alıcı cüzdan",
-        "Simulation Results": "Simülasyon Sonuçları"
+        "Simulation Results": "Simülasyon Sonuçları",
+        "TransactionDetails": "İşlem ayrıntıları",
+        "Operation": "İşlem"
       },
       "empty": {
         "title": "Hiç işlem yok",
@@ -846,7 +848,7 @@
       },
       "revokeModal": {
         "paused": "Duraklatıldı",
-        "gasNotEnough": "Gas göndermek için yetersiz。",
+        "gasNotEnough": "Gas göndermek için yetersiz.",
         "simulationFailed": "Simülasyon Başarısız",
         "gasTooHigh": "Gaz ücreti yüksek",
         "submitTxFailed": "Gönderim Başarısız",
@@ -1020,7 +1022,7 @@
       "formChangedTitle": "Form Değiştirildi",
       "formChangedAmount": "Miktar değişti, muhtemelen sistem klavyesinden şifre otomatik doldurma nedeniyle. Lütfen kontrol edin ve doğru miktarı yeniden girin.",
       "best-subtitle": "En iyi teklif, tahmini toplam maliyet (Gas ücretleri dahil) ve teslimat hızının birleşimiyle belirlenir.",
-      "swap-best-subtitle": "En iyi teklif, döviz kuru ve gas ücretleri dahil olmak üzere en düşük tahmini toplam maliyet ile belirlenir。"
+      "swap-best-subtitle": "En iyi teklif, döviz kuru ve Gas ücretleri dahil olmak üzere en düşük tahmini toplam maliyet ile belirlenir."
     },
     "manageAddress": {
       "watch-address": "Adres İzle",
@@ -1061,7 +1063,7 @@
         "predict": "Tahmin Et",
         "meme": "Memecoin",
         "market": "Pazar",
-        "gasDeposit": "Gaz Dekontörü",
+        "gasDeposit": "Gas Yatırma",
         "convertDust": "Küçük Bakiyeleri Dönüştür"
       },
       "swipeUp": {
@@ -1808,7 +1810,8 @@
         "txSigned": "İmzalandı. İşlem oluşturuluyor"
       },
       "signWithLedger": "İmza",
-      "fixedModeText": "Sabit Mod: Her zaman özel gaz ayarınızı kullanın"
+      "fixedModeText": "Sabit Mod: Her zaman özel gaz ayarınızı kullanın",
+      "fixedModeTag": "Sabit mod"
     },
     "gasAccount": {
       "history": {
@@ -1939,7 +1942,7 @@
       },
       "depositNow": "Şimdi Yatırın",
       "switchAccount": "Cüzdanı Değiştir",
-      "lowBalance": "Yeterli gazınız yok. Gelecekteki işlemlerin sorunsuz geçmesi için gaz depozitosu yapın.",
+      "lowBalance": "Yeterli gazınız yok (<$1.00). Gelecekteki işlemlerin sorunsuz geçmesi için gaz depozitosu yapın.",
       "gasBalance": "Gaz Bakiyesi",
       "depositFailed": "Yatırım başarısız oldu",
       "depositSubmitted": "Yatırma Gönderildi",
@@ -2440,6 +2443,28 @@
       "title": "Geçmiş"
     },
     "perps": {
+      "limitOrders": "Limit Emirler",
+      "cancelAll": "Tümünü İptal Et",
+      "cancelAllOrdersConfirmTitle": "Tüm Emirlerin İptalini Onayla",
+      "cancelAllOrdersConfirmMessage": "Tüm Limit Emirleriniz iptal edilecektir",
+      "limitOrderDetail": {
+        "title": "Limit {{side}} {{pair}}",
+        "time": "Zaman",
+        "size": "Boyut",
+        "filled": "Doldurulan",
+        "currentPrice": "Mevcut Fiyat",
+        "limitPrice": "Limit Fiyatı",
+        "marginUsage": "Marj Kullanımı",
+        "cancelLimitOrder": "Limit Emri İptal Et",
+        "buy": "Al",
+        "sell": "Sat"
+      },
+      "cancelOrderToast": {
+        "singleSuccess": "Limit emir iptal edildi",
+        "multiSuccess": "{{count}} limit emir iptal edildi",
+        "partial": "{{okCount}} iptal edildi, {{failCount}} başarısız",
+        "failed": "Limit emir iptal edilemedi"
+      },
       "PerpsCard": {
         "depositBtn": "Para Yatırma",
         "loginBtn": "Perps'a Giriş Yap",
@@ -2695,6 +2720,20 @@
       }
     },
     "perpsDetail": {
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "Limit Alış Fiyatını Belirle",
+        "setLimitSellPrice": "Limit Satış Fiyatını Belirle",
+        "marketLabel": "Orta",
+        "setBtn": "Belirle",
+        "blockError": "Emir fiyatı %10 fiyat koruma limitini aşıyor.",
+        "confirmTitle": "Limit Fiyatını İncele",
+        "confirmMessage": "Limit fiyatı, piyasa fiyatından %5 veya daha fazla uzakta",
+        "confirmContinue": "Devam Et",
+        "confirmCancel": "İptal Et"
+      },
+      "PerpsPriceInfo": {
+        "current": "Mevcut"
+      },
       "PerpsPosition": {
         "slPrice": "Zarar Durdurma Fiyatı",
         "justMargin": "Marjinal",
@@ -2760,6 +2799,13 @@
         "rabbyFeeTipsV2": "Rabby ücreti: 0.02%"
       },
       "PerpsOpenPositionPopup": {
+        "title": "{{coin}} Pozisyonu Aç",
+        "limitOrderPlacedToast": "Limit {{direction}} {{coin}}: Boyut {{size}}, ${{price}} fiyatından yerleştirildi",
+        "orderType": "Emir Türü",
+        "orderTypeMarket": "Piyasa",
+        "orderTypeLimit": "Limit",
+        "limitPrice": "Limit Fiyatı",
+        "currentPrice": "Mevcut Fiyat",
         "maximumOrderSize": "Maksimum emir büyüklüğü {{amount}}'dir.",
         "tpPrice": "Kar Alım Fiyatı",
         "sizeTips": "Ticaretinizin toplam değeri veya miktarı, marj ve kaldıraçla belirlenir.",
@@ -2783,6 +2829,11 @@
         "onlyIsolated": "Bu token için yalnızca izole marj desteklenmektedir."
       },
       "PerpsOpenPositionCheckPopup": {
+        "limitTitle": "Limit Emri Kontrol Et",
+        "marketTitle": "Piyasa Emri Kontrol Et",
+        "limitPrice": "Limit Fiyatı",
+        "mayExecuteImmediately": "Bu limit emir hemen gerçekleşebilir",
+        "setLimitOrderBtn": "Limit Emri Belirle",
         "direction": "Yön",
         "slPrice": "Zarar Durdurma Fiyatı",
         "perps": "Perps",
@@ -2830,6 +2881,10 @@
         "takeProfitExpectedPNL": "Kar al, beklenen PNL",
         "stopLossWhen": "Zarar Durdurulduğunda",
         "priceBelow": "Fiyat altında",
+        "youGainRoi": "Kazanç (ROI)",
+        "youLossRoi": "Kayıp (ROI)",
+        "currentPriceTpl": "Mevcut <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "Giriş <1>{{entryPrice}}</1>  Mevcut <2>{{price}}</2>",
         "EntryAndCurrentPrice": "Giriş {{entryPrice}}  Mevcut {{price}}"
       },
       "PerpsEditMarginPopup": {
@@ -3079,7 +3134,8 @@
         "debtSwapSelector": {
           "header": {
             "assets": "Token/Bakiye",
-            "borrow": "Benim borçlarım"
+            "borrow": "Benim borçlarım",
+            "apy": "APY"
           },
           "title": "Borç Alınacak Token'ı Seçin"
         },

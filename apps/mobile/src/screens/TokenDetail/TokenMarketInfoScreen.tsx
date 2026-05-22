@@ -283,8 +283,9 @@ export const TokenMarketInfoScreen = () => {
         });
       }
       navigation.push(RootNames.StackTransaction, {
-        screen: account ? RootNames.Swap : RootNames.MultiSwap,
+        screen: account ? RootNames.SwapBridge : RootNames.MultiSwapBridge,
         params: {
+          activeTab: 'swap',
           chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
           tokenId: token?.id,
           type: tokenSelectType === 'swapTo' ? 'Buy' : type,
@@ -312,8 +313,9 @@ export const TokenMarketInfoScreen = () => {
       // 关闭弹窗隐藏
       setIsFromBack(false);
       navigation.push(RootNames.StackTransaction, {
-        screen: account ? RootNames.Bridge : RootNames.MultiBridge,
+        screen: account ? RootNames.SwapBridge : RootNames.MultiSwapBridge,
         params: {
+          activeTab: 'bridge',
           toChainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
           toTokenId: token?.id,
         },
@@ -541,7 +543,7 @@ export const TokenMarketInfoScreen = () => {
             style={styles.innerContainer}>
             {!!account && (
               <HeaderBalanceCard
-                amount={formatAmountValueKMB(amountSum)}
+                amount={formatAmountValueKMB(amountSum, 4, true)}
                 usdValue={usdValue}
                 percentChange={percentChange}
                 isLoss={isLoss}

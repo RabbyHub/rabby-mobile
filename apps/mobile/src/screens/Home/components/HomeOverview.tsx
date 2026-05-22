@@ -88,11 +88,9 @@ import {
 import { BrowserOrPerpsPosition } from './BrowserOrPerpsPosition';
 import { GasAccountBadge } from '../../GasAccount/components/GasAccountBadge';
 import { apisLending } from '../../Lending/hooks';
-import { PointsBadge } from '../../Points/components/PointsBadge';
 import { HomeCenterArea } from '../components/HomeCenterArea';
 import { HomeDappDrawer } from '../components/HomeDappDrawer';
 import { HomePendingBadge } from '../components/HomePending';
-import { ETHStatus, refreshETHStatus } from '../components/ETHStatus';
 import { LendingHF } from '../components/LendingHF';
 import { MultiAddressHomeHeader } from '../components/MultiAddressHomeHeader';
 import { PerpsPnl } from '../components/PerpsPnl';
@@ -770,7 +768,6 @@ export const HomeOverview = React.memo(() => {
       return;
     }
 
-    refreshETHStatus();
     perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
     return Promise.all([
       // force update balance from server api
@@ -803,7 +800,6 @@ export const HomeOverview = React.memo(() => {
 
   // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
   const handlePressMarket = useCallback(() => {
-    refreshETHStatus();
     navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
       screen: RootNames.Market,
       params: {},
@@ -839,8 +835,10 @@ export const HomeOverview = React.memo(() => {
         case MultiHomeFeatTitle.Swap:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiSwap,
-              params: {},
+              screen: RootNames.MultiSwapBridge,
+              params: {
+                activeTab: 'swap',
+              },
             }),
           );
 
@@ -848,8 +846,10 @@ export const HomeOverview = React.memo(() => {
         case MultiHomeFeatTitle.Bridge:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiBridge,
-              params: {},
+              screen: RootNames.MultiSwapBridge,
+              params: {
+                activeTab: 'bridge',
+              },
             }),
           );
           break;
@@ -927,10 +927,6 @@ export const HomeOverview = React.memo(() => {
       isSuccess?: boolean;
       showGiftIcon?: boolean;
     }) => {
-      if (el.key === MultiHomeFeatTitle.Market) {
-        return <ETHStatus />;
-      }
-
       if (el.key === MultiHomeFeatTitle.Perps) {
         return <PerpsPnl />;
       }
@@ -946,10 +942,6 @@ export const HomeOverview = React.memo(() => {
 
       if (el.key === MultiHomeFeatTitle.Lending) {
         return <LendingHF />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.Points) {
-        return <PointsBadge />;
       }
 
       if (el.key === MultiHomeFeatTitle.GasAccount) {

@@ -209,7 +209,7 @@
         "ApproveTo": "Подтвердить для",
         "From": "От",
         "RevokeFrom": "Отозвать из",
-        "InteractedContract": "Взаимодействующий контракт",
+        "InteractedContract": "Взаимодействие с (Кому)",
         "Chain": "Цепь",
         "ApproveToken": "Одобрить токен",
         "Succeeded": "Успешно",
@@ -224,7 +224,9 @@
         "PurchaseFrom": "Приобретено от",
         "AddToWhitelist": "Добавить вWhitelist",
         "RecipientAddress": "Кошелек получателя",
-        "Simulation Results": "Результаты симуляции"
+        "Simulation Results": "Результаты симуляции",
+        "TransactionDetails": "Детали транзакции",
+        "Operation": "Операция"
       },
       "empty": {
         "title": "Нет транзакций",
@@ -1852,7 +1854,8 @@
         "txSigned": "Подписано. Создание транзакции",
         "txSendings": "Отправка запроса на подпись ({{current}}/{{total}})"
       },
-      "fixedModeText": "Фиксированный режим: Всегда используйте вашу собственную настройку газа"
+      "fixedModeText": "Фиксированный режим: Всегда используйте вашу собственную настройку газа",
+      "fixedModeTag": "Фиксированный режим"
     },
     "receiveAddressList": {
       "selectChainTitle": "Выберите Chain",
@@ -2093,7 +2096,7 @@
       "gasBalance": "Баланс Gas",
       "switchAccount": "Переключить кошелек",
       "depositFailed": "Ошибка при депозите",
-      "lowBalance": "У вас недостаточно газа. Внесите газ, чтобы обеспечитьSmooth будущие транзакции.",
+      "lowBalance": "У вас недостаточно газа (<$1.00). Внесите газ, чтобы будущие транзакции проходили без проблем.",
       "depositSubmitted": "Депозит отправлен",
       "depositWith": "Пополнение через"
     },
@@ -2561,6 +2564,28 @@
       "title": "История"
     },
     "perps": {
+      "limitOrders": "Лимитные ордера",
+      "cancelAll": "Отменить все",
+      "cancelAllOrdersConfirmTitle": "Подтвердите отмену ВСЕХ ордеров",
+      "cancelAllOrdersConfirmMessage": "Все ваши лимитные ордера будут отменены",
+      "limitOrderDetail": {
+        "title": "Лимитный {{side}} {{pair}}",
+        "time": "Время",
+        "size": "Размер",
+        "filled": "Исполнено",
+        "currentPrice": "Текущая цена",
+        "limitPrice": "Лимитная цена",
+        "marginUsage": "Использование маржи",
+        "cancelLimitOrder": "Отменить лимитный ордер",
+        "buy": "Покупка",
+        "sell": "Продажа"
+      },
+      "cancelOrderToast": {
+        "singleSuccess": "Лимитный ордер отменён",
+        "multiSuccess": "{{count}} лимитных ордеров отменено",
+        "partial": "{{okCount}} отменено, {{failCount}} не удалось",
+        "failed": "Не удалось отменить лимитный ордер"
+      },
       "PerpsCard": {
         "withdrawBtn": "Вывести",
         "depositBtn": "Депозит",
@@ -2816,6 +2841,20 @@
       }
     },
     "perpsDetail": {
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "Установить лимитную цену покупки",
+        "setLimitSellPrice": "Установить лимитную цену продажи",
+        "marketLabel": "Мид",
+        "setBtn": "Установить",
+        "blockError": "Цена ордера превышает лимит защиты цены в 10%.",
+        "confirmTitle": "Проверить лимитную цену",
+        "confirmMessage": "Лимитная цена отличается от рыночной на 5% и более",
+        "confirmContinue": "Продолжить",
+        "confirmCancel": "Отмена"
+      },
+      "PerpsPriceInfo": {
+        "current": "Текущая"
+      },
       "PerpsPosition": {
         "title": "Позиция",
         "justMargin": "Маржа",
@@ -2881,6 +2920,13 @@
         "rabbyFeeTipsV2": "Rabby комиссия: 0.02%"
       },
       "PerpsOpenPositionPopup": {
+        "title": "Открыть позицию {{coin}}",
+        "limitOrderPlacedToast": "Лимитный {{direction}} {{coin}}: Размер {{size}} выставлен по цене ${{price}}",
+        "orderType": "Тип ордера",
+        "orderTypeMarket": "Рыночный",
+        "orderTypeLimit": "Лимитный",
+        "limitPrice": "Лимитная цена",
+        "currentPrice": "Текущая цена",
         "size": "Размер",
         "available": "доступен",
         "sizeTips": "Общая стоимость или количество вашей сделки, установленное за счёт маржи и кредитного плеча.",
@@ -2904,6 +2950,11 @@
         "onlyIsolated": "Только изолированное плечо поддерживается для этого токена"
       },
       "PerpsOpenPositionCheckPopup": {
+        "limitTitle": "Проверить лимитный ордер",
+        "marketTitle": "Проверить рыночный ордер",
+        "limitPrice": "Лимитная цена",
+        "mayExecuteImmediately": "Этот лимитный ордер может исполниться немедленно",
+        "setLimitOrderBtn": "Выставить лимитный ордер",
         "price": "Цена",
         "tpPrice": "Цена взятия прибыли",
         "estLqPrice": "Ожидаемая цена ликвидации",
@@ -2948,6 +2999,10 @@
         "takeProfitWhen": "Закрыть позицию по прибыли при",
         "stopLossWhen": "Стоп-лосс при",
         "youLoss": "Вы проиграли",
+        "youGainRoi": "Вы получаете (ROI)",
+        "youLossRoi": "Вы теряете (ROI)",
+        "currentPriceTpl": "Текущая <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "Вход <1>{{entryPrice}}</1>  Текущая <2>{{price}}</2>",
         "EntryAndCurrentPrice": "Вход {{entryPrice}} Текущий {{price}}",
         "stopLossExpectedPNL": "Стоп-лосс ожидаемая прибыль и убыток",
         "takeProfitExpectedPNL": "Ожидаемая прибыль от Take profit",
@@ -3200,7 +3255,8 @@
         "debtSwapSelector": {
           "header": {
             "borrow": "Мои заимствования",
-            "assets": "Токен/Баланс"
+            "assets": "Токен/Баланс",
+            "apy": "APY"
           },
           "title": "Выберите токен займа"
         },

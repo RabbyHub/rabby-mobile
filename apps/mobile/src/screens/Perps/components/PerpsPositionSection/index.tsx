@@ -6,32 +6,22 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { sortBy } from 'lodash';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Alert,
-  Dimensions,
-  Platform,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, TouchableOpacity, View } from 'react-native';
 import { PerpsPositionItem } from './PerpsPositionItem';
-import { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
 import { useMemoizedFn } from 'ahooks';
-import { sleep } from '@/utils/async';
-import Toast from 'react-native-root-toast';
-import { toast } from '@/components2024/Toast';
 import { Text } from '@/components/Typography';
 export const PerpsPositionSection: React.FC<{
   positionAndOpenOrders?: PositionAndOpenOrder[];
   handleShowRiskPopup: (coin: string) => void;
   handleCloseRiskPopup: () => void;
   handleActionApproveStatus: () => Promise<void>;
-  onClosePosition: (position: AssetPosition['position']) => Promise<void>;
+  onCloseAllPositions: () => Promise<void>;
 }> = ({
   positionAndOpenOrders,
   handleShowRiskPopup,
   handleCloseRiskPopup,
   handleActionApproveStatus,
-  onClosePosition,
+  onCloseAllPositions,
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -57,11 +47,8 @@ export const PerpsPositionSection: React.FC<{
         {
           text: t('global.confirm'),
           style: 'default',
-          onPress: async () => {
-            for (const item of list) {
-              await onClosePosition(item.position);
-              await sleep(10);
-            }
+          onPress: () => {
+            onCloseAllPositions();
           },
         },
       ],

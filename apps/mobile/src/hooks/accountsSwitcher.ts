@@ -433,8 +433,7 @@ function getDefaultSceneAccountInfo() {
   };
 }
 type OfSceneScreen =
-  | typeof RootNames.MultiSwap
-  | typeof RootNames.MultiBridge
+  | typeof RootNames.MultiSwapBridge
   | typeof RootNames.MultiSend
   | typeof RootNames.TokenDetail
   | typeof RootNames.Lending;

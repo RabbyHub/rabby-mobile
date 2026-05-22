@@ -17,10 +17,9 @@ import SendNFTScreen from '../SendNFT/SendNFT';
 import { HistoryDetailScreen } from '../Transaction/HistoryDetailScreen';
 import { HistoryLocalDetailScreen } from '../Transaction/HistoryLocalDetailScreen';
 import { TransactionNavigatorParamList } from '@/navigation-type';
-import Swap from '../Swap';
 import ApprovalsScreen from '../Approvals';
 import ReceiveScreen from '../Receive/Receive';
-import { Bridge } from '../Bridge';
+import SwapBridgeScreen from '../SwapBridge';
 import { ConvertDustScreen } from '../ConvertDust';
 import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
@@ -239,40 +238,25 @@ export default function TransactionNavigator() {
         })}
       />
       {/* ReceiveScreen */}
-      {/* SwapScreen */}
+      {/* SwapBridgeScreen */}
       <TransactionStack.Screen
-        name={RootNames.Swap}
-        component={Swap}
+        name={RootNames.SwapBridge}
+        component={SwapBridgeScreen}
         options={mergeScreenOptions2024([
           {
-            title: 'Swap',
-            headerTitle: ctx => {
-              return (
-                <ScreenHeaderAccountSwitcher
-                  forScene="MakeTransactionAbout"
-                  titleText={ctx.children}
-                  disableSwitch
-                />
-              );
-            },
+            title: '',
+            headerTitle: () => null,
           },
         ])}
       />
 
       <TransactionStack.Screen
-        name={RootNames.MultiSwap}
-        component={Swap.ForMultipleAddress}
+        name={RootNames.MultiSwapBridge}
+        component={SwapBridgeScreen.ForMultipleAddress}
         options={mergeScreenOptions2024([
           {
-            title: 'Swap',
-            headerTitle: ctx => {
-              return (
-                <ScreenHeaderAccountSwitcher
-                  forScene="MakeTransactionAbout"
-                  titleText={ctx.children}
-                />
-              );
-            },
+            title: '',
+            headerTitle: () => null,
           },
         ])}
       />
@@ -294,45 +278,6 @@ export default function TransactionNavigator() {
           ...headerPresets.withBgCard2_2024,
           headerStyle: {},
         })}
-      />
-
-      <TransactionStack.Screen
-        name={RootNames.Bridge}
-        component={Bridge}
-        options={mergeScreenOptions2024([
-          {
-            title: 'Bridge',
-            // ...headerPresets.withBgCard1_2024,
-            headerTitle: ctx => {
-              return (
-                <ScreenHeaderAccountSwitcher
-                  forScene="MakeTransactionAbout"
-                  titleText={ctx.children}
-                  disableSwitch
-                />
-              );
-            },
-          },
-        ])}
-      />
-
-      <TransactionStack.Screen
-        name={RootNames.MultiBridge}
-        component={Bridge.ForMultipleAddress}
-        options={mergeScreenOptions2024([
-          {
-            title: 'Bridge',
-            // ...headerPresets.withBgCard1_2024,
-            headerTitle: ctx => {
-              return (
-                <ScreenHeaderAccountSwitcher
-                  forScene="MakeTransactionAbout"
-                  titleText={ctx.children}
-                />
-              );
-            },
-          },
-        ])}
       />
 
       <TransactionStack.Screen

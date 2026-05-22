@@ -13,6 +13,7 @@ export const formatPercent = (value: number) => {
 export const formatAmountValueKMB = (
   value: string | number,
   decimals = 4,
+  ignoreK = false,
 ): string => {
   const bnValue = new BigNumber(value);
 
@@ -31,10 +32,13 @@ export const formatAmountValueKMB = (
     formattedValue = `${(numValue / 1e9).toFixed(2)}B`;
   } else if (numValue >= 1e6) {
     formattedValue = `${(numValue / 1e6).toFixed(2)}M`;
-  } else if (numValue >= 1e3) {
+  } else if (numValue >= 1e3 && !ignoreK) {
     formattedValue = `${(numValue / 1e3).toFixed(2)}K`;
   } else if (numValue >= 1) {
-    formattedValue = formatNumber(value, decimals);
+    formattedValue = formatNumber(
+      value,
+      bnValue.mod(1).isZero() ? 0 : decimals,
+    );
   } else {
     formattedValue = formatAmount(value, decimals);
   }
@@ -44,8 +48,9 @@ export const formatAmountValueKMB = (
 export const formatUsdValueKMB = (
   value: string | number,
   decimals = 4,
+  ignoreK = false,
 ): string => {
-  return `$${formatAmountValueKMB(value, decimals)}`;
+  return `$${formatAmountValueKMB(value, decimals, ignoreK)}`;
 };
 
 // <60s: XX s

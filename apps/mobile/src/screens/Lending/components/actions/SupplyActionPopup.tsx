@@ -428,8 +428,9 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
 
     await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
     naviPush(RootNames.StackTransaction, {
-      screen: RootNames.Swap,
+      screen: RootNames.SwapBridge,
       params: {
+        activeTab: 'swap',
         chainEnum: chainEnum || CHAINS_ENUM.ETH,
         tokenId: swapTokenId,
         type: 'Buy',
@@ -645,6 +646,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
             setAmount(supplyAmount.amount || '0');
           }}
           tokenAmount={Number(supplyAmount.amount || '0')}
+          tokenDecimals={reserve.reserve.decimals}
           price={Number(
             reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
           )}

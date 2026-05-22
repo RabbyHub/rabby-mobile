@@ -370,7 +370,7 @@
         "RevokeFrom": "Revocar desde",
         "InteractionResults": "Resultados de Interacción",
         "ApproveTo": "Aprobar para",
-        "InteractedContract": "Contrato interactuado",
+        "InteractedContract": "Interacción con (A)",
         "Name": "Nombre",
         "totalApprovedAmount": "Cantidad Aprobada Actual",
         "BuyAgain": "Comprar de nuevo",
@@ -379,10 +379,12 @@
         "Collection": "Colección",
         "AddToWhitelist": "Añadir a la lista blanca",
         "RecipientAddress": "Cartera del destinatario",
-        "Simulation Results": "Resultados de la simulación"
+        "Simulation Results": "Resultados de la simulación",
+        "TransactionDetails": "Detalles de la transacción",
+        "Operation": "Operación"
       },
       "empty": {
-        "desc": "No se encontraron transacciones en <1>supported chains</1>",
+        "desc": "No se encontraron transacciones en <1>cadenas compatibles</1>",
         "title": "Sin transacciones"
       },
       "txHistory": {
@@ -1991,7 +1993,8 @@
         "txSending": "Enviando solicitud de firma",
         "txSigned": "Firmado. Creando transacción"
       },
-      "fixedModeText": "Modo Fijo: Siempre usa tu configuración de gas personalizada"
+      "fixedModeText": "Modo Fijo: Siempre usa tu configuración de gas personalizada",
+      "fixedModeTag": "Modo fijo"
     },
     "search": {
       "searchWeb": {
@@ -2375,7 +2378,7 @@
       "gasBalance": "Saldo de Gas",
       "depositFailed": "Depósito fallido",
       "depositNow": "Depositar ahora",
-      "lowBalance": "No tienes suficiente gas. Deposita gas para asegurar que las futuras transacciones transcurran sin problemas.",
+      "lowBalance": "No tienes suficiente gas (<$1.00). Deposita gas para asegurar que las futuras transacciones transcurran sin problemas.",
       "switchAccount": "Cambiar Wallet",
       "depositSubmitted": "Depósito Enviado",
       "depositWith": "Depositar mediante"
@@ -2716,6 +2719,28 @@
       "title": "Historia"
     },
     "perps": {
+      "limitOrders": "Órdenes Limitadas",
+      "cancelAll": "Cancelar Todo",
+      "cancelAllOrdersConfirmTitle": "Confirmar Cancelar TODAS las Órdenes",
+      "cancelAllOrdersConfirmMessage": "Todas tus Órdenes Limitadas serán canceladas",
+      "limitOrderDetail": {
+        "title": "Límite {{side}} {{pair}}",
+        "time": "Tiempo",
+        "size": "Tamaño",
+        "filled": "Ejecutado",
+        "currentPrice": "Precio Actual",
+        "limitPrice": "Precio Límite",
+        "marginUsage": "Uso de Margen",
+        "cancelLimitOrder": "Cancelar Orden Limitada",
+        "buy": "Comprar",
+        "sell": "Vender"
+      },
+      "cancelOrderToast": {
+        "singleSuccess": "Orden limitada cancelada",
+        "multiSuccess": "{{count}} órdenes limitadas canceladas",
+        "partial": "{{okCount}} canceladas, {{failCount}} fallidas",
+        "failed": "Error al cancelar la orden limitada"
+      },
       "PerpsCard": {
         "available": "Disponible",
         "title": "Operar con Perps",
@@ -2971,6 +2996,20 @@
       }
     },
     "perpsDetail": {
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "Establecer Precio de Compra Límite",
+        "setLimitSellPrice": "Establecer Precio de Venta Límite",
+        "marketLabel": "Mid",
+        "setBtn": "Establecer",
+        "blockError": "El precio de la orden supera el límite de protección de precio del 10%.",
+        "confirmTitle": "Revisar Precio Límite",
+        "confirmMessage": "El precio límite está a más del 5% del precio de mercado",
+        "confirmContinue": "Continuar",
+        "confirmCancel": "Cancelar"
+      },
+      "PerpsPriceInfo": {
+        "current": "Actual"
+      },
       "PerpsPosition": {
         "title": "Posición",
         "closePosition": "Cerrar {{direction}}",
@@ -3036,6 +3075,13 @@
         "rabbyFeeTipsV2": "Rabby tarifa: 0.02%"
       },
       "PerpsOpenPositionPopup": {
+        "title": "Abrir posición {{coin}}",
+        "limitOrderPlacedToast": "Límite {{direction}} {{coin}}: Tamaño {{size}} colocado a ${{price}}",
+        "orderType": "Tipo de Orden",
+        "orderTypeMarket": "Mercado",
+        "orderTypeLimit": "Límite",
+        "limitPrice": "Precio Límite",
+        "currentPrice": "Precio Actual",
         "maximumOrderSize": "El tamaño máximo del pedido es {{amount}}",
         "leverage": "Apalancamiento",
         "margin": "Margen",
@@ -3059,6 +3105,11 @@
         "onlyIsolated": "Solo se admite margen aislado para este token."
       },
       "PerpsOpenPositionCheckPopup": {
+        "limitTitle": "Revisar Orden Limitada",
+        "marketTitle": "Revisar Orden de Mercado",
+        "limitPrice": "Precio Límite",
+        "mayExecuteImmediately": "Esta orden limitada puede ejecutarse inmediatamente",
+        "setLimitOrderBtn": "Establecer Orden Limitada",
         "perps": "Perpetuos",
         "fee": "Tarifa",
         "price": "Precio",
@@ -3104,6 +3155,10 @@
         "stopLossExpectedPNL": "Stop loss PNL esperado",
         "stopLossWhen": "Detener Pérdidas Cuando",
         "takeProfitExpectedPNL": "Tomar ganancias PNL esperada",
+        "youGainRoi": "Ganas (ROI)",
+        "youLossRoi": "Pérdida (ROI)",
+        "currentPriceTpl": "Actual <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "Entrada <1>{{entryPrice}}</1>  Actual <2>{{price}}</2>",
         "EntryAndCurrentPrice": "Entrada {{entryPrice}}  Actual {{price}}",
         "priceAbove": "Precio por encima",
         "priceReaches": "El precio alcanza"
@@ -3206,7 +3261,7 @@
         "approveAndSupply": "Aprobar y Suministrar",
         "availableToBorrow": "Disponible para pedir prestado",
         "enabled": "Habilitado",
-        "supplyBalance": "Suministro de saldo",
+        "supplyBalance": "Saldo suministrado",
         "collateralization": "Colateralización",
         "isolatedTips": "Los activos de préstamo/endeudamiento existentes no son compatibles.",
         "unavailable": "No disponible",
@@ -3355,7 +3410,8 @@
         "debtSwapSelector": {
           "header": {
             "assets": "Token/Saldo",
-            "borrow": "Mis préstamos"
+            "borrow": "Mis préstamos",
+            "apy": "APY"
           },
           "title": "Seleccionar Token de Préstamo"
         },

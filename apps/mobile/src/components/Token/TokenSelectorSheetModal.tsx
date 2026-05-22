@@ -103,7 +103,7 @@ import { isNumber } from 'lodash';
 import { Text, TextInput } from '@/components/Typography';
 
 type SwapRouteProps = CompositeScreenProps<
-  NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
+  NativeStackScreenProps<TransactionNavigatorParamList, 'SwapBridge'>,
   NativeStackScreenProps<RootStackParamsList>
 >;
 
@@ -373,7 +373,8 @@ export const TokenSelectorSheetModal = ({
   const isFocused = useIsFocused();
 
   const isSwapRoute =
-    route.name === RootNames.Swap || route.name === RootNames.MultiSwap;
+    route.name === RootNames.SwapBridge ||
+    route.name === RootNames.MultiSwapBridge;
 
   if (isSwapTo && swapToTokenDetail && visible && isFocused && isSwapRoute) {
     setSwapToTokenDetail(false);

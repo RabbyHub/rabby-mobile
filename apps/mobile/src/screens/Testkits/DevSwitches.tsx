@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, {
   useCallback,
   useDeferredValue,
@@ -38,6 +39,7 @@ import {
   storeApiExpSettingData,
   useBlockSubmitIfFormChangedOnAuth,
   useDebugSwapHistorySkipLocalLookup,
+  useEnablePerpsWatchAddress,
   useExpScreenCapture,
   useIosForceDisableAlertForSensitiveScene,
   useMockBatchRevoke,
@@ -1278,6 +1280,52 @@ function DevSwitchSwapHistoryFallback() {
   );
 }
 
+function DevSwitchPerpsWatchAddress() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { enablePerpsWatchAddress, toggleEnablePerpsWatchAddress } =
+    useEnablePerpsWatchAddress();
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <RcCode
+          width={24}
+          height={24}
+          color={styles.secondarySectionTitle.color}
+        />
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Perps Watch Address
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={styles.switchRowWrapper}
+        onPress={() => {
+          toggleEnablePerpsWatchAddress();
+        }}>
+        <AppSwitch2024
+          value={enablePerpsWatchAddress}
+          onPress={evt => evt.stopPropagation()}
+          onValueChange={toggleEnablePerpsWatchAddress}
+        />
+        <Text style={styles.switchLabel}>
+          {enablePerpsWatchAddress
+            ? 'Include watch addresses in Perps account selector'
+            : 'Hide watch addresses from Perps account selector (default)'}
+        </Text>
+      </TouchableOpacity>
+      <Text style={[styles.metaLabel, { marginTop: 4 }]}>
+        Test-only switch. Production builds always hide watch addresses
+        regardless of this toggle.
+      </Text>
+    </View>
+  );
+}
+
 async function importWalletConnectAddress({
   address,
   brandName,
@@ -1470,6 +1518,9 @@ function DevSwitches(): JSX.Element {
         <Text style={styles.areaTitle}>Swap / Bridge</Text>
         <DevSwitchSubmitFormGuard />
         <DevSwitchSwapHistoryFallback />
+
+        <Text style={styles.areaTitle}>Perps</Text>
+        <DevSwitchPerpsWatchAddress />
       </ScrollView>
     </NormalScreenContainer>
   );
