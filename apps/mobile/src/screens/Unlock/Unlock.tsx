@@ -447,10 +447,7 @@ export default function UnlockScreen() {
             });
             hideAuthToastRef.current?.();
             hideAuthToastRef.current = null;
-            if (
-              APP_FEATURE_SWITCH.showBiometricUnlockProgressToast &&
-              !isFaceID
-            ) {
+            if (!isFaceID) {
               hidePostAuthToastRef.current = toastUnlocking();
               traceAndroidUnlockPerf('post_auth_unlock_toast_show', {
                 elapsedMs: Date.now() - startedAt,
