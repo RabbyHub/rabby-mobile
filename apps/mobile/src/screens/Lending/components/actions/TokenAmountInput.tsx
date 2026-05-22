@@ -116,7 +116,7 @@ export const TokenAmountInput = ({
   const handleChangeText = useCallback(
     (v: string) => {
       const formatted = formatAmountInput(v);
-      if (formatted >= tokenAmount && tokenAmount > 0) {
+      if (Number(formatted) >= tokenAmount && tokenAmount > 0) {
         debouncedChangeText.cancel();
         handleClickMaxButton?.();
         return false;
