@@ -1,7 +1,4 @@
-import OfficialKeychain, {
-  type BaseOptions,
-  type Options,
-} from 'react-native-keychain';
+import OfficialKeychain, { type BaseOptions } from 'react-native-keychain';
 import { NativeModules, Platform } from 'react-native';
 
 import i18n from '@/utils/i18n';
@@ -36,9 +33,25 @@ export {
 
 const isAndroid = Platform.OS === 'android';
 const GENERIC_USER = 'rabbymobile-user';
-export const KEYCHAIN_PROBE_SERVICE = `${KEYCHAIN_DEFAULT_SERVICE}.rn-keychain-v9`;
-export const KEYCHAIN_PROBE_PASSWORD = 'rn-keychain-v9-probe-password';
-export const KEYCHAIN_SOURCE_LABEL = 'react-native-keychain@9.0.0 raw';
+export const KEYCHAIN_PROBE_SERVICE = `${KEYCHAIN_DEFAULT_SERVICE}.rn-keychain-v10`;
+export const KEYCHAIN_PROBE_PASSWORD = 'rn-keychain-v10-probe-password';
+export const KEYCHAIN_SOURCE_LABEL = 'react-native-keychain@10.0.0 raw';
+
+type RawOfficialOptions = BaseOptions & {
+  accessible?: unknown;
+  accessControl?: unknown;
+  authenticationType?: unknown;
+  authenticationPrompt?: {
+    title?: string;
+    subtitle?: string;
+    description?: string;
+    cancel?: string;
+  };
+  rules?: unknown;
+  securityLevel?: unknown;
+  storage?: KeychainStorageType;
+  androidAllowAuthenticatedSessionReuse?: boolean;
+};
 
 type NativeKeychainDebugState =
   | NativeAndroidKeychainDebugState
@@ -46,18 +59,18 @@ type NativeKeychainDebugState =
 
 type KeychainDebugModule = {
   debugGetGenericPasswordStateForOptions?: (
-    options: BaseOptions,
+    options: RawOfficialOptions,
   ) => Promise<NativeKeychainDebugState>;
   debugRemoveCipherStorageMarkerForOptions?: (
-    options: BaseOptions,
+    options: RawOfficialOptions,
   ) => Promise<boolean>;
 };
 
-const DEFAULT_BASE_OPTIONS: BaseOptions = {
+const DEFAULT_BASE_OPTIONS: RawOfficialOptions = {
   service: KEYCHAIN_DEFAULT_SERVICE,
 };
 
-const DEFAULT_GET_OPTIONS: Options = {
+const DEFAULT_GET_OPTIONS: RawOfficialOptions = {
   ...DEFAULT_BASE_OPTIONS,
   authenticationPrompt: {
     title: i18n.t('native.authentication.auth_prompt_title'),
@@ -70,7 +83,7 @@ const DEFAULT_GET_OPTIONS: Options = {
   }),
 };
 
-const DEFAULT_BIOMETRIC_SET_OPTIONS: Options = {
+const DEFAULT_BIOMETRIC_SET_OPTIONS: RawOfficialOptions = {
   service: KEYCHAIN_DEFAULT_SERVICE,
   accessible: OfficialKeychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
   accessControl: OfficialKeychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
@@ -85,6 +98,7 @@ function sortKeychainStorageTypes(
   const order = [
     KEYCHAIN_STORAGE_TYPES.RSA,
     KEYCHAIN_STORAGE_TYPES.AES,
+    KEYCHAIN_STORAGE_TYPES.AES_GCM,
     KEYCHAIN_STORAGE_TYPES.KC,
   ];
 
@@ -95,8 +109,8 @@ function sortKeychainStorageTypes(
 
 function toOfficialStorageType(
   storage?: KeychainStorageType,
-): BaseOptions['storage'] | undefined {
-  return storage as BaseOptions['storage'] | undefined;
+): RawOfficialOptions['storage'] | undefined {
+  return storage as RawOfficialOptions['storage'] | undefined;
 }
 
 function makeBaseStateCommon(service: string) {
@@ -166,10 +180,10 @@ function makeIOSBaseState(service: string): IOSKeychainDebugState {
 
 async function callDebugMethod<R>(
   method: keyof KeychainDebugModule,
-  options: BaseOptions,
+  options: RawOfficialOptions,
 ): Promise<R> {
   const debugMethod = RNKeychainDebugManager?.[method] as
-    | ((nextOptions: BaseOptions) => Promise<R>)
+    | ((nextOptions: RawOfficialOptions) => Promise<R>)
     | undefined;
 
   if (typeof debugMethod !== 'function') {
@@ -250,7 +264,7 @@ export async function readGenericPassword(
     ...DEFAULT_GET_OPTIONS,
     service,
     ...getAndroidAuthPromptPolicyOptions(options?.androidAuthPromptPolicy),
-  });
+  } as Parameters<typeof OfficialKeychain.getGenericPassword>[0]);
 }
 
 export async function writeBiometricsEntry(
@@ -266,7 +280,7 @@ export async function writeBiometricsEntry(
     ...(options?.storage
       ? { storage: toOfficialStorageType(options.storage) }
       : null),
-  });
+  } as Parameters<typeof OfficialKeychain.setGenericPassword>[2]);
 }
 
 export async function getSupportedStorageTypes(): Promise<
@@ -279,6 +293,7 @@ export async function getSupportedStorageTypes(): Promise<
   return sortKeychainStorageTypes([
     KEYCHAIN_STORAGE_TYPES.RSA,
     KEYCHAIN_STORAGE_TYPES.AES,
+    KEYCHAIN_STORAGE_TYPES.AES_GCM,
   ]);
 }
 
