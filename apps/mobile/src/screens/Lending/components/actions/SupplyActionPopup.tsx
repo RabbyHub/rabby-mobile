@@ -646,6 +646,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
             setAmount(supplyAmount.amount || '0');
           }}
           tokenAmount={Number(supplyAmount.amount || '0')}
+          tokenDecimals={reserve.reserve.decimals}
           price={Number(
             reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
           )}
