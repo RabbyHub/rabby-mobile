@@ -209,7 +209,7 @@
         "ApproveTo": "Подтвердить для",
         "From": "От",
         "RevokeFrom": "Отозвать из",
-        "InteractedContract": "",
+        "InteractedContract": "Взаимодействие с (Кому)",
         "Chain": "Цепь",
         "ApproveToken": "Одобрить токен",
         "Succeeded": "Успешно",
@@ -224,7 +224,9 @@
         "PurchaseFrom": "Приобретено от",
         "AddToWhitelist": "Добавить вWhitelist",
         "RecipientAddress": "Кошелек получателя",
-        "Simulation Results": "Результаты симуляции"
+        "Simulation Results": "Результаты симуляции",
+        "TransactionDetails": "Детали транзакции",
+        "Operation": "Операция"
       },
       "empty": {
         "title": "Нет транзакций",
@@ -1852,7 +1854,8 @@
         "txSigned": "Подписано. Создание транзакции",
         "txSendings": "Отправка запроса на подпись ({{current}}/{{total}})"
       },
-      "fixedModeText": "Фиксированный режим: Всегда используйте вашу собственную настройку газа"
+      "fixedModeText": "Фиксированный режим: Всегда используйте вашу собственную настройку газа",
+      "fixedModeTag": "Фиксированный режим"
     },
     "receiveAddressList": {
       "selectChainTitle": "Выберите Chain",
@@ -3252,7 +3255,8 @@
         "debtSwapSelector": {
           "header": {
             "borrow": "Мои заимствования",
-            "assets": "Токен/Баланс"
+            "assets": "Токен/Баланс",
+            "apy": "APY"
           },
           "title": "Выберите токен займа"
         },

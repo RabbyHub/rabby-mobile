@@ -206,7 +206,7 @@
         "RevokeToken": "Thu hồi Token",
         "InteractionResults": "Kết quả Tương tác",
         "GasFee": "Phí Gas",
-        "InteractedContract": "",
+        "InteractedContract": "Tương tác với (Đến)",
         "ApproveTo": "Phê duyệt tới",
         "WillReceive": "Sẽ Nhận: ≈ {{token}}",
         "Name": "Tên",
@@ -216,7 +216,9 @@
         "BuyAgain": "Mua lại",
         "AddToWhitelist": "Thêm vào Danh sách Trắng",
         "RecipientAddress": "Ví nhận",
-        "Simulation Results": "Kết quả mô phỏng"
+        "Simulation Results": "Kết quả mô phỏng",
+        "TransactionDetails": "Chi tiết giao dịch",
+        "Operation": "Hoạt động"
       },
       "empty": {
         "title": "Không có giao dịch",
@@ -1722,7 +1724,8 @@
         "txSigned": "Đã ký. Đang tạo giao dịch",
         "txSendings": "Đang gửi yêu cầu ký ({{current}}/{{total}})"
       },
-      "fixedModeText": "Chế độ cố định: Luôn sử dụng cài đặt gas tùy chỉnh của bạn"
+      "fixedModeText": "Chế độ cố định: Luôn sử dụng cài đặt gas tùy chỉnh của bạn",
+      "fixedModeTag": "Chế độ cố định"
     },
     "search": {
       "sectionHeader": {
@@ -3252,7 +3255,8 @@
         "debtSwapSelector": {
           "header": {
             "assets": "Token/Số dư",
-            "borrow": "Các khoản vay của tôi"
+            "borrow": "Các khoản vay của tôi",
+            "apy": "APY"
           },
           "title": "Chọn Token Vay"
         },

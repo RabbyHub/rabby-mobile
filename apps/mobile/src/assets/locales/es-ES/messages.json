@@ -370,7 +370,7 @@
         "RevokeFrom": "Revocar desde",
         "InteractionResults": "Resultados de Interacción",
         "ApproveTo": "Aprobar para",
-        "InteractedContract": "",
+        "InteractedContract": "Interacción con (A)",
         "Name": "Nombre",
         "totalApprovedAmount": "Cantidad Aprobada Actual",
         "BuyAgain": "Comprar de nuevo",
@@ -379,7 +379,9 @@
         "Collection": "Colección",
         "AddToWhitelist": "Añadir a la lista blanca",
         "RecipientAddress": "Cartera del destinatario",
-        "Simulation Results": "Resultados de la simulación"
+        "Simulation Results": "Resultados de la simulación",
+        "TransactionDetails": "Detalles de la transacción",
+        "Operation": "Operación"
       },
       "empty": {
         "desc": "No se encontraron transacciones en <1>cadenas compatibles</1>",
@@ -1991,7 +1993,8 @@
         "txSending": "Enviando solicitud de firma",
         "txSigned": "Firmado. Creando transacción"
       },
-      "fixedModeText": "Modo Fijo: Siempre usa tu configuración de gas personalizada"
+      "fixedModeText": "Modo Fijo: Siempre usa tu configuración de gas personalizada",
+      "fixedModeTag": "Modo fijo"
     },
     "search": {
       "searchWeb": {
@@ -3407,7 +3410,8 @@
         "debtSwapSelector": {
           "header": {
             "assets": "Token/Saldo",
-            "borrow": "Mis préstamos"
+            "borrow": "Mis préstamos",
+            "apy": "APY"
           },
           "title": "Seleccionar Token de Préstamo"
         },
