@@ -3,6 +3,7 @@ import {
   LayoutChangeEvent,
   StyleSheet,
   TextInputProps,
+  TextStyle,
   TextLayoutEventData,
   NativeSyntheticEvent,
 } from 'react-native';
@@ -29,6 +30,21 @@ type AutoShrinkAmountTextProps = React.ComponentProps<typeof Text> & {
   fontSizeStep?: number;
 };
 
+function getMeasureTextStyle(style?: TextStyle): TextStyle {
+  if (!style) {
+    return {};
+  }
+
+  return {
+    fontFamily: style.fontFamily,
+    fontStyle: style.fontStyle,
+    fontVariant: style.fontVariant,
+    fontWeight: style.fontWeight,
+    letterSpacing: style.letterSpacing,
+    textTransform: style.textTransform,
+  };
+}
+
 function useFittingFontSize({
   style,
   maxFontSize,
@@ -41,6 +57,10 @@ function useFittingFontSize({
   fontSizeStep?: number;
 }) {
   const flattenedStyle = useMemo(() => StyleSheet.flatten(style), [style]);
+  const measureTextStyle = useMemo(
+    () => getMeasureTextStyle(flattenedStyle),
+    [flattenedStyle],
+  );
   const baseFontSize =
     maxFontSize || Number(flattenedStyle?.fontSize) || DEFAULT_MAX_FONT_SIZE;
   const [inputWidth, setInputWidth] = useState(0);
@@ -79,6 +99,7 @@ function useFittingFontSize({
   return {
     baseFontSize,
     fittingFontSize,
+    measureTextStyle,
     setInputWidth,
     handleMeasureTextLayout,
   };
@@ -97,13 +118,37 @@ export const AutoShrinkAmountTextInput = React.forwardRef<
       maxFontSize,
       minFontSize = DEFAULT_MIN_FONT_SIZE,
       fontSizeStep = DEFAULT_FONT_SIZE_STEP,
+      multiline,
+      scrollEnabled,
       ...props
     },
     ref,
   ) => {
+    const flattenedStyle = useMemo(() => StyleSheet.flatten(style), [style]);
+    const isSingleLine = !multiline;
+    const singleLineTextInputStyle = useMemo(() => {
+      if (!isSingleLine) {
+        return null;
+      }
+
+      const height = flattenedStyle?.height;
+      const lineHeight =
+        flattenedStyle?.lineHeight ||
+        (typeof height === 'number' ? height : undefined);
+
+      return {
+        includeFontPadding: false,
+        lineHeight,
+        overflow: 'hidden' as const,
+        paddingVertical: 0,
+        textAlignVertical: 'center' as const,
+      };
+    }, [flattenedStyle?.height, flattenedStyle?.lineHeight, isSingleLine]);
+
     const {
       baseFontSize,
       fittingFontSize,
+      measureTextStyle,
       setInputWidth,
       handleMeasureTextLayout,
     } = useFittingFontSize({
@@ -127,14 +172,20 @@ export const AutoShrinkAmountTextInput = React.forwardRef<
           ref={ref}
           value={value}
           placeholder={placeholder}
+          multiline={multiline}
           onLayout={handleLayout}
-          style={[style, { fontSize: fittingFontSize }]}
+          scrollEnabled={isSingleLine ? false : scrollEnabled}
+          style={[
+            style,
+            singleLineTextInputStyle,
+            { fontSize: fittingFontSize },
+          ]}
         />
         <Text
           numberOfLines={1}
           onTextLayout={handleMeasureTextLayout}
           style={[
-            style,
+            measureTextStyle,
             styles.measureText,
             {
               fontSize: baseFontSize,
@@ -161,6 +212,7 @@ export const AutoShrinkAmountText = ({
   const {
     baseFontSize,
     fittingFontSize,
+    measureTextStyle,
     setInputWidth,
     handleMeasureTextLayout,
   } = useFittingFontSize({
@@ -192,7 +244,7 @@ export const AutoShrinkAmountText = ({
         numberOfLines={1}
         onTextLayout={handleMeasureTextLayout}
         style={[
-          style,
+          measureTextStyle,
           styles.measureText,
           {
             fontSize: baseFontSize,

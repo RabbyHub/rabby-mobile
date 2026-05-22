@@ -270,7 +270,7 @@ const BridgeToken = ({
                   inSufficient && styles.insufficientInput,
                 ]}
                 placeholder={'0'}
-                scrollEnabled={true}
+                scrollEnabled={false}
                 value={value?.toString()}
                 onChangeText={inputChange}
                 ref={inputCallbackRef}
@@ -450,8 +450,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 28,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
-    // height: 36,
-    // lineHeight: 36,
+    height: 36,
+    lineHeight: 36,
     includeFontPadding: false,
     paddingLeft: 0,
     borderWidth: 0,
