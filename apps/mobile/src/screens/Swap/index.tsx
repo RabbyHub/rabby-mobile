@@ -1497,6 +1497,7 @@ const Swap = ({
             fee={feeRate}
             inSufficient={inSufficient}
             setActiveProvider={setActiveProvider}
+            currentProvider={activeProvider}
             sortIncludeGasFee
           />
         ) : null}
