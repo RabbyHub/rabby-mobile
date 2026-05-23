@@ -228,6 +228,10 @@ export type TokenGroupResourceValue = {
 
 const TOKEN_ENTITY_RESOURCE_FAMILY = 'token.entity';
 const TOKEN_GROUP_RESOURCE_FAMILY = 'token.group';
+const EMPTY_TOKEN_ENTITY_IDS: TokenEntityId[] = [];
+const EMPTY_TOKEN_ASSETS_INDEX_ROWS: TokenAssetsIndexRow[] = [];
+const EMPTY_TOKEN_SELECT_INDEX_ROWS: TokenSelectIndexRow[] = [];
+const EMPTY_STRING_LIST: string[] = [];
 
 const createEmptyAssetsIndexResult = (): TokenAssetsIndexResult => ({
   unFoldRows: [],
@@ -460,16 +464,85 @@ const buildTokenGroupId = (
   return `${listKey}::${section}::${groupKey}` as TokenGroupId;
 };
 
+const buildStableTokenEntityIds = (
+  tokens: ITokenItem[],
+  previousIds?: TokenEntityId[],
+) => {
+  if (!tokens.length) {
+    return previousIds?.length ? EMPTY_TOKEN_ENTITY_IDS : previousIds || [];
+  }
+
+  const canReusePrevious = previousIds?.length === tokens.length;
+  let nextIds: TokenEntityId[] | undefined = canReusePrevious ? undefined : [];
+
+  tokens.forEach((token, index) => {
+    const tokenId = buildTokenEntityId(token);
+    if (canReusePrevious && !nextIds) {
+      if (previousIds![index] === tokenId) {
+        return;
+      }
+      nextIds = previousIds!.slice(0, index);
+    }
+    nextIds!.push(tokenId);
+  });
+
+  return nextIds || previousIds!;
+};
+
+const buildStableStringList = (list: string[], previousList?: string[]) => {
+  if (!list.length) {
+    return previousList?.length ? EMPTY_STRING_LIST : previousList || [];
+  }
+
+  const canReusePrevious = previousList?.length === list.length;
+  let nextList: string[] | undefined = canReusePrevious ? undefined : [];
+
+  list.forEach((item, index) => {
+    if (canReusePrevious && !nextList) {
+      if (previousList![index] === item) {
+        return;
+      }
+      nextList = previousList!.slice(0, index);
+    }
+    nextList!.push(item);
+  });
+
+  return nextList || previousList!;
+};
+
+const isTokenAssetsIndexRowSame = (
+  row: TokenAssetsIndexRow | undefined,
+  nextType: TokenAssetsIndexRow['type'],
+  nextId: TokenEntityId | TokenGroupId,
+) => {
+  if (!row || row.type !== nextType) {
+    return false;
+  }
+  return row.type === 'group' ? row.groupId === nextId : row.tokenId === nextId;
+};
+
 const buildTokenAssetsIndexRows = (
   tokens: ITokenItem[],
   section: 'unfold' | 'fold' | 'scam',
   listKey?: string,
+  previousRows?: TokenAssetsIndexRow[],
 ) => {
+  if (!tokens.length) {
+    return previousRows?.length
+      ? EMPTY_TOKEN_ASSETS_INDEX_ROWS
+      : previousRows || [];
+  }
+
   const groups: Array<{
     groupId: TokenGroupId;
     value: TokenGroupResourceValue;
   }> = [];
-  const rows = tokens.map(token => {
+  const canReusePrevious = previousRows?.length === tokens.length;
+  let nextRows: TokenAssetsIndexRow[] | undefined = canReusePrevious
+    ? undefined
+    : [];
+
+  tokens.forEach((token, index) => {
     const groupItems = getTokenRuntimeGroupItems(token);
 
     if (listKey && groupItems?.length) {
@@ -484,16 +557,33 @@ const buildTokenAssetsIndexRows = (
           summary: stripTokenRuntimeGroupFields(token),
         },
       });
-      return {
+
+      if (canReusePrevious && !nextRows) {
+        if (isTokenAssetsIndexRowSame(previousRows![index], 'group', groupId)) {
+          return;
+        }
+        nextRows = previousRows!.slice(0, index);
+      }
+
+      nextRows!.push({
         type: 'group',
         groupId,
-      } satisfies TokenAssetsIndexRow;
+      });
+      return;
     }
 
-    return {
+    const tokenId = buildTokenEntityId(token);
+    if (canReusePrevious && !nextRows) {
+      if (isTokenAssetsIndexRowSame(previousRows![index], 'token', tokenId)) {
+        return;
+      }
+      nextRows = previousRows!.slice(0, index);
+    }
+
+    nextRows!.push({
       type: 'token',
-      tokenId: buildTokenEntityId(token),
-    } satisfies TokenAssetsIndexRow;
+      tokenId,
+    });
   });
 
   if (groups.length) {
@@ -504,39 +594,53 @@ const buildTokenAssetsIndexRows = (
     tokenGroupResourceStore.upsertGroups(groups);
   }
 
-  return rows;
+  return nextRows || previousRows!;
 };
 
 const buildTokenAssetsIndexResult = (
   result: TokenAssetsResult,
   listKey?: string,
+  previousResult?: TokenAssetsIndexResult,
 ): TokenAssetsIndexResult => {
   const unFoldRows = buildTokenAssetsIndexRows(
     result.unFoldTokens,
     'unfold',
     listKey,
+    previousResult?.unFoldRows,
   );
   const foldRows = buildTokenAssetsIndexRows(
     result.foldTokens,
     'fold',
     listKey,
+    previousResult?.foldRows,
   );
   const scamRows = buildTokenAssetsIndexRows(
     result.scamTokens,
     'scam',
     listKey,
+    previousResult?.scamRows,
   );
 
   return {
     unFoldRows,
     foldRows,
     scamRows,
-    unFoldTokenIds: result.unFoldTokens.map(buildTokenEntityId),
-    foldTokenIds: result.foldTokens.map(buildTokenEntityId),
-    scamTokenIds: result.scamTokens.map(buildTokenEntityId),
-    scamTokenPreviewLogoUrls: result.scamTokens
-      .slice(0, 3)
-      .map(token => token.logo_url),
+    unFoldTokenIds: buildStableTokenEntityIds(
+      result.unFoldTokens,
+      previousResult?.unFoldTokenIds,
+    ),
+    foldTokenIds: buildStableTokenEntityIds(
+      result.foldTokens,
+      previousResult?.foldTokenIds,
+    ),
+    scamTokenIds: buildStableTokenEntityIds(
+      result.scamTokens,
+      previousResult?.scamTokenIds,
+    ),
+    scamTokenPreviewLogoUrls: buildStableStringList(
+      result.scamTokens.slice(0, 3).map(token => token.logo_url),
+      previousResult?.scamTokenPreviewLogoUrls,
+    ),
     foldCoreUsdValue: result.foldTokens
       .filter(token => token.is_core)
       .reduce((total, token) => total + (token.usd_value || 0), 0),
@@ -666,6 +770,7 @@ const computeMultiAssetsIndex = (
   isLpTokenEnabled?: boolean,
   tokenDisplayMode?: TokenDisplayMode,
   listKey?: string,
+  previousResult?: TokenAssetsIndexResult,
 ): TokenAssetsIndexResult => {
   if (!addresses.length) {
     return createEmptyAssetsIndexResult();
@@ -680,6 +785,7 @@ const computeMultiAssetsIndex = (
       tokenDisplayMode,
     ),
     listKey,
+    previousResult,
   );
 };
 
@@ -751,6 +857,7 @@ const computeSingleAssetsIndex = (
   address: string,
   chainServerId?: string,
   isLpTokenEnabled?: boolean,
+  previousResult?: TokenAssetsIndexResult,
 ): TokenAssetsIndexResult => {
   if (!address) {
     return createEmptyAssetsIndexResult();
@@ -758,6 +865,8 @@ const computeSingleAssetsIndex = (
 
   return buildTokenAssetsIndexResult(
     computeSingleAssets(tokenListMap, address, chainServerId, isLpTokenEnabled),
+    undefined,
+    previousResult,
   );
 };
 
@@ -868,12 +977,36 @@ const computeTokenSelect = (
 
 const buildTokenSelectIndexRows = (
   tokens: ITokenItem[],
+  previousRows?: TokenSelectIndexRow[],
 ): TokenSelectIndexRow[] => {
   tokenEntityResourceStore.upsertTokens(tokens);
-  return tokens.map(token => ({
-    type: 'token',
-    tokenId: buildTokenEntityId(token),
-  }));
+
+  if (!tokens.length) {
+    return previousRows?.length
+      ? EMPTY_TOKEN_SELECT_INDEX_ROWS
+      : previousRows || [];
+  }
+
+  const canReusePrevious = previousRows?.length === tokens.length;
+  let nextRows: TokenSelectIndexRow[] | undefined = canReusePrevious
+    ? undefined
+    : [];
+
+  tokens.forEach((token, index) => {
+    const tokenId = buildTokenEntityId(token);
+    if (canReusePrevious && !nextRows) {
+      if (previousRows![index].tokenId === tokenId) {
+        return;
+      }
+      nextRows = previousRows!.slice(0, index);
+    }
+    nextRows!.push({
+      type: 'token',
+      tokenId,
+    });
+  });
+
+  return nextRows || previousRows!;
 };
 
 const computePerpsTokenSelect = (
@@ -1265,6 +1398,7 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
             isLpTokenEnabled,
             tokenDisplayMode,
             key,
+            state.multiAssetsIndexCache[key],
           ),
           removedKeys,
         ),
@@ -1298,6 +1432,7 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
             address,
             chainServerId,
             isLpTokenEnabled,
+            state.singleAssetsIndexCache[key],
           ),
           removedKeys,
         ),
@@ -1341,7 +1476,10 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
         tokenSelectIndexCache: upsertRecordCache(
           state.tokenSelectIndexCache,
           key,
-          buildTokenSelectIndexRows(tokenSelect),
+          buildTokenSelectIndexRows(
+            tokenSelect,
+            state.tokenSelectIndexCache[key],
+          ),
           removedKeys,
         ),
       }));
@@ -1399,6 +1537,7 @@ const rebuildComputedCaches = (
   tokenListMap: TokenListState['tokenListMap'],
 ) => {
   tokenEntityResourceStore.syncFromTokenListMap(tokenListMap);
+  const previousComputedState = useTokenListComputedStore.getState();
 
   const multiAssetsIndexCache: Record<string, TokenAssetsIndexResult> = {};
   multiAssetsIndexCacheParams.forEach((params, key) => {
@@ -1409,6 +1548,7 @@ const rebuildComputedCaches = (
       params.isLpTokenEnabled,
       params.tokenDisplayMode,
       key,
+      previousComputedState.multiAssetsIndexCache[key],
     );
   });
 
@@ -1419,6 +1559,7 @@ const rebuildComputedCaches = (
       params.address,
       params.chainServerId,
       params.isLpTokenEnabled,
+      previousComputedState.singleAssetsIndexCache[key],
     );
   });
 
@@ -1433,7 +1574,10 @@ const rebuildComputedCaches = (
       params.isLpTokenEnabled,
     );
     tokenSelectCache[key] = tokenSelect;
-    tokenSelectIndexCache[key] = buildTokenSelectIndexRows(tokenSelect);
+    tokenSelectIndexCache[key] = buildTokenSelectIndexRows(
+      tokenSelect,
+      previousComputedState.tokenSelectIndexCache[key],
+    );
   });
 
   const perpsTokenSelectCache: Record<string, ITokenItem[]> = {};
@@ -1462,7 +1606,12 @@ const rebuildComputedCaches = (
   });
 };
 
+let lastComputedTokenListMap = tokenListStore.getState().tokenListMap;
 tokenListStore.subscribe(state => {
+  if (state.tokenListMap === lastComputedTokenListMap) {
+    return;
+  }
+  lastComputedTokenListMap = state.tokenListMap;
   rebuildComputedCaches(state.tokenListMap);
 });
 
