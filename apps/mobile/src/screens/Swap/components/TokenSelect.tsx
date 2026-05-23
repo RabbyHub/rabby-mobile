@@ -107,7 +107,14 @@ const TokenSelect = ({
     useState<FavoriteFilterType>('all');
 
   const [_, setLongPressToken] = useLongPressTokenAtom();
-  const queryConds = useDebouncedValue(_queryConds, 250);
+  const debouncedKeyword = useDebouncedValue(_queryConds.keyword, 250);
+  const queryConds = useMemo(
+    () => ({
+      ..._queryConds,
+      keyword: debouncedKeyword,
+    }),
+    [_queryConds, debouncedKeyword],
+  );
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
   const currentAccount = queryConds.account;
 
