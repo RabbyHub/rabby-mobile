@@ -1,7 +1,7 @@
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { queryTokensCache } from '@/core/apis/tokenCache';
 import { openapi } from '@/core/request';
-import { mCreate, zCreate } from '@/core/utils/reexports';
+import { mCreate, zCreate, zMutative } from '@/core/utils/reexports';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { syncRemoteTokens } from '@/databases/sync/assets';
 import { defaultTokenFilter, lpTokenFilter } from '@/utils/lpToken';
@@ -210,6 +210,19 @@ export type TokenAssetsIndexRow =
 export type TokenSelectIndexRow = {
   type: 'token';
   tokenId: TokenEntityId;
+};
+
+export type TokenStaticIndexItem = {
+  tokenId: TokenEntityId;
+  ownerAddr: string;
+  chain: string;
+  id: string;
+  symbol?: string;
+  isCore: boolean | null;
+  isVerified?: boolean | null;
+  isSuspicious?: boolean | null;
+  protocolId?: string;
+  searchText: string;
 };
 
 export type TokenAssetsIndexResult = {
@@ -595,6 +608,109 @@ const buildStableStringList = (list: string[], previousList?: string[]) => {
 
   return nextList || previousList!;
 };
+
+const buildTokenStaticIndexItem = (token: ITokenItem): TokenStaticIndexItem => {
+  const id = token.id || '';
+  const symbol = token.symbol || '';
+
+  return {
+    tokenId: buildTokenEntityId(token),
+    ownerAddr: normalizeAddress(token.owner_addr),
+    chain: token.chain,
+    id,
+    symbol,
+    isCore: token.is_core,
+    isVerified: token.is_verified,
+    isSuspicious: token.is_suspicious,
+    protocolId: token.protocol_id,
+    searchText: `${id.toLowerCase()} ${symbol.toLowerCase()}`,
+  };
+};
+
+const isTokenStaticIndexItemSame = (
+  previousItem: TokenStaticIndexItem | undefined,
+  nextItem: TokenStaticIndexItem,
+) => {
+  if (!previousItem) {
+    return false;
+  }
+
+  return (
+    previousItem.tokenId === nextItem.tokenId &&
+    previousItem.ownerAddr === nextItem.ownerAddr &&
+    previousItem.chain === nextItem.chain &&
+    previousItem.id === nextItem.id &&
+    previousItem.symbol === nextItem.symbol &&
+    previousItem.isCore === nextItem.isCore &&
+    previousItem.isVerified === nextItem.isVerified &&
+    previousItem.isSuspicious === nextItem.isSuspicious &&
+    previousItem.protocolId === nextItem.protocolId &&
+    previousItem.searchText === nextItem.searchText
+  );
+};
+
+type TokenIndexState = {
+  addressTokenIds: Record<string, TokenEntityId[]>;
+  tokenStaticMap: Record<string, TokenStaticIndexItem>;
+  syncAddressTokens(address: string, tokens: ITokenItem[]): void;
+  syncFromTokenListMap(
+    tokenListMap: TokenListState['tokenListMap'],
+    addresses?: string[],
+  ): void;
+};
+
+export const useTokenIndexStore = zCreate(
+  zMutative<TokenIndexState>((set, get) => ({
+    addressTokenIds: {},
+    tokenStaticMap: {},
+    syncAddressTokens(address, tokens) {
+      const normalizedAddress = normalizeAddress(address);
+      const nextTokenIds = buildStableTokenEntityIds(
+        sortByUsdValueDesc(tokens),
+        get().addressTokenIds[normalizedAddress],
+      );
+      const nextStaticItems = tokens.map(buildTokenStaticIndexItem);
+      const nextStaticTokenIds = new Set(
+        nextStaticItems.map(item => item.tokenId),
+      );
+
+      set(draft => {
+        if (draft.addressTokenIds[normalizedAddress] !== nextTokenIds) {
+          draft.addressTokenIds[normalizedAddress] = nextTokenIds;
+        }
+
+        nextStaticItems.forEach(item => {
+          if (
+            !isTokenStaticIndexItemSame(
+              draft.tokenStaticMap[item.tokenId],
+              item,
+            )
+          ) {
+            draft.tokenStaticMap[item.tokenId] = item;
+          }
+        });
+
+        Object.keys(draft.tokenStaticMap).forEach(tokenId => {
+          if (
+            getTokenEntityIdAddress(tokenId) === normalizedAddress &&
+            !nextStaticTokenIds.has(tokenId as TokenEntityId)
+          ) {
+            delete draft.tokenStaticMap[tokenId];
+          }
+        });
+      });
+    },
+    syncFromTokenListMap(tokenListMap, addresses) {
+      const addressSet = addresses
+        ? normalizeAddressSet(addresses)
+        : new Set(Object.keys(tokenListMap).map(normalizeAddress));
+
+      addressSet.forEach(address => {
+        get().syncAddressTokens(address, tokenListMap[address] || []);
+      });
+    },
+  })),
+);
 
 const isTokenAssetsIndexRowSame = (
   row: TokenAssetsIndexRow | undefined,
@@ -1897,6 +2013,9 @@ tokenListStore.subscribe(state => {
   if (!changedAddresses.size) {
     return;
   }
+  useTokenIndexStore
+    .getState()
+    .syncFromTokenListMap(state.tokenListMap, Array.from(changedAddresses));
   rebuildComputedCaches(
     state.tokenListMap,
     shouldRebuildAllComputedCaches(
