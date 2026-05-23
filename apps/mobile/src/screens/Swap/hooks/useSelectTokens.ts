@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import useAsync from 'react-use/lib/useAsync';
+import { useShallow } from 'zustand/shallow';
 
 import {
   makeTokenSettingSets,
@@ -9,12 +10,14 @@ import { Account } from '@/core/services/preference';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import useTokenList, {
+  buildTokenSelectIndexRowsFromIds,
   buildTokenEntityId,
-  getTokenSelectCacheKey,
   ITokenItem,
+  selectTokenIdsForTokenSelector,
   TokenSelectIndexRow,
   tokenEntityResourceStore,
-  useTokenListComputedStore,
+  TokenEntityId,
+  useTokenIndexStore,
 } from '@/store/tokens';
 
 import { useSelectTokensThreadSafe } from '@/components/Token/hooks/selectToken';
@@ -80,10 +83,6 @@ export const useSelectTokens = ({
   const batchGetTokenList = useTokenList(s => s.batchGetTokenList);
   const getTokenList = useTokenList(s => s.getTokenList);
 
-  const registerTokenSelect = useTokenListComputedStore(
-    state => state.registerTokenSelect,
-  );
-
   const isLoadingToken = useMemo(() => {
     if (!currentAccount) {
       return isLoading;
@@ -133,50 +132,58 @@ export const useSelectTokens = ({
       return [];
     }, [chain_server_id, currentAddress, keyword]);
 
-  const tokenSelectKey = useMemo(
-    () =>
-      getTokenSelectCacheKey(
+  useEffect(() => {
+    useTokenIndexStore
+      .getState()
+      .syncFromTokenListMap(
+        useTokenList.getState().tokenListMap,
+        tokenSelectAddresses,
+      );
+  }, [tokenSelectAddresses]);
+
+  const tokenIds = useTokenIndexStore(
+    useShallow(state =>
+      selectTokenIdsForTokenSelector(
+        state,
         tokenSelectAddresses,
         chain_server_id,
         keyword,
         isLpTokenEnabled,
       ),
-    [tokenSelectAddresses, chain_server_id, keyword, isLpTokenEnabled],
+    ),
   );
 
-  useEffect(() => {
-    registerTokenSelect(
-      tokenSelectAddresses,
-      chain_server_id,
-      keyword,
-      isLpTokenEnabled,
-    );
-  }, [
-    registerTokenSelect,
-    tokenSelectAddresses,
-    chain_server_id,
-    keyword,
-    isLpTokenEnabled,
-  ]);
+  const tokenRows = useMemo(
+    () => buildTokenSelectIndexRowsFromIds(tokenIds),
+    [tokenIds],
+  );
 
-  const tokens = useTokenListComputedStore(state => {
+  const tokens = tokenEntityResourceStore.useStore(
+    useShallow(state => {
+      if (!keyword) {
+        return EMPTY_TOKEN_LIST;
+      }
+      return tokenIds
+        .map(tokenId => state.valueMap[tokenId])
+        .filter((token): token is ITokenItem => !!token);
+    }),
+  );
+
+  const existingTokenIdSet = useMemo(() => {
     if (!keyword) {
-      return EMPTY_TOKEN_LIST;
+      return null;
     }
-    return state.tokenSelectCache[tokenSelectKey] || EMPTY_TOKEN_LIST;
-  });
-  const tokenRows = useTokenListComputedStore(state => {
-    return state.tokenSelectIndexCache[tokenSelectKey] || EMPTY_TOKEN_ROWS;
-  });
+    return new Set<TokenEntityId>(tokenIds);
+  }, [keyword, tokenIds]);
 
   const mergedTokens = useMemo(() => {
     if (!keyword || !searchTokenResult?.length) {
       return tokens;
     }
-    const seen = new Set(tokens.map(token => `${token.chain}:${token.id}`));
+    const seen = new Set(tokens.map(buildTokenEntityId));
     const mergedList = tokens.slice();
     searchTokenResult.forEach(token => {
-      const key = `${token.chain}:${token.id}`;
+      const key = buildTokenEntityId(token);
       if (!seen.has(key)) {
         seen.add(key);
         mergedList.push(token);
@@ -241,10 +248,17 @@ export const useSelectTokens = ({
       ];
     }
     if (keyword && searchTokenResult?.length) {
-      return buildTokenRows(tokenWithOwner);
+      const externalTokens = tokenWithOwner.filter(token => {
+        if (!existingTokenIdSet) {
+          return true;
+        }
+        return !existingTokenIdSet.has(buildTokenEntityId(token));
+      });
+      return [...tokenRows, ...buildTokenRows(externalTokens)];
     }
     return tokenRows;
   }, [
+    existingTokenIdSet,
     keyword,
     recommendedTokens,
     searchTokenResult?.length,
