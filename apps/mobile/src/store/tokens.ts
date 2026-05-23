@@ -136,13 +136,6 @@ const isDataExpiredBatch = async (addresses: string[]) => {
 
 const COMPUTED_CACHE_LIMIT = 10;
 
-const createEmptyAssetsResult = (): TokenAssetsResult => ({
-  unFoldTokens: [],
-  foldTokens: [],
-  scamTokens: [],
-  hasFoldTokens: false,
-});
-
 const normalizeAddress = (address: string) => address.toLowerCase();
 
 const normalizeAddresses = (addresses: string[]) =>
@@ -163,15 +156,6 @@ export const getMultiAssetsCacheKey = (
   `${getAddressesKey(addresses)}::${chainServerId ?? ''}::${
     isLpTokenEnabled ? '1' : '0'
   }::${tokenDisplayMode ?? 'byAddress'}`;
-
-export const getSingleAssetsCacheKey = (
-  address: string,
-  chainServerId?: string,
-  isLpTokenEnabled?: boolean,
-) =>
-  `${address.toLowerCase()}::${chainServerId ?? ''}::${
-    isLpTokenEnabled ? '1' : '0'
-  }`;
 
 export const getChainSelectorCacheKey = (addresses: string[]) =>
   getAddressesKey(addresses);
@@ -1107,20 +1091,6 @@ export const buildMultiAssetsIndexFromTokenIds = (
   );
 };
 
-const computeSingleAssets = (
-  tokenListMap: TokenListState['tokenListMap'],
-  address: string,
-  chainServerId?: string,
-  isLpTokenEnabled?: boolean,
-): TokenAssetsResult => {
-  if (!address) {
-    return createEmptyAssetsResult();
-  }
-  const normalizedAddress = address.toLowerCase();
-  const tokens = tokenListMap[normalizedAddress] || [];
-  return computeSingleAssetsFromTokens(tokens, chainServerId, isLpTokenEnabled);
-};
-
 const computeSingleAssetsFromTokens = (
   tokens: ITokenItem[],
   chainServerId?: string,
@@ -1194,24 +1164,6 @@ export const buildSingleAssetsIndexFromTokenIds = (
 
   return buildTokenAssetsIndexResult(
     computeSingleAssetsFromTokens(tokens, chainServerId, isLpTokenEnabled),
-    undefined,
-    previousResult,
-  );
-};
-
-const computeSingleAssetsIndex = (
-  tokenListMap: TokenListState['tokenListMap'],
-  address: string,
-  chainServerId?: string,
-  isLpTokenEnabled?: boolean,
-  previousResult?: TokenAssetsIndexResult,
-): TokenAssetsIndexResult => {
-  if (!address) {
-    return createEmptyAssetsIndexResult();
-  }
-
-  return buildTokenAssetsIndexResult(
-    computeSingleAssets(tokenListMap, address, chainServerId, isLpTokenEnabled),
     undefined,
     previousResult,
   );
@@ -1443,26 +1395,11 @@ const tokenListStore = zCreate<TokenListState>(set => ({
 }));
 
 type TokenListComputedState = {
-  singleAssetsIndexCache: Record<string, TokenAssetsIndexResult>;
   chainSelectorCache: Record<string, ITokenItem[]>;
-  registerSingleAssets: (
-    address: string,
-    chainServerId?: string,
-    isLpTokenEnabled?: boolean,
-  ) => string;
   registerChainSelector: (addresses: string[]) => string;
 };
 
-const singleAssetsIndexCacheParams = new Map<
-  string,
-  {
-    address: string;
-    chainServerId?: string;
-    isLpTokenEnabled?: boolean;
-  }
->();
 const chainSelectorCacheParams = new Map<string, { addresses: string[] }>();
-const singleAssetsIndexCacheOrder: string[] = [];
 const chainSelectorCacheOrder: string[] = [];
 
 const upsertRecordCache = <T>(
@@ -1525,16 +1462,6 @@ const shouldRecomputeAddressCache = (
   return addresses.some(address =>
     changedAddresses.has(normalizeAddress(address)),
   );
-};
-
-const shouldRecomputeSingleAddressCache = (
-  address: string,
-  changedAddresses: Set<string> | null,
-) => {
-  if (!changedAddresses) {
-    return true;
-  }
-  return changedAddresses.has(normalizeAddress(address));
 };
 
 const rebuildRecordCache = <T, P>(
@@ -1602,44 +1529,7 @@ const shouldRebuildAllComputedCaches = (
 export const EMPTY_TOKEN_LIST = [];
 export const useTokenListComputedStore = zCreate<TokenListComputedState>(
   set => ({
-    singleAssetsIndexCache: {},
     chainSelectorCache: {},
-    registerSingleAssets(address, chainServerId, isLpTokenEnabled) {
-      const key = getSingleAssetsCacheKey(
-        address,
-        chainServerId,
-        isLpTokenEnabled,
-      );
-      const removedKeys = touchCacheParams(
-        singleAssetsIndexCacheParams,
-        singleAssetsIndexCacheOrder,
-        key,
-        {
-          address,
-          chainServerId,
-          isLpTokenEnabled,
-        },
-      );
-      const tokenListMap = tokenListStore.getState().tokenListMap;
-      tokenEntityResourceStore.syncAddressesFromTokenListMap(tokenListMap, [
-        address,
-      ]);
-      set(state => ({
-        singleAssetsIndexCache: upsertRecordCache(
-          state.singleAssetsIndexCache,
-          key,
-          computeSingleAssetsIndex(
-            tokenListMap,
-            address,
-            chainServerId,
-            isLpTokenEnabled,
-            state.singleAssetsIndexCache[key],
-          ),
-          removedKeys,
-        ),
-      }));
-      return key;
-    },
     registerChainSelector(addresses) {
       const key = getChainSelectorCacheKey(addresses);
       const removedKeys = touchCacheParams(
@@ -1679,21 +1569,6 @@ const rebuildComputedCaches = (
 
   const previousComputedState = useTokenListComputedStore.getState();
 
-  const singleAssetsIndexCache = rebuildRecordCache(
-    previousComputedState.singleAssetsIndexCache,
-    singleAssetsIndexCacheParams,
-    params =>
-      shouldRecomputeSingleAddressCache(params.address, changedAddresses),
-    (params, _key, previousValue) =>
-      computeSingleAssetsIndex(
-        tokenListMap,
-        params.address,
-        params.chainServerId,
-        params.isLpTokenEnabled,
-        previousValue,
-      ),
-  );
-
   const chainSelectorCache = rebuildRecordCache(
     previousComputedState.chainSelectorCache,
     chainSelectorCacheParams,
@@ -1701,15 +1576,11 @@ const rebuildComputedCaches = (
     params => computeChainSelector(tokenListMap, params.addresses),
   );
 
-  if (
-    previousComputedState.singleAssetsIndexCache === singleAssetsIndexCache &&
-    previousComputedState.chainSelectorCache === chainSelectorCache
-  ) {
+  if (previousComputedState.chainSelectorCache === chainSelectorCache) {
     return;
   }
 
   useTokenListComputedStore.setState({
-    singleAssetsIndexCache,
     chainSelectorCache,
   });
 };
