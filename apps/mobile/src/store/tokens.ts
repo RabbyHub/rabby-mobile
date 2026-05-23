@@ -173,9 +173,6 @@ export const getSingleAssetsCacheKey = (
     isLpTokenEnabled ? '1' : '0'
   }`;
 
-export const getPerpsTokenSelectCacheKey = (address: string) =>
-  address.toLowerCase();
-
 export const getChainSelectorCacheKey = (addresses: string[]) =>
   getAddressesKey(addresses);
 
@@ -1220,20 +1217,6 @@ const computeSingleAssetsIndex = (
   );
 };
 
-const computePerpsTokenSelect = (
-  tokenListMap: TokenListState['tokenListMap'],
-  address?: string,
-): ITokenItem[] => {
-  if (!address) {
-    return [];
-  }
-  return (
-    tokenListMap[address.toLowerCase()]
-      ?.filter(item => item.is_core)
-      .sort(compareByUsdValueDesc) || []
-  );
-};
-
 const computeChainSelector = (
   tokenListMap: TokenListState['tokenListMap'],
   addresses: string[],
@@ -1461,14 +1444,12 @@ const tokenListStore = zCreate<TokenListState>(set => ({
 
 type TokenListComputedState = {
   singleAssetsIndexCache: Record<string, TokenAssetsIndexResult>;
-  perpsTokenSelectCache: Record<string, ITokenItem[]>;
   chainSelectorCache: Record<string, ITokenItem[]>;
   registerSingleAssets: (
     address: string,
     chainServerId?: string,
     isLpTokenEnabled?: boolean,
   ) => string;
-  registerPerpsTokenSelect: (address?: string) => string | null;
   registerChainSelector: (addresses: string[]) => string;
 };
 
@@ -1480,10 +1461,8 @@ const singleAssetsIndexCacheParams = new Map<
     isLpTokenEnabled?: boolean;
   }
 >();
-const perpsTokenSelectCacheParams = new Map<string, { address: string }>();
 const chainSelectorCacheParams = new Map<string, { addresses: string[] }>();
 const singleAssetsIndexCacheOrder: string[] = [];
-const perpsTokenSelectCacheOrder: string[] = [];
 const chainSelectorCacheOrder: string[] = [];
 
 const upsertRecordCache = <T>(
@@ -1624,7 +1603,6 @@ export const EMPTY_TOKEN_LIST = [];
 export const useTokenListComputedStore = zCreate<TokenListComputedState>(
   set => ({
     singleAssetsIndexCache: {},
-    perpsTokenSelectCache: {},
     chainSelectorCache: {},
     registerSingleAssets(address, chainServerId, isLpTokenEnabled) {
       const key = getSingleAssetsCacheKey(
@@ -1657,30 +1635,6 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
             isLpTokenEnabled,
             state.singleAssetsIndexCache[key],
           ),
-          removedKeys,
-        ),
-      }));
-      return key;
-    },
-    registerPerpsTokenSelect(address) {
-      if (!address) {
-        return null;
-      }
-      const key = getPerpsTokenSelectCacheKey(address);
-      const removedKeys = touchCacheParams(
-        perpsTokenSelectCacheParams,
-        perpsTokenSelectCacheOrder,
-        key,
-        {
-          address,
-        },
-      );
-      const tokenListMap = tokenListStore.getState().tokenListMap;
-      set(state => ({
-        perpsTokenSelectCache: upsertRecordCache(
-          state.perpsTokenSelectCache,
-          key,
-          computePerpsTokenSelect(tokenListMap, address),
           removedKeys,
         ),
       }));
@@ -1740,14 +1694,6 @@ const rebuildComputedCaches = (
       ),
   );
 
-  const perpsTokenSelectCache = rebuildRecordCache(
-    previousComputedState.perpsTokenSelectCache,
-    perpsTokenSelectCacheParams,
-    params =>
-      shouldRecomputeSingleAddressCache(params.address, changedAddresses),
-    params => computePerpsTokenSelect(tokenListMap, params.address),
-  );
-
   const chainSelectorCache = rebuildRecordCache(
     previousComputedState.chainSelectorCache,
     chainSelectorCacheParams,
@@ -1757,7 +1703,6 @@ const rebuildComputedCaches = (
 
   if (
     previousComputedState.singleAssetsIndexCache === singleAssetsIndexCache &&
-    previousComputedState.perpsTokenSelectCache === perpsTokenSelectCache &&
     previousComputedState.chainSelectorCache === chainSelectorCache
   ) {
     return;
@@ -1765,7 +1710,6 @@ const rebuildComputedCaches = (
 
   useTokenListComputedStore.setState({
     singleAssetsIndexCache,
-    perpsTokenSelectCache,
     chainSelectorCache,
   });
 };
