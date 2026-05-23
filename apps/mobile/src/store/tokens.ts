@@ -1,7 +1,7 @@
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { queryTokensCache } from '@/core/apis/tokenCache';
 import { openapi } from '@/core/request';
-import { mCreate, zCreate, zMutative } from '@/core/utils/reexports';
+import { zCreate, zMutative } from '@/core/utils/reexports';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { syncRemoteTokens } from '@/databases/sync/assets';
 import { lpTokenFilter } from '@/utils/lpToken';
@@ -134,8 +134,6 @@ const isDataExpiredBatch = async (addresses: string[]) => {
   return res.some(item => !!item);
 };
 
-const COMPUTED_CACHE_LIMIT = 10;
-
 const normalizeAddress = (address: string) => address.toLowerCase();
 
 const normalizeAddresses = (addresses: string[]) =>
@@ -156,9 +154,6 @@ export const getMultiAssetsCacheKey = (
   `${getAddressesKey(addresses)}::${chainServerId ?? ''}::${
     isLpTokenEnabled ? '1' : '0'
   }::${tokenDisplayMode ?? 'byAddress'}`;
-
-export const getChainSelectorCacheKey = (addresses: string[]) =>
-  getAddressesKey(addresses);
 
 export type TokenEntityId = string & {
   readonly __tokenEntityId: unique symbol;
@@ -1169,19 +1164,6 @@ export const buildSingleAssetsIndexFromTokenIds = (
   );
 };
 
-const computeChainSelector = (
-  tokenListMap: TokenListState['tokenListMap'],
-  addresses: string[],
-): ITokenItem[] => {
-  if (!addresses.length) {
-    return [];
-  }
-  const normalizedAddresses = normalizeAddresses(addresses);
-  return normalizedAddresses
-    .flatMap(address => tokenListMap[address] || [])
-    .filter(item => item.is_core);
-};
-
 const tokenListStore = zCreate<TokenListState>(set => ({
   tokenListMap: {},
   isLoading: false, // 整体的 loading 状态
@@ -1394,103 +1376,6 @@ const tokenListStore = zCreate<TokenListState>(set => ({
   },
 }));
 
-type TokenListComputedState = {
-  chainSelectorCache: Record<string, ITokenItem[]>;
-  registerChainSelector: (addresses: string[]) => string;
-};
-
-const chainSelectorCacheParams = new Map<string, { addresses: string[] }>();
-const chainSelectorCacheOrder: string[] = [];
-
-const upsertRecordCache = <T>(
-  cache: Record<string, T>,
-  key: string,
-  value: T,
-  keys: string[],
-) => {
-  if (!keys.length && cache[key] === value) {
-    return cache;
-  }
-
-  return mCreate(cache, draft => {
-    const record = draft as Record<string, T>;
-    record[key] = value;
-    keys.forEach(removedKey => {
-      delete record[removedKey];
-    });
-  });
-};
-
-const touchCacheParams = <T>(
-  map: Map<string, T>,
-  order: string[],
-  key: string,
-  params: T,
-  limit = COMPUTED_CACHE_LIMIT,
-) => {
-  if (map.has(key)) {
-    map.set(key, params);
-    const index = order.indexOf(key);
-    if (index > -1) {
-      order.splice(index, 1);
-    }
-    order.push(key);
-    return [] as string[];
-  }
-  map.set(key, params);
-  order.push(key);
-  if (order.length > limit) {
-    const removed = order.shift();
-    if (removed) {
-      map.delete(removed);
-      return [removed];
-    }
-  }
-  return [] as string[];
-};
-
-const hasRecordKey = <T>(record: Record<string, T>, key: string) =>
-  Object.prototype.hasOwnProperty.call(record, key);
-
-const shouldRecomputeAddressCache = (
-  addresses: string[],
-  changedAddresses: Set<string> | null,
-) => {
-  if (!changedAddresses) {
-    return true;
-  }
-  return addresses.some(address =>
-    changedAddresses.has(normalizeAddress(address)),
-  );
-};
-
-const rebuildRecordCache = <T, P>(
-  previousCache: Record<string, T>,
-  paramsMap: Map<string, P>,
-  shouldRecompute: (params: P, key: string) => boolean,
-  compute: (params: P, key: string, previousValue?: T) => T,
-) => {
-  const nextCache: Record<string, T> = {};
-  let isChanged = Object.keys(previousCache).length !== paramsMap.size;
-
-  paramsMap.forEach((params, key) => {
-    const hasPrevious = hasRecordKey(previousCache, key);
-    const previousValue = previousCache[key];
-    const nextValue =
-      !hasPrevious || shouldRecompute(params, key)
-        ? compute(params, key, previousValue)
-        : previousValue;
-
-    nextCache[key] = nextValue;
-
-    if (!hasPrevious || previousValue !== nextValue) {
-      isChanged = true;
-    }
-  });
-
-  return isChanged ? nextCache : previousCache;
-};
-
 const getTokenListMapChangedAddresses = (
   previousTokenListMap: TokenListState['tokenListMap'],
   nextTokenListMap: TokenListState['tokenListMap'],
@@ -1510,81 +1395,6 @@ const getTokenListMapChangedAddresses = (
   return changedAddresses;
 };
 
-const shouldRebuildAllComputedCaches = (
-  previousTokenListMap: TokenListState['tokenListMap'],
-  nextTokenListMap: TokenListState['tokenListMap'],
-  changedAddresses: Set<string>,
-) => {
-  if (!changedAddresses.size) {
-    return false;
-  }
-  const addressCount = new Set([
-    ...Object.keys(previousTokenListMap).map(normalizeAddress),
-    ...Object.keys(nextTokenListMap).map(normalizeAddress),
-  ]).size;
-
-  return changedAddresses.size === addressCount;
-};
-
-export const EMPTY_TOKEN_LIST = [];
-export const useTokenListComputedStore = zCreate<TokenListComputedState>(
-  set => ({
-    chainSelectorCache: {},
-    registerChainSelector(addresses) {
-      const key = getChainSelectorCacheKey(addresses);
-      const removedKeys = touchCacheParams(
-        chainSelectorCacheParams,
-        chainSelectorCacheOrder,
-        key,
-        {
-          addresses,
-        },
-      );
-      const tokenListMap = tokenListStore.getState().tokenListMap;
-      set(state => ({
-        chainSelectorCache: upsertRecordCache(
-          state.chainSelectorCache,
-          key,
-          computeChainSelector(tokenListMap, addresses),
-          removedKeys,
-        ),
-      }));
-      return key;
-    },
-  }),
-);
-
-const rebuildComputedCaches = (
-  tokenListMap: TokenListState['tokenListMap'],
-  changedAddresses: Set<string> | null,
-) => {
-  if (changedAddresses) {
-    tokenEntityResourceStore.syncChangedAddressesFromTokenListMap(
-      tokenListMap,
-      changedAddresses,
-    );
-  } else {
-    tokenEntityResourceStore.syncFromTokenListMap(tokenListMap);
-  }
-
-  const previousComputedState = useTokenListComputedStore.getState();
-
-  const chainSelectorCache = rebuildRecordCache(
-    previousComputedState.chainSelectorCache,
-    chainSelectorCacheParams,
-    params => shouldRecomputeAddressCache(params.addresses, changedAddresses),
-    params => computeChainSelector(tokenListMap, params.addresses),
-  );
-
-  if (previousComputedState.chainSelectorCache === chainSelectorCache) {
-    return;
-  }
-
-  useTokenListComputedStore.setState({
-    chainSelectorCache,
-  });
-};
-
 let lastComputedTokenListMap = tokenListStore.getState().tokenListMap;
 tokenListStore.subscribe(state => {
   if (state.tokenListMap === lastComputedTokenListMap) {
@@ -1602,15 +1412,9 @@ tokenListStore.subscribe(state => {
   useTokenIndexStore
     .getState()
     .syncFromTokenListMap(state.tokenListMap, Array.from(changedAddresses));
-  rebuildComputedCaches(
+  tokenEntityResourceStore.syncChangedAddressesFromTokenListMap(
     state.tokenListMap,
-    shouldRebuildAllComputedCaches(
-      previousTokenListMap,
-      state.tokenListMap,
-      changedAddresses,
-    )
-      ? null
-      : changedAddresses,
+    changedAddresses,
   );
 });
 
