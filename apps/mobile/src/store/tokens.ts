@@ -236,7 +236,7 @@ export type TokenGroupResourceValue = {
 
 const TOKEN_ENTITY_RESOURCE_FAMILY = 'token.entity';
 const TOKEN_GROUP_RESOURCE_FAMILY = 'token.group';
-const EMPTY_TOKEN_ENTITY_IDS: TokenEntityId[] = [];
+export const EMPTY_TOKEN_ENTITY_IDS: TokenEntityId[] = [];
 const EMPTY_TOKEN_ASSETS_INDEX_ROWS: TokenAssetsIndexRow[] = [];
 const EMPTY_TOKEN_SELECT_INDEX_ROWS: TokenSelectIndexRow[] = [];
 const EMPTY_STRING_LIST: string[] = [];
@@ -1127,6 +1127,14 @@ const computeSingleAssets = (
   }
   const normalizedAddress = address.toLowerCase();
   const tokens = tokenListMap[normalizedAddress] || [];
+  return computeSingleAssetsFromTokens(tokens, chainServerId, isLpTokenEnabled);
+};
+
+const computeSingleAssetsFromTokens = (
+  tokens: ITokenItem[],
+  chainServerId?: string,
+  isLpTokenEnabled?: boolean,
+): TokenAssetsResult => {
   const scamTokens: ITokenItem[] = [];
   const nonScamTokens: ITokenItem[] = [];
   const coreTokens: ITokenItem[] = [];
@@ -1177,6 +1185,27 @@ const computeSingleAssets = (
         ),
         scamTokens: scamTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
       };
+};
+
+export const buildSingleAssetsIndexFromTokenIds = (
+  tokenIds: TokenEntityId[],
+  chainServerId?: string,
+  isLpTokenEnabled?: boolean,
+  previousResult?: TokenAssetsIndexResult,
+): TokenAssetsIndexResult => {
+  if (!tokenIds.length) {
+    return createEmptyAssetsIndexResult();
+  }
+
+  const tokens = tokenIds
+    .map(tokenId => tokenEntityResourceStore.getValue(tokenId))
+    .filter((token): token is ITokenItem => !!token);
+
+  return buildTokenAssetsIndexResult(
+    computeSingleAssetsFromTokens(tokens, chainServerId, isLpTokenEnabled),
+    undefined,
+    previousResult,
+  );
 };
 
 const computeSingleAssetsIndex = (

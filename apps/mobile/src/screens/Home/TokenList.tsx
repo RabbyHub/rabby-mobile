@@ -32,11 +32,13 @@ import {
   useSingleHomeSelectData,
 } from './hooks/singleHome';
 import useTokenList, {
-  getSingleAssetsCacheKey,
+  buildSingleAssetsIndexFromTokenIds,
+  EMPTY_TOKEN_ENTITY_IDS,
   ITokenItem,
+  tokenEntityResourceStore,
   TokenEntityId,
   useTokenEntity,
-  useTokenListComputedStore,
+  useTokenIndexStore,
 } from '@/store/tokens';
 import { formatNetworth } from '@/utils/math';
 import { useAppForeground } from '@/hooks/useAppForeground';
@@ -99,6 +101,56 @@ const TokenResourceRow = React.memo(
   },
 );
 
+const TokenFoldSectionHeader = React.memo(
+  ({
+    tokenIds,
+    isEnabled,
+    onValueChange,
+    fold,
+    style,
+    buttonStyle,
+    onPressFold,
+  }: {
+    tokenIds: TokenEntityId[];
+    isEnabled: boolean;
+    onValueChange: (value: boolean) => void;
+    fold: boolean;
+    style: ViewStyle;
+    buttonStyle: ViewStyle;
+    onPressFold: () => void;
+  }) => {
+    const tokens = tokenEntityResourceStore.useStore(
+      useShallow(state => tokenIds.map(tokenId => state.valueMap[tokenId])),
+    );
+    const foldCoreUsdValue = useMemo(
+      () =>
+        tokens.reduce((total, token) => {
+          if (!token?.is_core) {
+            return total;
+          }
+          return total + (token.usd_value || 0);
+        }, 0),
+      [tokens],
+    );
+    const foldTokenUsdValue = useMemo(
+      () => formatNetworth(foldCoreUsdValue),
+      [foldCoreUsdValue],
+    );
+
+    return (
+      <TokenRowSectionLpTokenHeader
+        isEnabled={isEnabled}
+        onValueChange={onValueChange}
+        fold={fold}
+        style={style}
+        buttonStyle={buttonStyle}
+        str={foldTokenUsdValue}
+        onPressFold={onPressFold}
+      />
+    );
+  },
+);
+
 interface Props {
   noAssetsOnAnyChain: boolean;
   onForeground?: () => void;
@@ -133,53 +185,40 @@ export const TokenList = ({
   const currentAddress = currentAccount?.address;
   const lowerAddress = currentAddress?.toLowerCase();
 
-  const emptyResult = useMemo(
-    () => ({
-      unFoldTokenIds: [] as TokenEntityId[],
-      foldTokenIds: [] as TokenEntityId[],
-      scamTokenIds: [] as TokenEntityId[],
-      scamTokenPreviewLogoUrls: [] as string[],
-      foldCoreUsdValue: 0,
-      hasFoldTokens: false,
-    }),
-    [],
-  );
-
-  const registerSingleAssets = useTokenListComputedStore(
-    state => state.registerSingleAssets,
-  );
-
-  const singleAssetsKey = useMemo(() => {
-    if (!currentAddress) {
-      return null;
-    }
-    return getSingleAssetsCacheKey(
-      currentAddress,
-      selectedChain,
-      isLpTokenEnabled,
-    );
-  }, [currentAddress, selectedChain, isLpTokenEnabled]);
-
   useEffect(() => {
     if (!currentAddress) {
       return;
     }
-    registerSingleAssets(currentAddress, selectedChain, isLpTokenEnabled);
-  }, [currentAddress, selectedChain, isLpTokenEnabled, registerSingleAssets]);
+    useTokenIndexStore
+      .getState()
+      .syncFromTokenListMap(useTokenList.getState().tokenListMap, [
+        currentAddress,
+      ]);
+  }, [currentAddress]);
+
+  const tokenIds = useTokenIndexStore(
+    useShallow(state => {
+      if (!lowerAddress) {
+        return EMPTY_TOKEN_ENTITY_IDS;
+      }
+      return state.addressTokenIds[lowerAddress] || EMPTY_TOKEN_ENTITY_IDS;
+    }),
+  );
 
   const {
     unFoldTokenIds,
     foldTokenIds,
     scamTokenIds,
     scamTokenPreviewLogoUrls,
-    foldCoreUsdValue,
     hasFoldTokens,
-  } = useTokenListComputedStore(
-    useShallow(state =>
-      singleAssetsKey
-        ? state.singleAssetsIndexCache[singleAssetsKey] || emptyResult
-        : emptyResult,
-    ),
+  } = useMemo(
+    () =>
+      buildSingleAssetsIndexFromTokenIds(
+        tokenIds,
+        selectedChain,
+        isLpTokenEnabled,
+      ),
+    [isLpTokenEnabled, selectedChain, tokenIds],
   );
 
   const isLoading = useTokenList(state => {
@@ -223,11 +262,6 @@ export const TokenList = ({
 
   const { selectData } = useSingleHomeSelectData();
   const noAnyAssets = !selectData.rawNetWorth || noAssetsOnAnyChain;
-
-  const foldTokenUsdValue = useMemo(
-    () => formatNetworth(foldCoreUsdValue),
-    [foldCoreUsdValue],
-  );
 
   const dataList = useMemo(() => {
     const items: TokenListItem[] = [];
@@ -370,7 +404,8 @@ export const TokenList = ({
           );
         case 'toggle_token_fold':
           return (
-            <TokenRowSectionLpTokenHeader
+            <TokenFoldSectionHeader
+              tokenIds={foldTokenIds}
               isEnabled={isLpTokenEnabled}
               onValueChange={setIsLpTokenEnabled}
               fold={foldHideList}
@@ -379,7 +414,6 @@ export const TokenList = ({
                 styles.buttonHeader,
                 !isLight && styles.bg2,
               ])}
-              str={foldTokenUsdValue}
               onPressFold={() => {
                 if (!foldHideList) {
                   setFoldScam(true);
@@ -417,7 +451,7 @@ export const TokenList = ({
     [
       currentAccount,
       foldHideList,
-      foldTokenUsdValue,
+      foldTokenIds,
       handleOpenTokenDetail,
       isLight,
       isLpTokenEnabled,
