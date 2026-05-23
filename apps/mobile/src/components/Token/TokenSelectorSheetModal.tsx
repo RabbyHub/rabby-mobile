@@ -29,7 +29,6 @@ import {
   TokenItem,
   TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { SheetModalShowType, useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
@@ -485,6 +484,52 @@ export const TokenSelectorSheetModal = ({
     return !!type && ['swapTo', 'bridgeTo'].includes(type);
   }, [type]);
   const { accounts } = useMyAccounts({ disableAutoFetch: true });
+  const ownerAccountByAddress = useMemo(() => {
+    const groupedAccounts = new Map<string, typeof accounts>();
+    accounts.forEach(account => {
+      const addressKey = account.address?.toLowerCase();
+      if (!addressKey) {
+        return;
+      }
+      const accountList = groupedAccounts.get(addressKey);
+      if (accountList) {
+        accountList.push(account);
+      } else {
+        groupedAccounts.set(addressKey, [account]);
+      }
+    });
+
+    const ownerAccountMap = new Map<string, (typeof accounts)[number]>();
+    groupedAccounts.forEach((accountList, addressKey) => {
+      const ownerAccount = findAccountByPriority(accountList.slice());
+      if (ownerAccount) {
+        ownerAccountMap.set(addressKey, ownerAccount);
+      }
+    });
+
+    return ownerAccountMap;
+  }, [accounts]);
+  const supportChainServerIdSet = useMemo(() => {
+    if (!supportChains?.length) {
+      return null;
+    }
+
+    return new Set(
+      supportChains
+        .map(chainEnum => findChainByEnum(chainEnum)?.serverId)
+        .filter((serverId): serverId is string => !!serverId),
+    );
+  }, [supportChains]);
+  const cexLogoById = useMemo(() => {
+    const logoMap = new Map<string, string>();
+    cexList.forEach(item => {
+      if (item.id && item.logo_url) {
+        logoMap.set(item.id, item.logo_url);
+      }
+    });
+
+    return logoMap;
+  }, [cexList]);
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => {
@@ -550,10 +595,9 @@ export const TokenSelectorSheetModal = ({
                   simpleReason: disableSimpleReason,
                 } = disableItemCheck?.(token) || {};
 
-                const sameAddressAccounts = accounts.filter(acct =>
-                  isSameAddress(acct.address, token.owner_addr),
+                const ownerAccount = ownerAccountByAddress.get(
+                  token.owner_addr.toLowerCase(),
                 );
-                const ownerAccount = findAccountByPriority(sameAddressAccounts);
                 const ownerKey = !ownerAccount
                   ? ''
                   : `${ownerAccount.type}-${ownerAccount.address}`;
@@ -569,11 +613,9 @@ export const TokenSelectorSheetModal = ({
                 ]
                   .filter(Boolean)
                   .join('-');
-                const currentChainItem = findChainByServerID(token.chain);
                 const disabled =
-                  !!supportChains?.length &&
-                  currentChainItem &&
-                  !supportChains.includes(currentChainItem.enum);
+                  !!supportChainServerIdSet &&
+                  !supportChainServerIdSet.has(token.chain);
 
                 let percentColor = colors2024['red-default'];
                 if (
@@ -587,11 +629,7 @@ export const TokenSelectorSheetModal = ({
                 }
                 const cexLogos = token?.cex_ids?.length
                   ? token.cex_ids
-                      .map(
-                        id =>
-                          cexList.find(_item => _item.id === id)?.logo_url ||
-                          '',
-                      )
+                      .map(id => cexLogoById.get(id) || '')
                       .filter(i => !!i) || []
                   : (token as TokenItemWithEntity).identity?.cex_list?.map(
                       _item => _item.logo_url,
@@ -925,9 +963,9 @@ export const TokenSelectorSheetModal = ({
     [
       isLoading,
       disableItemCheck,
-      accounts,
+      ownerAccountByAddress,
       chainSearchCtx.filterAccountItem,
-      supportChains,
+      supportChainServerIdSet,
       debouncedQuery,
       needToTokenMarketInfo,
       type,
@@ -935,7 +973,7 @@ export const TokenSelectorSheetModal = ({
       isBridgeTo,
       colors2024,
       t,
-      cexList,
+      cexLogoById,
       disabledTips,
       favoriteTokenKeySet,
       confirmTokenSelection,
