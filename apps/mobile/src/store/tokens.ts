@@ -202,6 +202,11 @@ export type TokenAssetsIndexRow =
       groupId: TokenGroupId;
     };
 
+export type TokenSelectIndexRow = {
+  type: 'token';
+  tokenId: TokenEntityId;
+};
+
 export type TokenAssetsIndexResult = {
   unFoldRows: TokenAssetsIndexRow[];
   foldRows: TokenAssetsIndexRow[];
@@ -423,6 +428,9 @@ export const getTokenAssetsIndexRowKey = (row: TokenAssetsIndexRow) => {
   }
   return `token-${row.tokenId}`;
 };
+
+export const getTokenSelectIndexRowKey = (row: TokenSelectIndexRow) =>
+  `token-${row.tokenId}`;
 
 const getTokenRuntimeGroupItems = (token: ITokenItem) =>
   (token as { groupItems?: ITokenItem[] }).groupItems;
@@ -858,6 +866,16 @@ const computeTokenSelect = (
     : sortedUnfoldTokens;
 };
 
+const buildTokenSelectIndexRows = (
+  tokens: ITokenItem[],
+): TokenSelectIndexRow[] => {
+  tokenEntityResourceStore.upsertTokens(tokens);
+  return tokens.map(token => ({
+    type: 'token',
+    tokenId: buildTokenEntityId(token),
+  }));
+};
+
 const computePerpsTokenSelect = (
   tokenListMap: TokenListState['tokenListMap'],
   address?: string,
@@ -1101,6 +1119,7 @@ type TokenListComputedState = {
   multiAssetsIndexCache: Record<string, TokenAssetsIndexResult>;
   singleAssetsIndexCache: Record<string, TokenAssetsIndexResult>;
   tokenSelectCache: Record<string, ITokenItem[]>;
+  tokenSelectIndexCache: Record<string, TokenSelectIndexRow[]>;
   perpsTokenSelectCache: Record<string, ITokenItem[]>;
   chainSelectorCache: Record<string, ITokenItem[]>;
   registerMultiAssets: (
@@ -1207,6 +1226,7 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
     multiAssetsIndexCache: {},
     singleAssetsIndexCache: {},
     tokenSelectCache: {},
+    tokenSelectIndexCache: {},
     perpsTokenSelectCache: {},
     chainSelectorCache: {},
     registerMultiAssets(
@@ -1303,17 +1323,25 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
         },
       );
       const tokenListMap = tokenListStore.getState().tokenListMap;
+      tokenEntityResourceStore.syncFromTokenListMap(tokenListMap);
+      const tokenSelect = computeTokenSelect(
+        tokenListMap,
+        addresses,
+        chainServerId,
+        keyword,
+        isLpTokenEnabled,
+      );
       set(state => ({
         tokenSelectCache: upsertRecordCache(
           state.tokenSelectCache,
           key,
-          computeTokenSelect(
-            tokenListMap,
-            addresses,
-            chainServerId,
-            keyword,
-            isLpTokenEnabled,
-          ),
+          tokenSelect,
+          removedKeys,
+        ),
+        tokenSelectIndexCache: upsertRecordCache(
+          state.tokenSelectIndexCache,
+          key,
+          buildTokenSelectIndexRows(tokenSelect),
           removedKeys,
         ),
       }));
@@ -1395,14 +1423,17 @@ const rebuildComputedCaches = (
   });
 
   const tokenSelectCache: Record<string, ITokenItem[]> = {};
+  const tokenSelectIndexCache: Record<string, TokenSelectIndexRow[]> = {};
   tokenSelectCacheParams.forEach((params, key) => {
-    tokenSelectCache[key] = computeTokenSelect(
+    const tokenSelect = computeTokenSelect(
       tokenListMap,
       params.addresses,
       params.chainServerId,
       params.keyword,
       params.isLpTokenEnabled,
     );
+    tokenSelectCache[key] = tokenSelect;
+    tokenSelectIndexCache[key] = buildTokenSelectIndexRows(tokenSelect);
   });
 
   const perpsTokenSelectCache: Record<string, ITokenItem[]> = {};
@@ -1425,6 +1456,7 @@ const rebuildComputedCaches = (
     multiAssetsIndexCache,
     singleAssetsIndexCache,
     tokenSelectCache,
+    tokenSelectIndexCache,
     perpsTokenSelectCache,
     chainSelectorCache,
   });

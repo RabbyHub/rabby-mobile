@@ -9,8 +9,11 @@ import { Account } from '@/core/services/preference';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import useTokenList, {
+  buildTokenEntityId,
   getTokenSelectCacheKey,
   ITokenItem,
+  TokenSelectIndexRow,
+  tokenEntityResourceStore,
   useTokenListComputedStore,
 } from '@/store/tokens';
 
@@ -19,6 +22,18 @@ import { openapi } from '@/core/request';
 import { tokenItemToITokenItem } from '@/utils/token';
 
 const EMPTY_TOKEN_LIST: ITokenItem[] = [];
+const EMPTY_TOKEN_ROWS: TokenSelectIndexRow[] = [];
+
+const buildTokenRows = (tokens: ITokenItem[]): TokenSelectIndexRow[] => {
+  if (!tokens.length) {
+    return EMPTY_TOKEN_ROWS;
+  }
+  tokenEntityResourceStore.upsertTokens(tokens);
+  return tokens.map(token => ({
+    type: 'token',
+    tokenId: buildTokenEntityId(token),
+  }));
+};
 
 export const useSelectTokens = ({
   currentAccount: _currentAccount,
@@ -145,7 +160,13 @@ export const useSelectTokens = ({
   ]);
 
   const tokens = useTokenListComputedStore(state => {
+    if (!keyword) {
+      return EMPTY_TOKEN_LIST;
+    }
     return state.tokenSelectCache[tokenSelectKey] || EMPTY_TOKEN_LIST;
+  });
+  const tokenRows = useTokenListComputedStore(state => {
+    return state.tokenSelectIndexCache[tokenSelectKey] || EMPTY_TOKEN_ROWS;
   });
 
   const mergedTokens = useMemo(() => {
@@ -183,13 +204,13 @@ export const useSelectTokens = ({
     ) {
       return false;
     }
-    return tokens.length === 0;
+    return tokenRows.length === 0;
   }, [
     currentAddress,
     isLpTokenEnabled,
     keyword,
     searchTokenResult,
-    tokens.length,
+    tokenRows.length,
   ]);
 
   const { value: recommendedTokens, loading: loadingRecommendedTokens } =
@@ -212,6 +233,25 @@ export const useSelectTokens = ({
     return tokenWithOwner;
   }, [tokenWithOwner, recommendedTokens, formatToken]);
 
+  const finalTokenRows = useMemo(() => {
+    if (recommendedTokens && recommendedTokens.length > 0) {
+      return [
+        ...buildTokenRows(tokenWithOwner),
+        ...buildTokenRows(recommendedTokens),
+      ];
+    }
+    if (keyword && searchTokenResult?.length) {
+      return buildTokenRows(tokenWithOwner);
+    }
+    return tokenRows;
+  }, [
+    keyword,
+    recommendedTokens,
+    searchTokenResult?.length,
+    tokenRows,
+    tokenWithOwner,
+  ]);
+
   const checkIsExpireAndUpdate = useCallback(async () => {
     if (currentAccount) {
       return;
@@ -230,7 +270,8 @@ export const useSelectTokens = ({
 
   return {
     tokens: finalTokens,
-    existedTokens: !!tokens.length,
+    tokenRows: finalTokenRows,
+    existedTokens: !!tokenRows.length || !!tokens.length,
     isSearching: searchingToken || loadingRecommendedTokens,
     isLoading: isLoadingToken,
     checkIsExpireAndUpdate,

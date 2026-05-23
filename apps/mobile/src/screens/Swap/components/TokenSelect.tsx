@@ -130,6 +130,7 @@ const TokenSelect = ({
 
   const {
     tokens,
+    tokenRows,
     checkIsExpireAndUpdate,
     loadToken,
     loadOnVisibleChanged,
@@ -179,6 +180,9 @@ const TokenSelect = ({
     () => userTokenSettings.pinedQueue,
     [userTokenSettings.pinedQueue],
   );
+  const favoriteTokenKeySet = useMemo(() => {
+    return new Set(pinedQueue?.map(x => `${x.chainId}:${x.tokenId}`));
+  }, [pinedQueue]);
 
   const { data: favoriteTokens, loading: favoriteTokensLoading } =
     useFavoriteTokens({
@@ -284,7 +288,23 @@ const TokenSelect = ({
     }, [currentAccount?.address, fetchUserTokenSettings]),
   );
 
+  const isSend = type === 'send';
+
+  const { isShowTestnet, selectedTab, onTabChange } = useSwitchNetTab({
+    hideTestnetTab: !isSend || customTestnetService.getList().length === 0,
+  });
+
+  const isSameSourceTokenSelect =
+    type === 'send' || type === 'swapFrom' || type === 'bridgeFrom';
+  const shouldUseTokenRows =
+    isSameSourceTokenSelect &&
+    selectedTab !== 'testnet' &&
+    favoriteFilterValue !== 'favorite';
+
   const unFoldTokenList = useMemo(() => {
+    if (shouldUseTokenRows) {
+      return [];
+    }
     if (favoriteFilterValue === 'favorite') {
       return favoriteTokens.map(e => ({
         ...e,
@@ -296,7 +316,13 @@ const TokenSelect = ({
       isPin: pinedQueue?.some(x => x.chainId === e.chain && x.tokenId === e.id),
     })) as ITokenItem[];
     return tokensWithPinStatus;
-  }, [favoriteFilterValue, tokens, favoriteTokens, pinedQueue]);
+  }, [
+    shouldUseTokenRows,
+    favoriteFilterValue,
+    tokens,
+    favoriteTokens,
+    pinedQueue,
+  ]);
 
   const { forScene, ofScreen } = useScreenSceneAccountContext();
   const allowClearAccountFilter = useMemo(() => {
@@ -358,12 +384,6 @@ const TokenSelect = ({
       position: { x: 0, y: 0, height: 0 },
       tokenEntity: null,
     });
-  });
-
-  const isSend = type === 'send';
-
-  const { isShowTestnet, selectedTab, onTabChange } = useSwitchNetTab({
-    hideTestnetTab: !isSend || customTestnetService.getList().length === 0,
   });
 
   const {
@@ -441,7 +461,14 @@ const TokenSelect = ({
         ref={tokenSelectorModalRef}
         visible={tokenSelectorVisible}
         unshiftList={[]}
-        list={selectedTab === 'testnet' ? testnetTokenList : unFoldTokenList}
+        list={
+          shouldUseTokenRows
+            ? []
+            : selectedTab === 'testnet'
+            ? testnetTokenList
+            : unFoldTokenList
+        }
+        tokenRows={shouldUseTokenRows ? tokenRows : undefined}
         onConfirm={handleCurrentTokenChange}
         onCancel={handleTokenSelectorClose}
         onSearch={handleSearchTokens}
@@ -467,6 +494,7 @@ const TokenSelect = ({
         showLpTokenSwitch={!queryConds.keyword}
         isLpTokenEnabled={isLpTokenEnabled}
         onLpTokenChange={setIsLpTokenEnabled}
+        favoriteTokenKeySet={favoriteTokenKeySet}
       />
     </>
   );

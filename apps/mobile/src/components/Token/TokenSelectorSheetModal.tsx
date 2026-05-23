@@ -92,7 +92,12 @@ import { ExchangeLogos } from '@/screens/Home/components/AssetRenderItems/Exchan
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { touchedFeedback } from '@/utils/touch';
-import { ITokenItem } from '@/store/tokens';
+import {
+  getTokenSelectIndexRowKey,
+  ITokenItem,
+  tokenEntityResourceStore,
+  TokenSelectIndexRow,
+} from '@/store/tokens';
 import { useMyAccounts } from '@/hooks/account';
 import LpTokenSwitch from '@/screens/Home/components/LpTokenSwitch';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
@@ -110,7 +115,8 @@ type SwapRouteProps = CompositeScreenProps<
 type TokenListItem =
   | {
       type: 'unfold_token';
-      data: ITokenItem;
+      data?: ITokenItem;
+      row?: TokenSelectIndexRow;
     }
   | {
       type: 'empty-token';
@@ -162,7 +168,8 @@ export interface TokenSelectorProps<
 > {
   // visibleRef: SharedValue<boolean>;
   visible: boolean;
-  list: ITokenItem[];
+  list?: ITokenItem[];
+  tokenRows?: TokenSelectIndexRow[];
   foldTokensList?: ITokenItem[];
   scamTokensList?: ITokenItem[];
   isLoading?: boolean;
@@ -202,6 +209,7 @@ export interface TokenSelectorProps<
   showLpTokenSwitch?: boolean;
   isLpTokenEnabled?: boolean;
   onLpTokenChange?: (value: boolean) => void;
+  favoriteTokenKeySet?: ReadonlySet<string>;
 }
 
 const isAndroid = Platform.OS === 'android';
@@ -271,7 +279,8 @@ export type TokenSelectorSheetModalInst = {
 };
 export const TokenSelectorSheetModal = ({
   visible,
-  list,
+  list = [],
+  tokenRows,
   displayAccountFilter = false,
   filterAccount,
   chainServerId,
@@ -296,6 +305,7 @@ export const TokenSelectorSheetModal = ({
   showLpTokenSwitch: _showLpTokenSwitch,
   isLpTokenEnabled = false,
   onLpTokenChange: _onLpTokenChange,
+  favoriteTokenKeySet,
   ref,
 }: RNViewProps &
   TokenSelectorProps & { ref?: Ref<TokenSelectorSheetModalInst> }) => {
@@ -436,12 +446,18 @@ export const TokenSelectorSheetModal = ({
 
   const dataList = useMemo(() => {
     const items: TokenListItem[] = [];
-    list.forEach(token => {
-      items.push({ type: 'unfold_token', data: token });
-    });
+    if (tokenRows?.length) {
+      tokenRows.forEach(row => {
+        items.push({ type: 'unfold_token', row });
+      });
+    } else {
+      list.forEach(token => {
+        items.push({ type: 'unfold_token', data: token });
+      });
+    }
 
     return items;
-  }, [list]);
+  }, [list, tokenRows]);
 
   const needToTokenMarketInfo = useMemo(() => {
     return !!type && ['swapTo', 'bridgeTo'].includes(type);
@@ -503,7 +519,14 @@ export const TokenSelectorSheetModal = ({
 
       switch (item.type) {
         case 'unfold_token': {
-          const token = item.data;
+          const token =
+            item.data ||
+            (item.row
+              ? tokenEntityResourceStore.getValue(item.row.tokenId)
+              : undefined);
+          if (!token) {
+            return null;
+          }
           const {
             disable: lightDisable,
             reason: disableReason,
@@ -520,7 +543,9 @@ export const TokenSelectorSheetModal = ({
 
           const showOwnerAccount = !chainSearchCtx.filterAccountItem;
 
-          const isPined = token.isPin || false;
+          const isPined =
+            token.isPin ||
+            favoriteTokenKeySet?.has(`${token.chain}:${token.id}`);
           const token_key = [
             ownerKey,
             `${token.id}-${token.symbol}-${token.chain}`,
@@ -871,6 +896,7 @@ export const TokenSelectorSheetModal = ({
       t,
       cexList,
       disabledTips,
+      favoriteTokenKeySet,
       confirmTokenSelection,
       toggleShowSheetModal,
     ],
@@ -932,10 +958,17 @@ export const TokenSelectorSheetModal = ({
     }
     // 只有send场景需要
     if (type === 'send') {
+      if (tokenRows?.length) {
+        return getTop3Chains(
+          tokenRows
+            .map(row => tokenEntityResourceStore.getValue(row.tokenId))
+            .filter((token): token is ITokenItem => !!token),
+        );
+      }
       return getTop3Chains(list);
     }
     return [];
-  }, [list, type, visible]);
+  }, [list, tokenRows, type, visible]);
 
   useFocusEffect(onHardwareBackHandler);
 
@@ -1129,7 +1162,12 @@ export const TokenSelectorSheetModal = ({
           showsVerticalScrollIndicator={false}
           keyExtractor={item => {
             if (item.type === 'unfold_token') {
-              return `${item.type}-${item.data.owner_addr}-${item.data.chain}-${item.data.id}`;
+              if (item.row) {
+                return `${item.type}-${getTokenSelectIndexRowKey(item.row)}`;
+              }
+              if (item.data) {
+                return `${item.type}-${item.data.owner_addr}-${item.data.chain}-${item.data.id}`;
+              }
             }
             if (item.type === 'empty-assets') {
               return `empty-assets-${item.data}`;
