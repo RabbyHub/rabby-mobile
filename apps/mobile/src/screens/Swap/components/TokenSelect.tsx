@@ -231,7 +231,12 @@ const TokenSelect = ({
           : {
               account: ctx.filterAccountItem ?? null,
               keyword: ctx.keyword,
-              chainServerId: ctx.chainServerId ?? prev.chainServerId,
+              chainServerId: Object.prototype.hasOwnProperty.call(
+                ctx,
+                'chainServerId',
+              )
+                ? ctx.chainServerId || ''
+                : prev.chainServerId,
             }),
       }));
     },
