@@ -621,7 +621,7 @@ const buildTokenAssetsIndexResult = (
     previousResult?.scamRows,
   );
 
-  return {
+  const nextResult = {
     unFoldRows,
     foldRows,
     scamRows,
@@ -646,6 +646,24 @@ const buildTokenAssetsIndexResult = (
       .reduce((total, token) => total + (token.usd_value || 0), 0),
     hasFoldTokens: result.hasFoldTokens,
   };
+
+  if (
+    previousResult &&
+    previousResult.unFoldRows === nextResult.unFoldRows &&
+    previousResult.foldRows === nextResult.foldRows &&
+    previousResult.scamRows === nextResult.scamRows &&
+    previousResult.unFoldTokenIds === nextResult.unFoldTokenIds &&
+    previousResult.foldTokenIds === nextResult.foldTokenIds &&
+    previousResult.scamTokenIds === nextResult.scamTokenIds &&
+    previousResult.scamTokenPreviewLogoUrls ===
+      nextResult.scamTokenPreviewLogoUrls &&
+    previousResult.foldCoreUsdValue === nextResult.foldCoreUsdValue &&
+    previousResult.hasFoldTokens === nextResult.hasFoldTokens
+  ) {
+    return previousResult;
+  }
+
+  return nextResult;
 };
 
 type AggregatedTokenItem = ITokenItem & {
@@ -1316,6 +1334,10 @@ const upsertRecordCache = <T>(
   value: T,
   keys: string[],
 ) => {
+  if (!keys.length && cache[key] === value) {
+    return cache;
+  }
+
   return mCreate(cache, draft => {
     const record = draft as Record<string, T>;
     record[key] = value;
