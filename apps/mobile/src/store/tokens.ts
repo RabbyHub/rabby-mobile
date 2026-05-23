@@ -261,6 +261,29 @@ export const buildTokenEntityId = (
 
 const getTokenEntityIdAddress = (tokenId: string) => tokenId.split(':', 1)[0];
 
+const getChangedTokenKeys = (
+  previousToken: ITokenItem | undefined,
+  nextToken: ITokenItem,
+) => {
+  if (!previousToken) {
+    return null;
+  }
+
+  const keys = new Set([
+    ...Object.keys(previousToken),
+    ...Object.keys(nextToken),
+  ] as Array<keyof ITokenItem>);
+  const changedKeys: Array<keyof ITokenItem> = [];
+
+  keys.forEach(key => {
+    if (!Object.is(previousToken[key], nextToken[key])) {
+      changedKeys.push(key);
+    }
+  });
+
+  return changedKeys;
+};
+
 const getTokenListFromTokenMap = (
   tokenListMap: TokenListState['tokenListMap'],
 ) => Object.values(tokenListMap).flat();
@@ -296,18 +319,21 @@ class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
     const changedTokens: Array<{
       tokenId: TokenEntityId;
       token: ITokenItem;
+      changedKeys: Array<keyof ITokenItem> | null;
       meta: (typeof prev.metaMap)[string];
     }> = [];
 
     entries.forEach((token, tokenId) => {
       const prevToken = prev.valueMap[tokenId];
       const prevMeta = prev.metaMap[tokenId];
-      const isTokenChanged = prevToken !== token;
+      const changedKeys = getChangedTokenKeys(prevToken, token);
+      const isTokenChanged = !prevToken || !!changedKeys?.length;
 
       if (!prevMeta || isTokenChanged) {
         changedTokens.push({
           tokenId,
           token,
+          changedKeys,
           meta: {
             family: TOKEN_ENTITY_RESOURCE_FAMILY,
             resourceKey: tokenId,
@@ -350,8 +376,19 @@ class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
     }
 
     this.mutateState(draft => {
-      changedTokens.forEach(({ tokenId, token, meta }) => {
-        draft.valueMap[tokenId] = token;
+      changedTokens.forEach(({ tokenId, token, changedKeys, meta }) => {
+        const previousToken = draft.valueMap[tokenId];
+        if (!previousToken || !changedKeys) {
+          draft.valueMap[tokenId] = token;
+        } else {
+          changedKeys.forEach(key => {
+            if (Object.prototype.hasOwnProperty.call(token, key)) {
+              previousToken[key] = token[key] as never;
+            } else {
+              delete previousToken[key];
+            }
+          });
+        }
         draft.metaMap[tokenId] = meta;
       });
 
