@@ -125,6 +125,22 @@ const TokenSelect = ({
     return _favoriteFilterValue;
   }, [_favoriteFilterValue, queryConds.keyword]);
 
+  const isSend = type === 'send';
+  const { isShowTestnet, selectedTab, onTabChange } = useSwitchNetTab({
+    hideTestnetTab: !isSend || customTestnetService.getList().length === 0,
+  });
+
+  const isSameSourceTokenSelect =
+    type === 'send' || type === 'swapFrom' || type === 'bridgeFrom';
+  const shouldUseTokenRows =
+    isSameSourceTokenSelect &&
+    selectedTab !== 'testnet' &&
+    favoriteFilterValue !== 'favorite';
+  const shouldUseTokenObjects =
+    selectedTab !== 'testnet' &&
+    favoriteFilterValue !== 'favorite' &&
+    !shouldUseTokenRows;
+
   const {
     visible: tokenSelectorVisible,
     tokenSelectorModalRef,
@@ -148,6 +164,7 @@ const TokenSelect = ({
     chain_server_id: queryConds.chainServerId,
     isLpTokenEnabled,
     keyword: queryConds.keyword,
+    returnTokenObjects: shouldUseTokenObjects,
   });
 
   useImperativeHandle(ref, () => ({
@@ -299,19 +316,6 @@ const TokenSelect = ({
       })();
     }, [currentAccount?.address, fetchUserTokenSettings]),
   );
-
-  const isSend = type === 'send';
-
-  const { isShowTestnet, selectedTab, onTabChange } = useSwitchNetTab({
-    hideTestnetTab: !isSend || customTestnetService.getList().length === 0,
-  });
-
-  const isSameSourceTokenSelect =
-    type === 'send' || type === 'swapFrom' || type === 'bridgeFrom';
-  const shouldUseTokenRows =
-    isSameSourceTokenSelect &&
-    selectedTab !== 'testnet' &&
-    favoriteFilterValue !== 'favorite';
 
   const unFoldTokenList = useMemo(() => {
     if (shouldUseTokenRows) {

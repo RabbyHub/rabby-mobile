@@ -43,11 +43,13 @@ export const useSelectTokens = ({
   chain_server_id,
   isLpTokenEnabled,
   keyword,
+  returnTokenObjects = false,
 }: {
   currentAccount?: Account | null;
   chain_server_id?: string;
   isLpTokenEnabled?: boolean;
   keyword?: string;
+  returnTokenObjects?: boolean;
 }) => {
   const currentAccount = useDebouncedValue(_currentAccount, 100);
   const currentAddress = currentAccount?.address || _currentAccount?.address;
@@ -158,9 +160,10 @@ export const useSelectTokens = ({
     [tokenIds],
   );
 
-  const tokens = tokenEntityResourceStore.useStore(
+  const shouldSubscribeTokenObjects = !!keyword || returnTokenObjects;
+  const tokenObjects = tokenEntityResourceStore.useStore(
     useShallow(state => {
-      if (!keyword) {
+      if (!shouldSubscribeTokenObjects) {
         return EMPTY_TOKEN_LIST;
       }
       return tokenIds
@@ -178,10 +181,10 @@ export const useSelectTokens = ({
 
   const mergedTokens = useMemo(() => {
     if (!keyword || !searchTokenResult?.length) {
-      return tokens;
+      return tokenObjects;
     }
-    const seen = new Set(tokens.map(buildTokenEntityId));
-    const mergedList = tokens.slice();
+    const seen = new Set(tokenObjects.map(buildTokenEntityId));
+    const mergedList = tokenObjects.slice();
     searchTokenResult.forEach(token => {
       const key = buildTokenEntityId(token);
       if (!seen.has(key)) {
@@ -190,7 +193,7 @@ export const useSelectTokens = ({
       }
     });
     return mergedList;
-  }, [keyword, searchTokenResult, tokens]);
+  }, [keyword, searchTokenResult, tokenObjects]);
 
   const formatToken = useCallback(
     (token: ITokenItem) =>
@@ -233,12 +236,15 @@ export const useSelectTokens = ({
     }, [shouldLoadRecommended, currentAddress, chain_server_id]);
 
   const finalTokens = useMemo(() => {
+    if (!returnTokenObjects) {
+      return EMPTY_TOKEN_LIST;
+    }
     if (recommendedTokens && recommendedTokens.length > 0) {
       const formattedRecommended = recommendedTokens.map(formatToken);
       return [...tokenWithOwner, ...formattedRecommended];
     }
     return tokenWithOwner;
-  }, [tokenWithOwner, recommendedTokens, formatToken]);
+  }, [returnTokenObjects, recommendedTokens, tokenWithOwner, formatToken]);
 
   const finalTokenRows = useMemo(() => {
     if (recommendedTokens && recommendedTokens.length > 0) {
@@ -285,7 +291,8 @@ export const useSelectTokens = ({
   return {
     tokens: finalTokens,
     tokenRows: finalTokenRows,
-    existedTokens: !!tokenRows.length || !!tokens.length,
+    existedTokens:
+      !!finalTokenRows.length || !!finalTokens.length || !!tokenObjects.length,
     isSearching: searchingToken || loadingRecommendedTokens,
     isLoading: isLoadingToken,
     checkIsExpireAndUpdate,

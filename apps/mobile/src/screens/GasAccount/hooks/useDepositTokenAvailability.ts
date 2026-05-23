@@ -86,6 +86,7 @@ export const useGasAccountDepositAvailableTokens = (
   const disableL2Deposit = options?.disableL2Deposit ?? false;
   const { tokens, isLoading, checkIsExpireAndUpdate } = useSelectTokens({
     currentAccount: undefined,
+    returnTokenObjects: true,
   });
   const bridgeSupportTokens = useGasAccountBridgeSupportTokenList();
   const bridgeSupportUpdatedAt = useGasAccountBridgeSupportUpdatedAt();
