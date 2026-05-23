@@ -25,15 +25,20 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { HomeTabName as TabName } from '@/hooks/navigation';
 import useTokenList, {
+  buildMultiAssetsIndexFromTokenIds,
+  EMPTY_TOKEN_ENTITY_IDS,
   getMultiAssetsCacheKey,
   getTokenAssetsIndexRowKey,
   ITokenItem,
   TokenAssetsIndexRow,
+  TokenEntityId,
+  TokenGroupId,
   TokenGroupResourceValue,
   tokenEntityResourceStore,
+  tokenGroupResourceStore,
   useTokenEntity,
   useTokenGroup,
-  useTokenListComputedStore,
+  useTokenIndexStore,
 } from '@/store/tokens';
 import { formatNetworth } from '@/utils/math';
 import { useFindAccountByAddress, useIsFocusedCurrentTab } from './hooks/share';
@@ -125,6 +130,77 @@ const TokenResourceRow = React.memo(
   },
 );
 
+const TokenFoldSectionHeader = React.memo(
+  ({
+    rows,
+    style,
+    fold,
+    str,
+    onPressFold,
+    isEnabled,
+    onValueChange,
+  }: {
+    rows: TokenAssetsIndexRow[];
+    style: ViewStyle;
+    fold: boolean;
+    str?: string;
+    onPressFold: () => void;
+    isEnabled: boolean;
+    onValueChange: (value: boolean) => void;
+  }) => {
+    const tokenIds = useMemo(
+      () =>
+        rows
+          .filter(row => row.type === 'token')
+          .map(row => row.tokenId) as TokenEntityId[],
+      [rows],
+    );
+    const groupIds = useMemo(
+      () =>
+        rows
+          .filter(row => row.type === 'group')
+          .map(row => row.groupId) as TokenGroupId[],
+      [rows],
+    );
+    const tokens = tokenEntityResourceStore.useStore(
+      useShallow(state => tokenIds.map(tokenId => state.valueMap[tokenId])),
+    );
+    const groups = tokenGroupResourceStore.useStore(
+      useShallow(state => groupIds.map(groupId => state.valueMap[groupId])),
+    );
+    const foldCoreUsdValue = useMemo(() => {
+      const tokenTotal = tokens.reduce((total, token) => {
+        if (!token?.is_core) {
+          return total;
+        }
+        return total + (token.usd_value || 0);
+      }, 0);
+      const groupTotal = groups.reduce((total, group) => {
+        if (!group?.summary.is_core) {
+          return total;
+        }
+        return total + (group.summary.usd_value || 0);
+      }, 0);
+      return tokenTotal + groupTotal;
+    }, [groups, tokens]);
+    const foldTokenUsdValue = useMemo(
+      () => str || formatNetworth(foldCoreUsdValue),
+      [foldCoreUsdValue, str],
+    );
+
+    return (
+      <MemoizedTokenRowSectionHeader
+        style={style}
+        fold={fold}
+        str={foldTokenUsdValue}
+        onPressFold={onPressFold}
+        isEnabled={isEnabled}
+        onValueChange={onValueChange}
+      />
+    );
+  },
+);
+
 type TokenListItem =
   | {
       type: 'unfold_token' | 'fold_token';
@@ -172,21 +248,6 @@ export const TokenList = () => {
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
 
-  const emptyResult = useMemo(
-    () => ({
-      unFoldRows: [] as TokenAssetsIndexRow[],
-      foldRows: [] as TokenAssetsIndexRow[],
-      scamRows: [] as TokenAssetsIndexRow[],
-      scamTokenPreviewLogoUrls: [] as string[],
-      foldCoreUsdValue: 0,
-    }),
-    [],
-  );
-
-  const registerMultiAssets = useTokenListComputedStore(
-    state => state.registerMultiAssets,
-  );
-
   const multiAssetsKey = useMemo(
     () =>
       getMultiAssetsCacheKey(
@@ -199,38 +260,56 @@ export const TokenList = () => {
   );
 
   useEffect(() => {
-    registerMultiAssets(
-      myTop10Addresses,
-      chain,
-      isLpTokenEnabled,
-      tokenDisplayMode,
-    );
-  }, [
-    myTop10Addresses,
-    chain,
-    isLpTokenEnabled,
-    registerMultiAssets,
-    tokenDisplayMode,
-  ]);
+    useTokenIndexStore
+      .getState()
+      .syncFromTokenListMap(
+        useTokenList.getState().tokenListMap,
+        myTop10Addresses,
+      );
+  }, [myTop10Addresses]);
+
+  const tokenIds = useTokenIndexStore(
+    useShallow(state => {
+      if (!myTop10Addresses.length) {
+        return EMPTY_TOKEN_ENTITY_IDS;
+      }
+
+      const ids: TokenEntityId[] = [];
+      const seen = new Set<TokenEntityId>();
+      myTop10Addresses.forEach(address => {
+        const addressTokenIds =
+          state.addressTokenIds[address.toLowerCase()] ||
+          EMPTY_TOKEN_ENTITY_IDS;
+        addressTokenIds.forEach(tokenId => {
+          if (seen.has(tokenId)) {
+            return;
+          }
+          seen.add(tokenId);
+          ids.push(tokenId);
+        });
+      });
+      return ids;
+    }),
+  );
 
   const {
     unFoldRows: tokenRows,
     foldRows,
     scamRows,
     scamTokenPreviewLogoUrls,
-    foldCoreUsdValue,
-  } = useTokenListComputedStore(
-    useShallow(
-      state => state.multiAssetsIndexCache[multiAssetsKey] || emptyResult,
-    ),
+  } = useMemo(
+    () =>
+      buildMultiAssetsIndexFromTokenIds(
+        tokenIds,
+        chain,
+        isLpTokenEnabled,
+        tokenDisplayMode,
+        multiAssetsKey,
+      ),
+    [chain, isLpTokenEnabled, multiAssetsKey, tokenDisplayMode, tokenIds],
   );
 
   const isLoading = useTokenList(s => s.isLoading);
-
-  const foldTokenUsdValue = useMemo(
-    () => formatNetworth(foldCoreUsdValue),
-    [foldCoreUsdValue],
-  );
 
   useEffect(() => {
     batchGetTokenList(myTop10Addresses);
@@ -463,10 +542,10 @@ export const TokenList = () => {
         }
         case 'toggle_token_fold':
           return (
-            <MemoizedTokenRowSectionHeader
+            <TokenFoldSectionHeader
+              rows={foldRows}
               style={styles.tokenSectionHeader}
               fold={foldHideList}
-              str={foldTokenUsdValue}
               onPressFold={handleToggleTokenFold}
               isEnabled={isLpTokenEnabled}
               onValueChange={setIsLpTokenEnabled}
@@ -499,8 +578,8 @@ export const TokenList = () => {
     },
     [
       tokenDisplayMode,
+      foldRows,
       foldHideList,
-      foldTokenUsdValue,
       getAccountByAddress,
       handleGroupPress,
       handleOpenScamToken,
