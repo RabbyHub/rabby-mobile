@@ -172,6 +172,25 @@ export const usePendingTxData = () => {
 export const useReadSwapHistoryRedDot = () => {
   return useAtomValue(swapHistoryRedDotAtom);
 };
+
+export const useClearSwapHistoryRedDot = () => {
+  const setSwapHistoryRedDot = useSetAtom(swapHistoryRedDotAtom);
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
+
+  return useCallback(() => {
+    if (!currentAccount?.address) {
+      return 0;
+    }
+
+    setSwapHistoryRedDot(false);
+    const currentTs = swapService.getOpenSwapHistoryTs(currentAccount.address);
+    swapService.setOpenSwapHistoryTs(currentAccount.address);
+    return currentTs;
+  }, [currentAccount?.address, setSwapHistoryRedDot]);
+};
+
 export const usePollSwapPendingNumber = (timer = 10000) => {
   const [, setCount] = useAtom(swapPendingCountAtom);
   const [, setTxData] = useAtom(swapPendingTxDataAtom);

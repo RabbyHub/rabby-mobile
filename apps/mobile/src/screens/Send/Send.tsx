@@ -10,6 +10,7 @@ import {
   View,
   TouchableWithoutFeedback,
   Keyboard,
+  ScrollView,
 } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -93,7 +94,18 @@ import { type ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import Animated, {
+  runOnJS,
+  useAnimatedReaction,
+  useAnimatedRef,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+
+const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
+  KeyboardAwareScrollView,
+);
 
 const EMPTY_TOKEN_ITEM = {
   decimals: 18,
@@ -238,6 +250,7 @@ function SendScreen({
     setReloadTxRefreshPaused,
     onBottomAreaLayout,
     scrollViewRef,
+    scrollViewStyle,
     scrollToBottom,
 
     checkCexSupport,
@@ -546,17 +559,13 @@ function SendScreen({
                 sendTokenEvents.emit(SendTokenEvents.ON_PRESS_DISMISS);
                 Keyboard.dismiss();
               }}>
-              <View style={styles.sendScreen}>
-                <KeyboardAwareScrollView
+              <ScrollView contentContainerStyle={styles.sendScreen}>
+                <AnimatedKeyboardAwareScrollView
                   innerRef={instance => {
                     scrollViewRef.current =
                       instance as unknown as KeyboardAwareScrollView;
                   }}
-                  style={styles.scrollArea}
-                  contentContainerStyle={styles.mainContent}
-                  enableOnAndroid
-                  extraHeight={200}
-                  keyboardOpeningTime={0}>
+                  contentContainerStyle={[styles.mainContent, scrollViewStyle]}>
                   {/* FromToSection */}
                   <View>
                     {/* From */}
@@ -586,9 +595,9 @@ function SendScreen({
                       clearLocalPendingTxData={clearLocalPendingTxData}
                     />
                   )}
-                </KeyboardAwareScrollView>
+                </AnimatedKeyboardAwareScrollView>
                 <BottomArea account={currentAccount} />
-              </View>
+              </ScrollView>
             </TouchableWithoutFeedback>
             <TokenInfoPopup />
             <BlockedAddressDialog
@@ -636,16 +645,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       marginTop: 8,
     },
     sendScreen: {
-      flex: 1,
       flexDirection: 'column',
-      paddingTop: 16,
-    },
-    scrollArea: {
+      justifyContent: 'space-between',
       flex: 1,
+      paddingTop: 16,
+      position: 'relative',
+      height: '100%',
     },
     mainContent: {
       paddingHorizontal: 24,
-      paddingBottom: 24,
+      paddingBottom: 280,
     },
     balance: {
       marginTop: 24,

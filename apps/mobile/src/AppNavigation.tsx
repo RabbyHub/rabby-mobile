@@ -6,7 +6,7 @@ import {
   NavigationIndependentTree,
 } from '@react-navigation/native';
 import React, { useCallback } from 'react';
-import { BackHandler } from 'react-native';
+import { BackHandler, InteractionManager } from 'react-native';
 import * as Sentry from '@sentry/react-native';
 import { useAppTheme, useThemeColors } from '@/hooks/theme';
 
@@ -281,14 +281,37 @@ const onStateChange: React.ComponentProps<
 const routeNameRef: RefLikeObject<string | undefined | null> = { current: '' };
 
 type DeferredGlobalsSlot = 'navigation-pre' | 'navigation-post' | 'overlay';
+const DEFERRED_GLOBALS_AFTER_UNLOCK_DELAY_MS = 800;
 
 function useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked: boolean) {
   const [hasUnlockedOnce, setHasUnlockedOnce] = React.useState(isAppUnlocked);
 
   React.useEffect(() => {
-    if (isAppUnlocked) {
-      setHasUnlockedOnce(true);
+    if (!isAppUnlocked || hasUnlockedOnce) {
+      return;
     }
+
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const interactionHandle = InteractionManager.runAfterInteractions(() => {
+      timeoutId = setTimeout(() => {
+        setHasUnlockedOnce(true);
+      }, DEFERRED_GLOBALS_AFTER_UNLOCK_DELAY_MS);
+    });
+
+    return () => {
+      interactionHandle.cancel?.();
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [hasUnlockedOnce, isAppUnlocked]);
+
+  React.useEffect(() => {
+    if (isAppUnlocked) {
+      return;
+    }
+
+    setHasUnlockedOnce(false);
   }, [isAppUnlocked]);
 
   return hasUnlockedOnce;

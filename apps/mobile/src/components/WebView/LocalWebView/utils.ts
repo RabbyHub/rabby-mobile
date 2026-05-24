@@ -115,12 +115,14 @@ export function makeRuntimeInfo({
   isDark = false,
   language = SupportedLang['en-US'],
   i18nTexts = {},
+  backGroundColor,
 }: {
   baseUrl: string;
   useDevResource?: boolean;
   isDark: boolean;
   language?: SupportedLang;
   i18nTexts?: Record<string, string>;
+  backGroundColor?: string;
 }) {
   return {
     runtimeBaseUrl: baseUrl,
@@ -130,6 +132,7 @@ export function makeRuntimeInfo({
     language,
     // colors2024: ThemeColors2024[isDark ? 'dark' : 'light'],
     i18nTexts,
+    backGroundColor,
   };
 }
 

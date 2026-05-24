@@ -1,8 +1,13 @@
 import { unionBy } from 'lodash';
 
-import { filterOutTop10Accounts, getAccountList } from '@/core/apis/account';
+import {
+  filterMyAccounts,
+  filterOutTop10Accounts,
+  getAccountList,
+  sortAccountList,
+} from '@/core/apis/account';
 import { keyringService } from '@/core/services';
-import type { Account } from '@/types/account';
+import type { Account, IPinAddress } from '@/types/account';
 import accountStore from './account';
 import {
   type AccountBalanceSelectionSnapshot,
@@ -11,9 +16,7 @@ import {
   startProcessAddressBalanceEvents,
 } from './balance';
 
-async function pickSelectedAccountsFromSortedAccounts(
-  sortedAccounts: Account[],
-) {
+function pickSelectedAccountsFromSortedAccounts(sortedAccounts: Account[]) {
   const { top10Accounts, top10Addresses } = filterOutTop10Accounts(
     sortedAccounts,
     {
@@ -31,15 +34,32 @@ async function pickSelectedAccountsFromSortedAccounts(
 
 async function getMatteredAccountsSnapshot(): Promise<AccountBalanceSelectionSnapshot> {
   const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
+  return buildMatteredAccountsSnapshotFromSortedAccounts(sortedAccounts);
+}
+
+function buildMatteredAccountsSnapshotFromSortedAccounts(
+  sortedAccounts: Account[],
+): AccountBalanceSelectionSnapshot {
   const matteredAccountLength = sortedAccounts.length;
   const { selectedAccounts, selectedAddresses } =
-    await pickSelectedAccountsFromSortedAccounts(sortedAccounts);
+    pickSelectedAccountsFromSortedAccounts(sortedAccounts);
 
   return {
     selectedAccounts,
     selectedAddresses,
     matteredAccountLength,
   };
+}
+
+function buildMatteredAccountsSnapshotFromStoreAccounts(
+  accounts: Account[],
+  pinnedAddresses: IPinAddress[],
+) {
+  const sortedAccounts = sortAccountList(filterMyAccounts(accounts), {
+    highlightedAddresses: pinnedAddresses,
+  });
+
+  return buildMatteredAccountsSnapshotFromSortedAccounts(sortedAccounts);
 }
 
 setAccountBalanceSelectionSnapshotGetter(getMatteredAccountsSnapshot);
@@ -54,8 +74,18 @@ async function initAccountBalanceSelectionLifecycle() {
   console.time('initAccountBalanceSelectionLifecycle');
 
   try {
-    const syncSelectionFromAccounts = async () => {
-      const snapshot = await getMatteredAccountsSnapshot();
+    const syncSelectionFromAccounts = async (
+      accountState = accountStore.getState(),
+    ) => {
+      const canUseStoreSnapshot =
+        accountState.hasFetchedAccounts || accountState.accounts.length > 0;
+      const snapshot = canUseStoreSnapshot
+        ? buildMatteredAccountsSnapshotFromStoreAccounts(
+            accountState.accounts,
+            accountState.pinnedAddresses,
+          )
+        : await getMatteredAccountsSnapshot();
+
       await applyAccountBalanceSelectionSnapshot(snapshot, {
         hydrate: true,
         source: 'accounts_changed',
@@ -89,7 +119,7 @@ async function initAccountBalanceSelectionLifecycle() {
 
         accountBalanceSelectionLifecycleStateRef.prevSelectionSignature =
           nextSignature;
-        void syncSelectionFromAccounts();
+        void syncSelectionFromAccounts(state);
       });
     }
 
@@ -100,6 +130,10 @@ async function initAccountBalanceSelectionLifecycle() {
 }
 
 export async function ensureAccountBalanceSelectionLifecycle() {
+  if (!keyringService.isUnlocked()) {
+    return;
+  }
+
   if (accountBalanceSelectionLifecycleStateRef.promise) {
     return accountBalanceSelectionLifecycleStateRef.promise;
   }
@@ -122,9 +156,15 @@ export function startProcessAccountBalanceEvents() {
 
   startProcessAddressBalanceEvents();
 
-  keyringService.once('unlock', () => {
+  const ensureSelectionLifecycle = () => {
     ensureAccountBalanceSelectionLifecycle().catch(error => {
       console.error('ensureAccountBalanceSelectionLifecycle::error', error);
     });
-  });
+  };
+
+  if (keyringService.isUnlocked()) {
+    ensureSelectionLifecycle();
+  }
+
+  keyringService.on('unlock', ensureSelectionLifecycle);
 }

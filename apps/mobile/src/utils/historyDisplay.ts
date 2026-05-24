@@ -18,8 +18,7 @@ export const ensureHistoryListItemFromDb = (
       to_addr: item.tx_to_address,
       usd_gas_fee: item.tx_usd_gas_fee,
       eth_gas_fee: item.tx_eth_gas_fee,
-
-      name: '',
+      name: item.tx_name,
       params: [],
       value: 0,
       message: '',

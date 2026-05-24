@@ -37,6 +37,7 @@ import {
   apisKeychainDebug,
   apisKeychainV8_2_0,
   apisKeychainV9_0_0,
+  apisKeychainV10_0_0,
 } from '@/core/apis';
 import { IS_ANDROID } from '@/core/native/utils';
 import {
@@ -53,6 +54,7 @@ const TAB_OPTIONS = [
   { key: 'current', label: 'Current' },
   { key: '8.2.0-fork', label: '8.2.0' },
   { key: '9.0.0', label: '9.0.0' },
+  { key: '10.0.0', label: '10.0.0' },
 ] as const;
 
 const KEYCHAIN_VERSION_OPTIONS = [
@@ -66,7 +68,13 @@ const KEYCHAIN_VERSION_OPTIONS = [
     key: '9.0.0',
     label: '9.0.0',
     sourceLabel: apisKeychainV9_0_0.KEYCHAIN_SOURCE_LABEL,
-    description: 'Official package wrapped with Rabby business logic.',
+    description: 'Rabby-local 9.x wrapper with the Android prompt patch.',
+  },
+  {
+    key: '10.0.0',
+    label: '10.0.0',
+    sourceLabel: apisKeychainV10_0_0.KEYCHAIN_SOURCE_LABEL,
+    description: 'Official 10.x package wrapped with Rabby business logic.',
   },
 ] as const;
 
@@ -76,6 +84,7 @@ const KEYCHAIN_VERSION_META: Record<
 > = {
   '8.2.0-fork': KEYCHAIN_VERSION_OPTIONS[0],
   '9.0.0': KEYCHAIN_VERSION_OPTIONS[1],
+  '10.0.0': KEYCHAIN_VERSION_OPTIONS[2],
 };
 
 const ANDROID_AUTH_PROMPT_POLICY_OPTIONS = [
@@ -105,6 +114,12 @@ const KEYCHAIN_STORAGE_OPTIONS = [
     label: 'AES / CBC',
     description:
       'Android Keystore AES path. Its auth behavior differs from the RSA biometric flow.',
+  },
+  {
+    key: apisKeychain.KEYCHAIN_STORAGE_TYPES.AES_GCM,
+    label: 'AES / GCM',
+    description:
+      'Android Keystore AES-GCM path introduced by react-native-keychain 10.',
   },
   {
     key: apisKeychain.KEYCHAIN_STORAGE_TYPES.KC,
@@ -139,10 +154,14 @@ const REPEAT_DECRYPT_EXPECTATIONS: Record<CurrentKeychainVersion, string[]> = {
     'Expected: both Try Decrypt taps prompt biometrics, matching 8.2.0-fork.',
     'Regression signal: a later tap succeeds without a fresh biometric prompt.',
   ],
+  '10.0.0': [
+    'Expected: both Try Decrypt taps prompt biometrics, matching 8.2.0-fork and 9.0.0.',
+    'Regression signal: a later tap succeeds without a fresh biometric prompt.',
+  ],
 };
 
 const REPEAT_RAW_READ_TEST_STEPS = [
-  '1. Open the 9.0.0 tab and keep the current keychain set to 9.0.0 if you want the business path aligned.',
+  '1. Open the 10.0.0 tab and keep the current keychain set to 10.0.0 if you want the business path aligned.',
   '2. Ensure the current service already has a biometrics entry.',
   '3. Run Read Current twice, waiting at least 2 seconds between taps.',
 ] as const;
@@ -255,6 +274,7 @@ type KeychainDebugExportPayload = {
   current: {
     effectiveVersion: CurrentKeychainVersion;
     configuredVersion: CurrentKeychainVersion;
+    configuredVersionField: string;
     canSwitchCurrentKeychainVersion: boolean;
     sourceLabel: string;
     defaultAndroidAuthPromptPolicy: AndroidAuthPromptPolicy;
@@ -274,8 +294,9 @@ type KeychainDebugExportPayload = {
   versions: {
     v8_2_0: KeychainVersionExportState;
     v9_0_0: KeychainVersionExportState;
+    v10_0_0: KeychainVersionExportState;
   };
-  v9Raw: {
+  v10Raw: {
     defaultState: apisKeychainDebug.KeychainDebugState | null;
     probeState: apisKeychainDebug.KeychainDebugState | null;
     probeService: string;
@@ -306,7 +327,7 @@ type HelpSheetContext =
       isCurrentAlias: boolean;
     }
   | {
-      topic: 'raw-v9';
+      topic: 'raw-v10';
     };
 
 function getPromptPolicyLabel(policy: AndroidAuthPromptPolicy) {
@@ -1163,7 +1184,15 @@ function KeychainStatusCard({
 }
 
 function getBusinessApi(version: CurrentKeychainVersion) {
-  return version === '9.0.0' ? apisKeychainV9_0_0 : apisKeychainV8_2_0;
+  switch (version) {
+    case '10.0.0':
+      return apisKeychainV10_0_0;
+    case '9.0.0':
+      return apisKeychainV9_0_0;
+    case '8.2.0-fork':
+    default:
+      return apisKeychainV8_2_0;
+  }
 }
 
 function makeInitialBusinessVersionState(): BusinessVersionState {
@@ -1191,6 +1220,7 @@ export default function DevDataKeychain(): JSX.Element {
   const {
     currentKeychainVersion,
     debugCurrentKeychainVersion,
+    debugCurrentKeychainVersionField,
     canSwitchCurrentKeychainVersion,
     setCurrentKeychainVersion,
   } = useCurrentKeychainVersion();
@@ -1208,12 +1238,14 @@ export default function DevDataKeychain(): JSX.Element {
   >({
     '8.2.0-fork': makeInitialBusinessVersionState(),
     '9.0.0': makeInitialBusinessVersionState(),
+    '10.0.0': makeInitialBusinessVersionState(),
   });
   const [businessPasswordVisibility, setBusinessPasswordVisibility] = useState<
     Record<CurrentKeychainVersion, PromptPolicyState<boolean>>
   >({
     '8.2.0-fork': makePromptPolicyState(() => false),
     '9.0.0': makePromptPolicyState(() => false),
+    '10.0.0': makePromptPolicyState(() => false),
   });
   const [v9DefaultState, setV9DefaultState] =
     useState<apisKeychainDebug.KeychainDebugState | null>(null);
@@ -1259,6 +1291,7 @@ export default function DevDataKeychain(): JSX.Element {
     useState<Record<CurrentKeychainVersion, KeychainStorageType[]>>({
       '8.2.0-fork': [apisKeychain.DEFAULT_KEYCHAIN_STORAGE_TYPE],
       '9.0.0': [apisKeychain.DEFAULT_KEYCHAIN_STORAGE_TYPE],
+      '10.0.0': [apisKeychain.DEFAULT_KEYCHAIN_STORAGE_TYPE],
     });
 
   const actionsSheetMaxHeight = useMemo(
@@ -1285,6 +1318,13 @@ export default function DevDataKeychain(): JSX.Element {
         '9.0.0': (() => {
           const supported = supportedStorageTypesByVersion['9.0.0'];
           const configured = debugKeychainStorageByVersion['9.0.0'];
+          return supported.includes(configured)
+            ? configured
+            : supported[0] || apisKeychain.DEFAULT_KEYCHAIN_STORAGE_TYPE;
+        })(),
+        '10.0.0': (() => {
+          const supported = supportedStorageTypesByVersion['10.0.0'];
+          const configured = debugKeychainStorageByVersion['10.0.0'];
           return supported.includes(configured)
             ? configured
             : supported[0] || apisKeychain.DEFAULT_KEYCHAIN_STORAGE_TYPE;
@@ -1381,13 +1421,16 @@ export default function DevDataKeychain(): JSX.Element {
       const [
         v8State,
         v9State,
-        nextV9DefaultState,
-        nextV9ProbeState,
+        v10State,
+        nextV10DefaultState,
+        nextV10ProbeState,
         nextV8SupportedStorageTypes,
         nextV9SupportedStorageTypes,
+        nextV10SupportedStorageTypes,
       ] = await Promise.all([
         apisKeychainV8_2_0.getKeychainDebugState(),
         apisKeychainV9_0_0.getKeychainDebugState(),
+        apisKeychainV10_0_0.getKeychainDebugState(),
         apisKeychainDebug.getKeychainDebugState(
           apisKeychainDebug.KEYCHAIN_DEFAULT_SERVICE,
         ),
@@ -1396,6 +1439,7 @@ export default function DevDataKeychain(): JSX.Element {
         ),
         apisKeychainV8_2_0.getSupportedStorageTypes(),
         apisKeychainV9_0_0.getSupportedStorageTypes(),
+        apisKeychainV10_0_0.getSupportedStorageTypes(),
       ]);
 
       setBusinessStates(prev => ({
@@ -1408,12 +1452,17 @@ export default function DevDataKeychain(): JSX.Element {
           ...prev['9.0.0'],
           debugState: v9State,
         },
+        '10.0.0': {
+          ...prev['10.0.0'],
+          debugState: v10State,
+        },
       }));
-      setV9DefaultState(nextV9DefaultState);
-      setV9ProbeState(nextV9ProbeState);
+      setV9DefaultState(nextV10DefaultState);
+      setV9ProbeState(nextV10ProbeState);
       setSupportedStorageTypesByVersion({
         '8.2.0-fork': nextV8SupportedStorageTypes,
         '9.0.0': nextV9SupportedStorageTypes,
+        '10.0.0': nextV10SupportedStorageTypes,
       });
     } finally {
       setIsLoading(false);
@@ -1467,7 +1516,7 @@ export default function DevDataKeychain(): JSX.Element {
       }
 
       const decryptedPayload =
-        await apisKeychainV9_0_0.debugDecryptStoredPasswordPayload(
+        await apisKeychainV10_0_0.debugDecryptStoredPasswordPayload(
           credentials.password,
         );
       const nextDecryptResult: V9CurrentBusinessDecryptResult = {
@@ -1787,7 +1836,7 @@ export default function DevDataKeychain(): JSX.Element {
   }, [readCurrentKeychainAndDecryptForBusiness, refreshState]);
 
   const handleRewriteCurrentViaKeychain = useCallback(async () => {
-    const targetStorage = effectiveStorageByVersion['9.0.0'];
+    const targetStorage = effectiveStorageByVersion['10.0.0'];
 
     try {
       setIsLoading(true);
@@ -1863,7 +1912,7 @@ export default function DevDataKeychain(): JSX.Element {
   ]);
 
   const handleWriteV9Probe = useCallback(async () => {
-    const targetStorage = effectiveStorageByVersion['9.0.0'];
+    const targetStorage = effectiveStorageByVersion['10.0.0'];
 
     try {
       setIsLoading(true);
@@ -2103,6 +2152,7 @@ export default function DevDataKeychain(): JSX.Element {
       current: {
         effectiveVersion: currentKeychainVersion,
         configuredVersion: debugCurrentKeychainVersion,
+        configuredVersionField: debugCurrentKeychainVersionField,
         canSwitchCurrentKeychainVersion,
         sourceLabel: apisKeychain.getCurrentKeychainSourceLabel(),
         defaultAndroidAuthPromptPolicy:
@@ -2122,8 +2172,13 @@ export default function DevDataKeychain(): JSX.Element {
           businessStates['9.0.0'],
           includeSecretFieldsInExport,
         ),
+        v10_0_0: sanitizeBusinessVersionStateForExport(
+          KEYCHAIN_VERSION_META['10.0.0'].sourceLabel,
+          businessStates['10.0.0'],
+          includeSecretFieldsInExport,
+        ),
       },
-      v9Raw: {
+      v10Raw: {
         defaultState: v9DefaultState,
         probeState: v9ProbeState,
         probeService: apisKeychainDebug.KEYCHAIN_PROBE_SERVICE,
@@ -2186,6 +2241,7 @@ export default function DevDataKeychain(): JSX.Element {
       currentKeychainVersion,
       debugKeychainStorageByVersion,
       debugCurrentKeychainVersion,
+      debugCurrentKeychainVersionField,
       effectiveStorageByVersion,
       includeSecretFieldsInExport,
       rabbitCode,
@@ -2433,31 +2489,31 @@ export default function DevDataKeychain(): JSX.Element {
     return (
       <>
         <View style={styles.sectionStandaloneHeader}>
-          <Text style={styles.sectionTitle}>Official v9 Raw</Text>
+          <Text style={styles.sectionTitle}>Official v10 Raw</Text>
           <SectionHelpButton
             onPress={() => {
               openHelpSheet({
-                topic: 'raw-v9',
+                topic: 'raw-v10',
               });
             }}
           />
         </View>
         <KeychainSummaryCard
-          title="Official v9 Raw Current Service"
+          title="Official v10 Raw Current Service"
           state={v9DefaultState}
         />
         <KeychainSummaryCard
-          title="Official v9 Raw Probe Service"
+          title="Official v10 Raw Probe Service"
           state={v9ProbeState}
         />
 
         <KeychainStatusCard
-          title="Official v9 Raw Current Detail"
+          title="Official v10 Raw Current Detail"
           state={v9DefaultState}
           maxHeight={detailCardMaxHeight}
         />
         <KeychainStatusCard
-          title="Official v9 Raw Probe Detail"
+          title="Official v10 Raw Probe Detail"
           state={v9ProbeState}
           maxHeight={detailCardMaxHeight}
         />
@@ -2465,7 +2521,7 @@ export default function DevDataKeychain(): JSX.Element {
         {ANDROID_AUTH_PROMPT_POLICY_OPTIONS.map(option => (
           <React.Fragment key={`current-${option.key}`}>
             <KeychainReadResultCard
-              title={`Official v9 Raw Current Read (${option.label})`}
+              title={`Official v10 Raw Current Read (${option.label})`}
               result={v9CurrentReadStates[option.key].result}
               isPasswordVisible={v9CurrentPasswordVisibility[option.key]}
               maxHeight={detailCardMaxHeight}
@@ -2480,7 +2536,7 @@ export default function DevDataKeychain(): JSX.Element {
             {v9CurrentReadStates[option.key].errorMessage ? (
               <View style={styles.statusCard}>
                 <Text style={styles.sectionTitle}>
-                  Official v9 Raw Current Read Error ({option.label})
+                  Official v10 Raw Current Read Error ({option.label})
                 </Text>
                 <Text style={styles.errorText} selectable>
                   {v9CurrentReadStates[option.key].errorMessage}
@@ -2493,7 +2549,7 @@ export default function DevDataKeychain(): JSX.Element {
         {ANDROID_AUTH_PROMPT_POLICY_OPTIONS.map(option => (
           <React.Fragment key={`probe-${option.key}`}>
             <KeychainReadResultCard
-              title={`Official v9 Raw Probe Read (${option.label})`}
+              title={`Official v10 Raw Probe Read (${option.label})`}
               result={v9ProbeReadStates[option.key].result}
               isPasswordVisible={v9ProbePasswordVisibility[option.key]}
               maxHeight={detailCardMaxHeight}
@@ -2508,7 +2564,7 @@ export default function DevDataKeychain(): JSX.Element {
             {v9ProbeReadStates[option.key].errorMessage ? (
               <View style={styles.statusCard}>
                 <Text style={styles.sectionTitle}>
-                  Official v9 Probe Read Error ({option.label})
+                  Official v10 Probe Read Error ({option.label})
                 </Text>
                 <Text style={styles.errorText} selectable>
                   {v9ProbeReadStates[option.key].errorMessage}
@@ -2713,7 +2769,7 @@ export default function DevDataKeychain(): JSX.Element {
               </Text>
               <Text style={styles.sheetListLine}>
                 {canSwitchCurrentKeychainVersion
-                  ? 'This build can switch between 8.2.0-fork and 9.0.0 for migration testing.'
+                  ? 'This build can switch between 8.2.0-fork, 9.0.0, and 10.0.0 for migration testing.'
                   : 'Public builds ignore this selector and stay pinned to the default business path.'}
               </Text>
               <Text style={styles.sheetListLine}>
@@ -2792,11 +2848,11 @@ export default function DevDataKeychain(): JSX.Element {
         style={styles.sheetScrollView}
         contentContainerStyle={styles.sheetScrollContent}>
         <AutoLockView>
-          <AppBottomSheetModalTitle title="Official v9 Raw Help" />
+          <AppBottomSheetModalTitle title="Official v10 Raw Help" />
 
           <ActionSheetSection
             title="Raw Official Package"
-            desc="This section talks directly to the official `react-native-keychain@9.0.0` package and stays outside the Rabby business wrapper.">
+            desc="This section talks directly to the official `react-native-keychain@10.0.0` package and stays outside the Rabby business wrapper.">
             <Text style={styles.sheetListLine}>
               Current Service: reads the real `com.debank` entry already used by
               the app.
@@ -2810,8 +2866,8 @@ export default function DevDataKeychain(): JSX.Element {
               current-service rewrite experiments.
             </Text>
             <Text style={styles.sheetListLine}>
-              Official v9 on Android can still register multiple storage
-              implementations. The selected 9.0.0 target storage is reused by
+              Official v10 on Android can still register multiple storage
+              implementations. The selected 10.0.0 target storage is reused by
               both the business wrapper and the raw rewrite/write probes.
             </Text>
           </ActionSheetSection>
@@ -2835,10 +2891,10 @@ export default function DevDataKeychain(): JSX.Element {
   };
 
   const renderSelectedTab = () => {
-    if (tabKey === '9.0.0') {
+    if (tabKey === '10.0.0') {
       return (
         <>
-          {renderBusinessVersionSection('9.0.0', {
+          {renderBusinessVersionSection('10.0.0', {
             isCurrentAlias: false,
           })}
           {renderV9RawSection()}
@@ -2976,11 +3032,11 @@ export default function DevDataKeychain(): JSX.Element {
             />
           </ActionSheetSection>
 
-          {tabKey === '9.0.0' ? (
+          {tabKey === '10.0.0' ? (
             <ActionSheetSection
-              title="Official v9 Raw Actions"
-              desc={`These are raw \`react-native-keychain@9.0.0\` experiments for comparing Android storage behavior. Selected storage: ${getKeychainStorageLabel(
-                effectiveStorageByVersion['9.0.0'],
+              title="Official v10 Raw Actions"
+              desc={`These are raw \`react-native-keychain@10.0.0\` experiments for comparing Android storage behavior. Selected storage: ${getKeychainStorageLabel(
+                effectiveStorageByVersion['10.0.0'],
               )}.`}>
               <View style={styles.actionsRow}>
                 <Button
@@ -3103,10 +3159,10 @@ export default function DevDataKeychain(): JSX.Element {
                 }}
               />
             </ActionSheetSection>
-          ) : resolvedTabVersion === '9.0.0' ? (
+          ) : resolvedTabVersion === '10.0.0' ? (
             <ActionSheetSection
-              title="Official v9 Raw Actions"
-              desc="Open the `9.0.0` tab when you need raw official current/probe operations. The Current tab only exposes the selected business path."
+              title="Official v10 Raw Actions"
+              desc="Open the `10.0.0` tab when you need raw official current/probe operations. The Current tab only exposes the selected business path."
             />
           ) : null}
         </AutoLockView>
@@ -3140,6 +3196,11 @@ export default function DevDataKeychain(): JSX.Element {
             />
           </View>
           <StatusRow label="Effective" value={currentKeychainVersion} />
+          <StatusRow
+            label="Debug Field"
+            value={debugCurrentKeychainVersionField}
+            selectable
+          />
           <StatusRow
             label="Source"
             value={apisKeychain.getCurrentKeychainSourceLabel()}

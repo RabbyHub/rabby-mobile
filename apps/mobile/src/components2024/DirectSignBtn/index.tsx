@@ -201,7 +201,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 8,
     backgroundColor: colors2024['neutral-bg-4'],
     borderRadius: 16,
-    height: 56,
+    height: 52,
     marginTop: 12,
   },
   statusContainerSuccess: {

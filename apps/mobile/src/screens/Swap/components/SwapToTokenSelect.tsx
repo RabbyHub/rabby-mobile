@@ -318,8 +318,8 @@ const SwapToTokenSelect = ({
 
     return (
       forScene === 'MakeTransactionAbout' &&
-      ((RootNames.MultiBridge === ofScreen && type === 'bridgeFrom') ||
-        (RootNames.MultiSwap === ofScreen && type === 'swapFrom'))
+      RootNames.MultiSwapBridge === ofScreen &&
+      (type === 'bridgeFrom' || type === 'swapFrom')
     );
   }, [queryConds.keyword, currentAccount?.type, forScene, ofScreen, type]);
 
@@ -429,7 +429,7 @@ const SwapToTokenSelect = ({
 };
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   wrapper: {
-    borderRadius: 12,
+    borderRadius: 100,
     // TODO: backgroundColor: colors2024['neutral-card-2'],
     backgroundColor: colors2024['neutral-line'],
     // backgroundColor: colors2024['neutral-bg-2'],

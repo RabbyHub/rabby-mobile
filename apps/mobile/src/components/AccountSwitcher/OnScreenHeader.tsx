@@ -152,7 +152,6 @@ const getStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 199,
-      width: SCREEN_WIDTH - 140,
       marginTop: -4,
     },
     titleText: {
@@ -165,8 +164,8 @@ const getStyle = createGetStyles2024(ctx => {
     wrapperAddressRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      width: '100%',
       justifyContent: 'center',
+      width: SCREEN_WIDTH - 140,
     },
     addressRow: {
       flexDirection: 'row',

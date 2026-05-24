@@ -45,13 +45,14 @@ import Toast from 'react-native-root-toast';
 import { naviReplace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
+import { PerpsLimitOrdersForCoin } from './components/PerpsLimitOrdersForCoin';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import { showToast } from '@/hooks/perps/showToast';
 import { PerpsAgentsLimitModal } from '../Perps/components/PerpsAgentsLimitModal';
 import { PerpsPositionSkeletonLoader } from '../Perps/components/PerpsSkeletonLoader';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 import { stats } from '@/utils/stats';
-import { getStatsReportSide } from '@/utils/perps';
+import { getStatsReportSide, isLimitOrder } from '@/utils/perps';
 import { APP_VERSIONS } from '@/constant';
 import { Text } from '@/components/Typography';
 import { PerpsGuideEntryPopup } from './components/PerpsGuideEntryPopup';
@@ -280,6 +281,10 @@ export const PerpsMarketDetailScreen = () => {
     return !!currentPosition;
   }, [currentPosition]);
 
+  const hasLimitOrders = perpsStore(s =>
+    (s.openOrders || []).some(o => o.coin === coin && isLimitOrder(o)),
+  );
+
   const { accountValue, isUnifiedAccount, getAvailableByAsset } =
     usePerpsAccount();
 
@@ -460,7 +465,7 @@ export const PerpsMarketDetailScreen = () => {
 
   return (
     <>
-      <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
+      <NormalScreenContainer2024 type={'bg1'}>
         {!hasPermission ? <PerpsRegionAlert /> : null}
         <ScrollView
           style={styles.container}
@@ -489,6 +494,13 @@ export const PerpsMarketDetailScreen = () => {
               />
             ) : null}
           </View>
+          {!hasPosition && (
+            <PerpsLimitOrdersForCoin
+              coin={coin}
+              leverage={activeAssetData?.leverage ?? null}
+              handleActionApproveStatus={handleActionApproveStatus}
+            />
+          )}
           {!isInitialized ? (
             <PerpsPositionSkeletonLoader />
           ) : (
@@ -522,14 +534,21 @@ export const PerpsMarketDetailScreen = () => {
               handleUpdateMargin={handleUpdateMargin}
             />
           )}
-          {!hasPosition && <PerpsAbout coin={coin} />}
+          {hasPosition && (
+            <PerpsLimitOrdersForCoin
+              coin={coin}
+              leverage={currentPosition?.position.leverage ?? null}
+              handleActionApproveStatus={handleActionApproveStatus}
+            />
+          )}
+          {!hasPosition && !hasLimitOrders && <PerpsAbout coin={coin} />}
           <PerpsInfo market={currentAssetCtx} activeAssetCtx={activeAssetCtx} />
 
           <PerpsHistorySection
             coin={coin}
             historyList={singleCoinHistoryList}
           />
-          {hasPosition && <PerpsAbout coin={coin} />}
+          {(hasPosition || hasLimitOrders) && <PerpsAbout coin={coin} />}
         </ScrollView>
         {isLogin ? (
           <PerpsFooter

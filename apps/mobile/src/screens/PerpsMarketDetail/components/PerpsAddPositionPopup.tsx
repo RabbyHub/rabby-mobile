@@ -38,6 +38,7 @@ import { DistanceToLiquidationTag } from '@/screens/Perps/components/PerpsPositi
 import { useShallow } from 'zustand/react/shallow';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 import { Text } from '@/components/Typography';
+import { PerpsDisplayCoinName } from '@/screens/Perps/components/PerpsDisplayCoinName';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -261,7 +262,7 @@ export const PerpsAddPositionPopup: React.FC<{
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
-    return Math.min(height - 100, 656);
+    return Math.min(height - 100, 622);
   }, [height]);
 
   useEffect(() => {
@@ -297,11 +298,10 @@ export const PerpsAddPositionPopup: React.FC<{
           </View>
 
           <AssetPriceInfo
-            coin={displayName}
-            logoUrl={coinLogo || ''}
+            displayName={formatPerpsCoin(displayName)}
+            quoteAsset={quoteAsset}
             activeAssetCtx={activeAssetCtx}
             currentAssetCtx={currentAssetCtx}
-            quoteAsset={currentAssetCtx?.quoteAsset}
           />
 
           {/* Coin Info */}
@@ -309,16 +309,10 @@ export const PerpsAddPositionPopup: React.FC<{
             <View style={styles.leftSection}>
               <View style={styles.coinInfoRow}>
                 <AssetAvatar logo={coinLogo} size={28} />
-                <Text style={styles.coinName}>
-                  {formatPerpsCoin(displayName)}
-                </Text>
-                <View style={styles.crossTag}>
-                  <Text style={styles.crossText}>
-                    {marginMode === 'cross'
-                      ? t('page.perpsDetail.PerpsPosition.cross')
-                      : t('page.perpsDetail.PerpsPosition.isolated')}
-                  </Text>
-                </View>
+                <PerpsDisplayCoinName
+                  item={currentAssetCtx || undefined}
+                  coin={coin}
+                />
               </View>
               <View style={styles.tagRow}>
                 <View
@@ -339,6 +333,13 @@ export const PerpsAddPositionPopup: React.FC<{
                     {direction} {`${leverage}x`}
                   </Text>
                 </View>
+                <View style={styles.crossTag}>
+                  <Text style={styles.crossText}>
+                    {marginMode === 'cross'
+                      ? t('page.perpsDetail.PerpsPosition.cross')
+                      : t('page.perpsDetail.PerpsPosition.isolated')}
+                  </Text>
+                </View>
                 <DistanceToLiquidationTag
                   liquidationPrice={liquidationPx}
                   markPrice={markPrice}
@@ -355,9 +356,7 @@ export const PerpsAddPositionPopup: React.FC<{
                   styles.pnlText,
                   pnl >= 0 ? styles.pnlTextUp : styles.pnlTextDown,
                 ]}>
-                {pnl >= 0 ? '+' : '-'}${Math.abs(pnl || 0).toFixed(2)} (
-                {pnl >= 0 ? '+' : ''}
-                {pnlPercent.toFixed(2)}%)
+                {pnl >= 0 ? '+' : '-'}${Math.abs(pnl || 0).toFixed(2)}
               </Text>
             </View>
           </View>
@@ -623,7 +622,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     crossTag: {
       borderRadius: 4,
       paddingHorizontal: 4,
-      height: 18,
+      height: 20,
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: colors2024['neutral-bg-5'],
@@ -750,7 +749,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       width: '100%',
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: 16,
+      paddingVertical: 12,
       justifyContent: 'space-between',
     },
     value: {

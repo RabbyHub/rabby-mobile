@@ -147,9 +147,12 @@ export const PerpsPosition: React.FC<{
     <>
       <View style={styles.section}>
         <View style={styles.header}>
-          <Text style={styles.title}>
-            {t('page.perpsDetail.PerpsPosition.title')}
-          </Text>
+          <View style={styles.sectionTitleRow}>
+            <View style={styles.sectionTitleBar} />
+            <Text style={styles.title}>
+              {t('page.perpsDetail.PerpsPosition.title')}
+            </Text>
+          </View>
           <View
             style={[
               styles.leverageTag,
@@ -212,27 +215,32 @@ export const PerpsPosition: React.FC<{
             {Math.abs(positionData?.pnl || 0).toFixed(2)}
           </Text>
           <View style={styles.positionValueWrapper}>
-            <Text style={styles.positionValueTitle}>
-              {t('page.perpsDetail.PerpsPosition.positionValue')}
-            </Text>
+            <TouchableOpacity
+              onPress={() => {
+                showTipsPopup({
+                  title: t('page.perpsDetail.PerpsPosition.size'),
+                  desc: t('page.perpsDetail.PerpsPosition.sizeTips'),
+                  buttonType: 'hyperliquid',
+                });
+              }}>
+              <View style={styles.listItemMain}>
+                <Text style={styles.label}>
+                  {t('page.perpsDetail.PerpsPosition.size')}
+                </Text>
+                <RcIconInfoCC
+                  width={18}
+                  height={18}
+                  color={colors2024['neutral-info']}
+                />
+              </View>
+            </TouchableOpacity>
             <Text style={styles.positionValue}>
-              {formatUsdValue(Number(positionData?.positionValue || 0))}
+              {`${Number(positionData?.positionValue || 0).toFixed(2)}`}
+              {quoteAsset} = {positionData?.size} {formatPerpsCoin(displayName)}
             </Text>
           </View>
         </View>
         <View style={styles.list}>
-          <View style={styles.listItem}>
-            <View style={styles.listItemMain}>
-              <Text style={styles.label}>
-                {t('page.perpsDetail.PerpsPosition.currentPrice')}
-              </Text>
-            </View>
-            <View>
-              <Text style={styles.value}>
-                ${splitNumberByStep(currentAssetCtx?.markPx || 0)}
-              </Text>
-            </View>
-          </View>
           <View style={styles.listItem}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
@@ -270,7 +278,7 @@ export const PerpsPosition: React.FC<{
           )}
         </View>
         <View style={[styles.header, styles.paddingTopHeader]}>
-          <Text style={styles.title}>
+          <Text style={styles.subTitle}>
             {t('page.perpsDetail.PerpsPosition.settings')}
           </Text>
         </View>
@@ -342,6 +350,7 @@ export const PerpsPosition: React.FC<{
                   liqPrice={Number(positionData?.liquidationPrice || 0)}
                   pxDecimals={pxDecimals}
                   szDecimals={szDecimals}
+                  quoteAsset={quoteAsset}
                   handleCancelAutoClose={async () => {
                     await handleCancelAutoClose('tp');
                   }}
@@ -432,6 +441,7 @@ export const PerpsPosition: React.FC<{
                   liqPrice={Number(positionData?.liquidationPrice || 0)}
                   pxDecimals={pxDecimals}
                   szDecimals={szDecimals}
+                  quoteAsset={quoteAsset}
                   handleCancelAutoClose={async () => {
                     await handleCancelAutoClose('sl');
                   }}
@@ -495,7 +505,7 @@ export const PerpsPosition: React.FC<{
           </View>
         </View>
         <View style={[styles.header, styles.paddingTopHeader]}>
-          <Text style={styles.title}>
+          <Text style={styles.subTitle}>
             {t('page.perpsDetail.PerpsPosition.details')}
           </Text>
         </View>
@@ -512,73 +522,6 @@ export const PerpsPosition: React.FC<{
               </Text>
             </View>
           </View>
-          <View style={styles.listItem}>
-            <View style={styles.listItemMain}>
-              <Text style={styles.label}>
-                {t('page.perpsDetail.PerpsPosition.size')}
-              </Text>
-            </View>
-            <View>
-              <Text style={styles.value}>
-                {positionData?.size} {formatPerpsCoin(displayName)}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.listItem}>
-            <TouchableOpacity
-              onPress={() => {
-                showTipsPopup({
-                  title: t('page.perps.historyDetail.tradeValue'),
-                  desc: t('page.perpsDetail.PerpsPosition.sizeTips'),
-                  buttonType: 'hyperliquid',
-                });
-              }}>
-              <View style={styles.listItemMain}>
-                <Text style={styles.label}>
-                  {t('page.perps.historyDetail.tradeValue')}
-                </Text>
-                <RcIconInfoCC
-                  width={18}
-                  height={18}
-                  color={colors2024['neutral-info']}
-                />
-              </View>
-            </TouchableOpacity>
-            <View>
-              <Text style={styles.value}>
-                {splitNumberByStep(
-                  Number(positionData?.positionValue || 0).toFixed(2),
-                )}{' '}
-                {quoteAsset}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.listItem}>
-            <View style={styles.listItemMain}>
-              <Text style={styles.label}>
-                {t('page.perpsDetail.PerpsPosition.direction')}
-              </Text>
-            </View>
-            <View>
-              <Text style={styles.value}>
-                {positionData?.direction} {positionData?.leverage}x
-              </Text>
-            </View>
-          </View>
-          {/* <View style={styles.listItem}>
-            <View style={styles.listItemMain}>
-              <Text style={styles.label}>
-                {t('page.perpsDetail.PerpsPosition.marginMode')}
-              </Text>
-            </View>
-            <View>
-              <Text style={styles.value}>
-                {positionData?.type === 'cross'
-                  ? t('page.perpsDetail.PerpsPosition.cross')
-                  : t('page.perpsDetail.PerpsPosition.isolated')}
-              </Text>
-            </View>
-          </View> */}
           <View style={styles.listItem}>
             <TouchableOpacity
               onPress={() => {
@@ -715,11 +658,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 6,
     flexDirection: 'row',
   },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  sectionTitleBar: {
+    width: 4,
+    height: 20,
+    borderRadius: 100,
+    backgroundColor: '#50D2C1',
+  },
   title: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     lineHeight: 22,
     fontWeight: '900',
+    color: colors2024['neutral-title-1'],
+  },
+  subTitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
   },
   unrealizedPnlTitle: {
@@ -757,7 +714,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: isLight ? colors2024['neutral-title-1'] : '#50D2C1',
   },
   paddingTopHeader: {
-    marginTop: 12,
+    marginTop: 0,
   },
   unrealizedPnl: {
     fontFamily: 'SF Pro Rounded',
@@ -798,9 +755,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   list: {
     borderRadius: 16,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-2'],
   },
   listItemContainer: {
     padding: 16,

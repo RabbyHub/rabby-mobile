@@ -1,47 +1,43 @@
 import { apisPerps } from '@/core/apis';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import {
+  fetchAllDexsClearinghouseStateHttp,
+  fetchClearinghouseStateHttp,
+  fetchPositionOpenOrdersHttp,
+  fetchPositionOpenOrdersHttpForDexes,
+  getDexByCoin,
   perpsStore,
-  setAccountNeedApproveAgent,
 } from '@/hooks/perps/usePerpsStore';
+import { judgeIsUserAgentIsExpired } from '@/hooks/perps/judgeAgentExpired';
 import { useMemoizedFn } from 'ahooks';
 import * as Sentry from '@sentry/react-native';
 import { Dimensions, Platform } from 'react-native';
-import { PERPS_BUILDER_INFO } from '@/constant/perps';
+import {
+  PERPS_BUILDER_INFO,
+  PERPS_LIMIT_TIF_DEFAULT,
+  type PerpsOpenOrderType,
+} from '@/constant/perps';
 import { sleep } from '@/utils/async';
-import { OrderResponse } from '@rabby-wallet/hyperliquid-sdk';
+import {
+  AssetPosition,
+  ClearinghouseState,
+  OpenOrder,
+  OrderResponse,
+} from '@rabby-wallet/hyperliquid-sdk';
 import { showToast } from '@/hooks/perps/showToast';
 import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
+import { useTranslation } from 'react-i18next';
 
 export const usePerpsPosition = () => {
   const currentPerpsAccount = perpsStore(s => s.currentPerpsAccount);
+  const { t } = useTranslation();
 
   const formatTriggerPx = (px?: string) => {
     // avoid '.15' input error from hy validator
     // '.15' -> '0.15'
     return px ? Number(px).toString() : undefined;
   };
-
-  const judgeIsUserAgentIsExpired = useMemoizedFn(
-    async (errorMessage: string) => {
-      const masterAddress = currentPerpsAccount?.address;
-      if (!masterAddress) {
-        return false;
-      }
-
-      const agentWalletPreference = await apisPerps.getAgentWalletPreference(
-        masterAddress,
-      );
-      const agentAddress = agentWalletPreference?.agentAddress;
-      if (agentAddress && errorMessage.includes(agentAddress)) {
-        console.warn('handle action agent is expired, logout');
-        showToast('Agent is expired, please try again', 'error');
-        setAccountNeedApproveAgent(true);
-        return true;
-      }
-    },
-  );
 
   const handleCancelOrder = useMemoizedFn(
     async (oid: number, coin: string, actionType: 'tp' | 'sl') => {
@@ -83,6 +79,83 @@ export const usePerpsPosition = () => {
     },
   );
 
+  // Single round-trip for both single-cancel and "Cancel All". Returns the
+  // oids that the SDK confirmed cancelled; callers use this to scope stats /
+  // UI updates (empty array = all failed or agent expired).
+  const handleCancelLimitOrders = useMemoizedFn(
+    async (orders: OpenOrder[]): Promise<number[]> => {
+      if (!orders.length) {
+        return [];
+      }
+      try {
+        const sdk = apisPerps.getPerpsSDK();
+        const res = await sdk.exchange?.cancelOrder(
+          orders.map(o => ({ oid: o.oid, coin: o.coin })),
+        );
+        const statuses = res?.response.data.statuses ?? [];
+        const cancelledOids = statuses
+          .map((s, i) =>
+            (s as unknown as string) === 'success'
+              ? orders[i]?.oid ?? null
+              : null,
+          )
+          .filter((o): o is number => o != null);
+        const okCount = cancelledOids.length;
+        const failCount = statuses.length - okCount;
+
+        if (okCount > 0) {
+          // Cancel-All on Home can span multiple dexes — refresh just those.
+          fetchPositionOpenOrdersHttpForDexes(
+            orders.map(o => getDexByCoin(o.coin)),
+          );
+        }
+
+        if (okCount > 0 && failCount === 0) {
+          showToast(
+            orders.length === 1
+              ? t('page.perps.cancelOrderToast.singleSuccess')
+              : t('page.perps.cancelOrderToast.multiSuccess', {
+                  count: okCount,
+                }),
+            'success',
+          );
+          return cancelledOids;
+        }
+        if (okCount > 0) {
+          showToast(
+            t('page.perps.cancelOrderToast.partial', {
+              okCount,
+              failCount,
+            }),
+            'success',
+          );
+          Sentry.captureException(
+            new Error(
+              'cancel limit orders partial failure: ' + JSON.stringify(res),
+            ),
+          );
+          return cancelledOids;
+        }
+        showToast(t('page.perps.cancelOrderToast.failed'), 'error');
+        Sentry.captureException(
+          new Error('cancel limit orders all failed: ' + JSON.stringify(res)),
+        );
+        return [];
+      } catch (e: any) {
+        const expired = await judgeIsUserAgentIsExpired(e?.message || '');
+        if (expired) {
+          return [];
+        }
+        console.error('cancel limit order error', e);
+        showToast(t('page.perps.cancelOrderToast.failed'), 'error');
+        Sentry.captureException(
+          new Error('cancel limit order error: ' + JSON.stringify(e)),
+        );
+        return [];
+      }
+    },
+  );
+
   const handleUpdateMargin = useMemoizedFn(
     async (coin: string, action: 'add' | 'reduce', margin: number) => {
       const actionText = action === 'add' ? 'Add Margin' : 'Reduce Margin';
@@ -95,6 +168,7 @@ export const usePerpsPosition = () => {
           value: marginNormalized,
         });
         if (res?.status === 'ok') {
+          fetchClearinghouseStateHttp(getDexByCoin(coin));
           showToast(actionText + ' successfully', 'success');
         } else {
           showToast(
@@ -145,6 +219,7 @@ export const usePerpsPosition = () => {
           (nextCurrentTpOrSl.tpPrice = formattedTpTriggerPx);
         formattedSlTriggerPx &&
           (nextCurrentTpOrSl.slPrice = formattedSlTriggerPx);
+        fetchPositionOpenOrdersHttp(getDexByCoin(coin));
         showToast(autoCloseText + ' set successfully', 'success');
         return true;
       } catch (error: any) {
@@ -192,6 +267,7 @@ export const usePerpsPosition = () => {
           const msg = `Closed ${direction} ${formatPerpsCoin(
             coin,
           )}-USD: Size ${totalSz} at Price $${avgPx}`;
+          fetchClearinghouseStateHttp(getDexByCoin(coin));
           showToast(msg, 'success');
           return res?.response?.data?.statuses[0]?.filled as {
             totalSz: string;
@@ -244,6 +320,8 @@ export const usePerpsPosition = () => {
       tpTriggerPx?: string;
       slTriggerPx?: string;
       isAddingPosition?: boolean;
+      orderType?: PerpsOpenOrderType;
+      limitPx?: string;
     }) => {
       try {
         const sdk = apisPerps.getPerpsSDK();
@@ -256,6 +334,8 @@ export const usePerpsPosition = () => {
           midPx,
           tpTriggerPx,
           slTriggerPx,
+          orderType = 'market',
+          limitPx,
         } = params;
         if (!params.isAddingPosition) {
           await sdk.exchange?.updateLeverage({
@@ -265,21 +345,37 @@ export const usePerpsPosition = () => {
           });
         }
 
-        const promises = [
-          sdk.exchange?.marketOrderOpen({
-            coin,
-            isBuy: direction === 'Long',
-            size,
-            midPx,
-            builder: PERPS_BUILDER_INFO,
-          }),
-        ];
-
-        // avoid '.15' input error from hy validator
         const formattedTpTriggerPx = formatTriggerPx(tpTriggerPx);
         const formattedSlTriggerPx = formatTriggerPx(slTriggerPx);
 
-        if (tpTriggerPx || slTriggerPx) {
+        const openCall =
+          orderType === 'limit' && limitPx
+            ? sdk.exchange?.limitOrderOpen({
+                coin,
+                isBuy: direction === 'Long',
+                size,
+                limitPx,
+                tif: PERPS_LIMIT_TIF_DEFAULT,
+                // Intentionally not forwarding tpTriggerPx / slTriggerPx in
+                // limit mode: TP/SL state may carry over from a previous
+                // market-mode session and the UI is hidden in limit mode, so
+                // the user has no chance to confirm them — passing them
+                // through would attach stale triggers to the limit order.
+                builder: PERPS_BUILDER_INFO,
+              })
+            : sdk.exchange?.marketOrderOpen({
+                coin,
+                isBuy: direction === 'Long',
+                size,
+                midPx,
+                builder: PERPS_BUILDER_INFO,
+              });
+
+        const promises = [openCall];
+
+        // Market-open keeps the separate bindTpsl call. limitOrderOpen already
+        // accepts tpTriggerPx / slTriggerPx natively, so no second call.
+        if (orderType === 'market' && (tpTriggerPx || slTriggerPx)) {
           promises.push(
             (async () => {
               await sleep(10); // little delay to ensure nonce is correct
@@ -298,30 +394,55 @@ export const usePerpsPosition = () => {
         const results = await Promise.all(promises);
         const res = results[0];
         const filled = res?.response?.data?.statuses[0]?.filled;
+        const resting = res?.response?.data?.statuses[0]?.resting;
+
+        const dex = getDexByCoin(coin);
         if (filled) {
           const { totalSz, avgPx } = filled;
           const msg = `Opened ${direction} ${formatPerpsCoin(
             coin,
-          )}-USD: Size ${totalSz} at Price $${avgPx}`;
+          )}: Size ${totalSz} at Price $${avgPx}`;
+          fetchClearinghouseStateHttp(dex);
           showToast(msg, 'success');
           return res?.response?.data?.statuses[0]?.filled as {
             totalSz: string;
             avgPx: string;
             oid: number;
           };
-        } else {
-          const msg = res?.response?.data?.statuses[0]?.error;
-          showToast(msg || 'open position error', 'error');
-          Sentry.captureException(
-            new Error(
-              'PERPS open position noFills' +
-                'params: ' +
-                JSON.stringify(params) +
-                'res: ' +
-                JSON.stringify(res),
-            ),
-          );
         }
+
+        if (orderType === 'limit' && resting) {
+          // Limit orders frequently rest in the book instead of filling. Treat as
+          // success and surface a "placed" toast; downstream stats code keys off
+          // the returned shape so we fake an avgPx using limitPx.
+          fetchPositionOpenOrdersHttp(dex);
+          showToast(
+            t('page.perpsDetail.PerpsOpenPositionPopup.limitOrderPlacedToast', {
+              direction,
+              coin: formatPerpsCoin(coin),
+              size,
+              price: limitPx,
+            }),
+            'success',
+          );
+          return {
+            totalSz: size,
+            avgPx: limitPx ?? '0',
+            oid: resting.oid,
+          };
+        }
+
+        const msg = res?.response?.data?.statuses[0]?.error;
+        showToast(msg || 'open position error', 'error');
+        Sentry.captureException(
+          new Error(
+            'PERPS open position noFills' +
+              'params: ' +
+              JSON.stringify(params) +
+              'res: ' +
+              JSON.stringify(res),
+          ),
+        );
       } catch (error: any) {
         const isExpired = await judgeIsUserAgentIsExpired(error?.message || '');
         if (isExpired) {
@@ -393,12 +514,72 @@ export const usePerpsPosition = () => {
     },
   );
 
+  // One multiOrder of reduce-only IOC limits — one signature for all positions.
+  const handleCloseAllPositions = useMemoizedFn(
+    async (clearinghouseState: ClearinghouseState) => {
+      try {
+        const sdk = apisPerps.getPerpsSDK();
+        const res = await sdk.exchange?.closeAllPositions(
+          clearinghouseState,
+          undefined,
+          PERPS_BUILDER_INFO,
+        );
+        const statuses = res?.response?.data?.statuses ?? [];
+        // SDK iterates assetPositions in order and skips szi === 0, so the
+        // statuses array aligns 1:1 with this filtered list.
+        const closableAssets: AssetPosition[] =
+          clearinghouseState.assetPositions.filter(
+            ap => parseFloat(ap.position.szi) !== 0,
+          );
+        const filledResults: {
+          filled: { totalSz: string; avgPx: string; oid: number };
+          position: AssetPosition['position'];
+        }[] = [];
+        statuses.forEach((s, i) => {
+          const filled = (s as any).filled;
+          const position = closableAssets[i]?.position;
+          if (filled && position) {
+            filledResults.push({ filled, position });
+          }
+        });
+
+        if (filledResults.length === 0) {
+          const firstErr = statuses.map(s => (s as any).error).find(Boolean);
+          showToast(String(firstErr || 'close all error'), 'error');
+          Sentry.captureException(
+            new Error('PERPS close all noFills res: ' + JSON.stringify(res)),
+          );
+          return null;
+        }
+
+        // closeAllPositions can span all dexes — refresh the full set so
+        // sub-dex positions also reflect the close.
+        fetchAllDexsClearinghouseStateHttp();
+        showToast('Closed all position successfully', 'success');
+        return filledResults;
+      } catch (e: any) {
+        const isExpired = await judgeIsUserAgentIsExpired(e?.message || '');
+        if (isExpired) {
+          return null;
+        }
+        console.error('close all positions error', e);
+        showToast(e?.message || 'close all positions error', 'error');
+        Sentry.captureException(
+          new Error('close all positions error: ' + JSON.stringify(e)),
+        );
+        return null;
+      }
+    },
+  );
+
   return {
     handleOpenPosition,
     handleClosePosition,
+    handleCloseAllPositions,
     handleSetAutoClose,
     handleUpdateMargin,
     handleCancelOrder,
+    handleCancelLimitOrders,
     handleStableCoinOrder,
   };
 };

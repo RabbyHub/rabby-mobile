@@ -28,9 +28,9 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import i18n from '@/utils/i18n';
 import { stats } from '@/utils/stats';
 import { toChecksumAddress } from '@ethereumjs/util';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useMount, useRequest } from 'ahooks';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { normalizeTxParams } from '../SignTx/util';
 import {
   GasSelectorHeader,
@@ -647,8 +647,8 @@ export const SignTestnetTx = ({
   }
 
   return (
-    <BottomSheetView style={styles.wrapper}>
-      <ScrollView style={styles.approvalTx}>
+    <View style={styles.wrapper}>
+      <BottomSheetScrollView style={styles.approvalTx} nestedScrollEnabled>
         <View
           style={StyleSheet.flatten({
             rowGap: 12,
@@ -690,7 +690,7 @@ export const SignTestnetTx = ({
         </View>
 
         <View style={styles.placeholder} />
-      </ScrollView>
+      </BottomSheetScrollView>
       {isReady && (
         <FooterBar
           Header={
@@ -766,7 +766,7 @@ export const SignTestnetTx = ({
           account={currentAccount}
         />
       )}
-    </BottomSheetView>
+    </View>
   );
 };
 

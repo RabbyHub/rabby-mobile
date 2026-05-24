@@ -21,19 +21,30 @@ import { useCallback, useMemo } from 'react';
 
 const isIOS = DeviceUtils.isIOS();
 
-export const CURRENT_KEYCHAIN_VERSION_VALUES = ['8.2.0-fork', '9.0.0'] as const;
+export const CURRENT_KEYCHAIN_VERSION_VALUES = [
+  '8.2.0-fork',
+  '9.0.0',
+  '10.0.0',
+] as const;
 
 export type CurrentKeychainVersion =
   (typeof CURRENT_KEYCHAIN_VERSION_VALUES)[number];
 
-const DEFAULT_CURRENT_KEYCHAIN_VERSION: CurrentKeychainVersion = '8.2.0-fork';
+export const DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD =
+  'debugCurrentKeychainVersion20260518' as const;
+
+const DEFAULT_CURRENT_KEYCHAIN_VERSION: CurrentKeychainVersion = '9.0.0';
 const DEFAULT_DEBUG_KEYCHAIN_STORAGE: KeychainStorageType =
   DEFAULT_KEYCHAIN_STORAGE_TYPE;
 
 function coerceCurrentKeychainVersion(
   version: unknown,
 ): CurrentKeychainVersion {
-  return version === '9.0.0' ? '9.0.0' : DEFAULT_CURRENT_KEYCHAIN_VERSION;
+  return CURRENT_KEYCHAIN_VERSION_VALUES.includes(
+    version as CurrentKeychainVersion,
+  )
+    ? (version as CurrentKeychainVersion)
+    : DEFAULT_CURRENT_KEYCHAIN_VERSION;
 }
 
 type DebugKeychainStorageByVersion = Record<
@@ -45,6 +56,7 @@ function makeDefaultDebugKeychainStorageByVersion(): DebugKeychainStorageByVersi
   return {
     '8.2.0-fork': DEFAULT_DEBUG_KEYCHAIN_STORAGE,
     '9.0.0': DEFAULT_DEBUG_KEYCHAIN_STORAGE,
+    '10.0.0': DEFAULT_DEBUG_KEYCHAIN_STORAGE,
   };
 }
 
@@ -59,6 +71,7 @@ function coerceDebugKeychainStorageByVersion(
   return {
     '8.2.0-fork': coerceKeychainStorageType(raw?.['8.2.0-fork']),
     '9.0.0': coerceKeychainStorageType(raw?.['9.0.0']),
+    '10.0.0': coerceKeychainStorageType(raw?.['10.0.0']),
   };
 }
 
@@ -70,8 +83,9 @@ type ScreenshotSettings = {
   blockSubmitIfFormChangedOnAuth: boolean;
   toastOpenApiHttpErrorStatus: boolean;
   debugSwapHistorySkipLocalLookup: boolean;
-  debugCurrentKeychainVersion: CurrentKeychainVersion;
+  [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: CurrentKeychainVersion;
   debugKeychainStorageByVersion: DebugKeychainStorageByVersion;
+  enablePerpsWatchAddress: boolean;
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
   '@ExperimentalSettings',
@@ -89,8 +103,9 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     blockSubmitIfFormChangedOnAuth: false,
     toastOpenApiHttpErrorStatus: false,
     debugSwapHistorySkipLocalLookup: false,
-    debugCurrentKeychainVersion: DEFAULT_CURRENT_KEYCHAIN_VERSION,
+    [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: DEFAULT_CURRENT_KEYCHAIN_VERSION,
     debugKeychainStorageByVersion: makeDefaultDebugKeychainStorageByVersion(),
+    enablePerpsWatchAddress: false,
   },
 );
 
@@ -130,7 +145,7 @@ export function getCurrentKeychainVersion(): CurrentKeychainVersion {
   }
 
   return coerceCurrentKeychainVersion(
-    experimentalSettingsStore.getState().debugCurrentKeychainVersion,
+    experimentalSettingsStore.getState()[DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD],
   );
 }
 
@@ -143,7 +158,7 @@ export function setCurrentKeychainVersion(version: CurrentKeychainVersion) {
 
   setExpSettingData(prev => ({
     ...prev,
-    debugCurrentKeychainVersion: nextVersion,
+    [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: nextVersion,
   }));
 
   return nextVersion;
@@ -613,9 +628,29 @@ export function useDebugSwapHistorySkipLocalLookup() {
   };
 }
 
+export function useEnablePerpsWatchAddress() {
+  const enablePerpsWatchAddress = experimentalSettingsStore(
+    s => s.enablePerpsWatchAddress,
+  );
+
+  const toggleEnablePerpsWatchAddress = useCallback((nextVal?: boolean) => {
+    setExpSettingData(prev => ({
+      ...prev,
+      enablePerpsWatchAddress:
+        typeof nextVal === 'boolean' ? nextVal : !prev.enablePerpsWatchAddress,
+    }));
+  }, []);
+
+  return {
+    enablePerpsWatchAddress:
+      isNonPublicProductionEnv && enablePerpsWatchAddress,
+    toggleEnablePerpsWatchAddress,
+  };
+}
+
 export function useCurrentKeychainVersion() {
   const debugCurrentKeychainVersion = experimentalSettingsStore(
-    s => s.debugCurrentKeychainVersion,
+    s => s[DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD],
   );
 
   const setDebugCurrentKeychainVersion = useCallback(
@@ -633,6 +668,7 @@ export function useCurrentKeychainVersion() {
     canSwitchCurrentKeychainVersion: isNonPublicProductionEnv,
     setCurrentKeychainVersion: setDebugCurrentKeychainVersion,
     currentKeychainVersionOptions: CURRENT_KEYCHAIN_VERSION_VALUES,
+    debugCurrentKeychainVersionField: DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD,
   };
 }
 
@@ -657,6 +693,7 @@ export function useDebugKeychainStorage() {
     debugKeychainStorageOptions: [
       KEYCHAIN_STORAGE_TYPES.RSA,
       KEYCHAIN_STORAGE_TYPES.AES,
+      KEYCHAIN_STORAGE_TYPES.AES_GCM,
       KEYCHAIN_STORAGE_TYPES.KC,
     ] as KeychainStorageType[],
   };

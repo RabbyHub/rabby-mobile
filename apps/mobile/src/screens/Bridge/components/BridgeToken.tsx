@@ -1,10 +1,12 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
-import {
-  View,
-  TouchableOpacity,
-  StyleSheet,
-  useWindowDimensions,
-} from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
@@ -25,13 +27,12 @@ import { Account } from '@/core/services/preference';
 import { TokenItemMaybeWithOwner } from '@/databases/hooks/token';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import useAutoFocusInput from '@/hooks/useAutoFocusInput';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-} from 'react-native-reanimated';
-import { IS_ANDROID } from '@/core/native/utils';
-import { BubbleWithText } from '@/screens/Swap/components/Slider';
-import { Text, TextInput } from '@/components/Typography';
+import { SliderBubblePortal } from '@/screens/Swap/components/Slider';
+import { Text } from '@/components/Typography';
+import {
+  AutoShrinkAmountText,
+  AutoShrinkAmountTextInput,
+} from '@/components/AutoShrinkAmountTextInput';
 
 const hiddenSlider = false;
 
@@ -157,42 +158,23 @@ const BridgeToken = ({
     );
   }, [colors2024]);
 
-  const showBubble = useSharedValue(false);
-
-  const { width } = useWindowDimensions();
-
-  const sliderStyle = useAnimatedStyle(
-    () => ({
-      opacity: showBubble.value ? 1 : 0,
-      display: showBubble.value ? 'flex' : 'none',
-      position: 'absolute',
-      top: IS_ANDROID ? -72 : -60,
-      left: 0,
-      height: 70,
-      width,
-      transform: [
-        {
-          translateX: 0 - width / 2 + (IS_ANDROID ? 7 : 6),
-        },
-      ],
-    }),
-    [width],
-  );
+  const [isSliderBubbleVisible, setIsSliderBubbleVisible] = useState(false);
+  const sliderThumbRef = useRef<View>(null);
 
   const onSlidingStart = useCallback(() => {
     if (!disabled) {
-      showBubble.value = true;
+      setIsSliderBubbleVisible(true);
       onSliderScrollEnabledChange?.(false);
     }
-  }, [showBubble, disabled, onSliderScrollEnabledChange]);
+  }, [disabled, onSliderScrollEnabledChange]);
 
   const onAfterChangeSlider = useCallback(
     (v: number) => {
       onChangeSlider?.(v, true);
-      showBubble.value = false;
+      setIsSliderBubbleVisible(false);
       onSliderScrollEnabledChange?.(true);
     },
-    [onChangeSlider, showBubble, onSliderScrollEnabledChange],
+    [onChangeSlider, onSliderScrollEnabledChange],
   );
 
   useEffect(() => {
@@ -235,16 +217,17 @@ const BridgeToken = ({
               thumbProps={{
                 children: (
                   <View>
-                    <View style={[styles.outerThumb, { position: 'relative' }]}>
+                    <View ref={sliderThumbRef} style={styles.outerThumb}>
                       <View style={styles.innerThumb} />
-
-                      <Animated.View style={sliderStyle}>
-                        <BubbleWithText slide={slider || 0} />
-                      </Animated.View>
                     </View>
                   </View>
                 ),
               }}
+            />
+            <SliderBubblePortal
+              anchorRef={sliderThumbRef}
+              slide={slider || 0}
+              visible={isSliderBubbleVisible}
             />
             <Text style={styles.sliderValue}>{slider}%</Text>
           </View>
@@ -253,6 +236,48 @@ const BridgeToken = ({
 
       <View style={styles.body}>
         <View style={styles.inputContainer}>
+          {valueLoading && skeletonLoading ? (
+            <CustomSkeleton
+              animation="wave"
+              LinearGradientComponent={Linear}
+              style={styles.skeleton}
+            />
+          ) : isToToken ? (
+            <AutoShrinkAmountText
+              numberOfLines={1}
+              style={StyleSheet.flatten([
+                styles.input,
+                styles.inputLeft,
+                (showNoQuote || !value) && styles.showNoQuoteText,
+                valueLoading && styles.loadingOpacity,
+              ])}>
+              {showNoQuote ? t('page.bridge.no-quote') : value?.toString() || 0}
+            </AutoShrinkAmountText>
+          ) : (
+            <View style={[styles.inputBox]}>
+              <AutoShrinkAmountTextInput
+                contextMenuHidden={disabled}
+                editable={!disabled}
+                numberOfLines={1}
+                multiline={false}
+                textAlign="left"
+                keyboardType="numeric"
+                inputMode="decimal"
+                placeholderTextColor={colors2024['neutral-info']}
+                style={[
+                  styles.input,
+                  styles.inputLeft,
+                  inSufficient && styles.insufficientInput,
+                ]}
+                placeholder={'0'}
+                scrollEnabled={false}
+                value={value?.toString()}
+                onChangeText={inputChange}
+                ref={inputCallbackRef}
+              />
+            </View>
+          )}
+          <View style={styles.vecticalLine} />
           <View style={styles.tokenSelectBox}>
             {/* {isFromToken && !value && (
               <TouchableOpacity
@@ -285,47 +310,13 @@ const BridgeToken = ({
                 // supportChains={supportedChains}
               />
             )}
-            <View style={styles.vecticalLine} />
           </View>
-          {valueLoading && skeletonLoading ? (
-            <CustomSkeleton
-              animation="wave"
-              LinearGradientComponent={Linear}
-              style={styles.skeleton}
-            />
-          ) : isToToken ? (
-            <Text
-              numberOfLines={1}
-              style={StyleSheet.flatten([
-                styles.input,
-                (showNoQuote || !value) && styles.showNoQuoteText,
-                valueLoading && styles.loadingOpacity,
-              ])}>
-              {showNoQuote ? t('page.bridge.no-quote') : value?.toString() || 0}
-            </Text>
-          ) : (
-            <View style={[styles.inputBox]}>
-              <TextInput
-                contextMenuHidden={disabled}
-                editable={!disabled}
-                numberOfLines={1}
-                multiline={false}
-                textAlign="right"
-                keyboardType="numeric"
-                inputMode="decimal"
-                placeholderTextColor={colors2024['neutral-info']}
-                style={[styles.input, inSufficient && styles.insufficientInput]}
-                placeholder={'0'}
-                scrollEnabled={true}
-                value={value?.toString()}
-                onChangeText={inputChange}
-                ref={inputCallbackRef}
-              />
-            </View>
-          )}
         </View>
         {
           <View style={[styles.footer, valueLoading && styles.loadingOpacity]}>
+            <View style={styles.balanceContainer}>
+              {<Text style={styles.value}>{useValue}</Text>}
+            </View>
             <View style={styles.balanceContainer}>
               {
                 <View style={styles.balanceWrapper}>
@@ -352,9 +343,6 @@ const BridgeToken = ({
                   </Text>
                 </View>
               }
-            </View>
-            <View style={styles.balanceContainer}>
-              {<Text style={styles.value}>{useValue}</Text>}
             </View>
           </View>
         }
@@ -388,6 +376,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   maxBtnBox: {
     borderRadius: 8,
@@ -441,6 +430,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     height: 56,
     alignItems: 'center',
+    minWidth: 0,
   },
   showNoQuoteText: {
     color: colors2024['neutral-info'],
@@ -460,12 +450,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 28,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
-    // height: 36,
+    height: 36,
     lineHeight: 36,
     includeFontPadding: false,
     paddingLeft: 0,
     borderWidth: 0,
     overflow: 'hidden',
+  },
+  inputLeft: {
+    textAlign: 'left',
   },
   insufficientInput: {
     color: colors2024['red-default'],

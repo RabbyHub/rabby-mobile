@@ -109,7 +109,10 @@ export const BottomBtns = ({
         }
         await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
         navigation.push(RootNames.StackTransaction, {
-          screen: RootNames.Bridge,
+          screen: RootNames.SwapBridge,
+          params: {
+            activeTab: 'bridge',
+          },
         });
       },
     },
@@ -169,7 +172,10 @@ export const BottomBtns = ({
     }
     await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
     navigation.push(RootNames.StackTransaction, {
-      screen: RootNames.Swap,
+      screen: RootNames.SwapBridge,
+      params: {
+        activeTab: 'swap',
+      },
     });
   };
   const handleMore = () => {

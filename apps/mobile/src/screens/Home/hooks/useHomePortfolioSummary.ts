@@ -1,7 +1,10 @@
 import { zCreate } from '@/core/utils/reexports';
+import { filterMyAccounts } from '@/core/apis/account';
 import accountStore from '@/store/account';
-import { balanceAccountsStore } from '@/store/balance';
+import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import {
+  balance24hStore,
+  computeCombined24hBalanceData,
   type Combined24hBalanceData,
   scene24hBalanceStore,
 } from '@/store/balance24h';
@@ -20,7 +23,7 @@ type HomePortfolioState = {
   hasFetchedAccounts: boolean;
   isFetchingAccounts: boolean;
   matteredAccountLength: number;
-  canToggle24hCurve: boolean;
+  isPendingMatteredAccountLength: boolean;
   isPendingDisplayAddresses: boolean;
   totalBalance: number;
   changeData: HomeChangeData;
@@ -63,6 +66,23 @@ function getAddressSetSignature(addresses: string[]) {
     .join('|');
 }
 
+function normalizeHomeAddresses(addresses: string[]) {
+  const seen = new Set<string>();
+  const normalizedAddresses: string[] = [];
+
+  addresses.forEach(address => {
+    const lowerAddress = address.toLowerCase();
+    if (!lowerAddress || seen.has(lowerAddress)) {
+      return;
+    }
+
+    seen.add(lowerAddress);
+    normalizedAddresses.push(lowerAddress);
+  });
+
+  return normalizedAddresses;
+}
+
 function areCurveListsEqual(
   prev: HomePortfolioState['curveList'],
   next: HomePortfolioState['curveList'],
@@ -92,7 +112,7 @@ function buildInitialState(): HomePortfolioState {
     hasFetchedAccounts: false,
     isFetchingAccounts: false,
     matteredAccountLength: 0,
-    canToggle24hCurve: false,
+    isPendingMatteredAccountLength: true,
     isPendingDisplayAddresses: true,
     totalBalance: 0,
     changeData: EMPTY_HOME_CHANGE_DATA,
@@ -115,7 +135,8 @@ function isSameState(prev: HomePortfolioState, next: HomePortfolioState) {
     prev.hasFetchedAccounts === next.hasFetchedAccounts &&
     prev.isFetchingAccounts === next.isFetchingAccounts &&
     prev.matteredAccountLength === next.matteredAccountLength &&
-    prev.canToggle24hCurve === next.canToggle24hCurve &&
+    prev.isPendingMatteredAccountLength ===
+      next.isPendingMatteredAccountLength &&
     prev.isPendingDisplayAddresses === next.isPendingDisplayAddresses &&
     prev.totalBalance === next.totalBalance &&
     prev.changeData.rawChange === next.changeData.rawChange &&
@@ -137,13 +158,20 @@ function isSameState(prev: HomePortfolioState, next: HomePortfolioState) {
 function buildHomePortfolioState(): HomePortfolioState {
   const balanceState = balanceAccountsStore.getState();
   const accountState = accountStore.getState();
-  const displayAddresses = balanceState.selectedAddresses;
+  const displayAddresses = normalizeHomeAddresses(
+    balanceState.selectedAddresses,
+  );
   const scene24hState = scene24hBalanceStore.getState();
   const sceneCurveState = sceneCurve24hStore.getState();
+  const currentBalanceMap = addressBalanceStore.getAddressValueMap();
+  const balance24hMap = balance24hStore.getAddress24hBalanceMap();
   const displayAddressSignature = getAddressSetSignature(displayAddresses);
-  const is24hSceneMatched =
-    getAddressSetSignature(scene24hState.addresses.Home) ===
-    displayAddressSignature;
+  const canUseFetchedAccountLength =
+    !balanceState.hasResolvedMatteredAccountLength &&
+    accountState.hasFetchedAccounts;
+  const matteredAccountLength = canUseFetchedAccountLength
+    ? filterMyAccounts(accountState.accounts).length
+    : balanceState.matteredAccountLength;
   const isCurveSceneMatched =
     getAddressSetSignature(sceneCurveState.addresses.Home) ===
     displayAddressSignature;
@@ -155,20 +183,38 @@ function buildHomePortfolioState(): HomePortfolioState {
   const showBalanceLoadingWithoutLocal =
     isPendingDisplayAddresses ||
     (displayAddresses.length > 0 && !balanceState.hasAnyBalanceValue);
-  const scene24hAddrLoading = displayAddresses.some(address => {
-    return !!scene24hState.sceneAddrLoading[`Home-${address.toLowerCase()}`];
+  const currentBalanceFlow =
+    addressBalanceStore.getAddressesFlowState(displayAddresses);
+  const missingChangeInputAddresses = displayAddresses.filter(address => {
+    return !currentBalanceMap[address] || !balance24hMap[address];
   });
-  const canToggle24hCurve =
-    balanceState.hasResolvedSelection && displayAddresses.length > 0;
+  const scene24hAddrLoading = displayAddresses.some(address => {
+    return !!scene24hState.sceneAddrLoading[`Home-${address}`];
+  });
+  const direct24hAddrLoading = displayAddresses.some(address => {
+    const flow = balance24hStore.getAddress24hBalanceFlowState(address);
+
+    return flow.isLoading;
+  });
   const isChangeAnyLoading =
-    !is24hSceneMatched ||
     scene24hState.sceneLoading.Home ||
     scene24hState.sceneComputing.Home ||
-    scene24hAddrLoading;
-  const changeData =
-    is24hSceneMatched && scene24hState.addresses.Home.length
-      ? pickHomeChangeData(scene24hState.combinedData.Home)
-      : EMPTY_HOME_CHANGE_DATA;
+    scene24hAddrLoading ||
+    direct24hAddrLoading ||
+    currentBalanceFlow.isAnyLoading;
+  const hasAllChangeInputs =
+    displayAddresses.length > 0 && missingChangeInputAddresses.length === 0;
+  const changeData = displayAddresses.length
+    ? pickHomeChangeData(
+        computeCombined24hBalanceData({
+          addresses: displayAddresses,
+          multi24hBalance: balance24hMap,
+          balanceMap: currentBalanceMap,
+          totalEvmBalance: 0,
+          totalBalance: 0,
+        }),
+      )
+    : EMPTY_HOME_CHANGE_DATA;
   const curveList =
     isCurveSceneMatched && sceneCurveState.addresses.Home.length
       ? sceneCurveState.combinedData.Home.list
@@ -176,11 +222,13 @@ function buildHomePortfolioState(): HomePortfolioState {
   const showChangeLoadingWithoutLocal =
     !showBalanceLoadingWithoutLocal &&
     !changeData.changePercent &&
-    isChangeAnyLoading &&
+    (!hasAllChangeInputs || isChangeAnyLoading) &&
     displayAddresses.length > 0;
   const isBalanceFetchingRemote = balanceState.isAnyBalanceFetchingRemote;
   const is24hChangeFetchingRemote =
-    scene24hState.sceneLoading.Home || scene24hAddrLoading;
+    scene24hState.sceneLoading.Home ||
+    scene24hAddrLoading ||
+    direct24hAddrLoading;
   const isCurveFetchingRemote = sceneCurveState.sceneLoading.Home;
   const isCurveAnyAddrLoading =
     !isCurveSceneMatched ||
@@ -192,8 +240,10 @@ function buildHomePortfolioState(): HomePortfolioState {
     hasResolvedSelection: balanceState.hasResolvedSelection,
     hasFetchedAccounts: accountState.hasFetchedAccounts,
     isFetchingAccounts: accountState.isFetchingAccounts,
-    matteredAccountLength: balanceState.matteredAccountLength,
-    canToggle24hCurve,
+    matteredAccountLength,
+    isPendingMatteredAccountLength:
+      !balanceState.hasResolvedMatteredAccountLength &&
+      !canUseFetchedAccountLength,
     isPendingDisplayAddresses,
     totalBalance: balanceState.totalBalance,
     changeData,
@@ -239,6 +289,8 @@ function ensureHomePortfolioLifecycle() {
 
   balanceAccountsStore.subscribe(syncHomePortfolioState);
   accountStore.subscribe(syncHomePortfolioState);
+  addressBalanceStore.subscribe(syncHomePortfolioState);
+  balance24hStore.subscribe(syncHomePortfolioState);
   scene24hBalanceStore.subscribe(syncHomePortfolioState);
   sceneCurve24hStore.subscribe(syncHomePortfolioState);
 
