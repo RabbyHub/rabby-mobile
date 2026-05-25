@@ -162,8 +162,13 @@ function nextFrame() {
 }
 
 function notifyUnlockUIReadyAfterHomePaint() {
+  const notifyUIReady = apisLock.deferNotifyUserManuallyUnlockUIReady();
+  if (!notifyUIReady) {
+    return;
+  }
+
   if (!isAndroid) {
-    apisLock.notifyUserManuallyUnlockUIReady();
+    notifyUIReady();
     return;
   }
 
@@ -174,7 +179,7 @@ function notifyUnlockUIReadyAfterHomePaint() {
   InteractionManager.runAfterInteractions(() => {
     setTimeout(() => {
       traceAndroidUnlockPerf('unlock_ui_ready_notify_deferred_fire');
-      apisLock.notifyUserManuallyUnlockUIReady();
+      notifyUIReady();
     }, POST_UNLOCK_UI_READY_DELAY_MS);
   });
 }

@@ -121,6 +121,7 @@ export async function verifyPasswordOrUnlock(password: string) {
     throw new Error(result.formFieldError || ERRORS.INCORRECT_PASSWORD);
   }
   updateUnlockTime();
+  notifyUserManuallyUnlockUIReady();
 }
 
 export async function setupWalletPassword(newPassword: string) {
@@ -467,10 +468,17 @@ function makeLockApiWithUpdateUnlockTime<T extends (...args: any[]) => any>(
   } as T;
 }
 
-export const tryAutoUnlockRabbyMobileWithUpdateUnlockTime =
-  makeLockApiWithUpdateUnlockTime(tryAutoUnlockRabbyMobile, () =>
-    keyringService.isUnlocked(),
-  );
+export const tryAutoUnlockRabbyMobileWithUpdateUnlockTime = async () => {
+  const wasUnlocked = keyringService.isUnlocked();
+  const result = await tryAutoUnlockRabbyMobile();
+  if (keyringService.isUnlocked()) {
+    updateUnlockTime();
+    if (!wasUnlocked) {
+      notifyUserManuallyUnlockUIReady();
+    }
+  }
+  return result;
+};
 export const unlockWalletWithUpdateUnlockTime = makeLockApiWithUpdateUnlockTime(
   unlockWallet,
   result => !result.error,
@@ -496,14 +504,20 @@ const pendingUserManuallyUnlockUIReadyRef = {
   current: null as UserManuallyUnlockContext | null,
 };
 
-export function notifyUserManuallyUnlockUIReady() {
+export function notifyUserManuallyUnlockUIReady(
+  expectedCtx?: UserManuallyUnlockContext,
+) {
   const ctx = pendingUserManuallyUnlockUIReadyRef.current;
-  if (!ctx) {
+  if (!ctx || (expectedCtx && ctx !== expectedCtx)) {
     return;
   }
 
   pendingUserManuallyUnlockUIReadyRef.current = null;
-  Promise.resolve()
+  if (!keyringService.isUnlocked()) {
+    return;
+  }
+
+  void Promise.resolve()
     .then(() =>
       (
         keyringService as KeyringServiceWithUnlockOptions
@@ -515,6 +529,15 @@ export function notifyUserManuallyUnlockUIReady() {
       });
     });
   perfEvents.emit('USER_MANUALLY_UNLOCK_UI_READY', ctx);
+}
+
+export function deferNotifyUserManuallyUnlockUIReady() {
+  const ctx = pendingUserManuallyUnlockUIReadyRef.current;
+  if (!ctx) {
+    return null;
+  }
+  // Capture this unlock so delayed callbacks cannot consume a later unlock.
+  return () => notifyUserManuallyUnlockUIReady(ctx);
 }
 
 runIIFEFunc(() => {
@@ -533,5 +556,8 @@ runIIFEFunc(() => {
         isFirstTimeAfterLaunch,
       });
     }
+  });
+  keyringService.on('lock', () => {
+    pendingUserManuallyUnlockUIReadyRef.current = null;
   });
 });
