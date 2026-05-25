@@ -155,6 +155,11 @@ describe('core/apis/keychainV9_0_0', () => {
         warn: jest.fn(),
       },
     }));
+    jest.doMock('@/components2024/Toast', () => ({
+      toast: {
+        show: jest.fn(),
+      },
+    }));
 
     let module!: typeof import('./keychainV9_0_0');
     jest.isolateModules(() => {

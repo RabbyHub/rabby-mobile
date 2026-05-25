@@ -153,6 +153,11 @@ describe('core/apis/keychainV8_2_0', () => {
         warn: jest.fn(),
       },
     }));
+    jest.doMock('@/components2024/Toast', () => ({
+      toast: {
+        show: jest.fn(),
+      },
+    }));
 
     let module!: typeof import('./keychainV8_2_0');
     jest.isolateModules(() => {
@@ -566,6 +571,11 @@ describe('core/apis/keychainV8_2_0', () => {
       __esModule: true,
       default: {
         t: (key: string) => key,
+      },
+    }));
+    jest.doMock('@/components2024/Toast', () => ({
+      toast: {
+        show: jest.fn(),
       },
     }));
 
