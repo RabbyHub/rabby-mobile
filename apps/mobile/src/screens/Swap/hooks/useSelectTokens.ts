@@ -10,10 +10,9 @@ import { Account } from '@/core/services/preference';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import useTokenList, {
-  buildTokenSelectIndexRowsFromIds,
   buildTokenEntityId,
   ITokenItem,
-  selectTokenIdsForTokenSelector,
+  selectTokenSelectIndexResult,
   TokenSelectIndexRow,
   tokenEntityResourceStore,
   TokenEntityId,
@@ -143,9 +142,9 @@ export const useSelectTokens = ({
       );
   }, [tokenSelectAddresses]);
 
-  const tokenIds = useTokenIndexStore(
+  const tokenSelectIndexResult = useTokenIndexStore(
     useShallow(state =>
-      selectTokenIdsForTokenSelector(
+      selectTokenSelectIndexResult(
         state,
         tokenSelectAddresses,
         chain_server_id,
@@ -154,11 +153,8 @@ export const useSelectTokens = ({
       ),
     ),
   );
-
-  const tokenRows = useMemo(
-    () => buildTokenSelectIndexRowsFromIds(tokenIds),
-    [tokenIds],
-  );
+  const tokenIds = tokenSelectIndexResult.tokenIds;
+  const tokenRows = tokenSelectIndexResult.rows;
 
   const shouldSubscribeTokenObjects = !!keyword || returnTokenObjects;
   const tokenObjects = tokenEntityResourceStore.useStore(

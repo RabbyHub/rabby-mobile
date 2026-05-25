@@ -145,6 +145,9 @@ const normalizeAddressSet = (addresses: string[]) =>
 const getAddressesKey = (addresses: string[]) =>
   normalizeAddresses(addresses).slice().sort().join('|');
 
+const getOrderedAddressesKey = (addresses: string[]) =>
+  normalizeAddresses(addresses).join('|');
+
 export const getMultiAssetsCacheKey = (
   addresses: string[],
   chainServerId?: string,
@@ -185,6 +188,11 @@ export type TokenAssetsIndexRow =
 export type TokenSelectIndexRow = {
   type: 'token';
   tokenId: TokenEntityId;
+};
+
+export type TokenSelectIndexResult = {
+  tokenIds: TokenEntityId[];
+  rows: TokenSelectIndexRow[];
 };
 
 export type TokenStaticIndexItem = {
@@ -236,6 +244,11 @@ export const EMPTY_TOKEN_ASSETS_INDEX_RESULT: TokenAssetsIndexResult = {
   scamTokenPreviewLogoUrls: EMPTY_STRING_LIST,
   foldCoreUsdValue: 0,
   hasFoldTokens: false,
+};
+
+const EMPTY_TOKEN_SELECT_INDEX_RESULT: TokenSelectIndexResult = {
+  tokenIds: EMPTY_TOKEN_ENTITY_IDS,
+  rows: EMPTY_TOKEN_SELECT_INDEX_ROWS,
 };
 
 const createEmptyAssetsIndexResult = (): TokenAssetsIndexResult =>
@@ -566,6 +579,30 @@ const buildStableTokenEntityIds = (
   return nextIds || previousIds!;
 };
 
+const buildStableTokenEntityIdList = (
+  tokenIds: TokenEntityId[],
+  previousIds?: TokenEntityId[],
+) => {
+  if (!tokenIds.length) {
+    return previousIds?.length ? EMPTY_TOKEN_ENTITY_IDS : previousIds || [];
+  }
+
+  const canReusePrevious = previousIds?.length === tokenIds.length;
+  let nextIds: TokenEntityId[] | undefined = canReusePrevious ? undefined : [];
+
+  tokenIds.forEach((tokenId, index) => {
+    if (canReusePrevious && !nextIds) {
+      if (previousIds![index] === tokenId) {
+        return;
+      }
+      nextIds = previousIds!.slice(0, index);
+    }
+    nextIds!.push(tokenId);
+  });
+
+  return nextIds || previousIds!;
+};
+
 const buildStableStringList = (list: string[], previousList?: string[]) => {
   if (!list.length) {
     return previousList?.length ? EMPTY_STRING_LIST : previousList || [];
@@ -629,6 +666,7 @@ const isTokenStaticIndexItemSame = (
 
 type TokenIndexState = {
   addressTokenIds: Record<string, TokenEntityId[]>;
+  addressVersions: Record<string, number>;
   tokenStaticMap: Record<string, TokenStaticIndexItem>;
   syncAddressTokens(address: string, tokens: ITokenItem[]): void;
   syncFromTokenListMap(
@@ -640,6 +678,7 @@ type TokenIndexState = {
 export const useTokenIndexStore = zCreate(
   zMutative<TokenIndexState>((set, get) => ({
     addressTokenIds: {},
+    addressVersions: {},
     tokenStaticMap: {},
     syncAddressTokens(address, tokens) {
       const normalizedAddress = normalizeAddress(address);
@@ -653,8 +692,10 @@ export const useTokenIndexStore = zCreate(
       );
 
       set(draft => {
+        let didChange = false;
         if (draft.addressTokenIds[normalizedAddress] !== nextTokenIds) {
           draft.addressTokenIds[normalizedAddress] = nextTokenIds;
+          didChange = true;
         }
 
         nextStaticItems.forEach(item => {
@@ -665,6 +706,7 @@ export const useTokenIndexStore = zCreate(
             )
           ) {
             draft.tokenStaticMap[item.tokenId] = item;
+            didChange = true;
           }
         });
 
@@ -674,8 +716,14 @@ export const useTokenIndexStore = zCreate(
             !nextStaticTokenIds.has(tokenId as TokenEntityId)
           ) {
             delete draft.tokenStaticMap[tokenId];
+            didChange = true;
           }
         });
+
+        if (didChange) {
+          draft.addressVersions[normalizedAddress] =
+            (draft.addressVersions[normalizedAddress] || 0) + 1;
+        }
       });
     },
     syncFromTokenListMap(tokenListMap, addresses) {
@@ -805,6 +853,166 @@ export const buildTokenSelectIndexRowsFromIds = (
     type: 'token',
     tokenId,
   }));
+};
+
+const buildStableTokenSelectIndexRowsFromIds = (
+  tokenIds: TokenEntityId[],
+  previousRows?: TokenSelectIndexRow[],
+): TokenSelectIndexRow[] => {
+  if (!tokenIds.length) {
+    return previousRows?.length
+      ? EMPTY_TOKEN_SELECT_INDEX_ROWS
+      : previousRows || EMPTY_TOKEN_SELECT_INDEX_ROWS;
+  }
+
+  const canReusePrevious = previousRows?.length === tokenIds.length;
+  let nextRows: TokenSelectIndexRow[] | undefined = canReusePrevious
+    ? undefined
+    : [];
+
+  tokenIds.forEach((tokenId, index) => {
+    if (canReusePrevious && !nextRows) {
+      if (previousRows![index]?.tokenId === tokenId) {
+        return;
+      }
+      nextRows = previousRows!.slice(0, index);
+    }
+    nextRows!.push({
+      type: 'token',
+      tokenId,
+    });
+  });
+
+  return nextRows || previousRows!;
+};
+
+const buildTokenSelectIndexResultFromIds = (
+  tokenIds: TokenEntityId[],
+  previousResult?: TokenSelectIndexResult,
+): TokenSelectIndexResult => {
+  if (!tokenIds.length) {
+    return previousResult?.tokenIds.length
+      ? EMPTY_TOKEN_SELECT_INDEX_RESULT
+      : previousResult || EMPTY_TOKEN_SELECT_INDEX_RESULT;
+  }
+
+  const stableTokenIds = buildStableTokenEntityIdList(
+    tokenIds,
+    previousResult?.tokenIds,
+  );
+  const rows = buildStableTokenSelectIndexRowsFromIds(
+    stableTokenIds,
+    previousResult?.rows,
+  );
+
+  if (
+    previousResult &&
+    previousResult.tokenIds === stableTokenIds &&
+    previousResult.rows === rows
+  ) {
+    return previousResult;
+  }
+
+  return {
+    tokenIds: stableTokenIds,
+    rows,
+  };
+};
+
+const getTokenSelectIndexCacheKey = ({
+  addresses,
+  chainServerId,
+  keyword,
+  isLpTokenEnabled,
+}: {
+  addresses: string[];
+  chainServerId?: string;
+  keyword?: string;
+  isLpTokenEnabled?: boolean;
+}) =>
+  `${getOrderedAddressesKey(addresses)}::${chainServerId ?? ''}::${
+    keyword?.toLowerCase() ?? ''
+  }::${isLpTokenEnabled ? '1' : '0'}`;
+
+const getTokenSelectIndexAddressVersionKey = (
+  state: Pick<TokenIndexState, 'addressVersions'>,
+  addresses: string[],
+) =>
+  normalizeAddresses(addresses)
+    .map(address => `${address}:${state.addressVersions[address] || 0}`)
+    .join('|');
+
+const tokenSelectIndexResultCache: Record<
+  string,
+  {
+    addressVersionKey: string;
+    result: TokenSelectIndexResult;
+  }
+> = {};
+const TOKEN_SELECT_INDEX_RESULT_CACHE_LIMIT = 80;
+
+const setTokenSelectIndexResultCache = (
+  cacheKey: string,
+  value: {
+    addressVersionKey: string;
+    result: TokenSelectIndexResult;
+  },
+) => {
+  tokenSelectIndexResultCache[cacheKey] = value;
+
+  const cacheKeys = Object.keys(tokenSelectIndexResultCache);
+  if (cacheKeys.length <= TOKEN_SELECT_INDEX_RESULT_CACHE_LIMIT) {
+    return;
+  }
+
+  delete tokenSelectIndexResultCache[cacheKeys[0]!];
+};
+
+export const selectTokenSelectIndexResult = (
+  state: Pick<
+    TokenIndexState,
+    'addressTokenIds' | 'addressVersions' | 'tokenStaticMap'
+  >,
+  addresses: string[],
+  chainServerId?: string,
+  keyword?: string,
+  isLpTokenEnabled?: boolean,
+): TokenSelectIndexResult => {
+  if (!addresses.length) {
+    return EMPTY_TOKEN_SELECT_INDEX_RESULT;
+  }
+
+  const cacheKey = getTokenSelectIndexCacheKey({
+    addresses,
+    chainServerId,
+    keyword,
+    isLpTokenEnabled,
+  });
+  const addressVersionKey = getTokenSelectIndexAddressVersionKey(
+    state,
+    addresses,
+  );
+  const cached = tokenSelectIndexResultCache[cacheKey];
+
+  if (cached?.addressVersionKey === addressVersionKey) {
+    return cached.result;
+  }
+
+  const tokenIds = selectTokenIdsForTokenSelector(
+    state,
+    addresses,
+    chainServerId,
+    keyword,
+    isLpTokenEnabled,
+  );
+  const result = buildTokenSelectIndexResultFromIds(tokenIds, cached?.result);
+
+  setTokenSelectIndexResultCache(cacheKey, {
+    addressVersionKey,
+    result,
+  });
+
+  return result;
 };
 
 const isTokenAssetsIndexRowSame = (
