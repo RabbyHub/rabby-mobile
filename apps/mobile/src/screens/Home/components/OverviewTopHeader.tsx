@@ -62,6 +62,7 @@ import { useReportTokenTabView } from '../hooks/useReportTokenTabView';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
 import { useShallow } from 'zustand/react/shallow';
+import { MultiHeaderRightHistory } from '../MultiHeaderRightHistory';
 
 const HeaderHeight = 30;
 const handleSwitchToTokenTab = (index: number) => {
@@ -120,6 +121,11 @@ export function TabsTopHeader(): JSX.Element {
   const showRightArea = useMemo(() => {
     return focusedTab !== HomeTabName.token;
   }, [focusedTab]);
+
+  const InOverViewTab = useMemo(() => {
+    return focusedTab === HomeTabName.overview;
+  }, [focusedTab]);
+
   const tokenDisplayModeLabel = useMemo(() => {
     if (tokenDisplayMode === 'bySymbol') {
       return 'By Symbol';
@@ -288,16 +294,22 @@ export function TabsTopHeader(): JSX.Element {
                 {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
               </View>
             </Pressable>
+            {!InOverViewTab && (
+              <MultiHeaderRightHistory style={styles.pendingHistoryBox} />
+            )}
           </>
         ) : (
-          <TouchableOpacity onPress={handleToggleTokenDisplayMode}>
-            <View style={styles.displayModeButton}>
-              <Text style={styles.displayModeText}>
-                {tokenDisplayModeLabel}
-              </Text>
-              <IconPerpEdit color={colors2024['neutral-body']} />
-            </View>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity onPress={handleToggleTokenDisplayMode}>
+              <View style={styles.displayModeButton}>
+                <Text style={styles.displayModeText}>
+                  {tokenDisplayModeLabel}
+                </Text>
+                <IconPerpEdit color={colors2024['neutral-body']} />
+              </View>
+            </TouchableOpacity>
+            <MultiHeaderRightHistory style={styles.pendingHistoryBox} />
+          </>
         )}
       </Pressable>
     </Animated.View>
@@ -415,5 +427,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'absolute',
     top: 0,
     right: -3,
+  },
+  pendingHistoryBox: {
+    marginLeft: 12,
   },
 }));
