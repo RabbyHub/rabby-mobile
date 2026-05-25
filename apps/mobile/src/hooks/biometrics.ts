@@ -147,10 +147,10 @@ const toggleBiometrics = async <T extends boolean>(
         validatedPassword,
         authenticationType ?? KEYCHAIN_AUTH_TYPES.BIOMETRICS,
       );
-      Alert.alert('set password completed');
       const requestResult = await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.VERIFY,
       });
+      Alert.alert('verify password completed', JSON.stringify(requestResult));
       if (!requestResult) {
         await reset();
       } else if (requestResult && requestResult.actionSuccess) {
@@ -159,6 +159,7 @@ const toggleBiometrics = async <T extends boolean>(
       }
     }
   } catch (error: any) {
+    Alert.alert('verify password error', JSON.stringify(error));
     if (nextEnabled) {
       await reset();
       return false;
