@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { ListRenderItem, StyleSheet, View, ViewStyle } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
@@ -32,11 +38,13 @@ import {
   useSingleHomeSelectData,
 } from './hooks/singleHome';
 import useTokenList, {
-  buildSingleAssetsIndexFromTokenIds,
+  EMPTY_TOKEN_ASSETS_INDEX_RESULT,
   EMPTY_TOKEN_ENTITY_IDS,
+  getSingleAssetsCacheKey,
   ITokenItem,
   tokenEntityResourceStore,
   TokenEntityId,
+  useTokenAssetsIndexStore,
   useTokenEntity,
   useTokenIndexStore,
 } from '@/store/tokens';
@@ -103,40 +111,22 @@ const TokenResourceRow = React.memo(
 
 const TokenFoldSectionHeader = React.memo(
   ({
-    tokenIds,
     isEnabled,
     onValueChange,
     fold,
+    str,
     style,
     buttonStyle,
     onPressFold,
   }: {
-    tokenIds: TokenEntityId[];
     isEnabled: boolean;
     onValueChange: (value: boolean) => void;
     fold: boolean;
+    str: string;
     style: ViewStyle;
     buttonStyle: ViewStyle;
     onPressFold: () => void;
   }) => {
-    const tokens = tokenEntityResourceStore.useStore(
-      useShallow(state => tokenIds.map(tokenId => state.valueMap[tokenId])),
-    );
-    const foldCoreUsdValue = useMemo(
-      () =>
-        tokens.reduce((total, token) => {
-          if (!token?.is_core) {
-            return total;
-          }
-          return total + (token.usd_value || 0);
-        }, 0),
-      [tokens],
-    );
-    const foldTokenUsdValue = useMemo(
-      () => formatNetworth(foldCoreUsdValue),
-      [foldCoreUsdValue],
-    );
-
     return (
       <TokenRowSectionLpTokenHeader
         isEnabled={isEnabled}
@@ -144,7 +134,7 @@ const TokenFoldSectionHeader = React.memo(
         fold={fold}
         style={style}
         buttonStyle={buttonStyle}
-        str={foldTokenUsdValue}
+        str={str}
         onPressFold={onPressFold}
       />
     );
@@ -204,21 +194,58 @@ export const TokenList = ({
       return state.addressTokenIds[lowerAddress] || EMPTY_TOKEN_ENTITY_IDS;
     }),
   );
+  const tokenVersions = tokenEntityResourceStore.useStore(
+    useShallow(state =>
+      tokenIds.map(tokenId => state.metaMap[tokenId]?.version || 0),
+    ),
+  );
+  const singleAssetsKey = useMemo(() => {
+    if (!lowerAddress) {
+      return null;
+    }
+    return getSingleAssetsCacheKey(
+      lowerAddress,
+      selectedChain,
+      isLpTokenEnabled,
+    );
+  }, [isLpTokenEnabled, lowerAddress, selectedChain]);
+
+  useLayoutEffect(() => {
+    if (!singleAssetsKey) {
+      return;
+    }
+    useTokenAssetsIndexStore.getState().syncSingleAssetsResult({
+      key: singleAssetsKey,
+      tokenIds,
+      chainServerId: selectedChain,
+      isLpTokenEnabled,
+    });
+  }, [
+    isLpTokenEnabled,
+    selectedChain,
+    singleAssetsKey,
+    tokenIds,
+    tokenVersions,
+  ]);
 
   const {
     unFoldTokenIds,
     foldTokenIds,
     scamTokenIds,
     scamTokenPreviewLogoUrls,
+    foldCoreUsdValue,
     hasFoldTokens,
-  } = useMemo(
-    () =>
-      buildSingleAssetsIndexFromTokenIds(
-        tokenIds,
-        selectedChain,
-        isLpTokenEnabled,
-      ),
-    [isLpTokenEnabled, selectedChain, tokenIds],
+  } = useTokenAssetsIndexStore(
+    useShallow(
+      state =>
+        (singleAssetsKey
+          ? state.singleAssetsResultByKey[singleAssetsKey]
+          : undefined) || EMPTY_TOKEN_ASSETS_INDEX_RESULT,
+    ),
+  );
+  const foldTokenUsdValue = useMemo(
+    () => formatNetworth(foldCoreUsdValue),
+    [foldCoreUsdValue],
   );
 
   const isLoading = useTokenList(state => {
@@ -405,10 +432,10 @@ export const TokenList = ({
         case 'toggle_token_fold':
           return (
             <TokenFoldSectionHeader
-              tokenIds={foldTokenIds}
               isEnabled={isLpTokenEnabled}
               onValueChange={setIsLpTokenEnabled}
               fold={foldHideList}
+              str={foldTokenUsdValue}
               style={styles.sectionHeader}
               buttonStyle={StyleSheet.flatten([
                 styles.buttonHeader,
@@ -451,7 +478,7 @@ export const TokenList = ({
     [
       currentAccount,
       foldHideList,
-      foldTokenIds,
+      foldTokenUsdValue,
       handleOpenTokenDetail,
       isLight,
       isLpTokenEnabled,

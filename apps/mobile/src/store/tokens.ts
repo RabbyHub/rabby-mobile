@@ -155,6 +155,15 @@ export const getMultiAssetsCacheKey = (
     isLpTokenEnabled ? '1' : '0'
   }::${tokenDisplayMode ?? 'byAddress'}`;
 
+export const getSingleAssetsCacheKey = (
+  address: string,
+  chainServerId?: string,
+  isLpTokenEnabled?: boolean,
+) =>
+  `${normalizeAddress(address)}::${chainServerId ?? ''}::${
+    isLpTokenEnabled ? '1' : '0'
+  }`;
+
 export type TokenEntityId = string & {
   readonly __tokenEntityId: unique symbol;
 };
@@ -217,17 +226,20 @@ const EMPTY_TOKEN_ASSETS_INDEX_ROWS: TokenAssetsIndexRow[] = [];
 const EMPTY_TOKEN_SELECT_INDEX_ROWS: TokenSelectIndexRow[] = [];
 const EMPTY_STRING_LIST: string[] = [];
 
-const createEmptyAssetsIndexResult = (): TokenAssetsIndexResult => ({
-  unFoldRows: [],
-  foldRows: [],
-  scamRows: [],
-  unFoldTokenIds: [],
-  foldTokenIds: [],
-  scamTokenIds: [],
-  scamTokenPreviewLogoUrls: [],
+export const EMPTY_TOKEN_ASSETS_INDEX_RESULT: TokenAssetsIndexResult = {
+  unFoldRows: EMPTY_TOKEN_ASSETS_INDEX_ROWS,
+  foldRows: EMPTY_TOKEN_ASSETS_INDEX_ROWS,
+  scamRows: EMPTY_TOKEN_ASSETS_INDEX_ROWS,
+  unFoldTokenIds: EMPTY_TOKEN_ENTITY_IDS,
+  foldTokenIds: EMPTY_TOKEN_ENTITY_IDS,
+  scamTokenIds: EMPTY_TOKEN_ENTITY_IDS,
+  scamTokenPreviewLogoUrls: EMPTY_STRING_LIST,
   foldCoreUsdValue: 0,
   hasFoldTokens: false,
-});
+};
+
+const createEmptyAssetsIndexResult = (): TokenAssetsIndexResult =>
+  EMPTY_TOKEN_ASSETS_INDEX_RESULT;
 
 export const buildTokenEntityId = (
   token: Pick<ITokenItem, 'owner_addr' | 'chain' | 'id'>,
@@ -1163,6 +1175,73 @@ export const buildSingleAssetsIndexFromTokenIds = (
     previousResult,
   );
 };
+
+type TokenAssetsIndexStoreState = {
+  singleAssetsResultByKey: Record<string, TokenAssetsIndexResult>;
+  multiAssetsResultByKey: Record<string, TokenAssetsIndexResult>;
+  syncSingleAssetsResult(input: {
+    key: string;
+    tokenIds: TokenEntityId[];
+    chainServerId?: string;
+    isLpTokenEnabled?: boolean;
+  }): void;
+  syncMultiAssetsResult(input: {
+    key: string;
+    tokenIds: TokenEntityId[];
+    chainServerId?: string;
+    isLpTokenEnabled?: boolean;
+    tokenDisplayMode?: TokenDisplayMode;
+  }): void;
+};
+
+export const useTokenAssetsIndexStore = zCreate(
+  zMutative<TokenAssetsIndexStoreState>((set, get) => ({
+    singleAssetsResultByKey: {},
+    multiAssetsResultByKey: {},
+    syncSingleAssetsResult({ key, tokenIds, chainServerId, isLpTokenEnabled }) {
+      const previousResult = get().singleAssetsResultByKey[key];
+      const nextResult = buildSingleAssetsIndexFromTokenIds(
+        tokenIds,
+        chainServerId,
+        isLpTokenEnabled,
+        previousResult,
+      );
+
+      if (previousResult === nextResult) {
+        return;
+      }
+
+      set(draft => {
+        draft.singleAssetsResultByKey[key] = nextResult;
+      });
+    },
+    syncMultiAssetsResult({
+      key,
+      tokenIds,
+      chainServerId,
+      isLpTokenEnabled,
+      tokenDisplayMode,
+    }) {
+      const previousResult = get().multiAssetsResultByKey[key];
+      const nextResult = buildMultiAssetsIndexFromTokenIds(
+        tokenIds,
+        chainServerId,
+        isLpTokenEnabled,
+        tokenDisplayMode,
+        key,
+        previousResult,
+      );
+
+      if (previousResult === nextResult) {
+        return;
+      }
+
+      set(draft => {
+        draft.multiAssetsResultByKey[key] = nextResult;
+      });
+    },
+  })),
+);
 
 const tokenListStore = zCreate<TokenListState>(set => ({
   tokenListMap: {},

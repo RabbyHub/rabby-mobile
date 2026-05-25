@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { ListRenderItem, View, Dimensions, ViewStyle } from 'react-native';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
@@ -25,17 +31,16 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { HomeTabName as TabName } from '@/hooks/navigation';
 import useTokenList, {
-  buildMultiAssetsIndexFromTokenIds,
+  EMPTY_TOKEN_ASSETS_INDEX_RESULT,
   EMPTY_TOKEN_ENTITY_IDS,
   getMultiAssetsCacheKey,
   getTokenAssetsIndexRowKey,
   ITokenItem,
   TokenAssetsIndexRow,
   TokenEntityId,
-  TokenGroupId,
   TokenGroupResourceValue,
   tokenEntityResourceStore,
-  tokenGroupResourceStore,
+  useTokenAssetsIndexStore,
   useTokenEntity,
   useTokenGroup,
   useTokenIndexStore,
@@ -132,7 +137,6 @@ const TokenResourceRow = React.memo(
 
 const TokenFoldSectionHeader = React.memo(
   ({
-    rows,
     style,
     fold,
     str,
@@ -140,59 +144,18 @@ const TokenFoldSectionHeader = React.memo(
     isEnabled,
     onValueChange,
   }: {
-    rows: TokenAssetsIndexRow[];
     style: ViewStyle;
     fold: boolean;
-    str?: string;
+    str: string;
     onPressFold: () => void;
     isEnabled: boolean;
     onValueChange: (value: boolean) => void;
   }) => {
-    const tokenIds = useMemo(
-      () =>
-        rows
-          .filter(row => row.type === 'token')
-          .map(row => row.tokenId) as TokenEntityId[],
-      [rows],
-    );
-    const groupIds = useMemo(
-      () =>
-        rows
-          .filter(row => row.type === 'group')
-          .map(row => row.groupId) as TokenGroupId[],
-      [rows],
-    );
-    const tokens = tokenEntityResourceStore.useStore(
-      useShallow(state => tokenIds.map(tokenId => state.valueMap[tokenId])),
-    );
-    const groups = tokenGroupResourceStore.useStore(
-      useShallow(state => groupIds.map(groupId => state.valueMap[groupId])),
-    );
-    const foldCoreUsdValue = useMemo(() => {
-      const tokenTotal = tokens.reduce((total, token) => {
-        if (!token?.is_core) {
-          return total;
-        }
-        return total + (token.usd_value || 0);
-      }, 0);
-      const groupTotal = groups.reduce((total, group) => {
-        if (!group?.summary.is_core) {
-          return total;
-        }
-        return total + (group.summary.usd_value || 0);
-      }, 0);
-      return tokenTotal + groupTotal;
-    }, [groups, tokens]);
-    const foldTokenUsdValue = useMemo(
-      () => str || formatNetworth(foldCoreUsdValue),
-      [foldCoreUsdValue, str],
-    );
-
     return (
       <MemoizedTokenRowSectionHeader
         style={style}
         fold={fold}
-        str={foldTokenUsdValue}
+        str={str}
         onPressFold={onPressFold}
         isEnabled={isEnabled}
         onValueChange={onValueChange}
@@ -291,22 +254,45 @@ export const TokenList = () => {
       return ids;
     }),
   );
+  const tokenVersions = tokenEntityResourceStore.useStore(
+    useShallow(state =>
+      tokenIds.map(tokenId => state.metaMap[tokenId]?.version || 0),
+    ),
+  );
+
+  useLayoutEffect(() => {
+    useTokenAssetsIndexStore.getState().syncMultiAssetsResult({
+      key: multiAssetsKey,
+      tokenIds,
+      chainServerId: chain,
+      isLpTokenEnabled,
+      tokenDisplayMode,
+    });
+  }, [
+    chain,
+    isLpTokenEnabled,
+    multiAssetsKey,
+    tokenDisplayMode,
+    tokenIds,
+    tokenVersions,
+  ]);
 
   const {
     unFoldRows: tokenRows,
     foldRows,
     scamRows,
     scamTokenPreviewLogoUrls,
-  } = useMemo(
-    () =>
-      buildMultiAssetsIndexFromTokenIds(
-        tokenIds,
-        chain,
-        isLpTokenEnabled,
-        tokenDisplayMode,
-        multiAssetsKey,
-      ),
-    [chain, isLpTokenEnabled, multiAssetsKey, tokenDisplayMode, tokenIds],
+    foldCoreUsdValue,
+  } = useTokenAssetsIndexStore(
+    useShallow(
+      state =>
+        state.multiAssetsResultByKey[multiAssetsKey] ||
+        EMPTY_TOKEN_ASSETS_INDEX_RESULT,
+    ),
+  );
+  const foldTokenUsdValue = useMemo(
+    () => formatNetworth(foldCoreUsdValue),
+    [foldCoreUsdValue],
   );
 
   const isLoading = useTokenList(s => s.isLoading);
@@ -543,9 +529,9 @@ export const TokenList = () => {
         case 'toggle_token_fold':
           return (
             <TokenFoldSectionHeader
-              rows={foldRows}
               style={styles.tokenSectionHeader}
               fold={foldHideList}
+              str={foldTokenUsdValue}
               onPressFold={handleToggleTokenFold}
               isEnabled={isLpTokenEnabled}
               onValueChange={setIsLpTokenEnabled}
@@ -578,8 +564,8 @@ export const TokenList = () => {
     },
     [
       tokenDisplayMode,
-      foldRows,
       foldHideList,
+      foldTokenUsdValue,
       getAccountByAddress,
       handleGroupPress,
       handleOpenScamToken,
