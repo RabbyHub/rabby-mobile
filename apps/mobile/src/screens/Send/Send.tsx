@@ -362,6 +362,7 @@ function SendScreen({
     sendTokenEvents,
     formik,
     formValues,
+    submitForm,
     handleFieldChange,
     handleClickMaxButton,
     onChangeSlider,
@@ -657,6 +658,7 @@ function SendScreen({
       formValuesRef,
       callbacks: {
         handleCurrentTokenChange,
+        submitForm,
         handleFieldChange,
         checkCexSupport,
         handleClickMaxButton,
@@ -685,6 +687,7 @@ function SendScreen({
       formik,
       handleClickMaxButton,
       handleCurrentTokenChange,
+      submitForm,
       handleFieldChange,
       handleGasLevelChanged,
       handleIgnoreGasFeeChange,

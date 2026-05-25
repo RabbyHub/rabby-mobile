@@ -114,6 +114,7 @@ export default function SendNFT() {
     sendNFTEvents,
     formik,
     formValues,
+    submitForm,
     handleFieldChange,
     handleGasLevelChanged,
     scrollviewRef,
@@ -212,6 +213,7 @@ export default function SendNFT() {
 
       callbacks: {
         handleFieldChange,
+        submitForm,
         handleGasLevelChanged,
         handleIgnoreGasFeeChange,
         onBottomAreaLayout,
@@ -229,6 +231,7 @@ export default function SendNFT() {
       formValues,
       formik,
       handleFieldChange,
+      submitForm,
       handleGasLevelChanged,
       handleIgnoreGasFeeChange,
       nftItem,

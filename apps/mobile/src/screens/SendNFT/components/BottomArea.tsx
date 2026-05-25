@@ -1,10 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { Button } from '@/components2024/Button';
-import {
-  useSendNFTFormik,
-  useSendNFTInternalShallowSelector,
-} from '../hooks/useSendNFT';
+import { useSendNFTInternalShallowSelector } from '../hooks/useSendNFT';
 import { useTranslation } from 'react-i18next';
 
 import { ModalConfirmAllowTransfer } from '@/components/Address/SheetModalConfirmAllowTransfer';
@@ -28,8 +25,6 @@ function BottomArea() {
 
   const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const { handleSubmit } = useSendNFTFormik();
-
   const {
     addressToAddAsContacts,
     agreeRequiredForToAddress,
@@ -45,6 +40,7 @@ function BottomArea() {
     onBottomAreaLayout,
     onGasInfoDebouncedLoaded,
     putScreenState,
+    submitForm,
     to,
     toAddrCex,
     toAddressInContactBook,
@@ -64,6 +60,7 @@ function BottomArea() {
     onBottomAreaLayout: ctx.callbacks.onBottomAreaLayout,
     onGasInfoDebouncedLoaded: ctx.callbacks.onGasInfoDebouncedLoaded,
     putScreenState: ctx.fns.putScreenState,
+    submitForm: ctx.callbacks.submitForm,
     to: ctx.formValues.to,
     toAddrCex: ctx.computed.toAddrCex,
     toAddressInContactBook: ctx.computed.toAddressInContactBook,
@@ -203,7 +200,7 @@ function BottomArea() {
           title={t('global.confirm')}
           onFinished={p => {
             handleIgnoreGasFeeChange(p?.ignoreGasFee || false);
-            handleSubmit();
+            submitForm();
           }}
           disabled={
             disableSubmitDueToBasic || !canDirectSign || isDirectSigning
@@ -221,7 +218,7 @@ function BottomArea() {
           type="primary"
           title={'Send'}
           loading={isSubmitLoading}
-          onPress={() => handleSubmit()}
+          onPress={submitForm}
         />
       )}
 

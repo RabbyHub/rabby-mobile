@@ -5,7 +5,6 @@ import {
   apiSendToken,
   SendTokenEvents,
   subscribeEvent,
-  useSendTokenFormik,
   useSendTokenInternalShallowSelector,
   useSendTokenScreenChainToken,
 } from '../hooks/useSendToken';
@@ -41,8 +40,6 @@ function BottomArea() {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
-  const { handleSubmit } = useSendTokenFormik();
-
   const {
     addressToAddAsContacts,
     agreeRequiredForToAddress,
@@ -62,6 +59,7 @@ function BottomArea() {
     onBottomAreaLayout,
     onGasInfoDebouncedLoaded,
     sendTokenEvents,
+    submitForm,
     to,
     toAddrCex,
     toAddressInContactBook,
@@ -85,6 +83,7 @@ function BottomArea() {
     onBottomAreaLayout: ctx.callbacks.onBottomAreaLayout,
     onGasInfoDebouncedLoaded: ctx.callbacks.onGasInfoDebouncedLoaded,
     sendTokenEvents: ctx.sendTokenEvents,
+    submitForm: ctx.callbacks.submitForm,
     to: ctx.formValues.to,
     toAddrCex: ctx.computed.toAddrCex,
     toAddressInContactBook: ctx.computed.toAddressInContactBook,
@@ -262,7 +261,7 @@ function BottomArea() {
           title={t('global.confirm')}
           onFinished={p => {
             handleIgnoreGasFeeChange(p?.ignoreGasFee || false);
-            handleSubmit();
+            submitForm();
           }}
           onBeforeAuth={() => {
             // Disable input during authentication to prevent autofill
@@ -294,7 +293,7 @@ function BottomArea() {
           type="primary"
           title={'Send'}
           loading={isSubmitLoading}
-          onPress={() => handleSubmit()}
+          onPress={submitForm}
           {...makeTestIDProps(E2E_ID.send.confirmButton)}
         />
       )}

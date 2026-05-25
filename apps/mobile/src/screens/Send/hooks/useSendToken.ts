@@ -789,6 +789,9 @@ export function useSendTokenForm({
       handleSubmit(values);
     },
   });
+  const submitForm = useMemoizedFn(() => {
+    formik.handleSubmit();
+  });
 
   const patchFormValues = useCallback(
     (changedValues: Partial<FormSendToken>) => {
@@ -2217,6 +2220,7 @@ export function useSendTokenForm({
 
     sendTokenEvents: sendTokenEventsRef.current,
     formik,
+    submitForm,
     formValues,
     resetFormValues,
     handleFieldChange,
@@ -2284,6 +2288,7 @@ type InternalContext = {
   callbacks: {
     handleCurrentTokenChange: (token: TokenItem) => void;
     checkCexSupport: (token: TokenItem) => void;
+    submitForm: () => void;
     handleFieldChange: <T extends keyof FormSendToken>(
       f: T,
       value: FormSendToken[T],
@@ -2344,6 +2349,7 @@ const DEFAULT_SEND_TOKEN_INTERNAL_CONTEXT: InternalContext = {
   callbacks: {
     handleCurrentTokenChange: () => {},
     checkCexSupport: () => {},
+    submitForm: () => {},
     handleFieldChange: () => {},
     handleGasLevelChanged: () => {},
     handleClickMaxButton: () => {},

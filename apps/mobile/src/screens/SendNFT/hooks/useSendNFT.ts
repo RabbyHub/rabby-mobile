@@ -310,6 +310,9 @@ export function useSendNFTForm({
       handleSubmit(formattedValues);
     },
   });
+  const submitForm = useMemoizedFn(() => {
+    formik.handleSubmit();
+  });
 
   const patchFormValues = useCallback(
     (changedValues: Partial<FormSendNFT>) => {
@@ -804,6 +807,7 @@ export function useSendNFTForm({
 
     sendNFTEvents: sendNFTEventsRef.current,
     formik,
+    submitForm,
     formValues,
     resetFormValues,
     handleFieldChange,
@@ -875,6 +879,7 @@ type InternalContext = {
     fetchContactAccounts: () => void;
   };
   callbacks: {
+    submitForm: () => void;
     handleFieldChange: <T extends keyof FormSendNFT>(
       f: T,
       value: FormSendNFT[T],
@@ -913,6 +918,7 @@ const DEFAULT_SEND_NFT_INTERNAL_CONTEXT: InternalContext = {
     fetchContactAccounts: () => {},
   },
   callbacks: {
+    submitForm: () => {},
     handleFieldChange: () => {},
     handleGasLevelChanged: () => {},
     handleIgnoreGasFeeChange: () => {},
