@@ -254,12 +254,6 @@ export const TokenList = () => {
       return ids;
     }),
   );
-  const tokenVersions = tokenEntityResourceStore.useStore(
-    useShallow(state =>
-      tokenIds.map(tokenId => state.metaMap[tokenId]?.version || 0),
-    ),
-  );
-
   useLayoutEffect(() => {
     useTokenAssetsIndexStore.getState().syncMultiAssetsResult({
       key: multiAssetsKey,
@@ -268,14 +262,7 @@ export const TokenList = () => {
       isLpTokenEnabled,
       tokenDisplayMode,
     });
-  }, [
-    chain,
-    isLpTokenEnabled,
-    multiAssetsKey,
-    tokenDisplayMode,
-    tokenIds,
-    tokenVersions,
-  ]);
+  }, [chain, isLpTokenEnabled, multiAssetsKey, tokenDisplayMode, tokenIds]);
 
   const {
     unFoldRows: tokenRows,

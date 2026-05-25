@@ -42,7 +42,6 @@ import useTokenList, {
   EMPTY_TOKEN_ENTITY_IDS,
   getSingleAssetsCacheKey,
   ITokenItem,
-  tokenEntityResourceStore,
   TokenEntityId,
   useTokenAssetsIndexStore,
   useTokenEntity,
@@ -194,11 +193,6 @@ export const TokenList = ({
       return state.addressTokenIds[lowerAddress] || EMPTY_TOKEN_ENTITY_IDS;
     }),
   );
-  const tokenVersions = tokenEntityResourceStore.useStore(
-    useShallow(state =>
-      tokenIds.map(tokenId => state.metaMap[tokenId]?.version || 0),
-    ),
-  );
   const singleAssetsKey = useMemo(() => {
     if (!lowerAddress) {
       return null;
@@ -220,13 +214,7 @@ export const TokenList = ({
       chainServerId: selectedChain,
       isLpTokenEnabled,
     });
-  }, [
-    isLpTokenEnabled,
-    selectedChain,
-    singleAssetsKey,
-    tokenIds,
-    tokenVersions,
-  ]);
+  }, [isLpTokenEnabled, selectedChain, singleAssetsKey, tokenIds]);
 
   const {
     unFoldTokenIds,
