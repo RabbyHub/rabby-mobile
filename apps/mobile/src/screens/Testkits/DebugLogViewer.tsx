@@ -19,6 +19,7 @@ import {
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { Text } from '@/components/Typography';
 import { useNavigation } from '@react-navigation/native';
+import { StackActions } from '@react-navigation/native';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { toast } from '@/components2024/Toast';
@@ -1274,9 +1275,11 @@ export default function DebugLogViewerScreen(): JSX.Element {
             type="ghost"
             height={48}
             onPress={() => {
-              navigation.navigate(RootNames.StackTestkits, {
-                screen: RootNames.InMemoryLogViewer,
-              });
+              navigation.dispatch(
+                StackActions.push(RootNames.StackTestkits, {
+                  screen: RootNames.InMemoryLogViewer,
+                }),
+              );
             }}
             containerStyle={styles.singleActionButton}
           />

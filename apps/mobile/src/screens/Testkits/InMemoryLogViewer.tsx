@@ -19,7 +19,8 @@ function LogEntry({
 }: {
   entry: DebugLogEntry;
   colors: Record<string, string>;
-  styles: ReturnType<typeof getStyles>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  styles: any;
 }) {
   const [expanded, setExpanded] = useState(false);
 
