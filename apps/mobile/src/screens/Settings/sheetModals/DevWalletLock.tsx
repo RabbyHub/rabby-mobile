@@ -50,6 +50,20 @@ export function useWalletLockTestItemModalVisible() {
 
 const RcIconCheckmark = makeThemeIconFromCC(RcIconCheckmarkCC, 'neutral-body');
 
+// Start with a resolved promise
+let alertChain = Promise.resolve();
+
+export const alertQueue = (title, message) => {
+  // Attach the next alert to the chain
+  alertChain = alertChain.then(() => {
+    return new Promise(resolve => {
+      Alert.alert(title, message, [{ text: 'OK', onPress: () => resolve() }], {
+        cancelable: false,
+      });
+    });
+  });
+};
+
 export default function WalletLockTestItemModal({
   onCancel,
 }: RNViewProps & {
@@ -213,6 +227,27 @@ export default function WalletLockTestItemModal({
         },
       },
       {
+        label: 'Verify Stored Password',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: async () => {
+          try {
+            const result = await requestGenericPassword({
+              purpose: RequestGenericPurpose.VERIFY,
+              onPlainPassword: (password: string) => {
+                alertQueue('Retrieved Password', password);
+              },
+            });
+            if (!result || !result.actionSuccess) {
+              alertQueue('Error', 'Failed to retrieve password from keychain');
+            } else {
+              alertQueue('Result', JSON.stringify(result));
+            }
+          } catch (e: any) {
+            alertQueue('Error', e?.message || String(e));
+          }
+        },
+      },
+      {
         label: 'Get Stored Password',
         icon: <RcCode style={styles.labelIcon} />,
         onPress: async () => {
@@ -220,14 +255,16 @@ export default function WalletLockTestItemModal({
             const result = await requestGenericPassword({
               purpose: RequestGenericPurpose.DECRYPT_PWD,
               onPlainPassword: (password: string) => {
-                Alert.alert('Retrieved Password', password);
+                alertQueue('Retrieved Password', password);
               },
             });
             if (!result || !result.actionSuccess) {
-              Alert.alert('Error', 'Failed to retrieve password from keychain');
+              alertQueue('Error', 'Failed to retrieve password from keychain');
+            } else {
+              alertQueue('Result', JSON.stringify(result));
             }
           } catch (e: any) {
-            Alert.alert('Error', e?.message || String(e));
+            alertQueue('Error', e?.message || String(e));
           }
         },
       },

@@ -14,7 +14,7 @@ import {
   ValidationBehaviorProps,
   parseValidationBehavior,
 } from '@/core/apis/lock';
-import { Vibration } from 'react-native';
+import { Alert, Vibration } from 'react-native';
 import { IExtractFromPromise } from '@/utils/type';
 import { IS_IOS } from '@/core/native/utils';
 import { preferenceService } from '@/core/services';
@@ -147,6 +147,7 @@ const toggleBiometrics = async <T extends boolean>(
         validatedPassword,
         authenticationType ?? KEYCHAIN_AUTH_TYPES.BIOMETRICS,
       );
+      Alert.alert('set password completed');
       const requestResult = await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.VERIFY,
       });
