@@ -280,7 +280,7 @@ const onStateChange: React.ComponentProps<
 
 const routeNameRef: RefLikeObject<string | undefined | null> = { current: '' };
 
-type DeferredGlobalsSlot = 'navigation-pre' | 'navigation-post' | 'overlay';
+type DeferredGlobalsSlot = 'navigation-pre' | 'navigation-post';
 const DEFERRED_GLOBALS_AFTER_UNLOCK_DELAY_MS = 800;
 
 function useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked: boolean) {
@@ -351,10 +351,6 @@ function AppNavigationDeferredGlobals({
   enabled: boolean;
 }) {
   if (!enabled) {
-    if (slot === 'overlay' && NEED_DEVSETTINGBLOCKS) {
-      return <FloatingDiagnosticsPanel />;
-    }
-
     return null;
   }
 
@@ -377,18 +373,40 @@ function AppNavigationDeferredGlobals({
     );
   }
 
+  return null;
+}
+
+function AppNavigationOverlayGlobals({
+  deferredGlobalsEnabled,
+  miniSignPortalsEnabled,
+}: {
+  deferredGlobalsEnabled: boolean;
+  miniSignPortalsEnabled: boolean;
+}) {
+  const showDiagnostics = deferredGlobalsEnabled || NEED_DEVSETTINGBLOCKS;
+
+  if (!showDiagnostics && !miniSignPortalsEnabled) {
+    return null;
+  }
+
   return (
     <>
-      <ModalsSubmitFeedbackByScreenshotStub />
-      <ToggleCollateralModal />
+      {deferredGlobalsEnabled && <ModalsSubmitFeedbackByScreenshotStub />}
+      {deferredGlobalsEnabled && <ToggleCollateralModal />}
 
       {/** @warning put all business stub components before this modal */}
-      <GlobalSecurityTipStubModal />
-      <FloatingDiagnosticsPanel />
-      <GlobalMiniApproval />
-      <GlobalMiniSignTypedDataPortal />
-      <GlobalTipsPopup />
-      <GlobalSignerPortal />
+      {deferredGlobalsEnabled && <GlobalSecurityTipStubModal />}
+      {showDiagnostics && <FloatingDiagnosticsPanel />}
+      {miniSignPortalsEnabled && (
+        <GlobalMiniApproval key="global-mini-approval" />
+      )}
+      {miniSignPortalsEnabled && (
+        <GlobalMiniSignTypedDataPortal key="global-mini-sign-typed-data" />
+      )}
+      {deferredGlobalsEnabled && <GlobalTipsPopup />}
+      {miniSignPortalsEnabled && (
+        <GlobalSignerPortal key="global-signer-portal" />
+      )}
     </>
   );
 }
@@ -731,9 +749,9 @@ export default function AppNavigation() {
           />
         </NavigationContainer>
       </NavigationIndependentTree>
-      <AppNavigationDeferredGlobals
-        slot="overlay"
-        enabled={shouldRenderDeferredGlobals}
+      <AppNavigationOverlayGlobals
+        deferredGlobalsEnabled={shouldRenderDeferredGlobals}
+        miniSignPortalsEnabled={shouldRenderDappBrowserGlobals}
       />
       <BackgroundSecureBlurView />
     </AutoLockView.ForAppNav>

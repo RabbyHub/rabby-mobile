@@ -73,6 +73,8 @@ export const GlobalMiniApproval = () => {
 
   useUnmount(() => {
     perfEvents.removeListener('EVENT_ROUTE_CHANGE', onEventRouteChange);
+    submittingToastRef.current?.();
+    submittingToastRef.current = null;
   });
 
   if (!currentAccount) {

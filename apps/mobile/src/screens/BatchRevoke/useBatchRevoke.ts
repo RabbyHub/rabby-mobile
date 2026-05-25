@@ -12,7 +12,6 @@ import { useRevokeOne } from './useRevokeOne';
 import { findIndexRevokeList } from './utils';
 import { Account } from '@/core/services/preference';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 export const useBatchRevoke = ({
   account: currentAccount,
@@ -56,9 +55,6 @@ export const useBatchRevoke = ({
       dataSource: AssetApprovalSpender[],
     ) => {
       if (revokeList.length === 0) {
-        return;
-      }
-      if (!(await ensureWalletUnlockedForAction())) {
         return;
       }
 
