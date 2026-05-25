@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -28,7 +29,6 @@ import {
   SendTokenEvents,
   SendTokenInternalContextProvider,
   useSendTokenForm,
-  useSendTokenInternalContext,
   useSendTokenScreenChainToken,
   useSendTokenScreenState,
 } from './hooks/useSendToken';
@@ -501,6 +501,14 @@ function SendScreen({
     chainServerId: chainItem?.serverId || '',
   });
 
+  const toAddressControlStyle = useMemo(
+    () => ({
+      marginTop: 24,
+      marginBottom: 0,
+    }),
+    [],
+  );
+
   return (
     <SignatureInstanceProvider instance={miniSignInstance}>
       <SendTokenInternalContextProvider
@@ -572,10 +580,7 @@ function SendScreen({
                     <FromAddressControl2024 disableSwitch={false} />
                     {/* To */}
                     <ToAddressControl2024
-                      style={{
-                        marginTop: 24,
-                        marginBottom: 0,
-                      }}
+                      style={toAddressControlStyle}
                       addrDesc={screenState.toAddrDesc}
                       // brandName={navParams?.addressBrandName}
                     />

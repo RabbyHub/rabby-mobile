@@ -1,12 +1,19 @@
-import { useSendTokenInternalContext } from '../hooks/useSendToken';
+import React from 'react';
+import { useSendTokenInternalShallowSelector } from '../hooks/useSendToken';
 import { View } from 'react-native';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 
-export const ShowMoreOnSend = ({ chainServeId }: { chainServeId: string }) => {
-  const {
-    computed: { canSubmit, canDirectSign },
-    callbacks: { setReloadTxRefreshPaused },
-  } = useSendTokenInternalContext();
+export const ShowMoreOnSend = React.memo(function ShowMoreOnSend({
+  chainServeId,
+}: {
+  chainServeId: string;
+}) {
+  const { canSubmit, canDirectSign, setReloadTxRefreshPaused } =
+    useSendTokenInternalShallowSelector(ctx => ({
+      canSubmit: ctx.computed.canSubmit,
+      canDirectSign: ctx.computed.canDirectSign,
+      setReloadTxRefreshPaused: ctx.callbacks.setReloadTxRefreshPaused,
+    }));
 
   if (!canSubmit || !canDirectSign) return null;
 
@@ -21,4 +28,4 @@ export const ShowMoreOnSend = ({ chainServeId }: { chainServeId: string }) => {
       />
     </View>
   );
-};
+});

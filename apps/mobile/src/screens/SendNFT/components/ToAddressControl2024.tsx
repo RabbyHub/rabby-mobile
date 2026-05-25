@@ -34,7 +34,7 @@ import { getCexWithLocalCache } from '@/databases/hooks/cex';
 import { useAlias2 } from '@/hooks/alias';
 import { default as RcIconUnknownAddressAvatarCC } from '@/screens/Send/icons/unknown-address-avatar-cc.svg';
 import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
-import { useSendNFTInternalContext } from '../hooks/useSendNFT';
+import { useSendNFTInternalShallowSelector } from '../hooks/useSendNFT';
 import { RcIconTipRightCC } from '@/screens/Send/icons';
 import { makeAccountObject } from '@/utils/account';
 import { Text } from '@/components/Typography';
@@ -408,7 +408,7 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
   },
 }));
 
-export default function ToAddressControl2024({
+function ToAddressControl2024({
   style,
   // brandName,
   addrDesc,
@@ -421,11 +421,12 @@ export default function ToAddressControl2024({
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { isAddrOnWhitelist } = useWhitelist();
   const { findAccountWithoutBalance } = useFindAddressByWhitelist();
-  const {
-    formValues,
-    computed: { toAddressPositiveTips, toAccount },
-    callbacks: { handleFieldChange },
-  } = useSendNFTInternalContext();
+  const { handleFieldChange, toAccount, toAddressPositiveTips } =
+    useSendNFTInternalShallowSelector(ctx => ({
+      handleFieldChange: ctx.callbacks.handleFieldChange,
+      toAccount: ctx.computed.toAccount,
+      toAddressPositiveTips: ctx.computed.toAddressPositiveTips,
+    }));
 
   const { t } = useTranslation();
 
@@ -484,6 +485,8 @@ export default function ToAddressControl2024({
     </View>
   );
 }
+
+export default React.memo(ToAddressControl2024);
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {

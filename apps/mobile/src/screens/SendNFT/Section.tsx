@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Chain } from '@/constant/chains';
 import {
-  useSendNFTInternalContext,
+  useSendNFTInternalShallowSelector,
   useInputBlurOnEvents,
 } from './hooks/useSendNFT';
 import { NFTAmountInput } from './components/AmountInput';
@@ -38,7 +38,7 @@ export function SendNFTSection({
   return <View style={[styles.sectionPanel, style]}>{children}</View>;
 }
 
-export function NFTSection({
+export const NFTSection = React.memo(function NFTSection({
   style,
   nftItem,
   collectionName,
@@ -51,10 +51,12 @@ export function NFTSection({
   const { styles } = useTheme2024({ getStyle: getNFTSectionStyles });
   const { t } = useTranslation();
 
-  const {
-    formValues,
-    callbacks: { handleFieldChange },
-  } = useSendNFTInternalContext();
+  const { amount, handleFieldChange } = useSendNFTInternalShallowSelector(
+    ctx => ({
+      amount: ctx.formValues.amount,
+      handleFieldChange: ctx.callbacks.handleFieldChange,
+    }),
+  );
 
   const amountInputRef = useRef<TextInput>(null);
   useInputBlurOnEvents(amountInputRef);
@@ -128,7 +130,7 @@ export function NFTSection({
             <NFTAmountInput
               nftItem={nftItem}
               style={styles.nftAmountInput}
-              value={formValues.amount}
+              value={amount}
               onChange={val => {
                 handleFieldChange('amount', val + '');
               }}
@@ -138,7 +140,7 @@ export function NFTSection({
       </AddressItemShadowView>
     </View>
   );
-}
+});
 
 const BASIC_INFO_H = 80;
 const getNFTSectionStyles = createGetStyles2024(({ colors2024 }) => {

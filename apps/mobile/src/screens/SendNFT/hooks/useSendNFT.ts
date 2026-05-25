@@ -61,10 +61,14 @@ import {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
+import { useStore } from 'zustand';
+import { useShallow } from 'zustand/shallow';
+import { createStore } from 'zustand/vanilla';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
 import { TextInput } from '@/components/Typography';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
+import { zMutative } from '@/core/utils/reexports';
 
 export const enum SendNFTEvents {
   'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',
@@ -824,9 +828,7 @@ export function useSendNFTFormikContext() {
 }
 
 export function useSendNFTFormik() {
-  const { formik } = useSendNFTInternalContext();
-
-  return formik;
+  return useSendNFTInternalSelector(ctx => ctx.formik);
 }
 
 type FoundAccountResult = Awaited<
@@ -878,7 +880,7 @@ type InternalContext = {
     onGasInfoDebouncedLoaded: () => void;
   };
 };
-const SendNFTInternalContext = React.createContext<InternalContext>({
+const DEFAULT_SEND_NFT_INTERNAL_CONTEXT: InternalContext = {
   screenState: { ...DFLT_SEND_STATE },
   formValues: { ...DF_SEND_TOKEN_FORM },
   computed: {
@@ -907,12 +909,65 @@ const SendNFTInternalContext = React.createContext<InternalContext>({
     onBottomAreaLayout: () => {},
     onGasInfoDebouncedLoaded: () => {},
   },
-});
+};
 
-export const SendNFTInternalContextProvider = SendNFTInternalContext.Provider;
+const createSendNFTInternalStore = (initialState: InternalContext) =>
+  createStore<InternalContext>()(
+    zMutative<InternalContext>(() => initialState),
+  );
+
+type SendNFTInternalStore = ReturnType<typeof createSendNFTInternalStore>;
+
+const defaultSendNFTInternalStore = createSendNFTInternalStore(
+  DEFAULT_SEND_NFT_INTERNAL_CONTEXT,
+);
+
+const SendNFTInternalStoreContext =
+  React.createContext<SendNFTInternalStore | null>(null);
+
+export function SendNFTInternalContextProvider({
+  value,
+  children,
+}: React.PropsWithChildren<{ value: InternalContext }>) {
+  const storeRef = React.useRef<SendNFTInternalStore | null>(null);
+  if (!storeRef.current) {
+    storeRef.current = createSendNFTInternalStore(value);
+  }
+
+  React.useLayoutEffect(() => {
+    storeRef.current?.setState(value, true);
+  }, [value]);
+
+  return React.createElement(
+    SendNFTInternalStoreContext.Provider,
+    { value: storeRef.current },
+    children,
+  );
+}
+
+function useSendNFTInternalStoreApi() {
+  return (
+    React.useContext(SendNFTInternalStoreContext) || defaultSendNFTInternalStore
+  );
+}
 
 export function useSendNFTInternalContext() {
-  return React.useContext(SendNFTInternalContext);
+  return useStore(useSendNFTInternalStoreApi());
+}
+
+export function useSendNFTInternalSelector<T>(
+  selector: (ctx: InternalContext) => T,
+) {
+  const store = useSendNFTInternalStoreApi();
+  return useStore(store, selector);
+}
+
+export function useSendNFTInternalShallowSelector<T>(
+  selector: (ctx: InternalContext) => T,
+) {
+  const store = useSendNFTInternalStoreApi();
+  const shallowSelector = useShallow(selector);
+  return useStore(store, shallowSelector);
 }
 
 export function subscribeEvent<T extends SendNFTEvents>(
@@ -937,7 +992,7 @@ export function subscribeEvent<T extends SendNFTEvents>(
 export function useInputBlurOnEvents(
   inputRef: React.RefObject<TextInput | null>,
 ) {
-  const { events } = useSendNFTInternalContext();
+  const events = useSendNFTInternalSelector(ctx => ctx.events);
   useEffect(() => {
     const disposeRets = [] as Function[];
     subscribeEvent(

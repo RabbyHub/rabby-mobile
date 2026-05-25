@@ -6,7 +6,7 @@ import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import {
   apiSendToken,
   useInputBlurOnEvents,
-  useSendTokenInternalContext,
+  useSendTokenInternalShallowSelector,
 } from './hooks/useSendToken';
 import { useTranslation } from 'react-i18next';
 import { MINIMUM_GAS_LIMIT } from '@/constant/gas';
@@ -30,7 +30,7 @@ import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { Text, TextInput } from '@/components/Typography';
 
-export function BalanceSection({
+export const BalanceSection = React.memo(function BalanceSection({
   style,
   disableItemCheck,
 }: RNViewProps & {
@@ -43,31 +43,50 @@ export function BalanceSection({
     forScene: 'MakeTransactionAbout',
   });
   const {
-    screenState,
-
-    slider,
-    formValues,
+    amount,
+    balanceError,
+    balanceWarn,
+    chainItem,
+    currentToken,
+    currentTokenBalance,
     directSignBtnRef,
-    computed: { chainItem, currentToken, currentTokenBalance },
-
-    callbacks: {
-      handleGasLevelChanged,
-      handleFieldChange,
-      handleClickMaxButton,
-      checkCexSupport,
-      onChangeSlider,
-      setSlider,
-      // isAuthInProgress,
-    },
-  } = useSendTokenInternalContext();
+    gasList,
+    handleFieldChange,
+    handleClickMaxButton,
+    checkCexSupport,
+    isEstimatingGas,
+    isLoading,
+    onChangeSlider,
+    setSlider,
+    showBalanceLoading,
+    showGasReserved,
+  } = useSendTokenInternalShallowSelector(ctx => ({
+    amount: ctx.formValues.amount,
+    balanceError: ctx.screenState.balanceError,
+    balanceWarn: ctx.screenState.balanceWarn,
+    chainItem: ctx.computed.chainItem,
+    currentToken: ctx.computed.currentToken,
+    currentTokenBalance: ctx.computed.currentTokenBalance,
+    directSignBtnRef: ctx.directSignBtnRef,
+    gasList: ctx.screenState.gasList,
+    handleFieldChange: ctx.callbacks.handleFieldChange,
+    handleClickMaxButton: ctx.callbacks.handleClickMaxButton,
+    checkCexSupport: ctx.callbacks.checkCexSupport,
+    isEstimatingGas: ctx.screenState.isEstimatingGas,
+    isLoading: ctx.screenState.isLoading,
+    onChangeSlider: ctx.callbacks.onChangeSlider,
+    setSlider: ctx.callbacks.setSlider,
+    showBalanceLoading: ctx.screenState.showBalanceLoading,
+    showGasReserved: ctx.screenState.showGasReserved,
+  }));
 
   const amountInputRef = useRef<TextInput>(null);
   useInputBlurOnEvents(amountInputRef);
 
   useEffect(() => {
-    if (currentToken && screenState.gasList) {
+    if (currentToken && gasList) {
       const result = checkIfTokenBalanceEnough(currentToken, {
-        gasList: screenState.gasList,
+        gasList,
         gasLimit: MINIMUM_GAS_LIMIT,
       });
 
@@ -79,7 +98,7 @@ export function BalanceSection({
         apiSendToken.putScreenState({ selectedGasLevel: result.customLevel });
       }
     }
-  }, [currentToken, screenState.gasList]);
+  }, [currentToken, gasList]);
 
   const showBubble = useSharedValue(false);
 
@@ -139,8 +158,8 @@ export function BalanceSection({
   );
 
   const sliderDisable = useMemo(() => {
-    return screenState.isLoading || screenState.isEstimatingGas;
-  }, [screenState]);
+    return isLoading || isEstimatingGas;
+  }, [isEstimatingGas, isLoading]);
 
   const previousAddress = usePrevious(currentAccount?.address);
   useEffect(() => {
@@ -159,20 +178,19 @@ export function BalanceSection({
         <Text style={styles.sectionTitle}>{t('page.sendToken.newAmount')}</Text>
         <TouchableOpacity
           style={styles.balanceArea}
-          onPress={screenState.isLoading ? noop : handleClickMaxButton}>
-          {screenState.showBalanceLoading ? (
+          onPress={isLoading ? noop : handleClickMaxButton}>
+          {showBalanceLoading ? (
             <Skeleton style={{ width: 100, height: 16 }} />
           ) : (
             <>
-              {!screenState.showGasReserved &&
-              (screenState.balanceError || screenState.balanceWarn) ? (
+              {!showGasReserved && (balanceError || balanceWarn) ? (
                 <Text style={[styles.issueText]}>
-                  {screenState.balanceError ? (
+                  {balanceError ? (
                     <>
-                      {screenState.balanceError}: {currentTokenBalance}
+                      {balanceError}: {currentTokenBalance}
                     </>
-                  ) : screenState.balanceWarn ? (
-                    <>{screenState.balanceWarn}</>
+                  ) : balanceWarn ? (
+                    <>{balanceWarn}</>
                   ) : null}
                 </Text>
               ) : (
@@ -194,15 +212,15 @@ export function BalanceSection({
           <TokenAmountInput
             ref={amountInputRef}
             currentAccount={currentAccount}
-            value={formValues.amount}
+            value={amount}
             onChange={handleAmountChange}
             disableItemCheck={disableItemCheck}
             chainId={chainItem.serverId}
             token={currentToken}
-            isEstimatingGas={screenState.isEstimatingGas}
+            isEstimatingGas={isEstimatingGas}
             handleClickMaxButton={handleClickMaxButton}
             onTokenChange={checkCexSupport}
-            inSufficient={new BigNumber(formValues.amount).gt(
+            inSufficient={new BigNumber(amount).gt(
               new BigNumber(currentTokenBalance),
             )}
             inlinePrize
@@ -227,7 +245,7 @@ export function BalanceSection({
       /> */}
     </View>
   );
-}
+});
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {

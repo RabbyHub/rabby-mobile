@@ -92,11 +92,14 @@ import {
   useSharedValue,
 } from 'react-native-reanimated';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useStore } from 'zustand';
+import { useShallow } from 'zustand/shallow';
+import { createStore } from 'zustand/vanilla';
 import {
   makeAvoidParallelAsyncFunc,
   makeSWRKeyAsyncFunc,
 } from '@/core/utils/concurrency';
-import { jotaiStore } from '@/core/utils/reexports';
+import { jotaiStore, zMutative } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { TextInput } from '@/components/Typography';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
@@ -2231,9 +2234,7 @@ export function useSendTokenFormikContext() {
 }
 
 export function useSendTokenFormik() {
-  const { formik } = useSendTokenInternalContext();
-
-  return formik;
+  return useSendTokenInternalSelector(ctx => ctx.formik);
 }
 
 type FoundAccountResult = IExtractFromPromise<
@@ -2301,7 +2302,7 @@ type InternalContext = {
     // isAuthInProgress?: () => boolean;
   };
 };
-const SendTokenInternalContext = React.createContext<InternalContext>({
+const DEFAULT_SEND_TOKEN_INTERNAL_CONTEXT: InternalContext = {
   screenState: { ...DFLT_SEND_STATE },
   formValues: { ...DF_SEND_TOKEN_FORM },
   computed: {
@@ -2348,13 +2349,66 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     onGasInfoDebouncedLoaded: () => {},
     // isAuthInProgress: () => false,
   },
-});
+};
 
-export const SendTokenInternalContextProvider =
-  SendTokenInternalContext.Provider;
+const createSendTokenInternalStore = (initialState: InternalContext) =>
+  createStore<InternalContext>()(
+    zMutative<InternalContext>(() => initialState),
+  );
+
+type SendTokenInternalStore = ReturnType<typeof createSendTokenInternalStore>;
+
+const defaultSendTokenInternalStore = createSendTokenInternalStore(
+  DEFAULT_SEND_TOKEN_INTERNAL_CONTEXT,
+);
+
+const SendTokenInternalStoreContext =
+  React.createContext<SendTokenInternalStore | null>(null);
+
+export function SendTokenInternalContextProvider({
+  value,
+  children,
+}: React.PropsWithChildren<{ value: InternalContext }>) {
+  const storeRef = React.useRef<SendTokenInternalStore | null>(null);
+  if (!storeRef.current) {
+    storeRef.current = createSendTokenInternalStore(value);
+  }
+
+  React.useLayoutEffect(() => {
+    storeRef.current?.setState(value, true);
+  }, [value]);
+
+  return React.createElement(
+    SendTokenInternalStoreContext.Provider,
+    { value: storeRef.current },
+    children,
+  );
+}
+
+function useSendTokenInternalStoreApi() {
+  return (
+    React.useContext(SendTokenInternalStoreContext) ||
+    defaultSendTokenInternalStore
+  );
+}
 
 export function useSendTokenInternalContext() {
-  return React.useContext(SendTokenInternalContext);
+  return useStore(useSendTokenInternalStoreApi());
+}
+
+export function useSendTokenInternalSelector<T>(
+  selector: (ctx: InternalContext) => T,
+) {
+  const store = useSendTokenInternalStoreApi();
+  return useStore(store, selector);
+}
+
+export function useSendTokenInternalShallowSelector<T>(
+  selector: (ctx: InternalContext) => T,
+) {
+  const store = useSendTokenInternalStoreApi();
+  const shallowSelector = useShallow(selector);
+  return useStore(store, shallowSelector);
 }
 
 export function subscribeEvent<T extends SendTokenEvents>(
@@ -2379,7 +2433,9 @@ export function subscribeEvent<T extends SendTokenEvents>(
 export function useInputBlurOnEvents(
   inputRef: React.RefObject<TextInput | null>,
 ) {
-  const { sendTokenEvents } = useSendTokenInternalContext();
+  const sendTokenEvents = useSendTokenInternalSelector(
+    ctx => ctx.sendTokenEvents,
+  );
   useEffect(() => {
     const disposeRets = [] as Function[];
     subscribeEvent(

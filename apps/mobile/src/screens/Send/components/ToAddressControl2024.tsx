@@ -37,7 +37,7 @@ import { getCexWithLocalCache } from '@/databases/hooks/cex';
 import { useAlias2 } from '@/hooks/alias';
 import { default as RcIconUnknownAddressAvatarCC } from '../icons/unknown-address-avatar-cc.svg';
 import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
-import { useSendTokenInternalContext } from '../hooks/useSendToken';
+import { useSendTokenInternalShallowSelector } from '../hooks/useSendToken';
 import { RcIconTipRightCC } from '../icons';
 import { makeAccountObject } from '@/utils/account';
 import { IExtractFromPromise } from '@/utils/type';
@@ -414,7 +414,7 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
   },
 }));
 
-export default function ToAddressControl2024({
+function ToAddressControl2024({
   style,
   brandName,
   addrDesc,
@@ -426,11 +426,12 @@ export default function ToAddressControl2024({
 >) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { isAddrOnWhitelist } = useWhitelist();
-  const {
-    formValues,
-    computed: { toAddressPositiveTips, toAccount },
-    callbacks: { handleFieldChange },
-  } = useSendTokenInternalContext();
+  const { handleFieldChange, toAccount, toAddressPositiveTips } =
+    useSendTokenInternalShallowSelector(ctx => ({
+      handleFieldChange: ctx.callbacks.handleFieldChange,
+      toAccount: ctx.computed.toAccount,
+      toAddressPositiveTips: ctx.computed.toAddressPositiveTips,
+    }));
 
   const { t } = useTranslation();
 
@@ -493,6 +494,8 @@ export default function ToAddressControl2024({
     </View>
   );
 }
+
+export default React.memo(ToAddressControl2024);
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {

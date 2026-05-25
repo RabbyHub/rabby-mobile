@@ -3,7 +3,7 @@ import { Platform, View } from 'react-native';
 import { Button } from '@/components2024/Button';
 import {
   useSendNFTFormik,
-  useSendNFTInternalContext,
+  useSendNFTInternalShallowSelector,
 } from '../hooks/useSendNFT';
 import { useTranslation } from 'react-i18next';
 
@@ -24,7 +24,7 @@ import { resolveBgColorByType } from '@/components2024/ScreenContainer/LinearGra
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 
-export default function BottomArea({ account }: { account: Account | null }) {
+function BottomArea({ account }: { account: Account | null }) {
   const { t } = useTranslation();
 
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -32,26 +32,42 @@ export default function BottomArea({ account }: { account: Account | null }) {
   const { handleSubmit } = useSendNFTFormik();
 
   const {
-    formValues,
-    screenState,
-    computed: {
-      fromAddress,
-      canSubmit,
-      canDirectSign: canShowDirectSign,
-      toAddressPositiveTips,
-      toAddressInContactBook,
-      toAddrCex,
-      currentNFT: nftItem,
-    },
-    callbacks: {
-      handleIgnoreGasFeeChange,
-      onBottomAreaLayout,
-      onGasInfoDebouncedLoaded,
-    },
-    fns: { putScreenState, fetchContactAccounts },
-  } = useSendNFTInternalContext();
-
-  const { isSubmitLoading, addressToAddAsContacts } = screenState;
+    addressToAddAsContacts,
+    agreeRequiredForToAddress,
+    buildTxsCount,
+    canShowDirectSign,
+    canSubmit,
+    fetchContactAccounts,
+    fromAddress,
+    handleIgnoreGasFeeChange,
+    isSubmitLoading,
+    nftItem,
+    onBottomAreaLayout,
+    onGasInfoDebouncedLoaded,
+    putScreenState,
+    to,
+    toAddrCex,
+    toAddressInContactBook,
+    toAddressPositiveTips,
+  } = useSendNFTInternalShallowSelector(ctx => ({
+    addressToAddAsContacts: ctx.screenState.addressToAddAsContacts,
+    agreeRequiredForToAddress: ctx.screenState.agreeRequiredChecks.forToAddress,
+    buildTxsCount: ctx.screenState.buildTxsCount,
+    canShowDirectSign: ctx.computed.canDirectSign,
+    canSubmit: ctx.computed.canSubmit,
+    fetchContactAccounts: ctx.fns.fetchContactAccounts,
+    fromAddress: ctx.computed.fromAddress,
+    handleIgnoreGasFeeChange: ctx.callbacks.handleIgnoreGasFeeChange,
+    isSubmitLoading: ctx.screenState.isSubmitLoading,
+    nftItem: ctx.computed.currentNFT,
+    onBottomAreaLayout: ctx.callbacks.onBottomAreaLayout,
+    onGasInfoDebouncedLoaded: ctx.callbacks.onGasInfoDebouncedLoaded,
+    putScreenState: ctx.fns.putScreenState,
+    to: ctx.formValues.to,
+    toAddrCex: ctx.computed.toAddrCex,
+    toAddressInContactBook: ctx.computed.toAddressInContactBook,
+    toAddressPositiveTips: ctx.computed.toAddressPositiveTips,
+  }));
 
   const [isAllowTransferModalVisible, setIsAllowTransferModalVisible] =
     React.useState(false);
@@ -80,17 +96,17 @@ export default function BottomArea({ account }: { account: Account | null }) {
   } = useRisks({
     // balance: !!screenState.toAddrAccountInfo?.account?.balance,
     fromAddress,
-    toAddress: formValues.to,
+    toAddress: to,
     cex: toAddrCex,
     forbiddenCheck: useMemo(() => {
       return {
         user_addr: fromAddress || '',
-        to_addr: formValues.to || '',
+        to_addr: to || '',
         chain_id: nftItem?.chain,
         // id: nftItem?.id || '',
-        id: formValues.to || '',
+        id: to || '',
       };
-    }, [fromAddress, formValues.to, nftItem?.chain /* , nftItem?.id */]),
+    }, [fromAddress, to, nftItem?.chain /* , nftItem?.id */]),
     onLoadFinished: useCallback(
       ctx => {
         putScreenState(prev => ({
@@ -151,8 +167,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
     };
   }, [risks, toAddressPositiveTips?.hasPositiveTips]);
 
-  const agreeRequiredChecked =
-    hasRiskForToAddress && screenState.agreeRequiredChecks.forToAddress;
+  const agreeRequiredChecked = hasRiskForToAddress && agreeRequiredForToAddress;
 
   const disableSubmitDueToBasic =
     !canSubmit || (!!mostImportantRisks.length && !agreeRequiredChecked);
@@ -180,7 +195,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
       {canShowDirectSign ? (
         <DirectSignBtn
           // refresh  risk check
-          key={screenState?.buildTxsCount + ''}
+          key={buildTxsCount + ''}
           showTextOnLoading
           loadingType="circle"
           authTitle={t('page.whitelist.confirmPassword')}
@@ -210,7 +225,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
       )}
 
       <ModalConfirmAllowTransfer
-        toAddr={formValues.to}
+        toAddr={to}
         visible={isAllowTransferModalVisible}
         showAddToWhitelist={toAddressInContactBook}
         onFinished={result => {
@@ -240,6 +255,8 @@ export default function BottomArea({ account }: { account: Account | null }) {
     </View>
   );
 }
+
+export default React.memo(BottomArea);
 
 export const SIZES = {
   containerPt: 16,
