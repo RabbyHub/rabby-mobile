@@ -21,6 +21,7 @@ import {
 } from '@/store/balance24h';
 import { computeCurveBalanceChange } from '@/store/curveShared';
 import { navigateDeprecated } from '@/utils/navigation';
+import { ellipsisAddress } from '@/utils/address';
 import { useEffect, useMemo, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -192,8 +193,8 @@ export function useSingleHomeAccountAlias() {
   }, [address, adderssAlias, isDefaultAlias]);
 
   const nameText = useMemo(
-    () => adderssAlias || brandName,
-    [adderssAlias, brandName],
+    () => adderssAlias || ellipsisAddress(address || ''),
+    [adderssAlias, address],
   );
 
   return { aliasExist, address, nameText, brandName, isDefaultAlias };

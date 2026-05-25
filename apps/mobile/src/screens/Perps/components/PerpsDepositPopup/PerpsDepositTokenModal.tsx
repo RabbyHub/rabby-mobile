@@ -96,9 +96,10 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
                   );
                   if (isSwap) {
                     navigation.navigateDeprecated(RootNames.StackTransaction, {
-                      screen: RootNames.MultiSwap,
+                      screen: RootNames.MultiSwapBridge,
 
                       params: {
+                        activeTab: 'swap',
                         swapAgain: true,
                         chainEnum: findChain({ serverId: token.chain })?.enum,
                         swapTokenId: [token.id, ARB_USDC_TOKEN_ITEM.id],
@@ -106,9 +107,10 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
                     });
                   } else {
                     navigation.navigateDeprecated(RootNames.StackTransaction, {
-                      screen: RootNames.MultiBridge,
+                      screen: RootNames.MultiSwapBridge,
 
                       params: {
+                        activeTab: 'bridge',
                         chainEnum: findChain({ serverId: token.chain })?.enum,
                         tokenId: token.id,
                         toChainEnum: findChain({

@@ -657,8 +657,11 @@ function handleMessage(event: CustomEvent) {
   switch (message.type) {
     case 'GOT_RUNTIME_INFO': {
       // Apply initial theme from runtime info
-      const { isDark, i18nTexts } = message.info;
+      const { isDark, i18nTexts, backGroundColor } = message.info;
       const colors = getChartColors(!isDark);
+      if (backGroundColor) {
+        colors.background = backGroundColor;
+      }
       const description: ChartDescription = {
         tp: i18nTexts?.['component.kline.tp'] || defaultDescription.tp,
         entry: i18nTexts?.['component.kline.entry'] || defaultDescription.entry,

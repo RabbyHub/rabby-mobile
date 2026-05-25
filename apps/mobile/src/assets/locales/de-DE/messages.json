@@ -457,7 +457,7 @@
         "RevokeToken": "Token widerrufen",
         "GasFee": "Gasgebühr",
         "Revoke": "Zurückziehen",
-        "InteractedContract": "In Kontakt stehender Vertrag",
+        "InteractedContract": "Interaktion mit (An)",
         "From": "Von",
         "SwapAgain": "Erneut tauschen",
         "Unknown": "Unbekannt",
@@ -476,7 +476,9 @@
         "BuyAgain": "Erneut kaufen",
         "AddToWhitelist": "Zur Whitelist hinzufügen",
         "RecipientAddress": "Empfänger-Wallet",
-        "Simulation Results": "Simulations Ergebnisse"
+        "Simulation Results": "Simulations Ergebnisse",
+        "TransactionDetails": "Transaktionsdetails",
+        "Operation": "Vorgang"
       },
       "empty": {
         "title": "Keine Transaktionen",
@@ -581,7 +583,7 @@
           "cancelSingleNFTApproval": "Einzelne NFT-Zulassung für {{protocol}} widerrufen",
           "cancelNFTCollectionApproval": "Widerrufen Sie die Genehmigung der NFT-Sammlung für {{protocol}}.",
           "unknown": "Unbekannte Transaktion",
-          "nftCollectionApproval": "{{protocol}} 的 NFT Collection 批准",
+          "nftCollectionApproval": "NFT-Collection-Genehmigung für {{protocol}}",
           "singleNFTApproval": "Einzelne NFT-Zulassung für {{protocol}}",
           "approve": "Genehmigen Sie {{count}} {{token}} für {{protocol}}"
         },
@@ -2244,7 +2246,7 @@
       "depositNow": "Jetzt einzahlen",
       "gasBalance": "Gas-Balance",
       "switchAccount": "Wechseln Sie das Wallet",
-      "lowBalance": "Sie haben nicht genügend Gas. Tätigen Sie eine Gas-Einzahlung, um sicherzustellen, dass zukünftige Transaktionen reibungslos verlaufen.",
+      "lowBalance": "Sie haben nicht genügend Gas (<$1.00). Tätigen Sie eine Gas-Einzahlung, um sicherzustellen, dass zukünftige Transaktionen reibungslos verlaufen.",
       "depositSubmitted": "Einzahlung eingereicht",
       "depositWith": "Einzahlung über"
     },
@@ -2450,7 +2452,8 @@
         "txSigned": "Signiert. Transaktion wird erstellt",
         "txCreated": "Transaktion erstellt"
       },
-      "fixedModeText": "Festgelegter Modus: Verwenden Sie immer Ihre benutzerdefinierte Gas-Einstellung"
+      "fixedModeText": "Festgelegter Modus: Verwenden Sie immer Ihre benutzerdefinierte Gas-Einstellung",
+      "fixedModeTag": "Fester Modus"
     },
     "customTestnet": {
       "currency": "Währung",
@@ -2821,6 +2824,28 @@
       "title": "Verlauf"
     },
     "perps": {
+      "limitOrders": "Limit-Orders",
+      "cancelAll": "Alle stornieren",
+      "cancelAllOrdersConfirmTitle": "Alle Orders stornieren bestätigen",
+      "cancelAllOrdersConfirmMessage": "Alle Ihre Limit-Orders werden storniert",
+      "limitOrderDetail": {
+        "title": "Limit {{side}} {{pair}}",
+        "time": "Zeit",
+        "size": "Größe",
+        "filled": "Gefüllt",
+        "currentPrice": "Aktueller Preis",
+        "limitPrice": "Limit-Preis",
+        "marginUsage": "Margin-Nutzung",
+        "cancelLimitOrder": "Limit-Order stornieren",
+        "buy": "Kaufen",
+        "sell": "Verkaufen"
+      },
+      "cancelOrderToast": {
+        "singleSuccess": "Limit-Order storniert",
+        "multiSuccess": "{{count}} Limit-Orders storniert",
+        "partial": "{{okCount}} storniert, {{failCount}} fehlgeschlagen",
+        "failed": "Limit-Order stornieren fehlgeschlagen"
+      },
       "PerpsCard": {
         "loginBtn": "Melden Sie sich bei Trading Perps an",
         "withdrawBtn": "Abheben",
@@ -3076,6 +3101,20 @@
       }
     },
     "perpsDetail": {
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "Limit-Kaufpreis festlegen",
+        "setLimitSellPrice": "Limit-Verkaufspreis festlegen",
+        "marketLabel": "Mid",
+        "setBtn": "Festlegen",
+        "blockError": "Orderpreis überschreitet das 10%-Preisschutzlimit.",
+        "confirmTitle": "Limit-Preis überprüfen",
+        "confirmMessage": "Limit-Preis weicht um 5%+ vom Marktpreis ab",
+        "confirmContinue": "Fortfahren",
+        "confirmCancel": "Abbrechen"
+      },
+      "PerpsPriceInfo": {
+        "current": "Aktuell"
+      },
       "PerpsPosition": {
         "title": "Position",
         "tpPrice": "Take-Profit Preis",
@@ -3141,6 +3180,13 @@
         "rabbyFeeTipsV2": "Rabby Gebühr: 0,02%"
       },
       "PerpsOpenPositionPopup": {
+        "title": "{{coin}} Position eröffnen",
+        "limitOrderPlacedToast": "Limit {{direction}} {{coin}}: Größe {{size}} platziert zu ${{price}}",
+        "orderType": "Ordertyp",
+        "orderTypeMarket": "Market",
+        "orderTypeLimit": "Limit",
+        "limitPrice": "Limit-Preis",
+        "currentPrice": "Aktueller Preis",
         "insufficientBalance": "Unzureichendes Guthaben",
         "invalidNumber": "Bitte geben Sie eine gültige Zahl ein.",
         "available": "verfügbar",
@@ -3164,6 +3210,11 @@
         "onlyIsolated": "Für dieses Token wird nur isolierte Margin unterstützt."
       },
       "PerpsOpenPositionCheckPopup": {
+        "limitTitle": "Limit-Order prüfen",
+        "marketTitle": "Market-Order prüfen",
+        "limitPrice": "Limit-Preis",
+        "mayExecuteImmediately": "Diese Limit-Order wird möglicherweise sofort ausgeführt",
+        "setLimitOrderBtn": "Limit-Order festlegen",
         "perps": "Perps",
         "autoClose": "Automatisches Schließen",
         "size": "Größe",
@@ -3206,6 +3257,10 @@
         "youLoss": "Du verlierst",
         "priceBelow": "Preis darunter",
         "takeProfitExpectedPNL": "Nehmen Sie den erwarteten PNL Gewinn mit",
+        "youGainRoi": "Sie gewinnen (ROI)",
+        "youLossRoi": "Sie verlieren (ROI)",
+        "currentPriceTpl": "Aktuell <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "Eintritt <1>{{entryPrice}}</1>  Aktuell <2>{{price}}</2>",
         "EntryAndCurrentPrice": "Eintritt {{entryPrice}} Aktuell {{price}}",
         "currentPrice": "Aktueller {{price}}",
         "youGain": "Sie Gewinne",
@@ -3312,7 +3367,7 @@
         "availableToBorrow": "Verfügbar zum Ausleihen",
         "collateralization": "Besicherung",
         "enabled": "Aktiviert",
-        "supplyBalance": "Versorgungsbilanz",
+        "supplyBalance": "Eingezahlter Saldo",
         "unavailable": "Nicht verfügbar",
         "isolatedTips": "Ihre bestehenden Kredit-/Leihvermögen werden nicht unterstützt.",
         "supplied": "Geliefert"
@@ -3460,7 +3515,8 @@
         "debtSwapSelector": {
           "header": {
             "borrow": "Meine Ausleihen",
-            "assets": "Token/Guthaben"
+            "assets": "Token/Guthaben",
+            "apy": "APY"
           },
           "title": "Wählen Sie das Kredit-Token aus"
         },

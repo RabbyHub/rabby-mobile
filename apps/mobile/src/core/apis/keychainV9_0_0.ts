@@ -1,4 +1,4 @@
-import OfficialKeychain from 'react-native-keychain';
+import OfficialKeychain from '@rabby-wallet/react-native-keychain-9';
 
 import {
   ANDROID_AUTH_PROMPT_POLICIES,
@@ -30,8 +30,8 @@ import {
 
 const keychainApi = createBusinessKeychainApi({
   keychainModule: OfficialKeychain as unknown as KeychainCompatibleModule,
-  debugNativeModuleName: 'RNKeychainManager',
-  sourceLabel: 'react-native-keychain@9.0.0',
+  debugNativeModuleName: 'RNRabbyKeychainV9Manager',
+  sourceLabel: '@rabby-wallet/react-native-keychain-9@9.0.0-rabby.0',
 });
 
 export {
@@ -74,5 +74,7 @@ export const debugWriteMockLegacyBiometricsEntry =
 export const debugDecryptStoredPasswordPayload =
   keychainApi.debugDecryptStoredPasswordPayload;
 export const setGenericPassword = keychainApi.setGenericPassword;
+export const cacheTrustedVaultKeyString =
+  keychainApi.cacheTrustedVaultKeyString;
 export const resetGenericPassword = keychainApi.resetGenericPassword;
 export const clearApplicationPassword = keychainApi.clearApplicationPassword;

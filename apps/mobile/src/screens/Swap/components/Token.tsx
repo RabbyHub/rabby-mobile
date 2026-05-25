@@ -1,7 +1,13 @@
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { QuoteProvider } from '../hooks';
 import { useTranslation } from 'react-i18next';
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { tokenAmountBn } from '../utils';
 import {
   formatSpeicalAmount,
@@ -9,27 +15,26 @@ import {
   formatUsdValue,
 } from '@/utils/number';
 import BigNumber from 'bignumber.js';
-import { Divider, Slider } from '@rneui/themed';
+import { Slider } from '@rneui/themed';
 
 import TokenSelect, { TokenSelectInst } from './TokenSelect';
 import SwapToTokenSelect from './SwapToTokenSelect';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-} from 'react-native-reanimated';
-import { BubbleWithText } from './Slider';
-import { IS_ANDROID } from '@/core/native/utils';
+import { SliderBubblePortal } from './Slider';
 import { Account } from '@/core/services/preference';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import usePrevious from 'react-use/lib/usePrevious';
 import { ITokenItem } from '@/store/tokens';
-import { Text, TextInput } from '@/components/Typography';
+import { Text } from '@/components/Typography';
+import {
+  AutoShrinkAmountText,
+  AutoShrinkAmountTextInput,
+} from '@/components/AutoShrinkAmountTextInput';
 
 interface SwapTokenItemProps {
   type: 'from' | 'to';
@@ -113,57 +118,43 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
     [onValueChange],
   );
 
-  const showBubble = useSharedValue(false);
-
-  const { width } = useWindowDimensions();
-
-  const sliderStyle = useAnimatedStyle(
-    () => ({
-      opacity: showBubble.value ? 1 : 0,
-      display: showBubble.value ? 'flex' : 'none',
-      position: 'absolute',
-      top: IS_ANDROID ? -72 : -60,
-      left: 0,
-      height: 70,
-      width,
-      transform: [
-        {
-          translateX: 0 - width / 2 + (IS_ANDROID ? 7 : 6),
-        },
-      ],
-    }),
-    [width],
-  );
+  const [isSliderBubbleVisible, setIsSliderBubbleVisible] = useState(false);
+  const sliderThumbRef = useRef<View>(null);
 
   const onSlidingStart = useCallback(() => {
     if (!disabled) {
-      showBubble.value = true;
+      setIsSliderBubbleVisible(true);
     }
-  }, [showBubble, disabled]);
+  }, [disabled]);
 
   const onAfterChangeSlider = useCallback(
     (v: number) => {
       onChangeSlider?.(v, true);
-      showBubble.value = false;
+      setIsSliderBubbleVisible(false);
     },
-    [onChangeSlider, showBubble],
+    [onChangeSlider],
   );
 
   const prevToken = usePrevious(token);
 
-  if (
+  const shouldSyncAmountWithToken =
     isFrom &&
-    slider &&
+    !!slider &&
     Number(value) === 0 &&
-    onChangeSlider &&
+    !!onChangeSlider &&
     prevToken?.chain === token?.chain &&
     prevToken?.id === token?.id &&
     (token?.amount !== prevToken?.amount ||
-      token?.raw_amount_hex_str !== prevToken?.raw_amount_hex_str)
-  ) {
+      token?.raw_amount_hex_str !== prevToken?.raw_amount_hex_str);
+
+  useEffect(() => {
+    if (!shouldSyncAmountWithToken || !slider) {
+      return;
+    }
+
     console.debug('sync amount with token', slider);
     onAfterChangeSlider(slider);
-  }
+  }, [onAfterChangeSlider, shouldSyncAmountWithToken, slider]);
 
   const Linear = useCallback(() => {
     return (
@@ -203,16 +194,17 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
               thumbProps={{
                 children: (
                   <View>
-                    <View style={[styles.outerThumb, { position: 'relative' }]}>
+                    <View ref={sliderThumbRef} style={styles.outerThumb}>
                       <View style={styles.innerThumb} />
-
-                      <Animated.View style={sliderStyle}>
-                        <BubbleWithText slide={slider || 0} />
-                      </Animated.View>
                     </View>
                   </View>
                 ),
               }}
+            />
+            <SliderBubblePortal
+              anchorRef={sliderThumbRef}
+              slide={slider || 0}
+              visible={isSliderBubbleVisible}
             />
             <Text style={styles.sliderValue}>{slider}%</Text>
           </View>
@@ -220,11 +212,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
       </View>
 
       <View style={styles.inputContainer}>
-        <View
-          style={{
-            flexDirection: 'row',
-            gap: 12,
-          }}>
+        <View style={styles.tokenSelectBox}>
           {isFrom ? (
             <TokenSelect
               ref={openTokenModalRef}
@@ -249,7 +237,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
             />
           )}
 
-          <Divider color={colors2024['neutral-line']} />
+          <View style={styles.vecticalLine} />
         </View>
 
         {valueLoading && skeletonLoading ? (
@@ -259,7 +247,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
             style={styles.skeleton}
           />
         ) : isFrom ? (
-          <TextInput
+          <AutoShrinkAmountTextInput
             editable={!disabled}
             contextMenuHidden={disabled}
             numberOfLines={1}
@@ -270,7 +258,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
             inputMode="decimal"
             placeholder="0"
             value={value}
-            scrollEnabled={true}
+            scrollEnabled={false}
             placeholderTextColor={colors2024['neutral-info']}
             onChangeText={onInputChange}
             style={[
@@ -279,14 +267,14 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
             ]}
           />
         ) : (
-          <Text
+          <AutoShrinkAmountText
             numberOfLines={1}
             style={StyleSheet.flatten([
               styles.input,
               valueLoading && styles.loadingOpacity,
             ])}>
             {value ? formatTokenAmount(value) : '0'}
-          </Text>
+          </AutoShrinkAmountText>
         )}
       </View>
 
@@ -332,10 +320,10 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 16,
     backgroundColor: 'transparent',
-    height: 134,
+    // height: 134,
   },
   top: {
     flexDirection: 'row',
@@ -369,14 +357,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro',
   },
   input: {
+    fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
     fontSize: 28,
     fontWeight: '700',
     paddingLeft: 0,
     borderWidth: 0,
     flex: 1,
+    height: 36,
+    lineHeight: 36,
     textAlign: 'right',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
     padding: 0,
+    overflow: 'hidden',
   },
 
   inSufficient: {
@@ -387,9 +381,24 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 12,
-    marginBottom: 14,
+    minWidth: 0,
+    marginTop: 9,
+    marginBottom: 6,
     height: 36,
+  },
+  tokenSelectBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  vecticalLine: {
+    marginLeft: 12,
+    marginRight: 12,
+    borderWidth: 0,
+    borderLeftWidth: 1,
+    width: 0,
+    height: 27,
+    borderColor: colors2024['neutral-line'],
   },
 
   bottom: {

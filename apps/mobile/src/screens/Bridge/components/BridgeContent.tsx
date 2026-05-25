@@ -81,12 +81,18 @@ import {
   type QuotePollingPauseReasonState,
   updateQuotePollingPauseReason,
 } from '@/utils/quotePolling';
+import { IS_ANDROID } from '@/core/native/utils';
 
 /** Bridge form snapshot for validation during auth */
 export interface BridgeFormSnapshot {
   amount: string;
   amountMode?: FormAmountMode;
 }
+
+const BOTTOM_BUTTON_HEIGHT = 52;
+const BOTTOM_BUTTON_TITLE_FONT_SIZE = 18;
+const BOTTOM_BUTTON_HORIZONTAL_PADDING = 20;
+const BOTTOM_BUTTON_BOTTOM_OFFSET = 36;
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -118,7 +124,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     position: 'absolute',
     left: '50%',
     top: '50%',
-    transform: [{ translateX: -30 }, { translateY: -30 }],
+    transform: [{ translateX: -18 }, { translateY: -18 }],
   },
   switchButton: {
     padding: 10,
@@ -199,20 +205,30 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     position: 'absolute',
     left: 0,
     bottom: 0,
-    // height: 140,
     backgroundColor: colors2024['neutral-bg-1'],
     width: '100%',
-    padding: 20,
+    paddingHorizontal: BOTTOM_BUTTON_HORIZONTAL_PADDING,
   },
   btnTitle: {
     color: colors['neutral-title-2'],
+  },
+  bottomButtonTitle: {
+    fontSize: BOTTOM_BUTTON_TITLE_FONT_SIZE,
   },
   marketClosedTip: {
     marginHorizontal: 24,
   },
 }));
 
-export const BridgeContent = ({ isForMultipleAddress = false }) => {
+export const BridgeContent = ({
+  isForMultipleAddress = false,
+  disableHeaderRight = false,
+  disableAccountSwitcherModal = false,
+}: {
+  isForMultipleAddress?: boolean;
+  disableHeaderRight?: boolean;
+  disableAccountSwitcherModal?: boolean;
+}) => {
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const { styles } = useTheme2024({ getStyle });
@@ -261,10 +277,13 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     [clearBridgeHistoryRedDot],
   );
   useEffect(() => {
+    if (disableHeaderRight) {
+      return;
+    }
     setNavigationOptions({
       headerRight: Header,
     });
-  }, [Header, setNavigationOptions]);
+  }, [Header, disableHeaderRight, setNavigationOptions]);
 
   const {
     fromChain,
@@ -1004,7 +1023,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   return (
     <SignatureInstanceProvider instance={instance}>
       <NormalScreenContainer overwriteStyle={styles.screen}>
-        {isForMultipleAddress && (
+        {isForMultipleAddress && !disableAccountSwitcherModal && (
           <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
         )}
         <KeyboardAwareScrollView
@@ -1201,7 +1220,8 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
           style={[
             styles.buttonContainer,
             {
-              paddingBottom: Math.max(bottom, 50),
+              paddingBottom:
+                BOTTOM_BUTTON_BOTTOM_OFFSET + (IS_ANDROID ? bottom : 0),
             },
           ]}>
           <Tip
@@ -1214,6 +1234,8 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               <DirectSignBtn
                 ref={directSignBtnRef}
                 key={`${selectedBridgeQuote?.aggregator.id}-${selectedBridgeQuote?.bridge?.id}-${refreshId}`}
+                height={BOTTOM_BUTTON_HEIGHT}
+                titleStyle={styles.bottomButtonTitle}
                 authTitle={t('page.whitelist.confirmPassword')}
                 title={t('global.confirm')}
                 loadingType="circle"
@@ -1240,9 +1262,10 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               />
             ) : (
               <Button
+                height={BOTTOM_BUTTON_HEIGHT}
                 onPress={handleConfirm}
                 title={btnText}
-                titleStyle={styles.btnTitle}
+                titleStyle={[styles.btnTitle, styles.bottomButtonTitle]}
                 loading={fetchingBridgeQuote}
                 disabled={
                   !isSupportedChain && externalDapps.length > 0
@@ -1280,33 +1303,6 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
             currentSelectedQuote={selectedBridgeQuote}
           />
         ) : null}
-
-        {/* <MiniApproval
-        visible={isShowSign}
-        txs={txs}
-        ga={{
-          category: 'Bridge',
-          source: 'bridge',
-          // trigger: rbiSource,
-        }}
-        onReject={() => {
-          setIsShowSign(false);
-          refresh(e => e + 1);
-          mutateTxs([]);
-        }}
-        onResolve={() => {
-          setTimeout(() => {
-            setIsShowSign(false);
-            mutateTxs([]);
-
-            navigation.dispatch(
-              StackActions.replace(RootNames.StackRoot, {
-                screen: RootNames.Home,
-              }),
-            );
-          }, 500);
-        }}
-      /> */}
       </NormalScreenContainer>
     </SignatureInstanceProvider>
   );

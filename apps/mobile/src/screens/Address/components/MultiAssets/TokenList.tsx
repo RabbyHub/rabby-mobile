@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ListRenderItem, View, Dimensions } from 'react-native';
+import { ListRenderItem, View, Dimensions, ViewStyle } from 'react-native';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { useShallow } from 'zustand/shallow';
 
@@ -26,7 +26,13 @@ import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAss
 import { HomeTabName as TabName } from '@/hooks/navigation';
 import useTokenList, {
   getMultiAssetsCacheKey,
+  getTokenAssetsIndexRowKey,
   ITokenItem,
+  TokenAssetsIndexRow,
+  TokenGroupResourceValue,
+  tokenEntityResourceStore,
+  useTokenEntity,
+  useTokenGroup,
   useTokenListComputedStore,
 } from '@/store/tokens';
 import { formatNetworth } from '@/utils/math';
@@ -61,10 +67,68 @@ export const MemoizedTokenItemLoader = React.memo((props: RNViewProps) => {
   );
 });
 
+const TokenResourceRow = React.memo(
+  ({
+    row,
+    tokenDisplayMode,
+    getAccountByAddress,
+    onTokenPress,
+    onGroupPress,
+    style,
+    hideChainLogo,
+  }: {
+    row: TokenAssetsIndexRow;
+    tokenDisplayMode: string;
+    getAccountByAddress(address?: string): KeyringAccountWithAlias | undefined;
+    onTokenPress(token: ITokenItem): void;
+    onGroupPress(group: TokenGroupResourceValue): void;
+    style?: ViewStyle;
+    hideChainLogo?: boolean;
+  }) => {
+    const token = useTokenEntity(
+      row.type === 'token' ? row.tokenId : undefined,
+    );
+    const group = useTokenGroup(row.type === 'group' ? row.groupId : undefined);
+    const data = row.type === 'group' ? group?.summary : token;
+    const account =
+      tokenDisplayMode === 'byAddress' && data
+        ? getAccountByAddress(data.owner_addr)
+        : undefined;
+
+    const handlePress = useCallback(() => {
+      if (!data) {
+        return;
+      }
+      if (row.type === 'group' && group) {
+        onGroupPress(group);
+        return;
+      }
+      onTokenPress(data);
+    }, [data, group, onGroupPress, onTokenPress, row]);
+
+    if (!data) {
+      return <MemoizedItemLoader />;
+    }
+
+    return (
+      <MemoizedTokenRow
+        data={data}
+        onTokenPress={handlePress}
+        logoSize={46}
+        style={style}
+        chainLogoSize={18}
+        hideChainLogo={hideChainLogo}
+        account={account}
+        scene="portfolio"
+      />
+    );
+  },
+);
+
 type TokenListItem =
   | {
       type: 'unfold_token' | 'fold_token';
-      data: ITokenItem;
+      row: TokenAssetsIndexRow;
       isLast?: boolean;
     }
   | {
@@ -79,6 +143,10 @@ type TokenListItem =
     }
   | {
       type: 'empty-assets';
+      data: string;
+    }
+  | {
+      type: 'loading-skeleton';
       data: string;
     };
 
@@ -106,9 +174,11 @@ export const TokenList = () => {
 
   const emptyResult = useMemo(
     () => ({
-      unFoldTokens: [] as ITokenItem[],
-      foldTokens: [] as ITokenItem[],
-      scamTokens: [] as ITokenItem[],
+      unFoldRows: [] as TokenAssetsIndexRow[],
+      foldRows: [] as TokenAssetsIndexRow[],
+      scamRows: [] as TokenAssetsIndexRow[],
+      scamTokenPreviewLogoUrls: [] as string[],
+      foldCoreUsdValue: 0,
     }),
     [],
   );
@@ -144,23 +214,23 @@ export const TokenList = () => {
   ]);
 
   const {
-    unFoldTokens: tokens,
-    foldTokens,
-    scamTokens,
+    unFoldRows: tokenRows,
+    foldRows,
+    scamRows,
+    scamTokenPreviewLogoUrls,
+    foldCoreUsdValue,
   } = useTokenListComputedStore(
-    useShallow(state => state.multiAssetsCache[multiAssetsKey] || emptyResult),
+    useShallow(
+      state => state.multiAssetsIndexCache[multiAssetsKey] || emptyResult,
+    ),
   );
 
   const isLoading = useTokenList(s => s.isLoading);
 
-  const foldTokenUsdValue = useMemo(() => {
-    const usdValue = foldTokens
-      .filter(item => item.is_core)
-      .reduce((total, item) => {
-        return total + item.usd_value;
-      }, 0);
-    return formatNetworth(usdValue);
-  }, [foldTokens]);
+  const foldTokenUsdValue = useMemo(
+    () => formatNetworth(foldCoreUsdValue),
+    [foldCoreUsdValue],
+  );
 
   useEffect(() => {
     batchGetTokenList(myTop10Addresses);
@@ -180,7 +250,7 @@ export const TokenList = () => {
   });
 
   const hasNoAssets =
-    tokens.length + foldTokens.length + scamTokens.length === 0 &&
+    tokenRows.length + foldRows.length + scamRows.length === 0 &&
     !isLoading &&
     isFocused;
 
@@ -204,13 +274,29 @@ export const TokenList = () => {
       if (isTabsSwiping.value) {
         return;
       }
-      if (tokenDisplayMode === 'byAddress') {
-        handleOpenTokenDetail(token, getAccountByAddress(token.owner_addr));
+
+      handleOpenTokenDetail(
+        token,
+        tokenDisplayMode === 'byAddress'
+          ? getAccountByAddress(token.owner_addr)
+          : undefined,
+      );
+    },
+    [getAccountByAddress, handleOpenTokenDetail, tokenDisplayMode],
+  );
+
+  const handleGroupPress = useCallback(
+    (group: TokenGroupResourceValue) => {
+      if (isTabsSwiping.value) {
         return;
       }
-      const groupItems = (token as { groupItems?: ITokenItem[] }).groupItems;
-      if (!groupItems?.length) {
-        handleOpenTokenDetail(token);
+
+      const groupItems = group.memberTokenIds
+        .map(tokenId => tokenEntityResourceStore.getValue(tokenId))
+        .filter((token): token is ITokenItem => !!token);
+
+      if (!groupItems.length) {
+        handleOpenTokenDetail(group.summary);
         return;
       }
       if (groupItems.length === 1) {
@@ -240,7 +326,7 @@ export const TokenList = () => {
         },
       });
     },
-    [colors2024, getAccountByAddress, handleOpenTokenDetail, tokenDisplayMode],
+    [colors2024, getAccountByAddress, handleOpenTokenDetail],
   );
 
   const handleOpenScamToken = useCallback(() => {
@@ -265,7 +351,7 @@ export const TokenList = () => {
 
   const onRefresh = useCallback(async () => {
     try {
-      batchGetTokenList(myTop10Addresses, true);
+      await batchGetTokenList(myTop10Addresses, true);
     } catch (error) {
       console.error('Refresh failed:', error);
     }
@@ -273,6 +359,18 @@ export const TokenList = () => {
 
   const dataList = useMemo(() => {
     const items: TokenListItem[] = [];
+    const hasNoTokenItems =
+      tokenRows.length + foldRows.length + scamRows.length === 0;
+
+    if (isLoading && hasNoTokenItems) {
+      items.push(
+        ...Array.from({ length: 5 }, (_, index) => ({
+          type: 'loading-skeleton' as const,
+          data: `index-token-${index.toString()}`,
+        })),
+      );
+      return items;
+    }
 
     if (hasNoAssets) {
       items.push({
@@ -284,81 +382,81 @@ export const TokenList = () => {
       return items;
     }
 
-    tokens.forEach((token, index) => {
+    tokenRows.forEach((row, index) => {
       items.push({
         type: 'unfold_token',
-        data: token,
-        isLast: index === tokens.length - 1,
+        row,
+        isLast: index === tokenRows.length - 1,
       });
     });
 
     items.push({ type: 'toggle_token_fold' });
 
     if (!foldHideList) {
-      foldTokens.forEach(token => {
-        items.push({ type: 'fold_token', data: token });
+      foldRows.forEach(row => {
+        items.push({ type: 'fold_token', row });
       });
 
-      if (scamTokens.length > 0) {
+      if (scamRows.length > 0) {
         if (foldScam) {
           items.push({
             type: 'scam_header',
             data: {
-              total: scamTokens.length,
-              logoUrls: scamTokens.slice(0, 3).map(i => i.logo_url),
+              total: scamRows.length,
+              logoUrls: scamTokenPreviewLogoUrls,
             },
           });
         } else {
-          scamTokens.forEach(token => {
-            items.push({ type: 'fold_token', data: token });
+          scamRows.forEach(row => {
+            items.push({ type: 'fold_token', row });
           });
         }
       }
     }
 
     return items;
-  }, [foldTokens, scamTokens, tokens, foldHideList, foldScam, hasNoAssets, t]);
+  }, [
+    foldRows,
+    scamRows,
+    tokenRows,
+    foldHideList,
+    foldScam,
+    hasNoAssets,
+    isLoading,
+    scamTokenPreviewLogoUrls,
+    t,
+  ]);
 
   const renderItem = useCallback<ListRenderItem<TokenListItem>>(
     ({ item }) => {
       switch (item.type) {
         case 'unfold_token': {
-          const account =
-            tokenDisplayMode === 'byAddress'
-              ? getAccountByAddress(item.data.owner_addr)
-              : undefined;
           return (
             <View
               style={[styles.rowWrap, item.isLast ? styles.lastRowWrap : null]}>
-              <MemoizedTokenRow
-                data={item.data}
+              <TokenResourceRow
+                row={item.row}
+                tokenDisplayMode={tokenDisplayMode}
+                getAccountByAddress={getAccountByAddress}
                 onTokenPress={handleTokenPress}
-                logoSize={46}
+                onGroupPress={handleGroupPress}
                 style={styles.renderItemWrapper}
-                chainLogoSize={18}
                 hideChainLogo={tokenDisplayMode === 'bySymbol'}
-                account={account}
-                scene="portfolio"
               />
             </View>
           );
         }
         case 'fold_token': {
-          const foldAccount =
-            tokenDisplayMode === 'byAddress'
-              ? getAccountByAddress(item.data.owner_addr)
-              : undefined;
           return (
             <View style={styles.foldRowWrap}>
-              <MemoizedTokenRow
-                data={item.data}
+              <TokenResourceRow
+                row={item.row}
+                tokenDisplayMode={tokenDisplayMode}
+                getAccountByAddress={getAccountByAddress}
                 onTokenPress={handleTokenPress}
-                logoSize={46}
+                onGroupPress={handleGroupPress}
                 style={styles.renderItemWrapper}
-                chainLogoSize={18}
                 hideChainLogo={tokenDisplayMode === 'bySymbol'}
-                account={foldAccount}
-                scene="portfolio"
               />
             </View>
           );
@@ -393,6 +491,8 @@ export const TokenList = () => {
               type={'empty-assets'}
             />
           );
+        case 'loading-skeleton':
+          return <MemoizedItemLoader style={styles.loadingItem} />;
         default:
           return null;
       }
@@ -402,6 +502,7 @@ export const TokenList = () => {
       foldHideList,
       foldTokenUsdValue,
       getAccountByAddress,
+      handleGroupPress,
       handleOpenScamToken,
       handleTokenPress,
       handleToggleTokenFold,
@@ -412,17 +513,16 @@ export const TokenList = () => {
 
   const keyExtractor = useCallback((item: TokenListItem) => {
     if (item.type === 'unfold_token' || item.type === 'fold_token') {
-      const groupKey = (item.data as { groupKey?: string }).groupKey;
-      if (groupKey) {
-        return `${item.type}-${groupKey}`;
-      }
-      return `${item.type}-${item.data.owner_addr}-${item.data.chain}-${item.data.id}`;
+      return `${item.type}-${getTokenAssetsIndexRowKey(item.row)}`;
     }
     if (item.type === 'scam_header') {
       return `scam-header-${item.data.total}`;
     }
     if (item.type === 'empty-assets') {
       return `empty-assets-${item.data}`;
+    }
+    if (item.type === 'loading-skeleton') {
+      return `loading-skeleton-${item.data}`;
     }
     return item.type;
   }, []);
@@ -518,6 +618,7 @@ const getStyles = createGetStyles2024(() => ({
   },
   loadingItem: {
     height: ASSETS_ITEM_HEIGHT_NEW,
+    marginBottom: 8,
   },
   rowWrap: {
     height: ASSETS_ITEM_HEIGHT_NEW,

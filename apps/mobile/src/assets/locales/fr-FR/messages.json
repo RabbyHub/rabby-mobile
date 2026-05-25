@@ -100,7 +100,7 @@
         "Unlimited": "Illimité",
         "InteractionResults": "Résultats d'interaction",
         "RevokeFrom": "Révoquer de",
-        "InteractedContract": "Contrat interagi",
+        "InteractedContract": "Interaction avec (À)",
         "name": "Nom",
         "SendAgain": "Envoyer à nouveau",
         "Unknown": "Inconnu",
@@ -113,7 +113,9 @@
         "BuyAgain": "Acheter à nouveau",
         "AddToWhitelist": "Ajouter à la liste blanche",
         "RecipientAddress": "Portefeuille du destinataire",
-        "Simulation Results": "Résultats de simulation"
+        "Simulation Results": "Résultats de simulation",
+        "TransactionDetails": "Détails de la transaction",
+        "Operation": "Opération"
       },
       "empty": {
         "title": "Aucune transaction",
@@ -1665,7 +1667,8 @@
         "txCreated": "Transaction créée",
         "txSendings": "Envoi de la demande de signature ({{current}}/{{total}})"
       },
-      "fixedModeText": "Mode Fixe : Utilisez toujours votre paramètre de gaz personnalisé"
+      "fixedModeText": "Mode Fixe : Utilisez toujours votre paramètre de gaz personnalisé",
+      "fixedModeTag": "Mode fixe"
     },
     "sign": {
       "transactionSpeed": "Vitesse de Transaction"
@@ -1874,7 +1877,7 @@
       "switchAccount": "Changer de portefeuille",
       "depositFailed": "Le dépôt a échoué",
       "gasBalance": "Solde de Gaz",
-      "lowBalance": "Vous n'avez pas assez de gas. Déposez du gas pour garantir que vos futures transactions se déroulent sans problème.",
+      "lowBalance": "Vous n'avez pas assez de gas (<$1.00). Déposez du gas pour garantir que vos futures transactions se déroulent sans problème.",
       "depositSubmitted": "Dépôt soumis",
       "depositWith": "Déposer via"
     },
@@ -2450,6 +2453,28 @@
       "title": "Historique"
     },
     "perps": {
+      "limitOrders": "Ordres à cours limité",
+      "cancelAll": "Tout annuler",
+      "cancelAllOrdersConfirmTitle": "Confirmer l'annulation de TOUS les ordres",
+      "cancelAllOrdersConfirmMessage": "Tous vos ordres à cours limité seront annulés",
+      "limitOrderDetail": {
+        "title": "Limite {{side}} {{pair}}",
+        "time": "Heure",
+        "size": "Taille",
+        "filled": "Exécuté",
+        "currentPrice": "Prix actuel",
+        "limitPrice": "Prix limite",
+        "marginUsage": "Utilisation de la marge",
+        "cancelLimitOrder": "Annuler l'ordre à cours limité",
+        "buy": "Acheter",
+        "sell": "Vendre"
+      },
+      "cancelOrderToast": {
+        "singleSuccess": "Ordre à cours limité annulé",
+        "multiSuccess": "{{count}} ordres à cours limité annulés",
+        "partial": "{{okCount}} annulé(s), {{failCount}} échoué(s)",
+        "failed": "Échec de l'annulation de l'ordre à cours limité"
+      },
       "PerpsCard": {
         "available": "Disponible",
         "loginBtn": "Connectez-vous à Trading Perps",
@@ -2705,6 +2730,20 @@
       }
     },
     "perpsDetail": {
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "Définir le prix limite d'achat",
+        "setLimitSellPrice": "Définir le prix limite de vente",
+        "marketLabel": "Mid",
+        "setBtn": "Définir",
+        "blockError": "Le prix de l'ordre dépasse la limite de protection de prix de 10 %.",
+        "confirmTitle": "Vérifier le prix limite",
+        "confirmMessage": "Le prix limite est à 5 %+ du prix du marché",
+        "confirmContinue": "Continuer",
+        "confirmCancel": "Annuler"
+      },
+      "PerpsPriceInfo": {
+        "current": "Actuel"
+      },
       "PerpsPosition": {
         "title": "Position",
         "cross": "Cross",
@@ -2770,6 +2809,13 @@
         "rabbyFeeTipsV2": "Frais Rabby : 0,02 %"
       },
       "PerpsOpenPositionPopup": {
+        "title": "Ouvrir une position {{coin}}",
+        "limitOrderPlacedToast": "Limite {{direction}} {{coin}} : Taille {{size}} placée à ${{price}}",
+        "orderType": "Type d'ordre",
+        "orderTypeMarket": "Marché",
+        "orderTypeLimit": "Limite",
+        "limitPrice": "Prix limite",
+        "currentPrice": "Prix actuel",
         "margin": "Marge",
         "insufficientBalance": "Solde insuffisant",
         "size": "Taille",
@@ -2793,6 +2839,11 @@
         "onlyIsolated": "Seule la marge isolée est prise en charge pour ce token."
       },
       "PerpsOpenPositionCheckPopup": {
+        "limitTitle": "Vérifier l'ordre à cours limité",
+        "marketTitle": "Vérifier l'ordre au marché",
+        "limitPrice": "Prix limite",
+        "mayExecuteImmediately": "Cet ordre à cours limité peut s'exécuter immédiatement",
+        "setLimitOrderBtn": "Définir l'ordre à cours limité",
         "price": "Prix",
         "perps": "Perps",
         "initialMargin": "Marge Initiale",
@@ -2836,6 +2887,10 @@
         "priceBelow": "Prix en dessous",
         "priceAbove": "Prix au-dessus",
         "EntryAndCurrentPrice": "Entrée {{entryPrice}}  Actuel {{price}}",
+        "youGainRoi": "Vous gagnez (ROI)",
+        "youLossRoi": "Vous perdez (ROI)",
+        "currentPriceTpl": "Actuel <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "Entrée <1>{{entryPrice}}</1>  Actuel <2>{{price}}</2>",
         "youGain": "Vous gagnez",
         "stopLossWhen": "Arrêt de Perte Lorsque",
         "currentPrice": "Prix actuel {{price}}",
@@ -2939,7 +2994,7 @@
         "availableToBorrow": "Disponible à emprunter",
         "approveAndSupply": "Approuver et fournir",
         "supplyAPY": "Offre APY",
-        "supplyBalance": "Fournir le solde",
+        "supplyBalance": "Solde fourni",
         "collateralization": "Suralisation",
         "enabled": "Activé",
         "isolatedTips": "Vos actifs de prêt/emprunt existants ne sont pas pris en charge.",
@@ -3089,7 +3144,8 @@
         "debtSwapSelector": {
           "header": {
             "assets": "Token/Balance",
-            "borrow": "Mes emprunts"
+            "borrow": "Mes emprunts",
+            "apy": "APY"
           },
           "title": "Sélectionner le Token d'emprunt"
         },

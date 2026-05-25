@@ -1,0 +1,177 @@
+import React, { useState } from 'react';
+import { Alert, TouchableOpacity, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { useMemoizedFn } from 'ahooks';
+import BigNumber from 'bignumber.js';
+
+import { Text } from '@/components/Typography';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { getStatsReportSide } from '@/utils/perps';
+import { stats } from '@/utils/stats';
+import { APP_VERSIONS } from '@/constant';
+
+import { PerpsLimitOrderItem } from './PerpsLimitOrderItem';
+import { PerpsLimitOrderDetailPopup } from './PerpsLimitOrderDetailPopup';
+import { LimitOrderRow } from '../../hooks/useLimitOrders';
+import { usePerpsPosition } from '@/screens/PerpsMarketDetail/hooks/usePerpsPosition';
+
+type Props = {
+  rows: LimitOrderRow[];
+  handleActionApproveStatus: () => Promise<void>;
+  isHome?: boolean;
+  disableCoinNavigation?: boolean;
+};
+
+export const PerpsLimitOrdersSectionView: React.FC<Props> = ({
+  rows,
+  isHome,
+  disableCoinNavigation,
+  handleActionApproveStatus,
+}) => {
+  const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+  const currentPerpsAccount = perpsStore(s => s.currentPerpsAccount);
+  const { handleCancelLimitOrders } = usePerpsPosition();
+  const [activeRow, setActiveRow] = useState<LimitOrderRow | null>(null);
+
+  const reportCancelled = useMemoizedFn((cancelledRows: LimitOrderRow[]) => {
+    cancelledRows.forEach(row => {
+      const { order, leverage } = row;
+      const isBuy = order.side === 'B';
+      stats.report('perpsTradeHistory', {
+        created_at: new Date().getTime(),
+        user_addr: currentPerpsAccount?.address || '',
+        trade_type: 'cancel limit order',
+        leverage: leverage?.value.toString() || '',
+        trade_side: getStatsReportSide(isBuy, false),
+        margin_mode: leverage?.type || '',
+        coin: order.coin,
+        size: order.origSz,
+        price: order.limitPx,
+        trade_usd_value: new BigNumber(order.limitPx)
+          .times(order.origSz)
+          .toFixed(2),
+        service_provider: 'hyperliquid',
+        app_version: APP_VERSIONS.fromNative || '0',
+        address_type: currentPerpsAccount?.type || '',
+      });
+    });
+  });
+
+  const handleCancelAll = useMemoizedFn(async () => {
+    await handleActionApproveStatus();
+    Alert.alert(
+      t('page.perps.cancelAllOrdersConfirmTitle'),
+      t('page.perps.cancelAllOrdersConfirmMessage'),
+      [
+        { text: t('global.cancel'), style: 'default' },
+        {
+          text: t('global.confirm'),
+          style: 'default',
+          onPress: async () => {
+            const cancelledOids = await handleCancelLimitOrders(
+              rows.map(r => r.order),
+            );
+            const cancelledSet = new Set(cancelledOids);
+            reportCancelled(rows.filter(r => cancelledSet.has(r.order.oid)));
+          },
+        },
+      ],
+    );
+  });
+
+  const handleConfirmSingleCancel = useMemoizedFn(async () => {
+    if (!activeRow) {
+      return;
+    }
+    await handleActionApproveStatus();
+    const cancelledOids = await handleCancelLimitOrders([activeRow.order]);
+    if (cancelledOids.length > 0) {
+      reportCancelled([activeRow]);
+      setActiveRow(null);
+    }
+  });
+
+  if (!rows.length) {
+    return null;
+  }
+
+  return (
+    <View style={[styles.container, isHome && styles.homeContainer]}>
+      <View style={styles.sectionHeader}>
+        <View style={styles.sectionTitleRow}>
+          <View style={styles.sectionTitleBar} />
+          <Text style={styles.sectionTitle}>{t('page.perps.limitOrders')}</Text>
+        </View>
+        <TouchableOpacity onPress={handleCancelAll}>
+          <Text style={styles.sectionActionText}>
+            {t('page.perps.cancelAll')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.content}>
+        {rows.map(row => (
+          <PerpsLimitOrderItem
+            key={row.order.oid}
+            order={row.order}
+            leverage={row.leverage}
+            marginUsage={row.marginUsage}
+            onPress={() => setActiveRow(row)}
+          />
+        ))}
+      </View>
+
+      <PerpsLimitOrderDetailPopup
+        visible={!!activeRow}
+        order={activeRow?.order}
+        leverage={activeRow?.leverage}
+        marginUsage={activeRow?.marginUsage}
+        disableCoinNavigation={disableCoinNavigation}
+        onClose={() => setActiveRow(null)}
+        onCancel={handleConfirmSingleCancel}
+      />
+    </View>
+  );
+};
+
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  container: {
+    marginBottom: 24,
+  },
+  homeContainer: {
+    marginTop: 24,
+    marginBottom: 0,
+  },
+  sectionHeader: {
+    marginBottom: 12,
+    paddingHorizontal: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  sectionTitleBar: {
+    width: 4,
+    height: 20,
+    borderRadius: 100,
+    backgroundColor: '#50D2C1',
+  },
+  sectionTitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '900',
+    color: colors2024['neutral-title-1'],
+  },
+  sectionActionText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: colors2024['neutral-secondary'],
+    textAlign: 'right',
+  },
+  content: { flexDirection: 'column', gap: 8 },
+}));

@@ -31,7 +31,7 @@ const PerpsMarketItemComponent: React.FC<{
     <TouchableOpacity onPress={onPress}>
       <View style={styles.card}>
         {rank != null && <PerpsRankBadge rank={rank} />}
-        <AssetAvatar logo={item.logoUrl} logoStyle={styles.icon} size={46} />
+        <AssetAvatar logo={item.logoUrl} logoStyle={styles.icon} size={36} />
         <View style={styles.content}>
           <View style={styles.row}>
             <View style={styles.nameContainer}>
@@ -91,8 +91,8 @@ export const PerpsMarketItem = React.memo(
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: 16,
+    paddingHorizontal: 4,
     // backgroundColor: isLight
     //   ? colors2024['neutral-bg-1']
     //   : colors2024['neutral-bg-3'],
@@ -102,8 +102,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 8,
   },
   icon: {
-    width: 46,
-    height: 46,
+    width: 36,
+    height: 36,
     borderRadius: 1000,
     backgroundColor: 'white',
     flexShrink: 0,

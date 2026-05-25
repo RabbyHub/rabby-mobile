@@ -1,4 +1,8 @@
-import { accountEvents, fetchAllAccounts } from '@/core/apis/account';
+import {
+  accountEvents,
+  fetchAllAccounts,
+  invalidateFetchAllAccountsCache,
+} from '@/core/apis/account';
 import * as apiMnemonic from '@/core/apis/mnemonic';
 import { getAllAccounts, removeAddress } from '@/core/apis/address';
 import { AccountInfoEntity } from '@/databases/entities/accountInfo';
@@ -45,32 +49,34 @@ class AccountStore extends BaseStore<AccountStoreState> {
   private hasStartedLifecycle = false;
 
   private readonly fetchAccountsInParallel =
-    this.createAvoidParallelAsyncMethod(async () => {
-      this.setState(prev => {
-        if (prev.isFetchingAccounts) {
-          return prev;
-        }
-        return {
-          isFetchingAccounts: true,
-        };
-      });
+    this.createAvoidParallelAsyncMethod(
+      async (options?: { force?: boolean }) => {
+        this.setState(prev => {
+          if (prev.isFetchingAccounts) {
+            return prev;
+          }
+          return {
+            isFetchingAccounts: true,
+          };
+        });
 
-      try {
-        const accounts = await fetchAllAccounts();
-        this.setState({
-          accounts,
-          hasFetchedAccounts: true,
-          isFetchingAccounts: false,
-        });
-        return accounts;
-      } catch (error) {
-        this.setState({
-          hasFetchedAccounts: true,
-          isFetchingAccounts: false,
-        });
-        throw error;
-      }
-    });
+        try {
+          const accounts = await fetchAllAccounts(options);
+          this.setState({
+            accounts,
+            hasFetchedAccounts: true,
+            isFetchingAccounts: false,
+          });
+          return accounts;
+        } catch (error) {
+          this.setState({
+            hasFetchedAccounts: true,
+            isFetchingAccounts: false,
+          });
+          throw error;
+        }
+      },
+    );
 
   constructor() {
     super({
@@ -99,8 +105,8 @@ class AccountStore extends BaseStore<AccountStoreState> {
     this.setField('pinnedAddresses', valOrFunc);
   };
 
-  fetchAccounts = async () => {
-    return this.fetchAccountsInParallel();
+  fetchAccounts = async (options?: { force?: boolean }) => {
+    return this.fetchAccountsInParallel(options);
   };
 
   fetchNewlyAddedAccounts = async () => {
@@ -190,7 +196,8 @@ class AccountStore extends BaseStore<AccountStoreState> {
 
     await this.togglePinAddressAsync({ ...account, nextPinned: false });
     await removeAddress(account);
-    await this.fetchAccounts();
+    invalidateFetchAllAccountsCache();
+    await this.fetchAccounts({ force: true });
 
     if (
       accounts.filter(acc => isSameAddress(acc.address, account.address))
@@ -208,16 +215,18 @@ class AccountStore extends BaseStore<AccountStoreState> {
     }
     this.hasStartedLifecycle = true;
 
-    perfEvents.subscribe('USER_MANUALLY_UNLOCK', () => {
+    perfEvents.subscribe('USER_MANUALLY_UNLOCK_UI_READY', () => {
       this.fetchAccounts();
     });
 
     keyringService.on('newAccount', () => {
-      this.fetchAccounts();
+      invalidateFetchAllAccountsCache();
+      this.fetchAccounts({ force: true });
     });
 
     keyringService.on('removedAccount', async account => {
-      await this.fetchAccounts();
+      invalidateFetchAllAccountsCache();
+      await this.fetchAccounts({ force: true });
       accountEvents.emit('ACCOUNT_REMOVED', {
         removedAccounts: [account],
       });
@@ -249,6 +258,7 @@ class AccountStore extends BaseStore<AccountStoreState> {
     accountEvents.on(
       'ACCOUNT_ADDED',
       async ({ accounts, needsBackupReminder }) => {
+        invalidateFetchAllAccountsCache();
         // Store backup reminder in preferenceService (MMKV) for reliable persistence
         // Use basePublicKey as the key so all addresses from the same seed phrase
         // share the same backup reminder state

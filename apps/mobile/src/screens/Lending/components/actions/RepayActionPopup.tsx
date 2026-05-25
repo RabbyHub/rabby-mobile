@@ -626,8 +626,9 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
 
     await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
     naviPush(RootNames.StackTransaction, {
-      screen: RootNames.Swap,
+      screen: RootNames.SwapBridge,
       params: {
+        activeTab: 'swap',
         chainEnum: chainEnum || CHAINS_ENUM.ETH,
         tokenId: swapTokenId,
         type: 'Buy',
@@ -745,6 +746,9 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
             handleChangeAmount('-1');
           }}
           tokenAmount={Number(repayAmount.amount || '0')}
+          tokenDecimals={
+            selectedRepayToken?.decimals ?? reserve.reserve.decimals
+          }
           price={Number(
             reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
           )}

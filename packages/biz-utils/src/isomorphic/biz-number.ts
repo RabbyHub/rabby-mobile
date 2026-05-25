@@ -254,15 +254,21 @@ export const formatPerpsUsdValue = (
   return '<$0.01';
 };
 
-export const formatAmount = (amount: string | number, decimals = 4) => {
+export const formatAmount = (
+  amount: string | number,
+  decimals = 4,
+  ignoreZeroTail = false,
+) => {
+  const bnValue = new BigNumber(amount);
+  const shouldIgnoreZeroTail = ignoreZeroTail && bnValue.mod(1).isZero();
   if ((amount as number) > 1e9) {
-    return `${new BigNumber(amount).div(1e9).toFormat(4)}B`;
+    return `${bnValue.div(1e9).toFormat(4)}B`;
   }
   if ((amount as number) > 10000) {
-    return formatNumber(amount);
+    return formatNumber(amount, shouldIgnoreZeroTail ? 0 : 2);
   }
   if ((amount as number) > 1) {
-    return formatNumber(amount, 4);
+    return formatNumber(amount, shouldIgnoreZeroTail ? 0 : 4);
   }
   if ((amount as number) < 0.0001) {
     const str = new BigNumber(amount).toFixed();
