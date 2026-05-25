@@ -1,30 +1,23 @@
-import React, { useLayoutEffect, useMemo, useState, useEffect } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
   View,
   StyleProp,
   ViewStyle,
-  TouchableOpacity,
   Pressable,
   Image,
 } from 'react-native';
-import { StackActions } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
-import { useFindAddressByWhitelist } from '../hooks/useWhiteListAddress';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { contactService } from '@/core/services';
 import { SheetModalSelectAccountSend } from '@/components/AccountSelectModalTx/SelectAccountSheetModal';
 
 import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '@/components2024/Card';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { ellipsisAddress } from '@/utils/address';
 import { RcIconLockCC, RcIconSwitchCC } from '@/assets/icons/send';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { RootNames } from '@/constant/layout';
 import { useWhitelist } from '@/hooks/whitelist';
 import { AddrDescResponse, Cex } from '@rabby-wallet/rabby-api/dist/types';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
@@ -39,13 +32,11 @@ import { default as RcIconUnknownAddressAvatarCC } from '../icons/unknown-addres
 import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
 import { useSendTokenInternalShallowSelector } from '../hooks/useSendToken';
 import { RcIconTipRightCC } from '../icons';
-import { makeAccountObject } from '@/utils/account';
-import { IExtractFromPromise } from '@/utils/type';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { Text } from '@/components/Typography';
 
-export const ToAccountEntry = ({
+export const ToAccountEntry = React.memo(function ToAccountEntry({
   account,
   isSelectingAccount = false,
   onPress,
@@ -62,7 +53,7 @@ export const ToAccountEntry = ({
   disableMenu?: boolean;
   isMyImported?: boolean;
   hideBalance?: boolean;
-}) => {
+}) {
   const { styles, colors2024 } = useTheme2024({ getStyle: getToItemStyles });
   const { t } = useTranslation();
   const [cacheCexDes, setCacheCexDes] = useState<Cex | null>(null);
@@ -91,6 +82,31 @@ export const ToAccountEntry = ({
   }, [cexDes, account.address]);
 
   const isEmptyAddress = !account.address;
+  const handleCardPress = useCallback(
+    (evt: any) => {
+      evt.stopPropagation();
+      onPress();
+    },
+    [onPress],
+  );
+  const handleAddressDescPress = useCallback(() => {
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.ADDRESS_HIGHT_DESC,
+      address: account.address,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
+      },
+      nextButtonProps: {
+        title: <Text style={styles.modalNextButtonText}>{t('global.ok')}</Text>,
+        titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+        onPress: () => {
+          removeGlobalBottomSheetModal2024(modalId);
+        },
+      },
+    });
+  }, [account.address, styles.modalNextButtonText, t]);
 
   return (
     <AddressItemShadowView
@@ -107,10 +123,7 @@ export const ToAccountEntry = ({
             isEmptyAddress && styles.emptyBg,
             style,
           ])}
-          onPress={evt => {
-            evt.stopPropagation();
-            onPress();
-          }}>
+          onPress={handleCardPress}>
           <InnerAddressItem style={styles.rootItem} account={account}>
             {({ WalletIcon }) => (
               <View style={styles.item}>
@@ -169,32 +182,7 @@ export const ToAccountEntry = ({
                         numberOfLines={1}>
                         {formatName}
                       </Text>
-                      <Pressable
-                        onPress={() => {
-                          const modalId = createGlobalBottomSheetModal2024({
-                            name: MODAL_NAMES.ADDRESS_HIGHT_DESC,
-                            address: account.address,
-                            bottomSheetModalProps: {
-                              enableContentPanningGesture: true,
-                              enablePanDownToClose: true,
-                              enableDismissOnClose: true,
-                            },
-                            nextButtonProps: {
-                              title: (
-                                <Text style={styles.modalNextButtonText}>
-                                  {t('global.ok')}
-                                </Text>
-                              ),
-                              titleStyle: StyleSheet.flatten([
-                                styles.modalNextButtonText,
-                              ]),
-                              onPress: () => {
-                                removeGlobalBottomSheetModal2024(modalId);
-                              },
-                            },
-                          });
-                        }}
-                        hitSlop={10}>
+                      <Pressable onPress={handleAddressDescPress} hitSlop={10}>
                         <View style={styles.underlineContainer}>
                           <Text style={styles.hideBalanceAddress}>
                             {ellipsisAddress(account.address)}
@@ -241,7 +229,7 @@ export const ToAccountEntry = ({
       </View>
     </AddressItemShadowView>
   );
-};
+});
 
 const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
   shadowView: {
@@ -428,6 +416,24 @@ function ToAddressControl2024({ style }: React.PropsWithChildren<RNViewProps>) {
   const { t } = useTranslation();
 
   const [isSelectingAccount, setIsSelectingAccount] = useState(false);
+  const toAccountAddress = toAccount?.address || '';
+  const toAccountInWhitelist = useMemo(
+    () => !!toAccountAddress && isAddrOnWhitelist(toAccountAddress),
+    [isAddrOnWhitelist, toAccountAddress],
+  );
+  const handleOpenAccountSelector = useCallback(() => {
+    setIsSelectingAccount(true);
+  }, []);
+  const handleAccountSelectorVisibleChange = useCallback((visible: boolean) => {
+    setIsSelectingAccount(!!visible);
+  }, []);
+  const handleSelectAccount = useCallback(
+    (account: any) => {
+      handleFieldChange('to', account?.address || '');
+      setIsSelectingAccount(false);
+    },
+    [handleFieldChange],
+  );
 
   if (!toAccount) {
     return null;
@@ -466,21 +472,15 @@ function ToAddressControl2024({ style }: React.PropsWithChildren<RNViewProps>) {
       </View>
       <ToAccountEntry
         isSelectingAccount={isSelectingAccount}
-        onPress={() => setIsSelectingAccount(true)}
+        onPress={handleOpenAccountSelector}
         account={toAccount}
         addrDesc={addrDesc}
-        inWhiteList={isAddrOnWhitelist(toAccount.address)}
+        inWhiteList={toAccountInWhitelist}
       />
       <SheetModalSelectAccountSend
         visible={isSelectingAccount}
-        onVisibleChange={visible => {
-          setIsSelectingAccount(!!visible);
-        }}
-        onSelectAccount={account => {
-          // setCurrentAccount(account);
-          handleFieldChange('to', account?.address || '');
-          setIsSelectingAccount(false);
-        }}
+        onVisibleChange={handleAccountSelectorVisibleChange}
+        onSelectAccount={handleSelectAccount}
         type="SendTo"
       />
     </View>

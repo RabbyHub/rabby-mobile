@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { Platform, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -95,12 +95,15 @@ function BottomArea() {
   const [isAllowTransferModalVisible, setIsAllowTransferModalVisible] =
     React.useState(false);
 
-  const { status, ctx } = useSignatureStore();
-  const [calcCount, setCalcCount] = useState(ctx?.txsCalc?.length);
-  useEffect(() => {
-    setCalcCount(ctx?.txsCalc?.length);
-  }, [ctx?.txsCalc?.length]);
-  const debouncedCalcCount = useDebouncedValue(calcCount, 300);
+  const signatureStatus = useSignatureStore(state => state.status);
+  const signatureDisabledProcess = useSignatureStore(
+    state => !!state.ctx?.disabledProcess,
+  );
+  const signatureGasFeeTooHigh = useSignatureStore(
+    state => !!state.ctx?.gasFeeTooHigh,
+  );
+  const txsCalcLength = useSignatureStore(state => state.ctx?.txsCalc?.length);
+  const debouncedCalcCount = useDebouncedValue(txsCalcLength, 300);
   useEffect(() => {
     if (!debouncedCalcCount) return;
     if (debouncedCalcCount > 0) {
@@ -108,10 +111,9 @@ function BottomArea() {
     }
   }, [debouncedCalcCount, onGasInfoDebouncedLoaded]);
 
-  const isDirectSigning = status === 'signing';
-
-  const canDirectSign = !ctx?.disabledProcess;
-  const showRiskTipsForMiniSign = !!ctx?.gasFeeTooHigh;
+  const isDirectSigning = signatureStatus === 'signing';
+  const canDirectSign = !signatureDisabledProcess;
+  const showRiskTipsForMiniSign = signatureGasFeeTooHigh;
 
   const {
     loading: loadingRisks,
