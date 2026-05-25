@@ -98,7 +98,6 @@ import { GasAccountBadge } from '../../GasAccount/components/GasAccountBadge';
 import { apisLending } from '../../Lending/hooks';
 import { HomeCenterArea } from '../components/HomeCenterArea';
 import { HomeDappDrawer } from '../components/HomeDappDrawer';
-import { ETHStatus } from '../components/ETHStatus';
 import { HomePendingBadge } from '../components/HomePending';
 import { LendingHF } from '../components/LendingHF';
 import { MultiAddressHomeHeader } from '../components/MultiAddressHomeHeader';
@@ -775,10 +774,6 @@ function DeferredHomeMenuBadge({
     return null;
   }
 
-  if (el.key === MultiHomeFeatTitle.Market) {
-    return <ETHStatus />;
-  }
-
   if (el.key === MultiHomeFeatTitle.Perps) {
     return <PerpsPnl />;
   }
@@ -793,10 +788,6 @@ function DeferredHomeMenuBadge({
 
   if (el.key === MultiHomeFeatTitle.Lending) {
     return <LendingHF />;
-  }
-
-  if (el.key === MultiHomeFeatTitle.Points) {
-    return <PointsBadge />;
   }
 
   if (el.key === MultiHomeFeatTitle.GasAccount) {
