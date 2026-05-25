@@ -25,7 +25,6 @@ import {
   DirectSignBtn,
   DirectSignBtnMethods,
 } from '@/components2024/DirectSignBtn';
-import { Account } from '@/core/services/preference';
 import { RiskType, sortRisksDesc, useRisks } from '@/components/SendLike/risk';
 import { useSignatureStore } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { BottomRiskTip } from '@/components/SendLike/BottomRiskTip';
@@ -38,7 +37,7 @@ import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/deposi
 
 const isAndroid = Platform.OS === 'android';
 
-function BottomArea({ account }: { account: Account | null }) {
+function BottomArea() {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
@@ -49,6 +48,7 @@ function BottomArea({ account }: { account: Account | null }) {
     agreeRequiredForToAddress,
     agreeRequiredForToken,
     amount,
+    account,
     buildTxsCount,
     canShowDirectSign,
     canSubmit,
@@ -71,6 +71,7 @@ function BottomArea({ account }: { account: Account | null }) {
     agreeRequiredForToAddress: ctx.screenState.agreeRequiredChecks.forToAddress,
     agreeRequiredForToken: ctx.screenState.agreeRequiredChecks.forToken,
     amount: ctx.formValues.amount,
+    account: ctx.computed.account,
     buildTxsCount: ctx.screenState.buildTxsCount,
     canShowDirectSign: ctx.computed.canDirectSign,
     canSubmit: ctx.computed.canSubmit,

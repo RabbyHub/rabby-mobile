@@ -4,17 +4,13 @@ import { Dimensions, View } from 'react-native';
 import { useSendNFTInternalShallowSelector } from '../hooks/useSendNFT';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 
-export const ShowMoreOnSendNFT = React.memo(function ShowMoreOnSendNFT({
-  chainServeId,
-}: {
-  chainServeId: string;
-}) {
-  const { canSubmit, canDirectSign } = useSendNFTInternalShallowSelector(
-    ctx => ({
+export const ShowMoreOnSendNFT = React.memo(function ShowMoreOnSendNFT() {
+  const { canSubmit, canDirectSign, chainServeId } =
+    useSendNFTInternalShallowSelector(ctx => ({
       canSubmit: ctx.computed.canSubmit,
       canDirectSign: ctx.computed.canDirectSign,
-    }),
-  );
+      chainServeId: ctx.computed.chainItem?.serverId || '',
+    }));
 
   if (!canSubmit || !canDirectSign) return null;
 

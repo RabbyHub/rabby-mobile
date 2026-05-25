@@ -2250,6 +2250,7 @@ type InternalContext = {
   screenState: SendScreenState;
   formValues: FormSendToken;
   computed: {
+    account: Account | null;
     fromAddress: string;
     chainItem: Chain | null;
     currentToken: TokenItem | null;
@@ -2267,6 +2268,8 @@ type InternalContext = {
   formik: ReturnType<typeof useSendTokenFormikContext>;
   sendTokenEvents: EventEmitter;
   slider: number;
+  scrollViewRef: React.MutableRefObject<KeyboardAwareScrollView | null>;
+  scrollViewStyle: any;
   fns: {
     // putScreenState: (
     //   patch:
@@ -2306,6 +2309,7 @@ const DEFAULT_SEND_TOKEN_INTERNAL_CONTEXT: InternalContext = {
   screenState: { ...DFLT_SEND_STATE },
   formValues: { ...DF_SEND_TOKEN_FORM },
   computed: {
+    account: null,
     fromAddress: '',
     chainItem: null,
     currentToken: null,
@@ -2324,6 +2328,8 @@ const DEFAULT_SEND_TOKEN_INTERNAL_CONTEXT: InternalContext = {
   formik: null as any,
   sendTokenEvents: null as any,
   slider: 0,
+  scrollViewRef: { current: null },
+  scrollViewStyle: null,
   fns: {
     // putScreenState: () => { },
     fetchContactAccounts: () => {},

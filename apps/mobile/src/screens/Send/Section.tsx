@@ -19,7 +19,6 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 import { TokenAmountInput } from '@/components/Token/TokenAmountInput';
-import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { IS_ANDROID } from '@/core/native/utils';
 import { BubbleWithText } from '@/screens/Swap/components/Slider';
@@ -32,10 +31,7 @@ import { Text, TextInput } from '@/components/Typography';
 
 export const BalanceSection = React.memo(function BalanceSection({
   style,
-  disableItemCheck,
-}: RNViewProps & {
-  disableItemCheck?: ITokenCheck;
-}) {
+}: RNViewProps) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -50,6 +46,7 @@ export const BalanceSection = React.memo(function BalanceSection({
     currentToken,
     currentTokenBalance,
     directSignBtnRef,
+    disableItemCheck,
     gasList,
     handleFieldChange,
     handleClickMaxButton,
@@ -68,6 +65,7 @@ export const BalanceSection = React.memo(function BalanceSection({
     currentToken: ctx.computed.currentToken,
     currentTokenBalance: ctx.computed.currentTokenBalance,
     directSignBtnRef: ctx.directSignBtnRef,
+    disableItemCheck: ctx.fns.disableItemCheck,
     gasList: ctx.screenState.gasList,
     handleFieldChange: ctx.callbacks.handleFieldChange,
     handleClickMaxButton: ctx.callbacks.handleClickMaxButton,

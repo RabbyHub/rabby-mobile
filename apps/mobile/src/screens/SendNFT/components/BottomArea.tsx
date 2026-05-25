@@ -16,7 +16,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useSignatureStore } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
-import { Account } from '@/core/services/preference';
 import { RiskType, sortRisksDesc, useRisks } from '@/components/SendLike/risk';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { BottomRiskTip } from '@/components/SendLike/BottomRiskTip';
@@ -24,7 +23,7 @@ import { resolveBgColorByType } from '@/components2024/ScreenContainer/LinearGra
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 
-function BottomArea({ account }: { account: Account | null }) {
+function BottomArea() {
   const { t } = useTranslation();
 
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -34,6 +33,7 @@ function BottomArea({ account }: { account: Account | null }) {
   const {
     addressToAddAsContacts,
     agreeRequiredForToAddress,
+    account,
     buildTxsCount,
     canShowDirectSign,
     canSubmit,
@@ -52,6 +52,7 @@ function BottomArea({ account }: { account: Account | null }) {
   } = useSendNFTInternalShallowSelector(ctx => ({
     addressToAddAsContacts: ctx.screenState.addressToAddAsContacts,
     agreeRequiredForToAddress: ctx.screenState.agreeRequiredChecks.forToAddress,
+    account: ctx.computed.account,
     buildTxsCount: ctx.screenState.buildTxsCount,
     canShowDirectSign: ctx.computed.canDirectSign,
     canSubmit: ctx.computed.canSubmit,

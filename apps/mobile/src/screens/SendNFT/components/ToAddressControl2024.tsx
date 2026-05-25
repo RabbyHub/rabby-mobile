@@ -410,19 +410,14 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
 
 function ToAddressControl2024({
   style,
-  // brandName,
-  addrDesc,
-}: React.PropsWithChildren<
-  RNViewProps & {
-    // brandName?: string;
-    addrDesc?: AddrDescResponse['desc'] | null;
-  }
->) {
+}: // brandName,
+React.PropsWithChildren<RNViewProps>) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { isAddrOnWhitelist } = useWhitelist();
   const { findAccountWithoutBalance } = useFindAddressByWhitelist();
-  const { handleFieldChange, toAccount, toAddressPositiveTips } =
+  const { addrDesc, handleFieldChange, toAccount, toAddressPositiveTips } =
     useSendNFTInternalShallowSelector(ctx => ({
+      addrDesc: ctx.computed.addrDesc,
       handleFieldChange: ctx.callbacks.handleFieldChange,
       toAccount: ctx.computed.toAccount,
       toAddressPositiveTips: ctx.computed.toAddressPositiveTips,

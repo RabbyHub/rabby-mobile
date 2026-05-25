@@ -23,6 +23,7 @@ import {
   SendNFTInternalContextProvider,
   subscribeEvent,
   useSendNFTForm,
+  useSendNFTInternalShallowSelector,
   useSendNFTScreenState,
 } from './hooks/useSendNFT';
 import { useContactAccounts } from '@/hooks/contact';
@@ -39,9 +40,46 @@ const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
   KeyboardAwareScrollView,
 );
 
-export default function SendNFT() {
+const SendNFTScreenBody = React.memo(function SendNFTScreenBody() {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const { scrollViewRef, scrollViewStyle } = useSendNFTInternalShallowSelector(
+    ctx => ({
+      scrollViewRef: ctx.scrollViewRef,
+      scrollViewStyle: ctx.scrollViewStyle,
+    }),
+  );
 
+  const mainContentStyle = React.useMemo(
+    () => [styles.mainContent, scrollViewStyle],
+    [scrollViewStyle, styles.mainContent],
+  );
+
+  const handleScrollViewRef = React.useCallback(
+    (instance: any) => {
+      scrollViewRef.current = instance as unknown as KeyboardAwareScrollView;
+    },
+    [scrollViewRef],
+  );
+
+  return (
+    <NormalScreenContainer2024 type="bg1">
+      <AccountSwitcherModal forScene="SendNFT" inScreen />
+      <View style={styles.sendNFTScreen}>
+        <AnimatedKeyboardAwareScrollView
+          innerRef={handleScrollViewRef}
+          contentContainerStyle={mainContentStyle}>
+          <FromAddressControl2024 disableSwitch={true} />
+          <ToAddressControl2024 />
+          <NFTSection />
+          <ShowMoreOnSendNFT />
+        </AnimatedKeyboardAwareScrollView>
+        <BottomArea />
+      </View>
+    </NormalScreenContainer2024>
+  );
+});
+
+export default function SendNFT() {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -142,71 +180,81 @@ export default function SendNFT() {
     };
   }, [resetScreenState]);
 
+  const sendNFTInternalValue = React.useMemo(
+    () => ({
+      screenState,
+      formValues,
+      computed: {
+        account,
+        addrDesc: addrDesc || null,
+        collectionName,
+        fromAddress: account.address,
+        canSubmit,
+        toAccount,
+        toAddressPositiveTips,
+        // toAddressIsRecentlySend,
+        // toAddressInWhitelist,
+        whitelistEnabled,
+        toAddrCex,
+        toAddressInContactBook,
+        chainItem: chainItem || null,
+        currentNFT: nftItem || null,
+        canDirectSign,
+      },
+      events: sendNFTEvents,
+      formik,
+      scrollViewRef: scrollviewRef,
+      scrollViewStyle,
+      fns: {
+        putScreenState,
+        fetchContactAccounts,
+      },
+
+      callbacks: {
+        handleFieldChange,
+        handleGasLevelChanged,
+        handleIgnoreGasFeeChange,
+        onBottomAreaLayout,
+        onGasInfoDebouncedLoaded: scrollToBottom,
+      },
+    }),
+    [
+      account,
+      addrDesc,
+      canDirectSign,
+      canSubmit,
+      chainItem,
+      collectionName,
+      fetchContactAccounts,
+      formValues,
+      formik,
+      handleFieldChange,
+      handleGasLevelChanged,
+      handleIgnoreGasFeeChange,
+      nftItem,
+      onBottomAreaLayout,
+      putScreenState,
+      screenState,
+      scrollToBottom,
+      scrollviewRef,
+      scrollViewStyle,
+      sendNFTEvents,
+      toAccount,
+      toAddrCex,
+      toAddressInContactBook,
+      toAddressPositiveTips,
+      whitelistEnabled,
+    ],
+  );
+
   if (!nftItem || !chainItem || !account) {
     return null;
   }
 
   return (
     <SignatureInstanceProvider instance={miniSignInstance}>
-      <SendNFTInternalContextProvider
-        value={{
-          screenState,
-          formValues,
-          computed: {
-            fromAddress: account.address,
-            canSubmit,
-            toAccount,
-            toAddressPositiveTips,
-            // toAddressIsRecentlySend,
-            // toAddressInWhitelist,
-            whitelistEnabled,
-            toAddrCex,
-            toAddressInContactBook,
-            chainItem,
-            currentNFT: nftItem,
-            canDirectSign,
-          },
-          events: sendNFTEvents,
-          formik,
-          fns: {
-            putScreenState,
-            fetchContactAccounts,
-          },
-
-          callbacks: {
-            handleFieldChange,
-            handleGasLevelChanged,
-            handleIgnoreGasFeeChange,
-            onBottomAreaLayout,
-            onGasInfoDebouncedLoaded: scrollToBottom,
-          },
-        }}>
-        <NormalScreenContainer2024 type="bg1">
-          <AccountSwitcherModal forScene="SendNFT" inScreen />
-          <View style={styles.sendNFTScreen}>
-            <AnimatedKeyboardAwareScrollView
-              innerRef={instance => {
-                scrollviewRef.current =
-                  instance as unknown as KeyboardAwareScrollView;
-              }}
-              contentContainerStyle={[styles.mainContent, scrollViewStyle]}>
-              {/* From */}
-              <FromAddressControl2024 disableSwitch={true} />
-
-              {/* To */}
-              <ToAddressControl2024 addrDesc={addrDesc} />
-
-              {/* nft amount info */}
-              <NFTSection
-                collectionName={collectionName}
-                nftItem={nftItem}
-                chainItem={chainItem}
-              />
-              <ShowMoreOnSendNFT chainServeId={chainItem?.serverId || ''} />
-            </AnimatedKeyboardAwareScrollView>
-            <BottomArea account={account} />
-          </View>
-        </NormalScreenContainer2024>
+      <SendNFTInternalContextProvider value={sendNFTInternalValue}>
+        <SendNFTScreenBody />
       </SendNFTInternalContextProvider>
     </SignatureInstanceProvider>
   );

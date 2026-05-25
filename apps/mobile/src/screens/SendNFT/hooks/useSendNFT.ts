@@ -844,6 +844,9 @@ type InternalContext = {
   screenState: SendScreenState;
   formValues: FormSendNFT;
   computed: {
+    account: Account | null;
+    addrDesc: AddrDescResponse['desc'] | null;
+    collectionName?: string;
     fromAddress: string;
     chainItem: Chain | null;
     currentNFT: NFTItem | null;
@@ -861,6 +864,8 @@ type InternalContext = {
 
   formik: ReturnType<typeof useFormik<FormSendNFT>>;
   events: EventEmitter;
+  scrollViewRef: React.MutableRefObject<KeyboardAwareScrollView | null>;
+  scrollViewStyle: any;
   fns: {
     putScreenState: (
       patch:
@@ -884,6 +889,9 @@ const DEFAULT_SEND_NFT_INTERNAL_CONTEXT: InternalContext = {
   screenState: { ...DFLT_SEND_STATE },
   formValues: { ...DF_SEND_TOKEN_FORM },
   computed: {
+    account: null,
+    addrDesc: null,
+    collectionName: undefined,
     fromAddress: '',
     chainItem: null,
     currentNFT: null,
@@ -898,6 +906,8 @@ const DEFAULT_SEND_NFT_INTERNAL_CONTEXT: InternalContext = {
 
   formik: null as any,
   events: null as any,
+  scrollViewRef: { current: null },
+  scrollViewStyle: null,
   fns: {
     putScreenState: () => {},
     fetchContactAccounts: () => {},

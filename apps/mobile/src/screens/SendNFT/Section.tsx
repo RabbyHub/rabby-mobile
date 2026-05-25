@@ -3,8 +3,6 @@ import { View, StyleSheet } from 'react-native';
 import { useThemeStyles, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import { Chain } from '@/constant/chains';
 import {
   useSendNFTInternalShallowSelector,
   useInputBlurOnEvents,
@@ -40,26 +38,25 @@ export function SendNFTSection({
 
 export const NFTSection = React.memo(function NFTSection({
   style,
-  nftItem,
-  collectionName,
-  chainItem,
-}: RNViewProps & {
-  nftItem: NFTItem;
-  collectionName?: string;
-  chainItem?: Chain;
-}) {
+}: RNViewProps) {
   const { styles } = useTheme2024({ getStyle: getNFTSectionStyles });
   const { t } = useTranslation();
 
-  const { amount, handleFieldChange } = useSendNFTInternalShallowSelector(
-    ctx => ({
+  const { amount, chainItem, collectionName, handleFieldChange, nftItem } =
+    useSendNFTInternalShallowSelector(ctx => ({
       amount: ctx.formValues.amount,
+      chainItem: ctx.computed.chainItem,
+      collectionName: ctx.computed.collectionName,
       handleFieldChange: ctx.callbacks.handleFieldChange,
-    }),
-  );
+      nftItem: ctx.computed.currentNFT,
+    }));
 
   const amountInputRef = useRef<TextInput>(null);
   useInputBlurOnEvents(amountInputRef);
+
+  if (!nftItem) {
+    return null;
+  }
 
   return (
     <View style={[styles.nftSection, style]}>
