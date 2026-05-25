@@ -22,3 +22,4 @@ export { default as DevDataWhitelist } from '@/screens/Testkits/DevDataWhitelist
 export { default as DevSwitches } from '@/screens/Testkits/DevSwitches';
 export { default as DevPerf } from '@/screens/Testkits/DevPerf';
 export { default as DebugLogViewer } from '@/screens/Testkits/DebugLogViewer';
+export { default as InMemoryLogViewer } from '@/screens/Testkits/InMemoryLogViewer';

@@ -18,10 +18,12 @@ import {
 } from '@/components/customized/BottomSheet';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { Text } from '@/components/Typography';
+import { useNavigation } from '@react-navigation/native';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { toast } from '@/components2024/Toast';
 import { APP_RUNTIME_ENV } from '@/constant/env';
+import { RootNames } from '@/constant/layout';
 import { getOnlineConfig, subscribeOnlineConfig } from '@/core/config/online';
 import { useTheme2024 } from '@/hooks/theme';
 import { APP_FILE_LOGGING_ONLINE_SWITCH } from '@/utils/logging/policy';
@@ -654,6 +656,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
     localFileLoggingEnabled,
     onToggle,
   } = useAppLogFileSwitch();
+  const navigation = useNavigation();
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [isArchiveSharePickerVisible, setIsArchiveSharePickerVisible] =
     useState(false);
@@ -1260,6 +1263,22 @@ export default function DebugLogViewerScreen(): JSX.Element {
             label="Last action"
             value={lastAction}
             tone={lastAction.includes('failed') ? 'warning' : 'default'}
+          />
+        </Section>
+
+        <Section
+          title="In-Memory Logs"
+          description="View the live in-memory log buffer (newest first) on a dedicated screen for better scrolling performance.">
+          <Button
+            title="View In-Memory Logs"
+            type="ghost"
+            height={48}
+            onPress={() => {
+              navigation.navigate(RootNames.StackTestkits, {
+                screen: RootNames.InMemoryLogViewer,
+              });
+            }}
+            containerStyle={styles.singleActionButton}
           />
         </Section>
 

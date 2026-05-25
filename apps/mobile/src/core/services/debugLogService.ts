@@ -9,6 +9,7 @@ class DebugLogService {
   private logs: DebugLogEntry[] = [];
   private maxLogs = 500; // Maximum number of logs to keep
   private listeners: Set<() => void> = new Set();
+  private filter: ((entry: DebugLogEntry) => boolean) | null = null;
 
   /**
    * Add a log entry
@@ -56,10 +57,38 @@ class DebugLogService {
   };
 
   /**
-   * Get all logs
+   * Get all logs, respecting any active filter
    */
   getLogs = (): DebugLogEntry[] => {
-    return [...this.logs];
+    const logs = [...this.logs];
+    return this.filter ? logs.filter(this.filter) : logs;
+  };
+
+  /**
+   * Set a filter predicate. Only entries matching the predicate will be
+   * returned by getLogs() and shown in the log viewer.
+   *
+   * @example
+   *   // Show only keychain perf logs
+   *   debugLogService.setFilter(e => e.message.includes('[RabbyUnlockPerf:keychain]'))
+   *
+   *   // Show only errors
+   *   debugLogService.setFilter(e => e.level === 'error')
+   *
+   *   // Show only logs whose message matches a regex
+   *   debugLogService.setFilter(e => /keychain/i.test(e.message))
+   */
+  setFilter = (predicate: (entry: DebugLogEntry) => boolean) => {
+    this.filter = predicate;
+    this.notifyListeners();
+  };
+
+  /**
+   * Remove the active filter, restoring the full log view
+   */
+  clearFilter = () => {
+    this.filter = null;
+    this.notifyListeners();
   };
 
   /**
