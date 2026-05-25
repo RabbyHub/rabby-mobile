@@ -14,6 +14,7 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
@@ -46,6 +47,9 @@ import {
   useTimeTipAboutSeedPhraseAndPrivateKey,
   useToastOpenApiHttpErrorStatus,
   useToggleShowAutoLockCountdown,
+  useWideScreenDebugPanelSetting,
+  WIDE_SCREEN_DEBUG_PANEL_MIN_ALLOWED_WIDTH,
+  WIDE_SCREEN_DEBUG_PANEL_WIDTH,
 } from '@/hooks/appSettings';
 import { AppBottomSheetModal, SwitchToggleType } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
@@ -1280,6 +1284,104 @@ function DevSwitchSwapHistoryFallback() {
   );
 }
 
+function DevSwitchWideScreenDebugPanel() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { width } = useWindowDimensions();
+  const {
+    wideScreenDebugPanelEnabled,
+    wideScreenDebugPanelMinWidth,
+    setWideScreenDebugPanelMinWidth,
+    toggleWideScreenDebugPanel,
+  } = useWideScreenDebugPanelSetting();
+  const [draftMinWidth, setDraftMinWidth] = useState(
+    `${wideScreenDebugPanelMinWidth}`,
+  );
+  const requiredScreenWidth =
+    wideScreenDebugPanelMinWidth + WIDE_SCREEN_DEBUG_PANEL_WIDTH;
+  const availableMainWidth = Math.max(
+    Math.round(width - WIDE_SCREEN_DEBUG_PANEL_WIDTH),
+    0,
+  );
+  const isWideEnough = width >= requiredScreenWidth;
+
+  useEffect(() => {
+    setDraftMinWidth(`${wideScreenDebugPanelMinWidth}`);
+  }, [wideScreenDebugPanelMinWidth]);
+
+  const handleApplyMinWidth = useCallback(() => {
+    const appliedWidth = setWideScreenDebugPanelMinWidth(draftMinWidth);
+    setDraftMinWidth(`${appliedWidth}`);
+    toast.info(`Applied main min width ${appliedWidth}`);
+  }, [draftMinWidth, setWideScreenDebugPanelMinWidth]);
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Wide-screen Debug Panel
+        </Text>
+      </View>
+
+      <View
+        style={[styles.secondarySectionContent, { flexDirection: 'column' }]}>
+        <TouchableOpacity
+          style={styles.switchRowWrapper}
+          onPress={() => {
+            toggleWideScreenDebugPanel();
+          }}>
+          <AppSwitch2024
+            value={wideScreenDebugPanelEnabled}
+            onValueChange={toggleWideScreenDebugPanel}
+          />
+          <Text style={styles.switchLabel}>
+            {wideScreenDebugPanelEnabled
+              ? 'Show right debug panel on wide screens'
+              : 'Hide right debug panel on wide screens'}
+          </Text>
+        </TouchableOpacity>
+        <Text style={[styles.metaLabel, { marginTop: 4 }]}>
+          Screen width: {Math.round(width)} / need at least{' '}
+          {requiredScreenWidth} ({wideScreenDebugPanelMinWidth} main +{' '}
+          {WIDE_SCREEN_DEBUG_PANEL_WIDTH} panel). Available main after panel:{' '}
+          {availableMainWidth}.{' '}
+          {isWideEnough
+            ? 'Enable this to show the right panel.'
+            : 'Use a foldable or wide layout to show the right panel.'}
+        </Text>
+        <View style={styles.thresholdRow}>
+          <View style={styles.thresholdInput}>
+            <NextInput
+              fieldName="Main Min Width"
+              inputProps={{
+                value: draftMinWidth,
+                onChangeText: setDraftMinWidth,
+                keyboardType: 'number-pad',
+                placeholder: `${wideScreenDebugPanelMinWidth}`,
+                returnKeyType: 'done',
+              }}
+            />
+          </View>
+          <Button
+            title="Apply"
+            type="ghost"
+            height={48}
+            containerStyle={styles.thresholdApplyButton}
+            onPress={handleApplyMinWidth}
+          />
+        </View>
+        <Text style={styles.metaLabel}>
+          Applied only after tapping Apply. Minimum main width allowed:{' '}
+          {WIDE_SCREEN_DEBUG_PANEL_MIN_ALLOWED_WIDTH}.
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 function DevSwitchPerpsWatchAddress() {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { enablePerpsWatchAddress, toggleEnablePerpsWatchAddress } =
@@ -1519,6 +1621,9 @@ function DevSwitches(): JSX.Element {
         <DevSwitchSubmitFormGuard />
         <DevSwitchSwapHistoryFallback />
 
+        <Text style={styles.areaTitle}>Wide-screen Debug</Text>
+        <DevSwitchWideScreenDebugPanel />
+
         <Text style={styles.areaTitle}>Perps</Text>
         <DevSwitchPerpsWatchAddress />
       </ScrollView>
@@ -1633,6 +1738,20 @@ const getStyles = createGetStyles2024(ctx =>
       alignItems: 'center',
       justifyContent: 'flex-start',
       width: '100%',
+    },
+    thresholdRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      width: '100%',
+      gap: 8,
+    },
+    thresholdInput: {
+      flex: 1,
+      minWidth: 0,
+    },
+    thresholdApplyButton: {
+      width: 96,
+      flexShrink: 0,
     },
     rowFieldLabel: {
       fontSize: 16,

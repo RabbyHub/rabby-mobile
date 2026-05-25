@@ -92,12 +92,18 @@ import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { touchedFeedback } from '@/utils/touch';
 import {
+  buildTokenEntityId,
   getTokenSelectIndexRowKey,
   ITokenItem,
   tokenEntityResourceStore,
   TokenSelectIndexRow,
   useTokenEntity,
 } from '@/store/tokens';
+import {
+  clearTokenSelectorRenderProbeActiveTokens,
+  setTokenSelectorRenderProbeActiveTokens,
+  useShouldShowTokenSelectorRenderProbe,
+} from './tokenSelectorRenderProbe';
 import { useMyAccounts } from '@/hooks/account';
 import LpTokenSwitch from '@/screens/Home/components/LpTokenSwitch';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
@@ -138,14 +144,47 @@ const TokenSelectorTokenRow = React.memo(
   }) => {
     const resourceToken = useTokenEntity(item.row?.tokenId);
     const token = item.data || resourceToken;
+    const tokenId =
+      item.row?.tokenId || (item.data && buildTokenEntityId(item.data));
 
     if (!token) {
       return null;
     }
 
-    return <>{children(token)}</>;
+    return (
+      <View style={stylesForRenderProbe.rowWrapper}>
+        {children(token)}
+        <TokenSelectorRowRenderCountOverlay tokenId={tokenId} />
+      </View>
+    );
   },
 );
+
+function TokenSelectorRowRenderCountOverlay({ tokenId }: { tokenId?: string }) {
+  const shouldShow = useShouldShowTokenSelectorRenderProbe();
+  const renderCountRef = useRef(0);
+  renderCountRef.current += 1;
+
+  if (!shouldShow) {
+    return null;
+  }
+
+  return (
+    <View pointerEvents="none" style={stylesForRenderProbe.overlay}>
+      <View style={stylesForRenderProbe.badge}>
+        <Text style={stylesForRenderProbe.badgeText}>
+          {renderCountRef.current}
+        </Text>
+      </View>
+      <Text
+        numberOfLines={1}
+        ellipsizeMode="middle"
+        style={stylesForRenderProbe.tokenIdText}>
+        {tokenId || '-'}
+      </Text>
+    </View>
+  );
+}
 
 export const isSwapTokenType = (s?: string) =>
   s && ['swapFrom', 'swapTo'].includes(s);
@@ -153,6 +192,48 @@ export const isSwapTokenType = (s?: string) =>
 const hiddenZIndex = -9999;
 
 const ITEM_HEIGHT = 72;
+
+const stylesForRenderProbe = StyleSheet.create({
+  rowWrapper: {
+    position: 'relative',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 8,
+    left: 16,
+    right: 16,
+    bottom: 0,
+    borderRadius: 16,
+    backgroundColor: 'rgba(18, 28, 45, 0.04)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(18, 28, 45, 0.12)',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    padding: 4,
+  },
+  badge: {
+    minWidth: 28,
+    height: 20,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.48)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    lineHeight: 14,
+    fontWeight: '700',
+  },
+  tokenIdText: {
+    marginTop: 2,
+    maxWidth: 180,
+    color: 'rgba(0, 0, 0, 0.42)',
+    fontSize: 10,
+    lineHeight: 12,
+  },
+});
 
 export type ITokenCheck = (token: TokenItem) => {
   disable: boolean;
@@ -479,6 +560,36 @@ export const TokenSelectorSheetModal = ({
 
     return items;
   }, [list, tokenRows]);
+
+  const tokenSelectorRenderProbeTokenIds = useMemo(() => {
+    if (tokenRows?.length) {
+      return tokenRows.map(row => row.tokenId);
+    }
+
+    return list.map(buildTokenEntityId);
+  }, [list, tokenRows]);
+
+  useEffect(() => {
+    if (!visible) {
+      clearTokenSelectorRenderProbeActiveTokens();
+      return;
+    }
+
+    setTokenSelectorRenderProbeActiveTokens({
+      tokenIds: tokenSelectorRenderProbeTokenIds,
+      type,
+      chainServerId,
+      keyword: debouncedQuery,
+    });
+  }, [
+    chainServerId,
+    debouncedQuery,
+    tokenSelectorRenderProbeTokenIds,
+    type,
+    visible,
+  ]);
+
+  useEffect(() => clearTokenSelectorRenderProbeActiveTokens, []);
 
   const needToTokenMarketInfo = useMemo(() => {
     return !!type && ['swapTo', 'bridgeTo'].includes(type);
