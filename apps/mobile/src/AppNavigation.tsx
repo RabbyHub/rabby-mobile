@@ -371,13 +371,8 @@ function AppNavigationDeferredGlobals({
   if (slot === 'navigation-post') {
     return (
       <>
-        <InnerDappWebViewPreloadEntry />
         <BiometricsStubModal />
         <ApprovalTokenDetailSheetModalStub />
-        <BottomSheetBrowser />
-        <BrowserManagePopup />
-        <BrowserFavoritePopup />
-        <BottomSheetDappInfoPopup />
       </>
     );
   }
@@ -394,6 +389,22 @@ function AppNavigationDeferredGlobals({
       <GlobalMiniSignTypedDataPortal />
       <GlobalTipsPopup />
       <GlobalSignerPortal />
+    </>
+  );
+}
+
+function AppNavigationDappBrowserGlobals({ enabled }: { enabled: boolean }) {
+  if (!enabled) {
+    return null;
+  }
+
+  return (
+    <>
+      <InnerDappWebViewPreloadEntry />
+      <BottomSheetBrowser />
+      <BrowserManagePopup />
+      <BrowserFavoritePopup />
+      <BottomSheetDappInfoPopup />
     </>
   );
 }
@@ -422,6 +433,8 @@ export default function AppNavigation() {
     : RootNames.Unlock;
   const shouldRenderDeferredGlobals =
     useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked);
+  const shouldRenderDappBrowserGlobals =
+    shouldRenderDeferredGlobals || isUnlockSessionValid;
   useReadableAccountWarmupsOnHomeVisible({
     shouldWarmupReadableAccounts: !isAppUnlocked && isUnlockSessionValid,
     hasVisibleAccounts,
@@ -712,6 +725,9 @@ export default function AppNavigation() {
           <AppNavigationDeferredGlobals
             slot="navigation-post"
             enabled={shouldRenderDeferredGlobals}
+          />
+          <AppNavigationDappBrowserGlobals
+            enabled={shouldRenderDappBrowserGlobals}
           />
         </NavigationContainer>
       </NavigationIndependentTree>

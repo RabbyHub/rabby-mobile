@@ -11,6 +11,7 @@ import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
 import {
   ActiveDappState,
   activeDappStateEvents,
+  getActiveDappState,
   globalSetActiveDappState,
 } from '@/core/bridges/state';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
@@ -25,6 +26,7 @@ import { useRefState } from '@/hooks/common/useRefState';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
+  set(getActiveDappState().tabId);
   const listener = (tabId: ActiveDappState['tabId']) => {
     set(tabId);
   };
@@ -36,6 +38,17 @@ activeDappTabIdAtom.onMount = set => {
 };
 
 const activeDappOriginAtom = atom<ActiveDappState['dappOrigin']>(null);
+activeDappOriginAtom.onMount = set => {
+  set(getActiveDappState().dappOrigin);
+  const listener = () => {
+    set(getActiveDappState().dappOrigin);
+  };
+  activeDappStateEvents.addListener('updated', listener);
+
+  return () => {
+    activeDappStateEvents.removeListener('updated', listener);
+  };
+};
 export function useOpenedActiveDappState() {
   const activeDappOrigin = useAtomValue(activeDappOriginAtom);
   const activeTabId = useAtomValue(activeDappTabIdAtom);

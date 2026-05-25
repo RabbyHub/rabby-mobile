@@ -36,6 +36,7 @@ import { getDappAccount } from '@/core/utils/dappAccount';
 import { shouldAutoConnect, shouldAutoPersonalSign } from './autoConnect';
 import { openapi } from '../request';
 import type { Account } from '@/types/account';
+import { ensureWalletUnlocked } from '@/utils/walletUnlockGuard';
 
 export const resemblesETHAddress = (str: string): boolean => {
   return str.length === 42;
@@ -45,6 +46,13 @@ const isSignApproval = (type: string) => {
   const SIGN_APPROVALS = ['SignText', 'SignTypedData', 'SignTx'];
   return SIGN_APPROVALS.includes(type);
 };
+
+function isWalletUnlockCancelled(error: unknown) {
+  return (
+    (error as Error | undefined)?.name === 'WalletUnlockCancelledError' ||
+    (error as Error | undefined)?.message === 'wallet.unlock.cancelled'
+  );
+}
 
 const lockedOrigins = new Set<string>();
 const connectOrigins = new Set<string>();
@@ -112,14 +120,16 @@ const flowContext = flow
         ctx.request.requestedApproval = true;
         lockedOrigins.add(origin);
         try {
-          await notificationService.requestApproval(
-            { lock: true },
-            { height: 628 },
-          );
-          lockedOrigins.delete(origin);
+          await ensureWalletUnlocked();
         } catch (e) {
-          lockedOrigins.delete(origin);
+          if (isWalletUnlockCancelled(e)) {
+            throw ethErrors.provider.userRejectedRequest(
+              'User rejected the request.',
+            );
+          }
           throw e;
+        } finally {
+          lockedOrigins.delete(origin);
         }
       }
     }
