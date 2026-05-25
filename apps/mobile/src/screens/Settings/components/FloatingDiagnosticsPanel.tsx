@@ -19,7 +19,6 @@ import {
   GestureDetector,
   GestureHandlerRootView,
 } from 'react-native-gesture-handler';
-import { RootSiblingPortal } from 'react-native-root-siblings';
 import { RcIconLogo } from '@/assets/icons/common';
 import { Text, AnimateableText } from '@/components/Typography';
 import {
@@ -43,7 +42,6 @@ const PANEL_HEIGHT_FULL = 156;
 const UNLOCK_STATUS_BAR_WIDTH = 168;
 const UNLOCK_STATUS_BAR_HEIGHT = 36;
 const UNLOCK_STATUS_BAR_EDGE_PADDING = 12;
-const UNLOCK_STATUS_PORTAL_Z_INDEX = 9999;
 const VERTICAL_EDGE_PADDING = 40;
 const HORIZONTAL_EDGE_PADDING = 0;
 const SIDE_LEFT = 0;
@@ -234,34 +232,32 @@ function FloatingUnlockStatusBar() {
   }, [dragStartLeft, dragStartTop, positionLeft, positionTop]);
 
   return (
-    <RootSiblingPortal>
-      <GestureHandlerRootView
-        pointerEvents="box-none"
-        style={styles.unlockStatusPortal}>
-        <GestureDetector gesture={panGesture}>
-          <Animated.View
+    <GestureHandlerRootView
+      pointerEvents="box-none"
+      style={styles.unlockStatusPortal}>
+      <GestureDetector gesture={panGesture}>
+        <Animated.View
+          style={[
+            styles.unlockStatusBar,
+            isUnlocked
+              ? styles.unlockStatusBarUnlocked
+              : styles.unlockStatusBarLocked,
+            statusBarAnimatedStyle,
+          ]}>
+          <View
             style={[
-              styles.unlockStatusBar,
+              styles.unlockStatusDot,
               isUnlocked
-                ? styles.unlockStatusBarUnlocked
-                : styles.unlockStatusBarLocked,
-              statusBarAnimatedStyle,
-            ]}>
-            <View
-              style={[
-                styles.unlockStatusDot,
-                isUnlocked
-                  ? styles.unlockStatusDotUnlocked
-                  : styles.unlockStatusDotLocked,
-              ]}
-            />
-            <Text style={styles.unlockStatusText}>
-              {isUnlocked ? 'Unlocked' : 'Locked'}
-            </Text>
-          </Animated.View>
-        </GestureDetector>
-      </GestureHandlerRootView>
-    </RootSiblingPortal>
+                ? styles.unlockStatusDotUnlocked
+                : styles.unlockStatusDotLocked,
+            ]}
+          />
+          <Text style={styles.unlockStatusText}>
+            {isUnlocked ? 'Unlocked' : 'Locked'}
+          </Text>
+        </Animated.View>
+      </GestureDetector>
+    </GestureHandlerRootView>
   );
 }
 
@@ -585,8 +581,7 @@ const getFloatingDiagnosticsPanelStyles = createGetStyles(colors => {
     unlockStatusPortal: {
       position: 'absolute',
       inset: 0,
-      zIndex: UNLOCK_STATUS_PORTAL_Z_INDEX,
-      elevation: UNLOCK_STATUS_PORTAL_Z_INDEX,
+      zIndex: 1000,
     },
     container: {
       position: 'absolute',

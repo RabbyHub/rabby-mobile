@@ -12,6 +12,7 @@ import {
   RcClearPending,
   RcEarth,
   RcFeedback,
+  RcLock,
   RcLockWallet,
   RcAutoLockTime,
   RcScreenshot,
@@ -65,7 +66,10 @@ import {
   INTERNAL_REQUEST_SESSION,
 } from '@/constant';
 import { openExternalUrl } from '@/core/utils/linking';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+import {
+  requestLockWalletAndBackToUnlockScreen,
+  useRabbyAppNavigation,
+} from '@/hooks/navigation';
 import { useUpgradeInfo } from '@/hooks/version';
 import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
@@ -274,6 +278,17 @@ function SettingsBlocks() {
     selectAutolockTimeRef.current?.present();
   }, [shouldRedirectToSetPasswordBefore]);
 
+  const startLockWallet = useCallback(() => {
+    if (
+      shouldRedirectToSetPasswordBefore({
+        onSettingsAction: 'lockWallet',
+      })
+    ) {
+      return;
+    }
+    requestLockWalletAndBackToUnlockScreen();
+  }, [shouldRedirectToSetPasswordBefore]);
+
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
 
   const {
@@ -402,6 +417,14 @@ function SettingsBlocks() {
               startSelectAutolockTime();
             },
             rightTextNode: <AutoLockSettingLabel style={styles.rightText} />,
+          },
+          {
+            label: t('page.setting.lockWallet'),
+            icon: RcLock,
+            onPress: () => {
+              startLockWallet();
+            },
+            visible: APP_FEATURE_SWITCH.customizePassword,
           },
           {
             label: t('page.setting.currentLanguage'),

@@ -447,7 +447,7 @@ export type SettingNavigatorParamList = {
     | {
         actionAfterSetup: 'testkits:fromSettings';
         // actionType: (SettingNavigatorParamList['Settings'] & object)['enterActionType'];
-        actionType: 'setBiometrics' | 'setAutoLockExpireTime';
+        actionType: 'setBiometrics' | 'setAutoLockExpireTime' | 'lockWallet';
       };
   [RootNames.SetBiometricsAuthentication]: {};
   [RootNames.CustomTestnet]?: {};

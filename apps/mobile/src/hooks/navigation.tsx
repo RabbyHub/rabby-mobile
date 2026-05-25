@@ -481,8 +481,17 @@ export const requestLockWallet = makeAvoidParallelAsyncFunc(async () => {
 
 export const requestLockWalletAndBackToUnlockScreen =
   makeAvoidParallelAsyncFunc(async () => {
-    const result = await requestLockWallet();
-    if (!result.canLockWallet) return result;
+    const lockInfo = await apisLock.getRabbyLockInfo();
+    const result = { canLockWallet: false };
+    if (!lockInfo.isUseCustomPwd) return result;
+
+    if (apisLock.isUnlocked()) {
+      result.canLockWallet = true;
+      await apisLock.lockWallet();
+    } else {
+      result.canLockWallet = true;
+      apisLock.clearUnlockTime();
+    }
 
     console.debug('will back to unlock screen');
     const navigation = getReadyNavigationInstance();
