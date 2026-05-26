@@ -372,33 +372,6 @@ function Chart({
   );
 }
 
-const Mask = ({ xOffset }: { xOffset: SharedValue<number> }) => {
-  const { colors2024, isLight } = useTheme2024();
-  const styles = useAnimatedStyle(() => ({
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
-    transform: [
-      {
-        translateX: xOffset.value,
-      },
-    ],
-  }));
-
-  useEffect(() => {
-    const windowWidth = Dimensions.get('window').width;
-    xOffset.value = withTiming(windowWidth, { duration: 500 });
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return <Animated.View style={styles} />;
-};
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   chart: {
     position: 'relative',

@@ -128,7 +128,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
     marginTop: 0,
   },
   priceContainer: {
