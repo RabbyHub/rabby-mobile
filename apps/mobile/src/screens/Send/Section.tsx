@@ -18,7 +18,6 @@ import { checkIfTokenBalanceEnough } from '@/utils/token';
 import { noop } from 'lodash';
 import { TokenAmountInput } from '@/components/Token/TokenAmountInput';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { tokenAmountBn } from '../Swap/utils';
 import BigNumber from 'bignumber.js';
 import usePrevious from 'react-use/lib/usePrevious';
 import { E2E_ID } from '@/constant/e2e';
@@ -122,7 +121,6 @@ const SendAmountInput = React.memo(function SendAmountInput() {
     handleClickMaxButton,
     handleFieldChange,
     onChangeSlider,
-    setSlider,
   } = useSendTokenInternalShallowSelector(ctx => ({
     chainItem: ctx.computed.chainItem,
     checkCexSupport: ctx.callbacks.checkCexSupport,
@@ -133,7 +131,6 @@ const SendAmountInput = React.memo(function SendAmountInput() {
     handleClickMaxButton: ctx.callbacks.handleClickMaxButton,
     handleFieldChange: ctx.callbacks.handleFieldChange,
     onChangeSlider: ctx.callbacks.onChangeSlider,
-    setSlider: ctx.callbacks.setSlider,
   }));
   const isEstimatingGas = useSendTokenScreenStateSelector(
     state => state.isEstimatingGas,
@@ -152,20 +149,11 @@ const SendAmountInput = React.memo(function SendAmountInput() {
       if (directSignBtnRef.current?.isAuthInProgress()) return false;
       try {
         handleFieldChange?.('amount', value);
-        const sliderValue = value
-          ? Number(
-              new BigNumber(value || 0)
-                .div(currentToken?.amount ? tokenAmountBn(currentToken) : 1)
-                .times(100)
-                .toFixed(0),
-            )
-          : 0;
-        setSlider(sliderValue < 0 ? 0 : sliderValue > 100 ? 100 : sliderValue);
       } catch (e) {
         console.error('handleAmountChange error', e);
       }
     },
-    [handleFieldChange, currentToken, setSlider, directSignBtnRef],
+    [handleFieldChange, directSignBtnRef],
   );
 
   const previousAddress = usePrevious(currentAccount?.address);

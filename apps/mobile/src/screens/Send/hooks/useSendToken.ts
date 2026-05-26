@@ -1819,19 +1819,14 @@ export function useSendTokenForm({
     }, 300);
   });
 
-  const {
-    onChangeSlider,
-    slider,
-    setSlider,
-    isDraggingSlider,
-    setIsDraggingSlider,
-  } = useSwapBridgeSlider({
-    setAmount: (amount: string) => {
-      patchFormValues({ amount });
-    },
-    fromToken: currentToken,
-    handleSlider100: handleSlider100,
-  });
+  const { onChangeSlider, setSlider, isDraggingSlider, setIsDraggingSlider } =
+    useSwapBridgeSlider({
+      setAmount: (amount: string) => {
+        patchFormValues({ amount });
+      },
+      fromToken: currentToken,
+      handleSlider100: handleSlider100,
+    });
 
   const handleCurrentTokenChange = useMemoizedFn(async (token: TokenItem) => {
     if (screenState.showGasReserved) {
@@ -2283,8 +2278,6 @@ export function useSendTokenForm({
     scrollToBottom,
 
     onChangeSlider,
-    setSlider,
-    slider,
 
     sendTokenEvents: sendTokenEventsRef.current,
     submitForm,
@@ -2326,7 +2319,6 @@ type InternalContext = {
   };
 
   sendTokenEvents: EventEmitter;
-  slider: number;
   scrollViewRef: React.MutableRefObject<KeyboardAwareScrollView | null>;
   scrollViewStyle: any;
   fns: {
@@ -2361,7 +2353,6 @@ type InternalContext = {
     // }) => void;
     // onFormValuesChange: (changedValues: Partial<FormSendToken>) => void;
     onChangeSlider: (v: number, syncAmount?: boolean) => void;
-    setSlider: (v: number) => void;
     onBottomAreaLayout: (layout: LayoutChangeEvent) => void;
     onGasInfoDebouncedLoaded: () => void;
     // isAuthInProgress?: () => boolean;
@@ -2385,7 +2376,6 @@ const DEFAULT_SEND_TOKEN_INTERNAL_CONTEXT: InternalContext = {
   },
 
   sendTokenEvents: null as any,
-  slider: 0,
   scrollViewRef: { current: null },
   scrollViewStyle: null,
   fns: {
@@ -2411,7 +2401,6 @@ const DEFAULT_SEND_TOKEN_INTERNAL_CONTEXT: InternalContext = {
     saveCurrentFormValuesSnapshot: () => {},
     setReloadTxRefreshPaused: () => {},
     onChangeSlider: () => {},
-    setSlider: () => {},
     onBottomAreaLayout: () => {},
     onGasInfoDebouncedLoaded: () => {},
     // isAuthInProgress: () => false,
