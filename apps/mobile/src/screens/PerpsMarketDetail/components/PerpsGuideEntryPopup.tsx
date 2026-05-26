@@ -9,6 +9,10 @@ import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import PerpsGuideLight from '@/assets2024/icons/perps/ImgPerpDetailGuideLight.png';
 import PerpsGuideDark from '@/assets2024/icons/perps/ImgPerpDetailGuideDark.png';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+} from '@/constant/layout';
 
 interface Props {
   visible?: boolean;
@@ -44,6 +48,8 @@ export const PerpsGuideEntryPopup: React.FC<Props> = ({ visible, onClose }) => {
             title={t('page.perpsDetail.guideEntry.gotIt')}
             type="primary"
             containerStyle={styles.buttonContainer}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             onPress={() => {
               onClose?.();
             }}

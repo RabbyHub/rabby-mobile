@@ -11,7 +11,7 @@ import { ScrollView, TouchableOpacity, View } from 'react-native';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
 import { Text } from '@/components/Typography';
-import { RootNames } from '@/constant/layout';
+import { RootNames, getBottomButtonBottomOffset } from '@/constant/layout';
 import { Account } from '@/core/services/preference';
 import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
@@ -148,7 +148,7 @@ const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
     scrollView: {
       paddingHorizontal: 16,
-      paddingBottom: Math.max(safeAreaInsets.bottom, 24),
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
     colomnBox: {
       flexDirection: 'column',

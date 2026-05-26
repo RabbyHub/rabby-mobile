@@ -324,7 +324,8 @@ const styles = StyleSheet.create({
     borderRadius: 0,
   },
   title: {
-    fontSize: 17,
+    fontSize: 18,
+    lineHeight: 22,
     textAlign: 'center',
     paddingVertical: 1,
   },
@@ -342,7 +343,8 @@ const styles = StyleSheet.create({
     height: 52,
   },
   primaryButtonTitle: {
-    fontSize: 15,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '600',
   },
 });
@@ -378,7 +380,8 @@ const getMiniButtonStyle = createGetStyles2024(({ colors, colors2024 }) => {
     },
     miniBtnTextView: {
       color: colors2024['brand-default'],
-      fontSize: 14,
+      fontSize: 18,
+      lineHeight: 22,
       fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
     },

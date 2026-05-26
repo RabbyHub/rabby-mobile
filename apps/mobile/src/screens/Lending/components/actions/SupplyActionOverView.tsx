@@ -21,6 +21,7 @@ import {
   getCollateralState,
 } from '../../utils/collateral';
 import { Text } from '@/components/Typography';
+import { BOTTOM_BUTTON_BOTTOM_OFFSET } from '@/constant/layout';
 
 const SupplyActionOverView: React.FC<
   PopupDetailProps & {
@@ -83,7 +84,7 @@ const SupplyActionOverView: React.FC<
         },
         containerStyle: {
           position: 'absolute',
-          bottom: 48,
+          bottom: BOTTOM_BUTTON_BOTTOM_OFFSET,
           width: '100%',
         },
       },

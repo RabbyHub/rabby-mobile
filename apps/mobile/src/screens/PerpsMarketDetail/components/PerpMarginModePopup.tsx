@@ -11,6 +11,11 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+} from '@/constant/layout';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
@@ -97,9 +102,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],
-      paddingTop: 32,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
       // paddingHorizontal: 16,
-      paddingBottom: 40,
+      paddingBottom: 36,
     },
   };
 });
@@ -207,6 +212,8 @@ export const PerpMarginModePopup: React.FC<{
           <Button
             type="hyperliquid"
             title={t('global.confirm')}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             onPress={handleConfirm}
           />
         </View>

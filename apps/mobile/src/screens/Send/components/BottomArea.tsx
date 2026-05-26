@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Platform, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   apiSendToken,
@@ -35,8 +35,12 @@ import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { Text } from '@/components/Typography';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
-
-const isAndroid = Platform.OS === 'android';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 export default function BottomArea({ account }: { account: Account | null }) {
   const { t } = useTranslation();
@@ -259,6 +263,8 @@ export default function BottomArea({ account }: { account: Account | null }) {
             disableSubmitDueToBasic || !canDirectSign || isDirectSigning
           }
           loading={isSubmitLoading}
+          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+          titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
           type={'primary'}
           syncUnlockTime
           account={account}
@@ -272,6 +278,8 @@ export default function BottomArea({ account }: { account: Account | null }) {
           type="primary"
           title={'Send'}
           loading={isSubmitLoading}
+          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+          titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
           onPress={() => handleSubmit()}
           {...makeTestIDProps(E2E_ID.send.confirmButton)}
         />
@@ -310,10 +318,8 @@ export default function BottomArea({ account }: { account: Account | null }) {
 }
 
 const SIZES = {
-  containerPt: 16,
-  containerPb: 48,
+  containerPt: BOTTOM_BUTTON_TOP_OFFSET,
   // height: 220,
-  bottom: 48,
 };
 
 const getStyle = createGetStyles2024(
@@ -325,7 +331,7 @@ const getStyle = createGetStyles2024(
         paddingHorizontal: 24,
         position: 'absolute',
         paddingTop: SIZES.containerPt,
-        paddingBottom: SIZES.containerPb + safeAreaInsets.bottom,
+        paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
         backgroundColor: resolveBgColorByType('bg1', {
           isLight: isLight ?? true,
           colors,

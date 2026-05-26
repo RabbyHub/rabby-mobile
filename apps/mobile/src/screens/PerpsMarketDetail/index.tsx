@@ -43,7 +43,7 @@ import { usePerpsPopupState } from '../Perps/hooks/usePerpsPopupState';
 
 import Toast from 'react-native-root-toast';
 import { naviReplace } from '@/utils/navigation';
-import { RootNames } from '@/constant/layout';
+import { RootNames, getBottomButtonBottomOffset } from '@/constant/layout';
 import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
 import { PerpsLimitOrdersForCoin } from './components/PerpsLimitOrdersForCoin';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
@@ -816,25 +816,28 @@ export const PerpsMarketDetailScreen = () => {
   );
 };
 
-const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
-  container: {
-    flex: 1,
-    height: '100%',
-    paddingHorizontal: 12,
-    position: 'relative',
-  },
-  scrollContent: {
-    paddingBottom: 56,
-  },
-  header: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 12,
-    marginBottom: 30,
-  },
-  chart: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    height: 322,
-    borderRadius: 20,
-  },
-}));
+const getStyles = createGetStyles2024(ctx => {
+  const { colors2024, isLight, safeAreaInsets } = ctx;
+  return {
+    container: {
+      flex: 1,
+      height: '100%',
+      paddingHorizontal: 12,
+      position: 'relative',
+    },
+    scrollContent: {
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+    },
+    header: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12,
+      marginBottom: 30,
+    },
+    chart: {
+      backgroundColor: colors2024['neutral-bg-1'],
+      height: 322,
+      borderRadius: 20,
+    },
+  };
+});

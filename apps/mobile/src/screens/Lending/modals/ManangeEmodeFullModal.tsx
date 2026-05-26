@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { last, noop } from 'lodash';
 import { TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { apiProvider } from '@/core/apis';
@@ -46,9 +47,14 @@ import {
 } from '../utils/constant';
 import { isEModeCategoryAvailable } from '../utils/emode';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 const BOTTOM_SIZE = {
-  BUTTON: 116,
+  BUTTON: 12 + BOTTOM_BUTTON_SINGLE_HEIGHT,
   CHECKBOX: 40,
   TIPS: 80,
 };
@@ -56,6 +62,9 @@ const BOTTOM_SIZE = {
 const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
+  const bottomButtonAreaHeight =
+    BOTTOM_SIZE.BUTTON + getBottomButtonBottomOffset(bottom);
   const { emodeEnabled, emodeCategoryId, eModes } = useMode();
   const { chainInfo } = useSelectedMarket();
   const { refresh } = useRefreshHistoryId();
@@ -406,7 +415,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
             styles.buttonContainer,
             {
               height:
-                BOTTOM_SIZE.BUTTON +
+                bottomButtonAreaHeight +
                 (isBlock
                   ? BOTTOM_SIZE.TIPS
                   : isRisky
@@ -451,6 +460,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
                   : t('page.Lending.manageEmode.actions.enable')
               }
               titleStyle={[
+                BOTTOM_BUTTON_TITLE_STYLE,
                 wantDisableEmode && styles.closeButtonTitle,
                 wantDisableEmode &&
                   disableDirectSignBtn &&
@@ -472,6 +482,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
               onFinished={() => handlePressManageEMode()}
               disabled={disableDirectSignBtn}
               type="primary"
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               syncUnlockTime
               account={currentAccount}
               showHardWalletProcess
@@ -481,6 +492,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
               loadingType="circle"
               showTextOnLoading
               containerStyle={styles.fullWidthButton}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               onPress={() => handlePressManageEMode()}
               title={
                 wantDisableEmode
@@ -488,6 +500,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
                   : t('page.Lending.manageEmode.actions.enable')
               }
               titleStyle={[
+                BOTTOM_BUTTON_TITLE_STYLE,
                 wantDisableEmode && styles.closeButtonTitle,
                 wantDisableEmode &&
                   disableFullWidthButton &&
@@ -539,7 +552,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   button: {
     position: 'absolute',
-    bottom: 56,
+    bottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     width: '100%',
   },
   disabledButton: {
@@ -557,7 +570,9 @@ const getStyles = createGetStyles2024(ctx => ({
     position: 'absolute',
     paddingHorizontal: 25,
     bottom: 0,
-    height: 116,
+    height:
+      BOTTOM_SIZE.BUTTON +
+      getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     paddingTop: 12,
     width: '100%',
     display: 'flex',
@@ -570,6 +585,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   fullWidthButton: {
     flex: 1,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
   },
   closeButtonTitle: {
     color: ctx.colors2024['neutral-title-1'],

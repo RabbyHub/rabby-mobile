@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, TouchableOpacity, View } from 'react-native';
 import { ClearinghouseState } from '@rabby-wallet/hyperliquid-sdk';
 import { Text } from '@/components/Typography';
+import { getBottomButtonBottomOffset } from '@/constant/layout';
 
 export const PerpsAccountSelectorItem: React.FC<{
   account: KeyringAccountWithAlias;
@@ -192,7 +193,7 @@ const getStyle = createGetStyles2024(ctx => {
     list: {
       // flex: 1,
       // height: '100%',
-      paddingBottom: 56,
+      paddingBottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     },
     listContent: {
       // paddingBottom: 36,

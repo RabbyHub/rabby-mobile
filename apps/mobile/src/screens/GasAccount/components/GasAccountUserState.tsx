@@ -9,6 +9,12 @@ import { GasAccountBalanceCard } from './GasAccountBalanceCard';
 import { GasAccountHistory } from './History';
 import { GasAccountWarning } from './GasAccountWarning';
 import type { useGasAccountHistory } from '../hooks';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_SIZE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 type GasAccountHistoryState = ReturnType<typeof useGasAccountHistory>;
 
@@ -64,12 +70,12 @@ export const GasAccountUserState: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   container: {
     width: '100%',
     flex: 1,
     paddingHorizontal: 16,
-    paddingBottom: 48,
+    paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
   },
   topContent: {
     flex: 1,
@@ -94,12 +100,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
   },
   footer: {
-    paddingTop: 12,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
   },
   primaryButton: {
     width: 345,
     alignSelf: 'center',
-    height: 56,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     borderRadius: 12,
     marginTop: 4,
     shadowColor: '#7084ff',
@@ -113,7 +119,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   primaryButtonText: {
     color: colors2024['neutral-InvertHighlight'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
+    fontSize: BOTTOM_BUTTON_TEXT_SIZE,
     fontWeight: '700',
     lineHeight: 22,
   },

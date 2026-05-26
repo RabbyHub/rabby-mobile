@@ -28,6 +28,12 @@ import BigNumber from 'bignumber.js';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import RcIconSwapDeposit from '@/assets2024/icons/perps/IconSwapDeposit.svg';
 import { RcIconInfoFill1CC } from '@/assets/icons/common';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 const COIN_ICONS: Record<string, (size: number) => React.ReactNode> = {
   USDC: (s: number) => <RcIconUSDC width={s} height={s} />,
@@ -569,6 +575,8 @@ export const PerpsSpotSwapPopup: React.FC<{
           <Button
             type="hyperliquid"
             title={t('page.perps.PerpsSpotSwap.swapBtn')}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             onPress={handleSwap}
             loading={isLoading}
             disabled={!validation.isValid}
@@ -582,8 +590,8 @@ export const PerpsSpotSwapPopup: React.FC<{
 const getStyle = createGetStyles2024(ctx => ({
   container: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
-    paddingTop: 10,
-    paddingBottom: 56,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    paddingBottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     paddingHorizontal: 20,
     display: 'flex',
     flexDirection: 'column',

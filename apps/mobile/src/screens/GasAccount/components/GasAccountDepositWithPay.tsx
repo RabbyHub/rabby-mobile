@@ -16,6 +16,13 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { ErrorCode, PurchaseError, requestPurchase } from 'react-native-iap';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { gasAccountProducts } from '@/constant/iap';
+import {
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_SIZE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { Text } from '@/components/Typography';
 import { IS_ANDROID } from '@/core/native/utils';
 import { GasAccountTopUpWaitCallback } from './topUpContinuation';
@@ -200,7 +207,7 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
       keyboardOpeningTime={0}
       contentContainerStyle={StyleSheet.flatten([
         styles.container,
-        { paddingBottom: Math.max(bottom, 36) },
+        { paddingBottom: getBottomButtonBottomOffset(bottom) },
       ])}>
       <View style={styles.containerHorizontal}>
         <Text style={styles.title}>
@@ -285,7 +292,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     width: '100%',
     flex: 1,
-    paddingBottom: 48,
+    paddingBottom: BOTTOM_BUTTON_BOTTOM_OFFSET,
   },
   containerHorizontal: {
     paddingHorizontal: 20,
@@ -349,7 +356,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   depositWithPayBtn: {
-    height: 60,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     ...(isLight
       ? {
           backgroundColor: '#000',
@@ -375,8 +382,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   btnTitle: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: BOTTOM_BUTTON_TEXT_SIZE,
+    lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
     fontStyle: 'normal',
     fontWeight: '700',
     color: isLight ? '#fff' : '#000',

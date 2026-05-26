@@ -109,7 +109,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 'auto',
   },
   btnText: {
-    fontSize: 16,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '700',
   },
   alertContainer: {

@@ -25,7 +25,12 @@ import { TokenDetailHistoryList } from './components/HistoryList';
 import { isFromBackAtom } from '../Swap/hooks/atom';
 import BalanceOverview from './components/BalanceOverview';
 import { useSingleTokenBalance } from './hook';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  RootNames,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { navigateDeprecated } from '@/utils/navigation';
 import { RightMore } from './components/RightMore';
 import { useSetAtom } from 'jotai';
@@ -425,7 +430,8 @@ export const TokenDetailScreen = () => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+const getStyle = createGetStyles2024(ctx => {
+  const { colors2024, isLight, safeAreaInsets } = ctx;
   return {
     rootScreenContainer: {
       backgroundColor: isLight
@@ -462,7 +468,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     bottomContainer: {
       width: '100%',
-      height: 116,
+      height:
+        BOTTOM_BUTTON_TOP_OFFSET +
+        BOTTOM_BUTTON_DOUBLE_HEIGHT +
+        getBottomButtonBottomOffset(safeAreaInsets.bottom),
       backgroundColor: colors2024['neutral-bg-1'],
       position: 'absolute',
       bottom: 0,

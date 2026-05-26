@@ -19,6 +19,11 @@ import {
   PERPS_MINI_USD_VALUE,
 } from '@/constant/perps';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 export const PerpsClosePositionPopup: React.FC<{
   visible?: boolean;
@@ -192,6 +197,8 @@ export const PerpsClosePositionPopup: React.FC<{
           <Button
             type="hyperliquid"
             title={t('page.perpsDetail.PerpsClosePositionPopup.confirm')}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             loading={loading}
             disabled={!isValidClosePercent}
             onPress={closePosition}
@@ -202,11 +209,12 @@ export const PerpsClosePositionPopup: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+const getStyle = createGetStyles2024(ctx => {
+  const { colors2024, isLight, safeAreaInsets } = ctx;
   return {
     container: {
       height: '100%',
-      paddingBottom: 56,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
       paddingHorizontal: 20,
     },
     title: {

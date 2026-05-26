@@ -20,6 +20,7 @@ import { Text } from '@/components/Typography';
 import { ActionDetailSection } from './components/ActionDetailSection';
 import { ActionSpenderView } from './components/ActionSpenderView';
 import { ProjectItemInDetail } from '../ProjectItemInDetail';
+import { getBottomButtonBottomOffset } from '@/constant/layout';
 
 interface Props {
   data: TransactionGroup;
@@ -143,7 +144,7 @@ const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
     scrollView: {
       paddingHorizontal: 16,
-      paddingBottom: Math.max(safeAreaInsets.bottom, 24),
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
     colomnBox: {
       flexDirection: 'column',
