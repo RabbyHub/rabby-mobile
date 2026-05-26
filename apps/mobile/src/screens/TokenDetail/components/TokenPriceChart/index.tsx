@@ -343,7 +343,7 @@ function Chart({
         <>
           <LineChart
             height={114}
-            width={winInfo.width - 32}
+            width={winInfo.width - 56}
             shape={d3Shape.curveCatmullRom}
             style={styles.chart}>
             <LineChart.Path
@@ -375,12 +375,10 @@ function Chart({
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   chart: {
     position: 'relative',
-    marginHorizontal: 16,
     // backgroundColor: '#440000',
   },
   timeTabWrapper: {
     paddingTop: 7,
-    paddingHorizontal: 20,
     paddingBottom: 30,
   },
   xTitle: {
@@ -441,14 +439,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     // flexBasis: 0,
     gap: 2,
     // width: 'auto',
-    marginLeft: 20,
     borderRadius: 120,
     marginBottom: 8,
     flexDirection: 'row',
     backgroundColor: isLight
       ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-1'],
-    paddingHorizontal: 4,
     paddingVertical: 4,
     // justifyContent: 'space-between',
     alignItems: 'center',
