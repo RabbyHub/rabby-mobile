@@ -49,7 +49,6 @@ import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { useRecentSendToHistoryFor } from '@/screens/Send/hooks/useRecentSend';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { useMiniSigner } from '@/hooks/useSigner';
-import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { useMemoizedFn } from 'ahooks';
 import { abiCoder } from '@/core/apis/sendRequest';
@@ -212,6 +211,12 @@ type SendNFTFormValuesStore = ReturnType<typeof createSendNFTFormValuesStore>;
 const defaultSendNFTFormValuesStore = createSendNFTFormValuesStore({
   ...DF_SEND_TOKEN_FORM,
 });
+function shouldSyncSendNFTReactiveFormValues(
+  prev: FormSendNFT,
+  next: FormSendNFT,
+) {
+  return prev.to !== next.to;
+}
 export function useSendNFTForm({
   toAddress,
   toAddressBrandName,
@@ -229,6 +234,7 @@ export function useSendNFTForm({
 
   const { sendNFTScreenState: screenState, putScreenState } =
     useSendNFTScreenState();
+  const cacheAmountRef = useRef(DFLT_SEND_STATE.cacheAmount);
 
   const [formValues, setFormValues] = React.useState<FormSendNFT>({
     ...DF_SEND_TOKEN_FORM,
@@ -243,12 +249,19 @@ export function useSendNFTForm({
   const setCommittedFormValues = useCallback(
     (next: FormSendNFT | ((prev: FormSendNFT) => FormSendNFT)) => {
       setFormValues(prev => {
-        const nextValues = typeof next === 'function' ? next(prev) : next;
-        if (isEqual(prev, nextValues)) {
+        const latest = formValuesLatestRef.current;
+        const nextValues = typeof next === 'function' ? next(latest) : next;
+        if (isEqual(latest, nextValues)) {
           return prev;
         }
         formValuesLatestRef.current = nextValues;
         formValuesStoreRef.current?.setState(nextValues, true);
+        if (isEqual(prev, nextValues)) {
+          return prev;
+        }
+        if (!shouldSyncSendNFTReactiveFormValues(prev, nextValues)) {
+          return prev;
+        }
         return nextValues;
       });
     },
@@ -258,6 +271,32 @@ export function useSendNFTForm({
     formValuesLatestRef.current = formValues;
     formValuesStoreRef.current?.setState(formValues, true);
   }, [formValues]);
+
+  const [stableAmountValue, setStableAmountValue] = useState(formValues.amount);
+  useEffect(() => {
+    const formValuesStore = formValuesStoreRef.current;
+    if (!formValuesStore) return;
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const unsubscribe = formValuesStore.subscribe((values, prevValues) => {
+      if (values.amount === prevValues.amount) {
+        return;
+      }
+      if (timer) {
+        clearTimeout(timer);
+      }
+      timer = setTimeout(() => {
+        setStableAmountValue(values.amount);
+      }, 300);
+    });
+
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+      unsubscribe();
+    };
+  }, []);
 
   const { validationSchema } = useMemo(() => {
     return {
@@ -367,7 +406,7 @@ export function useSendNFTForm({
       }
       let resultAmount = currentValues.amount;
       if (!/^\d*(\.\d*)?$/.test(currentValues.amount + '')) {
-        resultAmount = screenState.cacheAmount;
+        resultAmount = cacheAmountRef.current;
       }
 
       // Validate amount for NFT
@@ -386,10 +425,7 @@ export function useSendNFTForm({
       };
 
       patchFormValues(nextFormValues);
-      putScreenState({
-        cacheAmount: resultAmount,
-        ...(!resultAmount && { showGasReserved: false }),
-      });
+      cacheAmountRef.current = resultAmount;
       const aliasName = apiContact.getAliasName(currentValues.to.toLowerCase());
       if (aliasName) {
         putScreenState({
@@ -402,7 +438,6 @@ export function useSendNFTForm({
     },
     [
       patchFormValues,
-      screenState.cacheAmount,
       screenState.contactInfo,
       getLatestFormValues,
       putScreenState,
@@ -438,7 +473,7 @@ export function useSendNFTForm({
   const prepareDirectSubmitMiniTx = useMemoizedFn(async (ref: number) => {
     if (!nftToken || !currentAccount) return;
 
-    const { to, amount } = formValues;
+    const { to, amount } = getLatestFormValues();
 
     if (
       ref === prepareCountRef.current &&
@@ -743,12 +778,6 @@ export function useSendNFTForm({
         item => item.id === screenState.toAddrDesc?.cex?.id,
       ),
 
-      canSubmit:
-        isValidAddress(formValues.to) &&
-        !screenState.balanceError &&
-        new BigNumber(formValues.amount).gt(0) &&
-        !screenState.isLoading,
-
       canDirectSign:
         isAccountSupportMiniApproval(currentAccount?.type || '') &&
         !chainItem?.isTestnet,
@@ -761,13 +790,13 @@ export function useSendNFTForm({
     foundToAccountInfo?.isMyImported,
     toAddressIsRecentlySend,
     screenState,
-    formValues.amount,
     cexList,
     currentAccount?.type,
     chainItem?.isTestnet,
   ]);
 
   const resetFormValues = useCallback(() => {
+    cacheAmountRef.current = DFLT_SEND_STATE.cacheAmount;
     setCommittedFormValues({ ...DF_SEND_TOKEN_FORM });
   }, [setCommittedFormValues]);
 
@@ -775,8 +804,6 @@ export function useSendNFTForm({
   const prepareCountRef = useRef(0);
 
   const isFocused = useIsFocused();
-  const stableAmountValue = useDebouncedValue(formValues.amount, 300);
-
   useEffect(() => {
     if (
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
@@ -796,11 +823,17 @@ export function useSendNFTForm({
   ]);
 
   useEffect(() => {
+    const canPrepareDirectSubmit =
+      isValidAddress(formValues.to) &&
+      !screenState.balanceError &&
+      new BigNumber(stableAmountValue || 0).gt(0) &&
+      !screenState.isLoading;
+
     if (
       isFocused &&
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chainItem?.isTestnet &&
-      computed.canSubmit &&
+      canPrepareDirectSubmit &&
       formValues.to &&
       stableAmountValue
     ) {
@@ -813,9 +846,10 @@ export function useSendNFTForm({
     isFocused,
     chainItem?.id,
     chainItem?.isTestnet,
-    computed.canSubmit,
     formValues.to,
     stableAmountValue,
+    screenState.balanceError,
+    screenState.isLoading,
     currentAccount?.type,
     prepareDirectSubmitMiniTx,
   ]);
