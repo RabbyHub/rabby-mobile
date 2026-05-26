@@ -113,6 +113,7 @@ export default function SendNFT() {
   const {
     sendNFTEvents,
     formValues,
+    formValuesStore,
     submitForm,
     handleFieldChange,
     handleGasLevelChanged,
@@ -130,7 +131,6 @@ export default function SendNFT() {
       toAddrCex,
       // toAddressIsRecentlySend,
       // toAddressInWhitelist,
-      canSubmit,
       canDirectSign,
     },
     miniSignInstance,
@@ -183,13 +183,11 @@ export default function SendNFT() {
   const sendNFTInternalValue = React.useMemo(
     () => ({
       screenState,
-      formValues,
       computed: {
         account,
         addrDesc: addrDesc || null,
         collectionName,
         fromAddress: account.address,
-        canSubmit,
         toAccount,
         toAddressPositiveTips,
         // toAddressIsRecentlySend,
@@ -202,6 +200,7 @@ export default function SendNFT() {
         canDirectSign,
       },
       events: sendNFTEvents,
+      formValuesStore,
       scrollViewRef: scrollviewRef,
       scrollViewStyle,
       fns: {
@@ -222,11 +221,10 @@ export default function SendNFT() {
       account,
       addrDesc,
       canDirectSign,
-      canSubmit,
       chainItem,
       collectionName,
       fetchContactAccounts,
-      formValues,
+      formValuesStore,
       handleFieldChange,
       submitForm,
       handleGasLevelChanged,

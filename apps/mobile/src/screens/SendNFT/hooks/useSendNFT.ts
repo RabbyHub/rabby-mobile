@@ -68,6 +68,7 @@ import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddr
 import { TextInput } from '@/components/Typography';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 import { zMutative } from '@/core/utils/reexports';
+import { isEqual } from 'lodash';
 
 export const enum SendNFTEvents {
   'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',
@@ -152,10 +153,11 @@ export function useSendNFTScreenState() {
             ? patchOrUpdateFunc(prev)
             : patchOrUpdateFunc;
 
-        return {
+        const nextState = {
           ...prev,
           ...patch,
         };
+        return isEqual(prev, nextState) ? prev : nextState;
       });
     },
     [setSendNFTScreenState],
@@ -204,6 +206,12 @@ const DF_SEND_TOKEN_FORM: FormSendNFT = {
   to: '',
   amount: 1,
 };
+const createSendNFTFormValuesStore = (initialState: FormSendNFT) =>
+  createStore<FormSendNFT>()(zMutative<FormSendNFT>(() => initialState));
+type SendNFTFormValuesStore = ReturnType<typeof createSendNFTFormValuesStore>;
+const defaultSendNFTFormValuesStore = createSendNFTFormValuesStore({
+  ...DF_SEND_TOKEN_FORM,
+});
 export function useSendNFTForm({
   toAddress,
   toAddressBrandName,
@@ -226,13 +234,21 @@ export function useSendNFTForm({
     ...DF_SEND_TOKEN_FORM,
     to: toAddress || '',
   });
+  const formValuesStoreRef = useRef<SendNFTFormValuesStore | null>(null);
+  if (!formValuesStoreRef.current) {
+    formValuesStoreRef.current = createSendNFTFormValuesStore(formValues);
+  }
   const formValuesLatestRef = useRef<FormSendNFT>(formValues);
   const getLatestFormValues = useMemoizedFn(() => formValuesLatestRef.current);
   const setCommittedFormValues = useCallback(
     (next: FormSendNFT | ((prev: FormSendNFT) => FormSendNFT)) => {
       setFormValues(prev => {
         const nextValues = typeof next === 'function' ? next(prev) : next;
+        if (isEqual(prev, nextValues)) {
+          return prev;
+        }
         formValuesLatestRef.current = nextValues;
+        formValuesStoreRef.current?.setState(nextValues, true);
         return nextValues;
       });
     },
@@ -240,6 +256,7 @@ export function useSendNFTForm({
   );
   useEffect(() => {
     formValuesLatestRef.current = formValues;
+    formValuesStoreRef.current?.setState(formValues, true);
   }, [formValues]);
 
   const { validationSchema } = useMemo(() => {
@@ -807,6 +824,7 @@ export function useSendNFTForm({
     chainItem,
 
     sendNFTEvents: sendNFTEventsRef.current,
+    formValuesStore: formValuesStoreRef.current,
     submitForm,
     formValues,
     resetFormValues,
@@ -838,7 +856,6 @@ type ToAddressPositiveTips = {
 };
 type InternalContext = {
   screenState: SendScreenState;
-  formValues: FormSendNFT;
   computed: {
     account: Account | null;
     addrDesc: AddrDescResponse['desc'] | null;
@@ -847,7 +864,6 @@ type InternalContext = {
     chainItem: Chain | null;
     currentNFT: NFTItem | null;
     whitelistEnabled: boolean;
-    canSubmit: boolean;
     canDirectSign: boolean;
     // toAddressInWhitelist: boolean;
     // toAddressIsRecentlySend: boolean;
@@ -859,6 +875,7 @@ type InternalContext = {
   };
 
   events: EventEmitter;
+  formValuesStore: SendNFTFormValuesStore;
   scrollViewRef: React.MutableRefObject<KeyboardAwareScrollView | null>;
   scrollViewStyle: any;
   fns: {
@@ -883,7 +900,6 @@ type InternalContext = {
 };
 const DEFAULT_SEND_NFT_INTERNAL_CONTEXT: InternalContext = {
   screenState: { ...DFLT_SEND_STATE },
-  formValues: { ...DF_SEND_TOKEN_FORM },
   computed: {
     account: null,
     addrDesc: null,
@@ -892,7 +908,6 @@ const DEFAULT_SEND_NFT_INTERNAL_CONTEXT: InternalContext = {
     chainItem: null,
     currentNFT: null,
     whitelistEnabled: false,
-    canSubmit: false,
     canDirectSign: false,
     toAccount: null,
     toAddressPositiveTips: null,
@@ -901,6 +916,7 @@ const DEFAULT_SEND_NFT_INTERNAL_CONTEXT: InternalContext = {
   },
 
   events: null as any,
+  formValuesStore: defaultSendNFTFormValuesStore,
   scrollViewRef: { current: null },
   scrollViewStyle: null,
   fns: {
@@ -974,6 +990,45 @@ export function useSendNFTInternalShallowSelector<T>(
   const store = useSendNFTInternalStoreApi();
   const shallowSelector = useShallow(selector);
   return useStore(store, shallowSelector);
+}
+
+export function useSendNFTFormValuesSelector<T>(
+  selector: (values: FormSendNFT) => T,
+) {
+  const formValuesStore = useSendNFTInternalSelector(
+    ctx => ctx.formValuesStore,
+  );
+  return useStore(formValuesStore, selector);
+}
+
+export function useSendNFTFormValuesShallowSelector<T>(
+  selector: (values: FormSendNFT) => T,
+) {
+  const formValuesStore = useSendNFTInternalSelector(
+    ctx => ctx.formValuesStore,
+  );
+  const shallowSelector = useShallow(selector);
+  return useStore(formValuesStore, shallowSelector);
+}
+
+export function useSendNFTCanSubmit() {
+  const { balanceError, isLoading } = useSendNFTInternalShallowSelector(
+    ctx => ({
+      balanceError: ctx.screenState.balanceError,
+      isLoading: ctx.screenState.isLoading,
+    }),
+  );
+  const { amount, to } = useSendNFTFormValuesShallowSelector(values => ({
+    amount: values.amount,
+    to: values.to,
+  }));
+
+  return (
+    isValidAddress(to) &&
+    !balanceError &&
+    new BigNumber(amount || 0).gt(0) &&
+    !isLoading
+  );
 }
 
 export function subscribeEvent<T extends SendNFTEvents>(

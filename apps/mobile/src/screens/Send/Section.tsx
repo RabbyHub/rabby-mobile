@@ -6,6 +6,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import {
   apiSendToken,
   useInputBlurOnEvents,
+  useSendTokenFormValuesSelector,
   useSendTokenInternalSelector,
   useSendTokenInternalShallowSelector,
 } from './hooks/useSendToken';
@@ -109,8 +110,8 @@ const BalanceHeader = React.memo(function BalanceHeader() {
 });
 
 const SendAmountInput = React.memo(function SendAmountInput() {
+  const amount = useSendTokenFormValuesSelector(values => values.amount);
   const {
-    amount,
     chainItem,
     checkCexSupport,
     currentToken,
@@ -123,7 +124,6 @@ const SendAmountInput = React.memo(function SendAmountInput() {
     onChangeSlider,
     setSlider,
   } = useSendTokenInternalShallowSelector(ctx => ({
-    amount: ctx.formValues.amount,
     chainItem: ctx.computed.chainItem,
     checkCexSupport: ctx.callbacks.checkCexSupport,
     currentToken: ctx.computed.currentToken,

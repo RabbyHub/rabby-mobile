@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Platform, View } from 'react-native';
 import { Button } from '@/components2024/Button';
-import { useSendNFTInternalShallowSelector } from '../hooks/useSendNFT';
+import {
+  useSendNFTCanSubmit,
+  useSendNFTFormValuesSelector,
+  useSendNFTInternalShallowSelector,
+} from '../hooks/useSendNFT';
 import { useTranslation } from 'react-i18next';
 
 import { ModalConfirmAllowTransfer } from '@/components/Address/SheetModalConfirmAllowTransfer';
@@ -24,6 +28,8 @@ function BottomArea() {
   const { t } = useTranslation();
 
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const canSubmit = useSendNFTCanSubmit();
+  const to = useSendNFTFormValuesSelector(values => values.to);
 
   const {
     addressToAddAsContacts,
@@ -31,7 +37,6 @@ function BottomArea() {
     account,
     buildTxsCount,
     canShowDirectSign,
-    canSubmit,
     fetchContactAccounts,
     fromAddress,
     handleIgnoreGasFeeChange,
@@ -41,7 +46,6 @@ function BottomArea() {
     onGasInfoDebouncedLoaded,
     putScreenState,
     submitForm,
-    to,
     toAddrCex,
     toAddressInContactBook,
     toAddressPositiveTips,
@@ -51,7 +55,6 @@ function BottomArea() {
     account: ctx.computed.account,
     buildTxsCount: ctx.screenState.buildTxsCount,
     canShowDirectSign: ctx.computed.canDirectSign,
-    canSubmit: ctx.computed.canSubmit,
     fetchContactAccounts: ctx.fns.fetchContactAccounts,
     fromAddress: ctx.computed.fromAddress,
     handleIgnoreGasFeeChange: ctx.callbacks.handleIgnoreGasFeeChange,
@@ -61,7 +64,6 @@ function BottomArea() {
     onGasInfoDebouncedLoaded: ctx.callbacks.onGasInfoDebouncedLoaded,
     putScreenState: ctx.fns.putScreenState,
     submitForm: ctx.callbacks.submitForm,
-    to: ctx.formValues.to,
     toAddrCex: ctx.computed.toAddrCex,
     toAddressInContactBook: ctx.computed.toAddressInContactBook,
     toAddressPositiveTips: ctx.computed.toAddressPositiveTips,

@@ -5,6 +5,8 @@ import {
   apiSendToken,
   SendTokenEvents,
   subscribeEvent,
+  useSendTokenCanSubmit,
+  useSendTokenFormValuesSelector,
   useSendTokenInternalShallowSelector,
   useSendTokenScreenChainToken,
 } from '../hooks/useSendToken';
@@ -39,6 +41,8 @@ const isAndroid = Platform.OS === 'android';
 function BottomArea() {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const canSubmit = useSendTokenCanSubmit();
+  const to = useSendTokenFormValuesSelector(values => values.to);
 
   const {
     addressToAddAsContacts,
@@ -47,7 +51,6 @@ function BottomArea() {
     account,
     buildTxsCount,
     canShowDirectSign,
-    canSubmit,
     directSignBtnRef,
     disableItemCheck,
     fetchContactAccounts,
@@ -60,7 +63,6 @@ function BottomArea() {
     saveCurrentFormValuesSnapshot,
     sendTokenEvents,
     submitForm,
-    to,
     toAddrCex,
     toAddressInContactBook,
     toAddressPositiveTips,
@@ -71,7 +73,6 @@ function BottomArea() {
     account: ctx.computed.account,
     buildTxsCount: ctx.screenState.buildTxsCount,
     canShowDirectSign: ctx.computed.canDirectSign,
-    canSubmit: ctx.computed.canSubmit,
     directSignBtnRef: ctx.directSignBtnRef,
     disableItemCheck: ctx.fns.disableItemCheck,
     fetchContactAccounts: ctx.fns.fetchContactAccounts,
@@ -84,7 +85,6 @@ function BottomArea() {
     saveCurrentFormValuesSnapshot: ctx.callbacks.saveCurrentFormValuesSnapshot,
     sendTokenEvents: ctx.sendTokenEvents,
     submitForm: ctx.callbacks.submitForm,
-    to: ctx.formValues.to,
     toAddrCex: ctx.computed.toAddrCex,
     toAddressInContactBook: ctx.computed.toAddressInContactBook,
     toAddressPositiveTips: ctx.computed.toAddressPositiveTips,

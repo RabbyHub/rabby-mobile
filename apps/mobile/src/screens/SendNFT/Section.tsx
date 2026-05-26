@@ -4,6 +4,7 @@ import { useThemeStyles, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import {
+  useSendNFTFormValuesSelector,
   useSendNFTInternalShallowSelector,
   useInputBlurOnEvents,
 } from './hooks/useSendNFT';
@@ -41,10 +42,10 @@ export const NFTSection = React.memo(function NFTSection({
 }: RNViewProps) {
   const { styles } = useTheme2024({ getStyle: getNFTSectionStyles });
   const { t } = useTranslation();
+  const amount = useSendNFTFormValuesSelector(values => values.amount);
 
-  const { amount, chainItem, collectionName, handleFieldChange, nftItem } =
+  const { chainItem, collectionName, handleFieldChange, nftItem } =
     useSendNFTInternalShallowSelector(ctx => ({
-      amount: ctx.formValues.amount,
       chainItem: ctx.computed.chainItem,
       collectionName: ctx.computed.collectionName,
       handleFieldChange: ctx.callbacks.handleFieldChange,

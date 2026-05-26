@@ -395,10 +395,11 @@ function putScreenState(
         ? patchOrUpdateFunc(prev)
         : patchOrUpdateFunc;
 
-    return {
+    const nextState = {
       ...prev,
       ...patch,
     };
+    return isEqual(prev, nextState) ? prev : nextState;
   });
 }
 
@@ -523,6 +524,14 @@ const DF_SEND_TOKEN_FORM: FormSendToken = {
   messageDataForSendToEoa: '',
   messageDataForContractCall: '',
 };
+const createSendTokenFormValuesStore = (initialState: FormSendToken) =>
+  createStore<FormSendToken>()(zMutative<FormSendToken>(() => initialState));
+type SendTokenFormValuesStore = ReturnType<
+  typeof createSendTokenFormValuesStore
+>;
+const defaultSendTokenFormValuesStore = createSendTokenFormValuesStore({
+  ...DF_SEND_TOKEN_FORM,
+});
 const sendTokenFormValuesAtom = atom<FormSendToken>({ ...DF_SEND_TOKEN_FORM });
 const sendTokenExternalPatchAtom = atom<{
   nonce: number;
@@ -606,13 +615,21 @@ export function useSendTokenForm({
     ...DF_SEND_TOKEN_FORM,
     to: toAddress || '',
   });
+  const formValuesStoreRef = useRef<SendTokenFormValuesStore | null>(null);
+  if (!formValuesStoreRef.current) {
+    formValuesStoreRef.current = createSendTokenFormValuesStore(formValues);
+  }
   const formValuesLatestRef = useRef<FormSendToken>(formValues);
   const getLatestFormValues = useMemoizedFn(() => formValuesLatestRef.current);
   const setCommittedFormValues = useCallback(
     (next: FormSendToken | ((prev: FormSendToken) => FormSendToken)) => {
       setFormValues(prev => {
         const nextValues = typeof next === 'function' ? next(prev) : next;
+        if (isEqual(prev, nextValues)) {
+          return prev;
+        }
         formValuesLatestRef.current = nextValues;
+        formValuesStoreRef.current?.setState(nextValues, true);
         jotaiStore.set(sendTokenFormValuesAtom, nextValues);
         return nextValues;
       });
@@ -624,6 +641,7 @@ export function useSendTokenForm({
 
   useEffect(() => {
     formValuesLatestRef.current = formValues;
+    formValuesStoreRef.current?.setState(formValues, true);
     jotaiStore.set(sendTokenFormValuesAtom, formValues);
   }, [formValues]);
 
@@ -2182,6 +2200,7 @@ export function useSendTokenForm({
 
     directSignBtnRef,
     formValuesRef,
+    formValuesStore: formValuesStoreRef.current,
     saveCurrentFormValuesSnapshot,
 
     handleGasLevelChanged,
@@ -2222,7 +2241,6 @@ type ToAddressPositiveTips = {
 };
 type InternalContext = {
   screenState: SendScreenState;
-  formValues: FormSendToken;
   computed: {
     account: Account | null;
     fromAddress: string;
@@ -2230,7 +2248,6 @@ type InternalContext = {
     currentToken: TokenItem | null;
     currentTokenBalance: string;
     whitelistEnabled: boolean;
-    canSubmit: boolean;
     canDirectSign: boolean;
     toAccount: FoundAccountResult['account'] | null;
     toAddressIsCex: boolean;
@@ -2254,6 +2271,7 @@ type InternalContext = {
   };
   directSignBtnRef: React.RefObject<DirectSignBtnMethods | null>;
   formValuesRef: React.MutableRefObject<FormValuesOnSubmit<BridgeFormSnapshot>>;
+  formValuesStore: SendTokenFormValuesStore;
   callbacks: {
     handleCurrentTokenChange: (token: TokenItem) => void;
     checkCexSupport: (token: TokenItem) => void;
@@ -2282,7 +2300,6 @@ type InternalContext = {
 };
 const DEFAULT_SEND_TOKEN_INTERNAL_CONTEXT: InternalContext = {
   screenState: { ...DFLT_SEND_STATE },
-  formValues: { ...DF_SEND_TOKEN_FORM },
   computed: {
     account: null,
     fromAddress: '',
@@ -2290,7 +2307,6 @@ const DEFAULT_SEND_TOKEN_INTERNAL_CONTEXT: InternalContext = {
     currentToken: null,
     currentTokenBalance: '',
     whitelistEnabled: false,
-    canSubmit: false,
     toAccount: null,
     toAddressIsCex: false,
     toAddressInContactBook: false,
@@ -2315,6 +2331,7 @@ const DEFAULT_SEND_TOKEN_INTERNAL_CONTEXT: InternalContext = {
   },
   directSignBtnRef: React.createRef<DirectSignBtnMethods>(),
   formValuesRef: { current: null } as any,
+  formValuesStore: defaultSendTokenFormValuesStore,
   callbacks: {
     handleCurrentTokenChange: () => {},
     checkCexSupport: () => {},
@@ -2391,6 +2408,45 @@ export function useSendTokenInternalShallowSelector<T>(
   const store = useSendTokenInternalStoreApi();
   const shallowSelector = useShallow(selector);
   return useStore(store, shallowSelector);
+}
+
+export function useSendTokenFormValuesSelector<T>(
+  selector: (values: FormSendToken) => T,
+) {
+  const formValuesStore = useSendTokenInternalSelector(
+    ctx => ctx.formValuesStore,
+  );
+  return useStore(formValuesStore, selector);
+}
+
+export function useSendTokenFormValuesShallowSelector<T>(
+  selector: (values: FormSendToken) => T,
+) {
+  const formValuesStore = useSendTokenInternalSelector(
+    ctx => ctx.formValuesStore,
+  );
+  const shallowSelector = useShallow(selector);
+  return useStore(formValuesStore, shallowSelector);
+}
+
+export function useSendTokenCanSubmit() {
+  const { balanceError, isLoading } = useSendTokenInternalShallowSelector(
+    ctx => ({
+      balanceError: ctx.screenState.balanceError,
+      isLoading: ctx.screenState.isLoading,
+    }),
+  );
+  const { amount, to } = useSendTokenFormValuesShallowSelector(values => ({
+    amount: values.amount,
+    to: values.to,
+  }));
+
+  return (
+    isValidAddress(to) &&
+    !balanceError &&
+    new BigNumber(amount || 0).gt(0) &&
+    !isLoading
+  );
 }
 
 export function subscribeEvent<T extends SendTokenEvents>(

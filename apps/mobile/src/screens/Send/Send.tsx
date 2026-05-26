@@ -28,6 +28,7 @@ import {
   getSendChainToken,
   SendTokenEvents,
   SendTokenInternalContextProvider,
+  useSendTokenCanSubmit,
   useSendTokenForm,
   useSendTokenInternalShallowSelector,
   useSendTokenScreenChainToken,
@@ -134,9 +135,9 @@ const SendPendingTxItem = React.memo(function SendPendingTxItem({
   isForMultipleAddress: boolean;
   localPendingTxData: SendTxHistoryItem | null;
 }) {
-  const { account, canSubmit } = useSendTokenInternalShallowSelector(ctx => ({
+  const canSubmit = useSendTokenCanSubmit();
+  const { account } = useSendTokenInternalShallowSelector(ctx => ({
     account: ctx.computed.account,
-    canSubmit: ctx.computed.canSubmit,
   }));
 
   if (!localPendingTxData || canSubmit) {
@@ -382,6 +383,7 @@ function SendScreen({
 
     directSignBtnRef,
     formValuesRef,
+    formValuesStore,
     saveCurrentFormValuesSnapshot,
 
     whitelistEnabled,
@@ -390,7 +392,6 @@ function SendScreen({
       toAddressInContactBook,
       toAddressIsCex,
       toAddressPositiveTips,
-      canSubmit,
       canDirectSign,
       toAddrCex,
     },
@@ -627,11 +628,9 @@ function SendScreen({
   const sendTokenInternalValue = useMemo(
     () => ({
       screenState,
-      formValues,
       computed: {
         account: currentAccount || null,
         fromAddress: currentAccount?.address || '',
-        canSubmit,
         toAccount,
         toAddressIsCex,
         whitelistEnabled,
@@ -655,6 +654,7 @@ function SendScreen({
 
       directSignBtnRef,
       formValuesRef,
+      formValuesStore,
       callbacks: {
         handleCurrentTokenChange,
         submitForm,
@@ -674,7 +674,6 @@ function SendScreen({
     [
       balanceNumText,
       canDirectSign,
-      canSubmit,
       chainItem,
       checkCexSupport,
       currentAccount,
@@ -682,8 +681,8 @@ function SendScreen({
       directSignBtnRef,
       disableItemCheck,
       fetchContactAccounts,
-      formValues,
       formValuesRef,
+      formValuesStore,
       handleClickMaxButton,
       handleCurrentTokenChange,
       submitForm,
