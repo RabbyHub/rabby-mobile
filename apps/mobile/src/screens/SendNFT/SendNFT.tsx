@@ -24,7 +24,7 @@ import {
   subscribeEvent,
   useSendNFTForm,
   useSendNFTInternalShallowSelector,
-  useSendNFTScreenState,
+  useSendNFTScreenStateActions,
 } from './hooks/useSendNFT';
 import { useContactAccounts } from '@/hooks/contact';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
@@ -104,11 +104,7 @@ export default function SendNFT() {
     throw new Error('Account is required to send NFT');
   }
 
-  const {
-    sendNFTScreenState: screenState,
-    putScreenState,
-    resetScreenState,
-  } = useSendNFTScreenState();
+  const { resetScreenState } = useSendNFTScreenStateActions();
 
   const {
     sendNFTEvents,
@@ -182,7 +178,6 @@ export default function SendNFT() {
 
   const sendNFTInternalValue = React.useMemo(
     () => ({
-      screenState,
       computed: {
         account,
         addrDesc: addrDesc || null,
@@ -204,7 +199,6 @@ export default function SendNFT() {
       scrollViewRef: scrollviewRef,
       scrollViewStyle,
       fns: {
-        putScreenState,
         fetchContactAccounts,
       },
 
@@ -231,8 +225,6 @@ export default function SendNFT() {
       handleIgnoreGasFeeChange,
       nftItem,
       onBottomAreaLayout,
-      putScreenState,
-      screenState,
       scrollToBottom,
       scrollviewRef,
       scrollViewStyle,

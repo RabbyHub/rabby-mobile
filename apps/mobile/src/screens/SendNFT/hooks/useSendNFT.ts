@@ -21,7 +21,6 @@ import {
   ProjectItem,
   Tx,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { atom, useAtom } from 'jotai';
 import { openapi } from '@/core/request';
 import { TFunction } from 'i18next';
 import { isValidAddress } from '@ethereumjs/util';
@@ -138,36 +137,67 @@ const DFLT_SEND_STATE: SendScreenState = {
 
   toAddrDesc: null,
 };
-const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
+const createSendNFTScreenStateStore = (initialState: SendScreenState) =>
+  createStore<SendScreenState>()(
+    zMutative<SendScreenState>(() => initialState),
+  );
+const sendNFTScreenStateStore = createSendNFTScreenStateStore({
+  ...DFLT_SEND_STATE,
+});
+function putScreenState(
+  patchOrUpdateFunc:
+    | Partial<SendScreenState>
+    | ((prev: SendScreenState) => Partial<SendScreenState>),
+) {
+  const prev = sendNFTScreenStateStore.getState();
+  const patch =
+    typeof patchOrUpdateFunc === 'function'
+      ? patchOrUpdateFunc(prev)
+      : patchOrUpdateFunc;
+  const nextState = {
+    ...prev,
+    ...patch,
+  };
+
+  if (!isEqual(prev, nextState)) {
+    sendNFTScreenStateStore.setState(nextState, true);
+  }
+}
+
+function resetScreenState() {
+  sendNFTScreenStateStore.setState({ ...DFLT_SEND_STATE }, true);
+}
+
+export const apiSendNFT = {
+  putScreenState,
+  resetScreenState,
+};
+
 export function useSendNFTScreenState() {
-  const [sendNFTScreenState, setSendNFTScreenState] = useAtom(
-    sendTokenScreenStateAtom,
-  );
-
-  const putScreenState = useCallback<InternalContext['fns']['putScreenState']>(
-    patchOrUpdateFunc => {
-      setSendNFTScreenState(prev => {
-        const patch =
-          typeof patchOrUpdateFunc === 'function'
-            ? patchOrUpdateFunc(prev)
-            : patchOrUpdateFunc;
-
-        const nextState = {
-          ...prev,
-          ...patch,
-        };
-        return isEqual(prev, nextState) ? prev : nextState;
-      });
-    },
-    [setSendNFTScreenState],
-  );
-
-  const resetScreenState = useCallback(() => {
-    setSendNFTScreenState({ ...DFLT_SEND_STATE });
-  }, [setSendNFTScreenState]);
+  const sendNFTScreenState = useStore(sendNFTScreenStateStore);
 
   return {
     sendNFTScreenState,
+    putScreenState,
+    resetScreenState,
+  };
+}
+
+export function useSendNFTScreenStateSelector<T>(
+  selector: (state: SendScreenState) => T,
+) {
+  return useStore(sendNFTScreenStateStore, selector);
+}
+
+export function useSendNFTScreenStateShallowSelector<T>(
+  selector: (state: SendScreenState) => T,
+) {
+  const shallowSelector = useShallow(selector);
+  return useStore(sendNFTScreenStateStore, shallowSelector);
+}
+
+export function useSendNFTScreenStateActions() {
+  return {
     putScreenState,
     resetScreenState,
   };
@@ -232,8 +262,12 @@ export function useSendNFTForm({
 
   const sendNFTEventsRef = useRef(new EventEmitter());
 
-  const { sendNFTScreenState: screenState, putScreenState } =
-    useSendNFTScreenState();
+  const screenState = useSendNFTScreenStateShallowSelector(state => ({
+    balanceError: state.balanceError,
+    contactInfo: state.contactInfo,
+    isLoading: state.isLoading,
+    toAddrDesc: state.toAddrDesc,
+  }));
   const cacheAmountRef = useRef(DFLT_SEND_STATE.cacheAmount);
 
   const [formValues, setFormValues] = React.useState<FormSendNFT>({
@@ -436,13 +470,7 @@ export function useSendNFTForm({
         putScreenState({ contactInfo: null });
       }
     },
-    [
-      patchFormValues,
-      screenState.contactInfo,
-      getLatestFormValues,
-      putScreenState,
-      t,
-    ],
+    [patchFormValues, screenState.contactInfo, getLatestFormValues, t],
   );
 
   const submitForm = useMemoizedFn(async () => {
@@ -685,7 +713,6 @@ export function useSendNFTForm({
       prepareDirectSubmitMiniTx,
       toAddress,
       currentAccount,
-      putScreenState,
       chainItem?.name,
       nftToken,
       navigation,
@@ -789,7 +816,7 @@ export function useSendNFTForm({
     toAccount,
     foundToAccountInfo?.isMyImported,
     toAddressIsRecentlySend,
-    screenState,
+    screenState.toAddrDesc,
     cexList,
     currentAccount?.type,
     chainItem?.isTestnet,
@@ -842,7 +869,6 @@ export function useSendNFTForm({
       prepareRef.current = prepareDirectSubmitMiniTx(prepareCountRef.current);
     }
   }, [
-    putScreenState,
     isFocused,
     chainItem?.id,
     chainItem?.isTestnet,
@@ -889,7 +915,6 @@ type ToAddressPositiveTips = {
   isMyImported?: boolean;
 };
 type InternalContext = {
-  screenState: SendScreenState;
   computed: {
     account: Account | null;
     addrDesc: AddrDescResponse['desc'] | null;
@@ -913,11 +938,6 @@ type InternalContext = {
   scrollViewRef: React.MutableRefObject<KeyboardAwareScrollView | null>;
   scrollViewStyle: any;
   fns: {
-    putScreenState: (
-      patch:
-        | Partial<SendScreenState>
-        | ((prev: SendScreenState) => Partial<SendScreenState>),
-    ) => void;
     fetchContactAccounts: () => void;
   };
   callbacks: {
@@ -933,7 +953,6 @@ type InternalContext = {
   };
 };
 const DEFAULT_SEND_NFT_INTERNAL_CONTEXT: InternalContext = {
-  screenState: { ...DFLT_SEND_STATE },
   computed: {
     account: null,
     addrDesc: null,
@@ -954,7 +973,6 @@ const DEFAULT_SEND_NFT_INTERNAL_CONTEXT: InternalContext = {
   scrollViewRef: { current: null },
   scrollViewStyle: null,
   fns: {
-    putScreenState: () => {},
     fetchContactAccounts: () => {},
   },
   callbacks: {
@@ -1046,10 +1064,10 @@ export function useSendNFTFormValuesShallowSelector<T>(
 }
 
 export function useSendNFTCanSubmit() {
-  const { balanceError, isLoading } = useSendNFTInternalShallowSelector(
-    ctx => ({
-      balanceError: ctx.screenState.balanceError,
-      isLoading: ctx.screenState.isLoading,
+  const { balanceError, isLoading } = useSendNFTScreenStateShallowSelector(
+    state => ({
+      balanceError: state.balanceError,
+      isLoading: state.isLoading,
     }),
   );
   const { amount, to } = useSendNFTFormValuesShallowSelector(values => ({

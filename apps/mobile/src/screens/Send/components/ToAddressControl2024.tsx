@@ -30,7 +30,10 @@ import { getCexWithLocalCache } from '@/databases/hooks/cex';
 import { useAlias2 } from '@/hooks/alias';
 import { default as RcIconUnknownAddressAvatarCC } from '../icons/unknown-address-avatar-cc.svg';
 import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
-import { useSendTokenInternalShallowSelector } from '../hooks/useSendToken';
+import {
+  useSendTokenInternalShallowSelector,
+  useSendTokenScreenStateSelector,
+} from '../hooks/useSendToken';
 import { RcIconTipRightCC } from '../icons';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
@@ -405,9 +408,9 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
 function ToAddressControl2024({ style }: React.PropsWithChildren<RNViewProps>) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { isAddrOnWhitelist } = useWhitelist();
-  const { addrDesc, handleFieldChange, toAccount, toAddressPositiveTips } =
+  const addrDesc = useSendTokenScreenStateSelector(state => state.toAddrDesc);
+  const { handleFieldChange, toAccount, toAddressPositiveTips } =
     useSendTokenInternalShallowSelector(ctx => ({
-      addrDesc: ctx.screenState.toAddrDesc,
       handleFieldChange: ctx.callbacks.handleFieldChange,
       toAccount: ctx.computed.toAccount,
       toAddressPositiveTips: ctx.computed.toAddressPositiveTips,

@@ -9,6 +9,7 @@ import {
   useSendTokenFormValuesSelector,
   useSendTokenInternalShallowSelector,
   useSendTokenScreenChainToken,
+  useSendTokenScreenStateShallowSelector,
 } from '../hooks/useSendToken';
 import {
   createGetStyles2024,
@@ -48,8 +49,18 @@ function BottomArea() {
     addressToAddAsContacts,
     agreeRequiredForToAddress,
     agreeRequiredForToken,
-    account,
     buildTxsCount,
+    isSubmitLoading,
+  } = useSendTokenScreenStateShallowSelector(state => ({
+    addressToAddAsContacts: state.addressToAddAsContacts,
+    agreeRequiredForToAddress: state.agreeRequiredChecks.forToAddress,
+    agreeRequiredForToken: state.agreeRequiredChecks.forToken,
+    buildTxsCount: state.buildTxsCount,
+    isSubmitLoading: state.isSubmitLoading,
+  }));
+
+  const {
+    account,
     canShowDirectSign,
     directSignBtnRef,
     disableItemCheck,
@@ -57,7 +68,6 @@ function BottomArea() {
     formValuesRef,
     fromAddress,
     handleIgnoreGasFeeChange,
-    isSubmitLoading,
     onBottomAreaLayout,
     onGasInfoDebouncedLoaded,
     saveCurrentFormValuesSnapshot,
@@ -67,11 +77,7 @@ function BottomArea() {
     toAddressInContactBook,
     toAddressPositiveTips,
   } = useSendTokenInternalShallowSelector(ctx => ({
-    addressToAddAsContacts: ctx.screenState.addressToAddAsContacts,
-    agreeRequiredForToAddress: ctx.screenState.agreeRequiredChecks.forToAddress,
-    agreeRequiredForToken: ctx.screenState.agreeRequiredChecks.forToken,
     account: ctx.computed.account,
-    buildTxsCount: ctx.screenState.buildTxsCount,
     canShowDirectSign: ctx.computed.canDirectSign,
     directSignBtnRef: ctx.directSignBtnRef,
     disableItemCheck: ctx.fns.disableItemCheck,
@@ -79,7 +85,6 @@ function BottomArea() {
     formValuesRef: ctx.formValuesRef,
     fromAddress: ctx.computed.fromAddress,
     handleIgnoreGasFeeChange: ctx.callbacks.handleIgnoreGasFeeChange,
-    isSubmitLoading: ctx.screenState.isSubmitLoading,
     onBottomAreaLayout: ctx.callbacks.onBottomAreaLayout,
     onGasInfoDebouncedLoaded: ctx.callbacks.onGasInfoDebouncedLoaded,
     saveCurrentFormValuesSnapshot: ctx.callbacks.saveCurrentFormValuesSnapshot,

@@ -371,15 +371,24 @@ const DFLT_SEND_SUCCESS_RESET_STATE: Partial<SendScreenState> = {
     ...DFLT_SEND_STATE.agreeRequiredChecks,
   },
 };
-const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
+const createSendTokenScreenStateStore = (initialState: SendScreenState) =>
+  createStore<SendScreenState>()(
+    zMutative<SendScreenState>(() => initialState),
+  );
+type SendTokenScreenStateStore = ReturnType<
+  typeof createSendTokenScreenStateStore
+>;
+const sendTokenScreenStateStore = createSendTokenScreenStateStore({
+  ...DFLT_SEND_STATE,
+});
 function setSendScreenState(valOrFunc: UpdaterOrPartials<SendScreenState>) {
-  return jotaiStore.set(sendTokenScreenStateAtom, prev => {
-    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
-      strict: false,
-    });
-
-    return newVal;
+  const prev = sendTokenScreenStateStore.getState();
+  const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+    strict: false,
   });
+
+  sendTokenScreenStateStore.setState(newVal, true);
+  return newVal;
 }
 
 function putScreenState(
@@ -443,15 +452,28 @@ function resetScreenState() {
 }
 
 export function useSendTokenScreenState() {
-  const sendTokenScreenState = useAtomValue(sendTokenScreenStateAtom);
+  const sendTokenScreenState = useStore(sendTokenScreenStateStore);
 
   return {
     sendTokenScreenState,
   };
 }
 
+export function useSendTokenScreenStateSelector<T>(
+  selector: (state: SendScreenState) => T,
+) {
+  return useStore(sendTokenScreenStateStore, selector);
+}
+
+export function useSendTokenScreenStateShallowSelector<T>(
+  selector: (state: SendScreenState) => T,
+) {
+  const shallowSelector = useShallow(selector);
+  return useStore(sendTokenScreenStateStore, shallowSelector);
+}
+
 export function getSendTokenScreenState() {
-  return jotaiStore.get(sendTokenScreenStateAtom);
+  return sendTokenScreenStateStore.getState();
 }
 
 export function makeSendTokenValidationSchema(options: {
@@ -612,7 +634,19 @@ export function useSendTokenForm({
   const { chainEnum, isNativeToken, currentToken, chainItem } =
     useSendTokenScreenChainToken();
 
-  const { sendTokenScreenState: screenState } = useSendTokenScreenState();
+  const screenState = useSendTokenScreenStateShallowSelector(state => ({
+    balanceError: state.balanceError,
+    contactInfo: state.contactInfo,
+    estimatedGas: state.estimatedGas,
+    gasList: state.gasList,
+    isEstimatingGas: state.isEstimatingGas,
+    isGnosisSafe: state.isGnosisSafe,
+    isLoading: state.isLoading,
+    safeInfo: state.safeInfo,
+    selectedGasLevel: state.selectedGasLevel,
+    showGasReserved: state.showGasReserved,
+    toAddrDesc: state.toAddrDesc,
+  }));
   const cacheAmountRef = useRef(DFLT_SEND_STATE.cacheAmount);
 
   const route =
@@ -775,7 +809,7 @@ export function useSendTokenForm({
       isNativeToken,
       isShowMessageDataForContract,
       isShowMessageDataForToken,
-      screenState,
+      screenState.safeInfo,
     ],
   );
 
@@ -2276,7 +2310,6 @@ type ToAddressPositiveTips = {
   isMyImported?: boolean;
 };
 type InternalContext = {
-  screenState: SendScreenState;
   computed: {
     account: Account | null;
     fromAddress: string;
@@ -2335,7 +2368,6 @@ type InternalContext = {
   };
 };
 const DEFAULT_SEND_TOKEN_INTERNAL_CONTEXT: InternalContext = {
-  screenState: { ...DFLT_SEND_STATE },
   computed: {
     account: null,
     fromAddress: '',
@@ -2466,10 +2498,10 @@ export function useSendTokenFormValuesShallowSelector<T>(
 }
 
 export function useSendTokenCanSubmit() {
-  const { balanceError, isLoading } = useSendTokenInternalShallowSelector(
-    ctx => ({
-      balanceError: ctx.screenState.balanceError,
-      isLoading: ctx.screenState.isLoading,
+  const { balanceError, isLoading } = useSendTokenScreenStateShallowSelector(
+    state => ({
+      balanceError: state.balanceError,
+      isLoading: state.isLoading,
     }),
   );
   const { amount, to } = useSendTokenFormValuesShallowSelector(values => ({

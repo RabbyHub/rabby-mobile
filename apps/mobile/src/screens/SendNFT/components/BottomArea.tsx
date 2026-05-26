@@ -2,9 +2,11 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { Platform, View } from 'react-native';
 import { Button } from '@/components2024/Button';
 import {
+  apiSendNFT,
   useSendNFTCanSubmit,
   useSendNFTFormValuesSelector,
   useSendNFTInternalShallowSelector,
+  useSendNFTScreenStateShallowSelector,
 } from '../hooks/useSendNFT';
 import { useTranslation } from 'react-i18next';
 
@@ -34,35 +36,37 @@ function BottomArea() {
   const {
     addressToAddAsContacts,
     agreeRequiredForToAddress,
-    account,
     buildTxsCount,
+    isSubmitLoading,
+  } = useSendNFTScreenStateShallowSelector(state => ({
+    addressToAddAsContacts: state.addressToAddAsContacts,
+    agreeRequiredForToAddress: state.agreeRequiredChecks.forToAddress,
+    buildTxsCount: state.buildTxsCount,
+    isSubmitLoading: state.isSubmitLoading,
+  }));
+
+  const {
+    account,
     canShowDirectSign,
     fetchContactAccounts,
     fromAddress,
     handleIgnoreGasFeeChange,
-    isSubmitLoading,
     nftItem,
     onBottomAreaLayout,
     onGasInfoDebouncedLoaded,
-    putScreenState,
     submitForm,
     toAddrCex,
     toAddressInContactBook,
     toAddressPositiveTips,
   } = useSendNFTInternalShallowSelector(ctx => ({
-    addressToAddAsContacts: ctx.screenState.addressToAddAsContacts,
-    agreeRequiredForToAddress: ctx.screenState.agreeRequiredChecks.forToAddress,
     account: ctx.computed.account,
-    buildTxsCount: ctx.screenState.buildTxsCount,
     canShowDirectSign: ctx.computed.canDirectSign,
     fetchContactAccounts: ctx.fns.fetchContactAccounts,
     fromAddress: ctx.computed.fromAddress,
     handleIgnoreGasFeeChange: ctx.callbacks.handleIgnoreGasFeeChange,
-    isSubmitLoading: ctx.screenState.isSubmitLoading,
     nftItem: ctx.computed.currentNFT,
     onBottomAreaLayout: ctx.callbacks.onBottomAreaLayout,
     onGasInfoDebouncedLoaded: ctx.callbacks.onGasInfoDebouncedLoaded,
-    putScreenState: ctx.fns.putScreenState,
     submitForm: ctx.callbacks.submitForm,
     toAddrCex: ctx.computed.toAddrCex,
     toAddressInContactBook: ctx.computed.toAddressInContactBook,
@@ -110,18 +114,15 @@ function BottomArea() {
         id: to || '',
       };
     }, [fromAddress, to, nftItem?.chain /* , nftItem?.id */]),
-    onLoadFinished: useCallback(
-      ctx => {
-        putScreenState(prev => ({
-          ...prev,
-          agreeRequiredChecks: {
-            ...prev.agreeRequiredChecks,
-            forToAddress: false,
-          },
-        }));
-      },
-      [putScreenState],
-    ),
+    onLoadFinished: useCallback(() => {
+      apiSendNFT.putScreenState(prev => ({
+        ...prev,
+        agreeRequiredChecks: {
+          ...prev.agreeRequiredChecks,
+          forToAddress: false,
+        },
+      }));
+    }, []),
   });
 
   useEffect(() => {
@@ -182,7 +183,7 @@ function BottomArea() {
         mostImportantRisks={mostImportantRisks}
         agreeRequiredChecked={agreeRequiredChecked}
         onToggleAgreeRequiredChecked={() => {
-          putScreenState(prev => {
+          apiSendNFT.putScreenState(prev => {
             return {
               ...prev,
               agreeRequiredChecks: {
@@ -232,7 +233,7 @@ function BottomArea() {
         visible={isAllowTransferModalVisible}
         showAddToWhitelist={toAddressInContactBook}
         onFinished={result => {
-          putScreenState?.({ temporaryGrant: true });
+          apiSendNFT.putScreenState({ temporaryGrant: true });
           setIsAllowTransferModalVisible(false);
         }}
         onCancel={() => {
@@ -243,7 +244,7 @@ function BottomArea() {
       <ModalAddToContacts
         addrToAdd={addressToAddAsContacts || ''}
         onFinished={async result => {
-          putScreenState({ addressToAddAsContacts: null });
+          apiSendNFT.putScreenState({ addressToAddAsContacts: null });
           fetchContactAccounts();
 
           // trigger get balance of address
@@ -252,7 +253,7 @@ function BottomArea() {
           });
         }}
         onCancel={() => {
-          putScreenState({ addressToAddAsContacts: null });
+          apiSendNFT.putScreenState({ addressToAddAsContacts: null });
         }}
       />
     </View>

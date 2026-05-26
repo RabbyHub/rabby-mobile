@@ -9,6 +9,8 @@ import {
   useSendTokenFormValuesSelector,
   useSendTokenInternalSelector,
   useSendTokenInternalShallowSelector,
+  useSendTokenScreenStateSelector,
+  useSendTokenScreenStateShallowSelector,
 } from './hooks/useSendToken';
 import { useTranslation } from 'react-i18next';
 import { MINIMUM_GAS_LIMIT } from '@/constant/gas';
@@ -24,12 +26,10 @@ import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { Text, TextInput } from '@/components/Typography';
 
 const SyncSelectedGasLevel = React.memo(function SyncSelectedGasLevel() {
-  const { currentToken, gasList } = useSendTokenInternalShallowSelector(
-    ctx => ({
-      currentToken: ctx.computed.currentToken,
-      gasList: ctx.screenState.gasList,
-    }),
-  );
+  const gasList = useSendTokenScreenStateSelector(state => state.gasList);
+  const { currentToken } = useSendTokenInternalShallowSelector(ctx => ({
+    currentToken: ctx.computed.currentToken,
+  }));
 
   useEffect(() => {
     if (currentToken && gasList) {
@@ -55,22 +55,23 @@ const BalanceHeader = React.memo(function BalanceHeader() {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
+  const { handleClickMaxButton, currentTokenBalance } =
+    useSendTokenInternalShallowSelector(ctx => ({
+      handleClickMaxButton: ctx.callbacks.handleClickMaxButton,
+      currentTokenBalance: ctx.computed.currentTokenBalance,
+    }));
   const {
     balanceError,
     balanceWarn,
-    currentTokenBalance,
-    handleClickMaxButton,
     isLoading,
     showBalanceLoading,
     showGasReserved,
-  } = useSendTokenInternalShallowSelector(ctx => ({
-    balanceError: ctx.screenState.balanceError,
-    balanceWarn: ctx.screenState.balanceWarn,
-    currentTokenBalance: ctx.computed.currentTokenBalance,
-    handleClickMaxButton: ctx.callbacks.handleClickMaxButton,
-    isLoading: ctx.screenState.isLoading,
-    showBalanceLoading: ctx.screenState.showBalanceLoading,
-    showGasReserved: ctx.screenState.showGasReserved,
+  } = useSendTokenScreenStateShallowSelector(state => ({
+    balanceError: state.balanceError,
+    balanceWarn: state.balanceWarn,
+    isLoading: state.isLoading,
+    showBalanceLoading: state.showBalanceLoading,
+    showGasReserved: state.showGasReserved,
   }));
 
   return (
@@ -120,7 +121,6 @@ const SendAmountInput = React.memo(function SendAmountInput() {
     disableItemCheck,
     handleClickMaxButton,
     handleFieldChange,
-    isEstimatingGas,
     onChangeSlider,
     setSlider,
   } = useSendTokenInternalShallowSelector(ctx => ({
@@ -132,10 +132,12 @@ const SendAmountInput = React.memo(function SendAmountInput() {
     disableItemCheck: ctx.fns.disableItemCheck,
     handleClickMaxButton: ctx.callbacks.handleClickMaxButton,
     handleFieldChange: ctx.callbacks.handleFieldChange,
-    isEstimatingGas: ctx.screenState.isEstimatingGas,
     onChangeSlider: ctx.callbacks.onChangeSlider,
     setSlider: ctx.callbacks.setSlider,
   }));
+  const isEstimatingGas = useSendTokenScreenStateSelector(
+    state => state.isEstimatingGas,
+  );
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',

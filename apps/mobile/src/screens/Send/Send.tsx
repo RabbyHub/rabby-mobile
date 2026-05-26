@@ -32,7 +32,7 @@ import {
   useSendTokenForm,
   useSendTokenInternalShallowSelector,
   useSendTokenScreenChainToken,
-  useSendTokenScreenState,
+  useSendTokenScreenStateShallowSelector,
 } from './hooks/useSendToken';
 import BottomArea from './components/BottomArea';
 import {
@@ -280,7 +280,12 @@ function SendScreen({
   const { chainItem, currentToken } = useSendTokenScreenChainToken();
   const routeParams = useAtomValue(sendScreenParamsAtom);
 
-  const { sendTokenScreenState: screenState } = useSendTokenScreenState();
+  const screenState = useSendTokenScreenStateShallowSelector(state => ({
+    clickedMax: state.clickedMax,
+    inited: state.inited,
+    selectedGasLevel: state.selectedGasLevel,
+    toAddrDesc: state.toAddrDesc,
+  }));
 
   const Header = useCallback(
     () => <SendHeaderRight isForMultipleAddress={isForMultipleAddress} />,
@@ -627,7 +632,6 @@ function SendScreen({
 
   const sendTokenInternalValue = useMemo(
     () => ({
-      screenState,
       computed: {
         account: currentAccount || null,
         fromAddress: currentAccount?.address || '',
@@ -691,7 +695,6 @@ function SendScreen({
       handleIgnoreGasFeeChange,
       onBottomAreaLayout,
       onChangeSlider,
-      screenState,
       scrollToBottom,
       scrollViewRef,
       scrollViewStyle,
