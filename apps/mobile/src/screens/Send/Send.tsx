@@ -360,7 +360,6 @@ function SendScreen({
 
   const {
     sendTokenEvents,
-    formik,
     formValues,
     submitForm,
     handleFieldChange,
@@ -646,7 +645,6 @@ function SendScreen({
         currentTokenBalance: balanceNumText,
       },
       sendTokenEvents,
-      formik,
       slider,
       scrollViewRef,
       scrollViewStyle,
@@ -686,7 +684,6 @@ function SendScreen({
       fetchContactAccounts,
       formValues,
       formValuesRef,
-      formik,
       handleClickMaxButton,
       handleCurrentTokenChange,
       submitForm,

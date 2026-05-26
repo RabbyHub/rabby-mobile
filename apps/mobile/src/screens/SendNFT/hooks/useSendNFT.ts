@@ -33,7 +33,6 @@ import { UIContactBookItem } from '@/core/apis/contact';
 import { Account, ChainGas } from '@/core/services/preference';
 import { apiContact, apiProvider, apiToken } from '@/core/apis';
 import { formatSpeicalAmount } from '@/utils/number';
-import { useFormik, useFormikContext } from 'formik';
 import { getKRCategoryByType } from '@/utils/transaction';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { toast } from '@/components2024/Toast';
@@ -227,6 +226,21 @@ export function useSendNFTForm({
     ...DF_SEND_TOKEN_FORM,
     to: toAddress || '',
   });
+  const formValuesLatestRef = useRef<FormSendNFT>(formValues);
+  const getLatestFormValues = useMemoizedFn(() => formValuesLatestRef.current);
+  const setCommittedFormValues = useCallback(
+    (next: FormSendNFT | ((prev: FormSendNFT) => FormSendNFT)) => {
+      setFormValues(prev => {
+        const nextValues = typeof next === 'function' ? next(prev) : next;
+        formValuesLatestRef.current = nextValues;
+        return nextValues;
+      });
+    },
+    [],
+  );
+  useEffect(() => {
+    formValuesLatestRef.current = formValues;
+  }, [formValues]);
 
   const { validationSchema } = useMemo(() => {
     return {
@@ -298,38 +312,18 @@ export function useSendNFTForm({
     [svBottomAreaHeight],
   );
 
-  /** @notice the formik will be new object every-time re-render, but most of its fields keep same */
-  const formik = useFormik({
-    initialValues: formValues,
-    validationSchema,
-    onSubmit: values => {
-      const formattedValues = {
-        ...values,
-        amount: formatSpeicalAmount(values.amount),
-      };
-      handleSubmit(formattedValues);
-    },
-  });
-  const submitForm = useMemoizedFn(() => {
-    formik.handleSubmit();
-  });
-
   const patchFormValues = useCallback(
     (changedValues: Partial<FormSendNFT>) => {
-      setFormValues(prev => {
-        let nextState = {
+      setCommittedFormValues(prev => {
+        const nextState = {
           ...prev,
           ...changedValues,
         };
 
-        formik.setFormikState(fprev => {
-          return { ...fprev, values: nextState };
-        });
-
         return nextState;
       });
     },
-    [formik, setFormValues],
+    [setCommittedFormValues],
   );
 
   const handleFormValuesChange = useCallback(
@@ -341,7 +335,7 @@ export function useSendNFTForm({
     ) => {
       let { currentPartials } = opts || {};
       const currentValues = {
-        ...formik.values,
+        ...getLatestFormValues(),
         ...currentPartials,
       };
 
@@ -374,7 +368,6 @@ export function useSendNFTForm({
         amount: resultAmount,
       };
 
-      formik.setFormikState(prev => ({ ...prev, values: nextFormValues }));
       patchFormValues(nextFormValues);
       putScreenState({
         cacheAmount: resultAmount,
@@ -394,18 +387,33 @@ export function useSendNFTForm({
       patchFormValues,
       screenState.cacheAmount,
       screenState.contactInfo,
-      formik,
+      getLatestFormValues,
       putScreenState,
       t,
     ],
   );
 
+  const submitForm = useMemoizedFn(async () => {
+    const values = {
+      ...getLatestFormValues(),
+      amount: formatSpeicalAmount(getLatestFormValues().amount),
+    };
+
+    try {
+      await validationSchema.validate(values, { abortEarly: false });
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('[SendNFT] submit validation failed', error);
+      }
+      return;
+    }
+
+    handleSubmit(values);
+  });
+
   const handleFieldChange = useMemoizedFn(
     <T extends keyof FormSendNFT>(f: T, value: FormSendNFT[T]) => {
-      formik.setFieldValue(f, value);
-      setFormValues(prev => ({ ...prev, [f]: value }));
-
-      const nextVal = { ...formik.values, [f]: value };
+      const nextVal = { ...getLatestFormValues(), [f]: value };
       handleFormValuesChange({ [f]: value }, { currentPartials: nextVal });
     },
   );
@@ -743,9 +751,8 @@ export function useSendNFTForm({
   ]);
 
   const resetFormValues = useCallback(() => {
-    setFormValues({ ...DF_SEND_TOKEN_FORM });
-    formik.resetForm();
-  }, [setFormValues, formik]);
+    setCommittedFormValues({ ...DF_SEND_TOKEN_FORM });
+  }, [setCommittedFormValues]);
 
   const prepareRef = useRef<Promise<Tx | void>>(undefined);
   const prepareCountRef = useRef(0);
@@ -800,7 +807,6 @@ export function useSendNFTForm({
     chainItem,
 
     sendNFTEvents: sendNFTEventsRef.current,
-    formik,
     submitForm,
     formValues,
     resetFormValues,
@@ -821,14 +827,6 @@ export function useSendNFTForm({
     miniSignInstance,
   };
 }
-export function useSendNFTFormikContext() {
-  return useFormikContext<FormSendNFT>();
-}
-
-export function useSendNFTFormik() {
-  return useSendNFTInternalSelector(ctx => ctx.formik);
-}
-
 type FoundAccountResult = Awaited<
   ReturnType<ReturnType<typeof useFindAddressByWhitelist>['findAccount']>
 >;
@@ -860,7 +858,6 @@ type InternalContext = {
     toAddrCex: null | undefined | ProjectItem;
   };
 
-  formik: ReturnType<typeof useFormik<FormSendNFT>>;
   events: EventEmitter;
   scrollViewRef: React.MutableRefObject<KeyboardAwareScrollView | null>;
   scrollViewStyle: any;
@@ -903,7 +900,6 @@ const DEFAULT_SEND_NFT_INTERNAL_CONTEXT: InternalContext = {
     toAddrCex: null,
   },
 
-  formik: null as any,
   events: null as any,
   scrollViewRef: { current: null },
   scrollViewStyle: null,

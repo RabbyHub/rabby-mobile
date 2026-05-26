@@ -32,7 +32,7 @@ import {
   TokenItemWithEntity,
   Tx,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { atom, useAtomValue } from 'jotai';
 import { openapi } from '@/core/request';
 import i18next, { TFunction } from 'i18next';
 import BigNumber from 'bignumber.js';
@@ -43,7 +43,6 @@ import { UIContactBookItem } from '@/core/apis/contact';
 import { Account } from '@/core/services/preference';
 import { apiContact, apiCustomTestnet, apiProvider } from '@/core/apis';
 import { formatSpeicalAmount } from '@/utils/number';
-import { useFormik, useFormikContext } from 'formik';
 import { useCheckAddressType } from '@/hooks/useParseAddress';
 import { formatTxInputDataOnERC20 } from '@/utils/transaction';
 import {
@@ -607,10 +606,24 @@ export function useSendTokenForm({
     ...DF_SEND_TOKEN_FORM,
     to: toAddress || '',
   });
+  const formValuesLatestRef = useRef<FormSendToken>(formValues);
+  const getLatestFormValues = useMemoizedFn(() => formValuesLatestRef.current);
+  const setCommittedFormValues = useCallback(
+    (next: FormSendToken | ((prev: FormSendToken) => FormSendToken)) => {
+      setFormValues(prev => {
+        const nextValues = typeof next === 'function' ? next(prev) : next;
+        formValuesLatestRef.current = nextValues;
+        jotaiStore.set(sendTokenFormValuesAtom, nextValues);
+        return nextValues;
+      });
+    },
+    [],
+  );
   const externalFormPatch = useAtomValue(sendTokenExternalPatchAtom);
   const handledExternalFormPatchNonceRef = useRef(0);
 
   useEffect(() => {
+    formValuesLatestRef.current = formValues;
     jotaiStore.set(sendTokenFormValuesAtom, formValues);
   }, [formValues]);
 
@@ -707,13 +720,13 @@ export function useSendTokenForm({
   );
 
   useEffect(() => {
-    setFormValues(prev => {
+    setCommittedFormValues(prev => {
       return {
         ...DF_SEND_TOKEN_FORM,
         to: prev.to,
       };
     });
-  }, [currentAccount?.type, currentAccount?.address]);
+  }, [currentAccount?.type, currentAccount?.address, setCommittedFormValues]);
 
   const { validationSchema } = useMemo(() => {
     return {
@@ -780,35 +793,18 @@ export function useSendTokenForm({
   const { runFetchLocalPendingTx } =
     useRecentSendPendingTx(isForMultipleAddress);
 
-  /** @notice the formik will be new object every-time re-render, but most of its fields keep same */
-  const formik = useFormik({
-    initialValues: formValues,
-    validationSchema,
-    onSubmit: values => {
-      values.amount = formatSpeicalAmount(values.amount);
-      handleSubmit(values);
-    },
-  });
-  const submitForm = useMemoizedFn(() => {
-    formik.handleSubmit();
-  });
-
   const patchFormValues = useCallback(
     (changedValues: Partial<FormSendToken>) => {
-      setFormValues(prev => {
-        let nextState = {
+      setCommittedFormValues(prev => {
+        const nextState = {
           ...prev,
           ...changedValues,
         };
 
-        formik.setFormikState(fprev => {
-          return { ...fprev, values: nextState };
-        });
-
         return nextState;
       });
     },
-    [formik, setFormValues],
+    [setCommittedFormValues],
   );
 
   const handleFormValuesChange = useCallback(
@@ -822,7 +818,7 @@ export function useSendTokenForm({
     ) => {
       let { currentPartials } = opts || {};
       const currentValues = {
-        ...formik.values,
+        ...getLatestFormValues(),
         ...currentPartials,
       };
 
@@ -904,7 +900,6 @@ export function useSendTokenForm({
       //   values: nextFormValues,
       //   currentToken: targetToken,
       // });
-      formik.setFormikState(prev => ({ ...prev, values: nextFormValues }));
       patchFormValues(nextFormValues);
       putScreenState({
         cacheAmount: resultAmount,
@@ -929,11 +924,29 @@ export function useSendTokenForm({
       screenState.cacheAmount,
       screenState.contactInfo,
       screenState.showGasReserved,
-      formik,
+      getLatestFormValues,
       currentToken,
       t,
     ],
   );
+
+  const submitForm = useMemoizedFn(async () => {
+    const values = {
+      ...getLatestFormValues(),
+      amount: formatSpeicalAmount(getLatestFormValues().amount),
+    };
+
+    try {
+      await validationSchema.validate(values, { abortEarly: false });
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('[SendToken] submit validation failed', error);
+      }
+      return;
+    }
+
+    handleSubmit(values);
+  });
 
   useEffect(() => {
     if (!externalFormPatch.patch || !externalFormPatch.nonce) {
@@ -956,11 +969,11 @@ export function useSendTokenForm({
 
     handleFormValuesChange(nextPatch, {
       currentPartials: {
-        ...formik.values,
+        ...getLatestFormValues(),
         ...nextPatch,
       },
     });
-  }, [externalFormPatch, formik.values, handleFormValuesChange]);
+  }, [externalFormPatch, getLatestFormValues, handleFormValuesChange]);
 
   const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
   const formValuesRef = useRef(
@@ -986,16 +999,15 @@ export function useSendTokenForm({
       if (directSignBtnRef.current?.isAuthInProgress()) {
         return;
       }
-      formik.setFieldValue(f, value);
-      setFormValues(prev => ({ ...prev, [f]: value }));
-
-      const nextVal = { ...formik.values, [f]: value };
+      const nextVal = { ...getLatestFormValues(), [f]: value };
       formValuesRef.current.save({ amount: nextVal.amount });
 
       const { __NO_TRIGGER_FORM_VALUESCHANGE_CALLBACK__ = false } =
         options || {};
       if (!__NO_TRIGGER_FORM_VALUESCHANGE_CALLBACK__) {
         handleFormValuesChange({ [f]: value }, { currentPartials: nextVal });
+      } else {
+        patchFormValues({ [f]: value });
       }
     },
   );
@@ -1427,7 +1439,7 @@ export function useSendTokenForm({
         return result;
       }
 
-      const to = formik.values.to;
+      const to = getLatestFormValues().to;
 
       let _gasUsed: string = intToHex(DEFAULT_GAS_USED);
       try {
@@ -1456,7 +1468,7 @@ export function useSendTokenForm({
 
       return doReturn(Number(gasUsed));
     },
-    [formik.values.to, currentAccount],
+    [currentAccount, getLatestFormValues],
   );
 
   const loadCurrentToken = useMemoizedFn(
@@ -1583,7 +1595,7 @@ export function useSendTokenForm({
         currentToken.raw_amount_hex_str || 0,
       ).div(10 ** currentToken.decimals);
       let amount = tokenBalance.toFixed();
-      const to = formik.values.to;
+      const to = getLatestFormValues().to;
 
       const {
         gasLevel = screenState.selectedGasLevel ||
@@ -1646,7 +1658,7 @@ export function useSendTokenForm({
       }
 
       const newValues = {
-        ...formik.values,
+        ...getLatestFormValues(),
         amount,
       };
       patchFormValues(newValues);
@@ -1658,7 +1670,7 @@ export function useSendTokenForm({
       screenState.selectedGasLevel,
       screenState.isGnosisSafe,
       currentToken,
-      formik.values,
+      getLatestFormValues,
       loadGasListAndResolve,
       couldReserveGas,
       patchFormValues,
@@ -1986,9 +1998,8 @@ export function useSendTokenForm({
   ]);
 
   const resetFormValues = useCallback(() => {
-    setFormValues({ ...DF_SEND_TOKEN_FORM });
-    formik.resetForm();
-  }, [setFormValues, formik]);
+    setCommittedFormValues({ ...DF_SEND_TOKEN_FORM });
+  }, [setCommittedFormValues]);
 
   const refreshCurrentTokenBalance = useMemoizedFn(async () => {
     if (!currentAccount?.address) {
@@ -2040,7 +2051,7 @@ export function useSendTokenForm({
       },
       {
         currentPartials: {
-          ...formik.values,
+          ...getLatestFormValues(),
           amount: '',
           messageDataForSendToEoa: '',
           messageDataForContractCall: '',
@@ -2060,7 +2071,7 @@ export function useSendTokenForm({
     setSlider,
     setIsDraggingSlider,
     handleFormValuesChange,
-    formik.values,
+    getLatestFormValues,
   ]);
 
   useEffect(() => {
@@ -2187,7 +2198,6 @@ export function useSendTokenForm({
     slider,
 
     sendTokenEvents: sendTokenEventsRef.current,
-    formik,
     submitForm,
     formValues,
     resetFormValues,
@@ -2201,14 +2211,6 @@ export function useSendTokenForm({
     miniSignInstance,
   };
 }
-export function useSendTokenFormikContext() {
-  return useFormikContext<FormSendToken>();
-}
-
-export function useSendTokenFormik() {
-  return useSendTokenInternalSelector(ctx => ctx.formik);
-}
-
 type FoundAccountResult = IExtractFromPromise<
   ReturnType<ReturnType<typeof useFindAddressByWhitelist>['findAccount']>
 >;
@@ -2237,7 +2239,6 @@ type InternalContext = {
     toAddrCex: null | undefined | ProjectItem;
   };
 
-  formik: ReturnType<typeof useSendTokenFormikContext>;
   sendTokenEvents: EventEmitter;
   slider: number;
   scrollViewRef: React.MutableRefObject<KeyboardAwareScrollView | null>;
@@ -2299,7 +2300,6 @@ const DEFAULT_SEND_TOKEN_INTERNAL_CONTEXT: InternalContext = {
     toAddrCex: null,
   },
 
-  formik: null as any,
   sendTokenEvents: null as any,
   slider: 0,
   scrollViewRef: { current: null },

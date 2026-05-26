@@ -112,7 +112,6 @@ export default function SendNFT() {
 
   const {
     sendNFTEvents,
-    formik,
     formValues,
     submitForm,
     handleFieldChange,
@@ -203,7 +202,6 @@ export default function SendNFT() {
         canDirectSign,
       },
       events: sendNFTEvents,
-      formik,
       scrollViewRef: scrollviewRef,
       scrollViewStyle,
       fns: {
@@ -229,7 +227,6 @@ export default function SendNFT() {
       collectionName,
       fetchContactAccounts,
       formValues,
-      formik,
       handleFieldChange,
       submitForm,
       handleGasLevelChanged,
