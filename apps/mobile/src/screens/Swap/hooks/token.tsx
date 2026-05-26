@@ -823,7 +823,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   );
 
   const { run: runGetAllQuotes } = useDebounceFn(_runGetAllQuotes, {
-    wait: rateLimit ? 5000 : 1000,
+    wait: rateLimit ? 5000 : 300,
   });
 
   useLayoutEffect(() => {
