@@ -970,8 +970,11 @@ export function useSendTokenForm({
       },
     }),
   );
+  const saveCurrentFormValuesSnapshot = useMemoizedFn(() => {
+    formValuesRef.current.save({ amount: formValues.amount || '' });
+  });
 
-  const handleFieldChange = useCallback(
+  const handleFieldChange = useMemoizedFn(
     <T extends keyof FormSendToken>(
       f: T,
       value: FormSendToken[T],
@@ -995,7 +998,6 @@ export function useSendTokenForm({
         handleFormValuesChange({ [f]: value }, { currentPartials: nextVal });
       }
     },
-    [formik, setFormValues, handleFormValuesChange],
   );
 
   const prepareDirectSubmitMiniTx = useMemoizedFn(async (ref: number) => {
@@ -1666,25 +1668,22 @@ export function useSendTokenForm({
       onGasChange,
     ],
   );
-  const handleGasLevelChanged = useCallback(
-    async (gl?: GasLevel | null) => {
-      let gasLevel = gl
-        ? gl
-        : await loadGasListAndResolve().then(
-            result => result.normalGasLevel || result.instantGasLevel,
-          );
+  const handleGasLevelChanged = useMemoizedFn(async (gl?: GasLevel | null) => {
+    let gasLevel = gl
+      ? gl
+      : await loadGasListAndResolve().then(
+          result => result.normalGasLevel || result.instantGasLevel,
+        );
 
-      if (gasLevel) {
-        putScreenState({ reserveGasOpen: false, selectedGasLevel: gasLevel });
-        handleMaxInfoChanged({ gasLevel });
-      } else {
-        putScreenState({ reserveGasOpen: false });
-      }
-    },
-    [handleMaxInfoChanged, loadGasListAndResolve],
-  );
+    if (gasLevel) {
+      putScreenState({ reserveGasOpen: false, selectedGasLevel: gasLevel });
+      handleMaxInfoChanged({ gasLevel });
+    } else {
+      putScreenState({ reserveGasOpen: false });
+    }
+  });
 
-  const handleSlider100 = useCallback(async () => {
+  const handleSlider100 = useMemoizedFn(async () => {
     if (currentToken && couldReserveGas) {
       if (screenState.gasList) {
         const gasLevel = screenState.gasList.find(e => e.level === 'fast');
@@ -1700,16 +1699,9 @@ export function useSendTokenForm({
     } else {
       patchFormValues({ amount: tokenAmountBn(currentToken).toString(10) });
     }
-  }, [
-    currentToken,
-    couldReserveGas,
-    patchFormValues,
+  });
 
-    handleMaxInfoChanged,
-    screenState,
-  ]);
-
-  const handleClickMaxButton = useCallback(async () => {
+  const handleClickMaxButton = useMemoizedFn(async () => {
     putScreenState(prev => ({ ...prev, clickedMax: true }));
 
     handleSlider100();
@@ -1722,7 +1714,7 @@ export function useSendTokenForm({
     setTimeout(() => {
       scrollToBottom();
     }, 300);
-  }, [handleSlider100, scrollToBottom]);
+  });
 
   const {
     onChangeSlider,
@@ -1738,125 +1730,100 @@ export function useSendTokenForm({
     handleSlider100: handleSlider100,
   });
 
-  const handleCurrentTokenChange = useCallback(
-    async (token: TokenItem) => {
-      if (screenState.showGasReserved) {
-        putScreenState({ showGasReserved: false });
-      }
-      if (!currentAccount) {
-        console.error('[handleCurrentTokenChange] no currentAccount');
-      }
-      const newToken =
-        token.id !== currentToken.id || token.chain !== currentToken.chain;
-      if (newToken) {
-        patchFormValues({
-          amount: '',
-        });
-        setSlider(0);
-        setIsDraggingSlider(false);
-      }
-      const nextChainItem = findChainByServerID(token.chain);
-      putChainToken({
-        chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
-        currentToken: token,
+  const handleCurrentTokenChange = useMemoizedFn(async (token: TokenItem) => {
+    if (screenState.showGasReserved) {
+      putScreenState({ showGasReserved: false });
+    }
+    if (!currentAccount) {
+      console.error('[handleCurrentTokenChange] no currentAccount');
+    }
+    const newToken =
+      token.id !== currentToken.id || token.chain !== currentToken.chain;
+    if (newToken) {
+      patchFormValues({
+        amount: '',
       });
-      setRouteParams(pre => ({
-        ...pre,
-        chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
+      setSlider(0);
+      setIsDraggingSlider(false);
+    }
+    const nextChainItem = findChainByServerID(token.chain);
+    putChainToken({
+      chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
+      currentToken: token,
+    });
+    setRouteParams(pre => ({
+      ...pre,
+      chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
+      tokenId: token.id,
+    }));
+    putScreenState({
+      estimatedGas: 0,
+    });
+
+    // await persistPageStateCache({ currentToken: token });
+
+    putScreenState({
+      balanceError: null,
+      balanceWarn: null,
+    });
+    if (currentAccount) {
+      apiSendToken.markBalanceLoading({
         tokenId: token.id,
-      }));
-      putScreenState({
-        estimatedGas: 0,
+        chainId: token.chain,
+        currentAddress: currentAccount.address,
       });
+    }
 
-      // await persistPageStateCache({ currentToken: token });
+    if (currentAccount) {
+      await loadCurrentToken(
+        token.id,
+        token.chain,
+        currentAccount.address,
+        newToken,
+      );
+    }
+  });
 
-      putScreenState({
-        balanceError: null,
-        balanceWarn: null,
-      });
-      if (currentAccount) {
-        apiSendToken.markBalanceLoading({
-          tokenId: token.id,
-          chainId: token.chain,
-          currentAddress: currentAccount.address,
+  const checkCexSupport = useMemoizedFn(async (token: TokenItem) => {
+    const { reason } = disableItemCheck?.(token) || {};
+    const confirmCallback = () => {
+      if (!isForMultipleAddress) {
+        handleCurrentTokenChange(token);
+      } else {
+        const { accountSwitchTo } = switchAccountOnSelectedToken({
+          token,
+          currentAccount,
         });
-      }
-
-      if (currentAccount) {
-        await loadCurrentToken(
-          token.id,
-          token.chain,
-          currentAccount.address,
-          newToken,
-        );
-      }
-    },
-    [
-      screenState.showGasReserved,
-      currentAccount,
-      currentToken.id,
-      currentToken.chain,
-
-      patchFormValues,
-      loadCurrentToken,
-      setSlider,
-      setIsDraggingSlider,
-    ],
-  );
-
-  const checkCexSupport = useCallback(
-    async (token: TokenItem) => {
-      const { reason } = disableItemCheck?.(token) || {};
-      const confirmCallback = () => {
-        if (!isForMultipleAddress) {
+        if (!accountSwitchTo) {
           handleCurrentTokenChange(token);
         } else {
-          const { accountSwitchTo } = switchAccountOnSelectedToken({
-            token,
-            currentAccount,
+          const currChainItem = findChainByServerID(token.chain);
+          naviReplace(RootNames.StackTransaction, {
+            screen: RootNames.Send,
+            params: {
+              ...(multiNavParams || {}),
+              chainEnum: currChainItem?.enum,
+              tokenId: token.id,
+            },
           });
-          if (!accountSwitchTo) {
-            handleCurrentTokenChange(token);
-          } else {
-            const currChainItem = findChainByServerID(token.chain);
-            naviReplace(RootNames.StackTransaction, {
-              screen: RootNames.Send,
-              params: {
-                ...(multiNavParams || {}),
-                chainEnum: currChainItem?.enum,
-                tokenId: token.id,
-              },
-            });
-          }
         }
-      };
-      if (toAddress && reason) {
-        Alert.alert(reason, '', [
-          {
-            text: t('page.sendToken.noSupportBtns.cancel'),
-            style: 'cancel',
-          },
-          {
-            text: t('page.sendToken.noSupportBtns.confirm'),
-            onPress: confirmCallback,
-          },
-        ]);
-        return;
       }
-      confirmCallback();
-    },
-    [
-      currentAccount,
-      disableItemCheck,
-      handleCurrentTokenChange,
-      isForMultipleAddress,
-      multiNavParams,
-      switchAccountOnSelectedToken,
-      t,
-      toAddress,
-    ],
-  );
+    };
+    if (toAddress && reason) {
+      Alert.alert(reason, '', [
+        {
+          text: t('page.sendToken.noSupportBtns.cancel'),
+          style: 'cancel',
+        },
+        {
+          text: t('page.sendToken.noSupportBtns.confirm'),
+          onPress: confirmCallback,
+        },
+      ]);
+      return;
+    }
+    confirmCallback();
+  });
 
   const handleChainChanged = useCallback(
     async (val: CHAINS_ENUM) => {
@@ -2204,6 +2171,7 @@ export function useSendTokenForm({
 
     directSignBtnRef,
     formValuesRef,
+    saveCurrentFormValuesSnapshot,
 
     handleGasLevelChanged,
     handleClickMaxButton,
@@ -2296,6 +2264,7 @@ type InternalContext = {
     handleGasLevelChanged: (gl?: GasLevel | null) => Promise<void> | void;
     handleClickMaxButton: () => Promise<void> | void;
     handleIgnoreGasFeeChange: (b: boolean) => void;
+    saveCurrentFormValuesSnapshot: () => void;
     setReloadTxRefreshPaused: (paused: boolean) => void;
     // onGasChange: (input: {
     //   gasLevel: GasLevel;
@@ -2354,6 +2323,7 @@ const DEFAULT_SEND_TOKEN_INTERNAL_CONTEXT: InternalContext = {
     handleGasLevelChanged: () => {},
     handleClickMaxButton: () => {},
     handleIgnoreGasFeeChange: () => {},
+    saveCurrentFormValuesSnapshot: () => {},
     setReloadTxRefreshPaused: () => {},
     onChangeSlider: () => {},
     setSlider: () => {},

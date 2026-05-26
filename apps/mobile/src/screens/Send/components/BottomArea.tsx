@@ -44,7 +44,6 @@ function BottomArea() {
     addressToAddAsContacts,
     agreeRequiredForToAddress,
     agreeRequiredForToken,
-    amount,
     account,
     buildTxsCount,
     canShowDirectSign,
@@ -58,6 +57,7 @@ function BottomArea() {
     isSubmitLoading,
     onBottomAreaLayout,
     onGasInfoDebouncedLoaded,
+    saveCurrentFormValuesSnapshot,
     sendTokenEvents,
     submitForm,
     to,
@@ -68,7 +68,6 @@ function BottomArea() {
     addressToAddAsContacts: ctx.screenState.addressToAddAsContacts,
     agreeRequiredForToAddress: ctx.screenState.agreeRequiredChecks.forToAddress,
     agreeRequiredForToken: ctx.screenState.agreeRequiredChecks.forToken,
-    amount: ctx.formValues.amount,
     account: ctx.computed.account,
     buildTxsCount: ctx.screenState.buildTxsCount,
     canShowDirectSign: ctx.computed.canDirectSign,
@@ -82,6 +81,7 @@ function BottomArea() {
     isSubmitLoading: ctx.screenState.isSubmitLoading,
     onBottomAreaLayout: ctx.callbacks.onBottomAreaLayout,
     onGasInfoDebouncedLoaded: ctx.callbacks.onGasInfoDebouncedLoaded,
+    saveCurrentFormValuesSnapshot: ctx.callbacks.saveCurrentFormValuesSnapshot,
     sendTokenEvents: ctx.sendTokenEvents,
     submitForm: ctx.callbacks.submitForm,
     to: ctx.formValues.to,
@@ -268,9 +268,7 @@ function BottomArea() {
           onBeforeAuth={() => {
             // Disable input during authentication to prevent autofill
             // Save amount snapshot before authentication starts
-            formValuesRef.current.save({
-              amount: amount || '',
-            });
+            saveCurrentFormValuesSnapshot();
           }}
           onCancel={() => {
             formValuesRef.current.clear();

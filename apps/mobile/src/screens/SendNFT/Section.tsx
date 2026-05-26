@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useThemeStyles, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
@@ -53,6 +53,12 @@ export const NFTSection = React.memo(function NFTSection({
 
   const amountInputRef = useRef<TextInput>(null);
   useInputBlurOnEvents(amountInputRef);
+  const handleAmountChange = useCallback(
+    (val: number) => {
+      handleFieldChange('amount', val + '');
+    },
+    [handleFieldChange],
+  );
 
   if (!nftItem) {
     return null;
@@ -128,9 +134,7 @@ export const NFTSection = React.memo(function NFTSection({
               nftItem={nftItem}
               style={styles.nftAmountInput}
               value={amount}
-              onChange={val => {
-                handleFieldChange('amount', val + '');
-              }}
+              onChange={handleAmountChange}
             />
           </View>
         </View>

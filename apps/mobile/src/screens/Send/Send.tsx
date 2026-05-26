@@ -383,6 +383,7 @@ function SendScreen({
 
     directSignBtnRef,
     formValuesRef,
+    saveCurrentFormValuesSnapshot,
 
     whitelistEnabled,
     computed: {
@@ -666,6 +667,7 @@ function SendScreen({
         setSlider,
         handleGasLevelChanged,
         handleIgnoreGasFeeChange,
+        saveCurrentFormValuesSnapshot,
         setReloadTxRefreshPaused,
         onBottomAreaLayout,
         onGasInfoDebouncedLoaded: scrollToBottom,
@@ -697,6 +699,7 @@ function SendScreen({
       scrollToBottom,
       scrollViewRef,
       scrollViewStyle,
+      saveCurrentFormValuesSnapshot,
       sendTokenEvents,
       setReloadTxRefreshPaused,
       setSlider,

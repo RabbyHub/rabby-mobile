@@ -400,7 +400,7 @@ export function useSendNFTForm({
     ],
   );
 
-  const handleFieldChange = useCallback(
+  const handleFieldChange = useMemoizedFn(
     <T extends keyof FormSendNFT>(f: T, value: FormSendNFT[T]) => {
       formik.setFieldValue(f, value);
       setFormValues(prev => ({ ...prev, [f]: value }));
@@ -408,7 +408,6 @@ export function useSendNFTForm({
       const nextVal = { ...formik.values, [f]: value };
       handleFormValuesChange({ [f]: value }, { currentPartials: nextVal });
     },
-    [formik, setFormValues, handleFormValuesChange],
   );
 
   const prepareDirectSubmitMiniTx = useMemoizedFn(async (ref: number) => {
@@ -633,24 +632,19 @@ export function useSendNFTForm({
     ],
   );
 
-  const handleGasLevelChanged = useCallback(
-    async (gl?: GasLevel | null) => {
-      // let gasLevel = gl
-      //   ? gl
-      //   : await loadGasListAndResolve().then(
-      //     result => result.normalGasLevel || result.instantGasLevel,
-      //   );
-      // if (gasLevel) {
-      //   putScreenState({ reserveGasOpen: false, selectedGasLevel: gasLevel });
-      //   handleMaxInfoChanged({ gasLevel });
-      // } else {
-      //   putScreenState({ reserveGasOpen: false });
-      // }
-    },
-    [
-      /* putScreenState */
-    ],
-  );
+  const handleGasLevelChanged = useMemoizedFn(async (gl?: GasLevel | null) => {
+    // let gasLevel = gl
+    //   ? gl
+    //   : await loadGasListAndResolve().then(
+    //     result => result.normalGasLevel || result.instantGasLevel,
+    //   );
+    // if (gasLevel) {
+    //   putScreenState({ reserveGasOpen: false, selectedGasLevel: gasLevel });
+    //   handleMaxInfoChanged({ gasLevel });
+    // } else {
+    //   putScreenState({ reserveGasOpen: false });
+    // }
+  });
 
   const { isAddrOnContactBook } = useContactAccounts({ autoFetch: true });
   const { list: cexList } = useCexSupportList();
