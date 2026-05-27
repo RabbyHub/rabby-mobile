@@ -10,6 +10,10 @@ import { keychainMMKV } from '../storage/mmkvInstances';
 import { KEYCHAIN_MMKV_KEYS } from '../storage/mmkvConstants';
 import { appEncryptor, preferenceService } from '../services';
 import * as apisLock from './lock';
+import {
+  getAndroidBiometricSecurityLevelOptions,
+  type AndroidBiometricSecurityLevel,
+} from './androidBiometricsRegression';
 
 export const KEYCHAIN_DEFAULT_SERVICE = 'com.debank';
 export const KEYCHAIN_GENERIC_USER = 'rabbymobile-user';
@@ -54,6 +58,12 @@ export const ANDROID_AUTH_PROMPT_POLICIES = {
   ALLOW_AUTHENTICATED_SESSION_REUSE: 'allow-authenticated-session-reuse',
 } as const;
 
+export const ANDROID_KEYCHAIN_AUTH_PROFILES = {
+  BIOMETRIC_STRONG: 'biometric-strong-v1',
+  DEVICE_CREDENTIAL: 'device-credential-v1',
+  BIOMETRIC_OR_DEVICE_CREDENTIAL: 'biometric-or-device-credential-v1',
+} as const;
+
 export const KEYCHAIN_STORAGE_TYPES = {
   RSA: LEGACY_RSA_STORAGE_TYPE,
   AES: AES_STORAGE_TYPE,
@@ -63,6 +73,8 @@ export const KEYCHAIN_STORAGE_TYPES = {
 
 export type AndroidAuthPromptPolicy =
   (typeof ANDROID_AUTH_PROMPT_POLICIES)[keyof typeof ANDROID_AUTH_PROMPT_POLICIES];
+export type AndroidKeychainAuthProfile =
+  (typeof ANDROID_KEYCHAIN_AUTH_PROFILES)[keyof typeof ANDROID_KEYCHAIN_AUTH_PROFILES];
 
 export type KeychainStorageType =
   (typeof KEYCHAIN_STORAGE_TYPES)[keyof typeof KEYCHAIN_STORAGE_TYPES];
@@ -89,6 +101,8 @@ export type KeychainCompatibleOptions = {
   rules?: unknown;
   storage?: string;
   androidAllowAuthenticatedSessionReuse?: boolean;
+  androidBiometricSecurityLevel?: AndroidBiometricSecurityLevel;
+  androidKeychainAuthProfile?: AndroidKeychainAuthProfile;
 };
 
 export type KeychainCompatibleUserCredentials = {
@@ -97,6 +111,7 @@ export type KeychainCompatibleUserCredentials = {
   password: string;
   vaultKeyString?: string;
   storage?: string;
+  androidKeychainAuthProfile?: AndroidKeychainAuthProfile;
   [key: string]: unknown;
 };
 
@@ -143,7 +158,9 @@ export type KeychainCompatibleModule = {
   resetGenericPassword: (
     options: KeychainCompatibleOptions,
   ) => Promise<boolean>;
-  getSupportedBiometryType: () => Promise<KeychainSupportedBiometryType>;
+  getSupportedBiometryType: (
+    options?: KeychainCompatibleOptions,
+  ) => Promise<KeychainSupportedBiometryType>;
   ACCESSIBLE: {
     WHEN_UNLOCKED_THIS_DEVICE_ONLY: unknown;
   };
@@ -648,7 +665,11 @@ export function createBusinessKeychainApi({
         const nativeState =
           await callKeychainDebugMethod<NativeIOSKeychainDebugState>(
             'debugGetGenericPasswordStateForOptions',
-            { ...DEFAULT_GET_OPTIONS, service },
+            {
+              ...DEFAULT_GET_OPTIONS,
+              ...getAndroidBiometricSecurityLevelOptions(),
+              service,
+            },
           );
 
         return {
@@ -675,7 +696,11 @@ export function createBusinessKeychainApi({
       const nativeState =
         await callKeychainDebugMethod<NativeAndroidKeychainDebugState>(
           'debugGetGenericPasswordStateForOptions',
-          { ...DEFAULT_GET_OPTIONS, service },
+          {
+            ...DEFAULT_GET_OPTIONS,
+            ...getAndroidBiometricSecurityLevelOptions(),
+            service,
+          },
         );
 
       return {
@@ -733,11 +758,17 @@ export function createBusinessKeychainApi({
     if (type === KEYCHAIN_AUTH_TYPES.BIOMETRICS) {
       authOptions.accessControl =
         keychainModule.ACCESS_CONTROL.BIOMETRY_CURRENT_SET;
+      authOptions.androidKeychainAuthProfile =
+        ANDROID_KEYCHAIN_AUTH_PROFILES.BIOMETRIC_STRONG;
     } else if (type === KEYCHAIN_AUTH_TYPES.PASSCODE) {
       authOptions.accessControl = keychainModule.ACCESS_CONTROL.DEVICE_PASSCODE;
+      authOptions.androidKeychainAuthProfile =
+        ANDROID_KEYCHAIN_AUTH_PROFILES.DEVICE_CREDENTIAL;
     } else if (type === KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE) {
       authOptions.accessControl =
         keychainModule.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE;
+      authOptions.androidKeychainAuthProfile =
+        ANDROID_KEYCHAIN_AUTH_PROFILES.BIOMETRIC_OR_DEVICE_CREDENTIAL;
     } else if (type !== KEYCHAIN_AUTH_TYPES.REMEMBER_ME) {
       return null;
     }
@@ -774,6 +805,7 @@ export function createBusinessKeychainApi({
       vaultKeyString,
       {
         ...DEFAULT_SET_OPTIONS,
+        ...getAndroidBiometricSecurityLevelOptions(),
         ...authOptions,
         service: KEYCHAIN_TRUSTED_VAULT_KEY_SERVICE,
       },
@@ -791,6 +823,7 @@ export function createBusinessKeychainApi({
     try {
       const trustedVaultKeyObject = (await keychainModule.getGenericPassword({
         ...DEFAULT_GET_OPTIONS,
+        ...getAndroidBiometricSecurityLevelOptions(),
         service: KEYCHAIN_TRUSTED_VAULT_KEY_SERVICE,
         ...getAndroidAuthPromptPolicyOptions(
           ANDROID_AUTH_PROMPT_POLICIES.ALLOW_AUTHENTICATED_SESSION_REUSE,
@@ -992,6 +1025,7 @@ export function createBusinessKeychainApi({
 
       const keychainObject = (await keychainModule.getGenericPassword({
         ...DEFAULT_GET_OPTIONS,
+        ...getAndroidBiometricSecurityLevelOptions(),
         ...getAndroidAuthPromptPolicyOptions(androidAuthPromptPolicy),
         // Access control is only used by Android when requesting device authentication
         // For iOS, the access control is derived from the access control when the password was stored
@@ -1185,6 +1219,7 @@ export function createBusinessKeychainApi({
       encryptedPassword,
       {
         ...DEFAULT_SET_OPTIONS,
+        ...getAndroidBiometricSecurityLevelOptions(),
         service,
         accessible: keychainModule.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
         accessControl: keychainModule.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
@@ -1236,12 +1271,16 @@ export function createBusinessKeychainApi({
       ...(options?.vaultKeyString
         ? { vaultKeyString: options.vaultKeyString }
         : null),
+      ...(isAndroid && authOptions.androidKeychainAuthProfile
+        ? { androidKeychainAuthProfile: authOptions.androidKeychainAuthProfile }
+        : null),
     });
     await keychainModule.setGenericPassword(
       KEYCHAIN_GENERIC_USER,
       encryptedPassword,
       {
         ...DEFAULT_SET_OPTIONS,
+        ...getAndroidBiometricSecurityLevelOptions(),
         ...authOptions,
         ...(options?.storage ? { storage: options.storage } : null),
       },
@@ -1291,7 +1330,9 @@ export function createBusinessKeychainApi({
   }
 
   function getSupportedBiometryType() {
-    return keychainModule.getSupportedBiometryType();
+    return keychainModule.getSupportedBiometryType(
+      getAndroidBiometricSecurityLevelOptions(),
+    );
   }
 
   async function clearApplicationPassword(password: string) {
