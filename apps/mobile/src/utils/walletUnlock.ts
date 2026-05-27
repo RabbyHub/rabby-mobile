@@ -138,29 +138,35 @@ export async function ensureWalletUnlocked() {
     reject(new WalletUnlockCancelledError());
   };
 
-  let hideUnlockingToast: (() => void) | null = null;
+  const unlockingToastRef: { hide: (() => void) | null } = {
+    hide: null,
+  };
+
+  const hideUnlockingToast = () => {
+    unlockingToastRef.hide?.();
+    unlockingToastRef.hide = null;
+  };
 
   try {
     if (!(await canRequestStoredCredentialUnlock())) {
       throw new Error('Biometrics Disabled');
     }
 
-    hideUnlockingToast = toastUnlocking();
-
     await apisKeychain.requestGenericPassword({
       purpose: RequestGenericPurpose.DECRYPT_PWD,
       onPlainPassword: async password => {
+        unlockingToastRef.hide = toastUnlocking();
+
         try {
           await apisLock.verifyPasswordOrUnlock(password);
           resolveUnlock();
         } finally {
-          hideUnlockingToast?.();
-          hideUnlockingToast = null;
+          hideUnlockingToast();
         }
       },
     });
   } catch (error) {
-    hideUnlockingToast?.();
+    hideUnlockingToast();
     if (__DEV__) {
       console.error(error);
     }
