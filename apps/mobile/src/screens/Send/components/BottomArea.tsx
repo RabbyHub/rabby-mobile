@@ -38,6 +38,7 @@ import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/deposi
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
@@ -264,7 +265,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
           }
           loading={isSubmitLoading}
           height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-          titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+          titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
           type={'primary'}
           syncUnlockTime
           account={account}

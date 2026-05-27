@@ -60,6 +60,7 @@ import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInpu
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 
@@ -1207,7 +1208,7 @@ export default function RepayWithCollateral({
             authTitle={t('page.Lending.repayWithCollateral.button.repay')}
             title={t('page.Lending.repayWithCollateral.button.repay')}
             height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+            titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
             onFinished={() => handleRepay()}
             disabled={buttonDisabled || !!ctx?.disabledProcess}
             type="aave"

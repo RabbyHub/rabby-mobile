@@ -72,6 +72,7 @@ import { toChecksumAddress } from '@ethereumjs/util';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
@@ -991,7 +992,10 @@ export const PerpsDepositPopup: React.FC<{
                 type={'hyperliquid'}
                 iconColor={'#040601'}
                 height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-                titleStyle={[BOTTOM_BUTTON_TITLE_STYLE, { color: '#040601' }]}
+                titleStyle={[
+                  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+                  { color: '#040601' },
+                ]}
                 syncUnlockTime
                 onBeforeAuth={() => {
                   Keyboard.dismiss();

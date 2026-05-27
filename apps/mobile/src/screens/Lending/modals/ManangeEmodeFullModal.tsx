@@ -50,6 +50,7 @@ import { Text } from '@/components/Typography';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 
@@ -460,7 +461,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
                   : t('page.Lending.manageEmode.actions.enable')
               }
               titleStyle={[
-                BOTTOM_BUTTON_TITLE_STYLE,
+                BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
                 wantDisableEmode && styles.closeButtonTitle,
                 wantDisableEmode &&
                   disableDirectSignBtn &&

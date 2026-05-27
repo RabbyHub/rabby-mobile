@@ -885,7 +885,7 @@ function DevTestCloudDrive() {
             }
             title={ctx => {
               return (
-                <Text style={[styles.label, ctx.titleStyle]}>
+                <Text style={[styles.iconButtonLabel, ctx.titleStyle]}>
                   {!isLoginedGoogle
                     ? 'Sign google drive'
                     : 'Signout google drive'}
@@ -927,7 +927,7 @@ function DevTestCloudDrive() {
           }
           title={ctx => {
             return (
-              <Text style={[styles.label, ctx.titleStyle]}>
+              <Text style={[styles.iconButtonLabel, ctx.titleStyle]}>
                 Clear Cloud Backup
               </Text>
             );
@@ -1642,6 +1642,10 @@ const getStyles = createGetStyles2024(ctx =>
     label: {
       fontSize: 16,
       lineHeight: 22,
+      color: ctx.colors2024['neutral-body'],
+    },
+    iconButtonLabel: {
+      fontSize: 16,
       color: ctx.colors2024['neutral-body'],
     },
     metaLabel: {

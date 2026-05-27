@@ -20,6 +20,10 @@ export const BOTTOM_BUTTON_TITLE_STYLE = {
   lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
   fontWeight: '700',
 } as const;
+export const BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE = {
+  fontSize: BOTTOM_BUTTON_TEXT_SIZE,
+  fontWeight: '700',
+} as const;
 export const getBottomButtonBottomOffset = (safeAreaBottom = 0) =>
   BOTTOM_BUTTON_BOTTOM_OFFSET + (IS_ANDROID ? safeAreaBottom : 0);
 

@@ -60,6 +60,7 @@ import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInpu
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 
@@ -1152,7 +1153,7 @@ export default function DebtSwapModal({
               authTitle={t('page.Lending.debtSwap.button.swap')}
               title={t('page.Lending.debtSwap.button.swap')}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+              titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
               onFinished={() => handleSwap()}
               disabled={buttonDisabled || !!ctx?.disabledProcess}
               type="aave"

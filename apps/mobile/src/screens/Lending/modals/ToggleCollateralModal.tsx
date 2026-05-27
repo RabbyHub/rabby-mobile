@@ -47,6 +47,7 @@ import { useCurrentRouteName } from '@/hooks/navigation';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   RootNames,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
@@ -693,7 +694,7 @@ const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   directSignBtnTitle: {
-    ...BOTTOM_BUTTON_TITLE_STYLE,
+    ...BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
     fontFamily: 'SF Pro Rounded',
   },
   directSignBtn: {

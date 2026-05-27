@@ -13,7 +13,6 @@ import {
   ViewStyle,
   TouchableOpacityProps,
   TouchableOpacity,
-  TouchableWithoutFeedback,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -324,14 +323,14 @@ const getStyle = createGetStyles2024(ctx => ({
   },
   title: {
     fontSize: 18,
-    lineHeight: 22,
+    // lineHeight: 22,
     textAlign: 'center',
     paddingVertical: 1,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
   },
   titleWithLeading: {
-    lineHeight: 22,
+    // lineHeight: 22,
   },
   iconContainer: {
     marginHorizontal: 8,

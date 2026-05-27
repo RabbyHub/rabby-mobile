@@ -10,6 +10,7 @@ import { Tip } from '@/components';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
@@ -96,7 +97,7 @@ export function ConvertDustBottomBar({
           authTitle={t('page.whitelist.confirmPassword')}
           disabled={disabled}
           height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-          titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+          titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
         />
       )}
     </View>

@@ -20,7 +20,6 @@ const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
     // color: colors2024['neutral-InvertHighlight'],
     color: colors2024['brand-default'],
     fontSize: 18,
-    lineHeight: 22,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
   },

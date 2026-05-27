@@ -68,6 +68,7 @@ import { useZeroLTVBlockingWithdraw } from '../../hooks/useZeroLTVBlockingWithdr
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 
@@ -579,7 +580,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
               }
               type="aave"
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+              titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
               iconColor={
                 isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
               }

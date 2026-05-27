@@ -82,6 +82,7 @@ import AuthButton from '@/components2024/AuthButton';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 
@@ -978,7 +979,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
             loading={loading}
             syncUnlockTime
             height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+            titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
             onBeforeAuth={() => {
               Keyboard.dismiss();
             }}
