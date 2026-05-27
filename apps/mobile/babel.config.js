@@ -37,17 +37,17 @@ module.exports = api => {
   const buildGitInfo = (function getBuildEnvVars() {
     const NORMAL_GET_GIT_HASH = `git log --format="%H" -n1`;
     const BUILD_GIT_HASH_RAW = child_process
-      .execSync(
-        !process.env.LOCAL_PACK
-          ? NORMAL_GET_GIT_HASH
-          : `[[ -z $(git diff) || ! -z $CI ]] && (${NORMAL_GET_GIT_HASH}) || (git log --format="%H-dirty" -n 1)`,
-      )
+      .execSync(NORMAL_GET_GIT_HASH)
       .toString()
       .trim();
+    const SHOULD_MARK_GIT_DIRTY =
+      !!process.env.LOCAL_PACK &&
+      !process.env.CI &&
+      child_process.execSync('git status --porcelain').toString().trim()
+        .length > 0;
 
-    const isDirty = BUILD_GIT_HASH_RAW.endsWith('-dirty');
     const BUILD_GIT_HASH = `${BUILD_GIT_HASH_RAW.slice(0, 8)}${
-      isDirty ? '-dirty' : ''
+      SHOULD_MARK_GIT_DIRTY ? '-dirty' : ''
     }`;
 
     const BUILD_GIT_HASH_TIME =
