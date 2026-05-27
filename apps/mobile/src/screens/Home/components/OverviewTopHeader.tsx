@@ -308,7 +308,9 @@ export function TabsTopHeader(): JSX.Element {
                 <IconPerpEdit color={colors2024['neutral-body']} />
               </View>
             </TouchableOpacity>
-            <MultiHeaderRightHistory style={styles.pendingHistoryBox} />
+            <MultiHeaderRightHistory
+              style={styles.pendingHistoryBoxInOverview}
+            />
           </>
         )}
       </Pressable>
@@ -429,6 +431,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     right: -3,
   },
   pendingHistoryBox: {
+    marginLeft: 16,
+  },
+  pendingHistoryBoxInOverview: {
     marginLeft: 12,
   },
 }));

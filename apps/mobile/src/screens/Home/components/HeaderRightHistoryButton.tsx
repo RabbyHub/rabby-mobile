@@ -61,8 +61,8 @@ export function HeaderRightHistoryButton({
           }}>
           <RcIconHistory
             color={colors2024['neutral-title-1']}
-            width={22}
-            height={22}
+            width={20}
+            height={20}
           />
           {Boolean(historyCount?.success || historyCount?.fail) && (
             <View
