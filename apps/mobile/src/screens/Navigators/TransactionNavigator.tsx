@@ -450,7 +450,7 @@ const getConvertDustHeaderStyle = createGetStyles2024(({ colors2024 }) => ({
   convertDustHeaderOuter: {
     height: CONVERT_DUST_HEADER_HEIGHT,
     paddingHorizontal: 12,
-    paddingRight: 16,
+    paddingRight: 20,
     paddingVertical: 10,
     backgroundColor: colors2024['neutral-bg-1'],
   },
