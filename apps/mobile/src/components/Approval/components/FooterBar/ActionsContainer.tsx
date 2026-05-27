@@ -4,13 +4,11 @@ import { Chain } from '@/constant/chains';
 import { Account } from '@/core/services/preference';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { notificationService } from '@/core/services';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import ArrowDownCC from '@/assets/icons/common/arrow-down-cc.svg';
-import { AppColorsVariants } from '@/constant/theme';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Button } from '@/components2024/Button';
-import { Text } from '@/components/Typography';
 import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
   BOTTOM_BUTTON_GAP,
@@ -20,16 +18,7 @@ import {
 const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
   button: {
     height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
-    borderColor: colors2024['brand-default'],
-    borderWidth: 1,
-    borderRadius: 100,
-  },
-  buttonText: {
-    color: colors2024['brand-default'],
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
+    borderRadius: 12,
   },
   wrapper: {
     position: 'relative',
@@ -38,13 +27,8 @@ const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     gap: BOTTOM_BUTTON_GAP,
   },
-  cancelWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
   cancelIcon: {
-    color: colors2024['brand-default'],
+    color: colors2024['neutral-title-1'],
   },
 }));
 
@@ -111,21 +95,19 @@ export const ActionsContainer: React.FC<
     <View style={styles.wrapper}>
       {isMiniSignTx ? null : (
         <Button
-          type="ghost"
+          type="plain"
+          height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
           containerStyle={{
             flex: 1,
           }}
           buttonStyle={styles.button}
-          titleStyle={styles.buttonText}
           onPress={displayPopup ? activeCancelPopup : onCancel}
-          title={
-            <View style={styles.cancelWrapper}>
-              <Text style={styles.buttonText}>{t('global.cancelButton')}</Text>
-              {displayPopup && (
-                //@ts-expect-error
-                <ArrowDownCC style={styles.cancelIcon} width={12} />
-              )}
-            </View>
+          title={t('global.cancelButton')}
+          iconRight={
+            displayPopup ? (
+              //@ts-expect-error
+              <ArrowDownCC style={styles.cancelIcon} width={12} />
+            ) : null
           }
         />
       )}

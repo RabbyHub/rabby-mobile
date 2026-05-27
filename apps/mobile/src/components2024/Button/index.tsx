@@ -32,6 +32,7 @@ export type ButtonProps = Omit<
       buttonStyle?: StyleProp<ViewStyle> | StyleProp<ViewStyle>[];
       type?:
         | 'primary'
+        | 'plain'
         | 'ghost'
         | 'success'
         | 'danger'
@@ -85,6 +86,12 @@ export const Button = ({
       primary: {
         bg: colors2024['brand-default'],
         currentColor: colors2024['neutral-InvertHighlight'],
+      },
+      plain: {
+        bg: colors2024['neutral-bg-5'],
+        currentColor: disabled
+          ? colors2024['neutral-info']
+          : colors2024['neutral-title-1'],
       },
       ghost: {
         bg: colors2024['neutral-bg-1'],
@@ -183,6 +190,10 @@ export const Button = ({
         (type === 'ghost'
           ? {
               borderColor: colors2024['brand-disable'],
+            }
+          : type === 'plain'
+          ? {
+              backgroundColor: colors2024['neutral-bg-5'],
             }
           : type === 'hyperliquid'
           ? {
