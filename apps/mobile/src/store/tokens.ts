@@ -21,6 +21,7 @@ import type {
 import PQueue from 'p-queue';
 import { ResourceBaseStore } from './_resourceBase';
 import type { ObservableResourceValueSource } from './_resourceFlow';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
@@ -1802,7 +1803,7 @@ export const patchSingleTokenInStore = (address: string, token: ITokenItem) => {
     const matchedIndex = currentTokens.findIndex(
       item =>
         item.chain.toLowerCase() === nextToken.chain.toLowerCase() &&
-        item.id.toLowerCase() === nextToken.id.toLowerCase(),
+        isSameAddress(item.id, nextToken.id),
     );
     const hasPositiveAmount = (nextToken.amount || 0) > 0;
     let nextTokens = currentTokens;
