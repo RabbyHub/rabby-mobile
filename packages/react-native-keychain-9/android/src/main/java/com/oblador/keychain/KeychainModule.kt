@@ -74,6 +74,7 @@ class KeychainModule(reactContext: ReactApplicationContext) :
       const val ACCESSIBLE = "accessible"
       const val ANDROID_ALLOW_AUTHENTICATED_SESSION_REUSE =
           "androidAllowAuthenticatedSessionReuse"
+      const val ANDROID_BIOMETRIC_SECURITY_LEVEL = "androidBiometricSecurityLevel"
       const val AUTH_PROMPT = "authenticationPrompt"
       const val AUTH_TYPE = "authenticationType"
       const val SERVICE = "service"
@@ -415,16 +416,23 @@ class KeychainModule(reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun getSupportedBiometryType(promise: Promise) {
+    getSupportedBiometryTypeForOptions(null, promise)
+  }
+
+  @ReactMethod
+  fun getSupportedBiometryTypeForOptions(options: ReadableMap?, promise: Promise) {
     try {
       var reply: String? = null
-      if (!DeviceAvailability.isStrongBiometricAuthAvailable(reactApplicationContext)) {
+      val allowWeakBiometrics = getAllowWeakBiometrics(options)
+      if (!DeviceAvailability.isBiometricAuthAvailable(
+              reactApplicationContext, allowWeakBiometrics)) {
         reply = null
       } else {
-        if (isFingerprintAuthAvailable) {
+        if (isFingerprintAuthAvailable(allowWeakBiometrics)) {
           reply = FINGERPRINT_SUPPORTED_NAME
-        } else if (isFaceAuthAvailable) {
+        } else if (isFaceAuthAvailable(allowWeakBiometrics)) {
           reply = FACE_SUPPORTED_NAME
-        } else if (isIrisAuthAvailable) {
+        } else if (isIrisAuthAvailable(allowWeakBiometrics)) {
           reply = IRIS_SUPPORTED_NAME
         }
       }
@@ -775,17 +783,35 @@ class KeychainModule(reactContext: ReactApplicationContext) :
         DeviceAvailability.isStrongBiometricAuthAvailable(reactApplicationContext) &&
             DeviceAvailability.isFingerprintAuthAvailable(reactApplicationContext)
 
+  fun isFingerprintAuthAvailable(allowWeakBiometrics: Boolean): Boolean {
+    return DeviceAvailability.isBiometricAuthAvailable(
+        reactApplicationContext, allowWeakBiometrics) &&
+        DeviceAvailability.isFingerprintAuthAvailable(reactApplicationContext)
+  }
+
   val isFaceAuthAvailable: Boolean
     /** True - if face recognition hardware available and configured, otherwise false. */
     get() =
         DeviceAvailability.isStrongBiometricAuthAvailable(reactApplicationContext) &&
             DeviceAvailability.isFaceAuthAvailable(reactApplicationContext)
 
+  fun isFaceAuthAvailable(allowWeakBiometrics: Boolean): Boolean {
+    return DeviceAvailability.isBiometricAuthAvailable(
+        reactApplicationContext, allowWeakBiometrics) &&
+        DeviceAvailability.isFaceAuthAvailable(reactApplicationContext)
+  }
+
   val isIrisAuthAvailable: Boolean
     /** True - if iris recognition hardware available and configured, otherwise false. */
     get() =
         DeviceAvailability.isStrongBiometricAuthAvailable(reactApplicationContext) &&
             DeviceAvailability.isIrisAuthAvailable(reactApplicationContext)
+
+  fun isIrisAuthAvailable(allowWeakBiometrics: Boolean): Boolean {
+    return DeviceAvailability.isBiometricAuthAvailable(
+        reactApplicationContext, allowWeakBiometrics) &&
+        DeviceAvailability.isIrisAuthAvailable(reactApplicationContext)
+  }
 
   val isSecureHardwareAvailable: Boolean
     /** Is secured hardware a part of current storage or not. */
@@ -924,6 +950,22 @@ class KeychainModule(reactContext: ReactApplicationContext) :
           AccessControl.BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE == accessControl
     }
 
+    private fun getAllowWeakBiometrics(options: ReadableMap?): Boolean {
+      if (options == null || !options.hasKey(Maps.ANDROID_BIOMETRIC_SECURITY_LEVEL)) {
+        return false
+      }
+
+      return options.getString(Maps.ANDROID_BIOMETRIC_SECURITY_LEVEL) == "weak"
+    }
+
+    private fun getBiometricAuthenticators(options: ReadableMap?): Int {
+      return if (getAllowWeakBiometrics(options)) {
+        BiometricManager.Authenticators.BIOMETRIC_WEAK
+      } else {
+        BiometricManager.Authenticators.BIOMETRIC_STRONG
+      }
+    }
+
     /** Extract user specified prompt info from options. */
     private fun getPromptInfo(options: ReadableMap?): PromptInfo {
       val promptInfoOptionsMap =
@@ -948,8 +990,8 @@ class KeychainModule(reactContext: ReactApplicationContext) :
         promptInfoBuilder.setNegativeButtonText(promptInfoNegativeButton!!)
       }
 
-      /* PromptInfo is only used in Biometric-enabled RSA storage and can only be unlocked by a strong biometric */ promptInfoBuilder
-          .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+      /* Defaults to strong biometrics. Regression builds may opt into weak prompt coverage. */ promptInfoBuilder
+          .setAllowedAuthenticators(getBiometricAuthenticators(options))
 
       /* Bypass confirmation to avoid KeyStore unlock timeout being exceeded when using passive biometrics */ promptInfoBuilder
           .setConfirmationRequired(false)

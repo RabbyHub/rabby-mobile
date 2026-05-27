@@ -110,6 +110,8 @@ import {
 import { Text, AnimateableText } from '@/components/Typography';
 import { useAppLogFileSwitch } from '@/utils/logging/settings';
 import { APP_LOG_ROOT_PATH, logger } from '@/utils/logger';
+import { useAndroidWeakFaceBiometricsRegressionSwitch } from '@/core/apis/androidBiometricsRegression';
+import { storeApisBiometrics } from '@/hooks/biometrics';
 
 export const makeNoop = () => () => {};
 
@@ -847,6 +849,78 @@ function DevSwitchAboutAutoLock() {
   );
 }
 
+function DevSwitchAndroidWeakBiometrics() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const {
+    canUse,
+    allowWeakFaceBiometricsForRegression,
+    setAllowWeakFaceBiometricsForRegression,
+  } = useAndroidWeakFaceBiometricsRegressionSwitch();
+
+  const toggleSwitch = useCallback(
+    (nextVal?: boolean) => {
+      const next = setAllowWeakFaceBiometricsForRegression(nextVal);
+
+      void storeApisBiometrics.fetchBiometrics();
+      toast.show(
+        next
+          ? 'Weak Android face biometrics probe enabled. App Password unlock still uses strong biometrics.'
+          : 'Weak Android face biometrics probe disabled. App Password unlock uses strong biometrics.',
+      );
+    },
+    [setAllowWeakFaceBiometricsForRegression],
+  );
+
+  if (!IS_ANDROID || !canUse) {
+    return null;
+  }
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <RcCode
+          width={24}
+          height={24}
+          color={styles.secondarySectionTitle.color}
+        />
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Android Biometrics Regression
+        </Text>
+      </View>
+
+      <View
+        style={[styles.secondarySectionContent, { flexDirection: 'column' }]}>
+        <TouchableOpacity
+          style={styles.switchRowWrapper}
+          onPress={() => {
+            toggleSwitch();
+          }}>
+          <AppSwitch2024
+            value={allowWeakFaceBiometricsForRegression}
+            onPress={evt => evt.stopPropagation()}
+            onValueChange={toggleSwitch}
+          />
+          <Text style={styles.switchLabel}>
+            {allowWeakFaceBiometricsForRegression
+              ? 'Weak Android face biometrics probe enabled'
+              : 'Use strong Android biometrics for App Password'}
+          </Text>
+        </TouchableOpacity>
+
+        <Text style={styles.metaLabel}>
+          Regression-only. App Password read and write always stay on strong
+          Android biometrics; weak face support should be tested through a
+          separate probe.
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 function DevTestCloudDrive() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
@@ -1505,6 +1579,7 @@ function DevSwitches(): JSX.Element {
         <DevSwitchAboutOpenApiDebug />
         <DevSwitchAboutExpData />
         <DevSwitchAboutAutoLock />
+        <DevSwitchAndroidWeakBiometrics />
 
         <Text style={styles.areaTitle}>Cloud Drive</Text>
         <DevTestCloudDrive />

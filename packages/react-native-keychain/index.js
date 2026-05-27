@@ -86,6 +86,7 @@ type BaseOptions = {|
   accessGroup?: string,
   accessible?: SecAccessible,
   authenticationType?: LAPolicy,
+  androidBiometricSecurityLevel?: 'strong' | 'weak',
   service?: string,
   securityLevel?: SecMinimumLevel,
   storage?: SecStorageType,
@@ -284,9 +285,16 @@ export function resetInternetCredentials(server: string): Promise<void> {
  * @param {object} options An Keychain options object.
  * @return {Promise} Resolves to a `BIOMETRY_TYPE` when supported, otherwise `null`
  */
-export function getSupportedBiometryType(): Promise<null | SecBiometryType> {
+export function getSupportedBiometryType(
+  serviceOrOptions?: string | Options
+): Promise<null | SecBiometryType> {
   if (!RNKeychainManager.getSupportedBiometryType) {
     return Promise.resolve(null);
+  }
+
+  const options = normalizeOptions(serviceOrOptions);
+  if (RNKeychainManager.getSupportedBiometryTypeForOptions) {
+    return RNKeychainManager.getSupportedBiometryTypeForOptions(options);
   }
 
   return RNKeychainManager.getSupportedBiometryType();

@@ -117,6 +117,7 @@ public class KeychainModule extends ReactContextBaseJavaModule {
     String ACCESSIBLE = "accessible";
     String ANDROID_ALLOW_AUTHENTICATED_SESSION_REUSE =
       "androidAllowAuthenticatedSessionReuse";
+    String ANDROID_BIOMETRIC_SECURITY_LEVEL = "androidBiometricSecurityLevel";
     String AUTH_PROMPT = "authenticationPrompt";
     String AUTH_TYPE = "authenticationType";
     String SERVICE = "service";
@@ -571,17 +572,24 @@ public class KeychainModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void getSupportedBiometryType(@NonNull final Promise promise) {
+    getSupportedBiometryTypeForOptions(null, promise);
+  }
+
+  @ReactMethod
+  public void getSupportedBiometryTypeForOptions(@Nullable final ReadableMap options,
+                                                 @NonNull final Promise promise) {
     try {
       String reply = null;
+      final boolean allowWeakBiometrics = getAllowWeakBiometrics(options);
 
-      if (!DeviceAvailability.isStrongBiometricAuthAvailable(getReactApplicationContext())) {
+      if (!DeviceAvailability.isBiometricAuthAvailable(getReactApplicationContext(), allowWeakBiometrics)) {
         reply = null;
       } else {
-        if (isFingerprintAuthAvailable()) {
+        if (isFingerprintAuthAvailable(allowWeakBiometrics)) {
           reply = FINGERPRINT_SUPPORTED_NAME;
-        } else if (isFaceAuthAvailable()) {
+        } else if (isFaceAuthAvailable(allowWeakBiometrics)) {
           reply = FACE_SUPPORTED_NAME;
-        } else if (isIrisAuthAvailable()) {
+        } else if (isIrisAuthAvailable(allowWeakBiometrics)) {
           reply = IRIS_SUPPORTED_NAME;
         }
       }
@@ -890,6 +898,20 @@ public class KeychainModule extends ReactContextBaseJavaModule {
       || AccessControl.BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE.equals(accessControl);
   }
 
+  private static boolean getAllowWeakBiometrics(@Nullable final ReadableMap options) {
+    if (null == options || !options.hasKey(Maps.ANDROID_BIOMETRIC_SECURITY_LEVEL)) {
+      return false;
+    }
+
+    return "weak".equals(options.getString(Maps.ANDROID_BIOMETRIC_SECURITY_LEVEL));
+  }
+
+  private static int getBiometricAuthenticators(@Nullable final ReadableMap options) {
+    return getAllowWeakBiometrics(options)
+      ? BiometricManager.Authenticators.BIOMETRIC_WEAK
+      : BiometricManager.Authenticators.BIOMETRIC_STRONG;
+  }
+
   private void addCipherStorageToMap(@NonNull final CipherStorage cipherStorage) {
     cipherStorageMap.put(cipherStorage.getCipherStorageName(), cipherStorage);
   }
@@ -917,8 +939,8 @@ public class KeychainModule extends ReactContextBaseJavaModule {
       promptInfoBuilder.setNegativeButtonText(promptInfoNegativeButton);
     }
 
-    /* PromptInfo is only used in Biometric-enabled RSA storage and can only be unlocked by a strong biometric */
-    promptInfoBuilder.setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG);
+    /* Defaults to strong biometrics. Regression builds may opt into weak prompt coverage. */
+    promptInfoBuilder.setAllowedAuthenticators(getBiometricAuthenticators(options));
 
     /* Bypass confirmation to avoid KeyStore unlock timeout being exceeded when using passive biometrics */
     promptInfoBuilder.setConfirmationRequired(false);
@@ -1121,14 +1143,26 @@ public class KeychainModule extends ReactContextBaseJavaModule {
     return DeviceAvailability.isStrongBiometricAuthAvailable(getReactApplicationContext()) && DeviceAvailability.isFingerprintAuthAvailable(getReactApplicationContext());
   }
 
+  /* package */ boolean isFingerprintAuthAvailable(final boolean allowWeakBiometrics) {
+    return DeviceAvailability.isBiometricAuthAvailable(getReactApplicationContext(), allowWeakBiometrics) && DeviceAvailability.isFingerprintAuthAvailable(getReactApplicationContext());
+  }
+
   /** True - if face recognition hardware available and configured, otherwise false. */
   /* package */ boolean isFaceAuthAvailable() {
     return DeviceAvailability.isStrongBiometricAuthAvailable(getReactApplicationContext()) && DeviceAvailability.isFaceAuthAvailable(getReactApplicationContext());
   }
 
+  /* package */ boolean isFaceAuthAvailable(final boolean allowWeakBiometrics) {
+    return DeviceAvailability.isBiometricAuthAvailable(getReactApplicationContext(), allowWeakBiometrics) && DeviceAvailability.isFaceAuthAvailable(getReactApplicationContext());
+  }
+
   /** True - if iris recognition hardware available and configured, otherwise false. */
   /* package */ boolean isIrisAuthAvailable() {
     return DeviceAvailability.isStrongBiometricAuthAvailable(getReactApplicationContext()) && DeviceAvailability.isIrisAuthAvailable(getReactApplicationContext());
+  }
+
+  /* package */ boolean isIrisAuthAvailable(final boolean allowWeakBiometrics) {
+    return DeviceAvailability.isBiometricAuthAvailable(getReactApplicationContext(), allowWeakBiometrics) && DeviceAvailability.isIrisAuthAvailable(getReactApplicationContext());
   }
 
   /** Is secured hardware a part of current storage or not. */
