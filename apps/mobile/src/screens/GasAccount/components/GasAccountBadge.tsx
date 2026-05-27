@@ -43,7 +43,7 @@ export const GasAccountBadge: React.FC<{}> = () => {
     return null;
   }
 
-  if (displayBalance < 0.1) {
+  if (displayBalance < 1) {
     return (
       <Text style={styles.invalidText}>{formatUsdValue(displayBalance)}</Text>
     );
