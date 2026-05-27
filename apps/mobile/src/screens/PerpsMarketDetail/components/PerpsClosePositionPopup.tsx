@@ -22,6 +22,7 @@ import { Text } from '@/components/Typography';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 
@@ -194,15 +195,17 @@ export const PerpsClosePositionPopup: React.FC<{
             </View>
           </View>
 
-          <Button
-            type="hyperliquid"
-            title={t('page.perpsDetail.PerpsClosePositionPopup.confirm')}
-            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
-            loading={loading}
-            disabled={!isValidClosePercent}
-            onPress={closePosition}
-          />
+          <View style={styles.footer}>
+            <Button
+              type="hyperliquid"
+              title={t('page.perpsDetail.PerpsClosePositionPopup.confirm')}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+              loading={loading}
+              disabled={!isValidClosePercent}
+              onPress={closePosition}
+            />
+          </View>
         </AutoLockView>
       </BottomSheetView>
     </AppBottomSheetModal>
@@ -214,8 +217,12 @@ const getStyle = createGetStyles2024(ctx => {
   return {
     container: {
       height: '100%',
-      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
       paddingHorizontal: 20,
+    },
+    footer: {
+      marginTop: 'auto',
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
     title: {
       fontFamily: 'SF Pro Rounded',

@@ -11,10 +11,15 @@ import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Button } from '@/components2024/Button';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_TOP_OFFSET,
+} from '@/constant/layout';
 
 const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
   button: {
-    height: 56,
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
     borderColor: colors2024['brand-default'],
     borderWidth: 1,
     borderRadius: 100,
@@ -29,9 +34,9 @@ const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
   wrapper: {
     position: 'relative',
     flexDirection: 'row',
-    marginTop: 12,
+    marginTop: BOTTOM_BUTTON_TOP_OFFSET,
     justifyContent: 'space-between',
-    gap: 12,
+    gap: BOTTOM_BUTTON_GAP,
   },
   cancelWrapper: {
     flexDirection: 'row',

@@ -7,10 +7,11 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { ActionsContainer, Props } from './ActionsContainer';
 import { GasLessAnimatedWrapper } from './GasLessComponents';
+import { BOTTOM_BUTTON_DOUBLE_HEIGHT } from '@/constant/layout';
 
 const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
   button: {
-    height: 56,
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
     borderColor: colors2024['brand-default'],
     borderWidth: 1,
     borderRadius: 100,

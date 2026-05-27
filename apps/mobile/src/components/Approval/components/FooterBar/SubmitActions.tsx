@@ -15,6 +15,7 @@ import { useSubmitAction } from './useSubmitAction';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Text } from '@/components/Typography';
+import { BOTTOM_BUTTON_DOUBLE_HEIGHT } from '@/constant/layout';
 
 extend([mixPlugin]);
 
@@ -137,7 +138,7 @@ export const SubmitActions: React.FC<PropsWithAuthSession> = ({
 
 const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
   button: {
-    height: 56,
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
     borderColor: colors2024['brand-default'],
     borderWidth: 1,
     borderRadius: 100,
