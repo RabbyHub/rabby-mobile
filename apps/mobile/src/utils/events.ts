@@ -1,5 +1,6 @@
 import { SIGN_HELPER_EVENTS } from '@rabby-wallet/service-keyring';
 import { makeEEClass } from '@/core/apis/event';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
 import { type Purchase } from 'react-native-iap';
 import { DB } from '@op-engineering/op-sqlite';
@@ -27,6 +28,10 @@ export type EventBusListeners = {
   }) => void;
   [EVENT_ACTIVE_WINDOW]: (id?: string | null) => void;
   EVENT_REFRESH_ASSET: (type: keyof AssetsRefresthState) => void;
+  [EVENT_PATCH_SINGLE_TOKEN]: (detail: {
+    address: string;
+    token: TokenItem;
+  }) => void;
   __OP_SQLITE_LOADED__: (ctx: { database: DB }) => void;
 };
 type Listeners = {
@@ -48,6 +53,7 @@ export const APPROVAL_STATUS_MAP = {
 };
 
 export const EVENT_ACTIVE_WINDOW = 'EVENT_ACTIVE_WINDOW';
+export const EVENT_PATCH_SINGLE_TOKEN = 'EVENT_PATCH_SINGLE_TOKEN';
 
 export const EVENT_SWITCH_ACCOUNT = 'EVENT_SWITCH_ACCOUNT';
 
