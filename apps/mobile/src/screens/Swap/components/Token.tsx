@@ -273,7 +273,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
               styles.input,
               valueLoading && styles.loadingOpacity,
             ])}>
-            {value ? formatTokenAmount(value) : '0'}
+            {value || '0'}
           </AutoShrinkAmountText>
         )}
       </View>
