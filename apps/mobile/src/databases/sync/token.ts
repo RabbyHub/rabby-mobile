@@ -2,6 +2,7 @@ import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenItemEntity } from '../entities/tokenitem';
 import { prepareAppDataSource } from '../imports';
 import { batchSaveWithPQueueAndTransaction } from './_task';
+import { eventBus, EVENT_PATCH_SINGLE_TOKEN } from '@/utils/events';
 
 export async function patchSingleToken(address: string, token: TokenItem) {
   const tokenItem = new TokenItemEntity();
@@ -24,4 +25,9 @@ export async function patchSingleToken(address: string, token: TokenItem) {
     .catch(error => {
       console.error('Batch upsert patchSingleToken failed:', error);
     });
+
+  eventBus.emit(EVENT_PATCH_SINGLE_TOKEN, {
+    address,
+    token,
+  });
 }
