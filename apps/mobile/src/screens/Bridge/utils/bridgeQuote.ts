@@ -33,3 +33,39 @@ export const bridgeQuoteScore = (
   );
   return amountUsd.minus(gasFeeUsd).minus(timeCostUsd);
 };
+
+export const isSameBridgeQuote = (
+  left?: SelectedBridgeQuote,
+  right?: SelectedBridgeQuote,
+) => {
+  return (
+    !!left &&
+    !!right &&
+    left.aggregator.id === right.aggregator.id &&
+    left.bridge_id === right.bridge_id
+  );
+};
+
+export const getBestBridgeQuote = (
+  quotes: SelectedBridgeQuote[],
+  receiveToken: TokenItem,
+) => {
+  return quotes.reduce<
+    | {
+        quote: SelectedBridgeQuote;
+        score: BigNumber;
+      }
+    | undefined
+  >((best, quote) => {
+    if (quote.loading) {
+      return best;
+    }
+
+    const score = bridgeQuoteScore(quote, receiveToken);
+    if (!best || score.gt(best.score)) {
+      return { quote, score };
+    }
+
+    return best;
+  }, undefined);
+};
