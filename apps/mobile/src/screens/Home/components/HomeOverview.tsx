@@ -689,18 +689,12 @@ function HomeOverviewPostStartupEffects({
 
   useFocusEffect(
     useCallback(() => {
-      if (!couldDoRefresh()) {
-        return;
-      }
       refreshSuccessAndFailList();
     }, []),
   );
 
   useFocusEffect(
     useCallback(() => {
-      if (!couldDoRefresh()) {
-        return;
-      }
       resetFetchHistoryTxCount();
     }, []),
   );
