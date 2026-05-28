@@ -645,10 +645,5 @@ const getStyle = createGetStyles2024(ctx => {
       justifyContent: 'space-between',
       alignItems: 'center',
     },
-    historyHeaderTop: {
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-0']
-        : colors2024['neutral-bg-1'],
-    },
   };
 });
