@@ -783,6 +783,16 @@ export function createBusinessKeychainApi({
     return authOptions;
   }
 
+  function getAndroidRequestAccessControl(
+    authenticationType?: KEYCHAIN_AUTH_TYPES,
+  ) {
+    if (!isAndroid || !authenticationType) {
+      return undefined;
+    }
+
+    return getAuthOptionsForType(authenticationType)?.accessControl;
+  }
+
   async function resetTrustedVaultKeyString() {
     try {
       await keychainModule.resetGenericPassword({
@@ -1035,6 +1045,7 @@ export function createBusinessKeychainApi({
     androidAllowKeyStoreRecovery = false,
     shouldAttachTrustedVaultKeyString = true,
     skipLegacyAndroidBiometricsStorageUpgrade = false,
+    authenticationType,
   }: {
     purpose?: T;
     onPlainPassword?: (
@@ -1046,6 +1057,7 @@ export function createBusinessKeychainApi({
     shouldAttachTrustedVaultKeyString?: boolean;
     skipLegacyAndroidBiometricsStorageUpgrade?: boolean;
     skipCurrentVersionRewriteAfterLegacyFallback?: boolean;
+    authenticationType?: KEYCHAIN_AUTH_TYPES;
   }): Promise<null | DefaultRet> {
     const instance = await waitInstance();
     const startedAt = Date.now();
@@ -1057,12 +1069,19 @@ export function createBusinessKeychainApi({
         androidAuthPromptPolicy,
         androidAllowKeyStoreRecovery,
         shouldAttachTrustedVaultKeyString,
+        authenticationType,
       });
+      const androidAccessControl =
+        getAndroidRequestAccessControl(authenticationType);
+
       const keychainObject = (await keychainModule.getGenericPassword({
         ...DEFAULT_GET_OPTIONS,
         ...getAndroidBiometricSecurityLevelOptions(),
         ...getAndroidAuthPromptPolicyOptions(androidAuthPromptPolicy),
         ...(isAndroid ? { androidAllowKeyStoreRecovery } : {}),
+        ...(isAndroid && androidAccessControl
+          ? { accessControl: androidAccessControl }
+          : {}),
       })) as DefaultRet;
       traceAndroidKeychainPerf('request_generic_password_native_end', {
         elapsedMs: Date.now() - startedAt,

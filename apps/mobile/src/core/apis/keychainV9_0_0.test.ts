@@ -170,6 +170,11 @@ describe('core/apis/keychainV9_0_0', () => {
         warn: jest.fn(),
       },
     }));
+    jest.doMock('./androidBiometricsRegression', () => ({
+      getAndroidBiometricSecurityLevelOptions: jest.fn(() => ({
+        androidBiometricSecurityLevel: 'strong',
+      })),
+    }));
 
     let module!: typeof import('./keychainV9_0_0');
     jest.isolateModules(() => {
@@ -231,6 +236,7 @@ describe('core/apis/keychainV9_0_0', () => {
     );
     expect(mockUpdateUnlockTime).toHaveBeenCalled();
     expect(mockEncrypt).toHaveBeenCalledWith(currentRabbitCode, {
+      androidKeychainAuthProfile: 'biometric-strong-v1',
       password: 'plain-password',
     });
     expect(mockSetGenericPassword).toHaveBeenCalledTimes(1);

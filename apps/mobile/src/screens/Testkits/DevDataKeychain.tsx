@@ -200,6 +200,7 @@ type BusinessRewriteResult = {
   label: string;
   service: string;
   targetStorage: KeychainStorageType;
+  targetAuthTypeLabel?: string;
   rewrittenAt: string;
 };
 type RawReadState = {
@@ -2288,6 +2289,91 @@ export default function DevDataKeychain(): JSX.Element {
     ],
   );
 
+  const handleMigrateCurrentToV10BiometricsOrPasscode = useCallback(async () => {
+    const version: CurrentKeychainVersion = '10.0.0';
+    const api = getBusinessApi(version);
+    const targetStorage = effectiveStorageByVersion[version];
+    let decryptedPassword = '';
+    let vaultKeyString: string | undefined;
+
+    try {
+      setIsLoading(true);
+      updateBusinessState(version, {
+        rewriteResult: null,
+        rewriteErrorMessage: null,
+        lastActionErrorMessage: null,
+      });
+
+      await api.requestGenericPassword({
+        purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
+        androidAuthPromptPolicy: apisKeychain.DEFAULT_ANDROID_AUTH_PROMPT_POLICY,
+        onPlainPassword: (password, credentials) => {
+          decryptedPassword = password;
+          vaultKeyString =
+            typeof credentials.vaultKeyString === 'string'
+              ? credentials.vaultKeyString
+              : undefined;
+        },
+      });
+
+      if (!decryptedPassword) {
+        throw new Error(
+          'Current service returned no plain password to migrate.',
+        );
+      }
+
+      await api.setGenericPassword(
+        decryptedPassword,
+        apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
+        {
+          storage: targetStorage,
+          vaultKeyString,
+        },
+      );
+
+      setCurrentKeychainVersion(version);
+
+      updateBusinessState(version, {
+        rewriteResult: {
+          label: 'v10 Bio+Device Migration',
+          service: apisKeychain.KEYCHAIN_DEFAULT_SERVICE,
+          targetStorage,
+          targetAuthTypeLabel: apisKeychain.getAuthenticationTypeLabel(
+            apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
+          ),
+          rewrittenAt: new Date().toISOString(),
+        },
+        rewriteErrorMessage: null,
+      });
+      toast.success('v10 biometrics migration written');
+      Alert.alert(
+        'v10 migration written',
+        [
+          'Current com.debank entry was rewritten with BIOMETRICS_OR_PASSCODE.',
+          'Restart the app, then test fingerprint and face from the unlock screen.',
+          'If face still appears but cannot read the password, export this page for native debug details.',
+        ].join('\n'),
+      );
+    } catch (error) {
+      const parsed = api.parseKeychainError(error);
+      const message =
+        parsed.sysMessage ||
+        (error instanceof Error ? error.message : String(error));
+
+      updateBusinessState(version, {
+        rewriteErrorMessage: message,
+      });
+      Alert.alert('v10 biometrics migration failed', message);
+    } finally {
+      await refreshState();
+    }
+  }, [
+    effectiveStorageByVersion,
+    refreshState,
+    setCurrentKeychainVersion,
+    updateBusinessState,
+  ]);
+
   const handleChangeCurrentVersion = useCallback(
     async (nextVersion: CurrentKeychainVersion) => {
       if (nextVersion === currentKeychainVersion) {
@@ -2672,6 +2758,12 @@ export default function DevDataKeychain(): JSX.Element {
               value={versionState.rewriteResult.targetStorage}
               selectable
             />
+            {versionState.rewriteResult.targetAuthTypeLabel ? (
+              <StatusRow
+                label="Target Auth"
+                value={versionState.rewriteResult.targetAuthTypeLabel}
+              />
+            ) : null}
             <StatusRow
               label="Rewritten At"
               value={versionState.rewriteResult.rewrittenAt}
@@ -3277,6 +3369,25 @@ export default function DevDataKeychain(): JSX.Element {
               }}
             />
           </ActionSheetSection>
+
+          {tabKey === '10.0.0' ? (
+            <ActionSheetSection
+              title="v10 Migration Test"
+              desc="Rewrite the real `com.debank` entry with the v10 BIOMETRICS_OR_PASSCODE profile for restart testing.">
+              <Button
+                title="Migrate Current to Bio+Device"
+                type="warning"
+                height={40}
+                disabled={!IS_ANDROID || isLoading || !hasBusinessEntry}
+                containerStyle={styles.sheetActionButton}
+                onPress={() => {
+                  runSheetAction(
+                    handleMigrateCurrentToV10BiometricsOrPasscode,
+                  );
+                }}
+              />
+            </ActionSheetSection>
+          ) : null}
 
           {tabKey === '10.0.0' ? (
             <ActionSheetSection
