@@ -38,7 +38,7 @@ import {
   SendAmountInput,
   SendAmountInputMode,
 } from './components/SendAmountInput';
-import { formatSpeicalAmount, formatTokenAmount } from '@/utils/number';
+import { formatSpeicalAmount } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
 
 const USD_INPUT_REGEX = /^\d*(\.\d{0,2})?$/;
@@ -79,6 +79,27 @@ function formatUsdQuoteValueText(value: string | number | BigNumber) {
   }
 
   return formatFixedUsdAmountText(bn);
+}
+
+function formatTokenQuoteValueText(value: string | number | BigNumber) {
+  const bn = getSafeAmountBn(value);
+
+  if (bn.isZero()) {
+    return '0';
+  }
+
+  const normalizedValue = bn.toFixed();
+  const decimalPart = normalizedValue.split('.')[1] || '';
+  const displayValue =
+    decimalPart.length >= 6 ? bn.toFixed(6) : normalizedValue;
+  const [intPart, displayDecimalPart] = displayValue.split('.');
+  const sign = intPart.startsWith('-') ? '-' : '';
+  const absIntPart = sign ? intPart.slice(1) : intPart;
+  const groupedIntPart = absIntPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  return displayDecimalPart
+    ? `${sign}${groupedIntPart}.${displayDecimalPart}`
+    : `${sign}${groupedIntPart}`;
 }
 
 function formatUsdInputValueFromTokenAmount(
@@ -342,22 +363,21 @@ export function BalanceSection({
       return;
     }
 
-    setInputMode(prev => {
-      if (prev === 'token') {
-        setUsdInputValue(
-          formatUsdInputValueFromTokenAmount(
-            formValues.amount || '',
-            activeUsdPrice,
-          ),
-        );
-        lastUsdInputTokenAmountRef.current = formValues.amount || '';
-        return 'usd';
-      }
+    if (directSignBtnRef.current?.isAuthInProgress()) {
+      return;
+    }
 
-      lastUsdInputTokenAmountRef.current = '';
-      return 'token';
-    });
-  }, [activeUsdPrice, formValues.amount]);
+    setUsdInputValue('');
+    lastUsdInputTokenAmountRef.current = '';
+    handleFieldChange?.('amount', '');
+    updateSliderByTokenAmount('');
+    setInputMode(prev => (prev === 'token' ? 'usd' : 'token'));
+  }, [
+    activeUsdPrice,
+    directSignBtnRef,
+    handleFieldChange,
+    updateSliderByTokenAmount,
+  ]);
 
   const sliderDisable = useMemo(() => {
     return screenState.isLoading || screenState.isEstimatingGas;
@@ -381,7 +401,7 @@ export function BalanceSection({
   const amountInputUnit = inputMode === 'usd' ? 'USD' : tokenSymbol;
   const quoteValueText =
     inputMode === 'usd'
-      ? formatTokenAmount(safeFormAmount.toFixed())
+      ? formatTokenQuoteValueText(safeFormAmount)
       : formatUsdQuoteValueText(safeFormAmount.times(activeUsdPrice || 0));
   const quoteUnit = inputMode === 'usd' ? tokenSymbol : 'USD';
   const handleAmountChange =

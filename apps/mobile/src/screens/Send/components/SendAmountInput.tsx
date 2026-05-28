@@ -217,10 +217,15 @@ export const SendAmountInput = ({
         nextValue || '0',
       );
       if (!inputAreaWidth || !nextValueWidthAtBaseFontSize) {
+        const visibleValueWidth =
+          nextValueWidthAtBaseFontSize > 0
+            ? Math.ceil(nextValueWidthAtBaseFontSize) + CARET_BUFFER
+            : 0;
+
         return {
           fittingFontSize: MAIN_FONT_SIZE,
           valueInputWidth: undefined,
-          unitLeft: UNIT_GAP,
+          unitLeft: visibleValueWidth + UNIT_GAP,
           unitWidth: Math.ceil(measuredUnitWidthAtBaseFontSize) + 2,
         };
       }
@@ -394,6 +399,13 @@ export const SendAmountInput = ({
     [applyUnitLayoutNative, inputValue, onChange],
   );
 
+  const handleSwitchModePress = useCallback(() => {
+    onSwitchMode?.();
+    requestAnimationFrame(() => {
+      tokenInputRef.current?.focus();
+    });
+  }, [onSwitchMode, tokenInputRef]);
+
   const fallbackQuoteCharWidth =
     quoteCharWidths['0'] || QUOTE_TEXT_FONT_SIZE * 0.56;
   const fallbackQuoteUnitWidth =
@@ -485,7 +497,7 @@ export const SendAmountInput = ({
           <TouchableOpacity
             activeOpacity={canSwitchMode ? 0.7 : 1}
             disabled={!canSwitchMode}
-            onPress={onSwitchMode}
+            onPress={handleSwitchModePress}
             style={styles.quoteRow}
             hitSlop={8}>
             <Text
