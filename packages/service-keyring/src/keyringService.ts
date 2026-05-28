@@ -69,16 +69,27 @@ type PublicAccountSnapshotItem = {
   publicKey?: string;
   hdPathBasePublicKey?: string;
   hdPathType?: string;
+  hdPathIndex?: number;
   hasBackup?: boolean;
+  needPassphrase?: boolean;
 };
 
 type PublicAccountSnapshot = {
-  version: 3;
+  version: 4;
   updatedAt: number;
   accounts: PublicAccountSnapshotItem[];
 };
 
-const PUBLIC_ACCOUNT_SNAPSHOT_VERSION = 3;
+/**
+ * Public account snapshot version history:
+ * - v3: locked-readable account identity and public keyring metadata.
+ * - v4: adds locked-readable HD metadata and backup/import state:
+ *   hdPathBasePublicKey, hdPathType, hdPathIndex, hasBackup, needPassphrase,
+ *   and mnemonic basePublicKey normalization into hdPathBasePublicKey so locked
+ *   address detail can render HD Path, imported mnemonic source, and backup
+ *   reminders.
+ */
+const PUBLIC_ACCOUNT_SNAPSHOT_VERSION = 4;
 
 const isSensitiveKeyringType = (type: string) =>
   UNENCRYPTED_IGNORE_KEYRING.includes(type as any);
@@ -265,8 +276,14 @@ export class KeyringService extends RNEventEmitter {
             typeof item.hdPathType === 'string' && item.hdPathType
               ? item.hdPathType
               : undefined,
+          hdPathIndex:
+            typeof item.hdPathIndex === 'number' ? item.hdPathIndex : undefined,
           hasBackup:
             typeof item.hasBackup === 'boolean' ? item.hasBackup : undefined,
+          needPassphrase:
+            typeof item.needPassphrase === 'boolean'
+              ? item.needPassphrase
+              : undefined,
         } as PublicAccountSnapshotItem;
       })
       .filter(Boolean) as PublicAccountSnapshotItem[];
@@ -302,15 +319,26 @@ export class KeyringService extends RNEventEmitter {
     keyring: KeyringInstance,
     address: string,
   ) {
-    if (typeof (keyring as any)?.getAccountInfo !== 'function') {
-      return undefined;
+    if (typeof (keyring as any)?.getAccountInfo === 'function') {
+      try {
+        const accountInfo = await (keyring as any).getAccountInfo(address);
+        if (accountInfo) {
+          return accountInfo;
+        }
+      } catch {
+        // Fall through to getInfoByAddress when a keyring exposes both APIs.
+      }
     }
 
-    try {
-      return await (keyring as any).getAccountInfo(address);
-    } catch {
-      return undefined;
+    if (typeof (keyring as any)?.getInfoByAddress === 'function') {
+      try {
+        return await (keyring as any).getInfoByAddress(address);
+      } catch {
+        return undefined;
+      }
     }
+
+    return undefined;
   }
 
   private async buildPublicAccountSnapshotFromRuntime(): Promise<PublicAccountSnapshot> {
@@ -335,6 +363,14 @@ export class KeyringService extends RNEventEmitter {
                     keyring,
                     address,
                   );
+                const hdPathBasePublicKey =
+                  typeof accountInfo?.hdPathBasePublicKey === 'string' &&
+                  accountInfo.hdPathBasePublicKey
+                    ? accountInfo.hdPathBasePublicKey
+                    : typeof accountInfo?.basePublicKey === 'string' &&
+                      accountInfo.basePublicKey
+                    ? accountInfo.basePublicKey
+                    : undefined;
 
                 return {
                   address,
@@ -348,19 +384,23 @@ export class KeyringService extends RNEventEmitter {
                     typeof display.publicKey === 'string' && display.publicKey
                       ? display.publicKey
                       : undefined,
-                  hdPathBasePublicKey:
-                    typeof accountInfo?.hdPathBasePublicKey === 'string' &&
-                    accountInfo.hdPathBasePublicKey
-                      ? accountInfo.hdPathBasePublicKey
-                      : undefined,
+                  hdPathBasePublicKey,
                   hdPathType:
                     typeof accountInfo?.hdPathType === 'string' &&
                     accountInfo.hdPathType
                       ? accountInfo.hdPathType
                       : undefined,
+                  hdPathIndex:
+                    typeof accountInfo?.index === 'number'
+                      ? accountInfo.index
+                      : undefined,
                   hasBackup:
                     typeof (keyring as any).hasBackup === 'boolean'
                       ? (keyring as any).hasBackup
+                      : undefined,
+                  needPassphrase:
+                    typeof (keyring as any).needPassphrase === 'boolean'
+                      ? (keyring as any).needPassphrase
                       : undefined,
                 } as PublicAccountSnapshotItem;
               }),
@@ -421,7 +461,9 @@ export class KeyringService extends RNEventEmitter {
       publicKey: item.publicKey,
       hdPathBasePublicKey: item.hdPathBasePublicKey,
       hdPathType: item.hdPathType,
+      hdPathIndex: item.hdPathIndex,
       hasBackup: item.hasBackup,
+      needPassphrase: item.needPassphrase,
     }));
   }
 
@@ -441,6 +483,7 @@ export class KeyringService extends RNEventEmitter {
           item.hdPathBasePublicKey || '',
           item.hdPathType || '',
           String(item.hasBackup ?? ''),
+          String(item.needPassphrase ?? ''),
           String(item.byImport ?? ''),
         ].join('|');
         if (!acc[groupId]) {
@@ -449,6 +492,7 @@ export class KeyringService extends RNEventEmitter {
             byImport: item.byImport,
             publicKey: item.publicKey,
             hasBackup: item.hasBackup,
+            needPassphrase: item.needPassphrase,
             accounts: [] as PublicAccountSnapshotItem[],
           };
         }
@@ -463,6 +507,7 @@ export class KeyringService extends RNEventEmitter {
           byImport?: boolean;
           publicKey?: string;
           hasBackup?: boolean;
+          needPassphrase?: boolean;
           accounts: PublicAccountSnapshotItem[];
         }
       >,
@@ -477,6 +522,7 @@ export class KeyringService extends RNEventEmitter {
       byImport: group.byImport,
       publicKey: group.publicKey,
       hasBackup: group.hasBackup,
+      needPassphrase: group.needPassphrase,
     })) as DisplayedKeyring[];
   }
 
@@ -1698,6 +1744,14 @@ export class KeyringService extends RNEventEmitter {
         keyring: new DisplayKeyring(keyring),
         byImport: (keyring as KeyringIntf).byImport,
         publicKey: (keyring as KeyringIntf).publicKey,
+        hasBackup:
+          typeof (keyring as any).hasBackup === 'boolean'
+            ? (keyring as any).hasBackup
+            : undefined,
+        needPassphrase:
+          typeof (keyring as any).needPassphrase === 'boolean'
+            ? (keyring as any).needPassphrase
+            : undefined,
       } as DisplayedKeyring;
     });
   }
@@ -1742,10 +1796,14 @@ export class KeyringService extends RNEventEmitter {
     typedAccounts.forEach(accountGroup => {
       result.push(
         ...accountGroup.accounts.map(account => ({
+          ...account,
           address: account.address,
           brandName: account.brandName,
           type: accountGroup.type,
           byImport: accountGroup.byImport,
+          publicKey: accountGroup.publicKey,
+          hasBackup: accountGroup.hasBackup,
+          needPassphrase: accountGroup.needPassphrase,
         })),
       );
     });

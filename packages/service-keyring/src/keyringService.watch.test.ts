@@ -82,6 +82,7 @@ describe('keyringService support eth-keyring-watch', () => {
         byImport: true,
         publicKey: 'base-public-key',
         hasBackup: true,
+        needPassphrase: true,
         serialize: async () => ({
           mnemonic: walletOneSeedWords,
           accounts: [TEST_HD_ADDR],
@@ -93,9 +94,10 @@ describe('keyringService support eth-keyring-watch', () => {
             brandName: 'Rabby Wallet',
           },
         ],
-        getAccountInfo: async () => ({
-          hdPathBasePublicKey: 'base-public-key',
+        getInfoByAddress: async () => ({
+          basePublicKey: 'base-public-key',
           hdPathType: 'LedgerLive',
+          index: 0,
         }),
       } as any,
     ];
@@ -157,17 +159,42 @@ describe('keyringService support eth-keyring-watch', () => {
       const snapshot = keyringService.store.getState().publicAccountSnapshot;
       const accounts = await keyringService.getAllVisibleAccountsArray();
 
-      expect(snapshot?.version).toBe(3);
+      expect(snapshot?.version).toBe(4);
       expect(accounts).toHaveLength(1);
       expect(accounts[0]).toEqual(
         expect.objectContaining({
           address: TEST_HD_ADDR,
           brandName: 'Rabby Wallet',
           hasBackup: true,
+          needPassphrase: true,
           hdPathBasePublicKey: 'base-public-key',
           hdPathType: 'LedgerLive',
+          hdPathIndex: 0,
         }),
       );
+    });
+
+    it('ignores legacy public account snapshot versions', async () => {
+      setSensitiveHdKeyringInRuntime();
+      await keyringService.persistAllKeyrings();
+
+      const snapshot = keyringService.store.getState().publicAccountSnapshot;
+      keyringService.store.updateState({
+        publicAccountSnapshot: {
+          ...snapshot,
+          version: 3,
+          accounts: snapshot?.accounts.map(account => ({
+            ...account,
+            hdPathIndex: undefined,
+          })),
+        },
+      } as any);
+      await keyringService.setLocked();
+
+      await expect(keyringService.getAllVisibleAccountsArray()).resolves.toEqual(
+        [],
+      );
+      expect(keyringService.hasPublicAccountSnapshot()).toBe(false);
     });
 
     it('preserves sensitive public snapshot when locked unencrypted keyrings change', async () => {

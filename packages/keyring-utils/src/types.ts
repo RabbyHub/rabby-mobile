@@ -79,6 +79,12 @@ export type KeyringAccount = {
   realBrandName?: string;
   realBrandUrl?: string;
   hdPathBasePublicKey?: string;
+  hdPathType?: string;
+  hdPathIndex?: number;
+  byImport?: boolean;
+  publicKey?: string;
+  hasBackup?: boolean;
+  needPassphrase?: boolean;
 };
 
 export const KEYRING_CLASS = {
