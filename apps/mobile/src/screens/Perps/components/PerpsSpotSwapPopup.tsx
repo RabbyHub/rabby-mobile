@@ -572,15 +572,17 @@ export const PerpsSpotSwapPopup: React.FC<{
             </View>
           </View>
 
-          <Button
-            type="hyperliquid"
-            title={t('page.perps.PerpsSpotSwap.swapBtn')}
-            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
-            onPress={handleSwap}
-            loading={isLoading}
-            disabled={!validation.isValid}
-          />
+          <View style={styles.footer}>
+            <Button
+              type="hyperliquid"
+              title={t('page.perps.PerpsSpotSwap.swapBtn')}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+              onPress={handleSwap}
+              loading={isLoading}
+              disabled={!validation.isValid}
+            />
+          </View>
         </Pressable>
       </BottomSheetView>
     </AppBottomSheetModal>
@@ -589,12 +591,17 @@ export const PerpsSpotSwapPopup: React.FC<{
 
 const getStyle = createGetStyles2024(ctx => ({
   container: {
+    height: '100%',
     backgroundColor: ctx.colors2024['neutral-bg-1'],
     paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
-    paddingBottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     paddingHorizontal: 20,
     display: 'flex',
     flexDirection: 'column',
+  },
+  footer: {
+    marginTop: 'auto',
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    paddingBottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
   },
   title: {
     fontFamily: 'SF Pro Rounded',

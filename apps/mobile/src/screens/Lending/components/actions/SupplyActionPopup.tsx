@@ -69,6 +69,7 @@ import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
   BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   RootNames,
   getBottomButtonBottomOffset,
@@ -850,12 +851,9 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 24,
   },
   buttonContainer: {
-    height:
-      12 +
-      BOTTOM_BUTTON_SINGLE_HEIGHT +
-      getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
-    paddingTop: 12,
     marginTop: 'auto',
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    paddingBottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     width: '100%',
     display: 'flex',
     flexDirection: 'row',

@@ -68,6 +68,7 @@ import { useZeroLTVBlockingWithdraw } from '../../hooks/useZeroLTVBlockingWithdr
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
   BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
@@ -687,8 +688,9 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
   },
   buttonContainer: {
-    paddingTop: 12,
-    marginBottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
+    marginTop: 'auto',
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    paddingBottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
