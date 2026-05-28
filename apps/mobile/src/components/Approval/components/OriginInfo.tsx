@@ -33,9 +33,11 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     position: 'relative',
     paddingTop: 10,
     paddingBottom: 8,
+    paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
+    alignSelf: 'stretch',
   },
   originText: {
     color: colors2024['neutral-title-1'],
@@ -45,6 +47,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '900',
     lineHeight: 24,
+    flexShrink: 1,
   },
   chainLogo: {
     position: 'absolute',
@@ -171,7 +174,9 @@ export const OriginInfo: React.FC<Props> = ({
           )}
         </Tip>
       </View>
-      <Text style={styles.originText}>{displayOrigin}</Text>
+      <Text style={styles.originText} numberOfLines={1} ellipsizeMode="tail">
+        {displayOrigin}
+      </Text>
       {engineResultMap['1088'] && (
         <SecurityLevelTagNoText
           enable={engineResultMap['1088'].enable}
