@@ -1,5 +1,6 @@
 import { EncryptorAdapter } from '@rabby-wallet/service-keyring';
 import { NativeModules, Platform } from 'react-native';
+import ReactNativeBiometrics from 'react-native-biometrics';
 
 import i18n from '@/utils/i18n';
 import { DEFAULT_RABBY_MOBILE_CODE } from '@/constant/env';
@@ -22,11 +23,22 @@ const KEYCHAIN_TRUSTED_VAULT_KEY_USER = 'rabbymobile-vault-key';
 const LEGACY_RSA_STORAGE_TYPE = 'KeystoreRSAECB';
 const AES_STORAGE_TYPE = 'KeystoreAESCBC';
 const AES_GCM_STORAGE_TYPE = 'KeystoreAESGCM';
+const AES_GCM_NO_AUTH_STORAGE_TYPE = 'KeystoreAESGCM_NoAuth';
 const IOS_KEYCHAIN_STORAGE_TYPE = 'keychain';
 const BROKEN_BIOMETRICS_ENTRY_MESSAGE =
   'Biometrics data could not be decrypted with the current keychain state. Inspect the keychain debug screen before resetting biometrics.';
 const CANCELSTR = i18n.t('native.authentication.auth_prompt_cancel');
 const isAndroid = Platform.OS === 'android';
+
+let _rnBiometricsInstance: ReactNativeBiometrics | null = null;
+function getRNBiometrics(): ReactNativeBiometrics {
+  if (!_rnBiometricsInstance) {
+    _rnBiometricsInstance = new ReactNativeBiometrics({
+      allowDeviceCredentials: true,
+    });
+  }
+  return _rnBiometricsInstance;
+}
 
 function traceAndroidKeychainPerf(
   event: string,
@@ -68,6 +80,7 @@ export const KEYCHAIN_STORAGE_TYPES = {
   RSA: LEGACY_RSA_STORAGE_TYPE,
   AES: AES_STORAGE_TYPE,
   AES_GCM: AES_GCM_STORAGE_TYPE,
+  AES_GCM_NO_AUTH: AES_GCM_NO_AUTH_STORAGE_TYPE,
   KC: IOS_KEYCHAIN_STORAGE_TYPE,
 } as const;
 
@@ -82,7 +95,8 @@ export type KeychainStorageType =
 export const DEFAULT_ANDROID_AUTH_PROMPT_POLICY =
   ANDROID_AUTH_PROMPT_POLICIES.INTERACTIVE_FIRST;
 
-export const DEFAULT_ANDROID_KEYCHAIN_STORAGE_TYPE = KEYCHAIN_STORAGE_TYPES.RSA;
+export const DEFAULT_ANDROID_KEYCHAIN_STORAGE_TYPE =
+  KEYCHAIN_STORAGE_TYPES.AES_GCM_NO_AUTH;
 export const DEFAULT_IOS_KEYCHAIN_STORAGE_TYPE = KEYCHAIN_STORAGE_TYPES.KC;
 export const DEFAULT_KEYCHAIN_STORAGE_TYPE = isAndroid
   ? DEFAULT_ANDROID_KEYCHAIN_STORAGE_TYPE
@@ -816,6 +830,34 @@ export function createBusinessKeychainApi({
     return getAuthOptionsForType(getAuthenticationType())?.accessControl;
   }
 
+  async function getGenericPasswordWithBiometricPrompt(
+    options: KeychainCompatibleOptions,
+  ) {
+    const result = await keychainModule.getGenericPassword(options);
+    const credentials = result as DefaultRet;
+
+    if (
+      isAndroid &&
+      credentials &&
+      credentials.password &&
+      credentials.storage === KEYCHAIN_STORAGE_TYPES.AES_GCM_NO_AUTH &&
+      isAuthenticatedByBiometrics()
+    ) {
+      const promptResult = await getRNBiometrics().simplePrompt({
+        promptMessage: i18n.t('native.authentication.auth_prompt_desc'),
+      });
+      if (!promptResult.success) {
+        throw new Error(
+          promptResult.error
+            ? `msg: ${promptResult.error}`
+            : `msg: ${CANCELSTR}`,
+        );
+      }
+    }
+
+    return result;
+  }
+
   async function resetTrustedVaultKeyString() {
     try {
       await keychainModule.resetGenericPassword({
@@ -1064,7 +1106,7 @@ export function createBusinessKeychainApi({
       const androidAccessControl =
         getAndroidRequestAccessControl(authenticationType);
 
-      const keychainObject = (await keychainModule.getGenericPassword({
+      const keychainObject = (await getGenericPasswordWithBiometricPrompt({
         ...DEFAULT_GET_OPTIONS,
         ...getAndroidBiometricSecurityLevelOptions(),
         ...getAndroidAuthPromptPolicyOptions(androidAuthPromptPolicy),
