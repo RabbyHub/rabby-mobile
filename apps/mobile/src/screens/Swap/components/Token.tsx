@@ -10,8 +10,8 @@ import React, {
 } from 'react';
 import { tokenAmountBn } from '../utils';
 import {
-  formatSpeicalAmount,
   formatTokenAmount,
+  formatTokenAmountInput,
   formatUsdValue,
 } from '@/utils/number';
 import BigNumber from 'bignumber.js';
@@ -113,9 +113,9 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
 
   const onInputChange: (text: string) => void = useCallback(
     e => {
-      onValueChange?.(formatSpeicalAmount(e));
+      onValueChange?.(formatTokenAmountInput(e, token?.decimals));
     },
-    [onValueChange],
+    [onValueChange, token?.decimals],
   );
 
   const [isSliderBubbleVisible, setIsSliderBubbleVisible] = useState(false);
