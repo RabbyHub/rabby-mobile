@@ -97,13 +97,15 @@ export function ScreenHeaderAccountSwitcher({
                 return (
                   <View style={styles.addressRow}>
                     <WalletIcon style={styles.walletIcon} />
-                    <Text
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                      style={styles.address}>
-                      {finalSceneCurrentAccount.aliasName ||
-                        ellipsisAddress(finalSceneCurrentAccount?.address)}
-                    </Text>
+                    <View style={styles.nameBox}>
+                      <Text
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                        style={styles.address}>
+                        {finalSceneCurrentAccount.aliasName ||
+                          ellipsisAddress(finalSceneCurrentAccount?.address)}
+                      </Text>
+                    </View>
                     {!disableSwitch && (
                       <IconCom
                         style={[
@@ -122,7 +124,7 @@ export function ScreenHeaderAccountSwitcher({
           )
         ) : (
           <>
-            <Text style={styles.address}>
+            <Text style={styles.multipleAddress}>
               {t('component.accountSwitcher.all')}{' '}
               {t('component.accountSwitcher.screenHeaderSubTitle', {
                 count: len,
@@ -171,6 +173,7 @@ const getStyle = createGetStyles2024(ctx => {
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
+      width: '100%',
     },
     addressItem: {
       maxWidth: '100%',
@@ -183,10 +186,22 @@ const getStyle = createGetStyles2024(ctx => {
       marginRight: 4,
       flexShrink: 0,
     },
-    address: {
+    nameBox: {
       flexShrink: 1,
       minWidth: 0,
       margin: 4,
+    },
+    address: {
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '500',
+      lineHeight: 20,
+      fontSize: 16,
+      width: '100%',
+      color: ctx.colors2024['neutral-foot'],
+    },
+    multipleAddress: {
+      flexShrink: 1,
+      minWidth: 0,
       fontFamily: 'SF Pro Rounded',
       fontWeight: '500',
       lineHeight: 20,
