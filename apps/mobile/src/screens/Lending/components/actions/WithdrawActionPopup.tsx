@@ -689,6 +689,10 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   buttonContainer: {
     marginTop: 'auto',
+    minHeight:
+      BOTTOM_BUTTON_TOP_OFFSET +
+      BOTTOM_BUTTON_SINGLE_HEIGHT +
+      getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     paddingBottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     width: '100%',
