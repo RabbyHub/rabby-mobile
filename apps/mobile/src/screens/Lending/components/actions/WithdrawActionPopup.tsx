@@ -65,6 +65,13 @@ import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
 import { useZeroLTVBlockingWithdraw } from '../../hooks/useZeroLTVBlockingWithdraw';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -573,6 +580,8 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
                 (isRisky && !isChecked)
               }
               type="aave"
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
               iconColor={
                 isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
               }
@@ -586,6 +595,8 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
               loadingType="circle"
               showTextOnLoading
               containerStyle={styles.fullWidthButton}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               onPress={() => handleWithdraw()}
               title={t('page.Lending.withdrawDetail.actions')}
               loading={isLoading}
@@ -677,8 +688,9 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
   },
   buttonContainer: {
-    paddingTop: 12,
-    marginBottom: 48,
+    marginTop: 'auto',
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    paddingBottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
@@ -734,6 +746,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   fullWidthButton: {
     flex: 1,
-    paddingBottom: 58,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
   },
 }));

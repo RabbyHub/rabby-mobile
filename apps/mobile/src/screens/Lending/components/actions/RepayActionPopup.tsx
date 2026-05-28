@@ -80,7 +80,13 @@ import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
 import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  RootNames,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 
 export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
@@ -799,6 +805,8 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
             loadingType="circle"
             key={`${amount}-${needApprove}`}
             showTextOnLoading
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
             wrapperStyle={styles.directSignBtn}
             authTitle={t('page.Lending.repayDetail.actions')}
             title={t('page.Lending.repayDetail.actions')}
@@ -822,6 +830,8 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
             loadingType="circle"
             showTextOnLoading
             containerStyle={styles.fullWidthButton}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             onPress={() => handleRepay()}
             title={t('page.Lending.repayDetail.actions')}
             loading={isLoading}
@@ -1142,7 +1152,10 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-bg-0'],
   },
   buttonContainer: {
-    height: 116,
+    height:
+      12 +
+      BOTTOM_BUTTON_SINGLE_HEIGHT +
+      getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     paddingTop: 12,
     marginTop: 'auto',
     width: '100%',
@@ -1168,5 +1181,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   fullWidthButton: {
     flex: 1,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
   },
 }));

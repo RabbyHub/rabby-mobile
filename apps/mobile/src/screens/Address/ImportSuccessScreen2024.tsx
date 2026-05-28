@@ -29,7 +29,14 @@ import { getKRCategoryByType } from '@/utils/transaction';
 import { Button } from '@/components2024/Button';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+  RootNames,
+} from '@/constant/layout';
 import { GnosisSupportChainList } from './components/GnosisSupportChainList';
 import RcIconRightCC from '@/assets/icons/common/right-2-cc.svg';
 import {
@@ -349,7 +356,11 @@ export const ImportSuccessScreen2024 = () => {
         />
       </View>
 
-      <View style={[styles.footer, { paddingBottom: bottom + 20 }]}>
+      <View
+        style={[
+          styles.footer,
+          { paddingBottom: getBottomButtonBottomOffset(bottom) },
+        ]}>
         {state?.supportChainList?.length ? (
           <GnosisSupportChainList
             data={state.supportChainList}
@@ -375,6 +386,8 @@ export const ImportSuccessScreen2024 = () => {
         <Button
           containerStyle={styles.btnContainer}
           type="primary"
+          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+          titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
           title={
             onlyFirstAccount
               ? t('page.importSuccess.viewAddress')
@@ -388,6 +401,8 @@ export const ImportSuccessScreen2024 = () => {
           <Button
             containerStyle={[styles.btnContainer, styles.backupBtnContainer]}
             type="ghost"
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             buttonStyle={{
               backgroundColor: colors2024['brand-light-1'],
               borderWidth: 0,
@@ -431,13 +446,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     backgroundColor: colors2024['neutral-bg-1'],
   },
   btnContainer: {
     width: '100%',
   },
   backupBtnContainer: {
-    marginTop: 16,
+    marginTop: BOTTOM_BUTTON_GAP,
   },
 }));

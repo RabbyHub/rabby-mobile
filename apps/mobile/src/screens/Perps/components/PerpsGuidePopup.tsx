@@ -30,6 +30,12 @@ import {
   PanGestureHandlerGestureEvent,
 } from 'react-native-gesture-handler';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import Animated, {
   interpolateColor,
   runOnJS,
@@ -257,6 +263,8 @@ export const PerpsGuidePopup: React.FC<{
               <Button
                 type="primary"
                 title={activeStep.button}
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                 onPress={handleStep}
               />
             ) : null}
@@ -320,7 +328,7 @@ const getStyle = createGetStyles2024(ctx => {
       // height: '100%',
       minHeight: 536,
       backgroundColor: ctx.colors2024['neutral-bg-1'],
-      paddingBottom: 56,
+      paddingBottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
       // paddingHorizontal: 20,
     },
     step: {
@@ -384,6 +392,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     footer: {
       paddingHorizontal: 20,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     },
   };
 });

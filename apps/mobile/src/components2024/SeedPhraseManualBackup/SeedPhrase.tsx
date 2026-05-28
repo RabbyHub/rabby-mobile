@@ -394,10 +394,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   copyConfirmTitle: {
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
+    fontSize: 18,
     fontStyle: 'normal',
     fontWeight: '700',
-    lineHeight: 24,
+    lineHeight: 22,
   },
 }));
 

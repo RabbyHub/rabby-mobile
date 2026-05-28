@@ -7,6 +7,7 @@ import React, { useCallback, useMemo } from 'react';
 import { ScrollView, TouchableOpacity, View } from 'react-native';
 
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
+import { getBottomButtonBottomOffset } from '@/constant/layout';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
@@ -527,7 +528,7 @@ const getStyle = createGetStyles2024(
       flex: 1,
     },
     scrollViewWithoutBottomBtn: {
-      marginBottom: Math.max(safeAreaInsets.bottom, 36),
+      marginBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
     detailContainer: {
       width: '100%',

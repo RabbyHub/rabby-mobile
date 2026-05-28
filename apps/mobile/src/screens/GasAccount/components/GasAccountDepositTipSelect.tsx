@@ -8,6 +8,12 @@ import { useTranslation } from 'react-i18next';
 import { Platform, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_SIZE,
+} from '@/constant/layout';
 
 export const GasAccountDepositTipSelect: React.FC<{
   onSelect(type: 'token' | 'pay'): void;
@@ -157,14 +163,14 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
 
   accountDepositGroup: {
     flexDirection: 'column',
-    gap: 20,
+    gap: BOTTOM_BUTTON_GAP,
     width: '100%',
     marginTop: 30,
     paddingHorizontal: 20,
   },
 
   depositWithPayBtn: {
-    height: 60,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     ...(isLight
       ? {
           backgroundColor: '#000',
@@ -190,8 +196,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   btnTitle: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: BOTTOM_BUTTON_TEXT_SIZE,
+    lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
     fontStyle: 'normal',
     fontWeight: '700',
     color: colors2024['neutral-InvertHighlight'],

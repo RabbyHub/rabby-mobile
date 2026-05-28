@@ -13,7 +13,12 @@ import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { toast } from '@/components2024/Toast';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  RootNames,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { naviPush } from '@/utils/navigation';
@@ -354,6 +359,8 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
       {isLocalSwap && (
         <View style={[styles.buttonContainer]}>
           <Button
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             onPress={async () => {
               await switchSceneCurrentAccount(
                 'MakeTransactionAbout',
@@ -546,7 +553,7 @@ const getStyle = createGetStyles2024(
     buttonContainer: {
       paddingTop: 12,
       paddingHorizontal: 20,
-      paddingBottom: Math.max(safeAreaInsets.bottom, 36),
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
       backgroundColor: !isLight
         ? colors2024['neutral-bg-2']
         : colors2024['neutral-bg-1'],

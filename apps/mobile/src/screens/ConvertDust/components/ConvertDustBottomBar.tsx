@@ -7,6 +7,13 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { Account } from '@/types/account';
 import { Tip } from '@/components';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 export function ConvertDustBottomBar({
   disabled,
@@ -27,16 +34,21 @@ export function ConvertDustBottomBar({
   return (
     <View
       pointerEvents="box-none"
-      style={[styles.bottomBar, { paddingBottom: safeOffBottom + 17 }]}>
+      style={[
+        styles.bottomBar,
+        {
+          paddingBottom: getBottomButtonBottomOffset(safeOffBottom),
+        },
+      ]}>
       {!isSupportedAccount ? (
         <Tip content={t('page.convertDust.unsupportedAccount')}>
           <Button
             title={t('page.convertDust.bottomBar.start')}
-            height={52}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
             disabled
             containerStyle={styles.ctaContainer}
             buttonStyle={styles.ctaButton}
-            titleStyle={styles.ctaTitle}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             onPress={onPress}
             noShadow
             type="primary"
@@ -45,11 +57,11 @@ export function ConvertDustBottomBar({
       ) : status === 'active' ? (
         <Button
           title={t('page.convertDust.bottomBar.stop')}
-          height={52}
+          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
           disabled={disabled}
           containerStyle={styles.ctaContainer}
           buttonStyle={styles.ctaButton}
-          titleStyle={styles.ctaTitle}
+          titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
           onPress={onPress}
           noShadow
           type="danger"
@@ -57,11 +69,11 @@ export function ConvertDustBottomBar({
       ) : status === 'completed' ? (
         <Button
           title={t('global.Done')}
-          height={52}
+          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
           disabled={disabled}
           containerStyle={styles.ctaContainer}
           buttonStyle={styles.ctaButton}
-          titleStyle={styles.ctaTitle}
+          titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
           onPress={onPress}
           noShadow
           type="primary"
@@ -69,11 +81,11 @@ export function ConvertDustBottomBar({
       ) : status === 'paused' ? (
         <Button
           title={t('page.convertDust.bottomBar.continue')}
-          height={52}
+          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
           disabled={disabled}
           containerStyle={styles.ctaContainer}
           buttonStyle={styles.ctaButton}
-          titleStyle={styles.ctaTitle}
+          titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
           onPress={onPress}
           noShadow
           type="primary"
@@ -84,7 +96,8 @@ export function ConvertDustBottomBar({
           title={t('page.convertDust.bottomBar.start')}
           authTitle={t('page.whitelist.confirmPassword')}
           disabled={disabled}
-          height={52}
+          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+          titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
         />
       )}
     </View>
@@ -94,21 +107,15 @@ export function ConvertDustBottomBar({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   bottomBar: {
     flexShrink: 0,
-    paddingTop: 12,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     paddingHorizontal: 24,
     backgroundColor: colors2024['neutral-bg-1'],
   },
   ctaContainer: {
-    height: 52,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
   },
   ctaButton: {
-    height: 52,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     borderRadius: 12,
-  },
-  ctaTitle: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
-    fontWeight: '700',
-    lineHeight: 22,
   },
 }));

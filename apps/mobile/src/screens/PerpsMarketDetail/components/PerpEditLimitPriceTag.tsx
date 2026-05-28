@@ -29,6 +29,12 @@ import { useDebounceFn, useMemoizedFn, useRequest } from 'ahooks';
 import IconPerpEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
 import { useSlTpUsdInput } from '@/hooks/useUsdInput';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 interface Props {
   coin: string;
@@ -264,6 +270,8 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
                 title={t('page.perpsDetail.PerpEditLimitPriceTag.setBtn')}
                 disabled={!isValid}
                 onPress={handleConfirmPress}
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                 containerStyle={styles.btnContainer}
               />
             </View>
@@ -274,7 +282,7 @@ export const PerpEditLimitPriceTag: React.FC<Props> = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   tagContainer: {
     borderRadius: 100,
     backgroundColor: 'rgba(80, 210, 193, 0.12)',
@@ -378,8 +386,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   footer: {
     width: '100%',
-    paddingTop: 8,
-    paddingBottom: 56,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
   },
-  btnContainer: { height: 48 },
+  btnContainer: { height: BOTTOM_BUTTON_SINGLE_HEIGHT },
 }));

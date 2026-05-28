@@ -18,6 +18,7 @@ import { PerpsHistoryEmpty } from './PerpsHistoryEmpty';
 import { PerpsHistoryItem } from './PerpsHistoryItem';
 import { PerpsHistoryTransferPopup } from './PerpsHistoryTransferPopup';
 import { Text } from '@/components/Typography';
+import { getBottomButtonBottomOffset } from '@/constant/layout';
 
 export const PerpsHistoryList: React.FC<{
   ListHeaderComponent?: React.ReactElement<any>;
@@ -122,11 +123,11 @@ export const PerpsHistoryList: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   container: {},
   list: {},
   contentContainer: {
-    paddingBottom: 56,
+    paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
   },
   sectionHeader: {
     marginTop: 24,

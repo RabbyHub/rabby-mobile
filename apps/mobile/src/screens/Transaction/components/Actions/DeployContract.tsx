@@ -9,6 +9,7 @@ import { ActionDetailSection } from './components/ActionDetailSection';
 import { ScrollView } from 'react-native-gesture-handler';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import { getBottomButtonBottomOffset } from '@/constant/layout';
 
 interface Props {
   data: TransactionGroup;
@@ -48,7 +49,7 @@ const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
     scrollView: {
       paddingHorizontal: 16,
-      paddingBottom: Math.max(safeAreaInsets.bottom, 24),
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
   }),
 );

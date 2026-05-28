@@ -11,6 +11,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components2024/Button';
 import { PerpsAccountCard } from './components/PerpsAccountCard';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
@@ -26,7 +27,13 @@ import { PerpsLimitOrdersSection } from './components/PerpsLimitOrdersSection';
 import { PerpsPopupGroup } from './components/PerpsPopupGroup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
 import { PerpsNativeHeader } from './components/PerpsHeaderTitle';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  RootNames,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { calculateDistanceToLiquidation } from './components/PerpsPositionSection/utils';
 import { PerpsSkeletonLoader } from './components/PerpsSkeletonLoader';
@@ -43,6 +50,7 @@ export const PerpsOriginScreen = () => {
 
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { width: screenWidth } = useWindowDimensions();
+  const { bottom } = useSafeAreaInsets();
 
   const navigation = useRabbyAppNavigation();
 
@@ -280,7 +288,11 @@ export const PerpsOriginScreen = () => {
             </ScrollView>
 
             {hasPermission && isLogin && (
-              <View style={styles.footer}>
+              <View
+                style={[
+                  styles.footer,
+                  { paddingBottom: getBottomButtonBottomOffset(bottom) },
+                ]}>
                 <View style={styles.footerBtns}>
                   <View style={styles.footerBtnItem}>
                     <Button
@@ -368,9 +380,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   footer: {
     backgroundColor: colors2024['neutral-bg-1'],
-    paddingTop: 16,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     paddingHorizontal: 12,
-    paddingBottom: 48,
+    paddingBottom: 36,
   },
   emptyPadding: {
     height: 40,
@@ -396,18 +408,18 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   footerBtns: {
     flexDirection: 'row',
-    gap: 12,
+    gap: BOTTOM_BUTTON_GAP,
   },
   footerBtnItem: {
     flex: 1,
   },
   longBtn: {
     backgroundColor: colors2024['green-default'],
-    height: 52,
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
   },
   shortBtn: {
     backgroundColor: colors2024['red-default'],
-    height: 52,
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
   },
   openPositionBtn: {
     fontSize: 18,
