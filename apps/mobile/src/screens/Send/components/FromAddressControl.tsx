@@ -9,7 +9,7 @@ import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { Text } from '@/components/Typography';
 
-export default function FromAddressControl2024({
+function FromAddressControl2024({
   style,
   disableSwitch,
 }: React.PropsWithChildren<
@@ -33,6 +33,8 @@ export default function FromAddressControl2024({
     </View>
   );
 }
+
+export default React.memo(FromAddressControl2024);
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {

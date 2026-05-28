@@ -32,7 +32,7 @@ import {
   TokenItemWithEntity,
   Tx,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { atom, useAtomValue } from 'jotai';
 import { openapi } from '@/core/request';
 import i18next, { TFunction } from 'i18next';
 import BigNumber from 'bignumber.js';
@@ -43,7 +43,6 @@ import { UIContactBookItem } from '@/core/apis/contact';
 import { Account } from '@/core/services/preference';
 import { apiContact, apiCustomTestnet, apiProvider } from '@/core/apis';
 import { formatSpeicalAmount } from '@/utils/number';
-import { useFormik, useFormikContext } from 'formik';
 import { useCheckAddressType } from '@/hooks/useParseAddress';
 import { formatTxInputDataOnERC20 } from '@/utils/transaction';
 import {
@@ -55,7 +54,6 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { abiCoder } from '@/core/apis/sendRequest';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { getChainListFromAtom, useFindChain } from '@/hooks/useFindChain';
-import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 import { naviReplace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
@@ -83,7 +81,6 @@ import { tokenAmountBn } from '@/screens/Swap/utils';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { ExtractAtomValueType, IExtractFromPromise } from '@/utils/type';
 import { useFindAddressByWhitelist } from './useWhiteListAddress';
-import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { coerceNumber } from '@/utils/coerce';
 import {
   runOnJS,
@@ -92,11 +89,14 @@ import {
   useSharedValue,
 } from 'react-native-reanimated';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useStore } from 'zustand';
+import { useShallow } from 'zustand/shallow';
+import { createStore } from 'zustand/vanilla';
 import {
   makeAvoidParallelAsyncFunc,
   makeSWRKeyAsyncFunc,
 } from '@/core/utils/concurrency';
-import { jotaiStore } from '@/core/utils/reexports';
+import { jotaiStore, zMutative } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { TextInput } from '@/components/Typography';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
@@ -371,15 +371,24 @@ const DFLT_SEND_SUCCESS_RESET_STATE: Partial<SendScreenState> = {
     ...DFLT_SEND_STATE.agreeRequiredChecks,
   },
 };
-const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
+const createSendTokenScreenStateStore = (initialState: SendScreenState) =>
+  createStore<SendScreenState>()(
+    zMutative<SendScreenState>(() => initialState),
+  );
+type SendTokenScreenStateStore = ReturnType<
+  typeof createSendTokenScreenStateStore
+>;
+const sendTokenScreenStateStore = createSendTokenScreenStateStore({
+  ...DFLT_SEND_STATE,
+});
 function setSendScreenState(valOrFunc: UpdaterOrPartials<SendScreenState>) {
-  return jotaiStore.set(sendTokenScreenStateAtom, prev => {
-    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
-      strict: false,
-    });
-
-    return newVal;
+  const prev = sendTokenScreenStateStore.getState();
+  const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+    strict: false,
   });
+
+  sendTokenScreenStateStore.setState(newVal, true);
+  return newVal;
 }
 
 function putScreenState(
@@ -393,10 +402,11 @@ function putScreenState(
         ? patchOrUpdateFunc(prev)
         : patchOrUpdateFunc;
 
-    return {
+    const nextState = {
       ...prev,
       ...patch,
     };
+    return isEqual(prev, nextState) ? prev : nextState;
   });
 }
 
@@ -442,15 +452,28 @@ function resetScreenState() {
 }
 
 export function useSendTokenScreenState() {
-  const sendTokenScreenState = useAtomValue(sendTokenScreenStateAtom);
+  const sendTokenScreenState = useStore(sendTokenScreenStateStore);
 
   return {
     sendTokenScreenState,
   };
 }
 
+export function useSendTokenScreenStateSelector<T>(
+  selector: (state: SendScreenState) => T,
+) {
+  return useStore(sendTokenScreenStateStore, selector);
+}
+
+export function useSendTokenScreenStateShallowSelector<T>(
+  selector: (state: SendScreenState) => T,
+) {
+  const shallowSelector = useShallow(selector);
+  return useStore(sendTokenScreenStateStore, shallowSelector);
+}
+
 export function getSendTokenScreenState() {
-  return jotaiStore.get(sendTokenScreenStateAtom);
+  return sendTokenScreenStateStore.getState();
 }
 
 export function makeSendTokenValidationSchema(options: {
@@ -521,6 +544,24 @@ const DF_SEND_TOKEN_FORM: FormSendToken = {
   messageDataForSendToEoa: '',
   messageDataForContractCall: '',
 };
+const createSendTokenFormValuesStore = (initialState: FormSendToken) =>
+  createStore<FormSendToken>()(zMutative<FormSendToken>(() => initialState));
+type SendTokenFormValuesStore = ReturnType<
+  typeof createSendTokenFormValuesStore
+>;
+const defaultSendTokenFormValuesStore = createSendTokenFormValuesStore({
+  ...DF_SEND_TOKEN_FORM,
+});
+function shouldSyncSendTokenReactiveFormValues(
+  prev: FormSendToken,
+  next: FormSendToken,
+) {
+  return (
+    prev.to !== next.to ||
+    prev.messageDataForSendToEoa !== next.messageDataForSendToEoa ||
+    prev.messageDataForContractCall !== next.messageDataForContractCall
+  );
+}
 const sendTokenFormValuesAtom = atom<FormSendToken>({ ...DF_SEND_TOKEN_FORM });
 const sendTokenExternalPatchAtom = atom<{
   nonce: number;
@@ -593,7 +634,20 @@ export function useSendTokenForm({
   const { chainEnum, isNativeToken, currentToken, chainItem } =
     useSendTokenScreenChainToken();
 
-  const { sendTokenScreenState: screenState } = useSendTokenScreenState();
+  const screenState = useSendTokenScreenStateShallowSelector(state => ({
+    balanceError: state.balanceError,
+    contactInfo: state.contactInfo,
+    estimatedGas: state.estimatedGas,
+    gasList: state.gasList,
+    isEstimatingGas: state.isEstimatingGas,
+    isGnosisSafe: state.isGnosisSafe,
+    isLoading: state.isLoading,
+    safeInfo: state.safeInfo,
+    selectedGasLevel: state.selectedGasLevel,
+    showGasReserved: state.showGasReserved,
+    toAddrDesc: state.toAddrDesc,
+  }));
+  const cacheAmountRef = useRef(DFLT_SEND_STATE.cacheAmount);
 
   const route =
     useRoute<
@@ -604,12 +658,68 @@ export function useSendTokenForm({
     ...DF_SEND_TOKEN_FORM,
     to: toAddress || '',
   });
+  const formValuesStoreRef = useRef<SendTokenFormValuesStore | null>(null);
+  if (!formValuesStoreRef.current) {
+    formValuesStoreRef.current = createSendTokenFormValuesStore(formValues);
+  }
+  const formValuesLatestRef = useRef<FormSendToken>(formValues);
+  const getLatestFormValues = useMemoizedFn(() => formValuesLatestRef.current);
+  const setCommittedFormValues = useCallback(
+    (next: FormSendToken | ((prev: FormSendToken) => FormSendToken)) => {
+      setFormValues(prev => {
+        const latest = formValuesLatestRef.current;
+        const nextValues = typeof next === 'function' ? next(latest) : next;
+        if (isEqual(latest, nextValues)) {
+          return prev;
+        }
+        formValuesLatestRef.current = nextValues;
+        formValuesStoreRef.current?.setState(nextValues, true);
+        jotaiStore.set(sendTokenFormValuesAtom, nextValues);
+        if (isEqual(prev, nextValues)) {
+          return prev;
+        }
+        if (!shouldSyncSendTokenReactiveFormValues(prev, nextValues)) {
+          return prev;
+        }
+        return nextValues;
+      });
+    },
+    [],
+  );
   const externalFormPatch = useAtomValue(sendTokenExternalPatchAtom);
   const handledExternalFormPatchNonceRef = useRef(0);
 
   useEffect(() => {
+    formValuesLatestRef.current = formValues;
+    formValuesStoreRef.current?.setState(formValues, true);
     jotaiStore.set(sendTokenFormValuesAtom, formValues);
   }, [formValues]);
+
+  const [stableAmountValue, setStableAmountValue] = useState(formValues.amount);
+  useEffect(() => {
+    const formValuesStore = formValuesStoreRef.current;
+    if (!formValuesStore) return;
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const unsubscribe = formValuesStore.subscribe((values, prevValues) => {
+      if (values.amount === prevValues.amount) {
+        return;
+      }
+      if (timer) {
+        clearTimeout(timer);
+      }
+      timer = setTimeout(() => {
+        setStableAmountValue(values.amount);
+      }, 300);
+    });
+
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+      unsubscribe();
+    };
+  }, []);
 
   const { addressType } = useCheckAddressType(
     formValues.to,
@@ -699,18 +809,18 @@ export function useSendTokenForm({
       isNativeToken,
       isShowMessageDataForContract,
       isShowMessageDataForToken,
-      screenState,
+      screenState.safeInfo,
     ],
   );
 
   useEffect(() => {
-    setFormValues(prev => {
+    setCommittedFormValues(prev => {
       return {
         ...DF_SEND_TOKEN_FORM,
         to: prev.to,
       };
     });
-  }, [currentAccount?.type, currentAccount?.address]);
+  }, [currentAccount?.type, currentAccount?.address, setCommittedFormValues]);
 
   const { validationSchema } = useMemo(() => {
     return {
@@ -718,10 +828,12 @@ export function useSendTokenForm({
     };
   }, [t]);
 
-  const [{ error: loadGasListError }, loadGasList] = useAsyncFn(
-    async () =>
-      fetchGasList(chainItem, getParams(formValues) as Tx, currentAccount),
-    [chainItem, formValues, currentAccount],
+  const loadGasList = useMemoizedFn(async () =>
+    fetchGasList(
+      chainItem,
+      getParams(getLatestFormValues()) as Tx,
+      currentAccount,
+    ),
   );
 
   const loadGasListAndResolve = useCallback(async () => {
@@ -749,10 +861,6 @@ export function useSendTokenForm({
     return result;
   }, [loadGasList]);
 
-  if (__DEV__ && loadGasListError) {
-    console.error(loadGasListError);
-  }
-
   useEffect(() => {
     loadGasListAndResolve().then(result => {
       result.isValidArray && putScreenState({ gasList: result.gasList });
@@ -777,32 +885,18 @@ export function useSendTokenForm({
   const { runFetchLocalPendingTx } =
     useRecentSendPendingTx(isForMultipleAddress);
 
-  /** @notice the formik will be new object every-time re-render, but most of its fields keep same */
-  const formik = useFormik({
-    initialValues: formValues,
-    validationSchema,
-    onSubmit: values => {
-      values.amount = formatSpeicalAmount(values.amount);
-      handleSubmit(values);
-    },
-  });
-
   const patchFormValues = useCallback(
     (changedValues: Partial<FormSendToken>) => {
-      setFormValues(prev => {
-        let nextState = {
+      setCommittedFormValues(prev => {
+        const nextState = {
           ...prev,
           ...changedValues,
         };
 
-        formik.setFormikState(fprev => {
-          return { ...fprev, values: nextState };
-        });
-
         return nextState;
       });
     },
-    [formik, setFormValues],
+    [setCommittedFormValues],
   );
 
   const handleFormValuesChange = useCallback(
@@ -816,7 +910,7 @@ export function useSendTokenForm({
     ) => {
       let { currentPartials } = opts || {};
       const currentValues = {
-        ...formik.values,
+        ...getLatestFormValues(),
         ...currentPartials,
       };
 
@@ -842,10 +936,10 @@ export function useSendTokenForm({
       }
       let resultAmount = currentValues.amount;
       if (!/^\d*(\.\d*)?$/.test(currentValues.amount)) {
-        resultAmount = screenState.cacheAmount;
+        resultAmount = cacheAmountRef.current;
       }
 
-      if (currentValues.amount !== screenState.cacheAmount) {
+      if (currentValues.amount !== cacheAmountRef.current) {
         if (screenState.showGasReserved && coerceNumber(resultAmount, 0) > 0) {
           putScreenState({ showGasReserved: false });
         } /*  else if (isNativeToken && !screenState.isGnosisSafe) {
@@ -898,12 +992,11 @@ export function useSendTokenForm({
       //   values: nextFormValues,
       //   currentToken: targetToken,
       // });
-      formik.setFormikState(prev => ({ ...prev, values: nextFormValues }));
       patchFormValues(nextFormValues);
-      putScreenState({
-        cacheAmount: resultAmount,
-        ...(!resultAmount && { showGasReserved: false }),
-      });
+      cacheAmountRef.current = resultAmount;
+      if (!resultAmount && screenState.showGasReserved) {
+        putScreenState({ showGasReserved: false });
+      }
       const aliasName = apiContact.getAliasName(currentValues.to.toLowerCase());
       if (aliasName) {
         putScreenState({
@@ -920,14 +1013,31 @@ export function useSendTokenForm({
       // gasPriceMap,
       // isNativeToken,
       // screenState.isGnosisSafe,
-      screenState.cacheAmount,
       screenState.contactInfo,
       screenState.showGasReserved,
-      formik,
+      getLatestFormValues,
       currentToken,
       t,
     ],
   );
+
+  const submitForm = useMemoizedFn(async () => {
+    const values = {
+      ...getLatestFormValues(),
+      amount: formatSpeicalAmount(getLatestFormValues().amount),
+    };
+
+    try {
+      await validationSchema.validate(values, { abortEarly: false });
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('[SendToken] submit validation failed', error);
+      }
+      return;
+    }
+
+    handleSubmit(values);
+  });
 
   useEffect(() => {
     if (!externalFormPatch.patch || !externalFormPatch.nonce) {
@@ -950,11 +1060,11 @@ export function useSendTokenForm({
 
     handleFormValuesChange(nextPatch, {
       currentPartials: {
-        ...formik.values,
+        ...getLatestFormValues(),
         ...nextPatch,
       },
     });
-  }, [externalFormPatch, formik.values, handleFormValuesChange]);
+  }, [externalFormPatch, getLatestFormValues, handleFormValuesChange]);
 
   const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
   const formValuesRef = useRef(
@@ -964,8 +1074,11 @@ export function useSendTokenForm({
       },
     }),
   );
+  const saveCurrentFormValuesSnapshot = useMemoizedFn(() => {
+    formValuesRef.current.save({ amount: getLatestFormValues().amount || '' });
+  });
 
-  const handleFieldChange = useCallback(
+  const handleFieldChange = useMemoizedFn(
     <T extends keyof FormSendToken>(
       f: T,
       value: FormSendToken[T],
@@ -977,19 +1090,17 @@ export function useSendTokenForm({
       if (directSignBtnRef.current?.isAuthInProgress()) {
         return;
       }
-      formik.setFieldValue(f, value);
-      setFormValues(prev => ({ ...prev, [f]: value }));
-
-      const nextVal = { ...formik.values, [f]: value };
+      const nextVal = { ...getLatestFormValues(), [f]: value };
       formValuesRef.current.save({ amount: nextVal.amount });
 
       const { __NO_TRIGGER_FORM_VALUESCHANGE_CALLBACK__ = false } =
         options || {};
       if (!__NO_TRIGGER_FORM_VALUESCHANGE_CALLBACK__) {
         handleFormValuesChange({ [f]: value }, { currentPartials: nextVal });
+      } else {
+        patchFormValues({ [f]: value });
       }
     },
-    [formik, setFormValues, handleFormValuesChange],
   );
 
   const prepareDirectSubmitMiniTx = useMemoizedFn(async (ref: number) => {
@@ -998,7 +1109,7 @@ export function useSendTokenForm({
     })!;
 
     const { to, amount, messageDataForSendToEoa, messageDataForContractCall } =
-      formValues;
+      getLatestFormValues();
 
     const params = getParams({
       to: to,
@@ -1419,7 +1530,7 @@ export function useSendTokenForm({
         return result;
       }
 
-      const to = formik.values.to;
+      const to = getLatestFormValues().to;
 
       let _gasUsed: string = intToHex(DEFAULT_GAS_USED);
       try {
@@ -1448,7 +1559,7 @@ export function useSendTokenForm({
 
       return doReturn(Number(gasUsed));
     },
-    [formik.values.to, currentAccount],
+    [currentAccount, getLatestFormValues],
   );
 
   const loadCurrentToken = useMemoizedFn(
@@ -1493,7 +1604,7 @@ export function useSendTokenForm({
 
       if (
         !disableBalanceCheck &&
-        new BigNumber(formValues.amount || 0).isGreaterThan(
+        new BigNumber(getLatestFormValues().amount || 0).isGreaterThan(
           new BigNumber(result?.raw_amount_hex_str || 0).div(
             10 ** (result?.decimals || 0),
           ),
@@ -1575,7 +1686,7 @@ export function useSendTokenForm({
         currentToken.raw_amount_hex_str || 0,
       ).div(10 ** currentToken.decimals);
       let amount = tokenBalance.toFixed();
-      const to = formik.values.to;
+      const to = getLatestFormValues().to;
 
       const {
         gasLevel = screenState.selectedGasLevel ||
@@ -1638,7 +1749,7 @@ export function useSendTokenForm({
       }
 
       const newValues = {
-        ...formik.values,
+        ...getLatestFormValues(),
         amount,
       };
       patchFormValues(newValues);
@@ -1650,7 +1761,7 @@ export function useSendTokenForm({
       screenState.selectedGasLevel,
       screenState.isGnosisSafe,
       currentToken,
-      formik.values,
+      getLatestFormValues,
       loadGasListAndResolve,
       couldReserveGas,
       patchFormValues,
@@ -1660,25 +1771,22 @@ export function useSendTokenForm({
       onGasChange,
     ],
   );
-  const handleGasLevelChanged = useCallback(
-    async (gl?: GasLevel | null) => {
-      let gasLevel = gl
-        ? gl
-        : await loadGasListAndResolve().then(
-            result => result.normalGasLevel || result.instantGasLevel,
-          );
+  const handleGasLevelChanged = useMemoizedFn(async (gl?: GasLevel | null) => {
+    let gasLevel = gl
+      ? gl
+      : await loadGasListAndResolve().then(
+          result => result.normalGasLevel || result.instantGasLevel,
+        );
 
-      if (gasLevel) {
-        putScreenState({ reserveGasOpen: false, selectedGasLevel: gasLevel });
-        handleMaxInfoChanged({ gasLevel });
-      } else {
-        putScreenState({ reserveGasOpen: false });
-      }
-    },
-    [handleMaxInfoChanged, loadGasListAndResolve],
-  );
+    if (gasLevel) {
+      putScreenState({ reserveGasOpen: false, selectedGasLevel: gasLevel });
+      handleMaxInfoChanged({ gasLevel });
+    } else {
+      putScreenState({ reserveGasOpen: false });
+    }
+  });
 
-  const handleSlider100 = useCallback(async () => {
+  const handleSlider100 = useMemoizedFn(async () => {
     if (currentToken && couldReserveGas) {
       if (screenState.gasList) {
         const gasLevel = screenState.gasList.find(e => e.level === 'fast');
@@ -1694,16 +1802,9 @@ export function useSendTokenForm({
     } else {
       patchFormValues({ amount: tokenAmountBn(currentToken).toString(10) });
     }
-  }, [
-    currentToken,
-    couldReserveGas,
-    patchFormValues,
+  });
 
-    handleMaxInfoChanged,
-    screenState,
-  ]);
-
-  const handleClickMaxButton = useCallback(async () => {
+  const handleClickMaxButton = useMemoizedFn(async () => {
     putScreenState(prev => ({ ...prev, clickedMax: true }));
 
     handleSlider100();
@@ -1716,141 +1817,111 @@ export function useSendTokenForm({
     setTimeout(() => {
       scrollToBottom();
     }, 300);
-  }, [handleSlider100, scrollToBottom]);
-
-  const {
-    onChangeSlider,
-    slider,
-    setSlider,
-    isDraggingSlider,
-    setIsDraggingSlider,
-  } = useSwapBridgeSlider({
-    setAmount: (amount: string) => {
-      patchFormValues({ amount });
-    },
-    fromToken: currentToken,
-    handleSlider100: handleSlider100,
   });
 
-  const handleCurrentTokenChange = useCallback(
-    async (token: TokenItem) => {
-      if (screenState.showGasReserved) {
-        putScreenState({ showGasReserved: false });
-      }
-      if (!currentAccount) {
-        console.error('[handleCurrentTokenChange] no currentAccount');
-      }
-      const newToken =
-        token.id !== currentToken.id || token.chain !== currentToken.chain;
-      if (newToken) {
-        patchFormValues({
-          amount: '',
-        });
-        setSlider(0);
-        setIsDraggingSlider(false);
-      }
-      const nextChainItem = findChainByServerID(token.chain);
-      putChainToken({
-        chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
-        currentToken: token,
+  const { onChangeSlider, setSlider, isDraggingSlider, setIsDraggingSlider } =
+    useSwapBridgeSlider({
+      setAmount: (amount: string) => {
+        patchFormValues({ amount });
+      },
+      fromToken: currentToken,
+      handleSlider100: handleSlider100,
+    });
+
+  const handleCurrentTokenChange = useMemoizedFn(async (token: TokenItem) => {
+    if (screenState.showGasReserved) {
+      putScreenState({ showGasReserved: false });
+    }
+    if (!currentAccount) {
+      console.error('[handleCurrentTokenChange] no currentAccount');
+    }
+    const newToken =
+      token.id !== currentToken.id || token.chain !== currentToken.chain;
+    if (newToken) {
+      patchFormValues({
+        amount: '',
       });
-      setRouteParams(pre => ({
-        ...pre,
-        chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
+      setSlider(0);
+      setIsDraggingSlider(false);
+    }
+    const nextChainItem = findChainByServerID(token.chain);
+    putChainToken({
+      chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
+      currentToken: token,
+    });
+    setRouteParams(pre => ({
+      ...pre,
+      chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
+      tokenId: token.id,
+    }));
+    putScreenState({
+      estimatedGas: 0,
+    });
+
+    // await persistPageStateCache({ currentToken: token });
+
+    putScreenState({
+      balanceError: null,
+      balanceWarn: null,
+    });
+    if (currentAccount) {
+      apiSendToken.markBalanceLoading({
         tokenId: token.id,
-      }));
-      putScreenState({
-        estimatedGas: 0,
+        chainId: token.chain,
+        currentAddress: currentAccount.address,
       });
+    }
 
-      // await persistPageStateCache({ currentToken: token });
+    if (currentAccount) {
+      await loadCurrentToken(
+        token.id,
+        token.chain,
+        currentAccount.address,
+        newToken,
+      );
+    }
+  });
 
-      putScreenState({
-        balanceError: null,
-        balanceWarn: null,
-      });
-      if (currentAccount) {
-        apiSendToken.markBalanceLoading({
-          tokenId: token.id,
-          chainId: token.chain,
-          currentAddress: currentAccount.address,
+  const checkCexSupport = useMemoizedFn(async (token: TokenItem) => {
+    const { reason } = disableItemCheck?.(token) || {};
+    const confirmCallback = () => {
+      if (!isForMultipleAddress) {
+        handleCurrentTokenChange(token);
+      } else {
+        const { accountSwitchTo } = switchAccountOnSelectedToken({
+          token,
+          currentAccount,
         });
-      }
-
-      if (currentAccount) {
-        await loadCurrentToken(
-          token.id,
-          token.chain,
-          currentAccount.address,
-          newToken,
-        );
-      }
-    },
-    [
-      screenState.showGasReserved,
-      currentAccount,
-      currentToken.id,
-      currentToken.chain,
-
-      patchFormValues,
-      loadCurrentToken,
-      setSlider,
-      setIsDraggingSlider,
-    ],
-  );
-
-  const checkCexSupport = useCallback(
-    async (token: TokenItem) => {
-      const { reason } = disableItemCheck?.(token) || {};
-      const confirmCallback = () => {
-        if (!isForMultipleAddress) {
+        if (!accountSwitchTo) {
           handleCurrentTokenChange(token);
         } else {
-          const { accountSwitchTo } = switchAccountOnSelectedToken({
-            token,
-            currentAccount,
+          const currChainItem = findChainByServerID(token.chain);
+          naviReplace(RootNames.StackTransaction, {
+            screen: RootNames.Send,
+            params: {
+              ...(multiNavParams || {}),
+              chainEnum: currChainItem?.enum,
+              tokenId: token.id,
+            },
           });
-          if (!accountSwitchTo) {
-            handleCurrentTokenChange(token);
-          } else {
-            const currChainItem = findChainByServerID(token.chain);
-            naviReplace(RootNames.StackTransaction, {
-              screen: RootNames.Send,
-              params: {
-                ...(multiNavParams || {}),
-                chainEnum: currChainItem?.enum,
-                tokenId: token.id,
-              },
-            });
-          }
         }
-      };
-      if (toAddress && reason) {
-        Alert.alert(reason, '', [
-          {
-            text: t('page.sendToken.noSupportBtns.cancel'),
-            style: 'cancel',
-          },
-          {
-            text: t('page.sendToken.noSupportBtns.confirm'),
-            onPress: confirmCallback,
-          },
-        ]);
-        return;
       }
-      confirmCallback();
-    },
-    [
-      currentAccount,
-      disableItemCheck,
-      handleCurrentTokenChange,
-      isForMultipleAddress,
-      multiNavParams,
-      switchAccountOnSelectedToken,
-      t,
-      toAddress,
-    ],
-  );
+    };
+    if (toAddress && reason) {
+      Alert.alert(reason, '', [
+        {
+          text: t('page.sendToken.noSupportBtns.cancel'),
+          style: 'cancel',
+        },
+        {
+          text: t('page.sendToken.noSupportBtns.confirm'),
+          onPress: confirmCallback,
+        },
+      ]);
+      return;
+    }
+    confirmCallback();
+  });
 
   const handleChainChanged = useCallback(
     async (val: CHAINS_ENUM) => {
@@ -1986,12 +2057,6 @@ export function useSendTokenForm({
         item => item.id === screenState.toAddrDesc?.cex?.id,
       ),
 
-      canSubmit:
-        isValidAddress(formValues.to) &&
-        !screenState.balanceError &&
-        new BigNumber(formValues.amount || 0).gt(0) &&
-        !screenState.isLoading,
-
       canDirectSign:
         isAccountSupportMiniApproval(currentAccount?.type || '') &&
         !chainItem?.isTestnet,
@@ -2002,20 +2067,17 @@ export function useSendTokenForm({
     toAccount,
     toAddressIsRecentlySend,
     foundToAccountInfo?.isMyImported,
-    formValues.amount,
     cexList,
     isAddrOnContactBook,
     screenState.toAddrDesc,
-    screenState.balanceError,
-    screenState.isLoading,
     currentAccount?.type,
     chainItem?.isTestnet,
   ]);
 
   const resetFormValues = useCallback(() => {
-    setFormValues({ ...DF_SEND_TOKEN_FORM });
-    formik.resetForm();
-  }, [setFormValues, formik]);
+    cacheAmountRef.current = DFLT_SEND_STATE.cacheAmount;
+    setCommittedFormValues({ ...DF_SEND_TOKEN_FORM });
+  }, [setCommittedFormValues]);
 
   const refreshCurrentTokenBalance = useMemoizedFn(async () => {
     if (!currentAccount?.address) {
@@ -2067,7 +2129,7 @@ export function useSendTokenForm({
       },
       {
         currentPartials: {
-          ...formik.values,
+          ...getLatestFormValues(),
           amount: '',
           messageDataForSendToEoa: '',
           messageDataForContractCall: '',
@@ -2087,7 +2149,7 @@ export function useSendTokenForm({
     setSlider,
     setIsDraggingSlider,
     handleFormValuesChange,
-    formik.values,
+    getLatestFormValues,
   ]);
 
   useEffect(() => {
@@ -2109,7 +2171,6 @@ export function useSendTokenForm({
 
   const isFocused = useIsFocused();
 
-  const stableAmountValue = useDebouncedValue(formValues.amount, 300);
   useEffect(() => {
     if (
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
@@ -2132,12 +2193,18 @@ export function useSendTokenForm({
     currentAccount?.address,
   ]);
 
+  const canPrepareDirectSubmit =
+    isValidAddress(formValues.to) &&
+    !screenState.balanceError &&
+    new BigNumber(stableAmountValue || 0).gt(0) &&
+    !screenState.isLoading;
+
   useEffect(() => {
     if (
       isFocused &&
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chainItem?.isTestnet &&
-      computed.canSubmit &&
+      canPrepareDirectSubmit &&
       formValues.to &&
       stableAmountValue
     ) {
@@ -2149,7 +2216,7 @@ export function useSendTokenForm({
     isFocused,
     chainItem?.id,
     chainItem?.isTestnet,
-    computed.canSubmit,
+    canPrepareDirectSubmit,
     formValues.to,
     stableAmountValue,
     formValues.messageDataForSendToEoa,
@@ -2198,6 +2265,8 @@ export function useSendTokenForm({
 
     directSignBtnRef,
     formValuesRef,
+    formValuesStore: formValuesStoreRef.current,
+    saveCurrentFormValuesSnapshot,
 
     handleGasLevelChanged,
     handleClickMaxButton,
@@ -2209,11 +2278,9 @@ export function useSendTokenForm({
     scrollToBottom,
 
     onChangeSlider,
-    setSlider,
-    slider,
 
     sendTokenEvents: sendTokenEventsRef.current,
-    formik,
+    submitForm,
     formValues,
     resetFormValues,
     handleFieldChange,
@@ -2226,16 +2293,6 @@ export function useSendTokenForm({
     miniSignInstance,
   };
 }
-export function useSendTokenFormikContext() {
-  return useFormikContext<FormSendToken>();
-}
-
-export function useSendTokenFormik() {
-  const { formik } = useSendTokenInternalContext();
-
-  return formik;
-}
-
 type FoundAccountResult = IExtractFromPromise<
   ReturnType<ReturnType<typeof useFindAddressByWhitelist>['findAccount']>
 >;
@@ -2246,15 +2303,13 @@ type ToAddressPositiveTips = {
   isMyImported?: boolean;
 };
 type InternalContext = {
-  screenState: SendScreenState;
-  formValues: FormSendToken;
   computed: {
+    account: Account | null;
     fromAddress: string;
     chainItem: Chain | null;
     currentToken: TokenItem | null;
     currentTokenBalance: string;
     whitelistEnabled: boolean;
-    canSubmit: boolean;
     canDirectSign: boolean;
     toAccount: FoundAccountResult['account'] | null;
     toAddressIsCex: boolean;
@@ -2263,9 +2318,9 @@ type InternalContext = {
     toAddrCex: null | undefined | ProjectItem;
   };
 
-  formik: ReturnType<typeof useSendTokenFormikContext>;
   sendTokenEvents: EventEmitter;
-  slider: number;
+  scrollViewRef: React.MutableRefObject<KeyboardAwareScrollView | null>;
+  scrollViewStyle: any;
   fns: {
     // putScreenState: (
     //   patch:
@@ -2277,9 +2332,11 @@ type InternalContext = {
   };
   directSignBtnRef: React.RefObject<DirectSignBtnMethods | null>;
   formValuesRef: React.MutableRefObject<FormValuesOnSubmit<BridgeFormSnapshot>>;
+  formValuesStore: SendTokenFormValuesStore;
   callbacks: {
     handleCurrentTokenChange: (token: TokenItem) => void;
     checkCexSupport: (token: TokenItem) => void;
+    submitForm: () => void;
     handleFieldChange: <T extends keyof FormSendToken>(
       f: T,
       value: FormSendToken[T],
@@ -2287,6 +2344,7 @@ type InternalContext = {
     handleGasLevelChanged: (gl?: GasLevel | null) => Promise<void> | void;
     handleClickMaxButton: () => Promise<void> | void;
     handleIgnoreGasFeeChange: (b: boolean) => void;
+    saveCurrentFormValuesSnapshot: () => void;
     setReloadTxRefreshPaused: (paused: boolean) => void;
     // onGasChange: (input: {
     //   gasLevel: GasLevel;
@@ -2295,22 +2353,19 @@ type InternalContext = {
     // }) => void;
     // onFormValuesChange: (changedValues: Partial<FormSendToken>) => void;
     onChangeSlider: (v: number, syncAmount?: boolean) => void;
-    setSlider: (v: number) => void;
     onBottomAreaLayout: (layout: LayoutChangeEvent) => void;
     onGasInfoDebouncedLoaded: () => void;
     // isAuthInProgress?: () => boolean;
   };
 };
-const SendTokenInternalContext = React.createContext<InternalContext>({
-  screenState: { ...DFLT_SEND_STATE },
-  formValues: { ...DF_SEND_TOKEN_FORM },
+const DEFAULT_SEND_TOKEN_INTERNAL_CONTEXT: InternalContext = {
   computed: {
+    account: null,
     fromAddress: '',
     chainItem: null,
     currentToken: null,
     currentTokenBalance: '',
     whitelistEnabled: false,
-    canSubmit: false,
     toAccount: null,
     toAddressIsCex: false,
     toAddressInContactBook: false,
@@ -2320,9 +2375,9 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     toAddrCex: null,
   },
 
-  formik: null as any,
   sendTokenEvents: null as any,
-  slider: 0,
+  scrollViewRef: { current: null },
+  scrollViewStyle: null,
   fns: {
     // putScreenState: () => { },
     fetchContactAccounts: () => {},
@@ -2334,27 +2389,121 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
   },
   directSignBtnRef: React.createRef<DirectSignBtnMethods>(),
   formValuesRef: { current: null } as any,
+  formValuesStore: defaultSendTokenFormValuesStore,
   callbacks: {
     handleCurrentTokenChange: () => {},
     checkCexSupport: () => {},
+    submitForm: () => {},
     handleFieldChange: () => {},
     handleGasLevelChanged: () => {},
     handleClickMaxButton: () => {},
     handleIgnoreGasFeeChange: () => {},
+    saveCurrentFormValuesSnapshot: () => {},
     setReloadTxRefreshPaused: () => {},
     onChangeSlider: () => {},
-    setSlider: () => {},
     onBottomAreaLayout: () => {},
     onGasInfoDebouncedLoaded: () => {},
     // isAuthInProgress: () => false,
   },
-});
+};
 
-export const SendTokenInternalContextProvider =
-  SendTokenInternalContext.Provider;
+const createSendTokenInternalStore = (initialState: InternalContext) =>
+  createStore<InternalContext>()(
+    zMutative<InternalContext>(() => initialState),
+  );
+
+type SendTokenInternalStore = ReturnType<typeof createSendTokenInternalStore>;
+
+const defaultSendTokenInternalStore = createSendTokenInternalStore(
+  DEFAULT_SEND_TOKEN_INTERNAL_CONTEXT,
+);
+
+const SendTokenInternalStoreContext =
+  React.createContext<SendTokenInternalStore | null>(null);
+
+export function SendTokenInternalContextProvider({
+  value,
+  children,
+}: React.PropsWithChildren<{ value: InternalContext }>) {
+  const storeRef = React.useRef<SendTokenInternalStore | null>(null);
+  if (!storeRef.current) {
+    storeRef.current = createSendTokenInternalStore(value);
+  }
+
+  React.useLayoutEffect(() => {
+    storeRef.current?.setState(value, true);
+  }, [value]);
+
+  return React.createElement(
+    SendTokenInternalStoreContext.Provider,
+    { value: storeRef.current },
+    children,
+  );
+}
+
+function useSendTokenInternalStoreApi() {
+  return (
+    React.useContext(SendTokenInternalStoreContext) ||
+    defaultSendTokenInternalStore
+  );
+}
 
 export function useSendTokenInternalContext() {
-  return React.useContext(SendTokenInternalContext);
+  return useStore(useSendTokenInternalStoreApi());
+}
+
+export function useSendTokenInternalSelector<T>(
+  selector: (ctx: InternalContext) => T,
+) {
+  const store = useSendTokenInternalStoreApi();
+  return useStore(store, selector);
+}
+
+export function useSendTokenInternalShallowSelector<T>(
+  selector: (ctx: InternalContext) => T,
+) {
+  const store = useSendTokenInternalStoreApi();
+  const shallowSelector = useShallow(selector);
+  return useStore(store, shallowSelector);
+}
+
+export function useSendTokenFormValuesSelector<T>(
+  selector: (values: FormSendToken) => T,
+) {
+  const formValuesStore = useSendTokenInternalSelector(
+    ctx => ctx.formValuesStore,
+  );
+  return useStore(formValuesStore, selector);
+}
+
+export function useSendTokenFormValuesShallowSelector<T>(
+  selector: (values: FormSendToken) => T,
+) {
+  const formValuesStore = useSendTokenInternalSelector(
+    ctx => ctx.formValuesStore,
+  );
+  const shallowSelector = useShallow(selector);
+  return useStore(formValuesStore, shallowSelector);
+}
+
+export function useSendTokenCanSubmit() {
+  const { balanceError, isLoading } = useSendTokenScreenStateShallowSelector(
+    state => ({
+      balanceError: state.balanceError,
+      isLoading: state.isLoading,
+    }),
+  );
+  const { amount, to } = useSendTokenFormValuesShallowSelector(values => ({
+    amount: values.amount,
+    to: values.to,
+  }));
+
+  return (
+    isValidAddress(to) &&
+    !balanceError &&
+    new BigNumber(amount || 0).gt(0) &&
+    !isLoading
+  );
 }
 
 export function subscribeEvent<T extends SendTokenEvents>(
@@ -2379,7 +2528,9 @@ export function subscribeEvent<T extends SendTokenEvents>(
 export function useInputBlurOnEvents(
   inputRef: React.RefObject<TextInput | null>,
 ) {
-  const { sendTokenEvents } = useSendTokenInternalContext();
+  const sendTokenEvents = useSendTokenInternalSelector(
+    ctx => ctx.sendTokenEvents,
+  );
   useEffect(() => {
     const disposeRets = [] as Function[];
     subscribeEvent(
