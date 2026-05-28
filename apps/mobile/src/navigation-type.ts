@@ -69,6 +69,8 @@ export type RootStackParamsList = {
   [RootNames.NotFound]?: {};
   [RootNames.Unlock]?: {
     disableAutoTriggerUnlock?: boolean;
+    allowCancel?: boolean;
+    unlockRequestId?: number;
   };
   SetupWallet?:
     | { seedPhraseVaultId: string }
@@ -445,7 +447,7 @@ export type SettingNavigatorParamList = {
     | {
         actionAfterSetup: 'testkits:fromSettings';
         // actionType: (SettingNavigatorParamList['Settings'] & object)['enterActionType'];
-        actionType: 'setBiometrics' | 'setAutoLockExpireTime';
+        actionType: 'setBiometrics' | 'setAutoLockExpireTime' | 'lockWallet';
       };
   [RootNames.SetBiometricsAuthentication]: {};
   [RootNames.CustomTestnet]?: {};

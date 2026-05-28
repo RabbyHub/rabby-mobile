@@ -11,6 +11,7 @@ import { RootNames } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
 import { ellipsisAddress } from '@/utils/address';
 import { contactService } from '@/core/services';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 const useGetHdKeys = () => {
   return useAsync(async () => {
@@ -31,6 +32,10 @@ export const useSeedPhrase = () => {
   const handleAddSeedPhraseAddress = useCallback(
     async (publicKey: string) => {
       if (publicKey) {
+        if (!(await ensureWalletUnlockedForAction())) {
+          return;
+        }
+
         await invokeEnterPassphrase(publicKey);
         const keyringId =
           apiMnemonic.getMnemonicKeyRingIdFromPublicKey(publicKey);
@@ -57,6 +62,10 @@ export const useSeedPhrase = () => {
       if (!publicKey) {
         return;
       }
+      if (!(await ensureWalletUnlockedForAction())) {
+        return;
+      }
+
       const data = await apiMnemonic.getMnemonicKeyring('publickey', publicKey);
       const mnemonics = data.mnemonic as string;
       const passphrase = data.passphrase || '';

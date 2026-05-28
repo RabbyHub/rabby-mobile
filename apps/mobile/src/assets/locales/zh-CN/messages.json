@@ -2223,6 +2223,7 @@
       "addCustomNetwork": "添加自定义网络",
       "enableWhitelist": "启用白名单以发送资产",
       "autoLockTime": "自动锁定时间",
+      "lockWallet": "锁定钱包",
       "clearPending": "清除本地待处理事项",
       "clearPendingDesc2": "这不会改变您账户中的余额，也不需要您重新输入您的助记词。您所有的资产和账户信息都将保持安全。",
       "currentVersion": "当前版本",

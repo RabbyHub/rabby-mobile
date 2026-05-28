@@ -83,6 +83,8 @@ import {
 } from '@/perfs/loadables/navigators';
 import { HomeScreenNavigator } from '@/perfs/loadables/homeRootNavigator';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
+import { NEED_DEVSETTINGBLOCKS } from './constant';
+import { startReadableAccountBootstrapWarmups } from './setup-app-before-render';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
@@ -278,7 +280,7 @@ const onStateChange: React.ComponentProps<
 
 const routeNameRef: RefLikeObject<string | undefined | null> = { current: '' };
 
-type DeferredGlobalsSlot = 'navigation-pre' | 'navigation-post' | 'overlay';
+type DeferredGlobalsSlot = 'navigation-pre' | 'navigation-post';
 const DEFERRED_GLOBALS_AFTER_UNLOCK_DELAY_MS = 800;
 
 function useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked: boolean) {
@@ -315,6 +317,32 @@ function useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked: boolean) {
   return hasUnlockedOnce;
 }
 
+function useReadableAccountWarmupsOnHomeVisible({
+  shouldWarmupReadableAccounts,
+  hasVisibleAccounts,
+}: {
+  shouldWarmupReadableAccounts: boolean;
+  hasVisibleAccounts: boolean;
+}) {
+  const startedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (
+      startedRef.current ||
+      !shouldWarmupReadableAccounts ||
+      !hasVisibleAccounts
+    ) {
+      return;
+    }
+
+    startedRef.current = true;
+    startReadableAccountBootstrapWarmups().catch(error => {
+      startedRef.current = false;
+      console.error('useReadableAccountWarmupsOnHomeVisible::error', error);
+    });
+  }, [shouldWarmupReadableAccounts, hasVisibleAccounts]);
+}
+
 function AppNavigationDeferredGlobals({
   slot,
   enabled,
@@ -339,29 +367,62 @@ function AppNavigationDeferredGlobals({
   if (slot === 'navigation-post') {
     return (
       <>
-        <InnerDappWebViewPreloadEntry />
         <BiometricsStubModal />
-        <ApprovalTokenDetailSheetModalStub />
-        <BottomSheetBrowser />
-        <BrowserManagePopup />
-        <BrowserFavoritePopup />
-        <BottomSheetDappInfoPopup />
       </>
     );
   }
 
+  return null;
+}
+
+function AppNavigationOverlayGlobals({
+  deferredGlobalsEnabled,
+  postUnlockGlobalsEnabled,
+}: {
+  deferredGlobalsEnabled: boolean;
+  postUnlockGlobalsEnabled: boolean;
+}) {
+  const showDiagnostics = deferredGlobalsEnabled || NEED_DEVSETTINGBLOCKS;
+
+  if (!showDiagnostics && !postUnlockGlobalsEnabled) {
+    return null;
+  }
+
   return (
     <>
-      <ModalsSubmitFeedbackByScreenshotStub />
-      <ToggleCollateralModal />
+      {deferredGlobalsEnabled && <ModalsSubmitFeedbackByScreenshotStub />}
+      {postUnlockGlobalsEnabled && <ToggleCollateralModal />}
 
       {/** @warning put all business stub components before this modal */}
-      <GlobalSecurityTipStubModal />
-      <FloatingDiagnosticsPanel />
-      <GlobalMiniApproval />
-      <GlobalMiniSignTypedDataPortal />
-      <GlobalTipsPopup />
-      <GlobalSignerPortal />
+      {deferredGlobalsEnabled && <GlobalSecurityTipStubModal />}
+      {showDiagnostics && <FloatingDiagnosticsPanel />}
+      {postUnlockGlobalsEnabled && (
+        <GlobalMiniApproval key="global-mini-approval" />
+      )}
+      {postUnlockGlobalsEnabled && (
+        <GlobalMiniSignTypedDataPortal key="global-mini-sign-typed-data" />
+      )}
+      {postUnlockGlobalsEnabled && <GlobalTipsPopup />}
+      {postUnlockGlobalsEnabled && (
+        <GlobalSignerPortal key="global-signer-portal" />
+      )}
+    </>
+  );
+}
+
+function AppNavigationPostUnlockGlobals({ enabled }: { enabled: boolean }) {
+  if (!enabled) {
+    return null;
+  }
+
+  return (
+    <>
+      <ApprovalTokenDetailSheetModalStub />
+      <InnerDappWebViewPreloadEntry />
+      <BottomSheetBrowser />
+      <BrowserManagePopup />
+      <BrowserFavoritePopup />
+      <BottomSheetDappInfoPopup />
     </>
   );
 }
@@ -373,10 +434,29 @@ export default function AppNavigation() {
 
   const colors = useThemeColors();
 
-  const { isAppUnlocked } = useAppUnlocked();
-  const initialRouteName = useAppInitialRouteName(isAppUnlocked);
+  const {
+    isAppUnlocked,
+    isUnlockSessionValid,
+    hasVisibleAccounts,
+    hasStoredKeyrings,
+  } = useAppUnlocked();
+  const canSkipInitialUnlock = isAppUnlocked || isUnlockSessionValid;
+
+  const initialRouteName = hasVisibleAccounts
+    ? canSkipInitialUnlock
+      ? RootNames.StackRoot
+      : RootNames.Unlock
+    : isAppUnlocked || !hasStoredKeyrings
+    ? RootNames.StackGetStarted
+    : RootNames.Unlock;
   const shouldRenderDeferredGlobals =
     useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked);
+  const shouldRenderPostUnlockGlobals =
+    shouldRenderDeferredGlobals || isUnlockSessionValid;
+  useReadableAccountWarmupsOnHomeVisible({
+    shouldWarmupReadableAccounts: !isAppUnlocked && isUnlockSessionValid,
+    hasVisibleAccounts,
+  });
 
   const onReady = useCallback<
     React.ComponentProps<typeof NavigationContainer>['onReady'] & object
@@ -424,7 +504,7 @@ export default function AppNavigation() {
           theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <AppNavigationDeferredGlobals
             slot="navigation-pre"
-            enabled={shouldRenderDeferredGlobals}
+            enabled={shouldRenderPostUnlockGlobals}
           />
           <RootStack.Navigator
             screenOptions={{
@@ -664,11 +744,14 @@ export default function AppNavigation() {
             slot="navigation-post"
             enabled={shouldRenderDeferredGlobals}
           />
+          <AppNavigationPostUnlockGlobals
+            enabled={shouldRenderPostUnlockGlobals}
+          />
         </NavigationContainer>
       </NavigationIndependentTree>
-      <AppNavigationDeferredGlobals
-        slot="overlay"
-        enabled={shouldRenderDeferredGlobals}
+      <AppNavigationOverlayGlobals
+        deferredGlobalsEnabled={shouldRenderDeferredGlobals}
+        postUnlockGlobalsEnabled={shouldRenderPostUnlockGlobals}
       />
       <BackgroundSecureBlurView />
     </AutoLockView.ForAppNav>

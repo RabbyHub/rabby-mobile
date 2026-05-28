@@ -2151,6 +2151,7 @@
       "currentVersion": "Versi Saat Ini",
       "clearPending": "Hapus Terkendala Secara Lokal",
       "autoLockTime": "Waktu kunci otomatis",
+      "lockWallet": "Kunci dompet",
       "policy": "Kebijakan Privasi",
       "enableWhitelist": "Aktifkan whitelist untuk mengirim aset",
       "currentLanguage": "Bahasa Saat Ini",

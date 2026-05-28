@@ -19,7 +19,11 @@ import TouchableView, {
   SilentTouchableView,
 } from '@/components/Touchable/TouchableView';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
-import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
+import {
+  requestLockWalletAndBackToUnlockScreen,
+  resetNavigationTo,
+  useRabbyAppNavigation,
+} from '@/hooks/navigation';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { useShowUserAgreementLikeModal } from './components/UserAgreementLikeModalInner';
 import { ConfirmSetPasswordModal } from './components/ConfirmModal';
@@ -127,6 +131,9 @@ function useSetupPasswordForm() {
                 sheetModalRefsNeedLock.switchBiometricsRef.current?.toggle();
               } else if (navParams.actionType === 'setAutoLockExpireTime') {
                 sheetModalRefsNeedLock.selectAutolockTimeRef.current?.present();
+              } else if (navParams.actionType === 'lockWallet') {
+                await requestLockWalletAndBackToUnlockScreen();
+                break;
               }
               navigation.canGoBack() && navigation.goBack();
               break;

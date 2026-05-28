@@ -11,6 +11,10 @@ import {
 } from '../utils/unlockRateLimit';
 import { runIIFEFunc } from '../utils/store';
 import { perfEvents } from '../utils/perf';
+import {
+  getPersistedUnlockSessionExpireTime,
+  refreshAutolockTimeout,
+} from './autoLock';
 import { logger } from '@/utils/logger';
 
 export const enum PasswordStatus {
@@ -43,7 +47,7 @@ export type ValidationBehaviorProps = {
 };
 
 const DefaultValidationPassword: ValidationBehaviorProps['validationHandler'] &
-  object = throwErrorIfInvalidPwd;
+  object = verifyPasswordOrUnlock;
 const noop = () => {};
 
 export function parseValidationBehavior(props?: ValidationBehaviorProps) {
@@ -103,6 +107,21 @@ export async function throwErrorIfInvalidPwd(password: string) {
   } catch (error) {
     throw new Error(ERRORS.INCORRECT_PASSWORD);
   }
+}
+
+export async function verifyPasswordOrUnlock(password: string) {
+  if (keyringService.isUnlocked()) {
+    await throwErrorIfInvalidPwd(password);
+    updateUnlockTime();
+    return;
+  }
+
+  const result = await unlockWallet(password);
+  if (result.error) {
+    throw new Error(result.formFieldError || ERRORS.INCORRECT_PASSWORD);
+  }
+  updateUnlockTime();
+  notifyUserManuallyUnlockUIReady();
 }
 
 export async function setupWalletPassword(newPassword: string) {
@@ -277,6 +296,8 @@ async function tryAutoUnlockRabbyMobile() {
   try {
     if (lockInfo.isUseBuiltInPwd && !keyringService.isUnlocked()) {
       await keyringService.submitPassword(RABBY_MOBILE_KR_PWD);
+    } else if (!keyringService.isUnlocked()) {
+      await keyringService.restoreUnencryptedKeyrings();
     }
   } catch (e) {
     console.error('[tryAutoUnlockRabbyMobile]');
@@ -376,6 +397,7 @@ async function unlockWallet(
 
 export async function lockWallet() {
   await keyringService.setLocked();
+  clearUnlockTime();
   sessionService.broadcastEvent(BroadcastEvent.accountsChanged, []);
   sessionService.broadcastEvent(BroadcastEvent.lock);
 }
@@ -386,8 +408,16 @@ const { EventEmitter: UnlockTimeEvent } = makeEEClass<{
 export const unlockTimeEvent = new UnlockTimeEvent();
 
 const unlockTimeRef = {
-  current: 0,
+  current: normalizeUnlockTime(
+    preferenceService.getPreference('lastUnlockTime'),
+  ),
 };
+
+function normalizeUnlockTime(time: unknown) {
+  return typeof time === 'number' && Number.isFinite(time) && time > 0
+    ? time
+    : 0;
+}
 
 export function getUnlockTime() {
   return unlockTimeRef.current;
@@ -396,31 +426,71 @@ export function getUnlockTime() {
 export async function updateUnlockTime() {
   const time = Date.now();
   unlockTimeRef.current = time;
+  preferenceService.setPreference({
+    lastUnlockTime: time,
+  });
+  refreshAutolockTimeout();
   unlockTimeEvent.emit('updated', time);
+}
+
+export function clearUnlockTime() {
+  unlockTimeRef.current = 0;
+  preferenceService.setPreference({
+    lastUnlockTime: 0,
+    unlockSessionExpireTime: 0,
+  });
+  unlockTimeEvent.emit('updated', 0);
+}
+
+export function isUnlockSessionValid(now = Date.now()) {
+  const unlockTime = getUnlockTime();
+  if (!unlockTime) return false;
+  if (unlockTime > now) return false;
+
+  const expireTime = getPersistedUnlockSessionExpireTime();
+  if (expireTime === -1) return true;
+
+  return expireTime > now;
 }
 
 function makeLockApiWithUpdateUnlockTime<T extends (...args: any[]) => any>(
   fn: T,
+  shouldUpdateUnlockTime: (
+    result: Awaited<ReturnType<T>>,
+  ) => boolean | Promise<boolean> = () => true,
 ): T {
-  return function (...args) {
-    const res = fn(...args);
-    updateUnlockTime();
+  return async function (...args) {
+    const res = await fn(...args);
+    if (await shouldUpdateUnlockTime(res)) {
+      updateUnlockTime();
+    }
     return res;
   } as T;
 }
 
-export const tryAutoUnlockRabbyMobileWithUpdateUnlockTime =
-  makeLockApiWithUpdateUnlockTime(tryAutoUnlockRabbyMobile);
-export const unlockWalletWithUpdateUnlockTime =
-  makeLockApiWithUpdateUnlockTime(unlockWallet);
+export const tryAutoUnlockRabbyMobileWithUpdateUnlockTime = async () => {
+  const wasUnlocked = keyringService.isUnlocked();
+  const result = await tryAutoUnlockRabbyMobile();
+  if (keyringService.isUnlocked()) {
+    updateUnlockTime();
+    if (!wasUnlocked) {
+      notifyUserManuallyUnlockUIReady();
+    }
+  }
+  return result;
+};
+export const unlockWalletWithUpdateUnlockTime = makeLockApiWithUpdateUnlockTime(
+  unlockWallet,
+  result => !result.error,
+);
 export const safeVerifyPasswordAndUpdateUnlockTime =
-  makeLockApiWithUpdateUnlockTime(safeVerifyPassword);
+  makeLockApiWithUpdateUnlockTime(safeVerifyPassword, result => result.success);
 
 export function subscribeAppLock(fn: () => any) {
-  keyringService.on('locked', fn);
+  keyringService.on('lock', fn);
 
   const dispose = () => {
-    keyringService.off('locked', fn);
+    keyringService.off('lock', fn);
   };
 
   return dispose;
@@ -434,14 +504,20 @@ const pendingUserManuallyUnlockUIReadyRef = {
   current: null as UserManuallyUnlockContext | null,
 };
 
-export function notifyUserManuallyUnlockUIReady() {
+export function notifyUserManuallyUnlockUIReady(
+  expectedCtx?: UserManuallyUnlockContext,
+) {
   const ctx = pendingUserManuallyUnlockUIReadyRef.current;
-  if (!ctx) {
+  if (!ctx || (expectedCtx && ctx !== expectedCtx)) {
     return;
   }
 
   pendingUserManuallyUnlockUIReadyRef.current = null;
-  Promise.resolve()
+  if (!keyringService.isUnlocked()) {
+    return;
+  }
+
+  void Promise.resolve()
     .then(() =>
       (
         keyringService as KeyringServiceWithUnlockOptions
@@ -453,6 +529,15 @@ export function notifyUserManuallyUnlockUIReady() {
       });
     });
   perfEvents.emit('USER_MANUALLY_UNLOCK_UI_READY', ctx);
+}
+
+export function deferNotifyUserManuallyUnlockUIReady() {
+  const ctx = pendingUserManuallyUnlockUIReadyRef.current;
+  if (!ctx) {
+    return null;
+  }
+  // Capture this unlock so delayed callbacks cannot consume a later unlock.
+  return () => notifyUserManuallyUnlockUIReady(ctx);
 }
 
 runIIFEFunc(() => {
@@ -471,5 +556,8 @@ runIIFEFunc(() => {
         isFirstTimeAfterLaunch,
       });
     }
+  });
+  keyringService.on('lock', () => {
+    pendingUserManuallyUnlockUIReadyRef.current = null;
   });
 });

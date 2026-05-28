@@ -36,6 +36,8 @@ import { getDappAccount } from '@/core/utils/dappAccount';
 import { shouldAutoConnect, shouldAutoPersonalSign } from './autoConnect';
 import { openapi } from '../request';
 import type { Account } from '@/types/account';
+import { ensureWalletUnlocked } from '@/utils/walletUnlockGuard';
+import { isWalletUnlockCancelled } from '@/utils/walletUnlockError';
 
 export const resemblesETHAddress = (str: string): boolean => {
   return str.length === 42;
@@ -112,14 +114,16 @@ const flowContext = flow
         ctx.request.requestedApproval = true;
         lockedOrigins.add(origin);
         try {
-          await notificationService.requestApproval(
-            { lock: true },
-            { height: 628 },
-          );
-          lockedOrigins.delete(origin);
+          await ensureWalletUnlocked();
         } catch (e) {
-          lockedOrigins.delete(origin);
+          if (isWalletUnlockCancelled(e)) {
+            throw ethErrors.provider.userRejectedRequest(
+              'User rejected the request.',
+            );
+          }
           throw e;
+        } finally {
+          lockedOrigins.delete(origin);
         }
       }
     }

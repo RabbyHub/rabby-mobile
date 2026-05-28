@@ -68,6 +68,9 @@ async function getBasePublicKeyForAccount(
   if (!account?.address) return null;
   // Only HD keyring accounts have seed phrases that need backup
   if (account.type !== KEYRING_TYPE.HdKeyring) return null;
+  if (account.hdPathBasePublicKey) {
+    return account.hdPathBasePublicKey;
+  }
 
   try {
     const info = await apiMnemonic.getMnemonicAddressInfo(account.address);
@@ -115,6 +118,7 @@ export function useBackupReminder(account: KeyringAccount | null | undefined) {
   const address = account?.address;
   const type = account?.type;
   const brandName = account?.brandName;
+  const hdPathBasePublicKey = account?.hdPathBasePublicKey;
 
   useEffect(() => {
     if (!address || !type) {
@@ -125,8 +129,9 @@ export function useBackupReminder(account: KeyringAccount | null | undefined) {
       address,
       type,
       brandName: brandName ?? '',
+      hdPathBasePublicKey,
     }).then(setBasePublicKey);
-  }, [address, type, brandName]);
+  }, [address, type, brandName, hdPathBasePublicKey]);
 
   const getSnapshot = useCallback(
     () => getBackupReminderSnapshot(basePublicKey),

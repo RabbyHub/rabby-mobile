@@ -1,6 +1,7 @@
 import * as sinon from 'sinon';
 
 import { KeyringService } from './keyringService';
+import mockEncryptor from '../test/mock-encryptor';
 
 const password = 'password123';
 
@@ -8,7 +9,7 @@ describe('KeyringService setup', () => {
   let keyringService: KeyringService;
 
   beforeAll(() => {
-    keyringService = new KeyringService({});
+    keyringService = new KeyringService({ encryptor: mockEncryptor as any });
   });
 
   afterEach(() => {
@@ -30,7 +31,9 @@ describe('KeyringService setup', () => {
   describe('setLocked', () => {
     it('setLocked correctly sets lock state', async () => {
       await keyringService.setLocked();
-      expect((keyringService as any).password).toBeNull();
+      await expect(keyringService.persistAllKeyrings()).rejects.toThrow(
+        'KeyringService - password is not a string',
+      );
       expect(keyringService.memStore.getState().isUnlocked).toBe(false);
       expect(keyringService.keyrings).toHaveLength(0);
     });
@@ -48,7 +51,7 @@ describe('keyringService', () => {
   let keyringService: KeyringService;
 
   beforeEach(async () => {
-    keyringService = new KeyringService();
+    keyringService = new KeyringService({ encryptor: mockEncryptor as any });
     keyringService.loadStore({});
     await keyringService.boot(password);
     await keyringService.clearKeyrings();
@@ -70,12 +73,16 @@ describe('keyringService', () => {
 
     it('resets the submitting guard when password verification fails', async () => {
       await keyringService.setLocked();
+      sinon
+        .stub(keyringService, 'verifyPassword')
+        .rejects(new Error('bad password'));
 
       await expect(
         keyringService.submitPassword('wrong-password'),
-      ).rejects.toThrow();
+      ).rejects.toThrow('bad password');
       expect((keyringService as any)._isSubmittingPassword).toBe(false);
 
+      sinon.restore();
       await keyringService.submitPassword(password);
       expect(keyringService.memStore.getState().isUnlocked).toBe(true);
     });

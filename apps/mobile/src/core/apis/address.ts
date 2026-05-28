@@ -17,6 +17,10 @@ import {
 import { getKeyring } from './keyring';
 import { BroadcastEvent } from '@/constant/event';
 import { removeTestnetAddressBalanceCache } from '@/utils/testnetAddressBalanceCache';
+import {
+  isSensitiveKeyringType,
+  withWalletUnlockIf,
+} from '@/utils/walletUnlockGuard';
 
 export async function addWatchAddress(address: string) {
   const keyring = await getKeyring<WatchKeyring>(
@@ -48,61 +52,64 @@ async function resetCurrentAccount() {
   }
 }
 
-export async function removeAddress(account: KeyringAccountWithAlias) {
-  const isRemoveEmptyKeyring =
-    account.type !== KEYRING_TYPE.WalletConnectKeyring;
+export const removeAddress = withWalletUnlockIf(
+  account => isSensitiveKeyringType(account.type),
+  async (account: KeyringAccountWithAlias) => {
+    const isRemoveEmptyKeyring =
+      account.type !== KEYRING_TYPE.WalletConnectKeyring;
 
-  await keyringService.removeAccount(
-    account.address,
-    account.type,
-    account.brandName,
-    isRemoveEmptyKeyring,
-  );
+    await keyringService.removeAccount(
+      account.address,
+      account.type,
+      account.brandName,
+      isRemoveEmptyKeyring,
+    );
 
-  const hasSameAddressLeft = await keyringService.hasAddress(account.address);
-  if (!hasSameAddressLeft) {
-    removeTestnetAddressBalanceCache(account.address);
-    preferenceService.removeAddressAvatar(account.address);
-    contactService.removeAlias(account.address);
-    whitelistService.removeWhitelist(account.address);
-    transactionHistoryService.removeList(account.address);
-    perpsService.removeAgentWallet(account.address);
-  }
-  preferenceService.removePinAddress(account);
-
-  const currentAccount = getCurrentAccount();
-
-  if (
-    addressUtils.isSameAddress(
-      currentAccount?.address || '',
-      account?.address,
-    ) &&
-    currentAccount?.type === account.type &&
-    currentAccount?.brandName === account.brandName
-  ) {
-    await resetCurrentAccount();
-  }
-
-  const newCurrentAccount = getCurrentAccount();
-  Object.entries(dappService.getDapps()).forEach(([origin, dapp]) => {
-    if (isSameAccount(account, dapp.currentAccount)) {
-      dappService.updateDapp({
-        ...dapp,
-        origin,
-        currentAccount: newCurrentAccount,
-      });
-      if (dapp?.isConnected) {
-        sessionService.broadcastEvent(
-          BroadcastEvent.accountsChanged,
-          newCurrentAccount?.address
-            ? [newCurrentAccount.address.toLowerCase()]
-            : [],
-          origin,
-        );
-      }
+    const hasSameAddressLeft = await keyringService.hasAddress(account.address);
+    if (!hasSameAddressLeft) {
+      removeTestnetAddressBalanceCache(account.address);
+      preferenceService.removeAddressAvatar(account.address);
+      contactService.removeAlias(account.address);
+      whitelistService.removeWhitelist(account.address);
+      transactionHistoryService.removeList(account.address);
+      perpsService.removeAgentWallet(account.address);
     }
-  });
-}
+    preferenceService.removePinAddress(account);
+
+    const currentAccount = getCurrentAccount();
+
+    if (
+      addressUtils.isSameAddress(
+        currentAccount?.address || '',
+        account?.address,
+      ) &&
+      currentAccount?.type === account.type &&
+      currentAccount?.brandName === account.brandName
+    ) {
+      await resetCurrentAccount();
+    }
+
+    const newCurrentAccount = getCurrentAccount();
+    Object.entries(dappService.getDapps()).forEach(([origin, dapp]) => {
+      if (isSameAccount(account, dapp.currentAccount)) {
+        dappService.updateDapp({
+          ...dapp,
+          origin,
+          currentAccount: newCurrentAccount,
+        });
+        if (dapp?.isConnected) {
+          sessionService.broadcastEvent(
+            BroadcastEvent.accountsChanged,
+            newCurrentAccount?.address
+              ? [newCurrentAccount.address.toLowerCase()]
+              : [],
+            origin,
+          );
+        }
+      }
+    });
+  },
+);
 
 export async function getAllAccounts() {
   return await keyringService.getAllVisibleAccountsArray();

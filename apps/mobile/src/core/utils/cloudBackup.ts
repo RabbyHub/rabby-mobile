@@ -5,7 +5,7 @@ import {
   SignInResponse,
   User,
 } from '@react-native-google-signin/google-signin';
-import { appEncryptor } from '../services/shared';
+import { appEncryptor, keyringService } from '../services/shared';
 import { APPLICATION_ID, FIREBASE_WEBCLIENT_ID } from '@/constant';
 import { getAddressFromMnemonic } from './mnemonic';
 import { getMnemonicByAddress } from '../apis/mnemonic';
@@ -299,6 +299,10 @@ export const refreshAccessToken = async () => {
 export const checkCloudBackupExists = async (
   address: string,
 ): Promise<boolean> => {
+  if (!keyringService.isUnlocked()) {
+    return false;
+  }
+
   const mnemonic = getMnemonicByAddress(address);
   if (!mnemonic) return false;
   // Derive the index-0 address (this is the backup filename)

@@ -19,7 +19,7 @@ import TouchableView, {
   SilentTouchableView,
 } from '@/components/Touchable/TouchableView';
 import { useFormik } from 'formik';
-import { toast, toastIndicator, toastWithIcon } from '@/components2024/Toast';
+import { toast, toastWithIcon } from '@/components2024/Toast';
 import { apisKeychain, apisLock } from '@/core/apis';
 import {
   UnlockUIManager,
@@ -64,7 +64,9 @@ import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { startUnlockScreenBootstrapWarmups } from '@/setup-app-before-render';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
+import { cancelPendingWalletUnlock } from '@/utils/walletUnlock';
 import { logger } from '@/utils/logger';
+import { toastUnlocking } from '@/utils/toastUnlocking';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -161,8 +163,13 @@ function nextFrame() {
 }
 
 function notifyUnlockUIReadyAfterHomePaint() {
+  const notifyUIReady = apisLock.deferNotifyUserManuallyUnlockUIReady();
+  if (!notifyUIReady) {
+    return;
+  }
+
   if (!isAndroid) {
-    apisLock.notifyUserManuallyUnlockUIReady();
+    notifyUIReady();
     return;
   }
 
@@ -173,7 +180,7 @@ function notifyUnlockUIReadyAfterHomePaint() {
   InteractionManager.runAfterInteractions(() => {
     setTimeout(() => {
       traceAndroidUnlockPerf('unlock_ui_ready_notify_deferred_fire');
-      apisLock.notifyUserManuallyUnlockUIReady();
+      notifyUIReady();
     }, POST_UNLOCK_UI_READY_DELAY_MS);
   });
 }
@@ -193,11 +200,6 @@ const toastBiometricsAuthenticating = (isFaceIDAuth: boolean) =>
       position: toast.positions.TOP + 80,
     },
   );
-const toastUnlocking = () =>
-  toastIndicator(i18next.t('page.unlock.unlocking'), {
-    isTop: true,
-  });
-
 function traceAndroidUnlockPerf(
   event: string,
   data: Record<string, unknown> = {},
@@ -637,9 +639,22 @@ export default function UnlockScreen() {
     }, [params?.disableAutoTriggerUnlock]),
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        if (params?.allowCancel && !apisLock.isUnlocked()) {
+          cancelPendingWalletUnlock(params.unlockRequestId);
+        }
+      };
+    }, [params?.allowCancel, params?.unlockRequestId]),
+  );
+
   const { registerPreventEffect } = usePreventGoBack({
     navigation,
-    shouldGoback: useCallback(() => apisLock.isUnlocked(), []),
+    shouldGoback: useCallback(
+      () => Boolean(params?.allowCancel) || apisLock.isUnlocked(),
+      [params?.allowCancel],
+    ),
   });
 
   useFocusEffect(registerPreventEffect);
