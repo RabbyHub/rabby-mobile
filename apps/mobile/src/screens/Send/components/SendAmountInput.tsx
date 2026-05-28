@@ -154,7 +154,7 @@ export const SendAmountInput = ({
       onTokenChange,
       ref,
     });
-  const unitTextRef = useRef<Text>(null);
+  const unitTextRef = useRef<TextInput>(null);
   const inputSelectionRef = useRef({
     start: (value || '').length,
     end: (value || '').length,
@@ -221,6 +221,7 @@ export const SendAmountInput = ({
           fittingFontSize: MAIN_FONT_SIZE,
           valueInputWidth: undefined,
           unitLeft: UNIT_GAP,
+          unitWidth: Math.ceil(measuredUnitWidthAtBaseFontSize) + 2,
         };
       }
 
@@ -244,8 +245,11 @@ export const SendAmountInput = ({
 
       const valueWidth =
         (nextValueWidthAtBaseFontSize * nextFittingFontSize) / MAIN_FONT_SIZE;
+      const scaledUnitWidth =
+        (measuredUnitWidthAtBaseFontSize * nextFittingFontSize) /
+        MAIN_FONT_SIZE;
       const maxValueWidth = Math.max(
-        inputAreaWidth - UNIT_GAP - Math.ceil(measuredUnitWidthAtBaseFontSize),
+        inputAreaWidth - UNIT_GAP - Math.ceil(scaledUnitWidth),
         1,
       );
       const visibleValueWidth = Math.min(
@@ -253,10 +257,13 @@ export const SendAmountInput = ({
         maxValueWidth,
       );
 
+      const unitWidth = Math.ceil(scaledUnitWidth) + 2;
+
       return {
         fittingFontSize: nextFittingFontSize,
         valueInputWidth: maxValueWidth,
         unitLeft: visibleValueWidth + UNIT_GAP,
+        unitWidth,
       };
     },
     [
@@ -266,7 +273,7 @@ export const SendAmountInput = ({
     ],
   );
 
-  const { fittingFontSize, valueInputWidth, unitLeft } = useMemo(
+  const { fittingFontSize, valueInputWidth, unitLeft, unitWidth } = useMemo(
     () => getAmountLayout(textForMeasure),
     [getAmountLayout, textForMeasure],
   );
@@ -278,6 +285,7 @@ export const SendAmountInput = ({
         style: {
           fontSize: nextLayout.fittingFontSize,
           left: nextLayout.unitLeft,
+          width: nextLayout.unitWidth,
         },
       });
     },
@@ -450,18 +458,28 @@ export const SendAmountInput = ({
                 ]}
                 {...amountInputProps}
               />
-              <Text
+              <TextInput
                 ref={unitTextRef}
+                value={unit}
+                editable={false}
+                caretHidden
+                contextMenuHidden
+                pointerEvents="none"
+                accessible={false}
+                accessibilityElementsHidden
+                importantForAccessibility="no"
                 numberOfLines={1}
+                multiline={false}
+                scrollEnabled={false}
                 style={[
                   styles.unitText,
                   {
                     fontSize: fittingFontSize,
                     left: unitLeft,
+                    width: unitWidth,
                   },
-                ]}>
-                {unit}
-              </Text>
+                ]}
+              />
             </View>
           )}
           <TouchableOpacity
@@ -610,6 +628,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       lineHeight: 36,
       fontFamily: 'SF Pro Rounded',
       includeFontPadding: false,
+      padding: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
+      textAlignVertical: 'center',
+      overflow: 'hidden',
       zIndex: 2,
     },
     quoteRow: {
