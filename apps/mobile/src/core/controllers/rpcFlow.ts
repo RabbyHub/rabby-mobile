@@ -91,48 +91,6 @@ const flowContext = flow
     return next();
   })
   .use(async (ctx, next) => {
-    const {
-      mapMethod,
-      request: {
-        session: { origin },
-      },
-    } = ctx;
-
-    // // leave here for debug
-    // console.debug('[debug] flowContext:: before check lock');
-
-    if (!Reflect.getMetadata('SAFE', providerController, mapMethod)) {
-      // check lock
-      const isUnlock = keyringService.memStore.getState().isUnlocked;
-
-      if (!isUnlock) {
-        if (lockedOrigins.has(origin)) {
-          throw ethErrors.rpc.resourceNotFound(
-            'Already processing unlock. Please wait.',
-          );
-        }
-        ctx.request.requestedApproval = true;
-        lockedOrigins.add(origin);
-        try {
-          await ensureWalletUnlocked();
-        } catch (e) {
-          if (isWalletUnlockCancelled(e)) {
-            throw ethErrors.provider.userRejectedRequest(
-              'User rejected the request.',
-            );
-          }
-          throw e;
-        } finally {
-          lockedOrigins.delete(origin);
-        }
-      }
-    }
-    // // leave here for debug
-    // console.debug('[debug] flowContext:: after check lock');
-
-    return next();
-  })
-  .use(async (ctx, next) => {
     // check connect
     const {
       request: {
