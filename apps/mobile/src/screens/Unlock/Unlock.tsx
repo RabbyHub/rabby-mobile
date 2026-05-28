@@ -19,7 +19,7 @@ import TouchableView, {
   SilentTouchableView,
 } from '@/components/Touchable/TouchableView';
 import { useFormik } from 'formik';
-import { toast, toastIndicator, toastWithIcon } from '@/components2024/Toast';
+import { toast, toastWithIcon } from '@/components2024/Toast';
 import { apisKeychain, apisLock } from '@/core/apis';
 import {
   UnlockUIManager,
@@ -66,6 +66,7 @@ import { startUnlockScreenBootstrapWarmups } from '@/setup-app-before-render';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
 import { cancelPendingWalletUnlock } from '@/utils/walletUnlock';
 import { logger } from '@/utils/logger';
+import { toastUnlocking } from '@/utils/toastUnlocking';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -199,11 +200,6 @@ const toastBiometricsAuthenticating = (isFaceIDAuth: boolean) =>
       position: toast.positions.TOP + 80,
     },
   );
-const toastUnlocking = () =>
-  toastIndicator(i18next.t('page.unlock.unlocking'), {
-    isTop: true,
-  });
-
 function traceAndroidUnlockPerf(
   event: string,
   data: Record<string, unknown> = {},

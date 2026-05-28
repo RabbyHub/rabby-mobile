@@ -69,7 +69,14 @@ export const RcTermsOfUse = makeThemeIcon2024FromCC(RcTermsOfUseCC, ctx => ({
 }));
 
 import { default as RcLockCC } from './lock-cc.svg';
+import { default as RcNewLockCC } from './new-lock-wallet-cc.svg';
+
 export const RcLock = makeThemeIcon2024FromCC(RcLockCC, ctx => ({
+  onLight: ctx.colors2024['brand-default'],
+  onDark: ctx.colors2024['brand-default'],
+}));
+
+export const RcNewLock = makeThemeIcon2024FromCC(RcNewLockCC, ctx => ({
   onLight: ctx.colors2024['brand-default'],
   onDark: ctx.colors2024['brand-default'],
 }));

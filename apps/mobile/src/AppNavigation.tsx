@@ -368,7 +368,6 @@ function AppNavigationDeferredGlobals({
     return (
       <>
         <BiometricsStubModal />
-        <ApprovalTokenDetailSheetModalStub />
       </>
     );
   }
@@ -378,46 +377,47 @@ function AppNavigationDeferredGlobals({
 
 function AppNavigationOverlayGlobals({
   deferredGlobalsEnabled,
-  miniSignPortalsEnabled,
+  postUnlockGlobalsEnabled,
 }: {
   deferredGlobalsEnabled: boolean;
-  miniSignPortalsEnabled: boolean;
+  postUnlockGlobalsEnabled: boolean;
 }) {
   const showDiagnostics = deferredGlobalsEnabled || NEED_DEVSETTINGBLOCKS;
 
-  if (!showDiagnostics && !miniSignPortalsEnabled) {
+  if (!showDiagnostics && !postUnlockGlobalsEnabled) {
     return null;
   }
 
   return (
     <>
       {deferredGlobalsEnabled && <ModalsSubmitFeedbackByScreenshotStub />}
-      {deferredGlobalsEnabled && <ToggleCollateralModal />}
+      {postUnlockGlobalsEnabled && <ToggleCollateralModal />}
 
       {/** @warning put all business stub components before this modal */}
       {deferredGlobalsEnabled && <GlobalSecurityTipStubModal />}
       {showDiagnostics && <FloatingDiagnosticsPanel />}
-      {miniSignPortalsEnabled && (
+      {postUnlockGlobalsEnabled && (
         <GlobalMiniApproval key="global-mini-approval" />
       )}
-      {miniSignPortalsEnabled && (
+      {postUnlockGlobalsEnabled && (
         <GlobalMiniSignTypedDataPortal key="global-mini-sign-typed-data" />
       )}
-      {deferredGlobalsEnabled && <GlobalTipsPopup />}
-      {miniSignPortalsEnabled && (
+      {postUnlockGlobalsEnabled && <GlobalTipsPopup />}
+      {postUnlockGlobalsEnabled && (
         <GlobalSignerPortal key="global-signer-portal" />
       )}
     </>
   );
 }
 
-function AppNavigationDappBrowserGlobals({ enabled }: { enabled: boolean }) {
+function AppNavigationPostUnlockGlobals({ enabled }: { enabled: boolean }) {
   if (!enabled) {
     return null;
   }
 
   return (
     <>
+      <ApprovalTokenDetailSheetModalStub />
       <InnerDappWebViewPreloadEntry />
       <BottomSheetBrowser />
       <BrowserManagePopup />
@@ -451,7 +451,7 @@ export default function AppNavigation() {
     : RootNames.Unlock;
   const shouldRenderDeferredGlobals =
     useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked);
-  const shouldRenderDappBrowserGlobals =
+  const shouldRenderPostUnlockGlobals =
     shouldRenderDeferredGlobals || isUnlockSessionValid;
   useReadableAccountWarmupsOnHomeVisible({
     shouldWarmupReadableAccounts: !isAppUnlocked && isUnlockSessionValid,
@@ -504,7 +504,7 @@ export default function AppNavigation() {
           theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <AppNavigationDeferredGlobals
             slot="navigation-pre"
-            enabled={shouldRenderDeferredGlobals}
+            enabled={shouldRenderPostUnlockGlobals}
           />
           <RootStack.Navigator
             screenOptions={{
@@ -744,14 +744,14 @@ export default function AppNavigation() {
             slot="navigation-post"
             enabled={shouldRenderDeferredGlobals}
           />
-          <AppNavigationDappBrowserGlobals
-            enabled={shouldRenderDappBrowserGlobals}
+          <AppNavigationPostUnlockGlobals
+            enabled={shouldRenderPostUnlockGlobals}
           />
         </NavigationContainer>
       </NavigationIndependentTree>
       <AppNavigationOverlayGlobals
         deferredGlobalsEnabled={shouldRenderDeferredGlobals}
-        miniSignPortalsEnabled={shouldRenderDappBrowserGlobals}
+        postUnlockGlobalsEnabled={shouldRenderPostUnlockGlobals}
       />
       <BackgroundSecureBlurView />
     </AutoLockView.ForAppNav>

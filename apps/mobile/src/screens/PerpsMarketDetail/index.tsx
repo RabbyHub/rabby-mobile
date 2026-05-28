@@ -57,6 +57,7 @@ import { APP_VERSIONS } from '@/constant';
 import { Text } from '@/components/Typography';
 import { PerpsGuideEntryPopup } from './components/PerpsGuideEntryPopup';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
+import { withWalletUnlock } from '@/utils/walletUnlockGuard';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -149,20 +150,20 @@ export const PerpsMarketDetailScreen = () => {
     return unsubscribe;
   }, [navigation, fromSource]);
 
-  useEffect(() => {
-    const needDepositFirst =
-      Number(accountValue) === 0 && Number(availableBalance) === 0;
-    const isLocalWallet =
-      currentPerpsAccount?.type === KEYRING_CLASS.PRIVATE_KEY ||
-      currentPerpsAccount?.type === KEYRING_CLASS.MNEMONIC;
-    if (isLocalWallet && !needDepositFirst) {
-      // deposit first before approve agent
-      handleActionApproveStatus({
-        isHideToast: true,
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // useEffect(() => {
+  //   const needDepositFirst =
+  //     Number(accountValue) === 0 && Number(availableBalance) === 0;
+  //   const isLocalWallet =
+  //     currentPerpsAccount?.type === KEYRING_CLASS.PRIVATE_KEY ||
+  //     currentPerpsAccount?.type === KEYRING_CLASS.MNEMONIC;
+  //   if (isLocalWallet && !needDepositFirst) {
+  //     // deposit first before approve agent
+  //     handleActionApproveStatus({
+  //       isHideToast: true,
+  //     });
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
 
   const { activeAssetCtx, activeAssetData } = useActiveAssetSubscription(coin);
 
@@ -338,12 +339,28 @@ export const PerpsMarketDetailScreen = () => {
     needEnableUnifiedAccount,
   ]);
 
-  const [openPositionVisible, setOpenPositionVisible] = React.useState(
-    fromSource === 'openPosition' && canOpenPosition,
-  );
+  const [openPositionVisible, setOpenPositionVisible] = React.useState(false);
   const [isShowSwapPopup, setIsShowSwapPopup] = useState(false);
   const [isShowEnableUnifiedPopup, setIsShowEnableUnifiedPopup] =
     useState(false);
+
+  const initAutoOpenPositionRef = useRef(false);
+  useEffect(() => {
+    const autoOpenPosition = async () => {
+      try {
+        if (initAutoOpenPositionRef.current) {
+          return;
+        }
+        initAutoOpenPositionRef.current = true;
+        const isAutoOpen = fromSource === 'openPosition' && !!canOpenPosition;
+        if (isAutoOpen) {
+          await handleActionApproveStatus();
+          setOpenPositionVisible(true);
+        }
+      } catch (e) {}
+    };
+    autoOpenPosition();
+  }, [fromSource, canOpenPosition, handleActionApproveStatus]);
 
   const handleSwapPress = useCallback(async () => {
     await handleActionApproveStatus();

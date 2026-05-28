@@ -12,7 +12,7 @@ import {
   RcClearPending,
   RcEarth,
   RcFeedback,
-  RcLock,
+  RcNewLock,
   RcLockWallet,
   RcAutoLockTime,
   RcScreenshot,
@@ -420,7 +420,7 @@ function SettingsBlocks() {
           },
           {
             label: t('page.setting.lockWallet'),
-            icon: RcLock,
+            icon: RcNewLock,
             onPress: () => {
               startLockWallet();
             },

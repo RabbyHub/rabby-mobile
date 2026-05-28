@@ -41,6 +41,7 @@ import { sleep } from '@/utils/async';
 import { useShallow } from 'zustand/react/shallow';
 import { usePerpsAccount } from './usePerpsAccount';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+
 import { apisLock } from '@/core/apis';
 type SignActionType =
   | 'approveAgent'
@@ -483,6 +484,13 @@ export const usePerpsState = () => {
 
         const signActions: SignAction[] = [];
         const sdk = apisPerps.getPerpsSDK();
+
+        const { vault, agentAddress } =
+          await apisPerps.getOrCreatePerpsAgentWallet(
+            currentPerpsAccount.address,
+          );
+        sdk.initOrUpdateAgent(vault, agentAddress, PERPS_AGENT_NAME);
+
         if (accountNeedApproveAgent) {
           signActions.push({
             action: sdk.exchange?.prepareApproveAgent(),
