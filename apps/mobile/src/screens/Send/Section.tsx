@@ -82,10 +82,7 @@ function formatTokenQuoteValueText(value: string | number | BigNumber) {
     return '0';
   }
 
-  const normalizedValue = bn.toFixed();
-  const decimalPart = normalizedValue.split('.')[1] || '';
-  const displayValue =
-    decimalPart.length >= 6 ? bn.toFixed(6) : normalizedValue;
+  const displayValue = bn.decimalPlaces(6).toFixed();
   const [intPart, displayDecimalPart] = displayValue.split('.');
   const sign = intPart.startsWith('-') ? '-' : '';
   const absIntPart = sign ? intPart.slice(1) : intPart;
