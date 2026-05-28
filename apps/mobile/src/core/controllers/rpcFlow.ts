@@ -37,6 +37,7 @@ import { shouldAutoConnect, shouldAutoPersonalSign } from './autoConnect';
 import { openapi } from '../request';
 import type { Account } from '@/types/account';
 import { ensureWalletUnlocked } from '@/utils/walletUnlockGuard';
+import { isWalletUnlockCancelled } from '@/utils/walletUnlockError';
 
 export const resemblesETHAddress = (str: string): boolean => {
   return str.length === 42;
@@ -46,13 +47,6 @@ const isSignApproval = (type: string) => {
   const SIGN_APPROVALS = ['SignText', 'SignTypedData', 'SignTx'];
   return SIGN_APPROVALS.includes(type);
 };
-
-function isWalletUnlockCancelled(error: unknown) {
-  return (
-    (error as Error | undefined)?.name === 'WalletUnlockCancelledError' ||
-    (error as Error | undefined)?.message === 'wallet.unlock.cancelled'
-  );
-}
 
 const lockedOrigins = new Set<string>();
 const connectOrigins = new Set<string>();

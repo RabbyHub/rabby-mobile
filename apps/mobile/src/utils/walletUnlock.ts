@@ -6,6 +6,10 @@ import {
 } from '@/core/apis/keychain';
 import { preferenceService } from '@/core/services';
 import { toastUnlocking } from '@/utils/toastUnlocking';
+import {
+  WalletUnlockCancelledError,
+  isWalletUnlockCancelled,
+} from '@/utils/walletUnlockError';
 import { setWalletUnlockRequester } from '@/utils/walletUnlockGuard';
 
 type PendingWalletUnlock = {
@@ -16,23 +20,10 @@ type PendingWalletUnlock = {
   hideModal?: () => void;
 };
 
-export class WalletUnlockCancelledError extends Error {
-  constructor() {
-    super('wallet.unlock.cancelled');
-    this.name = 'WalletUnlockCancelledError';
-  }
-}
+export { WalletUnlockCancelledError, isWalletUnlockCancelled };
 
 let nextUnlockRequestId = 1;
 let pendingWalletUnlock: PendingWalletUnlock | null = null;
-
-export function isWalletUnlockCancelled(error: unknown) {
-  return (
-    error instanceof WalletUnlockCancelledError ||
-    (error as Error | undefined)?.name === 'WalletUnlockCancelledError' ||
-    (error as Error | undefined)?.message === 'wallet.unlock.cancelled'
-  );
-}
 
 export async function ensureWalletUnlockedForAction() {
   try {
