@@ -481,7 +481,6 @@ const getConvertDustHeaderStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
   },
   convertDustHeaderAccountSwitcher: {
-    maxWidth: 170,
     flexShrink: 1,
     minWidth: 0,
   },
