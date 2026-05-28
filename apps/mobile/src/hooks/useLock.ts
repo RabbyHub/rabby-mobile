@@ -84,6 +84,15 @@ export function useAppUnlocked() {
   };
 }
 
+export function useIsPostUnlockLockedSession() {
+  const appUnlocked = zAppLockStore(state => state.appUnlocked);
+  const isUnlockSessionValid = zAppLockStore(
+    state => state.isUnlockSessionValid,
+  );
+
+  return !appUnlocked && isUnlockSessionValid;
+}
+
 export function getPwdStatus() {
   const state = zAppLockStore.getState();
   return state.pwdStatus;
