@@ -9,17 +9,19 @@ export const LedgerHDPathTypeLabel = {
   [LedgerHDPathType.Legacy]: 'Ledger Legacy',
 };
 
+type AccountInfoState = {
+  address: string;
+  hdPathType: LedgerHDPathType;
+  hdPathTypeLabel: string;
+  index: number;
+};
+
 export const useAccountsInfo = (
   type: KeyringTypeName,
   address: string,
   brand?: string,
 ) => {
-  const [account, setAccount] = useState<{
-    address: string;
-    hdPathType: LedgerHDPathType;
-    hdPathTypeLabel: string;
-    index: number;
-  }>();
+  const [account, setAccount] = useState<AccountInfoState>();
   const isLedger = type === KEYRING_CLASS.HARDWARE.LEDGER;
   const isTrezorLike =
     type === KEYRING_CLASS.HARDWARE.TREZOR ||
@@ -54,16 +56,19 @@ export const useAccountsInfo = (
     try {
       const info = await apiMnemonic.getMnemonicAddressInfo(address);
       if (info) {
+        const hdPathType = info.hdPathType as unknown as LedgerHDPathType;
         setAccount({
           address,
           index: info.index + 1,
-          hdPathType: info.hdPathType as any,
-          hdPathTypeLabel: LedgerHDPathTypeLabel[info.hdPathType],
+          hdPathType,
+          hdPathTypeLabel: LedgerHDPathTypeLabel[hdPathType],
         });
+        return;
       }
     } catch {
-      setAccount(undefined);
+      // Locked wallets fall back to the public snapshot at the call site.
     }
+    setAccount(undefined);
   }, [address]);
 
   useEffect(() => {
@@ -74,8 +79,15 @@ export const useAccountsInfo = (
     } else if (isMnemonics) {
       fetchMnemonicsAccount();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address]);
+  }, [
+    fetchMnemonicsAccount,
+    fetchTrezorLikeAccount,
+    fetAccountInfo,
+    isKeystone,
+    isLedger,
+    isMnemonics,
+    isTrezorLike,
+  ]);
 
   return account;
 };

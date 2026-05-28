@@ -528,7 +528,7 @@ export const usePerpsState = () => {
         console.error('Failed to handle action approve status:', error);
         // todo fixme maybe no need show toast in prod
         if (!options?.isHideToast) {
-          showToast(String(error), 'error');
+          showToast((error as any)?.message || String(error), 'error');
         }
         Sentry.captureException(
           new Error(

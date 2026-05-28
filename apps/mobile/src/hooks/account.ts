@@ -17,6 +17,7 @@ import { getWalletIcon } from '@/utils/walletInfo';
 import { filterMyAccounts } from '@/utils/account';
 import { useCreationWithShallowCompare } from './common/useMemozied';
 import { accountEvents } from '@/core/apis/account';
+import * as apiMnemonic from '@/core/apis/mnemonic';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import addressBalanceStore from '@/store/balance';
 import accountStore, {
@@ -55,7 +56,14 @@ export function useIsNewlyAddedAccount(account: KeyringAccount) {
   };
 }
 
-import * as apiMnemonic from '@/core/apis/mnemonic';
+function getBackupReminderKey(
+  account:
+    | Pick<KeyringAccount, 'hdPathBasePublicKey' | 'publicKey'>
+    | null
+    | undefined,
+) {
+  return account?.hdPathBasePublicKey ?? account?.publicKey ?? null;
+}
 
 /**
  * Gets the base public key for an HD keyring account (seed phrase identifier).
@@ -68,8 +76,9 @@ async function getBasePublicKeyForAccount(
   if (!account?.address) return null;
   // Only HD keyring accounts have seed phrases that need backup
   if (account.type !== KEYRING_TYPE.HdKeyring) return null;
-  if (account.hdPathBasePublicKey) {
-    return account.hdPathBasePublicKey;
+  const publicKey = getBackupReminderKey(account);
+  if (publicKey) {
+    return publicKey;
   }
 
   try {
@@ -119,19 +128,56 @@ export function useBackupReminder(account: KeyringAccount | null | undefined) {
   const type = account?.type;
   const brandName = account?.brandName;
   const hdPathBasePublicKey = account?.hdPathBasePublicKey;
+  const publicKey = account?.publicKey;
+  const storedPublicKey = useAccountStore(s => {
+    if (!address || type !== KEYRING_TYPE.HdKeyring) {
+      return null;
+    }
+
+    const storedAccount = s.accounts.find(
+      item =>
+        isSameAddress(item.address, address) &&
+        item.type === type &&
+        (!brandName || item.brandName === brandName),
+    );
+    return getBackupReminderKey(storedAccount);
+  });
 
   useEffect(() => {
-    if (!address || !type) {
+    let cancelled = false;
+
+    if (!address || type !== KEYRING_TYPE.HdKeyring) {
       setBasePublicKey(null);
       return;
     }
+
+    const basePublicKey = hdPathBasePublicKey || publicKey || storedPublicKey;
+    if (basePublicKey) {
+      setBasePublicKey(basePublicKey);
+      return;
+    }
+
     getBasePublicKeyForAccount({
       address,
-      type,
+      type: KEYRING_TYPE.HdKeyring,
       brandName: brandName ?? '',
-      hdPathBasePublicKey,
-    }).then(setBasePublicKey);
-  }, [address, type, brandName, hdPathBasePublicKey]);
+    }).then(nextBasePublicKey => {
+      if (!cancelled) {
+        setBasePublicKey(nextBasePublicKey);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    address,
+    type,
+    brandName,
+    hdPathBasePublicKey,
+    publicKey,
+    storedPublicKey,
+  ]);
 
   const getSnapshot = useCallback(
     () => getBackupReminderSnapshot(basePublicKey),
