@@ -136,6 +136,7 @@ export function coerceKeychainStorageType(
     case KEYCHAIN_STORAGE_TYPES.RSA:
     case KEYCHAIN_STORAGE_TYPES.AES:
     case KEYCHAIN_STORAGE_TYPES.AES_GCM:
+    case KEYCHAIN_STORAGE_TYPES.AES_GCM_NO_AUTH:
     case KEYCHAIN_STORAGE_TYPES.KC:
       return storage;
     default:
@@ -146,10 +147,11 @@ export function coerceKeychainStorageType(
 function sortKeychainStorageTypes(
   storages: KeychainStorageType[],
 ): KeychainStorageType[] {
-  const order = [
+  const order: KeychainStorageType[] = [
     KEYCHAIN_STORAGE_TYPES.RSA,
     KEYCHAIN_STORAGE_TYPES.AES,
     KEYCHAIN_STORAGE_TYPES.AES_GCM,
+    KEYCHAIN_STORAGE_TYPES.AES_GCM_NO_AUTH,
     KEYCHAIN_STORAGE_TYPES.KC,
   ];
 
