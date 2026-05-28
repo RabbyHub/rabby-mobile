@@ -45,6 +45,7 @@ import {
   useDebugKeychainStorage,
   type CurrentKeychainVersion,
 } from '@/hooks/appSettings';
+import { useBiometrics } from '@/hooks/biometrics';
 import { useAppSecurityChain } from '@/hooks/global';
 import { useTheme2024 } from '@/hooks/theme';
 import { shareLocalFile } from '@/utils/shareLocalFile';
@@ -291,6 +292,21 @@ type KeychainDebugExportPayload = {
       CurrentKeychainVersion,
       KeychainStorageType[]
     >;
+    authenticationType: apisKeychain.KEYCHAIN_AUTH_TYPES;
+    authenticationTypeLabel: string;
+    isAuthenticatedByBiometrics: boolean;
+    defaultBiometricsAuthenticationType: apisKeychain.KEYCHAIN_AUTH_TYPES;
+    defaultBiometricsAuthenticationTypeLabel: string;
+    biometrics: {
+      authEnabled: boolean;
+      isBiometricsEnabled: boolean;
+      settingsAuthEnabled: boolean;
+      couldSetupBiometrics: boolean;
+      supportedBiometryType: apisKeychain.KeychainSupportedBiometryType;
+      devicePasscodeAvailable: boolean;
+      isUsingDevicePasscode: boolean;
+      defaultTypeLabel: string;
+    };
   };
   versions: {
     v8_2_0: KeychainVersionExportState;
@@ -1215,6 +1231,11 @@ export default function DevDataKeychain(): JSX.Element {
     isLight: true,
   });
   const { rabbitCode } = useAppSecurityChain();
+  const {
+    biometrics,
+    computed: biometricsComputed,
+    fetchBiometrics,
+  } = useBiometrics({ autoFetch: true });
   const { height: windowHeight } = useWindowDimensions();
   const actionsSheetRef = useRef<AppBottomSheetModal>(null);
   const helpSheetRef = useRef<AppBottomSheetModal>(null);
@@ -1441,6 +1462,7 @@ export default function DevDataKeychain(): JSX.Element {
         apisKeychainV8_2_0.getSupportedStorageTypes(),
         apisKeychainV9_0_0.getSupportedStorageTypes(),
         apisKeychainV10_0_0.getSupportedStorageTypes(),
+        fetchBiometrics(),
       ]);
 
       setBusinessStates(prev => ({
@@ -1468,7 +1490,7 @@ export default function DevDataKeychain(): JSX.Element {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchBiometrics]);
 
   useEffect(() => {
     refreshState();
@@ -2006,12 +2028,17 @@ export default function DevDataKeychain(): JSX.Element {
       version: CurrentKeychainVersion,
       options?: {
         targetStorage?: KeychainStorageType;
+        targetAuthType?: apisKeychain.KEYCHAIN_AUTH_TYPES;
+        actionLabel?: string;
         persistStorageSelection?: boolean;
       },
     ) => {
       const api = getBusinessApi(version);
       const targetStorage =
         options?.targetStorage ?? effectiveStorageByVersion[version];
+      const targetAuthType =
+        options?.targetAuthType ??
+        apisKeychain.getDefaultBiometricsAuthenticationType();
       let decryptedPassword = '';
 
       try {
@@ -2037,13 +2064,9 @@ export default function DevDataKeychain(): JSX.Element {
           );
         }
 
-        await api.setGenericPassword(
-          decryptedPassword,
-          apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS,
-          {
-            storage: targetStorage,
-          },
-        );
+        await api.setGenericPassword(decryptedPassword, targetAuthType, {
+          storage: targetStorage,
+        });
 
         if (options?.persistStorageSelection) {
           setDebugKeychainStorageForVersion(version, targetStorage);
@@ -2051,9 +2074,11 @@ export default function DevDataKeychain(): JSX.Element {
 
         updateBusinessState(version, {
           rewriteResult: {
-            label: 'Current Service',
+            label: options?.actionLabel || 'Current Service',
             service: apisKeychain.KEYCHAIN_DEFAULT_SERVICE,
             targetStorage,
+            targetAuthTypeLabel:
+              apisKeychain.getAuthenticationTypeLabel(targetAuthType),
             rewrittenAt: new Date().toISOString(),
           },
           rewriteErrorMessage: null,
@@ -2088,90 +2113,92 @@ export default function DevDataKeychain(): JSX.Element {
     ],
   );
 
-  const handleMigrateCurrentToV10BiometricsOrPasscode = useCallback(async () => {
-    const version: CurrentKeychainVersion = '10.0.0';
-    const api = getBusinessApi(version);
-    const targetStorage = effectiveStorageByVersion[version];
-    let decryptedPassword = '';
-    let vaultKeyString: string | undefined;
+  const handleMigrateCurrentToV10BiometricsOrPasscode =
+    useCallback(async () => {
+      const version: CurrentKeychainVersion = '10.0.0';
+      const api = getBusinessApi(version);
+      const targetStorage = effectiveStorageByVersion[version];
+      let decryptedPassword = '';
+      let vaultKeyString: string | undefined;
 
-    try {
-      setIsLoading(true);
-      updateBusinessState(version, {
-        rewriteResult: null,
-        rewriteErrorMessage: null,
-        lastActionErrorMessage: null,
-      });
+      try {
+        setIsLoading(true);
+        updateBusinessState(version, {
+          rewriteResult: null,
+          rewriteErrorMessage: null,
+          lastActionErrorMessage: null,
+        });
 
-      await api.requestGenericPassword({
-        purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
-        androidAuthPromptPolicy: apisKeychain.DEFAULT_ANDROID_AUTH_PROMPT_POLICY,
-        onPlainPassword: (password, credentials) => {
-          decryptedPassword = password;
-          vaultKeyString =
-            typeof credentials.vaultKeyString === 'string'
-              ? credentials.vaultKeyString
-              : undefined;
-        },
-      });
+        await api.requestGenericPassword({
+          purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
+          androidAuthPromptPolicy:
+            apisKeychain.DEFAULT_ANDROID_AUTH_PROMPT_POLICY,
+          onPlainPassword: (password, credentials) => {
+            decryptedPassword = password;
+            vaultKeyString =
+              typeof credentials.vaultKeyString === 'string'
+                ? credentials.vaultKeyString
+                : undefined;
+          },
+        });
 
-      if (!decryptedPassword) {
-        throw new Error(
-          'Current service returned no plain password to migrate.',
+        if (!decryptedPassword) {
+          throw new Error(
+            'Current service returned no plain password to migrate.',
+          );
+        }
+
+        await api.setGenericPassword(
+          decryptedPassword,
+          apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
+          {
+            storage: targetStorage,
+            vaultKeyString,
+          },
         );
+
+        setCurrentKeychainVersion(version);
+
+        updateBusinessState(version, {
+          rewriteResult: {
+            label: 'v10 Bio+Device Migration',
+            service: apisKeychain.KEYCHAIN_DEFAULT_SERVICE,
+            targetStorage,
+            targetAuthTypeLabel: apisKeychain.getAuthenticationTypeLabel(
+              apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
+            ),
+            rewrittenAt: new Date().toISOString(),
+          },
+          rewriteErrorMessage: null,
+        });
+        toast.success('v10 biometrics migration written');
+        Alert.alert(
+          'v10 migration written',
+          [
+            'Current com.debank entry was rewritten with BIOMETRICS_OR_PASSCODE.',
+            'Restart the app, then test fingerprint and face from the unlock screen.',
+            'If face still appears but cannot read the password, export this page for native debug details.',
+          ].join('\n'),
+        );
+      } catch (error) {
+        const parsed = api.parseKeychainError(error);
+        const message =
+          parsed.sysMessage ||
+          (error instanceof Error ? error.message : String(error));
+
+        updateBusinessState(version, {
+          rewriteErrorMessage: message,
+        });
+        Alert.alert('v10 biometrics migration failed', message);
+      } finally {
+        await refreshState();
       }
-
-      await api.setGenericPassword(
-        decryptedPassword,
-        apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
-        {
-          storage: targetStorage,
-          vaultKeyString,
-        },
-      );
-
-      setCurrentKeychainVersion(version);
-
-      updateBusinessState(version, {
-        rewriteResult: {
-          label: 'v10 Bio+Device Migration',
-          service: apisKeychain.KEYCHAIN_DEFAULT_SERVICE,
-          targetStorage,
-          targetAuthTypeLabel: apisKeychain.getAuthenticationTypeLabel(
-            apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
-          ),
-          rewrittenAt: new Date().toISOString(),
-        },
-        rewriteErrorMessage: null,
-      });
-      toast.success('v10 biometrics migration written');
-      Alert.alert(
-        'v10 migration written',
-        [
-          'Current com.debank entry was rewritten with BIOMETRICS_OR_PASSCODE.',
-          'Restart the app, then test fingerprint and face from the unlock screen.',
-          'If face still appears but cannot read the password, export this page for native debug details.',
-        ].join('\n'),
-      );
-    } catch (error) {
-      const parsed = api.parseKeychainError(error);
-      const message =
-        parsed.sysMessage ||
-        (error instanceof Error ? error.message : String(error));
-
-      updateBusinessState(version, {
-        rewriteErrorMessage: message,
-      });
-      Alert.alert('v10 biometrics migration failed', message);
-    } finally {
-      await refreshState();
-    }
-  }, [
-    effectiveStorageByVersion,
-    refreshState,
-    setCurrentKeychainVersion,
-    updateBusinessState,
-  ]);
+    }, [
+      effectiveStorageByVersion,
+      refreshState,
+      setCurrentKeychainVersion,
+      updateBusinessState,
+    ]);
 
   const handleChangeCurrentVersion = useCallback(
     async (nextVersion: CurrentKeychainVersion) => {
@@ -2225,6 +2252,9 @@ export default function DevDataKeychain(): JSX.Element {
   );
   const maskedRabbitCode = maskSecret(rabbitCode);
   const includeSecretFieldsInExport = __DEV__;
+  const currentAuthenticationType = apisKeychain.getAuthenticationType();
+  const defaultBiometricsAuthenticationType =
+    apisKeychain.getDefaultBiometricsAuthenticationType();
 
   const debugExportPayload = useMemo<KeychainDebugExportPayload>(
     () => ({
@@ -2246,6 +2276,26 @@ export default function DevDataKeychain(): JSX.Element {
         configuredStorageByVersion: debugKeychainStorageByVersion,
         effectiveStorageByVersion,
         supportedStorageTypesByVersion,
+        authenticationType: currentAuthenticationType,
+        authenticationTypeLabel: apisKeychain.getAuthenticationTypeLabel(
+          currentAuthenticationType,
+        ),
+        isAuthenticatedByBiometrics: apisKeychain.isAuthenticatedByBiometrics(),
+        defaultBiometricsAuthenticationType,
+        defaultBiometricsAuthenticationTypeLabel:
+          apisKeychain.getAuthenticationTypeLabel(
+            defaultBiometricsAuthenticationType,
+          ),
+        biometrics: {
+          authEnabled: biometrics.authEnabled,
+          isBiometricsEnabled: biometricsComputed.isBiometricsEnabled,
+          settingsAuthEnabled: biometricsComputed.settingsAuthEnabled,
+          couldSetupBiometrics: biometricsComputed.couldSetupBiometrics,
+          supportedBiometryType: biometrics.supportedBiometryType,
+          devicePasscodeAvailable: biometrics.devicePasscodeAvailable,
+          isUsingDevicePasscode: biometricsComputed.isUsingDevicePasscode,
+          defaultTypeLabel: biometricsComputed.defaultTypeLabel,
+        },
       },
       versions: {
         v8_2_0: sanitizeBusinessVersionStateForExport(
@@ -2323,8 +2373,18 @@ export default function DevDataKeychain(): JSX.Element {
     }),
     [
       businessStates,
+      biometrics.authEnabled,
+      biometrics.devicePasscodeAvailable,
+      biometrics.supportedBiometryType,
+      biometricsComputed.couldSetupBiometrics,
+      biometricsComputed.defaultTypeLabel,
+      biometricsComputed.isBiometricsEnabled,
+      biometricsComputed.isUsingDevicePasscode,
+      biometricsComputed.settingsAuthEnabled,
       canSwitchCurrentKeychainVersion,
       currentKeychainVersion,
+      currentAuthenticationType,
+      defaultBiometricsAuthenticationType,
       debugKeychainStorageByVersion,
       debugCurrentKeychainVersion,
       debugCurrentKeychainVersionField,
@@ -3003,6 +3063,8 @@ export default function DevDataKeychain(): JSX.Element {
     const versionMeta = KEYCHAIN_VERSION_META[resolvedTabVersion];
     const hasBusinessEntry =
       !!businessStates[resolvedTabVersion].debugState?.hasEntry;
+    const canMakeLegacyBiometricsEntry =
+      IS_ANDROID && hasBusinessEntry && biometricsComputed.isBiometricsEnabled;
 
     return (
       <BottomSheetScrollView
@@ -3101,6 +3163,21 @@ export default function DevDataKeychain(): JSX.Element {
               }}
             />
             <Button
+              title={IS_ANDROID ? 'Make Legacy Bio-only' : 'Android Only'}
+              type="warning"
+              height={40}
+              disabled={isLoading || !canMakeLegacyBiometricsEntry}
+              containerStyle={styles.sheetActionButton}
+              onPress={() => {
+                runSheetAction(() =>
+                  handleBusinessRewrite(resolvedTabVersion, {
+                    targetAuthType: apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+                    actionLabel: 'Legacy Bio-only Test Entry',
+                  }),
+                );
+              }}
+            />
+            <Button
               title="Clear Keychain"
               type="warning"
               height={40}
@@ -3135,9 +3212,7 @@ export default function DevDataKeychain(): JSX.Element {
                 disabled={!IS_ANDROID || isLoading || !hasBusinessEntry}
                 containerStyle={styles.sheetActionButton}
                 onPress={() => {
-                  runSheetAction(
-                    handleMigrateCurrentToV10BiometricsOrPasscode,
-                  );
+                  runSheetAction(handleMigrateCurrentToV10BiometricsOrPasscode);
                 }}
               />
             </ActionSheetSection>
@@ -3369,6 +3444,67 @@ export default function DevDataKeychain(): JSX.Element {
               </TouchableOpacity>
             ))}
           </View>
+        </View>
+
+        <View style={styles.summaryCard}>
+          <Text style={styles.sectionTitle}>Current Auth Snapshot</Text>
+          <CompactStatusGrid
+            maxColumns={2}
+            items={[
+              {
+                label: 'Stored Auth',
+                value: apisKeychain.getAuthenticationTypeLabel(
+                  currentAuthenticationType,
+                ),
+                allowHorizontalOverflow: true,
+              },
+              {
+                label: 'Default Write Auth',
+                value: apisKeychain.getAuthenticationTypeLabel(
+                  defaultBiometricsAuthenticationType,
+                ),
+                allowHorizontalOverflow: true,
+              },
+              {
+                label: 'Auth By Biometrics',
+                value: apisKeychain.isAuthenticatedByBiometrics(),
+              },
+              {
+                label: 'Store Auth Enabled',
+                value: biometrics.authEnabled,
+              },
+              {
+                label: 'Computed Bio Enabled',
+                value: biometricsComputed.isBiometricsEnabled,
+              },
+              {
+                label: 'Settings Auth Enabled',
+                value: biometricsComputed.settingsAuthEnabled,
+              },
+              {
+                label: 'Could Setup',
+                value: biometricsComputed.couldSetupBiometrics,
+              },
+              {
+                label: 'Device Passcode Available',
+                value: biometrics.devicePasscodeAvailable,
+              },
+              {
+                label: 'Using Device Passcode',
+                value: biometricsComputed.isUsingDevicePasscode,
+              },
+            ]}
+          />
+          <StatusRow
+            label="Supported Biometry Type"
+            value={biometrics.supportedBiometryType}
+            allowHorizontalOverflow
+          />
+          <StatusRow
+            label="Default UI Label"
+            value={biometricsComputed.defaultTypeLabel}
+            allowHorizontalOverflow
+          />
         </View>
 
         <PillsSwitch
