@@ -18,6 +18,7 @@ describe('core/apis/keychain current facade', () => {
         BIOMETRICS: 1,
         PASSCODE: 2,
         REMEMBER_ME: 3,
+        BIOMETRICS_OR_PASSCODE: 4,
       },
       KEYCHAIN_DEFAULT_SERVICE: 'com.debank',
       KEYCHAIN_ERROR_CODES: {
@@ -30,6 +31,7 @@ describe('core/apis/keychain current facade', () => {
       },
       getAuthenticationType: jest.fn(() => 1),
       getAuthenticationTypeLabel: jest.fn(() => 'BIOMETRICS'),
+      getDefaultBiometricsAuthenticationType: jest.fn(() => 4),
       isAuthenticatedByBiometrics: jest.fn(() => true),
       isBrokenBiometricsEntryError: jest.fn(() => false),
       makeKeyChainError: jest.fn(),
@@ -40,6 +42,7 @@ describe('core/apis/keychain current facade', () => {
       makeSecureKeyChainInstance: jest.fn(() => 'v8-instance'),
       requestGenericPassword: mockV8RequestGenericPassword,
       getSupportedBiometryType: jest.fn(async () => 'Fingerprint'),
+      isPasscodeAuthAvailable: jest.fn(async () => true),
       getKeychainDebugState: jest.fn(async () => ({ sourceLabel: 'v8-label' })),
       debugRemoveCurrentCipherStorageMarker: jest.fn(async () => true),
       debugWriteMockLegacyBiometricsEntry: jest.fn(async () => true),
@@ -47,6 +50,8 @@ describe('core/apis/keychain current facade', () => {
         password: 'v8',
       })),
       setGenericPassword: jest.fn(async () => undefined),
+      migrateAndroidBiometricsToPasscode: jest.fn(async () => false),
+      getDefaultBiometricsAuthenticationType: jest.fn(() => 4),
       resetGenericPassword: mockV8ResetGenericPassword,
       clearApplicationPassword: jest.fn(async () => ({
         clearCustomPasswordError: null,
@@ -58,6 +63,7 @@ describe('core/apis/keychain current facade', () => {
       makeSecureKeyChainInstance: jest.fn(() => 'v9-instance'),
       requestGenericPassword: mockV9RequestGenericPassword,
       getSupportedBiometryType: jest.fn(async () => 'Fingerprint'),
+      isPasscodeAuthAvailable: jest.fn(async () => true),
       getKeychainDebugState: jest.fn(async () => ({ sourceLabel: 'v9-label' })),
       debugRemoveCurrentCipherStorageMarker: jest.fn(async () => true),
       debugWriteMockLegacyBiometricsEntry: jest.fn(async () => true),
@@ -65,6 +71,8 @@ describe('core/apis/keychain current facade', () => {
         password: 'v9',
       })),
       setGenericPassword: jest.fn(async () => undefined),
+      migrateAndroidBiometricsToPasscode: jest.fn(async () => false),
+      getDefaultBiometricsAuthenticationType: jest.fn(() => 4),
       resetGenericPassword: mockV9ResetGenericPassword,
       clearApplicationPassword: jest.fn(async () => ({
         clearCustomPasswordError: null,
@@ -76,6 +84,7 @@ describe('core/apis/keychain current facade', () => {
       makeSecureKeyChainInstance: jest.fn(() => 'v10-instance'),
       requestGenericPassword: mockV10RequestGenericPassword,
       getSupportedBiometryType: jest.fn(async () => 'Fingerprint'),
+      isPasscodeAuthAvailable: jest.fn(async () => true),
       getKeychainDebugState: jest.fn(async () => ({
         sourceLabel: 'v10-label',
       })),
@@ -85,6 +94,8 @@ describe('core/apis/keychain current facade', () => {
         password: 'v10',
       })),
       setGenericPassword: jest.fn(async () => undefined),
+      migrateAndroidBiometricsToPasscode: jest.fn(async () => false),
+      getDefaultBiometricsAuthenticationType: jest.fn(() => 4),
       resetGenericPassword: mockV10ResetGenericPassword,
       clearApplicationPassword: jest.fn(async () => ({
         clearCustomPasswordError: null,

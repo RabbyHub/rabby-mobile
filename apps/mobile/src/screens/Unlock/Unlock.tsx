@@ -301,6 +301,9 @@ function useUnlockForm(
           toast.show(result.toastError || result.error);
         } else {
           updateUnlockTime();
+          await apisKeychain.migrateAndroidBiometricsToPasscode(
+            values.password,
+          );
           await checkUnlocked();
         }
       } catch (error) {

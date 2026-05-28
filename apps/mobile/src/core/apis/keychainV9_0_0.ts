@@ -13,6 +13,7 @@ import {
   type AndroidAuthPromptPolicy,
   type KeychainStorageType,
   coerceKeychainStorageType,
+  getDefaultBiometricsAuthenticationType,
   getAuthenticationType,
   getAuthenticationTypeLabel,
   isAuthenticatedByBiometrics,
@@ -46,6 +47,7 @@ export {
   type AndroidAuthPromptPolicy,
   type KeychainStorageType,
   coerceKeychainStorageType,
+  getDefaultBiometricsAuthenticationType,
   getAuthenticationType,
   getAuthenticationTypeLabel,
   isAuthenticatedByBiometrics,
@@ -65,6 +67,7 @@ export const makeSecureKeyChainInstance =
   keychainApi.makeSecureKeyChainInstance;
 export const requestGenericPassword = keychainApi.requestGenericPassword;
 export const getSupportedBiometryType = keychainApi.getSupportedBiometryType;
+export const isPasscodeAuthAvailable = keychainApi.isPasscodeAuthAvailable;
 export const getKeychainDebugState = keychainApi.getKeychainDebugState;
 export const debugRemoveCurrentCipherStorageMarker =
   keychainApi.debugRemoveCurrentCipherStorageMarker;
@@ -74,6 +77,8 @@ export const debugWriteMockLegacyBiometricsEntry =
 export const debugDecryptStoredPasswordPayload =
   keychainApi.debugDecryptStoredPasswordPayload;
 export const setGenericPassword = keychainApi.setGenericPassword;
+export const migrateAndroidBiometricsToPasscode =
+  keychainApi.migrateAndroidBiometricsToPasscode;
 export const cacheTrustedVaultKeyString =
   keychainApi.cacheTrustedVaultKeyString;
 export const resetGenericPassword = keychainApi.resetGenericPassword;

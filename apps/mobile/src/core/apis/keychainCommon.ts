@@ -161,6 +161,7 @@ export type KeychainCompatibleModule = {
   getSupportedBiometryType: (
     options?: KeychainCompatibleOptions,
   ) => Promise<KeychainSupportedBiometryType>;
+  isPasscodeAuthAvailable?: () => Promise<boolean>;
   ACCESSIBLE: {
     WHEN_UNLOCKED_THIS_DEVICE_ONLY: unknown;
   };
@@ -473,6 +474,24 @@ export function isAuthenticatedByBiometrics() {
     type === KEYCHAIN_AUTH_TYPES.BIOMETRICS ||
     type === KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE
   );
+}
+
+export function getDefaultBiometricsAuthenticationType() {
+  return isAndroid
+    ? KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE
+    : KEYCHAIN_AUTH_TYPES.BIOMETRICS;
+}
+
+function getPasscodeCapableAndroidAuthType(type: KEYCHAIN_AUTH_TYPES) {
+  if (
+    isAndroid &&
+    (type === KEYCHAIN_AUTH_TYPES.BIOMETRICS ||
+      type === KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE)
+  ) {
+    return KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE;
+  }
+
+  return type;
 }
 
 function sleep(ms: number = 1000) {
@@ -902,7 +921,8 @@ export function createBusinessKeychainApi({
     return (
       isAndroid &&
       isAuthenticatedByBiometrics() &&
-      storage === LEGACY_RSA_STORAGE_TYPE
+      (storage === LEGACY_RSA_STORAGE_TYPE ||
+        getAuthenticationType() === KEYCHAIN_AUTH_TYPES.BIOMETRICS)
     );
   }
 
@@ -916,9 +936,13 @@ export function createBusinessKeychainApi({
     }
 
     try {
-      await setGenericPassword(plainPassword, KEYCHAIN_AUTH_TYPES.BIOMETRICS, {
-        vaultKeyString: credentialsPatch.vaultKeyString,
-      });
+      await setGenericPassword(
+        plainPassword,
+        KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
+        {
+          vaultKeyString: credentialsPatch.vaultKeyString,
+        },
+      );
     } catch (error) {
       if (__DEV__) {
         console.warn(
@@ -980,13 +1004,14 @@ export function createBusinessKeychainApi({
     credentialsPatch: Partial<KeychainCompatibleUserCredentials> = {},
   ) {
     const authType = getAuthenticationType();
+    const nextAuthType = getPasscodeCapableAndroidAuthType(authType);
 
     if (authType === KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD) {
       return;
     }
 
     try {
-      await setGenericPassword(plainPassword, authType, {
+      await setGenericPassword(plainPassword, nextAuthType, {
         vaultKeyString: credentialsPatch.vaultKeyString,
       });
       logger.info(
@@ -994,6 +1019,7 @@ export function createBusinessKeychainApi({
         {
           sourceLabel,
           authType,
+          nextAuthType,
         },
       );
     } catch (error) {
@@ -1002,6 +1028,7 @@ export function createBusinessKeychainApi({
         {
           sourceLabel,
           authType,
+          nextAuthType,
           error: getErrorMessage(error),
         },
       );
@@ -1263,7 +1290,7 @@ export function createBusinessKeychainApi({
 
   async function setGenericPassword(
     password: string,
-    type: KEYCHAIN_AUTH_TYPES = KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+    type: KEYCHAIN_AUTH_TYPES = getDefaultBiometricsAuthenticationType(),
     options?: {
       storage?: KeychainStorageType;
       vaultKeyString?: string;
@@ -1307,11 +1334,44 @@ export function createBusinessKeychainApi({
     }
   }
 
+  async function migrateAndroidBiometricsToPasscode(password: string) {
+    if (
+      !isAndroid ||
+      getAuthenticationType() !== KEYCHAIN_AUTH_TYPES.BIOMETRICS
+    ) {
+      return false;
+    }
+
+    try {
+      await setGenericPassword(
+        password,
+        KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
+      );
+      logger.info(
+        '[keychain] migrated Android biometrics to passcode-capable auth',
+        {
+          sourceLabel,
+        },
+      );
+      return true;
+    } catch (error) {
+      logger.warn(
+        '[keychain] failed to migrate Android biometrics to passcode-capable auth',
+        {
+          sourceLabel,
+          error: getErrorMessage(error),
+        },
+      );
+      return false;
+    }
+  }
+
   async function cacheTrustedVaultKeyString(
     password: string,
     vaultKeyString: string,
   ) {
     const authType = getAuthenticationType();
+    const nextAuthType = getPasscodeCapableAndroidAuthType(authType);
 
     if (authType === KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD) {
       return;
@@ -1320,15 +1380,16 @@ export function createBusinessKeychainApi({
     const startedAt = Date.now();
     traceAndroidKeychainPerf('trusted_vault_key_cache_start', {
       authType,
+      nextAuthType,
     });
 
-    await setTrustedVaultKeyString(vaultKeyString, authType);
+    await setTrustedVaultKeyString(vaultKeyString, nextAuthType);
     traceAndroidKeychainPerf('trusted_vault_key_cache_separate_done', {
       elapsedMs: Date.now() - startedAt,
     });
 
     try {
-      await setGenericPassword(password, authType, {
+      await setGenericPassword(password, nextAuthType, {
         vaultKeyString,
         skipTrustedVaultKeyStringWrite: true,
       });
@@ -1347,6 +1408,23 @@ export function createBusinessKeychainApi({
     return keychainModule.getSupportedBiometryType(
       getAndroidBiometricSecurityLevelOptions(),
     );
+  }
+
+  async function isPasscodeAuthAvailable() {
+    if (
+      !isAndroid ||
+      typeof keychainModule.isPasscodeAuthAvailable !== 'function'
+    ) {
+      return false;
+    }
+
+    return keychainModule.isPasscodeAuthAvailable().catch(error => {
+      logger.warn('[keychain] failed to check passcode auth availability', {
+        sourceLabel,
+        error: getErrorMessage(error),
+      });
+      return false;
+    });
   }
 
   async function clearApplicationPassword(password: string) {
@@ -1373,17 +1451,20 @@ export function createBusinessKeychainApi({
     getAuthenticationType,
     getAuthenticationTypeLabel,
     isAuthenticatedByBiometrics,
+    getDefaultBiometricsAuthenticationType,
     parseKeychainError,
     makeKeyChainError,
     isBrokenBiometricsEntryError,
     requestGenericPassword,
     getSupportedBiometryType,
+    isPasscodeAuthAvailable,
     getKeychainDebugState,
     debugRemoveCurrentCipherStorageMarker,
     getSupportedStorageTypes,
     debugWriteMockLegacyBiometricsEntry,
     debugDecryptStoredPasswordPayload,
     setGenericPassword,
+    migrateAndroidBiometricsToPasscode,
     cacheTrustedVaultKeyString,
     resetGenericPassword,
     clearApplicationPassword,

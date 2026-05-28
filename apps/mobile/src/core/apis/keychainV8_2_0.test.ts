@@ -102,9 +102,11 @@ describe('core/apis/keychainV8_2_0', () => {
         ACCESS_CONTROL: {
           BIOMETRY_CURRENT_SET: 'BiometryCurrentSet',
           DEVICE_PASSCODE: 'DevicePasscode',
+          BIOMETRY_ANY_OR_DEVICE_PASSCODE: 'BiometryAnyOrDevicePasscode',
         },
         AUTHENTICATION_TYPE: {
           BIOMETRICS: 'AuthenticationWithBiometrics',
+          DEVICE_PASSCODE_OR_BIOMETRICS: 'DevicePasscodeOrBiometrics',
         },
         SECURITY_RULES: {
           AUTOMATIC_UPGRADE: 'automaticUpgradeToMoreSecuredStorage',
@@ -228,7 +230,7 @@ describe('core/apis/keychainV8_2_0', () => {
     );
     expect(mockUpdateUnlockTime).toHaveBeenCalled();
     expect(mockEncrypt).toHaveBeenCalledWith(currentRabbitCode, {
-      androidKeychainAuthProfile: 'biometric-strong-v1',
+      androidKeychainAuthProfile: 'biometric-or-device-credential-v1',
       password: 'plain-password',
     });
     expect(mockSetGenericPassword).toHaveBeenCalledTimes(1);
@@ -262,7 +264,7 @@ describe('core/apis/keychainV8_2_0', () => {
       expect.objectContaining({
         service: 'com.debank',
         accessible: 'AccessibleWhenUnlockedThisDeviceOnly',
-        accessControl: 'BiometryCurrentSet',
+        accessControl: 'BiometryAnyOrDevicePasscode',
       }),
     );
     expect(mockSetGenericPassword.mock.calls[0]?.[2]).toHaveProperty('storage');
@@ -313,6 +315,7 @@ describe('core/apis/keychainV8_2_0', () => {
   it('does not rewrite Android biometrics storage when the entry is already upgraded', async () => {
     const { module, mockSetGenericPassword } = await setup({
       storage: 'KeystoreAESGCM',
+      authType: 4,
     });
 
     await module.requestGenericPassword({
@@ -320,6 +323,27 @@ describe('core/apis/keychainV8_2_0', () => {
     });
 
     expect(mockSetGenericPassword).not.toHaveBeenCalled();
+  });
+
+  it('rewrites Android biometric entries when the stored auth type is legacy biometrics', async () => {
+    const { module, mockSetGenericPassword } = await setup({
+      storage: 'KeystoreAESGCM',
+      authType: 1,
+    });
+
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+
+    expect(mockSetGenericPassword).toHaveBeenCalledWith(
+      'rabbymobile-user',
+      'enc:plain-password',
+      expect.objectContaining({
+        service: 'com.debank',
+        accessible: 'AccessibleWhenUnlockedThisDeviceOnly',
+        accessControl: 'BiometryAnyOrDevicePasscode',
+      }),
+    );
   });
 
   it('passes the Android authenticated-session reuse option through business reads when requested', async () => {
@@ -531,9 +555,11 @@ describe('core/apis/keychainV8_2_0', () => {
         ACCESS_CONTROL: {
           BIOMETRY_CURRENT_SET: 'BiometryCurrentSet',
           DEVICE_PASSCODE: 'DevicePasscode',
+          BIOMETRY_ANY_OR_DEVICE_PASSCODE: 'BiometryAnyOrDevicePasscode',
         },
         AUTHENTICATION_TYPE: {
           BIOMETRICS: 'AuthenticationWithBiometrics',
+          DEVICE_PASSCODE_OR_BIOMETRICS: 'DevicePasscodeOrBiometrics',
         },
         SECURITY_RULES: {
           AUTOMATIC_UPGRADE: 'automaticUpgradeToMoreSecuredStorage',
