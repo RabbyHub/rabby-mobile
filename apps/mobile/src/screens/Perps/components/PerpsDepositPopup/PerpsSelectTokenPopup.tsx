@@ -13,11 +13,16 @@ import { useTheme2024 } from '@/hooks/theme';
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
-import { ITokenItem } from '@/store/tokens';
+import {
+  ITokenItem,
+  TokenEntityId,
+  tokenEntityResourceStore,
+  useTokenEntity,
+} from '@/store/tokens';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useMemoizedFn } from 'ahooks';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
@@ -32,61 +37,42 @@ const isDirectDepositToken = (item: ITokenItem) => {
   );
 };
 
+export type PerpsDepositTokenRow = {
+  tokenId: TokenEntityId;
+};
+
+export const getPerpsDepositTokenFromRow = (row?: PerpsDepositTokenRow) => {
+  if (!row) {
+    return undefined;
+  }
+  return tokenEntityResourceStore.getValue(row.tokenId);
+};
+
 export const PerpsSelectTokenPopup: React.FC<{
   onClose?(): void;
   visible?: boolean;
-  tokens: ITokenItem[];
+  tokenRows: PerpsDepositTokenRow[];
   onSelect?(token: ITokenItem): Promise<void>;
-}> = ({ onClose, visible, onSelect, tokens }) => {
+}> = ({ onClose, visible, onSelect, tokenRows }) => {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
   });
 
-  const renderItem = useMemoizedFn(({ item }: { item: ITokenItem }) => {
-    return (
-      <TouchableOpacity
-        style={[styles.tokenListItem]}
-        onPress={() => {
-          onSelect?.(item);
-        }}>
-        <View style={styles.box}>
-          <AssetAvatar
-            size={46}
-            chain={item.chain}
-            logo={item.logo_url}
-            chainSize={18}
-          />
-          <Text
-            style={StyleSheet.flatten([
-              {
-                marginLeft: 8,
-              },
-              styles.text,
-            ])}>
-            {getTokenSymbol(item)}
-          </Text>
-          {isDirectDepositToken(item) ? (
-            <View style={styles.depositTag}>
-              <Text style={styles.depositTagText}>
-                {t('page.perps.PerpsDepositTokenModal.directDepositFast')}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-        <View style={styles.rightArea}>
-          <Text style={styles.text}>
-            {formatUsdValue(
-              isDirectDepositToken(item)
-                ? item.amount
-                : item.amount * item.price || 0,
-            )}
-          </Text>
-          <Text style={styles.amountText}>{formatAmount(item.amount)}</Text>
-        </View>
-      </TouchableOpacity>
-    );
-  });
+  const renderItem = useMemoizedFn(
+    ({ item }: { item: PerpsDepositTokenRow }) => {
+      return (
+        <PerpsSelectTokenRow
+          row={item}
+          styles={styles}
+          directDepositLabel={t(
+            'page.perps.PerpsDepositTokenModal.directDepositFast',
+          )}
+          onSelect={onSelect}
+        />
+      );
+    },
+  );
 
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -121,11 +107,11 @@ export const PerpsSelectTokenPopup: React.FC<{
         </View>
         <BottomSheetFlatList
           keyboardShouldPersistTaps="handled"
-          data={tokens}
+          data={tokenRows}
           style={styles.flatList}
           renderItem={renderItem}
           ItemSeparatorComponent={() => <View style={styles.divider} />}
-          keyExtractor={item => item.id + item.chain}
+          keyExtractor={item => item.tokenId}
           ListEmptyComponent={
             <NotMatchedHolder
               // eslint-disable-next-line react-native/no-inline-styles
@@ -140,6 +126,69 @@ export const PerpsSelectTokenPopup: React.FC<{
     </AppBottomSheetModal>
   );
 };
+
+const PerpsSelectTokenRow = React.memo(
+  ({
+    row,
+    styles,
+    directDepositLabel,
+    onSelect,
+  }: {
+    row: PerpsDepositTokenRow;
+    styles: ReturnType<(typeof getStyle)['getStyles']>;
+    directDepositLabel: string;
+    onSelect?(token: ITokenItem): Promise<void>;
+  }) => {
+    const token = useTokenEntity(row.tokenId);
+    const isDirect = useMemo(
+      () => (token ? isDirectDepositToken(token) : false),
+      [token],
+    );
+
+    if (!token) {
+      return null;
+    }
+
+    return (
+      <TouchableOpacity
+        style={[styles.tokenListItem]}
+        onPress={() => {
+          onSelect?.(token);
+        }}>
+        <View style={styles.box}>
+          <AssetAvatar
+            size={46}
+            chain={token.chain}
+            logo={token.logo_url}
+            chainSize={18}
+          />
+          <Text
+            style={StyleSheet.flatten([
+              {
+                marginLeft: 8,
+              },
+              styles.text,
+            ])}>
+            {getTokenSymbol(token)}
+          </Text>
+          {isDirect ? (
+            <View style={styles.depositTag}>
+              <Text style={styles.depositTagText}>{directDepositLabel}</Text>
+            </View>
+          ) : null}
+        </View>
+        <View style={styles.rightArea}>
+          <Text style={styles.text}>
+            {formatUsdValue(
+              isDirect ? token.amount : token.amount * token.price || 0,
+            )}
+          </Text>
+          <Text style={styles.amountText}>{formatAmount(token.amount)}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  },
+);
 
 const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   container: {

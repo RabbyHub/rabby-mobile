@@ -1,10 +1,10 @@
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { queryTokensCache } from '@/core/apis/tokenCache';
 import { openapi } from '@/core/request';
-import { mCreate, zCreate } from '@/core/utils/reexports';
+import { zCreate, zMutative } from '@/core/utils/reexports';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { syncRemoteTokens } from '@/databases/sync/assets';
-import { defaultTokenFilter, lpTokenFilter } from '@/utils/lpToken';
+import { lpTokenFilter } from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import { preferenceService } from '@/core/services/shared';
 import { getTokenSymbol } from '@/utils/token';
@@ -134,20 +134,19 @@ const isDataExpiredBatch = async (addresses: string[]) => {
   return res.some(item => !!item);
 };
 
-const COMPUTED_CACHE_LIMIT = 10;
-
-const createEmptyAssetsResult = (): TokenAssetsResult => ({
-  unFoldTokens: [],
-  foldTokens: [],
-  scamTokens: [],
-  hasFoldTokens: false,
-});
+const normalizeAddress = (address: string) => address.toLowerCase();
 
 const normalizeAddresses = (addresses: string[]) =>
-  addresses.map(address => address.toLowerCase());
+  addresses.map(normalizeAddress);
+
+const normalizeAddressSet = (addresses: string[]) =>
+  new Set(normalizeAddresses(addresses));
 
 const getAddressesKey = (addresses: string[]) =>
   normalizeAddresses(addresses).slice().sort().join('|');
+
+const getOrderedAddressesKey = (addresses: string[]) =>
+  normalizeAddresses(addresses).join('|');
 
 export const getMultiAssetsCacheKey = (
   addresses: string[],
@@ -164,25 +163,9 @@ export const getSingleAssetsCacheKey = (
   chainServerId?: string,
   isLpTokenEnabled?: boolean,
 ) =>
-  `${address.toLowerCase()}::${chainServerId ?? ''}::${
+  `${normalizeAddress(address)}::${chainServerId ?? ''}::${
     isLpTokenEnabled ? '1' : '0'
   }`;
-
-export const getTokenSelectCacheKey = (
-  addresses: string[],
-  chainServerId?: string,
-  keyword?: string,
-  isLpTokenEnabled?: boolean,
-) =>
-  `${getAddressesKey(addresses)}::${chainServerId ?? ''}::${
-    keyword ? keyword.toLowerCase() : ''
-  }::${isLpTokenEnabled ? '1' : '0'}`;
-
-export const getPerpsTokenSelectCacheKey = (address: string) =>
-  address.toLowerCase();
-
-export const getChainSelectorCacheKey = (addresses: string[]) =>
-  getAddressesKey(addresses);
 
 export type TokenEntityId = string & {
   readonly __tokenEntityId: unique symbol;
@@ -201,6 +184,29 @@ export type TokenAssetsIndexRow =
       type: 'group';
       groupId: TokenGroupId;
     };
+
+export type TokenSelectIndexRow = {
+  type: 'token';
+  tokenId: TokenEntityId;
+};
+
+export type TokenSelectIndexResult = {
+  tokenIds: TokenEntityId[];
+  rows: TokenSelectIndexRow[];
+};
+
+export type TokenStaticIndexItem = {
+  tokenId: TokenEntityId;
+  ownerAddr: string;
+  chain: string;
+  id: string;
+  symbol?: string;
+  isCore: boolean | null;
+  isVerified?: boolean | null;
+  isSuspicious?: boolean | null;
+  protocolId?: string;
+  searchText: string;
+};
 
 export type TokenAssetsIndexResult = {
   unFoldRows: TokenAssetsIndexRow[];
@@ -223,18 +229,30 @@ export type TokenGroupResourceValue = {
 
 const TOKEN_ENTITY_RESOURCE_FAMILY = 'token.entity';
 const TOKEN_GROUP_RESOURCE_FAMILY = 'token.group';
+export const EMPTY_TOKEN_ENTITY_IDS: TokenEntityId[] = [];
+const EMPTY_TOKEN_ASSETS_INDEX_ROWS: TokenAssetsIndexRow[] = [];
+const EMPTY_TOKEN_SELECT_INDEX_ROWS: TokenSelectIndexRow[] = [];
+const EMPTY_STRING_LIST: string[] = [];
 
-const createEmptyAssetsIndexResult = (): TokenAssetsIndexResult => ({
-  unFoldRows: [],
-  foldRows: [],
-  scamRows: [],
-  unFoldTokenIds: [],
-  foldTokenIds: [],
-  scamTokenIds: [],
-  scamTokenPreviewLogoUrls: [],
+export const EMPTY_TOKEN_ASSETS_INDEX_RESULT: TokenAssetsIndexResult = {
+  unFoldRows: EMPTY_TOKEN_ASSETS_INDEX_ROWS,
+  foldRows: EMPTY_TOKEN_ASSETS_INDEX_ROWS,
+  scamRows: EMPTY_TOKEN_ASSETS_INDEX_ROWS,
+  unFoldTokenIds: EMPTY_TOKEN_ENTITY_IDS,
+  foldTokenIds: EMPTY_TOKEN_ENTITY_IDS,
+  scamTokenIds: EMPTY_TOKEN_ENTITY_IDS,
+  scamTokenPreviewLogoUrls: EMPTY_STRING_LIST,
   foldCoreUsdValue: 0,
   hasFoldTokens: false,
-});
+};
+
+const EMPTY_TOKEN_SELECT_INDEX_RESULT: TokenSelectIndexResult = {
+  tokenIds: EMPTY_TOKEN_ENTITY_IDS,
+  rows: EMPTY_TOKEN_SELECT_INDEX_ROWS,
+};
+
+const createEmptyAssetsIndexResult = (): TokenAssetsIndexResult =>
+  EMPTY_TOKEN_ASSETS_INDEX_RESULT;
 
 export const buildTokenEntityId = (
   token: Pick<ITokenItem, 'owner_addr' | 'chain' | 'id'>,
@@ -244,6 +262,31 @@ export const buildTokenEntityId = (
     token.chain.toLowerCase(),
     token.id.toLowerCase(),
   ].join(':') as TokenEntityId;
+
+const getTokenEntityIdAddress = (tokenId: string) => tokenId.split(':', 1)[0];
+
+const getChangedTokenKeys = (
+  previousToken: ITokenItem | undefined,
+  nextToken: ITokenItem,
+) => {
+  if (!previousToken) {
+    return null;
+  }
+
+  const keys = new Set([
+    ...Object.keys(previousToken),
+    ...Object.keys(nextToken),
+  ] as Array<keyof ITokenItem>);
+  const changedKeys: Array<keyof ITokenItem> = [];
+
+  keys.forEach(key => {
+    if (!Object.is(previousToken[key], nextToken[key])) {
+      changedKeys.push(key);
+    }
+  });
+
+  return changedKeys;
+};
 
 const getTokenListFromTokenMap = (
   tokenListMap: TokenListState['tokenListMap'],
@@ -259,9 +302,14 @@ class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
     source: ObservableResourceValueSource = 'remote',
     options?: {
       pruneMissing?: boolean;
+      pruneMissingAddresses?: Set<string>;
     },
   ) => {
-    if (!tokens.length && !options?.pruneMissing) {
+    if (
+      !tokens.length &&
+      !options?.pruneMissing &&
+      !options?.pruneMissingAddresses?.size
+    ) {
       return;
     }
 
@@ -275,18 +323,21 @@ class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
     const changedTokens: Array<{
       tokenId: TokenEntityId;
       token: ITokenItem;
+      changedKeys: Array<keyof ITokenItem> | null;
       meta: (typeof prev.metaMap)[string];
     }> = [];
 
     entries.forEach((token, tokenId) => {
       const prevToken = prev.valueMap[tokenId];
       const prevMeta = prev.metaMap[tokenId];
-      const isTokenChanged = prevToken !== token;
+      const changedKeys = getChangedTokenKeys(prevToken, token);
+      const isTokenChanged = !prevToken || !!changedKeys?.length;
 
       if (!prevMeta || isTokenChanged) {
         changedTokens.push({
           tokenId,
           token,
+          changedKeys,
           meta: {
             family: TOKEN_ENTITY_RESOURCE_FAMILY,
             resourceKey: tokenId,
@@ -308,13 +359,20 @@ class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
       }
     });
 
+    const pruneMissingAddresses = options?.pruneMissingAddresses;
+    const previousTokenIds = Array.from(
+      new Set([...Object.keys(prev.valueMap), ...Object.keys(prev.metaMap)]),
+    );
     const removedTokenIds = options?.pruneMissing
-      ? Array.from(
-          new Set([
-            ...Object.keys(prev.valueMap),
-            ...Object.keys(prev.metaMap),
-          ]),
-        ).filter(tokenId => !entries.has(tokenId as TokenEntityId))
+      ? previousTokenIds.filter(
+          tokenId => !entries.has(tokenId as TokenEntityId),
+        )
+      : pruneMissingAddresses?.size
+      ? previousTokenIds.filter(
+          tokenId =>
+            pruneMissingAddresses.has(getTokenEntityIdAddress(tokenId)) &&
+            !entries.has(tokenId as TokenEntityId),
+        )
       : [];
 
     if (!changedTokens.length && !removedTokenIds.length) {
@@ -322,8 +380,19 @@ class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
     }
 
     this.mutateState(draft => {
-      changedTokens.forEach(({ tokenId, token, meta }) => {
-        draft.valueMap[tokenId] = token;
+      changedTokens.forEach(({ tokenId, token, changedKeys, meta }) => {
+        const previousToken = draft.valueMap[tokenId];
+        if (!previousToken || !changedKeys) {
+          draft.valueMap[tokenId] = token;
+        } else {
+          changedKeys.forEach(key => {
+            if (Object.prototype.hasOwnProperty.call(token, key)) {
+              previousToken[key] = token[key] as never;
+            } else {
+              delete previousToken[key];
+            }
+          });
+        }
         draft.metaMap[tokenId] = meta;
       });
 
@@ -341,6 +410,36 @@ class TokenEntityResourceStore extends ResourceBaseStore<ITokenItem> {
     this.upsertTokens(getTokenListFromTokenMap(tokenListMap), source, {
       pruneMissing: true,
     });
+  };
+
+  syncAddressesFromTokenListMap = (
+    tokenListMap: TokenListState['tokenListMap'],
+    addresses: string[],
+    source: ObservableResourceValueSource = 'remote',
+  ) => {
+    const addressSet = normalizeAddressSet(addresses);
+    if (!addressSet.size) {
+      return;
+    }
+
+    const tokens = Array.from(addressSet).flatMap(
+      address => tokenListMap[address] || [],
+    );
+    this.upsertTokens(tokens, source, {
+      pruneMissingAddresses: addressSet,
+    });
+  };
+
+  syncChangedAddressesFromTokenListMap = (
+    tokenListMap: TokenListState['tokenListMap'],
+    changedAddresses: Set<string>,
+    source: ObservableResourceValueSource = 'remote',
+  ) => {
+    this.syncAddressesFromTokenListMap(
+      tokenListMap,
+      Array.from(changedAddresses),
+      source,
+    );
   };
 }
 
@@ -424,6 +523,9 @@ export const getTokenAssetsIndexRowKey = (row: TokenAssetsIndexRow) => {
   return `token-${row.tokenId}`;
 };
 
+export const getTokenSelectIndexRowKey = (row: TokenSelectIndexRow) =>
+  `token-${row.tokenId}`;
+
 const getTokenRuntimeGroupItems = (token: ITokenItem) =>
   (token as { groupItems?: ITokenItem[] }).groupItems;
 
@@ -452,16 +554,500 @@ const buildTokenGroupId = (
   return `${listKey}::${section}::${groupKey}` as TokenGroupId;
 };
 
+const buildStableTokenEntityIds = (
+  tokens: ITokenItem[],
+  previousIds?: TokenEntityId[],
+) => {
+  if (!tokens.length) {
+    return previousIds?.length ? EMPTY_TOKEN_ENTITY_IDS : previousIds || [];
+  }
+
+  const canReusePrevious = previousIds?.length === tokens.length;
+  let nextIds: TokenEntityId[] | undefined = canReusePrevious ? undefined : [];
+
+  tokens.forEach((token, index) => {
+    const tokenId = buildTokenEntityId(token);
+    if (canReusePrevious && !nextIds) {
+      if (previousIds![index] === tokenId) {
+        return;
+      }
+      nextIds = previousIds!.slice(0, index);
+    }
+    nextIds!.push(tokenId);
+  });
+
+  return nextIds || previousIds!;
+};
+
+const buildStableTokenEntityIdList = (
+  tokenIds: TokenEntityId[],
+  previousIds?: TokenEntityId[],
+) => {
+  if (!tokenIds.length) {
+    return previousIds?.length ? EMPTY_TOKEN_ENTITY_IDS : previousIds || [];
+  }
+
+  const canReusePrevious = previousIds?.length === tokenIds.length;
+  let nextIds: TokenEntityId[] | undefined = canReusePrevious ? undefined : [];
+
+  tokenIds.forEach((tokenId, index) => {
+    if (canReusePrevious && !nextIds) {
+      if (previousIds![index] === tokenId) {
+        return;
+      }
+      nextIds = previousIds!.slice(0, index);
+    }
+    nextIds!.push(tokenId);
+  });
+
+  return nextIds || previousIds!;
+};
+
+const buildStableStringList = (list: string[], previousList?: string[]) => {
+  if (!list.length) {
+    return previousList?.length ? EMPTY_STRING_LIST : previousList || [];
+  }
+
+  const canReusePrevious = previousList?.length === list.length;
+  let nextList: string[] | undefined = canReusePrevious ? undefined : [];
+
+  list.forEach((item, index) => {
+    if (canReusePrevious && !nextList) {
+      if (previousList![index] === item) {
+        return;
+      }
+      nextList = previousList!.slice(0, index);
+    }
+    nextList!.push(item);
+  });
+
+  return nextList || previousList!;
+};
+
+const buildTokenStaticIndexItem = (token: ITokenItem): TokenStaticIndexItem => {
+  const id = token.id || '';
+  const symbol = token.symbol || '';
+
+  return {
+    tokenId: buildTokenEntityId(token),
+    ownerAddr: normalizeAddress(token.owner_addr),
+    chain: token.chain,
+    id,
+    symbol,
+    isCore: token.is_core,
+    isVerified: token.is_verified,
+    isSuspicious: token.is_suspicious,
+    protocolId: token.protocol_id,
+    searchText: `${id.toLowerCase()} ${symbol.toLowerCase()}`,
+  };
+};
+
+const isTokenStaticIndexItemSame = (
+  previousItem: TokenStaticIndexItem | undefined,
+  nextItem: TokenStaticIndexItem,
+) => {
+  if (!previousItem) {
+    return false;
+  }
+
+  return (
+    previousItem.tokenId === nextItem.tokenId &&
+    previousItem.ownerAddr === nextItem.ownerAddr &&
+    previousItem.chain === nextItem.chain &&
+    previousItem.id === nextItem.id &&
+    previousItem.symbol === nextItem.symbol &&
+    previousItem.isCore === nextItem.isCore &&
+    previousItem.isVerified === nextItem.isVerified &&
+    previousItem.isSuspicious === nextItem.isSuspicious &&
+    previousItem.protocolId === nextItem.protocolId &&
+    previousItem.searchText === nextItem.searchText
+  );
+};
+
+type TokenIndexState = {
+  addressTokenIds: Record<string, TokenEntityId[]>;
+  addressVersions: Record<string, number>;
+  tokenStaticMap: Record<string, TokenStaticIndexItem>;
+  syncAddressTokens(address: string, tokens: ITokenItem[]): void;
+  syncFromTokenListMap(
+    tokenListMap: TokenListState['tokenListMap'],
+    addresses?: string[],
+  ): void;
+};
+
+export const useTokenIndexStore = zCreate(
+  zMutative<TokenIndexState>((set, get) => ({
+    addressTokenIds: {},
+    addressVersions: {},
+    tokenStaticMap: {},
+    syncAddressTokens(address, tokens) {
+      const normalizedAddress = normalizeAddress(address);
+      const nextTokenIds = buildStableTokenEntityIds(
+        sortByUsdValueDesc(tokens),
+        get().addressTokenIds[normalizedAddress],
+      );
+      const nextStaticItems = tokens.map(buildTokenStaticIndexItem);
+      const nextStaticTokenIds = new Set(
+        nextStaticItems.map(item => item.tokenId),
+      );
+
+      set(draft => {
+        let didChange = false;
+        if (draft.addressTokenIds[normalizedAddress] !== nextTokenIds) {
+          draft.addressTokenIds[normalizedAddress] = nextTokenIds;
+          didChange = true;
+        }
+
+        nextStaticItems.forEach(item => {
+          if (
+            !isTokenStaticIndexItemSame(
+              draft.tokenStaticMap[item.tokenId],
+              item,
+            )
+          ) {
+            draft.tokenStaticMap[item.tokenId] = item;
+            didChange = true;
+          }
+        });
+
+        Object.keys(draft.tokenStaticMap).forEach(tokenId => {
+          if (
+            getTokenEntityIdAddress(tokenId) === normalizedAddress &&
+            !nextStaticTokenIds.has(tokenId as TokenEntityId)
+          ) {
+            delete draft.tokenStaticMap[tokenId];
+            didChange = true;
+          }
+        });
+
+        if (didChange) {
+          draft.addressVersions[normalizedAddress] =
+            (draft.addressVersions[normalizedAddress] || 0) + 1;
+        }
+      });
+    },
+    syncFromTokenListMap(tokenListMap, addresses) {
+      const addressSet = addresses
+        ? normalizeAddressSet(addresses)
+        : new Set(Object.keys(tokenListMap).map(normalizeAddress));
+
+      addressSet.forEach(address => {
+        get().syncAddressTokens(address, tokenListMap[address] || []);
+      });
+    },
+  })),
+);
+
+const getTokenSelectSearchScore = (
+  item: TokenStaticIndexItem,
+  keyword: string,
+) => {
+  const idLower = item.id.toLowerCase();
+  const symbolLower = item.symbol?.toLowerCase() || '';
+  const isExactMatch = idLower === keyword || symbolLower === keyword;
+
+  if (isExactMatch && item.isCore) {
+    return 4;
+  }
+  if (isExactMatch && !item.isCore) {
+    return 3;
+  }
+  if (!isExactMatch && item.isCore) {
+    return 2;
+  }
+  return 1;
+};
+
+const isTokenStaticMatchedByKeyword = (
+  item: TokenStaticIndexItem,
+  keyword: string,
+) => {
+  if (item.isVerified === false) {
+    return false;
+  }
+  if (item.isCore === false && !item.protocolId) {
+    return false;
+  }
+  return item.searchText.includes(keyword);
+};
+
+export const selectTokenIdsForTokenSelector = (
+  state: Pick<TokenIndexState, 'addressTokenIds' | 'tokenStaticMap'>,
+  addresses: string[],
+  chainServerId?: string,
+  keyword?: string,
+  isLpTokenEnabled?: boolean,
+) => {
+  const tokenIds = normalizeAddresses(addresses).flatMap(
+    address => state.addressTokenIds[address] || EMPTY_TOKEN_ENTITY_IDS,
+  );
+  const normalizedKeyword = keyword?.toLowerCase();
+  const seen = new Set<TokenEntityId>();
+  const matchedIds: TokenEntityId[] = [];
+
+  tokenIds.forEach(tokenId => {
+    if (seen.has(tokenId)) {
+      return;
+    }
+    seen.add(tokenId);
+
+    const item = state.tokenStaticMap[tokenId];
+    if (!item) {
+      return;
+    }
+    if (chainServerId && item.chain !== chainServerId) {
+      return;
+    }
+
+    if (normalizedKeyword) {
+      if (!isTokenStaticMatchedByKeyword(item, normalizedKeyword)) {
+        return;
+      }
+      matchedIds.push(tokenId);
+      return;
+    }
+
+    if (
+      !lpTokenFilter(
+        {
+          is_core: item.isCore,
+          is_verified: item.isVerified,
+          is_suspicious: item.isSuspicious,
+          protocol_id: item.protocolId,
+        },
+        isLpTokenEnabled,
+      )
+    ) {
+      return;
+    }
+    matchedIds.push(tokenId);
+  });
+
+  if (!normalizedKeyword) {
+    return matchedIds;
+  }
+
+  return matchedIds.sort((a, b) => {
+    const aItem = state.tokenStaticMap[a]!;
+    const bItem = state.tokenStaticMap[b]!;
+    const aScore = getTokenSelectSearchScore(aItem, normalizedKeyword);
+    const bScore = getTokenSelectSearchScore(bItem, normalizedKeyword);
+
+    if (aScore !== bScore) {
+      return bScore - aScore;
+    }
+    if (aItem.isSuspicious !== bItem.isSuspicious) {
+      return aItem.isSuspicious ? 1 : -1;
+    }
+    return 0;
+  });
+};
+
+export const buildTokenSelectIndexRowsFromIds = (
+  tokenIds: TokenEntityId[],
+): TokenSelectIndexRow[] => {
+  if (!tokenIds.length) {
+    return EMPTY_TOKEN_SELECT_INDEX_ROWS;
+  }
+  return tokenIds.map(tokenId => ({
+    type: 'token',
+    tokenId,
+  }));
+};
+
+const buildStableTokenSelectIndexRowsFromIds = (
+  tokenIds: TokenEntityId[],
+  previousRows?: TokenSelectIndexRow[],
+): TokenSelectIndexRow[] => {
+  if (!tokenIds.length) {
+    return previousRows?.length
+      ? EMPTY_TOKEN_SELECT_INDEX_ROWS
+      : previousRows || EMPTY_TOKEN_SELECT_INDEX_ROWS;
+  }
+
+  const canReusePrevious = previousRows?.length === tokenIds.length;
+  let nextRows: TokenSelectIndexRow[] | undefined = canReusePrevious
+    ? undefined
+    : [];
+
+  tokenIds.forEach((tokenId, index) => {
+    if (canReusePrevious && !nextRows) {
+      if (previousRows![index]?.tokenId === tokenId) {
+        return;
+      }
+      nextRows = previousRows!.slice(0, index);
+    }
+    nextRows!.push({
+      type: 'token',
+      tokenId,
+    });
+  });
+
+  return nextRows || previousRows!;
+};
+
+const buildTokenSelectIndexResultFromIds = (
+  tokenIds: TokenEntityId[],
+  previousResult?: TokenSelectIndexResult,
+): TokenSelectIndexResult => {
+  if (!tokenIds.length) {
+    return previousResult?.tokenIds.length
+      ? EMPTY_TOKEN_SELECT_INDEX_RESULT
+      : previousResult || EMPTY_TOKEN_SELECT_INDEX_RESULT;
+  }
+
+  const stableTokenIds = buildStableTokenEntityIdList(
+    tokenIds,
+    previousResult?.tokenIds,
+  );
+  const rows = buildStableTokenSelectIndexRowsFromIds(
+    stableTokenIds,
+    previousResult?.rows,
+  );
+
+  if (
+    previousResult &&
+    previousResult.tokenIds === stableTokenIds &&
+    previousResult.rows === rows
+  ) {
+    return previousResult;
+  }
+
+  return {
+    tokenIds: stableTokenIds,
+    rows,
+  };
+};
+
+const getTokenSelectIndexCacheKey = ({
+  addresses,
+  chainServerId,
+  keyword,
+  isLpTokenEnabled,
+}: {
+  addresses: string[];
+  chainServerId?: string;
+  keyword?: string;
+  isLpTokenEnabled?: boolean;
+}) =>
+  `${getOrderedAddressesKey(addresses)}::${chainServerId ?? ''}::${
+    keyword?.toLowerCase() ?? ''
+  }::${isLpTokenEnabled ? '1' : '0'}`;
+
+const getTokenSelectIndexAddressVersionKey = (
+  state: Pick<TokenIndexState, 'addressVersions'>,
+  addresses: string[],
+) =>
+  normalizeAddresses(addresses)
+    .map(address => `${address}:${state.addressVersions[address] || 0}`)
+    .join('|');
+
+const tokenSelectIndexResultCache: Record<
+  string,
+  {
+    addressVersionKey: string;
+    result: TokenSelectIndexResult;
+  }
+> = {};
+const TOKEN_SELECT_INDEX_RESULT_CACHE_LIMIT = 80;
+
+const setTokenSelectIndexResultCache = (
+  cacheKey: string,
+  value: {
+    addressVersionKey: string;
+    result: TokenSelectIndexResult;
+  },
+) => {
+  tokenSelectIndexResultCache[cacheKey] = value;
+
+  const cacheKeys = Object.keys(tokenSelectIndexResultCache);
+  if (cacheKeys.length <= TOKEN_SELECT_INDEX_RESULT_CACHE_LIMIT) {
+    return;
+  }
+
+  delete tokenSelectIndexResultCache[cacheKeys[0]!];
+};
+
+export const selectTokenSelectIndexResult = (
+  state: Pick<
+    TokenIndexState,
+    'addressTokenIds' | 'addressVersions' | 'tokenStaticMap'
+  >,
+  addresses: string[],
+  chainServerId?: string,
+  keyword?: string,
+  isLpTokenEnabled?: boolean,
+): TokenSelectIndexResult => {
+  if (!addresses.length) {
+    return EMPTY_TOKEN_SELECT_INDEX_RESULT;
+  }
+
+  const cacheKey = getTokenSelectIndexCacheKey({
+    addresses,
+    chainServerId,
+    keyword,
+    isLpTokenEnabled,
+  });
+  const addressVersionKey = getTokenSelectIndexAddressVersionKey(
+    state,
+    addresses,
+  );
+  const cached = tokenSelectIndexResultCache[cacheKey];
+
+  if (cached?.addressVersionKey === addressVersionKey) {
+    return cached.result;
+  }
+
+  const tokenIds = selectTokenIdsForTokenSelector(
+    state,
+    addresses,
+    chainServerId,
+    keyword,
+    isLpTokenEnabled,
+  );
+  const result = buildTokenSelectIndexResultFromIds(tokenIds, cached?.result);
+
+  setTokenSelectIndexResultCache(cacheKey, {
+    addressVersionKey,
+    result,
+  });
+
+  return result;
+};
+
+const isTokenAssetsIndexRowSame = (
+  row: TokenAssetsIndexRow | undefined,
+  nextType: TokenAssetsIndexRow['type'],
+  nextId: TokenEntityId | TokenGroupId,
+) => {
+  if (!row || row.type !== nextType) {
+    return false;
+  }
+  return row.type === 'group' ? row.groupId === nextId : row.tokenId === nextId;
+};
+
 const buildTokenAssetsIndexRows = (
   tokens: ITokenItem[],
   section: 'unfold' | 'fold' | 'scam',
   listKey?: string,
+  previousRows?: TokenAssetsIndexRow[],
 ) => {
+  if (!tokens.length) {
+    return previousRows?.length
+      ? EMPTY_TOKEN_ASSETS_INDEX_ROWS
+      : previousRows || [];
+  }
+
   const groups: Array<{
     groupId: TokenGroupId;
     value: TokenGroupResourceValue;
   }> = [];
-  const rows = tokens.map(token => {
+  const canReusePrevious = previousRows?.length === tokens.length;
+  let nextRows: TokenAssetsIndexRow[] | undefined = canReusePrevious
+    ? undefined
+    : [];
+
+  tokens.forEach((token, index) => {
     const groupItems = getTokenRuntimeGroupItems(token);
 
     if (listKey && groupItems?.length) {
@@ -476,16 +1062,33 @@ const buildTokenAssetsIndexRows = (
           summary: stripTokenRuntimeGroupFields(token),
         },
       });
-      return {
+
+      if (canReusePrevious && !nextRows) {
+        if (isTokenAssetsIndexRowSame(previousRows![index], 'group', groupId)) {
+          return;
+        }
+        nextRows = previousRows!.slice(0, index);
+      }
+
+      nextRows!.push({
         type: 'group',
         groupId,
-      } satisfies TokenAssetsIndexRow;
+      });
+      return;
     }
 
-    return {
+    const tokenId = buildTokenEntityId(token);
+    if (canReusePrevious && !nextRows) {
+      if (isTokenAssetsIndexRowSame(previousRows![index], 'token', tokenId)) {
+        return;
+      }
+      nextRows = previousRows!.slice(0, index);
+    }
+
+    nextRows!.push({
       type: 'token',
-      tokenId: buildTokenEntityId(token),
-    } satisfies TokenAssetsIndexRow;
+      tokenId,
+    });
   });
 
   if (groups.length) {
@@ -496,44 +1099,76 @@ const buildTokenAssetsIndexRows = (
     tokenGroupResourceStore.upsertGroups(groups);
   }
 
-  return rows;
+  return nextRows || previousRows!;
 };
 
 const buildTokenAssetsIndexResult = (
   result: TokenAssetsResult,
   listKey?: string,
+  previousResult?: TokenAssetsIndexResult,
 ): TokenAssetsIndexResult => {
   const unFoldRows = buildTokenAssetsIndexRows(
     result.unFoldTokens,
     'unfold',
     listKey,
+    previousResult?.unFoldRows,
   );
   const foldRows = buildTokenAssetsIndexRows(
     result.foldTokens,
     'fold',
     listKey,
+    previousResult?.foldRows,
   );
   const scamRows = buildTokenAssetsIndexRows(
     result.scamTokens,
     'scam',
     listKey,
+    previousResult?.scamRows,
   );
 
-  return {
+  const nextResult = {
     unFoldRows,
     foldRows,
     scamRows,
-    unFoldTokenIds: result.unFoldTokens.map(buildTokenEntityId),
-    foldTokenIds: result.foldTokens.map(buildTokenEntityId),
-    scamTokenIds: result.scamTokens.map(buildTokenEntityId),
-    scamTokenPreviewLogoUrls: result.scamTokens
-      .slice(0, 3)
-      .map(token => token.logo_url),
+    unFoldTokenIds: buildStableTokenEntityIds(
+      result.unFoldTokens,
+      previousResult?.unFoldTokenIds,
+    ),
+    foldTokenIds: buildStableTokenEntityIds(
+      result.foldTokens,
+      previousResult?.foldTokenIds,
+    ),
+    scamTokenIds: buildStableTokenEntityIds(
+      result.scamTokens,
+      previousResult?.scamTokenIds,
+    ),
+    scamTokenPreviewLogoUrls: buildStableStringList(
+      result.scamTokens.slice(0, 3).map(token => token.logo_url),
+      previousResult?.scamTokenPreviewLogoUrls,
+    ),
     foldCoreUsdValue: result.foldTokens
       .filter(token => token.is_core)
       .reduce((total, token) => total + (token.usd_value || 0), 0),
     hasFoldTokens: result.hasFoldTokens,
   };
+
+  if (
+    previousResult &&
+    previousResult.unFoldRows === nextResult.unFoldRows &&
+    previousResult.foldRows === nextResult.foldRows &&
+    previousResult.scamRows === nextResult.scamRows &&
+    previousResult.unFoldTokenIds === nextResult.unFoldTokenIds &&
+    previousResult.foldTokenIds === nextResult.foldTokenIds &&
+    previousResult.scamTokenIds === nextResult.scamTokenIds &&
+    previousResult.scamTokenPreviewLogoUrls ===
+      nextResult.scamTokenPreviewLogoUrls &&
+    previousResult.foldCoreUsdValue === nextResult.foldCoreUsdValue &&
+    previousResult.hasFoldTokens === nextResult.hasFoldTokens
+  ) {
+    return previousResult;
+  }
+
+  return nextResult;
 };
 
 type AggregatedTokenItem = ITokenItem & {
@@ -590,20 +1225,12 @@ const aggregateTokens = (
   });
 };
 
-const computeMultiAssets = (
-  tokenListMap: TokenListState['tokenListMap'],
-  addresses: string[],
+const computeMultiAssetsFromTokens = (
+  allTokens: ITokenItem[],
   chainServerId?: string,
   isLpTokenEnabled?: boolean,
   tokenDisplayMode?: TokenDisplayMode,
 ): TokenAssetsResult => {
-  if (!addresses.length) {
-    return createEmptyAssetsResult();
-  }
-  const normalizedAddresses = normalizeAddresses(addresses);
-  const allTokens = normalizedAddresses.flatMap(
-    address => tokenListMap[address] || [],
-  );
   const tokens = chainServerId
     ? allTokens.filter(item => item.chain === chainServerId)
     : allTokens;
@@ -651,41 +1278,39 @@ const computeMultiAssets = (
   };
 };
 
-const computeMultiAssetsIndex = (
-  tokenListMap: TokenListState['tokenListMap'],
-  addresses: string[],
+export const buildMultiAssetsIndexFromTokenIds = (
+  tokenIds: TokenEntityId[],
   chainServerId?: string,
   isLpTokenEnabled?: boolean,
   tokenDisplayMode?: TokenDisplayMode,
   listKey?: string,
+  previousResult?: TokenAssetsIndexResult,
 ): TokenAssetsIndexResult => {
-  if (!addresses.length) {
+  if (!tokenIds.length) {
     return createEmptyAssetsIndexResult();
   }
 
+  const tokens = tokenIds
+    .map(tokenId => tokenEntityResourceStore.getValue(tokenId))
+    .filter((token): token is ITokenItem => !!token);
+
   return buildTokenAssetsIndexResult(
-    computeMultiAssets(
-      tokenListMap,
-      addresses,
+    computeMultiAssetsFromTokens(
+      tokens,
       chainServerId,
       isLpTokenEnabled,
       tokenDisplayMode,
     ),
     listKey,
+    previousResult,
   );
 };
 
-const computeSingleAssets = (
-  tokenListMap: TokenListState['tokenListMap'],
-  address: string,
+const computeSingleAssetsFromTokens = (
+  tokens: ITokenItem[],
   chainServerId?: string,
   isLpTokenEnabled?: boolean,
 ): TokenAssetsResult => {
-  if (!address) {
-    return createEmptyAssetsResult();
-  }
-  const normalizedAddress = address.toLowerCase();
-  const tokens = tokenListMap[normalizedAddress] || [];
   const scamTokens: ITokenItem[] = [];
   const nonScamTokens: ITokenItem[] = [];
   const coreTokens: ITokenItem[] = [];
@@ -738,152 +1363,222 @@ const computeSingleAssets = (
       };
 };
 
-const computeSingleAssetsIndex = (
-  tokenListMap: TokenListState['tokenListMap'],
-  address: string,
+export const buildSingleAssetsIndexFromTokenIds = (
+  tokenIds: TokenEntityId[],
   chainServerId?: string,
   isLpTokenEnabled?: boolean,
+  previousResult?: TokenAssetsIndexResult,
 ): TokenAssetsIndexResult => {
-  if (!address) {
+  if (!tokenIds.length) {
     return createEmptyAssetsIndexResult();
   }
 
+  const tokens = tokenIds
+    .map(tokenId => tokenEntityResourceStore.getValue(tokenId))
+    .filter((token): token is ITokenItem => !!token);
+
   return buildTokenAssetsIndexResult(
-    computeSingleAssets(tokenListMap, address, chainServerId, isLpTokenEnabled),
+    computeSingleAssetsFromTokens(tokens, chainServerId, isLpTokenEnabled),
+    undefined,
+    previousResult,
   );
 };
 
-const computeTokenSelect = (
-  tokenListMap: TokenListState['tokenListMap'],
-  addresses: string[],
-  chainServerId?: string,
-  keyword?: string,
-  isLpTokenEnabled?: boolean,
-): ITokenItem[] => {
-  if (!addresses.length) {
-    return [];
-  }
-  const normalizedAddresses = normalizeAddresses(addresses);
-  const normalizedKeyword = keyword ? keyword.toLowerCase() : undefined;
-  const tokens = normalizedAddresses.flatMap(
-    address => tokenListMap[address] || [],
-  );
-  const getUsdValue = (token: ITokenItem) =>
-    token.usd_value || (token.price || 0) * (token.amount || 0);
-  const filterAndSortTokens = (_list: ITokenItem[]) => {
-    const list = _list.filter(i => lpTokenFilter(i, isLpTokenEnabled));
-    return sortByUsdValueDesc(list);
-  };
-  const searchAndSortTokens = (_list: ITokenItem[]) => {
-    const keywordLower = normalizedKeyword;
-    if (!keywordLower) {
-      return [];
-    }
-    const filteredList = _list.filter(item => {
-      if (item.is_verified === false) {
-        return false;
-      }
-      if (item.is_core === false && !item.protocol_id) {
-        return false;
-      }
-      const matchKeyWords = [item.id, item.symbol];
-      return matchKeyWords.some(i => i?.toLowerCase().includes(keywordLower));
-    });
-    return filteredList.sort((a, b) => {
-      const aIdLower = a.id?.toLowerCase() || '';
-      const bIdLower = b.id?.toLowerCase() || '';
-      const aSymbolLower = a.symbol?.toLowerCase() || '';
-      const bSymbolLower = b.symbol?.toLowerCase() || '';
+type TokenAssetsIndexStoreState = {
+  singleAssetsResultByKey: Record<string, TokenAssetsIndexResult>;
+  multiAssetsResultByKey: Record<string, TokenAssetsIndexResult>;
+  singleAssetsConfigByKey: Record<string, SingleTokenAssetsIndexConfig>;
+  multiAssetsConfigByKey: Record<string, MultiTokenAssetsIndexConfig>;
+  syncSingleAssetsResult(input: {
+    key: string;
+    tokenIds: TokenEntityId[];
+    chainServerId?: string;
+    isLpTokenEnabled?: boolean;
+  }): void;
+  syncMultiAssetsResult(input: {
+    key: string;
+    tokenIds: TokenEntityId[];
+    chainServerId?: string;
+    isLpTokenEnabled?: boolean;
+    tokenDisplayMode?: TokenDisplayMode;
+  }): void;
+  syncChangedTokenAssetsResults(tokenIds: TokenEntityId[]): void;
+};
 
-      const aExactMatch =
-        aIdLower === keywordLower || aSymbolLower === keywordLower;
-      const bExactMatch =
-        bIdLower === keywordLower || bSymbolLower === keywordLower;
+type SingleTokenAssetsIndexConfig = {
+  key: string;
+  tokenIds: TokenEntityId[];
+  chainServerId?: string;
+  isLpTokenEnabled?: boolean;
+};
 
-      const getScore = (exactMatch: boolean, isCore: boolean | null) => {
-        if (exactMatch && isCore) {
-          return 4;
-        }
-        if (exactMatch && !isCore) {
-          return 3;
-        }
-        if (!exactMatch && isCore) {
-          return 2;
-        }
-        return 1;
+type MultiTokenAssetsIndexConfig = SingleTokenAssetsIndexConfig & {
+  tokenDisplayMode?: TokenDisplayMode;
+};
+
+const hasTokenAssetsConfigToken = (
+  tokenIds: TokenEntityId[],
+  changedTokenIdSet: ReadonlySet<TokenEntityId>,
+) => tokenIds.some(tokenId => changedTokenIdSet.has(tokenId));
+
+const isSingleTokenAssetsIndexConfigSame = (
+  previousConfig: SingleTokenAssetsIndexConfig | undefined,
+  nextConfig: SingleTokenAssetsIndexConfig,
+) =>
+  previousConfig?.tokenIds === nextConfig.tokenIds &&
+  previousConfig.chainServerId === nextConfig.chainServerId &&
+  previousConfig.isLpTokenEnabled === nextConfig.isLpTokenEnabled;
+
+const isMultiTokenAssetsIndexConfigSame = (
+  previousConfig: MultiTokenAssetsIndexConfig | undefined,
+  nextConfig: MultiTokenAssetsIndexConfig,
+) =>
+  isSingleTokenAssetsIndexConfigSame(previousConfig, nextConfig) &&
+  previousConfig?.tokenDisplayMode === nextConfig.tokenDisplayMode;
+
+export const useTokenAssetsIndexStore = zCreate(
+  zMutative<TokenAssetsIndexStoreState>((set, get) => ({
+    singleAssetsResultByKey: {},
+    multiAssetsResultByKey: {},
+    singleAssetsConfigByKey: {},
+    multiAssetsConfigByKey: {},
+    syncSingleAssetsResult({ key, tokenIds, chainServerId, isLpTokenEnabled }) {
+      const nextConfig = {
+        key,
+        tokenIds,
+        chainServerId,
+        isLpTokenEnabled,
       };
+      const previousConfig = get().singleAssetsConfigByKey[key];
+      const previousResult = get().singleAssetsResultByKey[key];
+      const nextResult = buildSingleAssetsIndexFromTokenIds(
+        tokenIds,
+        chainServerId,
+        isLpTokenEnabled,
+        previousResult,
+      );
+      const isConfigSame = isSingleTokenAssetsIndexConfigSame(
+        previousConfig,
+        nextConfig,
+      );
 
-      const aScore = getScore(aExactMatch, a.is_core);
-      const bScore = getScore(bExactMatch, b.is_core);
-      if (aScore !== bScore) {
-        return bScore - aScore;
+      if (isConfigSame && previousResult === nextResult) {
+        return;
       }
 
-      if (a.is_suspicious !== b.is_suspicious) {
-        return a.is_suspicious ? 1 : -1;
+      set(draft => {
+        if (!isConfigSame) {
+          draft.singleAssetsConfigByKey[key] = nextConfig;
+        }
+        draft.singleAssetsResultByKey[key] = nextResult;
+      });
+    },
+    syncMultiAssetsResult({
+      key,
+      tokenIds,
+      chainServerId,
+      isLpTokenEnabled,
+      tokenDisplayMode,
+    }) {
+      const nextConfig = {
+        key,
+        tokenIds,
+        chainServerId,
+        isLpTokenEnabled,
+        tokenDisplayMode,
+      };
+      const previousConfig = get().multiAssetsConfigByKey[key];
+      const previousResult = get().multiAssetsResultByKey[key];
+      const nextResult = buildMultiAssetsIndexFromTokenIds(
+        tokenIds,
+        chainServerId,
+        isLpTokenEnabled,
+        tokenDisplayMode,
+        key,
+        previousResult,
+      );
+      const isConfigSame = isMultiTokenAssetsIndexConfigSame(
+        previousConfig,
+        nextConfig,
+      );
+
+      if (isConfigSame && previousResult === nextResult) {
+        return;
       }
 
-      const aIdMatch = aIdLower.includes(keywordLower);
-      const bIdMatch = bIdLower.includes(keywordLower);
-      const aSymbolMatch = aSymbolLower.includes(keywordLower);
-      const bSymbolMatch = bSymbolLower.includes(keywordLower);
-
-      if (aIdMatch && !bIdMatch) {
-        return -1;
-      }
-      if (!aIdMatch && bIdMatch) {
-        return 1;
-      }
-      if (aSymbolMatch && !bSymbolMatch) {
-        return -1;
-      }
-      if (!aSymbolMatch && bSymbolMatch) {
-        return 1;
+      set(draft => {
+        if (!isConfigSame) {
+          draft.multiAssetsConfigByKey[key] = nextConfig;
+        }
+        draft.multiAssetsResultByKey[key] = nextResult;
+      });
+    },
+    syncChangedTokenAssetsResults(tokenIds) {
+      if (!tokenIds.length) {
+        return;
       }
 
-      return getUsdValue(b) - getUsdValue(a);
-    });
-  };
-  let sortedUnfoldTokens: ITokenItem[] = [];
-  if (normalizedKeyword) {
-    sortedUnfoldTokens = searchAndSortTokens(tokens);
-  } else if (isLpTokenEnabled) {
-    sortedUnfoldTokens = filterAndSortTokens(tokens);
-  } else {
-    sortedUnfoldTokens = sortByUsdValueDesc(tokens.filter(defaultTokenFilter));
-  }
+      const changedTokenIdSet = new Set(tokenIds);
+      const state = get();
+      const singleResultUpdates: Record<string, TokenAssetsIndexResult> = {};
+      const multiResultUpdates: Record<string, TokenAssetsIndexResult> = {};
 
-  return chainServerId
-    ? sortedUnfoldTokens.filter(item => item.chain === chainServerId)
-    : sortedUnfoldTokens;
-};
+      Object.values(state.singleAssetsConfigByKey).forEach(config => {
+        if (!hasTokenAssetsConfigToken(config.tokenIds, changedTokenIdSet)) {
+          return;
+        }
 
-const computePerpsTokenSelect = (
-  tokenListMap: TokenListState['tokenListMap'],
-  address?: string,
-): ITokenItem[] => {
-  if (!address) {
-    return [];
-  }
-  return (
-    tokenListMap[address.toLowerCase()]
-      ?.filter(item => item.is_core)
-      .sort(compareByUsdValueDesc) || []
-  );
-};
+        const previousResult = state.singleAssetsResultByKey[config.key];
+        const nextResult = buildSingleAssetsIndexFromTokenIds(
+          config.tokenIds,
+          config.chainServerId,
+          config.isLpTokenEnabled,
+          previousResult,
+        );
 
-const computeChainSelector = (
-  tokenListMap: TokenListState['tokenListMap'],
-  addresses: string[],
-): ITokenItem[] => {
-  if (!addresses.length) {
-    return [];
-  }
-  const normalizedAddresses = normalizeAddresses(addresses);
-  return normalizedAddresses
-    .flatMap(address => tokenListMap[address] || [])
-    .filter(item => item.is_core);
-};
+        if (previousResult !== nextResult) {
+          singleResultUpdates[config.key] = nextResult;
+        }
+      });
+
+      Object.values(state.multiAssetsConfigByKey).forEach(config => {
+        if (!hasTokenAssetsConfigToken(config.tokenIds, changedTokenIdSet)) {
+          return;
+        }
+
+        const previousResult = state.multiAssetsResultByKey[config.key];
+        const nextResult = buildMultiAssetsIndexFromTokenIds(
+          config.tokenIds,
+          config.chainServerId,
+          config.isLpTokenEnabled,
+          config.tokenDisplayMode,
+          config.key,
+          previousResult,
+        );
+
+        if (previousResult !== nextResult) {
+          multiResultUpdates[config.key] = nextResult;
+        }
+      });
+
+      if (
+        !Object.keys(singleResultUpdates).length &&
+        !Object.keys(multiResultUpdates).length
+      ) {
+        return;
+      }
+
+      set(draft => {
+        Object.entries(singleResultUpdates).forEach(([key, result]) => {
+          draft.singleAssetsResultByKey[key] = result;
+        });
+        Object.entries(multiResultUpdates).forEach(([key, result]) => {
+          draft.multiAssetsResultByKey[key] = result;
+        });
+      });
+    },
+  })),
+);
 
 const tokenListStore = zCreate<TokenListState>(set => ({
   tokenListMap: {},
@@ -1097,341 +1792,83 @@ const tokenListStore = zCreate<TokenListState>(set => ({
   },
 }));
 
-type TokenListComputedState = {
-  multiAssetsIndexCache: Record<string, TokenAssetsIndexResult>;
-  singleAssetsIndexCache: Record<string, TokenAssetsIndexResult>;
-  tokenSelectCache: Record<string, ITokenItem[]>;
-  perpsTokenSelectCache: Record<string, ITokenItem[]>;
-  chainSelectorCache: Record<string, ITokenItem[]>;
-  registerMultiAssets: (
-    addresses: string[],
-    chainServerId?: string,
-    isLpTokenEnabled?: boolean,
-    tokenDisplayMode?: TokenDisplayMode,
-  ) => string;
-  registerSingleAssets: (
-    address: string,
-    chainServerId?: string,
-    isLpTokenEnabled?: boolean,
-  ) => string;
-  registerTokenSelect: (
-    addresses: string[],
-    chainServerId?: string,
-    keyword?: string,
-    isLpTokenEnabled?: boolean,
-  ) => string;
-  registerPerpsTokenSelect: (address?: string) => string | null;
-  registerChainSelector: (addresses: string[]) => string;
-};
-
-const multiAssetsIndexCacheParams = new Map<
-  string,
-  {
-    addresses: string[];
-    chainServerId?: string;
-    isLpTokenEnabled?: boolean;
-    tokenDisplayMode?: TokenDisplayMode;
-  }
->();
-const singleAssetsIndexCacheParams = new Map<
-  string,
-  {
-    address: string;
-    chainServerId?: string;
-    isLpTokenEnabled?: boolean;
-  }
->();
-const tokenSelectCacheParams = new Map<
-  string,
-  {
-    addresses: string[];
-    chainServerId?: string;
-    keyword?: string;
-    isLpTokenEnabled?: boolean;
-  }
->();
-const perpsTokenSelectCacheParams = new Map<string, { address: string }>();
-const chainSelectorCacheParams = new Map<string, { addresses: string[] }>();
-const multiAssetsIndexCacheOrder: string[] = [];
-const singleAssetsIndexCacheOrder: string[] = [];
-const tokenSelectCacheOrder: string[] = [];
-const perpsTokenSelectCacheOrder: string[] = [];
-const chainSelectorCacheOrder: string[] = [];
-
-const upsertRecordCache = <T>(
-  cache: Record<string, T>,
-  key: string,
-  value: T,
-  keys: string[],
+const getTokenListMapChangedAddresses = (
+  previousTokenListMap: TokenListState['tokenListMap'],
+  nextTokenListMap: TokenListState['tokenListMap'],
 ) => {
-  return mCreate(cache, draft => {
-    const record = draft as Record<string, T>;
-    record[key] = value;
-    keys.forEach(removedKey => {
-      delete record[removedKey];
-    });
-  });
-};
+  const changedAddresses = new Set<string>();
+  const addresses = new Set([
+    ...Object.keys(previousTokenListMap).map(normalizeAddress),
+    ...Object.keys(nextTokenListMap).map(normalizeAddress),
+  ]);
 
-const touchCacheParams = <T>(
-  map: Map<string, T>,
-  order: string[],
-  key: string,
-  params: T,
-  limit = COMPUTED_CACHE_LIMIT,
-) => {
-  if (map.has(key)) {
-    map.set(key, params);
-    const index = order.indexOf(key);
-    if (index > -1) {
-      order.splice(index, 1);
+  addresses.forEach(address => {
+    if (previousTokenListMap[address] !== nextTokenListMap[address]) {
+      changedAddresses.add(address);
     }
-    order.push(key);
-    return [] as string[];
-  }
-  map.set(key, params);
-  order.push(key);
-  if (order.length > limit) {
-    const removed = order.shift();
-    if (removed) {
-      map.delete(removed);
-      return [removed];
-    }
-  }
-  return [] as string[];
+  });
+
+  return changedAddresses;
 };
 
-export const EMPTY_TOKEN_LIST = [];
-export const useTokenListComputedStore = zCreate<TokenListComputedState>(
-  set => ({
-    multiAssetsIndexCache: {},
-    singleAssetsIndexCache: {},
-    tokenSelectCache: {},
-    perpsTokenSelectCache: {},
-    chainSelectorCache: {},
-    registerMultiAssets(
-      addresses,
-      chainServerId,
-      isLpTokenEnabled,
-      tokenDisplayMode,
-    ) {
-      const key = getMultiAssetsCacheKey(
-        addresses,
-        chainServerId,
-        isLpTokenEnabled,
-        tokenDisplayMode,
-      );
-      const removedKeys = touchCacheParams(
-        multiAssetsIndexCacheParams,
-        multiAssetsIndexCacheOrder,
-        key,
-        {
-          addresses,
-          chainServerId,
-          isLpTokenEnabled,
-          tokenDisplayMode,
-        },
-      );
-      const tokenListMap = tokenListStore.getState().tokenListMap;
-      tokenEntityResourceStore.syncFromTokenListMap(tokenListMap);
-      set(state => ({
-        multiAssetsIndexCache: upsertRecordCache(
-          state.multiAssetsIndexCache,
-          key,
-          computeMultiAssetsIndex(
-            tokenListMap,
-            addresses,
-            chainServerId,
-            isLpTokenEnabled,
-            tokenDisplayMode,
-            key,
-          ),
-          removedKeys,
-        ),
-      }));
-      return key;
-    },
-    registerSingleAssets(address, chainServerId, isLpTokenEnabled) {
-      const key = getSingleAssetsCacheKey(
-        address,
-        chainServerId,
-        isLpTokenEnabled,
-      );
-      const removedKeys = touchCacheParams(
-        singleAssetsIndexCacheParams,
-        singleAssetsIndexCacheOrder,
-        key,
-        {
-          address,
-          chainServerId,
-          isLpTokenEnabled,
-        },
-      );
-      const tokenListMap = tokenListStore.getState().tokenListMap;
-      tokenEntityResourceStore.syncFromTokenListMap(tokenListMap);
-      set(state => ({
-        singleAssetsIndexCache: upsertRecordCache(
-          state.singleAssetsIndexCache,
-          key,
-          computeSingleAssetsIndex(
-            tokenListMap,
-            address,
-            chainServerId,
-            isLpTokenEnabled,
-          ),
-          removedKeys,
-        ),
-      }));
-      return key;
-    },
-    registerTokenSelect(addresses, chainServerId, keyword, isLpTokenEnabled) {
-      const key = getTokenSelectCacheKey(
-        addresses,
-        chainServerId,
-        keyword,
-        isLpTokenEnabled,
-      );
-      const removedKeys = touchCacheParams(
-        tokenSelectCacheParams,
-        tokenSelectCacheOrder,
-        key,
-        {
-          addresses,
-          chainServerId,
-          keyword,
-          isLpTokenEnabled,
-        },
-      );
-      const tokenListMap = tokenListStore.getState().tokenListMap;
-      set(state => ({
-        tokenSelectCache: upsertRecordCache(
-          state.tokenSelectCache,
-          key,
-          computeTokenSelect(
-            tokenListMap,
-            addresses,
-            chainServerId,
-            keyword,
-            isLpTokenEnabled,
-          ),
-          removedKeys,
-        ),
-      }));
-      return key;
-    },
-    registerPerpsTokenSelect(address) {
-      if (!address) {
-        return null;
-      }
-      const key = getPerpsTokenSelectCacheKey(address);
-      const removedKeys = touchCacheParams(
-        perpsTokenSelectCacheParams,
-        perpsTokenSelectCacheOrder,
-        key,
-        {
-          address,
-        },
-      );
-      const tokenListMap = tokenListStore.getState().tokenListMap;
-      set(state => ({
-        perpsTokenSelectCache: upsertRecordCache(
-          state.perpsTokenSelectCache,
-          key,
-          computePerpsTokenSelect(tokenListMap, address),
-          removedKeys,
-        ),
-      }));
-      return key;
-    },
-    registerChainSelector(addresses) {
-      const key = getChainSelectorCacheKey(addresses);
-      const removedKeys = touchCacheParams(
-        chainSelectorCacheParams,
-        chainSelectorCacheOrder,
-        key,
-        {
-          addresses,
-        },
-      );
-      const tokenListMap = tokenListStore.getState().tokenListMap;
-      set(state => ({
-        chainSelectorCache: upsertRecordCache(
-          state.chainSelectorCache,
-          key,
-          computeChainSelector(tokenListMap, addresses),
-          removedKeys,
-        ),
-      }));
-      return key;
-    },
-  }),
-);
-
-const rebuildComputedCaches = (
-  tokenListMap: TokenListState['tokenListMap'],
-) => {
-  tokenEntityResourceStore.syncFromTokenListMap(tokenListMap);
-
-  const multiAssetsIndexCache: Record<string, TokenAssetsIndexResult> = {};
-  multiAssetsIndexCacheParams.forEach((params, key) => {
-    multiAssetsIndexCache[key] = computeMultiAssetsIndex(
-      tokenListMap,
-      params.addresses,
-      params.chainServerId,
-      params.isLpTokenEnabled,
-      params.tokenDisplayMode,
-      key,
-    );
-  });
-
-  const singleAssetsIndexCache: Record<string, TokenAssetsIndexResult> = {};
-  singleAssetsIndexCacheParams.forEach((params, key) => {
-    singleAssetsIndexCache[key] = computeSingleAssetsIndex(
-      tokenListMap,
-      params.address,
-      params.chainServerId,
-      params.isLpTokenEnabled,
-    );
-  });
-
-  const tokenSelectCache: Record<string, ITokenItem[]> = {};
-  tokenSelectCacheParams.forEach((params, key) => {
-    tokenSelectCache[key] = computeTokenSelect(
-      tokenListMap,
-      params.addresses,
-      params.chainServerId,
-      params.keyword,
-      params.isLpTokenEnabled,
-    );
-  });
-
-  const perpsTokenSelectCache: Record<string, ITokenItem[]> = {};
-  perpsTokenSelectCacheParams.forEach((params, key) => {
-    perpsTokenSelectCache[key] = computePerpsTokenSelect(
-      tokenListMap,
-      params.address,
-    );
-  });
-
-  const chainSelectorCache: Record<string, ITokenItem[]> = {};
-  chainSelectorCacheParams.forEach((params, key) => {
-    chainSelectorCache[key] = computeChainSelector(
-      tokenListMap,
-      params.addresses,
-    );
-  });
-
-  useTokenListComputedStore.setState({
-    multiAssetsIndexCache,
-    singleAssetsIndexCache,
-    tokenSelectCache,
-    perpsTokenSelectCache,
-    chainSelectorCache,
-  });
-};
-
+let lastComputedTokenListMap = tokenListStore.getState().tokenListMap;
 tokenListStore.subscribe(state => {
-  rebuildComputedCaches(state.tokenListMap);
+  if (state.tokenListMap === lastComputedTokenListMap) {
+    return;
+  }
+  const previousTokenListMap = lastComputedTokenListMap;
+  const changedAddresses = getTokenListMapChangedAddresses(
+    previousTokenListMap,
+    state.tokenListMap,
+  );
+  lastComputedTokenListMap = state.tokenListMap;
+  if (!changedAddresses.size) {
+    return;
+  }
+  useTokenIndexStore
+    .getState()
+    .syncFromTokenListMap(state.tokenListMap, Array.from(changedAddresses));
+  tokenEntityResourceStore.syncChangedAddressesFromTokenListMap(
+    state.tokenListMap,
+    changedAddresses,
+  );
+});
+
+const getChangedTokenEntityIdsFromMetaMap = (
+  previousMetaMap: ReturnType<typeof tokenEntityResourceStore.getMetaMap>,
+  nextMetaMap: ReturnType<typeof tokenEntityResourceStore.getMetaMap>,
+) => {
+  const changedTokenIds: TokenEntityId[] = [];
+  const tokenIds = new Set([
+    ...Object.keys(previousMetaMap),
+    ...Object.keys(nextMetaMap),
+  ]);
+
+  tokenIds.forEach(tokenId => {
+    if (previousMetaMap[tokenId]?.version !== nextMetaMap[tokenId]?.version) {
+      changedTokenIds.push(tokenId as TokenEntityId);
+    }
+  });
+
+  return changedTokenIds;
+};
+
+let lastTokenEntityMetaMap = tokenEntityResourceStore.getMetaMap();
+tokenEntityResourceStore.subscribe(state => {
+  if (state.metaMap === lastTokenEntityMetaMap) {
+    return;
+  }
+
+  const previousMetaMap = lastTokenEntityMetaMap;
+  lastTokenEntityMetaMap = state.metaMap;
+  const changedTokenIds = getChangedTokenEntityIdsFromMetaMap(
+    previousMetaMap,
+    state.metaMap,
+  );
+
+  useTokenAssetsIndexStore
+    .getState()
+    .syncChangedTokenAssetsResults(changedTokenIds);
 });
 
 export default tokenListStore;

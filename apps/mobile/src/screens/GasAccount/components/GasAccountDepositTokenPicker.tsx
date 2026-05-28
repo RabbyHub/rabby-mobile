@@ -9,7 +9,11 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { Account } from '@/core/services/preference';
 import { useTheme2024 } from '@/hooks/theme';
-import { GasAccountAvailableToken } from '@/screens/GasAccount/hooks/useDepositTokenAvailability';
+import {
+  GasAccountAvailableToken,
+  GasAccountAvailableTokenRow,
+} from '@/screens/GasAccount/hooks/useDepositTokenAvailability';
+import { useTokenEntity } from '@/store/tokens';
 import { ellipsisAddress } from '@/utils/address';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { findAccountByPriority } from '@/utils/account';
@@ -30,6 +34,10 @@ const TOKEN_ROW_GAP = 10;
 const LIST_BOTTOM_PADDING = 36;
 const EMPTY_STATE_HEIGHT = 270;
 const LOADING_ROW_COUNT = 6;
+
+type GasAccountDepositTokenPickerStyles = ReturnType<
+  (typeof getStyles)['getStyles']
+>;
 
 export const getDepositTokenPickerSnapHeight = ({
   windowHeight,
@@ -62,14 +70,14 @@ export const GasAccountDepositTokenPicker: React.FC<{
   onClose?(): void;
   onSelect?(token: GasAccountAvailableToken): void;
   accounts: Account[];
-  availableTokens: GasAccountAvailableToken[];
+  availableTokenRows: GasAccountAvailableTokenRow[];
   isCheckingAvailability?: boolean;
 }> = ({
   visible,
   onClose,
   onSelect,
   accounts,
-  availableTokens,
+  availableTokenRows,
   isCheckingAvailability = false,
 }) => {
   const { t } = useTranslation();
@@ -78,16 +86,16 @@ export const GasAccountDepositTokenPicker: React.FC<{
   });
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { height } = useWindowDimensions();
-  const showLoadingState = isCheckingAvailability && !availableTokens.length;
+  const showLoadingState = isCheckingAvailability && !availableTokenRows.length;
 
   const snapHeight = useMemo(
     () =>
       getDepositTokenPickerSnapHeight({
         windowHeight: height,
-        tokenCount: availableTokens.length,
+        tokenCount: availableTokenRows.length,
         isCheckingAvailability: showLoadingState,
       }),
-    [availableTokens.length, height, showLoadingState],
+    [availableTokenRows.length, height, showLoadingState],
   );
 
   useEffect(() => {
@@ -105,55 +113,6 @@ export const GasAccountDepositTokenPicker: React.FC<{
       onClose?.();
     },
     [onClose, onSelect],
-  );
-
-  const renderItem = useCallback(
-    ({ item }: { item: GasAccountAvailableToken }) => {
-      const ownerAccount = findAccountByPriority(
-        accounts.filter(account =>
-          isSameAddress(account.address, item.owner_addr),
-        ),
-      );
-      if (!ownerAccount) {
-        devLog(
-          `Owner account not found for token ${item.symbol} (${item.owner_addr}) on chain ${item.chain}`,
-        );
-        return null;
-      }
-
-      return (
-        <CustomTouchableOpacity
-          style={styles.tokenCard}
-          onPress={() => handleSelect(item)}>
-          <View style={styles.tokenCardLeft}>
-            <AssetAvatar
-              size={46}
-              logo={item.logo_url}
-              chain={item.chain}
-              chainSize={18}
-            />
-            <View style={styles.tokenInfo}>
-              <View style={styles.tokenInfoHeading}>
-                <Text style={styles.tokenSymbol}>{getTokenSymbol(item)}</Text>
-              </View>
-              <View style={styles.tokenInfoSubTitle}>
-                <AccountInfoInTokenRow ownerAccount={ownerAccount} />
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.tokenCardRight}>
-            <Text style={styles.balanceUsd}>
-              {formatUsdValue(item.usd_value || 0)}
-            </Text>
-            <Text style={styles.balanceAmount}>
-              {formatTokenAmount(item.amount || 0)}
-            </Text>
-          </View>
-        </CustomTouchableOpacity>
-      );
-    },
-    [accounts, handleSelect, styles],
   );
 
   const loadingList = useMemo(
@@ -192,7 +151,7 @@ export const GasAccountDepositTokenPicker: React.FC<{
         </Text>
         {showLoadingState ? (
           <View style={styles.loadingWrapper}>{loadingList}</View>
-        ) : availableTokens.length ? (
+        ) : availableTokenRows.length ? (
           <>
             <View style={styles.header}>
               <Text style={styles.headerText}>
@@ -203,15 +162,22 @@ export const GasAccountDepositTokenPicker: React.FC<{
               </Text>
             </View>
             <BottomSheetFlatList
-              data={availableTokens}
+              data={availableTokenRows}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
               style={styles.list}
               keyExtractor={item =>
-                `${item.owner_addr.toLowerCase()}-${item.chain}-${item.id}`
+                `${item.tokenId}-${item.gasAccountDepositType}`
               }
               contentContainerStyle={styles.listContent}
-              renderItem={renderItem}
+              renderItem={({ item }) => (
+                <GasAccountDepositTokenPickerRow
+                  row={item}
+                  accounts={accounts}
+                  styles={styles}
+                  onSelect={handleSelect}
+                />
+              )}
             />
           </>
         ) : (
@@ -230,6 +196,86 @@ export const GasAccountDepositTokenPicker: React.FC<{
     </AppBottomSheetModal>
   );
 };
+
+const GasAccountDepositTokenPickerRow = React.memo(
+  ({
+    row,
+    accounts,
+    styles,
+    onSelect,
+  }: {
+    row: GasAccountAvailableTokenRow;
+    accounts: Account[];
+    styles: GasAccountDepositTokenPickerStyles;
+    onSelect(token: GasAccountAvailableToken): void;
+  }) => {
+    const token = useTokenEntity(row.tokenId);
+    const availableToken = useMemo(() => {
+      if (!token) {
+        return null;
+      }
+      return {
+        ...token,
+        gasAccountDepositType: row.gasAccountDepositType,
+      };
+    }, [row.gasAccountDepositType, token]);
+    const ownerAccount = useMemo(() => {
+      if (!availableToken?.owner_addr) {
+        return null;
+      }
+      return findAccountByPriority(
+        accounts.filter(account =>
+          isSameAddress(account.address, availableToken.owner_addr),
+        ),
+      );
+    }, [accounts, availableToken?.owner_addr]);
+
+    if (!availableToken) {
+      return null;
+    }
+
+    if (!ownerAccount) {
+      devLog(
+        `Owner account not found for token ${availableToken.symbol} (${availableToken.owner_addr}) on chain ${availableToken.chain}`,
+      );
+      return null;
+    }
+
+    return (
+      <CustomTouchableOpacity
+        style={styles.tokenCard}
+        onPress={() => onSelect(availableToken)}>
+        <View style={styles.tokenCardLeft}>
+          <AssetAvatar
+            size={46}
+            logo={availableToken.logo_url}
+            chain={availableToken.chain}
+            chainSize={18}
+          />
+          <View style={styles.tokenInfo}>
+            <View style={styles.tokenInfoHeading}>
+              <Text style={styles.tokenSymbol}>
+                {getTokenSymbol(availableToken)}
+              </Text>
+            </View>
+            <View style={styles.tokenInfoSubTitle}>
+              <AccountInfoInTokenRow ownerAccount={ownerAccount} />
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.tokenCardRight}>
+          <Text style={styles.balanceUsd}>
+            {formatUsdValue(availableToken.usd_value || 0)}
+          </Text>
+          <Text style={styles.balanceAmount}>
+            {formatTokenAmount(availableToken.amount || 0)}
+          </Text>
+        </View>
+      </CustomTouchableOpacity>
+    );
+  },
+);
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {

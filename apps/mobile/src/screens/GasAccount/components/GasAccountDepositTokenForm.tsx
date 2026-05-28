@@ -44,6 +44,8 @@ import {
 } from '@/screens/GasAccount/hooks/atom';
 import {
   GasAccountAvailableToken,
+  GasAccountAvailableTokenRow,
+  getGasAccountAvailableTokenFromRow,
   useGasAccountDepositAvailableTokens,
 } from '@/screens/GasAccount/hooks/useDepositTokenAvailability';
 import { Linear } from '@/screens/Transaction/components/SkeletonCard';
@@ -96,7 +98,7 @@ export const GasAccountDepositTokenForm: React.FC<{
     [accounts],
   );
   const {
-    availableTokens,
+    availableTokenRows,
     isCheckingAvailability,
     checkIsExpireAndUpdate,
     refreshBridgeSupportTokenList,
@@ -142,7 +144,7 @@ export const GasAccountDepositTokenForm: React.FC<{
     <GasAccountDepositTokenFormInner
       {...props}
       myAccounts={myAccounts}
-      availableTokens={availableTokens}
+      availableTokenRows={availableTokenRows}
       isCheckingAvailability={isTokenListLoading}
     />
   );
@@ -155,7 +157,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   onWaitDepositResult?: GasAccountTopUpWaitCallback;
   minDepositPrice?: number;
   myAccounts: DepositAccount[];
-  availableTokens: GasAccountAvailableToken[];
+  availableTokenRows: GasAccountAvailableTokenRow[];
   isCheckingAvailability: boolean;
 }> = ({
   visible,
@@ -164,7 +166,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   onWaitDepositResult,
   minDepositPrice,
   myAccounts,
-  availableTokens,
+  availableTokenRows,
   isCheckingAvailability,
 }) => {
   const { t } = useTranslation();
@@ -255,7 +257,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   const didInitSelectedTokenRef = useRef(false);
 
   useEffect(() => {
-    if (!availableTokens.length) {
+    if (!availableTokenRows.length) {
       setSelectedToken(undefined);
       return;
     }
@@ -264,14 +266,19 @@ const GasAccountDepositTokenFormInner: React.FC<{
       setSelectedToken(prev => {
         if (!prev) {
           return (
-            availableTokens?.find(e => e.chain !== 'eth') || availableTokens[0]
+            getGasAccountAvailableTokenFromRow(
+              availableTokenRows.find(row => {
+                const token = getGasAccountAvailableTokenFromRow(row);
+                return token?.chain !== 'eth';
+              }) || availableTokenRows[0],
+            ) || undefined
           );
         }
 
         return prev;
       });
     }
-  }, [availableTokens]);
+  }, [availableTokenRows]);
 
   const selectedOwnerAccount = useMemo(() => {
     const matched = myAccounts.filter(
@@ -833,7 +840,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   const isInteractionLocked = loading;
 
   let bottomContent: React.ReactNode = null;
-  if (!isCheckingAvailability && !availableTokens.length) {
+  if (!isCheckingAvailability && !availableTokenRows.length) {
     bottomContent = (
       <Text style={styles.errorText}>
         {t('page.gasAccount.depositPopup.noAvailableToken')}
@@ -993,7 +1000,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
         <GasAccountDepositTokenPicker
           visible={tokenPickerVisible}
           accounts={myAccounts}
-          availableTokens={availableTokens}
+          availableTokenRows={availableTokenRows}
           isCheckingAvailability={isCheckingAvailability}
           onClose={() => setTokenPickerVisible(false)}
           onSelect={token => {
