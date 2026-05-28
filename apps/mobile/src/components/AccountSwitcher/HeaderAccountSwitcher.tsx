@@ -21,13 +21,17 @@ const formatDefaultAliasInHeader = (address: string) => {
   return `${address.slice(0, prefixLength + 6)}...${address.slice(-4)}`;
 };
 
-const getHeaderAccountName = (address: string, aliasName?: string) => {
-  // 产品需求：这个场景为了能展示完整备注针对默认备注的地址单独处理成前 6 后 4 展示
+const getHeaderAccountName = (
+  address: string,
+  aliasName?: string,
+  formatDefaultAliasAsAddress = false,
+) => {
   const fallbackAlias =
     apiContact.getAliasName(address) || ellipsisAddress(address);
   const finalAlias = aliasName || fallbackAlias;
 
-  return finalAlias.toLowerCase() === ellipsisAddress(address).toLowerCase()
+  return formatDefaultAliasAsAddress &&
+    finalAlias.toLowerCase() === ellipsisAddress(address).toLowerCase()
     ? formatDefaultAliasInHeader(address)
     : finalAlias;
 };
@@ -35,9 +39,13 @@ const getHeaderAccountName = (address: string, aliasName?: string) => {
 export function HeaderAccountSwitcher({
   forScene,
   disableSwitch = false,
+  formatDefaultAliasAsAddress = false,
+  maxWidth = 180,
   style,
 }: AccountSwitcherAopProps<{
   disableSwitch?: boolean;
+  formatDefaultAliasAsAddress?: boolean;
+  maxWidth?: number;
   style?: StyleProp<ViewStyle>;
 }>) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -64,15 +72,16 @@ export function HeaderAccountSwitcher({
     return getHeaderAccountName(
       finalSceneCurrentAccount.address,
       finalSceneCurrentAccount.aliasName,
+      formatDefaultAliasAsAddress,
     );
-  }, [finalSceneCurrentAccount]);
+  }, [finalSceneCurrentAccount, formatDefaultAliasAsAddress]);
 
   if (!finalSceneCurrentAccount) {
     return null;
   }
 
   return (
-    <View style={[styles.accountSelectorContainer, style]}>
+    <View style={[styles.accountSelectorContainer, { maxWidth }, style]}>
       <View style={styles.accountSelectorWidthLimiter}>
         <TouchableOpacity
           disabled={disableSwitch}
@@ -111,7 +120,6 @@ export function HeaderAccountSwitcher({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   accountSelectorContainer: {
-    maxWidth: 170,
     flexShrink: 1,
     minWidth: 0,
   },

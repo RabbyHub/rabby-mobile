@@ -1,9 +1,11 @@
 import 'react-native-gesture-handler';
 import React from 'react';
+import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
-import { useStackScreenConfig } from '@/hooks/navigation';
+import { HeaderBackPressable, useStackScreenConfig } from '@/hooks/navigation';
 import {
   RootNames,
   makeHeadersPresets,
@@ -23,6 +25,7 @@ import SwapBridgeScreen from '../SwapBridge';
 import { ConvertDustScreen } from '../ConvertDust';
 import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
+import { HeaderAccountSwitcher } from '@/components/AccountSwitcher/HeaderAccountSwitcher';
 import MultiAddressHistory from '../Transaction/MultiAddressHistory';
 import { GnosisQueueScreen } from '../GnosisQueue';
 import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
@@ -36,20 +39,40 @@ import LendingScreen from '../Lending';
 import PredictionScreen from '../Prediction';
 import { PredictionScreenWithPreload } from '../InnerDapp/InnerDappPreloadScreens';
 import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
+import { Text } from '@/components/Typography';
+import { createGetStyles2024 } from '@/utils/styles';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
-function ConvertDustHeaderTitle(ctx: {
-  children: string;
+const CONVERT_DUST_HEADER_HEIGHT = 58;
+
+function ConvertDustHeader({
+  title,
+  disableSwitch,
+}: {
+  title: string;
   disableSwitch?: boolean;
 }) {
+  const { styles } = useTheme2024({ getStyle: getConvertDustHeaderStyle });
+  const { top } = useSafeAreaInsets();
+
   return (
-    <ScreenHeaderAccountSwitcher
-      forScene="MakeTransactionAbout"
-      titleText={ctx.children}
-      disableSwitch={ctx.disableSwitch}
-    />
+    <View style={[styles.convertDustHeaderOuter, { marginTop: top }]}>
+      <View style={styles.convertDustHeaderInner}>
+        <View style={styles.convertDustHeaderLeft}>
+          <HeaderBackPressable style={styles.convertDustHeaderBackButton} />
+          <Text numberOfLines={1} style={styles.convertDustHeaderTitle}>
+            {title}
+          </Text>
+        </View>
+        <HeaderAccountSwitcher
+          forScene="MakeTransactionAbout"
+          disableSwitch={disableSwitch}
+          style={styles.convertDustHeaderAccountSwitcher}
+        />
+      </View>
+    </View>
   );
 }
 
@@ -287,11 +310,12 @@ export default function TransactionNavigator() {
           mergeScreenOptions2024([
             {
               title: t('page.convertDust.title'),
-              headerTitle: ctx =>
-                ConvertDustHeaderTitle({
-                  ...ctx,
-                  disableSwitch: !!route.params?.disableAccountSwitch,
-                }),
+              header: () => (
+                <ConvertDustHeader
+                  title={t('page.convertDust.title')}
+                  disableSwitch={!!route.params?.disableAccountSwitch}
+                />
+              ),
             },
           ])
         }
@@ -421,3 +445,43 @@ export default function TransactionNavigator() {
     </TransactionStack.Navigator>
   );
 }
+
+const getConvertDustHeaderStyle = createGetStyles2024(({ colors2024 }) => ({
+  convertDustHeaderOuter: {
+    height: CONVERT_DUST_HEADER_HEIGHT,
+    paddingHorizontal: 12,
+    paddingRight: 20,
+    paddingVertical: 10,
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  convertDustHeaderInner: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minWidth: 0,
+  },
+  convertDustHeaderLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 0,
+  },
+  convertDustHeaderBackButton: {
+    marginLeft: 0,
+    paddingLeft: 0,
+  },
+  convertDustHeaderTitle: {
+    flexShrink: 1,
+    minWidth: 0,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '900',
+    color: colors2024['neutral-title-1'],
+  },
+  convertDustHeaderAccountSwitcher: {
+    flexShrink: 1,
+    minWidth: 0,
+  },
+}));
