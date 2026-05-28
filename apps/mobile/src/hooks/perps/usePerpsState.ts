@@ -553,6 +553,8 @@ export const usePerpsState = () => {
           return false;
         }
         if (!apisLock.isUnlocked()) {
+          await loginPerpsAccount(initAccount);
+          await Promise.all([fetchMarketData(), waitForInitialWsData()]);
           setInitialized(true);
           return false;
         }
