@@ -181,7 +181,10 @@ export const PerpsAccountSelectorPopup: React.FC<{
       setTmpSelectAccount(value || null);
       cancelSelect();
     } else {
-      Promise.allSettled([fetchAccounts(), getPinAddressesAsync()]);
+      Promise.allSettled([
+        fetchAccounts({ force: true }),
+        getPinAddressesAsync(),
+      ]);
       runGetLastUsedAccount();
     }
   }, [
