@@ -1922,6 +1922,7 @@
       "currentVersion": "Phiên bản hiện tại",
       "tou": "Điều Khoản Sử Dụng",
       "autoLockTime": "Thời gian tự động khóa",
+      "lockWallet": "Khóa ví",
       "modifyRPCURL": "Chỉnh sửa URL RPC",
       "addCustomNetwork": "Thêm mạng tùy chỉnh",
       "clearPendingDesc2": "Điều này sẽ không thay đổi số dư trong các tài khoản của bạn hoặc yêu cầu bạn nhập lại cụm từ khôi phục. Tất cả tài sản và thông tin tài khoản của bạn sẽ được bảo mật.",

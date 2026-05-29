@@ -36,6 +36,8 @@ import { getDappAccount } from '@/core/utils/dappAccount';
 import { shouldAutoConnect, shouldAutoPersonalSign } from './autoConnect';
 import { openapi } from '../request';
 import type { Account } from '@/types/account';
+import { ensureWalletUnlocked } from '@/utils/walletUnlockGuard';
+import { isWalletUnlockCancelled } from '@/utils/walletUnlockError';
 
 export const resemblesETHAddress = (str: string): boolean => {
   return str.length === 42;
@@ -85,46 +87,6 @@ const flowContext = flow
         data: ctx.request.data,
       });
     }
-
-    return next();
-  })
-  .use(async (ctx, next) => {
-    const {
-      mapMethod,
-      request: {
-        session: { origin },
-      },
-    } = ctx;
-
-    // // leave here for debug
-    // console.debug('[debug] flowContext:: before check lock');
-
-    if (!Reflect.getMetadata('SAFE', providerController, mapMethod)) {
-      // check lock
-      const isUnlock = keyringService.memStore.getState().isUnlocked;
-
-      if (!isUnlock) {
-        if (lockedOrigins.has(origin)) {
-          throw ethErrors.rpc.resourceNotFound(
-            'Already processing unlock. Please wait.',
-          );
-        }
-        ctx.request.requestedApproval = true;
-        lockedOrigins.add(origin);
-        try {
-          await notificationService.requestApproval(
-            { lock: true },
-            { height: 628 },
-          );
-          lockedOrigins.delete(origin);
-        } catch (e) {
-          lockedOrigins.delete(origin);
-          throw e;
-        }
-      }
-    }
-    // // leave here for debug
-    // console.debug('[debug] flowContext:: after check lock');
 
     return next();
   })

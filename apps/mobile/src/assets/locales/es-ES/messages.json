@@ -2232,6 +2232,7 @@
       "fingerPrint": "Huella dactilar",
       "policy": "Política de Privacidad",
       "autoLockTime": "Tiempo de bloqueo automático",
+      "lockWallet": "Bloquear billetera",
       "enableWhitelist": "Habilitar la lista blanca para el envío de activos",
       "currentVersion": "Versión Actual",
       "themeMode": "Modo de tema",

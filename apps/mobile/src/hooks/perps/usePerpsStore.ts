@@ -468,13 +468,37 @@ async function withRetry<T>(
   return undefined;
 }
 
-let isFetchingMarketData = false;
+// Single-flight: concurrent callers await the same in-flight fetch, so an
+// awaited fetchMarketData() resolves only when data is loaded.
+let marketDataPromise: Promise<void> | null = null;
 
-const fetchMarketData = async () => {
-  if (isFetchingMarketData) {
-    return;
-  }
-  isFetchingMarketData = true;
+// These openapi endpoints have no axios timeout — a stalled connection would
+// hang fetchMarketData forever. Cap them and fall back to defaults on timeout.
+const MARKET_DATA_FETCH_TIMEOUT = 10000;
+
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  label: string,
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`[fetchMarketData] ${label} timed out after ${ms}ms`));
+    }, ms);
+    promise.then(
+      value => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      error => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
+const runFetchMarketData = async () => {
   const prevStatus = perpsStore.getState().marketDataStatus;
   // Only show loading if we don't already have data; avoid UI flicker on silent refresh.
   if (prevStatus !== 'success') {
@@ -488,7 +512,11 @@ const fetchMarketData = async () => {
       return perpsTopTokenCache;
     }
     try {
-      const topAssets = await openapi.getPerpTopTokenListV3({ dex_id: 'all' });
+      const topAssets = await withTimeout(
+        openapi.getPerpTopTokenListV3({ dex_id: 'all' }),
+        MARKET_DATA_FETCH_TIMEOUT,
+        'getPerpTopTokenListV3',
+      );
       if (topAssets.length > 0) {
         perpsTopTokenCache = topAssets;
         return topAssets;
@@ -504,9 +532,11 @@ const fetchMarketData = async () => {
       return perpsCategoryCache;
     }
     try {
-      const categories = await openapi.getPerpTokenCategories({
-        lang: 'en-US',
-      });
+      const categories = await withTimeout(
+        openapi.getPerpTokenCategories({ lang: 'en-US' }),
+        MARKET_DATA_FETCH_TIMEOUT,
+        'getPerpTokenCategories',
+      );
       if (categories.length > 0) {
         perpsCategoryCache = categories;
         return categories;
@@ -551,9 +581,17 @@ const fetchMarketData = async () => {
   } catch (error) {
     console.error('Failed to fetch market data:', error);
     setMarketDataStatus('error');
-  } finally {
-    isFetchingMarketData = false;
   }
+};
+
+const fetchMarketData = (): Promise<void> => {
+  if (marketDataPromise) {
+    return marketDataPromise;
+  }
+  marketDataPromise = runFetchMarketData().finally(() => {
+    marketDataPromise = null;
+  });
+  return marketDataPromise;
 };
 
 const fetchFavoriteMarkets = async () => {
@@ -1274,7 +1312,7 @@ export const usePerpsStore = () => {
       userAbstraction: UserAbstractionResp.default,
       localLoadingHistory: [],
     }));
-    refreshData();
+    fetchUserHistoricalOrders();
     subscribeToUserData(account);
     fetchUserNonFundingLedgerUpdates();
     fetchPerpPermission(account.address);
@@ -1326,10 +1364,7 @@ export const usePerpsStore = () => {
 
   const refreshData = useMemoizedFn(async () => {
     // await is login is too low
-    const { marketDataStatus, marketData } = perpsStore.getState();
-    if (marketDataStatus === 'error' || marketData.length === 0) {
-      fetchMarketData();
-    }
+    fetchMarketData();
 
     await fetchUserHistoricalOrders();
   });

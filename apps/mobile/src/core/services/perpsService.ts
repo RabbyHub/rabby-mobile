@@ -67,6 +67,7 @@ export interface PerpsServiceMemoryState {
 export class PerpsService {
   private store?: PerpsServiceStore;
   private keyringCrypto: KeyringCrypto;
+  private agentWalletUnlockVersion = 0;
   private memoryState: PerpsServiceMemoryState = {
     agentWallets: {},
     unlockPromise: null,
@@ -254,10 +255,13 @@ export class PerpsService {
   };
 
   unlockAgentWallets = async () => {
+    const unlockVersion = ++this.agentWalletUnlockVersion;
     const unlock = async () => {
       if (!this.store) {
         throw new Error('PerpsService not initialized');
       }
+      const agentWallets: PerpsServiceMemoryState['agentWallets'] = {};
+
       // Decrypt and load agent vaults
       if (this.store.agentVaults) {
         const vaultsMap: {
@@ -272,7 +276,7 @@ export class PerpsService {
           const preference = this.store.agentPreferences[masterAddress] || {
             agentAddress: '',
           };
-          this.memoryState.agentWallets[masterAddress] = {
+          agentWallets[masterAddress] = {
             vault: privateKey,
             preference: {
               ...preference,
@@ -281,6 +285,10 @@ export class PerpsService {
           };
         }
       }
+
+      if (this.agentWalletUnlockVersion === unlockVersion) {
+        this.memoryState.agentWallets = agentWallets;
+      }
     };
     this.memoryState.unlockPromise = unlock();
     /**
@@ -288,8 +296,16 @@ export class PerpsService {
      *  所以这里把 promise 放到内存里，如果有立即读取的需求需要先读一下 promise 的状态
      * */
     this.memoryState.unlockPromise.finally(() => {
-      this.memoryState.unlockPromise = null;
+      if (this.agentWalletUnlockVersion === unlockVersion) {
+        this.memoryState.unlockPromise = null;
+      }
     });
+  };
+
+  lockAgentWallets = () => {
+    this.agentWalletUnlockVersion += 1;
+    this.memoryState.agentWallets = {};
+    this.memoryState.unlockPromise = null;
   };
 
   createAgentWallet = async (masterAddress: string) => {
@@ -301,7 +317,7 @@ export class PerpsService {
     const agentAddress = bytesToHex(
       publicToAddress(publicKey, true),
     ).toLowerCase();
-    this.addAgentWallet(masterAddress, bytesToHex(privateKey), {
+    await this.addAgentWallet(masterAddress, bytesToHex(privateKey), {
       agentAddress,
       approveSignatures: [],
     });

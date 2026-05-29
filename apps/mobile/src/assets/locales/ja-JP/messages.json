@@ -2146,6 +2146,7 @@
       "addCustomNetwork": "カスタムネットワークを追加",
       "clearPending": "ローカルで保留をクリア",
       "autoLockTime": "自動ロック時間",
+      "lockWallet": "ウォレットをロック",
       "faceId": "Face ID",
       "themeMode": "テーマモード",
       "clearPendingDesc1": "これにより、すべての未処理の取引がクリアされます。これは、一部のケースでRabbyにおける取引の状態がオンチェーンの状態と一致しないという問題を解決するのに役立ちます。",

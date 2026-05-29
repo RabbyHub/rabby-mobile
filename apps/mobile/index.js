@@ -20,6 +20,7 @@ if (!__DEV__) {
 import './src/utils/logging/install';
 import './global';
 import './src/setup-app';
+import './src/utils/walletUnlock';
 import { ENABLE_REACTOTRON } from './src/core/utils/reactotron-plugins/featureFlag';
 
 if (process.env.WITH_ROZENITE === 'true') {

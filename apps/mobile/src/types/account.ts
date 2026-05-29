@@ -7,6 +7,12 @@ export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
   balance?: number;
   evmBalance?: number;
+  byImport?: boolean;
+  publicKey?: string;
+  hdPathType?: string;
+  hdPathIndex?: number;
+  hasBackup?: boolean;
+  needPassphrase?: boolean;
 };
 
 export type Account = KeyringAccountWithAlias & {
@@ -29,4 +35,7 @@ export type IDisplayedAccountWithBalance = IDisplayedAccount & {
   publicKey?: string;
   hdPathBasePublicKey?: string;
   hdPathType?: string;
+  hdPathIndex?: number;
+  hasBackup?: boolean;
+  needPassphrase?: boolean;
 };

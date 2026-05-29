@@ -1,7 +1,7 @@
 import { AppState, NativeEventSubscription } from 'react-native';
 
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
-import { preferenceService } from '../services';
+import { keyringService, preferenceService } from '../services';
 import { makeEEClass } from './event';
 
 const MILLISECS_PER_MIN = 60 * 1e3;
@@ -24,6 +24,11 @@ export function isValidAutoLockTime(ms: number) {
 function calc(ms: number = AUTO_LOCK_SECS.TIMEOUT_MILLISECS) {
   if (!isValidAutoLockTime(ms)) return -1;
   return Date.now() + ms;
+}
+
+function calcExpireTimeFromBaseTime(baseTime: number) {
+  const { timeoutMs } = getPersistedAutoLockTimes();
+  return isValidAutoLockTime(timeoutMs) ? baseTime + timeoutMs : -1;
 }
 
 const autoLockTimerRef = {
@@ -85,13 +90,60 @@ export function getPersistedAutoLockTimes() {
   };
 }
 
+function normalizeUnlockTime(time: unknown) {
+  return typeof time === 'number' && Number.isFinite(time) && time > 0
+    ? time
+    : 0;
+}
+
+function normalizeUnlockSessionExpireTime(time: unknown) {
+  if (time === -1) return -1;
+  return typeof time === 'number' && Number.isFinite(time) && time > 0
+    ? time
+    : 0;
+}
+
+export function getPersistedUnlockSessionExpireTime() {
+  const expireTime = normalizeUnlockSessionExpireTime(
+    preferenceService.getPreference('unlockSessionExpireTime'),
+  );
+  if (expireTime) return expireTime;
+
+  const unlockTime = normalizeUnlockTime(
+    preferenceService.getPreference('lastUnlockTime'),
+  );
+  if (!unlockTime) return 0;
+
+  return calcExpireTimeFromBaseTime(unlockTime);
+}
+
+function canRefreshUnlockSession(now = Date.now()) {
+  const unlockTime = normalizeUnlockTime(
+    preferenceService.getPreference('lastUnlockTime'),
+  );
+  if (!unlockTime || unlockTime > now) return false;
+  if (keyringService.isUnlocked()) return true;
+
+  const expireTime = getPersistedUnlockSessionExpireTime();
+  return expireTime === -1 || expireTime > now;
+}
+
+function refreshPersistedUnlockSessionExpireTime(expireTime: number) {
+  if (!canRefreshUnlockSession()) return;
+
+  preferenceService.setPreference({
+    unlockSessionExpireTime: expireTime,
+  });
+}
+
 export function refreshAutolockTimeout(type?: 'clear') {
   if (type === 'clear') {
-    setAutoLockExpireTime(-1);
-  } else {
-    const { expireTime } = getPersistedAutoLockTimes();
-    setAutoLockExpireTime(expireTime);
+    return setAutoLockExpireTime(-1);
   }
+
+  const { expireTime } = getPersistedAutoLockTimes();
+  refreshPersistedUnlockSessionExpireTime(expireTime);
+  return setAutoLockExpireTime(expireTime);
 }
 
 export function uiRefreshTimeout() {
@@ -175,6 +227,7 @@ export function setupAutoLockChecker() {
         autoLockTimerRef,
       );
       const { expireTime, timeoutMs } = getPersistedAutoLockTimes();
+      refreshPersistedUnlockSessionExpireTime(expireTime);
       console.debug(
         '[autoLock] app to background expireTime, timeoutMs',
         expireTime,

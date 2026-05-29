@@ -221,6 +221,6 @@ export async function fixDeviceId(address: string, deviceId: string) {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
 
   await keyring.fixDeviceId(address, deviceId);
-  await keyringService.persistAllKeyrings();
+  await keyringService.persistKeyringsForKeyring(keyring);
   return;
 }

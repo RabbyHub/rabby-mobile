@@ -2100,6 +2100,7 @@
       "fingerPrint": "Empreinte digitale",
       "modifyRPCURL": "Modifier l'URL RPC",
       "autoLockTime": "Verrouillage automatique",
+      "lockWallet": "Verrouiller le portefeuille",
       "clearPending": "Effacer les éléments en attente localement",
       "aboutUs": "À propos de nous",
       "feedback": "Retour d'expérience",

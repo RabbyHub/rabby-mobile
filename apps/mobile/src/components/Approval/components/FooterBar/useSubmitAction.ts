@@ -21,9 +21,14 @@ const DEFAULT_VERIFY_INTERVAL = isNonPublicProductionEnv
 
 const unlockTimeAtom = atom(0);
 unlockTimeAtom.onMount = setter => {
-  unlockTimeEvent.addListener('updated', value => {
+  const onUnlockTimeUpdated = (value: number) => {
     setter(value);
-  });
+  };
+
+  unlockTimeEvent.addListener('updated', onUnlockTimeUpdated);
+  return () => {
+    unlockTimeEvent.off('updated', onUnlockTimeUpdated);
+  };
 };
 
 const RcIconFaceId = makeThemeIconFromCC(

@@ -84,7 +84,10 @@ export const PerpsOriginScreen = () => {
   const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
 
   const handleLogin = useMemoizedFn(async (v: Account) => {
-    await login(v);
+    const success = await login(v);
+    if (!success) {
+      return;
+    }
     setPopupState(prev => ({
       ...prev,
       isShowLoginPopup: false,
@@ -138,6 +141,14 @@ export const PerpsOriginScreen = () => {
 
   const handleShowRiskPopup = useMemoizedFn((coin: string) => {
     setSelectedCoin(coin);
+  });
+
+  const handleSwapPress = useMemoizedFn(async () => {
+    await handleActionApproveStatus({ isHideToast: true });
+    setPopupState(prev => ({
+      ...prev,
+      isShowSwapPopup: true,
+    }));
   });
 
   const handleCloseRiskPopup = useMemoizedFn(() => {
@@ -231,7 +242,7 @@ export const PerpsOriginScreen = () => {
               refreshControl={
                 <RefreshControl refreshing={false} onRefresh={onRefresh} />
               }>
-              <PerpsAccountCard />
+              <PerpsAccountCard onSwapPress={handleSwapPress} />
               <PerpsPositionSection
                 handleShowRiskPopup={handleShowRiskPopup}
                 handleCloseRiskPopup={handleCloseRiskPopup}
