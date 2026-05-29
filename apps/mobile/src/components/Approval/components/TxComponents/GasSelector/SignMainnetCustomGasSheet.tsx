@@ -137,7 +137,7 @@ export const SignMainnetCustomGasSheet = ({
   gasToken?: GasTokenInfo;
 }) => {
   const { t } = useTranslation();
-  const { colors, styles } = useTheme2024({ getStyle });
+  const { colors2024, styles } = useTheme2024({ getStyle });
   const chain = useFindChain({ id: chainId })!;
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -463,7 +463,7 @@ export const SignMainnetCustomGasSheet = ({
       keyboardBlurBehavior="restore"
       snapPoints={[snapPoint]}
       ref={modalRef}
-      handleStyle={{ backgroundColor: colors['neutral-bg1'] }}
+      handleStyle={{ backgroundColor: colors2024['neutral-bg-1'] }}
       onDismiss={onClose}>
       <BottomSheetScrollView
         style={styles.modalWrap}
@@ -605,7 +605,7 @@ export const SignMainnetCustomGasSheet = ({
                     </View>
                   }>
                   <IconInfoSVG
-                    color={colors['neutral-foot']}
+                    color={colors2024['neutral-foot']}
                     width={14}
                     height={14}
                   />
