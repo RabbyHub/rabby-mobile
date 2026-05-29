@@ -1,6 +1,6 @@
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
-import { formatSpeicalAmount, formatUsdValue } from '@/utils/number';
+import { formatTokenAmountInput, formatUsdValue } from '@/utils/number';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { BridgeQuote, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -641,7 +641,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   const handleAmountChange = useCallback(
     (e: string) => {
-      const v = formatSpeicalAmount(e);
+      const v = formatTokenAmountInput(e, fromToken?.decimals);
       if (!/^\d*(\.\d*)?$/.test(v)) {
         return;
       }

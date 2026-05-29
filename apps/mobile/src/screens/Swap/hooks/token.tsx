@@ -22,7 +22,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwapSettings } from './settings';
 import { QuoteProvider, TDexQuoteData, useQuoteMethods } from './quote';
 import { stats } from '@/utils/stats';
-import { formatSpeicalAmount } from '@/utils/number';
+import { formatTokenAmountInput } from '@/utils/number';
 import { getTokenSymbol, isTokenMarketClosed } from '@/utils/token';
 import { useDebounceFn, useRequest } from 'ahooks';
 import { findChainByEnum } from '@/utils/chain';
@@ -631,7 +631,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   const handleAmountChange = useCallback(
     (e: string) => {
-      const v = formatSpeicalAmount(e);
+      const v = formatTokenAmountInput(e, payToken?.decimals);
       if (!/^\d*(\.\d*)?$/.test(v)) {
         return;
       }
