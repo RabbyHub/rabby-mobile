@@ -552,11 +552,7 @@ export const TokenMarketInfoScreen = () => {
                 onPress={handleOpenTokenDetail}
               />
             )}
-            <View
-              style={{
-                position: 'relative',
-                marginTop: 12,
-              }}>
+            <View style={styles.chartContainer}>
               {tokenWithAmountLoading && !tokenWithAmount ? (
                 <View style={styles.skeleton} />
               ) : tokenWithAmount?.support_market_data ? (
@@ -693,7 +689,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         ? colors2024['neutral-bg-0']
         : colors2024['neutral-bg-1'],
     },
-
+    chartContainer: {
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+      borderRadius: 16,
+      position: 'relative',
+      marginTop: 12,
+      marginHorizontal: 16,
+      padding: 12,
+    },
     riskContainer: {
       paddingHorizontal: 20,
       marginTop: 12,
@@ -805,15 +810,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderRadius: 100,
     },
     skeleton: {
-      marginTop: 12,
-      width: screenWidth - 32,
+      width: '100%',
       height: 200,
       borderRadius: 12,
-      marginHorizontal: 16,
     },
-    klineContainer: {
-      paddingHorizontal: 16,
-      marginBottom: 12,
-    },
+    klineContainer: {},
   };
 });
