@@ -32,7 +32,7 @@ import {
   SendAmountInput,
   SendAmountInputMode,
 } from './components/SendAmountInput';
-import { formatSpeicalAmount } from '@/utils/number';
+import { formatLittleNumber, formatSpeicalAmount } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
 
 const USD_INPUT_REGEX = /^\d*(\.\d{0,2})?$/;
@@ -82,7 +82,12 @@ function formatTokenQuoteValueText(value: string | number | BigNumber) {
     return '0';
   }
 
-  const displayValue = bn.decimalPlaces(6).toFixed();
+  const displayBn = bn.decimalPlaces(6);
+  if (displayBn.isZero()) {
+    return formatLittleNumber(bn.toFixed());
+  }
+
+  const displayValue = displayBn.toFixed();
   const [intPart, displayDecimalPart] = displayValue.split('.');
   const sign = intPart.startsWith('-') ? '-' : '';
   const absIntPart = sign ? intPart.slice(1) : intPart;
@@ -239,6 +244,13 @@ const SendAmountControl = React.memo(function SendAmountControl() {
     () => getSendAmountTokenKey(currentToken),
     [currentToken],
   );
+  const amountInputHasValue = useMemo(() => {
+    if (inputMode === 'usd') {
+      return Boolean(usdInputValue || formValues.amount);
+    }
+
+    return Boolean(formValues.amount);
+  }, [formValues.amount, inputMode, usdInputValue]);
 
   useEffect(() => {
     setInputMode('token');
@@ -264,7 +276,11 @@ const SendAmountControl = React.memo(function SendAmountControl() {
         };
       }
 
-      if (!isValidUsdPrice(prev.price) && nextPrice !== null) {
+      if (amountInputHasValue) {
+        return prev;
+      }
+
+      if (prev.price !== nextPrice) {
         return {
           tokenKey,
           price: nextPrice,
@@ -273,7 +289,7 @@ const SendAmountControl = React.memo(function SendAmountControl() {
 
       return prev;
     });
-  }, [currentToken]);
+  }, [amountInputHasValue, currentToken]);
 
   const activeUsdPrice = useMemo(() => {
     if (
@@ -375,9 +391,13 @@ const SendAmountControl = React.memo(function SendAmountControl() {
   const previousAddress = usePrevious(currentAccount?.address);
   useEffect(() => {
     if (previousAddress && previousAddress !== currentAccount?.address) {
-      onChangeSlider(0, true);
+      setInputMode('token');
+      setUsdInputValue('');
+      lastUsdInputTokenAmountRef.current = '';
+      handleFieldChange?.('amount', '');
+      setSlider(0);
     }
-  }, [previousAddress, currentAccount?.address, onChangeSlider]);
+  }, [previousAddress, currentAccount?.address, handleFieldChange, setSlider]);
 
   if (!chainItem || !currentToken) {
     return null;

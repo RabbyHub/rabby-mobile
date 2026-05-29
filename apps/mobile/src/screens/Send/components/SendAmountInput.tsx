@@ -21,14 +21,11 @@ import LinearGradient from 'react-native-linear-gradient';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
 import { RcIconSwitchCC } from '@/assets/icons/send';
-import {
-  DEFAULT_FONT_SIZE_STEP,
-  DEFAULT_MAX_FONT_SIZE,
-  DEFAULT_MIN_FONT_SIZE,
-} from '@/components/AutoShrinkAmountTextSizing';
+import { DEFAULT_MAX_FONT_SIZE } from '@/components/AutoShrinkAmountTextSizing';
 import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import { Text, TextInput } from '@/components/Typography';
+import { IS_ANDROID } from '@/core/native/utils';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
@@ -101,10 +98,17 @@ function useLoadTokenList({
 }
 
 const UNIT_GAP = 4;
-const CARET_BUFFER = 6;
+const UNIT_COMPACT_PREFIX_LENGTH = 3;
+const UNIT_COMPACT_TRIGGER_LENGTH = 6;
+const CARET_BUFFER = 7;
 const MAIN_FONT_SIZE = DEFAULT_MAX_FONT_SIZE;
+const MIN_AMOUNT_FONT_SIZE = 17;
+const AMOUNT_FONT_SIZE_STEP = 1;
+const AMOUNT_ROW_HEIGHT = 36;
+const AMOUNT_LINE_HEIGHT = 34;
 const QUOTE_TEXT_FONT_SIZE = 14;
 const QUOTE_UNIT_GAP = 4;
+const EMPTY_AMOUNT_DISPLAY_VALUE = '0';
 const AMOUNT_MEASURE_CHARS = [
   '0',
   '1',
@@ -123,6 +127,47 @@ const QUOTE_MEASURE_CHARS = Array.from(
     '0123456789.,< >ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz$',
   ),
 );
+
+function getDisplayAmountValue(value?: string) {
+  return value || EMPTY_AMOUNT_DISPLAY_VALUE;
+}
+
+function getTextCharLength(text: string) {
+  return Array.from(text).length;
+}
+
+function getCompactUnitText(unit: string) {
+  const chars = Array.from(unit);
+  if (chars.length <= UNIT_COMPACT_TRIGGER_LENGTH) {
+    return unit;
+  }
+
+  return `${chars.slice(0, UNIT_COMPACT_PREFIX_LENGTH).join('')}...`;
+}
+
+function normalizeIntegerPart(value: string) {
+  if (!value) {
+    return EMPTY_AMOUNT_DISPLAY_VALUE;
+  }
+
+  return value.replace(/^0+(?=\d)/, '') || EMPTY_AMOUNT_DISPLAY_VALUE;
+}
+
+function normalizeDisplayAmountValue(value: string) {
+  const normalizedSeparatorValue = value.replace(',', '.');
+  if (!normalizedSeparatorValue) {
+    return '';
+  }
+
+  const dotIndex = normalizedSeparatorValue.indexOf('.');
+  if (dotIndex >= 0) {
+    return `${normalizeIntegerPart(
+      normalizedSeparatorValue.slice(0, dotIndex),
+    )}${normalizedSeparatorValue.slice(dotIndex)}`;
+  }
+
+  return normalizeIntegerPart(normalizedSeparatorValue);
+}
 
 export const SendAmountInput = ({
   token,
@@ -154,10 +199,12 @@ export const SendAmountInput = ({
       onTokenChange,
       ref,
     });
-  const unitTextRef = useRef<TextInput>(null);
+  const unitTextRef = useRef<{
+    setNativeProps?: (nativeProps: object) => void;
+  } | null>(null);
   const inputSelectionRef = useRef({
-    start: (value || '').length,
-    end: (value || '').length,
+    start: getDisplayAmountValue(value).length,
+    end: getDisplayAmountValue(value).length,
   });
 
   const [inputAreaWidth, setInputAreaWidth] = useState(0);
@@ -170,6 +217,13 @@ export const SendAmountInput = ({
   const [unitWidthAtBaseFontSize, setUnitWidthAtBaseFontSize] = useState(0);
   const [quoteUnitWidth, setQuoteUnitWidth] = useState(0);
   const [inputValue, setInputValue] = useState(value || '');
+
+  const setUnitTextNodeRef = useCallback(
+    (node: { setNativeProps?: (nativeProps: object) => void } | null) => {
+      unitTextRef.current = node;
+    },
+    [],
+  );
 
   useEffect(() => {
     setInputValue(value || '');
@@ -192,10 +246,24 @@ export const SendAmountInput = ({
     );
   }, [colors2024, styles.skeletonLinear]);
 
-  const textForMeasure = inputValue || '0';
+  const displayInputValue = getDisplayAmountValue(inputValue);
+  const displayUnitText = useMemo(() => getCompactUnitText(unit), [unit]);
+  const displayQuoteUnitText = useMemo(
+    () => getCompactUnitText(quoteUnit),
+    [quoteUnit],
+  );
+  const emptyAmountSelection = useMemo(
+    () => ({
+      start: EMPTY_AMOUNT_DISPLAY_VALUE.length,
+      end: EMPTY_AMOUNT_DISPLAY_VALUE.length,
+    }),
+    [],
+  );
+  const textForMeasure = displayInputValue;
   const fallbackCharWidth =
     charWidthsAtBaseFontSize['0'] || MAIN_FONT_SIZE * 0.56;
-  const fallbackUnitWidth = Math.max(unit.length, 1) * MAIN_FONT_SIZE * 0.58;
+  const fallbackUnitWidth =
+    Math.max(getTextCharLength(displayUnitText), 1) * MAIN_FONT_SIZE * 0.58;
   const measuredUnitWidthAtBaseFontSize =
     unitWidthAtBaseFontSize || fallbackUnitWidth;
   const getValueWidthAtBaseFontSize = useCallback(
@@ -230,11 +298,11 @@ export const SendAmountInput = ({
         };
       }
 
-      let nextFittingFontSize = DEFAULT_MIN_FONT_SIZE;
+      let nextFittingFontSize = MIN_AMOUNT_FONT_SIZE;
       for (
         let fontSize = MAIN_FONT_SIZE;
-        fontSize >= DEFAULT_MIN_FONT_SIZE;
-        fontSize -= DEFAULT_FONT_SIZE_STEP
+        fontSize >= MIN_AMOUNT_FONT_SIZE;
+        fontSize -= AMOUNT_FONT_SIZE_STEP
       ) {
         const scaledValueWidth =
           (nextValueWidthAtBaseFontSize * fontSize) / MAIN_FONT_SIZE;
@@ -285,8 +353,8 @@ export const SendAmountInput = ({
 
   const applyUnitLayoutNative = useCallback(
     (nextValue: string) => {
-      const nextLayout = getAmountLayout(nextValue);
-      unitTextRef.current?.setNativeProps({
+      const nextLayout = getAmountLayout(getDisplayAmountValue(nextValue));
+      unitTextRef.current?.setNativeProps?.({
         style: {
           fontSize: nextLayout.fittingFontSize,
           left: nextLayout.unitLeft,
@@ -353,26 +421,41 @@ export const SendAmountInput = ({
   const getPredictedValueFromKey = useCallback(
     (key: string) => {
       const selection = inputSelectionRef.current;
-      const start = Math.max(0, Math.min(selection.start, inputValue.length));
-      const end = Math.max(start, Math.min(selection.end, inputValue.length));
+      const start = Math.max(
+        0,
+        Math.min(selection.start, displayInputValue.length),
+      );
+      const end = Math.max(
+        start,
+        Math.min(selection.end, displayInputValue.length),
+      );
 
       if (key === 'Backspace') {
         if (start !== end) {
-          return inputValue.slice(0, start) + inputValue.slice(end);
+          return normalizeDisplayAmountValue(
+            displayInputValue.slice(0, start) + displayInputValue.slice(end),
+          );
         }
         if (start > 0) {
-          return inputValue.slice(0, start - 1) + inputValue.slice(end);
+          return normalizeDisplayAmountValue(
+            displayInputValue.slice(0, start - 1) +
+              displayInputValue.slice(end),
+          );
         }
         return inputValue;
       }
 
       if (key.length === 1) {
-        return inputValue.slice(0, start) + key + inputValue.slice(end);
+        return normalizeDisplayAmountValue(
+          displayInputValue.slice(0, start) +
+            key +
+            displayInputValue.slice(end),
+        );
       }
 
       return null;
     },
-    [inputValue],
+    [displayInputValue, inputValue],
   );
 
   const handleInputKeyPress = useCallback(
@@ -388,9 +471,10 @@ export const SendAmountInput = ({
   const handleInputChange = useCallback(
     (nextValue: string) => {
       const previousValue = inputValue;
-      applyUnitLayoutNative(nextValue);
-      setInputValue(nextValue);
-      const result = onChange?.(nextValue);
+      const normalizedValue = normalizeDisplayAmountValue(nextValue);
+      applyUnitLayoutNative(normalizedValue);
+      setInputValue(normalizedValue);
+      const result = onChange?.(normalizedValue);
       if (result === false) {
         applyUnitLayoutNative(previousValue);
         setInputValue(previousValue);
@@ -409,7 +493,9 @@ export const SendAmountInput = ({
   const fallbackQuoteCharWidth =
     quoteCharWidths['0'] || QUOTE_TEXT_FONT_SIZE * 0.56;
   const fallbackQuoteUnitWidth =
-    Math.max(quoteUnit.length, 1) * QUOTE_TEXT_FONT_SIZE * 0.58;
+    Math.max(getTextCharLength(displayQuoteUnitText), 1) *
+    QUOTE_TEXT_FONT_SIZE *
+    0.58;
   const measuredQuoteUnitWidth = quoteUnitWidth || fallbackQuoteUnitWidth;
   const quoteTextMaxWidth = Math.max(
     inputAreaWidth -
@@ -450,15 +536,15 @@ export const SendAmountInput = ({
             <View style={styles.amountRow}>
               <TextInput
                 ref={tokenInputRef}
-                value={inputValue}
+                value={displayInputValue}
                 onChangeText={handleInputChange}
-                placeholder="0"
-                placeholderTextColor={colors2024['neutral-info']}
                 inputMode="decimal"
                 keyboardType="decimal-pad"
                 numberOfLines={1}
                 multiline={false}
                 scrollEnabled
+                selection={!inputValue ? emptyAmountSelection : undefined}
+                selectionColor={colors2024['brand-default']}
                 onKeyPress={handleInputKeyPress}
                 onSelectionChange={handleInputSelectionChange}
                 style={[
@@ -470,28 +556,49 @@ export const SendAmountInput = ({
                 ]}
                 {...amountInputProps}
               />
-              <TextInput
-                ref={unitTextRef}
-                value={unit}
-                editable={false}
-                caretHidden
-                contextMenuHidden
-                pointerEvents="none"
-                accessible={false}
-                accessibilityElementsHidden
-                importantForAccessibility="no"
-                numberOfLines={1}
-                multiline={false}
-                scrollEnabled={false}
-                style={[
-                  styles.unitText,
-                  {
-                    fontSize: fittingFontSize,
-                    left: unitLeft,
-                    width: unitWidth,
-                  },
-                ]}
-              />
+              {IS_ANDROID ? (
+                <Text
+                  ref={setUnitTextNodeRef}
+                  pointerEvents="none"
+                  accessible={false}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={[
+                    styles.unitText,
+                    {
+                      fontSize: fittingFontSize,
+                      left: unitLeft,
+                      width: unitWidth,
+                    },
+                  ]}>
+                  {displayUnitText}
+                </Text>
+              ) : (
+                <TextInput
+                  ref={setUnitTextNodeRef}
+                  value={displayUnitText}
+                  editable={false}
+                  caretHidden
+                  contextMenuHidden
+                  pointerEvents="none"
+                  accessible={false}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no"
+                  numberOfLines={1}
+                  multiline={false}
+                  scrollEnabled={false}
+                  style={[
+                    styles.unitText,
+                    {
+                      fontSize: fittingFontSize,
+                      left: unitLeft,
+                      width: unitWidth,
+                    },
+                  ]}
+                />
+              )}
             </View>
           )}
           <TouchableOpacity
@@ -514,7 +621,7 @@ export const SendAmountInput = ({
               {quoteValueText}
             </Text>
             <Text style={styles.quoteUnitText} numberOfLines={1}>
-              {quoteUnit}
+              {displayQuoteUnitText}
             </Text>
             {canSwitchMode ? (
               <View style={styles.switchIconWrapper}>
@@ -568,7 +675,7 @@ export const SendAmountInput = ({
         numberOfLines={1}
         onTextLayout={handleUnitMeasure}
         style={[styles.measureText, styles.measureUnitText]}>
-        {unit}
+        {displayUnitText}
       </Text>
       {QUOTE_MEASURE_CHARS.map(char => (
         <Text
@@ -583,7 +690,7 @@ export const SendAmountInput = ({
         numberOfLines={1}
         onTextLayout={handleQuoteUnitMeasure}
         style={[styles.measureText, styles.measureQuoteText]}>
-        {quoteUnit}
+        {displayQuoteUnitText}
       </Text>
     </View>
   );
@@ -609,7 +716,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       justifyContent: 'center',
     },
     amountRow: {
-      height: 36,
+      height: AMOUNT_ROW_HEIGHT,
       position: 'relative',
       overflow: 'hidden',
     },
@@ -617,11 +724,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       position: 'absolute',
       left: 0,
       top: 0,
-      fontWeight: '700',
+      fontWeight: '900',
       fontFamily: 'SF Pro Rounded',
       color: colors2024['neutral-title-1'],
-      height: 36,
-      lineHeight: 36,
+      height: AMOUNT_ROW_HEIGHT,
+      lineHeight: AMOUNT_LINE_HEIGHT,
       padding: 0,
       paddingTop: 0,
       paddingBottom: 0,
@@ -637,7 +744,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       color: colors2024['neutral-info'],
       backgroundColor: colors2024['neutral-bg-2'],
       fontWeight: '700',
-      lineHeight: 36,
+      height: AMOUNT_ROW_HEIGHT,
+      lineHeight: AMOUNT_LINE_HEIGHT,
       fontFamily: 'SF Pro Rounded',
       includeFontPadding: false,
       padding: 0,
@@ -724,15 +832,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     },
     measureValueText: {
       fontFamily: 'SF Pro Rounded',
-      fontWeight: '700',
+      fontWeight: '900',
       fontSize: MAIN_FONT_SIZE,
-      lineHeight: 36,
+      lineHeight: AMOUNT_LINE_HEIGHT,
     },
     measureUnitText: {
       fontFamily: 'SF Pro Rounded',
       fontWeight: '700',
       fontSize: MAIN_FONT_SIZE,
-      lineHeight: 36,
+      lineHeight: AMOUNT_LINE_HEIGHT,
     },
     measureQuoteText: {
       fontFamily: 'SF Pro Rounded',
