@@ -4,6 +4,7 @@ import { openapi } from '@/core/request';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { syncRemoteTokens } from '@/databases/sync/assets';
+import { eventBus, EVENT_PATCH_SINGLE_TOKEN } from '@/utils/events';
 import { lpTokenFilter } from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import { preferenceService } from '@/core/services/shared';
@@ -20,6 +21,7 @@ import type {
 import PQueue from 'p-queue';
 import { ResourceBaseStore } from './_resourceBase';
 import type { ObservableResourceValueSource } from './_resourceFlow';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
@@ -1791,6 +1793,51 @@ const tokenListStore = zCreate<TokenListState>(set => ({
     }
   },
 }));
+
+const patchSingleTokenInStore = (address: string, token: ITokenItem) => {
+  const normalizedAddress = normalizeAddress(address);
+  const nextToken = tokenItemToITokenItem(token, normalizedAddress);
+
+  tokenListStore.setState(state => {
+    const currentTokens = state.tokenListMap[normalizedAddress] || [];
+    const matchedIndex = currentTokens.findIndex(
+      item =>
+        item.chain.toLowerCase() === nextToken.chain.toLowerCase() &&
+        isSameAddress(item.id, nextToken.id),
+    );
+    const hasPositiveAmount = (nextToken.amount || 0) > 0;
+    let nextTokens = currentTokens;
+
+    if (matchedIndex > -1) {
+      if (hasPositiveAmount) {
+        nextTokens = currentTokens.slice();
+        nextTokens[matchedIndex] = nextToken;
+      } else {
+        nextTokens = currentTokens.filter((_, index) => index !== matchedIndex);
+      }
+    } else if (hasPositiveAmount) {
+      nextTokens = [...currentTokens, nextToken];
+    }
+
+    if (nextTokens === currentTokens) {
+      return state;
+    }
+
+    return {
+      tokenListMap: {
+        ...state.tokenListMap,
+        [normalizedAddress]: nextTokens,
+      },
+    };
+  });
+};
+
+eventBus.on(EVENT_PATCH_SINGLE_TOKEN, detail => {
+  patchSingleTokenInStore(
+    detail.address,
+    tokenItemToITokenItem(detail.token, detail.address),
+  );
+});
 
 const getTokenListMapChangedAddresses = (
   previousTokenListMap: TokenListState['tokenListMap'],
