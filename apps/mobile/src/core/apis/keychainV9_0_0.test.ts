@@ -74,6 +74,12 @@ describe('core/apis/keychainV9_0_0', () => {
       keystorePublicKeySha256: 'debug-public-key',
       keystoreDebugErrorMessage: null,
     }));
+    const mockDebugDecryptGenericPasswordForOptions = jest.fn(async () => ({
+      service: 'com.debank',
+      username: 'rabbymobile-user',
+      password: 'enc:plain-password',
+      storage,
+    }));
     const mockDebugRemoveCipherStorageMarkerForOptions = jest.fn(
       async () => true,
     );
@@ -88,6 +94,8 @@ describe('core/apis/keychainV9_0_0', () => {
         RNRabbyKeychainV9Manager: {
           debugGetGenericPasswordStateForOptions:
             mockDebugGetGenericPasswordStateForOptions,
+          debugDecryptGenericPasswordForOptions:
+            mockDebugDecryptGenericPasswordForOptions,
           debugRemoveCipherStorageMarkerForOptions:
             mockDebugRemoveCipherStorageMarkerForOptions,
         },
@@ -169,6 +177,7 @@ describe('core/apis/keychainV9_0_0', () => {
       mockGetGenericPassword,
       mockSetGenericPassword,
       mockDebugGetGenericPasswordStateForOptions,
+      mockDebugDecryptGenericPasswordForOptions,
       mockSafeVerifyPasswordAndUpdateUnlockTime,
       mockUpdateUnlockTime,
     };
@@ -280,6 +289,7 @@ describe('core/apis/keychainV9_0_0', () => {
       module,
       mockGetGenericPassword,
       mockSetGenericPassword,
+      mockDebugDecryptGenericPasswordForOptions,
       mockSafeVerifyPasswordAndUpdateUnlockTime,
       mockUpdateUnlockTime,
     } = await setup();
@@ -299,14 +309,15 @@ describe('core/apis/keychainV9_0_0', () => {
       }),
     );
     expect(result.usedFallbackRabbitCode).toBe(false);
-    expect(mockGetGenericPassword).toHaveBeenCalledTimes(1);
-    expect(mockGetGenericPassword).toHaveBeenCalledWith(
+    expect(mockDebugDecryptGenericPasswordForOptions).toHaveBeenCalledTimes(1);
+    expect(mockDebugDecryptGenericPasswordForOptions).toHaveBeenCalledWith(
       expect.objectContaining({
         service: 'com.debank',
         rules: 'automaticUpgradeToMoreSecuredStorage',
         androidAllowAuthenticatedSessionReuse: true,
       }),
     );
+    expect(mockGetGenericPassword).not.toHaveBeenCalled();
     expect(mockSafeVerifyPasswordAndUpdateUnlockTime).not.toHaveBeenCalled();
     expect(mockUpdateUnlockTime).not.toHaveBeenCalled();
     expect(mockSetGenericPassword).not.toHaveBeenCalled();

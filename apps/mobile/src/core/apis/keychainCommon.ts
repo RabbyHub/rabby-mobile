@@ -206,6 +206,9 @@ type RNKeychainDebugModule = {
   debugGetGenericPasswordStateForOptions?: (
     options: KeychainCompatibleOptions,
   ) => Promise<NativeKeychainDebugState>;
+  debugDecryptGenericPasswordForOptions?: (
+    options: KeychainCompatibleOptions,
+  ) => Promise<false | KeychainCompatibleUserCredentials>;
   debugRemoveCipherStorageMarkerForOptions?: (
     options: KeychainCompatibleOptions,
   ) => Promise<boolean>;
@@ -1191,18 +1194,26 @@ export function createBusinessKeychainApi({
   }): Promise<DebugGenericPasswordDecryptResult> {
     const instance = await waitInstance();
     const startedAt = Date.now();
+    const keychainOptions = {
+      ...DEFAULT_GET_OPTIONS,
+      ...getAndroidAuthPromptPolicyOptions(options?.androidAuthPromptPolicy),
+    };
 
     logger.info('[keychain-debug] debug generic decrypt start', {
       sourceLabel,
       androidAuthPromptPolicy: options?.androidAuthPromptPolicy,
       authenticationTypeLabel: getAuthenticationTypeLabel(),
+      nativeDebugDecrypt: !!debugModule?.debugDecryptGenericPasswordForOptions,
     });
 
     try {
-      const keychainObject = (await keychainModule.getGenericPassword({
-        ...DEFAULT_GET_OPTIONS,
-        ...getAndroidAuthPromptPolicyOptions(options?.androidAuthPromptPolicy),
-      })) as false | KeychainCompatibleUserCredentials;
+      const keychainObject = debugModule?.debugDecryptGenericPasswordForOptions
+        ? await debugModule.debugDecryptGenericPasswordForOptions(
+            keychainOptions,
+          )
+        : ((await keychainModule.getGenericPassword(keychainOptions)) as
+            | false
+            | KeychainCompatibleUserCredentials);
 
       if (!keychainObject) {
         throw makeKeyChainError(
