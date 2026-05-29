@@ -347,7 +347,9 @@ export async function requestGenericPassword(
       );
 
       let currentRewriteSucceeded = false;
-      if (fallbackPlainPassword) {
+      const shouldRewriteCurrentVersion =
+        !requestOptions.skipCurrentVersionRewriteAfterLegacyFallback;
+      if (fallbackPlainPassword && shouldRewriteCurrentVersion) {
         try {
           await currentApi.setGenericPassword(
             fallbackPlainPassword,
@@ -384,6 +386,7 @@ export async function requestGenericPassword(
             message: getErrorMessage(error),
           },
           hasFallbackPlainPassword: !!fallbackPlainPassword,
+          currentRewriteSkipped: !shouldRewriteCurrentVersion,
           currentRewriteSucceeded,
         },
       );

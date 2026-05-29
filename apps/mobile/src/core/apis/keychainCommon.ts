@@ -944,6 +944,7 @@ export function createBusinessKeychainApi({
     onPlainPassword,
     androidAuthPromptPolicy = DEFAULT_ANDROID_AUTH_PROMPT_POLICY,
     shouldAttachTrustedVaultKeyString = true,
+    skipLegacyAndroidBiometricsStorageUpgrade = false,
   }: {
     purpose?: T;
     onPlainPassword?: (
@@ -952,6 +953,8 @@ export function createBusinessKeychainApi({
     ) => void | Promise<void>;
     androidAuthPromptPolicy?: AndroidAuthPromptPolicy;
     shouldAttachTrustedVaultKeyString?: boolean;
+    skipLegacyAndroidBiometricsStorageUpgrade?: boolean;
+    skipCurrentVersionRewriteAfterLegacyFallback?: boolean;
   }): Promise<null | DefaultRet> {
     const instance = await waitInstance();
     const startedAt = Date.now();
@@ -1013,7 +1016,7 @@ export function createBusinessKeychainApi({
                   decrypted.password,
                   decrypted,
                 );
-              } else {
+              } else if (!skipLegacyAndroidBiometricsStorageUpgrade) {
                 await upgradeLegacyAndroidBiometricsStorage(
                   decrypted.password,
                   typeof keychainObject.storage === 'string'
@@ -1060,7 +1063,7 @@ export function createBusinessKeychainApi({
                 credentialsWithVaultKey.password,
                 credentialsWithVaultKey,
               );
-            } else {
+            } else if (!skipLegacyAndroidBiometricsStorageUpgrade) {
               await upgradeLegacyAndroidBiometricsStorage(
                 credentialsWithVaultKey.password,
                 typeof keychainObject.storage === 'string'

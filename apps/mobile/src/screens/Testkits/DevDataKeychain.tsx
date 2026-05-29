@@ -1618,6 +1618,8 @@ export default function DevDataKeychain(): JSX.Element {
           purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
           androidAuthPromptPolicy: policy,
           shouldAttachTrustedVaultKeyString: false,
+          skipLegacyAndroidBiometricsStorageUpgrade: true,
+          skipCurrentVersionRewriteAfterLegacyFallback: true,
           onPlainPassword: password => {
             decryptedPassword = password;
           },

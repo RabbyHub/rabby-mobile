@@ -645,6 +645,7 @@ function MetaRow({
 
 export default function DebugLogViewerScreen(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const [, forcePolicyRender] = useState(0);
   const {
     canToggle,
     consoleCaptureEnabled,
@@ -1193,7 +1194,20 @@ export default function DebugLogViewerScreen(): JSX.Element {
                 }
 
                 onToggle(nextValue);
-                refreshSnapshot().catch(noop);
+                forcePolicyRender(value => value + 1);
+                logger
+                  .handlePolicyChange()
+                  .then(() => {
+                    logger.info('[debug-log] file logging switch changed', {
+                      nextValue,
+                      effectiveEnabled:
+                        logger.getState().effectiveFileLoggingEnabled,
+                    });
+                  })
+                  .then(refreshSnapshot)
+                  .catch(error => {
+                    markError('Toggle file logging', error);
+                  });
               }}
             />
           </View>
