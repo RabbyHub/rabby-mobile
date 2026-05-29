@@ -845,6 +845,19 @@ export function createBusinessKeychainApi({
       credentials.storage === KEYCHAIN_STORAGE_TYPES.AES_GCM_NO_AUTH &&
       isAuthenticatedByBiometrics()
     ) {
+      const [supportedBiometry, passcodeAvailable] = await Promise.all([
+        keychainModule.getSupportedBiometryType(),
+        typeof keychainModule.isPasscodeAuthAvailable === 'function'
+          ? keychainModule.isPasscodeAuthAvailable().catch(() => false)
+          : Promise.resolve(false),
+      ]);
+
+      if (!supportedBiometry && !passcodeAvailable) {
+        throw new Error(
+          'msg: No authentication method (biometrics or device PIN) is available on this device',
+        );
+      }
+
       const promptResult = await getRNBiometrics().simplePrompt({
         promptMessage: i18n.t('native.authentication.auth_prompt_desc'),
       });
