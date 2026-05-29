@@ -1922,7 +1922,7 @@
         "unavailablePaymentWallet": "所选支付钱包不可用",
         "balanceLabel": "余额",
         "fetchQuoteFailed": "获取报价失败",
-        "selectToken": "选择要存入的 Token",
+        "selectToken": "Token选择",
         "gasDepositTitle": "Gas 充值",
         "estReceiveLabel": "预计收款：{{usd}}",
         "insufficientBalanceLabel": "余额不足",
@@ -1980,7 +1980,7 @@
         "depositToken": "使用 Token 充值",
         "buyWithApple": "在应用商店购买",
         "insufficientTokenBalance": "余额不足",
-        "appStore": "App Store"
+        "appStore": "App Store 充值"
       },
       "gasAccountList": {
         "gasAccountBalance": "GasAccount 余额",
@@ -2009,7 +2009,7 @@
       "lowBalance": "您的 gas 不足（<$1.00）。请存入 gas 以确保未来交易顺利进行。",
       "gasBalance": "Gas 余额",
       "depositSubmitted": "存款已提交",
-      "depositWith": "存入方式"
+      "depositWith": "通过"
     },
     "search": {
       "header": {
@@ -3459,7 +3459,7 @@
         "stop": "停止交换"
       },
       "homeBanner": {
-        "title": "清理零头",
+        "title": "清理小额资产",
         "description": "支持将小额余额转换为原生代币"
       },
       "colValueAmount": "价值/金额",
