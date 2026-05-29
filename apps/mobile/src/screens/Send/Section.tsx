@@ -38,7 +38,7 @@ import {
   SendAmountInput,
   SendAmountInputMode,
 } from './components/SendAmountInput';
-import { formatSpeicalAmount } from '@/utils/number';
+import { formatLittleNumber, formatSpeicalAmount } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
 
 const USD_INPUT_REGEX = /^\d*(\.\d{0,2})?$/;
@@ -88,7 +88,12 @@ function formatTokenQuoteValueText(value: string | number | BigNumber) {
     return '0';
   }
 
-  const displayValue = bn.decimalPlaces(6).toFixed();
+  const displayBn = bn.decimalPlaces(6);
+  if (displayBn.isZero()) {
+    return formatLittleNumber(bn.toFixed());
+  }
+
+  const displayValue = displayBn.toFixed();
   const [intPart, displayDecimalPart] = displayValue.split('.');
   const sign = intPart.startsWith('-') ? '-' : '';
   const absIntPart = sign ? intPart.slice(1) : intPart;
