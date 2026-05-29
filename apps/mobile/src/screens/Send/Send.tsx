@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -27,10 +28,11 @@ import {
   getSendChainToken,
   SendTokenEvents,
   SendTokenInternalContextProvider,
+  useSendTokenCanSubmit,
   useSendTokenForm,
-  useSendTokenInternalContext,
+  useSendTokenInternalShallowSelector,
   useSendTokenScreenChainToken,
-  useSendTokenScreenState,
+  useSendTokenScreenStateShallowSelector,
 } from './hooks/useSendToken';
 import BottomArea from './components/BottomArea';
 import {
@@ -82,7 +84,7 @@ import { lowcaseSame } from '@/utils/common';
 import { noop } from 'lodash';
 import { ShowMoreOnSend } from './components/ShowMoreOnSend';
 import { PendingTxItem } from '../Swap/components/PendingTxItem';
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import { SendTxHistoryItem } from '@/core/services/transactionHistory';
 import { useRecentSendPendingTx } from './hooks/useRecentSend';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import {
@@ -124,11 +126,132 @@ const EMPTY_TOKEN_ITEM = {
   price: 0,
 };
 
+const SendPendingTxItem = React.memo(function SendPendingTxItem({
+  clearLocalPendingTxData,
+  isForMultipleAddress,
+  localPendingTxData,
+}: {
+  clearLocalPendingTxData: () => void;
+  isForMultipleAddress: boolean;
+  localPendingTxData: SendTxHistoryItem | null;
+}) {
+  const canSubmit = useSendTokenCanSubmit();
+  const { account } = useSendTokenInternalShallowSelector(ctx => ({
+    account: ctx.computed.account,
+  }));
+
+  if (!localPendingTxData || canSubmit) {
+    return null;
+  }
+
+  return (
+    <PendingTxItem
+      isForMultipleAddress={isForMultipleAddress}
+      data={localPendingTxData}
+      account={account}
+      type="send"
+      clearLocalPendingTxData={clearLocalPendingTxData}
+    />
+  );
+});
+
+const SendScreenBody = React.memo(function SendScreenBody({
+  clearLocalPendingTxData,
+  isForMultipleAddress,
+  isShowBlockedTransactionDialog,
+  localPendingTxData,
+}: {
+  clearLocalPendingTxData: () => void;
+  isForMultipleAddress: boolean;
+  isShowBlockedTransactionDialog: boolean;
+  localPendingTxData: SendTxHistoryItem | null;
+}) {
+  const navigation = useNavigation();
+  const { styles } = useTheme2024({ getStyle });
+  const { scrollViewRef, scrollViewStyle, sendTokenEvents } =
+    useSendTokenInternalShallowSelector(ctx => ({
+      scrollViewRef: ctx.scrollViewRef,
+      scrollViewStyle: ctx.scrollViewStyle,
+      sendTokenEvents: ctx.sendTokenEvents,
+    }));
+
+  const toAddressControlStyle = useMemo(
+    () => ({
+      marginTop: 24,
+      marginBottom: 0,
+    }),
+    [],
+  );
+
+  const mainContentStyle = useMemo(
+    () => [styles.mainContent, scrollViewStyle],
+    [scrollViewStyle, styles.mainContent],
+  );
+
+  const handlePressDismiss = useCallback(() => {
+    sendTokenEvents.emit(SendTokenEvents.ON_PRESS_DISMISS);
+    Keyboard.dismiss();
+  }, [sendTokenEvents]);
+
+  const handleScrollViewRef = useCallback(
+    (instance: any) => {
+      scrollViewRef.current = instance as unknown as KeyboardAwareScrollView;
+    },
+    [scrollViewRef],
+  );
+
+  const handleBlockedTransactionConfirm = useCallback(() => {
+    navigation.dispatch(
+      StackActions.replace(RootNames.StackRoot, {
+        screen: RootNames.Home,
+      }),
+    );
+  }, [navigation]);
+
+  return (
+    <View style={styles.screenRoot} {...makeTestIDProps(E2E_ID.send.screen)}>
+      <NormalScreenContainer2024
+        type="bg1"
+        // overwriteStyle={styles.screenContainer}
+      >
+        <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
+        <TouchableWithoutFeedback onPress={handlePressDismiss}>
+          <ScrollView contentContainerStyle={styles.sendScreen}>
+            <AnimatedKeyboardAwareScrollView
+              innerRef={handleScrollViewRef}
+              contentContainerStyle={mainContentStyle}>
+              <View>
+                <FromAddressControl2024 disableSwitch={false} />
+                <ToAddressControl2024
+                  style={toAddressControlStyle}
+                  // brandName={navParams?.addressBrandName}
+                />
+                <BalanceSection style={styles.balance} />
+                <ShowMoreOnSend />
+              </View>
+              <SendPendingTxItem
+                clearLocalPendingTxData={clearLocalPendingTxData}
+                isForMultipleAddress={isForMultipleAddress}
+                localPendingTxData={localPendingTxData}
+              />
+            </AnimatedKeyboardAwareScrollView>
+            <BottomArea />
+          </ScrollView>
+        </TouchableWithoutFeedback>
+        <TokenInfoPopup />
+        <BlockedAddressDialog
+          visible={isShowBlockedTransactionDialog}
+          onConfirm={handleBlockedTransactionConfirm}
+        />
+      </NormalScreenContainer2024>
+    </View>
+  );
+});
+
 function SendScreen({
   isForMultipleAddress = false,
 }: PropsForAccountSwitchScreen): JSX.Element {
   const navigation = useNavigation();
-  const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const [isShowBlockedTransactionDialog, setIsShowBlockedTransactionDialog] =
@@ -157,7 +280,12 @@ function SendScreen({
   const { chainItem, currentToken } = useSendTokenScreenChainToken();
   const routeParams = useAtomValue(sendScreenParamsAtom);
 
-  const { sendTokenScreenState: screenState } = useSendTokenScreenState();
+  const screenState = useSendTokenScreenStateShallowSelector(state => ({
+    clickedMax: state.clickedMax,
+    inited: state.inited,
+    selectedGasLevel: state.selectedGasLevel,
+    toAddrDesc: state.toAddrDesc,
+  }));
 
   const Header = useCallback(
     () => <SendHeaderRight isForMultipleAddress={isForMultipleAddress} />,
@@ -238,13 +366,11 @@ function SendScreen({
 
   const {
     sendTokenEvents,
-    formik,
     formValues,
+    submitForm,
     handleFieldChange,
     handleClickMaxButton,
     onChangeSlider,
-    slider,
-    setSlider,
     handleGasLevelChanged,
     handleIgnoreGasFeeChange,
     setReloadTxRefreshPaused,
@@ -260,6 +386,8 @@ function SendScreen({
 
     directSignBtnRef,
     formValuesRef,
+    formValuesStore,
+    saveCurrentFormValuesSnapshot,
 
     whitelistEnabled,
     computed: {
@@ -267,7 +395,6 @@ function SendScreen({
       toAddressInContactBook,
       toAddressIsCex,
       toAddressPositiveTips,
-      canSubmit,
       canDirectSign,
       toAddrCex,
     },
@@ -501,117 +628,93 @@ function SendScreen({
     chainServerId: chainItem?.serverId || '',
   });
 
+  const sendTokenInternalValue = useMemo(
+    () => ({
+      computed: {
+        account: currentAccount || null,
+        fromAddress: currentAccount?.address || '',
+        toAccount,
+        toAddressIsCex,
+        whitelistEnabled,
+        toAddressInContactBook,
+        toAddressPositiveTips,
+        canDirectSign,
+        toAddrCex,
+
+        chainItem,
+        currentToken,
+        currentTokenBalance: balanceNumText,
+      },
+      sendTokenEvents,
+      scrollViewRef,
+      scrollViewStyle,
+      fns: {
+        fetchContactAccounts,
+        disableItemCheck,
+      },
+
+      directSignBtnRef,
+      formValuesRef,
+      formValuesStore,
+      callbacks: {
+        handleCurrentTokenChange,
+        submitForm,
+        handleFieldChange,
+        checkCexSupport,
+        handleClickMaxButton,
+        onChangeSlider,
+        handleGasLevelChanged,
+        handleIgnoreGasFeeChange,
+        saveCurrentFormValuesSnapshot,
+        setReloadTxRefreshPaused,
+        onBottomAreaLayout,
+        onGasInfoDebouncedLoaded: scrollToBottom,
+      },
+    }),
+    [
+      balanceNumText,
+      canDirectSign,
+      chainItem,
+      checkCexSupport,
+      currentAccount,
+      currentToken,
+      directSignBtnRef,
+      disableItemCheck,
+      fetchContactAccounts,
+      formValuesRef,
+      formValuesStore,
+      handleClickMaxButton,
+      handleCurrentTokenChange,
+      submitForm,
+      handleFieldChange,
+      handleGasLevelChanged,
+      handleIgnoreGasFeeChange,
+      onBottomAreaLayout,
+      onChangeSlider,
+      scrollToBottom,
+      scrollViewRef,
+      scrollViewStyle,
+      saveCurrentFormValuesSnapshot,
+      sendTokenEvents,
+      setReloadTxRefreshPaused,
+      toAccount,
+      toAddrCex,
+      toAddressInContactBook,
+      toAddressIsCex,
+      toAddressPositiveTips,
+      whitelistEnabled,
+    ],
+  );
+
   return (
     <SignatureInstanceProvider instance={miniSignInstance}>
-      <SendTokenInternalContextProvider
-        value={{
-          screenState,
-          formValues,
-          computed: {
-            fromAddress: currentAccount?.address || '',
-            canSubmit,
-            toAccount,
-            toAddressIsCex,
-            whitelistEnabled,
-            toAddressInContactBook,
-            toAddressPositiveTips,
-            canDirectSign,
-            toAddrCex,
-
-            chainItem,
-            currentToken,
-            currentTokenBalance: balanceNumText,
-          },
-          sendTokenEvents,
-          formik,
-          slider,
-          fns: {
-            fetchContactAccounts,
-            disableItemCheck,
-          },
-
-          directSignBtnRef,
-          formValuesRef,
-          callbacks: {
-            handleCurrentTokenChange,
-            handleFieldChange,
-            checkCexSupport,
-            handleClickMaxButton,
-            onChangeSlider,
-            setSlider,
-            handleGasLevelChanged,
-            handleIgnoreGasFeeChange,
-            setReloadTxRefreshPaused,
-            onBottomAreaLayout,
-            onGasInfoDebouncedLoaded: scrollToBottom,
-          },
-        }}>
-        <View
-          style={styles.screenRoot}
-          {...makeTestIDProps(E2E_ID.send.screen)}>
-          <NormalScreenContainer2024
-            type="bg1"
-            // overwriteStyle={styles.screenContainer}
-          >
-            <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
-            <TouchableWithoutFeedback
-              onPress={() => {
-                sendTokenEvents.emit(SendTokenEvents.ON_PRESS_DISMISS);
-                Keyboard.dismiss();
-              }}>
-              <ScrollView contentContainerStyle={styles.sendScreen}>
-                <AnimatedKeyboardAwareScrollView
-                  innerRef={instance => {
-                    scrollViewRef.current =
-                      instance as unknown as KeyboardAwareScrollView;
-                  }}
-                  contentContainerStyle={[styles.mainContent, scrollViewStyle]}>
-                  {/* FromToSection */}
-                  <View>
-                    {/* From */}
-                    <FromAddressControl2024 disableSwitch={false} />
-                    {/* To */}
-                    <ToAddressControl2024
-                      style={{
-                        marginTop: 24,
-                        marginBottom: 0,
-                      }}
-                      addrDesc={screenState.toAddrDesc}
-                      // brandName={navParams?.addressBrandName}
-                    />
-                    {/* balance info */}
-                    <BalanceSection
-                      disableItemCheck={disableItemCheck}
-                      style={styles.balance}
-                    />
-                    <ShowMoreOnSend chainServeId={chainItem?.serverId || ''} />
-                  </View>
-                  {Boolean(localPendingTxData && !canSubmit) && (
-                    <PendingTxItem
-                      isForMultipleAddress={isForMultipleAddress}
-                      data={localPendingTxData!}
-                      account={currentAccount}
-                      type="send"
-                      clearLocalPendingTxData={clearLocalPendingTxData}
-                    />
-                  )}
-                </AnimatedKeyboardAwareScrollView>
-                <BottomArea account={currentAccount} />
-              </ScrollView>
-            </TouchableWithoutFeedback>
-            <TokenInfoPopup />
-            <BlockedAddressDialog
-              visible={isShowBlockedTransactionDialog}
-              onConfirm={() => {
-                navigation.dispatch(
-                  StackActions.replace(RootNames.StackRoot, {
-                    screen: RootNames.Home,
-                  }),
-                );
-              }}
-            />
-          </NormalScreenContainer2024>
-        </View>
+      <SendTokenInternalContextProvider value={sendTokenInternalValue}>
+        <SendScreenBody
+          clearLocalPendingTxData={clearLocalPendingTxData}
+          isForMultipleAddress={isForMultipleAddress}
+          isShowBlockedTransactionDialog={isShowBlockedTransactionDialog}
+          localPendingTxData={localPendingTxData}
+        />
       </SendTokenInternalContextProvider>
     </SignatureInstanceProvider>
   );
