@@ -209,7 +209,7 @@ const SendAmountControl = React.memo(function SendAmountControl() {
     disableItemCheck,
     handleClickMaxButton,
     handleFieldChange,
-    onChangeSlider,
+    setSlider,
   } = useSendTokenInternalShallowSelector(ctx => ({
     chainItem: ctx.computed.chainItem,
     checkCexSupport: ctx.callbacks.checkCexSupport,
@@ -218,7 +218,7 @@ const SendAmountControl = React.memo(function SendAmountControl() {
     disableItemCheck: ctx.fns.disableItemCheck,
     handleClickMaxButton: ctx.callbacks.handleClickMaxButton,
     handleFieldChange: ctx.callbacks.handleFieldChange,
-    onChangeSlider: ctx.callbacks.onChangeSlider,
+    setSlider: ctx.callbacks.setSlider,
   }));
   const isEstimatingGas = useSendTokenScreenStateSelector(
     state => state.isEstimatingGas,
@@ -246,11 +246,11 @@ const SendAmountControl = React.memo(function SendAmountControl() {
   );
   const amountInputHasValue = useMemo(() => {
     if (inputMode === 'usd') {
-      return Boolean(usdInputValue || formValues.amount);
+      return Boolean(usdInputValue || amount);
     }
 
-    return Boolean(formValues.amount);
-  }, [formValues.amount, inputMode, usdInputValue]);
+    return Boolean(amount);
+  }, [amount, inputMode, usdInputValue]);
 
   useEffect(() => {
     setInputMode('token');

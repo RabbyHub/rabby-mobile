@@ -2317,6 +2317,7 @@ export function useSendTokenForm({
     scrollToBottom,
 
     onChangeSlider,
+    setSlider,
 
     sendTokenEvents: sendTokenEventsRef.current,
     submitForm,
@@ -2392,6 +2393,7 @@ type InternalContext = {
     // }) => void;
     // onFormValuesChange: (changedValues: Partial<FormSendToken>) => void;
     onChangeSlider: (v: number, syncAmount?: boolean) => void;
+    setSlider: (v: number) => void;
     onBottomAreaLayout: (layout: LayoutChangeEvent) => void;
     onGasInfoDebouncedLoaded: () => void;
     // isAuthInProgress?: () => boolean;
@@ -2440,6 +2442,7 @@ const DEFAULT_SEND_TOKEN_INTERNAL_CONTEXT: InternalContext = {
     saveCurrentFormValuesSnapshot: () => {},
     setReloadTxRefreshPaused: () => {},
     onChangeSlider: () => {},
+    setSlider: () => {},
     onBottomAreaLayout: () => {},
     onGasInfoDebouncedLoaded: () => {},
     // isAuthInProgress: () => false,
