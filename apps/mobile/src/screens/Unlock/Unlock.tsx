@@ -544,11 +544,9 @@ export default function UnlockScreen() {
         if (__DEV__ && incToReset() === 0) {
           toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
           setUsingBiometrics(false);
-          storeApisBiometrics.toggleBiometrics(false, {});
         } else if (error.code === 'NIL_KEYCHAIN_OBJECT') {
           toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
           setUsingBiometrics(false);
-          storeApisBiometrics.toggleBiometrics(false, {});
         } else if (isBrokenBiometricsEntryError(error)) {
           toastBiometricsFailed(error.message);
         } else {
