@@ -1559,6 +1559,7 @@ export default function DevDataKeychain(): JSX.Element {
         await api.requestGenericPassword({
           purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
           androidAuthPromptPolicy: policy,
+          shouldAttachTrustedVaultKeyString: false,
           onPlainPassword: password => {
             decryptedPassword = password;
           },
