@@ -559,7 +559,6 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     alignItems: 'center',
     height: 20,
     backgroundColor: colors2024['neutral-bg-5'],
-    marginLeft: 6,
   },
   tagRow: {
     flexDirection: 'row',
