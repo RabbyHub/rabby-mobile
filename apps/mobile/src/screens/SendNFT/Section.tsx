@@ -1,12 +1,11 @@
-import React, { useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useThemeStyles, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import { Chain } from '@/constant/chains';
 import {
-  useSendNFTInternalContext,
+  useSendNFTFormValuesSelector,
+  useSendNFTInternalShallowSelector,
   useInputBlurOnEvents,
 } from './hooks/useSendNFT';
 import { NFTAmountInput } from './components/AmountInput';
@@ -38,26 +37,33 @@ export function SendNFTSection({
   return <View style={[styles.sectionPanel, style]}>{children}</View>;
 }
 
-export function NFTSection({
+export const NFTSection = React.memo(function NFTSection({
   style,
-  nftItem,
-  collectionName,
-  chainItem,
-}: RNViewProps & {
-  nftItem: NFTItem;
-  collectionName?: string;
-  chainItem?: Chain;
-}) {
+}: RNViewProps) {
   const { styles } = useTheme2024({ getStyle: getNFTSectionStyles });
   const { t } = useTranslation();
+  const amount = useSendNFTFormValuesSelector(values => values.amount);
 
-  const {
-    formValues,
-    callbacks: { handleFieldChange },
-  } = useSendNFTInternalContext();
+  const { chainItem, collectionName, handleFieldChange, nftItem } =
+    useSendNFTInternalShallowSelector(ctx => ({
+      chainItem: ctx.computed.chainItem,
+      collectionName: ctx.computed.collectionName,
+      handleFieldChange: ctx.callbacks.handleFieldChange,
+      nftItem: ctx.computed.currentNFT,
+    }));
 
   const amountInputRef = useRef<TextInput>(null);
   useInputBlurOnEvents(amountInputRef);
+  const handleAmountChange = useCallback(
+    (val: number) => {
+      handleFieldChange('amount', val + '');
+    },
+    [handleFieldChange],
+  );
+
+  if (!nftItem) {
+    return null;
+  }
 
   return (
     <View style={[styles.nftSection, style]}>
@@ -128,17 +134,15 @@ export function NFTSection({
             <NFTAmountInput
               nftItem={nftItem}
               style={styles.nftAmountInput}
-              value={formValues.amount}
-              onChange={val => {
-                handleFieldChange('amount', val + '');
-              }}
+              value={amount}
+              onChange={handleAmountChange}
             />
           </View>
         </View>
       </AddressItemShadowView>
     </View>
   );
-}
+});
 
 const BASIC_INFO_H = 80;
 const getNFTSectionStyles = createGetStyles2024(({ colors2024 }) => {

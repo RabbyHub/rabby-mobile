@@ -2829,7 +2829,7 @@
       "cancelAllOrdersConfirmTitle": "Alle Orders stornieren bestätigen",
       "cancelAllOrdersConfirmMessage": "Alle Ihre Limit-Orders werden storniert",
       "limitOrderDetail": {
-        "title": "Limit {{side}} {{pair}}",
+        "title": "Limit-Order {{side}} {{pair}}",
         "time": "Zeit",
         "size": "Größe",
         "filled": "Gefüllt",
@@ -2847,27 +2847,27 @@
         "failed": "Limit-Order stornieren fehlgeschlagen"
       },
       "PerpsCard": {
-        "loginBtn": "Melden Sie sich bei Trading Perps an",
+        "loginBtn": "Einloggen, um Perps zu traden",
         "withdrawBtn": "Abheben",
         "available": "Verfügbar",
         "title": "Perps traden",
         "depositBtn": "Einzahlen",
-        "loginDesc": "Melden Sie sich mit Ihrer Adresse an und hinterlegen Sie Gelder, um mit dem Handel von perps zu beginnen.",
+        "loginDesc": "Loggen Sie sich mit der aktuellen Adresse ein und zahlen Sie Guthaben ein, um Perps zu traden.",
         "learnBtn": "Lerne mehr über Perps",
         "learnMore": "Erfahren Sie mehr",
-        "addFunds": "Gelder hinzufügen"
+        "addFunds": "Guthaben aufladen"
       },
       "PerpsGuidePopup": {
-        "step1Title": "Master Perpetual Futures",
+        "step1Title": "Perpetual Futures meistern",
         "step4Title": "Leverage anpassen",
-        "step5Desc": "Jede Position hat einen Liquidationspreis. Wenn der Marktpreis ihn erreicht, wird Ihre Position geschlossen. Die Verwendung höherer Hebel erhöht das Risiko einer Liquidation.",
+        "step5Desc": "Jede Position hat einen Liquidationspreis. Wenn der Marktpreis diesen Preis erreicht, wird Ihre Position geschlossen. Je höher der Leverage, desto höher das Liquidationsrisiko.",
         "step3Desc": "Wenn Sie erwarten, dass der Preis fällt, eröffnen Sie einen Short. Wenn der Preis fällt, gewinnen Sie. Wenn er steigt, verlieren Sie.",
         "step2Title": "Long",
         "step2Desc": "Wenn Sie erwarten, dass der Preis steigt, eröffnen Sie eine Long-Position. Wenn der Preis steigt, gewinnen Sie. Wenn er fällt, verlieren Sie.",
         "step3Title": "Short",
-        "step1Desc": "Mit Perpetual Futures handelst du nicht nur mit Vermögenswerten. Du handelst mit dem, was du denkst, was als Nächstes passieren wird.",
+        "step1Desc": "Mit Perpetual Futures handeln Sie nicht nur Assets, sondern Ihre Einschätzung der nächsten Preisbewegung.",
         "step5Title": "Liquidation",
-        "step4Desc": "Der Hebel ermöglicht es Ihnen, mit mehr zu handeln, als Sie einsetzen. Er kann sowohl Ihre Gewinne als auch Ihre Verluste erhöhen."
+        "step4Desc": "Leverage ermöglicht es Ihnen, mit einem höheren Nominalwert als Ihrem eingesetzten Kapital zu handeln. Dadurch können Gewinne und Verluste verstärkt werden."
       },
       "PerpsDepositPopup": {
         "balance": "Guthaben",
@@ -2914,8 +2914,8 @@
           "closeShortTp": "Close Short Gewinnmitnahme",
           "closeShort": "Short schließen",
           "closeLongSl": "Long schließen Stop-Loss",
-          "closeShortLiquidation": "Close Short Liquidation",
-          "openShort": "Open Short",
+          "closeShortLiquidation": "Short-Liquidation",
+          "openShort": "Short eröffnen",
           "closeShortSl": "Short schließen Stop-Loss"
         },
         "provider": "Anbieter",
@@ -2965,13 +2965,13 @@
         "closeLongTp": "Schließe Long Take Profit",
         "title": "Verlauf",
         "deposit": "Einzahlen",
-        "closeShortSl": "Close Short Stop Loss",
+        "closeShortSl": "Short Stop Loss schließen",
         "closeShortTp": "Short schließen Gewinnmitnahme",
         "openLong": "Long eröffnen",
         "withdraw": "Abheben",
         "closeLong": "Long schließen",
         "closeShortLiquidation": "Close Short Liquidation",
-        "openShort": "Open Short",
+        "openShort": "Short eröffnen",
         "closeShort": "Short schließen",
         "closeLongLiquidation": "Long schließen Liquidation",
         "closeLongSl": "Close Long Stop-Loss",
@@ -2987,15 +2987,15 @@
         "date": "Datum"
       },
       "PerpsSelectTokenPopup": {
-        "title": "Token auswählen, um einzuzahlen",
+        "title": "Token zum Einzahlen auswählen",
         "balance": "Guthaben",
         "token": "Token",
-        "noTokens": "Keine Tokens"
+        "noTokens": "Keine Token"
       },
       "PerpsAccountLogoutPopup": {
         "logout": "Ausloggen",
-        "title": "Von aktuellem Konto abmelden",
-        "desc": "Sie melden sich von Ihrem aktuellen Perps-Konto ab. Sie können es jederzeit wiederherstellen, indem Sie sich mit dieser Adresse anmelden."
+        "title": "Aktuelle Adresse ausloggen",
+        "desc": "Sie loggen sich aus dem aktuellen Perps-Konto aus. Sie können es jederzeit wiederherstellen, indem Sie sich mit dieser Adresse erneut einloggen."
       },
       "PerpsDepositCard": {
         "deposit": "Einzahlen",
@@ -3004,7 +3004,7 @@
       },
       "PerpsAccountSelectorPopup": {
         "noPosition": "Keine Position",
-        "hyperliquidBalance": "Perps-Bilanz",
+        "hyperliquidBalance": "Perps-Guthaben",
         "lastUsed": "Zuletzt verwendet",
         "notActivatedAddress": "Nicht aktiviert",
         "activatedAddress": "Aktiviert"
@@ -3024,7 +3024,7 @@
       "leverageRangeMinError": "Der minimale Hebel beträgt {{min}}x",
       "leverageRangeMaxError": "Die maximale Hebelwirkung beträgt {{max}}x",
       "searchPerpsPopup": {
-        "openPosition": "Offene Position",
+        "openPosition": "Position eröffnen",
         "searchPosition": "Position suchen",
         "searchPlaceholder": "Suche Perps",
         "empty": "Keine Ergebnisse gefunden",
@@ -3041,13 +3041,13 @@
         "subtitle": "Echtzeit Liquidationsdistanz (%)",
         "currentPrice": "Aktueller Preis",
         "title": "Risikoniveau",
-        "liqIntro": "Liquidation Distance (%) zeigt, wie weit der aktuelle Preis von Ihrem Liquidationspreis entfernt ist. Eine größere Entfernung bedeutet eine sicherere Position, während eine kleinere Entfernung ein höheres Liquidationsrisiko bedeutet.",
+        "liqIntro": "Liquidationsabstand (%) zeigt, wie weit der aktuelle Preis von Ihrem Liquidationspreis entfernt ist. Ein größerer Abstand bedeutet eine sicherere Position; ein kleinerer Abstand bedeutet höheres Liquidationsrisiko.",
         "liqDistanceTipsShort": "Das Ansteigen um <1>{{distance}}</1> wird eine Liquidation auslösen.",
         "liqDistanceTipsLong": "Der Rückgang um <1>{{distance}}</1> wird eine Liquidation auslösen."
       },
-      "closeAllConfirmTitle": "Alle Positionen schließen bestätigen",
-      "closeAll": "Alle schließen",
-      "closeAllConfirmMessage": "Alle Ihre offenen Positionen werden zum Marktpreis geschlossen.",
+      "closeAllConfirmTitle": "Schließen aller Positionen bestätigen",
+      "closeAll": "Alle Positionen schließen",
+      "closeAllConfirmMessage": "Alle offenen Positionen werden zum Marktpreis geschlossen.",
       "assetPage": {
         "hyperliquidPosition": "Hyperliquid Position"
       },
@@ -3070,10 +3070,10 @@
       },
       "EnableUnifiedAccount": {
         "title": "Einheitliches Konto aktivieren",
-        "desc": "Einheitliches Konto ist der empfohlene Kontomodus, der das Handelserlebnis vereinfacht. Spot- und Perps-Guthaben werden für alle Token zusammengelegt, und Cross-Margin wird für alle verfügbaren Assets unterstützt.",
+        "desc": "Unified Account ist der empfohlene Kontomodus, der das Trading vereinfacht. Spot- und Perps-Guthaben werden für alle Token zusammengeführt, und Cross Margin wird für alle verfügbaren Assets unterstützt.",
         "confirm": "Bestätigen",
         "cancel": "Abbrechen",
-        "importantTips": "Alle USDC-Sicherheiten werden als Cross-Margin verwendet, sobald das einheitliche Konto aktiviert ist.",
+        "importantTips": "Nach Aktivierung von Unified Account werden alle USDC-Sicherheiten als Cross Margin verwendet.",
         "important": "Wichtig"
       },
       "PerpsSpotSwap": {
@@ -3092,7 +3092,7 @@
         "minimumAmount": "Der Mindesttauschbetrag beträgt {{amount}}"
       },
       "PerpMarginModePopup": {
-        "crossRequiresUnified": "Kreuzmargin für dieses Handelspaar erfordert ein einheitliches Konto. Möchten Sie es aktivieren?"
+        "crossRequiresUnified": "Cross Margin für dieses Handelspaar erfordert einen Unified Account. Möchten Sie ihn aktivieren?"
       },
       "PerpsMultiBalance": {
         "title": "Hyperliquid-Guthaben",
@@ -3135,11 +3135,11 @@
         "liqPrice": "Liq. Preis",
         "sizeTips": "Der Gesamtwert oder die Menge Ihres Handels, festgelegt durch Margin und Hebel.",
         "liquidationPriceTips": "Der Preis, zu dem Ihre Position automatisch von der Börse geschlossen wird, um weitere Verluste zu verhindern, wenn Ihr Margin unter das Wartemargin-Niveau fällt.",
-        "fundingPaymentsTips": "Dies sind die Nettogebühren, seit die Position eröffnet wurde. Die Funding ist eine stündliche Gebühr, die Händler zahlen oder erhalten, um den Preis des Perpetual Contracts nahe am tatsächlichen Preis des Tokens zu halten.",
+        "fundingPaymentsTips": "Dies sind die Netto-Funding-Zahlungen seit Eröffnung der Position. Funding ist eine stündliche Gebühr, die Trader zahlen oder erhalten, damit der Preis des Perpetual Contracts nahe am tatsächlichen Tokenpreis bleibt.",
         "closePosition": "Schließe {{direction}}",
         "autoClose": "Automatisches Schließen",
         "fundingGains": "Finanzierungsgewinne",
-        "fundingGainsTips": "Dies sind die Nettogewinne aus der Finanzierung, seit die Position eröffnet wurde. Funding ist eine stündliche Gebühr, die Händler zahlen oder erhalten, um den Preis des Perpetual Contracts nahe dem tatsächlichen Preis des Tokens zu halten.",
+        "fundingGainsTips": "Dies sind die Netto-Funding-Erträge seit Eröffnung der Position. Funding ist eine stündliche Gebühr, die Trader zahlen oder erhalten, damit der Preis des Perpetual Contracts nahe am tatsächlichen Tokenpreis bleibt.",
         "positionValue": "Positionswert",
         "marginMode": "Margin-Modus",
         "settings": "Einstellungen",
@@ -3147,7 +3147,7 @@
         "unrealizedPnl": "Unrealisierter PNL",
         "details": "Details",
         "realizedPnl": "Realisiertes PNL",
-        "fundingTipsBold": "Dies zeigt Ihre gesamte Finanzierung an, die seit der Eröffnung der Position abgewickelt wurde. <bold>Grüne (positive)</bold> Werte bedeuten, dass Sie von anderen Händlern verdient haben, während <bold>Rote (negative)</bold> Werte die Finanzierungskosten sind, die Sie an sie gezahlt haben.",
+        "fundingTipsBold": "Dies zeigt die seit Eröffnung der Position abgerechneten Funding-Gebühren insgesamt. <bold>Grüne (positive)</bold> Werte bedeuten, dass Sie Funding von anderen Tradern erhalten haben, während <bold>rote (negative)</bold> Werte Funding-Kosten sind, die Sie gezahlt haben.",
         "crossTips": "Im Cross-Margin-Modus ist der liquidationspreis für eine einzelne Position nur eine Schätzung zur Referenz."
       },
       "PerpsInfo": {
@@ -3156,7 +3156,7 @@
         "24Vol": "24h Volumen",
         "openInterestTips": "Die insgesamt ausstehende Position aller Benutzer in diesem Vertrag.",
         "openInterest": "Offene Interessen",
-        "fundingTips": "Dies ist eine stündliche Gebühr, die Trader zahlen oder erhalten, um den Preis des Perpetual-Contracts nahe dem tatsächlichen Preis des Tokens zu halten. Ist sie positiv, zahlt Long an Short. Ist sie negativ, zahlt Short an Long.",
+        "fundingTips": "Dies ist eine stündliche Gebühr, die Trader zahlen oder erhalten, damit der Preis des Perpetual Contracts nahe am tatsächlichen Tokenpreis bleibt. Wenn sie positiv ist, zahlt Long an Short. Wenn sie negativ ist, zahlt Short an Long.",
         "fundingRate": "Finanzierungsrate"
       },
       "PerpsIntro": {
@@ -3265,7 +3265,7 @@
         "currentPrice": "Aktueller {{price}}",
         "youGain": "Sie Gewinne",
         "priceAbove": "Preis über",
-        "takeProfitWhen": "Take Profit When",
+        "takeProfitWhen": "Take Profit, wenn",
         "stopLossWhen": "Stop Loss Wenn"
       },
       "PerpsEditMarginPopup": {
@@ -3293,8 +3293,8 @@
         "isolatedTitle": "Isolierte Margin",
         "crossTitle": "Kreuzmarge",
         "cannotChangeMarginMode": "Kann den Margin-Modus mit offenen Positionen nicht ändern",
-        "isolatedDesc": "Jede Position verwendet ihren eigenen Margin. Verluste sind auf diese Position begrenzt, aber sie kann leichter liquidiert werden.",
-        "crossDesc": "Alle Positionen teilen sich die gleiche Marge. Dies verringert die Wahrscheinlichkeit, dass eine einzelne Position liquidiert wird, aber alle Cross-Margin-Fonds können in extremen Marktbewegungen verloren gehen."
+        "isolatedDesc": "Jede Position verwendet ihre eigene Margin. Verluste sind auf diese Position begrenzt, sie kann jedoch leichter liquidiert werden.",
+        "crossDesc": "Alle Positionen teilen sich dieselbe Margin. Das senkt die Wahrscheinlichkeit, dass eine einzelne Position liquidiert wird, aber bei extremen Marktbewegungen können alle Cross-Margin-Mittel verloren gehen."
       },
       "guideEntry": {
         "gotIt": "Verstanden"
@@ -3362,8 +3362,8 @@
       },
       "supplyDetail": {
         "supplyAPY": "Liefer-APY",
-        "approveAndSupply": "Genehmigen und Bereitstellen",
-        "actions": "Lieferung",
+        "approveAndSupply": "Genehmigen und einzahlen",
+        "actions": "Einzahlen",
         "availableToBorrow": "Verfügbar zum Ausleihen",
         "collateralization": "Besicherung",
         "enabled": "Aktiviert",
@@ -3383,7 +3383,7 @@
         "almostReachedError": "Der maximale Betrag, der ausgeliehen werden kann, ist begrenzt, da die Kreditobergrenze des Protokolls nahezu erreicht ist.",
         "swapDebt": "Tausch",
         "borrowed": "Ausgeliehen",
-        "noSupplyPrefix": "Keine Versorgung:",
+        "noSupplyPrefix": "Keine Einlagen:",
         "noSupplyDesc": "Um zu leihen, müssen Sie Vermögenswerte als Sicherheiten bereitstellen."
       },
       "popup": {
@@ -3404,14 +3404,14 @@
         "reachCapTip": "Dieses Asset hat die Kreditobergrenze erreicht."
       },
       "supplyOverview": {
-        "availableToSupply": "Verfügbar zur Lieferung",
-        "totalSupplied": "Gesamtangebot",
+        "availableToSupply": "Verfügbar zum Einzahlen",
+        "totalSupplied": "Gesamt eingezahlt",
         "walletBalance": "Wallet-Balance",
         "mySupply": "Mein Angebot",
-        "title": "Bereitstellungsdetails",
+        "title": "Einzahlungsdetails",
         "reachCap": "Dieses Asset hat sein Angebotshöchstlimit erreicht. Nichts kann aus diesem Markt bereitgestellt werden.",
         "almostCap": "Dieses Asset hat fast seine Leihobergrenze erreicht. Es sind nur {{available}} verfügbar, um von diesem Markt geliehen zu werden.",
-        "useAsCollateral": "Als Sicherheiten verwenden",
+        "useAsCollateral": "Als Sicherheit verwenden",
         "collateral": "Sicherheit"
       },
       "risk": {
@@ -3420,7 +3420,7 @@
         "warning": "Das Leihen dieses Betrags wird Ihren Health Factor auf ein riskantes Niveau für die Liquidation senken.",
         "toggleCollateralWarning": "Das Deaktivieren dieses Assets als Sicherheit wird Ihren Gesundheitsfaktor auf ein riskantes Niveau für die Liquidation senken.",
         "emodeBlockWarning": "Das Deaktivieren des E-Modus verringert Ihren Gesundheitsfaktor auf ein riskantes Niveau für Liquidationen.",
-        "blockEmodeWarning": "Sie können den E-Modus nicht deaktivieren, da dies eine Liquidation verursachen könnte. Um den E-Modus zu verlassen, legen Sie geliehene Positionen an oder zahlen Sie sie zurück."
+        "blockEmodeWarning": "Sie können E-Mode nicht deaktivieren, da dies eine Liquidation auslösen könnte. Um E-Mode zu verlassen, stellen Sie mehr Sicherheiten bereit oder zahlen Sie geliehene Positionen zurück."
       },
       "lqDescription": {
         "over3title": "Gesundheitsfaktor > 3.0:",
@@ -3464,17 +3464,17 @@
       "toggleCollateralModal": {
         "enableIsolationModeTitle": "Isolation-Modus aktivieren",
         "exitIsolationModeTitle": "Verlassen Sie den Isolationsmodus",
-        "closeDesc": "Das Deaktivieren dieses Vermögenswerts als Sicherheiten wirkt sich auf Ihre Kreditaufnahmefähigkeit und den Gesundheitsfaktor aus.",
-        "riskToLiquidationText": "Sie können den Verwendungsmodus für diese Währung nicht auf Sicherheitenmodus umschalten, da dies einen Sicherheitenaufruf verursachen würde.",
-        "openTitle": "Überprüfung aktivieren",
+        "closeDesc": "Wenn Sie dieses Asset nicht mehr als Sicherheit verwenden, wirkt sich das auf Ihre Kreditkraft und Ihren Health Factor aus.",
+        "riskToLiquidationText": "Der Sicherheitenstatus dieses Assets kann nicht geändert werden, da dies eine Liquidation auslösen könnte.",
+        "openTitle": "Aktivierung bestätigen",
         "openDesc": "Das Aktivieren dieses Vermögens als Sicherheiten erhöht Ihre Kreditaufnahmefähigkeit und den Gesundheitsfaktor. Allerdings kann es liquidiert werden, wenn Ihr Gesundheitsfaktor unter 1 fällt.",
-        "closeTitle": "Überprüfung der Deaktivierung",
+        "closeTitle": "Deaktivierung bestätigen",
         "exitIsolationModeDesc": "Sie werden den Isolationsmodus verlassen und andere Token können jetzt als Sicherheiten verwendet werden.",
         "enableIsolationModeDesc": "Sie betreten den Isolationsmodus. Im Isolationsmodus können Sie andere Vermögenswerte nicht als Sicherheiten bereitstellen. Eine globale Verschuldungsgrenze begrenzt die Kreditaufnahmefähigkeit des isolierten Vermögenswerts. Um den Isolationsmodus zu verlassen, deaktivieren Sie CRV als Sicherheiten, bevor Sie einen anderen Vermögenswert leihen.",
         "toggleRiskTexts": {
           "canNotUseThisCurrencyAsCollateral": "Sie können diese Währung nicht als Sicherheiten verwenden.",
           "doNotHaveSuppliesInThisCurrency": "Sie haben keine Bestände in dieser Währung.",
-          "canNotSwitchUsageAsCollateralMode": "Sie können den Verwendungsmodus für diese Währung nicht auf Sicherheitenmodus umschalten, da dies einen Sicherheitenaufruf verursachen wird.",
+          "canNotSwitchUsageAsCollateralMode": "Der Sicherheitenstatus dieses Assets kann nicht geändert werden, da dies eine Liquidation auslösen könnte.",
           "zeroLTVWithdrawBlocked": "Vermögenswerte mit einem LTV von null ({{assets}}) müssen abgehoben oder als Sicherheiten deaktiviert werden, um diese Aktion auszuführen."
         }
       },
@@ -3532,23 +3532,23 @@
       "debtSwap": {
         "actions": {
           "select": "Auswählen",
-          "title": "Schulden-Tausch",
-          "swapTo": "Swap zu",
+          "title": "Schulden umwandeln",
+          "swapTo": "Umwandeln in",
           "amount": "Betrag",
           "borrowed": "Geliehen"
         },
         "overview": {
           "title": "Transaktionsübersicht",
-          "borrowValueAfter": "Entleihensaldo nach dem Tausch",
+          "borrowValueAfter": "Darlehenssaldo nach Umwandlung",
           "borrowAPY": "Ausleihen apy"
         },
         "button": {
-          "swap": "Tausch"
+          "swap": "Umwandeln"
         },
-        "title": "Tausch Darlehensposition",
+        "title": "Darlehensposition umwandeln",
         "borrowBalance": "Leihguthaben",
-        "entryTips": "Ein Klick, um Ihr geliehenes Asset zu tauschen, wodurch Schritte und Gebühren reduziert werden.",
-        "priceImpactTips": "Hoher Preisimpact ({{lostValue}}). Diese Route kann aufgrund niedriger Liquidität oder kleiner Bestellgröße mehr zurückgeben.",
+        "entryTips": "Geliehenes Asset mit einem Klick umwandeln und Schritte sowie Gebühren sparen.",
+        "priceImpactTips": "Hoher Preiseinfluss ({{lostValue}}). Wegen geringer Liquidität oder kleiner Ordergröße kann die Schätzung für diese Route deutlich abweichen.",
         "lpRiskWarning": "Niedriger Gesundheitsfaktor nach dem Swap. Ihre Position trägt ein höheres Risiko der Liquidation.",
         "lpDangerWarning": "Ihr Gesundheitsfaktor nach diesem Swap wird kritisch niedrig sein und kann zu einer Liquidation führen. Bitte wählen Sie einen anderen Vermögenswert oder reduzieren Sie den Swap-Betrag, um sicher zu bleiben.",
         "maxLtvWarning": "Unzureichende Sicherheiten, um eine neue Kreditposition zu decken. Die Wallet muss über verbleibende Kreditaufnahmefähigkeiten verfügen, um einen Schuldenwechsel durchzuführen."
@@ -3558,10 +3558,10 @@
         "desc": "Wenn es unter 1,0 fällt, kann Ihre Sicherheit liquidiert werden."
       },
       "disableBorrowTip": {
-        "desc": "Kein Supply: Um zu leihen, müssen Sie Vermögenswerte als Sicherheiten bereitstellen."
+        "desc": "Keine Einlagen: Um zu leihen, müssen Sie zuerst Assets als Sicherheit einzahlen."
       },
       "totalBorrowed": "Total borrowed",
-      "totalSupplied": "Gesamtangebot",
+      "totalSupplied": "Gesamt eingezahlt",
       "netApy": "Netto-APY",
       "repayWithCollateral": {
         "action": {
@@ -3575,7 +3575,7 @@
         "button": {
           "repay": "Rückzahlen"
         },
-        "repayWith": "Sicherheiten zur Rückzahlung mit",
+        "repayWith": "Sicherheit für die Rückzahlung",
         "toRepay": "Erwarteter Rückzahlungsbetrag",
         "collateralNotEnough": "Ihr Sicherheitensaldo ist niedriger als der ausgewählte Betrag.",
         "insufficientLiquidity": "Unzureichende Liquidität.",
@@ -3587,7 +3587,7 @@
           "assets": "Token"
         },
         "title": "Wählen Sie Rückzahlungs-Token",
-        "zeroLtvCollateralTips": "Sie haben folgende LTV = 0 Sicherheiten und können daher gemäß den Rückzahlungsregeln für Sicherheiten nur zunächst mit diesen Sicherheiten zurückzahlen."
+        "zeroLtvCollateralTips": "Sie haben die folgenden Sicherheiten mit LTV = 0. Nach den Regeln für die Rückzahlung mit Sicherheiten müssen Sie diese Sicherheiten zuerst verwenden."
       },
       "dappSelect": {
         "title": "Wählen Sie den Kreditgeber aus"

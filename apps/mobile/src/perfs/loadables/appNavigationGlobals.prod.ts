@@ -125,6 +125,15 @@ export const FloatingDiagnosticsPanel = registerAppScreen<
     ),
 });
 
+export const WideScreenDebugPanel = registerAppScreen<
+  typeof import('@/components/Debug/WideScreenDebugPanel').WideScreenDebugPanel
+>({
+  loader: () =>
+    import('@/components/Debug/WideScreenDebugPanel').then(m => ({
+      default: m.WideScreenDebugPanel,
+    })),
+});
+
 export const GlobalMiniApproval = registerAppScreen<
   typeof import('@/components/Approval/components/MiniSignTx/GlobalMiniApproval').GlobalMiniApproval
 >({

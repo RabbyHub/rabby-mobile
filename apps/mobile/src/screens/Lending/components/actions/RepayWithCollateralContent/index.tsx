@@ -34,7 +34,7 @@ import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { BridgeSlippage } from '@/screens/Bridge/components/BridgeSlippage';
-import { formatSpeicalAmount, formatTokenAmount } from '@/utils/number';
+import { formatTokenAmount, formatTokenAmountInput } from '@/utils/number';
 import { WarningText } from '@/screens/Bridge/components/WarningText';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
@@ -273,7 +273,7 @@ export default function RepayWithCollateral({
 
   const onInputChange = useCallback(
     (text: string) => {
-      const formatted = formatSpeicalAmount(text);
+      const formatted = formatTokenAmountInput(text, repayToken.decimals);
       if (!/^\d*(\.\d*)?$/.test(formatted)) {
         return;
       }
@@ -291,7 +291,7 @@ export default function RepayWithCollateral({
 
       setRepayAmount(displayAmountStr);
     },
-    [debtBalance],
+    [debtBalance, repayToken.decimals],
   );
 
   useEffect(() => {

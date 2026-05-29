@@ -1,6 +1,6 @@
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
-import { formatSpeicalAmount, formatUsdValue } from '@/utils/number';
+import { formatTokenAmountInput, formatUsdValue } from '@/utils/number';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { BridgeQuote, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -21,7 +21,11 @@ import { openapi } from '@/core/request';
 import { useRefreshId, useSetQuoteVisible, useSetRefreshId } from './context';
 import { getChainDefaultToken } from '@/constant/swap';
 import { tokenAmountBn } from '@/screens/Swap/utils';
-import { bridgeQuoteScore } from '../utils/bridgeQuote';
+import {
+  bridgeQuoteScore,
+  getBestBridgeQuote,
+  isSameBridgeQuote,
+} from '../utils/bridgeQuote';
 import BigNumber from 'bignumber.js';
 import { useBridgeSlippage } from './slippage';
 import { isNaN } from 'lodash';
@@ -637,7 +641,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   const handleAmountChange = useCallback(
     (e: string) => {
-      const v = formatSpeicalAmount(e);
+      const v = formatTokenAmountInput(e, fromToken?.decimals);
       if (!/^\d*(\.\d*)?$/.test(v)) {
         return;
       }
@@ -736,18 +740,74 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         aggregatorsList.length > 0 &&
         !isDraggingSlider
       ) {
-        let isEmpty = false;
-        const result: SelectedBridgeQuote[] = [];
         setTokenRefreshId(e => e + 1);
 
-        setQuotesList(e => {
-          if (!e.length) {
-            isEmpty = true;
-          }
-          return e?.map(e => ({ ...e, loading: true }));
-        });
+        setQuotesList(e => e?.map(e => ({ ...e, loading: true })));
 
         const originData: Omit<BridgeQuote, 'tx'>[] = [];
+
+        const getQuoteWithApproval = async (
+          quote: Omit<BridgeQuote, 'tx'>,
+        ): Promise<SelectedBridgeQuote | undefined> => {
+          if (currentFetchId !== fetchIdRef.current) {
+            return;
+          }
+
+          let tokenApproved = false;
+          let allowance = '0';
+          const fromFindChain = findChain({ serverId: fromToken?.chain });
+          if (fromToken?.id === fromFindChain?.nativeTokenAddress) {
+            tokenApproved = true;
+          } else if (!quote.approve_contract_id) {
+            tokenApproved = true;
+          } else {
+            allowance = await getERC20Allowance(
+              fromToken.chain,
+              fromToken.id,
+              quote.approve_contract_id,
+              currentAccount.address,
+              currentAccount,
+            );
+            tokenApproved = new BigNumber(allowance).gte(
+              new BigNumber(amount).times(10 ** fromToken.decimals),
+            );
+          }
+
+          let shouldTwoStepApprove = false;
+          if (
+            fromFindChain?.enum === CHAINS_ENUM.ETH &&
+            isSameAddress(fromToken.id, ETH_USDT_CONTRACT) &&
+            Number(allowance) !== 0 &&
+            !tokenApproved
+          ) {
+            shouldTwoStepApprove = true;
+          }
+
+          return {
+            ...quote,
+            loading: false,
+            shouldTwoStepApprove,
+            shouldApproveToken: !tokenApproved,
+          };
+        };
+
+        const upsertQuotes = (quotes: SelectedBridgeQuote[]) => {
+          if (!quotes.length || currentFetchId !== fetchIdRef.current) {
+            return;
+          }
+
+          setQuotesList(prev => {
+            const filteredArr = prev.filter(
+              item =>
+                !quotes.some(
+                  quote =>
+                    item.aggregator.id === quote.aggregator.id &&
+                    item.bridge.id === quote.bridge.id,
+                ),
+            );
+            return [...filteredArr, ...quotes];
+          });
+        };
 
         const getQUoteV2 = async (alternativeToken?: TokenItem) =>
           await Promise.allSettled(
@@ -815,6 +875,35 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
                   status: data?.length ? 'success' : 'none',
                 });
               }
+
+              const validData =
+                data?.filter(
+                  quote =>
+                    !!quote?.bridge &&
+                    !!quote?.bridge?.id &&
+                    !!quote?.bridge?.logo_url &&
+                    !!quote.bridge.name,
+                ) || [];
+
+              if (validData.length && currentFetchId === fetchIdRef.current) {
+                upsertQuotes(
+                  validData.map(quote => ({ ...quote, loading: true })),
+                );
+
+                await Promise.allSettled(
+                  validData.map(async quote => {
+                    const nextQuote = await getQuoteWithApproval(quote);
+                    if (
+                      nextQuote &&
+                      currentFetchId === fetchIdRef.current &&
+                      Number(amount) > 0
+                    ) {
+                      upsertQuotes([nextQuote]);
+                    }
+                  }),
+                );
+              }
+
               return data;
             }),
           );
@@ -865,86 +954,6 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
             toChainId: toToken.chain,
             status: data ? (data?.length === 0 ? 'none' : 'success') : 'fail',
           });
-        }
-
-        if (data && currentFetchId === fetchIdRef.current) {
-          if (!isEmpty) {
-            setQuotesList(data.map(e => ({ ...e, loading: true })));
-          }
-
-          await Promise.allSettled(
-            data.map(async quote => {
-              if (currentFetchId !== fetchIdRef.current) {
-                return;
-              }
-              let tokenApproved = false;
-              let allowance = '0';
-              const fromFindChain = findChain({ serverId: fromToken?.chain });
-              if (fromToken?.id === fromFindChain?.nativeTokenAddress) {
-                tokenApproved = true;
-              } else if (!quote.approve_contract_id) {
-                tokenApproved = true;
-              } else {
-                allowance = await getERC20Allowance(
-                  fromToken.chain,
-                  fromToken.id,
-                  quote.approve_contract_id,
-                  currentAccount.address,
-                  currentAccount,
-                );
-                tokenApproved = new BigNumber(allowance).gte(
-                  new BigNumber(amount).times(10 ** fromToken.decimals),
-                );
-              }
-              let shouldTwoStepApprove = false;
-              if (
-                fromFindChain?.enum === CHAINS_ENUM.ETH &&
-                isSameAddress(fromToken.id, ETH_USDT_CONTRACT) &&
-                Number(allowance) !== 0 &&
-                !tokenApproved
-              ) {
-                shouldTwoStepApprove = true;
-              }
-
-              if (isEmpty) {
-                result.push({
-                  ...quote,
-                  shouldTwoStepApprove,
-                  shouldApproveToken: !tokenApproved,
-                });
-              } else {
-                if (
-                  currentFetchId === fetchIdRef.current &&
-                  Number(amount) > 0
-                ) {
-                  setQuotesList(e => {
-                    const filteredArr = e.filter(
-                      item =>
-                        item.aggregator.id !== quote.aggregator.id ||
-                        item.bridge.id !== quote.bridge.id,
-                    );
-                    return [
-                      ...filteredArr,
-                      {
-                        ...quote,
-                        loading: false,
-                        shouldTwoStepApprove,
-                        shouldApproveToken: !tokenApproved,
-                      },
-                    ];
-                  });
-                }
-              }
-            }),
-          );
-
-          if (
-            isEmpty &&
-            currentFetchId === fetchIdRef.current &&
-            Number(amount) > 0
-          ) {
-            setQuotesList(result);
-          }
         }
       }
     }, [
@@ -1016,41 +1025,42 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   );
 
   useEffect(() => {
-    if (!quoteLoading && toToken?.id && quoteList.every(e => !e.loading)) {
-      if (!quoteList.length) {
+    if (!toToken?.id) {
+      return;
+    }
+
+    const best = getBestBridgeQuote(quoteList, toToken);
+    if (!best) {
+      return;
+    }
+
+    const bestQuote = best.quote;
+    if (bestQuote?.bridge_id && bestQuote?.aggregator?.id) {
+      setBestQuoteId({
+        bridgeId: bestQuote.bridge_id,
+        aggregatorId: bestQuote.aggregator.id,
+      });
+
+      const selectedQuoteLoaded = quoteList.some(
+        quote =>
+          !quote.loading && isSameBridgeQuote(quote, selectedBridgeQuote),
+      );
+      if (selectedQuoteLoaded && selectedBridgeQuote?.manualClick) {
         return;
       }
 
-      // 用新评分公式找 best（考虑 gas + 耗时成本）
-      let bestQuote = quoteList[0];
-      let bestScore = bridgeQuoteScore(quoteList[0], toToken);
-      for (let i = 1; i < quoteList.length; i++) {
-        const score = bridgeQuoteScore(quoteList[i], toToken);
-        if (score.gt(bestScore)) {
-          bestScore = score;
-          bestQuote = quoteList[i];
-        }
-      }
+      const shouldUpdateSelectedQuote =
+        !selectedBridgeQuote ||
+        !selectedQuoteLoaded ||
+        best.score.gt(bridgeQuoteScore(selectedBridgeQuote, toToken));
 
-      if (bestQuote?.bridge_id && bestQuote?.aggregator?.id) {
-        setBestQuoteId({
-          bridgeId: bestQuote.bridge_id,
-          aggregatorId: bestQuote.aggregator.id,
-        });
-
-        let useQuote = bestQuote;
-
-        setOriSelectedBridgeQuote(preItem => {
-          useQuote = preItem?.manualClick ? preItem : bestQuote!;
-          return preItem;
-        });
-
-        setSelectedBridgeQuote(useQuote);
+      if (shouldUpdateSelectedQuote) {
+        setSelectedBridgeQuote(bestQuote);
       }
     }
     // ignore toToken price update
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quoteList, quoteLoading, toToken?.id, setSelectedBridgeQuote]);
+  }, [quoteList, toToken?.id, selectedBridgeQuote, setSelectedBridgeQuote]);
 
   if (quotesError) {
     console.error('quotesError', quotesError);
@@ -1190,6 +1200,9 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     chainServerId: findChainByEnum(fromChain)?.serverId || '',
   });
 
+  const hasLoadedQuote = quoteList.some(quote => !quote.loading);
+  const quoteDisplayLoading = !hasLoadedQuote && (pending || quoteLoading);
+
   return {
     clearExpiredTimer,
 
@@ -1214,7 +1227,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     showLoss,
 
     openQuotesList,
-    quoteLoading: pending || quoteLoading,
+    quoteLoading: quoteDisplayLoading,
     quoteList,
     setQuotesList,
 

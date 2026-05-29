@@ -40,7 +40,7 @@ import { getERC20Allowance } from '@/core/apis/provider';
 import { approveToken } from '@/core/apis/approvals';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import { useMiniSigner } from '@/hooks/useSigner';
-import { last, noop } from 'lodash';
+import { debounce, last, noop } from 'lodash';
 import { formatTokenAmount } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
 import { transactionHistoryService } from '@/core/services/shared';
@@ -625,7 +625,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
     return reserve.reserve.underlyingAsset;
   }, [chainInfo?.nativeTokenAddress, reserve.reserve.underlyingAsset]);
 
-  const handleOpenSwap = useCallback(async () => {
+  const openSwap = useCallback(async () => {
     if (!currentAccount || !swapTokenId) {
       return;
     }
@@ -641,6 +641,21 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
       },
     });
   }, [chainEnum, currentAccount, swapTokenId]);
+
+  const handleOpenSwap = useMemo(
+    () =>
+      debounce(openSwap, 800, {
+        leading: true,
+        trailing: false,
+      }),
+    [openSwap],
+  );
+
+  useEffect(() => {
+    return () => {
+      handleOpenSwap.cancel();
+    };
+  }, [handleOpenSwap]);
 
   const handleChangeAmount = useCallback(
     (value: string) => {

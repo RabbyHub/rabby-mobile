@@ -13,7 +13,7 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ITokenCheck, TokenSelectorProps } from './TokenSelectorSheetModal';
-import { formatSpeicalAmount, splitNumberByStep } from '@/utils/number';
+import { formatTokenAmountInput, splitNumberByStep } from '@/utils/number';
 import { NumericInput } from '../Form/NumbericInput';
 import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInput';
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
@@ -138,6 +138,15 @@ export const TokenAmountInput = ({
       valueText,
     };
   }, [value, token.price]);
+
+  const handleAmountChange = useCallback(
+    (inputValue: string) => {
+      const formattedValue = formatTokenAmountInput(inputValue, token.decimals);
+      const result = onChange?.(formattedValue);
+      return formattedValue === inputValue ? result : false;
+    },
+    [onChange, token.decimals],
+  );
   const Linear = useCallback(() => {
     return (
       <LinearGradient
@@ -175,9 +184,7 @@ export const TokenAmountInput = ({
               styles.input,
             ]}
             value={value}
-            onChangeText={(value: string) => {
-              return onChange?.(formatSpeicalAmount(value));
-            }}
+            onChangeText={handleAmountChange}
             ref={tokenInputRef}
             placeholder="0"
             placeholderTextColor={colors2024['neutral-info']}

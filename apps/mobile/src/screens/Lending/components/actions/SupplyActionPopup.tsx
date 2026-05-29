@@ -34,7 +34,7 @@ import { getERC20Allowance } from '@/core/apis/provider';
 import { approveToken } from '@/core/apis/approvals';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
-import { last, noop } from 'lodash';
+import { debounce, last, noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { parseUnits } from 'ethers/lib/utils';
@@ -424,7 +424,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
     reserve.reserve.underlyingAsset,
   ]);
 
-  const handleOpenSwap = useCallback(async () => {
+  const openSwap = useCallback(async () => {
     if (!currentAccount || !swapTokenId) {
       return;
     }
@@ -444,6 +444,21 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
       },
     });
   }, [chainEnum, currentAccount, onBeforeSwapNavigate, swapTokenId]);
+
+  const handleOpenSwap = useMemo(
+    () =>
+      debounce(openSwap, 800, {
+        leading: true,
+        trailing: false,
+      }),
+    [openSwap],
+  );
+
+  useEffect(() => {
+    return () => {
+      handleOpenSwap.cancel();
+    };
+  }, [handleOpenSwap]);
 
   const txsForMiniApproval: Tx[] = useMemo(() => {
     const list: any[] = [];

@@ -39,7 +39,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { BridgeSlippage } from '@/screens/Bridge/components/BridgeSlippage';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
-import { formatSpeicalAmount, formatTokenAmount } from '@/utils/number';
+import { formatTokenAmount, formatTokenAmountInput } from '@/utils/number';
 import { WarningText } from '@/screens/Bridge/components/WarningText';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
@@ -252,7 +252,7 @@ export default function DebtSwapModal({
   const onInputChange = useCallback(
     (text: string) => {
       if (directSignBtnRef.current?.isAuthInProgress()) return;
-      const formatted = formatSpeicalAmount(text);
+      const formatted = formatTokenAmountInput(text, fromToken.decimals);
       if (!/^\d*(\.\d*)?$/.test(formatted)) {
         return;
       }
@@ -279,7 +279,7 @@ export default function DebtSwapModal({
       const clampedPercentage = Math.min(100, Math.max(0, percentage));
       setSlider(Math.round(clampedPercentage));
     },
-    [fromBalanceBn],
+    [fromBalanceBn, fromToken.decimals],
   );
 
   const handleOpenTokenSelect = useCallback(() => {
