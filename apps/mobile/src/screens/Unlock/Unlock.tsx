@@ -290,6 +290,16 @@ function useUnlockForm(
           toast.show(result.toastError || result.error);
         } else {
           updateUnlockTime();
+          apisKeychain
+            .repairBiometricsAfterPasswordUnlock(values.password, {
+              reason: 'unlock_password_success',
+            })
+            .catch(error => {
+              console.error(
+                'repairBiometricsAfterPasswordUnlock::error',
+                error,
+              );
+            });
           await checkUnlocked();
         }
       } catch (error) {
