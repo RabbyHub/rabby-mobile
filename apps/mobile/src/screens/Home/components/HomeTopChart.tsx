@@ -38,7 +38,7 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const ScreenWidth = Dimensions.get('screen').width;
 
-const MAX_NETWORTH_FS = 42;
+const MAX_NETWORTH_FS = 38;
 const MIN_NETWORTH_FS = 34;
 const NETWORTH_FIT_LEN = 10;
 
