@@ -882,7 +882,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   expectedPnlContainer: {
     backgroundColor: isLight
-      ? colors2024['neutral-bg-2']
+      ? colors2024['neutral-line']
       : colors2024['neutral-card-1'],
     borderRadius: 8,
     flex: 1,
@@ -909,7 +909,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderBottomColor: isLight
-      ? colors2024['neutral-bg-2']
+      ? colors2024['neutral-line']
       : colors2024['neutral-card-1'],
   },
   expectedPnlContent: {
