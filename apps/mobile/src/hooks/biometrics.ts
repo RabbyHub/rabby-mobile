@@ -80,12 +80,18 @@ const fetchBiometrics = async () => {
   isFetchingBiometricsRef.current = true;
   try {
     let supportedType = null as KeychainSupportedBiometryType;
+    let didFetchSupportedType = false;
     try {
       supportedType = await apisKeychain.getSupportedBiometryType();
+      didFetchSupportedType = true;
     } catch (error) {
       console.error(error);
     }
     setBiometrics(prev => {
+      if (!didFetchSupportedType) {
+        return prev;
+      }
+      const nextAuthEnabled = isAuthenticatedByBiometrics();
       // if (prev.authEnabled && !supportedType) {
       //   toast.info(
       //     'Biometrics authentication disabled because no valid biometric data found.',
@@ -93,8 +99,10 @@ const fetchBiometrics = async () => {
       // }
       return {
         ...prev,
-        supportedBiometryType: supportedType,
-        authEnabled: supportedType ? isAuthenticatedByBiometrics() : false,
+        supportedBiometryType:
+          supportedType ||
+          (nextAuthEnabled ? prev.supportedBiometryType : null),
+        authEnabled: nextAuthEnabled,
       };
     });
   } catch (error) {

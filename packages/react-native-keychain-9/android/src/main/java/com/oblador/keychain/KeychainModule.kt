@@ -74,6 +74,7 @@ class KeychainModule(reactContext: ReactApplicationContext) :
       const val ACCESSIBLE = "accessible"
       const val ANDROID_ALLOW_AUTHENTICATED_SESSION_REUSE =
           "androidAllowAuthenticatedSessionReuse"
+      const val ANDROID_ALLOW_KEY_STORE_RECOVERY = "androidAllowKeyStoreRecovery"
       const val AUTH_PROMPT = "authenticationPrompt"
       const val AUTH_TYPE = "authenticationType"
       const val SERVICE = "service"
@@ -592,6 +593,45 @@ class KeychainModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
+  fun debugDecryptGenericPasswordForOptions(options: ReadableMap?, promise: Promise) {
+    coroutineScope.launch {
+      try {
+        val service = getServiceOrDefault(options)
+        val resultSet = prefsStorage.getEncryptedEntry(service)
+        if (resultSet == null) {
+          Log.e(KEYCHAIN_MODULE, "No entry found for service: $service")
+          promise.resolve(false)
+          return@launch
+        }
+
+        val storageName = resultSet.cipherStorageName
+        val storage =
+            getCipherStorageByName(storageName)
+                ?: throw KeyStoreAccessException(
+                    "Wrong cipher storage name '$storageName' or cipher not available")
+        val decryptionResult =
+            decryptToResult(service, storage, resultSet, getPromptInfo(options), options)
+        val credentials = Arguments.createMap()
+
+        credentials.putString(Maps.SERVICE, service)
+        credentials.putString(Maps.USERNAME, decryptionResult.username)
+        credentials.putString(Maps.PASSWORD, decryptionResult.password)
+        credentials.putString(Maps.STORAGE, storage.getCipherStorageName())
+        promise.resolve(credentials)
+      } catch (e: KeyStoreAccessException) {
+        Log.e(KEYCHAIN_MODULE, e.message!!)
+        promise.reject(Errors.E_KEYSTORE_ACCESS_ERROR, e)
+      } catch (e: CryptoFailedException) {
+        Log.e(KEYCHAIN_MODULE, e.message!!)
+        promise.reject(Errors.E_CRYPTO_FAILED, e)
+      } catch (fail: Throwable) {
+        Log.e(KEYCHAIN_MODULE, fail.message, fail)
+        promise.reject(Errors.E_UNKNOWN_ERROR, fail)
+      }
+    }
+  }
+
+  @ReactMethod
   fun debugRemoveCipherStorageMarkerForOptions(options: ReadableMap?, promise: Promise) {
     try {
       val service = getServiceOrDefault(options)
@@ -674,7 +714,8 @@ class KeychainModule(reactContext: ReactApplicationContext) :
         resultSet.username!!,
         resultSet.password!!,
         SecurityLevel.ANY,
-        getAndroidAllowAuthenticatedSessionReuseOrDefault(options))
+        getAndroidAllowAuthenticatedSessionReuseOrDefault(options),
+        getAndroidAllowKeyStoreRecoveryOrDefault(options))
     CryptoFailedException.reThrowOnError(handler.error)
     if (null == handler.result) {
       throw CryptoFailedException("No decryption results and no error. Something deeply wrong!")
@@ -868,6 +909,14 @@ class KeychainModule(reactContext: ReactApplicationContext) :
       }
 
       return false
+    }
+
+    private fun getAndroidAllowKeyStoreRecoveryOrDefault(options: ReadableMap?): Boolean {
+      if (null != options && options.hasKey(Maps.ANDROID_ALLOW_KEY_STORE_RECOVERY)) {
+        return options.getBoolean(Maps.ANDROID_ALLOW_KEY_STORE_RECOVERY)
+      }
+
+      return true
     }
 
     /** Extract user specified storage from options. */

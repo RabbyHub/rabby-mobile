@@ -635,6 +635,7 @@ function DevSwitchAboutAppLogging() {
     effectiveEnabled,
     isOnlineControlled,
     localDefaultEnabled,
+    policyEnv,
     runtimeEnv,
     onToggle,
   } = useAppLogFileSwitch();
@@ -652,11 +653,11 @@ function DevSwitchAboutAppLogging() {
   const statusText = canToggle
     ? effectiveEnabled
       ? `${
-          runtimeEnv === 'development' ? 'Development' : 'Regression'
-        } build captures console and writes app logs into applogs zip archives`
+          policyEnv === 'development' ? 'Development' : 'Regression'
+        } policy captures console and writes app logs into applogs zip archives`
       : `${
-          runtimeEnv === 'development' ? 'Development' : 'Regression'
-        } build keeps app logs off until you enable the local switch`
+          policyEnv === 'development' ? 'Development' : 'Regression'
+        } policy keeps app logs off until you enable the local switch`
     : isOnlineControlled
     ? effectiveEnabled
       ? 'Production writes app logs because online config enables it'
@@ -706,7 +707,8 @@ function DevSwitchAboutAppLogging() {
         style={[styles.metaLabel, { marginTop: 12 }]}
         numberOfLines={2}
         ellipsizeMode="middle">
-        Default: {localDefaultEnabled ? 'ON' : 'OFF'}
+        Runtime: {runtimeEnv}; policy: {policyEnv}; default:{' '}
+        {localDefaultEnabled ? 'ON' : 'OFF'}
       </Text>
       <Text
         style={[styles.metaLabel, { marginTop: 4 }]}
