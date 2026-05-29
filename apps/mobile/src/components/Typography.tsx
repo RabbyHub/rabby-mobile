@@ -1,6 +1,10 @@
 /* eslint-disable no-restricted-imports */
 import React from 'react';
-import { Text as RNText, TextInput as RNTextInput } from 'react-native';
+import {
+  Platform,
+  Text as RNText,
+  TextInput as RNTextInput,
+} from 'react-native';
 import {
   Text as RNGHTextImpl,
   TextInput as RNGHTextInputImpl,
@@ -35,9 +39,20 @@ function withDefaults<C extends React.ComponentType<any>>(
   >;
 }
 
-export const Text = withDefaults(RNText, { allowFontScaling: false });
+const textDefaults = {
+  allowFontScaling: false,
+  ...Platform.select({
+    android: {
+      android_hyphenationFrequency: 'none' as const,
+      textBreakStrategy: 'simple' as const,
+    },
+    default: {},
+  }),
+};
+
+export const Text = withDefaults(RNText, textDefaults);
 export const TextInput = withDefaults(RNTextInput, { allowFontScaling: false });
-export const RNGHText = withDefaults(RNGHTextImpl, { allowFontScaling: false });
+export const RNGHText = withDefaults(RNGHTextImpl, textDefaults);
 export const RNGHTextInput = withDefaults(RNGHTextInputImpl, {
   allowFontScaling: false,
 });
