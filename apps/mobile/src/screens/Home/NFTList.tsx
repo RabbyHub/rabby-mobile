@@ -67,6 +67,7 @@ const NFTListInner = ({
 
   const [foldNft, setFoldNft] = useState(true);
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
   const focusedTab = useFocusedTab();
   const isFocused = focusedTab === 'nft';
@@ -294,11 +295,16 @@ const NFTListInner = ({
         refreshControl={
           <RefreshControl
             style={styles.bgContainer}
-            onRefresh={() => {
-              reloadNftList?.(true);
+            onRefresh={async () => {
+              setIsManualRefreshing(true);
               onRefresh?.();
+              try {
+                await reloadNftList?.(true);
+              } finally {
+                setIsManualRefreshing(false);
+              }
             }}
-            refreshing={false}
+            refreshing={isManualRefreshing}
           />
         }
       />
