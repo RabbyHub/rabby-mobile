@@ -25,7 +25,7 @@ import { DEFAULT_MAX_FONT_SIZE } from '@/components/AutoShrinkAmountTextSizing';
 import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import { Text, TextInput } from '@/components/Typography';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
@@ -259,6 +259,9 @@ export const SendAmountInput = ({
     }),
     [],
   );
+  const [forcedAmountSelection, setForcedAmountSelection] = useState<
+    { start: number; end: number } | undefined
+  >();
   const textForMeasure = displayInputValue;
   const fallbackCharWidth =
     charWidthsAtBaseFontSize['0'] || MAIN_FONT_SIZE * 0.56;
@@ -468,6 +471,30 @@ export const SendAmountInput = ({
     [applyUnitLayoutNative, getPredictedValueFromKey],
   );
 
+  useEffect(() => {
+    if (!forcedAmountSelection) {
+      return;
+    }
+
+    const requestId = requestAnimationFrame(() => {
+      setForcedAmountSelection(undefined);
+    });
+
+    return () => {
+      cancelAnimationFrame(requestId);
+    };
+  }, [forcedAmountSelection]);
+
+  const forceAmountCaretToEndOnce = useCallback((nextValue: string) => {
+    const nextSelection = {
+      start: nextValue.length,
+      end: nextValue.length,
+    };
+
+    inputSelectionRef.current = nextSelection;
+    setForcedAmountSelection(nextSelection);
+  }, []);
+
   const handleInputChange = useCallback(
     (nextValue: string) => {
       const previousValue = inputValue;
@@ -478,9 +505,11 @@ export const SendAmountInput = ({
       if (result === false) {
         applyUnitLayoutNative(previousValue);
         setInputValue(previousValue);
+      } else if (IS_IOS && !previousValue && normalizedValue) {
+        forceAmountCaretToEndOnce(normalizedValue);
       }
     },
-    [applyUnitLayoutNative, inputValue, onChange],
+    [applyUnitLayoutNative, forceAmountCaretToEndOnce, inputValue, onChange],
   );
 
   const handleSwitchModePress = useCallback(() => {
@@ -543,8 +572,12 @@ export const SendAmountInput = ({
                 numberOfLines={1}
                 multiline={false}
                 scrollEnabled
-                selection={!inputValue ? emptyAmountSelection : undefined}
-                selectionColor={colors2024['brand-default']}
+                selection={
+                  !inputValue ? emptyAmountSelection : forcedAmountSelection
+                }
+                selectionColor={
+                  IS_ANDROID ? undefined : colors2024['brand-default']
+                }
                 onKeyPress={handleInputKeyPress}
                 onSelectionChange={handleInputSelectionChange}
                 style={[
