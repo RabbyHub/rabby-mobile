@@ -6,6 +6,9 @@
     "node": ">=22"
   },
   "scripts": {
+    "doctor:android-device": "node src/doctor-android-device.mjs",
+    "run:android-device-flow": "node src/run-android-device-flow.mjs",
+    "run:android-existing-user-smoke": "node src/run-android-existing-user-smoke.mjs",
     "run:android-home-add-watch-address": "node src/run-android-home-add-watch-address.mjs",
     "run:android-home-balance-smoke": "node src/run-android-home-balance-smoke.mjs",
     "run:android-components2024-showcase-smoke": "node src/run-android-components2024-showcase-smoke.mjs",
