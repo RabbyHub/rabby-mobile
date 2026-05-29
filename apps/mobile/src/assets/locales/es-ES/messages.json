@@ -2747,21 +2747,21 @@
         "withdrawBtn": "Retirar",
         "depositBtn": "Depósito",
         "learnBtn": "Aprende sobre Perps",
-        "loginDesc": "Inicia sesión con tu dirección y deposita fondos para empezar a operar con perps.",
-        "loginBtn": "Iniciar sesión en Trading Perps",
+        "loginDesc": "Inicia sesión con la dirección actual y deposita fondos para empezar a operar Perps.",
+        "loginBtn": "Iniciar sesión para operar Perps",
         "learnMore": "Aprender más",
-        "addFunds": "Agregar fondos"
+        "addFunds": "Añadir fondos"
       },
       "PerpsGuidePopup": {
         "step2Title": "Largo",
         "step5Title": "Liquidación",
         "step4Title": "Ajustando el apalancamiento",
-        "step1Title": "Maestro de Futuros Perpetuos",
-        "step1Desc": "Con los futuros perpetuos, no solo estás comerciando activos. Estás comerciando lo que crees que sucederá a continuación.",
+        "step1Title": "Domina los futuros perpetuos",
+        "step1Desc": "Con los futuros perpetuos no solo operas activos: operas tu expectativa sobre el próximo movimiento del precio.",
         "step3Title": "Corto",
         "step2Desc": "Cuando esperas que el precio suba, abres un long. Si el precio sube, ganas. Si baja, pierdes.",
-        "step4Desc": "El apalancamiento te permite operar con más de lo que has invertido. Puede aumentar tanto tus ganancias como tus pérdidas.",
-        "step5Desc": "Cada posición tiene un precio de liquidación. Si el precio del mercado alcanza este nivel, tu posición se cerrará. Usar un apalancamiento más alto incrementa el riesgo de ser liquidado.",
+        "step4Desc": "El apalancamiento te permite operar con un valor nominal superior al capital aportado. Puede amplificar tanto tus ganancias como tus pérdidas.",
+        "step5Desc": "Cada posición tiene un precio de liquidación. Si el precio de mercado lo alcanza, tu posición se cerrará. Cuanto mayor sea el apalancamiento, mayor será el riesgo de liquidación.",
         "step3Desc": "Cuando esperas que el precio caiga, abres un short. Si el precio cae, ganas. Si sube, pierdes."
       },
       "PerpsDepositPopup": {
@@ -2882,15 +2882,15 @@
         "date": "Fecha"
       },
       "PerpsSelectTokenPopup": {
-        "title": "Selecciona el token para depositar",
+        "title": "Seleccionar token para depositar",
         "token": "Token",
         "balance": "Saldo",
-        "noTokens": "Sin tokens"
+        "noTokens": "No hay tokens"
       },
       "PerpsAccountLogoutPopup": {
         "logout": "Cerrar sesión",
-        "title": "Cerrar sesión en la dirección actual",
-        "desc": "Está cerrando sesión de su cuenta actual de Perps. Puede restaurarla en cualquier momento iniciando sesión con esta dirección."
+        "title": "Cerrar sesión de la dirección actual",
+        "desc": "Vas a cerrar sesión en la cuenta Perps actual. Puedes restaurarla en cualquier momento iniciando sesión de nuevo con esta dirección."
       },
       "PerpsDepositCard": {
         "availableToTrade": "Disponible para comerciar:",
@@ -2901,7 +2901,7 @@
         "activatedAddress": "Activado",
         "noPosition": "Sin posición",
         "notActivatedAddress": "No activado",
-        "hyperliquidBalance": "Saldo de Perps",
+        "hyperliquidBalance": "Saldo Perps",
         "lastUsed": "Último uso"
       },
       "selectAccountTitle": "Selecciona una billetera para iniciar sesión",
@@ -2922,7 +2922,7 @@
         "searchPlaceholder": "Buscar Perps",
         "empty": "No se encontraron resultados",
         "openPosition": "Abrir posición",
-        "searchPosition": "Buscar Posición",
+        "searchPosition": "Buscar posición",
         "searchPerps": "Buscar Perps"
       },
       "PerpsRiskPopup": {
@@ -2935,13 +2935,13 @@
         "currentPrice": "Precio Actual",
         "title": "Nivel de Riesgo",
         "liquidationPrice": "Precio de Liquidación",
-        "liqIntro": "La distancia de liquidación (%) muestra cuán lejos está el precio actual de tu precio de liquidación. Una distancia mayor indica una posición más segura, mientras que una distancia menor significa un mayor riesgo de liquidación.",
+        "liqIntro": "La distancia de liquidación (%) muestra qué tan lejos está el precio actual de tu precio de liquidación. Una distancia mayor indica una posición más segura; una menor implica mayor riesgo de liquidación.",
         "subtitle": "Distancia de liquidación en tiempo real (%)",
         "liqDistanceTipsShort": "Subir <1>{{distance}}</1> activará la liquidación.",
         "liqDistanceTipsLong": "Bajando <1>{{distance}}</1> se activará la liquidación."
       },
-      "closeAllConfirmTitle": "Confirmar Cerrar Todas las Posiciones",
-      "closeAll": "Cerrar todo",
+      "closeAllConfirmTitle": "Confirmar cierre de todas las posiciones",
+      "closeAll": "Cerrar todas las posiciones",
       "closeAllConfirmMessage": "Todas tus posiciones abiertas se cerrarán al precio de mercado.",
       "assetPage": {
         "hyperliquidPosition": "Hyperliquid Posición"
@@ -2965,10 +2965,10 @@
       },
       "EnableUnifiedAccount": {
         "title": "Habilitar Cuenta Unificada",
-        "desc": "Cuenta Unificada es el modo de cuenta recomendado que simplifica la experiencia de trading. Los balances de Spot y Perps se fusionan para todos los tokens, y el margen cruzado es compatible con todos los activos disponibles.",
+        "desc": "Unified Account es el modo de cuenta recomendado para simplificar la experiencia de trading. Los saldos Spot y Perps se combinan para todos los tokens, y se admite margen cruzado en todos los activos disponibles.",
         "confirm": "Confirmar",
         "cancel": "Cancelar",
-        "importantTips": "Toda la garantía en USDC se utilizará como margen cruzado una vez que se habilite la Cuenta Unificada.",
+        "importantTips": "Al activar Unified Account, todo el colateral en USDC se usará como margen cruzado.",
         "important": "Importante"
       },
       "PerpsSpotSwap": {
@@ -2987,7 +2987,7 @@
         "minimumAmount": "El monto mínimo de swap es {{amount}}"
       },
       "PerpMarginModePopup": {
-        "crossRequiresUnified": "El margen cruzado para este par de operaciones requiere una cuenta unificada. ¿Te gustaría activarlo?"
+        "crossRequiresUnified": "El margen cruzado para este par de trading requiere Unified Account. ¿Quieres activarlo?"
       },
       "PerpsMultiBalance": {
         "title": "Saldos Hyperliquid",
@@ -3028,13 +3028,13 @@
         "sizeTips": "El valor total o cantidad de tu operación, establecido por el margen y el apalancamiento.",
         "liqPrice": "Precio de Liquidación",
         "liquidationPriceTips": "El precio al cual tu posición es cerrada automáticamente por el intercambio para prevenir mayores pérdidas cuando tu margen cae por debajo del nivel de margen de mantenimiento.",
-        "fundingPaymentsTips": "Este es el pago neto de financiación desde que se abrió la posición. La financiación es una tarifa horaria que los traders pagan o reciben para mantener el precio del contrato perp cerca del precio real del token.",
+        "fundingPaymentsTips": "Estos son los pagos netos de funding desde que se abrió la posición. El funding es una comisión horaria que los traders pagan o reciben para mantener el precio del contrato perpetuo cerca del precio real del token.",
         "justMargin": "Margen",
         "direction": "Dirección",
         "slPrice": "Precio de Stop-Loss",
         "autoClose": "Cierre automático",
         "fundingGains": "Ganancias de Financiamiento",
-        "fundingGainsTips": "Esto son las ganancias netas de financiamiento desde que se abrió la posición. El financiamiento es una tarifa por hora que los traders pagan o reciben para mantener el precio del contrato perp cerca del precio real del token.",
+        "fundingGainsTips": "Estas son las ganancias netas de funding desde que se abrió la posición. El funding es una comisión horaria que los traders pagan o reciben para mantener el precio del contrato perpetuo cerca del precio real del token.",
         "details": "Detalles",
         "currentPrice": "Precio actual",
         "positionValue": "Valor de la posición",
@@ -3042,12 +3042,12 @@
         "unrealizedPnl": "PNL no realizado",
         "marginMode": "Modo Margen",
         "realizedPnl": "PNL realizado",
-        "fundingTipsBold": "Esto muestra el financiamiento total que se ha liquidado desde que se abrió la posición. Los valores en <bold>verde (positivo)</bold> significan que has ganado de otros traders, mientras que los valores en <bold>rojo (negativo)</bold> son los costos de financiamiento que les has pagado.",
+        "fundingTipsBold": "Esto muestra el total de funding liquidado desde que se abrió la posición. Los valores <bold>verdes (positivos)</bold> significan que has recibido funding de otros traders, mientras que los valores <bold>rojos (negativos)</bold> son costes de funding que les has pagado.",
         "crossTips": "En el modo de Margen Cruzado, el precio de liquidación para una sola posición es una estimación solo para referencia."
       },
       "PerpsInfo": {
         "openInterestTips": "El total de posiciones pendientes de todos los usuarios en este contrato.",
-        "fundingTips": "Este es un fee por hora que los traders pagan o reciben para mantener el precio del contrato perp cerca del precio actual del token. Si es positivo, long paga a short. Si es negativo, short paga a long.",
+        "fundingTips": "Es una comisión horaria que los traders pagan o reciben para mantener el precio del contrato perpetuo cerca del precio real del token. Si es positiva, los long pagan a los short. Si es negativa, los short pagan a los long.",
         "title": "Información",
         "24Vol": "Volumen en 24h",
         "openInterest": "Interés Abierto",
@@ -3188,8 +3188,8 @@
         "crossTitle": "Margen Cruzado",
         "isolatedTitle": "Margen Aislada",
         "cannotChangeMarginMode": "No se puede cambiar el modo de margen con posiciones abiertas.",
-        "isolatedDesc": "Cada posición utiliza su propio margen. Las pérdidas están limitadas a esa posición, pero se puede liquidar más fácilmente.",
-        "crossDesc": "Todas las posiciones comparten el mismo margen. Esto reduce la posibilidad de que una sola posición sea liquidada, pero todos los fondos de margen cruzado pueden perderse en movimientos extremos del mercado."
+        "isolatedDesc": "Cada posición usa su propio margen. Las pérdidas se limitan a esa posición, pero puede liquidarse con más facilidad.",
+        "crossDesc": "Todas las posiciones comparten el mismo margen. Esto reduce la probabilidad de que una sola posición sea liquidada, pero todos los fondos de margen cruzado pueden perderse en movimientos extremos del mercado."
       },
       "guideEntry": {
         "gotIt": "Entendido"
@@ -3256,9 +3256,9 @@
         "repayWith": "Reembolsar con"
       },
       "supplyDetail": {
-        "actions": "Suministro",
+        "actions": "Depositar",
         "supplyAPY": "Suministrar APY",
-        "approveAndSupply": "Aprobar y Suministrar",
+        "approveAndSupply": "Aprobar y depositar",
         "availableToBorrow": "Disponible para pedir prestado",
         "enabled": "Habilitado",
         "supplyBalance": "Saldo suministrado",
@@ -3278,7 +3278,7 @@
         "almostReachedWarning": "El límite de préstamo del protocolo está en el 100% para este activo. No se puede realizar más préstamos.",
         "swapDebt": "Intercambiar",
         "borrowed": "Prestado",
-        "noSupplyPrefix": "Sin suministro:",
+        "noSupplyPrefix": "Sin depósitos:",
         "noSupplyDesc": "Para pedir prestado, necesitas proporcionar activos como garantía."
       },
       "popup": {
@@ -3299,10 +3299,10 @@
         "reachCapTip": "Este activo ha alcanzado el límite de préstamo."
       },
       "supplyOverview": {
-        "title": "Detalles de suministro",
+        "title": "Detalles del depósito",
         "walletBalance": "Saldo de la billetera",
-        "availableToSupply": "Disponible para Suministrar",
-        "totalSupplied": "Total Suministrado",
+        "availableToSupply": "Disponible para depositar",
+        "totalSupplied": "Total depositado",
         "mySupply": "Mi Suministro",
         "almostCap": "Este activo ha alcanzado casi su límite de préstamo. Solo hay {{available}} disponible para ser prestado de este mercado.",
         "reachCap": "Este activo ha alcanzado su límite de suministro. No hay nada disponible para ser suministrado desde este mercado.",
@@ -3314,7 +3314,7 @@
         "warning": "Tomar esta cantidad reducirá tu Factor de Salud a un nivel arriesgado para la liquidación.",
         "withdrawWarning": "Retirar esta cantidad reducirá tu Factor de Salud a un nivel arriesgado para la liquidación.",
         "toggleCollateralWarning": "Deshabilitar este activo como colateral reducirá tu Factor de Salud a un nivel arriesgado para la liquidación.",
-        "blockEmodeWarning": "No puedes desactivar el E-Mode porque eso podría provocar una liquidación. Para salir del E-Mode, proporciona o reembolsa posiciones prestadas.",
+        "blockEmodeWarning": "No puedes desactivar E-Mode porque podría provocar una liquidación. Para salir de E-Mode, añade más colateral o reembolsa posiciones prestadas.",
         "emodeBlockWarning": "Desactivar el E-mode reducirá tu Factor de Salud a un nivel arriesgado para la Liquidación."
       },
       "lqDescription": {
@@ -3349,7 +3349,7 @@
       "netWorth": "Valor neto",
       "hf": "Factor de salud",
       "enterAmount": "Introducir cantidad",
-      "estNetApy": "Est. net APY",
+      "estNetApy": "APY neto estimado",
       "toggleCollateralDetail": {
         "actions": "Alternar {{asset}} Colateral",
         "enable": "Habilitar {{asset}} como Colateral",
@@ -3358,17 +3358,17 @@
       },
       "toggleCollateralModal": {
         "exitIsolationModeTitle": "Salir del Modo de Aislamiento",
-        "closeTitle": "Revisar la desactivación",
-        "riskToLiquidationText": "No puedes cambiar el uso a modo de colateral para esta moneda, porque provocará una llamada de colateral.",
+        "closeTitle": "Confirmar desactivación",
+        "riskToLiquidationText": "No puedes cambiar el estado de colateral de este activo porque podría provocar una liquidación.",
         "exitIsolationModeDesc": "Saldrás del modo de Aislamiento y otros tokens ahora pueden ser utilizados como colateral.",
-        "closeDesc": "Deshabilitar este activo como colateral afecta tu poder de endeudamiento y Factor de Salud.",
+        "closeDesc": "Desactivar este activo como colateral afecta a tu capacidad de préstamo y a tu Health Factor.",
         "enableIsolationModeDesc": "Estás entrando en modo Aislado. En modo Aislado, no puedes proporcionar otros activos como garantía. Un límite de deuda global restringe el poder de endeudamiento del activo aislado. Para salir del modo Aislado, desactiva CRV como garantía antes de pedir prestado otro activo.",
         "openDesc": "Activar este activo como colateral aumenta tu poder de endeudamiento y el Factor de Salud. Sin embargo, puede ser liquidado si tu factor de salud cae por debajo de 1.",
         "enableIsolationModeTitle": "Habilitar Modo de Aislamiento",
-        "openTitle": "Revisar la habilitación",
+        "openTitle": "Confirmar activación",
         "toggleRiskTexts": {
           "doNotHaveSuppliesInThisCurrency": "No tienes suministros en esta moneda",
-          "canNotSwitchUsageAsCollateralMode": "No puedes cambiar el uso a modo de colateral para esta moneda, porque causará una llamada de colateral.",
+          "canNotSwitchUsageAsCollateralMode": "No puedes cambiar el estado de colateral de este activo porque podría provocar una liquidación.",
           "canNotUseThisCurrencyAsCollateral": "No puedes usar esta moneda como colateral.",
           "zeroLTVWithdrawBlocked": "Los activos con LTV cero ({{assets}}) deben ser retirados o deshabilitados como garantía para realizar esta acción."
         }
@@ -3426,25 +3426,25 @@
       "disabled": "DESHABILITADO",
       "debtSwap": {
         "actions": {
-          "title": "Intercambio de Deuda",
-          "swapTo": "Intercambiar a",
+          "title": "Convertir deuda",
+          "swapTo": "Convertir a",
           "amount": "Cantidad",
           "select": "Seleccionar",
-          "borrowed": "Solicitado"
+          "borrowed": "Prestado"
         },
         "overview": {
           "title": "Resumen de Transacciones",
           "borrowAPY": "Pedir apy",
-          "borrowValueAfter": "Balance de préstamo después del intercambio"
+          "borrowValueAfter": "Saldo de préstamo tras la conversión"
         },
         "button": {
-          "swap": "Intercambiar"
+          "swap": "Convertir"
         },
         "borrowBalance": "Saldo de préstamo",
-        "title": "Intercambiar Posición de Préstamo",
-        "entryTips": "Un clic para intercambiar tu activo prestado, reduciendo pasos y tarifas.",
+        "title": "Convertir posición de préstamo",
+        "entryTips": "Convierte el activo prestado con un clic para reducir pasos y comisiones.",
         "lpRiskWarning": "Bajo factor de salud después del intercambio. Tu posición tendrá un mayor riesgo de liquidación.",
-        "priceImpactTips": "Alto impacto en el precio ({{lostValue}}). Esta ruta puede devolver más debido a la baja liquidez o al tamaño pequeño de la orden.",
+        "priceImpactTips": "Impacto de precio alto ({{lostValue}}). Debido a la baja liquidez o a un tamaño de orden pequeño, la estimación de esta ruta puede desviarse considerablemente.",
         "lpDangerWarning": "Su factor de salud después de este intercambio será críticamente bajo y puede resultar en liquidación. Por favor, elija un activo diferente o reduzca la cantidad del intercambio para mantenerse a salvo.",
         "maxLtvWarning": "Colateral insuficiente para cubrir nueva posición de préstamo. La billetera debe tener poder de préstamo restante para realizar el cambio de deuda."
       },
@@ -3453,11 +3453,11 @@
         "desc": "Si cae por debajo de 1.0, tu colateral puede ser liquidado."
       },
       "disableBorrowTip": {
-        "desc": "Sin suministro: Para pedir prestado, necesitas ofrecer activos como garantía."
+        "desc": "Sin depósitos: para pedir prestado, primero debes depositar activos como colateral."
       },
       "totalBorrowed": "Total prestado",
-      "netApy": "Net APY",
-      "totalSupplied": "Total suministrado",
+      "netApy": "APY neto",
+      "totalSupplied": "Total depositado",
       "repayWithCollateral": {
         "action": {
           "title": "Reembolsa con {{collateral}}"
@@ -3472,7 +3472,7 @@
         },
         "collateralNotEnough": "Su saldo de colateral es menor que la cantidad seleccionada.",
         "toRepay": "Cantidad esperada a reembolsar",
-        "repayWith": "Colateral para reembolsar con",
+        "repayWith": "Colateral para reembolsar",
         "insufficientLiquidity": "Liquidez insuficiente.",
         "frozenCollateral": "Este activo está congelado debido a una decisión de la comunidad de Aave."
       },
@@ -3482,7 +3482,7 @@
           "balance": "Saldo"
         },
         "title": "Seleccionar Token de Reembolso",
-        "zeroLtvCollateralTips": "Tienes los siguientes colaterales LTV = 0 y, por lo tanto, solo puedes reembolsar con estos colaterales primero de acuerdo con las reglas de reembolso de colaterales."
+        "zeroLtvCollateralTips": "Tienes los siguientes colaterales con LTV = 0. Según las reglas de reembolso con colateral, debes usar primero estos colaterales para reembolsar."
       },
       "dappSelect": {
         "title": "Seleccionar Proveedor de Préstamos"
