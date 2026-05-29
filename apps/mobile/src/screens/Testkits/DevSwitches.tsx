@@ -114,6 +114,7 @@ import {
 import { Text, AnimateableText } from '@/components/Typography';
 import { useAppLogFileSwitch } from '@/utils/logging/settings';
 import { APP_LOG_ROOT_PATH, logger } from '@/utils/logger';
+import { useAndroidWeakFaceBiometricsRegressionSwitch } from '@/core/apis/androidBiometricsRegression';
 
 export const makeNoop = () => () => {};
 
@@ -788,6 +789,55 @@ function DevSwitchAboutOpenApiDebug() {
             : 'Keep HTTP 4xx/5xx openapi responses silent and only log them'}
         </Text>
       </TouchableOpacity>
+    </View>
+  );
+}
+
+function DevSwitchAboutAndroidBiometricsRegression() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const {
+    canUse,
+    allowWeakFaceBiometricsForRegression,
+    setAllowWeakFaceBiometricsForRegression,
+  } = useAndroidWeakFaceBiometricsRegressionSwitch();
+
+  if (!canUse) {
+    return null;
+  }
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Android Biometrics
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={styles.switchRowWrapper}
+        onPress={() => {
+          setAllowWeakFaceBiometricsForRegression();
+        }}>
+        <AppSwitch2024
+          value={allowWeakFaceBiometricsForRegression}
+          onPress={evt => evt.stopPropagation()}
+          onValueChange={setAllowWeakFaceBiometricsForRegression}
+        />
+        <Text style={styles.switchLabel}>
+          {allowWeakFaceBiometricsForRegression
+            ? 'Allow weak Android face biometrics in regression keychain calls'
+            : 'Require strong Android biometrics for keychain calls'}
+        </Text>
+      </TouchableOpacity>
+
+      <Text style={[styles.metaLabel, { marginTop: 4 }]}>
+        Regression-only switch. Production and public builds keep strong
+        biometrics.
+      </Text>
     </View>
   );
 }
@@ -1606,6 +1656,7 @@ function DevSwitches(): JSX.Element {
         <Text style={styles.areaTitle}>Security</Text>
         <DevSwitchAboutScreenProtection />
         <DevSwitchAboutAppLogging />
+        <DevSwitchAboutAndroidBiometricsRegression />
         <DevSwitchAboutOpenApiDebug />
         <DevSwitchAboutExpData />
         <DevSwitchAboutAutoLock />

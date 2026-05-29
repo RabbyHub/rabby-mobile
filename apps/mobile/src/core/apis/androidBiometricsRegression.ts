@@ -50,7 +50,7 @@ export function getAndroidBiometricSecurityLevelOptions():
   }
 
   return {
-    androidBiometricSecurityLevel: ANDROID_BIOMETRIC_SECURITY_LEVELS.STRONG,
+    androidBiometricSecurityLevel: getAndroidBiometricSecurityLevel(),
   };
 }
 
@@ -61,9 +61,7 @@ export function getAndroidRegressionBiometricSecurityLevelOptions():
     return {};
   }
 
-  return {
-    androidBiometricSecurityLevel: getAndroidBiometricSecurityLevel(),
-  };
+  return getAndroidBiometricSecurityLevelOptions();
 }
 
 export function setAllowWeakFaceBiometricsForRegression(nextVal: boolean) {
