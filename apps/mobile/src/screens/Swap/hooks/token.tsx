@@ -889,6 +889,10 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         quote => !quote.loading && quote.name === currentProvider.name,
       );
 
+    if (currentProviderLoaded && currentProvider.manualClick) {
+      return;
+    }
+
     if (
       currentProviderLoaded &&
       currentProviderScore &&

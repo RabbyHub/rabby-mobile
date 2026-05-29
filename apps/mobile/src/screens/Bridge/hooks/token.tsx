@@ -1045,6 +1045,10 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         quote =>
           !quote.loading && isSameBridgeQuote(quote, selectedBridgeQuote),
       );
+      if (selectedQuoteLoaded && selectedBridgeQuote?.manualClick) {
+        return;
+      }
+
       const shouldUpdateSelectedQuote =
         !selectedBridgeQuote ||
         !selectedQuoteLoaded ||
