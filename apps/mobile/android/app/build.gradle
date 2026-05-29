@@ -109,6 +109,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 100216
         versionName "0.6.72"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         missingDimensionStrategy "store", "play"
         externalNativeBuild {
           cmake {
@@ -230,4 +231,9 @@ dependencies {
 
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.29'
     implementation 'com.android.billingclient:billing:7.0.0'
+
+    androidTestImplementation 'androidx.test:core-ktx:1.6.1'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test:rules:1.6.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
 }
