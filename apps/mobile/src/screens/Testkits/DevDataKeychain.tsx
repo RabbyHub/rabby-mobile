@@ -94,7 +94,7 @@ const KEYCHAIN_VERSION_DIFF_ROWS = [
     values: {
       '8.2.0-fork': 'workspace fork, legacy baseline',
       '9.0.0': 'workspace fork, current default',
-      '10.0.0': 'patched npm package, experimental',
+      '10.0.0': 'workspace fork, experimental',
     },
   },
   {
@@ -655,6 +655,22 @@ function chunkStatusGridItems(items: StatusGridItem[], chunkSize: number) {
   return rows;
 }
 
+function formatAndroidAuthenticatorCapability(
+  capability: apisKeychain.AndroidAuthenticatorCapability | null | undefined,
+) {
+  if (!capability || typeof capability !== 'object') {
+    return '-';
+  }
+
+  const code =
+    capability.statusCode === null ? '-' : String(capability.statusCode);
+  const suffix = capability.errorMessage ? `, ${capability.errorMessage}` : '';
+
+  return `${capability.available ? 'OK' : 'NO'} ${
+    capability.statusLabel
+  } (${code})${suffix}`;
+}
+
 function CompactStatusGrid({
   items,
   maxColumns = 6,
@@ -1035,6 +1051,39 @@ function AndroidKeychainStatusCard({
       label: 'Debug Supported',
       value: state.debugSupported,
     },
+    {
+      label: 'Android API',
+      value: state.androidAuthenticatorCapabilities?.apiLevel,
+    },
+    {
+      label: 'Can Strong Bio',
+      value: formatAndroidAuthenticatorCapability(
+        state.androidAuthenticatorCapabilities?.biometricStrong,
+      ),
+      allowHorizontalOverflow: true,
+    },
+    {
+      label: 'Can Device',
+      value: formatAndroidAuthenticatorCapability(
+        state.androidAuthenticatorCapabilities?.deviceCredential,
+      ),
+      allowHorizontalOverflow: true,
+    },
+    {
+      label: 'Can Strong+Device',
+      value: formatAndroidAuthenticatorCapability(
+        state.androidAuthenticatorCapabilities
+          ?.biometricStrongOrDeviceCredential,
+      ),
+      allowHorizontalOverflow: true,
+    },
+    {
+      label: 'Can Weak Bio',
+      value: formatAndroidAuthenticatorCapability(
+        state.androidAuthenticatorCapabilities?.biometricWeak,
+      ),
+      allowHorizontalOverflow: true,
+    },
   ];
 
   return (
@@ -1314,6 +1363,10 @@ function makeSafeKeychainDebugLogState(
       state.platform === 'android'
         ? state.keystoreIsCompatibleWithCurrentCipher
         : null,
+    androidAuthenticatorCapabilities:
+      state.platform === 'android'
+        ? state.androidAuthenticatorCapabilities
+        : null,
   };
 }
 
@@ -1561,7 +1614,7 @@ export default function DevDataKeychain(): JSX.Element {
 
       if (!canReadOfficialV10State) {
         logger.info(
-          '[keychain-debug] skipped official v10 state refresh to avoid Android DataStore migration',
+          '[keychain-debug] skipped v10 raw state refresh to avoid Android DataStore migration',
           { currentKeychainVersion },
         );
       }
@@ -2910,7 +2963,7 @@ export default function DevDataKeychain(): JSX.Element {
     return (
       <>
         <View style={styles.sectionStandaloneHeader}>
-          <Text style={styles.sectionTitle}>Official v10 Raw</Text>
+          <Text style={styles.sectionTitle}>v10 Fork Raw</Text>
           <SectionHelpButton
             onPress={() => {
               openHelpSheet({
@@ -2920,21 +2973,21 @@ export default function DevDataKeychain(): JSX.Element {
           />
         </View>
         <KeychainSummaryCard
-          title="Official v10 Raw Current Service"
+          title="v10 Fork Raw Current Service"
           state={v9DefaultState}
         />
         <KeychainSummaryCard
-          title="Official v10 Raw Probe Service"
+          title="v10 Fork Raw Probe Service"
           state={v9ProbeState}
         />
 
         <KeychainStatusCard
-          title="Official v10 Raw Current Detail"
+          title="v10 Fork Raw Current Detail"
           state={v9DefaultState}
           maxHeight={detailCardMaxHeight}
         />
         <KeychainStatusCard
-          title="Official v10 Raw Probe Detail"
+          title="v10 Fork Raw Probe Detail"
           state={v9ProbeState}
           maxHeight={detailCardMaxHeight}
         />
@@ -2942,7 +2995,7 @@ export default function DevDataKeychain(): JSX.Element {
         {ANDROID_AUTH_PROMPT_POLICY_OPTIONS.map(option => (
           <React.Fragment key={`current-${option.key}`}>
             <KeychainReadResultCard
-              title={`Official v10 Raw Current Read (${option.label})`}
+              title={`v10 Fork Raw Current Read (${option.label})`}
               result={v9CurrentReadStates[option.key].result}
               isPasswordVisible={v9CurrentPasswordVisibility[option.key]}
               maxHeight={detailCardMaxHeight}
@@ -2957,7 +3010,7 @@ export default function DevDataKeychain(): JSX.Element {
             {v9CurrentReadStates[option.key].errorMessage ? (
               <View style={styles.statusCard}>
                 <Text style={styles.sectionTitle}>
-                  Official v10 Raw Current Read Error ({option.label})
+                  v10 Fork Raw Current Read Error ({option.label})
                 </Text>
                 <Text style={styles.errorText} selectable>
                   {v9CurrentReadStates[option.key].errorMessage}
@@ -2970,7 +3023,7 @@ export default function DevDataKeychain(): JSX.Element {
         {ANDROID_AUTH_PROMPT_POLICY_OPTIONS.map(option => (
           <React.Fragment key={`probe-${option.key}`}>
             <KeychainReadResultCard
-              title={`Official v10 Raw Probe Read (${option.label})`}
+              title={`v10 Fork Raw Probe Read (${option.label})`}
               result={v9ProbeReadStates[option.key].result}
               isPasswordVisible={v9ProbePasswordVisibility[option.key]}
               maxHeight={detailCardMaxHeight}
@@ -3277,11 +3330,11 @@ export default function DevDataKeychain(): JSX.Element {
         style={styles.sheetScrollView}
         contentContainerStyle={styles.sheetScrollContent}>
         <AutoLockView>
-          <AppBottomSheetModalTitle title="Official v10 Raw Help" />
+          <AppBottomSheetModalTitle title="v10 Fork Raw Help" />
 
           <ActionSheetSection
-            title="Raw Official Package"
-            desc="This section talks directly to the official `react-native-keychain@10.0.0` package and stays outside the Rabby business wrapper.">
+            title="Raw v10 Fork"
+            desc="This section talks directly to the Rabby v10 keychain fork and stays outside the Rabby business wrapper.">
             <Text style={styles.sheetListLine}>
               Current Service: reads the real `com.debank` entry already used by
               the app.
@@ -3520,8 +3573,8 @@ export default function DevDataKeychain(): JSX.Element {
 
           {tabKey === '10.0.0' ? (
             <ActionSheetSection
-              title="Official v10 Raw Actions"
-              desc={`These are raw \`react-native-keychain@10.0.0\` experiments for comparing Android storage behavior. Selected storage: ${getKeychainStorageLabel(
+              title="v10 Fork Raw Actions"
+              desc={`These are raw \`@rabby-wallet/react-native-keychain-10@10.0.0-rabby.0\` experiments for comparing Android storage behavior. Selected storage: ${getKeychainStorageLabel(
                 effectiveStorageByVersion['10.0.0'],
               )}.`}>
               <View style={styles.actionsRow}>
@@ -3647,8 +3700,8 @@ export default function DevDataKeychain(): JSX.Element {
             </ActionSheetSection>
           ) : resolvedTabVersion === '10.0.0' ? (
             <ActionSheetSection
-              title="Official v10 Raw Actions"
-              desc="Open the `10.0.0` tab when you need raw official current/probe operations. The Current tab only exposes the selected business path."
+              title="v10 Fork Raw Actions"
+              desc="Open the `10.0.0` tab when you need raw v10 current/probe operations. The Current tab only exposes the selected business path."
             />
           ) : null}
         </AutoLockView>

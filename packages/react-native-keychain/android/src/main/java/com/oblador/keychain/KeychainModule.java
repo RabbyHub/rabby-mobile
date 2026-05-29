@@ -615,6 +615,7 @@ public class KeychainModule extends ReactContextBaseJavaModule {
 
       final WritableMap result = Arguments.createMap();
       result.putString(Maps.SERVICE, debugEntry.service);
+      result.putMap("androidAuthenticatorCapabilities", buildAndroidAuthenticatorCapabilities());
       result.putBoolean("hasEntry", debugEntry.hasEntry);
       result.putBoolean("hasUsername", debugEntry.hasUsername);
       result.putBoolean("hasPassword", debugEntry.hasPassword);
@@ -751,6 +752,90 @@ public class KeychainModule extends ReactContextBaseJavaModule {
     } catch (Throwable fail) {
       Log.e(KEYCHAIN_MODULE, fail.getMessage(), fail);
       promise.reject(Errors.E_UNKNOWN_ERROR, fail);
+    }
+  }
+
+  @NonNull
+  private WritableMap buildAndroidAuthenticatorCapabilities() {
+    final WritableMap result = Arguments.createMap();
+    result.putInt("apiLevel", Build.VERSION.SDK_INT);
+    putAndroidAuthenticatorCapability(
+      result,
+      "biometricStrong",
+      "BIOMETRIC_STRONG",
+      BiometricManager.Authenticators.BIOMETRIC_STRONG
+    );
+    putAndroidAuthenticatorCapability(
+      result,
+      "deviceCredential",
+      "DEVICE_CREDENTIAL",
+      BiometricManager.Authenticators.DEVICE_CREDENTIAL
+    );
+    putAndroidAuthenticatorCapability(
+      result,
+      "biometricStrongOrDeviceCredential",
+      "BIOMETRIC_STRONG | DEVICE_CREDENTIAL",
+      BiometricManager.Authenticators.BIOMETRIC_STRONG
+        | BiometricManager.Authenticators.DEVICE_CREDENTIAL
+    );
+    putAndroidAuthenticatorCapability(
+      result,
+      "biometricWeak",
+      "BIOMETRIC_WEAK",
+      BiometricManager.Authenticators.BIOMETRIC_WEAK
+    );
+    return result;
+  }
+
+  private void putAndroidAuthenticatorCapability(
+    @NonNull final WritableMap result,
+    @NonNull final String key,
+    @NonNull final String name,
+    final int authenticators
+  ) {
+    final WritableMap capability = Arguments.createMap();
+    capability.putString("name", name);
+    capability.putInt("authenticators", authenticators);
+
+    try {
+      final int statusCode =
+        BiometricManager.from(getReactApplicationContext()).canAuthenticate(authenticators);
+      capability.putInt("statusCode", statusCode);
+      capability.putString("statusLabel", getAndroidAuthenticatorStatusLabel(statusCode));
+      capability.putBoolean("available", statusCode == BiometricManager.BIOMETRIC_SUCCESS);
+      capability.putNull("errorMessage");
+    } catch (Throwable fail) {
+      capability.putNull("statusCode");
+      capability.putString("statusLabel", "ERROR");
+      capability.putBoolean("available", false);
+      capability.putString(
+        "errorMessage",
+        fail.getMessage() != null ? fail.getMessage() : fail.getClass().getSimpleName()
+      );
+    }
+
+    result.putMap(key, capability);
+  }
+
+  @NonNull
+  private String getAndroidAuthenticatorStatusLabel(final int statusCode) {
+    switch (statusCode) {
+      case 0:
+        return "BIOMETRIC_SUCCESS";
+      case 1:
+        return "BIOMETRIC_ERROR_HW_UNAVAILABLE";
+      case 11:
+        return "BIOMETRIC_ERROR_NONE_ENROLLED";
+      case 12:
+        return "BIOMETRIC_ERROR_NO_HARDWARE";
+      case 15:
+        return "BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED";
+      case -1:
+        return "BIOMETRIC_STATUS_UNKNOWN";
+      case -2:
+        return "BIOMETRIC_ERROR_UNSUPPORTED";
+      default:
+        return "BIOMETRIC_STATUS_" + statusCode;
     }
   }
 

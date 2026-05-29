@@ -12,6 +12,7 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.ReadableMap
+import com.facebook.react.bridge.WritableMap
 import com.facebook.react.module.annotations.ReactModule
 import com.rabbywallet.keychain9.cipherStorage.CipherStorage
 import com.rabbywallet.keychain9.cipherStorage.CipherStorage.DecryptionResult
@@ -449,6 +450,7 @@ class KeychainModule(reactContext: ReactApplicationContext) :
       val result = Arguments.createMap()
 
       result.putString(Maps.SERVICE, debugEntry.service)
+      result.putMap("androidAuthenticatorCapabilities", buildAndroidAuthenticatorCapabilities())
       result.putBoolean("hasEntry", debugEntry.hasEntry)
       result.putBoolean("hasUsername", debugEntry.hasUsername)
       result.putBoolean("hasPassword", debugEntry.hasPassword)
@@ -589,6 +591,73 @@ class KeychainModule(reactContext: ReactApplicationContext) :
     } catch (fail: Throwable) {
       Log.e(KEYCHAIN_MODULE, fail.message, fail)
       promise.reject(Errors.E_UNKNOWN_ERROR, fail)
+    }
+  }
+
+  private fun buildAndroidAuthenticatorCapabilities(): WritableMap {
+    val result = Arguments.createMap()
+    result.putInt("apiLevel", Build.VERSION.SDK_INT)
+    putAndroidAuthenticatorCapability(
+        result,
+        "biometricStrong",
+        "BIOMETRIC_STRONG",
+        BiometricManager.Authenticators.BIOMETRIC_STRONG)
+    putAndroidAuthenticatorCapability(
+        result,
+        "deviceCredential",
+        "DEVICE_CREDENTIAL",
+        BiometricManager.Authenticators.DEVICE_CREDENTIAL)
+    putAndroidAuthenticatorCapability(
+        result,
+        "biometricStrongOrDeviceCredential",
+        "BIOMETRIC_STRONG | DEVICE_CREDENTIAL",
+        BiometricManager.Authenticators.BIOMETRIC_STRONG or
+            BiometricManager.Authenticators.DEVICE_CREDENTIAL)
+    putAndroidAuthenticatorCapability(
+        result,
+        "biometricWeak",
+        "BIOMETRIC_WEAK",
+        BiometricManager.Authenticators.BIOMETRIC_WEAK)
+    return result
+  }
+
+  private fun putAndroidAuthenticatorCapability(
+      result: WritableMap,
+      key: String,
+      name: String,
+      authenticators: Int
+  ) {
+    val capability = Arguments.createMap()
+    capability.putString("name", name)
+    capability.putInt("authenticators", authenticators)
+
+    try {
+      val statusCode =
+          BiometricManager.from(reactApplicationContext).canAuthenticate(authenticators)
+      capability.putInt("statusCode", statusCode)
+      capability.putString("statusLabel", getAndroidAuthenticatorStatusLabel(statusCode))
+      capability.putBoolean("available", statusCode == BiometricManager.BIOMETRIC_SUCCESS)
+      capability.putNull("errorMessage")
+    } catch (fail: Throwable) {
+      capability.putNull("statusCode")
+      capability.putString("statusLabel", "ERROR")
+      capability.putBoolean("available", false)
+      capability.putString("errorMessage", fail.message ?: fail.javaClass.simpleName)
+    }
+
+    result.putMap(key, capability)
+  }
+
+  private fun getAndroidAuthenticatorStatusLabel(statusCode: Int): String {
+    return when (statusCode) {
+      0 -> "BIOMETRIC_SUCCESS"
+      1 -> "BIOMETRIC_ERROR_HW_UNAVAILABLE"
+      11 -> "BIOMETRIC_ERROR_NONE_ENROLLED"
+      12 -> "BIOMETRIC_ERROR_NO_HARDWARE"
+      15 -> "BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED"
+      -1 -> "BIOMETRIC_STATUS_UNKNOWN"
+      -2 -> "BIOMETRIC_ERROR_UNSUPPORTED"
+      else -> "BIOMETRIC_STATUS_$statusCode"
     }
   }
 

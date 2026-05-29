@@ -1,4 +1,4 @@
-import OfficialKeychain from 'react-native-keychain';
+import OfficialKeychain from '@rabby-wallet/react-native-keychain-10';
 
 import {
   ANDROID_AUTH_PROMPT_POLICIES,
@@ -31,8 +31,8 @@ import {
 
 const keychainApi = createBusinessKeychainApi({
   keychainModule: OfficialKeychain as unknown as KeychainCompatibleModule,
-  debugNativeModuleName: 'RNKeychainManager',
-  sourceLabel: 'react-native-keychain@10.0.0',
+  debugNativeModuleName: 'RNRabbyKeychainV10Manager',
+  sourceLabel: '@rabby-wallet/react-native-keychain-10@10.0.0-rabby.0',
   supportedAndroidStorageTypes: [
     KEYCHAIN_STORAGE_TYPES.RSA,
     KEYCHAIN_STORAGE_TYPES.AES,

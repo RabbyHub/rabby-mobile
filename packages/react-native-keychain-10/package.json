@@ -1,0 +1,60 @@
+{
+  "name": "@rabby-wallet/react-native-keychain-10",
+  "version": "10.0.0-rabby.0",
+  "private": true,
+  "description": "Local Rabby fork of react-native-keychain 10.0.0 for Rabby Mobile",
+  "main": "./lib/commonjs/index.js",
+  "module": "./lib/module/index",
+  "types": "./lib/typescript/index.d.ts",
+  "react-native": "./src/index",
+  "source": "./src/index",
+  "files": [
+    "android",
+    "ios/RNKeychainManager",
+    "lib",
+    "src",
+    "RabbyRNKeychainV10.podspec",
+    "react-native.config.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "react-native",
+    "react-component",
+    "react-native-component",
+    "react",
+    "mobile",
+    "ios",
+    "android",
+    "keychain"
+  ],
+  "author": {
+    "name": "Joel Arvidsson",
+    "email": "joel@oblador.se"
+  },
+  "contributors": [
+    "Dorian Mazur <mazur.dorian15@gmail.com> (https://github.com/DorianMazur)",
+    "Vojtech Novak <vonovak@gmail.com> (https://github.com/vonovak)"
+  ],
+  "homepage": "https://github.com/RabbyHub/rabby-mobile",
+  "bugs": {
+    "url": "https://github.com/oblador/react-native-keychain/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RabbyHub/rabby-mobile.git",
+    "directory": "packages/react-native-keychain-10"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "codegenConfig": {
+    "name": "RNRabbyKeychainV10Spec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "com.rabbywallet.keychain10"
+    }
+  }
+}

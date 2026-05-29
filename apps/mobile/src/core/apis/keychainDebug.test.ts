@@ -47,7 +47,7 @@ describe('core/apis/keychainDebug', () => {
     jest.doMock('react-native', () => ({
       Platform: { OS: 'android' },
       NativeModules: {
-        RNKeychainManager: {
+        RNRabbyKeychainV10Manager: {
           debugGetGenericPasswordStateForOptions:
             mockDebugGetGenericPasswordStateForOptions,
           debugRemoveCipherStorageMarkerForOptions:
@@ -55,7 +55,7 @@ describe('core/apis/keychainDebug', () => {
         },
       },
     }));
-    jest.doMock('react-native-keychain', () => {
+    jest.doMock('@rabby-wallet/react-native-keychain-10', () => {
       const OfficialKeychain = {
         getGenericPassword: mockGetGenericPassword,
         setGenericPassword: mockSetGenericPassword,
@@ -133,7 +133,7 @@ describe('core/apis/keychainDebug', () => {
     };
   };
 
-  it('reads generic passwords with official raw keychain defaults for the requested service', async () => {
+  it('reads generic passwords with v10 raw keychain defaults for the requested service', async () => {
     const { module, mockGetGenericPassword } = await setup();
 
     const result = await module.readGenericPassword('com.debank');
@@ -158,7 +158,7 @@ describe('core/apis/keychainDebug', () => {
     });
   });
 
-  it('passes the Android authenticated-session reuse option to raw official reads when requested', async () => {
+  it('passes the Android authenticated-session reuse option to raw v10 reads when requested', async () => {
     const { module, mockGetGenericPassword } = await setup();
 
     await module.readGenericPassword('com.debank', {
@@ -174,7 +174,7 @@ describe('core/apis/keychainDebug', () => {
     );
   });
 
-  it('writes biometrics entries to the requested service using official raw keychain defaults', async () => {
+  it('writes biometrics entries to the requested service using v10 raw keychain defaults', async () => {
     const { module, mockSetGenericPassword } = await setup();
 
     const result = await module.writeBiometricsEntry(
@@ -197,7 +197,7 @@ describe('core/apis/keychainDebug', () => {
     });
   });
 
-  it('passes an explicit storage through raw official writes', async () => {
+  it('passes an explicit storage through raw v10 writes', async () => {
     const { module, mockSetGenericPassword } = await setup();
 
     await module.writeBiometricsEntry('plain-password', 'com.debank', {
@@ -249,13 +249,13 @@ describe('core/apis/keychainDebug', () => {
     jest.doMock('react-native', () => ({
       Platform: { OS: 'ios' },
       NativeModules: {
-        RNKeychainManager: {
+        RNRabbyKeychainV10Manager: {
           debugGetGenericPasswordStateForOptions:
             mockDebugGetGenericPasswordStateForOptions,
         },
       },
     }));
-    jest.doMock('react-native-keychain', () => {
+    jest.doMock('@rabby-wallet/react-native-keychain-10', () => {
       const OfficialKeychain = {
         getGenericPassword: jest.fn(),
         setGenericPassword: jest.fn(),

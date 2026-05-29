@@ -1,4 +1,6 @@
-import OfficialKeychain, { type BaseOptions } from 'react-native-keychain';
+import OfficialKeychain, {
+  type BaseOptions,
+} from '@rabby-wallet/react-native-keychain-10';
 import { NativeModules, Platform } from 'react-native';
 
 import i18n from '@/utils/i18n';
@@ -33,7 +35,8 @@ const isAndroid = Platform.OS === 'android';
 const GENERIC_USER = 'rabbymobile-user';
 export const KEYCHAIN_PROBE_SERVICE = `${KEYCHAIN_DEFAULT_SERVICE}.rn-keychain-v10`;
 export const KEYCHAIN_PROBE_PASSWORD = 'rn-keychain-v10-probe-password';
-export const KEYCHAIN_SOURCE_LABEL = 'react-native-keychain@10.0.0 raw';
+export const KEYCHAIN_SOURCE_LABEL =
+  '@rabby-wallet/react-native-keychain-10@10.0.0-rabby.0 raw';
 
 type RawOfficialOptions = BaseOptions & {
   accessible?: unknown;
@@ -89,7 +92,7 @@ const DEFAULT_BIOMETRIC_SET_OPTIONS: RawOfficialOptions = {
 };
 
 const RNKeychainDebugManager: KeychainDebugModule | undefined =
-  NativeModules.RNKeychainManager;
+  NativeModules.RNRabbyKeychainV10Manager;
 
 function sortKeychainStorageTypes(
   storages: KeychainStorageType[],
@@ -156,6 +159,7 @@ function makeAndroidBaseState(service: string): AndroidKeychainDebugState {
     keystoreIsCompatibleWithCurrentCipher: null,
     keystorePublicKeySha256: null,
     keystoreDebugErrorMessage: null,
+    androidAuthenticatorCapabilities: null,
   };
 }
 
@@ -187,7 +191,9 @@ async function callDebugMethod<R>(
 
   if (typeof debugMethod !== 'function') {
     throw new Error(
-      `RNKeychainManager.${String(method)} is unavailable on ${Platform.OS}`,
+      `RNRabbyKeychainV10Manager.${String(method)} is unavailable on ${
+        Platform.OS
+      }`,
     );
   }
 

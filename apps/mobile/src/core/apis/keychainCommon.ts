@@ -146,6 +146,23 @@ function sortKeychainStorageTypes(
 
 export type KeychainSupportedBiometryType = string | null;
 
+export type AndroidAuthenticatorCapability = {
+  name: string;
+  authenticators: number;
+  statusCode: number | null;
+  statusLabel: string;
+  available: boolean;
+  errorMessage: string | null;
+};
+
+export type AndroidAuthenticatorCapabilities = {
+  apiLevel: number;
+  biometricStrong: AndroidAuthenticatorCapability;
+  deviceCredential: AndroidAuthenticatorCapability;
+  biometricStrongOrDeviceCredential: AndroidAuthenticatorCapability;
+  biometricWeak: AndroidAuthenticatorCapability;
+};
+
 export type KeychainCompatibleModule = {
   getGenericPassword: (
     options: KeychainCompatibleOptions,
@@ -203,6 +220,7 @@ export type NativeAndroidKeychainDebugState = {
   keystoreIsCompatibleWithCurrentCipher: boolean | null;
   keystorePublicKeySha256: string | null;
   keystoreDebugErrorMessage: string | null;
+  androidAuthenticatorCapabilities: AndroidAuthenticatorCapabilities | null;
 };
 
 export type NativeIOSKeychainDebugState = {
@@ -356,6 +374,7 @@ function makeAndroidKeychainDebugState(
     keystoreIsCompatibleWithCurrentCipher: null,
     keystorePublicKeySha256: null,
     keystoreDebugErrorMessage: null,
+    androidAuthenticatorCapabilities: null,
   };
 }
 
