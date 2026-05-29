@@ -55,6 +55,9 @@ target 'RabbyMobile' do
   use_frameworks! :linkage => :static
   config = use_native_modules!
 
+  # Keep transitive OpenSSL resolution stable when Podfile.lock is regenerated.
+  pod 'OpenSSL-Universal', '3.6.0000'
+
   # Flags change depending on the env values.
   flags = get_default_flags()
 
