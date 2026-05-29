@@ -19,6 +19,7 @@ Currently verified shared utilities:
 Current first flow:
 
 - `flows/android-onboarding-import-private-key.yaml`
+
   - start from the welcome page
   - import via private key
   - set app password
@@ -26,10 +27,12 @@ Current first flow:
   - wait for single-address balance to render after success, then return to unlocked Home
 
 - `flows/android-onboarding-import-private-key-to-single-home.yaml`
+
   - same onboarding path, but it intentionally stops on single-address Home
   - this is the base flow for single-address balance smoke validation
 
 - `flows/ios-onboarding-import-private-key-to-single-home.yaml`
+
   - start from the welcome page on a booted iOS simulator
   - paste the first configured private key through the simulator system clipboard
   - use an iOS-specific submit point on the private-key page
@@ -38,12 +41,14 @@ Current first flow:
   - stop on single-address Home after success
 
 - `src/run-ios-onboarding-import-private-key.mjs`
+
   - require a booted iOS simulator
   - terminate the debug app, clear simulator app data, and reset the simulator keychain
   - write the first configured private key into the simulator pasteboard before launch
   - launch the app, then run the iOS onboarding flow end-to-end
 
 - `flows/android-home-balance-smoke.yaml`
+
   - preserve app data and relaunch
   - bootstrap from Welcome, Unlock, or Home
   - wait until Home portfolio balance exits the loading state
@@ -51,6 +56,7 @@ Current first flow:
   - toggle the Home curve once and then restore it
 
 - `src/run-android-single-home-balance-smoke.mjs`
+
   - clear app state and import the first configured private key
   - stop on single-address Home
   - on debug builds, validate balance / change / curve state through the DevTools bridge
@@ -58,12 +64,14 @@ Current first flow:
   - return to unlocked Home at the end of the debug validation chain
 
 - `src/run-android-balance-suite.mjs`
+
   - runs the current balance-focused debug regression chain in order
   - onboarding into single-address Home
   - relaunch and verify Home portfolio balance
   - add watch address and verify Home recovers afterward
 
 - `src/run-android-components2024-showcase-smoke.mjs`
+
   - preserve app data and relaunch
   - bootstrap from Welcome, Unlock, or Home
   - navigate from Home into Settings -> UI Playground -> 2024 Components
@@ -127,6 +135,26 @@ Send smoke:
 yarn workspace automation-maestro run:android-send-smoke
 ```
 
+Android device doctor:
+
+```bash
+yarn workspace automation-maestro doctor:android-device
+RABBY_MAESTRO_APP_ID=com.debank.rabbymobile.regression yarn workspace automation-maestro doctor:android-device --launch
+```
+
+Run one Android flow on the connected device while preserving app data:
+
+```bash
+RABBY_MAESTRO_APP_ID=com.debank.rabbymobile.regression yarn workspace automation-maestro run:android-device-flow --flow flows/android-home-ready-existing-user.yaml
+RABBY_MAESTRO_APP_ID=com.debank.rabbymobile.regression yarn workspace automation-maestro run:android-device-flow --flow flows/android-home-balance-smoke.yaml -- --include-tags smoke
+```
+
+Existing-user Android smoke:
+
+```bash
+RABBY_MAESTRO_APP_ID=com.debank.rabbymobile.regression yarn workspace automation-maestro run:android-existing-user-smoke
+```
+
 Multi-key run:
 
 - first key uses the onboarding flow above
@@ -151,6 +179,8 @@ yarn workspace automation-maestro run:android-onboarding-import-private-keys
   clears app data, and writes the first configured private key into the
   simulator pasteboard before launching the app
 - debug-package runners additionally connect to Metro DevTools and write bridge snapshots as JSON artifacts next to the Maestro HTML reports
+- `run:android-device-flow` is the generic connected-device runner for
+  preserving current app data while exercising one selected Android flow
 - local-only files such as `.env.local`, `.env.regression`, and `.artifacts/`
   are expected to stay untracked inside this package
 
@@ -257,31 +287,31 @@ Example:
 ```js
 export default {
   maestro: {
-    binary: "/Users/you/.maestro/bin/maestro"
+    binary: '/Users/you/.maestro/bin/maestro',
   },
   android: {
-    sharedFixtureFile: "flows.fixture.local.json",
+    sharedFixtureFile: 'flows.fixture.local.json',
     onboardingImportPrivateKey: {
-      packageName: "com.debank.rabbymobile.debug",
-      appPassword: "11111111",
+      packageName: 'com.debank.rabbymobile.debug',
+      appPassword: '11111111',
       launchActivity:
-        "com.debank.rabbymobile.debug/com.debank.rabbymobile.MainActivity"
+        'com.debank.rabbymobile.debug/com.debank.rabbymobile.MainActivity',
     },
     sendSmoke: {
-      fixtureFile: "flows.fixture.local.json"
+      fixtureFile: 'flows.fixture.local.json',
     },
     homeImportPrivateKey: {
-      flowFile: "flows/android-home-import-private-key.yaml"
-    }
+      flowFile: 'flows/android-home-import-private-key.yaml',
+    },
   },
   ios: {
     onboardingImportPrivateKey: {
-      bundleId: "com.debank.rabby-mobile-debug",
-      appPassword: "11111111",
-      flowFile: "flows/ios-onboarding-import-private-key.yaml",
+      bundleId: 'com.debank.rabby-mobile-debug',
+      appPassword: '11111111',
+      flowFile: 'flows/ios-onboarding-import-private-key.yaml',
       resetKeychain: true,
-      clearAppData: true
-    }
-  }
+      clearAppData: true,
+    },
+  },
 };
 ```

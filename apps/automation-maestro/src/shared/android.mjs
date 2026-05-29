@@ -26,7 +26,8 @@ export function formatRunId(date = new Date()) {
   return (
     [date.getFullYear(), pad(date.getMonth() + 1), pad(date.getDate())].join(
       '',
-    ) + `-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`
+    ) +
+    `-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`
   );
 }
 
@@ -56,8 +57,7 @@ export function resolveMaestroBinary(config) {
       envVarName: 'MAESTRO_BIN',
       commandName: 'maestro',
       fallbackPath: defaultMaestroBinary(),
-      errorMessage:
-        '[maestro] maestro CLI is required but not found in PATH',
+      errorMessage: '[maestro] maestro CLI is required but not found in PATH',
     })
   );
 }
@@ -83,7 +83,7 @@ export function runAdb(adbBinary, args, options) {
   return run(adbBinary, adbArgs(args), options);
 }
 
-function captureAdb(adbBinary, args, options) {
+export function captureAdb(adbBinary, args, options) {
   return capture(adbBinary, adbArgs(args), options);
 }
 
@@ -128,10 +128,7 @@ export function launchActivity(adbBinary, launchActivity) {
   });
 }
 
-export function resolveMaestroAppId({
-  fallback,
-  platformEnvNames = [],
-} = {}) {
+export function resolveMaestroAppId({ fallback, platformEnvNames = [] } = {}) {
   for (const envName of ['RABBY_MAESTRO_APP_ID', ...platformEnvNames]) {
     const value = process.env[envName]?.trim();
     if (value) {
