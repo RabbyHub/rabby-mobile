@@ -124,6 +124,7 @@ export const TokenList = ({
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
   const focusedTab = useFocusedTab();
   const isFocused = useMemo(() => {
@@ -328,12 +329,17 @@ export const TokenList = ({
     [currentAccount],
   );
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
     if (!currentAddress) {
       return;
     }
-    getTokenList(currentAddress, true);
+    setIsManualRefreshing(true);
     onRefresh?.();
+    try {
+      await getTokenList(currentAddress, true);
+    } finally {
+      setIsManualRefreshing(false);
+    }
   }, [currentAddress, getTokenList, onRefresh]);
 
   const renderItem = useCallback<ListRenderItem<TokenListItem>>(
@@ -485,7 +491,7 @@ export const TokenList = ({
           <RefreshControl
             style={styles.bgContainer}
             onRefresh={handleRefresh}
-            refreshing={false}
+            refreshing={isManualRefreshing}
           />
         }
       />
