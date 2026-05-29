@@ -246,6 +246,12 @@ export type DebugDecryptedKeychainPayload = {
   vaultKeyString?: string;
 };
 
+export type DebugGenericPasswordDecryptResult = {
+  credentials: KeychainCompatibleUserCredentials;
+  decryptedPayload: DebugDecryptedKeychainPayload;
+  usedFallbackRabbitCode: boolean;
+};
+
 type KeychainDebugStateBase = {
   service: string;
   hasEntry: boolean;
@@ -1180,6 +1186,61 @@ export function createBusinessKeychainApi({
     ) as Promise<DebugDecryptedKeychainPayload>;
   }
 
+  async function debugDecryptGenericPassword(options?: {
+    androidAuthPromptPolicy?: AndroidAuthPromptPolicy;
+  }): Promise<DebugGenericPasswordDecryptResult> {
+    const instance = await waitInstance();
+    const startedAt = Date.now();
+
+    logger.info('[keychain-debug] debug generic decrypt start', {
+      sourceLabel,
+      androidAuthPromptPolicy: options?.androidAuthPromptPolicy,
+      authenticationTypeLabel: getAuthenticationTypeLabel(),
+    });
+
+    try {
+      const keychainObject = (await keychainModule.getGenericPassword({
+        ...DEFAULT_GET_OPTIONS,
+        ...getAndroidAuthPromptPolicyOptions(options?.androidAuthPromptPolicy),
+      })) as false | KeychainCompatibleUserCredentials;
+
+      if (!keychainObject) {
+        throw makeKeyChainError(
+          'NIL_KEYCHAIN_OBJECT',
+          'Failed to retrieve keychain object',
+        );
+      }
+
+      const encryptedPassword = keychainObject.password;
+      const { decrypted, usedFallbackRabbitCode } =
+        await decryptStoredPasswordWithRabbitCodeCandidates(
+          instance,
+          encryptedPassword,
+        );
+
+      logger.info('[keychain-debug] debug generic decrypt success', {
+        sourceLabel,
+        elapsedMs: Date.now() - startedAt,
+        storage: keychainObject.storage,
+        usedFallbackRabbitCode,
+        hasVaultKeyString: !!decrypted.vaultKeyString,
+      });
+
+      return {
+        credentials: keychainObject,
+        decryptedPayload: decrypted,
+        usedFallbackRabbitCode,
+      };
+    } catch (error) {
+      logger.warn('[keychain-debug] debug generic decrypt failed', {
+        sourceLabel,
+        elapsedMs: Date.now() - startedAt,
+        error: getErrorMessage(error),
+      });
+      throw error;
+    }
+  }
+
   async function setGenericPassword(
     password: string,
     type: KEYCHAIN_AUTH_TYPES = KEYCHAIN_AUTH_TYPES.BIOMETRICS,
@@ -1296,6 +1357,7 @@ export function createBusinessKeychainApi({
     getSupportedStorageTypes,
     debugWriteMockLegacyBiometricsEntry,
     debugDecryptStoredPasswordPayload,
+    debugDecryptGenericPassword,
     setGenericPassword,
     cacheTrustedVaultKeyString,
     resetGenericPassword,

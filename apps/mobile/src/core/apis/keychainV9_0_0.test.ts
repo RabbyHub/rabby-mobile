@@ -275,6 +275,43 @@ describe('core/apis/keychainV9_0_0', () => {
     );
   });
 
+  it('debug-decrypts the stored password without business unlock side effects', async () => {
+    const {
+      module,
+      mockGetGenericPassword,
+      mockSetGenericPassword,
+      mockSafeVerifyPasswordAndUpdateUnlockTime,
+      mockUpdateUnlockTime,
+    } = await setup();
+
+    const result = await module.debugDecryptGenericPassword({
+      androidAuthPromptPolicy:
+        module.ANDROID_AUTH_PROMPT_POLICIES.ALLOW_AUTHENTICATED_SESSION_REUSE,
+    });
+
+    expect(result.decryptedPayload).toEqual({ password: 'plain-password' });
+    expect(result.credentials).toEqual(
+      expect.objectContaining({
+        service: 'com.debank',
+        username: 'rabbymobile-user',
+        password: 'enc:plain-password',
+        storage: 'KeystoreRSAECB',
+      }),
+    );
+    expect(result.usedFallbackRabbitCode).toBe(false);
+    expect(mockGetGenericPassword).toHaveBeenCalledTimes(1);
+    expect(mockGetGenericPassword).toHaveBeenCalledWith(
+      expect.objectContaining({
+        service: 'com.debank',
+        rules: 'automaticUpgradeToMoreSecuredStorage',
+        androidAllowAuthenticatedSessionReuse: true,
+      }),
+    );
+    expect(mockSafeVerifyPasswordAndUpdateUnlockTime).not.toHaveBeenCalled();
+    expect(mockUpdateUnlockTime).not.toHaveBeenCalled();
+    expect(mockSetGenericPassword).not.toHaveBeenCalled();
+  });
+
   it('writes cached vault keys to separate and primary Android keychain entries', async () => {
     const { module, mockSetGenericPassword, mockEncrypt } = await setup();
 

@@ -27,6 +27,7 @@ import {
   makeKeyChainError,
   parseKeychainError,
   type DebugDecryptedKeychainPayload,
+  type DebugGenericPasswordDecryptResult,
   type KeychainBusinessApi,
   type KeychainBusinessRequestResult,
   type KeychainDebugState,
@@ -56,6 +57,7 @@ export {
   parseKeychainError,
   type CurrentKeychainVersion,
   type DebugDecryptedKeychainPayload,
+  type DebugGenericPasswordDecryptResult,
   type KeychainBusinessApi,
   type KeychainBusinessRequestResult,
   type KeychainDebugState,
@@ -440,6 +442,10 @@ export const debugDecryptStoredPasswordPayload = (
     typeof apisKeychainV8_2_0.debugDecryptStoredPasswordPayload
   >
 ) => getCurrentKeychainApi().debugDecryptStoredPasswordPayload(...args);
+
+export const debugDecryptGenericPassword = (
+  ...args: Parameters<typeof apisKeychainV8_2_0.debugDecryptGenericPassword>
+) => getCurrentKeychainApi().debugDecryptGenericPassword(...args);
 
 export const setGenericPassword = (
   ...args: Parameters<typeof apisKeychainV8_2_0.setGenericPassword>

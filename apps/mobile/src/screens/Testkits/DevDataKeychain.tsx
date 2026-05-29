@@ -1614,16 +1614,10 @@ export default function DevDataKeychain(): JSX.Element {
           ),
         });
 
-        await api.requestGenericPassword({
-          purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
+        const decryptResult = await api.debugDecryptGenericPassword({
           androidAuthPromptPolicy: policy,
-          shouldAttachTrustedVaultKeyString: false,
-          skipLegacyAndroidBiometricsStorageUpgrade: true,
-          skipCurrentVersionRewriteAfterLegacyFallback: true,
-          onPlainPassword: password => {
-            decryptedPassword = password;
-          },
         });
+        decryptedPassword = decryptResult.decryptedPayload.password;
 
         updateBusinessDecryptState(version, policy, {
           plainPassword: decryptedPassword || '(empty)',
@@ -1647,6 +1641,8 @@ export default function DevDataKeychain(): JSX.Element {
           useCurrentFacade,
           policy,
           hasPlainPassword: !!decryptedPassword,
+          storage: decryptResult.credentials.storage,
+          usedFallbackRabbitCode: decryptResult.usedFallbackRabbitCode,
         });
         await refreshState();
       } catch (error) {
