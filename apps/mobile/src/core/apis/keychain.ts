@@ -109,6 +109,10 @@ type KeychainBiometricsFailureDiagnostic = {
   };
 };
 
+type RequestGenericPasswordOptions = Parameters<
+  typeof apisKeychainV8_2_0.requestGenericPassword
+>[0];
+
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
     return error.message;
@@ -136,6 +140,22 @@ function getErrorCode(error: unknown) {
 
 function getErrorName(error: unknown) {
   return error instanceof Error ? error.name : undefined;
+}
+
+function shouldTryLegacyBiometricsFallback(
+  version: CurrentKeychainVersion,
+  error: unknown,
+) {
+  if (
+    !isAndroid ||
+    version === '8.2.0-fork' ||
+    getAuthenticationType() !== KEYCHAIN_AUTH_TYPES.BIOMETRICS
+  ) {
+    return false;
+  }
+
+  const parsed = parseKeychainError(error);
+  return !parsed?.isCancelledByUser;
 }
 
 function summarizeKeychainDebugState(
@@ -233,8 +253,11 @@ export const makeSecureKeyChainInstance = (
 export async function requestGenericPassword(
   ...args: Parameters<typeof apisKeychainV8_2_0.requestGenericPassword>
 ) {
+  const currentVersion = getCurrentKeychainVersion();
+  const currentApi = getKeychainApiByVersion(currentVersion);
+
   try {
-    return await getCurrentKeychainApi().requestGenericPassword(...args);
+    return await currentApi.requestGenericPassword(...args);
   } catch (error) {
     await recordAndroidBiometricsFailureDiagnostic({
       stage: 'requestGenericPassword',
@@ -246,6 +269,93 @@ export async function requestGenericPassword(
           args[0]?.shouldAttachTrustedVaultKeyString,
       },
     });
+
+    if (!shouldTryLegacyBiometricsFallback(currentVersion, error)) {
+      throw error;
+    }
+
+    let fallbackPlainPassword = '';
+    let fallbackVaultKeyString: string | undefined;
+    const requestOptions = args[0] || ({} as RequestGenericPasswordOptions);
+    const fallbackOptions = {
+      ...requestOptions,
+      onPlainPassword: async (
+        password: string,
+        credentials: Parameters<
+          NonNullable<RequestGenericPasswordOptions['onPlainPassword']>
+        >[1],
+      ) => {
+        fallbackPlainPassword = password;
+        fallbackVaultKeyString =
+          typeof credentials?.vaultKeyString === 'string'
+            ? credentials.vaultKeyString
+            : undefined;
+        await requestOptions.onPlainPassword?.(password, credentials);
+      },
+    };
+
+    try {
+      const fallbackResult = await apisKeychainV8_2_0.requestGenericPassword(
+        fallbackOptions,
+      );
+
+      let currentRewriteSucceeded = false;
+      if (fallbackPlainPassword) {
+        try {
+          await currentApi.setGenericPassword(
+            fallbackPlainPassword,
+            KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+            fallbackVaultKeyString
+              ? { vaultKeyString: fallbackVaultKeyString }
+              : undefined,
+          );
+          currentRewriteSucceeded = true;
+        } catch (repairError) {
+          logger.warn(
+            '[keychain] legacy fallback read succeeded but current rewrite failed',
+            {
+              currentVersion,
+              currentSourceLabel: currentApi.KEYCHAIN_SOURCE_LABEL,
+              fallbackSourceLabel: apisKeychainV8_2_0.KEYCHAIN_SOURCE_LABEL,
+              repairError: {
+                code: getErrorCode(repairError),
+                message: getErrorMessage(repairError),
+              },
+            },
+          );
+        }
+      }
+
+      logger.warn(
+        '[keychain] recovered Android biometrics through legacy v8 fallback',
+        {
+          currentVersion,
+          currentSourceLabel: currentApi.KEYCHAIN_SOURCE_LABEL,
+          fallbackSourceLabel: apisKeychainV8_2_0.KEYCHAIN_SOURCE_LABEL,
+          originalError: {
+            code: getErrorCode(error),
+            message: getErrorMessage(error),
+          },
+          currentRewriteSucceeded,
+        },
+      );
+
+      return fallbackResult;
+    } catch (fallbackError) {
+      logger.warn('[keychain] Android legacy biometrics fallback failed', {
+        currentVersion,
+        currentSourceLabel: currentApi.KEYCHAIN_SOURCE_LABEL,
+        originalError: {
+          code: getErrorCode(error),
+          message: getErrorMessage(error),
+        },
+        fallbackError: {
+          code: getErrorCode(fallbackError),
+          message: getErrorMessage(fallbackError),
+        },
+      });
+    }
+
     throw error;
   }
 }

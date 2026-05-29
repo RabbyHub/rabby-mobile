@@ -1543,8 +1543,13 @@ export default function DevDataKeychain(): JSX.Element {
     async (
       version: CurrentKeychainVersion,
       policy: AndroidAuthPromptPolicy = apisKeychain.DEFAULT_ANDROID_AUTH_PROMPT_POLICY,
+      options?: {
+        useCurrentFacade?: boolean;
+      },
     ) => {
-      const api = getBusinessApi(version);
+      const api = options?.useCurrentFacade
+        ? apisKeychain
+        : getBusinessApi(version);
 
       try {
         setIsLoading(true);
@@ -2978,6 +2983,7 @@ export default function DevDataKeychain(): JSX.Element {
                       resolvedTabVersion,
                       apisKeychain.ANDROID_AUTH_PROMPT_POLICIES
                         .INTERACTIVE_FIRST,
+                      { useCurrentFacade: tabKey === 'current' },
                     ),
                   );
                 }}
@@ -2994,6 +3000,7 @@ export default function DevDataKeychain(): JSX.Element {
                       resolvedTabVersion,
                       apisKeychain.ANDROID_AUTH_PROMPT_POLICIES
                         .ALLOW_AUTHENTICATED_SESSION_REUSE,
+                      { useCurrentFacade: tabKey === 'current' },
                     ),
                   );
                 }}
