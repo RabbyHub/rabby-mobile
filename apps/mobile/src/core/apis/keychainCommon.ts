@@ -1392,9 +1392,6 @@ export function createBusinessKeychainApi({
 
     const instance = await waitInstance();
     const encryptedPassword = await instance.encryptPassword(password, {
-      ...(options?.vaultKeyString
-        ? { vaultKeyString: options.vaultKeyString }
-        : null),
       ...(isAndroid && authOptions.androidKeychainAuthProfile
         ? { androidKeychainAuthProfile: authOptions.androidKeychainAuthProfile }
         : null),

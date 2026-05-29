@@ -369,6 +369,7 @@ describe('core/apis/keychainV9_0_0', () => {
     );
 
     expect(mockEncrypt).toHaveBeenCalledWith('salt', {
+      androidKeychainAuthProfile: 'biometric-strong-v1',
       password: 'plain-password',
     });
     expect(mockSetGenericPassword).toHaveBeenCalledTimes(2);
@@ -418,6 +419,7 @@ describe('core/apis/keychainV9_0_0', () => {
     );
     expect(mockUpdateUnlockTime).toHaveBeenCalled();
     expect(mockEncrypt).toHaveBeenCalledWith('salt', {
+      androidKeychainAuthProfile: 'biometric-strong-v1',
       password: 'plain-password',
     });
     expect(mockSetGenericPassword).toHaveBeenCalledTimes(2);
