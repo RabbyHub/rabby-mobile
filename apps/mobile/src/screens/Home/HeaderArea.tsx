@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 
 import RcIconCopy from '@/assets2024/singleHome/copy.svg';
@@ -16,12 +16,10 @@ import { trigger } from 'react-native-haptic-feedback';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import {
   apisSingleHome,
-  useSingleHomeAccount,
   useSingleHomeAccountAlias,
   useSingleHomeLoading,
 } from './hooks/singleHome';
 import { navBack } from '@/hooks/navigation';
-import { useAlias2 } from '@/hooks/alias';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 
 export default function HomeHeaderArea({ style }: RNViewProps) {
@@ -77,13 +75,15 @@ export default function HomeHeaderArea({ style }: RNViewProps) {
               </TouchableOpacity>
             </View>
           </View>
-          <TouchableOpacity style={styles.touchBox} onPress={handleCopyAddress}>
-            <Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              style={styles.titleText}>
-              {nameText}
-            </Text>
+          <TouchableOpacity style={styles.aliasBox} onPress={handleCopyAddress}>
+            <View style={styles.nameBox}>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={styles.titleText}>
+                {nameText}
+              </Text>
+            </View>
             {currentAddress && !aliasExist && (
               <TouchableOpacity
                 onPress={evt => {
@@ -108,6 +108,7 @@ export default function HomeHeaderArea({ style }: RNViewProps) {
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     flexShrink: 1,
+    minWidth: 0,
   },
   innerBox: {
     width: '100%',
@@ -121,7 +122,22 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'flex-start',
     alignItems: 'center',
     flexShrink: 1,
+    minWidth: 0,
+    width: '100%',
     gap: 6,
+  },
+  aliasBox: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    flexShrink: 1,
+    minWidth: 0,
+    flex: 1,
+    gap: 6,
+  },
+  nameBox: {
+    flexShrink: 1,
+    minWidth: 0,
   },
   accountBox: {
     flexDirection: 'row',
@@ -141,9 +157,7 @@ const getStyles = createGetStyles2024(ctx => ({
     // ...makeDebugBorder('yellow'),
   },
   titleText: {
-    flexShrink: 1,
-    flex: 1,
-    minWidth: 0,
+    width: '100%',
     color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
@@ -159,5 +173,6 @@ const getStyles = createGetStyles2024(ctx => ({
   copy: {
     width: 18,
     height: 18,
+    flexShrink: 0,
   },
 }));
