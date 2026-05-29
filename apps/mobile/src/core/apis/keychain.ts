@@ -142,20 +142,29 @@ function getErrorName(error: unknown) {
   return error instanceof Error ? error.name : undefined;
 }
 
-function shouldTryLegacyBiometricsFallback(
+function getLegacyBiometricsFallbackSkipReason(
   version: CurrentKeychainVersion,
   error: unknown,
 ) {
-  if (
-    !isAndroid ||
-    version === '8.2.0-fork' ||
-    getAuthenticationType() !== KEYCHAIN_AUTH_TYPES.BIOMETRICS
-  ) {
-    return false;
+  if (!isAndroid) {
+    return 'not-android';
+  }
+
+  if (version === '8.2.0-fork') {
+    return 'already-legacy-version';
+  }
+
+  const authenticationType = getAuthenticationType();
+  if (authenticationType !== KEYCHAIN_AUTH_TYPES.BIOMETRICS) {
+    return `auth-type-${getAuthenticationTypeLabel(authenticationType)}`;
   }
 
   const parsed = parseKeychainError(error);
-  return !parsed?.isCancelledByUser;
+  if (parsed?.isCancelledByUser) {
+    return 'cancelled-by-user';
+  }
+
+  return null;
 }
 
 function summarizeKeychainDebugState(
@@ -255,28 +264,55 @@ export async function requestGenericPassword(
 ) {
   const currentVersion = getCurrentKeychainVersion();
   const currentApi = getKeychainApiByVersion(currentVersion);
+  const requestOptions = args[0] || ({} as RequestGenericPasswordOptions);
 
   try {
+    logger.info('[keychain] facade requestGenericPassword start', {
+      currentVersion,
+      currentSourceLabel: currentApi.KEYCHAIN_SOURCE_LABEL,
+      authenticationTypeLabel: getAuthenticationTypeLabel(),
+      request: {
+        purpose: requestOptions.purpose,
+        androidAuthPromptPolicy: requestOptions.androidAuthPromptPolicy,
+        shouldAttachTrustedVaultKeyString:
+          requestOptions.shouldAttachTrustedVaultKeyString,
+      },
+    });
     return await currentApi.requestGenericPassword(...args);
   } catch (error) {
     await recordAndroidBiometricsFailureDiagnostic({
       stage: 'requestGenericPassword',
       error,
       request: {
-        purpose: args[0]?.purpose,
-        androidAuthPromptPolicy: args[0]?.androidAuthPromptPolicy,
+        purpose: requestOptions.purpose,
+        androidAuthPromptPolicy: requestOptions.androidAuthPromptPolicy,
         shouldAttachTrustedVaultKeyString:
-          args[0]?.shouldAttachTrustedVaultKeyString,
+          requestOptions.shouldAttachTrustedVaultKeyString,
       },
     });
 
-    if (!shouldTryLegacyBiometricsFallback(currentVersion, error)) {
+    const fallbackSkipReason = getLegacyBiometricsFallbackSkipReason(
+      currentVersion,
+      error,
+    );
+    logger.warn('[keychain] facade current requestGenericPassword failed', {
+      currentVersion,
+      currentSourceLabel: currentApi.KEYCHAIN_SOURCE_LABEL,
+      authenticationTypeLabel: getAuthenticationTypeLabel(),
+      fallbackSkipReason,
+      error: {
+        code: getErrorCode(error),
+        name: getErrorName(error),
+        message: getErrorMessage(error),
+      },
+    });
+
+    if (fallbackSkipReason) {
       throw error;
     }
 
     let fallbackPlainPassword = '';
     let fallbackVaultKeyString: string | undefined;
-    const requestOptions = args[0] || ({} as RequestGenericPasswordOptions);
     const fallbackOptions = {
       ...requestOptions,
       onPlainPassword: async (
@@ -290,11 +326,22 @@ export async function requestGenericPassword(
           typeof credentials?.vaultKeyString === 'string'
             ? credentials.vaultKeyString
             : undefined;
+        logger.info('[keychain] legacy fallback plain password callback', {
+          currentVersion,
+          fallbackSourceLabel: apisKeychainV8_2_0.KEYCHAIN_SOURCE_LABEL,
+          hasPlainPassword: !!password,
+          hasVaultKeyString: !!fallbackVaultKeyString,
+        });
         await requestOptions.onPlainPassword?.(password, credentials);
       },
     };
 
     try {
+      logger.info('[keychain] trying legacy v8 biometrics fallback', {
+        currentVersion,
+        currentSourceLabel: currentApi.KEYCHAIN_SOURCE_LABEL,
+        fallbackSourceLabel: apisKeychainV8_2_0.KEYCHAIN_SOURCE_LABEL,
+      });
       const fallbackResult = await apisKeychainV8_2_0.requestGenericPassword(
         fallbackOptions,
       );
@@ -336,6 +383,7 @@ export async function requestGenericPassword(
             code: getErrorCode(error),
             message: getErrorMessage(error),
           },
+          hasFallbackPlainPassword: !!fallbackPlainPassword,
           currentRewriteSucceeded,
         },
       );

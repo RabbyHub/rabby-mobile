@@ -48,6 +48,7 @@ import {
 import { useAppSecurityChain } from '@/hooks/global';
 import { useTheme2024 } from '@/hooks/theme';
 import { shareLocalFile } from '@/utils/shareLocalFile';
+import { logger } from '@/utils/logger';
 import { createGetStyles2024 } from '@/utils/styles';
 
 const TAB_OPTIONS = [
@@ -1208,6 +1209,40 @@ function makeInitialBusinessVersionState(): BusinessVersionState {
   };
 }
 
+function makeSafeKeychainDebugLogState(
+  state: apisKeychain.KeychainDebugState | null,
+) {
+  if (!state) {
+    return null;
+  }
+
+  return {
+    sourceLabel: state.sourceLabel,
+    platform: state.platform,
+    service: state.service,
+    hasEntry: state.hasEntry,
+    hasUsername: state.hasUsername,
+    hasPassword: state.hasPassword,
+    authenticationTypeLabel: state.authenticationTypeLabel,
+    supportedBiometryType: state.supportedBiometryType,
+    debugErrorMessage: state.debugErrorMessage,
+    resolvedCipherStorageName:
+      state.platform === 'android' ? state.resolvedCipherStorageName : null,
+    storedCipherStorageName:
+      state.platform === 'android' ? state.storedCipherStorageName : null,
+    hasKeystoreAlias:
+      state.platform === 'android' ? state.hasKeystoreAlias : null,
+    keystoreUserAuthenticationRequired:
+      state.platform === 'android'
+        ? state.keystoreUserAuthenticationRequired
+        : null,
+    keystoreIsCompatibleWithCurrentCipher:
+      state.platform === 'android'
+        ? state.keystoreIsCompatibleWithCurrentCipher
+        : null,
+  };
+}
+
 export default function DevDataKeychain(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({
     getStyle: getStyles,
@@ -1550,6 +1585,7 @@ export default function DevDataKeychain(): JSX.Element {
       const api = options?.useCurrentFacade
         ? apisKeychain
         : getBusinessApi(version);
+      const useCurrentFacade = !!options?.useCurrentFacade;
 
       try {
         setIsLoading(true);
@@ -1560,6 +1596,23 @@ export default function DevDataKeychain(): JSX.Element {
           lastActionErrorMessage: null,
         });
         let decryptedPassword = '';
+
+        logger.info('[keychain-debug] business decrypt start', {
+          version,
+          currentKeychainVersion,
+          useCurrentFacade,
+          policy,
+          authTypeLabel: apisKeychain.getAuthenticationTypeLabel(),
+          selectedState: makeSafeKeychainDebugLogState(
+            businessStates[version]?.debugState ?? null,
+          ),
+          currentState: makeSafeKeychainDebugLogState(
+            businessStates[currentKeychainVersion]?.debugState ?? null,
+          ),
+          legacyV8State: makeSafeKeychainDebugLogState(
+            businessStates['8.2.0-fork']?.debugState ?? null,
+          ),
+        });
 
         await api.requestGenericPassword({
           purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
@@ -1586,6 +1639,13 @@ export default function DevDataKeychain(): JSX.Element {
             policy,
           )} decrypted`,
         );
+        logger.info('[keychain-debug] business decrypt success', {
+          version,
+          currentKeychainVersion,
+          useCurrentFacade,
+          policy,
+          hasPlainPassword: !!decryptedPassword,
+        });
         await refreshState();
       } catch (error) {
         const parsed = api.parseKeychainError(error);
@@ -1593,6 +1653,18 @@ export default function DevDataKeychain(): JSX.Element {
           parsed.sysMessage ||
           (error instanceof Error ? error.message : String(error));
 
+        logger.warn('[keychain-debug] business decrypt failed', {
+          version,
+          currentKeychainVersion,
+          useCurrentFacade,
+          policy,
+          parsed,
+          message,
+          error:
+            error instanceof Error
+              ? { name: error.name, message: error.message }
+              : String(error),
+        });
         updateBusinessDecryptState(version, policy, {
           errorMessage: message,
         });
@@ -1607,7 +1679,13 @@ export default function DevDataKeychain(): JSX.Element {
         setIsLoading(false);
       }
     },
-    [refreshState, updateBusinessDecryptState, updateBusinessState],
+    [
+      businessStates,
+      currentKeychainVersion,
+      refreshState,
+      updateBusinessDecryptState,
+      updateBusinessState,
+    ],
   );
 
   const handleBusinessReset = useCallback(
