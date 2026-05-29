@@ -5,6 +5,10 @@ function loadLoggerModule() {
     DocumentDirectoryPath: '/documents',
   }));
 
+  jest.doMock('@/constant', () => ({
+    isNonPublicProductionEnv: false,
+  }));
+
   jest.doMock('./logging/settings', () => ({
     getEffectiveConsoleCaptureEnabled: jest.fn(() => true),
     getEffectiveFileLoggingEnabled: jest.fn(() => true),

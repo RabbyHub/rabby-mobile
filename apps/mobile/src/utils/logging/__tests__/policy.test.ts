@@ -1,6 +1,7 @@
 import {
   APP_FILE_LOGGING_ONLINE_SWITCH,
   getDefaultLocalAppFileLoggingEnabled,
+  resolveAppLogPolicyEnv,
   resolveAppFileLoggingEnabled,
   resolveConsoleCaptureEnabled,
 } from '../policy';
@@ -10,6 +11,22 @@ describe('logging policy', () => {
     expect(getDefaultLocalAppFileLoggingEnabled('development')).toBe(true);
     expect(getDefaultLocalAppFileLoggingEnabled('regression')).toBe(false);
     expect(getDefaultLocalAppFileLoggingEnabled('production')).toBe(false);
+  });
+
+  it('treats non-public production runtime builds as regression for local logging', () => {
+    expect(
+      resolveAppLogPolicyEnv({
+        runtimeEnv: 'production',
+        isNonPublicProductionEnv: true,
+      }),
+    ).toBe('regression');
+
+    expect(
+      resolveAppLogPolicyEnv({
+        runtimeEnv: 'production',
+        isNonPublicProductionEnv: false,
+      }),
+    ).toBe('production');
   });
 
   it('uses the local switch in development', () => {

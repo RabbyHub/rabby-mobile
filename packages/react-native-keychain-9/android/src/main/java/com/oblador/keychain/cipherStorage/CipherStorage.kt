@@ -107,7 +107,8 @@ interface CipherStorage {
       @NonNull username: ByteArray,
       @NonNull password: ByteArray,
       @NonNull level: SecurityLevel,
-      allowAuthenticatedSessionReuse: Boolean
+      allowAuthenticatedSessionReuse: Boolean,
+      allowKeyStoreRecovery: Boolean = true
   ) {
     decrypt(handler, alias, username, password, level)
   }

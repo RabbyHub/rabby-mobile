@@ -3,6 +3,7 @@ import { AppLogger, RollingZipLogWriter } from '@rabby-wallet/rabby-logger';
 import debugLogService from '@/core/services/debugLogService';
 import { APP_DOCUMENT_LIKE_PATH } from '@/core/utils/appFS';
 import { APP_RUNTIME_ENV } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import { rnfsLoggingAdapter } from './logging/rnfsAdapter';
 import {
   getEffectiveConsoleCaptureEnabled,
@@ -23,7 +24,7 @@ export const logger = new AppLogger({
   writer: logWriter,
   shouldWriteToFile: getEffectiveFileLoggingEnabled,
   shouldCaptureConsole: getEffectiveConsoleCaptureEnabled,
-  captureInMemory: APP_RUNTIME_ENV !== 'production',
+  captureInMemory: isNonPublicProductionEnv || APP_RUNTIME_ENV !== 'production',
   onInMemoryLog(entry) {
     debugLogService.addLog(entry.message, entry.level, entry.data);
   },

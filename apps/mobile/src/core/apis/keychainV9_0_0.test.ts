@@ -4,6 +4,7 @@ describe('core/apis/keychainV9_0_0', () => {
     authType?: number;
     salt?: string;
     trustedVaultKeyString?: string | null;
+    embeddedVaultKeyString?: string | null;
   }) => {
     jest.resetModules();
     const {
@@ -11,6 +12,7 @@ describe('core/apis/keychainV9_0_0', () => {
       authType = 1,
       salt = 'salt',
       trustedVaultKeyString = null,
+      embeddedVaultKeyString = null,
     } = options || {};
 
     const mockEncrypt = jest.fn(
@@ -21,7 +23,12 @@ describe('core/apis/keychainV9_0_0', () => {
         return `enc:${payload.password}`;
       },
     );
-    const mockDecrypt = jest.fn(async () => ({ password: 'plain-password' }));
+    const mockDecrypt = jest.fn(async () => ({
+      password: 'plain-password',
+      ...(embeddedVaultKeyString
+        ? { vaultKeyString: embeddedVaultKeyString }
+        : null),
+    }));
     const mockGetGenericPassword = jest.fn(
       async (keychainOptions?: { service?: string }) => {
         if (keychainOptions?.service === 'com.debank.trusted-vault-key') {
@@ -74,6 +81,12 @@ describe('core/apis/keychainV9_0_0', () => {
       keystorePublicKeySha256: 'debug-public-key',
       keystoreDebugErrorMessage: null,
     }));
+    const mockDebugDecryptGenericPasswordForOptions = jest.fn(async () => ({
+      service: 'com.debank',
+      username: 'rabbymobile-user',
+      password: 'enc:plain-password',
+      storage,
+    }));
     const mockDebugRemoveCipherStorageMarkerForOptions = jest.fn(
       async () => true,
     );
@@ -88,6 +101,8 @@ describe('core/apis/keychainV9_0_0', () => {
         RNRabbyKeychainV9Manager: {
           debugGetGenericPasswordStateForOptions:
             mockDebugGetGenericPasswordStateForOptions,
+          debugDecryptGenericPasswordForOptions:
+            mockDebugDecryptGenericPasswordForOptions,
           debugRemoveCipherStorageMarkerForOptions:
             mockDebugRemoveCipherStorageMarkerForOptions,
         },
@@ -169,6 +184,7 @@ describe('core/apis/keychainV9_0_0', () => {
       mockGetGenericPassword,
       mockSetGenericPassword,
       mockDebugGetGenericPasswordStateForOptions,
+      mockDebugDecryptGenericPasswordForOptions,
       mockSafeVerifyPasswordAndUpdateUnlockTime,
       mockUpdateUnlockTime,
     };
@@ -275,7 +291,46 @@ describe('core/apis/keychainV9_0_0', () => {
     );
   });
 
-  it('writes cached vault keys to separate and primary Android keychain entries', async () => {
+  it('debug-decrypts the stored password without business unlock side effects', async () => {
+    const {
+      module,
+      mockGetGenericPassword,
+      mockSetGenericPassword,
+      mockDebugDecryptGenericPasswordForOptions,
+      mockSafeVerifyPasswordAndUpdateUnlockTime,
+      mockUpdateUnlockTime,
+    } = await setup();
+
+    const result = await module.debugDecryptGenericPassword({
+      androidAuthPromptPolicy:
+        module.ANDROID_AUTH_PROMPT_POLICIES.ALLOW_AUTHENTICATED_SESSION_REUSE,
+    });
+
+    expect(result.decryptedPayload).toEqual({ password: 'plain-password' });
+    expect(result.credentials).toEqual(
+      expect.objectContaining({
+        service: 'com.debank',
+        username: 'rabbymobile-user',
+        password: 'enc:plain-password',
+        storage: 'KeystoreRSAECB',
+      }),
+    );
+    expect(result.usedFallbackRabbitCode).toBe(false);
+    expect(mockDebugDecryptGenericPasswordForOptions).toHaveBeenCalledTimes(1);
+    expect(mockDebugDecryptGenericPasswordForOptions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        service: 'com.debank',
+        rules: 'automaticUpgradeToMoreSecuredStorage',
+        androidAllowAuthenticatedSessionReuse: true,
+      }),
+    );
+    expect(mockGetGenericPassword).not.toHaveBeenCalled();
+    expect(mockSafeVerifyPasswordAndUpdateUnlockTime).not.toHaveBeenCalled();
+    expect(mockUpdateUnlockTime).not.toHaveBeenCalled();
+    expect(mockSetGenericPassword).not.toHaveBeenCalled();
+  });
+
+  it('writes cached vault keys only to the separate Android keychain entry', async () => {
     const { module, mockSetGenericPassword, mockEncrypt } = await setup();
 
     await module.cacheTrustedVaultKeyString(
@@ -283,13 +338,9 @@ describe('core/apis/keychainV9_0_0', () => {
       'trusted-vault-key',
     );
 
-    expect(mockEncrypt).toHaveBeenCalledWith('salt', {
-      password: 'plain-password',
-      vaultKeyString: 'trusted-vault-key',
-    });
-    expect(mockSetGenericPassword).toHaveBeenCalledTimes(2);
-    expect(mockSetGenericPassword).toHaveBeenNthCalledWith(
-      1,
+    expect(mockEncrypt).not.toHaveBeenCalled();
+    expect(mockSetGenericPassword).toHaveBeenCalledTimes(1);
+    expect(mockSetGenericPassword).toHaveBeenCalledWith(
       'rabbymobile-vault-key',
       'trusted-vault-key',
       expect.objectContaining({
@@ -298,14 +349,86 @@ describe('core/apis/keychainV9_0_0', () => {
         accessControl: 'BiometryCurrentSet',
       }),
     );
+  });
+
+  it('keeps primary Android credentials simple when a vault key is provided', async () => {
+    const { module, mockSetGenericPassword, mockEncrypt } = await setup();
+
+    await module.setGenericPassword(
+      'plain-password',
+      module.KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+      {
+        vaultKeyString: 'trusted-vault-key',
+      },
+    );
+
+    expect(mockEncrypt).toHaveBeenCalledWith('salt', {
+      password: 'plain-password',
+    });
+    expect(mockSetGenericPassword).toHaveBeenCalledTimes(2);
     expect(mockSetGenericPassword).toHaveBeenNthCalledWith(
-      2,
+      1,
       'rabbymobile-user',
       'enc:plain-password',
       expect.objectContaining({
         service: 'com.debank',
         accessible: 'AccessibleWhenUnlockedThisDeviceOnly',
         accessControl: 'BiometryCurrentSet',
+      }),
+    );
+    expect(mockSetGenericPassword).toHaveBeenNthCalledWith(
+      2,
+      'rabbymobile-vault-key',
+      'trusted-vault-key',
+      expect.objectContaining({
+        service: 'com.debank.trusted-vault-key',
+      }),
+    );
+  });
+
+  it('normalizes embedded vault keys out of the primary Android credentials', async () => {
+    const {
+      module,
+      mockEncrypt,
+      mockSetGenericPassword,
+      mockUpdateUnlockTime,
+    } = await setup({
+      embeddedVaultKeyString: 'embedded-vault-key',
+    });
+
+    const onPlainPassword = jest.fn();
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.DECRYPT_PWD,
+      shouldAttachTrustedVaultKeyString: false,
+      onPlainPassword,
+    });
+
+    expect(onPlainPassword).toHaveBeenCalledWith(
+      'plain-password',
+      expect.objectContaining({
+        password: 'plain-password',
+        vaultKeyString: 'embedded-vault-key',
+      }),
+    );
+    expect(mockUpdateUnlockTime).toHaveBeenCalled();
+    expect(mockEncrypt).toHaveBeenCalledWith('salt', {
+      password: 'plain-password',
+    });
+    expect(mockSetGenericPassword).toHaveBeenCalledTimes(2);
+    expect(mockSetGenericPassword).toHaveBeenNthCalledWith(
+      1,
+      'rabbymobile-user',
+      'enc:plain-password',
+      expect.objectContaining({
+        service: 'com.debank',
+      }),
+    );
+    expect(mockSetGenericPassword).toHaveBeenNthCalledWith(
+      2,
+      'rabbymobile-vault-key',
+      'embedded-vault-key',
+      expect.objectContaining({
+        service: 'com.debank.trusted-vault-key',
       }),
     );
   });
@@ -414,6 +537,7 @@ describe('core/apis/keychainV9_0_0', () => {
       expect.objectContaining({
         service: 'com.debank',
         androidAllowAuthenticatedSessionReuse: true,
+        androidAllowKeyStoreRecovery: false,
       }),
     );
   });
