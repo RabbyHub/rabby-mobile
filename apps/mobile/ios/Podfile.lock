@@ -233,7 +233,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - OpenSSL-Universal (3.6.2000)
+  - OpenSSL-Universal (3.6.0000)
   - PromisesObjC (2.4.0)
   - RabbyRNKeychain (8.2.0-rabby.0):
     - React-Core
@@ -3265,6 +3265,7 @@ DEPENDENCIES:
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - lottie-react-native (from `../node_modules/lottie-react-native`)
   - "op-sqlite (from `../node_modules/@op-engineering/op-sqlite`)"
+  - OpenSSL-Universal (= 3.6.0000)
   - "RabbyRNKeychain (from `../node_modules/@rabby-wallet/react-native-keychain`)"
   - "RabbyRNKeychainV9 (from `../node_modules/@rabby-wallet/react-native-keychain-9`)"
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
@@ -3690,7 +3691,7 @@ SPEC CHECKSUMS:
   MultiplatformBleAdapter: b1fddd0d499b96b607e00f0faa8e60648343dc1d
   nanopb: d4d75c12cd1316f4a64e3c6963f879ecd4b5e0d5
   op-sqlite: 559e7d37fe743edcc74f45bb49cab6259e30a144
-  OpenSSL-Universal: ecee7b138fa75a74ecf00d7ffd248fb584739b9e
+  OpenSSL-Universal: 9110d21982bb7e8b22a962b6db56a8aa805afde7
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   RabbyRNKeychain: cc2d4ef9630a23dd2a9d72ba3532d54a2fb58c66
   RabbyRNKeychainV9: 64b5098d79623d62cdb4a989be3d8d6e12878494
@@ -3809,6 +3810,6 @@ SPEC CHECKSUMS:
   VisionCamera: 2230ecfd78a1f6cddd8be0fe4e6589f21a6385e1
   Yoga: c7d9adcf9fca72e6219bdc5f1f11b76b38c4a030
 
-PODFILE CHECKSUM: 612f2244632d9f2e3a6e134391459f514de16e2e
+PODFILE CHECKSUM: 851bcc0d211b5717a5f3a23a27f1b0b7f4aa38ff
 
 COCOAPODS: 1.14.3
