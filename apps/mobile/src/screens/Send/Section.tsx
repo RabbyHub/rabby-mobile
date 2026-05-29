@@ -163,6 +163,13 @@ export function BalanceSection({
     () => getSendAmountTokenKey(currentToken),
     [currentToken],
   );
+  const amountInputHasValue = useMemo(() => {
+    if (inputMode === 'usd') {
+      return Boolean(usdInputValue || formValues.amount);
+    }
+
+    return Boolean(formValues.amount);
+  }, [formValues.amount, inputMode, usdInputValue]);
 
   useEffect(() => {
     setInputMode('token');
@@ -188,7 +195,11 @@ export function BalanceSection({
         };
       }
 
-      if (!isValidUsdPrice(prev.price) && nextPrice !== null) {
+      if (amountInputHasValue) {
+        return prev;
+      }
+
+      if (prev.price !== nextPrice) {
         return {
           tokenKey,
           price: nextPrice,
@@ -197,7 +208,7 @@ export function BalanceSection({
 
       return prev;
     });
-  }, [currentToken]);
+  }, [amountInputHasValue, currentToken]);
 
   const activeUsdPrice = useMemo(() => {
     if (
