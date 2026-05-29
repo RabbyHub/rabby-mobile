@@ -10,6 +10,12 @@ import { View } from 'react-native';
 import { Text } from '@/components/Typography';
 import AutoLockView from '@/components/AutoLockView';
 import RcIconTips from '@/assets2024/icons/perps/IconTips.svg';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+} from '@/constant/layout';
 
 export const EnableUnifiedAccountPopup: React.FC<{
   visible?: boolean;
@@ -74,6 +80,8 @@ export const EnableUnifiedAccountPopup: React.FC<{
           <View style={{ flex: 1 }}>
             <Button
               style={styles.footerBtn}
+              height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               onPress={onClose}
               title={t('page.perps.EnableUnifiedAccount.cancel')}
               type="hyperliquid-light"
@@ -82,6 +90,8 @@ export const EnableUnifiedAccountPopup: React.FC<{
           <View style={{ flex: 1 }}>
             <Button
               style={styles.footerBtn}
+              height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               onPress={handleConfirm}
               title={t('page.perps.EnableUnifiedAccount.confirm')}
               type="hyperliquid"
@@ -142,8 +152,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   footer: {
     flexDirection: 'row' as const,
-    gap: 12,
-    paddingBottom: 26,
+    gap: BOTTOM_BUTTON_GAP,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    paddingBottom: 0,
   },
   footerBtn: {
     flex: 1,

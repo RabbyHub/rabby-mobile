@@ -8,6 +8,25 @@ import {
 import { IS_ANDROID } from '@/core/native/utils';
 import { Dimensions } from 'react-native';
 
+export const BOTTOM_BUTTON_BOTTOM_OFFSET = 36;
+export const BOTTOM_BUTTON_TOP_OFFSET = 12;
+export const BOTTOM_BUTTON_GAP = 12;
+export const BOTTOM_BUTTON_SINGLE_HEIGHT = 52;
+export const BOTTOM_BUTTON_DOUBLE_HEIGHT = 48;
+export const BOTTOM_BUTTON_TEXT_SIZE = 18;
+export const BOTTOM_BUTTON_TEXT_LINE_HEIGHT = 22;
+export const BOTTOM_BUTTON_TITLE_STYLE = {
+  fontSize: BOTTOM_BUTTON_TEXT_SIZE,
+  lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
+  fontWeight: '700',
+} as const;
+export const BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE = {
+  fontSize: BOTTOM_BUTTON_TEXT_SIZE,
+  fontWeight: '700',
+} as const;
+export const getBottomButtonBottomOffset = (safeAreaBottom = 0) =>
+  BOTTOM_BUTTON_BOTTOM_OFFSET + (IS_ANDROID ? safeAreaBottom : 0);
+
 export const ModalLayouts = {
   defaultHeightPercentText: '80%' as `${number}%`,
   titleTopOffset: 8,

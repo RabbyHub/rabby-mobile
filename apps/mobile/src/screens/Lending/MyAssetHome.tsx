@@ -39,7 +39,13 @@ import {
 } from './hooks';
 import { ItemListLoading } from './components/ItemRender/ItemLoading';
 import EmptyItem from './components/ItemRender/EmptyItem';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_SIZE,
+  RootNames,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import type { TransactionNavigatorParamList } from '@/navigation-type';
 import {
   clearLendingActionPopupState,
@@ -431,6 +437,7 @@ const MyAssetHome: React.FC = () => {
             type="primary"
             containerStyle={[styles.actionButton]}
             buttonStyle={styles.normalButton}
+            height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
             titleStyle={styles.actionGhostTitle}
             title={t('page.Lending.supplyDetail.actions')}
             disabled={loading}
@@ -441,6 +448,7 @@ const MyAssetHome: React.FC = () => {
           <Button
             type="aave"
             containerStyle={styles.actionButton}
+            height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
             titleStyle={styles.actionPrimaryTitle}
             title={t('page.Lending.borrowDetail.actions')}
             disabled={loading}
@@ -454,7 +462,7 @@ const MyAssetHome: React.FC = () => {
 
 export default MyAssetHome;
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   container: {
     flex: 1,
     backgroundColor: colors2024['neutral-bg-1'],
@@ -482,7 +490,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 12,
     paddingTop: 12,
     paddingHorizontal: 16,
-    paddingBottom: 48,
+    paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     backgroundColor: colors2024['neutral-bg-1'],
   },
   actionBtnContainer: {
@@ -491,20 +499,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   actionButton: {
     borderRadius: 12,
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
   },
   normalButton: {
     backgroundColor: colors2024['neutral-line'],
   },
   actionGhostTitle: {
-    fontSize: 17,
-    lineHeight: 22,
+    fontSize: BOTTOM_BUTTON_TEXT_SIZE,
+    lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
   },
   actionPrimaryTitle: {
-    fontSize: 17,
-    lineHeight: 22,
+    fontSize: BOTTOM_BUTTON_TEXT_SIZE,
+    lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
   },

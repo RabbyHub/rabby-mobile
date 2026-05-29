@@ -2449,7 +2449,7 @@
       "cancelAllOrdersConfirmTitle": "Konfirmasi Batalkan SEMUA Order",
       "cancelAllOrdersConfirmMessage": "Semua Limit Order Anda akan dibatalkan",
       "limitOrderDetail": {
-        "title": "Limit {{side}} {{pair}}",
+        "title": "Order Limit {{side}} {{pair}}",
         "time": "Waktu",
         "size": "Ukuran",
         "filled": "Terisi",
@@ -2472,22 +2472,22 @@
         "title": "Perdagangan Perpetual",
         "learnBtn": "Pelajari tentang Perps",
         "depositBtn": "Setor",
-        "loginDesc": "Masuk dengan alamat Anda dan setorkan dana untuk mulai trading perps",
-        "loginBtn": "Masuk ke Trading Perps",
+        "loginDesc": "Masuk dengan alamat saat ini dan setor dana untuk mulai trading Perps.",
+        "loginBtn": "Masuk untuk trading Perps",
         "learnMore": "Pelajari Selengkapnya",
-        "addFunds": "Tambahkan Dana"
+        "addFunds": "Tambah dana"
       },
       "PerpsGuidePopup": {
         "step3Title": "Pendek",
         "step4Title": "Mengatur Leverage",
         "step5Title": "Likuidasi",
-        "step1Desc": "Dengan futures perpetual, Anda tidak hanya memperdagangkan aset. Anda memperdagangkan apa yang Anda pikir akan terjadi selanjutnya.",
-        "step1Title": "Master Perpetual Futures",
+        "step1Desc": "Dengan perpetual futures, Anda tidak hanya memperdagangkan aset, tetapi juga memperdagangkan perkiraan Anda terhadap pergerakan harga berikutnya.",
+        "step1Title": "Kuasai Perpetual Futures",
         "step3Desc": "Ketika Anda mengharapkan harga turun, Anda membuka posisi short. Jika harga turun, Anda mendapatkan keuntungan. Jika harga naik, Anda mengalami kerugian.",
-        "step4Desc": "Leverage memungkinkan Anda untuk berdagang dengan lebih dari yang Anda setor. Ini dapat meningkatkan baik keuntungan maupun kerugian Anda.",
+        "step4Desc": "Leverage memungkinkan Anda berdagang dengan nilai nosional yang lebih besar dari modal yang Anda masukkan. Ini dapat memperbesar keuntungan sekaligus kerugian.",
         "step2Desc": "Saat Anda mengharapkan harga naik, Anda membuka posisi long. Jika harga naik, Anda mendapatkan keuntungan. Jika turun, Anda mengalami kerugian.",
         "step2Title": "Long",
-        "step5Desc": "Setiap posisi memiliki harga likuidasi. Jika harga pasar mencapainya, posisi Anda akan ditutup. Menggunakan leverage yang lebih tinggi meningkatkan risiko dilikuidasi."
+        "step5Desc": "Setiap posisi memiliki harga likuidasi. Jika harga pasar mencapainya, posisi Anda akan ditutup. Semakin tinggi leverage, semakin tinggi risiko likuidasi."
       },
       "PerpsDepositPopup": {
         "amount": "Jumlah",
@@ -2544,7 +2544,7 @@
         "date": "Tanggal",
         "size": "Ukuran",
         "price": "Harga",
-        "closedPnl": "Closed PNL",
+        "closedPnl": "PNL Tertutup",
         "perps": "Perpetual Contracts",
         "sizeTips": "Nilai total atau jumlah perdagangan Anda, ditentukan oleh margin dan leverage.",
         "gotItBtn": "Saya mengerti",
@@ -2607,15 +2607,15 @@
         "date": "Tanggal"
       },
       "PerpsSelectTokenPopup": {
-        "title": "Pilih Token untuk Setor",
+        "title": "Pilih token untuk disetor",
         "noTokens": "Tidak ada token",
         "token": "Token",
         "balance": "Saldo"
       },
       "PerpsAccountLogoutPopup": {
         "logout": "Keluar",
-        "title": "Keluar Alamat Saat Ini",
-        "desc": "Anda sedang keluar dari akun Perps Anda saat ini. Anda dapat memulihkannya kapan saja dengan masuk menggunakan alamat ini."
+        "title": "Keluar dari alamat saat ini",
+        "desc": "Anda akan keluar dari akun Perps saat ini. Anda dapat memulihkannya kapan saja dengan masuk kembali menggunakan alamat ini."
       },
       "PerpsDepositCard": {
         "deposit": "Setor",
@@ -2626,7 +2626,7 @@
         "notActivatedAddress": "Tidak Diaktifkan",
         "activatedAddress": "Diaktifkan",
         "lastUsed": "Terakhir Digunakan",
-        "noPosition": "Tidak Ada Posisi",
+        "noPosition": "Tidak ada posisi",
         "hyperliquidBalance": "Saldo Perps"
       },
       "title": "Perps",
@@ -2646,9 +2646,9 @@
       "searchPerpsPopup": {
         "searchPlaceholder": "Cari Perps",
         "searchPerps": "Cari Perps",
-        "searchPosition": "Cari Posisi",
+        "searchPosition": "Cari posisi",
         "empty": "Tidak ada hasil yang ditemukan",
-        "openPosition": "Buka Posisi"
+        "openPosition": "Buka posisi"
       },
       "PerpsRiskPopup": {
         "level": {
@@ -2661,13 +2661,13 @@
         "currentPrice": "Harga Saat Ini",
         "subtitle": "Jarak likuidasi waktu nyata (%)",
         "distanceLabel": "Jarak Likuidasi",
-        "liqIntro": "Jarak Likuidasi (%) menunjukkan seberapa jauh harga saat ini dari harga likuidasi Anda. Jarak yang lebih besar menunjukkan posisi yang lebih aman, sementara jarak yang lebih kecil berarti risiko likuidasi yang lebih tinggi.",
+        "liqIntro": "Jarak likuidasi (%) menunjukkan seberapa jauh harga saat ini dari harga likuidasi Anda. Jarak yang lebih besar berarti posisi lebih aman; jarak yang lebih kecil berarti risiko likuidasi lebih tinggi.",
         "liqDistanceTipsLong": "Menurun <1>{{distance}}</1> akan memicu likuidasi.",
         "liqDistanceTipsShort": "Naik <1>{{distance}}</1> akan memicu likuidasi."
       },
-      "closeAllConfirmTitle": "Konfirmasi Tutup Semua Posisi",
+      "closeAllConfirmTitle": "Konfirmasi tutup semua posisi",
       "closeAllConfirmMessage": "Semua posisi terbuka Anda akan ditutup pada harga pasar.",
-      "closeAll": "Tutup Semua",
+      "closeAll": "Tutup semua posisi",
       "assetPage": {
         "hyperliquidPosition": "Hyperliquid Position"
       },
@@ -2690,10 +2690,10 @@
       },
       "EnableUnifiedAccount": {
         "title": "Aktifkan Akun Terpadu",
-        "desc": "Akun Terpadu adalah mode akun yang direkomendasikan yang menyederhanakan pengalaman trading. Saldo Spot dan Perps digabungkan untuk semua token, dan cross margin didukung pada semua aset yang tersedia.",
+        "desc": "Unified Account adalah mode akun yang direkomendasikan untuk menyederhanakan pengalaman trading. Saldo Spot dan Perps digabung untuk semua token, dan cross margin didukung pada semua aset yang tersedia.",
         "confirm": "Konfirmasi",
         "cancel": "Batal",
-        "importantTips": "Semua kolateral USDC akan digunakan sebagai cross margin begitu Akun Terpadu diaktifkan.",
+        "importantTips": "Setelah Unified Account diaktifkan, semua jaminan USDC akan digunakan sebagai cross margin.",
         "important": "Penting"
       },
       "PerpsSpotSwap": {
@@ -2712,7 +2712,7 @@
         "minimumAmount": "Jumlah swap minimum adalah {{amount}}"
       },
       "PerpMarginModePopup": {
-        "crossRequiresUnified": "Cross margin untuk pasangan trading ini memerlukan Akun Terpadu. Apakah Anda ingin mengaktifkannya?"
+        "crossRequiresUnified": "Cross margin untuk pasangan trading ini memerlukan Unified Account. Apakah Anda ingin mengaktifkannya?"
       },
       "PerpsMultiBalance": {
         "title": "Saldo Hyperliquid",
@@ -2754,29 +2754,29 @@
         "title": "Posisi",
         "sizeTips": "Nilai total atau jumlah perdagangan Anda, ditentukan oleh margin dan leverage.",
         "liquidationPrice": "Harga Likuidasi",
-        "fundingPaymentsTips": "Ini adalah total pembayaran pendanaan sejak posisi dibuka. Pendanaan adalah biaya per jam yang dibayar atau diterima oleh trader untuk menjaga harga kontrak perp dekat dengan harga aktual token.",
+        "fundingPaymentsTips": "Ini adalah pembayaran funding bersih sejak posisi dibuka. Funding adalah biaya per jam yang dibayar atau diterima trader agar harga kontrak perpetual tetap dekat dengan harga token sebenarnya.",
         "liquidationPriceTips": "Harga di mana posisi Anda secara otomatis ditutup oleh bursa untuk mencegah kerugian lebih lanjut ketika margin Anda jatuh di bawah level margin pemeliharaan.",
         "slPrice": "Harga Henti-Rugi",
         "closePosition": "Tutup {{direction}}",
         "fundingGains": "Pendanaan Keuntungan",
-        "fundingGainsTips": "Ini adalah keuntungan dana bersih sejak posisi dibuka. Pendanaan adalah biaya per jam yang dibayar atau diterima trader untuk menjaga harga kontrak perp tetap dekat dengan harga token yang sebenarnya.",
-        "unrealizedPnl": "Unrealized PNL",
+        "fundingGainsTips": "Ini adalah keuntungan funding bersih sejak posisi dibuka. Funding adalah biaya per jam yang dibayar atau diterima trader agar harga kontrak perpetual tetap dekat dengan harga token sebenarnya.",
+        "unrealizedPnl": "PNL Belum Terealisasi",
         "currentPrice": "Harga Saat Ini",
         "details": "Rincian",
         "realizedPnl": "PNL yang Direalisasikan",
         "positionValue": "Nilai Posisi",
         "settings": "Pengaturan",
         "marginMode": "Mode Margin",
-        "fundingTipsBold": "Ini menunjukkan total pendanaan Anda yang diselesaikan sejak posisi dibuka. Nilai <bold>Hijau (positif)</bold> berarti Anda telah menghasilkan dari trader lain, sedangkan nilai <bold>Merah (negatif)</bold> adalah biaya pendanaan yang telah Anda bayar kepada mereka.",
+        "fundingTipsBold": "Ini menampilkan total funding yang telah diselesaikan sejak posisi dibuka. Nilai <bold>hijau (positif)</bold> berarti Anda menerima funding dari trader lain, sedangkan nilai <bold>merah (negatif)</bold> adalah biaya funding yang Anda bayarkan kepada mereka.",
         "crossTips": "Dalam mode Cross Margin, harga likuidasi untuk satu posisi adalah estimasi hanya untuk referensi."
       },
       "PerpsInfo": {
         "openInterestTips": "Total posisi terbuka dari semua pengguna pada kontrak ini.",
-        "24Vol": "24h Volume",
+        "24Vol": "Volume 24 jam",
         "title": "Info",
         "openInterest": "Bunga Terbuka",
         "funding": "Pendanaan",
-        "fundingTips": "Ini adalah biaya per jam yang dibayar atau diterima oleh trader untuk menjaga harga kontrak perp mendekati harga aktual token. Jika positif, long membayar short. Jika negatif, short membayar long.",
+        "fundingTips": "Ini adalah biaya per jam yang dibayar atau diterima trader agar harga kontrak perpetual tetap dekat dengan harga token sebenarnya. Jika positif, long membayar short. Jika negatif, short membayar long.",
         "fundingRate": "Tingkat Pendanaan"
       },
       "PerpsIntro": {
@@ -2793,7 +2793,7 @@
         "closeBtn": "Tutup {{direction}}",
         "amount": "Jumlah",
         "total": "Total",
-        "closedPnl": "Closed PNL",
+        "closedPnl": "PNL Penutupan",
         "receive": "Terima",
         "confirm": "Konfirmasi",
         "minimumWarning": "Jumlah minimum adalah {{percent}}%",
@@ -2912,8 +2912,8 @@
       "PerpMarginModePopup": {
         "isolatedTitle": "Margin Terisolasi",
         "cannotChangeMarginMode": "Tidak dapat mengubah Mode Margin dengan posisi terbuka",
-        "isolatedDesc": "Setiap posisi menggunakan margin-nya sendiri. Kerugian dibatasi pada posisi tersebut, tetapi dapat dilikuidasi dengan lebih mudah.",
-        "crossDesc": "Semua posisi berbagi margin yang sama. Hal ini mengurangi kemungkinan satu posisi dilikuidasi, tetapi semua dana cross-margin dapat hilang dalam pergerakan pasar yang ekstrem.",
+        "isolatedDesc": "Setiap posisi menggunakan marginnya sendiri. Kerugian terbatas pada posisi tersebut, tetapi posisi itu lebih mudah dilikuidasi.",
+        "crossDesc": "Semua posisi berbagi margin yang sama. Ini mengurangi kemungkinan satu posisi dilikuidasi, tetapi semua dana cross margin dapat hilang saat pasar bergerak ekstrem.",
         "crossTitle": "Margin Silang"
       },
       "guideEntry": {
@@ -2982,9 +2982,9 @@
       },
       "supplyDetail": {
         "availableToBorrow": "Tersedia untuk dipinjam",
-        "approveAndSupply": "Setujui dan Pasok",
+        "approveAndSupply": "Setujui dan setor",
         "supplyAPY": "Supply APY",
-        "actions": "Persediaan",
+        "actions": "Setor",
         "enabled": "Diaktifkan",
         "collateralization": "Kollateralisasi",
         "supplyBalance": "Saldo Pasokan",
@@ -3004,7 +3004,7 @@
         "swapDebt": "Tukar",
         "borrowed": "Dipinjam",
         "noSupplyDesc": "Untuk meminjam, Anda perlu menyediakan aset sebagai jaminan.",
-        "noSupplyPrefix": "Tidak ada pasokan:"
+        "noSupplyPrefix": "Belum ada setoran:"
       },
       "popup": {
         "available": "tersedia",
@@ -3024,9 +3024,9 @@
         "reachCapTip": "Aset ini telah mencapai batas pinjaman."
       },
       "supplyOverview": {
-        "availableToSupply": "Tersedia untuk Menyediakan",
-        "title": "Detail Pasokan",
-        "totalSupplied": "Total Supplied",
+        "availableToSupply": "Tersedia untuk disetor",
+        "title": "Detail setoran",
+        "totalSupplied": "Total disetor",
         "mySupply": "Ketersediaan Saya",
         "walletBalance": "Saldo Dompet",
         "almostCap": "Aset ini hampir mencapai batas pinjamannya. Hanya ada {{available}} yang tersedia untuk dipinjam dari pasar ini.",
@@ -3039,13 +3039,13 @@
         "warning": "Meminjam jumlah ini akan menurunkan Faktor Kesehatan Anda ke level berisiko untuk likuidasi.",
         "withdrawWarning": "Menarikan jumlah ini akan menurunkan Faktor Kesehatan Anda ke level berisiko untuk likuidasi.",
         "toggleCollateralWarning": "Menonaktifkan aset ini sebagai jaminan akan menurunkan Faktor Kesehatan Anda ke tingkat berisiko untuk likuidasi.",
-        "blockEmodeWarning": "Anda tidak dapat menonaktifkan E-Mode karena itu bisa menyebabkan likuidasi. Untuk keluar dari E-Mode, sediakan atau lunasi posisi yang dipinjam.",
+        "blockEmodeWarning": "Anda tidak dapat menonaktifkan E-Mode karena dapat memicu likuidasi. Untuk keluar dari E-Mode, tambahkan jaminan atau lunasi posisi pinjaman.",
         "emodeBlockWarning": "Menonaktifkan E-mode akan menurunkan Faktor Kesehatan Anda ke tingkat berisiko untuk likuidasi."
       },
       "lqDescription": {
         "risky": "Berisiko",
         "over3desc": "Posisi Anda aman",
-        "below1title": "Health Factor ≤ 1.0:",
+        "below1title": "Health Factor ≤ 1,0:",
         "over3title": "Health factor > 3.0:",
         "desc": "Nilai likuidasi",
         "below1desc": "Posisi Anda berisiko dilikuidasi.",
@@ -3074,7 +3074,7 @@
       "hfTitle": "Health Factor",
       "hf": "Faktor kesehatan",
       "enterAmount": "Masukkan Jumlah",
-      "estNetApy": "Est. net APY",
+      "estNetApy": "Estimasi APY bersih",
       "toggleCollateralDetail": {
         "enable": "Aktifkan {{asset}} sebagai Jaminan",
         "disable": "Nonaktifkan {{asset}} sebagai Jaminan",
@@ -3083,18 +3083,18 @@
       },
       "toggleCollateralModal": {
         "enableIsolationModeTitle": "Aktifkan Mode Isolasi",
-        "openTitle": "Tinjau Pengaktifan",
-        "closeDesc": "Menonaktifkan aset ini sebagai jaminan mempengaruhi daya pinjam dan Faktor Kesehatan Anda.",
+        "openTitle": "Konfirmasi pengaktifan",
+        "closeDesc": "Menonaktifkan aset ini sebagai jaminan akan memengaruhi kemampuan pinjam dan Health Factor Anda.",
         "exitIsolationModeDesc": "Anda akan keluar dari mode Isolasi dan token lainnya sekarang dapat digunakan sebagai jaminan.",
-        "riskToLiquidationText": "Anda tidak dapat beralih penggunaan ke mode jaminan untuk mata uang ini, karena akan menyebabkan panggilan jaminan.",
-        "closeTitle": "Tinjau Nonaktifkan",
+        "riskToLiquidationText": "Status jaminan aset ini tidak dapat diubah karena dapat memicu likuidasi.",
+        "closeTitle": "Konfirmasi penonaktifan",
         "enableIsolationModeDesc": "Anda sedang masuk ke mode Isolation. Di mode Isolation, Anda tidak dapat menyediakan aset lain sebagai jaminan. Batas utang global membatasi kekuatan pinjam dari aset yang terisolasi. Untuk keluar dari mode isolation, matikan CRV sebagai jaminan sebelum meminjam aset lain.",
         "openDesc": "Mengaktifkan aset ini sebagai jaminan meningkatkan daya pinjam Anda dan Faktor Kesehatan. Namun, aset ini dapat dilikuidasi jika faktor kesehatan Anda turun di bawah 1.",
         "exitIsolationModeTitle": "Keluar dari Mode Isolasi",
         "toggleRiskTexts": {
           "canNotUseThisCurrencyAsCollateral": "Anda tidak dapat menggunakan mata uang ini sebagai jaminan.",
           "doNotHaveSuppliesInThisCurrency": "Anda tidak memiliki persediaan dalam mata uang ini",
-          "canNotSwitchUsageAsCollateralMode": "Anda tidak dapat mengalihkan penggunaan sebagai mode jaminan untuk mata uang ini, karena itu akan menyebabkan panggilan jaminan.",
+          "canNotSwitchUsageAsCollateralMode": "Status jaminan aset ini tidak dapat diubah karena dapat memicu likuidasi.",
           "zeroLTVWithdrawBlocked": "Aset dengan LTV nol ({{assets}}) harus ditarik atau dinonaktifkan sebagai jaminan untuk melakukan tindakan ini."
         }
       },
@@ -3152,23 +3152,23 @@
       "debtSwap": {
         "actions": {
           "borrowed": "Dipinjam",
-          "title": "Pertukaran Utang",
+          "title": "Konversi utang",
           "select": "Pilih",
           "amount": "Jumlah",
-          "swapTo": "Tukar ke"
+          "swapTo": "Konversi ke"
         },
         "overview": {
           "borrowAPY": "Pinjam apy",
-          "borrowValueAfter": "Saldo pinjaman setelah pertukaran",
+          "borrowValueAfter": "Saldo pinjaman setelah konversi",
           "title": "Ikhtisar Transaksi"
         },
         "button": {
-          "swap": "Tukar"
+          "swap": "Konversi"
         },
         "borrowBalance": "Saldo pinjaman",
-        "title": "Tukar Posisi Pinjaman",
-        "entryTips": "Satu klik untuk menukarkan aset yang Anda pinjam, mengurangi langkah dan biaya.",
-        "priceImpactTips": "Dampak harga tinggi ({{lostValue}}). Rute ini mungkin memberikan lebih banyak karena likuiditas rendah atau ukuran pesanan kecil.",
+        "title": "Konversi posisi pinjaman",
+        "entryTips": "Konversi aset pinjaman dengan sekali klik untuk mengurangi langkah dan biaya.",
+        "priceImpactTips": "Dampak harga tinggi ({{lostValue}}). Karena likuiditas rendah atau ukuran order kecil, estimasi rute ini dapat menyimpang cukup besar.",
         "lpDangerWarning": "Setelah pertukaran ini, faktor kesehatan Anda akan sangat rendah dan dapat mengakibatkan likuidasi. Silakan pilih aset lain atau kurangi jumlah pertukaran untuk tetap aman.",
         "lpRiskWarning": "Faktor kesehatan rendah setelah pertukaran. Posisi Anda akan membawa risiko likuidasi yang lebih tinggi.",
         "maxLtvWarning": "Jaminan tidak cukup untuk menutupi posisi pinjaman baru. Dompet harus memiliki sisa daya pinjaman untuk melakukan perpindahan utang."
@@ -3178,10 +3178,10 @@
         "desc": "Jika jatuh di bawah 1.0, jaminan Anda mungkin akan dilikuidasi."
       },
       "disableBorrowTip": {
-        "desc": "Tidak ada pasokan: Untuk meminjam, Anda perlu menyediakan aset sebagai jaminan."
+        "desc": "Belum ada setoran: untuk meminjam, Anda perlu menyetor aset sebagai jaminan terlebih dahulu."
       },
-      "netApy": "Net APY",
-      "totalSupplied": "Total supplied",
+      "netApy": "APY bersih",
+      "totalSupplied": "Total disetor",
       "totalBorrowed": "Total borrowed",
       "repayWithCollateral": {
         "action": {
@@ -3197,7 +3197,7 @@
         },
         "toRepay": "Jumlah yang diharapkan untuk dilunasi",
         "collateralNotEnough": "Saldo jaminan Anda lebih rendah dari jumlah yang dipilih.",
-        "repayWith": "Jaminan untuk dibayar kembali dengan",
+        "repayWith": "Jaminan untuk pelunasan",
         "insufficientLiquidity": "Likuiditas tidak mencukupi.",
         "frozenCollateral": "Aset ini dibekukan karena keputusan komunitas Aave."
       },
@@ -3207,7 +3207,7 @@
           "assets": "Token"
         },
         "title": "Pilih Token Pembayaran Kembali",
-        "zeroLtvCollateralTips": "Anda memiliki jaminan LTV = 0 berikut dan dengan demikian hanya dapat melunasi dengan jaminan ini terlebih dahulu sesuai dengan aturan pelunasan jaminan."
+        "zeroLtvCollateralTips": "Anda memiliki jaminan berikut dengan LTV = 0. Sesuai aturan pelunasan dengan jaminan, Anda harus menggunakan jaminan ini terlebih dahulu untuk melunasi."
       },
       "dappSelect": {
         "title": "Pilih Penyedia Peminjaman"

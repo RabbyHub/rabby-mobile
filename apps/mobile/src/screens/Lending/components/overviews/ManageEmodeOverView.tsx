@@ -23,6 +23,7 @@ import { useLendingISummary } from '../../hooks';
 import HealthFactorText from '../HealthFactorText';
 import { CategorySelector } from '../EmodeCategory/CategorySelector';
 import { Text } from '@/components/Typography';
+import { BOTTOM_BUTTON_BOTTOM_OFFSET } from '@/constant/layout';
 
 export const PairTable = ({
   data,
@@ -164,7 +165,7 @@ const ManageEmodeOverView: React.FC<{
         },
         containerStyle: {
           position: 'absolute',
-          bottom: 48,
+          bottom: BOTTOM_BUTTON_BOTTOM_OFFSET,
           width: '100%',
         },
       },

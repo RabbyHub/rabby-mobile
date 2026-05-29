@@ -4,7 +4,7 @@ import { Pressable, TouchableOpacity, View } from 'react-native';
 import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formatSpeicalAmount, splitNumberByStep } from '@/utils/number';
+import { formatTokenAmountInput, splitNumberByStep } from '@/utils/number';
 import { NumericInput } from '@/components/Form/NumbericInput';
 import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInput';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
@@ -29,31 +29,6 @@ interface TokenAmountInputProps {
   isEstimatingGas?: boolean;
   onClickToken?: () => void;
 }
-
-const truncateAmountToDecimals = (
-  inputValue: string,
-  tokenDecimals: number,
-) => {
-  const decimalsLimit =
-    Number.isFinite(tokenDecimals) && tokenDecimals > 0
-      ? Math.floor(tokenDecimals)
-      : 0;
-  const [whole, decimals] = inputValue.split('.');
-
-  if (decimals === undefined) {
-    return inputValue;
-  }
-
-  if (decimalsLimit === 0) {
-    return whole;
-  }
-
-  if (decimals.length <= decimalsLimit) {
-    return inputValue;
-  }
-
-  return `${whole}.${decimals.slice(0, decimalsLimit)}`;
-};
 
 export const TokenAmountInput = ({
   symbol,
@@ -98,10 +73,7 @@ export const TokenAmountInput = ({
 
   const formatAmountInput = useCallback(
     (v: string) => {
-      const formatted = formatSpeicalAmount(v);
-      return tokenDecimals === undefined
-        ? formatted
-        : truncateAmountToDecimals(formatted, tokenDecimals);
+      return formatTokenAmountInput(v, tokenDecimals);
     },
     [tokenDecimals],
   );

@@ -23,6 +23,12 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Text, TextInput } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 export const PerpsOpenPositionCheckPopup: React.FC<{
   visible?: boolean;
@@ -306,6 +312,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
           ) : null}
           <Button
             type="hyperliquid"
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             title={
               orderType === 'limit'
                 ? t(
@@ -328,7 +336,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+const getStyle = createGetStyles2024(ctx => {
+  const { colors2024, isLight, safeAreaInsets } = ctx;
   return {
     feeContainer: {
       flexDirection: 'row',
@@ -355,9 +364,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],
-      paddingTop: 16,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
       paddingHorizontal: 16,
-      paddingBottom: 56,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
     marketableWarning: {
       fontFamily: 'SF Pro Rounded',

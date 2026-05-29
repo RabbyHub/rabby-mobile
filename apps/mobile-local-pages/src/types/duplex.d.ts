@@ -81,10 +81,14 @@ type DuplexDefs = {
               background: string;
               text: string;
               border: string;
+              secondaryText: string;
               greenLineColor: string;
               redLineColor: string;
               highPriceLineColor: string;
               lowPriceLineColor: string;
+              emptyPrimary: string;
+              emptySecondary: string;
+              emptyStroke: string;
               tooltip: {
                 bg: string;
                 title: string;
@@ -104,6 +108,7 @@ type DuplexDefs = {
               chg: string;
               chgPercent: string;
               volume: string;
+              empty: string;
             };
           };
     };

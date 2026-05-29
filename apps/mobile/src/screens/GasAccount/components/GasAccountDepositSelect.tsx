@@ -8,6 +8,14 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, View } from 'react-native';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_SIZE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const GasAccountDepositSelect: React.FC<{
   onSelect(type: 'token' | 'pay'): void;
@@ -18,6 +26,7 @@ export const GasAccountDepositSelect: React.FC<{
   const { styles, isLight } = useTheme2024({
     getStyle: getStyles,
   });
+  const { bottom } = useSafeAreaInsets();
   const [showDisabledTip, setShowDisabledTip] = useState(false);
   const { tokenDisabled } = useGasAccountDepositAvailableTokens(
     minDepositPrice,
@@ -42,7 +51,11 @@ export const GasAccountDepositSelect: React.FC<{
   }, [onSelect, tokenDisabled]);
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { paddingBottom: getBottomButtonBottomOffset(bottom) },
+      ]}>
       <View style={styles.containerHorizontal}>
         <Text style={styles.title}>
           {t('page.gasAccount.depositPopup.gasDepositTitle')}
@@ -78,7 +91,9 @@ export const GasAccountDepositSelect: React.FC<{
             </Tip>
           }
           buttonStyle={
-            tokenDisabled ? styles.depositTokenDisabledBtn : undefined
+            tokenDisabled
+              ? [styles.depositTokenBtn, styles.depositTokenDisabledBtn]
+              : styles.depositTokenBtn
           }
         />
 
@@ -117,7 +132,7 @@ export const GasAccountDepositSelect: React.FC<{
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     width: '100%',
-    paddingBottom: 48,
+    paddingBottom: 36,
   },
   containerHorizontal: {
     paddingHorizontal: 20,
@@ -190,14 +205,14 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
 
   accountDepositGroup: {
     flexDirection: 'column',
-    gap: 16,
+    gap: BOTTOM_BUTTON_GAP,
     width: '100%',
     marginTop: 16,
     paddingHorizontal: 20,
   },
 
   depositWithPayBtn: {
-    height: 60,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     ...(isLight
       ? {
           backgroundColor: '#000',
@@ -207,6 +222,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
           borderWidth: 1,
           borderColor: colors2024['neutral-line'],
         }),
+  },
+  depositTokenBtn: {
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
   },
   depositWithTitle: {
     display: 'flex',
@@ -223,8 +241,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   btnTitle: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: BOTTOM_BUTTON_TEXT_SIZE,
+    lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
     fontStyle: 'normal',
     fontWeight: '700',
     color: colors2024['neutral-InvertHighlight'],

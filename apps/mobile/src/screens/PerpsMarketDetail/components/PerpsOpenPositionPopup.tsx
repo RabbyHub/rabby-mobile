@@ -61,6 +61,11 @@ import { showToast } from '@/hooks/perps/showToast';
 import { stats } from '@/utils/stats';
 import { APP_VERSIONS } from '@/constant';
 import { Text, TextInput } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { formatPerpsNumber } from '../../../../../../packages/biz-utils/src/isomorphic/biz-number';
 
 export const PerpsOpenPositionPopup: React.FC<{
@@ -981,6 +986,8 @@ export const PerpsOpenPositionPopup: React.FC<{
             <Button
               type="hyperliquid"
               title={t('page.perpsDetail.PerpsOpenPositionCheckPopup.title')}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               disabled={
                 !marginValidation.isValid ||
                 leverageRangeValidation.error ||
@@ -1018,7 +1025,8 @@ export const PerpsOpenPositionPopup: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+const getStyle = createGetStyles2024(ctx => {
+  const { colors2024, isLight, safeAreaInsets } = ctx;
   return {
     container: {
       height: '100%',
@@ -1129,7 +1137,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: colors2024['neutral-bg-1'],
       paddingTop: 12,
       paddingHorizontal: 16,
-      paddingBottom: 56,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
     row: {
       display: 'flex',
