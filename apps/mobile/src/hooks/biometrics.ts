@@ -29,10 +29,12 @@ import { logger } from '@/utils/logger';
 
 type BiometricsInfoState = {
   authEnabled: boolean;
+  canUseAndroidDeviceCredentialFallback: boolean;
   supportedBiometryType: KeychainSupportedBiometryType;
 };
 const biometricsInfoStore = zCreate<BiometricsInfoState>(() => ({
   authEnabled: isAuthenticatedByBiometrics(),
+  canUseAndroidDeviceCredentialFallback: false,
   supportedBiometryType: null,
 }));
 export function setBiometrics(
@@ -94,7 +96,19 @@ async function checkAndroidBiometricsEntryReady() {
 
 export function disableBiometricsForCurrentSession(reason: string) {
   logger.warn('[biometrics] disabled for current session', { reason });
-  setBiometrics(prev => ({ ...prev, authEnabled: false }));
+  setBiometrics(prev => ({
+    ...prev,
+    authEnabled: false,
+    canUseAndroidDeviceCredentialFallback: false,
+  }));
+}
+
+function canUseAndroidDeviceCredentialFallback() {
+  return (
+    IS_ANDROID &&
+    apisKeychain.getAuthenticationType() ===
+      KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE
+  );
 }
 
 async function ensureBiometricsReadyForUnlock() {
@@ -109,12 +123,18 @@ async function ensureBiometricsReadyForUnlock() {
 
   const enabledBySetting = isAuthenticatedByBiometrics();
   const entryReady = await checkAndroidBiometricsEntryReady();
-  const nextAuthEnabled = enabledBySetting && !!supportedType && entryReady;
+  const useAndroidDeviceCredentialFallback =
+    canUseAndroidDeviceCredentialFallback();
+  const nextAuthEnabled =
+    enabledBySetting &&
+    entryReady &&
+    (!!supportedType || useAndroidDeviceCredentialFallback);
 
   setBiometrics(prev => ({
     ...prev,
     supportedBiometryType:
       supportedType || (nextAuthEnabled ? prev.supportedBiometryType : null),
+    canUseAndroidDeviceCredentialFallback: useAndroidDeviceCredentialFallback,
     authEnabled: nextAuthEnabled,
   }));
 
@@ -123,6 +143,9 @@ async function ensureBiometricsReadyForUnlock() {
 
 export function useBiometricsComputed() {
   const authEnabled = biometricsInfoStore(s => s.authEnabled);
+  const canUseAndroidDeviceCredentialFallback = biometricsInfoStore(
+    s => s.canUseAndroidDeviceCredentialFallback,
+  );
   const supportedBiometryType = biometricsInfoStore(
     s => s.supportedBiometryType,
   );
@@ -130,8 +153,10 @@ export function useBiometricsComputed() {
 
   const computed = useMemo(() => {
     const isFaceID = supportedBiometryType === BIOMETRY_TYPE.FACE_ID;
+    const canUseUnlockAuth =
+      !!supportedBiometryType || canUseAndroidDeviceCredentialFallback;
     return {
-      isBiometricsEnabled: authEnabled && !!supportedBiometryType,
+      isBiometricsEnabled: authEnabled && canUseUnlockAuth,
       settingsAuthEnabled: authEnabled,
       couldSetupBiometrics: !!supportedBiometryType,
       supportedBiometryType,
@@ -142,7 +167,12 @@ export function useBiometricsComputed() {
         : t('page.setting.fingerPrint'),
       isFaceID,
     };
-  }, [authEnabled, supportedBiometryType, t]);
+  }, [
+    authEnabled,
+    canUseAndroidDeviceCredentialFallback,
+    supportedBiometryType,
+    t,
+  ]);
 
   return computed;
 }
@@ -163,6 +193,8 @@ const fetchBiometrics = async () => {
     }
     const enabledBySetting = isAuthenticatedByBiometrics();
     const entryReady = await checkAndroidBiometricsEntryReady();
+    const useAndroidDeviceCredentialFallback =
+      canUseAndroidDeviceCredentialFallback();
     const nextAuthEnabledByEntry = enabledBySetting && entryReady;
 
     setBiometrics(prev => {
@@ -178,12 +210,19 @@ const fetchBiometrics = async () => {
         ...prev,
         supportedBiometryType:
           supportedType ||
-          (!IS_ANDROID && nextAuthEnabledByEntry
+          ((useAndroidDeviceCredentialFallback || !IS_ANDROID) &&
+          nextAuthEnabledByEntry
             ? prev.supportedBiometryType
             : null),
+        canUseAndroidDeviceCredentialFallback:
+          useAndroidDeviceCredentialFallback,
         authEnabled:
           nextAuthEnabledByEntry &&
-          !!(supportedType || (!IS_ANDROID && prev.supportedBiometryType)),
+          !!(
+            supportedType ||
+            useAndroidDeviceCredentialFallback ||
+            (!IS_ANDROID && prev.supportedBiometryType)
+          ),
       };
     });
   } catch (error) {
