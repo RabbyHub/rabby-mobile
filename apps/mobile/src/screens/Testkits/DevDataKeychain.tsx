@@ -88,6 +88,57 @@ const KEYCHAIN_VERSION_META: Record<
   '10.0.0': KEYCHAIN_VERSION_OPTIONS[2],
 };
 
+const KEYCHAIN_VERSION_DIFF_ROWS = [
+  {
+    label: 'Implementation',
+    values: {
+      '8.2.0-fork': 'workspace fork, legacy baseline',
+      '9.0.0': 'workspace fork, current default',
+      '10.0.0': 'patched npm package, experimental',
+    },
+  },
+  {
+    label: 'Android Prompt',
+    values: {
+      '8.2.0-fork': 'strong biometric prompt only',
+      '9.0.0': 'strong biometric, or device credential when Bio+Device',
+      '10.0.0': 'auth profile driven prompt',
+    },
+  },
+  {
+    label: 'Android KeyStore Auth',
+    values: {
+      '8.2.0-fork': 'RSA key not auth-gated',
+      '9.0.0': 'RSA key not auth-gated',
+      '10.0.0': 'RSA/AES key auth profile configurable',
+    },
+  },
+  {
+    label: 'Passcode Fallback',
+    values: {
+      '8.2.0-fork': 'not supported',
+      '9.0.0': 'supported after Bio+Device rewrite',
+      '10.0.0': 'supported after Bio+Device rewrite',
+    },
+  },
+  {
+    label: 'Android Storage',
+    values: {
+      '8.2.0-fork': 'RSA / AES',
+      '9.0.0': 'RSA / AES',
+      '10.0.0': 'RSA / AES / AES-GCM',
+    },
+  },
+  {
+    label: 'Primary Payload',
+    values: {
+      '8.2.0-fork': 'App password only',
+      '9.0.0': 'App password only; vault key separate',
+      '10.0.0': 'App password only; vault key separate',
+    },
+  },
+] as const;
+
 const ANDROID_AUTH_PROMPT_POLICY_OPTIONS = [
   {
     key: apisKeychain.ANDROID_AUTH_PROMPT_POLICIES.INTERACTIVE_FIRST,
@@ -183,6 +234,26 @@ const SESSION_REUSE_EXPECTATIONS = [
   'Expected: later runs may skip the prompt only while Android still treats the KeyStore auth session as valid.',
   'If the action keeps succeeding without a fresh prompt far beyond the expected window, export debug info and compare both keychain versions.',
 ] as const;
+
+const PASSCODE_FALLBACK_TEST_STEPS = [
+  '1. Open Actions for 9.0.0 or 10.0.0 and run Migrate Current to Bio+Device.',
+  '2. Restart the app and confirm normal biometric unlock still works.',
+  '3. Remove all enrolled fingerprints in Android system settings while keeping screen lock enabled.',
+  '4. Restart the app and tap the unlock auth entry again.',
+] as const;
+
+const PASSCODE_FALLBACK_EXPECTATIONS: Record<CurrentKeychainVersion, string[]> =
+  {
+    '8.2.0-fork': ['Expected: not supported by the legacy 8.2.0 fork.'],
+    '9.0.0': [
+      'Expected: Android system credential prompt can unlock the app after Bio+Device rewrite.',
+      'Regression signal: the app hides the auth entry before attempting the system credential prompt.',
+    ],
+    '10.0.0': [
+      'Expected: Android system credential prompt can unlock the app after Bio+Device rewrite.',
+      'Regression signal: the prompt shows but the keychain object cannot be read afterwards.',
+    ],
+  };
 
 type TabKey = (typeof TAB_OPTIONS)[number]['key'];
 type DebugStateLike = apisKeychain.KeychainDebugState;
@@ -2306,11 +2377,11 @@ export default function DevDataKeychain(): JSX.Element {
     ],
   );
 
-  const handleMigrateCurrentToV10BiometricsOrPasscode =
-    useCallback(async () => {
-      const version: CurrentKeychainVersion = '10.0.0';
+  const handleMigrateCurrentToBiometricsOrPasscode = useCallback(
+    async (version: CurrentKeychainVersion) => {
       const api = getBusinessApi(version);
       const targetStorage = effectiveStorageByVersion[version];
+      const versionLabel = KEYCHAIN_VERSION_META[version].label;
       let decryptedPassword = '';
       let vaultKeyString: string | undefined;
 
@@ -2354,7 +2425,7 @@ export default function DevDataKeychain(): JSX.Element {
 
         updateBusinessState(version, {
           rewriteResult: {
-            label: 'v10 Bio+Device Migration',
+            label: `${versionLabel} Bio+Device Migration`,
             service: apisKeychain.KEYCHAIN_DEFAULT_SERVICE,
             targetStorage,
             targetAuthTypeLabel: apisKeychain.getAuthenticationTypeLabel(
@@ -2364,13 +2435,13 @@ export default function DevDataKeychain(): JSX.Element {
           },
           rewriteErrorMessage: null,
         });
-        toast.success('v10 biometrics migration written');
+        toast.success(`${versionLabel} Bio+Device migration written`);
         Alert.alert(
-          'v10 migration written',
+          `${versionLabel} Bio+Device migration written`,
           [
             'Current com.debank entry was rewritten with BIOMETRICS_OR_PASSCODE.',
-            'Restart the app, then test fingerprint and face from the unlock screen.',
-            'If face still appears but cannot read the password, export this page for native debug details.',
+            'Restart the app, then test fingerprint and Android device credential from the unlock screen.',
+            'If the system prompt finishes but the password cannot be read, export this page for native debug details.',
           ].join('\n'),
         );
       } catch (error) {
@@ -2382,16 +2453,18 @@ export default function DevDataKeychain(): JSX.Element {
         updateBusinessState(version, {
           rewriteErrorMessage: message,
         });
-        Alert.alert('v10 biometrics migration failed', message);
+        Alert.alert(`${versionLabel} Bio+Device migration failed`, message);
       } finally {
         await refreshState();
       }
-    }, [
+    },
+    [
       effectiveStorageByVersion,
       refreshState,
       setCurrentKeychainVersion,
       updateBusinessState,
-    ]);
+    ],
+  );
 
   const handleChangeCurrentVersion = useCallback(
     async (nextVersion: CurrentKeychainVersion) => {
@@ -2604,6 +2677,33 @@ export default function DevDataKeychain(): JSX.Element {
       setIsLoading(false);
     }
   }, [debugExportJson]);
+
+  const renderVersionDifferenceCard = () => {
+    return (
+      <View style={styles.summaryCard}>
+        <Text style={styles.sectionTitle}>Version Difference Map</Text>
+        <Text style={styles.emptyDesc}>
+          Use this card to read the intended behavior before running the
+          per-version probes below.
+        </Text>
+        <View style={styles.diffTable}>
+          {KEYCHAIN_VERSION_DIFF_ROWS.map(row => (
+            <View key={row.label} style={styles.diffRow}>
+              <Text style={styles.diffRowTitle}>{row.label}</Text>
+              {KEYCHAIN_VERSION_OPTIONS.map(option => (
+                <View key={option.key} style={styles.diffCell}>
+                  <Text style={styles.diffCellVersion}>{option.label}</Text>
+                  <Text style={styles.diffCellValue}>
+                    {row.values[option.key]}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+  };
 
   const renderStorageSelector = (version: CurrentKeychainVersion) => {
     const selectedStorage = effectiveStorageByVersion[version];
@@ -3159,6 +3259,14 @@ export default function DevDataKeychain(): JSX.Element {
               SESSION_REUSE_TEST_STEPS,
               SESSION_REUSE_EXPECTATIONS,
             )}
+
+            {helpSheetContext.version !== '8.2.0-fork'
+              ? renderManualTestHelpSection(
+                  'Manual Test: Bio+Device Passcode Fallback',
+                  PASSCODE_FALLBACK_TEST_STEPS,
+                  PASSCODE_FALLBACK_EXPECTATIONS[helpSheetContext.version],
+                )
+              : null}
           </AutoLockView>
         </BottomSheetScrollView>
       );
@@ -3389,10 +3497,10 @@ export default function DevDataKeychain(): JSX.Element {
             />
           </ActionSheetSection>
 
-          {tabKey === '10.0.0' ? (
+          {resolvedTabVersion !== '8.2.0-fork' ? (
             <ActionSheetSection
-              title="v10 Migration Test"
-              desc="Rewrite the real `com.debank` entry with the v10 BIOMETRICS_OR_PASSCODE profile for restart testing.">
+              title={`${versionMeta.label} Bio+Device Test`}
+              desc="Rewrite the real `com.debank` entry with BIOMETRICS_OR_PASSCODE. After this, remove enrolled fingerprints and restart to verify Android device credential fallback.">
               <Button
                 title="Migrate Current to Bio+Device"
                 type="warning"
@@ -3400,7 +3508,11 @@ export default function DevDataKeychain(): JSX.Element {
                 disabled={!IS_ANDROID || isLoading || !hasBusinessEntry}
                 containerStyle={styles.sheetActionButton}
                 onPress={() => {
-                  runSheetAction(handleMigrateCurrentToV10BiometricsOrPasscode);
+                  runSheetAction(() =>
+                    handleMigrateCurrentToBiometricsOrPasscode(
+                      resolvedTabVersion,
+                    ),
+                  );
                 }}
               />
             </ActionSheetSection>
@@ -3634,6 +3746,8 @@ export default function DevDataKeychain(): JSX.Element {
           </View>
         </View>
 
+        {renderVersionDifferenceCard()}
+
         <PillsSwitch
           value={tabKey}
           options={TAB_OPTIONS}
@@ -3754,6 +3868,37 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexWrap: 'wrap',
     gap: 8,
     marginTop: 12,
+  },
+  diffTable: {
+    marginTop: 12,
+    gap: 10,
+  },
+  diffRow: {
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: colors2024['neutral-bg-2'],
+    gap: 8,
+  },
+  diffRowTitle: {
+    color: colors2024['neutral-title-1'],
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  diffCell: {
+    gap: 2,
+  },
+  diffCellVersion: {
+    color: colors2024['brand-default'],
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 16,
+  },
+  diffCellValue: {
+    color: colors2024['neutral-body'],
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
   },
   policyProbeRow: {
     marginTop: 12,
