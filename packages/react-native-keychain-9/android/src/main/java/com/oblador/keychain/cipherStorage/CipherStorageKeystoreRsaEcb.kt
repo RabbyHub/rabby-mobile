@@ -114,7 +114,8 @@ class CipherStorageKeystoreRsaEcb : CipherStorageBase() {
         username = username,
         password = password,
         level = level,
-        allowAuthenticatedSessionReuse = false)
+        allowAuthenticatedSessionReuse = false,
+        allowKeyStoreRecovery = true)
   }
 
   @SuppressLint("NewApi")
@@ -125,7 +126,8 @@ class CipherStorageKeystoreRsaEcb : CipherStorageBase() {
       username: ByteArray,
       password: ByteArray,
       level: SecurityLevel,
-      allowAuthenticatedSessionReuse: Boolean
+      allowAuthenticatedSessionReuse: Boolean,
+      allowKeyStoreRecovery: Boolean
   ) {
     throwIfInsufficientLevel(level)
 
@@ -135,7 +137,7 @@ class CipherStorageKeystoreRsaEcb : CipherStorageBase() {
 
     try {
       // key is always NOT NULL otherwise GeneralSecurityException raised
-      val extractedKey = extractGeneratedKey(safeAlias, level, retries)
+      val extractedKey = extractGeneratedKey(safeAlias, level, retries, allowKeyStoreRecovery)
       key = extractedKey
 
       if (allowAuthenticatedSessionReuse) {

@@ -102,6 +102,7 @@ type KeychainBiometricsFailureDiagnostic = {
   request?: {
     purpose?: unknown;
     androidAuthPromptPolicy?: unknown;
+    androidAllowKeyStoreRecovery?: unknown;
     shouldAttachTrustedVaultKeyString?: unknown;
   };
   debugStates: {
@@ -276,6 +277,8 @@ export async function requestGenericPassword(
       request: {
         purpose: requestOptions.purpose,
         androidAuthPromptPolicy: requestOptions.androidAuthPromptPolicy,
+        androidAllowKeyStoreRecovery:
+          requestOptions.androidAllowKeyStoreRecovery,
         shouldAttachTrustedVaultKeyString:
           requestOptions.shouldAttachTrustedVaultKeyString,
       },
@@ -288,6 +291,8 @@ export async function requestGenericPassword(
       request: {
         purpose: requestOptions.purpose,
         androidAuthPromptPolicy: requestOptions.androidAuthPromptPolicy,
+        androidAllowKeyStoreRecovery:
+          requestOptions.androidAllowKeyStoreRecovery,
         shouldAttachTrustedVaultKeyString:
           requestOptions.shouldAttachTrustedVaultKeyString,
       },

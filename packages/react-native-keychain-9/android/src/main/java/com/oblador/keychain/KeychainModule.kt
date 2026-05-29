@@ -74,6 +74,7 @@ class KeychainModule(reactContext: ReactApplicationContext) :
       const val ACCESSIBLE = "accessible"
       const val ANDROID_ALLOW_AUTHENTICATED_SESSION_REUSE =
           "androidAllowAuthenticatedSessionReuse"
+      const val ANDROID_ALLOW_KEY_STORE_RECOVERY = "androidAllowKeyStoreRecovery"
       const val AUTH_PROMPT = "authenticationPrompt"
       const val AUTH_TYPE = "authenticationType"
       const val SERVICE = "service"
@@ -713,7 +714,8 @@ class KeychainModule(reactContext: ReactApplicationContext) :
         resultSet.username!!,
         resultSet.password!!,
         SecurityLevel.ANY,
-        getAndroidAllowAuthenticatedSessionReuseOrDefault(options))
+        getAndroidAllowAuthenticatedSessionReuseOrDefault(options),
+        getAndroidAllowKeyStoreRecoveryOrDefault(options))
     CryptoFailedException.reThrowOnError(handler.error)
     if (null == handler.result) {
       throw CryptoFailedException("No decryption results and no error. Something deeply wrong!")
@@ -907,6 +909,14 @@ class KeychainModule(reactContext: ReactApplicationContext) :
       }
 
       return false
+    }
+
+    private fun getAndroidAllowKeyStoreRecoveryOrDefault(options: ReadableMap?): Boolean {
+      if (null != options && options.hasKey(Maps.ANDROID_ALLOW_KEY_STORE_RECOVERY)) {
+        return options.getBoolean(Maps.ANDROID_ALLOW_KEY_STORE_RECOVERY)
+      }
+
+      return true
     }
 
     /** Extract user specified storage from options. */

@@ -3,7 +3,6 @@ package com.rabbywallet.keychain9.cipherStorage
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyInfo
-import android.text.TextUtils
 import android.util.Log
 import androidx.annotation.VisibleForTesting
 import com.rabbywallet.keychain9.SecurityLevel
@@ -247,7 +246,8 @@ abstract class CipherStorageBase : CipherStorage {
   protected fun extractGeneratedKey(
       safeAlias: String,
       level: SecurityLevel,
-      retries: AtomicInteger
+      retries: AtomicInteger,
+      allowKeyStoreRecovery: Boolean = true
   ): Key {
     var key: Key?
     do {
@@ -255,11 +255,14 @@ abstract class CipherStorageBase : CipherStorage {
 
       // if key is not available yet, try to generate the strongest possible
       if (!keyStore.containsAlias(safeAlias)) {
+        if (!allowKeyStoreRecovery) {
+          throw KeyStoreAccessException("No key found for alias: $safeAlias")
+        }
         generateKeyAndStoreUnderAlias(safeAlias, level)
       }
 
       // throw exception if cannot extract key in several retries
-      key = extractKey(keyStore, safeAlias, retries)
+      key = extractKey(keyStore, safeAlias, retries, allowKeyStoreRecovery)
     } while (key == null)
 
     return key
@@ -269,14 +272,19 @@ abstract class CipherStorageBase : CipherStorage {
    * Try to extract key by alias from keystore, in case of 'known android bug' reduce retry counter.
    */
   @Throws(GeneralSecurityException::class)
-  protected fun extractKey(keyStore: KeyStore, safeAlias: String, retry: AtomicInteger): Key? {
+  protected fun extractKey(
+      keyStore: KeyStore,
+      safeAlias: String,
+      retry: AtomicInteger,
+      allowKeyStoreRecovery: Boolean = true
+  ): Key? {
     val key: Key?
 
     try {
       key = keyStore.getKey(safeAlias, null)
     } catch (ex: UnrecoverableKeyException) {
       // try one more time
-      if (retry.getAndDecrement() > 0) {
+      if (allowKeyStoreRecovery && retry.getAndDecrement() > 0) {
         keyStore.deleteEntry(safeAlias)
         return null
       }
@@ -313,26 +321,6 @@ abstract class CipherStorageBase : CipherStorage {
             errorMessage = null)
       }
 
-      val key = keyStore.getKey(safeAlias, null)
-      if (key == null) {
-        return StoredKeyDebugInfo(
-            alias = safeAlias,
-            hasAlias = true,
-            keyAlgorithm = null,
-            securityLevelName = null,
-            isInsideSecureHardware = null,
-            isUserAuthenticationRequired = null,
-            userAuthenticationValidityDurationSeconds = null,
-            userAuthenticationType = null,
-            blockModes = null,
-            purposes = null,
-            isCompatibleWithCurrentCipher = null,
-            publicKeySha256 = null,
-            errorMessage = "KeyStore alias exists but key is null")
-      }
-
-      val keyInfo = getKeyInfo(key)
-      val encryptionAlgorithm = getEncryptionAlgorithm()
       val certificate: Certificate? = keyStore.getCertificate(safeAlias)
       val publicKeySha256 =
           if (certificate?.publicKey != null) {
@@ -344,40 +332,15 @@ abstract class CipherStorageBase : CipherStorage {
       StoredKeyDebugInfo(
           alias = safeAlias,
           hasAlias = true,
-          keyAlgorithm = key.algorithm,
-          securityLevelName = getSecurityLevel(key).name,
-          isInsideSecureHardware =
-              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                keyInfo.isInsideSecureHardware
-              } else {
-                null
-              },
-          isUserAuthenticationRequired =
-              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                keyInfo.isUserAuthenticationRequired
-              } else {
-                null
-              },
-          userAuthenticationValidityDurationSeconds =
-              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                keyInfo.userAuthenticationValidityDurationSeconds
-              } else {
-                null
-              },
-          userAuthenticationType =
-              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                keyInfo.userAuthenticationType
-              } else {
-                null
-              },
-          blockModes = keyInfo.blockModes,
-          purposes = keyInfo.purposes,
-          isCompatibleWithCurrentCipher =
-              if (!TextUtils.isEmpty(encryptionAlgorithm)) {
-                encryptionAlgorithm.equals(key.algorithm, ignoreCase = true)
-              } else {
-                null
-              },
+          keyAlgorithm = certificate?.publicKey?.algorithm,
+          securityLevelName = null,
+          isInsideSecureHardware = null,
+          isUserAuthenticationRequired = null,
+          userAuthenticationValidityDurationSeconds = null,
+          userAuthenticationType = null,
+          blockModes = null,
+          purposes = null,
+          isCompatibleWithCurrentCipher = null,
           publicKeySha256 = publicKeySha256,
           errorMessage = null)
     } catch (fail: Throwable) {

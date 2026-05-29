@@ -39225,8 +39225,8 @@ __metadata:
 
 "react-native-keychain@patch:react-native-keychain@npm%3A10.0.0#../../.yarn/patches/react-native-keychain-npm-10.0.0-rabby.patch::locator=rabby-mobile%40workspace%3Aapps%2Fmobile":
   version: 10.0.0
-  resolution: "react-native-keychain@patch:react-native-keychain@npm%3A10.0.0#../../.yarn/patches/react-native-keychain-npm-10.0.0-rabby.patch::version=10.0.0&hash=90d5fa&locator=rabby-mobile%40workspace%3Aapps%2Fmobile"
-  checksum: 10/363b245ee1011ec81b7d832854cff3a1e8d6093728d2f3605e742256a76830d22f409e3b8eec7b636b791a5a7e8e098b63e37fc129f5e8a59b2321c378ac2410
+  resolution: "react-native-keychain@patch:react-native-keychain@npm%3A10.0.0#../../.yarn/patches/react-native-keychain-npm-10.0.0-rabby.patch::version=10.0.0&hash=f9dbbf&locator=rabby-mobile%40workspace%3Aapps%2Fmobile"
+  checksum: 10/7babdc26139e32534735f4de7fad049d9aa7a5119cd7a49267b1c249d3c9acf9a03f6ff1c33b2feff74b5cc69dc4b2ac58bfb5f093087d93d8f05f14348af2d6
   languageName: node
   linkType: hard
 

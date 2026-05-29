@@ -113,7 +113,8 @@ public interface CipherStorage {
                                        @NonNull final byte[] username,
                                        @NonNull final byte[] password,
                                        @NonNull final SecurityLevel level,
-                                       final boolean allowAuthenticatedSessionReuse)
+                                       final boolean allowAuthenticatedSessionReuse,
+                                       final boolean allowKeyStoreRecovery)
     throws CryptoFailedException {
     decrypt(handler, alias, username, password, level);
   }
