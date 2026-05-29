@@ -394,9 +394,13 @@ export function BalanceSection({
   const previousAddress = usePrevious(currentAccount?.address);
   useEffect(() => {
     if (previousAddress && previousAddress !== currentAccount?.address) {
-      onChangeSlider(0, true);
+      setInputMode('token');
+      setUsdInputValue('');
+      lastUsdInputTokenAmountRef.current = '';
+      handleFieldChange?.('amount', '');
+      setSlider(0);
     }
-  }, [previousAddress, currentAccount?.address, onChangeSlider]);
+  }, [previousAddress, currentAccount?.address, handleFieldChange, setSlider]);
 
   if (!chainItem || !currentToken) {
     return null;
