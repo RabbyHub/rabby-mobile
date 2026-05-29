@@ -20,6 +20,7 @@ import {
   useProtocolConfig,
 } from '../../utils/protocolConfig';
 import JumpIconCC from '@/assets2024/icons/home/jump-cc.svg';
+import { resetFetchHistoryTxCount } from '../../hooks/history';
 import { setRefreshHistoryId } from '../../SingleHomeRightArea';
 import { dappService } from '@/core/services';
 import { CHAINS_ENUM } from '@debank/common';
@@ -133,8 +134,11 @@ export const FullDefiRenderItem = ({
         return;
       }
       if (!showAccount) {
-        // 单地址有历史记录入口要刷新，多地址没有历史记录入口，不需要刷新
+        // 单地址 history 入口用独立状态驱动。
         setRefreshHistoryId(e => e + 1);
+      } else {
+        // 多地址首页 DappAction 原地提交成功后不会触发 focus 刷新，这里补一次 pending 刷新。
+        resetFetchHistoryTxCount();
       }
       updateSpecificProtocol(account.address, data?.id, data?.chain || '');
     }, 200);
