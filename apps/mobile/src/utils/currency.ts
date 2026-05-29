@@ -136,7 +136,7 @@ export const formatSmallCurrencyValueParts = (
   }
 
   return formatCurrencyValueParts(value, {
-    decimal: val.isGreaterThan(1000000) ? 2 : 0,
+    decimal: 2,
     formatMillion: true,
     currency,
   });

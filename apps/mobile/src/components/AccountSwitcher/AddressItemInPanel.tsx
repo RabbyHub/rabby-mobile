@@ -162,7 +162,9 @@ export function AddressItemInPanel({
                   />
                   <View style={styles.centerInfo}>
                     <View style={styles.nameAndAdderss}>
-                      <WalletName style={styles.addressAliasName} />
+                      <View style={styles.nameBox}>
+                        <WalletName style={styles.addressAliasName} />
+                      </View>
                       {nameAddonNode}
                       {isCurrent && checkIconPosition === 'name' ? (
                         <RcIconCorrectCC
@@ -422,8 +424,12 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       fontWeight: '500',
       color: ctx.colors2024['neutral-secondary'],
     },
-    addressAliasName: {
+    nameBox: {
       flexShrink: 1,
+      minWidth: 0,
+    },
+    addressAliasName: {
+      width: '100%',
       fontFamily: 'SF Pro Rounded',
       fontSize: 16,
       lineHeight: 20,

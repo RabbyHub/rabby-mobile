@@ -4,7 +4,7 @@ import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { MiniLedgerHardwareWaiting } from './MiniLedgerHardwareWaiting';
 import { MiniPrivatekeyWaiting } from './MiniPrivatekeyWaiting';
 import { BatchSignTxTaskType } from './useBatchSignTxTask';
@@ -44,9 +44,11 @@ export const MiniWaiting = ({
   });
 
   const { sheetModalRef } = useSheetModal();
+  const cancelHandledRef = useRef(false);
 
   useEffect(() => {
     if (visible) {
+      cancelHandledRef.current = false;
       sheetModalRef.current?.present();
     } else {
       sheetModalRef.current?.dismiss();
@@ -55,8 +57,16 @@ export const MiniWaiting = ({
 
   const currentAccount = account;
 
+  const handleCancelOnce = useMemoizedFn((reason?: any) => {
+    if (cancelHandledRef.current) {
+      return;
+    }
+    cancelHandledRef.current = true;
+    onCancel?.(reason);
+  });
+
   const handleCancel = useMemoizedFn(() => {
-    onCancel?.(error?.description);
+    handleCancelOnce(error?.description);
   });
 
   return (
@@ -65,7 +75,7 @@ export const MiniWaiting = ({
       enableDismissOnClose
       onDismiss={() => {
         if (visible) {
-          onCancel?.();
+          handleCancelOnce();
         }
       }}
       handleStyle={styles.handleStyle}

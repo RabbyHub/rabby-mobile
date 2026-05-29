@@ -32,6 +32,7 @@ import {
 } from '../hooks/singleHome';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { AnimateableText } from '@/components/Typography';
+import { getFontSizeByLength } from '@/utils/fontSize';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -40,7 +41,7 @@ const ScreenWidth = Dimensions.get('screen').width;
 
 const MAX_NETWORTH_FS = 42;
 const MIN_NETWORTH_FS = 34;
-const NETWORTH_FIT_LEN = 10;
+const NETWORTH_FIT_LEN = 9;
 
 const ZERO_LINE_CHART_DATA: CurvePoint[] = [
   {
@@ -377,8 +378,11 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   }, [isLoss, data, currentIndex, colors2024, styles, loading, isInitialized]);
 
   const netWorthFontStyle = useAnimatedStyle(() => {
-    const len = formatNetWorth.value?.length ?? 0;
-    const fs = len <= NETWORTH_FIT_LEN ? MAX_NETWORTH_FS : MIN_NETWORTH_FS;
+    const fs = getFontSizeByLength(formatNetWorth.value?.length ?? 0, {
+      maxFontSize: MAX_NETWORTH_FS,
+      minFontSize: MIN_NETWORTH_FS,
+      threshold: NETWORTH_FIT_LEN,
+    });
     return { fontSize: fs };
   });
 

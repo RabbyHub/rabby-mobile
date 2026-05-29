@@ -16,7 +16,11 @@ import { ChainInfo } from './ChainInfo';
 import BridgeToTokenSelect from './BridgeToTokenSelect';
 import { findChainByEnum } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';
-import { formatTokenAmount, formatUsdValue } from '@/utils/number';
+import {
+  formatTokenAmount,
+  formatTokenAmountInput,
+  formatUsdValue,
+} from '@/utils/number';
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -141,9 +145,9 @@ const BridgeToken = ({
 
   const inputChange = React.useCallback(
     (text: string) => {
-      onInputChange?.(text);
+      onInputChange?.(formatTokenAmountInput(text, token?.decimals));
     },
-    [onInputChange],
+    [onInputChange, token?.decimals],
   );
 
   const Linear = useCallback(() => {

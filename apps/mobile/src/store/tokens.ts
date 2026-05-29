@@ -1794,7 +1794,7 @@ const tokenListStore = zCreate<TokenListState>(set => ({
   },
 }));
 
-export const patchSingleTokenInStore = (address: string, token: ITokenItem) => {
+const patchSingleTokenInStore = (address: string, token: ITokenItem) => {
   const normalizedAddress = normalizeAddress(address);
   const nextToken = tokenItemToITokenItem(token, normalizedAddress);
 

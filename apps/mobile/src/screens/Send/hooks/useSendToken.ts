@@ -1403,7 +1403,6 @@ export function useSendTokenForm({
 
               prepareCountRef.current++;
               putScreenState({ buildTxsCount: prepareCountRef.current });
-              prefetchMiniSigner({ txs: [] });
               prepareRef.current = prepareDirectSubmitMiniTx(
                 prepareCountRef.current,
               );
@@ -2221,7 +2220,6 @@ export function useSendTokenForm({
     stableAmountValue,
     formValues.messageDataForSendToEoa,
     formValues.messageDataForContractCall,
-    currentAccount?.address,
     currentAccount?.type,
     currentAccount?.address,
     prepareDirectSubmitMiniTx,

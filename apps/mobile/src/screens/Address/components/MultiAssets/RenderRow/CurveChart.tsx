@@ -33,6 +33,7 @@ import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useHomeStartupReady } from '@/core/utils/homeStartupReady';
 import { Text, AnimateableText } from '@/components/Typography';
 import { useHomePortfolioStore } from '@/screens/Home/hooks/useHomePortfolioSummary';
+import { getFontSizeByLength } from '@/utils/fontSize';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -41,7 +42,7 @@ const AnimatedSVG = Animated.createAnimatedComponent(Svg);
 const CHART_HORIZONTAL_INSET = 66;
 
 const MAX_NETWORTH_FS = 38;
-const MIN_NETWORTH_FS = 34;
+const MIN_NETWORTH_FS = 30;
 const NETWORTH_FIT_LEN = 8;
 
 const svIsFoldMultiChart = makeMutable(true);
@@ -344,9 +345,11 @@ const ChartHeader = React.memo(
     }, [isLoss, data, currentIndex, colors2024, styles, hideType]);
 
     const netWorthFontStyle = useAnimatedStyle(() => {
-      // TODO: should be using adjustFontSizeToFit, fix it upstream first
-      const len = formatNetWorth.value?.length ?? 0;
-      const fs = len <= NETWORTH_FIT_LEN ? MAX_NETWORTH_FS : MIN_NETWORTH_FS;
+      const fs = getFontSizeByLength(formatNetWorth.value?.length ?? 0, {
+        maxFontSize: MAX_NETWORTH_FS,
+        minFontSize: MIN_NETWORTH_FS,
+        threshold: NETWORTH_FIT_LEN,
+      });
       return { fontSize: fs };
     });
 
