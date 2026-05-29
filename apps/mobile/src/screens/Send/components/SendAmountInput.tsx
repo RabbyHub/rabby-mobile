@@ -25,6 +25,7 @@ import { DEFAULT_MAX_FONT_SIZE } from '@/components/AutoShrinkAmountTextSizing';
 import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import { Text, TextInput } from '@/components/Typography';
+import { IS_ANDROID } from '@/core/native/utils';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
@@ -97,6 +98,8 @@ function useLoadTokenList({
 }
 
 const UNIT_GAP = 4;
+const UNIT_COMPACT_PREFIX_LENGTH = 3;
+const UNIT_COMPACT_TRIGGER_LENGTH = 6;
 const CARET_BUFFER = 7;
 const MAIN_FONT_SIZE = DEFAULT_MAX_FONT_SIZE;
 const MIN_AMOUNT_FONT_SIZE = 17;
@@ -127,6 +130,19 @@ const QUOTE_MEASURE_CHARS = Array.from(
 
 function getDisplayAmountValue(value?: string) {
   return value || EMPTY_AMOUNT_DISPLAY_VALUE;
+}
+
+function getTextCharLength(text: string) {
+  return Array.from(text).length;
+}
+
+function getCompactUnitText(unit: string) {
+  const chars = Array.from(unit);
+  if (chars.length <= UNIT_COMPACT_TRIGGER_LENGTH) {
+    return unit;
+  }
+
+  return `${chars.slice(0, UNIT_COMPACT_PREFIX_LENGTH).join('')}...`;
 }
 
 function normalizeIntegerPart(value: string) {
@@ -183,7 +199,9 @@ export const SendAmountInput = ({
       onTokenChange,
       ref,
     });
-  const unitTextRef = useRef<TextInput>(null);
+  const unitTextRef = useRef<{
+    setNativeProps?: (nativeProps: object) => void;
+  } | null>(null);
   const inputSelectionRef = useRef({
     start: getDisplayAmountValue(value).length,
     end: getDisplayAmountValue(value).length,
@@ -199,6 +217,13 @@ export const SendAmountInput = ({
   const [unitWidthAtBaseFontSize, setUnitWidthAtBaseFontSize] = useState(0);
   const [quoteUnitWidth, setQuoteUnitWidth] = useState(0);
   const [inputValue, setInputValue] = useState(value || '');
+
+  const setUnitTextNodeRef = useCallback(
+    (node: { setNativeProps?: (nativeProps: object) => void } | null) => {
+      unitTextRef.current = node;
+    },
+    [],
+  );
 
   useEffect(() => {
     setInputValue(value || '');
@@ -222,6 +247,11 @@ export const SendAmountInput = ({
   }, [colors2024, styles.skeletonLinear]);
 
   const displayInputValue = getDisplayAmountValue(inputValue);
+  const displayUnitText = useMemo(() => getCompactUnitText(unit), [unit]);
+  const displayQuoteUnitText = useMemo(
+    () => getCompactUnitText(quoteUnit),
+    [quoteUnit],
+  );
   const emptyAmountSelection = useMemo(
     () => ({
       start: EMPTY_AMOUNT_DISPLAY_VALUE.length,
@@ -232,7 +262,8 @@ export const SendAmountInput = ({
   const textForMeasure = displayInputValue;
   const fallbackCharWidth =
     charWidthsAtBaseFontSize['0'] || MAIN_FONT_SIZE * 0.56;
-  const fallbackUnitWidth = Math.max(unit.length, 1) * MAIN_FONT_SIZE * 0.58;
+  const fallbackUnitWidth =
+    Math.max(getTextCharLength(displayUnitText), 1) * MAIN_FONT_SIZE * 0.58;
   const measuredUnitWidthAtBaseFontSize =
     unitWidthAtBaseFontSize || fallbackUnitWidth;
   const getValueWidthAtBaseFontSize = useCallback(
@@ -323,7 +354,7 @@ export const SendAmountInput = ({
   const applyUnitLayoutNative = useCallback(
     (nextValue: string) => {
       const nextLayout = getAmountLayout(getDisplayAmountValue(nextValue));
-      unitTextRef.current?.setNativeProps({
+      unitTextRef.current?.setNativeProps?.({
         style: {
           fontSize: nextLayout.fittingFontSize,
           left: nextLayout.unitLeft,
@@ -462,7 +493,9 @@ export const SendAmountInput = ({
   const fallbackQuoteCharWidth =
     quoteCharWidths['0'] || QUOTE_TEXT_FONT_SIZE * 0.56;
   const fallbackQuoteUnitWidth =
-    Math.max(quoteUnit.length, 1) * QUOTE_TEXT_FONT_SIZE * 0.58;
+    Math.max(getTextCharLength(displayQuoteUnitText), 1) *
+    QUOTE_TEXT_FONT_SIZE *
+    0.58;
   const measuredQuoteUnitWidth = quoteUnitWidth || fallbackQuoteUnitWidth;
   const quoteTextMaxWidth = Math.max(
     inputAreaWidth -
@@ -523,28 +556,49 @@ export const SendAmountInput = ({
                 ]}
                 {...amountInputProps}
               />
-              <TextInput
-                ref={unitTextRef}
-                value={unit}
-                editable={false}
-                caretHidden
-                contextMenuHidden
-                pointerEvents="none"
-                accessible={false}
-                accessibilityElementsHidden
-                importantForAccessibility="no"
-                numberOfLines={1}
-                multiline={false}
-                scrollEnabled={false}
-                style={[
-                  styles.unitText,
-                  {
-                    fontSize: fittingFontSize,
-                    left: unitLeft,
-                    width: unitWidth,
-                  },
-                ]}
-              />
+              {IS_ANDROID ? (
+                <Text
+                  ref={setUnitTextNodeRef}
+                  pointerEvents="none"
+                  accessible={false}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={[
+                    styles.unitText,
+                    {
+                      fontSize: fittingFontSize,
+                      left: unitLeft,
+                      width: unitWidth,
+                    },
+                  ]}>
+                  {displayUnitText}
+                </Text>
+              ) : (
+                <TextInput
+                  ref={setUnitTextNodeRef}
+                  value={displayUnitText}
+                  editable={false}
+                  caretHidden
+                  contextMenuHidden
+                  pointerEvents="none"
+                  accessible={false}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no"
+                  numberOfLines={1}
+                  multiline={false}
+                  scrollEnabled={false}
+                  style={[
+                    styles.unitText,
+                    {
+                      fontSize: fittingFontSize,
+                      left: unitLeft,
+                      width: unitWidth,
+                    },
+                  ]}
+                />
+              )}
             </View>
           )}
           <TouchableOpacity
@@ -567,7 +621,7 @@ export const SendAmountInput = ({
               {quoteValueText}
             </Text>
             <Text style={styles.quoteUnitText} numberOfLines={1}>
-              {quoteUnit}
+              {displayQuoteUnitText}
             </Text>
             {canSwitchMode ? (
               <View style={styles.switchIconWrapper}>
@@ -621,7 +675,7 @@ export const SendAmountInput = ({
         numberOfLines={1}
         onTextLayout={handleUnitMeasure}
         style={[styles.measureText, styles.measureUnitText]}>
-        {unit}
+        {displayUnitText}
       </Text>
       {QUOTE_MEASURE_CHARS.map(char => (
         <Text
@@ -636,7 +690,7 @@ export const SendAmountInput = ({
         numberOfLines={1}
         onTextLayout={handleQuoteUnitMeasure}
         style={[styles.measureText, styles.measureQuoteText]}>
-        {quoteUnit}
+        {displayQuoteUnitText}
       </Text>
     </View>
   );
