@@ -179,20 +179,18 @@ async function fetchAllAccountsProcess() {
   traceAndroidUnlockAccountPerf('get_all_visible_accounts_start');
 
   try {
+    const visibleAccounts = await keyringService.getAllVisibleAccountsArray();
+    await addressBalanceStore.hydrateCachedBalancesForAccounts(visibleAccounts);
     const balanceMap = addressBalanceStore.getAddressValueMap();
-    nextAccounts = await keyringService
-      .getAllVisibleAccountsArray()
-      .then(list => {
-        return list.map(account => {
-          const balance = balanceMap[account.address.toLowerCase()];
-          return {
-            ...account,
-            aliasName: '',
-            evmBalance: balance?.evmBalance || 0,
-            balance: balance?.totalBalance || 0,
-          };
-        });
-      });
+    nextAccounts = visibleAccounts.map(account => {
+      const balance = balanceMap[account.address.toLowerCase()];
+      return {
+        ...account,
+        aliasName: '',
+        evmBalance: balance?.evmBalance || 0,
+        balance: balance?.totalBalance || 0,
+      };
+    });
 
     await Promise.allSettled(
       nextAccounts.map(async (account, idx) => {
