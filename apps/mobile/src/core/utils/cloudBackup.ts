@@ -292,7 +292,7 @@ export const refreshAccessToken = async () => {
 };
 
 /**
- * Check if a cloud backup exists for the given address (does not require login)
+ * Check if a cloud backup exists for the given address (requires unlocked keyring)
  * @param address - The wallet address to check
  * @returns true if backup exists, false otherwise
  */
