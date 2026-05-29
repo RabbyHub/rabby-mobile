@@ -263,6 +263,39 @@ describe('keyringService support eth-keyring-watch', () => {
       );
     });
 
+    it('emits one newAccount signal after extension sync adds addresses', async () => {
+      await keyringService.persistAllKeyrings();
+
+      const sourceKeyringService = new KeyringService({
+        encryptor: mockEncryptor as any,
+      });
+      sourceKeyringService.loadStore({});
+      await sourceKeyringService.boot(password);
+      await sourceKeyringService.clearKeyrings();
+      const sourceKeyring = await sourceKeyringService.addNewKeyring(
+        KEYRING_TYPE.WatchAddressKeyring as KeyringTypeName,
+      );
+      sourceKeyring.setAccountToAdd(TEST_ADDR);
+      await sourceKeyringService.addNewAccount(sourceKeyring);
+      await sourceKeyringService.persistAllKeyrings();
+
+      const spy = sinon.spy();
+      keyringService.on('newAccount', spy);
+
+      const addedAccounts = await keyringService.syncExtensionData(
+        sourceKeyringService.store.getState().vault as any,
+      );
+
+      expect(addedAccounts).toEqual([
+        expect.objectContaining({
+          address: TEST_ADDR,
+          brandName: KEYRING_TYPE.WatchAddressKeyring,
+          type: KEYRING_TYPE.WatchAddressKeyring,
+        }),
+      ]);
+      expect(spy.calledOnceWithExactly(addedAccounts[0])).toBe(true);
+    });
+
     it('rejects locked private key export', async () => {
       await keyringService.setLocked();
 

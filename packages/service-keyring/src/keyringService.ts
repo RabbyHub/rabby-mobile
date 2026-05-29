@@ -2050,7 +2050,7 @@ export class KeyringService extends RNEventEmitter {
 
     const allAccounts = await this.getAllVisibleAccountsArray();
 
-    const addedAccounts: DisplayedKeyring['accounts'] = [];
+    const addedAccounts: KeyringEventAccount[] = [];
 
     const newKeyrings: KeyringInstance[] = await Promise.all(
       Array.from(newVault as any).map(
@@ -2097,6 +2097,10 @@ export class KeyringService extends RNEventEmitter {
     await this.persistAllKeyrings();
 
     await this._updateMemStoreKeyrings();
+
+    if (addedAccounts.length) {
+      this.emit('newAccount', addedAccounts[0]);
+    }
 
     return addedAccounts;
   }
