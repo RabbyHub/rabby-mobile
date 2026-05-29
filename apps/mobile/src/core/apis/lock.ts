@@ -448,9 +448,16 @@ export function isUnlockSessionValid(now = Date.now()) {
   if (unlockTime > now) return false;
 
   const expireTime = getPersistedUnlockSessionExpireTime();
-  if (expireTime === -1) return true;
+  if (expireTime !== -1 && expireTime <= now) return false;
 
-  return expireTime > now;
+  if (
+    !keyringService.isUnlocked() &&
+    !keyringService.hasPublicAccountSnapshot()
+  ) {
+    return false;
+  }
+
+  return true;
 }
 
 function makeLockApiWithUpdateUnlockTime<T extends (...args: any[]) => any>(
