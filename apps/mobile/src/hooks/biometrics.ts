@@ -7,6 +7,7 @@ import {
   RequestGenericPurpose,
   isAuthenticatedByBiometrics,
   parseKeychainError,
+  type KeychainDebugState,
   type KeychainSupportedBiometryType,
 } from '@/core/apis/keychain';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +17,7 @@ import {
 } from '@/core/apis/lock';
 import { Vibration } from 'react-native';
 import { IExtractFromPromise } from '@/utils/type';
-import { IS_IOS } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { zCreate } from '@/core/utils/reexports';
 import {
   resolveValFromUpdater,
@@ -24,6 +25,7 @@ import {
   UpdaterOrPartials,
 } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
+import { logger } from '@/utils/logger';
 
 type BiometricsInfoState = {
   authEnabled: boolean;
@@ -46,6 +48,78 @@ runIIFEFunc(() => {
     setBiometrics(prev => ({ ...prev, supportedBiometryType: supportedType }));
   });
 });
+
+function isPrimaryAndroidBiometricsEntryReady(state: KeychainDebugState) {
+  if (state.platform !== 'android' || !state.debugSupported) {
+    return true;
+  }
+
+  return state.hasEntry && state.hasUsername && state.hasPassword;
+}
+
+async function checkAndroidBiometricsEntryReady() {
+  if (!IS_ANDROID || !isAuthenticatedByBiometrics()) {
+    return true;
+  }
+
+  try {
+    const debugState = await apisKeychain.getKeychainDebugState();
+    const ready = isPrimaryAndroidBiometricsEntryReady(debugState);
+
+    if (!ready) {
+      logger.warn('[biometrics] Android keychain entry is unavailable', {
+        sourceLabel: debugState.sourceLabel,
+        hasEntry: debugState.hasEntry,
+        hasUsername: debugState.hasUsername,
+        hasPassword: debugState.hasPassword,
+        resolvedCipherStorageName:
+          debugState.platform === 'android'
+            ? debugState.resolvedCipherStorageName
+            : undefined,
+        hasKeystoreAlias:
+          debugState.platform === 'android'
+            ? debugState.hasKeystoreAlias
+            : undefined,
+      });
+    }
+
+    return ready;
+  } catch (error) {
+    logger.warn('[biometrics] failed to inspect Android keychain entry', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return true;
+  }
+}
+
+export function disableBiometricsForCurrentSession(reason: string) {
+  logger.warn('[biometrics] disabled for current session', { reason });
+  setBiometrics(prev => ({ ...prev, authEnabled: false }));
+}
+
+async function ensureBiometricsReadyForUnlock() {
+  let supportedType = null as KeychainSupportedBiometryType;
+  try {
+    supportedType = await apisKeychain.getSupportedBiometryType();
+  } catch (error) {
+    logger.warn('[biometrics] failed to fetch supported biometry type', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  const enabledBySetting = isAuthenticatedByBiometrics();
+  const entryReady = await checkAndroidBiometricsEntryReady();
+  const nextAuthEnabled = enabledBySetting && !!supportedType && entryReady;
+
+  setBiometrics(prev => ({
+    ...prev,
+    supportedBiometryType:
+      supportedType || (nextAuthEnabled ? prev.supportedBiometryType : null),
+    authEnabled: nextAuthEnabled,
+  }));
+
+  return nextAuthEnabled;
+}
 
 export function useBiometricsComputed() {
   const authEnabled = biometricsInfoStore(s => s.authEnabled);
@@ -87,11 +161,14 @@ const fetchBiometrics = async () => {
     } catch (error) {
       console.error(error);
     }
+    const enabledBySetting = isAuthenticatedByBiometrics();
+    const entryReady = await checkAndroidBiometricsEntryReady();
+    const nextAuthEnabledByEntry = enabledBySetting && entryReady;
+
     setBiometrics(prev => {
       if (!didFetchSupportedType) {
         return prev;
       }
-      const nextAuthEnabled = isAuthenticatedByBiometrics();
       // if (prev.authEnabled && !supportedType) {
       //   toast.info(
       //     'Biometrics authentication disabled because no valid biometric data found.',
@@ -101,8 +178,12 @@ const fetchBiometrics = async () => {
         ...prev,
         supportedBiometryType:
           supportedType ||
-          (nextAuthEnabled ? prev.supportedBiometryType : null),
-        authEnabled: nextAuthEnabled,
+          (!IS_ANDROID && nextAuthEnabledByEntry
+            ? prev.supportedBiometryType
+            : null),
+        authEnabled:
+          nextAuthEnabledByEntry &&
+          !!(supportedType || (!IS_ANDROID && prev.supportedBiometryType)),
       };
     });
   } catch (error) {
@@ -173,6 +254,8 @@ const toggleBiometrics = async <T extends boolean>(
 export const storeApisBiometrics = {
   fetchBiometrics,
   toggleBiometrics,
+  disableBiometricsForCurrentSession,
+  ensureBiometricsReadyForUnlock,
 };
 
 export function useBiometrics(options?: { autoFetch?: boolean }) {
