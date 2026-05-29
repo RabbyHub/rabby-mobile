@@ -27,6 +27,12 @@ import {
 } from 'react-native';
 import { PerpsSlider } from './PerpsSlider';
 import { PERPS_MAX_NTL_VALUE, PERPS_MINI_USD_VALUE } from '@/constant/perps';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import BigNumber from 'bignumber.js';
 import { calLiquidationPrice, formatPerpsCoin } from '@/utils/perps';
 import { AssetPriceInfo } from './PerpsPriceInfo';
@@ -506,6 +512,8 @@ export const PerpsAddPositionPopup: React.FC<{
           <Button
             type="hyperliquid"
             title={t('page.perpsDetail.PerpsClosePositionPopup.confirm')}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             loading={loading}
             disabled={!marginValidation.isValid}
             onPress={addPosition}
@@ -516,13 +524,14 @@ export const PerpsAddPositionPopup: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+const getStyle = createGetStyles2024(ctx => {
+  const { colors2024, isLight, safeAreaInsets } = ctx;
   return {
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],
-      paddingTop: 16,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
       paddingHorizontal: 16,
-      paddingBottom: 48,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
     scrollViewContent: {
       paddingHorizontal: 20,

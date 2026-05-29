@@ -76,6 +76,13 @@ import useTokenList, {
 } from '@/store/tokens';
 import { Text } from '@/components/Typography';
 import { toChecksumAddress } from '@ethereumjs/util';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { useShallow } from 'zustand/shallow';
 
 export interface PerpBridgeHistory {
@@ -1093,50 +1100,56 @@ export const PerpsDepositPopup: React.FC<{
             </View>
             <View style={styles.bottomContainer}>{BottomComponent}</View>
           </View>
-          {canShowDirectSubmit ? (
-            <AuthButton
-              authTitle={t('page.whitelist.confirmPassword')}
-              title={
-                shouldTwoStep && twoStepIsApprove
-                  ? t('page.swap.approve')
-                  : t('page.perps.PerpsDepositPopup.depositBtn')
-              }
-              onFinished={handleDeposit}
-              disabled={
-                !isValidAmount ||
-                Boolean(quoteError) ||
-                quoteLoading ||
-                twoStepApprovePending
-              }
-              loading={loading || twoStepApprovePending}
-              type={'hyperliquid'}
-              iconColor={'#040601'}
-              titleStyle={{
-                color: '#040601',
-              }}
-              syncUnlockTime
-              onBeforeAuth={() => {
-                Keyboard.dismiss();
-              }}
-            />
-          ) : (
-            <Button
-              type="hyperliquid"
-              title={
-                shouldTwoStep && twoStepIsApprove
-                  ? t('page.swap.approve')
-                  : t('page.perps.PerpsDepositPopup.depositBtn')
-              }
-              onPress={handleDeposit}
-              disabled={
-                !isValidAmount ||
-                Boolean(quoteError) ||
-                quoteLoading ||
-                twoStepApprovePending
-              }
-              loading={loading || twoStepApprovePending}
-            />
-          )}
+          <View style={styles.footer}>
+            {canShowDirectSubmit ? (
+              <AuthButton
+                authTitle={t('page.whitelist.confirmPassword')}
+                title={
+                  shouldTwoStep && twoStepIsApprove
+                    ? t('page.swap.approve')
+                    : t('page.perps.PerpsDepositPopup.depositBtn')
+                }
+                onFinished={handleDeposit}
+                disabled={
+                  !isValidAmount ||
+                  Boolean(quoteError) ||
+                  quoteLoading ||
+                  twoStepApprovePending
+                }
+                loading={loading || twoStepApprovePending}
+                type={'hyperliquid'}
+                iconColor={'#040601'}
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                titleStyle={[
+                  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+                  { color: '#040601' },
+                ]}
+                syncUnlockTime
+                onBeforeAuth={() => {
+                  Keyboard.dismiss();
+                }}
+              />
+            ) : (
+              <Button
+                type="hyperliquid"
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+                title={
+                  shouldTwoStep && twoStepIsApprove
+                    ? t('page.swap.approve')
+                    : t('page.perps.PerpsDepositPopup.depositBtn')
+                }
+                onPress={handleDeposit}
+                disabled={
+                  !isValidAmount ||
+                  Boolean(quoteError) ||
+                  quoteLoading ||
+                  twoStepApprovePending
+                }
+                loading={loading || twoStepApprovePending}
+              />
+            )}
+          </View>
         </BottomSheetView>
       </AppBottomSheetModal>
       <PerpsSelectTokenPopup
@@ -1173,10 +1186,8 @@ export const PerpsDepositPopup: React.FC<{
 const getStyle = createGetStyles2024(ctx => {
   return {
     container: {
-      // height: '100%',
+      height: '100%',
       backgroundColor: ctx.colors2024['neutral-bg-1'],
-      paddingTop: 10,
-      paddingBottom: 56,
       paddingHorizontal: 20,
       display: 'flex',
       flexDirection: 'column',
@@ -1241,6 +1252,11 @@ const getStyle = createGetStyles2024(ctx => {
       marginTop: 8,
       minHeight: 18,
       marginLeft: 8,
+    },
+    footer: {
+      marginTop: 'auto',
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+      paddingBottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     },
     maxButtonWrapper: {
       padding: 4,

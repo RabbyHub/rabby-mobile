@@ -21,7 +21,6 @@ import {
 } from '@react-navigation/native';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
-import { CHAINS_ENUM } from '@/constant/chains';
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
 import {
   apiSendToken,
@@ -43,7 +42,6 @@ import {
 } from '@/utils/chain';
 import { preferenceService } from '@/core/services';
 import {
-  AddrDescResponse,
   TokenItem,
   TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -71,39 +69,25 @@ import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { openapi } from '@/core/request';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
 import FromAddressControl2024 from './components/FromAddressControl';
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtomValue } from 'jotai';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
-import {
-  getAddrDescWithCexLocalCacheSync,
-  getInitDescWithCexLocalCache,
-} from '@/databases/hooks/cex';
+import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 import { SendHeaderRight } from './SubScreens/SelectPolyScreen/HeaderRight';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { getRecommendToken } from '@/utils/addressSupport';
 import { lowcaseSame } from '@/utils/common';
-import { noop } from 'lodash';
 import { ShowMoreOnSend } from './components/ShowMoreOnSend';
 import { PendingTxItem } from '../Swap/components/PendingTxItem';
 import { SendTxHistoryItem } from '@/core/services/transactionHistory';
 import { useRecentSendPendingTx } from './hooks/useRecentSend';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
-import {
-  globalSupportCexList,
-  useCexSupportList,
-} from '@/hooks/useCexSupportList';
+import { globalSupportCexList } from '@/hooks/useCexSupportList';
 import { isValidHexAddress } from '@metamask/utils';
 import { type ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
-import Animated, {
-  runOnJS,
-  useAnimatedReaction,
-  useAnimatedRef,
-  useAnimatedStyle,
-  useSharedValue,
-} from 'react-native-reanimated';
-import { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import Animated from 'react-native-reanimated';
 
 const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
   KeyboardAwareScrollView,

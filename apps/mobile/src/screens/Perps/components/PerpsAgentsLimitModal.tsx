@@ -9,6 +9,11 @@ import { useTheme2024 } from '@/hooks/theme';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_TITLE_STYLE,
+} from '@/constant/layout';
 
 interface Props {
   visible: boolean;
@@ -44,12 +49,16 @@ export const PerpsAgentsLimitModal: React.FC<Props> = ({
               type="ghost"
               title={t('global.cancel')}
               onPress={onCancel}
+              height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               containerStyle={styles.containerStyle}
             />
             <Button
               type="primary"
               title={t('global.confirm')}
               onPress={onConfirm}
+              height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               containerStyle={styles.containerStyle}
             />
           </View>
@@ -82,7 +91,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 13,
+    gap: BOTTOM_BUTTON_GAP,
   },
 
   description: {
@@ -106,7 +115,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   containerStyle: {
     // width: '100%',
     // height: 40,
-    height: 48,
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
     flex: 1,
   },
   buttonStyle: {},

@@ -88,7 +88,7 @@ const getStyle = createGetStyles(colors => {
     },
     buttonText: {
       color: colors['blue-default'],
-      fontSize: 14,
+      fontSize: 18,
       fontWeight: '500',
     },
   };

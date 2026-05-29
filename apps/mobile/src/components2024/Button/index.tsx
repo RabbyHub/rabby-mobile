@@ -13,7 +13,6 @@ import {
   ViewStyle,
   TouchableOpacityProps,
   TouchableOpacity,
-  TouchableWithoutFeedback,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -33,6 +32,7 @@ export type ButtonProps = Omit<
       buttonStyle?: StyleProp<ViewStyle> | StyleProp<ViewStyle>[];
       type?:
         | 'primary'
+        | 'plain'
         | 'ghost'
         | 'success'
         | 'danger'
@@ -86,6 +86,12 @@ export const Button = ({
       primary: {
         bg: colors2024['brand-default'],
         currentColor: colors2024['neutral-InvertHighlight'],
+      },
+      plain: {
+        bg: colors2024['neutral-bg-5'],
+        currentColor: disabled
+          ? colors2024['neutral-info']
+          : colors2024['neutral-title-1'],
       },
       ghost: {
         bg: colors2024['neutral-bg-1'],
@@ -184,6 +190,10 @@ export const Button = ({
         (type === 'ghost'
           ? {
               borderColor: colors2024['brand-disable'],
+            }
+          : type === 'plain'
+          ? {
+              backgroundColor: colors2024['neutral-bg-5'],
             }
           : type === 'hyperliquid'
           ? {
@@ -323,14 +333,15 @@ const getStyle = createGetStyles2024(ctx => ({
     // elevation: 4,
   },
   title: {
-    fontSize: 20,
+    fontSize: 18,
+    // lineHeight: 22,
     textAlign: 'center',
     paddingVertical: 1,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
   },
   titleWithLeading: {
-    lineHeight: 24,
+    // lineHeight: 22,
   },
   iconContainer: {
     marginHorizontal: 8,

@@ -36,8 +36,13 @@ import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { Text } from '@/components/Typography';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
-
-const isAndroid = Platform.OS === 'android';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 function BottomArea() {
   const { t } = useTranslation();
@@ -285,6 +290,8 @@ function BottomArea() {
             disableSubmitDueToBasic || !canDirectSign || isDirectSigning
           }
           loading={isSubmitLoading}
+          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+          titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
           type={'primary'}
           syncUnlockTime
           account={account}
@@ -298,6 +305,8 @@ function BottomArea() {
           type="primary"
           title={'Send'}
           loading={isSubmitLoading}
+          height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+          titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
           onPress={submitForm}
           {...makeTestIDProps(E2E_ID.send.confirmButton)}
         />
@@ -338,10 +347,8 @@ function BottomArea() {
 export default React.memo(BottomArea);
 
 const SIZES = {
-  containerPt: 16,
-  containerPb: 48,
+  containerPt: BOTTOM_BUTTON_TOP_OFFSET,
   // height: 220,
-  bottom: 48,
 };
 
 const getStyle = createGetStyles2024(
@@ -353,7 +360,7 @@ const getStyle = createGetStyles2024(
         paddingHorizontal: 24,
         position: 'absolute',
         paddingTop: SIZES.containerPt,
-        paddingBottom: SIZES.containerPb + safeAreaInsets.bottom,
+        paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
         backgroundColor: resolveBgColorByType('bg1', {
           isLight: isLight ?? true,
           colors,

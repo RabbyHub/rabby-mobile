@@ -9,9 +9,16 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/Typography';
 import { formatPerpsUsdValue } from '@/utils/number';
 import { AccountHistoryItem } from '@/hooks/perps/usePerpsStore';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 export const PerpsHistoryTransferPopup: React.FC<{
   visible?: boolean;
@@ -21,6 +28,7 @@ export const PerpsHistoryTransferPopup: React.FC<{
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
 
   useEffect(() => {
     if (visible) {
@@ -45,7 +53,11 @@ export const PerpsHistoryTransferPopup: React.FC<{
       onDismiss={onClose}
       enableDynamicSizing>
       <BottomSheetView>
-        <AutoLockView style={styles.container}>
+        <AutoLockView
+          style={[
+            styles.container,
+            { paddingBottom: getBottomButtonBottomOffset(bottom) },
+          ]}>
           <Text style={styles.title}>
             {t('page.perps.history.transferDetailTitle')}
           </Text>
@@ -74,6 +86,8 @@ export const PerpsHistoryTransferPopup: React.FC<{
           <Button
             type="hyperliquid"
             title={t('page.perps.history.transferGotIt')}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             onPress={onClose}
           />
         </AutoLockView>
@@ -85,8 +99,8 @@ export const PerpsHistoryTransferPopup: React.FC<{
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 48,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    paddingBottom: 36,
   },
   title: {
     fontFamily: 'SF Pro Rounded',
