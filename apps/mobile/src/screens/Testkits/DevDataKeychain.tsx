@@ -2917,6 +2917,16 @@ export default function DevDataKeychain(): JSX.Element {
     const versionMeta = KEYCHAIN_VERSION_META[resolvedTabVersion];
     const hasBusinessEntry =
       !!businessStates[resolvedTabVersion].debugState?.hasEntry;
+    const useCurrentFacadeForBusinessActions =
+      resolvedTabVersion === currentKeychainVersion;
+    const hasLegacyRecoverableBusinessEntry =
+      useCurrentFacadeForBusinessActions &&
+      !!businessStates['8.2.0-fork'].debugState?.hasEntry;
+    const canTryBusinessDecrypt =
+      hasBusinessEntry || hasLegacyRecoverableBusinessEntry;
+    const businessActionApiLabel = useCurrentFacadeForBusinessActions
+      ? 'current app facade'
+      : `${versionMeta.label} raw wrapper`;
 
     return (
       <BottomSheetScrollView
@@ -2967,14 +2977,18 @@ export default function DevDataKeychain(): JSX.Element {
 
           <ActionSheetSection
             title={`${versionMeta.label} Business Actions`}
-            desc={`These actions use the business wrapper for the selected version and affect the current \`com.debank\` entry. Selected storage: ${getKeychainStorageLabel(
+            desc={`These actions use the ${businessActionApiLabel} and affect the current \`com.debank\` entry. Selected storage: ${getKeychainStorageLabel(
               effectiveStorageByVersion[resolvedTabVersion],
             )}.`}>
             <View style={styles.actionsRow}>
               <Button
-                title="Try Decrypt"
+                title={
+                  useCurrentFacadeForBusinessActions
+                    ? 'Try Decrypt'
+                    : 'Try Raw Decrypt'
+                }
                 type="primary"
-                disabled={!hasBusinessEntry || isLoading}
+                disabled={!canTryBusinessDecrypt || isLoading}
                 height={40}
                 containerStyle={styles.actionButton}
                 onPress={() => {
@@ -2983,15 +2997,21 @@ export default function DevDataKeychain(): JSX.Element {
                       resolvedTabVersion,
                       apisKeychain.ANDROID_AUTH_PROMPT_POLICIES
                         .INTERACTIVE_FIRST,
-                      { useCurrentFacade: tabKey === 'current' },
+                      {
+                        useCurrentFacade: useCurrentFacadeForBusinessActions,
+                      },
                     ),
                   );
                 }}
               />
               <Button
-                title="Try Decrypt Session"
+                title={
+                  useCurrentFacadeForBusinessActions
+                    ? 'Try Decrypt Session'
+                    : 'Try Raw Decrypt Session'
+                }
                 type="ghost"
-                disabled={!hasBusinessEntry || isLoading || !IS_ANDROID}
+                disabled={!canTryBusinessDecrypt || isLoading || !IS_ANDROID}
                 height={40}
                 containerStyle={styles.actionButton}
                 onPress={() => {
@@ -3000,7 +3020,9 @@ export default function DevDataKeychain(): JSX.Element {
                       resolvedTabVersion,
                       apisKeychain.ANDROID_AUTH_PROMPT_POLICIES
                         .ALLOW_AUTHENTICATED_SESSION_REUSE,
-                      { useCurrentFacade: tabKey === 'current' },
+                      {
+                        useCurrentFacade: useCurrentFacadeForBusinessActions,
+                      },
                     ),
                   );
                 }}
