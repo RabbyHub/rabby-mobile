@@ -26,6 +26,7 @@ import {
 } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 import { logger } from '@/utils/logger';
+import { getCurrentKeychainVersion } from './appSettings';
 
 type BiometricsInfoState = {
   authEnabled: boolean;
@@ -259,10 +260,12 @@ const toggleBiometrics = async <T extends boolean>(
         throw new Error('Validated password is required to enable biometrics.');
       }
 
-      await apisKeychain.setGenericPassword(
-        validatedPassword,
-        KEYCHAIN_AUTH_TYPES.BIOMETRICS,
-      );
+      const nextAuthType =
+        IS_ANDROID && getCurrentKeychainVersion() !== '8.2.0-fork'
+          ? KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE
+          : KEYCHAIN_AUTH_TYPES.BIOMETRICS;
+
+      await apisKeychain.setGenericPassword(validatedPassword, nextAuthType);
       const requestResult = await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.VERIFY,
       });

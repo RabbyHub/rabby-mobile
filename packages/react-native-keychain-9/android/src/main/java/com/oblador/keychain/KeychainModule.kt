@@ -973,8 +973,18 @@ class KeychainModule(reactContext: ReactApplicationContext) :
           AccessControl.BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE == accessControl
     }
 
+    /** Is provided access control string matching passcode use request? */
+    fun getUsePasscode(@AccessControl accessControl: String?): Boolean {
+      return AccessControl.DEVICE_PASSCODE == accessControl ||
+          AccessControl.BIOMETRY_ANY_OR_DEVICE_PASSCODE == accessControl ||
+          AccessControl.BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE == accessControl
+    }
+
     /** Extract user specified prompt info from options. */
     private fun getPromptInfo(options: ReadableMap?): PromptInfo {
+      val accessControl = getAccessControlOrDefault(options)
+      val useBiometry = getUseBiometry(accessControl)
+      val usePasscode = getUsePasscode(accessControl)
       val promptInfoOptionsMap =
           if (options != null && options.hasKey(Maps.AUTH_PROMPT)) options.getMap(Maps.AUTH_PROMPT)
           else null
@@ -992,13 +1002,25 @@ class KeychainModule(reactContext: ReactApplicationContext) :
         val promptInfoDescription = promptInfoOptionsMap.getString(AuthPromptOptions.DESCRIPTION)
         promptInfoBuilder.setDescription(promptInfoDescription)
       }
-      if (null != promptInfoOptionsMap && promptInfoOptionsMap.hasKey(AuthPromptOptions.CANCEL)) {
+      val allowedAuthenticators =
+          when {
+            useBiometry && usePasscode ->
+                BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                    BiometricManager.Authenticators.DEVICE_CREDENTIAL
+            usePasscode -> BiometricManager.Authenticators.DEVICE_CREDENTIAL
+            else -> BiometricManager.Authenticators.BIOMETRIC_STRONG
+          }
+
+      if (null != promptInfoOptionsMap &&
+          promptInfoOptionsMap.hasKey(AuthPromptOptions.CANCEL) &&
+          (allowedAuthenticators and BiometricManager.Authenticators.DEVICE_CREDENTIAL) == 0) {
         val promptInfoNegativeButton = promptInfoOptionsMap.getString(AuthPromptOptions.CANCEL)
         promptInfoBuilder.setNegativeButtonText(promptInfoNegativeButton!!)
       }
 
-      /* PromptInfo is only used in Biometric-enabled RSA storage and can only be unlocked by a strong biometric */ promptInfoBuilder
-          .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+      /* PromptInfo is only used in auth-enabled RSA storage. v9 keeps the RSA key
+       * unauthenticated, so this prompt acts as the business auth gate. */
+      promptInfoBuilder.setAllowedAuthenticators(allowedAuthenticators)
 
       /* Bypass confirmation to avoid KeyStore unlock timeout being exceeded when using passive biometrics */ promptInfoBuilder
           .setConfirmationRequired(false)

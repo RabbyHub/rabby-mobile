@@ -121,6 +121,7 @@ describe('core/apis/keychainV9_0_0', () => {
         ACCESS_CONTROL: {
           BIOMETRY_CURRENT_SET: 'BiometryCurrentSet',
           DEVICE_PASSCODE: 'DevicePasscode',
+          BIOMETRY_ANY_OR_DEVICE_PASSCODE: 'BiometryAnyOrDevicePasscode',
         },
         AUTHENTICATION_TYPE: {
           BIOMETRICS: 'AuthenticationWithBiometrics',
@@ -496,6 +497,38 @@ describe('core/apis/keychainV9_0_0', () => {
     );
     expect(mockSetGenericPassword.mock.calls[0]?.[2]).not.toHaveProperty(
       'storage',
+    );
+  });
+
+  it('passes BIOMETRICS_OR_PASSCODE access control through v9 reads and writes', async () => {
+    const { module, mockGetGenericPassword, mockSetGenericPassword } =
+      await setup({
+        authType: 4,
+      });
+
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.DECRYPT_PWD,
+    });
+
+    expect(mockGetGenericPassword).toHaveBeenCalledWith(
+      expect.objectContaining({
+        service: 'com.debank',
+        accessControl: 'BiometryAnyOrDevicePasscode',
+      }),
+    );
+
+    await module.setGenericPassword(
+      'plain-password',
+      module.KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
+    );
+
+    expect(mockSetGenericPassword).toHaveBeenLastCalledWith(
+      'rabbymobile-user',
+      'enc:plain-password',
+      expect.objectContaining({
+        service: 'com.debank',
+        accessControl: 'BiometryAnyOrDevicePasscode',
+      }),
     );
   });
 

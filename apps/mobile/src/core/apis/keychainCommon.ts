@@ -911,8 +911,14 @@ export function createBusinessKeychainApi({
       return;
     }
 
+    const authType = getAuthenticationType();
+    const nextAuthType =
+      authType === KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE
+        ? authType
+        : KEYCHAIN_AUTH_TYPES.BIOMETRICS;
+
     try {
-      await setGenericPassword(plainPassword, KEYCHAIN_AUTH_TYPES.BIOMETRICS, {
+      await setGenericPassword(plainPassword, nextAuthType, {
         vaultKeyString: credentialsPatch.vaultKeyString,
       });
     } catch (error) {
@@ -1045,7 +1051,7 @@ export function createBusinessKeychainApi({
     androidAllowKeyStoreRecovery = false,
     shouldAttachTrustedVaultKeyString = true,
     skipLegacyAndroidBiometricsStorageUpgrade = false,
-    authenticationType,
+    authenticationType = getAuthenticationType(),
     skipPostDecryptKeychainRewrite = false,
   }: {
     purpose?: T;
