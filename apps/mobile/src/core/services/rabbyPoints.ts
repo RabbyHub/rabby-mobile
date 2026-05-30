@@ -39,7 +39,7 @@ export class RabbyPointsService {
     return this.store.signatures[addr.toLowerCase()];
   };
   clearSignatureByAddr = (addr: string) => {
-    delete this.store.signatures[addr];
+    delete this.store.signatures[addr.toLowerCase()];
     this.store.signatures = {
       ...this.store.signatures,
     };
