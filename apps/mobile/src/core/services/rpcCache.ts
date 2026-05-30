@@ -56,9 +56,8 @@ class RpcCache {
         expireTime,
       });
     } else {
-      const methodState: CacheState = new Map();
       const timeoutId = setTimeout(() => {
-        methodState.delete(key);
+        this.state.delete(key);
       }, expireTime);
       this.state.set(key, { result: data.result, timeoutId, expireTime });
     }
@@ -97,13 +96,14 @@ class RpcCache {
     }-${latestBlockNumber}-${JSON.stringify(data.params)}`;
     const cache = this.getIfExist(key);
     if (cache) {
+      clearTimeout(cache.timeoutId);
       const timeoutId = setTimeout(() => {
         this.state.delete(key);
       }, expireTime);
       this.state.set(key, {
         timeoutId,
         result: cache.result,
-        expireTime: cache.expireTime,
+        expireTime,
       });
     }
   }
