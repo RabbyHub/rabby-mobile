@@ -880,7 +880,7 @@ export function isSwapWrapToken(
   return (
     !!payTokenId &&
     !!receiveId &&
-    payTokenId !== receiveId &&
+    !isSameAddress(payTokenId, receiveId) &&
     !!wrapTokens.find(token => isSameAddress(payTokenId, token)) &&
     !!wrapTokens.find(token => isSameAddress(receiveId, token))
   );
