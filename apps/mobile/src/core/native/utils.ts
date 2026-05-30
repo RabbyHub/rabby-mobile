@@ -151,7 +151,7 @@ export function wrapPlatformOnlyMethod<
       );
 
       console.error(err);
-      fallbackFn(...args);
+      return fallbackFn(...args);
     } as T;
   }
 
