@@ -19,7 +19,7 @@ export const filterPrimaryType = ({
   message: Record<string, any>;
 }) => {
   const keys = types[primaryType];
-  const filteredMessage: Record<string, string> = {};
+  const filteredMessage: Record<string, any> = {};
 
   keys.forEach((key: { name: string; type: string }) => {
     filteredMessage[key.name] = message[key.name];
