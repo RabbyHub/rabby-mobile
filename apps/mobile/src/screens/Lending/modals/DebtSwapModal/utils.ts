@@ -50,7 +50,7 @@ export const formatTx = (
           : tx.value ?? '0x0',
       chainId,
     };
-    if (tx.nonce) {
+    if (tx.nonce !== undefined) {
       (formattedTx as any).nonce = tx.nonce;
     }
     return formattedTx as Tx;

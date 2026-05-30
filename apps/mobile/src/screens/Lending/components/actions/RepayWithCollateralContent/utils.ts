@@ -17,9 +17,8 @@ export const isSupportRepayWithCollateral = (
   market?: MarketDataType,
 ) => {
   const marketEnabledFeatures =
-    market &&
-    market.enabledFeatures?.collateralRepay &&
-    market.addresses.REPAY_WITH_COLLATERAL_ADAPTER;
+    !!market?.enabledFeatures?.collateralRepay &&
+    !!market.addresses.REPAY_WITH_COLLATERAL_ADAPTER;
   return (
     REPAY_WITH_COLLATERAL_SUPPORTED_CHAINs.includes(chainId) &&
     marketEnabledFeatures
