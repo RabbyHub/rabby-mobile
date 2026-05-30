@@ -129,6 +129,7 @@ export function isSameRevokeItem(
 ) {
   const base =
     src.approvalType === target.approvalType &&
+    src.chainServerId === target.chainServerId &&
     src.contractId === target.contractId &&
     src.spender === target.spender &&
     src.permit2Id === target.permit2Id &&
