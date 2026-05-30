@@ -2,8 +2,11 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import addressBalanceStore from '@/store/balance';
 import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import groupBy from 'lodash/groupBy';
 import { keyringService, preferenceService } from '../services/shared';
+
+dayjs.extend(utc);
 
 export const sendUserAddressEvent = async () => {
   const time = preferenceService.getSendLogTime();
