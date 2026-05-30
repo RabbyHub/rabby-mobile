@@ -17,11 +17,56 @@ import {
   buildOpenApiHttpErrorToastMessage,
   buildOpenApiFailurePayload,
   extractOpenApiResponseCode,
+  instrumentOpenApiFailureLogging,
   shouldLogOpenApiFailureResponse,
   shouldToastOpenApiHttpErrorStatus,
 } from './openapiFailureLogging';
+import {
+  OPENAPI_HTTP_ERROR_DEBUG,
+  openApiDebugEvents,
+} from './openapiDebugEvents';
+import { logger } from './logger';
+
+const createRequestLike = () => {
+  const requestUse = jest.fn();
+  const responseUse = jest.fn((fulfilled, rejected) => {
+    request.interceptors.response.handlers.push({ fulfilled, rejected });
+    return request.interceptors.response.handlers.length - 1;
+  });
+  const originalFulfilled = jest.fn(response => ({
+    ...response,
+    handled: true,
+  }));
+  const request = {
+    interceptors: {
+      request: {
+        use: requestUse,
+      },
+      response: {
+        handlers: [
+          {
+            fulfilled: originalFulfilled,
+          },
+        ],
+        use: responseUse,
+      },
+    },
+  };
+
+  return {
+    request,
+    requestUse,
+    responseUse,
+    originalFulfilled,
+  };
+};
 
 describe('openapi failure logging', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    openApiDebugEvents.removeAllListeners();
+  });
+
   it('detects http and api-level non-200 responses', () => {
     expect(
       shouldLogOpenApiFailureResponse({
@@ -123,6 +168,111 @@ describe('openapi failure logging', () => {
       }),
     ).toBe(
       '[notificationOpenapi] HTTP 503 POST /v1/notification/device/heartbeat?foo=bar',
+    );
+  });
+
+  it('instruments requests with source/request id metadata and wraps failed fulfilled responses', () => {
+    const listener = jest.fn();
+    const { request, requestUse, originalFulfilled } = createRequestLike();
+    const service = {
+      initSync: jest.fn(),
+      request,
+    } as never;
+
+    openApiDebugEvents.on(OPENAPI_HTTP_ERROR_DEBUG, listener);
+    instrumentOpenApiFailureLogging(service, 'openapi');
+
+    const config = requestUse.mock.calls[0][0]({
+      method: 'get',
+      baseURL: 'https://app-api.rabby.io',
+      url: '/v1/wallet',
+    });
+
+    expect(config.__rabbyOpenApiFailureMeta).toMatchObject({
+      source: 'openapi',
+      requestId: expect.stringMatching(/^openapi-/),
+    });
+
+    const response = {
+      status: 503,
+      statusText: 'Service Unavailable',
+      headers: {},
+      data: { err_code: 503 },
+      config,
+    } as never;
+
+    expect(
+      request.interceptors.response.handlers[0].fulfilled(response),
+    ).toMatchObject({
+      handled: true,
+    });
+
+    expect(originalFulfilled).toHaveBeenCalledWith(response);
+    expect(logger.warn).toHaveBeenCalledWith(
+      '[openapi] non-200 request detected',
+      expect.objectContaining({
+        requestId: config.__rabbyOpenApiFailureMeta.requestId,
+        source: 'openapi',
+      }),
+    );
+    expect(listener).toHaveBeenCalledWith({
+      source: 'openapi',
+      status: 503,
+      method: 'GET',
+      url: '/v1/wallet',
+      message: '[openapi] HTTP 503 GET /v1/wallet',
+    });
+  });
+
+  it('logs rejected request failures and keeps instrumentation idempotent', async () => {
+    const { request, requestUse, responseUse } = createRequestLike();
+    const originalInitSync = jest.fn();
+    const service = {
+      initSync: originalInitSync,
+      request,
+    } as any;
+
+    instrumentOpenApiFailureLogging(service, 'testOpenapi');
+    instrumentOpenApiFailureLogging(service, 'testOpenapi');
+
+    expect(requestUse).toHaveBeenCalledTimes(1);
+    expect(responseUse).toHaveBeenCalledTimes(1);
+
+    service.initSync({ from: 'bootstrap' });
+    expect(originalInitSync).toHaveBeenCalledWith({ from: 'bootstrap' });
+    expect(requestUse).toHaveBeenCalledTimes(1);
+
+    const rejected = request.interceptors.response.handlers.at(-1)?.rejected;
+    const error = Object.assign(new Error('network down'), {
+      code: 'ECONNABORTED',
+      config: {
+        method: 'post',
+        baseURL: 'https://test-api.rabby.io',
+        url: '/v1/tx',
+      },
+      response: {
+        status: 500,
+        statusText: 'Internal Server Error',
+        headers: {},
+        data: { error_code: '500' },
+      },
+    });
+
+    await expect(rejected?.(error)).rejects.toBe(error);
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      '[openapi] non-200 request detected',
+      expect.objectContaining({
+        error: expect.objectContaining({
+          code: 'ECONNABORTED',
+          message: 'network down',
+        }),
+        response: expect.objectContaining({
+          apiCode: 500,
+          status: 500,
+        }),
+        source: 'testOpenapi',
+      }),
     );
   });
 });
