@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import { zCreate } from '@/core/utils/reexports';
 import { runDevIIFEFunc } from '@/core/utils/store';
@@ -88,7 +89,9 @@ export function hasVisibleBlockingModal(options?: { excludeIds?: string[] }) {
 }
 
 export function useVisibleBlockingModalIds() {
-  return modalGateStore(s => Object.keys(s.blockingModalCountMap).sort());
+  return modalGateStore(
+    useShallow(s => Object.keys(s.blockingModalCountMap).sort()),
+  );
 }
 
 export type ModalGateDebugSnapshot = {
