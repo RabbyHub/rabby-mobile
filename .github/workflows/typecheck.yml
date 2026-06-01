@@ -2,9 +2,9 @@ name: Type Check & Test
 
 on:
   push:
-    branches: [ develop, feat/type*, build/* ]
+    branches: [develop, feat/type*, build/*]
   pull_request:
-    branches: [ develop ]
+    branches: [develop]
   workflow_dispatch:
   schedule:
     - cron: '30 0 * * 0'
@@ -86,6 +86,38 @@ jobs:
 
       - name: Run apps/mobile Jest
         run: time yarn workspace rabby-mobile test --runInBand
+
+  mobile_hermes_logic:
+    name: apps/mobile Hermes logic
+    permissions:
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+    runs-on:
+      - macos-latest
+    env:
+      NODE_OPTIONS: '--max_old_space_size=4096'
+      YARN_ENABLE_HARDENED_MODE: '0'
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run apps/mobile Hermes logic smoke
+        run: time yarn workspace rabby-mobile test:hermes-logic
 
   mobile_import_cycles:
     name: apps/mobile import cycles
