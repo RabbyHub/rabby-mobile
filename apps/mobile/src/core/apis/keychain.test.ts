@@ -378,9 +378,70 @@ describe('core/apis/keychain current facade', () => {
       { vaultKeyString: 'vault-key' },
     );
     expect(mockLoggerWarn).toHaveBeenCalledWith(
-      '[keychain] recovered Android biometrics through legacy v8 fallback',
+      '[keychain] recovered Android biometrics through legacy keychain fallback',
       expect.objectContaining({
         currentVersion: '9.0.0',
+        fallbackVersion: '8.2.0-fork',
+        currentRewriteSucceeded: true,
+      }),
+    );
+  });
+
+  it('falls back from v10 to v9 biometrics before v8 and rewrites the current version', async () => {
+    const {
+      module,
+      mockV8RequestGenericPassword,
+      mockV9RequestGenericPassword,
+      mockV10RequestGenericPassword,
+      mockV10SetGenericPassword,
+      mockLoggerWarn,
+    } = await setup('10.0.0');
+    const requestError = Object.assign(new Error('Failed to retrieve'), {
+      code: module.KEYCHAIN_ERROR_CODES.NIL_KEYCHAIN_OBJECT,
+    });
+    const onPlainPassword = jest.fn();
+
+    mockV10RequestGenericPassword.mockRejectedValueOnce(requestError);
+    mockV9RequestGenericPassword.mockImplementationOnce(async options => {
+      await options.onPlainPassword?.('v9-password', {
+        username: 'rabbymobile-user',
+        password: 'encrypted-password',
+        vaultKeyString: 'v9-vault-key',
+      });
+      return { actionSuccess: true };
+    });
+
+    const result = await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.DECRYPT_PWD,
+      shouldAttachTrustedVaultKeyString: false,
+      onPlainPassword,
+    });
+
+    expect(result).toEqual({ actionSuccess: true });
+    expect(mockV9RequestGenericPassword).toHaveBeenCalledWith(
+      expect.objectContaining({
+        purpose: module.RequestGenericPurpose.DECRYPT_PWD,
+        shouldAttachTrustedVaultKeyString: false,
+        onPlainPassword: expect.any(Function),
+      }),
+    );
+    expect(mockV8RequestGenericPassword).not.toHaveBeenCalled();
+    expect(onPlainPassword).toHaveBeenCalledWith(
+      'v9-password',
+      expect.objectContaining({
+        vaultKeyString: 'v9-vault-key',
+      }),
+    );
+    expect(mockV10SetGenericPassword).toHaveBeenCalledWith(
+      'v9-password',
+      module.KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+      { vaultKeyString: 'v9-vault-key' },
+    );
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      '[keychain] recovered Android biometrics through legacy keychain fallback',
+      expect.objectContaining({
+        currentVersion: '10.0.0',
+        fallbackVersion: '9.0.0',
         currentRewriteSucceeded: true,
       }),
     );
