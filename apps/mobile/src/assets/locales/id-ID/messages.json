@@ -6,7 +6,7 @@
       "VerifySeedPhrase": "Verifikasi frase benih",
       "CreateMnemonicBackup": "Cadangkan frase biji",
       "ImportSafeAddress2024": "Tambahkan Alamat Aman",
-      "SafeAddressList": "Alamat Aman",
+      "SafeAddressList": "Alamat Safe",
       "ImportMnemonic": "Impor Frasa Benih",
       "ImportPrivateKey": "Impor Kunci Pribadi",
       "BackupPrivateKey": "Cadangkan Kunci Pribadi",
@@ -168,7 +168,7 @@
         "payToken": "Bayar",
         "valueDiff": "Nilai diff",
         "slippageTolerance": "Toleransi selip",
-        "minReceive": "Minimum Receive",
+        "minReceive": "Minimum diterima",
         "failLoadReceiveToken": "Gagal memuat",
         "receiveToken": "Terima",
         "simulationNotSupport": "Simulasi transaksi tidak didukung di rantai ini",
@@ -182,7 +182,7 @@
         "selfHostConfirm": {
           "title": "Beralih ke Layanan Aman Rabby",
           "button": "OK",
-          "content": "API Safe tidak tersedia. Beralih ke layanan Safe yang diterapkan oleh Rabby untuk menjaga Safe Anda tetap berfungsi. <1></1><2>Semua penandatangan Safe harus menggunakan Rabby Wallet untuk mengotorisasi transaksi.<2>"
+          "content": "API Safe tidak tersedia. Beralih ke layanan Safe yang diterapkan oleh Rabby untuk menjaga Safe Anda tetap berfungsi. <1></1><2>Semua penandatangan Safe harus menggunakan Rabby Wallet untuk mengotorisasi transaksi.</2>"
         }
       },
       "crossChain": {
@@ -349,13 +349,13 @@
       "gasSelectorTitle": "Gas",
       "gasPriceTitle": "Harga Gas (Gwei)",
       "nativeTokenNotEngouthForGas": "Saldo Gas tidak cukup",
-      "gasLimitTitle": "Batas gas",
+      "gasLimitTitle": "Gas limit",
       "maxPriorityFee": "Max Priority Fee (Gwei)",
       "nonceTitle": "Nonce",
       "failToFetchGasCost": "Gagal memperkirakan gas",
-      "gasLimitNotEnough": "Batas gas kurang dari 21000. Transaksi tidak dapat diajukan.",
-      "gasLimitLessThanGasUsed": "Batas gas terlalu rendah. Ada kemungkinan 95% bahwa transaksi dapat gagal.",
-      "gasLimitLessThanExpect": "Batas Gas rendah. Ada 1% kemungkinan transaksi dapat gagal.",
+      "gasLimitNotEnough": "Gas limit kurang dari 21000. Transaksi tidak dapat diajukan.",
+      "gasLimitLessThanGasUsed": "Gas limit terlalu rendah. Ada kemungkinan 95% bahwa transaksi dapat gagal.",
+      "gasLimitLessThanExpect": "Gas limit rendah. Ada 1% kemungkinan transaksi dapat gagal.",
       "nativeTokenForGas": "Gunakan token {{tokenName}} di {{chainName}} untuk membayar gas",
       "manuallySetGasLimitAlert": "Anda telah mengatur batas Gas secara manual ke",
       "hardwareSupport1559Alert": "Pastikan firmware dompet perangkat keras Anda telah diperbarui ke versi yang mendukung EIP 1559",
@@ -364,7 +364,7 @@
       "canOnlyUseImportedAddress": "Anda tidak dapat menandatangani transaksi dengan alamat yang hanya untuk dilihat.",
       "nonceLowerThanExpect": "Nonce terlalu rendah, minimum harus {{0}}",
       "gasNotRequireForSafeTransaction": "Biaya gas tidak diperlukan untuk transaksi Safe",
-      "safeAddressNotSupportChain": "Alamat aman saat ini tidak didukung di rantai {{0}}",
+      "safeAddressNotSupportChain": "Alamat Safe saat ini tidak didukung di chain {{0}}",
       "noGasRequired": "Tidak ada gas yang diperlukan",
       "eip1559Desc1": "Pada rantai yang mendukung EIP-1559, Priority Fee adalah tip untuk penambang agar memproses transaksi Anda. Anda dapat menghemat biaya gas akhir Anda dengan menurunkan Priority Fee, yang mungkin memerlukan lebih banyak waktu untuk transaksi diproses.",
       "gasLimitModifyOnlyNecessaryAlert": "Modifikasi hanya jika diperlukan",
@@ -374,7 +374,7 @@
       "myNativeTokenBalance": "Saldo Gas saya:",
       "enoughSafeSigCollected": "Cukup tanda tangan yang dikumpulkan",
       "eip1559Desc2": "Di sini di Rabby, Biaya Prioritas (Tip) = Biaya Maksimal - Biaya Dasar. Setelah Anda mengatur Biaya Prioritas Maksimal, Biaya Dasar akan dipotong dari jumlah tersebut dan sisanya akan diberikan sebagai tip kepada penambang.",
-      "gasLimitMinValueAlert": "Batas gas harus lebih dari 21000",
+      "gasLimitMinValueAlert": "Gas limit harus lebih dari 21000",
       "gasLimitEmptyAlert": "Silakan masukkan gas limit",
       "wrapToken": "Wrap Token",
       "unwrap": "Buka Token",
@@ -426,14 +426,14 @@
       "addressSource": "Sumber Alamat",
       "contract": "Kontrak pintar",
       "errorRetry": {
-        "gasLimitTooLow": "Batas Gas terlalu rendah",
+        "gasLimitTooLow": "Gas limit terlalu rendah",
         "nonceTooHigh": "Nonce terlalu tinggi. Silakan sesuaikan nonce dan coba lagi.",
         "gasExceedsBlockGasLimit": "Gas melebihi batas gas blok. Silakan sesuaikan dan coba lagi.",
-        "nonceTooLow": "Nonce terlalu rendah. Kami akan memperbarui menjadi {{nonce}}. Klik “Retry” untuk mengonfirmasi dan mencoba lagi.",
+        "nonceTooLow": "Nonce terlalu rendah. Kami akan memperbaruinya menjadi {{nonce}}. Klik “Coba lagi” untuk mengonfirmasi dan mencoba lagi.",
         "defaultTips": "Sesuatu yang salah. Silakan coba lagi nanti.",
         "insufficient": "Saldo gas Anda tidak cukup untuk menutupi biaya gas jaringan. Tambahkan dana untuk gas dan coba lagi.",
         "InvalidTx": "Transaksi tidak valid.",
-        "gasPriceTooLow": "Harga gas terlalu rendah. Kami akan menyesuaikannya sebesar 30% untuk membantu transaksi Anda dikonfirmasi. Klik “Retry” untuk mengonfirmasi dan mencoba lagi.",
+        "gasPriceTooLow": "Harga gas terlalu rendah. Kami akan menyesuaikannya sebesar 30% agar transaksi lebih mudah dikonfirmasi. Klik “Coba lagi” untuk mengonfirmasi dan mencoba lagi.",
         "alreadySubmitted": "Transaksi sudah diajukan. Transaksi duplikat terdeteksi."
       },
       "addLiquidity": {
@@ -514,12 +514,12 @@
       "importedByLedger": "Diimpor oleh Ledger",
       "oneKeySign": "Tanda tangan",
       "startSigning": "Mulai Menandatangani",
-      "cancelAll": "Batalkan semua {{count}} permintaan dari Dapp",
+      "cancelAll": "Batalkan semua {{count}} permintaan dari DApp",
       "cancelCurrentConnection": "Batalkan koneksi saat ini",
-      "blockDappFromSendingRequests": "Blok Dapp dari mengirim permintaan selama 1 menit",
+      "blockDappFromSendingRequests": "Blok DApp dari mengirim permintaan selama 1 menit",
       "cancelConnection": "Batalkan koneksi",
       "cancelTransaction": "Batalkan Transaksi",
-      "detectedMultipleRequestsFromThisDapp": "Terdeteksi beberapa permintaan dari Dapp ini",
+      "detectedMultipleRequestsFromThisDapp": "Terdeteksi beberapa permintaan dari DApp ini",
       "submitTx": "Kirim Transaksi",
       "cancelCurrentTransaction": "Batalkan transaksi saat ini",
       "resend": "Coba lagi",
@@ -529,7 +529,7 @@
     },
     "signTypedData": {
       "permit": {
-        "title": "Izin Persetujuan Token"
+        "title": "Persetujuan Token Permit"
       },
       "permit2": {
         "sigExpireTimeTip": "Durasi agar tanda tangan ini valid di on-chain",
@@ -734,7 +734,7 @@
       "SelectFromHistory": "Pilih Dari Riwayat",
       "sentTimeHeader": "Terkirim",
       "sendToWatchAddress": "Kirim ke Dompet Hanya Tonton",
-      "sendToSafeAddress": "Kirim ke Dompet Aman",
+      "sendToSafeAddress": "Kirim ke Safe Wallets",
       "sendToImportedAddress": "Kirim ke Dompet yang Diimpor Saya",
       "enterOrSearchAddress": "Masukkan atau Cari Alamat",
       "dividerWatchOnlyWallets": "Alamat hanya untuk dilihat"
@@ -827,10 +827,10 @@
             "normalTrustValueDanger": "Nilai kepercayaan kontrak:{{ contractUsdText }}",
             "contractTrustValueDanger": "Nilai kepercayaan kontrak < $10.000",
             "contractTrustValueWarning": "Nilai kepercayaan kontrak < $100.000",
-            "revokeWarningTitle": "Kontrak 24 jam Cabut dua kali lipat dari Cabut",
+            "revokeWarningTitle": "Revoke 24 jam lebih dari 2x approval",
             "revokeTrendsValueWarning": "Pencabutan terbaru lebih dari dua kali lipat jumlah pengguna baru yang disetujui.",
             "contractTrustValue": "Nilai kepercayaan mengacu pada total nilai aset yang dikeluarkan oleh kontrak ini. Nilai kepercayaan yang rendah menunjukkan risiko atau tidak aktif selama 180 hari.",
-            "revokeDangerTitle": "Tren Pembatalan Kontrak 24h > 4",
+            "revokeDangerTitle": "Revoke 24 jam lebih dari 4x approval",
             "revokeTrendsValueDanger": "Pencabutan terbaru lebih dari 4 kali jumlah pengguna baru yang disetujui.",
             "button": "Saya Mengerti.",
             "revokeRecenet": "Revoke terbaru (24 jam): {{ count }}",
@@ -952,7 +952,7 @@
       "no-fees-for-wrap": "Tidak ada biaya Rabby untuk Wrap",
       "security-verification-failed": "Verifikasi keamanan gagal",
       "sort-with-gas": "Urutkan dengan gas",
-      "gas-fee": "GasFee: {{gasUsed}}",
+      "gas-fee": "Biaya gas: {{gasUsed}}",
       "historyTitle": "Riwayat swap",
       "swapped": "Ditukar",
       "transaction-might-be-frontrun-because-of-high-slippage-tolerance": "Transaksi mungkin akan terfront-run karena toleransi slippage yang tinggi",
@@ -963,7 +963,7 @@
     },
     "bridge": {
       "showMore": {
-        "source": "Jembatan Sumber",
+        "source": "Sumber bridge",
         "title": "Tampilkan Lebih Banyak",
         "signWarning": "Saya mengerti peringatan tersebut dan ingin melanjutkan."
       },
@@ -982,13 +982,13 @@
       "bridgeFrom": "Jembatan Dari",
       "From": "Dari",
       "history": "Riwayat Jembatan",
-      "no-quote": "Tidak Ada Kutipan",
-      "bridge-from": "Jembatan dari",
+      "no-quote": "Tidak ada penawaran",
+      "bridge-from": "Bridge dari",
       "To": "Untuk",
       "est-payment": "Est. Pembayaran:",
       "the-following-bridge-route-are-found": "Ditemukan tarif berikut",
       "Select": "Pilih",
-      "gas-fee": "GasFee: {{gasUsed}}",
+      "gas-fee": "Biaya gas: {{gasUsed}}",
       "bridged": "Jembatan",
       "detail-tx": "Detail",
       "approve-and-bridge": "Setujui dan Jembatani",
@@ -1050,7 +1050,7 @@
         "bridge": "Jembatan",
         "receive": "Menerima",
         "search": "Cari Token",
-        "dapps": "Dapps",
+        "dapps": "DApp",
         "more": "Lebih banyak",
         "queue": "Antrean",
         "websites": "Situs Web",
@@ -1068,13 +1068,13 @@
       },
       "swipeUp": {
         "descMore": "Geser ke atas untuk menjelajahi lebih banyak situs web",
-        "descAndroidMore": "Klik untuk menjelajahi lebih banyak dApps",
+        "descAndroidMore": "Klik untuk menjelajahi lebih banyak DApp",
         "desc": "Geser ke atas untuk menjelajahi situs web",
-        "descAndroid": "Klik untuk menjelajahi dApps"
+        "descAndroid": "Klik untuk menjelajahi DApp"
       },
       "DappDrawer": {
         "empty": "Tidak ada situs web yang ditambahkan ke favorit",
-        "emptyAndroid": "Tidak ada dApp yang ditambahkan ke favorit",
+        "emptyAndroid": "Tidak ada DApp yang ditambahkan ke favorit",
         "search": "Cari",
         "favorite": "Favorit",
         "tabs": {
@@ -1394,34 +1394,34 @@
       "hd": {
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: Jalur HD resmi Ledger.",
-            "bip44": "BIP44 Standar: HDpath yang ditentukan oleh protokol BIP44.",
-            "legacy": "Legacy: Jalur HD yang digunakan oleh MEW / Mycrypto."
+            "ledgerLive": "Ledger Live: HD Path resmi Ledger.",
+            "bip44": "BIP44 Standar: HD Path yang ditentukan oleh protokol BIP44.",
+            "legacy": "Legacy: HD Path yang digunakan oleh MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: Jalur HD resmi Ledger.",
-            "legacy": "Legacy: Jalur HD yang digunakan oleh MEW / Mycrypto.",
-            "bip44": "Standar BIP44: Jalur HD yang ditentukan oleh protokol BIP44."
+            "ledgerLive": "Ledger Live: HD Path resmi Ledger.",
+            "legacy": "Legacy: HD Path yang digunakan oleh MEW / Mycrypto.",
+            "bip44": "Standar BIP44: HD Path yang ditentukan oleh protokol BIP44."
           }
         },
         "onekey": {
           "hdPathType": {
-            "bip44": "BIP44: HDpath yang ditentukan oleh protokol BIP44."
+            "bip44": "BIP44: HD Path yang ditentukan oleh protokol BIP44."
           },
           "hdPathTypeNoChain": {
-            "bip44": "BIP44: HDpath ditentukan oleh protokol BIP44."
+            "bip44": "BIP44: HD Path ditentukan oleh protokol BIP44."
           }
         },
         "keystone": {
           "hdPathType": {
-            "legacy": "Legacy: Jalur HD yang digunakan oleh MEW / Mycrypto.",
-            "bip44": "BIP44: HDpath ditentukan oleh protokol BIP44.",
-            "ledgerLive": "Ledger Live: Jalur HD resmi Ledger. Anda hanya dapat mengelola 10 alamat dengan jalur Ledger Live."
+            "legacy": "Legacy: HD Path yang digunakan oleh MEW / Mycrypto.",
+            "bip44": "BIP44: HD Path ditentukan oleh protokol BIP44.",
+            "ledgerLive": "Ledger Live: HD Path resmi Ledger. Anda hanya dapat mengelola 10 alamat dengan jalur Ledger Live."
           },
           "hdPathTypeNoChain": {
-            "bip44": "BIP44: HDpath yang ditentukan oleh protokol BIP44.",
-            "ledgerLive": "Ledger Live: Jalur HD resmi Ledger. Anda hanya dapat mengelola 10 alamat dengan jalur Ledger Live.",
-            "legacy": "Legacy: HD path yang digunakan oleh MEW / Mycrypto."
+            "bip44": "BIP44: HD Path yang ditentukan oleh protokol BIP44.",
+            "ledgerLive": "Ledger Live: HD Path resmi Ledger. Anda hanya dapat mengelola 10 alamat dengan jalur Ledger Live.",
+            "legacy": "Legacy: HD Path yang digunakan oleh MEW / Mycrypto."
           }
         },
         "qrCode": {
@@ -1431,19 +1431,19 @@
           }
         },
         "balance": "Saldo",
-        "customAddressHdPath": "Jalur HD Dompet Kustom",
+        "customAddressHdPath": "HD Path Dompet Kustom",
         "manageAddressFrom": "Kelola dompet dari {{0}} ke {{1}}",
         "selectIndexTip": "Pilih nomor seri dompet untuk memulai:",
         "trezor": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: Jalur HD resmi Ledger.",
-            "bip44": "BIP44: HDpath yang ditentukan oleh protokol BIP44.",
-            "legacy": "Legacy: Jalur HD yang digunakan oleh MEW / Mycrypto."
+            "ledgerLive": "Ledger Live: HD Path resmi Ledger.",
+            "bip44": "BIP44: HD Path yang ditentukan oleh protokol BIP44.",
+            "legacy": "Legacy: HD Path yang digunakan oleh MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: Jalur HD resmi Ledger.",
-            "legacy": "Legacy: Jalur HD yang digunakan oleh MEW / Mycrypto.",
-            "bip44": "BIP44: HDpath yang ditentukan oleh protokol BIP44."
+            "ledgerLive": "Ledger Live: HD Path resmi Ledger.",
+            "legacy": "Legacy: HD Path yang digunakan oleh MEW / Mycrypto.",
+            "bip44": "BIP44: HD Path yang ditentukan oleh protokol BIP44."
           }
         }
       },
@@ -1505,7 +1505,7 @@
     },
     "signText": {
       "createKey": {
-        "interactDapp": "Interaksi Dapp",
+        "interactDapp": "Interaksi DApp",
         "description": "Deskripsi"
       },
       "title": "Tandai Teks",
@@ -1536,7 +1536,7 @@
       "connectBtn": "Sambungkan",
       "markRemovedToast": "Tanda dihapus",
       "ignoreAll": "Abaikan semuanya",
-      "title": "Sambungkan ke Dapp",
+      "title": "Sambungkan ke DApp",
       "flagByMM": "Diberi tanda oleh MetaMask",
       "onYourWhitelist": "Di whitelist Anda",
       "markAsTrustToast": "Tandai sebagai \"Trusted\"",
@@ -1546,7 +1546,7 @@
       "manageWhiteBlackList": "Kelola whitelist/blacklist",
       "popularLevelLow": "Rendah",
       "flagByScamSniffer": "Dikenali oleh ScamSniffer",
-      "popularLevelMedium": "Medium",
+      "popularLevelMedium": "Sedang",
       "sitePopularity": "Popularitas situs",
       "trusted": "Dipercayai",
       "popularLevelHigh": "Tinggi",
@@ -1566,9 +1566,9 @@
         "edit": "Sunting",
         "detail": "Rincian",
         "unpin": "Lepaskan Pin",
-        "importWatchAddress": "Imported Watch-Only Wallet",
+        "importWatchAddress": "Wallet watch-only yang diimpor",
         "title_other": "{{count}} Dompet",
-        "importSafeAddress": "Imported Safe Wallet",
+        "importSafeAddress": "Wallet Safe yang diimpor",
         "addAddress": "Tambahkan Dompet",
         "title_one": "{{count}} Dompet",
         "title_zero": "0 Dompet",
@@ -1583,7 +1583,7 @@
       "backup-seed-phrase": "Cadangan Frase Benih",
       "delete-desc-needpassword": "Sebelum Anda menghapus, ingatlah poin-poin berikut untuk memahami cara melindungi aset Anda.",
       "source": "Sumber",
-      "hd-path": "Jalur HD",
+      "hd-path": "HD Path",
       "address": "Alamat",
       "address-note": "Catatan Alamat",
       "qr-code": "QR Code",
@@ -1850,7 +1850,7 @@
         "suggestedToken": "Token yang Disarankan",
         "minAmountRequired": "Jumlah setoran minimum adalah $1",
         "fetchQuoteFailed": "Gagal mengambil kutipan",
-        "estReceiveLabel": "Estterima: {{usd}}",
+        "estReceiveLabel": "Perkiraan diterima: {{usd}}",
         "estReceiveTip": "Layanan diproses melalui {{name}}, mungkin mengalami slippage",
         "unavailablePaymentWallet": "Dompet pembayaran yang dipilih tidak tersedia",
         "noAvailableToken": "Token tidak tersedia"
@@ -1933,7 +1933,7 @@
       "benefitCard": {
         "item2": "Mendukung semua jaringan",
         "item1": "Tidak Ada Biaya Rabby",
-        "desc3": "Tukar, Jembatan, Kirim, DApps, & lainnya",
+        "desc3": "Tukar, Jembatan, Kirim, DApp, & lainnya",
         "item3": "Mendukung semua transaksi",
         "desc2": "Pembayaran gas otomatis di 80+ jaringan",
         "desc1": "Tidak ada biaya ekstra untuk membayar gas",
@@ -1993,7 +1993,7 @@
       "IssuerWebsite": "Website Penerbit",
       "NoIssuer": "Informasi penerbit tidak tersedia",
       "BridgeProvider": "Penyedia Jembatan",
-      "fdvContent": "Kapitalisasi pasar jika pasokan maksimum sedang beredar. Penilaian Sepenuhnya Tercemar (FDV) = Harga × Pasokan Maksimum. Jika Pasokan Maksimum adalah null, FDV = Harga × Total Supply. Jika baik Pasokan Maksimum maupun Total Supply tidak didefinisikan atau tak terhingga, FDV tidak ditampilkan.",
+      "fdvContent": "Kapitalisasi pasar jika pasokan maksimum beredar. Fully Diluted Valuation (FDV) = Harga × Pasokan Maksimum. Jika Pasokan Maksimum null, FDV = Harga × Total Pasokan. Jika Pasokan Maksimum dan Total Pasokan tidak didefinisikan atau bernilai tak hingga, FDV tidak ditampilkan.",
       "SupportedExchanges": "Bursa Didukung",
       "excludeBalanceTipsButton": "Saya Mengerti.",
       "excludeBalanceTips": "Aset ini dikecualikan dari total saldo Anda untuk akurasi. Anda dapat mengetuknya untuk melihat detail dan menyertakannya jika diinginkan.",
@@ -2086,10 +2086,10 @@
     "singleHome": {
       "sectionHeader": {
         "Token": "Token",
-        "totalChain_other": "Total {{count}} Chains",
+        "totalChain_other": "Total {{count}} chain",
         "Defi": "DeFi",
         "Nft": "NFT",
-        "totalChain_one": "Total {{count}} Chain",
+        "totalChain_one": "Total {{count}} chain",
         "NoData": "Tidak {{name}}"
       },
       "emptyToken": {
@@ -2105,7 +2105,7 @@
       "nft": {
         "floorPrice": "/Harga Lantai:"
       },
-      "appChain": "Akun Dapp"
+      "appChain": "Akun DApp"
     },
     "search": {
       "sectionHeader": {
@@ -2136,7 +2136,7 @@
         "title": "Panas"
       },
       "globalSearch": {
-        "placeHolder": "Cari Dapp/Token",
+        "placeHolder": "Cari DApp/Token",
         "iosPlaceHolder": "Cari Website/Token"
       },
       "tokenHeader": {
@@ -2263,11 +2263,11 @@
       },
       "BrowserHeader": {
         "searchIos": "Cari Situs Web",
-        "searchAndroid": "Cari Dapp"
+        "searchAndroid": "Cari DApp"
       },
       "CurrentPopup": {
         "connectChain": "Sambungkan Rantai",
-        "title": "Dapp Saat Ini",
+        "title": "DApp Saat Ini",
         "disconnect": "Putuskan hubungan",
         "connectWallet": "Sambungkan Dompet"
       },
@@ -2353,7 +2353,7 @@
       "noCameraDevice": "Tidak Ada Perangkat Kamera"
     },
     "defiDetail": {
-      "viewSiteInApp": "Lihat di Dapp",
+      "viewSiteInApp": "Lihat di DApp",
       "viewSiteInWebsite": "Lihat di Situs Web",
       "appChain": "Pada Akun {{chain}}",
       "dappActions": {
@@ -2368,7 +2368,7 @@
     "copyTrading": {
       "tipsDollar": {
         "title": "Copy Trading dari Smart Money",
-        "description": "Temukan token berdasarkan aktivitas terbaru dari smart money wallets. Ketuk token untuk melihat jumlah perdagangan terperinci dan keuntungan historis dari wallet tersebut."
+        "description": "Temukan token berdasarkan aktivitas terbaru dari Smart Money Wallets. Ketuk token untuk melihat detail jumlah trading dan profit historis dari wallet tersebut."
       },
       "updateText": "{{count}} Tren Terbaru",
       "buy": "Beli",
@@ -2377,13 +2377,13 @@
       "noMoreData": "Tidak ada data lagi",
       "historyProfit": "Riwayat Keuntungan",
       "smartMoneyWallets": "Smart Money Wallets",
-      "refreshTitle": "Memuat Lebih Banyak Copy Trading Dari Smart Money",
+      "refreshTitle": "Memuat lebih banyak Copy Trading dari Smart Money",
       "smartMoneyWallet": "Smart Money Wallet",
       "filterRule": {
         "24HChange": "24H Perubahan",
         "tokenCreate": "Baru Dibuat",
-        "smartMoney": "Trading Smart Wallets",
-        "smartWalletCount": "Jumlah Dompet Pintar"
+        "smartMoney": "Smart Wallets yang trading",
+        "smartWalletCount": "Jumlah Smart Wallets"
       },
       "chain": "Rantai",
       "tokenName": "Nama Token",
@@ -2394,12 +2394,12 @@
       "holdingProfit": "Holding/Pendapatan",
       "myCopyTradingEarnings": "Penghasilan Copy Trading Saya",
       "loss": "Kehilangan",
-      "timeSmartWallet": "Waktu / Dompet Pintar",
+      "timeSmartWallet": "Waktu / Smart Wallet",
       "buyEarn": "24H Beli / Dapatkan",
       "sameNameTokens": "Token Nama yang Sama",
-      "smartWalletsBuying": "{{len}} Smart Wallets Membeli",
+      "smartWalletsBuying": "{{len}} Smart Wallets membeli",
       "myCopyTrading": "Salin Perdagangan Saya",
-      "smartWallets": "Dompet Cerdas",
+      "smartWallets": "Smart Wallets",
       "earned": "Diperoleh",
       "currentToken": "Token Saat Ini",
       "Liquidity": "Likuiditas",
@@ -2410,7 +2410,7 @@
       "twitterNews": "Berita di X",
       "timeLabelAgo": "Dibuat {{time}} yang lalu",
       "myBalanceFromCopyTrading": "Saldo Saya dari Copy Trading",
-      "gettingLatest": "Mendapatkan yang terbaru dari Smart Money...",
+      "gettingLatest": "Mengambil info terbaru dari Smart Money...",
       "updateTokenText": "{{count}} token diperbarui"
     },
     "watchlist": {
@@ -2669,7 +2669,7 @@
       "closeAllConfirmMessage": "Semua posisi terbuka Anda akan ditutup pada harga pasar.",
       "closeAll": "Tutup semua posisi",
       "assetPage": {
-        "hyperliquidPosition": "Hyperliquid Position"
+        "hyperliquidPosition": "Posisi Hyperliquid"
       },
       "invitePopup": {
         "title": "Hemat Biaya Hyperliquid",
@@ -3017,7 +3017,7 @@
       "borrowOverview": {
         "myBorrow": "Pinjamanku",
         "borrowCap": "Batas Pinjaman",
-        "totalBorrowed": "Total Borrowed",
+        "totalBorrowed": "Total dipinjam",
         "title": "Rincian Pinjaman",
         "availableToBorrow": "Tersedia untuk dipinjam",
         "liquidityPenalty": "Denda Likuidasi",
@@ -3046,7 +3046,7 @@
         "risky": "Berisiko",
         "over3desc": "Posisi Anda aman",
         "below1title": "Health Factor ≤ 1,0:",
-        "over3title": "Health factor > 3.0:",
+        "over3title": "Faktor Kesehatan > 3,0:",
         "desc": "Nilai likuidasi",
         "below1desc": "Posisi Anda berisiko dilikuidasi.",
         "introText": "Faktor Kesehatan Anda menunjukkan seberapa aman posisi pinjaman Anda. Jika turun terlalu rendah, agunan Anda bisa dilikuidasi.",
@@ -3182,7 +3182,7 @@
       },
       "netApy": "APY bersih",
       "totalSupplied": "Total disetor",
-      "totalBorrowed": "Total borrowed",
+      "totalBorrowed": "Total dipinjam",
       "repayWithCollateral": {
         "action": {
           "title": "Bayar kembali dengan {{collateral}}"
@@ -3301,7 +3301,7 @@
       "receiveSummary": {
         "progress": "Kemajuan Konversi",
         "priceImpact": "Batas Dampak Harga",
-        "gasLimit": "Batas Gas Transaksi Tunggal",
+        "gasLimit": "Single Transaction Gas Limit",
         "estimateReceive": "Perkiraan Terima:",
         "actualReceive": "Terima"
       },
@@ -3418,10 +3418,10 @@
     },
     "Contact": {
       "EditModal": {
-        "title": "Edit address note"
+        "title": "Edit catatan alamat"
       },
       "EditWhitelist": {
-        "backModalContent": "Perubahan yang Anda buat tidak akan disimpan。",
+        "backModalContent": "Perubahan yang Anda buat tidak akan disimpan.",
         "backModalTitle": "Buang Perubahan"
       },
       "ListModal": {
@@ -3486,8 +3486,8 @@
       }
     },
     "signPermissionCheckModal": {
-      "reconnect": "Sambungkan Dapp",
-      "title": "Anda hanya mengizinkan Dapp ini untuk menandatangani di jaringan uji."
+      "reconnect": "Sambungkan DApp",
+      "title": "Anda hanya mengizinkan DApp ini untuk menandatangani di jaringan uji."
     },
     "AuthenticationModals": {
       "biometrics": {
@@ -3517,16 +3517,16 @@
       "desc": "Alamat berikut akan dihapus. Anda masih dapat menemukannya di aplikasi dompet asli. Impor frasa benih atau kunci pribadi untuk menggunakannya di sini."
     },
     "externalSwapBrideDappPopup": {
-      "viewDappOptions": "Lihat Opsi Dapp",
+      "viewDappOptions": "Lihat Opsi DApp",
       "noQuotesForChain": "Belum ada kutipan yang tersedia untuk rantai ini.",
-      "bridgeOnDapp": "Jembatan di Dapp",
-      "swapOnDapp": "Tukar di Dapp",
-      "thirdPartyDappToProceed": "Silakan gunakan Dapp pihak ketiga untuk melanjutkan",
+      "bridgeOnDapp": "Jembatan di DApp",
+      "swapOnDapp": "Tukar di DApp",
+      "thirdPartyDappToProceed": "Silakan gunakan DApp pihak ketiga untuk melanjutkan",
       "chainNotSupported": "Tidak didukung di rantai ini",
-      "selectADapp": "Pilih Dapp",
-      "noDapps": "Tidak ada Dapp yang tersedia di rantai ini",
+      "selectADapp": "Pilih DApp",
+      "noDapps": "Tidak ada DApp yang tersedia di rantai ini",
       "help": "Silakan hubungi tim resmi dari rantai ini untuk dukungan.",
-      "noDapp": "Tidak ada Dapps yang tersedia"
+      "noDapp": "Tidak ada DApp yang tersedia"
     },
     "selectCexModal": {
       "title": "Pilih Sumber Pertukaran"
@@ -3698,8 +3698,8 @@
     "gotIt": "Dapatkan",
     "check": "Periksa",
     "Token": "Token",
-    "Dapp": "Dapp",
-    "GotIt": "Got it",
+    "Dapp": "DApp",
+    "GotIt": "Mengerti",
     "copy": "Salin",
     "Backup": "Cadangan",
     "Other": "Lainnya",

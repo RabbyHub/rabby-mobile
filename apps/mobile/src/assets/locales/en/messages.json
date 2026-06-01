@@ -235,7 +235,7 @@
       "safeTx": {
         "selfHostConfirm": {
           "title": "Switch to Rabby's Safe Service",
-          "content": "Safe API is unavailable. Switch to the Safe service deployed by Rabby to keep your Safe functional. <1></1><2>All Safe signers must use Rabby Wallet to authorize transactions.<2>",
+          "content": "Safe API is unavailable. Switch to the Safe service deployed by Rabby to keep your Safe functional. <1></1><2>All Safe signers must use Rabby Wallet to authorize transactions.</2>",
           "button": "OK"
         }
       },
@@ -516,7 +516,7 @@
         "signWith": "Sign with {{brand}}",
         "failedToGetExplain": "Failed to get explain",
         "txFailed": "Fail to create",
-        "txFailedRetry": "Fail to create: Please Retry",
+        "txFailedRetry": "Failed to create: please retry",
         "sigCompleted": "Transaction created",
         "getSig": "Get signature",
         "qrcodeDesc": "Scan with your {{brand}} to sign\nAfter signing, click the button below to receive the signature",
@@ -538,10 +538,10 @@
       "resend": "Retry",
       "submitTx": "Submit Transaction",
       "cancelTransaction": "Cancel Transaction",
-      "detectedMultipleRequestsFromThisDapp": "Detected multiple requests from this Dapp",
+      "detectedMultipleRequestsFromThisDapp": "Detected multiple requests from this DApp",
       "cancelCurrentTransaction": "Cancel current transaction",
-      "cancelAll": "Cancel all {{count}} requests from Dapp",
-      "blockDappFromSendingRequests": "Block Dapp from sending requests for 1 min",
+      "cancelAll": "Cancel all {{count}} requests from DApp",
+      "blockDappFromSendingRequests": "Block DApp from sending requests for 1 min",
       "cancelConnection": "Cancel connection",
       "cancelCurrentConnection": "Cancel current connection",
       "startSigning": "Start Signing",
@@ -850,8 +850,8 @@
             "contractTrustValueWarning": "The contract trust value < $100,000",
             "contractTrustValueDanger": "The contract trust value < $10,000",
             "normalTrustValueDanger": "The contract trust value:{{ contractUsdText }}",
-            "revokeDangerTitle": "Contract 24h Revoke Trends > 4",
-            "revokeWarningTitle": "Contract 24h Revoke double than Revoke",
+            "revokeDangerTitle": "24h revokes are more than 4x approvals",
+            "revokeWarningTitle": "24h revokes are more than 2x approvals",
             "revokeTrendsValueWarning": "Recent revokes are greater than double the number of newly approved users.",
             "revokeTrendsValueDanger": "Recent revokes are greater than 4 times the number of newly approved users.",
             "revokeNewApproved": "Newly approved users(24h): {{ count }}",
@@ -955,7 +955,7 @@
       "recommend-slippage": "To prevent front-running, we recommend a slippage of <2>{{ slippage }}</2>%",
       "slippage-tolerance": "Slippage tolerance",
       "select-token": "Select Token",
-      "gas-fee": "GasFee: {{gasUsed}}",
+      "gas-fee": "Gas fee: {{gasUsed}}",
       "estimate": "Estimate:",
       "actual": "Actual:",
       "usd-after-fees": "≈ {{usd}} ",
@@ -1012,7 +1012,7 @@
       "Pending": "Pending",
       "estimate": "Estimate:",
       "actual": "Actual:",
-      "gas-fee": "GasFee: {{gasUsed}}",
+      "gas-fee": "Gas fee: {{gasUsed}}",
       "gas-x-price": "Gas price: {{price}} Gwei.",
       "detail-tx": "Detail",
       "bridgeTo": "Bridge To",
@@ -1073,7 +1073,7 @@
         "receive": "Receive",
         "gasDeposit": "Gas Deposit",
         "approvals": "Approvals",
-        "dapps": "Dapps",
+        "dapps": "DApp",
         "more": "More",
         "queue": "Queue",
         "websites": "Websites",
@@ -1091,11 +1091,11 @@
       "swipeUp": {
         "desc": "Swipe up to explore websites",
         "descMore": "Swipe up to explore more websites",
-        "descAndroid": "Click to explore dApps",
-        "descAndroidMore": "Click to explore more dApps"
+        "descAndroid": "Click to explore DApp",
+        "descAndroidMore": "Click to explore more DApp"
       },
       "DappDrawer": {
-        "emptyAndroid": "No dApp added to favorites",
+        "emptyAndroid": "No DApp added to favorites",
         "empty": "No website added to favorites",
         "favorite": "Favorite",
         "search": "Search",
@@ -1121,7 +1121,7 @@
       "comingSoon": "Coming soon...",
       "tipsDollar": {
         "title": "Copy Trading from Smart Money",
-        "description": "Discover tokens based on recent activity from smart money wallets. Tap a token to see detailed trade amounts and historical profits from those wallets."
+        "description": "Discover tokens based on recent activity from Smart Money Wallets. Tap a token to see detailed trade amounts and historical profits from those wallets."
       },
       "filterRule": {
         "24HChange": "24H Change",
@@ -1140,8 +1140,8 @@
       "noMoreData": "No more data",
       "updateText": "{{count}} Trends Updated",
       "updateTokenText": "{{count}} tokens updated",
-      "refreshTitle": "Loading More Copy Trading From Smart Money",
-      "gettingLatest": "Getting the latest from smart money...",
+      "refreshTitle": "Loading more Copy Trading from Smart Money",
+      "gettingLatest": "Getting the latest from Smart Money...",
       "twitterNews": "News in X",
       "tokenInfo": "Token Info",
       "smartWallets": "Smart Wallets",
@@ -1490,51 +1490,51 @@
         "balance": "Balance",
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: Ledger official HD path.",
-            "bip44": "BIP44 Standard: HDpath defined by the BIP44 protocol.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto."
+            "ledgerLive": "Ledger Live: Ledger official HD Path.",
+            "bip44": "BIP44 Standard: HD Path defined by the BIP44 protocol.",
+            "legacy": "Legacy: HD Path used by MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: Ledger official HD path.",
-            "bip44": "BIP44 Standard: HD path defined by the BIP44 protocol.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto."
+            "ledgerLive": "Ledger Live: Ledger official HD Path.",
+            "bip44": "BIP44 Standard: HD Path defined by the BIP44 protocol.",
+            "legacy": "Legacy: HD Path used by MEW / Mycrypto."
           }
         },
         "onekey": {
           "hdPathType": {
-            "bip44": "BIP44: HDpath defined by the BIP44 protocol."
+            "bip44": "BIP44: HD Path defined by the BIP44 protocol."
           },
           "hdPathTypeNoChain": {
-            "bip44": "BIP44: HDpath defined by the BIP44 protocol."
+            "bip44": "BIP44: HD Path defined by the BIP44 protocol."
           }
         },
         "keystone": {
           "hdPathType": {
-            "bip44": "BIP44: HDpath defined by the BIP44 protocol.",
-            "ledgerLive": "Ledger Live: Ledger official HD path. You can only manage 10 addresses with Ledger Live path.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto."
+            "bip44": "BIP44: HD Path defined by the BIP44 protocol.",
+            "ledgerLive": "Ledger Live: Ledger official HD Path. You can only manage 10 addresses with Ledger Live path.",
+            "legacy": "Legacy: HD Path used by MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
-            "bip44": "BIP44: HDpath defined by the BIP44 protocol.",
-            "ledgerLive": "Ledger Live: Ledger official HD path. You can only manage 10 addresses with Ledger Live path.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto."
+            "bip44": "BIP44: HD Path defined by the BIP44 protocol.",
+            "ledgerLive": "Ledger Live: Ledger official HD Path. You can only manage 10 addresses with Ledger Live path.",
+            "legacy": "Legacy: HD Path used by MEW / Mycrypto."
           }
         },
         "trezor": {
           "hdPathType": {
-            "bip44": "BIP44: HDpath defined by the BIP44 protocol.",
-            "ledgerLive": "Ledger Live: Ledger official HD path.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto."
+            "bip44": "BIP44: HD Path defined by the BIP44 protocol.",
+            "ledgerLive": "Ledger Live: Ledger official HD Path.",
+            "legacy": "Legacy: HD Path used by MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
-            "bip44": "BIP44: HDpath defined by the BIP44 protocol.",
-            "ledgerLive": "Ledger Live: Ledger official HD path.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto."
+            "bip44": "BIP44: HD Path defined by the BIP44 protocol.",
+            "ledgerLive": "Ledger Live: Ledger official HD Path.",
+            "legacy": "Legacy: HD Path used by MEW / Mycrypto."
           }
         },
         "selectIndexTip": "Select the serial number of wallets to start from:",
         "manageAddressFrom": "Manage wallet from {{0}} to {{1}}",
-        "customAddressHdPath": "Custom Wallet HD path",
+        "customAddressHdPath": "Custom Wallet HD Path",
         "qrCode": {
           "switch": {
             "title": "Switch to a new {{0}} device",
@@ -1584,7 +1584,7 @@
     "signText": {
       "title": "Sign Text",
       "createKey": {
-        "interactDapp": "Interact Dapp",
+        "interactDapp": "Interact DApp",
         "description": "Description"
       },
       "sameSafeMessageAlert": "The same message is confirmed; no additional signature is required."
@@ -1612,7 +1612,7 @@
       "markAsTrustToast": "Mark as \"Trusted\"",
       "markAsBlockToast": "Mark as \"Blocked\"",
       "markRemovedToast": "Mark removed",
-      "title": "Connect to Dapp",
+      "title": "Connect to DApp",
       "markRuleText": "My mark",
       "connectBtn": "Connect",
       "noWebsite": "None",
@@ -2020,7 +2020,7 @@
         "desc1": "No extra fees to pay gas",
         "item2": "Supports all networks",
         "desc2": "Automatic gas payments on 80+ networks",
-        "desc3": "Swap, Bridge, Send, DApps, & more",
+        "desc3": "Swap, Bridge, Send, DApp, & more",
         "item3": "Supports all transactions"
       },
       "gasBalance": "Gas Balance",
@@ -2169,7 +2169,7 @@
       }
     },
     "defiDetail": {
-      "viewSiteInApp": "View in Dapp",
+      "viewSiteInApp": "View in DApp",
       "viewSiteInWebsite": "View in Website",
       "appChain": "On {{chain}} Account",
       "dappActions": {
@@ -2205,7 +2205,7 @@
       "nft": {
         "floorPrice": "/Floor Price:"
       },
-      "appChain": "Dapp Account"
+      "appChain": "DApp Account"
     },
     "search": {
       "tokenHeader": {
@@ -2237,7 +2237,7 @@
         "searchTips": "Search the web"
       },
       "globalSearch": {
-        "placeHolder": "Search Dapp/Token",
+        "placeHolder": "Search DApp/Token",
         "iosPlaceHolder": "Search Website/Token"
       },
       "hotTokenList": {
@@ -2308,7 +2308,7 @@
       "toBuy": "Continue to Buy",
       "history": "Purchased History",
       "noQuotePlaceholder": "No Quote",
-      "noQuote": "No quotes found: Try enter a higher value.",
+      "noQuote": "No quotes found: try entering a higher value.",
       "noQuote2": "No quotes found.",
       "searchRegionPlaceholder": "Search for region",
       "paymentMethod": "Payment Method",
@@ -2321,7 +2321,7 @@
       "currencyBottomSheet": {
         "title": "Select a Currency",
         "searchPlaceholder": "Search currency",
-        "NoFound": "No Currency found"
+        "NoFound": "No currency found"
       },
       "quote": {
         "title": "Quotes For you",
@@ -2365,10 +2365,10 @@
       },
       "BrowserHeader": {
         "searchIos": "Search Website",
-        "searchAndroid": "Search Dapp"
+        "searchAndroid": "Search DApp"
       },
       "CurrentPopup": {
-        "title": "Current Dapp",
+        "title": "Current DApp",
         "connectChain": "Connect Chain",
         "connectWallet": "Connect Wallet",
         "disconnect": "Disconnect"
@@ -3376,15 +3376,15 @@
   "component": {
     "externalSwapBrideDappPopup": {
       "noQuotesForChain": "No quotes available for this chain yet",
-      "thirdPartyDappToProceed": "Please use a third-party Dapp to proceed",
-      "viewDappOptions": "View Dapp Options",
-      "selectADapp": "Select a Dapp",
-      "noDapp": "No Dapps available",
+      "thirdPartyDappToProceed": "Please use a third-party DApp to proceed",
+      "viewDappOptions": "View DApp Options",
+      "selectADapp": "Select a DApp",
+      "noDapp": "No DApp available",
       "help": "Please contact the official team of this chain for support",
       "chainNotSupported": "Not supported on this chain",
-      "noDapps": "No Dapp available on this chain",
-      "swapOnDapp": "Swap on Dapp",
-      "bridgeOnDapp": "Bridge on Dapp"
+      "noDapps": "No DApp available on this chain",
+      "swapOnDapp": "Swap on DApp",
+      "bridgeOnDapp": "Bridge on DApp"
     },
     "gasAccount": {
       "deposit": "Deposit",
@@ -3534,8 +3534,8 @@
       }
     },
     "signPermissionCheckModal": {
-      "title": "You only allow this Dapp to sign on testnets",
-      "reconnect": "Reconnect Dapp"
+      "title": "You only allow this DApp to sign on testnets",
+      "reconnect": "Reconnect DApp"
     },
     "AuthenticationModals": {
       "biometrics": {
@@ -3699,7 +3699,7 @@
     "Paste": "Paste",
     "Price": "Price",
     "Token": "Token",
-    "Dapp": "Dapp",
+    "Dapp": "DApp",
     "GotIt": "Got it",
     "time": {
       "hour": "{{t}} hour",

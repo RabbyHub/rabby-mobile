@@ -1,7 +1,7 @@
 {
   "screens": {
     "addressStackTitle": {
-      "SafeAddressList": "Safe Address",
+      "SafeAddressList": "ที่อยู่ Safe",
       "BackupPrivateKey": "สำรอง Private Key",
       "ImportMethods": "เลือกวิธีการนำเข้า",
       "ImportMnemonic": "นำเข้า Seed Phrase",
@@ -81,8 +81,8 @@
     },
     "PillsSwitch": {
       "NetSwitchTabs": {
-        "testnet": "Custom Network",
-        "mainnet": "Integrated Network"
+        "testnet": "เครือข่ายกำหนดเอง",
+        "mainnet": "เครือข่ายที่ผสานรวม"
       }
     },
     "NFTDetailModal": {
@@ -106,8 +106,8 @@
       "doNotReserve": "อย่าสำรอง Gas"
     },
     "signPermissionCheckModal": {
-      "reconnect": "Reconnect Dapp",
-      "title": "คุณอนุญาตให้ Dapp นี้ลงชื่อเข้าใช้เฉพาะ testnets เท่านั้น"
+      "reconnect": "เชื่อมต่อ DApp อีกครั้ง",
+      "title": "คุณอนุญาตให้ DApp นี้ลงชื่อเข้าใช้เฉพาะ testnets เท่านั้น"
     },
     "Contact": {
       "EditModal": {
@@ -147,7 +147,7 @@
         "title": "โอนเข้าสู่กระเป๋าเงิน DeBank L2 ของคุณ",
         "button": "ดูใน DeBank APP"
       },
-      "deposit": "Deposit",
+      "deposit": "ฝาก",
       "history": {
         "noHistory": "ไม่มีประวัติ"
       },
@@ -188,7 +188,7 @@
       "giftInfo": {
         "gotIt": "ฉันได้รับแล้ว",
         "noWithdrawableBalanceTitle": "{{amount}} ไม่สามารถถอนออกได้",
-        "noWithdrawableBalanceDescription": "{{amount}} ของยอดก๊าซของคุณไม่สามารถถอนออกได้:\n1. Apple Pay / Google Pay\n2. Gas Rewards",
+        "noWithdrawableBalanceDescription": "ยอด gas ของคุณจำนวน {{amount}} ไม่สามารถถอนได้:\n1. Apple Pay / Google Pay\n2. Gas Rewards",
         "giftTips": "รางวัล Gas สำหรับผู้ใช้ที่ใช้งานอยู่"
       },
       "about": {
@@ -208,15 +208,15 @@
       "desc": "ที่อยู่ต่อไปนี้จะถูกลบ คุณยังสามารถค้นหาพวกมันในแอปกระเป๋าเงินเดิมได้ นำเข้า seed phrase หรือ private key เพื่อใช้งานที่นี่"
     },
     "externalSwapBrideDappPopup": {
-      "selectADapp": "เลือก Dapp",
+      "selectADapp": "เลือก DApp",
       "noQuotesForChain": "ยังไม่มีการเสนอราคาสำหรับเครือข่ายนี้",
-      "viewDappOptions": "ดูตัวเลือก Dapp",
-      "bridgeOnDapp": "สะพานบน Dapp",
-      "swapOnDapp": "สลับบน Dapp",
-      "noDapps": "ไม่มี Dapp ที่พร้อมใช้งานในเครือข่ายนี้",
+      "viewDappOptions": "ดูตัวเลือก DApp",
+      "bridgeOnDapp": "สะพานบน DApp",
+      "swapOnDapp": "สลับบน DApp",
+      "noDapps": "ไม่มี DApp ที่พร้อมใช้งานในเครือข่ายนี้",
       "chainNotSupported": "ไม่รองรับในเครือข่ายนี้",
-      "thirdPartyDappToProceed": "กรุณาใช้ Dapp ของบุคคลที่สามเพื่อดำเนินการต่อ",
-      "noDapp": "ไม่พบ Dapps",
+      "thirdPartyDappToProceed": "กรุณาใช้ DApp ของบุคคลที่สามเพื่อดำเนินการต่อ",
+      "noDapp": "ไม่พบ DApp",
       "help": "โปรดติดต่อทีมงานทางการของเครือข่ายนี้เพื่อขอความช่วยเหลือ"
     },
     "selectCexModal": {
@@ -228,12 +228,12 @@
     "globalWarning": {
       "networkError": {
         "title": "ข้อผิดพลาดในการเชื่อมต่อบริการ:",
-        "globalDesc": "ข้อมูลอาจจะล้าสมัย แต่เงินของคุณยังคงปลอดภัย。"
+        "globalDesc": "ข้อมูลอาจจะล้าสมัย แต่เงินของคุณยังคงปลอดภัย."
       },
       "serviceError": {
         "title": "ปัญหาเครือข่าย:",
-        "quotesDesc": "ไม่สามารถโหลดคำพูดได้。",
-        "balanceDesc": "ไม่สามารถโหลดยอดคงเหลือได้。",
+        "quotesDesc": "ไม่สามารถโหลดคำพูดได้.",
+        "balanceDesc": "ไม่สามารถโหลดยอดคงเหลือได้.",
         "globalDesc": "ข้อมูลอาจจะล้าสมัย แต่ทรัพย์สินของคุณยังคงปลอดภัยอยู่"
       },
       "buttonText": "รีเฟรช",
@@ -251,7 +251,7 @@
       "title": "จับภาพหน้าจอเพื่อนำเสนอข้อบกพร่อง"
     },
     "feedbackModal": {
-      "pendingTitle": "Rabby Support ยังไม่ได้ตอบกลับ。",
+      "pendingTitle": "Rabby Support ยังไม่ได้ตอบกลับ.",
       "issueDescriptionLabel": "คำอธิบาย:",
       "title": "การตอบกลับจาก Rabby Support",
       "repliedTitle": "Rabby สนับสนุนได้ตอบกลับแล้ว:",
@@ -285,7 +285,7 @@
       "title": "กระเป๋าเงิน"
     },
     "lpTokenModal": {
-      "desc": "นี่คือโทเค็นผู้ให้ความ ликวิดิตี (LP) สำหรับ {{protocolId}}"
+      "desc": "นี่คือโทเค็นผู้ให้สภาพคล่อง (LP) สำหรับ {{protocolId}}"
     },
     "AccountSelectPopup": {
       "noAvailableAddress": "ไม่มีที่อยู่ที่ใช้ได้"
@@ -306,7 +306,7 @@
         "cancel": "ยกเลิกธุรกรรมที่ยังไม่ได้ดำเนินการ"
       },
       "itemTitle": {
-        "Bridge": "สะพาน",
+        "Bridge": "Bridge สำเร็จ",
         "Contract": "ปรับใช้ Contract",
         "Recieve": "ได้รับ",
         "Send": "ส่งแล้ว",
@@ -316,7 +316,7 @@
         "Approve": "อนุมัติแล้ว",
         "Buy": "ซื้อแล้ว",
         "Revoke": "เพิกถอนการอนุมัติ {{token}}",
-        "DepositedGas": "Deposited Gas",
+        "DepositedGas": "ฝาก Gas แล้ว",
         "WithdrawnGas": "ถอน Gas",
         "ReceivedGas": "ได้รับ Gas",
         "LendingBorrow": "ยืม",
@@ -435,20 +435,20 @@
         "operationDecoded": "การดำเนินการถอดรหัสจากข้อความ"
       },
       "permit": {
-        "title": "อนุญาต Token Approval"
+        "title": "การอนุมัติโทเค็น Permit"
       },
       "createKey": {
         "title": "สร้าง Key"
       },
       "safeCantSignText": "นี่คือที่อยู่ Safe และไม่สามารถใช้ลงชื่อข้อความได้",
       "permit2": {
-        "sigExpireTime": "Signature expire time",
+        "sigExpireTime": "เวลาหมดอายุของลายเซ็น",
         "title": "การอนุมัติโทเค็น Permit2",
         "approvalExpiretime": "ระยะเวลาหมดอายุของการอนุมัติ",
         "sigExpireTimeTip": "ระยะเวลาที่ลายเซ็นนี้จะมีผลบนเครือข่าย"
       },
       "buyNFT": {
-        "payToken": "Pay token",
+        "payToken": "โทเค็นที่ใช้ชำระ",
         "receiveNFT": "รับ NFT",
         "expireTime": "เวลา Expire",
         "listOn": "แสดงใน"
@@ -567,7 +567,7 @@
         "RevokeButton": {
           "btnText": "เพิกถอน",
           "btnText_zero": "เพิกถอน",
-          "btnText_one": "Revoke ({{count}})",
+          "btnText_one": "เพิกถอน ({{count}})",
           "btnText_other": "ยกเลิก ({{count}})",
           "permit2Batch": {
             "modalTitle_other": "ต้องใช้ลายเซ็นทั้งหมด <2>{{count}}</2> รายการ",
@@ -588,11 +588,11 @@
         "byContracts": {
           "columnTitle": {
             "contractTrustValue": "สัญญา Trust value",
-            "revokeTrends": "24h Revoke Trends"
+            "revokeTrends": "แนวโน้มการเพิกถอนใน 24 ชม."
           },
           "columnTip": {
             "button": "ฉันเข้าใจแล้ว",
-            "revokeWarningTitle": "การเพิกถอนสัญญา 24 ชั่วโมง มากกว่าเพิกถอนสองเท่า",
+            "revokeWarningTitle": "การเพิกถอนใน 24 ชม. มากกว่าการอนุมัติ 2 เท่า",
             "contractTrustValueWarning": "มูลค่าสัญญาที่เชื่อถือได้น้อยกว่า $100,000",
             "revokeRecenet": "การเพิกถอนล่าสุด(24 ชม.): {{ count }}",
             "revokeNewApproved": "ผู้ใช้ที่ได้รับอนุมัติใหม่ (24 ชม.): {{ count }}",
@@ -600,7 +600,7 @@
             "revokeTrendsValueWarning": "การเพิกถอนล่าสุดมีจำนวนมากกว่าผู้ใช้ที่ได้รับการอนุมัติใหม่ถึงสองเท่า",
             "contractTrustValue": "Trust value หมายถึงมูลค่ารวมของสินทรัพย์ที่ใช้โดยสัญญานี้ Trust value ในระดับต่ำหมายถึงความเสี่ยงหรือไม่มีกิจกรรมเป็นเวลา 180 วัน",
             "normalTrustValueDanger": "มูลค่าความน่าเชื่อถือของสัญญา: {{ contractUsdText }}",
-            "revokeDangerTitle": "แนวโน้มการเพิกถอนสัญญา 24 ชั่วโมง > 4",
+            "revokeDangerTitle": "การเพิกถอนใน 24 ชม. มากกว่าการอนุมัติ 4 เท่า",
             "contractTrustValueDanger": "มูลค่าความเชื่อถือของสัญญา < $10,000"
           }
         }
@@ -657,9 +657,9 @@
       "viewRaw": "ดู Raw",
       "popularity": "ความนิยม",
       "gasLimitTitle": "Gas limit",
-      "gasLimitNotEnough": "Gas limit is less than 21000. Transaction can't be submitted",
+      "gasLimitNotEnough": "Gas limit ต่ำกว่า 21000 จึงไม่สามารถส่งธุรกรรมได้",
       "addressTypeTitle": "ประเภทที่อยู่",
-      "unknownAction": "Unknown Signature Type",
+      "unknownAction": "ไม่ทราบประเภทลายเซ็น",
       "noMark": "ไม่มีเครื่องหมาย",
       "safeAdminSigned": "ลงนามแล้ว",
       "deployContract": {
@@ -679,16 +679,16 @@
       "contractAddress": "ที่อยู่ Contract",
       "sendNFT": {
         "title": "ส่ง NFT",
-        "nftNotSupport": "NFT not supported"
+        "nftNotSupport": "ไม่รองรับ NFT"
       },
-      "unknownActionType": "Unknown Action Type",
+      "unknownActionType": "ไม่รู้จักประเภทการดำเนินการ",
       "canOnlyUseImportedAddress": "คุณไม่สามารถลงนามธุรกรรมด้วยที่อยู่ watch-only ได้",
-      "safeAddressNotSupportChain": "ที่อยู่ปลอดภัยปัจจุบันไม่ได้รับการสนับสนุนบนเชน {{0}}",
+      "safeAddressNotSupportChain": "ที่อยู่ Safe ปัจจุบันไม่รองรับบนเชน {{0}}",
       "wrapToken": "Wrap Token",
       "revokePermit2": {
         "title": "เพิกถอนการอนุมัติ Permit2"
       },
-      "myNativeTokenBalance": "My Gas balance: ",
+      "myNativeTokenBalance": "ยอด Gas ของฉัน: ",
       "markRemoved": "ทำเครื่องหมายที่ลบออก",
       "interacted": "เคยมีการโต้ตอบก่อนหน้านี้",
       "nftCollection": "คอลเลกชัน NFT",
@@ -698,7 +698,7 @@
         "approveCollection": "อนุมัติคอลเลกชัน"
       },
       "assetOrder": {
-        "title": "Asset Order",
+        "title": "คำสั่งซื้อสินทรัพย์",
         "listAsset": "รายการสินทรัพย์",
         "receiveAsset": "รับสินทรัพย์"
       },
@@ -733,7 +733,7 @@
       },
       "manuallySetGasLimitAlert": "คุณได้ตั้งค่า Gas limit ด้วยตนเองเป็น",
       "nativeTokenNotEngouthForGas": "ยอดคงเหลือ Gas ไม่เพียงพอ",
-      "gasLimitMinValueAlert": "Gas limit should be more than 21000",
+      "gasLimitMinValueAlert": "Gas limit ต้องมากกว่า 21000",
       "firstOnChain": "แรกบนเชน",
       "transferOwner": {
         "description": "คำอธิบาย",
@@ -745,7 +745,7 @@
           "new": "ทำธุรกรรมใหม่"
         },
         "optionGroup": {
-          "recommendTitle": "Recommended nonce",
+          "recommendTitle": "Nonce ที่แนะนำ",
           "replaceTitle": "แทนที่ธุรกรรมใน Queue"
         }
       },
@@ -762,16 +762,16 @@
         "operationCantDecode": "การดำเนินการไม่ได้รับการถอดรหัส",
         "operationABIDesc": "การดำเนินการจะถูกถอดรหัสจาก ABI",
         "operation": "การดำเนินงาน",
-        "title": "Contract Call",
+        "title": "การเรียกใช้สัญญา",
         "receiver": "Receiver Address"
       },
       "speedUpTooltip": "การทำธุรกรรมที่เร่งนี้และการทำธุรกรรมต้นฉบับจะมีเพียงหนึ่งในนั้นเท่านั้นที่จะสำเร็จในที่สุด",
       "swapAndCross": {
         "title": "แลกเปลี่ยน Token และข้าม Chain"
       },
-      "gasLimitLessThanGasUsed": "Gas limit is too low. There is 95% chance that the transaction may fail.\n\nขีดจำกัด Gas ต่ำเกินไป มีโอกาส 95% ที่การทำธุรกรรมอาจล้มเหลว",
+      "gasLimitLessThanGasUsed": "Gas limit is too low. There is 95% chance that the transaction may fail.\n\nGas limit ต่ำเกินไป มีโอกาส 95% ที่การทำธุรกรรมอาจล้มเหลว",
       "revokeNFTCollectionApprove": {
-        "title": "เพิกถอน NFT Collection",
+        "title": "เพิกถอนคอลเลกชัน NFT",
         "revokeCollection": "เพิกถอนคอลเลกชัน"
       },
       "trusted": "เชื่อถือได้",
@@ -819,14 +819,14 @@
         "slippageFailToLoad": "โหลดไม่สำเร็จ",
         "unknownAddress": "ไม่ทราบที่อยู่",
         "payToken": "ชำระเงิน",
-        "slippageTolerance": "Slippage tolerance",
+        "slippageTolerance": "ค่าความคลาดเคลื่อนของราคา",
         "minReceive": "มูลค่ารับขั้นต่ำ",
         "simulationNotSupport": "การจำลองธุรกรรมไม่รองรับบนเชนนี้",
         "simulationFailed": "การจำลองธุรกรรมล้มเหลว",
         "receiveToken": "รับ",
         "notPaymentAddress": "ไม่ใช่กระเป๋าชำระเงิน"
       },
-      "gasLimitLessThanExpect": "ก๊าซลิมิตต่ำ มีโอกาส 1% ที่ธุรกรรมอาจล้มเหลว",
+      "gasLimitLessThanExpect": "Gas limitต่ำ มีโอกาส 1% ที่ธุรกรรมอาจล้มเหลว",
       "coboSafeModificationDelegatedAddress": {
         "safeWalletTitle": "Safe{Wallet}",
         "title": "ส่งการแก้ไขที่อยู่ที่มอบหมาย",
@@ -842,7 +842,7 @@
       "amount": "จำนวนเงิน",
       "trustValue": "คุณค่าวางใจ",
       "trustValueTitle": "คุณค่าที่เชื่อถือได้",
-      "contract": "Smart contract",
+      "contract": "สัญญาอัจฉริยะ",
       "noDelegatedAddress": "ไม่มีที่อยู่ผู้รับมอบสิทธิ์นำเข้า",
       "coboSafeModificationTokenApproval": {
         "title": "ส่งการแก้ไขการอนุมัติโทเค็น",
@@ -885,7 +885,7 @@
         "scamAddress": "ที่อยู่ Scam",
         "fromMyPrivateKey": "จากกุญแจส่วนตัวของฉัน",
         "sendTo": "ส่งไปยัง",
-        "receiverIsTokenAddress": "Token address",
+        "receiverIsTokenAddress": "ที่อยู่โทเค็น",
         "whitelistTitle": "Whitelist",
         "addressBalanceTitle": "ยอดเงินคงเหลือใน Address",
         "fromMySeedPhrase": "จากวลีเมล็ดพันธุ์ของฉัน",
@@ -925,19 +925,19 @@
         "selfHostConfirm": {
           "button": "OK",
           "title": "เปลี่ยนเป็นบริการ Safe ของ Rabby",
-          "content": "Safe API ไม่พร้อมใช้งาน สลับไปยังการใช้งาน Safe ที่ให้บริการโดย Rabby เพื่อให้ Safe ของคุณทำงานได้ <1></1><2>ผู้ลงนาม Safe ทุกคนจะต้องใช้ Rabby Wallet เพื่ออนุมัติธุรกรรม<2>"
+          "content": "Safe API ไม่พร้อมใช้งาน สลับไปยังการใช้งาน Safe ที่ให้บริการโดย Rabby เพื่อให้ Safe ของคุณทำงานได้ <1></1><2>ผู้ลงนาม Safe ทุกคนจะต้องใช้ Rabby Wallet เพื่ออนุมัติธุรกรรม</2>"
         }
       },
       "errorRetry": {
-        "InvalidTx": "ธุรกรรมไม่ถูกต้อง。",
-        "gasLimitTooLow": "ขีดจำกัดก๊าซต่ำเกินไป",
+        "InvalidTx": "ธุรกรรมไม่ถูกต้อง.",
+        "gasLimitTooLow": "Gas limitต่ำเกินไป",
         "alreadySubmitted": "รายการถูกส่งแล้ว พบการทำรายการซ้ำ",
-        "gasExceedsBlockGasLimit": "Gas เกินขีดจำกัดก๊าซบล็อก กรุณาปรับและลองอีกครั้ง",
-        "nonceTooHigh": "Nonce สูงเกินไป กรุณาปรับ nonce และลองอีกครั้ง。",
-        "defaultTips": "มีบางอย่างผิดปกติ กรุณาลองอีกครั้งในภายหลัง。",
-        "nonceTooLow": "Nonce ต่ำเกินไป เราจะอัปเดตเป็น {{nonce}} คลิก “Retry” เพื่อยืนยันและลองอีกครั้ง",
-        "insufficient": "ยอดเงินก๊าซของคุณไม่เพียงพอที่จะครอบคลุมค่าธรรมเนียมก๊าซของเครือข่าย เติมเงินสำหรับก๊าซและลองอีกครั้ง。",
-        "gasPriceTooLow": "ราคาก๊าซต่ำเกินไป เราจะปรับมันขึ้น 30% เพื่อช่วยให้การทำธุรกรรมของคุณยืนยัน คลิก “Retry” เพื่อยืนยันและลองอีกครั้ง"
+        "gasExceedsBlockGasLimit": "Gas เกิน block gas limit กรุณาปรับและลองอีกครั้ง",
+        "nonceTooHigh": "Nonce สูงเกินไป กรุณาปรับ nonce และลองอีกครั้ง.",
+        "defaultTips": "มีบางอย่างผิดปกติ กรุณาลองอีกครั้งในภายหลัง.",
+        "nonceTooLow": "Nonce ต่ำเกินไป เราจะอัปเดตเป็น {{nonce}} คลิก “ลองอีกครั้ง” เพื่อยืนยันและลองอีกครั้ง",
+        "insufficient": "ยอดเงินก๊าซของคุณไม่เพียงพอที่จะครอบคลุมค่าธรรมเนียมก๊าซของเครือข่าย เติมเงินสำหรับก๊าซและลองอีกครั้ง.",
+        "gasPriceTooLow": "ราคา gas ต่ำเกินไป เราจะปรับขึ้น 30% เพื่อช่วยให้ธุรกรรมยืนยันได้ง่ายขึ้น คลิก “ลองอีกครั้ง” เพื่อยืนยันและลองอีกครั้ง"
       },
       "addLiquidity": {
         "receiver": "ผู้รับ",
@@ -958,16 +958,16 @@
       "oneKeySign": "ลงชื่อ",
       "cancelTransaction": "ยกเลิกธุรกรรม",
       "ledgerSign": "ลงชื่อ",
-      "detectedMultipleRequestsFromThisDapp": "ตรวจพบคำขอหลายรายการจาก Dapp นี้",
+      "detectedMultipleRequestsFromThisDapp": "ตรวจพบคำขอหลายรายการจาก DApp นี้",
       "cancelCurrentConnection": "ยกเลิกการเชื่อมต่อปัจจุบัน",
       "beginSigning": "เริ่มกระบวนการลงนาม",
-      "cancelAll": "ยกเลิกคำขอทั้งหมด {{count}} จาก Dapp",
+      "cancelAll": "ยกเลิกคำขอทั้งหมด {{count}} จาก DApp",
       "confirm": "ยืนยัน",
       "signAndSubmitButton": "ลงชื่อ",
       "confirmWithPassword": "ยืนยัน",
       "cancelConnection": "ยกเลิกการเชื่อมต่อ",
       "processRiskAlert": "โปรดดำเนินการแจ้งเตือนก่อนเซ็นชื่อ",
-      "blockDappFromSendingRequests": "บล็อก Dapp ไม่ให้ส่งคำขอเป็นเวลา 1 นาที",
+      "blockDappFromSendingRequests": "บล็อก DApp ไม่ให้ส่งคำขอเป็นเวลา 1 นาที",
       "gasAccount": {
         "customRPC": "ไม่รองรับเมื่อใช้ custom RPC",
         "useGasAccount": "ใช้ GasAccount",
@@ -1025,8 +1025,8 @@
         "receive": "รับ",
         "send": "ส่ง",
         "bridge": "Bridge",
-        "dapps": "Dapps",
-        "websites": "Websites",
+        "dapps": "DApp",
+        "websites": "เว็บไซต์",
         "queue": "คิว",
         "search": "ค้นหา Token",
         "copyTrading": "การคัดลอกการซื้อขาย",
@@ -1041,15 +1041,15 @@
         "convertDust": "แปลง Dust"
       },
       "swipeUp": {
-        "descAndroid": "คลิกเพื่อสำรวจ dApps",
-        "descAndroidMore": "คลิกเพื่สำรวจ dApps เพิ่มเติม",
+        "descAndroid": "คลิกเพื่อสำรวจ DApp",
+        "descAndroidMore": "คลิกเพื่สำรวจ DApp เพิ่มเติม",
         "desc": "เลื่อนขึ้นเพื่อสำรวจเว็บไซต์",
         "descMore": "เลื่อนขึ้นเพื่อสำรวจเว็บไซต์เพิ่มเติม"
       },
       "DappDrawer": {
         "favorite": "โปรดปราน",
         "search": "ค้นหา",
-        "emptyAndroid": "ยังไม่มี dApp ที่เพิ่มลงในรายการที่ชื่นชอบ",
+        "emptyAndroid": "ยังไม่มี DApp ที่เพิ่มลงในรายการที่ชื่นชอบ",
         "empty": "ไม่มีเว็บไซต์ที่เพิ่มเข้าสู่รายการโปรด",
         "tabs": {
           "all": "ทั้งหมด",
@@ -1085,7 +1085,7 @@
         },
         "common": {
           "pendingDetail": "รอรายละเอียด",
-          "unlimited": "unlimited",
+          "unlimited": "ไม่จำกัด",
           "unknownProtocol": "ไม่ทราบโปรโตคอล"
         },
         "empty": {
@@ -1134,7 +1134,7 @@
         "CancelTxConfirmPopup": {
           "title": "ลบที่รอดำเนินการในเครื่อง",
           "warning": "ธุรกรรมที่ถูกลบอาจยังคงได้รับการยืนยันในเชนเว้นแต่ว่าจะถูกแทนที่",
-          "desc": "นี่จะลบธุรกรรมที่รอดำเนินการออกจากส่วนติดต่อของคุณ จากนั้นคุณสามารถเริ่มธุรกรรมใหม่ได้。"
+          "desc": "นี่จะลบธุรกรรมที่รอดำเนินการออกจากส่วนติดต่อของคุณ จากนั้นคุณสามารถเริ่มธุรกรรมใหม่ได้."
         }
       }
     },
@@ -1147,8 +1147,8 @@
       "token": "Token",
       "approve-and-bridge": "อนุมัติและบริดจ์",
       "est-receiving": "ประมาณการรับ:",
-      "bridge-from": "เชื่อมต่อจาก",
-      "bridgeTo": "Bridge To",
+      "bridge-from": "Bridge จาก",
+      "bridgeTo": "บริดจ์ไปยัง",
       "price-impact": "ผลกระทบต่อราคา",
       "Select": "เลือก",
       "detail-tx": "รายละเอียด",
@@ -1157,26 +1157,26 @@
       "estimate": "ประมาณการ:",
       "via-bridge": "ผ่าน {{bridge}}",
       "From": "จาก",
-      "no-quote": "ไม่มีการเสนอราคา",
+      "no-quote": "ไม่มีราคาเสนอ",
       "duration": "{{duration}} นาที",
       "title": "Bridge",
       "To": "ถึง",
       "gas-x-price": "ราคาแก๊ส: {{price}} Gwei.",
       "showMore": {
-        "source": "Bridge Source",
+        "source": "แหล่งที่มาของบริดจ์",
         "title": "แสดงเพิ่มเติม",
         "signWarning": "ฉันเข้าใจการแจ้งเตือนและต้องการดำเนินการต่อ"
       },
-      "gas-fee": "GasFee: {{gasUsed}}",
+      "gas-fee": "ค่า gas: {{gasUsed}}",
       "need-to-approve-token-before-bridge": "ต้องอนุมัติโทเค็นก่อนทำการ bridge",
       "liquidity": "สภาพคล่อง",
       "loss-tips": "คุณกำลังสูญเสีย {{usd}} ลองจำนวนเงินที่ต่างออกไป",
       "est-difference": "ประมาณการความแตกต่าง:",
       "Pending": "รอดำเนินการ",
-      "history": "Bridge history",
+      "history": "ประวัติ Bridge",
       "est-payment": "ประมาณการจ่าย:",
       "no-quote-found": "ไม่มีการเสนอราคา กรุณาลองคู่โทเค็นอื่น",
-      "bridged": "Bridged",
+      "bridged": "Bridge สำเร็จ",
       "gasFeeTooHight": "ค่าแก๊สสูงกว่าปกติ โปรดยืนยันหากคุณต้องการดำเนินการต่อ",
       "pendingItem": {
         "swap": "สลับ",
@@ -1185,8 +1185,8 @@
         "estimatedTime": "เวลาประมาณการณ์",
         "bridgeStatus": "สถานะสะพาน",
         "receivingTo": "การรับบน {{chain}}",
-        "receivedDifferentTokenNeedSwap": "คุณได้รับโทเค็นที่แตกต่างกัน คุณสามารถแลกเปลี่ยนเป็นโทเค็นที่คุณเลือกได้。",
-        "fromFailed": "การทำธุรกรรมไม่สำเร็จ โปรดลองอีกครั้ง。",
+        "receivedDifferentTokenNeedSwap": "คุณได้รับโทเค็นที่แตกต่างกัน คุณสามารถแลกเปลี่ยนเป็นโทเค็นที่คุณเลือกได้.",
+        "fromFailed": "การทำธุรกรรมไม่สำเร็จ โปรดลองอีกครั้ง.",
         "receivedDifferentTokenFromSource": "การส่งผ่านล้มเหลว มีโทเค็นที่แตกต่างกันถูกส่งกลับในเชนต้นทาง",
         "completed": "เสร็จสิ้น",
         "beReturnFailed": "การเชื่อมต่อล้มเหลว สินทรัพย์ของคุณได้ถูกส่งกลับแล้ว",
@@ -1197,7 +1197,7 @@
       },
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "ฟอร์มเปลี่ยนแล้ว",
-      "formChangedAmount": "จำนวนได้เปลี่ยนแปลงอาจเป็นผลมาจากการกรอกอัตโนมัติรหัสผ่านจากแป้นพิมพ์ของระบบ กรุณาตรวจสอบและกรอกจำนวนที่ถูกต้องอีกครั้ง。",
+      "formChangedAmount": "จำนวนได้เปลี่ยนแปลงอาจเป็นผลมาจากการกรอกอัตโนมัติรหัสผ่านจากแป้นพิมพ์ของระบบ กรุณาตรวจสอบและกรอกจำนวนที่ถูกต้องอีกครั้ง.",
       "best-subtitle": "ข้อเสนอที่ดีที่สุดถูกกำหนดโดยการรวมกันของต้นทุนรวมโดยประมาณ (รวมค่า Gas) และความเร็วในการจัดส่ง",
       "swap-best-subtitle": "คำเสนอราคาที่ดีที่สุดถูกกำหนดโดยต้นทุนรวมโดยประมาณที่ต่ำที่สุด รวมถึงอัตราแลกเปลี่ยนและค่าธรรมเนียม Gas"
     },
@@ -1217,15 +1217,15 @@
         },
         "comingSoon": "เร็วๆ นี้...",
         "table": {
-          "customizeTokens_one": "{{count}} custom token",
-          "blockedTokens_one": "{{count}} blocked token",
-          "blockedTokens_zero": "{{count}} blocked token",
-          "testnetTokens_zero": "{{count}} custom network token",
-          "customizeTokens_zero": "{{count}} custom token",
-          "blockedTokens_other": "{{count}} blocked Tokens",
-          "customizeTokens_other": "{{count}} custom tokens",
-          "testnetTokens_one": "{{count}} custom network token",
-          "testnetTokens_other": "{{count}} custom network tokens"
+          "customizeTokens_one": "{{count}} โทเค็นที่กำหนดเอง",
+          "blockedTokens_one": "{{count}} โทเค็นที่ถูกบล็อก",
+          "blockedTokens_zero": "{{count}} โทเค็นที่ถูกบล็อก",
+          "testnetTokens_zero": "{{count}} โทเค็นเครือข่ายที่กำหนดเอง",
+          "customizeTokens_zero": "{{count}} โทเค็นที่กำหนดเอง",
+          "blockedTokens_other": "{{count}} โทเค็นที่ถูกบล็อก",
+          "customizeTokens_other": "{{count}} โทเค็นที่กำหนดเอง",
+          "testnetTokens_one": "{{count}} โทเค็นเครือข่ายที่กำหนดเอง",
+          "testnetTokens_other": "{{count}} โทเค็นเครือข่ายที่กำหนดเอง"
         }
       },
       "tokenDetail": {
@@ -1265,7 +1265,7 @@
       "quickAddressTitle_one": "{{count}} ที่อยู่",
       "quickAddressTitle_other": "{{count}} ที่อยู่",
       "add-address": "เพิ่มกระเป๋าเงิน",
-      "delete-checklist-1": "ฉันเข้าใจว่าหากฉันลบกระเป๋านี้ จริง ๆ แล้ว กุญแจส่วนตัวและประโยค Seed ที่เกี่ยวข้องจะถูกลบ และ Rabby จะไม่สามารถกู้คืนได้。",
+      "delete-checklist-1": "ฉันเข้าใจว่าหากฉันลบกระเป๋านี้ จริง ๆ แล้ว กุญแจส่วนตัวและประโยค Seed ที่เกี่ยวข้องจะถูกลบ และ Rabby จะไม่สามารถกู้คืนได้.",
       "delete-private-key-title": "ลบกระเป๋าเงินและคีย์ส่วนตัว",
       "delete-seed-phrase-title": "ลบกระเป๋าเงินและวลีเมล็ดกำเนิด",
       "delete-title": "ลบกระเป๋าเงิน"
@@ -1279,7 +1279,7 @@
       "pendingTip": "การทำธุรกรรมถูกส่งแล้ว หากการทำธุรกรรมค้างอยู่เป็นเวลานาน คุณสามารถลองล้างการค้างในการตั้งค่าได้",
       "slippage_tolerance": "Slippage tolerance:",
       "token": "Token",
-      "gas-fee": "GasFee: {{gasUsed}}",
+      "gas-fee": "ค่า gas: {{gasUsed}}",
       "approve-swap": "อนุมัติและสวอป",
       "Auto": "อัตโนมัติ",
       "Completed": "เสร็จสิ้น",
@@ -1303,7 +1303,7 @@
       "no-fees-for-wrap": "ไม่มีค่าธรรมเนียม Rabby สำหรับ Wrap",
       "from": "จาก",
       "directlySwap": "การห่อโทเค็น {{symbol}} โดยตรงด้วยสัญญาอัจฉริยะ",
-      "hidden-no-quote-rates_other": "{{count}} rates unavailable",
+      "hidden-no-quote-rates_other": "{{count}} อัตราไม่พร้อมใช้งาน",
       "insufficient": "ยอดคงเหลือไม่เพียงพอ:",
       "Gas-fee-too-high": "ค่าธรรมเนียม Gas สูงเกินไป",
       "select-token": "เลือก Token",
@@ -1316,9 +1316,9 @@
         "desc": "ค่าความน่าเชื่อถือที่ต่ำมักบ่งชี้ถึงความเสี่ยงสูง เช่น โทเค็น honeypot หรือลิขวิดิตี้ที่ต่ำมาก"
       },
       "completedTip": "ธุรกรรมบนเชน ถอดรหัสข้อมูลเพื่อสร้างบันทึก",
-      "slippage-tolerance": "Slippage tolerance",
+      "slippage-tolerance": "ค่าความคลาดเคลื่อนของราคา",
       "rabbyFee": {
-        "title": "Rabby fee",
+        "title": "ค่าธรรมเนียม Rabby",
         "button": "เข้าใจแล้ว",
         "rate": "อัตราค่าธรรมเนียม",
         "wallet": "กระเป๋าเงิน",
@@ -1355,7 +1355,7 @@
         "fundYourWallet": "เติมเงินใน Wallet ของคุณ",
         "buyWithFiatDesc": "การซื้อสกุลเงินดิจิทัลที่ง่าย",
         "foundGuideTitle": "ระดมทุนอย่างรวดเร็ว",
-        "foundGuideDesc": "เพิ่มโทเค็นลงในกระเป๋าเงินของคุณเพื่อเริ่มต้น。",
+        "foundGuideDesc": "เพิ่มโทเค็นลงในกระเป๋าเงินของคุณเพื่อเริ่มต้น.",
         "importAddressDesc": "เพิ่มกระเป๋าเงินที่มีอยู่พร้อมกับเงินทุน",
         "importAddress": "นำเข้ากระเป๋าเงิน",
         "receiveCryptoDesc": "โอนโทเค็นจากกระเป๋าเงินอื่น"
@@ -1416,7 +1416,7 @@
         "descriptionAndroid": "ถ้าคุณชอบ Rabby การให้คะแนนอย่างเร็วบน Google Play จะมีความหมายมาก",
         "feedbackSuccess": "ขอขอบคุณสำหรับข้อเสนอแนะของคุณ",
         "descriptionIOS": "หากคุณชอบ Rabby การให้คะแนนอย่างรวดเร็วใน App Store จะมีความหมายมาก",
-        "feedbackTitle": "มีข้อเสนอแนะไหม? เรากำลังฟังอยู่。"
+        "feedbackTitle": "มีข้อเสนอแนะไหม? เรากำลังฟังอยู่."
       },
       "homeCenterTipScreenshot": {
         "description": "ถ่าย screenshot ได้ตลอดเวลาเพื่อรายงานข้อบกพร่องอย่างรวดเร็ว",
@@ -1428,7 +1428,7 @@
       "copySeedPhraseSecureTip": {
         "tip3": "อย่าแชร์ seed phrase ของคุณ เราจะไม่มีวันขอให้คุณแชร์มัน",
         "copied": "Seed phrase ได้ถูกคัดลอกแล้ว คลิปบอร์ดจะถูกล้างใน 1 นาที",
-        "subTitle": "ใครก็ตามที่ได้รับ seed phrase ของคุณสามารถควบคุมเงินของคุณได้อย่างสมบูรณ์。",
+        "subTitle": "ใครก็ตามที่ได้รับ seed phrase ของคุณสามารถควบคุมเงินของคุณได้อย่างสมบูรณ์.",
         "copyAnyway": "คัดลอกไปอยู่ดี",
         "title": "เก็บ SeedPhrase ของคุณให้เป็นความลับ",
         "tip2": "อย่านำ seed phrase ของคุณไปวางหรือบันทึกในบริการคลาวด์หรือแอปโน้ต",
@@ -1436,7 +1436,7 @@
       },
       "screenshotSecureTip": {
         "title": "ภาพหน้าจอไม่ปลอดภัย",
-        "tip2": "แอปหรือมัลแวร์สามารถอ่านภาพที่เก็บไว้ในไลบรารีภาพของคุณได้。",
+        "tip2": "แอปหรือมัลแวร์สามารถอ่านภาพที่เก็บไว้ในไลบรารีภาพของคุณได้.",
         "tip3": "ใครก็ตามที่ได้ seed phrase ของคุณสามารถควบคุมกระเป๋าเงินของคุณได้อย่างเต็มที่ และสิ่งนี้ไม่สามารถย้อนกลับได้",
         "subTitle": "การบันทึก seed phrase ของคุณเป็นภาพอาจทำให้มันถูกเปิดเผย ดังนั้นการจดลงเป็นตัวอักษรเป็นตัวเลือกที่ปลอดภัยกว่า",
         "tip1": "ภาพหน้าจอสามารถซิงค์ไปยังคลาวด์หรืออุปกรณ์อื่น ๆ และสามารถเข้าถึงได้หากอุปกรณ์สูญหาย ถูกขโมย หรือถูกละเมิด"
@@ -1459,9 +1459,9 @@
       "title": "ลงชื่อในข้อความ",
       "createKey": {
         "description": "คำอธิบาย",
-        "interactDapp": "โต้ตอบกับ Dapp"
+        "interactDapp": "โต้ตอบกับ DApp"
       },
-      "sameSafeMessageAlert": "ข้อความเดียวกันได้รับการยืนยันแล้ว; ไม่ต้องการลายเซ็นเพิ่มเติม。"
+      "sameSafeMessageAlert": "ข้อความเดียวกันได้รับการยืนยันแล้ว; ไม่ต้องการลายเซ็นเพิ่มเติม."
     },
     "securityEngine": {
       "no": "ไม่",
@@ -1482,7 +1482,7 @@
       "assets": "สินทรัพย์",
       "backup-private-key": "สำรอง Private Key",
       "safeAddressListScreen": {
-        "addSafeAddress": "เพิ่มกระเป๋าเงิน Safe"
+        "addSafeAddress": "เพิ่ม Safe Wallets"
       },
       "backup-seed-phrase": "สำรอง Seed Phrase",
       "source": "แหล่งที่มา",
@@ -1516,11 +1516,11 @@
       "delete-desc": "คุณแน่ใจหรือว่าต้องการลบกระเป๋านี้?",
       "notMatterAddressDialog": {
         "watchOnlyWallet": "กระเป๋าเงินดูเท่านั้น",
-        "safeWallet": "กระเป๋าเงินที่ปลอดภัย",
+        "safeWallet": "Safe Wallet",
         "notTop10Address": "กระเป๋าที่จัดอันดับต่ำกว่า 10 อันดับแรก",
         "title": "กระเป๋าเงินต่อไปนี้ไม่รวมอยู่ในยอดรวม",
         "helpDescription2": "คุณสามารถกดค้างเพื่อยึดกระเป๋าและปรับว่าอันไหนบ้างที่รวมอยู่",
-        "helpDescription1": "เพื่อให้แน่ใจว่าการอัปเดตข้อมูลเป็นไปอย่างรวดเร็วและแม่นยำ กระเป๋าเงิน 10 อันดับแรกของคุณเท่านั้นที่จะรวมอยู่ใน Total Balance และ Portfolio。",
+        "helpDescription1": "เพื่อให้แน่ใจว่าการอัปเดตข้อมูลเป็นไปอย่างรวดเร็วและแม่นยำ กระเป๋าเงิน 10 อันดับแรกของคุณเท่านั้นที่จะรวมอยู่ใน Total Balance และ Portfolio.",
         "helpTitle": "wallets ที่จัดอันดับต่ำกว่า 10 อันดับแรก"
       },
       "backup": "สำรองข้อมูล",
@@ -1555,21 +1555,21 @@
       "popularLevelHigh": "สูง",
       "blocked": "ถูกบล็อก",
       "connectBtn": "เชื่อมต่อ",
-      "listedBy": "Listed by",
+      "listedBy": "ระบุโดย",
       "myMark": "มายมาร์ก",
-      "title": "เชื่อมต่อกับ Dapp",
+      "title": "เชื่อมต่อกับ DApp",
       "markAsTrustToast": "ทำเครื่องหมายว่า \"Trusted\"",
       "foundForbiddenRisk": "พบความเสี่ยงที่ต้องห้าม การเชื่อมต่อถูกบล็อก",
       "manageWhiteBlackList": "จัดการรายการที่อนุญาต/รายการที่บล็อก",
       "markAsBlockToast": "ทำเครื่องหมายว่า \"Blocked\"",
       "noWebsite": "ไม่มี",
-      "markRemovedToast": "Mark removed",
+      "markRemovedToast": "ลบเครื่องหมายแล้ว",
       "verifiedByRabby": "ยืนยันโดย Rabby",
       "onYourWhitelist": "ในรายการอนุญาตของคุณ",
       "popularLevelLow": "ต่ำ",
       "noMark": "ไม่มีการทำเครื่องหมาย",
       "ignoreAll": "ละเว้นทั้งหมด",
-      "popularLevelMedium": "Medium",
+      "popularLevelMedium": "ปานกลาง",
       "SignTestnetPermission": {
         "title": "ลายเซ็นอนุญาต"
       },
@@ -1752,34 +1752,34 @@
         "balance": "ยอดคงเหลือ",
         "onekey": {
           "hdPathType": {
-            "bip44": "BIP44: HDpath ตามที่กำหนดโดยโปรโตคอล BIP44"
+            "bip44": "BIP44: HD Path ตามที่กำหนดโดยโปรโตคอล BIP44"
           },
           "hdPathTypeNoChain": {
-            "bip44": "BIP44: HDpath ที่กำหนดโดยโปรโตคอล BIP44"
+            "bip44": "BIP44: HD Path ที่กำหนดโดยโปรโตคอล BIP44"
           }
         },
         "ledger": {
           "hdPathTypeNoChain": {
-            "legacy": "Legacy: HD path ที่ใช้โดย MEW / Mycrypto.",
-            "ledgerLive": "Ledger Live: Ledger official HD path.",
-            "bip44": "มาตรฐาน BIP44: เส้นทาง HD ที่กำหนดโดยโปรโตคอล BIP44."
+            "legacy": "Legacy: HD Path ที่ใช้โดย MEW / Mycrypto.",
+            "ledgerLive": "Ledger Live: Ledger official HD Path.",
+            "bip44": "มาตรฐาน BIP44: HD Path ที่กำหนดโดยโปรโตคอล BIP44."
           },
           "hdPathType": {
-            "legacy": "Legacy: HD path ที่ใช้โดย MEW / Mycrypto。",
-            "ledgerLive": "Ledger Live: Ledger official HD path.",
-            "bip44": "มาตรฐาน BIP44: HDpath ที่กำหนดโดยโปรโตคอล BIP44."
+            "legacy": "Legacy: HD Path ที่ใช้โดย MEW / Mycrypto.",
+            "ledgerLive": "Ledger Live: Ledger official HD Path.",
+            "bip44": "มาตรฐาน BIP44: HD Path ที่กำหนดโดยโปรโตคอล BIP44."
           }
         },
         "keystone": {
           "hdPathTypeNoChain": {
-            "legacy": "Legacy: HD path used by MEW / Mycrypto.",
-            "ledgerLive": "Ledger Live: เส้นทาง HD อย่างเป็นทางการของ Ledger คุณสามารถจัดการได้เพียง 10 ที่อยู่ด้วยเส้นทาง Ledger Live เท่านั้น",
-            "bip44": "BIP44: HDpath ที่กำหนดโดยโปรโตคอล BIP44"
+            "legacy": "Legacy: HD Path used by MEW / Mycrypto.",
+            "ledgerLive": "Ledger Live: HD Path อย่างเป็นทางการของ Ledger คุณสามารถจัดการได้เพียง 10 ที่อยู่ด้วยเส้นทาง Ledger Live เท่านั้น",
+            "bip44": "BIP44: HD Path ที่กำหนดโดยโปรโตคอล BIP44"
           },
           "hdPathType": {
-            "ledgerLive": "Ledger Live: เส้นทาง HD อย่างเป็นทางการของ Ledger คุณสามารถจัดการที่อยู่ได้เพียง 10 ที่อยู่ด้วยเส้นทาง Ledger Live",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto.",
-            "bip44": "BIP44: HDpath ที่กำหนดโดยโปรโตคอล BIP44"
+            "ledgerLive": "Ledger Live: HD Path อย่างเป็นทางการของ Ledger คุณสามารถจัดการที่อยู่ได้เพียง 10 ที่อยู่ด้วยเส้นทาง Ledger Live",
+            "legacy": "Legacy: HD Path used by MEW / Mycrypto.",
+            "bip44": "BIP44: HD Path ที่กำหนดโดยโปรโตคอล BIP44"
           }
         },
         "qrCode": {
@@ -1788,19 +1788,19 @@
             "content": "ไม่รองรับการนำเข้าอุปกรณ์ {{0}} หลายเครื่อง หากคุณเปลี่ยนไปใช้อุปกรณ์ {{0}} ใหม่ รายการที่อยู่ของอุปกรณ์ปัจจุบันจะถูกลบก่อนเริ่มกระบวนการนำเข้า"
           }
         },
-        "customAddressHdPath": "custom wallet HD path",
+        "customAddressHdPath": "custom wallet HD Path",
         "selectIndexTip": "เลือกหมายเลขประจำตัวของกระเป๋าเงินที่จะเริ่มจาก:",
         "manageAddressFrom": "จัดการกระเป๋าเงินจาก {{0}} ถึง {{1}}",
         "trezor": {
           "hdPathType": {
-            "legacy": "Legacy: HD path ที่ใช้โดย MEW / Mycrypto。",
-            "bip44": "BIP44: HDpath ที่กำหนดโดยโปรโตคอล BIP44.",
-            "ledgerLive": "Ledger Live: เส้นทาง HD อย่างเป็นทางการของ Ledger."
+            "legacy": "Legacy: HD Path ที่ใช้โดย MEW / Mycrypto.",
+            "bip44": "BIP44: HD Path ที่กำหนดโดยโปรโตคอล BIP44.",
+            "ledgerLive": "Ledger Live: HD Path อย่างเป็นทางการของ Ledger."
           },
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: Ledger official HD path.",
-            "legacy": "Legacy: HD path ที่ใช้โดย MEW / Mycrypto.",
-            "bip44": "BIP44: HDpath ที่กำหนดโดยโปรโตคอล BIP44。"
+            "ledgerLive": "Ledger Live: Ledger official HD Path.",
+            "legacy": "Legacy: HD Path ที่ใช้โดย MEW / Mycrypto.",
+            "bip44": "BIP44: HD Path ที่กำหนดโดยโปรโตคอล BIP44."
           }
         }
       },
@@ -1810,11 +1810,11 @@
         "title4": "ความปลอดภัย",
         "title3": "อย่าแชร์มัน",
         "title": "กุญแจส่วนตัวคืออะไร",
-        "description3": "อย่าเล่private keyของคุณให้ผู้อื่นฟัง—ใครก็ตามที่เข้าถึงมันสามารถควบคุมเงินของคุณได้。",
+        "description3": "อย่าเล่private keyของคุณให้ผู้อื่นฟัง—ใครก็ตามที่เข้าถึงมันสามารถควบคุมเงินของคุณได้.",
         "description1": "คีย์ส่วนตัวคือชุดของตัวอักษรและตัวเลขที่ใช้ในการเข้าถึงและควบคุมกระเป๋าเงินของคุณ คุณสามารถใช้มันในการกู้คืนกระเป๋าเงินของคุณบนอุปกรณ์ใดก็ได้",
         "description4": "กุญแจส่วนตัวของคุณถูกเก็บไว้ในเครื่องของคุณและเข้ารหัสด้วยรหัสผ่านของคุณ เท่านั้นที่คุณสามารถเข้าถึงได้ Rabby ไม่สามารถดึงหรือเข้าถึงกุญแจส่วนตัวของคุณได้",
         "description2": "หากคุณสูญเสีย keyring ของคุณ คุณจะไม่สามารถกู้คืนกระเป๋าเงินของคุณได้",
-        "ButtonGotIt": "ฉันเข้าใจแล้ว。"
+        "ButtonGotIt": "ฉันเข้าใจแล้ว."
       },
       "importing": "นำเข้า...",
       "Done": "เสร็จเรียบร้อย",
@@ -1907,7 +1907,7 @@
       "alert": "วลี Seed นี้เป็นข้อมูลรับรองทรัพย์สินของคุณ ห้ามทำหายหรือเปิดเผยให้ผู้อื่นทราบ มิฉะนั้นคุณอาจสูญเสียทรัพย์สินของคุณตลอดไป โปรดดูในสภาพแวดล้อมที่ปลอดภัยและเก็บรักษาอย่างระมัดระวัง",
       "tapToReveal": {
         "line1": "แตะเพื่อแสดง seed phrase ของคุณ",
-        "line2": "ตรวจสอบให้แน่ใจว่าไม่มีใครกำลังมองหน้าจอของคุณอยู่。"
+        "line2": "ตรวจสอบให้แน่ใจว่าไม่มีใครกำลังมองหน้าจอของคุณอยู่."
       }
     },
     "rabbyPoints": {
@@ -1957,7 +1957,7 @@
       "alreadyClaimedXPoints": "เรียบร้อยแล้ว: {{point}}"
     },
     "approvalsAddressList": {
-      "title": "Approvals"
+      "title": "การอนุมัติ"
     },
     "sign": {
       "transactionSpeed": "Transaction Speed"
@@ -1991,7 +1991,7 @@
         "title": "ร้อน"
       },
       "globalSearch": {
-        "placeHolder": "ค้นหา Dapp/Token",
+        "placeHolder": "ค้นหา DApp/Token",
         "iosPlaceHolder": "ค้นหาเว็บไซต์/โทเค็น"
       },
       "tokenHeader": {
@@ -2034,9 +2034,9 @@
         "receiveBody": "โอนโทเค็นจากกระเป๋าเงินอื่น"
       },
       "nft": {
-        "floorPrice": "/Floor Price:"
+        "floorPrice": "/ราคาพื้น:"
       },
-      "appChain": "Dapp Account"
+      "appChain": "DApp Account"
     },
     "gasAccount": {
       "switchLoginAddressBeforeDeposit": {
@@ -2077,7 +2077,7 @@
         "applePayFeeDesc": "รวมค่าธรรมเนียม Apple Pay ไม่มีการถอนออก",
         "paymentAddress": "กระเป๋าเงินการชำระเงิน",
         "inSufficientTip1": "กระเป๋าเงินนี้มีโทเค็นไม่เพียงพอ กรุณาเลือกกระเป๋าเงินใบอื่น",
-        "applePayFeeDesc1": "รวมค่าธรรมเนียม App Store ไม่มีการถอนเงิน。",
+        "applePayFeeDesc1": "รวมค่าธรรมเนียม App Store ไม่มีการถอนเงิน.",
         "pay": "จ่าย",
         "insufficientBalanceLabel": "ยอดเงินไม่เพียงพอ",
         "balanceLabel": "ยอดเงิน",
@@ -2085,7 +2085,7 @@
         "unavailablePaymentWallet": "กระเป๋าเงินที่เลือกสำหรับการชำระเงินไม่สามารถใช้งานได้",
         "selectToken": "เลือกโทเค็นเพื่อฝากเงิน",
         "suggestedToken": "โทเค็นที่แนะนำ",
-        "estReceiveLabel": "Est.Receive: {{usd}}",
+        "estReceiveLabel": "คาดว่าจะได้รับ: {{usd}}",
         "fetchQuoteFailed": "ไม่สามารถดึงข้อมูลการเสนอราคาได้",
         "minAmountRequired": "จำนวนเงินฝากขั้นต่ำคือ $1",
         "estReceiveTip": "บริการที่ดำเนินการผ่าน {{name}} อาจมีการลื่นไถล",
@@ -2162,7 +2162,7 @@
         "item2": "รองรับทุกเครือข่าย",
         "desc2": "การชำระค่า Gas อัตโนมัติบน 80+ เครือข่าย",
         "item3": "รองรับการทำธุรกรรมทั้งหมด",
-        "desc3": "สลับ, สะพาน, ส่ง, DApps, & มากกว่า",
+        "desc3": "Swap, Bridge, ส่ง, DApp และอื่น ๆ",
         "title": "ชำระค่า Gas บนทุก Chain",
         "subtitle": "เมื่อคุณหมด Gas"
       },
@@ -2386,7 +2386,7 @@
       "clearBrowserData": {
         "button": "ล้างข้อมูล",
         "title": "ล้างข้อมูลเบราว์เซอร์",
-        "desc": "นี่จะปิดแท็บเบราว์เซอร์ทั้งหมดและลบประวัติการท่องเว็บทั้งหมด。"
+        "desc": "นี่จะปิดแท็บเบราว์เซอร์ทั้งหมดและลบประวัติการท่องเว็บทั้งหมด."
       }
     },
     "buy": {
@@ -2412,7 +2412,7 @@
       "paymentMethod": "วิธีการชำระเงิน",
       "searchRegionPlaceholder": "ค้นหาภูมิภาค",
       "searchingQuote": "กำลังค้นหาคำคมให้คุณ...",
-      "noQuote2": "ไม่พบคำพูด",
+      "noQuote2": "ไม่พบราคาเสนอ",
       "paymentProviderTips": "ผู้ให้บริการนี้รองรับวิธีการชำระเงินดังต่อไปนี้:",
       "history": "ประวัติการซื้อ",
       "youWillReceive": "รับ",
@@ -2523,12 +2523,12 @@
         "title": "รายการโปรด"
       },
       "BrowserHeader": {
-        "searchAndroid": "ค้นหา Dapp",
+        "searchAndroid": "ค้นหา DApp",
         "searchIos": "ค้นหาเว็บไซต์"
       },
       "CurrentPopup": {
         "connectChain": "เชื่อมต่อ Chain",
-        "title": "Dapp ปัจจุบัน",
+        "title": "DApp ปัจจุบัน",
         "disconnect": "ตัดการเชื่อมต่อ",
         "connectWallet": "เชื่อมต่อกระเป๋าเงิน"
       },
@@ -2559,9 +2559,9 @@
       "HyperliquidInvitePopup": {
         "btn": "เข้าร่วมตอนนี้",
         "title": "โปรแกรมแนะนำ Hyperliquid",
-        "desc": "เข้าร่วมตอนนี้โดยใช้รหัสของ Rabby เพื่อรับส่วนลด <1>4%</1> สำหรับค่าธรรมเนียม Hyperliquid ของคุณ。",
+        "desc": "เข้าร่วมตอนนี้โดยใช้รหัสของ Rabby เพื่อรับส่วนลด <1>4%</1> สำหรับค่าธรรมเนียม Hyperliquid ของคุณ.",
         "asterTitle": "โปรแกรมแนะนำของ Aster",
-        "asterDesc": "เข้าร่วมตอนนี้โดยใช้รหัสของ Rabby เพื่อรับส่วนลด <1>4%</1> สำหรับค่าธรรมเนียม Aster ของคุณ。"
+        "asterDesc": "เข้าร่วมตอนนี้โดยใช้รหัสของ Rabby เพื่อรับส่วนลด <1>4%</1> สำหรับค่าธรรมเนียม Aster ของคุณ."
       },
       "WebviewError": {
         "failedToLoad": "ไม่สามารถโหลดหน้าเว็บได้",
@@ -2615,7 +2615,7 @@
     },
     "defiDetail": {
       "viewSiteInWebsite": "ดูในเว็บไซต์",
-      "viewSiteInApp": "ดูใน Dapp",
+      "viewSiteInApp": "ดูใน DApp",
       "appChain": "บนบัญชี {{chain}}",
       "dappActions": {
         "queueDescription": "การถอนปัจจุบันจะเข้าสู่คิวรอ เมื่อดำเนินการเสร็จสิ้น สามารถถอนเข้าสู่กระเป๋าของคุณได้"
@@ -2628,8 +2628,8 @@
     },
     "copyTrading": {
       "tipsDollar": {
-        "title": "การคัดลอกการซื้อขายจาก Smart Money",
-        "description": "ค้นหาโทเค็นที่อิงจากกิจกรรมล่าสุดจาก smart money wallets แตะที่โทเค็นเพื่อดูจำนวนการซื้อขายโดยละเอียดและผลกำไรในอดีตจาก wallets เหล่านั้น"
+        "title": "Copy Trading จาก Smart Money",
+        "description": "ค้นหาโทเค็นจากกิจกรรมล่าสุดของ Smart Money Wallets แตะโทเค็นเพื่อดูมูลค่าการเทรดโดยละเอียดและกำไรย้อนหลังของ wallets เหล่านั้น"
       },
       "buy": "ซื้อ",
       "noMoreData": "ไม่มีข้อมูลเพิ่มเติม",
@@ -2638,13 +2638,13 @@
       "recentBuy": "การซื้อที่เพิ่งเกิดขึ้น",
       "updateText": "{{count}} แนวโน้มที่อัปเดตแล้ว",
       "historyProfit": "ประวัติผลกำไร",
-      "smartMoneyWallets": "กระเป๋า Smart Money",
+      "smartMoneyWallets": "Smart Money Wallets",
       "smartMoneyWallet": "Smart Money Wallet",
       "filterRule": {
         "tokenCreate": "สร้างขึ้นเมื่อเร็วๆ นี้",
-        "smartMoney": "การซื้อขาย Smart Wallets",
+        "smartMoney": "Smart Wallets ที่กำลังเทรด",
         "24HChange": "การเปลี่ยนแปลง 24 ชั่วโมง",
-        "smartWalletCount": "จำนวนกระเป๋าเงินอัจฉริยะ"
+        "smartWalletCount": "จำนวน Smart Wallets"
       },
       "bought": "ซื้อ",
       "Liquidity": "สภาพคล่อง",
@@ -2664,15 +2664,15 @@
       "currentToken": "โทเค็นปัจจุบัน",
       "sameNameTokens": "โทเค็นชื่อเดียวกัน",
       "noOtherTokensWithSameName": "ไม่พบโทเค็นอื่นที่มีชื่อเดียวกัน",
-      "smartWalletsBuying": "{{len}} กระเป๋าเงินอัจฉริยะ สำหรับการซื้อ",
+      "smartWalletsBuying": "{{len}} Smart Wallets กำลังซื้อ",
       "holdingProfit": "การถือครอง/กำไร",
       "chain": "Chain",
       "timeLabelAgo": "สร้างเมื่อ {{time}} ที่แล้ว",
       "info": "ข้อมูล",
-      "smartWallets": "กระเป๋าเงินอัจฉริยะ",
+      "smartWallets": "Smart Wallets",
       "myBalanceFromCopyTrading": "ยอดเงินของฉันจาก Copy Trading",
       "updateTokenText": "{{count}} โทเค็นที่อัปเดตแล้ว",
-      "gettingLatest": "รับข้อมูลล่าสุดจาก Smart Money..."
+      "gettingLatest": "กำลังดึงข้อมูลล่าสุดจาก Smart Money..."
     },
     "watchlist": {
       "empty": {
@@ -2744,7 +2744,7 @@
         "step5Title": "การชำระหนี้",
         "step4Title": "ปรับแต่งเลเวอเรจ",
         "step2Desc": "เมื่อคุณคาดว่าราคาจะเพิ่มขึ้น คุณจะเปิดทำการ Long หากราคาขึ้น คุณจะมีกำไร หากราคาลดลง คุณจะขาดทุน",
-        "step3Desc": "เมื่อคุณคาดว่าราคาจะลดลง คุณจะเปิดทำสัญญา Short หากราคาลดลง คุณจะได้กำไร หากราคาขึ้น คุณจะขาดทุน。",
+        "step3Desc": "เมื่อคุณคาดว่าราคาจะลดลง คุณจะเปิดทำสัญญา Short หากราคาลดลง คุณจะได้กำไร หากราคาขึ้น คุณจะขาดทุน.",
         "step4Desc": "เลเวอเรจช่วยให้คุณเทรดด้วยมูลค่าสัญญาที่สูงกว่าเงินทุนที่ใส่ไว้ ซึ่งอาจขยายทั้งกำไรและขาดทุน",
         "step2Title": "ยาว",
         "step1Desc": "ในการเทรด perpetual futures คุณไม่ได้เทรดแค่สินทรัพย์ แต่กำลังเทรดมุมมองต่อการเคลื่อนไหวของราคาถัดไป",
@@ -2776,7 +2776,7 @@
         "selectWithdrawToken": "เลือกโทเค็น",
         "hypeGasFeeTooltip": "ค่าธรรมเนียมประมาณ 0.00002 HYPE จะถูกเรียกเก็บเมื่อถอนเข้าสู่ EVM",
         "hypeFeeTip": "ค่าธรรมเนียม : ~${{fee}}",
-        "hypeActivationFeeTooltip": "ค่าธรรมเนียมการเปิดใช้งานครั้งเดียว {{fee}} จะถูกเรียกเก็บโดย Hyperliquid สำหรับการถอน HyperEVM ครั้งแรก。",
+        "hypeActivationFeeTooltip": "ค่าธรรมเนียมการเปิดใช้งานครั้งเดียว {{fee}} จะถูกเรียกเก็บโดย Hyperliquid สำหรับการถอน HyperEVM ครั้งแรก.",
         "chain": "สายโซ่",
         "max": "สูงสุด",
         "selectChain": "เลือกสายโซ่"
@@ -2808,7 +2808,7 @@
         "price": "ราคา",
         "perps": "Perps",
         "gotItBtn": "เข้าใจแล้ว",
-        "sizeTips": "มูลค่าหรือปริมาณรวมของการเทรดของคุณ ซึ่งกำหนดโดยมาร์จิ้นและเลเวอเรจ。",
+        "sizeTips": "มูลค่าหรือปริมาณรวมของการเทรดของคุณ ซึ่งกำหนดโดยมาร์จิ้นและเลเวอเรจ.",
         "feeTitle": "ค่าธรรมเนียม",
         "feeRabby": "Rabby Wallet",
         "feeHyperliquid": "Hyperliquid",
@@ -2833,7 +2833,7 @@
       "PerpsDepositTokenModal": {
         "directTag": "ฝากตรง",
         "swapBtn": "สลับ",
-        "bridgeBtn": "สะพาน",
+        "bridgeBtn": "Bridge",
         "goSwapDesc": "รองรับเฉพาะ USDC บน Arbitrum สำหรับการฝากโดยตรง โปรดแลกเปลี่ยนโทเค็นปัจจุบันของคุณเป็น USDC ก่อนไปฝาก",
         "goBridgeDesc": "เพียง USDC บน Arbitrum เท่านั้นที่รองรับสำหรับการฝากโดยตรง โปรดทำการย้ายโทเค็นปัจจุบันของคุณไปยัง USDC บน Arbitrum ก่อนที่จะทำการฝาก",
         "directDepositFast": "เร็ว, 0 Slippage"
@@ -2936,7 +2936,7 @@
         "activateFailed": "ล้มเหลว",
         "description": "ใช้รหัสของ Rabby เพื่อเปิดใช้งาน",
         "title": "ประหยัดค่าธรรมเนียม Hyperliquid",
-        "hyperliquidFee": "ค่าธรรมเนียมการซื้อขาย Hyperliquid。",
+        "hyperliquidFee": "ค่าธรรมเนียมการซื้อขาย Hyperliquid.",
         "activatedFailed": "การเปิดใช้งานล้มเหลว",
         "activatedSuccess": "เปิดใช้งานการประหยัดค่าธรรมเนียม Hyperliquid 4%",
         "activateNow": "เปิดใช้งานเดี๋ยวนี้"
@@ -3008,7 +3008,7 @@
         "margin": "มาร์จิ้น (แยก)",
         "justMargin": "มาร์จิ้น",
         "liqPrice": "Liq. Price",
-        "sizeTips": "มูลค่าหรือปริมาณรวมของการเทรดของคุณ ซึ่งตั้งโดยมาร์จินและเลเวอเรจ。",
+        "sizeTips": "มูลค่าหรือปริมาณรวมของการเทรดของคุณ ซึ่งตั้งโดยมาร์จินและเลเวอเรจ.",
         "liquidationPriceTips": "ราคาที่ตำแหน่งของคุณถูกปิดโดยอัตโนมัติจากการแลกเปลี่ยนเพื่อป้องกันการขาดทุนเพิ่มเติมเมื่อมาร์จิ้นของคุณต่ำกว่าระดับมาร์จิ้นขั้นต่ำ",
         "pnl": "PNL",
         "marginIsolated": "มาร์จิ้น (แยก)",
@@ -3029,12 +3029,12 @@
         "realizedPnl": "PNL ที่รับรู้แล้ว",
         "unrealizedPnl": "PNL ที่ยังไม่เกิดขึ้นจริง",
         "fundingTipsBold": "ส่วนนี้แสดงยอดค่าฟันดิงรวมที่ชำระแล้วตั้งแต่เปิดโพซิชัน ค่า <bold>สีเขียว (บวก)</bold> หมายถึงคุณได้รับค่าฟันดิงจากเทรดเดอร์อื่น ส่วนค่า <bold>สีแดง (ลบ)</bold> คือค่าฟันดิงที่คุณจ่ายให้พวกเขา",
-        "crossTips": "ในโหมด Cross Margin ราคาการชำระบัญชีสำหรับตำแหน่งเดียวเป็นเพียงการประมาณการเพื่อใช้เป็นข้อมูลอ้างอิงเท่านั้น。"
+        "crossTips": "ในโหมด Cross Margin ราคาการชำระบัญชีสำหรับตำแหน่งเดียวเป็นเพียงการประมาณการเพื่อใช้เป็นข้อมูลอ้างอิงเท่านั้น."
       },
       "PerpsInfo": {
         "title": "ข้อมูล",
         "openInterest": "ความสนใจที่เปิดอยู่",
-        "openInterestTips": "ยอดตำแหน่งคงค้างทั้งหมดของผู้ใช้ทุกคนในสัญญานี้。",
+        "openInterestTips": "ยอดตำแหน่งคงค้างทั้งหมดของผู้ใช้ทุกคนในสัญญานี้.",
         "funding": "การระดมทุน",
         "24Vol": "24h ปริมาณ",
         "fundingTips": "นี่คือค่าธรรมเนียมรายชั่วโมงที่เทรดเดอร์จ่ายหรือได้รับเพื่อให้ราคาสัญญา perpetual ใกล้เคียงกับราคาจริงของโทเค็น หากเป็นบวก long จะจ่ายให้ short หากเป็นลบ short จะจ่ายให้ long",
@@ -3107,7 +3107,7 @@
         "slPrice": "ราคา Stop-Loss",
         "direction": "ทิศทาง",
         "price": "ราคา",
-        "sizeTips": "มูลค่าหรือปริมาณรวมของการซื้อขายของคุณ ซึ่งกำหนดโดยมาร์จิ้นและเลเวอเรจ。",
+        "sizeTips": "มูลค่าหรือปริมาณรวมของการซื้อขายของคุณ ซึ่งกำหนดโดยมาร์จิ้นและเลเวอเรจ.",
         "liquidationPriceTips": "ราคาที่ตำแหน่งของคุณถูกปิดโดยอัตโนมัติจากการแลกเปลี่ยนเพื่อป้องกันการขาดทุนเพิ่มเติมเมื่อมาร์จิ้นของคุณต่ำกว่าระดับมาร์จิ้นขั้นต่ำ",
         "rabbyFeeTips": "ค่าธรรมเนียม Rabby: 0%",
         "margin": "มาร์จิ้น (แยก)",
@@ -3250,7 +3250,7 @@
         "enabled": "เปิดใช้งาน",
         "supplyBalance": "ยอดคงเหลือที่ฝาก",
         "unavailable": "ไม่สามารถใช้งานได้",
-        "isolatedTips": "สินทรัพย์การกู้ยืม/การยืมที่มีอยู่ของคุณไม่ได้รับการสนับสนุน。",
+        "isolatedTips": "สินทรัพย์การกู้ยืม/การยืมที่มีอยู่ของคุณไม่ได้รับการสนับสนุน.",
         "supplied": "จัดหาแล้ว"
       },
       "withdrawDetail": {
@@ -3260,12 +3260,12 @@
       "borrowDetail": {
         "actions": "ยืม",
         "approveAndBorrow": "อนุมัติและกู้ยืม",
-        "almostReachedWarning": "โปรโตคอลการกู้ยืมถึงขีดจำกัด 100% สำหรับสินทรัพย์นี้ การกู้ยืมเพิ่มเติมไม่สามารถใช้งานได้。",
-        "almostReachedError": "จำนวนสูงสุดที่สามารถยืมได้จะถูกจำกัดเนื่องจากขีดจำกัดการยืมของโปรโตคอลเกือบถึงแล้ว。",
+        "almostReachedWarning": "โปรโตคอลการกู้ยืมถึงขีดจำกัด 100% สำหรับสินทรัพย์นี้ การกู้ยืมเพิ่มเติมไม่สามารถใช้งานได้.",
+        "almostReachedError": "จำนวนสูงสุดที่สามารถยืมได้จะถูกจำกัดเนื่องจากขีดจำกัดการยืมของโปรโตคอลเกือบถึงแล้ว.",
         "swapDebt": "สลับ",
         "borrowed": "ยืม",
         "noSupplyPrefix": "ยังไม่มีเงินฝาก:",
-        "noSupplyDesc": "ในการยืม คุณต้องจัดเตรียมสินทรัพย์เป็นหลักประกัน。"
+        "noSupplyDesc": "ในการยืม คุณต้องจัดเตรียมสินทรัพย์เป็นหลักประกัน."
       },
       "popup": {
         "amount": "จำนวน",
@@ -3282,7 +3282,7 @@
         "title": "รายละเอียดการกู้ยืม",
         "myBorrow": "สินเชื่อของฉัน",
         "liquidityPenalty": "ค่าปรับการชำระหนี้",
-        "reachCapTip": "สินทรัพย์นี้ถึงขีดจำกัดการกู้ยืมแล้ว。"
+        "reachCapTip": "สินทรัพย์นี้ถึงขีดจำกัดการกู้ยืมแล้ว."
       },
       "supplyOverview": {
         "title": "รายละเอียดการฝาก",
@@ -3300,7 +3300,7 @@
         "warning": "การยืมจำนวนนี้จะทำให้ค่า Health Factor ของคุณลดลงไปยังระดับที่มีความเสี่ยงต่อการชำระบัญชี",
         "withdrawWarning": "การถอนจำนวนนี้จะทำให้ Health Factor ของคุณลดลงสู่ระดับที่มีความเสี่ยงต่อการชำระหนี้",
         "toggleCollateralWarning": "การปิดการใช้งานสินทรัพย์นี้เป็นหลักประกันจะทำให้ตัวเลข Health Factor ของคุณลดลงไปถึงระดับที่เสี่ยงต่อการชำระบัญชี",
-        "emodeBlockWarning": "การปิด E-mode จะทำให้ Health Factor ของคุณลดลงจนอยู่ในระดับที่มีความเสี่ยงต่อการชำระบัญชี。",
+        "emodeBlockWarning": "การปิด E-mode จะทำให้ Health Factor ของคุณลดลงจนอยู่ในระดับที่มีความเสี่ยงต่อการชำระบัญชี.",
         "blockEmodeWarning": "คุณไม่สามารถปิด E-Mode ได้ เพราะอาจทำให้เกิดการชำระบัญชี หากต้องการออกจาก E-Mode ให้เพิ่มหลักประกันหรือชำระคืนโพซิชันที่กู้ยืมไว้"
       },
       "lqDescription": {
@@ -3308,7 +3308,7 @@
         "risky": "เสี่ยง",
         "desc": "มูลค่าการขายทอดตลาด",
         "below1title": "Health Factor ≤ 1.0:",
-        "over3title": "Health factor > 3.0:",
+        "over3title": "Health Factor > 3.0:",
         "below1desc": "ตำแหน่งของคุณมีความเสี่ยงที่จะถูกขายออก",
         "introText": "ปัจจัยสุขภาพของคุณแสดงให้เห็นว่าตำแหน่งการกู้ยืมของคุณปลอดภัยแค่ไหน หากมันลดต่ำเกินไป หลักประกันของคุณอาจถูกขายทอดตลาด",
         "warningText": "ปัจจัยสุขภาพของคุณต่ำเกินไป เพื่อลดความเสี่ยงในการถูกชำระหนี้:\n1. ชำระคืนเงินกู้ส่วนหนึ่งหรือทั้งหมด\n2. เพิ่มหลักประกันเพิ่มเติม",
@@ -3351,7 +3351,7 @@
         "riskToLiquidationText": "ไม่สามารถเปลี่ยนสถานะหลักประกันของสินทรัพย์นี้ได้ เพราะอาจทำให้เกิดการชำระบัญชี",
         "openDesc": "การเปิดใช้งานสินทรัพย์นี้เป็นหลักประกันจะเพิ่มอำนาจในการกู้ยืมและปัจจัยความมั่นคงของคุณ อย่างไรก็ตาม มันอาจถูกขายทอดตลาดหากปัจจัยความมั่นคงของคุณลดต่ำกว่าหนึ่ง",
         "enableIsolationModeDesc": "คุณกำลังเข้าร่วมโหมด Isolation ในโหมด Isolation คุณไม่สามารถให้สินทรัพย์อื่นเป็นหลักประกันได้ เพดานหนี้ทั่วโลกจะจำกัดอำนาจการกู้ยืมของสินทรัพย์ที่ถูกแยกออก หากต้องการออกจากโหมด Isolation ให้ปิดใช้งาน CRV เป็นหลักประกันก่อนที่จะกู้สินทรัพย์อื่น",
-        "exitIsolationModeDesc": "คุณจะออกจากโหมดการแยกตัวและโทเค็นอื่น ๆ สามารถใช้เป็นหลักประกันได้แล้ว。",
+        "exitIsolationModeDesc": "คุณจะออกจากโหมดการแยกตัวและโทเค็นอื่น ๆ สามารถใช้เป็นหลักประกันได้แล้ว.",
         "toggleRiskTexts": {
           "canNotUseThisCurrencyAsCollateral": "คุณไม่สามารถใช้สกุลเงินนี้เป็นหลักประกันได้",
           "doNotHaveSuppliesInThisCurrency": "คุณไม่มีสินค้าที่ใช้ในสกุลเงินนี้",
@@ -3494,7 +3494,7 @@
     },
     "dappPermission": {
       "serviceUnavailableTitle": "บริการไม่พร้อมใช้งาน",
-      "serviceUnavailableDesc": "บริการนี้ไม่รองรับในภูมิภาคปัจจุบันของคุณ。"
+      "serviceUnavailableDesc": "บริการนี้ไม่รองรับในภูมิภาคปัจจุบันของคุณ."
     },
     "DAppFrame": {
       "netWorth": "สินทรัพย์สุทธิ",
@@ -3562,7 +3562,7 @@
       "receiveSummary": {
         "progress": "ความคืบหน้าในการแปลง",
         "priceImpact": "เพดานผลกระทบต่อราคา",
-        "gasLimit": "ขีดจำกัดแก๊สต่อธุรกรรมเดียว",
+        "gasLimit": "Single Transaction Gas Limit",
         "estimateReceive": "รับโดยประมาณ:",
         "actualReceive": "รับ"
       },
@@ -3619,7 +3619,7 @@
   "global": {
     "copied": "คัดลอกแล้ว",
     "cancelButton": "ยกเลิก",
-    "unknownNFT": "Unknown NFT",
+    "unknownNFT": "NFT ที่ไม่รู้จัก",
     "closeButton": "ปิด",
     "refresh": "รีเฟรช",
     "ok": "OK",
@@ -3651,7 +3651,7 @@
     "Paste": "วาง",
     "Nonce": "Nonce",
     "themeMode": {
-      "option_Dark": "Dark",
+      "option_Dark": "มืด",
       "option_System": "ระบบ",
       "option_Light": "เบา"
     },
@@ -3680,7 +3680,7 @@
       },
       "bluetoothConnect": {
         "title": "สิทธิ์การเชื่อมต่อ Bluetooth",
-        "message": "แอปนี้ต้องการการเข้าถึง Bluetooth ของคุณเพื่อเชื่อมต่อกับอุปกรณ์ต่างๆ。"
+        "message": "แอปนี้ต้องการการเข้าถึง Bluetooth ของคุณเพื่อเชื่อมต่อกับอุปกรณ์ต่างๆ."
       },
       "bluetoothAdmin": {
         "title": "Bluetooth สิทธิผู้ดูแล",
@@ -3698,7 +3698,7 @@
     },
     "gotIt": "เข้าใจแล้ว",
     "check": "ตรวจสอบ",
-    "Dapp": "Dapp",
+    "Dapp": "DApp",
     "Token": "โทเค็น",
     "GotIt": "เข้าใจแล้ว",
     "copy": "คัดลอก",
@@ -3732,7 +3732,7 @@
     },
     "error": {
       "noCurrentAccount": "ไม่มีบัญชีปัจจุบัน",
-      "unknownAbi": "unknown contract abi",
+      "unknownAbi": "ABI ของสัญญาที่ไม่รู้จัก",
       "notFindChain": "ไม่พบ chain {{chain}}",
       "notFoundTxGnosisKeyring": "ไม่พบธุรกรรมใน Gnosis keyring",
       "notFoundGnosisKeyring": "ไม่พบ Gnosis keyring",
@@ -3794,8 +3794,8 @@
   },
   "notifications": {
     "loadingTransaction": "กำลังเปิดธุรกรรม...",
-    "noTransactionOwnerAddress": "ธุรกรรมนี้ไม่ได้เป็นของที่อยู่ใดในกระเป๋าสตางค์ของคุณ กรุณาตรวจสอบประวัติธุรกรรมในภายหลัง。",
-    "noTransactionDetail": "ไม่พบรายละเอียดธุรกรรม กรุณาตรวจสอบประวัติธุรกรรมในภายหลัง。",
+    "noTransactionOwnerAddress": "ธุรกรรมนี้ไม่ได้เป็นของที่อยู่ใดในกระเป๋าสตางค์ของคุณ กรุณาตรวจสอบประวัติธุรกรรมในภายหลัง.",
+    "noTransactionDetail": "ไม่พบรายละเอียดธุรกรรม กรุณาตรวจสอบประวัติธุรกรรมในภายหลัง.",
     "unknownAddressFromTransaction": "การทำธุรกรรมเกี่ยวข้องกับที่อยู่ที่ไม่อยู่ในกระเป๋าของคุณ กรุณาตรวจสอบประวัติการทำธุรกรรมในภายหลัง"
   },
   "backupReminder": {
