@@ -32,6 +32,7 @@ import {
   RcScreenshotReport,
   RcIconCurrency,
   RcNotification,
+  RcAutolock,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -331,6 +332,7 @@ function SettingsBlocks() {
   const navigation = useRabbyAppNavigation();
 
   const biometricsComputed = useBiometricsComputed();
+  const { isUsingDevicePasscode } = biometricsComputed;
 
   const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
 
@@ -388,8 +390,14 @@ function SettingsBlocks() {
         label: t('page.setting.screenTitle'),
         items: [
           {
-            label: biometricsComputed.defaultTypeLabel,
-            icon: isFaceID ? RcFaceId : RcFingerprint,
+            label: isUsingDevicePasscode
+              ? t('page.setting.useDevicePassword')
+              : biometricsComputed.defaultTypeLabel,
+            icon: isUsingDevicePasscode
+              ? RcAutolock
+              : isFaceID
+              ? RcFaceId
+              : RcFingerprint,
             rightNode: (
               <SwitchBiometricsAuthentication
                 ref={switchBiometricsRef}

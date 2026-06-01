@@ -140,3 +140,10 @@ export const DebugLogViewer = registerAppScreen<
   loader: () => import('@/screens/Testkits/DebugLogViewer'),
   name: TESTKITS_PRELOAD_SCREENS.DebugLogViewer,
 });
+
+export const InMemoryLogViewer = registerAppScreen<
+  typeof import('@/screens/Testkits/InMemoryLogViewer').default
+>({
+  loader: () => import('@/screens/Testkits/InMemoryLogViewer'),
+  name: TESTKITS_PRELOAD_SCREENS.InMemoryLogViewer,
+});

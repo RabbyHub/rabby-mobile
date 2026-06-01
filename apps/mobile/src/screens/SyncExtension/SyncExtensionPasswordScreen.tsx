@@ -49,7 +49,9 @@ export const SyncExtensionPasswordScreen = () => {
     toggleBiometrics,
   } = useBiometrics({ autoFetch: true });
 
-  const [biometricsEnabled, setBiometricsEnabled] = useState(true);
+  const [biometricsEnabled, setBiometricsEnabled] = useState(
+    couldSetupBiometrics ?? true,
+  );
 
   const { togglePinAddressAsync } = usePinAddresses();
 

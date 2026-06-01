@@ -20,6 +20,7 @@ import {
   type AndroidAuthPromptPolicy,
   type KeychainStorageType,
   coerceKeychainStorageType,
+  getDefaultBiometricsAuthenticationType,
   getAuthenticationType,
   getAuthenticationTypeLabel,
   isAuthenticatedByBiometrics,
@@ -49,6 +50,7 @@ export {
   type AndroidAuthPromptPolicy,
   type KeychainStorageType,
   coerceKeychainStorageType,
+  getDefaultBiometricsAuthenticationType,
   getAuthenticationType,
   getAuthenticationTypeLabel,
   isAuthenticatedByBiometrics,
@@ -422,6 +424,9 @@ export const getSupportedBiometryType =
   (): Promise<KeychainSupportedBiometryType> =>
     getCurrentKeychainApi().getSupportedBiometryType();
 
+export const isPasscodeAuthAvailable = () =>
+  getCurrentKeychainApi().isPasscodeAuthAvailable();
+
 export const getKeychainDebugState = (
   ...args: Parameters<typeof apisKeychainV8_2_0.getKeychainDebugState>
 ) => getCurrentKeychainApi().getKeychainDebugState(...args);
@@ -455,6 +460,12 @@ export const debugDecryptGenericPassword = (
 export const setGenericPassword = (
   ...args: Parameters<typeof apisKeychainV8_2_0.setGenericPassword>
 ) => getCurrentKeychainApi().setGenericPassword(...args);
+
+export const migrateAndroidBiometricsToPasscode = (
+  ...args: Parameters<
+    typeof apisKeychainV8_2_0.migrateAndroidBiometricsToPasscode
+  >
+) => getCurrentKeychainApi().migrateAndroidBiometricsToPasscode(...args);
 
 export const cacheTrustedVaultKeyString = (
   ...args: Parameters<typeof apisKeychainV8_2_0.cacheTrustedVaultKeyString>

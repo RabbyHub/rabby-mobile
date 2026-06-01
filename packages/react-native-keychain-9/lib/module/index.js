@@ -328,9 +328,13 @@ export function resetInternetCredentials(server) {
  * console.log('Supported Biometry Type:', biometryType);
  * ```
  */
-export function getSupportedBiometryType() {
+export function getSupportedBiometryType(serviceOrOptions) {
   if (!RNRabbyKeychainV9Manager.getSupportedBiometryType) {
     return Promise.resolve(null);
+  }
+  const options = normalizeOptions(serviceOrOptions);
+  if (RNRabbyKeychainV9Manager.getSupportedBiometryTypeForOptions) {
+    return RNRabbyKeychainV9Manager.getSupportedBiometryTypeForOptions(options);
   }
   return RNRabbyKeychainV9Manager.getSupportedBiometryType();
 }

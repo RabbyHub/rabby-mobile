@@ -6,6 +6,7 @@ import { createCustomNativeStackNavigator as createNativeStackNavigator } from '
 import {
   DebugLogViewer,
   DevCapabilityFile,
+  InMemoryLogViewer,
   DevDataContactService,
   DevDataSQLite,
   DevDataKeychain,
@@ -170,6 +171,14 @@ export function TestkitsNavigator() {
         options={{
           headerShown: true,
           title: 'App Log Verification',
+        }}
+      />
+      <Stack.Screen
+        name={RootNames.InMemoryLogViewer}
+        component={InMemoryLogViewer}
+        options={{
+          headerShown: true,
+          title: 'In-Memory Logs',
         }}
       />
     </Stack.Navigator>

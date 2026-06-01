@@ -106,6 +106,7 @@ export type AuthenticationPrompt = {
     /** The cancel button text for the authentication prompt (Android only). */
     cancel?: string;
 };
+export type AndroidBiometricSecurityLevel = 'strong' | 'weak';
 /** Base options for keychain functions. */
 export type BaseOptions = {
     /** The access control policy to use for the keychain item. */
@@ -129,6 +130,11 @@ export type BaseOptions = {
      * the interactive biometric flow first.
      */
     androidAllowAuthenticatedSessionReuse?: boolean;
+    /**
+     * Android only. Defaults to strong biometrics. Weak is intended for non-production
+     * regression builds where face-recognition prompt behavior needs explicit coverage.
+     */
+    androidBiometricSecurityLevel?: AndroidBiometricSecurityLevel;
 };
 /**
  * Normalized options including authentication prompt details.
@@ -316,7 +322,7 @@ export declare function resetInternetCredentials(server: string): Promise<void>;
  * console.log('Supported Biometry Type:', biometryType);
  * ```
  */
-export declare function getSupportedBiometryType(): Promise<null | BIOMETRY_TYPE>;
+export declare function getSupportedBiometryType(serviceOrOptions?: string | Options): Promise<null | BIOMETRY_TYPE>;
 /**
  * Request shared web credentials (iOS only).
  *

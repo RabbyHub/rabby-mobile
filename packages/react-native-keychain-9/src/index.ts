@@ -120,6 +120,8 @@ export type AuthenticationPrompt = {
   cancel?: string;
 };
 
+export type AndroidBiometricSecurityLevel = 'strong' | 'weak';
+
 /** Base options for keychain functions. */
 export type BaseOptions = {
   /** The access control policy to use for the keychain item. */
@@ -143,6 +145,11 @@ export type BaseOptions = {
    * the interactive biometric flow first.
    */
   androidAllowAuthenticatedSessionReuse?: boolean;
+  /**
+   * Android only. Defaults to strong biometrics. Weak is intended for non-production
+   * regression builds where face-recognition prompt behavior needs explicit coverage.
+   */
+  androidBiometricSecurityLevel?: AndroidBiometricSecurityLevel;
 };
 
 /**
@@ -451,9 +458,16 @@ export function resetInternetCredentials(server: string): Promise<void> {
  * console.log('Supported Biometry Type:', biometryType);
  * ```
  */
-export function getSupportedBiometryType(): Promise<null | BIOMETRY_TYPE> {
+export function getSupportedBiometryType(
+  serviceOrOptions?: string | Options
+): Promise<null | BIOMETRY_TYPE> {
   if (!RNRabbyKeychainV9Manager.getSupportedBiometryType) {
     return Promise.resolve(null);
+  }
+
+  const options = normalizeOptions(serviceOrOptions);
+  if (RNRabbyKeychainV9Manager.getSupportedBiometryTypeForOptions) {
+    return RNRabbyKeychainV9Manager.getSupportedBiometryTypeForOptions(options);
   }
 
   return RNRabbyKeychainV9Manager.getSupportedBiometryType();
