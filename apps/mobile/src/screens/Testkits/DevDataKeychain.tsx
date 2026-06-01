@@ -1455,6 +1455,8 @@ export default function DevDataKeychain(): JSX.Element {
   const refreshState = useCallback(async () => {
     setIsLoading(true);
     try {
+      const canReadOfficialV10State =
+        !IS_ANDROID || currentKeychainVersion === '10.0.0';
       const [
         v8State,
         v9State,
@@ -1467,17 +1469,30 @@ export default function DevDataKeychain(): JSX.Element {
       ] = await Promise.all([
         apisKeychainV8_2_0.getKeychainDebugState(),
         apisKeychainV9_0_0.getKeychainDebugState(),
-        apisKeychainV10_0_0.getKeychainDebugState(),
-        apisKeychainDebug.getKeychainDebugState(
-          apisKeychainDebug.KEYCHAIN_DEFAULT_SERVICE,
-        ),
-        apisKeychainDebug.getKeychainDebugState(
-          apisKeychainDebug.KEYCHAIN_PROBE_SERVICE,
-        ),
+        canReadOfficialV10State
+          ? apisKeychainV10_0_0.getKeychainDebugState()
+          : Promise.resolve(null),
+        canReadOfficialV10State
+          ? apisKeychainDebug.getKeychainDebugState(
+              apisKeychainDebug.KEYCHAIN_DEFAULT_SERVICE,
+            )
+          : Promise.resolve(null),
+        canReadOfficialV10State
+          ? apisKeychainDebug.getKeychainDebugState(
+              apisKeychainDebug.KEYCHAIN_PROBE_SERVICE,
+            )
+          : Promise.resolve(null),
         apisKeychainV8_2_0.getSupportedStorageTypes(),
         apisKeychainV9_0_0.getSupportedStorageTypes(),
         apisKeychainV10_0_0.getSupportedStorageTypes(),
       ]);
+
+      if (!canReadOfficialV10State) {
+        logger.info(
+          '[keychain-debug] skipped official v10 state refresh to avoid Android DataStore migration',
+          { currentKeychainVersion },
+        );
+      }
 
       setBusinessStates(prev => ({
         ...prev,
@@ -1504,7 +1519,7 @@ export default function DevDataKeychain(): JSX.Element {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentKeychainVersion]);
 
   useEffect(() => {
     refreshState();
@@ -1625,6 +1640,7 @@ export default function DevDataKeychain(): JSX.Element {
           purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
           androidAuthPromptPolicy: policy,
           shouldAttachTrustedVaultKeyString: !IS_ANDROID,
+          skipPostDecryptKeychainRewrite: IS_ANDROID,
           onPlainPassword: (password, credentials) => {
             callbackCalled = true;
             decryptedPassword = password;
@@ -1749,6 +1765,7 @@ export default function DevDataKeychain(): JSX.Element {
       const requestResult = await apisKeychain.requestGenericPassword({
         purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
         shouldAttachTrustedVaultKeyString: !IS_ANDROID,
+        skipPostDecryptKeychainRewrite: IS_ANDROID,
         onPlainPassword: password => {
           callbackCalled = true;
           decryptedPassword = password;

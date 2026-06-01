@@ -1144,6 +1144,7 @@ export function createBusinessKeychainApi({
     shouldAttachTrustedVaultKeyString = true,
     authenticationType,
     skipLegacyAndroidBiometricsStorageUpgrade = false,
+    skipPostDecryptKeychainRewrite = false,
   }: {
     purpose?: T;
     onPlainPassword?: (
@@ -1155,6 +1156,7 @@ export function createBusinessKeychainApi({
     shouldAttachTrustedVaultKeyString?: boolean;
     authenticationType?: KEYCHAIN_AUTH_TYPES;
     skipLegacyAndroidBiometricsStorageUpgrade?: boolean;
+    skipPostDecryptKeychainRewrite?: boolean;
     skipCurrentVersionRewriteAfterLegacyFallback?: boolean;
   }): Promise<null | DefaultRet> {
     const instance = await waitInstance();
@@ -1167,6 +1169,7 @@ export function createBusinessKeychainApi({
         androidAuthPromptPolicy,
         androidAllowKeyStoreRecovery,
         shouldAttachTrustedVaultKeyString,
+        skipPostDecryptKeychainRewrite,
       });
       const androidAccessControl =
         getAndroidRequestAccessControl(authenticationType);
@@ -1214,6 +1217,37 @@ export function createBusinessKeychainApi({
           hasEmbeddedVaultKeyString: !!decrypted.vaultKeyString,
         });
 
+        const maybeRewriteStoredCredentialsAfterDecrypt = async () => {
+          if (skipPostDecryptKeychainRewrite) {
+            traceAndroidKeychainPerf('post_decrypt_keychain_rewrite_skipped', {
+              elapsedMs: Date.now() - startedAt,
+              usedFallbackRabbitCode,
+              hasEmbeddedVaultKeyString: !!decrypted.vaultKeyString,
+            });
+            return;
+          }
+
+          if (usedFallbackRabbitCode) {
+            await silentlyUpgradeStoredPasswordPayload(
+              decrypted.password,
+              decrypted,
+            );
+          } else if (decrypted.vaultKeyString) {
+            await normalizeEmbeddedTrustedVaultKeyString(
+              decrypted.password,
+              decrypted,
+            );
+          } else if (!skipLegacyAndroidBiometricsStorageUpgrade) {
+            await upgradeLegacyAndroidBiometricsStorage(
+              decrypted.password,
+              typeof keychainObject.storage === 'string'
+                ? keychainObject.storage
+                : undefined,
+              decrypted,
+            );
+          }
+        };
+
         switch (purpose) {
           case RequestGenericPurpose.VERIFY: {
             const verifyResult =
@@ -1221,25 +1255,7 @@ export function createBusinessKeychainApi({
                 decrypted.password,
               );
             if (verifyResult.success) {
-              if (usedFallbackRabbitCode) {
-                await silentlyUpgradeStoredPasswordPayload(
-                  decrypted.password,
-                  decrypted,
-                );
-              } else if (decrypted.vaultKeyString) {
-                await normalizeEmbeddedTrustedVaultKeyString(
-                  decrypted.password,
-                  decrypted,
-                );
-              } else if (!skipLegacyAndroidBiometricsStorageUpgrade) {
-                await upgradeLegacyAndroidBiometricsStorage(
-                  decrypted.password,
-                  typeof keychainObject.storage === 'string'
-                    ? keychainObject.storage
-                    : undefined,
-                  decrypted,
-                );
-              }
+              await maybeRewriteStoredCredentialsAfterDecrypt();
             }
 
             onRequestReturn(instance);
@@ -1273,25 +1289,7 @@ export function createBusinessKeychainApi({
                 !!credentialsWithVaultKey.vaultKeyString,
             });
             apisLock.updateUnlockTime();
-            if (usedFallbackRabbitCode) {
-              await silentlyUpgradeStoredPasswordPayload(
-                decrypted.password,
-                decrypted,
-              );
-            } else if (decrypted.vaultKeyString) {
-              await normalizeEmbeddedTrustedVaultKeyString(
-                decrypted.password,
-                decrypted,
-              );
-            } else if (!skipLegacyAndroidBiometricsStorageUpgrade) {
-              await upgradeLegacyAndroidBiometricsStorage(
-                decrypted.password,
-                typeof keychainObject.storage === 'string'
-                  ? keychainObject.storage
-                  : undefined,
-                decrypted,
-              );
-            }
+            await maybeRewriteStoredCredentialsAfterDecrypt();
             onRequestReturn(instance);
             traceAndroidKeychainPerf('request_generic_password_end', {
               elapsedMs: Date.now() - startedAt,

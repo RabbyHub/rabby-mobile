@@ -8,6 +8,7 @@ import {
   getAuthenticationType,
   isAuthenticatedByBiometrics,
   parseKeychainError,
+  type KeychainDebugState,
   type KeychainSupportedBiometryType,
 } from '@/core/apis/keychain';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +18,7 @@ import {
 } from '@/core/apis/lock';
 import { Alert, Vibration } from 'react-native';
 import { IExtractFromPromise } from '@/utils/type';
-import { IS_IOS } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { preferenceService } from '@/core/services';
 import { zCreate } from '@/core/utils/reexports';
 import {
@@ -26,6 +27,7 @@ import {
   UpdaterOrPartials,
 } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
+import { logger } from '@/utils/logger';
 
 type BiometricsInfoState = {
   authEnabled: boolean;
@@ -66,6 +68,91 @@ runIIFEFunc(() => {
     setBiometrics(prev => ({ ...prev, ...systemAuth }));
   });
 });
+
+function isPrimaryAndroidBiometricsEntryReady(state: KeychainDebugState) {
+  if (state.platform !== 'android' || !state.debugSupported) {
+    return true;
+  }
+
+  return state.hasEntry && state.hasUsername && state.hasPassword;
+}
+
+async function checkAndroidBiometricsEntryReady() {
+  if (!IS_ANDROID || !isAuthenticatedByBiometrics()) {
+    return true;
+  }
+
+  try {
+    const debugState = await apisKeychain.getKeychainDebugState();
+    const ready = isPrimaryAndroidBiometricsEntryReady(debugState);
+
+    if (!ready) {
+      logger.warn('[biometrics] Android keychain entry is unavailable', {
+        sourceLabel: debugState.sourceLabel,
+        hasEntry: debugState.hasEntry,
+        hasUsername: debugState.hasUsername,
+        hasPassword: debugState.hasPassword,
+        resolvedCipherStorageName:
+          debugState.platform === 'android'
+            ? debugState.resolvedCipherStorageName
+            : undefined,
+        hasKeystoreAlias:
+          debugState.platform === 'android'
+            ? debugState.hasKeystoreAlias
+            : undefined,
+      });
+    }
+
+    return ready;
+  } catch (error) {
+    logger.warn('[biometrics] failed to inspect Android keychain entry', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return true;
+  }
+}
+
+export function disableBiometricsForCurrentSession(reason: string) {
+  logger.warn('[biometrics] disabled for current session', { reason });
+  setBiometrics(prev => ({ ...prev, authEnabled: false }));
+}
+
+async function ensureBiometricsReadyForUnlock() {
+  let systemAuth = {
+    supportedBiometryType: null as KeychainSupportedBiometryType,
+    devicePasscodeAvailable: false,
+  };
+  try {
+    systemAuth = await fetchSystemAuthAvailability();
+  } catch (error) {
+    logger.warn('[biometrics] failed to fetch system auth availability', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  const enabledBySetting = isAuthenticatedByBiometrics();
+  const entryReady = await checkAndroidBiometricsEntryReady();
+  const authType = getAuthenticationType();
+  const canUseDevicePasscode =
+    !IS_IOS &&
+    authType === KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE &&
+    systemAuth.devicePasscodeAvailable;
+  const nextAuthEnabled =
+    enabledBySetting &&
+    entryReady &&
+    (!!systemAuth.supportedBiometryType || canUseDevicePasscode);
+
+  setBiometrics(prev => ({
+    ...prev,
+    ...systemAuth,
+    supportedBiometryType:
+      systemAuth.supportedBiometryType ||
+      (!IS_ANDROID && nextAuthEnabled ? prev.supportedBiometryType : null),
+    authEnabled: nextAuthEnabled,
+  }));
+
+  return nextAuthEnabled;
+}
 
 export function useBiometricsComputed() {
   const authEnabled = biometricsInfoStore(s => s.authEnabled);
@@ -139,11 +226,14 @@ const fetchBiometrics = async () => {
     } catch (error) {
       console.error(error);
     }
+    const enabledBySetting = isAuthenticatedByBiometrics();
+    const entryReady = await checkAndroidBiometricsEntryReady();
+    const nextAuthEnabledByEntry = enabledBySetting && entryReady;
+
     setBiometrics(prev => {
       if (!didFetchSupportedType) {
         return prev;
       }
-      const nextAuthEnabled = isAuthenticatedByBiometrics();
       // if (prev.authEnabled && !supportedType) {
       //   toast.info(
       //     'Biometrics authentication disabled because no valid biometric data found.',
@@ -152,7 +242,12 @@ const fetchBiometrics = async () => {
       return {
         ...prev,
         ...systemAuth,
-        authEnabled: nextAuthEnabled,
+        supportedBiometryType:
+          systemAuth.supportedBiometryType ||
+          (!IS_ANDROID && nextAuthEnabledByEntry
+            ? prev.supportedBiometryType
+            : null),
+        authEnabled: nextAuthEnabledByEntry,
       };
     });
   } catch (error) {
@@ -230,6 +325,8 @@ const toggleBiometrics = async <T extends boolean>(
 export const storeApisBiometrics = {
   fetchBiometrics,
   toggleBiometrics,
+  disableBiometricsForCurrentSession,
+  ensureBiometricsReadyForUnlock,
 };
 
 export function useBiometrics(options?: { autoFetch?: boolean }) {
