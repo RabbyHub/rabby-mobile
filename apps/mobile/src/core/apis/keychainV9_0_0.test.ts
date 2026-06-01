@@ -125,9 +125,11 @@ describe('core/apis/keychainV9_0_0', () => {
         ACCESS_CONTROL: {
           BIOMETRY_CURRENT_SET: 'BiometryCurrentSet',
           DEVICE_PASSCODE: 'DevicePasscode',
+          BIOMETRY_ANY_OR_DEVICE_PASSCODE: 'BiometryAnyOrDevicePasscode',
         },
         AUTHENTICATION_TYPE: {
           BIOMETRICS: 'AuthenticationWithBiometrics',
+          DEVICE_PASSCODE_OR_BIOMETRICS: 'DevicePasscodeOrBiometrics',
         },
         SECURITY_RULES: {
           AUTOMATIC_UPGRADE: 'automaticUpgradeToMoreSecuredStorage',
@@ -253,12 +255,10 @@ describe('core/apis/keychainV9_0_0', () => {
       expect.objectContaining({ password: 'plain-password' }),
     );
     expect(mockUpdateUnlockTime).toHaveBeenCalled();
-    expect(mockEncrypt).toHaveBeenCalledWith(
-      currentRabbitCode,
-      expect.objectContaining({
-        password: 'plain-password',
-      }),
-    );
+    expect(mockEncrypt).toHaveBeenCalledWith(currentRabbitCode, {
+      androidKeychainAuthProfile: 'biometric-or-device-credential-v1',
+      password: 'plain-password',
+    });
     expect(mockSetGenericPassword).toHaveBeenCalledTimes(1);
     expect(result?.actionSuccess).toBe(true);
   });
@@ -372,7 +372,9 @@ describe('core/apis/keychainV9_0_0', () => {
       expect.objectContaining({
         service: 'com.debank.trusted-vault-key',
         accessible: 'AccessibleWhenUnlockedThisDeviceOnly',
-        accessControl: 'BiometryCurrentSet',
+        accessControl: 'BiometryAnyOrDevicePasscode',
+        androidKeychainAuthProfile: 'biometric-or-device-credential-v1',
+        storage: 'KeystoreAESGCM_NoAuth',
       }),
     );
   });
@@ -388,12 +390,10 @@ describe('core/apis/keychainV9_0_0', () => {
       },
     );
 
-    expect(mockEncrypt).toHaveBeenCalledWith(
-      'salt',
-      expect.objectContaining({
-        password: 'plain-password',
-      }),
-    );
+    expect(mockEncrypt).toHaveBeenCalledWith('salt', {
+      androidKeychainAuthProfile: 'biometric-strong-v1',
+      password: 'plain-password',
+    });
     expect(mockSetGenericPassword).toHaveBeenCalledTimes(2);
     expect(mockSetGenericPassword).toHaveBeenNthCalledWith(
       1,
@@ -403,6 +403,8 @@ describe('core/apis/keychainV9_0_0', () => {
         service: 'com.debank',
         accessible: 'AccessibleWhenUnlockedThisDeviceOnly',
         accessControl: 'BiometryCurrentSet',
+        androidKeychainAuthProfile: 'biometric-strong-v1',
+        storage: 'KeystoreAESGCM_NoAuth',
       }),
     );
     expect(mockSetGenericPassword).toHaveBeenNthCalledWith(
@@ -411,6 +413,9 @@ describe('core/apis/keychainV9_0_0', () => {
       'trusted-vault-key',
       expect.objectContaining({
         service: 'com.debank.trusted-vault-key',
+        accessControl: 'BiometryCurrentSet',
+        androidKeychainAuthProfile: 'biometric-strong-v1',
+        storage: 'KeystoreAESGCM_NoAuth',
       }),
     );
   });
@@ -440,12 +445,10 @@ describe('core/apis/keychainV9_0_0', () => {
       }),
     );
     expect(mockUpdateUnlockTime).toHaveBeenCalled();
-    expect(mockEncrypt).toHaveBeenCalledWith(
-      'salt',
-      expect.objectContaining({
-        password: 'plain-password',
-      }),
-    );
+    expect(mockEncrypt).toHaveBeenCalledWith('salt', {
+      androidKeychainAuthProfile: 'biometric-strong-v1',
+      password: 'plain-password',
+    });
     expect(mockSetGenericPassword).toHaveBeenCalledTimes(2);
     expect(mockSetGenericPassword).toHaveBeenNthCalledWith(
       1,
@@ -453,6 +456,9 @@ describe('core/apis/keychainV9_0_0', () => {
       'enc:plain-password',
       expect.objectContaining({
         service: 'com.debank',
+        accessControl: 'BiometryCurrentSet',
+        androidKeychainAuthProfile: 'biometric-strong-v1',
+        storage: 'KeystoreAESGCM_NoAuth',
       }),
     );
     expect(mockSetGenericPassword).toHaveBeenNthCalledWith(
@@ -461,6 +467,9 @@ describe('core/apis/keychainV9_0_0', () => {
       'embedded-vault-key',
       expect.objectContaining({
         service: 'com.debank.trusted-vault-key',
+        accessControl: 'BiometryCurrentSet',
+        androidKeychainAuthProfile: 'biometric-strong-v1',
+        storage: 'KeystoreAESGCM_NoAuth',
       }),
     );
   });
@@ -492,11 +501,13 @@ describe('core/apis/keychainV9_0_0', () => {
       expect.objectContaining({
         service: 'com.debank',
         accessible: 'AccessibleWhenUnlockedThisDeviceOnly',
-        accessControl: 'BiometryCurrentSet',
+        accessControl: 'BiometryAnyOrDevicePasscode',
+        androidKeychainAuthProfile: 'biometric-or-device-credential-v1',
       }),
     );
-    expect(mockSetGenericPassword.mock.calls[0]?.[2]).not.toHaveProperty(
+    expect(mockSetGenericPassword.mock.calls[0]?.[2]).toHaveProperty(
       'storage',
+      'KeystoreAESGCM_NoAuth',
     );
     expect(result?.actionSuccess).toBe(true);
   });
@@ -516,10 +527,12 @@ describe('core/apis/keychainV9_0_0', () => {
         service: 'com.debank',
         accessible: 'AccessibleWhenUnlockedThisDeviceOnly',
         accessControl: 'BiometryCurrentSet',
+        androidKeychainAuthProfile: 'biometric-strong-v1',
       }),
     );
-    expect(mockSetGenericPassword.mock.calls[0]?.[2]).not.toHaveProperty(
+    expect(mockSetGenericPassword.mock.calls[0]?.[2]).toHaveProperty(
       'storage',
+      'KeystoreAESGCM_NoAuth',
     );
   });
 
@@ -547,6 +560,7 @@ describe('core/apis/keychainV9_0_0', () => {
   it('does not rewrite Android biometrics storage when the entry is already upgraded', async () => {
     const { module, mockSetGenericPassword } = await setup({
       storage: 'KeystoreAESGCM',
+      authType: 4,
     });
 
     await module.requestGenericPassword({
