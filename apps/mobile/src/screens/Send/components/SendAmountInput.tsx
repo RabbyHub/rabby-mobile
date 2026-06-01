@@ -106,6 +106,8 @@ const MIN_AMOUNT_FONT_SIZE = 17;
 const AMOUNT_FONT_SIZE_STEP = 1;
 const AMOUNT_ROW_HEIGHT = 36;
 const AMOUNT_LINE_HEIGHT = 34;
+const EMPTY_AMOUNT_CARET_WIDTH = 3;
+const EMPTY_AMOUNT_CARET_HEIGHT = 29;
 const QUOTE_TEXT_FONT_SIZE = 14;
 const QUOTE_UNIT_GAP = 4;
 const EMPTY_AMOUNT_DISPLAY_VALUE = '0';
@@ -217,6 +219,10 @@ export const SendAmountInput = ({
   const [unitWidthAtBaseFontSize, setUnitWidthAtBaseFontSize] = useState(0);
   const [quoteUnitWidth, setQuoteUnitWidth] = useState(0);
   const [inputValue, setInputValue] = useState(value || '');
+  const [inputFocused, setInputFocused] = useState(false);
+  const [inputSelection, setInputSelection] = useState(
+    inputSelectionRef.current,
+  );
 
   const setUnitTextNodeRef = useCallback(
     (node: { setNativeProps?: (nativeProps: object) => void } | null) => {
@@ -259,10 +265,9 @@ export const SendAmountInput = ({
     }),
     [],
   );
-  const [forcedAmountSelection, setForcedAmountSelection] = useState<
-    { start: number; end: number } | undefined
-  >();
   const textForMeasure = displayInputValue;
+  const isIosEmptyAmount = IS_IOS && !inputValue;
+  const textInputValue = IS_IOS && !inputValue ? '' : displayInputValue;
   const fallbackCharWidth =
     charWidthsAtBaseFontSize['0'] || MAIN_FONT_SIZE * 0.56;
   const fallbackUnitWidth =
@@ -353,6 +358,37 @@ export const SendAmountInput = ({
     () => getAmountLayout(textForMeasure),
     [getAmountLayout, textForMeasure],
   );
+  const normalizedSelectionStart = Math.max(
+    0,
+    Math.min(inputSelection.start, textInputValue.length),
+  );
+  const normalizedSelectionEnd = Math.max(
+    normalizedSelectionStart,
+    Math.min(inputSelection.end, textInputValue.length),
+  );
+  const isInputSelectionCollapsed =
+    normalizedSelectionStart === normalizedSelectionEnd;
+  const shouldUseIosCustomCaret =
+    IS_IOS && inputFocused && isInputSelectionCollapsed;
+  const textBeforeCaret = isIosEmptyAmount
+    ? EMPTY_AMOUNT_DISPLAY_VALUE
+    : textInputValue.slice(0, normalizedSelectionStart);
+  const rawAmountCaretLeft = Math.ceil(
+    (getValueWidthAtBaseFontSize(textBeforeCaret) * fittingFontSize) /
+      MAIN_FONT_SIZE,
+  );
+  const maxAmountCaretLeft =
+    typeof valueInputWidth === 'number'
+      ? Math.max(valueInputWidth - EMPTY_AMOUNT_CARET_WIDTH, 0)
+      : rawAmountCaretLeft;
+  const amountCaretLeft = Math.min(rawAmountCaretLeft, maxAmountCaretLeft);
+  const amountCaretHeight = Math.round(
+    (EMPTY_AMOUNT_CARET_HEIGHT * fittingFontSize) / MAIN_FONT_SIZE,
+  );
+  const amountCaretTop = Math.max(
+    (AMOUNT_ROW_HEIGHT - amountCaretHeight) / 2,
+    0,
+  );
 
   const applyUnitLayoutNative = useCallback(
     (nextValue: string) => {
@@ -416,7 +452,13 @@ export const SendAmountInput = ({
 
   const handleInputSelectionChange = useCallback(
     (event: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
-      inputSelectionRef.current = event.nativeEvent.selection;
+      const nextSelection = event.nativeEvent.selection;
+      inputSelectionRef.current = nextSelection;
+      setInputSelection(prev =>
+        prev.start === nextSelection.start && prev.end === nextSelection.end
+          ? prev
+          : nextSelection,
+      );
     },
     [],
   );
@@ -426,23 +468,22 @@ export const SendAmountInput = ({
       const selection = inputSelectionRef.current;
       const start = Math.max(
         0,
-        Math.min(selection.start, displayInputValue.length),
+        Math.min(selection.start, textInputValue.length),
       );
       const end = Math.max(
         start,
-        Math.min(selection.end, displayInputValue.length),
+        Math.min(selection.end, textInputValue.length),
       );
 
       if (key === 'Backspace') {
         if (start !== end) {
           return normalizeDisplayAmountValue(
-            displayInputValue.slice(0, start) + displayInputValue.slice(end),
+            textInputValue.slice(0, start) + textInputValue.slice(end),
           );
         }
         if (start > 0) {
           return normalizeDisplayAmountValue(
-            displayInputValue.slice(0, start - 1) +
-              displayInputValue.slice(end),
+            textInputValue.slice(0, start - 1) + textInputValue.slice(end),
           );
         }
         return inputValue;
@@ -450,15 +491,13 @@ export const SendAmountInput = ({
 
       if (key.length === 1) {
         return normalizeDisplayAmountValue(
-          displayInputValue.slice(0, start) +
-            key +
-            displayInputValue.slice(end),
+          textInputValue.slice(0, start) + key + textInputValue.slice(end),
         );
       }
 
       return null;
     },
-    [displayInputValue, inputValue],
+    [inputValue, textInputValue],
   );
 
   const handleInputKeyPress = useCallback(
@@ -471,30 +510,6 @@ export const SendAmountInput = ({
     [applyUnitLayoutNative, getPredictedValueFromKey],
   );
 
-  useEffect(() => {
-    if (!forcedAmountSelection) {
-      return;
-    }
-
-    const requestId = requestAnimationFrame(() => {
-      setForcedAmountSelection(undefined);
-    });
-
-    return () => {
-      cancelAnimationFrame(requestId);
-    };
-  }, [forcedAmountSelection]);
-
-  const forceAmountCaretToEndOnce = useCallback((nextValue: string) => {
-    const nextSelection = {
-      start: nextValue.length,
-      end: nextValue.length,
-    };
-
-    inputSelectionRef.current = nextSelection;
-    setForcedAmountSelection(nextSelection);
-  }, []);
-
   const handleInputChange = useCallback(
     (nextValue: string) => {
       const previousValue = inputValue;
@@ -506,10 +521,15 @@ export const SendAmountInput = ({
         applyUnitLayoutNative(previousValue);
         setInputValue(previousValue);
       } else if (IS_IOS && !previousValue && normalizedValue) {
-        forceAmountCaretToEndOnce(normalizedValue);
+        const nextSelection = {
+          start: normalizedValue.length,
+          end: normalizedValue.length,
+        };
+        inputSelectionRef.current = nextSelection;
+        setInputSelection(nextSelection);
       }
     },
-    [applyUnitLayoutNative, forceAmountCaretToEndOnce, inputValue, onChange],
+    [applyUnitLayoutNative, inputValue, onChange],
   );
 
   const handleSwitchModePress = useCallback(() => {
@@ -565,21 +585,24 @@ export const SendAmountInput = ({
             <View style={styles.amountRow}>
               <TextInput
                 ref={tokenInputRef}
-                value={displayInputValue}
+                value={textInputValue}
                 onChangeText={handleInputChange}
                 inputMode="decimal"
                 keyboardType="decimal-pad"
                 numberOfLines={1}
                 multiline={false}
                 scrollEnabled
+                caretHidden={shouldUseIosCustomCaret}
                 selection={
-                  !inputValue ? emptyAmountSelection : forcedAmountSelection
+                  !inputValue && IS_ANDROID ? emptyAmountSelection : undefined
                 }
                 selectionColor={
                   IS_ANDROID ? undefined : colors2024['brand-default']
                 }
                 onKeyPress={handleInputKeyPress}
                 onSelectionChange={handleInputSelectionChange}
+                onFocus={() => setInputFocused(true)}
+                onBlur={() => setInputFocused(false)}
                 style={[
                   styles.input,
                   {
@@ -589,6 +612,37 @@ export const SendAmountInput = ({
                 ]}
                 {...amountInputProps}
               />
+              {isIosEmptyAmount ? (
+                <>
+                  <Text
+                    pointerEvents="none"
+                    accessible={false}
+                    accessibilityElementsHidden
+                    importantForAccessibility="no"
+                    numberOfLines={1}
+                    style={[
+                      styles.emptyAmountText,
+                      {
+                        fontSize: fittingFontSize,
+                      },
+                    ]}>
+                    {EMPTY_AMOUNT_DISPLAY_VALUE}
+                  </Text>
+                </>
+              ) : null}
+              {shouldUseIosCustomCaret ? (
+                <View
+                  pointerEvents="none"
+                  style={[
+                    styles.amountCaret,
+                    {
+                      left: amountCaretLeft,
+                      top: amountCaretTop,
+                      height: amountCaretHeight,
+                    },
+                  ]}
+                />
+              ) : null}
               {IS_ANDROID ? (
                 <Text
                   ref={setUnitTextNodeRef}
@@ -770,6 +824,30 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       overflow: 'hidden',
       minWidth: 1,
       zIndex: 1,
+    },
+    emptyAmountText: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      fontWeight: '900',
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-title-1'],
+      height: AMOUNT_ROW_HEIGHT,
+      lineHeight: AMOUNT_LINE_HEIGHT,
+      padding: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
+      textAlignVertical: 'center',
+      includeFontPadding: false,
+      overflow: 'hidden',
+      zIndex: 2,
+    },
+    amountCaret: {
+      position: 'absolute',
+      width: EMPTY_AMOUNT_CARET_WIDTH,
+      borderRadius: 2,
+      backgroundColor: colors2024['brand-default'],
+      zIndex: 3,
     },
     unitText: {
       position: 'absolute',
