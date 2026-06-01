@@ -107,10 +107,7 @@ export function useBiometricsComputed() {
       isBiometricsEnabled:
         authEnabled && (!!supportedBiometryType || canFallbackToDevicePasscode),
       settingsAuthEnabled: authEnabled,
-      couldSetupBiometrics:
-        !!supportedBiometryType ||
-        isUsingDevicePasscode ||
-        (!IS_IOS && devicePasscodeAvailable),
+      couldSetupBiometrics: !!supportedBiometryType,
       supportedBiometryType,
       devicePasscodeAvailable,
       defaultTypeLabel,
