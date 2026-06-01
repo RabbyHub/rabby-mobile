@@ -3,7 +3,7 @@ import { AppState, AppStateStatus, Platform } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import { keyringService } from '@/core/services';
-import { apisLock } from '@/core/apis';
+import { apisAutoLock, apisLock } from '@/core/apis';
 import { PasswordStatus } from '@/core/apis/lock';
 import { useRabbyAppNavigation } from './navigation';
 import { useFocusEffect } from '@react-navigation/native';
@@ -29,11 +29,17 @@ const isIOS = Platform.OS === 'ios';
 
 type AppLockState = {
   appUnlocked: boolean;
+  isUnlockSessionValid: boolean;
+  hasVisibleAccounts: boolean;
+  hasStoredKeyrings: boolean;
   pwdStatus: PasswordStatus;
 };
 const zAppLockStore = zCreate<AppLockState>((set, get) => {
   return {
     appUnlocked: false,
+    isUnlockSessionValid: apisLock.isUnlockSessionValid(),
+    hasVisibleAccounts: false,
+    hasStoredKeyrings: false,
     pwdStatus: PasswordStatus.Unknown,
   };
 });
@@ -42,7 +48,17 @@ function setAppLock(valOrFunc: UpdaterOrPartials<AppLockState>) {
   zAppLockStore.setState(prev => resolveValFromUpdater(prev, valOrFunc).newVal);
 }
 // iife
-setAppLock({ appUnlocked: keyringService.isUnlocked() });
+setAppLock({
+  appUnlocked: keyringService.isUnlocked(),
+  isUnlockSessionValid: apisLock.isUnlockSessionValid(),
+});
+
+apisLock.unlockTimeEvent.addListener('updated', () => {
+  setAppLock(prev => ({
+    ...prev,
+    isUnlockSessionValid: apisLock.isUnlockSessionValid(),
+  }));
+});
 
 function getIsAppUnlocked() {
   const state = zAppLockStore.getState();
@@ -60,9 +76,21 @@ export function useSetAppLock() {
 export function useAppUnlocked() {
   return {
     isAppUnlocked: zAppLockStore(state => state.appUnlocked),
+    isUnlockSessionValid: zAppLockStore(state => state.isUnlockSessionValid),
+    hasVisibleAccounts: zAppLockStore(state => state.hasVisibleAccounts),
+    hasStoredKeyrings: zAppLockStore(state => state.hasStoredKeyrings),
     getIsAppUnlocked,
     setAppLock,
   };
+}
+
+export function useIsPostUnlockLockedSession() {
+  const appUnlocked = zAppLockStore(state => state.appUnlocked);
+  const isUnlockSessionValid = zAppLockStore(
+    state => state.isUnlockSessionValid,
+  );
+
+  return !appUnlocked && isUnlockSessionValid;
 }
 
 export function getPwdStatus() {
@@ -85,8 +113,19 @@ export const getTriedUnlock = async () => {
   return apisLock
     .tryAutoUnlockRabbyMobileWithUpdateUnlockTime()
     .then(async result => {
+      const accounts = await keyringService.getAllVisibleAccountsArray();
+      if (!keyringService.isUnlocked() && apisLock.isUnlockSessionValid()) {
+        apisAutoLock.refreshAutolockTimeout();
+      }
       setAppLock({
         appUnlocked: keyringService.isUnlocked(),
+        isUnlockSessionValid: apisLock.isUnlockSessionValid(),
+        hasVisibleAccounts: accounts.length > 0,
+        hasStoredKeyrings:
+          accounts.length > 0 ||
+          keyringService.hasVault() ||
+          keyringService.hasEncryptedKeyringData() ||
+          keyringService.hasUnencryptedKeyringData(),
         pwdStatus: result.lockInfo.pwdStatus,
       });
       return result;
@@ -107,9 +146,17 @@ export const fetchLockInfo = makeAvoidParallelAsyncFunc(async () => {
 
   try {
     const response = await apisLock.getRabbyLockInfo();
+    const accounts = await keyringService.getAllVisibleAccountsArray();
 
     setAppLock({
       appUnlocked: keyringService.isUnlocked(),
+      isUnlockSessionValid: apisLock.isUnlockSessionValid(),
+      hasVisibleAccounts: accounts.length > 0,
+      hasStoredKeyrings:
+        accounts.length > 0 ||
+        keyringService.hasVault() ||
+        keyringService.hasEncryptedKeyringData() ||
+        keyringService.hasUnencryptedKeyringData(),
       pwdStatus: response.pwdStatus,
     });
 
@@ -129,6 +176,7 @@ export function useLoadLockInfo(options?: { autoFetch?: boolean }) {
   const appLock = zAppLockStore(
     useShallow(state => ({
       appUnlocked: state.appUnlocked,
+      isUnlockSessionValid: state.isUnlockSessionValid,
       pwdStatus: state.pwdStatus,
     })),
   );

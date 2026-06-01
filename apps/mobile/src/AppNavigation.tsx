@@ -6,7 +6,12 @@ import {
   NavigationIndependentTree,
 } from '@react-navigation/native';
 import React, { useCallback } from 'react';
-import { BackHandler, InteractionManager } from 'react-native';
+import {
+  BackHandler,
+  InteractionManager,
+  StyleSheet,
+  View,
+} from 'react-native';
 import * as Sentry from '@sentry/react-native';
 import { useAppTheme, useThemeColors } from '@/hooks/theme';
 
@@ -71,6 +76,7 @@ import {
   ModalsSubmitFeedbackByScreenshotStub,
   QrCodeModal,
   ToggleCollateralModal,
+  WideScreenDebugPanel,
 } from '@/perfs/loadables/appNavigationGlobals';
 import {
   AddressNavigator,
@@ -83,6 +89,8 @@ import {
 } from '@/perfs/loadables/navigators';
 import { HomeScreenNavigator } from '@/perfs/loadables/homeRootNavigator';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
+import { NEED_DEVSETTINGBLOCKS } from './constant';
+import { startReadableAccountBootstrapWarmups } from './setup-app-before-render';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
@@ -278,7 +286,7 @@ const onStateChange: React.ComponentProps<
 
 const routeNameRef: RefLikeObject<string | undefined | null> = { current: '' };
 
-type DeferredGlobalsSlot = 'navigation-pre' | 'navigation-post' | 'overlay';
+type DeferredGlobalsSlot = 'navigation-pre' | 'navigation-post';
 const DEFERRED_GLOBALS_AFTER_UNLOCK_DELAY_MS = 800;
 
 function useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked: boolean) {
@@ -315,6 +323,32 @@ function useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked: boolean) {
   return hasUnlockedOnce;
 }
 
+function useReadableAccountWarmupsOnHomeVisible({
+  shouldWarmupReadableAccounts,
+  hasVisibleAccounts,
+}: {
+  shouldWarmupReadableAccounts: boolean;
+  hasVisibleAccounts: boolean;
+}) {
+  const startedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (
+      startedRef.current ||
+      !shouldWarmupReadableAccounts ||
+      !hasVisibleAccounts
+    ) {
+      return;
+    }
+
+    startedRef.current = true;
+    startReadableAccountBootstrapWarmups().catch(error => {
+      startedRef.current = false;
+      console.error('useReadableAccountWarmupsOnHomeVisible::error', error);
+    });
+  }, [shouldWarmupReadableAccounts, hasVisibleAccounts]);
+}
+
 function AppNavigationDeferredGlobals({
   slot,
   enabled,
@@ -339,29 +373,62 @@ function AppNavigationDeferredGlobals({
   if (slot === 'navigation-post') {
     return (
       <>
-        <InnerDappWebViewPreloadEntry />
         <BiometricsStubModal />
-        <ApprovalTokenDetailSheetModalStub />
-        <BottomSheetBrowser />
-        <BrowserManagePopup />
-        <BrowserFavoritePopup />
-        <BottomSheetDappInfoPopup />
       </>
     );
   }
 
+  return null;
+}
+
+function AppNavigationOverlayGlobals({
+  deferredGlobalsEnabled,
+  postUnlockGlobalsEnabled,
+}: {
+  deferredGlobalsEnabled: boolean;
+  postUnlockGlobalsEnabled: boolean;
+}) {
+  const showDiagnostics = deferredGlobalsEnabled || NEED_DEVSETTINGBLOCKS;
+
+  if (!showDiagnostics && !postUnlockGlobalsEnabled) {
+    return null;
+  }
+
   return (
     <>
-      <ModalsSubmitFeedbackByScreenshotStub />
-      <ToggleCollateralModal />
+      {deferredGlobalsEnabled && <ModalsSubmitFeedbackByScreenshotStub />}
+      {postUnlockGlobalsEnabled && <ToggleCollateralModal />}
 
       {/** @warning put all business stub components before this modal */}
-      <GlobalSecurityTipStubModal />
-      <FloatingDiagnosticsPanel />
-      <GlobalMiniApproval />
-      <GlobalMiniSignTypedDataPortal />
-      <GlobalTipsPopup />
-      <GlobalSignerPortal />
+      {deferredGlobalsEnabled && <GlobalSecurityTipStubModal />}
+      {showDiagnostics && <FloatingDiagnosticsPanel />}
+      {postUnlockGlobalsEnabled && (
+        <GlobalMiniApproval key="global-mini-approval" />
+      )}
+      {postUnlockGlobalsEnabled && (
+        <GlobalMiniSignTypedDataPortal key="global-mini-sign-typed-data" />
+      )}
+      {postUnlockGlobalsEnabled && <GlobalTipsPopup />}
+      {postUnlockGlobalsEnabled && (
+        <GlobalSignerPortal key="global-signer-portal" />
+      )}
+    </>
+  );
+}
+
+function AppNavigationPostUnlockGlobals({ enabled }: { enabled: boolean }) {
+  if (!enabled) {
+    return null;
+  }
+
+  return (
+    <>
+      <ApprovalTokenDetailSheetModalStub />
+      <InnerDappWebViewPreloadEntry />
+      <BottomSheetBrowser />
+      <BrowserManagePopup />
+      <BrowserFavoritePopup />
+      <BottomSheetDappInfoPopup />
     </>
   );
 }
@@ -373,10 +440,29 @@ export default function AppNavigation() {
 
   const colors = useThemeColors();
 
-  const { isAppUnlocked } = useAppUnlocked();
-  const initialRouteName = useAppInitialRouteName(isAppUnlocked);
+  const {
+    isAppUnlocked,
+    isUnlockSessionValid,
+    hasVisibleAccounts,
+    hasStoredKeyrings,
+  } = useAppUnlocked();
+  const canSkipInitialUnlock = isAppUnlocked || isUnlockSessionValid;
+
+  const initialRouteName = hasVisibleAccounts
+    ? canSkipInitialUnlock
+      ? RootNames.StackRoot
+      : RootNames.Unlock
+    : isAppUnlocked || !hasStoredKeyrings
+    ? RootNames.StackGetStarted
+    : RootNames.Unlock;
   const shouldRenderDeferredGlobals =
     useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked);
+  const shouldRenderPostUnlockGlobals =
+    shouldRenderDeferredGlobals || isUnlockSessionValid;
+  useReadableAccountWarmupsOnHomeVisible({
+    shouldWarmupReadableAccounts: !isAppUnlocked && isUnlockSessionValid,
+    hasVisibleAccounts,
+  });
 
   const onReady = useCallback<
     React.ComponentProps<typeof NavigationContainer>['onReady'] & object
@@ -414,266 +500,291 @@ export default function AppNavigation() {
       <GlobalBottomSheetModal />
       <GlobalBottomSheetModal2024 />
       {/* <GlobalAccountSwitcherStub /> */}
-      <NavigationIndependentTree>
-        <NavigationContainer
-          navigationInChildEnabled
-          ref={navigationRef}
-          // key={userId}
-          onReady={onReady}
-          onStateChange={onStateChange}
-          theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <AppNavigationDeferredGlobals
-            slot="navigation-pre"
-            enabled={shouldRenderDeferredGlobals}
-          />
-          <RootStack.Navigator
-            screenOptions={{
-              ...RootAnimOptions,
-              headerShown: false,
-              navigationBarColor: 'transparent',
-              freezeOnBlur: false,
-            }}
-            initialRouteName={initialRouteName}>
-            <RootStack.Screen
-              name={RootNames.StackGetStarted}
-              component={GetStartedNavigator}
-            />
-            <RootStack.Screen
-              name={RootNames.StackRoot}
-              component={HomeScreenNavigator}
-              options={RootAnimOptions}
-            />
-            <RootStack.Screen
-              name={RootNames.StackHomeNonTab}
-              component={HomeNonTabNavigator}
-              options={RootAnimOptions}
-            />
-            <RootStack.Screen
-              name={RootNames.SingleAddressStack}
-              component={SingleAddressNavigator}
-            />
-            <RootStack.Screen
-              name={RootNames.Unlock}
-              component={UnlockScreen}
-              options={mergeScreenOptions({
-                title: '',
-                // another valid composition
-                // animationTypeForReplace: isSlideFromGetStarted ? 'push' : 'pop',
-                // animation: isSlideFromGetStarted ? 'fade_from_bottom' : 'slide_from_left',
-                // animationTypeForReplace: 'push',
-                animation: 'fade_from_bottom',
-                headerTitle: '',
-                headerBackVisible: false,
-                headerShadowVisible: false,
-                // headerShown: true,
-                headerTransparent: true,
-                headerStyle: {
-                  // backgroundColor: colors['neutral-bg1'],
-                },
-              })}
-            />
-            <RootStack.Screen
-              name={RootNames.NotFound}
-              component={NotFoundScreen}
-              options={mergeScreenOptions({
-                title: 'Rabby Wallet',
-                headerShadowVisible: false,
-                headerShown: true,
-                headerTransparent: false,
-                headerStyle: {
-                  backgroundColor: colors['neutral-bg1'],
-                },
-              })}
-            />
-            <RootStack.Screen
-              name={RootNames.StackTestkits}
-              component={TestkitsNavigator}
-            />
-            <RootStack.Screen
-              name={RootNames.AccountTransaction}
-              component={AccountNavigator}
-            />
-            <RootStack.Screen
-              name={RootNames.StackTransaction}
-              component={TransactionNavigator}
-            />
-            <RootStack.Screen
-              name={RootNames.StackSettings}
-              component={SettingNavigator}
-            />
-            <RootStack.Screen
-              name={RootNames.StackAddress}
-              component={AddressNavigator}
-            />
-            <RootStack.Screen
-              name={RootNames.SetupWallet}
-              component={SetupWallet}
-              options={{ headerShown: false }}
-            />
-            <RootStack.Screen
-              name={RootNames.SelectImportMethod}
-              component={SelectImportMethod}
-              options={mergeScreenOptions2024([
-                {
-                  headerShown: true,
-                  headerTitle: t('screens.addressStackTitle.ImportMethods'),
-                },
-              ])}
-            />
-            <RootStack.Screen
-              name={RootNames.ImportRabbyWallet}
-              component={ImportRabbyWallet}
-              options={mergeScreenOptions2024([
-                {
-                  headerShown: true,
-                  headerTitle: t('page.newUserOnboarding.restoreWallet.title'),
-                },
-              ])}
-            />
-            <RootStack.Screen
-              name={RootNames.ImportSecret}
-              component={ImportSecret}
-              options={mergeScreenOptions2024([
-                {
-                  headerShown: true,
-                },
-              ])}
-            />
-            <RootStack.Screen
-              name={RootNames.MoreImportMethods}
-              component={MoreImportMethods}
-              options={mergeScreenOptions2024([
-                {
-                  headerShown: true,
-                  headerTitle: t('screens.addressStackTitle.MoreImportMethods'),
-                },
-              ])}
-            />
-            <RootStack.Screen
-              name={RootNames.SelectAddMethod}
-              component={SelectAddMethod}
-              options={mergeScreenOptions2024([
-                {
-                  headerShown: true,
-                  headerTitle: t(
-                    'page.nextComponent.addAddress.selectAddMethod',
-                  ),
-                },
-              ])}
-            />
-            <RootStack.Screen
-              name={RootNames.Backup}
-              component={Backup}
-              options={mergeScreenOptions2024([
-                {
-                  headerShown: true,
-                  headerTitle: t('screens.addressStackTitle.ChooseBackup'),
-                },
-              ])}
-            />
-            <RootStack.Screen
-              name={RootNames.StackDapps}
-              component={DappsNavigator}
-            />
-            <RootStack.Group
-              screenOptions={
-                {
-                  // freezeOnBlur: true,
-                }
-              }>
-              <RootStack.Screen
-                name={RootNames.NftDetail}
-                component={NFTDetailScreen}
-                options={mergeScreenOptions({
-                  headerShown: true,
-                  headerTitleAlign: 'center',
-                  headerTitle: '',
-                  headerStyle: {
-                    // backgroundColor: colors['neutral-bg-2'],
-                    backgroundColor: 'transparent',
-                  },
-                })}
+      <View style={appNavigationStyles.layout}>
+        <View style={appNavigationStyles.mainPane}>
+          <NavigationIndependentTree>
+            <NavigationContainer
+              navigationInChildEnabled
+              ref={navigationRef}
+              // key={userId}
+              onReady={onReady}
+              onStateChange={onStateChange}
+              theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <AppNavigationDeferredGlobals
+                slot="navigation-pre"
+                enabled={shouldRenderPostUnlockGlobals}
               />
-              <RootStack.Screen
-                name={RootNames.TokenDetail}
-                component={TokenDetailScreen}
-                options={mergeScreenOptions({
-                  headerShown: true,
-                  headerTitleAlign: 'left',
-                  headerTitle: '',
-                  headerStyle: {
-                    // backgroundColor: colors['neutral-bg-2'],
-                    backgroundColor: 'transparent',
-                  },
-                })}
-                getId={({ params }) => {
-                  const idStr = [
-                    params.token.id,
-                    params.isSwapToTokenDetail ? 'swapTo' : 'normal',
-                    params.tokenSelectType,
-                  ]
-                    .filter(Boolean)
-                    .join('-');
-                  return idStr || undefined;
+              <RootStack.Navigator
+                screenOptions={{
+                  ...RootAnimOptions,
+                  headerShown: false,
+                  navigationBarColor: 'transparent',
+                  freezeOnBlur: false,
                 }}
+                initialRouteName={initialRouteName}>
+                <RootStack.Screen
+                  name={RootNames.StackGetStarted}
+                  component={GetStartedNavigator}
+                />
+                <RootStack.Screen
+                  name={RootNames.StackRoot}
+                  component={HomeScreenNavigator}
+                  options={RootAnimOptions}
+                />
+                <RootStack.Screen
+                  name={RootNames.StackHomeNonTab}
+                  component={HomeNonTabNavigator}
+                  options={RootAnimOptions}
+                />
+                <RootStack.Screen
+                  name={RootNames.SingleAddressStack}
+                  component={SingleAddressNavigator}
+                />
+                <RootStack.Screen
+                  name={RootNames.Unlock}
+                  component={UnlockScreen}
+                  options={mergeScreenOptions({
+                    title: '',
+                    // another valid composition
+                    // animationTypeForReplace: isSlideFromGetStarted ? 'push' : 'pop',
+                    // animation: isSlideFromGetStarted ? 'fade_from_bottom' : 'slide_from_left',
+                    // animationTypeForReplace: 'push',
+                    animation: 'fade_from_bottom',
+                    headerTitle: '',
+                    headerBackVisible: false,
+                    headerShadowVisible: false,
+                    // headerShown: true,
+                    headerTransparent: true,
+                    headerStyle: {
+                      // backgroundColor: colors['neutral-bg1'],
+                    },
+                  })}
+                />
+                <RootStack.Screen
+                  name={RootNames.NotFound}
+                  component={NotFoundScreen}
+                  options={mergeScreenOptions({
+                    title: 'Rabby Wallet',
+                    headerShadowVisible: false,
+                    headerShown: true,
+                    headerTransparent: false,
+                    headerStyle: {
+                      backgroundColor: colors['neutral-bg1'],
+                    },
+                  })}
+                />
+                <RootStack.Screen
+                  name={RootNames.StackTestkits}
+                  component={TestkitsNavigator}
+                />
+                <RootStack.Screen
+                  name={RootNames.AccountTransaction}
+                  component={AccountNavigator}
+                />
+                <RootStack.Screen
+                  name={RootNames.StackTransaction}
+                  component={TransactionNavigator}
+                />
+                <RootStack.Screen
+                  name={RootNames.StackSettings}
+                  component={SettingNavigator}
+                />
+                <RootStack.Screen
+                  name={RootNames.StackAddress}
+                  component={AddressNavigator}
+                />
+                <RootStack.Screen
+                  name={RootNames.SetupWallet}
+                  component={SetupWallet}
+                  options={{ headerShown: false }}
+                />
+                <RootStack.Screen
+                  name={RootNames.SelectImportMethod}
+                  component={SelectImportMethod}
+                  options={mergeScreenOptions2024([
+                    {
+                      headerShown: true,
+                      headerTitle: t('screens.addressStackTitle.ImportMethods'),
+                    },
+                  ])}
+                />
+                <RootStack.Screen
+                  name={RootNames.ImportRabbyWallet}
+                  component={ImportRabbyWallet}
+                  options={mergeScreenOptions2024([
+                    {
+                      headerShown: true,
+                      headerTitle: t(
+                        'page.newUserOnboarding.restoreWallet.title',
+                      ),
+                    },
+                  ])}
+                />
+                <RootStack.Screen
+                  name={RootNames.ImportSecret}
+                  component={ImportSecret}
+                  options={mergeScreenOptions2024([
+                    {
+                      headerShown: true,
+                    },
+                  ])}
+                />
+                <RootStack.Screen
+                  name={RootNames.MoreImportMethods}
+                  component={MoreImportMethods}
+                  options={mergeScreenOptions2024([
+                    {
+                      headerShown: true,
+                      headerTitle: t(
+                        'screens.addressStackTitle.MoreImportMethods',
+                      ),
+                    },
+                  ])}
+                />
+                <RootStack.Screen
+                  name={RootNames.SelectAddMethod}
+                  component={SelectAddMethod}
+                  options={mergeScreenOptions2024([
+                    {
+                      headerShown: true,
+                      headerTitle: t(
+                        'page.nextComponent.addAddress.selectAddMethod',
+                      ),
+                    },
+                  ])}
+                />
+                <RootStack.Screen
+                  name={RootNames.Backup}
+                  component={Backup}
+                  options={mergeScreenOptions2024([
+                    {
+                      headerShown: true,
+                      headerTitle: t('screens.addressStackTitle.ChooseBackup'),
+                    },
+                  ])}
+                />
+                <RootStack.Screen
+                  name={RootNames.StackDapps}
+                  component={DappsNavigator}
+                />
+                <RootStack.Group
+                  screenOptions={
+                    {
+                      // freezeOnBlur: true,
+                    }
+                  }>
+                  <RootStack.Screen
+                    name={RootNames.NftDetail}
+                    component={NFTDetailScreen}
+                    options={mergeScreenOptions({
+                      headerShown: true,
+                      headerTitleAlign: 'center',
+                      headerTitle: '',
+                      headerStyle: {
+                        // backgroundColor: colors['neutral-bg-2'],
+                        backgroundColor: 'transparent',
+                      },
+                    })}
+                  />
+                  <RootStack.Screen
+                    name={RootNames.TokenDetail}
+                    component={TokenDetailScreen}
+                    options={mergeScreenOptions({
+                      headerShown: true,
+                      headerTitleAlign: 'left',
+                      headerTitle: '',
+                      headerStyle: {
+                        // backgroundColor: colors['neutral-bg-2'],
+                        backgroundColor: 'transparent',
+                      },
+                    })}
+                    getId={({ params }) => {
+                      const idStr = [
+                        params.token.id,
+                        params.isSwapToTokenDetail ? 'swapTo' : 'normal',
+                        params.tokenSelectType,
+                      ]
+                        .filter(Boolean)
+                        .join('-');
+                      return idStr || undefined;
+                    }}
+                  />
+                  <RootStack.Screen
+                    name={RootNames.TokenMarketInfo}
+                    component={TokenMarketInfoScreen}
+                    options={mergeScreenOptions({
+                      headerShown: true,
+                      headerTitleAlign: 'left',
+                      headerTitle: '',
+                      headerStyle: {
+                        // backgroundColor: colors['neutral-bg-2'],
+                        backgroundColor: 'transparent',
+                      },
+                    })}
+                    getId={({ params }) => {
+                      const idStr = [
+                        params.token.id,
+                        params.isSwapToTokenDetail ? 'swapTo' : 'normal',
+                        params.tokenSelectType,
+                      ]
+                        .filter(Boolean)
+                        .join('-');
+                      return idStr || undefined;
+                    }}
+                  />
+                  <RootStack.Screen
+                    name={RootNames.Scanner}
+                    component={ScannerScreen}
+                    options={mergeScreenOptions({
+                      title: 'Scan',
+                      headerShadowVisible: false,
+                      headerShown: true,
+                      headerStyle: {
+                        backgroundColor: colors['neutral-black'],
+                      },
+                      headerTintColor: colors['neutral-title-2'],
+                      headerTitleStyle: {
+                        color: colors['neutral-title-2'],
+                        fontWeight: '900',
+                        fontFamily: 'SF Pro Rounded',
+                      },
+                    })}
+                  />
+                </RootStack.Group>
+              </RootStack.Navigator>
+              <AppNavigationDeferredGlobals
+                slot="navigation-post"
+                enabled={shouldRenderDeferredGlobals}
               />
-              <RootStack.Screen
-                name={RootNames.TokenMarketInfo}
-                component={TokenMarketInfoScreen}
-                options={mergeScreenOptions({
-                  headerShown: true,
-                  headerTitleAlign: 'left',
-                  headerTitle: '',
-                  headerStyle: {
-                    // backgroundColor: colors['neutral-bg-2'],
-                    backgroundColor: 'transparent',
-                  },
-                })}
-                getId={({ params }) => {
-                  const idStr = [
-                    params.token.id,
-                    params.isSwapToTokenDetail ? 'swapTo' : 'normal',
-                    params.tokenSelectType,
-                  ]
-                    .filter(Boolean)
-                    .join('-');
-                  return idStr || undefined;
-                }}
+              <AppNavigationPostUnlockGlobals
+                enabled={shouldRenderPostUnlockGlobals}
               />
-              <RootStack.Screen
-                name={RootNames.Scanner}
-                component={ScannerScreen}
-                options={mergeScreenOptions({
-                  title: 'Scan',
-                  headerShadowVisible: false,
-                  headerShown: true,
-                  headerStyle: {
-                    backgroundColor: colors['neutral-black'],
-                  },
-                  headerTintColor: colors['neutral-title-2'],
-                  headerTitleStyle: {
-                    color: colors['neutral-title-2'],
-                    fontWeight: '900',
-                    fontFamily: 'SF Pro Rounded',
-                  },
-                })}
-              />
-            </RootStack.Group>
-          </RootStack.Navigator>
-          <AppNavigationDeferredGlobals
-            slot="navigation-post"
-            enabled={shouldRenderDeferredGlobals}
-          />
-        </NavigationContainer>
-      </NavigationIndependentTree>
-      <AppNavigationDeferredGlobals
-        slot="overlay"
-        enabled={shouldRenderDeferredGlobals}
+            </NavigationContainer>
+          </NavigationIndependentTree>
+        </View>
+        {shouldRenderDeferredGlobals ? <WideScreenDebugPanel /> : null}
+      </View>
+      <AppNavigationOverlayGlobals
+        deferredGlobalsEnabled={shouldRenderDeferredGlobals}
+        postUnlockGlobalsEnabled={shouldRenderPostUnlockGlobals}
       />
       <BackgroundSecureBlurView />
     </AutoLockView.ForAppNav>
   );
 }
+
+const appNavigationStyles = StyleSheet.create({
+  layout: {
+    flex: 1,
+    flexDirection: 'row',
+    minWidth: 0,
+  },
+  mainPane: {
+    flex: 1,
+    minWidth: 0,
+    height: '100%',
+  },
+});
 
 function AccountNavigator() {
   const { mergeScreenOptions } = useStackScreenConfig();

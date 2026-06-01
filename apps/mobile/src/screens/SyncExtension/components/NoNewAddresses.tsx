@@ -75,9 +75,9 @@ const getStyles = createGetStyles2024(ctx => ({
   confirmTitleStyle: {
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 18,
     fontStyle: 'normal',
     fontWeight: '700',
-    lineHeight: 20,
+    lineHeight: 22,
   },
 }));

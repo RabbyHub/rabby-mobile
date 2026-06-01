@@ -359,6 +359,7 @@ describe('core/apis/keychainV8_2_0', () => {
       expect.objectContaining({
         service: 'com.debank',
         androidAllowAuthenticatedSessionReuse: true,
+        androidAllowKeyStoreRecovery: false,
       }),
     );
   });

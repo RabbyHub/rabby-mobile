@@ -1922,6 +1922,7 @@
       "currentVersion": "Phiên bản hiện tại",
       "tou": "Điều Khoản Sử Dụng",
       "autoLockTime": "Thời gian tự động khóa",
+      "lockWallet": "Khóa ví",
       "modifyRPCURL": "Chỉnh sửa URL RPC",
       "addCustomNetwork": "Thêm mạng tùy chỉnh",
       "clearPendingDesc2": "Điều này sẽ không thay đổi số dư trong các tài khoản của bạn hoặc yêu cầu bạn nhập lại cụm từ khôi phục. Tất cả tài sản và thông tin tài khoản của bạn sẽ được bảo mật.",
@@ -2592,22 +2593,22 @@
         "available": "Có sẵn",
         "withdrawBtn": "Rút tiền",
         "learnBtn": "Tìm hiểu về Perps",
-        "loginBtn": "Đăng nhập vào Trading Perps",
-        "loginDesc": "Đăng nhập bằng địa chỉ của bạn và gửi tiền để bắt đầu giao dịch perps",
-        "addFunds": "Thêm Quỹ",
+        "loginBtn": "Đăng nhập để giao dịch Perps",
+        "loginDesc": "Đăng nhập bằng địa chỉ hiện tại và gửi tiền để bắt đầu giao dịch Perps.",
+        "addFunds": "Nạp tiền",
         "learnMore": "Tìm Hiểu Thêm"
       },
       "PerpsGuidePopup": {
         "step5Title": "Giải chấp",
         "step3Title": "Short",
         "step2Title": "Mua dài",
-        "step1Title": "Master Perpetual Futures",
+        "step1Title": "Nắm vững hợp đồng tương lai vĩnh viễn",
         "step4Title": "Điều chỉnh đòn bẩy",
-        "step4Desc": "Đòn bẩy cho phép bạn giao dịch với nhiều hơn số tiền bạn bỏ ra. Nó có thể làm tăng cả lợi nhuận và thua lỗ của bạn.",
+        "step4Desc": "Đòn bẩy cho phép bạn giao dịch với giá trị danh nghĩa lớn hơn số vốn bỏ ra. Nó có thể khuếch đại cả lợi nhuận lẫn thua lỗ.",
         "step3Desc": "Khi bạn mong đợi giá sẽ giảm, bạn mở một vị thế bán. Nếu giá giảm, bạn sẽ có lãi. Nếu giá tăng, bạn sẽ lỗ.",
         "step2Desc": "Khi bạn mong đợi giá sẽ tăng, bạn mở một vị thế long. Nếu giá tăng, bạn sẽ có lãi. Nếu giá giảm, bạn sẽ lỗ.",
-        "step5Desc": "Mọi vị thế đều có giá thanh lý. Nếu giá thị trường đạt đến mức đó, vị thế của bạn sẽ bị đóng. Sử dụng đòn bẩy cao hơn sẽ tăng rủi ro bị thanh lý.",
-        "step1Desc": "Với các hợp đồng tương lai vĩnh viễn, bạn không chỉ giao dịch tài sản. Bạn đang giao dịch những gì bạn nghĩ sẽ xảy ra tiếp theo."
+        "step5Desc": "Mỗi vị thế đều có giá thanh lý. Nếu giá thị trường chạm mức đó, vị thế của bạn sẽ bị đóng. Đòn bẩy càng cao thì rủi ro bị thanh lý càng lớn.",
+        "step1Desc": "Với hợp đồng tương lai vĩnh viễn, bạn không chỉ giao dịch tài sản mà còn giao dịch nhận định của mình về biến động giá tiếp theo."
       },
       "PerpsDepositPopup": {
         "amount": "Số lượng",
@@ -2727,14 +2728,14 @@
         "date": "Ngày"
       },
       "PerpsSelectTokenPopup": {
-        "title": "Chọn Token để Gửi",
+        "title": "Chọn token để gửi",
         "token": "Token",
         "balance": "Số dư",
         "noTokens": "Không có token"
       },
       "PerpsAccountLogoutPopup": {
-        "title": "Đăng xuất Địa chỉ Hiện tại",
-        "desc": "Bạn đang đăng xuất khỏi tài khoản Perps hiện tại của mình. Bạn có thể khôi phục nó bất kỳ lúc nào bằng cách đăng nhập với địa chỉ này.",
+        "title": "Đăng xuất địa chỉ hiện tại",
+        "desc": "Bạn đang đăng xuất khỏi tài khoản Perps hiện tại. Bạn có thể khôi phục bất cứ lúc nào bằng cách đăng nhập lại với địa chỉ này.",
         "logout": "Đăng xuất"
       },
       "PerpsDepositCard": {
@@ -2747,7 +2748,7 @@
         "lastUsed": "Cuối cùng được sử dụng",
         "noPosition": "Không có vị thế",
         "notActivatedAddress": "Chưa được kích hoạt",
-        "hyperliquidBalance": "Số Dư Perps"
+        "hyperliquidBalance": "Số dư Perps"
       },
       "title": "Perps",
       "selectAccountTitle": "Chọn Ví Để Đăng Nhập",
@@ -2764,8 +2765,8 @@
       "deleteAgentModal": "Bạn đã đạt đến số lượng đại lý tối đa. Bạn có muốn xóa một đại lý hiện có để tạo một đại lý mới không?",
       "leverageRangeMaxError": "Tỷ lệ đòn bẩy tối đa là {{max}}x",
       "searchPerpsPopup": {
-        "searchPosition": "Tìm Vị Trí",
-        "openPosition": "Mở Vị Trí",
+        "searchPosition": "Tìm vị thế",
+        "openPosition": "Mở vị thế",
         "empty": "Không tìm thấy kết quả nào",
         "searchPlaceholder": "Tìm kiếm Perps",
         "searchPerps": "Tìm kiếm Perps"
@@ -2781,13 +2782,13 @@
         "title": "Mức độ rủi ro",
         "currentPrice": "Giá hiện tại",
         "subtitle": "Khoảng cách thanh lý theo thời gian thực (%)",
-        "liqIntro": "Khoảng cách thanh lý (%) cho thấy giá hiện tại cách giá thanh lý của bạn bao xa. Khoảng cách lớn hơn chỉ ra một vị trí an toàn hơn, trong khi khoảng cách nhỏ hơn có nghĩa là rủi ro thanh lý cao hơn.",
+        "liqIntro": "Khoảng cách thanh lý (%) cho biết giá hiện tại cách giá thanh lý của bạn bao xa. Khoảng cách càng lớn thì vị thế càng an toàn; khoảng cách càng nhỏ thì rủi ro thanh lý càng cao.",
         "liqDistanceTipsShort": "Đi lên <1>{{distance}}</1> sẽ kích hoạt thanh lý.",
         "liqDistanceTipsLong": "Đi xuống <1>{{distance}}</1> sẽ kích hoạt thanh lý."
       },
-      "closeAll": "Đóng tất cả",
-      "closeAllConfirmTitle": "Xác nhận Đóng Tất cả Vị thế",
-      "closeAllConfirmMessage": "Tất cả các vị trí mở của bạn sẽ được đóng ở giá thị trường.",
+      "closeAll": "Đóng tất cả vị thế",
+      "closeAllConfirmTitle": "Xác nhận đóng tất cả vị thế",
+      "closeAllConfirmMessage": "Tất cả vị thế đang mở của bạn sẽ được đóng theo giá thị trường.",
       "assetPage": {
         "hyperliquidPosition": "Vị trí Hyperliquid"
       },
@@ -2805,10 +2806,10 @@
       },
       "EnableUnifiedAccount": {
         "title": "Bật Tài khoản Thống nhất",
-        "desc": "Tài khoản Thống nhất là chế độ tài khoản được khuyến nghị giúp đơn giản hóa trải nghiệm giao dịch. Số dư Spot và Perps được gộp cho tất cả token, và cross margin được hỗ trợ trên tất cả tài sản có sẵn.",
+        "desc": "Unified Account là chế độ tài khoản được khuyến nghị để đơn giản hóa trải nghiệm giao dịch. Số dư Spot và Perps của tất cả token được gộp lại, và cross margin được hỗ trợ cho mọi tài sản khả dụng.",
         "confirm": "Xác nhận",
         "cancel": "Hủy",
-        "importantTips": "Tất cả tài sản thế chấp USDC sẽ được sử dụng làm cross margin sau khi Tài khoản Thống nhất được bật.",
+        "importantTips": "Sau khi bật Unified Account, toàn bộ tài sản thế chấp USDC sẽ được dùng làm cross margin.",
         "important": "Quan trọng"
       },
       "PerpsSpotSwap": {
@@ -2827,7 +2828,7 @@
         "minimumAmount": "Số tiền đổi tối thiểu là {{amount}}"
       },
       "PerpMarginModePopup": {
-        "crossRequiresUnified": "Cross margin cho cặp giao dịch này yêu cầu Unified Account. Bạn có muốn bật tính năng này không?"
+        "crossRequiresUnified": "Cross margin cho cặp giao dịch này yêu cầu Unified Account. Bạn có muốn bật không?"
       },
       "PerpsMultiBalance": {
         "title": "Số dư Hyperliquid",
@@ -2877,9 +2878,9 @@
         "autoClose": "Tự động Đóng",
         "sizeTips": "Giá trị hoặc số lượng tổng của giao dịch của bạn, được xác định bởi ký quỹ và đòn bẩy.",
         "liquidationPriceTips": "Giá mà vị thế của bạn bị tự động đóng bởi sàn giao dịch để ngăn chặn tổn thất thêm khi ký quỹ của bạn giảm xuống dưới mức ký quỹ duy trì.",
-        "fundingPaymentsTips": "Đây là khoản thanh toán vốn ròng kể từ khi vị thế được mở. Funding là một khoản phí theo giờ mà các trader phải trả hoặc nhận để giữ cho giá của hợp đồng perp gần với giá thực tế của token.",
+        "fundingPaymentsTips": "Đây là khoản thanh toán funding ròng kể từ khi mở vị thế. Funding là khoản phí theo giờ mà trader trả hoặc nhận để giữ giá hợp đồng vĩnh viễn gần với giá thực tế của token.",
         "fundingGains": "Lợi nhuận Tài trợ",
-        "fundingGainsTips": "Đây là lợi nhuận từ việc tài trợ ròng kể từ khi vị thế được mở. Funding là một khoản phí hàng giờ mà các trader trả hoặc nhận để giữ giá của hợp đồng perp gần với giá thực tế của token.",
+        "fundingGainsTips": "Đây là khoản lợi funding ròng kể từ khi mở vị thế. Funding là khoản phí theo giờ mà trader trả hoặc nhận để giữ giá hợp đồng vĩnh viễn gần với giá thực tế của token.",
         "realizedPnl": "PNL thực hiện",
         "currentPrice": "Giá hiện tại",
         "positionValue": "Giá trị vị trí",
@@ -2887,7 +2888,7 @@
         "settings": "Cài đặt",
         "unrealizedPnl": "Lợi nhuận chưa thực hiện",
         "marginMode": "Chế độ ký quỹ",
-        "fundingTipsBold": "Điều này cho thấy tổng số tiền tài trợ của bạn đã được thanh toán kể từ khi vị trí được mở. Các giá trị <bold>Xanh (dương)</bold> có nghĩa là bạn đã kiếm được từ các nhà giao dịch khác, trong khi các giá trị <bold>Đỏ (âm)</bold> là chi phí tài trợ mà bạn đã trả cho họ.",
+        "fundingTipsBold": "Phần này hiển thị tổng funding đã được thanh toán kể từ khi mở vị thế. Giá trị <bold>xanh (dương)</bold> nghĩa là bạn nhận funding từ trader khác, còn giá trị <bold>đỏ (âm)</bold> là chi phí funding bạn đã trả cho họ.",
         "crossTips": "Trong chế độ Cross Margin, giá thanh lý cho một vị trí đơn lẻ chỉ là một ước tính để tham khảo."
       },
       "PerpsInfo": {
@@ -2895,7 +2896,7 @@
         "openInterest": "Lãi Suất Mở",
         "openInterestTips": "Tổng vị thế đang mở của tất cả người dùng trên hợp đồng này.",
         "funding": "Quỹ",
-        "fundingTips": "Đây là một khoản phí theo giờ mà các trader phải trả hoặc nhận để giữ cho giá của hợp đồng perp gần với giá thực tế của token. Nếu dương, long trả cho short. Nếu âm, short trả cho long.",
+        "fundingTips": "Đây là khoản phí theo giờ mà trader trả hoặc nhận để giữ giá hợp đồng vĩnh viễn gần với giá thực tế của token. Nếu dương, long trả cho short. Nếu âm, short trả cho long.",
         "24Vol": "24h Khối lượng",
         "fundingRate": "Tỷ lệ cấp vốn"
       },
@@ -3020,7 +3021,7 @@
         "perpsBalance": "Số Dư Perps",
         "amountToReduce": "Số lượng để giảm bớt",
         "insufficientMarginToReduce": "Không đủ ký quỹ để giảm vị thế.",
-        "liqDistance": "Liq.Distance"
+        "liqDistance": "Khoảng cách thanh lý"
       },
       "PerpsAddPositionPopup": {
         "addSize": "Thêm Kích Thước",
@@ -3033,8 +3034,8 @@
         "crossTitle": "Đòn bẩy chéo",
         "isolatedTitle": "Marghìn Isolated",
         "cannotChangeMarginMode": "Không thể thay đổi Chế độ Margin khi có các vị thế mở.",
-        "isolatedDesc": "Mỗi vị trí sử dụng margin riêng của nó. Lỗ được giới hạn trong vị trí đó, nhưng nó có thể bị thanh lý dễ dàng hơn.",
-        "crossDesc": "Tất cả các vị trí đều chia sẻ cùng một ký quỹ. Điều này giảm thiểu khả năng một vị trí duy nhất bị thanh lý, nhưng tất cả các quỹ ký quỹ chéo có thể bị mất trong những biến động thị trường cực đoan."
+        "isolatedDesc": "Mỗi vị thế dùng ký quỹ riêng. Khoản lỗ được giới hạn trong vị thế đó, nhưng vị thế có thể dễ bị thanh lý hơn.",
+        "crossDesc": "Tất cả vị thế dùng chung cùng một ký quỹ. Điều này giảm khả năng một vị thế riêng lẻ bị thanh lý, nhưng trong biến động thị trường cực đoan, toàn bộ tiền ký quỹ chéo có thể bị mất."
       },
       "guideEntry": {
         "gotIt": "Được rồi"
@@ -3101,8 +3102,8 @@
         "repayWith": "Trả nợ với"
       },
       "supplyDetail": {
-        "actions": "Cung cấp",
-        "approveAndSupply": "Chấp thuận và Cung cấp",
+        "actions": "Gửi",
+        "approveAndSupply": "Phê duyệt và gửi",
         "availableToBorrow": "Có sẵn để vay",
         "supplyAPY": "Cung cấp APY",
         "enabled": "Đã kích hoạt",
@@ -3124,7 +3125,7 @@
         "swapDebt": "Hoán đổi",
         "borrowed": "Đã vay",
         "noSupplyDesc": "Để vay, bạn cần cung cấp tài sản làm tài sản thế chấp.",
-        "noSupplyPrefix": "Không có nguồn cung:"
+        "noSupplyPrefix": "Chưa có khoản gửi:"
       },
       "popup": {
         "amount": "Số lượng",
@@ -3144,14 +3145,14 @@
         "reachCapTip": "Tài sản này đã đạt giới hạn vay."
       },
       "supplyOverview": {
-        "title": "Thông tin cung cấp",
-        "totalSupplied": "Tổng cung cấp",
-        "availableToSupply": "Có sẵn để cung cấp",
+        "title": "Chi tiết khoản gửi",
+        "totalSupplied": "Tổng đã gửi",
+        "availableToSupply": "Có thể gửi",
         "walletBalance": "Số dư Ví",
         "mySupply": "Cung cấp của tôi",
         "almostCap": "Tài sản này gần như đã đạt giới hạn vay của nó. Chỉ còn {{available}} có sẵn để vay từ thị trường này.",
         "reachCap": "Tài sản này đã đạt đến giới hạn cung cấp của nó. Không có gì có sẵn để cung cấp từ thị trường này.",
-        "useAsCollateral": "Sử dụng làm tài sản thế chấp",
+        "useAsCollateral": "Dùng làm tài sản thế chấp",
         "collateral": "Tài sản thế chấp"
       },
       "risk": {
@@ -3160,7 +3161,7 @@
         "warning": "Vay số tiền này sẽ làm giảm Hệ số Sức khỏe của bạn xuống mức rủi ro cho việc thanh lý.",
         "toggleCollateralWarning": "Vô hiệu hóa tài sản này làm tài sản thế chấp sẽ khiến hệ số an toàn của bạn giảm xuống mức rủi ro cho việc thanh lý.",
         "emodeBlockWarning": "Vô hiệu hóa E-mode sẽ làm giảm Hệ số Sức khỏe của bạn xuống mức rủi ro cho việc thanh lý.",
-        "blockEmodeWarning": "Bạn không thể tắt E-Mode vì điều đó có thể gây ra thanh lý. Để thoát khỏi E-Mode, hãy cung cấp hoặc hoàn trả các vị trí đã vay."
+        "blockEmodeWarning": "Bạn không thể tắt E-Mode vì có thể kích hoạt thanh lý. Để thoát E-Mode, hãy thêm tài sản thế chấp hoặc trả nợ các vị thế đã vay."
       },
       "lqDescription": {
         "desc": "Giá trị thanh lý",
@@ -3203,19 +3204,19 @@
       },
       "toggleCollateralModal": {
         "enableIsolationModeTitle": "Bật Chế độ Tách biệt",
-        "closeTitle": "Xem lại việc vô hiệu hóa",
+        "closeTitle": "Xác nhận tắt",
         "exitIsolationModeTitle": "Thoát Chế Độ Isolate",
         "exitIsolationModeDesc": "Bạn sẽ thoát khỏi chế độ Isolate và các token khác hiện có thể được sử dụng làm tài sản thế chấp.",
-        "closeDesc": "Việc vô hiệu hóa tài sản này làm tài sản thế chấp sẽ ảnh hưởng đến khả năng vay mượn và hệ số sức khỏe của bạn.",
-        "openTitle": "Xem xét kích hoạt",
+        "closeDesc": "Tắt tài sản này làm tài sản thế chấp sẽ ảnh hưởng đến sức vay và Health Factor của bạn.",
+        "openTitle": "Xác nhận bật",
         "openDesc": "Bật tài sản này làm tài sản thế chấp sẽ tăng cường khả năng vay mượn và Hệ số Sức khỏe của bạn. Tuy nhiên, nó có thể bị thanh lý nếu hệ số sức khỏe của bạn giảm thấp hơn 1.",
         "enableIsolationModeDesc": "Bạn đang vào chế độ Isolate. Trong chế độ Isolate, bạn không thể cung cấp tài sản khác làm tài sản thế chấp. Một giới hạn nợ toàn cầu hạn chế khả năng vay mượn của tài sản bị cô lập. Để thoát khỏi chế độ Isolate, hãy tắt CRV làm tài sản thế chấp trước khi vay mượn tài sản khác.",
-        "riskToLiquidationText": "Bạn không thể chuyển sang chế độ sử dụng làm tài sản thế chấp cho loại tiền tệ này, vì nó sẽ gây ra cuộc gọi tài sản thế chấp.",
+        "riskToLiquidationText": "Không thể thay đổi trạng thái tài sản thế chấp của tài sản này vì có thể kích hoạt thanh lý.",
         "toggleRiskTexts": {
           "canNotUseThisCurrencyAsCollateral": "Bạn không thể sử dụng loại tiền tệ này làm tài sản thế chấp.",
           "doNotHaveSuppliesInThisCurrency": "Bạn không có nguồn cung trong loại tiền tệ này.",
           "zeroLTVWithdrawBlocked": "Tài sản có LTV bằng 0 ({{assets}}) phải được rút hoặc vô hiệu hóa làm tài sản thế chấp để thực hiện hành động này.",
-          "canNotSwitchUsageAsCollateralMode": "Bạn không thể chuyển đổi sang chế độ sử dụng làm tài sản thế chấp cho loại tiền tệ này, vì điều đó sẽ gây ra cuộc gọi tài sản thế chấp."
+          "canNotSwitchUsageAsCollateralMode": "Không thể thay đổi trạng thái tài sản thế chấp của tài sản này vì có thể kích hoạt thanh lý."
         }
       },
       "searchMarket": "Tìm kiếm Thị trường",
@@ -3272,25 +3273,25 @@
       "debtSwap": {
         "actions": {
           "select": "Chọn",
-          "swapTo": "Hoán đổi sang",
+          "swapTo": "Chuyển đổi sang",
           "amount": "Số tiền",
-          "title": "Hoán Đổi Nợ",
-          "borrowed": "Được vay"
+          "title": "Chuyển đổi nợ",
+          "borrowed": "Đã vay"
         },
         "overview": {
           "borrowAPY": "Vay apy",
           "title": "Tổng quan giao dịch",
-          "borrowValueAfter": "Số dư vay sau khi hoán đổi"
+          "borrowValueAfter": "Dư nợ sau khi chuyển đổi"
         },
         "button": {
-          "swap": "Hoán đổi"
+          "swap": "Chuyển đổi"
         },
         "borrowBalance": "Số dư vay",
-        "entryTips": "Một cú nhấp chuột để hoán đổi tài sản đã vay của bạn, giảm bước và phí.",
+        "entryTips": "Chuyển đổi tài sản đã vay chỉ với một lần nhấn để giảm bước và phí.",
         "lpRiskWarning": "Số yếu tố sức khỏe thấp sau khi hoán đổi. Vị trí của bạn sẽ có rủi ro thanh lý cao hơn.",
         "lpDangerWarning": "Yếu tố sức khỏe của bạn sau giao dịch này sẽ ở mức rất thấp và có thể dẫn đến việc thanh lý. Vui lòng chọn tài sản khác hoặc giảm số lượng giao dịch để đảm bảo an toàn.",
-        "priceImpactTips": "Tác động giá cao ({{lostValue}}). Đường này có thể trả lại nhiều hơn do tính thanh khoản thấp hoặc kích thước đơn hàng nhỏ.",
-        "title": "Hoán đổi Vị trí Vay",
+        "priceImpactTips": "Tác động giá cao ({{lostValue}}). Do thanh khoản thấp hoặc kích thước lệnh nhỏ, ước tính của tuyến này có thể lệch đáng kể.",
+        "title": "Chuyển đổi vị thế vay",
         "maxLtvWarning": "Không đủ tài sản thế chấp để bảo hiểm vị trí vay mới. Ví phải có khả năng vay còn lại để thực hiện chuyển nợ."
       },
       "hfTips": {
@@ -3298,10 +3299,10 @@
         "desc": "Nếu nó giảm xuống dưới 1.0, tài sản thế chấp của bạn có thể bị thanh lý."
       },
       "disableBorrowTip": {
-        "desc": "Không có tài sản: Để vay, bạn cần cung cấp tài sản làm tài sản thế chấp."
+        "desc": "Chưa có khoản gửi: để vay, trước tiên bạn cần gửi tài sản làm tài sản thế chấp."
       },
-      "totalSupplied": "Tổng cung cấp",
-      "netApy": "Net APY",
+      "totalSupplied": "Tổng đã gửi",
+      "netApy": "APY ròng",
       "totalBorrowed": "Tổng số đã mượn",
       "repayWithCollateral": {
         "action": {
@@ -3317,7 +3318,7 @@
         },
         "toRepay": "Số tiền kỳ vọng để trả nợ",
         "collateralNotEnough": "Số dư tài sản thế chấp của bạn thấp hơn số tiền đã chọn.",
-        "repayWith": "Tài sản thế chấp để trả lại với",
+        "repayWith": "Tài sản thế chấp dùng để trả nợ",
         "insufficientLiquidity": "Không đủ thanh khoản.",
         "frozenCollateral": "Tài sản này đã bị đóng băng do quyết định của cộng đồng Aave."
       },
@@ -3327,7 +3328,7 @@
           "balance": "Số dư"
         },
         "title": "Chọn Token Hoàn trả",
-        "zeroLtvCollateralTips": "Bạn có LTV = 0 tài sản thế chấp và vì vậy chỉ có thể thanh toán trước bằng các tài sản thế chấp này theo quy tắc thanh toán tài sản thế chấp."
+        "zeroLtvCollateralTips": "Bạn có các tài sản thế chấp LTV = 0 sau. Theo quy tắc trả nợ bằng tài sản thế chấp, bạn cần ưu tiên dùng các tài sản thế chấp này để trả nợ trước."
       },
       "dappSelect": {
         "title": "Chọn Nhà Cung Cấp Cho Vay"

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
@@ -18,7 +19,13 @@ import { formatPerpsDisplayName, computeFilledPct } from '@/utils/perps';
 import BigNumber from 'bignumber.js';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  RootNames,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 const LimitPriceArrow: React.FC<{ bg: string; stroke: string }> = ({
   bg,
@@ -59,6 +66,7 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
   const modalRef = useRef<AppBottomSheetModal>(null);
+  const { bottom } = useSafeAreaInsets();
   const [cancelLoading, setCancelLoading] = useState(false);
   const coin = order?.coin;
   const marketData = perpsStore(s =>
@@ -191,14 +199,19 @@ export const PerpsLimitOrderDetailPopup: React.FC<Props> = ({
           )}
         </View>
 
-        <View style={styles.buttonContainer}>
+        <View
+          style={[
+            styles.buttonContainer,
+            { marginBottom: getBottomButtonBottomOffset(bottom) },
+          ]}>
           <Button
             type="hyperliquid"
             title={t('page.perps.limitOrderDetail.cancelLimitOrder')}
             onPress={handleCancel}
             loading={cancelLoading}
             containerStyle={{ width: '100%' }}
-            titleStyle={styles.btnText}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
           />
         </View>
       </BottomSheetView>
@@ -254,15 +267,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 2,
   },
   buttonContainer: {
-    paddingTop: 24,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     marginTop: 8,
-    marginBottom: 48,
-  },
-  btnText: {
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    fontWeight: '700',
-    lineHeight: 22,
+    marginBottom: 36,
   },
 }));

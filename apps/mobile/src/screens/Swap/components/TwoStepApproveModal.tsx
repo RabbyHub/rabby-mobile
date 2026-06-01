@@ -103,7 +103,8 @@ const getStyles = createGetStyles(colors => ({
   },
   confirmTitleStyle: {
     color: colors['neutral-title-2'],
-    fontSize: 15,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '500',
   },
   cancelText: {

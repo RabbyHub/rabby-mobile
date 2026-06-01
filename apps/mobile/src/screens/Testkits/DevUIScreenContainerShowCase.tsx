@@ -73,7 +73,7 @@ function DevUIScreenContainerShowCase() {
               onPress={() => {
                 setScreenSetting({ screenType: 'NormalScreenContainer' });
               }}
-              titleStyle={{ fontSize: 14, lineHeight: 32 }}
+              titleStyle={{ fontSize: 18, lineHeight: 32 }}
             />
           </View>
         </View>
@@ -105,7 +105,7 @@ function DevUIScreenContainerShowCase() {
                   screenType: 'FooterButtonScreenContainer2024',
                 });
               }}
-              titleStyle={{ fontSize: 14, lineHeight: 32 }}
+              titleStyle={{ fontSize: 18, lineHeight: 32 }}
             />
           </View>
         </View>
@@ -138,7 +138,7 @@ function DevUIScreenContainerShowCase() {
               onPress={() => {
                 setScreenSetting({ screenType: 'FooterButtonScreenContainer' });
               }}
-              titleStyle={{ fontSize: 14, lineHeight: 32 }}
+              titleStyle={{ fontSize: 18, lineHeight: 32 }}
             />
           </View>
         </View>

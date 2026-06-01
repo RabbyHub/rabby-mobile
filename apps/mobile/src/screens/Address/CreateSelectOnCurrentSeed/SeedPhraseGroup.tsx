@@ -231,9 +231,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   buttonText: {
     color: colors2024['brand-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
-    lineHeight: 22,
     textAlign: 'left',
   },
 }));

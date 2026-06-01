@@ -44,6 +44,12 @@ import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { calculateDistanceToLiquidation } from '@/screens/Perps/components/PerpsPositionSection/utils';
 import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 export const PerpsEditMarginPopup: React.FC<{
   visible: boolean;
@@ -516,6 +522,8 @@ export const PerpsEditMarginPopup: React.FC<{
             <Button
               type="hyperliquid"
               title={t('global.confirm')}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               loading={loading}
               disabled={!marginValidation.isValid || noChangeMargin}
               onPress={handleConfirm}
@@ -527,7 +535,8 @@ export const PerpsEditMarginPopup: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+const getStyle = createGetStyles2024(ctx => {
+  const { colors2024, isLight, safeAreaInsets } = ctx;
   return {
     container: {
       height: '100%',
@@ -628,9 +637,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],
-      paddingTop: 16,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
       paddingHorizontal: 16,
-      paddingBottom: 48,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
     liqPrice: {
       fontFamily: 'SF Pro Rounded',

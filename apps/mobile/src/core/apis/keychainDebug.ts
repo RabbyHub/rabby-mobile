@@ -49,6 +49,7 @@ type RawOfficialOptions = BaseOptions & {
   securityLevel?: unknown;
   storage?: KeychainStorageType;
   androidAllowAuthenticatedSessionReuse?: boolean;
+  androidAllowKeyStoreRecovery?: boolean;
 };
 
 type NativeKeychainDebugState =
@@ -257,12 +258,16 @@ export async function readGenericPassword(
   service: string = KEYCHAIN_DEFAULT_SERVICE,
   options?: {
     androidAuthPromptPolicy?: AndroidAuthPromptPolicy;
+    androidAllowKeyStoreRecovery?: boolean;
   },
 ): Promise<false | KeychainCompatibleUserCredentials> {
   return OfficialKeychain.getGenericPassword({
     ...DEFAULT_GET_OPTIONS,
     service,
     ...getAndroidAuthPromptPolicyOptions(options?.androidAuthPromptPolicy),
+    ...(isAndroid && typeof options?.androidAllowKeyStoreRecovery === 'boolean'
+      ? { androidAllowKeyStoreRecovery: options.androidAllowKeyStoreRecovery }
+      : {}),
   } as Parameters<typeof OfficialKeychain.getGenericPassword>[0]);
 }
 

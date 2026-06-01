@@ -12,6 +12,7 @@ import {
   RcClearPending,
   RcEarth,
   RcFeedback,
+  RcNewLock,
   RcLockWallet,
   RcAutoLockTime,
   RcScreenshot,
@@ -66,7 +67,10 @@ import {
   INTERNAL_REQUEST_SESSION,
 } from '@/constant';
 import { openExternalUrl } from '@/core/utils/linking';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+import {
+  requestLockWalletAndBackToUnlockScreen,
+  useRabbyAppNavigation,
+} from '@/hooks/navigation';
 import { useUpgradeInfo } from '@/hooks/version';
 import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
@@ -162,6 +166,8 @@ import {
 } from '@/utils/analytics0331';
 import { Text } from '@/components/Typography';
 import { useAppSecurityChain } from '@/hooks/global';
+import { useToggleShowUnlockStatusBar } from '@/hooks/appSettings';
+import { SwitchShowFloatingUnlockStatusBar } from './components/SwitchFloatingView';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -271,6 +277,17 @@ function SettingsBlocks() {
       return;
     }
     selectAutolockTimeRef.current?.present();
+  }, [shouldRedirectToSetPasswordBefore]);
+
+  const startLockWallet = useCallback(() => {
+    if (
+      shouldRedirectToSetPasswordBefore({
+        onSettingsAction: 'lockWallet',
+      })
+    ) {
+      return;
+    }
+    requestLockWalletAndBackToUnlockScreen();
   }, [shouldRedirectToSetPasswordBefore]);
 
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
@@ -408,6 +425,14 @@ function SettingsBlocks() {
               startSelectAutolockTime();
             },
             rightTextNode: <AutoLockSettingLabel style={styles.rightText} />,
+          },
+          {
+            label: t('page.setting.lockWallet'),
+            icon: RcNewLock,
+            onPress: () => {
+              startLockWallet();
+            },
+            visible: APP_FEATURE_SWITCH.customizePassword,
           },
           {
             label: t('page.setting.currentLanguage'),
@@ -733,6 +758,7 @@ function DevSettingsBlocks({
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
   const { setDevServerSettingsModalVisible } = useDevServerModalVisible();
   const currentAccount = preferenceService.getFallbackAccount();
+  const { toggleShowUnlockStatusBar } = useToggleShowUnlockStatusBar();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -792,6 +818,19 @@ function DevSettingsBlocks({
               onPress: async () => {
                 setWalletTestItemModalVisible(true);
               },
+            },
+            {
+              label: 'Show Unlock Status Bar',
+              icon: RcLockWallet,
+              onPress: () => {
+                toggleShowUnlockStatusBar();
+              },
+              rightNode: (
+                <SwitchShowFloatingUnlockStatusBar
+                  onPress={evt => evt.stopPropagation()}
+                />
+              ),
+              visible: NEED_DEVSETTINGBLOCKS,
             },
             {
               label: 'Regression Switches',

@@ -132,12 +132,18 @@ const fetchBiometrics = async () => {
       supportedBiometryType: null as KeychainSupportedBiometryType,
       devicePasscodeAvailable: false,
     };
+    let didFetchSupportedType = false;
     try {
       systemAuth = await fetchSystemAuthAvailability();
+      didFetchSupportedType = true;
     } catch (error) {
       console.error(error);
     }
     setBiometrics(prev => {
+      if (!didFetchSupportedType) {
+        return prev;
+      }
+      const nextAuthEnabled = isAuthenticatedByBiometrics();
       // if (prev.authEnabled && !supportedType) {
       //   toast.info(
       //     'Biometrics authentication disabled because no valid biometric data found.',
@@ -146,7 +152,7 @@ const fetchBiometrics = async () => {
       return {
         ...prev,
         ...systemAuth,
-        authEnabled: isAuthenticatedByBiometrics(),
+        authEnabled: nextAuthEnabled,
       };
     });
   } catch (error) {

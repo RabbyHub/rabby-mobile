@@ -34,6 +34,7 @@ import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { useRoute } from '@react-navigation/native';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { AddressAndCopy } from '@/components/Address/AddressAndCopy';
 import { Text } from '@/components/Typography';
@@ -105,7 +106,8 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     footerButtonTitle: {
       fontWeight: '600',
-      fontSize: 16,
+      fontSize: 18,
+      lineHeight: 22,
     },
     radioIcon: {
       width: 24,
@@ -359,6 +361,13 @@ export const ImportMoreAddressScreen = () => {
   const importToastHiddenRef = React.useRef<() => void>(() => {});
 
   const handleConfirm = React.useCallback(async () => {
+    if (
+      state.type === KEYRING_TYPE.HdKeyring &&
+      !(await ensureWalletUnlockedForAction())
+    ) {
+      return;
+    }
+
     setImporting(true);
     importToastHiddenRef.current = toast.show('Importing...', {
       duration: 100000,

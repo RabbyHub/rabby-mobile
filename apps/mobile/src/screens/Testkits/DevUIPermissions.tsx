@@ -124,7 +124,7 @@ function DevUIPermissions() {
               title={`Request: ${
                 PerAndroid.formatAndroidPermission(permission).keyLabel
               }`}
-              titleStyle={{ fontSize: 16, fontWeight: '500' }}
+              titleStyle={{ fontSize: 18, fontWeight: '500' }}
             />
           );
         })}
@@ -135,7 +135,7 @@ function DevUIPermissions() {
               PerAndroid.goToSystemSettingsFor();
             }}
             title={`Go Package's settings`}
-            titleStyle={{ fontSize: 16, fontWeight: '500' }}
+            titleStyle={{ fontSize: 18, fontWeight: '500' }}
           />
         </View>
       </ScrollView>

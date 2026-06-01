@@ -49,7 +49,7 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
   }, [syncUnlockTime, _onFinished]);
 
   const validationHandler = password => {
-    return apisLock.throwErrorIfInvalidPwd(password);
+    return apisLock.verifyPasswordOrUnlock(password);
   };
   const unlockWithBiometrics = useCallback(async () => {
     if (isProcessingRef.current) return;
@@ -102,7 +102,7 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
         onCancel: cancel,
         onDismiss: onDismiss,
         validationHandler(password) {
-          return apisLock.throwErrorIfInvalidPwd(password);
+          return apisLock.verifyPasswordOrUnlock(password);
         },
       });
     }

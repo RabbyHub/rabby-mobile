@@ -5,12 +5,53 @@ describe('core/apis/keychain current facade', () => {
     const mockV8RequestGenericPassword = jest.fn(async () => 'v8-request');
     const mockV9RequestGenericPassword = jest.fn(async () => 'v9-request');
     const mockV10RequestGenericPassword = jest.fn(async () => 'v10-request');
+    const mockV8SetGenericPassword = jest.fn(async () => undefined);
+    const mockV9SetGenericPassword = jest.fn(async () => undefined);
+    const mockV10SetGenericPassword = jest.fn(async () => undefined);
     const mockV8ResetGenericPassword = jest.fn(async () => true);
     const mockV9ResetGenericPassword = jest.fn(async () => true);
     const mockV10ResetGenericPassword = jest.fn(async () => true);
+    const mockV8GetKeychainDebugState = jest.fn(async () => ({
+      sourceLabel: 'v8-label',
+      hasEntry: true,
+      storedUsernameBase64: 'v8-username',
+      storedPasswordBase64: 'v8-password',
+    }));
+    const mockV9GetKeychainDebugState = jest.fn(async () => ({
+      sourceLabel: 'v9-label',
+      hasEntry: true,
+      storedUsernameBase64: 'v9-username',
+      storedPasswordBase64: 'v9-password',
+    }));
+    const mockV10GetKeychainDebugState = jest.fn(async () => ({
+      sourceLabel: 'v10-label',
+      hasEntry: true,
+    }));
+    const mockKeychainMMKVSet = jest.fn();
+    const mockLoggerInfo = jest.fn();
+    const mockLoggerWarn = jest.fn();
 
     jest.doMock('@/hooks/appSettings', () => ({
       getCurrentKeychainVersion: jest.fn(() => version),
+    }));
+    jest.doMock('react-native', () => ({
+      Platform: { OS: 'android' },
+    }));
+    jest.doMock('@/utils/logger', () => ({
+      logger: {
+        info: mockLoggerInfo,
+        warn: mockLoggerWarn,
+      },
+    }));
+    jest.doMock('../storage/mmkvInstances', () => ({
+      keychainMMKV: {
+        set: mockKeychainMMKVSet,
+      },
+    }));
+    jest.doMock('../storage/mmkvConstants', () => ({
+      KEYCHAIN_MMKV_KEYS: {
+        BIOMETRIC_FAILURE_DIAGNOSTIC: 'BIOMETRIC_FAILURE_DIAGNOSTIC',
+      },
     }));
     jest.doMock('./keychainCommon', () => ({
       KEYCHAIN_AUTH_TYPES: {
@@ -35,7 +76,7 @@ describe('core/apis/keychain current facade', () => {
       isAuthenticatedByBiometrics: jest.fn(() => true),
       isBrokenBiometricsEntryError: jest.fn(() => false),
       makeKeyChainError: jest.fn(),
-      parseKeychainError: jest.fn(),
+      parseKeychainError: jest.fn(() => ({ isCancelledByUser: false })),
     }));
     jest.doMock('./keychainV8_2_0', () => ({
       KEYCHAIN_SOURCE_LABEL: 'v8-label',
@@ -43,13 +84,14 @@ describe('core/apis/keychain current facade', () => {
       requestGenericPassword: mockV8RequestGenericPassword,
       getSupportedBiometryType: jest.fn(async () => 'Fingerprint'),
       isPasscodeAuthAvailable: jest.fn(async () => true),
-      getKeychainDebugState: jest.fn(async () => ({ sourceLabel: 'v8-label' })),
+      getKeychainDebugState: mockV8GetKeychainDebugState,
       debugRemoveCurrentCipherStorageMarker: jest.fn(async () => true),
       debugWriteMockLegacyBiometricsEntry: jest.fn(async () => true),
       debugDecryptStoredPasswordPayload: jest.fn(async () => ({
         password: 'v8',
       })),
-      setGenericPassword: jest.fn(async () => undefined),
+      setGenericPassword: mockV8SetGenericPassword,
+      cacheTrustedVaultKeyString: jest.fn(async () => undefined),
       migrateAndroidBiometricsToPasscode: jest.fn(async () => false),
       getDefaultBiometricsAuthenticationType: jest.fn(() => 4),
       resetGenericPassword: mockV8ResetGenericPassword,
@@ -64,13 +106,14 @@ describe('core/apis/keychain current facade', () => {
       requestGenericPassword: mockV9RequestGenericPassword,
       getSupportedBiometryType: jest.fn(async () => 'Fingerprint'),
       isPasscodeAuthAvailable: jest.fn(async () => true),
-      getKeychainDebugState: jest.fn(async () => ({ sourceLabel: 'v9-label' })),
+      getKeychainDebugState: mockV9GetKeychainDebugState,
       debugRemoveCurrentCipherStorageMarker: jest.fn(async () => true),
       debugWriteMockLegacyBiometricsEntry: jest.fn(async () => true),
       debugDecryptStoredPasswordPayload: jest.fn(async () => ({
         password: 'v9',
       })),
-      setGenericPassword: jest.fn(async () => undefined),
+      setGenericPassword: mockV9SetGenericPassword,
+      cacheTrustedVaultKeyString: jest.fn(async () => undefined),
       migrateAndroidBiometricsToPasscode: jest.fn(async () => false),
       getDefaultBiometricsAuthenticationType: jest.fn(() => 4),
       resetGenericPassword: mockV9ResetGenericPassword,
@@ -85,15 +128,14 @@ describe('core/apis/keychain current facade', () => {
       requestGenericPassword: mockV10RequestGenericPassword,
       getSupportedBiometryType: jest.fn(async () => 'Fingerprint'),
       isPasscodeAuthAvailable: jest.fn(async () => true),
-      getKeychainDebugState: jest.fn(async () => ({
-        sourceLabel: 'v10-label',
-      })),
+      getKeychainDebugState: mockV10GetKeychainDebugState,
       debugRemoveCurrentCipherStorageMarker: jest.fn(async () => true),
       debugWriteMockLegacyBiometricsEntry: jest.fn(async () => true),
       debugDecryptStoredPasswordPayload: jest.fn(async () => ({
         password: 'v10',
       })),
-      setGenericPassword: jest.fn(async () => undefined),
+      setGenericPassword: mockV10SetGenericPassword,
+      cacheTrustedVaultKeyString: jest.fn(async () => undefined),
       migrateAndroidBiometricsToPasscode: jest.fn(async () => false),
       getDefaultBiometricsAuthenticationType: jest.fn(() => 4),
       resetGenericPassword: mockV10ResetGenericPassword,
@@ -113,9 +155,18 @@ describe('core/apis/keychain current facade', () => {
       mockV8RequestGenericPassword,
       mockV9RequestGenericPassword,
       mockV10RequestGenericPassword,
+      mockV8SetGenericPassword,
+      mockV9SetGenericPassword,
+      mockV10SetGenericPassword,
       mockV8ResetGenericPassword,
       mockV9ResetGenericPassword,
       mockV10ResetGenericPassword,
+      mockV8GetKeychainDebugState,
+      mockV9GetKeychainDebugState,
+      mockV10GetKeychainDebugState,
+      mockKeychainMMKVSet,
+      mockLoggerInfo,
+      mockLoggerWarn,
     };
   };
 
@@ -198,5 +249,151 @@ describe('core/apis/keychain current facade', () => {
     expect(mockV8ResetGenericPassword).not.toHaveBeenCalled();
     expect(mockV9ResetGenericPassword).not.toHaveBeenCalled();
     expect(mockV10ResetGenericPassword).toHaveBeenCalled();
+  });
+
+  it('repairs the current Android biometric keychain after password unlock', async () => {
+    const { module, mockV9SetGenericPassword, mockLoggerInfo } = await setup(
+      '9.0.0',
+    );
+
+    const result = await module.repairBiometricsAfterPasswordUnlock(
+      'plain-password',
+      { reason: 'test' },
+    );
+
+    expect(mockV9SetGenericPassword).toHaveBeenCalledWith(
+      'plain-password',
+      module.KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+    );
+    expect(mockLoggerInfo).toHaveBeenCalledWith(
+      '[keychain] repaired Android biometrics after password unlock',
+      expect.objectContaining({
+        currentVersion: '9.0.0',
+        sourceLabel: 'v9-label',
+        reason: 'test',
+      }),
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        repaired: true,
+        skipped: false,
+        currentVersion: '9.0.0',
+      }),
+    );
+  });
+
+  it('records Android biometric diagnostics when the current request fails', async () => {
+    const {
+      module,
+      mockV8RequestGenericPassword,
+      mockV9RequestGenericPassword,
+      mockV8GetKeychainDebugState,
+      mockV9GetKeychainDebugState,
+      mockKeychainMMKVSet,
+      mockLoggerWarn,
+    } = await setup('9.0.0');
+    const requestError = Object.assign(new Error('native decrypt failed'), {
+      code: 'E_CRYPTO_FAILED',
+    });
+    mockV9RequestGenericPassword.mockRejectedValueOnce(requestError);
+    mockV8RequestGenericPassword.mockRejectedValueOnce(
+      new Error('legacy fallback failed'),
+    );
+
+    await expect(
+      module.requestGenericPassword({
+        purpose: module.RequestGenericPurpose.DECRYPT_PWD,
+        shouldAttachTrustedVaultKeyString: false,
+      }),
+    ).rejects.toBe(requestError);
+
+    expect(mockV8GetKeychainDebugState).toHaveBeenCalled();
+    expect(mockV9GetKeychainDebugState).toHaveBeenCalled();
+    expect(mockKeychainMMKVSet).toHaveBeenCalledWith(
+      'BIOMETRIC_FAILURE_DIAGNOSTIC',
+      expect.any(String),
+    );
+    const diagnostic = JSON.parse(mockKeychainMMKVSet.mock.calls[0][1]);
+    expect(diagnostic).toEqual(
+      expect.objectContaining({
+        stage: 'requestGenericPassword',
+        currentVersion: '9.0.0',
+        currentSourceLabel: 'v9-label',
+        authenticationTypeLabel: 'BIOMETRICS',
+        error: expect.objectContaining({
+          code: 'E_CRYPTO_FAILED',
+          message: 'native decrypt failed',
+        }),
+        request: expect.objectContaining({
+          purpose: module.RequestGenericPurpose.DECRYPT_PWD,
+          shouldAttachTrustedVaultKeyString: false,
+        }),
+      }),
+    );
+    expect(diagnostic.debugStates.current.storedPasswordBase64).toBeUndefined();
+    expect(diagnostic.debugStates.current.hasStoredPasswordBase64).toBe(true);
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      '[keychain] Android biometrics failure diagnostic recorded',
+      expect.objectContaining({
+        currentVersion: '9.0.0',
+      }),
+    );
+  });
+
+  it('falls back to v8 biometrics and rewrites the current version when v9 read fails', async () => {
+    const {
+      module,
+      mockV8RequestGenericPassword,
+      mockV9RequestGenericPassword,
+      mockV9SetGenericPassword,
+      mockLoggerWarn,
+    } = await setup('9.0.0');
+    const requestError = Object.assign(new Error('Failed to retrieve'), {
+      code: module.KEYCHAIN_ERROR_CODES.NIL_KEYCHAIN_OBJECT,
+    });
+    const onPlainPassword = jest.fn();
+
+    mockV9RequestGenericPassword.mockRejectedValueOnce(requestError);
+    mockV8RequestGenericPassword.mockImplementationOnce(async options => {
+      await options.onPlainPassword?.('legacy-password', {
+        username: 'rabbymobile-user',
+        password: 'encrypted-password',
+        vaultKeyString: 'vault-key',
+      });
+      return { actionSuccess: true };
+    });
+
+    const result = await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.DECRYPT_PWD,
+      shouldAttachTrustedVaultKeyString: false,
+      onPlainPassword,
+    });
+
+    expect(result).toEqual({ actionSuccess: true });
+    expect(mockV8RequestGenericPassword).toHaveBeenCalledWith(
+      expect.objectContaining({
+        purpose: module.RequestGenericPurpose.DECRYPT_PWD,
+        shouldAttachTrustedVaultKeyString: false,
+        onPlainPassword: expect.any(Function),
+      }),
+    );
+    expect(onPlainPassword).toHaveBeenCalledWith(
+      'legacy-password',
+      expect.objectContaining({
+        vaultKeyString: 'vault-key',
+      }),
+    );
+    expect(mockV9SetGenericPassword).toHaveBeenCalledWith(
+      'legacy-password',
+      module.KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+      { vaultKeyString: 'vault-key' },
+    );
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      '[keychain] recovered Android biometrics through legacy v8 fallback',
+      expect.objectContaining({
+        currentVersion: '9.0.0',
+        currentRewriteSucceeded: true,
+      }),
+    );
   });
 });

@@ -1,16 +1,19 @@
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import { Linking } from 'react-native';
 import { t } from 'i18next';
 import { keyringService } from '@/core/services';
-import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
-import { browserApis, useBrowser } from './browser/useBrowser';
+import { urlUtils } from '@rabby-wallet/base-utils';
+import { browserApis } from './browser/useBrowser';
 import useMount from 'react-use/lib/useMount';
-import { toastIndicator, toastWithIcon } from '@/components2024/Toast';
+import { toastWithIcon } from '@/components2024/Toast';
 import { RcIconInfoForToast } from '@/screens/Unlock/icons';
-import { getRabbyLockInfo, PasswordStatus } from '@/core/apis/lock';
-import { getPwdStatus, usePasswordStatus } from './useLock';
+import {
+  getRabbyLockInfo,
+  isUnlockSessionValid,
+  PasswordStatus,
+} from '@/core/apis/lock';
+import { getPwdStatus } from './useLock';
 import { ALLOWED_UL_DOMAINS } from '@/constant/universalLink';
-import { IS_IOS } from '@/core/native/utils';
 import { RefLikeObject } from '@/utils/type';
 
 const nextAppLinkRef = {
@@ -78,10 +81,8 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
 
 const hideToastRef: RefLikeObject<() => void | null> = { current: () => null };
 const handleAppLink = async (url: string, isInit = false) => {
-  const maybeShortTipIsBetter = IS_IOS && isInit;
-
-  if (keyringService.isUnlocked()) {
-    // just parse the link if app is unlocked
+  if (keyringService.isUnlocked() || isUnlockSessionValid()) {
+    // Parse the link when the wallet is fully unlocked or in a valid post-unlock session.
     parseActionAndProcessLink(url, handleActions);
     setNextAppLink('');
   } else if (
@@ -97,16 +98,6 @@ const handleAppLink = async (url: string, isInit = false) => {
     );
     setNextAppLink('');
   } else {
-    // // notify trigger unlock request here
-    // hideToastRef.current = toastIndicator(
-    //   t('page.universalLink.error.unlockWalletFirst'),
-    //   {
-    //     duration: maybeShortTipIsBetter ? 10000 : 30000,
-    //     hideOnPress: maybeShortTipIsBetter,
-    //     isTop: true,
-    //   },
-    // );
-
     if (isInit) {
       setNextAppLink(prev => prev || url);
     } else {

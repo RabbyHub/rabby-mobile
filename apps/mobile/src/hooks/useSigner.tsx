@@ -15,6 +15,9 @@ import {
   useMemoMiniSignGasStore,
   useMiniSignGasStoreOrigin,
 } from './miniSignGasStore';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+
+const USER_CANCELLED = 'User cancelled';
 
 type GasLevelType = 'normal' | 'slow' | 'fast' | 'custom';
 
@@ -261,6 +264,10 @@ export const useMiniSigner = ({
       if (!payload) {
         throw new Error('No transactions to sign');
       }
+      if (!(await ensureWalletUnlockedForAction())) {
+        throw USER_CANCELLED;
+      }
+
       return instance.openDirect(
         {
           txs: payload.txs,

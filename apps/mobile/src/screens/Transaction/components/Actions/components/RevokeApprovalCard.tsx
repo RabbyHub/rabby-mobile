@@ -1,6 +1,11 @@
 import { Tip } from '@/components';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Skeleton } from '@rneui/themed';
@@ -64,6 +69,8 @@ export const RevokeApprovalCard = ({
             onPress={onPress}
             type="primary"
             title={t('page.transactions.detail.Revoke')}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
           />
         </Tip>
       </View>
@@ -76,7 +83,7 @@ const getStyle = createGetStyles2024(
     card: {
       paddingTop: 16,
       paddingHorizontal: 20,
-      paddingBottom: Math.max(safeAreaInsets.bottom, 36),
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
       backgroundColor: !isLight
         ? colors2024['neutral-bg-2']
         : colors2024['neutral-bg-1'],

@@ -14,6 +14,7 @@ import {
 } from '@/hooks/onekey/useOneKeyStatus';
 import { t } from 'i18next';
 import type { BatchSignTxTaskType } from '@/components/Approval/components/MiniSignTx/useBatchSignTxTask';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 type ProgressStatus = 'building' | 'builded' | 'signed' | 'submitted';
 
@@ -55,6 +56,7 @@ type MiniSignTypedDataRunContext = {
 };
 
 const HARDWARE_USER_CANCELLED = 'User cancelled hardware connection';
+const USER_CANCELLED = 'User cancelled';
 
 class MiniSignTypedDataStore {
   private state: MiniSignTypedDataInfo = createDefaultInfo();
@@ -452,12 +454,15 @@ const executeSignTypedData = async ({
   return results;
 };
 
-export const miniSignTypedData = (
+export const miniSignTypedData = async (
   params: MiniSignTypedDataParams,
 ): Promise<MiniSignTypedDataResult[]> => {
   const { txs, account, ga, onProgress } = params;
   if (!txs?.length) {
     return Promise.reject(new Error('No typed data payloads to sign'));
+  }
+  if (!(await ensureWalletUnlockedForAction())) {
+    return Promise.reject(new Error(USER_CANCELLED));
   }
 
   const pendingPromise = store.createPendingPromise();

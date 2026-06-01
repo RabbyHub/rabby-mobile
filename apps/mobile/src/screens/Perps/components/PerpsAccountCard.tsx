@@ -29,7 +29,9 @@ const COIN_ICON_MAP: Record<string, React.ReactNode> = {
   USDE: <RcIconUSDE width={16} height={16} />,
 };
 
-export const PerpsAccountCard: React.FC = () => {
+export const PerpsAccountCard: React.FC<{
+  onSwapPress: () => void | Promise<void>;
+}> = ({ onSwapPress }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [, setPopupState] = usePerpsPopupState();
@@ -151,12 +153,7 @@ export const PerpsAccountCard: React.FC = () => {
                 </View>
                 <TouchableOpacity
                   style={styles.toSwapBtn}
-                  onPress={() => {
-                    setPopupState(prev => ({
-                      ...prev,
-                      isShowSwapPopup: true,
-                    }));
-                  }}>
+                  onPress={onSwapPress}>
                   <Text style={styles.toSwapText}>
                     {t('page.perps.PerpsSpotSwap.toSwapEntry')}
                   </Text>

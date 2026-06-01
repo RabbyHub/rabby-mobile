@@ -25,6 +25,7 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { toast } from '@/components2024/Toast';
 import { APP_RUNTIME_ENV } from '@/constant/env';
 import { RootNames } from '@/constant/layout';
+import { isNonPublicProductionEnv } from '@/constant';
 import { getOnlineConfig, subscribeOnlineConfig } from '@/core/config/online';
 import { useTheme2024 } from '@/hooks/theme';
 import { APP_FILE_LOGGING_ONLINE_SWITCH } from '@/utils/logging/policy';
@@ -648,6 +649,7 @@ function MetaRow({
 
 export default function DebugLogViewerScreen(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const [, forcePolicyRender] = useState(0);
   const {
     canToggle,
     consoleCaptureEnabled,
@@ -655,6 +657,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
     isOnlineControlled,
     localDefaultEnabled,
     localFileLoggingEnabled,
+    policyEnv,
     onToggle,
   } = useAppLogFileSwitch();
   const navigation = useNavigation();
@@ -665,7 +668,8 @@ export default function DebugLogViewerScreen(): JSX.Element {
   const [validationResult, setValidationResult] =
     useState<ZipValidationResult | null>(null);
   const archiveSharePickerRef = useRef<AppBottomSheetModal>(null);
-  const canShareArchive = APP_RUNTIME_ENV !== 'production';
+  const canShareArchive =
+    isNonPublicProductionEnv || APP_RUNTIME_ENV !== 'production';
   const [snapshot, setSnapshot] = useState<PageSnapshot>(() => ({
     loggerState: logger.getState(),
     rootExists: false,
@@ -1107,7 +1111,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
   );
 
   const localPolicyHint =
-    APP_RUNTIME_ENV === 'development'
+    policyEnv === 'development'
       ? `Development local switch default is ${
           localDefaultEnabled ? 'ON' : 'OFF'
         }. Current local value: ${localFileLoggingEnabled ? 'true' : 'false'}.`
@@ -1185,7 +1189,8 @@ export default function DebugLogViewerScreen(): JSX.Element {
                 {effectiveEnabled ? 'Enabled' : 'Disabled'}
               </Text>
               <Text style={styles.policyHint}>
-                env={APP_RUNTIME_ENV} · __DEV__={__DEV__ ? 'true' : 'false'}
+                env={APP_RUNTIME_ENV} · policy={policyEnv} · __DEV__=
+                {__DEV__ ? 'true' : 'false'}
               </Text>
             </View>
             <AppSwitch2024
@@ -1197,7 +1202,20 @@ export default function DebugLogViewerScreen(): JSX.Element {
                 }
 
                 onToggle(nextValue);
-                refreshSnapshot().catch(noop);
+                forcePolicyRender(value => value + 1);
+                logger
+                  .handlePolicyChange()
+                  .then(() => {
+                    logger.info('[debug-log] file logging switch changed', {
+                      nextValue,
+                      effectiveEnabled:
+                        logger.getState().effectiveFileLoggingEnabled,
+                    });
+                  })
+                  .then(refreshSnapshot)
+                  .catch(error => {
+                    markError('Toggle file logging', error);
+                  });
               }}
             />
           </View>

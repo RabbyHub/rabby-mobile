@@ -121,7 +121,7 @@ export const Quotes = ({
   const { t } = useTranslation();
 
   const sortedList = useMemo(() => {
-    return list?.sort((b, a) => {
+    return [...(list || [])].sort((b, a) => {
       return new BigNumber(a.to_token_amount)
         .times(other.receiveToken.price || 1)
         .minus(a.gas_fee.usd_value)

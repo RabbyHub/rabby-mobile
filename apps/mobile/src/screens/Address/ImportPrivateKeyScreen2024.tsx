@@ -39,6 +39,7 @@ import {
 import { Text } from '@/components/Typography';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 export const ImportPrivateKeyScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -111,6 +112,10 @@ export const ImportPrivateKeyScreen2024 = () => {
       );
 
       setConfirmCB(importPrivateKey);
+      return;
+    }
+
+    if (!(await ensureWalletUnlockedForAction())) {
       return;
     }
 

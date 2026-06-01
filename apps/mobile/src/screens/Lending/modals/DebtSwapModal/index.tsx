@@ -14,6 +14,7 @@ import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PopulatedTransaction } from 'ethers';
 
 import { apiProvider } from '@/core/apis';
@@ -38,7 +39,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { BridgeSlippage } from '@/screens/Bridge/components/BridgeSlippage';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
-import { formatSpeicalAmount, formatTokenAmount } from '@/utils/number';
+import { formatTokenAmount, formatTokenAmountInput } from '@/utils/number';
 import { WarningText } from '@/screens/Bridge/components/WarningText';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
@@ -56,6 +57,12 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInput';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 import { SwapType } from '../../types/swap';
 import DebtSwapModalOverview from './Overview';
@@ -102,7 +109,7 @@ interface DebtSwapModalProps {
 }
 
 const BOTTOM_SIZE = {
-  BUTTON: 116,
+  BUTTON: 12 + BOTTOM_BUTTON_SINGLE_HEIGHT,
   CHECKBOX: 40,
   TIPS: 80,
 };
@@ -113,6 +120,9 @@ export default function DebtSwapModal({
 }: DebtSwapModalProps) {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
+  const bottomButtonAreaHeight =
+    BOTTOM_SIZE.BUTTON + getBottomButtonBottomOffset(bottom);
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
@@ -242,7 +252,7 @@ export default function DebtSwapModal({
   const onInputChange = useCallback(
     (text: string) => {
       if (directSignBtnRef.current?.isAuthInProgress()) return;
-      const formatted = formatSpeicalAmount(text);
+      const formatted = formatTokenAmountInput(text, fromToken.decimals);
       if (!/^\d*(\.\d*)?$/.test(formatted)) {
         return;
       }
@@ -269,7 +279,7 @@ export default function DebtSwapModal({
       const clampedPercentage = Math.min(100, Math.max(0, percentage));
       setSlider(Math.round(clampedPercentage));
     },
-    [fromBalanceBn],
+    [fromBalanceBn, fromToken.decimals],
   );
 
   const handleOpenTokenSelect = useCallback(() => {
@@ -1103,7 +1113,7 @@ export default function DebtSwapModal({
             styles.buttonContainer,
             {
               height:
-                BOTTOM_SIZE.BUTTON +
+                bottomButtonAreaHeight +
                 (isLiquidatable || isExceedMaxLtvAfterSwap
                   ? BOTTOM_SIZE.TIPS
                   : isRisky
@@ -1142,6 +1152,8 @@ export default function DebtSwapModal({
               wrapperStyle={styles.directSignBtn}
               authTitle={t('page.Lending.debtSwap.button.swap')}
               title={t('page.Lending.debtSwap.button.swap')}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
               onFinished={() => handleSwap()}
               disabled={buttonDisabled || !!ctx?.disabledProcess}
               type="aave"
@@ -1155,6 +1167,8 @@ export default function DebtSwapModal({
               type="aave"
               showTextOnLoading
               containerStyle={styles.fullWidthButton}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               onPress={() => handleSwap()}
               title={t('page.Lending.debtSwap.button.swap')}
               loading={isLoading}
@@ -1167,7 +1181,7 @@ export default function DebtSwapModal({
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   container: {
     height: '100%',
     backgroundColor: colors2024['neutral-bg-1'],
@@ -1394,7 +1408,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'absolute',
     paddingHorizontal: 25,
     bottom: 0,
-    height: 116,
+    height:
+      BOTTOM_SIZE.BUTTON + getBottomButtonBottomOffset(safeAreaInsets.bottom),
     paddingTop: 12,
     width: '100%',
     display: 'flex',
@@ -1407,6 +1422,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   fullWidthButton: {
     flex: 1,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
   },
   loadingOpacity: {
     opacity: 0.5,

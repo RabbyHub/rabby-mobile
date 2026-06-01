@@ -21,6 +21,7 @@ import {
   makeKeyChainError,
   parseKeychainError,
   type DebugDecryptedKeychainPayload,
+  type DebugGenericPasswordDecryptResult,
   type KeychainBusinessApi,
   type KeychainBusinessRequestResult,
   type KeychainCompatibleModule,
@@ -55,6 +56,7 @@ export {
   makeKeyChainError,
   parseKeychainError,
   type DebugDecryptedKeychainPayload,
+  type DebugGenericPasswordDecryptResult,
   type KeychainBusinessApi,
   type KeychainBusinessRequestResult,
   type KeychainDebugState,
@@ -76,6 +78,8 @@ export const debugWriteMockLegacyBiometricsEntry =
   keychainApi.debugWriteMockLegacyBiometricsEntry;
 export const debugDecryptStoredPasswordPayload =
   keychainApi.debugDecryptStoredPasswordPayload;
+export const debugDecryptGenericPassword =
+  keychainApi.debugDecryptGenericPassword;
 export const setGenericPassword = keychainApi.setGenericPassword;
 export const migrateAndroidBiometricsToPasscode =
   keychainApi.migrateAndroidBiometricsToPasscode;

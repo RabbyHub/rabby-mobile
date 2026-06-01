@@ -5,7 +5,7 @@ import {
   SignInResponse,
   User,
 } from '@react-native-google-signin/google-signin';
-import { appEncryptor } from '../services/shared';
+import { appEncryptor, keyringService } from '../services/shared';
 import { APPLICATION_ID, FIREBASE_WEBCLIENT_ID } from '@/constant';
 import { getAddressFromMnemonic } from './mnemonic';
 import { getMnemonicByAddress } from '../apis/mnemonic';
@@ -292,13 +292,17 @@ export const refreshAccessToken = async () => {
 };
 
 /**
- * Check if a cloud backup exists for the given address (does not require login)
+ * Check if a cloud backup exists for the given address (requires unlocked keyring)
  * @param address - The wallet address to check
  * @returns true if backup exists, false otherwise
  */
 export const checkCloudBackupExists = async (
   address: string,
 ): Promise<boolean> => {
+  if (!keyringService.isUnlocked()) {
+    return false;
+  }
+
   const mnemonic = getMnemonicByAddress(address);
   if (!mnemonic) return false;
   // Derive the index-0 address (this is the backup filename)

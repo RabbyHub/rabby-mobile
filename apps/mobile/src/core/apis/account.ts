@@ -107,6 +107,8 @@ export async function getAllAccountsToDisplay() {
               allAliasNames[account?.address?.toLowerCase()]?.alias || '',
             keyring: item.keyring,
             publicKey: item?.publicKey,
+            hasBackup: item.hasBackup,
+            needPassphrase: item.needPassphrase,
           } as IDisplayedAccountWithBalance;
         });
       })
@@ -117,6 +119,7 @@ export async function getAllAccountsToDisplay() {
         let accountInfo = {} as {
           hdPathBasePublicKey?: string;
           hdPathType?: string;
+          index?: number;
         };
 
         await Promise.allSettled([
@@ -140,8 +143,10 @@ export async function getAllAccountsToDisplay() {
         return {
           ...item,
           balance: balance?.total_usd_value || 0,
-          hdPathBasePublicKey: accountInfo?.hdPathBasePublicKey,
-          hdPathType: accountInfo?.hdPathType,
+          hdPathBasePublicKey:
+            accountInfo?.hdPathBasePublicKey ?? item.hdPathBasePublicKey,
+          hdPathType: accountInfo?.hdPathType ?? item.hdPathType,
+          hdPathIndex: accountInfo?.index ?? item.hdPathIndex,
         };
       }),
   );
@@ -179,20 +184,18 @@ async function fetchAllAccountsProcess() {
   traceAndroidUnlockAccountPerf('get_all_visible_accounts_start');
 
   try {
+    const visibleAccounts = await keyringService.getAllVisibleAccountsArray();
+    await addressBalanceStore.hydrateCachedBalancesForAccounts(visibleAccounts);
     const balanceMap = addressBalanceStore.getAddressValueMap();
-    nextAccounts = await keyringService
-      .getAllVisibleAccountsArray()
-      .then(list => {
-        return list.map(account => {
-          const balance = balanceMap[account.address.toLowerCase()];
-          return {
-            ...account,
-            aliasName: '',
-            evmBalance: balance?.evmBalance || 0,
-            balance: balance?.totalBalance || 0,
-          };
-        });
-      });
+    nextAccounts = visibleAccounts.map(account => {
+      const balance = balanceMap[account.address.toLowerCase()];
+      return {
+        ...account,
+        aliasName: '',
+        evmBalance: balance?.evmBalance || 0,
+        balance: balance?.totalBalance || 0,
+      };
+    });
 
     await Promise.allSettled(
       nextAccounts.map(async (account, idx) => {

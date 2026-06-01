@@ -113,6 +113,7 @@ export function useAuthenticationModal(options: {
         await apisKeychain.requestGenericPassword({
           purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
           onPlainPassword: async password => {
+            await apisLock.verifyPasswordOrUnlock(password);
             result.success = true;
             result.getValidatedPassword = () => password;
           },

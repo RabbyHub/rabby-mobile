@@ -209,8 +209,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   statusText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
   },

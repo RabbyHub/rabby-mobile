@@ -11,10 +11,14 @@ export interface ChartColors {
   background: string;
   text: string;
   border: string;
+  secondaryText: string;
   greenLineColor: string;
   redLineColor: string;
   highPriceLineColor: string;
   lowPriceLineColor: string;
+  emptyPrimary: string;
+  emptySecondary: string;
+  emptyStroke: string;
   tooltip: {
     bg: string;
     title: string;
@@ -35,6 +39,7 @@ export interface ChartDescription {
   chg: string;
   chgPercent: string;
   volume: string;
+  empty: string;
 }
 
 export interface TPSLPriceLines {

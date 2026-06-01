@@ -44,6 +44,8 @@ import {
 } from '@/screens/GasAccount/hooks/atom';
 import {
   GasAccountAvailableToken,
+  GasAccountAvailableTokenRow,
+  getGasAccountAvailableTokenFromRow,
   useGasAccountDepositAvailableTokens,
 } from '@/screens/GasAccount/hooks/useDepositTokenAvailability';
 import { Linear } from '@/screens/Transaction/components/SkeletonCard';
@@ -79,6 +81,12 @@ import { GasAccountTopUpWaitCallback } from './topUpContinuation';
 import { apiProvider } from '@/core/apis';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import AuthButton from '@/components2024/AuthButton';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 type DepositAccount = Account;
 
@@ -96,7 +104,7 @@ export const GasAccountDepositTokenForm: React.FC<{
     [accounts],
   );
   const {
-    availableTokens,
+    availableTokenRows,
     isCheckingAvailability,
     checkIsExpireAndUpdate,
     refreshBridgeSupportTokenList,
@@ -142,7 +150,7 @@ export const GasAccountDepositTokenForm: React.FC<{
     <GasAccountDepositTokenFormInner
       {...props}
       myAccounts={myAccounts}
-      availableTokens={availableTokens}
+      availableTokenRows={availableTokenRows}
       isCheckingAvailability={isTokenListLoading}
     />
   );
@@ -155,7 +163,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   onWaitDepositResult?: GasAccountTopUpWaitCallback;
   minDepositPrice?: number;
   myAccounts: DepositAccount[];
-  availableTokens: GasAccountAvailableToken[];
+  availableTokenRows: GasAccountAvailableTokenRow[];
   isCheckingAvailability: boolean;
 }> = ({
   visible,
@@ -164,7 +172,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   onWaitDepositResult,
   minDepositPrice,
   myAccounts,
-  availableTokens,
+  availableTokenRows,
   isCheckingAvailability,
 }) => {
   const { t } = useTranslation();
@@ -255,7 +263,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   const didInitSelectedTokenRef = useRef(false);
 
   useEffect(() => {
-    if (!availableTokens.length) {
+    if (!availableTokenRows.length) {
       setSelectedToken(undefined);
       return;
     }
@@ -264,14 +272,19 @@ const GasAccountDepositTokenFormInner: React.FC<{
       setSelectedToken(prev => {
         if (!prev) {
           return (
-            availableTokens?.find(e => e.chain !== 'eth') || availableTokens[0]
+            getGasAccountAvailableTokenFromRow(
+              availableTokenRows.find(row => {
+                const token = getGasAccountAvailableTokenFromRow(row);
+                return token?.chain !== 'eth';
+              }) || availableTokenRows[0],
+            ) || undefined
           );
         }
 
         return prev;
       });
     }
-  }, [availableTokens]);
+  }, [availableTokenRows]);
 
   const selectedOwnerAccount = useMemo(() => {
     const matched = myAccounts.filter(
@@ -833,7 +846,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   const isInteractionLocked = loading;
 
   let bottomContent: React.ReactNode = null;
-  if (!isCheckingAvailability && !availableTokens.length) {
+  if (!isCheckingAvailability && !availableTokenRows.length) {
     bottomContent = (
       <Text style={styles.errorText}>
         {t('page.gasAccount.depositPopup.noAvailableToken')}
@@ -972,6 +985,8 @@ const GasAccountDepositTokenFormInner: React.FC<{
             disabled={!canSubmit}
             loading={loading}
             syncUnlockTime
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
             onBeforeAuth={() => {
               Keyboard.dismiss();
             }}
@@ -993,7 +1008,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
         <GasAccountDepositTokenPicker
           visible={tokenPickerVisible}
           accounts={myAccounts}
-          availableTokens={availableTokens}
+          availableTokenRows={availableTokenRows}
           isCheckingAvailability={isCheckingAvailability}
           onClose={() => setTokenPickerVisible(false)}
           onSelect={token => {
@@ -1011,7 +1026,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-1'],
     paddingTop: 10,
     paddingHorizontal: 20,
-    paddingBottom: 48,
+    paddingBottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     display: 'flex',
     flexDirection: 'column',
   },
@@ -1190,13 +1205,13 @@ const getStyles = createGetStyles2024(ctx => ({
     elevation: 20,
   },
   depositButton: {
-    height: 58,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     borderRadius: 16,
   },
   depositButtonTitle: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: BOTTOM_BUTTON_TITLE_STYLE.fontSize,
+    lineHeight: BOTTOM_BUTTON_TITLE_STYLE.lineHeight,
     fontWeight: '700',
   },
 }));

@@ -2152,6 +2152,7 @@
       "modifyRPCURL": "RPC URL'sunu Değiştir",
       "themeMode": "Tema Modu",
       "autoLockTime": "Otomatik kilit süresi",
+      "lockWallet": "Cüzdanı kilitle",
       "currentLanguage": "Geçerli Dil",
       "aboutUs": "Hakkımızda",
       "policy": "Gizlilik Politikası",
@@ -2448,7 +2449,7 @@
       "cancelAllOrdersConfirmTitle": "Tüm Emirlerin İptalini Onayla",
       "cancelAllOrdersConfirmMessage": "Tüm Limit Emirleriniz iptal edilecektir",
       "limitOrderDetail": {
-        "title": "Limit {{side}} {{pair}}",
+        "title": "{{side}} {{pair}} limit emri",
         "time": "Zaman",
         "size": "Boyut",
         "filled": "Doldurulan",
@@ -2467,32 +2468,32 @@
       },
       "PerpsCard": {
         "depositBtn": "Para Yatırma",
-        "loginBtn": "Perps'a Giriş Yap",
+        "loginBtn": "Perps işlemi için giriş yap",
         "title": "Perps Ticaret Yapın",
         "available": "Mevcut",
         "withdrawBtn": "Çekilme",
-        "loginDesc": "Adresinizle giriş yapın ve perps ticaretine başlamak için fon yatırın.",
+        "loginDesc": "Mevcut adresle giriş yapın ve Perps işlemine başlamak için fon yatırın.",
         "learnBtn": "Perps hakkında bilgi edinin",
         "learnMore": "Daha Fazla Bilgi Edinin",
         "addFunds": "Fon ekle"
       },
       "PerpsGuidePopup": {
         "step4Title": "Kaldıraç Ayarlama",
-        "step1Title": "Master Süreli Vadeli İşlemler",
+        "step1Title": "Sürekli vadeli işlemleri öğrenin",
         "step2Title": "Uzun",
         "step5Title": "Tasfiye",
         "step2Desc": "Fiyatın yükselebileceğini düşündüğünüzde, bir long açarsınız. Eğer fiyat yükselirse, kazanırsınız. Eğer düşerse, kaybedersiniz.",
-        "step1Desc": "Sonsuz vadeli işlemlerle, yalnızca varlık ticareti yapmıyorsunuz. Gelecekte ne olacağını düşündüğünüzü ticaretini yapıyorsunuz.",
+        "step1Desc": "Sürekli vadeli işlemlerde yalnızca varlıkları değil, fiyatın bir sonraki hareketine dair beklentinizi alıp satarsınız.",
         "step3Desc": "Fiyata düşmesini beklediğinizde, kısa pozisyon açarsınız. Fiyat düşerse, kazanırsınız. Fiyat yükselirse, kaybedersiniz.",
-        "step4Desc": "Kaldıraç, yatırdığınızdan daha fazla işlem yapmanızı sağlar. Bu, hem kazançlarınızı hem de zararlarınızı artırabilir.",
-        "step5Desc": "Her pozisyonun bir likidasyon fiyatı vardır. Eğer piyasa fiyatı bu seviyeye ulaşırsa, pozisyonunuz kapatılacaktır. Daha yüksek kaldıraç kullanmak, likide olma riskini artırır.",
+        "step4Desc": "Kaldıraç, yatırdığınız sermayeden daha yüksek bir nominal değerle işlem yapmanızı sağlar. Hem kazançları hem de kayıpları büyütebilir.",
+        "step5Desc": "Her pozisyonun bir tasfiye fiyatı vardır. Piyasa fiyatı bu seviyeye ulaşırsa pozisyonunuz kapatılır. Kaldıraç arttıkça tasfiye riski de artar.",
         "step3Title": "Kısa"
       },
       "PerpsDepositPopup": {
         "amount": "Miktar",
         "balance": "Bakiye",
         "title": "Yatırma",
-        "depositBtn": "Deposit",
+        "depositBtn": "Yatır",
         "estReceive": "Tahmini Alım: {{balance}}",
         "insufficientBalance": "Yetersiz bakiye",
         "minimumDepositSize": "Minimum para yatırma miktarı 5$'dır.",
@@ -2606,15 +2607,15 @@
         "date": "Tarih"
       },
       "PerpsSelectTokenPopup": {
-        "title": "Token Yatırmak İçin Seçin",
-        "noTokens": "Hiçbir token yok",
+        "title": "Yatırılacak tokenı seç",
+        "noTokens": "Token yok",
         "balance": "Bakiyeniz",
         "token": "Token"
       },
       "PerpsAccountLogoutPopup": {
-        "title": "Mevcut Adresten Çıkış Yap",
+        "title": "Mevcut adresten çıkış yap",
         "logout": "Çıkış yap",
-        "desc": "Mevcut Perps hesabınızdan çıkış yapıyorsunuz. Bu adresle giriş yaparak istediğiniz zaman geri yükleyebilirsiniz."
+        "desc": "Mevcut Perps hesabınızdan çıkış yapıyorsunuz. Bu adresle tekrar giriş yaparak istediğiniz zaman geri yükleyebilirsiniz."
       },
       "PerpsDepositCard": {
         "deposit": "Yatırma",
@@ -2623,10 +2624,10 @@
       },
       "PerpsAccountSelectorPopup": {
         "lastUsed": "Son Kullanım",
-        "noPosition": "Hiç Pozisyon Yok",
+        "noPosition": "Pozisyon yok",
         "activatedAddress": "Aktif edilmiş",
         "notActivatedAddress": "Aktive Değil",
-        "hyperliquidBalance": "Perps Bakiyesi"
+        "hyperliquidBalance": "Perps bakiyesi"
       },
       "selectAccountTitle": "Cüzdan Seçin ve Giriş Yapın",
       "title": "Perps",
@@ -2643,9 +2644,9 @@
       "leverageRangeMinError": "Minimum kaldıraç {{min}}x'dir.",
       "regionNotSupport": "Pozisyon açma işlemine bulunduğunuz bölgede desteklenmiyor.",
       "searchPerpsPopup": {
-        "searchPosition": "Pozisyon Ara",
+        "searchPosition": "Pozisyon ara",
         "empty": "Sonuç bulunamadı",
-        "openPosition": "Açık Pozisyon",
+        "openPosition": "Pozisyon aç",
         "searchPerps": "Perps Araştırın",
         "searchPlaceholder": "Perps Araştırması"
       },
@@ -2660,13 +2661,13 @@
         "liquidationPrice": "Tasfiye Fiyatı",
         "distanceLabel": "Tasfiye Mesafesi",
         "subtitle": "Gerçek zamanlı likidasyon mesafesi (%)",
-        "liqIntro": "Tasfiye Mesafesi (%) mevcut fiyatın tasfiye fiyatınızdan ne kadar uzakta olduğunu gösterir. Daha büyük bir mesafe, daha güvenli bir pozisyon anlamına gelirken, daha küçük bir mesafe daha yüksek tasfiye riski demektir.",
+        "liqIntro": "Tasfiye mesafesi (%) mevcut fiyatın tasfiye fiyatınızdan ne kadar uzakta olduğunu gösterir. Daha büyük mesafe daha güvenli pozisyon, daha küçük mesafe ise daha yüksek tasfiye riski anlamına gelir.",
         "liqDistanceTipsShort": "Yukarı <1>{{distance}}</1> çıkmak tasfiye tetikleyecektir.",
         "liqDistanceTipsLong": "Aşağıya <1>{{distance}}</1> inmek tasfiyeyi tetikleyecektir."
       },
-      "closeAll": "Tümünü Kapat",
-      "closeAllConfirmMessage": "Tüm açık pozisyonlarınız piyasa fiyatından kapatılacaktır.",
-      "closeAllConfirmTitle": "Tüm Pozisyonları Kapatmayı Onayla",
+      "closeAll": "Tüm pozisyonları kapat",
+      "closeAllConfirmMessage": "Tüm açık pozisyonlarınız piyasa fiyatından kapatılacak.",
+      "closeAllConfirmTitle": "Tüm pozisyonları kapatmayı onayla",
       "assetPage": {
         "hyperliquidPosition": "Hyperliquid Pozisyon"
       },
@@ -2689,10 +2690,10 @@
       },
       "EnableUnifiedAccount": {
         "title": "Birleşik Hesabı Etkinleştir",
-        "desc": "Birleşik Hesap, işlem deneyimini basitleştiren önerilen hesap modudur. Spot ve Perps bakiyeleri tüm tokenler için birleştirilir ve tüm mevcut varlıklarda çapraz marj desteklenir.",
+        "desc": "Unified Account, işlem deneyimini basitleştiren önerilen hesap modudur. Tüm tokenlar için Spot ve Perps bakiyeleri birleştirilir ve tüm kullanılabilir varlıklarda çapraz marj desteklenir.",
         "confirm": "Onayla",
         "cancel": "İptal Et",
-        "importantTips": "Birleşik Hesap etkinleştirildiğinde, tüm USDC teminatı çapraz marj olarak kullanılacaktır.",
+        "importantTips": "Unified Account etkinleştirildikten sonra tüm USDC teminatı çapraz marj olarak kullanılır.",
         "important": "Önemli"
       },
       "PerpsSpotSwap": {
@@ -2711,7 +2712,7 @@
         "minimumAmount": "Minimum takas tutarı {{amount}}"
       },
       "PerpMarginModePopup": {
-        "crossRequiresUnified": "Bu işlem çifti için çapraz marjin Birleşik Bir Hesap gerektirir. Etkinleştirmek ister misiniz?"
+        "crossRequiresUnified": "Bu işlem çifti için çapraz marj Unified Account gerektirir. Etkinleştirmek ister misiniz?"
       },
       "PerpsMultiBalance": {
         "title": "Hyperliquid Bakiyeleri",
@@ -2756,9 +2757,9 @@
         "sizeTips": "Marj ve kaldıraçla belirlenen ticaretinizin toplam değeri veya miktarı.",
         "liquidationPriceTips": "Pozisyonunuzun marjınız bakım marjı seviyesinin altına düştüğünde daha fazla kayıpları önlemek için borsa tarafından otomatik olarak kapatıldığı fiyat.",
         "autoClose": "Otomatik Kapat",
-        "fundingPaymentsTips": "Bu, pozisyonun açıldığı günden bu yana net finansman ödemeleridir. Finansman, tüccarların, perp sözleşmesinin fiyatını jetonun gerçek fiyatına yakın tutmak için ödediği veya aldığı saatlik bir ücrettir.",
+        "fundingPaymentsTips": "Bu, pozisyon açıldığından beri net fonlama ödemeleridir. Fonlama, perpetual sözleşme fiyatını tokenın gerçek fiyatına yakın tutmak için yatırımcıların ödediği veya aldığı saatlik bir ücrettir.",
         "fundingGains": "Finansman Kazançları",
-        "fundingGainsTips": "Bu, pozisyon açıldığından bu yana net finansman kazançlarıdır. Finansman, tüccarların, perpe sözleşmesinin fiyatını token'ın gerçek fiyatına yakın tutmak için ödediği veya aldığı saatlik bir ücrettir.",
+        "fundingGainsTips": "Bu, pozisyon açıldığından beri net fonlama kazancıdır. Fonlama, perpetual sözleşme fiyatını tokenın gerçek fiyatına yakın tutmak için yatırımcıların ödediği veya aldığı saatlik bir ücrettir.",
         "settings": "Ayarlar",
         "positionValue": "Pozisyon Değeri",
         "marginMode": "Marjin Modu",
@@ -2766,7 +2767,7 @@
         "unrealizedPnl": "Gerçekleşmemiş PNL",
         "details": "Ayrıntılar",
         "realizedPnl": "Gerçekleşen PNL",
-        "fundingTipsBold": "Bu, pozisyon açıldığından bu yana hesaplanan toplam fonlamanızı gösterir. <bold>Yeşil (pozitif)</bold> değerler, diğer yatırımcılardan kazandığınızı, <bold>Kırmızı (negatif)</bold> değerler ise onlara ödediğiniz fonlama maliyetleridir.",
+        "fundingTipsBold": "Bu, pozisyon açıldığından beri hesaplanan toplam fonlamayı gösterir. <bold>Yeşil (pozitif)</bold> değerler diğer yatırımcılardan fonlama aldığınız, <bold>kırmızı (negatif)</bold> değerler ise onlara ödediğiniz fonlama maliyetleri anlamına gelir.",
         "crossTips": "Cross Margin modunda, tek bir pozisyon için likidasyon fiyatı sadece referans amaçlı bir tahmindir."
       },
       "PerpsInfo": {
@@ -2775,7 +2776,7 @@
         "openInterest": "Açık Faiz",
         "funding": "Finansman",
         "openInterestTips": "Bu sözleşmedeki tüm kullanıcıların toplam açık pozisyonu.",
-        "fundingTips": "Bu, türev sözleşmenin fiyatını token'ın gerçek fiyatına yakın tutmak için yatırımcıların ödediği veya aldığı saatlik bir ücrettir. Eğer pozitifse, long short'a ödeme yapar. Eğer negatifse, short long'a ödeme yapar.",
+        "fundingTips": "Bu, perpetual sözleşme fiyatını tokenın gerçek fiyatına yakın tutmak için yatırımcıların ödediği veya aldığı saatlik bir ücrettir. Pozitifse long short’a ödeme yapar. Negatifse short long’a ödeme yapar.",
         "fundingRate": "Fonlama Oranı"
       },
       "PerpsIntro": {
@@ -2912,8 +2913,8 @@
         "isolatedTitle": "Izole Marjin",
         "crossTitle": "Çapraz Marj",
         "cannotChangeMarginMode": "Açık pozisyonlar varken Margin Modu değiştirilemez.",
-        "isolatedDesc": "Her pozisyon kendi marjını kullanır. Kayıplar o pozisyonla sınırlıdır, ancak tasfiye edilmesi daha kolaydır.",
-        "crossDesc": "Tüm pozisyonlar aynı marjı paylaşır. Bu, tek bir pozisyonun likide olma şansını azaltır, ancak aşırı piyasa hareketlerinde tüm çapraz marj fonları kaybedilebilir."
+        "isolatedDesc": "Her pozisyon kendi marjını kullanır. Kayıplar yalnızca o pozisyonla sınırlıdır, ancak pozisyon daha kolay tasfiye edilebilir.",
+        "crossDesc": "Tüm pozisyonlar aynı marjı paylaşır. Bu, tek bir pozisyonun tasfiye edilme olasılığını azaltır; ancak aşırı piyasa hareketlerinde tüm çapraz marj fonları kaybedilebilir."
       },
       "guideEntry": {
         "gotIt": "Tamamdır"
@@ -2980,10 +2981,10 @@
         "repayWith": "Geri ödeme yapın ile"
       },
       "supplyDetail": {
-        "actions": "Arz",
+        "actions": "Yatır",
         "availableToBorrow": "Ödünç alınabilir",
         "supplyAPY": "Arz APY",
-        "approveAndSupply": "Onayla ve Tedarik Et",
+        "approveAndSupply": "Onayla ve yatır",
         "supplyBalance": "Arz Dengesi",
         "collateralization": "Teminatlandırma",
         "enabled": "Etkinleştirildi",
@@ -3003,7 +3004,7 @@
         "swapDebt": "Değiştir",
         "borrowed": "Ödünç Alındı",
         "noSupplyDesc": "Borç almak için teminat olarak varlık sağlamanız gerekir.",
-        "noSupplyPrefix": "Temin yok:"
+        "noSupplyPrefix": "Yatırım yok:"
       },
       "popup": {
         "available": "mevcut",
@@ -3025,12 +3026,12 @@
       "supplyOverview": {
         "walletBalance": "Cüzdan Bakiyesi",
         "mySupply": "Benim Arzım",
-        "title": "Tedarik Detayları",
-        "availableToSupply": "Temin Edilir",
-        "totalSupplied": "Toplam Sağlanan",
+        "title": "Yatırım detayları",
+        "availableToSupply": "Yatırılabilir",
+        "totalSupplied": "Toplam yatırılan",
         "reachCap": "Bu varlık, arz sınırına ulaşmıştır. Bu piyasadan tedarik edilecek hiçbir şey yoktur.",
         "almostCap": "Bu varlık neredeyse borç sınırına ulaşmış durumda. Bu piyasadan borç alınabilecek yalnızca {{available}} mevcut.",
-        "useAsCollateral": "Teminat olarak kullanın",
+        "useAsCollateral": "Teminat olarak kullan",
         "collateral": "Teminat"
       },
       "risk": {
@@ -3039,11 +3040,11 @@
         "withdrawWarning": "Bu miktarın çekilmesi, Sağlık Faktörünüzü tasfiye için riskli bir seviyeye düşürecektir.",
         "toggleCollateralWarning": "Bu varlığı teminat olarak devre dışı bırakmak, Sağlık Faktörünüzü likidasyon için riskli bir seviyeye düşürecektir.",
         "emodeBlockWarning": "E-modu kapatmak, Sağlık Faktörünüzü tasfiye için riskli bir seviyeye düşürecektir.",
-        "blockEmodeWarning": "E-Modu devre dışı bırakamazsınız çünkü bu tasfiye ile sonuçlanabilir. E-Mod'dan çıkmak için, sağladığınız veya geri ödediğiniz borçlu pozisyonları kullanın."
+        "blockEmodeWarning": "E-Mode devre dışı bırakılamaz, çünkü tasfiyeyi tetikleyebilir. E-Mode’dan çıkmak için daha fazla teminat ekleyin veya borç pozisyonlarını geri ödeyin."
       },
       "lqDescription": {
         "desc": "Tasfiye değeri",
-        "risky": "Risky",
+        "risky": "Yüksek risk",
         "below1desc": "Pozisyonunuz likidasyon riski altındadır.",
         "over3title": "Sağlık faktörü > 3.0:",
         "over3desc": "Pozisyonlarınız güvende.",
@@ -3082,16 +3083,16 @@
       },
       "toggleCollateralModal": {
         "enableIsolationModeTitle": "İzole Modu Etkinleştir",
-        "openTitle": "Gözden Geçirme Etkinleştirme",
-        "closeTitle": "Gözden Geçirme Devre Dışı Bırakma",
+        "openTitle": "Etkinleştirmeyi onayla",
+        "closeTitle": "Kapatmayı onayla",
         "exitIsolationModeDesc": "İzolasyon modundan çıkacaksınız ve diğer token'lar şimdi teminat olarak kullanılabilir.",
         "exitIsolationModeTitle": "İzolasyon Modundan Çıkış",
-        "closeDesc": "Bu varlığın teminat olarak devre dışı bırakılması, borçlanma gücünüzü ve Sağlık Faktörünü etkiler.",
-        "riskToLiquidationText": "Bu para birimi için teminat modu olarak kullanımını değiştiremezsiniz, çünkü bu teminat çağrısına neden olacaktır.",
+        "closeDesc": "Bu varlığın teminat olarak kullanımını kapatmak, borç alma gücünüzü ve Health Factor değerini etkiler.",
+        "riskToLiquidationText": "Bu varlığın teminat durumu değiştirilemez, çünkü tasfiyeyi tetikleyebilir.",
         "enableIsolationModeDesc": "İzolasyon moduna giriyorsunuz. İzolasyon modundayken, diğer varlıkları teminat olarak sağlayamazsınız. Küresel bir borç tavanı, izole edilmiş varlığın borçlanma gücünü sınırlar. Başka bir varlık borçlanmadan önce teminat olarak CRV'yi devre dışı bırakarak izolasyon modundan çıkın.",
         "openDesc": "Bu varlığı teminat olarak etkinleştirmek, borçlanma gücünüzü ve Sağlık Faktörünü artırır. Ancak, sağlık faktörünüz 1'in altına düşerse tasfiye edilebilir.",
         "toggleRiskTexts": {
-          "canNotSwitchUsageAsCollateralMode": "Bu para birimi için teminat modu olarak kullanımını değiştiremiyorsunuz, çünkü bu teminat çağrısına neden olacaktır.",
+          "canNotSwitchUsageAsCollateralMode": "Bu varlığın teminat durumu değiştirilemez, çünkü tasfiyeyi tetikleyebilir.",
           "canNotUseThisCurrencyAsCollateral": "Bu para birimini teminat olarak kullanamazsınız.",
           "doNotHaveSuppliesInThisCurrency": "Bu para biriminde arzınız yok.",
           "zeroLTVWithdrawBlocked": "Sıfır LTV'ye sahip varlıklar ({{assets}}) bu işlemi gerçekleştirmek için geri çekilmeli veya teminat olarak devre dışı bırakılmalıdır."
@@ -3150,25 +3151,25 @@
       "disabled": "DEVRE DIŞI",
       "debtSwap": {
         "actions": {
-          "title": "Borç Değişimi",
-          "swapTo": "Değiştir",
+          "title": "Borcu dönüştür",
+          "swapTo": "Şuna dönüştür",
           "select": "Seçin",
-          "borrowed": "Ödünç Alınmış",
+          "borrowed": "Borç alınan",
           "amount": "Miktar"
         },
         "overview": {
-          "borrowValueAfter": "Takastan sonra borç bakiyesi",
+          "borrowValueAfter": "Dönüşüm sonrası borç bakiyesi",
           "title": "İşlem Genel Bakışı",
-          "borrowAPY": "Borrow apy"
+          "borrowAPY": "Borç APY"
         },
         "button": {
-          "swap": "Değiştir"
+          "swap": "Dönüştür"
         },
-        "title": "Swap Borrow Position",
+        "title": "Borç pozisyonunu dönüştür",
         "borrowBalance": "Borç bakiyesi",
-        "entryTips": "Bir tıklama ile borç aldığınız varlığı değiştirin, adımları ve ücretleri azaltın.",
+        "entryTips": "Borç aldığınız varlığı tek tıkla dönüştürerek adımları ve ücretleri azaltın.",
         "lpRiskWarning": "Takasta sonra düşük sağlık faktörü. Pozisyonunuzun tasfiye riski daha yüksek olacaktır.",
-        "priceImpactTips": "Yüksek fiyat etkisi ({{lostValue}}). Bu yol, düşük likidite veya küçük sipariş boyutu nedeniyle daha fazla getiri sağlayabilir.",
+        "priceImpactTips": "Yüksek fiyat etkisi ({{lostValue}}). Düşük likidite veya küçük emir boyutu nedeniyle bu rotanın tahmini önemli ölçüde sapabilir.",
         "lpDangerWarning": "Bu takas sonrası sağlık faktörünüz kritik derecede düşük olacak ve tasfiye ile sonuçlanabilir. Lütfen güvende kalmak için farklı bir varlık seçin veya takas miktarını azaltın.",
         "maxLtvWarning": "Yetersiz teminat, yeni borç pozisyonunu karşılamak için. Cebinizin borç değiştirme işlemi yapmak için kalan borç verme gücüne sahip olması gerekir."
       },
@@ -3177,9 +3178,9 @@
         "desc": "Eğer 1.0'ın altına düşerse, teminatınız tasfiye edilebilir."
       },
       "disableBorrowTip": {
-        "desc": "Temin yok: Borç almak için teminat olarak varlık sağlamanız gerekir."
+        "desc": "Yatırım yok: borç almak için önce varlıkları teminat olarak yatırmanız gerekir."
       },
-      "totalSupplied": "Toplam sağlanan",
+      "totalSupplied": "Toplam yatırılan",
       "totalBorrowed": "Toplam borçlanma",
       "netApy": "Net APY",
       "repayWithCollateral": {
@@ -3194,11 +3195,11 @@
         "button": {
           "repay": "Geri Ödeme"
         },
-        "repayWith": "Teminat ile geri ödemek için",
+        "repayWith": "Geri ödeme için kullanılacak teminat",
         "collateralNotEnough": "Teminat bakiyeniz seçilen tutardan daha düşük.",
         "toRepay": "Beklenen geri ödeme tutarı",
         "insufficientLiquidity": "Insufficient liquidity.",
-        "frozenCollateral": "This asset is frozen due to an Aave community decision."
+        "frozenCollateral": "Bu varlık, Aave topluluğu kararı nedeniyle donduruldu."
       },
       "repayWithAToken": {
         "header": {
@@ -3206,7 +3207,7 @@
           "assets": "Jeton"
         },
         "title": "Geri Ödeme Token'i Seçin",
-        "zeroLtvCollateralTips": "Aşağıdaki LTV = 0 teminatlarınız var ve bu nedenle teminat geri ödeme kurallarına göre önce bu teminatlarla geri ödeme yapabilirsiniz."
+        "zeroLtvCollateralTips": "Aşağıdaki LTV = 0 teminatlarınız var. Teminatla geri ödeme kurallarına göre önce bu teminatlarla geri ödeme yapmanız gerekir."
       },
       "dappSelect": {
         "title": "Kredilendirme Sağlayıcısı Seçin"

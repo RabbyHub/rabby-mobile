@@ -228,8 +228,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 6,
   },
   searchButtonText: {
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
   },

@@ -141,7 +141,7 @@ class ApisSafe {
       },
     );
     if (isChanged) {
-      await keyringService.persistAllKeyrings();
+      await keyringService.persistKeyringsForKeyring(keyring);
     }
   };
 
@@ -163,7 +163,7 @@ class ApisSafe {
       return;
     }
     keyring.setNetworkIds(address, nextNetworks);
-    await keyringService.persistAllKeyrings();
+    await keyringService.persistKeyringsForKeyring(keyring);
   };
   getSafeVersion = async ({
     address,

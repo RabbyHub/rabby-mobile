@@ -36,6 +36,9 @@ export const DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD =
 const DEFAULT_CURRENT_KEYCHAIN_VERSION: CurrentKeychainVersion = '10.0.0';
 const DEFAULT_DEBUG_KEYCHAIN_STORAGE: KeychainStorageType =
   DEFAULT_KEYCHAIN_STORAGE_TYPE;
+export const WIDE_SCREEN_DEBUG_PANEL_DEFAULT_MIN_WIDTH = 700;
+export const WIDE_SCREEN_DEBUG_PANEL_MIN_ALLOWED_WIDTH = 280;
+export const WIDE_SCREEN_DEBUG_PANEL_WIDTH = 320;
 
 function coerceCurrentKeychainVersion(
   version: unknown,
@@ -45,6 +48,16 @@ function coerceCurrentKeychainVersion(
   )
     ? (version as CurrentKeychainVersion)
     : DEFAULT_CURRENT_KEYCHAIN_VERSION;
+}
+
+function coerceWideScreenDebugPanelMinWidth(value: unknown) {
+  const width = typeof value === 'number' ? value : Number(value);
+
+  if (!Number.isFinite(width)) {
+    return WIDE_SCREEN_DEBUG_PANEL_DEFAULT_MIN_WIDTH;
+  }
+
+  return Math.max(WIDE_SCREEN_DEBUG_PANEL_MIN_ALLOWED_WIDTH, Math.round(width));
 }
 
 type DebugKeychainStorageByVersion = Record<
@@ -83,6 +96,8 @@ type ScreenshotSettings = {
   blockSubmitIfFormChangedOnAuth: boolean;
   toastOpenApiHttpErrorStatus: boolean;
   debugSwapHistorySkipLocalLookup: boolean;
+  wideScreenDebugPanelEnabled: boolean;
+  wideScreenDebugPanelMinWidth: number;
   [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: CurrentKeychainVersion;
   debugKeychainStorageByVersion: DebugKeychainStorageByVersion;
   enablePerpsWatchAddress: boolean;
@@ -103,6 +118,8 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     blockSubmitIfFormChangedOnAuth: false,
     toastOpenApiHttpErrorStatus: false,
     debugSwapHistorySkipLocalLookup: false,
+    wideScreenDebugPanelEnabled: false,
+    wideScreenDebugPanelMinWidth: WIDE_SCREEN_DEBUG_PANEL_DEFAULT_MIN_WIDTH,
     [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: DEFAULT_CURRENT_KEYCHAIN_VERSION,
     debugKeychainStorageByVersion: makeDefaultDebugKeychainStorageByVersion(),
     enablePerpsWatchAddress: false,
@@ -460,6 +477,13 @@ const showFloatingViewStore = zCreate<{
   collapsed: true,
   ui_showAutoLockCountdown: false,
 }));
+
+const floatingUnlockStatusBarStore = zustandByMMKV<{
+  enabled: boolean;
+}>('@FloatingUnlockStatusBar', {
+  enabled: false,
+});
+
 function setShowFloatingView(
   valOrFunc: UpdaterOrPartials<{
     collapsed: boolean;
@@ -489,14 +513,18 @@ const toggleCollapsed = (nextEnabled?: boolean) => {
 
 export function useFloatingView() {
   const floatingView = showFloatingViewStore(s => s);
+  const showUnlockStatusBar = floatingUnlockStatusBarStore(
+    s => isNonPublicProductionEnv && s.enabled,
+  );
 
   return {
     collapsed: floatingView.collapsed,
     showAutoLockCountdown: floatingView.ui_showAutoLockCountdown,
+    showUnlockStatusBar,
     toggleCollapsed,
-    shouldShow: Object.entries(floatingView).some(
-      ([k, v]) => k.startsWith('ui_') && v,
-    ),
+    shouldShow:
+      showUnlockStatusBar ||
+      Object.entries(floatingView).some(([k, v]) => k.startsWith('ui_') && v),
   };
 }
 
@@ -520,6 +548,39 @@ export function useToggleShowAutoLockCountdown() {
   return {
     showAutoLockCountdown: ui_showAutoLockCountdown,
     toggleShowAutoLockCountdown,
+  };
+}
+
+const toggleShowUnlockStatusBar = (nextEnabled?: boolean) => {
+  if (!isNonPublicProductionEnv) {
+    return false;
+  }
+
+  let finalValue = false;
+  floatingUnlockStatusBarStore.setState(prev => {
+    if (typeof nextEnabled !== 'boolean') {
+      nextEnabled = !prev.enabled;
+    }
+
+    finalValue = nextEnabled;
+
+    return {
+      ...prev,
+      enabled: finalValue,
+    };
+  });
+
+  return finalValue;
+};
+
+export function useToggleShowUnlockStatusBar() {
+  const showUnlockStatusBar = floatingUnlockStatusBarStore(
+    s => isNonPublicProductionEnv && s.enabled,
+  );
+
+  return {
+    showUnlockStatusBar,
+    toggleShowUnlockStatusBar,
   };
 }
 
@@ -581,6 +642,51 @@ export function useDebugSwapHistorySkipLocalLookup() {
   return {
     debugSwapHistorySkipLocalLookup,
     toggleDebugSwapHistorySkipLocalLookup,
+  };
+}
+
+export function useWideScreenDebugPanelSetting() {
+  const { wideScreenDebugPanelEnabled, wideScreenDebugPanelMinWidth } =
+    experimentalSettingsStore(
+      useShallow(s => ({
+        wideScreenDebugPanelEnabled: s.wideScreenDebugPanelEnabled,
+        wideScreenDebugPanelMinWidth: s.wideScreenDebugPanelMinWidth,
+      })),
+    );
+
+  const appliedWideScreenDebugPanelMinWidth =
+    coerceWideScreenDebugPanelMinWidth(wideScreenDebugPanelMinWidth);
+
+  const setWideScreenDebugPanelMinWidth = useCallback((nextWidth: unknown) => {
+    const coercedWidth = coerceWideScreenDebugPanelMinWidth(nextWidth);
+    setExpSettingData(prev => ({
+      ...prev,
+      wideScreenDebugPanelMinWidth: coercedWidth,
+    }));
+
+    return coercedWidth;
+  }, []);
+
+  const toggleWideScreenDebugPanel = useCallback((nextVal?: boolean) => {
+    setExpSettingData(prev => ({
+      ...prev,
+      wideScreenDebugPanelEnabled:
+        typeof nextVal === 'boolean'
+          ? nextVal
+          : !prev.wideScreenDebugPanelEnabled,
+    }));
+  }, []);
+
+  return {
+    wideScreenDebugPanelEnabled:
+      isNonPublicProductionEnv && wideScreenDebugPanelEnabled,
+    wideScreenDebugPanelMinWidth: isNonPublicProductionEnv
+      ? appliedWideScreenDebugPanelMinWidth
+      : WIDE_SCREEN_DEBUG_PANEL_DEFAULT_MIN_WIDTH,
+    wideScreenDebugPanelMinAllowedWidth:
+      WIDE_SCREEN_DEBUG_PANEL_MIN_ALLOWED_WIDTH,
+    setWideScreenDebugPanelMinWidth,
+    toggleWideScreenDebugPanel,
   };
 }
 

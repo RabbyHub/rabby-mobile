@@ -71,9 +71,14 @@ export const onAutoLockTimeMsChange = (ms: number) => {
 
 const unlockTimeAtom = atom(apisLock.getUnlockTime());
 unlockTimeAtom.onMount = setter => {
-  unlockTimeEvent.addListener('updated', time => {
+  const onUnlockTimeUpdated = (time: number) => {
     setter(time);
-  });
+  };
+
+  unlockTimeEvent.addListener('updated', onUnlockTimeUpdated);
+  return () => {
+    unlockTimeEvent.off('updated', onUnlockTimeUpdated);
+  };
 };
 
 export function useLastUnlockedAuth() {

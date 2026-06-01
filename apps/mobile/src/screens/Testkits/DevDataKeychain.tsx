@@ -45,10 +45,10 @@ import {
   useDebugKeychainStorage,
   type CurrentKeychainVersion,
 } from '@/hooks/appSettings';
-import { useBiometrics } from '@/hooks/biometrics';
 import { useAppSecurityChain } from '@/hooks/global';
 import { useTheme2024 } from '@/hooks/theme';
 import { shareLocalFile } from '@/utils/shareLocalFile';
+import { logger } from '@/utils/logger';
 import { createGetStyles2024 } from '@/utils/styles';
 
 const TAB_OPTIONS = [
@@ -143,20 +143,20 @@ const LEGACY_SIMULATION = {
 const REPEAT_DECRYPT_TEST_STEPS = [
   '1. Clear Keychain for the target version.',
   '2. Re-enable biometrics through the normal wallet lock flow.',
-  '3. Return here and run the same decrypt action twice, waiting at least 2 seconds between taps.',
+  '3. Return here and run the same unlock request action twice, waiting at least 2 seconds between taps.',
 ] as const;
 
 const REPEAT_DECRYPT_EXPECTATIONS: Record<CurrentKeychainVersion, string[]> = {
   '8.2.0-fork': [
-    'Expected: both Try Decrypt taps prompt biometrics.',
+    'Expected: both Unlock Request taps prompt biometrics.',
     'Regression signal: a later tap succeeds without a fresh biometric prompt.',
   ],
   '9.0.0': [
-    'Expected: both Try Decrypt taps prompt biometrics, matching 8.2.0-fork.',
+    'Expected: both Unlock Request taps prompt biometrics, matching 8.2.0-fork.',
     'Regression signal: a later tap succeeds without a fresh biometric prompt.',
   ],
   '10.0.0': [
-    'Expected: both Try Decrypt taps prompt biometrics, matching 8.2.0-fork and 9.0.0.',
+    'Expected: both Unlock Request taps prompt biometrics, matching 8.2.0-fork and 9.0.0.',
     'Regression signal: a later tap succeeds without a fresh biometric prompt.',
   ],
 };
@@ -193,13 +193,13 @@ type KeychainStorageType = apisKeychain.KeychainStorageType;
 type PromptPolicyState<T> = Record<AndroidAuthPromptPolicy, T>;
 type BusinessDecryptState = {
   plainPassword: string | null;
+  resultMessage: string | null;
   errorMessage: string | null;
 };
 type BusinessRewriteResult = {
   label: string;
   service: string;
   targetStorage: KeychainStorageType;
-  targetAuthTypeLabel?: string;
   rewrittenAt: string;
 };
 type RawReadState = {
@@ -292,21 +292,6 @@ type KeychainDebugExportPayload = {
       CurrentKeychainVersion,
       KeychainStorageType[]
     >;
-    authenticationType: apisKeychain.KEYCHAIN_AUTH_TYPES;
-    authenticationTypeLabel: string;
-    isAuthenticatedByBiometrics: boolean;
-    defaultBiometricsAuthenticationType: apisKeychain.KEYCHAIN_AUTH_TYPES;
-    defaultBiometricsAuthenticationTypeLabel: string;
-    biometrics: {
-      authEnabled: boolean;
-      isBiometricsEnabled: boolean;
-      settingsAuthEnabled: boolean;
-      couldSetupBiometrics: boolean;
-      supportedBiometryType: apisKeychain.KeychainSupportedBiometryType;
-      devicePasscodeAvailable: boolean;
-      isUsingDevicePasscode: boolean;
-      defaultTypeLabel: string;
-    };
   };
   versions: {
     v8_2_0: KeychainVersionExportState;
@@ -1217,11 +1202,46 @@ function makeInitialBusinessVersionState(): BusinessVersionState {
     debugState: null,
     decryptStates: makePromptPolicyState(() => ({
       plainPassword: null,
+      resultMessage: null,
       errorMessage: null,
     })),
     rewriteResult: null,
     rewriteErrorMessage: null,
     lastActionErrorMessage: null,
+  };
+}
+
+function makeSafeKeychainDebugLogState(
+  state: apisKeychain.KeychainDebugState | null,
+) {
+  if (!state) {
+    return null;
+  }
+
+  return {
+    sourceLabel: state.sourceLabel,
+    platform: state.platform,
+    service: state.service,
+    hasEntry: state.hasEntry,
+    hasUsername: state.hasUsername,
+    hasPassword: state.hasPassword,
+    authenticationTypeLabel: state.authenticationTypeLabel,
+    supportedBiometryType: state.supportedBiometryType,
+    debugErrorMessage: state.debugErrorMessage,
+    resolvedCipherStorageName:
+      state.platform === 'android' ? state.resolvedCipherStorageName : null,
+    storedCipherStorageName:
+      state.platform === 'android' ? state.storedCipherStorageName : null,
+    hasKeystoreAlias:
+      state.platform === 'android' ? state.hasKeystoreAlias : null,
+    keystoreUserAuthenticationRequired:
+      state.platform === 'android'
+        ? state.keystoreUserAuthenticationRequired
+        : null,
+    keystoreIsCompatibleWithCurrentCipher:
+      state.platform === 'android'
+        ? state.keystoreIsCompatibleWithCurrentCipher
+        : null,
   };
 }
 
@@ -1231,11 +1251,6 @@ export default function DevDataKeychain(): JSX.Element {
     isLight: true,
   });
   const { rabbitCode } = useAppSecurityChain();
-  const {
-    biometrics,
-    computed: biometricsComputed,
-    fetchBiometrics,
-  } = useBiometrics({ autoFetch: true });
   const { height: windowHeight } = useWindowDimensions();
   const actionsSheetRef = useRef<AppBottomSheetModal>(null);
   const helpSheetRef = useRef<AppBottomSheetModal>(null);
@@ -1462,7 +1477,6 @@ export default function DevDataKeychain(): JSX.Element {
         apisKeychainV8_2_0.getSupportedStorageTypes(),
         apisKeychainV9_0_0.getSupportedStorageTypes(),
         apisKeychainV10_0_0.getSupportedStorageTypes(),
-        fetchBiometrics(),
       ]);
 
       setBusinessStates(prev => ({
@@ -1490,7 +1504,7 @@ export default function DevDataKeychain(): JSX.Element {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchBiometrics]);
+  }, []);
 
   useEffect(() => {
     refreshState();
@@ -1562,33 +1576,88 @@ export default function DevDataKeychain(): JSX.Element {
     [],
   );
 
-  const handleBusinessDecrypt = useCallback(
+  const handleUnlockRequestProbe = useCallback(
     async (
       version: CurrentKeychainVersion,
       policy: AndroidAuthPromptPolicy = apisKeychain.DEFAULT_ANDROID_AUTH_PROMPT_POLICY,
+      options?: {
+        useCurrentFacade?: boolean;
+      },
     ) => {
-      const api = getBusinessApi(version);
+      const api = options?.useCurrentFacade
+        ? apisKeychain
+        : getBusinessApi(version);
+      const useCurrentFacade = !!options?.useCurrentFacade;
 
       try {
         setIsLoading(true);
         updateBusinessDecryptState(version, policy, {
+          resultMessage: null,
           errorMessage: null,
         });
         updateBusinessState(version, {
           lastActionErrorMessage: null,
         });
         let decryptedPassword = '';
+        let callbackCalled = false;
+        let callbackStorage: string | undefined;
+        let callbackHasTrustedVaultKeyString = false;
+        const startedAt = Date.now();
 
-        await api.requestGenericPassword({
+        logger.info('[keychain-debug] unlock request probe start', {
+          version,
+          currentKeychainVersion,
+          useCurrentFacade,
+          policy,
+          authTypeLabel: apisKeychain.getAuthenticationTypeLabel(),
+          selectedState: makeSafeKeychainDebugLogState(
+            businessStates[version]?.debugState ?? null,
+          ),
+          currentState: makeSafeKeychainDebugLogState(
+            businessStates[currentKeychainVersion]?.debugState ?? null,
+          ),
+          legacyV8State: makeSafeKeychainDebugLogState(
+            businessStates['8.2.0-fork']?.debugState ?? null,
+          ),
+        });
+
+        const requestResult = await api.requestGenericPassword({
           purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
           androidAuthPromptPolicy: policy,
-          onPlainPassword: password => {
+          shouldAttachTrustedVaultKeyString: !IS_ANDROID,
+          onPlainPassword: (password, credentials) => {
+            callbackCalled = true;
             decryptedPassword = password;
+            callbackStorage =
+              typeof credentials?.storage === 'string'
+                ? credentials.storage
+                : undefined;
+            callbackHasTrustedVaultKeyString =
+              typeof credentials?.vaultKeyString === 'string' &&
+              !!credentials.vaultKeyString;
           },
         });
+        const actionSuccess =
+          !!requestResult &&
+          'actionSuccess' in requestResult &&
+          !!requestResult.actionSuccess;
+        const resultStorage =
+          requestResult &&
+          typeof requestResult.storage === 'string' &&
+          requestResult.storage
+            ? requestResult.storage
+            : callbackStorage;
+        const resultMessage = [
+          `callback=${callbackCalled ? 'true' : 'false'}`,
+          `actionSuccess=${actionSuccess ? 'true' : 'false'}`,
+          `storage=${resultStorage || '-'}`,
+          `trustedVault=${callbackHasTrustedVaultKeyString ? 'true' : 'false'}`,
+          `elapsedMs=${Date.now() - startedAt}`,
+        ].join(', ');
 
         updateBusinessDecryptState(version, policy, {
           plainPassword: decryptedPassword || '(empty)',
+          resultMessage,
           errorMessage: null,
         });
         setBusinessPasswordVisibility(prev => ({
@@ -1601,8 +1670,20 @@ export default function DevDataKeychain(): JSX.Element {
         toast.success(
           `${KEYCHAIN_VERSION_META[version].label} ${getPromptPolicyLabel(
             policy,
-          )} decrypted`,
+          )} unlock request ok`,
         );
+        logger.info('[keychain-debug] unlock request probe success', {
+          version,
+          currentKeychainVersion,
+          useCurrentFacade,
+          policy,
+          hasPlainPassword: !!decryptedPassword,
+          callbackCalled,
+          actionSuccess,
+          storage: resultStorage,
+          hasTrustedVaultKeyString: callbackHasTrustedVaultKeyString,
+          elapsedMs: Date.now() - startedAt,
+        });
         await refreshState();
       } catch (error) {
         const parsed = api.parseKeychainError(error);
@@ -1610,13 +1691,26 @@ export default function DevDataKeychain(): JSX.Element {
           parsed.sysMessage ||
           (error instanceof Error ? error.message : String(error));
 
+        logger.warn('[keychain-debug] unlock request probe failed', {
+          version,
+          currentKeychainVersion,
+          useCurrentFacade,
+          policy,
+          parsed,
+          message,
+          error:
+            error instanceof Error
+              ? { name: error.name, message: error.message }
+              : String(error),
+        });
         updateBusinessDecryptState(version, policy, {
+          resultMessage: null,
           errorMessage: message,
         });
         Alert.alert(
           `${KEYCHAIN_VERSION_META[version].label} ${getPromptPolicyLabel(
             policy,
-          )} decrypt failed`,
+          )} unlock request failed`,
           message,
         );
         await refreshState();
@@ -1624,8 +1718,90 @@ export default function DevDataKeychain(): JSX.Element {
         setIsLoading(false);
       }
     },
-    [refreshState, updateBusinessDecryptState, updateBusinessState],
+    [
+      businessStates,
+      currentKeychainVersion,
+      refreshState,
+      updateBusinessDecryptState,
+      updateBusinessState,
+    ],
   );
+
+  const handleUnlockPagePathProbe = useCallback(async () => {
+    const version = currentKeychainVersion;
+    const policy = apisKeychain.ANDROID_AUTH_PROMPT_POLICIES.INTERACTIVE_FIRST;
+
+    try {
+      setIsLoading(true);
+      updateBusinessDecryptState(version, policy, {
+        resultMessage: null,
+        errorMessage: null,
+      });
+      let decryptedPassword = '';
+      let callbackCalled = false;
+      const startedAt = Date.now();
+
+      logger.info('[keychain-debug] unlock page path probe start', {
+        currentKeychainVersion,
+        authTypeLabel: apisKeychain.getAuthenticationTypeLabel(),
+      });
+
+      const requestResult = await apisKeychain.requestGenericPassword({
+        purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
+        shouldAttachTrustedVaultKeyString: !IS_ANDROID,
+        onPlainPassword: password => {
+          callbackCalled = true;
+          decryptedPassword = password;
+        },
+      });
+
+      const actionSuccess =
+        !!requestResult &&
+        'actionSuccess' in requestResult &&
+        !!requestResult.actionSuccess;
+      const resultMessage = [
+        `callback=${callbackCalled ? 'true' : 'false'}`,
+        `actionSuccess=${actionSuccess ? 'true' : 'false'}`,
+        `elapsedMs=${Date.now() - startedAt}`,
+      ].join(', ');
+
+      updateBusinessDecryptState(version, policy, {
+        plainPassword: decryptedPassword || '(empty)',
+        resultMessage,
+        errorMessage: null,
+      });
+      logger.info('[keychain-debug] unlock page path probe success', {
+        currentKeychainVersion,
+        callbackCalled,
+        actionSuccess,
+        hasPlainPassword: !!decryptedPassword,
+        elapsedMs: Date.now() - startedAt,
+      });
+      Alert.alert('Unlock Page Path OK', resultMessage);
+    } catch (error) {
+      const parsed = apisKeychain.parseKeychainError(error);
+      const message =
+        parsed.sysMessage ||
+        (error instanceof Error ? error.message : String(error));
+
+      logger.warn('[keychain-debug] unlock page path probe failed', {
+        currentKeychainVersion,
+        parsed,
+        message,
+        error:
+          error instanceof Error
+            ? { name: error.name, message: error.message }
+            : String(error),
+      });
+      updateBusinessDecryptState(version, policy, {
+        resultMessage: null,
+        errorMessage: message,
+      });
+      Alert.alert('Unlock Page Path Failed', message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentKeychainVersion, updateBusinessDecryptState]);
 
   const handleBusinessReset = useCallback(
     async (version: CurrentKeychainVersion) => {
@@ -1637,6 +1813,7 @@ export default function DevDataKeychain(): JSX.Element {
         updateBusinessState(version, {
           decryptStates: makePromptPolicyState(() => ({
             plainPassword: null,
+            resultMessage: null,
             errorMessage: null,
           })),
           rewriteResult: null,
@@ -1676,6 +1853,7 @@ export default function DevDataKeychain(): JSX.Element {
         updateBusinessState(version, {
           decryptStates: makePromptPolicyState(() => ({
             plainPassword: null,
+            resultMessage: null,
             errorMessage: null,
           })),
           rewriteResult: null,
@@ -2028,17 +2206,12 @@ export default function DevDataKeychain(): JSX.Element {
       version: CurrentKeychainVersion,
       options?: {
         targetStorage?: KeychainStorageType;
-        targetAuthType?: apisKeychain.KEYCHAIN_AUTH_TYPES;
-        actionLabel?: string;
         persistStorageSelection?: boolean;
       },
     ) => {
       const api = getBusinessApi(version);
       const targetStorage =
         options?.targetStorage ?? effectiveStorageByVersion[version];
-      const targetAuthType =
-        options?.targetAuthType ??
-        apisKeychain.getDefaultBiometricsAuthenticationType();
       let decryptedPassword = '';
 
       try {
@@ -2064,9 +2237,13 @@ export default function DevDataKeychain(): JSX.Element {
           );
         }
 
-        await api.setGenericPassword(decryptedPassword, targetAuthType, {
-          storage: targetStorage,
-        });
+        await api.setGenericPassword(
+          decryptedPassword,
+          apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+          {
+            storage: targetStorage,
+          },
+        );
 
         if (options?.persistStorageSelection) {
           setDebugKeychainStorageForVersion(version, targetStorage);
@@ -2074,11 +2251,9 @@ export default function DevDataKeychain(): JSX.Element {
 
         updateBusinessState(version, {
           rewriteResult: {
-            label: options?.actionLabel || 'Current Service',
+            label: 'Current Service',
             service: apisKeychain.KEYCHAIN_DEFAULT_SERVICE,
             targetStorage,
-            targetAuthTypeLabel:
-              apisKeychain.getAuthenticationTypeLabel(targetAuthType),
             rewrittenAt: new Date().toISOString(),
           },
           rewriteErrorMessage: null,
@@ -2112,93 +2287,6 @@ export default function DevDataKeychain(): JSX.Element {
       updateBusinessState,
     ],
   );
-
-  const handleMigrateCurrentToV10BiometricsOrPasscode =
-    useCallback(async () => {
-      const version: CurrentKeychainVersion = '10.0.0';
-      const api = getBusinessApi(version);
-      const targetStorage = effectiveStorageByVersion[version];
-      let decryptedPassword = '';
-      let vaultKeyString: string | undefined;
-
-      try {
-        setIsLoading(true);
-        updateBusinessState(version, {
-          rewriteResult: null,
-          rewriteErrorMessage: null,
-          lastActionErrorMessage: null,
-        });
-
-        await api.requestGenericPassword({
-          purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
-          androidAuthPromptPolicy:
-            apisKeychain.DEFAULT_ANDROID_AUTH_PROMPT_POLICY,
-          onPlainPassword: (password, credentials) => {
-            decryptedPassword = password;
-            vaultKeyString =
-              typeof credentials.vaultKeyString === 'string'
-                ? credentials.vaultKeyString
-                : undefined;
-          },
-        });
-
-        if (!decryptedPassword) {
-          throw new Error(
-            'Current service returned no plain password to migrate.',
-          );
-        }
-
-        await api.setGenericPassword(
-          decryptedPassword,
-          apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
-          {
-            storage: targetStorage,
-            vaultKeyString,
-          },
-        );
-
-        setCurrentKeychainVersion(version);
-
-        updateBusinessState(version, {
-          rewriteResult: {
-            label: 'v10 Bio+Device Migration',
-            service: apisKeychain.KEYCHAIN_DEFAULT_SERVICE,
-            targetStorage,
-            targetAuthTypeLabel: apisKeychain.getAuthenticationTypeLabel(
-              apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
-            ),
-            rewrittenAt: new Date().toISOString(),
-          },
-          rewriteErrorMessage: null,
-        });
-        toast.success('v10 biometrics migration written');
-        Alert.alert(
-          'v10 migration written',
-          [
-            'Current com.debank entry was rewritten with BIOMETRICS_OR_PASSCODE.',
-            'Restart the app, then test fingerprint and face from the unlock screen.',
-            'If face still appears but cannot read the password, export this page for native debug details.',
-          ].join('\n'),
-        );
-      } catch (error) {
-        const parsed = api.parseKeychainError(error);
-        const message =
-          parsed.sysMessage ||
-          (error instanceof Error ? error.message : String(error));
-
-        updateBusinessState(version, {
-          rewriteErrorMessage: message,
-        });
-        Alert.alert('v10 biometrics migration failed', message);
-      } finally {
-        await refreshState();
-      }
-    }, [
-      effectiveStorageByVersion,
-      refreshState,
-      setCurrentKeychainVersion,
-      updateBusinessState,
-    ]);
 
   const handleChangeCurrentVersion = useCallback(
     async (nextVersion: CurrentKeychainVersion) => {
@@ -2252,9 +2340,6 @@ export default function DevDataKeychain(): JSX.Element {
   );
   const maskedRabbitCode = maskSecret(rabbitCode);
   const includeSecretFieldsInExport = __DEV__;
-  const currentAuthenticationType = apisKeychain.getAuthenticationType();
-  const defaultBiometricsAuthenticationType =
-    apisKeychain.getDefaultBiometricsAuthenticationType();
 
   const debugExportPayload = useMemo<KeychainDebugExportPayload>(
     () => ({
@@ -2276,26 +2361,6 @@ export default function DevDataKeychain(): JSX.Element {
         configuredStorageByVersion: debugKeychainStorageByVersion,
         effectiveStorageByVersion,
         supportedStorageTypesByVersion,
-        authenticationType: currentAuthenticationType,
-        authenticationTypeLabel: apisKeychain.getAuthenticationTypeLabel(
-          currentAuthenticationType,
-        ),
-        isAuthenticatedByBiometrics: apisKeychain.isAuthenticatedByBiometrics(),
-        defaultBiometricsAuthenticationType,
-        defaultBiometricsAuthenticationTypeLabel:
-          apisKeychain.getAuthenticationTypeLabel(
-            defaultBiometricsAuthenticationType,
-          ),
-        biometrics: {
-          authEnabled: biometrics.authEnabled,
-          isBiometricsEnabled: biometricsComputed.isBiometricsEnabled,
-          settingsAuthEnabled: biometricsComputed.settingsAuthEnabled,
-          couldSetupBiometrics: biometricsComputed.couldSetupBiometrics,
-          supportedBiometryType: biometrics.supportedBiometryType,
-          devicePasscodeAvailable: biometrics.devicePasscodeAvailable,
-          isUsingDevicePasscode: biometricsComputed.isUsingDevicePasscode,
-          defaultTypeLabel: biometricsComputed.defaultTypeLabel,
-        },
       },
       versions: {
         v8_2_0: sanitizeBusinessVersionStateForExport(
@@ -2373,18 +2438,8 @@ export default function DevDataKeychain(): JSX.Element {
     }),
     [
       businessStates,
-      biometrics.authEnabled,
-      biometrics.devicePasscodeAvailable,
-      biometrics.supportedBiometryType,
-      biometricsComputed.couldSetupBiometrics,
-      biometricsComputed.defaultTypeLabel,
-      biometricsComputed.isBiometricsEnabled,
-      biometricsComputed.isUsingDevicePasscode,
-      biometricsComputed.settingsAuthEnabled,
       canSwitchCurrentKeychainVersion,
       currentKeychainVersion,
-      currentAuthenticationType,
-      defaultBiometricsAuthenticationType,
       debugKeychainStorageByVersion,
       debugCurrentKeychainVersion,
       debugCurrentKeychainVersionField,
@@ -2536,7 +2591,11 @@ export default function DevDataKeychain(): JSX.Element {
 
         {ANDROID_AUTH_PROMPT_POLICY_OPTIONS.map(option => {
           const decryptState = versionState.decryptStates[option.key];
-          if (!decryptState.plainPassword && !decryptState.errorMessage) {
+          if (
+            !decryptState.plainPassword &&
+            !decryptState.resultMessage &&
+            !decryptState.errorMessage
+          ) {
             return null;
           }
 
@@ -2546,7 +2605,7 @@ export default function DevDataKeychain(): JSX.Element {
             <View key={option.key} style={styles.statusCard}>
               <View style={styles.sectionHeaderRow}>
                 <Text style={styles.sectionTitle}>
-                  {option.label} Try Decrypt
+                  {option.label} Unlock Request Probe
                 </Text>
                 {__DEV__ && decryptState.plainPassword ? (
                   <EyeToggleButton
@@ -2571,6 +2630,11 @@ export default function DevDataKeychain(): JSX.Element {
                       : maskedPlainPassword}
                   </Text>
                 </>
+              ) : null}
+              {decryptState.resultMessage ? (
+                <Text style={styles.resultText} selectable>
+                  {decryptState.resultMessage}
+                </Text>
               ) : null}
               {decryptState.errorMessage ? (
                 <Text style={styles.errorText} selectable>
@@ -2608,12 +2672,6 @@ export default function DevDataKeychain(): JSX.Element {
               value={versionState.rewriteResult.targetStorage}
               selectable
             />
-            {versionState.rewriteResult.targetAuthTypeLabel ? (
-              <StatusRow
-                label="Target Auth"
-                value={versionState.rewriteResult.targetAuthTypeLabel}
-              />
-            ) : null}
             <StatusRow
               label="Rewritten At"
               value={versionState.rewriteResult.rewrittenAt}
@@ -2967,7 +3025,7 @@ export default function DevDataKeychain(): JSX.Element {
                 flow through this version.
               </Text>
               <Text style={styles.sheetListLine}>
-                Use the bottom Actions button for decrypt, clear, and
+                Use the bottom Actions button for unlock request, clear, and
                 marker-drop operations.
               </Text>
               <Text style={styles.sheetListLine}>
@@ -2980,7 +3038,7 @@ export default function DevDataKeychain(): JSX.Element {
             {renderPromptPolicyHelpSection()}
 
             {renderManualTestHelpSection(
-              'Manual Test: Repeat Try Decrypt Prompt',
+              'Manual Test: Repeat Unlock Request Prompt',
               REPEAT_DECRYPT_TEST_STEPS,
               REPEAT_DECRYPT_EXPECTATIONS[helpSheetContext.version],
             )}
@@ -3063,8 +3121,16 @@ export default function DevDataKeychain(): JSX.Element {
     const versionMeta = KEYCHAIN_VERSION_META[resolvedTabVersion];
     const hasBusinessEntry =
       !!businessStates[resolvedTabVersion].debugState?.hasEntry;
-    const canMakeLegacyBiometricsEntry =
-      IS_ANDROID && hasBusinessEntry && biometricsComputed.isBiometricsEnabled;
+    const useCurrentFacadeForBusinessActions =
+      resolvedTabVersion === currentKeychainVersion;
+    const hasLegacyRecoverableBusinessEntry =
+      useCurrentFacadeForBusinessActions &&
+      !!businessStates['8.2.0-fork'].debugState?.hasEntry;
+    const canTryBusinessDecrypt =
+      hasBusinessEntry || hasLegacyRecoverableBusinessEntry;
+    const businessActionApiLabel = useCurrentFacadeForBusinessActions
+      ? 'current app facade'
+      : `${versionMeta.label} raw wrapper`;
 
     return (
       <BottomSheetScrollView
@@ -3115,38 +3181,64 @@ export default function DevDataKeychain(): JSX.Element {
 
           <ActionSheetSection
             title={`${versionMeta.label} Business Actions`}
-            desc={`These actions use the business wrapper for the selected version and affect the current \`com.debank\` entry. Selected storage: ${getKeychainStorageLabel(
+            desc={`These actions use the ${businessActionApiLabel} and affect the current \`com.debank\` entry. Selected storage: ${getKeychainStorageLabel(
               effectiveStorageByVersion[resolvedTabVersion],
             )}.`}>
+            {useCurrentFacadeForBusinessActions ? (
+              <Button
+                title="Unlock Page Path"
+                type="primary"
+                disabled={!canTryBusinessDecrypt || isLoading}
+                height={40}
+                containerStyle={styles.sheetPrimaryButton}
+                onPress={() => {
+                  runSheetAction(handleUnlockPagePathProbe);
+                }}
+              />
+            ) : null}
             <View style={styles.actionsRow}>
               <Button
-                title="Try Decrypt"
+                title={
+                  useCurrentFacadeForBusinessActions
+                    ? 'Unlock Request'
+                    : 'Raw Unlock Request'
+                }
                 type="primary"
-                disabled={!hasBusinessEntry || isLoading}
+                disabled={!canTryBusinessDecrypt || isLoading}
                 height={40}
                 containerStyle={styles.actionButton}
                 onPress={() => {
                   runSheetAction(() =>
-                    handleBusinessDecrypt(
+                    handleUnlockRequestProbe(
                       resolvedTabVersion,
                       apisKeychain.ANDROID_AUTH_PROMPT_POLICIES
                         .INTERACTIVE_FIRST,
+                      {
+                        useCurrentFacade: useCurrentFacadeForBusinessActions,
+                      },
                     ),
                   );
                 }}
               />
               <Button
-                title="Try Decrypt Session"
+                title={
+                  useCurrentFacadeForBusinessActions
+                    ? 'Unlock Request Session'
+                    : 'Raw Unlock Request Session'
+                }
                 type="ghost"
-                disabled={!hasBusinessEntry || isLoading || !IS_ANDROID}
+                disabled={!canTryBusinessDecrypt || isLoading || !IS_ANDROID}
                 height={40}
                 containerStyle={styles.actionButton}
                 onPress={() => {
                   runSheetAction(() =>
-                    handleBusinessDecrypt(
+                    handleUnlockRequestProbe(
                       resolvedTabVersion,
                       apisKeychain.ANDROID_AUTH_PROMPT_POLICIES
                         .ALLOW_AUTHENTICATED_SESSION_REUSE,
+                      {
+                        useCurrentFacade: useCurrentFacadeForBusinessActions,
+                      },
                     ),
                   );
                 }}
@@ -3160,21 +3252,6 @@ export default function DevDataKeychain(): JSX.Element {
               containerStyle={styles.sheetActionButton}
               onPress={() => {
                 runSheetAction(() => handleBusinessRewrite(resolvedTabVersion));
-              }}
-            />
-            <Button
-              title={IS_ANDROID ? 'Make Legacy Bio-only' : 'Android Only'}
-              type="warning"
-              height={40}
-              disabled={isLoading || !canMakeLegacyBiometricsEntry}
-              containerStyle={styles.sheetActionButton}
-              onPress={() => {
-                runSheetAction(() =>
-                  handleBusinessRewrite(resolvedTabVersion, {
-                    targetAuthType: apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS,
-                    actionLabel: 'Legacy Bio-only Test Entry',
-                  }),
-                );
               }}
             />
             <Button
@@ -3200,23 +3277,6 @@ export default function DevDataKeychain(): JSX.Element {
               }}
             />
           </ActionSheetSection>
-
-          {tabKey === '10.0.0' ? (
-            <ActionSheetSection
-              title="v10 Migration Test"
-              desc="Rewrite the real `com.debank` entry with the v10 BIOMETRICS_OR_PASSCODE profile for restart testing.">
-              <Button
-                title="Migrate Current to Bio+Device"
-                type="warning"
-                height={40}
-                disabled={!IS_ANDROID || isLoading || !hasBusinessEntry}
-                containerStyle={styles.sheetActionButton}
-                onPress={() => {
-                  runSheetAction(handleMigrateCurrentToV10BiometricsOrPasscode);
-                }}
-              />
-            </ActionSheetSection>
-          ) : null}
 
           {tabKey === '10.0.0' ? (
             <ActionSheetSection
@@ -3444,67 +3504,6 @@ export default function DevDataKeychain(): JSX.Element {
               </TouchableOpacity>
             ))}
           </View>
-        </View>
-
-        <View style={styles.summaryCard}>
-          <Text style={styles.sectionTitle}>Current Auth Snapshot</Text>
-          <CompactStatusGrid
-            maxColumns={2}
-            items={[
-              {
-                label: 'Stored Auth',
-                value: apisKeychain.getAuthenticationTypeLabel(
-                  currentAuthenticationType,
-                ),
-                allowHorizontalOverflow: true,
-              },
-              {
-                label: 'Default Write Auth',
-                value: apisKeychain.getAuthenticationTypeLabel(
-                  defaultBiometricsAuthenticationType,
-                ),
-                allowHorizontalOverflow: true,
-              },
-              {
-                label: 'Auth By Biometrics',
-                value: apisKeychain.isAuthenticatedByBiometrics(),
-              },
-              {
-                label: 'Store Auth Enabled',
-                value: biometrics.authEnabled,
-              },
-              {
-                label: 'Computed Bio Enabled',
-                value: biometricsComputed.isBiometricsEnabled,
-              },
-              {
-                label: 'Settings Auth Enabled',
-                value: biometricsComputed.settingsAuthEnabled,
-              },
-              {
-                label: 'Could Setup',
-                value: biometricsComputed.couldSetupBiometrics,
-              },
-              {
-                label: 'Device Passcode Available',
-                value: biometrics.devicePasscodeAvailable,
-              },
-              {
-                label: 'Using Device Passcode',
-                value: biometricsComputed.isUsingDevicePasscode,
-              },
-            ]}
-          />
-          <StatusRow
-            label="Supported Biometry Type"
-            value={biometrics.supportedBiometryType}
-            allowHorizontalOverflow
-          />
-          <StatusRow
-            label="Default UI Label"
-            value={biometricsComputed.defaultTypeLabel}
-            allowHorizontalOverflow
-          />
         </View>
 
         <PillsSwitch
@@ -3782,6 +3781,13 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   eyeToggleButton: {
     padding: 2,
+  },
+  resultText: {
+    marginTop: 10,
+    color: colors2024['neutral-body'],
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 18,
   },
   errorText: {
     marginTop: 10,
