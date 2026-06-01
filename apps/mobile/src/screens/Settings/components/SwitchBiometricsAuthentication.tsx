@@ -158,13 +158,17 @@ export const SwitchBiometricsAuthentication = ({
 
   const { hasSetupCustomPassword } = useWalletPasswordInfo();
 
+  const switchValue = !!isBiometricsEnabled || isUsingDevicePasscode;
+  const switchDisabled =
+    !hasSetupCustomPassword || (!couldSetupBiometrics && !switchValue);
+
   return (
     <>
       <AppSwitch2024
         {...props}
         circleSize={20}
-        disabled={!hasSetupCustomPassword || !couldSetupBiometrics}
-        value={!!isBiometricsEnabled || isUsingDevicePasscode}
+        disabled={switchDisabled}
+        value={switchValue}
         changeValueImmediately={false}
         onValueChange={enabled => {
           requestToggleBiometricsEnabled(enabled, onToggleSuccess);

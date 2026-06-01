@@ -308,9 +308,6 @@ function SettingsBlocks() {
 
   const { currency, setIsShowCurrencyPopup } = useCurrentCurrencyVisible();
 
-  const disabledBiometrics =
-    !couldSetupBiometrics || !APP_FEATURE_SWITCH.biometricsAuth;
-
   const startSwitchBiometrics = useCallback(() => {
     if (
       shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setBiometrics' })
@@ -333,6 +330,9 @@ function SettingsBlocks() {
 
   const biometricsComputed = useBiometricsComputed();
   const { isUsingDevicePasscode } = biometricsComputed;
+  const disabledBiometrics =
+    (!couldSetupBiometrics && !isUsingDevicePasscode) ||
+    !APP_FEATURE_SWITCH.biometricsAuth;
 
   const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
 
