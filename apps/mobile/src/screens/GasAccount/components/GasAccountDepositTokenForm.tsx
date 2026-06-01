@@ -57,7 +57,7 @@ import {
   isHardWareAccountAccountSupportMiniApproval,
   isWatchOrSafeAccount,
 } from '@/utils/account';
-import { findChainByServerID } from '@/utils/chain';
+import { findChain, findChainByServerID } from '@/utils/chain';
 import { formatUsdValue } from '@/utils/number';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
@@ -87,6 +87,7 @@ import {
   BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
+import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 
 type DepositAccount = Account;
 
@@ -607,6 +608,12 @@ const GasAccountDepositTokenFormInner: React.FC<{
         if (!lastHash) {
           return;
         }
+
+        apisTransactionHistory.updateBridgeGasAccountTx({
+          address: selectedOwnerAccount.address,
+          chainId: findChain({ serverId: selectedToken.chain })!.id,
+          hash: lastHash,
+        });
 
         await afterBridgeTopUpGasAccount({
           chainServerId: selectedToken.chain,

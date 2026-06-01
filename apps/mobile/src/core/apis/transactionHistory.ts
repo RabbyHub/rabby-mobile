@@ -136,6 +136,52 @@ class ApisTransactionHistory {
         item.$ctx?.ga?.source === 'sendToken',
     );
   };
+
+  updateBridgeGasAccountTx = ({
+    address,
+    chainId,
+    hash,
+  }: {
+    address: string;
+    chainId?: number;
+    hash: string;
+  }) => {
+    if (!chainId) {
+      return;
+    }
+    const tx = transactionHistoryService.store.transactions.find(item => {
+      return (
+        isSameAddress(item.address, address) &&
+        item.chainId === chainId &&
+        item.hash === hash
+      );
+    });
+
+    if (tx) {
+      transactionHistoryService.updateTx({
+        ...tx,
+        isGasDeposit: true,
+      });
+    }
+  };
+
+  checkIsGasDepositTx = ({
+    chainId,
+    hash,
+  }: {
+    chainId?: number;
+    hash: string;
+  }) => {
+    if (!hash || !chainId) {
+      return false;
+    }
+
+    return !!transactionHistoryService.store.transactions.find(item => {
+      return (
+        item.chainId === chainId && item.hash === hash && item.isGasDeposit
+      );
+    });
+  };
 }
 
 export const apisTransactionHistory = new ApisTransactionHistory();

@@ -8,12 +8,22 @@ import {
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
 import { HistoryItemCateType } from '@/types/history';
+import { apisTransactionHistory } from '@/core/apis/transactionHistory';
+import { findChain } from './chain';
 
 export const isNFTTokenId = (tokenId: string) => {
   return tokenId.length === 32;
 };
 
 export function getHistoryItemType(data: TxHistoryItem): HistoryItemCateType {
+  if (
+    apisTransactionHistory.checkIsGasDepositTx({
+      chainId: findChain({ serverId: data.chain })?.id,
+      hash: data.id,
+    })
+  ) {
+    return HistoryItemCateType.GAS_DEPOSIT;
+  }
   if (data.cate_id === 'approve') {
     if (!data.token_approve?.value) {
       return HistoryItemCateType.Revoke;
