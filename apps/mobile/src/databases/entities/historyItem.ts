@@ -29,6 +29,8 @@ import { CustomTxItem } from '@/core/services/transactionHistory';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
 import { ParseEntity } from '@/core/utils/typeorm';
+import { apisTransactionHistory } from '@/core/apis/transactionHistory';
+import { findChain } from '@/utils/chain';
 
 export type { ProjectItemType } from '@/types/history';
 
@@ -273,6 +275,14 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
 
   static getHistoryItemType(data: HistoryItemEntity) {
     try {
+      if (
+        apisTransactionHistory.checkIsGasDepositTx({
+          chainId: findChain({ serverId: data.chain })?.id,
+          hash: data.txHash,
+        })
+      ) {
+        return HistoryItemCateType.GAS_DEPOSIT;
+      }
       if (data.cate_id === 'approve') {
         if (!data.token_approve_value) {
           return HistoryItemCateType.Revoke;
