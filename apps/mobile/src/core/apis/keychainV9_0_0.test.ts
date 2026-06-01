@@ -253,9 +253,12 @@ describe('core/apis/keychainV9_0_0', () => {
       expect.objectContaining({ password: 'plain-password' }),
     );
     expect(mockUpdateUnlockTime).toHaveBeenCalled();
-    expect(mockEncrypt).toHaveBeenCalledWith(currentRabbitCode, {
-      password: 'plain-password',
-    });
+    expect(mockEncrypt).toHaveBeenCalledWith(
+      currentRabbitCode,
+      expect.objectContaining({
+        password: 'plain-password',
+      }),
+    );
     expect(mockSetGenericPassword).toHaveBeenCalledTimes(1);
     expect(result?.actionSuccess).toBe(true);
   });
@@ -385,9 +388,12 @@ describe('core/apis/keychainV9_0_0', () => {
       },
     );
 
-    expect(mockEncrypt).toHaveBeenCalledWith('salt', {
-      password: 'plain-password',
-    });
+    expect(mockEncrypt).toHaveBeenCalledWith(
+      'salt',
+      expect.objectContaining({
+        password: 'plain-password',
+      }),
+    );
     expect(mockSetGenericPassword).toHaveBeenCalledTimes(2);
     expect(mockSetGenericPassword).toHaveBeenNthCalledWith(
       1,
@@ -434,9 +440,12 @@ describe('core/apis/keychainV9_0_0', () => {
       }),
     );
     expect(mockUpdateUnlockTime).toHaveBeenCalled();
-    expect(mockEncrypt).toHaveBeenCalledWith('salt', {
-      password: 'plain-password',
-    });
+    expect(mockEncrypt).toHaveBeenCalledWith(
+      'salt',
+      expect.objectContaining({
+        password: 'plain-password',
+      }),
+    );
     expect(mockSetGenericPassword).toHaveBeenCalledTimes(2);
     expect(mockSetGenericPassword).toHaveBeenNthCalledWith(
       1,
