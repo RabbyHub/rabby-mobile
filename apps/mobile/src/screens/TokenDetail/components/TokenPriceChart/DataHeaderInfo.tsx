@@ -149,7 +149,6 @@ export const DataHeaderInfoSkeleton = () => {
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   wrapper: {
-    paddingHorizontal: 25,
     gap: 8,
     height: 74,
   },

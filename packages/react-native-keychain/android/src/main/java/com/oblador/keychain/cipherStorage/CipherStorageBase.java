@@ -274,6 +274,17 @@ abstract public class CipherStorageBase implements CipherStorage {
                                     @NonNull final AtomicInteger retries,
                                     Boolean requireAuthentication)
     throws GeneralSecurityException {
+    return extractGeneratedKey(safeAlias, level, retries, requireAuthentication, true);
+  }
+
+  /** Extract existing key or generate a new one. In case of problems raise exception. */
+  @NonNull
+  protected Key extractGeneratedKey(@NonNull final String safeAlias,
+                                    @NonNull final SecurityLevel level,
+                                    @NonNull final AtomicInteger retries,
+                                    Boolean requireAuthentication,
+                                    final boolean allowKeyStoreRecovery)
+    throws GeneralSecurityException {
     Key key;
 
     do {
@@ -281,11 +292,14 @@ abstract public class CipherStorageBase implements CipherStorage {
 
       // if key is not available yet, try to generate the strongest possible
       if (!keyStore.containsAlias(safeAlias)) {
+        if (!allowKeyStoreRecovery) {
+          throw new KeyStoreAccessException("No key found for alias: " + safeAlias);
+        }
         generateKeyAndStoreUnderAlias(safeAlias, level, requireAuthentication);
       }
 
       // throw exception if cannot extract key in several retries
-      key = extractKey(keyStore, safeAlias, retries);
+      key = extractKey(keyStore, safeAlias, retries, allowKeyStoreRecovery);
     } while (null == key);
 
     return key;
@@ -297,6 +311,16 @@ abstract public class CipherStorageBase implements CipherStorage {
                            @NonNull final String safeAlias,
                            @NonNull final AtomicInteger retry)
     throws GeneralSecurityException {
+    return extractKey(keyStore, safeAlias, retry, true);
+  }
+
+  /** Try to extract key by alias from keystore, in case of 'known android bug' reduce retry counter. */
+  @Nullable
+  protected Key extractKey(@NonNull final KeyStore keyStore,
+                           @NonNull final String safeAlias,
+                           @NonNull final AtomicInteger retry,
+                           final boolean allowKeyStoreRecovery)
+    throws GeneralSecurityException {
     final Key key;
 
     // Fix for android.security.KeyStoreException: Invalid key blob
@@ -305,7 +329,7 @@ abstract public class CipherStorageBase implements CipherStorage {
       key = keyStore.getKey(safeAlias, null);
     } catch (final UnrecoverableKeyException ex) {
       // try one more time
-      if (retry.getAndDecrement() > 0) {
+      if (allowKeyStoreRecovery && retry.getAndDecrement() > 0) {
         keyStore.deleteEntry(safeAlias);
 
         return null;
@@ -346,27 +370,6 @@ abstract public class CipherStorageBase implements CipherStorage {
         );
       }
 
-      final Key key = keyStore.getKey(safeAlias, null);
-      if (key == null) {
-        return new StoredKeyDebugInfo(
-          safeAlias,
-          true,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          "KeyStore alias exists but key is null"
-        );
-      }
-
-      final KeyInfo keyInfo = getKeyInfo(key);
-      final String encryptionAlgorithm = getEncryptionAlgorithm();
       final Certificate certificate = keyStore.getCertificate(safeAlias);
       final String publicKeySha256 =
         certificate != null && certificate.getPublicKey() != null
@@ -376,17 +379,17 @@ abstract public class CipherStorageBase implements CipherStorage {
       return new StoredKeyDebugInfo(
         safeAlias,
         true,
-        key.getAlgorithm(),
-        getSecurityLevel(key).name(),
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? keyInfo.isInsideSecureHardware() : null,
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? keyInfo.isUserAuthenticationRequired() : null,
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? keyInfo.getUserAuthenticationValidityDurationSeconds() : null,
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ? keyInfo.getUserAuthenticationType() : null,
-        keyInfo.getBlockModes(),
-        keyInfo.getPurposes(),
-        !TextUtils.isEmpty(encryptionAlgorithm)
-          ? encryptionAlgorithm.equalsIgnoreCase(key.getAlgorithm())
+        certificate != null && certificate.getPublicKey() != null
+          ? certificate.getPublicKey().getAlgorithm()
           : null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
         publicKeySha256,
         null
       );

@@ -26,6 +26,11 @@ import {
 } from '@/utils/perps';
 import RcIconCloseCC from '@/assets2024/icons/perps/IconCloseCC.svg';
 import { Text, TextInput } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+} from '@/constant/layout';
 
 interface Props {
   coin: string;
@@ -561,6 +566,8 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                       title={t('global.confirm')}
                       disabled={!isValidPrice}
                       onPress={handleConfirm}
+                      height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                      titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                       containerStyle={styles.containerStyle}
                     />
                   </View>
@@ -630,6 +637,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     marginBottom: 36,
   },
 
@@ -812,7 +820,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   containerStyle: {
     // width: '100%',
     // height: 40,
-    height: 48,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     flex: 1,
   },
   buttonStyle: {},

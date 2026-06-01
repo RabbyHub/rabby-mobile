@@ -16,11 +16,13 @@ import {
   JSBridgeHarden,
 } from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
+import { apisLock, apisPerps } from '@/core/apis';
 import { loadSecurityChain } from './global';
 import { getTriedUnlock, storeApiLock } from './useLock';
 import SplashScreen from 'react-native-splash-screen';
 import { storeApiAccounts } from './account';
 import { storeApisBiometrics } from './biometrics';
+import { apisPerpsStore } from './perps/usePerpsStore';
 // import { browserStateAtom } from './browser/useBrowser';
 import { apisSafe } from '@/core/apis/safe';
 import { RefLikeObject } from '@/utils/type';
@@ -101,18 +103,50 @@ export function useInitializeAppOnTop() {
   React.useEffect(() => {
     const onUnlock = () => {
       console.debug('useBootstrap::onUnlock');
-      storeApiLock.setAppLock(prev => ({ ...prev, appUnlocked: true }));
+      storeApiLock.setAppLock(prev => ({
+        ...prev,
+        appUnlocked: true,
+        isUnlockSessionValid: apisLock.isUnlockSessionValid(),
+      }));
     };
     const onUnlockUIReady = () => {
       sendUserAddressEvent();
 
       doInitializeApis();
-      storeApiAccounts.fetchAccounts();
+      storeApiAccounts.fetchAccounts().then(accounts => {
+        storeApiLock.setAppLock(prev => ({
+          ...prev,
+          appUnlocked: true,
+          isUnlockSessionValid: apisLock.isUnlockSessionValid(),
+          hasVisibleAccounts: accounts.length > 0,
+          hasStoredKeyrings:
+            accounts.length > 0 ||
+            keyringService.hasVault() ||
+            keyringService.hasEncryptedKeyringData() ||
+            keyringService.hasUnencryptedKeyringData(),
+        }));
+      });
       perpsService.unlockAgentWallets();
     };
     const onLock = () => {
-      storeApiLock.setAppLock(prev => ({ ...prev, appUnlocked: false }));
-      storeApiAccounts.fetchAccounts();
+      storeApiLock.setAppLock(prev => ({
+        ...prev,
+        appUnlocked: false,
+        isUnlockSessionValid: apisLock.isUnlockSessionValid(),
+      }));
+      storeApiAccounts.fetchAccounts().then(accounts => {
+        storeApiLock.setAppLock(prev => ({
+          ...prev,
+          appUnlocked: false,
+          isUnlockSessionValid: apisLock.isUnlockSessionValid(),
+          hasVisibleAccounts: accounts.length > 0,
+          hasStoredKeyrings:
+            accounts.length > 0 ||
+            keyringService.hasVault() ||
+            keyringService.hasEncryptedKeyringData() ||
+            keyringService.hasUnencryptedKeyringData(),
+        }));
+      });
       setBrowserState({
         isShowBrowser: false,
         isShowSearch: false,
@@ -121,6 +155,9 @@ export function useInitializeAppOnTop() {
         searchTabId: '',
         trigger: '',
       });
+      perpsService.lockAgentWallets();
+      apisPerpsStore.logout();
+      apisPerps.destroyPerpsSDK();
     };
     const sub = perfEvents.subscribe('USER_MANUALLY_UNLOCK', onUnlock);
     const subUIReady = perfEvents.subscribe(

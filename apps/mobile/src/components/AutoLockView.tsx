@@ -4,10 +4,6 @@ import { Keyboard, PanResponder, View, ViewProps } from 'react-native';
 import * as apisAutoLock from '@/core/apis/autoLock';
 import { getLatestNavigationName } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import {
-  requestLockWalletAndBackToUnlockScreen,
-  useCurrentRouteName,
-} from '@/hooks/navigation';
 import { keyringService } from '@/core/services';
 import { throttle } from 'lodash';
 import { autoLockEvent } from '@/core/apis/autoLock';

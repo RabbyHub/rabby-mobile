@@ -4,7 +4,11 @@ import { useAccountSelectorList } from '@/components2024/AccountSelector/useAcco
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { apisPerps } from '@/core/apis';
 import { Account } from '@/core/services/preference';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  useAccounts,
+  usePinAddresses,
+} from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
@@ -62,6 +66,10 @@ export const PerpsAccountSelectorPopup: React.FC<{
     },
   );
 
+  const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
+  const { getPinAddressesAsync } = usePinAddresses({
+    disableAutoFetch: true,
+  });
   const { myAddresses, watchAddresses } = useAccountSelectorList({
     selectedAccount: value,
   });
@@ -173,9 +181,20 @@ export const PerpsAccountSelectorPopup: React.FC<{
       setTmpSelectAccount(value || null);
       cancelSelect();
     } else {
+      Promise.allSettled([
+        fetchAccounts({ force: true }),
+        getPinAddressesAsync(),
+      ]);
       runGetLastUsedAccount();
     }
-  }, [cancelSelect, runGetLastUsedAccount, value, visible]);
+  }, [
+    cancelSelect,
+    fetchAccounts,
+    getPinAddressesAsync,
+    runGetLastUsedAccount,
+    value,
+    visible,
+  ]);
 
   useEffect(() => {
     if (visible) {

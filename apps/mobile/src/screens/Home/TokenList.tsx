@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { ListRenderItem, StyleSheet, View, ViewStyle } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
@@ -32,11 +38,14 @@ import {
   useSingleHomeSelectData,
 } from './hooks/singleHome';
 import useTokenList, {
+  EMPTY_TOKEN_ASSETS_INDEX_RESULT,
+  EMPTY_TOKEN_ENTITY_IDS,
   getSingleAssetsCacheKey,
   ITokenItem,
   TokenEntityId,
+  useTokenAssetsIndexStore,
   useTokenEntity,
-  useTokenListComputedStore,
+  useTokenIndexStore,
 } from '@/store/tokens';
 import { formatNetworth } from '@/utils/math';
 import { useAppForeground } from '@/hooks/useAppForeground';
@@ -99,6 +108,38 @@ const TokenResourceRow = React.memo(
   },
 );
 
+const TokenFoldSectionHeader = React.memo(
+  ({
+    isEnabled,
+    onValueChange,
+    fold,
+    str,
+    style,
+    buttonStyle,
+    onPressFold,
+  }: {
+    isEnabled: boolean;
+    onValueChange: (value: boolean) => void;
+    fold: boolean;
+    str: string;
+    style: ViewStyle;
+    buttonStyle: ViewStyle;
+    onPressFold: () => void;
+  }) => {
+    return (
+      <TokenRowSectionLpTokenHeader
+        isEnabled={isEnabled}
+        onValueChange={onValueChange}
+        fold={fold}
+        style={style}
+        buttonStyle={buttonStyle}
+        str={str}
+        onPressFold={onPressFold}
+      />
+    );
+  },
+);
+
 interface Props {
   noAssetsOnAnyChain: boolean;
   onForeground?: () => void;
@@ -124,6 +165,7 @@ export const TokenList = ({
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
   const focusedTab = useFocusedTab();
   const isFocused = useMemo(() => {
@@ -133,39 +175,47 @@ export const TokenList = ({
   const currentAddress = currentAccount?.address;
   const lowerAddress = currentAddress?.toLowerCase();
 
-  const emptyResult = useMemo(
-    () => ({
-      unFoldTokenIds: [] as TokenEntityId[],
-      foldTokenIds: [] as TokenEntityId[],
-      scamTokenIds: [] as TokenEntityId[],
-      scamTokenPreviewLogoUrls: [] as string[],
-      foldCoreUsdValue: 0,
-      hasFoldTokens: false,
-    }),
-    [],
-  );
-
-  const registerSingleAssets = useTokenListComputedStore(
-    state => state.registerSingleAssets,
-  );
-
-  const singleAssetsKey = useMemo(() => {
-    if (!currentAddress) {
-      return null;
-    }
-    return getSingleAssetsCacheKey(
-      currentAddress,
-      selectedChain,
-      isLpTokenEnabled,
-    );
-  }, [currentAddress, selectedChain, isLpTokenEnabled]);
-
   useEffect(() => {
     if (!currentAddress) {
       return;
     }
-    registerSingleAssets(currentAddress, selectedChain, isLpTokenEnabled);
-  }, [currentAddress, selectedChain, isLpTokenEnabled, registerSingleAssets]);
+    useTokenIndexStore
+      .getState()
+      .syncFromTokenListMap(useTokenList.getState().tokenListMap, [
+        currentAddress,
+      ]);
+  }, [currentAddress]);
+
+  const tokenIds = useTokenIndexStore(
+    useShallow(state => {
+      if (!lowerAddress) {
+        return EMPTY_TOKEN_ENTITY_IDS;
+      }
+      return state.addressTokenIds[lowerAddress] || EMPTY_TOKEN_ENTITY_IDS;
+    }),
+  );
+  const singleAssetsKey = useMemo(() => {
+    if (!lowerAddress) {
+      return null;
+    }
+    return getSingleAssetsCacheKey(
+      lowerAddress,
+      selectedChain,
+      isLpTokenEnabled,
+    );
+  }, [isLpTokenEnabled, lowerAddress, selectedChain]);
+
+  useLayoutEffect(() => {
+    if (!singleAssetsKey) {
+      return;
+    }
+    useTokenAssetsIndexStore.getState().syncSingleAssetsResult({
+      key: singleAssetsKey,
+      tokenIds,
+      chainServerId: selectedChain,
+      isLpTokenEnabled,
+    });
+  }, [isLpTokenEnabled, selectedChain, singleAssetsKey, tokenIds]);
 
   const {
     unFoldTokenIds,
@@ -174,12 +224,17 @@ export const TokenList = ({
     scamTokenPreviewLogoUrls,
     foldCoreUsdValue,
     hasFoldTokens,
-  } = useTokenListComputedStore(
-    useShallow(state =>
-      singleAssetsKey
-        ? state.singleAssetsIndexCache[singleAssetsKey] || emptyResult
-        : emptyResult,
+  } = useTokenAssetsIndexStore(
+    useShallow(
+      state =>
+        (singleAssetsKey
+          ? state.singleAssetsResultByKey[singleAssetsKey]
+          : undefined) || EMPTY_TOKEN_ASSETS_INDEX_RESULT,
     ),
+  );
+  const foldTokenUsdValue = useMemo(
+    () => formatNetworth(foldCoreUsdValue),
+    [foldCoreUsdValue],
   );
 
   const isLoading = useTokenList(state => {
@@ -223,11 +278,6 @@ export const TokenList = ({
 
   const { selectData } = useSingleHomeSelectData();
   const noAnyAssets = !selectData.rawNetWorth || noAssetsOnAnyChain;
-
-  const foldTokenUsdValue = useMemo(
-    () => formatNetworth(foldCoreUsdValue),
-    [foldCoreUsdValue],
-  );
 
   const dataList = useMemo(() => {
     const items: TokenListItem[] = [];
@@ -328,12 +378,17 @@ export const TokenList = ({
     [currentAccount],
   );
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
     if (!currentAddress) {
       return;
     }
-    getTokenList(currentAddress, true);
+    setIsManualRefreshing(true);
     onRefresh?.();
+    try {
+      await getTokenList(currentAddress, true);
+    } finally {
+      setIsManualRefreshing(false);
+    }
   }, [currentAddress, getTokenList, onRefresh]);
 
   const renderItem = useCallback<ListRenderItem<TokenListItem>>(
@@ -370,16 +425,16 @@ export const TokenList = ({
           );
         case 'toggle_token_fold':
           return (
-            <TokenRowSectionLpTokenHeader
+            <TokenFoldSectionHeader
               isEnabled={isLpTokenEnabled}
               onValueChange={setIsLpTokenEnabled}
               fold={foldHideList}
+              str={foldTokenUsdValue}
               style={styles.sectionHeader}
               buttonStyle={StyleSheet.flatten([
                 styles.buttonHeader,
                 !isLight && styles.bg2,
               ])}
-              str={foldTokenUsdValue}
               onPressFold={() => {
                 if (!foldHideList) {
                   setFoldScam(true);
@@ -485,7 +540,7 @@ export const TokenList = ({
           <RefreshControl
             style={styles.bgContainer}
             onRefresh={handleRefresh}
-            refreshing={false}
+            refreshing={isManualRefreshing}
           />
         }
       />

@@ -185,7 +185,8 @@ const getStyles = createGetStyles2024(({ colors2024, colors }) => ({
   },
   titleStyle: {
     width: '100%',
-    fontSize: 16,
+    fontSize: 18,
+    lineHeight: 22,
     textAlign: 'center',
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',

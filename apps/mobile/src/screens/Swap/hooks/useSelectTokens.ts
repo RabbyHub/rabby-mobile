@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import useAsync from 'react-use/lib/useAsync';
+import { useShallow } from 'zustand/shallow';
 
 import {
   makeTokenSettingSets,
@@ -9,9 +10,13 @@ import { Account } from '@/core/services/preference';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import useTokenList, {
-  getTokenSelectCacheKey,
+  buildTokenEntityId,
   ITokenItem,
-  useTokenListComputedStore,
+  selectTokenSelectIndexResult,
+  TokenSelectIndexRow,
+  tokenEntityResourceStore,
+  TokenEntityId,
+  useTokenIndexStore,
 } from '@/store/tokens';
 
 import { useSelectTokensThreadSafe } from '@/components/Token/hooks/selectToken';
@@ -19,17 +24,31 @@ import { openapi } from '@/core/request';
 import { tokenItemToITokenItem } from '@/utils/token';
 
 const EMPTY_TOKEN_LIST: ITokenItem[] = [];
+const EMPTY_TOKEN_ROWS: TokenSelectIndexRow[] = [];
+
+const buildTokenRows = (tokens: ITokenItem[]): TokenSelectIndexRow[] => {
+  if (!tokens.length) {
+    return EMPTY_TOKEN_ROWS;
+  }
+  tokenEntityResourceStore.upsertTokens(tokens);
+  return tokens.map(token => ({
+    type: 'token',
+    tokenId: buildTokenEntityId(token),
+  }));
+};
 
 export const useSelectTokens = ({
   currentAccount: _currentAccount,
   chain_server_id,
   isLpTokenEnabled,
   keyword,
+  returnTokenObjects = false,
 }: {
   currentAccount?: Account | null;
   chain_server_id?: string;
   isLpTokenEnabled?: boolean;
   keyword?: string;
+  returnTokenObjects?: boolean;
 }) => {
   const currentAccount = useDebouncedValue(_currentAccount, 100);
   const currentAddress = currentAccount?.address || _currentAccount?.address;
@@ -64,10 +83,6 @@ export const useSelectTokens = ({
   const isLoadingByAddress = useTokenList(s => s.isLoadingByAddress);
   const batchGetTokenList = useTokenList(s => s.batchGetTokenList);
   const getTokenList = useTokenList(s => s.getTokenList);
-
-  const registerTokenSelect = useTokenListComputedStore(
-    state => state.registerTokenSelect,
-  );
 
   const isLoadingToken = useMemo(() => {
     if (!currentAccount) {
@@ -118,51 +133,63 @@ export const useSelectTokens = ({
       return [];
     }, [chain_server_id, currentAddress, keyword]);
 
-  const tokenSelectKey = useMemo(
-    () =>
-      getTokenSelectCacheKey(
+  useEffect(() => {
+    useTokenIndexStore
+      .getState()
+      .syncFromTokenListMap(
+        useTokenList.getState().tokenListMap,
+        tokenSelectAddresses,
+      );
+  }, [tokenSelectAddresses]);
+
+  const tokenSelectIndexResult = useTokenIndexStore(
+    useShallow(state =>
+      selectTokenSelectIndexResult(
+        state,
         tokenSelectAddresses,
         chain_server_id,
         keyword,
         isLpTokenEnabled,
       ),
-    [tokenSelectAddresses, chain_server_id, keyword, isLpTokenEnabled],
+    ),
+  );
+  const tokenIds = tokenSelectIndexResult.tokenIds;
+  const tokenRows = tokenSelectIndexResult.rows;
+
+  const shouldSubscribeTokenObjects = !!keyword || returnTokenObjects;
+  const tokenObjects = tokenEntityResourceStore.useStore(
+    useShallow(state => {
+      if (!shouldSubscribeTokenObjects) {
+        return EMPTY_TOKEN_LIST;
+      }
+      return tokenIds
+        .map(tokenId => state.valueMap[tokenId])
+        .filter((token): token is ITokenItem => !!token);
+    }),
   );
 
-  useEffect(() => {
-    registerTokenSelect(
-      tokenSelectAddresses,
-      chain_server_id,
-      keyword,
-      isLpTokenEnabled,
-    );
-  }, [
-    registerTokenSelect,
-    tokenSelectAddresses,
-    chain_server_id,
-    keyword,
-    isLpTokenEnabled,
-  ]);
-
-  const tokens = useTokenListComputedStore(state => {
-    return state.tokenSelectCache[tokenSelectKey] || EMPTY_TOKEN_LIST;
-  });
+  const existingTokenIdSet = useMemo(() => {
+    if (!keyword) {
+      return null;
+    }
+    return new Set<TokenEntityId>(tokenIds);
+  }, [keyword, tokenIds]);
 
   const mergedTokens = useMemo(() => {
     if (!keyword || !searchTokenResult?.length) {
-      return tokens;
+      return tokenObjects;
     }
-    const seen = new Set(tokens.map(token => `${token.chain}:${token.id}`));
-    const mergedList = tokens.slice();
+    const seen = new Set(tokenObjects.map(buildTokenEntityId));
+    const mergedList = tokenObjects.slice();
     searchTokenResult.forEach(token => {
-      const key = `${token.chain}:${token.id}`;
+      const key = buildTokenEntityId(token);
       if (!seen.has(key)) {
         seen.add(key);
         mergedList.push(token);
       }
     });
     return mergedList;
-  }, [keyword, searchTokenResult, tokens]);
+  }, [keyword, searchTokenResult, tokenObjects]);
 
   const formatToken = useCallback(
     (token: ITokenItem) =>
@@ -183,13 +210,13 @@ export const useSelectTokens = ({
     ) {
       return false;
     }
-    return tokens.length === 0;
+    return tokenRows.length === 0;
   }, [
     currentAddress,
     isLpTokenEnabled,
     keyword,
     searchTokenResult,
-    tokens.length,
+    tokenRows.length,
   ]);
 
   const { value: recommendedTokens, loading: loadingRecommendedTokens } =
@@ -205,12 +232,41 @@ export const useSelectTokens = ({
     }, [shouldLoadRecommended, currentAddress, chain_server_id]);
 
   const finalTokens = useMemo(() => {
+    if (!returnTokenObjects) {
+      return EMPTY_TOKEN_LIST;
+    }
     if (recommendedTokens && recommendedTokens.length > 0) {
       const formattedRecommended = recommendedTokens.map(formatToken);
       return [...tokenWithOwner, ...formattedRecommended];
     }
     return tokenWithOwner;
-  }, [tokenWithOwner, recommendedTokens, formatToken]);
+  }, [returnTokenObjects, recommendedTokens, tokenWithOwner, formatToken]);
+
+  const finalTokenRows = useMemo(() => {
+    if (recommendedTokens && recommendedTokens.length > 0) {
+      return [
+        ...buildTokenRows(tokenWithOwner),
+        ...buildTokenRows(recommendedTokens),
+      ];
+    }
+    if (keyword && searchTokenResult?.length) {
+      const externalTokens = tokenWithOwner.filter(token => {
+        if (!existingTokenIdSet) {
+          return true;
+        }
+        return !existingTokenIdSet.has(buildTokenEntityId(token));
+      });
+      return [...tokenRows, ...buildTokenRows(externalTokens)];
+    }
+    return tokenRows;
+  }, [
+    existingTokenIdSet,
+    keyword,
+    recommendedTokens,
+    searchTokenResult?.length,
+    tokenRows,
+    tokenWithOwner,
+  ]);
 
   const checkIsExpireAndUpdate = useCallback(async () => {
     if (currentAccount) {
@@ -230,7 +286,9 @@ export const useSelectTokens = ({
 
   return {
     tokens: finalTokens,
-    existedTokens: !!tokens.length,
+    tokenRows: finalTokenRows,
+    existedTokens:
+      !!finalTokenRows.length || !!finalTokens.length || !!tokenObjects.length,
     isSearching: searchingToken || loadingRecommendedTokens,
     isLoading: isLoadingToken,
     checkIsExpireAndUpdate,

@@ -1,6 +1,6 @@
 {
   "name": "rabby-mobile",
-  "version": "0.6.72",
+  "version": "0.6.73",
   "private": true,
   "repository": {
     "type": "git",
@@ -99,7 +99,7 @@
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/rabby-action": "0.1.14",
     "@rabby-wallet/rabby-api": "0.9.61",
-    "@rabby-wallet/rabby-bridge": "0.0.3",
+    "@rabby-wallet/rabby-bridge": "0.0.4",
     "@rabby-wallet/rabby-logger": "0.3.0",
     "@rabby-wallet/rabby-security-engine": "2.0.12",
     "@rabby-wallet/rabby-sign-bvm": "0.1.1",

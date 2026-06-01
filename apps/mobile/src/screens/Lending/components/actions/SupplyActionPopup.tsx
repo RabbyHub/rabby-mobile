@@ -34,7 +34,7 @@ import { getERC20Allowance } from '@/core/apis/provider';
 import { approveToken } from '@/core/apis/approvals';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
-import { last, noop } from 'lodash';
+import { debounce, last, noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { parseUnits } from 'ethers/lib/utils';
@@ -66,7 +66,14 @@ import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
 import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  RootNames,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 
 type SupplyActionPopupProps = PopupDetailProps & {
@@ -417,7 +424,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
     reserve.reserve.underlyingAsset,
   ]);
 
-  const handleOpenSwap = useCallback(async () => {
+  const openSwap = useCallback(async () => {
     if (!currentAccount || !swapTokenId) {
       return;
     }
@@ -437,6 +444,21 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
       },
     });
   }, [chainEnum, currentAccount, onBeforeSwapNavigate, swapTokenId]);
+
+  const handleOpenSwap = useMemo(
+    () =>
+      debounce(openSwap, 800, {
+        leading: true,
+        trailing: false,
+      }),
+    [openSwap],
+  );
+
+  useEffect(() => {
+    return () => {
+      handleOpenSwap.cancel();
+    };
+  }, [handleOpenSwap]);
 
   const txsForMiniApproval: Tx[] = useMemo(() => {
     const list: any[] = [];
@@ -701,6 +723,8 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
                 !!ctx?.disabledProcess
               }
               type="aave"
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
               iconColor={
                 isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
               }
@@ -714,6 +738,8 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
               loadingType="circle"
               showTextOnLoading
               containerStyle={styles.fullWidthButton}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               onPress={() => handleSupply()}
               title={t('page.Lending.supplyDetail.actions')}
               loading={isLoading}
@@ -840,9 +866,13 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 24,
   },
   buttonContainer: {
-    height: 116,
-    paddingTop: 12,
+    height:
+      BOTTOM_BUTTON_TOP_OFFSET +
+      BOTTOM_BUTTON_SINGLE_HEIGHT +
+      getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     marginTop: 'auto',
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    paddingBottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     width: '100%',
     display: 'flex',
     flexDirection: 'row',
@@ -851,6 +881,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   fullWidthButton: {
     flex: 1,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
   },
   directSignBtn: {
     width: '100%',

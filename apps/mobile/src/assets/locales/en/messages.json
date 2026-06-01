@@ -2252,6 +2252,7 @@
       "touchId": "Touch ID",
       "fingerPrint": "Fingerprint",
       "autoLockTime": "Auto lock time",
+      "lockWallet": "Lock Wallet",
       "addCustomNetwork": "Add Custom Network",
       "modifyRPCURL": "Modify RPC URL",
       "themeMode": "Theme Mode",

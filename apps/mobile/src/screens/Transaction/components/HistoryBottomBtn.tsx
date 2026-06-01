@@ -1,6 +1,11 @@
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { Button } from '@/components2024/Button';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  RootNames,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { transactionHistoryService } from '@/core/services';
 import { Account } from '@/core/services/preference';
 import { useMyAccounts } from '@/hooks/account';
@@ -86,7 +91,7 @@ export const HistoryBottomBtn = ({
     ]) as ViewStyle;
     return {
       btnContainerViewStyle: viewStyle,
-      buttonStyle: { height: viewStyle.height || 56 },
+      buttonStyle: { height: viewStyle.height || BOTTOM_BUTTON_SINGLE_HEIGHT },
     };
   }, [styles.buttonContainer, buttonContainerStyle]);
 
@@ -113,6 +118,7 @@ export const HistoryBottomBtn = ({
         <View style={btnContainerViewStyle}>
           <Button
             buttonStyle={buttonStyle}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             onPress={async () => {
               const sendToken = sends[0]?.token;
               const chainItem = findChain({
@@ -149,6 +155,7 @@ export const HistoryBottomBtn = ({
         <View style={btnContainerViewStyle}>
           <Button
             buttonStyle={buttonStyle}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             onPress={async () => {
               const chainItem = !chain ? null : findChainByServerID(chain);
               // if (!isForMultipleAddress) {
@@ -196,7 +203,7 @@ const getStyle = createGetStyles2024(
     buttonContainer: {
       paddingTop: 12,
       paddingHorizontal: 20,
-      paddingBottom: Math.max(safeAreaInsets.bottom, 36),
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
       backgroundColor: !isLight
         ? colors2024['neutral-bg-2']
         : colors2024['neutral-bg-1'],
@@ -206,7 +213,7 @@ const getStyle = createGetStyles2024(
       gap: 16,
     },
     placeholder: {
-      minHeight: Math.max(safeAreaInsets.bottom, 24),
+      minHeight: getBottomButtonBottomOffset(safeAreaInsets.bottom),
       flexShrink: 0,
     },
   }),

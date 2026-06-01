@@ -5,8 +5,10 @@ import {
   SwitchToggleType,
 } from '@/components/customized/Switch2024';
 import { useThemeColors } from '@/hooks/theme';
-import { useTranslation } from 'react-i18next';
-import { useToggleShowAutoLockCountdown } from '@/hooks/appSettings';
+import {
+  useToggleShowAutoLockCountdown,
+  useToggleShowUnlockStatusBar,
+} from '@/hooks/appSettings';
 
 export const SwitchShowFloatingAutoLockCountdown = ({
   ref,
@@ -17,7 +19,6 @@ export const SwitchShowFloatingAutoLockCountdown = ({
   const { showAutoLockCountdown, toggleShowAutoLockCountdown } =
     useToggleShowAutoLockCountdown();
   const colors = useThemeColors();
-  const { t } = useTranslation();
 
   useImperativeHandle(ref, () => ({
     toggle: async (enabled?: boolean) => {
@@ -33,6 +34,37 @@ export const SwitchShowFloatingAutoLockCountdown = ({
       changeValueImmediately={false}
       onValueChange={() => {
         toggleShowAutoLockCountdown();
+      }}
+      backgroundActive={colors['green-default']}
+      circleBorderActiveColor={colors['green-default']}
+    />
+  );
+};
+
+export const SwitchShowFloatingUnlockStatusBar = ({
+  ref,
+  ...props
+}: React.ComponentProps<typeof AppSwitch2024> & {
+  ref?: Ref<SwitchToggleType>;
+}) => {
+  const { showUnlockStatusBar, toggleShowUnlockStatusBar } =
+    useToggleShowUnlockStatusBar();
+  const colors = useThemeColors();
+
+  useImperativeHandle(ref, () => ({
+    toggle: async (enabled?: boolean) => {
+      toggleShowUnlockStatusBar(enabled ?? !showUnlockStatusBar);
+    },
+  }));
+
+  return (
+    <AppSwitch2024
+      {...props}
+      circleSize={20}
+      value={!!showUnlockStatusBar}
+      changeValueImmediately={false}
+      onValueChange={() => {
+        toggleShowUnlockStatusBar();
       }}
       backgroundActive={colors['green-default']}
       circleBorderActiveColor={colors['green-default']}

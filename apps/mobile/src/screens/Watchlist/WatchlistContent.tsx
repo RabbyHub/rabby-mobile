@@ -12,7 +12,12 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { Button } from '@/components2024/Button';
 import { Text } from '@/components/Typography';
 import { preferenceService } from '@/core/services';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+  RootNames,
+} from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   buildMarketTokenDetailFrom,
@@ -396,6 +401,8 @@ export function WatchlistContent({
             </Text>
           </Pressable>
           <Button
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             title={t('page.watchlist.footer.add', {
               count: selectedTokens.size,
             })}
@@ -408,69 +415,71 @@ export function WatchlistContent({
   );
 }
 
-const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
-  container: {
-    flex: 1,
-  },
-  header: {
-    height: 8,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollViewContent: {
-    paddingHorizontal: 16,
-    paddingTop: 0,
-    marginTop: isAndroid ? TAB_BAR_HEIGHT : 0,
-    flexGrow: 1,
-  },
-  stickyHeader: {
-    paddingTop: 14,
-    paddingBottom: 4,
-    backgroundColor: colors2024['neutral-bg-1'],
-  },
-  centerEmpty: {
-    marginTop: '50%',
-  },
-  footer: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    paddingHorizontal: 20,
-    paddingBottom: 48,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  skipText: {
-    fontSize: 16,
-    lineHeight: 20,
-    color: colors2024['neutral-secondary'],
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'center',
-    paddingBottom: 17,
-    paddingTop: 14,
-  },
-  bottomPadding: {
-    height: 160,
-  },
-  skeletonBlock: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
-    width: '100%',
-    height: 74,
-    padding: 0,
-    borderRadius: 16,
-    marginTop: 8,
-  },
-  topEmpty: {
-    marginTop: 26,
-  },
-  tokenItem: {
-    paddingHorizontal: 12,
-  },
-  firstItemPadding: {
-    paddingTop: 8,
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ isLight, colors2024, safeAreaInsets }) => ({
+    container: {
+      flex: 1,
+    },
+    header: {
+      height: 8,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollViewContent: {
+      paddingHorizontal: 16,
+      paddingTop: 0,
+      marginTop: isAndroid ? TAB_BAR_HEIGHT : 0,
+      flexGrow: 1,
+    },
+    stickyHeader: {
+      paddingTop: 14,
+      paddingBottom: 4,
+      backgroundColor: colors2024['neutral-bg-1'],
+    },
+    centerEmpty: {
+      marginTop: '50%',
+    },
+    footer: {
+      backgroundColor: colors2024['neutral-bg-1'],
+      paddingHorizontal: 20,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+    },
+    skipText: {
+      fontSize: 16,
+      lineHeight: 20,
+      color: colors2024['neutral-secondary'],
+      fontWeight: '500',
+      fontFamily: 'SF Pro Rounded',
+      textAlign: 'center',
+      paddingBottom: 17,
+      paddingTop: 14,
+    },
+    bottomPadding: {
+      height: 160,
+    },
+    skeletonBlock: {
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
+      width: '100%',
+      height: 74,
+      padding: 0,
+      borderRadius: 16,
+      marginTop: 8,
+    },
+    topEmpty: {
+      marginTop: 26,
+    },
+    tokenItem: {
+      paddingHorizontal: 12,
+    },
+    firstItemPadding: {
+      paddingTop: 8,
+    },
+  }),
+);

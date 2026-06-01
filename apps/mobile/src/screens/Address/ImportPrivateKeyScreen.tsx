@@ -12,6 +12,7 @@ import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 import { useScanner } from '../Scanner/ScannerScreen';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -37,7 +38,11 @@ export const ImportPrivateKeyScreen = () => {
   const duplicateAddressModal = useDuplicateAddressModal();
   const scanner = useScanner();
 
-  const handleConfirm = React.useCallback(() => {
+  const handleConfirm = React.useCallback(async () => {
+    if (!(await ensureWalletUnlockedForAction())) {
+      return;
+    }
+
     apiPrivateKey
       .importPrivateKey(privateKey)
       .then(([account]) => {

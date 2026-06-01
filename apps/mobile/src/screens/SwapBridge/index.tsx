@@ -95,6 +95,8 @@ function SwapBridgeHeaderRight({
     <View style={styles.headerRight}>
       <HeaderAccountSwitcher
         forScene="MakeTransactionAbout"
+        formatDefaultAliasAsAddress
+        maxWidth={170}
         style={styles.headerAccountSwitcher}
       />
       <View style={styles.headerAction}>
@@ -288,7 +290,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 8,
   },
   headerAccountSwitcher: {
-    maxWidth: 170,
     flexShrink: 1,
     minWidth: 0,
   },

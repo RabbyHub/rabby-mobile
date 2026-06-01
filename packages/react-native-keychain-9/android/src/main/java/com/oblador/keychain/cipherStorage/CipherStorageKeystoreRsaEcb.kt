@@ -114,7 +114,8 @@ class CipherStorageKeystoreRsaEcb : CipherStorageBase() {
         username = username,
         password = password,
         level = level,
-        allowAuthenticatedSessionReuse = false)
+        allowAuthenticatedSessionReuse = false,
+        allowKeyStoreRecovery = true)
   }
 
   @SuppressLint("NewApi")
@@ -125,7 +126,8 @@ class CipherStorageKeystoreRsaEcb : CipherStorageBase() {
       username: ByteArray,
       password: ByteArray,
       level: SecurityLevel,
-      allowAuthenticatedSessionReuse: Boolean
+      allowAuthenticatedSessionReuse: Boolean,
+      allowKeyStoreRecovery: Boolean
   ) {
     throwIfInsufficientLevel(level)
 
@@ -135,7 +137,7 @@ class CipherStorageKeystoreRsaEcb : CipherStorageBase() {
 
     try {
       // key is always NOT NULL otherwise GeneralSecurityException raised
-      val extractedKey = extractGeneratedKey(safeAlias, level, retries)
+      val extractedKey = extractGeneratedKey(safeAlias, level, retries, allowKeyStoreRecovery)
       key = extractedKey
 
       if (allowAuthenticatedSessionReuse) {
@@ -190,10 +192,7 @@ class CipherStorageKeystoreRsaEcb : CipherStorageBase() {
   ): CipherStorage.EncryptionResult {
     val store = getKeyStoreAndLoad()
 
-    // on first access create a key for storage
-    if (!store.containsAlias(alias)) {
-      generateKeyAndStoreUnderAlias(alias, level)
-    }
+    ensureRabbyCompatibleEncryptionKey(alias, store, level)
 
     val key = extractPublicEncryptionKeyOrRecreate(alias, store, level)
 
@@ -213,6 +212,25 @@ class CipherStorageKeystoreRsaEcb : CipherStorageBase() {
     val keySpec = X509EncodedKeySpec(publicKey.encoded)
 
     return kf.generatePublic(keySpec)
+  }
+
+  @Throws(GeneralSecurityException::class)
+  private fun ensureRabbyCompatibleEncryptionKey(
+      alias: String,
+      store: KeyStore,
+      level: SecurityLevel
+  ) {
+    if (!store.containsAlias(alias)) {
+      generateKeyAndStoreUnderAlias(alias, level)
+      return
+    }
+
+    val keyDebugInfo = getKeyDebugInfo(alias)
+    if (keyDebugInfo.isUserAuthenticationRequired == true) {
+      Log.w(LOG_TAG, "Recreating RSA key that requires KeyStore auth for service $alias")
+      store.deleteEntry(alias)
+      generateKeyAndStoreUnderAlias(alias, level)
+    }
   }
 
   @Throws(GeneralSecurityException::class)
@@ -253,21 +271,16 @@ class CipherStorageKeystoreRsaEcb : CipherStorageBase() {
 
     val keySize = if (isForTesting) ENCRYPTION_KEY_SIZE_WHEN_TESTING else ENCRYPTION_KEY_SIZE
 
-    val validityDuration = 5
     val keyGenParameterSpecBuilder =
         KeyGenParameterSpec.Builder(alias, purposes)
             .setBlockModes(BLOCK_MODE_ECB)
             .setEncryptionPaddings(PADDING_PKCS1)
             .setRandomizedEncryptionRequired(true)
-            .setUserAuthenticationRequired(true)
+            // Rabby authenticates with BiometricPrompt before reading the password. Keeping the
+            // RSA key unauthenticated matches the v8 fork and avoids a second, unbound KeyStore
+            // auth gate after the prompt succeeds.
+            .setUserAuthenticationRequired(false)
             .setKeySize(keySize)
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-      keyGenParameterSpecBuilder.setUserAuthenticationParameters(
-          validityDuration, KeyProperties.AUTH_BIOMETRIC_STRONG)
-    } else {
-      keyGenParameterSpecBuilder.setUserAuthenticationValidityDurationSeconds(validityDuration)
-    }
 
     return keyGenParameterSpecBuilder
   }

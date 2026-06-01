@@ -26,6 +26,13 @@ import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
 import { Account } from '@/core/services/preference';
 import { useEIP7702Approvals } from '../useEIP7702Approvals';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 /** @deprecated import from '../layout' directly */
 export { ApprovalsLayouts };
@@ -161,12 +168,14 @@ export function ApprovalsBottomArea({ account }: { account: Account }) {
     <View
       style={[
         styles.bottomDockArea,
-        isAndroid && { paddingBottom: safeOffBottom },
+        { bottom: getBottomButtonBottomOffset(safeOffBottom) },
       ]}>
       <Button
         disabled={isButtonDisabled}
         title={buttonTitle}
         onPress={onRevoke}
+        height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+        titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
         buttonStyle={[
           styles.buttonContainer,
           isEip7702Unsupported && styles.disabledButton,
@@ -184,7 +193,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 24,
     backgroundColor: 'transparent',
     width: '100%',
-    marginBottom: 56,
   },
 
   buttonContainer: {
@@ -382,7 +390,7 @@ export function BottomSheetModalFooterButton({
         styles.footerContainer,
         {
           height: safeSizes.bottomSheetConfirmAreaHeight,
-          paddingBottom: androidBottomOffset,
+          paddingBottom: getBottomButtonBottomOffset(androidBottomOffset),
         },
       ]}>
       <Button
@@ -397,6 +405,7 @@ export function BottomSheetModalFooterButton({
           buttonProps?.containerStyle,
         ]}
         buttonStyle={[styles.buttonStyle]}
+        height={BOTTOM_BUTTON_SINGLE_HEIGHT}
       />
     </View>
   );
@@ -405,7 +414,8 @@ export function BottomSheetModalFooterButton({
 const getBottomSheetModalFooterButtonStyles = createGetStyles(colors => {
   return {
     footerContainer: {
-      paddingVertical: 20,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+      paddingBottom: BOTTOM_BUTTON_BOTTOM_OFFSET,
       paddingHorizontal: 20,
       height: ApprovalsLayouts.bottomSheetConfirmAreaHeight,
       flexShrink: 0,
@@ -418,13 +428,16 @@ const getBottomSheetModalFooterButtonStyles = createGetStyles(colors => {
     },
     footerButtonContainer: {
       width: '100%',
-      height: 56,
+      height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     },
     buttonStyle: {
       borderRadius: 16,
     },
     footerText: {
       color: colors['neutral-title2'],
+      fontSize: BOTTOM_BUTTON_TITLE_STYLE.fontSize,
+      lineHeight: BOTTOM_BUTTON_TITLE_STYLE.lineHeight,
+      fontWeight: BOTTOM_BUTTON_TITLE_STYLE.fontWeight,
     },
     disabledFooterText: {
       color: colors['neutral-title2'],

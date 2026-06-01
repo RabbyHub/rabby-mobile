@@ -11,7 +11,13 @@ import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+  RootNames,
+} from '@/constant/layout';
 import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { naviPush } from '@/utils/navigation';
@@ -249,10 +255,14 @@ export const Send: React.FC<Props> = ({
               <Button
                 disabled
                 title={t('page.transactions.detail.AddToWhitelist')}
+                height={SIZES.buttonHeight}
+                titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               />
             </Tip>
           ) : (
             <Button
+              height={SIZES.buttonHeight}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               containerStyle={[
                 accountSelectCtx.isUnderContext && {
                   height: SIZES.buttonHeight,
@@ -296,9 +306,9 @@ export const Send: React.FC<Props> = ({
 };
 
 const SIZES = {
-  buttonHeight: 56,
+  buttonHeight: BOTTOM_BUTTON_SINGLE_HEIGHT,
   // bottomAreaPt: 0,
-  bottomContentBottom: IS_IOS ? 48 : 48,
+  bottomContentBottom: BOTTOM_BUTTON_BOTTOM_OFFSET,
   containerPt: 12,
   containerPb: 12,
 };
@@ -422,7 +432,7 @@ const getStyle = createGetStyles2024(
     buttonContainer: {
       paddingTop: 12,
       paddingHorizontal: 20,
-      paddingBottom: Math.max(safeAreaInsets.bottom, 36),
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
       backgroundColor: !isLight
         ? colors2024['neutral-bg-2']
         : colors2024['neutral-bg-1'],

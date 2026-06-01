@@ -26,6 +26,7 @@ import { toast } from '@/components2024/Toast';
 import { setAccountNeedsBackupReminder } from '@/hooks/account';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
   shouldRedirectToSetPasswordBefore2024: ReturnType<
@@ -108,6 +109,10 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
         <ListItem
           disableArrow={true}
           onPress={async () => {
+            if (!(await ensureWalletUnlockedForAction())) {
+              return;
+            }
+
             if (
               await shouldRedirectToSetPasswordBefore2024({
                 backScreen: RootNames.CreateSelectMethod,

@@ -468,8 +468,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     width: 128,
   },
   saveRemarkButtonTitle: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 18,
+    lineHeight: 22,
   },
   fieldLabel: {
     marginTop: 10,

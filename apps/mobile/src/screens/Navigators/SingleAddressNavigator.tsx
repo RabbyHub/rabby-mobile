@@ -1,5 +1,5 @@
 import 'react-native-gesture-handler';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { RootNames } from '@/constant/layout';
 import SingleAddressHome from '../Home/Home';
@@ -12,6 +12,7 @@ export function SingleAddressNavigator() {
   if (__DEV__) {
     console.debug('[SingleAddressNavigator] Render');
   }
+  const renderHeader = useCallback(() => <SingleAddressHome.Header />, []);
 
   return (
     <SingleAddressStack.Navigator
@@ -24,7 +25,7 @@ export function SingleAddressNavigator() {
         options={mergeScreenOptions({
           title: '',
           headerTitle: '',
-          header: () => <SingleAddressHome.Header />,
+          header: renderHeader,
           headerShown: true,
           headerStyle: {
             backgroundColor: 'transparent',

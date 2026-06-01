@@ -116,7 +116,7 @@ public class CipherStorageKeystoreRsaEcb extends CipherStorageBase {
                       @NonNull byte[] password,
                       @NonNull final SecurityLevel level)
     throws CryptoFailedException {
-    decryptWithPromptPolicy(handler, alias, username, password, level, false);
+    decryptWithPromptPolicy(handler, alias, username, password, level, false, true);
   }
 
   @SuppressLint("NewApi")
@@ -125,7 +125,8 @@ public class CipherStorageKeystoreRsaEcb extends CipherStorageBase {
                                       @NonNull byte[] username,
                                       @NonNull byte[] password,
                                       @NonNull final SecurityLevel level,
-                                      final boolean allowAuthenticatedSessionReuse)
+                                      final boolean allowAuthenticatedSessionReuse,
+                                      final boolean allowKeyStoreRecovery)
     throws CryptoFailedException {
 
     throwIfInsufficientLevel(level);
@@ -140,7 +141,7 @@ public class CipherStorageKeystoreRsaEcb extends CipherStorageBase {
     );
 
     try {
-      key = extractGeneratedKey(safeAlias, level, retries, false);
+      key = extractGeneratedKey(safeAlias, level, retries, false, allowKeyStoreRecovery);
       if (allowAuthenticatedSessionReuse) {
         final DecryptionResult results =
           new DecryptionResult(decryptBytes(key, username), decryptBytes(key, password));

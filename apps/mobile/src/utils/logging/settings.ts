@@ -1,10 +1,13 @@
 import { useCallback } from 'react';
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import { APP_RUNTIME_ENV } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import { getOnlineConfig } from '@/core/config/online';
 import {
   APP_FILE_LOGGING_ONLINE_SWITCH,
+  type AppLogPolicyEnv,
   getDefaultLocalAppFileLoggingEnabled,
+  resolveAppLogPolicyEnv,
   resolveAppFileLoggingEnabled,
   resolveConsoleCaptureEnabled,
 } from './policy';
@@ -29,11 +32,18 @@ function getProdOnlineLoggingEnabled() {
   return !!getOnlineConfig()?.switches?.[APP_FILE_LOGGING_ONLINE_SWITCH];
 }
 
+function getAppLogPolicyEnv(): AppLogPolicyEnv {
+  return resolveAppLogPolicyEnv({
+    runtimeEnv: APP_RUNTIME_ENV,
+    isNonPublicProductionEnv,
+  });
+}
+
 function resolveLocalFileLoggingEnabled(
   state: AppLogFileSettings,
-  runtimeEnv = APP_RUNTIME_ENV,
+  policyEnv: string = getAppLogPolicyEnv(),
 ) {
-  switch (runtimeEnv) {
+  switch (policyEnv) {
     case 'development':
       if (typeof state.developmentFileLoggingEnabled === 'boolean') {
         return state.developmentFileLoggingEnabled;
@@ -43,48 +53,54 @@ function resolveLocalFileLoggingEnabled(
         return state.nonProdFileLoggingEnabled;
       }
 
-      return getDefaultLocalAppFileLoggingEnabled(runtimeEnv);
+      return getDefaultLocalAppFileLoggingEnabled(policyEnv);
     case 'regression':
       if (typeof state.regressionFileLoggingEnabled === 'boolean') {
         return state.regressionFileLoggingEnabled;
       }
 
-      return getDefaultLocalAppFileLoggingEnabled(runtimeEnv);
+      return getDefaultLocalAppFileLoggingEnabled(policyEnv);
     default:
-      return getDefaultLocalAppFileLoggingEnabled(runtimeEnv);
+      return getDefaultLocalAppFileLoggingEnabled(policyEnv);
   }
 }
 
-function getLocalFileLoggingEnabled(runtimeEnv = APP_RUNTIME_ENV) {
+function getLocalFileLoggingEnabled(policyEnv = getAppLogPolicyEnv()) {
   return resolveLocalFileLoggingEnabled(
     appLogFileSettingsStore.getState(),
-    runtimeEnv,
+    policyEnv,
   );
 }
 
 export function getEffectiveFileLoggingEnabled() {
+  const policyEnv = getAppLogPolicyEnv();
+
   return resolveAppFileLoggingEnabled({
-    runtimeEnv: APP_RUNTIME_ENV,
-    localEnabled: getLocalFileLoggingEnabled(),
+    runtimeEnv: policyEnv,
+    localEnabled: getLocalFileLoggingEnabled(policyEnv),
     prodOnlineEnabled: getProdOnlineLoggingEnabled(),
   });
 }
 
 export function getEffectiveConsoleCaptureEnabled() {
+  const policyEnv = getAppLogPolicyEnv();
+
   return resolveConsoleCaptureEnabled({
-    runtimeEnv: APP_RUNTIME_ENV,
-    localEnabled: getLocalFileLoggingEnabled(),
+    runtimeEnv: policyEnv,
+    localEnabled: getLocalFileLoggingEnabled(policyEnv),
     prodOnlineEnabled: getProdOnlineLoggingEnabled(),
   });
 }
 
 export function setLocalFileLoggingEnabled(nextValue: boolean) {
-  if (APP_RUNTIME_ENV === 'production') {
+  const policyEnv = getAppLogPolicyEnv();
+
+  if (policyEnv === 'production') {
     return getEffectiveFileLoggingEnabled();
   }
 
   appLogFileSettingsStore.setState(
-    APP_RUNTIME_ENV === 'development'
+    policyEnv === 'development'
       ? { developmentFileLoggingEnabled: nextValue }
       : { regressionFileLoggingEnabled: nextValue },
   );
@@ -97,16 +113,16 @@ export function subscribeAppLogFileSettings(listener: () => void) {
 }
 
 export function useAppLogFileSwitch() {
+  const policyEnv = getAppLogPolicyEnv();
   const localFileLoggingEnabled = appLogFileSettingsStore(state =>
-    resolveLocalFileLoggingEnabled(state),
+    resolveLocalFileLoggingEnabled(state, policyEnv),
   );
 
   const effectiveEnabled = getEffectiveFileLoggingEnabled();
   const consoleCaptureEnabled = getEffectiveConsoleCaptureEnabled();
-  const localDefaultEnabled =
-    getDefaultLocalAppFileLoggingEnabled(APP_RUNTIME_ENV);
-  const canToggle = APP_RUNTIME_ENV !== 'production';
-  const isOnlineControlled = APP_RUNTIME_ENV === 'production';
+  const localDefaultEnabled = getDefaultLocalAppFileLoggingEnabled(policyEnv);
+  const canToggle = policyEnv !== 'production';
+  const isOnlineControlled = policyEnv === 'production';
 
   const onToggle = useCallback(
     (nextValue?: boolean) => {
@@ -120,6 +136,7 @@ export function useAppLogFileSwitch() {
 
   return {
     runtimeEnv: APP_RUNTIME_ENV,
+    policyEnv,
     canToggle,
     isOnlineControlled,
     effectiveEnabled,

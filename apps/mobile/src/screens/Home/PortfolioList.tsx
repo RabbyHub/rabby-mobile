@@ -77,6 +77,7 @@ export const PortfolioList = ({
 
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const [foldDefi, setFoldDefi] = useState(true);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
   const loadingPortfolio = useProtocols(state => {
     if (!lowerAddress) {
@@ -335,14 +336,19 @@ export const PortfolioList = ({
         refreshControl={
           <RefreshControl
             style={styles.bgContainer}
-            onRefresh={() => {
+            onRefresh={async () => {
               if (!lowerAddress) {
                 return;
               }
-              updatePortfolio?.(lowerAddress, true);
+              setIsManualRefreshing(true);
               onRefresh?.();
+              try {
+                await updatePortfolio?.(lowerAddress, true);
+              } finally {
+                setIsManualRefreshing(false);
+              }
             }}
-            refreshing={false}
+            refreshing={isManualRefreshing}
           />
         }
       />

@@ -117,6 +117,7 @@ public class KeychainModule extends ReactContextBaseJavaModule {
     String ACCESSIBLE = "accessible";
     String ANDROID_ALLOW_AUTHENTICATED_SESSION_REUSE =
       "androidAllowAuthenticatedSessionReuse";
+    String ANDROID_ALLOW_KEY_STORE_RECOVERY = "androidAllowKeyStoreRecovery";
     String AUTH_PROMPT = "authenticationPrompt";
     String AUTH_TYPE = "authenticationType";
     String SERVICE = "service";
@@ -380,12 +381,15 @@ public class KeychainModule extends ReactContextBaseJavaModule {
       final String rules = getSecurityRulesOrDefault(options);
       final boolean allowAuthenticatedSessionReuse =
         getAndroidAllowAuthenticatedSessionReuseOrDefault(options);
+      final boolean allowKeyStoreRecovery =
+        getAndroidAllowKeyStoreRecoveryOrDefault(options);
       Log.i(
         PERF_TAG,
         "get_generic_password_start service=" + alias +
           " storage=" + storageName +
           " rules=" + rules +
-          " allowSessionReuse=" + allowAuthenticatedSessionReuse
+          " allowSessionReuse=" + allowAuthenticatedSessionReuse +
+          " allowKeyStoreRecovery=" + allowKeyStoreRecovery
       );
 
       if (mKeyguardManager == null) {
@@ -413,7 +417,8 @@ public class KeychainModule extends ReactContextBaseJavaModule {
         resultSet,
         rules,
         promptInfo,
-        allowAuthenticatedSessionReuse
+        allowAuthenticatedSessionReuse,
+        allowKeyStoreRecovery
       );
 
       final WritableMap credentials = Arguments.createMap();
@@ -822,6 +827,19 @@ public class KeychainModule extends ReactContextBaseJavaModule {
     return false;
   }
 
+  private static boolean getAndroidAllowKeyStoreRecoveryOrDefault(
+    @Nullable final ReadableMap options
+  ) {
+    if (
+      null != options &&
+      options.hasKey(Maps.ANDROID_ALLOW_KEY_STORE_RECOVERY)
+    ) {
+      return options.getBoolean(Maps.ANDROID_ALLOW_KEY_STORE_RECOVERY);
+    }
+
+    return true;
+  }
+
   /** Extract user specified storage from options. */
   @KnownCiphers
   @Nullable
@@ -938,7 +956,8 @@ public class KeychainModule extends ReactContextBaseJavaModule {
                                               @NonNull final ResultSet resultSet,
                                               @Rules @NonNull final String rules,
                                               @NonNull final PromptInfo promptInfo,
-                                              final boolean allowAuthenticatedSessionReuse)
+                                              final boolean allowAuthenticatedSessionReuse,
+                                              final boolean allowKeyStoreRecovery)
     throws CryptoFailedException, KeyStoreAccessException {
     final String storageName = resultSet.cipherStorageName;
 
@@ -949,7 +968,8 @@ public class KeychainModule extends ReactContextBaseJavaModule {
         current,
         resultSet,
         promptInfo,
-        allowAuthenticatedSessionReuse
+        allowAuthenticatedSessionReuse,
+        allowKeyStoreRecovery
       );
     }
 
@@ -966,7 +986,8 @@ public class KeychainModule extends ReactContextBaseJavaModule {
       oldStorage,
       resultSet,
       promptInfo,
-      allowAuthenticatedSessionReuse
+      allowAuthenticatedSessionReuse,
+      allowKeyStoreRecovery
     );
 
     if (Rules.AUTOMATIC_UPGRADE.equals(rules)) {
@@ -987,7 +1008,8 @@ public class KeychainModule extends ReactContextBaseJavaModule {
                                            @NonNull final CipherStorage storage,
                                            @NonNull final ResultSet resultSet,
                                            @NonNull final PromptInfo promptInfo,
-                                           final boolean allowAuthenticatedSessionReuse)
+                                           final boolean allowAuthenticatedSessionReuse,
+                                           final boolean allowKeyStoreRecovery)
   throws CryptoFailedException {
     final DecryptionResultHandler handler = getInteractiveHandler(storage, promptInfo);
     storage.decryptWithPromptPolicy(
@@ -996,7 +1018,8 @@ public class KeychainModule extends ReactContextBaseJavaModule {
       resultSet.username,
       resultSet.password,
       SecurityLevel.ANY,
-      allowAuthenticatedSessionReuse
+      allowAuthenticatedSessionReuse,
+      allowKeyStoreRecovery
     );
 
     CryptoFailedException.reThrowOnError(handler.getError());

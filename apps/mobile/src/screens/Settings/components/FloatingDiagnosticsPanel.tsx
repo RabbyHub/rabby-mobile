@@ -26,6 +26,7 @@ import {
   subscribeModalGateDebugSnapshot,
 } from '@/utils/modalGate';
 import type { ModalGateDebugSnapshot } from '@/utils/modalGate';
+import { keyringService } from '@/core/services';
 
 const modalDebugCount = makeMutable(0);
 const modalDebugSummary = makeMutable('No blocking modals');
@@ -38,6 +39,9 @@ const PANEL_WIDTH = 320;
 const PANEL_BODY_WIDTH = PANEL_WIDTH - HANDLE_SIZE;
 const PANEL_HEIGHT_MODAL_ONLY = 132;
 const PANEL_HEIGHT_FULL = 156;
+const UNLOCK_STATUS_BAR_WIDTH = 168;
+const UNLOCK_STATUS_BAR_HEIGHT = 36;
+const UNLOCK_STATUS_BAR_EDGE_PADDING = 12;
 const VERTICAL_EDGE_PADDING = 40;
 const HORIZONTAL_EDGE_PADDING = 0;
 const SIDE_LEFT = 0;
@@ -144,7 +148,117 @@ export function FloatingDiagnosticsPanel() {
     return null;
   }
 
-  return <FloatingDiagnosticsPanelContent floatingView={floatingView} />;
+  return (
+    <>
+      {floatingView.showAutoLockCountdown && (
+        <FloatingDiagnosticsPanelContent floatingView={floatingView} />
+      )}
+      {floatingView.showUnlockStatusBar && <FloatingUnlockStatusBar />}
+    </>
+  );
+}
+
+function useKeyringUnlockStatus() {
+  const [isUnlocked, setIsUnlocked] = React.useState(() =>
+    keyringService.isUnlocked(),
+  );
+
+  React.useEffect(() => {
+    const syncUnlockStatus = () => {
+      setIsUnlocked(keyringService.isUnlocked());
+    };
+
+    keyringService.on('lock', syncUnlockStatus);
+    keyringService.on('unlock', syncUnlockStatus);
+    syncUnlockStatus();
+
+    return () => {
+      keyringService.off('lock', syncUnlockStatus);
+      keyringService.off('unlock', syncUnlockStatus);
+    };
+  }, []);
+
+  return isUnlocked;
+}
+
+function FloatingUnlockStatusBar() {
+  const { styles } = useThemeStyles(getFloatingDiagnosticsPanelStyles);
+  const isUnlocked = useKeyringUnlockStatus();
+
+  const positionLeft = useSharedValue(
+    Math.max(
+      UNLOCK_STATUS_BAR_EDGE_PADDING,
+      screenLayout.width -
+        UNLOCK_STATUS_BAR_WIDTH -
+        UNLOCK_STATUS_BAR_EDGE_PADDING,
+    ),
+  );
+  const positionTop = useSharedValue(96);
+  const dragStartLeft = useSharedValue(positionLeft.value);
+  const dragStartTop = useSharedValue(positionTop.value);
+
+  const statusBarAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateX: positionLeft.value },
+        { translateY: positionTop.value },
+      ],
+    };
+  });
+
+  const panGesture = React.useMemo(() => {
+    return Gesture.Pan()
+      .minDistance(4)
+      .onStart(() => {
+        dragStartLeft.value = positionLeft.value;
+        dragStartTop.value = positionTop.value;
+      })
+      .onUpdate(event => {
+        positionLeft.value = clamp(
+          dragStartLeft.value + event.translationX,
+          UNLOCK_STATUS_BAR_EDGE_PADDING,
+          screenLayout.width -
+            UNLOCK_STATUS_BAR_WIDTH -
+            UNLOCK_STATUS_BAR_EDGE_PADDING,
+        );
+        positionTop.value = clamp(
+          dragStartTop.value + event.translationY,
+          UNLOCK_STATUS_BAR_EDGE_PADDING,
+          screenLayout.height -
+            UNLOCK_STATUS_BAR_HEIGHT -
+            UNLOCK_STATUS_BAR_EDGE_PADDING,
+        );
+      });
+  }, [dragStartLeft, dragStartTop, positionLeft, positionTop]);
+
+  return (
+    <GestureHandlerRootView
+      pointerEvents="box-none"
+      style={styles.unlockStatusPortal}>
+      <GestureDetector gesture={panGesture}>
+        <Animated.View
+          style={[
+            styles.unlockStatusBar,
+            isUnlocked
+              ? styles.unlockStatusBarUnlocked
+              : styles.unlockStatusBarLocked,
+            statusBarAnimatedStyle,
+          ]}>
+          <View
+            style={[
+              styles.unlockStatusDot,
+              isUnlocked
+                ? styles.unlockStatusDotUnlocked
+                : styles.unlockStatusDotLocked,
+            ]}
+          />
+          <Text style={styles.unlockStatusText}>
+            {isUnlocked ? 'Unlocked' : 'Locked'}
+          </Text>
+        </Animated.View>
+      </GestureDetector>
+    </GestureHandlerRootView>
+  );
 }
 
 function FloatingDiagnosticsPanelContent({
@@ -464,9 +578,60 @@ const getFloatingDiagnosticsPanelStyles = createGetStyles(colors => {
       inset: 0,
       zIndex: 999,
     },
+    unlockStatusPortal: {
+      position: 'absolute',
+      inset: 0,
+      zIndex: 1000,
+    },
     container: {
       position: 'absolute',
       backgroundColor: 'transparent',
+    },
+    unlockStatusBar: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      width: UNLOCK_STATUS_BAR_WIDTH,
+      height: UNLOCK_STATUS_BAR_HEIGHT,
+      borderRadius: 18,
+      paddingHorizontal: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      borderWidth: 1,
+      shadowColor: '#000000',
+      shadowOpacity: 0.18,
+      shadowRadius: 10,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      elevation: 8,
+    },
+    unlockStatusBarUnlocked: {
+      backgroundColor: colord('#0F172A').alpha(0.84).toRgbString(),
+      borderColor: colord('#37D67A').alpha(0.42).toRgbString(),
+    },
+    unlockStatusBarLocked: {
+      backgroundColor: colord('#0F172A').alpha(0.84).toRgbString(),
+      borderColor: colord('#FFB648').alpha(0.48).toRgbString(),
+    },
+    unlockStatusDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+    },
+    unlockStatusDotUnlocked: {
+      backgroundColor: '#37D67A',
+    },
+    unlockStatusDotLocked: {
+      backgroundColor: '#FFB648',
+    },
+    unlockStatusText: {
+      color: '#FFFFFF',
+      fontSize: 13,
+      lineHeight: 18,
+      fontWeight: '700',
     },
     handle: {
       position: 'absolute',

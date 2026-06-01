@@ -7,6 +7,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_SIZE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 export const GiftInfoModal = ({
   visible,
@@ -44,7 +49,10 @@ export const GiftInfoModal = ({
       onDismiss={onClose}
       enableDynamicSizing={false}>
       <BottomSheetView
-        style={[styles.modalContent, { paddingBottom: bottom + 20 }]}>
+        style={[
+          styles.modalContent,
+          { paddingBottom: getBottomButtonBottomOffset(bottom) },
+        ]}>
         {header}
         {description}
         <TouchableOpacity
@@ -69,15 +77,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   gotItButton: {
     backgroundColor: colors2024['brand-default'],
     borderRadius: 12,
-    paddingVertical: 16,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
     marginTop: 30,
-    marginBottom: 56,
   },
   gotItButtonText: {
-    fontSize: 20,
+    fontSize: BOTTOM_BUTTON_TEXT_SIZE,
     fontStyle: 'normal',
     fontWeight: '700',
     color: colors2024['neutral-InvertHighlight'],

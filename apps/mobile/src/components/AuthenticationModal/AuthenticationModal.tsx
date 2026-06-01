@@ -208,7 +208,6 @@ const getFooterStyle = createGetStyles(colors => {
     confirmTitleStyle: {
       // ...makeDebugBorder('yellow'),
       fontSize: 15,
-      lineHeight: 18,
       fontWeight: '500',
       color: colors['neutral-title2'],
       // flex: 1,
@@ -217,7 +216,7 @@ const getFooterStyle = createGetStyles(colors => {
 });
 
 const DFLT_VALIDATE = async (password: string) => {
-  return apisLock.throwErrorIfInvalidPwd(password);
+  return apisLock.verifyPasswordOrUnlock(password);
 };
 
 export const AuthenticationModal = ({

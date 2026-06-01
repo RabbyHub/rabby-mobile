@@ -378,16 +378,16 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   primaryTitle: {
     color: colors2024['brand-default'],
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 18,
     fontFamily: 'SF Pro Rounded',
-    lineHeight: 18,
+    lineHeight: 22,
   },
   ghostTitle: {
     color: colors2024['neutral-title-1'],
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 18,
     fontFamily: 'SF Pro Rounded',
-    lineHeight: 18,
+    lineHeight: 22,
   },
   buttonContainer: {
     flexDirection: 'row',

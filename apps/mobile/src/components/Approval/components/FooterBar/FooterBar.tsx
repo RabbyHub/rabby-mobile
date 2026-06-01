@@ -24,6 +24,10 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Text } from '@/components/Typography';
 import { shouldUseLegacyApprovalFooterAutoSwitch } from '../TxComponents/GasSelector/approvalGasDisplay';
 import { GasAccountTopUpWaitCallback } from '@/screens/GasAccount/components/topUpContinuation';
+import {
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
+  BOTTOM_BUTTON_TOP_OFFSET,
+} from '@/constant/layout';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   isSwap?: boolean;
@@ -68,8 +72,8 @@ const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     wrapper: {
       paddingHorizontal: 20,
-      paddingTop: 12,
-      paddingBottom: 40,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+      paddingBottom: BOTTOM_BUTTON_BOTTOM_OFFSET,
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
       backgroundColor: colors['neutral-bg-1'],

@@ -20,6 +20,11 @@ import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/components/Typography';
 import { SPOT_STABLE_COIN_NAME } from '../PerpsSpotSwapPopup';
 import { formatPerpsCoin } from '@/utils/perps';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 // Reverse map: '@166' → 'USDT', '@150' → 'USDE', '@230' → 'USDH'
 const SPOT_COIN_TO_NAME: Record<string, string> = Object.fromEntries(
@@ -378,6 +383,8 @@ export const PerpsHistoryDetailPopup: React.FC<{
             <Button
               type="hyperliquid"
               title={t('page.perps.historyDetail.gotItBtn')}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               onPress={onClose}
             />
           </AutoLockView>
@@ -387,12 +394,13 @@ export const PerpsHistoryDetailPopup: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+const getStyle = createGetStyles2024(ctx => {
+  const { colors2024, isLight, safeAreaInsets } = ctx;
   return {
     container: {
       // height: '100%',
       // backgroundColor: colors2024['neutral-bg-1'],
-      paddingBottom: 56,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
       paddingHorizontal: 20,
       display: 'flex',
       flexDirection: 'column',

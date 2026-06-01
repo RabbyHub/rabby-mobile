@@ -2146,6 +2146,7 @@
       "addCustomNetwork": "カスタムネットワークを追加",
       "clearPending": "ローカルで保留をクリア",
       "autoLockTime": "自動ロック時間",
+      "lockWallet": "ウォレットをロック",
       "faceId": "Face ID",
       "themeMode": "テーマモード",
       "clearPendingDesc1": "これにより、すべての未処理の取引がクリアされます。これは、一部のケースでRabbyにおける取引の状態がオンチェーンの状態と一致しないという問題を解決するのに役立ちます。",
@@ -2522,9 +2523,9 @@
         "depositBtn": "入金",
         "available": "利用可能",
         "withdrawBtn": "引き出す",
-        "loginBtn": "Trading Perpsにログイン",
+        "loginBtn": "ログインしてPerpsを取引",
         "title": "永続契約を取引する",
-        "loginDesc": "アドレスでログインし、資金を入金してperpsの取引を開始してください。",
+        "loginDesc": "現在のアドレスでログインし、資金を入金するとPerpsの取引を開始できます。",
         "learnBtn": "Perpsについて学ぶ",
         "learnMore": "もっと学ぶ",
         "addFunds": "資金を追加"
@@ -2533,13 +2534,13 @@
         "step5Title": "清算",
         "step2Title": "ロング",
         "step4Title": "レバレッジの調整",
-        "step1Title": "マスターパー​​ペチュアルフューチャーズ",
+        "step1Title": "無期限先物を理解する",
         "step3Title": "ショート",
-        "step4Desc": "レバレッジは、あなたが投入した金額以上で取引できるようにします。これにより、利益と損失の両方が増加する可能性があります。",
-        "step1Desc": "永続的な先物契約では、資産を取引しているだけではありません。次に何が起こると考えているかを取引しています。",
+        "step4Desc": "レバレッジを使うと、投入した資金を上回る名目金額で取引できます。利益も損失も拡大する可能性があります。",
+        "step1Desc": "無期限先物では、単に資産を取引するだけでなく、次の価格変動に対する見通しを取引します。",
         "step2Desc": "価格が上昇すると予想する場合は、ロングを開きます。価格が上昇すれば利益を得ますが、下落すれば損失が発生します。",
         "step3Desc": "価格が下がると予想したら、ショートを開きます。価格が下がれば利益が得られます。価格が上がれば損失が出ます。",
-        "step5Desc": "すべてのポジションには清算価格があります。もし市場価格がその価格に達すると、あなたのポジションは閉じられます。高いレバレッジを使用すると、清算されるリスクが高まります。"
+        "step5Desc": "各ポジションには清算価格があります。市場価格がその価格に達すると、ポジションはクローズされます。レバレッジが高いほど、清算リスクも高くなります。"
       },
       "PerpsDepositPopup": {
         "title": "入金",
@@ -2659,15 +2660,15 @@
         "date": "日付"
       },
       "PerpsSelectTokenPopup": {
-        "title": "入金するトークンを選択してください",
+        "title": "入金するトークンを選択",
         "balance": "残高",
         "token": "トークン",
-        "noTokens": "トークンがありません"
+        "noTokens": "トークンなし"
       },
       "PerpsAccountLogoutPopup": {
         "logout": "ログアウト",
         "title": "現在のアドレスからログアウト",
-        "desc": "現在のPerpsアカウントからログアウトしています。このアドレスでログインすることで、いつでも復元できます。"
+        "desc": "現在のPerpsアカウントからログアウトします。このアドレスで再度ログインすれば、いつでも復元できます。"
       },
       "PerpsDepositCard": {
         "availableToTrade": "取引可能:",
@@ -2675,7 +2676,7 @@
         "swap": "スワップ"
       },
       "PerpsAccountSelectorPopup": {
-        "hyperliquidBalance": "パープス残高",
+        "hyperliquidBalance": "Perps残高",
         "noPosition": "ポジションなし",
         "notActivatedAddress": "未アクティブ",
         "lastUsed": "最後の使用",
@@ -2700,7 +2701,7 @@
         "empty": "結果が見つかりませんでした",
         "searchPosition": "ポジションを検索",
         "searchPerps": "永続契約を検索",
-        "openPosition": "ポジションをオープンする"
+        "openPosition": "ポジションを開く"
       },
       "PerpsRiskPopup": {
         "level": {
@@ -2713,13 +2714,13 @@
         "liquidationPrice": "清算価格",
         "subtitle": "リアルタイム清算距離 (%)",
         "distanceLabel": "清算距離",
-        "liqIntro": "清算距離 (%) は、現在の価格が清算価格からどれだけ離れているかを示します。距離が大きいほど安全なポジションを示し、距離が小さいほど清算リスクが高いことを意味します。",
+        "liqIntro": "清算距離（%）は、現在価格が清算価格からどれだけ離れているかを示します。距離が大きいほどポジションは安全で、距離が小さいほど清算リスクは高くなります。",
         "liqDistanceTipsShort": "上昇すると <1>{{distance}}</1> がリキデーションを引き起こします。",
         "liqDistanceTipsLong": "<1>{{distance}}</1>まで下がると、清算が発生します。"
       },
-      "closeAllConfirmTitle": "すべてのポジションをクローズすることを確認する",
-      "closeAll": "すべて閉じる",
-      "closeAllConfirmMessage": "すべてのオープンポジションは、市場価格でクローズされます。",
+      "closeAllConfirmTitle": "すべてのポジションを閉じる確認",
+      "closeAll": "すべてのポジションを閉じる",
+      "closeAllConfirmMessage": "すべての未決済ポジションが市場価格で閉じられます。",
       "assetPage": {
         "hyperliquidPosition": "Hyperliquidポジション"
       },
@@ -2742,10 +2743,10 @@
       },
       "EnableUnifiedAccount": {
         "title": "統合アカウントを有効にする",
-        "desc": "統合アカウントは、取引体験を簡素化するための推奨アカウントモードです。スポットとPerpsの残高は全トークンで統合され、クロス・マージンが全利用可能な資産でサポートされます。",
+        "desc": "Unified Accountは、取引体験を簡素化するために推奨されるアカウントモードです。すべてのトークンでSpotとPerpsの残高が統合され、利用可能なすべての資産でクロスマージンがサポートされます。",
         "confirm": "確認する",
         "cancel": "キャンセル",
-        "importantTips": "統合アカウントが有効になると、すべてのUSDC担保がクロス・マージンとして使用されます。",
+        "importantTips": "Unified Accountを有効にすると、すべてのUSDC担保がクロスマージンとして使用されます。",
         "important": "重要"
       },
       "PerpsSpotSwap": {
@@ -2764,7 +2765,7 @@
         "minimumAmount": "最小交換金額は {{amount}} です"
       },
       "PerpMarginModePopup": {
-        "crossRequiresUnified": "この取引ペアのクロス・マージンには統合アカウントが必要です。有効にしますか？"
+        "crossRequiresUnified": "この取引ペアでクロスマージンを使うにはUnified Accountが必要です。有効にしますか？"
       },
       "PerpsMultiBalance": {
         "title": "Hyperliquid 残高",
@@ -2808,10 +2809,10 @@
         "slPrice": "ストップロス価格",
         "sizeTips": "あなたの取引の総価値または数量で、マージンとレバレッジによって設定されます。",
         "entryPrice": "エントリープライス",
-        "fundingPaymentsTips": "これはポジションがオープンされて以来のネットファンディングペイメントです。ファンディングは、トレーダーが永続契約の価格をトークンの実際の価格に近づけるために支払うか受け取る毎時の手数料です。",
+        "fundingPaymentsTips": "これはポジションを開いて以降の純ファンディング支払いです。ファンディングは、無期限契約の価格をトークンの実勢価格に近づけるために、トレーダーが毎時支払う、または受け取る手数料です。",
         "liquidationPriceTips": "あなたのマージンが維持マージンレベルを下回ったときに、さらなる損失を防ぐために取引所によって自動的にポジションが閉じられる価格。",
         "fundingGains": "資金利益",
-        "fundingGainsTips": "これはポジションがオープンされて以来のネットファンディング利益です。ファンディングは、トレーダーがパーペチュアル契約の価格をトークンの実際の価格に近づけるために支払ったり受け取ったりする毎時の手数料です。",
+        "fundingGainsTips": "これはポジションを開いて以降の純ファンディング収益です。ファンディングは、無期限契約の価格をトークンの実勢価格に近づけるために、トレーダーが毎時支払う、または受け取る手数料です。",
         "currentPrice": "現在の価格",
         "marginMode": "マージンモード",
         "realizedPnl": "実現PNL",
@@ -2819,7 +2820,7 @@
         "details": "詳細情報",
         "settings": "設定",
         "unrealizedPnl": "未実現PNL",
-        "fundingTipsBold": "これは、ポジションがオープンして以来、あなたの合計資金調達が決済されたことを示しています。<bold>緑（プラス）</bold>の値は、他のトレーダーから得た利益を意味し、<bold>赤（マイナス）</bold>の値は、彼らに支払った資金調達コストを示しています。",
+        "fundingTipsBold": "これはポジションを開いて以降に決済されたファンディングの合計です。<bold>緑（プラス）</bold>の値は他のトレーダーからファンディングを受け取ったことを示し、<bold>赤（マイナス）</bold>の値は支払ったファンディングコストを示します。",
         "crossTips": "クロスマージンモードでは、単一ポジションの清算価格は参考のための推定値です。"
       },
       "PerpsInfo": {
@@ -2828,7 +2829,7 @@
         "24Vol": "24時間取引量",
         "openInterest": "オープンインタレスト",
         "openInterestTips": "この契約における全ユーザーの合計未決済ポジション。",
-        "fundingTips": "これは、トレーダーが永続契約の価格をトークンの実際の価格に近づけるために支払うか受け取る毎時料金です。正の場合、ロングはショートに支払います。負の場合、ショートはロングに支払います。",
+        "fundingTips": "これは、無期限契約の価格をトークンの実勢価格に近づけるために、トレーダーが毎時支払う、または受け取る手数料です。プラスの場合はロングがショートに支払い、マイナスの場合はショートがロングに支払います。",
         "fundingRate": "資金調達率"
       },
       "PerpsIntro": {
@@ -2952,7 +2953,7 @@
         "available": "利用可能",
         "perpsBalance": "永続契約残高",
         "insufficientMarginToReduce": "ポジションを減少させるための証拠金が不足しています。",
-        "liqDistance": "Liq.Distance"
+        "liqDistance": "清算距離"
       },
       "PerpsAddPositionPopup": {
         "addSize": "サイズを追加",
@@ -2965,8 +2966,8 @@
         "cannotChangeMarginMode": "オープンポジションではマージンモードを変更できません",
         "crossTitle": "クロスマージン",
         "isolatedTitle": "アイソレーテッドマージン",
-        "isolatedDesc": "各ポジションはそれぞれ独自のマージンを使用します。損失はそのポジションに限定されますが、より簡単に清算される可能性があります。",
-        "crossDesc": "すべてのポジションは同じマージンを共有しています。これにより、単一のポジションが清算される可能性が低くなりますが、極端な市場の動きではすべてのクロスマージン資金を失う可能性があります。"
+        "isolatedDesc": "各ポジションは個別の証拠金を使用します。損失はそのポジションに限定されますが、清算されやすくなります。",
+        "crossDesc": "すべてのポジションが同じ証拠金を共有します。単一ポジションが清算される可能性は下がりますが、極端な相場変動ではクロスマージンの資金をすべて失う可能性があります。"
       },
       "guideEntry": {
         "gotIt": "わかった"
@@ -3033,8 +3034,8 @@
         "repayWith": "返済するには"
       },
       "supplyDetail": {
-        "approveAndSupply": "承認と供給",
-        "actions": "供給",
+        "approveAndSupply": "承認して預け入れ",
+        "actions": "預け入れ",
         "availableToBorrow": "借りることができます",
         "supplyAPY": "供給APY",
         "unavailable": "利用できません",
@@ -3056,7 +3057,7 @@
         "swapDebt": "スワップ",
         "borrowed": "借入した",
         "noSupplyDesc": "借りるには、担保として資産を提供する必要があります。",
-        "noSupplyPrefix": "供給なし:"
+        "noSupplyPrefix": "預け入れなし："
       },
       "popup": {
         "available": "利用可能",
@@ -3076,14 +3077,14 @@
         "reachCapTip": "この資産は借り入れ上限に達しました。"
       },
       "supplyOverview": {
-        "title": "供給の詳細",
+        "title": "預け入れ詳細",
         "walletBalance": "ウォレット残高",
-        "totalSupplied": "供給総額",
+        "totalSupplied": "預け入れ合計",
         "mySupply": "私の供給",
-        "availableToSupply": "提供可能",
+        "availableToSupply": "預け入れ可能",
         "reachCap": "この資産は供給上限に達しました。この市場から供給されるものはありません。",
         "almostCap": "この資産は借入限度額にほぼ達しています。この市場から借りられるのは{{available}}のみです。",
-        "useAsCollateral": "担保として使用する",
+        "useAsCollateral": "担保として使用",
         "collateral": "担保"
       },
       "risk": {
@@ -3092,7 +3093,7 @@
         "warning": "この金額を借りると、あなたのヘルスファクターが清算のリスクレベルまで下がります。",
         "toggleCollateralWarning": "この資産を担保として無効にすると、清算のリスクがあるレベルまでヘルスファクターが低下します。",
         "emodeBlockWarning": "Eモードを無効にすると、あなたのヘルスファクターは清算の危険なレベルに下がります。",
-        "blockEmodeWarning": "E-Modeを無効にすることはできません。そうすると清算が発生する可能性があります。E-Modeを終了するには、供給または借用ポジションを返済してください。"
+        "blockEmodeWarning": "E-Modeを無効にできません。清算を引き起こす可能性があるためです。E-Modeを終了するには、担保を追加するか借入ポジションを返済してください。"
       },
       "lqDescription": {
         "desc": "清算価値",
@@ -3134,18 +3135,18 @@
         "error": "AAVEサービスにエラーがあります。後で再試行してください。"
       },
       "toggleCollateralModal": {
-        "openTitle": "レビューの有効化",
-        "closeTitle": "レビューの無効化",
+        "openTitle": "有効化を確認",
+        "closeTitle": "無効化を確認",
         "enableIsolationModeTitle": "アイソレーションモードを有効にする",
         "exitIsolationModeDesc": "アイソレーションモードが終了し、他のトークンを担保として使用できるようになります。",
-        "closeDesc": "この資産を担保として無効にすると、あなたの借入能力とヘルスファクターに影響を与えます。",
-        "riskToLiquidationText": "この通貨の担保モードとしての使用を切り替えることはできません。なぜなら、それが担保コールを引き起こすからです。",
+        "closeDesc": "この資産を担保として使わないようにすると、借入可能額とHealth Factorに影響します。",
+        "riskToLiquidationText": "この資産の担保状態は変更できません。清算を引き起こす可能性があるためです。",
         "exitIsolationModeTitle": "アイソレーションモードを終了する",
         "openDesc": "この資産を担保として有効にすることで、借入能力とヘルスファクターが増加します。ただし、ヘルスファクターが1未満になると、清算される可能性があります。",
         "enableIsolationModeDesc": "アイソレーションモードに入っています。アイソレーションモードでは、他の資産を担保として提供することはできません。グローバルデットシーリングが隔離された資産の借入能力を制限します。アイソレーションモードから退出するには、他の資産を借りる前にCRVを担保として無効にしてください。",
         "toggleRiskTexts": {
           "doNotHaveSuppliesInThisCurrency": "この通貨に供給がありません。",
-          "canNotSwitchUsageAsCollateralMode": "この通貨の担保モードへの切り替えはできません。担保コールが発生するためです。",
+          "canNotSwitchUsageAsCollateralMode": "この資産の担保状態は変更できません。清算を引き起こす可能性があるためです。",
           "zeroLTVWithdrawBlocked": "ゼロLTV（{{assets}}）の資産は、このアクションを実行するために引き出すか、担保として無効にする必要があります。",
           "canNotUseThisCurrencyAsCollateral": "この通貨を担保として使用することはできません。"
         }
@@ -3205,23 +3206,23 @@
         "actions": {
           "amount": "金額",
           "select": "選択します",
-          "title": "債務スワップ",
-          "swapTo": "スワップする",
-          "borrowed": "借りた"
+          "title": "負債を変換",
+          "swapTo": "変換先",
+          "borrowed": "借入済み"
         },
         "overview": {
-          "borrowValueAfter": "スワップ後の借入残高",
+          "borrowValueAfter": "変換後の借入残高",
           "borrowAPY": "借りるapy",
           "title": "取引の概要"
         },
         "button": {
-          "swap": "スワップ"
+          "swap": "変換"
         },
-        "entryTips": "ワンクリックで借りた資産をスワップし、手順と手数料を削減します。",
+        "entryTips": "借入資産をワンクリックで変換し、手順と手数料を減らします。",
         "borrowBalance": "借入残高",
-        "title": "スワップ 借入 ポジション",
+        "title": "借入ポジションを変換",
         "lpRiskWarning": "スワップ後の健康係数が低下しています。あなたのポジションは、清算のリスクが高くなります。",
-        "priceImpactTips": "高い価格影響（{{lostValue}}）。このルートは、流動性が低いか小さな注文サイズのために、より多く返す可能性があります。",
+        "priceImpactTips": "価格への影響が大きいです（{{lostValue}}）。流動性が低い、または注文サイズが小さいため、このルートの見積もりは大きくずれる可能性があります。",
         "lpDangerWarning": "このスワップ後のあなたのヘルスファクターは非常に低くなり、清算のリスクがあります。安全を保つために、別の資産を選ぶか、スワップ額を減らしてください。",
         "maxLtvWarning": "新しい借入ポジションをカバーするための担保が不足しています。ウォレットには、債務スイッチを実行するために残っている借入権限が必要です。"
       },
@@ -3230,9 +3231,9 @@
         "desc": "1.0を下回ると、あなたの担保が清算される可能性があります。"
       },
       "disableBorrowTip": {
-        "desc": "供給がありません：借りるためには、担保として資産を供給する必要があります。"
+        "desc": "預け入れなし：借りるには、まず資産を担保として預け入れる必要があります。"
       },
-      "totalSupplied": "総供給量",
+      "totalSupplied": "預け入れ合計",
       "totalBorrowed": "合計借入額",
       "netApy": "ネットAPY",
       "repayWithCollateral": {
@@ -3248,7 +3249,7 @@
           "repay": "返済"
         },
         "toRepay": "返済予定額",
-        "repayWith": "担保として返済するための",
+        "repayWith": "返済に使う担保",
         "collateralNotEnough": "選択した金額よりも担保残高が低いです。",
         "insufficientLiquidity": "流動性が不足しています。",
         "frozenCollateral": "この資産はAaveコミュニティの決定により凍結されています。"
@@ -3259,7 +3260,7 @@
           "balance": "残高"
         },
         "title": "リペイトークンを選択してください",
-        "zeroLtvCollateralTips": "あなたは以下のLTV = 0の担保を持っているため、担保返済ルールに従ってまずこれらの担保で返済することしかできません。"
+        "zeroLtvCollateralTips": "以下のLTV = 0の担保があります。担保による返済ルールに従い、まずこれらの担保で返済する必要があります。"
       },
       "dappSelect": {
         "title": "レンディングプロバイダーを選択してください"
