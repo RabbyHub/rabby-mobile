@@ -155,10 +155,13 @@ export function makeClassicalBottomSheetProps(ctx: {
     }
     return {
       handleStyle: {
-        backgroundColor: ctx.colors['neutral-bg-4'],
+        backgroundColor: ctx.colors2024['neutral-bg-4'],
       },
       handleIndicatorStyle: {
-        backgroundColor: ctx.colors['neutral-line'],
+        backgroundColor: ctx.colors2024['neutral-line'],
+      },
+      backgroundStyle: {
+        backgroundColor: ctx.colors2024['neutral-bg-4'],
       },
     };
   }
