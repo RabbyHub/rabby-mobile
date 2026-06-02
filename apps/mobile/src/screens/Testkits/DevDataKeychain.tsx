@@ -123,6 +123,12 @@ const KEYCHAIN_STORAGE_OPTIONS = [
       'Android Keystore AES-GCM path introduced by react-native-keychain 10.',
   },
   {
+    key: apisKeychain.KEYCHAIN_STORAGE_TYPES.AES_GCM_NO_AUTH,
+    label: 'AES / GCM NoAuth',
+    description:
+      'Rabby business path: no-auth keychain secret plus ReactNativeBiometrics system prompt.',
+  },
+  {
     key: apisKeychain.KEYCHAIN_STORAGE_TYPES.KC,
     label: 'iOS Keychain',
     description: 'System keychain storage on iOS / visionOS.',
@@ -238,6 +244,20 @@ type V9CurrentRewriteResult = {
   targetStorage: KeychainStorageType;
   rewrittenAt: string;
 };
+
+function getAndroidAcmAlgorithmDebugLabel(cipherName?: string | null) {
+  switch (cipherName) {
+    case apisKeychain.KEYCHAIN_STORAGE_TYPES.RSA:
+      return 'RSA/ECB/PKCS1Padding';
+    case apisKeychain.KEYCHAIN_STORAGE_TYPES.AES:
+      return 'AES/CBC/PKCS7Padding';
+    case apisKeychain.KEYCHAIN_STORAGE_TYPES.AES_GCM:
+    case apisKeychain.KEYCHAIN_STORAGE_TYPES.AES_GCM_NO_AUTH:
+      return 'AES/GCM/NoPadding';
+    default:
+      return null;
+  }
+}
 
 type ExportableV9ReadCredentials = Omit<V9ReadCredentials, 'password'> & {
   password: string | null;
@@ -818,6 +838,10 @@ function KeychainSummaryCard({
           `Bio: ${state.supportedBiometryType || '-'}`,
           `Stored: ${state.storedCipherStorageName || '-'}`,
           `Resolved: ${state.resolvedCipherStorageName || '-'}`,
+          `ACM: ${
+            getAndroidAcmAlgorithmDebugLabel(state.resolvedCipherStorageName) ||
+            '-'
+          }`,
           `Key Alias: ${state.hasKeystoreAlias ? 'true' : 'false'}`,
           `Key Compat: ${
             state.keystoreIsCompatibleWithCurrentCipher === null
@@ -905,6 +929,11 @@ function AndroidKeychainStatusCard({
     {
       label: 'Resolved Cipher',
       value: state.resolvedCipherStorageName,
+      allowHorizontalOverflow: true,
+    },
+    {
+      label: 'ACM Algorithm',
+      value: getAndroidAcmAlgorithmDebugLabel(state.resolvedCipherStorageName),
       allowHorizontalOverflow: true,
     },
     {
@@ -1000,6 +1029,14 @@ function AndroidKeychainStatusCard({
       <StatusRow
         label="Resolved Cipher"
         value={state.resolvedCipherStorageName}
+        allowHorizontalOverflow
+      />
+      <StatusRow
+        label="ACM Algorithm"
+        value={getAndroidAcmAlgorithmDebugLabel(
+          state.resolvedCipherStorageName,
+        )}
+        selectable
         allowHorizontalOverflow
       />
       <StatusRow
@@ -1232,6 +1269,10 @@ function makeSafeKeychainDebugLogState(
       state.platform === 'android' ? state.resolvedCipherStorageName : null,
     storedCipherStorageName:
       state.platform === 'android' ? state.storedCipherStorageName : null,
+    acmAlgorithm:
+      state.platform === 'android'
+        ? getAndroidAcmAlgorithmDebugLabel(state.resolvedCipherStorageName)
+        : null,
     hasKeystoreAlias:
       state.platform === 'android' ? state.hasKeystoreAlias : null,
     keystoreUserAuthenticationRequired:

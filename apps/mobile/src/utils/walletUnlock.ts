@@ -4,6 +4,7 @@ import {
   isAuthenticatedByBiometrics,
   RequestGenericPurpose,
 } from '@/core/apis/keychain';
+import { IS_ANDROID } from '@/core/native/utils';
 import { preferenceService } from '@/core/services';
 import { toastUnlocking } from '@/utils/toastUnlocking';
 import {
@@ -87,7 +88,10 @@ async function canRequestStoredCredentialUnlock() {
   }
 
   const authType = apisKeychain.getAuthenticationType();
-  if (authType !== apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE) {
+  const canFallbackToDevicePasscode =
+    authType === apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE ||
+    (IS_ANDROID && authType === apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS);
+  if (!canFallbackToDevicePasscode) {
     return false;
   }
 
