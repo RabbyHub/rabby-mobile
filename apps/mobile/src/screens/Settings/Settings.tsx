@@ -865,6 +865,17 @@ function DevSettingsBlocks({
               },
             },
             {
+              label: 'WalletConnect',
+              icon: RcCode,
+              onPress: () => {
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackTestkits, {
+                    screen: RootNames.DevUIWalletConnect,
+                  }),
+                );
+              },
+            },
+            {
               label: 'App Log Verification',
               icon: RcCode,
               onPress: () => {

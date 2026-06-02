@@ -13,6 +13,7 @@ export { default as DevUIScreenContainerShowCase } from '@/screens/Testkits/DevU
 export { default as DevUIDapps } from '@/screens/Testkits/DevUIDapps';
 export { default as DevUIBuiltInPages } from '@/screens/Testkits/DevUIBuiltInPages';
 export { default as DevUIPermissions } from '@/screens/Testkits/DevUIPermissions';
+export { default as DevUIWalletConnect } from '@/screens/Testkits/DevUIWalletConnect';
 export { default as DevCapabilityFile } from '@/screens/Testkits/DevCapabilityFile';
 export { default as DevDataSQLite } from '@/screens/Testkits/DevDataSQLite';
 export { default as DevDataKeychain } from '@/screens/Testkits/DevDataKeychain';

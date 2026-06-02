@@ -7,6 +7,7 @@ export enum MMKV_FILE_NAMES {
   CEXID = 'mmkv.cexid',
   BALANCE_24H = 'mmkv.balance24h',
   TESTNET_BALANCE = 'mmkv.testnetBalance',
+  WALLETCONNECT = 'mmkv.walletconnect',
 
   LENDING_DATA_CACHE = 'mmkv.lendingDataCache',
 }
@@ -15,6 +16,7 @@ export const APP_MMKV_KEYS = {
   LEGACY_KEYRING_STATE: 'keyringState',
   MINI_SIGN_CUSTOM_GAS: 'miniSignCustomGas',
   NOTIFICATION: 'notification',
+  WALLETCONNECT_SESSION_METADATA: 'walletConnectSessionMetadata',
 } as const;
 
 export const KEYCHAIN_MMKV_KEYS = {
