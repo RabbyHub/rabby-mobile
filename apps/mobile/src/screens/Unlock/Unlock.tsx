@@ -532,7 +532,7 @@ export default function UnlockScreen() {
         await apisKeychain.requestGenericPassword({
           purpose: RequestGenericPurpose.DECRYPT_PWD,
           shouldAttachTrustedVaultKeyString: !isAndroid,
-          skipPostDecryptKeychainRewrite: isAndroid,
+          deferPostDecryptKeychainRewrite: isAndroid,
           onPlainPassword: async (password, credentials) => {
             if (!isBiometricActionActive(actionId)) {
               hideAuthToastRef.current?.();

@@ -1,6 +1,7 @@
 import { EncryptorAdapter } from '@rabby-wallet/service-keyring';
 import { NativeModules, Platform } from 'react-native';
 import ReactNativeBiometrics from 'react-native-biometrics';
+import DeviceInfo from 'react-native-device-info';
 
 import i18n from '@/utils/i18n';
 import { DEFAULT_RABBY_MOBILE_CODE } from '@/constant/env';
@@ -31,6 +32,12 @@ const CANCELSTR = i18n.t('native.authentication.auth_prompt_cancel');
 const isAndroid = Platform.OS === 'android';
 
 let _rnBiometricsInstance: ReactNativeBiometrics | null = null;
+type RNBiometricsSimplePromptOptions = Parameters<
+  ReactNativeBiometrics['simplePrompt']
+>[0] & {
+  allowDeviceCredentials?: boolean;
+};
+
 function getRNBiometrics(): ReactNativeBiometrics {
   if (!_rnBiometricsInstance) {
     _rnBiometricsInstance = new ReactNativeBiometrics({
@@ -855,22 +862,64 @@ export function createBusinessKeychainApi({
       credentials.storage === KEYCHAIN_STORAGE_TYPES.AES_GCM_NO_AUTH &&
       isAuthenticatedByBiometrics()
     ) {
-      const [supportedBiometry, passcodeAvailable] = await Promise.all([
-        keychainModule.getSupportedBiometryType(),
-        typeof keychainModule.isPasscodeAuthAvailable === 'function'
-          ? keychainModule.isPasscodeAuthAvailable().catch(() => false)
-          : Promise.resolve(false),
-      ]);
+      const [supportedBiometry, keychainPasscodeAvailable, keyguardSecure] =
+        await Promise.all([
+          keychainModule.getSupportedBiometryType(),
+          typeof keychainModule.isPasscodeAuthAvailable === 'function'
+            ? keychainModule.isPasscodeAuthAvailable().catch(() => false)
+            : Promise.resolve(false),
+          DeviceInfo.isPinOrFingerprintSet().catch(() => false),
+        ]);
+      const passcodeAvailable = keychainPasscodeAvailable || keyguardSecure;
+
+      traceAndroidKeychainPerf('system_auth_prompt_start', {
+        storage: credentials.storage,
+        supportedBiometry: supportedBiometry || null,
+        passcodeAvailable,
+        keychainPasscodeAvailable,
+        keyguardSecure,
+        allowDeviceCredentials: true,
+      });
 
       if (!supportedBiometry && !passcodeAvailable) {
+        traceAndroidKeychainPerf('system_auth_prompt_unavailable', {
+          storage: credentials.storage,
+          supportedBiometry: supportedBiometry || null,
+          passcodeAvailable,
+          keychainPasscodeAvailable,
+          keyguardSecure,
+        });
         throw new Error(
           'msg: No authentication method (biometrics or device PIN) is available on this device',
         );
       }
 
-      const promptResult = await getRNBiometrics().simplePrompt({
-        promptMessage: i18n.t('native.authentication.auth_prompt_desc'),
+      let promptResult: Awaited<
+        ReturnType<ReactNativeBiometrics['simplePrompt']>
+      >;
+      try {
+        promptResult = await getRNBiometrics().simplePrompt({
+          promptMessage: i18n.t('native.authentication.auth_prompt_desc'),
+          allowDeviceCredentials: true,
+        } as RNBiometricsSimplePromptOptions);
+      } catch (error) {
+        traceAndroidKeychainPerf('system_auth_prompt_error', {
+          storage: credentials.storage,
+          supportedBiometry: supportedBiometry || null,
+          passcodeAvailable,
+          keychainPasscodeAvailable,
+          keyguardSecure,
+          error: getErrorMessage(error),
+        });
+        throw error;
+      }
+
+      traceAndroidKeychainPerf('system_auth_prompt_end', {
+        storage: credentials.storage,
+        success: promptResult.success,
+        error: promptResult.error || null,
       });
+
       if (!promptResult.success) {
         throw new Error(
           promptResult.error
@@ -987,10 +1036,18 @@ export function createBusinessKeychainApi({
   function shouldUpgradeBiometricsToPasscodeCapableEntry(storage?: string) {
     const authType = getAuthenticationType();
 
+    if (!isAuthenticatedByBiometrics()) {
+      return false;
+    }
+
+    if (authType === KEYCHAIN_AUTH_TYPES.BIOMETRICS) {
+      return true;
+    }
+
     return (
-      isAuthenticatedByBiometrics() &&
-      (authType === KEYCHAIN_AUTH_TYPES.BIOMETRICS ||
-        (isAndroid && storage === LEGACY_RSA_STORAGE_TYPE))
+      isAndroid &&
+      !!storage &&
+      storage !== KEYCHAIN_STORAGE_TYPES.AES_GCM_NO_AUTH
     );
   }
 
@@ -1147,6 +1204,7 @@ export function createBusinessKeychainApi({
     authenticationType,
     skipBiometricsPasscodeUpgrade = false,
     skipPostDecryptKeychainRewrite = false,
+    deferPostDecryptKeychainRewrite = false,
   }: {
     purpose?: T;
     onPlainPassword?: (
@@ -1159,6 +1217,7 @@ export function createBusinessKeychainApi({
     authenticationType?: KEYCHAIN_AUTH_TYPES;
     skipBiometricsPasscodeUpgrade?: boolean;
     skipPostDecryptKeychainRewrite?: boolean;
+    deferPostDecryptKeychainRewrite?: boolean;
   }): Promise<null | DefaultRet> {
     const instance = await waitInstance();
     const startedAt = Date.now();
@@ -1171,6 +1230,7 @@ export function createBusinessKeychainApi({
         androidAllowKeyStoreRecovery,
         shouldAttachTrustedVaultKeyString,
         skipPostDecryptKeychainRewrite,
+        deferPostDecryptKeychainRewrite,
       });
       const androidAccessControl =
         getAndroidRequestAccessControl(authenticationType);
@@ -1248,6 +1308,26 @@ export function createBusinessKeychainApi({
             );
           }
         };
+        const runPostDecryptKeychainRewrite = async () => {
+          if (!deferPostDecryptKeychainRewrite) {
+            await maybeRewriteStoredCredentialsAfterDecrypt();
+            return;
+          }
+
+          traceAndroidKeychainPerf('post_decrypt_keychain_rewrite_deferred', {
+            elapsedMs: Date.now() - startedAt,
+            usedFallbackRabbitCode,
+            hasEmbeddedVaultKeyString: !!decrypted.vaultKeyString,
+          });
+          setTimeout(() => {
+            maybeRewriteStoredCredentialsAfterDecrypt().catch(error => {
+              logger.warn('[keychain] deferred post-decrypt rewrite failed', {
+                sourceLabel,
+                error: getErrorMessage(error),
+              });
+            });
+          }, 0);
+        };
 
         switch (purpose) {
           case RequestGenericPurpose.VERIFY: {
@@ -1256,7 +1336,7 @@ export function createBusinessKeychainApi({
                 decrypted.password,
               );
             if (verifyResult.success) {
-              await maybeRewriteStoredCredentialsAfterDecrypt();
+              await runPostDecryptKeychainRewrite();
             }
 
             onRequestReturn(instance);
@@ -1290,7 +1370,7 @@ export function createBusinessKeychainApi({
                 !!credentialsWithVaultKey.vaultKeyString,
             });
             apisLock.updateUnlockTime();
-            await maybeRewriteStoredCredentialsAfterDecrypt();
+            await runPostDecryptKeychainRewrite();
             onRequestReturn(instance);
             traceAndroidKeychainPerf('request_generic_password_end', {
               elapsedMs: Date.now() - startedAt,
