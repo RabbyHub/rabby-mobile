@@ -357,7 +357,7 @@ const getStyle = createGetStyles2024(
       bottomDockArea: {
         bottom: 0,
         width: '100%',
-        paddingHorizontal: 24,
+        paddingHorizontal: 20,
         position: 'absolute',
         paddingTop: SIZES.containerPt,
         paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),

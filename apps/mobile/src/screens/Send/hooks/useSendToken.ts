@@ -105,6 +105,7 @@ import { createAmountComparer, FormValuesOnSubmit } from '@/utils/form';
 import { BridgeFormSnapshot } from '@/screens/Bridge/components/BridgeContent';
 import { toast } from '@/components2024/Toast';
 import { getChainDefaultToken } from '@/constant/swap';
+import { eventBus, EVENTS } from '@/utils/events';
 
 function makeDefaultToken(): TokenItemWithEntity & {
   tokenId?: string;
@@ -2171,6 +2172,46 @@ export function useSendTokenForm({
   const isFocused = useIsFocused();
 
   useEffect(() => {
+    if (!isFocused || !currentAccount?.address) {
+      return;
+    }
+
+    let delayedRefreshTimer: ReturnType<typeof setTimeout> | undefined;
+    const refreshOnTxReload = (payload?: { addressList?: string[] }) => {
+      if (reloadTxRefreshPausedRef.current || isGasAccountDepositFlowActive()) {
+        return;
+      }
+
+      const addressList = payload?.addressList;
+      if (
+        addressList?.length &&
+        !addressList.some(address =>
+          addressUtils.isSameAddress(address, currentAccount.address),
+        )
+      ) {
+        return;
+      }
+
+      refreshCurrentTokenBalance();
+      if (delayedRefreshTimer) {
+        clearTimeout(delayedRefreshTimer);
+      }
+      delayedRefreshTimer = setTimeout(() => {
+        refreshCurrentTokenBalance();
+      }, 5000);
+    };
+
+    eventBus.addListener(EVENTS.RELOAD_TX, refreshOnTxReload);
+
+    return () => {
+      eventBus.removeListener(EVENTS.RELOAD_TX, refreshOnTxReload);
+      if (delayedRefreshTimer) {
+        clearTimeout(delayedRefreshTimer);
+      }
+    };
+  }, [currentAccount?.address, isFocused, refreshCurrentTokenBalance]);
+
+  useEffect(() => {
     if (
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chainItem?.isTestnet
@@ -2276,6 +2317,7 @@ export function useSendTokenForm({
     scrollToBottom,
 
     onChangeSlider,
+    setSlider,
 
     sendTokenEvents: sendTokenEventsRef.current,
     submitForm,
@@ -2351,6 +2393,7 @@ type InternalContext = {
     // }) => void;
     // onFormValuesChange: (changedValues: Partial<FormSendToken>) => void;
     onChangeSlider: (v: number, syncAmount?: boolean) => void;
+    setSlider: (v: number) => void;
     onBottomAreaLayout: (layout: LayoutChangeEvent) => void;
     onGasInfoDebouncedLoaded: () => void;
     // isAuthInProgress?: () => boolean;
@@ -2399,6 +2442,7 @@ const DEFAULT_SEND_TOKEN_INTERNAL_CONTEXT: InternalContext = {
     saveCurrentFormValuesSnapshot: () => {},
     setReloadTxRefreshPaused: () => {},
     onChangeSlider: () => {},
+    setSlider: () => {},
     onBottomAreaLayout: () => {},
     onGasInfoDebouncedLoaded: () => {},
     // isAuthInProgress: () => false,

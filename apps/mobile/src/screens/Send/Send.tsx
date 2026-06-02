@@ -355,6 +355,7 @@ function SendScreen({
     handleFieldChange,
     handleClickMaxButton,
     onChangeSlider,
+    setSlider,
     handleGasLevelChanged,
     handleIgnoreGasFeeChange,
     setReloadTxRefreshPaused,
@@ -647,6 +648,7 @@ function SendScreen({
         checkCexSupport,
         handleClickMaxButton,
         onChangeSlider,
+        setSlider,
         handleGasLevelChanged,
         handleIgnoreGasFeeChange,
         saveCurrentFormValuesSnapshot,
@@ -675,6 +677,7 @@ function SendScreen({
       handleIgnoreGasFeeChange,
       onBottomAreaLayout,
       onChangeSlider,
+      setSlider,
       scrollToBottom,
       scrollViewRef,
       scrollViewStyle,
@@ -740,7 +743,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       height: '100%',
     },
     mainContent: {
-      paddingHorizontal: 24,
+      paddingHorizontal: 20,
       paddingBottom: 280,
     },
     balance: {
