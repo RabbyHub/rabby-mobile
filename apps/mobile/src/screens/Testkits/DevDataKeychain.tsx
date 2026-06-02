@@ -17,6 +17,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import RNFS from 'react-native-fs';
+import { Tabs } from 'react-native-collapsible-tab-view';
 
 import RcIconQuestionCC from '@/assets/icons/transaction-record/icon-question-cc.svg';
 import RcIconEyeCloseCC from '@/assets2024/icons/home/eye-close-cc.svg';
@@ -213,6 +214,7 @@ const SESSION_REUSE_EXPECTATIONS = [
 ] as const;
 
 type TabKey = (typeof TAB_OPTIONS)[number]['key'];
+type PageTabKey = 'overview' | 'versions' | 'raw-v10';
 type DebugStateLike = apisKeychain.KeychainDebugState;
 type AndroidDebugStateLike = Extract<DebugStateLike, { platform: 'android' }>;
 type IOSDebugStateLike = Extract<DebugStateLike, { platform: 'ios' }>;
@@ -1353,6 +1355,7 @@ export default function DevDataKeychain(): JSX.Element {
     setMode: setSystemAuthDebugMockMode,
   } = useBiometricsSystemAuthDebugMock();
   const systemAuthComputed = useBiometricsComputed();
+  const [pageTabKey, setPageTabKey] = useState<PageTabKey>('overview');
   const [tabKey, setTabKey] = useState<TabKey>('current');
   const [helpSheetContext, setHelpSheetContext] =
     useState<HelpSheetContext | null>(null);
@@ -3257,20 +3260,191 @@ export default function DevDataKeychain(): JSX.Element {
   };
 
   const renderSelectedTab = () => {
-    if (tabKey === '10.0.0') {
-      return (
-        <>
-          {renderBusinessVersionSection('10.0.0', {
-            isCurrentAlias: false,
-          })}
-          {renderV9RawSection()}
-        </>
-      );
-    }
-
     return renderBusinessVersionSection(resolvedTabVersion, {
       isCurrentAlias: tabKey === 'current',
     });
+  };
+
+  const renderOverviewTab = () => {
+    return (
+      <View style={styles.summaryCard}>
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>Current Keychain</Text>
+          <SectionHelpButton
+            onPress={() => {
+              openHelpSheet({
+                topic: 'current-selector',
+              });
+            }}
+          />
+        </View>
+        <StatusRow label="Effective" value={currentKeychainVersionMeta.label} />
+        <StatusRow
+          label="Debug Field"
+          value={debugCurrentKeychainVersionField}
+          selectable
+        />
+        <StatusRow
+          label="Source"
+          value={apisKeychain.getCurrentKeychainSourceLabel()}
+          selectable
+        />
+        <StatusRow
+          label="System Auth Mock"
+          value={systemAuthDebugMockMode}
+          selectable
+        />
+        <StatusRow
+          label="System Auth Label"
+          value={systemAuthComputed.systemAuthTypeLabel}
+          selectable
+        />
+        <StatusRow
+          label="Settings Label"
+          value={systemAuthComputed.systemAuthSettingsLabel}
+          selectable
+        />
+        <StatusRow
+          label="Detected Biometry"
+          value={systemAuthComputed.supportedBiometryType}
+          selectable
+        />
+        <StatusRow
+          label="Device Passcode"
+          value={
+            systemAuthComputed.devicePasscodeAvailable
+              ? 'available'
+              : 'unavailable'
+          }
+        />
+        <StatusRow
+          label="Using Device Passcode"
+          value={systemAuthComputed.isUsingDevicePasscode ? 'yes' : 'no'}
+        />
+        <StatusRow
+          label="Device Passcode Only"
+          value={
+            systemAuthComputed.isDevicePasscodeOnlyAvailable ? 'yes' : 'no'
+          }
+        />
+        <View style={styles.statusRow}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.statusLabel}>RABBY_MOBILE_CODE</Text>
+            {rabbitCode ? (
+              <EyeToggleButton
+                visible={isRabbitCodeVisible}
+                onPress={() => {
+                  setIsRabbitCodeVisible(visible => !visible);
+                }}
+              />
+            ) : null}
+          </View>
+          <Text
+            style={[styles.statusValue, styles.statusValueNoWrap]}
+            selectable={!!rabbitCode && isRabbitCodeVisible}>
+            {rabbitCode
+              ? isRabbitCodeVisible
+                ? rabbitCode
+                : maskedRabbitCode
+              : '-'}
+          </Text>
+        </View>
+
+        <View style={styles.versionSelectorGroup}>
+          {KEYCHAIN_VERSION_OPTIONS.map(option => (
+            <TouchableOpacity
+              key={option.key}
+              activeOpacity={0.8}
+              disabled={!canSwitchCurrentKeychainVersion}
+              style={styles.versionSelectorOption}
+              onPress={() => {
+                handleChangeCurrentVersion(option.key);
+              }}>
+              <Radio
+                title={option.label}
+                checked={currentKeychainVersion === option.key}
+                onPress={() => {
+                  handleChangeCurrentVersion(option.key);
+                }}
+                checkedColor={colors2024['brand-default']}
+                containerStyle={styles.versionRadio}
+                textStyle={styles.versionRadioLabel}
+              />
+              <Text style={styles.versionRadioMeta}>{option.description}</Text>
+              <Text style={styles.versionRadioMeta} selectable>
+                Source: {option.sourceLabel}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.systemAuthMockHeader}>
+          <Text style={styles.statusLabel}>System Auth Availability Mock</Text>
+          <Text style={styles.versionRadioMeta}>
+            Overrides JS system auth availability checks only. It cannot emulate
+            Android prompt fallback from biometrics to device credential.
+          </Text>
+        </View>
+        <View style={styles.versionSelectorGroup}>
+          {SYSTEM_AUTH_DEBUG_MOCK_OPTIONS.map(option => (
+            <TouchableOpacity
+              key={option.key}
+              activeOpacity={0.8}
+              disabled={!canUseSystemAuthDebugMock}
+              style={[
+                styles.versionSelectorOption,
+                !canUseSystemAuthDebugMock &&
+                  styles.versionSelectorOptionDisabled,
+              ]}
+              onPress={() => {
+                void handleChangeSystemAuthDebugMock(option.key);
+              }}>
+              <Radio
+                title={option.label}
+                checked={systemAuthDebugMockMode === option.key}
+                onPress={() => {
+                  void handleChangeSystemAuthDebugMock(option.key);
+                }}
+                checkedColor={colors2024['brand-default']}
+                containerStyle={styles.versionRadio}
+                textStyle={styles.versionRadioLabel}
+              />
+              <Text style={styles.versionRadioMeta}>{option.description}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    );
+  };
+
+  const renderVersionsTab = () => {
+    return (
+      <>
+        <PillsSwitch
+          value={tabKey}
+          options={TAB_OPTIONS}
+          onTabChange={key => {
+            setTabKey(key as TabKey);
+          }}
+          containerStyle={styles.tabSwitch}
+          itemStyle={styles.tabSwitchItem}
+        />
+
+        {renderSelectedTab()}
+      </>
+    );
+  };
+
+  const renderTabScrollView = (children: React.ReactNode) => {
+    return (
+      <Tabs.ScrollView
+        tvParallaxProperties={undefined}
+        horizontal={false}
+        nestedScrollEnabled={false}
+        contentContainerStyle={styles.scrollView}>
+        {children}
+      </Tabs.ScrollView>
+    );
   };
 
   const renderActionsSheetContent = () => {
@@ -3582,180 +3756,25 @@ export default function DevDataKeychain(): JSX.Element {
         onPress: openActionsSheet,
       }}
       footerContainerStyle={styles.footerContainer}>
-      <ScrollView
-        horizontal={false}
-        contentContainerStyle={styles.scrollView}
-        nestedScrollEnabled>
-        <View style={styles.summaryCard}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Current Keychain</Text>
-            <SectionHelpButton
-              onPress={() => {
-                openHelpSheet({
-                  topic: 'current-selector',
-                });
-              }}
-            />
-          </View>
-          <StatusRow
-            label="Effective"
-            value={currentKeychainVersionMeta.label}
-          />
-          <StatusRow
-            label="Debug Field"
-            value={debugCurrentKeychainVersionField}
-            selectable
-          />
-          <StatusRow
-            label="Source"
-            value={apisKeychain.getCurrentKeychainSourceLabel()}
-            selectable
-          />
-          <StatusRow
-            label="System Auth Mock"
-            value={systemAuthDebugMockMode}
-            selectable
-          />
-          <StatusRow
-            label="System Auth Label"
-            value={systemAuthComputed.systemAuthTypeLabel}
-            selectable
-          />
-          <StatusRow
-            label="Settings Label"
-            value={systemAuthComputed.systemAuthSettingsLabel}
-            selectable
-          />
-          <StatusRow
-            label="Detected Biometry"
-            value={systemAuthComputed.supportedBiometryType}
-            selectable
-          />
-          <StatusRow
-            label="Device Passcode"
-            value={
-              systemAuthComputed.devicePasscodeAvailable
-                ? 'available'
-                : 'unavailable'
-            }
-          />
-          <StatusRow
-            label="Using Device Passcode"
-            value={systemAuthComputed.isUsingDevicePasscode ? 'yes' : 'no'}
-          />
-          <StatusRow
-            label="Device Passcode Only"
-            value={
-              systemAuthComputed.isDevicePasscodeOnlyAvailable ? 'yes' : 'no'
-            }
-          />
-          <View style={styles.statusRow}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.statusLabel}>RABBY_MOBILE_CODE</Text>
-              {rabbitCode ? (
-                <EyeToggleButton
-                  visible={isRabbitCodeVisible}
-                  onPress={() => {
-                    setIsRabbitCodeVisible(visible => !visible);
-                  }}
-                />
-              ) : null}
-            </View>
-            <Text
-              style={[styles.statusValue, styles.statusValueNoWrap]}
-              selectable={!!rabbitCode && isRabbitCodeVisible}>
-              {rabbitCode
-                ? isRabbitCodeVisible
-                  ? rabbitCode
-                  : maskedRabbitCode
-                : '-'}
-            </Text>
-          </View>
-
-          <View style={styles.versionSelectorGroup}>
-            {KEYCHAIN_VERSION_OPTIONS.map(option => (
-              <TouchableOpacity
-                key={option.key}
-                activeOpacity={0.8}
-                disabled={!canSwitchCurrentKeychainVersion}
-                style={styles.versionSelectorOption}
-                onPress={() => {
-                  handleChangeCurrentVersion(option.key);
-                }}>
-                <Radio
-                  title={option.label}
-                  checked={currentKeychainVersion === option.key}
-                  onPress={() => {
-                    handleChangeCurrentVersion(option.key);
-                  }}
-                  checkedColor={colors2024['brand-default']}
-                  containerStyle={styles.versionRadio}
-                  textStyle={styles.versionRadioLabel}
-                />
-                <Text style={styles.versionRadioMeta}>
-                  {option.description}
-                </Text>
-                <Text style={styles.versionRadioMeta} selectable>
-                  Source: {option.sourceLabel}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View style={styles.systemAuthMockHeader}>
-            <Text style={styles.statusLabel}>
-              System Auth Availability Mock
-            </Text>
-            <Text style={styles.versionRadioMeta}>
-              Overrides JS system auth availability checks only. It cannot
-              emulate Android prompt fallback from biometrics to device
-              credential.
-            </Text>
-          </View>
-          <View style={styles.versionSelectorGroup}>
-            {SYSTEM_AUTH_DEBUG_MOCK_OPTIONS.map(option => (
-              <TouchableOpacity
-                key={option.key}
-                activeOpacity={0.8}
-                disabled={!canUseSystemAuthDebugMock}
-                style={[
-                  styles.versionSelectorOption,
-                  !canUseSystemAuthDebugMock &&
-                    styles.versionSelectorOptionDisabled,
-                ]}
-                onPress={() => {
-                  void handleChangeSystemAuthDebugMock(option.key);
-                }}>
-                <Radio
-                  title={option.label}
-                  checked={systemAuthDebugMockMode === option.key}
-                  onPress={() => {
-                    void handleChangeSystemAuthDebugMock(option.key);
-                  }}
-                  checkedColor={colors2024['brand-default']}
-                  containerStyle={styles.versionRadio}
-                  textStyle={styles.versionRadioLabel}
-                />
-                <Text style={styles.versionRadioMeta}>
-                  {option.description}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <PillsSwitch
-          value={tabKey}
-          options={TAB_OPTIONS}
-          onTabChange={key => {
-            setTabKey(key as TabKey);
-          }}
-          containerStyle={styles.tabSwitch}
-          itemStyle={styles.tabSwitchItem}
-        />
-
-        {renderSelectedTab()}
-      </ScrollView>
+      <Tabs.Container
+        initialTabName={pageTabKey}
+        onTabChange={event => {
+          const nextTab = event.tabName as PageTabKey;
+          setPageTabKey(nextTab);
+          if (nextTab === 'raw-v10') {
+            setTabKey('10.0.0');
+          }
+        }}>
+        <Tabs.Tab name="overview" label="Overview">
+          {renderTabScrollView(renderOverviewTab())}
+        </Tabs.Tab>
+        <Tabs.Tab name="versions" label="Versions">
+          {renderTabScrollView(renderVersionsTab())}
+        </Tabs.Tab>
+        <Tabs.Tab name="raw-v10" label="Raw v10">
+          {renderTabScrollView(renderV9RawSection())}
+        </Tabs.Tab>
+      </Tabs.Container>
 
       <AppBottomSheetModal
         ref={actionsSheetRef}
