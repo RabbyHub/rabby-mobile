@@ -214,7 +214,7 @@ const SESSION_REUSE_EXPECTATIONS = [
 ] as const;
 
 type TabKey = (typeof TAB_OPTIONS)[number]['key'];
-type PageTabKey = 'overview' | 'versions' | 'raw-v10';
+type PageTabKey = 'overview' | 'business' | 'raw-v10';
 type DebugStateLike = apisKeychain.KeychainDebugState;
 type AndroidDebugStateLike = Extract<DebugStateLike, { platform: 'android' }>;
 type IOSDebugStateLike = Extract<DebugStateLike, { platform: 'ios' }>;
@@ -2857,14 +2857,25 @@ export default function DevDataKeychain(): JSX.Element {
   const renderV9RawSection = () => {
     return (
       <>
-        <View style={styles.sectionStandaloneHeader}>
-          <Text style={styles.sectionTitle}>Official v10 Raw</Text>
-          <SectionHelpButton
-            onPress={() => {
-              openHelpSheet({
-                topic: 'raw-v10',
-              });
-            }}
+        <View style={styles.summaryCard}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Official v10 Raw</Text>
+            <SectionHelpButton
+              onPress={() => {
+                openHelpSheet({
+                  topic: 'raw-v10',
+                });
+              }}
+            />
+          </View>
+          <StatusRow label="Scope" value="Official v10 current/probe" />
+          <StatusRow
+            label="Business Current"
+            value={currentKeychainVersionMeta.label}
+          />
+          <StatusRow
+            label="Selected Storage"
+            value={getKeychainStorageLabel(effectiveStorageByVersion['10.0.0'])}
           />
         </View>
         <KeychainSummaryCard
@@ -3417,9 +3428,20 @@ export default function DevDataKeychain(): JSX.Element {
     );
   };
 
-  const renderVersionsTab = () => {
+  const renderBusinessTab = () => {
+    const inspectingLabel =
+      tabKey === 'current'
+        ? `Current -> ${currentKeychainVersionMeta.label}`
+        : `${KEYCHAIN_VERSION_META[resolvedTabVersion].label} wrapper`;
+
     return (
       <>
+        <View style={styles.summaryCard}>
+          <Text style={styles.sectionTitle}>Business Path Probes</Text>
+          <StatusRow label="Current" value={currentKeychainVersionMeta.label} />
+          <StatusRow label="Inspecting" value={inspectingLabel} />
+        </View>
+
         <PillsSwitch
           value={tabKey}
           options={TAB_OPTIONS}
@@ -3448,11 +3470,18 @@ export default function DevDataKeychain(): JSX.Element {
   };
 
   const renderActionsSheetContent = () => {
-    const versionMeta = KEYCHAIN_VERSION_META[resolvedTabVersion];
+    const isRawV10Page = pageTabKey === 'raw-v10';
+    const actionsBusinessVersion =
+      pageTabKey === 'overview' ? currentKeychainVersion : resolvedTabVersion;
+    const versionMeta = KEYCHAIN_VERSION_META[actionsBusinessVersion];
+    const actionsBusinessLabel =
+      pageTabKey === 'overview' || tabKey === 'current'
+        ? 'Current'
+        : versionMeta.label;
     const hasBusinessEntry =
-      !!businessStates[resolvedTabVersion].debugState?.hasEntry;
+      !!businessStates[actionsBusinessVersion].debugState?.hasEntry;
     const useCurrentFacadeForBusinessActions =
-      resolvedTabVersion === currentKeychainVersion;
+      actionsBusinessVersion === currentKeychainVersion;
     const hasLegacyRecoverableBusinessEntry =
       useCurrentFacadeForBusinessActions &&
       !!businessStates['8.2.0-fork'].debugState?.hasEntry;
@@ -3468,9 +3497,11 @@ export default function DevDataKeychain(): JSX.Element {
         contentContainerStyle={styles.sheetScrollContent}>
         <AutoLockView>
           <AppBottomSheetModalTitle
-            title={`${
-              tabKey === 'current' ? 'Current' : versionMeta.label
-            } Actions`}
+            title={
+              isRawV10Page
+                ? 'Official v10 Raw Actions'
+                : `${actionsBusinessLabel} Actions`
+            }
           />
 
           <ActionSheetSection
@@ -3509,106 +3540,112 @@ export default function DevDataKeychain(): JSX.Element {
             />
           </ActionSheetSection>
 
-          <ActionSheetSection
-            title={`${versionMeta.label} Business Actions`}
-            desc={`These actions use the ${businessActionApiLabel} and affect the current \`com.debank\` entry. Selected storage: ${getKeychainStorageLabel(
-              effectiveStorageByVersion[resolvedTabVersion],
-            )}.`}>
-            {useCurrentFacadeForBusinessActions ? (
+          {!isRawV10Page ? (
+            <ActionSheetSection
+              title={`${versionMeta.label} Business Actions`}
+              desc={`These actions use the ${businessActionApiLabel} and affect the current \`com.debank\` entry. Selected storage: ${getKeychainStorageLabel(
+                effectiveStorageByVersion[actionsBusinessVersion],
+              )}.`}>
+              {useCurrentFacadeForBusinessActions ? (
+                <Button
+                  title="Unlock Page Path"
+                  type="primary"
+                  disabled={!canTryBusinessDecrypt || isLoading}
+                  height={40}
+                  containerStyle={styles.sheetPrimaryButton}
+                  onPress={() => {
+                    runSheetAction(handleUnlockPagePathProbe);
+                  }}
+                />
+              ) : null}
+              <View style={styles.actionsRow}>
+                <Button
+                  title={
+                    useCurrentFacadeForBusinessActions
+                      ? 'Unlock Request'
+                      : 'Raw Unlock Request'
+                  }
+                  type="primary"
+                  disabled={!canTryBusinessDecrypt || isLoading}
+                  height={40}
+                  containerStyle={styles.actionButton}
+                  onPress={() => {
+                    runSheetAction(() =>
+                      handleUnlockRequestProbe(
+                        actionsBusinessVersion,
+                        apisKeychain.ANDROID_AUTH_PROMPT_POLICIES
+                          .INTERACTIVE_FIRST,
+                        {
+                          useCurrentFacade: useCurrentFacadeForBusinessActions,
+                        },
+                      ),
+                    );
+                  }}
+                />
+                <Button
+                  title={
+                    useCurrentFacadeForBusinessActions
+                      ? 'Unlock Request Session'
+                      : 'Raw Unlock Request Session'
+                  }
+                  type="ghost"
+                  disabled={!canTryBusinessDecrypt || isLoading || !IS_ANDROID}
+                  height={40}
+                  containerStyle={styles.actionButton}
+                  onPress={() => {
+                    runSheetAction(() =>
+                      handleUnlockRequestProbe(
+                        actionsBusinessVersion,
+                        apisKeychain.ANDROID_AUTH_PROMPT_POLICIES
+                          .ALLOW_AUTHENTICATED_SESSION_REUSE,
+                        {
+                          useCurrentFacade: useCurrentFacadeForBusinessActions,
+                        },
+                      ),
+                    );
+                  }}
+                />
+              </View>
               <Button
-                title="Unlock Page Path"
+                title="Rewrite Current"
                 type="primary"
-                disabled={!canTryBusinessDecrypt || isLoading}
                 height={40}
-                containerStyle={styles.sheetPrimaryButton}
-                onPress={() => {
-                  runSheetAction(handleUnlockPagePathProbe);
-                }}
-              />
-            ) : null}
-            <View style={styles.actionsRow}>
-              <Button
-                title={
-                  useCurrentFacadeForBusinessActions
-                    ? 'Unlock Request'
-                    : 'Raw Unlock Request'
-                }
-                type="primary"
-                disabled={!canTryBusinessDecrypt || isLoading}
-                height={40}
-                containerStyle={styles.actionButton}
+                disabled={!hasBusinessEntry || isLoading}
+                containerStyle={styles.sheetActionButton}
                 onPress={() => {
                   runSheetAction(() =>
-                    handleUnlockRequestProbe(
-                      resolvedTabVersion,
-                      apisKeychain.ANDROID_AUTH_PROMPT_POLICIES
-                        .INTERACTIVE_FIRST,
-                      {
-                        useCurrentFacade: useCurrentFacadeForBusinessActions,
-                      },
-                    ),
+                    handleBusinessRewrite(actionsBusinessVersion),
                   );
                 }}
               />
               <Button
-                title={
-                  useCurrentFacadeForBusinessActions
-                    ? 'Unlock Request Session'
-                    : 'Raw Unlock Request Session'
-                }
-                type="ghost"
-                disabled={!canTryBusinessDecrypt || isLoading || !IS_ANDROID}
+                title="Clear Keychain"
+                type="warning"
                 height={40}
-                containerStyle={styles.actionButton}
+                disabled={isLoading}
+                containerStyle={styles.sheetActionButton}
                 onPress={() => {
                   runSheetAction(() =>
-                    handleUnlockRequestProbe(
-                      resolvedTabVersion,
-                      apisKeychain.ANDROID_AUTH_PROMPT_POLICIES
-                        .ALLOW_AUTHENTICATED_SESSION_REUSE,
-                      {
-                        useCurrentFacade: useCurrentFacadeForBusinessActions,
-                      },
-                    ),
+                    handleBusinessReset(actionsBusinessVersion),
                   );
                 }}
               />
-            </View>
-            <Button
-              title="Rewrite Current"
-              type="primary"
-              height={40}
-              disabled={!hasBusinessEntry || isLoading}
-              containerStyle={styles.sheetActionButton}
-              onPress={() => {
-                runSheetAction(() => handleBusinessRewrite(resolvedTabVersion));
-              }}
-            />
-            <Button
-              title="Clear Keychain"
-              type="warning"
-              height={40}
-              disabled={isLoading}
-              containerStyle={styles.sheetActionButton}
-              onPress={() => {
-                runSheetAction(() => handleBusinessReset(resolvedTabVersion));
-              }}
-            />
-            <Button
-              title={IS_ANDROID ? 'Drop Current Marker' : 'Android Only'}
-              type="warning"
-              height={40}
-              disabled={!IS_ANDROID || isLoading || !hasBusinessEntry}
-              containerStyle={styles.sheetActionButton}
-              onPress={() => {
-                runSheetAction(() =>
-                  handleDropCurrentMarker(resolvedTabVersion),
-                );
-              }}
-            />
-          </ActionSheetSection>
+              <Button
+                title={IS_ANDROID ? 'Drop Current Marker' : 'Android Only'}
+                type="warning"
+                height={40}
+                disabled={!IS_ANDROID || isLoading || !hasBusinessEntry}
+                containerStyle={styles.sheetActionButton}
+                onPress={() => {
+                  runSheetAction(() =>
+                    handleDropCurrentMarker(actionsBusinessVersion),
+                  );
+                }}
+              />
+            </ActionSheetSection>
+          ) : null}
 
-          {tabKey === '10.0.0' ? (
+          {isRawV10Page ? (
             <ActionSheetSection
               title="Official v10 Raw Actions"
               desc={`These are raw \`react-native-keychain@10.0.0\` experiments for comparing Android storage behavior. Selected storage: ${getKeychainStorageLabel(
@@ -3735,10 +3772,10 @@ export default function DevDataKeychain(): JSX.Element {
                 }}
               />
             </ActionSheetSection>
-          ) : resolvedTabVersion === '10.0.0' ? (
+          ) : actionsBusinessVersion === '10.0.0' ? (
             <ActionSheetSection
               title="Official v10 Raw Actions"
-              desc="Open the `10.0.0` tab when you need raw official current/probe operations. The Current tab only exposes the selected business path."
+              desc="Open the Raw v10 tab when you need raw official current/probe operations. Business only exposes the Rabby business wrapper."
             />
           ) : null}
         </AutoLockView>
@@ -3761,15 +3798,12 @@ export default function DevDataKeychain(): JSX.Element {
         onTabChange={event => {
           const nextTab = event.tabName as PageTabKey;
           setPageTabKey(nextTab);
-          if (nextTab === 'raw-v10') {
-            setTabKey('10.0.0');
-          }
         }}>
         <Tabs.Tab name="overview" label="Overview">
           {renderTabScrollView(renderOverviewTab())}
         </Tabs.Tab>
-        <Tabs.Tab name="versions" label="Versions">
-          {renderTabScrollView(renderVersionsTab())}
+        <Tabs.Tab name="business" label="Business">
+          {renderTabScrollView(renderBusinessTab())}
         </Tabs.Tab>
         <Tabs.Tab name="raw-v10" label="Raw v10">
           {renderTabScrollView(renderV9RawSection())}
