@@ -66,6 +66,11 @@ const TAB_OPTIONS = [
   { key: '10.0.0', label: '10.0.0' },
 ] as const;
 
+const PAGE_TAB_BAR_HEIGHT = 48;
+const PAGE_TAB_CONTENT_TOP_GAP = 12;
+const PAGE_TAB_CONTENT_TOP_PADDING =
+  PAGE_TAB_BAR_HEIGHT + PAGE_TAB_CONTENT_TOP_GAP;
+
 const KEYCHAIN_VERSION_OPTIONS = [
   {
     key: '8.2.0-fork',
@@ -3794,6 +3799,10 @@ export default function DevDataKeychain(): JSX.Element {
       }}
       footerContainerStyle={styles.footerContainer}>
       <Tabs.Container
+        containerStyle={styles.tabsContainer}
+        headerContainerStyle={styles.tabsHeaderContainer}
+        headerHeight={0}
+        tabBarHeight={PAGE_TAB_BAR_HEIGHT}
         initialTabName={pageTabKey}
         onTabChange={event => {
           const nextTab = event.tabName as PageTabKey;
@@ -3838,9 +3847,15 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors2024['neutral-line'],
   },
+  tabsContainer: {
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  tabsHeaderContainer: {
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
   scrollView: {
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: PAGE_TAB_CONTENT_TOP_PADDING,
     paddingBottom: 24,
   },
   tabSwitch: {
