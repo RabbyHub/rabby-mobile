@@ -28,6 +28,7 @@ import {
   AppBottomSheetModal,
   AppBottomSheetModalTitle,
 } from '@/components/customized/BottomSheet';
+import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { Button } from '@/components2024/Button';
 import { PillsSwitch } from '@/components2024/PillSwitch';
 import { Radio } from '@/components2024/Radio';
@@ -91,6 +92,39 @@ const KEYCHAIN_VERSION_OPTIONS = [
     description: 'Official 10.x package wrapped with Rabby business logic.',
   },
 ] as const;
+
+const PLAYGROUND_AUTH_OPTIONS: PlaygroundAuthOption[] = [
+  {
+    key: 'biometrics-current-set',
+    label: 'Biometrics',
+    type: apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+    requiresPassword: true,
+  },
+  {
+    key: 'biometrics-or-passcode',
+    label: 'Biometrics + Passcode',
+    type: apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
+    requiresPassword: true,
+  },
+  {
+    key: 'passcode',
+    label: 'Passcode Only',
+    type: apisKeychain.KEYCHAIN_AUTH_TYPES.PASSCODE,
+    requiresPassword: true,
+  },
+  {
+    key: 'remember-me',
+    label: 'Remember Me',
+    type: apisKeychain.KEYCHAIN_AUTH_TYPES.REMEMBER_ME,
+    requiresPassword: true,
+  },
+  {
+    key: 'reset',
+    label: 'Reset Keychain Entry',
+    type: apisKeychain.KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD,
+    requiresPassword: false,
+  },
+];
 
 const KEYCHAIN_VERSION_META: Record<
   CurrentKeychainVersion,
@@ -219,7 +253,7 @@ const SESSION_REUSE_EXPECTATIONS = [
 ] as const;
 
 type TabKey = (typeof TAB_OPTIONS)[number]['key'];
-type PageTabKey = 'overview' | 'business' | 'raw-v10';
+type PageTabKey = 'overview' | 'business' | 'playground' | 'raw-v10';
 type DebugStateLike = apisKeychain.KeychainDebugState;
 type AndroidDebugStateLike = Extract<DebugStateLike, { platform: 'android' }>;
 type IOSDebugStateLike = Extract<DebugStateLike, { platform: 'ios' }>;
@@ -240,6 +274,20 @@ type BusinessRewriteResult = {
 type RawReadState = {
   result: V9ReadResult | null;
   errorMessage: string | null;
+};
+type PlaygroundAuthOption = {
+  key: string;
+  label: string;
+  type: apisKeychain.KEYCHAIN_AUTH_TYPES;
+  requiresPassword: boolean;
+};
+type PlaygroundResultState = {
+  title: string;
+  authTypeLabel: string;
+  resultMessage: string | null;
+  plainPassword: string | null;
+  errorMessage: string | null;
+  updatedAt: string;
 };
 type BusinessVersionState = {
   debugState: apisKeychain.KeychainDebugState | null;
@@ -1419,6 +1467,10 @@ export default function DevDataKeychain(): JSX.Element {
     useState<V9CurrentRewriteResult | null>(null);
   const [v9CurrentRewriteErrorMessage, setV9CurrentRewriteErrorMessage] =
     useState<string | null>(null);
+  const [playgroundResult, setPlaygroundResult] =
+    useState<PlaygroundResultState | null>(null);
+  const [isPlaygroundPasswordVisible, setIsPlaygroundPasswordVisible] =
+    useState(false);
   const [supportedStorageTypesByVersion, setSupportedStorageTypesByVersion] =
     useState<Record<CurrentKeychainVersion, KeychainStorageType[]>>({
       '8.2.0-fork': [apisKeychain.DEFAULT_KEYCHAIN_STORAGE_TYPE],
@@ -1621,6 +1673,155 @@ export default function DevDataKeychain(): JSX.Element {
   useEffect(() => {
     refreshState();
   }, [refreshState]);
+
+  const setPlaygroundSuccess = useCallback(
+    ({
+      title,
+      authTypeLabel = apisKeychain.getAuthenticationTypeLabel(),
+      resultMessage,
+      plainPassword = null,
+    }: {
+      title: string;
+      authTypeLabel?: string;
+      resultMessage: string;
+      plainPassword?: string | null;
+    }) => {
+      setPlaygroundResult({
+        title,
+        authTypeLabel,
+        resultMessage,
+        plainPassword,
+        errorMessage: null,
+        updatedAt: new Date().toISOString(),
+      });
+      setIsPlaygroundPasswordVisible(false);
+    },
+    [],
+  );
+
+  const setPlaygroundError = useCallback((title: string, error: unknown) => {
+    setPlaygroundResult({
+      title,
+      authTypeLabel: apisKeychain.getAuthenticationTypeLabel(),
+      resultMessage: null,
+      plainPassword: null,
+      errorMessage: getReadableErrorMessage(error),
+      updatedAt: new Date().toISOString(),
+    });
+    setIsPlaygroundPasswordVisible(false);
+  }, []);
+
+  const handlePlaygroundStoreAuthType = useCallback(
+    (option: PlaygroundAuthOption) => {
+      if (!option.requiresPassword) {
+        Alert.alert(
+          'Reset Keychain Entry',
+          'Clear the current app keychain password entry?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Reset',
+              style: 'destructive',
+              onPress: async () => {
+                try {
+                  setIsLoading(true);
+                  const result = await apisKeychain.resetGenericPassword();
+                  setPlaygroundSuccess({
+                    title: option.label,
+                    authTypeLabel: apisKeychain.getAuthenticationTypeLabel(
+                      option.type,
+                    ),
+                    resultMessage: `reset=${String(result)}`,
+                  });
+                  toast.success('Keychain entry reset');
+                  await refreshState();
+                } catch (error) {
+                  setPlaygroundError(option.label, error);
+                  Alert.alert(option.label, getReadableErrorMessage(error));
+                } finally {
+                  setIsLoading(false);
+                }
+              },
+            },
+          ],
+        );
+        return;
+      }
+
+      AuthenticationModal.show({
+        confirmText: 'Store',
+        title: `Store password as ${option.label}`,
+        authType: ['password'],
+        async onFinished({ getValidatedPassword }) {
+          try {
+            setIsLoading(true);
+            const password = getValidatedPassword();
+            const result = await apisKeychain.setGenericPassword(
+              password,
+              option.type,
+            );
+            setPlaygroundSuccess({
+              title: option.label,
+              authTypeLabel: apisKeychain.getAuthenticationTypeLabel(
+                option.type,
+              ),
+              resultMessage: `stored=${String(result)}`,
+            });
+            toast.success(`${option.label} stored`);
+            await refreshState();
+          } catch (error) {
+            setPlaygroundError(option.label, error);
+            Alert.alert(option.label, getReadableErrorMessage(error));
+          } finally {
+            setIsLoading(false);
+          }
+        },
+      });
+    },
+    [refreshState, setPlaygroundError, setPlaygroundSuccess],
+  );
+
+  const handlePlaygroundRequestPassword = useCallback(
+    async (purpose: apisKeychain.RequestGenericPurpose, title: string) => {
+      try {
+        setIsLoading(true);
+        let plainPassword = '';
+        let callbackCalled = false;
+        const startedAt = Date.now();
+
+        const result = await apisKeychain.requestGenericPassword({
+          purpose,
+          onPlainPassword: password => {
+            callbackCalled = true;
+            plainPassword = password;
+          },
+        });
+        const actionSuccess =
+          !!result && 'actionSuccess' in result && !!result.actionSuccess;
+        const storage =
+          result && typeof result.storage === 'string' ? result.storage : '-';
+        setPlaygroundSuccess({
+          title,
+          resultMessage: [
+            `callback=${callbackCalled ? 'true' : 'false'}`,
+            `actionSuccess=${actionSuccess ? 'true' : 'false'}`,
+            `storage=${storage}`,
+            `elapsedMs=${Date.now() - startedAt}`,
+          ].join(', '),
+          plainPassword: plainPassword || null,
+        });
+        toast.success(`${title} completed`);
+        await refreshState();
+      } catch (error) {
+        setPlaygroundError(title, error);
+        Alert.alert(title, getReadableErrorMessage(error));
+        await refreshState();
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [refreshState, setPlaygroundError, setPlaygroundSuccess],
+  );
 
   const readCurrentKeychainAndDecryptForBusiness = useCallback(
     async (options?: { syncState?: boolean }) => {
@@ -3462,6 +3663,131 @@ export default function DevDataKeychain(): JSX.Element {
     );
   };
 
+  const renderPlaygroundTab = () => {
+    const maskedPlaygroundPassword = maskSecret(
+      playgroundResult?.plainPassword,
+    );
+
+    return (
+      <>
+        <View style={styles.summaryCard}>
+          <Text style={styles.sectionTitle}>Keychain Auth Playground</Text>
+          <StatusRow
+            label="Current Auth"
+            value={`${apisKeychain.getAuthenticationTypeLabel()} (${apisKeychain.getAuthenticationType()})`}
+          />
+          <StatusRow
+            label="Business Current"
+            value={currentKeychainVersionMeta.label}
+          />
+        </View>
+
+        <View style={styles.statusCard}>
+          <Text style={styles.sectionTitle}>Store Current Password As</Text>
+          <View style={styles.playgroundButtonGrid}>
+            {PLAYGROUND_AUTH_OPTIONS.map(option => (
+              <Button
+                key={option.key}
+                title={option.label}
+                type={option.requiresPassword ? 'ghost' : 'warning'}
+                height={40}
+                disabled={isLoading}
+                containerStyle={styles.playgroundButton}
+                onPress={() => {
+                  handlePlaygroundStoreAuthType(option);
+                }}
+              />
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.statusCard}>
+          <Text style={styles.sectionTitle}>Read Stored Password</Text>
+          <View style={styles.actionsRow}>
+            <Button
+              title="Verify Stored Password"
+              type="primary"
+              height={40}
+              disabled={isLoading}
+              containerStyle={styles.actionButton}
+              onPress={() => {
+                void handlePlaygroundRequestPassword(
+                  apisKeychain.RequestGenericPurpose.VERIFY,
+                  'Verify Stored Password',
+                );
+              }}
+            />
+            <Button
+              title="Get Stored Password"
+              type="ghost"
+              height={40}
+              disabled={isLoading}
+              containerStyle={styles.actionButton}
+              onPress={() => {
+                void handlePlaygroundRequestPassword(
+                  apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
+                  'Get Stored Password',
+                );
+              }}
+            />
+          </View>
+        </View>
+
+        {playgroundResult ? (
+          <View style={styles.statusCard}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>Last Playground Result</Text>
+              {__DEV__ && playgroundResult.plainPassword ? (
+                <EyeToggleButton
+                  visible={isPlaygroundPasswordVisible}
+                  onPress={() => {
+                    setIsPlaygroundPasswordVisible(visible => !visible);
+                  }}
+                />
+              ) : null}
+            </View>
+            <StatusRow label="Action" value={playgroundResult.title} />
+            <StatusRow
+              label="Auth Type"
+              value={playgroundResult.authTypeLabel}
+            />
+            <StatusRow
+              label="Updated At"
+              value={playgroundResult.updatedAt}
+              selectable
+              allowHorizontalOverflow
+            />
+            {playgroundResult.resultMessage ? (
+              <Text style={styles.resultText} selectable>
+                {playgroundResult.resultMessage}
+              </Text>
+            ) : null}
+            {playgroundResult.plainPassword ? (
+              <>
+                <Text style={styles.statusLabel}>Plain Password</Text>
+                <Text
+                  style={[
+                    styles.plainPasswordValue,
+                    styles.plainPasswordOverflowValue,
+                  ]}
+                  selectable={__DEV__}>
+                  {__DEV__ && isPlaygroundPasswordVisible
+                    ? playgroundResult.plainPassword
+                    : maskedPlaygroundPassword}
+                </Text>
+              </>
+            ) : null}
+            {playgroundResult.errorMessage ? (
+              <Text style={styles.errorText} selectable>
+                {playgroundResult.errorMessage}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
+      </>
+    );
+  };
+
   const renderTabScrollView = (children: React.ReactNode) => {
     return (
       <Tabs.ScrollView
@@ -3476,6 +3802,7 @@ export default function DevDataKeychain(): JSX.Element {
 
   const renderActionsSheetContent = () => {
     const isRawV10Page = pageTabKey === 'raw-v10';
+    const isPlaygroundPage = pageTabKey === 'playground';
     const actionsBusinessVersion =
       pageTabKey === 'overview' ? currentKeychainVersion : resolvedTabVersion;
     const versionMeta = KEYCHAIN_VERSION_META[actionsBusinessVersion];
@@ -3505,6 +3832,8 @@ export default function DevDataKeychain(): JSX.Element {
             title={
               isRawV10Page
                 ? 'Official v10 Raw Actions'
+                : isPlaygroundPage
+                ? 'Playground Actions'
                 : `${actionsBusinessLabel} Actions`
             }
           />
@@ -3545,7 +3874,7 @@ export default function DevDataKeychain(): JSX.Element {
             />
           </ActionSheetSection>
 
-          {!isRawV10Page ? (
+          {!isRawV10Page && !isPlaygroundPage ? (
             <ActionSheetSection
               title={`${versionMeta.label} Business Actions`}
               desc={`These actions use the ${businessActionApiLabel} and affect the current \`com.debank\` entry. Selected storage: ${getKeychainStorageLabel(
@@ -3777,7 +4106,7 @@ export default function DevDataKeychain(): JSX.Element {
                 }}
               />
             </ActionSheetSection>
-          ) : actionsBusinessVersion === '10.0.0' ? (
+          ) : !isPlaygroundPage && actionsBusinessVersion === '10.0.0' ? (
             <ActionSheetSection
               title="Official v10 Raw Actions"
               desc="Open the Raw v10 tab when you need raw official current/probe operations. Business only exposes the Rabby business wrapper."
@@ -3813,6 +4142,9 @@ export default function DevDataKeychain(): JSX.Element {
         </Tabs.Tab>
         <Tabs.Tab name="business" label="Business">
           {renderTabScrollView(renderBusinessTab())}
+        </Tabs.Tab>
+        <Tabs.Tab name="playground" label="Playground">
+          {renderTabScrollView(renderPlaygroundTab())}
         </Tabs.Tab>
         <Tabs.Tab name="raw-v10" label="Raw v10">
           {renderTabScrollView(renderV9RawSection())}
@@ -3975,6 +4307,13 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   actionButton: {
     flex: 1,
+    marginTop: 0,
+  },
+  playgroundButtonGrid: {
+    marginTop: 12,
+    gap: 8,
+  },
+  playgroundButton: {
     marginTop: 0,
   },
   sheetScrollView: {
