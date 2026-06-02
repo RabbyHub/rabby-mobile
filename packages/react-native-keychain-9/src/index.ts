@@ -1,259 +1,37 @@
 import { NativeModules, Platform } from 'react-native';
+import {
+  ACCESSIBLE,
+  ACCESS_CONTROL,
+  AUTHENTICATION_TYPE,
+  SECURITY_LEVEL,
+  SECURITY_RULES,
+  STORAGE_TYPE,
+  BIOMETRY_TYPE,
+} from './enums';
+import type {
+  Result,
+  UserCredentials,
+  SharedWebCredentials,
+  GetOptions,
+  BaseOptions,
+  SetOptions,
+  AuthenticationTypeOption,
+  AccessControlOption,
+} from './types';
+import {
+  normalizeOptions,
+  normalizeServerOption,
+  normalizeServiceOption,
+} from './normalizeOptions';
 
 const { RNRabbyKeychainV9Manager } = NativeModules;
-
-/**
- * Enum representing when a keychain item is accessible.
- */
-export enum ACCESSIBLE {
-  /** The data in the keychain item can be accessed only while the device is unlocked by the user. */
-  WHEN_UNLOCKED = 'AccessibleWhenUnlocked',
-  /** The data in the keychain item cannot be accessed after a restart until the device has been unlocked once by the user. */
-  AFTER_FIRST_UNLOCK = 'AccessibleAfterFirstUnlock',
-  /** The data in the keychain item can always be accessed regardless of whether the device is locked. */
-  ALWAYS = 'AccessibleAlways',
-  /** The data in the keychain can only be accessed when the device is unlocked. Only available if a passcode is set on the device. Items with this attribute never migrate to a new device. */
-  WHEN_PASSCODE_SET_THIS_DEVICE_ONLY = 'AccessibleWhenPasscodeSetThisDeviceOnly',
-  /** The data in the keychain item can be accessed only while the device is unlocked by the user. Items with this attribute do not migrate to a new device. */
-  WHEN_UNLOCKED_THIS_DEVICE_ONLY = 'AccessibleWhenUnlockedThisDeviceOnly',
-  /** The data in the keychain item cannot be accessed after a restart until the device has been unlocked once by the user. Items with this attribute never migrate to a new device. */
-  AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY = 'AccessibleAfterFirstUnlockThisDeviceOnly',
-}
-
-/**
- * Enum representing access control options.
- */
-export enum ACCESS_CONTROL {
-  /** Constraint to access an item with either Touch ID or passcode. */
-  USER_PRESENCE = 'UserPresence',
-  /** Constraint to access an item with Touch ID for any enrolled fingers. */
-  BIOMETRY_ANY = 'BiometryAny',
-  /** Constraint to access an item with Touch ID for currently enrolled fingers. */
-  BIOMETRY_CURRENT_SET = 'BiometryCurrentSet',
-  /** Constraint to access an item with the device passcode. */
-  DEVICE_PASSCODE = 'DevicePasscode',
-  /** Constraint to use an application-provided password for data encryption key generation. */
-  APPLICATION_PASSWORD = 'ApplicationPassword',
-  /** Constraint to access an item with Touch ID for any enrolled fingers or passcode. */
-  BIOMETRY_ANY_OR_DEVICE_PASSCODE = 'BiometryAnyOrDevicePasscode',
-  /** Constraint to access an item with Touch ID for currently enrolled fingers or passcode. */
-  BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE = 'BiometryCurrentSetOrDevicePasscode',
-}
-
-/**
- * Enum representing authentication types.
- */
-export enum AUTHENTICATION_TYPE {
-  /** Device owner is going to be authenticated by biometry or device passcode. */
-  DEVICE_PASSCODE_OR_BIOMETRICS = 'AuthenticationWithBiometricsDevicePasscode',
-  /** Device owner is going to be authenticated using a biometric method (Touch ID or Face ID). */
-  BIOMETRICS = 'AuthenticationWithBiometrics',
-}
-
-/**
- * Enum representing security levels. (Android only)
- */
-export enum SECURITY_LEVEL {
-  /** Secure storage using software-based encryption. */
-  SECURE_SOFTWARE = RNRabbyKeychainV9Manager &&
-    RNRabbyKeychainV9Manager.SECURITY_LEVEL_SECURE_SOFTWARE,
-  /** Secure storage using hardware-based encryption. */
-  SECURE_HARDWARE = RNRabbyKeychainV9Manager &&
-    RNRabbyKeychainV9Manager.SECURITY_LEVEL_SECURE_HARDWARE,
-  /** Any security level. */
-  ANY = RNRabbyKeychainV9Manager && RNRabbyKeychainV9Manager.SECURITY_LEVEL_ANY,
-}
-
-/**
- * Enum representing types of biometric authentication supported by the device.
- */
-export enum BIOMETRY_TYPE {
-  /** Device supports authentication with Touch ID. (iOS only) */
-  TOUCH_ID = 'TouchID',
-  /** Device supports authentication with Face ID. (iOS only) */
-  FACE_ID = 'FaceID',
-  /** Device supports authentication with Optic ID. (visionOS only) */
-  OPTIC_ID = 'OpticID',
-  /** Device supports authentication with Fingerprint. (Android only) */
-  FINGERPRINT = 'Fingerprint',
-  /** Device supports authentication with Face Recognition. (Android only) */
-  FACE = 'Face',
-  /** Device supports authentication with Iris Recognition. (Android only) */
-  IRIS = 'Iris',
-}
-
-/**
- * Enum representing storage types. (Android only)
- */
-export enum STORAGE_TYPE {
-  /** Facebook compatibility cipher. */
-  FB = 'FacebookConceal',
-  /** Encryptions without human interaction. */
-  AES = 'KeystoreAESCBC',
-  /** Encryption with biometrics. */
-  RSA = 'KeystoreRSAECB',
-  /** iOS Keychain or Android default storage. */
-  KC = 'keychain',
-}
-
-/**
- * Enum representing security rules for storage. (Android only)
- */
-export enum SECURITY_RULES {
-  /** No special security rules applied. */
-  NONE = 'none',
-  /** Upgrade secret to the best available storage as soon as it is available and user request secret extraction. Upgrade not applied till we request the secret. This rule only applies to secrets stored with FacebookConseal. */
-  AUTOMATIC_UPGRADE = 'automaticUpgradeToMoreSecuredStorage',
-}
-
-/**
- * Options for authentication prompt displayed to the user.
- */
-export type AuthenticationPrompt = {
-  /** The title for the authentication prompt. */
-  title?: string;
-  /** The subtitle for the authentication prompt (Android only). */
-  subtitle?: string;
-  /** The description for the authentication prompt (Android only). */
-  description?: string;
-  /** The cancel button text for the authentication prompt (Android only). */
-  cancel?: string;
-};
-
-export type AndroidBiometricSecurityLevel = 'strong' | 'weak';
-
-/** Base options for keychain functions. */
-export type BaseOptions = {
-  /** The access control policy to use for the keychain item. */
-  accessControl?: ACCESS_CONTROL;
-  /** The access group to share keychain items between apps (iOS and visionOS only). */
-  accessGroup?: string;
-  /** Specifies when a keychain item is accessible (iOS and visionOS only).*/
-  accessible?: ACCESSIBLE;
-  /** Authentication type for retrieving keychain item (iOS and visionOS only). */
-  authenticationType?: AUTHENTICATION_TYPE;
-  /** The service name to associate with the keychain item. */
-  service?: string;
-  /** The desired security level of the keychain item. */
-  securityLevel?: SECURITY_LEVEL;
-  /** The storage type (Android only). */
-  storage?: STORAGE_TYPE;
-  /** The security rules to apply when storing the keychain item (Android only). */
-  rules?: SECURITY_RULES;
-  /**
-   * Allow Android keystore reads to reuse a still-valid authenticated session instead of forcing
-   * the interactive biometric flow first.
-   */
-  androidAllowAuthenticatedSessionReuse?: boolean;
-  /**
-   * Android only. Defaults to strong biometrics. Weak is intended for non-production
-   * regression builds where face-recognition prompt behavior needs explicit coverage.
-   */
-  androidBiometricSecurityLevel?: AndroidBiometricSecurityLevel;
-};
-
-/**
- * Normalized options including authentication prompt details.
- */
-export type NormalizedOptions = {
-  /** Authentication prompt details. */
-  authenticationPrompt?: AuthenticationPrompt;
-} & BaseOptions;
-
-/**
- * Options for keychain functions.
- */
-export type Options = Partial<
-  {
-    /** Authentication prompt details or a title string. */
-    authenticationPrompt?: string | AuthenticationPrompt;
-  } & BaseOptions
->;
-
-/**
- * Result returned by keychain functions.
- */
-export type Result = {
-  /** The service name associated with the keychain item. */
-  service: string;
-  /** The storage type used for the keychain item. */
-  storage: STORAGE_TYPE;
-};
-
-/**
- * User credentials returned by keychain functions.
- */
-export type UserCredentials = {
-  /** The username associated with the keychain item. */
-  username: string;
-  /** The password associated with the keychain item. */
-  password: string;
-} & Result;
-
-/**
- * Shared web credentials returned by keychain functions (iOS only).
- */
-export type SharedWebCredentials = {
-  /** The server associated with the keychain item. */
-  server: string;
-} & UserCredentials;
-
-// Default authentication prompt options
-const AUTH_PROMPT_DEFAULTS: AuthenticationPrompt = {
-  title: 'Authenticate to retrieve secret',
-  cancel: 'Cancel',
-};
-
-function normalizeServiceOption(serviceOrOptions?: string | Options): Options {
-  if (typeof serviceOrOptions === 'string') {
-    console.warn(
-      `You passed a service string as an argument to one of the react-native-keychain functions.
-          This way of passing service is deprecated and will be removed in a future major.
-          Please update your code to use { service: ${JSON.stringify(
-            serviceOrOptions
-          )} }`
-    );
-    return { service: serviceOrOptions };
-  }
-  return serviceOrOptions || {};
-}
-
-function normalizeOptions(
-  serviceOrOptions?: string | Options
-): NormalizedOptions {
-  const options = {
-    ...normalizeServiceOption(serviceOrOptions),
-  } as NormalizedOptions;
-  const { authenticationPrompt } = options;
-
-  if (typeof authenticationPrompt === 'string') {
-    console.warn(
-      `You passed a authenticationPrompt string as an argument to one of the react-native-keychain functions.
-          This way of passing authenticationPrompt is deprecated and will be removed in a future major.
-          Please update your code to use { authenticationPrompt: { title: ${JSON.stringify(
-            authenticationPrompt
-          )} }`
-    );
-    options.authenticationPrompt = {
-      ...AUTH_PROMPT_DEFAULTS,
-      title: authenticationPrompt,
-    };
-  } else {
-    options.authenticationPrompt = {
-      ...AUTH_PROMPT_DEFAULTS,
-      ...authenticationPrompt,
-    };
-  }
-
-  return options;
-}
 
 /**
  * Saves the `username` and `password` combination for the given service.
  *
  * @param {string} username - The username or e-mail to be saved.
  * @param {string} password - The password to be saved.
- * @param {Options | string} [serviceOrOptions] - A keychain options object or a service name string. Passing a service name as a string is deprecated.
+ * @param {SetOptions | string} [serviceOrOptions] - A keychain options object or a service name string. Passing a service name as a string is deprecated.
  *
  * @returns {Promise<false | Result>} Resolves to an object containing `service` and `storage` when successful, or `false` on failure.
  *
@@ -265,7 +43,7 @@ function normalizeOptions(
 export function setGenericPassword(
   username: string,
   password: string,
-  serviceOrOptions?: string | Options
+  serviceOrOptions?: string | SetOptions
 ): Promise<false | Result> {
   const options = normalizeOptions(serviceOrOptions);
   return RNRabbyKeychainV9Manager.setGenericPasswordForOptions(
@@ -278,7 +56,7 @@ export function setGenericPassword(
 /**
  * Fetches the `username` and `password` combination for the given service.
  *
- * @param {Options | string} [serviceOrOptions] - A keychain options object or a service name string.
+ * @param {GetOptions | string} [serviceOrOptions] - A keychain options object or a service name string.
  *
  * @returns {Promise<false | UserCredentials>} Resolves to an object containing `service`, `username`, `password`, and `storage` when successful, or `false` on failure.
  *
@@ -293,7 +71,7 @@ export function setGenericPassword(
  * ```
  */
 export function getGenericPassword(
-  serviceOrOptions?: string | Options
+  serviceOrOptions?: string | GetOptions
 ): Promise<false | UserCredentials> {
   const options = normalizeOptions(serviceOrOptions);
   return RNRabbyKeychainV9Manager.getGenericPasswordForOptions(options);
@@ -302,7 +80,7 @@ export function getGenericPassword(
 /**
  * Checks if generic password exists for the given service.
  *
- * @param {Options | string} [serviceOrOptions] - A keychain options object or a service name string.
+ * @param {BaseOptions | string} [serviceOrOptions] - A keychain options object or a service name string.
  *
  * @returns {Promise<boolean>} Resolves to `true` if a password exists, otherwise `false`.
  *
@@ -313,16 +91,16 @@ export function getGenericPassword(
  * ```
  */
 export function hasGenericPassword(
-  serviceOrOptions?: string | Options
+  serviceOrOptions?: string | BaseOptions
 ): Promise<boolean> {
-  const options = normalizeOptions(serviceOrOptions);
+  const options = normalizeServiceOption(serviceOrOptions);
   return RNRabbyKeychainV9Manager.hasGenericPasswordForOptions(options);
 }
 
 /**
  * Deletes all generic password keychain entries for the given service.
  *
- * @param {Options | string} [serviceOrOptions] - A keychain options object or a service name string.
+ * @param {BaseOptions | string} [serviceOrOptions] - A keychain options object or a service name string.
  *
  * @returns {Promise<boolean>} Resolves to `true` when successful, otherwise `false`.
  *
@@ -333,9 +111,9 @@ export function hasGenericPassword(
  * ```
  */
 export function resetGenericPassword(
-  serviceOrOptions?: string | Options
+  serviceOrOptions?: string | BaseOptions
 ): Promise<boolean> {
-  const options = normalizeOptions(serviceOrOptions);
+  const options = normalizeServiceOption(serviceOrOptions);
   return RNRabbyKeychainV9Manager.resetGenericPasswordForOptions(options);
 }
 
@@ -357,9 +135,9 @@ export function getAllGenericPasswordServices(): Promise<string[]> {
 /**
  * Checks if internet credentials exist for the given server.
  *
- * @param {string} server - The server URL.
+ * @param {string} serverOrOptions - A keychain options object or a server name string.
  *
- * @returns {Promise<false | Result>} Resolves to an object containing `service` and `storage` when successful, or `false` if not found.
+ * @returns {Promise<boolean>} Resolves to `true` if internet credentials exist, otherwise `false`.
  *
  * @example
  * ```typescript
@@ -368,9 +146,10 @@ export function getAllGenericPasswordServices(): Promise<string[]> {
  * ```
  */
 export function hasInternetCredentials(
-  server: string
-): Promise<false | Result> {
-  return RNRabbyKeychainV9Manager.hasInternetCredentialsForServer(server);
+  serverOrOptions: string | BaseOptions
+): Promise<boolean> {
+  const options = normalizeServerOption(serverOrOptions);
+  return RNRabbyKeychainV9Manager.hasInternetCredentialsForOptions(options);
 }
 
 /**
@@ -379,7 +158,7 @@ export function hasInternetCredentials(
  * @param {string} server - The server URL.
  * @param {string} username - The username or e-mail to be saved.
  * @param {string} password - The password to be saved.
- * @param {Options} [options] - A keychain options object.
+ * @param {SetOptions} [options] - A keychain options object.
  *
  * @returns {Promise<false | Result>} Resolves to an object containing `service` and `storage` when successful, or `false` on failure.
  *
@@ -392,13 +171,13 @@ export function setInternetCredentials(
   server: string,
   username: string,
   password: string,
-  options?: Options
+  options?: SetOptions
 ): Promise<false | Result> {
   return RNRabbyKeychainV9Manager.setInternetCredentialsForServer(
     server,
     username,
     password,
-    options
+    normalizeOptions(options)
   );
 }
 
@@ -406,7 +185,7 @@ export function setInternetCredentials(
  * Fetches the internet credentials for the given server.
  *
  * @param {string} server - The server URL.
- * @param {Options} [options] - A keychain options object.
+ * @param {GetOptions} [options] - A keychain options object.
  *
  * @returns {Promise<false | UserCredentials>} Resolves to an object containing `server`, `username`, `password`, and `storage` when successful, or `false` on failure.
  *
@@ -422,7 +201,7 @@ export function setInternetCredentials(
  */
 export function getInternetCredentials(
   server: string,
-  options?: Options
+  options?: GetOptions
 ): Promise<false | UserCredentials> {
   return RNRabbyKeychainV9Manager.getInternetCredentialsForServer(
     server,
@@ -433,7 +212,7 @@ export function getInternetCredentials(
 /**
  * Deletes all internet password keychain entries for the given server.
  *
- * @param {string} server - The server URL.
+ * @param {BaseOptions | string} [serviceOrOptions] - A keychain options object or a service name string.
  *
  * @returns {Promise<void>} Resolves when the operation is completed.
  *
@@ -443,8 +222,11 @@ export function getInternetCredentials(
  * console.log('Credentials reset for server');
  * ```
  */
-export function resetInternetCredentials(server: string): Promise<void> {
-  return RNRabbyKeychainV9Manager.resetInternetCredentialsForServer(server);
+export function resetInternetCredentials(
+  serverOrOptions: string | BaseOptions
+): Promise<void> {
+  const options = normalizeServerOption(serverOrOptions);
+  return RNRabbyKeychainV9Manager.resetInternetCredentialsForOptions(options);
 }
 
 /**
@@ -458,23 +240,18 @@ export function resetInternetCredentials(server: string): Promise<void> {
  * console.log('Supported Biometry Type:', biometryType);
  * ```
  */
-export function getSupportedBiometryType(
-  serviceOrOptions?: string | Options
-): Promise<null | BIOMETRY_TYPE> {
+export function getSupportedBiometryType(): Promise<null | BIOMETRY_TYPE> {
   if (!RNRabbyKeychainV9Manager.getSupportedBiometryType) {
     return Promise.resolve(null);
-  }
-
-  const options = normalizeOptions(serviceOrOptions);
-  if (RNRabbyKeychainV9Manager.getSupportedBiometryTypeForOptions) {
-    return RNRabbyKeychainV9Manager.getSupportedBiometryTypeForOptions(options);
   }
 
   return RNRabbyKeychainV9Manager.getSupportedBiometryType();
 }
 
 /**
- * Request shared web credentials (iOS only).
+ * Request shared web credentials.
+ *
+ * @platform iOS
  *
  * @returns {Promise<false | SharedWebCredentials>} Resolves to an object containing `server`, `username`, and `password` if approved, or `false` if denied.
  *
@@ -502,7 +279,9 @@ export function requestSharedWebCredentials(): Promise<
 }
 
 /**
- * Sets shared web credentials (iOS only).
+ * Sets shared web credentials.
+ *
+ * @platform iOS
  *
  * @param {string} server - The server URL.
  * @param {string} username - The username or e-mail to be saved.
@@ -536,9 +315,11 @@ export function setSharedWebCredentials(
 }
 
 /**
- * Checks if the current device supports the specified authentication policy (iOS only).
+ * Checks if the current device supports the specified authentication policy.
  *
- * @param {Options} [options] - A keychain options object.
+ * @platform iOS
+ *
+ * @param {AuthenticationTypeOption} [options] - A keychain options object.
  *
  * @returns {Promise<boolean>} Resolves to `true` when supported, otherwise `false`.
  *
@@ -548,7 +329,9 @@ export function setSharedWebCredentials(
  * console.log('Can imply authentication:', canAuthenticate);
  * ```
  */
-export function canImplyAuthentication(options?: Options): Promise<boolean> {
+export function canImplyAuthentication(
+  options?: AuthenticationTypeOption
+): Promise<boolean> {
   if (!RNRabbyKeychainV9Manager.canCheckAuthentication) {
     return Promise.resolve(false);
   }
@@ -556,9 +339,11 @@ export function canImplyAuthentication(options?: Options): Promise<boolean> {
 }
 
 /**
- * Returns the security level supported by the library on the current device (Android only).
+ * Returns the security level supported by the library on the current device.
  *
- * @param {Options} [options] - A keychain options object.
+ * @platform Android
+ *
+ * @param {AccessControlOption} [options] - A keychain options object.
  *
  * @returns {Promise<null | SECURITY_LEVEL>} Resolves to a `SECURITY_LEVEL` when supported, otherwise `null`.
  *
@@ -569,7 +354,7 @@ export function canImplyAuthentication(options?: Options): Promise<boolean> {
  * ```
  */
 export function getSecurityLevel(
-  options?: Options
+  options?: AccessControlOption
 ): Promise<null | SECURITY_LEVEL> {
   if (!RNRabbyKeychainV9Manager.getSecurityLevel) {
     return Promise.resolve(null);
@@ -577,6 +362,8 @@ export function getSecurityLevel(
   return RNRabbyKeychainV9Manager.getSecurityLevel(options);
 }
 
+export * from './enums';
+export * from './types';
 /** @ignore */
 export default {
   SECURITY_LEVEL,
