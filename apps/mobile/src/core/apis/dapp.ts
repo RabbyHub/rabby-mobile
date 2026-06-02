@@ -12,6 +12,9 @@ import { getAllAccountsToDisplay } from './account';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { sortAccountList } from '@/utils/sortAccountList';
 import { findChain } from '@/utils/chain';
+import { createDappBySession } from '@/core/utils/createDappBySession';
+
+export { createDappBySession };
 
 export const removeDapp = (origin: string) => {
   disconnect(origin);
@@ -131,32 +134,6 @@ export const fetchDappInfo = async (origin: string) => {
 
 // cache 1 minute
 export const cachedFetchDappInfo = cached(fetchDappInfo, 60 * 1e3);
-
-export const createDappBySession = ({
-  origin,
-  name,
-  icon,
-}: {
-  origin: string;
-  name: string;
-  icon: string;
-}): DappInfo => {
-  const id = origin.replace(/^https?:\/\//, '');
-  return {
-    origin,
-    chainId: undefined as any,
-    name: '',
-    info: {
-      id,
-      name: name || '',
-      logo_url: icon || '',
-      description: '',
-      user_range: '',
-      tags: [],
-      chain_ids: [],
-    },
-  };
-};
 
 export const syncBasicDappInfo = async (origin: string | string[]) => {
   const input = Array.isArray(origin) ? origin : [origin];

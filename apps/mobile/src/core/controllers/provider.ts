@@ -62,7 +62,7 @@ import { is1559Tx, is7702Tx, validateGasPriceRange } from '@/utils/transaction';
 import { eventBus, EVENTS } from '@/utils/events';
 import { sessionService } from '../services/shared';
 import { BroadcastEvent } from '@/constant/event';
-import { createDappBySession } from '../apis/dapp';
+import { createDappBySession } from '@/core/utils/createDappBySession';
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { stats } from '@/utils/stats';
