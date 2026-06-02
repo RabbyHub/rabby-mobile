@@ -342,6 +342,7 @@ type KeychainDebugExportPayload = {
       supportedBiometryType: string | null;
       devicePasscodeAvailable: boolean;
       isUsingDevicePasscode: boolean;
+      isDevicePasscodeOnlyAvailable: boolean;
       isBiometricsEnabled: boolean;
       couldSetupSystemAuth: boolean;
       defaultTypeLabel: string;
@@ -2500,6 +2501,8 @@ export default function DevDataKeychain(): JSX.Element {
           supportedBiometryType: systemAuthComputed.supportedBiometryType,
           devicePasscodeAvailable: systemAuthComputed.devicePasscodeAvailable,
           isUsingDevicePasscode: systemAuthComputed.isUsingDevicePasscode,
+          isDevicePasscodeOnlyAvailable:
+            systemAuthComputed.isDevicePasscodeOnlyAvailable,
           isBiometricsEnabled: systemAuthComputed.isBiometricsEnabled,
           couldSetupSystemAuth: systemAuthComputed.couldSetupSystemAuth,
           defaultTypeLabel: systemAuthComputed.defaultTypeLabel,
@@ -3639,6 +3642,12 @@ export default function DevDataKeychain(): JSX.Element {
           <StatusRow
             label="Using Device Passcode"
             value={systemAuthComputed.isUsingDevicePasscode ? 'yes' : 'no'}
+          />
+          <StatusRow
+            label="Device Passcode Only"
+            value={
+              systemAuthComputed.isDevicePasscodeOnlyAvailable ? 'yes' : 'no'
+            }
           />
           <View style={styles.statusRow}>
             <View style={styles.sectionHeaderRow}>
