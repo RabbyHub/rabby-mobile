@@ -1155,7 +1155,6 @@ export function createBusinessKeychainApi({
     shouldAttachTrustedVaultKeyString?: boolean;
     authenticationType?: KEYCHAIN_AUTH_TYPES;
     skipLegacyAndroidBiometricsStorageUpgrade?: boolean;
-    skipCurrentVersionRewriteAfterLegacyFallback?: boolean;
   }): Promise<null | DefaultRet> {
     const instance = await waitInstance();
     const startedAt = Date.now();

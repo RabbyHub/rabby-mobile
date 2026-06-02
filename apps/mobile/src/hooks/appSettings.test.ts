@@ -83,7 +83,7 @@ jest.mock('zustand/react/shallow', () => ({
 }));
 
 describe('hooks/appSettings keychain defaults', () => {
-  it('keeps v10 as the production current keychain version', () => {
+  it('keeps v9 as the production current keychain version', () => {
     jest.isolateModules(() => {
       const {
         DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD,
@@ -94,9 +94,9 @@ describe('hooks/appSettings keychain defaults', () => {
       expect(DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD).toBe(
         'debugCurrentKeychainVersion20260602',
       );
-      expect(getCurrentKeychainVersion()).toBe('10.0.0');
-      expect(setCurrentKeychainVersion('9.0.0')).toBe('10.0.0');
-      expect(getCurrentKeychainVersion()).toBe('10.0.0');
+      expect(getCurrentKeychainVersion()).toBe('9.0.0');
+      expect(setCurrentKeychainVersion('10.0.0')).toBe('9.0.0');
+      expect(getCurrentKeychainVersion()).toBe('9.0.0');
     });
   });
 });
