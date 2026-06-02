@@ -17,6 +17,7 @@ jest.mock('@/core/apis/keychainCommon', () => ({
     RSA: 'KeystoreRSAECB',
     AES: 'KeystoreAESCBC',
     AES_GCM: 'KeystoreAESGCM',
+    AES_GCM_NO_AUTH: 'KeystoreAESGCM_NoAuth',
     KC: 'keychain',
   },
   DEFAULT_KEYCHAIN_STORAGE_TYPE: 'KeystoreAESGCM_NoAuth',
@@ -84,9 +85,15 @@ jest.mock('zustand/react/shallow', () => ({
 describe('hooks/appSettings keychain defaults', () => {
   it('keeps v10 as the production current keychain version', () => {
     jest.isolateModules(() => {
-      const { getCurrentKeychainVersion, setCurrentKeychainVersion } =
-        require('./appSettings') as typeof import('./appSettings');
+      const {
+        DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD,
+        getCurrentKeychainVersion,
+        setCurrentKeychainVersion,
+      } = require('./appSettings') as typeof import('./appSettings');
 
+      expect(DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD).toBe(
+        'debugCurrentKeychainVersion20260602',
+      );
       expect(getCurrentKeychainVersion()).toBe('10.0.0');
       expect(setCurrentKeychainVersion('9.0.0')).toBe('10.0.0');
       expect(getCurrentKeychainVersion()).toBe('10.0.0');
