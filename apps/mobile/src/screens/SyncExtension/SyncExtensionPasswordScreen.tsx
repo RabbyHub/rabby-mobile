@@ -335,7 +335,11 @@ export const SyncExtensionPasswordScreen = () => {
             />
 
             {shouldSetupPassword ? (
-              <View style={styles.switchContainer}>
+              <View
+                style={[
+                  styles.switchContainer,
+                  !couldSetupBiometrics && styles.switchContainerDisabled,
+                ]}>
                 <Text style={styles.labelText}>
                   {t('page.createPassword.enable', {
                     bioType: defaultTypeLabel,
@@ -344,6 +348,7 @@ export const SyncExtensionPasswordScreen = () => {
                 <View style={styles.valueView}>
                   <AppSwitch2024
                     value={biometricsEnabled}
+                    disabled={!couldSetupBiometrics}
                     onValueChange={async value => {
                       if (!couldSetupBiometrics) {
                         toast.show(
@@ -407,6 +412,9 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     marginTop: 24,
     paddingHorizontal: 8,
+  },
+  switchContainerDisabled: {
+    opacity: 0.45,
   },
   labelText: {
     width: '50%',

@@ -45,6 +45,12 @@ import {
   useDebugKeychainStorage,
   type CurrentKeychainVersion,
 } from '@/hooks/appSettings';
+import {
+  BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES,
+  storeApisBiometrics,
+  useBiometricsSystemAuthDebugMock,
+  type BiometricsSystemAuthDebugMode,
+} from '@/hooks/biometrics';
 import { useAppSecurityChain } from '@/hooks/global';
 import { useTheme2024 } from '@/hooks/theme';
 import { shareLocalFile } from '@/utils/shareLocalFile';
@@ -132,6 +138,27 @@ const KEYCHAIN_STORAGE_OPTIONS = [
     key: apisKeychain.KEYCHAIN_STORAGE_TYPES.KC,
     label: 'iOS Keychain',
     description: 'System keychain storage on iOS / visionOS.',
+  },
+] as const;
+
+const SYSTEM_AUTH_DEBUG_MOCK_OPTIONS = [
+  {
+    key: BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.REAL,
+    label: 'Real System Auth',
+    description:
+      'Use native getSupportedBiometryType and device passcode availability.',
+  },
+  {
+    key: BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.PASSCODE_ONLY,
+    label: 'No Biometrics + Device Passcode',
+    description:
+      'Mock no enrolled biometrics while Android device credential remains available.',
+  },
+  {
+    key: BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.NONE,
+    label: 'No System Auth',
+    description:
+      'Mock neither enrolled biometrics nor device credential is available.',
   },
 ] as const;
 
@@ -312,6 +339,10 @@ type KeychainDebugExportPayload = {
       CurrentKeychainVersion,
       KeychainStorageType[]
     >;
+    systemAuthDebugMock: {
+      mode: BiometricsSystemAuthDebugMode;
+      canUse: boolean;
+    };
   };
   versions: {
     v8_2_0: KeychainVersionExportState;
@@ -1307,6 +1338,11 @@ export default function DevDataKeychain(): JSX.Element {
     canSwitchDebugKeychainStorage,
     setDebugKeychainStorageForVersion,
   } = useDebugKeychainStorage();
+  const {
+    canUse: canUseSystemAuthDebugMock,
+    mode: systemAuthDebugMockMode,
+    setMode: setSystemAuthDebugMockMode,
+  } = useBiometricsSystemAuthDebugMock();
   const [tabKey, setTabKey] = useState<TabKey>('current');
   const [helpSheetContext, setHelpSheetContext] =
     useState<HelpSheetContext | null>(null);
@@ -2395,6 +2431,32 @@ export default function DevDataKeychain(): JSX.Element {
     ],
   );
 
+  const handleChangeSystemAuthDebugMock = useCallback(
+    async (nextMode: BiometricsSystemAuthDebugMode) => {
+      if (nextMode === systemAuthDebugMockMode) {
+        return;
+      }
+      if (!canUseSystemAuthDebugMock) {
+        toast.show('System auth mock is only available on Android test builds');
+        return;
+      }
+
+      const changed = setSystemAuthDebugMockMode(nextMode);
+      if (!changed) {
+        toast.show('Failed to change system auth mock');
+        return;
+      }
+
+      await storeApisBiometrics.fetchBiometrics();
+      toast.success(`System auth mock: ${nextMode}`);
+    },
+    [
+      canUseSystemAuthDebugMock,
+      setSystemAuthDebugMockMode,
+      systemAuthDebugMockMode,
+    ],
+  );
+
   const maskedV9CurrentBusinessPassword = maskSecret(
     v9CurrentBusinessDecryptResult?.decryptedPayload.password,
   );
@@ -2421,6 +2483,10 @@ export default function DevDataKeychain(): JSX.Element {
         configuredStorageByVersion: debugKeychainStorageByVersion,
         effectiveStorageByVersion,
         supportedStorageTypesByVersion,
+        systemAuthDebugMock: {
+          mode: systemAuthDebugMockMode,
+          canUse: canUseSystemAuthDebugMock,
+        },
       },
       versions: {
         v8_2_0: sanitizeBusinessVersionStateForExport(
@@ -2499,6 +2565,7 @@ export default function DevDataKeychain(): JSX.Element {
     [
       businessStates,
       canSwitchCurrentKeychainVersion,
+      canUseSystemAuthDebugMock,
       currentKeychainVersion,
       debugKeychainStorageByVersion,
       debugCurrentKeychainVersion,
@@ -2506,6 +2573,7 @@ export default function DevDataKeychain(): JSX.Element {
       effectiveStorageByVersion,
       includeSecretFieldsInExport,
       rabbitCode,
+      systemAuthDebugMockMode,
       supportedStorageTypesByVersion,
       v9CurrentBusinessDecryptErrorMessage,
       v9CurrentBusinessDecryptResult,
@@ -3515,6 +3583,11 @@ export default function DevDataKeychain(): JSX.Element {
             value={apisKeychain.getCurrentKeychainSourceLabel()}
             selectable
           />
+          <StatusRow
+            label="System Auth Mock"
+            value={systemAuthDebugMockMode}
+            selectable
+          />
           <View style={styles.statusRow}>
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.statusLabel}>RABBY_MOBILE_CODE</Text>
@@ -3563,6 +3636,46 @@ export default function DevDataKeychain(): JSX.Element {
                 </Text>
                 <Text style={styles.versionRadioMeta} selectable>
                   Source: {option.sourceLabel}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={styles.systemAuthMockHeader}>
+            <Text style={styles.statusLabel}>
+              System Auth Availability Mock
+            </Text>
+            <Text style={styles.versionRadioMeta}>
+              Overrides JS biometric/passcode availability checks only. It does
+              not write keychain data or mutate Android credentials.
+            </Text>
+          </View>
+          <View style={styles.versionSelectorGroup}>
+            {SYSTEM_AUTH_DEBUG_MOCK_OPTIONS.map(option => (
+              <TouchableOpacity
+                key={option.key}
+                activeOpacity={0.8}
+                disabled={!canUseSystemAuthDebugMock}
+                style={[
+                  styles.versionSelectorOption,
+                  !canUseSystemAuthDebugMock &&
+                    styles.versionSelectorOptionDisabled,
+                ]}
+                onPress={() => {
+                  void handleChangeSystemAuthDebugMock(option.key);
+                }}>
+                <Radio
+                  title={option.label}
+                  checked={systemAuthDebugMockMode === option.key}
+                  onPress={() => {
+                    void handleChangeSystemAuthDebugMock(option.key);
+                  }}
+                  checkedColor={colors2024['brand-default']}
+                  containerStyle={styles.versionRadio}
+                  textStyle={styles.versionRadioLabel}
+                />
+                <Text style={styles.versionRadioMeta}>
+                  {option.description}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -3638,6 +3751,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-bg-2'],
   },
+  versionSelectorOptionDisabled: {
+    opacity: 0.45,
+  },
   versionRadio: {
     paddingVertical: 0,
   },
@@ -3653,6 +3769,10 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
+  },
+  systemAuthMockHeader: {
+    marginTop: 16,
+    gap: 2,
   },
   summaryCard: {
     marginTop: 16,
