@@ -106,8 +106,15 @@ const CARET_BUFFER = 7;
 const MAIN_FONT_SIZE = DEFAULT_MAX_FONT_SIZE;
 const MIN_AMOUNT_FONT_SIZE = 17;
 const AMOUNT_FONT_SIZE_STEP = 1;
+const AMOUNT_CONTAINER_HEIGHT = 92;
+const AMOUNT_CONTENT_HEIGHT = 60;
 const AMOUNT_ROW_HEIGHT = 36;
-const AMOUNT_LINE_HEIGHT = 34;
+const AMOUNT_ROW_MIN_COMPACT_HEIGHT = 34;
+const AMOUNT_DEFAULT_LINE_HEIGHT = 34;
+const AMOUNT_LINE_HEIGHT_EXTRA = 6;
+const AMOUNT_MIN_COMPACT_LEFT_OFFSET = 6;
+const QUOTE_ROW_TOP = 40;
+const QUOTE_ROW_MIN_COMPACT_TOP = 38;
 const QUOTE_TEXT_FONT_SIZE = 14;
 const QUOTE_UNIT_GAP = 4;
 const EMPTY_AMOUNT_DISPLAY_VALUE = '0';
@@ -175,6 +182,54 @@ function normalizeDisplayAmountValue(value: string) {
 
 function isNonEmptyNormalizedAmountInput(value: string) {
   return Boolean(value) && NORMALIZED_AMOUNT_INPUT_REGEX.test(value);
+}
+
+function getAmountRowHeight(isMinCompactLayout: boolean) {
+  return isMinCompactLayout ? AMOUNT_ROW_MIN_COMPACT_HEIGHT : AMOUNT_ROW_HEIGHT;
+}
+
+function getAmountLineHeight(fontSize: number, isMinCompactLayout: boolean) {
+  const rowHeight = getAmountRowHeight(isMinCompactLayout);
+  return Math.min(
+    rowHeight,
+    Math.max(fontSize, Math.round(fontSize + AMOUNT_LINE_HEIGHT_EXTRA)),
+  );
+}
+
+function getCenteredTextTop(rowHeight: number, lineHeight: number) {
+  return Math.max(0, Math.round((rowHeight - lineHeight) / 2));
+}
+
+function getAmountTextTop(fontSize: number, isMinCompactLayout: boolean) {
+  return getCenteredTextTop(
+    getAmountRowHeight(isMinCompactLayout),
+    getAmountLineHeight(fontSize, isMinCompactLayout),
+  );
+}
+
+function getUnitLineHeight(fontSize: number, isMinCompactLayout: boolean) {
+  return getAmountLineHeight(fontSize, isMinCompactLayout);
+}
+
+function getUnitTextTop(fontSize: number, isMinCompactLayout: boolean) {
+  return getCenteredTextTop(
+    getAmountRowHeight(isMinCompactLayout),
+    getUnitLineHeight(fontSize, isMinCompactLayout),
+  );
+}
+
+function getAmountVerticalLayout(
+  fontSize: number,
+  isMinCompactLayout: boolean,
+) {
+  return {
+    amountRowHeight: getAmountRowHeight(isMinCompactLayout),
+    amountLineHeight: getAmountLineHeight(fontSize, isMinCompactLayout),
+    amountTextTop: getAmountTextTop(fontSize, isMinCompactLayout),
+    unitLineHeight: getUnitLineHeight(fontSize, isMinCompactLayout),
+    unitTextTop: getUnitTextTop(fontSize, isMinCompactLayout),
+    quoteRowTop: isMinCompactLayout ? QUOTE_ROW_MIN_COMPACT_TOP : QUOTE_ROW_TOP,
+  };
 }
 
 export const SendAmountInput = ({
@@ -322,6 +377,7 @@ export const SendAmountInput = ({
           valueInputWidth: undefined,
           unitLeft: visibleValueWidth + UNIT_GAP,
           unitWidth: Math.ceil(measuredUnitWidthAtBaseFontSize) + 2,
+          isMinCompactLayout: false,
         };
       }
 
@@ -344,13 +400,27 @@ export const SendAmountInput = ({
         }
       }
 
+      const minValueWidth =
+        (nextValueWidthAtBaseFontSize * MIN_AMOUNT_FONT_SIZE) / MAIN_FONT_SIZE;
+      const minUnitWidth =
+        (measuredUnitWidthAtBaseFontSize * MIN_AMOUNT_FONT_SIZE) /
+        MAIN_FONT_SIZE;
+      const minTotalWidth =
+        minValueWidth + minUnitWidth + AMOUNT_UNIT_RESERVED_WIDTH;
+      const isMinCompactLayout =
+        nextFittingFontSize === MIN_AMOUNT_FONT_SIZE &&
+        minTotalWidth > inputAreaWidth;
+      const effectiveInputAreaWidth = isMinCompactLayout
+        ? inputAreaWidth + AMOUNT_MIN_COMPACT_LEFT_OFFSET
+        : inputAreaWidth;
+
       const valueWidth =
         (nextValueWidthAtBaseFontSize * nextFittingFontSize) / MAIN_FONT_SIZE;
       const scaledUnitWidth =
         (measuredUnitWidthAtBaseFontSize * nextFittingFontSize) /
         MAIN_FONT_SIZE;
       const maxValueWidth = Math.max(
-        inputAreaWidth - UNIT_GAP - Math.ceil(scaledUnitWidth),
+        effectiveInputAreaWidth - UNIT_GAP - Math.ceil(scaledUnitWidth),
         1,
       );
       const visibleValueWidth = Math.min(
@@ -365,6 +435,7 @@ export const SendAmountInput = ({
         valueInputWidth: maxValueWidth,
         unitLeft: visibleValueWidth + UNIT_GAP,
         unitWidth,
+        isMinCompactLayout,
       };
     },
     [
@@ -374,7 +445,13 @@ export const SendAmountInput = ({
     ],
   );
 
-  const { fittingFontSize, valueInputWidth, unitLeft, unitWidth } = useMemo(
+  const {
+    fittingFontSize,
+    valueInputWidth,
+    unitLeft,
+    unitWidth,
+    isMinCompactLayout,
+  } = useMemo(
     () => getAmountLayout(textForMeasure),
     [getAmountLayout, textForMeasure],
   );
@@ -446,9 +523,16 @@ export const SendAmountInput = ({
   const applyUnitLayoutNative = useCallback(
     (nextValue: string) => {
       const nextLayout = getAmountLayout(getDisplayAmountValue(nextValue));
+      const nextVerticalLayout = getAmountVerticalLayout(
+        nextLayout.fittingFontSize,
+        nextLayout.isMinCompactLayout,
+      );
       unitTextRef.current?.setNativeProps?.({
         style: {
           fontSize: nextLayout.fittingFontSize,
+          top: nextVerticalLayout.unitTextTop,
+          height: nextVerticalLayout.unitLineHeight,
+          lineHeight: nextVerticalLayout.unitLineHeight,
           left: nextLayout.unitLeft,
           width: nextLayout.unitWidth,
         },
@@ -663,6 +747,33 @@ export const SendAmountInput = ({
     !!inputAreaWidth && quoteTextWidth >= quoteTextMaxWidth - 1;
 
   const hasValue = !!inputValue;
+  const {
+    amountRowHeight,
+    amountLineHeight,
+    amountTextTop,
+    unitLineHeight,
+    unitTextTop,
+    quoteRowTop,
+  } = useMemo(
+    () => getAmountVerticalLayout(fittingFontSize, isMinCompactLayout),
+    [fittingFontSize, isMinCompactLayout],
+  );
+  const compactAmountRowStyle =
+    isMinCompactLayout && inputAreaWidth
+      ? {
+          marginLeft: -AMOUNT_MIN_COMPACT_LEFT_OFFSET,
+          width: inputAreaWidth + AMOUNT_MIN_COMPACT_LEFT_OFFSET,
+        }
+      : null;
+  const compactQuoteRowStyle =
+    isMinCompactLayout && inputAreaWidth
+      ? {
+          marginLeft: -AMOUNT_MIN_COMPACT_LEFT_OFFSET,
+          paddingLeft: AMOUNT_MIN_COMPACT_LEFT_OFFSET,
+          width: inputAreaWidth + AMOUNT_MIN_COMPACT_LEFT_OFFSET,
+          maxWidth: inputAreaWidth + AMOUNT_MIN_COMPACT_LEFT_OFFSET,
+        }
+      : null;
 
   return (
     <View style={[styles.container, style]}>
@@ -680,7 +791,14 @@ export const SendAmountInput = ({
               style={styles.skeleton}
             />
           ) : (
-            <View style={styles.amountRow}>
+            <View
+              style={[
+                styles.amountRow,
+                {
+                  height: amountRowHeight,
+                },
+                compactAmountRowStyle,
+              ]}>
               <TextInput
                 ref={tokenInputRef}
                 value={textInputValue}
@@ -699,6 +817,9 @@ export const SendAmountInput = ({
                 style={[
                   styles.input,
                   {
+                    top: amountTextTop,
+                    height: amountLineHeight,
+                    lineHeight: amountLineHeight,
                     left: inputLeft,
                     fontSize: fittingFontSize,
                     width: inputWidth,
@@ -716,6 +837,9 @@ export const SendAmountInput = ({
                 style={[
                   styles.emptyAmountText,
                   {
+                    top: amountTextTop,
+                    height: amountLineHeight,
+                    lineHeight: amountLineHeight,
                     fontSize: fittingFontSize,
                     opacity: inputValue ? 0 : 1,
                   },
@@ -734,6 +858,9 @@ export const SendAmountInput = ({
                   style={[
                     styles.unitText,
                     {
+                      top: unitTextTop,
+                      height: unitLineHeight,
+                      lineHeight: unitLineHeight,
                       fontSize: fittingFontSize,
                       left: unitLeft,
                       width: unitWidth,
@@ -758,6 +885,9 @@ export const SendAmountInput = ({
                   style={[
                     styles.unitText,
                     {
+                      top: unitTextTop,
+                      height: unitLineHeight,
+                      lineHeight: unitLineHeight,
                       fontSize: fittingFontSize,
                       left: unitLeft,
                       width: unitWidth,
@@ -771,7 +901,13 @@ export const SendAmountInput = ({
             activeOpacity={canSwitchMode ? 0.7 : 1}
             disabled={!canSwitchMode}
             onPress={handleSwitchModePress}
-            style={styles.quoteRow}
+            style={[
+              styles.quoteRow,
+              {
+                top: quoteRowTop,
+              },
+              compactQuoteRowStyle,
+            ]}
             hitSlop={8}>
             <Text
               style={[
@@ -792,7 +928,7 @@ export const SendAmountInput = ({
             {canSwitchMode ? (
               <View style={styles.switchIconWrapper}>
                 <RcIconSwitchCC
-                  fillColor={colors2024['brand-light-1']}
+                  fillColor={colors2024['neutral-line']}
                   strokeColor={colors2024['neutral-body']}
                   width={20}
                   height={20}
@@ -867,7 +1003,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     container: {
       borderRadius: 16,
       backgroundColor: colors2024['neutral-bg-2'],
-      height: 98,
+      height: AMOUNT_CONTAINER_HEIGHT,
       flexDirection: 'row',
       alignItems: 'center',
       paddingRight: 16,
@@ -879,22 +1015,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       paddingLeft: 16,
     },
     leftInputContent: {
-      justifyContent: 'center',
+      height: AMOUNT_CONTENT_HEIGHT,
+      position: 'relative',
     },
     amountRow: {
       height: AMOUNT_ROW_HEIGHT,
-      position: 'relative',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
       overflow: 'hidden',
     },
     input: {
       position: 'absolute',
       left: 0,
-      top: 0,
       fontWeight: '900',
       fontFamily: 'SF Pro Rounded',
       color: colors2024['neutral-title-1'],
-      height: AMOUNT_ROW_HEIGHT,
-      lineHeight: AMOUNT_LINE_HEIGHT,
       padding: 0,
       paddingTop: 0,
       paddingBottom: 0,
@@ -907,12 +1044,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     emptyAmountText: {
       position: 'absolute',
       left: 0,
-      top: 0,
       fontWeight: '900',
       fontFamily: 'SF Pro Rounded',
       color: colors2024['neutral-title-1'],
-      height: AMOUNT_ROW_HEIGHT,
-      lineHeight: AMOUNT_LINE_HEIGHT,
       padding: 0,
       paddingTop: 0,
       paddingBottom: 0,
@@ -923,12 +1057,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     },
     unitText: {
       position: 'absolute',
-      top: 0,
       color: colors2024['neutral-info'],
       backgroundColor: colors2024['neutral-bg-2'],
       fontWeight: '700',
-      height: AMOUNT_ROW_HEIGHT,
-      lineHeight: AMOUNT_LINE_HEIGHT,
       fontFamily: 'SF Pro Rounded',
       includeFontPadding: false,
       padding: 0,
@@ -939,7 +1070,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       zIndex: 2,
     },
     quoteRow: {
-      marginTop: 4,
+      position: 'absolute',
+      left: 0,
       height: 20,
       flexDirection: 'row',
       alignItems: 'center',
@@ -1017,13 +1149,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       fontFamily: 'SF Pro Rounded',
       fontWeight: '900',
       fontSize: MAIN_FONT_SIZE,
-      lineHeight: AMOUNT_LINE_HEIGHT,
+      lineHeight: AMOUNT_DEFAULT_LINE_HEIGHT,
     },
     measureUnitText: {
       fontFamily: 'SF Pro Rounded',
       fontWeight: '700',
       fontSize: MAIN_FONT_SIZE,
-      lineHeight: AMOUNT_LINE_HEIGHT,
+      lineHeight: AMOUNT_DEFAULT_LINE_HEIGHT,
     },
     measureQuoteText: {
       fontFamily: 'SF Pro Rounded',
