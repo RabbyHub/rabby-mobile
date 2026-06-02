@@ -9,7 +9,7 @@ import {
 import providerController from './provider';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import { ProviderRequest } from './type';
-import { createDappBySession } from '../apis/dapp';
+import { createDappBySession } from '@/core/utils/createDappBySession';
 import { openapi } from '../request';
 
 const networkIdMap: {

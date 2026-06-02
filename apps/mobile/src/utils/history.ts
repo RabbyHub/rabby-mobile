@@ -8,16 +8,32 @@ import {
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
 import { HistoryItemCateType } from '@/types/history';
-import { apisTransactionHistory } from '@/core/apis/transactionHistory';
+import { transactionHistoryService } from '@/core/services/shared';
 import { findChain } from './chain';
 
 export const isNFTTokenId = (tokenId: string) => {
   return tokenId.length === 32;
 };
 
+export const checkIsGasDepositTx = ({
+  chainId,
+  hash,
+}: {
+  chainId?: number;
+  hash: string;
+}) => {
+  if (!hash || !chainId) {
+    return false;
+  }
+
+  return !!transactionHistoryService.store.transactions.find(item => {
+    return item.chainId === chainId && item.hash === hash && item.isGasDeposit;
+  });
+};
+
 export function getHistoryItemType(data: TxHistoryItem): HistoryItemCateType {
   if (
-    apisTransactionHistory.checkIsGasDepositTx({
+    checkIsGasDepositTx({
       chainId: findChain({ serverId: data.chain })?.id,
       hash: data.id,
     })
