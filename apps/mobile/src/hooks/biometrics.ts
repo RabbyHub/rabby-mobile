@@ -20,6 +20,7 @@ import { Alert, Vibration } from 'react-native';
 import { IExtractFromPromise } from '@/utils/type';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { preferenceService } from '@/core/services';
+import { zustandByMMKV } from '@/core/storage/mmkv';
 import { zCreate } from '@/core/utils/reexports';
 import {
   resolveValFromUpdater,
@@ -28,12 +29,39 @@ import {
 } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 import { logger } from '@/utils/logger';
+import { isNonPublicProductionEnv } from '@/constant';
 
 type BiometricsInfoState = {
   authEnabled: boolean;
   supportedBiometryType: KeychainSupportedBiometryType;
   devicePasscodeAvailable: boolean;
 };
+type BiometricsSystemAuthAvailability = Pick<
+  BiometricsInfoState,
+  'supportedBiometryType' | 'devicePasscodeAvailable'
+>;
+
+export const BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES = {
+  REAL: 'real',
+  PASSCODE_ONLY: 'passcode-only',
+  NONE: 'none',
+} as const;
+
+export type BiometricsSystemAuthDebugMode =
+  (typeof BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES)[keyof typeof BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES];
+
+type BiometricsSystemAuthDebugState = {
+  mode: BiometricsSystemAuthDebugMode;
+};
+
+const biometricsSystemAuthDebugStore =
+  zustandByMMKV<BiometricsSystemAuthDebugState>(
+    '@BiometricsSystemAuthDebugSettings',
+    {
+      mode: BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.REAL,
+    },
+  );
+
 const biometricsInfoStore = zCreate<BiometricsInfoState>(() => ({
   authEnabled: isAuthenticatedByBiometrics(),
   supportedBiometryType: null,
@@ -54,13 +82,78 @@ async function getDevicePasscodeAvailable() {
   return apisKeychain.isPasscodeAuthAvailable().catch(() => false);
 }
 
+export function canUseBiometricsSystemAuthDebugMock() {
+  return IS_ANDROID && isNonPublicProductionEnv;
+}
+
+export function getBiometricsSystemAuthDebugMode() {
+  return canUseBiometricsSystemAuthDebugMock()
+    ? biometricsSystemAuthDebugStore.getState().mode
+    : BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.REAL;
+}
+
+export function setBiometricsSystemAuthDebugMode(
+  nextMode: BiometricsSystemAuthDebugMode,
+) {
+  if (!canUseBiometricsSystemAuthDebugMock()) {
+    return false;
+  }
+
+  biometricsSystemAuthDebugStore.setState(prev => ({
+    ...prev,
+    mode: nextMode,
+  }));
+  return true;
+}
+
+export function applyBiometricsSystemAuthDebugMock(
+  systemAuth: BiometricsSystemAuthAvailability,
+  mode: BiometricsSystemAuthDebugMode = getBiometricsSystemAuthDebugMode(),
+): BiometricsSystemAuthAvailability {
+  switch (mode) {
+    case BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.PASSCODE_ONLY:
+      return {
+        supportedBiometryType: null,
+        devicePasscodeAvailable: true,
+      };
+    case BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.NONE:
+      return {
+        supportedBiometryType: null,
+        devicePasscodeAvailable: false,
+      };
+    case BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.REAL:
+    default:
+      return systemAuth;
+  }
+}
+
+export function useBiometricsSystemAuthDebugMock() {
+  const rawMode = biometricsSystemAuthDebugStore(s => s.mode);
+  const canUse = canUseBiometricsSystemAuthDebugMock();
+  const mode = canUse ? rawMode : BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.REAL;
+  const setMode = useCallback(
+    (nextMode: BiometricsSystemAuthDebugMode) =>
+      setBiometricsSystemAuthDebugMode(nextMode),
+    [],
+  );
+
+  return {
+    canUse,
+    mode,
+    setMode,
+  };
+}
+
 async function fetchSystemAuthAvailability() {
   const [supportedBiometryType, devicePasscodeAvailable] = await Promise.all([
     apisKeychain.getSupportedBiometryType().catch(() => null),
     getDevicePasscodeAvailable(),
   ]);
 
-  return { supportedBiometryType, devicePasscodeAvailable };
+  return applyBiometricsSystemAuthDebugMock({
+    supportedBiometryType,
+    devicePasscodeAvailable,
+  });
 }
 
 runIIFEFunc(() => {

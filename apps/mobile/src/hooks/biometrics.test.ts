@@ -56,6 +56,28 @@ describe('hooks/biometrics', () => {
       IS_ANDROID: true,
       IS_IOS: false,
     }));
+    jest.doMock('@/constant', () => ({
+      isNonPublicProductionEnv: true,
+    }));
+    jest.doMock('@/core/storage/mmkv', () => ({
+      zustandByMMKV: <T extends object>(_key: string, initialState: T) => {
+        let state = initialState;
+        const store = ((selector: (input: T) => unknown) =>
+          selector(state)) as ((selector: (input: T) => unknown) => unknown) & {
+          getState: () => T;
+          setState: (updater: T | ((prev: T) => T)) => void;
+        };
+
+        store.getState = () => state;
+        store.setState = updater => {
+          state =
+            typeof updater === 'function'
+              ? (updater as (prev: T) => T)(state)
+              : updater;
+        };
+        return store;
+      },
+    }));
     jest.doMock('@/core/apis/keychain', () => ({
       KEYCHAIN_AUTH_TYPES,
       RequestGenericPurpose,
@@ -180,5 +202,49 @@ describe('hooks/biometrics', () => {
     });
     expect(computed.isBiometricsEnabled).toBe(true);
     expect(computed.isUsingDevicePasscode).toBe(true);
+  });
+
+  it('mocks no biometric enrollment while Android device passcode remains available', async () => {
+    const { module } = await setup({
+      supportedBiometryType: 'Fingerprint',
+      passcodeAuthAvailable: false,
+    });
+
+    const changed = module.setBiometricsSystemAuthDebugMode(
+      module.BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.PASSCODE_ONLY,
+    );
+
+    expect(changed).toBe(true);
+    expect(
+      module.applyBiometricsSystemAuthDebugMock({
+        supportedBiometryType: null,
+        devicePasscodeAvailable: false,
+      }),
+    ).toEqual({
+      supportedBiometryType: null,
+      devicePasscodeAvailable: true,
+    });
+  });
+
+  it('mocks no usable system authentication', async () => {
+    const { module } = await setup({
+      supportedBiometryType: 'Fingerprint',
+      passcodeAuthAvailable: true,
+    });
+
+    const changed = module.setBiometricsSystemAuthDebugMode(
+      module.BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.NONE,
+    );
+
+    expect(changed).toBe(true);
+    expect(
+      module.applyBiometricsSystemAuthDebugMock({
+        supportedBiometryType: null,
+        devicePasscodeAvailable: true,
+      }),
+    ).toEqual({
+      supportedBiometryType: null,
+      devicePasscodeAvailable: false,
+    });
   });
 });
