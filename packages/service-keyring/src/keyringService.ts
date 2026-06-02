@@ -256,14 +256,24 @@ export class KeyringService extends RNEventEmitter {
   // TODO: add strict check for newPassword in logic layer too.
   async updatePassword(oldPassword: string, newPassword: string) {
     await this.verifyPassword(oldPassword);
+    const wasUnlocked = this.isUnlocked();
 
     this.emit('beforeUpdatePassword', {
       keyringState: this.store.getState(),
     });
 
+    const restoredVaultIntoRuntime =
+      await this.ensureVaultLoadedForPasswordUpdate(oldPassword);
+
     // reboot it
     await this._setupBoot(newPassword);
     await this.persistAllKeyrings();
+
+    if (!wasUnlocked) {
+      await this.restoreLockedRuntimeAfterPasswordUpdate();
+    } else if (restoredVaultIntoRuntime) {
+      await this._updateMemStoreKeyrings();
+    }
   }
   // #filterAllKeyringsNeedPassword() {
   //   return this.keyrings.filter(
@@ -1536,6 +1546,46 @@ export class KeyringService extends RNEventEmitter {
 
       return !(type === KEYRING_TYPE.SimpleKeyring && !data.length);
     });
+  }
+  private async shouldRestoreVaultForPasswordUpdate() {
+    const state = this.store.getState();
+    if (!state.vault) {
+      return false;
+    }
+
+    if (!this.isUnlocked() || !this.keyrings.length) {
+      return true;
+    }
+
+    const serializedKeyrings = await this.serializeKeyrings();
+    if (
+      state.hasEncryptedKeyringData &&
+      !this.hasEncryptedKeyrings(serializedKeyrings)
+    ) {
+      return true;
+    }
+
+    const persistedUnencryptedCount = state.unencryptedKeyringData?.length || 0;
+    const runtimeUnencryptedCount =
+      this.getUnencryptedKeyringData(serializedKeyrings).length;
+
+    return persistedUnencryptedCount > 0 && runtimeUnencryptedCount === 0;
+  }
+  private async ensureVaultLoadedForPasswordUpdate(password: string) {
+    if (!(await this.shouldRestoreVaultForPasswordUpdate())) {
+      return false;
+    }
+
+    await this.unlockKeyrings(password, {
+      deferMemStoreKeyringsUpdate: true,
+    });
+    return true;
+  }
+  private async restoreLockedRuntimeAfterPasswordUpdate() {
+    this.#password = null;
+    this.memStore.updateState({ isUnlocked: false });
+    this.keyrings = [];
+    await this.restoreUnencryptedKeyrings();
   }
   async persistUnencryptedKeyrings(
     changedTypes: string[] = [],

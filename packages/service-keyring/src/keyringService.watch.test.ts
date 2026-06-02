@@ -55,6 +55,52 @@ describe('keyringService support eth-keyring-watch', () => {
   const TEST_ADDR = '0x39b97205b9826f21fd39b535cf972c809e160e5f';
   const TEST_HD_ADDR = '0x1111111111111111111111111111111111111111';
 
+  class TestHdKeyring {
+    static type = KEYRING_TYPE.HdKeyring;
+
+    type = KEYRING_TYPE.HdKeyring;
+
+    byImport = true;
+
+    publicKey = 'base-public-key';
+
+    hasBackup = true;
+
+    needPassphrase = true;
+
+    private accounts = [TEST_HD_ADDR];
+
+    async serialize() {
+      return {
+        mnemonic: walletOneSeedWords,
+        accounts: this.accounts,
+      };
+    }
+
+    async deserialize(data: { accounts?: string[] }) {
+      this.accounts = data.accounts || [];
+    }
+
+    async getAccounts() {
+      return this.accounts;
+    }
+
+    async getAccountsWithBrand() {
+      return this.accounts.map(address => ({
+        address,
+        brandName: 'Rabby Wallet',
+      }));
+    }
+
+    async getInfoByAddress() {
+      return {
+        basePublicKey: 'base-public-key',
+        hdPathType: 'LedgerLive',
+        index: 0,
+      };
+    }
+  }
+
   beforeEach(async () => {
     keyringService = new KeyringService({ encryptor: mockEncryptor as any });
     keyringService.loadStore({});
@@ -172,6 +218,37 @@ describe('keyringService support eth-keyring-watch', () => {
           hdPathIndex: 0,
         }),
       );
+    });
+
+    it('preserves locked sensitive vault data when updating password', async () => {
+      const service = new KeyringService({
+        encryptor: mockEncryptor as any,
+        keyringClasses: [TestHdKeyring as any],
+      });
+      service.loadStore({});
+      await service.boot(password);
+      service.keyrings = [new TestHdKeyring() as any];
+      await service.persistAllKeyrings();
+      await service.setLocked();
+
+      expect(service.isUnlocked()).toBe(false);
+      expect(service.keyrings).toHaveLength(0);
+
+      await service.updatePassword(password, 'new-password');
+
+      expect(service.isUnlocked()).toBe(false);
+      expect(service.store.getState().hasEncryptedKeyringData).toBe(true);
+
+      await service.submitPassword('new-password');
+
+      const accounts = await service.getAllVisibleAccountsArray();
+      expect(accounts).toEqual([
+        expect.objectContaining({
+          address: TEST_HD_ADDR,
+          brandName: 'Rabby Wallet',
+          type: KEYRING_TYPE.HdKeyring,
+        }),
+      ]);
     });
 
     it('ignores legacy public account snapshot versions', async () => {
