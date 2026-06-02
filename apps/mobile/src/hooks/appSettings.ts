@@ -31,7 +31,7 @@ export type CurrentKeychainVersion =
   (typeof CURRENT_KEYCHAIN_VERSION_VALUES)[number];
 
 export const DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD =
-  'debugCurrentKeychainVersion20260518' as const;
+  'debugCurrentKeychainVersion20260602' as const;
 
 const DEFAULT_CURRENT_KEYCHAIN_VERSION: CurrentKeychainVersion = '10.0.0';
 const DEFAULT_DEBUG_KEYCHAIN_STORAGE: KeychainStorageType =
