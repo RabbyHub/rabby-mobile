@@ -148,53 +148,6 @@ function getErrorName(error: unknown) {
   return error instanceof Error ? error.name : undefined;
 }
 
-function getLegacyBiometricsFallbackSkipReason(
-  version: CurrentKeychainVersion,
-  error: unknown,
-) {
-  if (!isAndroid) {
-    return 'not-android';
-  }
-
-  if (version === '8.2.0-fork') {
-    return 'already-legacy-version';
-  }
-
-  const authenticationType = getAuthenticationType();
-  if (authenticationType !== KEYCHAIN_AUTH_TYPES.BIOMETRICS) {
-    return `auth-type-${getAuthenticationTypeLabel(authenticationType)}`;
-  }
-
-  const parsed = parseKeychainError(error);
-  if (parsed?.isCancelledByUser) {
-    return 'cancelled-by-user';
-  }
-
-  return null;
-}
-
-type KeychainFallbackCandidate = {
-  version: CurrentKeychainVersion;
-  api: ReturnType<typeof getKeychainApiByVersion>;
-};
-
-function getLegacyBiometricsFallbackCandidates(
-  version: CurrentKeychainVersion,
-): KeychainFallbackCandidate[] {
-  switch (version) {
-    case '10.0.0':
-      return [
-        { version: '9.0.0', api: apisKeychainV9_0_0 },
-        { version: '8.2.0-fork', api: apisKeychainV8_2_0 },
-      ];
-    case '9.0.0':
-      return [{ version: '8.2.0-fork', api: apisKeychainV8_2_0 }];
-    case '8.2.0-fork':
-    default:
-      return [];
-  }
-}
-
 function summarizeKeychainDebugState(
   state: KeychainDebugState,
 ): SafeKeychainDebugState {
@@ -327,131 +280,16 @@ export async function requestGenericPassword(
       },
     });
 
-    const fallbackSkipReason = getLegacyBiometricsFallbackSkipReason(
-      currentVersion,
-      error,
-    );
     logger.warn('[keychain] facade current requestGenericPassword failed', {
       currentVersion,
       currentSourceLabel: currentApi.KEYCHAIN_SOURCE_LABEL,
       authenticationTypeLabel: getAuthenticationTypeLabel(),
-      fallbackSkipReason,
       error: {
         code: getErrorCode(error),
         name: getErrorName(error),
         message: getErrorMessage(error),
       },
     });
-
-    if (fallbackSkipReason) {
-      throw error;
-    }
-
-    const fallbackCandidates =
-      getLegacyBiometricsFallbackCandidates(currentVersion);
-
-    for (const fallbackCandidate of fallbackCandidates) {
-      let fallbackPlainPassword = '';
-      let fallbackVaultKeyString: string | undefined;
-      const fallbackOptions = {
-        ...requestOptions,
-        onPlainPassword: async (
-          password: string,
-          credentials: Parameters<
-            NonNullable<RequestGenericPasswordOptions['onPlainPassword']>
-          >[1],
-        ) => {
-          fallbackPlainPassword = password;
-          fallbackVaultKeyString =
-            typeof credentials?.vaultKeyString === 'string'
-              ? credentials.vaultKeyString
-              : undefined;
-          logger.info('[keychain] legacy fallback plain password callback', {
-            currentVersion,
-            fallbackVersion: fallbackCandidate.version,
-            fallbackSourceLabel: fallbackCandidate.api.KEYCHAIN_SOURCE_LABEL,
-            hasPlainPassword: !!password,
-            hasVaultKeyString: !!fallbackVaultKeyString,
-          });
-          await requestOptions.onPlainPassword?.(password, credentials);
-        },
-      };
-
-      try {
-        logger.info('[keychain] trying legacy biometrics fallback', {
-          currentVersion,
-          currentSourceLabel: currentApi.KEYCHAIN_SOURCE_LABEL,
-          fallbackVersion: fallbackCandidate.version,
-          fallbackSourceLabel: fallbackCandidate.api.KEYCHAIN_SOURCE_LABEL,
-        });
-        const fallbackResult =
-          await fallbackCandidate.api.requestGenericPassword(fallbackOptions);
-
-        let currentRewriteSucceeded = false;
-        const shouldRewriteCurrentVersion =
-          !requestOptions.skipCurrentVersionRewriteAfterLegacyFallback;
-        if (fallbackPlainPassword && shouldRewriteCurrentVersion) {
-          try {
-            await currentApi.setGenericPassword(
-              fallbackPlainPassword,
-              KEYCHAIN_AUTH_TYPES.BIOMETRICS,
-              fallbackVaultKeyString
-                ? { vaultKeyString: fallbackVaultKeyString }
-                : undefined,
-            );
-            currentRewriteSucceeded = true;
-          } catch (repairError) {
-            logger.warn(
-              '[keychain] legacy fallback read succeeded but current rewrite failed',
-              {
-                currentVersion,
-                currentSourceLabel: currentApi.KEYCHAIN_SOURCE_LABEL,
-                fallbackVersion: fallbackCandidate.version,
-                fallbackSourceLabel: fallbackCandidate.api.KEYCHAIN_SOURCE_LABEL,
-                repairError: {
-                  code: getErrorCode(repairError),
-                  message: getErrorMessage(repairError),
-                },
-              },
-            );
-          }
-        }
-
-        logger.warn(
-          '[keychain] recovered Android biometrics through legacy keychain fallback',
-          {
-            currentVersion,
-            currentSourceLabel: currentApi.KEYCHAIN_SOURCE_LABEL,
-            fallbackVersion: fallbackCandidate.version,
-            fallbackSourceLabel: fallbackCandidate.api.KEYCHAIN_SOURCE_LABEL,
-            originalError: {
-              code: getErrorCode(error),
-              message: getErrorMessage(error),
-            },
-            hasFallbackPlainPassword: !!fallbackPlainPassword,
-            currentRewriteSkipped: !shouldRewriteCurrentVersion,
-            currentRewriteSucceeded,
-          },
-        );
-
-        return fallbackResult;
-      } catch (fallbackError) {
-        logger.warn('[keychain] Android legacy biometrics fallback failed', {
-          currentVersion,
-          currentSourceLabel: currentApi.KEYCHAIN_SOURCE_LABEL,
-          fallbackVersion: fallbackCandidate.version,
-          fallbackSourceLabel: fallbackCandidate.api.KEYCHAIN_SOURCE_LABEL,
-          originalError: {
-            code: getErrorCode(error),
-            message: getErrorMessage(error),
-          },
-          fallbackError: {
-            code: getErrorCode(fallbackError),
-            message: getErrorMessage(fallbackError),
-          },
-        });
-      }
-    }
 
     throw error;
   }

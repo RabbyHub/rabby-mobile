@@ -1,10 +1,9 @@
 package com.rabbywallet.keychain9
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Base64
-import androidx.datastore.core.DataMigration
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.SharedPreferencesMigration
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -30,15 +29,12 @@ class DataStorePrefsStorage(
 
   private val Context.prefs: DataStore<Preferences> by preferencesDataStore(
     name = KEYCHAIN_DATA,
-    produceMigrations = ::sharedPreferencesMigration,
     scope = coroutineScope,
   )
   private val prefs: DataStore<Preferences> = reactContext.prefs
+  private val legacyPrefs: SharedPreferences =
+    reactContext.getSharedPreferences(KEYCHAIN_DATA, Context.MODE_PRIVATE)
   private val prefsData: Preferences get() = callSuspendable { prefs.data.first() }
-
-  private fun sharedPreferencesMigration(context: Context): List<DataMigration<Preferences>> {
-    return listOf(SharedPreferencesMigration(context, KEYCHAIN_DATA))
-  }
 
   override fun getEncryptedEntry(service: String): ResultSet? {
     val bytesForUsername = getBytesForUsername(service)
@@ -59,6 +55,9 @@ class DataStorePrefsStorage(
     val keyForUsername = stringPreferencesKey(getKeyForUsername(service))
     val keyForPassword = stringPreferencesKey(getKeyForPassword(service))
     val keyForCipherStorage = stringPreferencesKey(getKeyForCipherStorage(service))
+    val legacyKeyForUsername = getKeyForUsername(service)
+    val legacyKeyForPassword = getKeyForPassword(service)
+    val legacyKeyForCipherStorage = getKeyForCipherStorage(service)
     callSuspendable {
       prefs.edit {
         it.remove(keyForUsername)
@@ -66,6 +65,11 @@ class DataStorePrefsStorage(
         it.remove(keyForCipherStorage)
       }
     }
+    legacyPrefs.edit()
+      .remove(legacyKeyForUsername)
+      .remove(legacyKeyForPassword)
+      .remove(legacyKeyForCipherStorage)
+      .apply()
   }
 
   override fun storeEncryptedEntry(
@@ -127,8 +131,11 @@ class DataStorePrefsStorage(
   }
 
   override fun removeCipherStorageMarker(service: String): Boolean {
-    val keyForCipherStorage = stringPreferencesKey(getKeyForCipherStorage(service))
-    if (!prefsData.contains(keyForCipherStorage)) {
+    val legacyKeyForCipherStorage = getKeyForCipherStorage(service)
+    val keyForCipherStorage = stringPreferencesKey(legacyKeyForCipherStorage)
+    val hasDataStoreMarker = prefsData.contains(keyForCipherStorage)
+    val hasLegacyMarker = legacyPrefs.contains(legacyKeyForCipherStorage)
+    if (!hasDataStoreMarker && !hasLegacyMarker) {
       return false
     }
 
@@ -137,6 +144,7 @@ class DataStorePrefsStorage(
         it.remove(keyForCipherStorage)
       }
     }
+    legacyPrefs.edit().remove(legacyKeyForCipherStorage).apply()
     return true
   }
 
@@ -148,6 +156,11 @@ class DataStorePrefsStorage(
         if (isKeyForCipherStorage(key)) {
           val cipher = prefsData[stringPreferencesKey(key)]
           result.add(cipher)
+        }
+      }
+      for (key in legacyPrefs.all.keys) {
+        if (isKeyForCipherStorage(key)) {
+          result.add(legacyPrefs.getString(key, null))
         }
       }
       return result
@@ -170,16 +183,17 @@ class DataStorePrefsStorage(
   }
 
   private fun getCipherStorageName(service: String): String? {
-    val key = stringPreferencesKey(getKeyForCipherStorage(service))
-    return prefsData[key]
+    val key = getKeyForCipherStorage(service)
+    return getString(key)
   }
 
   private fun getBytes(prefKey: Preferences.Key<String>): ByteArray? {
-    return prefsData[prefKey]?.let { Base64.decode(it, Base64.DEFAULT) }
+    val value = prefsData[prefKey] ?: legacyPrefs.getString(prefKey.name, null)
+    return value?.let { Base64.decode(it, Base64.DEFAULT) }
   }
 
   private fun getString(key: String): String? {
-    return prefsData[stringPreferencesKey(key)]
+    return prefsData[stringPreferencesKey(key)] ?: legacyPrefs.getString(key, null)
   }
 
   private fun getCandidateCipherStorageNamesForDebug(storedCipherStorageName: String?): List<String> {

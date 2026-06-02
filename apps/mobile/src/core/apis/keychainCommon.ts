@@ -1157,7 +1157,6 @@ export function createBusinessKeychainApi({
     authenticationType?: KEYCHAIN_AUTH_TYPES;
     skipLegacyAndroidBiometricsStorageUpgrade?: boolean;
     skipPostDecryptKeychainRewrite?: boolean;
-    skipCurrentVersionRewriteAfterLegacyFallback?: boolean;
   }): Promise<null | DefaultRet> {
     const instance = await waitInstance();
     const startedAt = Date.now();
