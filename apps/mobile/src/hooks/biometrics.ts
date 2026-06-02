@@ -17,6 +17,7 @@ import {
   parseValidationBehavior,
 } from '@/core/apis/lock';
 import { Alert, Vibration } from 'react-native';
+import DeviceInfo from 'react-native-device-info';
 import { IExtractFromPromise } from '@/utils/type';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { preferenceService } from '@/core/services';
@@ -79,7 +80,12 @@ async function getDevicePasscodeAvailable() {
     return false;
   }
 
-  return apisKeychain.isPasscodeAuthAvailable().catch(() => false);
+  const [keychainPasscodeAvailable, keyguardSecure] = await Promise.all([
+    apisKeychain.isPasscodeAuthAvailable().catch(() => false),
+    DeviceInfo.isPinOrFingerprintSet().catch(() => false),
+  ]);
+
+  return keychainPasscodeAvailable || keyguardSecure;
 }
 
 export function canUseBiometricsSystemAuthDebugMock() {

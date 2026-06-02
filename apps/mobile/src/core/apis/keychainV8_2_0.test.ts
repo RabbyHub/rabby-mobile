@@ -77,6 +77,7 @@ describe('core/apis/keychainV8_2_0', () => {
       success: true,
     }));
     const mockUpdateUnlockTime = jest.fn();
+    const mockSimplePrompt = jest.fn(async () => ({ success: true }));
 
     jest.doMock('react-native', () => ({
       Platform: { OS: 'android' },
@@ -121,6 +122,17 @@ describe('core/apis/keychainV8_2_0', () => {
         },
       };
     });
+    jest.doMock('react-native-biometrics', () => {
+      return jest.fn().mockImplementation(() => ({
+        simplePrompt: mockSimplePrompt,
+      }));
+    });
+    jest.doMock('react-native-device-info', () => ({
+      __esModule: true,
+      default: {
+        isPinOrFingerprintSet: jest.fn(async () => true),
+      },
+    }));
     jest.doMock('../services', () => ({
       appEncryptor: {
         encrypt: mockEncrypt,
@@ -312,9 +324,29 @@ describe('core/apis/keychainV8_2_0', () => {
     );
   });
 
-  it('does not rewrite Android biometrics storage when the entry is already upgraded', async () => {
+  it('rewrites Android biometric auth storage to no-auth storage after a successful read', async () => {
     const { module, mockSetGenericPassword } = await setup({
       storage: 'KeystoreAESGCM',
+      authType: 4,
+    });
+
+    await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.VERIFY,
+    });
+
+    expect(mockSetGenericPassword).toHaveBeenCalledWith(
+      'rabbymobile-user',
+      'enc:plain-password',
+      expect.objectContaining({
+        service: 'com.debank',
+        storage: 'KeystoreAESGCM_NoAuth',
+      }),
+    );
+  });
+
+  it('does not rewrite Android biometrics storage when the entry is already no-auth', async () => {
+    const { module, mockSetGenericPassword } = await setup({
+      storage: 'KeystoreAESGCM_NoAuth',
       authType: 4,
     });
 
@@ -575,6 +607,17 @@ describe('core/apis/keychainV8_2_0', () => {
         },
       };
     });
+    jest.doMock('react-native-biometrics', () => {
+      return jest.fn().mockImplementation(() => ({
+        simplePrompt: jest.fn(async () => ({ success: true })),
+      }));
+    });
+    jest.doMock('react-native-device-info', () => ({
+      __esModule: true,
+      default: {
+        isPinOrFingerprintSet: jest.fn(async () => false),
+      },
+    }));
     jest.doMock('../services', () => ({
       appEncryptor: {
         encrypt: mockEncrypt,
