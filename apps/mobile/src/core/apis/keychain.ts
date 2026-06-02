@@ -348,28 +348,25 @@ export async function repairBiometricsAfterPasswordUnlock(
   const currentVersion = getCurrentKeychainVersion();
   const authType = getAuthenticationType();
 
-  if (!isAndroid || authType !== KEYCHAIN_AUTH_TYPES.BIOMETRICS) {
+  if (authType !== KEYCHAIN_AUTH_TYPES.BIOMETRICS) {
     return {
       repaired: false,
       skipped: true,
-      reason: !isAndroid ? 'not-android' : 'not-biometrics-auth',
+      reason: 'not-biometrics-auth',
     } as const;
   }
 
   try {
     await getKeychainApiByVersion(currentVersion).setGenericPassword(
       password,
-      KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+      KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
     );
-    logger.info(
-      '[keychain] repaired Android biometrics after password unlock',
-      {
-        currentVersion,
-        sourceLabel:
-          getKeychainApiByVersion(currentVersion).KEYCHAIN_SOURCE_LABEL,
-        reason: options.reason,
-      },
-    );
+    logger.info('[keychain] repaired biometrics after password unlock', {
+      currentVersion,
+      sourceLabel:
+        getKeychainApiByVersion(currentVersion).KEYCHAIN_SOURCE_LABEL,
+      reason: options.reason,
+    });
 
     return {
       repaired: true,
@@ -378,7 +375,7 @@ export async function repairBiometricsAfterPasswordUnlock(
     } as const;
   } catch (error) {
     logger.warn(
-      '[keychain] failed to repair Android biometrics after password unlock',
+      '[keychain] failed to repair biometrics after password unlock',
       {
         currentVersion,
         sourceLabel:
@@ -387,10 +384,12 @@ export async function repairBiometricsAfterPasswordUnlock(
         error: getErrorMessage(error),
       },
     );
-    await recordAndroidBiometricsFailureDiagnostic({
-      stage: 'repairBiometricsAfterPasswordUnlock',
-      error,
-    });
+    if (isAndroid) {
+      await recordAndroidBiometricsFailureDiagnostic({
+        stage: 'repairBiometricsAfterPasswordUnlock',
+        error,
+      });
+    }
 
     return {
       repaired: false,

@@ -251,7 +251,7 @@ describe('core/apis/keychain current facade', () => {
     expect(mockV10ResetGenericPassword).toHaveBeenCalled();
   });
 
-  it('repairs the current Android biometric keychain after password unlock', async () => {
+  it('repairs the current biometric keychain with device passcode fallback after password unlock', async () => {
     const { module, mockV9SetGenericPassword, mockLoggerInfo } = await setup(
       '9.0.0',
     );
@@ -263,10 +263,10 @@ describe('core/apis/keychain current facade', () => {
 
     expect(mockV9SetGenericPassword).toHaveBeenCalledWith(
       'plain-password',
-      module.KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+      module.KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
     );
     expect(mockLoggerInfo).toHaveBeenCalledWith(
-      '[keychain] repaired Android biometrics after password unlock',
+      '[keychain] repaired biometrics after password unlock',
       expect.objectContaining({
         currentVersion: '9.0.0',
         sourceLabel: 'v9-label',
