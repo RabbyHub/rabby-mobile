@@ -46,7 +46,7 @@ function useToggleBiometricsEnabled() {
       if (!nextEnabled) {
         Alert.alert(
           t('component.AuthenticationModals.biometrics.disable', {
-            bioType: computed.defaultTypeLabel,
+            bioType: computed.systemAuthTypeLabel,
           }),
           undefined,
           [
@@ -70,7 +70,7 @@ function useToggleBiometricsEnabled() {
         confirmText: t('global.confirm'),
         cancelText: t('global.cancel'),
         title: t('component.AuthenticationModals.biometrics.enable', {
-          bioType: computed.defaultTypeLabel,
+          bioType: computed.systemAuthTypeLabel,
         }),
         authType: ['password'],
         async onFinished({ getValidatedPassword }) {
@@ -83,7 +83,7 @@ function useToggleBiometricsEnabled() {
         },
       });
     },
-    [toggleBiometrics, computed.defaultTypeLabel, t],
+    [toggleBiometrics, computed.systemAuthTypeLabel, t],
   );
 
   const handleSheetConfirm = React.useCallback(
