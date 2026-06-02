@@ -172,6 +172,11 @@ describe('hooks/biometrics', () => {
     expect(computed.couldSetupSystemAuth).toBe(true);
     expect(computed.isBiometricsEnabled).toBe(false);
     expect(computed.isUsingDevicePasscode).toBe(false);
+    expect(computed.isDevicePasscodeOnlyAvailable).toBe(true);
+    expect(computed.systemAuthSettingsLabel).toBe(
+      'page.setting.useDevicePassword',
+    );
+    expect(computed.systemAuthTypeLabel).toBe('page.setting.devicePassword');
   });
 
   it('enables passcode-capable system auth when only Android passcode is available', async () => {
@@ -209,6 +214,7 @@ describe('hooks/biometrics', () => {
     });
     expect(computed.isBiometricsEnabled).toBe(true);
     expect(computed.isUsingDevicePasscode).toBe(true);
+    expect(computed.isDevicePasscodeOnlyAvailable).toBe(true);
     expect(computed.systemAuthTypeLabel).toBe('page.setting.devicePassword');
     expect(computed.systemAuthSettingsLabel).toBe(
       'page.setting.useDevicePassword',

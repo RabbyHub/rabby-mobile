@@ -329,7 +329,8 @@ function SettingsBlocks() {
   const navigation = useRabbyAppNavigation();
 
   const biometricsComputed = useBiometricsComputed();
-  const { isUsingDevicePasscode } = biometricsComputed;
+  const { isDevicePasscodeOnlyAvailable, isUsingDevicePasscode } =
+    biometricsComputed;
   const disabledBiometrics =
     (!couldSetupSystemAuth && !isUsingDevicePasscode) ||
     !APP_FEATURE_SWITCH.biometricsAuth;
@@ -391,11 +392,12 @@ function SettingsBlocks() {
         items: [
           {
             label: biometricsComputed.systemAuthSettingsLabel,
-            icon: isUsingDevicePasscode
-              ? RcAutolock
-              : isFaceID
-              ? RcFaceId
-              : RcFingerprint,
+            icon:
+              isUsingDevicePasscode || isDevicePasscodeOnlyAvailable
+                ? RcAutolock
+                : isFaceID
+                ? RcFaceId
+                : RcFingerprint,
             rightNode: (
               <SwitchBiometricsAuthentication
                 ref={switchBiometricsRef}
