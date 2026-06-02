@@ -32,7 +32,7 @@ RCT_EXPORT_MODULE();
 }
 
 // Messages from the comments in <Security/SecBase.h>
-NSString *messageForError(NSError *error)
+static NSString *messageForError(NSError *error)
 {
   switch (error.code) {
     case errSecUnimplemented:
@@ -82,12 +82,12 @@ NSString *messageForError(NSError *error)
   }
 }
 
-NSString *codeForError(NSError *error)
+static NSString *codeForError(NSError *error)
 {
   return [NSString stringWithFormat:@"%li", (long)error.code];
 }
 
-void rejectWithError(RCTPromiseRejectBlock reject, NSError *error)
+static void rejectWithError(RCTPromiseRejectBlock reject, NSError *error)
 {
   return reject(codeForError(error), messageForError(error), nil);
 }
@@ -181,7 +181,7 @@ static NSString *accessControlConstraintsDescription(SecAccessControlRef accessC
   return nil;
 }
 
-CFStringRef accessibleValue(NSDictionary *options)
+static CFStringRef accessibleValue(NSDictionary *options)
 {
   if (options && options[@"accessible"] != nil) {
     NSDictionary *keyMap = @{
@@ -200,7 +200,7 @@ CFStringRef accessibleValue(NSDictionary *options)
   return kSecAttrAccessibleAfterFirstUnlock;
 }
 
-NSString *serviceValue(NSDictionary *options)
+static NSString *serviceValue(NSDictionary *options)
 {
   if (options && options[@"service"] != nil) {
     return options[@"service"];
@@ -208,7 +208,7 @@ NSString *serviceValue(NSDictionary *options)
   return [[NSBundle mainBundle] bundleIdentifier];
 }
 
-NSString *serverValue(NSDictionary *options)
+static NSString *serverValue(NSDictionary *options)
 {
   if (options && options[@"server"] != nil) {
     return options[@"server"];
@@ -216,7 +216,7 @@ NSString *serverValue(NSDictionary *options)
   return @"";
 }
 
-NSString *accessGroupValue(NSDictionary *options)
+static NSString *accessGroupValue(NSDictionary *options)
 {
   if (options && options[@"accessGroup"] != nil) {
     return options[@"accessGroup"];
@@ -224,7 +224,7 @@ NSString *accessGroupValue(NSDictionary *options)
   return nil;
 }
 
-CFBooleanRef cloudSyncValue(NSDictionary *options)
+static CFBooleanRef cloudSyncValue(NSDictionary *options)
 {
   if (options && options[@"cloudSync"]) {
     return kCFBooleanTrue;
@@ -232,7 +232,7 @@ CFBooleanRef cloudSyncValue(NSDictionary *options)
   return kCFBooleanFalse;
 }
 
-NSString *authenticationPromptValue(NSDictionary *options)
+static NSString *authenticationPromptValue(NSDictionary *options)
 {
   if (options && options[@"authenticationPrompt"] != nil && options[@"authenticationPrompt"][@"title"]) {
     return options[@"authenticationPrompt"][@"title"];
@@ -259,7 +259,7 @@ NSString *authenticationPromptValue(NSDictionary *options)
 #define kBiometryTypeOpticID @"OpticID"
 
 #if TARGET_OS_IOS || TARGET_OS_VISION
-LAPolicy authPolicy(NSDictionary *options)
+static LAPolicy authPolicy(NSDictionary *options)
 {
   if (options && options[kAuthenticationType]) {
     if ([ options[kAuthenticationType] isEqualToString:kAuthenticationTypeBiometrics ]) {
@@ -270,7 +270,7 @@ LAPolicy authPolicy(NSDictionary *options)
 }
 #endif
 
-SecAccessControlCreateFlags accessControlValue(NSDictionary *options)
+static SecAccessControlCreateFlags accessControlValue(NSDictionary *options)
 {
   if (options && options[kAccessControlType] && [options[kAccessControlType] isKindOfClass:[NSString class]]) {
     if ([options[kAccessControlType] isEqualToString: kAccessControlUserPresence]) {
