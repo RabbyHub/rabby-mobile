@@ -176,6 +176,34 @@ describe('utils/walletUnlock', () => {
     expect(mockShowAuthenticationModal).not.toHaveBeenCalled();
   });
 
+  it('uses Android passcode fallback for old biometrics auth settings when biometric enrollment is gone', async () => {
+    const {
+      walletUnlock,
+      mockVerifyPasswordOrUnlock,
+      mockRequestGenericPassword,
+      mockGetSupportedBiometryType,
+      mockIsPasscodeAuthAvailable,
+      mockShowAuthenticationModal,
+    } = await setup({
+      supportedBiometryType: null,
+      authType: 1,
+      passcodeAuthAvailable: true,
+      isAndroid: true,
+    });
+
+    await walletUnlock.ensureWalletUnlocked();
+
+    expect(mockGetSupportedBiometryType).toHaveBeenCalled();
+    expect(mockIsPasscodeAuthAvailable).toHaveBeenCalled();
+    expect(mockRequestGenericPassword).toHaveBeenCalledWith(
+      expect.objectContaining({
+        purpose: 11,
+      }),
+    );
+    expect(mockVerifyPasswordOrUnlock).toHaveBeenCalledWith('plain-password');
+    expect(mockShowAuthenticationModal).not.toHaveBeenCalled();
+  });
+
   it('shows unlocking toast for biometric post-unlock', async () => {
     const {
       walletUnlock,

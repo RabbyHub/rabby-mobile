@@ -118,7 +118,7 @@ function useToggleBiometricsEnabled() {
 
   return {
     isBiometricsEnabled: computed.isBiometricsEnabled,
-    couldSetupBiometrics: computed.couldSetupBiometrics,
+    couldSetupSystemAuth: computed.couldSetupSystemAuth,
     isUsingDevicePasscode: computed.isUsingDevicePasscode,
     requestToggleBiometricsEnabled,
     sheetVisible,
@@ -138,7 +138,7 @@ export const SwitchBiometricsAuthentication = ({
 }) => {
   const {
     isBiometricsEnabled,
-    couldSetupBiometrics,
+    couldSetupSystemAuth,
     requestToggleBiometricsEnabled,
     sheetVisible,
     sheetLoading,
@@ -160,7 +160,7 @@ export const SwitchBiometricsAuthentication = ({
 
   const switchValue = !!isBiometricsEnabled || isUsingDevicePasscode;
   const switchDisabled =
-    !hasSetupCustomPassword || (!couldSetupBiometrics && !switchValue);
+    !hasSetupCustomPassword || (!couldSetupSystemAuth && !switchValue);
 
   return (
     <>

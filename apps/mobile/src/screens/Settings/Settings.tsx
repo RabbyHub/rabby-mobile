@@ -293,7 +293,7 @@ function SettingsBlocks() {
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
 
   const {
-    computed: { couldSetupBiometrics, isFaceID },
+    computed: { couldSetupSystemAuth, isFaceID },
     fetchBiometrics,
   } = useBiometrics({ autoFetch: true });
 
@@ -331,7 +331,7 @@ function SettingsBlocks() {
   const biometricsComputed = useBiometricsComputed();
   const { isUsingDevicePasscode } = biometricsComputed;
   const disabledBiometrics =
-    (!couldSetupBiometrics && !isUsingDevicePasscode) ||
+    (!couldSetupSystemAuth && !isUsingDevicePasscode) ||
     !APP_FEATURE_SWITCH.biometricsAuth;
 
   const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
