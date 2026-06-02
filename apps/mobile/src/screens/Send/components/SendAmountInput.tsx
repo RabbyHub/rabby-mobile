@@ -45,6 +45,8 @@ type SendAmountInputProps = {
   quoteValueText: string;
   quoteUnit: string;
   canSwitchMode: boolean;
+  maxDecimalPlaces?: number | null;
+  normalizeInputValue?: (value: string) => string;
   onChange?: (value: string) => void | boolean;
   onSwitchMode?: () => void;
   onTokenChange(token: TokenItem): void;
@@ -178,6 +180,8 @@ export const SendAmountInput = ({
   quoteValueText,
   quoteUnit,
   canSwitchMode,
+  maxDecimalPlaces,
+  normalizeInputValue,
   onChange,
   onSwitchMode,
   onTokenChange,
@@ -268,6 +272,17 @@ export const SendAmountInput = ({
   const textForMeasure = displayInputValue;
   const isIosEmptyAmount = IS_IOS && !inputValue;
   const textInputValue = IS_IOS && !inputValue ? '' : displayInputValue;
+  const decimalPlacesLimit = useMemo(() => {
+    if (
+      typeof maxDecimalPlaces !== 'number' ||
+      !Number.isFinite(maxDecimalPlaces) ||
+      maxDecimalPlaces < 0
+    ) {
+      return undefined;
+    }
+
+    return Math.floor(maxDecimalPlaces);
+  }, [maxDecimalPlaces]);
   const fallbackCharWidth =
     charWidthsAtBaseFontSize['0'] || MAIN_FONT_SIZE * 0.56;
   const fallbackUnitWidth =
@@ -368,6 +383,19 @@ export const SendAmountInput = ({
   );
   const isInputSelectionCollapsed =
     normalizedSelectionStart === normalizedSelectionEnd;
+  const decimalSeparatorIndex = textInputValue.indexOf('.');
+  const decimalPlacesCount =
+    decimalSeparatorIndex >= 0
+      ? textInputValue.length - decimalSeparatorIndex - 1
+      : 0;
+  const inputMaxLength =
+    decimalPlacesLimit !== undefined &&
+    decimalSeparatorIndex >= 0 &&
+    isInputSelectionCollapsed &&
+    normalizedSelectionStart > decimalSeparatorIndex &&
+    decimalPlacesCount >= decimalPlacesLimit
+      ? textInputValue.length
+      : undefined;
   const shouldUseIosCustomCaret =
     IS_IOS && inputFocused && isInputSelectionCollapsed;
   const textBeforeCaret = isIosEmptyAmount
@@ -463,6 +491,16 @@ export const SendAmountInput = ({
     [],
   );
 
+  const normalizeTypedInputValue = useCallback(
+    (nextValue: string) => {
+      const normalizedValue = normalizeDisplayAmountValue(nextValue);
+      return normalizeInputValue
+        ? normalizeInputValue(normalizedValue)
+        : normalizedValue;
+    },
+    [normalizeInputValue],
+  );
+
   const getPredictedValueFromKey = useCallback(
     (key: string) => {
       const selection = inputSelectionRef.current;
@@ -477,12 +515,12 @@ export const SendAmountInput = ({
 
       if (key === 'Backspace') {
         if (start !== end) {
-          return normalizeDisplayAmountValue(
+          return normalizeTypedInputValue(
             textInputValue.slice(0, start) + textInputValue.slice(end),
           );
         }
         if (start > 0) {
-          return normalizeDisplayAmountValue(
+          return normalizeTypedInputValue(
             textInputValue.slice(0, start - 1) + textInputValue.slice(end),
           );
         }
@@ -490,14 +528,14 @@ export const SendAmountInput = ({
       }
 
       if (key.length === 1) {
-        return normalizeDisplayAmountValue(
+        return normalizeTypedInputValue(
           textInputValue.slice(0, start) + key + textInputValue.slice(end),
         );
       }
 
       return null;
     },
-    [inputValue, textInputValue],
+    [inputValue, normalizeTypedInputValue, textInputValue],
   );
 
   const handleInputKeyPress = useCallback(
@@ -513,11 +551,25 @@ export const SendAmountInput = ({
   const handleInputChange = useCallback(
     (nextValue: string) => {
       const previousValue = inputValue;
-      const normalizedValue = normalizeDisplayAmountValue(nextValue);
+      const normalizedValue = normalizeTypedInputValue(nextValue);
+      if (normalizedValue !== nextValue) {
+        tokenInputRef.current?.setNativeProps?.({
+          text: normalizedValue,
+        });
+      }
+
+      if (normalizedValue === previousValue) {
+        applyUnitLayoutNative(previousValue);
+        return;
+      }
+
       applyUnitLayoutNative(normalizedValue);
       setInputValue(normalizedValue);
       const result = onChange?.(normalizedValue);
       if (result === false) {
+        tokenInputRef.current?.setNativeProps?.({
+          text: previousValue,
+        });
         applyUnitLayoutNative(previousValue);
         setInputValue(previousValue);
       } else if (IS_IOS && !previousValue && normalizedValue) {
@@ -529,7 +581,13 @@ export const SendAmountInput = ({
         setInputSelection(nextSelection);
       }
     },
-    [applyUnitLayoutNative, inputValue, onChange],
+    [
+      applyUnitLayoutNative,
+      inputValue,
+      normalizeTypedInputValue,
+      onChange,
+      tokenInputRef,
+    ],
   );
 
   const handleSwitchModePress = useCallback(() => {
@@ -592,6 +650,7 @@ export const SendAmountInput = ({
                 numberOfLines={1}
                 multiline={false}
                 scrollEnabled
+                maxLength={inputMaxLength}
                 caretHidden={shouldUseIosCustomCaret}
                 selection={
                   !inputValue && IS_ANDROID ? emptyAmountSelection : undefined

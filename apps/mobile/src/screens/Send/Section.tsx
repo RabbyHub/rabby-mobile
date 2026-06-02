@@ -34,7 +34,11 @@ import {
   SendAmountInput as SendAmountInputControl,
   SendAmountInputMode,
 } from './components/SendAmountInput';
-import { formatLittleNumber, formatSpeicalAmount } from '@/utils/number';
+import {
+  formatLittleNumber,
+  formatSpeicalAmount,
+  formatTokenAmountInput,
+} from '@/utils/number';
 
 const USD_INPUT_REGEX = /^\d*(\.\d{0,2})?$/;
 const TOKEN_INPUT_REGEX = /^\d*(\.\d*)?$/;
@@ -331,7 +335,7 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
     (value: string) => {
       if (directSignBtnRef.current?.isAuthInProgress()) return false;
       try {
-        const nextValue = formatSpeicalAmount(value);
+        const nextValue = formatTokenAmountInput(value, currentToken?.decimals);
         if (!TOKEN_INPUT_REGEX.test(nextValue)) {
           return false;
         }
@@ -343,7 +347,12 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
         console.error('handleTokenAmountChange error', e);
       }
     },
-    [directSignBtnRef, handleFieldChange, updateSliderByTokenAmount],
+    [
+      currentToken?.decimals,
+      directSignBtnRef,
+      handleFieldChange,
+      updateSliderByTokenAmount,
+    ],
   );
 
   const handleUsdAmountChange = useCallback(
@@ -429,6 +438,17 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
     }
   }, [previousAddress, currentAccount?.address, handleFieldChange, setSlider]);
 
+  const normalizeAmountInputValue = useCallback(
+    (nextValue: string) => {
+      if (inputMode === 'usd') {
+        return formatSpeicalAmount(nextValue);
+      }
+
+      return formatTokenAmountInput(nextValue, currentToken?.decimals);
+    },
+    [currentToken?.decimals, inputMode],
+  );
+
   if (!chainItem || !currentToken) {
     return null;
   }
@@ -437,6 +457,8 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
   const safeFormAmount = getSafeAmountBn(amount);
   const amountInputValue = inputMode === 'usd' ? usdInputValue : amount;
   const amountInputUnit = inputMode === 'usd' ? 'USD' : tokenSymbol;
+  const amountInputMaxDecimalPlaces =
+    inputMode === 'usd' ? 2 : currentToken.decimals;
   const quoteValueText =
     inputMode === 'usd'
       ? formatTokenQuoteValueText(safeFormAmount)
@@ -455,6 +477,8 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
           unit={amountInputUnit}
           quoteValueText={quoteValueText}
           quoteUnit={quoteUnit}
+          maxDecimalPlaces={amountInputMaxDecimalPlaces}
+          normalizeInputValue={normalizeAmountInputValue}
           onChange={handleAmountChange}
           canSwitchMode={!!activeUsdPrice}
           onSwitchMode={handleAmountInputModeSwitch}
