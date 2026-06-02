@@ -54,7 +54,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 const TAB_OPTIONS = [
   { key: 'current', label: 'Current' },
   { key: '8.2.0-fork', label: '8.2.0' },
-  { key: '9.0.0', label: '9.0.0' },
+  { key: '9.0.0', label: '9.2.3' },
   { key: '10.0.0', label: '10.0.0' },
 ] as const;
 
@@ -67,9 +67,9 @@ const KEYCHAIN_VERSION_OPTIONS = [
   },
   {
     key: '9.0.0',
-    label: '9.0.0',
+    label: '9.2.3',
     sourceLabel: apisKeychainV9_0_0.KEYCHAIN_SOURCE_LABEL,
-    description: 'Rabby-local 9.x wrapper with the Android prompt patch.',
+    description: 'Rabby-local 9.2.3 wrapper with the Android prompt patch.',
   },
   {
     key: '10.0.0',
@@ -156,7 +156,7 @@ const REPEAT_DECRYPT_EXPECTATIONS: Record<CurrentKeychainVersion, string[]> = {
     'Regression signal: a later tap succeeds without a fresh biometric prompt.',
   ],
   '10.0.0': [
-    'Expected: both Unlock Request taps prompt biometrics, matching 8.2.0-fork and 9.0.0.',
+    'Expected: both Unlock Request taps prompt biometrics, matching 8.2.0-fork and 9.2.3.',
     'Regression signal: a later tap succeeds without a fresh biometric prompt.',
   ],
 };
@@ -1341,6 +1341,8 @@ export default function DevDataKeychain(): JSX.Element {
   );
   const resolvedTabVersion =
     tabKey === 'current' ? currentKeychainVersion : tabKey;
+  const currentKeychainVersionMeta =
+    KEYCHAIN_VERSION_META[currentKeychainVersion];
 
   const effectiveStorageByVersion = useMemo(
     () =>
@@ -2996,7 +2998,7 @@ export default function DevDataKeychain(): JSX.Element {
               </Text>
               <Text style={styles.sheetListLine}>
                 {canSwitchCurrentKeychainVersion
-                  ? 'This build can switch between 8.2.0-fork, 9.0.0, and 10.0.0 for migration testing.'
+                  ? 'This build can switch between 8.2.0-fork, 9.2.3, and 10.0.0 for migration testing.'
                   : 'Public builds ignore this selector and stay pinned to the default business path.'}
               </Text>
               <Text style={styles.sheetListLine}>
@@ -3458,7 +3460,10 @@ export default function DevDataKeychain(): JSX.Element {
               }}
             />
           </View>
-          <StatusRow label="Effective" value={currentKeychainVersion} />
+          <StatusRow
+            label="Effective"
+            value={currentKeychainVersionMeta.label}
+          />
           <StatusRow
             label="Debug Field"
             value={debugCurrentKeychainVersionField}
