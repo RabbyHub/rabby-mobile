@@ -1,11 +1,9 @@
 package com.rabbywallet.keychain9.cipherStorage
 
-import androidx.annotation.NonNull
 import com.rabbywallet.keychain9.SecurityLevel
-import com.rabbywallet.keychain9.decryptionHandler.DecryptionResultHandler
+import com.rabbywallet.keychain9.resultHandler.ResultHandler
 import com.rabbywallet.keychain9.exceptions.CryptoFailedException
 import com.rabbywallet.keychain9.exceptions.KeyStoreAccessException
-import java.security.Key
 
 @Suppress("unused", "MemberVisibilityCanBePrivate")
 interface CipherStorage {
@@ -17,35 +15,27 @@ interface CipherStorage {
 
   /** Credentials in bytes array, often a result of encryption. */
   class EncryptionResult(
-      username: ByteArray,
-      password: ByteArray,
-      /** Name of cipher storage used for encryption. */
-      val cipherName: String
+    username: ByteArray,
+    password: ByteArray,
+    /** Name of cipher storage used for encryption. */
+    val cipherName: String
   ) : CipherResult<ByteArray>(username, password) {
     /** Helper constructor. Simplifies cipher name extraction. */
     constructor(
-        username: ByteArray,
-        password: ByteArray,
-        cipherStorage: CipherStorage
+      username: ByteArray,
+      password: ByteArray,
+      cipherStorage: CipherStorage
     ) : this(username, password, cipherStorage.getCipherStorageName())
   }
 
   /** Credentials in strings, often a result of decryption. */
   class DecryptionResult(
-      username: String,
-      password: String,
-      private val securityLevel: SecurityLevel = SecurityLevel.ANY
+    username: String,
+    password: String,
+    private val securityLevel: SecurityLevel = SecurityLevel.ANY
   ) : CipherResult<String>(username, password) {
     fun getSecurityLevel(): SecurityLevel = securityLevel
   }
-
-  /** Ask access permission for decrypting credentials in provided context. */
-  class DecryptionContext(
-      @NonNull val keyAlias: String,
-      @NonNull val key: Key,
-      password: ByteArray,
-      username: ByteArray
-  ) : CipherResult<ByteArray>(username, password)
 
   // endregion
 
@@ -56,30 +46,16 @@ interface CipherStorage {
    *
    * @throws CryptoFailedException If encryption fails.
    */
-  @NonNull
+
   @Throws(CryptoFailedException::class)
   fun encrypt(
-      @NonNull alias: String,
-      @NonNull username: String,
-      @NonNull password: String,
-      @NonNull level: SecurityLevel
-  ): EncryptionResult
+    handler: ResultHandler,
+    alias: String,
+    username: String,
+    password: String,
+    level: SecurityLevel
+  )
 
-  /**
-   * Decrypt credentials with provided key (by alias) and required security level. In case of key
-   * stored in weaker security level than required, an exception will be raised. That can happen
-   * during migration from one version of library to another.
-   *
-   * @throws CryptoFailedException If decryption fails.
-   */
-  @NonNull
-  @Throws(CryptoFailedException::class)
-  fun decrypt(
-      @NonNull alias: String,
-      @NonNull username: ByteArray,
-      @NonNull password: ByteArray,
-      @NonNull level: SecurityLevel
-  ): DecryptionResult
 
   /**
    * Decrypt the credentials but redirect results of operation to handler.
@@ -88,40 +64,42 @@ interface CipherStorage {
    */
   @Throws(CryptoFailedException::class)
   fun decrypt(
-      @NonNull handler: DecryptionResultHandler,
-      @NonNull alias: String,
-      @NonNull username: ByteArray,
-      @NonNull password: ByteArray,
-      @NonNull level: SecurityLevel
+    handler: ResultHandler,
+    alias: String,
+    username: ByteArray,
+    password: ByteArray,
+    level: SecurityLevel
   )
 
   /**
-   * Decrypt the credentials with an explicit Android prompt policy when the storage supports it.
+   * Decrypt credentials with an explicit Android prompt policy when the storage supports it.
    *
-   * Storages that don't need an interactive prompt can keep the default implementation.
+   * Storages that do not need an interactive prompt can keep the default implementation.
    */
   @Throws(CryptoFailedException::class)
   fun decryptWithPromptPolicy(
-      @NonNull handler: DecryptionResultHandler,
-      @NonNull alias: String,
-      @NonNull username: ByteArray,
-      @NonNull password: ByteArray,
-      @NonNull level: SecurityLevel,
-      allowAuthenticatedSessionReuse: Boolean,
-      allowKeyStoreRecovery: Boolean = true
+    handler: ResultHandler,
+    alias: String,
+    username: ByteArray,
+    password: ByteArray,
+    level: SecurityLevel,
+    allowAuthenticatedSessionReuse: Boolean,
+    allowKeyStoreRecovery: Boolean = true
   ) {
     decrypt(handler, alias, username, password, level)
   }
 
   /** Remove key (by alias) from storage. */
-  @Throws(KeyStoreAccessException::class) fun removeKey(@NonNull alias: String)
+  @Throws(KeyStoreAccessException::class)
+  fun removeKey(alias: String)
 
   /**
    * Return all keys present in this storage.
    *
    * @return Set of key aliases.
    */
-  @Throws(KeyStoreAccessException::class) fun getAllKeys(): Set<String>
+  @Throws(KeyStoreAccessException::class)
+  fun getAllKeys(): Set<String>
 
   // endregion
 
