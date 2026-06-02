@@ -118,6 +118,7 @@ function useToggleBiometricsEnabled() {
 
   return {
     isBiometricsEnabled: computed.isBiometricsEnabled,
+    couldSetupBiometrics: computed.couldSetupBiometrics,
     couldSetupSystemAuth: computed.couldSetupSystemAuth,
     isUsingDevicePasscode: computed.isUsingDevicePasscode,
     requestToggleBiometricsEnabled,
@@ -131,14 +132,16 @@ function useToggleBiometricsEnabled() {
 export const SwitchBiometricsAuthentication = ({
   ref,
   onToggleSuccess,
+  onUnavailablePress,
   ...props
 }: React.ComponentProps<typeof AppSwitch2024> & {
   onToggleSuccess?: (enabled: boolean) => void | Promise<void>;
+  onUnavailablePress?: () => void;
   ref?: Ref<SwitchToggleType>;
 }) => {
   const {
     isBiometricsEnabled,
-    couldSetupSystemAuth,
+    couldSetupBiometrics,
     requestToggleBiometricsEnabled,
     sheetVisible,
     sheetLoading,
@@ -159,8 +162,9 @@ export const SwitchBiometricsAuthentication = ({
   const { hasSetupCustomPassword } = useWalletPasswordInfo();
 
   const switchValue = !!isBiometricsEnabled || isUsingDevicePasscode;
+  const isBiometricsUnavailableForSetup = !couldSetupBiometrics && !switchValue;
   const switchDisabled =
-    !hasSetupCustomPassword || (!couldSetupSystemAuth && !switchValue);
+    !hasSetupCustomPassword || isBiometricsUnavailableForSetup;
 
   return (
     <>
@@ -170,6 +174,12 @@ export const SwitchBiometricsAuthentication = ({
         disabled={switchDisabled}
         value={switchValue}
         changeValueImmediately={false}
+        onPress={evt => {
+          if (switchDisabled && isBiometricsUnavailableForSetup) {
+            evt.stopPropagation?.();
+            onUnavailablePress?.();
+          }
+        }}
         onValueChange={enabled => {
           requestToggleBiometricsEnabled(enabled, onToggleSuccess);
         }}

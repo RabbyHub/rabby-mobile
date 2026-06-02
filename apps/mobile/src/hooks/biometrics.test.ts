@@ -155,7 +155,7 @@ describe('hooks/biometrics', () => {
     jest.restoreAllMocks();
   });
 
-  it('allows settings setup when biometric enrollment is gone but Android passcode is available', async () => {
+  it('keeps settings on biometrics when only Android passcode is available but not enabled', async () => {
     const { module } = await setup();
 
     const computed = module.computeBiometricsState({
@@ -173,10 +173,8 @@ describe('hooks/biometrics', () => {
     expect(computed.isBiometricsEnabled).toBe(false);
     expect(computed.isUsingDevicePasscode).toBe(false);
     expect(computed.isDevicePasscodeOnlyAvailable).toBe(true);
-    expect(computed.systemAuthSettingsLabel).toBe(
-      'page.setting.useDevicePassword',
-    );
-    expect(computed.systemAuthTypeLabel).toBe('page.setting.devicePassword');
+    expect(computed.systemAuthSettingsLabel).toBe('page.setting.fingerPrint');
+    expect(computed.systemAuthTypeLabel).toBe('page.setting.fingerPrint');
   });
 
   it('enables passcode-capable system auth when only Android passcode is available', async () => {

@@ -126,7 +126,7 @@ import {
   dropAppDataSourceAndQuitApp,
 } from '@/databases/imports';
 import { AppCacheSizeText } from './components/SpecialText';
-import { IS_IOS } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { abortAllSyncTasks } from '@/databases/sync/_task';
 import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
@@ -293,7 +293,7 @@ function SettingsBlocks() {
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
 
   const {
-    computed: { couldSetupSystemAuth, isFaceID },
+    computed: { isFaceID },
     fetchBiometrics,
   } = useBiometrics({ autoFetch: true });
 
@@ -308,15 +308,6 @@ function SettingsBlocks() {
 
   const { currency, setIsShowCurrencyPopup } = useCurrentCurrencyVisible();
 
-  const startSwitchBiometrics = useCallback(() => {
-    if (
-      shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setBiometrics' })
-    ) {
-      return;
-    }
-    switchBiometricsRef.current?.toggle();
-  }, [shouldRedirectToSetPasswordBefore]);
-
   const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
   const { appTheme } = useAppTheme();
   const { t } = useTranslation();
@@ -329,11 +320,39 @@ function SettingsBlocks() {
   const navigation = useRabbyAppNavigation();
 
   const biometricsComputed = useBiometricsComputed();
-  const { isDevicePasscodeOnlyAvailable, isUsingDevicePasscode } =
-    biometricsComputed;
-  const disabledBiometrics =
-    (!couldSetupSystemAuth && !isUsingDevicePasscode) ||
-    !APP_FEATURE_SWITCH.biometricsAuth;
+  const { couldSetupBiometrics, isUsingDevicePasscode } = biometricsComputed;
+  const biometricsUnavailableForSettings =
+    !couldSetupBiometrics && !isUsingDevicePasscode;
+  const disabledBiometrics = !APP_FEATURE_SWITCH.biometricsAuth;
+
+  const showBiometricsEnrollmentRequiredAlert = useCallback(() => {
+    const title = IS_ANDROID
+      ? 'Fingerprint unavailable'
+      : 'Biometrics unavailable';
+    const message = IS_ANDROID
+      ? 'Please set up at least one fingerprint in system settings before using fingerprint unlock.'
+      : 'Please set up at least one biometric credential in system settings before using it.';
+
+    Alert.alert(title, message);
+  }, []);
+
+  const startSwitchBiometrics = useCallback(() => {
+    if (biometricsUnavailableForSettings) {
+      showBiometricsEnrollmentRequiredAlert();
+      return;
+    }
+
+    if (
+      shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setBiometrics' })
+    ) {
+      return;
+    }
+    switchBiometricsRef.current?.toggle();
+  }, [
+    biometricsUnavailableForSettings,
+    shouldRedirectToSetPasswordBefore,
+    showBiometricsEnrollmentRequiredAlert,
+  ]);
 
   const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
 
@@ -392,16 +411,16 @@ function SettingsBlocks() {
         items: [
           {
             label: biometricsComputed.systemAuthSettingsLabel,
-            icon:
-              isUsingDevicePasscode || isDevicePasscodeOnlyAvailable
-                ? RcAutolock
-                : isFaceID
-                ? RcFaceId
-                : RcFingerprint,
+            icon: isUsingDevicePasscode
+              ? RcAutolock
+              : isFaceID
+              ? RcFaceId
+              : RcFingerprint,
             rightNode: (
               <SwitchBiometricsAuthentication
                 ref={switchBiometricsRef}
                 onToggleSuccess={handleBiometricsToggleSuccess}
+                onUnavailablePress={showBiometricsEnrollmentRequiredAlert}
               />
             ),
             onPress: () => {
