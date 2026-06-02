@@ -82,7 +82,16 @@ async function canRequestStoredCredentialUnlock() {
     .getSupportedBiometryType()
     .catch(() => null);
 
-  return !!supportedBiometryType;
+  if (supportedBiometryType) {
+    return true;
+  }
+
+  const authType = apisKeychain.getAuthenticationType();
+  if (authType !== apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE) {
+    return false;
+  }
+
+  return apisKeychain.isPasscodeAuthAvailable();
 }
 
 export async function ensureWalletUnlocked() {

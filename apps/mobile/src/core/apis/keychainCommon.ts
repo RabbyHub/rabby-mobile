@@ -167,6 +167,9 @@ export type KeychainCompatibleModule = {
   getGenericPassword: (
     options: KeychainCompatibleOptions,
   ) => Promise<false | KeychainCompatibleUserCredentials>;
+  canImplyAuthentication?: (options?: {
+    authenticationType?: unknown;
+  }) => Promise<boolean>;
   setGenericPassword: (
     username: string,
     password: string,
@@ -503,16 +506,13 @@ export function isAuthenticatedByBiometrics() {
 }
 
 export function getDefaultBiometricsAuthenticationType() {
-  return isAndroid
-    ? KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE
-    : KEYCHAIN_AUTH_TYPES.BIOMETRICS;
+  return KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE;
 }
 
-function getPasscodeCapableAndroidAuthType(type: KEYCHAIN_AUTH_TYPES) {
+function getPasscodeCapableAuthType(type: KEYCHAIN_AUTH_TYPES) {
   if (
-    isAndroid &&
-    (type === KEYCHAIN_AUTH_TYPES.BIOMETRICS ||
-      type === KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE)
+    type === KEYCHAIN_AUTH_TYPES.BIOMETRICS ||
+    type === KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE
   ) {
     return KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE;
   }
@@ -984,21 +984,22 @@ export function createBusinessKeychainApi({
     };
   }
 
-  function shouldUpgradeLegacyAndroidBiometricsStorage(storage?: string) {
+  function shouldUpgradeBiometricsToPasscodeCapableEntry(storage?: string) {
+    const authType = getAuthenticationType();
+
     return (
-      isAndroid &&
       isAuthenticatedByBiometrics() &&
-      (storage === LEGACY_RSA_STORAGE_TYPE ||
-        getAuthenticationType() === KEYCHAIN_AUTH_TYPES.BIOMETRICS)
+      (authType === KEYCHAIN_AUTH_TYPES.BIOMETRICS ||
+        (isAndroid && storage === LEGACY_RSA_STORAGE_TYPE))
     );
   }
 
-  async function upgradeLegacyAndroidBiometricsStorage(
+  async function upgradeBiometricsToPasscodeCapableEntry(
     plainPassword: string,
     storage?: string,
     credentialsPatch: Partial<KeychainCompatibleUserCredentials> = {},
   ) {
-    if (!shouldUpgradeLegacyAndroidBiometricsStorage(storage)) {
+    if (!shouldUpgradeBiometricsToPasscodeCapableEntry(storage)) {
       return;
     }
 
@@ -1013,7 +1014,7 @@ export function createBusinessKeychainApi({
     } catch (error) {
       if (__DEV__) {
         console.warn(
-          'upgradeLegacyAndroidBiometricsStorage failed',
+          'upgradeBiometricsToPasscodeCapableEntry failed',
           error instanceof Error ? error.message : error,
         );
       }
@@ -1029,13 +1030,14 @@ export function createBusinessKeychainApi({
     }
 
     const authType = getAuthenticationType();
+    const nextAuthType = getPasscodeCapableAuthType(authType);
 
     if (authType === KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD) {
       return;
     }
 
     try {
-      await setGenericPassword(plainPassword, authType, {
+      await setGenericPassword(plainPassword, nextAuthType, {
         vaultKeyString: decrypted.vaultKeyString,
       });
       logger.info(
@@ -1105,7 +1107,7 @@ export function createBusinessKeychainApi({
     credentialsPatch: Partial<KeychainCompatibleUserCredentials> = {},
   ) {
     const authType = getAuthenticationType();
-    const nextAuthType = getPasscodeCapableAndroidAuthType(authType);
+    const nextAuthType = getPasscodeCapableAuthType(authType);
 
     if (authType === KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD) {
       return;
@@ -1143,7 +1145,7 @@ export function createBusinessKeychainApi({
     androidAllowKeyStoreRecovery = false,
     shouldAttachTrustedVaultKeyString = true,
     authenticationType,
-    skipLegacyAndroidBiometricsStorageUpgrade = false,
+    skipBiometricsPasscodeUpgrade = false,
     skipPostDecryptKeychainRewrite = false,
   }: {
     purpose?: T;
@@ -1155,7 +1157,7 @@ export function createBusinessKeychainApi({
     androidAllowKeyStoreRecovery?: boolean;
     shouldAttachTrustedVaultKeyString?: boolean;
     authenticationType?: KEYCHAIN_AUTH_TYPES;
-    skipLegacyAndroidBiometricsStorageUpgrade?: boolean;
+    skipBiometricsPasscodeUpgrade?: boolean;
     skipPostDecryptKeychainRewrite?: boolean;
   }): Promise<null | DefaultRet> {
     const instance = await waitInstance();
@@ -1236,8 +1238,8 @@ export function createBusinessKeychainApi({
               decrypted.password,
               decrypted,
             );
-          } else if (!skipLegacyAndroidBiometricsStorageUpgrade) {
-            await upgradeLegacyAndroidBiometricsStorage(
+          } else if (!skipBiometricsPasscodeUpgrade) {
+            await upgradeBiometricsToPasscodeCapableEntry(
               decrypted.password,
               typeof keychainObject.storage === 'string'
                 ? keychainObject.storage
@@ -1560,7 +1562,7 @@ export function createBusinessKeychainApi({
     vaultKeyString: string,
   ) {
     const authType = getAuthenticationType();
-    const nextAuthType = getPasscodeCapableAndroidAuthType(authType);
+    const nextAuthType = getPasscodeCapableAuthType(authType);
 
     if (authType === KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD) {
       return;
@@ -1598,19 +1600,34 @@ export function createBusinessKeychainApi({
 
   async function isPasscodeAuthAvailable() {
     if (
-      !isAndroid ||
-      typeof keychainModule.isPasscodeAuthAvailable !== 'function'
+      isAndroid &&
+      typeof keychainModule.isPasscodeAuthAvailable === 'function'
     ) {
+      return keychainModule.isPasscodeAuthAvailable().catch(error => {
+        logger.warn('[keychain] failed to check passcode auth availability', {
+          sourceLabel,
+          error: getErrorMessage(error),
+        });
+        return false;
+      });
+    }
+
+    if (typeof keychainModule.canImplyAuthentication !== 'function') {
       return false;
     }
 
-    return keychainModule.isPasscodeAuthAvailable().catch(error => {
-      logger.warn('[keychain] failed to check passcode auth availability', {
-        sourceLabel,
-        error: getErrorMessage(error),
+    return keychainModule
+      .canImplyAuthentication({
+        authenticationType:
+          keychainModule.AUTHENTICATION_TYPE.DEVICE_PASSCODE_OR_BIOMETRICS,
+      })
+      .catch(error => {
+        logger.warn('[keychain] failed to check passcode auth availability', {
+          sourceLabel,
+          error: getErrorMessage(error),
+        });
+        return false;
       });
-      return false;
-    });
   }
 
   async function clearApplicationPassword(password: string) {
