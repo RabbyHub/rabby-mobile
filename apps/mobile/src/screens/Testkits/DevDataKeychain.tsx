@@ -48,6 +48,7 @@ import {
 import {
   BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES,
   storeApisBiometrics,
+  useBiometricsComputed,
   useBiometricsSystemAuthDebugMock,
   type BiometricsSystemAuthDebugMode,
 } from '@/hooks/biometrics';
@@ -147,12 +148,6 @@ const SYSTEM_AUTH_DEBUG_MOCK_OPTIONS = [
     label: 'Real System Auth',
     description:
       'Use native getSupportedBiometryType and device passcode availability.',
-  },
-  {
-    key: BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.PASSCODE_ONLY,
-    label: 'No Biometrics + Device Passcode',
-    description:
-      'Mock no enrolled biometrics while Android device credential remains available.',
   },
   {
     key: BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.NONE,
@@ -342,6 +337,19 @@ type KeychainDebugExportPayload = {
     systemAuthDebugMock: {
       mode: BiometricsSystemAuthDebugMode;
       canUse: boolean;
+    };
+    systemAuthUi: {
+      supportedBiometryType: string | null;
+      devicePasscodeAvailable: boolean;
+      isUsingDevicePasscode: boolean;
+      isBiometricsEnabled: boolean;
+      couldSetupSystemAuth: boolean;
+      defaultTypeLabel: string;
+      devicePasscodeLabel: string;
+      devicePasscodeActionLabel: string;
+      systemAuthTypeLabel: string;
+      systemAuthSettingsLabel: string;
+      systemAuthSwitchTypeLabel: string;
     };
   };
   versions: {
@@ -1343,6 +1351,7 @@ export default function DevDataKeychain(): JSX.Element {
     mode: systemAuthDebugMockMode,
     setMode: setSystemAuthDebugMockMode,
   } = useBiometricsSystemAuthDebugMock();
+  const systemAuthComputed = useBiometricsComputed();
   const [tabKey, setTabKey] = useState<TabKey>('current');
   const [helpSheetContext, setHelpSheetContext] =
     useState<HelpSheetContext | null>(null);
@@ -2487,6 +2496,21 @@ export default function DevDataKeychain(): JSX.Element {
           mode: systemAuthDebugMockMode,
           canUse: canUseSystemAuthDebugMock,
         },
+        systemAuthUi: {
+          supportedBiometryType: systemAuthComputed.supportedBiometryType,
+          devicePasscodeAvailable: systemAuthComputed.devicePasscodeAvailable,
+          isUsingDevicePasscode: systemAuthComputed.isUsingDevicePasscode,
+          isBiometricsEnabled: systemAuthComputed.isBiometricsEnabled,
+          couldSetupSystemAuth: systemAuthComputed.couldSetupSystemAuth,
+          defaultTypeLabel: systemAuthComputed.defaultTypeLabel,
+          devicePasscodeLabel: systemAuthComputed.devicePasscodeLabel,
+          devicePasscodeActionLabel:
+            systemAuthComputed.devicePasscodeActionLabel,
+          systemAuthTypeLabel: systemAuthComputed.systemAuthTypeLabel,
+          systemAuthSettingsLabel: systemAuthComputed.systemAuthSettingsLabel,
+          systemAuthSwitchTypeLabel:
+            systemAuthComputed.systemAuthSwitchTypeLabel,
+        },
       },
       versions: {
         v8_2_0: sanitizeBusinessVersionStateForExport(
@@ -2573,6 +2597,7 @@ export default function DevDataKeychain(): JSX.Element {
       effectiveStorageByVersion,
       includeSecretFieldsInExport,
       rabbitCode,
+      systemAuthComputed,
       systemAuthDebugMockMode,
       supportedStorageTypesByVersion,
       v9CurrentBusinessDecryptErrorMessage,
@@ -3588,6 +3613,33 @@ export default function DevDataKeychain(): JSX.Element {
             value={systemAuthDebugMockMode}
             selectable
           />
+          <StatusRow
+            label="System Auth Label"
+            value={systemAuthComputed.systemAuthTypeLabel}
+            selectable
+          />
+          <StatusRow
+            label="Settings Label"
+            value={systemAuthComputed.systemAuthSettingsLabel}
+            selectable
+          />
+          <StatusRow
+            label="Detected Biometry"
+            value={systemAuthComputed.supportedBiometryType}
+            selectable
+          />
+          <StatusRow
+            label="Device Passcode"
+            value={
+              systemAuthComputed.devicePasscodeAvailable
+                ? 'available'
+                : 'unavailable'
+            }
+          />
+          <StatusRow
+            label="Using Device Passcode"
+            value={systemAuthComputed.isUsingDevicePasscode ? 'yes' : 'no'}
+          />
           <View style={styles.statusRow}>
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.statusLabel}>RABBY_MOBILE_CODE</Text>
@@ -3646,8 +3698,9 @@ export default function DevDataKeychain(): JSX.Element {
               System Auth Availability Mock
             </Text>
             <Text style={styles.versionRadioMeta}>
-              Overrides JS biometric/passcode availability checks only. It does
-              not write keychain data or mutate Android credentials.
+              Overrides JS system auth availability checks only. It cannot
+              emulate Android prompt fallback from biometrics to device
+              credential.
             </Text>
           </View>
           <View style={styles.versionSelectorGroup}>

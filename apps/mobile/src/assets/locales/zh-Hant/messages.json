@@ -2252,6 +2252,8 @@
       "followUs": "關注我們",
       "tou": "使用條款",
       "fingerPrint": "指紋",
+      "devicePassword": "設備密碼",
+      "useDevicePassword": "使用設備密碼",
       "policy": "隱私政策",
       "feedback": "反饋",
       "faceId": "Face ID",

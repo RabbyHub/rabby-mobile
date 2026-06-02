@@ -390,9 +390,7 @@ function SettingsBlocks() {
         label: t('page.setting.screenTitle'),
         items: [
           {
-            label: isUsingDevicePasscode
-              ? t('page.setting.useDevicePassword')
-              : biometricsComputed.defaultTypeLabel,
+            label: biometricsComputed.systemAuthSettingsLabel,
             icon: isUsingDevicePasscode
               ? RcAutolock
               : isFaceID

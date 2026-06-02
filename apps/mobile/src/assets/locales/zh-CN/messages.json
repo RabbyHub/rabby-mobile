@@ -2218,6 +2218,8 @@
       "aboutUs": "关于我们",
       "tou": "使用条款",
       "fingerPrint": "指纹",
+      "devicePassword": "设备密码",
+      "useDevicePassword": "使用设备密码",
       "modifyRPCURL": "修改 RPC URL",
       "followUs": "关注我们",
       "addCustomNetwork": "添加自定义网络",

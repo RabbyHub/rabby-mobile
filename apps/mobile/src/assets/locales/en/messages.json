@@ -2253,6 +2253,7 @@
       "faceId": "Face ID",
       "touchId": "Touch ID",
       "fingerPrint": "Fingerprint",
+      "devicePassword": "Device password",
       "useDevicePassword": "Use device password",
       "autoLockTime": "Auto lock time",
       "lockWallet": "Lock Wallet",
