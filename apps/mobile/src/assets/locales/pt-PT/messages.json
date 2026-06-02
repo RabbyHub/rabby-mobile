@@ -1139,7 +1139,7 @@
         "convertDust": "Converter Pó"
       },
       "swipeUp": {
-        "desc": "Deslize para cima para explorar websites",
+        "desc": "Deslize para cima para explorar e pesquisar websites",
         "descAndroid": "Clique para explorar dApps",
         "descAndroidMore": "Clique para explorar mais dApps",
         "descMore": "Deslize para cima para explorar mais websites"
@@ -1217,7 +1217,7 @@
       "no-route-found": "Nenhuma rota encontrada",
       "gas-x-price": "Preço do Gas: {{price}} Gwei.",
       "duration": "{{duration}} min",
-      "bridged": "Ponte",
+      "bridged": "Bridge iniciada",
       "gasFeeTooHight": "A taxa de Gas é superior ao normal. Confirme apenas se desejar prosseguir.",
       "pendingItem": {
         "swap": "Trocar",

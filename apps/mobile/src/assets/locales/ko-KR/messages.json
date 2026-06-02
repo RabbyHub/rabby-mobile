@@ -823,7 +823,7 @@
         "convertDust": "소액 전환"
       },
       "swipeUp": {
-        "desc": "위로 스와이프하여 웹사이트 탐색하기",
+        "desc": "위로 스와이프하여 웹사이트 탐색 및 검색하기",
         "descAndroidMore": "dApp을 더 탐색하려면 클릭하세요",
         "descAndroid": "dApp을 탐색하려면 클릭하세요.",
         "descMore": "더 많은 웹사이트를 탐색하려면 위로 스 와이프 하세요."
@@ -883,7 +883,7 @@
       "duration": "{{duration}} 분",
       "via-bridge": "{{bridge}} 통해",
       "To": "에게",
-      "bridged": "브리징됨",
+      "bridged": "브리지 시작됨",
       "gasFeeTooHight": "가스 요금이 정상보다 높습니다. 진행하시려면 확인하십시오.",
       "pendingItem": {
         "swap": "스왑",

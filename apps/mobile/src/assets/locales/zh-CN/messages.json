@@ -891,7 +891,7 @@
       "swipeUp": {
         "descAndroid": "点击探索 dApps",
         "descAndroidMore": "点击探索更多 dApps",
-        "desc": "向上滑动以探索网站",
+        "desc": "向上滑动以探索和搜索网站",
         "descMore": "向上滑动以探索更多网站"
       },
       "DappDrawer": {
@@ -968,7 +968,7 @@
       "bridgeTo": "跨链到",
       "loss-tips": "您正在损失 {{usd}}。请尝试不同的金额。",
       "title": "跨链",
-      "bridged": "跨链已完成",
+      "bridged": "已发起跨链",
       "gasFeeTooHight": "Gas费用高于正常情况。仅在您希望继续时确认。",
       "pendingItem": {
         "pending": "待处理",

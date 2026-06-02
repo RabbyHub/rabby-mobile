@@ -993,7 +993,7 @@
       "gas-fee": "GasÜcreti: {{gasUsed}}",
       "duration": "{{duration}} dk",
       "via-bridge": "via {{bridge}}",
-      "bridged": "Köprülenmiş",
+      "bridged": "Bridge başlatıldı",
       "approve-and-bridge": "Onayla ve Köprü kur",
       "gas-x-price": "Gas fiyatı: {{price}} Gwei.",
       "actual": "Gerçek:",
@@ -1070,7 +1070,7 @@
         "descAndroid": "dApp'leri keşfetmek için tıklayın",
         "descMore": "Daha fazla web sitesini keşfetmek için yukarı kaydırın.",
         "descAndroidMore": "DApp'leri keşfetmek için tıklayın",
-        "desc": "Web siteleri keşfetmek için yukarı kaydırın"
+        "desc": "Web sitelerini keşfetmek ve aramak için yukarı kaydırın"
       },
       "DappDrawer": {
         "search": "Arama",
