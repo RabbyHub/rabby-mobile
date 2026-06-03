@@ -174,7 +174,7 @@ const SendScreenBody = React.memo(function SendScreenBody({
 
   const toAddressControlStyle = useMemo(
     () => ({
-      marginTop: 24,
+      marginTop: 16,
       marginBottom: 0,
     }),
     [],
@@ -770,7 +770,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       flexDirection: 'column',
       justifyContent: 'space-between',
       flex: 1,
-      paddingTop: 16,
+      paddingTop: 4,
       position: 'relative',
       height: '100%',
     },
@@ -779,7 +779,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       paddingBottom: 280,
     },
     balance: {
-      marginTop: 24,
+      marginTop: 16,
     },
     screenRoot: {
       flex: 1,

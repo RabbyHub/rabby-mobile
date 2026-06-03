@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import React from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
@@ -41,11 +41,13 @@ import { PredictionScreenWithPreload } from '../InnerDapp/InnerDappPreloadScreen
 import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
 import { Text } from '@/components/Typography';
 import { createGetStyles2024 } from '@/utils/styles';
+import { IS_IOS } from '@/core/native/utils';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
 const CONVERT_DUST_HEADER_HEIGHT = 58;
+const SEND_IOS_HEADER_ICON_OFFSET = 6;
 
 function ConvertDustHeader({
   title,
@@ -89,6 +91,15 @@ export default function TransactionNavigator() {
     innerDappStrategy === 'screen'
       ? PredictionScreenWithPreload
       : PredictionScreen;
+  const renderSendHeaderLeft = React.useCallback(
+    ({ tintColor }: { tintColor?: string }) => (
+      <HeaderBackPressable
+        tintColor={tintColor}
+        style={transactionNavigatorStyles.sendHeaderIconOffset}
+      />
+    ),
+    [],
+  );
 
   return (
     <TransactionStack.Navigator
@@ -110,6 +121,7 @@ export default function TransactionNavigator() {
             fontFamily: 'SF Pro Rounded',
             fontSize: 20,
           },
+          headerLeft: renderSendHeaderLeft,
         })}
       />
       <TransactionStack.Screen
@@ -123,6 +135,7 @@ export default function TransactionNavigator() {
             fontFamily: 'SF Pro Rounded',
             fontSize: 20,
           },
+          headerLeft: renderSendHeaderLeft,
         })}
       />
       <TransactionStack.Screen
@@ -485,3 +498,9 @@ const getConvertDustHeaderStyle = createGetStyles2024(({ colors2024 }) => ({
     minWidth: 0,
   },
 }));
+
+const transactionNavigatorStyles = StyleSheet.create({
+  sendHeaderIconOffset: {
+    transform: [{ translateY: IS_IOS ? SEND_IOS_HEADER_ICON_OFFSET : 0 }],
+  },
+});

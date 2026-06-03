@@ -547,7 +547,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     sectionTitle: {
       color: colors2024['neutral-title-1'],
-      fontSize: 17,
+      fontSize: 15,
+      lineHeight: 18,
       fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
     },
@@ -570,8 +571,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      height: 26,
-      marginBottom: 12,
+      height: 18,
+      marginBottom: 8,
+      paddingHorizontal: 8,
     },
 
     balanceArea: {
