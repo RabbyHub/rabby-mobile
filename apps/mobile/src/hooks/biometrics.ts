@@ -74,6 +74,10 @@ export function setBiometrics(
     prev => resolveValFromUpdater(prev, valOrFunc).newVal,
   );
 }
+
+export function getBiometricsInfoSnapshot() {
+  return biometricsInfoStore.getState();
+}
 async function getDevicePasscodeAvailable() {
   if (IS_IOS) {
     return apisKeychain.isPasscodeAuthAvailable().catch(() => false);
@@ -485,6 +489,7 @@ export const storeApisBiometrics = {
   toggleBiometrics,
   disableBiometricsForCurrentSession,
   ensureBiometricsReadyForUnlock,
+  getBiometricsInfoSnapshot,
 };
 
 export function useBiometrics(options?: { autoFetch?: boolean }) {
