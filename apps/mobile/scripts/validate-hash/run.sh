@@ -6,7 +6,7 @@
 #   ./run.sh android      # 只运行 Android 校验
 #   ./run.sh all          # (默认) 运行两个平台并计算组合哈希
 
-set -eu
+set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
@@ -23,8 +23,8 @@ run_and_capture_hash() {
   : >"$output_file"
 
   set +e
-  "$@" | tee "$output_file" >"$TEE_TARGET"
-  local command_status=${PIPESTATUS[0]}
+  "$@" > >(tee "$output_file" >"$TEE_TARGET")
+  local command_status=$?
   set -e
 
   return "$command_status"
@@ -37,7 +37,8 @@ install_common_dependencies
 
 # 定义总的导出目录
 TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
-EXPORT_BASE_DIR="$REPO_ROOT/apps/mobile/validation_exports_${TIMESTAMP}"
+EXPORT_REPO_ROOT="${HASHCHECK_EXPORT_REPO_ROOT:-$REPO_ROOT}"
+EXPORT_BASE_DIR="$EXPORT_REPO_ROOT/apps/mobile/validation_exports_${TIMESTAMP}"
 mkdir -p "$EXPORT_BASE_DIR"
 echo "ℹ️ 构建产物将导出至: $EXPORT_BASE_DIR"
 

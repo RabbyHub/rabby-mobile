@@ -25,6 +25,21 @@ on:
         required: true
         type: boolean
         default: false
+      HASH_CHECK:
+        description: 'Build in deterministic release hash-check mode without upload'
+        required: false
+        type: boolean
+        default: false
+      HASH_CHECK_GIT_HASH:
+        description: 'Optional git hash injected into HASH_CHECK bundle metadata'
+        required: false
+        type: string
+        default: ''
+      HASH_CHECK_GIT_TIME:
+        description: 'Optional git time injected into HASH_CHECK bundle metadata'
+        required: false
+        type: string
+        default: ''
   workflow_call:
     secrets:
       RABBY_MOBILE_ANDROID_KEY_STORE:
@@ -43,6 +58,7 @@ defaults:
     shell: bash -ieol pipefail {0}
 env:
   BUILD_TARGET_PLATFORM: android
+  ANDROID_NDK_VERSION: '27.3.13750724'
 
 jobs:
   release-build:
@@ -56,6 +72,7 @@ jobs:
       RABBY_MOBILE_NM_USE_CACHE: 'true'
       RABBY_MOBILE_METRO_NODE_MAX_OLD_SPACE_SIZE: '6144'
       RABBY_MOBILE_METRO_MAX_WORKERS: '4'
+      HASH_CHECK: ${{ (github.event_name == 'workflow_dispatch' && inputs.HASH_CHECK) || startsWith(github.ref_name, 'ci/android-release-hash-check-') || false }}
     steps:
       - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
         with:
@@ -70,6 +87,8 @@ jobs:
               -e node_modules
               -e 'apps/*/node_modules'
               -e 'packages/*/node_modules'
+              -e apps/mobile/.bundle
+              -e apps/mobile/vendor/bundle
               -e .yarn/install-state.gz
               -e .yarn/unplugged
             )
@@ -113,15 +132,40 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@7c5672355aaa8fde5f97a91aa9a99616d1ace6bc # v2
 
+      - name: Setup Android NDK for HASH_CHECK
+        if: ${{ env.HASH_CHECK == 'true' }}
+        run: |
+          sdkmanager "ndk;${ANDROID_NDK_VERSION}"
+          ndk_root="$ANDROID_HOME/ndk/${ANDROID_NDK_VERSION}"
+          if [ ! -d "$ndk_root" ]; then
+            ndk_root="$(find "$ANDROID_HOME/ndk" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | LC_ALL=C sort | tail -n 1)"
+          fi
+          if [ -z "$ndk_root" ] || [ ! -d "$ndk_root" ]; then
+            echo "Android NDK not found under $ANDROID_HOME/ndk" >&2
+            exit 1
+          fi
+          llvm_strip_path="$(find "$ndk_root" -path '*/toolchains/llvm/prebuilt/*/bin/llvm-strip' \( -type f -o -type l \) 2>/dev/null | LC_ALL=C sort | tail -n 1)"
+          if [ -z "$llvm_strip_path" ] || [ ! -x "$llvm_strip_path" ]; then
+            echo "llvm-strip not found under $ndk_root" >&2
+            exit 1
+          fi
+          echo "ANDROID_NDK_HOME=$ndk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_ROOT=$ndk_root" >> "$GITHUB_ENV"
+          echo "RABBY_MOBILE_ANDROID_LLVM_STRIP=$llvm_strip_path" >> "$GITHUB_ENV"
+
       - name: Install & Build app
         run: |
           cd apps/mobile;
-          RABBY_MOBILE_RUN_POSTINSTALL=true bash ./scripts/ci/prepare-mobile-build.sh;
-          bundle install;
 
           [ -z $buildchannel ] && export buildchannel=appstore;
           [ -z "${REALLY_UPLOAD:-}" ] && export REALLY_UPLOAD=true;
-          ./scripts/deploy-android.sh
+          if [ "$HASH_CHECK" = "true" ]; then
+            bash ./scripts/release-hash-check.sh android
+          else
+            RABBY_MOBILE_RUN_POSTINSTALL=true bash ./scripts/ci/prepare-mobile-build.sh;
+            bundle install;
+            ./scripts/deploy-android.sh
+          fi
         env:
           FLATTEN_REFNAME: ${{ steps.actionvars.outputs.flatten_refname }}
           TRIGGER_DATE: ${{ steps.actionvars.outputs.trigger_date }}
@@ -142,6 +186,8 @@ jobs:
           RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64 }}
           buildchannel: ${{ inputs.buildchannel }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
+          RABBY_MOBILE_HASHCHECK_INJECTED_GIT_HASH: ${{ github.event_name == 'workflow_dispatch' && inputs.HASH_CHECK_GIT_HASH || '' }}
+          RABBY_MOBILE_HASHCHECK_INJECTED_GIT_TIME: ${{ github.event_name == 'workflow_dispatch' && inputs.HASH_CHECK_GIT_TIME || '' }}
           # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
           GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GITHUB_ACTOR: ${{ github.actor }}
@@ -151,8 +197,16 @@ jobs:
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
 
+      - name: Upload HASH_CHECK artifact
+        if: ${{ env.HASH_CHECK == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-hash-check
+          path: apps/mobile/release_hash_check_exports_*
+          retention-days: 7
+
       - name: Upload appstore AAB to Google Play internal track
-        if: ${{ inputs.buildchannel == 'appstore' && inputs.REALLY_UPLOAD && inputs.UPLOAD_TO_GOOGLE_PLAY_INTERNAL }}
+        if: ${{ inputs.buildchannel == 'appstore' && inputs.REALLY_UPLOAD && inputs.UPLOAD_TO_GOOGLE_PLAY_INTERNAL && !inputs.HASH_CHECK }}
         run: |
           cd apps/mobile;
           bash ./scripts/ci/upload-google-play-internal-track.sh

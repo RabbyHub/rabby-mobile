@@ -4,6 +4,8 @@ const fs = require('fs');
 const path = require('path');
 
 const LDR_HEX_LENGTH = 3;
+const ADRP_REG_TTL = 12;
+const FRAME_BASE_REGISTERS = new Set(['sp', 'x29', 'fp']);
 
 function findSpecificObjcMsgSendGotAddressStrings(linkMapContent) {
   const gotAddressStrings = [];
@@ -125,6 +127,72 @@ function removeFilePath(otoolSContent) {
   return otoolSContent?.replace(/literal pool for: \"\/Users\/[^\n]+/g, '');
 }
 
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function decrementAdrpRegisters(adrpRegisters) {
+  for (const [reg, ttl] of [...adrpRegisters.entries()]) {
+    if (ttl <= 0) {
+      adrpRegisters.delete(reg);
+    } else {
+      adrpRegisters.set(reg, ttl - 1);
+    }
+  }
+}
+
+function normalizeMachOLayoutAddressNoise(otoolSContent) {
+  const adrpRegisters = new Map();
+
+  return otoolSContent
+    .split('\n')
+    .map(line => {
+      const adrpMatch = line.match(
+        /^([0-9a-f]+\tadrp\t([xw]\d{1,2}),\s*)\S+(\s*;\s*)0x[0-9a-f]+$/i,
+      );
+      if (adrpMatch) {
+        adrpRegisters.set(adrpMatch[2], ADRP_REG_TTL);
+        return `${adrpMatch[1]}<page>${adrpMatch[3]}<addr>`;
+      }
+
+      for (const reg of adrpRegisters.keys()) {
+        const escapedReg = escapeRegex(reg);
+        const adrpAddRegex = new RegExp(
+          `^([0-9a-f]+)\\tadd\\t${escapedReg},\\s*${escapedReg},\\s*#0x[0-9a-f]+(?:\\s*;.*)?$`,
+          'i',
+        );
+        const adrpAddMatch = line.match(adrpAddRegex);
+        if (adrpAddMatch) {
+          return `${adrpAddMatch[1]}\tadrp-address\t${reg}`;
+        }
+
+        const adrpLdrRegex = new RegExp(
+          `^([0-9a-f]+)\\tldr\\t${escapedReg},\\s*\\[${escapedReg}(?:,\\s*#0x[0-9a-f]+)?\\](?:\\s*;.*)?$`,
+          'i',
+        );
+        const adrpLdrMatch = line.match(adrpLdrRegex);
+        if (adrpLdrMatch) {
+          return `${adrpLdrMatch[1]}\tadrp-address\t${reg}`;
+        }
+      }
+
+      decrementAdrpRegisters(adrpRegisters);
+
+      const memoryOffsetMatch = line.match(
+        /^(.*\t(?:ldr|ldrb|ldrh|ldrsw|str|strb|strh)\t[^\n[]+\[)([^,\]\s]+)(?:,\s*#0x[0-9a-f]+)?(\][^\n]*)$/i,
+      );
+      if (
+        memoryOffsetMatch &&
+        !FRAME_BASE_REGISTERS.has(memoryOffsetMatch[2].toLowerCase())
+      ) {
+        return `${memoryOffsetMatch[1]}${memoryOffsetMatch[2]}, #<mem-offset>${memoryOffsetMatch[3]}`;
+      }
+
+      return line;
+    })
+    .join('\n');
+}
+
 async function main() {
   const args = process.argv.slice(2);
   let otoolSFilePath = null;
@@ -180,10 +248,12 @@ async function main() {
 
   const otoolSContentWithoutFilePath = removeFilePath(otoolSContent);
 
-  const result = normalizeOtoolFilePureString(
+  const objcMsgSendNormalized = normalizeOtoolFilePureString(
     otoolSContentWithoutFilePath,
     linkMapGotAddressStrings,
   );
+
+  const result = normalizeMachOLayoutAddressNoise(objcMsgSendNormalized);
 
   console.log(result);
 }

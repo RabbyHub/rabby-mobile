@@ -13,8 +13,10 @@ export buildchannel="appstore";
 export BUILD_TARGET_PLATFORM="ios";
 export RABBY_MOBILE_BUILD_ENV="production";
 check_build_params;
-check_s3_params;
-checkout_s3_pub_deployment_params;
+if [ "$HASH_CHECK" != "true" ]; then
+  check_s3_params;
+  checkout_s3_pub_deployment_params;
+fi
 
 # make plist file
 cd $project_dir;
@@ -48,14 +50,19 @@ build_appstore() {
   export RABBY_MOBILE_BUILD_ENV="production";
   cd $project_dir;
   sh ./ios/patches/override-xcconfig-release.sh;
-  turbo_prepare_js_dependencies || return $?
-  ensure_inpage_bridge_assets || return $?
-  yarn check-nodeengines &&
-    yarn ../mobile-local-pages bundle:all &&
-    yarn link-assets &&
-    yarn buildworker:prod:ios &&
-    yarn syncrnversion
-  build_status=$?
+  if [ "$HASH_CHECK" == "true" ]; then
+    echo "[deploy-ios-appstore] HASH_CHECK=true, skip repeated JS asset preparation."
+    build_status=0
+  else
+    turbo_prepare_js_dependencies || return $?
+    ensure_inpage_bridge_assets || return $?
+    yarn check-nodeengines &&
+      yarn ../mobile-local-pages bundle:all &&
+      yarn link-assets &&
+      yarn buildworker:prod:ios &&
+      yarn syncrnversion
+    build_status=$?
+  fi
 
   if [ $build_status -ne 0 ]; then
     return $build_status
@@ -63,14 +70,14 @@ build_appstore() {
 
   turbo_prepare_ruby_bundle || return $?
 
-  if [ ! -z $CI ]; then
+  if [ ! -z $CI ] && [ "$HASH_CHECK" != "true" ]; then
     cd $project_dir/ios || return 1
     turbo_bundle_pod cache clean --all || return $?
     cd $project_dir || return 1
   fi
 
   turbo_prepare_cocoapods || return $?
-  turbo_bundle_exec exec fastlane ios appstore
+  turbo_bundle_fastlane ios appstore
 }
 
 if [[ -z $SKIP_BUILD || ! -f $ouput_dir/RabbyMobile.ipa ]]; then
@@ -87,6 +94,11 @@ fi
 if [ ! -f $ouput_dir/RabbyMobile.ipa ]; then
   echo "[deploy-ios-appstore] build failed: $ouput_dir/RabbyMobile.ipa was not created"
   exit 1
+fi
+
+if [ "$HASH_CHECK" == "true" ]; then
+  echo "[deploy-ios-appstore] HASH_CHECK=true, skip App Store/S3 deployment steps."
+  exit 0
 fi
 
 tmp_ipa_extract_dir=$(mktemp -d)

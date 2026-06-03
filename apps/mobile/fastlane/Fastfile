@@ -1,4 +1,8 @@
 require 'base64'
+require 'shellwords'
+
+MOBILE_PROJECT_ROOT = File.expand_path('..', __dir__)
+REPO_ROOT = File.expand_path('../..', MOBILE_PROJECT_ROOT)
 
 def turbo_build_enabled?
   ENV['RABBY_MOBILE_TURBO_BUILD'] == 'true'
@@ -20,6 +24,33 @@ end
 
 def ios_adhoc_skip_build_archive?
   ENV['RABBY_MOBILE_IOS_SKIP_BUILD_ARCHIVE'] == 'true'
+end
+
+def hashcheck_prefix_map_xcargs
+  developer_dir = ENV['DEVELOPER_DIR']
+  developer_dir = `xcode-select -p`.strip if developer_dir.nil? || developer_dir.empty?
+  repo_root_alt =
+    if REPO_ROOT.start_with?('/private/tmp/')
+      REPO_ROOT.sub('/private/tmp/', '/tmp/')
+    elsif REPO_ROOT.start_with?('/tmp/')
+      REPO_ROOT.sub('/tmp/', '/private/tmp/')
+    else
+      REPO_ROOT
+    end
+
+  {
+    'HASHCHECK_REPO_ROOT' => REPO_ROOT,
+    'HASHCHECK_REPO_ROOT_ALT' => repo_root_alt,
+    'HASHCHECK_DEVELOPER_DIR' => File.expand_path(developer_dir)
+  }.map { |key, value| "#{key}=#{Shellwords.escape(value)}" }.join(' ')
+end
+
+def release_hash_check?
+  ENV['HASH_CHECK'] == 'true'
+end
+
+def skip_testflight_upload?
+  release_hash_check? || ENV['RABBY_MOBILE_SKIP_TESTFLIGHT_UPLOAD'] == 'true' || ENV['SKIP_TESTFLIGHT_UPLOAD'] == 'true'
 end
 
 platform :ios do
@@ -191,7 +222,7 @@ platform :ios do
       archive_path: './ios/Package/RabbyMobile.xcarchive',
       skip_codesigning: true,
       # skip_archive: true,
-      # xcargs: "-jobs 1", # 禁用并行编译
+      xcargs: hashcheck_prefix_map_xcargs,
       xcconfig: "./ios/RabbyMobile/ValidHash.xcconfig",
       buildlog_path: './ios/Package'
     )
@@ -199,28 +230,52 @@ platform :ios do
 
   desc "Release for the iOS production"
   lane :appstore do
-      asc_api_key = load_app_store_connect_api_key_for_testflight
       current_version = get_version_number(
         xcodeproj: './ios/RabbyMobile.xcodeproj',
         target: 'RabbyMobile',
         configuration: 'Release'
       )
-      baseline_build_number = latest_testflight_build_number_for_version(
-        api_key: asc_api_key,
-        app_identifier: 'com.debank.rabby-mobile',
-        version: current_version
-      )
-      UI.message("Latest TestFlight build before upload for #{current_version}: #{baseline_build_number}")
-      next_build_number = baseline_build_number + 1
-      UI.message("Will build #{current_version}(#{next_build_number}) for upload")
+      asc_api_key = nil
+      if skip_testflight_upload?
+        next_build_number = (ENV['RABBY_MOBILE_HASH_CHECK_IOS_BUILD_NUMBER'] || ENV['RABBY_MOBILE_IOS_BUILD_NUMBER'] || get_build_number(
+          xcodeproj: './ios/RabbyMobile.xcodeproj'
+        )).to_i
+        UI.message("TestFlight upload disabled; will build #{current_version}(#{next_build_number}) without App Store Connect upload")
+      else
+        asc_api_key = load_app_store_connect_api_key_for_testflight
+        baseline_build_number = latest_testflight_build_number_for_version(
+          api_key: asc_api_key,
+          app_identifier: 'com.debank.rabby-mobile',
+          version: current_version
+        )
+        UI.message("Latest TestFlight build before upload for #{current_version}: #{baseline_build_number}")
+        next_build_number = baseline_build_number + 1
+        UI.message("Will build #{current_version}(#{next_build_number}) for upload")
+      end
 
       prepare_apple_sign(type: 'appstore')
+      xcode_args = ["CURRENT_PROJECT_VERSION=#{next_build_number}"]
+      xcode_args << hashcheck_prefix_map_xcargs if release_hash_check?
+      release_hashcheck_archive_path = release_hash_check? ? "./ios/Package/appstore/RabbyMobile.xcarchive" : nil
+      release_hashcheck_derived_data_path = release_hash_check? ? "./ios/DerivedData/release-hash-check" : nil
+      release_hashcheck_xcconfig = release_hash_check? ? "./ios/RabbyMobile/ValidHash.xcconfig" : nil
+      release_export_options = {
+        method: "app-store",
+        signingStyle: 'manual',
+        provisioningProfiles: {
+          "com.debank.rabby-mobile": "RabbyMobileAppStoreOpcode",
+          "com.debank.rabby-mobile.RabbyMobileNotification": "RabbyMobileNotificationAppStore"
+        }
+      }
+      release_export_options[:manageAppVersionAndBuildNumber] = false if release_hash_check?
       gym(
         scheme: 'RabbyMobile',
         workspace: './ios/RabbyMobile.xcworkspace',
         configuration: 'Release',
         output_directory: "./ios/Package/appstore",
         build_path: "./ios/Package/appstore",
+        archive_path: release_hashcheck_archive_path,
+        derived_data_path: release_hashcheck_derived_data_path,
         destination: "generic/platform=iOS",
         skip_profile_detection: true,
         clean: true,
@@ -229,31 +284,27 @@ platform :ios do
         # suppress_xcode_output: false,
         skip_package_pkg: true,
         export_method: "app-store",
-        xcargs: "CURRENT_PROJECT_VERSION=#{next_build_number}",
+        xcargs: xcode_args.join(' '),
+        xcconfig: release_hashcheck_xcconfig,
         verbose: true,
-        export_options: {
-          method: "app-store",
-          signingStyle: 'manual',
-          provisioningProfiles: {
-            "com.debank.rabby-mobile": "RabbyMobileAppStoreOpcode",
-            "com.debank.rabby-mobile.RabbyMobileNotification": "RabbyMobileNotificationAppStore"
-          }
-        })
-      pilot(
-        api_key: asc_api_key,
-        apple_id: '6474381673',
-        ipa: "./ios/Package/appstore/RabbyMobile.ipa",
-        skip_waiting_for_build_processing: true,
-        distribute_only: ENV["RABBY_MOBILE_PILOT_DISTRIBUTE_ONLY"] || false,
-      )
-      unless ENV["RABBY_MOBILE_PILOT_DISTRIBUTE_ONLY"] == 'true'
-        wait_for_uploaded_testflight_build(
+        export_options: release_export_options)
+      unless skip_testflight_upload?
+        pilot(
           api_key: asc_api_key,
-          app_identifier: 'com.debank.rabby-mobile',
-          version: current_version,
-          baseline_build_number: baseline_build_number,
-          expected_build_number: next_build_number
+          apple_id: '6474381673',
+          ipa: "./ios/Package/appstore/RabbyMobile.ipa",
+          skip_waiting_for_build_processing: true,
+          distribute_only: ENV["RABBY_MOBILE_PILOT_DISTRIBUTE_ONLY"] || false,
         )
+        unless ENV["RABBY_MOBILE_PILOT_DISTRIBUTE_ONLY"] == 'true'
+          wait_for_uploaded_testflight_build(
+            api_key: asc_api_key,
+            app_identifier: 'com.debank.rabby-mobile',
+            version: current_version,
+            baseline_build_number: baseline_build_number,
+            expected_build_number: next_build_number
+          )
+        end
       end
   end
 end
@@ -269,12 +320,18 @@ platform :android do
   end
 
   private_lane :build_rabbymobile_app do |opts|
-    gradle(tasks: opts[:tasks], project_dir: './android', properties: {
+    gradle_options = {
+      tasks: opts[:tasks],
+      project_dir: './android',
+      properties: {
       "MYAPP_UPLOAD_STORE_FILE" => "app-upload-key.keystore",
       "MYAPP_UPLOAD_STORE_PASSWORD" => ENV['RABBY_MOBILE_ANDROID_STORE_PASSWORD'],
       "MYAPP_UPLOAD_KEY_ALIAS" => ENV['RABBY_MOBILE_ANDROID_KEY_ALIAS'],
       "MYAPP_UPLOAD_KEY_PASSWORD" => ENV['RABBY_MOBILE_ANDROID_KEY_PASSWORD']
-    }.merge(opts.fetch(:properties, {})))
+      }.merge(opts.fetch(:properties, {}))
+    }
+    gradle_options[:flags] = opts[:flags] if opts[:flags]
+    gradle(gradle_options)
 
     android_version_code = android_get_version_code(gradle_file: "./android/app/build.gradle")
     android_version_name = android_get_version_name(gradle_file: "./android/app/build.gradle")
@@ -282,7 +339,7 @@ platform :android do
 
   desc "Valid android adhoc"
   lane :hashcheck do |options|
-    gradle(task: 'clean', project_dir: './android')
+    gradle(task: 'clean', project_dir: './android', flags: '--no-daemon')
     build_rabbymobile_app(tasks: ['assembleHash'], properties: {
       "org.gradle.daemon"=>false,
       "org.gradle.caching"=>false,
@@ -290,7 +347,7 @@ platform :android do
       "android.useAndroidX"=>true,
       "android.buildfeatures.buildId"=>false,
       "hashcheck" => true,
-    })
+    }, flags: '--no-daemon')
 
     apk_path = lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
 
@@ -338,12 +395,29 @@ platform :android do
     if use_cache
       UI.message("Using Gradle cache for playstore build")
     else
-      gradle(task: 'clean', project_dir: './android')
+      clean_options = { task: 'clean', project_dir: './android' }
+      clean_options[:flags] = '--no-daemon' if release_hash_check?
+      gradle(clean_options)
     end
-    build_rabbymobile_app(tasks: ['assembleRelease', 'bundleRelease'], properties: {
+    build_properties = {
       "org.gradle.configuration-cache"=>use_cache ? 'true' : 'false',
       "org.gradle.caching"=>use_cache ? 'true' : 'false',
       "org.gradle.parallel"=>use_cache ? 'true' : 'false',
-    })
+    }
+    if release_hash_check?
+      build_properties.merge!({
+        "org.gradle.daemon"=>false,
+        "org.gradle.configuration-cache"=>false,
+        "org.gradle.caching"=>false,
+        "org.gradle.parallel"=>false,
+        "android.buildfeatures.buildId"=>false,
+        "hashcheck" => true,
+      })
+    end
+    build_rabbymobile_app(
+      tasks: ['assembleRelease', 'bundleRelease'],
+      properties: build_properties,
+      flags: release_hash_check? ? '--no-daemon' : nil
+    )
   end
 end

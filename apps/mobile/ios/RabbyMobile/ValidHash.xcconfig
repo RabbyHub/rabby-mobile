@@ -7,14 +7,20 @@ SWIFT_COMPILATION_MODE = wholemodule
 _EXPERIMENTAL_SWIFT_EXPLICIT_MODULES = YES
 SENTRY_DISABLE_AUTO_UPLOAD = true
 
+HASHCHECK_CANONICAL_REPO_ROOT = /__rabby_repo__
+HASHCHECK_CANONICAL_DEVELOPER_DIR = /__rabby_xcode_developer__
+
+HASHCHECK_CLANG_PREFIX_MAP_FLAGS = -fdebug-prefix-map=$(HASHCHECK_REPO_ROOT)=$(HASHCHECK_CANONICAL_REPO_ROOT) -ffile-prefix-map=$(HASHCHECK_REPO_ROOT)=$(HASHCHECK_CANONICAL_REPO_ROOT) -fmacro-prefix-map=$(HASHCHECK_REPO_ROOT)=$(HASHCHECK_CANONICAL_REPO_ROOT) -fdebug-prefix-map=$(HASHCHECK_REPO_ROOT_ALT)=$(HASHCHECK_CANONICAL_REPO_ROOT) -ffile-prefix-map=$(HASHCHECK_REPO_ROOT_ALT)=$(HASHCHECK_CANONICAL_REPO_ROOT) -fmacro-prefix-map=$(HASHCHECK_REPO_ROOT_ALT)=$(HASHCHECK_CANONICAL_REPO_ROOT) -fdebug-prefix-map=$(HASHCHECK_DEVELOPER_DIR)=$(HASHCHECK_CANONICAL_DEVELOPER_DIR) -ffile-prefix-map=$(HASHCHECK_DEVELOPER_DIR)=$(HASHCHECK_CANONICAL_DEVELOPER_DIR) -fmacro-prefix-map=$(HASHCHECK_DEVELOPER_DIR)=$(HASHCHECK_CANONICAL_DEVELOPER_DIR) -fdepscan-prefix-map-sdk=/__rabby_sdk__ -fdepscan-prefix-map-toolchain=/__rabby_toolchain__
+HASHCHECK_SWIFT_PREFIX_MAP_FLAGS = -enable-upcoming-feature ConciseMagicFile -debug-prefix-map $(HASHCHECK_REPO_ROOT)=$(HASHCHECK_CANONICAL_REPO_ROOT) -file-prefix-map $(HASHCHECK_REPO_ROOT)=$(HASHCHECK_CANONICAL_REPO_ROOT) -debug-prefix-map $(HASHCHECK_REPO_ROOT_ALT)=$(HASHCHECK_CANONICAL_REPO_ROOT) -file-prefix-map $(HASHCHECK_REPO_ROOT_ALT)=$(HASHCHECK_CANONICAL_REPO_ROOT) -debug-prefix-map $(HASHCHECK_DEVELOPER_DIR)=$(HASHCHECK_CANONICAL_DEVELOPER_DIR) -file-prefix-map $(HASHCHECK_DEVELOPER_DIR)=$(HASHCHECK_CANONICAL_DEVELOPER_DIR) -scanner-prefix-map-sdk /__rabby_sdk__ -scanner-prefix-map-toolchain /__rabby_toolchain__ -Xcc -fdebug-prefix-map=$(HASHCHECK_REPO_ROOT)=$(HASHCHECK_CANONICAL_REPO_ROOT) -Xcc -ffile-prefix-map=$(HASHCHECK_REPO_ROOT)=$(HASHCHECK_CANONICAL_REPO_ROOT) -Xcc -fmacro-prefix-map=$(HASHCHECK_REPO_ROOT)=$(HASHCHECK_CANONICAL_REPO_ROOT) -Xcc -fdebug-prefix-map=$(HASHCHECK_REPO_ROOT_ALT)=$(HASHCHECK_CANONICAL_REPO_ROOT) -Xcc -ffile-prefix-map=$(HASHCHECK_REPO_ROOT_ALT)=$(HASHCHECK_CANONICAL_REPO_ROOT) -Xcc -fmacro-prefix-map=$(HASHCHECK_REPO_ROOT_ALT)=$(HASHCHECK_CANONICAL_REPO_ROOT) -Xcc -fdebug-prefix-map=$(HASHCHECK_DEVELOPER_DIR)=$(HASHCHECK_CANONICAL_DEVELOPER_DIR) -Xcc -ffile-prefix-map=$(HASHCHECK_DEVELOPER_DIR)=$(HASHCHECK_CANONICAL_DEVELOPER_DIR) -Xcc -fmacro-prefix-map=$(HASHCHECK_DEVELOPER_DIR)=$(HASHCHECK_CANONICAL_DEVELOPER_DIR)
+
 // 针对 C/Objective-C 文件
-OTHER_CFLAGS = $(inherited) -O0 -mllvm -disable-post-ra -fno-common -fno-omit-frame-pointer -fno-inline -fno-align-functions -mllvm -enable-misched=false -mllvm --disable-cgp-gc-opts -fno-stack-protector -fno-optimize-sibling-calls -mllvm -enable-objc-arc-opts=false -mllvm -arm-promote-constant=false -fdebug-compilation-dir=. -no-canonical-prefixes -Wno-builtin-macro-redefined -D__DATE__= -D__TIME__= -D__TIMESTAMP__=
+OTHER_CFLAGS = $(inherited) -O0 -mllvm -disable-post-ra -fno-common -fno-omit-frame-pointer -fno-inline -fno-align-functions -mllvm -enable-misched=false -mllvm --disable-cgp-gc-opts -fno-stack-protector -fno-optimize-sibling-calls -mllvm -enable-objc-arc-opts=false -mllvm -arm-promote-constant=false -fdebug-compilation-dir=. -no-canonical-prefixes $(HASHCHECK_CLANG_PREFIX_MAP_FLAGS) -Wno-builtin-macro-redefined -D__DATE__= -D__TIME__= -D__TIMESTAMP__=
 
 // 针对 C++/Objective-C++ 文件
-OTHER_CPLUSPLUSFLAGS = $(inherited) -fno-optimize-sibling-calls -mllvm -enable-misched=false -mllvm -disable-post-ra -fno-common -fno-omit-frame-pointer -fno-align-functions -fdebug-compilation-dir=. -no-canonical-prefixes -Wno-builtin-macro-redefined -D__DATE__= -D__TIME__= -D__TIMESTAMP__=
+OTHER_CPLUSPLUSFLAGS = $(inherited) -fno-optimize-sibling-calls -mllvm -enable-misched=false -mllvm -disable-post-ra -fno-common -fno-omit-frame-pointer -fno-align-functions -fdebug-compilation-dir=. -no-canonical-prefixes $(HASHCHECK_CLANG_PREFIX_MAP_FLAGS) -Wno-builtin-macro-redefined -D__DATE__= -D__TIME__= -D__TIMESTAMP__=
 
 // 针对 Swift 间接影响 C++ 的情况（如桥接头文件）
-OTHER_SWIFT_FLAGS = $(inherited) -Xcc -fno-align-functions -Xcc -no-canonical-prefixes -Xcc -fdebug-compilation-dir=.
+OTHER_SWIFT_FLAGS = $(inherited) -Xcc -fno-align-functions -Xcc -no-canonical-prefixes -Xcc -fdebug-compilation-dir=. $(HASHCHECK_SWIFT_PREFIX_MAP_FLAGS)
 
 // 链接器 (Linker) 额外参数
 // order 文件生成： nm your_binary | grep -o '[^ ]\+$' | sort -u > full.order

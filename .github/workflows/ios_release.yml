@@ -27,6 +27,26 @@ on:
         required: false
         type: string
         default: ''
+      HASH_CHECK:
+        description: 'Build in deterministic release hash-check mode without upload'
+        required: false
+        type: boolean
+        default: false
+      SKIP_TESTFLIGHT_UPLOAD:
+        description: 'Build the App Store IPA but skip TestFlight upload'
+        required: false
+        type: boolean
+        default: false
+      HASH_CHECK_GIT_HASH:
+        description: 'Optional git hash injected into HASH_CHECK bundle metadata'
+        required: false
+        type: string
+        default: ''
+      HASH_CHECK_GIT_TIME:
+        description: 'Optional git time injected into HASH_CHECK bundle metadata'
+        required: false
+        type: string
+        default: ''
   workflow_call:
     secrets:
       KEYCHAIN_PASS:
@@ -47,7 +67,7 @@ jobs:
       matrix:
         include:
           - host: macOS
-            machine_loc: ${{ inputs.macos_machine_location }}
+            machine_loc: ${{ github.event_name == 'workflow_dispatch' && inputs.macos_machine_location || (contains(github.ref_name, 'mobile-local') && 'mobile-local' || 'mobile') }}
     runs-on:
       - self-hosted
       - ${{ matrix.host }}
@@ -55,6 +75,7 @@ jobs:
     env:
       RABBY_MOBILE_NM_USE_CACHE: 'true'
       XCODE_VER: '26.3'
+      HASH_CHECK: ${{ (github.event_name == 'workflow_dispatch' && inputs.HASH_CHECK) || startsWith(github.ref_name, 'ci/ios-release-hash-check-') || false }}
     steps:
       - name: Checkout git repo
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -70,8 +91,16 @@ jobs:
               -e node_modules
               -e 'apps/*/node_modules'
               -e 'packages/*/node_modules'
+              -e apps/mobile/.bundle
+              -e apps/mobile/vendor/bundle
               -e .yarn/install-state.gz
               -e .yarn/unplugged
+            )
+          fi
+          if [ "$HASH_CHECK" = "true" ]; then
+            echo "Keep reusable iOS Pods for HASH_CHECK";
+            yarn_exclude_args+=(
+              -e apps/mobile/ios/Pods
             )
           fi
 
@@ -120,14 +149,18 @@ jobs:
       - name: Install dependencies && Build app
         run: |
           cd apps/mobile;
-          RABBY_MOBILE_RUN_POSTINSTALL=true bash ./scripts/ci/prepare-mobile-build.sh;
-
           if [ "$INPUT_MOBILE_LOC" != "mobile-local" ]; then
             RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS=${{ secrets.KEYCHAIN_PASS }}
           fi
           # security unlock-keychain -p $RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS ~/Library/Keychains/login.keychain-db
           security unlock-keychain -p $RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS login.keychain
-          ./scripts/deploy-ios-appstore.sh
+
+          if [ "$HASH_CHECK" = "true" ]; then
+            bash ./scripts/release-hash-check.sh ios
+          else
+            RABBY_MOBILE_RUN_POSTINSTALL=true bash ./scripts/ci/prepare-mobile-build.sh;
+            ./scripts/deploy-ios-appstore.sh
+          fi
 
         env:
           KEYCHAIN_PASS: ${{ secrets.KEYCHAIN_PASS }}
@@ -141,6 +174,9 @@ jobs:
           INPUT_MOBILE_LOC: ${{ inputs.macos_machine_location }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.SENTRY_DISABLE_AUTO_UPLOAD }}
+          RABBY_MOBILE_SKIP_TESTFLIGHT_UPLOAD: ${{ github.event_name == 'workflow_dispatch' && inputs.SKIP_TESTFLIGHT_UPLOAD || false }}
+          RABBY_MOBILE_HASHCHECK_INJECTED_GIT_HASH: ${{ github.event_name == 'workflow_dispatch' && inputs.HASH_CHECK_GIT_HASH || '' }}
+          RABBY_MOBILE_HASHCHECK_INJECTED_GIT_TIME: ${{ github.event_name == 'workflow_dispatch' && inputs.HASH_CHECK_GIT_TIME || '' }}
           CONFIGURATION: release
           TYPE: appstore
           RABBY_MOBILE_BUILD_ENV: production
@@ -160,6 +196,14 @@ jobs:
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
           INPUT_NEW_VERSION_NAME: ${{ inputs.NEW_VERSION_NAME }}
+
+      - name: Upload HASH_CHECK artifact
+        if: ${{ env.HASH_CHECK == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-release-hash-check-${{ matrix.machine_loc }}
+          path: apps/mobile/release_hash_check_exports_*
+          retention-days: 7
 
       # - name: Upload artifact
       #   uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3

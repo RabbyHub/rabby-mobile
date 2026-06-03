@@ -6,8 +6,15 @@ script_dir="$(cd "$(dirname "$0")" && pwd)"
 project_dir="$(cd "$script_dir/../.." && pwd)"
 
 ensure_node_runtime() {
+  local requested_node_version="${RABBY_MOBILE_NODE_VERSION:-}"
+
   if command -v nvm >/dev/null 2>&1; then
-    nvm use
+    if [ -n "$requested_node_version" ]; then
+      nvm use "$requested_node_version" || nvm install "$requested_node_version"
+      nvm use "$requested_node_version"
+    else
+      nvm use
+    fi
     return 0
   fi
 
@@ -15,11 +22,24 @@ ensure_node_runtime() {
   if [ -s "$nvm_dir/nvm.sh" ]; then
     # shellcheck source=/dev/null
     . "$nvm_dir/nvm.sh"
-    nvm use
+    if [ -n "$requested_node_version" ]; then
+      nvm use "$requested_node_version" || nvm install "$requested_node_version"
+      nvm use "$requested_node_version"
+    else
+      nvm use
+    fi
     return 0
   fi
 
   if command -v node >/dev/null 2>&1; then
+    if [ -n "$requested_node_version" ]; then
+      local current_node_version
+      current_node_version="$(node -v | sed 's/^v//')"
+      if [ "$current_node_version" != "$requested_node_version" ]; then
+        echo "[prepare-mobile-build] requested node $requested_node_version but current node is $current_node_version and nvm is unavailable" >&2
+        return 1
+      fi
+    fi
     echo "[prepare-mobile-build] nvm not found, keep current node $(node -v)"
     return 0
   fi
@@ -73,7 +93,11 @@ main() {
 
   echo "[prepare-mobile-build] node: $(node -v)"
   echo "[prepare-mobile-build] yarn: $(yarn --version)"
-  yarn install --immutable
+  local yarn_install_args=(--immutable)
+  if [ "${RABBY_MOBILE_YARN_INSTALL_SKIP_BUILDS:-false}" = "true" ]; then
+    yarn_install_args+=(--mode=skip-build)
+  fi
+  yarn install "${yarn_install_args[@]}"
 
   local requested_version="${INPUT_NEW_VERSION_NAME:-}"
   if [ -n "$requested_version" ]; then
@@ -82,7 +106,11 @@ main() {
 
   if [ "${RABBY_MOBILE_RUN_POSTINSTALL:-false}" = "true" ]; then
     echo "[prepare-mobile-build] run explicit postinstall"
-    yarn postinstall
+    if [ "${RABBY_MOBILE_POSTINSTALL_DIRECT:-false}" = "true" ]; then
+      bash ./scripts/ci/run-postinstall-direct.sh
+    else
+      yarn postinstall
+    fi
   fi
 }
 

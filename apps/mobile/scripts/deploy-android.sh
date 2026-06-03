@@ -17,8 +17,10 @@ UPLOAD_TEMPLATE_APK=${RABBY_MOBILE_UPLOAD_TEMPLATE_APK:-${FAST_BUILD_ENABLED}}
 export BUILD_TARGET_PLATFORM="android";
 export RABBY_MOBILE_BUILD_ENV="regression";
 check_build_params;
-check_s3_params;
-checkout_s3_pub_deployment_params;
+if [ "$HASH_CHECK" != "true" ]; then
+  check_s3_params;
+  checkout_s3_pub_deployment_params;
+fi
 
 cd $project_dir;
 
@@ -76,7 +78,7 @@ deployment_local_dir="$script_dir/deployments/android"
 
 rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 
-if [ "$buildchannel" == "appstore" ]; then
+if [ "$buildchannel" == "appstore" ] && [ "$HASH_CHECK" != "true" ]; then
   prepare_appstore_android_version_code || exit $?
 fi
 
@@ -128,7 +130,7 @@ build_selfhost() {
     fi
     echo "[deploy-android] build with fastlane."
     turbo_restore_gradle_state
-    turbo_bundle_exec exec fastlane android selfhost
+    turbo_bundle_fastlane android selfhost
     fastlane_status=$?
     [ $fastlane_status -eq 0 ] && turbo_save_gradle_state
     return $fastlane_status
@@ -160,7 +162,7 @@ build_appstore() {
   if [ $RABBY_HOST_OS != "Windows" ]; then
     echo "[deploy-android] build with fastlane."
     turbo_restore_gradle_state
-    turbo_bundle_exec exec fastlane android playstore
+    turbo_bundle_fastlane android playstore
     fastlane_status=$?
     [ $fastlane_status -eq 0 ] && turbo_save_gradle_state
     return $fastlane_status
@@ -236,6 +238,11 @@ if [[ ! -f $android_export_target || $GHA_MOCK_BUILD_FAILED == "true" ]]; then
   echo "[deploy-ios-adhoc] ⚠️ build failed! No $android_export_target found";
   node $script_dir/notify-lark.js "FAILED" android
   exit 1;
+fi
+
+if [ "$HASH_CHECK" == "true" ]; then
+  echo "[deploy-android] HASH_CHECK=true, skip S3/Google Play deployment steps."
+  exit 0
 fi
 
 file_date=$(date -r $android_export_target '+%Y%m%d_%H%M%S')

@@ -25,12 +25,12 @@ done
 
 mkdir -p $script_dir/inpage-bridge/dist && rm -rf $script_dir/inpage-bridge/dist/*
 cd $script_dir/inpage-bridge/inpage
-$repo_dir/node_modules/.bin/webpack --config webpack.config.js --mode $webpack_mode
+node $repo_dir/node_modules/webpack/bin/webpack.js --config webpack.config.js --mode $webpack_mode
 
 cd $script_dir/inpage-bridge/
 node $script_dir/inpage-bridge/content-script/build.js
 cat dist/inpage-bundle.js content-script/index.js > dist/index-raw.js
-$repo_dir/node_modules/.bin/webpack --config webpack.config.js --mode $webpack_mode
+node $repo_dir/node_modules/webpack/bin/webpack.js --config webpack.config.js --mode $webpack_mode
 
 # copy dist to targets
 cp $script_dir/inpage-bridge/dist/index.js $repo_dir/apps/mobile/assets/custom/InpageBridgeWeb3.js

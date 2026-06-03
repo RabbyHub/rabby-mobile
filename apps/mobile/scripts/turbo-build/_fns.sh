@@ -297,9 +297,9 @@ turbo_init_env() {
       "$RABBY_MOBILE_TURBO_WORK_ROOT" \
       "$RABBY_MOBILE_TURBO_MOBILE_WORK_ROOT"
 
-    export YARN_CACHE_FOLDER="${RABBY_MOBILE_TURBO_WORK_ROOT}/yarn"
-    export RABBY_MOBILE_TURBO_BUNDLE_PATH="${RABBY_MOBILE_TURBO_MOBILE_WORK_ROOT}/vendor/bundle"
-    export RABBY_MOBILE_TURBO_BUNDLE_APP_CONFIG="${RABBY_MOBILE_TURBO_MOBILE_WORK_ROOT}/bundle-config"
+    export YARN_CACHE_FOLDER="${YARN_CACHE_FOLDER:-${RABBY_MOBILE_TURBO_WORK_ROOT}/yarn}"
+    export RABBY_MOBILE_TURBO_BUNDLE_PATH="${RABBY_MOBILE_TURBO_BUNDLE_PATH:-${RABBY_MOBILE_TURBO_MOBILE_WORK_ROOT}/vendor/bundle}"
+    export RABBY_MOBILE_TURBO_BUNDLE_APP_CONFIG="${RABBY_MOBILE_TURBO_BUNDLE_APP_CONFIG:-${RABBY_MOBILE_TURBO_MOBILE_WORK_ROOT}/bundle-config}"
     export RABBY_MOBILE_TURBO_BUNDLE_FORCE_RUBY_PLATFORM="${RABBY_MOBILE_TURBO_BUNDLE_FORCE_RUBY_PLATFORM:-1}"
   fi
 
@@ -397,8 +397,14 @@ turbo_bundle_with_project_ruby() {
   tb_app_config="$RABBY_MOBILE_TURBO_BUNDLE_APP_CONFIG"
   tb_path="$RABBY_MOBILE_TURBO_BUNDLE_PATH"
   tb_force_ruby_platform="$RABBY_MOBILE_TURBO_BUNDLE_FORCE_RUBY_PLATFORM"
+  tb_bash_flags="-lc"
+  case "${RABBY_MOBILE_TURBO_RVM_LOGIN_SHELL:-true}" in
+    false|0|no|off)
+      tb_bash_flags="-c"
+      ;;
+  esac
 
-  bash -lc '
+  bash "$tb_bash_flags" '
     set -e
     work_dir="$1"
     ruby_target="$2"
@@ -439,6 +445,10 @@ turbo_bundle_exec() {
 
 turbo_bundle_pod() {
   turbo_bundle_exec exec ruby -e 'load Gem.bin_path("cocoapods", "pod")' -- "$@"
+}
+
+turbo_bundle_fastlane() {
+  turbo_bundle_exec exec ruby -e 'load Gem.bin_path("fastlane", "fastlane")' -- "$@"
 }
 
 turbo_log() {
@@ -1211,14 +1221,15 @@ turbo_prepare_ruby_bundle() {
 
 turbo_prepare_cocoapods() {
   turbo_init_env
+
+  if turbo_cocoapods_ready; then
+    turbo_log "cocoapods already up to date"
+    return 0
+  fi
+
   cache_key=$(turbo_compute_cocoapods_cache_key)
 
   if turbo_build_enabled; then
-    if turbo_cocoapods_ready; then
-      turbo_log "cocoapods already up to date"
-      return 0
-    fi
-
     turbo_restore_layer cocoapods "$cache_key" apps/mobile/ios/Pods || true
 
     if turbo_cocoapods_ready; then
