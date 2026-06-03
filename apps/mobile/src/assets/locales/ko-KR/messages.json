@@ -2306,7 +2306,7 @@
       "WebviewError": {
         "error": "오류:",
         "failedToLoad": "페이지를 불러오는 데 실패했습니다.",
-        "alertText": "브라우저에서 열어보세요<1/><2>웹사이트 문제인지 확인하기 위해</2><3/>"
+        "alertText": ""
       },
       "toast": {
         "clearCacheSuccess": "캐시가 지워졌습니다"

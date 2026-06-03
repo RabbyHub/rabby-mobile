@@ -2438,7 +2438,7 @@
       "WebviewError": {
         "error": "错误：",
         "failedToLoad": "无法加载页面",
-        "alertText": "尝试<1/><2>在浏览器中打开</2><3/>以检查是否是网站问题"
+        "alertText": ""
       },
       "toast": {
         "clearCacheSuccess": "缓存已清除"

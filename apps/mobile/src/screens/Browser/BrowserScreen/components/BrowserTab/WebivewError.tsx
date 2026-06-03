@@ -56,14 +56,19 @@ export function WebviewError({
       />
       <View style={styles.alertContainer}>
         <View style={styles.alert}>
-          <RcIconWarningCircleCC color={colors2024['neutral-info']} />
+          <RcIconWarningCircleCC
+            width={18}
+            height={18}
+            color={colors2024['neutral-foot']}
+          />
           <Text style={styles.alertText}>
             <Trans t={t} i18nKey="page.browser.WebviewError.alertText">
               Try{' '}
               <Text style={styles.link} onPress={onOpenInBrowser}>
                 Open in browser
               </Text>{' '}
-              to check if it is a website issue
+              to check if this third party DApp is functional in your current
+              location.
             </Trans>
           </Text>
         </View>
@@ -124,10 +129,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   alert: {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flexDirection: 'row',
-    gap: 2,
-    padding: 8,
+    gap: 4,
+    padding: 12,
     borderRadius: 8,
     backgroundColor: colors2024['neutral-bg-5'],
   },
@@ -136,7 +141,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
-    color: colors2024['neutral-secondary'],
+    color: colors2024['neutral-foot'],
   },
   link: {
     fontFamily: 'SF Pro Rounded',
