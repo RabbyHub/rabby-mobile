@@ -126,6 +126,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     alignItems: 'center',
     flexDirection: 'column',
+    paddingHorizontal: 20,
   },
   alert: {
     display: 'flex',
