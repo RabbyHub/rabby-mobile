@@ -60,10 +60,12 @@ export const useSubmitAction = ({
 
   const isInAuthSession = Date.now() - unlockTime < DEFAULT_VERIFY_INTERVAL;
   const isLastUnlockTimeValid = !!useLastUnlockedAuth && isInAuthSession;
+  const isUnlocked = apisLock.isUnlocked();
 
   const disabledVerify =
-    isLastUnlockTimeValid ||
-    (!isUseCustomPwd && !bioComputed.isBiometricsEnabled);
+    isUnlocked &&
+    (isLastUnlockTimeValid ||
+      (!isUseCustomPwd && !bioComputed.isBiometricsEnabled));
 
   const signComputed = useMemo(() => {
     return {
@@ -107,7 +109,7 @@ export const useSubmitAction = ({
       };
 
       // avoid multiple click
-      if (disabledVerify) {
+      if (disabledVerify && apisLock.isUnlocked()) {
         onFinished();
         return;
       }
