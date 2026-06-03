@@ -200,3 +200,12 @@ export const RcScreenshotReport = makeThemeIcon2024FromCC(
   }),
 );
 export { default as RcIconCurrency } from './icon-currency.svg';
+
+import { default as RcWalletConnectCC } from './icon-wallet-connect.svg';
+export const RcWalletConnect = makeThemeIcon2024FromCC(
+  RcWalletConnectCC,
+  ctx => ({
+    onLight: ctx.colors2024['brand-default'],
+    onDark: ctx.colors2024['brand-default'],
+  }),
+);

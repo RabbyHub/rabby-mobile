@@ -32,7 +32,7 @@ import {
   RcScreenshotReport,
   RcIconCurrency,
   RcNotification,
-  RcConnectedDapp,
+  RcWalletConnect,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -390,7 +390,7 @@ function SettingsBlocks() {
         items: [
           {
             label: 'WalletConnect',
-            icon: RcConnectedDapp,
+            icon: RcWalletConnect,
             onPress: () => {
               navigation.dispatch(
                 StackActions.push(RootNames.StackSettings, {
