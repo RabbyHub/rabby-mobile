@@ -4,7 +4,6 @@ import {
   isAuthenticatedByBiometrics,
   RequestGenericPurpose,
 } from '@/core/apis/keychain';
-import { IS_ANDROID } from '@/core/native/utils';
 import { preferenceService } from '@/core/services';
 import { toastUnlocking } from '@/utils/toastUnlocking';
 import {
@@ -20,6 +19,9 @@ type PendingWalletUnlock = {
   reject: (error: unknown) => void;
   hideModal?: () => void;
 };
+
+type AuthenticationModal2024Module =
+  typeof import('@/components/AuthenticationModal/AuthenticationModal2024');
 
 export { WalletUnlockCancelledError, isWalletUnlockCancelled };
 
@@ -87,15 +89,7 @@ async function canRequestStoredCredentialUnlock() {
     return true;
   }
 
-  const authType = apisKeychain.getAuthenticationType();
-  const canFallbackToDevicePasscode =
-    authType === apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE ||
-    (IS_ANDROID && authType === apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS);
-  if (!canFallbackToDevicePasscode) {
-    return false;
-  }
-
-  return apisKeychain.isPasscodeAuthAvailable();
+  return false;
 }
 
 export async function ensureWalletUnlocked() {
@@ -180,9 +174,9 @@ export async function ensureWalletUnlocked() {
       return promise;
     }
 
-    const { AuthenticationModal2024 } = await import(
-      '@/components/AuthenticationModal/AuthenticationModal2024'
-    );
+    const authModalModule =
+      require('@/components/AuthenticationModal/AuthenticationModal2024') as AuthenticationModal2024Module;
+    const { AuthenticationModal2024 } = authModalModule;
     const { hideModal } = await AuthenticationModal2024.show({
       title: 'Unlock Rabby Wallet',
       authType: ['password'],
