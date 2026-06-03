@@ -4,7 +4,6 @@ import { useNavigation } from '@react-navigation/native';
 import type { Code } from 'react-native-vision-camera';
 
 import { QRCodeScanner } from '@/components/QRCodeScanner/QRCodeScanner';
-import { Text } from '@/components/Typography';
 import { toast } from '@/components2024/Toast';
 import {
   pairWalletConnectUri,
@@ -83,7 +82,6 @@ export default function WalletConnectScreen() {
           ]}
           size={scannerSize}
         />
-        <Text style={styles.statusText}>Waiting for WalletConnect QR code</Text>
       </View>
     </ScrollView>
   );

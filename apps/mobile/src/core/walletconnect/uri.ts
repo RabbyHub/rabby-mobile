@@ -1,3 +1,5 @@
+import i18n from '@/utils/i18n';
+
 export type WalletConnectUriParseErrorCode =
   | 'EMPTY_URI'
   | 'INVALID_URI'
@@ -56,7 +58,7 @@ function validateWalletConnectUri(uri: string) {
   if (!isWalletConnectUri(uri)) {
     throw new WalletConnectUriError(
       'INVALID_WC_URI',
-      'WalletConnect URI must start with wc:<topic>@2.',
+      i18n.t('page.walletConnect.uriInvalidFormat'),
     );
   }
 
@@ -66,7 +68,7 @@ function validateWalletConnectUri(uri: string) {
   if (!params.get('symKey') || !params.get('relay-protocol')) {
     throw new WalletConnectUriError(
       'INVALID_WC_URI',
-      'WalletConnect URI is missing symKey or relay-protocol.',
+      i18n.t('page.walletConnect.uriMissingParams'),
     );
   }
 }
@@ -77,7 +79,7 @@ export function parseWalletConnectUri(input: string): ParsedWalletConnectUri {
   if (!trimmed) {
     throw new WalletConnectUriError(
       'EMPTY_URI',
-      'WalletConnect URI cannot be empty.',
+      i18n.t('page.walletConnect.uriEmpty'),
     );
   }
 

@@ -214,12 +214,8 @@ function startInitStoresOnUnlock() {
 
 startInitStoresOnUnlock();
 
-function startRestoreWalletConnectSessionsOnUnlock() {
-  if (keyringService.isUnlocked()) {
-    startRestoreWalletConnectSessions();
-  }
+export async function startRestoreWalletConnectSessionsOnUnlock() {
+  startRestoreWalletConnectSessions();
 
   keyringService.on('unlock', startRestoreWalletConnectSessions);
 }
-
-startRestoreWalletConnectSessionsOnUnlock();

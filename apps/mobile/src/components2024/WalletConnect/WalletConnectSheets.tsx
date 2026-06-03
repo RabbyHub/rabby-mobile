@@ -123,11 +123,20 @@ function getProposalOrigin(proposal: WalletConnectProposalViewModel) {
   );
 }
 
-function formatUnsupportedCapability(count: number, label: string) {
-  return `${count} ${label}${count === 1 ? '' : 's'}`;
+type Translate = (key: string, options?: Record<string, unknown>) => string;
+
+function formatUnsupportedCapability(
+  t: Translate,
+  count: number,
+  label: 'chain' | 'method',
+) {
+  return t(`page.walletConnect.unsupportedCapability.${label}`, { count });
 }
 
-function getWalletConnectBlockText(proposal: WalletConnectProposalViewModel) {
+function getWalletConnectBlockText(
+  proposal: WalletConnectProposalViewModel,
+  t: Translate,
+) {
   if (proposal.error) {
     return proposal.error;
   }
@@ -136,6 +145,7 @@ function getWalletConnectBlockText(proposal: WalletConnectProposalViewModel) {
   if (proposal.unsupportedRequiredChains.length) {
     unsupported.push(
       formatUnsupportedCapability(
+        t,
         proposal.unsupportedRequiredChains.length,
         'chain',
       ),
@@ -144,6 +154,7 @@ function getWalletConnectBlockText(proposal: WalletConnectProposalViewModel) {
   if (proposal.unsupportedRequiredMethods.length) {
     unsupported.push(
       formatUnsupportedCapability(
+        t,
         proposal.unsupportedRequiredMethods.length,
         'method',
       ),
@@ -151,13 +162,20 @@ function getWalletConnectBlockText(proposal: WalletConnectProposalViewModel) {
   }
 
   return unsupported.length
-    ? `Unsupported required WalletConnect request: ${unsupported.join(
-        ' and ',
-      )} not supported.`
+    ? t('page.walletConnect.unsupportedRequiredRequest', {
+        capabilities:
+          unsupported.length === 1
+            ? unsupported[0]
+            : t('page.walletConnect.unsupportedCapabilityList', {
+                first: unsupported[0],
+                second: unsupported[1],
+              }),
+      })
     : '';
 }
 
 export function WalletConnectPairingLoading() {
+  const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const ringRotationValue = useRef(new Animated.Value(0)).current;
 
@@ -218,7 +236,9 @@ export function WalletConnectPairingLoading() {
           <RcIconLogoBlueAutoSize width={54} height={54} />
         </View>
       </View>
-      <Text style={styles.loadingTitle}>Connecting to Rabby</Text>
+      <Text style={styles.loadingTitle}>
+        {t('page.walletConnect.connectingToRabby')}
+      </Text>
     </View>
   );
 }
@@ -263,7 +283,7 @@ export function WalletConnectConnectSheet({
   const origin = useMemo(() => getProposalOrigin(proposal), [proposal]);
   const selectedAccountAddress = selectedAccount?.address || '';
   const dappIcon = proposal.proposer.icons?.[0] || '';
-  const walletConnectBlockText = getWalletConnectBlockText(proposal);
+  const walletConnectBlockText = getWalletConnectBlockText(proposal, t);
   const SecurityLevelTipColor = useMemo(
     () => createSecurityLevelTipColor(colors2024),
     [colors2024],

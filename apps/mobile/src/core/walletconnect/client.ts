@@ -1,6 +1,7 @@
 import { Core } from '@walletconnect/core';
 import { WalletKit } from '@reown/walletkit';
 import type { IWalletKit } from '@reown/walletkit';
+import i18n from '@/utils/i18n';
 import { RABBY_MOBILE_WALLETCONNECT_PROJECT_ID } from '@/constant/env';
 import {
   clearWalletConnectAutoDisconnectTopic,
@@ -21,6 +22,7 @@ import {
   setWalletConnectDebugState,
 } from './state';
 import { walletConnectStorage } from './storage';
+import { emitWalletConnectUiEvent } from './uiEvents';
 
 type WalletConnectCore = InstanceType<typeof Core> & {
   pairing?: {
@@ -78,14 +80,19 @@ function bindWalletConnectEvents(
       return;
     }
 
+    const message = i18n.t('page.walletConnect.proposalExpired');
     setWalletConnectDebugState(prev => ({
       ...prev,
       pairing: {
         ...prev.pairing,
         status: 'error',
-        error: 'WalletConnect proposal expired.',
+        error: message,
       },
     }));
+    emitWalletConnectUiEvent({
+      type: 'pairingError',
+      message,
+    });
     addWalletConnectLog('proposal', 'proposal expired', event, 'warn');
   });
 
@@ -100,14 +107,19 @@ function bindWalletConnectEvents(
       return;
     }
 
+    const message = i18n.t('page.walletConnect.pairingExpired');
     setWalletConnectDebugState(prev => ({
       ...prev,
       pairing: {
         ...prev.pairing,
         status: 'error',
-        error: 'WalletConnect pairing expired. Refresh the dapp QR code.',
+        error: message,
       },
     }));
+    emitWalletConnectUiEvent({
+      type: 'pairingError',
+      message,
+    });
     addWalletConnectLog('pairing', 'pairing expired', event, 'warn');
   });
 

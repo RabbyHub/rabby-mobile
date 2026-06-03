@@ -1,8 +1,10 @@
+import i18n from '@/utils/i18n';
 import { initWalletConnect } from './client';
 import { addWalletConnectLog } from './debugLog';
 import { getWalletConnectErrorMessage } from './error';
 import { setWalletConnectDebugState } from './state';
 import type { WalletConnectPairingSource } from './types';
+import { emitWalletConnectUiEvent } from './uiEvents';
 import { parseWalletConnectUri, WalletConnectUriError } from './uri';
 
 function formatPairingError(error: unknown) {
@@ -14,10 +16,10 @@ function formatPairingError(error: unknown) {
   const lower = message.toLowerCase();
 
   if (lower.includes('already') || lower.includes('duplicate')) {
-    return 'This WalletConnect URI is already being paired. Refresh the dapp QR code and try again.';
+    return i18n.t('page.walletConnect.duplicatePairing');
   }
   if (lower.includes('expired')) {
-    return 'WalletConnect pairing expired. Refresh the dapp QR code and try again.';
+    return i18n.t('page.walletConnect.pairingExpired');
   }
   if (
     lower.includes('timeout') ||
@@ -25,7 +27,7 @@ function formatPairingError(error: unknown) {
     lower.includes('socket') ||
     lower.includes('relay')
   ) {
-    return 'WalletConnect relay is not reachable. Check the network and try again.';
+    return i18n.t('page.walletConnect.relayUnreachable');
   }
 
   return message;
@@ -48,6 +50,10 @@ export async function pairWalletConnectUri(input: {
         error: message,
       },
     }));
+    emitWalletConnectUiEvent({
+      type: 'pairingError',
+      message,
+    });
     throw error;
   }
 
@@ -60,6 +66,9 @@ export async function pairWalletConnectUri(input: {
       error: undefined,
     },
   }));
+  emitWalletConnectUiEvent({
+    type: 'pairingStarted',
+  });
   addWalletConnectLog('pairing', 'pairing started', {
     source: input.source,
   });
@@ -72,6 +81,7 @@ export async function pairWalletConnectUri(input: {
     addWalletConnectLog('pairing', 'pairing submitted');
   } catch (error) {
     const message = formatPairingError(error);
+    let didSetError = false;
     setWalletConnectDebugState(prev => {
       if (
         prev.pairing.status !== 'pairing' ||
@@ -80,6 +90,7 @@ export async function pairWalletConnectUri(input: {
         return prev;
       }
 
+      didSetError = true;
       return {
         ...prev,
         pairing: {
@@ -89,6 +100,12 @@ export async function pairWalletConnectUri(input: {
         },
       };
     });
+    if (didSetError) {
+      emitWalletConnectUiEvent({
+        type: 'pairingError',
+        message,
+      });
+    }
     addWalletConnectLog('pairing', 'pairing failed', error, 'error');
     throw new Error(message);
   }

@@ -1,9 +1,5 @@
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useSyncExternalStore,
-} from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   createGlobalBottomSheetModal2024,
@@ -18,9 +14,9 @@ import {
   approveWalletConnectProposal,
   getWalletConnectDebugState,
   rejectWalletConnectProposal,
-  subscribeWalletConnectDebugState,
 } from '@/core/walletconnect';
 import { getWalletConnectErrorMessage } from '@/core/walletconnect/error';
+import { subscribeWalletConnectUiEvents } from '@/core/walletconnect/uiEvents';
 import type { Account } from '@/types/account';
 import type { WalletConnectProposalViewModel } from '@/core/walletconnect/types';
 import { useTheme2024 } from '@/hooks/theme';
@@ -29,12 +25,8 @@ const WALLETCONNECT_PAIRING_SINGLETON_KEY = 'walletconnect-pairing';
 const WALLETCONNECT_CONNECT_SINGLETON_KEY = 'walletconnect-connect';
 
 export function WalletConnectModalHost() {
+  const { t } = useTranslation();
   const { isLight, colors2024 } = useTheme2024();
-  const walletConnectState = useSyncExternalStore(
-    subscribeWalletConnectDebugState,
-    getWalletConnectDebugState,
-    getWalletConnectDebugState,
-  );
   const modalIdsRef = useRef<{
     loading: MODAL_ID | null;
     connect: MODAL_ID | null;
@@ -65,24 +57,27 @@ export function WalletConnectModalHost() {
     removeGlobalBottomSheetModal2024(id, { waitMaxtime: 0 });
   }, []);
 
-  const showErrorToast = useCallback((message?: string) => {
-    const nextMessage = message || 'WalletConnect pairing failed.';
-    const now = Date.now();
-    const last = lastErrorToastRef.current;
+  const showErrorToast = useCallback(
+    (message?: string) => {
+      const nextMessage = message || t('page.walletConnect.pairingFailed');
+      const now = Date.now();
+      const last = lastErrorToastRef.current;
 
-    if (last.message === nextMessage && now - last.ts < 1000) {
-      return;
-    }
+      if (last.message === nextMessage && now - last.ts < 1000) {
+        return;
+      }
 
-    lastErrorToastRef.current = {
-      message: nextMessage,
-      ts: now,
-    };
-    toast.error(nextMessage, {
-      duration: 3000,
-      hideOnPress: true,
-    });
-  }, []);
+      lastErrorToastRef.current = {
+        message: nextMessage,
+        ts: now,
+      };
+      toast.error(nextMessage, {
+        duration: 3000,
+        hideOnPress: true,
+      });
+    },
+    [t],
+  );
 
   const openLoading = useCallback(() => {
     if (modalIdsRef.current.loading) {
@@ -133,7 +128,7 @@ export function WalletConnectModalHost() {
               proposalId: proposal.id,
               account,
             });
-            toast.success('Wallet connected', {
+            toast.success(t('page.walletConnect.connected'), {
               duration: 3000,
               hideOnPress: true,
             });
@@ -153,38 +148,44 @@ export function WalletConnectModalHost() {
         },
       });
     },
-    [closeConnect, closeLoading, colors2024, isLight, showErrorToast],
+    [closeConnect, closeLoading, colors2024, isLight, showErrorToast, t],
   );
 
   useEffect(() => {
-    const { pairing, proposal } = walletConnectState;
+    const syncCurrentUiState = () => {
+      const { pairing, proposal } = getWalletConnectDebugState();
+      if (proposal) {
+        closeLoading();
+        openConnect(proposal);
+        return;
+      }
+      if (pairing.status === 'pairing') {
+        openLoading();
+      }
+    };
 
-    if (proposal) {
-      closeLoading();
-      openConnect(proposal);
-      return;
-    }
-
-    closeConnect();
-
-    if (pairing.status === 'pairing') {
-      openLoading();
-      return;
-    }
-
-    closeLoading();
-
-    if (pairing.status === 'error' && pairing.error) {
-      showErrorToast(pairing.error);
-    }
-  }, [
-    closeConnect,
-    closeLoading,
-    openConnect,
-    openLoading,
-    showErrorToast,
-    walletConnectState,
-  ]);
+    syncCurrentUiState();
+    return subscribeWalletConnectUiEvents(event => {
+      if (event.type === 'pairingStarted') {
+        closeConnect();
+        openLoading();
+        return;
+      }
+      if (event.type === 'pairingError') {
+        closeLoading();
+        showErrorToast(event.message);
+        return;
+      }
+      if (event.type === 'proposalReceived') {
+        closeLoading();
+        openConnect(event.proposal);
+        return;
+      }
+      if (event.type === 'proposalCleared') {
+        closeConnect();
+      }
+    });
+  }, [closeConnect, closeLoading, openConnect, openLoading, showErrorToast]);
 
   useEffect(() => {
     return () => {

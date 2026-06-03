@@ -100,11 +100,8 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       pairWalletConnectUri({
         uri: payload.uri,
         source: 'deeplink',
-      }).catch(error => {
-        toastTip(error?.message || 'WalletConnect pairing failed.', {
-          duration: 3000,
-          hideOnPress: true,
-        });
+      }).catch(() => {
+        // WalletConnectModalHost consumes the pairing error event once.
       });
       break;
   }

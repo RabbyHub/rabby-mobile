@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 import { RootNames, makeHeadersPresets } from '@/constant/layout';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
@@ -14,6 +16,7 @@ import { I18nRouteScreenTitle } from '@/components2024/i18n/RouteScreen';
 const SettingsStack = createNativeStackNavigator();
 
 export function SettingNavigator() {
+  const { t } = useTranslation();
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== SettingNavigator Render =========');
@@ -71,8 +74,8 @@ export function SettingNavigator() {
         name={RootNames.WalletConnect}
         component={WalletConnectScreen}
         options={mergeScreenOptions({
-          title: 'Connect Wallet',
-          headerTitle: 'Connect Wallet',
+          title: t('page.walletConnect.screenTitle'),
+          headerTitle: t('page.walletConnect.screenTitle'),
           headerShadowVisible: false,
           headerStyle: {
             backgroundColor: colors['neutral-black'],

@@ -44,6 +44,12 @@ export async function startUnlockScreenBootstrapWarmups() {
 }
 
 export async function startReadableAccountBootstrapWarmups() {
+  (
+    await loadSetupBeforeRenderRuntime(
+      'start_restore_wallet_connect_sessions_on_unlock',
+    )
+  ).startUnlockScreenBootstrapWarmups();
+
   return (
     await loadSetupBeforeRenderRuntime('readable_account_bootstrap_warmups')
   ).startReadableAccountBootstrapWarmups();

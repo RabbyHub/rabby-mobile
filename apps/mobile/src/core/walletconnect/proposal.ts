@@ -20,6 +20,7 @@ import type {
   WalletConnectPairingSource,
   WalletConnectProposalViewModel,
 } from './types';
+import { emitWalletConnectUiEvent } from './uiEvents';
 
 type PendingProposal = {
   id: number;
@@ -88,6 +89,10 @@ export function storeWalletConnectProposal(input: {
     },
     proposal,
   }));
+  emitWalletConnectUiEvent({
+    type: 'proposalReceived',
+    proposal,
+  });
   addWalletConnectLog('proposal', 'session_proposal received', proposal);
 }
 
@@ -102,13 +107,22 @@ export function clearWalletConnectProposal(proposalId?: number) {
     pendingProposals.clear();
   }
 
-  setWalletConnectDebugState(prev => ({
-    ...prev,
-    proposal:
-      typeof proposalId === 'number' && prev.proposal?.id !== proposalId
-        ? prev.proposal
-        : undefined,
-  }));
+  let didClearProposal = false;
+  setWalletConnectDebugState(prev => {
+    const shouldKeepProposal =
+      typeof proposalId === 'number' && prev.proposal?.id !== proposalId;
+    didClearProposal = !!prev.proposal && !shouldKeepProposal;
+
+    return {
+      ...prev,
+      proposal: shouldKeepProposal ? prev.proposal : undefined,
+    };
+  });
+  if (didClearProposal) {
+    emitWalletConnectUiEvent({
+      type: 'proposalCleared',
+    });
+  }
 }
 
 export function setWalletConnectProposalError(
