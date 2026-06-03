@@ -989,7 +989,7 @@
       "the-following-bridge-route-are-found": "Ditemukan tarif berikut",
       "Select": "Pilih",
       "gas-fee": "Biaya gas: {{gasUsed}}",
-      "bridged": "Jembatan",
+      "bridged": "Bridge dimulai",
       "detail-tx": "Detail",
       "approve-and-bridge": "Setujui dan Jembatani",
       "actual": "Aktual:",
@@ -1069,7 +1069,7 @@
       "swipeUp": {
         "descMore": "Geser ke atas untuk menjelajahi lebih banyak situs web",
         "descAndroidMore": "Klik untuk menjelajahi lebih banyak DApp",
-        "desc": "Geser ke atas untuk menjelajahi situs web",
+        "desc": "Geser ke atas untuk menjelajahi dan mencari situs web",
         "descAndroid": "Klik untuk menjelajahi DApp"
       },
       "DappDrawer": {

@@ -1053,7 +1053,7 @@
       "no-route-found": "Không tìm thấy tuyến đường",
       "via-bridge": "thông qua {{bridge}}",
       "duration": "{{duration}} phút",
-      "bridged": "Bridge hoàn tất",
+      "bridged": "Đã khởi tạo bridge",
       "gasFeeTooHight": "Phí Gas cao hơn bình thường. Chỉ xác nhận nếu bạn muốn tiếp tục.",
       "pendingItem": {
         "swap": "Hoán đổi",
@@ -1326,7 +1326,7 @@
       },
       "swipeUp": {
         "descMore": "Kéo lên để khám phá thêm nhiều trang web",
-        "desc": "Kéo lên để khám phá trang web",
+        "desc": "Kéo lên để khám phá và tìm kiếm trang web",
         "descAndroidMore": "Nhấn để khám phá thêm DApp",
         "descAndroid": "Nhấn để khám phá DApp"
       },

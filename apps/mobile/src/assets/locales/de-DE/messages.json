@@ -1238,7 +1238,7 @@
       "swipeUp": {
         "descAndroidMore": "Klicken Sie, um weitere DApp zu erkunden",
         "descMore": "Wischen Sie nach oben, um weitere Webseiten zu erkunden.",
-        "desc": "Wischen Sie nach oben, um Websites zu erkunden",
+        "desc": "Wischen Sie nach oben, um Websites zu erkunden und zu durchsuchen",
         "descAndroid": "Klicken Sie, um DApp zu erkunden"
       },
       "DappDrawer": {
@@ -1378,7 +1378,7 @@
       "est-difference": "Geschätzter Unterschied:",
       "duration": "{{duration}} Min.",
       "no-quote": "Kein Angebot",
-      "bridged": "Überbrückt",
+      "bridged": "Bridge gestartet",
       "gasFeeTooHight": "Die Gasgebühren sind höher als normal. Bestätigen Sie nur, wenn Sie fortfahren möchten.",
       "pendingItem": {
         "completed": "Abgeschlossen",
