@@ -288,6 +288,7 @@ export const SendAmountInput = ({
   const [inputSelection, setInputSelection] = useState(
     inputSelectionRef.current,
   );
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   const setUnitTextNodeRef = useCallback(
     (node: { setNativeProps?: (nativeProps: object) => void } | null) => {
@@ -599,6 +600,12 @@ export const SendAmountInput = ({
     },
     [],
   );
+  const handleInputFocus = useCallback(() => {
+    setIsInputFocused(true);
+  }, []);
+  const handleInputBlur = useCallback(() => {
+    setIsInputFocused(false);
+  }, []);
 
   const normalizeTypedInputValue = useCallback(
     (nextValue: string) => {
@@ -747,6 +754,9 @@ export const SendAmountInput = ({
     !!inputAreaWidth && quoteTextWidth >= quoteTextMaxWidth - 1;
 
   const hasValue = !!inputValue;
+  const showAmountSkeleton = !hasValue && token.amount > 0 && isEstimatingGas;
+  const showStaticEmptyAmount =
+    !hasValue && !isInputFocused && !showAmountSkeleton;
   const {
     amountRowHeight,
     amountLineHeight,
@@ -784,7 +794,7 @@ export const SendAmountInput = ({
           tokenInputRef.current?.focus();
         }}>
         <View style={styles.leftInputContent} onLayout={handleInputAreaLayout}>
-          {!hasValue && token.amount > 0 && isEstimatingGas ? (
+          {showAmountSkeleton ? (
             <CustomSkeleton
               animation="wave"
               LinearGradientComponent={Linear}
@@ -814,6 +824,8 @@ export const SendAmountInput = ({
                 }
                 onKeyPress={handleInputKeyPress}
                 onSelectionChange={handleInputSelectionChange}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
                 style={[
                   styles.input,
                   {
@@ -824,6 +836,7 @@ export const SendAmountInput = ({
                     fontSize: fittingFontSize,
                     width: inputWidth,
                   },
+                  showStaticEmptyAmount && styles.staticHiddenInput,
                 ]}
                 {...amountInputProps}
               />
@@ -843,6 +856,7 @@ export const SendAmountInput = ({
                     fontSize: fittingFontSize,
                     opacity: inputValue ? 0 : 1,
                   },
+                  showStaticEmptyAmount && styles.staticHiddenInput,
                 ]}>
                 {EMPTY_AMOUNT_DISPLAY_VALUE}
               </Text>
@@ -865,6 +879,7 @@ export const SendAmountInput = ({
                       left: unitLeft,
                       width: unitWidth,
                     },
+                    showStaticEmptyAmount && styles.staticHiddenInput,
                   ]}>
                   {displayUnitText}
                 </Text>
@@ -892,9 +907,25 @@ export const SendAmountInput = ({
                       left: unitLeft,
                       width: unitWidth,
                     },
+                    showStaticEmptyAmount && styles.staticHiddenInput,
                   ]}
                 />
               )}
+              {showStaticEmptyAmount ? (
+                <View
+                  pointerEvents="none"
+                  accessible={false}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no"
+                  style={styles.staticEmptyAmountRow}>
+                  <Text numberOfLines={1} style={styles.staticEmptyAmountText}>
+                    {EMPTY_AMOUNT_DISPLAY_VALUE}
+                  </Text>
+                  <Text numberOfLines={1} style={styles.staticUnitText}>
+                    {displayUnitText}
+                  </Text>
+                </View>
+              ) : null}
             </View>
           )}
           <TouchableOpacity
@@ -1068,6 +1099,43 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       textAlignVertical: 'center',
       overflow: 'hidden',
       zIndex: 2,
+    },
+    staticHiddenInput: {
+      opacity: 0,
+    },
+    staticEmptyAmountRow: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: AMOUNT_ROW_HEIGHT,
+      flexDirection: 'row',
+      alignItems: 'center',
+      overflow: 'hidden',
+      zIndex: 3,
+    },
+    staticEmptyAmountText: {
+      color: colors2024['neutral-title-1'],
+      fontSize: MAIN_FONT_SIZE,
+      fontWeight: '900',
+      lineHeight: AMOUNT_DEFAULT_LINE_HEIGHT,
+      fontFamily: 'SF Pro Rounded',
+      includeFontPadding: false,
+      padding: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
+    },
+    staticUnitText: {
+      color: colors2024['neutral-info'],
+      fontSize: MAIN_FONT_SIZE,
+      fontWeight: '700',
+      lineHeight: AMOUNT_DEFAULT_LINE_HEIGHT,
+      fontFamily: 'SF Pro Rounded',
+      includeFontPadding: false,
+      marginLeft: CARET_BUFFER + UNIT_GAP,
+      padding: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
     },
     quoteRow: {
       position: 'absolute',

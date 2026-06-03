@@ -442,7 +442,7 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
   const normalizeAmountInputValue = useCallback(
     (nextValue: string) => {
       if (inputMode === 'usd') {
-        return formatSpeicalAmount(nextValue);
+        return formatTokenAmountInput(nextValue, 2);
       }
 
       return formatTokenAmountInput(nextValue, currentToken?.decimals);
