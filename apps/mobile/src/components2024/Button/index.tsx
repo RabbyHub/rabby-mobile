@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
+import { Text } from '@/components/Text';
 import { renderText } from '@/utils/renderNode';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CircleSpinnerCC } from '../CircleSpinner/CircleSpinnerCC';
@@ -57,6 +58,17 @@ export type ButtonProps = Omit<
     },
   'children'
 >;
+
+const SHORT_CJK_TITLE_RE =
+  /^[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uac00-\ud7af]{1,4}$/;
+
+function shouldSplitAndroidCJKTitle(textNode: ReactNode): textNode is string {
+  return (
+    Platform.OS === 'android' &&
+    typeof textNode === 'string' &&
+    SHORT_CJK_TITLE_RE.test(textNode)
+  );
+}
 
 export const Button = ({
   height = undefined,
@@ -248,6 +260,28 @@ export const Button = ({
     return i;
   }, [icon, iconRight, titleStyle]);
 
+  const titleNode = useMemo(() => {
+    if (!textNode) {
+      return null;
+    }
+
+    if (shouldSplitAndroidCJKTitle(textNode)) {
+      return (
+        <View style={styles.cjkTitleRow}>
+          {Array.from(textNode).map((char, index) => (
+            <Text key={`${char}-${index}`} style={titleStyle}>
+              {char}
+            </Text>
+          ))}
+        </View>
+      );
+    }
+
+    return renderText(textNode, {
+      style: titleStyle,
+    });
+  }, [styles.cjkTitleRow, textNode, titleStyle]);
+
   return (
     <View
       style={StyleSheet.flatten([
@@ -278,11 +312,7 @@ export const Button = ({
               ) : (
                 <CircleSpinnerCC size={24} style={loadingStyle} />
               )}
-              {!!showTextOnLoading &&
-                !!textNode &&
-                renderText(textNode, {
-                  style: titleStyle,
-                })}
+              {!!showTextOnLoading && !!titleNode && titleNode}
             </>
           )}
           {!loading && (
@@ -293,10 +323,7 @@ export const Button = ({
                 </View>
               )}
               {/* Title for Button */}
-              {!!textNode &&
-                renderText(textNode, {
-                  style: titleStyle,
-                })}
+              {!!titleNode && titleNode}
               {iconNode && iconRight && (
                 <View style={StyleSheet.flatten([styles.iconContainer])}>
                   {iconNode}
@@ -342,6 +369,11 @@ const getStyle = createGetStyles2024(ctx => ({
   },
   titleWithLeading: {
     // lineHeight: 22,
+  },
+  cjkTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconContainer: {
     marginHorizontal: 8,
