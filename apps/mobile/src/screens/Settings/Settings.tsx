@@ -325,20 +325,13 @@ function SettingsBlocks() {
     !couldSetupBiometrics && !isUsingDevicePasscode;
   const disabledBiometrics = !APP_FEATURE_SWITCH.biometricsAuth;
 
-  const showBiometricsEnrollmentRequiredAlert = useCallback(() => {
-    const title = IS_ANDROID
-      ? 'Fingerprint unavailable'
-      : 'Biometrics unavailable';
-    const message = IS_ANDROID
-      ? 'Please set up at least one fingerprint in system settings before using fingerprint unlock.'
-      : 'Please set up at least one biometric credential in system settings before using it.';
-
-    Alert.alert(title, message);
+  const showBiometricsUnavailableToast = useCallback(() => {
+    toast.show('Please enable biometric permissions in the system settings.');
   }, []);
 
   const startSwitchBiometrics = useCallback(() => {
     if (biometricsUnavailableForSettings) {
-      showBiometricsEnrollmentRequiredAlert();
+      showBiometricsUnavailableToast();
       return;
     }
 
@@ -351,7 +344,7 @@ function SettingsBlocks() {
   }, [
     biometricsUnavailableForSettings,
     shouldRedirectToSetPasswordBefore,
-    showBiometricsEnrollmentRequiredAlert,
+    showBiometricsUnavailableToast,
   ]);
 
   const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
@@ -420,13 +413,16 @@ function SettingsBlocks() {
               <SwitchBiometricsAuthentication
                 ref={switchBiometricsRef}
                 onToggleSuccess={handleBiometricsToggleSuccess}
-                onUnavailablePress={showBiometricsEnrollmentRequiredAlert}
+                onUnavailablePress={showBiometricsUnavailableToast}
               />
             ),
             onPress: () => {
               startSwitchBiometrics();
             },
-            disabled: disabledBiometrics,
+            onDisabledPress: biometricsUnavailableForSettings
+              ? showBiometricsUnavailableToast
+              : undefined,
+            disabled: disabledBiometrics || biometricsUnavailableForSettings,
             visible: APP_FEATURE_SWITCH.biometricsAuth,
           },
           {
