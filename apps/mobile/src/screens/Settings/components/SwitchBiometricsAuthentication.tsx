@@ -120,7 +120,7 @@ function useToggleBiometricsEnabled() {
     isBiometricsEnabled: computed.isBiometricsEnabled,
     couldSetupBiometrics: computed.couldSetupBiometrics,
     couldSetupSystemAuth: computed.couldSetupSystemAuth,
-    isUsingDevicePasscode: computed.isUsingDevicePasscode,
+    isUsingDevicePasscodeForSettings: computed.isUsingDevicePasscodeForSettings,
     requestToggleBiometricsEnabled,
     sheetVisible,
     sheetLoading,
@@ -147,13 +147,13 @@ export const SwitchBiometricsAuthentication = ({
     sheetLoading,
     handleSheetConfirm,
     setSheetVisible,
-    isUsingDevicePasscode,
+    isUsingDevicePasscodeForSettings,
   } = useToggleBiometricsEnabled();
 
   useImperativeHandle(ref, () => ({
     toggle: async (enabled?: boolean) => {
       await requestToggleBiometricsEnabled(
-        enabled ?? (!isBiometricsEnabled && !isUsingDevicePasscode),
+        enabled ?? (!isBiometricsEnabled && !isUsingDevicePasscodeForSettings),
         onToggleSuccess,
       );
     },
@@ -161,7 +161,9 @@ export const SwitchBiometricsAuthentication = ({
 
   const { hasSetupCustomPassword } = useWalletPasswordInfo();
 
-  const switchValue = !!isBiometricsEnabled || isUsingDevicePasscode;
+  const switchValue = couldSetupBiometrics
+    ? !!isBiometricsEnabled
+    : isUsingDevicePasscodeForSettings;
   const isBiometricsUnavailableForSetup = !couldSetupBiometrics && !switchValue;
   const switchDisabled =
     !hasSetupCustomPassword || isBiometricsUnavailableForSetup;
