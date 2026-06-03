@@ -16,7 +16,10 @@ jest.mock('react-native-size-matters', () => ({
   moderateScale: (value: number) => value,
 }));
 
-import { containsCJKText, sanitizeAndroidCJKFontStyle } from './Text';
+import {
+  containsCJKText,
+  sanitizeAndroidCJKFontStyle,
+} from './textFontFallback';
 
 describe('Text Android CJK font fallback', () => {
   it('detects CJK text in nested children', () => {
