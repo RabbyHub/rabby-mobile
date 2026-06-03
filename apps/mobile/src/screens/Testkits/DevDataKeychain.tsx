@@ -17,6 +17,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import RNFS from 'react-native-fs';
+import { Tabs } from 'react-native-collapsible-tab-view';
 
 import RcIconQuestionCC from '@/assets/icons/transaction-record/icon-question-cc.svg';
 import RcIconEyeCloseCC from '@/assets2024/icons/home/eye-close-cc.svg';
@@ -27,6 +28,7 @@ import {
   AppBottomSheetModal,
   AppBottomSheetModalTitle,
 } from '@/components/customized/BottomSheet';
+import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { Button } from '@/components2024/Button';
 import { PillsSwitch } from '@/components2024/PillSwitch';
 import { Radio } from '@/components2024/Radio';
@@ -45,6 +47,13 @@ import {
   useDebugKeychainStorage,
   type CurrentKeychainVersion,
 } from '@/hooks/appSettings';
+import {
+  BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES,
+  storeApisBiometrics,
+  useBiometricsComputed,
+  useBiometricsSystemAuthDebugMock,
+  type BiometricsSystemAuthDebugMode,
+} from '@/hooks/biometrics';
 import { useAppSecurityChain } from '@/hooks/global';
 import { useTheme2024 } from '@/hooks/theme';
 import { shareLocalFile } from '@/utils/shareLocalFile';
@@ -57,6 +66,11 @@ const TAB_OPTIONS = [
   { key: '9.0.0', label: '9.2.3' },
   { key: '10.0.0', label: '10.0.0' },
 ] as const;
+
+const PAGE_TAB_BAR_HEIGHT = 48;
+const PAGE_TAB_CONTENT_TOP_GAP = 12;
+const PAGE_TAB_CONTENT_TOP_PADDING =
+  PAGE_TAB_BAR_HEIGHT + PAGE_TAB_CONTENT_TOP_GAP;
 
 const KEYCHAIN_VERSION_OPTIONS = [
   {
@@ -78,6 +92,39 @@ const KEYCHAIN_VERSION_OPTIONS = [
     description: 'Official 10.x package wrapped with Rabby business logic.',
   },
 ] as const;
+
+const PLAYGROUND_AUTH_OPTIONS: PlaygroundAuthOption[] = [
+  {
+    key: 'biometrics-current-set',
+    label: 'Biometrics',
+    type: apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+    requiresPassword: true,
+  },
+  {
+    key: 'biometrics-or-passcode',
+    label: 'Biometrics + Passcode',
+    type: apisKeychain.KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
+    requiresPassword: true,
+  },
+  {
+    key: 'passcode',
+    label: 'Passcode Only',
+    type: apisKeychain.KEYCHAIN_AUTH_TYPES.PASSCODE,
+    requiresPassword: true,
+  },
+  {
+    key: 'remember-me',
+    label: 'Remember Me',
+    type: apisKeychain.KEYCHAIN_AUTH_TYPES.REMEMBER_ME,
+    requiresPassword: true,
+  },
+  {
+    key: 'reset',
+    label: 'Reset Keychain Entry',
+    type: apisKeychain.KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD,
+    requiresPassword: false,
+  },
+];
 
 const KEYCHAIN_VERSION_META: Record<
   CurrentKeychainVersion,
@@ -123,9 +170,30 @@ const KEYCHAIN_STORAGE_OPTIONS = [
       'Android Keystore AES-GCM path introduced by react-native-keychain 10.',
   },
   {
+    key: apisKeychain.KEYCHAIN_STORAGE_TYPES.AES_GCM_NO_AUTH,
+    label: 'AES / GCM NoAuth',
+    description:
+      'Rabby business path: no-auth keychain secret plus ReactNativeBiometrics system prompt.',
+  },
+  {
     key: apisKeychain.KEYCHAIN_STORAGE_TYPES.KC,
     label: 'iOS Keychain',
     description: 'System keychain storage on iOS / visionOS.',
+  },
+] as const;
+
+const SYSTEM_AUTH_DEBUG_MOCK_OPTIONS = [
+  {
+    key: BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.REAL,
+    label: 'Real System Auth',
+    description:
+      'Use native getSupportedBiometryType and device passcode availability.',
+  },
+  {
+    key: BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.NONE,
+    label: 'No System Auth',
+    description:
+      'Mock neither enrolled biometrics nor device credential is available.',
   },
 ] as const;
 
@@ -185,6 +253,7 @@ const SESSION_REUSE_EXPECTATIONS = [
 ] as const;
 
 type TabKey = (typeof TAB_OPTIONS)[number]['key'];
+type PageTabKey = 'overview' | 'business' | 'playground' | 'raw-v10';
 type DebugStateLike = apisKeychain.KeychainDebugState;
 type AndroidDebugStateLike = Extract<DebugStateLike, { platform: 'android' }>;
 type IOSDebugStateLike = Extract<DebugStateLike, { platform: 'ios' }>;
@@ -205,6 +274,20 @@ type BusinessRewriteResult = {
 type RawReadState = {
   result: V9ReadResult | null;
   errorMessage: string | null;
+};
+type PlaygroundAuthOption = {
+  key: string;
+  label: string;
+  type: apisKeychain.KEYCHAIN_AUTH_TYPES;
+  requiresPassword: boolean;
+};
+type PlaygroundResultState = {
+  title: string;
+  authTypeLabel: string;
+  resultMessage: string | null;
+  plainPassword: string | null;
+  errorMessage: string | null;
+  updatedAt: string;
 };
 type BusinessVersionState = {
   debugState: apisKeychain.KeychainDebugState | null;
@@ -238,6 +321,20 @@ type V9CurrentRewriteResult = {
   targetStorage: KeychainStorageType;
   rewrittenAt: string;
 };
+
+function getAndroidAcmAlgorithmDebugLabel(cipherName?: string | null) {
+  switch (cipherName) {
+    case apisKeychain.KEYCHAIN_STORAGE_TYPES.RSA:
+      return 'RSA/ECB/PKCS1Padding';
+    case apisKeychain.KEYCHAIN_STORAGE_TYPES.AES:
+      return 'AES/CBC/PKCS7Padding';
+    case apisKeychain.KEYCHAIN_STORAGE_TYPES.AES_GCM:
+    case apisKeychain.KEYCHAIN_STORAGE_TYPES.AES_GCM_NO_AUTH:
+      return 'AES/GCM/NoPadding';
+    default:
+      return null;
+  }
+}
 
 type ExportableV9ReadCredentials = Omit<V9ReadCredentials, 'password'> & {
   password: string | null;
@@ -292,6 +389,24 @@ type KeychainDebugExportPayload = {
       CurrentKeychainVersion,
       KeychainStorageType[]
     >;
+    systemAuthDebugMock: {
+      mode: BiometricsSystemAuthDebugMode;
+      canUse: boolean;
+    };
+    systemAuthUi: {
+      supportedBiometryType: string | null;
+      devicePasscodeAvailable: boolean;
+      isUsingDevicePasscode: boolean;
+      isDevicePasscodeOnlyAvailable: boolean;
+      isBiometricsEnabled: boolean;
+      couldSetupSystemAuth: boolean;
+      defaultTypeLabel: string;
+      devicePasscodeLabel: string;
+      devicePasscodeActionLabel: string;
+      systemAuthTypeLabel: string;
+      systemAuthSettingsLabel: string;
+      systemAuthSwitchTypeLabel: string;
+    };
   };
   versions: {
     v8_2_0: KeychainVersionExportState;
@@ -818,6 +933,10 @@ function KeychainSummaryCard({
           `Bio: ${state.supportedBiometryType || '-'}`,
           `Stored: ${state.storedCipherStorageName || '-'}`,
           `Resolved: ${state.resolvedCipherStorageName || '-'}`,
+          `ACM: ${
+            getAndroidAcmAlgorithmDebugLabel(state.resolvedCipherStorageName) ||
+            '-'
+          }`,
           `Key Alias: ${state.hasKeystoreAlias ? 'true' : 'false'}`,
           `Key Compat: ${
             state.keystoreIsCompatibleWithCurrentCipher === null
@@ -905,6 +1024,11 @@ function AndroidKeychainStatusCard({
     {
       label: 'Resolved Cipher',
       value: state.resolvedCipherStorageName,
+      allowHorizontalOverflow: true,
+    },
+    {
+      label: 'ACM Algorithm',
+      value: getAndroidAcmAlgorithmDebugLabel(state.resolvedCipherStorageName),
       allowHorizontalOverflow: true,
     },
     {
@@ -1000,6 +1124,14 @@ function AndroidKeychainStatusCard({
       <StatusRow
         label="Resolved Cipher"
         value={state.resolvedCipherStorageName}
+        allowHorizontalOverflow
+      />
+      <StatusRow
+        label="ACM Algorithm"
+        value={getAndroidAcmAlgorithmDebugLabel(
+          state.resolvedCipherStorageName,
+        )}
+        selectable
         allowHorizontalOverflow
       />
       <StatusRow
@@ -1232,6 +1364,10 @@ function makeSafeKeychainDebugLogState(
       state.platform === 'android' ? state.resolvedCipherStorageName : null,
     storedCipherStorageName:
       state.platform === 'android' ? state.storedCipherStorageName : null,
+    acmAlgorithm:
+      state.platform === 'android'
+        ? getAndroidAcmAlgorithmDebugLabel(state.resolvedCipherStorageName)
+        : null,
     hasKeystoreAlias:
       state.platform === 'android' ? state.hasKeystoreAlias : null,
     keystoreUserAuthenticationRequired:
@@ -1266,6 +1402,13 @@ export default function DevDataKeychain(): JSX.Element {
     canSwitchDebugKeychainStorage,
     setDebugKeychainStorageForVersion,
   } = useDebugKeychainStorage();
+  const {
+    canUse: canUseSystemAuthDebugMock,
+    mode: systemAuthDebugMockMode,
+    setMode: setSystemAuthDebugMockMode,
+  } = useBiometricsSystemAuthDebugMock();
+  const systemAuthComputed = useBiometricsComputed();
+  const [pageTabKey, setPageTabKey] = useState<PageTabKey>('overview');
   const [tabKey, setTabKey] = useState<TabKey>('current');
   const [helpSheetContext, setHelpSheetContext] =
     useState<HelpSheetContext | null>(null);
@@ -1324,6 +1467,10 @@ export default function DevDataKeychain(): JSX.Element {
     useState<V9CurrentRewriteResult | null>(null);
   const [v9CurrentRewriteErrorMessage, setV9CurrentRewriteErrorMessage] =
     useState<string | null>(null);
+  const [playgroundResult, setPlaygroundResult] =
+    useState<PlaygroundResultState | null>(null);
+  const [isPlaygroundPasswordVisible, setIsPlaygroundPasswordVisible] =
+    useState(false);
   const [supportedStorageTypesByVersion, setSupportedStorageTypesByVersion] =
     useState<Record<CurrentKeychainVersion, KeychainStorageType[]>>({
       '8.2.0-fork': [apisKeychain.DEFAULT_KEYCHAIN_STORAGE_TYPE],
@@ -1457,6 +1604,8 @@ export default function DevDataKeychain(): JSX.Element {
   const refreshState = useCallback(async () => {
     setIsLoading(true);
     try {
+      const canReadOfficialV10State =
+        !IS_ANDROID || currentKeychainVersion === '10.0.0';
       const [
         v8State,
         v9State,
@@ -1469,17 +1618,30 @@ export default function DevDataKeychain(): JSX.Element {
       ] = await Promise.all([
         apisKeychainV8_2_0.getKeychainDebugState(),
         apisKeychainV9_0_0.getKeychainDebugState(),
-        apisKeychainV10_0_0.getKeychainDebugState(),
-        apisKeychainDebug.getKeychainDebugState(
-          apisKeychainDebug.KEYCHAIN_DEFAULT_SERVICE,
-        ),
-        apisKeychainDebug.getKeychainDebugState(
-          apisKeychainDebug.KEYCHAIN_PROBE_SERVICE,
-        ),
+        canReadOfficialV10State
+          ? apisKeychainV10_0_0.getKeychainDebugState()
+          : Promise.resolve(null),
+        canReadOfficialV10State
+          ? apisKeychainDebug.getKeychainDebugState(
+              apisKeychainDebug.KEYCHAIN_DEFAULT_SERVICE,
+            )
+          : Promise.resolve(null),
+        canReadOfficialV10State
+          ? apisKeychainDebug.getKeychainDebugState(
+              apisKeychainDebug.KEYCHAIN_PROBE_SERVICE,
+            )
+          : Promise.resolve(null),
         apisKeychainV8_2_0.getSupportedStorageTypes(),
         apisKeychainV9_0_0.getSupportedStorageTypes(),
         apisKeychainV10_0_0.getSupportedStorageTypes(),
       ]);
+
+      if (!canReadOfficialV10State) {
+        logger.info(
+          '[keychain-debug] skipped official v10 state refresh to avoid Android DataStore migration',
+          { currentKeychainVersion },
+        );
+      }
 
       setBusinessStates(prev => ({
         ...prev,
@@ -1506,11 +1668,160 @@ export default function DevDataKeychain(): JSX.Element {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentKeychainVersion]);
 
   useEffect(() => {
     refreshState();
   }, [refreshState]);
+
+  const setPlaygroundSuccess = useCallback(
+    ({
+      title,
+      authTypeLabel = apisKeychain.getAuthenticationTypeLabel(),
+      resultMessage,
+      plainPassword = null,
+    }: {
+      title: string;
+      authTypeLabel?: string;
+      resultMessage: string;
+      plainPassword?: string | null;
+    }) => {
+      setPlaygroundResult({
+        title,
+        authTypeLabel,
+        resultMessage,
+        plainPassword,
+        errorMessage: null,
+        updatedAt: new Date().toISOString(),
+      });
+      setIsPlaygroundPasswordVisible(false);
+    },
+    [],
+  );
+
+  const setPlaygroundError = useCallback((title: string, error: unknown) => {
+    setPlaygroundResult({
+      title,
+      authTypeLabel: apisKeychain.getAuthenticationTypeLabel(),
+      resultMessage: null,
+      plainPassword: null,
+      errorMessage: getReadableErrorMessage(error),
+      updatedAt: new Date().toISOString(),
+    });
+    setIsPlaygroundPasswordVisible(false);
+  }, []);
+
+  const handlePlaygroundStoreAuthType = useCallback(
+    (option: PlaygroundAuthOption) => {
+      if (!option.requiresPassword) {
+        Alert.alert(
+          'Reset Keychain Entry',
+          'Clear the current app keychain password entry?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Reset',
+              style: 'destructive',
+              onPress: async () => {
+                try {
+                  setIsLoading(true);
+                  const result = await apisKeychain.resetGenericPassword();
+                  setPlaygroundSuccess({
+                    title: option.label,
+                    authTypeLabel: apisKeychain.getAuthenticationTypeLabel(
+                      option.type,
+                    ),
+                    resultMessage: `reset=${String(result)}`,
+                  });
+                  toast.success('Keychain entry reset');
+                  await refreshState();
+                } catch (error) {
+                  setPlaygroundError(option.label, error);
+                  Alert.alert(option.label, getReadableErrorMessage(error));
+                } finally {
+                  setIsLoading(false);
+                }
+              },
+            },
+          ],
+        );
+        return;
+      }
+
+      AuthenticationModal.show({
+        confirmText: 'Store',
+        title: `Store password as ${option.label}`,
+        authType: ['password'],
+        async onFinished({ getValidatedPassword }) {
+          try {
+            setIsLoading(true);
+            const password = getValidatedPassword();
+            const result = await apisKeychain.setGenericPassword(
+              password,
+              option.type,
+            );
+            setPlaygroundSuccess({
+              title: option.label,
+              authTypeLabel: apisKeychain.getAuthenticationTypeLabel(
+                option.type,
+              ),
+              resultMessage: `stored=${String(result)}`,
+            });
+            toast.success(`${option.label} stored`);
+            await refreshState();
+          } catch (error) {
+            setPlaygroundError(option.label, error);
+            Alert.alert(option.label, getReadableErrorMessage(error));
+          } finally {
+            setIsLoading(false);
+          }
+        },
+      });
+    },
+    [refreshState, setPlaygroundError, setPlaygroundSuccess],
+  );
+
+  const handlePlaygroundRequestPassword = useCallback(
+    async (purpose: apisKeychain.RequestGenericPurpose, title: string) => {
+      try {
+        setIsLoading(true);
+        let plainPassword = '';
+        let callbackCalled = false;
+        const startedAt = Date.now();
+
+        const result = await apisKeychain.requestGenericPassword({
+          purpose,
+          onPlainPassword: password => {
+            callbackCalled = true;
+            plainPassword = password;
+          },
+        });
+        const actionSuccess =
+          !!result && 'actionSuccess' in result && !!result.actionSuccess;
+        const storage =
+          result && typeof result.storage === 'string' ? result.storage : '-';
+        setPlaygroundSuccess({
+          title,
+          resultMessage: [
+            `callback=${callbackCalled ? 'true' : 'false'}`,
+            `actionSuccess=${actionSuccess ? 'true' : 'false'}`,
+            `storage=${storage}`,
+            `elapsedMs=${Date.now() - startedAt}`,
+          ].join(', '),
+          plainPassword: plainPassword || null,
+        });
+        toast.success(`${title} completed`);
+        await refreshState();
+      } catch (error) {
+        setPlaygroundError(title, error);
+        Alert.alert(title, getReadableErrorMessage(error));
+        await refreshState();
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [refreshState, setPlaygroundError, setPlaygroundSuccess],
+  );
 
   const readCurrentKeychainAndDecryptForBusiness = useCallback(
     async (options?: { syncState?: boolean }) => {
@@ -1627,6 +1938,7 @@ export default function DevDataKeychain(): JSX.Element {
           purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
           androidAuthPromptPolicy: policy,
           shouldAttachTrustedVaultKeyString: !IS_ANDROID,
+          skipPostDecryptKeychainRewrite: IS_ANDROID,
           onPlainPassword: (password, credentials) => {
             callbackCalled = true;
             decryptedPassword = password;
@@ -1751,6 +2063,7 @@ export default function DevDataKeychain(): JSX.Element {
       const requestResult = await apisKeychain.requestGenericPassword({
         purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
         shouldAttachTrustedVaultKeyString: !IS_ANDROID,
+        skipPostDecryptKeychainRewrite: IS_ANDROID,
         onPlainPassword: password => {
           callbackCalled = true;
           decryptedPassword = password;
@@ -2337,6 +2650,32 @@ export default function DevDataKeychain(): JSX.Element {
     ],
   );
 
+  const handleChangeSystemAuthDebugMock = useCallback(
+    async (nextMode: BiometricsSystemAuthDebugMode) => {
+      if (nextMode === systemAuthDebugMockMode) {
+        return;
+      }
+      if (!canUseSystemAuthDebugMock) {
+        toast.show('System auth mock is only available on Android test builds');
+        return;
+      }
+
+      const changed = setSystemAuthDebugMockMode(nextMode);
+      if (!changed) {
+        toast.show('Failed to change system auth mock');
+        return;
+      }
+
+      await storeApisBiometrics.fetchBiometrics();
+      toast.success(`System auth mock: ${nextMode}`);
+    },
+    [
+      canUseSystemAuthDebugMock,
+      setSystemAuthDebugMockMode,
+      systemAuthDebugMockMode,
+    ],
+  );
+
   const maskedV9CurrentBusinessPassword = maskSecret(
     v9CurrentBusinessDecryptResult?.decryptedPayload.password,
   );
@@ -2363,6 +2702,27 @@ export default function DevDataKeychain(): JSX.Element {
         configuredStorageByVersion: debugKeychainStorageByVersion,
         effectiveStorageByVersion,
         supportedStorageTypesByVersion,
+        systemAuthDebugMock: {
+          mode: systemAuthDebugMockMode,
+          canUse: canUseSystemAuthDebugMock,
+        },
+        systemAuthUi: {
+          supportedBiometryType: systemAuthComputed.supportedBiometryType,
+          devicePasscodeAvailable: systemAuthComputed.devicePasscodeAvailable,
+          isUsingDevicePasscode: systemAuthComputed.isUsingDevicePasscode,
+          isDevicePasscodeOnlyAvailable:
+            systemAuthComputed.isDevicePasscodeOnlyAvailable,
+          isBiometricsEnabled: systemAuthComputed.isBiometricsEnabled,
+          couldSetupSystemAuth: systemAuthComputed.couldSetupSystemAuth,
+          defaultTypeLabel: systemAuthComputed.defaultTypeLabel,
+          devicePasscodeLabel: systemAuthComputed.devicePasscodeLabel,
+          devicePasscodeActionLabel:
+            systemAuthComputed.devicePasscodeActionLabel,
+          systemAuthTypeLabel: systemAuthComputed.systemAuthTypeLabel,
+          systemAuthSettingsLabel: systemAuthComputed.systemAuthSettingsLabel,
+          systemAuthSwitchTypeLabel:
+            systemAuthComputed.systemAuthSwitchTypeLabel,
+        },
       },
       versions: {
         v8_2_0: sanitizeBusinessVersionStateForExport(
@@ -2441,6 +2801,7 @@ export default function DevDataKeychain(): JSX.Element {
     [
       businessStates,
       canSwitchCurrentKeychainVersion,
+      canUseSystemAuthDebugMock,
       currentKeychainVersion,
       debugKeychainStorageByVersion,
       debugCurrentKeychainVersion,
@@ -2448,6 +2809,8 @@ export default function DevDataKeychain(): JSX.Element {
       effectiveStorageByVersion,
       includeSecretFieldsInExport,
       rabbitCode,
+      systemAuthComputed,
+      systemAuthDebugMockMode,
       supportedStorageTypesByVersion,
       v9CurrentBusinessDecryptErrorMessage,
       v9CurrentBusinessDecryptResult,
@@ -2700,14 +3063,25 @@ export default function DevDataKeychain(): JSX.Element {
   const renderV9RawSection = () => {
     return (
       <>
-        <View style={styles.sectionStandaloneHeader}>
-          <Text style={styles.sectionTitle}>Official v10 Raw</Text>
-          <SectionHelpButton
-            onPress={() => {
-              openHelpSheet({
-                topic: 'raw-v10',
-              });
-            }}
+        <View style={styles.summaryCard}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Official v10 Raw</Text>
+            <SectionHelpButton
+              onPress={() => {
+                openHelpSheet({
+                  topic: 'raw-v10',
+                });
+              }}
+            />
+          </View>
+          <StatusRow label="Scope" value="Official v10 current/probe" />
+          <StatusRow
+            label="Business Current"
+            value={currentKeychainVersionMeta.label}
+          />
+          <StatusRow
+            label="Selected Storage"
+            value={getKeychainStorageLabel(effectiveStorageByVersion['10.0.0'])}
           />
         </View>
         <KeychainSummaryCard
@@ -3103,28 +3477,343 @@ export default function DevDataKeychain(): JSX.Element {
   };
 
   const renderSelectedTab = () => {
-    if (tabKey === '10.0.0') {
-      return (
-        <>
-          {renderBusinessVersionSection('10.0.0', {
-            isCurrentAlias: false,
-          })}
-          {renderV9RawSection()}
-        </>
-      );
-    }
-
     return renderBusinessVersionSection(resolvedTabVersion, {
       isCurrentAlias: tabKey === 'current',
     });
   };
 
+  const renderOverviewTab = () => {
+    return (
+      <View style={styles.summaryCard}>
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>Current Keychain</Text>
+          <SectionHelpButton
+            onPress={() => {
+              openHelpSheet({
+                topic: 'current-selector',
+              });
+            }}
+          />
+        </View>
+        <StatusRow label="Effective" value={currentKeychainVersionMeta.label} />
+        <StatusRow
+          label="Debug Field"
+          value={debugCurrentKeychainVersionField}
+          selectable
+        />
+        <StatusRow
+          label="Source"
+          value={apisKeychain.getCurrentKeychainSourceLabel()}
+          selectable
+        />
+        <StatusRow
+          label="System Auth Mock"
+          value={systemAuthDebugMockMode}
+          selectable
+        />
+        <StatusRow
+          label="System Auth Label"
+          value={systemAuthComputed.systemAuthTypeLabel}
+          selectable
+        />
+        <StatusRow
+          label="Settings Label"
+          value={systemAuthComputed.systemAuthSettingsLabel}
+          selectable
+        />
+        <StatusRow
+          label="Detected Biometry"
+          value={systemAuthComputed.supportedBiometryType}
+          selectable
+        />
+        <StatusRow
+          label="Device Passcode"
+          value={
+            systemAuthComputed.devicePasscodeAvailable
+              ? 'available'
+              : 'unavailable'
+          }
+        />
+        <StatusRow
+          label="Using Device Passcode"
+          value={systemAuthComputed.isUsingDevicePasscode ? 'yes' : 'no'}
+        />
+        <StatusRow
+          label="Device Passcode Only"
+          value={
+            systemAuthComputed.isDevicePasscodeOnlyAvailable ? 'yes' : 'no'
+          }
+        />
+        <View style={styles.statusRow}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.statusLabel}>RABBY_MOBILE_CODE</Text>
+            {rabbitCode ? (
+              <EyeToggleButton
+                visible={isRabbitCodeVisible}
+                onPress={() => {
+                  setIsRabbitCodeVisible(visible => !visible);
+                }}
+              />
+            ) : null}
+          </View>
+          <Text
+            style={[styles.statusValue, styles.statusValueNoWrap]}
+            selectable={!!rabbitCode && isRabbitCodeVisible}>
+            {rabbitCode
+              ? isRabbitCodeVisible
+                ? rabbitCode
+                : maskedRabbitCode
+              : '-'}
+          </Text>
+        </View>
+
+        <View style={styles.versionSelectorGroup}>
+          {KEYCHAIN_VERSION_OPTIONS.map(option => (
+            <TouchableOpacity
+              key={option.key}
+              activeOpacity={0.8}
+              disabled={!canSwitchCurrentKeychainVersion}
+              style={styles.versionSelectorOption}
+              onPress={() => {
+                handleChangeCurrentVersion(option.key);
+              }}>
+              <Radio
+                title={option.label}
+                checked={currentKeychainVersion === option.key}
+                onPress={() => {
+                  handleChangeCurrentVersion(option.key);
+                }}
+                checkedColor={colors2024['brand-default']}
+                containerStyle={styles.versionRadio}
+                textStyle={styles.versionRadioLabel}
+              />
+              <Text style={styles.versionRadioMeta}>{option.description}</Text>
+              <Text style={styles.versionRadioMeta} selectable>
+                Source: {option.sourceLabel}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.systemAuthMockHeader}>
+          <Text style={styles.statusLabel}>System Auth Availability Mock</Text>
+          <Text style={styles.versionRadioMeta}>
+            Overrides JS system auth availability checks only. It cannot emulate
+            Android prompt fallback from biometrics to device credential.
+          </Text>
+        </View>
+        <View style={styles.versionSelectorGroup}>
+          {SYSTEM_AUTH_DEBUG_MOCK_OPTIONS.map(option => (
+            <TouchableOpacity
+              key={option.key}
+              activeOpacity={0.8}
+              disabled={!canUseSystemAuthDebugMock}
+              style={[
+                styles.versionSelectorOption,
+                !canUseSystemAuthDebugMock &&
+                  styles.versionSelectorOptionDisabled,
+              ]}
+              onPress={() => {
+                void handleChangeSystemAuthDebugMock(option.key);
+              }}>
+              <Radio
+                title={option.label}
+                checked={systemAuthDebugMockMode === option.key}
+                onPress={() => {
+                  void handleChangeSystemAuthDebugMock(option.key);
+                }}
+                checkedColor={colors2024['brand-default']}
+                containerStyle={styles.versionRadio}
+                textStyle={styles.versionRadioLabel}
+              />
+              <Text style={styles.versionRadioMeta}>{option.description}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    );
+  };
+
+  const renderBusinessTab = () => {
+    const inspectingLabel =
+      tabKey === 'current'
+        ? `Current -> ${currentKeychainVersionMeta.label}`
+        : `${KEYCHAIN_VERSION_META[resolvedTabVersion].label} wrapper`;
+
+    return (
+      <>
+        <View style={styles.summaryCard}>
+          <Text style={styles.sectionTitle}>Business Path Probes</Text>
+          <StatusRow label="Current" value={currentKeychainVersionMeta.label} />
+          <StatusRow label="Inspecting" value={inspectingLabel} />
+        </View>
+
+        <PillsSwitch
+          value={tabKey}
+          options={TAB_OPTIONS}
+          onTabChange={key => {
+            setTabKey(key as TabKey);
+          }}
+          containerStyle={styles.tabSwitch}
+          itemStyle={styles.tabSwitchItem}
+        />
+
+        {renderSelectedTab()}
+      </>
+    );
+  };
+
+  const renderPlaygroundTab = () => {
+    const maskedPlaygroundPassword = maskSecret(
+      playgroundResult?.plainPassword,
+    );
+
+    return (
+      <>
+        <View style={styles.summaryCard}>
+          <Text style={styles.sectionTitle}>Keychain Auth Playground</Text>
+          <StatusRow
+            label="Current Auth"
+            value={`${apisKeychain.getAuthenticationTypeLabel()} (${apisKeychain.getAuthenticationType()})`}
+          />
+          <StatusRow
+            label="Business Current"
+            value={currentKeychainVersionMeta.label}
+          />
+        </View>
+
+        <View style={styles.statusCard}>
+          <Text style={styles.sectionTitle}>Store Current Password As</Text>
+          <View style={styles.playgroundButtonGrid}>
+            {PLAYGROUND_AUTH_OPTIONS.map(option => (
+              <Button
+                key={option.key}
+                title={option.label}
+                type={option.requiresPassword ? 'ghost' : 'warning'}
+                height={40}
+                disabled={isLoading}
+                containerStyle={styles.playgroundButton}
+                onPress={() => {
+                  handlePlaygroundStoreAuthType(option);
+                }}
+              />
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.statusCard}>
+          <Text style={styles.sectionTitle}>Read Stored Password</Text>
+          <View style={styles.actionsRow}>
+            <Button
+              title="Verify Stored Password"
+              type="primary"
+              height={40}
+              disabled={isLoading}
+              containerStyle={styles.actionButton}
+              onPress={() => {
+                void handlePlaygroundRequestPassword(
+                  apisKeychain.RequestGenericPurpose.VERIFY,
+                  'Verify Stored Password',
+                );
+              }}
+            />
+            <Button
+              title="Get Stored Password"
+              type="ghost"
+              height={40}
+              disabled={isLoading}
+              containerStyle={styles.actionButton}
+              onPress={() => {
+                void handlePlaygroundRequestPassword(
+                  apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
+                  'Get Stored Password',
+                );
+              }}
+            />
+          </View>
+        </View>
+
+        {playgroundResult ? (
+          <View style={styles.statusCard}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>Last Playground Result</Text>
+              {__DEV__ && playgroundResult.plainPassword ? (
+                <EyeToggleButton
+                  visible={isPlaygroundPasswordVisible}
+                  onPress={() => {
+                    setIsPlaygroundPasswordVisible(visible => !visible);
+                  }}
+                />
+              ) : null}
+            </View>
+            <StatusRow label="Action" value={playgroundResult.title} />
+            <StatusRow
+              label="Auth Type"
+              value={playgroundResult.authTypeLabel}
+            />
+            <StatusRow
+              label="Updated At"
+              value={playgroundResult.updatedAt}
+              selectable
+              allowHorizontalOverflow
+            />
+            {playgroundResult.resultMessage ? (
+              <Text style={styles.resultText} selectable>
+                {playgroundResult.resultMessage}
+              </Text>
+            ) : null}
+            {playgroundResult.plainPassword ? (
+              <>
+                <Text style={styles.statusLabel}>Plain Password</Text>
+                <Text
+                  style={[
+                    styles.plainPasswordValue,
+                    styles.plainPasswordOverflowValue,
+                  ]}
+                  selectable={__DEV__}>
+                  {__DEV__ && isPlaygroundPasswordVisible
+                    ? playgroundResult.plainPassword
+                    : maskedPlaygroundPassword}
+                </Text>
+              </>
+            ) : null}
+            {playgroundResult.errorMessage ? (
+              <Text style={styles.errorText} selectable>
+                {playgroundResult.errorMessage}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
+      </>
+    );
+  };
+
+  const renderTabScrollView = (children: React.ReactNode) => {
+    return (
+      <Tabs.ScrollView
+        tvParallaxProperties={undefined}
+        horizontal={false}
+        nestedScrollEnabled={false}
+        contentContainerStyle={styles.scrollView}>
+        {children}
+      </Tabs.ScrollView>
+    );
+  };
+
   const renderActionsSheetContent = () => {
-    const versionMeta = KEYCHAIN_VERSION_META[resolvedTabVersion];
+    const isRawV10Page = pageTabKey === 'raw-v10';
+    const isPlaygroundPage = pageTabKey === 'playground';
+    const actionsBusinessVersion =
+      pageTabKey === 'overview' ? currentKeychainVersion : resolvedTabVersion;
+    const versionMeta = KEYCHAIN_VERSION_META[actionsBusinessVersion];
+    const actionsBusinessLabel =
+      pageTabKey === 'overview' || tabKey === 'current'
+        ? 'Current'
+        : versionMeta.label;
     const hasBusinessEntry =
-      !!businessStates[resolvedTabVersion].debugState?.hasEntry;
+      !!businessStates[actionsBusinessVersion].debugState?.hasEntry;
     const useCurrentFacadeForBusinessActions =
-      resolvedTabVersion === currentKeychainVersion;
+      actionsBusinessVersion === currentKeychainVersion;
     const hasLegacyRecoverableBusinessEntry =
       useCurrentFacadeForBusinessActions &&
       !!businessStates['8.2.0-fork'].debugState?.hasEntry;
@@ -3140,9 +3829,13 @@ export default function DevDataKeychain(): JSX.Element {
         contentContainerStyle={styles.sheetScrollContent}>
         <AutoLockView>
           <AppBottomSheetModalTitle
-            title={`${
-              tabKey === 'current' ? 'Current' : versionMeta.label
-            } Actions`}
+            title={
+              isRawV10Page
+                ? 'Official v10 Raw Actions'
+                : isPlaygroundPage
+                ? 'Playground Actions'
+                : `${actionsBusinessLabel} Actions`
+            }
           />
 
           <ActionSheetSection
@@ -3181,106 +3874,112 @@ export default function DevDataKeychain(): JSX.Element {
             />
           </ActionSheetSection>
 
-          <ActionSheetSection
-            title={`${versionMeta.label} Business Actions`}
-            desc={`These actions use the ${businessActionApiLabel} and affect the current \`com.debank\` entry. Selected storage: ${getKeychainStorageLabel(
-              effectiveStorageByVersion[resolvedTabVersion],
-            )}.`}>
-            {useCurrentFacadeForBusinessActions ? (
+          {!isRawV10Page && !isPlaygroundPage ? (
+            <ActionSheetSection
+              title={`${versionMeta.label} Business Actions`}
+              desc={`These actions use the ${businessActionApiLabel} and affect the current \`com.debank\` entry. Selected storage: ${getKeychainStorageLabel(
+                effectiveStorageByVersion[actionsBusinessVersion],
+              )}.`}>
+              {useCurrentFacadeForBusinessActions ? (
+                <Button
+                  title="Unlock Page Path"
+                  type="primary"
+                  disabled={!canTryBusinessDecrypt || isLoading}
+                  height={40}
+                  containerStyle={styles.sheetPrimaryButton}
+                  onPress={() => {
+                    runSheetAction(handleUnlockPagePathProbe);
+                  }}
+                />
+              ) : null}
+              <View style={styles.actionsRow}>
+                <Button
+                  title={
+                    useCurrentFacadeForBusinessActions
+                      ? 'Unlock Request'
+                      : 'Raw Unlock Request'
+                  }
+                  type="primary"
+                  disabled={!canTryBusinessDecrypt || isLoading}
+                  height={40}
+                  containerStyle={styles.actionButton}
+                  onPress={() => {
+                    runSheetAction(() =>
+                      handleUnlockRequestProbe(
+                        actionsBusinessVersion,
+                        apisKeychain.ANDROID_AUTH_PROMPT_POLICIES
+                          .INTERACTIVE_FIRST,
+                        {
+                          useCurrentFacade: useCurrentFacadeForBusinessActions,
+                        },
+                      ),
+                    );
+                  }}
+                />
+                <Button
+                  title={
+                    useCurrentFacadeForBusinessActions
+                      ? 'Unlock Request Session'
+                      : 'Raw Unlock Request Session'
+                  }
+                  type="ghost"
+                  disabled={!canTryBusinessDecrypt || isLoading || !IS_ANDROID}
+                  height={40}
+                  containerStyle={styles.actionButton}
+                  onPress={() => {
+                    runSheetAction(() =>
+                      handleUnlockRequestProbe(
+                        actionsBusinessVersion,
+                        apisKeychain.ANDROID_AUTH_PROMPT_POLICIES
+                          .ALLOW_AUTHENTICATED_SESSION_REUSE,
+                        {
+                          useCurrentFacade: useCurrentFacadeForBusinessActions,
+                        },
+                      ),
+                    );
+                  }}
+                />
+              </View>
               <Button
-                title="Unlock Page Path"
+                title="Rewrite Current"
                 type="primary"
-                disabled={!canTryBusinessDecrypt || isLoading}
                 height={40}
-                containerStyle={styles.sheetPrimaryButton}
-                onPress={() => {
-                  runSheetAction(handleUnlockPagePathProbe);
-                }}
-              />
-            ) : null}
-            <View style={styles.actionsRow}>
-              <Button
-                title={
-                  useCurrentFacadeForBusinessActions
-                    ? 'Unlock Request'
-                    : 'Raw Unlock Request'
-                }
-                type="primary"
-                disabled={!canTryBusinessDecrypt || isLoading}
-                height={40}
-                containerStyle={styles.actionButton}
+                disabled={!hasBusinessEntry || isLoading}
+                containerStyle={styles.sheetActionButton}
                 onPress={() => {
                   runSheetAction(() =>
-                    handleUnlockRequestProbe(
-                      resolvedTabVersion,
-                      apisKeychain.ANDROID_AUTH_PROMPT_POLICIES
-                        .INTERACTIVE_FIRST,
-                      {
-                        useCurrentFacade: useCurrentFacadeForBusinessActions,
-                      },
-                    ),
+                    handleBusinessRewrite(actionsBusinessVersion),
                   );
                 }}
               />
               <Button
-                title={
-                  useCurrentFacadeForBusinessActions
-                    ? 'Unlock Request Session'
-                    : 'Raw Unlock Request Session'
-                }
-                type="ghost"
-                disabled={!canTryBusinessDecrypt || isLoading || !IS_ANDROID}
+                title="Clear Keychain"
+                type="warning"
                 height={40}
-                containerStyle={styles.actionButton}
+                disabled={isLoading}
+                containerStyle={styles.sheetActionButton}
                 onPress={() => {
                   runSheetAction(() =>
-                    handleUnlockRequestProbe(
-                      resolvedTabVersion,
-                      apisKeychain.ANDROID_AUTH_PROMPT_POLICIES
-                        .ALLOW_AUTHENTICATED_SESSION_REUSE,
-                      {
-                        useCurrentFacade: useCurrentFacadeForBusinessActions,
-                      },
-                    ),
+                    handleBusinessReset(actionsBusinessVersion),
                   );
                 }}
               />
-            </View>
-            <Button
-              title="Rewrite Current"
-              type="primary"
-              height={40}
-              disabled={!hasBusinessEntry || isLoading}
-              containerStyle={styles.sheetActionButton}
-              onPress={() => {
-                runSheetAction(() => handleBusinessRewrite(resolvedTabVersion));
-              }}
-            />
-            <Button
-              title="Clear Keychain"
-              type="warning"
-              height={40}
-              disabled={isLoading}
-              containerStyle={styles.sheetActionButton}
-              onPress={() => {
-                runSheetAction(() => handleBusinessReset(resolvedTabVersion));
-              }}
-            />
-            <Button
-              title={IS_ANDROID ? 'Drop Current Marker' : 'Android Only'}
-              type="warning"
-              height={40}
-              disabled={!IS_ANDROID || isLoading || !hasBusinessEntry}
-              containerStyle={styles.sheetActionButton}
-              onPress={() => {
-                runSheetAction(() =>
-                  handleDropCurrentMarker(resolvedTabVersion),
-                );
-              }}
-            />
-          </ActionSheetSection>
+              <Button
+                title={IS_ANDROID ? 'Drop Current Marker' : 'Android Only'}
+                type="warning"
+                height={40}
+                disabled={!IS_ANDROID || isLoading || !hasBusinessEntry}
+                containerStyle={styles.sheetActionButton}
+                onPress={() => {
+                  runSheetAction(() =>
+                    handleDropCurrentMarker(actionsBusinessVersion),
+                  );
+                }}
+              />
+            </ActionSheetSection>
+          ) : null}
 
-          {tabKey === '10.0.0' ? (
+          {isRawV10Page ? (
             <ActionSheetSection
               title="Official v10 Raw Actions"
               desc={`These are raw \`react-native-keychain@10.0.0\` experiments for comparing Android storage behavior. Selected storage: ${getKeychainStorageLabel(
@@ -3407,10 +4106,10 @@ export default function DevDataKeychain(): JSX.Element {
                 }}
               />
             </ActionSheetSection>
-          ) : resolvedTabVersion === '10.0.0' ? (
+          ) : !isPlaygroundPage && actionsBusinessVersion === '10.0.0' ? (
             <ActionSheetSection
               title="Official v10 Raw Actions"
-              desc="Open the `10.0.0` tab when you need raw official current/probe operations. The Current tab only exposes the selected business path."
+              desc="Open the Raw v10 tab when you need raw official current/probe operations. Business only exposes the Rabby business wrapper."
             />
           ) : null}
         </AutoLockView>
@@ -3428,101 +4127,29 @@ export default function DevDataKeychain(): JSX.Element {
         onPress: openActionsSheet,
       }}
       footerContainerStyle={styles.footerContainer}>
-      <ScrollView
-        horizontal={false}
-        contentContainerStyle={styles.scrollView}
-        nestedScrollEnabled>
-        <View style={styles.summaryCard}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Current Keychain</Text>
-            <SectionHelpButton
-              onPress={() => {
-                openHelpSheet({
-                  topic: 'current-selector',
-                });
-              }}
-            />
-          </View>
-          <StatusRow
-            label="Effective"
-            value={currentKeychainVersionMeta.label}
-          />
-          <StatusRow
-            label="Debug Field"
-            value={debugCurrentKeychainVersionField}
-            selectable
-          />
-          <StatusRow
-            label="Source"
-            value={apisKeychain.getCurrentKeychainSourceLabel()}
-            selectable
-          />
-          <View style={styles.statusRow}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.statusLabel}>RABBY_MOBILE_CODE</Text>
-              {rabbitCode ? (
-                <EyeToggleButton
-                  visible={isRabbitCodeVisible}
-                  onPress={() => {
-                    setIsRabbitCodeVisible(visible => !visible);
-                  }}
-                />
-              ) : null}
-            </View>
-            <Text
-              style={[styles.statusValue, styles.statusValueNoWrap]}
-              selectable={!!rabbitCode && isRabbitCodeVisible}>
-              {rabbitCode
-                ? isRabbitCodeVisible
-                  ? rabbitCode
-                  : maskedRabbitCode
-                : '-'}
-            </Text>
-          </View>
-
-          <View style={styles.versionSelectorGroup}>
-            {KEYCHAIN_VERSION_OPTIONS.map(option => (
-              <TouchableOpacity
-                key={option.key}
-                activeOpacity={0.8}
-                disabled={!canSwitchCurrentKeychainVersion}
-                style={styles.versionSelectorOption}
-                onPress={() => {
-                  handleChangeCurrentVersion(option.key);
-                }}>
-                <Radio
-                  title={option.label}
-                  checked={currentKeychainVersion === option.key}
-                  onPress={() => {
-                    handleChangeCurrentVersion(option.key);
-                  }}
-                  checkedColor={colors2024['brand-default']}
-                  containerStyle={styles.versionRadio}
-                  textStyle={styles.versionRadioLabel}
-                />
-                <Text style={styles.versionRadioMeta}>
-                  {option.description}
-                </Text>
-                <Text style={styles.versionRadioMeta} selectable>
-                  Source: {option.sourceLabel}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <PillsSwitch
-          value={tabKey}
-          options={TAB_OPTIONS}
-          onTabChange={key => {
-            setTabKey(key as TabKey);
-          }}
-          containerStyle={styles.tabSwitch}
-          itemStyle={styles.tabSwitchItem}
-        />
-
-        {renderSelectedTab()}
-      </ScrollView>
+      <Tabs.Container
+        containerStyle={styles.tabsContainer}
+        headerContainerStyle={styles.tabsHeaderContainer}
+        headerHeight={0}
+        tabBarHeight={PAGE_TAB_BAR_HEIGHT}
+        initialTabName={pageTabKey}
+        onTabChange={event => {
+          const nextTab = event.tabName as PageTabKey;
+          setPageTabKey(nextTab);
+        }}>
+        <Tabs.Tab name="overview" label="Overview">
+          {renderTabScrollView(renderOverviewTab())}
+        </Tabs.Tab>
+        <Tabs.Tab name="business" label="Business">
+          {renderTabScrollView(renderBusinessTab())}
+        </Tabs.Tab>
+        <Tabs.Tab name="playground" label="Playground">
+          {renderTabScrollView(renderPlaygroundTab())}
+        </Tabs.Tab>
+        <Tabs.Tab name="raw-v10" label="Raw v10">
+          {renderTabScrollView(renderV9RawSection())}
+        </Tabs.Tab>
+      </Tabs.Container>
 
       <AppBottomSheetModal
         ref={actionsSheetRef}
@@ -3552,9 +4179,15 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors2024['neutral-line'],
   },
+  tabsContainer: {
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  tabsHeaderContainer: {
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
   scrollView: {
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: PAGE_TAB_CONTENT_TOP_PADDING,
     paddingBottom: 24,
   },
   tabSwitch: {
@@ -3580,6 +4213,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-bg-2'],
   },
+  versionSelectorOptionDisabled: {
+    opacity: 0.45,
+  },
   versionRadio: {
     paddingVertical: 0,
   },
@@ -3595,6 +4231,10 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
+  },
+  systemAuthMockHeader: {
+    marginTop: 16,
+    gap: 2,
   },
   summaryCard: {
     marginTop: 16,
@@ -3667,6 +4307,13 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   actionButton: {
     flex: 1,
+    marginTop: 0,
+  },
+  playgroundButtonGrid: {
+    marginTop: 12,
+    gap: 8,
+  },
+  playgroundButton: {
     marginTop: 0,
   },
   sheetScrollView: {

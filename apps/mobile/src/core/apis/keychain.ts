@@ -20,6 +20,7 @@ import {
   type AndroidAuthPromptPolicy,
   type KeychainStorageType,
   coerceKeychainStorageType,
+  getDefaultBiometricsAuthenticationType,
   getAuthenticationType,
   getAuthenticationTypeLabel,
   isAuthenticatedByBiometrics,
@@ -49,6 +50,7 @@ export {
   type AndroidAuthPromptPolicy,
   type KeychainStorageType,
   coerceKeychainStorageType,
+  getDefaultBiometricsAuthenticationType,
   getAuthenticationType,
   getAuthenticationTypeLabel,
   isAuthenticatedByBiometrics,
@@ -104,6 +106,7 @@ type KeychainBiometricsFailureDiagnostic = {
     androidAuthPromptPolicy?: unknown;
     androidAllowKeyStoreRecovery?: unknown;
     shouldAttachTrustedVaultKeyString?: unknown;
+    skipPostDecryptKeychainRewrite?: unknown;
   };
   debugStates: {
     current: SafeKeychainDebugState | null;
@@ -143,53 +146,6 @@ function getErrorCode(error: unknown) {
 
 function getErrorName(error: unknown) {
   return error instanceof Error ? error.name : undefined;
-}
-
-function getLegacyBiometricsFallbackSkipReason(
-  version: CurrentKeychainVersion,
-  error: unknown,
-) {
-  if (!isAndroid) {
-    return 'not-android';
-  }
-
-  if (version === '8.2.0-fork') {
-    return 'already-legacy-version';
-  }
-
-  const authenticationType = getAuthenticationType();
-  if (authenticationType !== KEYCHAIN_AUTH_TYPES.BIOMETRICS) {
-    return `auth-type-${getAuthenticationTypeLabel(authenticationType)}`;
-  }
-
-  const parsed = parseKeychainError(error);
-  if (parsed?.isCancelledByUser) {
-    return 'cancelled-by-user';
-  }
-
-  return null;
-}
-
-type KeychainFallbackCandidate = {
-  version: CurrentKeychainVersion;
-  api: ReturnType<typeof getKeychainApiByVersion>;
-};
-
-function getLegacyBiometricsFallbackCandidates(
-  version: CurrentKeychainVersion,
-): KeychainFallbackCandidate[] {
-  switch (version) {
-    case '10.0.0':
-      return [
-        { version: '9.0.0', api: apisKeychainV9_0_0 },
-        { version: '8.2.0-fork', api: apisKeychainV8_2_0 },
-      ];
-    case '9.0.0':
-      return [{ version: '8.2.0-fork', api: apisKeychainV8_2_0 }];
-    case '8.2.0-fork':
-    default:
-      return [];
-  }
 }
 
 function summarizeKeychainDebugState(
@@ -303,6 +259,8 @@ export async function requestGenericPassword(
           requestOptions.androidAllowKeyStoreRecovery,
         shouldAttachTrustedVaultKeyString:
           requestOptions.shouldAttachTrustedVaultKeyString,
+        skipPostDecryptKeychainRewrite:
+          requestOptions.skipPostDecryptKeychainRewrite,
       },
     });
     return await currentApi.requestGenericPassword(...args);
@@ -317,134 +275,21 @@ export async function requestGenericPassword(
           requestOptions.androidAllowKeyStoreRecovery,
         shouldAttachTrustedVaultKeyString:
           requestOptions.shouldAttachTrustedVaultKeyString,
+        skipPostDecryptKeychainRewrite:
+          requestOptions.skipPostDecryptKeychainRewrite,
       },
     });
 
-    const fallbackSkipReason = getLegacyBiometricsFallbackSkipReason(
-      currentVersion,
-      error,
-    );
     logger.warn('[keychain] facade current requestGenericPassword failed', {
       currentVersion,
       currentSourceLabel: currentApi.KEYCHAIN_SOURCE_LABEL,
       authenticationTypeLabel: getAuthenticationTypeLabel(),
-      fallbackSkipReason,
       error: {
         code: getErrorCode(error),
         name: getErrorName(error),
         message: getErrorMessage(error),
       },
     });
-
-    if (fallbackSkipReason) {
-      throw error;
-    }
-
-    const fallbackCandidates =
-      getLegacyBiometricsFallbackCandidates(currentVersion);
-
-    for (const fallbackCandidate of fallbackCandidates) {
-      let fallbackPlainPassword = '';
-      let fallbackVaultKeyString: string | undefined;
-      const fallbackOptions = {
-        ...requestOptions,
-        onPlainPassword: async (
-          password: string,
-          credentials: Parameters<
-            NonNullable<RequestGenericPasswordOptions['onPlainPassword']>
-          >[1],
-        ) => {
-          fallbackPlainPassword = password;
-          fallbackVaultKeyString =
-            typeof credentials?.vaultKeyString === 'string'
-              ? credentials.vaultKeyString
-              : undefined;
-          logger.info('[keychain] legacy fallback plain password callback', {
-            currentVersion,
-            fallbackVersion: fallbackCandidate.version,
-            fallbackSourceLabel: fallbackCandidate.api.KEYCHAIN_SOURCE_LABEL,
-            hasPlainPassword: !!password,
-            hasVaultKeyString: !!fallbackVaultKeyString,
-          });
-          await requestOptions.onPlainPassword?.(password, credentials);
-        },
-      };
-
-      try {
-        logger.info('[keychain] trying legacy biometrics fallback', {
-          currentVersion,
-          currentSourceLabel: currentApi.KEYCHAIN_SOURCE_LABEL,
-          fallbackVersion: fallbackCandidate.version,
-          fallbackSourceLabel: fallbackCandidate.api.KEYCHAIN_SOURCE_LABEL,
-        });
-        const fallbackResult =
-          await fallbackCandidate.api.requestGenericPassword(fallbackOptions);
-
-        let currentRewriteSucceeded = false;
-        const shouldRewriteCurrentVersion =
-          !requestOptions.skipCurrentVersionRewriteAfterLegacyFallback;
-        if (fallbackPlainPassword && shouldRewriteCurrentVersion) {
-          try {
-            await currentApi.setGenericPassword(
-              fallbackPlainPassword,
-              KEYCHAIN_AUTH_TYPES.BIOMETRICS,
-              fallbackVaultKeyString
-                ? { vaultKeyString: fallbackVaultKeyString }
-                : undefined,
-            );
-            currentRewriteSucceeded = true;
-          } catch (repairError) {
-            logger.warn(
-              '[keychain] legacy fallback read succeeded but current rewrite failed',
-              {
-                currentVersion,
-                currentSourceLabel: currentApi.KEYCHAIN_SOURCE_LABEL,
-                fallbackVersion: fallbackCandidate.version,
-                fallbackSourceLabel: fallbackCandidate.api.KEYCHAIN_SOURCE_LABEL,
-                repairError: {
-                  code: getErrorCode(repairError),
-                  message: getErrorMessage(repairError),
-                },
-              },
-            );
-          }
-        }
-
-        logger.warn(
-          '[keychain] recovered Android biometrics through legacy keychain fallback',
-          {
-            currentVersion,
-            currentSourceLabel: currentApi.KEYCHAIN_SOURCE_LABEL,
-            fallbackVersion: fallbackCandidate.version,
-            fallbackSourceLabel: fallbackCandidate.api.KEYCHAIN_SOURCE_LABEL,
-            originalError: {
-              code: getErrorCode(error),
-              message: getErrorMessage(error),
-            },
-            hasFallbackPlainPassword: !!fallbackPlainPassword,
-            currentRewriteSkipped: !shouldRewriteCurrentVersion,
-            currentRewriteSucceeded,
-          },
-        );
-
-        return fallbackResult;
-      } catch (fallbackError) {
-        logger.warn('[keychain] Android legacy biometrics fallback failed', {
-          currentVersion,
-          currentSourceLabel: currentApi.KEYCHAIN_SOURCE_LABEL,
-          fallbackVersion: fallbackCandidate.version,
-          fallbackSourceLabel: fallbackCandidate.api.KEYCHAIN_SOURCE_LABEL,
-          originalError: {
-            code: getErrorCode(error),
-            message: getErrorMessage(error),
-          },
-          fallbackError: {
-            code: getErrorCode(fallbackError),
-            message: getErrorMessage(fallbackError),
-          },
-        });
-      }
-    }
 
     throw error;
   }
@@ -453,6 +298,9 @@ export async function requestGenericPassword(
 export const getSupportedBiometryType =
   (): Promise<KeychainSupportedBiometryType> =>
     getCurrentKeychainApi().getSupportedBiometryType();
+
+export const isPasscodeAuthAvailable = () =>
+  getCurrentKeychainApi().isPasscodeAuthAvailable();
 
 export const getKeychainDebugState = (
   ...args: Parameters<typeof apisKeychainV8_2_0.getKeychainDebugState>
@@ -488,6 +336,12 @@ export const setGenericPassword = (
   ...args: Parameters<typeof apisKeychainV8_2_0.setGenericPassword>
 ) => getCurrentKeychainApi().setGenericPassword(...args);
 
+export const migrateAndroidBiometricsToPasscode = (
+  ...args: Parameters<
+    typeof apisKeychainV8_2_0.migrateAndroidBiometricsToPasscode
+  >
+) => getCurrentKeychainApi().migrateAndroidBiometricsToPasscode(...args);
+
 export const cacheTrustedVaultKeyString = (
   ...args: Parameters<typeof apisKeychainV8_2_0.cacheTrustedVaultKeyString>
 ) => getCurrentKeychainApi().cacheTrustedVaultKeyString(...args);
@@ -499,28 +353,25 @@ export async function repairBiometricsAfterPasswordUnlock(
   const currentVersion = getCurrentKeychainVersion();
   const authType = getAuthenticationType();
 
-  if (!isAndroid || authType !== KEYCHAIN_AUTH_TYPES.BIOMETRICS) {
+  if (authType !== KEYCHAIN_AUTH_TYPES.BIOMETRICS) {
     return {
       repaired: false,
       skipped: true,
-      reason: !isAndroid ? 'not-android' : 'not-biometrics-auth',
+      reason: 'not-biometrics-auth',
     } as const;
   }
 
   try {
     await getKeychainApiByVersion(currentVersion).setGenericPassword(
       password,
-      KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+      KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
     );
-    logger.info(
-      '[keychain] repaired Android biometrics after password unlock',
-      {
-        currentVersion,
-        sourceLabel:
-          getKeychainApiByVersion(currentVersion).KEYCHAIN_SOURCE_LABEL,
-        reason: options.reason,
-      },
-    );
+    logger.info('[keychain] repaired biometrics after password unlock', {
+      currentVersion,
+      sourceLabel:
+        getKeychainApiByVersion(currentVersion).KEYCHAIN_SOURCE_LABEL,
+      reason: options.reason,
+    });
 
     return {
       repaired: true,
@@ -529,7 +380,7 @@ export async function repairBiometricsAfterPasswordUnlock(
     } as const;
   } catch (error) {
     logger.warn(
-      '[keychain] failed to repair Android biometrics after password unlock',
+      '[keychain] failed to repair biometrics after password unlock',
       {
         currentVersion,
         sourceLabel:
@@ -538,10 +389,12 @@ export async function repairBiometricsAfterPasswordUnlock(
         error: getErrorMessage(error),
       },
     );
-    await recordAndroidBiometricsFailureDiagnostic({
-      stage: 'repairBiometricsAfterPasswordUnlock',
-      error,
-    });
+    if (isAndroid) {
+      await recordAndroidBiometricsFailureDiagnostic({
+        stage: 'repairBiometricsAfterPasswordUnlock',
+        error,
+      });
+    }
 
     return {
       repaired: false,
