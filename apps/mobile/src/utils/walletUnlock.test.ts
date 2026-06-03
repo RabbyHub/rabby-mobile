@@ -31,6 +31,7 @@ describe('utils/walletUnlock', () => {
       async () => passcodeAuthAvailable,
     );
     const mockShowAuthenticationModal = jest.fn(async config => {
+      await config.validationHandler?.('custom-password');
       config.onFinished?.();
       return { hideModal: jest.fn() };
     });
@@ -149,7 +150,7 @@ describe('utils/walletUnlock', () => {
     expect(mockHideUnlockingToast).toHaveBeenCalledTimes(1);
   });
 
-  it('uses system credential unlock when biometrics are gone but device passcode can satisfy the keychain entry', async () => {
+  it('falls back to the custom password modal when biometrics are gone even if Android passcode is available', async () => {
     const {
       walletUnlock,
       mockVerifyPasswordOrUnlock,
@@ -166,17 +167,17 @@ describe('utils/walletUnlock', () => {
     await walletUnlock.ensureWalletUnlocked();
 
     expect(mockGetSupportedBiometryType).toHaveBeenCalled();
-    expect(mockIsPasscodeAuthAvailable).toHaveBeenCalled();
-    expect(mockRequestGenericPassword).toHaveBeenCalledWith(
+    expect(mockIsPasscodeAuthAvailable).not.toHaveBeenCalled();
+    expect(mockRequestGenericPassword).not.toHaveBeenCalled();
+    expect(mockShowAuthenticationModal).toHaveBeenCalledWith(
       expect.objectContaining({
-        purpose: 11,
+        authType: ['password'],
       }),
     );
-    expect(mockVerifyPasswordOrUnlock).toHaveBeenCalledWith('plain-password');
-    expect(mockShowAuthenticationModal).not.toHaveBeenCalled();
+    expect(mockVerifyPasswordOrUnlock).toHaveBeenCalledWith('custom-password');
   });
 
-  it('uses Android passcode fallback for old biometrics auth settings when biometric enrollment is gone', async () => {
+  it('falls back to the custom password modal for old Android biometrics auth settings when enrollment is gone', async () => {
     const {
       walletUnlock,
       mockVerifyPasswordOrUnlock,
@@ -194,14 +195,14 @@ describe('utils/walletUnlock', () => {
     await walletUnlock.ensureWalletUnlocked();
 
     expect(mockGetSupportedBiometryType).toHaveBeenCalled();
-    expect(mockIsPasscodeAuthAvailable).toHaveBeenCalled();
-    expect(mockRequestGenericPassword).toHaveBeenCalledWith(
+    expect(mockIsPasscodeAuthAvailable).not.toHaveBeenCalled();
+    expect(mockRequestGenericPassword).not.toHaveBeenCalled();
+    expect(mockShowAuthenticationModal).toHaveBeenCalledWith(
       expect.objectContaining({
-        purpose: 11,
+        authType: ['password'],
       }),
     );
-    expect(mockVerifyPasswordOrUnlock).toHaveBeenCalledWith('plain-password');
-    expect(mockShowAuthenticationModal).not.toHaveBeenCalled();
+    expect(mockVerifyPasswordOrUnlock).toHaveBeenCalledWith('custom-password');
   });
 
   it('shows unlocking toast for biometric post-unlock', async () => {
