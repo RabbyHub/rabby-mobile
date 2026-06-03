@@ -76,6 +76,10 @@ export function setBiometrics(
 }
 async function getDevicePasscodeAvailable() {
   if (IS_IOS) {
+    return apisKeychain.isPasscodeAuthAvailable().catch(() => false);
+  }
+
+  if (!IS_ANDROID) {
     return false;
   }
 
@@ -235,10 +239,9 @@ async function ensureBiometricsReadyForUnlock() {
   const entryReady = await checkAndroidBiometricsEntryReady();
   const authType = getAuthenticationType();
   const canUseDevicePasscode =
-    !IS_IOS &&
+    systemAuth.devicePasscodeAvailable &&
     (authType === KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE ||
-      authType === KEYCHAIN_AUTH_TYPES.BIOMETRICS) &&
-    systemAuth.devicePasscodeAvailable;
+      (!IS_IOS && authType === KEYCHAIN_AUTH_TYPES.BIOMETRICS));
   const nextAuthEnabled =
     enabledBySetting &&
     entryReady &&
