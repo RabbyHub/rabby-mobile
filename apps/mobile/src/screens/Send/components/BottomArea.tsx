@@ -55,12 +55,14 @@ function BottomArea() {
     agreeRequiredForToAddress,
     agreeRequiredForToken,
     buildTxsCount,
+    initialTokenReady,
     isSubmitLoading,
   } = useSendTokenScreenStateShallowSelector(state => ({
     addressToAddAsContacts: state.addressToAddAsContacts,
     agreeRequiredForToAddress: state.agreeRequiredChecks.forToAddress,
     agreeRequiredForToken: state.agreeRequiredChecks.forToken,
     buildTxsCount: state.buildTxsCount,
+    initialTokenReady: state.initialTokenReady,
     isSubmitLoading: state.isSubmitLoading,
   }));
 
@@ -100,7 +102,8 @@ function BottomArea() {
     toAddressPositiveTips: ctx.computed.toAddressPositiveTips,
   }));
 
-  const { currentToken } = useSendTokenScreenChainToken();
+  const { currentToken: screenCurrentToken } = useSendTokenScreenChainToken();
+  const currentToken = initialTokenReady ? screenCurrentToken : null;
 
   const [isAllowTransferModalVisible, setIsAllowTransferModalVisible] =
     React.useState(false);
@@ -132,7 +135,7 @@ function BottomArea() {
   } = useRisks({
     // balance: !!screenState.toAddrAccountInfo?.account?.balance,
     fromAddress: fromAddress,
-    toAddress: to,
+    toAddress: initialTokenReady ? to : '',
     cex: toAddrCex,
     forbiddenCheck: useMemo(() => {
       return {

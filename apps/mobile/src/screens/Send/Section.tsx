@@ -15,6 +15,7 @@ import {
   useSendTokenFormValuesSelector,
   useSendTokenInternalSelector,
   useSendTokenInternalShallowSelector,
+  useSendTokenScreenChainToken,
   useSendTokenScreenStateSelector,
   useSendTokenScreenStateShallowSelector,
 } from './hooks/useSendToken';
@@ -499,11 +500,37 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
 export const BalanceSection = React.memo(function BalanceSection({
   style,
 }: RNViewProps) {
-  const isReady = useSendTokenInternalSelector(
-    ctx => !!ctx.computed.chainItem && !!ctx.computed.currentToken,
+  const initialTokenIdentityReady = useSendTokenScreenStateSelector(
+    state => state.initialTokenIdentityReady,
   );
+  const { chainItem: screenChainItem, currentToken: screenCurrentToken } =
+    useSendTokenScreenChainToken();
+  const { chainItem: internalChainItem, currentToken: internalCurrentToken } =
+    useSendTokenInternalShallowSelector(ctx => ({
+      chainItem: ctx.computed.chainItem,
+      currentToken: ctx.computed.currentToken,
+    }));
+  const hasRenderedSyncedInitialTokenRef = useRef(false);
 
-  if (!isReady) {
+  const isReady = !!internalChainItem && !!internalCurrentToken;
+  const isInitialTokenSynced =
+    !!screenChainItem &&
+    !!screenCurrentToken &&
+    !!internalChainItem &&
+    !!internalCurrentToken &&
+    screenChainItem.serverId === internalChainItem.serverId &&
+    getSendAmountTokenKey(screenCurrentToken).toLowerCase() ===
+      getSendAmountTokenKey(internalCurrentToken).toLowerCase();
+
+  if (initialTokenIdentityReady && isInitialTokenSynced) {
+    hasRenderedSyncedInitialTokenRef.current = true;
+  }
+
+  if (
+    !initialTokenIdentityReady ||
+    !isReady ||
+    !hasRenderedSyncedInitialTokenRef.current
+  ) {
     return null;
   }
 
