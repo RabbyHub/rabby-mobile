@@ -320,9 +320,10 @@ function SettingsBlocks() {
   const navigation = useRabbyAppNavigation();
 
   const biometricsComputed = useBiometricsComputed();
-  const { couldSetupBiometrics, isUsingDevicePasscode } = biometricsComputed;
+  const { couldSetupBiometrics, isUsingDevicePasscodeForSettings } =
+    biometricsComputed;
   const biometricsUnavailableForSettings =
-    !couldSetupBiometrics && !isUsingDevicePasscode;
+    !couldSetupBiometrics && !isUsingDevicePasscodeForSettings;
   const disabledBiometrics = !APP_FEATURE_SWITCH.biometricsAuth;
 
   const showBiometricsUnavailableToast = useCallback(() => {
@@ -404,7 +405,7 @@ function SettingsBlocks() {
         items: [
           {
             label: biometricsComputed.systemAuthSettingsLabel,
-            icon: isUsingDevicePasscode
+            icon: isUsingDevicePasscodeForSettings
               ? RcAutolock
               : isFaceID
               ? RcFaceId
