@@ -249,6 +249,8 @@ export function useSendTokenScreenChainToken() {
 }
 export type SendScreenState = {
   inited: boolean;
+  initialTokenIdentityReady: boolean;
+  initialTokenReady: boolean;
 
   showContactInfo: boolean;
   contactInfo: null | UIContactBookItem;
@@ -301,6 +303,8 @@ export type SendScreenState = {
 };
 const DFLT_SEND_STATE: SendScreenState = {
   inited: false,
+  initialTokenIdentityReady: false,
+  initialTokenReady: false,
 
   showContactInfo: false,
   contactInfo: null,
@@ -2529,18 +2533,19 @@ export function useSendTokenFormValuesShallowSelector<T>(
 }
 
 export function useSendTokenCanSubmit() {
-  const { balanceError, isLoading } = useSendTokenScreenStateShallowSelector(
-    state => ({
+  const { balanceError, initialTokenReady, isLoading } =
+    useSendTokenScreenStateShallowSelector(state => ({
       balanceError: state.balanceError,
+      initialTokenReady: state.initialTokenReady,
       isLoading: state.isLoading,
-    }),
-  );
+    }));
   const { amount, to } = useSendTokenFormValuesShallowSelector(values => ({
     amount: values.amount,
     to: values.to,
   }));
 
   return (
+    initialTokenReady &&
     isValidAddress(to) &&
     !balanceError &&
     new BigNumber(amount || 0).gt(0) &&

@@ -15,6 +15,7 @@ import {
   useSendTokenFormValuesSelector,
   useSendTokenInternalSelector,
   useSendTokenInternalShallowSelector,
+  useSendTokenScreenChainToken,
   useSendTokenScreenStateSelector,
   useSendTokenScreenStateShallowSelector,
 } from './hooks/useSendToken';
@@ -441,7 +442,7 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
   const normalizeAmountInputValue = useCallback(
     (nextValue: string) => {
       if (inputMode === 'usd') {
-        return formatSpeicalAmount(nextValue);
+        return formatTokenAmountInput(nextValue, 2);
       }
 
       return formatTokenAmountInput(nextValue, currentToken?.decimals);
@@ -499,11 +500,37 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
 export const BalanceSection = React.memo(function BalanceSection({
   style,
 }: RNViewProps) {
-  const isReady = useSendTokenInternalSelector(
-    ctx => !!ctx.computed.chainItem && !!ctx.computed.currentToken,
+  const initialTokenIdentityReady = useSendTokenScreenStateSelector(
+    state => state.initialTokenIdentityReady,
   );
+  const { chainItem: screenChainItem, currentToken: screenCurrentToken } =
+    useSendTokenScreenChainToken();
+  const { chainItem: internalChainItem, currentToken: internalCurrentToken } =
+    useSendTokenInternalShallowSelector(ctx => ({
+      chainItem: ctx.computed.chainItem,
+      currentToken: ctx.computed.currentToken,
+    }));
+  const hasRenderedSyncedInitialTokenRef = useRef(false);
 
-  if (!isReady) {
+  const isReady = !!internalChainItem && !!internalCurrentToken;
+  const isInitialTokenSynced =
+    !!screenChainItem &&
+    !!screenCurrentToken &&
+    !!internalChainItem &&
+    !!internalCurrentToken &&
+    screenChainItem.serverId === internalChainItem.serverId &&
+    getSendAmountTokenKey(screenCurrentToken).toLowerCase() ===
+      getSendAmountTokenKey(internalCurrentToken).toLowerCase();
+
+  if (initialTokenIdentityReady && isInitialTokenSynced) {
+    hasRenderedSyncedInitialTokenRef.current = true;
+  }
+
+  if (
+    !initialTokenIdentityReady ||
+    !isReady ||
+    !hasRenderedSyncedInitialTokenRef.current
+  ) {
     return null;
   }
 
@@ -520,7 +547,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     sectionTitle: {
       color: colors2024['neutral-title-1'],
-      fontSize: 17,
+      fontSize: 15,
+      lineHeight: 18,
       fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
     },
@@ -543,8 +571,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      height: 26,
-      marginBottom: 12,
+      height: 18,
+      marginBottom: 8,
+      paddingHorizontal: 8,
     },
 
     balanceArea: {

@@ -110,6 +110,19 @@ const EMPTY_TOKEN_ITEM = {
   price: 0,
 };
 
+function getInitialDisplayToken(token: TokenItem): TokenItem | null {
+  const chain = findChainByServerID(token.chain);
+  if (chain && lowcaseSame(token.id, chain.nativeTokenAddress)) {
+    return makeTokenFromChain(chain);
+  }
+
+  if (token.optimized_symbol || token.display_symbol || token.symbol) {
+    return token;
+  }
+
+  return null;
+}
+
 const SendPendingTxItem = React.memo(function SendPendingTxItem({
   clearLocalPendingTxData,
   isForMultipleAddress,
@@ -161,7 +174,7 @@ const SendScreenBody = React.memo(function SendScreenBody({
 
   const toAddressControlStyle = useMemo(
     () => ({
-      marginTop: 24,
+      marginTop: 16,
       marginBottom: 0,
     }),
     [],
@@ -506,15 +519,32 @@ function SendScreen({
         apiSendToken.setChainEnum(target.enum);
       }
     }
-    await Promise.race([
+    const initialDisplayToken = getInitialDisplayToken(targetToken);
+    if (initialDisplayToken) {
+      apiSendToken.putChainToken({ currentToken: initialDisplayToken });
+      if (currentAccount?.address) {
+        apiSendToken.markBalanceLoading({
+          tokenId: targetToken.id,
+          chainId: targetToken.chain,
+          currentAddress: currentAccount.address,
+        });
+      }
+      apiSendToken.putScreenState({ initialTokenIdentityReady: true });
+    }
+
+    const loadedToken =
       currentAccount?.address &&
-        (await loadCurrentToken(
-          targetToken.id,
-          targetToken.chain,
-          currentAccount?.address,
-        )),
-      sleep(5000),
-    ]);
+      (await loadCurrentToken(
+        targetToken.id,
+        targetToken.chain,
+        currentAccount?.address,
+      ));
+
+    if (!initialDisplayToken && loadedToken) {
+      apiSendToken.putScreenState({ initialTokenIdentityReady: true });
+    }
+
+    await Promise.race([loadedToken, sleep(5000)]);
   }, [
     navParams,
     routeParams,
@@ -548,6 +578,8 @@ function SendScreen({
         } catch (e) {
           console.error('SendScreen initByCache error', e);
           initByCacheFinishedRef.current = false;
+        } finally {
+          apiSendToken.putScreenState({ initialTokenReady: true });
         }
       })();
       checkIsAddressBlocked(navParams?.toAddress);
@@ -738,7 +770,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       flexDirection: 'column',
       justifyContent: 'space-between',
       flex: 1,
-      paddingTop: 16,
+      paddingTop: 4,
       position: 'relative',
       height: '100%',
     },
@@ -747,7 +779,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       paddingBottom: 280,
     },
     balance: {
-      marginTop: 24,
+      marginTop: 16,
     },
     screenRoot: {
       flex: 1,
