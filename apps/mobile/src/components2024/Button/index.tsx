@@ -260,15 +260,18 @@ export const Button = ({
     return i;
   }, [icon, iconRight, titleStyle]);
 
+  const splitCJKTitle = shouldSplitAndroidCJKTitle(textNode)
+    ? textNode
+    : undefined;
   const titleNode = useMemo(() => {
     if (!textNode) {
       return null;
     }
 
-    if (shouldSplitAndroidCJKTitle(textNode)) {
+    if (splitCJKTitle) {
       return (
         <View style={styles.cjkTitleRow}>
-          {Array.from(textNode).map((char, index) => (
+          {Array.from(splitCJKTitle).map((char, index) => (
             <Text key={`${char}-${index}`} style={titleStyle}>
               {char}
             </Text>
@@ -280,7 +283,7 @@ export const Button = ({
     return renderText(textNode, {
       style: titleStyle,
     });
-  }, [styles.cjkTitleRow, textNode, titleStyle]);
+  }, [splitCJKTitle, styles.cjkTitleRow, textNode, titleStyle]);
 
   return (
     <View
@@ -297,6 +300,7 @@ export const Button = ({
         accessibilityRole="button"
         accessibilityState={accessibilityState}
         {...rest}
+        accessibilityLabel={rest.accessibilityLabel ?? splitCJKTitle}
         style={StyleSheet.flatten([rest.style, styleWithHeight])}>
         <ViewComponent style={innerStyle}>
           {/* Activity Indicator on loading */}
