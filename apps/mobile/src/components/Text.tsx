@@ -1,5 +1,17 @@
-import { RefAttributes, useMemo } from 'react';
-import { TextProps, Platform, TextStyle } from 'react-native';
+import {
+  Children,
+  RefAttributes,
+  isValidElement,
+  type ReactNode,
+  useMemo,
+} from 'react';
+import {
+  TextProps,
+  Platform,
+  TextStyle,
+  StyleProp,
+  StyleSheet,
+} from 'react-native';
 import { Text as RNText } from '@/components/Typography';
 import { moderateScale } from 'react-native-size-matters';
 
@@ -39,17 +51,108 @@ const defaultFontFamily = {
 
 const RobotoLackWeights = ['200', '600', '800'];
 
+const CJK_RE =
+  /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uac00-\ud7af]/;
+const SF_PRO_RE =
+  /^SF(?:[-\s]?Pro|Pro)(?:[-\s]?Rounded)?(?:[-\s]?(Regular|Medium|Bold|Heavy))?$/i;
+
+function collectText(node: ReactNode): string {
+  if (node == null || typeof node === 'boolean') {
+    return '';
+  }
+
+  if (typeof node === 'string') {
+    return node;
+  }
+
+  if (typeof node === 'number' || typeof node === 'bigint') {
+    return String(node);
+  }
+
+  if (isValidElement<{ children?: ReactNode }>(node)) {
+    return collectText(node.props.children);
+  }
+
+  let text = '';
+  Children.forEach(node, child => {
+    text += collectText(child);
+  });
+  return text;
+}
+
+export function containsCJKText(node: ReactNode) {
+  return CJK_RE.test(collectText(node));
+}
+
+function inferFontWeightFromFamily(fontFamily?: TextStyle['fontFamily']) {
+  if (!fontFamily) {
+    return undefined;
+  }
+
+  if (/Heavy$/i.test(fontFamily)) {
+    return '900';
+  }
+
+  if (/Bold$/i.test(fontFamily)) {
+    return '700';
+  }
+
+  if (/Medium$/i.test(fontFamily)) {
+    return '500';
+  }
+
+  if (/Regular$/i.test(fontFamily)) {
+    return '400';
+  }
+
+  return undefined;
+}
+
+export function sanitizeAndroidCJKFontStyle(
+  style: StyleProp<TextStyle>,
+  hasCJK: boolean,
+  platformOS = Platform.OS,
+) {
+  const flattenedStyle = StyleSheet.flatten(style) || {};
+
+  if (
+    platformOS !== 'android' ||
+    !hasCJK ||
+    !flattenedStyle.fontFamily ||
+    !SF_PRO_RE.test(flattenedStyle.fontFamily)
+  ) {
+    return flattenedStyle;
+  }
+
+  const inferredFontWeight = inferFontWeightFromFamily(
+    flattenedStyle.fontFamily,
+  );
+  const nextStyle = { ...flattenedStyle };
+  delete nextStyle.fontFamily;
+
+  return {
+    ...nextStyle,
+    fontWeight: nextStyle.fontWeight || inferredFontWeight,
+  };
+}
+
 export const Text = ({
   style,
+  children,
   ref,
   ...rest
 }: TextProps & RefAttributes<RNText>) => {
+  const hasCJK = useMemo(() => containsCJKText(children), [children]);
+  const sanitizedStyle = useMemo(
+    () => sanitizeAndroidCJKFontStyle(style, hasCJK),
+    [hasCJK, style],
+  );
   const _fontSize = useMemo(
-    () => normalize((style as TextStyle)?.fontSize || 14),
-    [style],
+    () => normalize((sanitizedStyle as TextStyle)?.fontSize || 14),
+    [sanitizedStyle],
   );
   const _fontWeight = useMemo(() => {
-    const fontWeight = (style as TextStyle)?.fontWeight;
+    const fontWeight = (sanitizedStyle as TextStyle)?.fontWeight;
 
     if (
       Platform.OS === 'android' &&
@@ -60,20 +163,21 @@ export const Text = ({
     }
 
     return fontWeight;
-  }, [style]);
+  }, [sanitizedStyle]);
 
   return (
     <RNText
       style={[
         defaultFontFamily,
-        style,
+        sanitizedStyle,
         {
           fontSize: _fontSize,
           fontWeight: _fontWeight as TextStyle['fontWeight'],
         },
       ]}
       {...rest}
-      ref={ref}
-    />
+      ref={ref}>
+      {children}
+    </RNText>
   );
 };
