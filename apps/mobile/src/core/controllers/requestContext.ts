@@ -49,11 +49,8 @@ export function buildProviderRequestContext(
   request: ProviderRequest,
 ): ProviderRequestContext {
   const $ctx = request.data?.$ctx || {};
-  const legacyWalletConnectChainId = ($ctx as any).walletConnect?.chainId;
   const chainId = normalizeProviderRequestChainId(
-    request.requestContext?.chainId ??
-      $ctx.chainId ??
-      legacyWalletConnectChainId,
+    request.requestContext?.chainId ?? $ctx.chainId,
   );
   const origin =
     request.requestContext?.origin ||

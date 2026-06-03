@@ -1,19 +1,20 @@
 import { Core } from '@walletconnect/core';
 import { WalletKit } from '@reown/walletkit';
-import { isNonPublicProductionEnv } from '@/constant';
+import type { IWalletKit } from '@reown/walletkit';
 import { RABBY_MOBILE_WALLETCONNECT_PROJECT_ID } from '@/constant/env';
+import {
+  clearWalletConnectAutoDisconnectTopic,
+  disconnectRestoredWalletConnectSessionsForAutoDisconnect,
+} from './autoDisconnect';
 import { WALLETCONNECT_METADATA } from './constants';
 import { addWalletConnectLog } from './debugLog';
+import { getWalletConnectErrorMessage } from './error';
 import {
   clearWalletConnectProposal,
   storeWalletConnectProposal,
 } from './proposal';
 import { handleWalletConnectSessionRequest } from './requestBridge';
-import {
-  disconnectWalletConnectDappMirrorByTopic,
-  forgetWalletConnectSession,
-  syncWalletConnectSessionsFromClient,
-} from './sessions';
+import { syncWalletConnectSessionsFromClient } from './sessions';
 import {
   getWalletConnectDebugState,
   setWalletConnectClientStatus,
@@ -21,11 +22,31 @@ import {
 } from './state';
 import { walletConnectStorage } from './storage';
 
-let walletKitClient: any = null;
-let initPromise: Promise<any> | null = null;
+type WalletConnectCore = InstanceType<typeof Core> & {
+  pairing?: {
+    events?: {
+      on?: (
+        event: 'pairing_expire',
+        listener: (event: unknown) => void,
+      ) => void;
+    };
+  };
+  relayer?: {
+    on?: (
+      event: 'relayer_connect' | 'relayer_disconnect',
+      listener: () => void,
+    ) => void;
+  };
+};
 
-function bindWalletConnectEvents(walletKit: any, core: any) {
-  walletKit.on('session_proposal', (event: any) => {
+let walletKitClient: IWalletKit | null = null;
+let initPromise: Promise<IWalletKit> | null = null;
+
+function bindWalletConnectEvents(
+  walletKit: IWalletKit,
+  core: WalletConnectCore,
+) {
+  walletKit.on('session_proposal', event => {
     const source =
       getWalletConnectDebugState().pairing.source || ('manual' as const);
     storeWalletConnectProposal({
@@ -36,22 +57,27 @@ function bindWalletConnectEvents(walletKit: any, core: any) {
     });
   });
 
-  walletKit.on('session_request', (event: any) => {
+  walletKit.on('session_request', event => {
     handleWalletConnectSessionRequest({
       walletKit,
       event,
     });
   });
 
-  walletKit.on('session_delete', (event: any) => {
-    disconnectWalletConnectDappMirrorByTopic(event.topic);
-    forgetWalletConnectSession(event.topic);
+  walletKit.on('session_delete', event => {
+    clearWalletConnectAutoDisconnectTopic(event.topic);
     syncWalletConnectSessionsFromClient(walletKit);
     addWalletConnectLog('sessions', 'session_delete received', event);
   });
 
-  walletKit.on('proposal_expire', (event: any) => {
+  walletKit.on('proposal_expire', event => {
+    const currentProposalId = getWalletConnectDebugState().proposal?.id;
     clearWalletConnectProposal(event.id);
+    if (currentProposalId !== event.id) {
+      addWalletConnectLog('proposal', 'stale proposal expired', event, 'warn');
+      return;
+    }
+
     setWalletConnectDebugState(prev => ({
       ...prev,
       pairing: {
@@ -63,17 +89,17 @@ function bindWalletConnectEvents(walletKit: any, core: any) {
     addWalletConnectLog('proposal', 'proposal expired', event, 'warn');
   });
 
-  walletKit.on('session_request_expire', (event: any) => {
-    setWalletConnectDebugState(prev => ({
-      ...prev,
-      pendingRequests: prev.pendingRequests.filter(
-        item => item.id !== event.id,
-      ),
-    }));
+  walletKit.on('session_request_expire', event => {
     addWalletConnectLog('request', 'session_request expired', event, 'warn');
   });
 
-  core?.pairing?.events?.on?.('pairing_expire', (event: any) => {
+  core?.pairing?.events?.on?.('pairing_expire', event => {
+    const pairingStatus = getWalletConnectDebugState().pairing.status;
+    if (pairingStatus !== 'pairing' && pairingStatus !== 'paired') {
+      addWalletConnectLog('pairing', 'stale pairing expired', event, 'warn');
+      return;
+    }
+
     setWalletConnectDebugState(prev => ({
       ...prev,
       pairing: {
@@ -93,17 +119,7 @@ function bindWalletConnectEvents(walletKit: any, core: any) {
   });
 }
 
-export async function initWalletConnectForTest() {
-  if (!isNonPublicProductionEnv) {
-    setWalletConnectClientStatus(
-      'disabled',
-      'WalletConnect test wallet is disabled in public production builds.',
-    );
-    throw new Error(
-      'WalletConnect test wallet is disabled in public production builds.',
-    );
-  }
-
+export async function initWalletConnect() {
   if (!RABBY_MOBILE_WALLETCONNECT_PROJECT_ID) {
     setWalletConnectClientStatus(
       'error',
@@ -135,19 +151,30 @@ export async function initWalletConnectForTest() {
 
     walletKitClient = walletKit;
     bindWalletConnectEvents(walletKit, core);
+    await disconnectRestoredWalletConnectSessionsForAutoDisconnect(walletKit);
     syncWalletConnectSessionsFromClient(walletKit);
     setWalletConnectClientStatus('ready');
     addWalletConnectLog('client', 'WalletKit ready');
     return walletKit;
-  })().catch(error => {
+  })().catch((error: unknown) => {
     initPromise = null;
-    const message = error?.message || String(error);
+    const message = getWalletConnectErrorMessage(error);
     setWalletConnectClientStatus('error', message);
     addWalletConnectLog('client', 'WalletKit init failed', error, 'error');
     throw error;
   });
 
   return initPromise;
+}
+
+export function startRestoreWalletConnectSessions() {
+  if (!RABBY_MOBILE_WALLETCONNECT_PROJECT_ID) {
+    return;
+  }
+
+  initWalletConnect().catch((error: unknown) => {
+    console.warn('startRestoreWalletConnectSessions::error', error);
+  });
 }
 
 export function getWalletConnectClient() {

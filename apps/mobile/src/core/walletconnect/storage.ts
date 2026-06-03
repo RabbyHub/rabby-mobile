@@ -11,14 +11,14 @@ export const walletConnectStorage: IKeyValueStorage = {
     return walletConnectMMKV.getAllKeys();
   },
 
-  async getEntries<T = any>() {
+  async getEntries<T = unknown>() {
     return walletConnectMMKV.getAllKeys().map(key => {
       const value = walletConnectMMKV.getString(key) ?? '';
       return [key, parseWalletConnectStorageValue<T>(value)] as [string, T];
     });
   },
 
-  async getItem<T = any>(key: string) {
+  async getItem<T = unknown>(key: string) {
     const value = walletConnectMMKV.getString(key);
     if (typeof value !== 'string') {
       return undefined;
@@ -27,7 +27,7 @@ export const walletConnectStorage: IKeyValueStorage = {
     return parseWalletConnectStorageValue<T>(value);
   },
 
-  async setItem<T = any>(key: string, value: T) {
+  async setItem<T = unknown>(key: string, value: T) {
     walletConnectMMKV.set(key, safeJsonStringify(value));
   },
 

@@ -1,4 +1,5 @@
 import { buildApprovedNamespaces } from '@walletconnect/utils';
+import type { ProposalTypes, SessionTypes } from '@walletconnect/types';
 import type { Account } from '@/types/account';
 import {
   WALLETCONNECT_NAMESPACE,
@@ -8,8 +9,8 @@ import {
 import {
   getRequestedChainsFromProposal,
   getRequestedMethodsFromProposal,
-  getUnsupportedChainsFromProposal,
-  getUnsupportedMethodsFromProposal,
+  getUnsupportedRequiredChainsFromProposal,
+  getUnsupportedRequiredMethodsFromProposal,
   getWalletConnectAccounts,
   getWalletConnectSupportedChains,
 } from './chainAccount';
@@ -22,14 +23,16 @@ import type {
 
 type PendingProposal = {
   id: number;
-  proposal: any;
+  proposal: ProposalTypes.Struct;
   source: WalletConnectPairingSource;
   verifyContext?: unknown;
 };
 
 const pendingProposals = new Map<number, PendingProposal>();
 
-function normalizeMetadata(metadata: any) {
+function normalizeMetadata(
+  metadata: ProposalTypes.Struct['proposer']['metadata'] | undefined,
+) {
   return {
     name: metadata?.name || 'Unknown dapp',
     description: metadata?.description || '',
@@ -52,15 +55,17 @@ function buildProposalViewModel(
     optionalNamespaces: proposal?.optionalNamespaces || {},
     requestedChains: getRequestedChainsFromProposal(proposal),
     requestedMethods: getRequestedMethodsFromProposal(proposal),
-    unsupportedChains: getUnsupportedChainsFromProposal(proposal),
-    unsupportedMethods: getUnsupportedMethodsFromProposal(proposal),
+    unsupportedRequiredChains:
+      getUnsupportedRequiredChainsFromProposal(proposal),
+    unsupportedRequiredMethods:
+      getUnsupportedRequiredMethodsFromProposal(proposal),
     verifyContext: pending.verifyContext,
   };
 }
 
 export function storeWalletConnectProposal(input: {
   id: number;
-  proposal: any;
+  proposal: ProposalTypes.Struct;
   source: WalletConnectPairingSource;
   verifyContext?: unknown;
 }) {
@@ -125,9 +130,9 @@ export function setWalletConnectProposalError(
 }
 
 export function buildApprovedNamespacesForAccount(input: {
-  proposal: any;
+  proposal: ProposalTypes.Struct;
   account: Account;
-}) {
+}): SessionTypes.Namespaces {
   return buildApprovedNamespaces({
     proposal: input.proposal,
     supportedNamespaces: {

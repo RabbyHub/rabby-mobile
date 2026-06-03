@@ -1,10 +1,12 @@
 import { getChainList, type Chain } from '@/constant/chains';
+import type { ProposalTypes } from '@walletconnect/types';
 import type { Account } from '@/types/account';
 import { findChain } from '@/utils/chain';
 import {
   WALLETCONNECT_NAMESPACE,
   WALLETCONNECT_SUPPORTED_METHODS,
 } from './constants';
+import type { WalletConnectNamespaces } from './types';
 
 export function chainToCaip2(chain: Pick<Chain, 'id'>) {
   return `${WALLETCONNECT_NAMESPACE}:${chain.id}`;
@@ -60,7 +62,7 @@ export function getAddressFromCaip10(account: string) {
 }
 
 export function getChainsFromNamespaces(
-  namespaces: Record<string, any> | undefined,
+  namespaces: WalletConnectNamespaces | undefined,
 ) {
   const chains = new Set<string>();
 
@@ -82,7 +84,7 @@ export function getChainsFromNamespaces(
 }
 
 export function getMethodsFromNamespaces(
-  namespaces: Record<string, any> | undefined,
+  namespaces: WalletConnectNamespaces | undefined,
 ) {
   const methods = new Set<string>();
 
@@ -99,7 +101,7 @@ export function getMethodsFromNamespaces(
   return Array.from(methods);
 }
 
-export function getRequestedChainsFromProposal(proposal: any) {
+export function getRequestedChainsFromProposal(proposal: ProposalTypes.Struct) {
   return Array.from(
     new Set([
       ...getChainsFromNamespaces(proposal?.requiredNamespaces),
@@ -108,7 +110,9 @@ export function getRequestedChainsFromProposal(proposal: any) {
   );
 }
 
-export function getRequestedMethodsFromProposal(proposal: any) {
+export function getRequestedMethodsFromProposal(
+  proposal: ProposalTypes.Struct,
+) {
   return Array.from(
     new Set([
       ...getMethodsFromNamespaces(proposal?.requiredNamespaces),
@@ -117,16 +121,28 @@ export function getRequestedMethodsFromProposal(proposal: any) {
   );
 }
 
-export function getUnsupportedChainsFromProposal(proposal: any) {
+export function getRequiredChainsFromProposal(proposal: ProposalTypes.Struct) {
+  return getChainsFromNamespaces(proposal.requiredNamespaces);
+}
+
+export function getRequiredMethodsFromProposal(proposal: ProposalTypes.Struct) {
+  return getMethodsFromNamespaces(proposal.requiredNamespaces);
+}
+
+export function getUnsupportedRequiredChainsFromProposal(
+  proposal: ProposalTypes.Struct,
+) {
   const supported = new Set(getWalletConnectSupportedChains());
-  return getRequestedChainsFromProposal(proposal).filter(
+  return getRequiredChainsFromProposal(proposal).filter(
     chain => !supported.has(chain),
   );
 }
 
-export function getUnsupportedMethodsFromProposal(proposal: any) {
+export function getUnsupportedRequiredMethodsFromProposal(
+  proposal: ProposalTypes.Struct,
+) {
   const supported = new Set(WALLETCONNECT_SUPPORTED_METHODS);
-  return getRequestedMethodsFromProposal(proposal).filter(
+  return getRequiredMethodsFromProposal(proposal).filter(
     method => !supported.has(method),
   );
 }

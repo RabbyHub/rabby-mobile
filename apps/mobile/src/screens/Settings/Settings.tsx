@@ -32,6 +32,7 @@ import {
   RcScreenshotReport,
   RcIconCurrency,
   RcNotification,
+  RcConnectedDapp,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -387,6 +388,17 @@ function SettingsBlocks() {
       settings: {
         label: t('page.setting.screenTitle'),
         items: [
+          {
+            label: 'WalletConnect',
+            icon: RcConnectedDapp,
+            onPress: () => {
+              navigation.dispatch(
+                StackActions.push(RootNames.StackSettings, {
+                  screen: RootNames.WalletConnect,
+                }),
+              );
+            },
+          },
           {
             label: biometricsComputed.defaultTypeLabel,
             icon: isFaceID ? RcFaceId : RcFingerprint,
@@ -865,7 +877,7 @@ function DevSettingsBlocks({
               },
             },
             {
-              label: 'WalletConnect',
+              label: 'WalletConnect Log',
               icon: RcCode,
               onPress: () => {
                 navigation.dispatch(

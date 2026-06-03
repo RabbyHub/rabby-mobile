@@ -103,6 +103,7 @@ const flowContext = flow
     const {
       request: {
         session: { origin, name, icon, $mobileCtx },
+        requestContext,
       },
       mapMethod,
     } = ctx;
@@ -110,7 +111,10 @@ const flowContext = flow
     const { isFromMobileInnerDapp } = $mobileCtx || {};
     // // leave here for debug
     // console.debug('[debug] flowContext:: before check connect');
-    if (!Reflect.getMetadata('SAFE', providerController, mapMethod)) {
+    if (
+      requestContext?.source !== 'walletconnect' &&
+      !Reflect.getMetadata('SAFE', providerController, mapMethod)
+    ) {
       if (!dappService.hasPermission(origin)) {
         if (connectOrigins.has(origin)) {
           throw ethErrors.rpc.resourceNotFound(

@@ -125,6 +125,7 @@ export const RootNames = {
   StackSettings: 'StackSettings',
   Settings: 'Settings',
   SetPassword: 'SetPassword',
+  WalletConnect: 'WalletConnect',
   CustomTestnet: 'CustomTestnet',
   CustomRPC: 'CustomRPC',
   SetBiometricsAuthentication: 'SetBiometricsAuthentication',
@@ -392,6 +393,7 @@ function makeScreenSpecConfig() {
       // StackSettings
       [RootNames.Settings]: historyPageConf,
       [RootNames.SetPassword]: blueLightConf,
+      [RootNames.WalletConnect]: transparentDefault2024Conf,
       [RootNames.CustomTestnet]: bg1Default2024Conf,
       [RootNames.CustomRPC]: bg1Default2024Conf,
       [RootNames.SetBiometricsAuthentication]: bg1DefaultConf,

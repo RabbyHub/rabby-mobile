@@ -16,7 +16,6 @@ export const APP_MMKV_KEYS = {
   LEGACY_KEYRING_STATE: 'keyringState',
   MINI_SIGN_CUSTOM_GAS: 'miniSignCustomGas',
   NOTIFICATION: 'notification',
-  WALLETCONNECT_SESSION_METADATA: 'walletConnectSessionMetadata',
 } as const;
 
 export const KEYCHAIN_MMKV_KEYS = {
@@ -35,4 +34,5 @@ export const APP_MMKV_WEAK_KEYS = {
   LENDING_MARKET: '@lendingMarket',
   FAILED_UNLOCK: '@failed_unlock',
   HOME_TOP10_ADDRESSES: '@homeTop10Addresses',
+  WALLETCONNECT_AUTO_DISCONNECT_ENABLED: '@walletConnectAutoDisconnectEnabled',
 } as const;

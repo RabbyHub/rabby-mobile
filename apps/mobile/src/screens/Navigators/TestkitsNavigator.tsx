@@ -97,8 +97,8 @@ export function TestkitsNavigator() {
         options={mergeScreenOptions2024([
           {
             headerShown: true,
-            headerTitle: 'WalletConnect',
-            title: 'WalletConnect',
+            headerTitle: 'WalletConnect Log',
+            title: 'WalletConnect Log',
           },
         ])}
       />

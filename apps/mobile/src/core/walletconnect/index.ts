@@ -1,10 +1,13 @@
 import { getSdkError } from '@walletconnect/utils';
+import type { SessionTypes } from '@walletconnect/types';
 import type { Account } from '@/types/account';
 import {
-  getWalletConnectClientOrThrow,
-  initWalletConnectForTest,
-} from './client';
+  clearWalletConnectAutoDisconnectTopic,
+  replaceWalletConnectSessionsForAutoDisconnect,
+} from './autoDisconnect';
+import { getWalletConnectClientOrThrow, initWalletConnect } from './client';
 import { addWalletConnectLog } from './debugLog';
+import { getWalletConnectErrorMessage } from './error';
 import { pairWalletConnectUri } from './pairing';
 import {
   buildApprovedNamespacesForAccount,
@@ -13,16 +16,10 @@ import {
   setWalletConnectProposalError,
 } from './proposal';
 import { maybeRedirectToDapp } from './redirectPolicy';
-import {
-  disconnectWalletConnectDappMirror,
-  ensureWalletConnectDappMirror,
-  forgetWalletConnectSession,
-  getWalletConnectSession,
-  rememberWalletConnectSession,
-  syncWalletConnectSessionsFromClient,
-} from './sessions';
+import { syncWalletConnectSessionsFromClient } from './sessions';
+import { clearWalletConnectPairingState } from './state';
 
-export { initWalletConnectForTest, pairWalletConnectUri };
+export { initWalletConnect, pairWalletConnectUri };
 export {
   getWalletConnectDebugState,
   subscribeWalletConnectDebugState,
@@ -39,14 +36,19 @@ export {
   getWalletConnectAccounts,
 } from './chainAccount';
 export { shouldAutoRedirectToDapp } from './redirectPolicy';
-export { respondSessionRequestOnce } from './requestResponse';
+export {
+  getWalletConnectAutoDisconnectEnabled,
+  setWalletConnectAutoDisconnectEnabled,
+} from './autoDisconnect';
 export type {
   WalletConnectDebugState,
   WalletConnectPairingSource,
 } from './types';
 
-function getSdkErrorCompat(key: string) {
-  return getSdkError(key as any);
+type WalletConnectSdkErrorKey = Parameters<typeof getSdkError>[0];
+
+function getSdkErrorCompat(key: WalletConnectSdkErrorKey) {
+  return getSdkError(key);
 }
 
 export async function approveWalletConnectProposal(input: {
@@ -59,14 +61,14 @@ export async function approveWalletConnectProposal(input: {
     throw new Error('WalletConnect proposal not found or already handled.');
   }
 
-  let namespaces: any;
+  let namespaces: SessionTypes.Namespaces;
   try {
     namespaces = buildApprovedNamespacesForAccount({
       proposal: pending.proposal,
       account: input.account,
     });
-  } catch (error: any) {
-    const message = error?.message || String(error);
+  } catch (error: unknown) {
+    const message = getWalletConnectErrorMessage(error);
     setWalletConnectProposalError(input.proposalId, message);
     addWalletConnectLog(
       'proposal',
@@ -99,16 +101,12 @@ export async function approveWalletConnectProposal(input: {
       id: input.proposalId,
       namespaces,
     });
-    rememberWalletConnectSession({
-      topic: session.topic,
-      account: input.account,
-      source: pending.source,
-    });
-    ensureWalletConnectDappMirror({
-      session,
-      account: input.account,
-    });
     clearWalletConnectProposal(input.proposalId);
+    clearWalletConnectPairingState();
+    await replaceWalletConnectSessionsForAutoDisconnect(
+      walletKit,
+      session.topic,
+    );
     syncWalletConnectSessionsFromClient(walletKit);
     addWalletConnectLog('proposal', 'session approved', {
       id: input.proposalId,
@@ -119,8 +117,8 @@ export async function approveWalletConnectProposal(input: {
       source: pending.source,
       nativeRedirect: session.peer?.metadata?.redirect?.native,
     });
-  } catch (error: any) {
-    const message = error?.message || String(error);
+  } catch (error: unknown) {
+    const message = getWalletConnectErrorMessage(error);
     setWalletConnectProposalError(input.proposalId, message);
     addWalletConnectLog('proposal', 'approveSession failed', error, 'error');
     throw error;
@@ -134,25 +132,22 @@ export async function rejectWalletConnectProposal(proposalId: number) {
     reason: getSdkErrorCompat('USER_REJECTED'),
   });
   clearWalletConnectProposal(proposalId);
+  clearWalletConnectPairingState();
   addWalletConnectLog('proposal', 'session proposal rejected', { proposalId });
 }
 
 export async function disconnectWalletConnectSession(topic: string) {
   const walletKit = getWalletConnectClientOrThrow();
-  const session = getWalletConnectSession(walletKit, topic);
-  if (session) {
-    disconnectWalletConnectDappMirror(session);
-  }
+  clearWalletConnectAutoDisconnectTopic(topic);
   await walletKit.disconnectSession({
     topic,
     reason: getSdkErrorCompat('USER_DISCONNECTED'),
   });
-  forgetWalletConnectSession(topic);
   syncWalletConnectSessionsFromClient(walletKit);
   addWalletConnectLog('sessions', 'session disconnected by wallet', { topic });
 }
 
-export async function refreshWalletConnectSessionsForTest() {
-  const walletKit = await initWalletConnectForTest();
+export async function refreshWalletConnectSessions() {
+  const walletKit = await initWalletConnect();
   syncWalletConnectSessionsFromClient(walletKit);
 }

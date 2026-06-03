@@ -3,10 +3,11 @@ import type { Account } from '@/types/account';
 import { findChain } from '@/utils/chain';
 import {
   accountToCaip10,
-  getUnsupportedMethodsFromProposal,
+  getUnsupportedRequiredMethodsFromProposal,
   getWalletConnectChainByCaip2,
   getWalletConnectSupportedChains,
 } from './chainAccount';
+import { WALLETCONNECT_SUPPORTED_METHODS } from './constants';
 
 jest.mock('@/constant/chains', () => {
   const CHAINS_ENUM = {
@@ -60,7 +61,7 @@ describe('walletconnect chain account mapping', () => {
 
   it('does not advertise unsupported methods', () => {
     expect(
-      getUnsupportedMethodsFromProposal({
+      getUnsupportedRequiredMethodsFromProposal({
         requiredNamespaces: {
           eip155: {
             methods: ['eth_sign', 'personal_sign'],
@@ -68,5 +69,36 @@ describe('walletconnect chain account mapping', () => {
         },
       }),
     ).toEqual(['eth_sign']);
+  });
+
+  it('does not block unsupported optional methods', () => {
+    expect(
+      getUnsupportedRequiredMethodsFromProposal({
+        requiredNamespaces: {
+          eip155: {
+            methods: ['personal_sign'],
+          },
+        },
+        optionalNamespaces: {
+          eip155: {
+            methods: ['eth_sign'],
+          },
+        },
+      }),
+    ).toEqual([]);
+  });
+
+  it('advertises only WalletConnect methods handled by the bridge', () => {
+    expect(WALLETCONNECT_SUPPORTED_METHODS).toEqual([
+      'eth_accounts',
+      'eth_requestAccounts',
+      'eth_chainId',
+      'net_version',
+      'personal_sign',
+      'eth_signTypedData',
+      'eth_signTypedData_v3',
+      'eth_signTypedData_v4',
+      'eth_sendTransaction',
+    ]);
   });
 });

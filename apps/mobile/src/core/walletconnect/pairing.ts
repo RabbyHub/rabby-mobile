@@ -1,20 +1,16 @@
-import { initWalletConnectForTest } from './client';
+import { initWalletConnect } from './client';
 import { addWalletConnectLog } from './debugLog';
-import {
-  getWalletConnectDebugState,
-  setWalletConnectDebugState,
-} from './state';
+import { getWalletConnectErrorMessage } from './error';
+import { setWalletConnectDebugState } from './state';
 import type { WalletConnectPairingSource } from './types';
 import { parseWalletConnectUri, WalletConnectUriError } from './uri';
 
-let pairingInFlightUri: string | null = null;
-
-function formatPairingError(error: any) {
+function formatPairingError(error: unknown) {
   if (error instanceof WalletConnectUriError) {
     return error.message;
   }
 
-  const message = error?.message || String(error);
+  const message = getWalletConnectErrorMessage(error);
   const lower = message.toLowerCase();
 
   if (lower.includes('already') || lower.includes('duplicate')) {
@@ -39,37 +35,6 @@ export async function pairWalletConnectUri(input: {
   uri: string;
   source: WalletConnectPairingSource;
 }) {
-  const currentPairing = getWalletConnectDebugState().pairing;
-  if (
-    pairingInFlightUri ||
-    currentPairing.status === 'validating' ||
-    currentPairing.status === 'pairing'
-  ) {
-    const error =
-      pairingInFlightUri === input.uri || currentPairing.uri === input.uri
-        ? 'This WalletConnect URI is already being paired. Refresh the dapp QR code and try again.'
-        : 'Another WalletConnect pairing is already in progress.';
-    setWalletConnectDebugState(prev => ({
-      ...prev,
-      pairing: {
-        ...prev.pairing,
-        status: 'error',
-        error,
-      },
-    }));
-    throw new Error(error);
-  }
-
-  setWalletConnectDebugState(prev => ({
-    ...prev,
-    pairing: {
-      status: 'validating',
-      source: input.source,
-      uri: input.uri,
-      error: undefined,
-    },
-  }));
-
   let parsed: ReturnType<typeof parseWalletConnectUri>;
   try {
     parsed = parseWalletConnectUri(input.uri);
@@ -85,8 +50,7 @@ export async function pairWalletConnectUri(input: {
     }));
     throw error;
   }
-  const walletKit = await initWalletConnectForTest();
-  pairingInFlightUri = parsed.uri;
+
   setWalletConnectDebugState(prev => ({
     ...prev,
     pairing: {
@@ -101,6 +65,7 @@ export async function pairWalletConnectUri(input: {
   });
 
   try {
+    const walletKit = await initWalletConnect();
     await walletKit.pair({
       uri: parsed.uri,
     });
@@ -125,9 +90,5 @@ export async function pairWalletConnectUri(input: {
     }));
     addWalletConnectLog('pairing', 'pairing failed', error, 'error');
     throw new Error(message);
-  } finally {
-    if (pairingInFlightUri === parsed.uri) {
-      pairingInFlightUri = null;
-    }
   }
 }

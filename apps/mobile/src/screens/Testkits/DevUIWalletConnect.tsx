@@ -1,35 +1,35 @@
 import React, {
   useCallback,
-  useEffect,
   useMemo,
-  useRef,
   useState,
   useSyncExternalStore,
 } from 'react';
-import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import Clipboard from '@react-native-clipboard/clipboard';
-import { QRCodeScanner } from '@/components/QRCodeScanner/QRCodeScanner';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { Text, TextInput } from '@/components/Typography';
-import { useMyAccounts } from '@/hooks/account';
-import { useThemeColors } from '@/hooks/theme';
-import { ellipsisAddress } from '@/utils/address';
-import type { Account } from '@/types/account';
+import { Button } from '@/components2024/Button';
+import { toast } from '@/components2024/Toast';
+import { AppSwitch2024 } from '@/components/customized/Switch2024';
+import { ScreenLayouts } from '@/constant/layout';
 import {
-  approveWalletConnectProposal,
   disconnectWalletConnectSession,
   getWalletConnectDebugState,
-  initWalletConnectForTest,
+  getWalletConnectAutoDisconnectEnabled,
   pairWalletConnectUri,
-  refreshWalletConnectSessionsForTest,
-  rejectWalletConnectProposal,
+  setWalletConnectAutoDisconnectEnabled,
   subscribeWalletConnectDebugState,
 } from '@/core/walletconnect';
+import { getWalletConnectErrorMessage } from '@/core/walletconnect/error';
+import type {
+  WalletConnectDebugLogEntry,
+  WalletConnectProposalViewModel,
+  WalletConnectSessionViewModel,
+} from '@/core/walletconnect/types';
+import { useThemeColors } from '@/hooks/theme';
+import { ellipsisAddress } from '@/utils/address';
+
+const MAX_VISIBLE_LOGS = 40;
 
 function maskProjectId(projectId: string) {
   if (!projectId) {
@@ -41,8 +41,15 @@ function maskProjectId(projectId: string) {
   return `${projectId.slice(0, 6)}...${projectId.slice(-4)}`;
 }
 
-function accountKey(account: Account) {
-  return `${account.type}:${account.brandName}:${account.address}`;
+function formatTime(ts?: number) {
+  if (!ts) {
+    return '-';
+  }
+  return new Date(ts).toLocaleString();
+}
+
+function formatList(values: string[], empty = 'none') {
+  return values.length ? values.join(', ') : empty;
 }
 
 function Section({
@@ -60,356 +67,404 @@ function Section({
   );
 }
 
-function Button({
-  label,
-  onPress,
-  disabled,
-  variant = 'default',
-}: {
-  label: string;
-  onPress: () => void | Promise<void>;
-  disabled?: boolean;
-  variant?: 'default' | 'secondary' | 'danger';
-}) {
+function KeyValue({ label, value }: { label: string; value: string }) {
   return (
-    <TouchableOpacity
-      disabled={disabled}
-      onPress={onPress}
-      style={[
-        styles.button,
-        variant === 'secondary' && styles.secondaryButton,
-        variant === 'danger' && styles.dangerButton,
-        disabled && styles.disabledButton,
-      ]}>
-      <Text
-        style={[
-          styles.buttonText,
-          variant === 'secondary' && styles.secondaryButtonText,
-          disabled && styles.disabledButtonText,
-        ]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
+    <View style={styles.rowBetween}>
+      <Text style={styles.labelText}>{label}</Text>
+      <Text style={styles.valueText}>{value}</Text>
+    </View>
   );
 }
 
-function StatusText({ children }: { children: React.ReactNode }) {
-  return <Text style={styles.statusText}>{children}</Text>;
+function EmptyText({ value }: { value: string }) {
+  return <Text style={styles.emptyText}>{value}</Text>;
 }
 
-export default function DevUIWalletConnect() {
+function AutoDisconnectSwitchRow({
+  enabled,
+  onChange,
+}: {
+  enabled: boolean;
+  onChange: (enabled: boolean) => void;
+}) {
+  return (
+    <View style={styles.switchRow}>
+      <View style={styles.flex1}>
+        <Text style={styles.labelText}>Auto Disconnect</Text>
+        <Text style={styles.mutedText}>
+          Keep one active session, replace new connections, and drop inactive
+          sessions.
+        </Text>
+      </View>
+      <AppSwitch2024 circleSize={20} value={enabled} onValueChange={onChange} />
+    </View>
+  );
+}
+
+function ManualPairingSection({
+  value,
+  loading,
+  onChange,
+  onConnect,
+}: {
+  value: string;
+  loading: boolean;
+  onChange: (value: string) => void;
+  onConnect: () => void;
+}) {
+  return (
+    <Section title="Manual Pairing">
+      <TextInput
+        value={value}
+        onChangeText={onChange}
+        placeholder="wc:..."
+        placeholderTextColor="#8A94A6"
+        autoCapitalize="none"
+        autoCorrect={false}
+        multiline
+        style={styles.uriInput}
+      />
+      <Button
+        title="Connect"
+        type="primary"
+        height={40}
+        loading={loading}
+        disabled={!value.trim() || loading}
+        containerStyle={styles.connectUriButton}
+        buttonStyle={styles.smallButton}
+        titleStyle={styles.smallButtonTitle}
+        onPress={onConnect}
+      />
+    </Section>
+  );
+}
+
+function DappHeader({
+  name,
+  url,
+  icon,
+}: {
+  name: string;
+  url?: string;
+  icon?: string;
+}) {
+  return (
+    <View style={styles.dappHeader}>
+      {icon ? <Image source={{ uri: icon }} style={styles.dappIcon} /> : null}
+      <View style={styles.flex1}>
+        <Text style={styles.dappName}>{name}</Text>
+        <Text style={styles.mutedText} numberOfLines={1}>
+          {url || 'No URL'}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function ProposalSection({
+  proposal,
+}: {
+  proposal?: WalletConnectProposalViewModel;
+}) {
+  if (!proposal) {
+    return (
+      <Section title="Current Proposal">
+        <EmptyText value="No pending proposal" />
+      </Section>
+    );
+  }
+
+  return (
+    <Section title="Current Proposal">
+      <DappHeader
+        name={proposal.proposer.name}
+        url={proposal.proposer.url}
+        icon={proposal.proposer.icons?.[0]}
+      />
+      <KeyValue label="ID" value={String(proposal.id)} />
+      <KeyValue label="Source" value={proposal.source} />
+      <KeyValue label="Received" value={formatTime(proposal.receivedAt)} />
+      <Text style={styles.mutedText}>
+        Chains: {formatList(proposal.requestedChains)}
+      </Text>
+      <Text style={styles.mutedText}>
+        Methods: {formatList(proposal.requestedMethods)}
+      </Text>
+      {proposal.unsupportedRequiredChains.length ? (
+        <Text style={styles.errorText}>
+          Unsupported required chains:{' '}
+          {formatList(proposal.unsupportedRequiredChains)}
+        </Text>
+      ) : null}
+      {proposal.unsupportedRequiredMethods.length ? (
+        <Text style={styles.errorText}>
+          Unsupported required methods:{' '}
+          {formatList(proposal.unsupportedRequiredMethods)}
+        </Text>
+      ) : null}
+      {proposal.error ? (
+        <Text style={styles.errorText}>{proposal.error}</Text>
+      ) : null}
+    </Section>
+  );
+}
+
+function SessionCard({
+  session,
+  disabled,
+  loading,
+  onDisconnect,
+}: {
+  session: WalletConnectSessionViewModel;
+  disabled: boolean;
+  loading: boolean;
+  onDisconnect: (topic: string) => Promise<void>;
+}) {
+  return (
+    <View style={styles.card}>
+      <DappHeader
+        name={session.peer.name}
+        url={session.peer.url || session.topic}
+        icon={session.peer.icons?.[0]}
+      />
+      <KeyValue
+        label="Account"
+        value={
+          session.selectedAccount?.address
+            ? ellipsisAddress(session.selectedAccount.address)
+            : 'unknown'
+        }
+      />
+      <Text style={styles.mutedText}>Chains: {formatList(session.chains)}</Text>
+      <Text style={styles.mutedText}>
+        Methods: {formatList(session.methods)}
+      </Text>
+      <Text style={styles.logData} numberOfLines={2}>
+        {session.topic}
+      </Text>
+      <Button
+        title="Disconnect"
+        type="danger"
+        height={36}
+        loading={loading}
+        disabled={disabled}
+        containerStyle={styles.sessionActionButton}
+        buttonStyle={styles.smallButton}
+        titleStyle={styles.smallButtonTitle}
+        onPress={() => {
+          void onDisconnect(session.topic);
+        }}
+      />
+    </View>
+  );
+}
+
+function SessionsSection({
+  sessions,
+  disconnectingTopic,
+  onDisconnect,
+  onDisconnectAll,
+}: {
+  sessions: WalletConnectSessionViewModel[];
+  disconnectingTopic: string | 'all' | null;
+  onDisconnect: (topic: string) => Promise<void>;
+  onDisconnectAll: () => Promise<void>;
+}) {
+  const hasSessions = sessions.length > 0;
+  const isDisconnecting = disconnectingTopic !== null;
+
+  return (
+    <Section title={`Sessions (${sessions.length})`}>
+      {hasSessions ? (
+        <View style={styles.sectionActionRow}>
+          <Button
+            title="Disconnect All"
+            type="plain"
+            height={36}
+            loading={disconnectingTopic === 'all'}
+            disabled={isDisconnecting}
+            containerStyle={styles.disconnectAllButton}
+            buttonStyle={styles.smallButton}
+            titleStyle={styles.disconnectAllButtonTitle}
+            onPress={() => {
+              void onDisconnectAll();
+            }}
+          />
+        </View>
+      ) : null}
+      {!hasSessions ? (
+        <EmptyText value="No active sessions" />
+      ) : (
+        sessions.map(session => (
+          <SessionCard
+            key={session.topic}
+            session={session}
+            disabled={isDisconnecting}
+            loading={disconnectingTopic === session.topic}
+            onDisconnect={onDisconnect}
+          />
+        ))
+      )}
+    </Section>
+  );
+}
+
+function LogRow({ item }: { item: WalletConnectDebugLogEntry }) {
+  return (
+    <View style={styles.logRow}>
+      <Text style={styles.logTitle}>
+        {new Date(item.ts).toLocaleTimeString()} [{item.level}] {item.scope}
+      </Text>
+      <Text style={styles.mutedText}>{item.message}</Text>
+      {item.data ? (
+        <Text style={styles.logData} numberOfLines={8}>
+          {item.data}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+function RecentLogSection({ log }: { log: WalletConnectDebugLogEntry[] }) {
+  return (
+    <Section title="Recent Log">
+      {!log.length ? (
+        <EmptyText value="No events yet" />
+      ) : (
+        log.map(item => <LogRow key={item.id} item={item} />)
+      )}
+    </Section>
+  );
+}
+
+export default function WalletConnectLogScreen() {
   const colors = useThemeColors();
+  const insets = useSafeAreaInsets();
+  const [disconnectingTopic, setDisconnectingTopic] = useState<
+    string | 'all' | null
+  >(null);
+  const [uriInput, setUriInput] = useState('');
+  const [isPairingUri, setIsPairingUri] = useState(false);
+  const [autoDisconnectEnabled, setAutoDisconnectEnabledState] = useState(
+    getWalletConnectAutoDisconnectEnabled,
+  );
   const walletConnectState = useSyncExternalStore(
     subscribeWalletConnectDebugState,
     getWalletConnectDebugState,
     getWalletConnectDebugState,
   );
-  const { accounts } = useMyAccounts();
-  const [uri, setUri] = useState('');
-  const [selectedAccountKey, setSelectedAccountKey] = useState('');
-  const [actionError, setActionError] = useState('');
-  const [busy, setBusy] = useState(false);
-  const lastScannedUriRef = useRef('');
-
-  const selectedAccount = useMemo(
-    () =>
-      accounts.find(account => accountKey(account) === selectedAccountKey) ||
-      accounts[0],
-    [accounts, selectedAccountKey],
+  const visibleLog = useMemo(
+    () => walletConnectState.log.slice(0, MAX_VISIBLE_LOGS),
+    [walletConnectState.log],
+  );
+  const contentStyle = useMemo(
+    () => [
+      styles.content,
+      { paddingTop: insets.top + ScreenLayouts.headerAreaHeight + 16 },
+    ],
+    [insets.top],
   );
 
-  useEffect(() => {
-    if (!selectedAccountKey && accounts[0]) {
-      setSelectedAccountKey(accountKey(accounts[0]));
-    }
-  }, [accounts, selectedAccountKey]);
-
-  const runAction = useCallback(async (fn: () => Promise<void>) => {
-    setBusy(true);
-    setActionError('');
+  const handleDisconnectSession = useCallback(async (topic: string) => {
+    setDisconnectingTopic(topic);
     try {
-      await fn();
-    } catch (error: any) {
-      setActionError(error?.message || String(error));
+      await disconnectWalletConnectSession(topic);
+    } catch (error: unknown) {
+      toast.error(getWalletConnectErrorMessage(error));
     } finally {
-      setBusy(false);
+      setDisconnectingTopic(null);
     }
   }, []);
 
-  const handlePaste = useCallback(() => {
-    Clipboard.getString().then(value => {
-      setUri(value || '');
-    });
-  }, []);
+  const handleDisconnectAllSessions = useCallback(async () => {
+    const topics = walletConnectState.sessions.map(session => session.topic);
+    if (!topics.length) {
+      return;
+    }
 
-  const connectUri = useCallback(
-    (source: 'manual' | 'qr') =>
-      runAction(async () => {
-        await pairWalletConnectUri({
-          uri,
-          source,
-        });
-      }),
-    [runAction, uri],
-  );
-
-  const handleCodeScanned = useCallback(
-    (codes: { value?: string | null }[]) => {
-      const nextUri = codes.find(code => !!code.value)?.value?.trim();
-      if (!nextUri || lastScannedUriRef.current === nextUri) {
-        return;
+    setDisconnectingTopic('all');
+    let firstError: unknown;
+    try {
+      for (const topic of topics) {
+        try {
+          await disconnectWalletConnectSession(topic);
+        } catch (error: unknown) {
+          firstError = firstError || error;
+        }
       }
-      lastScannedUriRef.current = nextUri;
-      setUri(nextUri);
-      runAction(async () => {
-        await pairWalletConnectUri({
-          uri: nextUri,
-          source: 'qr',
-        });
-      });
-    },
-    [runAction],
-  );
+      if (firstError) {
+        toast.error(getWalletConnectErrorMessage(firstError));
+      }
+    } finally {
+      setDisconnectingTopic(null);
+    }
+  }, [walletConnectState.sessions]);
 
-  const proposal = walletConnectState.proposal;
-  const projectIdText = maskProjectId(walletConnectState.projectId);
-  const visibleLog = walletConnectState.log.slice(0, 20);
+  const handleConnectUri = useCallback(async () => {
+    const uri = uriInput.trim();
+    if (!uri || isPairingUri) {
+      return;
+    }
+
+    setIsPairingUri(true);
+    try {
+      await pairWalletConnectUri({
+        uri,
+        source: 'manual',
+      });
+      setUriInput('');
+    } catch (error: unknown) {
+      toast.error(getWalletConnectErrorMessage(error));
+    } finally {
+      setIsPairingUri(false);
+    }
+  }, [isPairingUri, uriInput]);
+
+  const handleAutoDisconnectChange = useCallback((enabled: boolean) => {
+    setWalletConnectAutoDisconnectEnabled(enabled);
+    setAutoDisconnectEnabledState(enabled);
+  }, []);
 
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors['neutral-bg-1'] }]}
-      contentContainerStyle={styles.content}>
-      <Section title="Client">
-        <View style={styles.rowBetween}>
-          <StatusText>Project ID</StatusText>
-          <Text style={styles.valueText}>{projectIdText}</Text>
-        </View>
-        <View style={styles.rowBetween}>
-          <StatusText>Init</StatusText>
-          <Text style={styles.valueText}>
-            {walletConnectState.client.status}
-          </Text>
-        </View>
+      contentContainerStyle={contentStyle}>
+      <Section title="Status">
+        <KeyValue
+          label="Project ID"
+          value={maskProjectId(walletConnectState.projectId)}
+        />
+        <KeyValue label="Client" value={walletConnectState.client.status} />
+        <KeyValue label="Pairing" value={walletConnectState.pairing.status} />
         {walletConnectState.client.error ? (
           <Text style={styles.errorText}>
             {walletConnectState.client.error}
           </Text>
         ) : null}
-        <Button
-          label="Init WalletKit"
-          disabled={busy}
-          onPress={() => runAction(initWalletConnectForTest)}
-        />
-      </Section>
-
-      <Section title="QR Scanner">
-        <QRCodeScanner
-          showScanLine
-          onCodeScanned={handleCodeScanned}
-          containerStyle={styles.scanner}
-          size={250}
-        />
-      </Section>
-
-      <Section title="URI Input">
-        <TextInput
-          value={uri}
-          onChangeText={setUri}
-          placeholder="wc:... or rabby://walletconnect?uri=..."
-          placeholderTextColor="#8A94A6"
-          multiline
-          style={styles.uriInput}
-        />
-        <View style={styles.buttonRow}>
-          <Button
-            label="Paste"
-            disabled={busy}
-            variant="secondary"
-            onPress={handlePaste}
-          />
-          <Button
-            label="Clear"
-            disabled={busy}
-            variant="secondary"
-            onPress={() => setUri('')}
-          />
-          <Button
-            label="Connect"
-            disabled={busy || !uri.trim()}
-            onPress={() => connectUri('manual')}
-          />
-        </View>
-        <View style={styles.rowBetween}>
-          <StatusText>Pairing</StatusText>
-          <Text style={styles.valueText}>
-            {walletConnectState.pairing.status}
-          </Text>
-        </View>
         {walletConnectState.pairing.error ? (
           <Text style={styles.errorText}>
             {walletConnectState.pairing.error}
           </Text>
         ) : null}
-        {actionError ? (
-          <Text style={styles.errorText}>{actionError}</Text>
-        ) : null}
-      </Section>
-
-      <Section title="Proposal">
-        {!proposal ? (
-          <Text style={styles.emptyText}>No pending proposal</Text>
-        ) : (
-          <View>
-            <View style={styles.dappHeader}>
-              {proposal.proposer.icons?.[0] ? (
-                <Image
-                  source={{ uri: proposal.proposer.icons[0] }}
-                  style={styles.dappIcon}
-                />
-              ) : null}
-              <View style={styles.flex1}>
-                <Text style={styles.dappName}>{proposal.proposer.name}</Text>
-                <Text style={styles.mutedText} numberOfLines={1}>
-                  {proposal.proposer.url || 'No URL'}
-                </Text>
-              </View>
-            </View>
-            <Text style={styles.mutedText}>Source: {proposal.source}</Text>
-            <Text style={styles.mutedText}>
-              Chains: {proposal.requestedChains.join(', ') || 'none'}
-            </Text>
-            <Text style={styles.mutedText}>
-              Methods: {proposal.requestedMethods.join(', ') || 'none'}
-            </Text>
-            {proposal.unsupportedChains.length ? (
-              <Text style={styles.errorText}>
-                Unsupported chains: {proposal.unsupportedChains.join(', ')}
-              </Text>
-            ) : null}
-            {proposal.unsupportedMethods.length ? (
-              <Text style={styles.errorText}>
-                Unsupported methods: {proposal.unsupportedMethods.join(', ')}
-              </Text>
-            ) : null}
-            {proposal.error ? (
-              <Text style={styles.errorText}>{proposal.error}</Text>
-            ) : null}
-
-            <View style={styles.accountList}>
-              {accounts.map(account => {
-                const selected =
-                  accountKey(account) === accountKey(selectedAccount);
-                return (
-                  <TouchableOpacity
-                    key={accountKey(account)}
-                    onPress={() => setSelectedAccountKey(accountKey(account))}
-                    style={[
-                      styles.accountRow,
-                      selected && styles.accountRowSelected,
-                    ]}>
-                    <Text style={styles.accountName}>
-                      {account.aliasName || account.brandName}
-                    </Text>
-                    <Text style={styles.mutedText}>
-                      {ellipsisAddress(account.address)}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            <View style={styles.buttonRow}>
-              <Button
-                label="Approve"
-                disabled={busy || !selectedAccount}
-                onPress={() =>
-                  runAction(async () => {
-                    if (!selectedAccount) {
-                      throw new Error('Select an account before approving.');
-                    }
-                    await approveWalletConnectProposal({
-                      proposalId: proposal.id,
-                      account: selectedAccount,
-                    });
-                  })
-                }
-              />
-              <Button
-                label="Reject"
-                disabled={busy}
-                variant="danger"
-                onPress={() =>
-                  runAction(async () => {
-                    await rejectWalletConnectProposal(proposal.id);
-                  })
-                }
-              />
-            </View>
-          </View>
-        )}
-      </Section>
-
-      <Section title="Sessions">
-        <Button
-          label="Refresh"
-          disabled={busy}
-          variant="secondary"
-          onPress={() => runAction(refreshWalletConnectSessionsForTest)}
+        <AutoDisconnectSwitchRow
+          enabled={autoDisconnectEnabled}
+          onChange={handleAutoDisconnectChange}
         />
-        {!walletConnectState.sessions.length ? (
-          <Text style={styles.emptyText}>No active sessions</Text>
-        ) : (
-          walletConnectState.sessions.map(session => (
-            <View key={session.topic} style={styles.sessionRow}>
-              <Text style={styles.dappName}>{session.peer.name}</Text>
-              <Text style={styles.mutedText} numberOfLines={1}>
-                {session.peer.url || session.topic}
-              </Text>
-              <Text style={styles.mutedText}>
-                Account:{' '}
-                {session.selectedAccount?.address
-                  ? ellipsisAddress(session.selectedAccount.address)
-                  : 'unknown'}
-              </Text>
-              <Text style={styles.mutedText}>
-                Chains: {session.chains.slice(0, 6).join(', ')}
-                {session.chains.length > 6 ? '...' : ''}
-              </Text>
-              <Button
-                label="Disconnect"
-                disabled={busy}
-                variant="danger"
-                onPress={() =>
-                  runAction(async () => {
-                    await disconnectWalletConnectSession(session.topic);
-                  })
-                }
-              />
-            </View>
-          ))
-        )}
       </Section>
-
-      <Section title="Recent Log">
-        {!visibleLog.length ? (
-          <Text style={styles.emptyText}>No events yet</Text>
-        ) : (
-          visibleLog.map(item => (
-            <View key={item.id} style={styles.logRow}>
-              <Text style={styles.logTitle}>
-                {new Date(item.ts).toLocaleTimeString()} [{item.level}]{' '}
-                {item.scope}
-              </Text>
-              <Text style={styles.mutedText}>{item.message}</Text>
-              {item.data ? (
-                <Text style={styles.logData} numberOfLines={6}>
-                  {item.data}
-                </Text>
-              ) : null}
-            </View>
-          ))
-        )}
-      </Section>
+      <ManualPairingSection
+        value={uriInput}
+        loading={isPairingUri}
+        onChange={setUriInput}
+        onConnect={handleConnectUri}
+      />
+      <ProposalSection proposal={walletConnectState.proposal} />
+      <SessionsSection
+        sessions={walletConnectState.sessions}
+        disconnectingTopic={disconnectingTopic}
+        onDisconnect={handleDisconnectSession}
+        onDisconnectAll={handleDisconnectAllSessions}
+      />
+      <RecentLogSection log={visibleLog} />
     </ScrollView>
   );
 }
@@ -437,11 +492,70 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#192945',
   },
+  card: {
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#E1E6EF',
+    backgroundColor: '#F7F9FC',
+    padding: 12,
+    gap: 8,
+  },
+  sectionActionRow: {
+    alignItems: 'flex-end',
+  },
+  disconnectAllButton: {
+    width: 154,
+  },
+  disconnectAllButtonTitle: {
+    color: '#D32F2F',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  sessionActionButton: {
+    alignSelf: 'flex-end',
+    width: 128,
+  },
+  smallButton: {
+    borderRadius: 8,
+    height: 36,
+  },
+  smallButtonTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  uriInput: {
+    minHeight: 92,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#D8DEE8',
+    backgroundColor: '#F7F9FC',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: '#192945',
+    fontSize: 13,
+    lineHeight: 18,
+    textAlignVertical: 'top',
+  },
+  connectUriButton: {
+    alignSelf: 'flex-end',
+    width: 128,
+  },
   rowBetween: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingTop: 2,
+  },
+  labelText: {
+    color: '#5D6B82',
+    fontSize: 13,
   },
   valueText: {
     color: '#192945',
@@ -449,73 +563,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flexShrink: 1,
     textAlign: 'right',
-  },
-  statusText: {
-    color: '#5D6B82',
-    fontSize: 13,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  button: {
-    minHeight: 40,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#4C65FF',
-  },
-  secondaryButton: {
-    backgroundColor: '#EDF1FF',
-  },
-  dangerButton: {
-    backgroundColor: '#E34935',
-  },
-  disabledButton: {
-    backgroundColor: '#D4D9E3',
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  secondaryButtonText: {
-    color: '#4C65FF',
-  },
-  disabledButtonText: {
-    color: '#8A94A6',
-  },
-  scanner: {
-    alignSelf: 'center',
-    width: 250,
-    height: 250,
-  },
-  uriInput: {
-    minHeight: 92,
-    borderRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#C9D2E3',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: '#192945',
-    textAlignVertical: 'top',
-    fontSize: 13,
-  },
-  errorText: {
-    color: '#D92D20',
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  emptyText: {
-    color: '#8A94A6',
-    fontSize: 13,
-  },
-  mutedText: {
-    color: '#5D6B82',
-    fontSize: 12,
-    lineHeight: 17,
   },
   dappHeader: {
     flexDirection: 'row',
@@ -526,55 +573,48 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 8,
+    backgroundColor: '#EEF2F7',
   },
   dappName: {
     color: '#192945',
-    fontSize: 14,
+    fontSize: 15,
+    lineHeight: 20,
     fontWeight: '700',
   },
-  flex1: {
-    flex: 1,
-  },
-  accountList: {
-    gap: 8,
-  },
-  accountRow: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#D8DEE8',
-    borderRadius: 8,
-    padding: 10,
-  },
-  accountRowSelected: {
-    borderColor: '#4C65FF',
-    backgroundColor: '#F3F6FF',
-  },
-  accountName: {
-    color: '#192945',
+  mutedText: {
+    color: '#5D6B82',
     fontSize: 13,
-    fontWeight: '700',
+    lineHeight: 18,
   },
-  sessionRow: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#D8DEE8',
-    borderRadius: 8,
-    padding: 10,
-    gap: 6,
+  emptyText: {
+    color: '#8A94A6',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  errorText: {
+    color: '#D32F2F',
+    fontSize: 13,
+    lineHeight: 18,
   },
   logRow: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: '#E6EAF2',
-    paddingTop: 8,
-    gap: 3,
+    borderRadius: 8,
+    backgroundColor: '#F7F9FC',
+    padding: 10,
+    gap: 5,
   },
   logTitle: {
     color: '#192945',
     fontSize: 12,
+    lineHeight: 16,
     fontWeight: '700',
   },
   logData: {
-    color: '#3B4658',
+    color: '#3B4A62',
     fontSize: 11,
     lineHeight: 15,
-    fontFamily: 'Courier',
+    fontFamily: 'Menlo',
+  },
+  flex1: {
+    flex: 1,
   },
 });

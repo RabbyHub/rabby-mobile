@@ -432,6 +432,7 @@ export type SettingNavigatorParamList = {
     // enterActionType?: 'setBiometrics' | 'setAutoLockExpireTime';
   };
   [RootNames.ProviderControllerTester]?: {};
+  [RootNames.WalletConnect]?: {};
   [RootNames.SetPassword]?:
     | {
         actionAfterSetup: 'backScreen';

@@ -5,10 +5,9 @@ import {
 import { InteractionManager } from 'react-native';
 
 import { runIIFEFunc } from './core/utils/store';
-import { isNonPublicProductionEnv } from './constant';
-import { RABBY_MOBILE_WALLETCONNECT_PROJECT_ID } from './constant/env';
 import { startSubscribeLangChange } from './hooks/lang';
 import { connectPushServerOnBootstrap } from './core/notifications';
+import { startRestoreWalletConnectSessions } from './core/walletconnect/client';
 
 import { startManageAccountStoreLifecycle } from './hooks/account';
 
@@ -123,25 +122,6 @@ startSubscribeOpenApiHttpErrorDebugToast();
 startCareAppNotificationPermissions();
 startSubscribeRemoteNotification();
 
-function startRestoreWalletConnectSessionsForTest() {
-  if (!isNonPublicProductionEnv || !RABBY_MOBILE_WALLETCONNECT_PROJECT_ID) {
-    return;
-  }
-
-  runIIFEFunc(async () => {
-    try {
-      const { initWalletConnectForTest } = await import(
-        './core/walletconnect/client'
-      );
-      await initWalletConnectForTest();
-    } catch (error) {
-      console.warn('startRestoreWalletConnectSessionsForTest::error', error);
-    }
-  });
-}
-
-startRestoreWalletConnectSessionsForTest();
-
 async function initPersistedStores() {
   console.time('initPersistedStores');
   await useAppChainStore.getState().initStore();
@@ -233,3 +213,13 @@ function startInitStoresOnUnlock() {
 }
 
 startInitStoresOnUnlock();
+
+function startRestoreWalletConnectSessionsOnUnlock() {
+  if (keyringService.isUnlocked()) {
+    startRestoreWalletConnectSessions();
+  }
+
+  keyringService.on('unlock', startRestoreWalletConnectSessions);
+}
+
+startRestoreWalletConnectSessionsOnUnlock();

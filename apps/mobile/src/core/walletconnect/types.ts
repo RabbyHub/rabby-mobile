@@ -1,4 +1,13 @@
-import type { Account } from '@/types/account';
+import type { ProposalTypes } from '@walletconnect/types';
+
+export type WalletConnectNamespace = {
+  chains?: string[];
+  accounts?: string[];
+  methods?: string[];
+  events?: string[];
+};
+
+export type WalletConnectNamespaces = Record<string, WalletConnectNamespace>;
 
 export type WalletConnectPairingSource = 'qr' | 'manual' | 'deeplink';
 
@@ -6,12 +15,10 @@ export type WalletConnectClientStatus =
   | 'idle'
   | 'initializing'
   | 'ready'
-  | 'disabled'
   | 'error';
 
 export type WalletConnectPairingStatus =
   | 'idle'
-  | 'validating'
   | 'pairing'
   | 'paired'
   | 'proposal'
@@ -41,12 +48,12 @@ export type WalletConnectProposalViewModel = {
   source: WalletConnectPairingSource;
   receivedAt: number;
   proposer: WalletConnectDappMetadata;
-  requiredNamespaces: Record<string, any>;
-  optionalNamespaces: Record<string, any>;
+  requiredNamespaces: ProposalTypes.RequiredNamespaces;
+  optionalNamespaces: ProposalTypes.OptionalNamespaces;
   requestedChains: string[];
   requestedMethods: string[];
-  unsupportedChains: string[];
-  unsupportedMethods: string[];
+  unsupportedRequiredChains: string[];
+  unsupportedRequiredMethods: string[];
   verifyContext?: unknown;
   error?: string;
 };
@@ -54,7 +61,6 @@ export type WalletConnectProposalViewModel = {
 export type WalletConnectSessionViewModel = {
   topic: string;
   peer: WalletConnectDappMetadata;
-  source: WalletConnectPairingSource;
   chains: string[];
   methods: string[];
   accounts: string[];
@@ -65,19 +71,8 @@ export type WalletConnectSessionViewModel = {
   };
 };
 
-export type WalletConnectPendingRequestViewModel = {
-  id: number;
-  topic: string;
-  chainId: string;
-  method: string;
-  receivedAt: number;
-  peer?: WalletConnectDappMetadata;
-};
-
 export type WalletConnectDebugState = {
-  enabled: boolean;
   projectId: string;
-  projectIdConfigured: boolean;
   client: {
     status: WalletConnectClientStatus;
     error?: string;
@@ -90,11 +85,5 @@ export type WalletConnectDebugState = {
   };
   proposal?: WalletConnectProposalViewModel;
   sessions: WalletConnectSessionViewModel[];
-  pendingRequests: WalletConnectPendingRequestViewModel[];
   log: WalletConnectDebugLogEntry[];
 };
-
-export type WalletConnectStoredSessionAccount = Pick<
-  Account,
-  'address' | 'type' | 'brandName'
->;

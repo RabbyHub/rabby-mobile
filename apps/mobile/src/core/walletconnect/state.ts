@@ -1,4 +1,3 @@
-import { isNonPublicProductionEnv } from '@/constant';
 import { RABBY_MOBILE_WALLETCONNECT_PROJECT_ID } from '@/constant/env';
 import { WALLETCONNECT_LOG_LIMIT } from './constants';
 import type {
@@ -12,17 +11,17 @@ type StateUpdater =
   | ((prev: WalletConnectDebugState) => WalletConnectDebugState);
 
 const initialState: WalletConnectDebugState = {
-  enabled: isNonPublicProductionEnv,
   projectId: RABBY_MOBILE_WALLETCONNECT_PROJECT_ID,
-  projectIdConfigured: !!RABBY_MOBILE_WALLETCONNECT_PROJECT_ID,
   client: {
-    status: isNonPublicProductionEnv ? 'idle' : 'disabled',
+    status: RABBY_MOBILE_WALLETCONNECT_PROJECT_ID ? 'idle' : 'error',
+    error: RABBY_MOBILE_WALLETCONNECT_PROJECT_ID
+      ? undefined
+      : 'Missing RABBY_MOBILE_WALLETCONNECT_PROJECT_ID.',
   },
   pairing: {
     status: 'idle',
   },
   sessions: [],
-  pendingRequests: [],
   log: [],
 };
 
@@ -71,6 +70,15 @@ export function setWalletConnectClientStatus(
     client: {
       status,
       error,
+    },
+  }));
+}
+
+export function clearWalletConnectPairingState() {
+  setWalletConnectDebugState(prev => ({
+    ...prev,
+    pairing: {
+      status: 'idle',
     },
   }));
 }

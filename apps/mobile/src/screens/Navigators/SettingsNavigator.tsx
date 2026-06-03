@@ -6,6 +6,7 @@ import {
   ProviderControllerTester,
   SetPasswordScreen,
   SettingsScreen,
+  WalletConnectScreen,
 } from '@/perfs/loadables/settingsNavigatorScreens';
 import { CustomTestnetScreen } from '../CustomTestnet';
 import { I18nRouteScreenTitle } from '@/components2024/i18n/RouteScreen';
@@ -65,6 +66,24 @@ export function SettingNavigator() {
           // ...(isOnSettingsWaiting && {
           // }),
         }}
+      />
+      <SettingsStack.Screen
+        name={RootNames.WalletConnect}
+        component={WalletConnectScreen}
+        options={mergeScreenOptions({
+          title: 'Connect Wallet',
+          headerTitle: 'Connect Wallet',
+          headerShadowVisible: false,
+          headerStyle: {
+            backgroundColor: colors['neutral-black'],
+          },
+          headerTintColor: colors['neutral-title-2'],
+          headerTitleStyle: {
+            color: colors['neutral-title-2'],
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+          },
+        })}
       />
       <SettingsStack.Screen
         name={RootNames.CustomTestnet}
