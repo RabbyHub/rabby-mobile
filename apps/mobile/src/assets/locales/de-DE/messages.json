@@ -2686,7 +2686,7 @@
       "WebviewError": {
         "failedToLoad": "Seite konnte nicht geladen werden",
         "error": "Fehler:",
-        "alertText": "Versuchen Sie<1/><2>im Browser zu öffnen</2><3/>um zu überprüfen, ob es sich um ein Website-Problem handelt"
+        "alertText": ""
       },
       "toast": {
         "clearCacheSuccess": "Cache gelöscht"

@@ -2358,7 +2358,7 @@
       "WebviewError": {
         "failedToLoad": "ページの読み込みに失敗しました",
         "error": "エラー：",
-        "alertText": "試してみてください<1/><2>ブラウザで開く</2><3/>ウェブサイトの問題か確認するために"
+        "alertText": ""
       },
       "toast": {
         "clearCacheSuccess": "キャッシュがクリアされました"

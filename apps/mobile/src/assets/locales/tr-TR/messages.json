@@ -2305,7 +2305,7 @@
       "WebviewError": {
         "error": "Hata:",
         "failedToLoad": "Sayfa yüklenemedi",
-        "alertText": "Denemek için <1/><2>Tarayıcıda aç</2><3/> bunun bir web sitesi sorunu olup olmadığını kontrol et."
+        "alertText": ""
       },
       "toast": {
         "clearCacheSuccess": "Önbellek temizlendi"

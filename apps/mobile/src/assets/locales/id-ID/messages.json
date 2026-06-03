@@ -2305,7 +2305,7 @@
       "WebviewError": {
         "error": "Error:",
         "failedToLoad": "Gagal memuat halaman",
-        "alertText": "Coba<1/><2> Buka di browser</2><3/> untuk memeriksa apakah itu masalah situs web"
+        "alertText": ""
       },
       "toast": {
         "clearCacheSuccess": "Cache dibersihkan"

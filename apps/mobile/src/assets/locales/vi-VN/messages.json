@@ -2426,7 +2426,7 @@
       "WebviewError": {
         "error": "Lỗi:",
         "failedToLoad": "Không thể tải trang",
-        "alertText": "Thử<1/><2>Mở trong trình duyệt</2><3/>để kiểm tra xem có phải là vấn đề của trang web không"
+        "alertText": ""
       },
       "toast": {
         "clearCacheSuccess": "Bộ nhớ cache đã được xóa"
