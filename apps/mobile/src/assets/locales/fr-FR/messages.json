@@ -950,7 +950,7 @@
         "descAndroid": "Cliquez pour explorer les DApp",
         "descMore": "Faites glisser vers le haut pour explorer plus de sites web",
         "descAndroidMore": "Cliquez pour explorer plus de DApp",
-        "desc": "Faites glisser vers le haut pour explorer des sites web"
+        "desc": "Faites glisser vers le haut pour explorer et rechercher des sites web"
       },
       "DappDrawer": {
         "favorite": "Favori",
@@ -1007,7 +1007,7 @@
       "best": "Meilleur",
       "no-route-found": "Aucun itinéraire trouvé",
       "the-following-bridge-route-are-found": "Taux suivants trouvés",
-      "bridged": "Ponté",
+      "bridged": "Bridge initié",
       "gasFeeTooHight": "Les frais de Gas sont plus élevés que la normale. Confirmez uniquement si vous souhaitez continuer.",
       "pendingItem": {
         "swap": "Échanger",

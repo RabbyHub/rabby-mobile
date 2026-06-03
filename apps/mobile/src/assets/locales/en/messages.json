@@ -1024,7 +1024,7 @@
       "best-subtitle": "The best quote is determined by a combination of estimated total cost (including gas fees) and delivery speed.",
       "swap-best-subtitle": "The best quote is determined by the lowest estimated total cost, including the exchange rate and gas fees.",
       "no-route-found": "No route found",
-      "bridged": "Bridged",
+      "bridged": "Bridge initiated",
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "Form Changed",
       "formChangedAmount": "The amount has changed, possibly due to password autofill from the system keyboard. Please review and re-enter the correct amount.",
@@ -1089,7 +1089,7 @@
         "convertDust": "Convert Dust"
       },
       "swipeUp": {
-        "desc": "Swipe up to explore websites",
+        "desc": "Swipe up to explore & search websites",
         "descMore": "Swipe up to explore more websites",
         "descAndroid": "Click to explore DApp",
         "descAndroidMore": "Click to explore more DApp"

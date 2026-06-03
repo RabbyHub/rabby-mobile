@@ -991,7 +991,7 @@
         "descAndroidMore": "點擊探索更多 DApp",
         "descAndroid": "點擊探索 DApp",
         "descMore": "向上滑動以探索更多網站",
-        "desc": "向上滑動以探索網站"
+        "desc": "向上滑動以探索和搜尋網站"
       },
       "DappDrawer": {
         "emptyAndroid": "尚未將 DApp 加入收藏",
@@ -1099,7 +1099,7 @@
       "loss-tips": "您正在損失 {{usd}}。請嘗試不同的金額。",
       "no-quote-found": "未找到報價。請嘗試其他代幣對。",
       "To": "至",
-      "bridged": "跨鏈已完成",
+      "bridged": "已發起跨鏈",
       "gasFeeTooHight": "Gas 費用高於正常水平。只有在您希望繼續時才可確認。",
       "pendingItem": {
         "failed": "失敗",

@@ -1132,7 +1132,7 @@
       },
       "swipeUp": {
         "descAndroidMore": "Haz clic para explorar más DApp",
-        "desc": "Desliza hacia arriba para explorar sitios web",
+        "desc": "Desliza hacia arriba para explorar y buscar sitios web",
         "descAndroid": "Haz clic para explorar DApp",
         "descMore": "Desliza hacia arriba para explorar más sitios web."
       },
@@ -1432,7 +1432,7 @@
       "price-impact": "Impacto en el precio",
       "From": "Desde",
       "actual": "Actual:",
-      "bridged": "Transferencia completada",
+      "bridged": "Bridge iniciado",
       "gasFeeTooHight": "La tarifa de Gas es más alta de lo normal. Confirma solo si deseas continuar.",
       "pendingItem": {
         "completed": "Completado",
