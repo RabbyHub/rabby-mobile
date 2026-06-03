@@ -45,6 +45,7 @@ type BiometricsSystemAuthAvailability = Pick<
 export const BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES = {
   REAL: 'real',
   NONE: 'none',
+  NO_BIOMETRICS_DEVICE_PASSCODE: 'no-biometrics-device-passcode',
 } as const;
 
 export type BiometricsSystemAuthDebugMode =
@@ -99,15 +100,27 @@ export function canUseBiometricsSystemAuthDebugMock() {
   return IS_ANDROID && isNonPublicProductionEnv;
 }
 
+function normalizeBiometricsSystemAuthDebugMode(
+  mode: BiometricsSystemAuthDebugMode,
+): BiometricsSystemAuthDebugMode {
+  switch (mode) {
+    case BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.NONE:
+    case BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.NO_BIOMETRICS_DEVICE_PASSCODE:
+      return mode;
+    case BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.REAL:
+    default:
+      return BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.REAL;
+  }
+}
+
 export function getBiometricsSystemAuthDebugMode() {
   if (!canUseBiometricsSystemAuthDebugMock()) {
     return BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.REAL;
   }
 
-  const mode = biometricsSystemAuthDebugStore.getState().mode;
-  return mode === BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.NONE
-    ? mode
-    : BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.REAL;
+  return normalizeBiometricsSystemAuthDebugMode(
+    biometricsSystemAuthDebugStore.getState().mode,
+  );
 }
 
 export function setBiometricsSystemAuthDebugMode(
@@ -134,6 +147,11 @@ export function applyBiometricsSystemAuthDebugMock(
         supportedBiometryType: null,
         devicePasscodeAvailable: false,
       };
+    case BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.NO_BIOMETRICS_DEVICE_PASSCODE:
+      return {
+        supportedBiometryType: null,
+        devicePasscodeAvailable: true,
+      };
     case BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.REAL:
     default:
       return systemAuth;
@@ -143,10 +161,9 @@ export function applyBiometricsSystemAuthDebugMock(
 export function useBiometricsSystemAuthDebugMock() {
   const rawMode = biometricsSystemAuthDebugStore(s => s.mode);
   const canUse = canUseBiometricsSystemAuthDebugMock();
-  const mode =
-    canUse && rawMode === BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.NONE
-      ? rawMode
-      : BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.REAL;
+  const mode = canUse
+    ? normalizeBiometricsSystemAuthDebugMode(rawMode)
+    : BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.REAL;
   const setMode = useCallback(
     (nextMode: BiometricsSystemAuthDebugMode) =>
       setBiometricsSystemAuthDebugMode(nextMode),
