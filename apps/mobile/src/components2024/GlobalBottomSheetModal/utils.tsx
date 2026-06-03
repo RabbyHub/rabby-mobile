@@ -383,8 +383,11 @@ export const MODAL_CONFIGS = {
     Component: RepayTokenSelectModal,
   },
   [MODAL_NAMES.WALLETCONNECT_PAIRING]: {
-    snapPoints: [168],
+    snapPoints: [317],
     Component: WalletConnectPairingLoading,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset({
+      linearGradientType: 'bg1',
+    }),
   },
   [MODAL_NAMES.WALLETCONNECT_CONNECT]: {
     snapPoints: ['80%'],

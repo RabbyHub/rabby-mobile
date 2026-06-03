@@ -9,7 +9,7 @@ import {
   clearWalletConnectProposal,
   getWalletConnectPendingProposal,
 } from './proposal';
-import { clearWalletConnectPairingState } from './state';
+import { clearWalletConnectProposalPairingState } from './state';
 import { syncWalletConnectSessionsFromClient } from './sessions';
 import { replaceWalletConnectSessionsForAutoDisconnect } from './autoDisconnect';
 
@@ -76,7 +76,7 @@ jest.mock('./sessions', () => ({
 }));
 
 jest.mock('./state', () => ({
-  clearWalletConnectPairingState: jest.fn(),
+  clearWalletConnectProposalPairingState: jest.fn(),
   getWalletConnectDebugState: jest.fn(),
   subscribeWalletConnectDebugState: jest.fn(),
 }));
@@ -119,14 +119,14 @@ describe('walletconnect proposal lifecycle', () => {
     walletKit.rejectSession.mockResolvedValue(undefined);
   });
 
-  it('clears pairing state after approving a proposal', async () => {
+  it('clears proposal pairing state after approving a proposal', async () => {
     await approveWalletConnectProposal({
       proposalId: 1,
       account,
     });
 
     expect(clearWalletConnectProposal).toHaveBeenCalledWith(1);
-    expect(clearWalletConnectPairingState).toHaveBeenCalledTimes(1);
+    expect(clearWalletConnectProposalPairingState).toHaveBeenCalledTimes(1);
     expect(replaceWalletConnectSessionsForAutoDisconnect).toHaveBeenCalledWith(
       walletKit,
       'topic-1',
@@ -134,10 +134,10 @@ describe('walletconnect proposal lifecycle', () => {
     expect(syncWalletConnectSessionsFromClient).toHaveBeenCalledWith(walletKit);
   });
 
-  it('clears pairing state after rejecting a proposal', async () => {
+  it('clears proposal pairing state after rejecting a proposal', async () => {
     await rejectWalletConnectProposal(1);
 
     expect(clearWalletConnectProposal).toHaveBeenCalledWith(1);
-    expect(clearWalletConnectPairingState).toHaveBeenCalledTimes(1);
+    expect(clearWalletConnectProposalPairingState).toHaveBeenCalledTimes(1);
   });
 });

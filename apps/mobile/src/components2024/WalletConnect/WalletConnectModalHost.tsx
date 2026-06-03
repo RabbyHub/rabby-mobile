@@ -22,19 +22,14 @@ import {
 } from '@/core/walletconnect';
 import { getWalletConnectErrorMessage } from '@/core/walletconnect/error';
 import type { Account } from '@/types/account';
-import type {
-  WalletConnectPairingStatus,
-  WalletConnectProposalViewModel,
-} from '@/core/walletconnect/types';
+import type { WalletConnectProposalViewModel } from '@/core/walletconnect/types';
+import { useTheme2024 } from '@/hooks/theme';
 
 const WALLETCONNECT_PAIRING_SINGLETON_KEY = 'walletconnect-pairing';
 const WALLETCONNECT_CONNECT_SINGLETON_KEY = 'walletconnect-connect';
 
-function isPairingPending(status: WalletConnectPairingStatus) {
-  return status === 'pairing' || status === 'paired';
-}
-
 export function WalletConnectModalHost() {
+  const { isLight, colors2024 } = useTheme2024();
   const walletConnectState = useSyncExternalStore(
     subscribeWalletConnectDebugState,
     getWalletConnectDebugState,
@@ -120,9 +115,20 @@ export function WalletConnectModalHost() {
         proposal,
         bottomSheetModalProps: {
           enablePanDownToClose: false,
+          handleStyle: {
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
+          },
+          backgroundStyle: {
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
+          },
         },
         onApprove: async (account: Account) => {
           try {
+            closeLoading();
             await approveWalletConnectProposal({
               proposalId: proposal.id,
               account,
@@ -138,6 +144,7 @@ export function WalletConnectModalHost() {
         },
         onReject: async () => {
           try {
+            closeLoading();
             await rejectWalletConnectProposal(proposal.id);
             closeConnect();
           } catch (error: unknown) {
@@ -146,7 +153,7 @@ export function WalletConnectModalHost() {
         },
       });
     },
-    [closeConnect, showErrorToast],
+    [closeConnect, closeLoading, colors2024, isLight, showErrorToast],
   );
 
   useEffect(() => {
@@ -160,7 +167,7 @@ export function WalletConnectModalHost() {
 
     closeConnect();
 
-    if (isPairingPending(pairing.status)) {
+    if (pairing.status === 'pairing') {
       openLoading();
       return;
     }

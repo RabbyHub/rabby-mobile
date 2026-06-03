@@ -20,7 +20,6 @@ export type WalletConnectClientStatus =
 export type WalletConnectPairingStatus =
   | 'idle'
   | 'pairing'
-  | 'paired'
   | 'proposal'
   | 'error';
 

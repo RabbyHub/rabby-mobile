@@ -17,7 +17,7 @@ import {
 } from './proposal';
 import { maybeRedirectToDapp } from './redirectPolicy';
 import { syncWalletConnectSessionsFromClient } from './sessions';
-import { clearWalletConnectPairingState } from './state';
+import { clearWalletConnectProposalPairingState } from './state';
 
 export { initWalletConnect, pairWalletConnectUri };
 export {
@@ -102,7 +102,7 @@ export async function approveWalletConnectProposal(input: {
       namespaces,
     });
     clearWalletConnectProposal(input.proposalId);
-    clearWalletConnectPairingState();
+    clearWalletConnectProposalPairingState();
     await replaceWalletConnectSessionsForAutoDisconnect(
       walletKit,
       session.topic,
@@ -132,7 +132,7 @@ export async function rejectWalletConnectProposal(proposalId: number) {
     reason: getSdkErrorCompat('USER_REJECTED'),
   });
   clearWalletConnectProposal(proposalId);
-  clearWalletConnectPairingState();
+  clearWalletConnectProposalPairingState();
   addWalletConnectLog('proposal', 'session proposal rejected', { proposalId });
 }
 

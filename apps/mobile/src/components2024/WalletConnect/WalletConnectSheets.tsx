@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import {
@@ -18,6 +19,7 @@ import { toast } from '@/components2024/Toast';
 import RuleResult from '@/components/Approval/components/Connect/RuleResult';
 import UserListDrawer from '@/components/Approval/components/Connect/UserListDrawer';
 import RuleDrawer from '@/components/Approval/components/SecurityEngine/RuleDrawer';
+import { RcIconLogoBlueAutoSize } from '@/assets/icons/common';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { CHAINS_ENUM, type Chain } from '@/constant/chains';
 import { SecurityEngineLevel } from '@/constant/security';
@@ -155,25 +157,68 @@ function getWalletConnectBlockText(proposal: WalletConnectProposalViewModel) {
     : '';
 }
 
-function getRecommendChainServerId(chain: unknown) {
-  if (!chain || typeof chain !== 'object' || !('id' in chain)) {
-    return null;
-  }
-
-  const id = chain.id;
-  return typeof id === 'string' ? id : null;
-}
-
 export function WalletConnectPairingLoading() {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
+  const ringRotationValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.timing(ringRotationValue, {
+        toValue: 1,
+        duration: 1800,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    );
+    animation.start();
+
+    return () => {
+      animation.stop();
+    };
+  }, [ringRotationValue]);
+
+  const ringRotation = ringRotationValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
   return (
     <View style={styles.loadingContainer}>
-      <ActivityIndicator color={colors2024['brand-default']} />
-      <Text style={styles.loadingTitle}>Connecting...</Text>
-      <Text style={styles.loadingDesc}>
-        Waiting for the WalletConnect request
-      </Text>
+      <View style={styles.loadingIllustration}>
+        <Animated.View
+          style={[
+            styles.loadingRing,
+            {
+              transform: [{ rotate: ringRotation }],
+            },
+          ]}>
+          <Svg width={100} height={100} viewBox="0 0 100 100" fill="none">
+            <Path
+              d="M50 2C23.4903 2 2 23.4903 2 50C2 76.5097 23.4903 98 50 98"
+              stroke="url(#walletconnect_pairing_ring)"
+              strokeWidth={4}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <Defs>
+              <LinearGradient
+                id="walletconnect_pairing_ring"
+                x1={17.2727}
+                y1={18.9091}
+                x2={41.8182}
+                y2={98}
+                gradientUnits="userSpaceOnUse">
+                <Stop stopColor="#7084FF" />
+                <Stop offset={1} stopColor="#7084FF" stopOpacity={0.13} />
+              </LinearGradient>
+            </Defs>
+          </Svg>
+        </Animated.View>
+        <View style={styles.loadingIconCircle}>
+          <RcIconLogoBlueAutoSize width={54} height={54} />
+        </View>
+      </View>
+      <Text style={styles.loadingTitle}>Connecting to Rabby</Text>
     </View>
   );
 }
@@ -252,13 +297,9 @@ export function WalletConnectConnectSheet({
 
         let targetChain: Chain | undefined;
         for (let i = 0; i < recommendChains.length; i++) {
-          const serverId = getRecommendChainServerId(recommendChains[i]);
-          if (!serverId) {
-            continue;
-          }
           targetChain =
             findChain({
-              serverId,
+              serverId: recommendChains?.[i]?.id,
             }) || undefined;
           if (targetChain) {
             break;
@@ -291,12 +332,12 @@ export function WalletConnectConnectSheet({
     for (let i = 0; i < RuleDesc.length; i++) {
       const item = RuleDesc[i];
       const result = engineResults.find(_result => {
-        return _result.id === item.id;
+        return _result.id === item?.id;
       });
-      if (result || item.fixed) {
+      if (result || item?.fixed) {
         list.push({
-          id: item.id,
-          desc: item.desc,
+          id: item?.id,
+          desc: item?.desc,
           result: result || null,
         });
       }
@@ -762,22 +803,37 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
+    paddingTop: 50,
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  loadingIllustration: {
+    width: 105,
+    height: 109,
+    alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 24,
-    gap: 8,
+    marginBottom: 24,
+  },
+  loadingRing: {
+    position: 'absolute',
+    left: 2.5,
+    top: 4.5,
+    width: 100,
+    height: 100,
+  },
+  loadingIconCircle: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors2024['neutral-card-2'],
   },
   loadingTitle: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
-    fontWeight: '700',
-    lineHeight: 22,
-  },
-  loadingDesc: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 20,
+    fontWeight: '800',
+    lineHeight: 24,
     textAlign: 'center',
   },
   connectWrapper: {

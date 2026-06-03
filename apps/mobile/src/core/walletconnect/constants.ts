@@ -8,19 +8,17 @@ export const WALLETCONNECT_METADATA = {
   },
 };
 
-export const WALLETCONNECT_SUPPORTED_METHODS = Array.from(
-  new Set([
-    'eth_accounts',
-    'eth_requestAccounts',
-    'eth_chainId',
-    'net_version',
-    'personal_sign',
-    'eth_signTypedData',
-    'eth_signTypedData_v3',
-    'eth_signTypedData_v4',
-    'eth_sendTransaction',
-  ]),
-);
+export const WALLETCONNECT_SUPPORTED_METHODS = [
+  'eth_accounts',
+  'eth_requestAccounts',
+  'eth_chainId',
+  'net_version',
+  'personal_sign',
+  'eth_signTypedData',
+  'eth_signTypedData_v3',
+  'eth_signTypedData_v4',
+  'eth_sendTransaction',
+];
 
 export const WALLETCONNECT_SUPPORTED_EVENTS = [
   'accountsChanged',

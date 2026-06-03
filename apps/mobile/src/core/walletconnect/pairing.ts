@@ -69,25 +69,26 @@ export async function pairWalletConnectUri(input: {
     await walletKit.pair({
       uri: parsed.uri,
     });
-    setWalletConnectDebugState(prev => ({
-      ...prev,
-      pairing: {
-        ...prev.pairing,
-        status: 'paired',
-        error: undefined,
-      },
-    }));
     addWalletConnectLog('pairing', 'pairing submitted');
   } catch (error) {
     const message = formatPairingError(error);
-    setWalletConnectDebugState(prev => ({
-      ...prev,
-      pairing: {
-        ...prev.pairing,
-        status: 'error',
-        error: message,
-      },
-    }));
+    setWalletConnectDebugState(prev => {
+      if (
+        prev.pairing.status !== 'pairing' ||
+        prev.pairing.uri !== parsed.uri
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        pairing: {
+          ...prev.pairing,
+          status: 'error',
+          error: message,
+        },
+      };
+    });
     addWalletConnectLog('pairing', 'pairing failed', error, 'error');
     throw new Error(message);
   }

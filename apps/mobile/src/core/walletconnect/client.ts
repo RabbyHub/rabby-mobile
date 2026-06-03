@@ -95,7 +95,7 @@ function bindWalletConnectEvents(
 
   core?.pairing?.events?.on?.('pairing_expire', event => {
     const pairingStatus = getWalletConnectDebugState().pairing.status;
-    if (pairingStatus !== 'pairing' && pairingStatus !== 'paired') {
+    if (pairingStatus !== 'pairing') {
       addWalletConnectLog('pairing', 'stale pairing expired', event, 'warn');
       return;
     }

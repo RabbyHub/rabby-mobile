@@ -74,11 +74,17 @@ export function setWalletConnectClientStatus(
   }));
 }
 
-export function clearWalletConnectPairingState() {
-  setWalletConnectDebugState(prev => ({
-    ...prev,
-    pairing: {
-      status: 'idle',
-    },
-  }));
+export function clearWalletConnectProposalPairingState() {
+  setWalletConnectDebugState(prev => {
+    if (prev.pairing.status !== 'proposal') {
+      return prev;
+    }
+
+    return {
+      ...prev,
+      pairing: {
+        status: 'idle',
+      },
+    };
+  });
 }
