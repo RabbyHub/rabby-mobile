@@ -2,11 +2,6 @@ import { RefAttributes, useMemo } from 'react';
 import { TextProps, Platform, TextStyle } from 'react-native';
 import { Text as RNText } from '@/components/Typography';
 import { moderateScale } from 'react-native-size-matters';
-import {
-  containsCJKText,
-  sanitizeAndroidCJKFontStyle,
-  shouldUseAndroidSystemFontForCJK,
-} from './textFontFallback';
 
 // https://github.com/react-native-elements/react-native-elements/blob/1709780f72a42b2a5d656976f2034a75a78a1796/packages/base/src/helpers/normalizeText.tsx
 function normalize(number: number, factor = 0.25) {
@@ -46,22 +41,15 @@ const RobotoLackWeights = ['200', '600', '800'];
 
 export const Text = ({
   style,
-  children,
   ref,
   ...rest
 }: TextProps & RefAttributes<RNText>) => {
-  const hasCJK = useMemo(() => containsCJKText(children), [children]);
-  const sanitizedStyle = useMemo(
-    () => sanitizeAndroidCJKFontStyle(style, hasCJK),
-    [hasCJK, style],
-  );
-  const useAndroidSystemFont = shouldUseAndroidSystemFontForCJK(hasCJK);
   const _fontSize = useMemo(
-    () => normalize((sanitizedStyle as TextStyle)?.fontSize || 14),
-    [sanitizedStyle],
+    () => normalize((style as TextStyle)?.fontSize || 14),
+    [style],
   );
   const _fontWeight = useMemo(() => {
-    const fontWeight = (sanitizedStyle as TextStyle)?.fontWeight;
+    const fontWeight = (style as TextStyle)?.fontWeight;
 
     if (
       Platform.OS === 'android' &&
@@ -72,21 +60,20 @@ export const Text = ({
     }
 
     return fontWeight;
-  }, [sanitizedStyle]);
+  }, [style]);
 
   return (
     <RNText
       style={[
-        useAndroidSystemFont ? null : defaultFontFamily,
-        sanitizedStyle,
+        defaultFontFamily,
+        style,
         {
           fontSize: _fontSize,
           fontWeight: _fontWeight as TextStyle['fontWeight'],
         },
       ]}
       {...rest}
-      ref={ref}>
-      {children}
-    </RNText>
+      ref={ref}
+    />
   );
 };
