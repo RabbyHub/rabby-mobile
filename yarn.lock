@@ -11120,18 +11120,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native-async-storage/async-storage@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "@react-native-async-storage/async-storage@npm:3.0.2"
-  dependencies:
-    idb: "npm:8.0.3"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 10/c6b4ff9fefe233cab3dd1bd3fcc0d928d2cdaaac942e31f6aafc329296e4558f9695d607deab4af934969db7402accba8bbd81b0ab923eccf3fe1bfaf279291e
-  languageName: node
-  linkType: hard
-
 "@react-native-clipboard/clipboard@npm:^1.13.0":
   version: 1.13.2
   resolution: "@react-native-clipboard/clipboard@npm:1.13.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40react-native-clipboard%2Fclipboard%2F-%2Fclipboard-1.13.2.tgz"
@@ -28923,13 +28911,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"idb@npm:8.0.3":
-  version: 8.0.3
-  resolution: "idb@npm:8.0.3"
-  checksum: 10/e2beccb0be7c6af562a5e92b209363358571a770aecdc68e891d1141d994d8f1e8f34b79dafa309ed7467d0f4df2b7b4c15f67cfd0611100282bfc3d85f9c73c
-  languageName: node
-  linkType: hard
-
 "idb@npm:^7.0.1":
   version: 7.1.1
   resolution: "idb@npm:7.1.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fidb%2F-%2Fidb-7.1.1.tgz"
@@ -38769,7 +38750,6 @@ __metadata:
     "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^"
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
-    "@react-native-async-storage/async-storage": "npm:^3.0.2"
     "@react-native-clipboard/clipboard": "npm:^1.13.0"
     "@react-native-community/blur": "npm:4.4.1"
     "@react-native-community/cli": "npm:20.0.0"
