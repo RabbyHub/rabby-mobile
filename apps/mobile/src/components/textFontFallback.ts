@@ -34,6 +34,13 @@ export function containsCJKText(node: ReactNode) {
   return CJK_RE.test(collectText(node));
 }
 
+export function shouldUseAndroidSystemFontForCJK(
+  hasCJK: boolean,
+  platformOS = Platform.OS,
+) {
+  return platformOS === 'android' && hasCJK;
+}
+
 function inferFontWeightFromFamily(fontFamily?: TextStyle['fontFamily']) {
   if (!fontFamily) {
     return undefined;

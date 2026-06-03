@@ -19,6 +19,7 @@ jest.mock('react-native-size-matters', () => ({
 import {
   containsCJKText,
   sanitizeAndroidCJKFontStyle,
+  shouldUseAndroidSystemFontForCJK,
 } from './textFontFallback';
 
 describe('Text Android CJK font fallback', () => {
@@ -81,5 +82,11 @@ describe('Text Android CJK font fallback', () => {
       fontFamily: 'SFProRounded-Bold',
       fontSize: 16,
     });
+  });
+
+  it('uses the Android system font instead of forcing Roboto for CJK text', () => {
+    expect(shouldUseAndroidSystemFontForCJK(true, 'android')).toBe(true);
+    expect(shouldUseAndroidSystemFontForCJK(false, 'android')).toBe(false);
+    expect(shouldUseAndroidSystemFontForCJK(true, 'ios')).toBe(false);
   });
 });

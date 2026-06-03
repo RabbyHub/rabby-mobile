@@ -5,6 +5,7 @@ import { moderateScale } from 'react-native-size-matters';
 import {
   containsCJKText,
   sanitizeAndroidCJKFontStyle,
+  shouldUseAndroidSystemFontForCJK,
 } from './textFontFallback';
 
 // https://github.com/react-native-elements/react-native-elements/blob/1709780f72a42b2a5d656976f2034a75a78a1796/packages/base/src/helpers/normalizeText.tsx
@@ -54,6 +55,7 @@ export const Text = ({
     () => sanitizeAndroidCJKFontStyle(style, hasCJK),
     [hasCJK, style],
   );
+  const useAndroidSystemFont = shouldUseAndroidSystemFontForCJK(hasCJK);
   const _fontSize = useMemo(
     () => normalize((sanitizedStyle as TextStyle)?.fontSize || 14),
     [sanitizedStyle],
@@ -75,7 +77,7 @@ export const Text = ({
   return (
     <RNText
       style={[
-        defaultFontFamily,
+        useAndroidSystemFont ? null : defaultFontFamily,
         sanitizedStyle,
         {
           fontSize: _fontSize,
