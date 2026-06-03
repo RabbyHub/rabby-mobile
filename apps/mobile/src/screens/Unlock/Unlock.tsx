@@ -35,6 +35,7 @@ import {
   APPLICATION_ID,
 } from '@/constant';
 import {
+  KEYCHAIN_ERROR_CODES,
   RequestGenericPurpose,
   isBrokenBiometricsEntryError,
   parseKeychainError,
@@ -210,6 +211,27 @@ function traceAndroidUnlockPerf(
 
   logger.info(`[RabbyUnlockPerf:unlock] ${event}`, data);
   console.info('[RabbyUnlockPerf:unlock]', event, data);
+}
+
+function shouldSwitchToPasswordAfterBiometricsError(error: unknown) {
+  if (isBrokenBiometricsEntryError(error)) {
+    return true;
+  }
+
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const code = 'code' in error ? error.code : undefined;
+  const message =
+    'message' in error && typeof error.message === 'string'
+      ? error.message
+      : '';
+
+  return (
+    code === KEYCHAIN_ERROR_CODES.NIL_KEYCHAIN_OBJECT ||
+    message.includes('Failed to retrieve keychain object')
+  );
 }
 
 export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
@@ -446,6 +468,7 @@ export default function UnlockScreen() {
         await apisKeychain.requestGenericPassword({
           purpose: RequestGenericPurpose.DECRYPT_PWD,
           shouldAttachTrustedVaultKeyString: !isAndroid,
+          skipPostDecryptKeychainRewrite: isAndroid,
           onPlainPassword: async (password, credentials) => {
             if (!isBiometricActionActive(actionId)) {
               hideAuthToastRef.current?.();
@@ -543,14 +566,15 @@ export default function UnlockScreen() {
 
         storeApisUnlock.resetUnlocking();
 
-        if (__DEV__ && incToReset() === 0) {
+        if (shouldSwitchToPasswordAfterBiometricsError(error)) {
+          storeApisBiometrics.disableBiometricsForCurrentSession(
+            'unlock-biometrics-keychain-unavailable',
+          );
           toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
           setUsingBiometrics(false);
-        } else if (error.code === 'NIL_KEYCHAIN_OBJECT') {
+        } else if (__DEV__ && incToReset() === 0) {
           toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
           setUsingBiometrics(false);
-        } else if (isBrokenBiometricsEntryError(error)) {
-          toastBiometricsFailed(error.message);
         } else {
           toastBiometricsFailed(t('page.unlock.biometrics.failedAndTipTitle'));
         }
@@ -591,9 +615,10 @@ export default function UnlockScreen() {
     ) {
       return;
     }
+
+    lockBiometricRef.current = true;
     const actionId = biometricActionIdRef.current + 1;
     biometricActionIdRef.current = actionId;
-    lockBiometricRef.current = true;
     const unlockBiometricsIfActive = () => {
       if (!isBiometricActionActive(actionId)) {
         return Promise.resolve();
@@ -605,6 +630,22 @@ export default function UnlockScreen() {
       lockBiometricRef.current = false;
     };
 
+    const biometricsReady = await storeApisBiometrics
+      .ensureBiometricsReadyForUnlock()
+      .catch(error => {
+        logger.warn('[unlock] biometrics readiness check failed', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return false;
+      });
+    if (!biometricsReady) {
+      traceAndroidUnlockPerf('biometrics_not_ready_switch_to_password');
+      toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
+      setUsingBiometrics(false);
+      releaseBiometricLock();
+      return;
+    }
+
     if (!isFaceID && !isAndroid) {
       const hideToast = toastUnlocking();
       await unlockBiometricsIfActive().finally(() => {
@@ -614,7 +655,13 @@ export default function UnlockScreen() {
     } else {
       await unlockBiometricsIfActive().finally(releaseBiometricLock);
     }
-  }, [isFaceID, isBiometricActionActive, unlockWithBiometrics, checkUnlocked]);
+  }, [
+    isFaceID,
+    isBiometricActionActive,
+    unlockWithBiometrics,
+    checkUnlocked,
+    t,
+  ]);
 
   useLayoutEffect(() => {
     incToReset(true);
