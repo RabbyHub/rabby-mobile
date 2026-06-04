@@ -1,6 +1,6 @@
 import { Account, ChainGas } from '@/core/services/preference';
 import { useSecurityEngine } from '@/hooks/securityEngine';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { intToHex } from '@/utils/number';
@@ -2101,8 +2101,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   //   }
   // }, [scrollInfo, scrollRefSize]);
 
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { colors2024 } = useTheme2024();
+  const styles = React.useMemo(() => getStyles(colors2024), [colors2024]);
   const { setRPCEnable } = useCustomRPC();
 
   // is eip7702
