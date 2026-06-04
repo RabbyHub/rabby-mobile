@@ -199,9 +199,17 @@ export const RcScreenshotReport = makeThemeIcon2024FromCC(
     onDark: ctx.colors2024['brand-default'],
   }),
 );
-export { default as RcIconCurrency } from './icon-currency.svg';
 
-import { default as RcWalletConnectCC } from './icon-wallet-connect.svg';
+import { default as RcIconCurrencyCC } from './icon-currency-cc.svg';
+export const RcIconCurrency = makeThemeIcon2024FromCC(
+  RcIconCurrencyCC,
+  ctx => ({
+    onLight: ctx.colors2024['brand-default'],
+    onDark: ctx.colors2024['brand-default'],
+  }),
+);
+
+import { default as RcWalletConnectCC } from './icon-wallet-connect-cc.svg';
 export const RcWalletConnect = makeThemeIcon2024FromCC(
   RcWalletConnectCC,
   ctx => ({
