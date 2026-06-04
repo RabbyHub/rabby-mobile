@@ -5,7 +5,7 @@
       "ImportMnemonic": "Importar Seed Phrase",
       "ImportPrivateKey": "Importar Private Key",
       "ImportHardwareAddress": "Conectar Carteras de Hardware",
-      "SafeAddressList": "Dirección Segura",
+      "SafeAddressList": "Dirección Safe",
       "CreateChooseBackup": "3. Elija un método de respaldo",
       "ImportSafeAddress2024": "Agregar Safe Address",
       "ImportSuccess": "Agregado exitosamente",
@@ -55,14 +55,14 @@
     },
     "ReserveGasPopup": {
       "normal": "Lento",
-      "doNotReserve": "No reserves Gas",
+      "doNotReserve": "No reservar Gas",
       "title": "Reserva Gas",
       "instant": "Rápido",
       "fast": "Normal"
     },
     "signPermissionCheckModal": {
-      "reconnect": "Reconectar Dapp",
-      "title": "Solo permites que esta Dapp firme en redes de prueba"
+      "reconnect": "Reconectar DApp",
+      "title": "Solo permites que esta DApp firme en redes de prueba"
     },
     "AuthenticationModal": {
       "passwordPlaceholder": "Introduce la contraseña para confirmar"
@@ -187,7 +187,7 @@
         "noWithdrawableBalanceTitle": "{{amount}} No retirable",
         "giftTips": "Recompensa de Gas para usuarios activos",
         "gotIt": "Lo Tengo",
-        "noWithdrawableBalanceDescription": "{{amount}} de tu saldo de gas no es retirado:\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+        "noWithdrawableBalanceDescription": "{{amount}} de tu saldo de gas no se puede retirar:\n1. Apple Pay / Google Pay\n2. Gas Rewards"
       },
       "about": {
         "title3": "¿GasAccount tiene tarifas adicionales?",
@@ -223,15 +223,15 @@
       }
     },
     "externalSwapBrideDappPopup": {
-      "selectADapp": "Selecciona una Dapp",
-      "thirdPartyDappToProceed": "Por favor, utiliza una Dapp de terceros para continuar.",
-      "viewDappOptions": "Ver Opciones de Dapp",
-      "noDapps": "No hay Dapp disponible en esta cadena",
-      "noDapp": "No hay Dapps disponibles",
+      "selectADapp": "Selecciona una DApp",
+      "thirdPartyDappToProceed": "Por favor, utiliza una DApp de terceros para continuar.",
+      "viewDappOptions": "Ver Opciones de DApp",
+      "noDapps": "No hay DApp disponible en esta cadena",
+      "noDapp": "No hay DApp disponibles",
       "noQuotesForChain": "Aún no hay cotizaciones disponibles para esta cadena",
-      "swapOnDapp": "Intercambiar en Dapp",
+      "swapOnDapp": "Intercambiar en DApp",
       "help": "Por favor, contacta al equipo oficial de esta cadena para obtener soporte.",
-      "bridgeOnDapp": "Puente en Dapp",
+      "bridgeOnDapp": "Puente en DApp",
       "chainNotSupported": "No soportado en esta cadena"
     },
     "selectCexModal": {
@@ -328,7 +328,7 @@
         "Recieve": "Recibido",
         "Swap": "Cambiado",
         "Contract": "Desplegar Contrato",
-        "Bridge": "Puenteado",
+        "Bridge": "Bridge completado",
         "Buy": "Comprado",
         "Revoke": "Revocación de la aprobación de {{token}}",
         "WithdrawnGas": "Gas retirado",
@@ -357,7 +357,7 @@
         "To": "A",
         "ApproveToken": "Aprobar token",
         "Pending": "Pendiente",
-        "NoApproveNeed": "No need to revoke: No allowance remaining.",
+        "NoApproveNeed": "No hace falta revocar: no queda allowance.",
         "Chain": "Cadena",
         "Date": "Fecha",
         "SpeedUp": "Acelerar",
@@ -438,7 +438,7 @@
       },
       "buyNFT": {
         "receiveNFT": "Recibir NFT",
-        "listOn": "List on",
+        "listOn": "Publicado en",
         "payToken": "Pagar token",
         "expireTime": "Tiempo de expiración"
       },
@@ -449,7 +449,7 @@
         "title": "Confirmar Transacción"
       },
       "permit": {
-        "title": "Aprobar Token de Permiso"
+        "title": "Aprobación de Token Permit"
       },
       "permit2": {
         "title": "Permit2 Token Approval",
@@ -514,7 +514,7 @@
       },
       "revokeNFTCollectionApprove": {
         "revokeCollection": "Revocar colección",
-        "title": "Revocar NFT Collection"
+        "title": "Revocar colección NFT"
       },
       "nativeTokenNotEngouthForGas": "El saldo de Gas no es suficiente",
       "unknownAction": "Tipo de Firma Desconocido",
@@ -577,18 +577,18 @@
         "operationCantDecode": "Operación no está decodificada",
         "operation": "Operación"
       },
-      "gasLimitMinValueAlert": "El límite de Gas debe ser más de 21000",
-      "gasLimitEmptyAlert": "Por favor, introduce el límite de gas",
+      "gasLimitMinValueAlert": "El Gas limit debe ser más de 21000",
+      "gasLimitEmptyAlert": "Por favor, introduce el Gas limit",
       "nftCollectionApprove": {
         "title": "Aprobación de la colección NFT",
         "approveCollection": "Aprobar colección"
       },
-      "gasLimitNotEnough": "El límite de Gas es inferior a 21000. La transacción no puede ser enviada",
+      "gasLimitNotEnough": "El Gas limit es inferior a 21000. La transacción no puede ser enviada",
       "crossChain": {
-        "title": "Cross Chain"
+        "title": "Cross-chain"
       },
-      "safeAddressNotSupportChain": "La dirección segura actual no es compatible con la cadena {{0}}.",
-      "gasLimitLessThanExpect": "El límite de Gas es bajo. Hay un 1% de probabilidad de que la transacción falle.",
+      "safeAddressNotSupportChain": "La dirección Safe actual no es compatible con la cadena {{0}}.",
+      "gasLimitLessThanExpect": "El Gas limit es bajo. Hay un 1% de probabilidad de que la transacción falle.",
       "recommendGasLimitTip": "Est. {{est}}. Current {{current}}x, recommend",
       "swapLimitPay": {
         "maxPay": "Pago máximo",
@@ -598,7 +598,7 @@
       "noGasRequired": "No se requiere gas",
       "balanceChange": {
         "failedTitle": "Error de simulación",
-        "noBalanceChange": "No balance change",
+        "noBalanceChange": "Sin cambios de saldo",
         "notSupport": "Simulación No Soportada",
         "successTitle": "Resultados de la simulación",
         "errorTitle": "Error al obtener el cambio de balance"
@@ -606,7 +606,7 @@
       "gasNotRequireForSafeTransaction": "No se requiere tarifa de Gas para transacciones de Safe",
       "nativeTokenForGas": "Usa el token {{tokenName}} en {{chainName}} para pagar el gas",
       "speedUpTooltip": "Esta transacción acelerada y la transacción original, solo una de las cuales se completará eventualmente",
-      "gasLimitLessThanGasUsed": "El límite de gas es demasiado bajo. Hay un 95% de probabilidad de que la transacción pueda fallar.",
+      "gasLimitLessThanGasUsed": "El Gas limit es demasiado bajo. Hay un 95% de probabilidad de que la transacción pueda fallar.",
       "enoughSafeSigCollected": "Firmas suficientes recogidas",
       "deployContract": {
         "descriptionTitle": "Descripción",
@@ -666,7 +666,7 @@
       "swap": {
         "title": "Intercambiar Token",
         "simulationFailed": "Simulación de transacción fallida",
-        "minReceive": "Minimum Receive",
+        "minReceive": "Recepción mínima",
         "payToken": "Pagar",
         "receiver": "Receptor",
         "failLoadReceiveToken": "Error al cargar",
@@ -742,7 +742,7 @@
       },
       "no": "No",
       "label": "Etiqueta",
-      "contract": "Smart contract",
+      "contract": "Contrato inteligente",
       "typedDataMessage": "Firmar Datos Tipados",
       "maxPriorityFeeDisabledAlert": "Por favor, establezca el Gas Price primero.",
       "trustValueTitle": "Confía en el valor",
@@ -751,11 +751,11 @@
         "selfHostConfirm": {
           "button": "OK",
           "title": "Cambiar al Servicio Seguro de Rabby",
-          "content": "La API de Safe no está disponible. Cambia al servicio Safe implementado por Rabby para mantener tu Safe operativo. <1></1><2>Todos los firmantes de Safe deben usar Rabby Wallet para autorizar transacciones.<2>"
+          "content": "La API de Safe no está disponible. Cambia al servicio Safe implementado por Rabby para mantener tu Safe operativo. <1></1><2>Todos los firmantes de Safe deben usar Rabby Wallet para autorizar transacciones.</2>"
         }
       },
       "errorRetry": {
-        "gasLimitTooLow": "Límite de gas demasiado bajo",
+        "gasLimitTooLow": "Gas limit demasiado bajo",
         "alreadySubmitted": "Transacción ya enviada. Se ha detectado una transacción duplicada.",
         "nonceTooHigh": "Nonce demasiado alto. Por favor, ajusta el nonce y vuelve a intentar.",
         "defaultTips": "Algo ha salido mal. Por favor, inténtalo de nuevo más tarde.",
@@ -869,12 +869,12 @@
       "cancelConnection": "Cancelar conexión",
       "cancelCurrentTransaction": "Cancelar la transacción actual",
       "submitTx": "Enviar transacción",
-      "blockDappFromSendingRequests": "Bloquear Dapp de enviar solicitudes durante 1 min",
+      "blockDappFromSendingRequests": "Bloquear DApp de enviar solicitudes durante 1 min",
       "resend": "Reintentar",
       "confirm": "Confirmar",
       "signAndSubmitButton": "Firmar",
       "confirmWithPassword": "Confirmar",
-      "cancelAll": "Cancelar todas las {{count}} solicitudes de Dapp",
+      "cancelAll": "Cancelar todas las {{count}} solicitudes de DApp",
       "gasAccount": {
         "deposit": "Depósito",
         "chainNotSupported": "Esta cadena no es compatible con GasAccount",
@@ -904,7 +904,7 @@
         "siging": "Enviando solicitud de firma",
         "txRejectedByLedger": "La transacción ha sido rechazada en tu Ledger"
       },
-      "detectedMultipleRequestsFromThisDapp": "Se han detectado múltiples solicitudes de esta Dapp",
+      "detectedMultipleRequestsFromThisDapp": "Se han detectado múltiples solicitudes de esta DApp",
       "qrcode": {
         "sigCompleted": "Transacción creada",
         "failedToGetExplain": "Error al obtener la explicación",
@@ -974,10 +974,10 @@
             "normalTrustValueDanger": "El valor de confianza del contrato: {{ contractUsdText }}",
             "contractTrustValueDanger": "El valor de confianza del contrato < $10,000",
             "revokeTrendsValueDanger": "Los revokes recientes son más de 4 veces el número de usuarios recién aprobados.",
-            "revokeDangerTitle": "Contrato 24h Revocar Tendencias > 4",
+            "revokeDangerTitle": "Las revocaciones de 24 h superan en 4x las aprobaciones",
             "contractTrustValue": "El valor de confianza se refiere al valor total de activos gastado por este contrato. Un valor de confianza bajo indica ya sea riesgo o inactividad durante 180 días.",
             "revokeTrendsValueWarning": "Las revocaciones recientes son más del doble del número de usuarios recién aprobados.",
-            "revokeWarningTitle": "Contract 24h Revoke doble que Revoke"
+            "revokeWarningTitle": "Las revocaciones de 24 h superan en 2x las aprobaciones"
           }
         }
       },
@@ -1110,7 +1110,7 @@
       "services": {
         "bridge": "Bridge",
         "swap": "Intercambiar",
-        "dapps": "Dapps",
+        "dapps": "DApp",
         "send": "Enviar",
         "receive": "Recibir",
         "more": "Más",
@@ -1131,14 +1131,14 @@
         "convertDust": "Convertir Polvo"
       },
       "swipeUp": {
-        "descAndroidMore": "Haz clic para explorar más dApps",
-        "desc": "Desliza hacia arriba para explorar sitios web",
-        "descAndroid": "Haz clic para explorar dApps",
+        "descAndroidMore": "Haz clic para explorar más DApp",
+        "desc": "Desliza hacia arriba para explorar y buscar sitios web",
+        "descAndroid": "Haz clic para explorar DApp",
         "descMore": "Desliza hacia arriba para explorar más sitios web."
       },
       "DappDrawer": {
         "favorite": "Favorito",
-        "emptyAndroid": "No hay dApp añadida a favoritos",
+        "emptyAndroid": "No hay DApp añadida a favoritos",
         "search": "Buscar",
         "empty": "Ningún sitio web añadido a favoritos",
         "tabs": {
@@ -1189,7 +1189,7 @@
           "customizeTokens_one": "{{count}} token personalizado",
           "testnetTokens_other": "{{count}} tokens de red personalizados",
           "customizeTokens_zero": "{{count}} token personalizado",
-          "blockedTokens_zero": "{{count}} blocked token"
+          "blockedTokens_zero": "{{count}} token bloqueado"
         }
       },
       "settings": {
@@ -1265,7 +1265,7 @@
       "low-slippage-may-cause-failed-transactions-due-to-high-volatility": "Baja deslizamiento puede causar transacciones fallidas debido a alta volatilidad",
       "token": "Token",
       "by-transaction-simulation-the-quote-is-valid": "Mediante la simulación de transacciones, la cotización es válida",
-      "gas-fee": "GasFee: {{gasUsed}}",
+      "gas-fee": "Comisión de gas: {{gasUsed}}",
       "slippage-tolerance": "Tolerancia de deslizamiento",
       "transaction-might-be-frontrun-because-of-high-slippage-tolerance": "La transacción podría ser adelantada debido a una alta tolerancia al deslizamiento.",
       "recommend-slippage": "Para prevenir el front-running, recomendamos un deslizamiento de <2>{{ slippage }}</2>%.",
@@ -1401,10 +1401,10 @@
       "history": "Historial de Bridge",
       "showMore": {
         "title": "Mostrar más",
-        "source": "Bridge Source",
+        "source": "Origen del bridge",
         "signWarning": "Entiendo la alerta y quiero continuar."
       },
-      "bridgeTo": "Bridge To",
+      "bridgeTo": "Bridge hacia",
       "best": "Mejor",
       "via-bridge": "a través de {{bridge}}",
       "bridgeFrom": "Puente Desde",
@@ -1416,23 +1416,23 @@
       "approve-and-bridge": "Aprobar y Puente",
       "Select": "Seleccionar",
       "To": "A",
-      "est-receiving": "Est. Receiving:",
-      "gas-fee": "GasFee: {{gasUsed}}",
+      "est-receiving": "Recepción estimada:",
+      "gas-fee": "Comisión de gas: {{gasUsed}}",
       "liquidity": "Liquidez",
       "est-difference": "Est. Difference:",
-      "no-quote": "Sin Cotización",
-      "est-payment": "Est. Payment:",
+      "no-quote": "Sin cotización",
+      "est-payment": "Pago estimado:",
       "no-route-found": "No se encontró ruta",
       "no-quote-found": "No se encontró cotización. Por favor, intente con otros pares de tokens.",
       "loss-tips": "Está perdiendo {{usd}}. Intente con una cantidad diferente.",
       "duration": "{{duration}} min",
       "for-available-quote": "para una cotización disponible",
       "value": "Saldo",
-      "bridge-from": "Puente desde",
+      "bridge-from": "Origen del bridge",
       "price-impact": "Impacto en el precio",
       "From": "Desde",
       "actual": "Actual:",
-      "bridged": "Puenteado",
+      "bridged": "Bridge iniciado",
       "gasFeeTooHight": "La tarifa de Gas es más alta de lo normal. Confirma solo si deseas continuar.",
       "pendingItem": {
         "completed": "Completado",
@@ -1578,34 +1578,34 @@
         "balance": "Balance",
         "onekey": {
           "hdPathTypeNoChain": {
-            "bip44": "BIP44: HDpath definido por el protocolo BIP44."
+            "bip44": "BIP44: HD Path definido por el protocolo BIP44."
           },
           "hdPathType": {
-            "bip44": "BIP44: HDpath definido por el protocolo BIP44."
+            "bip44": "BIP44: HD Path definido por el protocolo BIP44."
           }
         },
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: Ruta HD oficial de Ledger.",
-            "bip44": "BIP44 Estándar: HDpath definido por el protocolo BIP44.",
-            "legacy": "Legado: ruta HD utilizada por MEW / Mycrypto."
+            "ledgerLive": "Ledger Live: HD Path oficial de Ledger.",
+            "bip44": "BIP44 Estándar: HD Path definido por el protocolo BIP44.",
+            "legacy": "Legado: HD Path utilizada por MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: ruta HD oficial de Ledger.",
-            "bip44": "Estándar BIP44: ruta HD definida por el protocolo BIP44.",
-            "legacy": "Legado: ruta HD utilizada por MEW / Mycrypto."
+            "ledgerLive": "Ledger Live: HD Path oficial de Ledger.",
+            "bip44": "Estándar BIP44: HD Path definida por el protocolo BIP44.",
+            "legacy": "Legado: HD Path utilizada por MEW / Mycrypto."
           }
         },
         "keystone": {
           "hdPathTypeNoChain": {
-            "bip44": "BIP44: HDpath definido por el protocolo BIP44.",
-            "legacy": "Legacy: Ruta HD utilizada por MEW / Mycrypto.",
-            "ledgerLive": "Ledger Live: ruta HD oficial de Ledger. Solo puedes gestionar 10 direcciones con la ruta de Ledger Live."
+            "bip44": "BIP44: HD Path definido por el protocolo BIP44.",
+            "legacy": "Legacy: HD Path utilizada por MEW / Mycrypto.",
+            "ledgerLive": "Ledger Live: HD Path oficial de Ledger. Solo puedes gestionar 10 direcciones con la ruta de Ledger Live."
           },
           "hdPathType": {
-            "bip44": "BIP44: HDpath definido por el protocolo BIP44.",
-            "legacy": "Legacy: Ruta HD utilizada por MEW / Mycrypto.",
-            "ledgerLive": "Ledger Live: Ruta HD oficial de Ledger. Solo puedes gestionar 10 direcciones con la ruta de Ledger Live."
+            "bip44": "BIP44: HD Path definido por el protocolo BIP44.",
+            "legacy": "Legacy: HD Path utilizada por MEW / Mycrypto.",
+            "ledgerLive": "Ledger Live: HD Path oficial de Ledger. Solo puedes gestionar 10 direcciones con la ruta de Ledger Live."
           }
         },
         "qrCode": {
@@ -1614,19 +1614,19 @@
             "content": "No se admite la importación de múltiples dispositivos {{0}}. Si cambias a un nuevo dispositivo {{0}}, la lista de direcciones del dispositivo actual se eliminará antes de comenzar el proceso de importación."
           }
         },
-        "customAddressHdPath": "Ruta HD de billetera personalizada",
+        "customAddressHdPath": "HD Path de billetera personalizada",
         "manageAddressFrom": "Gestionar cartera de {{0}} a {{1}}",
         "selectIndexTip": "Seleccione el número de serie de las carteras con las que desea comenzar:",
         "trezor": {
           "hdPathType": {
-            "bip44": "BIP44: Ruta HD definida por el protocolo BIP44.",
-            "ledgerLive": "Ledger Live: ruta HD oficial de Ledger.",
-            "legacy": "Legacy: Ruta HD utilizada por MEW / Mycrypto."
+            "bip44": "BIP44: HD Path definida por el protocolo BIP44.",
+            "ledgerLive": "Ledger Live: HD Path oficial de Ledger.",
+            "legacy": "Legacy: HD Path utilizada por MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: ruta HD oficial de Ledger.",
-            "bip44": "BIP44: HDpath definido por el protocolo BIP44.",
-            "legacy": "Legado: ruta HD utilizada por MEW / Mycrypto."
+            "ledgerLive": "Ledger Live: HD Path oficial de Ledger.",
+            "bip44": "BIP44: HD Path definido por el protocolo BIP44.",
+            "legacy": "Legado: HD Path utilizada por MEW / Mycrypto."
           }
         }
       },
@@ -1684,7 +1684,7 @@
       "title": "Firmar texto",
       "createKey": {
         "description": "Descripción",
-        "interactDapp": "Interactuar con Dapp"
+        "interactDapp": "Interactuar con DApp"
       },
       "sameSafeMessageAlert": "El mismo mensaje está confirmado; no se requiere ninguna firma adicional."
     },
@@ -1800,7 +1800,7 @@
     "addressDetail": {
       "qr-code": "Código QR",
       "safeAddressListScreen": {
-        "addSafeAddress": "Agregar billeteras seguras"
+        "addSafeAddress": "Añadir Safe Wallets"
       },
       "hd-path": "HD Path",
       "address-note": "Nota de Dirección",
@@ -1838,7 +1838,7 @@
       "delete-address": "Eliminar wallet",
       "delete-desc": "¿Estás seguro de que quieres eliminar esta wallet?",
       "notMatterAddressDialog": {
-        "safeWallet": "Billetera Segura",
+        "safeWallet": "Safe Wallet",
         "helpTitle": "Billeteras clasificadas por debajo de las 10 mejores",
         "title": "Los siguientes wallets no están incluidos en el saldo total.",
         "watchOnlyWallet": "Wallet de Solo Visualización",
@@ -1883,7 +1883,7 @@
       "foundForbiddenRisk": "Se encontraron riesgos prohibidos. La conexión está bloqueada.",
       "manageWhiteBlackList": "Gestionar whitelist/blacklist",
       "trusted": "Confiable",
-      "title": "Conectar a Dapp",
+      "title": "Conectar a DApp",
       "popularLevelMedium": "Medio",
       "blocked": "Bloqueado",
       "connectWallet": "Conectar Wallet"
@@ -1915,7 +1915,7 @@
       "settingUp": "Configuración de la contraseña",
       "passwordMinTip": "Debe tener al menos 8 caracteres",
       "confirmError": "Las contraseñas no coinciden",
-      "subTitle": "Se usará para desbloquear tu wallet y cifrar los datos locales。",
+      "subTitle": "Se usará para desbloquear tu wallet y cifrar los datos locales.",
       "passwordMin": "La contraseña debe tener al menos 8 caracteres",
       "confirmTitle": "Confirmar contraseña",
       "PrivacyPolicy": "Política de Privacidad",
@@ -2026,7 +2026,7 @@
       },
       "globalSearch": {
         "iosPlaceHolder": "Buscar sitio web/token",
-        "placeHolder": "Buscar Dapp/Token"
+        "placeHolder": "Buscar DApp/Token"
       },
       "tokenHeader": {
         "tokenAndFdv": "Token/FDV",
@@ -2039,8 +2039,8 @@
         "Token": "Token",
         "Defi": "DeFi",
         "NoData": "Sin {{name}}",
-        "totalChain_other": "Total {{count}} Chains",
-        "totalChain_one": "Total {{count}} Chain"
+        "totalChain_other": "Total: {{count}} cadenas",
+        "totalChain_one": "Total: {{count}} cadena"
       },
       "emptyToken": {
         "receiveHeader": "Recibir Crypto",
@@ -2055,7 +2055,7 @@
       "nft": {
         "floorPrice": "/Precio de suelo:"
       },
-      "appChain": "Cuenta Dapp"
+      "appChain": "Cuenta DApp"
     },
     "customTestnet": {
       "empty": "Sin red personalizada",
@@ -2066,7 +2066,7 @@
         "idRequired": "Por favor, introduce el ID de la cadena",
         "nativeTokenSymbolRequired": "Por favor, introduce el símbolo de la moneda",
         "rpcUrl": "RPC URL",
-        "blockExplorerUrl": "Block explorer URL (Optional)",
+        "blockExplorerUrl": "URL del explorador de bloques (opcional)",
         "id": "ID de cadena",
         "nativeTokenSymbol": "Símbolo de moneda",
         "name": "Nombre de la red",
@@ -2294,7 +2294,7 @@
         "suggestedToken": "Tokens Sugeridos",
         "gasDepositTitle": "Depósito de Gas",
         "minAmountRequired": "El monto mínimo de depósito es $1",
-        "estReceiveLabel": "Est. Recibir: {{usd}}",
+        "estReceiveLabel": "Recepción estimada: {{usd}}",
         "fetchQuoteFailed": "Error al obtener la cotización",
         "selectToken": "Seleccionar Token para Depositar",
         "unavailablePaymentWallet": "La billetera de pago seleccionada no está disponible",
@@ -2357,7 +2357,7 @@
       },
       "gasAccountList": {
         "address": "Dirección",
-        "gasAccountBalance": "GasAccount Balance",
+        "gasAccountBalance": "Saldo de GasAccount",
         "balance": "Saldo",
         "wallet": "Billetera"
       },
@@ -2371,7 +2371,7 @@
         "desc1": "Sin tarifas extra para pagar gas",
         "item3": "Admite todas las transacciones",
         "item1": "Sin tarifa de Rabby",
-        "desc3": "Intercambiar, Puente, Enviar, DApps, y más",
+        "desc3": "Swap, Bridge, enviar, DApp y más",
         "item2": "Soporta todas las redes",
         "title": "Paga comisiones de gas en todas las cadenas",
         "subtitle": "cuando te quedes sin gas"
@@ -2415,7 +2415,7 @@
       "currencyBottomSheet": {
         "title": "Seleccionar una moneda",
         "searchPlaceholder": "Buscar moneda",
-        "NoFound": "No Currency found"
+        "NoFound": "No se encontró ninguna moneda"
       },
       "quote": {
         "title": "Citas para ti",
@@ -2433,7 +2433,7 @@
       "noQuote": "No se encontraron cotizaciones: Intenta ingresar un valor más alto.",
       "noQuotePlaceholder": "Sin cotización",
       "history": "Historial de Compras",
-      "noQuote2": "No quotes found.",
+      "noQuote2": "No se encontraron cotizaciones.",
       "searchRegionPlaceholder": "Buscar región"
     },
     "eip7702": {
@@ -2459,7 +2459,7 @@
       "SelectFromHistory": "Seleccionar del historial",
       "recent": "Reciente",
       "sentTimeHeader": "Enviado",
-      "sendToSafeAddress": "Enviar a monederos seguros",
+      "sendToSafeAddress": "Enviar a Safe Wallets",
       "sendToImportedAddress": "Enviar a mis monederos importados",
       "sendToWatchAddress": "Enviar a Wallets Solo de Observación",
       "enterOrSearchAddress": "Introducir o Buscar Dirección",
@@ -2539,13 +2539,13 @@
       },
       "BrowserHeader": {
         "searchIos": "Buscar sitio web",
-        "searchAndroid": "Buscar Dapp"
+        "searchAndroid": "Buscar DApp"
       },
       "CurrentPopup": {
         "connectChain": "Conectar Cadena",
         "disconnect": "Desconectar",
         "connectWallet": "Conectar Wallet",
-        "title": "Dapp actual"
+        "title": "DApp actual"
       },
       "BrowserSearch": {
         "results": "Resultados",
@@ -2629,7 +2629,7 @@
       "noQRCodeFound": "No se encontró ningún código QR"
     },
     "defiDetail": {
-      "viewSiteInApp": "Ver en Dapp",
+      "viewSiteInApp": "Ver en DApp",
       "viewSiteInWebsite": "Ver en el sitio web",
       "appChain": "En la cuenta {{chain}}",
       "dappActions": {
@@ -2644,11 +2644,11 @@
     "copyTrading": {
       "tipsDollar": {
         "title": "Copy Trading de Smart Money",
-        "description": "Descubre tokens basados en la actividad reciente de carteras de Smart Money. Toca un token para ver los montos de las transacciones y los beneficios históricos de esas carteras."
+        "description": "Descubre tokens basados en la actividad reciente de Smart Money Wallets. Toca un token para ver los importes de trading detallados y las ganancias históricas de esas wallets."
       },
       "updateText": "{{count}} Tendencias Actualizadas",
       "historyProfit": "Historia de Beneficios",
-      "smartMoneyWallets": "Bolsas de Smart Money",
+      "smartMoneyWallets": "Smart Money Wallets",
       "buy": "Comprar",
       "noMoreData": "No hay más datos",
       "smartMoneyWallet": "Smart Money Wallet",
@@ -2657,9 +2657,9 @@
       "comingSoon": "Próximamente...",
       "filterRule": {
         "24HChange": "24H Cambio",
-        "smartMoney": "Carteras Inteligentes de Trading",
+        "smartMoney": "Smart Wallets que operan",
         "tokenCreate": "Recientemente creado",
-        "smartWalletCount": "Contador de Smart Wallet"
+        "smartWalletCount": "Cantidad de Smart Wallets"
       },
       "currentToken": "Token Actual",
       "contractAddress": "Dirección del contrato",
@@ -2676,13 +2676,13 @@
       "myCopyTrading": "Mi Copy Trading",
       "noOtherTokensWithSameName": "No se encontraron otros tokens con el mismo nombre.",
       "timeSmartWallet": "Tiempo / Smart Wallet",
-      "smartWalletsBuying": "{{len}} Cartera Inteligente Comprando",
+      "smartWalletsBuying": "{{len}} Smart Wallets comprando",
       "earned": "Ganado",
       "holdingProfit": "Tenencia/Beneficio",
       "loss": "Pérdida",
       "buyEarn": "24H Comprar / Ganar",
       "earn": "Ganar",
-      "smartWallets": "Carteras Inteligentes",
+      "smartWallets": "Smart Wallets",
       "info": "Información",
       "sameNameTokens": "Tokens con el mismo nombre",
       "myBalanceFromCopyTrading": "Mi saldo de Copy Trading",
@@ -2846,7 +2846,7 @@
         "noPosition": "Debes introducir primero el margen."
       },
       "PerpsDepositTokenModal": {
-        "bridgeBtn": "Puente",
+        "bridgeBtn": "Bridge",
         "swapBtn": "Intercambiar",
         "directTag": "Depósito Directo",
         "goSwapDesc": "Solo se admite USDC en Arbitrum para depósitos directos. Por favor, cambia tu token actual a USDC antes de depositar.",
@@ -3577,7 +3577,7 @@
       "receiveSummary": {
         "progress": "Progreso de conversión",
         "priceImpact": "Límite de impacto de precio",
-        "gasLimit": "Límite de gas de transacción única",
+        "gasLimit": "Single Transaction Gas Limit",
         "estimateReceive": "Recib. est.:",
         "actualReceive": "Recibir"
       },
@@ -3699,7 +3699,7 @@
     "check": "Verificar",
     "gotIt": "Entendido",
     "Token": "Token",
-    "Dapp": "Dapp",
+    "Dapp": "DApp",
     "GotIt": "Entendido",
     "Other": "Otro",
     "Backup": "Copia de seguridad",
@@ -3729,7 +3729,7 @@
       "message": "Por favor, activa el Bluetooth para usar esta función."
     },
     "update_firmware_alert": {
-      "title": "Ledger Firmware Outdated",
+      "title": "Firmware de Ledger desactualizado",
       "cancel": "Cancelar",
       "update": "Actualizar",
       "message": "Consulte cómo actualizar el firmware de Ledger desde el soporte de Ledger"
