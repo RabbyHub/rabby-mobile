@@ -107,6 +107,10 @@ export const SignText = ({
 
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
+  const chain = useMemo(
+    () => (chainId ? findChain({ id: chainId }) || undefined : undefined),
+    [chainId],
+  );
 
   const securityLevel = useMemo(() => {
     const enableResults = engineResults.filter(result => {
@@ -494,6 +498,7 @@ export const SignText = ({
             message={signText}
             origin={params.session.origin}
             originLogo={site?.icon}
+            chain={chain}
           />
         )}
       </BottomSheetScrollView>

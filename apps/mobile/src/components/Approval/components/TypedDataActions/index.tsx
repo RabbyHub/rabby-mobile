@@ -350,6 +350,7 @@ const Actions = ({
       <View style={actionStyles.actionWrapper}>
         <Card>
           <OriginInfo
+            chain={chain}
             origin={origin}
             originLogo={originLogo}
             engineResults={engineResults}
