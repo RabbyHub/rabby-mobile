@@ -3,7 +3,7 @@
     "addressStackTitle": {
       "ImportSuccess": "Başarıyla eklendi",
       "CreateMnemonicBackup": "Yedek tohum ifadesi",
-      "SafeAddressList": "Güvenli Adres",
+      "SafeAddressList": "Safe Adresi",
       "CreateSelectMethod": "1. Oluşturma Yöntemi Seçin",
       "AddMnemonic": "Mevcut Seed Phrase'den Ekle",
       "ImportPrivateKey": "Özel Anahtarı İçe Aktar",
@@ -182,7 +182,7 @@
         "selfHostConfirm": {
           "button": "Tamam",
           "title": "Rabby'nin Güvenli Servisine Geçiş Yapın",
-          "content": "Safe API mevcut değil. Safe'inizi işlevsel tutmak için Rabby tarafından dağıtılan Safe hizmetine geçin. <1></1><2>Tüm Safe imzalayıcıları, işlemleri yetkilendirmek için Rabby Wallet kullanmalıdır.<2>"
+          "content": "Safe API mevcut değil. Safe'inizi işlevsel tutmak için Rabby tarafından dağıtılan Safe hizmetine geçin. <1></1><2>Tüm Safe imzalayıcıları, işlemleri yetkilendirmek için Rabby Wallet kullanmalıdır.</2>"
         }
       },
       "crossChain": {
@@ -229,7 +229,7 @@
         "contractTrustValueTip": "Güven değeri, bu sözleşme tarafından harcanan toplam varlık değerini ifade eder. Düşük bir güven değeri, ya risk ya da 180 gün boyunca faaliyetsizlik anlamına gelir."
       },
       "revokeTokenApprove": {
-        "revokeFrom": "Revoke from",
+        "revokeFrom": "Şuradan iptal et",
         "title": "Token Onayını Geri Al",
         "revokeToken": "Token'i İptal Et"
       },
@@ -339,7 +339,7 @@
       },
       "coboSafeModificationTokenApproval": {
         "title": "Token Onay Değişikliği Gönder",
-        "safeWalletTitle": "Safe{Cüzdan}",
+        "safeWalletTitle": "Safe{Wallet}",
         "descriptionTitle": "Açıklama"
       },
       "common": {
@@ -351,18 +351,18 @@
       "gasPriceTitle": "Gaz Fiyatı (Gwei)",
       "nonceTitle": "Nonce",
       "nonceLowerThanExpect": "Nonce çok düşük, minimum {{0}} olmalıdır.",
-      "manuallySetGasLimitAlert": "Gaz limitini manuel olarak ayarladınız",
-      "gasLimitTitle": "Gaz limiti",
+      "manuallySetGasLimitAlert": "Gas limit'i manuel olarak ayarladınız",
+      "gasLimitTitle": "Gas limit",
       "gasAccountForGas": "Gaz için ödemek amacıyla GasAccount'ımdan USD kullan.",
       "maxPriorityFee": "Maksimum Öncelik Ücreti (Gwei)",
-      "gasLimitNotEnough": "Gas limiti 21000'den az. İşlem gönderilemez.",
-      "gasLimitLessThanExpect": "Gaz limiti düşük. İşlemin başarısız olma olasılığı %1'dir.",
+      "gasLimitNotEnough": "Gas limit 21000'den az. İşlem gönderilemez.",
+      "gasLimitLessThanExpect": "Gas limit düşük. İşlemin başarısız olma olasılığı %1'dir.",
       "gasNotRequireForSafeTransaction": "Safe işlemleri için Gaz ücreti gerekmemektedir.",
       "nativeTokenNotEngouthForGas": "Gaz bakiyesi yeterli değil",
       "nativeTokenForGas": "{{chainName}} üzerindeki {{tokenName}} token'ını gaz ödemek için kullanın.",
-      "gasLimitLessThanGasUsed": "Gaz limiti çok düşük. İşlemin başarısız olma ihtimali %95.",
+      "gasLimitLessThanGasUsed": "Gas limit çok düşük. İşlemin başarısız olma ihtimali %95.",
       "multiSigChainNotMatch": "Multi-signature adresleri bu zincirde bulunmamaktadır ve işlemleri başlatamaz.",
-      "safeAddressNotSupportChain": "Mevcut güvenli adres {{0}} zincirinde desteklenmiyor.",
+      "safeAddressNotSupportChain": "Mevcut Safe adresi {{0}} zincirinde desteklenmiyor.",
       "canOnlyUseImportedAddress": "Sadece görüntüleme adresi ile işlemleri imzalayamazsınız.",
       "recommendGasLimitTip": "Est. {{est}}. Mevcut {{current}}x, önerilir",
       "eip1559Desc2": "Rabby'de Öncelik Ücreti (İpucu) = Maksimum Ücret - Temel Ücret. Maksimum Öncelik Ücretini ayarladıktan sonra, Temel Ücret ondan düşülecek ve geriye kalan miktar madencilere ipucu olarak verilecektir.",
@@ -374,15 +374,15 @@
       "hardwareSupport1559Alert": "Donanım cüzdanı yazılımınızın EIP 1559'u destekleyen versiyona güncellendiğinden emin olun.",
       "enoughSafeSigCollected": "Yeterli imza toplandı",
       "moreSafeSigNeeded": "{{0}} daha fazla onay gerekiyor",
-      "gasLimitMinValueAlert": "Gaz limiti 21000'den fazla olmalıdır.",
+      "gasLimitMinValueAlert": "Gas limit 21000'den fazla olmalıdır.",
       "wrapToken": "Wrap Token",
       "unwrap": "Token'i Aç",
-      "gasLimitEmptyAlert": "Lütfen gaz limitini girin",
+      "gasLimitEmptyAlert": "Lütfen Gas limit girin",
       "gasSelectorTitle": "Gaz",
       "importedAddress": "İçe aktarılan adres",
       "nftCollection": "NFT Koleksiyonu",
       "chain": "Zincir",
-      "noMark": "No mark",
+      "noMark": "İşaret yok",
       "markRemoved": "Mark kaldırıldı",
       "interacted": "Daha önce etkileşimde bulunuldu",
       "markAsBlock": "Engelli olarak işaretlendi",
@@ -427,7 +427,7 @@
       "sigCantDecode": "Bu imza Rabby Wallet tarafından çözülemez.",
       "errorRetry": {
         "InvalidTx": "Geçersiz işlem.",
-        "gasLimitTooLow": "Gaz limiti çok düşük",
+        "gasLimitTooLow": "Gas limit çok düşük",
         "nonceTooHigh": "Nonce çok yüksek. Lütfen nonce'u ayarlayın ve tekrar deneyin.",
         "gasExceedsBlockGasLimit": "Gaz, blok gaz limitini aşmaktadır. Lütfen ayarlayın ve tekrar deneyin.",
         "defaultTips": "Bir şeyler yanlış gitti. Lütfen daha sonra tekrar deneyin.",
@@ -515,21 +515,21 @@
       "confirmWithPassword": "Onayla",
       "submitTx": "İşlem Gönder",
       "resend": "Yeniden Dene",
-      "detectedMultipleRequestsFromThisDapp": "Bu Dapp'tan birden fazla istek tespit edildi",
+      "detectedMultipleRequestsFromThisDapp": "Bu DApp'tan birden fazla istek tespit edildi",
       "startSigning": "İmzalamaya Başla",
-      "cancelAll": "Tüm {{count}} Dapp taleplerini iptal et",
+      "cancelAll": "Tüm {{count}} DApp taleplerini iptal et",
       "cancelCurrentConnection": "Mevcut bağlantıyı iptal et",
       "cancelCurrentTransaction": "Mevcut işlemi iptal et",
       "cancelTransaction": "İşlemi İptal Et",
       "cancelConnection": "Bağlantıyı iptal et",
-      "blockDappFromSendingRequests": "Blok Dapp'ın istek göndermesini 1 dakika boyunca engelle.",
+      "blockDappFromSendingRequests": "Blok DApp'ın istek göndermesini 1 dakika boyunca engelle.",
       "oneKeyConfirm": "Onayla",
       "ledgerConfirm": "Onayla",
       "got": "Anladım"
     },
     "signTypedData": {
       "permit": {
-        "title": "İzin Verme Token Onayı"
+        "title": "Permit Token Onayı"
       },
       "permit2": {
         "sigExpireTime": "İmza sona erme süresi",
@@ -570,7 +570,7 @@
     "activities": {
       "signedTx": {
         "empty": {
-          "title": "No Transaction history",
+          "title": "İşlem geçmişi yok",
           "desc": "Tüm Rabby aracılığıyla imzalanan işlemler burada listelenecektir.",
           "titleLastThreeMonths": "Son 90 Günde İşlem Geçmişi Yok"
         },
@@ -734,7 +734,7 @@
       "recent": "Son zamanlarda",
       "sentTimeHeader": "Gönderildi",
       "sendToWatchAddress": "Gözetim-Modu Cüzdanlarına Gönder",
-      "sendToSafeAddress": "Güvenli Cüzdanlara Gönder",
+      "sendToSafeAddress": "Safe Wallets'a Gönder",
       "sendToImportedAddress": "İçe Aktarılan Cüzdanlarıma Gönder",
       "dividerWatchOnlyWallets": "Sadece izleme adresleri",
       "enterOrSearchAddress": "Adres Girin veya Ara"
@@ -827,9 +827,9 @@
             "revokeNewApproved": "Yeni onaylanan kullanıcılar (24h): {{ count }}",
             "normalTrustValueDanger": "Sözleşme güven değeri:{{ contractUsdText }}",
             "contractTrustValueWarning": "Sözleşme güven değeri < $100,000",
-            "revokeWarningTitle": "Sözleşme 24s İptal, İptalden iki kat fazla",
+            "revokeWarningTitle": "24 saatlik iptaller onayların 2 katından fazla",
             "contractTrustValueDanger": "Sözleşme güven değeri < 10.000 $",
-            "revokeDangerTitle": "Sözleşme 24s İptal Eğilimleri > 4",
+            "revokeDangerTitle": "24 saatlik iptaller onayların 4 katından fazla",
             "contractTrustValue": "Güven değeri, bu sözleşme tarafından harcanan toplam varlık değerini ifade eder. Düşük bir güven değeri, ya risk ya da 180 gün boyunca hareketsizlik anlamına gelir.",
             "revokeTrendsValueWarning": "Son zamanlardaki iptaller, yeni onaylanan kullanıcı sayısının iki katından fazla.",
             "button": "Tamam, aldım.",
@@ -864,7 +864,7 @@
       },
       "allApprovals": "Tüm Onaylar",
       "selectAll": "Tümünü Seç",
-      "revokeFrom": "Revoke From",
+      "revokeFrom": "Şuradan iptal et",
       "unknownContract": "Bilinmeyen Sözleşme",
       "pauseRevoke": "Durdur",
       "approvedAssetsAndAmount": "Onaylı Varlıklar ve Miktar",
@@ -939,7 +939,7 @@
       "fail-to-simulate-transaction": "İşlemi simüle etme başarısız oldu",
       "actual": "Gerçek:",
       "sort-with-gas": "Gaz ile sırala",
-      "gas-fee": "GasÜcreti: {{gasUsed}}",
+      "gas-fee": "Gas ücreti: {{gasUsed}}",
       "source": "Kaynak",
       "no-quote-found": "Alıntı bulunamadı",
       "by-transaction-simulation-the-quote-is-valid": "İşlem simülasyonu ile, teklif geçerlidir.",
@@ -964,7 +964,7 @@
     "bridge": {
       "showMore": {
         "title": "Daha Fazla Göster",
-        "source": "Köprü Kaynağı",
+        "source": "Köprü kaynağı",
         "signWarning": "Alarmı anlıyorum ve devam etmek istiyorum."
       },
       "From": "Den",
@@ -979,7 +979,7 @@
       "liquidity": "Likidite",
       "est-payment": "Tahmini Ödeme:",
       "for-available-quote": "mevcut teklif için",
-      "bridge-from": "Köprüden",
+      "bridge-from": "Bridge kaynağı",
       "no-quote-found": "Alıntı bulunamadı. Lütfen diğer token çiftlerini deneyin.",
       "estimate": "Tahmin:",
       "title": "Köprü",
@@ -990,10 +990,10 @@
       "loss-tips": "{{usd}} kaybediyorsun. Farklı bir tutar dene.",
       "best": "En İyi",
       "detail-tx": "Detay",
-      "gas-fee": "GasÜcreti: {{gasUsed}}",
+      "gas-fee": "Gas ücreti: {{gasUsed}}",
       "duration": "{{duration}} dk",
       "via-bridge": "via {{bridge}}",
-      "bridged": "Köprülenmiş",
+      "bridged": "Bridge başlatıldı",
       "approve-and-bridge": "Onayla ve Köprü kur",
       "gas-x-price": "Gas fiyatı: {{price}} Gwei.",
       "actual": "Gerçek:",
@@ -1052,7 +1052,7 @@
         "receive": "Al",
         "more": "Daha fazla",
         "search": "Token Ara",
-        "dapps": "Dapps",
+        "dapps": "DApp",
         "queue": "Kuyruk",
         "websites": "Web Siteleri",
         "copyTrading": "Copy Trading",
@@ -1067,15 +1067,15 @@
         "convertDust": "Küçük Bakiyeleri Dönüştür"
       },
       "swipeUp": {
-        "descAndroid": "dApp'leri keşfetmek için tıklayın",
+        "descAndroid": "DApp'leri keşfetmek için tıklayın",
         "descMore": "Daha fazla web sitesini keşfetmek için yukarı kaydırın.",
         "descAndroidMore": "DApp'leri keşfetmek için tıklayın",
-        "desc": "Web siteleri keşfetmek için yukarı kaydırın"
+        "desc": "Web sitelerini keşfetmek ve aramak için yukarı kaydırın"
       },
       "DappDrawer": {
         "search": "Arama",
         "favorite": "Favori",
-        "emptyAndroid": "Favorilere eklenmiş dApp yok.",
+        "emptyAndroid": "Favorilere eklenmiş DApp yok.",
         "empty": "Favorilere eklenmiş hiçbir web sitesi yok.",
         "tabs": {
           "all": "Tümü",
@@ -1394,34 +1394,34 @@
       "hd": {
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: Ledger resmi HD yolu.",
-            "bip44": "BIP44 Standard: BIP44 protokolü tarafından tanımlanan HDpath.",
-            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD yolu."
+            "ledgerLive": "Ledger Live: Ledger resmi HD Path.",
+            "bip44": "BIP44 Standard: BIP44 protokolü tarafından tanımlanan HD Path.",
+            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD Path."
           },
           "hdPathTypeNoChain": {
-            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD yolu.",
-            "ledgerLive": "Ledger Live: Ledger resmi HD yolu.",
-            "bip44": "BIP44 Standartı: BIP44 protokolü tarafından tanımlanan HD yolu."
+            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD Path.",
+            "ledgerLive": "Ledger Live: Ledger resmi HD Path.",
+            "bip44": "BIP44 Standartı: BIP44 protokolü tarafından tanımlanan HD Path."
           }
         },
         "onekey": {
           "hdPathType": {
-            "bip44": "BIP44: BIP44 protokolü tarafından tanımlanan HDpath."
+            "bip44": "BIP44: BIP44 protokolü tarafından tanımlanan HD Path."
           },
           "hdPathTypeNoChain": {
-            "bip44": "BIP44: BIP44 protokolü tarafından tanımlanan HDpath."
+            "bip44": "BIP44: BIP44 protokolü tarafından tanımlanan HD Path."
           }
         },
         "keystone": {
           "hdPathType": {
-            "bip44": "BIP44: BIP44 protokolü tarafından tanımlanan HDpath.",
-            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD yolu.",
-            "ledgerLive": "Ledger Live: Ledger resmi HD yolu. Ledger Live yolu ile yalnızca 10 adresi yönetebilirsiniz."
+            "bip44": "BIP44: BIP44 protokolü tarafından tanımlanan HD Path.",
+            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD Path.",
+            "ledgerLive": "Ledger Live: Ledger resmi HD Path. Ledger Live yolu ile yalnızca 10 adresi yönetebilirsiniz."
           },
           "hdPathTypeNoChain": {
-            "bip44": "BIP44: BIP44 protokolü ile tanımlanan HDpath.",
-            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD yolu.",
-            "ledgerLive": "Ledger Live: Ledger resmi HD yolu. Ledger Live yolu ile yalnızca 10 adresi yönetebilirsiniz."
+            "bip44": "BIP44: BIP44 protokolü ile tanımlanan HD Path.",
+            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD Path.",
+            "ledgerLive": "Ledger Live: Ledger resmi HD Path. Ledger Live yolu ile yalnızca 10 adresi yönetebilirsiniz."
           }
         },
         "qrCode": {
@@ -1431,19 +1431,19 @@
           }
         },
         "balance": "Bakiye",
-        "customAddressHdPath": "Özel Cüzdan HD yolu",
+        "customAddressHdPath": "Özel Cüzdan HD Path",
         "manageAddressFrom": "{{0}}'dan {{1}}'e cüzdanı yönet",
         "selectIndexTip": "Cüzdanların başlangıç seri numarasını seçin:",
         "trezor": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: Ledger resmi HD yolu.",
-            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD yolu.",
-            "bip44": "BIP44: BIP44 protokolü tarafından tanımlanan HDpath."
+            "ledgerLive": "Ledger Live: Ledger resmi HD Path.",
+            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD Path.",
+            "bip44": "BIP44: BIP44 protokolü tarafından tanımlanan HD Path."
           },
           "hdPathTypeNoChain": {
-            "legacy": "Eski: MEW / Mycrypto tarafından kullanılan HD yolu.",
-            "ledgerLive": "Ledger Live: Ledger resmi HD yolu.",
-            "bip44": "BIP44: BIP44 protokolü tarafından tanımlanan HDpath."
+            "legacy": "Eski: MEW / Mycrypto tarafından kullanılan HD Path.",
+            "ledgerLive": "Ledger Live: Ledger resmi HD Path.",
+            "bip44": "BIP44: BIP44 protokolü tarafından tanımlanan HD Path."
           }
         }
       },
@@ -1505,7 +1505,7 @@
     },
     "signText": {
       "createKey": {
-        "interactDapp": "Etkileşim Dapp",
+        "interactDapp": "Etkileşim DApp",
         "description": "Açıklama"
       },
       "title": "Metni İmzalayın",
@@ -1537,9 +1537,9 @@
       "markRemovedToast": "Mark silindi",
       "markAsBlockToast": "\"Engelli\" olarak işaretle",
       "verifiedByRabby": "Rabby tarafından doğrulandı",
-      "title": "Dapp'e Bağlan",
+      "title": "DApp'e Bağlan",
       "trusted": "Güvenilir",
-      "noMark": "No mark",
+      "noMark": "İşaret yok",
       "flagByScamSniffer": "ScamSniffer tarafından işaretlendi",
       "foundForbiddenRisk": "Yasaklı riskler bulundu. Bağlantı engellendi.",
       "ignoreAll": "Tümünü yoksay",
@@ -1586,7 +1586,7 @@
       "address-note": "Adres Notu",
       "qr-code": "QR Kodu",
       "source": "Kaynak",
-      "hd-path": "HD Yolu",
+      "hd-path": "HD Path",
       "admins": "Yöneticiler",
       "address": "Adres",
       "manage-seed-phrase": "Seed İfadesini Yönet",
@@ -1723,7 +1723,7 @@
       "claimModal": {
         "rabbyValuedUserBadge": "Rabby Değerli Kullanıcı Rozeti",
         "snapshotTime": "Anlık görüntü zamanı: {{time}}",
-        "rabbyDesktopGenesisNft": "Rabby Masaüstü Genesis NFT",
+        "rabbyDesktopGenesisNft": "Rabby Desktop Genesis NFT",
         "addressBalance": "Cüzdan bakiyesi",
         "claim": "Talep Et",
         "invalid-code": "geçersiz kod",
@@ -1844,7 +1844,7 @@
         "pay": "Öde",
         "applePayFeeDesc1": "Uygulama Mağazası ücreti içerir. Çekim yoktur.",
         "insufficientBalanceLabel": "Yetersiz Bakiye",
-        "estReceiveLabel": "Est.Alacak: {{usd}}",
+        "estReceiveLabel": "Tahmini alınacak: {{usd}}",
         "unavailablePaymentWallet": "Seçilen ödeme cüzdanı kullanılamıyor",
         "balanceLabel": "Bakiye",
         "gasDepositTitle": "Gaz Yatırma",
@@ -1936,7 +1936,7 @@
         "item1": "Ücret Yok Rabby",
         "item3": "Tüm işlemleri destekler",
         "desc2": "80+ ağda otomatik gas ödemeleri",
-        "desc3": "Değiştir, Köprü, Gönder, DApps ve daha fazlası",
+        "desc3": "Değiştir, Köprü, Gönder, DApp ve daha fazlası",
         "title": "Tüm zincirlerde Gas Ücretlerini Ödeyin",
         "subtitle": "gasınız bittiğinde"
       },
@@ -1996,7 +1996,7 @@
       "ListedBy": "Tarafından listelenmiştir",
       "fdvTitle": "FDV nedir?",
       "excludeBalanceTipsButton": "Tamam.",
-      "fdvContent": "Piyasa değeri, maksimum arz sirkülasyonda olduğunda. Tam Seyreltme Değeri (FDV) = Fiyat × Maksimum Arz. Eğer Maksimum Arz yoksa, FDV = Fiyat × Toplam Arz. Eğer ne Maksimum Arz ne de Toplam Arz tanımlı veya sonsuzsa, FDV gösterilmez.",
+      "fdvContent": "Maksimum arz dolaşımda olsaydı oluşacak piyasa değeri. Tam Seyreltilmiş Değerleme (FDV) = Fiyat × Maksimum Arz. Maksimum Arz boşsa FDV = Fiyat × Toplam Arz. Maksimum Arz ve Toplam Arz tanımlı değilse veya sonsuzsa FDV gösterilmez.",
       "excludeBalanceTips": "Bu varlık, doğruluk için toplam bakiyenizden hariç tutulmuştur. Detayları görmek ve tercih ederseniz dahil etmek için üzerine dokunabilirsiniz.",
       "ShowMore": "Daha fazla göster",
       "ContentGeneratedByAI": "Bu içerik yapay zekâ tarafından oluşturuldu",
@@ -2105,7 +2105,7 @@
       "nft": {
         "floorPrice": "/Floor Fiyatı:"
       },
-      "appChain": "Dapp Hesabı"
+      "appChain": "DApp Hesabı"
     },
     "search": {
       "sectionHeader": {
@@ -2137,7 +2137,7 @@
       },
       "globalSearch": {
         "iosPlaceHolder": "Websites/Token Araştırın",
-        "placeHolder": "Dapp/Tokene Araştırın"
+        "placeHolder": "DApp/Tokene Araştırın"
       },
       "tokenHeader": {
         "tokenAndFdv": "Token/FDV",
@@ -2263,13 +2263,13 @@
       },
       "BrowserHeader": {
         "searchIos": "Websitesini Ara",
-        "searchAndroid": "Dapp Ara"
+        "searchAndroid": "DApp Ara"
       },
       "CurrentPopup": {
         "connectWallet": "Cüzdanı Bağla",
         "disconnect": "Bağlantıyı Kaldır",
         "connectChain": "Ağa Bağlan",
-        "title": "Mevcut Dapp"
+        "title": "Mevcut DApp"
       },
       "BrowserSearch": {
         "openUrl": "Aç \"{{searchText}}\"",
@@ -2353,7 +2353,7 @@
       "noCameraDevice": "Kamera Cihazı Yok"
     },
     "defiDetail": {
-      "viewSiteInApp": "Dapp'ta Görüntüle",
+      "viewSiteInApp": "DApp'ta Görüntüle",
       "viewSiteInWebsite": "Websitesi Görüntüle",
       "appChain": "{{chain}} Hesabı üzerinde",
       "dappActions": {
@@ -2367,23 +2367,23 @@
     },
     "copyTrading": {
       "tipsDollar": {
-        "title": "Smart Money'den Copy Trading",
-        "description": "Akıllı para cüzdanlarından son etkinliklere dayalı token'ları keşfedin. Detaylı ticaret miktarlarını ve o cüzdanlardan elde edilen tarihsel karları görmek için bir token'a dokunun."
+        "title": "Smart Money’den Copy Trading",
+        "description": "Smart Money Wallets'taki son aktivitelere göre token'ları keşfedin. İşlem tutarlarını ve bu wallet'ların geçmiş kârlarını görmek için bir token'a dokunun."
       },
       "buy": "Satın Al",
-      "smartMoneyWallet": "Akıllı Para Cüzdanı",
+      "smartMoneyWallet": "Smart Money Wallet",
       "comingSoon": "Yakında...",
       "historyProfit": "Geçmiş Kar",
       "updateText": "{{count}} Trendler Güncellendi",
-      "refreshTitle": "Daha Fazla Copy Trading Yükleniyor Smart Money'den",
-      "smartMoneyWallets": "Akıllı Para Cüzdanları",
+      "refreshTitle": "Smart Money’den daha fazla Copy Trading yükleniyor",
+      "smartMoneyWallets": "Smart Money Wallets",
       "recentBuy": "Son Satın Alım",
       "noMoreData": "Artık veri yok",
       "filterRule": {
         "24HChange": "24H Değişim",
         "tokenCreate": "Yeni Oluşturuldu",
-        "smartMoney": "Akıllı Cüzdan Ticareti",
-        "smartWalletCount": "Akıllı Cüzdan Sayısı"
+        "smartMoney": "Trading yapan Smart Wallets",
+        "smartWalletCount": "Smart Wallet sayısı"
       },
       "token": "Jeton",
       "Liquidity": "Likidite",
@@ -2402,15 +2402,15 @@
       "currentToken": "Mevcut Token",
       "noOtherTokensWithSameName": "Aynı isimde başka token bulunamadı.",
       "createdTime": "Oluşturulma Zamanı",
-      "timeSmartWallet": "Zaman / Akıllı Cüzdan",
+      "timeSmartWallet": "Zaman / Smart Wallet",
       "buyEarn": "24H Satın Al / Kazan",
       "myCopyTradingEarnings": "Kopya Ticaret Kazançlarım",
-      "smartWalletsBuying": "{{len}} Akıllı Cüzdan Satın Alma",
+      "smartWalletsBuying": "{{len}} Smart Wallets alım yapıyor",
       "sameNameTokens": "Aynı İsimli Token'lar",
       "earn": "Kazan",
-      "smartWallets": "Akıllı Cüzdanlar",
+      "smartWallets": "Smart Wallets",
       "myBalanceFromCopyTrading": "Copy Trading'den Bakiyem",
-      "gettingLatest": "Akıllı paranın en son haberlerini alıyorum...",
+      "gettingLatest": "Smart Money’den en güncel veriler alınıyor...",
       "updateTokenText": "{{count}} token güncellendi"
     },
     "watchlist": {
@@ -3301,7 +3301,7 @@
       "receiveSummary": {
         "progress": "Dönüştürme ilerlemesi",
         "priceImpact": "Fiyat Etkisi Limiti",
-        "gasLimit": "Tek İşlem Gas Limiti",
+        "gasLimit": "Single Transaction Gas Limit",
         "estimateReceive": "Tah. Alım:",
         "actualReceive": "Al"
       },
@@ -3350,12 +3350,12 @@
         "desc": "Tüm Zincirlerde Gas Ücretlerini Ödeyin",
         "title": "USDC / USDT Yatırın",
         "loginAndClaim": "Giriş Yap ve {{amount}} Talep Et",
-        "loginTips1": "Gaz ücretlerini ödeyin için",
+        "loginTips1": "Gaz ücretlerini şunun için ödeyin:",
         "loginTips3": "gazınız bittiğinde",
-        "loginTips2": "herhangi bir adres herhangi bir zincirde",
+        "loginTips2": "herhangi bir zincirdeki herhangi bir adres",
         "learnAbout": "GasAccount hakkında daha fazla bilgi edinin",
         "depositDesc": "tüm zincirlerde gazınız bittiğinde",
-        "depositTitle": "USDC/USDT Yatırı, Gas Ücretlerini Öde"
+        "depositTitle": "USDC/USDT Yatırın, gas ücretlerini ödeyin"
       },
       "loginConfirmModal": {
         "desc": "Oturum açtığınızda, bunu yalnızca bu adrese yatırabilirsiniz.",
@@ -3389,7 +3389,7 @@
         "giftTips": "Aktif kullanıcılar için Gas Ödülü",
         "gotIt": "Ben Aldım",
         "noWithdrawableBalanceTitle": "{{amount}} Çekilemez",
-        "noWithdrawableBalanceDescription": "{{amount}} gaz bakiyeniz geri alınamaz:\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+        "noWithdrawableBalanceDescription": "Gas bakiyenizdeki {{amount}} çekilemez:\n1. Apple Pay / Google Pay\n2. Gas Rewards"
       },
       "about": {
         "title1": "GasAccount nedir",
@@ -3486,8 +3486,8 @@
       }
     },
     "signPermissionCheckModal": {
-      "reconnect": "Dapp'i Yeniden Bağla",
-      "title": "Bu Dapp'in yalnızca testnetlerde imza atmasına izin veriyorsunuz."
+      "reconnect": "DApp'i Yeniden Bağla",
+      "title": "Bu DApp'in yalnızca testnetlerde imza atmasına izin veriyorsunuz."
     },
     "AuthenticationModals": {
       "biometrics": {
@@ -3517,15 +3517,15 @@
       "desc": "Aşağıdaki adresler kaldırılacak. Onları orijinal cüzdan uygulamasında bulmaya devam edebilirsiniz. Burada kullanmak için seed ifadesini veya özel anahtarı içe aktarın."
     },
     "externalSwapBrideDappPopup": {
-      "bridgeOnDapp": "Dapp'te Köprü",
-      "noDapp": "Mevcut Dapp yok",
-      "viewDappOptions": "Dapp Seçeneklerini Görüntüle",
-      "noDapps": "Bu zincirde mevcut Dapp yok.",
-      "selectADapp": "Bir Dapp Seçin",
+      "bridgeOnDapp": "DApp'te Köprü",
+      "noDapp": "Mevcut DApp yok",
+      "viewDappOptions": "DApp Seçeneklerini Görüntüle",
+      "noDapps": "Bu zincirde mevcut DApp yok.",
+      "selectADapp": "Bir DApp Seçin",
       "help": "Lütfen destek için bu zincirin resmi ekibiyle iletişime geçin.",
-      "swapOnDapp": "Dapp'ta Takas Yapın",
+      "swapOnDapp": "DApp'ta Takas Yapın",
       "noQuotesForChain": "Bu ağ için henüz hiç alıntı mevcut değil.",
-      "thirdPartyDappToProceed": "Lütfen işlemi devam ettirmek için bir üçüncü taraf Dapp kullanın.",
+      "thirdPartyDappToProceed": "Lütfen işlemi devam ettirmek için bir üçüncü taraf DApp kullanın.",
       "chainNotSupported": "Bu zincirde desteklenmiyor"
     },
     "selectCexModal": {
@@ -3697,7 +3697,7 @@
     },
     "gotIt": "Tamamdır",
     "check": "Kontrol Et",
-    "Dapp": "Dapp",
+    "Dapp": "DApp",
     "Token": "Jeton",
     "GotIt": "Anladım",
     "Backup": "Yedekle",

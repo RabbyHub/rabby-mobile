@@ -97,7 +97,10 @@ export const TransactionItem = ({
   );
 
   const formatType: HistoryItemCateType = useMemo(() => {
-    if (data.maxGasTx.action?.actionData.send) {
+    if (data.maxGasTx?.isGasDeposit) {
+      return HistoryItemCateType.GAS_DEPOSIT;
+    }
+    if (data.maxGasTx?.action?.actionData.send) {
       if (
         Object.values(L2_DEPOSIT_ADDRESS_MAP).includes(
           data.maxGasTx.action?.actionData.send.to.toLowerCase() || '',
@@ -110,13 +113,13 @@ export const TransactionItem = ({
     }
 
     if (
-      data.maxGasTx.action?.actionData.wrapToken ||
-      data.maxGasTx.action?.actionData.unWrapToken
+      data.maxGasTx?.action?.actionData.wrapToken ||
+      data.maxGasTx?.action?.actionData.unWrapToken
     ) {
       return HistoryItemCateType.Swap;
     }
 
-    if (data.maxGasTx.action?.actionData.swap) {
+    if (data.maxGasTx?.action?.actionData.swap) {
       if (
         data.maxGasTx.action?.actionData.swap?.payToken?.is_core &&
         data.maxGasTx.action?.actionData.swap?.receiveToken?.is_core
@@ -126,18 +129,18 @@ export const TransactionItem = ({
     }
 
     if (
-      data.maxGasTx.action?.actionData.approveToken ||
-      data.maxGasTx.action?.actionData.approveNFT ||
-      data.maxGasTx.action?.actionData.approveNFTCollection
+      data.maxGasTx?.action?.actionData.approveToken ||
+      data.maxGasTx?.action?.actionData.approveNFT ||
+      data.maxGasTx?.action?.actionData.approveNFTCollection
     ) {
       return HistoryItemCateType.Approve;
     }
 
     if (
-      data.maxGasTx.action?.actionData.revokeToken ||
-      data.maxGasTx.action?.actionData.revokeNFT ||
-      data.maxGasTx.action?.actionData.revokeNFTCollection ||
-      data.maxGasTx.action?.actionData.revokePermit2
+      data.maxGasTx?.action?.actionData.revokeToken ||
+      data.maxGasTx?.action?.actionData.revokeNFT ||
+      data.maxGasTx?.action?.actionData.revokeNFTCollection ||
+      data.maxGasTx?.action?.actionData.revokePermit2
     ) {
       return HistoryItemCateType.Revoke;
     }
@@ -339,12 +342,12 @@ export const TransactionItem = ({
         return (
           t('page.transactions.itemTitle.Approve') +
           ' ' +
-          ellipsisOverflowedText(getTokenSymbol(tokenApproveData[0].token), 6)
+          ellipsisOverflowedText(getTokenSymbol(tokenApproveData[0]?.token), 6)
         );
       case HistoryItemCateType.Revoke:
         return t('page.transactions.itemTitle.Revoke', {
           token: ellipsisOverflowedText(
-            getTokenSymbol(tokenApproveData[0].token),
+            getTokenSymbol(tokenApproveData[0]?.token),
             6,
           ),
         });
@@ -360,7 +363,7 @@ export const TransactionItem = ({
   const formatDescribe = useMemo(() => {
     const ToText = t('page.swap.to') + ' ';
 
-    const chain = findChain({ id: data.maxGasTx.chainId });
+    const chain = findChain({ id: data.maxGasTx?.chainId });
     let address: string | React.ReactNode = '';
 
     switch (formatType) {
@@ -408,7 +411,7 @@ export const TransactionItem = ({
         }
         break;
       case HistoryItemCateType.Swap:
-        const requireData = data.maxGasTx.action
+        const requireData = data.maxGasTx?.action
           ?.requiredData as SwapRequireData;
         address =
           requireData?.protocol?.name || t('page.transactions.detail.Unknown');
@@ -417,7 +420,7 @@ export const TransactionItem = ({
       case HistoryItemCateType.Approve:
       case HistoryItemCateType.Cancel:
       default:
-        const appRequireData = data.maxGasTx.action
+        const appRequireData = data.maxGasTx?.action
           ?.requiredData as ApproveTokenRequireData;
         const name = appRequireData?.protocol?.name;
         address =
@@ -495,7 +498,7 @@ export const TransactionItem = ({
 
   useEffect(() => {
     if (!data.isPending && !isInSendHistory) {
-      const rawId = `${data.address.toLowerCase()}-${data.maxGasTx.hash}`;
+      const rawId = `${data.address.toLowerCase()}-${data.maxGasTx?.hash}`;
       const isShowStatus =
         transactionHistoryService.clearSuccessAndFailSingleId(rawId);
       isShowStatus && setShowSuccess(true);
