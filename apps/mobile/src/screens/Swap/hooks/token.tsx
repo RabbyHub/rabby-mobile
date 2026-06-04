@@ -49,6 +49,7 @@ export const enableInsufficientQuote = true;
 
 const sliderHapticTriggerNumbers = [0, 50, 100];
 const SWAP_QUOTE_REFRESH_INTERVAL = 1000 * 20;
+const EARLY_QUOTE_DISPLAY_MIN_TO_FROM_USD_RATIO = 0.03;
 
 const { isSameAddress } = addressUtils;
 
@@ -111,6 +112,111 @@ const getSwapProviderScore = ({
 
   return amountUsd.minus(provider.preExecResult.gasUsdValue || 0);
 };
+
+const getTokenUsdValue = ({
+  token,
+  amount,
+}: {
+  token?: TokenItem;
+  amount: string;
+}) => new BigNumber(amount || 0).times(token?.price || 0);
+
+const getSwapQuoteToTokenUsdValue = ({
+  quote,
+  receiveToken,
+}: {
+  quote: TDexQuoteData;
+  receiveToken: TokenItem;
+}) => {
+  if (!quote.data?.toTokenAmount) {
+    return new BigNumber(0);
+  }
+
+  return new BigNumber(quote.data.toTokenAmount)
+    .div(
+      new BigNumber(10).pow(
+        quote.data.toTokenDecimals || receiveToken.decimals,
+      ),
+    )
+    .times(receiveToken.price || 0);
+};
+
+const getSwapProviderToTokenUsdValue = ({
+  provider,
+  receiveToken,
+}: {
+  provider: QuoteProvider;
+  receiveToken: TokenItem;
+}) => {
+  if (!provider.quote?.toTokenAmount) {
+    return new BigNumber(0);
+  }
+
+  return new BigNumber(provider.quote.toTokenAmount)
+    .div(
+      new BigNumber(10).pow(
+        provider.quote.toTokenDecimals || receiveToken.decimals,
+      ),
+    )
+    .times(receiveToken.price || 0);
+};
+
+const canDisplayEarlyQuoteByUsdValue = ({
+  fromToken,
+  fromAmount,
+  toUsdValue,
+}: {
+  fromToken?: TokenItem;
+  fromAmount: string;
+  toUsdValue: BigNumber;
+}) => {
+  const fromUsdValue = getTokenUsdValue({
+    token: fromToken,
+    amount: fromAmount,
+  });
+
+  if (!fromUsdValue.gt(0)) {
+    return true;
+  }
+
+  return toUsdValue.gte(
+    fromUsdValue.times(EARLY_QUOTE_DISPLAY_MIN_TO_FROM_USD_RATIO),
+  );
+};
+
+const canDisplaySwapQuoteBeforeAllQuotesLoaded = ({
+  quote,
+  payToken,
+  payAmount,
+  receiveToken,
+}: {
+  quote: TDexQuoteData;
+  payToken?: TokenItem;
+  payAmount: string;
+  receiveToken: TokenItem;
+}) =>
+  canDisplayEarlyQuoteByUsdValue({
+    fromToken: payToken,
+    fromAmount: payAmount,
+    toUsdValue: getSwapQuoteToTokenUsdValue({ quote, receiveToken }),
+  });
+
+const canDisplaySwapProviderBeforeAllQuotesLoaded = ({
+  provider,
+  payToken,
+  payAmount,
+  receiveToken,
+}: {
+  provider: QuoteProvider;
+  payToken?: TokenItem;
+  payAmount: string;
+  receiveToken: TokenItem;
+}) =>
+  canDisplayEarlyQuoteByUsdValue({
+    fromToken: payToken,
+    fromAmount: payAmount,
+    toUsdValue: getSwapProviderToTokenUsdValue({ provider, receiveToken }),
+  });
 
 const getBestSwapQuote = ({
   quoteList,
@@ -743,6 +849,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   const [finishedQuotes, setFinishedQuotes] = useState(0);
 
   const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteRequestFinished, setQuoteRequestFinished] = useState(true);
 
   const rateLimitRef = useRef(new RequestRateLimiter(1000 * 30, 10));
 
@@ -813,6 +920,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         // wait for progress animation finish
         setTimeout(() => {
           if (params[0] === fetchIdRef.current) {
+            setQuoteRequestFinished(true);
             setQuoteLoading(false);
             setShowMoreVisible(true);
             setFinishedQuotes(0);
@@ -833,9 +941,11 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     setBestQuoteDex('');
     setFinishedQuotes(0);
     if (canRunQuoteRequest) {
+      setQuoteRequestFinished(false);
       setQuoteLoading(true);
       runGetAllQuotes(fetchIdRef.current);
     } else {
+      setQuoteRequestFinished(true);
       setQuoteLoading(false);
     }
   }, [
@@ -862,8 +972,19 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       return;
     }
 
+    const selectableQuoteList = quoteRequestFinished
+      ? quoteList
+      : quoteList.filter(quote =>
+          canDisplaySwapQuoteBeforeAllQuotesLoaded({
+            quote,
+            payToken,
+            payAmount,
+            receiveToken,
+          }),
+        );
+
     const best = getBestSwapQuote({
-      quoteList,
+      quoteList: selectableQuoteList,
       receiveToken,
       inSufficient,
     });
@@ -890,7 +1011,18 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       );
 
     if (currentProviderLoaded && currentProvider.manualClick) {
-      return;
+      const canDisplayCurrentProvider =
+        quoteRequestFinished ||
+        canDisplaySwapProviderBeforeAllQuotesLoaded({
+          provider: currentProvider,
+          payToken,
+          payAmount,
+          receiveToken,
+        });
+
+      if (canDisplayCurrentProvider) {
+        return;
+      }
     }
 
     if (
@@ -915,9 +1047,12 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     setActiveProvider,
     canUpdateActiveProvider,
     currentProvider,
+    payToken,
+    payAmount,
+    quoteRequestFinished,
     receiveToken?.id,
     receiveToken?.chain,
-    // receiveToken?.price,
+    receiveToken?.price,
     receiveToken?.decimals,
   ]);
 
