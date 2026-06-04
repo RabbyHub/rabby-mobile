@@ -3,13 +3,13 @@ import { getVersion, getBuildNumber } from 'react-native-device-info';
 import { stringUtils } from '@rabby-wallet/base-utils';
 
 import { BUILD_CHANNEL } from './env';
-import { INTERNAL_REQUEST_ORIGIN } from './internalRequest';
-
-export { INTERNAL_REQUEST_ORIGIN };
 
 export const INITIAL_OPENAPI_URL = 'https://app-api.rabby.io';
 
 export const INITIAL_TESTNET_OPENAPI_URL = 'https://api.testnet.rabby.io';
+
+export const INTERNAL_REQUEST_ORIGIN =
+  'chrome-extension://acmacodkjbdgmoleebolmdjonilkdbch';
 
 export const INTERNAL_REQUEST_SESSION = {
   name: 'Rabby',

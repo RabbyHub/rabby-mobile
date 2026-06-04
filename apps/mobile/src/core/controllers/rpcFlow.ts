@@ -38,10 +38,6 @@ import { openapi } from '../request';
 import type { Account } from '@/types/account';
 import { ensureWalletUnlocked } from '@/utils/walletUnlockGuard';
 import { isWalletUnlockCancelled } from '@/utils/walletUnlockError';
-import {
-  ensureProviderRequestContext,
-  getProviderRequestChain,
-} from './requestContext';
 
 export const resemblesETHAddress = (str: string): boolean => {
   return str.length === 42;
@@ -63,10 +59,6 @@ const flow = new PromiseFlow<{
   approvalRes: any;
 }>();
 const flowContext = flow
-  .use(async (ctx, next) => {
-    ensureProviderRequestContext(ctx.request);
-    return next();
-  })
   .use(async (ctx, next) => {
     // check method
     const {
@@ -103,7 +95,6 @@ const flowContext = flow
     const {
       request: {
         session: { origin, name, icon, $mobileCtx },
-        requestContext,
       },
       mapMethod,
     } = ctx;
@@ -111,10 +102,7 @@ const flowContext = flow
     const { isFromMobileInnerDapp } = $mobileCtx || {};
     // // leave here for debug
     // console.debug('[debug] flowContext:: before check connect');
-    if (
-      requestContext?.source !== 'walletconnect' &&
-      !Reflect.getMetadata('SAFE', providerController, mapMethod)
-    ) {
+    if (!Reflect.getMetadata('SAFE', providerController, mapMethod)) {
       if (!dappService.hasPermission(origin)) {
         if (connectOrigins.has(origin)) {
           throw ethErrors.rpc.resourceNotFound(
@@ -252,13 +240,10 @@ const flowContext = flow
     if (approvalType && (!condition || !condition(ctx.request))) {
       ctx.request.requestedApproval = true;
       if (approvalType === 'SignTx' && !('chainId' in params[0])) {
-        const requestChain = getProviderRequestChain(ctx.request);
-        if (requestChain) {
-          params[0].chainId = requestChain.id;
-        } else {
-          const site = dappService.getConnectedDapp(origin);
+        const site = dappService.getConnectedDapp(origin);
+        if (site) {
           const chain = findChain({
-            enum: site?.chainId,
+            enum: site.chainId,
           });
           if (chain) {
             params[0].chainId = chain.id;
@@ -280,7 +265,6 @@ const flowContext = flow
             params: {
               $ctx: ctx?.request?.data?.$ctx,
               $mobileCtx,
-              requestContext: ctx.request.requestContext,
               method,
               data: ctx.request.data.params,
               session: { origin, name, icon, $mobileCtx },

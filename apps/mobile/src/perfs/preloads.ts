@@ -51,7 +51,6 @@ export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {
   [RootNames.DevUINotifications]: 'DevUINotifications',
   [RootNames.DevUIDapps]: 'DevUIDapps',
   [RootNames.DevUIPermissions]: 'DevUIPermissions',
-  [RootNames.DevUIWalletConnect]: 'DevUIWalletConnect',
   [RootNames.DevCapabilityFile]: 'DevCapabilityFile',
   [RootNames.DevUIBuiltInPages]: 'DevUIBuiltInPages',
   [RootNames.DevDataSQLite]: 'DevDataSQLite',

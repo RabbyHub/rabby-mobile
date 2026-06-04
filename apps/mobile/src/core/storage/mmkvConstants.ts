@@ -7,7 +7,6 @@ export enum MMKV_FILE_NAMES {
   CEXID = 'mmkv.cexid',
   BALANCE_24H = 'mmkv.balance24h',
   TESTNET_BALANCE = 'mmkv.testnetBalance',
-  WALLETCONNECT = 'mmkv.walletconnect',
 
   LENDING_DATA_CACHE = 'mmkv.lendingDataCache',
 }
@@ -34,5 +33,4 @@ export const APP_MMKV_WEAK_KEYS = {
   LENDING_MARKET: '@lendingMarket',
   FAILED_UNLOCK: '@failed_unlock',
   HOME_TOP10_ADDRESSES: '@homeTop10Addresses',
-  WALLETCONNECT_AUTO_DISCONNECT_ENABLED: '@walletConnectAutoDisconnectEnabled',
 } as const;

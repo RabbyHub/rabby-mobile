@@ -78,7 +78,6 @@ import { updateExpiredTime } from '@/databases/sync/utils';
 import { assertProviderRequest } from '../utils/assertProviderRequest';
 import { ProviderRequest } from './type';
 import { hexToNumber, isAddress, toHex } from 'viem';
-import { getProviderRequestChain } from './requestContext';
 import { Transaction as ViemTempoTransaction } from 'viem/tempo';
 import { add0x } from '@/utils/address';
 import { removeLeadingZeroes } from '@/utils/7702';
@@ -487,22 +486,19 @@ const v1SignTypedDataVlidation = ({
     throw ethErrors.rpc.invalidParams('from should be same as current address');
 };
 
-const signTypedDataVlidation = (
-  req: ProviderRequest & {
-    data: {
-      params: SignTypeDataParams;
-    };
-    session: Session;
-    account?: Account | null;
+const signTypedDataVlidation = ({
+  data: {
+    params: [from, data],
   },
-) => {
-  const {
-    data: {
-      params: [from, data],
-    },
-    session,
-    account,
-  } = req;
+  session,
+  account,
+}: {
+  data: {
+    params: SignTypeDataParams;
+  };
+  session: Session;
+  account?: Account | null;
+}) => {
   let jsonData;
   try {
     jsonData = JSON.parse(data);
@@ -510,9 +506,7 @@ const signTypedDataVlidation = (
     throw ethErrors.rpc.invalidParams('data is not a validate JSON string');
   }
   if (!dappService.isInternalDapp(session.origin)) {
-    const currentChain =
-      getProviderRequestChain(req)?.enum ||
-      dappService.getDapp(session.origin)?.chainId;
+    const currentChain = dappService.getDapp(session.origin)?.chainId;
 
     if (jsonData.domain.chainId) {
       const chainItem = findChainByEnum(currentChain);
@@ -547,7 +541,7 @@ interface ControllerParams<T> {
 class ProviderController extends BaseController {
   @Reflect.metadata('PRIVATE', true)
   ethRpc = (
-    req: ProviderRequest & {
+    req: {
       data: RPCRequest;
       session: Session;
       account?: Account | null;
@@ -571,10 +565,6 @@ class ProviderController extends BaseController {
     if (site) {
       chainServerId =
         findChain({ enum: site.chainId })?.serverId || chainServerId;
-    }
-    const requestChain = getProviderRequestChain(req);
-    if (requestChain) {
-      chainServerId = requestChain.serverId;
     }
     if (forceChainServerId) {
       chainServerId = forceChainServerId;
@@ -715,13 +705,7 @@ class ProviderController extends BaseController {
   };
 
   @Reflect.metadata('SAFE', true)
-  ethChainId = (req: ProviderRequest) => {
-    const requestChain = getProviderRequestChain(req);
-    if (requestChain) {
-      return requestChain.hex;
-    }
-
-    const { session } = req;
+  ethChainId = ({ session }: { session: Session }) => {
     const origin = session.origin;
     const site = dappService.getDapp(origin);
 
@@ -740,10 +724,7 @@ class ProviderController extends BaseController {
         account,
       } = req;
       const currentAddress = account?.address?.toLowerCase();
-      const requestChain = getProviderRequestChain(req);
-      const currentChain = requestChain
-        ? requestChain.enum
-        : dappService.isInternalDapp(session.origin)
+      const currentChain = dappService.isInternalDapp(session.origin)
         ? findChain({ id: tx.chainId })!.enum
         : dappService.getConnectedDapp(session.origin)?.chainId;
       if (tx.from.toLowerCase() !== currentAddress) {
@@ -951,10 +932,7 @@ class ProviderController extends BaseController {
         console.log(e);
       }
     }
-    const requestChain = getProviderRequestChain(options as any);
-    const chain = requestChain
-      ? requestChain.enum
-      : dappService.isInternalDapp(origin)
+    const chain = dappService.isInternalDapp(origin)
       ? findChain({ id: approvalRes.chainId })!.enum
       : dappService.getConnectedDapp(origin)!.chainId;
 
@@ -1511,10 +1489,10 @@ class ProviderController extends BaseController {
     }
   };
   @Reflect.metadata('SAFE', true)
-  netVersion = (req: ProviderRequest) => {
+  netVersion = (req: { session: Session }) => {
     return this.ethRpc({
       ...req,
-      data: { ...req.data, method: 'net_version', params: [] },
+      data: { method: 'net_version', params: [] },
     });
   };
 

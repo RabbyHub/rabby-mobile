@@ -94,11 +94,6 @@ export const Approval = () => {
     data?.$mobileCtx?.isFromMobileInnerDapp ||
     params?.session?.$mobileCtx?.isFromMobileInnerDapp;
 
-  const isFromWalletConnect =
-    params?.$mobileCtx?.isFromWalletConnect ||
-    data?.$mobileCtx?.isFromWalletConnect ||
-    params?.session?.$mobileCtx?.isFromWalletConnect;
-
   const fromOrigin = origin || params?.origin;
   const shouldDisallow =
     !isInternalSession(fromOrigin) &&
@@ -113,12 +108,7 @@ export const Approval = () => {
       { allowSecondaryDomainMatch: false },
     );
 
-  if (
-    shouldDisallow &&
-    !shouldAllowForLegacy &&
-    !isFromMobileInnerDapp &&
-    !isFromWalletConnect
-  ) {
+  if (shouldDisallow && !shouldAllowForLegacy && !isFromMobileInnerDapp) {
     return <ShouldntRenderApproveDueToDappDisappeared />;
   }
 

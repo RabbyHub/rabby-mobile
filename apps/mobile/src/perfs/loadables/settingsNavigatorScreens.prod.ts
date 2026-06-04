@@ -16,13 +16,6 @@ export const SetPasswordScreen = registerAppScreen<
   name: RootNames.SetPassword,
 });
 
-export const WalletConnectScreen = registerAppScreen<
-  typeof import('@/screens/Settings/WalletConnect').default
->({
-  loader: () => import('@/screens/Settings/WalletConnect'),
-  name: RootNames.WalletConnect,
-});
-
 export const ProviderControllerTester = registerAppScreen<
   typeof import('@/screens/ProviderControllerTester/ProviderControllerTester').default
 >({

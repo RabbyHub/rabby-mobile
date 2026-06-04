@@ -37,10 +37,6 @@ const {
 
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../..');
-const walletConnectKeyValueStorageShim = path.resolve(
-  projectRoot,
-  'src/core/walletconnect/keyvaluestorageRuntimeShim.js',
-);
 const escapePathForRegex = value =>
   value.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
 const turboBuildBlockList = new RegExp(
@@ -189,13 +185,6 @@ const config = {
      *
      * */
     resolveRequest: (context, moduleName, platform) => {
-      if (moduleName === '@walletconnect/keyvaluestorage') {
-        return {
-          filePath: walletConnectKeyValueStorageShim,
-          type: 'sourceFile',
-        };
-      }
-
       try {
         return context.resolveRequest(context, moduleName, platform);
       } catch (error) {

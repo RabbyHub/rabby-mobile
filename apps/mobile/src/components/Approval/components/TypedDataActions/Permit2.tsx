@@ -45,11 +45,10 @@ const Permit2 = ({
   }, [engineResults]);
 
   const tokenBalance = useMemo(() => {
-    const decimals = requireData?.token?.decimals ?? actionData.token.decimals;
-    return new BigNumber(requireData?.token?.raw_amount || '0')
-      .div(10 ** (decimals || 0))
+    return new BigNumber(requireData.token.raw_amount || '0')
+      .div(10 ** requireData.token.decimals)
       .toFixed();
-  }, [actionData.token.decimals, requireData]);
+  }, [requireData]);
 
   useEffect(() => {
     init();

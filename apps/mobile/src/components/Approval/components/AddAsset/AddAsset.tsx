@@ -55,7 +55,6 @@ import React, {
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Dimensions, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Typography';
-import type { ProviderRequestContext } from '@/core/controllers/type';
 
 interface AddAssetProps {
   data: {
@@ -72,7 +71,6 @@ interface AddAssetProps {
     icon: string;
     name: string;
   };
-  requestContext?: ProviderRequestContext;
 }
 
 interface TokenHistoryItem extends TxHistoryItem {
@@ -202,15 +200,10 @@ export const AddAsset = ({
 
   // console.log(token, customTokens, customTestnetToken, params);
   const init = useMemoizedFn(async () => {
-    const requestChain = params.requestContext?.chainId
-      ? findChain({ id: params.requestContext.chainId })
-      : undefined;
     const site = await dappService.getDapp(params.session.origin);
-    const chain =
-      requestChain ||
-      findChain({
-        enum: site?.chainId,
-      });
+    const chain = findChain({
+      enum: site?.chainId,
+    });
     setCurrentChain(chain);
     if (chain?.isTestnet) {
       if (account) {

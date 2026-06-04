@@ -21,4 +21,3 @@ export { GlobalMiniApproval } from '@/components/Approval/components/MiniSignTx/
 export { GlobalMiniSignTypedDataPortal } from '@/components/Approval/components/MiniSignTypedData/GlobalMiniSignTypedDataPortal';
 export { GlobalTipsPopup } from '@/components2024/GlobalTipsPopup';
 export { GlobalSignerPortal } from '@/components2024/MiniSignV2/components/GlobalSignerPortal';
-export { WalletConnectModalHost } from '@/components2024/WalletConnect/WalletConnectModalHost';

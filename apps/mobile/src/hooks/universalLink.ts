@@ -15,10 +15,6 @@ import {
 import { getPwdStatus } from './useLock';
 import { ALLOWED_UL_DOMAINS } from '@/constant/universalLink';
 import { RefLikeObject } from '@/utils/type';
-import {
-  pairWalletConnectUri,
-  parseWalletConnectUriFromLink,
-} from '@/core/walletconnect';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -37,23 +33,13 @@ function setNextAppLink(linkOrSetter: string | ((prev: string) => string)) {
 }
 
 type OnParseUrlAndProcessAction = (payload: {
-  type: 'open-dapp' | 'walletconnect-uri';
-  dappUrl?: string;
-  uri?: string;
+  type: 'open-dapp';
+  dappUrl: string;
 }) => void;
 function parseActionAndProcessLink(
   appLink: string,
   onActions?: OnParseUrlAndProcessAction,
 ) {
-  const walletConnectUri = parseWalletConnectUriFromLink(appLink);
-  if (walletConnectUri) {
-    onActions?.({
-      type: 'walletconnect-uri',
-      uri: walletConnectUri,
-    });
-    return;
-  }
-
   if (!ALLOWED_UL_DOMAINS.some(domain => appLink.startsWith(domain))) return;
 
   const urlInfo = urlUtils.safeParseURL(appLink);
@@ -86,22 +72,8 @@ const toastTip = toastWithIcon(RcIconInfoForToast);
 const handleActions: OnParseUrlAndProcessAction = payload => {
   switch (payload.type) {
     case 'open-dapp':
-      if (!payload.dappUrl) {
-        return;
-      }
       browserApis.openTab(payload.dappUrl, {
         isNewTab: true,
-      });
-      break;
-    case 'walletconnect-uri':
-      if (!payload.uri) {
-        return;
-      }
-      pairWalletConnectUri({
-        uri: payload.uri,
-        source: 'deeplink',
-      }).catch(() => {
-        // WalletConnectModalHost consumes the pairing error event once.
       });
       break;
   }

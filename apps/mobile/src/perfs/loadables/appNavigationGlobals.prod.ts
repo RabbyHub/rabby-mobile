@@ -175,12 +175,3 @@ export const GlobalSignerPortal = registerAppScreen<
       }),
     ),
 });
-
-export const WalletConnectModalHost = registerAppScreen<
-  typeof import('@/components2024/WalletConnect/WalletConnectModalHost').WalletConnectModalHost
->({
-  loader: () =>
-    import('@/components2024/WalletConnect/WalletConnectModalHost').then(m => ({
-      default: m.WalletConnectModalHost,
-    })),
-});

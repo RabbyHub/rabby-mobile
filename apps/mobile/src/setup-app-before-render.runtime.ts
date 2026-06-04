@@ -7,7 +7,6 @@ import { InteractionManager } from 'react-native';
 import { runIIFEFunc } from './core/utils/store';
 import { startSubscribeLangChange } from './hooks/lang';
 import { connectPushServerOnBootstrap } from './core/notifications';
-import { startRestoreWalletConnectSessions } from './core/walletconnect/client';
 
 import { startManageAccountStoreLifecycle } from './hooks/account';
 
@@ -213,9 +212,3 @@ function startInitStoresOnUnlock() {
 }
 
 startInitStoresOnUnlock();
-
-export async function startRestoreWalletConnectSessionsOnUnlock() {
-  startRestoreWalletConnectSessions();
-
-  keyringService.on('unlock', startRestoreWalletConnectSessions);
-}
