@@ -451,6 +451,7 @@ const MyAssetHome: React.FC = () => {
             height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
             titleStyle={styles.actionPrimaryTitle}
             title={t('page.Lending.borrowDetail.actions')}
+            splitAndroidCJKTitle
             disabled={loading}
             onPress={handleOpenBorrowList}
           />

@@ -55,6 +55,7 @@ export type ButtonProps = Omit<
       iconRight?: ReactNode | ((ctx: { titleStyle?: TextStyle }) => ReactNode);
       showTextOnLoading?: boolean;
       loadingType?: 'indicator' | 'circle';
+      splitAndroidCJKTitle?: boolean;
     },
   'children'
 >;
@@ -62,8 +63,12 @@ export type ButtonProps = Omit<
 const SHORT_CJK_TITLE_RE =
   /^[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uac00-\ud7af]{1,4}$/;
 
-function shouldSplitAndroidCJKTitle(textNode: ReactNode): textNode is string {
+function shouldSplitAndroidCJKTitle(
+  textNode: ReactNode,
+  enabled: boolean,
+): textNode is string {
   return (
+    enabled &&
     Platform.OS === 'android' &&
     typeof textNode === 'string' &&
     SHORT_CJK_TITLE_RE.test(textNode)
@@ -88,6 +93,7 @@ export const Button = ({
   disabledTitleStyle,
   icon,
   iconRight,
+  splitAndroidCJKTitle = false,
   ViewComponent = View,
   ...rest
 }: ButtonProps) => {
@@ -260,7 +266,10 @@ export const Button = ({
     return i;
   }, [icon, iconRight, titleStyle]);
 
-  const splitCJKTitle = shouldSplitAndroidCJKTitle(textNode)
+  const splitCJKTitle = shouldSplitAndroidCJKTitle(
+    textNode,
+    splitAndroidCJKTitle,
+  )
     ? textNode
     : undefined;
   const titleNode = useMemo(() => {
