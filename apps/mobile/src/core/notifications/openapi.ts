@@ -1,13 +1,7 @@
 import { OpenApiService } from '@rabby-wallet/rabby-api';
-import { OpenApiStore } from '../services/openapiStore';
+import { notificationOpenApiStore } from '../services/openapiStore';
 import { SignApiPlugin } from '../request';
-import {
-  APP_VERSIONS,
-  APPLICATION_ID,
-  INITIAL_OPENAPI_URL,
-  isNonPublicProductionEnv,
-} from '@/constant';
-import { APP_STORE_NAMES } from '../storage/storeConstant';
+import { APP_VERSIONS, APPLICATION_ID } from '@/constant';
 import { makeDeviceUUID } from '../apis/device';
 import { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
 import { AppState } from 'react-native';
@@ -93,15 +87,8 @@ class NotificationsOpenApiService extends OpenApiService {
   }
 }
 
-const apiStore = new OpenApiStore({
-  name: APP_STORE_NAMES.notificationOpenapi,
-});
-apiStore.store.api.host = isNonPublicProductionEnv
-  ? INITIAL_OPENAPI_URL.replace('app-api.', 'alpha.')
-  : INITIAL_OPENAPI_URL;
-
 export const notificationOpenapi = new NotificationsOpenApiService({
-  store: apiStore,
+  store: notificationOpenApiStore,
   plugin: SignApiPlugin,
   clientName: 'rabbymobile',
   clientVersion: APP_VERSIONS.fromJs,
