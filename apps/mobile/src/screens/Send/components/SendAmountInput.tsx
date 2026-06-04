@@ -44,6 +44,7 @@ type SendAmountInputProps = {
   unit: string;
   quoteValueText: string;
   quoteUnit: string;
+  showQuote?: boolean;
   canSwitchMode: boolean;
   maxDecimalPlaces?: number | null;
   normalizeInputValue?: (value: string) => string;
@@ -233,6 +234,7 @@ export const SendAmountInput = ({
   unit,
   quoteValueText,
   quoteUnit,
+  showQuote = true,
   canSwitchMode,
   maxDecimalPlaces,
   normalizeInputValue,
@@ -835,45 +837,47 @@ export const SendAmountInput = ({
               ) : null}
             </View>
           )}
-          <TouchableOpacity
-            activeOpacity={canSwitchMode ? 0.7 : 1}
-            disabled={!canSwitchMode}
-            onPress={handleSwitchModePress}
-            style={[
-              styles.quoteRow,
-              {
-                top: quoteRowTop,
-              },
-              compactQuoteRowStyle,
-            ]}
-            hitSlop={8}>
-            <Text
+          {showQuote ? (
+            <TouchableOpacity
+              activeOpacity={canSwitchMode ? 0.7 : 1}
+              disabled={!canSwitchMode}
+              onPress={handleSwitchModePress}
               style={[
-                styles.quoteText,
-                inputAreaWidth
-                  ? shouldFixQuoteWidth
-                    ? { width: quoteTextMaxWidth }
-                    : { maxWidth: quoteTextMaxWidth }
-                  : null,
+                styles.quoteRow,
+                {
+                  top: quoteRowTop,
+                },
+                compactQuoteRowStyle,
               ]}
-              ellipsizeMode="tail"
-              numberOfLines={1}>
-              {quoteValueText}
-            </Text>
-            <Text style={styles.quoteUnitText} numberOfLines={1}>
-              {displayQuoteUnitText}
-            </Text>
-            {canSwitchMode ? (
-              <View style={styles.switchIconWrapper}>
-                <RcIconSwitchCC
-                  fillColor={colors2024['neutral-line']}
-                  strokeColor={colors2024['neutral-body']}
-                  width={20}
-                  height={20}
-                />
-              </View>
-            ) : null}
-          </TouchableOpacity>
+              hitSlop={8}>
+              <Text
+                style={[
+                  styles.quoteText,
+                  inputAreaWidth
+                    ? shouldFixQuoteWidth
+                      ? { width: quoteTextMaxWidth }
+                      : { maxWidth: quoteTextMaxWidth }
+                    : null,
+                ]}
+                ellipsizeMode="tail"
+                numberOfLines={1}>
+                {quoteValueText}
+              </Text>
+              <Text style={styles.quoteUnitText} numberOfLines={1}>
+                {displayQuoteUnitText}
+              </Text>
+              {canSwitchMode ? (
+                <View style={styles.switchIconWrapper}>
+                  <RcIconSwitchCC
+                    fillColor={colors2024['neutral-line']}
+                    strokeColor={colors2024['neutral-body']}
+                    width={20}
+                    height={20}
+                  />
+                </View>
+              ) : null}
+            </TouchableOpacity>
+          ) : null}
         </View>
       </SilentTouchableView>
 
