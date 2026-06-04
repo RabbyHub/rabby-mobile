@@ -110,6 +110,19 @@ const EMPTY_TOKEN_ITEM = {
   price: 0,
 };
 
+function getInitialDisplayToken(token: TokenItem): TokenItem | null {
+  const chain = findChainByServerID(token.chain);
+  if (chain && lowcaseSame(token.id, chain.nativeTokenAddress)) {
+    return makeTokenFromChain(chain);
+  }
+
+  if (token.optimized_symbol || token.display_symbol || token.symbol) {
+    return token;
+  }
+
+  return null;
+}
+
 const SendPendingTxItem = React.memo(function SendPendingTxItem({
   clearLocalPendingTxData,
   isForMultipleAddress,
@@ -161,7 +174,7 @@ const SendScreenBody = React.memo(function SendScreenBody({
 
   const toAddressControlStyle = useMemo(
     () => ({
-      marginTop: 24,
+      marginTop: 16,
       marginBottom: 0,
     }),
     [],
@@ -355,6 +368,7 @@ function SendScreen({
     handleFieldChange,
     handleClickMaxButton,
     onChangeSlider,
+    setSlider,
     handleGasLevelChanged,
     handleIgnoreGasFeeChange,
     setReloadTxRefreshPaused,
@@ -505,15 +519,39 @@ function SendScreen({
         apiSendToken.setChainEnum(target.enum);
       }
     }
-    await Promise.race([
-      currentAccount?.address &&
-        (await loadCurrentToken(
+    const initialDisplayToken = getInitialDisplayToken(targetToken);
+    if (initialDisplayToken) {
+      apiSendToken.putChainToken({ currentToken: initialDisplayToken });
+      if (currentAccount?.address) {
+        apiSendToken.markBalanceLoading({
+          tokenId: targetToken.id,
+          chainId: targetToken.chain,
+          currentAddress: currentAccount.address,
+        });
+      }
+      apiSendToken.putScreenState({ initialTokenIdentityReady: true });
+    }
+
+    const loadedTokenPromise = currentAccount?.address
+      ? loadCurrentToken(
           targetToken.id,
           targetToken.chain,
-          currentAccount?.address,
-        )),
-      sleep(5000),
-    ]);
+          currentAccount.address,
+        ).catch(error => {
+          console.error('SendScreen loadCurrentToken error', error);
+          return null;
+        })
+      : Promise.resolve(null);
+
+    if (!initialDisplayToken) {
+      void loadedTokenPromise.then(loadedToken => {
+        if (loadedToken) {
+          apiSendToken.putScreenState({ initialTokenIdentityReady: true });
+        }
+      });
+    }
+
+    await Promise.race([loadedTokenPromise, sleep(5000)]);
   }, [
     navParams,
     routeParams,
@@ -547,6 +585,8 @@ function SendScreen({
         } catch (e) {
           console.error('SendScreen initByCache error', e);
           initByCacheFinishedRef.current = false;
+        } finally {
+          apiSendToken.putScreenState({ initialTokenReady: true });
         }
       })();
       checkIsAddressBlocked(navParams?.toAddress);
@@ -647,6 +687,7 @@ function SendScreen({
         checkCexSupport,
         handleClickMaxButton,
         onChangeSlider,
+        setSlider,
         handleGasLevelChanged,
         handleIgnoreGasFeeChange,
         saveCurrentFormValuesSnapshot,
@@ -675,6 +716,7 @@ function SendScreen({
       handleIgnoreGasFeeChange,
       onBottomAreaLayout,
       onChangeSlider,
+      setSlider,
       scrollToBottom,
       scrollViewRef,
       scrollViewStyle,
@@ -735,16 +777,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       flexDirection: 'column',
       justifyContent: 'space-between',
       flex: 1,
-      paddingTop: 16,
+      paddingTop: 4,
       position: 'relative',
       height: '100%',
     },
     mainContent: {
-      paddingHorizontal: 24,
+      paddingHorizontal: 20,
       paddingBottom: 280,
     },
     balance: {
-      marginTop: 24,
+      marginTop: 16,
     },
     screenRoot: {
       flex: 1,

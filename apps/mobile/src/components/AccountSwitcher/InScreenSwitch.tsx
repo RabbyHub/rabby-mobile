@@ -96,7 +96,7 @@ const getStyle = createGetStyles2024(ctx => {
   return {
     container: {
       borderRadius: 16,
-      paddingHorizontal: 22,
+      paddingHorizontal: 16,
       paddingVertical: 16,
       backgroundColor: ctx.colors2024['neutral-bg-2'],
       flexDirection: 'row',
