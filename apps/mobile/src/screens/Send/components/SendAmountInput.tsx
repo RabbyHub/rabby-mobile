@@ -44,6 +44,7 @@ type SendAmountInputProps = {
   unit: string;
   quoteValueText: string;
   quoteUnit: string;
+  showQuote?: boolean;
   canSwitchMode: boolean;
   maxDecimalPlaces?: number | null;
   normalizeInputValue?: (value: string) => string;
@@ -118,7 +119,6 @@ const QUOTE_ROW_MIN_COMPACT_TOP = 38;
 const QUOTE_TEXT_FONT_SIZE = 14;
 const QUOTE_UNIT_GAP = 4;
 const EMPTY_AMOUNT_DISPLAY_VALUE = '0';
-const NORMALIZED_AMOUNT_INPUT_REGEX = /^\d*(\.\d*)?$/;
 const AMOUNT_UNIT_RESERVED_WIDTH = CARET_BUFFER + UNIT_GAP;
 const AMOUNT_MEASURE_CHARS = [
   '0',
@@ -180,10 +180,6 @@ function normalizeDisplayAmountValue(value: string) {
   return normalizeIntegerPart(normalizedSeparatorValue);
 }
 
-function isNonEmptyNormalizedAmountInput(value: string) {
-  return Boolean(value) && NORMALIZED_AMOUNT_INPUT_REGEX.test(value);
-}
-
 function getAmountRowHeight(isMinCompactLayout: boolean) {
   return isMinCompactLayout ? AMOUNT_ROW_MIN_COMPACT_HEIGHT : AMOUNT_ROW_HEIGHT;
 }
@@ -238,6 +234,7 @@ export const SendAmountInput = ({
   unit,
   quoteValueText,
   quoteUnit,
+  showQuote = true,
   canSwitchMode,
   maxDecimalPlaces,
   normalizeInputValue,
@@ -267,9 +264,6 @@ export const SendAmountInput = ({
   const unitTextRef = useRef<{
     setNativeProps?: (nativeProps: object) => void;
   } | null>(null);
-  const emptyAmountTextRef = useRef<{
-    setNativeProps?: (nativeProps: object) => void;
-  } | null>(null);
   const inputSelectionRef = useRef({
     start: getDisplayAmountValue(value).length,
     end: getDisplayAmountValue(value).length,
@@ -296,13 +290,6 @@ export const SendAmountInput = ({
     },
     [],
   );
-  const setEmptyAmountTextNodeRef = useCallback(
-    (node: { setNativeProps?: (nativeProps: object) => void } | null) => {
-      emptyAmountTextRef.current = node;
-    },
-    [],
-  );
-
   useEffect(() => {
     setInputValue(value || '');
   }, [value]);
@@ -456,47 +443,8 @@ export const SendAmountInput = ({
     () => getAmountLayout(textForMeasure),
     [getAmountLayout, textForMeasure],
   );
-  const emptyAmountTextWidth = useMemo(
-    () =>
-      Math.ceil(
-        (getValueWidthAtBaseFontSize(EMPTY_AMOUNT_DISPLAY_VALUE) *
-          fittingFontSize) /
-          MAIN_FONT_SIZE,
-      ),
-    [fittingFontSize, getValueWidthAtBaseFontSize],
-  );
-  const inputLeft = inputValue ? 0 : emptyAmountTextWidth;
-  const emptyInputWidth =
-    typeof valueInputWidth === 'number'
-      ? Math.max(valueInputWidth - emptyAmountTextWidth, CARET_BUFFER)
-      : valueInputWidth;
-  const inputWidth = inputValue ? valueInputWidth : emptyInputWidth;
-  const getInputNativeLayoutStyle = useCallback(
-    (showEmptyAmount: boolean) => {
-      const width = showEmptyAmount ? emptyInputWidth : valueInputWidth;
-      const style: { left: number; width?: number } = {
-        left: showEmptyAmount ? emptyAmountTextWidth : 0,
-      };
-      if (typeof width === 'number') {
-        style.width = width;
-      }
-      return style;
-    },
-    [emptyAmountTextWidth, emptyInputWidth, valueInputWidth],
-  );
-  const applyEmptyAmountDisplayNative = useCallback(
-    (showEmptyAmount: boolean) => {
-      emptyAmountTextRef.current?.setNativeProps?.({
-        style: {
-          opacity: showEmptyAmount ? 1 : 0,
-        },
-      });
-      tokenInputRef.current?.setNativeProps?.({
-        style: getInputNativeLayoutStyle(showEmptyAmount),
-      });
-    },
-    [getInputNativeLayoutStyle, tokenInputRef],
-  );
+  const inputLeft = 0;
+  const inputWidth = valueInputWidth;
   const normalizedSelectionStart = Math.max(
     0,
     Math.min(inputSelection.start, textInputValue.length),
@@ -657,34 +605,17 @@ export const SendAmountInput = ({
   const handleInputKeyPress = useCallback(
     (event: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
       const predictedValue = getPredictedValueFromKey(event.nativeEvent.key);
-      if (
-        !inputValue &&
-        predictedValue &&
-        isNonEmptyNormalizedAmountInput(predictedValue)
-      ) {
-        applyEmptyAmountDisplayNative(false);
-      }
       if (predictedValue !== null) {
         applyUnitLayoutNative(predictedValue);
       }
     },
-    [
-      applyEmptyAmountDisplayNative,
-      applyUnitLayoutNative,
-      getPredictedValueFromKey,
-      inputValue,
-    ],
+    [applyUnitLayoutNative, getPredictedValueFromKey],
   );
 
   const handleInputChange = useCallback(
     (nextValue: string) => {
       const previousValue = inputValue;
       const normalizedValue = normalizeTypedInputValue(nextValue);
-      if (!previousValue && isNonEmptyNormalizedAmountInput(normalizedValue)) {
-        applyEmptyAmountDisplayNative(false);
-      } else if (!normalizedValue) {
-        applyEmptyAmountDisplayNative(true);
-      }
 
       if (normalizedValue !== nextValue) {
         tokenInputRef.current?.setNativeProps?.({
@@ -701,9 +632,6 @@ export const SendAmountInput = ({
       setInputValue(normalizedValue);
       const result = onChange?.(normalizedValue);
       if (result === false) {
-        if (!previousValue) {
-          applyEmptyAmountDisplayNative(true);
-        }
         tokenInputRef.current?.setNativeProps?.({
           text: previousValue,
         });
@@ -712,7 +640,6 @@ export const SendAmountInput = ({
       }
     },
     [
-      applyEmptyAmountDisplayNative,
       applyUnitLayoutNative,
       inputValue,
       normalizeTypedInputValue,
@@ -819,6 +746,8 @@ export const SendAmountInput = ({
                 multiline={false}
                 scrollEnabled
                 maxLength={inputMaxLength}
+                placeholder={EMPTY_AMOUNT_DISPLAY_VALUE}
+                placeholderTextColor={colors2024['neutral-info']}
                 selectionColor={
                   IS_ANDROID ? undefined : colors2024['brand-default']
                 }
@@ -840,26 +769,6 @@ export const SendAmountInput = ({
                 ]}
                 {...amountInputProps}
               />
-              <Text
-                ref={setEmptyAmountTextNodeRef}
-                pointerEvents="none"
-                accessible={false}
-                accessibilityElementsHidden
-                importantForAccessibility="no"
-                numberOfLines={1}
-                style={[
-                  styles.emptyAmountText,
-                  {
-                    top: amountTextTop,
-                    height: amountLineHeight,
-                    lineHeight: amountLineHeight,
-                    fontSize: fittingFontSize,
-                    opacity: inputValue ? 0 : 1,
-                  },
-                  showStaticEmptyAmount && styles.staticHiddenInput,
-                ]}>
-                {EMPTY_AMOUNT_DISPLAY_VALUE}
-              </Text>
               {IS_ANDROID ? (
                 <Text
                   ref={setUnitTextNodeRef}
@@ -928,45 +837,47 @@ export const SendAmountInput = ({
               ) : null}
             </View>
           )}
-          <TouchableOpacity
-            activeOpacity={canSwitchMode ? 0.7 : 1}
-            disabled={!canSwitchMode}
-            onPress={handleSwitchModePress}
-            style={[
-              styles.quoteRow,
-              {
-                top: quoteRowTop,
-              },
-              compactQuoteRowStyle,
-            ]}
-            hitSlop={8}>
-            <Text
+          {showQuote ? (
+            <TouchableOpacity
+              activeOpacity={canSwitchMode ? 0.7 : 1}
+              disabled={!canSwitchMode}
+              onPress={handleSwitchModePress}
               style={[
-                styles.quoteText,
-                inputAreaWidth
-                  ? shouldFixQuoteWidth
-                    ? { width: quoteTextMaxWidth }
-                    : { maxWidth: quoteTextMaxWidth }
-                  : null,
+                styles.quoteRow,
+                {
+                  top: quoteRowTop,
+                },
+                compactQuoteRowStyle,
               ]}
-              ellipsizeMode="tail"
-              numberOfLines={1}>
-              {quoteValueText}
-            </Text>
-            <Text style={styles.quoteUnitText} numberOfLines={1}>
-              {displayQuoteUnitText}
-            </Text>
-            {canSwitchMode ? (
-              <View style={styles.switchIconWrapper}>
-                <RcIconSwitchCC
-                  fillColor={colors2024['neutral-line']}
-                  strokeColor={colors2024['neutral-body']}
-                  width={20}
-                  height={20}
-                />
-              </View>
-            ) : null}
-          </TouchableOpacity>
+              hitSlop={8}>
+              <Text
+                style={[
+                  styles.quoteText,
+                  inputAreaWidth
+                    ? shouldFixQuoteWidth
+                      ? { width: quoteTextMaxWidth }
+                      : { maxWidth: quoteTextMaxWidth }
+                    : null,
+                ]}
+                ellipsizeMode="tail"
+                numberOfLines={1}>
+                {quoteValueText}
+              </Text>
+              <Text style={styles.quoteUnitText} numberOfLines={1}>
+                {displayQuoteUnitText}
+              </Text>
+              {canSwitchMode ? (
+                <View style={styles.switchIconWrapper}>
+                  <RcIconSwitchCC
+                    fillColor={colors2024['neutral-line']}
+                    strokeColor={colors2024['neutral-body']}
+                    width={20}
+                    height={20}
+                  />
+                </View>
+              ) : null}
+            </TouchableOpacity>
+          ) : null}
         </View>
       </SilentTouchableView>
 
@@ -1072,20 +983,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       minWidth: 1,
       zIndex: 1,
     },
-    emptyAmountText: {
-      position: 'absolute',
-      left: 0,
-      fontWeight: '900',
-      fontFamily: 'SF Pro Rounded',
-      color: colors2024['neutral-title-1'],
-      padding: 0,
-      paddingTop: 0,
-      paddingBottom: 0,
-      textAlignVertical: 'center',
-      includeFontPadding: false,
-      overflow: 'hidden',
-      zIndex: 1,
-    },
     unitText: {
       position: 'absolute',
       color: colors2024['neutral-info'],
@@ -1115,7 +1012,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       zIndex: 3,
     },
     staticEmptyAmountText: {
-      color: colors2024['neutral-title-1'],
+      color: colors2024['neutral-info'],
       fontSize: MAIN_FONT_SIZE,
       fontWeight: '900',
       lineHeight: AMOUNT_DEFAULT_LINE_HEIGHT,

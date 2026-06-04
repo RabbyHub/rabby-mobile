@@ -34,6 +34,11 @@ export const testnetBalanceMMKV = new MMKV({
   id: MMKV_FILE_NAMES.TESTNET_BALANCE,
 });
 
+export const walletConnectMMKV = new MMKV({
+  id: MMKV_FILE_NAMES.WALLETCONNECT,
+  encryptionKey: 'walletconnect',
+});
+
 export const lendingDataCacheMMKV = new MMKV({
   id: MMKV_FILE_NAMES.LENDING_DATA_CACHE,
 });
@@ -47,5 +52,6 @@ export const ALL_KNOWN_MMKV_INSTANCES = {
   [MMKV_FILE_NAMES.CEXID]: cexIdMMKV,
   [MMKV_FILE_NAMES.BALANCE_24H]: balance24hMMKV,
   [MMKV_FILE_NAMES.TESTNET_BALANCE]: testnetBalanceMMKV,
+  [MMKV_FILE_NAMES.WALLETCONNECT]: walletConnectMMKV,
   [MMKV_FILE_NAMES.LENDING_DATA_CACHE]: lendingDataCacheMMKV,
 } as const;

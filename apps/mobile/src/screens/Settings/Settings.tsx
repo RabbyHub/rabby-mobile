@@ -32,6 +32,7 @@ import {
   RcScreenshotReport,
   RcIconCurrency,
   RcNotification,
+  RcWalletConnect,
   RcAutolock,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
@@ -403,6 +404,17 @@ function SettingsBlocks() {
       settings: {
         label: t('page.setting.screenTitle'),
         items: [
+          {
+            label: 'WalletConnect',
+            icon: RcWalletConnect,
+            onPress: () => {
+              navigation.dispatch(
+                StackActions.push(RootNames.StackSettings, {
+                  screen: RootNames.WalletConnect,
+                }),
+              );
+            },
+          },
           {
             label: biometricsComputed.systemAuthSettingsLabel,
             icon: isUsingDevicePasscodeForSettings
@@ -886,6 +898,17 @@ function DevSettingsBlocks({
               icon: RcCode,
               onPress: () => {
                 setDevCapabilityPlaygroundModalVisible(true);
+              },
+            },
+            {
+              label: 'WalletConnect Log',
+              icon: RcCode,
+              onPress: () => {
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackTestkits, {
+                    screen: RootNames.DevUIWalletConnect,
+                  }),
+                );
               },
             },
             {
