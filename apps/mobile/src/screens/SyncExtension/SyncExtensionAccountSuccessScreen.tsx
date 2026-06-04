@@ -45,18 +45,39 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
   const { accounts: acc } = useAccounts();
 
   const list = useSortAddressList(acc);
+  const newAccounts = useMemo(
+    () => navState?.newAccounts ?? [],
+    [navState?.newAccounts],
+  );
 
-  const accounts = useMemo(
+  const matchedAccounts = useMemo(
     () =>
       list.filter(account =>
-        navState?.newAccounts.some(
+        newAccounts.some(
           newAccount =>
             isSameAddress(account.address, newAccount.address) &&
             account.type === (newAccount.type || newAccount.brandName),
         ),
       ),
-    [list, navState?.newAccounts],
+    [list, newAccounts],
   );
+
+  const fallbackAccounts = useMemo(
+    () =>
+      newAccounts.map(account => ({
+        ...account,
+        type: account.type || account.brandName,
+        brandName: account.brandName || account.type,
+        aliasName: account.aliasName || '',
+        balance: account.balance || 0,
+        evmBalance: account.evmBalance || 0,
+      })),
+    [newAccounts],
+  );
+
+  // The global account store may still be refreshing immediately after extension
+  // sync, especially when first-time password setup also updates keychain state.
+  const accounts = matchedAccounts.length ? matchedAccounts : fallbackAccounts;
   const balanceSnapshots = addressBalanceStore.useAddressesSnapshot(
     useMemo(() => {
       return accounts.map(account => account.address.toLowerCase());

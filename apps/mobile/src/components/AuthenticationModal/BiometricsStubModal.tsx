@@ -1,24 +1,22 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { useThemeStyles } from '@/hooks/theme';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles } from '@/utils/styles';
 
-import {
-  RcIconKeychainFaceIdCC,
-  RcIconKeychainFingerprintCC,
-} from '@/assets/icons/lock';
 import ThemeIcon from '../ThemeMode/ThemeIcon';
-import DeviceUtils from '@/core/utils/device';
 import TouchableView from '../Touchable/TouchableView';
-import { useVerifyByBiometrics } from '@/hooks/biometrics';
+import {
+  useBiometricsComputed,
+  useVerifyByBiometrics,
+} from '@/hooks/biometrics';
 import { RcIconCloseCC } from '@/assets/icons/common';
 import { Text } from '@/components/Typography';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { BiometricsIcon } from './BiometricsIcon';
 
-const isIOS = DeviceUtils.isIOS();
 /**
  * @description stub component for biometrics process
  */
@@ -26,6 +24,7 @@ export default function BiometricsStubModal() {
   const { styles, colors } = useThemeStyles(getStyles);
 
   const { t } = useTranslation();
+  const bioComputed = useBiometricsComputed();
 
   const {
     isProcessBiometrics,
@@ -54,7 +53,9 @@ export default function BiometricsStubModal() {
           <View style={styles.container}>
             <View style={styles.titleSection}>
               <Text style={styles.title}>
-                {t('component.AuthenticationModals.processBiometrics.title')}
+                {bioComputed.isUsingDevicePasscode
+                  ? t('native.authentication.auth_prompt_title')
+                  : t('component.AuthenticationModals.processBiometrics.title')}
               </Text>
               <TouchableView
                 onPress={abortBiometricsVerification}
@@ -78,21 +79,14 @@ export default function BiometricsStubModal() {
                   verifyByBiometrics();
                 }}>
                 {(!isProcessBiometrics && (
-                  <ThemeIcon
-                    src={
-                      isIOS
-                        ? RcIconKeychainFaceIdCC
-                        : RcIconKeychainFingerprintCC
-                    }
-                    // style={StyleSheet.flatten([isProcessBiometrics && { opacity: 0 }])}
-                    svgSize={SIZES.thumbnailSize}
-                    color={colors['neutral-body']}
-                  />
+                  <BiometricsIcon size={SIZES.thumbnailSize} />
                 )) ||
                   null}
               </TouchableView>
               <Text style={styles.bodyDesc}>
-                {t('component.AuthenticationModals.processBiometrics.desc')}
+                {bioComputed.isUsingDevicePasscode
+                  ? t('native.authentication.auth_prompt_desc')
+                  : t('component.AuthenticationModals.processBiometrics.desc')}
               </Text>
             </View>
           </View>

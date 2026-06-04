@@ -13,6 +13,7 @@ import {
   type AndroidAuthPromptPolicy,
   type KeychainStorageType,
   coerceKeychainStorageType,
+  getDefaultBiometricsAuthenticationType,
   getAuthenticationType,
   getAuthenticationTypeLabel,
   isAuthenticatedByBiometrics,
@@ -32,7 +33,7 @@ import {
 const keychainApi = createBusinessKeychainApi({
   keychainModule: OfficialKeychain as unknown as KeychainCompatibleModule,
   debugNativeModuleName: 'RNRabbyKeychainV9Manager',
-  sourceLabel: '@rabby-wallet/react-native-keychain-9@9.0.0-rabby.0',
+  sourceLabel: '@rabby-wallet/react-native-keychain-9@9.2.3-rabby.0',
 });
 
 export {
@@ -47,6 +48,7 @@ export {
   type AndroidAuthPromptPolicy,
   type KeychainStorageType,
   coerceKeychainStorageType,
+  getDefaultBiometricsAuthenticationType,
   getAuthenticationType,
   getAuthenticationTypeLabel,
   isAuthenticatedByBiometrics,
@@ -67,6 +69,7 @@ export const makeSecureKeyChainInstance =
   keychainApi.makeSecureKeyChainInstance;
 export const requestGenericPassword = keychainApi.requestGenericPassword;
 export const getSupportedBiometryType = keychainApi.getSupportedBiometryType;
+export const isPasscodeAuthAvailable = keychainApi.isPasscodeAuthAvailable;
 export const getKeychainDebugState = keychainApi.getKeychainDebugState;
 export const debugRemoveCurrentCipherStorageMarker =
   keychainApi.debugRemoveCurrentCipherStorageMarker;
@@ -78,6 +81,8 @@ export const debugDecryptStoredPasswordPayload =
 export const debugDecryptGenericPassword =
   keychainApi.debugDecryptGenericPassword;
 export const setGenericPassword = keychainApi.setGenericPassword;
+export const migrateAndroidBiometricsToPasscode =
+  keychainApi.migrateAndroidBiometricsToPasscode;
 export const cacheTrustedVaultKeyString =
   keychainApi.cacheTrustedVaultKeyString;
 export const resetGenericPassword = keychainApi.resetGenericPassword;

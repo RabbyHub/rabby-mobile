@@ -2035,6 +2035,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - react-native-biometrics (3.0.1):
+    - React-Core
   - react-native-ble-manager (11.6.0):
     - React-Core
   - react-native-ble-plx (3.5.1):
@@ -3304,6 +3306,7 @@ DEPENDENCIES:
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-aes (from `../node_modules/react-native-aes-crypto`)
   - react-native-animateable-text (from `../node_modules/react-native-animateable-text`)
+  - react-native-biometrics (from `../node_modules/react-native-biometrics`)
   - react-native-ble-manager (from `../node_modules/react-native-ble-manager`)
   - react-native-ble-plx (from `../node_modules/react-native-ble-plx`)
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
@@ -3508,6 +3511,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-aes-crypto"
   react-native-animateable-text:
     :path: "../node_modules/react-native-animateable-text"
+  react-native-biometrics:
+    :path: "../node_modules/react-native-biometrics"
   react-native-ble-manager:
     :path: "../node_modules/react-native-ble-manager"
   react-native-ble-plx:
@@ -3730,6 +3735,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: dc9eedafc87d677c7b49c9db9a51753e8c0b1ca1
   react-native-aes: 2f9ce51c4bd1e9fb5c50f5c867df05bcac10884b
   react-native-animateable-text: 0c9fdbbf97c8fdacd93b1b441b692ec7fca332cf
+  react-native-biometrics: 352e5a794bfffc46a0c86725ea7dc62deb085bdc
   react-native-ble-manager: 7e6373a746c5a815d0a65a11cc5f633c72c36c5b
   react-native-ble-plx: 7dd1776b5d6df9cbffbeaea0b3dba01e48ecd89b
   react-native-blur: aa2c298b36e5aa0ac7feff837315a4668afbf25a

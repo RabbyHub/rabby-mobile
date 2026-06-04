@@ -140,7 +140,7 @@ export function useTryUnlockAppWithBuiltinOnTop() {
 }
 
 const isLoadingRef: RefLikeObject<boolean> = { current: false };
-const fetchLockInfo = makeAvoidParallelAsyncFunc(async () => {
+export const fetchLockInfo = makeAvoidParallelAsyncFunc(async () => {
   // if (isLoadingRef.current) return;
   isLoadingRef.current = true;
 

@@ -32,6 +32,7 @@ import {
   RcScreenshotReport,
   RcIconCurrency,
   RcNotification,
+  RcAutolock,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -125,7 +126,7 @@ import {
   dropAppDataSourceAndQuitApp,
 } from '@/databases/imports';
 import { AppCacheSizeText } from './components/SpecialText';
-import { IS_IOS } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { abortAllSyncTasks } from '@/databases/sync/_task';
 import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
@@ -292,7 +293,7 @@ function SettingsBlocks() {
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
 
   const {
-    computed: { couldSetupBiometrics, isFaceID },
+    computed: { isFaceID },
     fetchBiometrics,
   } = useBiometrics({ autoFetch: true });
 
@@ -307,18 +308,6 @@ function SettingsBlocks() {
 
   const { currency, setIsShowCurrencyPopup } = useCurrentCurrencyVisible();
 
-  const disabledBiometrics =
-    !couldSetupBiometrics || !APP_FEATURE_SWITCH.biometricsAuth;
-
-  const startSwitchBiometrics = useCallback(() => {
-    if (
-      shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setBiometrics' })
-    ) {
-      return;
-    }
-    switchBiometricsRef.current?.toggle();
-  }, [shouldRedirectToSetPasswordBefore]);
-
   const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
   const { appTheme } = useAppTheme();
   const { t } = useTranslation();
@@ -331,6 +320,33 @@ function SettingsBlocks() {
   const navigation = useRabbyAppNavigation();
 
   const biometricsComputed = useBiometricsComputed();
+  const { couldSetupBiometrics, isUsingDevicePasscodeForSettings } =
+    biometricsComputed;
+  const biometricsUnavailableForSettings =
+    !couldSetupBiometrics && !isUsingDevicePasscodeForSettings;
+  const disabledBiometrics = !APP_FEATURE_SWITCH.biometricsAuth;
+
+  const showBiometricsUnavailableToast = useCallback(() => {
+    toast.show('Please enable biometric permissions in the system settings.');
+  }, []);
+
+  const startSwitchBiometrics = useCallback(() => {
+    if (biometricsUnavailableForSettings) {
+      showBiometricsUnavailableToast();
+      return;
+    }
+
+    if (
+      shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setBiometrics' })
+    ) {
+      return;
+    }
+    switchBiometricsRef.current?.toggle();
+  }, [
+    biometricsUnavailableForSettings,
+    shouldRedirectToSetPasswordBefore,
+    showBiometricsUnavailableToast,
+  ]);
 
   const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
 
@@ -388,18 +404,26 @@ function SettingsBlocks() {
         label: t('page.setting.screenTitle'),
         items: [
           {
-            label: biometricsComputed.defaultTypeLabel,
-            icon: isFaceID ? RcFaceId : RcFingerprint,
+            label: biometricsComputed.systemAuthSettingsLabel,
+            icon: isUsingDevicePasscodeForSettings
+              ? RcAutolock
+              : isFaceID
+              ? RcFaceId
+              : RcFingerprint,
             rightNode: (
               <SwitchBiometricsAuthentication
                 ref={switchBiometricsRef}
                 onToggleSuccess={handleBiometricsToggleSuccess}
+                onUnavailablePress={showBiometricsUnavailableToast}
               />
             ),
             onPress: () => {
               startSwitchBiometrics();
             },
-            disabled: disabledBiometrics,
+            onDisabledPress: biometricsUnavailableForSettings
+              ? showBiometricsUnavailableToast
+              : undefined,
+            disabled: disabledBiometrics || biometricsUnavailableForSettings,
             visible: APP_FEATURE_SWITCH.biometricsAuth,
           },
           {
