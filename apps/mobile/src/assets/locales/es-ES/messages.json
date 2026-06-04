@@ -263,6 +263,7 @@
       "switchArea": {
         "skipText": "Saltar este popup por 1 día"
       },
+      "alertText": "DApp de terceros: para problemas de uso, contacta con el soporte de la DApp. Rabby solo proporciona acceso de visualización.",
       "title": "Captura de pantalla para reportar un error"
     },
     "feedbackModal": {
@@ -1834,6 +1835,7 @@
         "moreWallets": "Más Wallets"
       },
       "backup-seed-phrase": "Copia de seguridad de la frase semilla",
+      "backupFailed": "Error al hacer la copia de seguridad, inténtalo de nuevo",
       "manage-addresses-under-this-seed-phrase": "Añadir wallet desde esta seed phrase",
       "delete-address": "Eliminar wallet",
       "delete-desc": "¿Estás seguro de que quieres eliminar esta wallet?",
@@ -1923,6 +1925,7 @@
       "agreeToTerms": "He leído y estoy de acuerdo con los",
       "passwordPlaceholder": "La contraseña debe tener al menos 8 caracteres.",
       "confirmModalDesc": "Por favor, guarde su contraseña adecuadamente. Una vez perdida, no puede ser cambiada o recuperada por Rabby.",
+      "setWallet": "Configurar wallet",
       "biometricsFail": "Error al habilitar la autenticación biométrica"
     },
     "approvalsAddressList": {
@@ -2230,6 +2233,8 @@
       "tou": "Términos de uso",
       "faceId": "Face ID",
       "fingerPrint": "Huella dactilar",
+      "devicePassword": "Contraseña del dispositivo",
+      "useDevicePassword": "Usar contraseña del dispositivo",
       "policy": "Política de Privacidad",
       "autoLockTime": "Tiempo de bloqueo automático",
       "lockWallet": "Bloquear billetera",
@@ -2581,7 +2586,7 @@
       "WebviewError": {
         "error": "Error:",
         "failedToLoad": "Error al cargar la página",
-        "alertText": ""
+        "alertText": "Para comprobar si esta DApp de terceros funciona en tu ubicación actual, prueba<1/><2>Abrir en el navegador</2><3/>."
       },
       "toast": {
         "clearCacheSuccess": "Caché vaciado"
