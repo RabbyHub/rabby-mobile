@@ -123,6 +123,7 @@ export const ToAccountEntry = React.memo(function ToAccountEntry({
         <Card
           style={StyleSheet.flatten([
             styles.card,
+            isEmptyAddress && styles.emptyAddrCard,
             isEmptyAddress && styles.emptyBg,
             style,
           ])}
@@ -241,6 +242,10 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   emptyAddrShadowView: {
     borderWidth: 0,
+    borderRadius: 16,
+  },
+  emptyAddrCard: {
+    borderRadius: 16,
   },
   root: {
     // borderRadius: 20,
