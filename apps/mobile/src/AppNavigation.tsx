@@ -396,7 +396,7 @@ function AppNavigationOverlayGlobals({
 
   return (
     <>
-      {deferredGlobalsEnabled && <ModalsSubmitFeedbackByScreenshotStub />}
+      {postUnlockGlobalsEnabled && <ModalsSubmitFeedbackByScreenshotStub />}
       {postUnlockGlobalsEnabled && <ToggleCollateralModal />}
 
       {/** @warning put all business stub components before this modal */}
