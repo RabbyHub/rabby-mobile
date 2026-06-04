@@ -17,6 +17,11 @@
 #}
 -dontwarn io.branch.**
 
+# JNA's Android AAR keeps desktop-only AWT entry points. WalletConnect Pay uses
+# JNA for UniFFI/native dispatch on Android, not for desktop window handles.
+-dontwarn java.awt.**
+-keep class com.sun.jna.** { *; }
+
 # # keep screen capture callback
 # -keep class android.content.ScreenCaptureCallback { *; }
 
@@ -63,4 +68,3 @@
 -keep class kotlin.** { *; }
 
 -keep class kotlin.Metadata { *; }
-

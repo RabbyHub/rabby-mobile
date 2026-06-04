@@ -1631,6 +1631,27 @@
       "ignoreAll": "Ignore all",
       "connectWallet": "Connect Wallet"
     },
+    "walletConnect": {
+      "screenTitle": "Connect Wallet",
+      "connectingToRabby": "Connecting to Rabby",
+      "pairingFailed": "WalletConnect pairing failed.",
+      "connected": "Connected successfully. Please return to the Dapp.",
+      "proposalExpired": "WalletConnect proposal expired.",
+      "pairingExpired": "WalletConnect pairing expired. Refresh the dapp QR code and try again.",
+      "duplicatePairing": "This WalletConnect URI is already being paired. Refresh the dapp QR code and try again.",
+      "relayUnreachable": "WalletConnect relay is not reachable. Check the network and try again.",
+      "uriEmpty": "WalletConnect URI cannot be empty.",
+      "uriInvalidFormat": "WalletConnect URI must start with wc:<topic>@2.",
+      "uriMissingParams": "WalletConnect URI is missing symKey or relay-protocol.",
+      "unsupportedCapability": {
+        "chain_one": "{{count}} chain",
+        "chain_other": "{{count}} chains",
+        "method_one": "{{count}} method",
+        "method_other": "{{count}} methods"
+      },
+      "unsupportedCapabilityList": "{{first}} and {{second}}",
+      "unsupportedRequiredRequest": "Unsupported required WalletConnect request: {{capabilities}} not supported."
+    },
     "addressDetail": {
       "add-to-whitelist": "Add to Whitelist",
       "pin-in-list": "Pin in List",
