@@ -460,11 +460,17 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
   const amountInputUnit = inputMode === 'usd' ? 'USD' : tokenSymbol;
   const amountInputMaxDecimalPlaces =
     inputMode === 'usd' ? 2 : currentToken.decimals;
-  const quoteValueText =
-    inputMode === 'usd'
+  const showQuote = !!activeUsdPrice;
+  const quoteValueText = activeUsdPrice
+    ? inputMode === 'usd'
       ? formatTokenQuoteValueText(safeFormAmount)
-      : formatUsdQuoteValueText(safeFormAmount.times(activeUsdPrice || 0));
-  const quoteUnit = inputMode === 'usd' ? tokenSymbol : 'USD';
+      : formatUsdQuoteValueText(safeFormAmount.times(activeUsdPrice))
+    : '';
+  const quoteUnit = activeUsdPrice
+    ? inputMode === 'usd'
+      ? tokenSymbol
+      : 'USD'
+    : '';
   const handleAmountChange =
     inputMode === 'usd' ? handleUsdAmountChange : handleTokenAmountChange;
 
@@ -478,6 +484,7 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
           unit={amountInputUnit}
           quoteValueText={quoteValueText}
           quoteUnit={quoteUnit}
+          showQuote={showQuote}
           maxDecimalPlaces={amountInputMaxDecimalPlaces}
           normalizeInputValue={normalizeAmountInputValue}
           onChange={handleAmountChange}
