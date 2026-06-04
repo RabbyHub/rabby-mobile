@@ -385,7 +385,7 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       width: '100%',
     },
     buttonContainer: {
-      height: 56,
+      height: 48,
       justifyContent: 'center',
       alignItems: 'center',
       width: '100%',
@@ -397,12 +397,14 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      fontSize: 18,
+      fontWeight: '700',
     },
     buttonLoading: {
       width: '100%',
     },
     buttonStyle: {
-      height: 56,
+      height: 48,
     },
     cancelButtonContainer: {
       // backgroundColor: colors2024['neutral-bg-5'],
