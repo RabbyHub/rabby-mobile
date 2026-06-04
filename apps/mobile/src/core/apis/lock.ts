@@ -1,7 +1,12 @@
 import { Platform } from 'react-native';
 import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
 import { BroadcastEvent } from '@/constant/event';
-import { keyringService, preferenceService, sessionService } from '../services';
+import {
+  keyringService,
+  perpsService,
+  preferenceService,
+  sessionService,
+} from '../services';
 import { makeEEClass } from './event';
 import { formatTimeReadable } from '@/utils/time';
 import {
@@ -202,6 +207,7 @@ export async function resetPasswordOnUI(newPassword: string) {
       // await updateWalletPassword(RABBY_MOBILE_KR_PWD, newPassword);
     } else {
       await keyringService.resetPassword(newPassword);
+      await perpsService.resetStore();
     }
   } catch (error) {
     console.error(error);
