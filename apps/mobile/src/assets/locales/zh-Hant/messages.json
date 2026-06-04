@@ -2488,7 +2488,7 @@
       "WebviewError": {
         "error": "錯誤：",
         "failedToLoad": "無法載入頁面",
-        "alertText": "嘗試<1/><2>在瀏覽器中打開</2><3/>以檢查是否是網站問題"
+        "alertText": ""
       },
       "toast": {
         "clearCacheSuccess": "快取已清除"

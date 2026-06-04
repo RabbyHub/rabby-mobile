@@ -16,9 +16,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) =>
   StyleSheet.create({
     card: {
       borderRadius: 16,
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
+      backgroundColor: colors2024['neutral-bg-2'],
       borderColor: isLight ? colors['neutral-card-1'] : 'transparent',
       borderWidth: 1,
       borderStyle: 'solid',

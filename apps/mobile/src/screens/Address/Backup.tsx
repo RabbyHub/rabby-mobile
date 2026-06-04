@@ -167,7 +167,6 @@ function Backup(): JSX.Element {
     // For cloud backup from AddressDetail, we need to authenticate first to get
     // the seed phrase, then pass it to the cloud backup modal.
     let seedPhraseData = '';
-    let cloudBackupExists = false;
 
     AuthenticationModal2024.show({
       confirmText: t('page.addressDetail.verify-and-backup'),
@@ -177,7 +176,6 @@ function Backup(): JSX.Element {
       validationHandler: async (password: string) => {
         if (!address) return;
         seedPhraseData = await apiMnemonic.getMnemonics(password, address);
-        cloudBackupExists = await checkCloudBackupExists(address);
 
         if (type === KEYRING_TYPE.HdKeyring) {
           await invokeEnterPassphrase(address);
@@ -185,11 +183,6 @@ function Backup(): JSX.Element {
       },
       onFinished(ctx) {
         if (ctx.hasSetupCustomPassword && !seedPhraseData) {
-          return;
-        }
-
-        if (cloudBackupExists) {
-          setHasCloudBackup(true);
           return;
         }
 

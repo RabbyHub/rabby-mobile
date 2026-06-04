@@ -2315,7 +2315,7 @@
       "WebviewError": {
         "error": "Erreur :",
         "failedToLoad": "Échec du chargement de la page",
-        "alertText": "Essayez<1/><2>Ouvrir dans le navigateur</2><3/>pour vérifier si c'est un problème de site web"
+        "alertText": ""
       },
       "toast": {
         "clearCacheSuccess": "Cache vidé"

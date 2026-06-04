@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
+import { Text } from '@/components/Text';
 import { renderText } from '@/utils/renderNode';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CircleSpinnerCC } from '../CircleSpinner/CircleSpinnerCC';
@@ -54,9 +55,25 @@ export type ButtonProps = Omit<
       iconRight?: ReactNode | ((ctx: { titleStyle?: TextStyle }) => ReactNode);
       showTextOnLoading?: boolean;
       loadingType?: 'indicator' | 'circle';
+      splitAndroidCJKTitle?: boolean;
     },
   'children'
 >;
+
+const SHORT_CJK_TITLE_RE =
+  /^[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uac00-\ud7af]{1,4}$/;
+
+function shouldSplitAndroidCJKTitle(
+  textNode: ReactNode,
+  enabled: boolean,
+): textNode is string {
+  return (
+    enabled &&
+    Platform.OS === 'android' &&
+    typeof textNode === 'string' &&
+    SHORT_CJK_TITLE_RE.test(textNode)
+  );
+}
 
 export const Button = ({
   height = undefined,
@@ -76,6 +93,7 @@ export const Button = ({
   disabledTitleStyle,
   icon,
   iconRight,
+  splitAndroidCJKTitle = false,
   ViewComponent = View,
   ...rest
 }: ButtonProps) => {
@@ -248,6 +266,34 @@ export const Button = ({
     return i;
   }, [icon, iconRight, titleStyle]);
 
+  const splitCJKTitle = shouldSplitAndroidCJKTitle(
+    textNode,
+    splitAndroidCJKTitle,
+  )
+    ? textNode
+    : undefined;
+  const titleNode = useMemo(() => {
+    if (!textNode) {
+      return null;
+    }
+
+    if (splitCJKTitle) {
+      return (
+        <View style={styles.cjkTitleRow}>
+          {Array.from(splitCJKTitle).map((char, index) => (
+            <Text key={`${char}-${index}`} style={titleStyle}>
+              {char}
+            </Text>
+          ))}
+        </View>
+      );
+    }
+
+    return renderText(textNode, {
+      style: titleStyle,
+    });
+  }, [splitCJKTitle, styles.cjkTitleRow, textNode, titleStyle]);
+
   return (
     <View
       style={StyleSheet.flatten([
@@ -263,6 +309,7 @@ export const Button = ({
         accessibilityRole="button"
         accessibilityState={accessibilityState}
         {...rest}
+        accessibilityLabel={rest.accessibilityLabel ?? splitCJKTitle}
         style={StyleSheet.flatten([rest.style, styleWithHeight])}>
         <ViewComponent style={innerStyle}>
           {/* Activity Indicator on loading */}
@@ -278,11 +325,7 @@ export const Button = ({
               ) : (
                 <CircleSpinnerCC size={24} style={loadingStyle} />
               )}
-              {!!showTextOnLoading &&
-                !!textNode &&
-                renderText(textNode, {
-                  style: titleStyle,
-                })}
+              {!!showTextOnLoading && !!titleNode && titleNode}
             </>
           )}
           {!loading && (
@@ -293,10 +336,7 @@ export const Button = ({
                 </View>
               )}
               {/* Title for Button */}
-              {!!textNode &&
-                renderText(textNode, {
-                  style: titleStyle,
-                })}
+              {!!titleNode && titleNode}
               {iconNode && iconRight && (
                 <View style={StyleSheet.flatten([styles.iconContainer])}>
                   {iconNode}
@@ -342,6 +382,11 @@ const getStyle = createGetStyles2024(ctx => ({
   },
   titleWithLeading: {
     // lineHeight: 22,
+  },
+  cjkTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconContainer: {
     marginHorizontal: 8,
