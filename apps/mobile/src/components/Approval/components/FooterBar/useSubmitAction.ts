@@ -5,19 +5,15 @@ import {
 } from '@/assets/icons/lock';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { useAuthenticationModal } from '@/components/AuthenticationModal/hooks';
-import { isNonPublicProductionEnv } from '@/constant';
 import { apisLock } from '@/core/apis';
 import { unlockTimeEvent, updateUnlockTime } from '@/core/apis/lock';
+import { useDappSignAuthSessionIntervalMs } from '@/hooks/appSettings';
 import { useBiometrics } from '@/hooks/biometrics';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { usePasswordStatus } from '@/hooks/useLock';
 import { atom, useAtom } from 'jotai';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-
-const DEFAULT_VERIFY_INTERVAL = isNonPublicProductionEnv
-  ? 1000 * 60 * 1 // 1 minute
-  : 1000 * 60 * 10; // 10 minutes
 
 const unlockTimeAtom = atom(0);
 unlockTimeAtom.onMount = setter => {
@@ -56,8 +52,10 @@ export const useSubmitAction = ({
   const { isUseCustomPwd } = usePasswordStatus();
 
   const [unlockTime, setUnlockTime] = useAtom(unlockTimeAtom);
+  const { dappSignAuthSessionIntervalMs } = useDappSignAuthSessionIntervalMs();
 
-  const isInAuthSession = Date.now() - unlockTime < DEFAULT_VERIFY_INTERVAL;
+  const isInAuthSession =
+    Date.now() - unlockTime < dappSignAuthSessionIntervalMs;
   const isLastUnlockTimeValid = !!useLastUnlockedAuth && isInAuthSession;
   const isUnlocked = apisLock.isUnlocked();
 
