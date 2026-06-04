@@ -96,6 +96,16 @@ const SetPasswordBottomSheet: React.FC<SetPasswordBottomSheetProps> = ({
     [formik.values, yupSchema],
   );
 
+  const handleDismiss = () => {
+    formik.resetForm({
+      values: {
+        password: '',
+        confirmPassword: '',
+      },
+    });
+    onClose();
+  };
+
   const isFormValueValid = !getFormikErrorsCount(validationErrors);
   const shouldDisabled = !isFormValueValid || loading;
 
@@ -105,7 +115,7 @@ const SetPasswordBottomSheet: React.FC<SetPasswordBottomSheetProps> = ({
       index={0}
       enableDynamicSizing={true}
       enableContentPanningGesture={false}
-      onDismiss={onClose}
+      onDismiss={handleDismiss}
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
       {...makeBottomSheetProps({
@@ -136,7 +146,7 @@ const SetPasswordBottomSheet: React.FC<SetPasswordBottomSheetProps> = ({
               inputStyle={styles.inputPadding}
               fieldNameStyle={styles.fieldNameStyle}
               inputProps={{
-                value: formik.values.password,
+                // value: formik.values.password,
                 secureTextEntry: true,
                 inputMode: 'text',
                 returnKeyType: 'done',
@@ -165,7 +175,7 @@ const SetPasswordBottomSheet: React.FC<SetPasswordBottomSheetProps> = ({
               inputStyle={styles.inputPadding}
               fieldNameStyle={styles.fieldNameStyle}
               inputProps={{
-                value: formik.values.confirmPassword,
+                // value: formik.values.confirmPassword,
                 secureTextEntry: true,
                 inputMode: 'text',
                 returnKeyType: 'done',
