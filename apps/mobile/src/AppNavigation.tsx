@@ -53,6 +53,7 @@ import MoreImportMethods from '@/screens/Address/MoreImportMethods';
 import SelectAddMethod from '@/screens/Address/SelectAddMethod';
 import Backup from '@/screens/Address/Backup';
 import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
+import { ScreenshotFeedbackGlobalHost } from './components/Screenshot/ScreenshotFeedbackGlobalHost';
 import { perfEvents } from './core/utils/perf';
 import { RefLikeObject } from './utils/type';
 import { useRendererDetect } from './components/Perf/PerfDetector';
@@ -73,7 +74,6 @@ import {
   GlobalSignerPortal,
   GlobalTipsPopup,
   InnerDappWebViewPreloadEntry,
-  ModalsSubmitFeedbackByScreenshotStub,
   QrCodeModal,
   ToggleCollateralModal,
   WideScreenDebugPanel,
@@ -390,13 +390,9 @@ function AppNavigationOverlayGlobals({
 }) {
   const showDiagnostics = deferredGlobalsEnabled || NEED_DEVSETTINGBLOCKS;
 
-  if (!showDiagnostics && !postUnlockGlobalsEnabled) {
-    return null;
-  }
-
   return (
     <>
-      {postUnlockGlobalsEnabled && <ModalsSubmitFeedbackByScreenshotStub />}
+      <ScreenshotFeedbackGlobalHost />
       {postUnlockGlobalsEnabled && <ToggleCollateralModal />}
 
       {/** @warning put all business stub components before this modal */}

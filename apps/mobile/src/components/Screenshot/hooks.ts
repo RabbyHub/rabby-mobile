@@ -578,6 +578,15 @@ const closeSubmitModal = ({
   }));
 };
 
+async function getScreenshotFeedbackExtraSafely(totalBalanceText: string) {
+  try {
+    return await getScreenshotFeedbackExtra({ totalBalanceText });
+  } catch (error) {
+    console.error('screenshot feedback extra error', error);
+    return {};
+  }
+}
+
 export function useSubmitFeedbackOnScreenshot() {
   const { lastScreenshot, totalBalanceText } = feedbackByScreenshotStore(
     useShallow(s => ({
@@ -594,9 +603,6 @@ export function useSubmitFeedbackOnScreenshot() {
     useRefState(false);
   const submitFeedbackByScreenshot = useCallback(
     async function () {
-      const extraInfo = await getScreenshotFeedbackExtra({ totalBalanceText });
-      // console.debug('[debug] extraInfo', extraInfo);
-
       if (isSubmittingRef.current) return;
       setSubmitting(true, true);
 
@@ -614,6 +620,11 @@ export function useSubmitFeedbackOnScreenshot() {
         if (!imageUrl) {
           throw new Error('No screenshot available');
         }
+
+        const extraInfo = await getScreenshotFeedbackExtraSafely(
+          totalBalanceText,
+        );
+        // console.debug('[debug] extraInfo', extraInfo);
 
         // TODO: report to sentry here, add extra fields here
         submitResult = await openapi.postUserFeedback({
