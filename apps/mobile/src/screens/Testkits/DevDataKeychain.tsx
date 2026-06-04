@@ -195,6 +195,12 @@ const SYSTEM_AUTH_DEBUG_MOCK_OPTIONS = [
     description:
       'Mock neither enrolled biometrics nor device credential is available.',
   },
+  {
+    key: BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES.NO_BIOMETRICS_DEVICE_PASSCODE,
+    label: 'No Biometrics + Device Passcode',
+    description:
+      'Mock no enrolled biometrics while keeping device credential available.',
+  },
 ] as const;
 
 const LEGACY_SIMULATION = {
