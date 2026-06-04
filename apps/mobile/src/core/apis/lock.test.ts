@@ -61,8 +61,14 @@ const preferenceService = {
   initCurrentAccount: (...args: unknown[]) => mockInitCurrentAccount(...args),
 };
 
+const mockResetPerpsStore = jest.fn();
+
 const sessionService = {
   broadcastEvent: (...args: unknown[]) => mockBroadcastEvent(...args),
+};
+
+const perpsService = {
+  resetStore: (...args: unknown[]) => mockResetPerpsStore(...args),
 };
 
 const loadLockModule = () => {
@@ -88,6 +94,7 @@ const loadLockModule = () => {
 
   jest.doMock('../services', () => ({
     keyringService,
+    perpsService,
     preferenceService,
     sessionService,
   }));
@@ -152,6 +159,7 @@ describe('core/apis/lock password and session utilities', () => {
     mockIsUnlocked.mockReturnValue(false);
     mockSubmitPassword.mockResolvedValue(undefined);
     mockSetLocked.mockResolvedValue(undefined);
+    mockResetPerpsStore.mockResolvedValue(undefined);
     mockHasPublicAccountSnapshot.mockReturnValue(true);
     mockGetPreference.mockReturnValue(0);
     mockShouldRejectUnlockDueToMultipleFailed.mockReturnValue({
