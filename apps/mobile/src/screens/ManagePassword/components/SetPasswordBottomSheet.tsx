@@ -18,7 +18,6 @@ import {
   validateFormikSchema,
 } from '@/utils/patch';
 import YesIcon from '@/assets2024/icons/common/check.svg';
-import RcIconLock from '@/assets2024/icons/common/lock-cc.svg';
 import RcIconKeychainFaceIdCC from '@/assets2024/icons/common/fack_id.svg';
 import RcIconKeychainFingerprintCC from '@/assets2024/icons/common/fingerprint.svg';
 import { useTranslation } from 'react-i18next';

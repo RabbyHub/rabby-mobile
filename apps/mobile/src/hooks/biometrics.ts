@@ -421,11 +421,7 @@ const fetchBiometrics = async () => {
       return {
         ...prev,
         ...systemAuth,
-        supportedBiometryType:
-          systemAuth.supportedBiometryType ||
-          (!IS_ANDROID && nextAuthEnabledByEntry
-            ? prev.supportedBiometryType
-            : null),
+        supportedBiometryType: systemAuth.supportedBiometryType,
         authEnabled: nextAuthEnabledByEntry,
       };
     });
