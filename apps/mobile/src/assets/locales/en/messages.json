@@ -2407,7 +2407,7 @@
       "WebviewError": {
         "failedToLoad": "Failed to load the page",
         "error": "Error:",
-        "alertText": "Try<1/><2>Open in browser</2><3/>to check if it is a website issue"
+        "alertText": "Try<1/><2>Open in browser</2><3/>to check if this third party DApp is functional in your current location."
       },
       "toast": {
         "clearCacheSuccess": "Cache cleared"
@@ -3593,7 +3593,8 @@
       },
       "switchArea": {
         "skipText": "Skip this popup for 1 day"
-      }
+      },
+      "alertText": "Third-party DApp: for usage issues please contact DApp support. Rabby provides viewing access only"
     },
     "feedbackModal": {
       "title": "Response from Rabby Support",
