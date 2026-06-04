@@ -416,6 +416,17 @@ function SettingsBlocks() {
             },
           },
           {
+            label: 'WalletConnect',
+            icon: RcWalletConnect,
+            onPress: () => {
+              navigation.dispatch(
+                StackActions.push(RootNames.StackSettings, {
+                  screen: RootNames.WalletConnect,
+                }),
+              );
+            },
+          },
+          {
             label: biometricsComputed.systemAuthSettingsLabel,
             icon: isUsingDevicePasscodeForSettings
               ? RcAutolock
