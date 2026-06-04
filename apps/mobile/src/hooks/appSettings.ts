@@ -39,6 +39,34 @@ const DEFAULT_DEBUG_KEYCHAIN_STORAGE: KeychainStorageType =
 export const WIDE_SCREEN_DEBUG_PANEL_DEFAULT_MIN_WIDTH = 700;
 export const WIDE_SCREEN_DEBUG_PANEL_MIN_ALLOWED_WIDTH = 280;
 export const WIDE_SCREEN_DEBUG_PANEL_WIDTH = 320;
+export const DAPP_SIGN_AUTH_SESSION_INTERVAL_MS_PROD = 10 * 60 * 1000;
+export const DAPP_SIGN_AUTH_SESSION_INTERVAL_MS_DEFAULT_NON_PROD =
+  1 * 60 * 1000;
+export const DAPP_SIGN_AUTH_SESSION_INTERVAL_OPTIONS = [
+  {
+    label: '1 min',
+    value: 1 * 60 * 1000,
+  },
+  {
+    label: '3 min',
+    value: 3 * 60 * 1000,
+  },
+  {
+    label: '5 min',
+    value: 5 * 60 * 1000,
+  },
+  {
+    label: '10 min',
+    value: 10 * 60 * 1000,
+  },
+  {
+    label: '30 min',
+    value: 30 * 60 * 1000,
+  },
+] as const;
+
+export type DappSignAuthSessionIntervalMs =
+  (typeof DAPP_SIGN_AUTH_SESSION_INTERVAL_OPTIONS)[number]['value'];
 
 function coerceCurrentKeychainVersion(
   version: unknown,
@@ -58,6 +86,17 @@ function coerceWideScreenDebugPanelMinWidth(value: unknown) {
   }
 
   return Math.max(WIDE_SCREEN_DEBUG_PANEL_MIN_ALLOWED_WIDTH, Math.round(width));
+}
+
+function coerceDappSignAuthSessionIntervalMs(
+  value: unknown,
+): DappSignAuthSessionIntervalMs {
+  const numericValue = typeof value === 'number' ? value : Number(value);
+  const option = DAPP_SIGN_AUTH_SESSION_INTERVAL_OPTIONS.find(
+    item => item.value === numericValue,
+  );
+
+  return option?.value || DAPP_SIGN_AUTH_SESSION_INTERVAL_MS_DEFAULT_NON_PROD;
 }
 
 type DebugKeychainStorageByVersion = Record<
@@ -98,6 +137,7 @@ type ScreenshotSettings = {
   debugSwapHistorySkipLocalLookup: boolean;
   wideScreenDebugPanelEnabled: boolean;
   wideScreenDebugPanelMinWidth: number;
+  debugDappSignAuthSessionIntervalMs: DappSignAuthSessionIntervalMs;
   [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: CurrentKeychainVersion;
   debugKeychainStorageByVersion: DebugKeychainStorageByVersion;
   enablePerpsWatchAddress: boolean;
@@ -120,6 +160,8 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     debugSwapHistorySkipLocalLookup: false,
     wideScreenDebugPanelEnabled: false,
     wideScreenDebugPanelMinWidth: WIDE_SCREEN_DEBUG_PANEL_DEFAULT_MIN_WIDTH,
+    debugDappSignAuthSessionIntervalMs:
+      DAPP_SIGN_AUTH_SESSION_INTERVAL_MS_DEFAULT_NON_PROD,
     [DEBUG_CURRENT_KEYCHAIN_VERSION_FIELD]: DEFAULT_CURRENT_KEYCHAIN_VERSION,
     debugKeychainStorageByVersion: makeDefaultDebugKeychainStorageByVersion(),
     enablePerpsWatchAddress: false,
@@ -687,6 +729,36 @@ export function useWideScreenDebugPanelSetting() {
       WIDE_SCREEN_DEBUG_PANEL_MIN_ALLOWED_WIDTH,
     setWideScreenDebugPanelMinWidth,
     toggleWideScreenDebugPanel,
+  };
+}
+
+export function setDappSignAuthSessionIntervalMs(value: unknown) {
+  if (!isNonPublicProductionEnv) {
+    return DAPP_SIGN_AUTH_SESSION_INTERVAL_MS_PROD;
+  }
+
+  const nextIntervalMs = coerceDappSignAuthSessionIntervalMs(value);
+
+  setExpSettingData(prev => ({
+    ...prev,
+    debugDappSignAuthSessionIntervalMs: nextIntervalMs,
+  }));
+
+  return nextIntervalMs;
+}
+
+export function useDappSignAuthSessionIntervalMs() {
+  const debugDappSignAuthSessionIntervalMs = experimentalSettingsStore(
+    s => s.debugDappSignAuthSessionIntervalMs,
+  );
+
+  return {
+    dappSignAuthSessionIntervalMs: isNonPublicProductionEnv
+      ? coerceDappSignAuthSessionIntervalMs(debugDappSignAuthSessionIntervalMs)
+      : DAPP_SIGN_AUTH_SESSION_INTERVAL_MS_PROD,
+    canSwitchDappSignAuthSessionInterval: isNonPublicProductionEnv,
+    dappSignAuthSessionIntervalOptions: DAPP_SIGN_AUTH_SESSION_INTERVAL_OPTIONS,
+    setDappSignAuthSessionIntervalMs,
   };
 }
 

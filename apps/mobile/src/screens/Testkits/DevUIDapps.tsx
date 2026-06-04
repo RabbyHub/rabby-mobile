@@ -1,8 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Dimensions, ScrollView, StyleSheet, View } from 'react-native';
+import React from 'react';
+import { Dimensions, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { useNavigation } from '@react-navigation/native';
 import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import {
@@ -16,6 +15,10 @@ import { formatTimeReadable } from '@/utils/time';
 import dayjs from 'dayjs';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { Text } from '@/components/Typography';
+import {
+  DAPP_SIGN_AUTH_SESSION_INTERVAL_MS_PROD,
+  useDappSignAuthSessionIntervalMs,
+} from '@/hooks/appSettings';
 
 const TEST_OPEN_DAPPS = [
   'https://debank.com',
@@ -25,14 +28,18 @@ const TEST_OPEN_DAPPS = [
 ];
 
 function DevUIDapps() {
-  const { styles, colors2024, colors } = useTheme2024({
+  const { styles, colors } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
   });
 
-  const navigation = useNavigation();
-
   const { dappsViewConfig } = useDappsViewConfig();
+  const {
+    dappSignAuthSessionIntervalMs,
+    canSwitchDappSignAuthSessionInterval,
+    dappSignAuthSessionIntervalOptions,
+    setDappSignAuthSessionIntervalMs,
+  } = useDappSignAuthSessionIntervalMs();
 
   const {} = useOpenedActiveDappState();
   const { openedDappRecords } = useOpenedDappsRecordsOnDEV();
@@ -72,6 +79,46 @@ function DevUIDapps() {
               Open Dapp expire duration: {dappsViewConfig.expireDuration} ms
             </Text>
           </Text>
+        </View>
+        <View style={styles.showCaseRowsContainer}>
+          <Text
+            style={[styles.componentName, { fontSize: 24, marginBottom: 12 }]}>
+            Dapp Signing Auth Session
+          </Text>
+          <Text style={[styles.propertyDesc, { marginVertical: 12 }]}>
+            <Text style={{ marginBottom: 12 }}>
+              Current auth-free duration:{' '}
+              {formatTimeReadable(dappSignAuthSessionIntervalMs / 1000)}
+              {' '.repeat(100)}
+            </Text>
+            <Text style={{ marginBottom: 12 }}>
+              Non-production packages can override this value. Production
+              packages always use{' '}
+              {formatTimeReadable(
+                DAPP_SIGN_AUTH_SESSION_INTERVAL_MS_PROD / 1000,
+              )}
+              .
+            </Text>
+          </Text>
+          <View style={styles.durationOptionList}>
+            {dappSignAuthSessionIntervalOptions.map(option => {
+              const selected = option.value === dappSignAuthSessionIntervalMs;
+
+              return (
+                <Button
+                  key={option.value}
+                  title={option.label}
+                  type={selected ? 'primary' : 'ghost'}
+                  height={40}
+                  disabled={!canSwitchDappSignAuthSessionInterval}
+                  containerStyle={styles.durationOptionButton}
+                  onPress={() => {
+                    setDappSignAuthSessionIntervalMs(option.value);
+                  }}
+                />
+              );
+            })}
+          </View>
         </View>
         <View style={styles.showCaseRowsContainer}>
           <Text
@@ -177,6 +224,15 @@ const getStyles = createGetStyles2024(ctx =>
     propertyType: {
       color: ctx.colors2024['blue-default'],
       fontSize: 16,
+    },
+    durationOptionList: {
+      width: '100%',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    durationOptionButton: {
+      minWidth: 92,
     },
 
     openedDappRecord: {
