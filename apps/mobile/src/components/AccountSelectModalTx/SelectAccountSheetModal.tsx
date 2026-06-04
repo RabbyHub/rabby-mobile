@@ -32,6 +32,7 @@ import { touchedFeedback } from '@/utils/touch';
 import { ScreenPanelScanner } from './modalScreens/ScanQrcode';
 import { Button } from '@/components2024/Button';
 import { Text } from '@/components/Typography';
+import { MODAL_GATE_IDS, useRegisterBlockingModal } from '@/utils/modalGate';
 
 function getDefaultScreenStates(): {
   isScanning: boolean;
@@ -77,6 +78,8 @@ export function SheetModalSelectAccountSend({
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal(null);
+  useRegisterBlockingModal(MODAL_GATE_IDS.accountSelectSheet, !!visible);
+
   const mountRef = useRef(false);
   useEffect(() => {
     if (visible) {
