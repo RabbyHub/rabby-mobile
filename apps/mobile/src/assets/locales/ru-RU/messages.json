@@ -5,7 +5,7 @@
       "ImportMethods": "Выберите метод импорта",
       "CreateMnemonicBackup": "Резервная копия seed-фразы",
       "ImportMnemonic": "Импортировать Seed Phrase",
-      "SafeAddressList": "Безопасный адрес",
+      "SafeAddressList": "Safe-адрес",
       "ImportSuccess": "Успешно добавлено",
       "ImportPrivateKey": "Импортировать Private Key",
       "ImportSafeAddress2024": "Добавить адрес Safe",
@@ -128,7 +128,7 @@
     },
     "gotIt": "Понял",
     "check": "Проверить",
-    "Dapp": "Dapp",
+    "Dapp": "DApp",
     "Token": "Токен",
     "GotIt": "Понял",
     "Other": "Другие",
@@ -276,7 +276,7 @@
     },
     "signTypedData": {
       "permit": {
-        "title": "Разрешить токену Approval"
+        "title": "Разрешение токена Permit"
       },
       "safeCantSignText": "Это адрес Safe, и он не может использоваться для подписи текста.",
       "signMultiSig": {
@@ -285,7 +285,7 @@
       "sellNFT": {
         "listNFT": "Список NFT",
         "receiveToken": "Получить токен",
-        "title": "NFT Order（Порядок NFT）",
+        "title": "NFT-ордер",
         "specificBuyer": "Конкретный покупатель"
       },
       "createKey": {
@@ -301,7 +301,7 @@
         "operationDecoded": "Операция декодируется из сообщения"
       },
       "buyNFT": {
-        "payToken": "Pay token",
+        "payToken": "Токен оплаты",
         "receiveNFT": "Получить NFT",
         "expireTime": "Время истечения",
         "listOn": "Список на"
@@ -342,7 +342,7 @@
         "walletConnectUnavailableTip": "Поддержка мобильных кошельков, подключенных через WalletConnect, для Free Gas отсутствует.",
         "watchUnavailableTip": "Кошелек только для наблюдения не поддерживает Free Gas."
       },
-      "blockDappFromSendingRequests": "Блокировать запросы от Dapp в течение 1 минуты",
+      "blockDappFromSendingRequests": "Блокировать запросы от DApp в течение 1 минуты",
       "cancelTransaction": "Отменить транзакцию",
       "beginSigning": "Начать процесс подписи",
       "cancelCurrentConnection": "Отменить текущее соединение",
@@ -361,9 +361,9 @@
         "qrcodeDesc": "Сканируйте с помощью вашего {{brand}}, чтобы подписать  \nПосле подписания нажмите кнопку ниже, чтобы получить подпись",
         "txFailedRetry": "Не удалось создать: Пожалуйста, попробуйте снова"
       },
-      "cancelAll": "Отменить все {{count}} запросы от Dapp",
+      "cancelAll": "Отменить все {{count}} запросы от DApp",
       "cancelCurrentTransaction": "Отменить текущую транзакцию",
-      "detectedMultipleRequestsFromThisDapp": "Обнаружено несколько запросов от этого Dapp",
+      "detectedMultipleRequestsFromThisDapp": "Обнаружено несколько запросов от этого DApp",
       "ledger": {
         "siging": "Отправка запроса на подпись",
         "unlockAlert": "Пожалуйста, подключите и разблокируйте ваш Ledger, откройте Ethereum на нем.",
@@ -524,10 +524,10 @@
         "sendTo": "Отправить в",
         "cexAddress": "CEX адрес",
         "contractNotOnThisChain": "Не в этой цепи",
-        "receiverIsTokenAddress": "Token address",
+        "receiverIsTokenAddress": "Адрес токена",
         "tokenNotSupport": "{{0}} не поддерживается"
       },
-      "gasLimitLessThanExpect": "Газовый лимит низкий. Существует 1% вероятность, что транзакция может не пройти.",
+      "gasLimitLessThanExpect": "Gas limit низкий. Существует 1% вероятность, что транзакция может не пройти.",
       "swapLimitPay": {
         "title": "Обмен лимита токена плата",
         "maxPay": "Максимальная оплата"
@@ -558,7 +558,7 @@
       "gasPriceMedian": "Среднее значение последних 100 on-chain транзакций:",
       "revokeNFTCollectionApprove": {
         "revokeCollection": "Отменить коллекцию",
-        "title": "Отозвать NFT Collection"
+        "title": "Отозвать коллекцию NFT"
       },
       "sigCantDecode": "Эта подпись не может быть декодирована Rabby Wallet",
       "contractCall": {
@@ -588,7 +588,7 @@
         "title": "Отправить мультиподпись транзакцию"
       },
       "maxPriorityFee": "Max Priority Fee (Gwei)",
-      "safeAddressNotSupportChain": "Текущий безопасный адрес не поддерживается в цепочке {{0}}.",
+      "safeAddressNotSupportChain": "Текущий Safe-адрес не поддерживается в сети {{0}}.",
       "myNativeTokenBalance": "Мой баланс Gas:",
       "tokenApprove": {
         "myBalance": "Мой баланс",
@@ -610,7 +610,7 @@
         "title": "Утверждение коллекции NFT"
       },
       "gasLimitEmptyAlert": "Пожалуйста, введите gas limit",
-      "gasLimitLessThanGasUsed": "Газ лимит слишком низкий. Существует 95% вероятность, что транзакция может не удаться.",
+      "gasLimitLessThanGasUsed": "Gas limit слишком низкий. Существует 95% вероятность, что транзакция может не удаться.",
       "gasAccountForGas": "Использовать USD из моего GasAccount для оплаты газа",
       "importedDelegatedAddress": "Импортированный делегированный адрес",
       "batchRevokePermit2": {
@@ -689,7 +689,7 @@
         "descriptionTitle": "Описание",
         "title": "Отправить изменение делегированного адреса"
       },
-      "gasLimitNotEnough": "Gas limit is less than 21000. Transaction can't be submitted\n\nГазлимит меньше 21000. Транзакция не может быть отправлена.",
+      "gasLimitNotEnough": "Gas limit меньше 21000. Транзакция не может быть отправлена.",
       "address": "Адрес",
       "coboSafeCreate": {
         "descriptionTitle": "Описание",
@@ -724,7 +724,7 @@
         "selfHostConfirm": {
           "button": "OK",
           "title": "Переключитесь на сервис безопасного хранения Rabby",
-          "content": "API Safe недоступен. Переключитесь на службу Safe, развернутую Rabby, чтобы ваш Safe оставался функциональным. <1></1><2>Все подписанты Safe должны использовать Rabby Wallet для авторизации транзакций.<2>"
+          "content": "API Safe недоступен. Переключитесь на службу Safe, развернутую Rabby, чтобы ваш Safe оставался функциональным. <1></1><2>Все подписанты Safe должны использовать Rabby Wallet для авторизации транзакций.</2>"
         }
       },
       "errorRetry": {
@@ -735,7 +735,7 @@
         "gasExceedsBlockGasLimit": "Газ превышает лимит газа блока. Пожалуйста, отрегулируйте и попробуйте снова.",
         "nonceTooLow": "Невозможно установить nonce. Мы обновим его до {{nonce}}. Нажмите «Попробовать снова», чтобы подтвердить и попробовать еще раз.",
         "gasPriceTooLow": "Цена газа слишком низкая. Мы увеличим ее на 30%, чтобы помочь вашей транзакции подтвердиться. Нажмите «Повторить», чтобы подтвердить и попробовать снова.",
-        "gasLimitTooLow": "Лимит газа слишком низкий",
+        "gasLimitTooLow": "Gas limit слишком низкий",
         "nonceTooHigh": "Nonce слишком высок. Пожалуйста, скорректируйте nonce и попробуйте снова."
       },
       "addLiquidity": {
@@ -882,8 +882,8 @@
             "normalTrustValueDanger": "Доверие к контракту: {{ contractUsdText }}",
             "revokeNewApproved": "Новые одобренные пользователи (24ч): {{ count }}",
             "button": "Понял.",
-            "revokeWarningTitle": "Contract 24h Revoke double than Revoke",
-            "revokeDangerTitle": "Контракт 24h Revoke Trends > 4",
+            "revokeWarningTitle": "Отзывов за 24 ч более чем в 2 раза больше, чем разрешений",
+            "revokeDangerTitle": "Отзывов за 24 ч более чем в 4 раза больше, чем разрешений",
             "revokeRecenet": "Недавние отклонения (24ч): {{ count }}",
             "contractTrustValueDanger": "Значение доверия к контракту < $10,000",
             "revokeTrendsValueDanger": "Количество недавних отзывов более чем в 4 раза превышает количество недавно одобренных пользователей.",
@@ -960,7 +960,7 @@
       "Select": "Выбрать",
       "price-impact": "Влияние на цену",
       "est-difference": "Предполагаемая разница:",
-      "no-quote": "Без кавычек",
+      "no-quote": "Нет котировки",
       "Pending": "В ожидании",
       "actual": "Фактический:",
       "approve-and-bridge": "Утвердить и Мост",
@@ -971,25 +971,25 @@
       "est-receiving": "Ожидаемое получение:",
       "loss-tips": "Вы теряете {{usd}}. Попробуйте другую сумму.",
       "for-available-quote": "для доступной котировки",
-      "bridge-from": "Мост из",
+      "bridge-from": "Bridge из",
       "liquidity": "Ликвидность",
       "history": "История bridge",
       "detail-tx": "Подробности",
-      "gas-fee": "GasFee: {{gasUsed}}",
+      "gas-fee": "Комиссия за gas: {{gasUsed}}",
       "To": "К",
       "via-bridge": "через {{bridge}}",
       "duration": "{{duration}} мин",
       "the-following-bridge-route-are-found": "Найдены следующие курсы",
       "no-quote-found": "Котировка не найдена. Пожалуйста, попробуйте другие пары токенов.",
       "showMore": {
-        "source": "Источник Bridge",
+        "source": "Источник моста",
         "title": "Показать больше",
         "signWarning": "Я понимаю уведомление и хочу продолжить"
       },
       "no-route-found": "Маршрут не найден",
       "value": "Баланс",
       "estimate": "Оценка:",
-      "bridged": "Подключено",
+      "bridged": "Bridge запущен",
       "gasFeeTooHight": "Плата за газ выше нормы. Подтвердите только если хотите продолжить.",
       "pendingItem": {
         "bridgeStatus": "Статус моста",
@@ -1036,7 +1036,7 @@
       "services": {
         "receive": "Получить",
         "approvals": "Одобрения",
-        "dapps": "Dapps",
+        "dapps": "DApp",
         "swap": "Swap",
         "more": "Ещё",
         "history": "История",
@@ -1051,21 +1051,21 @@
         "perpsMarketList": "Больше Perps",
         "lending": "Кредитование",
         "predict": "Предсказать",
-        "meme": "Мемкоин",
+        "meme": "Memecoin",
         "market": "Рынок",
         "gasDeposit": "Газовый депозит",
         "convertDust": "Convert Dust"
       },
       "swipeUp": {
-        "descAndroidMore": "Нажмите, чтобы узнать больше о dApps",
-        "desc": "Проведите вверх, чтобы исследовать веб-сайты",
+        "descAndroidMore": "Нажмите, чтобы узнать больше о DApp",
+        "desc": "Проведите вверх, чтобы исследовать и искать веб-сайты",
         "descMore": "Проведите вверх, чтобы ознакомиться с другими веб-сайтами",
-        "descAndroid": "Нажмите, чтобы исследовать dApps"
+        "descAndroid": "Нажмите, чтобы исследовать DApp"
       },
       "DappDrawer": {
         "search": "Поиск",
         "favorite": "Избранное",
-        "emptyAndroid": "Нет dApp, добавленных в избранное",
+        "emptyAndroid": "Нет DApp, добавленных в избранное",
         "empty": "Нет веб-сайта добавленного в избранное",
         "tabs": {
           "all": "Все",
@@ -1108,7 +1108,7 @@
         "comingSoon": "Скоро будет...",
         "table": {
           "customizeTokens_one": "{{count}} пользовательский токен",
-          "customizeTokens_other": "{{count}} custom tokens",
+          "customizeTokens_other": "{{count}} пользовательских токенов",
           "blockedTokens_other": "{{count}} заблокированных Tokens",
           "testnetTokens_other": "{{count}} пользовательских токенов сети",
           "blockedTokens_one": "{{count}} заблокированный токен",
@@ -1178,7 +1178,7 @@
         "title": "Этот токен имеет низкую кредитную стоимость.",
         "desc": "Низкое кредитное значение часто сигнализирует о высоком риске, например, о токене-ловушке или очень низкой ликвидности."
       },
-      "gas-fee": "GasFee: {{gasUsed}}",
+      "gas-fee": "Комиссия за gas: {{gasUsed}}",
       "rabbyFee": {
         "wallet": "Кошелёк",
         "title": "Комиссия Rabby",
@@ -1451,20 +1451,20 @@
         "balance": "Баланс",
         "onekey": {
           "hdPathType": {
-            "bip44": "BIP44: HDpath, определенный протоколом BIP44."
+            "bip44": "BIP44: HD Path, определенный протоколом BIP44."
           },
           "hdPathTypeNoChain": {
-            "bip44": "BIP44: HDpath, определённый протоколом BIP44."
+            "bip44": "BIP44: HD Path, определённый протоколом BIP44."
           }
         },
         "keystone": {
           "hdPathType": {
             "legacy": "Наследие: HD путь, используемый MEW / Mycrypto.",
-            "bip44": "BIP44: HDpath, определенный протоколом BIP44.",
+            "bip44": "BIP44: HD Path, определенный протоколом BIP44.",
             "ledgerLive": "Ledger Live: официальная HD-путь от Ledger. Используя путь Ledger Live, вы можете управлять только 10 адресами."
           },
           "hdPathTypeNoChain": {
-            "bip44": "BIP44: HDpath, определенный протоколом BIP44.",
+            "bip44": "BIP44: HD Path, определенный протоколом BIP44.",
             "ledgerLive": "Ledger Live: Ledger официальная HD-путь. Вы можете управлять только 10 адресами с путь Ledger Live.",
             "legacy": "Наследие: HD-путь, используемый MEW / Mycrypto."
           }
@@ -1473,7 +1473,7 @@
           "hdPathType": {
             "legacy": "Наследие: HD путь, используемый MEW / Mycrypto.",
             "ledgerLive": "Ledger Live: официальный HD путь Ledger.",
-            "bip44": "Стандарт BIP44: HDpath, определенный протоколом BIP44."
+            "bip44": "Стандарт BIP44: HD Path, определенный протоколом BIP44."
           },
           "hdPathTypeNoChain": {
             "ledgerLive": "Ledger Live: официальный HD путь Ledger.",
@@ -1493,7 +1493,7 @@
         "trezor": {
           "hdPathType": {
             "ledgerLive": "Ledger Live: официальный HD путь Ledger.",
-            "bip44": "BIP44: HDpath, определенный протоколом BIP44.",
+            "bip44": "BIP44: HD Path, определенный протоколом BIP44.",
             "legacy": "Наследие: HD-путь, используемый MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
@@ -1529,7 +1529,7 @@
       "title": "Подписать текст",
       "createKey": {
         "description": "Описание",
-        "interactDapp": "Взаимодействие с Dapp"
+        "interactDapp": "Взаимодействие с DApp"
       },
       "sameSafeMessageAlert": "То же сообщение подтверждено; дополнительная подпись не требуется."
     },
@@ -1550,7 +1550,7 @@
     "addressDetail": {
       "backup-seed-phrase": "Резервная фраза восстановления",
       "hd-path": "HD Path",
-      "address": "Address",
+      "address": "Адрес",
       "pin-in-list": "Закрепить в списке",
       "watchAddressListScreen": {
         "addWatchAddress": "Добавить только для просмотра кошельки"
@@ -1717,7 +1717,7 @@
         "title": "Разрешение на подпись"
       },
       "markAsBlockToast": "Отметить как «Заблокировано»",
-      "title": "Подключиться к Dapp",
+      "title": "Подключиться к DApp",
       "popularLevelMedium": "Средний",
       "flagByMM": "Помечено MetaMask",
       "foundForbiddenRisk": "Обнаружены запрещенные риски. Подключение заблокировано.",
@@ -1842,9 +1842,9 @@
         "importHeader": "Импортировать кошелек"
       },
       "nft": {
-        "floorPrice": "/Floor Price:"
+        "floorPrice": "/Минимальная цена:"
       },
-      "appChain": "Dapp Счет"
+      "appChain": "DApp Счет"
     },
     "miniSignFooterBar": {
       "signWithLedger": "Подписать",
@@ -1928,7 +1928,7 @@
       },
       "globalSearch": {
         "iosPlaceHolder": "Поиск сайта/токена",
-        "placeHolder": "Поиск Dapp/Token"
+        "placeHolder": "Поиск DApp/Token"
       },
       "tokenHeader": {
         "tokenAndFdv": "Token/FDV",
@@ -2015,7 +2015,7 @@
         "estReceiveTip": "Сервис, обработанный через {{name}}, может иметь проскальзывание.",
         "fetchQuoteFailed": "Не удалось получить котировку",
         "selectToken": "Выберите токен для депозита",
-        "estReceiveLabel": "Est.Receive: {{usd}}",
+        "estReceiveLabel": "Ожидаемое получение: {{usd}}",
         "noAvailableToken": "Нет доступных токенов"
       },
       "paymentAddressPopup": {
@@ -2088,7 +2088,7 @@
         "item3": "Поддерживает все транзакции",
         "item2": "Поддерживает все сети",
         "desc1": "Нет дополнительных сборов за оплату газа",
-        "desc3": "Обмен, Мост, Отправить, DApps и многое другое",
+        "desc3": "Обмен, Мост, Отправить, DApp и многое другое",
         "desc2": "Автоматические платежи за газ более чем на 80+ сетях",
         "title": "Оплачивайте комиссии за Gas на всех сетях",
         "subtitle": "когда у вас закончился газ"
@@ -2141,13 +2141,13 @@
       "IssuedBy": "Выпущено",
       "fdv": "FDV",
       "BridgeIssue": "Токен, переведённый третьей стороной",
-      "OriginalToken": "Original Token",
+      "OriginalToken": "Исходный токен",
       "TokenName": "Имя токена",
       "NoListedSite": "Нет информации о листинге",
       "OriginIssue": "Первоначально выпущено на этом блокчейне",
       "fdvTitle": "Что такое FDV?",
       "BridgeProvider": "Поставщик Bridge",
-      "fdvContent": "Рыночная капитализация, если максимальное предложение было бы в обращении. Полностью Разводненная Оценка (FDV) = Цена × Максимальное Предложение. Если Максимальное Предложение равно null, FDV = Цена × Общее Предложение. Если ни Максимальное Предложение, ни Общее Предложение не определены или бесконечны, FDV не отображается.",
+      "fdvContent": "Рыночная капитализация, если бы максимальное предложение находилось в обращении. Полностью разводненная оценка (FDV) = Цена × Максимальное предложение. Если максимальное предложение отсутствует, FDV = Цена × Общее предложение. Если ни максимальное, ни общее предложение не определены или бесконечны, FDV не отображается.",
       "noTransactions": "Нет транзакций",
       "HoldingValue": "Удерживаемая стоимость",
       "Price": "Цена",
@@ -2383,13 +2383,13 @@
         "title": "Избранное"
       },
       "BrowserHeader": {
-        "searchAndroid": "Поиск Dapp",
+        "searchAndroid": "Поиск DApp",
         "searchIos": "Поиск сайта"
       },
       "CurrentPopup": {
         "connectChain": "Подключить Цепь",
         "connectWallet": "Подключить кошелек",
-        "title": "Текущий Dapp",
+        "title": "Текущий DApp",
         "disconnect": "Отключить"
       },
       "BrowserSearch": {
@@ -2474,7 +2474,7 @@
       "selectFromAlbum": "Выбрать из Альбома"
     },
     "defiDetail": {
-      "viewSiteInApp": "Посмотреть в Dapp",
+      "viewSiteInApp": "Посмотреть в DApp",
       "viewSiteInWebsite": "Просмотреть на сайте",
       "appChain": "На {{chain}} аккаунте",
       "dappActions": {
@@ -2488,28 +2488,28 @@
     },
     "copyTrading": {
       "tipsDollar": {
-        "title": "Копирование торговли от Smart Money",
-        "description": "Откройте токены на основе недавней активности кошельков Smart Money. Нажмите на токен, чтобы увидеть детальные объемы торговли и историческую прибыль от этих кошельков."
+        "title": "Copy Trading от Smart Money",
+        "description": "Находите токены по недавней активности Smart Money Wallets. Нажмите на токен, чтобы увидеть подробные суммы сделок и историческую прибыль этих wallets."
       },
       "comingSoon": "Скоро...",
       "historyProfit": "История прибыли",
       "buy": "Купить",
       "recentBuy": "Последняя покупка",
       "updateText": "{{count}} Тренды Обновлены",
-      "smartMoneyWallets": "Кошельки Smart Money",
-      "smartMoneyWallet": "Кошелек Smart Money",
+      "smartMoneyWallets": "Smart Money Wallets",
+      "smartMoneyWallet": "Smart Money Wallet",
       "noMoreData": "Больше нет данных",
-      "refreshTitle": "Загрузка дополнительных Copy Trading от Smart Money",
+      "refreshTitle": "Загружаем больше Copy Trading от Smart Money",
       "filterRule": {
         "tokenCreate": "Недавно создано",
         "24HChange": "24H Изменение",
-        "smartMoney": "Торговля Smart Wallets",
-        "smartWalletCount": "Умных кошельков:"
+        "smartMoney": "Торгующие Smart Wallets",
+        "smartWalletCount": "Количество Smart Wallets"
       },
       "token": "Токен",
       "Liquidity": "Ликвидность",
       "earned": "Заработано",
-      "smartWallets": "Умные кошельки",
+      "smartWallets": "Smart Wallets",
       "bought": "Куплено",
       "myCopyTradingEarnings": "Моя прибыль от копирования торговли",
       "twitterNews": "Новости в X",
@@ -2523,7 +2523,7 @@
       "tokenInfo": "Информация о токене",
       "timeSmartWallet": "Время / Smart Wallet",
       "contractAddress": "Адрес контракта",
-      "smartWalletsBuying": "{{len}} Умные Кошельки Покупка",
+      "smartWalletsBuying": "{{len}} Smart Wallets покупают",
       "noOtherTokensWithSameName": "Не были найдены другие токены с тем же названием.",
       "tokenName": "Название токена",
       "info": "Информация",
@@ -2531,7 +2531,7 @@
       "loss": "Потеря",
       "sameNameTokens": "Токены с одинаковым названием",
       "myBalanceFromCopyTrading": "Мой баланс от Copy Trading",
-      "gettingLatest": "Получение последних новостей от smart money...",
+      "gettingLatest": "Загружаем последние данные от Smart Money...",
       "updateTokenText": "{{count}} токенов обновлено"
     },
     "watchlist": {
@@ -3379,7 +3379,7 @@
       "tabs": {
         "commodities": "Товары",
         "stock": "Запасы",
-        "memecoin": "Мемкоин",
+        "memecoin": "Memecoin",
         "watchlist": "Список наблюдения"
       },
       "marketNotOpenTooltip": "Рынок не открыт",
@@ -3422,7 +3422,7 @@
       "receiveSummary": {
         "progress": "Прогресс конвертации",
         "priceImpact": "Лимит влияния на цену",
-        "gasLimit": "Лимит газа одной транзакции",
+        "gasLimit": "Single Transaction Gas Limit",
         "estimateReceive": "Ожидаемое получение:",
         "actualReceive": "Получить"
       },
@@ -3433,8 +3433,8 @@
       },
       "completed": {
         "title": "Dust Converted !",
-        "receive": "Received:",
-        "failedTitle": "Conversion Ended",
+        "receive": "Получено:",
+        "failedTitle": "Конвертация завершена",
         "viewMoreDetail": "View more details",
         "fold": "Fold"
       },
@@ -3471,7 +3471,7 @@
     "PillsSwitch": {
       "NetSwitchTabs": {
         "mainnet": "Интегрированная сеть",
-        "testnet": "Custom Network  \n(Пользовательская сеть)"
+        "testnet": "Пользовательская сеть"
       }
     },
     "ModalPreviewNFTItem": {
@@ -3545,8 +3545,8 @@
       }
     },
     "signPermissionCheckModal": {
-      "title": "Вы разрешаете этому Dapp подписывать только в testnets.",
-      "reconnect": "Повторное подключение Dapp"
+      "title": "Вы разрешаете этому DApp подписывать только в testnets.",
+      "reconnect": "Повторное подключение DApp"
     },
     "AuthenticationModals": {
       "processBiometrics": {
@@ -3610,7 +3610,7 @@
       "giftInfo": {
         "noWithdrawableBalanceTitle": "{{amount}} Невозможен вывод",
         "giftTips": "Награда за газ для активных пользователей",
-        "noWithdrawableBalanceDescription": "{{amount}} вашего газа баланса не подлежит выводу:\n1. Apple Pay / Google Pay\n2. Gas Rewards",
+        "noWithdrawableBalanceDescription": "{{amount}} из вашего gas-баланса нельзя вывести:\n1. Apple Pay / Google Pay\n2. Gas Rewards",
         "gotIt": "Я понял это"
       },
       "about": {
@@ -3639,15 +3639,15 @@
     },
     "externalSwapBrideDappPopup": {
       "chainNotSupported": "Не поддерживается в этой цепочке",
-      "selectADapp": "Выберите Dapp",
+      "selectADapp": "Выберите DApp",
       "help": "Пожалуйста, свяжитесь с официальной командой этой цепи для получения поддержки.",
-      "noDapps": "Нет Dapp, доступных в этой цепочке",
-      "viewDappOptions": "Посмотреть параметры Dapp",
-      "bridgeOnDapp": "Мост на Dapp",
-      "thirdPartyDappToProceed": "Пожалуйста, используйте сторонний Dapp для продолжения",
+      "noDapps": "Нет DApp, доступных в этой цепочке",
+      "viewDappOptions": "Посмотреть параметры DApp",
+      "bridgeOnDapp": "Мост на DApp",
+      "thirdPartyDappToProceed": "Пожалуйста, используйте сторонний DApp для продолжения",
       "noQuotesForChain": "Пока нет доступных котировок для этой цепочки",
-      "swapOnDapp": "Менять на Dapp",
-      "noDapp": "Нет доступных Dapps"
+      "swapOnDapp": "Менять на DApp",
+      "noDapp": "Нет доступных DApp"
     },
     "selectCexModal": {
       "title": "Выберите источник обмена"

@@ -18,17 +18,22 @@ import {
   HistoryItemCateType,
   ProjectItemType,
 } from '@/types/history';
-import { fetchHistoryTokenItem, isNFTTokenId } from '@/utils/history';
+import {
+  checkIsGasDepositTx,
+  fetchHistoryTokenItem,
+  isNFTTokenId,
+} from '@/utils/history';
 import type { IManageToken } from '@/types/assets';
 import {
   GAS_ACCOUNT_RECEIVED_ADDRESS,
   GAS_ACCOUNT_WITHDRAWED_ADDRESS,
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
-import { CustomTxItem } from '@/core/services/transactionHistory';
+import type { CustomTxItem } from '@/core/services/transactionHistory';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
 import { ParseEntity } from '@/core/utils/typeorm';
+import { findChain } from '@/utils/chain';
 
 export type { ProjectItemType } from '@/types/history';
 
@@ -273,6 +278,14 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
 
   static getHistoryItemType(data: HistoryItemEntity) {
     try {
+      if (
+        checkIsGasDepositTx({
+          chainId: findChain({ serverId: data.chain })?.id,
+          hash: data.txHash,
+        })
+      ) {
+        return HistoryItemCateType.GAS_DEPOSIT;
+      }
       if (data.cate_id === 'approve') {
         if (!data.token_approve_value) {
           return HistoryItemCateType.Revoke;

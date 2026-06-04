@@ -3267,6 +3267,7 @@ DEPENDENCIES:
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - lottie-react-native (from `../node_modules/lottie-react-native`)
   - "op-sqlite (from `../node_modules/@op-engineering/op-sqlite`)"
+  - OpenSSL-Universal (= 3.6.0000)
   - "RabbyRNKeychain (from `../node_modules/@rabby-wallet/react-native-keychain`)"
   - "RabbyRNKeychainV9 (from `../node_modules/@rabby-wallet/react-native-keychain-9`)"
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
@@ -3815,6 +3816,6 @@ SPEC CHECKSUMS:
   VisionCamera: 2230ecfd78a1f6cddd8be0fe4e6589f21a6385e1
   Yoga: c7d9adcf9fca72e6219bdc5f1f11b76b38c4a030
 
-PODFILE CHECKSUM: 612f2244632d9f2e3a6e134391459f514de16e2e
+PODFILE CHECKSUM: 851bcc0d211b5717a5f3a23a27f1b0b7f4aa38ff
 
 COCOAPODS: 1.14.3
