@@ -355,6 +355,7 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
       updateSliderByTokenAmount,
     ],
   );
+  const currentTokenDecimals = currentToken?.decimals;
 
   const handleUsdAmountChange = useCallback(
     (value: string) => {
@@ -370,10 +371,22 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
         let tokenAmount = '';
         if (nextValue && nextValue !== '.') {
           const nextTokenAmount = new BigNumber(nextValue).div(activeUsdPrice);
-          tokenAmount =
-            nextTokenAmount.isFinite() && !nextTokenAmount.isNaN()
-              ? nextTokenAmount.toFixed()
+          if (nextTokenAmount.isFinite() && !nextTokenAmount.isNaN()) {
+            const tokenDecimals =
+              typeof currentTokenDecimals === 'number' &&
+              Number.isFinite(currentTokenDecimals) &&
+              currentTokenDecimals > 0
+                ? Math.floor(currentTokenDecimals)
+                : 0;
+            const normalizedTokenAmount = nextTokenAmount.decimalPlaces(
+              tokenDecimals,
+              BigNumber.ROUND_DOWN,
+            );
+
+            tokenAmount = normalizedTokenAmount.gt(0)
+              ? normalizedTokenAmount.toFixed()
               : '';
+          }
         }
 
         setUsdInputValue(nextValue);
@@ -386,6 +399,7 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
     },
     [
       activeUsdPrice,
+      currentTokenDecimals,
       directSignBtnRef,
       handleFieldChange,
       updateSliderByTokenAmount,

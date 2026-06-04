@@ -532,19 +532,26 @@ function SendScreen({
       apiSendToken.putScreenState({ initialTokenIdentityReady: true });
     }
 
-    const loadedToken =
-      currentAccount?.address &&
-      (await loadCurrentToken(
-        targetToken.id,
-        targetToken.chain,
-        currentAccount?.address,
-      ));
+    const loadedTokenPromise = currentAccount?.address
+      ? loadCurrentToken(
+          targetToken.id,
+          targetToken.chain,
+          currentAccount.address,
+        ).catch(error => {
+          console.error('SendScreen loadCurrentToken error', error);
+          return null;
+        })
+      : Promise.resolve(null);
 
-    if (!initialDisplayToken && loadedToken) {
-      apiSendToken.putScreenState({ initialTokenIdentityReady: true });
+    if (!initialDisplayToken) {
+      void loadedTokenPromise.then(loadedToken => {
+        if (loadedToken) {
+          apiSendToken.putScreenState({ initialTokenIdentityReady: true });
+        }
+      });
     }
 
-    await Promise.race([loadedToken, sleep(5000)]);
+    await Promise.race([loadedTokenPromise, sleep(5000)]);
   }, [
     navParams,
     routeParams,
