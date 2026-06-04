@@ -19,6 +19,7 @@ module.exports = api => {
   const resolvedBuildEnv = inputBuildEnv || 'production';
   const resolvedBuildChannel = inputBuildChannel || 'selfhost-reg';
   const shouldEnableRozenite = process.env.WITH_ROZENITE === 'true';
+  const isHermesLogicTest = process.env.RABBY_MOBILE_HERMES_LOGIC_TEST === '1';
   const shouldStripConsole =
     inputBuildEnv === 'production' ||
     (!inputBuildEnv && ['appstore', 'selfhost'].includes(resolvedBuildChannel));
@@ -29,6 +30,7 @@ module.exports = api => {
       buildChannel: resolvedBuildChannel,
       buildEnv: resolvedBuildEnv,
       callerName,
+      isHermesLogicTest,
       isDevTransform,
       shouldEnableRozenite,
     }),
@@ -135,10 +137,10 @@ module.exports = api => {
       ['@babel/plugin-transform-export-namespace-from'],
 
       ['module:react-native-dotenv', { moduleName: '@env' }],
-      ['nativewind/babel', {}],
+      ...(isHermesLogicTest ? [] : [['nativewind/babel', {}]]),
       ['@babel/plugin-proposal-decorators', { legacy: true }],
       ['@babel/plugin-transform-class-static-block'],
-      ['react-native-reanimated/plugin'],
+      ...(isHermesLogicTest ? [] : [['react-native-reanimated/plugin']]),
     ],
     ...(shouldStripConsole
       ? {
