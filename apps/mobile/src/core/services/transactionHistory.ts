@@ -67,6 +67,7 @@ export interface TransactionHistoryItem {
   isFailed?: boolean;
   isSubmitFailed?: boolean;
   isCompleted?: boolean;
+  isGasDeposit?: boolean;
 
   isSynced?: boolean;
 

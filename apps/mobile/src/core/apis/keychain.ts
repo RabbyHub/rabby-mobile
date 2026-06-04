@@ -104,6 +104,7 @@ type KeychainBiometricsFailureDiagnostic = {
     androidAuthPromptPolicy?: unknown;
     androidAllowKeyStoreRecovery?: unknown;
     shouldAttachTrustedVaultKeyString?: unknown;
+    skipPostDecryptKeychainRewrite?: unknown;
   };
   debugStates: {
     current: SafeKeychainDebugState | null;
@@ -281,6 +282,8 @@ export async function requestGenericPassword(
           requestOptions.androidAllowKeyStoreRecovery,
         shouldAttachTrustedVaultKeyString:
           requestOptions.shouldAttachTrustedVaultKeyString,
+        skipPostDecryptKeychainRewrite:
+          requestOptions.skipPostDecryptKeychainRewrite,
       },
     });
     return await currentApi.requestGenericPassword(...args);
@@ -295,6 +298,8 @@ export async function requestGenericPassword(
           requestOptions.androidAllowKeyStoreRecovery,
         shouldAttachTrustedVaultKeyString:
           requestOptions.shouldAttachTrustedVaultKeyString,
+        skipPostDecryptKeychainRewrite:
+          requestOptions.skipPostDecryptKeychainRewrite,
       },
     });
 
