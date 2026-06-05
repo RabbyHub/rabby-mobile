@@ -368,6 +368,7 @@
       "switchArea": {
         "skipText": "Überspringe dieses Popup für 1 Tag"
       },
+      "alertText": "Drittanbieter-DApp: Wenden Sie sich bei Nutzungsproblemen bitte an den DApp-Support. Rabby bietet nur Anzeigezugriff.",
       "title": "Screenshot zur Fehlermeldung"
     },
     "feedbackModal": {
@@ -1839,6 +1840,7 @@
       },
       "manage-seed-phrase": "Seed Phrase verwalten",
       "backup-seed-phrase": "Seed-Phrase sichern",
+      "backupFailed": "Sicherung fehlgeschlagen, bitte versuchen Sie es erneut",
       "address-note": "Adressnotiz",
       "safeAddressListScreen": {
         "addSafeAddress": "Füge sichere Wallets hinzu"
@@ -1992,6 +1994,7 @@
       "enable": "Aktivieren Sie {{ bioType }}",
       "agree": "Ich habe die <1/><2>Nutzungsbedingungen</2> gelesen und stimme diesen zu.",
       "confirmModalDesc": "Bitte bewahren Sie Ihr Passwort ordnungsgemäß auf. Einmal verloren, kann es von Rabby weder geändert noch wiederhergestellt werden.",
+      "setWallet": "Wallet einrichten",
       "subTitle": "Es wird verwendet, um Ihr Wallet zu entsperren und lokale Daten zu verschlüsseln."
     },
     "backupPrivateKey": {
@@ -2427,6 +2430,8 @@
       "faceId": "Face ID",
       "followUs": "Folgen Sie uns",
       "fingerPrint": "Fingerabdruck",
+      "devicePassword": "Gerätepasswort",
+      "useDevicePassword": "Gerätepasswort verwenden",
       "tou": "Nutzungsbedingungen",
       "themeMode": "Designmodus",
       "clearPending": "Lokal Ausstehendes Löschen",
@@ -2686,7 +2691,7 @@
       "WebviewError": {
         "failedToLoad": "Seite konnte nicht geladen werden",
         "error": "Fehler:",
-        "alertText": ""
+        "alertText": "Um zu prüfen, ob diese Drittanbieter-DApp an Ihrem aktuellen Standort funktioniert, versuchen Sie<1/><2>Im Browser öffnen</2><3/>."
       },
       "toast": {
         "clearCacheSuccess": "Cache gelöscht"

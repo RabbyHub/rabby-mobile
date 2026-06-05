@@ -1279,6 +1279,7 @@
       "manage-seed-phrase": "시드 구문 관리",
       "qr-code": "QR Code",
       "backup-seed-phrase": "백업 시드 구문",
+      "backupFailed": "백업에 실패했습니다. 다시 시도해 주세요",
       "address-note": "주소 노트",
       "source": "출처",
       "safeAddressListScreen": {
@@ -1462,7 +1463,8 @@
       "passwordRequired": "비밀번호를 입력하세요.",
       "agree": "저는 <1/> <2>이용약관</2>을 읽고 동의합니다.",
       "passwordPlaceholder": "비밀번호는 최소 8자 이상이어야 합니다.",
-      "confirmModalDesc": "귀하의 비밀번호를 적절히 보관하십시오. 한 번 잃어버리면 Rabby에서는 변경하거나 복구할 수 없습니다."
+      "confirmModalDesc": "귀하의 비밀번호를 적절히 보관하십시오. 한 번 잃어버리면 Rabby에서는 변경하거나 복구할 수 없습니다.",
+      "setWallet": "지갑 설정"
     },
     "backupSeedPhrase": {
       "clickToShow": "클릭하여 Seed Phrase 보기",
@@ -2086,6 +2088,8 @@
       "autoLockTime": "자동 잠금 시간",
       "lockWallet": "지갑 잠금",
       "fingerPrint": "지문",
+      "devicePassword": "기기 비밀번호",
+      "useDevicePassword": "기기 비밀번호 사용",
       "touchId": "터치 ID",
       "modifyRPCURL": "RPC URL 수정",
       "themeMode": "테마 모드",
@@ -2306,7 +2310,7 @@
       "WebviewError": {
         "error": "오류:",
         "failedToLoad": "페이지를 불러오는 데 실패했습니다.",
-        "alertText": ""
+        "alertText": "현재 위치에서 이 타사 DApp이 작동하는지 확인하려면<1/><2>브라우저에서 열기</2><3/>를 시도해 보세요."
       },
       "toast": {
         "clearCacheSuccess": "캐시가 지워졌습니다"
@@ -3678,6 +3682,7 @@
       "switchArea": {
         "skipText": "이 팝업을 1일 동안 건너뛰기"
       },
+      "alertText": "타사 DApp: 사용 문제는 DApp 지원팀에 문의하세요. Rabby는 보기 전용 접근만 제공합니다.",
       "title": "버그 보고를 위한 스크린샷"
     },
     "feedbackModal": {

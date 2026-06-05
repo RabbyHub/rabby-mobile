@@ -1619,6 +1619,7 @@
         "addSafeAddress": "Thêm Safe Wallets"
       },
       "backup-seed-phrase": "Sao lưu Seed Phrase",
+      "backupFailed": "Sao lưu thất bại, vui lòng thử lại",
       "address": "Địa chỉ",
       "source": "Nguồn",
       "watchAddressListScreen": {
@@ -1911,6 +1912,8 @@
       "aboutUs": "Về Chúng Tôi",
       "themeMode": "Chế độ Theme",
       "fingerPrint": "Vân tay",
+      "devicePassword": "Mật khẩu thiết bị",
+      "useDevicePassword": "Sử dụng mật khẩu thiết bị",
       "policy": "Chính sách quyền riêng tư",
       "touchId": "Touch ID",
       "enableWhitelist": "Bật danh sách trắng để gửi tài sản",
@@ -2126,6 +2129,7 @@
       "passwordPlaceholder": "Mật khẩu phải có độ dài tối thiểu 8 ký tự",
       "settingUp": "Thiết lập mật khẩu",
       "confirmModalDesc": "Vui lòng lưu trữ mật khẩu của bạn đúng cách. Khi đã mất, Rabby không thể thay đổi hoặc khôi phục lại được.",
+      "setWallet": "Thiết lập ví",
       "confirmError": "Mật khẩu không khớp",
       "setUpSuccess": "Thiết lập Mật khẩu Thành công",
       "passwordRequired": "Vui lòng nhập Mật khẩu",
@@ -2426,7 +2430,7 @@
       "WebviewError": {
         "error": "Lỗi:",
         "failedToLoad": "Không thể tải trang",
-        "alertText": ""
+        "alertText": "Để kiểm tra DApp bên thứ ba này có hoạt động tại vị trí hiện tại của bạn không, hãy thử<1/><2>Mở trong trình duyệt</2><3/>."
       },
       "toast": {
         "clearCacheSuccess": "Bộ nhớ cache đã được xóa"
@@ -3678,6 +3682,7 @@
       "switchArea": {
         "skipText": "Bỏ qua thông báo này trong 1 ngày"
       },
+      "alertText": "DApp bên thứ ba: nếu gặp vấn đề sử dụng, vui lòng liên hệ bộ phận hỗ trợ DApp. Rabby chỉ cung cấp quyền truy cập xem.",
       "title": "Chụp màn hình để Báo cáo Lỗi"
     },
     "feedbackModal": {

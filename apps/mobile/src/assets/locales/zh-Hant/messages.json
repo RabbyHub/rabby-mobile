@@ -1434,6 +1434,7 @@
       "agree": "我已閱讀並同意<1/> <2>使用條款</2>",
       "title": "設定密碼",
       "confirmModalDesc": "請妥善保存你的密碼。一旦遺失，Rabby 無法更改或找回。",
+      "setWallet": "設定錢包",
       "passwordRequired": "請輸入密碼",
       "setUpSuccess": "密碼設定成功",
       "subTitle": "它將用於解鎖你的錢包並加密本機資料",
@@ -2191,6 +2192,7 @@
     "addressDetail": {
       "assets": "資產",
       "backup-seed-phrase": "備份助記詞",
+      "backupFailed": "備份失敗，請重試",
       "qr-code": "QR 碼",
       "pin-in-list": "置頂在列表中",
       "admins": "管理員們",
@@ -2488,7 +2490,7 @@
       "WebviewError": {
         "error": "錯誤：",
         "failedToLoad": "無法載入頁面",
-        "alertText": ""
+        "alertText": "請嘗試<1/><2>在瀏覽器中開啟</2><3/>，以檢查該第三方 DApp 在您目前所在地區是否可用。"
       },
       "toast": {
         "clearCacheSuccess": "快取已清除"
@@ -3740,6 +3742,7 @@
       "switchArea": {
         "skipText": "暫時跳過此彈窗 1 天"
       },
+      "alertText": "第三方 DApp：如遇使用問題，請聯絡 DApp 支援。Rabby 僅提供查看存取權限。",
       "title": "截圖以報告錯誤"
     },
     "feedbackModal": {
