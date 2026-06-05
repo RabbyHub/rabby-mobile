@@ -61,9 +61,9 @@ export function startSubscribeOnekeyDevices() {
 }
 
 export async function initOneKeyKeyring() {
-  return getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring, keyring => {
-    bindOneKeyEvents(keyring);
-  });
+  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  bindOneKeyEvents(keyring);
+  return keyring;
 }
 
 export async function importAddress(index: number) {
