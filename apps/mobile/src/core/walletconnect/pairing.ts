@@ -2,6 +2,10 @@ import i18n from '@/utils/i18n';
 import { initWalletConnect } from './client';
 import { addWalletConnectLog } from './debugLog';
 import { getWalletConnectErrorMessage } from './error';
+import {
+  clearWalletConnectDappRedirectPending,
+  markWalletConnectDappRedirectPending,
+} from './redirectState';
 import { setWalletConnectDebugState } from './state';
 import type { WalletConnectPairingSource } from './types';
 import { emitWalletConnectUiEvent } from './uiEvents';
@@ -57,6 +61,12 @@ export async function pairWalletConnectUri(input: {
     throw error;
   }
 
+  if (input.source === 'deeplink') {
+    markWalletConnectDappRedirectPending('pairing_deeplink');
+  } else {
+    clearWalletConnectDappRedirectPending('new non-deeplink pairing');
+  }
+
   setWalletConnectDebugState(prev => ({
     ...prev,
     pairing: {
@@ -80,6 +90,9 @@ export async function pairWalletConnectUri(input: {
     });
     addWalletConnectLog('pairing', 'pairing submitted');
   } catch (error) {
+    if (input.source === 'deeplink') {
+      clearWalletConnectDappRedirectPending('pairing failed');
+    }
     const message = formatPairingError(error);
     let didSetError = false;
     setWalletConnectDebugState(prev => {

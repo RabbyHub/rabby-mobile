@@ -16,6 +16,7 @@ import {
   setWalletConnectProposalError,
 } from './proposal';
 import { maybeRedirectToDapp } from './redirectPolicy';
+import { clearWalletConnectDappRedirectPending } from './redirectState';
 import { syncWalletConnectSessionsFromClient } from './sessions';
 import { clearWalletConnectProposalPairingState } from './state';
 
@@ -36,6 +37,7 @@ export {
   getWalletConnectAccounts,
 } from './chainAccount';
 export { shouldAutoRedirectToDapp } from './redirectPolicy';
+export { markWalletConnectDappRedirectPending } from './redirectState';
 export {
   getWalletConnectAutoDisconnectEnabled,
   setWalletConnectAutoDisconnectEnabled,
@@ -85,6 +87,7 @@ export async function approveWalletConnectProposal(input: {
         reason: getSdkErrorCompat(sdkErrorKey),
       });
       clearWalletConnectProposal(input.proposalId);
+      clearWalletConnectDappRedirectPending();
     } catch (rejectError) {
       addWalletConnectLog(
         'proposal',
@@ -113,7 +116,7 @@ export async function approveWalletConnectProposal(input: {
       topic: session.topic,
       source: pending.source,
     });
-    await maybeRedirectToDapp({
+    return await maybeRedirectToDapp({
       source: pending.source,
       nativeRedirect: session.peer?.metadata?.redirect?.native,
     });
@@ -133,6 +136,7 @@ export async function rejectWalletConnectProposal(proposalId: number) {
   });
   clearWalletConnectProposal(proposalId);
   clearWalletConnectProposalPairingState();
+  clearWalletConnectDappRedirectPending();
   addWalletConnectLog('proposal', 'session proposal rejected', { proposalId });
 }
 

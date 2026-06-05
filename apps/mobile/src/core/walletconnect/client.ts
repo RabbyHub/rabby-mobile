@@ -7,13 +7,14 @@ import {
   clearWalletConnectAutoDisconnectTopic,
   disconnectRestoredWalletConnectSessionsForAutoDisconnect,
 } from './autoDisconnect';
-import { WALLETCONNECT_METADATA } from './constants';
 import { addWalletConnectLog } from './debugLog';
 import { getWalletConnectErrorMessage } from './error';
+import { WALLETCONNECT_CLIENT_METADATA } from './metadata';
 import {
   clearWalletConnectProposal,
   storeWalletConnectProposal,
 } from './proposal';
+import { clearWalletConnectDappRedirectPending } from './redirectState';
 import { handleWalletConnectSessionRequest } from './requestBridge';
 import { syncWalletConnectSessionsFromClient } from './sessions';
 import {
@@ -75,6 +76,7 @@ function bindWalletConnectEvents(
   walletKit.on('proposal_expire', event => {
     const currentProposalId = getWalletConnectDebugState().proposal?.id;
     clearWalletConnectProposal(event.id);
+    clearWalletConnectDappRedirectPending();
     if (currentProposalId !== event.id) {
       addWalletConnectLog('proposal', 'stale proposal expired', event, 'warn');
       return;
@@ -158,7 +160,7 @@ export async function initWalletConnect() {
     });
     const walletKit = await WalletKit.init({
       core,
-      metadata: WALLETCONNECT_METADATA,
+      metadata: WALLETCONNECT_CLIENT_METADATA,
     });
 
     walletKitClient = walletKit;

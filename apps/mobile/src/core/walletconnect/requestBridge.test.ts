@@ -1,5 +1,18 @@
-import { sendRequest } from '@/core/apis/sendRequest';
-import { handleWalletConnectSessionRequest } from './requestBridge';
+const mockAppStateListeners = new Set<(state: string) => void>();
+const mockAppState = {
+  isAvailable: true,
+  currentState: 'active',
+  addEventListener: jest.fn(
+    (_event: 'change', listener: (state: string) => void) => {
+      mockAppStateListeners.add(listener);
+      return {
+        remove: jest.fn(() => {
+          mockAppStateListeners.delete(listener);
+        }),
+      };
+    },
+  ),
+};
 
 const chain = {
   enum: 'ETH',
@@ -34,6 +47,10 @@ jest.mock('@/core/apis/sendRequest', () => ({
   sendRequest: jest.fn(),
 }));
 
+jest.mock('react-native', () => ({
+  AppState: mockAppState,
+}));
+
 jest.mock('./chainAccount', () => ({
   getWalletConnectChainByCaip2: jest.fn(() => chain),
   isSupportedWalletConnectMethod: jest.fn((method: string) => {
@@ -47,6 +64,10 @@ jest.mock('./debugLog', () => ({
   addWalletConnectLog: jest.fn(),
 }));
 
+jest.mock('./redirectPolicy', () => ({
+  maybeRedirectToDapp: jest.fn(),
+}));
+
 jest.mock('./autoDisconnect', () => ({
   recordWalletConnectSessionActivity: jest.fn(),
 }));
@@ -58,6 +79,13 @@ jest.mock('./sessions', () => ({
   resolveWalletConnectAccount: jest.fn(() => account),
   syncWalletConnectSessionsFromClient: jest.fn(),
 }));
+
+const { sendRequest } =
+  require('@/core/apis/sendRequest') as typeof import('@/core/apis/sendRequest');
+const { handleWalletConnectSessionRequest } =
+  require('./requestBridge') as typeof import('./requestBridge');
+const { maybeRedirectToDapp } =
+  require('./redirectPolicy') as typeof import('./redirectPolicy');
 
 function makeEvent(method: string) {
   return {
@@ -78,6 +106,10 @@ describe('walletconnect request bridge', () => {
     jest.mocked(sendRequest).mockReset();
     walletKit.getActiveSessions.mockClear();
     walletKit.respondSessionRequest.mockReset();
+    jest.mocked(maybeRedirectToDapp).mockReset();
+    mockAppState.currentState = 'active';
+    mockAppStateListeners.clear();
+    mockAppState.addEventListener.mockClear();
   });
 
   it('responds to eth_chainId directly', async () => {
@@ -95,6 +127,7 @@ describe('walletconnect request bridge', () => {
         result: '0x1',
       },
     });
+    expect(maybeRedirectToDapp).not.toHaveBeenCalled();
   });
 
   it('forwards signing requests to the provider with WalletConnect context', async () => {
@@ -112,6 +145,48 @@ describe('walletconnect request bridge', () => {
           source: 'walletconnect',
           chainId: 1,
           accountAddress: account.address,
+        }),
+      }),
+    );
+    expect(walletKit.respondSessionRequest).toHaveBeenCalledWith({
+      topic: 'topic-1',
+      response: {
+        id: 1,
+        jsonrpc: '2.0',
+        result: '0xsigned',
+      },
+    });
+    expect(maybeRedirectToDapp).toHaveBeenCalledWith({
+      nativeRedirect: undefined,
+    });
+  });
+
+  it('waits until the app is active before forwarding approval requests', async () => {
+    jest.mocked(sendRequest).mockResolvedValue('0xsigned');
+    mockAppState.currentState = 'background';
+
+    const requestPromise = handleWalletConnectSessionRequest({
+      walletKit: walletKit as never,
+      event: makeEvent('eth_sendTransaction') as never,
+    });
+
+    await Promise.resolve();
+
+    expect(sendRequest).not.toHaveBeenCalled();
+    expect(mockAppState.addEventListener).toHaveBeenCalledWith(
+      'change',
+      expect.any(Function),
+    );
+
+    mockAppState.currentState = 'active';
+    mockAppStateListeners.forEach(listener => listener('active'));
+
+    await requestPromise;
+
+    expect(sendRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requestContext: expect.objectContaining({
+          source: 'walletconnect',
         }),
       }),
     );

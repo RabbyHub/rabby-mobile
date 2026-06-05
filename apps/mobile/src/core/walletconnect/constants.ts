@@ -4,7 +4,7 @@ export const WALLETCONNECT_METADATA = {
   url: 'https://rabby.io',
   icons: ['https://rabby.io/assets/images/logo-128.png'],
   redirect: {
-    native: 'rabby://',
+    native: 'rabby://walletconnect',
   },
 };
 

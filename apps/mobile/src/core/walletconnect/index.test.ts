@@ -12,6 +12,7 @@ import {
 import { clearWalletConnectProposalPairingState } from './state';
 import { syncWalletConnectSessionsFromClient } from './sessions';
 import { replaceWalletConnectSessionsForAutoDisconnect } from './autoDisconnect';
+import { maybeRedirectToDapp } from './redirectPolicy';
 
 const walletKit = {
   approveSession: jest.fn(),
@@ -132,6 +133,10 @@ describe('walletconnect proposal lifecycle', () => {
       'topic-1',
     );
     expect(syncWalletConnectSessionsFromClient).toHaveBeenCalledWith(walletKit);
+    expect(maybeRedirectToDapp).toHaveBeenCalledWith({
+      source: 'qr',
+      nativeRedirect: undefined,
+    });
   });
 
   it('clears proposal pairing state after rejecting a proposal', async () => {

@@ -124,14 +124,16 @@ export function WalletConnectModalHost() {
         onApprove: async (account: Account) => {
           try {
             closeLoading();
-            await approveWalletConnectProposal({
+            const didRedirect = await approveWalletConnectProposal({
               proposalId: proposal.id,
               account,
             });
-            toast.success(t('page.walletConnect.connected'), {
-              duration: 3000,
-              hideOnPress: true,
-            });
+            if (!didRedirect) {
+              toast.success(t('page.walletConnect.connected'), {
+                duration: 3000,
+                hideOnPress: true,
+              });
+            }
             closeConnect();
           } catch (error: unknown) {
             showErrorToast(getWalletConnectErrorMessage(error));

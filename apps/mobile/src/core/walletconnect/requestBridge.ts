@@ -2,12 +2,14 @@ import { sendRequest } from '@/core/apis/sendRequest';
 import type { IWalletKit, WalletKitTypes } from '@reown/walletkit';
 import type { SessionTypes } from '@walletconnect/types';
 import { ethErrors } from 'eth-rpc-errors';
+import { AppState, type AppStateStatus } from 'react-native';
 import {
   getWalletConnectChainByCaip2,
   isSupportedWalletConnectMethod,
 } from './chainAccount';
 import { recordWalletConnectSessionActivity } from './autoDisconnect';
 import { addWalletConnectLog } from './debugLog';
+import { maybeRedirectToDapp } from './redirectPolicy';
 import {
   getFirstApprovedChain,
   getWalletConnectSession,
@@ -30,6 +32,60 @@ type WalletConnectJsonRpcResponse =
         message: string;
       };
     };
+
+const WALLETCONNECT_DIRECT_RESPONSE_METHODS = new Set([
+  'eth_accounts',
+  'eth_requestAccounts',
+  'eth_chainId',
+  'net_version',
+]);
+
+function requiresWalletConnectApproval(method: string) {
+  return !WALLETCONNECT_DIRECT_RESPONSE_METHODS.has(method);
+}
+
+function isAppStateActive(state: AppStateStatus) {
+  return state === 'active';
+}
+
+function isAppActive() {
+  return !AppState.isAvailable || isAppStateActive(AppState.currentState);
+}
+
+function getCurrentAppStateForLog() {
+  return AppState.isAvailable ? AppState.currentState : 'unavailable';
+}
+
+async function waitForAppActiveBeforeApproval(method: string) {
+  if (isAppActive()) {
+    return;
+  }
+
+  addWalletConnectLog(
+    'request',
+    'waiting for app foreground before approval',
+    {
+      method,
+      appState: AppState.currentState,
+    },
+    'warn',
+  );
+
+  await new Promise<void>(resolve => {
+    const subscription = AppState.addEventListener('change', state => {
+      if (!isAppStateActive(state)) {
+        return;
+      }
+
+      subscription.remove();
+      resolve();
+    });
+  });
+
+  addWalletConnectLog('request', 'app foregrounded before approval', {
+    method,
+  });
+}
 
 function normalizeRequestParams(params: unknown) {
   if (Array.isArray(params)) {
@@ -115,6 +171,8 @@ async function executeSessionRequest(input: {
     return chain.network;
   }
 
+  await waitForAppActiveBeforeApproval(method);
+
   const origin = getWalletConnectSessionOrigin(session);
   return sendRequest({
     data: {
@@ -146,13 +204,17 @@ export async function handleWalletConnectSessionRequest(input: {
 }) {
   const { walletKit, event } = input;
   const session = getWalletConnectSession(walletKit, event.topic);
+  const method = event.params.request.method;
+  const shouldRedirectAfterResponse =
+    !!session && !!method && requiresWalletConnectApproval(method);
   let response: WalletConnectJsonRpcResponse;
 
   addWalletConnectLog('request', 'session_request received', {
     topic: event.topic,
     id: event.id,
-    method: event.params.request.method,
+    method,
     chainId: event.params.chainId,
+    appState: getCurrentAppStateForLog(),
   });
   if (session) {
     recordWalletConnectSessionActivity(walletKit, event.topic);
@@ -184,8 +246,13 @@ export async function handleWalletConnectSessionRequest(input: {
       topic: event.topic,
       id: event.id,
       ok: 'result' in response,
-      method: event.params.request.method,
+      method,
     });
+    if (shouldRedirectAfterResponse) {
+      await maybeRedirectToDapp({
+        nativeRedirect: session.peer?.metadata?.redirect?.native,
+      });
+    }
   } catch (error) {
     addWalletConnectLog(
       'request',
