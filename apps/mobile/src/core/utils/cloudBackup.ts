@@ -303,6 +303,10 @@ export const checkCloudBackupExists = async (
     return false;
   }
 
+  if (IS_ANDROID) {
+    await refreshAccessToken();
+  }
+
   const mnemonic = getMnemonicByAddress(address);
   if (!mnemonic) return false;
   // Derive the index-0 address (this is the backup filename)
