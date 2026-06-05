@@ -806,7 +806,11 @@ class OneKeyKeyring extends EventEmitter {
   fixConnectId(address: string, connectId: string) {
     const checksummedAddress = ethUtil.toChecksumAddress(address);
     const detail = this.accountDetails[checksummedAddress];
-    if (!detail.connectId) {
+    if (!detail) {
+      return;
+    }
+
+    if (detail.connectId !== connectId) {
       this.accountDetails[checksummedAddress] = {
         ...detail,
         connectId,

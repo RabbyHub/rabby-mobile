@@ -73,11 +73,12 @@ export async function isConnected(
   keyring.setDeviceId(detail.deviceId);
   try {
     if (!skipBLEOpen) {
-      await TransportBLE.open(detail.deviceId, 1000);
+      const transport = await TransportBLE.open(detail.deviceId, 1000);
+      await transport.close();
     }
     return [true, detail.deviceId];
   } catch (e) {
-    TransportBLE.disconnectDevice(detail.deviceId);
+    await TransportBLE.disconnectDevice(detail.deviceId);
     console.log('ledger is disconnect', e);
     return [false, detail.deviceId];
   }
@@ -220,6 +221,7 @@ export function getMaxAccountLimit() {
 export async function fixDeviceId(address: string, deviceId: string) {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
 
+  keyring.setDeviceId(deviceId);
   await keyring.fixDeviceId(address, deviceId);
   await keyringService.persistKeyringsForKeyring(keyring);
   return;
