@@ -26,7 +26,7 @@ class ResultHandlerInteractiveBiometricManualRetry(
 
   /** Manually cancel current (invisible) authentication to clear the fragment. */
   private fun cancelPresentedAuthentication() {
-    Log.d(LOG_TAG, "Cancelling authentication")
+    Log.d(LOG_TAG, "manualRetry cancelPresentedAuthentication didFail=$didFailBiometric")
     if (presentedPrompt == null) {
       return
     }
@@ -42,6 +42,10 @@ class ResultHandlerInteractiveBiometricManualRetry(
 
   /** Called when an unrecoverable error has been encountered and the operation is complete. */
   override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+    Log.w(
+      LOG_TAG,
+      "manualRetry onAuthenticationError code=$errorCode msg=$errString didFail=$didFailBiometric"
+    )
     if (didFailBiometric) {
       this.presentedPrompt = null
       this.didFailBiometric = false
@@ -57,7 +61,7 @@ class ResultHandlerInteractiveBiometricManualRetry(
    * belonging to the user.
    */
   override fun onAuthenticationFailed() {
-    Log.d(LOG_TAG, "Authentication failed: biometric not recognized.")
+    Log.d(LOG_TAG, "manualRetry onAuthenticationFailed presented=${presentedPrompt != null}")
     if (presentedPrompt != null) {
       this.didFailBiometric = true
       cancelPresentedAuthentication()
@@ -66,6 +70,7 @@ class ResultHandlerInteractiveBiometricManualRetry(
 
   /** Called when a biometric is recognized. */
   override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+    Log.i(LOG_TAG, "manualRetry onAuthenticationSucceeded")
     this.presentedPrompt = null
     this.didFailBiometric = false
     super.onAuthenticationSucceeded(result)
@@ -74,9 +79,14 @@ class ResultHandlerInteractiveBiometricManualRetry(
   /** Trigger interactive authentication. */
   override fun startAuthentication() {
     val activity = getCurrentActivity()
+    val isMainThread = Thread.currentThread() == Looper.getMainLooper().thread
+    Log.d(
+      LOG_TAG,
+      "manualRetry startAuthentication thread=${Thread.currentThread().name} isMain=$isMainThread"
+    )
 
     // Code can be executed only from MAIN thread
-    if (Thread.currentThread() != Looper.getMainLooper().thread) {
+    if (!isMainThread) {
       activity.runOnUiThread { startAuthentication() }
       waitResult()
       return
@@ -87,7 +97,11 @@ class ResultHandlerInteractiveBiometricManualRetry(
 
   /** Trigger interactive authentication without invoking another waitResult() */
   protected fun retryAuthentication() {
-    Log.d(LOG_TAG, "Retrying biometric authentication.")
+    Log.d(
+      LOG_TAG,
+      "manualRetry retryAuthentication thread=${Thread.currentThread().name} " +
+        "isMain=${Thread.currentThread() == Looper.getMainLooper().thread}"
+    )
 
     val activity = getCurrentActivity()
 
