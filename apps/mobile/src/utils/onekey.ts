@@ -102,14 +102,14 @@ export function bindOneKeyEvents(keyring: KeyringInstance | OneKeyKeyring) {
   eventBus.on(EVENTS.ONEKEY.REQUEST_PIN, e => {
     const connectId = e?.payload?.device?.connectId;
 
-    if (pinModalId) {
-      return;
-    }
-
     if (ONLY_IN_DEVICE) {
       oneKeyKeyring.bridge.receivePin({
         switchOnDevice: true,
       });
+
+      if (pinModalId) {
+        return;
+      }
 
       createPinModal(
         oneKeyKeyring,
@@ -119,15 +119,15 @@ export function bindOneKeyEvents(keyring: KeyringInstance | OneKeyKeyring) {
       return;
     }
 
+    if (pinModalId) {
+      return;
+    }
+
     createPinModal(oneKeyKeyring, connectId, MODAL_NAMES.ONEKEY_INPUT_PIN);
   });
 
   eventBus.on(EVENTS.ONEKEY.REQUEST_PASSPHRASE, e => {
     const connectId = e?.payload?.device?.connectId;
-
-    if (passphraseModalId) {
-      return;
-    }
 
     if (ONLY_IN_DEVICE) {
       oneKeyKeyring.bridge.receivePassphrase({
@@ -135,11 +135,19 @@ export function bindOneKeyEvents(keyring: KeyringInstance | OneKeyKeyring) {
         switchOnDevice: true,
       });
 
+      if (passphraseModalId) {
+        return;
+      }
+
       createPassphraseModal(
         oneKeyKeyring,
         connectId,
         MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE,
       );
+      return;
+    }
+
+    if (passphraseModalId) {
       return;
     }
 

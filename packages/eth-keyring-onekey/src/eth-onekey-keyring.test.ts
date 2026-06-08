@@ -125,6 +125,36 @@ function prepareUnlockedKeyring({
 }
 
 describe('OneKeyKeyring signTypedData', () => {
+  it('waits for bridge initialization before probing a device', async () => {
+    const bridge = createBridge();
+    let resolveInit!: () => void;
+    const initPromise = new Promise<void>(resolve => {
+      resolveInit = resolve;
+    });
+    bridge.init.mockReturnValue(initPromise);
+    bridge.getFeatures.mockResolvedValue({
+      success: true,
+      payload: {
+        device_id: 'device-id',
+      },
+    });
+    const keyring = new OneKeyKeyring({ bridge });
+    keyring.setDeviceConnectId('connect-id');
+
+    const devicePromise = keyring.trySearchDevice();
+    await Promise.resolve();
+
+    expect(bridge.getFeatures).not.toHaveBeenCalled();
+
+    resolveInit();
+
+    await expect(devicePromise).resolves.toEqual({
+      connectId: 'connect-id',
+      deviceId: 'device-id',
+    });
+    expect(bridge.getFeatures).toHaveBeenCalledWith('connect-id');
+  });
+
   it('rejects null typed-data fields with a readable error before hardware signing', async () => {
     const bridge = createBridge();
     const keyring = new OneKeyKeyring({ bridge });

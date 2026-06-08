@@ -1,9 +1,30 @@
 function setupApiOneKeyModule() {
   jest.resetModules();
 
-  const mockKeyring = {};
+  const mockKeyring = {
+    bridge: {
+      searchDevices: jest.fn(async () => ({
+        success: true,
+        payload: [],
+      })),
+    },
+    getAccountInfo: jest.fn(() => ({
+      connectId: 'connect-id',
+    })),
+    getAddresses: jest.fn(),
+    getCurrentAccounts: jest.fn(),
+    fixConnectId: jest.fn(),
+    setAccountToUnlock: jest.fn(),
+    setDeviceConnectId: jest.fn(),
+    trySearchDevice: jest.fn(async () => undefined),
+    unlock: jest.fn(),
+    cleanUp: jest.fn(),
+  };
   const mockGetKeyring = jest.fn(async () => mockKeyring);
   const mockBindOneKeyEvents = jest.fn();
+  const mockAddNewAccount = jest.fn();
+  const mockInitCurrentAccount = jest.fn();
+  const mockPersistKeyringsForKeyring = jest.fn();
 
   jest.doMock('@rabby-wallet/keyring-utils', () => ({
     KEYRING_TYPE: {
@@ -17,8 +38,13 @@ function setupApiOneKeyModule() {
     bindOneKeyEvents: mockBindOneKeyEvents,
   }));
   jest.doMock('../services/shared', () => ({
-    keyringService: {},
-    preferenceService: {},
+    keyringService: {
+      addNewAccount: mockAddNewAccount,
+      persistKeyringsForKeyring: mockPersistKeyringsForKeyring,
+    },
+    preferenceService: {
+      initCurrentAccount: mockInitCurrentAccount,
+    },
   }));
   jest.doMock('@onekeyfe/hd-ble-sdk', () => ({
     __esModule: true,
@@ -55,6 +81,9 @@ function setupApiOneKeyModule() {
     mockKeyring,
     mockGetKeyring,
     mockBindOneKeyEvents,
+    mockAddNewAccount,
+    mockInitCurrentAccount,
+    mockPersistKeyringsForKeyring,
   };
 }
 
@@ -83,5 +112,42 @@ describe('core/apis/onekey', () => {
     expect(result).toBe(mockKeyring);
     expect(mockGetKeyring).toHaveBeenCalledWith('OneKey Keyring');
     expect(mockBindOneKeyEvents).toHaveBeenCalledWith(mockKeyring);
+  });
+
+  it('binds OneKey events before scanning devices', async () => {
+    const { searchDevices, mockKeyring, mockBindOneKeyEvents } =
+      setupApiOneKeyModule();
+
+    await searchDevices();
+
+    expect(mockBindOneKeyEvents).toHaveBeenCalledWith(mockKeyring);
+    expect(mockKeyring.bridge.searchDevices).toHaveBeenCalled();
+  });
+
+  it('binds OneKey events before unlocking the device', async () => {
+    const { unlockDevice, mockKeyring, mockBindOneKeyEvents } =
+      setupApiOneKeyModule();
+
+    await unlockDevice();
+
+    expect(mockBindOneKeyEvents).toHaveBeenCalledWith(mockKeyring);
+    expect(mockKeyring.unlock).toHaveBeenCalled();
+  });
+
+  it('binds OneKey events before importing an address', async () => {
+    const {
+      importAddress,
+      mockKeyring,
+      mockBindOneKeyEvents,
+      mockAddNewAccount,
+      mockInitCurrentAccount,
+    } = setupApiOneKeyModule();
+
+    await importAddress(0);
+
+    expect(mockBindOneKeyEvents).toHaveBeenCalledWith(mockKeyring);
+    expect(mockKeyring.setAccountToUnlock).toHaveBeenCalledWith('0');
+    expect(mockAddNewAccount).toHaveBeenCalledWith(mockKeyring);
+    expect(mockInitCurrentAccount).toHaveBeenCalled();
   });
 });

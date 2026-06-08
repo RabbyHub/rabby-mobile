@@ -123,7 +123,7 @@ class OneKeyKeyring extends EventEmitter {
   }
 
   init() {
-    this.bridge.init();
+    return this.bridge.init();
   }
 
   _deviceConnectId?: string;
@@ -166,6 +166,8 @@ class OneKeyKeyring extends EventEmitter {
   }
 
   async trySearchDevice(needCancel = false) {
+    await this.init();
+
     const devicePromise = this._deviceConnectId
       ? this.bridge.getFeatures(this._deviceConnectId).then(res => {
           if (!res.success) {

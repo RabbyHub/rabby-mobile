@@ -123,6 +123,34 @@ describe('bindOneKeyEvents', () => {
     );
   });
 
+  it('still acknowledges repeated passphrase requests when the waiting modal already exists', () => {
+    const {
+      bindOneKeyEvents,
+      eventBus,
+      EVENTS,
+      mockCreateGlobalBottomSheetModal,
+    } = setupOneKeyEventsModule();
+    const keyring = createKeyring();
+    const passphraseRequest = {
+      payload: {
+        device: {
+          connectId: 'connect-id',
+        },
+      },
+    };
+
+    bindOneKeyEvents(keyring);
+    eventBus.emit(EVENTS.ONEKEY.REQUEST_PASSPHRASE, passphraseRequest);
+    eventBus.emit(EVENTS.ONEKEY.REQUEST_PASSPHRASE, passphraseRequest);
+
+    expect(keyring.bridge.receivePassphrase).toHaveBeenCalledTimes(2);
+    expect(keyring.bridge.receivePassphrase).toHaveBeenCalledWith({
+      passphrase: '',
+      switchOnDevice: true,
+    });
+    expect(mockCreateGlobalBottomSheetModal).toHaveBeenCalledTimes(1);
+  });
+
   it('binds each OneKey keyring instance once', () => {
     const { bindOneKeyEvents } = setupOneKeyEventsModule();
     const keyring = createKeyring();
