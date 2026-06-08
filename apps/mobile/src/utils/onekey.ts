@@ -3,8 +3,12 @@ import {
   MODAL_NAMES,
 } from '@/components2024/GlobalBottomSheetModal/types';
 import type { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
-import { KeyringInstance } from '@rabby-wallet/service-keyring';
-import { eventBus, EVENTS } from './events';
+import type { KeyringInstance } from '@rabby-wallet/service-keyring';
+import {
+  EVENT_ONEKEY_REQUEST_PASSPHRASE_ON_DEVICE,
+  eventBus,
+  EVENTS,
+} from './events';
 import { apisAppWin2024 } from '@/core/services2024/appWin';
 import { MODAL_ID } from '@/components2024/GlobalBottomSheetModal/types';
 
@@ -13,6 +17,7 @@ const ONLY_IN_DEVICE = true;
 
 let pinModalId: MODAL_ID | null = null;
 let passphraseModalId: MODAL_ID | null = null;
+const boundOneKeyKeyrings = new WeakSet<object>();
 
 function createPinModal(
   oneKeyKeyring: OneKeyKeyring,
@@ -84,22 +89,27 @@ function createPassphraseModal(
   );
 }
 
-export function bindOneKeyEvents(keyring: KeyringInstance) {
+export function bindOneKeyEvents(keyring: KeyringInstance | OneKeyKeyring) {
   const oneKeyKeyring = keyring as unknown as OneKeyKeyring;
+
+  if (boundOneKeyKeyrings.has(oneKeyKeyring)) {
+    return;
+  }
+  boundOneKeyKeyrings.add(oneKeyKeyring);
 
   oneKeyKeyring.init();
 
   eventBus.on(EVENTS.ONEKEY.REQUEST_PIN, e => {
     const connectId = e?.payload?.device?.connectId;
 
-    if (pinModalId) {
-      return;
-    }
-
     if (ONLY_IN_DEVICE) {
       oneKeyKeyring.bridge.receivePin({
         switchOnDevice: true,
       });
+
+      if (pinModalId) {
+        return;
+      }
 
       createPinModal(
         oneKeyKeyring,
@@ -109,21 +119,25 @@ export function bindOneKeyEvents(keyring: KeyringInstance) {
       return;
     }
 
+    if (pinModalId) {
+      return;
+    }
+
     createPinModal(oneKeyKeyring, connectId, MODAL_NAMES.ONEKEY_INPUT_PIN);
   });
 
   eventBus.on(EVENTS.ONEKEY.REQUEST_PASSPHRASE, e => {
     const connectId = e?.payload?.device?.connectId;
 
-    if (passphraseModalId) {
-      return;
-    }
-
     if (ONLY_IN_DEVICE) {
       oneKeyKeyring.bridge.receivePassphrase({
         passphrase: '',
         switchOnDevice: true,
       });
+
+      if (passphraseModalId) {
+        return;
+      }
 
       createPassphraseModal(
         oneKeyKeyring,
@@ -133,10 +147,28 @@ export function bindOneKeyEvents(keyring: KeyringInstance) {
       return;
     }
 
+    if (passphraseModalId) {
+      return;
+    }
+
     createPassphraseModal(
       oneKeyKeyring,
       connectId,
       MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE,
+    );
+  });
+
+  eventBus.on(EVENT_ONEKEY_REQUEST_PASSPHRASE_ON_DEVICE, e => {
+    const connectId = e?.payload?.device?.connectId;
+
+    if (passphraseModalId) {
+      return;
+    }
+
+    createPassphraseModal(
+      oneKeyKeyring,
+      connectId,
+      MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE,
     );
   });
 }

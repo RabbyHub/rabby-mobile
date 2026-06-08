@@ -56,7 +56,7 @@ type Device = {
 };
 
 export type Props = {
-  onSelect: (d: Device) => void;
+  onSelect: (d: Device) => void | Promise<void>;
   devices: Device[];
   errorCode?: string | number;
   currentDeviceId?: string;
