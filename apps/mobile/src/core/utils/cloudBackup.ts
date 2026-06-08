@@ -303,16 +303,15 @@ export const checkCloudBackupExists = async (
     return false;
   }
 
-  if (IS_ANDROID) {
-    await refreshAccessToken();
-  }
-
   const mnemonic = getMnemonicByAddress(address);
   if (!mnemonic) return false;
   // Derive the index-0 address (this is the backup filename)
   const index0Address = getAddressFromMnemonic(mnemonic, 0);
   const filePath = `${REMOTE_BACKUP_WALLET_DIR}/${index0Address}`;
   try {
+    if (IS_ANDROID) {
+      await refreshAccessToken();
+    }
     return await CloudStorage.exists(filePath);
   } catch (error) {
     console.error('Failed to check cloud backup existence:', error);
