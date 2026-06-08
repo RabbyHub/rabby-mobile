@@ -21,6 +21,7 @@ import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Account } from '@/core/services/preference';
 import { Text } from '@/components/Typography';
 import { getMessageStyles } from './styles';
+import type { Chain } from '@debank/common';
 
 export { getMessageStyles } from './styles';
 
@@ -32,6 +33,7 @@ const Actions = ({
   origin,
   originLogo,
   account,
+  chain,
 }: {
   data: ParsedTextActionData | null;
   engineResults: Result[];
@@ -40,6 +42,7 @@ const Actions = ({
   origin: string;
   originLogo?: string;
   account: Account;
+  chain?: Chain;
 }) => {
   const actionName = useMemo(() => {
     return getActionTypeText(data);
@@ -64,6 +67,7 @@ const Actions = ({
       <View style={actionStyles.actionWrapper}>
         <Card>
           <OriginInfo
+            chain={chain}
             origin={origin}
             originLogo={originLogo}
             engineResults={engineResults}

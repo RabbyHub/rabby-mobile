@@ -4,4 +4,5 @@
 
 export { default as SettingsScreen } from '@/screens/Settings/Settings';
 export { default as SetPasswordScreen } from '@/screens/ManagePassword/SetPassword';
+export { default as WalletConnectScreen } from '@/screens/Settings/WalletConnect';
 export { default as ProviderControllerTester } from '@/screens/ProviderControllerTester/ProviderControllerTester';

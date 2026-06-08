@@ -13,8 +13,17 @@ import {
   PasswordStatus,
 } from '@/core/apis/lock';
 import { getPwdStatus } from './useLock';
-import { ALLOWED_UL_DOMAINS } from '@/constant/universalLink';
+import {
+  ALLOWED_UL_DOMAINS,
+  UL_MATCH_PREFIX,
+  WALLETCONNECT_REDIRECT_PATH,
+} from '@/constant/universalLink';
 import { RefLikeObject } from '@/utils/type';
+import {
+  markWalletConnectDappRedirectPending,
+  pairWalletConnectUri,
+  parseWalletConnectUriFromLink,
+} from '@/core/walletconnect';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -33,13 +42,57 @@ function setNextAppLink(linkOrSetter: string | ((prev: string) => string)) {
 }
 
 type OnParseUrlAndProcessAction = (payload: {
-  type: 'open-dapp';
-  dappUrl: string;
+  type: 'open-dapp' | 'walletconnect-uri' | 'walletconnect-redirect';
+  dappUrl?: string;
+  uri?: string;
 }) => void;
+
+function isWalletConnectRedirectLink(appLink: string) {
+  const urlInfo = urlUtils.safeParseURL(appLink);
+  if (!urlInfo) {
+    return false;
+  }
+
+  if (urlInfo.protocol === 'rabby:') {
+    const target = urlInfo.hostname || urlInfo.pathname.replace(/^\/+/, '');
+    return target === WALLETCONNECT_REDIRECT_PATH || target === 'wc';
+  }
+
+  if (!ALLOWED_UL_DOMAINS.some(domain => appLink.startsWith(domain))) {
+    return false;
+  }
+
+  if (!urlInfo.pathname.startsWith(UL_MATCH_PREFIX)) {
+    return false;
+  }
+
+  const target = urlInfo.pathname
+    .slice(UL_MATCH_PREFIX.length)
+    .replace(/^\/+/, '')
+    .split('/')[0];
+  return target === WALLETCONNECT_REDIRECT_PATH || target === 'wc';
+}
+
 function parseActionAndProcessLink(
   appLink: string,
   onActions?: OnParseUrlAndProcessAction,
 ) {
+  const walletConnectUri = parseWalletConnectUriFromLink(appLink);
+  if (walletConnectUri) {
+    onActions?.({
+      type: 'walletconnect-uri',
+      uri: walletConnectUri,
+    });
+    return;
+  }
+
+  if (isWalletConnectRedirectLink(appLink)) {
+    onActions?.({
+      type: 'walletconnect-redirect',
+    });
+    return;
+  }
+
   if (!ALLOWED_UL_DOMAINS.some(domain => appLink.startsWith(domain))) return;
 
   const urlInfo = urlUtils.safeParseURL(appLink);
@@ -72,9 +125,26 @@ const toastTip = toastWithIcon(RcIconInfoForToast);
 const handleActions: OnParseUrlAndProcessAction = payload => {
   switch (payload.type) {
     case 'open-dapp':
+      if (!payload.dappUrl) {
+        return;
+      }
       browserApis.openTab(payload.dappUrl, {
         isNewTab: true,
       });
+      break;
+    case 'walletconnect-uri':
+      if (!payload.uri) {
+        return;
+      }
+      pairWalletConnectUri({
+        uri: payload.uri,
+        source: 'deeplink',
+      }).catch(() => {
+        // WalletConnectModalHost consumes the pairing error event once.
+      });
+      break;
+    case 'walletconnect-redirect':
+      markWalletConnectDappRedirectPending('metadata_redirect');
       break;
   }
 };
