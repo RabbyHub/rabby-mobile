@@ -16,7 +16,10 @@ import {
   getHistoryItemType,
 } from '@/screens/Transaction/components/utils';
 import { useTranslation } from 'react-i18next';
-import { HistoryList } from '@/screens/Transaction/components/HistoryGroupList';
+import {
+  HistoryList,
+  type HistoryListHeaderComponent,
+} from '@/screens/Transaction/components/HistoryGroupList';
 import { transactionHistoryService } from '@/core/services';
 import { openapi } from '@/core/request';
 import {
@@ -29,9 +32,8 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { Empty } from '@/screens/Transaction/components/Empty';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
-import { runOnJS, useAnimatedReaction } from 'react-native-reanimated';
 import { ITokenItem } from '@/store/tokens';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 
 interface IFetchHistory {
   last: number;
@@ -45,11 +47,13 @@ export const TokenDetailHistoryList = ({
   token,
   onRefresh,
   onReachTopStatusChange,
+  ListHeaderComponent,
 }: {
   finalAccount: KeyringAccountWithAlias | null;
   token: ITokenItem;
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
+  ListHeaderComponent?: HistoryListHeaderComponent;
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -71,23 +75,11 @@ export const TokenDetailHistoryList = ({
   );
 
   const historyListRef = useRef<{ scrollToTop: () => void }>(null);
-  const scrollY = useCurrentTabScrollY();
   const handleScroll = useCallback(
-    (currentScrollY: number) => {
-      if (currentScrollY <= 0) {
-        onReachTopStatusChange?.(true);
-      } else {
-        onReachTopStatusChange?.(false);
-      }
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      onReachTopStatusChange?.(event.nativeEvent.contentOffset.y <= 0);
     },
     [onReachTopStatusChange],
-  );
-
-  useAnimatedReaction(
-    () => scrollY.value,
-    currentScrollY => {
-      runOnJS(handleScroll)(currentScrollY);
-    },
   );
 
   const fetchData = async (
@@ -298,42 +290,44 @@ export const TokenDetailHistoryList = ({
   }, [fetchApiData]);
 
   return (
-    <>
-      {!loading && !displayList.length && noMore && (
-        <Empty
-          style={styles.emptyStyle}
-          title={
-            !isMyAddress
-              ? t('page.activities.signedTx.empty.title')
-              : t('page.activities.signedTx.empty.titleLastThreeMonths')
-          }
-        />
-      )}
-      <HistoryList
-        ref={historyListRef}
-        historySuccessList={historySuccessList}
-        list={displayList}
-        loading={false}
-        isNeedFetchFromApi={!isMyAddress}
-        tabList
-        firstFetchDone={false}
-        loadingMore={loadingMore}
-        refreshLoading={loading}
-        isForMultipleAddress={false}
-        account={finalAccount}
-        appendBottom={300}
-        style={styles.overwriteListContainer}
-        moreLoadingLength={5}
-        loadMore={() => {
-          // avoid exec multi times loadMore
-          if (loadingMore || noMore) {
-            return;
-          }
-          loadMore();
-        }}
-        onRefresh={refresh}
-      />
-    </>
+    <HistoryList
+      ref={historyListRef}
+      historySuccessList={historySuccessList}
+      list={displayList}
+      loading={false}
+      isNeedFetchFromApi={!isMyAddress}
+      firstFetchDone={false}
+      loadingMore={loadingMore}
+      refreshLoading={loading}
+      isForMultipleAddress={false}
+      account={finalAccount}
+      appendBottom={300}
+      style={styles.overwriteListContainer}
+      moreLoadingLength={5}
+      ListHeaderComponent={ListHeaderComponent}
+      emptyComponent={
+        !loading && !displayList.length && noMore ? (
+          <Empty
+            style={styles.emptyStyle}
+            title={
+              !isMyAddress
+                ? t('page.activities.signedTx.empty.title')
+                : t('page.activities.signedTx.empty.titleLastThreeMonths')
+            }
+          />
+        ) : null
+      }
+      onScroll={handleScroll}
+      scrollEventThrottle={16}
+      loadMore={() => {
+        // avoid exec multi times loadMore
+        if (loadingMore || noMore) {
+          return;
+        }
+        loadMore();
+      }}
+      onRefresh={refresh}
+    />
   );
 };
 
@@ -486,7 +480,6 @@ const getStyle = createGetStyles2024(ctx => ({
     fontWeight: '700',
   },
   emptyStyle: {
-    marginTop: 220,
     height: 150,
   },
   skeletonContainer: {

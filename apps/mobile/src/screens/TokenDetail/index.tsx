@@ -46,7 +46,6 @@ import { AccountSwitcher } from './components/InScreenSwitch';
 import RcIconRightArrowCC from '@/assets2024/icons/copyTrading/IconRightCC.svg';
 import { patchSingleToken } from '@/databases/sync/token';
 import { BG_FULL_HEIGHT } from '../Home/hooks/useBgSize';
-import { Tabs } from 'react-native-collapsible-tab-view';
 import { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
 import { IconRightCC } from './components/IconRightCC';
@@ -259,7 +258,7 @@ const TokenDetailContent = () => {
   }, [refreshBaseTokenInfo]);
   const renderHeader = useCallback(() => {
     return (
-      <View style={styles.balanceOverviewContainer}>
+      <View style={[styles.balanceOverviewContainer, styles.listHeader]}>
         <AccountSwitcher forScene="TokenDetail" disableSwitch={false} />
         <View style={styles.balanceOverviewContent}>
           <BalanceOverview usdValue={usdValue} amount={amountSum || 0} />
@@ -422,23 +421,13 @@ const TokenDetailContent = () => {
           }}
         />
       </Animated.View>
-      <Tabs.Container
-        renderTabBar={() => null}
-        tabBarHeight={0}
-        headerHeight={260}
-        renderHeader={renderHeader}
-        headerContainerStyle={styles.headerContainer}
-        containerStyle={styles.container}
-        pagerProps={{ scrollEnabled: !isAndroid }}>
-        <Tabs.Tab label="History" name="history">
-          <TokenDetailHistoryList
-            onRefresh={onRefresh}
-            onReachTopStatusChange={handleReachTopStatusChange}
-            finalAccount={effectiveAccount}
-            token={token}
-          />
-        </Tabs.Tab>
-      </Tabs.Container>
+      <TokenDetailHistoryList
+        onRefresh={onRefresh}
+        onReachTopStatusChange={handleReachTopStatusChange}
+        finalAccount={effectiveAccount}
+        token={token}
+        ListHeaderComponent={renderHeader}
+      />
 
       <View style={styles.bottomContainer}>
         <TokenDetailBottomBtns
@@ -484,18 +473,12 @@ const getStyle = createGetStyles2024(ctx => {
       width: ScreenWidth,
       overflow: 'hidden',
     },
-    headerContainer: {
-      backgroundColor: 'transparent',
-      shadowColor: 'transparent',
-      shadowOpacity: 0,
-      elevation: 0,
-    },
-    container: {
-      overflow: 'hidden',
-    },
     balanceOverviewContainer: {
       paddingLeft: 12,
       paddingRight: 12,
+    },
+    listHeader: {
+      marginHorizontal: -12,
     },
     headerRightContent: {
       flexDirection: 'row',
