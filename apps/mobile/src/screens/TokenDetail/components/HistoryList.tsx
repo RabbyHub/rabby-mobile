@@ -48,12 +48,14 @@ export const TokenDetailHistoryList = ({
   onRefresh,
   onReachTopStatusChange,
   ListHeaderComponent,
+  baseTokenRefreshing,
 }: {
   finalAccount: KeyringAccountWithAlias | null;
   token: ITokenItem;
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
   ListHeaderComponent?: HistoryListHeaderComponent;
+  baseTokenRefreshing?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -298,7 +300,7 @@ export const TokenDetailHistoryList = ({
       isNeedFetchFromApi={!isMyAddress}
       firstFetchDone={false}
       loadingMore={loadingMore}
-      refreshLoading={loading}
+      refreshLoading={loading || baseTokenRefreshing}
       isForMultipleAddress={false}
       account={finalAccount}
       appendBottom={300}
