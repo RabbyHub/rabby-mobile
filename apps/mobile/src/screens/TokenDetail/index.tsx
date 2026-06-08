@@ -137,6 +137,8 @@ const TokenDetailContent = () => {
     useRequest(fetchBaseTokenInfo, {
       manual: true,
     });
+  const [manualBaseTokenRefreshing, setManualBaseTokenRefreshing] =
+    React.useState(false);
 
   const {
     run: runDebouncedRefreshBaseTokenInfo,
@@ -253,8 +255,11 @@ const TokenDetailContent = () => {
     token: baseTokenInfo || token,
   });
 
-  const onRefresh = useCallback(async () => {
-    refreshBaseTokenInfo();
+  const onRefresh = useCallback(() => {
+    setManualBaseTokenRefreshing(true);
+    refreshBaseTokenInfo().finally(() => {
+      setManualBaseTokenRefreshing(false);
+    });
   }, [refreshBaseTokenInfo]);
   const renderHeader = useCallback(() => {
     return (
@@ -427,6 +432,7 @@ const TokenDetailContent = () => {
         finalAccount={effectiveAccount}
         token={token}
         ListHeaderComponent={renderHeader}
+        baseTokenRefreshing={manualBaseTokenRefreshing}
       />
 
       <View style={styles.bottomContainer}>
