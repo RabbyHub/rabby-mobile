@@ -46,6 +46,7 @@ import Animated, {
   interpolate,
   SharedValue,
   useAnimatedStyle,
+  useSharedValue,
 } from 'react-native-reanimated';
 import {
   apisHomeTabIndex,
@@ -63,6 +64,7 @@ import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
 import { useShallow } from 'zustand/react/shallow';
 import { MultiHeaderRightHistory } from '../MultiHeaderRightHistory';
+import AnimatedTickerText from '@/components/Animated/AnimatedTickerText';
 
 const HeaderHeight = 30;
 const handleSwitchToTokenTab = (index: number) => {
@@ -152,6 +154,10 @@ export function TabsTopHeader(): JSX.Element {
   const netWorth = useMemo(() => {
     return formatSmallCurrencyValueParts(totalBalance, { currency }).text;
   }, [currency, totalBalance]);
+  const netWorthValue = useSharedValue(netWorth);
+  useEffect(() => {
+    netWorthValue.value = netWorth;
+  }, [netWorth, netWorthValue]);
   const changePercent = useMemo(() => {
     if (!data.changePercent) {
       return '';
@@ -202,7 +208,18 @@ export function TabsTopHeader(): JSX.Element {
               <LoadingCircle />
             </View>
           ) : (
-            <Text style={styles.balanceTextBox}>{netWorth}</Text>
+            <AnimatedTickerText
+              value={netWorthValue}
+              maxLength={24}
+              lineHeight={22}
+              duration={320}
+              style={styles.balanceTextBox}
+              fontSizeByLength={{
+                maxFontSize: 18,
+                minFontSize: 18,
+                threshold: 24,
+              }}
+            />
           )}
           {!showBalanceLoadingWithoutLocal && changePercent ? (
             <Text
