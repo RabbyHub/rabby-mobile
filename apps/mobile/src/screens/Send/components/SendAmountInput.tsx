@@ -41,6 +41,7 @@ export type SendAmountInputMode = 'token' | 'usd';
 type SendAmountInputProps = {
   token: TokenItem;
   value?: string;
+  displayValueText?: string;
   unit: string;
   quoteValueText: string;
   quoteUnit: string;
@@ -132,6 +133,7 @@ const AMOUNT_MEASURE_CHARS = [
   '8',
   '9',
   '.',
+  '<',
 ];
 const QUOTE_MEASURE_CHARS = Array.from(
   new Set(
@@ -231,6 +233,7 @@ function getAmountVerticalLayout(
 export const SendAmountInput = ({
   token,
   value,
+  displayValueText,
   unit,
   quoteValueText,
   quoteUnit,
@@ -311,7 +314,10 @@ export const SendAmountInput = ({
     );
   }, [colors2024, styles.skeletonLinear]);
 
-  const displayInputValue = getDisplayAmountValue(inputValue);
+  const hasDisplayValueOverride = !!displayValueText;
+  const displayInputValue = getDisplayAmountValue(
+    displayValueText || inputValue,
+  );
   const displayUnitText = useMemo(() => getCompactUnitText(unit), [unit]);
   const displayQuoteUnitText = useMemo(
     () => getCompactUnitText(quoteUnit),
@@ -680,7 +686,7 @@ export const SendAmountInput = ({
   const shouldFixQuoteWidth =
     !!inputAreaWidth && quoteTextWidth >= quoteTextMaxWidth - 1;
 
-  const hasValue = !!inputValue;
+  const hasValue = !!inputValue || hasDisplayValueOverride;
   const showAmountSkeleton = !hasValue && token.amount > 0 && isEstimatingGas;
   const showStaticEmptyAmount =
     !hasValue && !isInputFocused && !showAmountSkeleton;
@@ -765,10 +771,33 @@ export const SendAmountInput = ({
                     fontSize: fittingFontSize,
                     width: inputWidth,
                   },
-                  showStaticEmptyAmount && styles.staticHiddenInput,
+                  (showStaticEmptyAmount || hasDisplayValueOverride) &&
+                    styles.staticHiddenInput,
                 ]}
                 {...amountInputProps}
               />
+              {hasDisplayValueOverride ? (
+                <Text
+                  pointerEvents="none"
+                  accessible={false}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={[
+                    styles.displayValueText,
+                    {
+                      top: amountTextTop,
+                      height: amountLineHeight,
+                      lineHeight: amountLineHeight,
+                      left: inputLeft,
+                      fontSize: fittingFontSize,
+                      width: inputWidth,
+                    },
+                  ]}>
+                  {displayValueText}
+                </Text>
+              ) : null}
               {IS_ANDROID ? (
                 <Text
                   ref={setUnitTextNodeRef}
@@ -982,6 +1011,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       overflow: 'hidden',
       minWidth: 1,
       zIndex: 1,
+    },
+    displayValueText: {
+      position: 'absolute',
+      left: 0,
+      fontWeight: '900',
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-title-1'],
+      padding: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
+      includeFontPadding: false,
+      overflow: 'hidden',
+      zIndex: 3,
     },
     unitText: {
       position: 'absolute',
