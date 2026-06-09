@@ -13,6 +13,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { createGetStyles2024 } from '@/utils/styles';
+import AnimatedTickerText from '@/components/Animated/AnimatedTickerText';
+import { useSharedValue } from 'react-native-reanimated';
 
 const PILLS_OPTIONS = [
   {
@@ -30,6 +32,50 @@ const PILLS_OPTIONS = [
 type PillOptionKey = (typeof PILLS_OPTIONS)[number]['key'];
 type RadioOptionKey = 'alpha' | 'beta';
 
+const TICKER_SAMPLE_VALUES = [
+  '$1,111.11',
+  '$8,888.88',
+  '<$0.01',
+  '-$12,345.67',
+  '$1.23K',
+  '$45.67M',
+  '$890.12B',
+  '$3.45T',
+];
+
+const TICKER_GLYPHS = [
+  '0',
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9',
+  ',',
+  '.',
+  '<',
+  '-',
+  '+',
+  '$',
+  '€',
+  '£',
+  '¥',
+  '₩',
+  '₹',
+  '₽',
+  '₺',
+  '฿',
+  '₫',
+  'K',
+  'M',
+  'B',
+  'T',
+  ' ',
+];
+
 function Section({
   title,
   children,
@@ -43,6 +89,80 @@ function Section({
       <Text style={styles.sectionTitle}>{title}</Text>
       {children}
     </View>
+  );
+}
+
+function TickerGlyphCell({ glyph }: { glyph: string }) {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const value = useSharedValue(glyph);
+
+  useEffect(() => {
+    value.value = glyph;
+  }, [glyph, value]);
+
+  return (
+    <View style={styles.tickerGlyphCell}>
+      <AnimatedTickerText
+        value={value}
+        maxLength={1}
+        duration={320}
+        lineHeight={46}
+        style={styles.tickerText}
+        containerStyle={styles.tickerGlyphValue}
+        fontSizeByLength={{
+          maxFontSize: 38,
+          minFontSize: 38,
+          threshold: 1,
+        }}
+      />
+      <Text style={styles.tickerGlyphLabel}>
+        {glyph === ' ' ? '[space]' : glyph}
+      </Text>
+    </View>
+  );
+}
+
+function AnimatedTickerTextShowCase() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const value = useSharedValue(TICKER_SAMPLE_VALUES[0]);
+
+  useEffect(() => {
+    let index = 0;
+    const timer = setInterval(() => {
+      index = (index + 1) % TICKER_SAMPLE_VALUES.length;
+      value.value = TICKER_SAMPLE_VALUES[index];
+    }, 1400);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, [value]);
+
+  return (
+    <>
+      <View style={styles.tickerPreviewBox}>
+        <AnimatedTickerText
+          value={value}
+          maxLength={16}
+          duration={320}
+          lineHeight={46}
+          style={styles.tickerText}
+          fontSizeByLength={{
+            maxFontSize: 38,
+            minFontSize: 34,
+            threshold: 9,
+          }}
+        />
+      </View>
+      <View style={styles.tickerGlyphGrid}>
+        {TICKER_GLYPHS.map(glyph => (
+          <TickerGlyphCell
+            key={glyph === ' ' ? 'space' : `glyph-${glyph}`}
+            glyph={glyph}
+          />
+        ))}
+      </View>
+    </>
   );
 }
 
@@ -200,6 +320,10 @@ function DevUIComponents2024ShowCase(): JSX.Element {
           </Text>
         </Section>
 
+        <Section title="AnimatedTickerText">
+          <AnimatedTickerTextShowCase />
+        </Section>
+
         <Section title="NextSearchBar">
           <NextSearchBar
             value={query}
@@ -292,6 +416,45 @@ const getStyles = createGetStyles2024(ctx =>
     },
     pillsContainer: {
       alignSelf: 'flex-start',
+    },
+    tickerPreviewBox: {
+      alignSelf: 'flex-start',
+      minWidth: 220,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      borderRadius: 10,
+      backgroundColor: ctx.colors2024['neutral-bg-2'],
+    },
+    tickerText: {
+      lineHeight: 46,
+      fontWeight: '900',
+      color: ctx.colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    tickerGlyphGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    tickerGlyphCell: {
+      width: 56,
+      height: 82,
+      borderRadius: 8,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: ctx.colors2024['neutral-line'],
+      backgroundColor: ctx.colors2024['neutral-bg-2'],
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+    },
+    tickerGlyphValue: {
+      height: 46,
+      justifyContent: 'center',
+    },
+    tickerGlyphLabel: {
+      fontSize: 11,
+      lineHeight: 14,
+      color: ctx.colors2024['neutral-secondary'],
     },
   }),
 );

@@ -32,8 +32,8 @@ import {
 } from '../hooks/singleHome';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { AnimateableText } from '@/components/Typography';
-import { getFontSizeByLength } from '@/utils/fontSize';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import AnimatedTickerText from '@/components/Animated/AnimatedTickerText';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -377,20 +377,6 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
     };
   }, [isLoss, data, currentIndex, colors2024, styles, loading, isInitialized]);
 
-  const netWorthFontStyle = useAnimatedStyle(() => {
-    const fs = getFontSizeByLength(formatNetWorth.value?.length ?? 0, {
-      maxFontSize: MAX_NETWORTH_FS,
-      minFontSize: MIN_NETWORTH_FS,
-      threshold: NETWORTH_FIT_LEN,
-    });
-    return { fontSize: fs };
-  });
-
-  const netWorthAnimatedProps = useAnimatedProps(() => {
-    return {
-      text: formatNetWorth.value,
-    };
-  }, [netWorth]);
   const percentChangeAnimatedProps = useAnimatedProps(() => {
     return {
       text: percentChange.value,
@@ -408,10 +394,18 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   return (
     <View style={[styles.charHeader]}>
       <View style={styles.leftContainer}>
-        <AnimateableText
-          {...makeTestIDProps(E2E_ID.home.singleBalanceValue)}
-          style={[styles.netWorth, netWorthFontStyle]}
-          animatedProps={netWorthAnimatedProps}
+        <AnimatedTickerText
+          value={formatNetWorth}
+          maxLength={16}
+          lineHeight={46}
+          duration={320}
+          style={styles.netWorth}
+          fontSizeByLength={{
+            maxFontSize: MAX_NETWORTH_FS,
+            minFontSize: MIN_NETWORTH_FS,
+            threshold: NETWORTH_FIT_LEN,
+          }}
+          containerProps={makeTestIDProps(E2E_ID.home.singleBalanceValue)}
         />
         <AnimateableText
           style={[styles.changeTime, animOpacityStyle]}
