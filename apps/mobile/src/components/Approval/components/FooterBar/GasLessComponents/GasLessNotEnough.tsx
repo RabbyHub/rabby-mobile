@@ -34,6 +34,7 @@ export const GasLessNotEnough: React.FC<{
   onDepositPopupVisibleChange?: (visible: boolean) => void;
   nativeTokenInsufficient?: boolean;
   inShowMore?: boolean;
+  fallbackDirectSignToOpenUI?: boolean;
 }> = ({
   gasAccountCost,
   gasAccountAddress,
@@ -45,6 +46,7 @@ export const GasLessNotEnough: React.FC<{
   onDepositPopupVisibleChange,
   nativeTokenInsufficient,
   inShowMore,
+  fallbackDirectSignToOpenUI,
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
@@ -165,6 +167,7 @@ export const GasLessNotEnough: React.FC<{
           await onWaitDepositResult?.(result);
         }}
         minDepositPrice={gasAccountCost?.gas_account_cost?.total_cost}
+        fallbackDirectSignToOpenUI={fallbackDirectSignToOpenUI}
       />
     </>
   );
