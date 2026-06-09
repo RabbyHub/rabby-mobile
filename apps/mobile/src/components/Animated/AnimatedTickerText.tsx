@@ -9,8 +9,10 @@ import {
   ViewStyle,
 } from 'react-native';
 import Animated, {
+  SharedValue,
   Easing,
   useAnimatedProps,
+  useDerivedValue,
   useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
@@ -42,15 +44,21 @@ type AnimatedTickerTextProps = {
   fontSizeByLength?: FontSizeByLengthOptions;
 };
 
+type TickerTextState = {
+  text: string;
+  isRtl: boolean;
+  fontSize: number | undefined;
+};
+
 type TickerColumnProps = {
   value: AnimatedStringValue;
+  textState: SharedValue<TickerTextState>;
   slotIndex: number;
   maxLength: number;
   duration: number;
   lineHeight: number;
   style?: StyleProp<TextStyle>;
   textProps?: TextProps;
-  fontSizeByLength?: FontSizeByLengthOptions;
 };
 
 const DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
@@ -209,15 +217,20 @@ const getTextFontSize = (text: string, options?: FontSizeByLengthOptions) => {
 const AnimatedTickerColumn = memo(
   ({
     value,
+    textState,
     slotIndex,
     maxLength,
     duration,
     lineHeight,
     style,
     textProps,
-    fontSizeByLength,
   }: TickerColumnProps) => {
-    const digitPosition = useSharedValue(0);
+    const initialDigit = getDigitIndex(
+      getSlotChar(value.value, slotIndex, maxLength),
+    );
+    const digitPosition = useSharedValue(
+      initialDigit >= 0 ? -initialDigit * lineHeight : 0,
+    );
 
     useEffect(() => {
       const initialDigit = getDigitIndex(
@@ -248,8 +261,8 @@ const AnimatedTickerColumn = memo(
     );
 
     const columnStyle = useAnimatedStyle(() => {
-      const text = value.value || '';
-      if (hasRtlText(text)) {
+      const { text, isRtl, fontSize: textFontSize } = textState.value;
+      if (isRtl) {
         return {
           width: 0,
           height: lineHeight,
@@ -258,7 +271,7 @@ const AnimatedTickerColumn = memo(
       }
 
       const char = getSlotChar(text, slotIndex, maxLength);
-      const fontSize = getTextFontSize(text, fontSizeByLength) ?? 38;
+      const fontSize = textFontSize ?? 38;
       return {
         width: withTiming(
           char ? fontSize * getCharWidthUnit(char) + GLYPH_SIDE_BEARING : 0,
@@ -270,7 +283,7 @@ const AnimatedTickerColumn = memo(
         height: lineHeight,
         opacity: char ? 1 : 0,
       };
-    }, [duration, fontSizeByLength, lineHeight, maxLength, slotIndex]);
+    }, [duration, lineHeight, maxLength, slotIndex]);
 
     const rollingStyle = useAnimatedStyle(() => {
       return {
@@ -290,7 +303,7 @@ const AnimatedTickerColumn = memo(
     }, [maxLength, slotIndex]);
 
     const textSizeStyle = useAnimatedStyle(() => {
-      const fontSize = getTextFontSize(value.value || '', fontSizeByLength);
+      const fontSize = textState.value.fontSize;
 
       if (!fontSize) {
         return {};
@@ -299,7 +312,7 @@ const AnimatedTickerColumn = memo(
       return {
         fontSize,
       };
-    }, [fontSizeByLength]);
+    });
 
     const staticTextProps = useAnimatedProps(() => {
       const char = getSlotChar(value.value, slotIndex, maxLength);
@@ -352,21 +365,35 @@ const AnimatedTickerText = ({
   containerProps,
   fontSizeByLength,
 }: AnimatedTickerTextProps) => {
+  const textState = useDerivedValue(() => {
+    const text = value.value || '';
+
+    return {
+      text,
+      isRtl: hasRtlText(text),
+      fontSize: getTextFontSize(text, fontSizeByLength),
+    };
+  }, [fontSizeByLength]);
+
   const fallbackAnimatedProps = useAnimatedProps(() => {
     return {
-      text: value.value || '',
+      text: textState.value.text,
     };
   });
 
   const fallbackStyle = useAnimatedStyle(() => {
-    const text = value.value || '';
-    const fontSize = getTextFontSize(text, fontSizeByLength);
+    const { isRtl, fontSize } = textState.value;
 
     return {
-      display: hasRtlText(text) ? 'flex' : 'none',
+      display: isRtl ? 'flex' : 'none',
       ...(fontSize ? { fontSize } : {}),
     };
-  }, [fontSizeByLength]);
+  });
+
+  const columns = React.useMemo(
+    () => Array.from({ length: maxLength }, (_, index) => index),
+    [maxLength],
+  );
 
   return (
     <View {...containerProps} style={[styles.row, containerStyle]}>
@@ -375,17 +402,17 @@ const AnimatedTickerText = ({
         style={[style, fallbackStyle, { lineHeight, height: lineHeight }]}
         animatedProps={fallbackAnimatedProps}
       />
-      {Array.from({ length: maxLength }).map((_, index) => (
+      {columns.map(index => (
         <AnimatedTickerColumn
           key={index}
           value={value}
+          textState={textState}
           slotIndex={index}
           maxLength={maxLength}
           duration={duration}
           lineHeight={lineHeight}
           style={style}
           textProps={textProps}
-          fontSizeByLength={fontSizeByLength}
         />
       ))}
     </View>
