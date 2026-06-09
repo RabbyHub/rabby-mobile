@@ -5,6 +5,9 @@ type MockWalletKit = {
   disconnectSession: jest.Mock;
 };
 
+const WALLETCONNECT_SETTINGS_KEY = '@walletConnectSettings';
+const ONE_SECOND_IN_MINUTES = 1 / 60;
+
 function makeWalletKit(topics: string[]): MockWalletKit {
   const sessions = Object.fromEntries(
     topics.map(topic => [topic, { topic }]),
@@ -18,24 +21,30 @@ function makeWalletKit(topics: string[]): MockWalletKit {
   };
 }
 
-function loadAutoDisconnectPolicy(input: {
-  storedEnabled?: boolean | null;
-  defaultEnabled?: boolean;
-  inactiveMs?: number;
-}) {
+function loadAutoDisconnectPolicy(
+  input: {
+    storedSettings?: unknown;
+    defaultEnabled?: boolean;
+    defaultInactiveMinutes?: number;
+  } = {},
+) {
   jest.resetModules();
-  let storedEnabled = input.storedEnabled;
+  const storage = new Map<string, unknown>();
+  if (typeof input.storedSettings !== 'undefined') {
+    storage.set(WALLETCONNECT_SETTINGS_KEY, input.storedSettings);
+  }
   jest.doMock('./constants', () => ({
     WalletConnectAutoDisconnect: input.defaultEnabled ?? true,
-    WALLETCONNECT_AUTO_DISCONNECT_INACTIVE_MS: input.inactiveMs ?? 1000,
+    WALLETCONNECT_AUTO_DISCONNECT_DEFAULT_INACTIVE_MINUTES:
+      input.defaultInactiveMinutes ?? ONE_SECOND_IN_MINUTES,
   }));
   jest.doMock('@/core/storage/mmkv', () => ({
     appStorage: {
-      getItem: jest.fn(() =>
-        typeof storedEnabled === 'boolean' ? storedEnabled : null,
+      getItem: jest.fn((key: string) =>
+        storage.has(key) ? storage.get(key) : null,
       ),
-      setItem: jest.fn((_key: string, value: boolean) => {
-        storedEnabled = value;
+      setItem: jest.fn((key: string, value: unknown) => {
+        storage.set(key, value);
       }),
     },
   }));
@@ -76,14 +85,50 @@ describe('walletconnect auto disconnect policy', () => {
   });
 
   it('uses true as the default auto-disconnect setting', async () => {
-    const policy = loadAutoDisconnectPolicy({ storedEnabled: null });
+    const policy = loadAutoDisconnectPolicy();
 
     expect(policy.getWalletConnectAutoDisconnectEnabled()).toBe(true);
   });
 
+  it('falls back to defaults when stored settings are invalid', async () => {
+    const policy = loadAutoDisconnectPolicy({
+      storedSettings: {
+        autoDisconnect: {
+          enabled: 'invalid',
+          inactiveMinutes: 0,
+        },
+      },
+      defaultInactiveMinutes: ONE_SECOND_IN_MINUTES,
+    });
+
+    expect(policy.getWalletConnectAutoDisconnectEnabled()).toBe(true);
+    expect(policy.getWalletConnectAutoDisconnectInactiveMinutes()).toBe(
+      ONE_SECOND_IN_MINUTES,
+    );
+  });
+
+  it('uses the persisted inactive minute setting', async () => {
+    const policy = loadAutoDisconnectPolicy({
+      storedSettings: {
+        autoDisconnect: {
+          enabled: true,
+          inactiveMinutes: 0.5,
+        },
+      },
+    });
+
+    expect(policy.getWalletConnectAutoDisconnectInactiveMinutes()).toBe(0.5);
+  });
+
   it('keeps current behavior when persisted auto-disconnect is false', async () => {
     jest.useFakeTimers();
-    const policy = loadAutoDisconnectPolicy({ storedEnabled: false });
+    const policy = loadAutoDisconnectPolicy({
+      storedSettings: {
+        autoDisconnect: {
+          enabled: false,
+        },
+      },
+    });
     const walletKit = makeWalletKit(['topic-1', 'topic-2']);
 
     await policy.disconnectRestoredWalletConnectSessionsForAutoDisconnect(
@@ -102,7 +147,7 @@ describe('walletconnect auto disconnect policy', () => {
   });
 
   it('disconnects restored sessions on startup when enabled', async () => {
-    const policy = loadAutoDisconnectPolicy({ storedEnabled: true });
+    const policy = loadAutoDisconnectPolicy();
     const { forgetWalletConnectAccountForTopic } =
       jest.requireMock('./accountSelection');
     const walletKit = makeWalletKit(['topic-1', 'topic-2']);
@@ -123,7 +168,7 @@ describe('walletconnect auto disconnect policy', () => {
   });
 
   it('replaces older sessions after a new session is approved', async () => {
-    const policy = loadAutoDisconnectPolicy({ storedEnabled: true });
+    const policy = loadAutoDisconnectPolicy();
     const { forgetWalletConnectAccountForTopic } =
       jest.requireMock('./accountSelection');
     const walletKit = makeWalletKit(['old-topic', 'new-topic']);
@@ -150,8 +195,7 @@ describe('walletconnect auto disconnect policy', () => {
     jest.setSystemTime(0);
 
     const policy = loadAutoDisconnectPolicy({
-      storedEnabled: true,
-      inactiveMs: 1000,
+      defaultInactiveMinutes: ONE_SECOND_IN_MINUTES,
     });
     const { forgetWalletConnectAccountForTopic } =
       jest.requireMock('./accountSelection');
@@ -174,13 +218,60 @@ describe('walletconnect auto disconnect policy', () => {
     expect(forgetWalletConnectAccountForTopic).toHaveBeenCalledWith('topic-1');
   });
 
+  it('uses configured inactive minutes for the inactivity window', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(0);
+
+    const policy = loadAutoDisconnectPolicy({
+      storedSettings: {
+        autoDisconnect: {
+          inactiveMinutes: ONE_SECOND_IN_MINUTES,
+        },
+      },
+      defaultInactiveMinutes: 60,
+    });
+    const walletKit = makeWalletKit(['topic-1']);
+
+    policy.recordWalletConnectSessionActivity(walletKit as never, 'topic-1');
+    jest.setSystemTime(999);
+    jest.advanceTimersByTime(999);
+    await flushTimers();
+    expect(walletKit.disconnectSession).not.toHaveBeenCalled();
+
+    jest.setSystemTime(1000);
+    jest.advanceTimersByTime(1);
+    await flushTimers();
+
+    expect(walletKit.disconnectSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('reschedules pending inactive sessions when the expiry changes', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(0);
+
+    const policy = loadAutoDisconnectPolicy({
+      defaultInactiveMinutes: 60,
+    });
+    const walletKit = makeWalletKit(['topic-1']);
+
+    policy.recordWalletConnectSessionActivity(walletKit as never, 'topic-1');
+    jest.setSystemTime(30 * 1000);
+    policy.setWalletConnectAutoDisconnectInactiveMinutes(
+      0.25,
+      walletKit as never,
+    );
+    jest.advanceTimersByTime(0);
+    await flushTimers();
+
+    expect(walletKit.disconnectSession).toHaveBeenCalledTimes(1);
+  });
+
   it('does not disconnect pending inactive sessions after the setting is disabled', async () => {
     jest.useFakeTimers();
     jest.setSystemTime(0);
 
     const policy = loadAutoDisconnectPolicy({
-      storedEnabled: true,
-      inactiveMs: 1000,
+      defaultInactiveMinutes: ONE_SECOND_IN_MINUTES,
     });
     const walletKit = makeWalletKit(['topic-1']);
 

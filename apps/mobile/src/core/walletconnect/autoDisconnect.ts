@@ -1,14 +1,14 @@
 import type { IWalletKit } from '@reown/walletkit';
 import { getSdkError } from '@walletconnect/utils';
 
-import { appStorage } from '@/core/storage/mmkv';
-import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
-import {
-  WALLETCONNECT_AUTO_DISCONNECT_INACTIVE_MS,
-  WalletConnectAutoDisconnect,
-} from './constants';
 import { forgetWalletConnectAccountForTopic } from './accountSelection';
 import { addWalletConnectLog } from './debugLog';
+import {
+  getWalletConnectAutoDisconnectEnabled as getAutoDisconnectEnabledSetting,
+  getWalletConnectAutoDisconnectInactiveMinutes as getAutoDisconnectInactiveMinutesSetting,
+  setWalletConnectAutoDisconnectEnabled as setAutoDisconnectEnabledSetting,
+  setWalletConnectAutoDisconnectInactiveMinutes as setAutoDisconnectInactiveMinutesSetting,
+} from './settings';
 import { syncWalletConnectSessionsFromClient } from './sessions';
 
 type WalletConnectAutoDisconnectReason = 'inactive' | 'startup' | 'replace';
@@ -17,17 +17,20 @@ type TimerRef = ReturnType<typeof setTimeout>;
 const lastActivityAtByTopic = new Map<string, number>();
 const disconnectTimersByTopic = new Map<string, TimerRef>();
 
-function isAutoDisconnectEnabled() {
-  const storedValue = appStorage.getItem(
-    APP_MMKV_WEAK_KEYS.WALLETCONNECT_AUTO_DISCONNECT_ENABLED,
-  );
-  return typeof storedValue === 'boolean'
-    ? storedValue
-    : WalletConnectAutoDisconnect;
+export function getWalletConnectAutoDisconnectEnabled() {
+  return getAutoDisconnectEnabledSetting();
 }
 
-export function getWalletConnectAutoDisconnectEnabled() {
-  return isAutoDisconnectEnabled();
+export function getWalletConnectAutoDisconnectInactiveMinutes() {
+  return getAutoDisconnectInactiveMinutesSetting();
+}
+
+function minutesToMs(minutes: number) {
+  return Math.max(1, Math.round(minutes * 60 * 1000));
+}
+
+function getWalletConnectAutoDisconnectInactiveMs() {
+  return minutesToMs(getWalletConnectAutoDisconnectInactiveMinutes());
 }
 
 function getActiveSessionTopics(walletKit: IWalletKit) {
@@ -56,16 +59,37 @@ function clearWalletConnectAutoDisconnectState() {
 }
 
 export function setWalletConnectAutoDisconnectEnabled(enabled: boolean) {
-  appStorage.setItem(
-    APP_MMKV_WEAK_KEYS.WALLETCONNECT_AUTO_DISCONNECT_ENABLED,
-    enabled,
-  );
+  setAutoDisconnectEnabledSetting(enabled);
   if (!enabled) {
     clearWalletConnectAutoDisconnectState();
   }
   addWalletConnectLog('sessions', 'auto-disconnect setting changed', {
     enabled,
   });
+}
+
+export function setWalletConnectAutoDisconnectInactiveMinutes(
+  minutes: number,
+  walletKit?: IWalletKit,
+) {
+  const settings = setAutoDisconnectInactiveMinutesSetting(minutes);
+  const inactiveMinutes = settings.autoDisconnect.inactiveMinutes;
+
+  addWalletConnectLog('sessions', 'auto-disconnect expiry changed', {
+    minutes: inactiveMinutes,
+    inactiveMs: minutesToMs(inactiveMinutes),
+  });
+
+  if (walletKit && getWalletConnectAutoDisconnectEnabled()) {
+    for (const topic of lastActivityAtByTopic.keys()) {
+      if (hasActiveSession(walletKit, topic)) {
+        scheduleInactiveDisconnect(walletKit, topic);
+      } else {
+        clearWalletConnectAutoDisconnectTopic(topic);
+        forgetWalletConnectAccountForTopic(topic);
+      }
+    }
+  }
 }
 
 async function disconnectWalletConnectSessionForPolicy(
@@ -112,8 +136,14 @@ function scheduleInactiveDisconnect(walletKit: IWalletKit, topic: string) {
     clearTimeout(currentTimer);
   }
 
+  const inactiveLimitMs = getWalletConnectAutoDisconnectInactiveMs();
+  const lastActivityAt = lastActivityAtByTopic.get(topic);
+  const inactiveMs =
+    typeof lastActivityAt === 'number' ? Date.now() - lastActivityAt : 0;
+  const delayMs = Math.max(0, inactiveLimitMs - inactiveMs);
+
   const timer = setTimeout(() => {
-    if (!isAutoDisconnectEnabled()) {
+    if (!getWalletConnectAutoDisconnectEnabled()) {
       clearWalletConnectAutoDisconnectTopic(topic);
       return;
     }
@@ -125,13 +155,25 @@ function scheduleInactiveDisconnect(walletKit: IWalletKit, topic: string) {
     }
 
     const inactiveMs = Date.now() - lastActivityAt;
-    if (inactiveMs < WALLETCONNECT_AUTO_DISCONNECT_INACTIVE_MS) {
+    if (inactiveMs < getWalletConnectAutoDisconnectInactiveMs()) {
       scheduleInactiveDisconnect(walletKit, topic);
       return;
     }
 
-    void disconnectWalletConnectSessionForPolicy(walletKit, topic, 'inactive');
-  }, WALLETCONNECT_AUTO_DISCONNECT_INACTIVE_MS);
+    disconnectWalletConnectSessionForPolicy(walletKit, topic, 'inactive').catch(
+      error => {
+        addWalletConnectLog(
+          'sessions',
+          'failed to run inactive auto-disconnect',
+          {
+            topic,
+            error,
+          },
+          'warn',
+        );
+      },
+    );
+  }, delayMs);
 
   disconnectTimersByTopic.set(topic, timer);
 }
@@ -140,7 +182,7 @@ export function recordWalletConnectSessionActivity(
   walletKit: IWalletKit,
   topic: string,
 ) {
-  if (!isAutoDisconnectEnabled()) {
+  if (!getWalletConnectAutoDisconnectEnabled()) {
     return;
   }
 
@@ -157,7 +199,7 @@ export function recordWalletConnectSessionActivity(
 export async function disconnectRestoredWalletConnectSessionsForAutoDisconnect(
   walletKit: IWalletKit,
 ) {
-  if (!isAutoDisconnectEnabled()) {
+  if (!getWalletConnectAutoDisconnectEnabled()) {
     return;
   }
 
@@ -171,7 +213,7 @@ export async function replaceWalletConnectSessionsForAutoDisconnect(
   walletKit: IWalletKit,
   activeTopic: string,
 ) {
-  if (!isAutoDisconnectEnabled()) {
+  if (!getWalletConnectAutoDisconnectEnabled()) {
     return;
   }
 
