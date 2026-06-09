@@ -30,4 +30,4 @@ export const WALLETCONNECT_NAMESPACE = 'eip155';
 export const WALLETCONNECT_LOG_LIMIT = 80;
 
 export const WalletConnectAutoDisconnect = true;
-export const WALLETCONNECT_AUTO_DISCONNECT_INACTIVE_MS = 60 * 60 * 1000;
+export const WALLETCONNECT_AUTO_DISCONNECT_DEFAULT_INACTIVE_MINUTES = 60;

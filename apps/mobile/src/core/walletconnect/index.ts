@@ -11,8 +11,13 @@ import {
 import {
   clearWalletConnectAutoDisconnectTopic,
   replaceWalletConnectSessionsForAutoDisconnect,
+  setWalletConnectAutoDisconnectInactiveMinutes as setWalletConnectAutoDisconnectInactiveMinutesForPolicy,
 } from './autoDisconnect';
-import { getWalletConnectClientOrThrow, initWalletConnect } from './client';
+import {
+  getWalletConnectClient,
+  getWalletConnectClientOrThrow,
+  initWalletConnect,
+} from './client';
 import { addWalletConnectLog } from './debugLog';
 import { getWalletConnectErrorMessage } from './error';
 import { pairWalletConnectUri } from './pairing';
@@ -47,6 +52,7 @@ export { shouldAutoRedirectToDapp } from './redirectPolicy';
 export { markWalletConnectDappRedirectPending } from './redirectState';
 export {
   getWalletConnectAutoDisconnectEnabled,
+  getWalletConnectAutoDisconnectInactiveMinutes,
   setWalletConnectAutoDisconnectEnabled,
 } from './autoDisconnect';
 export type {
@@ -171,4 +177,11 @@ export async function disconnectWalletConnectSession(topic: string) {
 export async function refreshWalletConnectSessions() {
   const walletKit = await initWalletConnect();
   syncWalletConnectSessionsFromClient(walletKit);
+}
+
+export function setWalletConnectAutoDisconnectInactiveMinutes(minutes: number) {
+  setWalletConnectAutoDisconnectInactiveMinutesForPolicy(
+    minutes,
+    getWalletConnectClient() || undefined,
+  );
 }

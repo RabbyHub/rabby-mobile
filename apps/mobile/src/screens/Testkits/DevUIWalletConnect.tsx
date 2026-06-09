@@ -24,8 +24,10 @@ import {
   disconnectWalletConnectSession,
   getWalletConnectDebugState,
   getWalletConnectAutoDisconnectEnabled,
+  getWalletConnectAutoDisconnectInactiveMinutes,
   pairWalletConnectUri,
   setWalletConnectAutoDisconnectEnabled,
+  setWalletConnectAutoDisconnectInactiveMinutes,
   subscribeWalletConnectDebugState,
 } from '@/core/walletconnect';
 import { getWalletConnectErrorMessage } from '@/core/walletconnect/error';
@@ -54,6 +56,10 @@ function formatTime(ts?: number) {
     return '-';
   }
   return new Date(ts).toLocaleString();
+}
+
+function formatMinuteValue(value: number) {
+  return String(Number.isInteger(value) ? value : Number(value.toFixed(4)));
 }
 
 function formatList(values: string[], empty = 'none') {
@@ -126,6 +132,50 @@ function AutoDisconnectSwitchRow({
         </Text>
       </View>
       <AppSwitch2024 circleSize={20} value={enabled} onValueChange={onChange} />
+    </View>
+  );
+}
+
+function AutoDisconnectExpiryRow({
+  value,
+  onChange,
+  onApply,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onApply: () => void;
+}) {
+  return (
+    <View style={styles.expiryRow}>
+      <View style={styles.flex1}>
+        <Text style={styles.labelText}>Auto Expiry Minutes</Text>
+        <Text style={styles.mutedText}>
+          Inactive WalletConnect sessions are disconnected after this duration.
+        </Text>
+      </View>
+      <View style={styles.expiryControlRow}>
+        <TextInput
+          value={value}
+          onChangeText={onChange}
+          placeholder="60"
+          placeholderTextColor="#8A94A6"
+          keyboardType="decimal-pad"
+          inputMode="decimal"
+          returnKeyType="done"
+          style={styles.expiryInput}
+          onSubmitEditing={onApply}
+        />
+        <Button
+          title="Apply"
+          type="primary"
+          height={40}
+          disabled={!value.trim()}
+          containerStyle={styles.expiryApplyButton}
+          buttonStyle={styles.smallButton}
+          titleStyle={styles.smallButtonTitle}
+          onPress={onApply}
+        />
+      </View>
     </View>
   );
 }
@@ -435,6 +485,9 @@ export default function WalletConnectLogScreen() {
   const [autoDisconnectEnabled, setAutoDisconnectEnabledState] = useState(
     getWalletConnectAutoDisconnectEnabled,
   );
+  const [autoDisconnectMinutesInput, setAutoDisconnectMinutesInput] = useState(
+    () => formatMinuteValue(getWalletConnectAutoDisconnectInactiveMinutes()),
+  );
   const walletConnectState = useSyncExternalStore(
     subscribeWalletConnectDebugState,
     getWalletConnectDebugState,
@@ -508,6 +561,24 @@ export default function WalletConnectLogScreen() {
     setAutoDisconnectEnabledState(enabled);
   }, []);
 
+  const handleApplyAutoDisconnectMinutes = useCallback(() => {
+    const minutes = Number(autoDisconnectMinutesInput.trim());
+    if (!Number.isFinite(minutes) || minutes <= 0) {
+      toast.error('Enter a positive minute value.');
+      return;
+    }
+
+    try {
+      setWalletConnectAutoDisconnectInactiveMinutes(minutes);
+      setAutoDisconnectMinutesInput(
+        formatMinuteValue(getWalletConnectAutoDisconnectInactiveMinutes()),
+      );
+      toast.success(`Auto expiry set to ${formatMinuteValue(minutes)} min`);
+    } catch (error: unknown) {
+      toast.error(getWalletConnectErrorMessage(error));
+    }
+  }, [autoDisconnectMinutesInput]);
+
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors['neutral-bg-1'] }]}
@@ -532,6 +603,11 @@ export default function WalletConnectLogScreen() {
         <AutoDisconnectSwitchRow
           enabled={autoDisconnectEnabled}
           onChange={handleAutoDisconnectChange}
+        />
+        <AutoDisconnectExpiryRow
+          value={autoDisconnectMinutesInput}
+          onChange={setAutoDisconnectMinutesInput}
+          onApply={handleApplyAutoDisconnectMinutes}
         />
       </Section>
       <ManualPairingSection
@@ -639,6 +715,29 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
     paddingTop: 2,
+  },
+  expiryRow: {
+    gap: 8,
+    paddingTop: 2,
+  },
+  expiryControlRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  expiryInput: {
+    flex: 1,
+    height: 40,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#D8DEE8',
+    backgroundColor: '#F7F9FC',
+    paddingHorizontal: 12,
+    color: '#192945',
+    fontSize: 13,
+  },
+  expiryApplyButton: {
+    width: 96,
   },
   labelText: {
     color: '#5D6B82',

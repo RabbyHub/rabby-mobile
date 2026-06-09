@@ -8,12 +8,12 @@ function serializeData(data: unknown) {
     return undefined;
   }
   if (typeof data === 'string') {
-    return data.slice(0, 2000);
+    return data;
   }
   try {
-    return JSON.stringify(data, null, 2).slice(0, 2000);
+    return JSON.stringify(data, null, 2);
   } catch (e) {
-    return String(data).slice(0, 2000);
+    return String(data);
   }
 }
 
