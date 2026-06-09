@@ -28,6 +28,13 @@ type NativeModulesStatic = {
 export const isTurboModuleEnabled = () =>
   (global as any).__turboModuleProxy != null;
 
+export const isBridgelessRuntimeEnabled = () =>
+  (globalThis as typeof globalThis & { RN$Bridgeless?: boolean })
+    .RN$Bridgeless === true;
+
+export const isTurboModuleRuntimeEnabled = () =>
+  isTurboModuleEnabled() || isBridgelessRuntimeEnabled();
+
 type EventEmitterDef = Record<string, EventEmitter<any>>;
 export type EventEmitterRecordToListeners<T extends EventEmitterDef> = {
   [K in keyof T]: Parameters<T[K]>[0];

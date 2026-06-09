@@ -126,7 +126,13 @@ import {
   dropAppDataSourceAndQuitApp,
 } from '@/databases/imports';
 import { AppCacheSizeText } from './components/SpecialText';
-import { IS_ANDROID, IS_IOS, isTurboModuleEnabled } from '@/core/native/utils';
+import {
+  IS_ANDROID,
+  IS_IOS,
+  isBridgelessRuntimeEnabled,
+  isTurboModuleEnabled,
+  isTurboModuleRuntimeEnabled,
+} from '@/core/native/utils';
 import { abortAllSyncTasks } from '@/databases/sync/_task';
 import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
@@ -226,7 +232,9 @@ function AlertBuildInfo({
     `rabbit_code_len: ${rabbitCodeLen ?? 'unknown'}`,
     '   ',
     `Hermes Engine: ${IS_HERMES_ENABLED ? 'Enabled' : 'Disabled'}`,
-    `Turbo Module: ${isTurboModuleEnabled() ? 'Enabled' : 'Disabled'}`,
+    `Turbo Module: ${isTurboModuleRuntimeEnabled() ? 'Enabled' : 'Disabled'}`,
+    `Turbo Proxy: ${isTurboModuleEnabled() ? 'Enabled' : 'Disabled'}`,
+    `Bridgeless: ${isBridgelessRuntimeEnabled() ? 'Enabled' : 'Disabled'}`,
     `Strip Console: ${IS_CONSOLE_STRIPPED ? 'Enabled' : 'Disabled'}`,
     `Worker Thread: ${isWorkerThreadRunning() ? 'Enabled' : 'Disabled'}`,
   ];
