@@ -4,7 +4,15 @@ import React, {
   useState,
   useSyncExternalStore,
 } from 'react';
-import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text, TextInput } from '@/components/Typography';
@@ -50,6 +58,27 @@ function formatTime(ts?: number) {
 
 function formatList(values: string[], empty = 'none') {
   return values.length ? values.join(', ') : empty;
+}
+
+function formatLogEntry(item: WalletConnectDebugLogEntry) {
+  return [
+    `#${item.id} ${new Date(item.ts).toISOString()} [${item.level}] ${
+      item.scope
+    }`,
+    item.message,
+    item.data,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+function formatLogEntries(log: WalletConnectDebugLogEntry[]) {
+  return log.map(formatLogEntry).join('\n\n');
+}
+
+function copyLogText(value: string) {
+  Clipboard.setString(value);
+  toast.success('Copied');
 }
 
 function Section({
@@ -309,29 +338,87 @@ function SessionsSection({
   );
 }
 
-function LogRow({ item }: { item: WalletConnectDebugLogEntry }) {
+function CopyButton({
+  onPress,
+  title = 'Copy',
+  style,
+}: {
+  onPress: () => void;
+  title?: string;
+  style?: StyleProp<ViewStyle>;
+}) {
   return (
-    <View style={styles.logRow}>
-      <Text style={styles.logTitle}>
-        {new Date(item.ts).toLocaleTimeString()} [{item.level}] {item.scope}
+    <TouchableOpacity
+      activeOpacity={0.7}
+      hitSlop={8}
+      style={[styles.copyButton, style]}
+      onPress={onPress}>
+      <Text style={styles.copyButtonText}>{title}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function LogRow({ item }: { item: WalletConnectDebugLogEntry }) {
+  const [expanded, setExpanded] = useState(false);
+  const canExpand = !!item.data;
+
+  return (
+    <TouchableOpacity
+      activeOpacity={canExpand ? 0.85 : 1}
+      disabled={!canExpand}
+      style={styles.logRow}
+      onPress={() => {
+        setExpanded(value => !value);
+      }}>
+      <View style={styles.logHeaderRow}>
+        <Text style={styles.logTitle}>
+          {new Date(item.ts).toLocaleTimeString()} [{item.level}] {item.scope}
+        </Text>
+        <CopyButton
+          onPress={() => {
+            copyLogText(formatLogEntry(item));
+          }}
+        />
+      </View>
+      <Text style={styles.mutedText} selectable>
+        {item.message}
       </Text>
-      <Text style={styles.mutedText}>{item.message}</Text>
       {item.data ? (
-        <Text style={styles.logData} numberOfLines={8}>
+        <Text
+          style={styles.logData}
+          numberOfLines={expanded ? undefined : 8}
+          selectable>
           {item.data}
         </Text>
       ) : null}
-    </View>
+    </TouchableOpacity>
   );
 }
 
 function RecentLogSection({ log }: { log: WalletConnectDebugLogEntry[] }) {
+  const visibleLog = log.slice(0, MAX_VISIBLE_LOGS);
+  const title =
+    visibleLog.length < log.length
+      ? `Recent Log (${visibleLog.length}/${log.length})`
+      : `Recent Log (${log.length})`;
+
   return (
-    <Section title="Recent Log">
+    <Section title={title}>
+      {log.length ? (
+        <View style={styles.sectionActionRow}>
+          <CopyButton
+            title="Copy All Logs"
+            style={styles.copyAllLogsButton}
+            onPress={() => {
+              copyLogText(formatLogEntries(log));
+            }}
+          />
+        </View>
+      ) : null}
       {!log.length ? (
         <EmptyText value="No events yet" />
       ) : (
-        log.map(item => <LogRow key={item.id} item={item} />)
+        visibleLog.map(item => <LogRow key={item.id} item={item} />)
       )}
     </Section>
   );
@@ -352,10 +439,6 @@ export default function WalletConnectLogScreen() {
     subscribeWalletConnectDebugState,
     getWalletConnectDebugState,
     getWalletConnectDebugState,
-  );
-  const visibleLog = useMemo(
-    () => walletConnectState.log.slice(0, MAX_VISIBLE_LOGS),
-    [walletConnectState.log],
   );
   const contentStyle = useMemo(
     () => [
@@ -464,7 +547,7 @@ export default function WalletConnectLogScreen() {
         onDisconnect={handleDisconnectSession}
         onDisconnectAll={handleDisconnectAllSessions}
       />
-      <RecentLogSection log={visibleLog} />
+      <RecentLogSection log={walletConnectState.log} />
     </ScrollView>
   );
 }
@@ -514,6 +597,10 @@ const styles = StyleSheet.create({
   sessionActionButton: {
     alignSelf: 'flex-end',
     width: 128,
+  },
+  copyAllLogsButton: {
+    width: 142,
+    minHeight: 36,
   },
   smallButton: {
     borderRadius: 8,
@@ -602,10 +689,34 @@ const styles = StyleSheet.create({
     padding: 10,
     gap: 5,
   },
+  logHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   logTitle: {
     color: '#192945',
     fontSize: 12,
     lineHeight: 16,
+    fontWeight: '700',
+    flex: 1,
+  },
+  copyButton: {
+    minWidth: 48,
+    minHeight: 24,
+    borderRadius: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#C9D3E2',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  copyButtonText: {
+    color: '#192945',
+    fontSize: 11,
+    lineHeight: 14,
     fontWeight: '700',
   },
   logData: {

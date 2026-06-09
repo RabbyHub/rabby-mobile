@@ -1,5 +1,6 @@
 import { buildApprovedNamespaces } from '@walletconnect/utils';
 import type { ProposalTypes, SessionTypes } from '@walletconnect/types';
+import type { CHAINS_ENUM } from '@/constant/chains';
 import type { Account } from '@/types/account';
 import {
   WALLETCONNECT_NAMESPACE,
@@ -7,11 +8,14 @@ import {
   WALLETCONNECT_SUPPORTED_METHODS,
 } from './constants';
 import {
+  accountToCaip10,
+  chainToCaip2,
   getRequestedChainsFromProposal,
   getRequestedMethodsFromProposal,
   getUnsupportedRequiredChainsFromProposal,
   getUnsupportedRequiredMethodsFromProposal,
   getWalletConnectAccounts,
+  getWalletConnectChainByCaip2,
   getWalletConnectSupportedChains,
 } from './chainAccount';
 import { addWalletConnectLog } from './debugLog';
@@ -146,8 +150,9 @@ export function setWalletConnectProposalError(
 export function buildApprovedNamespacesForAccount(input: {
   proposal: ProposalTypes.Struct;
   account: Account;
+  fallbackChain?: CHAINS_ENUM;
 }): SessionTypes.Namespaces {
-  return buildApprovedNamespaces({
+  const namespaces = buildApprovedNamespaces({
     proposal: input.proposal,
     supportedNamespaces: {
       [WALLETCONNECT_NAMESPACE]: {
@@ -158,4 +163,72 @@ export function buildApprovedNamespacesForAccount(input: {
       },
     },
   });
+
+  if (hasNamespacesData(namespaces)) {
+    return namespaces;
+  }
+
+  const fallbackNamespaces = buildOptionalEip155FallbackNamespace(input);
+  if (fallbackNamespaces) {
+    return fallbackNamespaces;
+  }
+
+  throw new Error('No supported WalletConnect namespace to approve.');
+}
+
+function hasNamespacesData(namespaces: SessionTypes.Namespaces) {
+  return Object.keys(namespaces).length > 0;
+}
+
+function intersectRequestedValues(requested: string[], supported: string[]) {
+  const supportedSet = new Set(supported);
+  return requested.filter(value => supportedSet.has(value));
+}
+
+function buildOptionalEip155FallbackNamespace(input: {
+  proposal: ProposalTypes.Struct;
+  account: Account;
+  fallbackChain?: CHAINS_ENUM;
+}): SessionTypes.Namespaces | null {
+  if (Object.keys(input.proposal.requiredNamespaces || {}).length) {
+    return null;
+  }
+
+  const optionalNamespace =
+    input.proposal.optionalNamespaces?.[WALLETCONNECT_NAMESPACE];
+  if (!optionalNamespace) {
+    return null;
+  }
+
+  const fallbackChain = input.fallbackChain
+    ? getWalletConnectSupportedChains()
+        .map(chainId => getWalletConnectChainByCaip2(chainId))
+        .find(chain => chain?.enum === input.fallbackChain)
+    : null;
+  if (!fallbackChain) {
+    return null;
+  }
+
+  const methods = intersectRequestedValues(
+    optionalNamespace.methods || [],
+    WALLETCONNECT_SUPPORTED_METHODS,
+  );
+  if (!methods.length) {
+    return null;
+  }
+
+  const events = intersectRequestedValues(
+    optionalNamespace.events || [],
+    WALLETCONNECT_SUPPORTED_EVENTS,
+  );
+  const chain = chainToCaip2(fallbackChain);
+
+  return {
+    [WALLETCONNECT_NAMESPACE]: {
+      chains: [chain],
+      methods,
+      events,
+      accounts: [accountToCaip10(input.account, fallbackChain)],
+    },
+  };
 }

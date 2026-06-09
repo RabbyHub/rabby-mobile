@@ -4,6 +4,7 @@ import type { SessionTypes } from '@walletconnect/types';
 import { ethErrors } from 'eth-rpc-errors';
 import { AppState, type AppStateStatus } from 'react-native';
 import {
+  chainToCaip2,
   getWalletConnectChainByCaip2,
   isSupportedWalletConnectMethod,
 } from './chainAccount';
@@ -12,6 +13,7 @@ import { addWalletConnectLog } from './debugLog';
 import { maybeRedirectToDapp } from './redirectPolicy';
 import {
   getFirstApprovedChain,
+  getWalletConnectApprovedChains,
   getWalletConnectSession,
   getWalletConnectSessionOrigin,
   resolveWalletConnectAccount,
@@ -39,6 +41,7 @@ const WALLETCONNECT_DIRECT_RESPONSE_METHODS = new Set([
   'eth_chainId',
   'net_version',
 ]);
+const WALLET_SWITCH_ETHEREUM_CHAIN_METHOD = 'wallet_switchEthereumChain';
 
 function requiresWalletConnectApproval(method: string) {
   return !WALLETCONNECT_DIRECT_RESPONSE_METHODS.has(method);
@@ -97,6 +100,34 @@ function normalizeRequestParams(params: unknown) {
   return [params];
 }
 
+function normalizeSwitchEthereumChainId(params: unknown) {
+  const [chainParams] = normalizeRequestParams(params);
+  if (!chainParams || typeof chainParams !== 'object') {
+    throw ethErrors.rpc.invalidParams('params is required but got []');
+  }
+
+  const rawChainId = (chainParams as { chainId?: unknown }).chainId;
+  if (typeof rawChainId === 'undefined' || rawChainId === null) {
+    throw ethErrors.rpc.invalidParams('chainId is required');
+  }
+
+  let chainId = NaN;
+  if (typeof rawChainId === 'number') {
+    chainId = rawChainId;
+  } else if (typeof rawChainId === 'string') {
+    const normalizedChainId = rawChainId.trim().toLowerCase();
+    chainId = normalizedChainId.startsWith('0x')
+      ? Number.parseInt(normalizedChainId, 16)
+      : Number(normalizedChainId);
+  }
+
+  if (!Number.isInteger(chainId) || chainId <= 0) {
+    throw ethErrors.rpc.invalidParams('chainId is invalid');
+  }
+
+  return chainId;
+}
+
 function getRpcError(error: unknown) {
   const record =
     typeof error === 'object' && error !== null
@@ -131,11 +162,52 @@ function getRequestChain(
   );
 }
 
+async function switchWalletConnectEthereumChain(input: {
+  walletKit: IWalletKit;
+  topic: string;
+  session: SessionTypes.Struct;
+  params: unknown;
+}) {
+  const targetChainId = normalizeSwitchEthereumChainId(input.params);
+  const targetChain = getWalletConnectChainByCaip2(`eip155:${targetChainId}`);
+
+  if (!targetChain) {
+    throw ethErrors.provider.custom({
+      code: 4902,
+      message: `WalletConnect chain is not supported: eip155:${targetChainId}`,
+    });
+  }
+
+  const targetCaip2 = chainToCaip2(targetChain);
+  if (!getWalletConnectApprovedChains(input.session).includes(targetCaip2)) {
+    throw ethErrors.provider.custom({
+      code: 4902,
+      message: `WalletConnect chain is not approved for this session: ${targetCaip2}`,
+    });
+  }
+
+  await input.walletKit.emitSessionEvent({
+    topic: input.topic,
+    chainId: targetCaip2,
+    event: {
+      name: 'chainChanged',
+      data: targetCaip2,
+    },
+  });
+  addWalletConnectLog('request', 'wallet_switchEthereumChain emitted', {
+    topic: input.topic,
+    chainId: targetCaip2,
+  });
+
+  return null;
+}
+
 async function executeSessionRequest(input: {
+  walletKit: IWalletKit;
   event: WalletKitTypes.EventArguments['session_request'];
   session: SessionTypes.Struct;
 }) {
-  const { event, session } = input;
+  const { event, session, walletKit } = input;
   const { method, params } = event.params.request;
 
   if (!method || !isSupportedWalletConnectMethod(method)) {
@@ -169,6 +241,14 @@ async function executeSessionRequest(input: {
   }
   if (method === 'net_version') {
     return chain.network;
+  }
+  if (method === WALLET_SWITCH_ETHEREUM_CHAIN_METHOD) {
+    return switchWalletConnectEthereumChain({
+      walletKit,
+      topic: event.topic,
+      session,
+      params,
+    });
   }
 
   await waitForAppActiveBeforeApproval(method);
@@ -206,7 +286,10 @@ export async function handleWalletConnectSessionRequest(input: {
   const session = getWalletConnectSession(walletKit, event.topic);
   const method = event.params.request.method;
   const shouldRedirectAfterResponse =
-    !!session && !!method && requiresWalletConnectApproval(method);
+    !!session &&
+    !!method &&
+    isSupportedWalletConnectMethod(method) &&
+    requiresWalletConnectApproval(method);
   let response: WalletConnectJsonRpcResponse;
 
   addWalletConnectLog('request', 'session_request received', {
@@ -227,7 +310,7 @@ export async function handleWalletConnectSessionRequest(input: {
     response = {
       id: event.id,
       jsonrpc: '2.0',
-      result: await executeSessionRequest({ event, session }),
+      result: await executeSessionRequest({ walletKit, event, session }),
     };
   } catch (error) {
     response = {

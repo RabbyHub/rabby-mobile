@@ -13,6 +13,7 @@ import { clearWalletConnectProposalPairingState } from './state';
 import { syncWalletConnectSessionsFromClient } from './sessions';
 import { replaceWalletConnectSessionsForAutoDisconnect } from './autoDisconnect';
 import { maybeRedirectToDapp } from './redirectPolicy';
+import { rememberWalletConnectAccountForOrigin } from './accountSelection';
 
 const walletKit = {
   approveSession: jest.fn(),
@@ -35,6 +36,11 @@ jest.mock('@walletconnect/utils', () => ({
 jest.mock('./autoDisconnect', () => ({
   clearWalletConnectAutoDisconnectTopic: jest.fn(),
   replaceWalletConnectSessionsForAutoDisconnect: jest.fn(),
+}));
+
+jest.mock('./accountSelection', () => ({
+  getWalletConnectOriginFromUrl: jest.fn(() => 'https://example.com'),
+  rememberWalletConnectAccountForOrigin: jest.fn(),
 }));
 
 jest.mock('./chainAccount', () => ({
@@ -124,13 +130,26 @@ describe('walletconnect proposal lifecycle', () => {
     await approveWalletConnectProposal({
       proposalId: 1,
       account,
+      fallbackChain: 'ETH' as never,
     });
 
+    expect(buildApprovedNamespacesForAccount).toHaveBeenCalledWith({
+      proposal: {
+        requiredNamespaces: {},
+        optionalNamespaces: {},
+      },
+      account,
+      fallbackChain: 'ETH',
+    });
     expect(clearWalletConnectProposal).toHaveBeenCalledWith(1);
     expect(clearWalletConnectProposalPairingState).toHaveBeenCalledTimes(1);
     expect(replaceWalletConnectSessionsForAutoDisconnect).toHaveBeenCalledWith(
       walletKit,
       'topic-1',
+    );
+    expect(rememberWalletConnectAccountForOrigin).toHaveBeenCalledWith(
+      'https://example.com',
+      account,
     );
     expect(syncWalletConnectSessionsFromClient).toHaveBeenCalledWith(walletKit);
     expect(maybeRedirectToDapp).toHaveBeenCalledWith({

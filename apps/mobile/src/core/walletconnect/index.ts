@@ -1,6 +1,11 @@
 import { getSdkError } from '@walletconnect/utils';
 import type { SessionTypes } from '@walletconnect/types';
+import type { CHAINS_ENUM } from '@/constant/chains';
 import type { Account } from '@/types/account';
+import {
+  getWalletConnectOriginFromUrl,
+  rememberWalletConnectAccountForOrigin,
+} from './accountSelection';
 import {
   clearWalletConnectAutoDisconnectTopic,
   replaceWalletConnectSessionsForAutoDisconnect,
@@ -56,6 +61,7 @@ function getSdkErrorCompat(key: WalletConnectSdkErrorKey) {
 export async function approveWalletConnectProposal(input: {
   proposalId: number;
   account: Account;
+  fallbackChain?: CHAINS_ENUM;
 }) {
   const walletKit = getWalletConnectClientOrThrow();
   const pending = getWalletConnectPendingProposal(input.proposalId);
@@ -68,6 +74,7 @@ export async function approveWalletConnectProposal(input: {
     namespaces = buildApprovedNamespacesForAccount({
       proposal: pending.proposal,
       account: input.account,
+      fallbackChain: input.fallbackChain,
     });
   } catch (error: unknown) {
     const message = getWalletConnectErrorMessage(error);
@@ -104,6 +111,12 @@ export async function approveWalletConnectProposal(input: {
       id: input.proposalId,
       namespaces,
     });
+    rememberWalletConnectAccountForOrigin(
+      getWalletConnectOriginFromUrl(
+        pending.proposal.proposer?.metadata?.url || '',
+      ),
+      input.account,
+    );
     clearWalletConnectProposal(input.proposalId);
     clearWalletConnectProposalPairingState();
     await replaceWalletConnectSessionsForAutoDisconnect(

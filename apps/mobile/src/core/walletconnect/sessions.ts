@@ -3,6 +3,7 @@ import type { IWalletKit } from '@reown/walletkit';
 import type { SessionTypes } from '@walletconnect/types';
 import { findChain } from '@/utils/chain';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import {
   getAddressFromCaip10,
   getChainsFromNamespaces,
@@ -25,7 +26,7 @@ function getMetadata(session: SessionTypes.Struct) {
 
 export function getWalletConnectSessionOrigin(session: SessionTypes.Struct) {
   const metadata = getMetadata(session);
-  return safeGetOrigin(metadata.url || '') || 'https://walletconnect.localhost';
+  return safeGetOrigin(metadata.url || '') || metadata.url || '';
 }
 
 function getApprovedAccounts(session: SessionTypes.Struct) {
@@ -44,7 +45,7 @@ function getApprovedAddresses(session: SessionTypes.Struct) {
   return getApprovedAccounts(session).map(getAddressFromCaip10).filter(Boolean);
 }
 
-function getApprovedChains(session: SessionTypes.Struct) {
+export function getWalletConnectApprovedChains(session: SessionTypes.Struct) {
   const chainsFromNamespaces = getChainsFromNamespaces(session.namespaces);
   if (chainsFromNamespaces.length) {
     return chainsFromNamespaces;
@@ -62,7 +63,7 @@ export function buildWalletConnectSessionViewModel(
   return {
     topic: session.topic,
     peer: getMetadata(session),
-    chains: getApprovedChains(session),
+    chains: getWalletConnectApprovedChains(session),
     methods: getMethodsFromNamespaces(session.namespaces),
     accounts: getApprovedAccounts(session),
     selectedAccount: selectedAddress
@@ -100,9 +101,8 @@ export async function resolveWalletConnectAccount(
   try {
     const accounts = await getAllAccountsToDisplay();
     return (
-      accounts.find(
-        account =>
-          account.address.toLowerCase() === approvedAddress.toLowerCase(),
+      accounts.find(account =>
+        isSameAddress(account.address, approvedAddress),
       ) || null
     );
   } catch (error) {
@@ -118,7 +118,7 @@ export async function resolveWalletConnectAccount(
 
 export function getFirstApprovedChain(session: SessionTypes.Struct) {
   return (
-    getApprovedChains(session)
+    getWalletConnectApprovedChains(session)
       .map(chainId => findChain({ id: Number(chainId.split(':')[1]) }))
       .find(Boolean) || null
   );

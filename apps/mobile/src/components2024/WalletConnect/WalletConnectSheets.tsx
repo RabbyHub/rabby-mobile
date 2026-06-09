@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
-import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import {
   ContextActionData,
@@ -26,12 +25,15 @@ import { SecurityEngineLevel } from '@/constant/security';
 import { AppColors2024Variants } from '@/constant/theme';
 import { apiSecurityEngine } from '@/core/apis';
 import { openapi } from '@/core/request';
-import { preferenceService } from '@/core/services';
-import { useMyAccounts } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import i18n from '@/utils/i18n';
+import {
+  getWalletConnectOriginFromUrl,
+  selectWalletConnectAccountForOrigin,
+} from '@/core/walletconnect/accountSelection';
 import type { WalletConnectProposalViewModel } from '@/core/walletconnect/types';
 import type { Account } from '@/types/account';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -93,34 +95,8 @@ const createSecurityLevelTipColor = (colors: AppColors2024Variants) => ({
   },
 });
 
-function getAccountKey(
-  account: Pick<Account, 'address' | 'brandName' | 'type'>,
-) {
-  return [
-    account.type,
-    account.brandName || '',
-    account.address.toLowerCase(),
-  ].join(':');
-}
-
-function findAccountByKey(
-  accounts: Account[],
-  target: Pick<Account, 'address' | 'brandName' | 'type'> | null | undefined,
-) {
-  if (!target) {
-    return null;
-  }
-
-  const targetKey = getAccountKey(target);
-  return accounts.find(account => getAccountKey(account) === targetKey) || null;
-}
-
 function getProposalOrigin(proposal: WalletConnectProposalViewModel) {
-  return (
-    safeGetOrigin(proposal.proposer.url || '') ||
-    proposal.proposer.url ||
-    'https://walletconnect.localhost'
-  );
+  return getWalletConnectOriginFromUrl(proposal.proposer.url);
 }
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
@@ -249,15 +225,16 @@ export function WalletConnectConnectSheet({
   onReject,
 }: {
   proposal: WalletConnectProposalViewModel;
-  onApprove: (account: Account) => Promise<void>;
+  onApprove: (account: Account, fallbackChain: CHAINS_ENUM) => Promise<void>;
   onReject: () => Promise<void>;
 }) {
   const { t } = useTranslation();
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
-  const { accounts } = useMyAccounts();
-  const [selectedAccount, setSelectedAccount] = useState<Account | null>(() => {
-    return preferenceService.getFallbackAccount();
-  });
+  const { accounts } = useAccounts();
+  const origin = useMemo(() => getProposalOrigin(proposal), [proposal]);
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(() =>
+    selectWalletConnectAccountForOrigin(origin, accounts),
+  );
   const [defaultChain, setDefaultChain] = useState(CHAINS_ENUM.ETH);
   const [busy, setBusy] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -280,7 +257,6 @@ export function WalletConnectConnectSheet({
     ignored: boolean;
   } | null>(null);
 
-  const origin = useMemo(() => getProposalOrigin(proposal), [proposal]);
   const selectedAccountAddress = selectedAccount?.address || '';
   const dappIcon = proposal.proposer.icons?.[0] || '';
   const walletConnectBlockText = getWalletConnectBlockText(proposal, t);
@@ -290,14 +266,10 @@ export function WalletConnectConnectSheet({
   );
 
   useEffect(() => {
-    if (findAccountByKey(accounts, selectedAccount)) {
-      return;
-    }
-
-    const fallbackAccount = preferenceService.getFallbackAccount();
-    const matchedFallback = findAccountByKey(accounts, fallbackAccount);
-    setSelectedAccount(matchedFallback || accounts[0] || null);
-  }, [accounts, selectedAccount]);
+    setSelectedAccount(current => {
+      return selectWalletConnectAccountForOrigin(origin, accounts, current);
+    });
+  }, [accounts, origin]);
 
   useEffect(() => {
     if (!selectedAccountAddress) {
@@ -666,7 +638,7 @@ export function WalletConnectConnectSheet({
 
     setBusy(true);
     try {
-      await onApprove(selectedAccount);
+      await onApprove(selectedAccount, defaultChain);
     } finally {
       setBusy(false);
     }

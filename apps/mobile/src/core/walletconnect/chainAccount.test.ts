@@ -64,11 +64,11 @@ describe('walletconnect chain account mapping', () => {
       getUnsupportedRequiredMethodsFromProposal({
         requiredNamespaces: {
           eip155: {
-            methods: ['eth_sign', 'personal_sign'],
+            methods: ['eth_sign', 'personal_sign', 'wallet_addEthereumChain'],
           },
         },
       }),
-    ).toEqual(['eth_sign']);
+    ).toEqual(['eth_sign', 'wallet_addEthereumChain']);
   });
 
   it('does not block unsupported optional methods', () => {
@@ -99,6 +99,7 @@ describe('walletconnect chain account mapping', () => {
       'eth_signTypedData_v3',
       'eth_signTypedData_v4',
       'eth_sendTransaction',
+      'wallet_switchEthereumChain',
     ]);
   });
 });
