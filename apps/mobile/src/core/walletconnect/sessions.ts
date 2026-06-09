@@ -1,7 +1,6 @@
 import { getAllAccountsToDisplay } from '@/core/apis/account';
 import type { IWalletKit } from '@reown/walletkit';
 import type { SessionTypes } from '@walletconnect/types';
-import { findChain } from '@/utils/chain';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import {
@@ -60,6 +59,40 @@ export function getWalletConnectApprovedChains(session: SessionTypes.Struct) {
   return getApprovedAccounts(session)
     .map(account => account.split(':').slice(0, 2).join(':'))
     .filter(Boolean);
+}
+
+function namespaceApprovesChain(input: {
+  namespaceKey: string;
+  namespace?: SessionTypes.Namespace;
+  chainId: string;
+}) {
+  if (input.namespaceKey === input.chainId) {
+    return true;
+  }
+
+  if (input.namespace?.chains?.includes(input.chainId)) {
+    return true;
+  }
+
+  return !!input.namespace?.accounts?.some(account =>
+    account.startsWith(`${input.chainId}:`),
+  );
+}
+
+export function isWalletConnectMethodApproved(
+  session: SessionTypes.Struct,
+  chainId: string,
+  method: string,
+) {
+  return Object.entries(session.namespaces || {}).some(
+    ([namespaceKey, namespace]) =>
+      !!namespace?.methods?.includes(method) &&
+      namespaceApprovesChain({
+        namespaceKey,
+        namespace,
+        chainId,
+      }),
+  );
 }
 
 export function buildWalletConnectSessionViewModel(
@@ -129,12 +162,4 @@ export async function resolveWalletConnectAccount(
     );
     return null;
   }
-}
-
-export function getFirstApprovedChain(session: SessionTypes.Struct) {
-  return (
-    getWalletConnectApprovedChains(session)
-      .map(chainId => findChain({ id: Number(chainId.split(':')[1]) }))
-      .find(Boolean) || null
-  );
 }

@@ -87,10 +87,10 @@ jest.mock('./autoDisconnect', () => ({
 }));
 
 jest.mock('./sessions', () => ({
-  getFirstApprovedChain: jest.fn(() => chain),
   getWalletConnectApprovedChains: jest.fn(() => ['eip155:1']),
   getWalletConnectSession: jest.fn(() => session),
   getWalletConnectSessionOrigin: jest.fn(() => 'https://example.com'),
+  isWalletConnectMethodApproved: jest.fn(() => true),
   resolveWalletConnectAccount: jest.fn(() => account),
   syncWalletConnectSessionsFromClient: jest.fn(),
 }));
@@ -104,6 +104,8 @@ const { maybeRedirectToDapp } =
 const { getWalletConnectApprovedChains } =
   require('./sessions') as typeof import('./sessions');
 const { getWalletConnectSession } =
+  require('./sessions') as typeof import('./sessions');
+const { isWalletConnectMethodApproved } =
   require('./sessions') as typeof import('./sessions');
 
 function makeEvent(method: string) {
@@ -128,6 +130,7 @@ describe('walletconnect request bridge', () => {
     walletKit.respondSessionRequest.mockReset();
     jest.mocked(getWalletConnectSession).mockReturnValue(session as never);
     jest.mocked(getWalletConnectApprovedChains).mockReturnValue(['eip155:1']);
+    jest.mocked(isWalletConnectMethodApproved).mockReturnValue(true);
     jest.mocked(maybeRedirectToDapp).mockReset();
     jest.mocked(maybeRedirectToDapp).mockResolvedValue(false);
     mockAppState.currentState = 'active';
@@ -196,7 +199,7 @@ describe('walletconnect request bridge', () => {
       nativeRedirect: undefined,
       iosNoRedirectToast: {
         variant: 'success',
-        message: 'Transaction sent! Go back to your browser',
+        message: 'Transaction sent! Please return to the Dapp.',
       },
     });
   });
@@ -217,7 +220,7 @@ describe('walletconnect request bridge', () => {
       nativeRedirect: undefined,
       iosNoRedirectToast: {
         variant: 'error',
-        message: 'Transaction canceled! Go back to your browser',
+        message: 'Transaction canceled! Please return to the Dapp.',
       },
     });
   });
@@ -267,7 +270,7 @@ describe('walletconnect request bridge', () => {
       chainId: 'eip155:1',
       event: {
         name: 'chainChanged',
-        data: 'eip155:1',
+        data: '0x1',
       },
     });
     expect(walletKit.respondSessionRequest).toHaveBeenCalledWith({
@@ -309,6 +312,56 @@ describe('walletconnect request bridge', () => {
           code: 4902,
           message:
             'WalletConnect chain is not approved for this session: eip155:5',
+        }),
+      },
+    });
+  });
+
+  it('rejects requests when the event chain is not approved for the session', async () => {
+    await handleWalletConnectSessionRequest({
+      walletKit: walletKit as never,
+      event: {
+        ...makeEvent('personal_sign'),
+        params: {
+          ...makeEvent('personal_sign').params,
+          chainId: 'eip155:5',
+        },
+      } as never,
+    });
+
+    expect(sendRequest).not.toHaveBeenCalled();
+    expect(walletKit.respondSessionRequest).toHaveBeenCalledWith({
+      topic: 'topic-1',
+      response: {
+        id: 1,
+        jsonrpc: '2.0',
+        error: expect.objectContaining({
+          code: 4902,
+          message:
+            'WalletConnect chain is not approved for this session: eip155:5',
+        }),
+      },
+    });
+  });
+
+  it('rejects requests when the method is not approved for the session chain', async () => {
+    jest.mocked(isWalletConnectMethodApproved).mockReturnValue(false);
+
+    await handleWalletConnectSessionRequest({
+      walletKit: walletKit as never,
+      event: makeEvent('personal_sign') as never,
+    });
+
+    expect(sendRequest).not.toHaveBeenCalled();
+    expect(walletKit.respondSessionRequest).toHaveBeenCalledWith({
+      topic: 'topic-1',
+      response: {
+        id: 1,
+        jsonrpc: '2.0',
+        error: expect.objectContaining({
+          code: 4100,
+          message:
+            'WalletConnect method is not approved for this session: personal_sign',
         }),
       },
     });

@@ -13,10 +13,10 @@ import { recordWalletConnectSessionActivity } from './autoDisconnect';
 import { addWalletConnectLog } from './debugLog';
 import { maybeRedirectToDapp } from './redirectPolicy';
 import {
-  getFirstApprovedChain,
   getWalletConnectApprovedChains,
   getWalletConnectSession,
   getWalletConnectSessionOrigin,
+  isWalletConnectMethodApproved,
   resolveWalletConnectAccount,
   syncWalletConnectSessionsFromClient,
 } from './sessions';
@@ -188,10 +188,28 @@ function getRequestChain(
   event: WalletKitTypes.EventArguments['session_request'],
   session: SessionTypes.Struct,
 ) {
-  return (
-    getWalletConnectChainByCaip2(event.params.chainId) ||
-    getFirstApprovedChain(session)
-  );
+  const chain = getWalletConnectChainByCaip2(event.params.chainId);
+  if (!chain) {
+    throw ethErrors.provider.custom({
+      code: 4902,
+      message: `WalletConnect chain is not supported: ${
+        event.params.chainId || 'unknown'
+      }`,
+    });
+  }
+
+  const caip2 = chainToCaip2(chain);
+  if (!getWalletConnectApprovedChains(session).includes(caip2)) {
+    throw ethErrors.provider.custom({
+      code: 4902,
+      message: `WalletConnect chain is not approved for this session: ${caip2}`,
+    });
+  }
+
+  return {
+    chain,
+    caip2,
+  };
 }
 
 async function switchWalletConnectEthereumChain(input: {
@@ -223,7 +241,7 @@ async function switchWalletConnectEthereumChain(input: {
     chainId: targetCaip2,
     event: {
       name: 'chainChanged',
-      data: targetCaip2,
+      data: targetChain.hex,
     },
   });
   addWalletConnectLog('request', 'wallet_switchEthereumChain emitted', {
@@ -248,13 +266,11 @@ async function executeSessionRequest(input: {
     });
   }
 
-  const chain = getRequestChain(event, session);
-  if (!chain) {
-    throw ethErrors.provider.custom({
-      code: 4902,
-      message: `WalletConnect chain is not supported: ${
-        event.params.chainId || 'unknown'
-      }`,
+  const { chain, caip2 } = getRequestChain(event, session);
+
+  if (!isWalletConnectMethodApproved(session, caip2, method)) {
+    throw ethErrors.provider.unauthorized({
+      message: `WalletConnect method is not approved for this session: ${method}`,
     });
   }
 

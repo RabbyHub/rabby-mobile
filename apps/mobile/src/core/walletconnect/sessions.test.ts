@@ -2,6 +2,7 @@ import type { Account } from '@/types/account';
 import { getAllAccountsToDisplay } from '@/core/apis/account';
 import {
   getWalletConnectSessionOrigin,
+  isWalletConnectMethodApproved,
   resolveWalletConnectAccount,
 } from './sessions';
 
@@ -153,5 +154,42 @@ describe('walletconnect sessions', () => {
         }),
       ),
     ).resolves.toBeNull();
+  });
+
+  it('checks approved methods against the matching session chain', () => {
+    const session = {
+      namespaces: {
+        eip155: {
+          chains: ['eip155:1'],
+          methods: ['personal_sign'],
+          accounts: ['eip155:1:0x1111111111111111111111111111111111111111'],
+        },
+      },
+    } as never;
+
+    expect(
+      isWalletConnectMethodApproved(session, 'eip155:1', 'personal_sign'),
+    ).toBe(true);
+    expect(
+      isWalletConnectMethodApproved(session, 'eip155:1', 'eth_sendTransaction'),
+    ).toBe(false);
+    expect(
+      isWalletConnectMethodApproved(session, 'eip155:5', 'personal_sign'),
+    ).toBe(false);
+  });
+
+  it('accepts chain-specific namespace keys when checking approved methods', () => {
+    const session = {
+      namespaces: {
+        'eip155:1': {
+          methods: ['eth_chainId'],
+          accounts: ['eip155:1:0x1111111111111111111111111111111111111111'],
+        },
+      },
+    } as never;
+
+    expect(
+      isWalletConnectMethodApproved(session, 'eip155:1', 'eth_chainId'),
+    ).toBe(true);
   });
 });
