@@ -2,6 +2,7 @@ import {
   loadJavaScriptBeforeContentLoadedOnBoot,
   subscribeUnlockToFetchAccounts,
 } from './hooks/useBootstrap';
+import { InteractionManager } from 'react-native';
 
 import { runIIFEFunc } from './core/utils/store';
 import { startSubscribeLangChange } from './hooks/lang';
@@ -65,6 +66,8 @@ import { startWatchLayoutChange } from './hooks/useAppLayout';
 import { startCareAppNotificationPermissions } from './hooks/appNotification';
 import nftListStore from './store/nfts';
 import { keyringService } from './core/services';
+
+const UNLOCKED_STORES_AFTER_UNLOCK_DELAY_MS = 800;
 
 startComputationThread();
 startSubscribeLangChange();
@@ -151,7 +154,7 @@ export const startInitPersistedStores = async () => {
   await promise;
 };
 
-export async function startUnlockScreenBootstrapWarmups() {
+export async function startReadableAccountBootstrapWarmups() {
   const results = await Promise.allSettled([
     startInitPersistedStores(),
     ensureAccountBalanceSelectionLifecycle(),
@@ -159,9 +162,16 @@ export async function startUnlockScreenBootstrapWarmups() {
 
   results.forEach(result => {
     if (result.status === 'rejected') {
-      console.error('startUnlockScreenBootstrapWarmups::error', result.reason);
+      console.error(
+        'startReadableAccountBootstrapWarmups::error',
+        result.reason,
+      );
     }
   });
+}
+
+export async function startUnlockScreenBootstrapWarmups() {
+  return startReadableAccountBootstrapWarmups();
 }
 
 const initUnlockedStoresStateRef = {
@@ -178,18 +188,26 @@ const startInitStores = async () => {
   await promise;
 };
 
+function startInitStoresAfterUnlockInteractions(reason: string) {
+  const interactionHandle = InteractionManager.runAfterInteractions(() => {
+    setTimeout(() => {
+      startInitStores().catch(error => {
+        console.error(`startInitStoresOnUnlock::${reason}::error`, error);
+      });
+    }, UNLOCKED_STORES_AFTER_UNLOCK_DELAY_MS);
+  });
+
+  return interactionHandle;
+}
+
 function startInitStoresOnUnlock() {
   if (keyringService.isUnlocked()) {
-    startInitStores().catch(error => {
-      console.error('startInitStoresOnUnlock::error', error);
-    });
+    startInitStoresAfterUnlockInteractions('already_unlocked');
     return;
   }
 
   keyringService.once('unlock', () => {
-    startInitStores().catch(error => {
-      console.error('startInitStoresOnUnlock::error', error);
-    });
+    startInitStoresAfterUnlockInteractions('unlock_event');
   });
 }
 

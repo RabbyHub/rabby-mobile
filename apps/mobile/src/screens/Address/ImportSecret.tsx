@@ -38,6 +38,7 @@ import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressP
 import * as SecretVault from '@/core/utils/secretVault';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 /** Toast position at the top of screen */
 const TOAST_POSITION_TOP = 30;
@@ -185,6 +186,10 @@ export const ImportSecret = ({ route }: ScreenProps) => {
       }
 
       if (isInAppFlow) {
+        if (!(await ensureWalletUnlockedForAction())) {
+          return;
+        }
+
         // Import directly and navigate to success screen
         try {
           const { keyringId, isExistedKR } =
@@ -274,6 +279,10 @@ export const ImportSecret = ({ route }: ScreenProps) => {
       }
 
       if (isInAppFlow) {
+        if (!(await ensureWalletUnlockedForAction())) {
+          return;
+        }
+
         // Import directly and navigate to success screen
         try {
           const [account] = await apiPrivateKey.importPrivateKey(

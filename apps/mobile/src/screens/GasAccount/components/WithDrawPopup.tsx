@@ -21,6 +21,13 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import { GiftInfoModal } from './GiftInfoModal';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const WithDrawInitContent = ({
   balance,
@@ -38,6 +45,7 @@ const WithDrawInitContent = ({
   const [loading, setLoading] = useState(false);
   const [showGiftInfo, setShowGiftInfo] = useState(false);
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { bottom } = useSafeAreaInsets();
 
   const [chain, setChain] = useState<RechargeChainItem>();
 
@@ -193,7 +201,11 @@ const WithDrawInitContent = ({
             />
           </View>
         </View>
-        <View style={styles.btnContainer}>
+        <View
+          style={[
+            styles.btnContainer,
+            { marginBottom: getBottomButtonBottomOffset(bottom) },
+          ]}>
           {!!withdrawBtnDisabledTips && (
             <View style={[styles.receiveTipsRow, styles.receiveTipsMargin18]}>
               <Text style={[styles.receiveTips, styles.errorTips]}>
@@ -230,6 +242,8 @@ const WithDrawInitContent = ({
             title={`${t(
               'page.gasAccount.withdrawPopup.title',
             )} ${BalanceSuffix}`}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
           />
         </View>
       </View>
@@ -388,15 +402,16 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   },
 
   btnContainer: {
-    paddingVertical: 20,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    paddingBottom: 0,
     alignItems: 'center',
     paddingHorizontal: 20,
-    marginBottom: 35,
+    marginBottom: 36,
   },
 
   confirmButton: {
     width: '100%',
-    height: 52,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
   },
 
   popup: {

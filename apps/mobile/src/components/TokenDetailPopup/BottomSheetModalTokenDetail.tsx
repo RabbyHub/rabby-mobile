@@ -764,8 +764,9 @@ export const BottomSheetModalTokenDetail = ({
             nextTxRedirectAccount || null,
           );
           navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.Swap,
+            screen: RootNames.SwapBridge,
             params: {
+              activeTab: 'swap',
               chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
               tokenId: token?._tokenId,
             },
@@ -1043,7 +1044,8 @@ const getStyles = createGetStyles(colors => {
       width: '100%',
     },
     buttonTitle: {
-      fontSize: 15,
+      fontSize: 18,
+      lineHeight: 22,
       fontWeight: '600',
     },
     disabledTooltipContent: {

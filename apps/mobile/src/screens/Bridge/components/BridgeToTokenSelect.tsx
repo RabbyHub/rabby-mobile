@@ -292,7 +292,7 @@ const BridgeToTokenSelect = ({
 };
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   wrapper: {
-    borderRadius: 12,
+    borderRadius: 100,
     backgroundColor: colors2024['neutral-line'],
     padding: 4,
     paddingHorizontal: 8,

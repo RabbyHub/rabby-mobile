@@ -67,6 +67,7 @@ export interface TransactionHistoryItem {
   isFailed?: boolean;
   isSubmitFailed?: boolean;
   isCompleted?: boolean;
+  isGasDeposit?: boolean;
 
   isSynced?: boolean;
 
@@ -443,11 +444,12 @@ export class TransactionHistoryService {
         return isSameAddress(address, item.address);
       })
       .sort((a, b) => b.createdAt - a.createdAt)[0];
+
     if (
       recentItem?.status === 'pending' ||
       recentItem?.status === 'fromSuccess'
     ) {
-      return recentItem;
+      return { ...recentItem };
     } else {
       return null;
     }
@@ -459,12 +461,13 @@ export class TransactionHistoryService {
     chainId: number,
     type: 'swap' | 'send' | 'approveSwap' | 'approveBridge' | 'bridge',
   ) {
-    return this.store[`${type}TxHistory`].find(
+    const tx = this.store[`${type}TxHistory`].find(
       item =>
         isSameAddress(address, item.address) &&
         item.hash === hash &&
         ('chainId' in item ? item.chainId : item.fromChainId) === chainId,
     );
+    return tx ? { ...tx } : null;
   }
 
   completeRecentTxHistory(

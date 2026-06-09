@@ -1,0 +1,315 @@
+package com.rabbywallet.keychain9.cipherStorage
+
+import android.annotation.SuppressLint
+import android.os.Build
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyInfo
+import android.security.keystore.KeyProperties
+import android.security.keystore.UserNotAuthenticatedException
+import android.util.Log
+import androidx.annotation.RequiresApi
+import com.facebook.react.bridge.ReactApplicationContext
+import com.rabbywallet.keychain9.KeychainModule.KnownCiphers
+import com.rabbywallet.keychain9.SecurityLevel
+import com.rabbywallet.keychain9.resultHandler.CryptoContext
+import com.rabbywallet.keychain9.resultHandler.CryptoOperation
+import com.rabbywallet.keychain9.resultHandler.ResultHandler
+import com.rabbywallet.keychain9.exceptions.CryptoFailedException
+import com.rabbywallet.keychain9.exceptions.KeyStoreAccessException
+import java.io.IOException
+import java.security.GeneralSecurityException
+import java.security.InvalidKeyException
+import java.security.Key
+import java.security.KeyFactory
+import java.security.KeyPairGenerator
+import java.security.KeyStore
+import java.security.KeyStoreException
+import java.security.NoSuchAlgorithmException
+import java.security.spec.InvalidKeySpecException
+import java.security.spec.X509EncodedKeySpec
+import java.util.concurrent.atomic.AtomicInteger
+import javax.crypto.NoSuchPaddingException
+
+/** Fingerprint biometry protected storage. */
+@RequiresApi(Build.VERSION_CODES.M)
+@Suppress("unused", "WeakerAccess")
+class CipherStorageKeystoreRsaEcb(reactContext: ReactApplicationContext) :
+  CipherStorageBase(reactContext) {
+
+  companion object {
+    /** Selected algorithm. */
+    const val ALGORITHM_RSA: String = KeyProperties.KEY_ALGORITHM_RSA
+
+    /** Selected block mode. */
+    const val BLOCK_MODE_ECB: String = KeyProperties.BLOCK_MODE_ECB
+
+    /** Selected padding transformation. */
+    const val PADDING_PKCS1: String = KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1
+
+    /** Composed transformation algorithms. */
+    val TRANSFORMATION_RSA_ECB_PKCS1: String = "$ALGORITHM_RSA/$BLOCK_MODE_ECB/$PADDING_PKCS1"
+
+    /** Selected encryption key size. */
+    const val ENCRYPTION_KEY_SIZE = 2048
+    const val ENCRYPTION_KEY_SIZE_WHEN_TESTING = 512
+  }
+
+  @Throws(CryptoFailedException::class)
+  override fun encrypt(
+    handler: ResultHandler,
+    alias: String,
+    username: String,
+    password: String,
+    level: SecurityLevel
+  ) {
+    throwIfInsufficientLevel(level)
+
+    val safeAlias = getDefaultAliasIfEmpty(alias, getDefaultAliasServiceName())
+    try {
+      val result = innerEncryptedCredentials(safeAlias, password, username, level)
+      handler.onEncrypt(result, null)
+    } catch (e: Exception) {
+      when (e) {
+        is NoSuchAlgorithmException,
+        is InvalidKeySpecException,
+        is NoSuchPaddingException,
+        is InvalidKeyException -> {
+          throw CryptoFailedException("Could not encrypt data for service $alias", e)
+        }
+
+        is KeyStoreException,
+        is KeyStoreAccessException -> {
+          throw CryptoFailedException("Could not access Keystore for service $alias", e)
+        }
+
+        is IOException -> {
+          throw CryptoFailedException("I/O error: ${e.message}", e)
+        }
+
+        else -> {
+          throw CryptoFailedException("Unknown error: ${e.message}", e)
+        }
+      }
+    }
+  }
+
+
+  @SuppressLint("NewApi")
+  @Throws(CryptoFailedException::class)
+  override fun decrypt(
+    handler: ResultHandler,
+    alias: String,
+    username: ByteArray,
+    password: ByteArray,
+    level: SecurityLevel
+  ) {
+    decryptWithPromptPolicy(
+      handler = handler,
+      alias = alias,
+      username = username,
+      password = password,
+      level = level,
+      allowAuthenticatedSessionReuse = false,
+      allowKeyStoreRecovery = true
+    )
+  }
+
+  @SuppressLint("NewApi")
+  @Throws(CryptoFailedException::class)
+  override fun decryptWithPromptPolicy(
+    handler: ResultHandler,
+    alias: String,
+    username: ByteArray,
+    password: ByteArray,
+    level: SecurityLevel,
+    allowAuthenticatedSessionReuse: Boolean,
+    allowKeyStoreRecovery: Boolean
+  ) {
+    throwIfInsufficientLevel(level)
+
+    val safeAlias = getDefaultAliasIfEmpty(alias, getDefaultAliasServiceName())
+    val retries = AtomicInteger(1)
+    var key: Key? = null
+
+    try {
+      // key is always NOT NULL otherwise GeneralSecurityException raised
+      val extractedKey = extractGeneratedKey(safeAlias, level, retries, allowKeyStoreRecovery)
+      key = extractedKey
+
+      if (allowAuthenticatedSessionReuse) {
+        val results =
+          CipherStorage.DecryptionResult(
+            decryptBytes(extractedKey, username),
+            decryptBytes(extractedKey, password)
+          )
+
+        handler.onDecrypt(results, null)
+        return
+      }
+
+      val context =
+        CryptoContext(safeAlias, extractedKey, password, username, CryptoOperation.DECRYPT)
+      handler.askAccessPermissions(context)
+    } catch (ex: UserNotAuthenticatedException) {
+      Log.d(LOG_TAG, "Unlock of keystore is needed. Error: ${ex.message}", ex)
+
+      // expected that KEY instance is extracted and we caught exception on decryptBytes operation
+      val context = CryptoContext(safeAlias, key!!, password, username, CryptoOperation.DECRYPT)
+
+      handler.askAccessPermissions(context)
+    } catch (fail: Throwable) {
+      // any other exception treated as a failure
+      handler.onDecrypt(null, fail)
+    }
+  }
+
+  /** RSAECB. */
+  override fun getCipherStorageName(): String = KnownCiphers.RSA
+
+  /** API23 is a requirement. */
+  override fun getMinSupportedApiLevel(): Int = Build.VERSION_CODES.M
+
+  /** Biometry is supported. */
+  override fun isBiometrySupported(): Boolean = true
+
+  /** RSA. */
+  override fun getEncryptionAlgorithm(): String = ALGORITHM_RSA
+
+  /** RSA/ECB/PKCS1Padding */
+  override fun getEncryptionTransformation(): String = TRANSFORMATION_RSA_ECB_PKCS1
+
+  /**
+   * Clean code without try/catch's that encrypt username and password with a key specified by
+   * alias.
+   */
+  @Throws(GeneralSecurityException::class, IOException::class)
+  private fun innerEncryptedCredentials(
+    alias: String,
+    password: String,
+    username: String,
+    level: SecurityLevel
+  ): CipherStorage.EncryptionResult {
+    val keyStore = getKeyStoreAndLoad()
+
+    ensureRabbyCompatibleEncryptionKey(alias, keyStore, level)
+
+    val key = extractPublicEncryptionKeyOrRecreate(alias, keyStore, level)
+
+    return CipherStorage.EncryptionResult(
+      encryptString(key, username), encryptString(key, password), this
+    )
+  }
+
+  @Throws(GeneralSecurityException::class)
+  private fun extractPublicEncryptionKey(alias: String, store: KeyStore): Key {
+    val kf = KeyFactory.getInstance(ALGORITHM_RSA)
+    val certificate =
+      store.getCertificate(alias)
+        ?: throw KeyStoreAccessException("Could not get certificate for service $alias")
+    val publicKey =
+      certificate.publicKey
+        ?: throw KeyStoreAccessException("Could not get publicKey for service $alias")
+    val keySpec = X509EncodedKeySpec(publicKey.encoded)
+
+    return kf.generatePublic(keySpec)
+  }
+
+  @Throws(GeneralSecurityException::class)
+  private fun ensureRabbyCompatibleEncryptionKey(
+    alias: String,
+    store: KeyStore,
+    level: SecurityLevel
+  ) {
+    if (!store.containsAlias(alias)) {
+      generateKeyAndStoreUnderAlias(alias, level)
+      return
+    }
+
+    val keyDebugInfo = getKeyDebugInfo(alias)
+    if (keyDebugInfo.isUserAuthenticationRequired == true) {
+      Log.w(LOG_TAG, "Recreating RSA key that requires KeyStore auth for service $alias")
+      store.deleteEntry(alias)
+      generateKeyAndStoreUnderAlias(alias, level)
+    }
+  }
+
+  @Throws(GeneralSecurityException::class)
+  private fun extractPublicEncryptionKeyOrRecreate(
+    alias: String,
+    store: KeyStore,
+    level: SecurityLevel
+  ): Key {
+    try {
+      return extractPublicEncryptionKey(alias, store)
+    } catch (fail: Throwable) {
+      Log.w(LOG_TAG, "Recreating invalid RSA key for service $alias", fail)
+      store.deleteEntry(alias)
+      generateKeyAndStoreUnderAlias(alias, level)
+      return extractPublicEncryptionKey(alias, store)
+    }
+  }
+
+  /** Get builder for encryption and decryption operations with required user Authentication. */
+  @SuppressLint("NewApi")
+  @Throws(GeneralSecurityException::class)
+  override fun getKeyGenSpecBuilder(alias: String): KeyGenParameterSpec.Builder {
+    return getKeyGenSpecBuilder(alias, false)
+  }
+
+  /** Get builder for encryption and decryption operations with required user Authentication. */
+  @SuppressLint("NewApi")
+  @Throws(GeneralSecurityException::class)
+  override fun getKeyGenSpecBuilder(
+    alias: String,
+    isForTesting: Boolean
+  ): KeyGenParameterSpec.Builder {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+      throw KeyStoreAccessException("Unsupported API${Build.VERSION.SDK_INT} version detected.")
+    }
+
+    val purposes = KeyProperties.PURPOSE_DECRYPT or KeyProperties.PURPOSE_ENCRYPT
+
+    val keySize = if (isForTesting) ENCRYPTION_KEY_SIZE_WHEN_TESTING else ENCRYPTION_KEY_SIZE
+
+    val keyGenParameterSpecBuilder =
+      KeyGenParameterSpec.Builder(alias, purposes)
+        .setBlockModes(BLOCK_MODE_ECB)
+        .setEncryptionPaddings(PADDING_PKCS1)
+        .setRandomizedEncryptionRequired(true)
+        // Rabby authenticates with BiometricPrompt before reading the password. Keeping the RSA key
+        // unauthenticated matches the v8/v9 Rabby forks and allows device-credential fallback.
+        .setUserAuthenticationRequired(false)
+        .setKeySize(keySize)
+
+    return keyGenParameterSpecBuilder
+  }
+
+  override fun shouldValidateAuthenticationRequirement(): Boolean {
+    return false
+  }
+
+  /** Get information about provided key. */
+  @Throws(GeneralSecurityException::class)
+  override fun getKeyInfo(key: Key): KeyInfo {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+      throw KeyStoreAccessException("Unsupported API${Build.VERSION.SDK_INT} version detected.")
+    }
+
+    val factory = KeyFactory.getInstance(key.algorithm, KEYSTORE_TYPE)
+
+    return factory.getKeySpec(key, KeyInfo::class.java)
+  }
+
+  /** Try to generate key from provided specification. */
+  @Throws(GeneralSecurityException::class)
+  override fun generateKey(spec: KeyGenParameterSpec): Key {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+      throw KeyStoreAccessException("Unsupported API${Build.VERSION.SDK_INT} version detected.")
+    }
+
+    val generator = KeyPairGenerator.getInstance(getEncryptionAlgorithm(), KEYSTORE_TYPE)
+    generator.initialize(spec)
+
+    return generator.generateKeyPair().private
+  }
+}

@@ -2,7 +2,15 @@
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { Button } from '@/components2024/Button';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  RootNames,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
@@ -283,8 +291,9 @@ export const TokenMarketInfoScreen = () => {
         });
       }
       navigation.push(RootNames.StackTransaction, {
-        screen: account ? RootNames.Swap : RootNames.MultiSwap,
+        screen: account ? RootNames.SwapBridge : RootNames.MultiSwapBridge,
         params: {
+          activeTab: 'swap',
           chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
           tokenId: token?.id,
           type: tokenSelectType === 'swapTo' ? 'Buy' : type,
@@ -312,8 +321,9 @@ export const TokenMarketInfoScreen = () => {
       // 关闭弹窗隐藏
       setIsFromBack(false);
       navigation.push(RootNames.StackTransaction, {
-        screen: account ? RootNames.Bridge : RootNames.MultiBridge,
+        screen: account ? RootNames.SwapBridge : RootNames.MultiSwapBridge,
         params: {
+          activeTab: 'bridge',
           toChainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
           toTokenId: token?.id,
         },
@@ -541,7 +551,7 @@ export const TokenMarketInfoScreen = () => {
             style={styles.innerContainer}>
             {!!account && (
               <HeaderBalanceCard
-                amount={formatAmountValueKMB(amountSum)}
+                amount={formatAmountValueKMB(amountSum, 4, true)}
                 usdValue={usdValue}
                 percentChange={percentChange}
                 isLoss={isLoss}
@@ -550,11 +560,7 @@ export const TokenMarketInfoScreen = () => {
                 onPress={handleOpenTokenDetail}
               />
             )}
-            <View
-              style={{
-                position: 'relative',
-                marginTop: 12,
-              }}>
+            <View style={styles.chartContainer}>
               {tokenWithAmountLoading && !tokenWithAmount ? (
                 <View style={styles.skeleton} />
               ) : tokenWithAmount?.support_market_data ? (
@@ -639,11 +645,13 @@ export const TokenMarketInfoScreen = () => {
       <View
         style={[
           styles.buttonGroup,
-          isAndroid && { paddingBottom: 50 + safeOffBottom },
+          { paddingBottom: getBottomButtonBottomOffset(safeOffBottom) },
         ]}>
         {isTransactionTo ? (
           <Button
             title={t('global.Confirm')}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             containerStyle={StyleSheet.flatten([styles.btnContainer])}
             onPress={() => {
               if (isSwapTo) {
@@ -662,6 +670,8 @@ export const TokenMarketInfoScreen = () => {
             <Button
               type="ghost"
               title={t('page.tokenDetail.action.Buy')}
+              height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               containerStyle={StyleSheet.flatten([styles.btnContainer])}
               buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
               onPress={() =>
@@ -671,6 +681,8 @@ export const TokenMarketInfoScreen = () => {
             <View style={styles.btnContainer}>
               <Button
                 title={t('page.tokenDetail.action.Sell')}
+                height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+                titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                 containerStyle={StyleSheet.flatten([styles.btnContainer])}
                 onPress={() =>
                   handleSwap('Sell', finalAccount?.address, finalAccount?.type)
@@ -691,7 +703,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         ? colors2024['neutral-bg-0']
         : colors2024['neutral-bg-1'],
     },
-
+    chartContainer: {
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+      borderRadius: 16,
+      position: 'relative',
+      marginTop: 12,
+      marginHorizontal: 16,
+      padding: 12,
+    },
     riskContainer: {
       paddingHorizontal: 20,
       marginTop: 12,
@@ -711,13 +732,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       position: 'absolute',
       bottom: 0,
       // display: 'flex',
-      gap: 16,
+      gap: BOTTOM_BUTTON_GAP,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingTop: 20,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
       paddingHorizontal: 20,
-      paddingBottom: 50,
+      paddingBottom: 36,
     },
 
     btnContainer: {
@@ -803,15 +824,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderRadius: 100,
     },
     skeleton: {
-      marginTop: 12,
-      width: screenWidth - 32,
+      width: '100%',
       height: 200,
       borderRadius: 12,
-      marginHorizontal: 16,
     },
-    klineContainer: {
-      paddingHorizontal: 16,
-      marginBottom: 12,
-    },
+    klineContainer: {},
   };
 });

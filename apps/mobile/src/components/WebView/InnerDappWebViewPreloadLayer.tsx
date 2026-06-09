@@ -78,7 +78,7 @@ export default function InnerDappWebViewPreloadLayer({
   const { lending, perps, prediction } = useInnerDappSelection();
   const [readyRouteName, setReadyRouteName] = useState<string | null>(null);
   const [retainedKeys, setRetainedKeys] = useState<string[]>([]);
-  const { getIsAppUnlocked } = useAppUnlocked();
+  const { isAppUnlocked, isUnlockSessionValid } = useAppUnlocked();
   const { lastUrlByKey, setLastUrl } = useInnerDappLastUrl();
   const { snapshotByKey, saveSnapshot } = useInnerDappSnapshot();
   const activeKeyRef = useRef<string | null>(null);
@@ -214,7 +214,7 @@ export default function InnerDappWebViewPreloadLayer({
       setDappPermission(true);
       return;
     }
-    if (!getIsAppUnlocked()) {
+    if (!isAppUnlocked) {
       setDappPermission(true);
       return;
     }
@@ -252,7 +252,7 @@ export default function InnerDappWebViewPreloadLayer({
     return () => {
       cancelled = true;
     };
-  }, [activeKey, getIsAppUnlocked, preloadItemsByKey]);
+  }, [activeKey, isAppUnlocked, preloadItemsByKey]);
 
   const keysToRender = useMemo(() => {
     const limit = resolvedMaxRetained;
@@ -452,7 +452,7 @@ export default function InnerDappWebViewPreloadLayer({
     [],
   );
 
-  if (!getIsAppUnlocked()) {
+  if (!isAppUnlocked && !isUnlockSessionValid) {
     return null;
   }
 

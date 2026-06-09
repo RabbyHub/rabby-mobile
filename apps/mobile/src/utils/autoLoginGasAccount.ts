@@ -1,5 +1,5 @@
 import { openapi } from '@/core/request';
-import { gasAccountService } from '@/core/services';
+import { gasAccountService, keyringService } from '@/core/services';
 import {
   getAccountList,
   filterDirectlySignableAccounts,
@@ -170,9 +170,15 @@ export async function autoLoginGasAccountIfNeeded() {
     const hardware = sortedAccounts.filter(isHardwareAccount);
 
     const directAccount = await findFirstAccountWithBalance(directlySignable);
-    if (await loginAutoDetectedAccount(directAccount)) {
-      refreshAllAccountsWithBalanceInBackground('after auto login');
-      return;
+    if (directAccount) {
+      mergeAccountsWithGasBalance(toGasAccountBalanceAccounts([directAccount]));
+      if (
+        keyringService.isUnlocked() &&
+        (await loginAutoDetectedAccount(directAccount))
+      ) {
+        refreshAllAccountsWithBalanceInBackground('after auto login');
+        return;
+      }
     }
 
     const hardwareAccount = await findFirstAccountWithBalance(hardware);
@@ -205,6 +211,11 @@ export const checkAddedAccountsGasAccountIfNeeded = makeAvoidParallelAsyncFunc(
     mergeAccountsWithGasBalance(
       toGasAccountBalanceAccounts([...directWithBalance, ...hwWithBalance]),
     );
+
+    if (!keyringService.isUnlocked()) {
+      setPendingHardwareAccount(hwWithBalance[0]);
+      return;
+    }
 
     if (await loginAutoDetectedAccount(directWithBalance[0])) {
       return;

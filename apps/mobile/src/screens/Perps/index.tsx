@@ -11,6 +11,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components2024/Button';
 import { PerpsAccountCard } from './components/PerpsAccountCard';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
@@ -22,10 +23,17 @@ import { Account } from '@/core/services/preference';
 import { usePerpsDeposit } from './hooks/usePerpsDeposit';
 import { PerpsMarketHomeList } from './components/PerpsMarketSection/PerpsMarketHomeList';
 import { PerpsPositionSection } from './components/PerpsPositionSection';
+import { PerpsLimitOrdersSection } from './components/PerpsLimitOrdersSection';
 import { PerpsPopupGroup } from './components/PerpsPopupGroup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
 import { PerpsNativeHeader } from './components/PerpsHeaderTitle';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  RootNames,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { calculateDistanceToLiquidation } from './components/PerpsPositionSection/utils';
 import { PerpsSkeletonLoader } from './components/PerpsSkeletonLoader';
@@ -42,6 +50,7 @@ export const PerpsOriginScreen = () => {
 
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { width: screenWidth } = useWindowDimensions();
+  const { bottom } = useSafeAreaInsets();
 
   const navigation = useRabbyAppNavigation();
 
@@ -66,7 +75,7 @@ export const PerpsOriginScreen = () => {
     handleSafeSetReference,
     setInitialized,
   } = usePerpsState();
-  const { handleClosePosition, handleStableCoinOrder } = usePerpsPosition();
+  const { handleCloseAllPositions, handleStableCoinOrder } = usePerpsPosition();
 
   const [, setPopupState] = usePerpsPopupState();
 
@@ -75,7 +84,10 @@ export const PerpsOriginScreen = () => {
   const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
 
   const handleLogin = useMemoizedFn(async (v: Account) => {
-    await login(v);
+    const success = await login(v);
+    if (!success) {
+      return;
+    }
     setPopupState(prev => ({
       ...prev,
       isShowLoginPopup: false,
@@ -129,6 +141,14 @@ export const PerpsOriginScreen = () => {
 
   const handleShowRiskPopup = useMemoizedFn((coin: string) => {
     setSelectedCoin(coin);
+  });
+
+  const handleSwapPress = useMemoizedFn(async () => {
+    await handleActionApproveStatus({ isHideToast: true });
+    setPopupState(prev => ({
+      ...prev,
+      isShowSwapPopup: true,
+    }));
   });
 
   const handleCloseRiskPopup = useMemoizedFn(() => {
@@ -222,23 +242,25 @@ export const PerpsOriginScreen = () => {
               refreshControl={
                 <RefreshControl refreshing={false} onRefresh={onRefresh} />
               }>
-              <PerpsAccountCard />
+              <PerpsAccountCard onSwapPress={handleSwapPress} />
               <PerpsPositionSection
                 handleShowRiskPopup={handleShowRiskPopup}
                 handleCloseRiskPopup={handleCloseRiskPopup}
                 positionAndOpenOrders={positionAndOpenOrders}
                 handleActionApproveStatus={handleActionApproveStatus}
-                onClosePosition={async position => {
-                  const marketDataItem =
-                    perpsStore.getState().marketDataMap[position.coin];
-                  const res = await handleClosePosition({
-                    coin: position.coin,
-                    size: Math.abs(Number(position.szi || 0)).toString() || '0',
-                    direction: Number(position.szi || 0) > 0 ? 'Long' : 'Short',
-                    price: marketDataItem?.markPx || '0',
-                  });
-                  if (res) {
-                    const { avgPx, totalSz } = res;
+                onCloseAllPositions={async () => {
+                  const clearinghouseState =
+                    perpsStore.getState().currentClearinghouseState;
+                  if (!clearinghouseState) {
+                    return;
+                  }
+                  const filledResults = await handleCloseAllPositions(
+                    clearinghouseState,
+                  );
+                  if (!filledResults) {
+                    return;
+                  }
+                  for (const { filled, position } of filledResults) {
                     const isBuy = Number(position.szi || 0) > 0;
                     stats.report('perpsTradeHistory', {
                       created_at: new Date().getTime(),
@@ -251,10 +273,10 @@ export const PerpsOriginScreen = () => {
                           ? 'cross'
                           : 'isolated',
                       coin: position.coin,
-                      size: totalSz,
-                      price: avgPx,
-                      trade_usd_value: new BigNumber(avgPx)
-                        .times(totalSz)
+                      size: filled.totalSz,
+                      price: filled.avgPx,
+                      trade_usd_value: new BigNumber(filled.avgPx)
+                        .times(filled.totalSz)
                         .toFixed(2),
                       service_provider: 'hyperliquid',
                       app_version: APP_VERSIONS.fromNative || '0',
@@ -263,13 +285,22 @@ export const PerpsOriginScreen = () => {
                   }
                 }}
               />
+              <PerpsLimitOrdersSection
+                isHome={true}
+                positionAndOpenOrders={positionAndOpenOrders}
+                handleActionApproveStatus={handleActionApproveStatus}
+              />
 
               <PerpsMarketHomeList onItemPress={handleHomeItemPress} />
               <View style={styles.emptyPadding} />
             </ScrollView>
 
             {hasPermission && isLogin && (
-              <View style={styles.footer}>
+              <View
+                style={[
+                  styles.footer,
+                  { paddingBottom: getBottomButtonBottomOffset(bottom) },
+                ]}>
                 <View style={styles.footerBtns}>
                   <View style={styles.footerBtnItem}>
                     <Button
@@ -357,9 +388,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   footer: {
     backgroundColor: colors2024['neutral-bg-1'],
-    paddingTop: 16,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     paddingHorizontal: 12,
-    paddingBottom: 48,
+    paddingBottom: 36,
   },
   emptyPadding: {
     height: 40,
@@ -385,18 +416,18 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   footerBtns: {
     flexDirection: 'row',
-    gap: 12,
+    gap: BOTTOM_BUTTON_GAP,
   },
   footerBtnItem: {
     flex: 1,
   },
   longBtn: {
     backgroundColor: colors2024['green-default'],
-    height: 52,
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
   },
   shortBtn: {
     backgroundColor: colors2024['red-default'],
-    height: 52,
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
   },
   openPositionBtn: {
     fontSize: 18,

@@ -40,6 +40,7 @@ import { useTranslation } from 'react-i18next';
 import { Keyboard, Platform, TouchableOpacity, View } from 'react-native';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import AuthButton from '@/components2024/AuthButton';
+import { zCreate, zMutative } from '@/core/utils/reexports';
 import {
   isAccountSupportDirectSign,
   isAccountSupportMiniApproval,
@@ -59,16 +60,30 @@ import { tokenAmountBn } from '@/screens/Swap/utils';
 import { useTwoStepSwap } from '@/screens/Swap/hooks/twoStepSwap';
 import { AccountSummary } from '@/hooks/perps/usePerpsStore';
 
-import { PerpsSelectTokenPopup } from './PerpsSelectTokenPopup';
+import {
+  getPerpsDepositTokenFromRow,
+  PerpsDepositTokenRow,
+  PerpsSelectTokenPopup,
+} from './PerpsSelectTokenPopup';
 import { PerpsDepositTokenModal } from './PerpsDepositTokenModal';
 import useTokenList, {
-  EMPTY_TOKEN_LIST,
-  getPerpsTokenSelectCacheKey,
+  buildTokenEntityId,
+  EMPTY_TOKEN_ENTITY_IDS,
   ITokenItem,
-  useTokenListComputedStore,
+  TokenEntityId,
+  tokenEntityResourceStore,
+  useTokenIndexStore,
 } from '@/store/tokens';
 import { Text } from '@/components/Typography';
 import { toChecksumAddress } from '@ethereumjs/util';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
+import { useShallow } from 'zustand/shallow';
 
 export interface PerpBridgeHistory {
   from_chain_id: string;
@@ -77,6 +92,132 @@ export interface PerpBridgeHistory {
   to_token_amount: number;
   tx: Tx;
 }
+
+const EMPTY_PERPS_DEPOSIT_TOKEN_ROWS: PerpsDepositTokenRow[] = [];
+
+const isPerpsDepositTokenRowSame = (
+  previousRow: PerpsDepositTokenRow | undefined,
+  nextRow: PerpsDepositTokenRow,
+) => previousRow?.tokenId === nextRow.tokenId;
+
+const buildStablePerpsDepositTokenRows = (
+  rows: PerpsDepositTokenRow[],
+  previousRows?: PerpsDepositTokenRow[],
+) => {
+  if (!rows.length) {
+    return previousRows?.length
+      ? EMPTY_PERPS_DEPOSIT_TOKEN_ROWS
+      : previousRows || EMPTY_PERPS_DEPOSIT_TOKEN_ROWS;
+  }
+
+  const canReusePrevious = previousRows?.length === rows.length;
+  let nextRows: PerpsDepositTokenRow[] | undefined = canReusePrevious
+    ? undefined
+    : [];
+
+  rows.forEach((row, index) => {
+    if (canReusePrevious && !nextRows) {
+      if (isPerpsDepositTokenRowSame(previousRows![index], row)) {
+        return;
+      }
+      nextRows = previousRows!.slice(0, index);
+    }
+    nextRows!.push(row);
+  });
+
+  return nextRows || previousRows!;
+};
+
+const getPerpsDepositTokenUsdValue = (token: ITokenItem) =>
+  token.amount * token.price;
+
+const isPerpsDirectDepositToken = (item: ITokenItem) =>
+  (item.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
+    isSameAddress(item.id, ARB_USDC_TOKEN_ID)) ||
+  (item.chain === HYPE_USDC_TOKEN_SERVER_CHAIN &&
+    isSameAddress(item.id, HYPE_USDC_TOKEN_ID));
+
+const buildPerpsDepositTokenRows = (
+  tokenIds: TokenEntityId[],
+  directUsdcTokens?: {
+    arbUsdc: ITokenItem;
+    hypeUsdc: ITokenItem;
+  } | null,
+  previousRows?: PerpsDepositTokenRow[],
+) => {
+  const directArbUsdc =
+    directUsdcTokens?.arbUsdc || (ARB_USDC_TOKEN_ITEM as ITokenItem);
+  const directHypeUsdc =
+    directUsdcTokens?.hypeUsdc || (HYPE_USDC_TOKEN_ITEM as ITokenItem);
+  tokenEntityResourceStore.upsertTokens([directArbUsdc, directHypeUsdc]);
+
+  const filtered = tokenIds
+    .map(tokenId => tokenEntityResourceStore.getValue(tokenId))
+    .filter((token): token is ITokenItem => !!token?.is_core)
+    .filter(token => getPerpsDepositTokenUsdValue(token) > 0);
+
+  const hasArbUsdc = filtered.some(
+    item =>
+      item.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
+      isSameAddress(item.id, ARB_USDC_TOKEN_ID),
+  );
+  const hasHypeUsdc = filtered.some(
+    item =>
+      item.chain === HYPE_USDC_TOKEN_SERVER_CHAIN &&
+      isSameAddress(item.id, HYPE_USDC_TOKEN_ID),
+  );
+
+  if (!hasArbUsdc) {
+    filtered.push(directArbUsdc);
+  }
+  if (!hasHypeUsdc) {
+    filtered.push(directHypeUsdc);
+  }
+
+  const rows = filtered
+    .sort(
+      (a, b) =>
+        getPerpsDepositTokenUsdValue(b) - getPerpsDepositTokenUsdValue(a),
+    )
+    .map(token => ({ tokenId: buildTokenEntityId(token) }));
+
+  return buildStablePerpsDepositTokenRows(rows, previousRows);
+};
+
+type PerpsDepositTokenIndexState = {
+  depositTokenRowsByAddress: Record<string, PerpsDepositTokenRow[]>;
+  syncDepositTokenRows(params: {
+    address: string;
+    tokenIds: TokenEntityId[];
+    directUsdcTokens?: {
+      arbUsdc: ITokenItem;
+      hypeUsdc: ITokenItem;
+    } | null;
+  }): void;
+};
+
+const usePerpsDepositTokenIndexStore = zCreate(
+  zMutative<PerpsDepositTokenIndexState>((set, get) => ({
+    depositTokenRowsByAddress: {},
+    syncDepositTokenRows({ address, tokenIds, directUsdcTokens }) {
+      const normalizedAddress = address.toLowerCase();
+      const previousRows = get().depositTokenRowsByAddress[normalizedAddress];
+      const nextRows = buildPerpsDepositTokenRows(
+        tokenIds,
+        directUsdcTokens,
+        previousRows,
+      );
+
+      if (previousRows === nextRows) {
+        return;
+      }
+
+      set(draft => {
+        draft.depositTokenRowsByAddress[normalizedAddress] = nextRows;
+      });
+    },
+  })),
+);
 
 export const PerpsDepositPopup: React.FC<{
   account?: Account | null;
@@ -125,24 +266,6 @@ export const PerpsDepositPopup: React.FC<{
     return () => sub.remove();
   }, [hideTip]);
 
-  // Load token list and auto-select the first (highest balance) token
-  const registerPerpsTokenSelect = useTokenListComputedStore(
-    state => state.registerPerpsTokenSelect,
-  );
-  const perpsTokenKey = useMemo(() => {
-    if (!account?.address) {
-      return null;
-    }
-    return getPerpsTokenSelectCacheKey(account.address);
-  }, [account?.address]);
-
-  const _tokens = useTokenListComputedStore(state => {
-    if (!perpsTokenKey) {
-      return EMPTY_TOKEN_LIST;
-    }
-    return state.perpsTokenSelectCache[perpsTokenKey] || EMPTY_TOKEN_LIST;
-  });
-
   const { data: directUsdcTokens } = useRequest(
     async () => {
       if (!account?.address) {
@@ -168,56 +291,63 @@ export const PerpsDepositPopup: React.FC<{
     { refreshDeps: [visible, account?.address], ready: !!visible },
   );
 
-  const isDirectDepositToken = (item: ITokenItem) => {
-    return (
-      (item.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-        isSameAddress(item.id, ARB_USDC_TOKEN_ID)) ||
-      (item.chain === HYPE_USDC_TOKEN_SERVER_CHAIN &&
-        isSameAddress(item.id, HYPE_USDC_TOKEN_ID))
-    );
-  };
-
-  const depositTokens = useMemo(() => {
-    const coreTokens = _tokens?.filter(item => item.is_core) || [];
-
-    // Filter: keep tokens with balance > 0, but always keep direct deposit tokens
-    const filtered = coreTokens.filter(
-      item => item.amount * item.price > 0 || isDirectDepositToken(item),
-    );
-
-    // Ensure ARB/HYPE USDC are present even if not in the token list
-    const hasArbUsdc = filtered.some(
-      item =>
-        item.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-        isSameAddress(item.id, ARB_USDC_TOKEN_ID),
-    );
-    const hasHypeUsdc = filtered.some(
-      item =>
-        item.chain === HYPE_USDC_TOKEN_SERVER_CHAIN &&
-        isSameAddress(item.id, HYPE_USDC_TOKEN_ID),
-    );
-    if (!hasArbUsdc) {
-      filtered.push(
-        directUsdcTokens?.arbUsdc || (ARB_USDC_TOKEN_ITEM as ITokenItem),
-      );
+  useEffect(() => {
+    if (!account?.address) {
+      return;
     }
-    if (!hasHypeUsdc) {
-      filtered.push(
-        directUsdcTokens?.hypeUsdc || (HYPE_USDC_TOKEN_ITEM as ITokenItem),
-      );
-    }
+    useTokenIndexStore
+      .getState()
+      .syncFromTokenListMap(useTokenList.getState().tokenListMap, [
+        account.address,
+      ]);
+  }, [account?.address]);
 
-    // Sort all by USD value descending
-    return filtered.sort((a, b) => b.amount * b.price - a.amount * a.price);
-  }, [_tokens, directUsdcTokens]);
+  const tokenIds = useTokenIndexStore(
+    useShallow(state => {
+      if (!account?.address) {
+        return EMPTY_TOKEN_ENTITY_IDS;
+      }
+      return (
+        state.addressTokenIds[account.address.toLowerCase()] ||
+        EMPTY_TOKEN_ENTITY_IDS
+      );
+    }),
+  );
+  const tokenVersions = tokenEntityResourceStore.useStore(
+    useShallow(state =>
+      tokenIds.map(tokenId => state.metaMap[tokenId]?.version || 0),
+    ),
+  );
+
+  useEffect(() => {
+    if (!account?.address) {
+      return;
+    }
+    usePerpsDepositTokenIndexStore.getState().syncDepositTokenRows({
+      address: account.address,
+      tokenIds,
+      directUsdcTokens,
+    });
+  }, [account?.address, directUsdcTokens, tokenIds, tokenVersions]);
+
+  const depositTokenRows = usePerpsDepositTokenIndexStore(
+    useShallow(state => {
+      if (!account?.address) {
+        return EMPTY_PERPS_DEPOSIT_TOKEN_ROWS;
+      }
+      return (
+        state.depositTokenRowsByAddress[account.address.toLowerCase()] ||
+        EMPTY_PERPS_DEPOSIT_TOKEN_ROWS
+      );
+    }),
+  );
 
   // Trigger token list loading and auto-select first token
   useEffect(() => {
     if (visible && account?.address) {
-      registerPerpsTokenSelect(account.address);
       useTokenList.getState().getTokenList(account.address, true);
     }
-  }, [visible, account?.address, registerPerpsTokenSelect]);
+  }, [visible, account?.address]);
 
   // Reset selected token when account changes or popup closes
   const prevAddressRef = useRef(account?.address);
@@ -229,16 +359,21 @@ export const PerpsDepositPopup: React.FC<{
   }, [account?.address]);
 
   // Wait for real token list to load before auto-selecting
-  const isTokenListReady = useMemo(() => _tokens.length > 0, [_tokens.length]);
+  const isTokenListReady = useMemo(
+    () => tokenIds.length > 0,
+    [tokenIds.length],
+  );
 
   useEffect(() => {
     if (
       visible &&
       isTokenListReady &&
-      depositTokens.length > 0 &&
+      depositTokenRows.length > 0 &&
       !selectedToken
     ) {
-      setSelectedToken(depositTokens[0] ?? null);
+      setSelectedToken(
+        getPerpsDepositTokenFromRow(depositTokenRows[0]) ?? null,
+      );
     }
     if (!visible && selectedToken) {
       setSelectedToken(null);
@@ -247,7 +382,7 @@ export const PerpsDepositPopup: React.FC<{
     visible,
     isTokenListReady,
     selectedToken,
-    depositTokens,
+    depositTokenRows,
     setSelectedToken,
   ]);
 
@@ -965,60 +1100,66 @@ export const PerpsDepositPopup: React.FC<{
             </View>
             <View style={styles.bottomContainer}>{BottomComponent}</View>
           </View>
-          {canShowDirectSubmit ? (
-            <AuthButton
-              authTitle={t('page.whitelist.confirmPassword')}
-              title={
-                shouldTwoStep && twoStepIsApprove
-                  ? t('page.swap.approve')
-                  : t('page.perps.PerpsDepositPopup.depositBtn')
-              }
-              onFinished={handleDeposit}
-              disabled={
-                !isValidAmount ||
-                Boolean(quoteError) ||
-                quoteLoading ||
-                twoStepApprovePending
-              }
-              loading={loading || twoStepApprovePending}
-              type={'hyperliquid'}
-              iconColor={'#040601'}
-              titleStyle={{
-                color: '#040601',
-              }}
-              syncUnlockTime
-              onBeforeAuth={() => {
-                Keyboard.dismiss();
-              }}
-            />
-          ) : (
-            <Button
-              type="hyperliquid"
-              title={
-                shouldTwoStep && twoStepIsApprove
-                  ? t('page.swap.approve')
-                  : t('page.perps.PerpsDepositPopup.depositBtn')
-              }
-              onPress={handleDeposit}
-              disabled={
-                !isValidAmount ||
-                Boolean(quoteError) ||
-                quoteLoading ||
-                twoStepApprovePending
-              }
-              loading={loading || twoStepApprovePending}
-            />
-          )}
+          <View style={styles.footer}>
+            {canShowDirectSubmit ? (
+              <AuthButton
+                authTitle={t('page.whitelist.confirmPassword')}
+                title={
+                  shouldTwoStep && twoStepIsApprove
+                    ? t('page.swap.approve')
+                    : t('page.perps.PerpsDepositPopup.depositBtn')
+                }
+                onFinished={handleDeposit}
+                disabled={
+                  !isValidAmount ||
+                  Boolean(quoteError) ||
+                  quoteLoading ||
+                  twoStepApprovePending
+                }
+                loading={loading || twoStepApprovePending}
+                type={'hyperliquid'}
+                iconColor={'#040601'}
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                titleStyle={[
+                  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+                  { color: '#040601' },
+                ]}
+                syncUnlockTime
+                onBeforeAuth={() => {
+                  Keyboard.dismiss();
+                }}
+              />
+            ) : (
+              <Button
+                type="hyperliquid"
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
+                title={
+                  shouldTwoStep && twoStepIsApprove
+                    ? t('page.swap.approve')
+                    : t('page.perps.PerpsDepositPopup.depositBtn')
+                }
+                onPress={handleDeposit}
+                disabled={
+                  !isValidAmount ||
+                  Boolean(quoteError) ||
+                  quoteLoading ||
+                  twoStepApprovePending
+                }
+                loading={loading || twoStepApprovePending}
+              />
+            )}
+          </View>
         </BottomSheetView>
       </AppBottomSheetModal>
       <PerpsSelectTokenPopup
         visible={isShowTokenPopup}
-        tokens={depositTokens}
+        tokenRows={depositTokenRows}
         onClose={() => setIsShowTokenPopup(false)}
         onSelect={async token => {
           setSelectedToken(token);
           setIsShowTokenPopup(false);
-          if (!isDirectDepositToken(token)) {
+          if (!isPerpsDirectDepositToken(token)) {
             const res = await openapi.getPerpsBridgeIsSupportToken({
               token_id: token.id,
               chain_id: token.chain,
@@ -1045,10 +1186,8 @@ export const PerpsDepositPopup: React.FC<{
 const getStyle = createGetStyles2024(ctx => {
   return {
     container: {
-      // height: '100%',
+      height: '100%',
       backgroundColor: ctx.colors2024['neutral-bg-1'],
-      paddingTop: 10,
-      paddingBottom: 56,
       paddingHorizontal: 20,
       display: 'flex',
       flexDirection: 'column',
@@ -1113,6 +1252,11 @@ const getStyle = createGetStyles2024(ctx => {
       marginTop: 8,
       minHeight: 18,
       marginLeft: 8,
+    },
+    footer: {
+      marginTop: 'auto',
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+      paddingBottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     },
     maxButtonWrapper: {
       padding: 4,

@@ -4,6 +4,10 @@ import { useMemoizedFn } from 'ahooks';
 import { apisPerps } from '@/core/apis';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import {
+  readActiveAssetDataFromCache,
+  writeActiveAssetDataToCache,
+} from '@/hooks/perps/useActiveAssetDataCache';
+import {
   WsActiveAssetCtx,
   WsActiveAssetData,
 } from '@rabby-wallet/hyperliquid-sdk';
@@ -17,8 +21,16 @@ export const useActiveAssetSubscription = (coin: string) => {
   const [activeAssetCtx, setActiveAssetCtx] = useState<
     WsActiveAssetCtx['ctx'] | null
   >(null);
+  // Seed from REST cache (home/other screens may have filled it already), so
+  // the first render has a leverage/markPx/etc instead of waiting on the WS.
   const [activeAssetData, setActiveAssetData] =
-    useState<WsActiveAssetData | null>(null);
+    useState<WsActiveAssetData | null>(() => {
+      const address = perpsStore.getState().currentPerpsAccount?.address;
+      if (!address) return null;
+      return readActiveAssetDataFromCache(coin, address);
+    });
+
+  const currentAddress = perpsStore(s => s.currentPerpsAccount?.address);
 
   const coinRef = useRef(coin);
   useEffect(() => {
@@ -52,7 +64,15 @@ export const useActiveAssetSubscription = (coin: string) => {
         if (coinRef.current !== data.coin) {
           return;
         }
+        // Late frame after account switch: don't leak old-account leverage into
+        // the new account's cache, even if the WS hasn't finished unsubscribing.
+        const liveAddress = perpsStore.getState().currentPerpsAccount?.address;
+        if (liveAddress !== address) {
+          return;
+        }
         setActiveAssetData(data);
+        // Keep home cache hot so returning to home avoids a REST round-trip.
+        writeActiveAssetDataToCache(data.coin, address, data);
       },
     );
     return unsubscribe;
@@ -61,6 +81,15 @@ export const useActiveAssetSubscription = (coin: string) => {
   const subscribeAll = useMemoizedFn(() => {
     unsubCtxRef.current?.();
     unsubDataRef.current?.();
+    // Avoid leaking previous coin's leverage into the new coin's marginUsage
+    // between coin switch and the first WS push. Seed from REST cache when
+    // available so margin/leverage stay populated across coin/account switches
+    // and foreground returns; WS push will overwrite as soon as it lands.
+    setActiveAssetCtx(null);
+    const address = perpsStore.getState().currentPerpsAccount?.address;
+    setActiveAssetData(
+      address ? readActiveAssetDataFromCache(coinRef.current, address) : null,
+    );
     unsubCtxRef.current = subscribeCtx();
     unsubDataRef.current = subscribeData();
   });
@@ -72,13 +101,14 @@ export const useActiveAssetSubscription = (coin: string) => {
     unsubDataRef.current = () => {};
   });
 
-  // Subscribe when coin changes
+  // Resubscribe on coin or account switch so the WS itself is bound to the
+  // right address; the in-callback guard above only covers late frames.
   useEffect(() => {
     subscribeAll();
     return () => {
       unsubscribeAll();
     };
-  }, [coin, subscribeAll, unsubscribeAll]);
+  }, [coin, currentAddress, subscribeAll, unsubscribeAll]);
 
   // Re-subscribe when app returns to foreground
   useEffect(() => {

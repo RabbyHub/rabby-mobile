@@ -57,6 +57,7 @@ export const useBatchRevoke = ({
       if (revokeList.length === 0) {
         return;
       }
+
       // not support batch revoke
       if (
         currentAccount &&

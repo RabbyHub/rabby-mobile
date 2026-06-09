@@ -1,5 +1,6 @@
 import { HyperliquidSDK } from '@rabby-wallet/hyperliquid-sdk';
 import { perpsService } from '../services';
+import { withWalletUnlock } from '@/utils/walletUnlockGuard';
 
 let sdkInstance: HyperliquidSDK | null = null;
 let currentMasterAddress: string | null = null;
@@ -52,15 +53,15 @@ class ApisPerps {
     return sdkInstance;
   }
 
-  // destroyPerpsSDK() {
-  //   sdkInstance?.ws.disconnect();
-  //   sdkInstance = null;
-  //   currentMasterAddress = null;
-  // }
+  destroyPerpsSDK() {
+    sdkInstance?.ws.disconnect();
+    sdkInstance = null;
+    currentMasterAddress = null;
+  }
 
-  createPerpsAgentWallet = async (masterWallet: string) => {
+  createPerpsAgentWallet = withWalletUnlock(async (masterWallet: string) => {
     return perpsService.createAgentWallet(masterWallet);
-  };
+  });
   setPerpsCurrentAccount = perpsService.setCurrentAccount;
   getPerpsCurrentAccount = perpsService.getCurrentAccount;
   getPerpsLastUsedAccount = perpsService.getLastUsedAccount;
@@ -80,24 +81,26 @@ class ApisPerps {
   getHasClosedLearnMoreCard = perpsService.getHasClosedLearnMoreCard;
   setSelectedKlineInterval = perpsService.setSelectedKlineInterval;
   getSelectedKlineInterval = perpsService.getSelectedKlineInterval;
-  getPerpsAgentWallet = async (masterWallet: string) => {
+  getPerpsAgentWallet = withWalletUnlock(async (masterWallet: string) => {
     return perpsService.getAgentWallet(masterWallet);
-  };
-  getOrCreatePerpsAgentWallet = async (masterWallet: string) => {
-    const res = await perpsService.getAgentWallet(masterWallet);
-    if (!res) {
-      const resp = await this.createPerpsAgentWallet(masterWallet);
-      return {
-        vault: resp.vault,
-        agentAddress: resp.agentAddress,
-      };
-    } else {
-      return {
-        vault: res.vault,
-        agentAddress: res.preference.agentAddress,
-      };
-    }
-  };
+  });
+  getOrCreatePerpsAgentWallet = withWalletUnlock(
+    async (masterWallet: string) => {
+      const res = await perpsService.getAgentWallet(masterWallet);
+      if (!res) {
+        const resp = await perpsService.createAgentWallet(masterWallet);
+        return {
+          vault: resp.vault,
+          agentAddress: resp.agentAddress,
+        };
+      } else {
+        return {
+          vault: res.vault,
+          agentAddress: res.preference.agentAddress,
+        };
+      }
+    },
+  );
 }
 
 export const apisPerps = new ApisPerps();

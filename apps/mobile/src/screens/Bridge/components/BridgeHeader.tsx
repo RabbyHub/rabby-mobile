@@ -6,6 +6,7 @@ import React, {
   type Ref,
 } from 'react';
 import {
+  useClearBridgeHistoryRedDot,
   useReadBridgeHistoryRedDot,
   useReadBridgePendingCount,
   useSetSettingVisible,
@@ -54,10 +55,11 @@ export const BridgeHeader = ({
   clearBridgeHistoryRedDot,
   ref,
 }: {
-  clearBridgeHistoryRedDot: () => number;
+  clearBridgeHistoryRedDot?: () => number;
   ref?: Ref<BridgeHeaderRef>;
 }) => {
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
+  const clearBridgeHistoryRedDotFromScene = useClearBridgeHistoryRedDot();
 
   const feePopupVisible = useSettingVisible();
   const setFeePopupVisible = useSetSettingVisible();
@@ -74,11 +76,13 @@ export const BridgeHeader = ({
   const openHistory = useCallback(() => {
     Keyboard.dismiss();
     setHistoryVisible(true);
-    const currentTs = clearBridgeHistoryRedDot();
+    const currentTs = (
+      clearBridgeHistoryRedDot || clearBridgeHistoryRedDotFromScene
+    )();
     if (currentTs) {
       setRecentShowTime(currentTs);
     }
-  }, [clearBridgeHistoryRedDot]);
+  }, [clearBridgeHistoryRedDot, clearBridgeHistoryRedDotFromScene]);
 
   const closeFeePopup = useCallback(() => {
     setFeePopupVisible(false);

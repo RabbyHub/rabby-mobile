@@ -64,6 +64,14 @@ import { ReserveDataHumanized } from '@aave/contract-helpers';
 import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
+import { useZeroLTVBlockingWithdraw } from '../../hooks/useZeroLTVBlockingWithdraw';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -78,6 +86,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   const [isChecked, setIsChecked] = useState(false);
   const { refresh } = useRefreshHistoryId();
   const { t } = useTranslation();
+  const assetsBlockingWithdraw = useZeroLTVBlockingWithdraw();
 
   const { formattedPoolReservesAndIncentives, wrapperPoolReserve } =
     useLendingSummary();
@@ -184,8 +193,35 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     reserve.underlyingBalance,
   ]);
 
+  const currentPoolReserve = useMemo(() => {
+    return (
+      isNativeToken
+        ? wrapperPoolReserve
+        : formattedPoolReservesAndIncentives.find(item =>
+            isSameAddress(item.underlyingAsset, reserve.underlyingAsset),
+          )
+    ) as ReserveDataHumanized | undefined | null;
+  }, [
+    formattedPoolReservesAndIncentives,
+    isNativeToken,
+    reserve.underlyingAsset,
+    wrapperPoolReserve,
+  ]);
+
+  const isZeroLTVWithdrawBlocked = useMemo(() => {
+    if (!assetsBlockingWithdraw.length || !currentPoolReserve?.symbol) {
+      return false;
+    }
+    return !assetsBlockingWithdraw.includes(currentPoolReserve.symbol);
+  }, [assetsBlockingWithdraw, currentPoolReserve?.symbol]);
+
   const buildTransactions = useCallback(async () => {
-    if (!amount || isZeroAmount(amount) || !currentAccount) {
+    if (
+      !amount ||
+      isZeroAmount(amount) ||
+      !currentAccount ||
+      isZeroLTVWithdrawBlocked
+    ) {
       setWithdrawTxs([]);
       return;
     }
@@ -199,13 +235,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         return;
       }
 
-      const targetPool = (
-        isNativeToken
-          ? wrapperPoolReserve
-          : formattedPoolReservesAndIncentives.find(item =>
-              isSameAddress(item.underlyingAsset, reserve.underlyingAsset),
-            )
-      ) as ReserveDataHumanized | undefined | null;
+      const targetPool = currentPoolReserve;
 
       if (!targetPool?.aTokenAddress) {
         return;
@@ -240,12 +270,10 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     amount,
     chainInfo,
     currentAccount,
-    formattedPoolReservesAndIncentives,
-    isNativeToken,
+    currentPoolReserve,
+    isZeroLTVWithdrawBlocked,
     pools,
-    reserve.underlyingAsset,
     selectedMarketData?.chainId,
-    wrapperPoolReserve,
   ]);
 
   // 执行withdraw交易
@@ -255,7 +283,8 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         !currentAccount ||
         !withdrawTxs.length ||
         !amount ||
-        isZeroAmount(amount)
+        isZeroAmount(amount) ||
+        isZeroLTVWithdrawBlocked
       ) {
         return;
       }
@@ -380,6 +409,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       reserve.underlyingAsset,
       reserve.chain,
       source,
+      isZeroLTVWithdrawBlocked,
     ],
   );
 
@@ -412,7 +442,8 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       currentAccount &&
       canShowDirectSubmit &&
       amount &&
-      !isZeroAmount(amount)
+      !isZeroAmount(amount) &&
+      !isZeroLTVWithdrawBlocked
     ) {
       prefetchMiniSigner({
         txs: withdrawTxs?.length ? withdrawTxs : [],
@@ -425,6 +456,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     amount,
     withdrawTxs,
     prefetchMiniSigner,
+    isZeroLTVWithdrawBlocked,
   ]);
 
   return (
@@ -457,6 +489,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
             handleChangeAmount('-1');
           }}
           tokenAmount={withdrawAmount}
+          tokenDecimals={reserve.reserve.decimals}
           price={Number(
             reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
           )}
@@ -488,7 +521,21 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         </BottomSheetScrollView>
 
         <View style={styles.buttonContainer}>
-          {isRisky && (
+          {isZeroLTVWithdrawBlocked ? (
+            <View style={styles.warningContainer}>
+              <RcIconWarningCircleCC
+                width={15}
+                height={15}
+                color={colors2024['red-default']}
+              />
+              <Text style={styles.warningText}>
+                {t(
+                  'page.Lending.toggleCollateralModal.toggleRiskTexts.zeroLTVWithdrawBlocked',
+                  { assets: assetsBlockingWithdraw.join(', ') },
+                )}
+              </Text>
+            </View>
+          ) : isRisky ? (
             <>
               <View style={styles.warningContainer}>
                 <RcIconWarningCircleCC
@@ -511,7 +558,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
                 </Text>
               </TouchableOpacity>
             </>
-          )}
+          ) : null}
           {canShowDirectSubmit ? (
             <DirectSignBtn
               loading={isLoading}
@@ -529,9 +576,12 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
                 isLoading ||
                 !currentAccount ||
                 !!ctx?.disabledProcess ||
+                isZeroLTVWithdrawBlocked ||
                 (isRisky && !isChecked)
               }
               type="aave"
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
               iconColor={
                 isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
               }
@@ -545,6 +595,8 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
               loadingType="circle"
               showTextOnLoading
               containerStyle={styles.fullWidthButton}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               onPress={() => handleWithdraw()}
               title={t('page.Lending.withdrawDetail.actions')}
               loading={isLoading}
@@ -554,6 +606,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
                 !withdrawTxs.length ||
                 isLoading ||
                 !currentAccount ||
+                isZeroLTVWithdrawBlocked ||
                 (isRisky && !isChecked)
               }
             />
@@ -635,8 +688,13 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
   },
   buttonContainer: {
-    paddingTop: 12,
-    marginBottom: 48,
+    marginTop: 'auto',
+    minHeight:
+      BOTTOM_BUTTON_TOP_OFFSET +
+      BOTTOM_BUTTON_SINGLE_HEIGHT +
+      getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    paddingBottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
@@ -680,6 +738,7 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 8,
+    marginBottom: 4,
   },
   warningText: {
     fontSize: 14,
@@ -691,6 +750,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   fullWidthButton: {
     flex: 1,
-    paddingBottom: 58,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
   },
 }));

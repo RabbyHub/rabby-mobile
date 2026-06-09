@@ -1,10 +1,25 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, View, ViewProps as RNViewProps } from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {
+  Pressable,
+  TouchableOpacity,
+  View,
+  ViewProps as RNViewProps,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import RcIconInfoCC from '@/assets2024/icons/offlineChain/info-cc.svg';
+import { default as RcIconGasActive } from '@/assets/icons/sign/tx/gas-active.svg';
+import { default as RcIconGasBlurCC } from '@/assets/icons/sign/tx/gas-blur-cc.svg';
+import { default as RcIconGasAccountBlurCC } from '@/assets/icons/sign/tx/gas-account-blur-cc.svg';
+import { default as RcIconGasAccountActive } from '@/assets/icons/sign/tx/gas-account-active.svg';
 import { Tip } from '@/components';
-import { useTheme2024 } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { DirectSignGasInfoUI } from '@/screens/Bridge/components/DirectSignGasInfoUI';
 import { getGasLevelI18nKey } from '@/utils/trans';
@@ -20,7 +35,7 @@ import { formatGasHeaderUsdValue } from '@/utils/number';
 import { useGasAccountSign } from '@/screens/GasAccount/hooks/atom';
 import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 import {
-  shouldAutoOpenSignMainnetGasModal,
+  resolveSignMainnetAutoDowngradeGasLevel,
   resolveSignMainnetGasLevelFetchNeeds,
   resolveSignMainnetGasLevelFetchMode,
   shouldFetchSignMainnetGasLevel,
@@ -28,6 +43,7 @@ import {
   type SignMainnetSupportedGasLevel,
 } from './signMainnetGasLevelPrefetch';
 import type { TempoFeeTokenOption } from '@/utils/tempo';
+import type { SvgProps } from 'react-native-svg';
 
 type GasSelectorHeaderProps = React.ComponentProps<
   typeof import('./GasSelectorHeader').GasSelectorHeader
@@ -36,9 +52,14 @@ type SignMainnetGasSelectorHeaderProps = GasSelectorHeaderProps & {
   freeGasAvailable?: boolean;
   noCustomRPC?: boolean;
   showTempoGasTokenSelector?: boolean;
+  showGasMethodShortcut?: boolean;
   tempoGasTokenList?: TempoFeeTokenOption[];
   onSelectTempoGasToken?: (token: TempoFeeTokenOption) => void;
   tempoGasTokenLoading?: boolean;
+  onGasSettingsOpenChange?: (open: boolean) => void;
+  tempoPreferredFeeTokenId?: string;
+  onAutoChangeGasMethod?: (value: 'native' | 'gasAccount') => void;
+  disableAutoGasLevelSwitch?: boolean;
 };
 
 export const SignMainnetHeaderContent = ({
@@ -77,9 +98,14 @@ export const SignMainnetHeaderContent = ({
   textColor,
   gasToken,
   showTempoGasTokenSelector,
+  showGasMethodShortcut = true,
   tempoGasTokenList,
   onSelectTempoGasToken,
   tempoGasTokenLoading,
+  onGasSettingsOpenChange,
+  tempoPreferredFeeTokenId,
+  onAutoChangeGasMethod,
+  disableAutoGasLevelSwitch = false,
 }: {
   gasList: GasSelectorHeaderProps['gasList'];
   selectedGas: GasSelectorHeaderProps['selectedGas'];
@@ -116,9 +142,14 @@ export const SignMainnetHeaderContent = ({
   textColor?: string;
   gasToken?: GasSelectorHeaderProps['gasToken'];
   showTempoGasTokenSelector?: boolean;
+  showGasMethodShortcut?: boolean;
   tempoGasTokenList?: TempoFeeTokenOption[];
   onSelectTempoGasToken?: (token: TempoFeeTokenOption) => void;
   tempoGasTokenLoading?: boolean;
+  onGasSettingsOpenChange?: (open: boolean) => void;
+  tempoPreferredFeeTokenId?: string;
+  onAutoChangeGasMethod?: (value: 'native' | 'gasAccount') => void;
+  disableAutoGasLevelSwitch?: boolean;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -127,6 +158,9 @@ export const SignMainnetHeaderContent = ({
   const [showMoreOpen, setShowMoreOpen] = useState(false);
   const [autoOpenSignal, setAutoOpenSignal] = useState(0);
   const hasOpenedOnceRef = useRef(false);
+  const gasSettingsOpen = showMoreOpen || customVisible;
+  const gasSettingsOpenRef = useRef(gasSettingsOpen);
+  const onGasSettingsOpenChangeRef = useRef(onGasSettingsOpenChange);
   const noCustomRPCEnabled = noCustomRPC ?? true;
   const displayGasMethod = resolveApprovalGasMethod({
     nativeTokenInsufficient: !!nativeTokenInsufficient,
@@ -158,6 +192,17 @@ export const SignMainnetHeaderContent = ({
   const summaryValueColor = isSummaryNotEnough
     ? colors2024['red-default']
     : textColor;
+  const showCustomFixedModeTag =
+    !!fixedMode &&
+    selectedGas?.level === 'custom' &&
+    !!defaultFixedModeOnCurrentChain;
+  const gasMethodShortcut =
+    showGasMethodShortcut && gasMethod && onChangeGasMethod && !disabled ? (
+      <GasMethodShortcut
+        gasMethod={displayGasMethod}
+        onChangeGasMethod={onChangeGasMethod}
+      />
+    ) : null;
   const supportedLevels = useMemo(
     () =>
       gasList.filter(
@@ -173,6 +218,56 @@ export const SignMainnetHeaderContent = ({
   const selectedSupportedLevel = supportedLevels.find(
     gasLevel => gasLevel.level === selectedGas?.level,
   )?.level;
+  const supportedGasLevelPrices = useMemo(
+    () =>
+      supportedLevels.map(gasLevel => ({
+        level: gasLevel.level,
+        price: Number(gasLevel.price),
+      })),
+    [supportedLevels],
+  );
+  const txFeeToken =
+    (tx as (typeof tx & { feeToken?: string }) | undefined)?.feeToken || '';
+  const requestFingerprint = useMemo(
+    () =>
+      [
+        tx?.chainId || chainId || 0,
+        tx?.from || '',
+        tx?.to || '',
+        tx?.value || '',
+        tx?.data || '',
+        txFeeToken,
+        String(gasLimit || ''),
+        String(nonce || ''),
+        gasToken?.tokenId || '',
+        gasToken?.decimals || '',
+        nativeTokenBalance || '',
+        tempoPreferredFeeTokenId || '',
+        isCancel ? '1' : '0',
+        isSpeedUp ? '1' : '0',
+        supportedGasLevelPrices
+          .map(item => `${item.level}:${item.price}`)
+          .join(','),
+      ].join('|'),
+    [
+      chainId,
+      gasLimit,
+      gasToken?.decimals,
+      gasToken?.tokenId,
+      isCancel,
+      isSpeedUp,
+      nativeTokenBalance,
+      nonce,
+      supportedGasLevelPrices,
+      tempoPreferredFeeTokenId,
+      tx?.chainId,
+      tx?.data,
+      tx?.from,
+      tx?.to,
+      tx?.value,
+      txFeeToken,
+    ],
+  );
   const gasAccountUsable =
     gasAccountMethodSupported && !!gasAccountCost?.balance_is_enough;
   const isHeaderLoading = !isReady;
@@ -181,6 +276,11 @@ export const SignMainnetHeaderContent = ({
   const levelStateRef = useRef(levelState);
   const fetchContextIdRef = useRef(0);
   const levelRequestSeqRef = useRef(0);
+  const autoDowngradeKeyRef = useRef('');
+  const autoDowngradeResultRef = useRef<{
+    level: SignMainnetSupportedGasLevel;
+    price: number;
+  } | null>(null);
   const activeLevelRequestsRef = useRef<
     Partial<
       Record<
@@ -205,6 +305,7 @@ export const SignMainnetHeaderContent = ({
         currentGasAccountInfo?.account?.balance || '',
         String(gasLimit || ''),
         String(nonce || ''),
+        requestFingerprint,
         nativeTokenInsufficient ? 1 : 0,
         gasAccountMethodSupported ? 1 : 0,
       ].join(':'),
@@ -216,6 +317,7 @@ export const SignMainnetHeaderContent = ({
       gasLimit,
       nativeTokenInsufficient,
       nonce,
+      requestFingerprint,
     ],
   );
 
@@ -224,9 +326,46 @@ export const SignMainnetHeaderContent = ({
   }, [levelState]);
 
   useEffect(() => {
+    onGasSettingsOpenChangeRef.current = onGasSettingsOpenChange;
+  }, [onGasSettingsOpenChange]);
+
+  useEffect(() => {
+    if (gasSettingsOpenRef.current === gasSettingsOpen) {
+      return;
+    }
+
+    gasSettingsOpenRef.current = gasSettingsOpen;
+    onGasSettingsOpenChangeRef.current?.(gasSettingsOpen);
+  }, [gasSettingsOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (gasSettingsOpenRef.current) {
+        onGasSettingsOpenChangeRef.current?.(false);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     activeLevelRequestsRef.current = {};
     setLevelState({});
   }, [levelFetchContextKey]);
+
+  const buildGasChange = useCallback(
+    (gasLevel: (typeof supportedLevels)[number]) => ({
+      ...gasLevel,
+      gasLimit: Number(gasLimit),
+      nonce: Number(nonce),
+      level: gasLevel.level,
+      maxPriorityFee: calcMaxPriorityFee(
+        gasList,
+        gasLevel,
+        chainId || 0,
+        !!(isCancel || isSpeedUp),
+      ),
+    }),
+    [chainId, gasLimit, gasList, isCancel, isSpeedUp, nonce],
+  );
 
   useEffect(() => {
     const contextId = ++fetchContextIdRef.current;
@@ -266,6 +405,7 @@ export const SignMainnetHeaderContent = ({
         needsNative,
         needsGasAccount,
         hasActiveRequest: activeRequest?.contextId === contextId,
+        requestFingerprint,
       });
 
       if ((!needsNative && !needsGasAccount) || !shouldFetchLevel) {
@@ -277,20 +417,12 @@ export const SignMainnetHeaderContent = ({
         contextId,
         requestId,
       };
-      patchLevelState(gasLevel.level, { loading: true });
+      patchLevelState(gasLevel.level, {
+        loading: true,
+        fingerprint: requestFingerprint,
+      });
 
-      const gasChange = {
-        ...gasLevel,
-        gasLimit: Number(gasLimit),
-        nonce: Number(nonce),
-        level: gasLevel.level,
-        maxPriorityFee: calcMaxPriorityFee(
-          gasList,
-          gasLevel,
-          chainId || 0,
-          !!(isCancel || isSpeedUp),
-        ),
-      };
+      const gasChange = buildGasChange(gasLevel);
 
       Promise.all([
         needsNative
@@ -310,11 +442,12 @@ export const SignMainnetHeaderContent = ({
           : Promise.resolve({}),
         needsGasAccount
           ? checkGasLevelIsNotEnough(gasChange, 'gasAccount').then(
-              ([notEnough, usd]) => ({
+              ([notEnough, usd, gasAccountResult]) => ({
                 gasAccount: [
                   notEnough,
                   calcGasAccountUsd(Number(usd || 0)),
                 ] as [boolean, string],
+                gasAccountResult,
               }),
             )
           : Promise.resolve({}),
@@ -328,6 +461,7 @@ export const SignMainnetHeaderContent = ({
             return;
           }
           patchLevelState(gasLevel.level, {
+            fingerprint: requestFingerprint,
             ...nativePatch,
             ...gasAccountPatch,
           });
@@ -342,24 +476,24 @@ export const SignMainnetHeaderContent = ({
             return;
           }
           delete activeLevelRequestsRef.current[gasLevel.level];
-          patchLevelState(gasLevel.level, { loading: false });
+          patchLevelState(gasLevel.level, {
+            loading: false,
+            fingerprint: requestFingerprint,
+          });
         });
     });
   }, [
     chainId,
+    buildGasChange,
     checkGasLevelIsNotEnough,
     fetchMode,
     gasAccountMethodSupported,
     gasAccountCost,
     gasAccountUsable,
     gasCalcMethod,
-    gasLimit,
-    gasList,
-    isCancel,
     isReady,
-    isSpeedUp,
     nativeTokenInsufficient,
-    nonce,
+    requestFingerprint,
     selectedSupportedLevel,
     showMoreOpen,
     supportedLevels,
@@ -368,59 +502,118 @@ export const SignMainnetHeaderContent = ({
 
   useEffect(() => {
     if (
-      showMoreOpen ||
-      hasOpenedOnceRef.current ||
-      !shouldAutoOpenSignMainnetGasModal({
-        fetchMode,
-        selectedSupportedLevel,
-        nativeTokenInsufficient: !!nativeTokenInsufficient,
-        gasAccountUsable,
-        gasAccountChainSupported: gasAccountMethodSupported,
-        levelState,
-      })
+      disableAutoGasLevelSwitch ||
+      freeGasAvailable ||
+      disabled ||
+      !isReady ||
+      fetchMode !== 'prefetch'
     ) {
       return;
     }
 
-    hasOpenedOnceRef.current = true;
-    setAutoOpenSignal(signal => signal + 1);
-  }, [
-    fetchMode,
-    gasAccountMethodSupported,
-    gasAccountUsable,
-    levelState,
-    nativeTokenInsufficient,
-    selectedSupportedLevel,
-    showMoreOpen,
-  ]);
+    if (selectedSupportedLevel) {
+      const selectedLevelState = levelState[selectedSupportedLevel];
+      if (
+        !selectedLevelState ||
+        selectedLevelState.fingerprint !== requestFingerprint ||
+        selectedLevelState.loading ||
+        selectedLevelState.nativeNotEnough === undefined
+      ) {
+        return;
+      }
 
-  console.log('SignMainnetHeaderContent', {
-    displayGasMethod,
+      if (selectedLevelState.nativeNotEnough === false) {
+        return;
+      }
+    }
+
+    const autoDowngradeResult = autoDowngradeResultRef.current;
+    if (
+      autoDowngradeResult?.level === selectedGas?.level &&
+      autoDowngradeResult?.price === Number(selectedGas?.price)
+    ) {
+      return;
+    }
+
+    const nextGasLevel = resolveSignMainnetAutoDowngradeGasLevel({
+      selectedSupportedLevel,
+      selectedGasPrice: Number(selectedGas?.price),
+      supportedGasLevels: supportedGasLevelPrices,
+      gasAccountChainSupported: gasAccountMethodSupported,
+      levelState,
+      requestFingerprint,
+    });
+
+    if (!nextGasLevel) {
+      return;
+    }
+
+    const gasLevel = supportedLevels.find(
+      item => item.level === nextGasLevel.level,
+    );
+    const changeGasMethod = onAutoChangeGasMethod || onChangeGasMethod;
+
+    if (!gasLevel || !changeGasMethod) {
+      return;
+    }
+
+    const switchKey = [
+      requestFingerprint,
+      selectedSupportedLevel || '',
+      selectedGas?.level || '',
+      selectedGas?.price || '',
+      nextGasLevel.level,
+      nextGasLevel.gasMethod,
+    ].join('|');
+
+    if (autoDowngradeKeyRef.current === switchKey) {
+      return;
+    }
+
+    autoDowngradeKeyRef.current = switchKey;
+    autoDowngradeResultRef.current = {
+      level: nextGasLevel.level,
+      price: Number(gasLevel.price),
+    };
+    void changeGasMethod(nextGasLevel.gasMethod);
+    onChange(buildGasChange(gasLevel));
+  }, [
+    buildGasChange,
+    disableAutoGasLevelSwitch,
+    disabled,
+    fetchMode,
+    freeGasAvailable,
+    gasAccountMethodSupported,
+    isReady,
     levelState,
-  });
+    onAutoChangeGasMethod,
+    onChange,
+    onChangeGasMethod,
+    requestFingerprint,
+    selectedGas?.level,
+    selectedGas?.price,
+    selectedSupportedLevel,
+    supportedGasLevelPrices,
+    supportedLevels,
+  ]);
 
   return (
     <>
       <DirectSignGasInfoUI
-        autoOpenSignal={autoOpenSignal}
         style={style}
         loading={isHeaderLoading}
         empty={isHeaderError}
         emptyText={t('page.signTx.failToFetchGasCost')}
         chainId={chainId}
-        label={t('page.transactions.detail.GasFee')}
+        label={gasMethodShortcut ? null : t('page.transactions.detail.GasFee')}
+        labelPrefix={gasMethodShortcut}
         levelText={t(getGasLevelI18nKey(selectedGas?.level || 'normal'))}
         valueText={summary.primaryText}
         textColor={textColor}
         valueColor={summaryValueColor}
         listItemStyle={gasFeeListItemStyle}
         listItemInnerStyle={gasFeeListItemInnerStyle}
-        onOpenChange={open => {
-          setShowMoreOpen(open);
-          if (open) {
-            hasOpenedOnceRef.current = true;
-          }
-        }}
+        onOpenChange={setShowMoreOpen}
         renderModal={({ visible, layout, close, chainId: modalChainId }) => (
           <SignMainnetShowMoreGasModal
             visible={visible}
@@ -442,6 +635,7 @@ export const SignMainnetHeaderContent = ({
             noCustomRPC={noCustomRPCEnabled}
             freeGasAvailable={freeGasAvailable}
             levelState={levelState}
+            showCustomFixedModeTag={showCustomFixedModeTag}
             gasToken={gasToken}
             showTempoGasTokenSelector={showTempoGasTokenSelector}
             tempoGasTokenList={tempoGasTokenList}
@@ -574,7 +768,90 @@ export const SignMainnetGasSelectorHeader = (
       tempoGasTokenList={props.tempoGasTokenList}
       onSelectTempoGasToken={props.onSelectTempoGasToken}
       tempoGasTokenLoading={props.tempoGasTokenLoading}
+      tempoPreferredFeeTokenId={props.tempoPreferredFeeTokenId}
+      showGasMethodShortcut={props.showGasMethodShortcut}
+      onAutoChangeGasMethod={props.onAutoChangeGasMethod}
+      disableAutoGasLevelSwitch={props.disableAutoGasLevelSwitch}
+      onGasSettingsOpenChange={props.onGasSettingsOpenChange}
     />
+  );
+};
+
+const GasMethodShortcut = ({
+  gasMethod,
+  onChangeGasMethod,
+}: {
+  gasMethod: 'native' | 'gasAccount';
+  onChangeGasMethod: (value: 'native' | 'gasAccount') => void;
+}) => {
+  const colors = useThemeColors();
+
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        padding: 2,
+        borderRadius: 6,
+        borderWidth: 0.5,
+        borderStyle: 'solid',
+        borderColor: colors['neutral-line'],
+        marginRight: 12,
+      }}>
+      <GasMethod
+        active={gasMethod === 'native'}
+        onChange={() => {
+          onChangeGasMethod('native');
+        }}
+        ActiveComponent={RcIconGasActive}
+        BlurComponent={RcIconGasBlurCC}
+      />
+
+      <GasMethod
+        active={gasMethod === 'gasAccount'}
+        onChange={() => {
+          onChangeGasMethod('gasAccount');
+        }}
+        ActiveComponent={RcIconGasAccountActive}
+        BlurComponent={RcIconGasAccountBlurCC}
+      />
+    </View>
+  );
+};
+
+const GasMethod = (props: {
+  active: boolean;
+  onChange: () => void;
+  ActiveComponent: React.FC<SvgProps>;
+  BlurComponent: React.FC<SvgProps>;
+}) => {
+  const { active, onChange, ActiveComponent, BlurComponent } = props;
+  const colors = useThemeColors();
+  return (
+    <TouchableOpacity
+      style={{
+        width: 32,
+        height: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 4,
+        backgroundColor: active ? colors['blue-light-1'] : 'transparent',
+      }}
+      onPress={event => {
+        event.stopPropagation();
+        onChange();
+      }}>
+      <ActiveComponent
+        style={{
+          display: active ? 'flex' : 'none',
+        }}
+      />
+      <BlurComponent
+        color={colors['neutral-foot']}
+        style={{
+          display: active ? 'none' : 'flex',
+        }}
+      />
+    </TouchableOpacity>
   );
 };
 

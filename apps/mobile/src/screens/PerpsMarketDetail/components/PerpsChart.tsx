@@ -464,9 +464,7 @@ export const PerpsChart: React.FC<{
           style={isReady ? null : styles.opacity0}
           ref={chartWebViewRef}
           height={Dimensions.get('screen').width - 128}
-          // backGroundColor={
-          //   isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2']
-          // }
+          backGroundColor={colors2024['neutral-bg-1']}
           onChartReady={handleChartReady}
         />
       </View>
@@ -577,9 +575,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     zIndex: 1,
   },
   skeleton: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-2'],
     // backgroundColor: colors2024['neutral-bg-5'],
   },
   opacity0: {

@@ -7,6 +7,7 @@ import {
   KeyringIntf,
 } from '@rabby-wallet/keyring-utils';
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
+import { Platform } from 'react-native';
 import * as Sentry from '@sentry/react-native';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
@@ -27,6 +28,24 @@ import { makeAvoidParallelAsyncFunc } from '../utils/concurrency';
 
 import BigNumber from 'bignumber.js';
 import { makeJsEEClass } from '@/core/services/_utils';
+import { logger } from '@/utils/logger';
+
+const isAndroid = Platform.OS === 'android';
+
+function traceAndroidUnlockAccountPerf(
+  event: string,
+  data: Record<string, unknown> = {},
+) {
+  if (!isAndroid) {
+    return;
+  }
+
+  logger.info(`[RabbyUnlockPerf:account] ${event}`, data);
+}
+
+function getTraceErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
 
 function ensureDisplayKeyring(keyring: KeyringIntf | DisplayKeyring) {
   if (keyring instanceof DisplayKeyring) {
@@ -37,8 +56,27 @@ function ensureDisplayKeyring(keyring: KeyringIntf | DisplayKeyring) {
 }
 
 export async function hasVisibleAccounts() {
-  const restAccountsCount = await keyringService.getCountOfAccountsInKeyring();
-  return restAccountsCount > 0;
+  const startedAt = Date.now();
+
+  traceAndroidUnlockAccountPerf('has_visible_accounts_start');
+
+  try {
+    const restAccountsCount =
+      await keyringService.getCountOfAccountsInKeyring();
+
+    traceAndroidUnlockAccountPerf('has_visible_accounts_end', {
+      elapsedMs: Date.now() - startedAt,
+      count: restAccountsCount,
+    });
+
+    return restAccountsCount > 0;
+  } catch (error) {
+    traceAndroidUnlockAccountPerf('has_visible_accounts_error', {
+      elapsedMs: Date.now() - startedAt,
+      error: getTraceErrorMessage(error),
+    });
+    throw error;
+  }
 }
 
 async function getAllVisibleAccounts(): Promise<DisplayedKeyring[]> {
@@ -69,6 +107,8 @@ export async function getAllAccountsToDisplay() {
               allAliasNames[account?.address?.toLowerCase()]?.alias || '',
             keyring: item.keyring,
             publicKey: item?.publicKey,
+            hasBackup: item.hasBackup,
+            needPassphrase: item.needPassphrase,
           } as IDisplayedAccountWithBalance;
         });
       })
@@ -79,6 +119,7 @@ export async function getAllAccountsToDisplay() {
         let accountInfo = {} as {
           hdPathBasePublicKey?: string;
           hdPathType?: string;
+          index?: number;
         };
 
         await Promise.allSettled([
@@ -102,8 +143,10 @@ export async function getAllAccountsToDisplay() {
         return {
           ...item,
           balance: balance?.total_usd_value || 0,
-          hdPathBasePublicKey: accountInfo?.hdPathBasePublicKey,
-          hdPathType: accountInfo?.hdPathType,
+          hdPathBasePublicKey:
+            accountInfo?.hdPathBasePublicKey ?? item.hdPathBasePublicKey,
+          hdPathType: accountInfo?.hdPathType ?? item.hdPathType,
+          hdPathIndex: accountInfo?.index ?? item.hdPathIndex,
         };
       }),
   );
@@ -118,23 +161,41 @@ export type { KeyringAccountWithAlias } from '@/types/account';
  * to keep same ref to avoid later re-renders on React Hooks
  */
 const existedAccountsRef = { current: [] as KeyringAccountWithAlias[] };
+const FETCH_ALL_ACCOUNTS_CACHE_TTL_MS = 2000;
+const fetchAllAccountsCacheRef = {
+  current: null as null | {
+    updatedAt: number;
+    accounts: KeyringAccountWithAlias[];
+  },
+};
+
+type FetchAllAccountsOptions = {
+  force?: boolean;
+};
+
+export function invalidateFetchAllAccountsCache() {
+  fetchAllAccountsCacheRef.current = null;
+}
+
 async function fetchAllAccountsProcess() {
   let nextAccounts: KeyringAccountWithAlias[] = [];
+  const startedAt = Date.now();
+
+  traceAndroidUnlockAccountPerf('get_all_visible_accounts_start');
+
   try {
+    const visibleAccounts = await keyringService.getAllVisibleAccountsArray();
+    await addressBalanceStore.hydrateCachedBalancesForAccounts(visibleAccounts);
     const balanceMap = addressBalanceStore.getAddressValueMap();
-    nextAccounts = await keyringService
-      .getAllVisibleAccountsArray()
-      .then(list => {
-        return list.map(account => {
-          const balance = balanceMap[account.address.toLowerCase()];
-          return {
-            ...account,
-            aliasName: '',
-            evmBalance: balance?.evmBalance || 0,
-            balance: balance?.totalBalance || 0,
-          };
-        });
-      });
+    nextAccounts = visibleAccounts.map(account => {
+      const balance = balanceMap[account.address.toLowerCase()];
+      return {
+        ...account,
+        aliasName: '',
+        evmBalance: balance?.evmBalance || 0,
+        balance: balance?.totalBalance || 0,
+      };
+    });
 
     await Promise.allSettled(
       nextAccounts.map(async (account, idx) => {
@@ -146,14 +207,47 @@ async function fetchAllAccountsProcess() {
       }),
     );
   } catch (err) {
+    traceAndroidUnlockAccountPerf('get_all_visible_accounts_error', {
+      elapsedMs: Date.now() - startedAt,
+      error: getTraceErrorMessage(err),
+    });
     Sentry.captureException(err);
   } finally {
+    traceAndroidUnlockAccountPerf('get_all_visible_accounts_end', {
+      elapsedMs: Date.now() - startedAt,
+      count: nextAccounts.length,
+    });
+
     if (!isEqual(existedAccountsRef.current, nextAccounts)) {
       existedAccountsRef.current = nextAccounts;
     }
 
     return existedAccountsRef.current;
   }
+}
+
+async function fetchAllAccountsCached(options?: FetchAllAccountsOptions) {
+  const now = Date.now();
+  const cache = fetchAllAccountsCacheRef.current;
+  if (
+    !options?.force &&
+    cache &&
+    now - cache.updatedAt <= FETCH_ALL_ACCOUNTS_CACHE_TTL_MS
+  ) {
+    traceAndroidUnlockAccountPerf('get_all_visible_accounts_cache_hit', {
+      elapsedMs: Date.now() - now,
+      ageMs: now - cache.updatedAt,
+      count: cache.accounts.length,
+    });
+    return cache.accounts;
+  }
+
+  const accounts = await fetchAllAccountsProcess();
+  fetchAllAccountsCacheRef.current = {
+    updatedAt: Date.now(),
+    accounts,
+  };
+  return accounts;
 }
 
 export const sortAccountsByBalance = <
@@ -281,7 +375,7 @@ export function sortAccountList(
 }
 
 export const fetchAllAccounts = makeAvoidParallelAsyncFunc(
-  fetchAllAccountsProcess,
+  fetchAllAccountsCached,
 );
 
 export async function getAccountList(options?: {

@@ -62,7 +62,7 @@ import { is1559Tx, is7702Tx, validateGasPriceRange } from '@/utils/transaction';
 import { eventBus, EVENTS } from '@/utils/events';
 import { sessionService } from '../services/shared';
 import { BroadcastEvent } from '@/constant/event';
-import { createDappBySession } from '../apis/dapp';
+import { createDappBySession } from '@/core/utils/createDappBySession';
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { stats } from '@/utils/stats';
@@ -683,10 +683,7 @@ class ProviderController extends BaseController {
     session: Session;
     account?: Account | null;
   }) => {
-    if (
-      !dappService.getDapp(origin)?.isConnected ||
-      !keyringService.isUnlocked()
-    ) {
+    if (!dappService.getDapp(origin)?.isConnected) {
       return [];
     }
 
@@ -2064,7 +2061,7 @@ class ProviderController extends BaseController {
   @Reflect.metadata('SAFE', true)
   walletGetPermissions = ({ session: { origin } }: { session: Session }) => {
     const result: Web3WalletPermission[] = [];
-    if (keyringService.isUnlocked() && dappService.getConnectedDapp(origin)) {
+    if (dappService.getConnectedDapp(origin)) {
       result.push({ parentCapability: 'eth_accounts' });
     }
     return result;
@@ -2075,7 +2072,7 @@ class ProviderController extends BaseController {
    */
   @Reflect.metadata('SAFE', true)
   walletRevokePermissions = ({ session: { origin }, data: { params } }) => {
-    if (keyringService.isUnlocked() && dappService.getConnectedDapp(origin)) {
+    if (dappService.getConnectedDapp(origin)) {
       if (params?.[0] && 'eth_accounts' in params[0]) {
         sessionService.broadcastEvent(
           BroadcastEvent.accountsChanged,

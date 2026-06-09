@@ -22,6 +22,11 @@ import { BackupReminderCard } from '@/components2024/BackupReminderCard';
 import { useBackupReminder } from '@/hooks/account';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 function HomeHeader() {
   const { styles } = useTheme2024({ getStyle: getHomeHeaderStyle });
@@ -136,14 +141,17 @@ function SingleAddressHome(): JSX.Element {
 
 SingleAddressHome.Header = HomeHeader;
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   rootScreenContainer: {
     // paddingHorizontal: 16,
     backgroundColor: colors2024['neutral-bg-gray'],
   },
   bottomContainer: {
     width: '100%',
-    height: 116,
+    height:
+      BOTTOM_BUTTON_TOP_OFFSET +
+      BOTTOM_BUTTON_DOUBLE_HEIGHT +
+      getBottomButtonBottomOffset(safeAreaInsets.bottom),
     backgroundColor: colors2024['neutral-bg-1'],
     position: 'absolute',
     bottom: 0,

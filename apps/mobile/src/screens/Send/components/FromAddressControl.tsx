@@ -9,7 +9,7 @@ import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { Text } from '@/components/Typography';
 
-export default function FromAddressControl2024({
+function FromAddressControl2024({
   style,
   disableSwitch,
 }: React.PropsWithChildren<
@@ -34,6 +34,8 @@ export default function FromAddressControl2024({
   );
 }
 
+export default React.memo(FromAddressControl2024);
+
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     control: {
@@ -45,11 +47,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      paddingHorizontal: 8,
     },
 
     sectionTitle: {
       color: colors2024['neutral-title-1'],
-      fontSize: 17,
+      fontSize: 15,
+      lineHeight: 18,
       fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
     },

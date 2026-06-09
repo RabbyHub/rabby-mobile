@@ -99,6 +99,20 @@ export const DevDataKeychain = registerAppScreen<
   name: TESTKITS_PRELOAD_SCREENS.DevDataKeychain,
 });
 
+export const DevDataKeyringVault = registerAppScreen<
+  typeof import('@/screens/Testkits/DevDataKeyringVault').default
+>({
+  loader: () => import('@/screens/Testkits/DevDataKeyringVault'),
+  name: TESTKITS_PRELOAD_SCREENS.DevDataKeyringVault,
+});
+
+export const DevDataContactService = registerAppScreen<
+  typeof import('@/screens/Testkits/DevDataContactService').default
+>({
+  loader: () => import('@/screens/Testkits/DevDataContactService'),
+  name: TESTKITS_PRELOAD_SCREENS.DevDataContactService,
+});
+
 export const DevDataWhitelist = registerAppScreen<
   typeof import('@/screens/Testkits/DevDataWhitelist').default
 >({
@@ -125,4 +139,11 @@ export const DebugLogViewer = registerAppScreen<
 >({
   loader: () => import('@/screens/Testkits/DebugLogViewer'),
   name: TESTKITS_PRELOAD_SCREENS.DebugLogViewer,
+});
+
+export const InMemoryLogViewer = registerAppScreen<
+  typeof import('@/screens/Testkits/InMemoryLogViewer').default
+>({
+  loader: () => import('@/screens/Testkits/InMemoryLogViewer'),
+  name: TESTKITS_PRELOAD_SCREENS.InMemoryLogViewer,
 });

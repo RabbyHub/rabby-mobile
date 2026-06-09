@@ -13,6 +13,7 @@ export const MODAL_GATE_IDS = {
   swapModal: 'swap-modal',
   securityTip: 'security-tip',
   biometricsStub: 'biometrics-stub',
+  accountSelectSheet: 'account-select-sheet',
   miniSignDirectOverlay: 'mini-sign-direct-overlay',
   debugReproModalA: 'debug-repro-modal-a',
   aliasNameEdit: 'alias-name-edit',

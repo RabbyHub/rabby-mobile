@@ -39,7 +39,11 @@ export const GasAccountBadge: React.FC<{}> = () => {
     return <CustomSkeleton width={50} height={18} style={styles.skeleton} />;
   }
 
-  if (displayBalance < 0.1) {
+  if (displayBalance >= 1) {
+    return null;
+  }
+
+  if (displayBalance < 1) {
     return (
       <Text style={styles.invalidText}>{formatUsdValue(displayBalance)}</Text>
     );

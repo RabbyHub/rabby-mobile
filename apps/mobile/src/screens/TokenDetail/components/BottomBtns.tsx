@@ -2,7 +2,11 @@ import { RcIconBridge } from '@/assets2024/singleHome';
 import { BSheetModal } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { toast } from '@/components2024/Toast';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  RootNames,
+} from '@/constant/layout';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { RootStackParamsList } from '@/navigation-type';
@@ -105,8 +109,9 @@ export const TokenDetailBottomBtns = ({
         await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
         setIsFromBack(false);
         navigation.navigateDeprecated(RootNames.StackTransaction, {
-          screen: RootNames.Bridge,
+          screen: RootNames.SwapBridge,
           params: {
+            activeTab: 'bridge',
             chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
             tokenId: token?.id,
           },
@@ -133,8 +138,9 @@ export const TokenDetailBottomBtns = ({
     await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
     setIsFromBack(false);
     navigation.navigateDeprecated(RootNames.StackTransaction, {
-      screen: RootNames.Swap,
+      screen: RootNames.SwapBridge,
       params: {
+        activeTab: 'swap',
         chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
         tokenId: token?.id,
         type: tokenSelectType === 'swapTo' ? 'Buy' : 'Sell',
@@ -222,7 +228,7 @@ const getStyles = createGetStyles2024(ctx => ({
   container: {
     position: 'relative',
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
   },
   group: {
     // justifyContent: 'space-between',
@@ -236,7 +242,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   action: {
     gap: 4,
-    height: 52,
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
     flex: 1,
     paddingHorizontal: 37,
     backgroundColor: ctx.colors2024['green-default'],
@@ -272,8 +278,8 @@ const getStyles = createGetStyles2024(ctx => ({
     height: 22,
   },
   moreAction: {
-    height: 52,
-    width: 52,
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
+    width: BOTTOM_BUTTON_DOUBLE_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 12,

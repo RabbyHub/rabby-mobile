@@ -1,6 +1,6 @@
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
-import { formatSpeicalAmount, formatUsdValue } from '@/utils/number';
+import { formatTokenAmountInput, formatUsdValue } from '@/utils/number';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { BridgeQuote, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -21,7 +21,11 @@ import { openapi } from '@/core/request';
 import { useRefreshId, useSetQuoteVisible, useSetRefreshId } from './context';
 import { getChainDefaultToken } from '@/constant/swap';
 import { tokenAmountBn } from '@/screens/Swap/utils';
-import { bridgeQuoteScore } from '../utils/bridgeQuote';
+import {
+  bridgeQuoteScore,
+  getBestBridgeQuote,
+  isSameBridgeQuote,
+} from '../utils/bridgeQuote';
 import BigNumber from 'bignumber.js';
 import { useBridgeSlippage } from './slippage';
 import { isNaN } from 'lodash';
@@ -39,7 +43,7 @@ import { eventBus, EVENTS } from '@/utils/events';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
-import { shouldScheduleQuotePolling } from '@/utils/quotePolling';
+import { getQuotePollingResumeDelay } from '@/utils/quotePolling';
 import { isTokenMarketClosed } from '@/utils/token';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 import { getQuoteList as getBridgeQuoteList } from '@rabby-wallet/rabby-bridge';
@@ -47,6 +51,8 @@ import { convert18RawToTokenRaw, isTempoChain } from '@/utils/tempo';
 import type { SelectedBridgeQuote } from '../types';
 
 export const enableInsufficientQuote = true;
+const BRIDGE_QUOTE_REFRESH_INTERVAL = 1000 * 30;
+const EARLY_QUOTE_DISPLAY_MIN_TO_FROM_USD_RATIO = 0.03;
 
 export const tokenPriceImpact = (
   fromToken?: TokenItem,
@@ -74,6 +80,47 @@ export const tokenPriceImpact = (
     fromUsd: formatUsdValue(fromUsdBn.toString(10)),
     toUsd: formatUsdValue(toUsdBn.toString(10)),
   };
+};
+
+const getTokenUsdValue = ({
+  token,
+  amount,
+}: {
+  token?: TokenItem;
+  amount: string;
+}) => new BigNumber(amount || 0).times(token?.price || 0);
+
+const getBridgeQuoteToTokenUsdValue = ({
+  quote,
+  toToken,
+}: {
+  quote: SelectedBridgeQuote;
+  toToken: TokenItem;
+}) => new BigNumber(quote.to_token_amount || 0).times(toToken.price || 0);
+
+const canDisplayBridgeQuoteBeforeAllQuotesLoaded = ({
+  quote,
+  fromToken,
+  toToken,
+  amount,
+}: {
+  quote: SelectedBridgeQuote;
+  fromToken?: TokenItem;
+  toToken: TokenItem;
+  amount: string;
+}) => {
+  const fromUsdValue = getTokenUsdValue({
+    token: fromToken,
+    amount,
+  });
+
+  if (!fromUsdValue.gt(0)) {
+    return true;
+  }
+
+  return getBridgeQuoteToTokenUsdValue({ quote, toToken }).gte(
+    fromUsdValue.times(EARLY_QUOTE_DISPLAY_MIN_TO_FROM_USD_RATIO),
+  );
 };
 
 const tokenRefreshIdAtom = atom(0);
@@ -207,6 +254,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   >();
 
   const expiredTimer = useRef<NodeJS.Timeout>(undefined);
+  const autoQuoteRefreshDeadlineRef = useRef<number | null>(null);
   const autoQuoteRefreshPausedRef = useRef(false);
   const reloadTxRefreshPausedRef = useRef(false);
 
@@ -316,7 +364,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     useRoute<
       GetNestedScreenRouteProp<
         'TransactionNavigatorParamList',
-        typeof RootNames.Bridge | typeof RootNames.MultiBridge
+        typeof RootNames.SwapBridge | typeof RootNames.MultiSwapBridge
       >
     >();
   const navState = route.params;
@@ -369,48 +417,89 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   const [quoteList, setQuotesList] = useState<SelectedBridgeQuote[]>([]);
 
-  const setSelectedBridgeQuote = useCallback(
-    (quote?: SelectedBridgeQuote) => {
-      if (!quote?.manualClick && expiredTimer.current) {
-        clearTimeout(expiredTimer.current);
+  const stopExpiredTimer = useCallback(() => {
+    if (expiredTimer.current) {
+      clearTimeout(expiredTimer.current);
+      expiredTimer.current = undefined;
+    }
+  }, []);
+
+  const clearExpiredTimer = useCallback(() => {
+    stopExpiredTimer();
+    autoQuoteRefreshDeadlineRef.current = null;
+  }, [stopExpiredTimer]);
+
+  const runScheduledQuoteRefresh = useCallback(() => {
+    expiredTimer.current = undefined;
+
+    if (autoQuoteRefreshPausedRef.current) {
+      return;
+    }
+
+    autoQuoteRefreshDeadlineRef.current = null;
+    setRefreshId(e => e + 1);
+  }, [setRefreshId]);
+
+  const scheduleQuoteRefresh = useCallback(
+    (delay: number) => {
+      stopExpiredTimer();
+      autoQuoteRefreshDeadlineRef.current = Date.now() + delay;
+
+      if (autoQuoteRefreshPausedRef.current) {
+        return;
       }
 
-      if (
-        !quote?.manualClick &&
-        quote &&
-        shouldScheduleQuotePolling({
-          enabled: true,
-          paused: autoQuoteRefreshPausedRef.current,
-        })
-      ) {
-        expiredTimer.current = setTimeout(() => {
-          if (
-            shouldScheduleQuotePolling({
-              enabled: true,
-              paused: autoQuoteRefreshPausedRef.current,
-            })
-          ) {
-            setRefreshId(e => e + 1);
-          }
-        }, 1000 * 30);
+      expiredTimer.current = setTimeout(runScheduledQuoteRefresh, delay);
+    },
+    [runScheduledQuoteRefresh, stopExpiredTimer],
+  );
+
+  const resumeQuoteRefresh = useCallback(() => {
+    const delay = getQuotePollingResumeDelay({
+      deadline: autoQuoteRefreshDeadlineRef.current,
+    });
+
+    if (delay === null) {
+      return;
+    }
+
+    if (delay <= 0) {
+      runScheduledQuoteRefresh();
+      return;
+    }
+
+    stopExpiredTimer();
+    expiredTimer.current = setTimeout(runScheduledQuoteRefresh, delay);
+  }, [runScheduledQuoteRefresh, stopExpiredTimer]);
+
+  const setSelectedBridgeQuote = useCallback(
+    (quote?: SelectedBridgeQuote) => {
+      if (!quote?.manualClick) {
+        clearExpiredTimer();
+      }
+
+      if (!quote?.manualClick && quote) {
+        scheduleQuoteRefresh(BRIDGE_QUOTE_REFRESH_INTERVAL);
       }
       setOriSelectedBridgeQuote(quote);
     },
-    [setRefreshId],
+    [clearExpiredTimer, scheduleQuoteRefresh],
   );
 
   const setAutoQuoteRefreshPaused = useCallback(
     (paused: boolean) => {
-      autoQuoteRefreshPausedRef.current = paused;
-      if (paused) {
-        if (expiredTimer.current) {
-          clearTimeout(expiredTimer.current);
-        }
+      if (autoQuoteRefreshPausedRef.current === paused) {
         return;
       }
-      setRefreshId(e => e + 1);
+
+      autoQuoteRefreshPausedRef.current = paused;
+      if (paused) {
+        stopExpiredTimer();
+        return;
+      }
+      resumeQuoteRefresh();
     },
-    [setRefreshId],
+    [resumeQuoteRefresh, stopExpiredTimer],
   );
 
   const setReloadTxRefreshPaused = useCallback((paused: boolean) => {
@@ -445,12 +534,6 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     }
     return false;
   }, [fromToken, toToken, amount, selectedBridgeQuote]);
-
-  const clearExpiredTimer = useCallback(() => {
-    if (expiredTimer.current) {
-      clearTimeout(expiredTimer.current);
-    }
-  }, []);
 
   const chainInfo = useMemo(
     () => findChainByEnum(fromChain) || CHAINS[fromChain || 'ETH'],
@@ -600,7 +683,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   const handleAmountChange = useCallback(
     (e: string) => {
-      const v = formatSpeicalAmount(e);
+      const v = formatTokenAmountInput(e, fromToken?.decimals);
       if (!/^\d*(\.\d*)?$/.test(v)) {
         return;
       }
@@ -699,18 +782,74 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         aggregatorsList.length > 0 &&
         !isDraggingSlider
       ) {
-        let isEmpty = false;
-        const result: SelectedBridgeQuote[] = [];
         setTokenRefreshId(e => e + 1);
 
-        setQuotesList(e => {
-          if (!e.length) {
-            isEmpty = true;
-          }
-          return e?.map(e => ({ ...e, loading: true }));
-        });
+        setQuotesList(e => e?.map(e => ({ ...e, loading: true })));
 
         const originData: Omit<BridgeQuote, 'tx'>[] = [];
+
+        const getQuoteWithApproval = async (
+          quote: Omit<BridgeQuote, 'tx'>,
+        ): Promise<SelectedBridgeQuote | undefined> => {
+          if (currentFetchId !== fetchIdRef.current) {
+            return;
+          }
+
+          let tokenApproved = false;
+          let allowance = '0';
+          const fromFindChain = findChain({ serverId: fromToken?.chain });
+          if (fromToken?.id === fromFindChain?.nativeTokenAddress) {
+            tokenApproved = true;
+          } else if (!quote.approve_contract_id) {
+            tokenApproved = true;
+          } else {
+            allowance = await getERC20Allowance(
+              fromToken.chain,
+              fromToken.id,
+              quote.approve_contract_id,
+              currentAccount.address,
+              currentAccount,
+            );
+            tokenApproved = new BigNumber(allowance).gte(
+              new BigNumber(amount).times(10 ** fromToken.decimals),
+            );
+          }
+
+          let shouldTwoStepApprove = false;
+          if (
+            fromFindChain?.enum === CHAINS_ENUM.ETH &&
+            isSameAddress(fromToken.id, ETH_USDT_CONTRACT) &&
+            Number(allowance) !== 0 &&
+            !tokenApproved
+          ) {
+            shouldTwoStepApprove = true;
+          }
+
+          return {
+            ...quote,
+            loading: false,
+            shouldTwoStepApprove,
+            shouldApproveToken: !tokenApproved,
+          };
+        };
+
+        const upsertQuotes = (quotes: SelectedBridgeQuote[]) => {
+          if (!quotes.length || currentFetchId !== fetchIdRef.current) {
+            return;
+          }
+
+          setQuotesList(prev => {
+            const filteredArr = prev.filter(
+              item =>
+                !quotes.some(
+                  quote =>
+                    item.aggregator.id === quote.aggregator.id &&
+                    item.bridge.id === quote.bridge.id,
+                ),
+            );
+            return [...filteredArr, ...quotes];
+          });
+        };
 
         const getQUoteV2 = async (alternativeToken?: TokenItem) =>
           await Promise.allSettled(
@@ -778,6 +917,35 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
                   status: data?.length ? 'success' : 'none',
                 });
               }
+
+              const validData =
+                data?.filter(
+                  quote =>
+                    !!quote?.bridge &&
+                    !!quote?.bridge?.id &&
+                    !!quote?.bridge?.logo_url &&
+                    !!quote.bridge.name,
+                ) || [];
+
+              if (validData.length && currentFetchId === fetchIdRef.current) {
+                upsertQuotes(
+                  validData.map(quote => ({ ...quote, loading: true })),
+                );
+
+                await Promise.allSettled(
+                  validData.map(async quote => {
+                    const nextQuote = await getQuoteWithApproval(quote);
+                    if (
+                      nextQuote &&
+                      currentFetchId === fetchIdRef.current &&
+                      Number(amount) > 0
+                    ) {
+                      upsertQuotes([nextQuote]);
+                    }
+                  }),
+                );
+              }
+
               return data;
             }),
           );
@@ -828,86 +996,6 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
             toChainId: toToken.chain,
             status: data ? (data?.length === 0 ? 'none' : 'success') : 'fail',
           });
-        }
-
-        if (data && currentFetchId === fetchIdRef.current) {
-          if (!isEmpty) {
-            setQuotesList(data.map(e => ({ ...e, loading: true })));
-          }
-
-          await Promise.allSettled(
-            data.map(async quote => {
-              if (currentFetchId !== fetchIdRef.current) {
-                return;
-              }
-              let tokenApproved = false;
-              let allowance = '0';
-              const fromFindChain = findChain({ serverId: fromToken?.chain });
-              if (fromToken?.id === fromFindChain?.nativeTokenAddress) {
-                tokenApproved = true;
-              } else if (!quote.approve_contract_id) {
-                tokenApproved = true;
-              } else {
-                allowance = await getERC20Allowance(
-                  fromToken.chain,
-                  fromToken.id,
-                  quote.approve_contract_id,
-                  currentAccount.address,
-                  currentAccount,
-                );
-                tokenApproved = new BigNumber(allowance).gte(
-                  new BigNumber(amount).times(10 ** fromToken.decimals),
-                );
-              }
-              let shouldTwoStepApprove = false;
-              if (
-                fromFindChain?.enum === CHAINS_ENUM.ETH &&
-                isSameAddress(fromToken.id, ETH_USDT_CONTRACT) &&
-                Number(allowance) !== 0 &&
-                !tokenApproved
-              ) {
-                shouldTwoStepApprove = true;
-              }
-
-              if (isEmpty) {
-                result.push({
-                  ...quote,
-                  shouldTwoStepApprove,
-                  shouldApproveToken: !tokenApproved,
-                });
-              } else {
-                if (
-                  currentFetchId === fetchIdRef.current &&
-                  Number(amount) > 0
-                ) {
-                  setQuotesList(e => {
-                    const filteredArr = e.filter(
-                      item =>
-                        item.aggregator.id !== quote.aggregator.id ||
-                        item.bridge.id !== quote.bridge.id,
-                    );
-                    return [
-                      ...filteredArr,
-                      {
-                        ...quote,
-                        loading: false,
-                        shouldTwoStepApprove,
-                        shouldApproveToken: !tokenApproved,
-                      },
-                    ];
-                  });
-                }
-              }
-            }),
-          );
-
-          if (
-            isEmpty &&
-            currentFetchId === fetchIdRef.current &&
-            Number(amount) > 0
-          ) {
-            setQuotesList(result);
-          }
         }
       }
     }, [
@@ -978,42 +1066,77 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     [getQuoteList],
   );
 
-  useEffect(() => {
-    if (!quoteLoading && toToken?.id && quoteList.every(e => !e.loading)) {
-      if (!quoteList.length) {
-        return;
-      }
+  const hasPendingBridgeQuote = pending || quoteLoading;
+  const bridgeQuoteRequestFinished = !hasPendingBridgeQuote;
 
-      // 用新评分公式找 best（考虑 gas + 耗时成本）
-      let bestQuote = quoteList[0];
-      let bestScore = bridgeQuoteScore(quoteList[0], toToken);
-      for (let i = 1; i < quoteList.length; i++) {
-        const score = bridgeQuoteScore(quoteList[i], toToken);
-        if (score.gt(bestScore)) {
-          bestScore = score;
-          bestQuote = quoteList[i];
+  useEffect(() => {
+    if (!toToken?.id) {
+      return;
+    }
+
+    const selectableQuoteList = bridgeQuoteRequestFinished
+      ? quoteList
+      : quoteList.filter(quote =>
+          canDisplayBridgeQuoteBeforeAllQuotesLoaded({
+            quote,
+            fromToken,
+            toToken,
+            amount,
+          }),
+        );
+
+    const best = getBestBridgeQuote(selectableQuoteList, toToken);
+    if (!best) {
+      return;
+    }
+
+    const bestQuote = best.quote;
+    if (bestQuote?.bridge_id && bestQuote?.aggregator?.id) {
+      setBestQuoteId({
+        bridgeId: bestQuote.bridge_id,
+        aggregatorId: bestQuote.aggregator.id,
+      });
+
+      const selectedQuoteLoaded = quoteList.some(
+        quote =>
+          !quote.loading && isSameBridgeQuote(quote, selectedBridgeQuote),
+      );
+      if (selectedQuoteLoaded && selectedBridgeQuote?.manualClick) {
+        const canDisplaySelectedQuote =
+          bridgeQuoteRequestFinished ||
+          canDisplayBridgeQuoteBeforeAllQuotesLoaded({
+            quote: selectedBridgeQuote,
+            fromToken,
+            toToken,
+            amount,
+          });
+
+        if (canDisplaySelectedQuote) {
+          return;
         }
       }
 
-      if (bestQuote?.bridge_id && bestQuote?.aggregator?.id) {
-        setBestQuoteId({
-          bridgeId: bestQuote.bridge_id,
-          aggregatorId: bestQuote.aggregator.id,
-        });
+      const shouldUpdateSelectedQuote =
+        !selectedBridgeQuote ||
+        !selectedQuoteLoaded ||
+        best.score.gt(bridgeQuoteScore(selectedBridgeQuote, toToken));
 
-        let useQuote = bestQuote;
-
-        setOriSelectedBridgeQuote(preItem => {
-          useQuote = preItem?.manualClick ? preItem : bestQuote!;
-          return preItem;
-        });
-
-        setSelectedBridgeQuote(useQuote);
+      if (shouldUpdateSelectedQuote) {
+        setSelectedBridgeQuote(bestQuote);
       }
     }
-    // ignore toToken price update
+    // toToken price is needed by the early-display USD guard.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quoteList, quoteLoading, toToken?.id, setSelectedBridgeQuote]);
+  }, [
+    quoteList,
+    bridgeQuoteRequestFinished,
+    fromToken,
+    amount,
+    toToken?.id,
+    toToken?.price,
+    selectedBridgeQuote,
+    setSelectedBridgeQuote,
+  ]);
 
   if (quotesError) {
     console.error('quotesError', quotesError);
@@ -1153,6 +1276,24 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     chainServerId: findChainByEnum(fromChain)?.serverId || '',
   });
 
+  const selectedBridgeQuoteLoaded =
+    !!selectedBridgeQuote &&
+    quoteList.some(
+      quote => !quote.loading && isSameBridgeQuote(quote, selectedBridgeQuote),
+    );
+  const selectedBridgeQuoteCanDisplay =
+    !!toToken &&
+    selectedBridgeQuoteLoaded &&
+    (bridgeQuoteRequestFinished ||
+      canDisplayBridgeQuoteBeforeAllQuotesLoaded({
+        quote: selectedBridgeQuote,
+        fromToken,
+        toToken,
+        amount,
+      }));
+  const quoteDisplayLoading =
+    !selectedBridgeQuoteCanDisplay && hasPendingBridgeQuote;
+
   return {
     clearExpiredTimer,
 
@@ -1177,7 +1318,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     showLoss,
 
     openQuotesList,
-    quoteLoading: pending || quoteLoading,
+    quoteLoading: quoteDisplayLoading,
     quoteList,
     setQuotesList,
 

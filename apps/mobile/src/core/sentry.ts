@@ -27,7 +27,7 @@ export function initSentry() {
       'Missing or invalid topic field',
       'Non-Error exception captured',
       'WebSocket connection failed for URL: wss://relay.walletconnect.com',
-      'TurboModules are enabled, but mTurboModuleRegistry hasn\'t been set',
+      "TurboModules are enabled, but mTurboModuleRegistry hasn't been set",
       'TurboModules are enabled, but mTurboModuleRegistry has not been set',
     ],
     // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.

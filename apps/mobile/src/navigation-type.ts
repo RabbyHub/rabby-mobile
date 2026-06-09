@@ -44,6 +44,24 @@ export type FromSceneParam = {
   symbol?: string;
 };
 
+export type SwapBridgeTab = 'swap' | 'bridge';
+
+export type SwapBridgeParams = {
+  activeTab?: SwapBridgeTab;
+  chainEnum?: CHAINS_ENUM | undefined;
+  tokenId?: TokenItem['id'];
+  type?: 'Buy' | 'Sell';
+  address?: string;
+  swapAgain?: boolean;
+  swapTokenId?: TokenItem['id'][];
+  isSwapToTokenDetail?: boolean;
+  isFromSwap?: boolean;
+  isFromCopyTrading?: boolean;
+  from?: FromSceneParam;
+  toChainEnum?: CHAINS_ENUM;
+  toTokenId?: TokenItem['id'];
+};
+
 export type RootStackParamsList = {
   [RootNames.StackRoot]?: NavigatorScreenParams<HomeNavigatorParamsList>;
   [RootNames.StackHomeNonTab]?: NavigatorScreenParams<HomeNonTabNavigatorParamsList>;
@@ -51,6 +69,8 @@ export type RootStackParamsList = {
   [RootNames.NotFound]?: {};
   [RootNames.Unlock]?: {
     disableAutoTriggerUnlock?: boolean;
+    allowCancel?: boolean;
+    unlockRequestId?: number;
   };
   SetupWallet?:
     | { seedPhraseVaultId: string }
@@ -161,6 +181,8 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
   [RootNames.DevDataKeychain]?: {};
+  [RootNames.DevDataKeyringVault]?: {};
+  [RootNames.DevDataContactService]?: {};
   [RootNames.DevDataWhitelist]?: {};
   [RootNames.DevUIBuiltInPages]?: {};
   [RootNames.DevUIPermissions]?: {};
@@ -308,6 +330,7 @@ export type TransactionNavigatorParamList = {
      * @default false
      */
     treatSmallAssetsAsScam?: boolean;
+    account?: Account | null;
   };
   [RootNames.HistoryLocalDetail]: {
     data: TransactionGroup;
@@ -317,6 +340,7 @@ export type TransactionNavigatorParamList = {
     type?: HistoryItemCateType;
     onPressAddToWhitelistButton?: (data: SendAction) => void;
     isInSendHistory?: boolean;
+    account?: Account | null;
   };
   [RootNames.Send]?:
     | {
@@ -342,19 +366,8 @@ export type TransactionNavigatorParamList = {
     addressBrandName?: string;
     addrDesc?: AddrDescResponse['desc'];
   };
-  [RootNames.Swap]?: {
-    chainEnum?: CHAINS_ENUM | undefined;
-    tokenId?: TokenItem['id'];
-    type?: 'Buy' | 'Sell';
-    address?: string;
-    swapAgain?: boolean;
-    swapTokenId?: TokenItem['id'][];
-    isSwapToTokenDetail?: boolean;
-    isFromSwap?: boolean;
-    isFromCopyTrading?: boolean;
-    from?: FromSceneParam;
-  };
-  [RootNames.MultiSwap]?: TransactionNavigatorParamList['Swap'] & object;
+  [RootNames.SwapBridge]?: SwapBridgeParams;
+  [RootNames.MultiSwapBridge]?: SwapBridgeParams & object;
   [RootNames.GnosisTransactionQueue]: {
     account: Account;
   };
@@ -366,13 +379,6 @@ export type TransactionNavigatorParamList = {
   [RootNames.Approvals]: {
     account: Account;
   };
-  [RootNames.Bridge]?: {
-    chainEnum?: CHAINS_ENUM | undefined;
-    tokenId?: TokenItem['id'];
-    toChainEnum?: CHAINS_ENUM;
-    toTokenId?: TokenItem['id'];
-  };
-  [RootNames.MultiBridge]?: TransactionNavigatorParamList['Bridge'] & object;
   [RootNames.ConvertDust]?: {
     disableAccountSwitch?: boolean;
     fromHomeConvertDustBanner?: boolean;
@@ -441,7 +447,7 @@ export type SettingNavigatorParamList = {
     | {
         actionAfterSetup: 'testkits:fromSettings';
         // actionType: (SettingNavigatorParamList['Settings'] & object)['enterActionType'];
-        actionType: 'setBiometrics' | 'setAutoLockExpireTime';
+        actionType: 'setBiometrics' | 'setAutoLockExpireTime' | 'lockWallet';
       };
   [RootNames.SetBiometricsAuthentication]: {};
   [RootNames.CustomTestnet]?: {};

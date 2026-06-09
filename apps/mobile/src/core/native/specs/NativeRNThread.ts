@@ -10,7 +10,10 @@ export interface Spec extends TurboModule {
   readonly addListener: (eventType: string) => void;
   readonly removeListeners: (count: number) => void;
 
-  startThread(jsFilePath: string, options?: ThreadStartOptions): Promise<number>;
+  startThread(
+    jsFilePath: string,
+    options?: ThreadStartOptions,
+  ): Promise<number>;
   stopThread(threadId: number): void;
   postThreadMessage(threadId: number, message: string): void;
 }

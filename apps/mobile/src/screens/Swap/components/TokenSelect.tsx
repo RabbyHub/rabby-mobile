@@ -107,7 +107,14 @@ const TokenSelect = ({
     useState<FavoriteFilterType>('all');
 
   const [_, setLongPressToken] = useLongPressTokenAtom();
-  const queryConds = useDebouncedValue(_queryConds, 250);
+  const debouncedKeyword = useDebouncedValue(_queryConds.keyword, 250);
+  const queryConds = useMemo(
+    () => ({
+      ..._queryConds,
+      keyword: debouncedKeyword,
+    }),
+    [_queryConds, debouncedKeyword],
+  );
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
   const currentAccount = queryConds.account;
 
@@ -117,6 +124,22 @@ const TokenSelect = ({
     }
     return _favoriteFilterValue;
   }, [_favoriteFilterValue, queryConds.keyword]);
+
+  const isSend = type === 'send';
+  const { isShowTestnet, selectedTab, onTabChange } = useSwitchNetTab({
+    hideTestnetTab: !isSend || customTestnetService.getList().length === 0,
+  });
+
+  const isSameSourceTokenSelect =
+    type === 'send' || type === 'swapFrom' || type === 'bridgeFrom';
+  const shouldUseTokenRows =
+    isSameSourceTokenSelect &&
+    selectedTab !== 'testnet' &&
+    favoriteFilterValue !== 'favorite';
+  const shouldUseTokenObjects =
+    selectedTab !== 'testnet' &&
+    favoriteFilterValue !== 'favorite' &&
+    !shouldUseTokenRows;
 
   const {
     visible: tokenSelectorVisible,
@@ -130,6 +153,7 @@ const TokenSelect = ({
 
   const {
     tokens,
+    tokenRows,
     checkIsExpireAndUpdate,
     loadToken,
     loadOnVisibleChanged,
@@ -140,6 +164,7 @@ const TokenSelect = ({
     chain_server_id: queryConds.chainServerId,
     isLpTokenEnabled,
     keyword: queryConds.keyword,
+    returnTokenObjects: shouldUseTokenObjects,
   });
 
   useImperativeHandle(ref, () => ({
@@ -179,6 +204,9 @@ const TokenSelect = ({
     () => userTokenSettings.pinedQueue,
     [userTokenSettings.pinedQueue],
   );
+  const favoriteTokenKeySet = useMemo(() => {
+    return new Set(pinedQueue?.map(x => `${x.chainId}:${x.tokenId}`));
+  }, [pinedQueue]);
 
   const { data: favoriteTokens, loading: favoriteTokensLoading } =
     useFavoriteTokens({
@@ -220,7 +248,12 @@ const TokenSelect = ({
           : {
               account: ctx.filterAccountItem ?? null,
               keyword: ctx.keyword,
-              chainServerId: ctx.chainServerId ?? prev.chainServerId,
+              chainServerId: Object.prototype.hasOwnProperty.call(
+                ctx,
+                'chainServerId',
+              )
+                ? ctx.chainServerId || ''
+                : prev.chainServerId,
             }),
       }));
     },
@@ -285,6 +318,9 @@ const TokenSelect = ({
   );
 
   const unFoldTokenList = useMemo(() => {
+    if (shouldUseTokenRows) {
+      return [];
+    }
     if (favoriteFilterValue === 'favorite') {
       return favoriteTokens.map(e => ({
         ...e,
@@ -296,7 +332,13 @@ const TokenSelect = ({
       isPin: pinedQueue?.some(x => x.chainId === e.chain && x.tokenId === e.id),
     })) as ITokenItem[];
     return tokensWithPinStatus;
-  }, [favoriteFilterValue, tokens, favoriteTokens, pinedQueue]);
+  }, [
+    shouldUseTokenRows,
+    favoriteFilterValue,
+    tokens,
+    favoriteTokens,
+    pinedQueue,
+  ]);
 
   const { forScene, ofScreen } = useScreenSceneAccountContext();
   const allowClearAccountFilter = useMemo(() => {
@@ -310,8 +352,8 @@ const TokenSelect = ({
 
     return (
       forScene === 'MakeTransactionAbout' &&
-      ((RootNames.MultiBridge === ofScreen && type === 'bridgeFrom') ||
-        (RootNames.MultiSwap === ofScreen && type === 'swapFrom'))
+      RootNames.MultiSwapBridge === ofScreen &&
+      (type === 'bridgeFrom' || type === 'swapFrom')
     );
   }, [queryConds.keyword, currentAccount?.type, forScene, ofScreen, type]);
 
@@ -358,12 +400,6 @@ const TokenSelect = ({
       position: { x: 0, y: 0, height: 0 },
       tokenEntity: null,
     });
-  });
-
-  const isSend = type === 'send';
-
-  const { isShowTestnet, selectedTab, onTabChange } = useSwitchNetTab({
-    hideTestnetTab: !isSend || customTestnetService.getList().length === 0,
   });
 
   const {
@@ -441,7 +477,14 @@ const TokenSelect = ({
         ref={tokenSelectorModalRef}
         visible={tokenSelectorVisible}
         unshiftList={[]}
-        list={selectedTab === 'testnet' ? testnetTokenList : unFoldTokenList}
+        list={
+          shouldUseTokenRows
+            ? []
+            : selectedTab === 'testnet'
+            ? testnetTokenList
+            : unFoldTokenList
+        }
+        tokenRows={shouldUseTokenRows ? tokenRows : undefined}
         onConfirm={handleCurrentTokenChange}
         onCancel={handleTokenSelectorClose}
         onSearch={handleSearchTokens}
@@ -467,19 +510,16 @@ const TokenSelect = ({
         showLpTokenSwitch={!queryConds.keyword}
         isLpTokenEnabled={isLpTokenEnabled}
         onLpTokenChange={setIsLpTokenEnabled}
+        favoriteTokenKeySet={favoriteTokenKeySet}
       />
     </>
   );
 };
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   wrapper: {
-    borderRadius: 12,
+    borderRadius: 100,
     // TODO: backgroundColor: colors2024['neutral-card-2'],
     backgroundColor: colors2024['neutral-line'],
-    // backgroundColor: colors2024['neutral-bg-2'],
-
-    // paddingLeft: 16,
-    // paddingRight: 12,
     padding: 4,
     height: 34,
     flexDirection: 'row',
@@ -487,7 +527,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
   },
   bridgeWrapper: {
-    borderRadius: 12,
+    borderRadius: 100,
     backgroundColor: colors2024['neutral-line'],
     padding: 4,
     flexDirection: 'row',

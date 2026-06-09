@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -26,6 +26,11 @@ import {
 } from '@/utils/perps';
 import RcIconCloseCC from '@/assets2024/icons/perps/IconCloseCC.svg';
 import { Text, TextInput } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+} from '@/constant/layout';
 
 interface Props {
   coin: string;
@@ -41,6 +46,7 @@ interface Props {
   pxDecimals: number;
   szDecimals: number;
   actionType: 'tp' | 'sl';
+  quoteAsset: string;
   type: 'openPosition' | 'hasPosition';
   handleSetAutoClose: (price: string) => Promise<void>;
   handleCancelAutoClose: () => Promise<void>;
@@ -80,6 +86,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   szDecimals,
   actionType,
   type,
+  quoteAsset,
   handleSetAutoClose,
   handleCancelAutoClose,
 }) => {
@@ -383,28 +390,31 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                   </TouchableOpacity>
                   <View style={styles.header}>
                     <Text style={styles.title}>
-                      {direction} {formatPerpsCoin(coin)}-USD
+                      {direction} {formatPerpsCoin(coin)}
                     </Text>
                     {type === 'openPosition' ? (
                       <Text style={styles.subTitle}>
-                        {t(
-                          'page.perpsDetail.PerpsAutoCloseModal.currentPrice',
-                          {
-                            price: `$${splitNumberByStep(markPrice)}`,
-                          },
-                        )}
+                        {formatPerpsCoin(coin)}/{quoteAsset}{' '}
+                        <Text
+                          style={styles.subTitlePrice}>{`$${splitNumberByStep(
+                          markPrice,
+                        )}`}</Text>
                       </Text>
                     ) : (
                       <Text style={styles.subTitle}>
-                        {t(
-                          'page.perpsDetail.PerpsAutoCloseModal.EntryAndCurrentPrice',
-                          {
+                        <Trans
+                          i18nKey="page.perpsDetail.PerpsAutoCloseModal.EntryAndCurrentPriceTpl"
+                          values={{
                             entryPrice: `$${splitNumberByStep(
                               entryPrice || markPrice,
                             )}`,
                             price: `$${splitNumberByStep(markPrice)}`,
-                          },
-                        )}
+                          }}
+                          components={{
+                            1: <Text style={styles.subTitlePrice} />,
+                            2: <Text style={styles.subTitlePrice} />,
+                          }}
+                        />
                       </Text>
                     )}
                   </View>
@@ -492,8 +502,12 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                       <View style={styles.pnlCardWrapperItem}>
                         <Text style={[styles.pnlText]}>
                           {gainOrLoss === 'gain'
-                            ? t('page.perpsDetail.PerpsAutoCloseModal.youGain')
-                            : t('page.perpsDetail.PerpsAutoCloseModal.youLoss')}
+                            ? t(
+                                'page.perpsDetail.PerpsAutoCloseModal.youGainRoi',
+                              )
+                            : t(
+                                'page.perpsDetail.PerpsAutoCloseModal.youLossRoi',
+                              )}
                           :
                         </Text>
                         {priceValidation.error || priceIsEmptyValue ? (
@@ -552,6 +566,8 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                       title={t('global.confirm')}
                       disabled={!isValidPrice}
                       onPress={handleConfirm}
+                      height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                      titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                       containerStyle={styles.containerStyle}
                     />
                   </View>
@@ -621,6 +637,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     marginBottom: 36,
   },
 
@@ -641,12 +658,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
 
   subTitle: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontStyle: 'normal',
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
     textAlign: 'center',
+  },
+  subTitlePrice: {
+    color: colors2024['neutral-title-1'],
+    fontWeight: '700',
   },
 
   body: {
@@ -800,7 +820,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   containerStyle: {
     // width: '100%',
     // height: 40,
-    height: 48,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     flex: 1,
   },
   buttonStyle: {},

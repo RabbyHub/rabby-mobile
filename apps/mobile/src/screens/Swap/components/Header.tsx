@@ -6,6 +6,7 @@ import React, { useEffect } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import {
   useReadPendingCount,
+  useClearSwapHistoryRedDot,
   useReadSwapHistoryRedDot,
   useSwapTxHistoryVisible,
 } from '../hooks/history';
@@ -17,10 +18,11 @@ export const SwapHeader = ({
   clearSwapHistoryRedDot,
 }: {
   isForMultipleAddress: boolean;
-  clearSwapHistoryRedDot: () => number;
+  clearSwapHistoryRedDot?: () => number;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [recentShowTime, setRecentShowTime] = React.useState<number>(0);
+  const clearSwapHistoryRedDotFromScene = useClearSwapHistoryRedDot();
 
   const loadingNumber = useReadPendingCount();
   const showRedDot = useReadSwapHistoryRedDot();
@@ -29,11 +31,13 @@ export const SwapHeader = ({
 
   const openSwapHistory = React.useCallback(() => {
     setVisible(true);
-    const currentTs = clearSwapHistoryRedDot();
+    const currentTs = (
+      clearSwapHistoryRedDot || clearSwapHistoryRedDotFromScene
+    )();
     if (currentTs) {
       setRecentShowTime(currentTs);
     }
-  }, [setVisible, clearSwapHistoryRedDot]);
+  }, [setVisible, clearSwapHistoryRedDot, clearSwapHistoryRedDotFromScene]);
 
   return (
     <View style={styles.container}>

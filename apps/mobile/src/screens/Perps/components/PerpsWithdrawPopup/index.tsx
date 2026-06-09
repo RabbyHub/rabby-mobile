@@ -45,6 +45,12 @@ import {
   PerpsWithdrawChainOption,
   PerpsWithdrawSelectChainPopup,
 } from './PerpsWithdrawSelectChainPopup';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { findChainByServerID } from '@/utils/chain';
 
 type SelectChainType =
@@ -460,6 +466,8 @@ export const PerpsWithdrawPopup: React.FC<{
             type="hyperliquid"
             disabled={!amountValidation.isValid}
             title={t('page.perps.PerpsWithdrawPopup.withdrawBtn')}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             loading={loading}
             onPress={handleWithdraw}
           />
@@ -497,9 +505,9 @@ const getStyle = createGetStyles2024(ctx => {
   return {
     container: {
       backgroundColor: ctx.colors2024['neutral-bg-1'],
-      paddingBottom: 56,
+      paddingBottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
       paddingHorizontal: 20,
-      paddingTop: 10,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
       display: 'flex',
       flexDirection: 'column',
     },

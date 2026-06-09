@@ -14,7 +14,7 @@ import { useSwapHistory, useSwapTxHistoryVisible } from '../hooks/history';
 import { SwapHistoryItem } from '@/components2024/HistoryItem/SwapHistoryItem';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { navigateDeprecated } from '@/utils/navigation';
+import { naviPush } from '@/utils/navigation';
 import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
 import { syncSingleAddress } from '@/databases/hooks/history';
 import IconEmpty from '@/assets2024/images/lending/empty.png';
@@ -22,7 +22,10 @@ import IconEmptyDark from '@/assets2024/images/lending/empty-dark.png';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
 import { preferenceService, transactionHistoryService } from '@/core/services';
-import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import {
+  switchSceneCurrentAccount,
+  useSceneAccountInfo,
+} from '@/hooks/accountsSwitcher';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
@@ -31,6 +34,7 @@ import { Text } from '@/components/Typography';
 import { notificationOpenapi } from '@/core/notifications/openapi';
 import { txResultToToHistoryDisplayItem } from '@/utils/transaction';
 import { useDebugSwapHistorySkipLocalLookup } from '@/hooks/appSettings';
+import { Account } from '@/types/account';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   flatList: {
@@ -267,7 +271,7 @@ export const SwapTxHistory = ({
         });
         if (historyItem) {
           onDismiss();
-          navigateDeprecated(RootNames.StackTransaction, {
+          naviPush(RootNames.StackTransaction, {
             screen: RootNames.HistoryDetail,
             params: {
               isForMultipleAddress,
@@ -276,6 +280,7 @@ export const SwapTxHistory = ({
               } as HistoryDisplayItem,
               title: t('page.swap.swapped'),
               treatSmallAssetsAsScam: true,
+              account: currentAccount,
             },
           });
           return;
@@ -289,13 +294,14 @@ export const SwapTxHistory = ({
           .find(i => i.txs[0]?.hash === txId);
         if (itemData) {
           onDismiss();
-          navigateDeprecated(RootNames.StackTransaction, {
+          naviPush(RootNames.StackTransaction, {
             screen: RootNames.HistoryLocalDetail,
             params: {
               isForMultipleAddress,
               data: itemData,
               type: HistoryItemCateType.Swap,
               title: t('page.swap.swapped'),
+              account: currentAccount,
             },
           });
           return;
@@ -338,23 +344,24 @@ export const SwapTxHistory = ({
 
       if (historyDisplayItem) {
         onDismiss();
-        navigateDeprecated(RootNames.StackTransaction, {
+        naviPush(RootNames.StackTransaction, {
           screen: RootNames.HistoryDetail,
           params: {
             isForMultipleAddress,
             data: historyDisplayItem,
             title: t('page.swap.swapped'),
             treatSmallAssetsAsScam: true,
+            account: currentAccount,
           },
         });
       }
     },
     [
       debugSwapHistorySkipLocalLookup,
+      currentAccount,
       onDismiss,
-      t,
       isForMultipleAddress,
-      currentAccount?.address,
+      t,
     ],
   );
 

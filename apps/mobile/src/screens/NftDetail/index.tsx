@@ -10,7 +10,13 @@ import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Media } from '@/components/Media';
 import { IconDefaultNFT, IconNumberNFT } from '@/assets/icons/nft';
 import { CHAINS_ENUM } from '@/constant/chains';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+  RootNames,
+} from '@/constant/layout';
 import { useRoute } from '@react-navigation/native';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { GetRootScreenRouteProp } from '@/navigation-type';
@@ -348,7 +354,8 @@ export const NFTDetailScreen = () => {
                   address && type && handleSend(iToken, address, type)
                 }
                 title={t('page.sendNFT.sendButton')}
-                titleStyle={styles.btnTitle}
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                titleStyle={[BOTTOM_BUTTON_TITLE_STYLE, styles.btnTitle]}
               />
             </View>
           )}
@@ -364,180 +371,182 @@ export const NFTDetailScreen = () => {
         {itemList.map(({ data, address, type, aliasName }) =>
           renderSingeleNft({ address, iToken: data, type, aliasName }),
         )}
-        <View style={{ height: 40 }} />
       </ScrollView>
     </NormalScreenContainer2024>
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
-  scrollContainer: {
-    flex: 1,
-    width: '100%',
-    marginTop: 8,
-    // backgroundColor: colors2024['neutral-bg-4'],
-  },
-  accountBox: {
-    flexDirection: 'row',
-    marginLeft: 25,
-    gap: 4,
-    marginTop: 10,
-    marginBottom: 8,
-  },
-  titleText: {
-    flexShrink: 1,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '500',
-    flexWrap: 'nowrap',
-  },
-  walletIcon: {
-    width: 18,
-    height: 18,
-    borderRadius: 4,
-  },
-  buttonContainer: {
-    height: 100,
-    width: '100%',
-    padding: 20,
-  },
-  btnTitle: {
-    color: colors['neutral-title-2'],
-  },
-  imagesView: {
-    borderRadius: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-    marginBottom: 0,
-  },
-  headerArea: {
-    width: '100%',
-    height: 'auto',
-    marginLeft: 8,
-    display: 'flex',
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center',
-  },
-  assetIcon: {
-    borderRadius: 8,
-  },
-  tokenSymbol: {
-    flexShrink: 1,
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '700',
-    flexWrap: 'nowrap',
-  },
-  container: {
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-  },
-  innerImages: {
-    borderRadius: 16,
-    // width: '100%',
-    // height: 'auto',
-  },
-  avator: {
-    width: 40,
-    height: 40,
-    borderColor: 'red',
-    position: 'relative',
-  },
-  chainIcon: {
-    width: 16,
-    height: 16,
-    borderRadius: 16,
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-  },
-  imagesAvatar: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 8,
-  },
-  images: {
-    width: '100%',
-    height: 360,
-    // flex: 1,
-    paddingHorizontal: 16,
-    borderRadius: 0,
-    resizeMode: 'cover',
-    backgroundColor: 'transparent',
-  },
-  titleView: {
-    paddingTop: 16,
-    paddingBottom: 16,
-    width: '100%',
-  },
-  title: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '700',
-  },
-  subtitle: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  numbernft: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: colors['neutral-title-1'],
-    lineHeight: 17,
-    marginLeft: 8,
-  },
-  listItem: {
-    flexDirection: 'row',
-    paddingTop: 16,
-    justifyContent: 'space-between',
-  },
-  price: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-  },
-  value: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '500',
-    alignSelf: 'flex-end',
-    alignItems: 'flex-end',
-    alignContent: 'flex-end',
-    maxWidth: 227,
-    marginLeft: 24,
-    textAlign: 'right',
-  },
-  borderTop: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: colors['neutral-line'],
-  },
-  bottom: {
-    paddingHorizontal: 20,
-    width: '100%',
-  },
-  left: {
-    alignSelf: 'flex-start',
-  },
-  right: {
-    alignItems: 'flex-end',
-    justifyContent: 'flex-end',
-    alignSelf: 'flex-end',
-    flexWrap: 'wrap',
-    alignContent: 'flex-end',
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, colors, safeAreaInsets }) => ({
+    scrollContainer: {
+      flex: 1,
+      width: '100%',
+      marginTop: 8,
+      // backgroundColor: colors2024['neutral-bg-4'],
+    },
+    accountBox: {
+      flexDirection: 'row',
+      marginLeft: 25,
+      gap: 4,
+      marginTop: 10,
+      marginBottom: 8,
+    },
+    titleText: {
+      flexShrink: 1,
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '500',
+      flexWrap: 'nowrap',
+    },
+    walletIcon: {
+      width: 18,
+      height: 18,
+      borderRadius: 4,
+    },
+    buttonContainer: {
+      width: '100%',
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+      paddingHorizontal: 20,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+    },
+    btnTitle: {
+      color: colors['neutral-title-2'],
+    },
+    imagesView: {
+      borderRadius: 4,
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'relative',
+      marginBottom: 0,
+    },
+    headerArea: {
+      width: '100%',
+      height: 'auto',
+      marginLeft: 8,
+      display: 'flex',
+      flexDirection: 'row',
+      gap: 8,
+      alignItems: 'center',
+    },
+    assetIcon: {
+      borderRadius: 8,
+    },
+    tokenSymbol: {
+      flexShrink: 1,
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '700',
+      flexWrap: 'nowrap',
+    },
+    container: {
+      flexDirection: 'column',
+      justifyContent: 'flex-start',
+      alignItems: 'flex-start',
+    },
+    innerImages: {
+      borderRadius: 16,
+      // width: '100%',
+      // height: 'auto',
+    },
+    avator: {
+      width: 40,
+      height: 40,
+      borderColor: 'red',
+      position: 'relative',
+    },
+    chainIcon: {
+      width: 16,
+      height: 16,
+      borderRadius: 16,
+      position: 'absolute',
+      bottom: -2,
+      right: -2,
+    },
+    imagesAvatar: {
+      width: '100%',
+      height: '100%',
+      borderRadius: 8,
+    },
+    images: {
+      width: '100%',
+      height: 360,
+      // flex: 1,
+      paddingHorizontal: 16,
+      borderRadius: 0,
+      resizeMode: 'cover',
+      backgroundColor: 'transparent',
+    },
+    titleView: {
+      paddingTop: 16,
+      paddingBottom: 16,
+      width: '100%',
+    },
+    title: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '700',
+    },
+    subtitle: {
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      marginTop: 16,
+    },
+    numbernft: {
+      fontSize: 15,
+      fontWeight: '500',
+      color: colors['neutral-title-1'],
+      lineHeight: 17,
+      marginLeft: 8,
+    },
+    listItem: {
+      flexDirection: 'row',
+      paddingTop: 16,
+      justifyContent: 'space-between',
+    },
+    price: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+    },
+    value: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '500',
+      alignSelf: 'flex-end',
+      alignItems: 'flex-end',
+      alignContent: 'flex-end',
+      maxWidth: 227,
+      marginLeft: 24,
+      textAlign: 'right',
+    },
+    borderTop: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderColor: colors['neutral-line'],
+    },
+    bottom: {
+      paddingHorizontal: 20,
+      width: '100%',
+    },
+    left: {
+      alignSelf: 'flex-start',
+    },
+    right: {
+      alignItems: 'flex-end',
+      justifyContent: 'flex-end',
+      alignSelf: 'flex-end',
+      flexWrap: 'wrap',
+      alignContent: 'flex-end',
+    },
+  }),
+);

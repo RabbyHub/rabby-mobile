@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useSwapSettings, useSwapSupportedDexList } from '../hooks';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { Skeleton } from '@rneui/themed';
 import { DEX } from '@/constant/swap';
-import { useThemeColors } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 
 type QuoteListLoadingProps = {
   fetchedList?: string[];
@@ -12,30 +12,16 @@ type QuoteListLoadingProps = {
 };
 
 export const QuoteLoading = ({
-  logo,
-  name,
   isCex = false,
 }: {
   logo: string;
   name: string;
   isCex?: boolean;
 }) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
-  const viewStyle = useMemo(
-    () => [
-      styles.container,
-      {
-        height: isCex ? 48 : 66,
-        borderWidth: isCex ? 0 : StyleSheet.hairlineWidth,
-        paddingHorizontal: isCex ? 0 : 16,
-      },
-    ],
-    [isCex, styles.container],
-  );
+  const { styles } = useTheme2024({ getStyle });
 
   return (
-    <View style={styles.dexLoading}>
+    <View style={[styles.dexLoading, isCex && styles.cexLoading]}>
       <View style={styles.column}>
         <View style={styles.dexNameColumn}>
           <Skeleton circle width={24} height={24} />
@@ -79,25 +65,28 @@ export const QuoteListLoading = ({
   );
 };
 
-const getStyles = createGetStyles(colors => ({
-  container: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 14,
-    borderRadius: 6,
-    borderColor: colors['neutral-line'],
-  },
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   dexLoading: {
     flexDirection: 'column',
     width: '100%',
-    height: 90,
+    height: 82,
     paddingHorizontal: 16,
+    paddingVertical: 16,
     justifyContent: 'center',
-    gap: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 6,
-    borderColor: colors['neutral-line'],
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 16,
+    borderColor: 'transparent',
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
+  cexLoading: {
+    height: 48,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    borderWidth: 0,
+    backgroundColor: 'transparent',
   },
   column: {
     flexDirection: 'row',
@@ -113,7 +102,7 @@ const getStyles = createGetStyles(colors => ({
     marginLeft: 8,
     fontSize: 16,
     fontWeight: '500',
-    color: colors['neutral-title-1'],
+    color: colors2024['neutral-title-1'],
     width: 100,
   },
   skeleton1: {

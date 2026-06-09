@@ -2,7 +2,12 @@ import { RcArrowRightCC } from '@/assets2024/icons/perps';
 import { AssetAvatar } from '@/components';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { Button } from '@/components2024/Button';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  RootNames,
+} from '@/constant/layout';
 import { ARB_USDC_TOKEN_ITEM } from '@/constant/perps';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
@@ -78,6 +83,8 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
               <Button
                 type="ghost"
                 title={t('global.cancel')}
+                height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+                titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                 onPress={onCancel}
               />
             </View>
@@ -89,6 +96,8 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
                     ? t('page.perps.PerpsDepositTokenModal.swapBtn')
                     : t('page.perps.PerpsDepositTokenModal.bridgeBtn')
                 }
+                height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+                titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                 onPress={async () => {
                   await switchSceneCurrentAccount(
                     'MakeTransactionAbout',
@@ -96,9 +105,10 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
                   );
                   if (isSwap) {
                     navigation.navigateDeprecated(RootNames.StackTransaction, {
-                      screen: RootNames.MultiSwap,
+                      screen: RootNames.MultiSwapBridge,
 
                       params: {
+                        activeTab: 'swap',
                         swapAgain: true,
                         chainEnum: findChain({ serverId: token.chain })?.enum,
                         swapTokenId: [token.id, ARB_USDC_TOKEN_ITEM.id],
@@ -106,9 +116,10 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
                     });
                   } else {
                     navigation.navigateDeprecated(RootNames.StackTransaction, {
-                      screen: RootNames.MultiBridge,
+                      screen: RootNames.MultiSwapBridge,
 
                       params: {
+                        activeTab: 'bridge',
                         chainEnum: findChain({ serverId: token.chain })?.enum,
                         tokenId: token.id,
                         toChainEnum: findChain({
@@ -153,7 +164,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: BOTTOM_BUTTON_GAP,
   },
   tokenSwap: {
     display: 'flex',
@@ -183,6 +194,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     // width: '100%',
     // height: 40,
     flex: 1,
+    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
   },
   buttonStyle: {},
 }));

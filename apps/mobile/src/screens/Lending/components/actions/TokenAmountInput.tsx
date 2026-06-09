@@ -4,8 +4,9 @@ import { Pressable, TouchableOpacity, View } from 'react-native';
 import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formatSpeicalAmount, splitNumberByStep } from '@/utils/number';
+import { formatTokenAmountInput, splitNumberByStep } from '@/utils/number';
 import { NumericInput } from '@/components/Form/NumbericInput';
+import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInput';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import LinearGradient from 'react-native-linear-gradient';
 import TokenIcon from '../TokenIcon';
@@ -17,6 +18,7 @@ interface TokenAmountInputProps {
   symbol: string;
   value?: string;
   tokenAmount: number;
+  tokenDecimals?: number;
   price?: number;
   chain: CHAINS_ENUM;
   onChange?(amount: string): void;
@@ -33,6 +35,7 @@ export const TokenAmountInput = ({
   value,
   price = 1,
   tokenAmount,
+  tokenDecimals,
   onChange,
   chain,
   inlinePrize,
@@ -68,19 +71,52 @@ export const TokenAmountInput = ({
     );
   }, [colors2024]);
 
-  const handleChangeText = useMemo(
+  const formatAmountInput = useCallback(
+    (v: string) => {
+      return formatTokenAmountInput(v, tokenDecimals);
+    },
+    [tokenDecimals],
+  );
+
+  const debouncedChangeText = useMemo(
     () =>
       debounce((v: string) => {
-        onChange?.(formatSpeicalAmount(v));
+        onChange?.(v);
       }, 200),
     [onChange],
   );
 
+  const handleChangeText = useCallback(
+    (v: string) => {
+      const formatted = formatAmountInput(v);
+      if (Number(formatted) >= tokenAmount && tokenAmount > 0) {
+        debouncedChangeText.cancel();
+        handleClickMaxButton?.();
+        return false;
+      }
+
+      if (formatted !== v) {
+        debouncedChangeText.cancel();
+        onChange?.(formatted);
+        return false;
+      }
+
+      debouncedChangeText(formatted);
+    },
+    [
+      debouncedChangeText,
+      formatAmountInput,
+      handleClickMaxButton,
+      onChange,
+      tokenAmount,
+    ],
+  );
+
   useEffect(() => {
     return () => {
-      handleChangeText.cancel();
+      debouncedChangeText.cancel();
     };
-  }, [handleChangeText]);
+  }, [debouncedChangeText]);
 
   const showTokenSelect = useMemo(() => {
     return !!onClickToken;
@@ -105,6 +141,7 @@ export const TokenAmountInput = ({
             />
           ) : (
             <NumericInput
+              TextInputComponent={AutoShrinkAmountTextInput}
               style={[
                 inlinePrize && !!valueText && styles.inputHasInlinePrize,
                 styles.input,
@@ -226,8 +263,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       color: colors2024['neutral-title-1'],
       marginLeft: 8,
       flex: 1,
+      height: 36,
+      lineHeight: 36,
       paddingTop: 0,
       paddingBottom: 0,
+      textAlignVertical: 'center',
+      includeFontPadding: false,
+      overflow: 'hidden',
     },
     inputHasInlinePrize: {
       // ...makeDebugBorder(),

@@ -2,7 +2,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { StyleSheet } from 'react-native';
 
-export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
+export const getStyle = createGetStyles2024(({ colors2024 }) => ({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -20,7 +20,7 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
 
   gasSelector: {
     marginTop: 15,
-    backgroundColor: colors['neutral-card-1'],
+    backgroundColor: colors2024['neutral-card-1'],
     borderRadius: 6,
     display: 'flex',
     padding: 16,
@@ -52,7 +52,7 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontWeight: '500',
     fontSize: 16,
     lineHeight: 19,
-    color: colors['neutral-title-1'],
+    color: colors2024['neutral-title-1'],
   },
   gasSelectorCardContent: {
     flex: 1,
@@ -60,7 +60,7 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     alignItems: 'center',
   },
   gasSelectorCardContentText: {
-    color: colors['neutral-title-1'],
+    color: colors2024['neutral-title-1'],
     fontWeight: '600',
   },
   gasSelectorCardContentItem: {
@@ -71,7 +71,7 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   gasSelectorCardErrorText: {
     fontSize: 15,
     lineHeight: 18,
-    color: colors['orange-default'],
+    color: colors2024['orange-default'],
   },
   gasSelectorCardAmount: {
     flex: 1,
@@ -81,7 +81,7 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   gasSelectorCardAmountText: {
     fontSize: 14,
     lineHeight: 16,
-    color: colors['neutral-foot'],
+    color: colors2024['neutral-foot'],
   },
   gasSelectorCardAmountLabel: {
     fontFamily: 'SF Pro Rounded',
@@ -105,7 +105,7 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontWeight: '700',
   },
   gasCostAmount: {
-    color: colors['neutral-body'],
+    color: colors2024['neutral-body'],
     marginTop: 2,
     flexShrink: 0,
     fontSize: 14,
@@ -113,14 +113,14 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   gasAccountTip: {
     fontSize: 13,
     fontWeight: '400',
-    color: colors['neutral-title-2'],
+    color: colors2024['neutral-title-2'],
   },
   gasMore: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   gasMoreText: {
-    color: colors['neutral-foot'],
+    color: colors2024['neutral-foot'],
     fontSize: 12,
   },
   manuallySetGasLimitAlert: {
@@ -128,10 +128,10 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontSize: 13,
     lineHeight: 15,
     marginTop: 10,
-    color: colors['neutral-body'],
+    color: colors2024['neutral-body'],
   },
   errorWrap: {
-    borderTopColor: colors['neutral-line'],
+    borderTopColor: colors2024['neutral-line'],
     borderTopWidth: StyleSheet.hairlineWidth,
     marginTop: 14,
     paddingTop: 14,
@@ -141,7 +141,7 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontWeight: '500',
     fontSize: 14,
     lineHeight: 16,
-    color: colors['neutral-body'],
+    color: colors2024['neutral-body'],
     marginBottom: 10,
     alignItems: 'flex-start',
   },
@@ -175,7 +175,7 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontSize: 20,
     lineHeight: 23,
     textAlign: 'center',
-    color: colors['orange-default'],
+    color: colors2024['orange-default'],
   },
   gasSelectorModalErrorDesc: {
     marginTop: 4,
@@ -185,7 +185,7 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontSize: 16,
     lineHeight: 19,
     textAlign: 'center',
-    color: colors['neutral-body'],
+    color: colors2024['neutral-body'],
   },
   gasSelectorModalUsdWrap: {
     flexDirection: 'row',
@@ -197,7 +197,7 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontSize: 15,
     lineHeight: 18,
     textAlign: 'center',
-    color: colors['neutral-body'],
+    color: colors2024['neutral-body'],
   },
   cardContainer: {
     paddingHorizontal: 20,
@@ -210,23 +210,30 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontSize: 14,
     fontWeight: '800',
     lineHeight: 18,
-    color: colors['neutral-title-1'],
+    color: colors2024['neutral-title-1'],
     marginBottom: 8,
   },
   cardContainerTitleDisabled: {
     opacity: 0.5,
   },
   modalWrap: {
-    position: 'relative',
     flex: 1,
-    backgroundColor: colors['neutral-bg1'],
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  modalBackground: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  modalScrollView: {
+    flex: 1,
   },
   gasLimitLabel: {
     paddingHorizontal: 20,
   },
   gasLimitLabelText: {
     lineHeight: 16,
-    color: colors['neutral-title1'],
+    color: colors2024['neutral-title-1'],
     fontSize: 13,
   },
   gasLimitLabelTextDisabled: {
@@ -234,12 +241,12 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   },
   nonceTitle: {
     lineHeight: 16,
-    color: colors['neutral-title1'],
+    color: colors2024['neutral-title-1'],
     marginTop: 20,
     fontSize: 13,
   },
   tip: {
-    color: colors['neutral-foot'],
+    color: colors2024['neutral-foot'],
     fontSize: 12,
     marginTop: 12,
     marginBottom: 0,
@@ -249,22 +256,22 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     textDecorationLine: 'line-through',
   },
   recommendTimes: {
-    textDecorationColor: colors['neutral-foot'],
+    textDecorationColor: colors2024['neutral-foot'],
     textDecorationLine: 'underline',
   },
   gasLimitInput: {
     padding: 15,
     borderRadius: 8,
-    backgroundColor: colors['neutral-card-1'],
-    borderColor: colors['neutral-line'],
+    backgroundColor: colors2024['neutral-card-1'],
+    borderColor: colors2024['neutral-line'],
     borderWidth: 1,
     fontSize: 15,
     fontWeight: '500',
-    color: colors['neutral-title-1'],
+    color: colors2024['neutral-title-1'],
     marginTop: 8,
   },
   button: {
-    backgroundColor: colors['blue-default'],
+    backgroundColor: colors2024['brand-default'],
   },
   gasPriceDesc: {
     marginTop: 20,
@@ -354,6 +361,8 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   },
   footer: {
     backgroundColor: colors2024['neutral-bg-1'],
+    paddingHorizontal: 20,
+    paddingTop: 16,
   },
   cardBody: {
     padding: 12,
@@ -361,10 +370,10 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   cardBodyText: {
     fontSize: 13,
     lineHeight: 15,
-    color: colors['neutral-body'],
+    color: colors2024['neutral-body'],
   },
   cardModal: {
-    backgroundColor: colors['neutral-bg2'],
+    backgroundColor: colors2024['neutral-bg-2'],
   },
   cardMain: {
     paddingHorizontal: 20,

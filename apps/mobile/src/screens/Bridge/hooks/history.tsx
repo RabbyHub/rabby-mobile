@@ -8,7 +8,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { uniqBy } from 'lodash';
 import { openapi } from '@/core/request';
 import useAsync from 'react-use/lib/useAsync';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import {
   BridgeTxHistoryItem,
   SwapTxHistoryItem,
@@ -30,6 +30,25 @@ export const useReadBridgePendingCount = () => {
 
 export const useReadBridgeHistoryRedDot = () => {
   return useAtomValue(bridgeHistoryRedDotAtom);
+};
+
+export const useClearBridgeHistoryRedDot = () => {
+  const setBridgeHistoryRedDot = useSetAtom(bridgeHistoryRedDotAtom);
+
+  const { finalSceneCurrentAccount: account } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
+
+  return useCallback(() => {
+    if (!account?.address) {
+      return 0;
+    }
+
+    setBridgeHistoryRedDot(false);
+    const currentTs = bridgeService.getOpenBridgeHistoryTs(account.address);
+    bridgeService.setOpenBridgeHistoryTs(account.address);
+    return currentTs;
+  }, [account?.address, setBridgeHistoryRedDot]);
 };
 
 export const fetchLocalBridgePendingTx = (address: string) => {

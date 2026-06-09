@@ -1,6 +1,21 @@
 export const APP_FILE_LOGGING_ONLINE_SWITCH =
   '20260410.enable_app_file_logging' as const;
 
+export type AppLogPolicyEnv = 'development' | 'regression' | 'production';
+
+export function resolveAppLogPolicyEnv(options: {
+  runtimeEnv: string;
+  isNonPublicProductionEnv: boolean;
+}): AppLogPolicyEnv {
+  const { runtimeEnv, isNonPublicProductionEnv } = options;
+
+  if (runtimeEnv === 'development') {
+    return 'development';
+  }
+
+  return isNonPublicProductionEnv ? 'regression' : 'production';
+}
+
 export function getDefaultLocalAppFileLoggingEnabled(runtimeEnv: string) {
   switch (runtimeEnv) {
     case 'development':

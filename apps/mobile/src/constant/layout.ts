@@ -8,6 +8,25 @@ import {
 import { IS_ANDROID } from '@/core/native/utils';
 import { Dimensions } from 'react-native';
 
+export const BOTTOM_BUTTON_BOTTOM_OFFSET = 36;
+export const BOTTOM_BUTTON_TOP_OFFSET = 12;
+export const BOTTOM_BUTTON_GAP = 12;
+export const BOTTOM_BUTTON_SINGLE_HEIGHT = 52;
+export const BOTTOM_BUTTON_DOUBLE_HEIGHT = 48;
+export const BOTTOM_BUTTON_TEXT_SIZE = 18;
+export const BOTTOM_BUTTON_TEXT_LINE_HEIGHT = 22;
+export const BOTTOM_BUTTON_TITLE_STYLE = {
+  fontSize: BOTTOM_BUTTON_TEXT_SIZE,
+  lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
+  fontWeight: '700',
+} as const;
+export const BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE = {
+  fontSize: BOTTOM_BUTTON_TEXT_SIZE,
+  fontWeight: '700',
+} as const;
+export const getBottomButtonBottomOffset = (safeAreaBottom = 0) =>
+  BOTTOM_BUTTON_BOTTOM_OFFSET + (IS_ANDROID ? safeAreaBottom : 0);
+
 export const ModalLayouts = {
   defaultHeightPercentText: '80%' as `${number}%`,
   titleTopOffset: 8,
@@ -127,6 +146,8 @@ export const RootNames = {
   DevUIDapps: 'DevUIDapps',
   DevDataSQLite: 'DevDataSQLite',
   DevDataKeychain: 'DevDataKeychain',
+  DevDataKeyringVault: 'DevDataKeyringVault',
+  DevDataContactService: 'DevDataContactService',
   DevDataWhitelist: 'DevDataWhitelist',
   DevUIBuiltInPages: 'DevUIBuiltInPages',
   DevUIPermissions: 'DevUIPermissions',
@@ -134,6 +155,7 @@ export const RootNames = {
   DevSwitches: 'DevSwitches',
   DevPerf: 'DevPerf',
   DebugLogViewer: 'DebugLogViewer',
+  InMemoryLogViewer: 'InMemoryLogViewer',
   /* warning: testkits only ------ start */
 
   StackTransaction: 'StackTransaction',
@@ -144,8 +166,8 @@ export const RootNames = {
   SendNFT: 'SendNFT',
   MultiSendNFT: 'MultiSendNFT',
   Receive: 'Receive',
-  Swap: 'Swap',
-  MultiSwap: 'MultiSwap',
+  SwapBridge: 'SwapBridge',
+  MultiSwapBridge: 'MultiSwapBridge',
   GnosisTransactionQueue: 'GnosisTransactionQueue',
   Approvals: 'Approvals',
   BatchRevoke: 'BatchRevoke',
@@ -154,8 +176,6 @@ export const RootNames = {
   HistoryLocalDetail: 'HistoryLocalDetail',
   MultiAddressHistory: 'MultiAddressHistory',
   LendingHistory: 'LendingHistory',
-  Bridge: 'Bridge',
-  MultiBridge: 'MultiBridge',
   ConvertDust: 'ConvertDust',
   GasAccount: 'GasAccount',
   Perps: 'Perps',
@@ -389,6 +409,8 @@ function makeScreenSpecConfig() {
       [RootNames.DevUIDapps]: bg1Default2024Conf,
       [RootNames.DevDataSQLite]: bg1Default2024Conf,
       [RootNames.DevDataKeychain]: bg1Default2024Conf,
+      [RootNames.DevDataKeyringVault]: bg1Default2024Conf,
+      [RootNames.DevDataContactService]: bg1Default2024Conf,
       [RootNames.DevDataWhitelist]: bg1Default2024Conf,
       [RootNames.DevUIBuiltInPages]: bg1Default2024Conf,
       [RootNames.DevUIPermissions]: bg1Default2024Conf,
@@ -396,6 +418,7 @@ function makeScreenSpecConfig() {
       [RootNames.DevSwitches]: bg1Default2024Conf,
       [RootNames.DevPerf]: bg1Default2024Conf,
       [RootNames.DebugLogViewer]: bg1Default2024Conf,
+      [RootNames.InMemoryLogViewer]: bg1Default2024Conf,
 
       // StackTransaction
       [RootNames.Send]: bg1Default2024Conf,
@@ -404,8 +427,8 @@ function makeScreenSpecConfig() {
       [RootNames.SendNFT]: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       [RootNames.MultiSendNFT]: bg1Default2024Conf,
       [RootNames.Receive]: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      [RootNames.Swap]: bg1Default2024Conf,
-      [RootNames.MultiSwap]: bg1Default2024Conf,
+      [RootNames.SwapBridge]: bg1Default2024Conf,
+      [RootNames.MultiSwapBridge]: bg1Default2024Conf,
       [RootNames.GnosisTransactionQueue]: card2DefaultConf,
       [RootNames.Approvals]: bg1Default2024Conf,
       [RootNames.BatchRevoke]: transparentDefault2024Conf,
@@ -414,8 +437,6 @@ function makeScreenSpecConfig() {
       [RootNames.HistoryLocalDetail]: historyPageConf,
       [RootNames.MultiAddressHistory]: historyPageConf,
       [RootNames.LendingHistory]: bg1Default2024Conf,
-      [RootNames.Bridge]: bg1Default2024Conf,
-      [RootNames.MultiBridge]: bg1Default2024Conf,
       [RootNames.ConvertDust]: bg1Default2024Conf,
       [RootNames.GasAccount]: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       [RootNames.Perps]: bg1Default2024Conf,

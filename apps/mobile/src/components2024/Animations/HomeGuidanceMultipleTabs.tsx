@@ -49,7 +49,11 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { toggleViewedGuidance, useGuidanceShown } from './hooks';
+import {
+  guidancePersistedStore,
+  toggleViewedGuidance,
+  useGuidanceShown,
+} from './hooks';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { getLottieAnimationDurationInMS } from '@/utils/time';
 import { isEqual } from 'lodash';
@@ -58,6 +62,7 @@ import AnimSwipeRightToViewAllAssets from './animations/swipe-right-to-view-all-
 import { zCreate } from '@/core/utils/reexports';
 import { UpdaterOrPartials } from '@/core/utils/store';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
+import { ThemeColors2024 } from '@/constant/theme';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { getHomeTabIndicatorWidth } from '@/screens/Home/utils/homeTabIndicator';
 import { Text } from '@/components/Typography';
@@ -200,6 +205,10 @@ const toggleLottieAnimation = (play: boolean) => {
 };
 
 const showAndPlayAnimationOnJs = () => {
+  if (guidancePersistedStore.getState().multiTabs20251205Viewed) {
+    return;
+  }
+
   toggleGuidanceVisible(true);
   animTimerRef.current && clearTimeout(animTimerRef.current);
   animTimerRef.current = setTimeout(() => {
@@ -335,7 +344,7 @@ export const HomeGuidanceMultipleTabs = ({
     );
   }, [prop_beforeContentNode, secondaryIndicatorAbsLayout]);
 
-  const wrapperOpacity = useSharedValue(1);
+  const wrapperOpacity = useSharedValue(guidanceVisible ? 1 : 0);
   const animatedStyle = useAnimatedStyle(() => {
     return {
       opacity: wrapperOpacity.value,
@@ -369,7 +378,7 @@ export const HomeGuidanceMultipleTabs = ({
     // <GestureDetector gesture={panRightToLeftGesture} />
     <Animated.View
       pointerEvents={'none'}
-      entering={FadeIn.duration(250)}
+      entering={guidanceVisible ? FadeIn.duration(250) : undefined}
       exiting={FadeOut.duration(250)}
       style={[
         styles.container,
@@ -462,9 +471,7 @@ const getStyle = createGetStyles2024(
           paddingTop: 0,
           justifyContent: 'center',
           alignItems: 'center',
-          top: svSecondaryIndicatorAbsLayout.value
-            ? svSecondaryIndicatorAbsLayout.value.pageY
-            : safeAreaInsets.value.top + HOME_TOP_HEADER_SIZES.headerHeight,
+          top: safeAreaInsets.value.top + HOME_TOP_HEADER_SIZES.headerHeight,
         };
       },
     },
@@ -564,14 +571,14 @@ function DefaultBeforeNode({
 const getDefaultBeforeNodeStyle = createGetStyles2024(
   {
     reanimatedStyles: {
-      rightIndicator: ({ colors2024, winLayout }) => {
+      rightIndicator: ({ winLayout }) => {
         'worklet';
 
         return {
           width: getHomeTabIndicatorWidth(winLayout.value.width),
           position: 'absolute',
           right: 0,
-          backgroundColor: colors2024['neutral-line'],
+          backgroundColor: ThemeColors2024.light['neutral-InvertHighlight'],
         };
       },
     },

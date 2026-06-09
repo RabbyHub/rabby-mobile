@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, {
   useCallback,
   useDeferredValue,
@@ -13,6 +14,7 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
@@ -38,12 +40,16 @@ import {
   storeApiExpSettingData,
   useBlockSubmitIfFormChangedOnAuth,
   useDebugSwapHistorySkipLocalLookup,
+  useEnablePerpsWatchAddress,
   useExpScreenCapture,
   useIosForceDisableAlertForSensitiveScene,
   useMockBatchRevoke,
   useTimeTipAboutSeedPhraseAndPrivateKey,
   useToastOpenApiHttpErrorStatus,
   useToggleShowAutoLockCountdown,
+  useWideScreenDebugPanelSetting,
+  WIDE_SCREEN_DEBUG_PANEL_MIN_ALLOWED_WIDTH,
+  WIDE_SCREEN_DEBUG_PANEL_WIDTH,
 } from '@/hooks/appSettings';
 import { AppBottomSheetModal, SwitchToggleType } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
@@ -108,6 +114,8 @@ import {
 import { Text, AnimateableText } from '@/components/Typography';
 import { useAppLogFileSwitch } from '@/utils/logging/settings';
 import { APP_LOG_ROOT_PATH, logger } from '@/utils/logger';
+import { useAndroidWeakFaceBiometricsRegressionSwitch } from '@/core/apis/androidBiometricsRegression';
+import { storeApisBiometrics } from '@/hooks/biometrics';
 
 export const makeNoop = () => () => {};
 
@@ -629,6 +637,7 @@ function DevSwitchAboutAppLogging() {
     effectiveEnabled,
     isOnlineControlled,
     localDefaultEnabled,
+    policyEnv,
     runtimeEnv,
     onToggle,
   } = useAppLogFileSwitch();
@@ -646,11 +655,11 @@ function DevSwitchAboutAppLogging() {
   const statusText = canToggle
     ? effectiveEnabled
       ? `${
-          runtimeEnv === 'development' ? 'Development' : 'Regression'
-        } build captures console and writes app logs into applogs zip archives`
+          policyEnv === 'development' ? 'Development' : 'Regression'
+        } policy captures console and writes app logs into applogs zip archives`
       : `${
-          runtimeEnv === 'development' ? 'Development' : 'Regression'
-        } build keeps app logs off until you enable the local switch`
+          policyEnv === 'development' ? 'Development' : 'Regression'
+        } policy keeps app logs off until you enable the local switch`
     : isOnlineControlled
     ? effectiveEnabled
       ? 'Production writes app logs because online config enables it'
@@ -700,7 +709,8 @@ function DevSwitchAboutAppLogging() {
         style={[styles.metaLabel, { marginTop: 12 }]}
         numberOfLines={2}
         ellipsizeMode="middle">
-        Default: {localDefaultEnabled ? 'ON' : 'OFF'}
+        Runtime: {runtimeEnv}; policy: {policyEnv}; default:{' '}
+        {localDefaultEnabled ? 'ON' : 'OFF'}
       </Text>
       <Text
         style={[styles.metaLabel, { marginTop: 4 }]}
@@ -845,6 +855,78 @@ function DevSwitchAboutAutoLock() {
   );
 }
 
+function DevSwitchAndroidWeakBiometrics() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const {
+    canUse,
+    allowWeakFaceBiometricsForRegression,
+    setAllowWeakFaceBiometricsForRegression,
+  } = useAndroidWeakFaceBiometricsRegressionSwitch();
+
+  const toggleSwitch = useCallback(
+    (nextVal?: boolean) => {
+      const next = setAllowWeakFaceBiometricsForRegression(nextVal);
+
+      void storeApisBiometrics.fetchBiometrics();
+      toast.show(
+        next
+          ? 'Weak Android face biometrics probe enabled. App Password unlock still uses strong biometrics.'
+          : 'Weak Android face biometrics probe disabled. App Password unlock uses strong biometrics.',
+      );
+    },
+    [setAllowWeakFaceBiometricsForRegression],
+  );
+
+  if (!IS_ANDROID || !canUse) {
+    return null;
+  }
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <RcCode
+          width={24}
+          height={24}
+          color={styles.secondarySectionTitle.color}
+        />
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Android Biometrics Regression
+        </Text>
+      </View>
+
+      <View
+        style={[styles.secondarySectionContent, { flexDirection: 'column' }]}>
+        <TouchableOpacity
+          style={styles.switchRowWrapper}
+          onPress={() => {
+            toggleSwitch();
+          }}>
+          <AppSwitch2024
+            value={allowWeakFaceBiometricsForRegression}
+            onPress={evt => evt.stopPropagation()}
+            onValueChange={toggleSwitch}
+          />
+          <Text style={styles.switchLabel}>
+            {allowWeakFaceBiometricsForRegression
+              ? 'Weak Android face biometrics probe enabled'
+              : 'Use strong Android biometrics for App Password'}
+          </Text>
+        </TouchableOpacity>
+
+        <Text style={styles.metaLabel}>
+          Regression-only. App Password read and write always stay on strong
+          Android biometrics; weak face support should be tested through a
+          separate probe.
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 function DevTestCloudDrive() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
@@ -883,7 +965,7 @@ function DevTestCloudDrive() {
             }
             title={ctx => {
               return (
-                <Text style={[styles.label, ctx.titleStyle]}>
+                <Text style={[styles.iconButtonLabel, ctx.titleStyle]}>
                   {!isLoginedGoogle
                     ? 'Sign google drive'
                     : 'Signout google drive'}
@@ -925,7 +1007,7 @@ function DevTestCloudDrive() {
           }
           title={ctx => {
             return (
-              <Text style={[styles.label, ctx.titleStyle]}>
+              <Text style={[styles.iconButtonLabel, ctx.titleStyle]}>
                 Clear Cloud Backup
               </Text>
             );
@@ -1278,6 +1360,150 @@ function DevSwitchSwapHistoryFallback() {
   );
 }
 
+function DevSwitchWideScreenDebugPanel() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { width } = useWindowDimensions();
+  const {
+    wideScreenDebugPanelEnabled,
+    wideScreenDebugPanelMinWidth,
+    setWideScreenDebugPanelMinWidth,
+    toggleWideScreenDebugPanel,
+  } = useWideScreenDebugPanelSetting();
+  const [draftMinWidth, setDraftMinWidth] = useState(
+    `${wideScreenDebugPanelMinWidth}`,
+  );
+  const requiredScreenWidth =
+    wideScreenDebugPanelMinWidth + WIDE_SCREEN_DEBUG_PANEL_WIDTH;
+  const availableMainWidth = Math.max(
+    Math.round(width - WIDE_SCREEN_DEBUG_PANEL_WIDTH),
+    0,
+  );
+  const isWideEnough = width >= requiredScreenWidth;
+
+  useEffect(() => {
+    setDraftMinWidth(`${wideScreenDebugPanelMinWidth}`);
+  }, [wideScreenDebugPanelMinWidth]);
+
+  const handleApplyMinWidth = useCallback(() => {
+    const appliedWidth = setWideScreenDebugPanelMinWidth(draftMinWidth);
+    setDraftMinWidth(`${appliedWidth}`);
+    toast.info(`Applied main min width ${appliedWidth}`);
+  }, [draftMinWidth, setWideScreenDebugPanelMinWidth]);
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Wide-screen Debug Panel
+        </Text>
+      </View>
+
+      <View
+        style={[styles.secondarySectionContent, { flexDirection: 'column' }]}>
+        <TouchableOpacity
+          style={styles.switchRowWrapper}
+          onPress={() => {
+            toggleWideScreenDebugPanel();
+          }}>
+          <AppSwitch2024
+            value={wideScreenDebugPanelEnabled}
+            onValueChange={toggleWideScreenDebugPanel}
+          />
+          <Text style={styles.switchLabel}>
+            {wideScreenDebugPanelEnabled
+              ? 'Show right debug panel on wide screens'
+              : 'Hide right debug panel on wide screens'}
+          </Text>
+        </TouchableOpacity>
+        <Text style={[styles.metaLabel, { marginTop: 4 }]}>
+          Screen width: {Math.round(width)} / need at least{' '}
+          {requiredScreenWidth} ({wideScreenDebugPanelMinWidth} main +{' '}
+          {WIDE_SCREEN_DEBUG_PANEL_WIDTH} panel). Available main after panel:{' '}
+          {availableMainWidth}.{' '}
+          {isWideEnough
+            ? 'Enable this to show the right panel.'
+            : 'Use a foldable or wide layout to show the right panel.'}
+        </Text>
+        <View style={styles.thresholdRow}>
+          <View style={styles.thresholdInput}>
+            <NextInput
+              fieldName="Main Min Width"
+              inputProps={{
+                value: draftMinWidth,
+                onChangeText: setDraftMinWidth,
+                keyboardType: 'number-pad',
+                placeholder: `${wideScreenDebugPanelMinWidth}`,
+                returnKeyType: 'done',
+              }}
+            />
+          </View>
+          <Button
+            title="Apply"
+            type="ghost"
+            height={48}
+            containerStyle={styles.thresholdApplyButton}
+            onPress={handleApplyMinWidth}
+          />
+        </View>
+        <Text style={styles.metaLabel}>
+          Applied only after tapping Apply. Minimum main width allowed:{' '}
+          {WIDE_SCREEN_DEBUG_PANEL_MIN_ALLOWED_WIDTH}.
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function DevSwitchPerpsWatchAddress() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { enablePerpsWatchAddress, toggleEnablePerpsWatchAddress } =
+    useEnablePerpsWatchAddress();
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <RcCode
+          width={24}
+          height={24}
+          color={styles.secondarySectionTitle.color}
+        />
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Perps Watch Address
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={styles.switchRowWrapper}
+        onPress={() => {
+          toggleEnablePerpsWatchAddress();
+        }}>
+        <AppSwitch2024
+          value={enablePerpsWatchAddress}
+          onPress={evt => evt.stopPropagation()}
+          onValueChange={toggleEnablePerpsWatchAddress}
+        />
+        <Text style={styles.switchLabel}>
+          {enablePerpsWatchAddress
+            ? 'Include watch addresses in Perps account selector'
+            : 'Hide watch addresses from Perps account selector (default)'}
+        </Text>
+      </TouchableOpacity>
+      <Text style={[styles.metaLabel, { marginTop: 4 }]}>
+        Test-only switch. Production builds always hide watch addresses
+        regardless of this toggle.
+      </Text>
+    </View>
+  );
+}
+
 async function importWalletConnectAddress({
   address,
   brandName,
@@ -1457,6 +1683,7 @@ function DevSwitches(): JSX.Element {
         <DevSwitchAboutOpenApiDebug />
         <DevSwitchAboutExpData />
         <DevSwitchAboutAutoLock />
+        <DevSwitchAndroidWeakBiometrics />
 
         <Text style={styles.areaTitle}>Cloud Drive</Text>
         <DevTestCloudDrive />
@@ -1470,6 +1697,12 @@ function DevSwitches(): JSX.Element {
         <Text style={styles.areaTitle}>Swap / Bridge</Text>
         <DevSwitchSubmitFormGuard />
         <DevSwitchSwapHistoryFallback />
+
+        <Text style={styles.areaTitle}>Wide-screen Debug</Text>
+        <DevSwitchWideScreenDebugPanel />
+
+        <Text style={styles.areaTitle}>Perps</Text>
+        <DevSwitchPerpsWatchAddress />
       </ScrollView>
     </NormalScreenContainer>
   );
@@ -1583,6 +1816,20 @@ const getStyles = createGetStyles2024(ctx =>
       justifyContent: 'flex-start',
       width: '100%',
     },
+    thresholdRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      width: '100%',
+      gap: 8,
+    },
+    thresholdInput: {
+      flex: 1,
+      minWidth: 0,
+    },
+    thresholdApplyButton: {
+      width: 96,
+      flexShrink: 0,
+    },
     rowFieldLabel: {
       fontSize: 16,
       lineHeight: 22,
@@ -1591,6 +1838,10 @@ const getStyles = createGetStyles2024(ctx =>
     label: {
       fontSize: 16,
       lineHeight: 22,
+      color: ctx.colors2024['neutral-body'],
+    },
+    iconButtonLabel: {
+      fontSize: 16,
       color: ctx.colors2024['neutral-body'],
     },
     metaLabel: {

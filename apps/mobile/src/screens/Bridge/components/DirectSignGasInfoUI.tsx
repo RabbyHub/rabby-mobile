@@ -1,7 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   Animated,
-  InteractionManager,
   TouchableOpacity,
   View,
   ViewProps as RNViewProps,
@@ -32,6 +31,7 @@ const isValidTriggerLayout = (
 
 type DirectSignGasInfoUIProps = {
   label?: React.ReactNode;
+  labelPrefix?: React.ReactNode;
   leftIcon?: React.ReactNode;
   loading: boolean;
   empty?: boolean;
@@ -45,7 +45,6 @@ type DirectSignGasInfoUIProps = {
   listItemStyle?: RNViewProps['style'];
   listItemInnerStyle?: RNViewProps['style'];
   onOpenChange?: (open: boolean) => void;
-  autoOpenSignal?: number;
   renderModal?: (args: {
     visible: boolean;
     layout: { x: number; y: number; width: number; height: number };
@@ -56,6 +55,7 @@ type DirectSignGasInfoUIProps = {
 
 export const DirectSignGasInfoUI = ({
   label = 'Gas Fee',
+  labelPrefix,
   leftIcon,
   loading,
   empty,
@@ -69,13 +69,11 @@ export const DirectSignGasInfoUI = ({
   listItemStyle,
   listItemInnerStyle,
   onOpenChange,
-  autoOpenSignal = 0,
   renderModal,
 }: DirectSignGasInfoUIProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const triggerRef = useRef<View>(null);
   const lastValidLayoutRef = useRef<TriggerLayout>(EMPTY_LAYOUT);
-  const lastHandledAutoOpenSignalRef = useRef(0);
   const [visible, setVisible] = useState(false);
   const [layout, setLayout] = useState<TriggerLayout>(EMPTY_LAYOUT);
 
@@ -168,29 +166,11 @@ export const DirectSignGasInfoUI = ({
     void measureTrigger();
   }, [measureTrigger]);
 
-  useEffect(() => {
-    if (
-      !autoOpenSignal ||
-      autoOpenSignal === lastHandledAutoOpenSignalRef.current ||
-      visible
-    ) {
-      return;
-    }
-
-    lastHandledAutoOpenSignalRef.current = autoOpenSignal;
-    const task = InteractionManager.runAfterInteractions(() => {
-      openModal();
-    });
-
-    return () => {
-      task.cancel();
-    };
-  }, [autoOpenSignal, openModal, visible]);
-
   return (
     <View style={style}>
       <ListItem
         name={<>{label}</>}
+        labelPrefix={labelPrefix}
         style={listItemStyle}
         innerStyle={listItemInnerStyle}
         LeftIcon={leftIcon}>
@@ -255,12 +235,14 @@ export const DirectSignGasInfoUI = ({
 
 function ListItem({
   name,
+  labelPrefix,
   style,
   innerStyle,
   children,
   LeftIcon,
 }: {
   name: React.ReactNode;
+  labelPrefix?: React.ReactNode;
   style?: RNViewProps['style'];
   innerStyle?: RNViewProps['style'];
   children: React.ReactNode;
@@ -270,7 +252,8 @@ function ListItem({
   return (
     <View style={[styles.listItemContainer, style]}>
       <View style={[styles.listItemInner, innerStyle]}>
-        <Text style={styles.listItemText}>{name}</Text>
+        {labelPrefix}
+        {name ? <Text style={styles.listItemText}>{name}</Text> : null}
         {LeftIcon}
       </View>
       <View style={styles.flexRow}>{children}</View>

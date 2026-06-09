@@ -20,17 +20,17 @@ import { isHexString } from 'ethereumjs-util';
 import React, { ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WaitingSignComponent } from '../map';
-import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { AppColors2024Variants } from '@/constant/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { useFindChain } from '@/hooks/useFindChain';
 import { matomoRequestEvent } from '@/utils/analytics';
 import i18n from '@/utils/i18n';
 import { stats } from '@/utils/stats';
 import { toChecksumAddress } from '@ethereumjs/util';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useMount, useRequest } from 'ahooks';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { normalizeTxParams } from '../SignTx/util';
 import {
   GasSelectorHeader,
@@ -204,8 +204,8 @@ export const SignTestnetTx = ({
 }: SignTxProps) => {
   const { isGnosis } = params;
   const currentAccount = params.isGnosis ? params.account! : $account;
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { colors2024 } = useTheme2024();
+  const styles = React.useMemo(() => getStyles(colors2024), [colors2024]);
   const site = dappService.getDapp(origin || '');
 
   const {
@@ -647,8 +647,8 @@ export const SignTestnetTx = ({
   }
 
   return (
-    <BottomSheetView style={styles.wrapper}>
-      <ScrollView style={styles.approvalTx}>
+    <View style={styles.wrapper}>
+      <BottomSheetScrollView style={styles.approvalTx} nestedScrollEnabled>
         <View
           style={StyleSheet.flatten({
             rowGap: 12,
@@ -690,7 +690,7 @@ export const SignTestnetTx = ({
         </View>
 
         <View style={styles.placeholder} />
-      </ScrollView>
+      </BottomSheetScrollView>
       {isReady && (
         <FooterBar
           Header={
@@ -766,14 +766,14 @@ export const SignTestnetTx = ({
           account={currentAccount}
         />
       )}
-    </BottomSheetView>
+    </View>
   );
 };
 
-export const getStyles = (colors: AppColorsVariants) =>
+export const getStyles = (colors2024: AppColors2024Variants) =>
   StyleSheet.create({
     wrapper: {
-      backgroundColor: colors['neutral-bg-4'],
+      backgroundColor: colors2024['neutral-bg-1'],
       height: '100%',
       position: 'relative',
     },

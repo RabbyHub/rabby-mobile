@@ -12,6 +12,7 @@ import {
   RcClearPending,
   RcEarth,
   RcFeedback,
+  RcNewLock,
   RcLockWallet,
   RcAutoLockTime,
   RcScreenshot,
@@ -31,6 +32,7 @@ import {
   RcScreenshotReport,
   RcIconCurrency,
   RcNotification,
+  RcAutolock,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -65,7 +67,10 @@ import {
   INTERNAL_REQUEST_SESSION,
 } from '@/constant';
 import { openExternalUrl } from '@/core/utils/linking';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+import {
+  requestLockWalletAndBackToUnlockScreen,
+  useRabbyAppNavigation,
+} from '@/hooks/navigation';
 import { useUpgradeInfo } from '@/hooks/version';
 import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
@@ -121,7 +126,7 @@ import {
   dropAppDataSourceAndQuitApp,
 } from '@/databases/imports';
 import { AppCacheSizeText } from './components/SpecialText';
-import { IS_IOS, isTurboModuleEnabled } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS, isTurboModuleEnabled } from '@/core/native/utils';
 import { abortAllSyncTasks } from '@/databases/sync/_task';
 import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
@@ -161,6 +166,8 @@ import {
 } from '@/utils/analytics0331';
 import { Text } from '@/components/Typography';
 import { useAppSecurityChain } from '@/hooks/global';
+import { useToggleShowUnlockStatusBar } from '@/hooks/appSettings';
+import { SwitchShowFloatingUnlockStatusBar } from './components/SwitchFloatingView';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -273,10 +280,21 @@ function SettingsBlocks() {
     selectAutolockTimeRef.current?.present();
   }, [shouldRedirectToSetPasswordBefore]);
 
+  const startLockWallet = useCallback(() => {
+    if (
+      shouldRedirectToSetPasswordBefore({
+        onSettingsAction: 'lockWallet',
+      })
+    ) {
+      return;
+    }
+    requestLockWalletAndBackToUnlockScreen();
+  }, [shouldRedirectToSetPasswordBefore]);
+
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
 
   const {
-    computed: { couldSetupBiometrics, isFaceID },
+    computed: { isFaceID },
     fetchBiometrics,
   } = useBiometrics({ autoFetch: true });
 
@@ -291,18 +309,6 @@ function SettingsBlocks() {
 
   const { currency, setIsShowCurrencyPopup } = useCurrentCurrencyVisible();
 
-  const disabledBiometrics =
-    !couldSetupBiometrics || !APP_FEATURE_SWITCH.biometricsAuth;
-
-  const startSwitchBiometrics = useCallback(() => {
-    if (
-      shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setBiometrics' })
-    ) {
-      return;
-    }
-    switchBiometricsRef.current?.toggle();
-  }, [shouldRedirectToSetPasswordBefore]);
-
   const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
   const { appTheme } = useAppTheme();
   const { t } = useTranslation();
@@ -315,6 +321,33 @@ function SettingsBlocks() {
   const navigation = useRabbyAppNavigation();
 
   const biometricsComputed = useBiometricsComputed();
+  const { couldSetupBiometrics, isUsingDevicePasscodeForSettings } =
+    biometricsComputed;
+  const biometricsUnavailableForSettings =
+    !couldSetupBiometrics && !isUsingDevicePasscodeForSettings;
+  const disabledBiometrics = !APP_FEATURE_SWITCH.biometricsAuth;
+
+  const showBiometricsUnavailableToast = useCallback(() => {
+    toast.show('Please enable biometric permissions in the system settings.');
+  }, []);
+
+  const startSwitchBiometrics = useCallback(() => {
+    if (biometricsUnavailableForSettings) {
+      showBiometricsUnavailableToast();
+      return;
+    }
+
+    if (
+      shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setBiometrics' })
+    ) {
+      return;
+    }
+    switchBiometricsRef.current?.toggle();
+  }, [
+    biometricsUnavailableForSettings,
+    shouldRedirectToSetPasswordBefore,
+    showBiometricsUnavailableToast,
+  ]);
 
   const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
 
@@ -372,18 +405,26 @@ function SettingsBlocks() {
         label: t('page.setting.screenTitle'),
         items: [
           {
-            label: biometricsComputed.defaultTypeLabel,
-            icon: isFaceID ? RcFaceId : RcFingerprint,
+            label: biometricsComputed.systemAuthSettingsLabel,
+            icon: isUsingDevicePasscodeForSettings
+              ? RcAutolock
+              : isFaceID
+              ? RcFaceId
+              : RcFingerprint,
             rightNode: (
               <SwitchBiometricsAuthentication
                 ref={switchBiometricsRef}
                 onToggleSuccess={handleBiometricsToggleSuccess}
+                onUnavailablePress={showBiometricsUnavailableToast}
               />
             ),
             onPress: () => {
               startSwitchBiometrics();
             },
-            disabled: disabledBiometrics,
+            onDisabledPress: biometricsUnavailableForSettings
+              ? showBiometricsUnavailableToast
+              : undefined,
+            disabled: disabledBiometrics || biometricsUnavailableForSettings,
             visible: APP_FEATURE_SWITCH.biometricsAuth,
           },
           {
@@ -401,6 +442,14 @@ function SettingsBlocks() {
               startSelectAutolockTime();
             },
             rightTextNode: <AutoLockSettingLabel style={styles.rightText} />,
+          },
+          {
+            label: t('page.setting.lockWallet'),
+            icon: RcNewLock,
+            onPress: () => {
+              startLockWallet();
+            },
+            visible: APP_FEATURE_SWITCH.customizePassword,
           },
           {
             label: t('page.setting.currentLanguage'),
@@ -726,6 +775,7 @@ function DevSettingsBlocks({
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
   const { setDevServerSettingsModalVisible } = useDevServerModalVisible();
   const currentAccount = preferenceService.getFallbackAccount();
+  const { toggleShowUnlockStatusBar } = useToggleShowUnlockStatusBar();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -785,6 +835,19 @@ function DevSettingsBlocks({
               onPress: async () => {
                 setWalletTestItemModalVisible(true);
               },
+            },
+            {
+              label: 'Show Unlock Status Bar',
+              icon: RcLockWallet,
+              onPress: () => {
+                toggleShowUnlockStatusBar();
+              },
+              rightNode: (
+                <SwitchShowFloatingUnlockStatusBar
+                  onPress={evt => evt.stopPropagation()}
+                />
+              ),
+              visible: NEED_DEVSETTINGBLOCKS,
             },
             {
               label: 'Regression Switches',

@@ -116,7 +116,7 @@ public class CipherStorageKeystoreRsaEcb extends CipherStorageBase {
                       @NonNull byte[] password,
                       @NonNull final SecurityLevel level)
     throws CryptoFailedException {
-    decryptWithPromptPolicy(handler, alias, username, password, level, false);
+    decryptWithPromptPolicy(handler, alias, username, password, level, false, true);
   }
 
   @SuppressLint("NewApi")
@@ -125,7 +125,8 @@ public class CipherStorageKeystoreRsaEcb extends CipherStorageBase {
                                       @NonNull byte[] username,
                                       @NonNull byte[] password,
                                       @NonNull final SecurityLevel level,
-                                      final boolean allowAuthenticatedSessionReuse)
+                                      final boolean allowAuthenticatedSessionReuse,
+                                      final boolean allowKeyStoreRecovery)
     throws CryptoFailedException {
 
     throwIfInsufficientLevel(level);
@@ -133,9 +134,14 @@ public class CipherStorageKeystoreRsaEcb extends CipherStorageBase {
     final String safeAlias = getDefaultAliasIfEmpty(alias, getDefaultAliasServiceName());
     final AtomicInteger retries = new AtomicInteger(1);
     Key key = null;
+    Log.i(
+      KeychainModule.PERF_TAG,
+      "rsa_decrypt_with_prompt_policy alias=" + safeAlias +
+        " allowSessionReuse=" + allowAuthenticatedSessionReuse
+    );
 
     try {
-      key = extractGeneratedKey(safeAlias, level, retries, false);
+      key = extractGeneratedKey(safeAlias, level, retries, false, allowKeyStoreRecovery);
       if (allowAuthenticatedSessionReuse) {
         final DecryptionResult results =
           new DecryptionResult(decryptBytes(key, username), decryptBytes(key, password));

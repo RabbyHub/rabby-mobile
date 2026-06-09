@@ -112,11 +112,9 @@ export const registerForPushNotifications = async () => {
     }
 
     await Promise.race([
-      firebaseMessaging
-        .getToken()
-        .then(token => {
-          pushToken = token;
-        }),
+      firebaseMessaging.getToken().then(token => {
+        pushToken = token;
+      }),
       sleep(3000).then(() => {
         if (pushToken) return;
         throw new Error('FCM getToken timeout');
@@ -330,7 +328,7 @@ export const requestBindDevice = async (pushToken: string) => {
 };
 
 export async function startBindPushServerOnDemand(pushToken: string) {
-  perfEvents.on('USER_MANUALLY_UNLOCK', () => {
+  perfEvents.on('USER_MANUALLY_UNLOCK_UI_READY', () => {
     requestBindDevice(pushToken);
   });
 

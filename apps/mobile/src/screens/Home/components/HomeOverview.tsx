@@ -15,6 +15,7 @@ import RcIconConvertDustCC from '@/assets2024/icons/home/IconDustCC.svg';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { useAppLanguage } from '@/hooks/lang';
+import { useIsPostUnlockLockedSession } from '@/hooks/useLock';
 import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
 import {
   createGetStyles2024,
@@ -52,13 +53,17 @@ import { currencyService } from '@/core/services';
 import { useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
 import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
-import addressBalanceStore from '@/store/balance';
+import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
 import { useTranslation } from 'react-i18next';
 import { useSortAddressList } from '../../Address/useSortAddressList';
 import { BadgeText } from '../components/BadgeText';
-import { useApprovalAlertCounts } from '../hooks/approvals';
+import {
+  forceUpdateApprovalAlertCounts,
+  triggerApprovalAlertCounts,
+  useApprovalAlertTotal,
+} from '../hooks/approvals';
 
 import RcIconLending from '@/assets2024/icons/home/IconLending.svg';
 import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
@@ -70,10 +75,17 @@ import {
   ITEM_LAYOUT_PADDING_HORIZONTAL,
 } from '@/constant/home';
 import { perfEvents } from '@/core/utils/perf';
+import {
+  useHomePostStartupReady,
+  useHomeStartupReady,
+} from '@/core/utils/homeStartupReady';
 import { syncTop10History } from '@/databases/hooks/history';
 import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
-import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
+import {
+  checkGasAccountAddressesEligibility,
+  useGasAccountGiftEligibility,
+} from '@/hooks/useGasAccountEligibility';
 import { refreshDayCurve } from '@/store/curve24h';
 import { scene24hBalanceStore } from '@/store/balance24h';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
@@ -81,25 +93,22 @@ import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import useTokenList from '@/store/tokens';
 import useProtocol from '@/store/protocols';
 import { colord } from 'colord';
-import {
-  isTabsSwiping,
-  useAccountInfo,
-} from '../../Address/components/MultiAssets/hooks';
+import { isTabsSwiping } from '../../Address/components/MultiAssets/hooks';
 import { BrowserOrPerpsPosition } from './BrowserOrPerpsPosition';
 import { GasAccountBadge } from '../../GasAccount/components/GasAccountBadge';
 import { apisLending } from '../../Lending/hooks';
-import { PointsBadge } from '../../Points/components/PointsBadge';
 import { HomeCenterArea } from '../components/HomeCenterArea';
 import { HomeDappDrawer } from '../components/HomeDappDrawer';
 import { HomePendingBadge } from '../components/HomePending';
-import { ETHStatus, refreshETHStatus } from '../components/ETHStatus';
 import { LendingHF } from '../components/LendingHF';
 import { MultiAddressHomeHeader } from '../components/MultiAddressHomeHeader';
 import { PerpsPnl } from '../components/PerpsPnl';
+import { PointsBadge } from '../../Points/components/PointsBadge';
 import {
   refreshSuccessAndFailList,
   resetFetchHistoryTxCount,
-  useHomeHistoryStore,
+  useHomeHistoryCount,
+  useHomePendingTxCount,
 } from '../hooks/history';
 import {
   TabsScrollView,
@@ -253,11 +262,14 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   });
 
   useEffect(() => {
-    const remove = addressBalanceStore.subscribe(async (cur, prev) => {
+    const remove = addressBalanceStore.subscribe((cur, prev) => {
       if (cur.metaMap === prev.metaMap || isEqual(cur.metaMap, prev.metaMap)) {
         return;
       }
-      const { top10Addresses } = await getTop10MyAccounts();
+      const top10Addresses = balanceAccountsStore.getState().selectedAddresses;
+      if (!top10Addresses.length) {
+        return;
+      }
       const isTop10BalanceLoading =
         addressBalanceStore.getAddressesFlowState(top10Addresses).isAnyLoading;
 
@@ -588,39 +600,254 @@ const getStyle = createGetStyles2024(
   }),
 );
 
+type HomeOverviewTriggerUpdate = ReturnType<
+  typeof addressBalanceStore.useAccountsBalanceTrigger
+>['triggerUpdate'];
+
+function HomeOverviewDeferredStartupGate({
+  triggerUpdate,
+}: {
+  triggerUpdate: HomeOverviewTriggerUpdate;
+}) {
+  const startupReady = useHomeStartupReady();
+
+  if (!startupReady) {
+    return null;
+  }
+
+  return (
+    <>
+      <HomeOverviewCriticalStartupEffects triggerUpdate={triggerUpdate} />
+      <HomeOverviewPostStartupGate triggerUpdate={triggerUpdate} />
+    </>
+  );
+}
+
+function HomeOverviewCriticalStartupEffects({
+  triggerUpdate,
+}: {
+  triggerUpdate: HomeOverviewTriggerUpdate;
+}) {
+  const hasTriggeredRef = useRef(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!couldDoRefresh() || hasTriggeredRef.current) {
+        return;
+      }
+      hasTriggeredRef.current = true;
+
+      void triggerUpdate({ localOnly: true });
+    }, [triggerUpdate]),
+  );
+
+  return null;
+}
+
+function HomeOverviewPostStartupGate({
+  triggerUpdate,
+}: {
+  triggerUpdate: HomeOverviewTriggerUpdate;
+}) {
+  const postStartupReady = useHomePostStartupReady();
+
+  if (!postStartupReady) {
+    return null;
+  }
+
+  return <HomeOverviewPostStartupEffects triggerUpdate={triggerUpdate} />;
+}
+
+function HomeOverviewPostStartupEffects({
+  triggerUpdate,
+}: {
+  triggerUpdate: HomeOverviewTriggerUpdate;
+}) {
+  const { accounts } = useMyAccounts({ disableAutoFetch: true });
+  const sortedAccounts = useSortAddressList(accounts);
+  const isFirstTriggerRef = useRef(true);
+
+  useSubscribePosition(sortedAccounts);
+  useFetchCexInfo();
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!couldDoRefresh()) {
+        return;
+      }
+      checkGasAccountAddressesEligibility();
+    }, []),
+  );
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      deleteLongTimeCurveCache();
+      deleteLongTime24hBalanceCache();
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshSuccessAndFailList();
+    }, []),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      resetFetchHistoryTxCount();
+    }, []),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!couldDoRefresh()) {
+        return;
+      }
+      const forceFirstTime = isFirstTriggerRef.current;
+      if (isFirstTriggerRef.current) {
+        isFirstTriggerRef.current = false;
+      }
+      triggerUpdate(forceFirstTime || undefined).then(balanceAccounts => {
+        // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
+        const balanceAddresses = Object.keys(balanceAccounts);
+        scene24hBalanceStore.refresh24hAssets({
+          addresses: balanceAddresses.length ? balanceAddresses : undefined,
+          force: forceFirstTime,
+          reason: 'manual_refresh',
+        });
+        refreshDayCurve({
+          addresses: balanceAddresses.length ? balanceAddresses : undefined,
+          force: forceFirstTime,
+          reason: 'manual_refresh',
+        });
+      });
+      triggerApprovalAlertCounts(HOME_REFRESH_INTERVAL);
+      // // leave here to measure perf impact
+      // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
+      getTop10MyAccounts().then(({ top10Addresses }) => {
+        syncTop10History(top10Addresses, false);
+      });
+    }, [triggerUpdate]),
+  );
+
+  return null;
+}
+
+function DeferredHomeDappDrawer({
+  onScrollBack,
+}: {
+  onScrollBack: React.ComponentProps<typeof HomeDappDrawer>['onScrollBack'];
+}) {
+  const postStartupReady = useHomePostStartupReady();
+  const isPostUnlockLockedSession = useIsPostUnlockLockedSession();
+
+  if (!postStartupReady && !isPostUnlockLockedSession) {
+    return null;
+  }
+
+  return <HomeDappDrawer onScrollBack={onScrollBack} />;
+}
+
+function DeferredHomeMenuBadge({
+  el,
+  badgeStyle,
+}: {
+  el: {
+    key: MultiHomeFeatTitle;
+    title: string;
+    icon: React.FC<import('react-native-svg').SvgProps>;
+    badge?: number;
+    isSuccess?: boolean;
+    showGiftIcon?: boolean;
+  };
+  badgeStyle: React.ComponentProps<typeof BadgeText>['style'];
+}) {
+  const startupReady = useHomePostStartupReady();
+
+  if (!startupReady) {
+    return null;
+  }
+
+  if (el.key === MultiHomeFeatTitle.Perps) {
+    return <PerpsPnl />;
+  }
+
+  if (el.key === MultiHomeFeatTitle.History) {
+    return <HistoryMenuBadge badgeStyle={badgeStyle} />;
+  }
+
+  if (el.key === MultiHomeFeatTitle.Approvals) {
+    return <ApprovalMenuBadge badgeStyle={badgeStyle} />;
+  }
+
+  if (el.key === MultiHomeFeatTitle.Lending) {
+    return <LendingHF />;
+  }
+
+  if (el.key === MultiHomeFeatTitle.GasAccount) {
+    return <GasAccountMenuBadge />;
+  }
+
+  return null;
+}
+
+function HistoryMenuBadge({
+  badgeStyle,
+}: {
+  badgeStyle: React.ComponentProps<typeof BadgeText>['style'];
+}) {
+  const pendingTxCount = useHomePendingTxCount();
+  const historyCount = useHomeHistoryCount();
+
+  if (pendingTxCount > 0) {
+    return <HomePendingBadge number={pendingTxCount} />;
+  }
+
+  const badge = historyCount?.fail || historyCount?.success;
+  return badge && badge > 0 ? (
+    <BadgeText
+      count={badge}
+      isSuccess={!historyCount?.fail}
+      style={[badgeStyle]}
+    />
+  ) : null;
+}
+
+function ApprovalMenuBadge({
+  badgeStyle,
+}: {
+  badgeStyle: React.ComponentProps<typeof BadgeText>['style'];
+}) {
+  const approvalTotal = useApprovalAlertTotal();
+
+  return approvalTotal > 0 ? (
+    <BadgeText count={approvalTotal} style={[badgeStyle]} />
+  ) : null;
+}
+
+function GasAccountMenuBadge() {
+  const isGiftEligible = useGasAccountGiftEligibility();
+
+  return isGiftEligible ? (
+    <IconGift width={24} height={24} />
+  ) : (
+    <GasAccountBadge />
+  );
+}
+
 export const HomeOverview = React.memo(() => {
   const navigation = useRabbyAppNavigation();
   const { t } = useTranslation();
   const { styles, reanimatedStyles, colors2024 } = useTheme2024({
     getStyle,
   });
-  const { pendingTxCount, historyCount } = useHomeHistoryStore();
   const dismissConvertDustBanner = useDismissConvertDustBanner();
 
   const { width } = useWindowDimensions();
   const itemWidth =
     (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
-
-  const {
-    alertInfo,
-    forceUpdate,
-    triggerUpdate: triggerUpdateAlert,
-  } = useApprovalAlertCounts(HOME_REFRESH_INTERVAL);
-
-  const { accounts } = useMyAccounts({ disableAutoFetch: true });
-  const sortedAccounts = useSortAddressList(accounts);
-  useSubscribePosition(sortedAccounts);
-
-  const { isEligible, checkAddressesEligibility } = useGasAccountEligibility();
-
-  useFocusEffect(
-    React.useCallback(() => {
-      if (!couldDoRefresh()) {
-        return;
-      }
-      checkAddressesEligibility();
-    }, [checkAddressesEligibility]),
-  );
 
   const MENU_ARR = useMemo(
     () =>
@@ -659,14 +886,11 @@ export const HomeOverview = React.memo(() => {
           key: MultiHomeFeatTitle.GasAccount,
           title: t('page.home.services.gasDeposit'),
           icon: RcIconGasAccountCC,
-          showGiftIcon: isEligible,
         },
         {
           key: MultiHomeFeatTitle.History,
           title: t('page.home.services.history'),
           icon: RcIconHistoryCC,
-          badge: historyCount?.fail || historyCount?.success,
-          isSuccess: !historyCount?.fail,
         },
         {
           key: MultiHomeFeatTitle.Market,
@@ -677,7 +901,6 @@ export const HomeOverview = React.memo(() => {
           key: MultiHomeFeatTitle.Approvals,
           title: t('page.home.services.approvals'),
           icon: RcIconApprovalsCC,
-          badge: alertInfo.total,
         },
         // __DEV__ && {
         //   title: MultiHomeFeatTitle.TEST_DAPP,
@@ -706,104 +929,50 @@ export const HomeOverview = React.memo(() => {
         isSuccess?: boolean;
         showGiftIcon?: boolean;
       }[],
-    [t, historyCount?.fail, historyCount?.success, alertInfo.total, isEligible],
+    [t],
   );
-
-  useFetchCexInfo();
 
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
-  const isFirstTriggerRef = useRef(true);
-
-  useEffect(() => {
-    setTimeout(() => {
-      deleteLongTimeCurveCache();
-      deleteLongTime24hBalanceCache();
-    }, 0);
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (!couldDoRefresh()) {
-        return;
-      }
-      refreshSuccessAndFailList();
-    }, []),
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      if (!couldDoRefresh()) {
-        return;
-      }
-      resetFetchHistoryTxCount();
-    }, []),
-  );
-
-  const { myTop10Addresses } = useAccountInfo();
-
-  useFocusEffect(
-    useCallback(() => {
-      if (!couldDoRefresh()) {
-        return;
-      }
-      const forceFirstTime = isFirstTriggerRef.current;
-      if (isFirstTriggerRef.current) {
-        isFirstTriggerRef.current = false;
-      }
-      triggerUpdate(forceFirstTime || undefined).then(balanceAccounts => {
-        // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
-        scene24hBalanceStore.refresh24hAssets({
-          balanceAccounts,
-          reason: 'manual_refresh',
-        });
-        refreshDayCurve({ balanceAccounts, reason: 'manual_refresh' });
-      });
-      triggerUpdateAlert();
-      // // leave here to measure perf impact
-      // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
-      syncTop10History(myTop10Addresses, false);
-    }, [triggerUpdate, triggerUpdateAlert, myTop10Addresses]),
-  );
 
   const onRefresh = useCallback(async () => {
     if (!couldDoRefresh()) {
       return;
     }
 
-    refreshETHStatus();
     perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
     return Promise.all([
       // force update balance from server api
       triggerUpdate(true).then(balanceAccounts => {
+        const balanceAddresses = Object.keys(balanceAccounts);
         scene24hBalanceStore.refresh24hAssets({
+          addresses: balanceAddresses.length ? balanceAddresses : undefined,
           force: true,
-          balanceAccounts,
           reason: 'manual_refresh',
         });
         refreshDayCurve({
+          addresses: balanceAddresses.length ? balanceAddresses : undefined,
           force: true,
-          balanceAccounts,
           reason: 'manual_refresh',
         });
       }),
-      checkAddressesEligibility(true),
-    ]).finally(() => {
+      checkGasAccountAddressesEligibility(true),
+    ]).finally(async () => {
       // update at background
-      forceUpdate();
+      forceUpdateApprovalAlertCounts();
       apisLending.fetchLendingData();
       const forceRefresh = true;
-      syncTop10History(myTop10Addresses, forceRefresh);
+      const { top10Addresses } = await getTop10MyAccounts();
+      syncTop10History(top10Addresses, forceRefresh);
       currencyService.syncCurrencyList(forceRefresh);
 
       // refresh token/protocol list
-      useTokenList.getState().batchGetTokenList(myTop10Addresses, forceRefresh);
-      useProtocol.getState().batchGetProtocols(myTop10Addresses, forceRefresh);
+      useTokenList.getState().batchGetTokenList(top10Addresses, forceRefresh);
+      useProtocol.getState().batchGetProtocols(top10Addresses, forceRefresh);
     });
-  }, [triggerUpdate, checkAddressesEligibility, forceUpdate, myTop10Addresses]);
+  }, [triggerUpdate]);
 
   // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
   const handlePressMarket = useCallback(() => {
-    refreshETHStatus();
     navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
       screen: RootNames.Market,
       params: {},
@@ -839,8 +1008,10 @@ export const HomeOverview = React.memo(() => {
         case MultiHomeFeatTitle.Swap:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiSwap,
-              params: {},
+              screen: RootNames.MultiSwapBridge,
+              params: {
+                activeTab: 'swap',
+              },
             }),
           );
 
@@ -848,8 +1019,10 @@ export const HomeOverview = React.memo(() => {
         case MultiHomeFeatTitle.Bridge:
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiBridge,
-              params: {},
+              screen: RootNames.MultiSwapBridge,
+              params: {
+                activeTab: 'bridge',
+              },
             }),
           );
           break;
@@ -927,48 +1100,9 @@ export const HomeOverview = React.memo(() => {
       isSuccess?: boolean;
       showGiftIcon?: boolean;
     }) => {
-      if (el.key === MultiHomeFeatTitle.Market) {
-        return <ETHStatus />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.Perps) {
-        return <PerpsPnl />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.History && pendingTxCount > 0) {
-        return <HomePendingBadge number={pendingTxCount} />;
-      }
-
-      // 显示gift图标
-      if (el.key === MultiHomeFeatTitle.GasAccount && el.showGiftIcon) {
-        return <IconGift width={24} height={24} />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.Lending) {
-        return <LendingHF />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.Points) {
-        return <PointsBadge />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.GasAccount) {
-        return <GasAccountBadge />;
-      }
-
-      return (
-        <>
-          {!!el.badge && el.badge > 0 ? (
-            <BadgeText
-              count={el.badge}
-              isSuccess={el.isSuccess}
-              style={[styles.badgeStyle]}
-            />
-          ) : null}
-        </>
-      );
+      return <DeferredHomeMenuBadge el={el} badgeStyle={styles.badgeStyle} />;
     },
-    [pendingTxCount, styles.badgeStyle],
+    [styles.badgeStyle],
   );
 
   const {
@@ -1010,6 +1144,7 @@ export const HomeOverview = React.memo(() => {
 
   return (
     <View style={styles.pullUpWrapper}>
+      <HomeOverviewDeferredStartupGate triggerUpdate={triggerUpdate} />
       <Animated.View style={[styles.main, mainStyle]}>
         <GestureDetector gesture={panGestureRef.current}>
           <TabsScrollView
@@ -1078,7 +1213,7 @@ export const HomeOverview = React.memo(() => {
           </TabsScrollView>
         </GestureDetector>
       </Animated.View>
-      <HomeDappDrawer onScrollBack={uiOnScrollBack} />
+      <DeferredHomeDappDrawer onScrollBack={uiOnScrollBack} />
     </View>
   );
 });

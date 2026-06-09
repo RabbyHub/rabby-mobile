@@ -9889,7 +9889,7 @@ __metadata:
   resolution: "@rabby-wallet/eth-keyring-gnosis@workspace:packages/eth-keyring-gnosis"
   dependencies:
     "@metamask/auto-changelog": "npm:^3.4.3"
-    "@rabby-wallet/gnosis-sdk": "npm:1.4.8"
+    "@rabby-wallet/gnosis-sdk": "npm:1.4.9"
     "@rabby-wallet/keyring-utils": "npm:^0.1.0"
     "@safe-global/protocol-kit": "npm:5.0.3"
     "@safe-global/types-kit": "npm:1.0.4"
@@ -10068,9 +10068,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/gnosis-sdk@npm:1.4.8":
-  version: 1.4.8
-  resolution: "@rabby-wallet/gnosis-sdk@npm:1.4.8"
+"@rabby-wallet/gnosis-sdk@npm:1.4.9":
+  version: 1.4.9
+  resolution: "@rabby-wallet/gnosis-sdk@npm:1.4.9"
   dependencies:
     "@ethersproject/bignumber": "npm:5.5.0"
     "@ethersproject/bytes": "npm:5.5.0"
@@ -10079,26 +10079,26 @@ __metadata:
     "@ethersproject/solidity": "npm:5.5.0"
     "@safe-global/api-kit": "npm:4.0.0"
     "@safe-global/protocol-kit": "npm:5.2.1"
-    "@safe-global/safe-deployments": "npm:1.37.49"
+    "@safe-global/safe-deployments": "npm:1.37.55"
     "@safe-global/types-kit": "npm:1.0.2"
     axios: "npm:0.24.0"
     ethereumjs-util: "npm:7.1.3"
     ethers: "npm:5.5.1"
     semver: "npm:7.5.4"
-  checksum: 10/24d6632178c713b68f01f40071fb79bce06d2b30cbcc482fe7ca102c85206e5965a0a4e88a5ca945bdc846dbf8368a37822d34e448e2d8c8e57744ec88244d51
+  checksum: 10/1bc1ae4d624965d57ca8d3e08b1df416ee16013a3ba2aeedf9e1b47efd71736d1532224f47d7c954a738cd9e12fc6954358e94858a4bc82d61576188548aaf5e
   languageName: node
   linkType: hard
 
-"@rabby-wallet/hyperliquid-sdk@npm:1.1.7":
-  version: 1.1.7
-  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.1.7"
+"@rabby-wallet/hyperliquid-sdk@npm:1.1.8":
+  version: 1.1.8
+  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.1.8"
   dependencies:
     "@ethereumjs/util": "npm:9.0.0"
     "@metamask/eth-sig-util": "npm:5.1.0"
     "@msgpack/msgpack": "npm:3.1.2"
     "@noble/hashes": "npm:1.8.0"
     ethereum-cryptography: "npm:2.2.1"
-  checksum: 10/51f6f55e4861f9c598780e8de10264ca22120c9a0aefe4b343d2690f1c04c5bb314eb5a3c2d71fc514251f3b7a4e048a3717bd874e9f860b6b97617941df76ee
+  checksum: 10/12952b63b07f508b83bb78af454936ed888adfb0c8a3253daed986cccead7cd07b12f168e987a470794d3405e8f98458173bf54e1b085133dec8578f3a5a1640
   languageName: node
   linkType: hard
 
@@ -10139,7 +10139,7 @@ __metadata:
     "@metamask/eth-json-rpc-provider": "npm:^2.3.0"
     "@metamask/json-rpc-engine": "npm:^7.3.0"
     "@metamask/utils": "npm:^8.2.0"
-    "@rabby-wallet/gnosis-sdk": "npm:1.4.8"
+    "@rabby-wallet/gnosis-sdk": "npm:1.4.9"
     "@rabby-wallet/rabby-api": "npm:0.9.61"
     "@types/node": "npm:^20.14.8"
     "@typescript-eslint/eslint-plugin": "npm:^5.62.0"
@@ -10303,13 +10303,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-bridge@npm:0.0.2":
-  version: 0.0.2
-  resolution: "@rabby-wallet/rabby-bridge@npm:0.0.2"
+"@rabby-wallet/rabby-bridge@npm:0.0.4":
+  version: 0.0.4
+  resolution: "@rabby-wallet/rabby-bridge@npm:0.0.4"
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.9.58"
-  checksum: 10/82aba0430cd56112b2c05086074b4cc8f227965c9a46213ad3e17d736da1d9a8d4417049eb945db8a32ad7e78584d340bee83bd2765b52c3b53fbff7cccdb2aa
+  checksum: 10/ad72558498ed4f67ae4f441d9378ba59828e8011ef56b1a9fa7151d3fb1031a1122717af05377981602780e915e9f490f1a39c473ce765ff5659fb1c2a12e728
   languageName: node
   linkType: hard
 
@@ -10351,9 +10351,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.76":
-  version: 0.0.76
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.76"
+"@rabby-wallet/rabby-swap@npm:0.0.77":
+  version: 0.0.77
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.77"
   dependencies:
     "@ethersproject/abi": "npm:^5.7.0"
     axios: "npm:^0.27.2"
@@ -10362,9 +10362,15 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
-  checksum: 10/02529109925906b48f43cc2d676329b6c22bbb90c4784894495326c74b1cb9c566204cd99696ed256277266480f35063f75151a6c9aee48f40ea406e34f6777c
+  checksum: 10/1e9cf74bda6b3bc192f3d8ed6881d0c0ea5ab39bb6c2c9372d6ecc5232edf5dad9001ec42b9e16a5823e91213f6519e25b034e69a1b26f730275289c4436dd66
   languageName: node
   linkType: hard
+
+"@rabby-wallet/react-native-keychain-9@workspace:^, @rabby-wallet/react-native-keychain-9@workspace:packages/react-native-keychain-9":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/react-native-keychain-9@workspace:packages/react-native-keychain-9"
+  languageName: unknown
+  linkType: soft
 
 "@rabby-wallet/react-native-keychain@workspace:^, @rabby-wallet/react-native-keychain@workspace:packages/react-native-keychain":
   version: 0.0.0-use.local
@@ -13031,12 +13037,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@safe-global/safe-deployments@npm:1.37.49":
-  version: 1.37.49
-  resolution: "@safe-global/safe-deployments@npm:1.37.49"
+"@safe-global/safe-deployments@npm:1.37.55":
+  version: 1.37.55
+  resolution: "@safe-global/safe-deployments@npm:1.37.55"
   dependencies:
     semver: "npm:^7.6.2"
-  checksum: 10/0291dd527cf38d0026bb3edbb44da658c2edd4e695290c47de7fc70ad5538c3c6d7a78783d802ffc79cee0e6d15285b671f44dea168bcefa53475f6c5eeb8fab
+  checksum: 10/be5ce80d1f505a50a23613de6c36d76d5d8a16fe760a2ce2ccaed94203319531d277ef1b8da3c6aebad3b4e1e31ed526380f6f9b99381cd19f628f107dfdcf64
   languageName: node
   linkType: hard
 
@@ -38821,18 +38827,19 @@ __metadata:
     "@rabby-wallet/eth-keyring-onekey": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": "npm:*"
     "@rabby-wallet/eth-simple-keyring": "npm:5.1.2"
-    "@rabby-wallet/gnosis-sdk": "npm:1.4.8"
-    "@rabby-wallet/hyperliquid-sdk": "npm:1.1.7"
+    "@rabby-wallet/gnosis-sdk": "npm:1.4.9"
+    "@rabby-wallet/hyperliquid-sdk": "npm:1.1.8"
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": "npm:0.1.14"
     "@rabby-wallet/rabby-api": "npm:0.9.61"
-    "@rabby-wallet/rabby-bridge": "npm:0.0.2"
+    "@rabby-wallet/rabby-bridge": "npm:0.0.4"
     "@rabby-wallet/rabby-logger": "npm:0.3.0"
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
-    "@rabby-wallet/rabby-swap": "npm:0.0.76"
+    "@rabby-wallet/rabby-swap": "npm:0.0.77"
     "@rabby-wallet/react-native-keychain": "workspace:^"
+    "@rabby-wallet/react-native-keychain-9": "workspace:^"
     "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^"
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
@@ -38939,6 +38946,7 @@ __metadata:
     react-native-aes-crypto: "npm:^3.0.1"
     react-native-animateable-text: "npm:0.17.1"
     react-native-asset: "npm:^2.1.1"
+    react-native-biometrics: "npm:^3.0.1"
     react-native-ble-manager: "npm:11.6.0"
     react-native-ble-plx: "npm:3.5.1"
     react-native-bundle-splitter: "npm:^3.0.1"
@@ -38961,7 +38969,7 @@ __metadata:
     react-native-ios-context-menu: "npm:1.15.3"
     react-native-keyboard-aware-scroll-view: "npm:^0.9.5"
     react-native-keyboard-controller: "npm:1.18.5"
-    react-native-keychain: "patch:react-native-keychain@npm%3A9.0.0#../../.yarn/patches/react-native-keychain-npm-9.0.0-263546fd9b.patch"
+    react-native-keychain: "patch:react-native-keychain@npm%3A10.0.0#../../.yarn/patches/react-native-keychain-npm-10.0.0-rabby.patch"
     react-native-linear-gradient: "npm:^2.8.3"
     react-native-localize: "npm:3.3.0"
     react-native-mmkv: "npm:3.3.1"
@@ -39497,6 +39505,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-biometrics@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "react-native-biometrics@npm:3.0.1"
+  peerDependencies:
+    react-native: ">=0.60.0"
+  checksum: 10/abbbe0b4ba0470ae6b8acdc9f1914b8356349096c58abd3b195d832ae7f007b9876191d08dd88b27c1cc9b69a43f4cd3b320307cd7f066e4475da4dfd696e198
+  languageName: node
+  linkType: hard
+
 "react-native-ble-manager@npm:11.6.0":
   version: 11.6.0
   resolution: "react-native-ble-manager@npm:11.6.0"
@@ -39869,17 +39886,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-keychain@npm:9.0.0":
-  version: 9.0.0
-  resolution: "react-native-keychain@npm:9.0.0"
-  checksum: 10/17110e12f8ece92462789d0756997a9dd20ef24f7e57f424cc5c08c23a0d83ce201afdb243d5f89de59c6f426abb4089c48617dcad5be0632462e4958e0403d1
+"react-native-keychain@npm:10.0.0":
+  version: 10.0.0
+  resolution: "react-native-keychain@npm:10.0.0"
+  checksum: 10/f06f2214ec7f8ac6fe63a30bee8a434e2d14c316be4b67821d7c25f1f540869ca852a567949783a560b0f7ca97f18be50c409cb35cb2cde3d49fb0700338604a
   languageName: node
   linkType: hard
 
-"react-native-keychain@patch:react-native-keychain@npm%3A9.0.0#../../.yarn/patches/react-native-keychain-npm-9.0.0-263546fd9b.patch::locator=rabby-mobile%40workspace%3Aapps%2Fmobile":
-  version: 9.0.0
-  resolution: "react-native-keychain@patch:react-native-keychain@npm%3A9.0.0#../../.yarn/patches/react-native-keychain-npm-9.0.0-263546fd9b.patch::version=9.0.0&hash=be9040&locator=rabby-mobile%40workspace%3Aapps%2Fmobile"
-  checksum: 10/1a5a92296cdf8e3e059531e0c0925ae5a2bbfd3df19fa3eebcabd60049599650c8156067b692721fe1b6b2ec4c6609bb206d0b6cec48a5ca27dd7f83ae6bac96
+"react-native-keychain@patch:react-native-keychain@npm%3A10.0.0#../../.yarn/patches/react-native-keychain-npm-10.0.0-rabby.patch::locator=rabby-mobile%40workspace%3Aapps%2Fmobile":
+  version: 10.0.0
+  resolution: "react-native-keychain@patch:react-native-keychain@npm%3A10.0.0#../../.yarn/patches/react-native-keychain-npm-10.0.0-rabby.patch::version=10.0.0&hash=f9dbbf&locator=rabby-mobile%40workspace%3Aapps%2Fmobile"
+  checksum: 10/7babdc26139e32534735f4de7fad049d9aa7a5119cd7a49267b1c249d3c9acf9a03f6ff1c33b2feff74b5cc69dc4b2ac58bfb5f093087d93d8f05f14348af2d6
   languageName: node
   linkType: hard
 

@@ -106,13 +106,17 @@ const TradingViewCandleChart = ({
     () => ({
       background:
         backGroundColor ||
-        (isLight ? colors2024['neutral-bg-0'] : colors2024['neutral-bg-1']),
+        (isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2']),
       text: colors2024['neutral-title-1'],
       border: colors2024['neutral-bg-5'],
+      secondaryText: colors2024['neutral-secondary'],
       greenLineColor: 'rgba(42, 187, 127, 1)',
       redLineColor: 'rgba(227, 73, 53, 1)',
       highPriceLineColor: colors2024['neutral-body'],
       lowPriceLineColor: colors2024['neutral-body'],
+      emptyPrimary: colors2024['brand-light-1'],
+      emptySecondary: colors2024['brand-light-2'],
+      emptyStroke: colors2024['brand-disable'],
       tooltip: {
         bg: isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
         title: colors2024['neutral-body'],
@@ -137,6 +141,7 @@ const TradingViewCandleChart = ({
       chg: t('component.kline.chg'),
       chgPercent: t('component.kline.chgPercent'),
       volume: t('component.kline.volume'),
+      empty: t('page.tokenDetail.marketInfo.empty'),
     }),
     [t],
   );
@@ -307,6 +312,7 @@ const TradingViewCandleChart = ({
         webviewSize={{ height }}
         onMessage={handleWebViewMessage}
         onError={handleWebViewError}
+        backGroundColor={backGroundColor}
         i18nTexts={{
           'component.kline.tp': t('component.kline.tp'),
           'component.kline.entry': t('component.kline.entry'),
@@ -320,6 +326,7 @@ const TradingViewCandleChart = ({
           'component.kline.chg': t('component.kline.chg'),
           'component.kline.chgPercent': t('component.kline.chgPercent'),
           'component.kline.volume': t('component.kline.volume'),
+          'component.kline.empty': t('page.tokenDetail.marketInfo.empty'),
         }}
       />
     </View>

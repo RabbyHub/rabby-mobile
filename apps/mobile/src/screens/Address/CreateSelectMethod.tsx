@@ -25,6 +25,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { replaceToFirst } from '@/utils/navigation';
 import { toast } from '@/components2024/Toast';
 import { setAccountNeedsBackupReminder } from '@/hooks/account';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 function MainListBlocks() {
   const { t } = useTranslation();
@@ -37,6 +38,10 @@ function MainListBlocks() {
     if (creatingRef.current) {
       return;
     }
+    if (!(await ensureWalletUnlockedForAction())) {
+      return;
+    }
+
     creatingRef.current = true;
     try {
       const seedPhrase = await apiMnemonic.generatePreMnemonic();

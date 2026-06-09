@@ -126,7 +126,7 @@
         "ApproveToken": "Approve token",
         "ApproveTo": "Approve to",
         "RevokeFrom": "Revoke from",
-        "InteractedContract": "Interacted contract",
+        "InteractedContract": "Interacted with (To)",
         "RecipientAddress": "Recipient wallet",
         "name": "Name",
         "RevokeToken": "Revoke Token",
@@ -134,7 +134,9 @@
         "Simulation Results": "Simulation Results",
         "totalApprovedAmount": "Current Approved Amount",
         "PurchaseFrom": "Purchased from",
-        "WillReceive": "Will Receive: ≈ {{token}}"
+        "WillReceive": "Will Receive: ≈ {{token}}",
+        "TransactionDetails": "Transaction Details",
+        "Operation": "Operation"
       },
       "empty": {
         "title": "No transactions",
@@ -233,7 +235,7 @@
       "safeTx": {
         "selfHostConfirm": {
           "title": "Switch to Rabby's Safe Service",
-          "content": "Safe API is unavailable. Switch to the Safe service deployed by Rabby to keep your Safe functional. <1></1><2>All Safe signers must use Rabby Wallet to authorize transactions.<2>",
+          "content": "Safe API is unavailable. Switch to the Safe service deployed by Rabby to keep your Safe functional. <1></1><2>All Safe signers must use Rabby Wallet to authorize transactions.</2>",
           "button": "OK"
         }
       },
@@ -514,7 +516,7 @@
         "signWith": "Sign with {{brand}}",
         "failedToGetExplain": "Failed to get explain",
         "txFailed": "Fail to create",
-        "txFailedRetry": "Fail to create: Please Retry",
+        "txFailedRetry": "Failed to create: please retry",
         "sigCompleted": "Transaction created",
         "getSig": "Get signature",
         "qrcodeDesc": "Scan with your {{brand}} to sign\nAfter signing, click the button below to receive the signature",
@@ -536,10 +538,10 @@
       "resend": "Retry",
       "submitTx": "Submit Transaction",
       "cancelTransaction": "Cancel Transaction",
-      "detectedMultipleRequestsFromThisDapp": "Detected multiple requests from this Dapp",
+      "detectedMultipleRequestsFromThisDapp": "Detected multiple requests from this DApp",
       "cancelCurrentTransaction": "Cancel current transaction",
-      "cancelAll": "Cancel all {{count}} requests from Dapp",
-      "blockDappFromSendingRequests": "Block Dapp from sending requests for 1 min",
+      "cancelAll": "Cancel all {{count}} requests from DApp",
+      "blockDappFromSendingRequests": "Block DApp from sending requests for 1 min",
       "cancelConnection": "Cancel connection",
       "cancelCurrentConnection": "Cancel current connection",
       "startSigning": "Start Signing",
@@ -848,8 +850,8 @@
             "contractTrustValueWarning": "The contract trust value < $100,000",
             "contractTrustValueDanger": "The contract trust value < $10,000",
             "normalTrustValueDanger": "The contract trust value:{{ contractUsdText }}",
-            "revokeDangerTitle": "Contract 24h Revoke Trends > 4",
-            "revokeWarningTitle": "Contract 24h Revoke double than Revoke",
+            "revokeDangerTitle": "24h revokes are more than 4x approvals",
+            "revokeWarningTitle": "24h revokes are more than 2x approvals",
             "revokeTrendsValueWarning": "Recent revokes are greater than double the number of newly approved users.",
             "revokeTrendsValueDanger": "Recent revokes are greater than 4 times the number of newly approved users.",
             "revokeNewApproved": "Newly approved users(24h): {{ count }}",
@@ -953,7 +955,7 @@
       "recommend-slippage": "To prevent front-running, we recommend a slippage of <2>{{ slippage }}</2>%",
       "slippage-tolerance": "Slippage tolerance",
       "select-token": "Select Token",
-      "gas-fee": "GasFee: {{gasUsed}}",
+      "gas-fee": "Gas fee: {{gasUsed}}",
       "estimate": "Estimate:",
       "actual": "Actual:",
       "usd-after-fees": "≈ {{usd}} ",
@@ -1010,7 +1012,7 @@
       "Pending": "Pending",
       "estimate": "Estimate:",
       "actual": "Actual:",
-      "gas-fee": "GasFee: {{gasUsed}}",
+      "gas-fee": "Gas fee: {{gasUsed}}",
       "gas-x-price": "Gas price: {{price}} Gwei.",
       "detail-tx": "Detail",
       "bridgeTo": "Bridge To",
@@ -1022,7 +1024,7 @@
       "best-subtitle": "The best quote is determined by a combination of estimated total cost (including gas fees) and delivery speed.",
       "swap-best-subtitle": "The best quote is determined by the lowest estimated total cost, including the exchange rate and gas fees.",
       "no-route-found": "No route found",
-      "bridged": "Bridged",
+      "bridged": "Bridge initiated",
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "Form Changed",
       "formChangedAmount": "The amount has changed, possibly due to password autofill from the system keyboard. Please review and re-enter the correct amount.",
@@ -1071,7 +1073,7 @@
         "receive": "Receive",
         "gasDeposit": "Gas Deposit",
         "approvals": "Approvals",
-        "dapps": "Dapps",
+        "dapps": "DApp",
         "more": "More",
         "queue": "Queue",
         "websites": "Websites",
@@ -1087,13 +1089,13 @@
         "convertDust": "Convert Dust"
       },
       "swipeUp": {
-        "desc": "Swipe up to explore websites",
+        "desc": "Swipe up to explore & search websites",
         "descMore": "Swipe up to explore more websites",
-        "descAndroid": "Click to explore dApps",
-        "descAndroidMore": "Click to explore more dApps"
+        "descAndroid": "Click to explore DApp",
+        "descAndroidMore": "Click to explore more DApp"
       },
       "DappDrawer": {
-        "emptyAndroid": "No dApp added to favorites",
+        "emptyAndroid": "No DApp added to favorites",
         "empty": "No website added to favorites",
         "favorite": "Favorite",
         "search": "Search",
@@ -1119,7 +1121,7 @@
       "comingSoon": "Coming soon...",
       "tipsDollar": {
         "title": "Copy Trading from Smart Money",
-        "description": "Discover tokens based on recent activity from smart money wallets. Tap a token to see detailed trade amounts and historical profits from those wallets."
+        "description": "Discover tokens based on recent activity from Smart Money Wallets. Tap a token to see detailed trade amounts and historical profits from those wallets."
       },
       "filterRule": {
         "24HChange": "24H Change",
@@ -1138,8 +1140,8 @@
       "noMoreData": "No more data",
       "updateText": "{{count}} Trends Updated",
       "updateTokenText": "{{count}} tokens updated",
-      "refreshTitle": "Loading More Copy Trading From Smart Money",
-      "gettingLatest": "Getting the latest from smart money...",
+      "refreshTitle": "Loading more Copy Trading from Smart Money",
+      "gettingLatest": "Getting the latest from Smart Money...",
       "twitterNews": "News in X",
       "tokenInfo": "Token Info",
       "smartWallets": "Smart Wallets",
@@ -1488,51 +1490,51 @@
         "balance": "Balance",
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: Ledger official HD path.",
-            "bip44": "BIP44 Standard: HDpath defined by the BIP44 protocol.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto."
+            "ledgerLive": "Ledger Live: Ledger official HD Path.",
+            "bip44": "BIP44 Standard: HD Path defined by the BIP44 protocol.",
+            "legacy": "Legacy: HD Path used by MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: Ledger official HD path.",
-            "bip44": "BIP44 Standard: HD path defined by the BIP44 protocol.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto."
+            "ledgerLive": "Ledger Live: Ledger official HD Path.",
+            "bip44": "BIP44 Standard: HD Path defined by the BIP44 protocol.",
+            "legacy": "Legacy: HD Path used by MEW / Mycrypto."
           }
         },
         "onekey": {
           "hdPathType": {
-            "bip44": "BIP44: HDpath defined by the BIP44 protocol."
+            "bip44": "BIP44: HD Path defined by the BIP44 protocol."
           },
           "hdPathTypeNoChain": {
-            "bip44": "BIP44: HDpath defined by the BIP44 protocol."
+            "bip44": "BIP44: HD Path defined by the BIP44 protocol."
           }
         },
         "keystone": {
           "hdPathType": {
-            "bip44": "BIP44: HDpath defined by the BIP44 protocol.",
-            "ledgerLive": "Ledger Live: Ledger official HD path. You can only manage 10 addresses with Ledger Live path.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto."
+            "bip44": "BIP44: HD Path defined by the BIP44 protocol.",
+            "ledgerLive": "Ledger Live: Ledger official HD Path. You can only manage 10 addresses with Ledger Live path.",
+            "legacy": "Legacy: HD Path used by MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
-            "bip44": "BIP44: HDpath defined by the BIP44 protocol.",
-            "ledgerLive": "Ledger Live: Ledger official HD path. You can only manage 10 addresses with Ledger Live path.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto."
+            "bip44": "BIP44: HD Path defined by the BIP44 protocol.",
+            "ledgerLive": "Ledger Live: Ledger official HD Path. You can only manage 10 addresses with Ledger Live path.",
+            "legacy": "Legacy: HD Path used by MEW / Mycrypto."
           }
         },
         "trezor": {
           "hdPathType": {
-            "bip44": "BIP44: HDpath defined by the BIP44 protocol.",
-            "ledgerLive": "Ledger Live: Ledger official HD path.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto."
+            "bip44": "BIP44: HD Path defined by the BIP44 protocol.",
+            "ledgerLive": "Ledger Live: Ledger official HD Path.",
+            "legacy": "Legacy: HD Path used by MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
-            "bip44": "BIP44: HDpath defined by the BIP44 protocol.",
-            "ledgerLive": "Ledger Live: Ledger official HD path.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto."
+            "bip44": "BIP44: HD Path defined by the BIP44 protocol.",
+            "ledgerLive": "Ledger Live: Ledger official HD Path.",
+            "legacy": "Legacy: HD Path used by MEW / Mycrypto."
           }
         },
         "selectIndexTip": "Select the serial number of wallets to start from:",
         "manageAddressFrom": "Manage wallet from {{0}} to {{1}}",
-        "customAddressHdPath": "Custom Wallet HD path",
+        "customAddressHdPath": "Custom Wallet HD Path",
         "qrCode": {
           "switch": {
             "title": "Switch to a new {{0}} device",
@@ -1582,7 +1584,7 @@
     "signText": {
       "title": "Sign Text",
       "createKey": {
-        "interactDapp": "Interact Dapp",
+        "interactDapp": "Interact DApp",
         "description": "Description"
       },
       "sameSafeMessageAlert": "The same message is confirmed; no additional signature is required."
@@ -1610,7 +1612,7 @@
       "markAsTrustToast": "Mark as \"Trusted\"",
       "markAsBlockToast": "Mark as \"Blocked\"",
       "markRemovedToast": "Mark removed",
-      "title": "Connect to Dapp",
+      "title": "Connect to DApp",
       "markRuleText": "My mark",
       "connectBtn": "Connect",
       "noWebsite": "None",
@@ -1635,6 +1637,7 @@
       "remove-from-whitelist": "Remove from Whitelist",
       "backup-private-key": "Backup Private Key",
       "backup-seed-phrase": "Backup Seed Phrase",
+      "backupFailed": "Backup failed, please try again",
       "verify-password": "Verify password",
       "verify-password-before-backup": "Verify your Rabby password before the backup",
       "verify-face-id": "Verify Face ID",
@@ -1769,7 +1772,7 @@
       "ConfirmPassword": "Confirm password",
       "biometricsFail": "Enable biometrics fail",
       "title": "Set Password",
-      "subTitle": "It will be used to unlock your wallet and encrypt local data",
+      "subTitle": "This password unlocks your wallet and encrypts your data on this device. It cannot be recovered. If lost, you will need to reset and re-import your wallet.",
       "passwordRequired": "Please input Password",
       "passwordMin": "Password must be at least 8 characters long",
       "passwordPlaceholder": "Password must be at least 8 characters long",
@@ -1779,7 +1782,8 @@
       "confirmError": "Passwords do not match",
       "agree": "I have read and agree to the<1/> <2>Terms of Use</2>",
       "confirmTitle": "Confirm password",
-      "confirmModalDesc": "Please store your password properly. Once lost, it cannot be changed or recovered by Rabby."
+      "confirmModalDesc": "Please store your password properly. Once lost, it cannot be changed or recovered by Rabby.",
+      "setWallet": "Set Wallet"
     },
     "importSafe": {
       "title": "Add Safe address",
@@ -1889,7 +1893,8 @@
         "txSending": "Sending signing request",
         "txSendings": "Sending signing request({{current}}/{{total}})"
       },
-      "fixedModeText": "Fixed Mode: Always use your custom gas setting"
+      "fixedModeText": "Fixed Mode: Always use your custom gas setting",
+      "fixedModeTag": "Fixed mode"
     },
     "gasAccount": {
       "deposit": "Deposit",
@@ -2017,11 +2022,11 @@
         "desc1": "No extra fees to pay gas",
         "item2": "Supports all networks",
         "desc2": "Automatic gas payments on 80+ networks",
-        "desc3": "Swap, Bridge, Send, DApps, & more",
+        "desc3": "Swap, Bridge, Send, DApp, & more",
         "item3": "Supports all transactions"
       },
       "gasBalance": "Gas Balance",
-      "lowBalance": "You don't have enough gas. Deposit gas to ensure future transactions go smoothly.",
+      "lowBalance": "You don't have enough gas (<$1.00). Deposit gas to ensure future transactions go smoothly.",
       "switchAccount": "Switch Wallet",
       "depositFailed": "Deposit failed",
       "depositWith": "Deposit via"
@@ -2166,7 +2171,7 @@
       }
     },
     "defiDetail": {
-      "viewSiteInApp": "View in Dapp",
+      "viewSiteInApp": "View in DApp",
       "viewSiteInWebsite": "View in Website",
       "appChain": "On {{chain}} Account",
       "dappActions": {
@@ -2202,7 +2207,7 @@
       "nft": {
         "floorPrice": "/Floor Price:"
       },
-      "appChain": "Dapp Account"
+      "appChain": "DApp Account"
     },
     "search": {
       "tokenHeader": {
@@ -2234,7 +2239,7 @@
         "searchTips": "Search the web"
       },
       "globalSearch": {
-        "placeHolder": "Search Dapp/Token",
+        "placeHolder": "Search DApp/Token",
         "iosPlaceHolder": "Search Website/Token"
       },
       "hotTokenList": {
@@ -2248,7 +2253,10 @@
       "faceId": "Face ID",
       "touchId": "Touch ID",
       "fingerPrint": "Fingerprint",
+      "devicePassword": "Device password",
+      "useDevicePassword": "Use device password",
       "autoLockTime": "Auto lock time",
+      "lockWallet": "Lock Wallet",
       "addCustomNetwork": "Add Custom Network",
       "modifyRPCURL": "Modify RPC URL",
       "themeMode": "Theme Mode",
@@ -2304,7 +2312,7 @@
       "toBuy": "Continue to Buy",
       "history": "Purchased History",
       "noQuotePlaceholder": "No Quote",
-      "noQuote": "No quotes found: Try enter a higher value.",
+      "noQuote": "No quotes found: try entering a higher value.",
       "noQuote2": "No quotes found.",
       "searchRegionPlaceholder": "Search for region",
       "paymentMethod": "Payment Method",
@@ -2317,7 +2325,7 @@
       "currencyBottomSheet": {
         "title": "Select a Currency",
         "searchPlaceholder": "Search currency",
-        "NoFound": "No Currency found"
+        "NoFound": "No currency found"
       },
       "quote": {
         "title": "Quotes For you",
@@ -2361,10 +2369,10 @@
       },
       "BrowserHeader": {
         "searchIos": "Search Website",
-        "searchAndroid": "Search Dapp"
+        "searchAndroid": "Search DApp"
       },
       "CurrentPopup": {
-        "title": "Current Dapp",
+        "title": "Current DApp",
         "connectChain": "Connect Chain",
         "connectWallet": "Connect Wallet",
         "disconnect": "Disconnect"
@@ -2403,7 +2411,7 @@
       "WebviewError": {
         "failedToLoad": "Failed to load the page",
         "error": "Error:",
-        "alertText": "Try<1/><2>Open in browser</2><3/>to check if it is a website issue"
+        "alertText": "Try<1/><2>Open in browser</2><3/>to check if this third party DApp is functional in your current location."
       },
       "toast": {
         "clearCacheSuccess": "Cache cleared"
@@ -2641,6 +2649,28 @@
       },
       "closeAllConfirmTitle": "Confirm Close All Positions",
       "closeAllConfirmMessage": "All your open positions will be closed at market price.",
+      "limitOrders": "Limit Orders",
+      "cancelAll": "Cancel All",
+      "cancelAllOrdersConfirmTitle": "Confirm Cancel ALL Orders",
+      "cancelAllOrdersConfirmMessage": "All your Limit Orders will be canceled",
+      "limitOrderDetail": {
+        "title": "Limit {{side}} {{pair}}",
+        "time": "Time",
+        "size": "Size",
+        "filled": "Filled",
+        "currentPrice": "Current Price",
+        "limitPrice": "Limit Price",
+        "marginUsage": "Margin Usage",
+        "cancelLimitOrder": "Cancel Limit Order",
+        "buy": "Buy",
+        "sell": "Sell"
+      },
+      "cancelOrderToast": {
+        "singleSuccess": "Limit order canceled",
+        "multiSuccess": "{{count}} limit orders canceled",
+        "partial": "{{okCount}} canceled, {{failCount}} failed",
+        "failed": "Cancel limit order failed"
+      },
       "PerpsDepositTokenModal": {
         "goSwapDesc": "Only USDC on Arbitrum is supported for direct deposit. Please swap your current token to USDC before depositing.",
         "goBridgeDesc": "Only USDC on Arbitrum is supported for direct deposit. Please bridge your current token to USDC on Arbitrum before depositing.",
@@ -2851,6 +2881,8 @@
         "addToShort": "Add to Short"
       },
       "PerpsOpenPositionPopup": {
+        "title": "Open {{coin}} Position",
+        "limitOrderPlacedToast": "Limit {{direction}} {{coin}}: Size {{size}} placed at ${{price}}",
         "onlyIsolated": "Only isolated margin is supported for this token",
         "margin": "Margin",
         "upTo": "Up to",
@@ -2871,10 +2903,17 @@
         "stopLossWhenPriceAbove": "Stop Loss When Price Above",
         "stopLossWhen": "Stop Loss When",
         "slPrice": "Stop-Loss Price",
-        "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
+        "sizeTips": "The total value or quantity of your trade, set by margin and leverage.",
+        "orderType": "Order Type",
+        "orderTypeMarket": "Market",
+        "orderTypeLimit": "Limit",
+        "limitPrice": "Limit Price",
+        "currentPrice": "Current Price"
       },
       "PerpsOpenPositionCheckPopup": {
         "title": "Check Order",
+        "limitTitle": "Check Limit Order",
+        "marketTitle": "Check Market Order",
         "perps": "Perps",
         "initialMargin": " Initial Margin",
         "direction": "Direction",
@@ -2894,7 +2933,10 @@
         "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage.",
         "marginCross": "Margin(Cross)",
-        "margin": "Margin(Isolated)"
+        "margin": "Margin(Isolated)",
+        "limitPrice": "Limit Price",
+        "mayExecuteImmediately": "This limit order may execute immediately",
+        "setLimitOrderBtn": "Set Limit Order"
       },
       "action": {
         "closePosition": "Close {{direction}} Position",
@@ -2915,8 +2957,12 @@
         "priceBelow": "Price below",
         "youGain": "You Gain",
         "youLoss": "You Loss",
+        "youGainRoi": "You Gain (ROI)",
+        "youLossRoi": "You Loss (ROI)",
         "currentPrice": "Current {{price}}",
         "EntryAndCurrentPrice": "Entry {{entryPrice}}  Current {{price}}",
+        "currentPriceTpl": "Current <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "Entry <1>{{entryPrice}}</1>  Current <2>{{price}}</2>",
         "takeProfitWhen": "Take Profit When",
         "stopLossWhen": "Stop Loss When",
         "slPrice": "Stop Loss Price",
@@ -2925,6 +2971,20 @@
         "entryPrice": "Entry Price:",
         "setTpPrice": "Set Take-Profit Price",
         "setSlPrice": "Set Stop-Loss Price"
+      },
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "Set Limit Buy Price",
+        "setLimitSellPrice": "Set Limit Sell Price",
+        "marketLabel": "Mid",
+        "setBtn": "Set",
+        "blockError": "Order price exceeds the 10% price protection limit.",
+        "confirmTitle": "Review Limit Price",
+        "confirmMessage": "Limit price is 5%+ away from market price",
+        "confirmContinue": "Continue",
+        "confirmCancel": "Cancel"
+      },
+      "PerpsPriceInfo": {
+        "current": "Current"
       },
       "PerpsAbout": {
         "title": "About"
@@ -3313,21 +3373,22 @@
         "description": "Supports converting small balances into the native token"
       },
       "unsupportedAccountType": "Not support this account type.",
-      "unsupportedAccount": "Currently only private key and seed phrase addresses are supported."
+      "unsupportedAccount": "Currently only private key and seed phrase addresses are supported.",
+      "title": "Convert Dust"
     }
   },
   "component": {
     "externalSwapBrideDappPopup": {
       "noQuotesForChain": "No quotes available for this chain yet",
-      "thirdPartyDappToProceed": "Please use a third-party Dapp to proceed",
-      "viewDappOptions": "View Dapp Options",
-      "selectADapp": "Select a Dapp",
-      "noDapp": "No Dapps available",
+      "thirdPartyDappToProceed": "Please use a third-party DApp to proceed",
+      "viewDappOptions": "View DApp Options",
+      "selectADapp": "Select a DApp",
+      "noDapp": "No DApp available",
       "help": "Please contact the official team of this chain for support",
       "chainNotSupported": "Not supported on this chain",
-      "noDapps": "No Dapp available on this chain",
-      "swapOnDapp": "Swap on Dapp",
-      "bridgeOnDapp": "Bridge on Dapp"
+      "noDapps": "No DApp available on this chain",
+      "swapOnDapp": "Swap on DApp",
+      "bridgeOnDapp": "Bridge on DApp"
     },
     "gasAccount": {
       "deposit": "Deposit",
@@ -3402,7 +3463,7 @@
       }
     },
     "AuthenticationModal": {
-      "passwordPlaceholder": "Enter password"
+      "passwordPlaceholder": "Enter password to Confirm"
     },
     "Contact": {
       "EditModal": {
@@ -3477,13 +3538,13 @@
       }
     },
     "signPermissionCheckModal": {
-      "title": "You only allow this Dapp to sign on testnets",
-      "reconnect": "Reconnect Dapp"
+      "title": "You only allow this DApp to sign on testnets",
+      "reconnect": "Reconnect DApp"
     },
     "AuthenticationModals": {
       "biometrics": {
-        "enable": "Enable {{ bioType }}",
-        "disable": "Disable {{ bioType }}",
+        "enable": "Enter the Password\nto Enable {{ bioType }}",
+        "disable": "Confirm to disable {{ bioType }}?",
         "enableTip": "Enable {{ bioType }} to unlock Rabby",
         "disableTip": "Disable {{ bioType }} to unlock Rabby"
       },
@@ -3536,7 +3597,8 @@
       },
       "switchArea": {
         "skipText": "Skip this popup for 1 day"
-      }
+      },
+      "alertText": "Third-party DApp: for usage issues please contact DApp support. Rabby provides viewing access only"
     },
     "feedbackModal": {
       "title": "Response from Rabby Support",
@@ -3610,6 +3672,7 @@
     "appName": "Rabby Wallet",
     "appDescription": "Your go-to wallet for Ethereum and EVM",
     "copy": "Copy",
+    "copiedSuccessfully": "Copied successfully",
     "copied": "Copied",
     "confirm": "Confirm",
     "next": "Next",
@@ -3641,7 +3704,7 @@
     "Paste": "Paste",
     "Price": "Price",
     "Token": "Token",
-    "Dapp": "Dapp",
+    "Dapp": "DApp",
     "GotIt": "Got it",
     "time": {
       "hour": "{{t}} hour",

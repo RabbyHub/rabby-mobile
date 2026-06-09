@@ -67,6 +67,12 @@ import { formatTokenAmount } from '@/utils/number';
 import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -437,6 +443,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
             setAmount(availableToBorrow.amount || '0');
           }}
           tokenAmount={Number(availableToBorrow.amount || '0')}
+          tokenDecimals={reserve.reserve.decimals}
           price={Number(
             reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
           )}
@@ -532,6 +539,8 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
                 (isRisky && !isChecked)
               }
               type="aave"
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
               iconColor={
                 isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
               }
@@ -545,6 +554,8 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
               loadingType="circle"
               showTextOnLoading
               containerStyle={styles.fullWidthButton}
+              height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               onPress={() => handleBorrow()}
               title={t('page.Lending.borrowDetail.actions')}
               loading={isLoading}
@@ -685,7 +696,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   buttonContainer: {
     paddingTop: 12,
-    marginBottom: 48,
+    marginBottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
@@ -795,6 +806,6 @@ const getStyles = createGetStyles2024(ctx => ({
   fullWidthButton: {
     flex: 1,
     width: '100%',
-    paddingBottom: 58,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
   },
 }));

@@ -1,38 +1,26 @@
 /* eslint-disable react-native/no-inline-styles */
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { RcIconMore } from '@/assets/icons/home';
-import { useAddressDetailModal } from '../Address/useAddressDetailModal';
-import RcIconHistory from '@/assets2024/singleHome/history.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { transactionHistoryService } from '@/core/services';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { View } from 'react-native';
 import { AbstractPortfolioToken } from './types';
-import { toast } from '@/components2024/Toast';
 import { useTranslation } from 'react-i18next';
-import { HomePendingBadge } from './components/HomePending';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useSingleHomeAccount, apisSingleHome } from './hooks/singleHome';
 import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
 import { naviPush } from '@/utils/navigation';
+import { HeaderRightHistoryButton } from './components/HeaderRightHistoryButton';
 
 const hitSlop = {
   top: 10,
   bottom: 10,
   left: 10,
   right: 10,
-};
-
-const historyHitSlop = {
-  top: 4,
-  bottom: 4,
-  left: 4,
-  right: 4,
 };
 
 interface HeaderRightHistoryProps {
@@ -69,7 +57,6 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const timeRef = useRef<null | ReturnType<typeof setInterval>>(null);
   const { navigation } = useSafeSetNavigationOptions();
-  const { colors2024 } = useTheme2024();
   const [historyCount, setHistoryCount] = useState<{
     success: number;
     fail: number;
@@ -151,42 +138,11 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   ]);
 
   return (
-    <CustomTouchableOpacity
-      as="RNGHTouchableOpacity"
-      hitSlop={historyHitSlop}
-      onPress={openHistory}>
-      {pendingTxCount > 0 ? (
-        <View
-          style={{ marginRight: 16, position: 'relative', paddingVertical: 4 }}>
-          <HomePendingBadge number={pendingTxCount} />
-        </View>
-      ) : (
-        <View
-          style={{ marginRight: 16, position: 'relative', paddingVertical: 4 }}>
-          <RcIconHistory
-            color={colors2024['neutral-title-1']}
-            width={22}
-            height={22}
-          />
-          {Boolean(historyCount?.success || historyCount?.fail) && (
-            <View
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: 3,
-                backgroundColor:
-                  colors2024[
-                    historyCount?.fail ? 'red-default' : 'green-default'
-                  ],
-                position: 'absolute',
-                top: 0,
-                right: -4,
-              }}
-            />
-          )}
-        </View>
-      )}
-    </CustomTouchableOpacity>
+    <HeaderRightHistoryButton
+      pendingTxCount={pendingTxCount}
+      historyCount={historyCount}
+      onPress={openHistory}
+    />
   );
 };
 

@@ -44,6 +44,8 @@ import {
 } from '@/screens/GasAccount/hooks/atom';
 import {
   GasAccountAvailableToken,
+  GasAccountAvailableTokenRow,
+  getGasAccountAvailableTokenFromRow,
   useGasAccountDepositAvailableTokens,
 } from '@/screens/GasAccount/hooks/useDepositTokenAvailability';
 import { Linear } from '@/screens/Transaction/components/SkeletonCard';
@@ -55,7 +57,7 @@ import {
   isHardWareAccountAccountSupportMiniApproval,
   isWatchOrSafeAccount,
 } from '@/utils/account';
-import { findChainByServerID } from '@/utils/chain';
+import { findChain, findChainByServerID } from '@/utils/chain';
 import { formatUsdValue } from '@/utils/number';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
@@ -79,6 +81,13 @@ import { GasAccountTopUpWaitCallback } from './topUpContinuation';
 import { apiProvider } from '@/core/apis';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import AuthButton from '@/components2024/AuthButton';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
+import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 
 type DepositAccount = Account;
 
@@ -96,7 +105,7 @@ export const GasAccountDepositTokenForm: React.FC<{
     [accounts],
   );
   const {
-    availableTokens,
+    availableTokenRows,
     isCheckingAvailability,
     checkIsExpireAndUpdate,
     refreshBridgeSupportTokenList,
@@ -142,7 +151,7 @@ export const GasAccountDepositTokenForm: React.FC<{
     <GasAccountDepositTokenFormInner
       {...props}
       myAccounts={myAccounts}
-      availableTokens={availableTokens}
+      availableTokenRows={availableTokenRows}
       isCheckingAvailability={isTokenListLoading}
     />
   );
@@ -155,7 +164,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   onWaitDepositResult?: GasAccountTopUpWaitCallback;
   minDepositPrice?: number;
   myAccounts: DepositAccount[];
-  availableTokens: GasAccountAvailableToken[];
+  availableTokenRows: GasAccountAvailableTokenRow[];
   isCheckingAvailability: boolean;
 }> = ({
   visible,
@@ -164,7 +173,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   onWaitDepositResult,
   minDepositPrice,
   myAccounts,
-  availableTokens,
+  availableTokenRows,
   isCheckingAvailability,
 }) => {
   const { t } = useTranslation();
@@ -255,7 +264,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   const didInitSelectedTokenRef = useRef(false);
 
   useEffect(() => {
-    if (!availableTokens.length) {
+    if (!availableTokenRows.length) {
       setSelectedToken(undefined);
       return;
     }
@@ -264,14 +273,19 @@ const GasAccountDepositTokenFormInner: React.FC<{
       setSelectedToken(prev => {
         if (!prev) {
           return (
-            availableTokens?.find(e => e.chain !== 'eth') || availableTokens[0]
+            getGasAccountAvailableTokenFromRow(
+              availableTokenRows.find(row => {
+                const token = getGasAccountAvailableTokenFromRow(row);
+                return token?.chain !== 'eth';
+              }) || availableTokenRows[0],
+            ) || undefined
           );
         }
 
         return prev;
       });
     }
-  }, [availableTokens]);
+  }, [availableTokenRows]);
 
   const selectedOwnerAccount = useMemo(() => {
     const matched = myAccounts.filter(
@@ -316,13 +330,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
           checkGasFeeTooHigh: true,
         });
       } catch (error) {
-        if (
-          error === MINI_SIGN_ERROR.CANT_PROCESS ||
-          error === MINI_SIGN_ERROR.GAS_FEE_TOO_HIGH
-        ) {
-          closeMiniSign();
-          return await openUI(config);
-        }
         throw error;
       }
     },
@@ -503,22 +510,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
     [],
   );
 
-  const fetchTopUpUsedNonce = useCallback(
-    async (txHash: string, chainServerId: string, account: DepositAccount) => {
-      const tx = await apiProvider.requestETHRpc<{ nonce?: string }>(
-        {
-          method: 'eth_getTransactionByHash',
-          params: [txHash],
-        },
-        chainServerId,
-        account,
-      );
-
-      return tx?.nonce;
-    },
-    [],
-  );
-
   const handleSubmit = useCallback(async () => {
     if (!selectedToken || !selectedOwnerAccount || !amountValidation.isValid) {
       return;
@@ -555,17 +546,24 @@ const GasAccountDepositTokenFormInner: React.FC<{
           const tx = await buildTopUpGasAccount(params);
 
           if (tx) {
-            const res = await openDirectOrFallbackToUI({
-              txs: [tx],
-              autoUseGasFree: true,
-              purpose: 'gasAccountTopUp',
-            });
-            const hash = res?.[0];
-            await afterTopUpGasAccount({
-              ...params,
-              tx: hash,
-            });
-            depositTxHash = hash || '';
+            try {
+              const res = await openDirectOrFallbackToUI({
+                txs: [tx],
+                autoUseGasFree: true,
+                purpose: 'gasAccountTopUp',
+              });
+              const hash = res?.[0];
+              await afterTopUpGasAccount({
+                ...params,
+                tx: hash,
+              });
+              depositTxHash = hash || '';
+            } catch (error) {
+              if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
+                throw error;
+              }
+              depositTxHash = (await topUpGasAccount(params)) || '';
+            }
           }
         } else {
           depositTxHash = (await topUpGasAccount(params)) || '';
@@ -584,12 +582,22 @@ const GasAccountDepositTokenFormInner: React.FC<{
 
         let lastHash = '';
         if (isAccountSupportMiniApproval(selectedOwnerAccount.type)) {
-          const hashes = await openDirectOrFallbackToUI({
-            txs: bridgeTxs,
-            autoUseGasFree: true,
-            purpose: 'gasAccountTopUp',
-          });
-          lastHash = hashes?.[hashes.length - 1] || '';
+          try {
+            const hashes = await openDirectOrFallbackToUI({
+              txs: bridgeTxs,
+              autoUseGasFree: true,
+              purpose: 'gasAccountTopUp',
+            });
+            lastHash = hashes?.[hashes.length - 1] || '';
+          } catch (error) {
+            if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
+              throw error;
+            }
+            lastHash = await sendBridgeTxsDirectly(
+              bridgeTxs,
+              selectedOwnerAccount,
+            );
+          }
         } else {
           lastHash = await sendBridgeTxsDirectly(
             bridgeTxs,
@@ -600,6 +608,12 @@ const GasAccountDepositTokenFormInner: React.FC<{
         if (!lastHash) {
           return;
         }
+
+        apisTransactionHistory.updateBridgeGasAccountTx({
+          address: selectedOwnerAccount.address,
+          chainId: findChain({ serverId: selectedToken.chain })!.id,
+          hash: lastHash,
+        });
 
         await afterBridgeTopUpGasAccount({
           chainServerId: selectedToken.chain,
@@ -626,16 +640,11 @@ const GasAccountDepositTokenFormInner: React.FC<{
         if (success !== 'cancel') {
           if (success) {
             storeApiGasAccount.markSnapshotDirty('deposit_confirmed');
-            const usedNonce = await fetchTopUpUsedNonce(
-              depositTxHash,
-              selectedToken.chain,
-              selectedOwnerAccount,
-            );
+
             await onWaitDepositResult({
               type: 'token',
               ownerAddress: selectedOwnerAccount.address,
               chainServerId: selectedToken.chain,
-              usedNonce,
             });
             await onDeposit?.();
           } else {
@@ -689,7 +698,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
     bridgeFromTokenAmount,
     bridgeQuote,
     ensureGasAccountLogin,
-    fetchTopUpUsedNonce,
     onClose,
     onDeposit,
     onWaitDepositResult,
@@ -845,7 +853,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   const isInteractionLocked = loading;
 
   let bottomContent: React.ReactNode = null;
-  if (!isCheckingAvailability && !availableTokens.length) {
+  if (!isCheckingAvailability && !availableTokenRows.length) {
     bottomContent = (
       <Text style={styles.errorText}>
         {t('page.gasAccount.depositPopup.noAvailableToken')}
@@ -984,6 +992,8 @@ const GasAccountDepositTokenFormInner: React.FC<{
             disabled={!canSubmit}
             loading={loading}
             syncUnlockTime
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
             onBeforeAuth={() => {
               Keyboard.dismiss();
             }}
@@ -1005,7 +1015,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
         <GasAccountDepositTokenPicker
           visible={tokenPickerVisible}
           accounts={myAccounts}
-          availableTokens={availableTokens}
+          availableTokenRows={availableTokenRows}
           isCheckingAvailability={isCheckingAvailability}
           onClose={() => setTokenPickerVisible(false)}
           onSelect={token => {
@@ -1023,7 +1033,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-1'],
     paddingTop: 10,
     paddingHorizontal: 20,
-    paddingBottom: 48,
+    paddingBottom: getBottomButtonBottomOffset(ctx.safeAreaInsets.bottom),
     display: 'flex',
     flexDirection: 'column',
   },
@@ -1202,13 +1212,13 @@ const getStyles = createGetStyles2024(ctx => ({
     elevation: 20,
   },
   depositButton: {
-    height: 58,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     borderRadius: 16,
   },
   depositButtonTitle: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: BOTTOM_BUTTON_TITLE_STYLE.fontSize,
+    lineHeight: BOTTOM_BUTTON_TITLE_STYLE.lineHeight,
     fontWeight: '700',
   },
 }));

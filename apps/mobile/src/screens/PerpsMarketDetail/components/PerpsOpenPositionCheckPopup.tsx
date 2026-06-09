@@ -12,6 +12,7 @@ import {
   formatUsdValue,
   splitNumberByStep,
 } from '@/utils/number';
+import { PerpsOpenOrderType } from '@/constant/perps';
 import { formatPerpsCoin } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
@@ -22,12 +23,18 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Text, TextInput } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 export const PerpsOpenPositionCheckPopup: React.FC<{
   visible?: boolean;
   onClose?(): void;
   onConfirm?(): Promise<void>;
-  info: {
+  summary: {
     coin: string;
     coinLogo?: string;
     margin: string;
@@ -43,8 +50,11 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     selectedMarginMode: 'cross' | 'isolated';
     estimatedLiquidationPrice: string | number;
     quoteAsset?: string;
+    orderType?: PerpsOpenOrderType;
+    limitPx?: string;
+    isMarketable?: boolean;
   };
-}> = ({ visible, onClose, info, onConfirm }) => {
+}> = ({ visible, onClose, summary, onConfirm }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
   const [loading, setLoading] = React.useState<boolean>(false);
   const { styles, colors2024, isLight } = useTheme2024({
@@ -68,7 +78,10 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     tpTriggerPx,
     slTriggerPx,
     selectedMarginMode,
-  } = info;
+    orderType = 'market',
+    limitPx,
+    isMarketable = false,
+  } = summary;
 
   const { t } = useTranslation();
 
@@ -100,7 +113,9 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
         <BottomSheetScrollView contentContainerStyle={styles.scrollViewContent}>
           <View>
             <Text style={styles.title}>
-              {t('page.perpsDetail.PerpsOpenPositionCheckPopup.title')}
+              {orderType === 'limit'
+                ? t('page.perpsDetail.PerpsOpenPositionCheckPopup.limitTitle')
+                : t('page.perpsDetail.PerpsOpenPositionCheckPopup.marketTitle')}
             </Text>
           </View>
 
@@ -113,8 +128,12 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </View>
               <View style={styles.coinContainer}>
                 <AssetAvatar size={24} logo={coinLogo} />
-                <Text style={styles.value}>{formatPerpsCoin(coin)}</Text>
-                <Text style={styles.quote}>/{info.quoteAsset || 'USDC'}</Text>
+                <Text style={styles.value}>
+                  {formatPerpsCoin(coin)}-{summary.quoteAsset || 'USDC'}
+                </Text>
+                {/* <Text style={styles.quote}>
+                  /{summary.quoteAsset || 'USDC'}
+                </Text> */}
               </View>
             </View>
             <View style={styles.listItem}>
@@ -182,7 +201,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               <View>
                 <Text style={styles.value}>
                   {formatPerpsNumber(Number(tradeAmount))}{' '}
-                  {info.quoteAsset || 'USDC'}
+                  {summary.quoteAsset || 'USDC'}
                 </Text>
               </View>
             </View>
@@ -219,7 +238,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
             <View style={styles.listItem}>
               <View style={styles.listItemMain}>
                 <Text style={styles.label}>
-                  {formatPerpsCoin(coin)}-{info.quoteAsset || 'USDC'}{' '}
+                  {formatPerpsCoin(coin)}-{summary.quoteAsset || 'USDC'}{' '}
                   {t('page.perpsDetail.PerpsOpenPositionCheckPopup.price')}
                 </Text>
               </View>
@@ -229,6 +248,22 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 </Text>
               </View>
             </View>
+            {orderType === 'limit' && limitPx ? (
+              <View style={styles.listItem}>
+                <View style={styles.listItemMain}>
+                  <Text style={styles.label}>
+                    {t(
+                      'page.perpsDetail.PerpsOpenPositionCheckPopup.limitPrice',
+                    )}
+                  </Text>
+                </View>
+                <View>
+                  <Text style={styles.value}>
+                    @ ${splitNumberByStep(limitPx)}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
             <View style={styles.listItem}>
               <TouchableOpacity
                 onPress={() => {
@@ -268,10 +303,23 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
           </View>
         </BottomSheetScrollView>
         <View style={styles.footer}>
+          {isMarketable ? (
+            <Text style={styles.marketableWarning}>
+              {t(
+                'page.perpsDetail.PerpsOpenPositionCheckPopup.mayExecuteImmediately',
+              )}
+            </Text>
+          ) : null}
           <Button
             type="hyperliquid"
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             title={
-              direction === 'Long'
+              orderType === 'limit'
+                ? t(
+                    'page.perpsDetail.PerpsOpenPositionCheckPopup.setLimitOrderBtn',
+                  )
+                : direction === 'Long'
                 ? t('page.perpsDetail.action.long')
                 : t('page.perpsDetail.action.short')
             }
@@ -288,7 +336,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+const getStyle = createGetStyles2024(ctx => {
+  const { colors2024, isLight, safeAreaInsets } = ctx;
   return {
     feeContainer: {
       flexDirection: 'row',
@@ -315,9 +364,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],
-      paddingTop: 16,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
       paddingHorizontal: 16,
-      paddingBottom: 56,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+    },
+    marketableWarning: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors2024['orange-default'],
+      textAlign: 'center',
+      marginBottom: 12,
+      paddingHorizontal: 20,
     },
     title: {
       fontFamily: 'SF Pro Rounded',
@@ -392,15 +451,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     value: {
       marginLeft: 6,
       fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
+      fontSize: 14,
+      lineHeight: 18,
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
     },
     quote: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
+      fontSize: 14,
+      lineHeight: 18,
       fontWeight: '700',
       color: colors2024['neutral-info'],
     },

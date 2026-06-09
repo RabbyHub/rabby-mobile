@@ -350,13 +350,18 @@ function MainListBlocks() {
                 }
               />
             </View>
-            <View style={styles.switchContainer}>
+            <View
+              style={[
+                styles.switchContainer,
+                !couldSetupBiometrics && styles.switchContainerDisabled,
+              ]}>
               <Text style={styles.labelText}>
                 {t('page.createPassword.enable', { bioType: defaultTypeLabel })}
               </Text>
               <View style={styles.valueView}>
                 <AppSwitch2024
                   value={formik.values.switch}
+                  disabled={!couldSetupBiometrics}
                   {...makeTestIDProps(
                     E2E_ID.onboarding.setPasswordBiometrics,
                     formik.values.switch
@@ -485,6 +490,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     marginTop: 24,
     paddingHorizontal: 8,
+  },
+  switchContainerDisabled: {
+    opacity: 0.45,
   },
   container: {
     height: '100%',

@@ -7,6 +7,11 @@ import { ScrollView, StyleProp, View, ViewStyle } from 'react-native';
 import { GasAccountBenefitsCard } from './GasAccountBenefitsCard';
 import { GasAccountWarning } from './GasAccountWarning';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TEXT_SIZE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 export const GasAccountEmptyState: React.FC<{
   style?: StyleProp<ViewStyle>;
@@ -45,7 +50,7 @@ export const GasAccountEmptyState: React.FC<{
         loading={primaryLoading}
         containerStyle={[
           styles.primaryButton,
-          { marginBottom: Math.max(bottom, 48) },
+          { marginBottom: getBottomButtonBottomOffset(bottom) },
           primaryContainerStyle,
         ]}
         title={
@@ -83,13 +88,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   primaryButton: {
     width: '100%',
-    height: 56,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
     borderRadius: 16,
   },
   primaryButtonText: {
     color: colors2024['neutral-InvertHighlight'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
+    fontSize: BOTTOM_BUTTON_TEXT_SIZE,
     fontWeight: '700',
     lineHeight: 22,
   },

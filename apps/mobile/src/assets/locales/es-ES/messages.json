@@ -5,7 +5,7 @@
       "ImportMnemonic": "Importar Seed Phrase",
       "ImportPrivateKey": "Importar Private Key",
       "ImportHardwareAddress": "Conectar Carteras de Hardware",
-      "SafeAddressList": "Dirección Segura",
+      "SafeAddressList": "Dirección Safe",
       "CreateChooseBackup": "3. Elija un método de respaldo",
       "ImportSafeAddress2024": "Agregar Safe Address",
       "ImportSuccess": "Agregado exitosamente",
@@ -55,14 +55,14 @@
     },
     "ReserveGasPopup": {
       "normal": "Lento",
-      "doNotReserve": "No reserves Gas",
+      "doNotReserve": "No reservar Gas",
       "title": "Reserva Gas",
       "instant": "Rápido",
       "fast": "Normal"
     },
     "signPermissionCheckModal": {
-      "reconnect": "Reconectar Dapp",
-      "title": "Solo permites que esta Dapp firme en redes de prueba"
+      "reconnect": "Reconectar DApp",
+      "title": "Solo permites que esta DApp firme en redes de prueba"
     },
     "AuthenticationModal": {
       "passwordPlaceholder": "Introduce la contraseña para confirmar"
@@ -187,7 +187,7 @@
         "noWithdrawableBalanceTitle": "{{amount}} No retirable",
         "giftTips": "Recompensa de Gas para usuarios activos",
         "gotIt": "Lo Tengo",
-        "noWithdrawableBalanceDescription": "{{amount}} de tu saldo de gas no es retirado:\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+        "noWithdrawableBalanceDescription": "{{amount}} de tu saldo de gas no se puede retirar:\n1. Apple Pay / Google Pay\n2. Gas Rewards"
       },
       "about": {
         "title3": "¿GasAccount tiene tarifas adicionales?",
@@ -223,15 +223,15 @@
       }
     },
     "externalSwapBrideDappPopup": {
-      "selectADapp": "Selecciona una Dapp",
-      "thirdPartyDappToProceed": "Por favor, utiliza una Dapp de terceros para continuar.",
-      "viewDappOptions": "Ver Opciones de Dapp",
-      "noDapps": "No hay Dapp disponible en esta cadena",
-      "noDapp": "No hay Dapps disponibles",
+      "selectADapp": "Selecciona una DApp",
+      "thirdPartyDappToProceed": "Por favor, utiliza una DApp de terceros para continuar.",
+      "viewDappOptions": "Ver Opciones de DApp",
+      "noDapps": "No hay DApp disponible en esta cadena",
+      "noDapp": "No hay DApp disponibles",
       "noQuotesForChain": "Aún no hay cotizaciones disponibles para esta cadena",
-      "swapOnDapp": "Intercambiar en Dapp",
+      "swapOnDapp": "Intercambiar en DApp",
       "help": "Por favor, contacta al equipo oficial de esta cadena para obtener soporte.",
-      "bridgeOnDapp": "Puente en Dapp",
+      "bridgeOnDapp": "Puente en DApp",
       "chainNotSupported": "No soportado en esta cadena"
     },
     "selectCexModal": {
@@ -263,6 +263,7 @@
       "switchArea": {
         "skipText": "Saltar este popup por 1 día"
       },
+      "alertText": "DApp de terceros: para problemas de uso, contacta con el soporte de la DApp. Rabby solo proporciona acceso de visualización.",
       "title": "Captura de pantalla para reportar un error"
     },
     "feedbackModal": {
@@ -328,7 +329,7 @@
         "Recieve": "Recibido",
         "Swap": "Cambiado",
         "Contract": "Desplegar Contrato",
-        "Bridge": "Puenteado",
+        "Bridge": "Bridge completado",
         "Buy": "Comprado",
         "Revoke": "Revocación de la aprobación de {{token}}",
         "WithdrawnGas": "Gas retirado",
@@ -357,7 +358,7 @@
         "To": "A",
         "ApproveToken": "Aprobar token",
         "Pending": "Pendiente",
-        "NoApproveNeed": "No need to revoke: No allowance remaining.",
+        "NoApproveNeed": "No hace falta revocar: no queda allowance.",
         "Chain": "Cadena",
         "Date": "Fecha",
         "SpeedUp": "Acelerar",
@@ -370,7 +371,7 @@
         "RevokeFrom": "Revocar desde",
         "InteractionResults": "Resultados de Interacción",
         "ApproveTo": "Aprobar para",
-        "InteractedContract": "Contrato interactuado",
+        "InteractedContract": "Interacción con (A)",
         "Name": "Nombre",
         "totalApprovedAmount": "Cantidad Aprobada Actual",
         "BuyAgain": "Comprar de nuevo",
@@ -379,10 +380,12 @@
         "Collection": "Colección",
         "AddToWhitelist": "Añadir a la lista blanca",
         "RecipientAddress": "Cartera del destinatario",
-        "Simulation Results": "Resultados de la simulación"
+        "Simulation Results": "Resultados de la simulación",
+        "TransactionDetails": "Detalles de la transacción",
+        "Operation": "Operación"
       },
       "empty": {
-        "desc": "No se encontraron transacciones en <1>supported chains</1>",
+        "desc": "No se encontraron transacciones en <1>cadenas compatibles</1>",
         "title": "Sin transacciones"
       },
       "txHistory": {
@@ -436,7 +439,7 @@
       },
       "buyNFT": {
         "receiveNFT": "Recibir NFT",
-        "listOn": "List on",
+        "listOn": "Publicado en",
         "payToken": "Pagar token",
         "expireTime": "Tiempo de expiración"
       },
@@ -447,7 +450,7 @@
         "title": "Confirmar Transacción"
       },
       "permit": {
-        "title": "Aprobar Token de Permiso"
+        "title": "Aprobación de Token Permit"
       },
       "permit2": {
         "title": "Permit2 Token Approval",
@@ -512,7 +515,7 @@
       },
       "revokeNFTCollectionApprove": {
         "revokeCollection": "Revocar colección",
-        "title": "Revocar NFT Collection"
+        "title": "Revocar colección NFT"
       },
       "nativeTokenNotEngouthForGas": "El saldo de Gas no es suficiente",
       "unknownAction": "Tipo de Firma Desconocido",
@@ -575,18 +578,18 @@
         "operationCantDecode": "Operación no está decodificada",
         "operation": "Operación"
       },
-      "gasLimitMinValueAlert": "El límite de Gas debe ser más de 21000",
-      "gasLimitEmptyAlert": "Por favor, introduce el límite de gas",
+      "gasLimitMinValueAlert": "El Gas limit debe ser más de 21000",
+      "gasLimitEmptyAlert": "Por favor, introduce el Gas limit",
       "nftCollectionApprove": {
         "title": "Aprobación de la colección NFT",
         "approveCollection": "Aprobar colección"
       },
-      "gasLimitNotEnough": "El límite de Gas es inferior a 21000. La transacción no puede ser enviada",
+      "gasLimitNotEnough": "El Gas limit es inferior a 21000. La transacción no puede ser enviada",
       "crossChain": {
-        "title": "Cross Chain"
+        "title": "Cross-chain"
       },
-      "safeAddressNotSupportChain": "La dirección segura actual no es compatible con la cadena {{0}}.",
-      "gasLimitLessThanExpect": "El límite de Gas es bajo. Hay un 1% de probabilidad de que la transacción falle.",
+      "safeAddressNotSupportChain": "La dirección Safe actual no es compatible con la cadena {{0}}.",
+      "gasLimitLessThanExpect": "El Gas limit es bajo. Hay un 1% de probabilidad de que la transacción falle.",
       "recommendGasLimitTip": "Est. {{est}}. Current {{current}}x, recommend",
       "swapLimitPay": {
         "maxPay": "Pago máximo",
@@ -596,7 +599,7 @@
       "noGasRequired": "No se requiere gas",
       "balanceChange": {
         "failedTitle": "Error de simulación",
-        "noBalanceChange": "No balance change",
+        "noBalanceChange": "Sin cambios de saldo",
         "notSupport": "Simulación No Soportada",
         "successTitle": "Resultados de la simulación",
         "errorTitle": "Error al obtener el cambio de balance"
@@ -604,7 +607,7 @@
       "gasNotRequireForSafeTransaction": "No se requiere tarifa de Gas para transacciones de Safe",
       "nativeTokenForGas": "Usa el token {{tokenName}} en {{chainName}} para pagar el gas",
       "speedUpTooltip": "Esta transacción acelerada y la transacción original, solo una de las cuales se completará eventualmente",
-      "gasLimitLessThanGasUsed": "El límite de gas es demasiado bajo. Hay un 95% de probabilidad de que la transacción pueda fallar.",
+      "gasLimitLessThanGasUsed": "El Gas limit es demasiado bajo. Hay un 95% de probabilidad de que la transacción pueda fallar.",
       "enoughSafeSigCollected": "Firmas suficientes recogidas",
       "deployContract": {
         "descriptionTitle": "Descripción",
@@ -664,7 +667,7 @@
       "swap": {
         "title": "Intercambiar Token",
         "simulationFailed": "Simulación de transacción fallida",
-        "minReceive": "Minimum Receive",
+        "minReceive": "Recepción mínima",
         "payToken": "Pagar",
         "receiver": "Receptor",
         "failLoadReceiveToken": "Error al cargar",
@@ -740,7 +743,7 @@
       },
       "no": "No",
       "label": "Etiqueta",
-      "contract": "Smart contract",
+      "contract": "Contrato inteligente",
       "typedDataMessage": "Firmar Datos Tipados",
       "maxPriorityFeeDisabledAlert": "Por favor, establezca el Gas Price primero.",
       "trustValueTitle": "Confía en el valor",
@@ -749,11 +752,11 @@
         "selfHostConfirm": {
           "button": "OK",
           "title": "Cambiar al Servicio Seguro de Rabby",
-          "content": "La API de Safe no está disponible. Cambia al servicio Safe implementado por Rabby para mantener tu Safe operativo. <1></1><2>Todos los firmantes de Safe deben usar Rabby Wallet para autorizar transacciones.<2>"
+          "content": "La API de Safe no está disponible. Cambia al servicio Safe implementado por Rabby para mantener tu Safe operativo. <1></1><2>Todos los firmantes de Safe deben usar Rabby Wallet para autorizar transacciones.</2>"
         }
       },
       "errorRetry": {
-        "gasLimitTooLow": "Límite de gas demasiado bajo",
+        "gasLimitTooLow": "Gas limit demasiado bajo",
         "alreadySubmitted": "Transacción ya enviada. Se ha detectado una transacción duplicada.",
         "nonceTooHigh": "Nonce demasiado alto. Por favor, ajusta el nonce y vuelve a intentar.",
         "defaultTips": "Algo ha salido mal. Por favor, inténtalo de nuevo más tarde.",
@@ -867,12 +870,12 @@
       "cancelConnection": "Cancelar conexión",
       "cancelCurrentTransaction": "Cancelar la transacción actual",
       "submitTx": "Enviar transacción",
-      "blockDappFromSendingRequests": "Bloquear Dapp de enviar solicitudes durante 1 min",
+      "blockDappFromSendingRequests": "Bloquear DApp de enviar solicitudes durante 1 min",
       "resend": "Reintentar",
       "confirm": "Confirmar",
       "signAndSubmitButton": "Firmar",
       "confirmWithPassword": "Confirmar",
-      "cancelAll": "Cancelar todas las {{count}} solicitudes de Dapp",
+      "cancelAll": "Cancelar todas las {{count}} solicitudes de DApp",
       "gasAccount": {
         "deposit": "Depósito",
         "chainNotSupported": "Esta cadena no es compatible con GasAccount",
@@ -902,7 +905,7 @@
         "siging": "Enviando solicitud de firma",
         "txRejectedByLedger": "La transacción ha sido rechazada en tu Ledger"
       },
-      "detectedMultipleRequestsFromThisDapp": "Se han detectado múltiples solicitudes de esta Dapp",
+      "detectedMultipleRequestsFromThisDapp": "Se han detectado múltiples solicitudes de esta DApp",
       "qrcode": {
         "sigCompleted": "Transacción creada",
         "failedToGetExplain": "Error al obtener la explicación",
@@ -972,10 +975,10 @@
             "normalTrustValueDanger": "El valor de confianza del contrato: {{ contractUsdText }}",
             "contractTrustValueDanger": "El valor de confianza del contrato < $10,000",
             "revokeTrendsValueDanger": "Los revokes recientes son más de 4 veces el número de usuarios recién aprobados.",
-            "revokeDangerTitle": "Contrato 24h Revocar Tendencias > 4",
+            "revokeDangerTitle": "Las revocaciones de 24 h superan en 4x las aprobaciones",
             "contractTrustValue": "El valor de confianza se refiere al valor total de activos gastado por este contrato. Un valor de confianza bajo indica ya sea riesgo o inactividad durante 180 días.",
             "revokeTrendsValueWarning": "Las revocaciones recientes son más del doble del número de usuarios recién aprobados.",
-            "revokeWarningTitle": "Contract 24h Revoke doble que Revoke"
+            "revokeWarningTitle": "Las revocaciones de 24 h superan en 2x las aprobaciones"
           }
         }
       },
@@ -1108,7 +1111,7 @@
       "services": {
         "bridge": "Bridge",
         "swap": "Intercambiar",
-        "dapps": "Dapps",
+        "dapps": "DApp",
         "send": "Enviar",
         "receive": "Recibir",
         "more": "Más",
@@ -1129,14 +1132,14 @@
         "convertDust": "Convertir Polvo"
       },
       "swipeUp": {
-        "descAndroidMore": "Haz clic para explorar más dApps",
-        "desc": "Desliza hacia arriba para explorar sitios web",
-        "descAndroid": "Haz clic para explorar dApps",
+        "descAndroidMore": "Haz clic para explorar más DApp",
+        "desc": "Desliza hacia arriba para explorar y buscar sitios web",
+        "descAndroid": "Haz clic para explorar DApp",
         "descMore": "Desliza hacia arriba para explorar más sitios web."
       },
       "DappDrawer": {
         "favorite": "Favorito",
-        "emptyAndroid": "No hay dApp añadida a favoritos",
+        "emptyAndroid": "No hay DApp añadida a favoritos",
         "search": "Buscar",
         "empty": "Ningún sitio web añadido a favoritos",
         "tabs": {
@@ -1187,7 +1190,7 @@
           "customizeTokens_one": "{{count}} token personalizado",
           "testnetTokens_other": "{{count}} tokens de red personalizados",
           "customizeTokens_zero": "{{count}} token personalizado",
-          "blockedTokens_zero": "{{count}} blocked token"
+          "blockedTokens_zero": "{{count}} token bloqueado"
         }
       },
       "settings": {
@@ -1263,7 +1266,7 @@
       "low-slippage-may-cause-failed-transactions-due-to-high-volatility": "Baja deslizamiento puede causar transacciones fallidas debido a alta volatilidad",
       "token": "Token",
       "by-transaction-simulation-the-quote-is-valid": "Mediante la simulación de transacciones, la cotización es válida",
-      "gas-fee": "GasFee: {{gasUsed}}",
+      "gas-fee": "Comisión de gas: {{gasUsed}}",
       "slippage-tolerance": "Tolerancia de deslizamiento",
       "transaction-might-be-frontrun-because-of-high-slippage-tolerance": "La transacción podría ser adelantada debido a una alta tolerancia al deslizamiento.",
       "recommend-slippage": "Para prevenir el front-running, recomendamos un deslizamiento de <2>{{ slippage }}</2>%.",
@@ -1399,10 +1402,10 @@
       "history": "Historial de Bridge",
       "showMore": {
         "title": "Mostrar más",
-        "source": "Bridge Source",
+        "source": "Origen del bridge",
         "signWarning": "Entiendo la alerta y quiero continuar."
       },
-      "bridgeTo": "Bridge To",
+      "bridgeTo": "Bridge hacia",
       "best": "Mejor",
       "via-bridge": "a través de {{bridge}}",
       "bridgeFrom": "Puente Desde",
@@ -1414,23 +1417,23 @@
       "approve-and-bridge": "Aprobar y Puente",
       "Select": "Seleccionar",
       "To": "A",
-      "est-receiving": "Est. Receiving:",
-      "gas-fee": "GasFee: {{gasUsed}}",
+      "est-receiving": "Recepción estimada:",
+      "gas-fee": "Comisión de gas: {{gasUsed}}",
       "liquidity": "Liquidez",
       "est-difference": "Est. Difference:",
-      "no-quote": "Sin Cotización",
-      "est-payment": "Est. Payment:",
+      "no-quote": "Sin cotización",
+      "est-payment": "Pago estimado:",
       "no-route-found": "No se encontró ruta",
       "no-quote-found": "No se encontró cotización. Por favor, intente con otros pares de tokens.",
       "loss-tips": "Está perdiendo {{usd}}. Intente con una cantidad diferente.",
       "duration": "{{duration}} min",
       "for-available-quote": "para una cotización disponible",
       "value": "Saldo",
-      "bridge-from": "Puente desde",
+      "bridge-from": "Origen del bridge",
       "price-impact": "Impacto en el precio",
       "From": "Desde",
       "actual": "Actual:",
-      "bridged": "Puenteado",
+      "bridged": "Bridge iniciado",
       "gasFeeTooHight": "La tarifa de Gas es más alta de lo normal. Confirma solo si deseas continuar.",
       "pendingItem": {
         "completed": "Completado",
@@ -1576,34 +1579,34 @@
         "balance": "Balance",
         "onekey": {
           "hdPathTypeNoChain": {
-            "bip44": "BIP44: HDpath definido por el protocolo BIP44."
+            "bip44": "BIP44: HD Path definido por el protocolo BIP44."
           },
           "hdPathType": {
-            "bip44": "BIP44: HDpath definido por el protocolo BIP44."
+            "bip44": "BIP44: HD Path definido por el protocolo BIP44."
           }
         },
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: Ruta HD oficial de Ledger.",
-            "bip44": "BIP44 Estándar: HDpath definido por el protocolo BIP44.",
-            "legacy": "Legado: ruta HD utilizada por MEW / Mycrypto."
+            "ledgerLive": "Ledger Live: HD Path oficial de Ledger.",
+            "bip44": "BIP44 Estándar: HD Path definido por el protocolo BIP44.",
+            "legacy": "Legado: HD Path utilizada por MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: ruta HD oficial de Ledger.",
-            "bip44": "Estándar BIP44: ruta HD definida por el protocolo BIP44.",
-            "legacy": "Legado: ruta HD utilizada por MEW / Mycrypto."
+            "ledgerLive": "Ledger Live: HD Path oficial de Ledger.",
+            "bip44": "Estándar BIP44: HD Path definida por el protocolo BIP44.",
+            "legacy": "Legado: HD Path utilizada por MEW / Mycrypto."
           }
         },
         "keystone": {
           "hdPathTypeNoChain": {
-            "bip44": "BIP44: HDpath definido por el protocolo BIP44.",
-            "legacy": "Legacy: Ruta HD utilizada por MEW / Mycrypto.",
-            "ledgerLive": "Ledger Live: ruta HD oficial de Ledger. Solo puedes gestionar 10 direcciones con la ruta de Ledger Live."
+            "bip44": "BIP44: HD Path definido por el protocolo BIP44.",
+            "legacy": "Legacy: HD Path utilizada por MEW / Mycrypto.",
+            "ledgerLive": "Ledger Live: HD Path oficial de Ledger. Solo puedes gestionar 10 direcciones con la ruta de Ledger Live."
           },
           "hdPathType": {
-            "bip44": "BIP44: HDpath definido por el protocolo BIP44.",
-            "legacy": "Legacy: Ruta HD utilizada por MEW / Mycrypto.",
-            "ledgerLive": "Ledger Live: Ruta HD oficial de Ledger. Solo puedes gestionar 10 direcciones con la ruta de Ledger Live."
+            "bip44": "BIP44: HD Path definido por el protocolo BIP44.",
+            "legacy": "Legacy: HD Path utilizada por MEW / Mycrypto.",
+            "ledgerLive": "Ledger Live: HD Path oficial de Ledger. Solo puedes gestionar 10 direcciones con la ruta de Ledger Live."
           }
         },
         "qrCode": {
@@ -1612,19 +1615,19 @@
             "content": "No se admite la importación de múltiples dispositivos {{0}}. Si cambias a un nuevo dispositivo {{0}}, la lista de direcciones del dispositivo actual se eliminará antes de comenzar el proceso de importación."
           }
         },
-        "customAddressHdPath": "Ruta HD de billetera personalizada",
+        "customAddressHdPath": "HD Path de billetera personalizada",
         "manageAddressFrom": "Gestionar cartera de {{0}} a {{1}}",
         "selectIndexTip": "Seleccione el número de serie de las carteras con las que desea comenzar:",
         "trezor": {
           "hdPathType": {
-            "bip44": "BIP44: Ruta HD definida por el protocolo BIP44.",
-            "ledgerLive": "Ledger Live: ruta HD oficial de Ledger.",
-            "legacy": "Legacy: Ruta HD utilizada por MEW / Mycrypto."
+            "bip44": "BIP44: HD Path definida por el protocolo BIP44.",
+            "ledgerLive": "Ledger Live: HD Path oficial de Ledger.",
+            "legacy": "Legacy: HD Path utilizada por MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: ruta HD oficial de Ledger.",
-            "bip44": "BIP44: HDpath definido por el protocolo BIP44.",
-            "legacy": "Legado: ruta HD utilizada por MEW / Mycrypto."
+            "ledgerLive": "Ledger Live: HD Path oficial de Ledger.",
+            "bip44": "BIP44: HD Path definido por el protocolo BIP44.",
+            "legacy": "Legado: HD Path utilizada por MEW / Mycrypto."
           }
         }
       },
@@ -1682,7 +1685,7 @@
       "title": "Firmar texto",
       "createKey": {
         "description": "Descripción",
-        "interactDapp": "Interactuar con Dapp"
+        "interactDapp": "Interactuar con DApp"
       },
       "sameSafeMessageAlert": "El mismo mensaje está confirmado; no se requiere ninguna firma adicional."
     },
@@ -1798,7 +1801,7 @@
     "addressDetail": {
       "qr-code": "Código QR",
       "safeAddressListScreen": {
-        "addSafeAddress": "Agregar billeteras seguras"
+        "addSafeAddress": "Añadir Safe Wallets"
       },
       "hd-path": "HD Path",
       "address-note": "Nota de Dirección",
@@ -1832,11 +1835,12 @@
         "moreWallets": "Más Wallets"
       },
       "backup-seed-phrase": "Copia de seguridad de la frase semilla",
+      "backupFailed": "Error al hacer la copia de seguridad, inténtalo de nuevo",
       "manage-addresses-under-this-seed-phrase": "Añadir wallet desde esta seed phrase",
       "delete-address": "Eliminar wallet",
       "delete-desc": "¿Estás seguro de que quieres eliminar esta wallet?",
       "notMatterAddressDialog": {
-        "safeWallet": "Billetera Segura",
+        "safeWallet": "Safe Wallet",
         "helpTitle": "Billeteras clasificadas por debajo de las 10 mejores",
         "title": "Los siguientes wallets no están incluidos en el saldo total.",
         "watchOnlyWallet": "Wallet de Solo Visualización",
@@ -1881,7 +1885,7 @@
       "foundForbiddenRisk": "Se encontraron riesgos prohibidos. La conexión está bloqueada.",
       "manageWhiteBlackList": "Gestionar whitelist/blacklist",
       "trusted": "Confiable",
-      "title": "Conectar a Dapp",
+      "title": "Conectar a DApp",
       "popularLevelMedium": "Medio",
       "blocked": "Bloqueado",
       "connectWallet": "Conectar Wallet"
@@ -1913,7 +1917,7 @@
       "settingUp": "Configuración de la contraseña",
       "passwordMinTip": "Debe tener al menos 8 caracteres",
       "confirmError": "Las contraseñas no coinciden",
-      "subTitle": "Se usará para desbloquear tu wallet y cifrar los datos locales。",
+      "subTitle": "Se usará para desbloquear tu wallet y cifrar los datos locales.",
       "passwordMin": "La contraseña debe tener al menos 8 caracteres",
       "confirmTitle": "Confirmar contraseña",
       "PrivacyPolicy": "Política de Privacidad",
@@ -1921,6 +1925,7 @@
       "agreeToTerms": "He leído y estoy de acuerdo con los",
       "passwordPlaceholder": "La contraseña debe tener al menos 8 caracteres.",
       "confirmModalDesc": "Por favor, guarde su contraseña adecuadamente. Una vez perdida, no puede ser cambiada o recuperada por Rabby.",
+      "setWallet": "Configurar wallet",
       "biometricsFail": "Error al habilitar la autenticación biométrica"
     },
     "approvalsAddressList": {
@@ -1991,7 +1996,8 @@
         "txSending": "Enviando solicitud de firma",
         "txSigned": "Firmado. Creando transacción"
       },
-      "fixedModeText": "Modo Fijo: Siempre usa tu configuración de gas personalizada"
+      "fixedModeText": "Modo Fijo: Siempre usa tu configuración de gas personalizada",
+      "fixedModeTag": "Modo fijo"
     },
     "search": {
       "searchWeb": {
@@ -2023,7 +2029,7 @@
       },
       "globalSearch": {
         "iosPlaceHolder": "Buscar sitio web/token",
-        "placeHolder": "Buscar Dapp/Token"
+        "placeHolder": "Buscar DApp/Token"
       },
       "tokenHeader": {
         "tokenAndFdv": "Token/FDV",
@@ -2036,8 +2042,8 @@
         "Token": "Token",
         "Defi": "DeFi",
         "NoData": "Sin {{name}}",
-        "totalChain_other": "Total {{count}} Chains",
-        "totalChain_one": "Total {{count}} Chain"
+        "totalChain_other": "Total: {{count}} cadenas",
+        "totalChain_one": "Total: {{count}} cadena"
       },
       "emptyToken": {
         "receiveHeader": "Recibir Crypto",
@@ -2052,7 +2058,7 @@
       "nft": {
         "floorPrice": "/Precio de suelo:"
       },
-      "appChain": "Cuenta Dapp"
+      "appChain": "Cuenta DApp"
     },
     "customTestnet": {
       "empty": "Sin red personalizada",
@@ -2063,7 +2069,7 @@
         "idRequired": "Por favor, introduce el ID de la cadena",
         "nativeTokenSymbolRequired": "Por favor, introduce el símbolo de la moneda",
         "rpcUrl": "RPC URL",
-        "blockExplorerUrl": "Block explorer URL (Optional)",
+        "blockExplorerUrl": "URL del explorador de bloques (opcional)",
         "id": "ID de cadena",
         "nativeTokenSymbol": "Símbolo de moneda",
         "name": "Nombre de la red",
@@ -2227,8 +2233,11 @@
       "tou": "Términos de uso",
       "faceId": "Face ID",
       "fingerPrint": "Huella dactilar",
+      "devicePassword": "Contraseña del dispositivo",
+      "useDevicePassword": "Usar contraseña del dispositivo",
       "policy": "Política de Privacidad",
       "autoLockTime": "Tiempo de bloqueo automático",
+      "lockWallet": "Bloquear billetera",
       "enableWhitelist": "Habilitar la lista blanca para el envío de activos",
       "currentVersion": "Versión Actual",
       "themeMode": "Modo de tema",
@@ -2290,7 +2299,7 @@
         "suggestedToken": "Tokens Sugeridos",
         "gasDepositTitle": "Depósito de Gas",
         "minAmountRequired": "El monto mínimo de depósito es $1",
-        "estReceiveLabel": "Est. Recibir: {{usd}}",
+        "estReceiveLabel": "Recepción estimada: {{usd}}",
         "fetchQuoteFailed": "Error al obtener la cotización",
         "selectToken": "Seleccionar Token para Depositar",
         "unavailablePaymentWallet": "La billetera de pago seleccionada no está disponible",
@@ -2353,7 +2362,7 @@
       },
       "gasAccountList": {
         "address": "Dirección",
-        "gasAccountBalance": "GasAccount Balance",
+        "gasAccountBalance": "Saldo de GasAccount",
         "balance": "Saldo",
         "wallet": "Billetera"
       },
@@ -2367,7 +2376,7 @@
         "desc1": "Sin tarifas extra para pagar gas",
         "item3": "Admite todas las transacciones",
         "item1": "Sin tarifa de Rabby",
-        "desc3": "Intercambiar, Puente, Enviar, DApps, y más",
+        "desc3": "Swap, Bridge, enviar, DApp y más",
         "item2": "Soporta todas las redes",
         "title": "Paga comisiones de gas en todas las cadenas",
         "subtitle": "cuando te quedes sin gas"
@@ -2375,7 +2384,7 @@
       "gasBalance": "Saldo de Gas",
       "depositFailed": "Depósito fallido",
       "depositNow": "Depositar ahora",
-      "lowBalance": "No tienes suficiente gas. Deposita gas para asegurar que las futuras transacciones transcurran sin problemas.",
+      "lowBalance": "No tienes suficiente gas (<$1.00). Deposita gas para asegurar que las futuras transacciones transcurran sin problemas.",
       "switchAccount": "Cambiar Wallet",
       "depositSubmitted": "Depósito Enviado",
       "depositWith": "Depositar mediante"
@@ -2411,7 +2420,7 @@
       "currencyBottomSheet": {
         "title": "Seleccionar una moneda",
         "searchPlaceholder": "Buscar moneda",
-        "NoFound": "No Currency found"
+        "NoFound": "No se encontró ninguna moneda"
       },
       "quote": {
         "title": "Citas para ti",
@@ -2429,7 +2438,7 @@
       "noQuote": "No se encontraron cotizaciones: Intenta ingresar un valor más alto.",
       "noQuotePlaceholder": "Sin cotización",
       "history": "Historial de Compras",
-      "noQuote2": "No quotes found.",
+      "noQuote2": "No se encontraron cotizaciones.",
       "searchRegionPlaceholder": "Buscar región"
     },
     "eip7702": {
@@ -2455,7 +2464,7 @@
       "SelectFromHistory": "Seleccionar del historial",
       "recent": "Reciente",
       "sentTimeHeader": "Enviado",
-      "sendToSafeAddress": "Enviar a monederos seguros",
+      "sendToSafeAddress": "Enviar a Safe Wallets",
       "sendToImportedAddress": "Enviar a mis monederos importados",
       "sendToWatchAddress": "Enviar a Wallets Solo de Observación",
       "enterOrSearchAddress": "Introducir o Buscar Dirección",
@@ -2535,13 +2544,13 @@
       },
       "BrowserHeader": {
         "searchIos": "Buscar sitio web",
-        "searchAndroid": "Buscar Dapp"
+        "searchAndroid": "Buscar DApp"
       },
       "CurrentPopup": {
         "connectChain": "Conectar Cadena",
         "disconnect": "Desconectar",
         "connectWallet": "Conectar Wallet",
-        "title": "Dapp actual"
+        "title": "DApp actual"
       },
       "BrowserSearch": {
         "results": "Resultados",
@@ -2577,7 +2586,7 @@
       "WebviewError": {
         "error": "Error:",
         "failedToLoad": "Error al cargar la página",
-        "alertText": "Intenta<1/><2>abrir en el navegador</2><3/>para comprobar si es un problema del sitio web"
+        "alertText": "Para comprobar si esta DApp de terceros funciona en tu ubicación actual, prueba<1/><2>Abrir en el navegador</2><3/>."
       },
       "toast": {
         "clearCacheSuccess": "Caché vaciado"
@@ -2625,7 +2634,7 @@
       "noQRCodeFound": "No se encontró ningún código QR"
     },
     "defiDetail": {
-      "viewSiteInApp": "Ver en Dapp",
+      "viewSiteInApp": "Ver en DApp",
       "viewSiteInWebsite": "Ver en el sitio web",
       "appChain": "En la cuenta {{chain}}",
       "dappActions": {
@@ -2640,11 +2649,11 @@
     "copyTrading": {
       "tipsDollar": {
         "title": "Copy Trading de Smart Money",
-        "description": "Descubre tokens basados en la actividad reciente de carteras de Smart Money. Toca un token para ver los montos de las transacciones y los beneficios históricos de esas carteras."
+        "description": "Descubre tokens basados en la actividad reciente de Smart Money Wallets. Toca un token para ver los importes de trading detallados y las ganancias históricas de esas wallets."
       },
       "updateText": "{{count}} Tendencias Actualizadas",
       "historyProfit": "Historia de Beneficios",
-      "smartMoneyWallets": "Bolsas de Smart Money",
+      "smartMoneyWallets": "Smart Money Wallets",
       "buy": "Comprar",
       "noMoreData": "No hay más datos",
       "smartMoneyWallet": "Smart Money Wallet",
@@ -2653,9 +2662,9 @@
       "comingSoon": "Próximamente...",
       "filterRule": {
         "24HChange": "24H Cambio",
-        "smartMoney": "Carteras Inteligentes de Trading",
+        "smartMoney": "Smart Wallets que operan",
         "tokenCreate": "Recientemente creado",
-        "smartWalletCount": "Contador de Smart Wallet"
+        "smartWalletCount": "Cantidad de Smart Wallets"
       },
       "currentToken": "Token Actual",
       "contractAddress": "Dirección del contrato",
@@ -2672,13 +2681,13 @@
       "myCopyTrading": "Mi Copy Trading",
       "noOtherTokensWithSameName": "No se encontraron otros tokens con el mismo nombre.",
       "timeSmartWallet": "Tiempo / Smart Wallet",
-      "smartWalletsBuying": "{{len}} Cartera Inteligente Comprando",
+      "smartWalletsBuying": "{{len}} Smart Wallets comprando",
       "earned": "Ganado",
       "holdingProfit": "Tenencia/Beneficio",
       "loss": "Pérdida",
       "buyEarn": "24H Comprar / Ganar",
       "earn": "Ganar",
-      "smartWallets": "Carteras Inteligentes",
+      "smartWallets": "Smart Wallets",
       "info": "Información",
       "sameNameTokens": "Tokens con el mismo nombre",
       "myBalanceFromCopyTrading": "Mi saldo de Copy Trading",
@@ -2716,27 +2725,49 @@
       "title": "Historia"
     },
     "perps": {
+      "limitOrders": "Órdenes Limitadas",
+      "cancelAll": "Cancelar Todo",
+      "cancelAllOrdersConfirmTitle": "Confirmar Cancelar TODAS las Órdenes",
+      "cancelAllOrdersConfirmMessage": "Todas tus Órdenes Limitadas serán canceladas",
+      "limitOrderDetail": {
+        "title": "Límite {{side}} {{pair}}",
+        "time": "Tiempo",
+        "size": "Tamaño",
+        "filled": "Ejecutado",
+        "currentPrice": "Precio Actual",
+        "limitPrice": "Precio Límite",
+        "marginUsage": "Uso de Margen",
+        "cancelLimitOrder": "Cancelar Orden Limitada",
+        "buy": "Comprar",
+        "sell": "Vender"
+      },
+      "cancelOrderToast": {
+        "singleSuccess": "Orden limitada cancelada",
+        "multiSuccess": "{{count}} órdenes limitadas canceladas",
+        "partial": "{{okCount}} canceladas, {{failCount}} fallidas",
+        "failed": "Error al cancelar la orden limitada"
+      },
       "PerpsCard": {
         "available": "Disponible",
         "title": "Operar con Perps",
         "withdrawBtn": "Retirar",
         "depositBtn": "Depósito",
         "learnBtn": "Aprende sobre Perps",
-        "loginDesc": "Inicia sesión con tu dirección y deposita fondos para empezar a operar con perps.",
-        "loginBtn": "Iniciar sesión en Trading Perps",
+        "loginDesc": "Inicia sesión con la dirección actual y deposita fondos para empezar a operar Perps.",
+        "loginBtn": "Iniciar sesión para operar Perps",
         "learnMore": "Aprender más",
-        "addFunds": "Agregar fondos"
+        "addFunds": "Añadir fondos"
       },
       "PerpsGuidePopup": {
         "step2Title": "Largo",
         "step5Title": "Liquidación",
         "step4Title": "Ajustando el apalancamiento",
-        "step1Title": "Maestro de Futuros Perpetuos",
-        "step1Desc": "Con los futuros perpetuos, no solo estás comerciando activos. Estás comerciando lo que crees que sucederá a continuación.",
+        "step1Title": "Domina los futuros perpetuos",
+        "step1Desc": "Con los futuros perpetuos no solo operas activos: operas tu expectativa sobre el próximo movimiento del precio.",
         "step3Title": "Corto",
         "step2Desc": "Cuando esperas que el precio suba, abres un long. Si el precio sube, ganas. Si baja, pierdes.",
-        "step4Desc": "El apalancamiento te permite operar con más de lo que has invertido. Puede aumentar tanto tus ganancias como tus pérdidas.",
-        "step5Desc": "Cada posición tiene un precio de liquidación. Si el precio del mercado alcanza este nivel, tu posición se cerrará. Usar un apalancamiento más alto incrementa el riesgo de ser liquidado.",
+        "step4Desc": "El apalancamiento te permite operar con un valor nominal superior al capital aportado. Puede amplificar tanto tus ganancias como tus pérdidas.",
+        "step5Desc": "Cada posición tiene un precio de liquidación. Si el precio de mercado lo alcanza, tu posición se cerrará. Cuanto mayor sea el apalancamiento, mayor será el riesgo de liquidación.",
         "step3Desc": "Cuando esperas que el precio caiga, abres un short. Si el precio cae, ganas. Si sube, pierdes."
       },
       "PerpsDepositPopup": {
@@ -2820,7 +2851,7 @@
         "noPosition": "Debes introducir primero el margen."
       },
       "PerpsDepositTokenModal": {
-        "bridgeBtn": "Puente",
+        "bridgeBtn": "Bridge",
         "swapBtn": "Intercambiar",
         "directTag": "Depósito Directo",
         "goSwapDesc": "Solo se admite USDC en Arbitrum para depósitos directos. Por favor, cambia tu token actual a USDC antes de depositar.",
@@ -2857,15 +2888,15 @@
         "date": "Fecha"
       },
       "PerpsSelectTokenPopup": {
-        "title": "Selecciona el token para depositar",
+        "title": "Seleccionar token para depositar",
         "token": "Token",
         "balance": "Saldo",
-        "noTokens": "Sin tokens"
+        "noTokens": "No hay tokens"
       },
       "PerpsAccountLogoutPopup": {
         "logout": "Cerrar sesión",
-        "title": "Cerrar sesión en la dirección actual",
-        "desc": "Está cerrando sesión de su cuenta actual de Perps. Puede restaurarla en cualquier momento iniciando sesión con esta dirección."
+        "title": "Cerrar sesión de la dirección actual",
+        "desc": "Vas a cerrar sesión en la cuenta Perps actual. Puedes restaurarla en cualquier momento iniciando sesión de nuevo con esta dirección."
       },
       "PerpsDepositCard": {
         "availableToTrade": "Disponible para comerciar:",
@@ -2876,7 +2907,7 @@
         "activatedAddress": "Activado",
         "noPosition": "Sin posición",
         "notActivatedAddress": "No activado",
-        "hyperliquidBalance": "Saldo de Perps",
+        "hyperliquidBalance": "Saldo Perps",
         "lastUsed": "Último uso"
       },
       "selectAccountTitle": "Selecciona una billetera para iniciar sesión",
@@ -2897,7 +2928,7 @@
         "searchPlaceholder": "Buscar Perps",
         "empty": "No se encontraron resultados",
         "openPosition": "Abrir posición",
-        "searchPosition": "Buscar Posición",
+        "searchPosition": "Buscar posición",
         "searchPerps": "Buscar Perps"
       },
       "PerpsRiskPopup": {
@@ -2910,13 +2941,13 @@
         "currentPrice": "Precio Actual",
         "title": "Nivel de Riesgo",
         "liquidationPrice": "Precio de Liquidación",
-        "liqIntro": "La distancia de liquidación (%) muestra cuán lejos está el precio actual de tu precio de liquidación. Una distancia mayor indica una posición más segura, mientras que una distancia menor significa un mayor riesgo de liquidación.",
+        "liqIntro": "La distancia de liquidación (%) muestra qué tan lejos está el precio actual de tu precio de liquidación. Una distancia mayor indica una posición más segura; una menor implica mayor riesgo de liquidación.",
         "subtitle": "Distancia de liquidación en tiempo real (%)",
         "liqDistanceTipsShort": "Subir <1>{{distance}}</1> activará la liquidación.",
         "liqDistanceTipsLong": "Bajando <1>{{distance}}</1> se activará la liquidación."
       },
-      "closeAllConfirmTitle": "Confirmar Cerrar Todas las Posiciones",
-      "closeAll": "Cerrar todo",
+      "closeAllConfirmTitle": "Confirmar cierre de todas las posiciones",
+      "closeAll": "Cerrar todas las posiciones",
       "closeAllConfirmMessage": "Todas tus posiciones abiertas se cerrarán al precio de mercado.",
       "assetPage": {
         "hyperliquidPosition": "Hyperliquid Posición"
@@ -2940,10 +2971,10 @@
       },
       "EnableUnifiedAccount": {
         "title": "Habilitar Cuenta Unificada",
-        "desc": "Cuenta Unificada es el modo de cuenta recomendado que simplifica la experiencia de trading. Los balances de Spot y Perps se fusionan para todos los tokens, y el margen cruzado es compatible con todos los activos disponibles.",
+        "desc": "Unified Account es el modo de cuenta recomendado para simplificar la experiencia de trading. Los saldos Spot y Perps se combinan para todos los tokens, y se admite margen cruzado en todos los activos disponibles.",
         "confirm": "Confirmar",
         "cancel": "Cancelar",
-        "importantTips": "Toda la garantía en USDC se utilizará como margen cruzado una vez que se habilite la Cuenta Unificada.",
+        "importantTips": "Al activar Unified Account, todo el colateral en USDC se usará como margen cruzado.",
         "important": "Importante"
       },
       "PerpsSpotSwap": {
@@ -2962,7 +2993,7 @@
         "minimumAmount": "El monto mínimo de swap es {{amount}}"
       },
       "PerpMarginModePopup": {
-        "crossRequiresUnified": "El margen cruzado para este par de operaciones requiere una cuenta unificada. ¿Te gustaría activarlo?"
+        "crossRequiresUnified": "El margen cruzado para este par de trading requiere Unified Account. ¿Quieres activarlo?"
       },
       "PerpsMultiBalance": {
         "title": "Saldos Hyperliquid",
@@ -2971,6 +3002,20 @@
       }
     },
     "perpsDetail": {
+      "PerpEditLimitPriceTag": {
+        "setLimitBuyPrice": "Establecer Precio de Compra Límite",
+        "setLimitSellPrice": "Establecer Precio de Venta Límite",
+        "marketLabel": "Mid",
+        "setBtn": "Establecer",
+        "blockError": "El precio de la orden supera el límite de protección de precio del 10%.",
+        "confirmTitle": "Revisar Precio Límite",
+        "confirmMessage": "El precio límite está a más del 5% del precio de mercado",
+        "confirmContinue": "Continuar",
+        "confirmCancel": "Cancelar"
+      },
+      "PerpsPriceInfo": {
+        "current": "Actual"
+      },
       "PerpsPosition": {
         "title": "Posición",
         "closePosition": "Cerrar {{direction}}",
@@ -2989,13 +3034,13 @@
         "sizeTips": "El valor total o cantidad de tu operación, establecido por el margen y el apalancamiento.",
         "liqPrice": "Precio de Liquidación",
         "liquidationPriceTips": "El precio al cual tu posición es cerrada automáticamente por el intercambio para prevenir mayores pérdidas cuando tu margen cae por debajo del nivel de margen de mantenimiento.",
-        "fundingPaymentsTips": "Este es el pago neto de financiación desde que se abrió la posición. La financiación es una tarifa horaria que los traders pagan o reciben para mantener el precio del contrato perp cerca del precio real del token.",
+        "fundingPaymentsTips": "Estos son los pagos netos de funding desde que se abrió la posición. El funding es una comisión horaria que los traders pagan o reciben para mantener el precio del contrato perpetuo cerca del precio real del token.",
         "justMargin": "Margen",
         "direction": "Dirección",
         "slPrice": "Precio de Stop-Loss",
         "autoClose": "Cierre automático",
         "fundingGains": "Ganancias de Financiamiento",
-        "fundingGainsTips": "Esto son las ganancias netas de financiamiento desde que se abrió la posición. El financiamiento es una tarifa por hora que los traders pagan o reciben para mantener el precio del contrato perp cerca del precio real del token.",
+        "fundingGainsTips": "Estas son las ganancias netas de funding desde que se abrió la posición. El funding es una comisión horaria que los traders pagan o reciben para mantener el precio del contrato perpetuo cerca del precio real del token.",
         "details": "Detalles",
         "currentPrice": "Precio actual",
         "positionValue": "Valor de la posición",
@@ -3003,12 +3048,12 @@
         "unrealizedPnl": "PNL no realizado",
         "marginMode": "Modo Margen",
         "realizedPnl": "PNL realizado",
-        "fundingTipsBold": "Esto muestra el financiamiento total que se ha liquidado desde que se abrió la posición. Los valores en <bold>verde (positivo)</bold> significan que has ganado de otros traders, mientras que los valores en <bold>rojo (negativo)</bold> son los costos de financiamiento que les has pagado.",
+        "fundingTipsBold": "Esto muestra el total de funding liquidado desde que se abrió la posición. Los valores <bold>verdes (positivos)</bold> significan que has recibido funding de otros traders, mientras que los valores <bold>rojos (negativos)</bold> son costes de funding que les has pagado.",
         "crossTips": "En el modo de Margen Cruzado, el precio de liquidación para una sola posición es una estimación solo para referencia."
       },
       "PerpsInfo": {
         "openInterestTips": "El total de posiciones pendientes de todos los usuarios en este contrato.",
-        "fundingTips": "Este es un fee por hora que los traders pagan o reciben para mantener el precio del contrato perp cerca del precio actual del token. Si es positivo, long paga a short. Si es negativo, short paga a long.",
+        "fundingTips": "Es una comisión horaria que los traders pagan o reciben para mantener el precio del contrato perpetuo cerca del precio real del token. Si es positiva, los long pagan a los short. Si es negativa, los short pagan a los long.",
         "title": "Información",
         "24Vol": "Volumen en 24h",
         "openInterest": "Interés Abierto",
@@ -3036,6 +3081,13 @@
         "rabbyFeeTipsV2": "Rabby tarifa: 0.02%"
       },
       "PerpsOpenPositionPopup": {
+        "title": "Abrir posición {{coin}}",
+        "limitOrderPlacedToast": "Límite {{direction}} {{coin}}: Tamaño {{size}} colocado a ${{price}}",
+        "orderType": "Tipo de Orden",
+        "orderTypeMarket": "Mercado",
+        "orderTypeLimit": "Límite",
+        "limitPrice": "Precio Límite",
+        "currentPrice": "Precio Actual",
         "maximumOrderSize": "El tamaño máximo del pedido es {{amount}}",
         "leverage": "Apalancamiento",
         "margin": "Margen",
@@ -3059,6 +3111,11 @@
         "onlyIsolated": "Solo se admite margen aislado para este token."
       },
       "PerpsOpenPositionCheckPopup": {
+        "limitTitle": "Revisar Orden Limitada",
+        "marketTitle": "Revisar Orden de Mercado",
+        "limitPrice": "Precio Límite",
+        "mayExecuteImmediately": "Esta orden limitada puede ejecutarse inmediatamente",
+        "setLimitOrderBtn": "Establecer Orden Limitada",
         "perps": "Perpetuos",
         "fee": "Tarifa",
         "price": "Precio",
@@ -3104,6 +3161,10 @@
         "stopLossExpectedPNL": "Stop loss PNL esperado",
         "stopLossWhen": "Detener Pérdidas Cuando",
         "takeProfitExpectedPNL": "Tomar ganancias PNL esperada",
+        "youGainRoi": "Ganas (ROI)",
+        "youLossRoi": "Pérdida (ROI)",
+        "currentPriceTpl": "Actual <1>{{price}}</1>",
+        "EntryAndCurrentPriceTpl": "Entrada <1>{{entryPrice}}</1>  Actual <2>{{price}}</2>",
         "EntryAndCurrentPrice": "Entrada {{entryPrice}}  Actual {{price}}",
         "priceAbove": "Precio por encima",
         "priceReaches": "El precio alcanza"
@@ -3133,8 +3194,8 @@
         "crossTitle": "Margen Cruzado",
         "isolatedTitle": "Margen Aislada",
         "cannotChangeMarginMode": "No se puede cambiar el modo de margen con posiciones abiertas.",
-        "isolatedDesc": "Cada posición utiliza su propio margen. Las pérdidas están limitadas a esa posición, pero se puede liquidar más fácilmente.",
-        "crossDesc": "Todas las posiciones comparten el mismo margen. Esto reduce la posibilidad de que una sola posición sea liquidada, pero todos los fondos de margen cruzado pueden perderse en movimientos extremos del mercado."
+        "isolatedDesc": "Cada posición usa su propio margen. Las pérdidas se limitan a esa posición, pero puede liquidarse con más facilidad.",
+        "crossDesc": "Todas las posiciones comparten el mismo margen. Esto reduce la probabilidad de que una sola posición sea liquidada, pero todos los fondos de margen cruzado pueden perderse en movimientos extremos del mercado."
       },
       "guideEntry": {
         "gotIt": "Entendido"
@@ -3201,12 +3262,12 @@
         "repayWith": "Reembolsar con"
       },
       "supplyDetail": {
-        "actions": "Suministro",
+        "actions": "Depositar",
         "supplyAPY": "Suministrar APY",
-        "approveAndSupply": "Aprobar y Suministrar",
+        "approveAndSupply": "Aprobar y depositar",
         "availableToBorrow": "Disponible para pedir prestado",
         "enabled": "Habilitado",
-        "supplyBalance": "Suministro de saldo",
+        "supplyBalance": "Saldo suministrado",
         "collateralization": "Colateralización",
         "isolatedTips": "Los activos de préstamo/endeudamiento existentes no son compatibles.",
         "unavailable": "No disponible",
@@ -3223,7 +3284,7 @@
         "almostReachedWarning": "El límite de préstamo del protocolo está en el 100% para este activo. No se puede realizar más préstamos.",
         "swapDebt": "Intercambiar",
         "borrowed": "Prestado",
-        "noSupplyPrefix": "Sin suministro:",
+        "noSupplyPrefix": "Sin depósitos:",
         "noSupplyDesc": "Para pedir prestado, necesitas proporcionar activos como garantía."
       },
       "popup": {
@@ -3244,10 +3305,10 @@
         "reachCapTip": "Este activo ha alcanzado el límite de préstamo."
       },
       "supplyOverview": {
-        "title": "Detalles de suministro",
+        "title": "Detalles del depósito",
         "walletBalance": "Saldo de la billetera",
-        "availableToSupply": "Disponible para Suministrar",
-        "totalSupplied": "Total Suministrado",
+        "availableToSupply": "Disponible para depositar",
+        "totalSupplied": "Total depositado",
         "mySupply": "Mi Suministro",
         "almostCap": "Este activo ha alcanzado casi su límite de préstamo. Solo hay {{available}} disponible para ser prestado de este mercado.",
         "reachCap": "Este activo ha alcanzado su límite de suministro. No hay nada disponible para ser suministrado desde este mercado.",
@@ -3259,7 +3320,7 @@
         "warning": "Tomar esta cantidad reducirá tu Factor de Salud a un nivel arriesgado para la liquidación.",
         "withdrawWarning": "Retirar esta cantidad reducirá tu Factor de Salud a un nivel arriesgado para la liquidación.",
         "toggleCollateralWarning": "Deshabilitar este activo como colateral reducirá tu Factor de Salud a un nivel arriesgado para la liquidación.",
-        "blockEmodeWarning": "No puedes desactivar el E-Mode porque eso podría provocar una liquidación. Para salir del E-Mode, proporciona o reembolsa posiciones prestadas.",
+        "blockEmodeWarning": "No puedes desactivar E-Mode porque podría provocar una liquidación. Para salir de E-Mode, añade más colateral o reembolsa posiciones prestadas.",
         "emodeBlockWarning": "Desactivar el E-mode reducirá tu Factor de Salud a un nivel arriesgado para la Liquidación."
       },
       "lqDescription": {
@@ -3294,7 +3355,7 @@
       "netWorth": "Valor neto",
       "hf": "Factor de salud",
       "enterAmount": "Introducir cantidad",
-      "estNetApy": "Est. net APY",
+      "estNetApy": "APY neto estimado",
       "toggleCollateralDetail": {
         "actions": "Alternar {{asset}} Colateral",
         "enable": "Habilitar {{asset}} como Colateral",
@@ -3303,17 +3364,17 @@
       },
       "toggleCollateralModal": {
         "exitIsolationModeTitle": "Salir del Modo de Aislamiento",
-        "closeTitle": "Revisar la desactivación",
-        "riskToLiquidationText": "No puedes cambiar el uso a modo de colateral para esta moneda, porque provocará una llamada de colateral.",
+        "closeTitle": "Confirmar desactivación",
+        "riskToLiquidationText": "No puedes cambiar el estado de colateral de este activo porque podría provocar una liquidación.",
         "exitIsolationModeDesc": "Saldrás del modo de Aislamiento y otros tokens ahora pueden ser utilizados como colateral.",
-        "closeDesc": "Deshabilitar este activo como colateral afecta tu poder de endeudamiento y Factor de Salud.",
+        "closeDesc": "Desactivar este activo como colateral afecta a tu capacidad de préstamo y a tu Health Factor.",
         "enableIsolationModeDesc": "Estás entrando en modo Aislado. En modo Aislado, no puedes proporcionar otros activos como garantía. Un límite de deuda global restringe el poder de endeudamiento del activo aislado. Para salir del modo Aislado, desactiva CRV como garantía antes de pedir prestado otro activo.",
         "openDesc": "Activar este activo como colateral aumenta tu poder de endeudamiento y el Factor de Salud. Sin embargo, puede ser liquidado si tu factor de salud cae por debajo de 1.",
         "enableIsolationModeTitle": "Habilitar Modo de Aislamiento",
-        "openTitle": "Revisar la habilitación",
+        "openTitle": "Confirmar activación",
         "toggleRiskTexts": {
           "doNotHaveSuppliesInThisCurrency": "No tienes suministros en esta moneda",
-          "canNotSwitchUsageAsCollateralMode": "No puedes cambiar el uso a modo de colateral para esta moneda, porque causará una llamada de colateral.",
+          "canNotSwitchUsageAsCollateralMode": "No puedes cambiar el estado de colateral de este activo porque podría provocar una liquidación.",
           "canNotUseThisCurrencyAsCollateral": "No puedes usar esta moneda como colateral.",
           "zeroLTVWithdrawBlocked": "Los activos con LTV cero ({{assets}}) deben ser retirados o deshabilitados como garantía para realizar esta acción."
         }
@@ -3355,7 +3416,8 @@
         "debtSwapSelector": {
           "header": {
             "assets": "Token/Saldo",
-            "borrow": "Mis préstamos"
+            "borrow": "Mis préstamos",
+            "apy": "APY"
           },
           "title": "Seleccionar Token de Préstamo"
         },
@@ -3370,25 +3432,25 @@
       "disabled": "DESHABILITADO",
       "debtSwap": {
         "actions": {
-          "title": "Intercambio de Deuda",
-          "swapTo": "Intercambiar a",
+          "title": "Convertir deuda",
+          "swapTo": "Convertir a",
           "amount": "Cantidad",
           "select": "Seleccionar",
-          "borrowed": "Solicitado"
+          "borrowed": "Prestado"
         },
         "overview": {
           "title": "Resumen de Transacciones",
           "borrowAPY": "Pedir apy",
-          "borrowValueAfter": "Balance de préstamo después del intercambio"
+          "borrowValueAfter": "Saldo de préstamo tras la conversión"
         },
         "button": {
-          "swap": "Intercambiar"
+          "swap": "Convertir"
         },
         "borrowBalance": "Saldo de préstamo",
-        "title": "Intercambiar Posición de Préstamo",
-        "entryTips": "Un clic para intercambiar tu activo prestado, reduciendo pasos y tarifas.",
+        "title": "Convertir posición de préstamo",
+        "entryTips": "Convierte el activo prestado con un clic para reducir pasos y comisiones.",
         "lpRiskWarning": "Bajo factor de salud después del intercambio. Tu posición tendrá un mayor riesgo de liquidación.",
-        "priceImpactTips": "Alto impacto en el precio ({{lostValue}}). Esta ruta puede devolver más debido a la baja liquidez o al tamaño pequeño de la orden.",
+        "priceImpactTips": "Impacto de precio alto ({{lostValue}}). Debido a la baja liquidez o a un tamaño de orden pequeño, la estimación de esta ruta puede desviarse considerablemente.",
         "lpDangerWarning": "Su factor de salud después de este intercambio será críticamente bajo y puede resultar en liquidación. Por favor, elija un activo diferente o reduzca la cantidad del intercambio para mantenerse a salvo.",
         "maxLtvWarning": "Colateral insuficiente para cubrir nueva posición de préstamo. La billetera debe tener poder de préstamo restante para realizar el cambio de deuda."
       },
@@ -3397,11 +3459,11 @@
         "desc": "Si cae por debajo de 1.0, tu colateral puede ser liquidado."
       },
       "disableBorrowTip": {
-        "desc": "Sin suministro: Para pedir prestado, necesitas ofrecer activos como garantía."
+        "desc": "Sin depósitos: para pedir prestado, primero debes depositar activos como colateral."
       },
       "totalBorrowed": "Total prestado",
-      "netApy": "Net APY",
-      "totalSupplied": "Total suministrado",
+      "netApy": "APY neto",
+      "totalSupplied": "Total depositado",
       "repayWithCollateral": {
         "action": {
           "title": "Reembolsa con {{collateral}}"
@@ -3416,7 +3478,7 @@
         },
         "collateralNotEnough": "Su saldo de colateral es menor que la cantidad seleccionada.",
         "toRepay": "Cantidad esperada a reembolsar",
-        "repayWith": "Colateral para reembolsar con",
+        "repayWith": "Colateral para reembolsar",
         "insufficientLiquidity": "Liquidez insuficiente.",
         "frozenCollateral": "Este activo está congelado debido a una decisión de la comunidad de Aave."
       },
@@ -3426,7 +3488,7 @@
           "balance": "Saldo"
         },
         "title": "Seleccionar Token de Reembolso",
-        "zeroLtvCollateralTips": "Tienes los siguientes colaterales LTV = 0 y, por lo tanto, solo puedes reembolsar con estos colaterales primero de acuerdo con las reglas de reembolso de colaterales."
+        "zeroLtvCollateralTips": "Tienes los siguientes colaterales con LTV = 0. Según las reglas de reembolso con colateral, debes usar primero estos colaterales para reembolsar."
       },
       "dappSelect": {
         "title": "Seleccionar Proveedor de Préstamos"
@@ -3520,7 +3582,7 @@
       "receiveSummary": {
         "progress": "Progreso de conversión",
         "priceImpact": "Límite de impacto de precio",
-        "gasLimit": "Límite de gas de transacción única",
+        "gasLimit": "Single Transaction Gas Limit",
         "estimateReceive": "Recib. est.:",
         "actualReceive": "Recibir"
       },
@@ -3555,7 +3617,8 @@
       "colStatusToken": "Estado/Token",
       "emptyText": "No se encontraron tokens de bajo valor",
       "unsupportedAccountType": "No se admite este tipo de cuenta.",
-      "unsupportedAccount": "Actualmente solo se admiten direcciones de clave privada y frase semilla."
+      "unsupportedAccount": "Actualmente solo se admiten direcciones de clave privada y frase semilla.",
+      "title": "Convertir Polvo"
     }
   },
   "global": {
@@ -3641,7 +3704,7 @@
     "check": "Verificar",
     "gotIt": "Entendido",
     "Token": "Token",
-    "Dapp": "Dapp",
+    "Dapp": "DApp",
     "GotIt": "Entendido",
     "Other": "Otro",
     "Backup": "Copia de seguridad",
@@ -3660,7 +3723,8 @@
     "Created": "Creado",
     "SavedSeedPhrase": "He guardado la frase semilla",
     "from": "Desde",
-    "to": "Hacia"
+    "to": "Hacia",
+    "copiedSuccessfully": "Copiado con éxito"
   },
   "bluetooth": {
     "powered_off_alert": {
@@ -3670,7 +3734,7 @@
       "message": "Por favor, activa el Bluetooth para usar esta función."
     },
     "update_firmware_alert": {
-      "title": "Ledger Firmware Outdated",
+      "title": "Firmware de Ledger desactualizado",
       "cancel": "Cancelar",
       "update": "Actualizar",
       "message": "Consulte cómo actualizar el firmware de Ledger desde el soporte de Ledger"

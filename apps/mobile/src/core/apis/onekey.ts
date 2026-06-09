@@ -90,7 +90,7 @@ export async function fixConnectId(address: string, connectId: string) {
   const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
 
   await keyring.fixConnectId(address, connectId);
-  await keyringService.persistAllKeyrings();
+  await keyringService.persistKeyringsForKeyring(keyring);
 
   return;
 }

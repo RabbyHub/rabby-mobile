@@ -56,9 +56,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 12,
     borderRadius: 12,
     justifyContent: 'space-between',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-2'],
   },
   label: {
     fontFamily: 'SF Pro Rounded',
@@ -76,8 +74,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   btnText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '700',
     color: isLight ? colors2024['neutral-title-1'] : '#50D2C1',
   },

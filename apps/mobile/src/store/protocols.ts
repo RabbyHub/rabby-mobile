@@ -256,6 +256,9 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
   },
   async batchGetProtocols(addresses, force = false) {
     if (!addresses.length) {
+      set(() => ({ isLoading: true }));
+      await new Promise(resolve => setTimeout(resolve, 0));
+      set(() => ({ protocolMap: {}, isLoading: false }));
       return;
     }
     const lowerAddresses = Array.from(
@@ -271,6 +274,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
         ]);
         set(() => ({
           protocolMap: mergeProtocolMaps(protocolMap, appChainMap),
+          isLoading: false,
         }));
         reportLendingUserStatusOnce({
           addresses: lowerAddresses,

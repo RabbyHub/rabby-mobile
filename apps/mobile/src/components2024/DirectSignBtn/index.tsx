@@ -201,7 +201,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 8,
     backgroundColor: colors2024['neutral-bg-4'],
     borderRadius: 16,
-    height: 56,
+    height: 52,
     marginTop: 12,
   },
   statusContainerSuccess: {
@@ -209,8 +209,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   statusText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
   },

@@ -10,6 +10,11 @@ import { getKeyringParams } from '../utils/getKeyringParams';
 import { EVENTS, eventBus } from '@/utils/events';
 import { t } from 'i18next';
 import { waitSignComponentAmounted } from '../utils/signEvent';
+import {
+  ensureWalletUnlocked,
+  isSensitiveKeyringType,
+  withWalletUnlockIf,
+} from '@/utils/walletUnlockGuard';
 
 export async function getKeyring<T = KeyringInstance>(
   type: KeyringTypeName,
@@ -25,6 +30,9 @@ export async function getKeyring<T = KeyringInstance>(
   }
 
   if (isNewKey) {
+    if (isSensitiveKeyringType(type)) {
+      await ensureWalletUnlocked();
+    }
     await keyringService.addKeyring(keyring);
     callbackOnNewKeyring?.(keyring);
   }
@@ -94,24 +102,23 @@ export async function _setCurrentAccountFromKeyring(keyring, index = 0) {
 }
 
 export const apisKeyring = {
-  signTypedData: async (
-    type: string,
-    from: string,
-    data: string,
-    options?: any,
-  ) => {
-    const keyring = await keyringService.getKeyringForAccount(from, type);
-    const res = await keyringService.signTypedMessage(
-      keyring,
-      { from, data },
-      options,
-    );
-    eventBus.emit(EVENTS.SIGN_FINISHED, {
-      success: true,
-      data: res,
-    });
-    return res;
-  },
+  signTypedData: withWalletUnlockIf(
+    (type: string, _from: string, _data: string, _options?: any) =>
+      isSensitiveKeyringType(type),
+    async (type: string, from: string, data: string, options?: any) => {
+      const keyring = await keyringService.getKeyringForAccount(from, type);
+      const res = await keyringService.signTypedMessage(
+        keyring,
+        { from, data },
+        options,
+      );
+      eventBus.emit(EVENTS.SIGN_FINISHED, {
+        success: true,
+        data: res,
+      });
+      return res;
+    },
+  ),
 
   signTypedDataWithUI: async (
     type: string,
@@ -135,6 +142,9 @@ export const addKeyring = async (
 ) => {
   const keyring = stashKeyrings[keyringId];
   if (keyring) {
+    if (isSensitiveKeyringType(keyring.type)) {
+      await ensureWalletUnlocked();
+    }
     keyring.byImport = byImport;
     // If keyring exits, just save
     if (keyringService.keyrings.find(item => item === keyring)) {

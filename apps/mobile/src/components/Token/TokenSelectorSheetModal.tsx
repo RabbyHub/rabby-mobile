@@ -29,7 +29,6 @@ import {
   TokenItem,
   TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { SheetModalShowType, useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
@@ -92,7 +91,19 @@ import { ExchangeLogos } from '@/screens/Home/components/AssetRenderItems/Exchan
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { touchedFeedback } from '@/utils/touch';
-import { ITokenItem } from '@/store/tokens';
+import {
+  buildTokenEntityId,
+  getTokenSelectIndexRowKey,
+  ITokenItem,
+  tokenEntityResourceStore,
+  TokenSelectIndexRow,
+  useTokenEntity,
+} from '@/store/tokens';
+import {
+  clearTokenSelectorRenderProbeActiveTokens,
+  setTokenSelectorRenderProbeActiveTokens,
+  useShouldShowTokenSelectorRenderProbe,
+} from './tokenSelectorRenderProbe';
 import { useMyAccounts } from '@/hooks/account';
 import LpTokenSwitch from '@/screens/Home/components/LpTokenSwitch';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
@@ -103,14 +114,15 @@ import { isNumber } from 'lodash';
 import { Text, TextInput } from '@/components/Typography';
 
 type SwapRouteProps = CompositeScreenProps<
-  NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
+  NativeStackScreenProps<TransactionNavigatorParamList, 'SwapBridge'>,
   NativeStackScreenProps<RootStackParamsList>
 >;
 
 type TokenListItem =
   | {
       type: 'unfold_token';
-      data: ITokenItem;
+      data?: ITokenItem;
+      row?: TokenSelectIndexRow;
     }
   | {
       type: 'empty-token';
@@ -120,12 +132,108 @@ type TokenListItem =
       data: string;
     };
 
+type UnfoldTokenListItem = Extract<TokenListItem, { type: 'unfold_token' }>;
+
+const TokenSelectorTokenRow = React.memo(
+  ({
+    item,
+    children,
+  }: {
+    item: UnfoldTokenListItem;
+    children: (token: ITokenItem) => React.ReactNode;
+  }) => {
+    const resourceToken = useTokenEntity(item.row?.tokenId);
+    const token = item.data || resourceToken;
+    const tokenId =
+      item.row?.tokenId || (item.data && buildTokenEntityId(item.data));
+
+    if (!token) {
+      return null;
+    }
+
+    return (
+      <View style={stylesForRenderProbe.rowWrapper}>
+        {children(token)}
+        <TokenSelectorRowRenderCountOverlay tokenId={tokenId} />
+      </View>
+    );
+  },
+);
+
+function TokenSelectorRowRenderCountOverlay({ tokenId }: { tokenId?: string }) {
+  const shouldShow = useShouldShowTokenSelectorRenderProbe();
+  const renderCountRef = useRef(0);
+  renderCountRef.current += 1;
+
+  if (!shouldShow) {
+    return null;
+  }
+
+  return (
+    <View pointerEvents="none" style={stylesForRenderProbe.overlay}>
+      <View style={stylesForRenderProbe.badge}>
+        <Text style={stylesForRenderProbe.badgeText}>
+          {renderCountRef.current}
+        </Text>
+      </View>
+      <Text
+        numberOfLines={1}
+        ellipsizeMode="middle"
+        style={stylesForRenderProbe.tokenIdText}>
+        {tokenId || '-'}
+      </Text>
+    </View>
+  );
+}
+
 export const isSwapTokenType = (s?: string) =>
   s && ['swapFrom', 'swapTo'].includes(s);
 
 const hiddenZIndex = -9999;
 
 const ITEM_HEIGHT = 72;
+
+const stylesForRenderProbe = StyleSheet.create({
+  rowWrapper: {
+    position: 'relative',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 8,
+    left: 16,
+    right: 16,
+    bottom: 0,
+    borderRadius: 16,
+    backgroundColor: 'rgba(18, 28, 45, 0.04)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(18, 28, 45, 0.12)',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    padding: 4,
+  },
+  badge: {
+    minWidth: 28,
+    height: 20,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.48)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    lineHeight: 14,
+    fontWeight: '700',
+  },
+  tokenIdText: {
+    marginTop: 2,
+    maxWidth: 180,
+    color: 'rgba(0, 0, 0, 0.42)',
+    fontSize: 10,
+    lineHeight: 12,
+  },
+});
 
 export type ITokenCheck = (token: TokenItem) => {
   disable: boolean;
@@ -162,7 +270,8 @@ export interface TokenSelectorProps<
 > {
   // visibleRef: SharedValue<boolean>;
   visible: boolean;
-  list: ITokenItem[];
+  list?: ITokenItem[];
+  tokenRows?: TokenSelectIndexRow[];
   foldTokensList?: ITokenItem[];
   scamTokensList?: ITokenItem[];
   isLoading?: boolean;
@@ -202,6 +311,7 @@ export interface TokenSelectorProps<
   showLpTokenSwitch?: boolean;
   isLpTokenEnabled?: boolean;
   onLpTokenChange?: (value: boolean) => void;
+  favoriteTokenKeySet?: ReadonlySet<string>;
 }
 
 const isAndroid = Platform.OS === 'android';
@@ -271,7 +381,8 @@ export type TokenSelectorSheetModalInst = {
 };
 export const TokenSelectorSheetModal = ({
   visible,
-  list,
+  list = [],
+  tokenRows,
   displayAccountFilter = false,
   filterAccount,
   chainServerId,
@@ -296,6 +407,7 @@ export const TokenSelectorSheetModal = ({
   showLpTokenSwitch: _showLpTokenSwitch,
   isLpTokenEnabled = false,
   onLpTokenChange: _onLpTokenChange,
+  favoriteTokenKeySet,
   ref,
 }: RNViewProps &
   TokenSelectorProps & { ref?: Ref<TokenSelectorSheetModalInst> }) => {
@@ -373,7 +485,8 @@ export const TokenSelectorSheetModal = ({
   const isFocused = useIsFocused();
 
   const isSwapRoute =
-    route.name === RootNames.Swap || route.name === RootNames.MultiSwap;
+    route.name === RootNames.SwapBridge ||
+    route.name === RootNames.MultiSwapBridge;
 
   if (isSwapTo && swapToTokenDetail && visible && isFocused && isSwapRoute) {
     setSwapToTokenDetail(false);
@@ -435,17 +548,99 @@ export const TokenSelectorSheetModal = ({
 
   const dataList = useMemo(() => {
     const items: TokenListItem[] = [];
-    list.forEach(token => {
-      items.push({ type: 'unfold_token', data: token });
-    });
+    if (tokenRows?.length) {
+      tokenRows.forEach(row => {
+        items.push({ type: 'unfold_token', row });
+      });
+    } else {
+      list.forEach(token => {
+        items.push({ type: 'unfold_token', data: token });
+      });
+    }
 
     return items;
-  }, [list]);
+  }, [list, tokenRows]);
+
+  const tokenSelectorRenderProbeTokenIds = useMemo(() => {
+    if (tokenRows?.length) {
+      return tokenRows.map(row => row.tokenId);
+    }
+
+    return list.map(buildTokenEntityId);
+  }, [list, tokenRows]);
+
+  useEffect(() => {
+    if (!visible) {
+      clearTokenSelectorRenderProbeActiveTokens();
+      return;
+    }
+
+    setTokenSelectorRenderProbeActiveTokens({
+      tokenIds: tokenSelectorRenderProbeTokenIds,
+      type,
+      chainServerId,
+      keyword: debouncedQuery,
+    });
+  }, [
+    chainServerId,
+    debouncedQuery,
+    tokenSelectorRenderProbeTokenIds,
+    type,
+    visible,
+  ]);
+
+  useEffect(() => clearTokenSelectorRenderProbeActiveTokens, []);
 
   const needToTokenMarketInfo = useMemo(() => {
     return !!type && ['swapTo', 'bridgeTo'].includes(type);
   }, [type]);
   const { accounts } = useMyAccounts({ disableAutoFetch: true });
+  const ownerAccountByAddress = useMemo(() => {
+    const groupedAccounts = new Map<string, typeof accounts>();
+    accounts.forEach(account => {
+      const addressKey = account.address?.toLowerCase();
+      if (!addressKey) {
+        return;
+      }
+      const accountList = groupedAccounts.get(addressKey);
+      if (accountList) {
+        accountList.push(account);
+      } else {
+        groupedAccounts.set(addressKey, [account]);
+      }
+    });
+
+    const ownerAccountMap = new Map<string, (typeof accounts)[number]>();
+    groupedAccounts.forEach((accountList, addressKey) => {
+      const ownerAccount = findAccountByPriority(accountList.slice());
+      if (ownerAccount) {
+        ownerAccountMap.set(addressKey, ownerAccount);
+      }
+    });
+
+    return ownerAccountMap;
+  }, [accounts]);
+  const supportChainServerIdSet = useMemo(() => {
+    if (!supportChains?.length) {
+      return null;
+    }
+
+    return new Set(
+      supportChains
+        .map(chainEnum => findChainByEnum(chainEnum)?.serverId)
+        .filter((serverId): serverId is string => !!serverId),
+    );
+  }, [supportChains]);
+  const cexLogoById = useMemo(() => {
+    const logoMap = new Map<string, string>();
+    cexList.forEach(item => {
+      if (item.id && item.logo_url) {
+        logoMap.set(item.id, item.logo_url);
+      }
+    });
+
+    return logoMap;
+  }, [cexList]);
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => {
@@ -502,134 +697,353 @@ export const TokenSelectorSheetModal = ({
 
       switch (item.type) {
         case 'unfold_token': {
-          const token = item.data;
-          const {
-            disable: lightDisable,
-            reason: disableReason,
-            simpleReason: disableSimpleReason,
-          } = disableItemCheck?.(token) || {};
+          return (
+            <TokenSelectorTokenRow item={item}>
+              {token => {
+                const {
+                  disable: lightDisable,
+                  reason: disableReason,
+                  simpleReason: disableSimpleReason,
+                } = disableItemCheck?.(token) || {};
 
-          const sameAddressAccounts = accounts.filter(acct =>
-            isSameAddress(acct.address, token.owner_addr),
-          );
-          const ownerAccount = findAccountByPriority(sameAddressAccounts);
-          const ownerKey = !ownerAccount
-            ? ''
-            : `${ownerAccount.type}-${ownerAccount.address}`;
+                const ownerAccount = ownerAccountByAddress.get(
+                  token.owner_addr.toLowerCase(),
+                );
+                const ownerKey = !ownerAccount
+                  ? ''
+                  : `${ownerAccount.type}-${ownerAccount.address}`;
 
-          const showOwnerAccount = !chainSearchCtx.filterAccountItem;
+                const showOwnerAccount = !chainSearchCtx.filterAccountItem;
 
-          const isPined = token.isPin || false;
-          const token_key = [
-            ownerKey,
-            `${token.id}-${token.symbol}-${token.chain}`,
-          ]
-            .filter(Boolean)
-            .join('-');
-          const currentChainItem = findChainByServerID(token.chain);
-          const disabled =
-            !!supportChains?.length &&
-            currentChainItem &&
-            !supportChains.includes(currentChainItem.enum);
+                const isPined =
+                  token.isPin ||
+                  favoriteTokenKeySet?.has(`${token.chain}:${token.id}`);
+                const token_key = [
+                  ownerKey,
+                  `${token.id}-${token.symbol}-${token.chain}`,
+                ]
+                  .filter(Boolean)
+                  .join('-');
+                const disabled =
+                  !!supportChainServerIdSet &&
+                  !supportChainServerIdSet.has(token.chain);
 
-          let percentColor = colors2024['red-default'];
-          if (
-            !token.price_24h_change ||
-            Math.abs(Number(token.price_24h_change)) < 0.00001
-          ) {
-            percentColor = colors2024['neutral-secondary'];
-          }
-          if (Number(token.price_24h_change) > 0) {
-            percentColor = colors2024['green-default'];
-          }
-          const cexLogos = token?.cex_ids?.length
-            ? token.cex_ids
-                .map(
-                  id => cexList.find(_item => _item.id === id)?.logo_url || '',
-                )
-                .filter(i => !!i) || []
-            : (token as TokenItemWithEntity).identity?.cex_list?.map(
-                _item => _item.logo_url,
-              ) || [];
-          const alertDisabledToken = () => {
-            if (disabled) {
-              disabledTips && toast.info(disabledTips);
-              return true;
-            } else if (lightDisable) {
-              Alert.alert(
-                t('component.TokenSelector.riskDetected.title'),
-                disableReason,
-                [
-                  { text: t('global.cancel'), style: 'cancel' },
-                  {
-                    text: t('component.TokenSelector.riskDetected.proceedBtn'),
-                    onPress: () => {
-                      confirmTokenSelection(token);
-                    },
-                  },
-                ],
-              );
-              return true;
-            }
-          };
-
-          if (debouncedQuery) {
-            return (
-              <View style={{ marginTop: 8, marginHorizontal: 16 }}>
-                <TokenItemContextMenu
-                  token={token}
-                  needToTokenMarketInfo={needToTokenMarketInfo}
-                  closeBottomSheet={() => {
-                    toggleShowSheetModal('destroy');
-                  }}
-                  type={type}>
-                  <TouchableOpacity
-                    delayLongPress={200}
-                    onLongPress={() => {
-                      longPressTriggered.current = true;
-                      touchedFeedback();
-                    }}
-                    onPressOut={() => {
-                      longPressTriggered.current = false;
-                    }}
-                    onPress={() => {
-                      if (longPressTriggered.current) {
-                        longPressTriggered.current = false;
-                        return;
-                      }
-                      if (alertDisabledToken()) {
-                        return true;
-                      }
-                      confirmTokenSelection(token);
-                    }}>
-                    <ExternalTokenRow
-                      decimalPrecision
-                      data={token}
-                      logoSize={40}
-                      rightInfoMode="balance"
-                      touchable={false}
-                      style={[
-                        (disabled || lightDisable) && styles.tokenItemDisabled,
-                      ]}
-                      onPressBottomRow={() => {
-                        // setTimeout(() => {
-                        //   toggleShowSheetModal('destroy');
-                        // }, 100);
-                        navigateDeprecated(
-                          needToTokenMarketInfo
-                            ? RootNames.TokenMarketInfo
-                            : RootNames.TokenDetail,
-                          {
-                            token,
-                            needUseCacheToken: true,
-                            tokenSelectType: type,
-                            account: ownerAccount,
+                let percentColor = colors2024['red-default'];
+                if (
+                  !token.price_24h_change ||
+                  Math.abs(Number(token.price_24h_change)) < 0.00001
+                ) {
+                  percentColor = colors2024['neutral-secondary'];
+                }
+                if (Number(token.price_24h_change) > 0) {
+                  percentColor = colors2024['green-default'];
+                }
+                const cexLogos = token?.cex_ids?.length
+                  ? token.cex_ids
+                      .map(id => cexLogoById.get(id) || '')
+                      .filter(i => !!i) || []
+                  : (token as TokenItemWithEntity).identity?.cex_list?.map(
+                      _item => _item.logo_url,
+                    ) || [];
+                const alertDisabledToken = () => {
+                  if (disabled) {
+                    disabledTips && toast.info(disabledTips);
+                    return true;
+                  } else if (lightDisable) {
+                    Alert.alert(
+                      t('component.TokenSelector.riskDetected.title'),
+                      disableReason,
+                      [
+                        { text: t('global.cancel'), style: 'cancel' },
+                        {
+                          text: t(
+                            'component.TokenSelector.riskDetected.proceedBtn',
+                          ),
+                          onPress: () => {
+                            confirmTokenSelection(token);
                           },
-                        );
+                        },
+                      ],
+                    );
+                    return true;
+                  }
+                };
+
+                if (debouncedQuery) {
+                  return (
+                    <View style={{ marginTop: 8, marginHorizontal: 16 }}>
+                      <TokenItemContextMenu
+                        token={token}
+                        needToTokenMarketInfo={needToTokenMarketInfo}
+                        closeBottomSheet={() => {
+                          toggleShowSheetModal('destroy');
+                        }}
+                        type={type}>
+                        <TouchableOpacity
+                          delayLongPress={200}
+                          onLongPress={() => {
+                            longPressTriggered.current = true;
+                            touchedFeedback();
+                          }}
+                          onPressOut={() => {
+                            longPressTriggered.current = false;
+                          }}
+                          onPress={() => {
+                            if (longPressTriggered.current) {
+                              longPressTriggered.current = false;
+                              return;
+                            }
+                            if (alertDisabledToken()) {
+                              return true;
+                            }
+                            confirmTokenSelection(token);
+                          }}>
+                          <ExternalTokenRow
+                            decimalPrecision
+                            data={token}
+                            logoSize={40}
+                            rightInfoMode="balance"
+                            touchable={false}
+                            style={[
+                              (disabled || lightDisable) &&
+                                styles.tokenItemDisabled,
+                            ]}
+                            onPressBottomRow={() => {
+                              // setTimeout(() => {
+                              //   toggleShowSheetModal('destroy');
+                              // }, 100);
+                              navigateDeprecated(
+                                needToTokenMarketInfo
+                                  ? RootNames.TokenMarketInfo
+                                  : RootNames.TokenDetail,
+                                {
+                                  token,
+                                  needUseCacheToken: true,
+                                  tokenSelectType: type,
+                                  account: ownerAccount,
+                                },
+                              );
+                            }}
+                            afterNode={
+                              lightDisable && (
+                                <View style={styles.lightDisableBadge}>
+                                  <RcIconWarningCircleCC
+                                    width={20}
+                                    height={20}
+                                    color={colors2024['red-default']}
+                                    style={styles.lightDisableIcon}
+                                  />
+                                  <Text style={styles.lightDisableText}>
+                                    {disableSimpleReason ||
+                                      t(
+                                        'component.TokenSelector.riskDetected.simpleExplanation',
+                                      )}
+                                  </Text>
+                                </View>
+                              )
+                            }
+                          />
+                          {isPined && (
+                            <FavoriteTag style={styles.favoriteTag} />
+                          )}
+                        </TouchableOpacity>
+                      </TokenItemContextMenu>
+                    </View>
+                  );
+                }
+
+                return (
+                  <View style={{ marginTop: 8, marginHorizontal: 16 }}>
+                    <TokenItemContextMenu
+                      token={token}
+                      closeBottomSheet={() => {
+                        toggleShowSheetModal('destroy');
                       }}
-                      afterNode={
-                        lightDisable && (
-                          <View style={styles.lightDisableBadge}>
+                      needToTokenMarketInfo={needToTokenMarketInfo}
+                      type={type}>
+                      <TouchableOpacity
+                        key={token_key}
+                        delayLongPress={200}
+                        onLongPress={() => {
+                          longPressTriggered.current = true;
+                          touchedFeedback();
+                        }}
+                        onPressOut={() => {
+                          longPressTriggered.current = false;
+                        }}
+                        onPress={async () => {
+                          if (longPressTriggered.current) {
+                            longPressTriggered.current = false;
+                            return;
+                          }
+
+                          if (alertDisabledToken()) {
+                            return true;
+                          }
+                          confirmTokenSelection(token);
+                        }}
+                        style={[
+                          styles.tokenItemOuter,
+                          // isSwapTo && { paddingRight: 0, paddingVertical: 0 },
+                          (disabled || lightDisable) &&
+                            styles.tokenItemDisabled,
+                        ]}>
+                        <View style={styles.tokenItem}>
+                          <View
+                            style={[styles.tokenLeft, styles.tokenLeftLoaded]}>
+                            <AssetAvatar
+                              logo={token?.logo_url}
+                              size={40}
+                              chain={token?.chain}
+                              chainSize={18}
+                              innerChainStyle={styles.avatarLogo}
+                              style={styles.tokenAvatarCol}
+                            />
+                          </View>
+                          <View style={styles.tokenCenter}>
+                            <View
+                              style={[
+                                styles.tokenCenterFloor,
+                                styles.tokenCenterFloor1,
+                              ]}>
+                              <View
+                                style={[
+                                  styles.tokenInfoCol,
+                                  styles.tokenInfoColLeftFlex,
+                                ]}>
+                                <View style={styles.tokenNameBox}>
+                                  <Text
+                                    style={styles.tokenName}
+                                    ellipsizeMode="tail"
+                                    numberOfLines={1}>
+                                    {token?.symbol}
+                                  </Text>
+                                  {isLpToken(token) && (
+                                    <View style={styles.lpTokenIconContainer}>
+                                      <LpTokenIcon
+                                        protocolId={token.protocol_id || ''}
+                                      />
+                                    </View>
+                                  )}
+                                  {needToTokenMarketInfo && (
+                                    <View style={styles.exchangeLogosContainer}>
+                                      <ExchangeLogos logos={cexLogos} />
+                                    </View>
+                                  )}
+                                </View>
+                              </View>
+                              <View
+                                style={[
+                                  styles.tokenInfoCol,
+                                  styles.tokenInfoColRightFixed,
+                                  styles.tokenInfoColRight,
+                                ]}>
+                                <Text style={[styles.tokenHeaderNetworth]}>
+                                  {formatNetworth(token.usd_value)}
+                                </Text>
+                              </View>
+                            </View>
+                            <View
+                              style={[
+                                styles.tokenCenterFloor,
+                                styles.tokenCenterFloor2,
+                              ]}>
+                              <View
+                                style={[
+                                  styles.tokenInfoCol,
+                                  styles.tokenInfoColLeftFlex,
+                                ]}>
+                                {showOwnerAccount ? (
+                                  !ownerAccount ? null : (
+                                    <AccountInfoInTokenRow
+                                      ownerAccount={ownerAccount}
+                                    />
+                                  )
+                                ) : (
+                                  <Text
+                                    numberOfLines={1}
+                                    ellipsizeMode="tail"
+                                    style={[
+                                      styles.tokenHeaderAmount,
+                                      // isExcludeBalanceShowTips && styles.textSecondary,
+                                    ]}>
+                                    {formatTokenAmount(token.amount)}
+                                  </Text>
+                                )}
+                                {isBridgeTo && (
+                                  <View
+                                    style={[
+                                      styles.tokenInfoColRight,
+                                      styles.tardeLevel,
+                                      {
+                                        backgroundColor:
+                                          token.trade_volume_level === 'low'
+                                            ? colors2024['orange-light-1']
+                                            : colors2024['green-light-1'],
+                                      },
+                                    ]}>
+                                    <Text
+                                      style={[
+                                        styles.tardeLevelText,
+                                        {
+                                          color:
+                                            token.trade_volume_level === 'low'
+                                              ? colors2024['orange-default']
+                                              : colors2024['green-default'],
+                                        },
+                                      ]}>
+                                      {token.trade_volume_level === 'low'
+                                        ? t(
+                                            'component.TokenSelector.bridgeTo.low',
+                                          )
+                                        : t(
+                                            'component.TokenSelector.bridgeTo.high',
+                                          )}
+                                    </Text>
+                                  </View>
+                                )}
+                              </View>
+
+                              <View
+                                style={[
+                                  styles.tokenInfoCol,
+                                  styles.tokenInfoColRightFixed,
+                                  styles.tokenInfoColRight,
+                                ]}>
+                                <View style={styles.priceInfo}>
+                                  <Text
+                                    style={[styles.tokenPrice]}
+                                    numberOfLines={1}>
+                                    {`$${formatPrice(token.price)}`}
+                                  </Text>
+                                  {isNumber(token.price_24h_change) && (
+                                    <Text
+                                      style={StyleSheet.compose(
+                                        styles.percent,
+                                        {
+                                          ...(!token.is_core &&
+                                          (token.usd_value || 0) > 0
+                                            ? styles.exclude
+                                            : {}),
+                                          color: percentColor,
+                                        },
+                                      )}>
+                                      {formatPercentage(
+                                        Number(token.price_24h_change) || 0,
+                                      )}
+                                    </Text>
+                                  )}
+                                </View>
+                              </View>
+                            </View>
+                          </View>
+                        </View>
+                        {lightDisable && (
+                          <View
+                            style={[
+                              styles.lightDisableBadge,
+                              { marginBottom: 12 },
+                            ]}>
                             <RcIconWarningCircleCC
                               width={20}
                               height={20}
@@ -643,212 +1057,14 @@ export const TokenSelectorSheetModal = ({
                                 )}
                             </Text>
                           </View>
-                        )
-                      }
-                    />
-                    {isPined && <FavoriteTag style={styles.favoriteTag} />}
-                  </TouchableOpacity>
-                </TokenItemContextMenu>
-              </View>
-            );
-          }
-
-          return (
-            <View style={{ marginTop: 8, marginHorizontal: 16 }}>
-              <TokenItemContextMenu
-                token={token}
-                closeBottomSheet={() => {
-                  toggleShowSheetModal('destroy');
-                }}
-                needToTokenMarketInfo={needToTokenMarketInfo}
-                type={type}>
-                <TouchableOpacity
-                  key={token_key}
-                  delayLongPress={200}
-                  onLongPress={() => {
-                    longPressTriggered.current = true;
-                    touchedFeedback();
-                  }}
-                  onPressOut={() => {
-                    longPressTriggered.current = false;
-                  }}
-                  onPress={async () => {
-                    if (longPressTriggered.current) {
-                      longPressTriggered.current = false;
-                      return;
-                    }
-
-                    if (alertDisabledToken()) {
-                      return true;
-                    }
-                    confirmTokenSelection(token);
-                  }}
-                  style={[
-                    styles.tokenItemOuter,
-                    // isSwapTo && { paddingRight: 0, paddingVertical: 0 },
-                    (disabled || lightDisable) && styles.tokenItemDisabled,
-                  ]}>
-                  <View style={styles.tokenItem}>
-                    <View style={[styles.tokenLeft, styles.tokenLeftLoaded]}>
-                      <AssetAvatar
-                        logo={token?.logo_url}
-                        size={40}
-                        chain={token?.chain}
-                        chainSize={18}
-                        innerChainStyle={styles.avatarLogo}
-                        style={styles.tokenAvatarCol}
-                      />
-                    </View>
-                    <View style={styles.tokenCenter}>
-                      <View
-                        style={[
-                          styles.tokenCenterFloor,
-                          styles.tokenCenterFloor1,
-                        ]}>
-                        <View
-                          style={[
-                            styles.tokenInfoCol,
-                            styles.tokenInfoColLeftFlex,
-                          ]}>
-                          <View style={styles.tokenNameBox}>
-                            <Text
-                              style={styles.tokenName}
-                              ellipsizeMode="tail"
-                              numberOfLines={1}>
-                              {token?.symbol}
-                            </Text>
-                            {isLpToken(token) && (
-                              <View style={styles.lpTokenIconContainer}>
-                                <LpTokenIcon
-                                  protocolId={token.protocol_id || ''}
-                                />
-                              </View>
-                            )}
-                            {needToTokenMarketInfo && (
-                              <View style={styles.exchangeLogosContainer}>
-                                <ExchangeLogos logos={cexLogos} />
-                              </View>
-                            )}
-                          </View>
-                        </View>
-                        <View
-                          style={[
-                            styles.tokenInfoCol,
-                            styles.tokenInfoColRightFixed,
-                            styles.tokenInfoColRight,
-                          ]}>
-                          <Text style={[styles.tokenHeaderNetworth]}>
-                            {formatNetworth(token.usd_value)}
-                          </Text>
-                        </View>
-                      </View>
-                      <View
-                        style={[
-                          styles.tokenCenterFloor,
-                          styles.tokenCenterFloor2,
-                        ]}>
-                        <View
-                          style={[
-                            styles.tokenInfoCol,
-                            styles.tokenInfoColLeftFlex,
-                          ]}>
-                          {showOwnerAccount ? (
-                            !ownerAccount ? null : (
-                              <AccountInfoInTokenRow
-                                ownerAccount={ownerAccount}
-                              />
-                            )
-                          ) : (
-                            <Text
-                              numberOfLines={1}
-                              ellipsizeMode="tail"
-                              style={[
-                                styles.tokenHeaderAmount,
-                                // isExcludeBalanceShowTips && styles.textSecondary,
-                              ]}>
-                              {formatTokenAmount(token.amount)}
-                            </Text>
-                          )}
-                          {isBridgeTo && (
-                            <View
-                              style={[
-                                styles.tokenInfoColRight,
-                                styles.tardeLevel,
-                                {
-                                  backgroundColor:
-                                    token.trade_volume_level === 'low'
-                                      ? colors2024['orange-light-1']
-                                      : colors2024['green-light-1'],
-                                },
-                              ]}>
-                              <Text
-                                style={[
-                                  styles.tardeLevelText,
-                                  {
-                                    color:
-                                      token.trade_volume_level === 'low'
-                                        ? colors2024['orange-default']
-                                        : colors2024['green-default'],
-                                  },
-                                ]}>
-                                {token.trade_volume_level === 'low'
-                                  ? t('component.TokenSelector.bridgeTo.low')
-                                  : t('component.TokenSelector.bridgeTo.high')}
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-
-                        <View
-                          style={[
-                            styles.tokenInfoCol,
-                            styles.tokenInfoColRightFixed,
-                            styles.tokenInfoColRight,
-                          ]}>
-                          <View style={styles.priceInfo}>
-                            <Text style={[styles.tokenPrice]} numberOfLines={1}>
-                              {`$${formatPrice(token.price)}`}
-                            </Text>
-                            {isNumber(token.price_24h_change) && (
-                              <Text
-                                style={StyleSheet.compose(styles.percent, {
-                                  ...(!token.is_core &&
-                                  (token.usd_value || 0) > 0
-                                    ? styles.exclude
-                                    : {}),
-                                  color: percentColor,
-                                })}>
-                                {formatPercentage(
-                                  Number(token.price_24h_change) || 0,
-                                )}
-                              </Text>
-                            )}
-                          </View>
-                        </View>
-                      </View>
-                    </View>
+                        )}
+                        {isPined && <FavoriteTag style={styles.favoriteTag} />}
+                      </TouchableOpacity>
+                    </TokenItemContextMenu>
                   </View>
-                  {lightDisable && (
-                    <View
-                      style={[styles.lightDisableBadge, { marginBottom: 12 }]}>
-                      <RcIconWarningCircleCC
-                        width={20}
-                        height={20}
-                        color={colors2024['red-default']}
-                        style={styles.lightDisableIcon}
-                      />
-                      <Text style={styles.lightDisableText}>
-                        {disableSimpleReason ||
-                          t(
-                            'component.TokenSelector.riskDetected.simpleExplanation',
-                          )}
-                      </Text>
-                    </View>
-                  )}
-                  {isPined && <FavoriteTag style={styles.favoriteTag} />}
-                </TouchableOpacity>
-              </TokenItemContextMenu>
-            </View>
+                );
+              }}
+            </TokenSelectorTokenRow>
           );
         }
         default:
@@ -858,9 +1074,9 @@ export const TokenSelectorSheetModal = ({
     [
       isLoading,
       disableItemCheck,
-      accounts,
+      ownerAccountByAddress,
       chainSearchCtx.filterAccountItem,
-      supportChains,
+      supportChainServerIdSet,
       debouncedQuery,
       needToTokenMarketInfo,
       type,
@@ -868,8 +1084,9 @@ export const TokenSelectorSheetModal = ({
       isBridgeTo,
       colors2024,
       t,
-      cexList,
+      cexLogoById,
       disabledTips,
+      favoriteTokenKeySet,
       confirmTokenSelection,
       toggleShowSheetModal,
     ],
@@ -931,10 +1148,17 @@ export const TokenSelectorSheetModal = ({
     }
     // 只有send场景需要
     if (type === 'send') {
+      if (tokenRows?.length) {
+        return getTop3Chains(
+          tokenRows
+            .map(row => tokenEntityResourceStore.getValue(row.tokenId))
+            .filter((token): token is ITokenItem => !!token),
+        );
+      }
       return getTop3Chains(list);
     }
     return [];
-  }, [list, type, visible]);
+  }, [list, tokenRows, type, visible]);
 
   useFocusEffect(onHardwareBackHandler);
 
@@ -1128,7 +1352,12 @@ export const TokenSelectorSheetModal = ({
           showsVerticalScrollIndicator={false}
           keyExtractor={item => {
             if (item.type === 'unfold_token') {
-              return `${item.type}-${item.data.owner_addr}-${item.data.chain}-${item.data.id}`;
+              if (item.row) {
+                return `${item.type}-${getTokenSelectIndexRowKey(item.row)}`;
+              }
+              if (item.data) {
+                return `${item.type}-${item.data.owner_addr}-${item.data.chain}-${item.data.id}`;
+              }
             }
             if (item.type === 'empty-assets') {
               return `empty-assets-${item.data}`;

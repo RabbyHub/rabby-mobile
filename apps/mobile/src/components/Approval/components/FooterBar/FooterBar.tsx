@@ -1,11 +1,11 @@
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { Chain } from '@/constant/chains';
 import { SecurityEngineLevel } from '@/constant/security';
-import { AppColorsVariants } from '@/constant/theme';
+import { AppColors2024Variants, AppColorsVariants } from '@/constant/theme';
 import { dappService, preferenceService } from '@/core/services';
 import { DappInfo } from '@/core/services/dappService';
 import { Account } from '@/core/services/preference';
-import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
@@ -24,6 +24,10 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Text } from '@/components/Typography';
 import { shouldUseLegacyApprovalFooterAutoSwitch } from '../TxComponents/GasSelector/approvalGasDisplay';
 import { GasAccountTopUpWaitCallback } from '@/screens/GasAccount/components/topUpContinuation';
+import {
+  BOTTOM_BUTTON_BOTTOM_OFFSET,
+  BOTTOM_BUTTON_TOP_OFFSET,
+} from '@/constant/layout';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   isSwap?: boolean;
@@ -64,15 +68,18 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   isFirstGasLessLoading?: boolean;
 }
 
-const getStyles = (colors: AppColorsVariants) =>
+const getStyles = (
+  colors: AppColorsVariants,
+  colors2024: AppColors2024Variants,
+) =>
   StyleSheet.create({
     wrapper: {
       paddingHorizontal: 20,
-      paddingTop: 12,
-      paddingBottom: 40,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+      paddingBottom: BOTTOM_BUTTON_BOTTOM_OFFSET,
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
-      backgroundColor: colors['neutral-bg-1'],
+      backgroundColor: colors2024['neutral-bg-1'],
       position: 'relative',
       // shadow
       shadowColor: colors['neutral-line'],
@@ -222,7 +229,11 @@ export const FooterBar: React.FC<Props> = ({
   );
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { colors2024 } = useTheme2024();
+  const styles = React.useMemo(
+    () => getStyles(colors, colors2024),
+    [colors, colors2024],
+  );
   const SecurityLevelTipColor = getSecurityLevelTipColor(colors);
 
   const displayOrigin = useMemo(() => {

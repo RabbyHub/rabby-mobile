@@ -1,9 +1,11 @@
 import 'react-native-gesture-handler';
 import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
-import { useStackScreenConfig } from '@/hooks/navigation';
+import { HeaderBackPressable, useStackScreenConfig } from '@/hooks/navigation';
 import {
   RootNames,
   makeHeadersPresets,
@@ -17,13 +19,13 @@ import SendNFTScreen from '../SendNFT/SendNFT';
 import { HistoryDetailScreen } from '../Transaction/HistoryDetailScreen';
 import { HistoryLocalDetailScreen } from '../Transaction/HistoryLocalDetailScreen';
 import { TransactionNavigatorParamList } from '@/navigation-type';
-import Swap from '../Swap';
 import ApprovalsScreen from '../Approvals';
 import ReceiveScreen from '../Receive/Receive';
-import { Bridge } from '../Bridge';
+import SwapBridgeScreen from '../SwapBridge';
 import { ConvertDustScreen } from '../ConvertDust';
 import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
+import { HeaderAccountSwitcher } from '@/components/AccountSwitcher/HeaderAccountSwitcher';
 import MultiAddressHistory from '../Transaction/MultiAddressHistory';
 import { GnosisQueueScreen } from '../GnosisQueue';
 import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
@@ -37,20 +39,42 @@ import LendingScreen from '../Lending';
 import PredictionScreen from '../Prediction';
 import { PredictionScreenWithPreload } from '../InnerDapp/InnerDappPreloadScreens';
 import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
+import { Text } from '@/components/Typography';
+import { createGetStyles2024 } from '@/utils/styles';
+import { IS_IOS } from '@/core/native/utils';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
-function ConvertDustHeaderTitle(ctx: {
-  children: string;
+const CONVERT_DUST_HEADER_HEIGHT = 58;
+const SEND_IOS_HEADER_ICON_OFFSET = 6;
+
+function ConvertDustHeader({
+  title,
+  disableSwitch,
+}: {
+  title: string;
   disableSwitch?: boolean;
 }) {
+  const { styles } = useTheme2024({ getStyle: getConvertDustHeaderStyle });
+  const { top } = useSafeAreaInsets();
+
   return (
-    <ScreenHeaderAccountSwitcher
-      forScene="MakeTransactionAbout"
-      titleText={ctx.children}
-      disableSwitch={ctx.disableSwitch}
-    />
+    <View style={[styles.convertDustHeaderOuter, { marginTop: top }]}>
+      <View style={styles.convertDustHeaderInner}>
+        <View style={styles.convertDustHeaderLeft}>
+          <HeaderBackPressable style={styles.convertDustHeaderBackButton} />
+          <Text numberOfLines={1} style={styles.convertDustHeaderTitle}>
+            {title}
+          </Text>
+        </View>
+        <HeaderAccountSwitcher
+          forScene="MakeTransactionAbout"
+          disableSwitch={disableSwitch}
+          style={styles.convertDustHeaderAccountSwitcher}
+        />
+      </View>
+    </View>
   );
 }
 
@@ -67,6 +91,15 @@ export default function TransactionNavigator() {
     innerDappStrategy === 'screen'
       ? PredictionScreenWithPreload
       : PredictionScreen;
+  const renderSendHeaderLeft = React.useCallback(
+    ({ tintColor }: { tintColor?: string }) => (
+      <HeaderBackPressable
+        tintColor={tintColor}
+        style={transactionNavigatorStyles.sendHeaderIconOffset}
+      />
+    ),
+    [],
+  );
 
   return (
     <TransactionStack.Navigator
@@ -88,6 +121,7 @@ export default function TransactionNavigator() {
             fontFamily: 'SF Pro Rounded',
             fontSize: 20,
           },
+          headerLeft: renderSendHeaderLeft,
         })}
       />
       <TransactionStack.Screen
@@ -101,6 +135,7 @@ export default function TransactionNavigator() {
             fontFamily: 'SF Pro Rounded',
             fontSize: 20,
           },
+          headerLeft: renderSendHeaderLeft,
         })}
       />
       <TransactionStack.Screen
@@ -239,40 +274,25 @@ export default function TransactionNavigator() {
         })}
       />
       {/* ReceiveScreen */}
-      {/* SwapScreen */}
+      {/* SwapBridgeScreen */}
       <TransactionStack.Screen
-        name={RootNames.Swap}
-        component={Swap}
+        name={RootNames.SwapBridge}
+        component={SwapBridgeScreen}
         options={mergeScreenOptions2024([
           {
-            title: 'Swap',
-            headerTitle: ctx => {
-              return (
-                <ScreenHeaderAccountSwitcher
-                  forScene="MakeTransactionAbout"
-                  titleText={ctx.children}
-                  disableSwitch
-                />
-              );
-            },
+            title: '',
+            headerTitle: () => null,
           },
         ])}
       />
 
       <TransactionStack.Screen
-        name={RootNames.MultiSwap}
-        component={Swap.ForMultipleAddress}
+        name={RootNames.MultiSwapBridge}
+        component={SwapBridgeScreen.ForMultipleAddress}
         options={mergeScreenOptions2024([
           {
-            title: 'Swap',
-            headerTitle: ctx => {
-              return (
-                <ScreenHeaderAccountSwitcher
-                  forScene="MakeTransactionAbout"
-                  titleText={ctx.children}
-                />
-              );
-            },
+            title: '',
+            headerTitle: () => null,
           },
         ])}
       />
@@ -297,56 +317,18 @@ export default function TransactionNavigator() {
       />
 
       <TransactionStack.Screen
-        name={RootNames.Bridge}
-        component={Bridge}
-        options={mergeScreenOptions2024([
-          {
-            title: 'Bridge',
-            // ...headerPresets.withBgCard1_2024,
-            headerTitle: ctx => {
-              return (
-                <ScreenHeaderAccountSwitcher
-                  forScene="MakeTransactionAbout"
-                  titleText={ctx.children}
-                  disableSwitch
-                />
-              );
-            },
-          },
-        ])}
-      />
-
-      <TransactionStack.Screen
-        name={RootNames.MultiBridge}
-        component={Bridge.ForMultipleAddress}
-        options={mergeScreenOptions2024([
-          {
-            title: 'Bridge',
-            // ...headerPresets.withBgCard1_2024,
-            headerTitle: ctx => {
-              return (
-                <ScreenHeaderAccountSwitcher
-                  forScene="MakeTransactionAbout"
-                  titleText={ctx.children}
-                />
-              );
-            },
-          },
-        ])}
-      />
-
-      <TransactionStack.Screen
         name={RootNames.ConvertDust}
         component={ConvertDustScreen}
         options={({ route }) =>
           mergeScreenOptions2024([
             {
-              title: 'Convert Dust',
-              headerTitle: ctx =>
-                ConvertDustHeaderTitle({
-                  ...ctx,
-                  disableSwitch: !!route.params?.disableAccountSwitch,
-                }),
+              title: t('page.convertDust.title'),
+              header: () => (
+                <ConvertDustHeader
+                  title={t('page.convertDust.title')}
+                  disableSwitch={!!route.params?.disableAccountSwitch}
+                />
+              ),
             },
           ])
         }
@@ -476,3 +458,49 @@ export default function TransactionNavigator() {
     </TransactionStack.Navigator>
   );
 }
+
+const getConvertDustHeaderStyle = createGetStyles2024(({ colors2024 }) => ({
+  convertDustHeaderOuter: {
+    height: CONVERT_DUST_HEADER_HEIGHT,
+    paddingHorizontal: 12,
+    paddingRight: 20,
+    paddingVertical: 10,
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  convertDustHeaderInner: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minWidth: 0,
+  },
+  convertDustHeaderLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 0,
+  },
+  convertDustHeaderBackButton: {
+    marginLeft: 0,
+    paddingLeft: 0,
+  },
+  convertDustHeaderTitle: {
+    flexShrink: 1,
+    minWidth: 0,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '900',
+    color: colors2024['neutral-title-1'],
+  },
+  convertDustHeaderAccountSwitcher: {
+    flexShrink: 1,
+    minWidth: 0,
+  },
+}));
+
+const transactionNavigatorStyles = StyleSheet.create({
+  sendHeaderIconOffset: {
+    transform: [{ translateY: IS_IOS ? SEND_IOS_HEADER_ICON_OFFSET : 0 }],
+  },
+});

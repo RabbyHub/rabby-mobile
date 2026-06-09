@@ -24,7 +24,7 @@ export interface GasSelectorResponse extends GasLevel {
   maxPriorityFee: number;
 }
 
-const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors2024 }) => ({
   cardBody: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -41,7 +41,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   },
   cardActive: {
     backgroundColor: colors2024['brand-light-1'],
-    borderColor: colors['blue-default'],
+    borderColor: colors2024['brand-default'],
     shadowColor: 'transparent',
   },
   cardItem: {},
@@ -65,9 +65,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     padding: 0,
     marginTop: 4,
   },
-  cardItemTextActive: {
-    // color: colors['blue-default'],
-  },
+  cardItemTextActive: {},
   cardBodyDisabled: {},
   cardTime: {
     marginTop: 2,

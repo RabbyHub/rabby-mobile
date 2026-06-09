@@ -6,8 +6,11 @@ import { createCustomNativeStackNavigator as createNativeStackNavigator } from '
 import {
   DebugLogViewer,
   DevCapabilityFile,
+  InMemoryLogViewer,
+  DevDataContactService,
   DevDataSQLite,
   DevDataKeychain,
+  DevDataKeyringVault,
   DevDataWhitelist,
   DevPerf,
   DevSwitches,
@@ -113,6 +116,28 @@ export function TestkitsNavigator() {
         ])}
       />
       <Stack.Screen
+        name={RootNames.DevDataKeyringVault}
+        component={DevDataKeyringVault}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'Keyring Vault',
+            title: 'Keyring Vault',
+          },
+        ])}
+      />
+      <Stack.Screen
+        name={RootNames.DevDataContactService}
+        component={DevDataContactService}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'Contact Service',
+            title: 'Contact Service',
+          },
+        ])}
+      />
+      <Stack.Screen
         name={RootNames.DevDataWhitelist}
         component={DevDataWhitelist}
         options={mergeScreenOptions2024([
@@ -146,6 +171,14 @@ export function TestkitsNavigator() {
         options={{
           headerShown: true,
           title: 'App Log Verification',
+        }}
+      />
+      <Stack.Screen
+        name={RootNames.InMemoryLogViewer}
+        component={InMemoryLogViewer}
+        options={{
+          headerShown: true,
+          title: 'In-Memory Logs',
         }}
       />
     </Stack.Navigator>

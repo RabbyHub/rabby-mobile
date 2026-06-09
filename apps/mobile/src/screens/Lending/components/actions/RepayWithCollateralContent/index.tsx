@@ -17,6 +17,7 @@ import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { sendRequest } from '@/core/apis/sendRequest';
 import { useTheme2024 } from '@/hooks/theme';
@@ -33,7 +34,7 @@ import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { BridgeSlippage } from '@/screens/Bridge/components/BridgeSlippage';
-import { formatSpeicalAmount, formatTokenAmount } from '@/utils/number';
+import { formatTokenAmount, formatTokenAmountInput } from '@/utils/number';
 import { WarningText } from '@/screens/Bridge/components/WarningText';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
@@ -55,6 +56,13 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { AutoShrinkAmountTextInput } from '@/components/AutoShrinkAmountTextInput';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 import { SwapType } from '../../../types/swap';
 import TokenIcon from '../../TokenIcon';
@@ -92,7 +100,7 @@ import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { ethers, PopulatedTransaction } from 'ethers';
 import { DEFAULT_REPAY_WITH_COLLATERAL_SLIPPAGE } from './utils';
 import RepayWithCollateralOverview from './Overview';
-import { Text, TextInput } from '@/components/Typography';
+import { Text } from '@/components/Typography';
 import { stats } from '@/utils/stats';
 
 interface RepayWithCollateralProps {
@@ -103,7 +111,7 @@ interface RepayWithCollateralProps {
 }
 
 const BOTTOM_SIZE = {
-  BUTTON: 116,
+  BUTTON: 12 + BOTTOM_BUTTON_SINGLE_HEIGHT,
   CHECKBOX: 40,
   TIPS: 80,
 };
@@ -116,6 +124,9 @@ export default function RepayWithCollateral({
 }: RepayWithCollateralProps) {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
+  const bottomButtonAreaHeight =
+    BOTTOM_SIZE.BUTTON + getBottomButtonBottomOffset(bottom);
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
@@ -262,7 +273,7 @@ export default function RepayWithCollateral({
 
   const onInputChange = useCallback(
     (text: string) => {
-      const formatted = formatSpeicalAmount(text);
+      const formatted = formatTokenAmountInput(text, repayToken.decimals);
       if (!/^\d*(\.\d*)?$/.test(formatted)) {
         return;
       }
@@ -280,7 +291,7 @@ export default function RepayWithCollateral({
 
       setRepayAmount(displayAmountStr);
     },
-    [debtBalance],
+    [debtBalance, repayToken.decimals],
   );
 
   useEffect(() => {
@@ -951,7 +962,7 @@ export default function RepayWithCollateral({
             </View>
 
             <View style={styles.tokenBody}>
-              <TextInput
+              <AutoShrinkAmountTextInput
                 style={styles.amountInput}
                 value={repayAmount}
                 onChangeText={onInputChange}
@@ -962,7 +973,7 @@ export default function RepayWithCollateral({
                 multiline={false}
                 spellCheck={false}
                 inputMode="decimal"
-                scrollEnabled={true}
+                scrollEnabled={false}
                 placeholderTextColor={colors2024['neutral-info']}
               />
               {(!repayAmount || BigNumber(repayAmount || '0').lte(0)) && (
@@ -1159,7 +1170,7 @@ export default function RepayWithCollateral({
           styles.buttonContainer,
           {
             height:
-              BOTTOM_SIZE.BUTTON +
+              bottomButtonAreaHeight +
               (isLiquidatable
                 ? BOTTOM_SIZE.TIPS
                 : isRisky
@@ -1196,6 +1207,8 @@ export default function RepayWithCollateral({
             wrapperStyle={styles.directSignBtn}
             authTitle={t('page.Lending.repayWithCollateral.button.repay')}
             title={t('page.Lending.repayWithCollateral.button.repay')}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
             onFinished={() => handleRepay()}
             disabled={buttonDisabled || !!ctx?.disabledProcess}
             type="aave"
@@ -1212,6 +1225,8 @@ export default function RepayWithCollateral({
             loadingType="circle"
             showTextOnLoading
             containerStyle={styles.fullWidthButton}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
             onPress={() => handleRepay()}
             title={t('page.Lending.repayWithCollateral.button.repay')}
             loading={isLoading}
@@ -1223,7 +1238,7 @@ export default function RepayWithCollateral({
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   scrollableBlock: {
     flex: 1,
     width: '100%',
@@ -1379,6 +1394,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'left',
     minWidth: 100,
     flex: 1,
+    height: 36,
+    lineHeight: 36,
+    paddingVertical: 0,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    overflow: 'hidden',
   },
   amountDisplay: {
     fontSize: 28,
@@ -1418,8 +1439,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-line'],
   },
   arrowContainer: {
-    width: 45,
-    height: 45,
+    width: 36,
+    height: 36,
     borderRadius: 22.5,
     backgroundColor: colors2024['neutral-bg-1'],
     justifyContent: 'center',
@@ -1430,7 +1451,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'absolute',
     left: '50%',
     top: '50%',
-    transform: [{ translateX: -45 / 2 }, { translateY: -45 / 2 }],
+    transform: [{ translateX: -18 }, { translateY: -18 }],
   },
   arrowText: {
     fontSize: 22,
@@ -1444,7 +1465,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   buttonContainer: {
     position: 'absolute',
     bottom: 0,
-    height: 116,
+    height:
+      BOTTOM_SIZE.BUTTON + getBottomButtonBottomOffset(safeAreaInsets.bottom),
     paddingTop: 12,
     width: '100%',
     display: 'flex',
@@ -1457,6 +1479,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   fullWidthButton: {
     flex: 1,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
   },
   loadingOpacity: {
     opacity: 0.5,

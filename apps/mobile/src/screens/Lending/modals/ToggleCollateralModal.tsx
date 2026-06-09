@@ -44,7 +44,13 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import IconCloseCC from '@/assets2024/icons/common/close-cc.svg';
 import { useCurrentRouteName } from '@/hooks/navigation';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
+  RootNames,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { useCollateralWaring } from '../hooks/useCollateralWaring';
 import { Text } from '@/components/Typography';
 
@@ -542,6 +548,7 @@ function ToggleCollateralContent({}: {}) {
                   authTitle={btnTitle}
                   title={btnTitle}
                   titleStyle={styles.directSignBtnTitle}
+                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
                   onFinished={() => handleToggleCollateral()}
                   disabled={
                     !txs.length ||
@@ -562,6 +569,8 @@ function ToggleCollateralContent({}: {}) {
                   loadingType="circle"
                   showTextOnLoading
                   containerStyle={styles.fullWidthButton}
+                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                  titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                   onPress={() => handleToggleCollateral()}
                   title={btnTitle}
                   loading={isLoading}
@@ -596,7 +605,7 @@ export const ToggleCollateralModal = () => {
 const ScreenWidth = Dimensions.get('screen').width;
 const ScreenHeight = Dimensions.get('screen').height;
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   modal: {
     width: ScreenWidth,
     height: ScreenHeight,
@@ -658,7 +667,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   btnContainer: {
     marginTop: 16,
-    marginBottom: 32,
+    marginBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     //flex: 1,
     //height: 50,
     width: '100%',
@@ -685,9 +694,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   directSignBtnTitle: {
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '700',
+    ...BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
     fontFamily: 'SF Pro Rounded',
   },
   directSignBtn: {
@@ -729,7 +736,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   fullWidthButton: {
     flex: 1,
-    paddingBottom: 58,
+    height: BOTTOM_BUTTON_SINGLE_HEIGHT,
   },
   gasPreContainer: {
     paddingHorizontal: 8,

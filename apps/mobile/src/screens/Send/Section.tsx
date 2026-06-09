@@ -1,73 +1,135 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, TouchableOpacity, useWindowDimensions } from 'react-native';
-import { Skeleton, Slider } from '@rneui/themed';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { View, TouchableOpacity } from 'react-native';
+import { Skeleton } from '@rneui/themed';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import {
   apiSendToken,
   useInputBlurOnEvents,
-  useSendTokenInternalContext,
+  useSendTokenFormValuesSelector,
+  useSendTokenInternalSelector,
+  useSendTokenInternalShallowSelector,
+  useSendTokenScreenChainToken,
+  useSendTokenScreenStateSelector,
+  useSendTokenScreenStateShallowSelector,
 } from './hooks/useSendToken';
 import { useTranslation } from 'react-i18next';
 import { MINIMUM_GAS_LIMIT } from '@/constant/gas';
-import { GasLevelType } from '@/components/ReserveGasPopup';
-import { SendReserveGasPopup } from './components/SendReserveGasPopup';
-import { checkIfTokenBalanceEnough } from '@/utils/token';
+import { checkIfTokenBalanceEnough, getTokenSymbol } from '@/utils/token';
 import { noop } from 'lodash';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-} from 'react-native-reanimated';
-import { TokenAmountInput } from '@/components/Token/TokenAmountInput';
 import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { IS_ANDROID } from '@/core/native/utils';
-import { BubbleWithText } from '@/screens/Swap/components/Slider';
 import { tokenAmountBn } from '../Swap/utils';
 import BigNumber from 'bignumber.js';
 import usePrevious from 'react-use/lib/usePrevious';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { Text, TextInput } from '@/components/Typography';
+import {
+  SendAmountInput as SendAmountInputControl,
+  SendAmountInputMode,
+} from './components/SendAmountInput';
+import {
+  formatLittleNumber,
+  formatSpeicalAmount,
+  formatTokenAmountInput,
+} from '@/utils/number';
 
-export function BalanceSection({
-  style,
-  disableItemCheck,
-}: RNViewProps & {
-  disableItemCheck?: ITokenCheck;
-}) {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
+const USD_INPUT_REGEX = /^\d*(\.\d{0,2})?$/;
+const TOKEN_INPUT_REGEX = /^\d*(\.\d*)?$/;
 
-  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
-  });
-  const {
-    screenState,
+function getSendAmountTokenKey(token?: { chain?: string; id?: string } | null) {
+  return token ? `${token.chain}:${token.id}` : '';
+}
 
-    slider,
-    formValues,
-    directSignBtnRef,
-    computed: { chainItem, currentToken, currentTokenBalance },
+function isValidUsdPrice(price?: number | string | null) {
+  const bn = new BigNumber(price || 0);
+  return bn.isFinite() && !bn.isNaN() && bn.gt(0);
+}
 
-    callbacks: {
-      handleGasLevelChanged,
-      handleFieldChange,
-      handleClickMaxButton,
-      checkCexSupport,
-      onChangeSlider,
-      setSlider,
-      // isAuthInProgress,
-    },
-  } = useSendTokenInternalContext();
+function getSafeAmountBn(amount?: string | number | BigNumber | null) {
+  const bn = new BigNumber(amount || 0);
+  return bn.isFinite() && !bn.isNaN() ? bn : new BigNumber(0);
+}
 
-  const amountInputRef = useRef<TextInput>(null);
-  useInputBlurOnEvents(amountInputRef);
+function formatFixedUsdAmountText(value: BigNumber) {
+  const fixedValue = value.toFixed(2);
+  const [intPart, decimalPart] = fixedValue.split('.');
+  const sign = intPart.startsWith('-') ? '-' : '';
+  const absIntPart = sign ? intPart.slice(1) : intPart;
+  const groupedIntPart = absIntPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  return `${sign}${groupedIntPart}.${decimalPart || '00'}`;
+}
+
+function formatUsdQuoteValueText(value: string | number | BigNumber) {
+  const bn = getSafeAmountBn(value);
+
+  if (bn.isZero()) {
+    return '0';
+  }
+  if (bn.gt(0) && bn.lt(0.01)) {
+    return '<0.01';
+  }
+
+  return formatFixedUsdAmountText(bn);
+}
+
+function formatTokenQuoteValueText(value: string | number | BigNumber) {
+  const bn = getSafeAmountBn(value);
+
+  if (bn.isZero()) {
+    return '0';
+  }
+
+  const displayBn = bn.decimalPlaces(6);
+  if (displayBn.isZero()) {
+    return formatLittleNumber(bn.toFixed());
+  }
+
+  const displayValue = displayBn.toFixed();
+  const [intPart, displayDecimalPart] = displayValue.split('.');
+  const sign = intPart.startsWith('-') ? '-' : '';
+  const absIntPart = sign ? intPart.slice(1) : intPart;
+  const groupedIntPart = absIntPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  return displayDecimalPart
+    ? `${sign}${groupedIntPart}.${displayDecimalPart}`
+    : `${sign}${groupedIntPart}`;
+}
+
+function formatUsdInputValueFromTokenAmount(
+  tokenAmount: string,
+  price: number,
+) {
+  if (!tokenAmount || !isValidUsdPrice(price)) {
+    return '';
+  }
+
+  const usdValue = new BigNumber(tokenAmount).times(price);
+  if (!usdValue.isFinite() || usdValue.isNaN()) {
+    return '';
+  }
+
+  return usdValue.decimalPlaces(2, BigNumber.ROUND_DOWN).toFixed();
+}
+
+const SyncSelectedGasLevel = React.memo(function SyncSelectedGasLevel() {
+  const gasList = useSendTokenScreenStateSelector(state => state.gasList);
+  const { currentToken } = useSendTokenInternalShallowSelector(ctx => ({
+    currentToken: ctx.computed.currentToken,
+  }));
 
   useEffect(() => {
-    if (currentToken && screenState.gasList) {
+    if (currentToken && gasList) {
       const result = checkIfTokenBalanceEnough(currentToken, {
-        gasList: screenState.gasList,
+        gasList,
         gasLimit: MINIMUM_GAS_LIMIT,
       });
 
@@ -79,161 +141,435 @@ export function BalanceSection({
         apiSendToken.putScreenState({ selectedGasLevel: result.customLevel });
       }
     }
-  }, [currentToken, screenState.gasList]);
+  }, [currentToken, gasList]);
 
-  const showBubble = useSharedValue(false);
+  return null;
+});
 
-  const { width } = useWindowDimensions();
+const BalanceHeader = React.memo(function BalanceHeader() {
+  const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
 
-  const onSlidingStart = useCallback(() => {
-    showBubble.value = true;
-  }, [showBubble]);
+  const { handleClickMaxButton, currentTokenBalance } =
+    useSendTokenInternalShallowSelector(ctx => ({
+      handleClickMaxButton: ctx.callbacks.handleClickMaxButton,
+      currentTokenBalance: ctx.computed.currentTokenBalance,
+    }));
+  const {
+    balanceError,
+    balanceWarn,
+    isLoading,
+    showBalanceLoading,
+    showGasReserved,
+  } = useSendTokenScreenStateShallowSelector(state => ({
+    balanceError: state.balanceError,
+    balanceWarn: state.balanceWarn,
+    isLoading: state.isLoading,
+    showBalanceLoading: state.showBalanceLoading,
+    showGasReserved: state.showGasReserved,
+  }));
 
-  const sliderStyle = useAnimatedStyle(
-    () => ({
-      opacity: showBubble.value ? 1 : 0,
-      display: showBubble.value ? 'flex' : 'none',
-      position: 'absolute',
-      top: IS_ANDROID ? -72 : -60,
-      left: 0,
-      height: 70,
-      width,
-      transform: [
-        {
-          translateX: 0 - width / 2 + (IS_ANDROID ? 7 : 6),
-        },
-      ],
-    }),
-    [width],
+  return (
+    <View style={styles.titleSection}>
+      <Text style={styles.sectionTitle}>{t('page.sendToken.newAmount')}</Text>
+      <TouchableOpacity
+        style={styles.balanceArea}
+        onPress={isLoading ? noop : handleClickMaxButton}>
+        {showBalanceLoading ? (
+          <Skeleton style={{ width: 100, height: 16 }} />
+        ) : (
+          <>
+            {!showGasReserved && (balanceError || balanceWarn) ? (
+              <Text style={[styles.issueText]}>
+                {balanceError ? (
+                  <>
+                    {balanceError}: {currentTokenBalance}
+                  </>
+                ) : balanceWarn ? (
+                  <>{balanceWarn}</>
+                ) : null}
+              </Text>
+            ) : (
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={styles.balanceText}>
+                {t('page.sendToken.sectionBalance.title')}:{' '}
+                {currentTokenBalance}
+              </Text>
+            )}
+          </>
+        )}
+      </TouchableOpacity>
+    </View>
+  );
+});
+
+const SendAmountInputSection = React.memo(function SendAmountInputSection() {
+  const amount = useSendTokenFormValuesSelector(values => values.amount);
+  const {
+    chainItem,
+    checkCexSupport,
+    currentToken,
+    directSignBtnRef,
+    disableItemCheck,
+    handleClickMaxButton,
+    handleFieldChange,
+    setSlider,
+  } = useSendTokenInternalShallowSelector(ctx => ({
+    chainItem: ctx.computed.chainItem,
+    checkCexSupport: ctx.callbacks.checkCexSupport,
+    currentToken: ctx.computed.currentToken,
+    directSignBtnRef: ctx.directSignBtnRef,
+    disableItemCheck: ctx.fns.disableItemCheck,
+    handleClickMaxButton: ctx.callbacks.handleClickMaxButton,
+    handleFieldChange: ctx.callbacks.handleFieldChange,
+    setSlider: ctx.callbacks.setSlider,
+  }));
+  const isEstimatingGas = useSendTokenScreenStateSelector(
+    state => state.isEstimatingGas,
   );
 
-  const onAfterChangeSlider = useCallback(
-    (v: number) => {
-      onChangeSlider?.(v, true);
-      showBubble.value = false;
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
+  const amountInputRef = useRef<TextInput>(null);
+  useInputBlurOnEvents(amountInputRef);
+  const [inputMode, setInputMode] = useState<SendAmountInputMode>('token');
+  const [usdInputValue, setUsdInputValue] = useState('');
+  const lastUsdInputTokenAmountRef = useRef('');
+  const [usdPriceSnapshot, setUsdPriceSnapshot] = useState<{
+    tokenKey: string;
+    price: number | null;
+  }>({
+    tokenKey: '',
+    price: null,
+  });
+
+  const currentTokenKey = useMemo(
+    () => getSendAmountTokenKey(currentToken),
+    [currentToken],
+  );
+  const amountInputHasValue = useMemo(() => {
+    if (inputMode === 'usd') {
+      return Boolean(usdInputValue || amount);
+    }
+
+    return Boolean(amount);
+  }, [amount, inputMode, usdInputValue]);
+
+  useEffect(() => {
+    setInputMode('token');
+    setUsdInputValue('');
+    lastUsdInputTokenAmountRef.current = '';
+  }, [currentTokenKey]);
+
+  useEffect(() => {
+    if (!currentToken) {
+      return;
+    }
+
+    const tokenKey = getSendAmountTokenKey(currentToken);
+    const nextPrice = isValidUsdPrice(currentToken.price)
+      ? Number(currentToken.price)
+      : null;
+
+    setUsdPriceSnapshot(prev => {
+      if (prev.tokenKey !== tokenKey) {
+        return {
+          tokenKey,
+          price: nextPrice,
+        };
+      }
+
+      if (amountInputHasValue) {
+        return prev;
+      }
+
+      if (prev.price !== nextPrice) {
+        return {
+          tokenKey,
+          price: nextPrice,
+        };
+      }
+
+      return prev;
+    });
+  }, [amountInputHasValue, currentToken]);
+
+  const activeUsdPrice = useMemo(() => {
+    if (
+      usdPriceSnapshot.tokenKey === currentTokenKey &&
+      isValidUsdPrice(usdPriceSnapshot.price)
+    ) {
+      return usdPriceSnapshot.price;
+    }
+
+    return null;
+  }, [currentTokenKey, usdPriceSnapshot]);
+
+  useEffect(() => {
+    if (!activeUsdPrice && inputMode === 'usd') {
+      setInputMode('token');
+      setUsdInputValue('');
+      lastUsdInputTokenAmountRef.current = '';
+    }
+  }, [activeUsdPrice, inputMode]);
+
+  const updateSliderByTokenAmount = useCallback(
+    (tokenAmount: string) => {
+      const safeTokenAmount = getSafeAmountBn(tokenAmount);
+      const sliderValue = tokenAmount
+        ? Number(
+            safeTokenAmount
+              .div(currentToken?.amount ? tokenAmountBn(currentToken) : 1)
+              .times(100)
+              .toFixed(0),
+          )
+        : 0;
+      setSlider(sliderValue < 0 ? 0 : sliderValue > 100 ? 100 : sliderValue);
     },
-    [onChangeSlider, showBubble],
+    [currentToken, setSlider],
   );
 
-  const handleAmountChange = useCallback<
-    React.ComponentProps<typeof TokenAmountInput>['onChange'] & object
-  >(
-    value => {
+  const handleTokenAmountChange = useCallback(
+    (value: string) => {
       if (directSignBtnRef.current?.isAuthInProgress()) return false;
       try {
-        handleFieldChange?.('amount', value);
-        const sliderValue = value
-          ? Number(
-              new BigNumber(value || 0)
-                .div(currentToken?.amount ? tokenAmountBn(currentToken) : 1)
-                .times(100)
-                .toFixed(0),
-            )
-          : 0;
-        setSlider(sliderValue < 0 ? 0 : sliderValue > 100 ? 100 : sliderValue);
+        const nextValue = formatTokenAmountInput(value, currentToken?.decimals);
+        if (!TOKEN_INPUT_REGEX.test(nextValue)) {
+          return false;
+        }
+
+        lastUsdInputTokenAmountRef.current = '';
+        handleFieldChange?.('amount', nextValue);
+        updateSliderByTokenAmount(nextValue);
       } catch (e) {
-        console.error('handleAmountChange error', e);
+        console.error('handleTokenAmountChange error', e);
       }
     },
-    [handleFieldChange, currentToken, setSlider, directSignBtnRef],
+    [
+      currentToken?.decimals,
+      directSignBtnRef,
+      handleFieldChange,
+      updateSliderByTokenAmount,
+    ],
+  );
+  const currentTokenDecimals = currentToken?.decimals;
+
+  const handleUsdAmountChange = useCallback(
+    (value: string) => {
+      if (directSignBtnRef.current?.isAuthInProgress()) return false;
+      if (!activeUsdPrice) return false;
+
+      try {
+        const nextValue = formatSpeicalAmount(value);
+        if (!USD_INPUT_REGEX.test(nextValue)) {
+          return false;
+        }
+
+        let tokenAmount = '';
+        if (nextValue && nextValue !== '.') {
+          const nextTokenAmount = new BigNumber(nextValue).div(activeUsdPrice);
+          if (nextTokenAmount.isFinite() && !nextTokenAmount.isNaN()) {
+            const tokenDecimals =
+              typeof currentTokenDecimals === 'number' &&
+              Number.isFinite(currentTokenDecimals) &&
+              currentTokenDecimals > 0
+                ? Math.floor(currentTokenDecimals)
+                : 0;
+            const normalizedTokenAmount = nextTokenAmount.decimalPlaces(
+              tokenDecimals,
+              BigNumber.ROUND_DOWN,
+            );
+
+            tokenAmount = normalizedTokenAmount.gt(0)
+              ? normalizedTokenAmount.toFixed()
+              : '';
+          }
+        }
+
+        setUsdInputValue(nextValue);
+        lastUsdInputTokenAmountRef.current = tokenAmount;
+        handleFieldChange?.('amount', tokenAmount);
+        updateSliderByTokenAmount(tokenAmount);
+      } catch (e) {
+        console.error('handleUsdAmountChange error', e);
+      }
+    },
+    [
+      activeUsdPrice,
+      currentTokenDecimals,
+      directSignBtnRef,
+      handleFieldChange,
+      updateSliderByTokenAmount,
+    ],
   );
 
-  const sliderDisable = useMemo(() => {
-    return screenState.isLoading || screenState.isEstimatingGas;
-  }, [screenState]);
+  useEffect(() => {
+    if (inputMode !== 'usd' || !activeUsdPrice) {
+      return;
+    }
+
+    const tokenAmount = amount || '';
+    if (lastUsdInputTokenAmountRef.current === tokenAmount) {
+      return;
+    }
+
+    setUsdInputValue(
+      formatUsdInputValueFromTokenAmount(tokenAmount, activeUsdPrice),
+    );
+  }, [activeUsdPrice, amount, inputMode]);
+
+  const handleAmountInputModeSwitch = useCallback(() => {
+    if (!activeUsdPrice) {
+      return;
+    }
+
+    if (directSignBtnRef.current?.isAuthInProgress()) {
+      return;
+    }
+
+    setUsdInputValue('');
+    lastUsdInputTokenAmountRef.current = '';
+    handleFieldChange?.('amount', '');
+    updateSliderByTokenAmount('');
+    setInputMode(prev => (prev === 'token' ? 'usd' : 'token'));
+  }, [
+    activeUsdPrice,
+    directSignBtnRef,
+    handleFieldChange,
+    updateSliderByTokenAmount,
+  ]);
 
   const previousAddress = usePrevious(currentAccount?.address);
   useEffect(() => {
     if (previousAddress && previousAddress !== currentAccount?.address) {
-      onChangeSlider(0, true);
+      setInputMode('token');
+      setUsdInputValue('');
+      lastUsdInputTokenAmountRef.current = '';
+      handleFieldChange?.('amount', '');
+      setSlider(0);
     }
-  }, [previousAddress, currentAccount?.address, onChangeSlider]);
+  }, [previousAddress, currentAccount?.address, handleFieldChange, setSlider]);
+
+  const normalizeAmountInputValue = useCallback(
+    (nextValue: string) => {
+      if (inputMode === 'usd') {
+        return formatTokenAmountInput(nextValue, 2);
+      }
+
+      return formatTokenAmountInput(nextValue, currentToken?.decimals);
+    },
+    [currentToken?.decimals, inputMode],
+  );
 
   if (!chainItem || !currentToken) {
     return null;
   }
 
+  const tokenSymbol = getTokenSymbol(currentToken);
+  const safeFormAmount = getSafeAmountBn(amount);
+  const amountInputValue = inputMode === 'usd' ? usdInputValue : amount;
+  const amountInputUnit = inputMode === 'usd' ? 'USD' : tokenSymbol;
+  const amountInputMaxDecimalPlaces =
+    inputMode === 'usd' ? 2 : currentToken.decimals;
+  const showQuote = !!activeUsdPrice;
+  const quoteValueText = activeUsdPrice
+    ? inputMode === 'usd'
+      ? formatTokenQuoteValueText(safeFormAmount)
+      : formatUsdQuoteValueText(safeFormAmount.times(activeUsdPrice))
+    : '';
+  const quoteUnit = activeUsdPrice
+    ? inputMode === 'usd'
+      ? tokenSymbol
+      : 'USD'
+    : '';
+  const handleAmountChange =
+    inputMode === 'usd' ? handleUsdAmountChange : handleTokenAmountChange;
+
   return (
-    <View style={style}>
-      <View style={styles.titleSection}>
-        <Text style={styles.sectionTitle}>{t('page.sendToken.newAmount')}</Text>
-        <TouchableOpacity
-          style={styles.balanceArea}
-          onPress={screenState.isLoading ? noop : handleClickMaxButton}>
-          {screenState.showBalanceLoading ? (
-            <Skeleton style={{ width: 100, height: 16 }} />
-          ) : (
-            <>
-              {!screenState.showGasReserved &&
-              (screenState.balanceError || screenState.balanceWarn) ? (
-                <Text style={[styles.issueText]}>
-                  {screenState.balanceError ? (
-                    <>
-                      {screenState.balanceError}: {currentTokenBalance}
-                    </>
-                  ) : screenState.balanceWarn ? (
-                    <>{screenState.balanceWarn}</>
-                  ) : null}
-                </Text>
-              ) : (
-                <Text
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  style={styles.balanceText}>
-                  {t('page.sendToken.sectionBalance.title')}:{' '}
-                  {currentTokenBalance}
-                </Text>
-              )}
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      <View>
-        {currentAccount && chainItem && (
-          <TokenAmountInput
-            ref={amountInputRef}
-            currentAccount={currentAccount}
-            value={formValues.amount}
-            onChange={handleAmountChange}
-            disableItemCheck={disableItemCheck}
-            chainId={chainItem.serverId}
-            token={currentToken}
-            isEstimatingGas={screenState.isEstimatingGas}
-            handleClickMaxButton={handleClickMaxButton}
-            onTokenChange={checkCexSupport}
-            inSufficient={new BigNumber(formValues.amount).gt(
-              new BigNumber(currentTokenBalance),
-            )}
-            inlinePrize
-            amountInputProps={makeTestIDProps(E2E_ID.send.amountInput)}
-            maxButtonProps={makeTestIDProps(E2E_ID.send.amountMax)}
-            tokenSelectProps={makeTestIDProps(E2E_ID.send.tokenSelector)}
-          />
-        )}
-      </View>
-
-      {/* <SendReserveGasPopup
-        selectedItem={screenState.selectedGasLevel?.level as GasLevelType}
-        chain={chainItem?.enum}
-        limit={Math.max(screenState.estimatedGas, MINIMUM_GAS_LIMIT)}
-        onGasChange={gasLevel => {
-          handleGasLevelChanged(gasLevel);
-        }}
-        gasList={screenState.gasList}
-        visible={screenState.reserveGasOpen}
-        rawHexBalance={currentToken.raw_amount_hex_str}
-        onClose={gasLevel => handleGasLevelChanged(gasLevel)}
-      /> */}
+    <View>
+      {currentAccount && chainItem && (
+        <SendAmountInputControl
+          ref={amountInputRef}
+          currentAccount={currentAccount}
+          value={amountInputValue}
+          unit={amountInputUnit}
+          quoteValueText={quoteValueText}
+          quoteUnit={quoteUnit}
+          showQuote={showQuote}
+          maxDecimalPlaces={amountInputMaxDecimalPlaces}
+          normalizeInputValue={normalizeAmountInputValue}
+          onChange={handleAmountChange}
+          canSwitchMode={!!activeUsdPrice}
+          onSwitchMode={handleAmountInputModeSwitch}
+          disableItemCheck={disableItemCheck as ITokenCheck}
+          token={currentToken}
+          isEstimatingGas={isEstimatingGas}
+          handleClickMaxButton={handleClickMaxButton}
+          onTokenChange={checkCexSupport}
+          amountInputProps={makeTestIDProps(E2E_ID.send.amountInput)}
+          maxButtonProps={makeTestIDProps(E2E_ID.send.amountMax)}
+          tokenSelectProps={makeTestIDProps(E2E_ID.send.tokenSelector)}
+        />
+      )}
     </View>
   );
-}
+});
+
+export const BalanceSection = React.memo(function BalanceSection({
+  style,
+}: RNViewProps) {
+  const initialTokenIdentityReady = useSendTokenScreenStateSelector(
+    state => state.initialTokenIdentityReady,
+  );
+  const { chainItem: screenChainItem, currentToken: screenCurrentToken } =
+    useSendTokenScreenChainToken();
+  const { chainItem: internalChainItem, currentToken: internalCurrentToken } =
+    useSendTokenInternalShallowSelector(ctx => ({
+      chainItem: ctx.computed.chainItem,
+      currentToken: ctx.computed.currentToken,
+    }));
+  const hasRenderedSyncedInitialTokenRef = useRef(false);
+
+  const isReady = !!internalChainItem && !!internalCurrentToken;
+  const isInitialTokenSynced =
+    !!screenChainItem &&
+    !!screenCurrentToken &&
+    !!internalChainItem &&
+    !!internalCurrentToken &&
+    screenChainItem.serverId === internalChainItem.serverId &&
+    getSendAmountTokenKey(screenCurrentToken).toLowerCase() ===
+      getSendAmountTokenKey(internalCurrentToken).toLowerCase();
+
+  if (initialTokenIdentityReady && isInitialTokenSynced) {
+    hasRenderedSyncedInitialTokenRef.current = true;
+  }
+
+  if (
+    !initialTokenIdentityReady ||
+    !isReady ||
+    !hasRenderedSyncedInitialTokenRef.current
+  ) {
+    return null;
+  }
+
+  return (
+    <View style={style}>
+      <SyncSelectedGasLevel />
+      <BalanceHeader />
+      <SendAmountInputSection />
+    </View>
+  );
+});
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     sectionTitle: {
       color: colors2024['neutral-title-1'],
-      fontSize: 17,
+      fontSize: 15,
+      lineHeight: 18,
       fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
     },
@@ -256,8 +592,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      height: 26,
-      marginBottom: 12,
+      height: 18,
+      marginBottom: 8,
+      paddingHorizontal: 8,
     },
 
     balanceArea: {

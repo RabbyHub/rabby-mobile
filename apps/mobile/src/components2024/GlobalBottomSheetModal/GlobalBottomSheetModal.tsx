@@ -215,8 +215,15 @@ export const GlobalBottomSheetModal2024 = () => {
 
   useHandleBackPressClosable(
     React.useCallback(() => {
-      return !modalsToPreventBack.length;
-    }, [modalsToPreventBack]),
+      if (modalsToPreventBack.length > 0) {
+        const lastModal = modals[modals.length - 1];
+        if (lastModal) {
+          modalRefs.current[lastModal.id]?.current?.close();
+        }
+        return false;
+      }
+      return true;
+    }, [modalsToPreventBack, modals]),
     { autoEffectEnabled: !!modalsToPreventBack.length },
   );
 

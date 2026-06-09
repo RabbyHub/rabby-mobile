@@ -1,11 +1,18 @@
 import React, { FC, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, TouchableOpacity } from 'react-native';
-import RcIconSwitchBtn from '@/assets2024/icons/bridge/IconSwitchBtn.svg';
-import RcIconSwitchBtnDark from '@/assets2024/icons/bridge/IconSwitchBtnDark.svg';
-import RcIconSwitchBtnPressing from '@/assets2024/icons/bridge/IconSwitchBtnPress.svg';
+import {
+  Animated,
+  Easing,
+  GestureResponderEvent,
+  StyleSheet,
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from 'react-native';
+import RcIconSwitchBtn from '@/assets2024/icons/bridge/IconSwitchBtnNew.svg';
+import RcIconSwitchBtnDark from '@/assets2024/icons/bridge/IconSwitchBtnNewDark.svg';
 import SwapLoadingPng from '@/assets2024/images/swap/loading.png';
 import { useTheme2024 } from '@/hooks/theme';
-import { GestureResponderEvent, TouchableOpacityProps } from 'react-native';
+
+const BUTTON_SIZE = 36;
 
 interface BridgeSwitchBtnProps extends TouchableOpacityProps {
   onPress?: (event?: GestureResponderEvent) => void;
@@ -15,6 +22,7 @@ interface BridgeSwitchBtnProps extends TouchableOpacityProps {
 const BridgeSwitchBtn: FC<BridgeSwitchBtnProps> = ({
   onPress,
   loading,
+  style,
   ...others
 }) => {
   const [isPressed, setIsPressed] = useState(false);
@@ -39,13 +47,20 @@ const BridgeSwitchBtn: FC<BridgeSwitchBtnProps> = ({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       onPress={handlePress}
+      style={[styles.button, style]}
       {...others}>
-      {isPressed ? (
-        <RcIconSwitchBtnPressing />
-      ) : !isLight ? (
-        <RcIconSwitchBtnDark />
+      {isLight ? (
+        <RcIconSwitchBtn
+          width={BUTTON_SIZE}
+          height={BUTTON_SIZE}
+          color={colors2024['neutral-bg-3']}
+        />
       ) : (
-        <RcIconSwitchBtn color={colors2024['neutral-bg-3']} />
+        <RcIconSwitchBtnDark
+          width={BUTTON_SIZE}
+          height={BUTTON_SIZE}
+          color={colors2024['neutral-bg-3']}
+        />
       )}
 
       {loading && <Loading />}
@@ -103,5 +118,20 @@ export function Loading() {
     />
   );
 }
+
+const styles = StyleSheet.create({
+  button: {
+    width: BUTTON_SIZE,
+    height: BUTTON_SIZE,
+  },
+  swapButton: {
+    width: BUTTON_SIZE,
+    height: BUTTON_SIZE,
+    borderRadius: BUTTON_SIZE / 2,
+    borderWidth: 0.7,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 export default BridgeSwitchBtn;

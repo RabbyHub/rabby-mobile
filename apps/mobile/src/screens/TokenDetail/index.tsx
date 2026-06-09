@@ -5,7 +5,7 @@ import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
-import { useRequest } from 'ahooks';
+import { useDebounceFn, useRequest } from 'ahooks';
 import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -25,7 +25,12 @@ import { TokenDetailHistoryList } from './components/HistoryList';
 import { isFromBackAtom } from '../Swap/hooks/atom';
 import BalanceOverview from './components/BalanceOverview';
 import { useSingleTokenBalance } from './hook';
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  RootNames,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { navigateDeprecated } from '@/utils/navigation';
 import { RightMore } from './components/RightMore';
 import { useSetAtom } from 'jotai';
@@ -112,28 +117,56 @@ const TokenDetailContent = () => {
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
-  const { data: baseTokenInfo, refreshAsync: refreshBaseTokenInfo } =
-    useRequest(
-      async () => {
-        const res = await openapi.getToken(
-          effectiveAccount?.address!,
-          token.chain,
-          token.id,
-        );
-        // TODO: 通过 store 写 db
-        patchSingleToken(effectiveAccount?.address!, res);
-        return {
-          ...token,
-          amount: res?.amount,
-          price_24h_change: res?.price_24h_change,
-          usd_value: res?.usd_value,
-          price: res?.price,
-        } as ITokenItem;
-      },
-      {
-        refreshDeps: [token.chain, token.id, effectiveAccount?.address],
-      },
+  const fetchBaseTokenInfo = useCallback(async () => {
+    const res = await openapi.getToken(
+      effectiveAccount?.address!,
+      token.chain,
+      token.id,
     );
+    patchSingleToken(effectiveAccount?.address!, res);
+
+    return {
+      ...token,
+      amount: res?.amount,
+      price_24h_change: res?.price_24h_change,
+      usd_value: res?.usd_value,
+      price: res?.price,
+    } as ITokenItem;
+  }, [effectiveAccount?.address, token]);
+
+  const { data: baseTokenInfo, refreshAsync: refreshBaseTokenInfo } =
+    useRequest(fetchBaseTokenInfo, {
+      manual: true,
+    });
+
+  const {
+    run: runDebouncedRefreshBaseTokenInfo,
+    cancel: cancelDebouncedRefreshBaseTokenInfo,
+  } = useDebounceFn(
+    () => {
+      if (!effectiveAccount?.address) {
+        return;
+      }
+      return refreshBaseTokenInfo();
+    },
+    { wait: 200 },
+  );
+
+  useEffect(() => {
+    if (effectiveAccount?.address) {
+      runDebouncedRefreshBaseTokenInfo();
+    }
+
+    return () => {
+      cancelDebouncedRefreshBaseTokenInfo();
+    };
+  }, [
+    cancelDebouncedRefreshBaseTokenInfo,
+    effectiveAccount?.address,
+    runDebouncedRefreshBaseTokenInfo,
+    token.chain,
+    token.id,
+  ]);
 
   const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
 
@@ -184,11 +217,21 @@ const TokenDetailContent = () => {
 
   useFocusEffect(
     useCallback(() => {
+      if (effectiveAccount?.address) {
+        runDebouncedRefreshBaseTokenInfo();
+      }
+
       return () => {
+        cancelDebouncedRefreshBaseTokenInfo();
         // 页面失焦（返回/左滑/点击返回按钮）时统一副作用
         setIsFromBack(true);
       };
-    }, [setIsFromBack]),
+    }, [
+      cancelDebouncedRefreshBaseTokenInfo,
+      effectiveAccount?.address,
+      runDebouncedRefreshBaseTokenInfo,
+      setIsFromBack,
+    ]),
   );
 
   React.useEffect(() => {
@@ -219,7 +262,7 @@ const TokenDetailContent = () => {
       <View style={styles.balanceOverviewContainer}>
         <AccountSwitcher forScene="TokenDetail" disableSwitch={false} />
         <View style={styles.balanceOverviewContent}>
-          <BalanceOverview usdValue={usdValue} amount={amountSum} />
+          <BalanceOverview usdValue={usdValue} amount={amountSum || 0} />
           {!baseTokenInfo ? null : (
             <Pressable
               style={[
@@ -425,7 +468,8 @@ export const TokenDetailScreen = () => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+const getStyle = createGetStyles2024(ctx => {
+  const { colors2024, isLight, safeAreaInsets } = ctx;
   return {
     rootScreenContainer: {
       backgroundColor: isLight
@@ -462,7 +506,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     bottomContainer: {
       width: '100%',
-      height: 116,
+      height:
+        BOTTOM_BUTTON_TOP_OFFSET +
+        BOTTOM_BUTTON_DOUBLE_HEIGHT +
+        getBottomButtonBottomOffset(safeAreaInsets.bottom),
       backgroundColor: colors2024['neutral-bg-1'],
       position: 'absolute',
       bottom: 0,
@@ -597,11 +644,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       marginTop: 0,
       justifyContent: 'space-between',
       alignItems: 'center',
-    },
-    historyHeaderTop: {
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-0']
-        : colors2024['neutral-bg-1'],
     },
   };
 });

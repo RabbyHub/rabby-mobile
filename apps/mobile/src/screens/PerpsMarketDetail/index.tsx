@@ -43,19 +43,21 @@ import { usePerpsPopupState } from '../Perps/hooks/usePerpsPopupState';
 
 import Toast from 'react-native-root-toast';
 import { naviReplace } from '@/utils/navigation';
-import { RootNames } from '@/constant/layout';
+import { RootNames, getBottomButtonBottomOffset } from '@/constant/layout';
 import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
+import { PerpsLimitOrdersForCoin } from './components/PerpsLimitOrdersForCoin';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import { showToast } from '@/hooks/perps/showToast';
 import { PerpsAgentsLimitModal } from '../Perps/components/PerpsAgentsLimitModal';
 import { PerpsPositionSkeletonLoader } from '../Perps/components/PerpsSkeletonLoader';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 import { stats } from '@/utils/stats';
-import { getStatsReportSide } from '@/utils/perps';
+import { getStatsReportSide, isLimitOrder } from '@/utils/perps';
 import { APP_VERSIONS } from '@/constant';
 import { Text } from '@/components/Typography';
 import { PerpsGuideEntryPopup } from './components/PerpsGuideEntryPopup';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
+import { withWalletUnlock } from '@/utils/walletUnlockGuard';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -148,20 +150,20 @@ export const PerpsMarketDetailScreen = () => {
     return unsubscribe;
   }, [navigation, fromSource]);
 
-  useEffect(() => {
-    const needDepositFirst =
-      Number(accountValue) === 0 && Number(availableBalance) === 0;
-    const isLocalWallet =
-      currentPerpsAccount?.type === KEYRING_CLASS.PRIVATE_KEY ||
-      currentPerpsAccount?.type === KEYRING_CLASS.MNEMONIC;
-    if (isLocalWallet && !needDepositFirst) {
-      // deposit first before approve agent
-      handleActionApproveStatus({
-        isHideToast: true,
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // useEffect(() => {
+  //   const needDepositFirst =
+  //     Number(accountValue) === 0 && Number(availableBalance) === 0;
+  //   const isLocalWallet =
+  //     currentPerpsAccount?.type === KEYRING_CLASS.PRIVATE_KEY ||
+  //     currentPerpsAccount?.type === KEYRING_CLASS.MNEMONIC;
+  //   if (isLocalWallet && !needDepositFirst) {
+  //     // deposit first before approve agent
+  //     handleActionApproveStatus({
+  //       isHideToast: true,
+  //     });
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
 
   const { activeAssetCtx, activeAssetData } = useActiveAssetSubscription(coin);
 
@@ -280,6 +282,10 @@ export const PerpsMarketDetailScreen = () => {
     return !!currentPosition;
   }, [currentPosition]);
 
+  const hasLimitOrders = perpsStore(s =>
+    (s.openOrders || []).some(o => o.coin === coin && isLimitOrder(o)),
+  );
+
   const { accountValue, isUnifiedAccount, getAvailableByAsset } =
     usePerpsAccount();
 
@@ -333,12 +339,28 @@ export const PerpsMarketDetailScreen = () => {
     needEnableUnifiedAccount,
   ]);
 
-  const [openPositionVisible, setOpenPositionVisible] = React.useState(
-    fromSource === 'openPosition' && canOpenPosition,
-  );
+  const [openPositionVisible, setOpenPositionVisible] = React.useState(false);
   const [isShowSwapPopup, setIsShowSwapPopup] = useState(false);
   const [isShowEnableUnifiedPopup, setIsShowEnableUnifiedPopup] =
     useState(false);
+
+  const initAutoOpenPositionRef = useRef(false);
+  useEffect(() => {
+    const autoOpenPosition = async () => {
+      try {
+        if (initAutoOpenPositionRef.current) {
+          return;
+        }
+        initAutoOpenPositionRef.current = true;
+        const isAutoOpen = fromSource === 'openPosition' && !!canOpenPosition;
+        if (isAutoOpen) {
+          await handleActionApproveStatus();
+          setOpenPositionVisible(true);
+        }
+      } catch (e) {}
+    };
+    autoOpenPosition();
+  }, [fromSource, canOpenPosition, handleActionApproveStatus]);
 
   const handleSwapPress = useCallback(async () => {
     await handleActionApproveStatus();
@@ -460,7 +482,7 @@ export const PerpsMarketDetailScreen = () => {
 
   return (
     <>
-      <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
+      <NormalScreenContainer2024 type={'bg1'}>
         {!hasPermission ? <PerpsRegionAlert /> : null}
         <ScrollView
           style={styles.container}
@@ -489,6 +511,13 @@ export const PerpsMarketDetailScreen = () => {
               />
             ) : null}
           </View>
+          {!hasPosition && (
+            <PerpsLimitOrdersForCoin
+              coin={coin}
+              leverage={activeAssetData?.leverage ?? null}
+              handleActionApproveStatus={handleActionApproveStatus}
+            />
+          )}
           {!isInitialized ? (
             <PerpsPositionSkeletonLoader />
           ) : (
@@ -522,14 +551,21 @@ export const PerpsMarketDetailScreen = () => {
               handleUpdateMargin={handleUpdateMargin}
             />
           )}
-          {!hasPosition && <PerpsAbout coin={coin} />}
+          {hasPosition && (
+            <PerpsLimitOrdersForCoin
+              coin={coin}
+              leverage={currentPosition?.position.leverage ?? null}
+              handleActionApproveStatus={handleActionApproveStatus}
+            />
+          )}
+          {!hasPosition && !hasLimitOrders && <PerpsAbout coin={coin} />}
           <PerpsInfo market={currentAssetCtx} activeAssetCtx={activeAssetCtx} />
 
           <PerpsHistorySection
             coin={coin}
             historyList={singleCoinHistoryList}
           />
-          {hasPosition && <PerpsAbout coin={coin} />}
+          {(hasPosition || hasLimitOrders) && <PerpsAbout coin={coin} />}
         </ScrollView>
         {isLogin ? (
           <PerpsFooter
@@ -797,25 +833,28 @@ export const PerpsMarketDetailScreen = () => {
   );
 };
 
-const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
-  container: {
-    flex: 1,
-    height: '100%',
-    paddingHorizontal: 12,
-    position: 'relative',
-  },
-  scrollContent: {
-    paddingBottom: 56,
-  },
-  header: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 12,
-    marginBottom: 30,
-  },
-  chart: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    height: 322,
-    borderRadius: 20,
-  },
-}));
+const getStyles = createGetStyles2024(ctx => {
+  const { colors2024, isLight, safeAreaInsets } = ctx;
+  return {
+    container: {
+      flex: 1,
+      height: '100%',
+      paddingHorizontal: 12,
+      position: 'relative',
+    },
+    scrollContent: {
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+    },
+    header: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12,
+      marginBottom: 30,
+    },
+    chart: {
+      backgroundColor: colors2024['neutral-bg-1'],
+      height: 322,
+      borderRadius: 20,
+    },
+  };
+});

@@ -22,6 +22,7 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import {
   ExplainTxResponse,
+  GasAccountCheckResult,
   GasLevel,
   ParseTxResponse,
   Tx,
@@ -53,6 +54,7 @@ import { normalizeTxParams } from '../SignTx/util';
 import { GasSelectorResponse } from '../TxComponents/GasSelector/GasSelectorHeader';
 import { SignMainnetGasSelectorHeader } from '../TxComponents/GasSelector/SignMainnetGasSelectorHeader';
 import { useEffectiveApprovalGasMethod } from '../TxComponents/GasSelector/useEffectiveApprovalGasMethod';
+import type { ApprovalGasMethod } from '../TxComponents/GasSelector/approvalGasDisplay';
 import { MiniFooterBar } from './MiniFooterBar';
 import { MiniWaiting } from './MiniWaiting';
 import { calcGasLimit } from '@/core/apis/transactions';
@@ -378,6 +380,9 @@ export const MiniSignTx = ({
   }, [currentAccountType, t]);
 
   const [noCustomRPC, setNoCustomRPC] = useState(true);
+  const [manualGasMethod, setManualGasMethod] = useState<
+    ApprovalGasMethod | undefined
+  >(undefined);
 
   const gasAccountTxs = useMemo(() => {
     if (!selectedGas?.price) {
@@ -399,6 +404,7 @@ export const MiniSignTx = ({
     gasMethod,
     setGasMethod,
     gasAccountCanPay,
+    canUseGasAccount,
     canGotoUseGasAccount,
     canDepositUseGasAccount,
     gasAccountCostFn,
@@ -412,8 +418,43 @@ export const MiniSignTx = ({
     isSupportedAddr,
     currentAccount,
   });
-  const gasAccountChainSupported =
-    !!gasAccountCost && !gasAccountCost.chain_not_support;
+  const gasMethodScopeKey = useMemo(
+    () =>
+      [
+        chainId,
+        currentAccount.address,
+        currentAccount.type,
+        txs
+          .map(
+            tx =>
+              `${tx.from || ''}:${tx.to || ''}:${tx.value || ''}:${
+                tx.data || ''
+              }`,
+          )
+          .join('|'),
+      ].join('|'),
+    [chainId, currentAccount.address, currentAccount.type, txs],
+  );
+
+  useEffect(() => {
+    setManualGasMethod(undefined);
+  }, [gasMethodScopeKey]);
+
+  const effectiveGasMethod = manualGasMethod ?? gasMethod;
+  const effectiveGasAccountCanPay =
+    effectiveGasMethod === 'gasAccount' && gasAccountCanPay;
+  const gasAccountChainSupported = !!canUseGasAccount;
+  const handleAutoChangeGasMethod = useMemoizedFn(
+    (method: ApprovalGasMethod) => {
+      setGasMethod(method);
+    },
+  );
+  const handleManualChangeGasMethod = useMemoizedFn(
+    (method: ApprovalGasMethod) => {
+      setManualGasMethod(method);
+      setGasMethod(method);
+    },
+  );
   useEffectiveApprovalGasMethod({
     isReady,
     isFirstGasLessLoading,
@@ -421,8 +462,10 @@ export const MiniSignTx = ({
     gasAccountChainSupported,
     noCustomRPC,
     canUseGasLess: !!canUseGasLess,
+    manualGasMethod,
     gasMethod,
-    setGasMethod,
+    setGasMethod: handleAutoChangeGasMethod,
+    autoSwitchKey: gasMethodScopeKey,
   });
 
   useEffect(() => {
@@ -478,8 +521,8 @@ export const MiniSignTx = ({
           options: {
             chainServerId: chain.serverId,
             gasLevel: selectedGas || undefined,
-            isGasLess: gasMethod === 'native' ? useGasLess : false,
-            isGasAccount: gasAccountCanPay,
+            isGasLess: effectiveGasMethod === 'native' ? useGasLess : false,
+            isGasAccount: effectiveGasAccountCanPay,
             waitCompleted: false,
             pushType: pushInfo.type,
             ignoreGasCheck: true,
@@ -506,7 +549,8 @@ export const MiniSignTx = ({
     useGasLess,
     pushInfo.type,
     handleInitTask,
-    gasAccountCanPay,
+    effectiveGasAccountCanPay,
+    effectiveGasMethod,
   ]);
 
   const handleAllow = useMemoizedFn(async () => {
@@ -803,7 +847,7 @@ export const MiniSignTx = ({
     (
       gas: GasSelectorResponse,
       type?: 'gasAccount' | 'native',
-    ): Promise<[boolean, number]> => {
+    ): Promise<[boolean, number, GasAccountCheckResult?]> => {
       if (!isReady || !initdTxs.length) {
         return Promise.resolve([true, 0]);
       }
@@ -893,6 +937,7 @@ export const MiniSignTx = ({
               !gasAccountRes.balance_is_enough,
               (gasAccountRes.gas_account_cost.estimate_tx_cost || 0) +
                 (gasAccountRes.gas_account_cost?.gas_cost || 0),
+              gasAccountRes,
             ];
           });
       });
@@ -1102,25 +1147,29 @@ export const MiniSignTx = ({
         },
       >(
         items: T[],
+        nextTxs: Tx[],
       ) => {
-        const nextTxs = buildTopUpResumedTxs({
-          txs: items.map(item => item.tx),
-          originalAccountAddress: currentAccount.address,
-          originalChainServerId: chain.serverId,
-          topUpResult: result,
-        });
-
         return items.map((item, index) => ({
           ...item,
-          tx: nextTxs[index] || item.tx,
+          tx: {
+            ...item.tx,
+            nonce: nextTxs[index]?.nonce ?? item.tx.nonce,
+          },
         }));
       };
 
-      setTxsResult(prev => patchCalcItems(prev));
-      setInitdTxs(prev => patchCalcItems(prev));
+      const resumedTxs = await buildTopUpResumedTxs({
+        txs: (txsResult.length ? txsResult : initdTxs).map(item => item.tx),
+        originalAccount: currentAccount,
+        originalChainServerId: chain.serverId,
+        topUpResult: result,
+      });
+
+      setTxsResult(prev => patchCalcItems(prev, resumedTxs));
+      setInitdTxs(prev => patchCalcItems(prev, resumedTxs));
       await gasAccountCostFn();
 
-      setGasMethod('gasAccount');
+      handleManualChangeGasMethod('gasAccount');
     },
   );
 
@@ -1210,13 +1259,16 @@ export const MiniSignTx = ({
             ) : null}
             <View style={styles.gasSelectorWrapper}>
               <SignMainnetGasSelectorHeader
+                showGasMethodShortcut
                 fixedMode
                 defaultFixedModeOnCurrentChain={fixedModeOnCurrentChain}
                 tx={txs[0]}
                 gasAccountCost={gasAccountCost}
                 noCustomRPC={noCustomRPC}
-                gasMethod={gasMethod}
-                onChangeGasMethod={setGasMethod}
+                gasMethod={effectiveGasMethod}
+                onChangeGasMethod={handleManualChangeGasMethod}
+                onAutoChangeGasMethod={handleAutoChangeGasMethod}
+                disableAutoGasLevelSwitch={!!manualGasMethod}
                 pushType={pushInfo.type}
                 isDisabledGasPopup={task.status !== 'idle'}
                 disabled={false}
@@ -1257,11 +1309,12 @@ export const MiniSignTx = ({
         }
         isSwap={isSwap}
         noCustomRPC={noCustomRPC}
-        gasMethod={gasMethod}
+        gasMethod={effectiveGasMethod}
         gasAccountCost={gasAccountCost}
         isFirstGasCostLoading={isFirstGasCostLoading}
         isFirstGasLessLoading={isFirstGasLessLoading}
-        gasAccountCanPay={gasAccountCanPay}
+        disableAutoGasAccountSwitch={!!manualGasMethod}
+        gasAccountCanPay={effectiveGasAccountCanPay}
         canGotoUseGasAccount={canGotoUseGasAccount}
         canDepositUseGasAccount={canDepositUseGasAccount}
         rejectApproval={onReject}
@@ -1275,7 +1328,9 @@ export const MiniSignTx = ({
         isWalletConnect={
           currentAccountType === KEYRING_TYPE.WalletConnectKeyring
         }
-        onChangeGasAccount={() => setGasMethod('gasAccount')}
+        onChangeGasAccount={() => {
+          handleManualChangeGasMethod('gasAccount');
+        }}
         isWatchAddr={currentAccountType === KEYRING_TYPE.WatchAddressKeyring}
         gasLessConfig={gasLessConfig}
         gasLessFailedReason={gasLessFailedReason}

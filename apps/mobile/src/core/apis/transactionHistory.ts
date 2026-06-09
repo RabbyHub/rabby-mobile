@@ -57,11 +57,17 @@ class ApisTransactionHistory {
     const { pendings } = await transactionHistoryService.getList(address);
 
     return pendings
-      .filter(item => new BigNumber(item.nonce).lt(recommendNonce))
+      .filter(
+        item =>
+          item.chainId === chainId &&
+          new BigNumber(item.nonce).lt(recommendNonce),
+      )
+      .sort((a, b) =>
+        new BigNumber(a.nonce).minus(new BigNumber(b.nonce)).toNumber(),
+      )
       .reduce((result, item) => {
         return result.concat(item.txs.map(tx => tx.rawTx));
       }, [] as Tx[])
-      .filter(item => item.chainId === chainId)
       .map(item => ({
         from: item.from,
         to: item.to,
@@ -129,6 +135,52 @@ class ApisTransactionHistory {
         item.action?.actionData.send &&
         item.$ctx?.ga?.source === 'sendToken',
     );
+  };
+
+  updateBridgeGasAccountTx = ({
+    address,
+    chainId,
+    hash,
+  }: {
+    address: string;
+    chainId?: number;
+    hash: string;
+  }) => {
+    if (!chainId) {
+      return;
+    }
+    const tx = transactionHistoryService.store.transactions.find(item => {
+      return (
+        isSameAddress(item.address, address) &&
+        item.chainId === chainId &&
+        item.hash === hash
+      );
+    });
+
+    if (tx) {
+      transactionHistoryService.updateTx({
+        ...tx,
+        isGasDeposit: true,
+      });
+    }
+  };
+
+  checkIsGasDepositTx = ({
+    chainId,
+    hash,
+  }: {
+    chainId?: number;
+    hash: string;
+  }) => {
+    if (!hash || !chainId) {
+      return false;
+    }
+
+    return !!transactionHistoryService.store.transactions.find(item => {
+      return (
+        item.chainId === chainId && item.hash === hash && item.isGasDeposit
+      );
+    });
   };
 }
 

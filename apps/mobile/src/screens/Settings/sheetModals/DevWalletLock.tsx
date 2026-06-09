@@ -25,6 +25,16 @@ import {
   NEED_DEVSETTINGBLOCKS,
 } from '@/constant';
 import { keyringService } from '@/core/services/shared';
+import {
+  setGenericPassword,
+  resetGenericPassword,
+  requestGenericPassword,
+  RequestGenericPurpose,
+  KEYCHAIN_AUTH_TYPES,
+  getAuthenticationType,
+  getAuthenticationTypeLabel,
+} from '@/core/apis/keychain';
+import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { Text } from '@/components/Typography';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
@@ -45,6 +55,20 @@ export function useWalletLockTestItemModalVisible() {
 }
 
 const RcIconCheckmark = makeThemeIconFromCC(RcIconCheckmarkCC, 'neutral-body');
+
+// Start with a resolved promise
+let alertChain = Promise.resolve();
+
+export const alertQueue = (title, message) => {
+  // Attach the next alert to the chain
+  alertChain = alertChain.then(() => {
+    return new Promise(resolve => {
+      Alert.alert(title, message, [{ text: 'OK', onPress: () => resolve() }], {
+        cancelable: false,
+      });
+    });
+  });
+};
 
 export default function WalletLockTestItemModal({
   onCancel,
@@ -80,7 +104,8 @@ export default function WalletLockTestItemModal({
   } = useManagePasswordOnSettings();
 
   const handleSetTestPassword = useCallback(async () => {
-    const result = await apisLock.debugSetUnlockedWalletPasswordToTestPassword();
+    const result =
+      await apisLock.debugSetUnlockedWalletPasswordToTestPassword();
     if (result.error) {
       toast.show(result.error);
       return { keepModalVisible: true };
@@ -168,6 +193,121 @@ export default function WalletLockTestItemModal({
           const keyringData =
             await keyringService.DEV_GET_UNENCRYPTED_KEYRING_DATA();
           Alert.alert('Unencrypted Keyring Data', JSON.stringify(keyringData));
+        },
+      },
+      {
+        label: 'Keychain Auth Playground',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          const currentType = getAuthenticationType();
+          const currentLabel = getAuthenticationTypeLabel();
+          const options: Array<{
+            label: string;
+            type: KEYCHAIN_AUTH_TYPES;
+            requiresPassword?: boolean;
+          }> = [
+            {
+              label: 'Biometrics (BIOMETRY_CURRENT_SET)',
+              type: KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+              requiresPassword: true,
+            },
+            {
+              label: 'Biometrics+Passcode (BIOMETRY_ANY_OR_DEVICE_PASSCODE)',
+              type: KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE,
+              requiresPassword: true,
+            },
+            {
+              label: 'Passcode only (DEVICE_PASSCODE)',
+              type: KEYCHAIN_AUTH_TYPES.PASSCODE,
+              requiresPassword: true,
+            },
+            {
+              label: 'Remember Me (no access control)',
+              type: KEYCHAIN_AUTH_TYPES.REMEMBER_ME,
+              requiresPassword: true,
+            },
+            {
+              label: 'Reset keychain entry',
+              type: KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD,
+            },
+          ];
+
+          Alert.alert(
+            'Keychain Auth Playground',
+            `Current: ${currentLabel} (${currentType})\n\nSelect an auth type to test:`,
+            [
+              ...options.map(opt => ({
+                text: opt.label,
+                onPress: async () => {
+                  if (!opt.requiresPassword) {
+                    await resetGenericPassword();
+                    Alert.alert('Reset', 'Keychain entry cleared');
+                    return;
+                  }
+                  AuthenticationModal.show({
+                    confirmText: 'Store',
+                    title: `Store password as ${opt.label}`,
+                    authType: ['password'],
+                    async onFinished({ getValidatedPassword }) {
+                      const password = getValidatedPassword();
+                      try {
+                        await setGenericPassword(password, opt.type);
+                        Alert.alert(
+                          'Success',
+                          `${opt.label} — stored successfully`,
+                        );
+                      } catch (e: any) {
+                        Alert.alert('Error', e?.message || String(e));
+                      }
+                    },
+                  });
+                },
+              })),
+              { text: 'Cancel', style: 'cancel' },
+            ],
+          );
+        },
+      },
+      {
+        label: 'Verify Stored Password',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: async () => {
+          try {
+            const result = await requestGenericPassword({
+              purpose: RequestGenericPurpose.VERIFY,
+              onPlainPassword: (password: string) => {
+                alertQueue('Retrieved Password', password);
+              },
+            });
+            if (!result || !result.actionSuccess) {
+              alertQueue('Error', 'Failed to retrieve password from keychain');
+            } else {
+              alertQueue('Result', JSON.stringify(result));
+            }
+          } catch (e: any) {
+            alertQueue('Error', e?.message || String(e));
+          }
+        },
+      },
+      {
+        label: 'Get Stored Password',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: async () => {
+          try {
+            const result = await requestGenericPassword({
+              purpose: RequestGenericPurpose.DECRYPT_PWD,
+              onPlainPassword: (password: string) => {
+                alertQueue('Retrieved Password', password);
+              },
+            });
+            if (!result || !result.actionSuccess) {
+              alertQueue('Error', 'Failed to retrieve password from keychain');
+            } else {
+              alertQueue('Result', JSON.stringify(result));
+            }
+          } catch (e: any) {
+            alertQueue('Error', e?.message || String(e));
+          }
         },
       },
     ];

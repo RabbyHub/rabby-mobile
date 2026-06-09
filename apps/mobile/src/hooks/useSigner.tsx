@@ -15,6 +15,9 @@ import {
   useMemoMiniSignGasStore,
   useMiniSignGasStoreOrigin,
 } from './miniSignGasStore';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+
+const USER_CANCELLED = 'User cancelled';
 
 type GasLevelType = 'normal' | 'slow' | 'fast' | 'custom';
 
@@ -92,8 +95,17 @@ export const useMiniSigner = ({
   }, [resetGasStore]);
 
   const previousChainServerIdRef = useRef(chainServerId);
+  const signerScopeKey = `${account?.type || ''}:${account?.address || ''}:${
+    chainServerId || ''
+  }`;
+  const previousSignerScopeKeyRef = useRef(signerScopeKey);
 
   useEffect(() => {
+    if (previousSignerScopeKeyRef.current !== signerScopeKey) {
+      previousSignerScopeKeyRef.current = signerScopeKey;
+      instance.clearManualGasMethod();
+    }
+
     if (!autoResetGasStoreOnChainChange) return;
     if (previousChainServerIdRef.current === chainServerId) return;
 
@@ -105,8 +117,10 @@ export const useMiniSigner = ({
   }, [
     autoResetGasStoreOnChainChange,
     chainServerId,
+    instance,
     miniGasLevel,
     resetGasStore,
+    signerScopeKey,
   ]);
 
   const updateMiniGasStore = useCallback(
@@ -216,7 +230,7 @@ export const useMiniSigner = ({
   const prefetch = useMemoizedFn(async (cfg: SimpleSignConfig) => {
     const payload = await prepareSignerPayload(cfg);
     if (!payload) {
-      instance.close();
+      instance.close({ preserveManualGasMethod: true });
       return;
     }
 
@@ -250,6 +264,10 @@ export const useMiniSigner = ({
       if (!payload) {
         throw new Error('No transactions to sign');
       }
+      if (!(await ensureWalletUnlockedForAction())) {
+        throw USER_CANCELLED;
+      }
+
       return instance.openDirect(
         {
           txs: payload.txs,
@@ -267,7 +285,10 @@ export const useMiniSigner = ({
     instance.updateConfig(partial);
   });
 
-  const close = useMemoizedFn(() => instance.close());
+  const close = useMemoizedFn(
+    (options?: Parameters<SignatureManager['close']>[0]) =>
+      instance.close(options),
+  );
   return {
     openDirect,
     openUI,

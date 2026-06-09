@@ -376,10 +376,10 @@ const getFooterComponentStyle = createGetStyles2024(({ colors2024 }) => {
       color: colors2024['neutral-InvertHighlight'],
       textAlign: 'center',
       fontFamily: 'SF Pro Rounded',
-      fontSize: 20,
+      fontSize: 18,
       fontStyle: 'normal',
+      lineHeight: 22,
       fontWeight: 700,
-      lineHeight: 24,
     },
   };
 });

@@ -40,6 +40,9 @@ import { useTranslation } from 'react-i18next';
 import { sleep } from '@/utils/async';
 import { useShallow } from 'zustand/react/shallow';
 import { usePerpsAccount } from './usePerpsAccount';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+
+import { apisLock } from '@/core/apis';
 type SignActionType =
   | 'approveAgent'
   | 'approveBuilderFee'
@@ -481,6 +484,13 @@ export const usePerpsState = () => {
 
         const signActions: SignAction[] = [];
         const sdk = apisPerps.getPerpsSDK();
+
+        const { vault, agentAddress } =
+          await apisPerps.getOrCreatePerpsAgentWallet(
+            currentPerpsAccount.address,
+          );
+        sdk.initOrUpdateAgent(vault, agentAddress, PERPS_AGENT_NAME);
+
         if (accountNeedApproveAgent) {
           signActions.push({
             action: sdk.exchange?.prepareApproveAgent(),
@@ -518,7 +528,7 @@ export const usePerpsState = () => {
         console.error('Failed to handle action approve status:', error);
         // todo fixme maybe no need show toast in prod
         if (!options?.isHideToast) {
-          showToast(String(error), 'error');
+          showToast((error as any)?.message || String(error), 'error');
         }
         Sentry.captureException(
           new Error(
@@ -548,6 +558,12 @@ export const usePerpsState = () => {
       try {
         const initAccount = perpsState.currentPerpsAccount;
         if (!initAccount) {
+          return false;
+        }
+        if (!apisLock.isUnlocked()) {
+          await loginPerpsAccount(initAccount);
+          await Promise.all([fetchMarketData(), waitForInitialWsData()]);
+          setInitialized(true);
           return false;
         }
         const { vault, agentAddress } =
@@ -584,6 +600,7 @@ export const usePerpsState = () => {
     fetchMarketData,
     ensureLoginApproveSign,
     setInitialized,
+    resetAccountState,
     fetchPerpPermission,
   ]);
 
@@ -672,6 +689,10 @@ export const usePerpsState = () => {
 
   const login = useMemoizedFn(async (account: Account) => {
     try {
+      if (!(await ensureWalletUnlockedForAction())) {
+        return false;
+      }
+
       const sdk = apisPerps.getPerpsSDK();
       const res = await apisPerps.getPerpsAgentWallet(account.address);
       const agentAddress = res?.preference?.agentAddress || '';
