@@ -3,6 +3,10 @@ import type { SessionTypes } from '@walletconnect/types';
 import type { CHAINS_ENUM } from '@/constant/chains';
 import type { Account } from '@/types/account';
 import {
+  getWalletConnectOriginFromUrl,
+  rememberWalletConnectAccountForOrigin,
+} from './accountSelection';
+import {
   clearWalletConnectAutoDisconnectTopic,
   replaceWalletConnectSessionsForAutoDisconnect,
 } from './autoDisconnect';
@@ -107,6 +111,12 @@ export async function approveWalletConnectProposal(input: {
       id: input.proposalId,
       namespaces,
     });
+    rememberWalletConnectAccountForOrigin(
+      getWalletConnectOriginFromUrl(
+        pending.proposal.proposer?.metadata?.url || '',
+      ),
+      input.account,
+    );
     clearWalletConnectProposal(input.proposalId);
     clearWalletConnectProposalPairingState();
     await replaceWalletConnectSessionsForAutoDisconnect(

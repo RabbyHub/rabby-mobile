@@ -186,6 +186,7 @@ export function WalletConnectModalHost() {
         return;
       }
       if (event.type === 'proposalCleared') {
+        closeLoading();
         closeConnect();
       }
     });

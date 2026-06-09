@@ -35,4 +35,5 @@ export const APP_MMKV_WEAK_KEYS = {
   FAILED_UNLOCK: '@failed_unlock',
   HOME_TOP10_ADDRESSES: '@homeTop10Addresses',
   WALLETCONNECT_AUTO_DISCONNECT_ENABLED: '@walletConnectAutoDisconnectEnabled',
+  WALLETCONNECT_LAST_APPROVED_ACCOUNTS: '@walletConnectLastApprovedAccounts',
 } as const;

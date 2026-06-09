@@ -3,6 +3,7 @@ import type { IWalletKit } from '@reown/walletkit';
 import type { SessionTypes } from '@walletconnect/types';
 import { findChain } from '@/utils/chain';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import {
   getAddressFromCaip10,
   getChainsFromNamespaces,
@@ -25,7 +26,7 @@ function getMetadata(session: SessionTypes.Struct) {
 
 export function getWalletConnectSessionOrigin(session: SessionTypes.Struct) {
   const metadata = getMetadata(session);
-  return safeGetOrigin(metadata.url || '') || 'https://walletconnect.localhost';
+  return safeGetOrigin(metadata.url || '') || metadata.url || '';
 }
 
 function getApprovedAccounts(session: SessionTypes.Struct) {
@@ -100,9 +101,8 @@ export async function resolveWalletConnectAccount(
   try {
     const accounts = await getAllAccountsToDisplay();
     return (
-      accounts.find(
-        account =>
-          account.address.toLowerCase() === approvedAddress.toLowerCase(),
+      accounts.find(account =>
+        isSameAddress(account.address, approvedAddress),
       ) || null
     );
   } catch (error) {
