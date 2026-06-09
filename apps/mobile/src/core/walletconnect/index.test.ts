@@ -124,8 +124,17 @@ describe('walletconnect proposal lifecycle', () => {
     await approveWalletConnectProposal({
       proposalId: 1,
       account,
+      fallbackChain: 'ETH' as never,
     });
 
+    expect(buildApprovedNamespacesForAccount).toHaveBeenCalledWith({
+      proposal: {
+        requiredNamespaces: {},
+        optionalNamespaces: {},
+      },
+      account,
+      fallbackChain: 'ETH',
+    });
     expect(clearWalletConnectProposal).toHaveBeenCalledWith(1);
     expect(clearWalletConnectProposalPairingState).toHaveBeenCalledTimes(1);
     expect(replaceWalletConnectSessionsForAutoDisconnect).toHaveBeenCalledWith(

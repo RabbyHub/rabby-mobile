@@ -44,7 +44,7 @@ function getApprovedAddresses(session: SessionTypes.Struct) {
   return getApprovedAccounts(session).map(getAddressFromCaip10).filter(Boolean);
 }
 
-function getApprovedChains(session: SessionTypes.Struct) {
+export function getWalletConnectApprovedChains(session: SessionTypes.Struct) {
   const chainsFromNamespaces = getChainsFromNamespaces(session.namespaces);
   if (chainsFromNamespaces.length) {
     return chainsFromNamespaces;
@@ -62,7 +62,7 @@ export function buildWalletConnectSessionViewModel(
   return {
     topic: session.topic,
     peer: getMetadata(session),
-    chains: getApprovedChains(session),
+    chains: getWalletConnectApprovedChains(session),
     methods: getMethodsFromNamespaces(session.namespaces),
     accounts: getApprovedAccounts(session),
     selectedAccount: selectedAddress
@@ -118,7 +118,7 @@ export async function resolveWalletConnectAccount(
 
 export function getFirstApprovedChain(session: SessionTypes.Struct) {
   return (
-    getApprovedChains(session)
+    getWalletConnectApprovedChains(session)
       .map(chainId => findChain({ id: Number(chainId.split(':')[1]) }))
       .find(Boolean) || null
   );

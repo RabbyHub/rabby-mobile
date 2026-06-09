@@ -17,6 +17,7 @@ import {
 } from '@/core/walletconnect';
 import { getWalletConnectErrorMessage } from '@/core/walletconnect/error';
 import { subscribeWalletConnectUiEvents } from '@/core/walletconnect/uiEvents';
+import type { CHAINS_ENUM } from '@/constant/chains';
 import type { Account } from '@/types/account';
 import type { WalletConnectProposalViewModel } from '@/core/walletconnect/types';
 import { useTheme2024 } from '@/hooks/theme';
@@ -121,12 +122,13 @@ export function WalletConnectModalHost() {
               : colors2024['neutral-bg-1'],
           },
         },
-        onApprove: async (account: Account) => {
+        onApprove: async (account: Account, fallbackChain: CHAINS_ENUM) => {
           try {
             closeLoading();
             const didRedirect = await approveWalletConnectProposal({
               proposalId: proposal.id,
               account,
+              fallbackChain,
             });
             if (!didRedirect) {
               toast.success(t('page.walletConnect.connected'), {

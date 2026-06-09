@@ -249,7 +249,7 @@ export function WalletConnectConnectSheet({
   onReject,
 }: {
   proposal: WalletConnectProposalViewModel;
-  onApprove: (account: Account) => Promise<void>;
+  onApprove: (account: Account, fallbackChain: CHAINS_ENUM) => Promise<void>;
   onReject: () => Promise<void>;
 }) {
   const { t } = useTranslation();
@@ -666,7 +666,7 @@ export function WalletConnectConnectSheet({
 
     setBusy(true);
     try {
-      await onApprove(selectedAccount);
+      await onApprove(selectedAccount, defaultChain);
     } finally {
       setBusy(false);
     }

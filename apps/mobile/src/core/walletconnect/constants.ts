@@ -18,6 +18,7 @@ export const WALLETCONNECT_SUPPORTED_METHODS = [
   'eth_signTypedData_v3',
   'eth_signTypedData_v4',
   'eth_sendTransaction',
+  'wallet_switchEthereumChain',
 ];
 
 export const WALLETCONNECT_SUPPORTED_EVENTS = [
