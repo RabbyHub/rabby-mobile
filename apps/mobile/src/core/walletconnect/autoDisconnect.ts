@@ -7,6 +7,7 @@ import {
   WALLETCONNECT_AUTO_DISCONNECT_INACTIVE_MS,
   WalletConnectAutoDisconnect,
 } from './constants';
+import { forgetWalletConnectAccountForTopic } from './accountSelection';
 import { addWalletConnectLog } from './debugLog';
 import { syncWalletConnectSessionsFromClient } from './sessions';
 
@@ -75,6 +76,7 @@ async function disconnectWalletConnectSessionForPolicy(
   clearWalletConnectAutoDisconnectTopic(topic);
 
   if (!hasActiveSession(walletKit, topic)) {
+    forgetWalletConnectAccountForTopic(topic);
     return;
   }
 
@@ -83,6 +85,7 @@ async function disconnectWalletConnectSessionForPolicy(
       topic,
       reason: getSdkError('USER_DISCONNECTED'),
     });
+    forgetWalletConnectAccountForTopic(topic);
     addWalletConnectLog('sessions', 'auto-disconnected session', {
       topic,
       reason,
@@ -143,6 +146,7 @@ export function recordWalletConnectSessionActivity(
 
   if (!hasActiveSession(walletKit, topic)) {
     clearWalletConnectAutoDisconnectTopic(topic);
+    forgetWalletConnectAccountForTopic(topic);
     return;
   }
 

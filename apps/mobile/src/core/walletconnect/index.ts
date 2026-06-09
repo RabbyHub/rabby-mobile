@@ -4,7 +4,9 @@ import type { CHAINS_ENUM } from '@/constant/chains';
 import type { Account } from '@/types/account';
 import {
   getWalletConnectOriginFromUrl,
+  forgetWalletConnectAccountForTopic,
   rememberWalletConnectAccountForOrigin,
+  rememberWalletConnectAccountForTopic,
 } from './accountSelection';
 import {
   clearWalletConnectAutoDisconnectTopic,
@@ -117,6 +119,7 @@ export async function approveWalletConnectProposal(input: {
       ),
       input.account,
     );
+    rememberWalletConnectAccountForTopic(session.topic, input.account);
     clearWalletConnectProposal(input.proposalId);
     clearWalletConnectProposalPairingState();
     await replaceWalletConnectSessionsForAutoDisconnect(
@@ -160,6 +163,7 @@ export async function disconnectWalletConnectSession(topic: string) {
     topic,
     reason: getSdkErrorCompat('USER_DISCONNECTED'),
   });
+  forgetWalletConnectAccountForTopic(topic);
   syncWalletConnectSessionsFromClient(walletKit);
   addWalletConnectLog('sessions', 'session disconnected by wallet', { topic });
 }

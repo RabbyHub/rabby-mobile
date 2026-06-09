@@ -1,6 +1,7 @@
 import type { Account } from '@/types/account';
 import {
   approveWalletConnectProposal,
+  disconnectWalletConnectSession,
   rejectWalletConnectProposal,
 } from './index';
 import { getWalletConnectClientOrThrow } from './client';
@@ -13,10 +14,15 @@ import { clearWalletConnectProposalPairingState } from './state';
 import { syncWalletConnectSessionsFromClient } from './sessions';
 import { replaceWalletConnectSessionsForAutoDisconnect } from './autoDisconnect';
 import { maybeRedirectToDapp } from './redirectPolicy';
-import { rememberWalletConnectAccountForOrigin } from './accountSelection';
+import {
+  forgetWalletConnectAccountForTopic,
+  rememberWalletConnectAccountForOrigin,
+  rememberWalletConnectAccountForTopic,
+} from './accountSelection';
 
 const walletKit = {
   approveSession: jest.fn(),
+  disconnectSession: jest.fn(),
   rejectSession: jest.fn(),
 };
 
@@ -39,8 +45,10 @@ jest.mock('./autoDisconnect', () => ({
 }));
 
 jest.mock('./accountSelection', () => ({
+  forgetWalletConnectAccountForTopic: jest.fn(),
   getWalletConnectOriginFromUrl: jest.fn(() => 'https://example.com'),
   rememberWalletConnectAccountForOrigin: jest.fn(),
+  rememberWalletConnectAccountForTopic: jest.fn(),
 }));
 
 jest.mock('./chainAccount', () => ({
@@ -123,6 +131,7 @@ describe('walletconnect proposal lifecycle', () => {
         metadata: {},
       },
     });
+    walletKit.disconnectSession.mockResolvedValue(undefined);
     walletKit.rejectSession.mockResolvedValue(undefined);
   });
 
@@ -151,6 +160,10 @@ describe('walletconnect proposal lifecycle', () => {
       'https://example.com',
       account,
     );
+    expect(rememberWalletConnectAccountForTopic).toHaveBeenCalledWith(
+      'topic-1',
+      account,
+    );
     expect(syncWalletConnectSessionsFromClient).toHaveBeenCalledWith(walletKit);
     expect(maybeRedirectToDapp).toHaveBeenCalledWith({
       source: 'qr',
@@ -163,5 +176,19 @@ describe('walletconnect proposal lifecycle', () => {
 
     expect(clearWalletConnectProposal).toHaveBeenCalledWith(1);
     expect(clearWalletConnectProposalPairingState).toHaveBeenCalledTimes(1);
+  });
+
+  it('forgets approved account mapping after disconnecting a session', async () => {
+    await disconnectWalletConnectSession('topic-1');
+
+    expect(walletKit.disconnectSession).toHaveBeenCalledWith({
+      topic: 'topic-1',
+      reason: {
+        code: 5000,
+        message: 'USER_DISCONNECTED',
+      },
+    });
+    expect(forgetWalletConnectAccountForTopic).toHaveBeenCalledWith('topic-1');
+    expect(syncWalletConnectSessionsFromClient).toHaveBeenCalledWith(walletKit);
   });
 });

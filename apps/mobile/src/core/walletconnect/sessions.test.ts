@@ -19,6 +19,20 @@ jest.mock('./chainAccount', () => ({
   getMethodsFromNamespaces: jest.fn(() => []),
 }));
 
+jest.mock('./accountSelection', () => ({
+  getWalletConnectAccountForTopic: jest.fn(() => null),
+  isSameWalletConnectAccount: jest.fn(
+    (
+      account: Pick<Account, 'address' | 'type' | 'brandName'>,
+      target?: Pick<Account, 'address' | 'type' | 'brandName'> | null,
+    ) =>
+      !!target &&
+      account.address.toLowerCase() === target.address.toLowerCase() &&
+      account.type === target.type &&
+      account.brandName === target.brandName,
+  ),
+}));
+
 jest.mock('./debugLog', () => ({
   addWalletConnectLog: jest.fn(),
 }));
@@ -27,8 +41,21 @@ jest.mock('./state', () => ({
   setWalletConnectDebugState: jest.fn(),
 }));
 
-function createSession({ url, account }: { url?: string; account?: string }) {
+const { getWalletConnectAccountForTopic } = jest.requireMock(
+  './accountSelection',
+) as typeof import('./accountSelection');
+
+function createSession({
+  url,
+  account,
+  topic = 'topic-1',
+}: {
+  url?: string;
+  account?: string;
+  topic?: string;
+}) {
   return {
+    topic,
     peer: {
       metadata: {
         url,
@@ -47,6 +74,7 @@ function createSession({ url, account }: { url?: string; account?: string }) {
 describe('walletconnect sessions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.mocked(getWalletConnectAccountForTopic).mockReturnValue(null);
   });
 
   it('normalizes session origin without inventing a fallback origin', () => {
@@ -74,5 +102,56 @@ describe('walletconnect sessions', () => {
         }),
       ),
     ).resolves.toBe(account);
+  });
+
+  it('resolves approved accounts by topic account identity before address fallback', async () => {
+    const mnemonicAccount = {
+      address: '0xAbCd00000000000000000000000000000000AbCd',
+      type: 'HD Key Tree',
+      brandName: 'Rabby',
+    } as Account;
+    const ledgerAccount = {
+      address: '0xabcd00000000000000000000000000000000abcd',
+      type: 'Ledger Hardware',
+      brandName: 'Ledger',
+    } as Account;
+    jest.mocked(getWalletConnectAccountForTopic).mockReturnValue({
+      address: ledgerAccount.address,
+      type: ledgerAccount.type,
+      brandName: ledgerAccount.brandName,
+    });
+    jest
+      .mocked(getAllAccountsToDisplay)
+      .mockResolvedValue([mnemonicAccount, ledgerAccount]);
+
+    await expect(
+      resolveWalletConnectAccount(
+        createSession({
+          account: '0xabcd00000000000000000000000000000000abcd',
+        }),
+      ),
+    ).resolves.toBe(ledgerAccount);
+  });
+
+  it('does not fallback to the same address when topic account identity is missing locally', async () => {
+    const mnemonicAccount = {
+      address: '0xAbCd00000000000000000000000000000000AbCd',
+      type: 'HD Key Tree',
+      brandName: 'Rabby',
+    } as Account;
+    jest.mocked(getWalletConnectAccountForTopic).mockReturnValue({
+      address: '0xabcd00000000000000000000000000000000abcd',
+      type: 'Ledger Hardware',
+      brandName: 'Ledger',
+    });
+    jest.mocked(getAllAccountsToDisplay).mockResolvedValue([mnemonicAccount]);
+
+    await expect(
+      resolveWalletConnectAccount(
+        createSession({
+          account: '0xabcd00000000000000000000000000000000abcd',
+        }),
+      ),
+    ).resolves.toBeNull();
   });
 });

@@ -9,6 +9,10 @@ import {
   getChainsFromNamespaces,
   getMethodsFromNamespaces,
 } from './chainAccount';
+import {
+  getWalletConnectAccountForTopic,
+  isSameWalletConnectAccount,
+} from './accountSelection';
 import { addWalletConnectLog } from './debugLog';
 import { setWalletConnectDebugState } from './state';
 import type { WalletConnectSessionViewModel } from './types';
@@ -41,7 +45,9 @@ function getApprovedAccounts(session: SessionTypes.Struct) {
   return Array.from(accounts);
 }
 
-function getApprovedAddresses(session: SessionTypes.Struct) {
+export function getWalletConnectApprovedAddresses(
+  session: SessionTypes.Struct,
+) {
   return getApprovedAccounts(session).map(getAddressFromCaip10).filter(Boolean);
 }
 
@@ -59,7 +65,7 @@ export function getWalletConnectApprovedChains(session: SessionTypes.Struct) {
 export function buildWalletConnectSessionViewModel(
   session: SessionTypes.Struct,
 ): WalletConnectSessionViewModel {
-  const selectedAddress = getApprovedAddresses(session)[0];
+  const selectedAddress = getWalletConnectApprovedAddresses(session)[0];
   return {
     topic: session.topic,
     peer: getMetadata(session),
@@ -93,18 +99,27 @@ export function getWalletConnectSession(walletKit: IWalletKit, topic: string) {
 export async function resolveWalletConnectAccount(
   session: SessionTypes.Struct,
 ) {
-  const approvedAddress = getApprovedAddresses(session)[0];
-  if (!approvedAddress) {
+  const approvedAddress = getWalletConnectApprovedAddresses(session)[0];
+  const approvedAccount = getWalletConnectAccountForTopic(session.topic);
+  if (!approvedAddress && !approvedAccount) {
     return null;
   }
 
   try {
     const accounts = await getAllAccountsToDisplay();
-    return (
-      accounts.find(account =>
-        isSameAddress(account.address, approvedAddress),
-      ) || null
-    );
+    if (approvedAccount) {
+      return (
+        accounts.find(account =>
+          isSameWalletConnectAccount(account, approvedAccount),
+        ) || null
+      );
+    }
+
+    return approvedAddress
+      ? accounts.find(account =>
+          isSameAddress(account.address, approvedAddress),
+        ) || null
+      : null;
   } catch (error) {
     addWalletConnectLog(
       'sessions',

@@ -60,6 +60,9 @@ function loadAddressModule({
   const mockRemoveWhitelist = jest.fn();
   const mockRemoveList = jest.fn();
   const mockRemoveAgentWallet = jest.fn();
+  const mockDisconnectWalletConnectSessionsForRemovedAccount = jest
+    .fn()
+    .mockResolvedValue(0);
   const mockGetDapps = jest.fn(() => dapps);
   const mockUpdateDapp = jest.fn();
   const mockBroadcastEvent = jest.fn();
@@ -87,6 +90,10 @@ function loadAddressModule({
   jest.doMock('@/utils/testnetAddressBalanceCache', () => ({
     removeTestnetAddressBalanceCache: (...args: unknown[]) =>
       mockRemoveTestnetAddressBalanceCache(...args),
+  }));
+  jest.doMock('../walletconnect/accountRemoval', () => ({
+    disconnectWalletConnectSessionsForRemovedAccount: (...args: unknown[]) =>
+      mockDisconnectWalletConnectSessionsForRemovedAccount(...args),
   }));
   jest.doMock('./keyring', () => ({
     getKeyring: (...args: unknown[]) => mockGetKeyring(...args),
@@ -133,6 +140,7 @@ function loadAddressModule({
     mocks: {
       mockAddNewAccount,
       mockBroadcastEvent,
+      mockDisconnectWalletConnectSessionsForRemovedAccount,
       mockGetAllVisibleAccountsArray,
       mockGetDapps,
       mockGetFallbackAccount,
@@ -257,6 +265,9 @@ describe('core/apis/address', () => {
       'rabby',
       true,
     );
+    expect(
+      mocks.mockDisconnectWalletConnectSessionsForRemovedAccount,
+    ).toHaveBeenCalledWith(removedAccount);
     expect(mocks.mockHasAddress).toHaveBeenCalledWith('0xABC');
     expect(mocks.mockRemoveTestnetAddressBalanceCache).toHaveBeenCalledWith(
       '0xABC',
@@ -304,6 +315,9 @@ describe('core/apis/address', () => {
       'rabby',
       false,
     );
+    expect(
+      mocks.mockDisconnectWalletConnectSessionsForRemovedAccount,
+    ).toHaveBeenCalledWith(walletConnectAccount);
     expect(mocks.mockRemoveTestnetAddressBalanceCache).not.toHaveBeenCalled();
     expect(mocks.mockRemoveAddressAvatar).not.toHaveBeenCalled();
     expect(mocks.mockRemoveAlias).not.toHaveBeenCalled();
@@ -327,5 +341,8 @@ describe('core/apis/address', () => {
     ).rejects.toThrow('background.error.unlock');
 
     expect(mocks.mockRemoveAccount).not.toHaveBeenCalled();
+    expect(
+      mocks.mockDisconnectWalletConnectSessionsForRemovedAccount,
+    ).not.toHaveBeenCalled();
   });
 });

@@ -2,8 +2,12 @@ import type { Account } from '@/types/account';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { preferenceService } from '@/core/services';
 import {
+  forgetWalletConnectAccountForTopic,
+  getWalletConnectAccountForTopic,
   getWalletConnectOriginFromUrl,
+  isSameWalletConnectAccount,
   rememberWalletConnectAccountForOrigin,
+  rememberWalletConnectAccountForTopic,
   selectWalletConnectAccountForOrigin,
 } from './accountSelection';
 
@@ -73,6 +77,11 @@ const sameAddressDifferentTypeAccount = {
   address: '0xabcd00000000000000000000000000000000abcd',
   type: 'HD Key Tree',
   brandName: 'Rabby',
+} as Account;
+const sameAddressSameTypeDifferentBrandAccount = {
+  address: '0xabcd00000000000000000000000000000000abcd',
+  type: 'Ledger Hardware',
+  brandName: 'Other Ledger',
 } as Account;
 
 describe('walletconnect account selection', () => {
@@ -167,11 +176,31 @@ describe('walletconnect account selection', () => {
       'https://example.com': {
         address: secondSignable.address,
         type: secondSignable.type,
+        brandName: secondSignable.brandName,
       },
     });
   });
 
-  it('matches remembered accounts by address and type', () => {
+  it('matches remembered accounts by account identity', () => {
+    mockStorage.set(APP_MMKV_WEAK_KEYS.WALLETCONNECT_LAST_APPROVED_ACCOUNTS, {
+      'https://example.com': {
+        address: '0xabcd00000000000000000000000000000000abcd',
+        type: 'Ledger Hardware',
+        brandName: 'Ledger',
+      },
+    });
+
+    expect(
+      selectWalletConnectAccountForOrigin('https://example.com', [
+        firstSignable,
+        sameAddressSameTypeDifferentBrandAccount,
+        sameAddressDifferentTypeAccount,
+        mixedCaseAddressAccount,
+      ]),
+    ).toBe(mixedCaseAddressAccount);
+  });
+
+  it('keeps matching legacy remembered accounts without brandName by address and type', () => {
     mockStorage.set(APP_MMKV_WEAK_KEYS.WALLETCONNECT_LAST_APPROVED_ACCOUNTS, {
       'https://example.com': {
         address: '0xabcd00000000000000000000000000000000abcd',
@@ -193,6 +222,7 @@ describe('walletconnect account selection', () => {
       'https://example.com': {
         address: '0xabcd00000000000000000000000000000000abcd',
         type: 'Ledger Hardware',
+        brandName: 'Ledger',
       },
     });
 
@@ -226,6 +256,70 @@ describe('walletconnect account selection', () => {
     expect(
       mockStorage.get(APP_MMKV_WEAK_KEYS.WALLETCONNECT_LAST_APPROVED_ACCOUNTS),
     ).toBeUndefined();
+  });
+
+  it('remembers approved accounts by WalletConnect topic', () => {
+    rememberWalletConnectAccountForTopic('topic-1', mixedCaseAddressAccount);
+
+    expect(getWalletConnectAccountForTopic('topic-1')).toEqual({
+      address: mixedCaseAddressAccount.address,
+      type: mixedCaseAddressAccount.type,
+      brandName: mixedCaseAddressAccount.brandName,
+    });
+    expect(
+      mockStorage.get(
+        APP_MMKV_WEAK_KEYS.WALLETCONNECT_APPROVED_ACCOUNTS_BY_TOPIC,
+      ),
+    ).toEqual({
+      'topic-1': {
+        address: mixedCaseAddressAccount.address,
+        type: mixedCaseAddressAccount.type,
+        brandName: mixedCaseAddressAccount.brandName,
+      },
+    });
+  });
+
+  it('forgets approved accounts by WalletConnect topic', () => {
+    rememberWalletConnectAccountForTopic('topic-1', mixedCaseAddressAccount);
+
+    forgetWalletConnectAccountForTopic('topic-1');
+
+    expect(getWalletConnectAccountForTopic('topic-1')).toBeNull();
+    expect(
+      mockStorage.get(
+        APP_MMKV_WEAK_KEYS.WALLETCONNECT_APPROVED_ACCOUNTS_BY_TOPIC,
+      ),
+    ).toEqual({});
+  });
+
+  it('compares approved WalletConnect accounts by account identity', () => {
+    expect(
+      isSameWalletConnectAccount(mixedCaseAddressAccount, {
+        address: '0xabcd00000000000000000000000000000000abcd',
+        type: 'Ledger Hardware',
+        brandName: 'Ledger',
+      }),
+    ).toBe(true);
+    expect(
+      isSameWalletConnectAccount(sameAddressDifferentTypeAccount, {
+        address: '0xabcd00000000000000000000000000000000abcd',
+        type: 'Ledger Hardware',
+        brandName: 'Ledger',
+      }),
+    ).toBe(false);
+    expect(
+      isSameWalletConnectAccount(sameAddressSameTypeDifferentBrandAccount, {
+        address: '0xabcd00000000000000000000000000000000abcd',
+        type: 'Ledger Hardware',
+        brandName: 'Ledger',
+      }),
+    ).toBe(false);
+    expect(
+      isSameWalletConnectAccount(sameAddressSameTypeDifferentBrandAccount, {
+        address: '0xabcd00000000000000000000000000000000abcd',
+        type: 'Ledger Hardware',
+      }),
+    ).toBe(true);
   });
 
   it('normalizes origins without inventing a fallback origin', () => {
