@@ -69,6 +69,25 @@ const getSlotChar = (text: string, slotIndex: number, maxLength: number) => {
   return safeText.charAt(textIndex);
 };
 
+// 目前影响只印度货币，兜底到不走滚动数字动画，fallback 到 animateText
+const hasRtlText = (text: string) => {
+  'worklet';
+
+  for (let i = 0; i < text.length; i += 1) {
+    const code = text.charCodeAt(i);
+
+    if (
+      (code >= 0x0590 && code <= 0x08ff) ||
+      (code >= 0xfb1d && code <= 0xfdff) ||
+      (code >= 0xfe70 && code <= 0xfeff)
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 const getDigitIndex = (char: string) => {
   'worklet';
 
@@ -102,6 +121,7 @@ const getDigitWidthUnit = (char: string) => {
   'worklet';
 
   switch (char) {
+    // 先留在这，需要配置再改
     default:
       return 0.68;
   }
@@ -131,6 +151,8 @@ const getCharWidthUnit = (char: string) => {
       return 0.3;
     case '-':
       return 0.5;
+    case '*':
+      return 0.46;
     case '<':
     case '+':
       return 0.64;
@@ -148,8 +170,27 @@ const getCharWidthUnit = (char: string) => {
     case 'T':
       return 0.64;
     case '₩':
+    case 'W':
     case 'M':
+    case 'm':
       return 0.94;
+    case 'I':
+    case 'l':
+    case 'i':
+      return 0.34;
+    case 'w':
+      return 0.82;
+    case '₀':
+    case '₁':
+    case '₂':
+    case '₃':
+    case '₄':
+    case '₅':
+    case '₆':
+    case '₇':
+    case '₈':
+    case '₉':
+      return 0.42;
     default:
       return 0.72;
   }
@@ -208,6 +249,14 @@ const AnimatedTickerColumn = memo(
 
     const columnStyle = useAnimatedStyle(() => {
       const text = value.value || '';
+      if (hasRtlText(text)) {
+        return {
+          width: 0,
+          height: lineHeight,
+          opacity: 0,
+        };
+      }
+
       const char = getSlotChar(text, slotIndex, maxLength);
       const fontSize = getTextFontSize(text, fontSizeByLength) ?? 38;
       return {
@@ -303,8 +352,29 @@ const AnimatedTickerText = ({
   containerProps,
   fontSizeByLength,
 }: AnimatedTickerTextProps) => {
+  const fallbackAnimatedProps = useAnimatedProps(() => {
+    return {
+      text: value.value || '',
+    };
+  });
+
+  const fallbackStyle = useAnimatedStyle(() => {
+    const text = value.value || '';
+    const fontSize = getTextFontSize(text, fontSizeByLength);
+
+    return {
+      display: hasRtlText(text) ? 'flex' : 'none',
+      ...(fontSize ? { fontSize } : {}),
+    };
+  }, [fontSizeByLength]);
+
   return (
     <View {...containerProps} style={[styles.row, containerStyle]}>
+      <AnimateableText
+        {...textProps}
+        style={[style, fallbackStyle, { lineHeight, height: lineHeight }]}
+        animatedProps={fallbackAnimatedProps}
+      />
       {Array.from({ length: maxLength }).map((_, index) => (
         <AnimatedTickerColumn
           key={index}

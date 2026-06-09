@@ -33,9 +33,9 @@ import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useHomeStartupReady } from '@/core/utils/homeStartupReady';
 import { Text, AnimateableText } from '@/components/Typography';
 import { useHomePortfolioStore } from '@/screens/Home/hooks/useHomePortfolioSummary';
-import { getFontSizeByLength } from '@/utils/fontSize';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useShallow } from 'zustand/react/shallow';
+import AnimatedTickerText from '@/components/Animated/AnimatedTickerText';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedSVG = Animated.createAnimatedComponent(Svg);
@@ -344,21 +344,6 @@ const ChartHeader = React.memo(
       };
     }, [isLoss, data, currentIndex, colors2024, styles, hideType]);
 
-    const netWorthFontStyle = useAnimatedStyle(() => {
-      const fs = getFontSizeByLength(formatNetWorth.value?.length ?? 0, {
-        maxFontSize: MAX_NETWORTH_FS,
-        minFontSize: MIN_NETWORTH_FS,
-        threshold: NETWORTH_FIT_LEN,
-      });
-      return { fontSize: fs };
-    });
-
-    const netWorthAnimatedProps = useAnimatedProps(() => {
-      return {
-        text: formatNetWorth.value,
-      };
-    }, [netWorth, hideType]);
-
     const percentChangeAnimatedProps = useAnimatedProps(() => {
       return {
         text: percentChange.value,
@@ -403,13 +388,20 @@ const ChartHeader = React.memo(
             ]}
             onPress={onPressNetWorth}
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceValue)}>
-            <AnimateableText
+            <AnimatedTickerText
+              value={formatNetWorth}
+              maxLength={24}
+              lineHeight={46}
+              duration={320}
               style={[
                 styles.netWorth,
-                netWorthFontStyle,
                 hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
               ]}
-              animatedProps={netWorthAnimatedProps}
+              fontSizeByLength={{
+                maxFontSize: MAX_NETWORTH_FS,
+                minFontSize: MIN_NETWORTH_FS,
+                threshold: NETWORTH_FIT_LEN,
+              }}
             />
           </Pressable>
 
