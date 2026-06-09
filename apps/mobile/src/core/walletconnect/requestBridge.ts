@@ -1,4 +1,5 @@
 import { sendRequest } from '@/core/apis/sendRequest';
+import i18n from '@/utils/i18n';
 import type { IWalletKit, WalletKitTypes } from '@reown/walletkit';
 import type { SessionTypes } from '@walletconnect/types';
 import { ethErrors } from 'eth-rpc-errors';
@@ -42,9 +43,40 @@ const WALLETCONNECT_DIRECT_RESPONSE_METHODS = new Set([
   'net_version',
 ]);
 const WALLET_SWITCH_ETHEREUM_CHAIN_METHOD = 'wallet_switchEthereumChain';
+const WALLETCONNECT_TRANSACTION_METHODS = new Set(['eth_sendTransaction']);
+const WALLETCONNECT_TRANSACTION_RETURN_TOASTS = {
+  sent: {
+    variant: 'success',
+    messageKey: 'page.walletConnect.transactionSentReturnToBrowser',
+  },
+  canceled: {
+    variant: 'error',
+    messageKey: 'page.walletConnect.transactionCanceledReturnToBrowser',
+  },
+} as const;
 
 function requiresWalletConnectApproval(method: string) {
   return !WALLETCONNECT_DIRECT_RESPONSE_METHODS.has(method);
+}
+
+function isWalletConnectTransactionMethod(method?: string) {
+  return !!method && WALLETCONNECT_TRANSACTION_METHODS.has(method);
+}
+
+function getWalletConnectTransactionReturnToast(input: {
+  method?: string;
+  response: WalletConnectJsonRpcResponse;
+}) {
+  if (!isWalletConnectTransactionMethod(input.method)) {
+    return undefined;
+  }
+
+  const status = 'result' in input.response ? 'sent' : 'canceled';
+  const toast = WALLETCONNECT_TRANSACTION_RETURN_TOASTS[status];
+  return {
+    variant: toast.variant,
+    message: i18n.t(toast.messageKey),
+  };
 }
 
 function isAppStateActive(state: AppStateStatus) {
@@ -332,8 +364,13 @@ export async function handleWalletConnectSessionRequest(input: {
       method,
     });
     if (shouldRedirectAfterResponse) {
+      const iosNoRedirectToast = getWalletConnectTransactionReturnToast({
+        method,
+        response,
+      });
       await maybeRedirectToDapp({
         nativeRedirect: session.peer?.metadata?.redirect?.native,
+        ...(iosNoRedirectToast ? { iosNoRedirectToast } : {}),
       });
     }
   } catch (error) {

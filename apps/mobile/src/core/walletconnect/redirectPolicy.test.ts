@@ -1,3 +1,6 @@
+let mockIsAndroid = true;
+let mockIsIos = false;
+
 import RNHelpers from '@/core/native/RNHelpers';
 import { Linking } from 'react-native';
 import {
@@ -21,7 +24,16 @@ jest.mock('@/core/native/RNHelpers', () => ({
 }));
 
 jest.mock('@/core/native/utils', () => ({
-  IS_ANDROID: true,
+  get IS_ANDROID() {
+    return mockIsAndroid;
+  },
+  get IS_IOS() {
+    return mockIsIos;
+  },
+}));
+
+jest.mock('./uiEvents', () => ({
+  emitWalletConnectUiEvent: jest.fn(),
 }));
 
 jest.mock('react-native', () => ({
@@ -30,11 +42,17 @@ jest.mock('react-native', () => ({
   },
 }));
 
+const { emitWalletConnectUiEvent } =
+  require('./uiEvents') as typeof import('./uiEvents');
+
 describe('walletconnect redirect policy', () => {
   beforeEach(() => {
+    mockIsAndroid = true;
+    mockIsIos = false;
     clearWalletConnectDappRedirectPending();
     jest.mocked(RNHelpers.moveTaskToBack).mockReset();
     jest.mocked(Linking.openURL).mockReset();
+    jest.mocked(emitWalletConnectUiEvent).mockReset();
   });
 
   it('only auto redirects deep-link initiated connections', () => {
@@ -92,5 +110,62 @@ describe('walletconnect redirect policy', () => {
     await expect(maybeRedirectToDapp({})).resolves.toBe(false);
 
     expect(RNHelpers.moveTaskToBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not show the iOS no-redirect toast when no automatic redirect is allowed', async () => {
+    mockIsAndroid = false;
+    mockIsIos = true;
+
+    await expect(
+      maybeRedirectToDapp({
+        nativeRedirect: '',
+        iosNoRedirectToast: {
+          variant: 'success',
+          message: 'Transaction sent! Go back to your browser',
+        },
+      }),
+    ).resolves.toBe(false);
+
+    expect(emitWalletConnectUiEvent).not.toHaveBeenCalled();
+  });
+
+  it('shows the iOS no-redirect toast when native redirect is unavailable', async () => {
+    mockIsAndroid = false;
+    mockIsIos = true;
+    markWalletConnectDappRedirectPending();
+
+    await expect(
+      maybeRedirectToDapp({
+        iosNoRedirectToast: {
+          variant: 'error',
+          message: 'Transaction canceled! Go back to your browser',
+        },
+      }),
+    ).resolves.toBe(false);
+
+    expect(emitWalletConnectUiEvent).toHaveBeenCalledWith({
+      type: 'toast',
+      variant: 'error',
+      message: 'Transaction canceled! Go back to your browser',
+    });
+  });
+
+  it('does not show the iOS no-redirect toast after a native redirect opens', async () => {
+    mockIsAndroid = false;
+    mockIsIos = true;
+    markWalletConnectDappRedirectPending();
+    jest.mocked(Linking.openURL).mockResolvedValue(undefined);
+
+    await expect(
+      maybeRedirectToDapp({
+        nativeRedirect: 'example://walletconnect',
+        iosNoRedirectToast: {
+          variant: 'success',
+          message: 'Transaction sent! Go back to your browser',
+        },
+      }),
+    ).resolves.toBe(true);
+
+    expect(emitWalletConnectUiEvent).not.toHaveBeenCalled();
   });
 });

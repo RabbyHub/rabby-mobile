@@ -1640,6 +1640,8 @@
       "pairingExpired": "WalletConnect pairing expired. Refresh the dapp QR code and try again.",
       "duplicatePairing": "This WalletConnect URI is already being paired. Refresh the dapp QR code and try again.",
       "relayUnreachable": "WalletConnect relay is not reachable. Check the network and try again.",
+      "transactionSentReturnToBrowser": "Transaction sent! Please return to the Dapp.",
+      "transactionCanceledReturnToBrowser": "Transaction canceled! Please return to the Dapp.",
       "uriEmpty": "WalletConnect URI cannot be empty.",
       "uriInvalidFormat": "WalletConnect URI must start with wc:<topic>@2.",
       "uriMissingParams": "WalletConnect URI is missing symKey or relay-protocol.",

@@ -1,9 +1,15 @@
 import { Linking } from 'react-native';
 import RNHelpers from '@/core/native/RNHelpers';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { addWalletConnectLog } from './debugLog';
 import { consumeWalletConnectDappRedirectPending } from './redirectState';
 import type { WalletConnectPairingSource } from './types';
+import { emitWalletConnectUiEvent } from './uiEvents';
+
+type WalletConnectRedirectToast = {
+  variant: 'success' | 'error';
+  message: string;
+};
 
 export function shouldAutoRedirectToDapp(source: WalletConnectPairingSource) {
   return source === 'deeplink';
@@ -12,7 +18,18 @@ export function shouldAutoRedirectToDapp(source: WalletConnectPairingSource) {
 export async function maybeRedirectToDapp(input: {
   source?: WalletConnectPairingSource;
   nativeRedirect?: string;
+  iosNoRedirectToast?: WalletConnectRedirectToast;
 }) {
+  const emitIosNoRedirectToast = () => {
+    if (!IS_IOS || !input.iosNoRedirectToast) {
+      return;
+    }
+
+    emitWalletConnectUiEvent({
+      type: 'toast',
+      ...input.iosNoRedirectToast,
+    });
+  };
   const pendingRedirect = consumeWalletConnectDappRedirectPending();
   const redirectReason = pendingRedirect
     ? 'pending_redirect'
@@ -51,6 +68,7 @@ export async function maybeRedirectToDapp(input: {
 
   const nativeRedirect = input.nativeRedirect?.trim();
   if (!nativeRedirect) {
+    emitIosNoRedirectToast();
     return false;
   }
 
@@ -65,6 +83,7 @@ export async function maybeRedirectToDapp(input: {
     return true;
   } catch (e) {
     addWalletConnectLog('redirect', 'failed to open dapp redirect', e, 'warn');
+    emitIosNoRedirectToast();
     return false;
   }
 }
