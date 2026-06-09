@@ -14,6 +14,11 @@ export type WalletConnectUiEvent =
     }
   | {
       type: 'proposalCleared';
+    }
+  | {
+      type: 'toast';
+      variant: 'success' | 'error';
+      message: string;
     };
 
 type WalletConnectUiEventListener = (event: WalletConnectUiEvent) => void;

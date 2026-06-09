@@ -188,6 +188,19 @@ export function WalletConnectModalHost() {
       if (event.type === 'proposalCleared') {
         closeLoading();
         closeConnect();
+        return;
+      }
+      if (event.type === 'toast') {
+        const options = {
+          duration: 3000,
+          hideOnPress: true,
+        };
+
+        if (event.variant === 'success') {
+          toast.success(event.message, options);
+        } else {
+          toast.error(event.message, options);
+        }
       }
     });
   }, [closeConnect, closeLoading, openConnect, openLoading, showErrorToast]);

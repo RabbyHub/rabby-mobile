@@ -48,6 +48,9 @@ function loadAutoDisconnectPolicy(input: {
   jest.doMock('./debugLog', () => ({
     addWalletConnectLog: jest.fn(),
   }));
+  jest.doMock('./accountSelection', () => ({
+    forgetWalletConnectAccountForTopic: jest.fn(),
+  }));
   jest.doMock('./sessions', () => ({
     syncWalletConnectSessionsFromClient: jest.fn(),
   }));
@@ -68,6 +71,7 @@ describe('walletconnect auto disconnect policy', () => {
     jest.dontMock('@/core/storage/mmkv');
     jest.dontMock('@walletconnect/utils');
     jest.dontMock('./debugLog');
+    jest.dontMock('./accountSelection');
     jest.dontMock('./sessions');
   });
 
@@ -99,6 +103,8 @@ describe('walletconnect auto disconnect policy', () => {
 
   it('disconnects restored sessions on startup when enabled', async () => {
     const policy = loadAutoDisconnectPolicy({ storedEnabled: true });
+    const { forgetWalletConnectAccountForTopic } =
+      jest.requireMock('./accountSelection');
     const walletKit = makeWalletKit(['topic-1', 'topic-2']);
 
     await policy.disconnectRestoredWalletConnectSessionsForAutoDisconnect(
@@ -112,10 +118,14 @@ describe('walletconnect auto disconnect policy', () => {
     expect(walletKit.disconnectSession).toHaveBeenCalledWith(
       expect.objectContaining({ topic: 'topic-2' }),
     );
+    expect(forgetWalletConnectAccountForTopic).toHaveBeenCalledWith('topic-1');
+    expect(forgetWalletConnectAccountForTopic).toHaveBeenCalledWith('topic-2');
   });
 
   it('replaces older sessions after a new session is approved', async () => {
     const policy = loadAutoDisconnectPolicy({ storedEnabled: true });
+    const { forgetWalletConnectAccountForTopic } =
+      jest.requireMock('./accountSelection');
     const walletKit = makeWalletKit(['old-topic', 'new-topic']);
 
     await policy.replaceWalletConnectSessionsForAutoDisconnect(
@@ -127,6 +137,12 @@ describe('walletconnect auto disconnect policy', () => {
     expect(walletKit.disconnectSession).toHaveBeenCalledWith(
       expect.objectContaining({ topic: 'old-topic' }),
     );
+    expect(forgetWalletConnectAccountForTopic).toHaveBeenCalledWith(
+      'old-topic',
+    );
+    expect(forgetWalletConnectAccountForTopic).not.toHaveBeenCalledWith(
+      'new-topic',
+    );
   });
 
   it('disconnects an active session after one inactivity window', async () => {
@@ -137,6 +153,8 @@ describe('walletconnect auto disconnect policy', () => {
       storedEnabled: true,
       inactiveMs: 1000,
     });
+    const { forgetWalletConnectAccountForTopic } =
+      jest.requireMock('./accountSelection');
     const walletKit = makeWalletKit(['topic-1']);
 
     policy.recordWalletConnectSessionActivity(walletKit as never, 'topic-1');
@@ -153,6 +171,7 @@ describe('walletconnect auto disconnect policy', () => {
     expect(walletKit.disconnectSession).toHaveBeenCalledWith(
       expect.objectContaining({ topic: 'topic-1' }),
     );
+    expect(forgetWalletConnectAccountForTopic).toHaveBeenCalledWith('topic-1');
   });
 
   it('does not disconnect pending inactive sessions after the setting is disabled', async () => {

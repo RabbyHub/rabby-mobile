@@ -103,6 +103,8 @@ const { maybeRedirectToDapp } =
   require('./redirectPolicy') as typeof import('./redirectPolicy');
 const { getWalletConnectApprovedChains } =
   require('./sessions') as typeof import('./sessions');
+const { getWalletConnectSession } =
+  require('./sessions') as typeof import('./sessions');
 
 function makeEvent(method: string) {
   return {
@@ -124,8 +126,10 @@ describe('walletconnect request bridge', () => {
     walletKit.getActiveSessions.mockClear();
     walletKit.emitSessionEvent.mockReset();
     walletKit.respondSessionRequest.mockReset();
+    jest.mocked(getWalletConnectSession).mockReturnValue(session as never);
     jest.mocked(getWalletConnectApprovedChains).mockReturnValue(['eip155:1']);
     jest.mocked(maybeRedirectToDapp).mockReset();
+    jest.mocked(maybeRedirectToDapp).mockResolvedValue(false);
     mockAppState.currentState = 'active';
     mockAppStateListeners.clear();
     mockAppState.addEventListener.mockClear();
@@ -178,6 +182,68 @@ describe('walletconnect request bridge', () => {
     expect(maybeRedirectToDapp).toHaveBeenCalledWith({
       nativeRedirect: undefined,
     });
+  });
+
+  it('passes an iOS return toast for transaction responses', async () => {
+    jest.mocked(sendRequest).mockResolvedValue('0xtransaction');
+
+    await handleWalletConnectSessionRequest({
+      walletKit: walletKit as never,
+      event: makeEvent('eth_sendTransaction') as never,
+    });
+
+    expect(maybeRedirectToDapp).toHaveBeenCalledWith({
+      nativeRedirect: undefined,
+      iosNoRedirectToast: {
+        variant: 'success',
+        message: 'Transaction sent! Go back to your browser',
+      },
+    });
+  });
+
+  it('passes an iOS return toast for transaction errors', async () => {
+    jest
+      .mocked(sendRequest)
+      .mockRejectedValue(
+        Object.assign(new Error('User Cancel'), { code: 4001 }),
+      );
+
+    await handleWalletConnectSessionRequest({
+      walletKit: walletKit as never,
+      event: makeEvent('eth_sendTransaction') as never,
+    });
+
+    expect(maybeRedirectToDapp).toHaveBeenCalledWith({
+      nativeRedirect: undefined,
+      iosNoRedirectToast: {
+        variant: 'error',
+        message: 'Transaction canceled! Go back to your browser',
+      },
+    });
+  });
+
+  it('does not pass a transaction return toast for non-transaction requests', async () => {
+    jest.mocked(sendRequest).mockResolvedValue('0xsigned');
+
+    await handleWalletConnectSessionRequest({
+      walletKit: walletKit as never,
+      event: makeEvent('personal_sign') as never,
+    });
+
+    expect(maybeRedirectToDapp).toHaveBeenCalledWith({
+      nativeRedirect: undefined,
+    });
+  });
+
+  it('does not pass a transaction return toast for missing sessions', async () => {
+    jest.mocked(getWalletConnectSession).mockReturnValue(undefined as never);
+
+    await handleWalletConnectSessionRequest({
+      walletKit: walletKit as never,
+      event: makeEvent('eth_sendTransaction') as never,
+    });
+
+    expect(maybeRedirectToDapp).not.toHaveBeenCalled();
   });
 
   it('handles wallet_switchEthereumChain inside WalletConnect', async () => {

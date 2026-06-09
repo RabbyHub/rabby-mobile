@@ -14,6 +14,7 @@ import {
   clearWalletConnectProposal,
   storeWalletConnectProposal,
 } from './proposal';
+import { forgetWalletConnectAccountForTopic } from './accountSelection';
 import { clearWalletConnectDappRedirectPending } from './redirectState';
 import { handleWalletConnectSessionRequest } from './requestBridge';
 import { syncWalletConnectSessionsFromClient } from './sessions';
@@ -69,6 +70,7 @@ function bindWalletConnectEvents(
 
   walletKit.on('session_delete', event => {
     clearWalletConnectAutoDisconnectTopic(event.topic);
+    forgetWalletConnectAccountForTopic(event.topic);
     syncWalletConnectSessionsFromClient(walletKit);
     addWalletConnectLog('sessions', 'session_delete received', event);
   });
