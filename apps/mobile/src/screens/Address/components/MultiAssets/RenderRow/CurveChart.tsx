@@ -258,6 +258,7 @@ const ChartHeader = React.memo(
       return formatSmallCurrencyValueParts(rawNetWorth, {
         currency,
         formatMillion: false,
+        decimalOverMillion: 2,
       }).text;
     }, [currency, rawNetWorth]);
     const change = useMemo(() => {
@@ -274,6 +275,7 @@ const ChartHeader = React.memo(
             netWorth: formatSmallCurrencyValueParts(item.value, {
               currency,
               formatMillion: false,
+              decimalOverMillion: 2,
             }).text,
             change: formatCurrencyValueParts(Math.abs(item.rawChange), {
               currency,
