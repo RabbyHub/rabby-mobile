@@ -557,18 +557,14 @@ const GasAccountDepositTokenFormInner: React.FC<{
           const tx = await buildTopUpGasAccount(params);
 
           if (tx) {
+            let directDepositTxHash: string | undefined;
             try {
               const res = await openDirectOrFallbackToUI({
                 txs: [tx],
                 autoUseGasFree: true,
                 purpose: 'gasAccountTopUp',
               });
-              const hash = res?.[0];
-              await afterTopUpGasAccount({
-                ...params,
-                tx: hash,
-              });
-              depositTxHash = hash || '';
+              directDepositTxHash = res?.[0] || '';
             } catch (error) {
               if (
                 error === MINI_SIGN_ERROR.USER_CANCELLED ||
@@ -577,6 +573,13 @@ const GasAccountDepositTokenFormInner: React.FC<{
                 throw error;
               }
               depositTxHash = (await topUpGasAccount(params)) || '';
+            }
+            if (directDepositTxHash !== undefined) {
+              await afterTopUpGasAccount({
+                ...params,
+                tx: directDepositTxHash,
+              });
+              depositTxHash = directDepositTxHash;
             }
           }
         } else {
