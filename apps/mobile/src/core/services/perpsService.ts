@@ -277,9 +277,17 @@ export class PerpsService {
       if (!this.keyringCrypto.isUnlocked()) {
         throw error;
       }
+      // browser-passworder reports a genuine key mismatch as "Incorrect
+      // password"; anything else (corrupted blob, transient native crypto
+      // failure) must propagate instead of irreversibly wiping every
+      // account's agent data and pending approve signatures.
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/incorrect password/i.test(message)) {
+        throw error;
+      }
       console.warn(
         '[perpsService] failed to decrypt agentVaults while unlocked, resetting stale agent data',
-        error instanceof Error ? error.message : String(error),
+        message,
       );
       if (this.store) {
         this.store.agentVaults = '';

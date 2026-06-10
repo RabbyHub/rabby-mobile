@@ -127,6 +127,7 @@ export function useInitializeAppOnTop() {
         }));
       });
       perpsService.unlockAgentWallets();
+      apisPerpsStore.reinitAfterUnlock();
     };
     const onLock = () => {
       storeApiLock.setAppLock(prev => ({

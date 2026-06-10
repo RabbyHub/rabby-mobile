@@ -201,14 +201,6 @@ export const usePerpsPosition = () => {
             builder: PERPS_BUILDER_INFO,
           });
 
-          const nextCurrentTpOrSl = {} as {
-            tpPrice?: string;
-            slPrice?: string;
-          };
-          formattedTpTriggerPx &&
-            (nextCurrentTpOrSl.tpPrice = formattedTpTriggerPx);
-          formattedSlTriggerPx &&
-            (nextCurrentTpOrSl.slPrice = formattedSlTriggerPx);
           fetchPositionOpenOrdersHttp(getDexByCoin(coin));
           showToast(autoCloseText + ' set successfully', 'success');
           return true;
