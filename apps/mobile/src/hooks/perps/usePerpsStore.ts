@@ -1244,6 +1244,12 @@ export const apisPerpsStore = {
   logout: () => {
     unsubscribeAll();
     resetAccountState();
+    // The SDK singleton is torn down on lock (destroyPerpsSDK), so force the
+    // init effect to run again on next entry and reinstall the signer
+    // (externalSign for self-sign, or the agent vault). Without this, the stale
+    // isInitialized=true would skip initIsLogin and a self-sign account could
+    // not sign after an unlock.
+    setInitialized(false);
     fetchPerpPermission('');
   },
 };

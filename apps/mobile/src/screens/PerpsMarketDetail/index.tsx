@@ -316,8 +316,8 @@ export const PerpsMarketDetailScreen = () => {
   }, [accountNeedApproveAgent, accountNeedApproveBuilderFee]);
 
   const needEnableUnifiedAccount = useMemo(() => {
-    return !isUnifiedAccount && currentAssetCtx?.quoteAsset !== 'USDC';
-  }, [isUnifiedAccount, currentAssetCtx?.quoteAsset]);
+    return !isUnifiedAccount && !!currentAssetCtx?.dexId;
+  }, [isUnifiedAccount, currentAssetCtx?.dexId]);
 
   const canOpenPosition = useMemo(() => {
     return (
@@ -344,6 +344,17 @@ export const PerpsMarketDetailScreen = () => {
   const [isShowEnableUnifiedPopup, setIsShowEnableUnifiedPopup] =
     useState(false);
 
+  const unifiedEnableSourceRef = useRef<'swap' | 'other'>('swap');
+
+  const gateUnifiedForNonDefaultDex = useCallback((): boolean => {
+    if (needEnableUnifiedAccount) {
+      unifiedEnableSourceRef.current = 'other';
+      setIsShowEnableUnifiedPopup(true);
+      return false;
+    }
+    return true;
+  }, [needEnableUnifiedAccount]);
+
   const initAutoOpenPositionRef = useRef(false);
   useEffect(() => {
     const autoOpenPosition = async () => {
@@ -366,6 +377,7 @@ export const PerpsMarketDetailScreen = () => {
     await handleActionApproveStatus();
 
     if (!isUnifiedAccount && !accountNeedApproveAgent) {
+      unifiedEnableSourceRef.current = 'swap';
       setIsShowEnableUnifiedPopup(true);
       return;
     }
@@ -375,7 +387,7 @@ export const PerpsMarketDetailScreen = () => {
   const handleEnableUnifiedConfirm = useCallback(async () => {
     const success = await handleEnableUnifiedAccount();
     setIsShowEnableUnifiedPopup(false);
-    if (success) {
+    if (success && unifiedEnableSourceRef.current === 'swap') {
       setIsShowSwapPopup(true);
     }
   }, [handleEnableUnifiedAccount]);
@@ -505,6 +517,9 @@ export const PerpsMarketDetailScreen = () => {
                 availableBalance={availableBalance}
                 quoteAsset={currentAssetCtx?.quoteAsset}
                 onDepositPress={() => {
+                  if (!gateUnifiedForNonDefaultDex()) {
+                    return;
+                  }
                   setIsShowDepositPopup(true);
                 }}
                 onSwapPress={handleSwapPress}
@@ -581,6 +596,9 @@ export const PerpsMarketDetailScreen = () => {
                 showToast(t('page.perpsDetail.needDepositFirst'), 'error');
                 return;
               }
+              if (!gateUnifiedForNonDefaultDex()) {
+                return;
+              }
 
               await handleActionApproveStatus();
               setPositionDirection('Long');
@@ -589,6 +607,9 @@ export const PerpsMarketDetailScreen = () => {
             onShortPress={async () => {
               if (needDepositFirst) {
                 showToast(t('page.perpsDetail.needDepositFirst'), 'error');
+                return;
+              }
+              if (!gateUnifiedForNonDefaultDex()) {
                 return;
               }
 

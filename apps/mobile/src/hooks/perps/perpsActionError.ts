@@ -12,8 +12,13 @@ import * as Sentry from '@sentry/react-native';
 export const judgeIsUserAgentIsExpired = async (
   errorMessage: string,
 ): Promise<boolean> => {
-  const masterAddress = perpsStore.getState().currentPerpsAccount?.address;
+  const currentAccount = perpsStore.getState().currentPerpsAccount;
+  const masterAddress = currentAccount?.address;
   if (!masterAddress) {
+    return false;
+  }
+  // self-sign master signs its own orders — there is no agent to expire.
+  if (apisPerps.isSelfSignPerpsAccount(currentAccount?.type)) {
     return false;
   }
 
