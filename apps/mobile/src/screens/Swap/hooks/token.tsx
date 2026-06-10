@@ -845,6 +845,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   );
 
   const fetchIdRef = useRef(0);
+  const [quoteRequestId, setQuoteRequestId] = useState(0);
   const { getAllQuotes, validSlippage } = useQuoteMethods();
   const [finishedQuotes, setFinishedQuotes] = useState(0);
 
@@ -936,6 +937,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   useLayoutEffect(() => {
     fetchIdRef.current += 1;
+    setQuoteRequestId(fetchIdRef.current);
     setQuotesList([]);
     setActiveProvider(undefined);
     setBestQuoteDex('');
@@ -1328,6 +1330,8 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     closeQuotesList,
     quotesListVisible,
     quoteLoading,
+    allQuotesLoaded: quoteRequestFinished,
+    quoteRequestId,
     quoteList,
     currentProvider,
     setActiveProvider,
