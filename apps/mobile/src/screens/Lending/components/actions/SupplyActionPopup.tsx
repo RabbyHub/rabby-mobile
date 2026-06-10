@@ -54,7 +54,7 @@ import { transactionHistoryService } from '@/core/services';
 import { useRefreshHistoryId } from '../../hooks';
 import wrapperToken from '../../config/wrapperToken';
 import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
-import { apiProvider } from '@/core/apis';
+import { sendRequest } from '@/core/apis/sendRequest';
 import { Button } from '@/components2024/Button';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
@@ -524,7 +524,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
           }
         } else {
           for (const tx of txsForMiniApproval) {
-            const result = await apiProvider.sendRequest({
+            const result = await sendRequest({
               data: {
                 method: 'eth_sendTransaction',
                 params: [tx],
