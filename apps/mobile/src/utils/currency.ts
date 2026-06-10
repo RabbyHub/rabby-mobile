@@ -109,9 +109,10 @@ export const formatSmallCurrencyValueParts = (
   value: number,
   options?: {
     currency?: CurrencyItem;
+    formatMillion?: boolean;
   },
 ): CurrencyValueParts => {
-  const { currency = USD_CURRENCY } = options || {};
+  const { currency = USD_CURRENCY, formatMillion = true } = options || {};
   const val = new BigNumber(value).times(currency.usd_rate);
 
   if (!isCurrencyPrefix(currency)) {
@@ -137,7 +138,7 @@ export const formatSmallCurrencyValueParts = (
 
   return formatCurrencyValueParts(value, {
     decimal: 2,
-    formatMillion: true,
+    formatMillion,
     currency,
   });
 };

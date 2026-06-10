@@ -52,7 +52,7 @@ import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
 import { useShallow } from 'zustand/react/shallow';
 import { MultiHeaderRightHistory } from '../MultiHeaderRightHistory';
-import AnimatedTickerText from '@/components/Animated/AnimatedTickerText';
+import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 
 const HeaderHeight = 30;
@@ -135,7 +135,10 @@ export function TabsTopHeader(): JSX.Element {
   }, [setTokenDisplayMode, tokenDisplayMode]);
 
   const netWorth = useMemo(() => {
-    return formatSmallCurrencyValueParts(totalBalance, { currency }).text;
+    return formatSmallCurrencyValueParts(totalBalance, {
+      currency,
+      formatMillion: false,
+    }).text;
   }, [currency, totalBalance]);
   const netWorthValue = useSharedValue(netWorth);
   useEffect(() => {
@@ -252,7 +255,7 @@ export function TabsTopHeader(): JSX.Element {
                 <LoadingCircle />
               </View>
             ) : (
-              <AnimatedTickerText
+              <RefreshNudgedTickerText
                 value={netWorthValue}
                 maxLength={16}
                 lineHeight={22}

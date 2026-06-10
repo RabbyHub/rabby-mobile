@@ -46,6 +46,7 @@ import {
 } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { RNGHRefreshControl } from '@/components/customized/reexports';
 import { useAppForeground } from '@/hooks/useAppForeground';
+import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
 
 const emptyCacheProtocolItem: ICacheProtocolItem = {
   fold: [],
@@ -268,11 +269,15 @@ export const ProtocolList = () => {
   }, [hasMorePortfolios, styles.loadingMore]);
 
   const onRefresh = useCallback(async () => {
+    const balanceRefresh = triggerUpdate(true);
+    const protocolRefresh = batchGetProtocols(myTop10Addresses, true);
+
+    await withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(error => {
+      console.error('Refresh balance failed:', error);
+    });
+
     try {
-      await Promise.all([
-        triggerUpdate(true),
-        batchGetProtocols(myTop10Addresses, true),
-      ]);
+      await protocolRefresh;
     } catch (error) {
       console.error('Refresh failed:', error);
     }

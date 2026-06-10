@@ -49,6 +49,7 @@ import useTokenList, {
 } from '@/store/tokens';
 import { formatNetworth } from '@/utils/math';
 import { useAppForeground } from '@/hooks/useAppForeground';
+import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
 
 type TokenListItem =
   | {
@@ -143,7 +144,7 @@ const TokenFoldSectionHeader = React.memo(
 interface Props {
   noAssetsOnAnyChain: boolean;
   onForeground?: () => void;
-  onRefresh?: () => void;
+  onRefresh?: () => void | Promise<void>;
   onReachTopStatusChange?: (status: boolean) => void;
 }
 const FOOTER_HEIGHT = 220;
@@ -383,9 +384,15 @@ export const TokenList = ({
       return;
     }
     setIsManualRefreshing(true);
-    onRefresh?.();
     try {
-      await getTokenList(currentAddress, true);
+      const balanceRefresh = Promise.resolve().then(() => onRefresh?.());
+      const tokenRefresh = getTokenList(currentAddress, true);
+      await withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(
+        error => {
+          console.error('Refresh balance failed:', error);
+        },
+      );
+      await tokenRefresh;
     } finally {
       setIsManualRefreshing(false);
     }
