@@ -78,6 +78,24 @@ class ApisPerps {
     type === KEYRING_CLASS.PRIVATE_KEY || type === KEYRING_CLASS.MNEMONIC;
 
   /**
+   * Bind the SDK to an agent-signed account. Always drops any externalSign
+   * installed by a previous self-sign session first — sdk.initAccount alone
+   * keeps it, and signL1Action prefers externalSign over the agent key, so a
+   * leftover signer would sign the new account's actions with the old
+   * account's key.
+   */
+  initPerpsAgentAccount = (
+    masterAddress: string,
+    vault: string | undefined,
+    agentAddress: string,
+    agentName: string = PERPS_AGENT_NAME,
+  ) => {
+    const sdk = this.getPerpsSDK();
+    sdk.setExternalSign(undefined);
+    sdk.initAccount(masterAddress, vault, agentAddress, agentName);
+  };
+
+  /**
    * Build the SDK externalSign callback for a self-sign account: signs
    * Hyperliquid L1 typed data (EIP-712 V4) with the account's OWN keyring key —
    * no agent wallet, no plaintext export. apisKeyring.signTypedData is wrapped
@@ -112,10 +130,9 @@ class ApisPerps {
         isCreate: false,
       };
     }
-    sdk.setExternalSign(undefined);
     const { vault, agentAddress, isCreate } =
       await this.getOrCreatePerpsAgentWallet(account.address);
-    sdk.initAccount(account.address, vault, agentAddress, PERPS_AGENT_NAME);
+    this.initPerpsAgentAccount(account.address, vault, agentAddress);
     return { agentAddress, isSelfSign: false, isCreate };
   };
 }

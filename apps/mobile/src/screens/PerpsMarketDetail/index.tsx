@@ -316,8 +316,8 @@ export const PerpsMarketDetailScreen = () => {
   }, [accountNeedApproveAgent, accountNeedApproveBuilderFee]);
 
   const needEnableUnifiedAccount = useMemo(() => {
-    return !isUnifiedAccount && !!currentAssetCtx?.dexId;
-  }, [isUnifiedAccount, currentAssetCtx?.dexId]);
+    return !isUnifiedAccount && (!currentAssetCtx || !!currentAssetCtx.dexId);
+  }, [isUnifiedAccount, currentAssetCtx]);
 
   const canOpenPosition = useMemo(() => {
     return (
