@@ -485,13 +485,13 @@ export const usePerpsState = () => {
         const signActions: SignAction[] = [];
         const sdk = apisPerps.getPerpsSDK();
 
-        const { vault, agentAddress } =
+        const { vault, agentAddress, isCreate } =
           await apisPerps.getOrCreatePerpsAgentWallet(
             currentPerpsAccount.address,
           );
         sdk.initOrUpdateAgent(vault, agentAddress, PERPS_AGENT_NAME);
 
-        if (accountNeedApproveAgent) {
+        if (accountNeedApproveAgent || isCreate) {
           signActions.push({
             action: sdk.exchange?.prepareApproveAgent(),
             type: 'approveAgent',

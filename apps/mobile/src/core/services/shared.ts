@@ -266,6 +266,7 @@ export const perpsService = new PerpsService({
   keyringCrypto: {
     decryptWithPassword: value => keyringService.decryptWithPassword(value),
     encryptWithPassword: value => keyringService.encryptWithPassword(value),
+    isUnlocked: () => keyringService.isUnlocked(),
   },
 });
 

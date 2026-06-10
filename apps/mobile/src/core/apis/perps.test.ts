@@ -137,6 +137,7 @@ describe('core/apis/perps', () => {
     ).resolves.toEqual({
       agentAddress: '0xexisting-agent',
       vault: '0xexisting-vault',
+      isCreate: false,
     });
 
     expect(mocks.mockGetAgentWallet).toHaveBeenCalledWith('0xmaster');
@@ -156,6 +157,7 @@ describe('core/apis/perps', () => {
     ).resolves.toEqual({
       agentAddress: '0xnew-agent',
       vault: '0xnew-vault',
+      isCreate: true,
     });
 
     expect(mocks.mockGetAgentWallet).toHaveBeenCalledWith('0xmaster');

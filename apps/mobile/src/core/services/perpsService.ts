@@ -12,6 +12,7 @@ import type { Account } from '@/types/account';
 type KeyringCrypto = {
   decryptWithPassword: <T>(value: string) => Promise<T>;
   encryptWithPassword: <T>(value: T) => Promise<string>;
+  isUnlocked: () => boolean;
 };
 
 export interface AgentWalletInfo {
@@ -254,6 +255,40 @@ export class PerpsService {
     return agentWallet.preference.approveSignatures;
   };
 
+  /**
+   * Agent vaults are encrypted with the keyring password, and changing the
+   * password doesn't re-encrypt them — so the ciphertext can stop decrypting
+   * ("Incorrect password"). An agent is a re-creatable signing proxy, so on a
+   * genuine key mismatch (unlocked but decrypt still fails) we drop the stale
+   * data and let the caller recreate it instead of surfacing a password error.
+   */
+  private safeDecryptAgentVaults = async (): Promise<{
+    [address: string]: string;
+  }> => {
+    if (!this.store?.agentVaults) {
+      return {};
+    }
+    try {
+      return await this.keyringCrypto.decryptWithPassword(
+        this.store.agentVaults,
+      );
+    } catch (error) {
+      // not unlocked yet → password not ready, not a real key mismatch
+      if (!this.keyringCrypto.isUnlocked()) {
+        throw error;
+      }
+      console.warn(
+        '[perpsService] failed to decrypt agentVaults while unlocked, resetting stale agent data',
+        error instanceof Error ? error.message : String(error),
+      );
+      if (this.store) {
+        this.store.agentVaults = '';
+        this.store.agentPreferences = {};
+      }
+      return {};
+    }
+  };
+
   unlockAgentWallets = async () => {
     const unlockVersion = ++this.agentWalletUnlockVersion;
     const unlock = async () => {
@@ -264,17 +299,14 @@ export class PerpsService {
 
       // Decrypt and load agent vaults
       if (this.store.agentVaults) {
-        const vaultsMap: {
-          [address: string]: string;
-        } = await this.keyringCrypto.decryptWithPassword(
-          this.store.agentVaults,
-        );
+        const vaultsMap = await this.safeDecryptAgentVaults();
 
         // Format data for memory state
         for (const masterAddress in vaultsMap) {
-          const privateKey = vaultsMap[masterAddress];
+          const privateKey = vaultsMap[masterAddress] || '';
           const preference = this.store.agentPreferences[masterAddress] || {
             agentAddress: '',
+            approveSignatures: [],
           };
           agentWallets[masterAddress] = {
             vault: privateKey,
@@ -343,12 +375,7 @@ export class PerpsService {
       },
     };
 
-    let vaultsMap: { [address: string]: string } = {};
-    if (this.store.agentVaults) {
-      vaultsMap = await this.keyringCrypto.decryptWithPassword(
-        this.store.agentVaults,
-      );
-    }
+    const vaultsMap = await this.safeDecryptAgentVaults();
 
     vaultsMap[normalizedAddress] = vault;
 
@@ -451,12 +478,7 @@ export class PerpsService {
 
     const normalizedAddress = address.toLowerCase();
 
-    let vaultsMap: { [address: string]: string } = {};
-    if (this.store.agentVaults) {
-      vaultsMap = await this.keyringCrypto.decryptWithPassword(
-        this.store.agentVaults,
-      );
-    }
+    const vaultsMap = await this.safeDecryptAgentVaults();
 
     delete vaultsMap[normalizedAddress];
 
