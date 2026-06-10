@@ -138,6 +138,7 @@ export function TabsTopHeader(): JSX.Element {
     return formatSmallCurrencyValueParts(totalBalance, {
       currency,
       formatMillion: false,
+      decimalOverMillion: 2,
     }).text;
   }, [currency, totalBalance]);
   const netWorthValue = useSharedValue(netWorth);

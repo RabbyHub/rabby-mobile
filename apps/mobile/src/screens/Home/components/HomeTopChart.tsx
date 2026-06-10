@@ -255,6 +255,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
     return formatSmallCurrencyValueParts(rawNetWorth, {
       currency,
       formatMillion: false,
+      decimalOverMillion: 2,
     }).text;
   }, [rawNetWorth, currency]);
 
@@ -266,6 +267,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
           netWorth: formatSmallCurrencyValueParts(item.value, {
             currency,
             formatMillion: false,
+            decimalOverMillion: 2,
           }).text,
         };
       }) || []
