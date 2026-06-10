@@ -63,6 +63,7 @@ import {
   startProcessAccountBalanceEvents,
 } from './store/balanceAccountSelection';
 import * as apisAutoLock from './core/apis/autoLock';
+import { isUnlockSessionValid } from './core/apis/lock';
 import { startWatchLayoutChange } from './hooks/useAppLayout';
 import { startCareAppNotificationPermissions } from './hooks/appNotification';
 import nftListStore from './store/nfts';
@@ -214,8 +215,12 @@ function startInitStoresOnUnlock() {
 
 startInitStoresOnUnlock();
 
-export async function startRestoreWalletConnectSessionsOnUnlock() {
-  startRestoreWalletConnectSessions();
+function startWalletConnectStartupPolicy() {
+  if (keyringService.isUnlocked() || isUnlockSessionValid()) {
+    startRestoreWalletConnectSessions();
+  }
 
   keyringService.on('unlock', startRestoreWalletConnectSessions);
 }
+
+startWalletConnectStartupPolicy();
