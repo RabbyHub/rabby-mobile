@@ -263,29 +263,6 @@ export const usePerpsState = () => {
     return signActions;
   });
 
-  // return bool if can use approveSignatures
-  const restoreApproveSignatures = useMemoizedFn(
-    async (payload: { address: string }) => {
-      const approveSignatures = await apisPerps.getSendApproveAfterDeposit(
-        payload.address,
-      );
-
-      if (approveSignatures?.length) {
-        const item = approveSignatures[0];
-        const expiredTime = item.nonce + 1000 * 60 * 60 * 24;
-        const now = Date.now();
-        if (expiredTime > now) {
-          setApproveSignatures(approveSignatures);
-          return true;
-        } else {
-          return false;
-        }
-      } else {
-        return false;
-      }
-    },
-  );
-
   const checkBuilderFee = useMemoizedFn(async address => {
     try {
       const sdk = apisPerps.getPerpsSDK();
@@ -373,6 +350,44 @@ export const usePerpsState = () => {
       }, 100);
     },
     [handleSafeSetReference, handleSafeSetUnifiedAccount],
+  );
+
+  const checkAccountApproveStatus = useCallback(
+    async (account: Account, agentAddress: string) => {
+      try {
+        const sdk = apisPerps.getPerpsSDK();
+        const [checkResult, maxFee] = await Promise.all([
+          checkExtraAgent(account, agentAddress),
+          sdk.info.getMaxBuilderFee(PERPS_BUILD_FEE_RECEIVE_ADDRESS),
+        ]);
+        if (checkResult.needDelete) {
+          setAccountNeedApproveAgent(true);
+          !maxFee && setAccountNeedApproveBuilderFee(true);
+          return;
+        }
+
+        if (checkResult.isExpired) {
+          setAccountNeedApproveAgent(true);
+        }
+
+        if (!maxFee) {
+          setAccountNeedApproveBuilderFee(true);
+        }
+      } catch (e) {
+        setAccountNeedApproveAgent(true);
+        setAccountNeedApproveBuilderFee(true);
+        Sentry.captureException(
+          new Error(
+            `checkAccountApproveStatus failed, address: ${account.address} , account type: ${account.type} , agentAddress: ${agentAddress} , error: ${e}`,
+          ),
+        );
+      }
+    },
+    [
+      setAccountNeedApproveAgent,
+      setAccountNeedApproveBuilderFee,
+      checkExtraAgent,
+    ],
   );
 
   const ensureLoginApproveSign = useCallback(
@@ -561,8 +576,12 @@ export const usePerpsState = () => {
           return false;
         }
         if (!apisLock.isUnlocked()) {
+          const agentAddress = await apisPerps.getPerpsAgentAddress(
+            initAccount.address,
+          );
           await loginPerpsAccount(initAccount);
           await Promise.all([fetchMarketData(), waitForInitialWsData()]);
+          checkAccountApproveStatus(initAccount, agentAddress || '');
           setInitialized(true);
           return false;
         }
@@ -599,30 +618,11 @@ export const usePerpsState = () => {
     loginPerpsAccount,
     fetchMarketData,
     ensureLoginApproveSign,
+    checkAccountApproveStatus,
     setInitialized,
     resetAccountState,
     fetchPerpPermission,
   ]);
-
-  const judgeIsUserAgentIsExpired = useMemoizedFn(
-    async (errorMessage: string) => {
-      const masterAddress = currentPerpsAccount?.address;
-      if (!masterAddress) {
-        return false;
-      }
-
-      const agentWalletPreference = await apisPerps.getAgentWalletPreference(
-        masterAddress,
-      );
-      const agentAddress = agentWalletPreference?.agentAddress;
-      if (agentAddress && errorMessage.includes(agentAddress)) {
-        console.warn('handle action agent is expired, logout');
-        showToast('Agent is expired, try it again', 'error');
-        setAccountNeedApproveAgent(true);
-        return true;
-      }
-    },
-  );
 
   const handleSetLaterApproveStatus = useCallback(
     (signActions: SignAction[]) => {
@@ -972,8 +972,6 @@ export const usePerpsState = () => {
     handleDeleteAgent,
     fetchMarketData,
     fetchClearinghouseState,
-
-    judgeIsUserAgentIsExpired,
     handleActionApproveStatus,
 
     handleSafeSetReference,

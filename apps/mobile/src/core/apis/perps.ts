@@ -33,6 +33,9 @@ class ApisPerps {
   getAgentWalletPreference = async (masterWallet: string) => {
     return perpsService.getAgentWalletPreference(masterWallet);
   };
+  getPerpsAgentAddress = async (masterWallet: string) => {
+    return perpsService.getAgentWalletPreference(masterWallet)?.agentAddress;
+  };
   updatePerpsAgentWalletPreference = perpsService.updateAgentWalletPreference;
   setSendApproveAfterDeposit = perpsService.setSendApproveAfterDeposit;
   getSendApproveAfterDeposit = async (masterAddress: string) => {

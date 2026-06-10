@@ -715,7 +715,7 @@ export const setAccountNeedApproveAgent = (payload: boolean) => {
 export const fetchClearinghouseStateAction = async () => {};
 export const fetchPositionOpenOrdersAction = async () => {};
 
-const setAccountNeedApproveBuilderFee = (payload: boolean) => {
+export const setAccountNeedApproveBuilderFee = (payload: boolean) => {
   setPerpsState(prev => ({ ...prev, accountNeedApproveBuilderFee: payload }));
 };
 
