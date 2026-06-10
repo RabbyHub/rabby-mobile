@@ -43,10 +43,11 @@ import { getItemId } from './utils/listRenderId';
 import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
 import { Text } from '@/components/Typography';
 import { useAppForeground } from '@/hooks/useAppForeground';
+import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
 
 interface Props {
   onForeground?: () => void;
-  onRefresh?: () => void;
+  onRefresh?: () => void | Promise<void>;
   onReachTopStatusChange?: (status: boolean) => void;
 }
 const FOOTER_HEIGHT = 220;
@@ -297,9 +298,17 @@ const NFTListInner = ({
             style={styles.bgContainer}
             onRefresh={async () => {
               setIsManualRefreshing(true);
-              onRefresh?.();
               try {
-                await reloadNftList?.(true);
+                const balanceRefresh = Promise.resolve().then(() =>
+                  onRefresh?.(),
+                );
+                const nftRefresh = reloadNftList?.(true);
+                await withAnimatedTickerRefreshNudge(
+                  () => balanceRefresh,
+                ).catch(error => {
+                  console.error('Refresh balance failed:', error);
+                });
+                await nftRefresh;
               } finally {
                 setIsManualRefreshing(false);
               }

@@ -35,7 +35,7 @@ import { Text, AnimateableText } from '@/components/Typography';
 import { useHomePortfolioStore } from '@/screens/Home/hooks/useHomePortfolioSummary';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useShallow } from 'zustand/react/shallow';
-import AnimatedTickerText from '@/components/Animated/AnimatedTickerText';
+import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedSVG = Animated.createAnimatedComponent(Svg);
@@ -392,7 +392,7 @@ const ChartHeader = React.memo(
             ]}
             onPress={onPressNetWorth}
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceValue)}>
-            <AnimatedTickerText
+            <RefreshNudgedTickerText
               value={formatNetWorth}
               maxLength={24}
               lineHeight={46}

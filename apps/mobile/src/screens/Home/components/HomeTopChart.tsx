@@ -33,7 +33,7 @@ import {
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { AnimateableText } from '@/components/Typography';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
-import AnimatedTickerText from '@/components/Animated/AnimatedTickerText';
+import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -398,7 +398,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   return (
     <View style={[styles.charHeader]}>
       <View style={styles.leftContainer}>
-        <AnimatedTickerText
+        <RefreshNudgedTickerText
           value={formatNetWorth}
           maxLength={16}
           lineHeight={46}
