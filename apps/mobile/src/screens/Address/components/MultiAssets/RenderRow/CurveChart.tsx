@@ -42,7 +42,7 @@ const AnimatedSVG = Animated.createAnimatedComponent(Svg);
 const CHART_HORIZONTAL_INSET = 66;
 
 const MAX_NETWORTH_FS = 38;
-const MIN_NETWORTH_FS = 30;
+const MIN_NETWORTH_FS = 28;
 const NETWORTH_FIT_LEN = 8;
 
 const svIsFoldMultiChart = makeMutable(true);
@@ -255,7 +255,10 @@ const ChartHeader = React.memo(
       matteredAccountCount >= 10 ? '10' : String(matteredAccountCount);
 
     const netWorth = useMemo(() => {
-      return formatSmallCurrencyValueParts(rawNetWorth, { currency }).text;
+      return formatSmallCurrencyValueParts(rawNetWorth, {
+        currency,
+        formatMillion: false,
+      }).text;
     }, [currency, rawNetWorth]);
     const change = useMemo(() => {
       return formatCurrencyValueParts(Math.abs(debouncedRawChange), {
@@ -270,6 +273,7 @@ const ChartHeader = React.memo(
             ...item,
             netWorth: formatSmallCurrencyValueParts(item.value, {
               currency,
+              formatMillion: false,
             }).text,
             change: formatCurrencyValueParts(Math.abs(item.rawChange), {
               currency,

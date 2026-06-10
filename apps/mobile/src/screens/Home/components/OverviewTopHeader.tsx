@@ -135,7 +135,10 @@ export function TabsTopHeader(): JSX.Element {
   }, [setTokenDisplayMode, tokenDisplayMode]);
 
   const netWorth = useMemo(() => {
-    return formatSmallCurrencyValueParts(totalBalance, { currency }).text;
+    return formatSmallCurrencyValueParts(totalBalance, {
+      currency,
+      formatMillion: false,
+    }).text;
   }, [currency, totalBalance]);
   const netWorthValue = useSharedValue(netWorth);
   useEffect(() => {
