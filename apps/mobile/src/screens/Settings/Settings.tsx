@@ -175,6 +175,7 @@ import { Text } from '@/components/Typography';
 import { useAppSecurityChain } from '@/hooks/global';
 import { useToggleShowUnlockStatusBar } from '@/hooks/appSettings';
 import { SwitchShowFloatingUnlockStatusBar } from './components/SwitchFloatingView';
+import { SwitchUserBehaviorTrackingOptOut } from './components/SwitchUserBehaviorTrackingOptOut';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -796,6 +797,11 @@ function DevSettingsBlocks({
   const { setDevServerSettingsModalVisible } = useDevServerModalVisible();
   const currentAccount = preferenceService.getFallbackAccount();
   const { toggleShowUnlockStatusBar } = useToggleShowUnlockStatusBar();
+  const toggleUserBehaviorTrackingOptOut = useCallback(() => {
+    preferenceService.setUserBehaviorTrackingOptOut(
+      !preferenceService.getUserBehaviorTrackingOptOut(),
+    );
+  }, []);
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -813,6 +819,19 @@ function DevSettingsBlocks({
                 </Text>
               ),
               // TODO: only show in non-production mode
+              visible: NEED_DEVSETTINGBLOCKS,
+            },
+            {
+              label: 'User Behavior Tracking Opt-out',
+              icon: RcPrivacyPolicy,
+              onPress: () => {
+                toggleUserBehaviorTrackingOptOut();
+              },
+              rightNode: (
+                <SwitchUserBehaviorTrackingOptOut
+                  onPress={evt => evt.stopPropagation()}
+                />
+              ),
               visible: NEED_DEVSETTINGBLOCKS,
             },
             {
