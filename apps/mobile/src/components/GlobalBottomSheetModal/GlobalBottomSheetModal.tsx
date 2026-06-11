@@ -33,6 +33,7 @@ type ModalData = {
 
 export const GlobalBottomSheetModal = () => {
   const modalRefs = React.useRef<Record<string, ModalData['ref']>>({});
+  const presentedModalIds = React.useRef<Set<string>>(new Set());
   const [modals, setModals] = React.useState<ModalData[]>([]);
 
   const { colors, colors2024, isLight } = useTheme2024();
@@ -47,7 +48,7 @@ export const GlobalBottomSheetModal = () => {
   const handlePresent = React.useCallback<
     GlobalSheetModalListeners[EVENT_NAMES.PRESENT]
   >((key: string) => {
-    const currentModal = modalRefs.current[key];
+    const currentModal = modalRefs.current[key]?.current;
 
     if (!currentModal) {
       if (__DEV__) {
@@ -58,9 +59,27 @@ export const GlobalBottomSheetModal = () => {
       return;
     }
 
-    currentModal.current?.present();
+    currentModal.present();
+    presentedModalIds.current.add(key);
     globalSheetModalEvents.emit(EVENT_NAMES.PRESENTED, key);
   }, []);
+
+  React.useEffect(() => {
+    const pendingModals = modals.filter(
+      modal => !presentedModalIds.current.has(modal.id),
+    );
+    if (!pendingModals.length) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      pendingModals.forEach(modal => handlePresent(modal.id));
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [handlePresent, modals]);
 
   const [getApproval] = useApproval();
 
@@ -108,11 +127,8 @@ export const GlobalBottomSheetModal = () => {
 
         return [...prev, newModal];
       });
-      setTimeout(() => {
-        handlePresent(id);
-      }, 0);
     },
-    [getApproval, handlePresent],
+    [getApproval],
   );
 
   const handleRemove = React.useCallback<
@@ -125,6 +141,7 @@ export const GlobalBottomSheetModal = () => {
       );
     }
     delete modalRefs.current[key];
+    presentedModalIds.current.delete(key);
     // const modalInst = modals.find(modal => modal.id === key);
     // modalInst?.params.onCancel?.();
 

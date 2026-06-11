@@ -818,3 +818,21 @@ index 7cbd83521257c1a730cca632a712737253dcddab..9a7011445029fbbd22524879f8fc0128
 +    disableJsPromptLike?: boolean;
  }
  export {};
+diff --git a/src/RNCWebViewNativeComponent.ts b/src/RNCWebViewNativeComponent.ts
+index a6e72f0f8e2e29dc064452c35ef0d4d4d08b3f98..1c645b31ef387f9f23f73f73a1dc3db7edb7fd63 100644
+--- a/src/RNCWebViewNativeComponent.ts
++++ b/src/RNCWebViewNativeComponent.ts
+@@ -80,4 +80,5 @@ export type WebViewNavigationEvent = Readonly<{
+     | 'formresubmit'
+     | 'other';
+   mainDocumentURL?: string;
++  isReload?: boolean;
+ }>;
+@@ -218,6 +219,7 @@ export interface NativeProps extends ViewProps {
+   decelerationRate?: Double;
+   directionalLockEnabled?: boolean;
+   enableApplePay?: boolean;
++  disableJsPromptLike?: boolean;
+   hideKeyboardAccessoryView?: boolean;
+   keyboardDisplayRequiresUserAction?: boolean;
+   limitsNavigationsToAppBoundDomains?: boolean;

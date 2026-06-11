@@ -1,9 +1,11 @@
 import React from 'react';
 import { BlurView } from '@react-native-community/blur';
 
+import { RootNames } from '@/constant/layout';
+import { useCurrentRouteName } from '@/hooks/navigation';
+import { useIOSAppSwitcherBlurVisible } from '@/hooks/native/security';
 import { useGetBinaryMode, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { useIsOnBackground } from '@/hooks/useLock';
 
 const getBlurModalStyles = createGetStyles(() => {
   return {
@@ -17,14 +19,17 @@ const getBlurModalStyles = createGetStyles(() => {
   };
 });
 
-export function SafeTipModalBlurView() {
+export function BackgroundSecureBlurViewLegacy() {
   const { styles } = useThemeStyles(getBlurModalStyles);
-
   const appThemeMode = useGetBinaryMode();
+  const { currentRouteName } = useCurrentRouteName();
+  const visible = useIOSAppSwitcherBlurVisible();
 
-  const { isOnBackground } = useIsOnBackground();
+  if (!visible) {
+    return null;
+  }
 
-  if (!isOnBackground) {
+  if (currentRouteName === RootNames.Unlock) {
     return null;
   }
 

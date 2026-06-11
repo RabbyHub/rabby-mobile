@@ -106,10 +106,10 @@ export const GlobalSecurityTipStubModal = registerAppScreen<
 });
 
 export const BackgroundSecureBlurView = registerAppScreen<
-  typeof import('@/components/customized/BlurViews').BackgroundSecureBlurView
+  typeof import('@/components/customized/BackgroundSecureBlurView').BackgroundSecureBlurView
 >({
   loader: () =>
-    import('@/components/customized/BlurViews').then(m => ({
+    import('@/components/customized/BackgroundSecureBlurView').then(m => ({
       default: m.BackgroundSecureBlurView,
     })),
 });
