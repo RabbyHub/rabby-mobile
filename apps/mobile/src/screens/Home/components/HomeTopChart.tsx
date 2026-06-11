@@ -33,14 +33,14 @@ import {
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { AnimateableText } from '@/components/Typography';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
-import AnimatedTickerText from '@/components/Animated/AnimatedTickerText';
+import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const ScreenWidth = Dimensions.get('screen').width;
 
 const MAX_NETWORTH_FS = 38;
-const MIN_NETWORTH_FS = 34;
+const MIN_NETWORTH_FS = 28;
 const NETWORTH_FIT_LEN = 9;
 
 const ZERO_LINE_CHART_DATA: CurvePoint[] = [
@@ -252,7 +252,11 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   const _data = selectData.list;
 
   const netWorth = useMemo(() => {
-    return formatSmallCurrencyValueParts(rawNetWorth, { currency }).text;
+    return formatSmallCurrencyValueParts(rawNetWorth, {
+      currency,
+      formatMillion: false,
+      decimalOverMillion: 2,
+    }).text;
   }, [rawNetWorth, currency]);
 
   const data = useMemo(() => {
@@ -262,6 +266,8 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
           ...item,
           netWorth: formatSmallCurrencyValueParts(item.value, {
             currency,
+            formatMillion: false,
+            decimalOverMillion: 2,
           }).text,
         };
       }) || []
@@ -394,7 +400,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   return (
     <View style={[styles.charHeader]}>
       <View style={styles.leftContainer}>
-        <AnimatedTickerText
+        <RefreshNudgedTickerText
           value={formatNetWorth}
           maxLength={16}
           lineHeight={46}

@@ -63,6 +63,7 @@ import {
 import { RNGHRefreshControl } from '@/components/customized/reexports';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import addressBalanceStore from '@/store/balance';
+import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -402,12 +403,19 @@ export const TokenList = () => {
   // }, [hasMorePortfolios, styles.loadingMore]);
 
   const onRefresh = useCallback(async () => {
+    const balanceRefresh = triggerUpdate(true);
+    const tokenRefresh = batchGetTokenList(myTop10Addresses, true);
+
+    await withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(error => {
+      console.error('Refresh balance failed:', error);
+    });
+
     try {
-      await batchGetTokenList(myTop10Addresses, true);
+      await tokenRefresh;
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [myTop10Addresses]);
+  }, [myTop10Addresses, triggerUpdate]);
 
   const dataList = useMemo(() => {
     const items: TokenListItem[] = [];

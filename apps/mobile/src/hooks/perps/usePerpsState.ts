@@ -174,7 +174,15 @@ export const usePerpsState = () => {
   );
 
   const checkExtraAgent = useMemoizedFn(
-    async (account: Account, agentAddress: string) => {
+    async (
+      account: Account,
+      agentAddress: string,
+      opts?: { skipDeletePopup?: boolean },
+    ) => {
+      // self-sign: master signs its own orders, there is no agent to expire.
+      if (apisPerps.isSelfSignPerpsAccount(account.type)) {
+        return { isExpired: false };
+      }
       const sdk = apisPerps.getPerpsSDK();
       const extraAgents = await sdk.info.extraAgents(account.address);
       const item = extraAgents.find(agent =>
@@ -186,36 +194,38 @@ export const usePerpsState = () => {
         );
         if (!existAgentName && extraAgents.length >= 3) {
           // 超过3个，需要删除一个
-          deleteAgentCbRef.current = async () => {
-            const deleteItem = minBy(extraAgents, agent => agent.validUntil);
-            if (deleteItem) {
-              sdk.initAccount(
-                account.address,
-                DELETE_AGENT_EMPTY_ADDRESS,
-                DELETE_AGENT_EMPTY_ADDRESS,
-                deleteItem.name,
-              );
-              const action = sdk.exchange?.prepareApproveAgent();
-              const signActions: SignAction[] = [
-                {
-                  action,
-                  type: 'approveAgent',
-                  signature: '',
-                },
-              ];
-              await executeSignatures(signActions, account);
-              const res = await sdk.exchange?.sendApproveAgent({
-                action: action?.message,
-                nonce: action?.nonce || 0,
-                signature: signActions[0].signature,
-              });
-            }
-          };
-          // setDeleteAgentModalVisible?.(true);
-          setPopupState(prev => ({
-            ...prev,
-            isShowDeleteAgentPopup: true,
-          }));
+          if (!opts?.skipDeletePopup) {
+            deleteAgentCbRef.current = async () => {
+              const deleteItem = minBy(extraAgents, agent => agent.validUntil);
+              if (deleteItem) {
+                apisPerps.initPerpsAgentAccount(
+                  account.address,
+                  DELETE_AGENT_EMPTY_ADDRESS,
+                  DELETE_AGENT_EMPTY_ADDRESS,
+                  deleteItem.name,
+                );
+                const action = sdk.exchange?.prepareApproveAgent();
+                const signActions: SignAction[] = [
+                  {
+                    action,
+                    type: 'approveAgent',
+                    signature: '',
+                  },
+                ];
+                await executeSignatures(signActions, account);
+                const res = await sdk.exchange?.sendApproveAgent({
+                  action: action?.message,
+                  nonce: action?.nonce || 0,
+                  signature: signActions[0]?.signature || '',
+                });
+              }
+            };
+            // setDeleteAgentModalVisible?.(true);
+            setPopupState(prev => ({
+              ...prev,
+              isShowDeleteAgentPopup: true,
+            }));
+          }
           return {
             needDelete: true,
             isExpired: true,
@@ -263,29 +273,6 @@ export const usePerpsState = () => {
     return signActions;
   });
 
-  // return bool if can use approveSignatures
-  const restoreApproveSignatures = useMemoizedFn(
-    async (payload: { address: string }) => {
-      const approveSignatures = await apisPerps.getSendApproveAfterDeposit(
-        payload.address,
-      );
-
-      if (approveSignatures?.length) {
-        const item = approveSignatures[0];
-        const expiredTime = item.nonce + 1000 * 60 * 60 * 24;
-        const now = Date.now();
-        if (expiredTime > now) {
-          setApproveSignatures(approveSignatures);
-          return true;
-        } else {
-          return false;
-        }
-      } else {
-        return false;
-      }
-    },
-  );
-
   const checkBuilderFee = useMemoizedFn(async address => {
     try {
       const sdk = apisPerps.getPerpsSDK();
@@ -294,15 +281,24 @@ export const usePerpsState = () => {
       );
       if (!res) {
         setAccountNeedApproveBuilderFee(true);
-        console.error('Failed to set builder fee');
-        Sentry.captureException(
-          new Error(
-            `PERPS set builder fee error, no max builder fee, address: ${address}`,
-          ),
-        );
       }
     } catch (error) {
       console.error('Failed to set builder fee:', error);
+      Sentry.captureException(
+        new Error(`PERPS set builder fee error, address: ${address}`),
+      );
+    }
+  });
+
+  const checkSelfSignBuilderFee = useMemoizedFn(async () => {
+    try {
+      const maxFee = await apisPerps
+        .getPerpsSDK()
+        .info.getMaxBuilderFee(PERPS_BUILD_FEE_RECEIVE_ADDRESS);
+      setAccountNeedApproveAgent(false);
+      setAccountNeedApproveBuilderFee(!maxFee);
+    } catch (e) {
+      // best-effort; keep current flags
     }
   });
 
@@ -375,6 +371,62 @@ export const usePerpsState = () => {
     [handleSafeSetReference, handleSafeSetUnifiedAccount],
   );
 
+  const fetchApproveStatus = useMemoizedFn(
+    async (
+      account: Account,
+      agentAddress: string,
+      opts?: { skipDeletePopup?: boolean },
+    ) => {
+      const sdk = apisPerps.getPerpsSDK();
+      const [checkResult, maxFee] = await Promise.all([
+        checkExtraAgent(account, agentAddress, opts),
+        sdk.info.getMaxBuilderFee(
+          PERPS_BUILD_FEE_RECEIVE_ADDRESS,
+          account.address,
+        ),
+      ]);
+      return { ...checkResult, maxFee };
+    },
+  );
+
+  const checkAccountApproveStatus = useCallback(
+    async (account: Account, agentAddress: string) => {
+      try {
+        const { needDelete, isExpired, maxFee } = await fetchApproveStatus(
+          account,
+          agentAddress,
+          { skipDeletePopup: true },
+        );
+        if (needDelete) {
+          setAccountNeedApproveAgent(true);
+          !maxFee && setAccountNeedApproveBuilderFee(true);
+          return;
+        }
+
+        if (isExpired) {
+          setAccountNeedApproveAgent(true);
+        }
+
+        if (!maxFee) {
+          setAccountNeedApproveBuilderFee(true);
+        }
+      } catch (e) {
+        setAccountNeedApproveAgent(true);
+        setAccountNeedApproveBuilderFee(true);
+        Sentry.captureException(
+          new Error(
+            `checkAccountApproveStatus failed, address: ${account.address} , account type: ${account.type} , agentAddress: ${agentAddress} , error: ${e}`,
+          ),
+        );
+      }
+    },
+    [
+      setAccountNeedApproveAgent,
+      setAccountNeedApproveBuilderFee,
+      fetchApproveStatus,
+    ],
+  );
+
   const ensureLoginApproveSign = useCallback(
     async (account: Account, agentAddress: string) => {
       try {
@@ -382,18 +434,18 @@ export const usePerpsState = () => {
 
         const signActions: SignAction[] = [];
 
-        const [checkResult, maxFee] = await Promise.all([
-          checkExtraAgent(account, agentAddress),
-          sdk.info.getMaxBuilderFee(PERPS_BUILD_FEE_RECEIVE_ADDRESS),
-        ]);
-        if (checkResult.needDelete) {
+        const { needDelete, isExpired, maxFee } = await fetchApproveStatus(
+          account,
+          agentAddress,
+        );
+        if (needDelete) {
           // 需要删除agent，且重新approve agent和builder fee
           setAccountNeedApproveAgent(true);
           !maxFee && setAccountNeedApproveBuilderFee(true);
           return;
         }
 
-        if (checkResult.isExpired) {
+        if (isExpired) {
           const { agentAddress: newAgentAddress, vault } =
             await apisPerps.createPerpsAgentWallet(account.address);
           sdk.initOrUpdateAgent(vault, newAgentAddress, PERPS_AGENT_NAME);
@@ -463,7 +515,7 @@ export const usePerpsState = () => {
       handleDirectApprove,
       setAccountNeedApproveAgent,
       setAccountNeedApproveBuilderFee,
-      checkExtraAgent,
+      fetchApproveStatus,
       handleSafeSetUnifiedAccount,
     ],
   );
@@ -485,13 +537,14 @@ export const usePerpsState = () => {
         const signActions: SignAction[] = [];
         const sdk = apisPerps.getPerpsSDK();
 
-        const { vault, agentAddress } =
-          await apisPerps.getOrCreatePerpsAgentWallet(
-            currentPerpsAccount.address,
-          );
-        sdk.initOrUpdateAgent(vault, agentAddress, PERPS_AGENT_NAME);
+        // Configure signing identity. self-sign installs externalSign and needs
+        // no approveAgent; agent wallets keep the vault + approveAgent flow.
+        const signer = await apisPerps.applyPerpsSigner(currentPerpsAccount);
 
-        if (accountNeedApproveAgent) {
+        if (
+          !signer.isSelfSign &&
+          (accountNeedApproveAgent || signer.isCreate)
+        ) {
           signActions.push({
             action: sdk.exchange?.prepareApproveAgent(),
             type: 'approveAgent',
@@ -511,6 +564,9 @@ export const usePerpsState = () => {
         }
 
         if (signActions.length === 0) {
+          if (signer.isSelfSign && accountNeedApproveAgent) {
+            setAccountNeedApproveAgent(false);
+          }
           isHandlingApproveStatus.current = false;
           return;
         }
@@ -560,21 +616,36 @@ export const usePerpsState = () => {
         if (!initAccount) {
           return false;
         }
-        if (!apisLock.isUnlocked()) {
+        // self-sign passive init: configure signer (no unlock), pull data, only
+        // MARK builder-fee status. No signing here — unlock waits for a user
+        // action (placing an order / tapping approve).
+        if (apisPerps.isSelfSignPerpsAccount(initAccount.type)) {
+          await apisPerps.applyPerpsSigner(initAccount);
           await loginPerpsAccount(initAccount);
           await Promise.all([fetchMarketData(), waitForInitialWsData()]);
+          // lightweight builder-fee check only (not the agent-aware
+          // ensureLoginApproveSign); fire-and-forget — non-blocking UI hint.
+          checkSelfSignBuilderFee();
+          setInitialized(true);
+          return false;
+        }
+        if (!apisLock.isUnlocked()) {
+          const agentAddress = await apisPerps.getPerpsAgentAddress(
+            initAccount.address,
+          );
+          await loginPerpsAccount(initAccount);
+          await Promise.all([fetchMarketData(), waitForInitialWsData()]);
+          checkAccountApproveStatus(initAccount, agentAddress || '');
           setInitialized(true);
           return false;
         }
         const { vault, agentAddress } =
           await apisPerps.getOrCreatePerpsAgentWallet(initAccount.address);
-        const sdk = apisPerps.getPerpsSDK();
         // 开始恢复登录态
-        sdk.initAccount(
+        apisPerps.initPerpsAgentAccount(
           initAccount.address,
           vault,
           agentAddress,
-          PERPS_AGENT_NAME,
         );
         await loginPerpsAccount(initAccount);
 
@@ -599,30 +670,12 @@ export const usePerpsState = () => {
     loginPerpsAccount,
     fetchMarketData,
     ensureLoginApproveSign,
+    checkAccountApproveStatus,
     setInitialized,
     resetAccountState,
     fetchPerpPermission,
+    checkSelfSignBuilderFee,
   ]);
-
-  const judgeIsUserAgentIsExpired = useMemoizedFn(
-    async (errorMessage: string) => {
-      const masterAddress = currentPerpsAccount?.address;
-      if (!masterAddress) {
-        return false;
-      }
-
-      const agentWalletPreference = await apisPerps.getAgentWalletPreference(
-        masterAddress,
-      );
-      const agentAddress = agentWalletPreference?.agentAddress;
-      if (agentAddress && errorMessage.includes(agentAddress)) {
-        console.warn('handle action agent is expired, logout');
-        showToast('Agent is expired, try it again', 'error');
-        setAccountNeedApproveAgent(true);
-        return true;
-      }
-    },
-  );
 
   const handleSetLaterApproveStatus = useCallback(
     (signActions: SignAction[]) => {
@@ -642,7 +695,7 @@ export const usePerpsState = () => {
       account.address,
     );
     const sdk = apisPerps.getPerpsSDK();
-    sdk.initAccount(account.address, vault, agentAddress, PERPS_AGENT_NAME);
+    apisPerps.initPerpsAgentAccount(account.address, vault, agentAddress);
 
     const signActions = await prepareSignActions();
     console.log('signActions', signActions);
@@ -693,7 +746,43 @@ export const usePerpsState = () => {
         return false;
       }
 
-      const sdk = apisPerps.getPerpsSDK();
+      // self-sign (pk/mnemonic): master is its own signer — no agent, no
+      // approveAgent. login is a user-initiated, already-unlocked entry, so
+      // silently approve the builder fee here if it isn't yet (self-sign signs
+      // locally via keyring → no popup; handleDirectApprove also sets the
+      // unified account). Non-fatal: flag it for later if the approve fails.
+      if (apisPerps.isSelfSignPerpsAccount(account.type)) {
+        await apisPerps.applyPerpsSigner(account);
+        await loginPerpsAccount(account);
+        setAccountNeedApproveAgent(false);
+        const selfSignSdk = apisPerps.getPerpsSDK();
+        try {
+          const maxFee = await selfSignSdk.info.getMaxBuilderFee(
+            PERPS_BUILD_FEE_RECEIVE_ADDRESS,
+            account.address,
+          );
+          if (maxFee) {
+            setAccountNeedApproveBuilderFee(false);
+          } else {
+            const signActions: SignAction[] = [
+              {
+                action: selfSignSdk.exchange?.prepareApproveBuilderFee({
+                  builder: PERPS_BUILD_FEE_RECEIVE_ADDRESS,
+                }),
+                type: 'approveBuilderFee',
+                signature: '',
+              },
+            ];
+            await executeSignatures(signActions, account);
+            await handleDirectApprove(signActions);
+            setAccountNeedApproveBuilderFee(false);
+          }
+        } catch (e) {
+          setAccountNeedApproveBuilderFee(true);
+        }
+        return true;
+      }
+
       const res = await apisPerps.getPerpsAgentWallet(account.address);
       const agentAddress = res?.preference?.agentAddress || '';
       const { isExpired, needDelete } = await checkExtraAgent(
@@ -709,11 +798,10 @@ export const usePerpsState = () => {
 
       if (res) {
         if (!isExpired) {
-          sdk.initAccount(
+          apisPerps.initPerpsAgentAccount(
             account.address,
             res.vault,
             res.preference.agentAddress,
-            PERPS_AGENT_NAME,
           );
           // 未到过期时间无需签名直接登录即可
           await loginPerpsAccount(account);
@@ -745,10 +833,6 @@ export const usePerpsState = () => {
     apisPerps.setPerpsCurrentAccount(null);
     apisPerps.setSendApproveAfterDeposit(address, []);
     deleteAgentCbRef.current = null;
-  });
-
-  const setCurrentPerpsAccount = useMemoizedFn((account: Account | null) => {
-    setCurrentPerpsAccount(account);
   });
 
   const handleWithdraw = useMemoizedFn(
@@ -965,15 +1049,12 @@ export const usePerpsState = () => {
     // Actions
     login,
     logout,
-    setCurrentPerpsAccount,
     setInitialized,
     handleWithdraw,
     refreshData: refreshData,
     handleDeleteAgent,
     fetchMarketData,
     fetchClearinghouseState,
-
-    judgeIsUserAgentIsExpired,
     handleActionApproveStatus,
 
     handleSafeSetReference,

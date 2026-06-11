@@ -392,6 +392,8 @@ export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
     isUserDataReady: false,
     currentClearinghouseState: null,
     homePositionPnl: pnl,
+    accountNeedApproveAgent: false,
+    accountNeedApproveBuilderFee: false,
   }));
   perpsService.setCurrentAccount(payload);
 };
@@ -715,7 +717,7 @@ export const setAccountNeedApproveAgent = (payload: boolean) => {
 export const fetchClearinghouseStateAction = async () => {};
 export const fetchPositionOpenOrdersAction = async () => {};
 
-const setAccountNeedApproveBuilderFee = (payload: boolean) => {
+export const setAccountNeedApproveBuilderFee = (payload: boolean) => {
   setPerpsState(prev => ({ ...prev, accountNeedApproveBuilderFee: payload }));
 };
 
@@ -1244,7 +1246,24 @@ export const apisPerpsStore = {
   logout: () => {
     unsubscribeAll();
     resetAccountState();
+    // The SDK singleton is torn down on lock (destroyPerpsSDK), so force the
+    // init effect to run again on next entry and reinstall the signer
+    // (externalSign for self-sign, or the agent vault). Without this, the stale
+    // isInitialized=true would skip initIsLogin and a self-sign account could
+    // not sign after an unlock.
+    setInitialized(false);
     fetchPerpPermission('');
+  },
+  // Re-arm the init effect after an unlock. An init that ran while locked
+  // could neither bind the SDK account/vault nor sign, and a failed
+  // checkAccountApproveStatus latches both approve flags — without this the
+  // `isInitialized` guard keeps the wrong flags until the next lock event,
+  // prompting the user to re-sign approvals for a perfectly valid agent.
+  // No-op when no perps session is active (lock already reset everything).
+  reinitAfterUnlock: () => {
+    if (perpsStore.getState().currentPerpsAccount) {
+      setInitialized(false);
+    }
   },
 };
 

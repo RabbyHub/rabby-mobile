@@ -156,6 +156,7 @@ import {
   usePulldownRefreshStyles,
 } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { Text } from '@/components/Typography';
+import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
 
 function couldDoRefresh() {
   return apisHomeTabIndex.isHomeAtFirstTab();
@@ -934,6 +935,36 @@ export const HomeOverview = React.memo(() => {
 
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 
+  const refreshManualBalance = useCallback(() => {
+    return triggerUpdate(true).then(balanceAccounts => {
+      const balanceAddresses = Object.keys(balanceAccounts);
+      scene24hBalanceStore.refresh24hAssets({
+        addresses: balanceAddresses.length ? balanceAddresses : undefined,
+        force: true,
+        reason: 'manual_refresh',
+      });
+      refreshDayCurve({
+        addresses: balanceAddresses.length ? balanceAddresses : undefined,
+        force: true,
+        reason: 'manual_refresh',
+      });
+    });
+  }, [triggerUpdate]);
+
+  const refreshManualHomeBackgroundData = useCallback(async () => {
+    // update at background
+    forceUpdateApprovalAlertCounts();
+    apisLending.fetchLendingData();
+    const forceRefresh = true;
+    const { top10Addresses } = await getTop10MyAccounts();
+    syncTop10History(top10Addresses, forceRefresh);
+    currencyService.syncCurrencyList(forceRefresh);
+
+    // refresh token/protocol list
+    useTokenList.getState().batchGetTokenList(top10Addresses, forceRefresh);
+    useProtocol.getState().batchGetProtocols(top10Addresses, forceRefresh);
+  }, []);
+
   const onRefresh = useCallback(async () => {
     if (!couldDoRefresh()) {
       return;
@@ -941,35 +972,30 @@ export const HomeOverview = React.memo(() => {
 
     perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
     return Promise.all([
-      // force update balance from server api
-      triggerUpdate(true).then(balanceAccounts => {
-        const balanceAddresses = Object.keys(balanceAccounts);
-        scene24hBalanceStore.refresh24hAssets({
-          addresses: balanceAddresses.length ? balanceAddresses : undefined,
-          force: true,
-          reason: 'manual_refresh',
-        });
-        refreshDayCurve({
-          addresses: balanceAddresses.length ? balanceAddresses : undefined,
-          force: true,
-          reason: 'manual_refresh',
-        });
-      }),
+      refreshManualBalance(),
       checkGasAccountAddressesEligibility(true),
-    ]).finally(async () => {
-      // update at background
-      forceUpdateApprovalAlertCounts();
-      apisLending.fetchLendingData();
-      const forceRefresh = true;
-      const { top10Addresses } = await getTop10MyAccounts();
-      syncTop10History(top10Addresses, forceRefresh);
-      currencyService.syncCurrencyList(forceRefresh);
+    ]).finally(refreshManualHomeBackgroundData);
+  }, [refreshManualBalance, refreshManualHomeBackgroundData]);
 
-      // refresh token/protocol list
-      useTokenList.getState().batchGetTokenList(top10Addresses, forceRefresh);
-      useProtocol.getState().batchGetProtocols(top10Addresses, forceRefresh);
+  // 只有手动刷新需要检查跳跃数字是否和刷新前是否一致
+  const handleManualPulldownRefresh = useCallback(async () => {
+    if (!couldDoRefresh()) {
+      return;
+    }
+
+    perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
+    const balanceRefresh = refreshManualBalance();
+    const gasAccountRefresh = checkGasAccountAddressesEligibility(true);
+
+    await withAnimatedTickerRefreshNudge(() =>
+      Promise.race([balanceRefresh, sleep(3000)]),
+    ).catch(error => {
+      console.error('Refresh balance failed:', error);
     });
-  }, [triggerUpdate]);
+    await Promise.all([balanceRefresh, gasAccountRefresh]).finally(
+      refreshManualHomeBackgroundData,
+    );
+  }, [refreshManualBalance, refreshManualHomeBackgroundData]);
 
   // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
   const handlePressMarket = useCallback(() => {
@@ -1118,7 +1144,7 @@ export const HomeOverview = React.memo(() => {
   } = usePulldownRefreshGesture<RNGHScrollView>({
     onJsPulldownRefresh: async ctx => {
       ctx.svIsManualRefreshing.value = true;
-      await Promise.race([onRefresh(), sleep(3000)]);
+      await handleManualPulldownRefresh();
     },
   });
 
@@ -1169,7 +1195,7 @@ export const HomeOverview = React.memo(() => {
                 <RNGHRefreshControl
                   style={{ paddingHorizontal: 16 }}
                   refreshing={isRefreshing}
-                  onRefresh={onRefresh}
+                  onRefresh={handleManualPulldownRefresh}
                 />
               ),
             })}>
