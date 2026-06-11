@@ -47,6 +47,7 @@ type AnimatedTickerTextProps = {
 type TickerTextState = {
   text: string;
   isRtl: boolean;
+  isOverflow: boolean;
   fontSize: number | undefined;
 };
 
@@ -261,8 +262,13 @@ const AnimatedTickerColumn = memo(
     );
 
     const columnStyle = useAnimatedStyle(() => {
-      const { text, isRtl, fontSize: textFontSize } = textState.value;
-      if (isRtl) {
+      const {
+        text,
+        isRtl,
+        isOverflow,
+        fontSize: textFontSize,
+      } = textState.value;
+      if (isRtl || isOverflow) {
         return {
           width: 0,
           height: lineHeight,
@@ -371,9 +377,10 @@ const AnimatedTickerText = ({
     return {
       text,
       isRtl: hasRtlText(text),
+      isOverflow: text.length > maxLength,
       fontSize: getTextFontSize(text, fontSizeByLength),
     };
-  }, [fontSizeByLength]);
+  }, [fontSizeByLength, maxLength]);
 
   const fallbackAnimatedProps = useAnimatedProps(() => {
     return {
@@ -382,10 +389,10 @@ const AnimatedTickerText = ({
   });
 
   const fallbackStyle = useAnimatedStyle(() => {
-    const { isRtl, fontSize } = textState.value;
+    const { isRtl, isOverflow, fontSize } = textState.value;
 
     return {
-      display: isRtl ? 'flex' : 'none',
+      display: isRtl || isOverflow ? 'flex' : 'none',
       ...(fontSize ? { fontSize } : {}),
     };
   });
