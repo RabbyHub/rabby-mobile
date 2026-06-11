@@ -628,6 +628,10 @@ export function useSetupWallet(
       formValues.enableBiometrics = true;
     }
 
+    if (formValues.checked) {
+      preferenceService.setUserBehaviorTrackingOptOut(false);
+    }
+
     setIsSubmitting(true);
     try {
       await submitWalletCreation(walletData, formValues, { toggleBiometrics });
