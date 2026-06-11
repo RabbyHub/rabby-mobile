@@ -48,8 +48,10 @@ describe('RefreshNudgedTickerText', () => {
     expect(shouldNudgeRefreshText('AED 10.01', 'AED 10.01', 16)).toBe(true);
   });
 
-  it('applies suffix multipliers when checking the minimum value', () => {
-    expect(shouldNudgeRefreshText('$1.26B', '$1.26B', 16)).toBe(true);
+  it('checks only the visible numeric portion and ignores suffix units', () => {
+    expect(shouldNudgeRefreshText('$1.26B', '$1.26B', 16)).toBe(false);
+    expect(shouldNudgeRefreshText('0.01 BTC', '0.01 BTC', 16)).toBe(false);
+    expect(shouldNudgeRefreshText('$12.01B', '$12.01B', 16)).toBe(true);
   });
 
   it('checks the minimum value only inside the visible range', () => {
