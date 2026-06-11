@@ -23,6 +23,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Text, TextInput } from '@/components/Typography';
+import { MarketSlippage } from './MarketSlippage';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
@@ -34,6 +35,10 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
   visible?: boolean;
   onClose?(): void;
   onConfirm?(): Promise<void>;
+  slippage?: number;
+  depthInsufficient?: boolean;
+  slippageReady?: boolean;
+  onSwitchToLimit?: () => void;
   summary: {
     coin: string;
     coinLogo?: string;
@@ -54,7 +59,16 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     limitPx?: string;
     isMarketable?: boolean;
   };
-}> = ({ visible, onClose, summary, onConfirm }) => {
+}> = ({
+  visible,
+  onClose,
+  summary,
+  onConfirm,
+  slippage = 0,
+  depthInsufficient,
+  slippageReady,
+  onSwitchToLimit,
+}) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
   const [loading, setLoading] = React.useState<boolean>(false);
   const { styles, colors2024, isLight } = useTheme2024({
@@ -301,6 +315,16 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </View>
             </View>
           </View>
+          {orderType === 'market' && slippageReady && Number(tradeSize) > 0 ? (
+            <View style={styles.list}>
+              <MarketSlippage
+                slippage={slippage}
+                depthInsufficient={depthInsufficient}
+                onSwitchToLimit={onSwitchToLimit}
+                rowStyle={styles.listItem}
+              />
+            </View>
+          ) : null}
         </BottomSheetScrollView>
         <View style={styles.footer}>
           {isMarketable ? (

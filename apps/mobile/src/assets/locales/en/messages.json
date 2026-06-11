@@ -2632,7 +2632,8 @@
         "feeTitle": "Fee",
         "feeDesc": "When users place trades, both\n<1>trading fees</1> and <2>builder fees</2> apply.",
         "feeHyperliquid": "Hyperliquid",
-        "feeRabby": "Rabby Wallet"
+        "feeRabby": "Rabby Wallet",
+        "feeRabbyDiscount": "Limited-time trading fee discount"
       },
       "PerpsAutoCloseModal": {
         "noPosition": "You must input margin first.",
@@ -2909,6 +2910,11 @@
         "orderTypeLimit": "Limit",
         "limitPrice": "Limit Price",
         "currentPrice": "Current Price"
+      },
+      "MarketSlippage": {
+        "estimatedSlippage": "Estimated Slippage",
+        "lowLiquiditySwitchLimit": "Low liquidity, switch to Limit Order.",
+        "switchToLimit": "Switch"
       },
       "PerpsOpenPositionCheckPopup": {
         "title": "Check Order",

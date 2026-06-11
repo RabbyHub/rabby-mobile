@@ -50,6 +50,7 @@ import {
 } from '@/hooks/perps/usePerpsStore';
 import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
 import { PerpEditLimitPriceTag } from './PerpEditLimitPriceTag';
+import { useMarketSlippage } from '../hooks/useMarketSlippage';
 import { PerpsSlider } from './PerpsSlider';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
@@ -207,6 +208,18 @@ export const PerpsOpenPositionPopup: React.FC<{
     }
     return Number(tradeAmount / effectivePx).toFixed(szDecimals);
   }, [effectivePx, tradeAmount, szDecimals]);
+
+  const {
+    slippage,
+    depthInsufficient,
+    isReady: slippageReady,
+  } = useMarketSlippage({
+    coin,
+    isBuy: direction === 'Long',
+    size: Number(tradeSize),
+    markPrice,
+    enabled: !!visible && orderType === 'market',
+  });
 
   // Marketable limit fills immediately at mark, so liq uses markPrice as the
   // true entry price (not limitPx, which is just the user's price ceiling).
@@ -427,6 +440,14 @@ export const PerpsOpenPositionPopup: React.FC<{
     setSelectedDirection(_direction);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
+
+  // Back out of review and flip the order to limit, seeding limitPx the same
+  // way the manual order-type toggle does.
+  const handleSwitchToLimit = useMemoizedFn(() => {
+    setIsReviewMode(false);
+    setOrderType('limit');
+    setLimitPx(formatTpOrSlPrice(markPrice, szDecimals));
+  });
 
   const openPosition = useMemoizedFn(async () => {
     const res = await handleOpenPosition({
@@ -1004,6 +1025,10 @@ export const PerpsOpenPositionPopup: React.FC<{
       <PerpsOpenPositionCheckPopup
         summary={checkSummary}
         visible={isReviewMode}
+        slippage={slippage}
+        depthInsufficient={depthInsufficient}
+        slippageReady={slippageReady}
+        onSwitchToLimit={handleSwitchToLimit}
         onClose={() => {
           setIsReviewMode(false);
         }}
