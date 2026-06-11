@@ -517,7 +517,7 @@ export const PerpsMarketDetailScreen = () => {
                 availableBalance={availableBalance}
                 quoteAsset={currentAssetCtx?.quoteAsset}
                 onDepositPress={() => {
-                  if (!gateUnifiedForNonDefaultDex()) {
+                  if (!needDepositFirst && !gateUnifiedForNonDefaultDex()) {
                     return;
                   }
                   setIsShowDepositPopup(true);

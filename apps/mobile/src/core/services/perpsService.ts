@@ -2,7 +2,7 @@ import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import createPersistStore from '@rabby-wallet/persist-store';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 
-import { bytesToHex, publicToAddress } from '@ethereumjs/util';
+import { bytesToHex, publicToAddress, hexToBytes } from '@ethereumjs/util';
 import { SendApproveParams } from '@rabby-wallet/hyperliquid-sdk';
 import { getRandomBytesSync } from 'ethereum-cryptography/random.js';
 import { secp256k1 } from 'ethereum-cryptography/secp256k1.js';
@@ -320,6 +320,14 @@ export class PerpsService {
             vault: privateKey,
             preference: {
               ...preference,
+              // Derive the agent address from the vault key — never trust the
+              // stored preference.agentAddress here. A concurrent
+              // createAgentWallet can rewrite agentPreferences during the decrypt
+              // await above, so pairing this vault snapshot with the current
+              // preference would hand the SDK a private key and address from two
+              // different agents (→ approve one, sign with the other →
+              // "agent does not exist").
+              agentAddress: this.deriveAgentAddress(privateKey),
               approveSignatures: preference.approveSignatures || [],
             },
           };
@@ -348,20 +356,31 @@ export class PerpsService {
     this.memoryState.unlockPromise = null;
   };
 
+  // The agent address is fully determined by its vault private key, so we derive
+  // it from the key rather than trusting a stored preference.agentAddress — that
+  // stored value can be desynced from the vault by a concurrent createAgentWallet
+  // across the decrypt await in unlockAgentWallets (the vault is snapshotted
+  // before the await, the preference is read after). Deriving from the key keeps
+  // agentPrivateKey and agentPublicKey on the SAME agent.
+  private deriveAgentAddress = (vault: string): string => {
+    const privateKey = hexToBytes(
+      vault.startsWith('0x') ? vault : `0x${vault}`,
+    );
+    const publicKey = secp256k1.getPublicKey(privateKey, false);
+    return bytesToHex(publicToAddress(publicKey, true)).toLowerCase();
+  };
+
   createAgentWallet = async (masterAddress: string) => {
     if (!this.store) {
       throw new Error('PerpsService not initialized');
     }
-    const privateKey = getRandomBytesSync(32);
-    const publicKey = secp256k1.getPublicKey(privateKey, false);
-    const agentAddress = bytesToHex(
-      publicToAddress(publicKey, true),
-    ).toLowerCase();
-    await this.addAgentWallet(masterAddress, bytesToHex(privateKey), {
+    const vault = bytesToHex(getRandomBytesSync(32));
+    const agentAddress = this.deriveAgentAddress(vault);
+    await this.addAgentWallet(masterAddress, vault, {
       agentAddress,
       approveSignatures: [],
     });
-    return { agentAddress, vault: bytesToHex(privateKey) };
+    return { agentAddress, vault };
   };
 
   addAgentWallet = async (
