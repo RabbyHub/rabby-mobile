@@ -3,7 +3,7 @@ import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import {
   PERPS_SLIPPAGE_THRESHOLD,
   PERPS_SLIPPAGE_WARNING,
@@ -35,7 +35,7 @@ export const MarketSlippage: React.FC<MarketSlippageProps> = ({
     return null;
   }
 
-  const overThreshold = slippage >= PERPS_SLIPPAGE_THRESHOLD || true;
+  const overThreshold = slippage >= PERPS_SLIPPAGE_THRESHOLD;
   const isWarning = !overThreshold && slippage >= PERPS_SLIPPAGE_WARNING;
 
   const valueColor = overThreshold
@@ -56,6 +56,7 @@ export const MarketSlippage: React.FC<MarketSlippageProps> = ({
       </View>
       {overThreshold && onSwitchToLimit ? (
         <View style={styles.banner}>
+          <View style={styles.bannerArrow} />
           <Text style={styles.bannerText}>
             {t('page.perpsDetail.MarketSlippage.lowLiquiditySwitchLimit')}
           </Text>
@@ -93,6 +94,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
   },
   banner: {
+    position: 'relative',
     marginHorizontal: 16,
     marginBottom: 12,
     flexDirection: 'row',
@@ -100,9 +102,22 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     gap: 8,
     borderRadius: 8,
-    backgroundColor: colors2024['orange-light-1'],
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    backgroundColor: colors2024['red-light-1'],
+    paddingHorizontal: 8,
+    height: 42,
+  },
+  bannerArrow: {
+    position: 'absolute',
+    left: 40,
+    top: -8,
+    ...makeTriangleStyle({
+      dir: 'up',
+      size: 8,
+      color: colors2024['red-light-1'],
+    }),
+    borderTopWidth: 0,
+    borderLeftWidth: 8,
+    borderRightWidth: 8,
   },
   bannerText: {
     flex: 1,
@@ -110,21 +125,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '500',
-    color: colors2024['orange-default'],
+    color: colors2024['red-default'],
   },
   switchBtn: {
     paddingHorizontal: 8,
-    height: 22,
+    height: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 4,
-    backgroundColor: colors2024['blue-light-1'],
+    borderRadius: 6,
+    backgroundColor: '#23C0B0',
   },
   switchBtnText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 13,
+    fontSize: 12,
     lineHeight: 16,
-    fontWeight: '500',
-    color: colors2024['blue-default'],
+    fontWeight: '700',
+    color: '#040601',
   },
 }));

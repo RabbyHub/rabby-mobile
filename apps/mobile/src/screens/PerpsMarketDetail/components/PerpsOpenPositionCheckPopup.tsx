@@ -416,7 +416,7 @@ const getStyle = createGetStyles2024(ctx => {
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
-      marginBottom: 18,
+      marginBottom: 12,
     },
     listItemContainer: {
       padding: 16,
