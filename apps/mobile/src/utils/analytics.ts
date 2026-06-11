@@ -15,54 +15,12 @@ const ANALYTICS_PATH = 'https://matomo.debank.com/matomo.php';
 const genExtensionId = customAlphabet('1234567890abcdef', 16);
 const firebaseAnalyticsClient = firebaseAnalytics();
 
-type FirebaseAnalyticsModule = ReturnType<typeof firebaseAnalytics>;
+type FirebaseAnalyticsModule = typeof firebaseAnalyticsClient;
 
 type AnalyticsPreferenceStore = {
   extensionId?: string;
   [USER_BEHAVIOR_TRACKING_OPT_OUT_KEY]?: boolean;
 };
-
-let firebaseAnalyticsInstance: FirebaseAnalyticsModule | null | undefined;
-let firebaseAnalyticsUnavailableLogged = false;
-
-function logFirebaseAnalyticsUnavailable(error: unknown) {
-  if (firebaseAnalyticsUnavailableLogged) {
-    return;
-  }
-  firebaseAnalyticsUnavailableLogged = true;
-  console.warn('[analytics] Firebase analytics unavailable', error);
-}
-
-function getFirebaseAnalytics() {
-  if (firebaseAnalyticsInstance !== undefined) {
-    return firebaseAnalyticsInstance;
-  }
-
-  try {
-    firebaseAnalyticsInstance = firebaseAnalytics();
-  } catch (error) {
-    firebaseAnalyticsInstance = null;
-    logFirebaseAnalyticsUnavailable(error);
-  }
-
-  return firebaseAnalyticsInstance;
-}
-
-async function safeFirebaseAnalyticsCall<T>(
-  callback: (instance: FirebaseAnalyticsModule) => Promise<T>,
-) {
-  const instance = getFirebaseAnalytics();
-  if (!instance) {
-    return undefined;
-  }
-
-  try {
-    return await callback(instance);
-  } catch (error) {
-    logFirebaseAnalyticsUnavailable(error);
-    return undefined;
-  }
-}
 
 const getStoredPreference = () =>
   appStorage.getItem(APP_STORE_NAMES.preference) as
@@ -112,7 +70,7 @@ export const analytics = {
     if (!canTrackUserBehavior()) {
       return;
     }
-    return safeFirebaseAnalyticsCall(instance => instance.logEvent(...args));
+    return firebaseAnalyticsClient.logEvent(...args);
   },
   logScreenView: (
     ...args: Parameters<FirebaseAnalyticsModule['logScreenView']>
@@ -120,9 +78,7 @@ export const analytics = {
     if (!canTrackUserBehavior()) {
       return;
     }
-    return safeFirebaseAnalyticsCall(instance =>
-      instance.logScreenView(...args),
-    );
+    return firebaseAnalyticsClient.logScreenView(...args);
   },
 };
 

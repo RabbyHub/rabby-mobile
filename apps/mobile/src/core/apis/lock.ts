@@ -1,7 +1,6 @@
 import { Platform } from 'react-native';
 import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
 import { BroadcastEvent } from '@/constant/event';
-import { APP_TEST_PWD, NEED_DEVSETTINGBLOCKS } from '@/constant';
 import {
   keyringService,
   perpsService,
@@ -260,47 +259,6 @@ export async function clearCustomPassword(currentPassword: string) {
     await perpsService.resetStore();
   } catch (error) {
     result.error = 'Failed to cancel password';
-  }
-
-  return result;
-}
-
-/**
- * Debug-only helper for dev/regression packages.
- * Requires the wallet to be unlocked, then re-encrypts the current vault with
- * the standard local test password.
- */
-export async function debugSetUnlockedWalletPasswordToTestPassword() {
-  const result = { error: '' };
-  if (!NEED_DEVSETTINGBLOCKS || !APP_TEST_PWD) {
-    result.error = 'Only available in non-production packages';
-    return result;
-  }
-
-  if (!keyringService.isUnlocked()) {
-    result.error = 'Unlock wallet before setting the test password';
-    return result;
-  }
-
-  const debugKeyringService = keyringService as typeof keyringService & {
-    dangerouslySetUnlockedPasswordForDebug?: (
-      newPassword: string,
-    ) => Promise<void>;
-  };
-
-  if (!debugKeyringService.dangerouslySetUnlockedPasswordForDebug) {
-    result.error = 'Current keyring service does not support this debug action';
-    return result;
-  }
-
-  try {
-    await debugKeyringService.dangerouslySetUnlockedPasswordForDebug(
-      APP_TEST_PWD,
-    );
-    resetMultipleFailed();
-  } catch (error) {
-    console.error(error);
-    result.error = 'Failed to set test password';
   }
 
   return result;

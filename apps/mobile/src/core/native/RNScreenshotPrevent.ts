@@ -1,18 +1,35 @@
-import { NativeModuleNames } from './specs/types';
-import {
-  EventEmitterRecordToListeners,
-  IS_IOS,
-  makeRnEEClass,
-  resolveNativeModule,
-} from './utils';
+import { IS_IOS, makeRnEEClass, resolveNativeModule } from './utils';
 
 const { RNScreenshotPrevent: nativeModule } = resolveNativeModule(
-  NativeModuleNames.RNScreenshotPrevent,
+  'RNScreenshotPrevent',
 );
 
-type Listeners = EventEmitterRecordToListeners<
-  import('./specs/NativeRNScreenshotPrevent').EventEmitterRecord
->;
+type Listeners = {
+  /**
+   * @platform iOS, Android >= 14
+   */
+  userDidTakeScreenshot: (ret?: {
+    captured?: boolean;
+    path?: string;
+    height?: string | number;
+    width?: string | number;
+    imageBase64?: string;
+    imageType?: 'jpeg' | 'png';
+    name?: string;
+  }) => any;
+  screenCapturedChanged: (ret: { isBeingCaptured: boolean }) => any;
+  appSwitcherBlurChanged: (ret: { visible: boolean }) => any;
+  screenCaptureDetectionChanged: (ret: { enabled: boolean }) => any;
+  /**
+   * @description subscribe to android app state change, pause means app is in background, resume means app is in foreground
+   */
+  androidOnLifeCycleChanged: (ret: { state: 'resume' | 'pause' }) => any;
+  /** @description pointless now */
+  preventScreenshotChanged: (ret: {
+    isPrevent: boolean;
+    success: boolean;
+  }) => any;
+};
 const { NativeEventEmitter } = makeRnEEClass<Listeners>();
 const eventEmitter = new NativeEventEmitter(nativeModule);
 

@@ -262,7 +262,7 @@ export const HistoryList = ({
       onEndReachedThreshold={0.5}
       onScroll={onScroll}
       scrollEventThrottle={scrollEventThrottle}
-      removeClippedSubviews={false}
+      removeClippedSubviews={true}
       ListFooterComponent={
         loadingMore ? (
           <>

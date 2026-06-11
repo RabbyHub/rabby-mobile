@@ -52,7 +52,7 @@ import {
 } from '@/screens/Transaction/components/type';
 import { useRefreshHistoryId } from '../../hooks';
 import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
-import { sendRequest } from '@/core/apis/sendRequest';
+import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
@@ -505,7 +505,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
           }
         } else {
           for (const tx of txsForMiniApproval) {
-            const result = await sendRequest({
+            const result = await apiProvider.sendRequest({
               data: {
                 method: 'eth_sendTransaction',
                 params: [tx],

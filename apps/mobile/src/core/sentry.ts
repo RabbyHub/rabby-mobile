@@ -1,5 +1,4 @@
 import * as Sentry from '@sentry/react-native';
-import { Platform } from 'react-native';
 import type { ReactNativeOptions } from '@sentry/react-native';
 
 import { APP_VERSIONS } from '@/constant';
@@ -71,19 +70,6 @@ export function syncSentryUserBehaviorTrackingEnabled() {
     });
   }
 }
-
-const isAndroidBridgelessRuntime = () => {
-  if (Platform.OS !== 'android') {
-    return false;
-  }
-
-  const rnRuntime = globalThis as typeof globalThis & {
-    RN$Bridgeless?: boolean;
-    __turboModuleProxy?: unknown;
-  };
-
-  return rnRuntime.RN$Bridgeless === true || !!rnRuntime.__turboModuleProxy;
-};
 
 type SentryBeforeSend = NonNullable<ReactNativeOptions['beforeSend']>;
 type SentryEvent = Parameters<SentryBeforeSend>[0];
@@ -204,7 +190,6 @@ export function shouldDropSentryEvent(
 }
 
 export function initSentry() {
-  const disableNativeBridgeAccess = isAndroidBridgelessRuntime();
   if (!canInitializeSentry()) {
     return;
   }
@@ -230,14 +215,6 @@ export function initSentry() {
     // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
     // We recommend adjusting this value in production.
     tracesSampleRate: 0.2,
-    enableNative: !disableNativeBridgeAccess,
-    enableNativeCrashHandling: !disableNativeBridgeAccess,
-    enableNativeNagger: !disableNativeBridgeAccess,
-    enableNdk: !disableNativeBridgeAccess,
-    enableAutoPerformanceTracing: !disableNativeBridgeAccess,
-    enableAppStartTracking: !disableNativeBridgeAccess,
-    enableNativeFramesTracking: !disableNativeBridgeAccess,
-    enableStallTracking: !disableNativeBridgeAccess,
     enableAutoSessionTracking: true,
     environment: getSentryEnv(),
     debug: SENTRY_DEBUG,

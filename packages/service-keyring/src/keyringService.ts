@@ -275,24 +275,6 @@ export class KeyringService extends RNEventEmitter {
       await this._updateMemStoreKeyrings();
     }
   }
-
-  /**
-   * Debug-only helper for already-unlocked local/test packages.
-   * Re-encrypts the current in-memory vault without asking for the old password.
-   */
-  async dangerouslySetUnlockedPasswordForDebug(newPassword: string) {
-    if (!this.isUnlocked() || !this.#password) {
-      throw new Error('KeyringService - unlock before changing password');
-    }
-
-    this.emit('beforeUpdatePassword', {
-      keyringState: this.store.getState(),
-    });
-
-    await this._setupBoot(newPassword);
-    await this.persistAllKeyrings();
-  }
-
   // #filterAllKeyringsNeedPassword() {
   //   return this.keyrings.filter(
   //     keyring =>

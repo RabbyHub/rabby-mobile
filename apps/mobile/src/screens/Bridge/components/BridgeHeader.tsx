@@ -15,8 +15,7 @@ import {
 import TouchableView from '@/components/Touchable/TouchableView';
 import { BridgeTxHistory } from './BridgeHistory';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
-import { Keyboard, View } from 'react-native';
-import { Pressable } from 'react-native-gesture-handler';
+import { Keyboard, TouchableOpacity, View } from 'react-native';
 // import { RcIconSwapHistory } from '@/assets/icons/swap';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
@@ -99,11 +98,11 @@ export const BridgeHeader = ({
   return (
     <>
       <View style={styles.container}>
-        <Pressable onPress={openHistory} style={styles.iconContainer}>
+        <TouchableOpacity onPress={openHistory} style={styles.iconContainer}>
           <RcIconSwapHistory color={colors2024['neutral-body']} />
           {/* not very accurate */}
           {/* {Boolean(showRedDot) && <View style={styles.greenDot} />} */}
-        </Pressable>
+        </TouchableOpacity>
       </View>
 
       <BridgeTxHistory

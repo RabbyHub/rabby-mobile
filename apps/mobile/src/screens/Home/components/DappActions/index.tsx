@@ -9,7 +9,7 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useDappAction } from './hook';
-import { sendRequest } from '@/core/apis/sendRequest';
+import { sendRequest } from '@/core/apis/provider';
 import { toast } from '@/components2024/Toast';
 import { DappActionHeader } from './DappActionHeader';
 import { INTERNAL_REQUEST_SESSION, APP_VERSIONS } from '@/constant';
