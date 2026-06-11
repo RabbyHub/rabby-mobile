@@ -60,6 +60,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
   const tradeValue = Number(sz) * Number(px);
   const pnlValue = Number(closedPnl) - Number(fee);
   const isClose = (dir === 'Close Long' || dir === 'Close Short') && closedPnl;
+  const isLiquidation = Boolean(fill?.liquidation);
   const logoUrl = fill?.logoUrl;
 
   // Stablecoin swap detection
@@ -70,7 +71,6 @@ export const PerpsHistoryDetailPopup: React.FC<{
     if (isStableCoinTrade) {
       return `${fill?.dir} ${stableCoinName}`;
     }
-    const isLiquidation = Boolean(fill?.liquidation);
     if (fill?.dir === 'Close Long') {
       if (orderTpOrSl === 'tp') {
         return t('page.perps.historyDetail.title.closeLongTp');
@@ -104,7 +104,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
     return fill?.dir;
   }, [
     fill?.dir,
-    fill?.liquidation,
+    isLiquidation,
     orderTpOrSl,
     t,
     isStableCoinTrade,
@@ -331,17 +331,34 @@ export const PerpsHistoryDetailPopup: React.FC<{
                                       0.045%
                                     </Text>
                                   </View>
-                                  <View style={styles.feeRow}>
-                                    <View style={styles.feeRowLeft}>
-                                      <RcIconRabby width={20} height={20} />
-                                      <Text style={styles.feeRowLabel}>
-                                        {t('page.perps.historyDetail.feeRabby')}
-                                      </Text>
+                                  {!isLiquidation && (
+                                    <View style={styles.feeRow}>
+                                      <View style={styles.feeRowLeft}>
+                                        <RcIconRabby width={20} height={20} />
+                                        <Text style={styles.feeRowLabel}>
+                                          {t(
+                                            'page.perps.historyDetail.feeRabby',
+                                          )}
+                                        </Text>
+                                      </View>
+                                      <View style={styles.feeRowRight}>
+                                        <View style={styles.feeRowValueRow}>
+                                          <Text style={styles.feeRowValue}>
+                                            0.02%
+                                          </Text>
+                                          <Text
+                                            style={styles.feeRowValueOrigin}>
+                                            0.04%
+                                          </Text>
+                                        </View>
+                                        <Text style={styles.feeRowDiscount}>
+                                          {t(
+                                            'page.perps.historyDetail.feeRabbyDiscount',
+                                          )}
+                                        </Text>
+                                      </View>
                                     </View>
-                                    <Text style={styles.feeRowValue}>
-                                      0.02%
-                                    </Text>
-                                  </View>
+                                  )}
                                 </View>
                               </View>
                             ),
@@ -542,6 +559,30 @@ const getStyle = createGetStyles2024(ctx => {
       lineHeight: 18,
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
+    },
+    feeRowRight: {
+      alignItems: 'flex-end',
+      gap: 2,
+    },
+    feeRowValueRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    feeRowValueOrigin: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors2024['neutral-foot'],
+      textDecorationLine: 'line-through',
+    },
+    feeRowDiscount: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      lineHeight: 14,
+      fontWeight: '400',
+      color: colors2024['neutral-foot'],
     },
   };
 });

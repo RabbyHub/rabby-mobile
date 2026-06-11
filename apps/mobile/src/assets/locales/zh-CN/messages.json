@@ -2709,6 +2709,7 @@
         "perps": "永续合约",
         "feeHyperliquid": "Hyperliquid",
         "feeRabby": "Rabby 钱包",
+        "feeRabbyDiscount": "限时交易手续费折扣",
         "feeDesc": "交易时会产生<1>交易手续费</1>和<2>构建者费用</2>。",
         "feeTitle": "费用",
         "amount": "金额",
@@ -2987,6 +2988,11 @@
         "maxMargin": "最大保证金为 {{amount}}",
         "upTo": "最高",
         "onlyIsolated": "该代币仅支持逐仓保证金"
+      },
+      "MarketSlippage": {
+        "estimatedSlippage": "预估滑点",
+        "lowLiquiditySwitchLimit": "流动性不足，请切换为限价单。",
+        "switchToLimit": "切换"
       },
       "PerpsOpenPositionCheckPopup": {
         "limitTitle": "确认限价单",

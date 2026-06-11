@@ -2937,6 +2937,7 @@
         "feeHyperliquid": "Hyperliquid",
         "feeTitle": "Gebühr",
         "feeRabby": "Rabby Wallet",
+        "feeRabbyDiscount": "Zeitlich begrenzter Rabatt auf Handelsgebühren",
         "feeDesc": "Wenn Benutzer Trades platzieren, gelten sowohl <1>Handelsgebühren</1> als auch <2>Builder-Gebühren</2>.",
         "amount": "Betrag",
         "asset": "Vermögenswert",
@@ -3214,6 +3215,11 @@
         "upTo": "Bis zu",
         "maxMargin": "Der maximale Betrag beträgt {{amount}}",
         "onlyIsolated": "Für dieses Token wird nur isolierte Margin unterstützt."
+      },
+      "MarketSlippage": {
+        "estimatedSlippage": "Geschätzte Slippage",
+        "lowLiquiditySwitchLimit": "Geringe Liquidität, zu Limit-Order wechseln.",
+        "switchToLimit": "Wechseln"
       },
       "PerpsOpenPositionCheckPopup": {
         "limitTitle": "Limit-Order prüfen",

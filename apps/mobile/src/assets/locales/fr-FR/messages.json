@@ -2565,6 +2565,7 @@
         "feeTitle": "Frais",
         "feeHyperliquid": "Hyperliquid",
         "feeRabby": "Rabby Wallet",
+        "feeRabbyDiscount": "Réduction des frais de trading pour une durée limitée",
         "feeDesc": "Lorsque les utilisateurs effectuent des transactions, des <1>frais de trading</1> et des <2>frais de constructeur</2> s'appliquent.",
         "amount": "Montant",
         "asset": "Actif",
@@ -2842,6 +2843,11 @@
         "minMargin": "La marge minimale est de {{amount}}",
         "maxMargin": "La marge maximale est {{amount}}",
         "onlyIsolated": "Seule la marge isolée est prise en charge pour ce token."
+      },
+      "MarketSlippage": {
+        "estimatedSlippage": "Slippage estimé",
+        "lowLiquiditySwitchLimit": "Liquidité faible, passez à l'ordre limite.",
+        "switchToLimit": "Changer"
       },
       "PerpsOpenPositionCheckPopup": {
         "limitTitle": "Vérifier l'ordre à cours limité",

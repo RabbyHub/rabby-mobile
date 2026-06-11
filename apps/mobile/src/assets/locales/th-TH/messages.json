@@ -2816,6 +2816,7 @@
         "sizeTips": "มูลค่าหรือปริมาณรวมของการเทรดของคุณ ซึ่งกำหนดโดยมาร์จิ้นและเลเวอเรจ.",
         "feeTitle": "ค่าธรรมเนียม",
         "feeRabby": "Rabby Wallet",
+        "feeRabbyDiscount": "ส่วนลดค่าธรรมเนียมการเทรดแบบจำกัดเวลา",
         "feeHyperliquid": "Hyperliquid",
         "feeDesc": "เมื่อผู้ใช้ทำการซื้อขาย ทั้ง <1>ค่าธรรมเนียมการซื้อขาย</1> และ <2>ค่าธรรมเนียมผู้สร้าง</2> จะมีผลบังคับใช้งาน",
         "amount": "จำนวน",
@@ -3094,6 +3095,11 @@
         "minMargin": "มาร์จิ้นขั้นต่ำคือ {{amount}}",
         "maxMargin": "มาร์จิ้นสูงสุดคือ {{amount}}",
         "onlyIsolated": "เฉพาะอัตรากำไรที่แยกออกเท่านั้นที่รองรับสำหรับโทเค็นนี้"
+      },
+      "MarketSlippage": {
+        "estimatedSlippage": "Slippage โดยประมาณ",
+        "lowLiquiditySwitchLimit": "สภาพคล่องต่ำ เปลี่ยนไปใช้คำสั่ง Limit",
+        "switchToLimit": "เปลี่ยน"
       },
       "PerpsOpenPositionCheckPopup": {
         "limitTitle": "ตรวจสอบคำสั่ง Limit",

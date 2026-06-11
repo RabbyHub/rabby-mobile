@@ -2734,6 +2734,7 @@
         "gotItBtn": "我知道了",
         "sizeTips": "交易的總價值或數量，由保證金和槓桿決定。",
         "feeRabby": "Rabby Wallet",
+        "feeRabbyDiscount": "限時交易手續費折扣",
         "feeHyperliquid": "Hyperliquid",
         "feeDesc": "交易時會產生<1>交易手續費</1>和<2>建構者費用</2>。",
         "feeTitle": "費用",
@@ -3013,6 +3014,11 @@
         "maxMargin": "最高保證金為 {{amount}}",
         "upTo": "高達",
         "onlyIsolated": "該代幣僅支援逐倉保證金"
+      },
+      "MarketSlippage": {
+        "estimatedSlippage": "預估滑點",
+        "lowLiquiditySwitchLimit": "流動性不足，請切換為限價單。",
+        "switchToLimit": "切換"
       },
       "PerpsOpenPositionCheckPopup": {
         "limitTitle": "確認限價單",
