@@ -26,6 +26,14 @@ import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
 
 const marketList: MarketDataType[] = Object.values(marketsData);
 const EMPTY_PROTOCOLS: IProtocolItem[] = [];
+const getProtocolLendingNetWorth = (protocol: IProtocolItem) => {
+  return protocol._portfolios.reduce((sum, portfolio) => {
+    if (portfolio.name?.toLowerCase() !== 'lending') {
+      return sum;
+    }
+    return sum + (Number(portfolio.netWorth) || 0);
+  }, 0);
+};
 
 interface IProps {
   value: CustomMarket;
@@ -80,11 +88,11 @@ export default function SelectLendingChain({ value, onChange }: IProps) {
 
     currentProtocols.forEach(protocol => {
       const marketKey = protocolIdToMarketKey(protocol.id);
-      const netWorth = Number(protocol.netWorth || 0);
-      if (!marketKey || netWorth <= 0) {
+      const lendingNetWorth = getProtocolLendingNetWorth(protocol);
+      if (!marketKey || lendingNetWorth <= 0) {
         return;
       }
-      map.set(marketKey, netWorth);
+      map.set(marketKey, lendingNetWorth);
     });
 
     const selectedMarketNetWorth = Number(iUserSummary.netWorthUSD || 0);
