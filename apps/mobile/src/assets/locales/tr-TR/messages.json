@@ -2553,6 +2553,7 @@
         "perps": "Perps",
         "sizeTips": "Ticaretinizin toplam değeri veya miktarı, teminat ve kaldıraç tarafından belirlenir.",
         "feeRabby": "Rabby Cüzdan",
+        "feeRabbyDiscount": "Sınırlı süreli işlem ücreti indirimi",
         "feeHyperliquid": "Hyperliquid",
         "feeTitle": "Ücret",
         "feeDesc": "Kullanıcılar işlemlerini gerçekleştirdiğinde, hem <1>trading fees</1> hem de <2>builder fees</2> uygulanır.",
@@ -2832,6 +2833,11 @@
         "maxMargin": "Maksimum marj {{amount}}'dır.",
         "minMargin": "Minimum margin {{amount}}'dir.",
         "onlyIsolated": "Bu token için yalnızca izole marj desteklenmektedir."
+      },
+      "MarketSlippage": {
+        "estimatedSlippage": "Tahmini Kayma",
+        "lowLiquiditySwitchLimit": "Düşük likidite, Limit Emrine geçin.",
+        "switchToLimit": "Değiştir"
       },
       "PerpsOpenPositionCheckPopup": {
         "limitTitle": "Limit Emri Kontrol Et",

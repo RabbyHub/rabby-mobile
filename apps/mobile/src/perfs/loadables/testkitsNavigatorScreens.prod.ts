@@ -78,6 +78,13 @@ export const DevUIPermissions = registerAppScreen<
   name: TESTKITS_PRELOAD_SCREENS.DevUIPermissions,
 });
 
+export const DevUIWalletConnect = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUIWalletConnect').default
+>({
+  loader: () => import('@/screens/Testkits/DevUIWalletConnect'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUIWalletConnect,
+});
+
 export const DevCapabilityFile = registerAppScreen<
   typeof import('@/screens/Testkits/DevCapabilityFile').default
 >({

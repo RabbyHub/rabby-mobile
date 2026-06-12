@@ -186,6 +186,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevDataWhitelist]?: {};
   [RootNames.DevUIBuiltInPages]?: {};
   [RootNames.DevUIPermissions]?: {};
+  [RootNames.DevUIWalletConnect]?: {};
   [RootNames.DevCapabilityFile]?: {};
   [RootNames.DevSwitches]?: {};
   [RootNames.DevPerf]?: {};
@@ -431,6 +432,7 @@ export type SettingNavigatorParamList = {
     // enterActionType?: 'setBiometrics' | 'setAutoLockExpireTime';
   };
   [RootNames.ProviderControllerTester]?: {};
+  [RootNames.WalletConnect]?: {};
   [RootNames.SetPassword]?:
     | {
         actionAfterSetup: 'backScreen';

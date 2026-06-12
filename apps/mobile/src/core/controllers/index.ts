@@ -18,9 +18,14 @@ export default async function provider<T = void>(
   } = req;
 
   const origin = req.session?.origin || req.origin;
+  const isWalletConnectRequest =
+    req.requestContext?.source === 'walletconnect' ||
+    req.session?.$mobileCtx?.isFromWalletConnect;
   let account: Account | undefined = undefined;
 
-  if (origin) {
+  if (isWalletConnectRequest) {
+    account = req.account || undefined;
+  } else if (origin) {
     if (origin === INTERNAL_REQUEST_ORIGIN) {
       account =
         req.account || preferenceService.getFallbackAccount() || undefined;

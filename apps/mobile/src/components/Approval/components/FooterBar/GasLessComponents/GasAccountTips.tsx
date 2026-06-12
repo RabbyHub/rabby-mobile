@@ -33,6 +33,7 @@ export const GasAccountTips: React.FC<{
   noCustomRPC?: boolean;
   nativeTokenInsufficient?: boolean;
   inShowMore?: boolean;
+  fallbackDirectSignToOpenUI?: boolean;
 }> = ({
   gasAccountCost,
   isWalletConnect,
@@ -45,6 +46,7 @@ export const GasAccountTips: React.FC<{
   disableDepositAction,
   gasAccountAddress,
   inShowMore = true,
+  fallbackDirectSignToOpenUI,
 }) => {
   const { t } = useTranslation();
 
@@ -184,6 +186,7 @@ export const GasAccountTips: React.FC<{
           await onWaitDepositResult?.(result);
         }}
         minDepositPrice={gasAccountCost?.gas_account_cost?.total_cost}
+        fallbackDirectSignToOpenUI={fallbackDirectSignToOpenUI}
       />
     </View>
   );

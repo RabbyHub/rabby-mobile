@@ -28,6 +28,21 @@ describe('currency utils', () => {
     expect(formatSmallCurrencyValueParts(0.001, { currency: usd }).text).toBe(
       '<$0.01',
     );
+    expect(
+      formatSmallCurrencyValueParts(1_260_000, { currency: usd }).text,
+    ).toBe('$1.26M');
+    expect(
+      formatSmallCurrencyValueParts(1_260_000, {
+        currency: usd,
+        formatMillion: false,
+      }).text,
+    ).toBe('$1,260,000');
+    expect(
+      formatSmallCurrencyValueParts(1_260_000_000, {
+        currency: usd,
+        formatMillion: false,
+      }).text,
+    ).toBe('$1.26B');
   });
 
   it('moves postfix currencies behind the amount and exposes styled parts', () => {

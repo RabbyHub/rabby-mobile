@@ -51,6 +51,7 @@ import { GnosisSameMessageModal } from './TxComponents/GnosisSameMessageModal';
 import { useSetState } from 'ahooks';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Text } from '@/components/Typography';
+import type { ProviderRequestContext } from '@/core/controllers/type';
 
 interface SignTextProps {
   data: string[];
@@ -63,6 +64,7 @@ interface SignTextProps {
   account?: Account;
   method?: string;
   $ctx: any;
+  requestContext?: ProviderRequestContext;
 }
 
 export const SignText = ({
@@ -105,6 +107,10 @@ export const SignText = ({
 
   const { colors2024 } = useTheme2024();
   const styles = useMemo(() => getStyles(colors2024), [colors2024]);
+  const chain = useMemo(
+    () => (chainId ? findChain({ id: chainId }) || undefined : undefined),
+    [chainId],
+  );
 
   const securityLevel = useMemo(() => {
     const enableResults = engineResults.filter(result => {
@@ -145,7 +151,9 @@ export const SignText = ({
     error,
   } = useAsync(async () => {
     let chainId = 1; // ETH as default
-    if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
+    if (params.requestContext?.chainId) {
+      chainId = params.requestContext.chainId;
+    } else if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
       const site = await dappService.getDapp(params.session.origin);
       if (site) {
         chainId =
@@ -165,7 +173,7 @@ export const SignText = ({
       address: currentAccount!.address,
       origin: session.origin,
     });
-  }, [signText, session]);
+  }, [signText, session, params.requestContext?.chainId]);
 
   const isViewGnosisSafe = params?.$ctx?.isViewGnosisSafe;
 
@@ -490,6 +498,7 @@ export const SignText = ({
             message={signText}
             origin={params.session.origin}
             originLogo={site?.icon}
+            chain={chain}
           />
         )}
       </BottomSheetScrollView>

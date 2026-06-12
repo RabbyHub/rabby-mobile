@@ -53,7 +53,7 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
     if (!currentAddress) {
       return;
     }
-    apisAddressBalance.triggerUpdate({
+    await apisAddressBalance.triggerUpdate({
       address: currentAddress,
       force: true,
       fromScene: 'SingleAddressHome',

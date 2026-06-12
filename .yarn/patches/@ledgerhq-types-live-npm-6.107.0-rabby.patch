@@ -1,0 +1,24 @@
+diff --git a/lib-es/manager.d.ts b/lib-es/manager.d.ts
+index 7b7cd2a20af43202cc67e9571078ae8b2e7ba384..9e4b20b4b13c0bb0421d082420bf16af77e1e68a 100644
+--- a/lib-es/manager.d.ts
++++ b/lib-es/manager.d.ts
+@@ -1,6 +1,6 @@
+ import type { DeviceModelId } from "@ledgerhq/types-devices";
+ import type { CryptoCurrency } from "@ledgerhq/types-cryptoassets";
+-import type { DeviceId } from "@ledgerhq/client-ids/ids";
++import type { DeviceId } from "@ledgerhq/client-ids/lib/ids/index";
+ export type Id = number;
+ /**
+  *
+diff --git a/lib/manager.d.ts b/lib/manager.d.ts
+index 7b7cd2a20af43202cc67e9571078ae8b2e7ba384..9e4b20b4b13c0bb0421d082420bf16af77e1e68a 100644
+--- a/lib/manager.d.ts
++++ b/lib/manager.d.ts
+@@ -1,6 +1,6 @@
+ import type { DeviceModelId } from "@ledgerhq/types-devices";
+ import type { CryptoCurrency } from "@ledgerhq/types-cryptoassets";
+-import type { DeviceId } from "@ledgerhq/client-ids/ids";
++import type { DeviceId } from "@ledgerhq/client-ids/lib/ids/index";
+ export type Id = number;
+ /**
+  *

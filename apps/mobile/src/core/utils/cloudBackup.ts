@@ -309,6 +309,9 @@ export const checkCloudBackupExists = async (
   const index0Address = getAddressFromMnemonic(mnemonic, 0);
   const filePath = `${REMOTE_BACKUP_WALLET_DIR}/${index0Address}`;
   try {
+    if (IS_ANDROID) {
+      await refreshAccessToken();
+    }
     return await CloudStorage.exists(filePath);
   } catch (error) {
     console.error('Failed to check cloud backup existence:', error);

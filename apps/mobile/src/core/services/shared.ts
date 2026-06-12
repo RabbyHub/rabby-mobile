@@ -56,6 +56,12 @@ import { KeyringIntf } from '@rabby-wallet/keyring-utils';
 import { AutoConnectService } from './autoConnect';
 import { openapi } from '../request';
 import { setTxRpcClient } from '../utils/tx';
+import {
+  setUserBehaviorTrackingOptOutCache,
+  USER_BEHAVIOR_TRACKING_OPT_OUT_KEY,
+} from '@/utils/trackingOptOut';
+import { syncFirebaseAnalyticsCollectionWithOptOut } from '@/utils/analytics';
+import { syncSentryUserBehaviorTrackingEnabled } from '@/core/sentry';
 
 migrateAppStorage(appStorage);
 
@@ -152,6 +158,12 @@ export const preferenceService = new PreferenceService({
 });
 
 preferenceService.setBeforeSetKV((k, v) => {
+  if (k === USER_BEHAVIOR_TRACKING_OPT_OUT_KEY) {
+    setUserBehaviorTrackingOptOutCache(v !== false);
+    void syncFirebaseAnalyticsCollectionWithOptOut();
+    syncSentryUserBehaviorTrackingEnabled();
+  }
+
   perfEvents.emit('PREFERENCE_UPDATED', {
     key: k,
     value: v,
@@ -266,6 +278,7 @@ export const perpsService = new PerpsService({
   keyringCrypto: {
     decryptWithPassword: value => keyringService.decryptWithPassword(value),
     encryptWithPassword: value => keyringService.encryptWithPassword(value),
+    isUnlocked: () => keyringService.isUnlocked(),
   },
 });
 

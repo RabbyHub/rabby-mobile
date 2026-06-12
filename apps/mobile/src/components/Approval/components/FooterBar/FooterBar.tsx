@@ -385,6 +385,7 @@ export const FooterBar: React.FC<Props> = ({
                     await onWaitDepositResult?.(result);
                     onChangeGasAccount?.();
                   }}
+                  fallbackDirectSignToOpenUI
                 />
               )
             ) : null}
@@ -402,6 +403,7 @@ export const FooterBar: React.FC<Props> = ({
                   onDeposit={onDeposit}
                   onWaitDepositResult={onWaitDepositResult}
                   disableDepositAction={disableGasAccountDeposit}
+                  fallbackDirectSignToOpenUI
                 />
               )
             ) : null}

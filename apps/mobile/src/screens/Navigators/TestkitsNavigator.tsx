@@ -18,6 +18,7 @@ import {
   DevUIAnimatedTextAndView,
   DevUIBuiltInPages,
   DevUIComponents2024ShowCase,
+  DevUIWalletConnect,
   DevUIDapps,
   DevUIFontShowCase,
   DevUIFormShowCase,
@@ -90,6 +91,17 @@ export function TestkitsNavigator() {
       <Stack.Screen
         name={RootNames.DevUIPermissions}
         component={DevUIPermissions}
+      />
+      <Stack.Screen
+        name={RootNames.DevUIWalletConnect}
+        component={DevUIWalletConnect}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'WalletConnect Log',
+            title: 'WalletConnect Log',
+          },
+        ])}
       />
       <Stack.Screen
         name={RootNames.DevCapabilityFile}

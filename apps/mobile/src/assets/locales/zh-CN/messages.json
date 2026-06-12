@@ -1629,6 +1629,27 @@
       "popularLevelHigh": "高",
       "connectWallet": "连接钱包"
     },
+    "walletConnect": {
+      "screenTitle": "连接钱包",
+      "connectingToRabby": "正在连接到 Rabby",
+      "pairingFailed": "WalletConnect 配对失败。",
+      "connected": "连接成功，请返回Dapp",
+      "proposalExpired": "WalletConnect 连接请求已过期。",
+      "pairingExpired": "WalletConnect 配对已过期。请刷新 dapp 二维码后重试。",
+      "duplicatePairing": "此 WalletConnect URI 已在配对中。请刷新 dapp 二维码后重试。",
+      "relayUnreachable": "无法连接 WalletConnect relay。请检查网络后重试。",
+      "uriEmpty": "WalletConnect URI 不能为空。",
+      "uriInvalidFormat": "WalletConnect URI 必须以 wc:<topic>@2 开头。",
+      "uriMissingParams": "WalletConnect URI 缺少 symKey 或 relay-protocol。",
+      "unsupportedCapability": {
+        "chain_one": "{{count}} 条链",
+        "chain_other": "{{count}} 条链",
+        "method_one": "{{count}} 个方法",
+        "method_other": "{{count}} 个方法"
+      },
+      "unsupportedCapabilityList": "{{first}} 和 {{second}}",
+      "unsupportedRequiredRequest": "不支持必需的 WalletConnect 请求：{{capabilities}}。"
+    },
     "addToken": {
       "noTokenFound": "未找到 token",
       "tokenSupported": "Token 已在 Rabby 上支持",
@@ -2688,6 +2709,7 @@
         "perps": "永续合约",
         "feeHyperliquid": "Hyperliquid",
         "feeRabby": "Rabby 钱包",
+        "feeRabbyDiscount": "限时交易手续费折扣",
         "feeDesc": "交易时会产生<1>交易手续费</1>和<2>构建者费用</2>。",
         "feeTitle": "费用",
         "amount": "金额",
@@ -2966,6 +2988,11 @@
         "maxMargin": "最大保证金为 {{amount}}",
         "upTo": "最高",
         "onlyIsolated": "该代币仅支持逐仓保证金"
+      },
+      "MarketSlippage": {
+        "estimatedSlippage": "预估滑点",
+        "lowLiquiditySwitchLimit": "流动性不足，请切换为限价单。",
+        "switchToLimit": "切换"
       },
       "PerpsOpenPositionCheckPopup": {
         "limitTitle": "确认限价单",

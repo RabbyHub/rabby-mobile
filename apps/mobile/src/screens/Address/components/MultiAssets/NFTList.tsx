@@ -60,6 +60,7 @@ import {
   HOME_TOP_HEADER_SIZES,
   SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
 } from '@/constant/home';
+import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useAppForeground } from '@/hooks/useAppForeground';
 
@@ -265,12 +266,18 @@ const NFTListInner = () => {
   );
 
   const onRefresh = useCallback(async () => {
+    const balanceRefresh = triggerUpdate(true);
+    const nftListRefresh = Promise.all([
+      batchGetNFTList(true, {}),
+      nftRefresh(),
+    ]);
+
+    await withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(error => {
+      console.error('Refresh balance failed:', error);
+    });
+
     try {
-      await Promise.all([
-        triggerUpdate(true),
-        batchGetNFTList(true, {}),
-        nftRefresh(),
-      ]);
+      await nftListRefresh;
     } catch (error) {
       console.error('Refresh failed:', error);
     }

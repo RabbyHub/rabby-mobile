@@ -2,8 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   GestureResponderEvent,
   Pressable,
-  Animated as RNAnimated,
-  Easing as RNEasing,
+  StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -14,11 +13,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { E2E_ID } from '@/constant/e2e';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import { useUpgradeInfo } from '@/hooks/version';
@@ -40,22 +35,16 @@ import { AddressListScreenButton } from '@/screens/Address/AddressListScreenButt
 import { useCurrency } from '@/hooks/useCurrency';
 import { formatSmallCurrencyValueParts } from '@/utils/currency';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
-import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import Animated, {
   Extrapolate,
   interpolate,
-  SharedValue,
   useAnimatedStyle,
+  useSharedValue,
 } from 'react-native-reanimated';
-import {
-  apisHomeTabIndex,
-  HomeTabName,
-  useHomeTabIndex,
-} from '@/hooks/navigation';
+import { apisHomeTabIndex, HomeTabName } from '@/hooks/navigation';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
 import useTokenList from '@/store/tokens';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
-import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
 import { useReportTokenTabView } from '../hooks/useReportTokenTabView';
@@ -63,6 +52,8 @@ import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
 import { useShallow } from 'zustand/react/shallow';
 import { MultiHeaderRightHistory } from '../MultiHeaderRightHistory';
+import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
+import { useValueFromSharedValue } from '@/hooks/reanimated';
 
 const HeaderHeight = 30;
 const handleSwitchToTokenTab = (index: number) => {
@@ -72,12 +63,6 @@ const handleSwitchToTokenTab = (index: number) => {
 export function TabsTopHeader(): JSX.Element {
   const focusedTab = useValueFromSharedValue(apisHomeTabIndex.svTabName);
 
-  // const indexDecimalValue = useSVFromMutable(apisHomeTabIndex.svTabIndexDecimal);
-  // const tabIndexFromSv = useValueFromSharedValue(indexDecimalValue);
-  const tabIndexFromSv = useValueFromSharedValue(
-    apisHomeTabIndex.svTabIndexDecimal,
-  );
-  const showNetWorth = tabIndexFromSv > 0.7;
   const {
     totalBalance,
     showBalanceLoadingWithoutLocal,
@@ -150,8 +135,16 @@ export function TabsTopHeader(): JSX.Element {
   }, [setTokenDisplayMode, tokenDisplayMode]);
 
   const netWorth = useMemo(() => {
-    return formatSmallCurrencyValueParts(totalBalance, { currency }).text;
+    return formatSmallCurrencyValueParts(totalBalance, {
+      currency,
+      formatMillion: false,
+      decimalOverMillion: 2,
+    }).text;
   }, [currency, totalBalance]);
+  const netWorthValue = useSharedValue(netWorth);
+  useEffect(() => {
+    netWorthValue.value = netWorth;
+  }, [netWorth, netWorthValue]);
   const changePercent = useMemo(() => {
     if (!data.changePercent) {
       return '';
@@ -190,45 +183,37 @@ export function TabsTopHeader(): JSX.Element {
       Extrapolate.CLAMP,
     ),
   }));
+  const totalBalanceStyle = useAnimatedStyle(() => {
+    const netWorthProgress = interpolate(
+      apisHomeTabIndex.svTabIndexDecimal.value,
+      [0.62, 0.82],
+      [0, 1],
+      Extrapolate.CLAMP,
+    );
+
+    return {
+      opacity: 1 - netWorthProgress,
+    };
+  });
+  const netWorthStyle = useAnimatedStyle(() => {
+    const netWorthProgress = interpolate(
+      apisHomeTabIndex.svTabIndexDecimal.value,
+      [0.62, 0.82],
+      [0, 1],
+      Extrapolate.CLAMP,
+    );
+
+    return {
+      opacity: netWorthProgress,
+    };
+  });
 
   return (
     <Animated.View style={[styles.headerBox, opacityStyle, headerStyle]}>
-      {showNetWorth ? (
-        <Pressable
-          style={styles.leftBox}
-          onPress={() => handleSwitchToTokenTab(0)}>
-          {showBalanceLoadingWithoutLocal ? (
-            <View style={styles.balanceLoadingBox}>
-              <LoadingCircle />
-            </View>
-          ) : (
-            <Text style={styles.balanceTextBox}>{netWorth}</Text>
-          )}
-          {!showBalanceLoadingWithoutLocal && changePercent ? (
-            <Text
-              style={[
-                styles.changePercentText,
-                {
-                  color: data.isLoss
-                    ? colors2024['red-default']
-                    : colors2024['green-default'],
-                },
-              ]}>
-              {changePercent}
-            </Text>
-          ) : null}
-          {showChangeLoading ? (
-            <View style={styles.changeLoadingBox}>
-              <LoadingCircle />
-            </View>
-          ) : null}
-          {!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
-          showHeaderSideLoadingIndicator ? (
-            <LoadingCircle />
-          ) : null}
-        </Pressable>
-      ) : (
-        <View style={styles.leftBox}>
+      <View style={styles.leftBox}>
+        <Animated.View
+          pointerEvents={focusedTab === HomeTabName.overview ? 'auto' : 'none'}
+          style={[styles.leftContent, totalBalanceStyle]}>
           <Text style={styles.balanceTextBox}>
             {t('page.nextComponent.multiAddressHome.totalBalance')}
           </Text>
@@ -259,8 +244,56 @@ export function TabsTopHeader(): JSX.Element {
           showHeaderSideLoadingIndicator ? (
             <LoadingCircle />
           ) : null}
-        </View>
-      )}
+        </Animated.View>
+        <Animated.View
+          pointerEvents={focusedTab === HomeTabName.overview ? 'none' : 'auto'}
+          style={[styles.leftContent, netWorthStyle]}>
+          <Pressable
+            style={styles.netWorthPressable}
+            onPress={() => handleSwitchToTokenTab(0)}>
+            {showBalanceLoadingWithoutLocal ? (
+              <View style={styles.balanceLoadingBox}>
+                <LoadingCircle />
+              </View>
+            ) : (
+              <RefreshNudgedTickerText
+                value={netWorthValue}
+                maxLength={16}
+                lineHeight={22}
+                duration={320}
+                style={styles.balanceTextBox}
+                fontSizeByLength={{
+                  maxFontSize: 18,
+                  minFontSize: 18,
+                  threshold: 16,
+                }}
+              />
+            )}
+            {!showBalanceLoadingWithoutLocal && changePercent ? (
+              <Text
+                style={[
+                  styles.changePercentText,
+                  {
+                    color: data.isLoss
+                      ? colors2024['red-default']
+                      : colors2024['green-default'],
+                  },
+                ]}>
+                {changePercent}
+              </Text>
+            ) : null}
+            {showChangeLoading ? (
+              <View style={styles.changeLoadingBox}>
+                <LoadingCircle />
+              </View>
+            ) : null}
+            {!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+            showHeaderSideLoadingIndicator ? (
+              <LoadingCircle />
+            ) : null}
+          </Pressable>
+        </Animated.View>
+      </View>
 
       <Pressable
         style={styles.rightArea}
@@ -335,12 +368,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   leftBox: {
     height: '100%',
+    flex: 1,
+    position: 'relative',
+  },
+  leftContent: {
+    ...StyleSheet.absoluteFillObject,
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'center',
     gap: 4,
+  },
+  netWorthPressable: {
+    height: '100%',
     flex: 1,
-    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    gap: 4,
   },
   balanceTextBox: {
     color: colors2024['neutral-title-1'],

@@ -34,6 +34,7 @@ interface NativeModulesStatic {
   };
   RNHelpers: NativeModule & {
     forceExitApp(): void;
+    moveTaskToBack?(): Promise<boolean>;
     shareFile?(options: {
       filePath: string;
       mimeType?: string;
