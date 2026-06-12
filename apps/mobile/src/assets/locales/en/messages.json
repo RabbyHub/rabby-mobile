@@ -3127,7 +3127,8 @@
           "doNotHaveSuppliesInThisCurrency": "You do not have supplies in this currency",
           "canNotUseThisCurrencyAsCollateral": "You can not use this currency as collateral",
           "canNotSwitchUsageAsCollateralMode": "You can not switch usage as collateral mode for this currency, because it will cause collateral call",
-          "zeroLTVWithdrawBlocked": "Assets with zero LTV ({{assets}}) must be withdrawn or disabled as collateral to perform this action"
+          "zeroLTVWithdrawBlocked": "Assets with zero LTV ({{assets}}) must be withdrawn or disabled as collateral to perform this action",
+          "zeroLTVEnableEModeFirst": "This asset has 0 LTV and cannot be used as collateral. Enable an E-Mode to use {{asset}} as collateral."
         }
       },
       "borrowDetail": {
