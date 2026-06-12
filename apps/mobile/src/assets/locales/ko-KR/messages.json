@@ -2555,6 +2555,7 @@
         "sizeTips": "거래의 총 가치 또는 수량으로, 마진과 레버리지에 의해 설정됩니다.",
         "feeTitle": "수수료",
         "feeRabby": "래비 월렛",
+        "feeRabbyDiscount": "기간 한정 거래 수수료 할인",
         "feeHyperliquid": "하이퍼리퀴드",
         "feeDesc": "사용자가 거래를 할 때, <1>거래 수수료</1>와 <2>빌더 수수료</2>가 모두 적용됩니다.",
         "amount": "금액",
@@ -2833,6 +2834,11 @@
         "minMargin": "최소 마진은 {{amount}}입니다.",
         "upTo": "최대",
         "onlyIsolated": "이 토큰에 대해서는 격리 마진만 지원됩니다."
+      },
+      "MarketSlippage": {
+        "estimatedSlippage": "예상 슬리피지",
+        "lowLiquiditySwitchLimit": "유동성이 낮습니다. 지정가 주문으로 전환하세요.",
+        "switchToLimit": "전환"
       },
       "PerpsOpenPositionCheckPopup": {
         "limitTitle": "지정가 주문 확인",

@@ -138,6 +138,7 @@ export interface PerpsState {
     tokenToAvailableAfterMaintenance: [number, string][] | null;
   };
   userAbstraction: UserAbstractionResp;
+  userAbstractionReady: boolean;
   openOrders: OpenOrder[];
   currentPerpsAccount: Account | null;
   clearinghouseStateMap: Record<string, ClearinghouseState | null>;
@@ -193,6 +194,7 @@ export const initialState: PerpsState = {
     tokenToAvailableAfterMaintenance: null,
   },
   userAbstraction: UserAbstractionResp.default,
+  userAbstractionReady: false,
   hasPermission: true,
   perpFee: 0.00045,
   currentPerpsAccount: null,
@@ -313,7 +315,11 @@ const fetchPerpPermission = async (address: string) => {
 export const fetchUserAbstraction = async (address: string) => {
   const sdk = apisPerps.getPerpsSDK();
   const userAbstraction = await sdk.info.getUserAbstraction(address);
-  setPerpsState(prev => ({ ...prev, userAbstraction: userAbstraction }));
+  setPerpsState(prev => ({
+    ...prev,
+    userAbstraction: userAbstraction,
+    userAbstractionReady: true,
+  }));
 };
 
 const setIsFetchAllDone = (payload: boolean) => {
