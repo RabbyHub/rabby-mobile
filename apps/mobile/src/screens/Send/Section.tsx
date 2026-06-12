@@ -43,6 +43,7 @@ import {
 
 const USD_INPUT_REGEX = /^\d*(\.\d{0,2})?$/;
 const TOKEN_INPUT_REGEX = /^\d*(\.\d*)?$/;
+const SMALL_USD_AMOUNT_TEXT = '<0.01';
 
 function getSendAmountTokenKey(token?: { chain?: string; id?: string } | null) {
   return token ? `${token.chain}:${token.id}` : '';
@@ -104,16 +105,28 @@ function formatTokenQuoteValueText(value: string | number | BigNumber) {
     : `${sign}${groupedIntPart}`;
 }
 
-function formatUsdInputValueFromTokenAmount(
+function getUsdValueFromTokenAmount(
   tokenAmount: string,
   price: number,
-) {
+): BigNumber | null {
   if (!tokenAmount || !isValidUsdPrice(price)) {
-    return '';
+    return null;
   }
 
   const usdValue = new BigNumber(tokenAmount).times(price);
   if (!usdValue.isFinite() || usdValue.isNaN()) {
+    return null;
+  }
+
+  return usdValue;
+}
+
+function formatUsdInputValueFromTokenAmount(
+  tokenAmount: string,
+  price: number,
+) {
+  const usdValue = getUsdValueFromTokenAmount(tokenAmount, price);
+  if (!usdValue) {
     return '';
   }
 
@@ -237,6 +250,7 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
   useInputBlurOnEvents(amountInputRef);
   const [inputMode, setInputMode] = useState<SendAmountInputMode>('token');
   const [usdInputValue, setUsdInputValue] = useState('');
+  const [isUsdMaxAmountActive, setIsUsdMaxAmountActive] = useState(false);
   const lastUsdInputTokenAmountRef = useRef('');
   const [usdPriceSnapshot, setUsdPriceSnapshot] = useState<{
     tokenKey: string;
@@ -261,6 +275,7 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
   useEffect(() => {
     setInputMode('token');
     setUsdInputValue('');
+    setIsUsdMaxAmountActive(false);
     lastUsdInputTokenAmountRef.current = '';
   }, [currentTokenKey]);
 
@@ -312,6 +327,7 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
     if (!activeUsdPrice && inputMode === 'usd') {
       setInputMode('token');
       setUsdInputValue('');
+      setIsUsdMaxAmountActive(false);
       lastUsdInputTokenAmountRef.current = '';
     }
   }, [activeUsdPrice, inputMode]);
@@ -342,6 +358,7 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
         }
 
         lastUsdInputTokenAmountRef.current = '';
+        setIsUsdMaxAmountActive(false);
         handleFieldChange?.('amount', nextValue);
         updateSliderByTokenAmount(nextValue);
       } catch (e) {
@@ -390,6 +407,7 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
         }
 
         setUsdInputValue(nextValue);
+        setIsUsdMaxAmountActive(false);
         lastUsdInputTokenAmountRef.current = tokenAmount;
         handleFieldChange?.('amount', tokenAmount);
         updateSliderByTokenAmount(tokenAmount);
@@ -431,6 +449,7 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
     }
 
     setUsdInputValue('');
+    setIsUsdMaxAmountActive(false);
     lastUsdInputTokenAmountRef.current = '';
     handleFieldChange?.('amount', '');
     updateSliderByTokenAmount('');
@@ -447,6 +466,7 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
     if (previousAddress && previousAddress !== currentAccount?.address) {
       setInputMode('token');
       setUsdInputValue('');
+      setIsUsdMaxAmountActive(false);
       lastUsdInputTokenAmountRef.current = '';
       handleFieldChange?.('amount', '');
       setSlider(0);
@@ -464,13 +484,32 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
     [currentToken?.decimals, inputMode],
   );
 
+  const handleAmountInputMaxButton = useCallback(() => {
+    if (inputMode === 'usd') {
+      setIsUsdMaxAmountActive(true);
+      lastUsdInputTokenAmountRef.current = '';
+    }
+
+    handleClickMaxButton();
+  }, [handleClickMaxButton, inputMode]);
+
   if (!chainItem || !currentToken) {
     return null;
   }
 
   const tokenSymbol = getTokenSymbol(currentToken);
   const safeFormAmount = getSafeAmountBn(amount);
+  const usdValueFromTokenAmount =
+    inputMode === 'usd' && activeUsdPrice
+      ? getUsdValueFromTokenAmount(amount, activeUsdPrice)
+      : null;
   const amountInputValue = inputMode === 'usd' ? usdInputValue : amount;
+  const amountInputDisplayValueText =
+    isUsdMaxAmountActive &&
+    usdValueFromTokenAmount?.gt(0) &&
+    usdValueFromTokenAmount.lt(0.01)
+      ? SMALL_USD_AMOUNT_TEXT
+      : undefined;
   const amountInputUnit = inputMode === 'usd' ? 'USD' : tokenSymbol;
   const amountInputMaxDecimalPlaces =
     inputMode === 'usd' ? 2 : currentToken.decimals;
@@ -495,6 +534,7 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
           ref={amountInputRef}
           currentAccount={currentAccount}
           value={amountInputValue}
+          displayValueText={amountInputDisplayValueText}
           unit={amountInputUnit}
           quoteValueText={quoteValueText}
           quoteUnit={quoteUnit}
@@ -507,7 +547,7 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
           disableItemCheck={disableItemCheck as ITokenCheck}
           token={currentToken}
           isEstimatingGas={isEstimatingGas}
-          handleClickMaxButton={handleClickMaxButton}
+          handleClickMaxButton={handleAmountInputMaxButton}
           onTokenChange={checkCexSupport}
           amountInputProps={makeTestIDProps(E2E_ID.send.amountInput)}
           maxButtonProps={makeTestIDProps(E2E_ID.send.amountMax)}
