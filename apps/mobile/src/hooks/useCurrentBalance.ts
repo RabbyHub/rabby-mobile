@@ -18,7 +18,7 @@ export type AddressBalanceUpdaterSource =
 const triggerUpdate = ({
   ...params
 }: GetAddressBalanceOptions & { address: string }) => {
-  getAddressBalance(params.address, {
+  return getAddressBalance(params.address, {
     force: params.force,
     fromScene: params.fromScene,
   });

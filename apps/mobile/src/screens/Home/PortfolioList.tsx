@@ -35,6 +35,7 @@ import useProtocols, {
 } from '@/store/protocols';
 import { useShallow } from 'zustand/react/shallow';
 import { useAppForeground } from '@/hooks/useAppForeground';
+import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
 
 const emptyCacheProtocolItem: ICacheProtocolItem = {
   fold: [],
@@ -45,7 +46,7 @@ const MemoFullDefiRenderItem = memo(FullDefiRenderItem);
 
 interface Props {
   onForeground?: () => void;
-  onRefresh?: () => void;
+  onRefresh?: () => void | Promise<void>;
   onReachTopStatusChange?: (status: boolean) => void;
 }
 const FOOTER_HEIGHT = 220;
@@ -341,9 +342,17 @@ export const PortfolioList = ({
                 return;
               }
               setIsManualRefreshing(true);
-              onRefresh?.();
               try {
-                await updatePortfolio?.(lowerAddress, true);
+                const balanceRefresh = Promise.resolve().then(() =>
+                  onRefresh?.(),
+                );
+                const portfolioRefresh = updatePortfolio?.(lowerAddress, true);
+                await withAnimatedTickerRefreshNudge(
+                  () => balanceRefresh,
+                ).catch(error => {
+                  console.error('Refresh balance failed:', error);
+                });
+                await portfolioRefresh;
               } finally {
                 setIsManualRefreshing(false);
               }
