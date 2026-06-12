@@ -1,8 +1,9 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard, Pressable, View } from 'react-native';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { useTheme2024, useGetBinaryMode } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
+import { useShallow } from 'zustand/react/shallow';
 
 import AutoLockView from '@/components/AutoLockView';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -12,8 +13,19 @@ import { NextSearchBar } from '@/components2024/SearchBar';
 import MarketItem from './MarketItem';
 import { CustomMarket, MarketDataType, marketsData } from '../config/market';
 import { Text, TextInput } from '@/components/Typography';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import useProtocolListStore from '@/store/protocols';
+import type { IProtocolItem } from '@/types/assets';
+import { useLendingSummaryCard } from '../hooks';
+import {
+  marketTotalMarketSizeMap,
+  protocolIdToMarketKey,
+} from '../config/protocol';
+import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
+import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
 
 const marketList: MarketDataType[] = Object.values(marketsData);
+const EMPTY_PROTOCOLS: IProtocolItem[] = [];
 
 interface IProps {
   value: CustomMarket;
@@ -27,19 +39,100 @@ export default function SelectLendingChain({ value, onChange }: IProps) {
   const [canSearch, setCanSearch] = useState(false);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [search, setSearch] = useState('');
+  const { finalSceneCurrentAccount } = useSceneAccountInfo({
+    forScene: 'Lending',
+  });
+  const { myTop10Addresses } = useAccountInfo();
+  const currentAddress = finalSceneCurrentAccount?.address?.toLowerCase();
+  const isCurrentAddressTop10 = useMemo(() => {
+    if (!currentAddress) {
+      return false;
+    }
+    return myTop10Addresses.some(address =>
+      isSameAddress(address, currentAddress),
+    );
+  }, [currentAddress, myTop10Addresses]);
+  const { iUserSummary } = useLendingSummaryCard();
+  const { currentProtocols, getProtocols } = useProtocolListStore(
+    useShallow(state => ({
+      currentProtocols:
+        currentAddress && isCurrentAddressTop10
+          ? state.protocolMap[currentAddress] || EMPTY_PROTOCOLS
+          : EMPTY_PROTOCOLS,
+      getProtocols: state.getProtocols,
+    })),
+  );
 
   const isDark = useGetBinaryMode() === 'dark';
   const inputRef = useRef<TextInput | null>(null);
 
-  const filterMarketList: MarketDataType[] = useMemo(() => {
-    return marketList.filter(item => {
-      const formatKey = search.trim().toLowerCase();
-      if (!formatKey) {
-        return true;
+  useEffect(() => {
+    if (isCurrentAddressTop10 && finalSceneCurrentAccount?.address) {
+      getProtocols(finalSceneCurrentAccount.address);
+    }
+  }, [finalSceneCurrentAccount?.address, getProtocols, isCurrentAddressTop10]);
+
+  const marketUsdValueMap = useMemo(() => {
+    const map = new Map<CustomMarket, number>();
+    if (!isCurrentAddressTop10) {
+      return map;
+    }
+
+    currentProtocols.forEach(protocol => {
+      const marketKey = protocolIdToMarketKey(protocol.id);
+      const netWorth = Number(protocol.netWorth || 0);
+      if (!marketKey || netWorth <= 0) {
+        return;
       }
-      return item.marketTitle.toLowerCase().includes(formatKey);
+      map.set(marketKey, netWorth);
     });
-  }, [search]);
+
+    const selectedMarketNetWorth = Number(iUserSummary.netWorthUSD || 0);
+    if (selectedMarketNetWorth > 0) {
+      map.set(value, selectedMarketNetWorth);
+    } else {
+      map.delete(value);
+    }
+
+    return map;
+  }, [
+    currentProtocols,
+    isCurrentAddressTop10,
+    iUserSummary.netWorthUSD,
+    value,
+  ]);
+
+  const hasUserMarketValue = marketUsdValueMap.size > 0;
+
+  const filterMarketList: MarketDataType[] = useMemo(() => {
+    const formatKey = search.trim().toLowerCase();
+    return marketList
+      .filter(item => {
+        if (!formatKey) {
+          return true;
+        }
+        return item.marketTitle.toLowerCase().includes(formatKey);
+      })
+      .sort((a, b) => {
+        if (hasUserMarketValue) {
+          const aUserValue = marketUsdValueMap.get(a.market) || 0;
+          const bUserValue = marketUsdValueMap.get(b.market) || 0;
+          const aHasUserValue = aUserValue > 0;
+          const bHasUserValue = bUserValue > 0;
+          if (aHasUserValue !== bHasUserValue) {
+            return bHasUserValue ? 1 : -1;
+          }
+          if (aHasUserValue && bHasUserValue && aUserValue !== bUserValue) {
+            return bUserValue - aUserValue;
+          }
+        }
+
+        return (
+          (marketTotalMarketSizeMap[b.market] || 0) -
+          (marketTotalMarketSizeMap[a.market] || 0)
+        );
+      });
+  }, [hasUserMarketValue, marketUsdValueMap, search]);
 
   const handleToggleSearch = () => {
     if (!canSearch) {
@@ -119,7 +212,12 @@ export default function SelectLendingChain({ value, onChange }: IProps) {
                   isSectionFirst && styles.sectionFirst,
                   isSectionLast && styles.sectionLast,
                 ]}>
-                <MarketItem data={item} value={value} onPress={onChange} />
+                <MarketItem
+                  data={item}
+                  value={value}
+                  usdValue={marketUsdValueMap.get(item.market)}
+                  onPress={onChange}
+                />
               </View>
             );
           }}
