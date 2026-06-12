@@ -2,7 +2,7 @@ import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import createPersistStore from '@rabby-wallet/persist-store';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 
-import { bytesToHex, publicToAddress } from '@ethereumjs/util';
+import { bytesToHex, publicToAddress, hexToBytes } from '@ethereumjs/util';
 import { SendApproveParams } from '@rabby-wallet/hyperliquid-sdk';
 import { getRandomBytesSync } from 'ethereum-cryptography/random.js';
 import { secp256k1 } from 'ethereum-cryptography/secp256k1.js';
@@ -12,6 +12,7 @@ import type { Account } from '@/types/account';
 type KeyringCrypto = {
   decryptWithPassword: <T>(value: string) => Promise<T>;
   encryptWithPassword: <T>(value: T) => Promise<string>;
+  isUnlocked: () => boolean;
 };
 
 export interface AgentWalletInfo {
@@ -254,6 +255,48 @@ export class PerpsService {
     return agentWallet.preference.approveSignatures;
   };
 
+  /**
+   * Agent vaults are encrypted with the keyring password, and changing the
+   * password doesn't re-encrypt them — so the ciphertext can stop decrypting
+   * ("Incorrect password"). An agent is a re-creatable signing proxy, so on a
+   * genuine key mismatch (unlocked but decrypt still fails) we drop the stale
+   * data and let the caller recreate it instead of surfacing a password error.
+   */
+  private safeDecryptAgentVaults = async (): Promise<{
+    [address: string]: string;
+  }> => {
+    if (!this.store?.agentVaults) {
+      return {};
+    }
+    try {
+      return await this.keyringCrypto.decryptWithPassword(
+        this.store.agentVaults,
+      );
+    } catch (error) {
+      // not unlocked yet → password not ready, not a real key mismatch
+      if (!this.keyringCrypto.isUnlocked()) {
+        throw error;
+      }
+      // browser-passworder reports a genuine key mismatch as "Incorrect
+      // password"; anything else (corrupted blob, transient native crypto
+      // failure) must propagate instead of irreversibly wiping every
+      // account's agent data and pending approve signatures.
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/incorrect password/i.test(message)) {
+        throw error;
+      }
+      console.warn(
+        '[perpsService] failed to decrypt agentVaults while unlocked, resetting stale agent data',
+        message,
+      );
+      if (this.store) {
+        this.store.agentVaults = '';
+        this.store.agentPreferences = {};
+      }
+      return {};
+    }
+  };
+
   unlockAgentWallets = async () => {
     const unlockVersion = ++this.agentWalletUnlockVersion;
     const unlock = async () => {
@@ -264,22 +307,27 @@ export class PerpsService {
 
       // Decrypt and load agent vaults
       if (this.store.agentVaults) {
-        const vaultsMap: {
-          [address: string]: string;
-        } = await this.keyringCrypto.decryptWithPassword(
-          this.store.agentVaults,
-        );
+        const vaultsMap = await this.safeDecryptAgentVaults();
 
         // Format data for memory state
         for (const masterAddress in vaultsMap) {
-          const privateKey = vaultsMap[masterAddress];
+          const privateKey = vaultsMap[masterAddress] || '';
           const preference = this.store.agentPreferences[masterAddress] || {
             agentAddress: '',
+            approveSignatures: [],
           };
           agentWallets[masterAddress] = {
             vault: privateKey,
             preference: {
               ...preference,
+              // Derive the agent address from the vault key — never trust the
+              // stored preference.agentAddress here. A concurrent
+              // createAgentWallet can rewrite agentPreferences during the decrypt
+              // await above, so pairing this vault snapshot with the current
+              // preference would hand the SDK a private key and address from two
+              // different agents (→ approve one, sign with the other →
+              // "agent does not exist").
+              agentAddress: this.deriveAgentAddress(privateKey),
               approveSignatures: preference.approveSignatures || [],
             },
           };
@@ -308,20 +356,31 @@ export class PerpsService {
     this.memoryState.unlockPromise = null;
   };
 
+  // The agent address is fully determined by its vault private key, so we derive
+  // it from the key rather than trusting a stored preference.agentAddress — that
+  // stored value can be desynced from the vault by a concurrent createAgentWallet
+  // across the decrypt await in unlockAgentWallets (the vault is snapshotted
+  // before the await, the preference is read after). Deriving from the key keeps
+  // agentPrivateKey and agentPublicKey on the SAME agent.
+  private deriveAgentAddress = (vault: string): string => {
+    const privateKey = hexToBytes(
+      vault.startsWith('0x') ? vault : `0x${vault}`,
+    );
+    const publicKey = secp256k1.getPublicKey(privateKey, false);
+    return bytesToHex(publicToAddress(publicKey, true)).toLowerCase();
+  };
+
   createAgentWallet = async (masterAddress: string) => {
     if (!this.store) {
       throw new Error('PerpsService not initialized');
     }
-    const privateKey = getRandomBytesSync(32);
-    const publicKey = secp256k1.getPublicKey(privateKey, false);
-    const agentAddress = bytesToHex(
-      publicToAddress(publicKey, true),
-    ).toLowerCase();
-    await this.addAgentWallet(masterAddress, bytesToHex(privateKey), {
+    const vault = bytesToHex(getRandomBytesSync(32));
+    const agentAddress = this.deriveAgentAddress(vault);
+    await this.addAgentWallet(masterAddress, vault, {
       agentAddress,
       approveSignatures: [],
     });
-    return { agentAddress, vault: bytesToHex(privateKey) };
+    return { agentAddress, vault };
   };
 
   addAgentWallet = async (
@@ -343,12 +402,7 @@ export class PerpsService {
       },
     };
 
-    let vaultsMap: { [address: string]: string } = {};
-    if (this.store.agentVaults) {
-      vaultsMap = await this.keyringCrypto.decryptWithPassword(
-        this.store.agentVaults,
-      );
-    }
+    const vaultsMap = await this.safeDecryptAgentVaults();
 
     vaultsMap[normalizedAddress] = vault;
 
@@ -451,12 +505,7 @@ export class PerpsService {
 
     const normalizedAddress = address.toLowerCase();
 
-    let vaultsMap: { [address: string]: string } = {};
-    if (this.store.agentVaults) {
-      vaultsMap = await this.keyringCrypto.decryptWithPassword(
-        this.store.agentVaults,
-      );
-    }
+    const vaultsMap = await this.safeDecryptAgentVaults();
 
     delete vaultsMap[normalizedAddress];
 
