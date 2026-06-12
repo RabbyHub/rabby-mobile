@@ -32,15 +32,15 @@ import {
 } from '../hooks/singleHome';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { AnimateableText } from '@/components/Typography';
-import { getFontSizeByLength } from '@/utils/fontSize';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const ScreenWidth = Dimensions.get('screen').width;
 
 const MAX_NETWORTH_FS = 38;
-const MIN_NETWORTH_FS = 34;
+const MIN_NETWORTH_FS = 24;
 const NETWORTH_FIT_LEN = 9;
 
 const ZERO_LINE_CHART_DATA: CurvePoint[] = [
@@ -252,7 +252,11 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   const _data = selectData.list;
 
   const netWorth = useMemo(() => {
-    return formatSmallCurrencyValueParts(rawNetWorth, { currency }).text;
+    return formatSmallCurrencyValueParts(rawNetWorth, {
+      currency,
+      formatMillion: false,
+      decimalOverMillion: 2,
+    }).text;
   }, [rawNetWorth, currency]);
 
   const data = useMemo(() => {
@@ -262,6 +266,8 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
           ...item,
           netWorth: formatSmallCurrencyValueParts(item.value, {
             currency,
+            formatMillion: false,
+            decimalOverMillion: 2,
           }).text,
         };
       }) || []
@@ -377,20 +383,6 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
     };
   }, [isLoss, data, currentIndex, colors2024, styles, loading, isInitialized]);
 
-  const netWorthFontStyle = useAnimatedStyle(() => {
-    const fs = getFontSizeByLength(formatNetWorth.value?.length ?? 0, {
-      maxFontSize: MAX_NETWORTH_FS,
-      minFontSize: MIN_NETWORTH_FS,
-      threshold: NETWORTH_FIT_LEN,
-    });
-    return { fontSize: fs };
-  });
-
-  const netWorthAnimatedProps = useAnimatedProps(() => {
-    return {
-      text: formatNetWorth.value,
-    };
-  }, [netWorth]);
   const percentChangeAnimatedProps = useAnimatedProps(() => {
     return {
       text: percentChange.value,
@@ -408,10 +400,18 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   return (
     <View style={[styles.charHeader]}>
       <View style={styles.leftContainer}>
-        <AnimateableText
-          {...makeTestIDProps(E2E_ID.home.singleBalanceValue)}
-          style={[styles.netWorth, netWorthFontStyle]}
-          animatedProps={netWorthAnimatedProps}
+        <RefreshNudgedTickerText
+          value={formatNetWorth}
+          maxLength={16}
+          lineHeight={46}
+          duration={320}
+          style={styles.netWorth}
+          fontSizeByLength={{
+            maxFontSize: MAX_NETWORTH_FS,
+            minFontSize: MIN_NETWORTH_FS,
+            threshold: NETWORTH_FIT_LEN,
+          }}
+          containerProps={makeTestIDProps(E2E_ID.home.singleBalanceValue)}
         />
         <AnimateableText
           style={[styles.changeTime, animOpacityStyle]}

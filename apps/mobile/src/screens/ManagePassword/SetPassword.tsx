@@ -35,6 +35,7 @@ import { sheetModalRefsNeedLock, useLoadLockInfo } from '@/hooks/useLock';
 import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
 import { IS_IOS } from '@/core/native/utils';
 import { Text, TextInput } from '@/components/Typography';
+import { preferenceService } from '@/core/services';
 
 const INIT_FORM_DATA = __DEV__
   ? { password: APP_TEST_PWD, confirmPassword: APP_TEST_PWD, checked: true }
@@ -98,6 +99,8 @@ function useSetupPasswordForm() {
       const errors = formik.validateFormValues();
 
       if (getFormikErrorsCount(errors)) return;
+
+      preferenceService.setUserBehaviorTrackingOptOut(false);
 
       const toastHide = toastWithIcon(() => (
         <ActivityIndicator style={{ marginRight: 6 }} />

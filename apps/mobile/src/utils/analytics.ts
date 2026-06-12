@@ -2,6 +2,11 @@ import { BUILD_CHANNEL } from '@/constant/env';
 import { appStorage } from '@/core/storage/mmkv';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import firebaseAnalytics from '@react-native-firebase/analytics';
+import {
+  canTrackUserBehavior,
+  getUserBehaviorTrackingOptOut,
+  USER_BEHAVIOR_TRACKING_OPT_OUT_KEY,
+} from '@/utils/trackingOptOut';
 
 import { customAlphabet, nanoid } from 'nanoid';
 import { Platform } from 'react-native';
@@ -11,6 +16,7 @@ const genExtensionId = customAlphabet('1234567890abcdef', 16);
 type FirebaseAnalyticsModule = ReturnType<typeof firebaseAnalytics>;
 type AnalyticsPreferenceStore = {
   extensionId?: string;
+  [USER_BEHAVIOR_TRACKING_OPT_OUT_KEY]?: boolean;
 };
 
 let firebaseAnalyticsInstance: FirebaseAnalyticsModule | null | undefined;
@@ -55,14 +61,6 @@ async function safeFirebaseAnalyticsCall<T>(
   }
 }
 
-export const analytics = {
-  logEvent: (...args: Parameters<FirebaseAnalyticsModule['logEvent']>) =>
-    safeFirebaseAnalyticsCall(instance => instance.logEvent(...args)),
-  logScreenView: (
-    ...args: Parameters<FirebaseAnalyticsModule['logScreenView']>
-  ) => safeFirebaseAnalyticsCall(instance => instance.logScreenView(...args)),
-};
-
 const getStoredPreference = () =>
   appStorage.getItem(APP_STORE_NAMES.preference) as
     | AnalyticsPreferenceStore
@@ -78,16 +76,64 @@ async function postData(url = '', params: URLSearchParams) {
 }
 
 let extensionId = getStoredPreference()?.extensionId;
-if (!extensionId) {
-  extensionId = genExtensionId();
-  appStorage.setItem(APP_STORE_NAMES.preference, {
-    ...(getStoredPreference() || {}),
-    extensionId,
-  });
+
+function getOrCreateExtensionId() {
+  extensionId = extensionId || getStoredPreference()?.extensionId;
+
+  if (!extensionId) {
+    extensionId = genExtensionId();
+    appStorage.setItem(APP_STORE_NAMES.preference, {
+      ...(getStoredPreference() || {}),
+      [USER_BEHAVIOR_TRACKING_OPT_OUT_KEY]: getUserBehaviorTrackingOptOut(),
+      extensionId,
+    });
+  }
+
+  return extensionId;
 }
 
+export const syncFirebaseAnalyticsCollectionWithOptOut = async () => {
+  await safeFirebaseAnalyticsCall(instance =>
+    instance.setAnalyticsCollectionEnabled(canTrackUserBehavior()),
+  );
+};
+
+void syncFirebaseAnalyticsCollectionWithOptOut();
+
+export const analytics = {
+  logEvent: async (...args: Parameters<FirebaseAnalyticsModule['logEvent']>) => {
+    if (!canTrackUserBehavior()) {
+      return;
+    }
+    return safeFirebaseAnalyticsCall(instance => instance.logEvent(...args));
+  },
+  logScreenView: async (
+    ...args: Parameters<FirebaseAnalyticsModule['logScreenView']>
+  ) => {
+    if (!canTrackUserBehavior()) {
+      return;
+    }
+    return safeFirebaseAnalyticsCall(instance =>
+      instance.logScreenView(...args),
+    );
+  },
+  setAnalyticsCollectionEnabled: (
+    ...args: Parameters<
+      FirebaseAnalyticsModule['setAnalyticsCollectionEnabled']
+    >
+  ) =>
+    safeFirebaseAnalyticsCall(instance =>
+      instance.setAnalyticsCollectionEnabled(...args),
+    ),
+};
+
 const getParams = async () => {
+  if (!canTrackUserBehavior()) {
+    return null;
+  }
+
   const gaParams = new URLSearchParams();
+  const visitorId = getOrCreateExtensionId();
 
   // const url = `https://${location.host}.com/${pathname}`;
 
@@ -95,7 +141,7 @@ const getParams = async () => {
   gaParams.append('idsite', '5');
   gaParams.append('rec', '1');
   // gaParams.append('url', encodeURI(url));
-  gaParams.append('_id', extensionId);
+  gaParams.append('_id', visitorId);
   gaParams.append('rand', nanoid());
   gaParams.append('ca', '1');
   gaParams.append('h', new Date().getUTCHours().toString());
@@ -119,6 +165,9 @@ export const matomoRequestEvent = async (data: {
   transport?: any;
 }) => {
   const params = await getParams();
+  if (!params) {
+    return;
+  }
 
   if (data.category) {
     params.append('e_c', data.category);
@@ -152,6 +201,10 @@ export const matomoRequestEvent = async (data: {
 
 export const matomoLogScreenView = async ({ name }: { name: string }) => {
   const params = await getParams();
+  if (!params) {
+    return;
+  }
+
   params.append('action_name', `Screen / ${name}`);
 
   try {

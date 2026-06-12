@@ -1,15 +1,33 @@
-import { eventBus, EVENTS } from '@/utils/events';
+import {
+  EVENT_ONEKEY_REQUEST_PASSPHRASE_ON_DEVICE,
+  eventBus,
+  EVENTS,
+} from '@/utils/events';
 import HardwareBleSdk from '@onekeyfe/hd-ble-sdk';
 import { UI_EVENT, UI_REQUEST, UI_RESPONSE } from '@onekeyfe/hd-core';
 
 import type { OneKeyBridgeInterface } from '@rabby-wallet/eth-keyring-onekey';
 
 export default class OneKeyBridge implements OneKeyBridgeInterface {
+  private initPromise?: Promise<void>;
+
   init: OneKeyBridgeInterface['init'] = async () => {
+    if (!this.initPromise) {
+      this.initPromise = this.doInit().catch(error => {
+        this.initPromise = undefined;
+        throw error;
+      });
+    }
+
+    return this.initPromise;
+  };
+
+  private async doInit() {
     await HardwareBleSdk.init({
       debug: false,
       fetchConfig: true,
     });
+
     HardwareBleSdk.on(UI_EVENT, e => {
       switch (e.type) {
         case UI_REQUEST.REQUEST_PIN:
@@ -18,6 +36,9 @@ export default class OneKeyBridge implements OneKeyBridgeInterface {
         case UI_REQUEST.REQUEST_PASSPHRASE:
           eventBus.emit(EVENTS.ONEKEY.REQUEST_PASSPHRASE, e);
           break;
+        case UI_REQUEST.REQUEST_PASSPHRASE_ON_DEVICE:
+          eventBus.emit(EVENT_ONEKEY_REQUEST_PASSPHRASE_ON_DEVICE, e);
+          break;
         case UI_REQUEST.CLOSE_UI_WINDOW:
           eventBus.emit(EVENTS.ONEKEY.CLOSE_UI_WINDOW, e);
           break;
@@ -25,7 +46,7 @@ export default class OneKeyBridge implements OneKeyBridgeInterface {
         // NOTHING
       }
     });
-  };
+  }
 
   evmSignTransaction = HardwareBleSdk.evmSignTransaction;
 

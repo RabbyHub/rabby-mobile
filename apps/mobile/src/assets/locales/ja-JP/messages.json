@@ -2608,6 +2608,7 @@
         "feeTitle": "手数料",
         "feeHyperliquid": "ハイパーリキッド",
         "feeRabby": "Rabbyウォレット",
+        "feeRabbyDiscount": "期間限定の取引手数料割引",
         "feeDesc": "ユーザーが取引を行うと、<1>取引手数料</1>と<2>ビルダーフィー</2>が適用されます。",
         "amount": "金額",
         "asset": "資産",
@@ -2885,6 +2886,11 @@
         "minMargin": "最小マージンは{{amount}}です。",
         "maxMargin": "最大マージンは{{amount}}です。",
         "onlyIsolated": "このトークンには、孤立したマージンのみがサポートされています。"
+      },
+      "MarketSlippage": {
+        "estimatedSlippage": "推定スリッページ",
+        "lowLiquiditySwitchLimit": "流動性が低いため、指値注文に切り替えてください。",
+        "switchToLimit": "切り替え"
       },
       "PerpsOpenPositionCheckPopup": {
         "limitTitle": "指値注文を確認",

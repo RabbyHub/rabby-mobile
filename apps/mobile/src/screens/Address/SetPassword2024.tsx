@@ -108,6 +108,8 @@ function useSetupPasswordForm(
         return;
       }
 
+      preferenceService.setUserBehaviorTrackingOptOut(false);
+
       const toastHide = toastWithIcon(() => (
         <ActivityIndicator style={{ marginRight: 6 }} />
       ))(t('page.createPassword.settingUp'), {

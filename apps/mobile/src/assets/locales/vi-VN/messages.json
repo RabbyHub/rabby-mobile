@@ -2675,6 +2675,7 @@
         "sizeTips": "Giá trị hoặc số lượng tổng thể của giao dịch của bạn, được xác định bởi ký quỹ và đòn bẩy.",
         "feeHyperliquid": "Hyperliquid",
         "feeRabby": "Rabby Wallet",
+        "feeRabbyDiscount": "Giảm phí giao dịch trong thời gian có hạn",
         "feeTitle": "Phí",
         "feeDesc": "Khi người dùng thực hiện giao dịch, cả <1>phí giao dịch</1> và <2>phí người xây dựng</2> đều được áp dụng.",
         "amount": "Số tiền",
@@ -2953,6 +2954,11 @@
         "maxMargin": "Lợi nhuận tối đa là {{amount}}",
         "upTo": "Lên đến",
         "onlyIsolated": "Chỉ có margin cô lập được hỗ trợ cho token này"
+      },
+      "MarketSlippage": {
+        "estimatedSlippage": "Trượt giá ước tính",
+        "lowLiquiditySwitchLimit": "Thanh khoản thấp, hãy chuyển sang Lệnh Giới Hạn.",
+        "switchToLimit": "Chuyển"
       },
       "PerpsOpenPositionCheckPopup": {
         "limitTitle": "Kiểm Tra Lệnh Giới Hạn",

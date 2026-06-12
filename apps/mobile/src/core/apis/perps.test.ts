@@ -1,3 +1,5 @@
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+
 function loadPerpsModule({ isUnlocked = true }: { isUnlocked?: boolean } = {}) {
   jest.resetModules();
 
@@ -53,6 +55,9 @@ function loadPerpsModule({ isUnlocked = true }: { isUnlocked?: boolean } = {}) {
       setSendApproveAfterDeposit: mockSetSendApproveAfterDeposit,
       updateAgentWalletPreference: mockUpdateAgentWalletPreference,
     },
+  }));
+  jest.doMock('./keyring', () => ({
+    apisKeyring: { signTypedData: jest.fn() },
   }));
 
   const { apisPerps } = require('./perps') as typeof import('./perps');
@@ -137,6 +142,7 @@ describe('core/apis/perps', () => {
     ).resolves.toEqual({
       agentAddress: '0xexisting-agent',
       vault: '0xexisting-vault',
+      isCreate: false,
     });
 
     expect(mocks.mockGetAgentWallet).toHaveBeenCalledWith('0xmaster');
@@ -156,9 +162,23 @@ describe('core/apis/perps', () => {
     ).resolves.toEqual({
       agentAddress: '0xnew-agent',
       vault: '0xnew-vault',
+      isCreate: true,
     });
 
     expect(mocks.mockGetAgentWallet).toHaveBeenCalledWith('0xmaster');
     expect(mocks.mockCreateAgentWallet).toHaveBeenCalledWith('0xmaster');
+  });
+
+  it('isSelfSignPerpsAccount: true for private-key & mnemonic, false otherwise', () => {
+    const { apisPerps } = loadPerpsModule();
+    expect(apisPerps.isSelfSignPerpsAccount(KEYRING_CLASS.PRIVATE_KEY)).toBe(
+      true,
+    );
+    expect(apisPerps.isSelfSignPerpsAccount(KEYRING_CLASS.MNEMONIC)).toBe(true);
+    expect(
+      apisPerps.isSelfSignPerpsAccount(KEYRING_CLASS.HARDWARE.LEDGER),
+    ).toBe(false);
+    expect(apisPerps.isSelfSignPerpsAccount('WalletConnect')).toBe(false);
+    expect(apisPerps.isSelfSignPerpsAccount(undefined)).toBe(false);
   });
 });

@@ -33,16 +33,16 @@ import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useHomeStartupReady } from '@/core/utils/homeStartupReady';
 import { Text, AnimateableText } from '@/components/Typography';
 import { useHomePortfolioStore } from '@/screens/Home/hooks/useHomePortfolioSummary';
-import { getFontSizeByLength } from '@/utils/fontSize';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { useShallow } from 'zustand/react/shallow';
+import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedSVG = Animated.createAnimatedComponent(Svg);
 const CHART_HORIZONTAL_INSET = 66;
 
 const MAX_NETWORTH_FS = 38;
-const MIN_NETWORTH_FS = 30;
+const MIN_NETWORTH_FS = 24;
 const NETWORTH_FIT_LEN = 8;
 
 const svIsFoldMultiChart = makeMutable(true);
@@ -255,7 +255,11 @@ const ChartHeader = React.memo(
       matteredAccountCount >= 10 ? '10' : String(matteredAccountCount);
 
     const netWorth = useMemo(() => {
-      return formatSmallCurrencyValueParts(rawNetWorth, { currency }).text;
+      return formatSmallCurrencyValueParts(rawNetWorth, {
+        currency,
+        formatMillion: false,
+        decimalOverMillion: 2,
+      }).text;
     }, [currency, rawNetWorth]);
     const change = useMemo(() => {
       return formatCurrencyValueParts(Math.abs(debouncedRawChange), {
@@ -270,6 +274,8 @@ const ChartHeader = React.memo(
             ...item,
             netWorth: formatSmallCurrencyValueParts(item.value, {
               currency,
+              formatMillion: false,
+              decimalOverMillion: 2,
             }).text,
             change: formatCurrencyValueParts(Math.abs(item.rawChange), {
               currency,
@@ -344,21 +350,6 @@ const ChartHeader = React.memo(
       };
     }, [isLoss, data, currentIndex, colors2024, styles, hideType]);
 
-    const netWorthFontStyle = useAnimatedStyle(() => {
-      const fs = getFontSizeByLength(formatNetWorth.value?.length ?? 0, {
-        maxFontSize: MAX_NETWORTH_FS,
-        minFontSize: MIN_NETWORTH_FS,
-        threshold: NETWORTH_FIT_LEN,
-      });
-      return { fontSize: fs };
-    });
-
-    const netWorthAnimatedProps = useAnimatedProps(() => {
-      return {
-        text: formatNetWorth.value,
-      };
-    }, [netWorth, hideType]);
-
     const percentChangeAnimatedProps = useAnimatedProps(() => {
       return {
         text: percentChange.value,
@@ -403,13 +394,20 @@ const ChartHeader = React.memo(
             ]}
             onPress={onPressNetWorth}
             {...makeTestIDProps(E2E_ID.home.portfolioBalanceValue)}>
-            <AnimateableText
+            <RefreshNudgedTickerText
+              value={formatNetWorth}
+              maxLength={24}
+              lineHeight={46}
+              duration={320}
               style={[
                 styles.netWorth,
-                netWorthFontStyle,
                 hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
               ]}
-              animatedProps={netWorthAnimatedProps}
+              fontSizeByLength={{
+                maxFontSize: MAX_NETWORTH_FS,
+                minFontSize: MIN_NETWORTH_FS,
+                threshold: NETWORTH_FIT_LEN,
+              }}
             />
           </Pressable>
 

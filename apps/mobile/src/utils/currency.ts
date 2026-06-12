@@ -18,6 +18,7 @@ type CurrencyFormatOptions = {
   decimal?: number;
   formatMillion?: boolean;
   currency?: CurrencyItem;
+  decimalOverMillion?: number;
 };
 
 export const isCurrencyPrefix = (currency?: Pick<CurrencyItem, 'is_prefix'>) =>
@@ -73,7 +74,12 @@ export const formatCurrencyValueParts = (
   value: string | number,
   options?: CurrencyFormatOptions,
 ): CurrencyValueParts => {
-  const { decimal, formatMillion, currency = USD_CURRENCY } = options || {};
+  const {
+    decimal,
+    formatMillion,
+    currency = USD_CURRENCY,
+    decimalOverMillion = 0,
+  } = options || {};
   const bnValue = new BigNumber(value).times(currency.usd_rate);
 
   if (!isCurrencyPrefix(currency) && decimal === undefined) {
@@ -92,7 +98,7 @@ export const formatCurrencyValueParts = (
 
   if (bnValue.gte(0.01) || bnValue.eq(0)) {
     return joinCurrencyValueParts(
-      formatNumber(bnValue, decimal, {}, formatMillion),
+      formatNumber(bnValue, decimal, {}, formatMillion, decimalOverMillion),
       {
         currency,
       },
@@ -109,9 +115,15 @@ export const formatSmallCurrencyValueParts = (
   value: number,
   options?: {
     currency?: CurrencyItem;
+    formatMillion?: boolean;
+    decimalOverMillion?: number;
   },
 ): CurrencyValueParts => {
-  const { currency = USD_CURRENCY } = options || {};
+  const {
+    currency = USD_CURRENCY,
+    formatMillion = true,
+    decimalOverMillion = 0,
+  } = options || {};
   const val = new BigNumber(value).times(currency.usd_rate);
 
   if (!isCurrencyPrefix(currency)) {
@@ -137,7 +149,8 @@ export const formatSmallCurrencyValueParts = (
 
   return formatCurrencyValueParts(value, {
     decimal: 2,
-    formatMillion: true,
+    formatMillion,
     currency,
+    decimalOverMillion,
   });
 };

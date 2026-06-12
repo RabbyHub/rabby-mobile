@@ -2150,7 +2150,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-compat (2.17.2):
+  - react-native-compat (2.23.9):
     - boost
     - DoubleConversion
     - fast_float
@@ -2178,8 +2178,35 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-get-random-values (1.10.0):
+    - YttriumWrapper (= 0.10.50)
+  - react-native-get-random-values (2.0.0):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
     - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - react-native-ios-context-menu (1.15.3):
     - React-Core
   - react-native-keyboard-controller (1.18.5):
@@ -2267,8 +2294,34 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-netinfo (11.4.1):
+  - react-native-netinfo (12.0.1):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
     - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - react-native-pager-view (6.7.0):
     - boost
     - DoubleConversion
@@ -3616,6 +3669,7 @@ PODS:
   - VisionCamera/React (4.7.2):
     - React-Core
   - Yoga (0.0.0)
+  - YttriumWrapper (0.10.50)
 
 DEPENDENCIES:
   - "BleUtils (from `../node_modules/@onekeyfe/react-native-ble-utils`)"
@@ -3772,6 +3826,7 @@ SPEC REPOS:
     - SDWebImageWebPCoder
     - Sentry
     - SocketRocket
+    - YttriumWrapper
 
 EXTERNAL SOURCES:
   BleUtils:
@@ -4098,12 +4153,12 @@ SPEC CHECKSUMS:
   react-native-ble-plx: 4edb4fb2137bbada7b34223f02d27b0a724489f6
   react-native-blur: 981b2ec64b3084ecf98812333f2a8c6e83643a1e
   react-native-cloud-storage: b14cb947dd22ebb81a88f9c760ae737003579e84
-  react-native-compat: bb471e72bf8f7c87a3173e7a8c24efdf7b2662b9
-  react-native-get-random-values: 384787fd76976f5aec9465aff6fa9e9129af1e74
+  react-native-compat: b3f3e5e40c53f0d67ba19676900b17802e49933f
+  react-native-get-random-values: edbdff6647e5723a6ed4febbbfc17bac8645d08d
   react-native-ios-context-menu: e529171ba760a1af7f2ef0729f5a7f4d226171c5
   react-native-keyboard-controller: ef239acc614d5d520b07853be6bfa6e87b7770db
   react-native-mmkv: cbb76022ac5ddeaec29032b8adceb3e669c23d54
-  react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
+  react-native-netinfo: d5aaff3fa427a72aaedf1d758508d15f301a4087
   react-native-pager-view: e065942ac4efaceed355b93e6d6d200c11dc7cc4
   react-native-quick-crypto: 749b3a82edadac3a9fbe63a780444fd4e7df4f5f
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
@@ -4173,6 +4228,7 @@ SPEC CHECKSUMS:
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   VisionCamera: 2230ecfd78a1f6cddd8be0fe4e6589f21a6385e1
   Yoga: c7d9adcf9fca72e6219bdc5f1f11b76b38c4a030
+  YttriumWrapper: d7f63336830536f1da41b745ed8bacedb04228c4
 
 PODFILE CHECKSUM: b6cdb31beb1699f024decf286d719c06b61d2c3f
 

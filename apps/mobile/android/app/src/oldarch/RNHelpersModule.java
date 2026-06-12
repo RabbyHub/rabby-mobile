@@ -1,5 +1,6 @@
 package com.debank.rabbymobile;
 
+import android.app.Activity;
 import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
@@ -36,6 +37,26 @@ public class RNHelpersModule extends SimplePackageSpec {
   @ReactMethod
   public void forceExitApp() {
     android.os.Process.killProcess(android.os.Process.myPid());
+  }
+
+  @ReactMethod
+  public void moveTaskToBack(Promise promise) {
+    Activity activity = getCurrentActivity();
+    if (activity == null) {
+      promise.reject(
+        "E_MOVE_TASK_TO_BACK_ACTIVITY",
+        "Current activity is not available"
+      );
+      return;
+    }
+
+    activity.runOnUiThread(() -> {
+      try {
+        promise.resolve(activity.moveTaskToBack(true));
+      } catch (Exception error) {
+        promise.reject("E_MOVE_TASK_TO_BACK", error);
+      }
+    });
   }
 
   @ReactMethod

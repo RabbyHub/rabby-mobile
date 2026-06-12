@@ -2553,6 +2553,7 @@
         "sizeTips": "Nilai total atau jumlah perdagangan Anda, ditentukan oleh margin dan leverage.",
         "gotItBtn": "Saya mengerti",
         "feeRabby": "Rabby Wallet",
+        "feeRabbyDiscount": "Diskon biaya trading untuk waktu terbatas",
         "feeTitle": "Biaya",
         "feeHyperliquid": "Hyperliquid",
         "feeDesc": "Ketika pengguna melakukan perdagangan, baik <1>biaya perdagangan</1> maupun <2>biaya pembuat</2> berlaku.",
@@ -2832,6 +2833,11 @@
         "minMargin": "Margin minimum adalah {{amount}}",
         "maxMargin": "Margin maksimum adalah {{amount}}",
         "onlyIsolated": "Hanya margin terisolasi yang didukung untuk token ini"
+      },
+      "MarketSlippage": {
+        "estimatedSlippage": "Estimasi selip",
+        "lowLiquiditySwitchLimit": "Likuiditas rendah, beralih ke Pesanan Limit.",
+        "switchToLimit": "Beralih"
       },
       "PerpsOpenPositionCheckPopup": {
         "limitTitle": "Periksa Limit Order",

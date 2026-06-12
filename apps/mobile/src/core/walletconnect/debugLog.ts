@@ -1,0 +1,34 @@
+import { appendWalletConnectLog } from './state';
+import type { WalletConnectLogLevel } from './types';
+
+let nextLogId = 1;
+
+function serializeData(data: unknown) {
+  if (typeof data === 'undefined') {
+    return undefined;
+  }
+  if (typeof data === 'string') {
+    return data;
+  }
+  try {
+    return JSON.stringify(data, null, 2);
+  } catch (e) {
+    return String(data);
+  }
+}
+
+export function addWalletConnectLog(
+  scope: string,
+  message: string,
+  data?: unknown,
+  level: WalletConnectLogLevel = 'info',
+) {
+  appendWalletConnectLog({
+    id: nextLogId++,
+    ts: Date.now(),
+    scope,
+    message,
+    level,
+    data: serializeData(data),
+  });
+}

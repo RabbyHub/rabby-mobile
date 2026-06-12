@@ -11,6 +11,7 @@ export type ShareFileOptions = {
 
 export interface Spec extends TurboModule {
   forceExitApp(): void;
+  moveTaskToBack(): Promise<boolean>;
   shareFile(options: ShareFileOptions): Promise<void>;
   iosExcludeFileFromBackup(filePath: string): Promise<boolean>;
 }

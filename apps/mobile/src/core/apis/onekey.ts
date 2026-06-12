@@ -60,14 +60,18 @@ export function startSubscribeOnekeyDevices() {
   });
 }
 
+async function getOneKeyKeyring() {
+  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  bindOneKeyEvents(keyring);
+  return keyring;
+}
+
 export async function initOneKeyKeyring() {
-  return getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring, keyring => {
-    bindOneKeyEvents(keyring);
-  });
+  return getOneKeyKeyring();
 }
 
 export async function importAddress(index: number) {
-  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const keyring = await getOneKeyKeyring();
 
   keyring.setAccountToUnlock(index.toString());
   const result = await keyringService.addNewAccount(keyring as any);
@@ -76,18 +80,18 @@ export async function importAddress(index: number) {
 }
 
 export async function getAddresses(start: number, end: number) {
-  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const keyring = await getOneKeyKeyring();
   return keyring.getAddresses(start, end);
 }
 
 export async function unlockDevice() {
-  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const keyring = await getOneKeyKeyring();
 
   await keyring.unlock();
 }
 
 export async function fixConnectId(address: string, connectId: string) {
-  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const keyring = await getOneKeyKeyring();
 
   await keyring.fixConnectId(address, connectId);
   await keyringService.persistKeyringsForKeyring(keyring);
@@ -96,7 +100,7 @@ export async function fixConnectId(address: string, connectId: string) {
 }
 
 export async function searchDevices() {
-  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const keyring = await getOneKeyKeyring();
 
   let retryCount = 0;
   const MAX_RETRY_COUNT = 10;
@@ -118,7 +122,7 @@ export async function searchDevices() {
 }
 
 export async function setDeviceConnectId(deviceConnectId: string) {
-  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const keyring = await getOneKeyKeyring();
 
   return keyring.setDeviceConnectId(deviceConnectId);
 }
@@ -157,12 +161,12 @@ export async function importFirstAddress({
 }
 
 export async function getCurrentAccounts() {
-  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const keyring = await getOneKeyKeyring();
   return keyring.getCurrentAccounts();
 }
 
 export async function cleanUp() {
-  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const keyring = await getOneKeyKeyring();
   // keyring.bridge.dispose();
   return keyring.cleanUp();
 }
@@ -170,7 +174,7 @@ export async function cleanUp() {
 export async function isConnected(
   address: string,
 ): Promise<[boolean, string?]> {
-  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const keyring = await getOneKeyKeyring();
   const detail = keyring.getAccountInfo(address);
 
   if (!detail?.connectId) {
@@ -180,7 +184,7 @@ export async function isConnected(
   keyring.setDeviceConnectId(detail.connectId);
 
   try {
-    await keyring.trySearchDevice(true);
+    await keyring.trySearchDevice();
     return [true, detail.connectId];
   } catch (e) {
     return [false, detail.connectId];

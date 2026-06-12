@@ -32,6 +32,7 @@ import {
   RcScreenshotReport,
   RcIconCurrency,
   RcNotification,
+  RcWalletConnect,
   RcAutolock,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
@@ -174,6 +175,7 @@ import { Text } from '@/components/Typography';
 import { useAppSecurityChain } from '@/hooks/global';
 import { useToggleShowUnlockStatusBar } from '@/hooks/appSettings';
 import { SwitchShowFloatingUnlockStatusBar } from './components/SwitchFloatingView';
+import { SwitchUserBehaviorTrackingOptOut } from './components/SwitchUserBehaviorTrackingOptOut';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -412,6 +414,17 @@ function SettingsBlocks() {
       settings: {
         label: t('page.setting.screenTitle'),
         items: [
+          {
+            label: 'WalletConnect',
+            icon: RcWalletConnect,
+            onPress: () => {
+              navigation.dispatch(
+                StackActions.push(RootNames.StackSettings, {
+                  screen: RootNames.WalletConnect,
+                }),
+              );
+            },
+          },
           {
             label: biometricsComputed.systemAuthSettingsLabel,
             icon: isUsingDevicePasscodeForSettings
@@ -784,6 +797,11 @@ function DevSettingsBlocks({
   const { setDevServerSettingsModalVisible } = useDevServerModalVisible();
   const currentAccount = preferenceService.getFallbackAccount();
   const { toggleShowUnlockStatusBar } = useToggleShowUnlockStatusBar();
+  const toggleUserBehaviorTrackingOptOut = useCallback(() => {
+    preferenceService.setUserBehaviorTrackingOptOut(
+      !preferenceService.getUserBehaviorTrackingOptOut(),
+    );
+  }, []);
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -801,6 +819,19 @@ function DevSettingsBlocks({
                 </Text>
               ),
               // TODO: only show in non-production mode
+              visible: NEED_DEVSETTINGBLOCKS,
+            },
+            {
+              label: 'User Behavior Tracking Opt-out',
+              icon: RcPrivacyPolicy,
+              onPress: () => {
+                toggleUserBehaviorTrackingOptOut();
+              },
+              rightNode: (
+                <SwitchUserBehaviorTrackingOptOut
+                  onPress={evt => evt.stopPropagation()}
+                />
+              ),
               visible: NEED_DEVSETTINGBLOCKS,
             },
             {
@@ -895,6 +926,17 @@ function DevSettingsBlocks({
               icon: RcCode,
               onPress: () => {
                 setDevCapabilityPlaygroundModalVisible(true);
+              },
+            },
+            {
+              label: 'WalletConnect Log',
+              icon: RcCode,
+              onPress: () => {
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackTestkits, {
+                    screen: RootNames.DevUIWalletConnect,
+                  }),
+                );
               },
             },
             {

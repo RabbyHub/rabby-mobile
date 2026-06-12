@@ -735,7 +735,6 @@ const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
     color: colors2024['neutral-foot'],
   },
   fullWidthButton: {
-    flex: 1,
     height: BOTTOM_BUTTON_SINGLE_HEIGHT,
   },
   gasPreContainer: {

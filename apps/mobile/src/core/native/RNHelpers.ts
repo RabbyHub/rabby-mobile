@@ -7,6 +7,11 @@ const { RNHelpers: nativeModule } = resolveNativeModule(
 
 const RNHelpers = Object.freeze({
   ...nativeModule,
+  moveTaskToBack: wrapPlatformOnlyMethod({
+    method: nativeModule.moveTaskToBack,
+    platform: 'android',
+    fallbackFn: () => Promise.resolve(false),
+  }),
   shareFile: wrapPlatformOnlyMethod({
     method: nativeModule.shareFile,
     platform: 'android',
