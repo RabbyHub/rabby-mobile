@@ -1260,17 +1260,6 @@ export const apisPerpsStore = {
     setInitialized(false);
     fetchPerpPermission('');
   },
-  // Re-arm the init effect after an unlock. An init that ran while locked
-  // could neither bind the SDK account/vault nor sign, and a failed
-  // checkAccountApproveStatus latches both approve flags — without this the
-  // `isInitialized` guard keeps the wrong flags until the next lock event,
-  // prompting the user to re-sign approvals for a perfectly valid agent.
-  // No-op when no perps session is active (lock already reset everything).
-  reinitAfterUnlock: () => {
-    if (perpsStore.getState().currentPerpsAccount) {
-      setInitialized(false);
-    }
-  },
 };
 
 export const usePerpsStore = () => {
