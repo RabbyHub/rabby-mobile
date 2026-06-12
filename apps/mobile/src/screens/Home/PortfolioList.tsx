@@ -22,6 +22,7 @@ import {
   useCurrentTabScrollY,
   useFocusedTab,
 } from 'react-native-collapsible-tab-view';
+import { useIsFocused } from '@react-navigation/native';
 import { useAnimatedReaction } from 'react-native-reanimated';
 import { runOnJS } from 'react-native-reanimated';
 import { getItemId } from './utils/listRenderId';
@@ -79,6 +80,7 @@ export const PortfolioList = ({
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const [foldDefi, setFoldDefi] = useState(true);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const isScreenFocused = useIsFocused();
 
   const loadingPortfolio = useProtocols(state => {
     if (!lowerAddress) {
@@ -357,7 +359,7 @@ export const PortfolioList = ({
                 setIsManualRefreshing(false);
               }
             }}
-            refreshing={isManualRefreshing}
+            refreshing={isScreenFocused && isManualRefreshing}
           />
         }
       />
