@@ -31,6 +31,15 @@ import {
   View,
   StyleSheet,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { PerpsOpenPositionCheckPopup } from './PerpsOpenPositionCheckPopup';
 
 const isAndroid = Platform.OS === 'android';
@@ -441,12 +450,31 @@ export const PerpsOpenPositionPopup: React.FC<{
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
+  // Flash highlight on the order-type row after switching to limit from the
+  // check popup, so the user notices what changed.
+  const orderTypeFlash = useSharedValue(0);
+  const orderTypeFlashStyle = useAnimatedStyle(() => ({
+    opacity: orderTypeFlash.value,
+  }));
+
   // Back out of review and flip the order to limit, seeding limitPx the same
   // way the manual order-type toggle does.
   const handleSwitchToLimit = useMemoizedFn(() => {
     setIsReviewMode(false);
     setOrderType('limit');
     setLimitPx(formatTpOrSlPrice(markPrice, szDecimals));
+    orderTypeFlash.value = 0;
+    // Delay past the check popup's dismiss animation so the flash is visible.
+    orderTypeFlash.value = withDelay(
+      300,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 300 }),
+          withTiming(0, { duration: 300 }),
+        ),
+        3,
+      ),
+    );
   });
 
   const openPosition = useMemoizedFn(async () => {
@@ -855,6 +883,23 @@ export const PerpsOpenPositionPopup: React.FC<{
                 </Text>
               </View>
               <View style={styles.listItem}>
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFill,
+                    { left: 16, right: 16 },
+                    orderTypeFlashStyle,
+                  ]}>
+                  <LinearGradient
+                    colors={[
+                      'rgba(35, 192, 176, 0)',
+                      'rgba(35, 192, 176, 0.12)',
+                    ]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={StyleSheet.absoluteFill}
+                  />
+                </Animated.View>
                 <Text style={styles.label}>
                   {t('page.perpsDetail.PerpsOpenPositionPopup.orderType')}
                 </Text>
