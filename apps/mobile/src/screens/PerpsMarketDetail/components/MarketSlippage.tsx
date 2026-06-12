@@ -102,7 +102,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     gap: 8,
     borderRadius: 8,
-    backgroundColor: colors2024['red-light-1'],
+    backgroundColor: colors2024['orange-light-1'],
     paddingHorizontal: 8,
     height: 42,
   },
@@ -113,7 +113,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     ...makeTriangleStyle({
       dir: 'up',
       size: 8,
-      color: colors2024['red-light-1'],
+      color: colors2024['orange-light-1'],
     }),
     borderTopWidth: 0,
     borderLeftWidth: 8,
@@ -125,7 +125,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '500',
-    color: colors2024['red-default'],
+    color: colors2024['orange-default'],
   },
   switchBtn: {
     paddingHorizontal: 8,
