@@ -76,6 +76,7 @@ import {
   InnerDappWebViewPreloadEntry,
   QrCodeModal,
   ToggleCollateralModal,
+  WalletConnectModalHost,
   WideScreenDebugPanel,
 } from '@/perfs/loadables/appNavigationGlobals';
 import {
@@ -425,6 +426,7 @@ function AppNavigationPostUnlockGlobals({ enabled }: { enabled: boolean }) {
       <BrowserManagePopup />
       <BrowserFavoritePopup />
       <BottomSheetDappInfoPopup />
+      <WalletConnectModalHost />
     </>
   );
 }

@@ -28,11 +28,13 @@ const UL_CONFIG = __DEV__
 export const UL_PROTOCOL = UL_CONFIG.protocol;
 export const UL_HOSTNAME = UL_CONFIG.hostname;
 export const UL_PATH_PREFIX = UL_CONFIG.pathPrefix;
+export const WALLETCONNECT_REDIRECT_PATH = 'walletconnect';
 
 const UL_HTTP_DOMAIN = `https://${UL_HOSTNAME}`;
 const UL_HTTP_DOMAIN_PROD = `https://${RABBY_GO_ENVS.release.hostname}`;
 const UL_APP_DOMAIN = `${UL_PROTOCOL}//${UL_HOSTNAME}`;
 const UL_APP_DOMAIN_PROD = `${UL_PROTOCOL}//${RABBY_GO_ENVS.release.hostname}`;
+export const WALLETCONNECT_REDIRECT_UNIVERSAL_LINK = `${UL_HTTP_DOMAIN}${UL_PATH_PREFIX}${WALLETCONNECT_REDIRECT_PATH}`;
 
 export const ALLOWED_UL_DOMAINS = [
   ...new Set(

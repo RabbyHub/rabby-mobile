@@ -21,6 +21,7 @@ import {
   isSensitiveKeyringType,
   withWalletUnlockIf,
 } from '@/utils/walletUnlockGuard';
+import { disconnectWalletConnectSessionsForRemovedAccount } from '../walletconnect/accountRemoval';
 
 export async function addWatchAddress(address: string) {
   const keyring = await getKeyring<WatchKeyring>(
@@ -64,6 +65,7 @@ export const removeAddress = withWalletUnlockIf(
       account.brandName,
       isRemoveEmptyKeyring,
     );
+    await disconnectWalletConnectSessionsForRemovedAccount(account);
 
     const hasSameAddressLeft = await keyringService.hasAddress(account.address);
     if (!hasSameAddressLeft) {

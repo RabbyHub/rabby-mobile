@@ -1,7 +1,6 @@
 import type { Account, IPinAddress } from '@/core/services/preference';
 import { useAccounts, usePinAddresses } from '@/hooks/account';
-import { sortAccountList } from '@/utils/sortAccountList';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { getAccountSelectorDisplayGroups } from '@/utils/accountSelectorList';
 import { useCallback, useMemo } from 'react';
 
 // todo move to single file
@@ -36,21 +35,13 @@ function computeAccountInfo({
     shouldSafeAddressesExpanded: false,
   };
 
-  for (const origAccount of accounts.values()) {
-    const account: Account = { ...origAccount };
-
-    if (account.type === KEYRING_CLASS.WATCH) {
-      result.watchAddresses.push(account);
-    } else if (account.type === KEYRING_CLASS.GNOSIS) {
-      result.safeAddresses.push(account);
-    } else {
-      result.myAddresses.push(account);
-    }
-  }
-
-  result.myAddresses = sortAccountList(result.myAddresses, {
-    highlightedAddresses: pinAddresses || [],
-  });
+  Object.assign(
+    result,
+    getAccountSelectorDisplayGroups({
+      accounts,
+      pinAddresses,
+    }),
+  );
 
   if (!result.isUsingAllAccounts && currentAccount) {
     result.shouldSafeAddressesExpanded = !!result.safeAddresses.find(account =>
