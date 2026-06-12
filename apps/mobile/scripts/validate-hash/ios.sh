@@ -54,6 +54,9 @@ run_ios_build_and_hash() {
     sed -i '' -e 's/"DumpToolVersion" : .*/"DumpToolVersion" : 0,/' "$app_path/Assets.car.json"
     # "Authoring Tool": "@(#)PROGRAM:CoreThemeDefinition  PROJECT:CoreThemeDefinition-611  [IIO-2661.3.6]", 版本号会不一样
     sed -i '' -e 's/"Authoring Tool" : .*/"Authoring Tool" : "",/' "$app_path/Assets.car.json"
+    # CoreUI 记录的是 assetutil/CoreUI 工具版本，系统补丁版本不同也可能变化
+    sed -i '' -e 's/"CoreUIVersion" : [0-9]*/"CoreUIVersion" : 0/' "$app_path/Assets.car.json"
+    sed -i '' -e 's/"MainVersion" : "@(#)PROGRAM:CoreUI  PROJECT:CoreUI-[^"]*"/"MainVersion" : "@(#)PROGRAM:CoreUI  PROJECT:CoreUI-0"/' "$app_path/Assets.car.json"
     rm -f "$app_path/Assets.car"
   fi
 

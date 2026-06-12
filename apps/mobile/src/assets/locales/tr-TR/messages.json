@@ -1577,6 +1577,7 @@
         "notIncludedInTotalBalance": "Toplam Bakiyeye Dahil Değil"
       },
       "backup-seed-phrase": "Yedek Seed Phrase",
+      "backupFailed": "Yedekleme başarısız, lütfen tekrar deneyin",
       "add-to-whitelist": "Beyaz Listeye Ekle",
       "pin-in-list": "Listeye Sabitle",
       "delete-desc-needpassword": "Silmeden önce, varlıklarınızı nasıl koruyacağınızı anlamak için aşağıdaki noktaları aklınızda bulundurun.",
@@ -1697,6 +1698,7 @@
       "termOfUse": "Kullanım Şartları",
       "biometricsFail": "Biyometrik kimlik doğrulama etkinleştirme başarısız oldu",
       "confirmModalDesc": "Lütfen şifrenizi düzgün bir şekilde saklayın. Bir kez kaybolduğunda, Rabby tarafından değiştirilemez veya kurtarılamaz.",
+      "setWallet": "Cüzdanı Ayarla",
       "confirmError": "Şifreler uyuşmuyor",
       "confirmTitle": "Şifreyi Onayla",
       "subTitle": "Cüzdanınızı açmak ve yerel verileri şifrelemek için kullanılacaktır.",
@@ -2160,6 +2162,8 @@
       "currentVersion": "Mevcut Sürüm",
       "appCache": "Uygulama Önbelleğini Temizle",
       "fingerPrint": "Parmak izi",
+      "devicePassword": "Cihaz şifresi",
+      "useDevicePassword": "Cihaz şifresini kullan",
       "tou": "Kullanım Şartları",
       "clearPending": "Yerel Olarak Bekleyenleri Temizle",
       "feedback": "Geri Bildirim",
@@ -2305,7 +2309,7 @@
       "WebviewError": {
         "error": "Hata:",
         "failedToLoad": "Sayfa yüklenemedi",
-        "alertText": "Denemek için <1/><2>Tarayıcıda aç</2><3/> bunun bir web sitesi sorunu olup olmadığını kontrol et."
+        "alertText": "Bu üçüncü taraf DApp’in mevcut konumunuzda çalışıp çalışmadığını kontrol etmek için<1/><2>Tarayıcıda aç</2><3/>seçeneğini deneyin."
       },
       "toast": {
         "clearCacheSuccess": "Önbellek temizlendi"
@@ -3557,6 +3561,7 @@
       "switchArea": {
         "skipText": "Bu açılır pencereyi 1 gün için atla"
       },
+      "alertText": "Üçüncü taraf DApp: kullanım sorunları için lütfen DApp desteğiyle iletişime geçin. Rabby yalnızca görüntüleme erişimi sağlar.",
       "title": "Hata Bildirmek için Ekran Görüntüsü"
     },
     "feedbackModal": {

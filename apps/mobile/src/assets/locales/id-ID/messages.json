@@ -1581,6 +1581,7 @@
       "add-to-whitelist": "Tambahkan ke Daftar Putih",
       "remove-from-whitelist": "Hapus dari Daftar Putih",
       "backup-seed-phrase": "Cadangan Frase Benih",
+      "backupFailed": "Pencadangan gagal, silakan coba lagi",
       "delete-desc-needpassword": "Sebelum Anda menghapus, ingatlah poin-poin berikut untuk memahami cara melindungi aset Anda.",
       "source": "Sumber",
       "hd-path": "HD Path",
@@ -1700,6 +1701,7 @@
       "agree": "Saya telah membaca dan setuju dengan<1/> <2>Ketentuan Penggunaan</2>",
       "agreeToTerms": "Saya telah membaca dan setuju dengan",
       "confirmModalDesc": "Silakan simpan kata sandi Anda dengan baik. Setelah hilang, kata sandi tidak dapat diubah atau dipulihkan oleh Rabby.",
+      "setWallet": "Atur Dompet",
       "ConfirmPassword": "Konfirmasi kata sandi",
       "title": "Atur Kata Sandi",
       "passwordMin": "Kata sandi harus memiliki panjang minimal 8 karakter",
@@ -2164,6 +2166,8 @@
       "appCache": "Hapus Cache Aplikasi",
       "addCustomNetwork": "Tambah Jaringan Kustom",
       "fingerPrint": "Sidik Jari",
+      "devicePassword": "Kata sandi perangkat",
+      "useDevicePassword": "Gunakan kata sandi perangkat",
       "clearPendingResetDesc": "Juga reset data nonce lokal saya dan catatan tanda tangan",
       "clearPendingWarning": "Transaksi yang dihapus mungkin masih dikonfirmasi di on-chain kecuali jika diganti.",
       "clearPendingDesc2": "Ini tidak akan mengubah saldo di akun Anda atau mengharuskan Anda untuk memasukkan kembali frase benih Anda. Semua aset dan informasi akun Anda akan tetap aman.",
@@ -2305,7 +2309,7 @@
       "WebviewError": {
         "error": "Error:",
         "failedToLoad": "Gagal memuat halaman",
-        "alertText": "Coba<1/><2> Buka di browser</2><3/> untuk memeriksa apakah itu masalah situs web"
+        "alertText": "Untuk memeriksa apakah DApp pihak ketiga ini berfungsi di lokasi Anda saat ini, coba<1/><2>Buka di browser</2><3/>."
       },
       "toast": {
         "clearCacheSuccess": "Cache dibersihkan"
@@ -3557,6 +3561,7 @@
       "switchArea": {
         "skipText": "Lewati popup ini selama 1 hari"
       },
+      "alertText": "DApp pihak ketiga: untuk masalah penggunaan, silakan hubungi dukungan DApp. Rabby hanya menyediakan akses melihat.",
       "title": "Screenshot untuk Melaporkan Bug"
     },
     "feedbackModal": {

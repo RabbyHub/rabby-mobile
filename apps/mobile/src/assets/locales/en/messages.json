@@ -1660,6 +1660,7 @@
       "remove-from-whitelist": "Remove from Whitelist",
       "backup-private-key": "Backup Private Key",
       "backup-seed-phrase": "Backup Seed Phrase",
+      "backupFailed": "Backup failed, please try again",
       "verify-password": "Verify password",
       "verify-password-before-backup": "Verify your Rabby password before the backup",
       "verify-face-id": "Verify Face ID",
@@ -1794,7 +1795,7 @@
       "ConfirmPassword": "Confirm password",
       "biometricsFail": "Enable biometrics fail",
       "title": "Set Password",
-      "subTitle": "It will be used to unlock your wallet and encrypt local data",
+      "subTitle": "This password unlocks your wallet and encrypts your data on this device. It cannot be recovered. If lost, you will need to reset and re-import your wallet.",
       "passwordRequired": "Please input Password",
       "passwordMin": "Password must be at least 8 characters long",
       "passwordPlaceholder": "Password must be at least 8 characters long",
@@ -1804,7 +1805,8 @@
       "confirmError": "Passwords do not match",
       "agree": "I have read and agree to the<1/> <2>Terms of Use</2>",
       "confirmTitle": "Confirm password",
-      "confirmModalDesc": "Please store your password properly. Once lost, it cannot be changed or recovered by Rabby."
+      "confirmModalDesc": "Please store your password properly. Once lost, it cannot be changed or recovered by Rabby.",
+      "setWallet": "Set Wallet"
     },
     "importSafe": {
       "title": "Add Safe address",
@@ -2274,6 +2276,8 @@
       "faceId": "Face ID",
       "touchId": "Touch ID",
       "fingerPrint": "Fingerprint",
+      "devicePassword": "Device password",
+      "useDevicePassword": "Use device password",
       "autoLockTime": "Auto lock time",
       "lockWallet": "Lock Wallet",
       "addCustomNetwork": "Add Custom Network",
@@ -2430,7 +2434,7 @@
       "WebviewError": {
         "failedToLoad": "Failed to load the page",
         "error": "Error:",
-        "alertText": "Try<1/><2>Open in browser</2><3/>to check if it is a website issue"
+        "alertText": "Try<1/><2>Open in browser</2><3/>to check if this third party DApp is functional in your current location."
       },
       "toast": {
         "clearCacheSuccess": "Cache cleared"
@@ -3482,7 +3486,7 @@
       }
     },
     "AuthenticationModal": {
-      "passwordPlaceholder": "Enter password"
+      "passwordPlaceholder": "Enter password to Confirm"
     },
     "Contact": {
       "EditModal": {
@@ -3562,8 +3566,8 @@
     },
     "AuthenticationModals": {
       "biometrics": {
-        "enable": "Enable {{ bioType }}",
-        "disable": "Disable {{ bioType }}",
+        "enable": "Enter the Password\nto Enable {{ bioType }}",
+        "disable": "Confirm to disable {{ bioType }}?",
         "enableTip": "Enable {{ bioType }} to unlock Rabby",
         "disableTip": "Disable {{ bioType }} to unlock Rabby"
       },
@@ -3616,7 +3620,8 @@
       },
       "switchArea": {
         "skipText": "Skip this popup for 1 day"
-      }
+      },
+      "alertText": "Third-party DApp: for usage issues please contact DApp support. Rabby provides viewing access only"
     },
     "feedbackModal": {
       "title": "Response from Rabby Support",

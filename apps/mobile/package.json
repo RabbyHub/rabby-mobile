@@ -1,6 +1,6 @@
 {
   "name": "rabby-mobile",
-  "version": "0.6.73",
+  "version": "0.6.74",
   "private": true,
   "repository": {
     "type": "git",
@@ -179,6 +179,7 @@
     "react-native": "0.81.6",
     "react-native-aes-crypto": "^3.0.1",
     "react-native-animateable-text": "0.17.1",
+    "react-native-biometrics": "^3.0.1",
     "react-native-ble-manager": "11.6.0",
     "react-native-ble-plx": "3.5.1",
     "react-native-bundle-splitter": "^3.0.1",

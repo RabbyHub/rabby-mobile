@@ -237,7 +237,7 @@ PODS:
   - PromisesObjC (2.4.0)
   - RabbyRNKeychain (8.2.0-rabby.0):
     - React-Core
-  - RabbyRNKeychainV9 (9.0.0-rabby.0):
+  - RabbyRNKeychainV9 (9.2.3-rabby.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -2035,6 +2035,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - react-native-biometrics (3.0.1):
+    - React-Core
   - react-native-ble-manager (11.6.0):
     - React-Core
   - react-native-ble-plx (3.5.1):
@@ -3332,6 +3334,7 @@ DEPENDENCIES:
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-aes (from `../node_modules/react-native-aes-crypto`)
   - react-native-animateable-text (from `../node_modules/react-native-animateable-text`)
+  - react-native-biometrics (from `../node_modules/react-native-biometrics`)
   - react-native-ble-manager (from `../node_modules/react-native-ble-manager`)
   - react-native-ble-plx (from `../node_modules/react-native-ble-plx`)
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
@@ -3537,6 +3540,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-aes-crypto"
   react-native-animateable-text:
     :path: "../node_modules/react-native-animateable-text"
+  react-native-biometrics:
+    :path: "../node_modules/react-native-biometrics"
   react-native-ble-manager:
     :path: "../node_modules/react-native-ble-manager"
   react-native-ble-plx:
@@ -3723,7 +3728,7 @@ SPEC CHECKSUMS:
   OpenSSL-Universal: 9110d21982bb7e8b22a962b6db56a8aa805afde7
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   RabbyRNKeychain: cc2d4ef9630a23dd2a9d72ba3532d54a2fb58c66
-  RabbyRNKeychainV9: 64b5098d79623d62cdb4a989be3d8d6e12878494
+  RabbyRNKeychainV9: 149a60d8e00ab5ce9e5a2d27361994d60c332264
   RCT-Folly: 59ec0ac1f2f39672a0c6e6cecdd39383b764646f
   RCTDeprecation: d4ef510f229cea15314176aee5e3ba10064a8496
   RCTRequired: 1e41b794629558f6626e2bc39c166ac0ec1c5878
@@ -3759,6 +3764,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: dc9eedafc87d677c7b49c9db9a51753e8c0b1ca1
   react-native-aes: 2f9ce51c4bd1e9fb5c50f5c867df05bcac10884b
   react-native-animateable-text: 0c9fdbbf97c8fdacd93b1b441b692ec7fca332cf
+  react-native-biometrics: 352e5a794bfffc46a0c86725ea7dc62deb085bdc
   react-native-ble-manager: 7e6373a746c5a815d0a65a11cc5f633c72c36c5b
   react-native-ble-plx: 7dd1776b5d6df9cbffbeaea0b3dba01e48ecd89b
   react-native-blur: aa2c298b36e5aa0ac7feff837315a4668afbf25a

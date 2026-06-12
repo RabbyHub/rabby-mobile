@@ -1679,6 +1679,7 @@
       "passwordPlaceholder": "密码长度必须至少为 8 个字符",
       "confirmError": "密码不匹配",
       "confirmModalDesc": "请妥善保存您的密码。一旦丢失，Rabby 无法更改或找回。",
+      "setWallet": "设置钱包",
       "termOfUse": "使用条款",
       "agree": "我已阅读并同意<1/> <2>使用条款</2>",
       "confirmTitle": "确认密码"
@@ -1746,6 +1747,7 @@
       "pin-in-list": "置顶在列表中",
       "manage-seed-phrase": "管理助记词",
       "backup-seed-phrase": "备份助记词",
+      "backupFailed": "备份失败，请重试",
       "watchAddressListScreen": {
         "addWatchAddress": "添加只读钱包"
       },
@@ -2239,6 +2241,8 @@
       "aboutUs": "关于我们",
       "tou": "使用条款",
       "fingerPrint": "指纹",
+      "devicePassword": "设备密码",
+      "useDevicePassword": "使用设备密码",
       "modifyRPCURL": "修改 RPC URL",
       "followUs": "关注我们",
       "addCustomNetwork": "添加自定义网络",
@@ -2457,7 +2461,7 @@
       "WebviewError": {
         "error": "错误：",
         "failedToLoad": "无法加载页面",
-        "alertText": "尝试<1/><2>在浏览器中打开</2><3/>以检查是否是网站问题"
+        "alertText": "请尝试<1/><2>在浏览器中打开</2><3/>，以检查该第三方 DApp 在您当前所在地区是否可用。"
       },
       "toast": {
         "clearCacheSuccess": "缓存已清除"
@@ -3709,6 +3713,7 @@
       "switchArea": {
         "skipText": "在此弹窗上跳过 1 天"
       },
+      "alertText": "第三方 DApp：如遇使用问题，请联系 DApp 支持。Rabby 仅提供查看访问权限。",
       "title": "截图以报告bug"
     },
     "feedbackModal": {

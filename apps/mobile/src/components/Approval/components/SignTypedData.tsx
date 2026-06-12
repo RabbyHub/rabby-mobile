@@ -34,7 +34,7 @@ import {
 import { openapi, testOpenapi } from '@/core/request';
 import { View } from 'react-native';
 import useAsync from 'react-use/lib/useAsync';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { getStyles } from './SignTx/style';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { getKRCategoryByType } from '@/utils/transaction';
@@ -103,8 +103,8 @@ export const SignTypedData = ({
   const [engineResults, setEngineResults] = useState<Result[]>([]);
   const { userData, rules, currentTx, ...apiApprovalSecurityEngine } =
     useApprovalSecurityEngine();
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { colors2024 } = useTheme2024();
+  const styles = useMemo(() => getStyles(colors2024), [colors2024]);
   const site = dappService.getDapp(params.session.origin);
 
   const [currentChainId, setCurrentChainId] = useState<number | undefined>(

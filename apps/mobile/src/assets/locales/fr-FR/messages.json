@@ -1228,6 +1228,7 @@
       "address-note": "Note d'adresse",
       "qr-code": "Code QR",
       "backup-seed-phrase": "Sauvegarder la Seed Phrase",
+      "backupFailed": "Échec de la sauvegarde, veuillez réessayer",
       "manage-seed-phrase": "Gérer la Seed Phrase",
       "delete-desc-needpassword": "Avant de supprimer, gardez à l'esprit les points suivants pour comprendre comment protéger vos actifs.",
       "pin-in-list": "Épingler dans la liste",
@@ -1657,7 +1658,8 @@
       "termOfUse": "Conditions d'utilisation",
       "confirmTitle": "Confirmer le mot de passe",
       "agree": "J'ai lu et j'accepte les<1/> <2>Conditions d'utilisation</2>",
-      "confirmModalDesc": "Veuillez conserver votre mot de passe correctement. Une fois perdu, il ne peut pas être modifié ni récupéré par Rabby."
+      "confirmModalDesc": "Veuillez conserver votre mot de passe correctement. Une fois perdu, il ne peut pas être modifié ni récupéré par Rabby.",
+      "setWallet": "Configurer le portefeuille"
     },
     "miniSignFooterBar": {
       "signWithLedger": "Signer",
@@ -2098,6 +2100,8 @@
       "followUs": "Suivez-nous",
       "addCustomNetwork": "Ajouter un réseau personnalisé",
       "fingerPrint": "Empreinte digitale",
+      "devicePassword": "Mot de passe de l’appareil",
+      "useDevicePassword": "Utiliser le mot de passe de l’appareil",
       "modifyRPCURL": "Modifier l'URL RPC",
       "autoLockTime": "Verrouillage automatique",
       "lockWallet": "Verrouiller le portefeuille",
@@ -2315,7 +2319,7 @@
       "WebviewError": {
         "error": "Erreur :",
         "failedToLoad": "Échec du chargement de la page",
-        "alertText": "Essayez<1/><2>Ouvrir dans le navigateur</2><3/>pour vérifier si c'est un problème de site web"
+        "alertText": "Pour vérifier si cette DApp tierce fonctionne dans votre emplacement actuel, essayez<1/><2>Ouvrir dans le navigateur</2><3/>."
       },
       "toast": {
         "clearCacheSuccess": "Cache vidé"
@@ -3602,6 +3606,7 @@
       "switchArea": {
         "skipText": "Ignorer cette fenêtre contextuelle pendant 1 jour"
       },
+      "alertText": "DApp tierce : pour les problèmes d’utilisation, contactez le support de la DApp. Rabby fournit uniquement un accès en lecture.",
       "title": "Capture d'écran pour signaler un bug"
     },
     "feedbackModal": {

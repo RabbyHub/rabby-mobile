@@ -20,8 +20,8 @@ import { isHexString } from 'ethereumjs-util';
 import React, { ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WaitingSignComponent } from '../map';
-import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { AppColors2024Variants } from '@/constant/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { useFindChain } from '@/hooks/useFindChain';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -204,8 +204,8 @@ export const SignTestnetTx = ({
 }: SignTxProps) => {
   const { isGnosis } = params;
   const currentAccount = params.isGnosis ? params.account! : $account;
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { colors2024 } = useTheme2024();
+  const styles = React.useMemo(() => getStyles(colors2024), [colors2024]);
   const site = dappService.getDapp(origin || '');
 
   const {
@@ -770,10 +770,10 @@ export const SignTestnetTx = ({
   );
 };
 
-export const getStyles = (colors: AppColorsVariants) =>
+export const getStyles = (colors2024: AppColors2024Variants) =>
   StyleSheet.create({
     wrapper: {
-      backgroundColor: colors['neutral-bg-4'],
+      backgroundColor: colors2024['neutral-bg-1'],
       height: '100%',
       position: 'relative',
     },

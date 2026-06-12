@@ -29,9 +29,8 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
   tokenBalanceChange: {
     marginTop: 16,
     paddingHorizontal: 16,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-line'],
+    backgroundColor: colors2024['neutral-bg-5'],
+
     borderRadius: 8,
     paddingTop: 12,
     paddingBottom: 8,

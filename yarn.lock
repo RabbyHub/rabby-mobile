@@ -38859,6 +38859,7 @@ __metadata:
     react-native-aes-crypto: "npm:^3.0.1"
     react-native-animateable-text: "npm:0.17.1"
     react-native-asset: "npm:^2.1.1"
+    react-native-biometrics: "npm:^3.0.1"
     react-native-ble-manager: "npm:11.6.0"
     react-native-ble-plx: "npm:3.5.1"
     react-native-bundle-splitter: "npm:^3.0.1"
@@ -39421,6 +39422,15 @@ __metadata:
   bin:
     react-native-asset: lib/cli.js
   checksum: 10/862fbf74de43bda26fb56a91090144f51d626c364dd725da76e8636e2c706aed43fd165fc2eacf973639c1b6a2d74229d8ebea56e528980e2afffe660575526e
+  languageName: node
+  linkType: hard
+
+"react-native-biometrics@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "react-native-biometrics@npm:3.0.1"
+  peerDependencies:
+    react-native: ">=0.60.0"
+  checksum: 10/abbbe0b4ba0470ae6b8acdc9f1914b8356349096c58abd3b195d832ae7f007b9876191d08dd88b27c1cc9b69a43f4cd3b320307cd7f066e4475da4dfd696e198
   languageName: node
   linkType: hard
 

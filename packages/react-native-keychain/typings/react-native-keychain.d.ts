@@ -71,6 +71,8 @@ declare module '@rabby-wallet/react-native-keychain' {
     cancel?: string;
   }
 
+  export type AndroidBiometricSecurityLevel = 'strong' | 'weak';
+
   export interface Options {
     accessControl?: ACCESS_CONTROL;
     accessGroup?: string;
@@ -79,6 +81,11 @@ declare module '@rabby-wallet/react-native-keychain' {
     authenticationType?: AUTHENTICATION_TYPE;
     /** Android only. Allow the RSA path to reuse an already-authenticated KeyStore session. */
     androidAllowAuthenticatedSessionReuse?: boolean;
+    /**
+     * Android only. Defaults to strong biometrics. Weak is intended for non-production
+     * regression builds where face-recognition prompt behavior needs explicit coverage.
+     */
+    androidBiometricSecurityLevel?: AndroidBiometricSecurityLevel;
     service?: string;
     securityLevel?: SECURITY_LEVEL;
     storage?: STORAGE_TYPE;

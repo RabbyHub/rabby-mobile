@@ -263,6 +263,7 @@
       "switchArea": {
         "skipText": "Ignorar este popup por 1 dia"
       },
+      "alertText": "DApp de terceiros: para problemas de utilização, contacte o suporte da DApp. A Rabby fornece apenas acesso de visualização.",
       "title": "Captura de Ecrã para Reportar Erro"
     },
     "feedbackModal": {
@@ -1908,6 +1909,7 @@
       "phoneNotSupport": "O seu telefone não suporta {{ bioType }}",
       "agree": "Li e concordo com os<1/> <2>Termos de Uso</2>",
       "confirmModalDesc": "Por favor, guarde a sua palavra-passe devidamente. Uma vez perdida, não pode ser alterada ou recuperada pelo Rabby.",
+      "setWallet": "Configurar Wallet",
       "ConfirmPassword": "Confirmar palavra-passe"
     },
     "ethSign": {
@@ -1920,6 +1922,7 @@
     },
     "addressDetail": {
       "backup-seed-phrase": "Frase de Semente de Backup",
+      "backupFailed": "Falha na cópia de segurança, tente novamente",
       "address": "Endereço",
       "add-to-whitelist": "Adicionar à Lista de Permissões",
       "pin-in-list": "Fixar na Lista",
@@ -2329,6 +2332,8 @@
       "policy": "Política de Privacidade",
       "currentVersion": "Versão Atual",
       "fingerPrint": "Impressão digital",
+      "devicePassword": "Palavra-passe do dispositivo",
+      "useDevicePassword": "Usar palavra-passe do dispositivo",
       "aboutUs": "Sobre Nós",
       "autoLockTime": "Tempo de bloqueio automático",
       "lockWallet": "Bloquear carteira",
@@ -2686,7 +2691,7 @@
       "WebviewError": {
         "error": "Erro:",
         "failedToLoad": "Falha ao carregar a página",
-        "alertText": "Tente<1/><2>Abrir no navegador</2><3/>para verificar se é um problema do site"
+        "alertText": "Para verificar se esta DApp de terceiros funciona na sua localização atual, tente<1/><2>Abrir no navegador</2><3/>."
       },
       "toast": {
         "clearCacheSuccess": "Cache limpo"

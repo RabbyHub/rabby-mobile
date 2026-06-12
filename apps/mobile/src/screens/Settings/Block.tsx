@@ -209,6 +209,8 @@ export type SettingConfBlock = {
     | 'onPress'
     | 'rightTextNode'
     | 'rightNode'
+    | 'disabled'
+    | 'onDisabledPress'
     | 'testID'
     | 'accessibilityLabel'
   >[];

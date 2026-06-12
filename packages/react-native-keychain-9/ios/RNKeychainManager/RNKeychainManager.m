@@ -92,107 +92,6 @@ static void rejectWithError(RCTPromiseRejectBlock reject, NSError *error)
   return reject(codeForError(error), messageForError(error), nil);
 }
 
-static CFStringRef accessibleValue(NSDictionary *options)
-{
-  if (options && options[@"accessible"] != nil) {
-    NSDictionary *keyMap = @{
-      @"AccessibleWhenUnlocked": (__bridge NSString *)kSecAttrAccessibleWhenUnlocked,
-      @"AccessibleAfterFirstUnlock": (__bridge NSString *)kSecAttrAccessibleAfterFirstUnlock,
-      @"AccessibleAlways": (__bridge NSString *)kSecAttrAccessibleAlways,
-      @"AccessibleWhenPasscodeSetThisDeviceOnly": (__bridge NSString *)kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly,
-      @"AccessibleWhenUnlockedThisDeviceOnly": (__bridge NSString *)kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
-      @"AccessibleAfterFirstUnlockThisDeviceOnly": (__bridge NSString *)kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-    };
-    NSString *result = keyMap[options[@"accessible"]];
-    if (result) {
-      return (__bridge CFStringRef)result;
-    }
-  }
-  return kSecAttrAccessibleAfterFirstUnlock;
-}
-
-static NSString *serviceValue(NSDictionary *options)
-{
-  if (options && options[@"service"] != nil) {
-    return options[@"service"];
-  }
-  return [[NSBundle mainBundle] bundleIdentifier];
-}
-
-static NSString *accessGroupValue(NSDictionary *options)
-{
-  if (options && options[@"accessGroup"] != nil) {
-    return options[@"accessGroup"];
-  }
-  return nil;
-}
-
-static NSString *authenticationPromptValue(NSDictionary *options)
-{
-  if (options && options[@"authenticationPrompt"] != nil && options[@"authenticationPrompt"][@"title"]) {
-    return options[@"authenticationPrompt"][@"title"];
-  }
-  return nil;
-}
-
-#pragma mark - Proposed functionality - Helpers
-
-#define kAuthenticationType @"authenticationType"
-#define kAuthenticationTypeBiometrics @"AuthenticationWithBiometrics"
-
-#define kAccessControlType @"accessControl"
-#define kAccessControlUserPresence @"UserPresence"
-#define kAccessControlBiometryAny @"BiometryAny"
-#define kAccessControlBiometryCurrentSet @"BiometryCurrentSet"
-#define kAccessControlDevicePasscode @"DevicePasscode"
-#define kAccessControlApplicationPassword @"ApplicationPassword"
-#define kAccessControlBiometryAnyOrDevicePasscode @"BiometryAnyOrDevicePasscode"
-#define kAccessControlBiometryCurrentSetOrDevicePasscode @"BiometryCurrentSetOrDevicePasscode"
-
-#define kBiometryTypeTouchID @"TouchID"
-#define kBiometryTypeFaceID @"FaceID"
-#define kBiometryTypeOpticID @"OpticID"
-
-#if TARGET_OS_IOS || TARGET_OS_VISION
-static LAPolicy authPolicy(NSDictionary *options)
-{
-  if (options && options[kAuthenticationType]) {
-    if ([ options[kAuthenticationType] isEqualToString:kAuthenticationTypeBiometrics ]) {
-      return LAPolicyDeviceOwnerAuthenticationWithBiometrics;
-    }
-  }
-  return LAPolicyDeviceOwnerAuthentication;
-}
-#endif
-
-static SecAccessControlCreateFlags accessControlValue(NSDictionary *options)
-{
-  if (options && options[kAccessControlType] && [options[kAccessControlType] isKindOfClass:[NSString class]]) {
-    if ([options[kAccessControlType] isEqualToString: kAccessControlUserPresence]) {
-      return kSecAccessControlUserPresence;
-    }
-    else if ([options[kAccessControlType] isEqualToString: kAccessControlBiometryAny]) {
-      return kSecAccessControlTouchIDAny;
-    }
-    else if ([options[kAccessControlType] isEqualToString: kAccessControlBiometryCurrentSet]) {
-      return kSecAccessControlTouchIDCurrentSet;
-    }
-    else if ([options[kAccessControlType] isEqualToString: kAccessControlDevicePasscode]) {
-      return kSecAccessControlDevicePasscode;
-    }
-    else if ([options[kAccessControlType] isEqualToString: kAccessControlBiometryAnyOrDevicePasscode]) {
-      return kSecAccessControlTouchIDAny|kSecAccessControlOr|kSecAccessControlDevicePasscode;
-    }
-    else if ([options[kAccessControlType] isEqualToString: kAccessControlBiometryCurrentSetOrDevicePasscode]) {
-      return kSecAccessControlTouchIDCurrentSet|kSecAccessControlOr|kSecAccessControlDevicePasscode;
-    }
-    else if ([options[kAccessControlType] isEqualToString: kAccessControlApplicationPassword]) {
-      return kSecAccessControlApplicationPassword;
-    }
-  }
-  return 0;
-}
-
 static id nullableValue(id value)
 {
   return value ?: (id)[NSNull null];
@@ -277,10 +176,126 @@ static NSString *accessControlConstraintsDescription(SecAccessControlRef accessC
     return nil;
   }
 
-  // `SecAccessControlCopyConstraints` isn't declared in the public iOS SDK
-  // headers we build against, so keep the debug payload limited to the public
-  // access-control description for now.
+  // `SecAccessControlCopyConstraints` isn't declared in the public iOS SDK headers we build
+  // against, so keep the debug payload limited to the public access-control description.
   return nil;
+}
+
+static CFStringRef accessibleValue(NSDictionary *options)
+{
+  if (options && options[@"accessible"] != nil) {
+    NSDictionary *keyMap = @{
+      @"AccessibleWhenUnlocked": (__bridge NSString *)kSecAttrAccessibleWhenUnlocked,
+      @"AccessibleAfterFirstUnlock": (__bridge NSString *)kSecAttrAccessibleAfterFirstUnlock,
+      @"AccessibleAlways": (__bridge NSString *)kSecAttrAccessibleAlways,
+      @"AccessibleWhenPasscodeSetThisDeviceOnly": (__bridge NSString *)kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly,
+      @"AccessibleWhenUnlockedThisDeviceOnly": (__bridge NSString *)kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
+      @"AccessibleAfterFirstUnlockThisDeviceOnly": (__bridge NSString *)kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+    };
+    NSString *result = keyMap[options[@"accessible"]];
+    if (result) {
+      return (__bridge CFStringRef)result;
+    }
+  }
+  return kSecAttrAccessibleAfterFirstUnlock;
+}
+
+static NSString *serviceValue(NSDictionary *options)
+{
+  if (options && options[@"service"] != nil) {
+    return options[@"service"];
+  }
+  return [[NSBundle mainBundle] bundleIdentifier];
+}
+
+static NSString *serverValue(NSDictionary *options)
+{
+  if (options && options[@"server"] != nil) {
+    return options[@"server"];
+  }
+  return @"";
+}
+
+static NSString *accessGroupValue(NSDictionary *options)
+{
+  if (options && options[@"accessGroup"] != nil) {
+    return options[@"accessGroup"];
+  }
+  return nil;
+}
+
+static CFBooleanRef cloudSyncValue(NSDictionary *options)
+{
+  if (options && options[@"cloudSync"]) {
+    return kCFBooleanTrue;
+  }
+  return kCFBooleanFalse;
+}
+
+static NSString *authenticationPromptValue(NSDictionary *options)
+{
+  if (options && options[@"authenticationPrompt"] != nil && options[@"authenticationPrompt"][@"title"]) {
+    return options[@"authenticationPrompt"][@"title"];
+  }
+  return nil;
+}
+
+#pragma mark - Proposed functionality - Helpers
+
+#define kAuthenticationType @"authenticationType"
+#define kAuthenticationTypeBiometrics @"AuthenticationWithBiometrics"
+
+#define kAccessControlType @"accessControl"
+#define kAccessControlUserPresence @"UserPresence"
+#define kAccessControlBiometryAny @"BiometryAny"
+#define kAccessControlBiometryCurrentSet @"BiometryCurrentSet"
+#define kAccessControlDevicePasscode @"DevicePasscode"
+#define kAccessControlApplicationPassword @"ApplicationPassword"
+#define kAccessControlBiometryAnyOrDevicePasscode @"BiometryAnyOrDevicePasscode"
+#define kAccessControlBiometryCurrentSetOrDevicePasscode @"BiometryCurrentSetOrDevicePasscode"
+
+#define kBiometryTypeTouchID @"TouchID"
+#define kBiometryTypeFaceID @"FaceID"
+#define kBiometryTypeOpticID @"OpticID"
+
+#if TARGET_OS_IOS || TARGET_OS_VISION
+static LAPolicy authPolicy(NSDictionary *options)
+{
+  if (options && options[kAuthenticationType]) {
+    if ([ options[kAuthenticationType] isEqualToString:kAuthenticationTypeBiometrics ]) {
+      return LAPolicyDeviceOwnerAuthenticationWithBiometrics;
+    }
+  }
+  return LAPolicyDeviceOwnerAuthentication;
+}
+#endif
+
+static SecAccessControlCreateFlags accessControlValue(NSDictionary *options)
+{
+  if (options && options[kAccessControlType] && [options[kAccessControlType] isKindOfClass:[NSString class]]) {
+    if ([options[kAccessControlType] isEqualToString: kAccessControlUserPresence]) {
+      return kSecAccessControlUserPresence;
+    }
+    else if ([options[kAccessControlType] isEqualToString: kAccessControlBiometryAny]) {
+      return kSecAccessControlTouchIDAny;
+    }
+    else if ([options[kAccessControlType] isEqualToString: kAccessControlBiometryCurrentSet]) {
+      return kSecAccessControlTouchIDCurrentSet;
+    }
+    else if ([options[kAccessControlType] isEqualToString: kAccessControlDevicePasscode]) {
+      return kSecAccessControlDevicePasscode;
+    }
+    else if ([options[kAccessControlType] isEqualToString: kAccessControlBiometryAnyOrDevicePasscode]) {
+      return kSecAccessControlTouchIDAny|kSecAccessControlOr|kSecAccessControlDevicePasscode;
+    }
+    else if ([options[kAccessControlType] isEqualToString: kAccessControlBiometryCurrentSetOrDevicePasscode]) {
+      return kSecAccessControlTouchIDCurrentSet|kSecAccessControlOr|kSecAccessControlDevicePasscode;
+    }
+    else if ([options[kAccessControlType] isEqualToString: kAccessControlApplicationPassword]) {
+      return kSecAccessControlApplicationPassword;
+    }
+  }
+  return 0;
 }
 
 - (void)insertKeychainEntry:(NSDictionary *)attributes
@@ -300,12 +315,12 @@ static NSString *accessControlConstraintsDescription(SecAccessControlRef accessC
 
   if (accessControl) {
     NSError *aerr = nil;
-#if TARGET_OS_IOS || TARGET_OS_VISION
+    #if TARGET_OS_IOS || TARGET_OS_VISION
     BOOL canAuthenticate = [[LAContext new] canEvaluatePolicy:LAPolicyDeviceOwnerAuthentication error:&aerr];
     if (aerr || !canAuthenticate) {
       return rejectWithError(reject, aerr);
     }
-#endif
+    #endif
 
     CFErrorRef error = NULL;
     SecAccessControlRef sacRef = SecAccessControlCreateWithFlags(kCFAllocatorDefault,
@@ -341,11 +356,53 @@ static NSString *accessControlConstraintsDescription(SecAccessControlRef accessC
   }
 }
 
-- (OSStatus)deletePasswordsForService:(NSString *)service
+- (void)hasCredentialsWithSecClass:(CFTypeRef)secClass
+                           options:(NSDictionary *)options
+                           resolver:(RCTPromiseResolveBlock)resolve
+                           rejecter:(RCTPromiseRejectBlock)reject
 {
+  CFBooleanRef cloudSync = cloudSyncValue(options);
+  NSMutableDictionary *queryParts = [[NSMutableDictionary alloc] init];
+  queryParts[(__bridge NSString *)kSecClass] = (__bridge id)(secClass),
+  queryParts[(__bridge NSString *)kSecMatchLimit] = (__bridge NSString *)kSecMatchLimitOne;
+  queryParts[(__bridge NSString *)kSecAttrSynchronizable] = (__bridge id)(cloudSync);
+
+  if (secClass == kSecClassInternetPassword) {
+    queryParts[(__bridge NSString *)kSecAttrServer] = serverValue(options);
+  } else {
+    queryParts[(__bridge NSString *)kSecAttrService] = serviceValue(options);
+  }
+
+  if (@available(iOS 9, *)) {
+    queryParts[(__bridge NSString *)kSecUseAuthenticationUI] = (__bridge NSString *)kSecUseAuthenticationUIFail;
+  }
+
+  NSDictionary *query = [queryParts copy];
+
+  // Perform the keychain query
+  OSStatus osStatus = SecItemCopyMatching((__bridge CFDictionaryRef)query, nil);
+
+  switch (osStatus) {
+    case noErr:
+    case errSecInteractionNotAllowed:
+      return resolve(@(YES));
+
+    case errSecItemNotFound:
+      return resolve(@(NO));
+  }
+
+  NSError *error = [NSError errorWithDomain:NSOSStatusErrorDomain code:osStatus userInfo:nil];
+  return rejectWithError(reject, error);
+}
+
+- (OSStatus)deletePasswordsForOptions:(NSDictionary *)options
+{
+  NSString *service = serviceValue(options);
+  CFBooleanRef cloudSync = cloudSyncValue(options);
   NSDictionary *query = @{
     (__bridge NSString *)kSecClass: (__bridge id)(kSecClassGenericPassword),
     (__bridge NSString *)kSecAttrService: service,
+    (__bridge NSString *)kSecAttrSynchronizable: (__bridge id)cloudSync,
     (__bridge NSString *)kSecReturnAttributes: (__bridge id)kCFBooleanTrue,
     (__bridge NSString *)kSecReturnData: (__bridge id)kCFBooleanFalse
   };
@@ -353,11 +410,13 @@ static NSString *accessControlConstraintsDescription(SecAccessControlRef accessC
   return SecItemDelete((__bridge CFDictionaryRef) query);
 }
 
-- (OSStatus)deleteCredentialsForServer:(NSString *)server
+- (OSStatus)deleteCredentialsForServer:(NSString *)server withOptions:(NSDictionary * __nullable)options
 {
+  CFBooleanRef cloudSync = cloudSyncValue(options);
   NSDictionary *query = @{
     (__bridge NSString *)kSecClass: (__bridge id)(kSecClassInternetPassword),
     (__bridge NSString *)kSecAttrServer: server,
+    (__bridge NSString *)kSecAttrSynchronizable: (__bridge id)(cloudSync),
     (__bridge NSString *)kSecReturnAttributes: (__bridge id)kCFBooleanTrue,
     (__bridge NSString *)kSecReturnData: (__bridge id)kCFBooleanFalse
   };
@@ -565,14 +624,16 @@ RCT_EXPORT_METHOD(setGenericPasswordForOptions:(NSDictionary *)options
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
   NSString *service = serviceValue(options);
+  CFBooleanRef cloudSync = cloudSyncValue(options);
   NSDictionary *attributes = attributes = @{
     (__bridge NSString *)kSecClass: (__bridge id)(kSecClassGenericPassword),
     (__bridge NSString *)kSecAttrService: service,
     (__bridge NSString *)kSecAttrAccount: username,
+    (__bridge NSString *)kSecAttrSynchronizable: (__bridge id)(cloudSync),
     (__bridge NSString *)kSecValueData: [password dataUsingEncoding:NSUTF8StringEncoding]
   };
 
-  [self deletePasswordsForService:service];
+  [self deletePasswordsForOptions:options];
 
   [self insertKeychainEntry:attributes withOptions:options resolver:resolve rejecter:reject];
 }
@@ -583,10 +644,12 @@ RCT_EXPORT_METHOD(getGenericPasswordForOptions:(NSDictionary * __nullable)option
 {
   NSString *service = serviceValue(options);
   NSString *authenticationPrompt = authenticationPromptValue(options);
+  CFBooleanRef cloudSync = cloudSyncValue(options);
 
   NSDictionary *query = @{
     (__bridge NSString *)kSecClass: (__bridge id)(kSecClassGenericPassword),
     (__bridge NSString *)kSecAttrService: service,
+    (__bridge NSString *)kSecAttrSynchronizable: (__bridge id)(cloudSync),
     (__bridge NSString *)kSecReturnAttributes: (__bridge id)kCFBooleanTrue,
     (__bridge NSString *)kSecReturnData: (__bridge id)kCFBooleanTrue,
     (__bridge NSString *)kSecMatchLimit: (__bridge NSString *)kSecMatchLimitOne,
@@ -630,9 +693,8 @@ RCT_EXPORT_METHOD(resetGenericPasswordForOptions:(NSDictionary *)options
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-  NSString *service = serviceValue(options);
 
-  OSStatus osStatus = [self deletePasswordsForService:service];
+  OSStatus osStatus = [self deletePasswordsForOptions:options];
 
   if (osStatus != noErr && osStatus != errSecItemNotFound) {
     NSError *error = [NSError errorWithDomain:NSOSStatusErrorDomain code:osStatus userInfo:nil];
@@ -645,84 +707,42 @@ RCT_EXPORT_METHOD(resetGenericPasswordForOptions:(NSDictionary *)options
 RCT_EXPORT_METHOD(setInternetCredentialsForServer:(NSString *)server
                   withUsername:(NSString*)username
                   withPassword:(NSString*)password
-                  withOptions:(NSDictionary * __nullable)options
+                  withOptions:(NSDictionary *)options
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-  [self deleteCredentialsForServer:server];
+  [self deleteCredentialsForServer:server withOptions: options];
+  CFBooleanRef cloudSync = cloudSyncValue(options);
 
   NSDictionary *attributes = @{
     (__bridge NSString *)kSecClass: (__bridge id)(kSecClassInternetPassword),
     (__bridge NSString *)kSecAttrServer: server,
     (__bridge NSString *)kSecAttrAccount: username,
-    (__bridge NSString *)kSecValueData: [password dataUsingEncoding:NSUTF8StringEncoding]
+    (__bridge NSString *)kSecValueData: [password dataUsingEncoding:NSUTF8StringEncoding],
+    (__bridge NSString *)kSecAttrSynchronizable: (__bridge id)(cloudSync),
   };
 
   [self insertKeychainEntry:attributes withOptions:options resolver:resolve rejecter:reject];
 }
 
-RCT_EXPORT_METHOD(hasInternetCredentialsForServer:(NSString *)server
+RCT_EXPORT_METHOD(hasInternetCredentialsForOptions:(NSDictionary *)options
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-  NSMutableDictionary *queryParts = [[NSMutableDictionary alloc] init];
-  queryParts[(__bridge NSString *)kSecClass] = (__bridge id)(kSecClassInternetPassword);
-  queryParts[(__bridge NSString *)kSecAttrServer] = server;
-  queryParts[(__bridge NSString *)kSecMatchLimit] = (__bridge NSString *)kSecMatchLimitOne;
-
-  if (@available(iOS 9, *)) {
-    queryParts[(__bridge NSString *)kSecUseAuthenticationUI] = (__bridge NSString *)kSecUseAuthenticationUIFail;
-  }
-
-  NSDictionary *query = [queryParts copy];
-
-  // Look up server in the keychain
-  OSStatus osStatus = SecItemCopyMatching((__bridge CFDictionaryRef) query, nil);
-
-  switch (osStatus) {
-    case noErr:
-    case errSecInteractionNotAllowed:
-      return resolve(@(YES));
-
-    case errSecItemNotFound:
-      return resolve(@(NO));
-  }
-
-  NSError *error = [NSError errorWithDomain:NSOSStatusErrorDomain code:osStatus userInfo:nil];
-  return rejectWithError(reject, error);
+  [self hasCredentialsWithSecClass:kSecClassInternetPassword
+                           options:options
+                           resolver:resolve
+                           rejecter:reject];
 }
 
 RCT_EXPORT_METHOD(hasGenericPasswordForOptions:(NSDictionary *)options
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-  NSString *service = serviceValue(options);
-
-  NSMutableDictionary *queryParts = [[NSMutableDictionary alloc] init];
-  queryParts[(__bridge NSString *)kSecClass] = (__bridge id)(kSecClassGenericPassword);
-  queryParts[(__bridge NSString *)kSecAttrService] = service;
-  queryParts[(__bridge NSString *)kSecMatchLimit] = (__bridge NSString *)kSecMatchLimitOne;
-
-  if (@available(iOS 9, *)) {
-    queryParts[(__bridge NSString *)kSecUseAuthenticationUI] = (__bridge NSString *)kSecUseAuthenticationUIFail;
-  }
-
-  NSDictionary *query = [queryParts copy];
-
-  // Look up service in the keychain
-  OSStatus osStatus = SecItemCopyMatching((__bridge CFDictionaryRef) query, nil);
-
-  switch (osStatus) {
-    case noErr:
-    case errSecInteractionNotAllowed:
-      return resolve(@(YES));
-
-    case errSecItemNotFound:
-      return resolve(@(NO));
-  }
-
-  NSError *error = [NSError errorWithDomain:NSOSStatusErrorDomain code:osStatus userInfo:nil];
-  return rejectWithError(reject, error);
+  [self hasCredentialsWithSecClass:kSecClassGenericPassword
+                           options:options
+                           resolver:resolve
+                           rejecter:reject];
 }
 
 RCT_EXPORT_METHOD(getInternetCredentialsForServer:(NSString *)server
@@ -730,11 +750,13 @@ RCT_EXPORT_METHOD(getInternetCredentialsForServer:(NSString *)server
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
+  CFBooleanRef cloudSync = cloudSyncValue(options);
   NSString *authenticationPrompt = authenticationPromptValue(options);
   NSDictionary *query = @{
     (__bridge NSString *)kSecClass: (__bridge id)(kSecClassInternetPassword),
     (__bridge NSString *)kSecAttrServer: server,
     (__bridge NSString *)kSecReturnAttributes: (__bridge id)kCFBooleanTrue,
+    (__bridge NSString *)kSecAttrSynchronizable: (__bridge id)(cloudSync),
     (__bridge NSString *)kSecReturnData: (__bridge id)kCFBooleanTrue,
     (__bridge NSString *)kSecMatchLimit: (__bridge NSString *)kSecMatchLimitOne,
     (__bridge NSString *)kSecUseOperationPrompt: authenticationPrompt
@@ -769,12 +791,12 @@ RCT_EXPORT_METHOD(getInternetCredentialsForServer:(NSString *)server
 
 }
 
-RCT_EXPORT_METHOD(resetInternetCredentialsForServer:(NSString *)server
+RCT_EXPORT_METHOD(resetInternetCredentialsForOptions:(NSDictionary *)options
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-  OSStatus osStatus = [self deleteCredentialsForServer:server];
-
+  NSString *server = serverValue(options);
+  OSStatus osStatus = [self deleteCredentialsForServer:server withOptions:options];
   if (osStatus != noErr && osStatus != errSecItemNotFound) {
     NSError *error = [NSError errorWithDomain:NSOSStatusErrorDomain code:osStatus userInfo:nil];
     return rejectWithError(reject, error);

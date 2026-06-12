@@ -31,7 +31,7 @@ import useAsync from 'react-use/lib/useAsync';
 import { Skeleton } from '@rneui/themed';
 import RuleDrawer from './SecurityEngine/RuleDrawer';
 import Actions from './TextActions';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { getStyles } from './SignTx/style';
 import { getKRCategoryByType } from '@/utils/transaction';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -105,8 +105,8 @@ export const SignText = ({
     preparedSignature: '',
   });
 
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { colors2024 } = useTheme2024();
+  const styles = useMemo(() => getStyles(colors2024), [colors2024]);
   const chain = useMemo(
     () => (chainId ? findChain({ id: chainId }) || undefined : undefined),
     [chainId],

@@ -20,6 +20,9 @@ type PendingWalletUnlock = {
   hideModal?: () => void;
 };
 
+type AuthenticationModal2024Module =
+  typeof import('@/components/AuthenticationModal/AuthenticationModal2024');
+
 export { WalletUnlockCancelledError, isWalletUnlockCancelled };
 
 let nextUnlockRequestId = 1;
@@ -82,7 +85,11 @@ async function canRequestStoredCredentialUnlock() {
     .getSupportedBiometryType()
     .catch(() => null);
 
-  return !!supportedBiometryType;
+  if (supportedBiometryType) {
+    return true;
+  }
+
+  return false;
 }
 
 export async function ensureWalletUnlocked() {
@@ -167,9 +174,9 @@ export async function ensureWalletUnlocked() {
       return promise;
     }
 
-    const { AuthenticationModal2024 } = await import(
-      '@/components/AuthenticationModal/AuthenticationModal2024'
-    );
+    const authModalModule =
+      require('@/components/AuthenticationModal/AuthenticationModal2024') as AuthenticationModal2024Module;
+    const { AuthenticationModal2024 } = authModalModule;
     const { hideModal } = await AuthenticationModal2024.show({
       title: 'Unlock Rabby Wallet',
       authType: ['password'],

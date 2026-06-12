@@ -123,6 +123,7 @@ export const ToAccountEntry = React.memo(function ToAccountEntry({
         <Card
           style={StyleSheet.flatten([
             styles.card,
+            isEmptyAddress && styles.emptyAddrCard,
             isEmptyAddress && styles.emptyBg,
             style,
           ])}
@@ -241,6 +242,10 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   emptyAddrShadowView: {
     borderWidth: 0,
+    borderRadius: 16,
+  },
+  emptyAddrCard: {
+    borderRadius: 16,
   },
   root: {
     // borderRadius: 20,
@@ -260,7 +265,7 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
     flexGrow: 1,
     backgroundColor: colors2024['neutral-bg-1'],
     padding: 16,
-    paddingRight: 24,
+    paddingRight: 16,
   },
   emptyBg: {
     backgroundColor: colors2024['neutral-bg-2'],
@@ -273,7 +278,7 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   item: {
     flexDirection: 'row',
-    gap: 11,
+    gap: 8,
     alignItems: 'center',
   },
   iconWrapper: {
@@ -377,10 +382,10 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
     marginRight: 3,
   },
   arrow: {
-    width: 30,
-    height: 30,
+    width: 26,
+    height: 26,
     backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 30,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -505,11 +510,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      paddingHorizontal: 8,
     },
 
     sectionTitle: {
       color: colors2024['neutral-title-1'],
-      fontSize: 17,
+      fontSize: 15,
+      lineHeight: 18,
       fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
     },

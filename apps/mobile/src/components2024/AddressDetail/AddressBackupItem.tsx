@@ -15,6 +15,7 @@ import { AuthenticationModal2024 } from '@/components/AuthenticationModal/Authen
 import { BackupBadge } from './BackupBadge';
 import ArrowSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { Text } from '@/components/Typography';
+import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 interface AddressInfoProps {
   account: KeyringAccountWithAlias;
@@ -61,9 +62,11 @@ export const AddressBackupItem: React.FC<AddressInfoProps> = props => {
     });
   }, [account.address, account.type, invokeEnterPassphrase, onCancel, t]);
 
-  const handlePressBackupSeedPhrase = useCallback(() => {
-    // Navigate to Backup screen directly
-    // The Backup screen will handle authentication internally when user selects an option
+  const handlePressBackupSeedPhrase = useCallback(async () => {
+    if (!(await ensureWalletUnlockedForAction())) {
+      return;
+    }
+
     navigateDeprecated(RootNames.Backup, {
       address: account.address,
       type: account.type,

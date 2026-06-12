@@ -1555,6 +1555,7 @@
       "hd-path": "HD Path",
       "admins": "管理者",
       "backup-seed-phrase": "バックアップ シード フレーズ",
+      "backupFailed": "バックアップに失敗しました。もう一度お試しください",
       "delete-desc-needpassword": "削除する前に、資産を保護する方法を理解するために次の点に注意してください。",
       "qr-code": "QR Code",
       "assets": "資産",
@@ -2127,6 +2128,7 @@
       "agreeToTerms": "私は、以下を読み、同意します",
       "passwordPlaceholder": "パスワードは8文字以上でなければなりません。",
       "confirmModalDesc": "パスワードを適切に保管してください。一度失われた場合、Rabbyでは変更や回復ができません。",
+      "setWallet": "ウォレットを設定",
       "biometricsFail": "生体認証が無効になりました",
       "confirmRequired": "パスワードを確認してください",
       "ConfirmPassword": "パスワードを確認"
@@ -2136,6 +2138,8 @@
       "enableWhitelist": "資産送信のためのホワイトリストを有効にする",
       "touchId": "Touch ID",
       "fingerPrint": "指紋",
+      "devicePassword": "デバイスのパスワード",
+      "useDevicePassword": "デバイスのパスワードを使用",
       "followUs": "フォローする",
       "policy": "プライバシーポリシー",
       "feedback": "フィードバック",
@@ -2358,7 +2362,7 @@
       "WebviewError": {
         "failedToLoad": "ページの読み込みに失敗しました",
         "error": "エラー：",
-        "alertText": "試してみてください<1/><2>ブラウザで開く</2><3/>ウェブサイトの問題か確認するために"
+        "alertText": "このサードパーティ DApp が現在地で機能するか確認するには、<1/><2>ブラウザで開く</2><3/>をお試しください。"
       },
       "toast": {
         "clearCacheSuccess": "キャッシュがクリアされました"
@@ -3735,6 +3739,7 @@
       "switchArea": {
         "skipText": "このポップアップを1日間スキップする"
       },
+      "alertText": "サードパーティ DApp: 利用上の問題については DApp サポートにお問い合わせください。Rabby は閲覧アクセスのみを提供します。",
       "title": "バグを報告するためのスクリーンショット"
     },
     "feedbackModal": {

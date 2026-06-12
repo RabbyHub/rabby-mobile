@@ -52,6 +52,7 @@ import type { SelectedBridgeQuote } from '../types';
 
 export const enableInsufficientQuote = true;
 const BRIDGE_QUOTE_REFRESH_INTERVAL = 1000 * 30;
+const EARLY_QUOTE_DISPLAY_MIN_TO_FROM_USD_RATIO = 0.03;
 
 export const tokenPriceImpact = (
   fromToken?: TokenItem,
@@ -79,6 +80,47 @@ export const tokenPriceImpact = (
     fromUsd: formatUsdValue(fromUsdBn.toString(10)),
     toUsd: formatUsdValue(toUsdBn.toString(10)),
   };
+};
+
+const getTokenUsdValue = ({
+  token,
+  amount,
+}: {
+  token?: TokenItem;
+  amount: string;
+}) => new BigNumber(amount || 0).times(token?.price || 0);
+
+const getBridgeQuoteToTokenUsdValue = ({
+  quote,
+  toToken,
+}: {
+  quote: SelectedBridgeQuote;
+  toToken: TokenItem;
+}) => new BigNumber(quote.to_token_amount || 0).times(toToken.price || 0);
+
+const canDisplayBridgeQuoteBeforeAllQuotesLoaded = ({
+  quote,
+  fromToken,
+  toToken,
+  amount,
+}: {
+  quote: SelectedBridgeQuote;
+  fromToken?: TokenItem;
+  toToken: TokenItem;
+  amount: string;
+}) => {
+  const fromUsdValue = getTokenUsdValue({
+    token: fromToken,
+    amount,
+  });
+
+  if (!fromUsdValue.gt(0)) {
+    return true;
+  }
+
+  return getBridgeQuoteToTokenUsdValue({ quote, toToken }).gte(
+    fromUsdValue.times(EARLY_QUOTE_DISPLAY_MIN_TO_FROM_USD_RATIO),
+  );
 };
 
 const tokenRefreshIdAtom = atom(0);
@@ -1024,12 +1066,26 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     [getQuoteList],
   );
 
+  const hasPendingBridgeQuote = pending || quoteLoading;
+  const bridgeQuoteRequestFinished = !hasPendingBridgeQuote;
+
   useEffect(() => {
     if (!toToken?.id) {
       return;
     }
 
-    const best = getBestBridgeQuote(quoteList, toToken);
+    const selectableQuoteList = bridgeQuoteRequestFinished
+      ? quoteList
+      : quoteList.filter(quote =>
+          canDisplayBridgeQuoteBeforeAllQuotesLoaded({
+            quote,
+            fromToken,
+            toToken,
+            amount,
+          }),
+        );
+
+    const best = getBestBridgeQuote(selectableQuoteList, toToken);
     if (!best) {
       return;
     }
@@ -1046,7 +1102,18 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
           !quote.loading && isSameBridgeQuote(quote, selectedBridgeQuote),
       );
       if (selectedQuoteLoaded && selectedBridgeQuote?.manualClick) {
-        return;
+        const canDisplaySelectedQuote =
+          bridgeQuoteRequestFinished ||
+          canDisplayBridgeQuoteBeforeAllQuotesLoaded({
+            quote: selectedBridgeQuote,
+            fromToken,
+            toToken,
+            amount,
+          });
+
+        if (canDisplaySelectedQuote) {
+          return;
+        }
       }
 
       const shouldUpdateSelectedQuote =
@@ -1058,9 +1125,18 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         setSelectedBridgeQuote(bestQuote);
       }
     }
-    // ignore toToken price update
+    // toToken price is needed by the early-display USD guard.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quoteList, toToken?.id, selectedBridgeQuote, setSelectedBridgeQuote]);
+  }, [
+    quoteList,
+    bridgeQuoteRequestFinished,
+    fromToken,
+    amount,
+    toToken?.id,
+    toToken?.price,
+    selectedBridgeQuote,
+    setSelectedBridgeQuote,
+  ]);
 
   if (quotesError) {
     console.error('quotesError', quotesError);
@@ -1200,8 +1276,23 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     chainServerId: findChainByEnum(fromChain)?.serverId || '',
   });
 
-  const hasLoadedQuote = quoteList.some(quote => !quote.loading);
-  const quoteDisplayLoading = !hasLoadedQuote && (pending || quoteLoading);
+  const selectedBridgeQuoteLoaded =
+    !!selectedBridgeQuote &&
+    quoteList.some(
+      quote => !quote.loading && isSameBridgeQuote(quote, selectedBridgeQuote),
+    );
+  const selectedBridgeQuoteCanDisplay =
+    !!toToken &&
+    selectedBridgeQuoteLoaded &&
+    (bridgeQuoteRequestFinished ||
+      canDisplayBridgeQuoteBeforeAllQuotesLoaded({
+        quote: selectedBridgeQuote,
+        fromToken,
+        toToken,
+        amount,
+      }));
+  const quoteDisplayLoading =
+    !selectedBridgeQuoteCanDisplay && hasPendingBridgeQuote;
 
   return {
     clearExpiredTimer,

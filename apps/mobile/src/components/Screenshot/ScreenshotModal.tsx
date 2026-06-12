@@ -24,6 +24,8 @@ import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
 import { Text } from '@/components/Typography';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
+import { useBrowser } from '@/hooks/browser/useBrowser';
 
 function SwitchTextLine({
   checked,
@@ -95,7 +97,7 @@ function wrapOnPress(handler?: (evt: GestureResponderEvent) => void) {
 }
 
 export function ModalsSubmitFeedbackByScreenshotStub() {
-  const { styles } = useTheme2024({ getStyle: getModalStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getModalStyle });
   const { t } = useTranslation();
 
   const {
@@ -108,6 +110,8 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
   } = useSubmitFeedbackOnScreenshot();
 
   const [skipInNext1Day, setSkipInNext1Day] = useState(false);
+
+  const { browserState } = useBrowser();
 
   useEffect(() => {
     if (globalModalShown) {
@@ -154,6 +158,20 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
                     {t('component.screenshotModal.title')}
                   </Text>
                 </View>
+                {browserState.isShowBrowser &&
+                !browserState.isShowManage &&
+                !browserState.isShowSearch ? (
+                  <View style={styles.alert}>
+                    <RcIconWarningCircleCC
+                      width={18}
+                      height={18}
+                      color={colors2024['neutral-foot']}
+                    />
+                    <Text style={styles.alertText}>
+                      {t('component.screenshotModal.alertText')}
+                    </Text>
+                  </View>
+                ) : null}
                 <View style={[styles.imageWrapper]}>
                   {lastScreenshot?.uri && (
                     <Image
@@ -367,7 +385,7 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       width: '100%',
     },
     buttonContainer: {
-      height: 56,
+      height: 48,
       justifyContent: 'center',
       alignItems: 'center',
       width: '100%',
@@ -379,12 +397,14 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      fontSize: 18,
+      fontWeight: '700',
     },
     buttonLoading: {
       width: '100%',
     },
     buttonStyle: {
-      height: 56,
+      height: 48,
     },
     cancelButtonContainer: {
       // backgroundColor: colors2024['neutral-bg-5'],
@@ -399,5 +419,25 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
     submitButtonContainer: {},
     submitButtonTitle: {},
     submitButtonStyle: {},
+
+    alert: {
+      marginTop: 16,
+      display: 'flex',
+      alignItems: 'flex-start',
+      flexDirection: 'row',
+      width: '100%',
+      gap: 4,
+      padding: 12,
+      borderRadius: 8,
+      backgroundColor: colors2024['neutral-bg-5'],
+    },
+    alertText: {
+      flex: 1,
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '500',
+      color: colors2024['neutral-foot'],
+    },
   };
 });
