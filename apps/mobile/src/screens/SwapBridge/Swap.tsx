@@ -98,6 +98,7 @@ import useDebounce from 'react-use/lib/useDebounce';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
 import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
+import { buildFingerprint } from '@/components2024/MiniSignV2/domain/ctx';
 import { BridgeSlippage } from '../Bridge/components/BridgeSlippage';
 import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
 import { APP_VERSIONS } from '@/constant';
@@ -123,6 +124,7 @@ const BOTTOM_BUTTON_HEIGHT = 52;
 const BOTTOM_BUTTON_TITLE_FONT_SIZE = 18;
 const BOTTOM_BUTTON_HORIZONTAL_PADDING = 20;
 const BOTTOM_BUTTON_BOTTOM_OFFSET = 36;
+const BUILD_SWAP_TXS_DEBOUNCE_MS = 500;
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<
@@ -233,6 +235,8 @@ const Swap = ({
     closeQuotesList,
     quotesListVisible,
     quoteLoading,
+    allQuotesLoaded,
+    quoteRequestId,
     quoteList,
 
     currentProvider: activeProvider,
@@ -580,10 +584,73 @@ const Swap = ({
     }
   });
 
-  const buildSwapTxs = useMemoizedFn(async () => {
+  const activeProviderBuildKey = useMemo(() => {
+    if (!activeProvider?.quote || !payToken || !receiveToken) {
+      return '';
+    }
+
+    const gasPrice =
+      payTokenIsNativeToken && passGasPrice
+        ? gasList?.find(e => e.level === 'normal')?.price
+        : '';
+
+    return [
+      chain,
+      payToken.id,
+      receiveToken.id,
+      payAmount,
+      slippage,
+      preferMEVGuarded ? '1' : '0',
+      unlimitedAllowance ? '1' : '0',
+      activeProvider.name,
+      activeProvider.shouldApproveToken ? '1' : '0',
+      activeProvider.shouldTwoStepApprove ? '1' : '0',
+      activeProvider.quote.toTokenAmount,
+      activeProvider.quote.toTokenDecimals || '',
+      activeProvider.quote.tx?.to || '',
+      activeProvider.quote.tx?.value || '',
+      activeProvider.quote.tx?.data || '',
+      gasPrice || '',
+    ].join('|');
+  }, [
+    activeProvider?.name,
+    activeProvider?.quote,
+    activeProvider?.shouldApproveToken,
+    activeProvider?.shouldTwoStepApprove,
+    chain,
+    gasList,
+    passGasPrice,
+    payAmount,
+    payToken,
+    payTokenIsNativeToken,
+    preferMEVGuarded,
+    receiveToken,
+    slippage,
+    unlimitedAllowance,
+  ]);
+  const activeProviderBuildKeyRef = useRef(activeProviderBuildKey);
+
+  useEffect(() => {
+    activeProviderBuildKeyRef.current = activeProviderBuildKey;
+  }, [activeProviderBuildKey]);
+
+  const activeProviderIsBestQuote =
+    !!activeProvider && !!bestQuoteDex && activeProvider.name === bestQuoteDex;
+  const activeProviderIsManualQuote = !!activeProvider?.manualClick;
+  const activeProviderCanAutoPreExec =
+    activeProviderIsBestQuote || activeProviderIsManualQuote;
+  const builtSwapTxsKeyRef = useRef('');
+  const prefetchedSwapTxsKeyRef = useRef('');
+
+  const buildSwapTxs = useMemoizedFn(async (expectedBuildKey?: string) => {
     if (!inSufficient && payToken && receiveToken && activeProvider?.quote) {
+      const buildKey = expectedBuildKey || activeProviderBuildKeyRef.current;
+      if (expectedBuildKey && buildKey !== activeProviderBuildKeyRef.current) {
+        return;
+      }
+
       try {
-        return buildDexSwap(
+        const result = await buildDexSwap(
           {
             swapPreferMEVGuarded: !!preferMEVGuarded,
             chain,
@@ -629,6 +696,14 @@ const Swap = ({
             },
           },
         );
+        if (
+          expectedBuildKey &&
+          buildKey !== activeProviderBuildKeyRef.current
+        ) {
+          return;
+        }
+        builtSwapTxsKeyRef.current = buildKey;
+        return result;
       } catch (error) {
         console.error(error);
       }
@@ -641,6 +716,61 @@ const Swap = ({
     mutate: mutateTxs,
   } = useRequest(buildSwapTxs, {
     manual: true,
+  });
+  const runBuildSwapTxsRef = useRef<
+    ReturnType<typeof runBuildSwapTxs> | undefined
+  >(undefined);
+  const runBuildSwapTxsKeyRef = useRef('');
+  const buildSwapTxsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const swapAutoPreExecRef = useRef({
+    requestId: 0,
+    earlyBuildKey: '',
+    finalBuildKey: '',
+    manualBuildKey: '',
+  });
+  const quoteRequestIdRef = useRef(quoteRequestId);
+  const allQuotesLoadedRef = useRef(allQuotesLoaded);
+
+  useEffect(() => {
+    quoteRequestIdRef.current = quoteRequestId;
+  }, [quoteRequestId]);
+
+  useEffect(() => {
+    allQuotesLoadedRef.current = allQuotesLoaded;
+  }, [allQuotesLoaded]);
+
+  useEffect(() => {
+    quoteRequestIdRef.current = quoteRequestId;
+    swapAutoPreExecRef.current = {
+      requestId: quoteRequestId,
+      earlyBuildKey: '',
+      finalBuildKey: '',
+      manualBuildKey: '',
+    };
+    builtSwapTxsKeyRef.current = '';
+    prefetchedSwapTxsKeyRef.current = '';
+    mutateTxs([]);
+    runBuildSwapTxsRef.current = undefined;
+    runBuildSwapTxsKeyRef.current = '';
+    if (buildSwapTxsTimerRef.current) {
+      clearTimeout(buildSwapTxsTimerRef.current);
+      buildSwapTxsTimerRef.current = null;
+    }
+  }, [mutateTxs, quoteRequestId]);
+
+  const runBuildSwapTxsForKey = useMemoizedFn((buildKey: string) => {
+    const buildPromise = runBuildSwapTxs(buildKey);
+    runBuildSwapTxsRef.current = buildPromise;
+    runBuildSwapTxsKeyRef.current = buildKey;
+    buildPromise.finally(() => {
+      if (runBuildSwapTxsRef.current === buildPromise) {
+        runBuildSwapTxsRef.current = undefined;
+        runBuildSwapTxsKeyRef.current = '';
+      }
+    });
+    return buildPromise;
   });
 
   const [_, setRecentSwapToToken] = useSwapRecentToTokens();
@@ -699,6 +829,10 @@ const Swap = ({
           [{ text: t('global.ok') || 'OK' }],
         );
         refresh(e => e + 1);
+        builtSwapTxsKeyRef.current = '';
+        prefetchedSwapTxsKeyRef.current = '';
+        runBuildSwapTxsRef.current = undefined;
+        runBuildSwapTxsKeyRef.current = '';
         mutateTxs([]);
         return;
       }
@@ -718,7 +852,32 @@ const Swap = ({
         setIsSubmitting(true);
         setReloadTxRefreshPaused(true);
 
-        if (!currentTxs?.length) {
+        if (buildSwapTxsTimerRef.current) {
+          clearTimeout(buildSwapTxsTimerRef.current);
+          buildSwapTxsTimerRef.current = null;
+        }
+
+        const currentBuildKey = activeProviderBuildKeyRef.current;
+        const canReuseCurrentTxs =
+          !!currentBuildKey &&
+          builtSwapTxsKeyRef.current === currentBuildKey &&
+          !!currentTxs?.length;
+        let txsForSigning = canReuseCurrentTxs ? currentTxs : undefined;
+
+        if (!txsForSigning?.length && currentBuildKey) {
+          const reusableBuildPromise =
+            runBuildSwapTxsKeyRef.current === currentBuildKey
+              ? runBuildSwapTxsRef.current
+              : undefined;
+          const buildPromise =
+            reusableBuildPromise || runBuildSwapTxsForKey(currentBuildKey);
+          const rebuiltTxs = await buildPromise;
+          if (rebuiltTxs?.length) {
+            txsForSigning = rebuiltTxs;
+          }
+        }
+
+        if (!txsForSigning?.length) {
           toast.info('please retry');
           throw new Error('no txs');
         }
@@ -729,7 +888,7 @@ const Swap = ({
         setMiniSignLoading(true);
 
         const res = await openDirect({
-          txs: currentTxs!,
+          txs: txsForSigning,
           ga: miniSignGa,
           checkGasFeeTooHigh: checkGasFeeTooHighRef.current,
           ignoreGasFeeTooHigh: p?.ignoreGasFee || false,
@@ -739,6 +898,8 @@ const Swap = ({
         miniSignNextStep(txHash);
 
         if (!isApprove) {
+          builtSwapTxsKeyRef.current = '';
+          prefetchedSwapTxsKeyRef.current = '';
           mutateTxs([]);
           const createdAt = Date.now();
           transactionHistoryService.addSwapTxHistory({
@@ -822,6 +983,8 @@ const Swap = ({
         console.log('swap mini sign error', error);
         if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
           refresh(e => e + 1);
+          builtSwapTxsKeyRef.current = '';
+          prefetchedSwapTxsKeyRef.current = '';
           mutateTxs([]);
         } else if (
           [
@@ -1020,6 +1183,22 @@ const Swap = ({
       closeMiniSigner({ preserveManualGasMethod: true });
       return;
     }
+    const canPrefetchCurrentTxs =
+      canShowDirectSubmit &&
+      activeProviderCanAutoPreExec &&
+      !!builtSwapTxsKeyRef.current &&
+      builtSwapTxsKeyRef.current === activeProviderBuildKeyRef.current;
+    if (!canPrefetchCurrentTxs) {
+      return;
+    }
+    const prefetchKey = [
+      builtSwapTxsKeyRef.current,
+      buildFingerprint(currentTxs || []),
+    ].join('|');
+    if (prefetchedSwapTxsKeyRef.current === prefetchKey) {
+      return;
+    }
+    prefetchedSwapTxsKeyRef.current = prefetchKey;
     onChangeCheckGasFeeTooHigh(true);
     prefetchMiniSigner({
       txs: currentTxs,
@@ -1027,9 +1206,14 @@ const Swap = ({
       checkGasFeeTooHigh: true,
       synGasHeaderInfo: true,
     }).catch(error => {
+      if (prefetchedSwapTxsKeyRef.current === prefetchKey) {
+        prefetchedSwapTxsKeyRef.current = '';
+      }
       console.error('swap mini signer prefetch failed', error);
     });
   }, [
+    activeProviderBuildKey,
+    activeProviderCanAutoPreExec,
     onChangeCheckGasFeeTooHigh,
     isFocused,
     canShowDirectSubmit,
@@ -1046,26 +1230,121 @@ const Swap = ({
       return;
     }
     if (!activeProvider) {
+      if (buildSwapTxsTimerRef.current) {
+        clearTimeout(buildSwapTxsTimerRef.current);
+        buildSwapTxsTimerRef.current = null;
+      }
+      builtSwapTxsKeyRef.current = '';
+      prefetchedSwapTxsKeyRef.current = '';
+      runBuildSwapTxsRef.current = undefined;
+      runBuildSwapTxsKeyRef.current = '';
       mutateTxs([]);
     }
   }, [activeProvider, mutateTxs, shouldPauseMiniSignerEffects]);
 
   useEffect(() => {
+    const clearBuildTimer = () => {
+      if (buildSwapTxsTimerRef.current) {
+        clearTimeout(buildSwapTxsTimerRef.current);
+        buildSwapTxsTimerRef.current = null;
+      }
+    };
+
     if (shouldPauseMiniSignerEffects()) {
-      return;
+      return clearBuildTimer;
     }
-    if (activeProvider && canShowDirectSubmit) {
-      mutateTxs([]);
-      runBuildSwapTxs();
+    if (
+      swapBtnDisabled ||
+      !canShowDirectSubmit ||
+      !activeProviderBuildKey ||
+      !activeProviderCanAutoPreExec
+    ) {
+      return clearBuildTimer;
     }
+
+    const tracker = swapAutoPreExecRef.current;
+    if (tracker.requestId !== quoteRequestId) {
+      tracker.requestId = quoteRequestId;
+      tracker.earlyBuildKey = '';
+      tracker.finalBuildKey = '';
+      tracker.manualBuildKey = '';
+    }
+
+    const phase = allQuotesLoaded ? 'final' : 'early';
+    if (activeProviderIsManualQuote) {
+      if (tracker.manualBuildKey === activeProviderBuildKey) {
+        return clearBuildTimer;
+      }
+    } else {
+      if (!allQuotesLoaded && tracker.earlyBuildKey) {
+        return clearBuildTimer;
+      }
+      if (allQuotesLoaded) {
+        if (
+          tracker.finalBuildKey === activeProviderBuildKey ||
+          tracker.earlyBuildKey === activeProviderBuildKey
+        ) {
+          tracker.finalBuildKey = activeProviderBuildKey;
+          return clearBuildTimer;
+        }
+      }
+    }
+
+    builtSwapTxsKeyRef.current = '';
+    prefetchedSwapTxsKeyRef.current = '';
+    mutateTxs([]);
+    runBuildSwapTxsRef.current = undefined;
+    runBuildSwapTxsKeyRef.current = '';
+
+    const scheduledBuildKey = activeProviderBuildKey;
+    const scheduledQuoteRequestId = quoteRequestId;
+    const scheduledIsManualQuote = activeProviderIsManualQuote;
+    buildSwapTxsTimerRef.current = setTimeout(() => {
+      buildSwapTxsTimerRef.current = null;
+      const latestTracker = swapAutoPreExecRef.current;
+      if (
+        quoteRequestIdRef.current !== scheduledQuoteRequestId ||
+        latestTracker.requestId !== scheduledQuoteRequestId ||
+        activeProviderBuildKeyRef.current !== scheduledBuildKey
+      ) {
+        return;
+      }
+
+      if (scheduledIsManualQuote) {
+        if (latestTracker.manualBuildKey === scheduledBuildKey) {
+          return;
+        }
+        latestTracker.manualBuildKey = scheduledBuildKey;
+      } else if (phase === 'early') {
+        if (allQuotesLoadedRef.current || latestTracker.earlyBuildKey) {
+          return;
+        }
+        latestTracker.earlyBuildKey = scheduledBuildKey;
+      } else {
+        if (
+          !allQuotesLoadedRef.current ||
+          latestTracker.finalBuildKey === scheduledBuildKey
+        ) {
+          return;
+        }
+        latestTracker.finalBuildKey = scheduledBuildKey;
+      }
+
+      runBuildSwapTxsForKey(scheduledBuildKey);
+    }, BUILD_SWAP_TXS_DEBOUNCE_MS);
+
+    return clearBuildTimer;
   }, [
-    activeProvider,
+    activeProviderBuildKey,
+    activeProviderCanAutoPreExec,
+    activeProviderIsManualQuote,
+    allQuotesLoaded,
     canShowDirectSubmit,
-    currentAccount?.address,
     mutateTxs,
-    runBuildSwapTxs,
+    quoteRequestId,
+    runBuildSwapTxsForKey,
     shouldPauseMiniSignerEffects,
-    swapUseSlider,
+    swapBtnDisabled,
   ]);
 
   useEffect(
