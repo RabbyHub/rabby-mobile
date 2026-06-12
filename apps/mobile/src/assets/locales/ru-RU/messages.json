@@ -3226,7 +3226,8 @@
           "doNotHaveSuppliesInThisCurrency": "У вас нет средств в этой валюте",
           "zeroLTVWithdrawBlocked": "Активы с нулевым LTV ({{assets}}) должны быть выведены или отключены в качестве залога для выполнения этого действия.",
           "canNotSwitchUsageAsCollateralMode": "Нельзя изменить статус залога для этого актива, так как это может привести к ликвидации.",
-          "canNotUseThisCurrencyAsCollateral": "Вы не можете использовать эту валюту в качестве залога"
+          "canNotUseThisCurrencyAsCollateral": "Вы не можете использовать эту валюту в качестве залога",
+          "zeroLTVEnableEModeFirst": "Этот актив имеет LTV 0 и не может использоваться в качестве залога. Включите E-Mode, чтобы использовать {{asset}} в качестве залога."
         }
       },
       "selectMarket": "Выбрать рынок",
@@ -3469,6 +3470,29 @@
       "unsupportedAccountType": "Этот тип аккаунта не поддерживается.",
       "unsupportedAccount": "В настоящее время поддерживаются только адреса с закрытым ключом и seed-фразой.",
       "title": "Convert Dust"
+    },
+    "walletConnect": {
+      "screenTitle": "Подключить кошелек",
+      "connectingToRabby": "Подключение к Rabby",
+      "pairingFailed": "Сопряжение WalletConnect не удалось.",
+      "connected": "Успешно подключено. Вернитесь в DApp.",
+      "proposalExpired": "Предложение WalletConnect истекло.",
+      "pairingExpired": "Сопряжение WalletConnect истекло. Обновите QR-код dapp и попробуйте снова.",
+      "duplicatePairing": "Этот WalletConnect URI уже находится в процессе сопряжения. Обновите QR-код dapp и попробуйте снова.",
+      "relayUnreachable": "Ретранслятор WalletConnect недоступен. Проверьте сеть и попробуйте снова.",
+      "transactionSentReturnToBrowser": "Транзакция отправлена! Вернитесь в DApp.",
+      "transactionCanceledReturnToBrowser": "Транзакция отменена! Вернитесь в DApp.",
+      "uriEmpty": "WalletConnect URI не может быть пустым.",
+      "uriInvalidFormat": "WalletConnect URI должен начинаться с wc:<topic>@2.",
+      "uriMissingParams": "В WalletConnect URI отсутствует symKey или relay-protocol.",
+      "unsupportedCapability": {
+        "chain_one": "{{count}} цепь",
+        "chain_other": "{{count}} цепей",
+        "method_one": "{{count}} метод",
+        "method_other": "{{count}} методов"
+      },
+      "unsupportedCapabilityList": "{{first}} и {{second}}",
+      "unsupportedRequiredRequest": "Неподдерживаемый обязательный запрос WalletConnect: {{capabilities}} не поддерживается."
     }
   },
   "component": {

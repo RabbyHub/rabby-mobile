@@ -3286,7 +3286,8 @@
           "doNotHaveSuppliesInThisCurrency": "您沒有存入該資產。",
           "canNotSwitchUsageAsCollateralMode": "無法切換該資產的抵押狀態，因為這可能觸發清算。",
           "zeroLTVWithdrawBlocked": "LTV 為 0 的資產（{{assets}}）必須先提取或關閉抵押用途，才能執行此操作。",
-          "canNotUseThisCurrencyAsCollateral": "該資產不能用作抵押品。"
+          "canNotUseThisCurrencyAsCollateral": "該資產不能用作抵押品。",
+          "zeroLTVEnableEModeFirst": "該資產的 LTV 為 0，不能用作抵押品。請先啟用 E-Mode，才能將 {{asset}} 用作抵押品。"
         }
       },
       "searchMarket": "搜尋市場",
@@ -3529,6 +3530,29 @@
       "unsupportedAccountType": "不支援此帳戶類型。",
       "unsupportedAccount": "目前僅支援私鑰和助記詞地址。",
       "title": "轉換零散資產"
+    },
+    "walletConnect": {
+      "screenTitle": "連接錢包",
+      "connectingToRabby": "正在連接到 Rabby",
+      "pairingFailed": "WalletConnect 配對失敗。",
+      "connected": "連接成功，請返回 DApp。",
+      "proposalExpired": "WalletConnect 連接請求已過期。",
+      "pairingExpired": "WalletConnect 配對已過期。請刷新 dapp 二維碼後重試。",
+      "duplicatePairing": "此 WalletConnect URI 已在配對中。請刷新 dapp 二維碼後重試。",
+      "relayUnreachable": "無法連接 WalletConnect relay。請檢查網路後重試。",
+      "transactionSentReturnToBrowser": "交易已發送！請返回 DApp。",
+      "transactionCanceledReturnToBrowser": "交易已取消！請返回 DApp。",
+      "uriEmpty": "WalletConnect URI 不能為空。",
+      "uriInvalidFormat": "WalletConnect URI 必須以 wc:<topic>@2 開頭。",
+      "uriMissingParams": "WalletConnect URI 缺少 symKey 或 relay-protocol。",
+      "unsupportedCapability": {
+        "chain_one": "{{count}} 條鏈",
+        "chain_other": "{{count}} 條鏈",
+        "method_one": "{{count}} 個方法",
+        "method_other": "{{count}} 個方法"
+      },
+      "unsupportedCapabilityList": "{{first}} 和 {{second}}",
+      "unsupportedRequiredRequest": "不支援必需的 WalletConnect 請求：{{capabilities}}。"
     }
   },
   "component": {
