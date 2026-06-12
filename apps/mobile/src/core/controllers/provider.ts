@@ -804,6 +804,7 @@ class ProviderController extends BaseController {
     delete txParams.isCoboSafe;
     delete approvalRes.isGasLess;
     delete approvalRes.isGasAccount;
+    delete approvalRes.logId;
     delete approvalRes.sig;
     delete approvalRes.$account;
 
