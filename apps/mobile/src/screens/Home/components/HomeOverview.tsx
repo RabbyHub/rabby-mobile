@@ -994,7 +994,7 @@ export const HomeOverview = React.memo(() => {
       console.error('Refresh failed:', error);
     });
 
-    await withAnimatedTickerRefreshNudge(() =>
+    withAnimatedTickerRefreshNudge(() =>
       Promise.race([balanceRefresh, sleep(3000)]),
     ).catch(error => {
       console.error('Refresh balance failed:', error);

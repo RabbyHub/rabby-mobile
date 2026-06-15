@@ -272,7 +272,7 @@ const NFTListInner = () => {
       nftRefresh(),
     ]);
 
-    await withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(error => {
+    withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(error => {
       console.error('Refresh balance failed:', error);
     });
 
