@@ -3115,7 +3115,8 @@
           "doNotHaveSuppliesInThisCurrency": "Vous n'avez pas de fournitures dans cette devise.",
           "canNotUseThisCurrencyAsCollateral": "Vous ne pouvez pas utiliser cette devise comme garantie.",
           "zeroLTVWithdrawBlocked": "Les actifs avec un LTV de zéro ({{assets}}) doivent être retirés ou désactivés en tant que garantie pour effectuer cette action.",
-          "canNotSwitchUsageAsCollateralMode": "Vous ne pouvez pas modifier le statut de garantie de cet actif, car cela pourrait déclencher une liquidation."
+          "canNotSwitchUsageAsCollateralMode": "Vous ne pouvez pas modifier le statut de garantie de cet actif, car cela pourrait déclencher une liquidation.",
+          "zeroLTVEnableEModeFirst": "Cet actif a un LTV de 0 et ne peut pas être utilisé comme garantie. Activez un E-Mode pour utiliser {{asset}} comme garantie."
         }
       },
       "selectMarket": "Sélectionner le marché",
@@ -3358,6 +3359,29 @@
         "start": "Démarrer la conversion"
       },
       "title": "Convertir la poussière"
+    },
+    "walletConnect": {
+      "screenTitle": "Connecter le portefeuille",
+      "connectingToRabby": "Connexion à Rabby",
+      "pairingFailed": "L'appairage WalletConnect a échoué.",
+      "connected": "Connexion réussie. Veuillez retourner à la DApp.",
+      "proposalExpired": "La proposition WalletConnect a expiré.",
+      "pairingExpired": "L'appairage WalletConnect a expiré. Actualisez le code QR de la DApp et réessayez.",
+      "duplicatePairing": "Cet URI WalletConnect est déjà en cours d'appairage. Actualisez le code QR de la DApp et réessayez.",
+      "relayUnreachable": "Le relais WalletConnect est inaccessible. Vérifiez le réseau et réessayez.",
+      "transactionSentReturnToBrowser": "Transaction envoyée ! Veuillez retourner à la DApp.",
+      "transactionCanceledReturnToBrowser": "Transaction annulée ! Veuillez retourner à la DApp.",
+      "uriEmpty": "L'URI WalletConnect ne peut pas être vide.",
+      "uriInvalidFormat": "L'URI WalletConnect doit commencer par wc:<topic>@2.",
+      "uriMissingParams": "L'URI WalletConnect ne contient pas symKey ou relay-protocol.",
+      "unsupportedCapability": {
+        "chain_one": "{{count}} chaîne",
+        "chain_other": "{{count}} chaînes",
+        "method_one": "{{count}} méthode",
+        "method_other": "{{count}} méthodes"
+      },
+      "unsupportedCapabilityList": "{{first}} et {{second}}",
+      "unsupportedRequiredRequest": "Requête WalletConnect obligatoire non prise en charge : {{capabilities}} non pris en charge."
     }
   },
   "native": {

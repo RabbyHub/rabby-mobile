@@ -3105,7 +3105,8 @@
           "canNotUseThisCurrencyAsCollateral": "Anda tidak dapat menggunakan mata uang ini sebagai jaminan.",
           "doNotHaveSuppliesInThisCurrency": "Anda tidak memiliki persediaan dalam mata uang ini",
           "canNotSwitchUsageAsCollateralMode": "Status jaminan aset ini tidak dapat diubah karena dapat memicu likuidasi.",
-          "zeroLTVWithdrawBlocked": "Aset dengan LTV nol ({{assets}}) harus ditarik atau dinonaktifkan sebagai jaminan untuk melakukan tindakan ini."
+          "zeroLTVWithdrawBlocked": "Aset dengan LTV nol ({{assets}}) harus ditarik atau dinonaktifkan sebagai jaminan untuk melakukan tindakan ini.",
+          "zeroLTVEnableEModeFirst": "Aset ini memiliki LTV 0 dan tidak dapat digunakan sebagai jaminan. Aktifkan E-Mode untuk menggunakan {{asset}} sebagai jaminan."
         }
       },
       "selectMarket": "Pilih Pasar",
@@ -3348,6 +3349,29 @@
       "unsupportedAccountType": "Not support this account type.",
       "unsupportedAccount": "Currently only private key and seed phrase addresses are supported.",
       "title": "Konversi Dust"
+    },
+    "walletConnect": {
+      "screenTitle": "Hubungkan Wallet",
+      "connectingToRabby": "Menghubungkan ke Rabby",
+      "pairingFailed": "Penyandingan WalletConnect gagal.",
+      "connected": "Berhasil terhubung. Silakan kembali ke DApp.",
+      "proposalExpired": "Proposal WalletConnect kedaluwarsa.",
+      "pairingExpired": "Penyandingan WalletConnect kedaluwarsa. Muat ulang kode QR dapp dan coba lagi.",
+      "duplicatePairing": "URI WalletConnect ini sedang dipasangkan. Muat ulang kode QR dapp dan coba lagi.",
+      "relayUnreachable": "Relay WalletConnect tidak dapat dijangkau. Periksa jaringan dan coba lagi.",
+      "transactionSentReturnToBrowser": "Transaksi terkirim! Silakan kembali ke DApp.",
+      "transactionCanceledReturnToBrowser": "Transaksi dibatalkan! Silakan kembali ke DApp.",
+      "uriEmpty": "URI WalletConnect tidak boleh kosong.",
+      "uriInvalidFormat": "URI WalletConnect harus dimulai dengan wc:<topic>@2.",
+      "uriMissingParams": "URI WalletConnect tidak memiliki symKey atau relay-protocol.",
+      "unsupportedCapability": {
+        "chain_one": "{{count}} chain",
+        "chain_other": "{{count}} chain",
+        "method_one": "{{count}} metode",
+        "method_other": "{{count}} metode"
+      },
+      "unsupportedCapabilityList": "{{first}} dan {{second}}",
+      "unsupportedRequiredRequest": "Permintaan wajib WalletConnect tidak didukung: {{capabilities}} tidak didukung."
     }
   },
   "component": {
