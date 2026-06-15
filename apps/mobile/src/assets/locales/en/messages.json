@@ -2422,7 +2422,8 @@
         "contentModeMobile": "Request Mobile Site",
         "contentModeDesktop": "Request DeskTop Site",
         "disconnect": "Disconnect",
-        "clearCache": "Clear cache"
+        "clearCache": "Clear cache",
+        "disconnectAll": "Disconnect All"
       },
       "HyperliquidInvitePopup": {
         "title": "Hyperliquid Referral Program",
@@ -2452,6 +2453,11 @@
         "category": "Category",
         "skipDappInfoNextTime": "Skip this page next time",
         "openDapp": "Open"
+      },
+      "disconnectAllAlert": {
+        "desc": "You will disconnect all {{count}} connected DApps.",
+        "title": "Disconnect All?",
+        "success": "Disconnected all DApps."
       }
     },
     "browserManage": {
