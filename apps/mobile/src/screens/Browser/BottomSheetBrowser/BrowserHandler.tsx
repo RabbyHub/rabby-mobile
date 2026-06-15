@@ -10,8 +10,8 @@ import { EVENT_BROWSER_ACTION, eventBus } from '@/utils/events';
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
-import React from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { Alert, Image, StyleSheet, View } from 'react-native';
 import { DropdownMenuView } from '../BrowserScreen/components/BrowserTab/DropdownMenuView';
 import { useTranslation } from 'react-i18next';
 import {
@@ -19,6 +19,9 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 import RcIconFavoriteCC from '@/assets2024/icons/browser/favorite-cc.svg';
+import { useDapps } from '@/hooks/useDapps';
+import { dappService } from '@/core/services';
+import { toast } from '@/components2024/Toast';
 
 export const BrowserHandler = () => {
   const { styles, isLight, colors2024 } = useTheme2024({
@@ -65,6 +68,42 @@ export const BrowserHandler = () => {
       });
     },
   );
+
+  const { dapps } = useDapps();
+  const connectedDapps = useMemo(() => {
+    return Object.values(dapps).filter(item => item.isConnected);
+  }, [dapps]);
+
+  const handleDisconnectAll = useMemoizedFn(() => {
+    Alert.alert(
+      t('page.browser.disconnectAllAlert.title'),
+      t('page.browser.disconnectAllAlert.desc', {
+        count: connectedDapps.length,
+      }),
+      [
+        {
+          text: t('global.Cancel'),
+          // style: 'cancel',
+          onPress: () => {},
+        },
+        {
+          text: t('global.Confirm'),
+          // style: 'destructive',
+          onPress: () => {
+            dappService.patchDapps(
+              connectedDapps.reduce((result, item) => {
+                result[item.origin] = {
+                  isConnected: false,
+                };
+                return result;
+              }, {}),
+            );
+            toast.success(t('page.browser.disconnectAllAlert.success'));
+          },
+        },
+      ],
+    );
+  });
 
   const menuConfigs = React.useMemo(() => {
     const urlInfo = urlUtils.canoicalizeDappUrl(activeTabState.url || '');
@@ -147,6 +186,18 @@ export const BrowserHandler = () => {
           handleAction('disconnect');
         },
       },
+
+      connectedDapps?.length && {
+        title: t('page.browser.menu.disconnectAll'),
+        textColor: colors2024['red-dark'],
+        iosIconSource: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_disconnect_all.png'),
+        androidIcon: { color: colors2024['neutral-body'] },
+        androidIconName: 'ic_rabby_menu_disconnect_all',
+        key: 'disconnectAll',
+        onSelect: () => {
+          handleDisconnectAll();
+        },
+      },
     ].filter(Boolean);
 
     if (IS_ANDROID) {
@@ -175,7 +226,9 @@ export const BrowserHandler = () => {
     activeTabState.isDapp,
     activeTabState.url,
     colors2024,
+    connectedDapps?.length,
     handleAction,
+    handleDisconnectAll,
     isLight,
     t,
   ]);
@@ -217,7 +270,11 @@ export const BrowserHandler = () => {
 
             {activeTabState.url ? (
               <DropdownMenuView menuConfig={menuConfigs}>
-                <View style={styles.handleItem}>
+                <View
+                  style={[
+                    styles.handleItem,
+                    !activeTabState.isDapp && styles.handleItemFirst,
+                  ]}>
                   <RcIconMore1CC
                     width={24}
                     height={24}
@@ -226,7 +283,11 @@ export const BrowserHandler = () => {
                 </View>
               </DropdownMenuView>
             ) : (
-              <View style={styles.handleItem}>
+              <View
+                style={[
+                  styles.handleItem,
+                  !activeTabState.isDapp && styles.handleItemFirst,
+                ]}>
                 <RcIconMore1CC
                   width={24}
                   height={24}
@@ -277,9 +338,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: isLight ? colors2024['neutral-InvertHighlight'] : '#000',
     },
-    handleItem: {
+    handleItemFirst: {
       paddingVertical: 4,
       paddingLeft: 12,
+    },
+    handleItem: {
+      paddingVertical: 4,
     },
     handleItemLast: {
       paddingVertical: 4,
