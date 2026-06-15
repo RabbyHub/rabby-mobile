@@ -31,6 +31,15 @@ import {
   View,
   StyleSheet,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { PerpsOpenPositionCheckPopup } from './PerpsOpenPositionCheckPopup';
 
 const isAndroid = Platform.OS === 'android';
@@ -50,6 +59,7 @@ import {
 } from '@/hooks/perps/usePerpsStore';
 import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
 import { PerpEditLimitPriceTag } from './PerpEditLimitPriceTag';
+import { useMarketSlippage } from '../hooks/useMarketSlippage';
 import { PerpsSlider } from './PerpsSlider';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
@@ -207,6 +217,18 @@ export const PerpsOpenPositionPopup: React.FC<{
     }
     return Number(tradeAmount / effectivePx).toFixed(szDecimals);
   }, [effectivePx, tradeAmount, szDecimals]);
+
+  const {
+    slippage,
+    depthInsufficient,
+    isReady: slippageReady,
+  } = useMarketSlippage({
+    coin,
+    isBuy: direction === 'Long',
+    size: Number(tradeSize),
+    markPrice,
+    enabled: !!visible && orderType === 'market',
+  });
 
   // Marketable limit fills immediately at mark, so liq uses markPrice as the
   // true entry price (not limitPx, which is just the user's price ceiling).
@@ -427,6 +449,33 @@ export const PerpsOpenPositionPopup: React.FC<{
     setSelectedDirection(_direction);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
+
+  // Flash highlight on the order-type row after switching to limit from the
+  // check popup, so the user notices what changed.
+  const orderTypeFlash = useSharedValue(0);
+  const orderTypeFlashStyle = useAnimatedStyle(() => ({
+    opacity: orderTypeFlash.value,
+  }));
+
+  // Back out of review and flip the order to limit, seeding limitPx the same
+  // way the manual order-type toggle does.
+  const handleSwitchToLimit = useMemoizedFn(() => {
+    setIsReviewMode(false);
+    setOrderType('limit');
+    setLimitPx(formatTpOrSlPrice(markPrice, szDecimals));
+    orderTypeFlash.value = 0;
+    // Delay past the check popup's dismiss animation so the flash is visible.
+    orderTypeFlash.value = withDelay(
+      300,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 300 }),
+          withTiming(0, { duration: 300 }),
+        ),
+        3,
+      ),
+    );
+  });
 
   const openPosition = useMemoizedFn(async () => {
     const res = await handleOpenPosition({
@@ -834,6 +883,23 @@ export const PerpsOpenPositionPopup: React.FC<{
                 </Text>
               </View>
               <View style={styles.listItem}>
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFill,
+                    { left: 16, right: 16 },
+                    orderTypeFlashStyle,
+                  ]}>
+                  <LinearGradient
+                    colors={[
+                      'rgba(35, 192, 176, 0)',
+                      'rgba(35, 192, 176, 0.12)',
+                    ]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={StyleSheet.absoluteFill}
+                  />
+                </Animated.View>
                 <Text style={styles.label}>
                   {t('page.perpsDetail.PerpsOpenPositionPopup.orderType')}
                 </Text>
@@ -1004,6 +1070,10 @@ export const PerpsOpenPositionPopup: React.FC<{
       <PerpsOpenPositionCheckPopup
         summary={checkSummary}
         visible={isReviewMode}
+        slippage={slippage}
+        depthInsufficient={depthInsufficient}
+        slippageReady={slippageReady}
+        onSwitchToLimit={handleSwitchToLimit}
         onClose={() => {
           setIsReviewMode(false);
         }}

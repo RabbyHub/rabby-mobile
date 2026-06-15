@@ -98,6 +98,7 @@ export const GasAccountDepositTokenForm: React.FC<{
   onWaitDepositResult?: GasAccountTopUpWaitCallback;
   minDepositPrice?: number;
   disableL2Deposit?: boolean;
+  fallbackDirectSignToOpenUI?: boolean;
 }> = props => {
   const { accounts } = useAccounts({ disableAutoFetch: true });
   const myAccounts = useMemo(
@@ -163,6 +164,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   onDeposit?(): Promise<void> | void;
   onWaitDepositResult?: GasAccountTopUpWaitCallback;
   minDepositPrice?: number;
+  fallbackDirectSignToOpenUI?: boolean;
   myAccounts: DepositAccount[];
   availableTokenRows: GasAccountAvailableTokenRow[];
   isCheckingAvailability: boolean;
@@ -172,6 +174,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   onDeposit,
   onWaitDepositResult,
   minDepositPrice,
+  fallbackDirectSignToOpenUI,
   myAccounts,
   availableTokenRows,
   isCheckingAvailability,
@@ -319,17 +322,24 @@ const GasAccountDepositTokenFormInner: React.FC<{
     async (config: SimpleSignConfig) => {
       resetGasStore();
       closeMiniSign();
+      const configWithGasCheck: SimpleSignConfig = {
+        ...config,
+        checkGasFeeTooHigh: true,
+      };
       if (
         isHardWareAccountAccountSupportMiniApproval(selectedOwnerAccount?.type)
       ) {
         return await openUI(config);
       }
       try {
-        return await openDirect({
-          ...config,
-          checkGasFeeTooHigh: true,
-        });
+        return await openDirect(configWithGasCheck);
       } catch (error) {
+        if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
+          throw error;
+        }
+        if (fallbackDirectSignToOpenUI) {
+          return await openUI(configWithGasCheck);
+        }
         throw error;
       }
     },
@@ -337,6 +347,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
       closeMiniSign,
       openDirect,
       openUI,
+      fallbackDirectSignToOpenUI,
       resetGasStore,
       selectedOwnerAccount?.type,
     ],
@@ -546,23 +557,29 @@ const GasAccountDepositTokenFormInner: React.FC<{
           const tx = await buildTopUpGasAccount(params);
 
           if (tx) {
+            let directDepositTxHash: string | undefined;
             try {
               const res = await openDirectOrFallbackToUI({
                 txs: [tx],
                 autoUseGasFree: true,
                 purpose: 'gasAccountTopUp',
               });
-              const hash = res?.[0];
-              await afterTopUpGasAccount({
-                ...params,
-                tx: hash,
-              });
-              depositTxHash = hash || '';
+              directDepositTxHash = res?.[0] || '';
             } catch (error) {
-              if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
+              if (
+                error === MINI_SIGN_ERROR.USER_CANCELLED ||
+                fallbackDirectSignToOpenUI
+              ) {
                 throw error;
               }
               depositTxHash = (await topUpGasAccount(params)) || '';
+            }
+            if (directDepositTxHash !== undefined) {
+              await afterTopUpGasAccount({
+                ...params,
+                tx: directDepositTxHash,
+              });
+              depositTxHash = directDepositTxHash;
             }
           }
         } else {
@@ -590,7 +607,10 @@ const GasAccountDepositTokenFormInner: React.FC<{
             });
             lastHash = hashes?.[hashes.length - 1] || '';
           } catch (error) {
-            if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
+            if (
+              error === MINI_SIGN_ERROR.USER_CANCELLED ||
+              fallbackDirectSignToOpenUI
+            ) {
               throw error;
             }
             lastHash = await sendBridgeTxsDirectly(
@@ -698,6 +718,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
     bridgeFromTokenAmount,
     bridgeQuote,
     ensureGasAccountLogin,
+    fallbackDirectSignToOpenUI,
     onClose,
     onDeposit,
     onWaitDepositResult,

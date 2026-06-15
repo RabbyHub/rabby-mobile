@@ -14,6 +14,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import { PerpsSlider } from './PerpsSlider';
+import { MarketSlippage } from './MarketSlippage';
+import { useMarketSlippage } from '../hooks/useMarketSlippage';
 import {
   PERPS_EXCHANGE_FEE_NUMBER,
   PERPS_MINI_USD_VALUE,
@@ -41,7 +43,7 @@ export const PerpsClosePositionPopup: React.FC<{
   handleClosePosition: (closePercent: number) => Promise<void>;
 }> = ({
   visible,
-  coin: _coin,
+  coin,
   direction,
   positionSize,
   marginUsed,
@@ -94,6 +96,19 @@ export const PerpsClosePositionPopup: React.FC<{
     return (pnl * closePercent) / 100;
   }, [pnl, closePercent]);
 
+  // Close trades opposite the position: long -> sell (bids), short -> buy (asks)
+  const {
+    slippage,
+    depthInsufficient,
+    isReady: slippageReady,
+  } = useMarketSlippage({
+    coin,
+    isBuy: direction === 'Short',
+    size: Number(positionSize) * (closePercent / 100),
+    markPrice,
+    enabled: !!visible,
+  });
+
   const bothFee = useMemo(() => {
     return providerFee + PERPS_EXCHANGE_FEE_NUMBER;
   }, [providerFee]);
@@ -122,8 +137,8 @@ export const PerpsClosePositionPopup: React.FC<{
         linearGradientType: 'bg1',
       })}
       onDismiss={onCancel}
-      snapPoints={[490]}>
-      <BottomSheetView>
+      snapPoints={[520]}>
+      <BottomSheetView style={styles.sheetView}>
         <AutoLockView style={[styles.container]}>
           <View>
             <Text style={styles.title}>
@@ -194,6 +209,12 @@ export const PerpsClosePositionPopup: React.FC<{
               </Text>
             </View>
           </View>
+          <MarketSlippage
+            style={styles.slippageContainer}
+            visible={slippageReady && Number(positionSize) > 0}
+            slippage={slippage}
+            depthInsufficient={depthInsufficient}
+          />
 
           <View style={styles.footer}>
             <Button
@@ -215,6 +236,9 @@ export const PerpsClosePositionPopup: React.FC<{
 const getStyle = createGetStyles2024(ctx => {
   const { colors2024, isLight, safeAreaInsets } = ctx;
   return {
+    sheetView: {
+      height: '100%',
+    },
     container: {
       height: '100%',
       paddingHorizontal: 20,
@@ -317,7 +341,14 @@ const getStyle = createGetStyles2024(ctx => {
       width: '100%',
       alignContent: 'center',
       alignItems: 'center',
-      marginBottom: 20,
+      marginBottom: 12,
+    },
+    slippageContainer: {
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      borderRadius: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 16,
     },
     pnlLabel: {
       fontFamily: 'SF Pro Rounded',

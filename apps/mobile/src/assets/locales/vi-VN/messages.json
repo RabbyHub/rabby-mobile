@@ -2675,6 +2675,7 @@
         "sizeTips": "Giá trị hoặc số lượng tổng thể của giao dịch của bạn, được xác định bởi ký quỹ và đòn bẩy.",
         "feeHyperliquid": "Hyperliquid",
         "feeRabby": "Rabby Wallet",
+        "feeRabbyDiscount": "Giảm phí giao dịch trong thời gian có hạn",
         "feeTitle": "Phí",
         "feeDesc": "Khi người dùng thực hiện giao dịch, cả <1>phí giao dịch</1> và <2>phí người xây dựng</2> đều được áp dụng.",
         "amount": "Số tiền",
@@ -2954,6 +2955,11 @@
         "upTo": "Lên đến",
         "onlyIsolated": "Chỉ có margin cô lập được hỗ trợ cho token này"
       },
+      "MarketSlippage": {
+        "estimatedSlippage": "Trượt giá ước tính",
+        "lowLiquiditySwitchLimit": "Thanh khoản thấp, hãy chuyển sang Lệnh Giới Hạn.",
+        "switchToLimit": "Chuyển"
+      },
       "PerpsOpenPositionCheckPopup": {
         "limitTitle": "Kiểm Tra Lệnh Giới Hạn",
         "marketTitle": "Kiểm Tra Lệnh Thị Trường",
@@ -3220,7 +3226,8 @@
           "canNotUseThisCurrencyAsCollateral": "Bạn không thể sử dụng loại tiền tệ này làm tài sản thế chấp.",
           "doNotHaveSuppliesInThisCurrency": "Bạn không có nguồn cung trong loại tiền tệ này.",
           "zeroLTVWithdrawBlocked": "Tài sản có LTV bằng 0 ({{assets}}) phải được rút hoặc vô hiệu hóa làm tài sản thế chấp để thực hiện hành động này.",
-          "canNotSwitchUsageAsCollateralMode": "Không thể thay đổi trạng thái tài sản thế chấp của tài sản này vì có thể kích hoạt thanh lý."
+          "canNotSwitchUsageAsCollateralMode": "Không thể thay đổi trạng thái tài sản thế chấp của tài sản này vì có thể kích hoạt thanh lý.",
+          "zeroLTVEnableEModeFirst": "Tài sản này có LTV bằng 0 và không thể dùng làm tài sản thế chấp. Bật E-Mode để dùng {{asset}} làm tài sản thế chấp."
         }
       },
       "searchMarket": "Tìm kiếm Thị trường",
@@ -3463,6 +3470,29 @@
       "unsupportedAccountType": "Không hỗ trợ loại tài khoản này.",
       "unsupportedAccount": "Hiện chỉ hỗ trợ địa chỉ khóa riêng tư và cụm từ hạt giống.",
       "title": "Chuyển đổi Dust"
+    },
+    "walletConnect": {
+      "screenTitle": "Kết nối ví",
+      "connectingToRabby": "Đang kết nối với Rabby",
+      "pairingFailed": "Ghép nối WalletConnect thất bại.",
+      "connected": "Đã kết nối thành công. Vui lòng quay lại DApp.",
+      "proposalExpired": "Đề xuất WalletConnect đã hết hạn.",
+      "pairingExpired": "Ghép nối WalletConnect đã hết hạn. Làm mới mã QR dapp và thử lại.",
+      "duplicatePairing": "URI WalletConnect này đang được ghép nối. Làm mới mã QR dapp và thử lại.",
+      "relayUnreachable": "Không thể kết nối tới relay WalletConnect. Kiểm tra mạng và thử lại.",
+      "transactionSentReturnToBrowser": "Giao dịch đã được gửi! Vui lòng quay lại DApp.",
+      "transactionCanceledReturnToBrowser": "Giao dịch đã bị hủy! Vui lòng quay lại DApp.",
+      "uriEmpty": "URI WalletConnect không được để trống.",
+      "uriInvalidFormat": "URI WalletConnect phải bắt đầu bằng wc:<topic>@2.",
+      "uriMissingParams": "URI WalletConnect thiếu symKey hoặc relay-protocol.",
+      "unsupportedCapability": {
+        "chain_one": "{{count}} chuỗi",
+        "chain_other": "{{count}} chuỗi",
+        "method_one": "{{count}} phương thức",
+        "method_other": "{{count}} phương thức"
+      },
+      "unsupportedCapabilityList": "{{first}} và {{second}}",
+      "unsupportedRequiredRequest": "Yêu cầu WalletConnect bắt buộc không được hỗ trợ: {{capabilities}} không được hỗ trợ."
     }
   },
   "component": {

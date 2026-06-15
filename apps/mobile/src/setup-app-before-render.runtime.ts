@@ -7,6 +7,7 @@ import { InteractionManager } from 'react-native';
 import { runIIFEFunc } from './core/utils/store';
 import { startSubscribeLangChange } from './hooks/lang';
 import { connectPushServerOnBootstrap } from './core/notifications';
+import { startRestoreWalletConnectSessions } from './core/walletconnect/client';
 
 import { startManageAccountStoreLifecycle } from './hooks/account';
 
@@ -62,6 +63,7 @@ import {
   startProcessAccountBalanceEvents,
 } from './store/balanceAccountSelection';
 import * as apisAutoLock from './core/apis/autoLock';
+import { isUnlockSessionValid } from './core/apis/lock';
 import { startWatchLayoutChange } from './hooks/useAppLayout';
 import { startCareAppNotificationPermissions } from './hooks/appNotification';
 import nftListStore from './store/nfts';
@@ -212,3 +214,13 @@ function startInitStoresOnUnlock() {
 }
 
 startInitStoresOnUnlock();
+
+function startWalletConnectStartupPolicy() {
+  if (keyringService.isUnlocked() || isUnlockSessionValid()) {
+    startRestoreWalletConnectSessions();
+  }
+
+  keyringService.on('unlock', startRestoreWalletConnectSessions);
+}
+
+startWalletConnectStartupPolicy();

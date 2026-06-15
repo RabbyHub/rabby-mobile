@@ -145,6 +145,7 @@ export async function setupWalletPassword(newPassword: string) {
       throw new Error(ERRORS.CURRENT_IS_INCORRET);
     }
     await keyringService.updatePassword(RABBY_MOBILE_KR_PWD, newPassword);
+    await perpsService.resetStore();
   } catch (error: any) {
     result.error = error?.message || 'Failed to set password';
   }
@@ -172,6 +173,7 @@ export async function updateWalletPassword(
 
   try {
     await keyringService.updatePassword(oldPassword, newPassword);
+    await perpsService.resetStore();
   } catch (error) {
     result.error = 'Failed to set password';
   }
@@ -229,6 +231,7 @@ export async function dangerouslyResetPasswordAndKeyrings(
       oldPassword,
       newPassword,
     );
+    await perpsService.resetStore();
   } catch (error) {
     console.error(error);
     result.error = 'Failed to reset password an clear keyrings';
@@ -253,6 +256,7 @@ export async function clearCustomPassword(currentPassword: string) {
 
   try {
     await keyringService.updatePassword(currentPassword, RABBY_MOBILE_KR_PWD);
+    await perpsService.resetStore();
   } catch (error) {
     result.error = 'Failed to cancel password';
   }

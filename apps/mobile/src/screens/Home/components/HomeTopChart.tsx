@@ -40,7 +40,7 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 const ScreenWidth = Dimensions.get('screen').width;
 
 const MAX_NETWORTH_FS = 38;
-const MIN_NETWORTH_FS = 28;
+const MIN_NETWORTH_FS = 24;
 const NETWORTH_FIT_LEN = 9;
 
 const ZERO_LINE_CHART_DATA: CurvePoint[] = [

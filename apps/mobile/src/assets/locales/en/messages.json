@@ -1631,6 +1631,29 @@
       "ignoreAll": "Ignore all",
       "connectWallet": "Connect Wallet"
     },
+    "walletConnect": {
+      "screenTitle": "Connect Wallet",
+      "connectingToRabby": "Connecting to Rabby",
+      "pairingFailed": "WalletConnect pairing failed.",
+      "connected": "Connected successfully. Please return to the Dapp.",
+      "proposalExpired": "WalletConnect proposal expired.",
+      "pairingExpired": "WalletConnect pairing expired. Refresh the dapp QR code and try again.",
+      "duplicatePairing": "This WalletConnect URI is already being paired. Refresh the dapp QR code and try again.",
+      "relayUnreachable": "WalletConnect relay is not reachable. Check the network and try again.",
+      "transactionSentReturnToBrowser": "Transaction sent! Please return to the Dapp.",
+      "transactionCanceledReturnToBrowser": "Transaction canceled! Please return to the Dapp.",
+      "uriEmpty": "WalletConnect URI cannot be empty.",
+      "uriInvalidFormat": "WalletConnect URI must start with wc:<topic>@2.",
+      "uriMissingParams": "WalletConnect URI is missing symKey or relay-protocol.",
+      "unsupportedCapability": {
+        "chain_one": "{{count}} chain",
+        "chain_other": "{{count}} chains",
+        "method_one": "{{count}} method",
+        "method_other": "{{count}} methods"
+      },
+      "unsupportedCapabilityList": "{{first}} and {{second}}",
+      "unsupportedRequiredRequest": "Unsupported required WalletConnect request: {{capabilities}} not supported."
+    },
     "addressDetail": {
       "add-to-whitelist": "Add to Whitelist",
       "pin-in-list": "Pin in List",
@@ -2632,7 +2655,8 @@
         "feeTitle": "Fee",
         "feeDesc": "When users place trades, both\n<1>trading fees</1> and <2>builder fees</2> apply.",
         "feeHyperliquid": "Hyperliquid",
-        "feeRabby": "Rabby Wallet"
+        "feeRabby": "Rabby Wallet",
+        "feeRabbyDiscount": "Limited-time trading fee discount"
       },
       "PerpsAutoCloseModal": {
         "noPosition": "You must input margin first.",
@@ -2910,6 +2934,11 @@
         "limitPrice": "Limit Price",
         "currentPrice": "Current Price"
       },
+      "MarketSlippage": {
+        "estimatedSlippage": "Estimated Slippage",
+        "lowLiquiditySwitchLimit": "Low liquidity, switch to Limit Order.",
+        "switchToLimit": "Switch"
+      },
       "PerpsOpenPositionCheckPopup": {
         "title": "Check Order",
         "limitTitle": "Check Limit Order",
@@ -3121,7 +3150,8 @@
           "doNotHaveSuppliesInThisCurrency": "You do not have supplies in this currency",
           "canNotUseThisCurrencyAsCollateral": "You can not use this currency as collateral",
           "canNotSwitchUsageAsCollateralMode": "You can not switch usage as collateral mode for this currency, because it will cause collateral call",
-          "zeroLTVWithdrawBlocked": "Assets with zero LTV ({{assets}}) must be withdrawn or disabled as collateral to perform this action"
+          "zeroLTVWithdrawBlocked": "Assets with zero LTV ({{assets}}) must be withdrawn or disabled as collateral to perform this action",
+          "zeroLTVEnableEModeFirst": "This asset has 0 LTV and cannot be used as collateral. Enable an E-Mode to use {{asset}} as collateral."
         }
       },
       "borrowDetail": {

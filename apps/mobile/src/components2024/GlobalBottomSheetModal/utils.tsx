@@ -70,6 +70,10 @@ import { LpTokenDescription } from '../LpTokenDescription';
 import CollateralTokenSelectModal from '@/screens/Lending/components/CollateralTokenSelect';
 import TokenGroupDetailSheet from '@/screens/Address/components/MultiAssets/TokenGroupDetailSheet';
 import RepayTokenSelectModal from '@/screens/Lending/components/RepayTokenModal';
+import {
+  WalletConnectConnectSheet,
+  WalletConnectPairingLoading,
+} from '@/components2024/WalletConnect/WalletConnectSheets';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -377,5 +381,17 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.REPAY_TOKEN_SELECT]: {
     snapPoints: [360],
     Component: RepayTokenSelectModal,
+  },
+  [MODAL_NAMES.WALLETCONNECT_PAIRING]: {
+    snapPoints: [317],
+    Component: WalletConnectPairingLoading,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset({
+      linearGradientType: 'bg1',
+    }),
+  },
+  [MODAL_NAMES.WALLETCONNECT_CONNECT]: {
+    snapPoints: ['80%'],
+    Component: WalletConnectConnectSheet,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
 };

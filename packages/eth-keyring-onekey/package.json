@@ -40,7 +40,8 @@
   "devDependencies": {
     "@ethereumjs/tx": "5.4.0",
     "@metamask/auto-changelog": "^3.4.3",
-    "@onekeyfe/hd-core": "1.1.13",
+    "@noble/hashes": "^1.4.0",
+    "@onekeyfe/hd-core": "1.1.26",
     "@types/bytebuffer": "^5.0.48",
     "@types/hdkey": "^2.0.3",
     "@types/jest": "^27.4.1",

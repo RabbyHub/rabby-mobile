@@ -13,6 +13,7 @@ declare module '@env' {
     DEV_SERVER_HOSTNAME?: string;
 
     RABBY_MOBILE_FE_SERVICE_URL?: string;
+    RABBY_MOBILE_WALLETCONNECT_PROJECT_ID?: string;
   };
 
   export = Env;

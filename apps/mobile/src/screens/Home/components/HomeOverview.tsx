@@ -986,15 +986,20 @@ export const HomeOverview = React.memo(() => {
     perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
     const balanceRefresh = refreshManualBalance();
     const gasAccountRefresh = checkGasAccountAddressesEligibility(true);
+    const fullRefresh = Promise.all([
+      balanceRefresh,
+      gasAccountRefresh,
+    ]).finally(refreshManualHomeBackgroundData);
+    const safeFullRefresh = fullRefresh.catch(error => {
+      console.error('Refresh failed:', error);
+    });
 
     await withAnimatedTickerRefreshNudge(() =>
       Promise.race([balanceRefresh, sleep(3000)]),
     ).catch(error => {
       console.error('Refresh balance failed:', error);
     });
-    await Promise.all([balanceRefresh, gasAccountRefresh]).finally(
-      refreshManualHomeBackgroundData,
-    );
+    await Promise.race([safeFullRefresh, sleep(3000)]);
   }, [refreshManualBalance, refreshManualHomeBackgroundData]);
 
   // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();

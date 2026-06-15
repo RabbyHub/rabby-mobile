@@ -65,6 +65,7 @@ import {
   TypeDataActionItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Text } from '@/components/Typography';
+import type { ProviderRequestContext } from '@/core/controllers/type';
 
 interface SignTypedDataProps {
   method: string;
@@ -78,6 +79,7 @@ interface SignTypedDataProps {
   isSend?: boolean;
   account?: Account;
   $ctx?: any;
+  requestContext?: ProviderRequestContext;
 }
 
 export const SignTypedData = ({
@@ -202,6 +204,8 @@ export const SignTypedData = ({
     [method],
   );
 
+  const requestChainId = params.requestContext?.chainId ?? params.$ctx?.chainId;
+
   const [signTypedData, rawMessage]: (null | Record<string, any>)[] =
     useMemo(() => {
       if (!isSignTypedDataV1) {
@@ -218,6 +222,14 @@ export const SignTypedData = ({
     }, [data, isSignTypedDataV1]);
 
   const chain = useMemo(() => {
+    if (requestChainId) {
+      return (
+        findChain({
+          id: requestChainId,
+        }) || undefined
+      );
+    }
+
     if (!isSignTypedDataV1 && signTypedData) {
       let chainId;
       try {
@@ -237,9 +249,13 @@ export const SignTypedData = ({
 
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, isSignTypedDataV1, signTypedData]);
+  }, [data, isSignTypedDataV1, signTypedData, requestChainId]);
 
   const getCurrentChainId = async () => {
+    if (requestChainId) {
+      return requestChainId;
+    }
+
     if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
       const site = await dappService.getDapp(params.session.origin);
       if (site) {
@@ -258,7 +274,7 @@ export const SignTypedData = ({
       setCurrentChainId(id);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.session.origin]);
+  }, [params.session.origin, requestChainId]);
 
   const {
     value: typedDataActionData,
@@ -467,7 +483,9 @@ export const SignTypedData = ({
   const init = async () => {};
 
   const getRequireData = async (data: ParsedTypedDataActionData) => {
-    if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
+    if (requestChainId) {
+      data.chainId = requestChainId.toString();
+    } else if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
       const site = await dappService.getDapp(params.session.origin);
       if (site) {
         data.chainId = findChain({

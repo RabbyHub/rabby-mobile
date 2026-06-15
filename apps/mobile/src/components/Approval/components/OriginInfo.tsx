@@ -77,19 +77,19 @@ export const OriginInfo: React.FC<Props> = ({
   const { styles } = useTheme2024({ getStyle });
 
   const currentChain = useMemo(() => {
-    if (inDappAction) {
-      return chain || CHAINS.ETH;
+    if (chain) {
+      return chain;
     }
-    if (origin === INTERNAL_REQUEST_ORIGIN) {
-      return chain || CHAINS.ETH;
-    } else {
-      if (!connectedSite) {
-        return CHAINS.ETH;
-      }
-      return findChain({
+
+    if (inDappAction || origin === INTERNAL_REQUEST_ORIGIN || !connectedSite) {
+      return CHAINS.ETH;
+    }
+
+    return (
+      findChain({
         enum: connectedSite.chainId,
-      })!;
-    }
+      }) || CHAINS.ETH
+    );
   }, [inDappAction, origin, chain, connectedSite]);
 
   const displayOrigin = useMemo(() => {

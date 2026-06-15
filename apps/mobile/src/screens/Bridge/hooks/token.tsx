@@ -765,10 +765,12 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   ]);
 
   const fetchIdRef = useRef(0);
+  const [quoteRequestId, setQuoteRequestId] = useState(0);
   const [{ loading: quoteLoading, error: quotesError }, getQuoteList] =
     useAsyncFn(async () => {
       fetchIdRef.current += 1;
       const currentFetchId = fetchIdRef.current;
+      setQuoteRequestId(currentFetchId);
 
       if (
         canRequestQuote &&
@@ -1016,6 +1018,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   useLayoutEffect(() => {
     fetchIdRef.current += 1;
+    setQuoteRequestId(fetchIdRef.current);
     setQuotesList([]);
     setRecommendFromToken(undefined);
     setSelectedBridgeQuote(undefined);
@@ -1319,6 +1322,8 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
     openQuotesList,
     quoteLoading: quoteDisplayLoading,
+    allQuotesLoaded: bridgeQuoteRequestFinished,
+    quoteRequestId,
     quoteList,
     setQuotesList,
 

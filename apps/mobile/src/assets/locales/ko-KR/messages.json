@@ -2555,6 +2555,7 @@
         "sizeTips": "거래의 총 가치 또는 수량으로, 마진과 레버리지에 의해 설정됩니다.",
         "feeTitle": "수수료",
         "feeRabby": "래비 월렛",
+        "feeRabbyDiscount": "기간 한정 거래 수수료 할인",
         "feeHyperliquid": "하이퍼리퀴드",
         "feeDesc": "사용자가 거래를 할 때, <1>거래 수수료</1>와 <2>빌더 수수료</2>가 모두 적용됩니다.",
         "amount": "금액",
@@ -2834,6 +2835,11 @@
         "upTo": "최대",
         "onlyIsolated": "이 토큰에 대해서는 격리 마진만 지원됩니다."
       },
+      "MarketSlippage": {
+        "estimatedSlippage": "예상 슬리피지",
+        "lowLiquiditySwitchLimit": "유동성이 낮습니다. 지정가 주문으로 전환하세요.",
+        "switchToLimit": "전환"
+      },
       "PerpsOpenPositionCheckPopup": {
         "limitTitle": "지정가 주문 확인",
         "marketTitle": "시장가 주문 확인",
@@ -3100,7 +3106,8 @@
           "doNotHaveSuppliesInThisCurrency": "이 통화에 자산이 없습니다.",
           "canNotUseThisCurrencyAsCollateral": "이 통화를 담보로 사용할 수 없습니다.",
           "canNotSwitchUsageAsCollateralMode": "이 자산의 담보 상태를 변경할 수 없습니다. 청산이 발생할 수 있기 때문입니다.",
-          "zeroLTVWithdrawBlocked": "LTV가 0인 자산 ({{assets}})은 이 작업을 수행하기 위해 인출하거나 담보로 사용 중지해야 합니다."
+          "zeroLTVWithdrawBlocked": "LTV가 0인 자산 ({{assets}})은 이 작업을 수행하기 위해 인출하거나 담보로 사용 중지해야 합니다.",
+          "zeroLTVEnableEModeFirst": "이 자산은 LTV가 0이므로 담보로 사용할 수 없습니다. {{asset}}을(를) 담보로 사용하려면 E-Mode를 활성화하세요."
         }
       },
       "searchMarket": "시장 검색",
@@ -3343,6 +3350,29 @@
       "unsupportedAccountType": "이 계정 유형은 지원하지 않습니다.",
       "unsupportedAccount": "현재 개인 키와 시드 구문 주소만 지원됩니다.",
       "title": "소액 전환"
+    },
+    "walletConnect": {
+      "screenTitle": "지갑 연결",
+      "connectingToRabby": "Rabby에 연결 중",
+      "pairingFailed": "WalletConnect 페어링에 실패했습니다.",
+      "connected": "성공적으로 연결되었습니다. DApp으로 돌아가세요.",
+      "proposalExpired": "WalletConnect 제안이 만료되었습니다.",
+      "pairingExpired": "WalletConnect 페어링이 만료되었습니다. dapp QR 코드를 새로고침한 후 다시 시도하세요.",
+      "duplicatePairing": "이 WalletConnect URI는 이미 페어링 중입니다. dapp QR 코드를 새로고침한 후 다시 시도하세요.",
+      "relayUnreachable": "WalletConnect 릴레이에 연결할 수 없습니다. 네트워크를 확인한 후 다시 시도하세요.",
+      "transactionSentReturnToBrowser": "트랜잭션이 전송되었습니다! DApp으로 돌아가세요.",
+      "transactionCanceledReturnToBrowser": "트랜잭션이 취소되었습니다! DApp으로 돌아가세요.",
+      "uriEmpty": "WalletConnect URI는 비워둘 수 없습니다.",
+      "uriInvalidFormat": "WalletConnect URI는 wc:<topic>@2로 시작해야 합니다.",
+      "uriMissingParams": "WalletConnect URI에 symKey 또는 relay-protocol이 없습니다.",
+      "unsupportedCapability": {
+        "chain_one": "{{count}}개 체인",
+        "chain_other": "{{count}}개 체인",
+        "method_one": "{{count}}개 메서드",
+        "method_other": "{{count}}개 메서드"
+      },
+      "unsupportedCapabilityList": "{{first}} 및 {{second}}",
+      "unsupportedRequiredRequest": "지원되지 않는 필수 WalletConnect 요청: {{capabilities}}은(는) 지원되지 않습니다."
     }
   },
   "global": {

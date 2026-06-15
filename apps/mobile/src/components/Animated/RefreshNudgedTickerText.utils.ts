@@ -24,7 +24,6 @@ const getVisibleNumericValue = (text: string, maxLength: number) => {
   let numericText = '';
   let hasDigit = false;
   let hasDecimalPoint = false;
-  let lastNumberIndex = -1;
 
   for (let i = 0; i < visibleLength; i += 1) {
     const code = text.charCodeAt(i);
@@ -33,7 +32,6 @@ const getVisibleNumericValue = (text: string, maxLength: number) => {
     if (code >= 48 && code <= 57) {
       numericText += text[i];
       hasDigit = true;
-      lastNumberIndex = i;
       continue;
     }
 
@@ -44,7 +42,6 @@ const getVisibleNumericValue = (text: string, maxLength: number) => {
     if (code === 46 && !hasDecimalPoint) {
       numericText += '.';
       hasDecimalPoint = true;
-      lastNumberIndex = i;
     }
   }
 
@@ -57,27 +54,7 @@ const getVisibleNumericValue = (text: string, maxLength: number) => {
     return 0;
   }
 
-  let multiplier = 1;
-  for (let i = lastNumberIndex + 1; i < visibleLength; i += 1) {
-    const code = text.charCodeAt(i);
-
-    if (code === 66 || code === 98) {
-      multiplier = 1_000_000_000;
-      break;
-    }
-
-    if (code === 77 || code === 109) {
-      multiplier = 1_000_000;
-      break;
-    }
-
-    if (code === 75 || code === 107) {
-      multiplier = 1_000;
-      break;
-    }
-  }
-
-  return numericValue * multiplier;
+  return numericValue;
 };
 
 export const shouldNudgeRefreshText = (
