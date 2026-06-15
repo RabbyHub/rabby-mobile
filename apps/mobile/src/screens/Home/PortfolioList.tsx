@@ -349,11 +349,11 @@ export const PortfolioList = ({
                   onRefresh?.(),
                 );
                 const portfolioRefresh = updatePortfolio?.(lowerAddress, true);
-                await withAnimatedTickerRefreshNudge(
-                  () => balanceRefresh,
-                ).catch(error => {
-                  console.error('Refresh balance failed:', error);
-                });
+                withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(
+                  error => {
+                    console.error('Refresh balance failed:', error);
+                  },
+                );
                 await portfolioRefresh;
               } finally {
                 setIsManualRefreshing(false);

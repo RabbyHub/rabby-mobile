@@ -305,11 +305,11 @@ const NFTListInner = ({
                   onRefresh?.(),
                 );
                 const nftRefresh = reloadNftList?.(true);
-                await withAnimatedTickerRefreshNudge(
-                  () => balanceRefresh,
-                ).catch(error => {
-                  console.error('Refresh balance failed:', error);
-                });
+                withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(
+                  error => {
+                    console.error('Refresh balance failed:', error);
+                  },
+                );
                 await nftRefresh;
               } finally {
                 setIsManualRefreshing(false);

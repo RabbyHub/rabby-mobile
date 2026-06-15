@@ -389,11 +389,9 @@ export const TokenList = ({
     try {
       const balanceRefresh = Promise.resolve().then(() => onRefresh?.());
       const tokenRefresh = getTokenList(currentAddress, true);
-      await withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(
-        error => {
-          console.error('Refresh balance failed:', error);
-        },
-      );
+      withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(error => {
+        console.error('Refresh balance failed:', error);
+      });
       await tokenRefresh;
     } finally {
       setIsManualRefreshing(false);
