@@ -64,13 +64,13 @@ export default function MarketItem({
           <Text style={styles.nameText} numberOfLines={1}>
             {data?.marketTitle}
           </Text>
-        </View>
-        <View style={styles.rightArea}>
           {!!usdValue && (
             <Text style={styles.usdValueText}>
               {formatNetworth(usdValue || 0)}
             </Text>
           )}
+        </View>
+        <View style={styles.rightArea}>
           {isSelected ? <RcIconChecked /> : null}
         </View>
       </View>
@@ -113,6 +113,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'column',
     flex: 1,
     flexShrink: 1,
+    gap: 4,
   },
   nameText: {
     fontSize: 16,
@@ -141,10 +142,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   usdValueText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '500',
     lineHeight: 20,
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro',
   },
   rightArea: {
     flexDirection: 'row',
