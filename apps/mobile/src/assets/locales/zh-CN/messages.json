@@ -1648,7 +1648,9 @@
         "method_other": "{{count}} 个方法"
       },
       "unsupportedCapabilityList": "{{first}} 和 {{second}}",
-      "unsupportedRequiredRequest": "不支持必需的 WalletConnect 请求：{{capabilities}}。"
+      "unsupportedRequiredRequest": "不支持必需的 WalletConnect 请求：{{capabilities}}。",
+      "transactionSentReturnToBrowser": "交易已发送！请返回 DApp。",
+      "transactionCanceledReturnToBrowser": "交易已取消！请返回 DApp。"
     },
     "addToken": {
       "noTokenFound": "未找到 token",
@@ -3257,7 +3259,8 @@
           "doNotHaveSuppliesInThisCurrency": "您没有存入该资产。",
           "zeroLTVWithdrawBlocked": "LTV 为 0 的资产（{{assets}}）必须先提取或关闭抵押用途，才能执行此操作。",
           "canNotSwitchUsageAsCollateralMode": "无法切换该资产的抵押状态，因为这可能触发清算。",
-          "canNotUseThisCurrencyAsCollateral": "该资产不能用作抵押品。"
+          "canNotUseThisCurrencyAsCollateral": "该资产不能用作抵押品。",
+          "zeroLTVEnableEModeFirst": "该资产的 LTV 为 0，不能用作抵押品。请先启用 E-Mode，才能将 {{asset}} 用作抵押品。"
         }
       },
       "searchMarket": "搜索市场",
