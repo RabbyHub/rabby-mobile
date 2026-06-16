@@ -20,8 +20,8 @@ import {
 } from 'react-native-gesture-handler';
 import RcIconFavoriteCC from '@/assets2024/icons/browser/favorite-cc.svg';
 import { useDapps } from '@/hooks/useDapps';
-import { dappService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
+import { apisDapp } from '@/core/apis';
 
 export const BrowserHandler = () => {
   const { styles, isLight, colors2024 } = useTheme2024({
@@ -90,14 +90,9 @@ export const BrowserHandler = () => {
           text: t('global.Confirm'),
           // style: 'destructive',
           onPress: () => {
-            dappService.patchDapps(
-              connectedDapps.reduce((result, item) => {
-                result[item.origin] = {
-                  isConnected: false,
-                };
-                return result;
-              }, {}),
-            );
+            connectedDapps.forEach(dapp => {
+              apisDapp.disconnect(dapp.origin);
+            });
             toast.success(t('page.browser.disconnectAllAlert.success'));
           },
         },
