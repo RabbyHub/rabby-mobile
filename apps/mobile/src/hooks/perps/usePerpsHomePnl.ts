@@ -3,18 +3,28 @@ import { useShallow } from 'zustand/react/shallow';
 import { usePerpsAccount } from './usePerpsAccount';
 
 export const usePerpsHomePnl = () => {
-  const { homePositionPnl, userAbstractionReady } = perpsStore(
+  const {
+    currentPerpsAccount,
+    homePositionPnl,
+    isFetchAllDone,
+    isUserDataReady,
+  } = perpsStore(
     useShallow(s => ({
+      currentPerpsAccount: s.currentPerpsAccount,
       homePositionPnl: s.homePositionPnl,
-      userAbstractionReady: s.userAbstractionReady,
+      isFetchAllDone: s.isFetchAllDone,
+      isUserDataReady: s.isUserDataReady,
     })),
   );
   const { availableBalance } = usePerpsAccount();
+  const isLoading =
+    !homePositionPnl.show &&
+    (currentPerpsAccount ? !isUserDataReady : !isFetchAllDone);
 
   return {
     perpsPositionInfo: {
       ...homePositionPnl,
-      show: userAbstractionReady,
+      isLoading,
       availableBalance: Number(availableBalance),
     },
   };

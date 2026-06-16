@@ -376,6 +376,12 @@ const setCurrentPerpsAccount = (payload: Account) => {
     ...prev,
     currentPerpsAccount: payload,
     isLogin: !!payload,
+    isUserDataReady:
+      prev.currentPerpsAccount &&
+      isSameAddress(prev.currentPerpsAccount.address, payload.address) &&
+      prev.currentPerpsAccount.type === payload.type
+        ? prev.isUserDataReady
+        : false,
   }));
   perpsService.setCurrentAccount(payload);
 };
@@ -1323,6 +1329,7 @@ export const usePerpsStore = () => {
       currentPerpsAccount: account,
       isLogin: !!account,
       currentClearinghouseState: null,
+      isUserDataReady: false,
       userAbstraction: UserAbstractionResp.default,
       localLoadingHistory: [],
     }));
