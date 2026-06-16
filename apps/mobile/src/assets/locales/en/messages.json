@@ -2455,7 +2455,8 @@
         "openDapp": "Open"
       },
       "disconnectAllAlert": {
-        "desc": "You will disconnect all {{count}} connected DApps.",
+        "desc_one": "You will disconnect {{count}} connected DApp.",
+        "desc_other": "You will disconnect {{count}} connected DApps.",
         "title": "Disconnect All?",
         "success": "Disconnected all DApps."
       }
