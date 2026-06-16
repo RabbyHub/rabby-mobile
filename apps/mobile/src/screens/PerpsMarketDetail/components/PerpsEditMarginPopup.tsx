@@ -407,7 +407,12 @@ export const PerpsEditMarginPopup: React.FC<{
 
               <View style={styles.marginAvailableWrapper}>
                 <Text style={styles.marginAvailable}>
-                  {formatPerpsNumber(minMargin, BigNumber.ROUND_DOWN)}
+                  {formatPerpsNumber(
+                    minMargin,
+                    2,
+                    undefined,
+                    BigNumber.ROUND_DOWN,
+                  )}
                 </Text>
                 <View style={styles.errorMsgContainer}>
                   {marginValidation.error ? (
@@ -417,7 +422,12 @@ export const PerpsEditMarginPopup: React.FC<{
                   ) : null}
                 </View>
                 <Text style={styles.marginAvailable}>
-                  {formatPerpsNumber(maxMargin, BigNumber.ROUND_DOWN)}
+                  {formatPerpsNumber(
+                    maxMargin,
+                    2,
+                    undefined,
+                    BigNumber.ROUND_DOWN,
+                  )}
                 </Text>
               </View>
               {/*
