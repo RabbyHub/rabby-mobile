@@ -2264,7 +2264,8 @@
       "clearBrowserData": "清除浏览器数据",
       "currency": "货币",
       "searchCurrency": "搜索货币",
-      "screenshotReportSwitch": "截图以报告错误"
+      "screenshotReportSwitch": "截图以报告错误",
+      "dataAnalysis": "数据分析"
     },
     "settingModal": {
       "themeMode": {

@@ -154,7 +154,10 @@ import {
   setEnableTransactionNofification,
   useAppNotificationEnabled,
 } from '@/hooks/appNotification';
-import { AppSwitch2024 } from '@/components/customized/Switch2024';
+import {
+  AppSwitch2024,
+  SwitchToggleType,
+} from '@/components/customized/Switch2024';
 import { SupportedLang } from '@/utils/i18n';
 import { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
 import {
@@ -169,7 +172,10 @@ import { Text } from '@/components/Typography';
 import { useAppSecurityChain } from '@/hooks/global';
 import { useToggleShowUnlockStatusBar } from '@/hooks/appSettings';
 import { SwitchShowFloatingUnlockStatusBar } from './components/SwitchFloatingView';
-import { SwitchUserBehaviorTrackingOptOut } from './components/SwitchUserBehaviorTrackingOptOut';
+import {
+  SwitchDataAnalysis,
+  SwitchUserBehaviorTrackingOptOut,
+} from './components/SwitchUserBehaviorTrackingOptOut';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -400,6 +406,8 @@ function SettingsBlocks() {
     });
   }, []);
 
+  const toggleDataAnalysisRef = useRef<SwitchToggleType>(null);
+
   const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
       settings: {
@@ -539,6 +547,14 @@ function SettingsBlocks() {
             },
             // disabled: disabledBiometrics,
             visible: !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
+          },
+          {
+            label: t('page.setting.dataAnalysis'),
+            icon: RcPrivacyPolicy,
+            onPress: () => {
+              toggleDataAnalysisRef?.current?.toggle();
+            },
+            rightNode: <SwitchDataAnalysis ref={toggleDataAnalysisRef} />,
           },
           {
             label: t('page.setting.clearPending'),
