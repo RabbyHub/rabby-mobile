@@ -38,6 +38,9 @@ if [[ "$CONFIGURATION" == "Regression" ]]; then
     exit 1;
   fi
 fi
+if [ -z "${APP_ENV:-}" ] && [ -n "${RABBY_MOBILE_BUILD_ENV:-}" ]; then
+  export APP_ENV="$RABBY_MOBILE_BUILD_ENV"
+fi
 if [[ "$APP_ENV" == "hashing" ]] && [[ "$RABBY_MOBILE_CODE" == "RABBY_MOBILE_CODE_DEV" ]]; then
   echo "[RabbyMobileBuild] hashing mode allows fixed RABBY_MOBILE_CODE_DEV."
 fi
@@ -53,10 +56,9 @@ if [[ "$CONFIGURATION" == "Regression" ]] && [[ "$RABBY_MOBILE_CODE" == "RABBY_M
 fi
 echo "[RabbyMobileBuild] buildchannel is $buildchannel"
 
-check_env_file() {
+resolve_bundle_env_file() {
   env_file="$project_dir/.env"
   if [ "$APP_ENV" == "hashing" ]; then
-    echo "[RabbyMobileBuild] in hashing mode"
     env_file="$project_dir/.env.hashing"
   elif [ "$CONFIGURATION" == "Release" ]; then
     env_file="$project_dir/.env.production"
@@ -72,6 +74,91 @@ check_env_file() {
     env_file="$project_dir/.env.local"
   fi
 
+  printf '%s\n' "$env_file"
+}
+
+read_bundle_env_value() {
+  local env_file="$1"
+  local env_key="$2"
+
+  [ -f "$env_file" ] || return 1
+
+  awk -v key="$env_key" '
+    /^[[:space:]]*#/ || /^[[:space:]]*$/ { next }
+    {
+      line = $0
+      sub(/\r$/, "", line)
+      sub(/^[[:space:]]*export[[:space:]]+/, "", line)
+      pos = index(line, "=")
+      if (pos == 0) next
+
+      current_key = substr(line, 1, pos - 1)
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", current_key)
+      if (current_key != key) next
+
+      value = substr(line, pos + 1)
+      sub(/[[:space:]]*#.*$/, "", value)
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+
+      first = substr(value, 1, 1)
+      last = substr(value, length(value), 1)
+      if ((first == "\"" && last == "\"") || (first == "'"'"'" && last == "'"'"'")) {
+        value = substr(value, 2, length(value) - 2)
+      }
+
+      print value
+      exit
+    }
+  ' "$env_file"
+}
+
+log_bundle_env_value() {
+  local env_file="$1"
+  local env_key="$2"
+  local visibility="$3"
+  local shell_value file_value effective_value effective_source
+
+  eval "shell_value=\${$env_key:-}"
+  file_value=$(read_bundle_env_value "$env_file" "$env_key" 2>/dev/null || true)
+
+  if [ -n "$shell_value" ]; then
+    effective_value="$shell_value"
+    effective_source="shell-env"
+  elif [ -n "$file_value" ]; then
+    effective_value="$file_value"
+    effective_source="dotenv-file"
+  else
+    effective_value=""
+    effective_source="unset"
+  fi
+
+  if [ "$visibility" = "secret" ]; then
+    echo "[RabbyMobileBuild] env diagnostics: $env_key shell=$([ -n "$shell_value" ] && echo set || echo unset) file=$([ -n "$file_value" ] && echo set || echo unset) effective_source=$effective_source"
+  else
+    echo "[RabbyMobileBuild] env diagnostics: $env_key shell=${shell_value:-<unset>} file=${file_value:-<unset>} effective=${effective_value:-<unset>} effective_source=$effective_source"
+  fi
+}
+
+log_bundle_env_diagnostics() {
+  local env_file="$1"
+  local dotenv_mode="${APP_ENV:-${BABEL_ENV:-${NODE_ENV:-development}}}"
+
+  echo "[RabbyMobileBuild] env diagnostics begin"
+  echo "[RabbyMobileBuild] env diagnostics: CONFIGURATION=${CONFIGURATION:-unset} RABBY_MOBILE_BUILD_ENV=${RABBY_MOBILE_BUILD_ENV:-unset} APP_ENV=${APP_ENV:-unset} BABEL_ENV=${BABEL_ENV:-unset} NODE_ENV=${NODE_ENV:-unset} dotenv_mode=$dotenv_mode buildchannel=${buildchannel:-unset}"
+  echo "[RabbyMobileBuild] env diagnostics: expected_dotenv_file=$env_file exists=$([ -f "$env_file" ] && echo yes || echo no)"
+  log_bundle_env_value "$env_file" RABBY_MOBILE_BUILD_CHANNEL public
+  log_bundle_env_value "$env_file" RABBY_MOBILE_FE_SERVICE_URL public
+  log_bundle_env_value "$env_file" RABBY_MOBILE_KR_PWD secret
+  log_bundle_env_value "$env_file" RABBY_MOBILE_CODE secret
+  echo "[RabbyMobileBuild] env diagnostics end"
+}
+
+check_env_file() {
+  env_file=$(resolve_bundle_env_file)
+  if [ "$APP_ENV" == "hashing" ]; then
+    echo "[RabbyMobileBuild] in hashing mode"
+  fi
+
   echo "[RabbyMobileBuild] checking env file: $env_file"
 
   local sysenv_krPwd=$RABBY_MOBILE_KR_PWD
@@ -81,6 +168,7 @@ check_env_file() {
   if [ -f "$env_file" ]; then
     while IFS='=' read -r key value || [ -n "$key" ]; do
       key_cleaned=$(echo "$key" | sed 's/#.*//' | awk '{$1=$1};1')
+      key_cleaned=$(echo "$key_cleaned" | sed 's/^export[[:space:]]\+//')
       if [ -z "$key_cleaned" ]; then continue; fi
       value_cleaned=$(echo "$value" | sed 's/#.*//' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e "s/^'//" -e "s/'$//" -e 's/^"//' -e 's/"$//')
       if [ "$key_cleaned" == "RABBY_MOBILE_KR_PWD" ]; then
@@ -116,6 +204,7 @@ check_env_file() {
   fi
 }
 
+log_bundle_env_diagnostics "$(resolve_bundle_env_file)"
 check_env_file;
 
 if [ "$CONFIGURATION" == "Debug" ] && [ "$IOS_SKIP_METRO_BUNDLE_ON_DEBUG" == "true" ]; then
