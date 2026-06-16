@@ -81,7 +81,7 @@ jobs:
     runs-on: macos-26
     env:
       NODE_OPTIONS: '--max_old_space_size=8192'
-      XCODE_VER: '26.5'
+      XCODE_VER: '26.3'
 
     outputs:
       ios_hash: ${{ steps.generate_hash.outputs.hash }}
