@@ -1,5 +1,5 @@
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
-import { sendRequest } from '@/core/apis/provider';
+import { sendRequest } from '@/core/apis/sendRequest';
 import { openapi } from '@/core/request';
 import {
   gasAccountService,

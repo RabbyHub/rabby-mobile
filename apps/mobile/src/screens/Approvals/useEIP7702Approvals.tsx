@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { apiProvider } from '@/core/apis';
+import { sendRequest } from '@/core/apis/sendRequest';
 import useAsync from 'react-use/lib/useAsync';
 import { Account } from '@/core/services/preference';
 import { getRecommendNonce } from '@/core/apis/provider';
@@ -226,7 +227,7 @@ export const useEIP7702ApprovalsQuery = ({
             type: 4,
             nonce: _nonce,
           };
-          await apiProvider.sendRequest({
+          await sendRequest({
             data: {
               $ctx: {
                 eip7702Revoke: true,

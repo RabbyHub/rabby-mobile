@@ -40,6 +40,7 @@ export function HeaderRightHistoryButton({
 
   return (
     <CustomTouchableOpacity
+      as="RNGHTouchableOpacity"
       style={style}
       hitSlop={historyHitSlop}
       onPress={onPress}>

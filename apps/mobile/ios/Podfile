@@ -1,5 +1,5 @@
-# Disable New Architecture
-ENV['RCT_NEW_ARCH_ENABLED'] = "0"
+# Enable New Architecture
+ENV['RCT_NEW_ARCH_ENABLED'] = "1"
 
 def node_require(script)
   # Resolve script with node to allow for hoisting
@@ -14,6 +14,7 @@ node_require('react-native/scripts/react_native_pods.rb')
 node_require('react-native-permissions/scripts/setup.rb')
 
 $RNFirebaseAsStaticFramework = true
+$FirebaseSDKVersion = '11.4.0'
 $RNGoogleMobileAdsAsStaticFramework = true
 $RNAdMobAsStaticFramework = true
 # $NotifeeExtension = true
