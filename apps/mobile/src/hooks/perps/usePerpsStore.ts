@@ -155,6 +155,8 @@ export interface PerpsState {
   isInitialized: boolean;
   // First WS snapshot received for the current account's clearinghouse state.
   isUserDataReady: boolean;
+  // First WS snapshot received for the current account's spot state.
+  isSpotStateReady: boolean;
   // First WS push received for global asset ticker (AllDexsAssetCtxs).
   isMarketTickerReady: boolean;
   approveSignatures: ApproveSignatures;
@@ -209,6 +211,7 @@ export const initialState: PerpsState = {
   isLogin: false,
   isInitialized: false,
   isUserDataReady: false,
+  isSpotStateReady: false,
   isMarketTickerReady: false,
   userFills: [],
   approveSignatures: [],
@@ -382,6 +385,18 @@ const setCurrentPerpsAccount = (payload: Account) => {
       prev.currentPerpsAccount.type === payload.type
         ? prev.isUserDataReady
         : false,
+    isSpotStateReady:
+      prev.currentPerpsAccount &&
+      isSameAddress(prev.currentPerpsAccount.address, payload.address) &&
+      prev.currentPerpsAccount.type === payload.type
+        ? prev.isSpotStateReady
+        : false,
+    userAbstractionReady:
+      prev.currentPerpsAccount &&
+      isSameAddress(prev.currentPerpsAccount.address, payload.address) &&
+      prev.currentPerpsAccount.type === payload.type
+        ? prev.userAbstractionReady
+        : false,
   }));
   perpsService.setCurrentAccount(payload);
 };
@@ -402,6 +417,8 @@ export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
     isLogin: !!payload,
     isInitialized: false,
     isUserDataReady: false,
+    isSpotStateReady: false,
+    userAbstractionReady: false,
     currentClearinghouseState: null,
     homePositionPnl: pnl,
     accountNeedApproveAgent: false,
@@ -756,6 +773,8 @@ const resetAccountState = () => {
     accountNeedApproveAgent: false,
     accountNeedApproveBuilderFee: false,
     isUserDataReady: false,
+    isSpotStateReady: false,
+    userAbstractionReady: false,
     currentClearinghouseState: null,
   }));
 };
@@ -1013,6 +1032,7 @@ export const subscribeToUserData = (account: Account) => {
       setPerpsState(prev => ({
         ...prev,
         spotState: formatSpotState(spotState),
+        isSpotStateReady: true,
       }));
     },
   );
@@ -1330,7 +1350,9 @@ export const usePerpsStore = () => {
       isLogin: !!account,
       currentClearinghouseState: null,
       isUserDataReady: false,
+      isSpotStateReady: false,
       userAbstraction: UserAbstractionResp.default,
+      userAbstractionReady: false,
       localLoadingHistory: [],
     }));
     fetchUserHistoricalOrders();
