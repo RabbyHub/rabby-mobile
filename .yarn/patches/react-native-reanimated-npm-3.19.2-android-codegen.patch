@@ -1,0 +1,13 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 3d4d8be1c6828c78125fc7f23a29ac7fcb8d4a22..b33cfe6d3152a92a9c588008af1c8f281f0d829b 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -342,7 +342,8 @@ android {
+     sourceSets.main {
+         java {
+             if (IS_NEW_ARCHITECTURE_ENABLED) {
+                 srcDirs += "src/fabric/java"
++                srcDirs += "$buildDir/generated/source/codegen/java"
+             } else {
+                 srcDirs += "src/paper/java"
+             }

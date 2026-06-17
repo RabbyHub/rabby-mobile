@@ -40710,6 +40710,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-reanimated@patch:react-native-reanimated@npm%3A3.19.2#./.yarn/patches/react-native-reanimated-npm-3.19.2-android-codegen.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 3.19.2
+  resolution: "react-native-reanimated@patch:react-native-reanimated@npm%3A3.19.2#./.yarn/patches/react-native-reanimated-npm-3.19.2-android-codegen.patch::version=3.19.2&hash=b43cb5&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    "@babel/plugin-transform-arrow-functions": "npm:^7.0.0-0"
+    "@babel/plugin-transform-class-properties": "npm:^7.0.0-0"
+    "@babel/plugin-transform-classes": "npm:^7.0.0-0"
+    "@babel/plugin-transform-nullish-coalescing-operator": "npm:^7.0.0-0"
+    "@babel/plugin-transform-optional-chaining": "npm:^7.0.0-0"
+    "@babel/plugin-transform-shorthand-properties": "npm:^7.0.0-0"
+    "@babel/plugin-transform-template-literals": "npm:^7.0.0-0"
+    "@babel/plugin-transform-unicode-regex": "npm:^7.0.0-0"
+    "@babel/preset-typescript": "npm:^7.16.7"
+    convert-source-map: "npm:^2.0.0"
+    invariant: "npm:^2.2.4"
+    react-native-is-edge-to-edge: "npm:1.1.7"
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+    react: "*"
+    react-native: "*"
+  checksum: 10/22b00234ca295fb69d048770a5023bc9a0e51cbdce7d0d578e1c636d9c1bf113468e7bb5b0fe50ee8308fa1954fc3e3a6aafaebc17d9d53b059ba2ba31dba96f
+  languageName: node
+  linkType: hard
+
 "react-native-redash@npm:^16.1.1":
   version: 16.3.0
   resolution: "react-native-redash@npm:16.3.0"
