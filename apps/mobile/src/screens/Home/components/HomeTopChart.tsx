@@ -41,7 +41,7 @@ const ScreenWidth = Dimensions.get('screen').width;
 
 const MAX_NETWORTH_FS = 38;
 const MIN_NETWORTH_FS = 24;
-const NETWORTH_FIT_LEN = 9;
+const NETWORTH_FIT_LEN = 8;
 
 const ZERO_LINE_CHART_DATA: CurvePoint[] = [
   {
