@@ -2301,7 +2301,8 @@
       "screenshotReportSwitch": "Screenshot to report bug",
       "currency": "Currency",
       "searchCurrency": "Search Currency",
-      "transactionNotification": "Txn notifications (Beta)"
+      "transactionNotification": "Txn notifications (Beta)",
+      "dataAnalysis": "Data Analysis"
     },
     "settingModal": {
       "themeMode": {
