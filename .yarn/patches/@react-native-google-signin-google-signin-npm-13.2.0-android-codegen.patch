@@ -1,0 +1,13 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 60a1308f7505bd0f2bcda4e069eb583c0f09d4fd..ee3f8c7bc6e6ce1b7a06792dc0759e212048094f 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -58,7 +58,8 @@ android {
+   sourceSets.main {
+     java {
+       if (isNewArchitectureEnabled()) {
+         srcDirs += 'src/newArch/java'
++        srcDirs += "$buildDir/generated/source/codegen/java"
+       } else {
+         srcDirs += 'src/oldArch/java'
+       }
