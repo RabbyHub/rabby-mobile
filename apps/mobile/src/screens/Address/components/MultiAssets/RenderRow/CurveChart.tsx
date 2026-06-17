@@ -43,7 +43,7 @@ const CHART_HORIZONTAL_INSET = 66;
 
 const MAX_NETWORTH_FS = 38;
 const MIN_NETWORTH_FS = 24;
-const NETWORTH_FIT_LEN = 8;
+const NETWORTH_FIT_LEN = 7;
 
 const svIsFoldMultiChart = makeMutable(true);
 
