@@ -31,10 +31,12 @@ The main agent's job is to:
 
 ## 1. Discover the current release
 
-Query Sentry for the latest deployed release — this is the version that matters for triage, since it reflects what is actually in production:
+Query Sentry for the latest deployed release — this is the version that matters for triage, since it reflects what is actually in production.
+
+The environment filter must match the one used in step 2's issue list query. The default is `ch:appstore|env:production` (production App Store builds). If the user asks for a different environment, use that here too — the release list and the issue list must always agree on the environment.
 
 ```bash
-sentry release list rabby-wallet/rabby-mobile --json --limit 1 --sort date
+sentry release list rabby-wallet/rabby-mobile --json --limit 1 --sort date --environment "ch:appstore|env:production"
 ```
 
 Parse the first entry's `version` field and `dateCreated` (ISO 8601) from the JSON array. If the CLI fails (auth, network, empty project), fall back to `jq -r '.version' apps/mobile/package.json` and leave `$RELEASE_DATE` empty — the subagents will rely on the "7 days from today" rule only.
@@ -44,6 +46,7 @@ If the user names a specific release, use that instead (look it up with `sentry 
 Store the resolved values:
 - `$VERSION` — the release version string (e.g. `0.6.75`).
 - `$RELEASE_DATE` — the ISO 8601 creation date of that release (e.g. `2026-06-15T10:00:00Z`). Used by per-issue subagents to judge whether an issue is new to this release.
+- `$ENVIRONMENT` — the environment string used for both release discovery and issue fetching (default: `ch:appstore|env:production`).
 
 Every subsequent step and subagent prompt references these values.
 
@@ -51,22 +54,22 @@ Every subsequent step and subagent prompt references these values.
 
 Dispatch **one** subagent to run the list query and return a compact summary. The main agent does NOT touch the `sentry` CLI for this step.
 
-Subagent prompt template (substitute `<VERSION>` with the value from step 1):
+Subagent prompt template (substitute `<VERSION>` and `<ENVIRONMENT>` with the values from step 1):
 
 > Run the Sentry CLI to list unresolved issues for the current release, then return a structured summary. Do NOT classify or recommend actions — fetch and dedupe only.
 >
-> The release version is `<VERSION>` (already resolved by the main agent — do not read it yourself).
+> The release version is `<VERSION>` and the environment is `<ENVIRONMENT>` (already resolved by the main agent — do not read them yourself).
 >
 > Steps:
 > 1. Run:
 >    ```bash
 >    sentry issue list rabby-wallet/rabby-mobile \
->      --query "release:<VERSION> is:unresolved environment:\"ch:appstore|env:production\"" \
+>      --query "release:<VERSION> is:unresolved environment:\"<ENVIRONMENT>\"" \
 >      --sort freq \
 >      --limit 50 \
 >      --json --fields shortId,title,level,status
 >    ```
->    The environment value `ch:appstore|env:production` is a single tag (production App Store builds) — the `ch:` and `env:` substrings are NOT separate filters. The value contains `:` and `|`, so it must be wrapped in double quotes inside the query. The outer query uses double quotes too, with the inner double quotes escaped as `\"...\"`; this keeps `$VERSION` shell-expanded. If the user asks for a different environment (e.g. dev, beta), replace the value in the query — keep the quoting.
+>    The environment value (e.g. `ch:appstore|env:production`) is a single tag — the `ch:` and `env:` substrings are NOT separate filters. The value contains `:` and `|`, so it must be wrapped in double quotes inside the query. The outer query uses double quotes too, with the inner double quotes escaped as `\"...\"`; this keeps `$VERSION` shell-expanded. If the user asks for a different environment (e.g. dev, beta), the main agent will have substituted the correct value.
 > 2. If the user asked for "across every release" (not just the latest), drop the `release:` clause and raise the limit to 100.
 > 3. The CLI wraps the array under `data`, not `issues`. Remap: `data → issues` and `total = data.length`. If `hasMore === true` in the CLI output, the result is truncated by the `--limit`; mention this in your reasoning so the main agent can warn the user, but do not add it to the schema output.
 > 4. Dedupe `issues` by `shortId`.
