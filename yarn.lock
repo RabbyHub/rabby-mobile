@@ -11996,6 +11996,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-google-signin/google-signin@patch:@react-native-google-signin/google-signin@npm%3A13.2.0#./.yarn/patches/@react-native-google-signin-google-signin-npm-13.2.0-android-codegen.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 13.2.0
+  resolution: "@react-native-google-signin/google-signin@patch:@react-native-google-signin/google-signin@npm%3A13.2.0#./.yarn/patches/@react-native-google-signin-google-signin-npm-13.2.0-android-codegen.patch::version=13.2.0&hash=6dd004&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  peerDependencies:
+    expo: ">=50.0.0"
+    react: "*"
+    react-dom: "*"
+    react-native: "*"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+    react-dom:
+      optional: true
+  checksum: 10/7ddec54285c164ad4b4321a5a0978e9d75c2403c0e3835c2a6ffbb647198a1c67762436143bf6e343cf40c748f3a1fb0536776410fee8b64f21e1e4733b19e1a
+  languageName: node
+  linkType: hard
+
 "@react-native-masked-view/masked-view@npm:^0.3.1":
   version: 0.3.1
   resolution: "@react-native-masked-view/masked-view@npm:0.3.1"
