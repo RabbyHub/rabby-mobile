@@ -17,13 +17,18 @@ export const usePerpsHomePnl = () => {
     })),
   );
   const { availableBalance } = usePerpsAccount();
-  const isLoading =
-    !homePositionPnl.show &&
-    (currentPerpsAccount ? !isUserDataReady : !isFetchAllDone);
+  const hasResolvedPositionInfo = currentPerpsAccount
+    ? isUserDataReady || isFetchAllDone
+    : isFetchAllDone;
+  const shouldShowResolvedZero =
+    !!currentPerpsAccount && hasResolvedPositionInfo && !homePositionPnl.show;
+  const isLoading = !homePositionPnl.show && !hasResolvedPositionInfo;
 
   return {
     perpsPositionInfo: {
       ...homePositionPnl,
+      show: homePositionPnl.show || shouldShowResolvedZero,
+      type: shouldShowResolvedZero ? 'accountValue' : homePositionPnl.type,
       isLoading,
       availableBalance: Number(availableBalance),
     },
