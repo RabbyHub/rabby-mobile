@@ -76,8 +76,12 @@ type SentryEvent = Parameters<SentryBeforeSend>[0];
 type SentryEventHint = Parameters<SentryBeforeSend>[1];
 
 export const SENTRY_IGNORED_ERROR_MESSAGES = [
+  'Google Play Services are not available on this device',
   'Missing or invalid topic field',
   'Non-Error exception captured',
+  'Screen capture detection is not supported',
+  'Unable to auto-initialize connection',
+  'apiClient is null',
 ] as const;
 
 export const SENTRY_IGNORED_ERROR_PATTERNS = [
@@ -90,6 +94,9 @@ export const SENTRY_IGNORED_ERROR_PATTERNS = [
   /\bbilling is unavailable\b/i,
   /\bstop loss cancel\b/i,
   /\b(?:https?:\/\/|http(?:\b|-))/i,
+  /\bMust deposit before performing actions\b/i,
+  /\bOrder was never placed, already canceled, or filled\b/i,
+  /\btransaction underpriced\b/i,
 ] as const;
 
 const SENTRY_IGNORED_ERROR_KEY_SETS = [
