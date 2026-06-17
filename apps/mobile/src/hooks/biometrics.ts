@@ -31,6 +31,7 @@ import {
 import { useShallow } from 'zustand/react/shallow';
 import { logger } from '@/utils/logger';
 import { isNonPublicProductionEnv } from '@/constant';
+import { getAndroidUnlockBiometricSecurityLevelOptions } from '@/core/apis/androidBiometricsRegression';
 
 type BiometricsInfoState = {
   authEnabled: boolean;
@@ -41,6 +42,7 @@ type BiometricsSystemAuthAvailability = Pick<
   BiometricsInfoState,
   'supportedBiometryType' | 'devicePasscodeAvailable'
 >;
+type BiometricsFetchPurpose = 'default' | 'unlock';
 
 export const BIOMETRICS_SYSTEM_AUTH_DEBUG_MODES = {
   REAL: 'real',
@@ -177,9 +179,17 @@ export function useBiometricsSystemAuthDebugMock() {
   };
 }
 
-async function fetchSystemAuthAvailability() {
+async function fetchSystemAuthAvailability(options?: {
+  purpose?: BiometricsFetchPurpose;
+}) {
+  const supportedBiometryTypeOptions =
+    options?.purpose === 'unlock'
+      ? getAndroidUnlockBiometricSecurityLevelOptions()
+      : undefined;
   const [supportedBiometryType, devicePasscodeAvailable] = await Promise.all([
-    apisKeychain.getSupportedBiometryType().catch(() => null),
+    apisKeychain
+      .getSupportedBiometryType(supportedBiometryTypeOptions)
+      .catch(() => null),
     getDevicePasscodeAvailable(),
   ]);
 
@@ -249,7 +259,7 @@ async function ensureBiometricsReadyForUnlock() {
     devicePasscodeAvailable: false,
   };
   try {
-    systemAuth = await fetchSystemAuthAvailability();
+    systemAuth = await fetchSystemAuthAvailability({ purpose: 'unlock' });
   } catch (error) {
     logger.warn('[biometrics] failed to fetch system auth availability', {
       error: error instanceof Error ? error.message : String(error),
@@ -298,7 +308,9 @@ export function computeBiometricsState({
   t: (key: string) => string;
   isIOS?: boolean;
 }) {
-  const isFaceID = supportedBiometryType === BIOMETRY_TYPE.FACE_ID;
+  const isFaceID =
+    supportedBiometryType === BIOMETRY_TYPE.FACE_ID ||
+    supportedBiometryType === BIOMETRY_TYPE.FACE;
   const isBiometricsOrPasscode =
     authType === KEYCHAIN_AUTH_TYPES.BIOMETRICS_OR_PASSCODE;
   const canAuthTypeFallbackToDevicePasscode =
@@ -389,7 +401,9 @@ export function useBiometricsComputed() {
 }
 
 const isFetchingBiometricsRef = { current: false };
-const fetchBiometrics = async () => {
+const fetchBiometrics = async (options?: {
+  purpose?: BiometricsFetchPurpose;
+}) => {
   if (isFetchingBiometricsRef.current) return;
 
   isFetchingBiometricsRef.current = true;
@@ -400,7 +414,7 @@ const fetchBiometrics = async () => {
     };
     let didFetchSupportedType = false;
     try {
-      systemAuth = await fetchSystemAuthAvailability();
+      systemAuth = await fetchSystemAuthAvailability(options);
       didFetchSupportedType = true;
     } catch (error) {
       console.error(error);
@@ -505,7 +519,10 @@ export const storeApisBiometrics = {
   getBiometricsInfoSnapshot,
 };
 
-export function useBiometrics(options?: { autoFetch?: boolean }) {
+export function useBiometrics(options?: {
+  autoFetch?: boolean;
+  purpose?: BiometricsFetchPurpose;
+}) {
   const biometrics = biometricsInfoStore(
     useShallow(s => ({
       authEnabled: s.authEnabled,
@@ -516,9 +533,9 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
 
   useEffect(() => {
     if (options?.autoFetch) {
-      fetchBiometrics();
+      fetchBiometrics({ purpose: options.purpose });
     }
-  }, [options?.autoFetch]);
+  }, [options?.autoFetch, options?.purpose]);
 
   const computed = useBiometricsComputed();
 

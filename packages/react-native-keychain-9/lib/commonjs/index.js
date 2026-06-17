@@ -1,7 +1,7 @@
-"use strict";
+'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
+Object.defineProperty(exports, '__esModule', {
+  value: true,
 });
 var _exportNames = {
   setGenericPassword: true,
@@ -14,10 +14,11 @@ var _exportNames = {
   getInternetCredentials: true,
   resetInternetCredentials: true,
   getSupportedBiometryType: true,
+  requestSystemAuthentication: true,
   requestSharedWebCredentials: true,
   setSharedWebCredentials: true,
   canImplyAuthentication: true,
-  getSecurityLevel: true
+  getSecurityLevel: true,
 };
 exports.canImplyAuthentication = canImplyAuthentication;
 exports.default = void 0;
@@ -28,41 +29,40 @@ exports.getSecurityLevel = getSecurityLevel;
 exports.getSupportedBiometryType = getSupportedBiometryType;
 exports.hasGenericPassword = hasGenericPassword;
 exports.hasInternetCredentials = hasInternetCredentials;
+exports.requestSystemAuthentication = requestSystemAuthentication;
 exports.requestSharedWebCredentials = requestSharedWebCredentials;
 exports.resetGenericPassword = resetGenericPassword;
 exports.resetInternetCredentials = resetInternetCredentials;
 exports.setGenericPassword = setGenericPassword;
 exports.setInternetCredentials = setInternetCredentials;
 exports.setSharedWebCredentials = setSharedWebCredentials;
-var _reactNative = require("react-native");
-var _enums = require("./enums.js");
+var _reactNative = require('react-native');
+var _enums = require('./enums.js');
 Object.keys(_enums).forEach(function (key) {
-  if (key === "default" || key === "__esModule") return;
+  if (key === 'default' || key === '__esModule') return;
   if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
   if (key in exports && exports[key] === _enums[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
     get: function () {
       return _enums[key];
-    }
+    },
   });
 });
-var _normalizeOptions = require("./normalizeOptions.js");
-var _types = require("./types.js");
+var _normalizeOptions = require('./normalizeOptions.js');
+var _types = require('./types.js');
 Object.keys(_types).forEach(function (key) {
-  if (key === "default" || key === "__esModule") return;
+  if (key === 'default' || key === '__esModule') return;
   if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
   if (key in exports && exports[key] === _types[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
     get: function () {
       return _types[key];
-    }
+    },
   });
 });
-const {
-  RNRabbyKeychainV9Manager
-} = _reactNative.NativeModules;
+const { RNRabbyKeychainV9Manager } = _reactNative.NativeModules;
 
 /**
  * Saves the `username` and `password` combination for the given service.
@@ -80,7 +80,11 @@ const {
  */
 function setGenericPassword(username, password, serviceOrOptions) {
   const options = (0, _normalizeOptions.normalizeOptions)(serviceOrOptions);
-  return RNRabbyKeychainV9Manager.setGenericPasswordForOptions(options, username, password);
+  return RNRabbyKeychainV9Manager.setGenericPasswordForOptions(
+    options,
+    username,
+    password,
+  );
 }
 
 /**
@@ -119,7 +123,9 @@ function getGenericPassword(serviceOrOptions) {
  * ```
  */
 function hasGenericPassword(serviceOrOptions) {
-  const options = (0, _normalizeOptions.normalizeServiceOption)(serviceOrOptions);
+  const options = (0, _normalizeOptions.normalizeServiceOption)(
+    serviceOrOptions,
+  );
   return RNRabbyKeychainV9Manager.hasGenericPasswordForOptions(options);
 }
 
@@ -137,7 +143,9 @@ function hasGenericPassword(serviceOrOptions) {
  * ```
  */
 function resetGenericPassword(serviceOrOptions) {
-  const options = (0, _normalizeOptions.normalizeServiceOption)(serviceOrOptions);
+  const options = (0, _normalizeOptions.normalizeServiceOption)(
+    serviceOrOptions,
+  );
   return RNRabbyKeychainV9Manager.resetGenericPasswordForOptions(options);
 }
 
@@ -190,7 +198,12 @@ function hasInternetCredentials(serverOrOptions) {
  * ```
  */
 function setInternetCredentials(server, username, password, options) {
-  return RNRabbyKeychainV9Manager.setInternetCredentialsForServer(server, username, password, (0, _normalizeOptions.normalizeOptions)(options));
+  return RNRabbyKeychainV9Manager.setInternetCredentialsForServer(
+    server,
+    username,
+    password,
+    (0, _normalizeOptions.normalizeOptions)(options),
+  );
 }
 
 /**
@@ -212,7 +225,10 @@ function setInternetCredentials(server, username, password, options) {
  * ```
  */
 function getInternetCredentials(server, options) {
-  return RNRabbyKeychainV9Manager.getInternetCredentialsForServer(server, (0, _normalizeOptions.normalizeOptions)(options));
+  return RNRabbyKeychainV9Manager.getInternetCredentialsForServer(
+    server,
+    (0, _normalizeOptions.normalizeOptions)(options),
+  );
 }
 
 /**
@@ -256,6 +272,23 @@ function getSupportedBiometryType(serviceOrOptions) {
 }
 
 /**
+ * Requests Android system authentication without reading or writing keychain data.
+ *
+ * @platform Android
+ */
+function requestSystemAuthentication(serviceOrOptions) {
+  const options = (0, _normalizeOptions.normalizeOptions)(serviceOrOptions);
+  if (!RNRabbyKeychainV9Manager.requestSystemAuthenticationForOptions) {
+    return Promise.reject(
+      new Error('requestSystemAuthentication() is not supported'),
+    );
+  }
+  return RNRabbyKeychainV9Manager.requestSystemAuthenticationForOptions(
+    options,
+  );
+}
+
+/**
  * Request shared web credentials.
  *
  * @platform iOS
@@ -274,7 +307,11 @@ function getSupportedBiometryType(serviceOrOptions) {
  */
 function requestSharedWebCredentials() {
   if (_reactNative.Platform.OS !== 'ios') {
-    return Promise.reject(new Error(`requestSharedWebCredentials() is not supported on ${_reactNative.Platform.OS} yet`));
+    return Promise.reject(
+      new Error(
+        `requestSharedWebCredentials() is not supported on ${_reactNative.Platform.OS} yet`,
+      ),
+    );
   }
   return RNRabbyKeychainV9Manager.requestSharedWebCredentials();
 }
@@ -298,9 +335,17 @@ function requestSharedWebCredentials() {
  */
 function setSharedWebCredentials(server, username, password) {
   if (_reactNative.Platform.OS !== 'ios') {
-    return Promise.reject(new Error(`setSharedWebCredentials() is not supported on ${_reactNative.Platform.OS} yet`));
+    return Promise.reject(
+      new Error(
+        `setSharedWebCredentials() is not supported on ${_reactNative.Platform.OS} yet`,
+      ),
+    );
   }
-  return RNRabbyKeychainV9Manager.setSharedWebCredentialsForServer(server, username, password);
+  return RNRabbyKeychainV9Manager.setSharedWebCredentialsForServer(
+    server,
+    username,
+    password,
+  );
 }
 
 /**
@@ -347,7 +392,7 @@ function getSecurityLevel(options) {
   return RNRabbyKeychainV9Manager.getSecurityLevel(options);
 }
 /** @ignore */
-var _default = exports.default = {
+var _default = (exports.default = {
   SECURITY_LEVEL: _enums.SECURITY_LEVEL,
   ACCESSIBLE: _enums.ACCESSIBLE,
   ACCESS_CONTROL: _enums.ACCESS_CONTROL,
@@ -358,6 +403,7 @@ var _default = exports.default = {
   getSecurityLevel,
   canImplyAuthentication,
   getSupportedBiometryType,
+  requestSystemAuthentication,
   setInternetCredentials,
   getInternetCredentials,
   resetInternetCredentials,
@@ -366,6 +412,6 @@ var _default = exports.default = {
   getAllGenericPasswordServices,
   resetGenericPassword,
   requestSharedWebCredentials,
-  setSharedWebCredentials
-};
+  setSharedWebCredentials,
+});
 //# sourceMappingURL=index.js.map

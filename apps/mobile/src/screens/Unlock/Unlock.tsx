@@ -42,6 +42,7 @@ import {
   isBrokenBiometricsEntryError,
   parseKeychainError,
 } from '@/core/apis/keychain';
+import { getAndroidUnlockSystemAuthPromptOptions } from '@/core/apis/androidBiometricsRegression';
 import {
   storeApisUnlock,
   useTipedUserEnableBiometrics,
@@ -398,7 +399,7 @@ export default function UnlockScreen() {
       systemAuthSwitchTypeLabel,
       couldSetupSystemAuth,
     },
-  } = useBiometrics({ autoFetch: true });
+  } = useBiometrics({ autoFetch: true, purpose: 'unlock' });
   const schedulePostUnlockWarmups = React.useCallback(() => {
     scheduleUnlockWarmupsAfterInteractions(
       'post_unlock',
@@ -412,7 +413,7 @@ export default function UnlockScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      storeApisBiometrics.fetchBiometrics();
+      storeApisBiometrics.fetchBiometrics({ purpose: 'unlock' });
     }, []),
   );
 
@@ -564,6 +565,7 @@ export default function UnlockScreen() {
         }
         await apisKeychain.requestGenericPassword({
           purpose: RequestGenericPurpose.DECRYPT_PWD,
+          ...getAndroidUnlockSystemAuthPromptOptions(),
           shouldAttachTrustedVaultKeyString: !isAndroid,
           deferPostDecryptKeychainRewrite: isAndroid,
           onPlainPassword: async (password, credentials) => {
