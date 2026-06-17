@@ -32,6 +32,24 @@ import { useInitDetectDBAssets } from '../Search/useAssets';
 import { TmpHomeRefresher } from './components/TmpHomeRefresher';
 import { storeApiGasAccount } from '../GasAccount/hooks/atom';
 import { useHomePortfolioStore } from './hooks/useHomePortfolioSummary';
+import { storeApiAccounts } from '@/hooks/account';
+import { startInitReadableAccountStores } from '@/setup-app-before-render';
+
+let hasStartedInitReadableAccountStoresOnHomeMount = false;
+
+async function startInitReadableAccountStoresOnHomeMount() {
+  if (hasStartedInitReadableAccountStoresOnHomeMount) {
+    return;
+  }
+
+  const accounts = await storeApiAccounts.fetchAccounts();
+  if (!accounts.length || hasStartedInitReadableAccountStoresOnHomeMount) {
+    return;
+  }
+
+  hasStartedInitReadableAccountStoresOnHomeMount = true;
+  await startInitReadableAccountStores();
+}
 
 const detectHasAccounts = async () => {
   const result = { redirectAction: null as Function | null };
@@ -58,6 +76,9 @@ function HomeStartupReadyScheduler() {
   useEffect(() => {
     resetHomeStartupReady();
     traceHomeStartupReady('home_mount');
+    startInitReadableAccountStoresOnHomeMount().catch(error => {
+      console.error('startInitReadableAccountStoresOnHomeMount::error', error);
+    });
 
     return scheduleHomeStartupReady();
   }, []);
