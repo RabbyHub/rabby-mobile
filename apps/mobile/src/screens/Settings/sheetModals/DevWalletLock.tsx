@@ -19,7 +19,11 @@ import { DevTestItem, makeNoop, GeneralTestItem } from './testDevUtils';
 import { useManagePasswordOnSettings } from '@/screens/ManagePassword/hooks';
 import { requestLockWalletAndBackToUnlockScreen } from '@/hooks/navigation';
 import { LastUnlockTimeLabel } from '../components/LockAbout';
-import { APP_FEATURE_SWITCH } from '@/constant';
+import {
+  APP_FEATURE_SWITCH,
+  APP_TEST_PWD,
+  NEED_DEVSETTINGBLOCKS,
+} from '@/constant';
 import { keyringService } from '@/core/services/shared';
 import {
   setGenericPassword,
@@ -36,6 +40,8 @@ import { Text } from '@/components/Typography';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
+import { apisKeychain, apisLock } from '@/core/apis';
+import { toast } from '@/components2024/Toast';
 
 const walletLockTestItemModalVisibleAtom = atom(false);
 export function useWalletLockTestItemModalVisible() {
@@ -97,6 +103,31 @@ export default function WalletLockTestItemModal({
     openResetPasswordAndKeyringSheetModal,
   } = useManagePasswordOnSettings();
 
+  const handleSetTestPassword = useCallback(async () => {
+    const result =
+      await apisLock.debugSetUnlockedWalletPasswordToTestPassword();
+    if (result.error) {
+      toast.show(result.error);
+      return { keepModalVisible: true };
+    }
+
+    try {
+      const authType = apisKeychain.getAuthenticationType();
+      if (authType === apisKeychain.KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD) {
+        await apisKeychain.resetGenericPassword();
+      } else {
+        await apisKeychain.setGenericPassword(APP_TEST_PWD, authType);
+      }
+
+      toast.success(`Password set to ${APP_TEST_PWD}`);
+    } catch (error) {
+      console.error(error);
+      toast.show('Password changed, but biometric password sync failed');
+    }
+
+    return { keepModalVisible: true };
+  }, []);
+
   const Items = (() => {
     const list: DevTestItem[] = [
       {
@@ -114,6 +145,17 @@ export default function WalletLockTestItemModal({
           openManagePasswordSheetModal();
         },
         visible: APP_FEATURE_SWITCH.customizePassword || hasSetupCustomPassword,
+      },
+      {
+        label: 'Set Test Password',
+        icon: <RcManagePassword style={styles.labelIcon} />,
+        disabled: !hasSetupCustomPassword || !APP_TEST_PWD,
+        visible: NEED_DEVSETTINGBLOCKS,
+        onPress: handleSetTestPassword,
+        onDisabledPress: () => {
+          toast.show('Unlock and set up a wallet password first');
+          return { keepModalVisible: true };
+        },
       },
       {
         label: 'Clear Password and Keyrings',

@@ -101,7 +101,7 @@
 	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
 	<true />
 	<key>RCTNewArchEnabled</key>
-	<false />
+	<true />
 	<key>UIAppFonts</key>
 	<array>
 		<string>SF-Pro-Rounded-Bold.otf</string>
