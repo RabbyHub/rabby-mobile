@@ -48,3 +48,9 @@ export async function startReadableAccountBootstrapWarmups() {
     await loadSetupBeforeRenderRuntime('readable_account_bootstrap_warmups')
   ).startReadableAccountBootstrapWarmups();
 }
+
+export async function startInitReadableAccountStores() {
+  return (
+    await loadSetupBeforeRenderRuntime('start_init_readable_account_stores')
+  ).initReadableAccountStores();
+}
