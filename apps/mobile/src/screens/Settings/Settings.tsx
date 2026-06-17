@@ -34,6 +34,7 @@ import {
   RcNotification,
   RcWalletConnect,
   RcAutolock,
+  RcDataAnalysis,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -550,7 +551,7 @@ function SettingsBlocks() {
           },
           {
             label: t('page.setting.dataAnalysis'),
-            icon: RcPrivacyPolicy,
+            icon: RcDataAnalysis,
             onPress: () => {
               toggleDataAnalysisRef?.current?.toggle();
             },
