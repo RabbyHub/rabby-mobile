@@ -14,6 +14,9 @@ module.exports = api => {
 
   const { version } = pkg;
   const inputBuildEnv = process.env.RABBY_MOBILE_BUILD_ENV;
+  if (!process.env.APP_ENV && inputBuildEnv) {
+    process.env.APP_ENV = inputBuildEnv;
+  }
   const inputBuildChannel =
     process.env.buildchannel || process.env.RABBY_MOBILE_BUILD_CHANNEL;
   const resolvedBuildEnv = inputBuildEnv || 'production';
@@ -28,6 +31,7 @@ module.exports = api => {
     JSON.stringify({
       buildChannel: resolvedBuildChannel,
       buildEnv: resolvedBuildEnv,
+      dotenvEnv: process.env.APP_ENV || '',
       callerName,
       isDevTransform,
       shouldEnableRozenite,

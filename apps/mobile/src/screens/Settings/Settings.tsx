@@ -564,7 +564,12 @@ function SettingsBlocks() {
             onPress: () => {
               toggleDataAnalysisRef?.current?.toggle();
             },
-            rightNode: <SwitchDataAnalysis ref={toggleDataAnalysisRef} />,
+            rightNode: (
+              <SwitchDataAnalysis
+                ref={toggleDataAnalysisRef}
+                onPress={evt => evt.stopPropagation()}
+              />
+            ),
           },
           {
             label: t('page.setting.clearPending'),
