@@ -20,6 +20,7 @@ import {
   resolveWalletConnectAccount,
   syncWalletConnectSessionsFromClient,
 } from './sessions';
+import { WALLETCONNECT_SIGN_METHODS } from './constants';
 
 type WalletConnectJsonRpcResponse =
   | {
@@ -36,14 +37,8 @@ type WalletConnectJsonRpcResponse =
       };
     };
 
-const WALLETCONNECT_DIRECT_RESPONSE_METHODS = new Set([
-  'eth_accounts',
-  'eth_requestAccounts',
-  'eth_chainId',
-  'net_version',
-]);
 const WALLET_SWITCH_ETHEREUM_CHAIN_METHOD = 'wallet_switchEthereumChain';
-const WALLETCONNECT_TRANSACTION_METHODS = new Set(['eth_sendTransaction']);
+
 const WALLETCONNECT_TRANSACTION_RETURN_TOASTS = {
   sent: {
     variant: 'success',
@@ -55,12 +50,8 @@ const WALLETCONNECT_TRANSACTION_RETURN_TOASTS = {
   },
 } as const;
 
-function requiresWalletConnectApproval(method: string) {
-  return !WALLETCONNECT_DIRECT_RESPONSE_METHODS.has(method);
-}
-
 function isWalletConnectTransactionMethod(method?: string) {
-  return !!method && WALLETCONNECT_TRANSACTION_METHODS.has(method);
+  return !!method && WALLETCONNECT_SIGN_METHODS.includes(method);
 }
 
 function getWalletConnectTransactionReturnToast(input: {
@@ -337,7 +328,8 @@ export async function handleWalletConnectSessionRequest(input: {
     !!session &&
     !!method &&
     isSupportedWalletConnectMethod(method) &&
-    requiresWalletConnectApproval(method);
+    isWalletConnectTransactionMethod(method);
+
   let response: WalletConnectJsonRpcResponse;
 
   addWalletConnectLog('request', 'session_request received', {

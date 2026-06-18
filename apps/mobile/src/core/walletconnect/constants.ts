@@ -8,6 +8,14 @@ export const WALLETCONNECT_METADATA = {
   },
 };
 
+export const WALLETCONNECT_SIGN_METHODS: string[] = [
+  'personal_sign',
+  'eth_signTypedData',
+  'eth_signTypedData_v3',
+  'eth_signTypedData_v4',
+  'eth_sendTransaction',
+];
+
 export const WALLETCONNECT_SUPPORTED_METHODS: string[] = [
   'eth_accounts',
   'eth_requestAccounts',
@@ -42,13 +50,9 @@ export const WALLETCONNECT_SUPPORTED_METHODS: string[] = [
   'web3_clientVersion',
   'wallet_getPermissions',
   'wallet_requestPermissions',
-  'personal_sign',
-  'eth_signTypedData',
-  'eth_signTypedData_v3',
-  'eth_signTypedData_v4',
-  'eth_sendTransaction',
   'wallet_watchAsset',
   'wallet_switchEthereumChain',
+  ...WALLETCONNECT_SIGN_METHODS,
 ];
 
 export const WALLETCONNECT_SUPPORTED_EVENTS = [
