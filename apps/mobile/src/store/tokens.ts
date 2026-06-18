@@ -1582,7 +1582,7 @@ export const useTokenAssetsIndexStore = zCreate(
   })),
 );
 
-const tokenListStore = zCreate<TokenListState>(set => ({
+const tokenListStore = zCreate<TokenListState>((set, get) => ({
   tokenListMap: {},
   isLoading: false, // 整体的 loading 状态
   tokenDisplayMode: preferenceService.getTokenDisplayMode(),
@@ -1700,21 +1700,27 @@ const tokenListStore = zCreate<TokenListState>(set => ({
 
   async getTokenList(address: string, force = false) {
     const normalizedAddress = address.toLowerCase();
-    if (!force) {
-      const isExpired = await isDataExpired(normalizedAddress);
-      if (!isExpired) {
-        const tokens = (await TokenItemEntity.batchQueryTokens(
-          normalizedAddress,
-        )) as TokenItemEntity[];
-        const res = tokens.map(tokenItemEntityToTokenItem);
-        set(state => ({
-          tokenListMap: {
-            ...state.tokenListMap,
-            [normalizedAddress]: res,
-          },
-        }));
-        return;
-      }
+    const isExpired = await isDataExpired(normalizedAddress);
+    const hasCurrentAddressTokens =
+      (get().tokenListMap[normalizedAddress] || []).length > 0;
+    const isRefreshingWithValidLocalTokens =
+      hasCurrentAddressTokens && !isExpired;
+
+    /**
+     * 阶段一： 校验有效期，有效期内直接用本地数据
+     */
+    if (!force && !isExpired) {
+      const tokens = (await TokenItemEntity.batchQueryTokens(
+        normalizedAddress,
+      )) as TokenItemEntity[];
+      const res = tokens.map(tokenItemEntityToTokenItem);
+      set(state => ({
+        tokenListMap: {
+          ...state.tokenListMap,
+          [normalizedAddress]: res,
+        },
+      }));
+      return;
     }
 
     set(state => ({
@@ -1725,29 +1731,44 @@ const tokenListStore = zCreate<TokenListState>(set => ({
     }));
 
     try {
-      const cacheList = await queryTokensCache(address);
-      const cacheTokens = cacheList.map(item =>
-        tokenItemToITokenItem(item, address),
-      );
-      set(state => {
-        const previousTokens = state.tokenListMap[normalizedAddress] || [];
-        const mergedCacheTokens = replacePreviousCoreTokensWithCacheTokens(
-          previousTokens,
-          cacheTokens,
-        );
-        return {
-          tokenListMap: {
-            ...state.tokenListMap,
-            [normalizedAddress]: mergedCacheTokens,
-          },
+      /**
+       * 阶段二： 从缓存接口中获取数据，注意缓存接口有30s延迟，且不完整（只包含核心token）
+       */
+      if (isRefreshingWithValidLocalTokens) {
+        set(state => ({
           isLoadingByAddress: {
             ...state.isLoadingByAddress,
-            // cache已经拿到，但是不是所有token都拿到
             [normalizedAddress]: { loading: false, allLoading: true },
           },
-        };
-      });
+        }));
+      } else {
+        const cacheList = await queryTokensCache(address);
+        const cacheTokens = cacheList.map(item =>
+          tokenItemToITokenItem(item, address),
+        );
+        set(state => {
+          const previousTokens = state.tokenListMap[normalizedAddress] || [];
+          const mergedCacheTokens = replacePreviousCoreTokensWithCacheTokens(
+            previousTokens,
+            cacheTokens,
+          );
+          return {
+            tokenListMap: {
+              ...state.tokenListMap,
+              [normalizedAddress]: mergedCacheTokens,
+            },
+            isLoadingByAddress: {
+              ...state.isLoadingByAddress,
+              // cache已经拿到，但是不是所有token都拿到
+              [normalizedAddress]: { loading: false, allLoading: true },
+            },
+          };
+        });
+      }
 
+      /**
+       * 阶段三： 从链接口中获取数据
+       */
       let chainIdList: string[] = [];
       // 单地址的查询还是使用 usedChainList，不然担心 token 选择器之类的地方用户找不到自己的 token
       const chains = await openapi.usedChainList(address);
