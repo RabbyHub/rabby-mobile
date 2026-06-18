@@ -9,7 +9,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import Lottie from 'lottie-react-native';
 
-import { RootNames } from '@/constant/layout';
+import {
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  RootNames,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 import { keyringService, preferenceService } from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
 import { navigateDeprecated } from '@/utils/navigation';
@@ -216,7 +223,10 @@ function NewUserGetStartedScreen() {
           <View
             style={[
               styles.bottomActions,
-              { flexShrink: 0, paddingBottom: Math.max(bottom, 16) },
+              {
+                flexShrink: 0,
+                paddingBottom: getBottomButtonBottomOffset(bottom),
+              },
             ]}>
             {!getStarted.localHasAccounts ? (
               <>
@@ -238,7 +248,8 @@ function NewUserGetStartedScreen() {
                 <Button
                   type="primary"
                   title={t('page.getStart.createNewAddress')}
-                  titleStyle={{ fontSize: 18 }}
+                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                  titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                   disabled={
                     !getStarted.processedInit || getStarted.localHasAccounts
                   }
@@ -250,7 +261,8 @@ function NewUserGetStartedScreen() {
                   }
                   type="ghost"
                   title={t('page.getStart.alreadyHaveAddress')}
-                  titleStyle={{ fontSize: 18 }}
+                  height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                  titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                   onPress={handleGoToImport}
                   buttonStyle={styles.secondaryButton}
                   {...makeTestIDProps(E2E_ID.onboarding.welcomeImportExisting)}
@@ -260,7 +272,8 @@ function NewUserGetStartedScreen() {
               <Button
                 type="primary"
                 title={t('page.getStart.goToHome') || 'Go to Home'}
-                titleStyle={{ fontSize: 18 }}
+                height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+                titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
                 disabled={
                   !getStarted.processedInit || !getStarted.localHasAccounts
                 }
@@ -351,9 +364,9 @@ const getStyle = createGetStyles2024(ctx => ({
     minHeight: 16,
   },
   bottomActions: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    gap: 12,
+    paddingHorizontal: 20,
+    paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+    gap: BOTTOM_BUTTON_GAP,
   },
   secondaryButton: {
     backgroundColor: ctx.colors2024['brand-light-1'],
