@@ -1,4 +1,5 @@
 import { sendRequest } from '@/core/apis/sendRequest';
+import { requestReadOnlyETHRpc } from '@/core/apis/readOnlyRpc';
 import i18n from '@/utils/i18n';
 import type { IWalletKit, WalletKitTypes } from '@reown/walletkit';
 import type { SessionTypes } from '@walletconnect/types';
@@ -20,7 +21,10 @@ import {
   resolveWalletConnectAccount,
   syncWalletConnectSessionsFromClient,
 } from './sessions';
-import { WALLETCONNECT_SIGN_METHODS } from './constants';
+import {
+  WALLETCONNECT_READ_ONLY_RPC_METHODS,
+  WALLETCONNECT_SIGN_METHODS,
+} from './constants';
 
 type WalletConnectJsonRpcResponse =
   | {
@@ -52,6 +56,10 @@ const WALLETCONNECT_TRANSACTION_RETURN_TOASTS = {
 
 function isWalletConnectTransactionMethod(method?: string) {
   return !!method && WALLETCONNECT_SIGN_METHODS.includes(method);
+}
+
+function isWalletConnectReadOnlyRpcMethod(method?: string) {
+  return !!method && WALLETCONNECT_READ_ONLY_RPC_METHODS.includes(method);
 }
 
 function getWalletConnectTransactionReturnToast(input: {
@@ -288,6 +296,16 @@ async function executeSessionRequest(input: {
       session,
       params,
     });
+  }
+  if (isWalletConnectReadOnlyRpcMethod(method)) {
+    return requestReadOnlyETHRpc(
+      {
+        method,
+        params: normalizeRequestParams(params),
+      },
+      chain.serverId,
+      account,
+    );
   }
 
   await waitForAppActiveBeforeApproval(method);

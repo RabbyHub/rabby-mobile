@@ -16,11 +16,7 @@ export const WALLETCONNECT_SIGN_METHODS: string[] = [
   'eth_sendTransaction',
 ];
 
-export const WALLETCONNECT_SUPPORTED_METHODS: string[] = [
-  'eth_accounts',
-  'eth_requestAccounts',
-  'eth_chainId',
-  'net_version',
+export const WALLETCONNECT_READ_ONLY_RPC_METHODS: string[] = [
   'eth_blockNumber',
   'eth_call',
   'eth_estimateGas',
@@ -48,6 +44,14 @@ export const WALLETCONNECT_SUPPORTED_METHODS: string[] = [
   'eth_uninstallFilter',
   'net_listening',
   'web3_clientVersion',
+];
+
+export const WALLETCONNECT_SUPPORTED_METHODS: string[] = [
+  'eth_accounts',
+  'eth_requestAccounts',
+  'eth_chainId',
+  'net_version',
+  ...WALLETCONNECT_READ_ONLY_RPC_METHODS,
   'wallet_getPermissions',
   'wallet_requestPermissions',
   'wallet_watchAsset',
