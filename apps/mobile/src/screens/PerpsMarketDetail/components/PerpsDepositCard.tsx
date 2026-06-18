@@ -35,7 +35,7 @@ export const PerpsDepositCard: React.FC<{
       <Text style={styles.label}>
         {t('page.perps.PerpsDepositCard.availableToTrade')}
         <Text style={styles.balance}>
-          {Number(formatPerpsNumber(availableBalance))} {quoteAsset}
+          {formatPerpsNumber(availableBalance)} {quoteAsset}
         </Text>
       </Text>
       <TouchableOpacity onPress={handlePress}>

@@ -542,11 +542,11 @@ export const handleDisplayFundingPayments = (fundingPayments: string) => {
 export const getSpotBalanceKey = (asset: string): string =>
   asset === 'USDT' ? 'USDT0' : asset;
 
-export const isLimitOrder = (order: OpenOrder): boolean => {
-  return (
-    !order.isTrigger && !order.isPositionTpsl && order.orderType === 'Limit'
-  );
-};
+export const isLimitOrder = (order: OpenOrder): boolean =>
+  !order.isTrigger &&
+  !order.isPositionTpsl &&
+  order.orderType === 'Limit' &&
+  order.coin.includes('@') === false; // filter out spot orders with coin like "@123"
 
 export const computeFilledPct = (origSz: string, sz: string): number => {
   const orig = new BigNumber(origSz || 0);

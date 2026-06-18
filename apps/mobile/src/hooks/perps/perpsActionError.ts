@@ -5,6 +5,7 @@ import {
   setAccountNeedApproveBuilderFee,
 } from '@/hooks/perps/usePerpsStore';
 import { showToast } from '@/hooks/perps/showToast';
+import { isWalletUnlockCancelled } from '@/utils/walletUnlockError';
 import * as Sentry from '@sentry/react-native';
 
 // Returns true when the error came from an expired agent. Side-effect: toast +
@@ -52,6 +53,14 @@ export const judgeIsBuilderFeeNeedApprove = (errorMessage: string): boolean => {
   return false;
 };
 
+// User-cancelled signatures are not errors: never toast an error or hit Sentry
+// for them. Covers the three cancel shapes the perps sign flow can produce:
+//   - hardware mini-sign rethrows the string 'Canceled' (executeSignatures)
+//   - local-wallet unlock / biometrics throw WalletUnlockCancelledError
+export function isUserCancelledSignature(error: unknown): boolean {
+  return error === 'Canceled' || isWalletUnlockCancelled(error);
+}
+
 type RunPerpsActionConfig<T> = {
   /** Value returned when an error is caught (after the side effects below). */
   fallback: T;
@@ -85,6 +94,9 @@ export async function runPerpsAction<T>(
   try {
     return await action();
   } catch (error: any) {
+    if (isUserCancelledSignature(error)) {
+      return config.fallback;
+    }
     const message = error?.message || '';
     if (await judgeIsUserAgentIsExpired(message)) {
       return config.fallback;
@@ -100,14 +112,14 @@ export async function runPerpsAction<T>(
       'error',
     );
     Sentry.captureException(
-      new Error(
-        title +
-          (config.context !== undefined
-            ? ' params: ' + JSON.stringify(config.context)
-            : '') +
-          ' error: ' +
-          JSON.stringify(error),
-      ),
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        extra: {
+          title,
+          context: config.context,
+          rawError: error?.message ?? error,
+        },
+      },
     );
     return config.fallback;
   }
