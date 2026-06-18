@@ -129,13 +129,13 @@ describe('walletconnect chain account mapping', () => {
       'web3_clientVersion',
       'wallet_getPermissions',
       'wallet_requestPermissions',
+      'wallet_watchAsset',
+      'wallet_switchEthereumChain',
       'personal_sign',
       'eth_signTypedData',
       'eth_signTypedData_v3',
       'eth_signTypedData_v4',
       'eth_sendTransaction',
-      'wallet_watchAsset',
-      'wallet_switchEthereumChain',
     ]);
   });
 });
