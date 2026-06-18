@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
@@ -97,6 +97,7 @@ const MyAssetHome: React.FC = () => {
   const isFocused = useIsFocused();
   const openedRouteActionKeyRef = useRef<string | null>(null);
   const restoringPopupRefreshKeyRef = useRef<string | null>(null);
+  const [activeUnderlyingAsset, setActiveUnderlyingAsset] = useState('');
 
   const loading = isFetching || !iUserSummary || !displayPoolReserves;
 
@@ -270,12 +271,14 @@ const MyAssetHome: React.FC = () => {
       return (
         <SupplyItem
           underlyingAsset={item.underlyingAsset}
+          activeUnderlyingAsset={activeUnderlyingAsset}
           tokenOptions={item.tokenOptions}
+          onChangeActiveUnderlyingAsset={setActiveUnderlyingAsset}
           style={styles.item}
         />
       );
     },
-    [styles.item],
+    [activeUnderlyingAsset, styles.item],
   );
 
   React.useEffect(() => {

@@ -31,30 +31,32 @@ import type {
 
 interface SupplyItemProps extends RNViewProps {
   underlyingAsset: string;
+  activeUnderlyingAsset: string;
   tokenOptions?: PositionTokenOption[];
+  onChangeActiveUnderlyingAsset: (underlyingAsset: string) => void;
 }
 
 const SupplyItem: React.FC<SupplyItemProps> = ({
   underlyingAsset,
+  activeUnderlyingAsset,
   tokenOptions,
+  onChangeActiveUnderlyingAsset,
   style,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const [activeUnderlyingAsset, setActiveUnderlyingAsset] =
-    React.useState(underlyingAsset);
 
   const { t } = useTranslation();
   const { iUserSummary: userSummary, getTargetReserve } = useLendingSummary();
   const { openCollateralChange } = useToggleCollateralModal();
   const { chainEnum } = useSelectedMarket();
-
-  React.useEffect(() => {
-    setActiveUnderlyingAsset(underlyingAsset);
-  }, [underlyingAsset]);
+  const currentUnderlyingAsset =
+    tokenOptions?.length && activeUnderlyingAsset
+      ? activeUnderlyingAsset
+      : underlyingAsset;
 
   const reserve = useMemo(() => {
-    return getTargetReserve(activeUnderlyingAsset);
-  }, [activeUnderlyingAsset, getTargetReserve]);
+    return getTargetReserve(currentUnderlyingAsset);
+  }, [currentUnderlyingAsset, getTargetReserve]);
 
   const { apyText, suppliedUsdText, suppliedTokenText, isIsolated } =
     useMemo(() => {
@@ -183,11 +185,11 @@ const SupplyItem: React.FC<SupplyItemProps> = ({
               <View style={styles.tokenTextArea}>
                 <View style={styles.symbolArea}>
                   <PositionTokenSelector
-                    activeUnderlyingAsset={activeUnderlyingAsset}
+                    activeUnderlyingAsset={currentUnderlyingAsset}
                     options={tokenOptions as BasicPositionTokenOption[]}
                     symbol={reserve.reserve.symbol}
                     chain={reserve.chain}
-                    onChange={setActiveUnderlyingAsset}
+                    onChange={onChangeActiveUnderlyingAsset}
                   />
                   <View style={styles.suppliedBadge}>
                     <Text style={styles.suppliedBadgeText}>
