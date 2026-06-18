@@ -451,7 +451,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   feedbackEntry: {
     height: '100%',
-    paddingRight: 6,
+    paddingRight: 12,
     // ...makeDebugBorder('yellow'),
   },
   settingEntry: {

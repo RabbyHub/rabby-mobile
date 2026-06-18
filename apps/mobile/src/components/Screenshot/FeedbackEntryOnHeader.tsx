@@ -7,20 +7,25 @@ import { useLatestRepliedFeedbacks, useViewingFeedback } from './hooks';
 import RcEntryCC from './icons/entry-cc.svg';
 import RcSuccessCC from './icons/success-cc.svg';
 
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { useSheetModal, useSheetModals } from '@/hooks/useSheetModal';
+import { useSheetModal } from '@/hooks/useSheetModal';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import AutoLockView from '../AutoLockView';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { Button } from '@/components2024/Button';
-import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
 import { FontWeightEnum } from '@/core/utils/fonts';
 import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
 import { Text } from '@/components/Typography';
+import {
+  BOTTOM_BUTTON_SINGLE_HEIGHT,
+  BOTTOM_BUTTON_TITLE_STYLE,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
 
 function ModalResponseDetail({
   lastRepliedFeedback,
@@ -121,14 +126,8 @@ function ModalResponseDetail({
       }}
       enableContentPanningGesture={true}
       enablePanDownToClose={true}
-      containerStyle={styles.sheetModal}
       footerComponent={() => {
-        return (
-          <FooterComponent
-            style={styles.sheetModalFooter}
-            onPress={() => finishViewFeedback()}
-          />
-        );
+        return <FooterComponent onPress={() => finishViewFeedback()} />;
       }}>
       <View style={styles.mainContainer}>
         <AutoLockView style={[styles.container]}>
@@ -138,7 +137,9 @@ function ModalResponseDetail({
             </Text>
           </BottomSheetHandlableView>
 
-          <BottomSheetScrollView style={styles.stagesContainer}>
+          <BottomSheetScrollView
+            style={styles.stagesContainer}
+            contentContainerStyle={styles.stagesContentContainer}>
             {stagesList.map((stage, index) => {
               const key = `stage-${index}-${stage.title}`;
               const isLast = index === stagesList.length - 1;
@@ -198,25 +199,21 @@ export function FeedbackEntryOnHeader({ style }: RNViewProps) {
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getFooterReservedHeight = (safeAreaBottom = 0) =>
+  BOTTOM_BUTTON_TOP_OFFSET +
+  BOTTOM_BUTTON_SINGLE_HEIGHT +
+  getBottomButtonBottomOffset(safeAreaBottom);
+
+const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   iconContainer: {
     height: '100%',
   },
   icon: {
     width: 20,
     height: 20,
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-title-1'],
   },
 
-  sheetModal: {
-    position: 'relative',
-  },
-  sheetModalFooter: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
   mainContainer: {
     height: '100%',
     maxHeight: 380,
@@ -244,8 +241,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 32,
     height: '100%',
     maxHeight: 320,
-    paddingBottom: 24,
     // ...makeDebugBorder('green'),
+  },
+  stagesContentContainer: {
+    paddingBottom: getFooterReservedHeight(safeAreaInsets.bottom),
   },
   stage: {
     position: 'relative',
@@ -316,36 +315,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 }));
 
-const FOOTER_SIZES = {
-  height: 56,
-  marginBottom: 8,
-  extraSpace: 12,
-  get totalHeight() {
-    return this.height + this.marginBottom + this.extraSpace;
-  },
-};
 function FooterComponent({
   onPress,
   style,
 }: RNViewProps & { onPress?(): void }) {
   const { styles } = useTheme2024({ getStyle: getFooterComponentStyle });
-  const { safeSizes } = useSafeAndroidBottomSizes({
-    footerHeight: FOOTER_SIZES.totalHeight,
-  });
   const { t } = useTranslation();
 
   return (
-    <View
-      style={[
-        styles.footerContainer,
-        { height: safeSizes.footerHeight },
-        style,
-      ]}>
+    <View style={[styles.footerContainer, style]}>
       <Button
         title={t('global.ok')}
         containerStyle={styles.okButtonContainer}
-        buttonStyle={styles.okButton}
-        titleStyle={styles.okButtonTitle}
+        height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+        titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
         type="primary"
         onPress={onPress}
       />
@@ -353,33 +336,16 @@ function FooterComponent({
   );
 }
 
-const getFooterComponentStyle = createGetStyles2024(({ colors2024 }) => {
+const getFooterComponentStyle = createGetStyles2024(({ safeAreaInsets }) => {
   return {
     footerContainer: {
       width: '100%',
       paddingHorizontal: 20,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
     okButtonContainer: {
-      height: FOOTER_SIZES.height,
-      justifyContent: 'center',
-      alignItems: 'center',
       width: '100%',
-    },
-    okButton: {
-      height: FOOTER_SIZES.height,
-    },
-    okButtonTitle: {
-      width: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      color: colors2024['neutral-InvertHighlight'],
-      textAlign: 'center',
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 18,
-      fontStyle: 'normal',
-      lineHeight: 22,
-      fontWeight: 700,
     },
   };
 });

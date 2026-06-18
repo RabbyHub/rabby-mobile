@@ -18,6 +18,7 @@ This is a **React Native cryptocurrency wallet mobile app** (Rabby Mobile) organ
 - For `apps/mobile` debug, probe, or migration-diagnostics screens, read `apps/mobile/skills/debug-pages.md` and keep the page focused on live state while moving instructions into help sheets and bulk actions into an actions sheet.
 - For `apps/mobile` keychain patching or upgrade work, read `apps/mobile/skills/keychain-upgrade.md` before changing Android fallback behavior, authentication policy, or package wiring.
 - For `apps/mobile` i18n locale files or translation backfills, read `apps/mobile/skills/i18n-translation.md` and respect `__skip_translation` markers before adding missing keys.
+- For `apps/mobile` fixed bottom buttons, bottom-sheet footer buttons, modal action rows, or footer spacing, read `apps/mobile/skills/bottom-buttons.md` and reuse the shared constants from `src/constant/layout.ts`.
 - For `apps/mobile` code changes, read `apps/mobile/skills/import-cycles.md` and keep import-cycle detection, TypeScript typecheck, and Jest as the required self-validation set before handoff.
 - For `apps/mobile` store, hooks, or Home-path performance work, read `apps/mobile/skills/perf-hooks.md` before changing selector boundaries or exposing large store state to React consumers. It captures the local rules around scene-picked minimal state, scene-level derived data, and limiting render fan-out.
 
