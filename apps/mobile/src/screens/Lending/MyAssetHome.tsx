@@ -30,6 +30,11 @@ import SupplyItem from './components/ItemRender/SupplyItem';
 import { displayGhoForMintableMarket } from './utils/supply';
 import SummaryItem from './components/ItemRender/SummaryItem';
 import {
+  getWrappedNativeReservePair,
+  getWrappedNativeTokenOptions,
+  type PositionTokenOption,
+} from './utils/positionTokenSelector';
+import {
   useFetchLendingData,
   useLendingIsLoading,
   useLendingRemoteData,
@@ -75,6 +80,7 @@ type MyAssetItem =
       type: 'supply';
       underlyingAsset: string;
       usdValue: number;
+      tokenOptions?: PositionTokenOption[];
     };
 
 const MyAssetHome: React.FC = () => {
@@ -140,13 +146,49 @@ const MyAssetHome: React.FC = () => {
         item.reserve.eModes,
       );
     });
+    const {
+      nativeReserve: nativeSupplyReserve,
+      wrappedReserve: wrappedNativeSupplyReserve,
+    } = getWrappedNativeReservePair(supplyList, chainEnum);
+    const shouldMergeWrappedNativeSupply =
+      nativeSupplyReserve &&
+      wrappedNativeSupplyReserve &&
+      nativeSupplyReserve.underlyingBalance ===
+        wrappedNativeSupplyReserve.underlyingBalance &&
+      nativeSupplyReserve.underlyingBalanceUSD ===
+        wrappedNativeSupplyReserve.underlyingBalanceUSD;
+    const wrappedNativeTokenOptions = shouldMergeWrappedNativeSupply
+      ? getWrappedNativeTokenOptions({
+          displayPoolReserves: supplyList,
+          chainEnum,
+        })
+      : undefined;
+
     supplyList?.forEach(item => {
+      if (
+        shouldMergeWrappedNativeSupply &&
+        wrappedNativeSupplyReserve &&
+        isSameAddress(
+          item.underlyingAsset,
+          wrappedNativeSupplyReserve.underlyingAsset,
+        )
+      ) {
+        return;
+      }
       const supplyUsd = Number(item.underlyingBalanceUSD || '0');
       if (supplyUsd > 0) {
         list.push({
           type: 'supply',
           underlyingAsset: item.underlyingAsset,
           usdValue: supplyUsd,
+          tokenOptions:
+            nativeSupplyReserve &&
+            isSameAddress(
+              item.underlyingAsset,
+              nativeSupplyReserve.underlyingAsset,
+            )
+              ? wrappedNativeTokenOptions
+              : undefined,
         });
       }
     });
@@ -228,6 +270,7 @@ const MyAssetHome: React.FC = () => {
       return (
         <SupplyItem
           underlyingAsset={item.underlyingAsset}
+          tokenOptions={item.tokenOptions}
           style={styles.item}
         />
       );

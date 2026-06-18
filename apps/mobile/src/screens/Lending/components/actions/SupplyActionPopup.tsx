@@ -66,6 +66,12 @@ import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
 import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { PositionTokenSelector } from '../ItemRender/PositionTokenSelector';
+import {
+  getWrappedNativeTokenOptions,
+  isWrappedNativeSelectorReserve,
+  type BalancePositionTokenOption,
+} from '../../utils/positionTokenSelector';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
@@ -88,6 +94,9 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
+  const [activeUnderlyingAsset, setActiveUnderlyingAsset] = useState(
+    reserve.underlyingAsset,
+  );
   const [needApprove, setNeedApprove] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [supplyTx, setSupplyTx] = useState<any>(null);
@@ -96,8 +105,11 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
-  const { formattedPoolReservesAndIncentives, getTargetReserve } =
-    useLendingSummary();
+  const {
+    displayPoolReserves,
+    formattedPoolReservesAndIncentives,
+    getTargetReserve,
+  } = useLendingSummary();
   const { isMainnet, chainInfo, chainEnum, selectedMarketData } =
     useSelectedMarket();
   const { pools } = usePoolDataProviderContract();
@@ -107,25 +119,64 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
     [currentAccount?.type],
   );
   const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
-  const isNativeToken = useMemo(() => {
-    return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS);
-  }, [reserve.underlyingAsset]);
+  const approveRequestIdRef = useRef(0);
+  const buildTransactionsRequestIdRef = useRef(0);
+
+  const resetTokenScopedState = useCallback(() => {
+    approveRequestIdRef.current += 1;
+    buildTransactionsRequestIdRef.current += 1;
+    setAmount(undefined);
+    setNeedApprove(false);
+    setSupplyTx(null);
+    setApproveTxs(null);
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    resetTokenScopedState();
+    setActiveUnderlyingAsset(reserve.underlyingAsset);
+  }, [reserve.underlyingAsset, resetTokenScopedState]);
 
   const currentReserve = useMemo(() => {
-    return getTargetReserve(reserve.underlyingAsset) || reserve;
-  }, [getTargetReserve, reserve]);
+    return getTargetReserve(activeUnderlyingAsset) || reserve;
+  }, [activeUnderlyingAsset, getTargetReserve, reserve]);
+
+  const isNativeToken = useMemo(() => {
+    return isSameAddress(currentReserve.underlyingAsset, API_ETH_MOCK_ADDRESS);
+  }, [currentReserve.underlyingAsset]);
+
+  const tokenOptions = useMemo(() => {
+    return isWrappedNativeSelectorReserve(currentReserve, chainEnum)
+      ? getWrappedNativeTokenOptions({
+          displayPoolReserves,
+          chainEnum,
+          type: 'balance',
+        })
+      : undefined;
+  }, [chainEnum, currentReserve, displayPoolReserves]);
+
+  const handleChangeActiveUnderlyingAsset = useCallback(
+    (underlyingAsset: string) => {
+      if (isSameAddress(underlyingAsset, activeUnderlyingAsset)) {
+        return;
+      }
+      resetTokenScopedState();
+      setActiveUnderlyingAsset(underlyingAsset);
+    },
+    [activeUnderlyingAsset, resetTokenScopedState],
+  );
 
   const afterHF = useMemo(() => {
     if (!amount || isZeroAmount(amount)) {
       return undefined;
     }
     const targetPool = formattedPoolReservesAndIncentives.find(item => {
-      return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
+      return isSameAddress(currentReserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
         ? isSameAddress(
             item.underlyingAsset,
-            wrapperToken?.[reserve.chain]?.address,
+            wrapperToken?.[currentReserve.chain]?.address,
           )
-        : isSameAddress(item.underlyingAsset, reserve.underlyingAsset);
+        : isSameAddress(item.underlyingAsset, currentReserve.underlyingAsset);
     });
     if (!targetPool) {
       return undefined;
@@ -139,9 +190,9 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
     ).toString();
   }, [
     amount,
+    currentReserve.chain,
+    currentReserve.underlyingAsset,
     formattedPoolReservesAndIncentives,
-    reserve.chain,
-    reserve.underlyingAsset,
     userSummary,
   ]);
 
@@ -150,20 +201,22 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
       return undefined;
     }
     const targetPool = formattedPoolReservesAndIncentives.find(item => {
-      return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
+      return isSameAddress(currentReserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
         ? isSameAddress(
             item.underlyingAsset,
-            wrapperToken?.[reserve.chain]?.address,
+            wrapperToken?.[currentReserve.chain]?.address,
           )
-        : isSameAddress(item.underlyingAsset, reserve.underlyingAsset);
+        : isSameAddress(item.underlyingAsset, currentReserve.underlyingAsset);
     });
     if (!targetPool) {
       return undefined;
     }
     if (effectUserAvailable(userSummary, targetPool)) {
       return BigNumber(amount)
-        .multipliedBy(reserve.reserve.formattedPriceInMarketReferenceCurrency)
-        .multipliedBy(reserve.reserve.formattedBaseLTVasCollateral)
+        .multipliedBy(
+          currentReserve.reserve.formattedPriceInMarketReferenceCurrency,
+        )
+        .multipliedBy(currentReserve.reserve.formattedBaseLTVasCollateral)
         .plus(BigNumber(userSummary?.availableBorrowsUSD || '0'))
         .toString();
     } else {
@@ -171,56 +224,74 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
     }
   }, [
     amount,
+    currentReserve.chain,
+    currentReserve.reserve.formattedBaseLTVasCollateral,
+    currentReserve.reserve.formattedPriceInMarketReferenceCurrency,
+    currentReserve.underlyingAsset,
     formattedPoolReservesAndIncentives,
-    reserve.chain,
-    reserve.reserve.formattedBaseLTVasCollateral,
-    reserve.reserve.formattedPriceInMarketReferenceCurrency,
-    reserve.underlyingAsset,
     userSummary,
   ]);
 
   // 检查approve额度
   const checkApproveStatus = useCallback(async () => {
+    const requestId = ++approveRequestIdRef.current;
+    const isLatestRequest = () => requestId === approveRequestIdRef.current;
+
     if (!amount || isZeroAmount(amount) || !currentAccount) {
       setNeedApprove(false);
       return;
     }
     if (!selectedMarketData) {
+      setNeedApprove(false);
       return;
     }
 
     try {
       if (!chainInfo) {
+        setNeedApprove(false);
         return;
       }
 
       // 如果是原生代币，不需要approve
       if (
-        isSameAddress(reserve.underlyingAsset, chainInfo.nativeTokenAddress) ||
+        isSameAddress(
+          currentReserve.underlyingAsset,
+          chainInfo.nativeTokenAddress,
+        ) ||
         isNativeToken
       ) {
-        setNeedApprove(false);
+        if (isLatestRequest()) {
+          setNeedApprove(false);
+        }
         return;
       }
 
       // 获取当前approve额度
       const allowance = await getERC20Allowance(
         chainInfo.serverId,
-        reserve.underlyingAsset,
+        currentReserve.underlyingAsset,
         selectedMarketData.addresses.LENDING_POOL,
         currentAccount.address,
         currentAccount,
       );
+      if (!isLatestRequest()) {
+        return;
+      }
 
       // 计算需要的额度（包含decimals）
       const requiredAmount = new BigNumber(amount)
-        .multipliedBy(10 ** reserve.reserve.decimals)
+        .multipliedBy(10 ** currentReserve.reserve.decimals)
         .toString();
 
       // 检查当前额度是否足够
       const isApproved = new BigNumber(allowance || '0').gte(requiredAmount);
-      setNeedApprove(!isApproved);
+      if (isLatestRequest()) {
+        setNeedApprove(!isApproved);
+      }
     } catch (error) {
+      if (!isLatestRequest()) {
+        return;
+      }
       console.error('Check approve status error:', error);
       setNeedApprove(true); // 出错时默认需要approve
     }
@@ -229,19 +300,26 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
     currentAccount,
     selectedMarketData,
     chainInfo,
-    reserve.underlyingAsset,
-    reserve.reserve.decimals,
+    currentReserve.underlyingAsset,
+    currentReserve.reserve.decimals,
     isNativeToken,
   ]);
 
   // 构建交易和估算gas
   const buildTransactions = useCallback(async () => {
+    const requestId = ++buildTransactionsRequestIdRef.current;
+    const isLatestRequest = () =>
+      requestId === buildTransactionsRequestIdRef.current;
+
+    setSupplyTx(null);
+    setApproveTxs(null);
+
     if (!amount || isZeroAmount(amount) || !currentAccount) {
-      setSupplyTx(null);
-      setApproveTxs(null);
+      setIsLoading(false);
       return;
     }
     if (!selectedMarketData || !pools) {
+      setIsLoading(false);
       return;
     }
 
@@ -257,19 +335,25 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
       let actualNeedApprove = false;
       let allowance = '0';
       if (
-        !isSameAddress(reserve.underlyingAsset, chainInfo.nativeTokenAddress) &&
+        !isSameAddress(
+          currentReserve.underlyingAsset,
+          chainInfo.nativeTokenAddress,
+        ) &&
         !isNativeToken
       ) {
         allowance = await getERC20Allowance(
           chainInfo.serverId,
-          reserve.underlyingAsset,
+          currentReserve.underlyingAsset,
           selectedMarketData.addresses.LENDING_POOL,
           currentAccount.address,
           currentAccount,
         );
+        if (!isLatestRequest()) {
+          return;
+        }
 
         const requiredAmount = new BigNumber(amount)
-          .multipliedBy(10 ** reserve.reserve.decimals)
+          .multipliedBy(10 ** currentReserve.reserve.decimals)
           .toString();
 
         actualNeedApprove = !new BigNumber(allowance || '0').gte(
@@ -279,14 +363,14 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
 
       if (actualNeedApprove && !isNativeToken) {
         const requiredAmount = new BigNumber(amount)
-          .multipliedBy(10 ** reserve.reserve.decimals)
+          .multipliedBy(10 ** currentReserve.reserve.decimals)
           .toFixed();
 
         // 检查是否需要两步approve（针对以太坊上的USDT）
         let shouldTwoStepApprove = false;
         if (
           isMainnet &&
-          isSameAddress(reserve.underlyingAsset, ETH_USDT_CONTRACT) &&
+          isSameAddress(currentReserve.underlyingAsset, ETH_USDT_CONTRACT) &&
           Number(allowance) !== 0 &&
           !new BigNumber(allowance || '0').gte(requiredAmount)
         ) {
@@ -297,12 +381,15 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
         if (shouldTwoStepApprove) {
           const zeroApproveResult = await approveToken({
             chainServerId: chainInfo.serverId,
-            id: reserve.underlyingAsset,
+            id: currentReserve.underlyingAsset,
             spender: selectedMarketData.addresses.LENDING_POOL,
             amount: 0,
             account: currentAccount,
             isBuild: true,
           });
+          if (!isLatestRequest()) {
+            return;
+          }
 
           const zeroApproveTxBuilt = {
             ...zeroApproveResult.params[0],
@@ -317,12 +404,15 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
         // 执行正常额度的approve
         const approveResult = await approveToken({
           chainServerId: chainInfo.serverId,
-          id: reserve.underlyingAsset,
+          id: currentReserve.underlyingAsset,
           spender: selectedMarketData.addresses.LENDING_POOL,
           amount: requiredAmount,
           account: currentAccount,
           isBuild: true,
         });
+        if (!isLatestRequest()) {
+          return;
+        }
 
         const approveTxBuilt = {
           ...approveResult.params[0],
@@ -332,17 +422,19 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
         };
 
         txs.push(approveTxBuilt);
-        setApproveTxs(txs);
       }
 
       // 构建supply交易
       const supplyResult = await buildSupplyTx({
         poolBundle: pools.poolBundle,
-        amount: parseUnits(amount, reserve.reserve.decimals).toString(),
+        amount: parseUnits(amount, currentReserve.reserve.decimals).toString(),
         address: currentAccount.address,
-        reserve: reserve.underlyingAsset,
+        reserve: currentReserve.underlyingAsset,
         useOptimizedPath: optimizedPath(selectedMarketData.chainId),
       });
+      if (!isLatestRequest()) {
+        return;
+      }
       delete supplyResult.gasLimit;
 
       const formattedSupplyResult = {
@@ -351,14 +443,20 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
         value: supplyResult.value?.toHexString() || '0x0',
         chainId: chainInfo.id,
       };
+      setApproveTxs(txs.length ? txs : null);
       setSupplyTx(formattedSupplyResult);
     } catch (error) {
+      if (!isLatestRequest()) {
+        return;
+      }
       console.error('Build transactions error:', error);
       toast.error('something error');
       setSupplyTx(null);
       setApproveTxs(null);
     } finally {
-      setIsLoading(false);
+      if (isLatestRequest()) {
+        setIsLoading(false);
+      }
     }
   }, [
     amount,
@@ -366,16 +464,16 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
     selectedMarketData,
     pools,
     chainInfo,
-    reserve.underlyingAsset,
-    reserve.reserve.decimals,
+    currentReserve.underlyingAsset,
+    currentReserve.reserve.decimals,
     isNativeToken,
     isMainnet,
   ]);
 
   const supplyAmount = useMemo(() => {
     const myAmount = BigNumber(currentReserve.walletBalance || '0');
-    const poolAmount = BigNumber(reserve.reserve.supplyCap)
-      .minus(BigNumber(reserve.reserve.totalLiquidity))
+    const poolAmount = BigNumber(currentReserve.reserve.supplyCap)
+      .minus(BigNumber(currentReserve.reserve.totalLiquidity))
       .multipliedBy(SUPPLY_UI_SAFE_MARGIN);
     const formattedPoolAmount = poolAmount.lt(0) ? BigNumber(0) : poolAmount;
     const miniAmount = myAmount.gte(formattedPoolAmount)
@@ -384,7 +482,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
     const usdValue = miniAmount
       .multipliedBy(
         BigNumber(
-          reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+          currentReserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
         ),
       )
       .toString();
@@ -395,33 +493,35 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
     };
   }, [
     currentReserve.walletBalance,
-    reserve.reserve.supplyCap,
-    reserve.reserve.totalLiquidity,
-    reserve.reserve.formattedPriceInMarketReferenceCurrency,
+    currentReserve.reserve.supplyCap,
+    currentReserve.reserve.totalLiquidity,
+    currentReserve.reserve.formattedPriceInMarketReferenceCurrency,
   ]);
 
   const showToSwap = useMemo(() => {
     return (
       new BigNumber(currentReserve.walletBalance || '0').lte(0) &&
-      BigNumber(reserve.reserve.supplyCap)
-        .minus(BigNumber(reserve.reserve.totalLiquidity))
+      BigNumber(currentReserve.reserve.supplyCap)
+        .minus(BigNumber(currentReserve.reserve.totalLiquidity))
         .gt(0)
     );
   }, [
     currentReserve.walletBalance,
-    reserve.reserve.supplyCap,
-    reserve.reserve.totalLiquidity,
+    currentReserve.reserve.supplyCap,
+    currentReserve.reserve.totalLiquidity,
   ]);
 
   const swapTokenId = useMemo(() => {
     if (isNativeToken) {
-      return chainInfo?.nativeTokenAddress || reserve.reserve.underlyingAsset;
+      return (
+        chainInfo?.nativeTokenAddress || currentReserve.reserve.underlyingAsset
+      );
     }
-    return reserve.reserve.underlyingAsset;
+    return currentReserve.reserve.underlyingAsset;
   }, [
     chainInfo?.nativeTokenAddress,
+    currentReserve.reserve.underlyingAsset,
     isNativeToken,
-    reserve.reserve.underlyingAsset,
   ]);
 
   const openSwap = useCallback(async () => {
@@ -555,7 +655,8 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
         const usdValue = new BigNumber(amount || '0')
           .multipliedBy(
             BigNumber(
-              reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+              currentReserve.reserve.formattedPriceInMarketReferenceCurrency ||
+                '0',
             ),
           )
           .toString();
@@ -591,7 +692,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
       amount,
       txsForMiniApproval,
       canShowDirectSubmit,
-      reserve.reserve.formattedPriceInMarketReferenceCurrency,
+      currentReserve.reserve.formattedPriceInMarketReferenceCurrency,
       chainInfo?.serverId,
       refresh,
       t,
@@ -628,7 +729,8 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
     <SignatureInstanceProvider instance={miniSignInstance}>
       <AutoLockView as="View" style={styles.container}>
         <Text style={styles.title}>
-          {t('page.Lending.supplyDetail.actions')} {reserve.reserve.symbol}
+          {t('page.Lending.supplyDetail.actions')}{' '}
+          {currentReserve.reserve.symbol}
         </Text>
         <View style={styles.amountHeader}>
           <Text style={styles.amountHeaderTitle}>
@@ -640,7 +742,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
                 styles.amountValueDescription,
                 emptyAmount && styles.amountValueDescriptionDanger,
               ]}>{`${formatTokenAmount(supplyAmount.amount || '0')}${
-              reserve.reserve.symbol
+              currentReserve.reserve.symbol
             }($${
               supplyAmount.isLteZero
                 ? '0'
@@ -663,23 +765,37 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
             }
             setAmount(v);
           }}
-          symbol={reserve.reserve.symbol}
+          symbol={currentReserve.reserve.symbol}
           handleClickMaxButton={() => {
             setAmount(supplyAmount.amount || '0');
           }}
           tokenAmount={Number(supplyAmount.amount || '0')}
-          tokenDecimals={reserve.reserve.decimals}
+          tokenDecimals={currentReserve.reserve.decimals}
           price={Number(
-            reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+            currentReserve.reserve.formattedPriceInMarketReferenceCurrency ||
+              '0',
           )}
           style={styles.amountInput}
           chain={chainEnum || CHAINS_ENUM.ETH}
+          tokenSelectContent={
+            tokenOptions?.length ? (
+              <PositionTokenSelector
+                type="balance"
+                triggerVariant="pill"
+                activeUnderlyingAsset={activeUnderlyingAsset}
+                options={tokenOptions as BalancePositionTokenOption[]}
+                symbol={currentReserve.reserve.symbol}
+                chain={currentReserve.chain}
+                onChange={handleChangeActiveUnderlyingAsset}
+              />
+            ) : undefined
+          }
         />
         <BottomSheetScrollView
           style={styles.bottomSheetScrollView}
           contentContainerStyle={styles.transactionContainer}>
           <SupplyActionOverView
-            reserve={reserve}
+            reserve={currentReserve}
             userSummary={userSummary}
             afterHF={afterHF}
             afterAvailable={afterAvailable}
@@ -697,7 +813,10 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
             </View>
           )}
 
-          <ReserveErrorTip reserve={reserve} style={styles.reserveErrorTip} />
+          <ReserveErrorTip
+            reserve={currentReserve}
+            style={styles.reserveErrorTip}
+          />
         </BottomSheetScrollView>
 
         <View style={styles.buttonContainer}>
@@ -706,12 +825,12 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
               ref={directSignBtnRef}
               loading={isLoading}
               loadingType="circle"
-              key={`${amount}-${needApprove}`}
+              key={`${currentReserve.underlyingAsset}-${amount}-${needApprove}`}
               showTextOnLoading
               wrapperStyle={styles.directSignBtn}
               authTitle={t('page.Lending.supplyDetail.actions')}
               title={`${t('page.Lending.supplyDetail.actions')} ${
-                reserve.reserve.symbol
+                currentReserve.reserve.symbol
               }`}
               onFinished={() => handleSupply()}
               disabled={
