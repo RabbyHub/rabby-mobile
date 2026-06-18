@@ -406,7 +406,7 @@ export const TokenList = () => {
     const balanceRefresh = triggerUpdate(true);
     const tokenRefresh = batchGetTokenList(myTop10Addresses, true);
 
-    await withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(error => {
+    withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(error => {
       console.error('Refresh balance failed:', error);
     });
 
