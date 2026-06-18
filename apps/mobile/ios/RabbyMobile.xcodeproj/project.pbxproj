@@ -19,7 +19,7 @@
 		019A0D4430A1A110007F31A8 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 019A0D4230A1A110007F31A8 /* Photos.framework */; };
 		019A0D4530A1A110007F31A8 /* PhotosUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 019A0D4330A1A110007F31A8 /* PhotosUI.framework */; };
 		01BBE0162C3879380033D12B /* UIImage+ImageEffects.m in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE0122C3879380033D12B /* UIImage+ImageEffects.m */; };
-		01BBE0172C3879380033D12B /* RNScreenshotPrevent.m in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE0132C3879380033D12B /* RNScreenshotPrevent.m */; };
+		01BBE0172C3879380033D12B /* RNScreenshotPrevent.mm in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE0132C3879380033D12B /* RNScreenshotPrevent.mm */; };
 		01BBE0212C3889BB0033D12B /* ScreenShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE01E2C3889BB0033D12B /* ScreenShield.swift */; };
 		01C69DD92C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */; };
 		01C69DDA2C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */; };
@@ -74,7 +74,7 @@
 		019A0D4230A1A110007F31A8 /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Photos.framework; path = System/Library/Frameworks/Photos.framework; sourceTree = SDKROOT; };
 		019A0D4330A1A110007F31A8 /* PhotosUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PhotosUI.framework; path = System/Library/Frameworks/PhotosUI.framework; sourceTree = SDKROOT; };
 		01BBE0122C3879380033D12B /* UIImage+ImageEffects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIImage+ImageEffects.m"; path = "RabbyMobile/UIImage+ImageEffects.m"; sourceTree = "<group>"; };
-		01BBE0132C3879380033D12B /* RNScreenshotPrevent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RNScreenshotPrevent.m; path = RabbyMobile/RNScreenshotPrevent.m; sourceTree = "<group>"; };
+		01BBE0132C3879380033D12B /* RNScreenshotPrevent.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RNScreenshotPrevent.mm; path = RabbyMobile/RNScreenshotPrevent.mm; sourceTree = "<group>"; };
 		01BBE0182C387B8C0033D12B /* RNScreenshotPrevent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RNScreenshotPrevent.h; path = RabbyMobile/RNScreenshotPrevent.h; sourceTree = "<group>"; };
 		01BBE0192C387B8C0033D12B /* UIImage+ImageEffects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIImage+ImageEffects.h"; path = "RabbyMobile/UIImage+ImageEffects.h"; sourceTree = "<group>"; };
 		01BBE01E2C3889BB0033D12B /* ScreenShield.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ScreenShield.swift; path = RabbyMobile/ScreenShield.swift; sourceTree = "<group>"; };
@@ -212,7 +212,7 @@
 				A8D4D12C2C7EFDA1002B827D /* RabbyMobile.entitlements */,
 				01BBE01E2C3889BB0033D12B /* ScreenShield.swift */,
 				01BBE0182C387B8C0033D12B /* RNScreenshotPrevent.h */,
-				01BBE0132C3879380033D12B /* RNScreenshotPrevent.m */,
+				01BBE0132C3879380033D12B /* RNScreenshotPrevent.mm */,
 				01BBE0192C387B8C0033D12B /* UIImage+ImageEffects.h */,
 				01BBE0122C3879380033D12B /* UIImage+ImageEffects.m */,
 				01EF41A82C36CAFF009D8053 /* ReactNativeSecurity.h */,
@@ -631,7 +631,7 @@
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				01D49C762CBE7D5E008C5EE2 /* RNTimeChanged.mm in Sources */,
 				018EF45A2EFC0FEE001A2361 /* RNUtils.m in Sources */,
-				01BBE0172C3879380033D12B /* RNScreenshotPrevent.m in Sources */,
+				01BBE0172C3879380033D12B /* RNScreenshotPrevent.mm in Sources */,
 				013A0B0D309BD7C5006B91AA /* RNFileHelpers.mm in Sources */,
 				0120B2102D082C0000FCB1B1 /* RNHelpers.mm in Sources */,
 			);

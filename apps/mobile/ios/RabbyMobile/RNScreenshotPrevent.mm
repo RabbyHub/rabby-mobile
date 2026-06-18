@@ -1,11 +1,16 @@
-//#import <Foundation/Foundation.h>
 #import "RNScreenshotPrevent.h"
-#import "UIImage+ImageEffects.h"
+#import <React/RCTUtils.h>
+
+#ifdef RCT_NEW_ARCH_ENABLED
+using namespace facebook::react;
+#endif
 
 @implementation RNScreenshotPrevent {
     BOOL hasListeners;
     BOOL enabled;
     BOOL appSwitcherBlurEnabled;
+    BOOL notificationObserversRegistered;
+    id screenshotObserver;
     UIImageView *obfuscatingView;
     UITextField *secureField;
     // UIImageView *imageView;
@@ -23,11 +28,28 @@
 
 // To export a module named RNScreenshotPrevent
 RCT_EXPORT_MODULE();
+
+#ifdef RCT_NEW_ARCH_ENABLED
+- (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
+    (const facebook::react::ObjCTurboModule::InitParams &)params
+{
+    return std::make_shared<NativeRNScreenshotPreventSpecJSI>(params);
+}
+
+- (void)setEventEmitterCallback:(EventEmitterCallbackWrapper *)eventEmitterCallbackWrapper
+{
+    [super setEventEmitterCallback:eventEmitterCallbackWrapper];
+    hasListeners = TRUE;
+    [self startNotificationObserversIfNeeded];
+}
+#endif
+
 - (NSArray<NSString *> *)supportedEvents {
     return @[
       @"userDidTakeScreenshot",
       @"screenCapturedChanged",
       @"appSwitcherBlurChanged",
+      @"screenCaptureDetectionChanged",
       @"preventScreenshotChanged",
       @"androidOnLifeCycleChanged" // robust, not really used
     ];
@@ -41,11 +63,22 @@ RCT_EXPORT_MODULE();
 #pragma mark - Lifecycle
 
 - (void) startObserving {
+    hasListeners = TRUE;
+    [self startNotificationObserversIfNeeded];
+}
+
+- (void) stopObserving {
+    [self stopNotificationObservers];
+    hasListeners = FALSE;
+}
+
+- (void) startNotificationObserversIfNeeded {
+    if (notificationObserversRegistered) {
+        return;
+    }
+
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     NSOperationQueue *mainQueue = [NSOperationQueue mainQueue];
-
-    // TODO: allow configure that
-    BOOL getScreenShotPath = TRUE;
 
     // handle inactive event
     [center addObserver:self selector:@selector(handleAppStateResignActive)
@@ -56,78 +89,89 @@ RCT_EXPORT_MODULE();
                             name:UIApplicationDidBecomeActiveNotification
                             object:nil];
 
-    // handle screenshot taken event
-    // [center addObserver:self selector:@selector(handleAppScreenshotNotification)
-    //                         name:UIApplicationUserDidTakeScreenshotNotification
-    //                         // queue:mainQueue
-    //                         object:nil];
-
-    [center addObserverForName:UIApplicationUserDidTakeScreenshotNotification
+    __weak RNScreenshotPrevent *weakSelf = self;
+    screenshotObserver =
+        [center addObserverForName:UIApplicationUserDidTakeScreenshotNotification
                             object:nil
-                            queue:mainQueue
-                            usingBlock:^(NSNotification *notification) {
-      if (self->hasListeners && getScreenShotPath) {
-          NSMutableDictionary *result = [@{
-            @"path": @"Error retrieving file",
-            @"name": @"",
-            @"height": @"",
-            @"width": @"",
-            @"imageBase64": @"",
-            @"imageType": @"",
-            @"captured": @FALSE
-          } mutableCopy];
-          UIViewController *presentedViewController = RCTPresentedViewController();
-
-          UIImage *image = [self convertViewToImage:presentedViewController.view.superview];
-          NSData *data = UIImagePNGRepresentation(image);
-          if (!data) {
-              [self sendEventWithName:@"userDidTakeScreenshot" body: result];
-            // reject(@"error", @"Failed to convert image to PNG", nil);
-            return;
-          }
-
-          [result setObject:@(image.size.height) forKey:@"height"];
-          [result setObject:@(image.size.width) forKey:@"width"];
-          [result setObject:[data base64EncodedStringWithOptions:0] forKey:@"imageBase64"];
-          [result setObject:@"png" forKey:@"imageType"];
-          [result setObject:@TRUE forKey:@"captured"];
-
-          // NSString *tempDir = NSTemporaryDirectory();
-          // NSString *fileName = [[NSUUID UUID] UUIDString];
-          // NSString *filePath = [tempDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.png", fileName]];
-
-          // NSError *error = nil;
-          // BOOL success = [data writeToFile:filePath options:NSDataWritingAtomic error:&error];
-          // if (success) {
-          //   [result setObject:filePath forKey:@"path"];
-          //   [result setObject:fileName forKey:@"name"];
-          // }
-          [self sendEventWithName:@"userDidTakeScreenshot" body: result];
-      } else if (self->hasListeners) {
-          [self sendEventWithName:@"userDidTakeScreenshot" body: nil];
-      }
-    }];
+                             queue:mainQueue
+                        usingBlock:^(NSNotification *notification) {
+                            (void)notification;
+                            [weakSelf handleAppScreenshotNotification];
+                        }];
 
     [center addObserver:self selector:@selector(handleScreenCapturedNotification)
                             name:UIScreenCapturedDidChangeNotification
                             object:nil];
 
-    hasListeners = TRUE;
+    notificationObserversRegistered = TRUE;
 }
 
-- (void) stopObserving {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
+- (void)stopNotificationObservers {
+    if (!notificationObserversRegistered) {
+        return;
+    }
 
-    hasListeners = FALSE;
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center removeObserver:self];
+    if (screenshotObserver) {
+        [center removeObserver:screenshotObserver];
+        screenshotObserver = nil;
+    }
+    notificationObserversRegistered = FALSE;
+}
+
+- (void)invalidate {
+    [self stopNotificationObservers];
+}
+
+- (void)dealloc {
+    [self stopNotificationObservers];
 }
 
 #pragma mark - App Notification Methods
 
-- (void)emitAppSwitcherBlurChanged:(BOOL)visible {
+- (void)emitUserDidTakeScreenshotChanged:(NSDictionary *)body {
+    if (!hasListeners) {
+        return;
+    }
+#ifdef RCT_NEW_ARCH_ENABLED
+    [self emitUserDidTakeScreenshot:body ?: @{}];
+#else
+    [self sendEventWithName:@"userDidTakeScreenshot" body:body];
+#endif
+}
+
+- (void)emitScreenCapturedChangedEvent:(NSDictionary *)body {
+    if (!hasListeners) {
+        return;
+    }
+#ifdef RCT_NEW_ARCH_ENABLED
+    [self emitScreenCapturedChanged:body];
+#else
+    [self sendEventWithName:@"screenCapturedChanged" body:body];
+#endif
+}
+
+- (void)emitPreventScreenshotChangedEvent:(NSDictionary *)body {
+    if (!hasListeners) {
+        return;
+    }
+#ifdef RCT_NEW_ARCH_ENABLED
+    [self emitPreventScreenshotChanged:body];
+#else
+    [self sendEventWithName:@"preventScreenshotChanged" body:body];
+#endif
+}
+
+- (void)emitAppSwitcherBlurChangedEvent:(BOOL)visible {
     if (hasListeners) {
         // The JS overlay owns the normal app-switcher blur presentation so we only
         // emit a deterministic lifecycle signal here and avoid depending on RN AppState.
+#ifdef RCT_NEW_ARCH_ENABLED
+        [self emitAppSwitcherBlurChanged:@{@"visible": @(visible)}];
+#else
         [self sendEventWithName:@"appSwitcherBlurChanged" body:@{@"visible": @(visible)}];
+#endif
     }
 }
 
@@ -138,7 +182,7 @@ RCT_EXPORT_MODULE();
     }
 
     if (self->appSwitcherBlurEnabled) {
-        [self emitAppSwitcherBlurChanged:YES];
+        [self emitAppSwitcherBlurChangedEvent:YES];
     }
 
     // Keep the legacy native snapshot blur only for the prevent-screenshot flow.
@@ -159,7 +203,12 @@ RCT_EXPORT_MODULE();
     UIImage *viewImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
 
-    blurredScreenImageView.image = [viewImage applyLightEffect];
+    blurredScreenImageView.image = viewImage;
+    UIBlurEffect *blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleLight];
+    UIVisualEffectView *blurView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
+    blurView.frame = blurredScreenImageView.bounds;
+    blurView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    [blurredScreenImageView addSubview:blurView];
 
     self->obfuscatingView = blurredScreenImageView;
     [keyWindow addSubview:self->obfuscatingView];
@@ -174,15 +223,41 @@ RCT_EXPORT_MODULE();
 
     // Mirror the resign-active signal so JS can hide the app-switcher overlay
     // without relying on the RN AppState transition timing.
-    [self emitAppSwitcherBlurChanged:NO];
+    [self emitAppSwitcherBlurChangedEvent:NO];
 }
 
 /** sends screenshot taken event into app */
 - (void) handleAppScreenshotNotification {
-    // only send events when we have some listeners
-    if(hasListeners) {
-        [self sendEventWithName:@"userDidTakeScreenshot" body:nil];
+    if (!hasListeners) {
+        return;
     }
+
+    NSMutableDictionary *result = [@{
+      @"path": @"Error retrieving file",
+      @"name": @"",
+      @"height": @"",
+      @"width": @"",
+      @"imageBase64": @"",
+      @"imageType": @"",
+      @"captured": @FALSE
+    } mutableCopy];
+
+    UIViewController *presentedViewController = RCTPresentedViewController();
+    UIView *targetView = presentedViewController.view.superview ?: presentedViewController.view;
+    UIImage *image = [self convertViewToImage:targetView];
+    NSData *data = UIImagePNGRepresentation(image);
+    if (!data) {
+        [self emitUserDidTakeScreenshotChanged:result];
+        return;
+    }
+
+    [result setObject:@(image.size.height) forKey:@"height"];
+    [result setObject:@(image.size.width) forKey:@"width"];
+    [result setObject:[data base64EncodedStringWithOptions:0] forKey:@"imageBase64"];
+    [result setObject:@"png" forKey:@"imageType"];
+    [result setObject:@TRUE forKey:@"captured"];
+
+    [self emitUserDidTakeScreenshotChanged:result];
 }
 
 - (void) handleScreenCapturedNotification {
@@ -192,7 +267,7 @@ RCT_EXPORT_MODULE();
 #endif
     // only send events when we have some listeners
     if(hasListeners) {
-        [self sendEventWithName:@"screenCapturedChanged" body:@{@"isBeingCaptured": @(isCaptured)}];
+        [self emitScreenCapturedChangedEvent:@{@"isBeingCaptured": @(isCaptured)}];
     }
 }
 
@@ -292,9 +367,38 @@ CGSize CGSizeAspectFill(const CGSize aspectRatio, const CGSize minimumSize)
 
 #pragma mark - Public API
 
+RCT_EXPORT_METHOD(addListener:(NSString *)eventType) {
+    (void)eventType;
+    hasListeners = TRUE;
+    [self startNotificationObserversIfNeeded];
+}
+
+RCT_EXPORT_METHOD(removeListeners:(double)count) {
+    (void)count;
+}
+
+RCT_EXPORT_METHOD(scanScreenshotDirectory) {
+}
+
+RCT_EXPORT_METHOD(startScreenCaptureDetection:
+  (RCTPromiseResolveBlock)resolve
+  reject:(RCTPromiseRejectBlock)reject
+) {
+    (void)reject;
+    resolve(nil);
+}
+
+RCT_EXPORT_METHOD(stopScreenCaptureDetection:
+  (RCTPromiseResolveBlock)resolve
+  reject:(RCTPromiseRejectBlock)reject
+) {
+    (void)reject;
+    resolve(nil);
+}
+
 RCT_EXPORT_METHOD(togglePreventScreenshot:(BOOL) isPrevent) {
     self->enabled = isPrevent;
-    [self sendEventWithName:@"preventScreenshotChanged" body:@{@"isPrevent": @(isPrevent), @"success": @YES}];
+    [self emitPreventScreenshotChangedEvent:@{@"isPrevent": @(isPrevent), @"success": @YES}];
 
     if (isPrevent) {
       dispatch_async(dispatch_get_main_queue(), ^{
@@ -303,7 +407,6 @@ RCT_EXPORT_METHOD(togglePreventScreenshot:(BOOL) isPrevent) {
     } else {
       dispatch_async(dispatch_get_main_queue(), ^{
           [self removeScreenShot];
-          [[NSNotificationCenter defaultCenter]removeObserver:UIApplicationUserDidTakeScreenshotNotification];
           // [[NSNotificationCenter defaultCenter]removeObserver:UIScreenCapturedDidChangeNotification];
       });
     }
@@ -313,12 +416,22 @@ RCT_EXPORT_METHOD(setAppSwitcherBlurEnabled:(BOOL)isEnabled) {
     self->appSwitcherBlurEnabled = isEnabled;
 }
 
-RCT_EXPORT_METHOD(iosProtectFromScreenRecording) {
+RCT_EXPORT_METHOD(iosProtectFromScreenRecording:
+  (RCTPromiseResolveBlock)resolve
+  reject:(RCTPromiseRejectBlock)reject
+) {
+    (void)reject;
     [[ScreenShield shared] protectFromScreenRecording];
+    resolve(nil);
 }
 
-RCT_EXPORT_METHOD(iosUnprotectFromScreenRecording) {
+RCT_EXPORT_METHOD(iosUnprotectFromScreenRecording:
+  (RCTPromiseResolveBlock)resolve
+  reject:(RCTPromiseRejectBlock)reject
+) {
+    (void)reject;
     [[ScreenShield shared] unprotectFromScreenRecording];
+    resolve(nil);
 }
 
 RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(iosIsBeingCaptured) {
