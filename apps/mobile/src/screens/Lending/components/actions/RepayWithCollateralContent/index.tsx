@@ -750,7 +750,7 @@ export default function RepayWithCollateral({
 
   useEffect(() => {
     if (
-      !currentAccount ||
+      !currentAccount?.address ||
       !canShowDirectSubmit ||
       !currentTxs?.length ||
       collateralNotEnough
@@ -767,7 +767,7 @@ export default function RepayWithCollateral({
     canShowDirectSubmit,
     closeMiniSigner,
     collateralNotEnough,
-    currentAccount,
+    currentAccount?.address,
     currentTxs,
     prefetchMiniSigner,
   ]);

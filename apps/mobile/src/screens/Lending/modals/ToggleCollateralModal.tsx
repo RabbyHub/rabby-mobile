@@ -395,7 +395,7 @@ function ToggleCollateralContent({}: {}) {
 
   useEffect(() => {
     if (
-      currentAccount &&
+      currentAccount?.address &&
       canShowDirectSubmit &&
       !isRiskToLiquidation &&
       !isError &&
@@ -408,7 +408,7 @@ function ToggleCollateralContent({}: {}) {
     }
   }, [
     canShowDirectSubmit,
-    currentAccount,
+    currentAccount?.address,
     isRiskToLiquidation,
     isError,
     isShowToggleCollateralModal,

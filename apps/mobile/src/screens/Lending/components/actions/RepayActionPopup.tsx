@@ -710,7 +710,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
 
   useEffect(() => {
     if (
-      currentAccount &&
+      currentAccount?.address &&
       canShowDirectSubmit &&
       amount &&
       !isZeroAmount(amount)
@@ -722,7 +722,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
     }
   }, [
     canShowDirectSubmit,
-    currentAccount,
+    currentAccount?.address,
     amount,
     txsForMiniApproval,
     prefetchMiniSigner,

@@ -675,7 +675,11 @@ export default function DebtSwapModal({
   ]);
 
   useEffect(() => {
-    if (!currentAccount || !canShowDirectSubmit || !currentTxs?.length) {
+    if (
+      !currentAccount?.address ||
+      !canShowDirectSubmit ||
+      !currentTxs?.length
+    ) {
       closeMiniSigner();
       return;
     }
@@ -687,7 +691,7 @@ export default function DebtSwapModal({
   }, [
     canShowDirectSubmit,
     closeMiniSigner,
-    currentAccount,
+    currentAccount?.address,
     currentTxs,
     prefetchMiniSigner,
   ]);

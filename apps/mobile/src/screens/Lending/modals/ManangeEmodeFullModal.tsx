@@ -210,7 +210,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
 
   useEffect(() => {
     if (
-      currentAccount &&
+      currentAccount?.address &&
       canShowDirectSubmit &&
       hasChangeCategory &&
       !isBlock &&
@@ -223,7 +223,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
     }
   }, [
     canShowDirectSubmit,
-    currentAccount,
+    currentAccount?.address,
     prefetchMiniSigner,
     manageEmodeTx,
     hasChangeCategory,

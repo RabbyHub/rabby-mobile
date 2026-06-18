@@ -439,7 +439,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
 
   useEffect(() => {
     if (
-      currentAccount &&
+      currentAccount?.address &&
       canShowDirectSubmit &&
       amount &&
       !isZeroAmount(amount) &&
@@ -452,7 +452,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     }
   }, [
     canShowDirectSubmit,
-    currentAccount,
+    currentAccount?.address,
     amount,
     withdrawTxs,
     prefetchMiniSigner,

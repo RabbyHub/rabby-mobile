@@ -364,7 +364,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
 
   useEffect(() => {
     if (
-      currentAccount &&
+      currentAccount?.address &&
       canShowDirectSubmit &&
       amount &&
       !isZeroAmount(amount)
@@ -374,7 +374,13 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         synGasHeaderInfo: true,
       });
     }
-  }, [canShowDirectSubmit, currentAccount, amount, txs, prefetchMiniSigner]);
+  }, [
+    canShowDirectSubmit,
+    currentAccount?.address,
+    amount,
+    txs,
+    prefetchMiniSigner,
+  ]);
 
   const showBorrowToCapTip = useMemo(() => {
     if (!reserve?.reserve?.totalDebt || !reserve?.reserve?.borrowCap) {
