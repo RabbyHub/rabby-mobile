@@ -92,6 +92,28 @@ public class RNScreenshotPreventModule extends NativeRNScreenshotPreventSpec /* 
   @Override
   public void setAppSwitcherBlurEnabled(boolean isEnabled) {}
 
+  private boolean hasCodegenEventEmitter() {
+    return mEventEmitterCallback != null;
+  }
+
+  private void emitUserDidTakeScreenshotEvent(WritableMap params) {
+    if (hasCodegenEventEmitter()) {
+      emitUserDidTakeScreenshot(params);
+    }
+  }
+
+  private void emitScreenCaptureDetectionChangedEvent(WritableMap params) {
+    if (hasCodegenEventEmitter()) {
+      emitScreenCaptureDetectionChanged(params);
+    }
+  }
+
+  private void emitPreventScreenshotChangedEvent(WritableMap params) {
+    if (hasCodegenEventEmitter()) {
+      emitPreventScreenshotChanged(params);
+    }
+  }
+
   private static ViewGroup activityGetRootView(Activity activity) {
     ViewGroup rootView = (ViewGroup) activity.getWindow().getDecorView().getRootView();
     return rootView;
@@ -139,7 +161,7 @@ public class RNScreenshotPreventModule extends NativeRNScreenshotPreventSpec /* 
     // Send event indicating screen capture detection has started
     WritableMap params = Arguments.createMap();
     params.putBoolean("enabled", true);
-    RabbyUtils.rnCtxSendEvent(reactContext, "screenCaptureDetectionChanged", params);
+    emitScreenCaptureDetectionChangedEvent(params);
 
     try {
         screenCaptureCallback = new Activity.ScreenCaptureCallback() {
@@ -179,7 +201,7 @@ public class RNScreenshotPreventModule extends NativeRNScreenshotPreventSpec /* 
         params.putString("imageType", "png");
     }
 
-    RabbyUtils.rnCtxSendEvent(this.reactContext, "userDidTakeScreenshot", params);
+    emitUserDidTakeScreenshotEvent(params);
   }
 
   @ReactMethod
@@ -207,7 +229,7 @@ public class RNScreenshotPreventModule extends NativeRNScreenshotPreventSpec /* 
 
         WritableMap params = Arguments.createMap();
         params.putBoolean("enabled", false);
-        RabbyUtils.rnCtxSendEvent(reactContext, "screenCaptureDetectionChanged", params);
+        emitScreenCaptureDetectionChangedEvent(params);
       } catch (Exception e) {
           Log.i(TAG, "Failed to unregister ScreenCaptureCallback (Reflection)", e);
       }
@@ -244,7 +266,7 @@ public class RNScreenshotPreventModule extends NativeRNScreenshotPreventSpec /* 
       }
     }
 
-    RabbyUtils.rnCtxSendEvent(reactContext, "preventScreenshotChanged", params);
+    emitPreventScreenshotChangedEvent(params);
   }
 
   @ReactMethod

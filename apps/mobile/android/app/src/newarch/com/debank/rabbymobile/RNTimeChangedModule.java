@@ -42,6 +42,12 @@ public class RNTimeChangedModule extends NativeRNTimeChangedSpec implements Life
   @Override
   public void removeListeners(double count) {}
 
+  private void emitOnTimeChangedEvent(WritableMap params) {
+    if (mEventEmitterCallback != null) {
+      emitOnTimeChanged(params);
+    }
+  }
+
   private class TimeChangeBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -55,13 +61,13 @@ public class RNTimeChangedModule extends NativeRNTimeChangedSpec implements Life
 
       if (Intent.ACTION_TIME_CHANGED.equals(action)) {
         params.putString("reason", "timeSet");
-        RabbyUtils.rnCtxSendEvent(reactContext, "onTimeChanged", params);
+        emitOnTimeChangedEvent(params);
       } else if (Intent.ACTION_TIMEZONE_CHANGED.equals(action)) {
         params.putString("reason", "timeZoneChanged");
-        RabbyUtils.rnCtxSendEvent(reactContext, "onTimeChanged", params);
+        emitOnTimeChangedEvent(params);
       }/*  else {
         params.putString("reason", "unknown");
-        RabbyUtils.rnCtxSendEvent(reactContext, "onTimeChanged", params);
+        emitOnTimeChangedEvent(params);
       } */
     }
   }

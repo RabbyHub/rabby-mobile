@@ -1,3 +1,5 @@
+import { NativeModules } from 'react-native';
+
 import { NativeModuleNames } from './specs/types';
 import {
   EventEmitterRecordToListeners,
@@ -14,7 +16,11 @@ type Listeners = EventEmitterRecordToListeners<
   import('./specs/NativeRNScreenshotPrevent').EventEmitterRecord
 >;
 const { NativeEventEmitter } = makeRnEEClass<Listeners>();
-const eventEmitter = new NativeEventEmitter(nativeModule);
+const legacyEventModule =
+  (NativeModules[NativeModuleNames.RNScreenshotPrevent] as
+    | typeof nativeModule
+    | undefined) || nativeModule;
+const eventEmitter = new NativeEventEmitter(legacyEventModule);
 
 function makeDefaultHandler<T extends keyof Listeners>(fn: Listeners[T]) {
   if (typeof fn !== 'function') {
@@ -45,11 +51,14 @@ function addNativeListener<T extends keyof Listeners & string>(
     nativeModule as unknown as Record<string, unknown>
   )[eventName];
   if (typeof codegenEventEmitter === 'function') {
-    return (codegenEventEmitter as (listener: Listeners[T]) => {
-      remove: () => void;
-    })(fn);
+    return (
+      codegenEventEmitter as (listener: Listeners[T]) => {
+        remove: () => void;
+      }
+    )(fn);
   }
 
+  // Legacy bridge fallback for Android and non-newArch iOS builds.
   return eventEmitter.addListener(eventName, fn);
 }
 
