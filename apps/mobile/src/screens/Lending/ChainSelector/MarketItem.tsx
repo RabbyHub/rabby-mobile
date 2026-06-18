@@ -8,6 +8,7 @@ import { RPCStatusBadge } from '@/components/Chain/RPCStatusBadge';
 import { useFindChain } from '@/hooks/useFindChain';
 import { CustomMarket, getMarketLogo, MarketDataType } from '../config/market';
 import { Text } from '@/components/Typography';
+import { formatNetworth } from '@/utils/math';
 
 interface MarketItem {
   chain: string;
@@ -15,11 +16,13 @@ interface MarketItem {
 export default function MarketItem({
   data,
   value,
+  usdValue,
   style,
   onPress,
 }: RNViewProps & {
   data: MarketDataType;
   value?: CustomMarket;
+  usdValue?: number;
   onPress?(value: CustomMarket): void;
 }) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -58,7 +61,14 @@ export default function MarketItem({
 
       <View style={styles.contentContainer}>
         <View style={styles.leftBasic}>
-          <Text style={styles.nameText}>{data?.marketTitle}</Text>
+          <Text style={styles.nameText} numberOfLines={1}>
+            {data?.marketTitle}
+          </Text>
+          {!!usdValue && (
+            <Text style={styles.usdValueText}>
+              {formatNetworth(usdValue || 0)}
+            </Text>
+          )}
         </View>
         <View style={styles.rightArea}>
           {isSelected ? <RcIconChecked /> : null}
@@ -97,9 +107,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     flex: 1,
+    gap: 12,
   },
   leftBasic: {
     flexDirection: 'column',
+    flex: 1,
+    flexShrink: 1,
+    gap: 4,
   },
   nameText: {
     fontSize: 16,
@@ -128,12 +142,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   usdValueText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '500',
     lineHeight: 20,
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro',
   },
-  rightArea: {},
+  rightArea: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
   badgeStyle: {
     top: 0,
     right: 0,
