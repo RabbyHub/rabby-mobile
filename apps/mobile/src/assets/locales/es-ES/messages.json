@@ -2251,7 +2251,8 @@
       "clearBrowserData": "Borrar datos del navegador",
       "searchCurrency": "Buscar moneda",
       "currency": "Moneda",
-      "screenshotReportSwitch": "Captura de pantalla para informar un error"
+      "screenshotReportSwitch": "Captura de pantalla para informar un error",
+      "dataAnalysis": "Análisis de datos"
     },
     "gasAccount": {
       "deposit": "Depósito",
@@ -2574,7 +2575,8 @@
         "favorite": "Favorito",
         "contentModeMobile": "Solicitar sitio móvil",
         "contentModeDesktop": "Solicitar sitio de escritorio",
-        "clearCache": "Borrar caché"
+        "clearCache": "Borrar caché",
+        "disconnectAll": "Desconectar todo"
       },
       "HyperliquidInvitePopup": {
         "btn": "Únete ahora",
@@ -2604,6 +2606,12 @@
         "category": "Categoría",
         "skipDappInfoNextTime": "Omitir esta página la próxima vez",
         "openDapp": "Abrir"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "Desconectarás {{count}} DApp conectada.",
+        "desc_other": "Desconectarás {{count}} DApps conectadas.",
+        "title": "¿Desconectar todo?",
+        "success": "Todas las DApps desconectadas."
       }
     },
     "browserManage": {

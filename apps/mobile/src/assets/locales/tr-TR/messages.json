@@ -2176,7 +2176,8 @@
       "clearBrowserData": "Tarayıcı Verilerini Temizle",
       "currency": "Para Birimi",
       "searchCurrency": "Para Araştırması",
-      "screenshotReportSwitch": "Hata bildirmek için ekran görüntüsü alın"
+      "screenshotReportSwitch": "Hata bildirmek için ekran görüntüsü alın",
+      "dataAnalysis": "Veri Analizi"
     },
     "settingModal": {
       "themeMode": {
@@ -2297,7 +2298,8 @@
         "contentModeMobile": "Mobil Sitei Talep Et",
         "disconnect": "Bağlantıyı kesmek",
         "contentModeDesktop": "Masaüstü Siteyi İsteği",
-        "clearCache": "Önbelleği temizle"
+        "clearCache": "Önbelleği temizle",
+        "disconnectAll": "Tümünün bağlantısını kes"
       },
       "HyperliquidInvitePopup": {
         "btn": "Şimdi Katıl",
@@ -2327,6 +2329,12 @@
         "category": "Kategori",
         "skipDappInfoNextTime": "Bir dahaki sefere bu sayfayı atla",
         "openDapp": "Aç"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "Bağlı {{count}} DApp'in bağlantısını keseceksiniz.",
+        "desc_other": "Bağlı {{count}} DApp'in bağlantısını keseceksiniz.",
+        "title": "Tümünün bağlantısı kesilsin mi?",
+        "success": "Tüm DApp'lerin bağlantısı kesildi."
       }
     },
     "browserManage": {
