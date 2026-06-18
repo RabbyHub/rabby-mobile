@@ -236,7 +236,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
 
   // 构建交易和估算gas
   const buildTransactions = useCallback(async () => {
-    if (!amount || isZeroAmount(amount) || !currentAccount) {
+    if (!amount || isZeroAmount(amount) || !currentAccount?.address) {
       setSupplyTx(null);
       setApproveTxs(null);
       return;
@@ -360,9 +360,11 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
     } finally {
       setIsLoading(false);
     }
+    //currentAccount is not stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     amount,
-    currentAccount,
+    currentAccount?.address,
     selectedMarketData,
     pools,
     chainInfo,

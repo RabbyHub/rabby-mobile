@@ -265,11 +265,13 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     } finally {
       setIsLoading(false);
     }
+    //currentAccount is not stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     _amount,
     amount,
     chainInfo,
-    currentAccount,
+    currentAccount?.address,
     currentPoolReserve,
     isZeroLTVWithdrawBlocked,
     pools,

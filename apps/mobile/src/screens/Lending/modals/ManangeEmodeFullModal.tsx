@@ -165,7 +165,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
 
   const buildTx = useCallback(async () => {
     if (
-      !currentAccount ||
+      !currentAccount?.address ||
       !pools ||
       !chainInfo ||
       !hasChangeCategory ||
@@ -194,7 +194,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
       toast.error('There was some error');
     }
   }, [
-    currentAccount,
+    currentAccount?.address,
     pools,
     chainInfo,
     hasChangeCategory,

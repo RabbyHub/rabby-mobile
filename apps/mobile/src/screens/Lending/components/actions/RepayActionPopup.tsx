@@ -287,7 +287,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   ]);
 
   const buildTransactions = useCallback(async () => {
-    if (!amount || isZeroAmount(amount) || !currentAccount) {
+    if (!amount || isZeroAmount(amount) || !currentAccount?.address) {
       setRepayTx(null);
       setApproveTxs(null);
       return;
@@ -423,11 +423,13 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
     } finally {
       setIsLoading(false);
     }
+    //currentAccount is not stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     _amount,
     amount,
     chainInfo,
-    currentAccount,
+    currentAccount?.address,
     formattedPoolReservesAndIncentives,
     isAtTokenRepay,
     isMainnet,

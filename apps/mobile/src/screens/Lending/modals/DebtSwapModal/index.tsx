@@ -570,7 +570,7 @@ export default function DebtSwapModal({
     let cancelled = false;
     const buildTxs = async () => {
       if (
-        !currentAccount ||
+        !currentAccount?.address ||
         !toToken ||
         !quote ||
         !swapRate.optimalRateData ||
@@ -604,7 +604,7 @@ export default function DebtSwapModal({
     };
   }, [
     buildDebtSwapTxs,
-    currentAccount,
+    currentAccount?.address,
     debouncedFromAmount,
     fromReserve,
     pools?.provider,

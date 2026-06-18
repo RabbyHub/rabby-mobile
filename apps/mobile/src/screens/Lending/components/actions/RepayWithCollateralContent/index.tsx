@@ -701,7 +701,7 @@ export default function RepayWithCollateral({
     let cancelled = false;
     const buildTxs = async () => {
       if (
-        !currentAccount ||
+        !currentAccount?.address ||
         !selectedCollateralToken ||
         !quote ||
         !swapRate.optimalRateData ||
@@ -736,7 +736,7 @@ export default function RepayWithCollateral({
     };
   }, [
     buildRepayWithCollateralTxs,
-    currentAccount,
+    currentAccount?.address,
     collateralReserve,
     pools?.provider,
     quote,
