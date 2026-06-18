@@ -335,11 +335,13 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         setIsLoading(false);
       }
     }
+    //currentAccount is not stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     _amount,
     amount,
     chainInfo,
-    currentAccount,
+    currentAccount?.address,
     currentPoolReserve,
     isZeroLTVWithdrawBlocked,
     pools,
@@ -515,7 +517,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
 
   useEffect(() => {
     if (
-      currentAccount &&
+      currentAccount?.address &&
       canShowDirectSubmit &&
       amount &&
       !isZeroAmount(amount) &&
@@ -528,7 +530,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     }
   }, [
     canShowDirectSubmit,
-    currentAccount,
+    currentAccount?.address,
     amount,
     withdrawTxs,
     prefetchMiniSigner,

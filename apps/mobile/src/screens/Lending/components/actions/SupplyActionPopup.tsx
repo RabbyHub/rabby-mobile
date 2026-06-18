@@ -314,7 +314,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
     setSupplyTx(null);
     setApproveTxs(null);
 
-    if (!amount || isZeroAmount(amount) || !currentAccount) {
+    if (!amount || isZeroAmount(amount) || !currentAccount?.address) {
       setIsLoading(false);
       return;
     }
@@ -458,9 +458,11 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
         setIsLoading(false);
       }
     }
+    //currentAccount is not stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     amount,
-    currentAccount,
+    currentAccount?.address,
     selectedMarketData,
     pools,
     chainInfo,
@@ -710,7 +712,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
   }, [buildTransactions]);
 
   useEffect(() => {
-    if (currentAccount && canShowDirectSubmit) {
+    if (currentAccount?.address && canShowDirectSubmit) {
       prefetchMiniSigner({
         txs: txsForMiniApproval?.length ? txsForMiniApproval : [],
         synGasHeaderInfo: true,
@@ -718,7 +720,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
     }
   }, [
     canShowDirectSubmit,
-    currentAccount,
+    currentAccount?.address,
     txsForMiniApproval,
     prefetchMiniSigner,
   ]);

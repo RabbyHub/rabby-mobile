@@ -1,9 +1,10 @@
 import 'react-native-gesture-handler';
-import React, { useCallback } from 'react';
+import React, { useCallback, useLayoutEffect } from 'react';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { RootNames } from '@/constant/layout';
 import SingleAddressHome from '../Home/Home';
 import { useStackScreenConfig } from '@/hooks/navigation';
+import { preloadTransactionHotNavigator } from '@/perfs/preloads';
 const SingleAddressStack = createNativeStackNavigator();
 
 export function SingleAddressNavigator() {
@@ -13,6 +14,19 @@ export function SingleAddressNavigator() {
     console.debug('[SingleAddressNavigator] Render');
   }
   const renderHeader = useCallback(() => <SingleAddressHome.Header />, []);
+
+  useLayoutEffect(() => {
+    const timer = setTimeout(() => {
+      preloadTransactionHotNavigator().catch(error => {
+        console.error(
+          'preloadTransactionHotNavigator::singleAddress::error',
+          error,
+        );
+      });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <SingleAddressStack.Navigator

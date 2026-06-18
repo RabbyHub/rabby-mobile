@@ -1287,7 +1287,7 @@
       "best": "ดีที่สุด",
       "chain": "Chain",
       "estimate": "ประมาณการ:",
-      "no-quote-found": "ไม่พบคำคม",
+      "no-quote-found": "ไม่สามารถหาราคาตลาดที่เหมาะสม",
       "preferMEV": "แนะนำ MEV Guarded",
       "wrap-contract": "Wrap Contract",
       "low-slippage-may-cause-failed-transactions-due-to-high-volatility": "Slippage ต่ำอาจทำให้การทำธุรกรรมล้มเหลวเนื่องจากความผันผวนสูง",
@@ -3688,7 +3688,7 @@
     "themeMode": {
       "option_Dark": "มืด",
       "option_System": "ระบบ",
-      "option_Light": "เบา"
+      "option_Light": "สว่าง"
     },
     "Unknown": "ไม่ทราบ",
     "unlimited": "ไม่จำกัด",

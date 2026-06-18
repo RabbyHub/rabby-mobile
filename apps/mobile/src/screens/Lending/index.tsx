@@ -14,7 +14,7 @@ import { useFetchLendingData, useSelectedMarket } from './hooks';
 import { LendingNativeHeader } from './components/LendingHeaderTitle';
 import MyAssetHome from './MyAssetHome';
 import useProtocols from '@/store/protocols';
-import { marketKeyToProtocolId } from '../Home/utils/protocolConfig';
+import { marketKeyToProtocolId } from './config/protocol';
 
 function DashBoardScreen(): JSX.Element {
   const { styles } = useTheme2024({ getStyle });
