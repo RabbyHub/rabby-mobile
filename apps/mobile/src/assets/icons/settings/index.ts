@@ -223,3 +223,12 @@ export const RcWalletConnect = makeThemeIcon2024FromCC(
     onDark: ctx.colors2024['brand-default'],
   }),
 );
+
+import { default as RcDataAnalysisCC } from './data-analysis-cc.svg';
+export const RcDataAnalysis = makeThemeIcon2024FromCC(
+  RcDataAnalysisCC,
+  ctx => ({
+    onLight: ctx.colors2024['brand-default'],
+    onDark: ctx.colors2024['brand-default'],
+  }),
+);
