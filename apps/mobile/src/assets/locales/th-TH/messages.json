@@ -1287,7 +1287,7 @@
       "best": "ดีที่สุด",
       "chain": "Chain",
       "estimate": "ประมาณการ:",
-      "no-quote-found": "ไม่พบคำคม",
+      "no-quote-found": "ไม่สามารถหาราคาตลาดที่เหมาะสม",
       "preferMEV": "แนะนำ MEV Guarded",
       "wrap-contract": "Wrap Contract",
       "low-slippage-may-cause-failed-transactions-due-to-high-volatility": "Slippage ต่ำอาจทำให้การทำธุรกรรมล้มเหลวเนื่องจากความผันผวนสูง",
@@ -2372,7 +2372,8 @@
       "clearBrowserData": "ล้างข้อมูลเบราว์เซอร์",
       "screenshotReportSwitch": "ถ่ายภาพหน้าจอเพื่อติดตามข้อบกพร่อง",
       "currency": "สกุลเงิน",
-      "searchCurrency": "ค้นหาเงินตรา"
+      "searchCurrency": "ค้นหาเงินตรา",
+      "dataAnalysis": "การวิเคราะห์ข้อมูล"
     },
     "settingModal": {
       "themeMode": {
@@ -2559,7 +2560,8 @@
         "favorite": "รายการโปรด",
         "disconnect": "ตัดการเชื่อมต่อ",
         "contentModeDesktop": "ขอเว็บไซต์เดสก์ท็อป",
-        "clearCache": "ล้างแคช"
+        "clearCache": "ล้างแคช",
+        "disconnectAll": "ตัดการเชื่อมต่อทั้งหมด"
       },
       "HyperliquidInvitePopup": {
         "btn": "เข้าร่วมตอนนี้",
@@ -2589,6 +2591,12 @@
         "category": "หมวดหมู่",
         "skipDappInfoNextTime": "ข้ามหน้านี้ในครั้งต่อไป",
         "openDapp": "เปิด"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "คุณจะตัดการเชื่อมต่อ DApp ที่เชื่อมต่ออยู่ {{count}} รายการ",
+        "desc_other": "คุณจะตัดการเชื่อมต่อ DApp ที่เชื่อมต่ออยู่ {{count}} รายการ",
+        "title": "ตัดการเชื่อมต่อทั้งหมดหรือไม่?",
+        "success": "ตัดการเชื่อมต่อ DApp ทั้งหมดแล้ว"
       }
     },
     "browserManage": {
@@ -3688,7 +3696,7 @@
     "themeMode": {
       "option_Dark": "มืด",
       "option_System": "ระบบ",
-      "option_Light": "เบา"
+      "option_Light": "สว่าง"
     },
     "Unknown": "ไม่ทราบ",
     "unlimited": "ไม่จำกัด",

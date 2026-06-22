@@ -1,4 +1,3 @@
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
@@ -15,13 +14,15 @@ import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
   BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
 } from '@/constant/layout';
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
   return {
     container: {
+      flex: 1,
       height: '100%',
-      paddingHorizontal: 24,
+      paddingHorizontal: 20,
       paddingTop: 12,
     },
     scrollViewContent: {
@@ -101,10 +102,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: '#50D2C1',
     },
     footer: {
+      marginTop: 'auto',
       backgroundColor: colors2024['neutral-bg-1'],
       paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
-      // paddingHorizontal: 16,
-      paddingBottom: 36,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
   };
 });
@@ -119,7 +120,7 @@ export const PerpMarginModePopup: React.FC<{
   const [selectedMode, setSelectedMode] = React.useState<'cross' | 'isolated'>(
     selectedMarginMode,
   );
-  const { styles, colors2024, isLight } = useTheme2024({
+  const { styles, colors2024 } = useTheme2024({
     getStyle,
   });
   const { t } = useTranslation();

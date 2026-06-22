@@ -119,21 +119,23 @@ function getWalletConnectBlockText(
 
   const unsupported: string[] = [];
   if (proposal.unsupportedRequiredChains.length) {
+    const text = formatUnsupportedCapability(
+      t,
+      proposal.unsupportedRequiredChains.length,
+      'chain',
+    );
     unsupported.push(
-      formatUnsupportedCapability(
-        t,
-        proposal.unsupportedRequiredChains.length,
-        'chain',
-      ),
+      `${text} (${proposal.unsupportedRequiredChains.join(', ')})`,
     );
   }
   if (proposal.unsupportedRequiredMethods.length) {
+    const text = formatUnsupportedCapability(
+      t,
+      proposal.unsupportedRequiredMethods.length,
+      'method',
+    );
     unsupported.push(
-      formatUnsupportedCapability(
-        t,
-        proposal.unsupportedRequiredMethods.length,
-        'method',
-      ),
+      `${text} (${proposal.unsupportedRequiredMethods.join(', ')})`,
     );
   }
 

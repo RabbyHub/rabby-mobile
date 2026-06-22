@@ -2280,7 +2280,8 @@
       "clearBrowserData": "清除瀏覽器資料",
       "searchCurrency": "搜尋貨幣",
       "currency": "貨幣",
-      "screenshotReportSwitch": "截圖以報告錯誤"
+      "screenshotReportSwitch": "截圖以報告錯誤",
+      "dataAnalysis": "資料分析"
     },
     "securityEngine": {
       "ignoreAlert": "忽略警報",
@@ -2478,7 +2479,8 @@
         "refresh": "刷新",
         "disconnect": "斷開連接",
         "favorite": "最愛",
-        "clearCache": "清除快取"
+        "clearCache": "清除快取",
+        "disconnectAll": "全部斷開連接"
       },
       "HyperliquidInvitePopup": {
         "btn": "立即加入",
@@ -2508,6 +2510,12 @@
         "category": "類別",
         "skipDappInfoNextTime": "下次跳過此頁面",
         "openDapp": "開啟"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "你將斷開 {{count}} 個已連接的 DApp。",
+        "desc_other": "你將斷開 {{count}} 個已連接的 DApp。",
+        "title": "全部斷開連接？",
+        "success": "已斷開所有 DApp。"
       }
     },
     "browserManage": {

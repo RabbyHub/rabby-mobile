@@ -2356,7 +2356,8 @@
       "clearBrowserData": "Limpar dados do navegador",
       "currency": "Moeda",
       "searchCurrency": "Pesquisar Moeda",
-      "screenshotReportSwitch": "Captura de ecrã para reportar erro"
+      "screenshotReportSwitch": "Captura de ecrã para reportar erro",
+      "dataAnalysis": "Análise de dados"
     },
     "gasAccount": {
       "GasAccountDepositTipPopup": {
@@ -2679,7 +2680,8 @@
         "contentModeDesktop": "Solicitar Site de Desktop",
         "favorite": "Favorito",
         "contentModeMobile": "Solicitar Site Móvel",
-        "clearCache": "Limpar cache"
+        "clearCache": "Limpar cache",
+        "disconnectAll": "Desconectar tudo"
       },
       "HyperliquidInvitePopup": {
         "title": "Programa de Referência Hyperliquid",
@@ -2709,6 +2711,12 @@
         "category": "Categoria",
         "skipDappInfoNextTime": "Saltar esta página da próxima vez",
         "openDapp": "Abrir"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "Você vai desconectar {{count}} DApp conectado.",
+        "desc_other": "Você vai desconectar {{count}} DApps conectados.",
+        "title": "Desconectar tudo?",
+        "success": "Todos os DApps foram desconectados."
       }
     },
     "browserManage": {

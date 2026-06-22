@@ -22,6 +22,8 @@ import { BackupReminderCard } from '@/components2024/BackupReminderCard';
 import { useBackupReminder } from '@/hooks/account';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import { useFocusEffect } from '@react-navigation/native';
+import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import {
   BOTTOM_BUTTON_DOUBLE_HEIGHT,
   BOTTOM_BUTTON_TOP_OFFSET,
@@ -86,6 +88,8 @@ function SingleAddressHome(): JSX.Element {
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
   const { topHeight } = useBgSize();
   const { currentAccount } = useSingleHomeAccount();
+  const currentAddress = currentAccount?.address;
+  const hasFocusedOnceRef = React.useRef(false);
   const needsBackupReminder = useBackupReminder(currentAccount);
 
   const { isDecrease } = useSingleHomeIsDecrease();
@@ -103,6 +107,24 @@ function SingleAddressHome(): JSX.Element {
   );
 
   useRendererDetect({ name: 'SingleAddressHome' });
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!currentAddress) {
+        return;
+      }
+
+      if (!hasFocusedOnceRef.current) {
+        hasFocusedOnceRef.current = true;
+        return;
+      }
+
+      apisAddressBalance.triggerUpdate({
+        address: currentAddress,
+        fromScene: 'SingleAddressHome',
+      });
+    }, [currentAddress]),
+  );
 
   const handleTouchEnd = () => {
     apisSingleHome.setFoldChart(true);

@@ -1,12 +1,20 @@
 import { RefLikeObject } from '@/utils/type';
+import { BalanceEntity } from '../entities/balance';
 import { NFTItemEntity } from '../entities/nftItem';
 import { ProtocolItemEntity } from '../entities/portocolItem';
+
+const TX_COMPLETED_BALANCE_EXPIRE_DELAY = 20 * 1000;
 
 export const updateExpiredTime = async (_address: string, offest?: number) => {
   const address = _address.toLowerCase();
   try {
     await Promise.all([
       // TokenItemEntity.willExpired(address, offest),
+      // 交易后balance不会立即刷新，故设置20s过期
+      BalanceEntity.willExpired(
+        address,
+        (offest || 0) + TX_COMPLETED_BALANCE_EXPIRE_DELAY,
+      ),
       NFTItemEntity.willExpired(address, offest),
       ProtocolItemEntity.willExpired(address, offest),
     ]);

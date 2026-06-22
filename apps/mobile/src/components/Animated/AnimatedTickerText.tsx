@@ -132,7 +132,7 @@ const getDigitWidthUnit = (char: string) => {
   switch (char) {
     // 先留在这，需要配置再改
     default:
-      return 0.68;
+      return 0.65;
   }
 };
 

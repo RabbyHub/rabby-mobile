@@ -13,6 +13,7 @@ import {
   useCurrentTabScrollY,
   useFocusedTab,
 } from 'react-native-collapsible-tab-view';
+import { useIsFocused } from '@react-navigation/native';
 import { runOnJS, useAnimatedReaction } from 'react-native-reanimated';
 import { useShallow } from 'zustand/shallow';
 
@@ -167,6 +168,7 @@ export const TokenList = ({
   const [foldScam, setFoldScam] = useState(true);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const isScreenFocused = useIsFocused();
 
   const focusedTab = useFocusedTab();
   const isFocused = useMemo(() => {
@@ -387,11 +389,9 @@ export const TokenList = ({
     try {
       const balanceRefresh = Promise.resolve().then(() => onRefresh?.());
       const tokenRefresh = getTokenList(currentAddress, true);
-      await withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(
-        error => {
-          console.error('Refresh balance failed:', error);
-        },
-      );
+      withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(error => {
+        console.error('Refresh balance failed:', error);
+      });
       await tokenRefresh;
     } finally {
       setIsManualRefreshing(false);
@@ -547,7 +547,7 @@ export const TokenList = ({
           <RefreshControl
             style={styles.bgContainer}
             onRefresh={handleRefresh}
-            refreshing={isManualRefreshing}
+            refreshing={isScreenFocused && isManualRefreshing}
           />
         }
       />

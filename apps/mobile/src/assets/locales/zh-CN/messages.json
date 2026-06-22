@@ -2264,7 +2264,8 @@
       "clearBrowserData": "清除浏览器数据",
       "currency": "货币",
       "searchCurrency": "搜索货币",
-      "screenshotReportSwitch": "截图以报告错误"
+      "screenshotReportSwitch": "截图以报告错误",
+      "dataAnalysis": "数据分析"
     },
     "settingModal": {
       "themeMode": {
@@ -2451,7 +2452,8 @@
         "favorite": "收藏",
         "disconnect": "断开连接",
         "contentModeMobile": "请求移动站点",
-        "clearCache": "清除缓存"
+        "clearCache": "清除缓存",
+        "disconnectAll": "全部断开连接"
       },
       "HyperliquidInvitePopup": {
         "btn": "立即加入",
@@ -2481,6 +2483,12 @@
         "category": "类别",
         "skipDappInfoNextTime": "下次跳过此页面",
         "openDapp": "打开"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "你将断开 {{count}} 个已连接的 DApp。",
+        "desc_other": "你将断开 {{count}} 个已连接的 DApp。",
+        "title": "全部断开连接？",
+        "success": "已断开所有 DApp。"
       }
     },
     "browserManage": {

@@ -61,7 +61,7 @@ const ListItem = (props: {
 };
 
 export const NFTDetailScreen = () => {
-  const { styles, colors } = useTheme2024({ getStyle });
+  const { styles, colors, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const route = useRoute<GetRootScreenRouteProp<'NftDetail'>>();
@@ -291,11 +291,13 @@ export const NFTDetailScreen = () => {
       iToken,
       type,
       aliasName,
+      showInlineButton = true,
     }: {
       address?: string;
       type?: KEYRING_TYPE;
       aliasName?: string;
       iToken: NFTItem;
+      showInlineButton?: boolean;
     }) => {
       return (
         <View key={`${address}-${iToken.id}`}>
@@ -347,7 +349,7 @@ export const NFTDetailScreen = () => {
             <ListItem title="Purchase Date" value={calDate(iToken)} />
             <ListItem title="Last Price" value={calPrice(iToken)} />
           </View>
-          {!!address && (
+          {showInlineButton && !!address && (
             <View style={[styles.buttonContainer]}>
               <Button
                 onPress={() =>
@@ -365,19 +367,57 @@ export const NFTDetailScreen = () => {
     [calDate, calPrice, renderAccountHeader, t, handleSend, colors, styles],
   );
 
+  const footerItem = useMemo(() => {
+    if (itemList.length !== 1) {
+      return null;
+    }
+
+    const [item] = itemList;
+    return item?.address && item?.type ? item : null;
+  }, [itemList]);
+
   return (
-    <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
+    <NormalScreenContainer2024
+      type="linear"
+      linearProp={{
+        colors: [colors2024['neutral-bg-1'], colors2024['neutral-bg-1']],
+        style: styles.screenRoot,
+      }}
+      overwriteStyle={styles.container}>
       <ScrollView style={styles.scrollContainer}>
         {itemList.map(({ data, address, type, aliasName }) =>
-          renderSingeleNft({ address, iToken: data, type, aliasName }),
+          renderSingeleNft({
+            address,
+            iToken: data,
+            type,
+            aliasName,
+            showInlineButton: !footerItem,
+          }),
         )}
       </ScrollView>
+      {footerItem ? (
+        <View style={styles.buttonContainer}>
+          <Button
+            onPress={() =>
+              footerItem.address &&
+              footerItem.type &&
+              handleSend(footerItem.data, footerItem.address, footerItem.type)
+            }
+            title={t('page.sendNFT.sendButton')}
+            height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+            titleStyle={[BOTTOM_BUTTON_TITLE_STYLE, styles.btnTitle]}
+          />
+        </View>
+      ) : null}
     </NormalScreenContainer2024>
   );
 };
 
 const getStyle = createGetStyles2024(
   ({ colors2024, colors, safeAreaInsets }) => ({
+    screenRoot: {
+      flex: 1,
+    },
     scrollContainer: {
       flex: 1,
       width: '100%',
@@ -443,6 +483,7 @@ const getStyle = createGetStyles2024(
       flexWrap: 'nowrap',
     },
     container: {
+      flex: 1,
       flexDirection: 'column',
       justifyContent: 'flex-start',
       alignItems: 'flex-start',

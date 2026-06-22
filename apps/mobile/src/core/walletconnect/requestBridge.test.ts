@@ -55,6 +55,10 @@ jest.mock('@/core/apis/sendRequest', () => ({
   sendRequest: jest.fn(),
 }));
 
+jest.mock('@/core/apis/readOnlyRpc', () => ({
+  requestReadOnlyETHRpc: jest.fn(),
+}));
+
 jest.mock('react-native', () => ({
   AppState: mockAppState,
 }));
@@ -97,6 +101,8 @@ jest.mock('./sessions', () => ({
 
 const { sendRequest } =
   require('@/core/apis/sendRequest') as typeof import('@/core/apis/sendRequest');
+const { requestReadOnlyETHRpc } =
+  require('@/core/apis/readOnlyRpc') as typeof import('@/core/apis/readOnlyRpc');
 const { handleWalletConnectSessionRequest } =
   require('./requestBridge') as typeof import('./requestBridge');
 const { maybeRedirectToDapp } =
@@ -108,7 +114,7 @@ const { getWalletConnectSession } =
 const { isWalletConnectMethodApproved } =
   require('./sessions') as typeof import('./sessions');
 
-function makeEvent(method: string) {
+function makeEvent(method: string, params: unknown[] = []) {
   return {
     id: 1,
     topic: 'topic-1',
@@ -116,15 +122,39 @@ function makeEvent(method: string) {
       chainId: 'eip155:1',
       request: {
         method,
-        params: [],
+        params,
       },
     },
   };
 }
 
+const readOnlyRpcCases: Array<[string, unknown[]]> = [
+  [
+    'eth_call',
+    [
+      {
+        to: '0x2222222222222222222222222222222222222222',
+        data: '0x1234',
+      },
+      'latest',
+    ],
+  ],
+  [
+    'eth_getLogs',
+    [
+      {
+        address: '0x2222222222222222222222222222222222222222',
+        fromBlock: '0x1',
+        toBlock: 'latest',
+      },
+    ],
+  ],
+];
+
 describe('walletconnect request bridge', () => {
   beforeEach(() => {
     jest.mocked(sendRequest).mockReset();
+    jest.mocked(requestReadOnlyETHRpc).mockReset();
     walletKit.getActiveSessions.mockClear();
     walletKit.emitSessionEvent.mockReset();
     walletKit.respondSessionRequest.mockReset();
@@ -156,6 +186,39 @@ describe('walletconnect request bridge', () => {
     expect(maybeRedirectToDapp).not.toHaveBeenCalled();
   });
 
+  it.each(readOnlyRpcCases)(
+    'responds to %s through the read-only RPC path without waiting for foreground',
+    async (method, params) => {
+      jest.mocked(requestReadOnlyETHRpc).mockResolvedValue(`${method}-result`);
+      mockAppState.currentState = 'background';
+
+      await handleWalletConnectSessionRequest({
+        walletKit: walletKit as never,
+        event: makeEvent(method, params) as never,
+      });
+
+      expect(requestReadOnlyETHRpc).toHaveBeenCalledWith(
+        {
+          method,
+          params,
+        },
+        'eth',
+        account,
+      );
+      expect(sendRequest).not.toHaveBeenCalled();
+      expect(mockAppState.addEventListener).not.toHaveBeenCalled();
+      expect(walletKit.respondSessionRequest).toHaveBeenCalledWith({
+        topic: 'topic-1',
+        response: {
+          id: 1,
+          jsonrpc: '2.0',
+          result: `${method}-result`,
+        },
+      });
+      expect(maybeRedirectToDapp).not.toHaveBeenCalled();
+    },
+  );
+
   it('forwards signing requests to the provider with WalletConnect context', async () => {
     jest.mocked(sendRequest).mockResolvedValue('0xsigned');
 
@@ -184,6 +247,10 @@ describe('walletconnect request bridge', () => {
     });
     expect(maybeRedirectToDapp).toHaveBeenCalledWith({
       nativeRedirect: undefined,
+      iosNoRedirectToast: {
+        variant: 'success',
+        message: 'Transaction sent! Please return to the Dapp.',
+      },
     });
   });
 
@@ -225,17 +292,16 @@ describe('walletconnect request bridge', () => {
     });
   });
 
-  it('does not pass a transaction return toast for non-transaction requests', async () => {
-    jest.mocked(sendRequest).mockResolvedValue('0xsigned');
+  it('does not redirect after read-only RPC responses', async () => {
+    jest.mocked(requestReadOnlyETHRpc).mockResolvedValue('0x123');
 
     await handleWalletConnectSessionRequest({
       walletKit: walletKit as never,
-      event: makeEvent('personal_sign') as never,
+      event: makeEvent('eth_blockNumber') as never,
     });
 
-    expect(maybeRedirectToDapp).toHaveBeenCalledWith({
-      nativeRedirect: undefined,
-    });
+    expect(sendRequest).not.toHaveBeenCalled();
+    expect(maybeRedirectToDapp).not.toHaveBeenCalled();
   });
 
   it('does not pass a transaction return toast for missing sessions', async () => {
@@ -281,9 +347,7 @@ describe('walletconnect request bridge', () => {
         result: null,
       },
     });
-    expect(maybeRedirectToDapp).toHaveBeenCalledWith({
-      nativeRedirect: undefined,
-    });
+    expect(maybeRedirectToDapp).not.toHaveBeenCalled();
   });
 
   it('rejects wallet_switchEthereumChain when the target chain is not approved', async () => {

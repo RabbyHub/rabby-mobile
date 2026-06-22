@@ -151,7 +151,12 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   }, [afterHF]);
 
   const buildTransactions = useCallback(async () => {
-    if (!amount || isZeroAmount(amount) || !currentAccount || hasNoSupply) {
+    if (
+      !amount ||
+      isZeroAmount(amount) ||
+      !currentAccount?.address ||
+      hasNoSupply
+    ) {
       setTxs([]);
       return;
     }
@@ -175,7 +180,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       const borrowTx = await buildBorrowTx({
         poolBundle: pools.poolBundle,
         amount: parseUnits(amount, targetPool.decimals).toString(),
-        address: currentAccount.address,
+        address: currentAccount?.address,
         reserve: reserve.underlyingAsset,
         debtTokenAddress: targetPool?.variableDebtTokenAddress || '',
         useOptimizedPath: optimizedPath(selectedMarketData?.chainId),
@@ -198,7 +203,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   }, [
     amount,
     chainInfo,
-    currentAccount,
+    currentAccount?.address,
     formattedPoolReservesAndIncentives,
     hasNoSupply,
     pools,
@@ -364,7 +369,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
 
   useEffect(() => {
     if (
-      currentAccount &&
+      currentAccount?.address &&
       canShowDirectSubmit &&
       amount &&
       !isZeroAmount(amount)
@@ -374,7 +379,13 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         synGasHeaderInfo: true,
       });
     }
-  }, [canShowDirectSubmit, currentAccount, amount, txs, prefetchMiniSigner]);
+  }, [
+    canShowDirectSubmit,
+    currentAccount?.address,
+    amount,
+    txs,
+    prefetchMiniSigner,
+  ]);
 
   const showBorrowToCapTip = useMemo(() => {
     if (!reserve?.reserve?.totalDebt || !reserve?.reserve?.borrowCap) {

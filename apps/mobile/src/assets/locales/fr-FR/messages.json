@@ -2120,7 +2120,8 @@
       "clearBrowserData": "Effacer les données du navigateur",
       "searchCurrency": "Rechercher une devise",
       "screenshotReportSwitch": "Capture d'écran pour signaler un bug",
-      "currency": "Monnaie"
+      "currency": "Monnaie",
+      "dataAnalysis": "Analyse des données"
     },
     "settingModal": {
       "themeMode": {
@@ -2307,7 +2308,8 @@
         "contentModeMobile": "Demander le site mobile",
         "disconnect": "Déconnexion",
         "refresh": "Rafraîchir",
-        "clearCache": "Vider le cache"
+        "clearCache": "Vider le cache",
+        "disconnectAll": "Tout déconnecter"
       },
       "HyperliquidInvitePopup": {
         "title": "Programme de parrainage Hyperliquid",
@@ -2337,6 +2339,12 @@
         "category": "Catégorie",
         "skipDappInfoNextTime": "Ne plus afficher cette page",
         "openDapp": "Ouvrir"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "Vous allez déconnecter {{count}} DApp connectée.",
+        "desc_other": "Vous allez déconnecter {{count}} DApps connectées.",
+        "title": "Tout déconnecter ?",
+        "success": "Toutes les DApps ont été déconnectées."
       }
     },
     "browserManage": {

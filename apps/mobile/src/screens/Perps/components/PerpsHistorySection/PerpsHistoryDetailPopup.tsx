@@ -60,6 +60,8 @@ export const PerpsHistoryDetailPopup: React.FC<{
   const tradeValue = Number(sz) * Number(px);
   const pnlValue = Number(closedPnl) - Number(fee);
   const isClose = (dir === 'Close Long' || dir === 'Close Short') && closedPnl;
+  const isSettlement = dir === 'Settlement';
+  const showClosedPnl = Boolean((isClose || isSettlement) && closedPnl);
   const isLiquidation = Boolean(fill?.liquidation);
   const logoUrl = fill?.logoUrl;
 
@@ -231,7 +233,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
                       </View>
                     </View>
                   ) : null}
-                  {isClose ? (
+                  {showClosedPnl ? (
                     <View style={styles.listItem}>
                       <View style={styles.listItemMain}>
                         <Text style={styles.label}>

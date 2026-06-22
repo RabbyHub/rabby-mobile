@@ -136,12 +136,12 @@ async function initPersistedStores() {
   console.timeEnd('initPersistedStores');
 }
 
-async function initUnlockedStores() {
-  console.time('initUnlockedStores');
+export async function initReadableAccountStores() {
+  console.time('initReadableAccountStores');
   await tokenListStore.getState().initStore();
   await nftListStore.getState().initStore();
   await useProtocolListStore.getState().initStore();
-  console.timeEnd('initUnlockedStores');
+  console.timeEnd('initReadableAccountStores');
 }
 
 const initPersistedStoresStateRef = {
@@ -176,18 +176,8 @@ export async function startUnlockScreenBootstrapWarmups() {
   return startReadableAccountBootstrapWarmups();
 }
 
-const initUnlockedStoresStateRef = {
-  promise: null as Promise<void> | null,
-};
 const startInitStores = async () => {
   await startInitPersistedStores();
-
-  if (initUnlockedStoresStateRef.promise) {
-    return initUnlockedStoresStateRef.promise;
-  }
-  const promise = initUnlockedStores();
-  initUnlockedStoresStateRef.promise = promise;
-  await promise;
 };
 
 function startInitStoresAfterUnlockInteractions(reason: string) {

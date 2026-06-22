@@ -37,6 +37,7 @@ import {
   useCurrentTabScrollY,
   useFocusedTab,
 } from 'react-native-collapsible-tab-view';
+import { useIsFocused } from '@react-navigation/native';
 import { useAnimatedReaction } from 'react-native-reanimated';
 import { runOnJS } from 'react-native-reanimated';
 import { getItemId } from './utils/listRenderId';
@@ -69,6 +70,7 @@ const NFTListInner = ({
   const [foldNft, setFoldNft] = useState(true);
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const isScreenFocused = useIsFocused();
 
   const focusedTab = useFocusedTab();
   const isFocused = focusedTab === 'nft';
@@ -303,17 +305,17 @@ const NFTListInner = ({
                   onRefresh?.(),
                 );
                 const nftRefresh = reloadNftList?.(true);
-                await withAnimatedTickerRefreshNudge(
-                  () => balanceRefresh,
-                ).catch(error => {
-                  console.error('Refresh balance failed:', error);
-                });
+                withAnimatedTickerRefreshNudge(() => balanceRefresh).catch(
+                  error => {
+                    console.error('Refresh balance failed:', error);
+                  },
+                );
                 await nftRefresh;
               } finally {
                 setIsManualRefreshing(false);
               }
             }}
-            refreshing={isManualRefreshing}
+            refreshing={isScreenFocused && isManualRefreshing}
           />
         }
       />
