@@ -12035,11 +12035,11 @@ __metadata:
 
 "@react-native-menu/menu@patch:@react-native-menu/menu@npm%3A2.0.0#./.yarn/patches/@react-native-menu-menu-npm-2.0.0-15e1fd477a.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 2.0.0
-  resolution: "@react-native-menu/menu@patch:@react-native-menu/menu@npm%3A2.0.0#./.yarn/patches/@react-native-menu-menu-npm-2.0.0-15e1fd477a.patch::version=2.0.0&hash=040b7f&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "@react-native-menu/menu@patch:@react-native-menu/menu@npm%3A2.0.0#./.yarn/patches/@react-native-menu-menu-npm-2.0.0-15e1fd477a.patch::version=2.0.0&hash=d63e77&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/f125ceef564b71174c9fa1da94094f6bc90328c9d222750ffdc0c63f6485baa1186e214cbfe54158417cfadcf301515b8ee4b3fe12db9e28d9d5e5febca64c9d
+  checksum: 10/68846b07b4884523901ffa41366ce014a96b0e76b319bd09fcd32280c177bff738bfed696355d92f3321b1cf7be31f5ed9cc2bcfe64ce08576a729eafaa22f55
   languageName: node
   linkType: hard
 
