@@ -28,6 +28,8 @@ const AES_GCM_NO_AUTH_STORAGE_TYPE = 'KeystoreAESGCM_NoAuth';
 const IOS_KEYCHAIN_STORAGE_TYPE = 'keychain';
 const BROKEN_BIOMETRICS_ENTRY_MESSAGE =
   'Biometrics data could not be decrypted with the current keychain state. Inspect the keychain debug screen before resetting biometrics.';
+const ANDROID_SECURITY_RULE_AUTOMATIC_UPGRADE =
+  'automaticUpgradeToMoreSecuredStorage';
 const CANCELSTR = i18n.t('native.authentication.auth_prompt_cancel');
 const isAndroid = Platform.OS === 'android';
 
@@ -661,7 +663,9 @@ export function createBusinessKeychainApi({
     authenticationType:
       keychainModule.AUTHENTICATION_TYPE.DEVICE_PASSCODE_OR_BIOMETRICS,
     ...(isAndroid && {
-      rules: keychainModule.SECURITY_RULES.AUTOMATIC_UPGRADE,
+      rules:
+        keychainModule.SECURITY_RULES?.AUTOMATIC_UPGRADE ??
+        ANDROID_SECURITY_RULE_AUTOMATIC_UPGRADE,
     }),
   };
   const debugModule = (NativeModules as Record<string, unknown>)[
