@@ -1402,7 +1402,7 @@
           "columnTip": {
             "contractTrustValueWarning": "O valor de confiança do contrato < $100,000",
             "revokeWarningTitle": "Revogações em 24h são mais de 2x as aprovações",
-            "revokeRecenet": "Revogações recentes (24h): {{count}}",
+            "revokeRecenet": "Revogações recentes (24h): {{ count }}",
             "revokeNewApproved": "Novos utilizadores aprovados (24h): {{ count }}",
             "contractTrustValue": "O valor de confiança refere-se ao valor total do ativo gasto por este contrato. Um valor de confiança baixo indica risco ou inatividade durante 180 dias.",
             "button": "Entendi.",
@@ -2356,7 +2356,8 @@
       "clearBrowserData": "Limpar dados do navegador",
       "currency": "Moeda",
       "searchCurrency": "Pesquisar Moeda",
-      "screenshotReportSwitch": "Captura de ecrã para reportar erro"
+      "screenshotReportSwitch": "Captura de ecrã para reportar erro",
+      "dataAnalysis": "Análise de dados"
     },
     "gasAccount": {
       "GasAccountDepositTipPopup": {
@@ -2679,7 +2680,8 @@
         "contentModeDesktop": "Solicitar Site de Desktop",
         "favorite": "Favorito",
         "contentModeMobile": "Solicitar Site Móvel",
-        "clearCache": "Limpar cache"
+        "clearCache": "Limpar cache",
+        "disconnectAll": "Desconectar tudo"
       },
       "HyperliquidInvitePopup": {
         "title": "Programa de Referência Hyperliquid",
@@ -2709,6 +2711,12 @@
         "category": "Categoria",
         "skipDappInfoNextTime": "Saltar esta página da próxima vez",
         "openDapp": "Abrir"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "Você vai desconectar {{count}} DApp conectado.",
+        "desc_other": "Você vai desconectar {{count}} DApps conectados.",
+        "title": "Desconectar tudo?",
+        "success": "Todos os DApps foram desconectados."
       }
     },
     "browserManage": {
@@ -3487,7 +3495,8 @@
           "canNotUseThisCurrencyAsCollateral": "Não pode usar esta moeda como colateral.",
           "canNotSwitchUsageAsCollateralMode": "Não é possível alterar o estado de colateral deste ativo, pois isso pode desencadear liquidação.",
           "doNotHaveSuppliesInThisCurrency": "Não tem suprimentos nesta moeda.",
-          "zeroLTVWithdrawBlocked": "Ativos com LTV zero ({{assets}}) devem ser retirados ou desativados como garantia para realizar esta ação."
+          "zeroLTVWithdrawBlocked": "Ativos com LTV zero ({{assets}}) devem ser retirados ou desativados como garantia para realizar esta ação.",
+          "zeroLTVEnableEModeFirst": "Este ativo tem LTV 0 e não pode ser usado como colateral. Ative um E-Mode para usar {{asset}} como colateral."
         }
       },
       "searchMarket": "Pesquisar Mercado",
@@ -3730,6 +3739,29 @@
       "unsupportedAccountType": "Não suporta este tipo de conta.",
       "unsupportedAccount": "Atualmente apenas são suportados endereços de chave privada e frase-semente.",
       "title": "Converter Pó"
+    },
+    "walletConnect": {
+      "screenTitle": "Conectar Wallet",
+      "connectingToRabby": "A ligar ao Rabby",
+      "pairingFailed": "O emparelhamento WalletConnect falhou.",
+      "connected": "Ligado com sucesso. Volte à DApp.",
+      "proposalExpired": "A proposta WalletConnect expirou.",
+      "pairingExpired": "O emparelhamento WalletConnect expirou. Atualize o código QR da DApp e tente novamente.",
+      "duplicatePairing": "Esta URI WalletConnect já está a ser emparelhada. Atualize o código QR da DApp e tente novamente.",
+      "relayUnreachable": "O relay WalletConnect não está acessível. Verifique a rede e tente novamente.",
+      "transactionSentReturnToBrowser": "Transação enviada! Volte à DApp.",
+      "transactionCanceledReturnToBrowser": "Transação cancelada! Volte à DApp.",
+      "uriEmpty": "A URI WalletConnect não pode estar vazia.",
+      "uriInvalidFormat": "A URI WalletConnect deve começar com wc:<topic>@2.",
+      "uriMissingParams": "A URI WalletConnect não contém symKey ou relay-protocol.",
+      "unsupportedCapability": {
+        "chain_one": "{{count}} cadeia",
+        "chain_other": "{{count}} cadeias",
+        "method_one": "{{count}} método",
+        "method_other": "{{count}} métodos"
+      },
+      "unsupportedCapabilityList": "{{first}} e {{second}}",
+      "unsupportedRequiredRequest": "Pedido WalletConnect obrigatório não suportado: {{capabilities}} não é suportado."
     }
   },
   "constant": {

@@ -2448,7 +2448,8 @@
       "clearBrowserData": "Browser-Daten löschen",
       "currency": "Währung",
       "searchCurrency": "Währung suchen",
-      "screenshotReportSwitch": "Screenshot, um einen Fehler zu melden"
+      "screenshotReportSwitch": "Screenshot, um einen Fehler zu melden",
+      "dataAnalysis": "Datenanalyse"
     },
     "miniSignFooterBar": {
       "signWithLedger": "Signieren",
@@ -2679,7 +2680,8 @@
         "favorite": "Favorit",
         "contentModeMobile": "Mobile-Seite anfordern",
         "refresh": "Aktualisieren",
-        "clearCache": "Cache löschen"
+        "clearCache": "Cache löschen",
+        "disconnectAll": "Alle trennen"
       },
       "HyperliquidInvitePopup": {
         "title": "Hyperliquid Empfehlungsprogramm",
@@ -2709,6 +2711,12 @@
         "category": "Kategorie",
         "skipDappInfoNextTime": "Diese Seite beim nächsten Mal überspringen",
         "openDapp": "Öffnen"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "Sie trennen {{count}} verbundene DApp.",
+        "desc_other": "Sie trennen {{count}} verbundene DApps.",
+        "title": "Alle trennen?",
+        "success": "Alle DApps getrennt."
       }
     },
     "browserManage": {
@@ -3487,7 +3495,8 @@
           "canNotUseThisCurrencyAsCollateral": "Sie können diese Währung nicht als Sicherheiten verwenden.",
           "doNotHaveSuppliesInThisCurrency": "Sie haben keine Bestände in dieser Währung.",
           "canNotSwitchUsageAsCollateralMode": "Der Sicherheitenstatus dieses Assets kann nicht geändert werden, da dies eine Liquidation auslösen könnte.",
-          "zeroLTVWithdrawBlocked": "Vermögenswerte mit einem LTV von null ({{assets}}) müssen abgehoben oder als Sicherheiten deaktiviert werden, um diese Aktion auszuführen."
+          "zeroLTVWithdrawBlocked": "Vermögenswerte mit einem LTV von null ({{assets}}) müssen abgehoben oder als Sicherheiten deaktiviert werden, um diese Aktion auszuführen.",
+          "zeroLTVEnableEModeFirst": "Dieses Asset hat 0 LTV und kann nicht als Sicherheit verwendet werden. Aktivieren Sie einen E-Mode, um {{asset}} als Sicherheit zu verwenden."
         }
       },
       "searchMarket": "Markt durchsuchen",
@@ -3730,6 +3739,29 @@
       "unsupportedAccountType": "Dieser Kontotyp wird nicht unterstützt.",
       "unsupportedAccount": "Derzeit werden nur Private-Key- und Seed-Phrase-Adressen unterstützt.",
       "title": "Dust umwandeln"
+    },
+    "walletConnect": {
+      "screenTitle": "Wallet verbinden",
+      "connectingToRabby": "Verbindung zu Rabby wird hergestellt",
+      "pairingFailed": "WalletConnect-Kopplung fehlgeschlagen.",
+      "connected": "Erfolgreich verbunden. Bitte kehren Sie zur DApp zurück.",
+      "proposalExpired": "WalletConnect-Anfrage abgelaufen.",
+      "pairingExpired": "WalletConnect-Kopplung abgelaufen. Aktualisieren Sie den DApp-QR-Code und versuchen Sie es erneut.",
+      "duplicatePairing": "Diese WalletConnect-URI wird bereits gekoppelt. Aktualisieren Sie den DApp-QR-Code und versuchen Sie es erneut.",
+      "relayUnreachable": "WalletConnect-Relay ist nicht erreichbar. Prüfen Sie das Netzwerk und versuchen Sie es erneut.",
+      "transactionSentReturnToBrowser": "Transaktion gesendet! Bitte kehren Sie zur DApp zurück.",
+      "transactionCanceledReturnToBrowser": "Transaktion abgebrochen! Bitte kehren Sie zur DApp zurück.",
+      "uriEmpty": "WalletConnect-URI darf nicht leer sein.",
+      "uriInvalidFormat": "WalletConnect-URI muss mit wc:<topic>@2 beginnen.",
+      "uriMissingParams": "Der WalletConnect-URI fehlt symKey oder relay-protocol.",
+      "unsupportedCapability": {
+        "chain_one": "{{count}} Kette",
+        "chain_other": "{{count}} Ketten",
+        "method_one": "{{count}} Methode",
+        "method_other": "{{count}} Methoden"
+      },
+      "unsupportedCapabilityList": "{{first}} und {{second}}",
+      "unsupportedRequiredRequest": "Nicht unterstützte erforderliche WalletConnect-Anfrage: {{capabilities}} wird nicht unterstützt."
     }
   },
   "constant": {

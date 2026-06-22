@@ -165,7 +165,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
 
   const buildTx = useCallback(async () => {
     if (
-      !currentAccount ||
+      !currentAccount?.address ||
       !pools ||
       !chainInfo ||
       !hasChangeCategory ||
@@ -194,7 +194,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
       toast.error('There was some error');
     }
   }, [
-    currentAccount,
+    currentAccount?.address,
     pools,
     chainInfo,
     hasChangeCategory,
@@ -210,7 +210,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
 
   useEffect(() => {
     if (
-      currentAccount &&
+      currentAccount?.address &&
       canShowDirectSubmit &&
       hasChangeCategory &&
       !isBlock &&
@@ -223,7 +223,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
     }
   }, [
     canShowDirectSubmit,
-    currentAccount,
+    currentAccount?.address,
     prefetchMiniSigner,
     manageEmodeTx,
     hasChangeCategory,

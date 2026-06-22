@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dimensions, View } from 'react-native';
+import { View } from 'react-native';
 
 import {
   useSendNFTCanSubmit,
@@ -25,22 +25,6 @@ export const ShowMoreOnSendNFT = React.memo(function ShowMoreOnSendNFT() {
         loading={false}
         openShowMore={() => void 0}
         chainServeId={chainServeId}
-        style={[
-          {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            // ...makeDebugBorder(),
-          },
-        ]}
-        gasFeeListItemStyle={[
-          {
-            maxWidth: Dimensions.get('window').width - 24 * 2,
-            width: '100%',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            // ...makeDebugBorder('red'),
-          },
-        ]}
       />
     </View>
   );

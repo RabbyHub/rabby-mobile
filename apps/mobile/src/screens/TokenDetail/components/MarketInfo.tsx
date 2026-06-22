@@ -11,7 +11,7 @@ import { isNumber } from 'lodash';
 
 const PRICE_VALUE_MAX_LENGTH = 7;
 const PRICE_VALUE_BASE_FONT_SIZE = 42;
-const PRICE_VALUE_MIN_FONT_SIZE = 28;
+const PRICE_VALUE_MIN_FONT_SIZE = 22;
 
 const MarketInfo = ({
   price,
@@ -37,7 +37,7 @@ const MarketInfo = ({
   const priceValueFontSize = Math.max(
     PRICE_VALUE_MIN_FONT_SIZE,
     PRICE_VALUE_BASE_FONT_SIZE -
-      2 * Math.max(0, priceText.length - PRICE_VALUE_MAX_LENGTH),
+      3 * Math.max(0, priceText.length - PRICE_VALUE_MAX_LENGTH),
   );
   const percentChangeText = useMemo(() => {
     const changeValue = isNumber(price24hChange)

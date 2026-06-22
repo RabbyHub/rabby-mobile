@@ -41,6 +41,7 @@ import { sleep } from '@/utils/async';
 import { useShallow } from 'zustand/react/shallow';
 import { usePerpsAccount } from './usePerpsAccount';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import { isUserCancelledSignature } from './perpsActionError';
 
 import { apisLock } from '@/core/apis';
 type SignActionType =
@@ -285,7 +286,8 @@ export const usePerpsState = () => {
     } catch (error) {
       console.error('Failed to set builder fee:', error);
       Sentry.captureException(
-        new Error(`PERPS set builder fee error, address: ${address}`),
+        error instanceof Error ? error : new Error(String(error)),
+        { extra: { scene: 'PERPS set builder fee error', address } },
       );
     }
   });
@@ -413,11 +415,14 @@ export const usePerpsState = () => {
       } catch (e) {
         setAccountNeedApproveAgent(true);
         setAccountNeedApproveBuilderFee(true);
-        Sentry.captureException(
-          new Error(
-            `checkAccountApproveStatus failed, address: ${account.address} , account type: ${account.type} , agentAddress: ${agentAddress} , error: ${e}`,
-          ),
-        );
+        Sentry.captureException(e instanceof Error ? e : new Error(String(e)), {
+          extra: {
+            scene: 'checkAccountApproveStatus failed',
+            address: account.address,
+            accountType: account.type,
+            agentAddress,
+          },
+        });
       }
     },
     [
@@ -504,11 +509,14 @@ export const usePerpsState = () => {
       } catch (e) {
         setAccountNeedApproveAgent(true);
         setAccountNeedApproveBuilderFee(true);
-        Sentry.captureException(
-          new Error(
-            `ensure login approve sign failed, address: ${account.address} , account type: ${account.type} , agentAddress: ${agentAddress} , error: ${e}`,
-          ),
-        );
+        Sentry.captureException(e instanceof Error ? e : new Error(String(e)), {
+          extra: {
+            scene: 'ensure login approve sign failed',
+            address: account.address,
+            accountType: account.type,
+            agentAddress,
+          },
+        });
       }
     },
     [
@@ -587,9 +595,14 @@ export const usePerpsState = () => {
           showToast((error as any)?.message || String(error), 'error');
         }
         Sentry.captureException(
-          new Error(
-            `Failed to handle action approve status, address: ${currentPerpsAccount?.address} , account type: ${currentPerpsAccount?.type} , error: ${error}`,
-          ),
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            extra: {
+              scene: 'Failed to handle action approve status',
+              address: currentPerpsAccount?.address,
+              accountType: currentPerpsAccount?.type,
+            },
+          },
         );
         throw error;
       }
@@ -821,9 +834,14 @@ export const usePerpsState = () => {
       console.error('Failed to login Perps account:', error);
       showToast(error.message || 'Login failed', 'error');
       Sentry.captureException(
-        new Error(
-          `Failed to login Perps account, address: ${account.address} , account type: ${account.type} , error: ${error}`,
-        ),
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          extra: {
+            scene: 'Failed to login Perps account',
+            address: account.address,
+            accountType: account.type,
+          },
+        },
       );
     }
   });
@@ -1020,13 +1038,19 @@ export const usePerpsState = () => {
       showToast('Unified Account enabled', 'success');
       return true;
     } catch (error: any) {
-      if (error === 'Canceled') {
+      if (isUserCancelledSignature(error)) {
         return false;
       }
       console.error('enableUnifiedAccount error', error);
       showToast(error?.message || 'Failed to enable Unified Account', 'error');
       Sentry.captureException(
-        new Error('PERPS enableUnifiedAccount error: ' + JSON.stringify(error)),
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          extra: {
+            title: 'PERPS enableUnifiedAccount error',
+            rawError: error?.message ?? error,
+          },
+        },
       );
       return false;
     }

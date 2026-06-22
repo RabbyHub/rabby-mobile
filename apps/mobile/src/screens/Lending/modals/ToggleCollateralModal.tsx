@@ -171,7 +171,7 @@ function ToggleCollateralContent({}: {}) {
   const buildTx = useCallback(async () => {
     if (
       !currentToggleReserve ||
-      !currentAccount ||
+      !currentAccount?.address ||
       !pools ||
       !chainInfo ||
       isRiskToLiquidation ||
@@ -216,7 +216,7 @@ function ToggleCollateralContent({}: {}) {
     }
   }, [
     chainInfo,
-    currentAccount,
+    currentAccount?.address,
     currentToggleReserve,
     isNativeToken,
     isRiskToLiquidation,
@@ -395,7 +395,7 @@ function ToggleCollateralContent({}: {}) {
 
   useEffect(() => {
     if (
-      currentAccount &&
+      currentAccount?.address &&
       canShowDirectSubmit &&
       !isRiskToLiquidation &&
       !isError &&
@@ -408,7 +408,7 @@ function ToggleCollateralContent({}: {}) {
     }
   }, [
     canShowDirectSubmit,
-    currentAccount,
+    currentAccount?.address,
     isRiskToLiquidation,
     isError,
     isShowToggleCollateralModal,

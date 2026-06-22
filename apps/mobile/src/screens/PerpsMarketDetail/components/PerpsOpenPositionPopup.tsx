@@ -722,7 +722,12 @@ export const PerpsOpenPositionPopup: React.FC<{
                         color: colors2024['red-default'],
                       },
                     ]}>
-                    {formatPerpsNumber(availableBalance, BigNumber.ROUND_DOWN)}
+                    {formatPerpsNumber(
+                      availableBalance,
+                      2,
+                      undefined,
+                      BigNumber.ROUND_DOWN,
+                    )}
                   </Text>
                   <View
                     style={{

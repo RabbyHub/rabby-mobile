@@ -14,6 +14,7 @@ import { APP_URLS, APP_VERSIONS, APPLICATION_ID } from '@/constant';
 import { isNonPublicProductionEnv } from '@/constant';
 import { Platform } from 'react-native';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { getDeviceInfoForFeedbackText } from '@/utils/deviceInfo';
 import { openExternalUrl } from '@/core/utils/linking';
 import {
   resolveValFromUpdater,
@@ -294,6 +295,7 @@ const pushRateDetails = async (params?: { userStar?: number }) => {
   const starText = `${makeStarText(userStar, 5)} (${userStar})`;
   const balanceText = rmState.totalBalanceText;
   const versionText = APP_VERSIONS.forFeedback;
+  const { deviceText, osText } = getDeviceInfoForFeedbackText();
 
   const feedbackContent = [
     ...(!needFeedbackText
@@ -303,6 +305,8 @@ const pushRateDetails = async (params?: { userStar?: number }) => {
           `Rate: ${starText}`,
           `Total Balance: ${balanceText}`,
           `App Version: ${versionText}`,
+          `Device: ${deviceText}`,
+          `OS: ${osText}`,
           '  ',
         ]),
   ]

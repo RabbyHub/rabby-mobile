@@ -1648,7 +1648,9 @@
         "method_other": "{{count}} 个方法"
       },
       "unsupportedCapabilityList": "{{first}} 和 {{second}}",
-      "unsupportedRequiredRequest": "不支持必需的 WalletConnect 请求：{{capabilities}}。"
+      "unsupportedRequiredRequest": "不支持必需的 WalletConnect 请求：{{capabilities}}。",
+      "transactionSentReturnToBrowser": "交易已发送！请返回 DApp。",
+      "transactionCanceledReturnToBrowser": "交易已取消！请返回 DApp。"
     },
     "addToken": {
       "noTokenFound": "未找到 token",
@@ -2262,7 +2264,8 @@
       "clearBrowserData": "清除浏览器数据",
       "currency": "货币",
       "searchCurrency": "搜索货币",
-      "screenshotReportSwitch": "截图以报告错误"
+      "screenshotReportSwitch": "截图以报告错误",
+      "dataAnalysis": "数据分析"
     },
     "settingModal": {
       "themeMode": {
@@ -2449,7 +2452,8 @@
         "favorite": "收藏",
         "disconnect": "断开连接",
         "contentModeMobile": "请求移动站点",
-        "clearCache": "清除缓存"
+        "clearCache": "清除缓存",
+        "disconnectAll": "全部断开连接"
       },
       "HyperliquidInvitePopup": {
         "btn": "立即加入",
@@ -2479,6 +2483,12 @@
         "category": "类别",
         "skipDappInfoNextTime": "下次跳过此页面",
         "openDapp": "打开"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "你将断开 {{count}} 个已连接的 DApp。",
+        "desc_other": "你将断开 {{count}} 个已连接的 DApp。",
+        "title": "全部断开连接？",
+        "success": "已断开所有 DApp。"
       }
     },
     "browserManage": {
@@ -3257,7 +3267,8 @@
           "doNotHaveSuppliesInThisCurrency": "您没有存入该资产。",
           "zeroLTVWithdrawBlocked": "LTV 为 0 的资产（{{assets}}）必须先提取或关闭抵押用途，才能执行此操作。",
           "canNotSwitchUsageAsCollateralMode": "无法切换该资产的抵押状态，因为这可能触发清算。",
-          "canNotUseThisCurrencyAsCollateral": "该资产不能用作抵押品。"
+          "canNotUseThisCurrencyAsCollateral": "该资产不能用作抵押品。",
+          "zeroLTVEnableEModeFirst": "该资产的 LTV 为 0，不能用作抵押品。请先启用 E-Mode，才能将 {{asset}} 用作抵押品。"
         }
       },
       "searchMarket": "搜索市场",

@@ -2163,7 +2163,8 @@
       "clearBrowserData": "ブラウザデータをクリア",
       "searchCurrency": "通貨を検索",
       "currency": "通貨",
-      "screenshotReportSwitch": "バグを報告するためのスクリーンショット"
+      "screenshotReportSwitch": "バグを報告するためのスクリーンショット",
+      "dataAnalysis": "データ分析"
     },
     "settingModal": {
       "themeMode": {
@@ -2350,7 +2351,8 @@
         "contentModeDesktop": "デスクトップ版サイトをリクエスト",
         "favorite": "お気に入り",
         "contentModeMobile": "モバイルサイトをリクエスト",
-        "clearCache": "キャッシュをクリア"
+        "clearCache": "キャッシュをクリア",
+        "disconnectAll": "すべて切断"
       },
       "HyperliquidInvitePopup": {
         "btn": "今すぐ参加",
@@ -2380,6 +2382,12 @@
         "category": "カテゴリ",
         "skipDappInfoNextTime": "次回はこのメッセージをスキップ",
         "openDapp": "開く"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "接続中のDApp {{count}}件を切断します。",
+        "desc_other": "接続中のDApp {{count}}件を切断します。",
+        "title": "すべて切断しますか？",
+        "success": "すべてのDAppを切断しました。"
       }
     },
     "browserManage": {
@@ -3158,7 +3166,8 @@
           "doNotHaveSuppliesInThisCurrency": "この通貨に供給がありません。",
           "canNotSwitchUsageAsCollateralMode": "この資産の担保状態は変更できません。清算を引き起こす可能性があるためです。",
           "zeroLTVWithdrawBlocked": "ゼロLTV（{{assets}}）の資産は、このアクションを実行するために引き出すか、担保として無効にする必要があります。",
-          "canNotUseThisCurrencyAsCollateral": "この通貨を担保として使用することはできません。"
+          "canNotUseThisCurrencyAsCollateral": "この通貨を担保として使用することはできません。",
+          "zeroLTVEnableEModeFirst": "この資産のLTVは0で、担保として使用できません。{{asset}}を担保として使用するにはE-Modeを有効にしてください。"
         }
       },
       "searchMarket": "市場を検索",
@@ -3401,6 +3410,29 @@
       "unsupportedAccountType": "このアカウントタイプには対応していません。",
       "unsupportedAccount": "現在、秘密鍵とシードフレーズのアドレスのみ対応しています。",
       "title": "ダスト変換"
+    },
+    "walletConnect": {
+      "screenTitle": "ウォレットを接続",
+      "connectingToRabby": "Rabbyに接続中",
+      "pairingFailed": "WalletConnectのペアリングに失敗しました。",
+      "connected": "接続しました。DAppに戻ってください。",
+      "proposalExpired": "WalletConnectの接続リクエストは期限切れです。",
+      "pairingExpired": "WalletConnectのペアリングの有効期限が切れました。dappのQRコードを更新して、もう一度お試しください。",
+      "duplicatePairing": "このWalletConnect URIはすでにペアリング中です。dappのQRコードを更新して、もう一度お試しください。",
+      "relayUnreachable": "WalletConnect relayに到達できません。ネットワークを確認して、もう一度お試しください。",
+      "transactionSentReturnToBrowser": "トランザクションが送信されました！DAppに戻ってください。",
+      "transactionCanceledReturnToBrowser": "トランザクションがキャンセルされました！DAppに戻ってください。",
+      "uriEmpty": "WalletConnect URIは空にできません。",
+      "uriInvalidFormat": "WalletConnect URIはwc:<topic>@2で始まる必要があります。",
+      "uriMissingParams": "WalletConnect URIにsymKeyまたはrelay-protocolがありません。",
+      "unsupportedCapability": {
+        "chain_one": "{{count}}チェーン",
+        "chain_other": "{{count}}チェーン",
+        "method_one": "{{count}}メソッド",
+        "method_other": "{{count}}メソッド"
+      },
+      "unsupportedCapabilityList": "{{first}}と{{second}}",
+      "unsupportedRequiredRequest": "サポートされていない必須WalletConnectリクエスト: {{capabilities}}はサポートされていません。"
     }
   },
   "global": {

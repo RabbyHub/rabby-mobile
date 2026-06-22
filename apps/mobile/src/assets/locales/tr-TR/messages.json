@@ -2176,7 +2176,8 @@
       "clearBrowserData": "Tarayıcı Verilerini Temizle",
       "currency": "Para Birimi",
       "searchCurrency": "Para Araştırması",
-      "screenshotReportSwitch": "Hata bildirmek için ekran görüntüsü alın"
+      "screenshotReportSwitch": "Hata bildirmek için ekran görüntüsü alın",
+      "dataAnalysis": "Veri Analizi"
     },
     "settingModal": {
       "themeMode": {
@@ -2297,7 +2298,8 @@
         "contentModeMobile": "Mobil Sitei Talep Et",
         "disconnect": "Bağlantıyı kesmek",
         "contentModeDesktop": "Masaüstü Siteyi İsteği",
-        "clearCache": "Önbelleği temizle"
+        "clearCache": "Önbelleği temizle",
+        "disconnectAll": "Tümünün bağlantısını kes"
       },
       "HyperliquidInvitePopup": {
         "btn": "Şimdi Katıl",
@@ -2327,6 +2329,12 @@
         "category": "Kategori",
         "skipDappInfoNextTime": "Bir dahaki sefere bu sayfayı atla",
         "openDapp": "Aç"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "Bağlı {{count}} DApp'in bağlantısını keseceksiniz.",
+        "desc_other": "Bağlı {{count}} DApp'in bağlantısını keseceksiniz.",
+        "title": "Tümünün bağlantısı kesilsin mi?",
+        "success": "Tüm DApp'lerin bağlantısı kesildi."
       }
     },
     "browserManage": {
@@ -3105,7 +3113,8 @@
           "canNotSwitchUsageAsCollateralMode": "Bu varlığın teminat durumu değiştirilemez, çünkü tasfiyeyi tetikleyebilir.",
           "canNotUseThisCurrencyAsCollateral": "Bu para birimini teminat olarak kullanamazsınız.",
           "doNotHaveSuppliesInThisCurrency": "Bu para biriminde arzınız yok.",
-          "zeroLTVWithdrawBlocked": "Sıfır LTV'ye sahip varlıklar ({{assets}}) bu işlemi gerçekleştirmek için geri çekilmeli veya teminat olarak devre dışı bırakılmalıdır."
+          "zeroLTVWithdrawBlocked": "Sıfır LTV'ye sahip varlıklar ({{assets}}) bu işlemi gerçekleştirmek için geri çekilmeli veya teminat olarak devre dışı bırakılmalıdır.",
+          "zeroLTVEnableEModeFirst": "Bu varlığın LTV'si 0'dır ve teminat olarak kullanılamaz. {{asset}} varlığını teminat olarak kullanmak için E-Mode'u etkinleştirin."
         }
       },
       "selectMarket": "Pazar Seçin",
@@ -3348,6 +3357,29 @@
       "unsupportedAccountType": "Bu hesap türü desteklenmiyor.",
       "unsupportedAccount": "Şu anda yalnızca private key ve seed phrase adresleri desteklenmektedir.",
       "title": "Küçük Bakiyeleri Dönüştür"
+    },
+    "walletConnect": {
+      "screenTitle": "Cüzdanı Bağla",
+      "connectingToRabby": "Rabby'ye bağlanıyor",
+      "pairingFailed": "WalletConnect eşleştirmesi başarısız.",
+      "connected": "Başarıyla bağlandı. Lütfen DApp'e geri dönün.",
+      "proposalExpired": "WalletConnect teklifinin süresi doldu.",
+      "pairingExpired": "WalletConnect eşleştirmesinin süresi doldu. dapp QR kodunu yenileyip tekrar deneyin.",
+      "duplicatePairing": "Bu WalletConnect URI'si zaten eşleştiriliyor. dapp QR kodunu yenileyip tekrar deneyin.",
+      "relayUnreachable": "WalletConnect relay'e ulaşılamıyor. Ağı kontrol edip tekrar deneyin.",
+      "transactionSentReturnToBrowser": "İşlem gönderildi! Lütfen DApp'e geri dönün.",
+      "transactionCanceledReturnToBrowser": "İşlem iptal edildi! Lütfen DApp'e geri dönün.",
+      "uriEmpty": "WalletConnect URI boş olamaz.",
+      "uriInvalidFormat": "WalletConnect URI wc:<topic>@2 ile başlamalıdır.",
+      "uriMissingParams": "WalletConnect URI symKey veya relay-protocol içermiyor.",
+      "unsupportedCapability": {
+        "chain_one": "{{count}} zincir",
+        "chain_other": "{{count}} zincir",
+        "method_one": "{{count}} yöntem",
+        "method_other": "{{count}} yöntem"
+      },
+      "unsupportedCapabilityList": "{{first}} ve {{second}}",
+      "unsupportedRequiredRequest": "Desteklenmeyen zorunlu WalletConnect isteği: {{capabilities}} desteklenmiyor."
     }
   },
   "component": {

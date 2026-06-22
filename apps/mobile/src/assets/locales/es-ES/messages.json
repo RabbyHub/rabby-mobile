@@ -2251,7 +2251,8 @@
       "clearBrowserData": "Borrar datos del navegador",
       "searchCurrency": "Buscar moneda",
       "currency": "Moneda",
-      "screenshotReportSwitch": "Captura de pantalla para informar un error"
+      "screenshotReportSwitch": "Captura de pantalla para informar un error",
+      "dataAnalysis": "Análisis de datos"
     },
     "gasAccount": {
       "deposit": "Depósito",
@@ -2574,7 +2575,8 @@
         "favorite": "Favorito",
         "contentModeMobile": "Solicitar sitio móvil",
         "contentModeDesktop": "Solicitar sitio de escritorio",
-        "clearCache": "Borrar caché"
+        "clearCache": "Borrar caché",
+        "disconnectAll": "Desconectar todo"
       },
       "HyperliquidInvitePopup": {
         "btn": "Únete ahora",
@@ -2604,6 +2606,12 @@
         "category": "Categoría",
         "skipDappInfoNextTime": "Omitir esta página la próxima vez",
         "openDapp": "Abrir"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "Desconectarás {{count}} DApp conectada.",
+        "desc_other": "Desconectarás {{count}} DApps conectadas.",
+        "title": "¿Desconectar todo?",
+        "success": "Todas las DApps desconectadas."
       }
     },
     "browserManage": {
@@ -3382,7 +3390,8 @@
           "doNotHaveSuppliesInThisCurrency": "No tienes suministros en esta moneda",
           "canNotSwitchUsageAsCollateralMode": "No puedes cambiar el estado de colateral de este activo porque podría provocar una liquidación.",
           "canNotUseThisCurrencyAsCollateral": "No puedes usar esta moneda como colateral.",
-          "zeroLTVWithdrawBlocked": "Los activos con LTV cero ({{assets}}) deben ser retirados o deshabilitados como garantía para realizar esta acción."
+          "zeroLTVWithdrawBlocked": "Los activos con LTV cero ({{assets}}) deben ser retirados o deshabilitados como garantía para realizar esta acción.",
+          "zeroLTVEnableEModeFirst": "Este activo tiene LTV 0 y no puede usarse como colateral. Habilita un E-Mode para usar {{asset}} como colateral."
         }
       },
       "selectMarket": "Seleccionar Mercado",
@@ -3625,6 +3634,29 @@
       "unsupportedAccountType": "No se admite este tipo de cuenta.",
       "unsupportedAccount": "Actualmente solo se admiten direcciones de clave privada y frase semilla.",
       "title": "Convertir Polvo"
+    },
+    "walletConnect": {
+      "screenTitle": "Conectar Wallet",
+      "connectingToRabby": "Conectando a Rabby",
+      "pairingFailed": "El emparejamiento de WalletConnect ha fallado.",
+      "connected": "Conectado correctamente. Vuelve a la DApp.",
+      "proposalExpired": "La propuesta de WalletConnect ha caducado.",
+      "pairingExpired": "El emparejamiento de WalletConnect ha caducado. Actualiza el código QR de la dapp e inténtalo de nuevo.",
+      "duplicatePairing": "Este URI de WalletConnect ya se está emparejando. Actualiza el código QR de la dapp e inténtalo de nuevo.",
+      "relayUnreachable": "No se puede acceder al relay de WalletConnect. Comprueba la red e inténtalo de nuevo.",
+      "transactionSentReturnToBrowser": "¡Transacción enviada! Vuelve a la DApp.",
+      "transactionCanceledReturnToBrowser": "¡Transacción cancelada! Vuelve a la DApp.",
+      "uriEmpty": "El URI de WalletConnect no puede estar vacío.",
+      "uriInvalidFormat": "El URI de WalletConnect debe empezar con wc:<topic>@2.",
+      "uriMissingParams": "Al URI de WalletConnect le falta symKey o relay-protocol.",
+      "unsupportedCapability": {
+        "chain_one": "{{count}} cadena",
+        "chain_other": "{{count}} cadenas",
+        "method_one": "{{count}} método",
+        "method_other": "{{count}} métodos"
+      },
+      "unsupportedCapabilityList": "{{first}} y {{second}}",
+      "unsupportedRequiredRequest": "Solicitud obligatoria de WalletConnect no compatible: {{capabilities}} no es compatible."
     }
   },
   "global": {

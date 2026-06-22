@@ -1287,7 +1287,7 @@
       "best": "ดีที่สุด",
       "chain": "Chain",
       "estimate": "ประมาณการ:",
-      "no-quote-found": "ไม่พบคำคม",
+      "no-quote-found": "ไม่สามารถหาราคาตลาดที่เหมาะสม",
       "preferMEV": "แนะนำ MEV Guarded",
       "wrap-contract": "Wrap Contract",
       "low-slippage-may-cause-failed-transactions-due-to-high-volatility": "Slippage ต่ำอาจทำให้การทำธุรกรรมล้มเหลวเนื่องจากความผันผวนสูง",
@@ -2372,7 +2372,8 @@
       "clearBrowserData": "ล้างข้อมูลเบราว์เซอร์",
       "screenshotReportSwitch": "ถ่ายภาพหน้าจอเพื่อติดตามข้อบกพร่อง",
       "currency": "สกุลเงิน",
-      "searchCurrency": "ค้นหาเงินตรา"
+      "searchCurrency": "ค้นหาเงินตรา",
+      "dataAnalysis": "การวิเคราะห์ข้อมูล"
     },
     "settingModal": {
       "themeMode": {
@@ -2559,7 +2560,8 @@
         "favorite": "รายการโปรด",
         "disconnect": "ตัดการเชื่อมต่อ",
         "contentModeDesktop": "ขอเว็บไซต์เดสก์ท็อป",
-        "clearCache": "ล้างแคช"
+        "clearCache": "ล้างแคช",
+        "disconnectAll": "ตัดการเชื่อมต่อทั้งหมด"
       },
       "HyperliquidInvitePopup": {
         "btn": "เข้าร่วมตอนนี้",
@@ -2589,6 +2591,12 @@
         "category": "หมวดหมู่",
         "skipDappInfoNextTime": "ข้ามหน้านี้ในครั้งต่อไป",
         "openDapp": "เปิด"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "คุณจะตัดการเชื่อมต่อ DApp ที่เชื่อมต่ออยู่ {{count}} รายการ",
+        "desc_other": "คุณจะตัดการเชื่อมต่อ DApp ที่เชื่อมต่ออยู่ {{count}} รายการ",
+        "title": "ตัดการเชื่อมต่อทั้งหมดหรือไม่?",
+        "success": "ตัดการเชื่อมต่อ DApp ทั้งหมดแล้ว"
       }
     },
     "browserManage": {
@@ -3367,7 +3375,8 @@
           "canNotUseThisCurrencyAsCollateral": "คุณไม่สามารถใช้สกุลเงินนี้เป็นหลักประกันได้",
           "doNotHaveSuppliesInThisCurrency": "คุณไม่มีสินค้าที่ใช้ในสกุลเงินนี้",
           "canNotSwitchUsageAsCollateralMode": "ไม่สามารถเปลี่ยนสถานะหลักประกันของสินทรัพย์นี้ได้ เพราะอาจทำให้เกิดการชำระบัญชี",
-          "zeroLTVWithdrawBlocked": "สินทรัพย์ที่มี LTV เป็นศูนย์ ({{assets}}) จะต้องถอนหรือปิดใช้งานเป็นหลักประกันเพื่อดำเนินการนี้"
+          "zeroLTVWithdrawBlocked": "สินทรัพย์ที่มี LTV เป็นศูนย์ ({{assets}}) จะต้องถอนหรือปิดใช้งานเป็นหลักประกันเพื่อดำเนินการนี้",
+          "zeroLTVEnableEModeFirst": "สินทรัพย์นี้มี LTV เป็น 0 และไม่สามารถใช้เป็นหลักประกันได้ เปิดใช้งาน E-Mode เพื่อใช้ {{asset}} เป็นหลักประกัน"
         }
       },
       "searchMarket": "ค้นหาราคา",
@@ -3610,6 +3619,29 @@
       "unsupportedAccountType": "ไม่รองรับประเภทบัญชีนี้",
       "unsupportedAccount": "ขณะนี้รองรับเฉพาะที่อยู่แบบคีย์ส่วนตัวและวลีเมล็ดพันธุ์เท่านั้น",
       "title": "แปลง Dust"
+    },
+    "walletConnect": {
+      "screenTitle": "เชื่อมต่อวอลเล็ต",
+      "connectingToRabby": "กำลังเชื่อมต่อกับ Rabby",
+      "pairingFailed": "การจับคู่ WalletConnect ล้มเหลว",
+      "connected": "เชื่อมต่อสำเร็จ โปรดกลับไปที่ DApp",
+      "proposalExpired": "ข้อเสนอ WalletConnect หมดอายุแล้ว",
+      "pairingExpired": "การจับคู่ WalletConnect หมดอายุแล้ว รีเฟรชคิวอาร์โค้ด dapp แล้วลองอีกครั้ง",
+      "duplicatePairing": "URI ของ WalletConnect นี้กำลังจับคู่อยู่แล้ว รีเฟรชคิวอาร์โค้ด dapp แล้วลองอีกครั้ง",
+      "relayUnreachable": "ไม่สามารถเข้าถึง relay ของ WalletConnect ได้ ตรวจสอบเครือข่ายแล้วลองอีกครั้ง",
+      "transactionSentReturnToBrowser": "ส่งธุรกรรมแล้ว! โปรดกลับไปที่ DApp",
+      "transactionCanceledReturnToBrowser": "ยกเลิกธุรกรรมแล้ว! โปรดกลับไปที่ DApp",
+      "uriEmpty": "URI ของ WalletConnect ต้องไม่ว่างเปล่า",
+      "uriInvalidFormat": "URI ของ WalletConnect ต้องขึ้นต้นด้วย wc:<topic>@2",
+      "uriMissingParams": "URI ของ WalletConnect ไม่มี symKey หรือ relay-protocol",
+      "unsupportedCapability": {
+        "chain_one": "{{count}} เชน",
+        "chain_other": "{{count}} เชน",
+        "method_one": "{{count}} เมธอด",
+        "method_other": "{{count}} เมธอด"
+      },
+      "unsupportedCapabilityList": "{{first}} และ {{second}}",
+      "unsupportedRequiredRequest": "คำขอ WalletConnect ที่จำเป็นไม่รองรับ: ไม่รองรับ {{capabilities}}"
     }
   },
   "native": {
@@ -3664,7 +3696,7 @@
     "themeMode": {
       "option_Dark": "มืด",
       "option_System": "ระบบ",
-      "option_Light": "เบา"
+      "option_Light": "สว่าง"
     },
     "Unknown": "ไม่ทราบ",
     "unlimited": "ไม่จำกัด",
