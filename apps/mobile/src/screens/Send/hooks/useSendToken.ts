@@ -51,7 +51,7 @@ import {
   MINIMUM_GAS_LIMIT,
 } from '@/constant/gas';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
-import { abiCoder } from '@/core/apis/sendRequest';
+import { abiCoder, sendRequest } from '@/core/apis/sendRequest';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { getChainListFromAtom, useFindChain } from '@/hooks/useFindChain';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
@@ -1177,7 +1177,7 @@ export function useSendTokenForm({
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chain.isTestnet
     ) {
-      const res = await apiProvider.sendRequest(
+      const res = await sendRequest(
         {
           data: {
             method: 'eth_sendTransaction',
@@ -1416,24 +1416,23 @@ export function useSendTokenForm({
 
           return;
         } else {
-          await apiProvider
-            .sendRequest({
-              data: {
-                method: 'eth_sendTransaction',
-                params: [params],
-                $ctx: {
-                  ga: {
-                    category: 'Send',
-                    source: 'sendToken',
-                    toAddress,
-                    // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
-                    trigger: 'sendToken',
-                  },
+          await sendRequest({
+            data: {
+              method: 'eth_sendTransaction',
+              params: [params],
+              $ctx: {
+                ga: {
+                  category: 'Send',
+                  source: 'sendToken',
+                  toAddress,
+                  // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
+                  trigger: 'sendToken',
                 },
               },
-              session: INTERNAL_REQUEST_SESSION,
-              account: currentAccount,
-            })
+            },
+            session: INTERNAL_REQUEST_SESSION,
+            account: currentAccount,
+          })
             .then(resp => {
               const hash = resp as string;
               console.debug('hash', hash);

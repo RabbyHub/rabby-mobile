@@ -2111,7 +2111,8 @@
       "clearBrowserData": "브라우저 데이터 삭제",
       "currency": "통화",
       "screenshotReportSwitch": "버그 보고를 위한 스크린샷",
-      "searchCurrency": "통화 검색"
+      "searchCurrency": "통화 검색",
+      "dataAnalysis": "데이터 분석"
     },
     "settingModal": {
       "themeMode": {
@@ -2298,7 +2299,8 @@
         "disconnect": "연결 해제",
         "favorite": "즐겨찾기",
         "contentModeDesktop": "데스크톱 사이트 요청",
-        "clearCache": "캐시 지우기"
+        "clearCache": "캐시 지우기",
+        "disconnectAll": "모두 연결 해제"
       },
       "HyperliquidInvitePopup": {
         "btn": "지금 가입하세요",
@@ -2328,6 +2330,12 @@
         "category": "카테고리",
         "skipDappInfoNextTime": "다음에 이 페이지 건너뛰기",
         "openDapp": "열기"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "연결된 DApp {{count}}개를 연결 해제합니다.",
+        "desc_other": "연결된 DApp {{count}}개를 연결 해제합니다.",
+        "title": "모두 연결 해제할까요?",
+        "success": "모든 DApp 연결이 해제되었습니다."
       }
     },
     "browserManage": {

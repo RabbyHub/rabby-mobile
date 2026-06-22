@@ -134,6 +134,7 @@ type ScreenshotSettings = {
   timeTipAboutSeedPhraseAndPrivateKey: 'copy' | 'pasted' | 'none';
   blockSubmitIfFormChangedOnAuth: boolean;
   toastOpenApiHttpErrorStatus: boolean;
+  screenshotDebugToastEnabled: boolean;
   debugSwapHistorySkipLocalLookup: boolean;
   wideScreenDebugPanelEnabled: boolean;
   wideScreenDebugPanelMinWidth: number;
@@ -157,6 +158,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     timeTipAboutSeedPhraseAndPrivateKey: 'copy',
     blockSubmitIfFormChangedOnAuth: false,
     toastOpenApiHttpErrorStatus: false,
+    screenshotDebugToastEnabled: false,
     debugSwapHistorySkipLocalLookup: false,
     wideScreenDebugPanelEnabled: false,
     wideScreenDebugPanelMinWidth: WIDE_SCREEN_DEBUG_PANEL_DEFAULT_MIN_WIDTH,
@@ -174,6 +176,12 @@ export const storeApiExpSettingData = {
   getCurrentKeychainVersion,
   getDebugKeychainStorageByVersion,
   getShouldBlockSubmitIfFormChangedOnAuth,
+  getScreenshotDebugToastEnabled: () => {
+    return (
+      isNonPublicProductionEnv &&
+      experimentalSettingsStore.getState().screenshotDebugToastEnabled
+    );
+  },
   getTimeTipAboutSeedPhraseAndPrivateKey: () => {
     if (!__DEV__) {
       return 'pasted';
@@ -457,6 +465,40 @@ export function useToastOpenApiHttpErrorStatus() {
       ? toastOpenApiHttpErrorStatus
       : false,
     toggleToastOpenApiHttpErrorStatus,
+  };
+}
+
+export function useScreenshotDebugToast() {
+  const screenshotDebugToastEnabled = experimentalSettingsStore(
+    s => s.screenshotDebugToastEnabled,
+  );
+
+  const toggleScreenshotDebugToast = useCallback((nextVal?: boolean) => {
+    if (!isNonPublicProductionEnv) {
+      return false;
+    }
+
+    let finalValue = false;
+    setExpSettingData(prev => {
+      finalValue =
+        typeof nextVal === 'boolean'
+          ? nextVal
+          : !prev.screenshotDebugToastEnabled;
+
+      return {
+        ...prev,
+        screenshotDebugToastEnabled: finalValue,
+      };
+    });
+
+    return finalValue;
+  }, []);
+
+  return {
+    screenshotDebugToastEnabled: isNonPublicProductionEnv
+      ? screenshotDebugToastEnabled
+      : false,
+    toggleScreenshotDebugToast,
   };
 }
 

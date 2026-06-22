@@ -2163,7 +2163,8 @@
       "clearBrowserData": "ブラウザデータをクリア",
       "searchCurrency": "通貨を検索",
       "currency": "通貨",
-      "screenshotReportSwitch": "バグを報告するためのスクリーンショット"
+      "screenshotReportSwitch": "バグを報告するためのスクリーンショット",
+      "dataAnalysis": "データ分析"
     },
     "settingModal": {
       "themeMode": {
@@ -2350,7 +2351,8 @@
         "contentModeDesktop": "デスクトップ版サイトをリクエスト",
         "favorite": "お気に入り",
         "contentModeMobile": "モバイルサイトをリクエスト",
-        "clearCache": "キャッシュをクリア"
+        "clearCache": "キャッシュをクリア",
+        "disconnectAll": "すべて切断"
       },
       "HyperliquidInvitePopup": {
         "btn": "今すぐ参加",
@@ -2380,6 +2382,12 @@
         "category": "カテゴリ",
         "skipDappInfoNextTime": "次回はこのメッセージをスキップ",
         "openDapp": "開く"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "接続中のDApp {{count}}件を切断します。",
+        "desc_other": "接続中のDApp {{count}}件を切断します。",
+        "title": "すべて切断しますか？",
+        "success": "すべてのDAppを切断しました。"
       }
     },
     "browserManage": {

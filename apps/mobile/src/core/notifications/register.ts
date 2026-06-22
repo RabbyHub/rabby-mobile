@@ -19,6 +19,25 @@ import { getTopMyAccountsOnNotifications } from './utils';
 import { makeAvoidParallelAsyncFunc } from '../utils/concurrency';
 import { APP_MMKV_KEYS } from '../storage/mmkvConstants';
 
+let messagingUnavailableLogged = false;
+
+function logMessagingUnavailable(error: unknown) {
+  if (messagingUnavailableLogged) {
+    return;
+  }
+  messagingUnavailableLogged = true;
+  console.warn('[notifications] Firebase messaging unavailable', error);
+}
+
+function getFirebaseMessaging() {
+  try {
+    return messaging();
+  } catch (error) {
+    logMessagingUnavailable(error);
+    return null;
+  }
+}
+
 const iosPush = {
   token: '',
   error: null as null | { message: string; code: number; details: any },
@@ -85,12 +104,17 @@ export const registerForPushNotifications = async () => {
     }
   } else {
     // Android: 使用 FCM
+    const firebaseMessaging = getFirebaseMessaging();
+    if (!firebaseMessaging) {
+      return {
+        pushToken,
+      };
+    }
+
     await Promise.race([
-      messaging()
-        .getToken()
-        .then(token => {
-          pushToken = token;
-        }),
+      firebaseMessaging.getToken().then(token => {
+        pushToken = token;
+      }),
       sleep(3000).then(() => {
         if (pushToken) return;
         throw new Error('FCM getToken timeout');
@@ -178,7 +202,12 @@ export const startSubscribePushNotifications = async () => {
     //   // notification.finish(PushNotificationIOS.FetchResult.NoData);
     // });
   } else {
-    messaging()
+    const firebaseMessaging = getFirebaseMessaging();
+    if (!firebaseMessaging) {
+      return;
+    }
+
+    firebaseMessaging
       .getInitialNotification()
       .then(remoteMessage => {
         console.debug(
@@ -194,8 +223,9 @@ export const startSubscribePushNotifications = async () => {
             parsedData: parsed,
           });
         console.debug('[notifications] parsed:', parsed);
-      });
-    messaging().onMessage(async remoteMessage => {
+      })
+      .catch(logMessagingUnavailable);
+    firebaseMessaging.onMessage(async remoteMessage => {
       console.debug('[notifications] Received foreground FCM:', remoteMessage);
 
       // const parsed = parseRemoteData(remoteMessage.data);
@@ -204,7 +234,7 @@ export const startSubscribePushNotifications = async () => {
       // });
       // console.debug('[notifications] parsed:', parsed);
     });
-    messaging().onNotificationOpenedApp(async remoteMessage => {
+    firebaseMessaging.onNotificationOpenedApp(async remoteMessage => {
       console.debug('[notifications] Received background FCM:', remoteMessage);
 
       const parsed = parseRemoteData(remoteMessage.data);

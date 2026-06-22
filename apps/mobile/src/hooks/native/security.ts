@@ -4,11 +4,12 @@ import { IS_IOS } from '@/core/native/utils';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { perfEvents } from '@/core/utils/perf';
+import {
+  getGlobalScreenCapturable,
+  setGlobalScreenCapturable,
+} from './screenCapturable';
 
-const globalScreenCapturableRef = { current: true };
-export function getGlobalScreenCapturable() {
-  return globalScreenCapturableRef.current;
-}
+export { getGlobalScreenCapturable };
 
 type IosAppSwitcherBlurState = {
   visible: boolean;
@@ -55,7 +56,7 @@ export function startSubscribeIOSAppSwitcherBlur() {
 
 export function startSubscribeWhetherPreventScreenshot() {
   perfEvents.subscribe('CHANGE_PREVENT_SCREENSHOT', (isPrevented: boolean) => {
-    globalScreenCapturableRef.current = !isPrevented;
+    setGlobalScreenCapturable(!isPrevented);
     if (!isPrevented) {
       RNScreenshotPrevent.togglePreventScreenshot(false);
       return;
