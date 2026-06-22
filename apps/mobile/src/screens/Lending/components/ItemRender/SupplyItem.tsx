@@ -23,21 +23,40 @@ import wrapperToken from '../../config/wrapperToken';
 import { Text } from '@/components/Typography';
 import { colord } from 'colord';
 import { openLendingActionPopup } from '../../utils/actionPopup';
+import { PositionTokenSelector } from './PositionTokenSelector';
+import type {
+  BasicPositionTokenOption,
+  PositionTokenOption,
+} from '../../utils/positionTokenSelector';
 
 interface SupplyItemProps extends RNViewProps {
   underlyingAsset: string;
+  activeUnderlyingAsset: string;
+  tokenOptions?: PositionTokenOption[];
+  onChangeActiveUnderlyingAsset: (underlyingAsset: string) => void;
 }
 
-const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
+const SupplyItem: React.FC<SupplyItemProps> = ({
+  underlyingAsset,
+  activeUnderlyingAsset,
+  tokenOptions,
+  onChangeActiveUnderlyingAsset,
+  style,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
   const { iUserSummary: userSummary, getTargetReserve } = useLendingSummary();
   const { openCollateralChange } = useToggleCollateralModal();
   const { chainEnum } = useSelectedMarket();
+  const currentUnderlyingAsset =
+    tokenOptions?.length && activeUnderlyingAsset
+      ? activeUnderlyingAsset
+      : underlyingAsset;
+
   const reserve = useMemo(() => {
-    return getTargetReserve(underlyingAsset);
-  }, [getTargetReserve, underlyingAsset]);
+    return getTargetReserve(currentUnderlyingAsset);
+  }, [currentUnderlyingAsset, getTargetReserve]);
 
   const { apyText, suppliedUsdText, suppliedTokenText, isIsolated } =
     useMemo(() => {
@@ -139,6 +158,7 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
         )
       : false;
   }, [chainEnum, reserve]);
+  const shouldUseWrapperTokenStyle = isWrapperToken && !tokenOptions?.length;
 
   if (!reserve) {
     return null;
@@ -146,8 +166,12 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
 
   return (
     <View
-      style={[styles.container, isWrapperToken && styles.wrapperToken, style]}>
-      {isWrapperToken && <View style={styles.wrapperTokenArrow} />}
+      style={[
+        styles.container,
+        shouldUseWrapperTokenStyle && styles.wrapperToken,
+        style,
+      ]}>
+      {shouldUseWrapperTokenStyle && <View style={styles.wrapperTokenArrow} />}
       <View style={styles.content}>
         <View style={styles.headerRow}>
           <View style={styles.tokenInfo}>
@@ -160,12 +184,13 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
               />
               <View style={styles.tokenTextArea}>
                 <View style={styles.symbolArea}>
-                  <Text
-                    style={styles.symbol}
-                    numberOfLines={1}
-                    ellipsizeMode="tail">
-                    {reserve.reserve.symbol}
-                  </Text>
+                  <PositionTokenSelector
+                    activeUnderlyingAsset={currentUnderlyingAsset}
+                    options={tokenOptions as BasicPositionTokenOption[]}
+                    symbol={reserve.reserve.symbol}
+                    chain={reserve.chain}
+                    onChange={onChangeActiveUnderlyingAsset}
+                  />
                   <View style={styles.suppliedBadge}>
                     <Text style={styles.suppliedBadgeText}>
                       {t('page.Lending.supplyDetail.supplied')}
