@@ -1967,7 +1967,8 @@
       "clearBrowserData": "Очистить данные браузера",
       "screenshotReportSwitch": "Скриншот для сообщения об ошибке",
       "currency": "Валюта",
-      "searchCurrency": "Поиск валюты"
+      "searchCurrency": "Поиск валюты",
+      "dataAnalysis": "Анализ данных"
     },
     "gasAccount": {
       "GasAccountDepositTipPopup": {
@@ -2418,7 +2419,8 @@
         "contentModeDesktop": "Запросить десктопную версию сайта",
         "favorite": "Избранное",
         "refresh": "Обновить",
-        "clearCache": "Очистить кэш"
+        "clearCache": "Очистить кэш",
+        "disconnectAll": "Отключить все"
       },
       "HyperliquidInvitePopup": {
         "btn": "Присоединяйтесь сейчас",
@@ -2448,6 +2450,12 @@
         "category": "Категория",
         "skipDappInfoNextTime": "Пропустить эту страницу в следующий раз",
         "openDapp": "Открыть"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "Вы отключите {{count}} подключенный DApp.",
+        "desc_other": "Вы отключите {{count}} подключенных DApp.",
+        "title": "Отключить все?",
+        "success": "Все DApp отключены."
       }
     },
     "browserManage": {

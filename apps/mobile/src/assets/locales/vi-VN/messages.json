@@ -1938,7 +1938,8 @@
       "clearBrowserData": "Xóa Dữ Liệu Trình Duyệt",
       "currency": "Tiền tệ",
       "searchCurrency": "Tìm kiếm Tiền tệ",
-      "screenshotReportSwitch": "Chụp màn hình để báo cáo lỗi"
+      "screenshotReportSwitch": "Chụp màn hình để báo cáo lỗi",
+      "dataAnalysis": "Phân tích dữ liệu"
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "Tôi hiểu rồi.",
@@ -2418,7 +2419,8 @@
         "disconnect": "Ngắt kết nối",
         "favorite": "Yêu thích",
         "contentModeDesktop": "Yêu cầu Trang Web Máy Tính",
-        "clearCache": "Xóa bộ nhớ cache"
+        "clearCache": "Xóa bộ nhớ cache",
+        "disconnectAll": "Ngắt kết nối tất cả"
       },
       "HyperliquidInvitePopup": {
         "btn": "Tham gia ngay",
@@ -2448,6 +2450,12 @@
         "category": "Danh mục",
         "skipDappInfoNextTime": "Bỏ qua trang này lần sau",
         "openDapp": "Mở"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "Bạn sẽ ngắt kết nối {{count}} DApp đã kết nối.",
+        "desc_other": "Bạn sẽ ngắt kết nối {{count}} DApp đã kết nối.",
+        "title": "Ngắt kết nối tất cả?",
+        "success": "Đã ngắt kết nối tất cả DApp."
       }
     },
     "browserManage": {

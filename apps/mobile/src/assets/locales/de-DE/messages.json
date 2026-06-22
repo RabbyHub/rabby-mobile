@@ -2448,7 +2448,8 @@
       "clearBrowserData": "Browser-Daten löschen",
       "currency": "Währung",
       "searchCurrency": "Währung suchen",
-      "screenshotReportSwitch": "Screenshot, um einen Fehler zu melden"
+      "screenshotReportSwitch": "Screenshot, um einen Fehler zu melden",
+      "dataAnalysis": "Datenanalyse"
     },
     "miniSignFooterBar": {
       "signWithLedger": "Signieren",
@@ -2679,7 +2680,8 @@
         "favorite": "Favorit",
         "contentModeMobile": "Mobile-Seite anfordern",
         "refresh": "Aktualisieren",
-        "clearCache": "Cache löschen"
+        "clearCache": "Cache löschen",
+        "disconnectAll": "Alle trennen"
       },
       "HyperliquidInvitePopup": {
         "title": "Hyperliquid Empfehlungsprogramm",
@@ -2709,6 +2711,12 @@
         "category": "Kategorie",
         "skipDappInfoNextTime": "Diese Seite beim nächsten Mal überspringen",
         "openDapp": "Öffnen"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "Sie trennen {{count}} verbundene DApp.",
+        "desc_other": "Sie trennen {{count}} verbundene DApps.",
+        "title": "Alle trennen?",
+        "success": "Alle DApps getrennt."
       }
     },
     "browserManage": {

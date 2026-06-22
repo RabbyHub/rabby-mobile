@@ -2176,7 +2176,8 @@
       "clearBrowserData": "Hapus Data Peramban",
       "searchCurrency": "Cari Mata Uang",
       "screenshotReportSwitch": "Ambil tangkapan layar untuk melaporkan bug",
-      "currency": "Mata Uang"
+      "currency": "Mata Uang",
+      "dataAnalysis": "Analisis Data"
     },
     "settingModal": {
       "themeMode": {
@@ -2297,7 +2298,8 @@
         "refresh": "Menyegarkan",
         "disconnect": "Putuskan Sambungan",
         "favorite": "Favorit",
-        "clearCache": "Bersihkan cache"
+        "clearCache": "Bersihkan cache",
+        "disconnectAll": "Putuskan Semua"
       },
       "HyperliquidInvitePopup": {
         "btn": "Bergabung Sekarang",
@@ -2327,6 +2329,12 @@
         "category": "Kategori",
         "skipDappInfoNextTime": "Lewati halaman ini lain kali",
         "openDapp": "Buka"
+      },
+      "disconnectAllAlert": {
+        "desc_one": "Anda akan memutuskan {{count}} DApp yang terhubung.",
+        "desc_other": "Anda akan memutuskan {{count}} DApp yang terhubung.",
+        "title": "Putuskan Semua?",
+        "success": "Semua DApp telah diputuskan."
       }
     },
     "browserManage": {
