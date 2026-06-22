@@ -11,6 +11,9 @@ import {
 const { RNScreenshotPrevent: nativeModule } = resolveNativeModule(
   NativeModuleNames.RNScreenshotPrevent,
 );
+const { ReactNativeSecurity: nativeSecurityModule } = resolveNativeModule(
+  NativeModuleNames.ReactNativeSecurity,
+);
 
 type Listeners = EventEmitterRecordToListeners<
   import('./specs/NativeRNScreenshotPrevent').EventEmitterRecord
@@ -94,6 +97,46 @@ function onScreenCaptureDetectionChanged(
   return addNativeListener('screenCaptureDetectionChanged', fn);
 }
 
+let hasWarnedMissingTogglePreventScreenshot = false;
+function warnMissingTogglePreventScreenshot(error?: unknown) {
+  if (hasWarnedMissingTogglePreventScreenshot) {
+    return;
+  }
+
+  hasWarnedMissingTogglePreventScreenshot = true;
+  console.warn(
+    'RNScreenshotPrevent.togglePreventScreenshot is unavailable; falling back to ReactNativeSecurity when possible.',
+    error,
+  );
+}
+
+function togglePreventScreenshot(isPrevent: boolean) {
+  try {
+    const nativeToggle = nativeModule.togglePreventScreenshot;
+    if (typeof nativeToggle === 'function') {
+      return nativeToggle.call(nativeModule, isPrevent);
+    }
+  } catch (error) {
+    warnMissingTogglePreventScreenshot(error);
+  }
+
+  try {
+    const fallbackMethod = isPrevent
+      ? nativeSecurityModule.blockScreen
+      : nativeSecurityModule.unblockScreen;
+
+    if (typeof fallbackMethod === 'function') {
+      warnMissingTogglePreventScreenshot();
+      return fallbackMethod.call(nativeSecurityModule);
+    }
+  } catch (error) {
+    warnMissingTogglePreventScreenshot(error);
+    return;
+  }
+
+  warnMissingTogglePreventScreenshot();
+}
+
 if (__DEV__) {
   // onUserDidTakeScreenshot(() => {
   //   console.debug('userDidTakeScreenshot');
@@ -114,6 +157,7 @@ if (__DEV__) {
  */
 const RNScreenshotPrevent = Object.freeze({
   ...nativeModule,
+  togglePreventScreenshot,
   onPreventScreenshotChanged,
   // iosToggleBlurView(bool: boolean) {
   //   nativeModule.iosToggleBlurView(!!bool);
