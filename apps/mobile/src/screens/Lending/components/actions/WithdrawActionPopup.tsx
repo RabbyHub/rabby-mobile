@@ -27,6 +27,8 @@ import {
   DirectSignBtnMethods,
 } from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { getERC20Allowance } from '@/core/apis/provider';
+import { approveToken } from '@/core/apis/approvals';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { last, noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
@@ -60,7 +62,7 @@ import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureMana
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
 import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { CHAINS_ENUM } from '@debank/common';
-import { ReserveDataHumanized } from '@aave/contract-helpers';
+import { MAX_UINT_AMOUNT, ReserveDataHumanized } from '@aave/contract-helpers';
 import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
@@ -78,6 +80,10 @@ import {
   BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
+import {
+  getNativeWithdrawRequiredAllowance,
+  isNativeWithdrawApprovalRequired,
+} from '../../utils/withdrawApproval';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -91,6 +97,8 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     reserve.underlyingAsset,
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [needApprove, setNeedApprove] = useState(false);
+  const [approveTxs, setApproveTxs] = useState<Tx[]>([]);
   const [withdrawTxs, setWithdrawTxs] = useState<Tx[]>([]);
   const [isChecked, setIsChecked] = useState(false);
   const { refresh } = useRefreshHistoryId();
@@ -104,12 +112,16 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     wrapperPoolReserve,
   } = useLendingSummary();
   const { chainEnum, chainInfo, selectedMarketData } = useSelectedMarket();
+  const wethGatewayAddress = selectedMarketData?.addresses.WETH_GATEWAY;
   const { pools } = usePoolDataProviderContract();
   const buildTransactionsRequestIdRef = useRef(0);
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
 
   const resetTokenScopedState = useCallback(() => {
     buildTransactionsRequestIdRef.current += 1;
     setAmount(undefined);
+    setNeedApprove(false);
+    setApproveTxs([]);
     setWithdrawTxs([]);
     setIsChecked(false);
     setIsLoading(false);
@@ -135,6 +147,9 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
 
   const handleChangeActiveUnderlyingAsset = useCallback(
     (underlyingAsset: string) => {
+      if (directSignBtnRef.current?.isAuthInProgress()) {
+        return;
+      }
       if (isSameAddress(underlyingAsset, activeUnderlyingAsset)) {
         return;
       }
@@ -183,14 +198,17 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
-  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
+  const activeTxs = useMemo(
+    () => [...approveTxs, ...withdrawTxs],
+    [approveTxs, withdrawTxs],
+  );
   const {
     openDirect,
     prefetch: prefetchMiniSigner,
     instance,
   } = useMiniSigner({
     account: currentAccount!,
-    chainServerId: withdrawTxs.length ? withdrawTxs?.[0]?.chainId + '' : '',
+    chainServerId: activeTxs.length ? activeTxs[0]?.chainId + '' : '',
     autoResetGasStoreOnChainChange: true,
   });
   const { ctx } = useSignatureStoreOf(instance);
@@ -272,6 +290,8 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     const isLatestRequest = () =>
       requestId === buildTransactionsRequestIdRef.current;
 
+    setNeedApprove(false);
+    setApproveTxs([]);
     setWithdrawTxs([]);
 
     if (
@@ -299,35 +319,97 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       if (!targetPool?.aTokenAddress) {
         return;
       }
-      const withdrawResult = await buildWithdrawTx({
+
+      const formattedApproveTxs: Tx[] = [];
+      if (isNativeToken) {
+        if (!wethGatewayAddress || wethGatewayAddress === '0x0') {
+          throw new Error('WETHGateway is not configured for this market');
+        }
+
+        const requiredAllowance = getNativeWithdrawRequiredAllowance({
+          amount,
+          decimals: currentReserve.reserve.decimals,
+          isMaxSelected: _amount === '-1',
+        });
+        const allowance = await getERC20Allowance(
+          chainInfo.serverId,
+          targetPool.aTokenAddress,
+          wethGatewayAddress,
+          currentAccount.address,
+          currentAccount,
+        );
+        if (!isLatestRequest()) {
+          return;
+        }
+
+        const actualNeedApprove = isNativeWithdrawApprovalRequired({
+          allowance,
+          requiredAllowance,
+        });
+        setNeedApprove(actualNeedApprove);
+        if (actualNeedApprove) {
+          const approveResult = await approveToken({
+            chainServerId: chainInfo.serverId,
+            id: targetPool.aTokenAddress,
+            spender: wethGatewayAddress,
+            amount: MAX_UINT_AMOUNT,
+            account: currentAccount,
+            isBuild: true,
+          });
+          if (!isLatestRequest()) {
+            return;
+          }
+
+          const approveTx = {
+            ...approveResult.params[0],
+            from: approveResult.params[0].from || currentAccount.address,
+            value: approveResult.params[0].value ?? '0x0',
+            chainId: approveResult.params[0].chainId || chainInfo.id,
+          } as Tx;
+          formattedApproveTxs.push(approveTx);
+        }
+      }
+
+      const withdrawAmountForTx = _amount === '-1' ? '-1' : amount;
+      const withdrawTx = await buildWithdrawTx({
         pool: pools.pool,
-        amount: _amount === '-1' ? '-1' : amount,
+        amount: withdrawAmountForTx,
         address: currentAccount.address,
-        reserve: targetPool.underlyingAsset,
-        aTokenAddress: targetPool?.aTokenAddress || '',
+        reserve: isNativeToken
+          ? API_ETH_MOCK_ADDRESS
+          : targetPool.underlyingAsset,
+        aTokenAddress: targetPool.aTokenAddress,
         useOptimizedPath: optimizedPath(selectedMarketData?.chainId),
       });
       if (!isLatestRequest()) {
         return;
       }
-      const txs = await Promise.all(withdrawResult.map(i => i.tx()));
-      if (!isLatestRequest()) {
+      if (!withdrawTx) {
         return;
       }
-      const formatTxs = txs.map(item => {
-        delete item.gasLimit;
-        return {
-          ...item,
-          chainId: chainInfo.id,
-        };
-      });
+      const txWithOptionalGasLimit = withdrawTx as typeof withdrawTx & {
+        gasLimit?: unknown;
+      };
+      delete txWithOptionalGasLimit.gasLimit;
+      const formattedWithdrawTx = {
+        ...txWithOptionalGasLimit,
+        from: withdrawTx.from || currentAccount.address,
+        value:
+          typeof withdrawTx.value === 'string'
+            ? withdrawTx.value
+            : withdrawTx.value?.toHexString() || '0x0',
+        chainId: chainInfo.id,
+      } as unknown as Tx;
 
-      setWithdrawTxs(formatTxs as unknown as Tx[]);
+      setApproveTxs(formattedApproveTxs);
+      setWithdrawTxs([formattedWithdrawTx]);
     } catch (error) {
       if (!isLatestRequest()) {
         return;
       }
       toast.error('something error');
+      setNeedApprove(false);
+      setApproveTxs([]);
       setWithdrawTxs([]);
       console.error('Build transactions error:', error);
     } finally {
@@ -343,9 +425,12 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     chainInfo,
     currentAccount?.address,
     currentPoolReserve,
+    currentReserve.reserve.decimals,
+    isNativeToken,
     isZeroLTVWithdrawBlocked,
     pools,
     selectedMarketData?.chainId,
+    wethGatewayAddress,
   ]);
 
   // 执行withdraw交易
@@ -353,7 +438,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     async (forceFullSign?: boolean) => {
       if (
         !currentAccount ||
-        !withdrawTxs.length ||
+        !activeTxs.length ||
         !amount ||
         isZeroAmount(amount) ||
         isZeroLTVWithdrawBlocked
@@ -363,7 +448,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
 
       try {
         setIsLoading(true);
-        if (!withdrawTxs?.length) {
+        if (!activeTxs.length) {
           toast.info('please retry');
           throw new Error('no txs');
         }
@@ -375,7 +460,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         if (canShowDirectSubmit && !forceFullSign) {
           try {
             results = await openDirect({
-              txs: withdrawTxs,
+              txs: activeTxs,
               ga: {
                 customAction: CUSTOM_HISTORY_ACTION.LENDING,
                 customActionTitleType:
@@ -393,7 +478,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
             return;
           }
         } else {
-          for (const tx of withdrawTxs) {
+          for (const tx of activeTxs) {
             const result = await apiProvider.sendRequest({
               data: {
                 method: 'eth_sendTransaction',
@@ -414,10 +499,10 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         }
 
         const txId = last(results);
-        if (txId && withdrawTxs[0]?.chainId) {
+        if (txId && activeTxs[0]?.chainId) {
           transactionHistoryService.setCustomTxItem(
             currentAccount.address,
-            withdrawTxs[0].chainId,
+            activeTxs[0].chainId,
             txId,
             { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW },
           );
@@ -475,7 +560,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     },
     [
       currentAccount,
-      withdrawTxs,
+      activeTxs,
       amount,
       canShowDirectSubmit,
       formattedPoolReservesAndIncentives,
@@ -524,7 +609,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       !isZeroLTVWithdrawBlocked
     ) {
       prefetchMiniSigner({
-        txs: withdrawTxs?.length ? withdrawTxs : [],
+        txs: activeTxs,
         synGasHeaderInfo: true,
       });
     }
@@ -532,10 +617,14 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     canShowDirectSubmit,
     currentAccount?.address,
     amount,
-    withdrawTxs,
+    activeTxs,
     prefetchMiniSigner,
     isZeroLTVWithdrawBlocked,
   ]);
+
+  const actionTitle = needApprove
+    ? t('page.Lending.withdrawDetail.approveAndWithdraw')
+    : t('page.Lending.withdrawDetail.actions');
 
   return (
     <SignatureInstanceProvider instance={instance}>
@@ -654,18 +743,19 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           ) : null}
           {canShowDirectSubmit ? (
             <DirectSignBtn
+              ref={directSignBtnRef}
               loading={isLoading}
               loadingType="circle"
-              key={`${currentReserve.underlyingAsset}-${amount}`}
+              key={`${currentReserve.underlyingAsset}-${amount}-${needApprove}`}
               showTextOnLoading
               wrapperStyle={styles.directSignBtn}
-              authTitle={t('page.Lending.withdrawDetail.actions')}
-              title={t('page.Lending.withdrawDetail.actions')}
+              authTitle={actionTitle}
+              title={actionTitle}
               onFinished={() => handleWithdraw()}
               disabled={
                 !amount ||
                 isZeroAmount(amount) ||
-                !withdrawTxs.length ||
+                !activeTxs.length ||
                 isLoading ||
                 !currentAccount ||
                 !!ctx?.disabledProcess ||
@@ -691,12 +781,12 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               onPress={() => handleWithdraw()}
-              title={t('page.Lending.withdrawDetail.actions')}
+              title={actionTitle}
               loading={isLoading}
               disabled={
                 !amount ||
                 isZeroAmount(amount) ||
-                !withdrawTxs.length ||
+                !activeTxs.length ||
                 isLoading ||
                 !currentAccount ||
                 isZeroLTVWithdrawBlocked ||
