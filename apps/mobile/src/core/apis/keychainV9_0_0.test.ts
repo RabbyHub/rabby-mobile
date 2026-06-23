@@ -693,7 +693,7 @@ describe('core/apis/keychainV9_0_0', () => {
     expect(mockSetGenericPassword).not.toHaveBeenCalled();
   });
 
-  it('applies weak biometrics only to the no-auth unlock system prompt', async () => {
+  it('keeps the no-auth unlock system prompt on strong biometrics', async () => {
     const {
       module,
       mockGetGenericPassword,
@@ -718,13 +718,13 @@ describe('core/apis/keychainV9_0_0', () => {
     );
     expect(mockGetSupportedBiometryType).toHaveBeenCalledWith(
       expect.objectContaining({
-        androidBiometricSecurityLevel: 'weak',
+        androidBiometricSecurityLevel: 'strong',
       }),
     );
     expect(mockRequestSystemAuthentication).toHaveBeenCalledWith(
       expect.objectContaining({
         accessControl: 'BiometryAnyOrDevicePasscode',
-        androidBiometricSecurityLevel: 'weak',
+        androidBiometricSecurityLevel: 'strong',
       }),
     );
   });

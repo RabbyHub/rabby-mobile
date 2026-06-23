@@ -22,15 +22,6 @@ public class DeviceAvailability {
     return BiometricManager.from(context).canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BIOMETRIC_SUCCESS;
   }
 
-  public static boolean isBiometricAuthAvailable(@NonNull final Context context,
-                                                 final boolean allowWeakBiometrics) {
-    final int authenticators = allowWeakBiometrics
-      ? BiometricManager.Authenticators.BIOMETRIC_WEAK
-      : BiometricManager.Authenticators.BIOMETRIC_STRONG;
-
-    return BiometricManager.from(context).canAuthenticate(authenticators) == BIOMETRIC_SUCCESS;
-  }
-
   public static boolean isFingerprintAuthAvailable(@NonNull final Context context) {
     return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_FINGERPRINT);
   }

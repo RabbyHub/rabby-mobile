@@ -445,23 +445,19 @@ class KeychainModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  fun getSupportedBiometryTypeForOptions(options: ReadableMap?, promise: Promise) {
+  fun getSupportedBiometryTypeForOptions(_options: ReadableMap?, promise: Promise) {
     try {
       var reply: String? = null
-      val allowWeakBiometrics = getAllowWeakBiometrics(options)
       if (
-        !DeviceAvailability.isBiometricAuthAvailable(
-          reactApplicationContext,
-          allowWeakBiometrics
-        )
+        !DeviceAvailability.isStrongBiometricAuthAvailable(reactApplicationContext)
       ) {
         reply = null
       } else {
-        if (isFingerprintAuthAvailable(allowWeakBiometrics)) {
+        if (isFingerprintAuthAvailable) {
           reply = FINGERPRINT_SUPPORTED_NAME
-        } else if (isFaceAuthAvailable(allowWeakBiometrics)) {
+        } else if (isFaceAuthAvailable) {
           reply = FACE_SUPPORTED_NAME
-        } else if (isIrisAuthAvailable(allowWeakBiometrics)) {
+        } else if (isIrisAuthAvailable) {
           reply = IRIS_SUPPORTED_NAME
         }
       }
@@ -655,12 +651,6 @@ class KeychainModule(reactContext: ReactApplicationContext) :
       "BIOMETRIC_STRONG | DEVICE_CREDENTIAL",
       BiometricManager.Authenticators.BIOMETRIC_STRONG or
         BiometricManager.Authenticators.DEVICE_CREDENTIAL
-    )
-    putAndroidAuthenticatorCapability(
-      result,
-      "biometricWeak",
-      "BIOMETRIC_WEAK",
-      BiometricManager.Authenticators.BIOMETRIC_WEAK
     )
     return result
   }
@@ -971,36 +961,21 @@ class KeychainModule(reactContext: ReactApplicationContext) :
 
   val isFingerprintAuthAvailable: Boolean
     /** True - if fingerprint hardware available and configured, otherwise false. */
-    get() = isFingerprintAuthAvailable(false)
-
-  private fun isFingerprintAuthAvailable(allowWeakBiometrics: Boolean): Boolean {
-    return DeviceAvailability.isBiometricAuthAvailable(
-      reactApplicationContext,
-      allowWeakBiometrics
-    ) && DeviceAvailability.isFingerprintAuthAvailable(reactApplicationContext)
-  }
+    get() =
+      DeviceAvailability.isStrongBiometricAuthAvailable(reactApplicationContext) &&
+        DeviceAvailability.isFingerprintAuthAvailable(reactApplicationContext)
 
   val isFaceAuthAvailable: Boolean
     /** True - if face recognition hardware available and configured, otherwise false. */
-    get() = isFaceAuthAvailable(false)
-
-  private fun isFaceAuthAvailable(allowWeakBiometrics: Boolean): Boolean {
-    return DeviceAvailability.isBiometricAuthAvailable(
-      reactApplicationContext,
-      allowWeakBiometrics
-    ) && DeviceAvailability.isFaceAuthAvailable(reactApplicationContext)
-  }
+    get() =
+      DeviceAvailability.isStrongBiometricAuthAvailable(reactApplicationContext) &&
+        DeviceAvailability.isFaceAuthAvailable(reactApplicationContext)
 
   val isIrisAuthAvailable: Boolean
     /** True - if iris recognition hardware available and configured, otherwise false. */
-    get() = isIrisAuthAvailable(false)
-
-  private fun isIrisAuthAvailable(allowWeakBiometrics: Boolean): Boolean {
-    return DeviceAvailability.isBiometricAuthAvailable(
-      reactApplicationContext,
-      allowWeakBiometrics
-    ) && DeviceAvailability.isIrisAuthAvailable(reactApplicationContext)
-  }
+    get() =
+      DeviceAvailability.isStrongBiometricAuthAvailable(reactApplicationContext) &&
+        DeviceAvailability.isIrisAuthAvailable(reactApplicationContext)
 
   val isSecureHardwareAvailable: Boolean
     /** Is secured hardware a part of current storage or not. */
@@ -1155,27 +1130,15 @@ class KeychainModule(reactContext: ReactApplicationContext) :
         AccessControl.BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE == accessControl
     }
 
-    private fun getAllowWeakBiometrics(options: ReadableMap?): Boolean {
-      if (null == options || !options.hasKey(Maps.ANDROID_BIOMETRIC_SECURITY_LEVEL)) {
-        return false
-      }
-
-      return "weak" == options.getString(Maps.ANDROID_BIOMETRIC_SECURITY_LEVEL)
-    }
-
-    private fun getBiometricAuthenticators(options: ReadableMap?): Int {
-      return if (getAllowWeakBiometrics(options)) {
-        BiometricManager.Authenticators.BIOMETRIC_WEAK
-      } else {
-        BiometricManager.Authenticators.BIOMETRIC_STRONG
-      }
+    private fun getBiometricAuthenticators(): Int {
+      return BiometricManager.Authenticators.BIOMETRIC_STRONG
     }
 
     private fun getAllowedAuthenticators(options: ReadableMap?): Int {
       val accessControl = getAccessControlOrDefault(options)
       val useBiometry = getUseBiometry(accessControl)
       val usePasscode = getUsePasscode(accessControl)
-      val biometricAuthenticators = getBiometricAuthenticators(options)
+      val biometricAuthenticators = getBiometricAuthenticators()
 
       return when {
         useBiometry && usePasscode ->

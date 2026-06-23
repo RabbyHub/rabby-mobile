@@ -258,8 +258,7 @@ export async function requestGenericPassword(
         androidAuthPromptPolicy: requestOptions.androidAuthPromptPolicy,
         androidAllowKeyStoreRecovery:
           requestOptions.androidAllowKeyStoreRecovery,
-        androidSystemAuthPromptSecurityLevel:
-          requestOptions.androidSystemAuthPromptSecurityLevel,
+        androidSystemAuthPromptSecurityLevel: 'strong',
         shouldAttachTrustedVaultKeyString:
           requestOptions.shouldAttachTrustedVaultKeyString,
         skipPostDecryptKeychainRewrite:
@@ -276,8 +275,7 @@ export async function requestGenericPassword(
         androidAuthPromptPolicy: requestOptions.androidAuthPromptPolicy,
         androidAllowKeyStoreRecovery:
           requestOptions.androidAllowKeyStoreRecovery,
-        androidSystemAuthPromptSecurityLevel:
-          requestOptions.androidSystemAuthPromptSecurityLevel,
+        androidSystemAuthPromptSecurityLevel: 'strong',
         shouldAttachTrustedVaultKeyString:
           requestOptions.shouldAttachTrustedVaultKeyString,
         skipPostDecryptKeychainRewrite:
