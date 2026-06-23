@@ -297,7 +297,10 @@ const TokenDetailContent = () => {
   const renderHeader = useCallback(() => {
     return (
       <View style={[styles.balanceOverviewContainer, styles.listHeader]}>
-        <AccountSwitcher forScene="TokenDetail" disableSwitch={false} />
+        <AccountSwitcher
+          forScene="TokenDetail"
+          disableSwitch={isCustomTestnetToken}
+        />
         <View style={styles.balanceOverviewContent}>
           <BalanceOverview usdValue={usdValue} amount={amountSum || 0} />
           {!baseTokenInfo || isCustomTestnetToken ? null : (
