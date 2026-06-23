@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import PQueue from 'p-queue';
 
 import { apiCustomTestnet } from '@/core/apis';
 import { customTestnetService } from '@/core/services/shared';
@@ -9,6 +10,12 @@ import type {
   LoadCustomTestnetAssetTokens,
 } from './types';
 import type { ITokenItem } from '@/types/assets';
+
+const customTestnetTokenListQueue = new PQueue({
+  intervalCap: 5,
+  concurrency: 5,
+  interval: 1000,
+});
 
 // for multi-address
 export function useCustomTestnetAssetSections(addresses: string[]) {
@@ -52,20 +59,26 @@ export function useCustomTestnetAssetSections(addresses: string[]) {
 
       const tokenGroups = await Promise.all(
         addresses.map(async address => {
-          const tokens = await apiCustomTestnet.getCustomTestnetTokenList({
-            address,
-            chainId,
-          });
+          const tokenItems = await customTestnetTokenListQueue.add(
+            async (): Promise<ITokenItem[]> => {
+              const tokens = await apiCustomTestnet.getCustomTestnetTokenList({
+                address,
+                chainId,
+              });
 
-          return tokens.map(token => {
-            const tokenItem = customTestnetTokenToTokenItem(token);
-            return {
-              ...tokenItem,
-              owner_addr: address,
-              usd_value: 0,
-              cex_ids: [],
-            } satisfies ITokenItem;
-          });
+              return tokens.map(token => {
+                const tokenItem = customTestnetTokenToTokenItem(token);
+                return {
+                  ...tokenItem,
+                  owner_addr: address,
+                  usd_value: 0,
+                  cex_ids: [],
+                } satisfies ITokenItem;
+              });
+            },
+          );
+
+          return tokenItems || [];
         }),
       );
 

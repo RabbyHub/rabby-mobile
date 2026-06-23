@@ -2383,7 +2383,8 @@
         "wallet_one": "Wallet",
         "wallet_other": "Wallets"
       },
-      "lowValueTokenHeader": "Low-value tokens"
+      "lowValueTokenHeader": "Low-value tokens",
+      "customNetworkTokenHeader": "Added custom networks"
     },
     "browser": {
       "BrowserBookmarkSection": {

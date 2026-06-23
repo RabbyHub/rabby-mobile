@@ -6,7 +6,13 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ListRenderItem, View, Dimensions, ViewStyle } from 'react-native';
+import {
+  ListRenderItem,
+  View,
+  Dimensions,
+  ViewStyle,
+  StyleSheet,
+} from 'react-native';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { useShallow } from 'zustand/shallow';
 
@@ -67,6 +73,7 @@ import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNud
 import { CustomTestnetAssetSection } from './CustomTestnetAssets/CustomTestnetAssetSection';
 import { useCustomTestnetAssetSections } from './CustomTestnetAssets/useCustomTestnetAssetSections';
 import type { CustomTestnetAssetSectionData } from './CustomTestnetAssets/types';
+import { Text } from '@/components/Typography';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -182,6 +189,9 @@ type TokenListItem =
       data: CustomTestnetAssetSectionData;
     }
   | {
+      type: 'custom_testnet_divider';
+    }
+  | {
       type: 'scam_header';
       data: {
         total: number;
@@ -198,6 +208,23 @@ type TokenListItem =
     };
 
 const { batchGetTokenList } = useTokenList.getState();
+const EMPTY_CUSTOM_TESTNET_SECTIONS: CustomTestnetAssetSectionData[] = [];
+
+const appendCustomTestnetItems = (
+  items: TokenListItem[],
+  sections: CustomTestnetAssetSectionData[],
+) => {
+  if (!sections.length) {
+    return;
+  }
+  items.push({ type: 'custom_testnet_divider' });
+  sections.forEach(section => {
+    items.push({
+      type: 'custom_testnet_assets',
+      data: section,
+    });
+  });
+};
 
 export const TokenList = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -219,6 +246,10 @@ export const TokenList = () => {
     sections: customTestnetSections,
     loadTokens: loadCustomTestnetTokens,
   } = useCustomTestnetAssetSections(myTop10Addresses);
+  const shouldShowCustomTestnetSections = !chain && !isLpTokenEnabled;
+  const visibleCustomTestnetSections = shouldShowCustomTestnetSections
+    ? customTestnetSections
+    : EMPTY_CUSTOM_TESTNET_SECTIONS;
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
@@ -317,7 +348,7 @@ export const TokenList = () => {
     tokenRows.length +
       foldRows.length +
       scamRows.length +
-      customTestnetSections.length ===
+      visibleCustomTestnetSections.length ===
       0 &&
     !isLoading &&
     isFocused;
@@ -438,7 +469,7 @@ export const TokenList = () => {
       tokenRows.length +
         foldRows.length +
         scamRows.length +
-        customTestnetSections.length ===
+        visibleCustomTestnetSections.length ===
       0;
     const hasDefaultTokenSections =
       tokenRows.length + foldRows.length + scamRows.length > 0;
@@ -471,13 +502,6 @@ export const TokenList = () => {
       });
     });
 
-    customTestnetSections.forEach(section => {
-      items.push({
-        type: 'custom_testnet_assets',
-        data: section,
-      });
-    });
-
     if (hasDefaultTokenSections) {
       items.push({ type: 'toggle_token_fold' });
     }
@@ -502,6 +526,12 @@ export const TokenList = () => {
           });
         }
       }
+
+      appendCustomTestnetItems(items, visibleCustomTestnetSections);
+    }
+
+    if (!hasDefaultTokenSections) {
+      appendCustomTestnetItems(items, visibleCustomTestnetSections);
     }
 
     return items;
@@ -509,7 +539,7 @@ export const TokenList = () => {
     foldRows,
     scamRows,
     tokenRows,
-    customTestnetSections,
+    visibleCustomTestnetSections,
     foldHideList,
     foldScam,
     hasNoAssets,
@@ -574,6 +604,16 @@ export const TokenList = () => {
               onTokenPress={handleTokenPress}
             />
           );
+        case 'custom_testnet_divider':
+          return (
+            <View style={styles.customTestnetDivider}>
+              <View style={styles.customTestnetDividerLine} />
+              <Text style={styles.customTestnetDividerText}>
+                {t('page.multiAddressAssets.customNetworkTokenHeader')}
+              </Text>
+              <View style={styles.customTestnetDividerLine} />
+            </View>
+          );
         case 'scam_header':
           return (
             <View style={styles.foldRowWrap}>
@@ -624,6 +664,9 @@ export const TokenList = () => {
     }
     if (item.type === 'custom_testnet_assets') {
       return `custom-testnet-assets-${item.data.chain.id}`;
+    }
+    if (item.type === 'custom_testnet_divider') {
+      return 'custom-testnet-divider';
     }
     if (item.type === 'empty-assets') {
       return `empty-assets-${item.data}`;
@@ -740,6 +783,27 @@ const getStyles = createGetStyles2024(() => ({
   },
   customTestnetSection: {
     marginBottom: 12,
+  },
+  customTestnetDivider: {
+    height: 16,
+    marginTop: 12,
+    marginBottom: 17,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16.5,
+    gap: 12,
+  },
+  customTestnetDividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#D3D8E0',
+  },
+  customTestnetDividerText: {
+    color: '#9A9CA9',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '400',
   },
   renderItemWrapper: {
     height: ASSETS_ITEM_HEIGHT_NEW,
