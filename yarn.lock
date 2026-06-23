@@ -12023,25 +12023,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native-menu/menu@npm:2.0.0":
-  version: 2.0.0
-  resolution: "@react-native-menu/menu@npm:2.0.0"
+"@react-native-menu/menu@workspace:^, @react-native-menu/menu@workspace:packages/react-native-menu":
+  version: 0.0.0-use.local
+  resolution: "@react-native-menu/menu@workspace:packages/react-native-menu"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/547830a473b408cb5218298eb0e8892968ce9e2e7ff35eaef3a5e60985a19a0bd2d782bd010baed50d5f1b3beadca5ac24991a7df0b164e3d90865cd1792a2aa
-  languageName: node
-  linkType: hard
-
-"@react-native-menu/menu@patch:@react-native-menu/menu@npm%3A2.0.0#./.yarn/patches/@react-native-menu-menu-npm-2.0.0-15e1fd477a.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 2.0.0
-  resolution: "@react-native-menu/menu@patch:@react-native-menu/menu@npm%3A2.0.0#./.yarn/patches/@react-native-menu-menu-npm-2.0.0-15e1fd477a.patch::version=2.0.0&hash=d63e77&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 10/68846b07b4884523901ffa41366ce014a96b0e76b319bd09fcd32280c177bff738bfed696355d92f3321b1cf7be31f5ed9cc2bcfe64ce08576a729eafaa22f55
-  languageName: node
-  linkType: hard
+  languageName: unknown
+  linkType: soft
 
 "@react-native/assets-registry@npm:0.81.6":
   version: 0.81.6
@@ -39494,7 +39483,7 @@ __metadata:
     "@react-native-firebase/messaging": "npm:21.3.0"
     "@react-native-google-signin/google-signin": "npm:13.2.0"
     "@react-native-masked-view/masked-view": "npm:^0.3.1"
-    "@react-native-menu/menu": "npm:2.0.0"
+    "@react-native-menu/menu": "workspace:^"
     "@react-native/babel-preset": "npm:0.81.6"
     "@react-native/eslint-config": "npm:0.81.6"
     "@react-native/metro-config": "npm:0.81.6"
