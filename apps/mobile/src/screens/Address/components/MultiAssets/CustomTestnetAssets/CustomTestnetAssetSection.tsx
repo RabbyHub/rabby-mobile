@@ -9,7 +9,7 @@ import {
   ViewStyle,
 } from 'react-native';
 
-import { RcIconAddCircle } from '@/assets/icons/address';
+import { RcIconAddCircleBold } from '@/assets/icons/address';
 import { RcArrowDownCC } from '@/assets/icons/common';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components/Typography';
@@ -211,7 +211,7 @@ export const CustomTestnetAssetSection = memo(
               style={styles.tokenButton}
               onPress={handleTokenButtonPress}
               disabled={!onTokenButtonPress}>
-              <RcIconAddCircle
+              <RcIconAddCircleBold
                 width={13}
                 height={13}
                 color={colors2024['neutral-title-1']}
