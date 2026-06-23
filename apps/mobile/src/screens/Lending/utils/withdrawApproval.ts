@@ -1,19 +1,25 @@
-import { SUPER_BIG_ALLOWANCE_NUMBER } from '@aave/contract-helpers';
 import BigNumber from 'bignumber.js';
-import { parseUnits } from 'ethers/lib/utils';
+
+const NATIVE_WITHDRAW_APPROVAL_MARGIN = 1.3;
 
 export const getNativeWithdrawRequiredAllowance = ({
   amount,
   decimals,
-  isMaxSelected,
 }: {
   amount: string;
   decimals: number;
-  isMaxSelected: boolean;
 }) => {
-  return isMaxSelected
-    ? SUPER_BIG_ALLOWANCE_NUMBER
-    : parseUnits(amount, decimals).toString();
+  return new BigNumber(amount)
+    .shiftedBy(decimals)
+    .integerValue(BigNumber.ROUND_UP)
+    .toFixed(0);
+};
+
+export const getNativeWithdrawApprovalAmount = (requiredAllowance: string) => {
+  return new BigNumber(requiredAllowance)
+    .multipliedBy(NATIVE_WITHDRAW_APPROVAL_MARGIN)
+    .integerValue(BigNumber.ROUND_UP)
+    .toFixed(0);
 };
 
 export const isNativeWithdrawApprovalRequired = ({
