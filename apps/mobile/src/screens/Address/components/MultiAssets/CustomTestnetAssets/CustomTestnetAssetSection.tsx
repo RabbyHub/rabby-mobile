@@ -1,4 +1,11 @@
-import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
   GestureResponderEvent,
@@ -24,7 +31,11 @@ import type {
   CustomTestnetAssetSectionData,
   LoadCustomTestnetAssetTokens,
 } from './types';
-import type { ITokenItem } from '@/types/assets';
+import {
+  getCustomTestnetTokenDisplayRows,
+  type CustomTestnetTokenDisplayRow,
+} from './utils';
+import type { ITokenItem, TokenDisplayMode } from '@/types/assets';
 
 type CustomTestnetAssetSectionProps = {
   data: CustomTestnetAssetSectionData;
@@ -32,7 +43,9 @@ type CustomTestnetAssetSectionProps = {
   tokenButtonLabel: string;
   loadTokens: LoadCustomTestnetAssetTokens;
   getAccountByAddress(address?: string): KeyringAccountWithAlias | undefined;
+  tokenDisplayMode: TokenDisplayMode;
   onTokenPress(token: ITokenItem): void;
+  onTokenGroupPress(tokens: ITokenItem[]): void;
   onTokenButtonPress?(data: CustomTestnetAssetSectionData): void;
 };
 
@@ -81,22 +94,30 @@ const TokenPreviewStack = memo(
 
 const CustomTestnetTokenRow = memo(
   ({
-    token,
+    row,
     account,
     onPress,
+    onGroupPress,
   }: {
-    token: ITokenItem;
+    row: CustomTestnetTokenDisplayRow;
     account?: KeyringAccountWithAlias;
     onPress(token: ITokenItem): void;
+    onGroupPress(tokens: ITokenItem[]): void;
   }) => {
     const { styles } = useTheme2024({ getStyle });
-    const handlePress = useCallback(() => onPress(token), [onPress, token]);
+    const handlePress = useCallback(() => {
+      if (row.mode === 'group') {
+        onGroupPress(row.tokens);
+        return;
+      }
+      onPress(row.token);
+    }, [onGroupPress, onPress, row]);
 
     return (
       <TouchableOpacity style={styles.tokenRow} onPress={handlePress}>
         <AssetAvatar
-          logo={token.logo_url}
-          chain={token.chain}
+          logo={row.token.logo_url}
+          chain={row.token.chain}
           size={46}
           chainSize={18}
           style={styles.tokenAvatar}
@@ -104,7 +125,7 @@ const CustomTestnetTokenRow = memo(
         <View style={styles.tokenContent}>
           <View style={styles.tokenInfo}>
             <Text numberOfLines={1} style={styles.tokenSymbol}>
-              {getTokenSymbol(token)}
+              {getTokenSymbol(row.token)}
             </Text>
             {account ? (
               <AccountOverview
@@ -115,7 +136,7 @@ const CustomTestnetTokenRow = memo(
             ) : null}
           </View>
           <Text numberOfLines={1} style={styles.tokenBalance}>
-            {formatAmount(token.amount, 4, true)}
+            {formatAmount(row.token.amount, 4, true)}
           </Text>
         </View>
       </TouchableOpacity>
@@ -130,7 +151,9 @@ export const CustomTestnetAssetSection = memo(
     tokenButtonLabel,
     loadTokens,
     getAccountByAddress,
+    tokenDisplayMode,
     onTokenPress,
+    onTokenGroupPress,
     onTokenButtonPress,
   }: CustomTestnetAssetSectionProps) => {
     const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -139,6 +162,10 @@ export const CustomTestnetAssetSection = memo(
     const [loading, setLoading] = useState(false);
     const [hasLoaded, setHasLoaded] = useState(false);
     const requestSeqRef = useRef(0);
+    const displayRows = useMemo(
+      () => getCustomTestnetTokenDisplayRows(tokens, tokenDisplayMode),
+      [tokenDisplayMode, tokens],
+    );
 
     const handleToggle = useCallback(() => {
       setExpanded(value => !value);
@@ -231,12 +258,17 @@ export const CustomTestnetAssetSection = memo(
                 />
               </View>
             ) : (
-              tokens.map(token => (
+              displayRows.map(row => (
                 <CustomTestnetTokenRow
-                  key={`${token.owner_addr}-${token.chain}-${token.id}`}
-                  token={token}
-                  account={getAccountByAddress(token.owner_addr)}
+                  key={row.key}
+                  row={row}
+                  account={
+                    row.mode === 'token'
+                      ? getAccountByAddress(row.token.owner_addr)
+                      : undefined
+                  }
                   onPress={onTokenPress}
+                  onGroupPress={onTokenGroupPress}
                 />
               ))
             )}

@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo } from 'react';
-import { View } from 'react-native';
+import React, { memo, useCallback, useMemo } from 'react';
+import { TouchableOpacity, View } from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -14,16 +14,68 @@ import {
   GlobalModalViewProps,
   MODAL_NAMES,
 } from '@/components2024/GlobalBottomSheetModal/types';
+import { AssetAvatar } from '@/components/AssetAvatar';
+import { Text } from '@/components/Typography';
+import { AccountOverview } from '@/screens/Home/components/AccountOverview';
+import { getTokenSymbol } from '@/utils/token';
+import { formatAmount } from '@/utils/number';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 
 type TokenGroupDetailSheetProps = GlobalModalViewProps<
   MODAL_NAMES.TOKEN_GROUP_DETAIL,
   {
     tokens: ITokenItem[];
+    amountOnly?: boolean;
   }
 >;
 
+const AmountOnlyTokenDistributionRow = memo(
+  ({
+    token,
+    account,
+    onPress,
+  }: {
+    token: ITokenItem;
+    account?: KeyringAccountWithAlias;
+    onPress(token: ITokenItem): void;
+  }) => {
+    const { styles } = useTheme2024({ getStyle });
+    const handlePress = useCallback(() => onPress(token), [onPress, token]);
+
+    return (
+      <TouchableOpacity style={styles.amountOnlyRow} onPress={handlePress}>
+        <AssetAvatar
+          logo={token.logo_url}
+          chain={token.chain}
+          size={46}
+          chainSize={18}
+          style={styles.tokenAvatar}
+        />
+        <View style={styles.amountOnlyContent}>
+          <View style={styles.amountOnlyInfo}>
+            <Text numberOfLines={1} style={styles.tokenSymbol}>
+              {getTokenSymbol(token)}
+            </Text>
+            {!!account && (
+              <AccountOverview
+                account={account}
+                logoSize={14}
+                textStyle={styles.accountText}
+              />
+            )}
+          </View>
+          <Text numberOfLines={1} style={styles.tokenBalance}>
+            {formatAmount(token.amount, 4, true)}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  },
+);
+
 const TokenGroupDetailSheet: React.FC<TokenGroupDetailSheetProps> = ({
   tokens,
+  amountOnly,
   onCancel,
 }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -64,19 +116,30 @@ const TokenGroupDetailSheet: React.FC<TokenGroupDetailSheetProps> = ({
           `${item.owner_addr}-${item.chain}-${item.id}-${item.inner_id ?? ''}`
         }
         contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
-          <View style={styles.rowWrap}>
-            <TokenRowV2
-              data={item}
-              onTokenPress={handleOpenTokenDetail}
-              logoSize={46}
-              chainLogoSize={18}
-              style={styles.renderItemWrapper}
-              account={getAccountByAddress(item.owner_addr)}
-              scene="portfolio"
-            />
-          </View>
-        )}
+        renderItem={({ item }) => {
+          const account = getAccountByAddress(item.owner_addr);
+          return (
+            <View style={styles.rowWrap}>
+              {amountOnly ? (
+                <AmountOnlyTokenDistributionRow
+                  token={item}
+                  account={account}
+                  onPress={handleOpenTokenDetail}
+                />
+              ) : (
+                <TokenRowV2
+                  data={item}
+                  onTokenPress={handleOpenTokenDetail}
+                  logoSize={46}
+                  chainLogoSize={18}
+                  style={styles.renderItemWrapper}
+                  account={account}
+                  scene="portfolio"
+                />
+              )}
+            </View>
+          );
+        }}
       />
     </AutoLockView>
   );
@@ -98,6 +161,51 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   renderItemWrapper: {
     height: ASSETS_ITEM_HEIGHT_NEW,
+  },
+  amountOnlyRow: {
+    height: ASSETS_ITEM_HEIGHT_NEW,
+    borderRadius: 16,
+    backgroundColor: colors2024['neutral-bg-1'],
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tokenAvatar: {
+    marginRight: 12,
+  },
+  amountOnlyContent: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  amountOnlyInfo: {
+    flex: 1,
+    minWidth: 0,
+    gap: 4,
+  },
+  tokenSymbol: {
+    color: colors2024['neutral-title-1'],
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '700',
+  },
+  accountText: {
+    color: colors2024['neutral-foot'],
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: '400',
+  },
+  tokenBalance: {
+    flexShrink: 0,
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    textAlign: 'right',
   },
 }));
 

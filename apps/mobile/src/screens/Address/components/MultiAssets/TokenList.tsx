@@ -384,6 +384,41 @@ export const TokenList = () => {
     [getAccountByAddress, handleOpenTokenDetail, tokenDisplayMode],
   );
 
+  const handleOpenTokenGroupDetail = useCallback(
+    (
+      groupItems: ITokenItem[],
+      options?: {
+        amountOnly?: boolean;
+      },
+    ) => {
+      if (!groupItems.length) {
+        return;
+      }
+
+      const maxHeight = Dimensions.get('window').height - 160;
+      const listHeight = groupItems.length * (ASSETS_ITEM_HEIGHT_NEW + 8) + 28;
+      const snapPoint = Math.min(maxHeight, listHeight + 100);
+      const modalId = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.TOKEN_GROUP_DETAIL,
+        tokens: groupItems,
+        amountOnly: options?.amountOnly,
+        onCancel: () => {
+          removeGlobalBottomSheetModal2024(modalId);
+        },
+        bottomSheetModalProps: {
+          snapPoints: [snapPoint],
+          handleStyle: {
+            backgroundColor: colors2024['neutral-bg-0'],
+          },
+          enableContentPanningGesture: true,
+          enablePanDownToClose: true,
+          enableDismissOnClose: true,
+        },
+      });
+    },
+    [colors2024],
+  );
+
   const handleGroupPress = useCallback(
     (group: TokenGroupResourceValue) => {
       if (isTabsSwiping.value) {
@@ -405,27 +440,19 @@ export const TokenList = () => {
         );
         return;
       }
-      const maxHeight = Dimensions.get('window').height - 160;
-      const listHeight = groupItems.length * (ASSETS_ITEM_HEIGHT_NEW + 8) + 28;
-      const snapPoint = Math.min(maxHeight, listHeight + 100);
-      const modalId = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.TOKEN_GROUP_DETAIL,
-        tokens: groupItems,
-        onCancel: () => {
-          removeGlobalBottomSheetModal2024(modalId);
-        },
-        bottomSheetModalProps: {
-          snapPoints: [snapPoint],
-          handleStyle: {
-            backgroundColor: colors2024['neutral-bg-0'],
-          },
-          enableContentPanningGesture: true,
-          enablePanDownToClose: true,
-          enableDismissOnClose: true,
-        },
-      });
+      handleOpenTokenGroupDetail(groupItems);
     },
-    [colors2024, getAccountByAddress, handleOpenTokenDetail],
+    [getAccountByAddress, handleOpenTokenDetail, handleOpenTokenGroupDetail],
+  );
+
+  const handleCustomTestnetTokenGroupPress = useCallback(
+    (groupItems: ITokenItem[]) => {
+      if (isTabsSwiping.value) {
+        return;
+      }
+      handleOpenTokenGroupDetail(groupItems, { amountOnly: true });
+    },
+    [handleOpenTokenGroupDetail],
   );
 
   const handleOpenScamToken = useCallback(() => {
@@ -601,7 +628,9 @@ export const TokenList = () => {
               tokenButtonLabel={t('page.singleHome.sectionHeader.Token')}
               loadTokens={loadCustomTestnetTokens}
               getAccountByAddress={getAccountByAddress}
+              tokenDisplayMode={tokenDisplayMode}
               onTokenPress={handleTokenPress}
+              onTokenGroupPress={handleCustomTestnetTokenGroupPress}
             />
           );
         case 'custom_testnet_divider':
@@ -646,6 +675,7 @@ export const TokenList = () => {
       getAccountByAddress,
       handleGroupPress,
       handleOpenScamToken,
+      handleCustomTestnetTokenGroupPress,
       handleTokenPress,
       handleToggleTokenFold,
       isLpTokenEnabled,
