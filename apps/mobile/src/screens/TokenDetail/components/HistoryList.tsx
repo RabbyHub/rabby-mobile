@@ -49,6 +49,7 @@ export const TokenDetailHistoryList = ({
   onReachTopStatusChange,
   ListHeaderComponent,
   baseTokenRefreshing,
+  disableHistoryRequest,
 }: {
   finalAccount: KeyringAccountWithAlias | null;
   token: ITokenItem;
@@ -56,6 +57,7 @@ export const TokenDetailHistoryList = ({
   onReachTopStatusChange?: (status: boolean) => void;
   ListHeaderComponent?: HistoryListHeaderComponent;
   baseTokenRefreshing?: boolean;
+  disableHistoryRequest?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -182,6 +184,13 @@ export const TokenDetailHistoryList = ({
 
   const batchFetchData = useMemoizedFn(async () => {
     const list: HistoryDisplayItem[] = [];
+    if (disableHistoryRequest) {
+      return {
+        list,
+        hasMore: false,
+      };
+    }
+
     const account = finalAccount;
     if (!account) {
       return {
@@ -237,14 +246,16 @@ export const TokenDetailHistoryList = ({
     reloadAsync,
     cancel,
   } = useInfiniteScroll(() => batchFetchData(), {
-    isNoMore: d => (d ? !d.hasMore : false),
+    isNoMore: d => disableHistoryRequest || (d ? !d.hasMore : false),
     onSuccess() {},
   });
 
   const refresh = useMemoizedFn(() => {
     lastMap.current = {};
     hasMoreMap.current = {};
-    reloadAsync();
+    if (!disableHistoryRequest) {
+      reloadAsync();
+    }
     onRefresh?.();
   });
 

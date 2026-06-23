@@ -26,6 +26,7 @@ type TokenGroupDetailSheetProps = GlobalModalViewProps<
   {
     tokens: ITokenItem[];
     amountOnly?: boolean;
+    isCustomTestnetToken?: boolean;
   }
 >;
 
@@ -76,6 +77,7 @@ const AmountOnlyTokenDistributionRow = memo(
 const TokenGroupDetailSheet: React.FC<TokenGroupDetailSheetProps> = ({
   tokens,
   amountOnly,
+  isCustomTestnetToken,
   onCancel,
 }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -103,9 +105,10 @@ const TokenGroupDetailSheet: React.FC<TokenGroupDetailSheetProps> = ({
         unHold: false,
         needUseCacheToken: true,
         account,
+        isCustomTestnetToken,
       });
     },
-    [getAccountByAddress, onCancel],
+    [getAccountByAddress, isCustomTestnetToken, onCancel],
   );
 
   return (

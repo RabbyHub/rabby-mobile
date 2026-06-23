@@ -354,7 +354,13 @@ export const TokenList = () => {
     isFocused;
 
   const handleOpenTokenDetail = useCallback(
-    (token: ITokenItem, account?: KeyringAccountWithAlias) => {
+    (
+      token: ITokenItem,
+      account?: KeyringAccountWithAlias,
+      options?: {
+        isCustomTestnetToken?: boolean;
+      },
+    ) => {
       if (isTabsSwiping.value) {
         return;
       }
@@ -363,6 +369,7 @@ export const TokenList = () => {
         unHold: false,
         needUseCacheToken: true,
         account,
+        isCustomTestnetToken: options?.isCustomTestnetToken,
       });
     },
     [],
@@ -384,6 +391,19 @@ export const TokenList = () => {
     [getAccountByAddress, handleOpenTokenDetail, tokenDisplayMode],
   );
 
+  const handleCustomTestnetTokenPress = useCallback(
+    (token: ITokenItem) => {
+      if (isTabsSwiping.value) {
+        return;
+      }
+
+      handleOpenTokenDetail(token, getAccountByAddress(token.owner_addr), {
+        isCustomTestnetToken: true,
+      });
+    },
+    [getAccountByAddress, handleOpenTokenDetail],
+  );
+
   const handleOpenTokenGroupDetail = useCallback(
     (
       groupItems: ITokenItem[],
@@ -402,6 +422,7 @@ export const TokenList = () => {
         name: MODAL_NAMES.TOKEN_GROUP_DETAIL,
         tokens: groupItems,
         amountOnly: options?.amountOnly,
+        isCustomTestnetToken: options?.amountOnly,
         onCancel: () => {
           removeGlobalBottomSheetModal2024(modalId);
         },
@@ -629,7 +650,7 @@ export const TokenList = () => {
               loadTokens={loadCustomTestnetTokens}
               getAccountByAddress={getAccountByAddress}
               tokenDisplayMode={tokenDisplayMode}
-              onTokenPress={handleTokenPress}
+              onTokenPress={handleCustomTestnetTokenPress}
               onTokenGroupPress={handleCustomTestnetTokenGroupPress}
             />
           );
@@ -674,6 +695,7 @@ export const TokenList = () => {
       foldTokenUsdValue,
       getAccountByAddress,
       handleGroupPress,
+      handleCustomTestnetTokenPress,
       handleOpenScamToken,
       handleCustomTestnetTokenGroupPress,
       handleTokenPress,

@@ -40,10 +40,12 @@ export const TokenDetailBottomBtns = ({
   token,
   finalAccount,
   tokenSelectType,
+  disableSwapBridge,
 }: {
   token: ITokenItem;
   finalAccount: KeyringAccountWithAlias | null;
   tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
+  disableSwapBridge?: boolean;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -101,6 +103,7 @@ export const TokenDetailBottomBtns = ({
       key: 'Bridge',
       title: t('page.home.services.bridge'),
       Icon: RcIconBridge,
+      disabled: disableSwapBridge,
       onPress: async () => {
         const chain = findChain({
           serverId: token.chain,
@@ -134,6 +137,9 @@ export const TokenDetailBottomBtns = ({
     const chain = findChain({
       serverId: token.chain,
     });
+    if (disableSwapBridge) {
+      return;
+    }
 
     await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
     setIsFromBack(false);
@@ -168,7 +174,11 @@ export const TokenDetailBottomBtns = ({
               </Text>
             </Pressable>
             <Pressable
-              style={[styles.action, styles.blueAction]}
+              style={[
+                styles.action,
+                styles.blueAction,
+                disableSwapBridge && styles.disabledAction,
+              ]}
               onPress={handleSwap}>
               <RcIconSwapCC width={22} height={22} style={styles.actionIcon} />
               <Text
