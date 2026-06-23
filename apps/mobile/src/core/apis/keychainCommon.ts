@@ -859,15 +859,11 @@ export function createBusinessKeychainApi({
 
   function getSystemAuthPromptOptions(
     options: KeychainCompatibleOptions,
-    androidSystemAuthPromptSecurityLevel?: AndroidBiometricSecurityLevel,
+    _androidSystemAuthPromptSecurityLevel?: AndroidBiometricSecurityLevel,
   ): KeychainCompatibleOptions {
-    const securityLevelOptions = androidSystemAuthPromptSecurityLevel
-      ? { androidBiometricSecurityLevel: androidSystemAuthPromptSecurityLevel }
-      : getAndroidBiometricSecurityLevelOptions();
-
     return {
       ...options,
-      ...securityLevelOptions,
+      ...getAndroidBiometricSecurityLevelOptions(),
       accessControl:
         keychainModule.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE,
     };
@@ -923,8 +919,7 @@ export function createBusinessKeychainApi({
         keychainPasscodeAvailable,
         keyguardSecure,
         allowDeviceCredentials: true,
-        androidSystemAuthPromptSecurityLevel:
-          promptOptions?.androidSystemAuthPromptSecurityLevel || 'strong',
+        androidSystemAuthPromptSecurityLevel: 'strong',
       });
 
       if (!supportedBiometry && !passcodeAvailable) {
@@ -1273,8 +1268,7 @@ export function createBusinessKeychainApi({
         purpose,
         androidAuthPromptPolicy,
         androidAllowKeyStoreRecovery,
-        androidSystemAuthPromptSecurityLevel:
-          androidSystemAuthPromptSecurityLevel || 'strong',
+        androidSystemAuthPromptSecurityLevel: 'strong',
         shouldAttachTrustedVaultKeyString,
         skipPostDecryptKeychainRewrite,
         deferPostDecryptKeychainRewrite,

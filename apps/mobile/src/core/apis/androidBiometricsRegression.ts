@@ -62,7 +62,7 @@ export function getAndroidUnlockBiometricSecurityLevelOptions():
   }
 
   return {
-    androidBiometricSecurityLevel: ANDROID_BIOMETRIC_SECURITY_LEVELS.WEAK,
+    androidBiometricSecurityLevel: ANDROID_BIOMETRIC_SECURITY_LEVELS.STRONG,
   };
 }
 
@@ -75,7 +75,7 @@ export function getAndroidUnlockSystemAuthPromptOptions():
 
   return {
     androidSystemAuthPromptSecurityLevel:
-      ANDROID_BIOMETRIC_SECURITY_LEVELS.WEAK,
+      ANDROID_BIOMETRIC_SECURITY_LEVELS.STRONG,
   };
 }
 

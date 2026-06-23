@@ -94,7 +94,7 @@ describe('hooks/biometrics', () => {
     }));
     jest.doMock('@/core/apis/androidBiometricsRegression', () => ({
       getAndroidUnlockBiometricSecurityLevelOptions: jest.fn(() => ({
-        androidBiometricSecurityLevel: 'weak',
+        androidBiometricSecurityLevel: 'strong',
       })),
     }));
     jest.doMock('@/core/apis', () => ({
@@ -297,7 +297,7 @@ describe('hooks/biometrics', () => {
     ).resolves.toBe(true);
   });
 
-  it('uses weak Android biometric probing for unlock readiness', async () => {
+  it('uses strong Android biometric probing for unlock readiness', async () => {
     const { module, mockGetSupportedBiometryType } = await setup({
       authenticatedByBiometrics: true,
       supportedBiometryType: 'Face',
@@ -311,7 +311,7 @@ describe('hooks/biometrics', () => {
     ).resolves.toBe(true);
 
     expect(mockGetSupportedBiometryType).toHaveBeenCalledWith({
-      androidBiometricSecurityLevel: 'weak',
+      androidBiometricSecurityLevel: 'strong',
     });
   });
 
