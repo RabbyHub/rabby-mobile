@@ -62,7 +62,7 @@ import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureMana
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
 import { useSignatureStoreOf } from '@/components2024/MiniSignV2/state/useSignatureStore';
 import { CHAINS_ENUM } from '@debank/common';
-import { MAX_UINT_AMOUNT, ReserveDataHumanized } from '@aave/contract-helpers';
+import { ReserveDataHumanized } from '@aave/contract-helpers';
 import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
@@ -81,6 +81,7 @@ import {
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import {
+  getNativeWithdrawApprovalAmount,
   getNativeWithdrawRequiredAllowance,
   isNativeWithdrawApprovalRequired,
 } from '../../utils/withdrawApproval';
@@ -329,7 +330,6 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         const requiredAllowance = getNativeWithdrawRequiredAllowance({
           amount,
           decimals: currentReserve.reserve.decimals,
-          isMaxSelected: _amount === '-1',
         });
         const allowance = await getERC20Allowance(
           chainInfo.serverId,
@@ -352,7 +352,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
             chainServerId: chainInfo.serverId,
             id: targetPool.aTokenAddress,
             spender: wethGatewayAddress,
-            amount: MAX_UINT_AMOUNT,
+            amount: getNativeWithdrawApprovalAmount(requiredAllowance),
             account: currentAccount,
             isBuild: true,
           });
