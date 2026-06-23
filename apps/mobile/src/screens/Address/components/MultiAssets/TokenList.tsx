@@ -64,6 +64,9 @@ import { RNGHRefreshControl } from '@/components/customized/reexports';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import addressBalanceStore from '@/store/balance';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
+import { CustomTestnetAssetSection } from './CustomTestnetAssets/CustomTestnetAssetSection';
+import { useCustomTestnetAssetSections } from './CustomTestnetAssets/useCustomTestnetAssetSections';
+import type { CustomTestnetAssetSectionData } from './CustomTestnetAssets/types';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -175,6 +178,10 @@ type TokenListItem =
       type: 'toggle_token_fold';
     }
   | {
+      type: 'custom_testnet_assets';
+      data: CustomTestnetAssetSectionData;
+    }
+  | {
       type: 'scam_header';
       data: {
         total: number;
@@ -208,6 +215,10 @@ export const TokenList = () => {
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
 
   const getAccountByAddress = useFindAccountByAddress();
+  const {
+    sections: customTestnetSections,
+    loadTokens: loadCustomTestnetTokens,
+  } = useCustomTestnetAssetSections(myTop10Addresses);
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
@@ -303,7 +314,11 @@ export const TokenList = () => {
   });
 
   const hasNoAssets =
-    tokenRows.length + foldRows.length + scamRows.length === 0 &&
+    tokenRows.length +
+      foldRows.length +
+      scamRows.length +
+      customTestnetSections.length ===
+      0 &&
     !isLoading &&
     isFocused;
 
@@ -420,7 +435,13 @@ export const TokenList = () => {
   const dataList = useMemo(() => {
     const items: TokenListItem[] = [];
     const hasNoTokenItems =
-      tokenRows.length + foldRows.length + scamRows.length === 0;
+      tokenRows.length +
+        foldRows.length +
+        scamRows.length +
+        customTestnetSections.length ===
+      0;
+    const hasDefaultTokenSections =
+      tokenRows.length + foldRows.length + scamRows.length > 0;
 
     if (isLoading && hasNoTokenItems) {
       items.push(
@@ -450,9 +471,18 @@ export const TokenList = () => {
       });
     });
 
-    items.push({ type: 'toggle_token_fold' });
+    customTestnetSections.forEach(section => {
+      items.push({
+        type: 'custom_testnet_assets',
+        data: section,
+      });
+    });
 
-    if (!foldHideList) {
+    if (hasDefaultTokenSections) {
+      items.push({ type: 'toggle_token_fold' });
+    }
+
+    if (hasDefaultTokenSections && !foldHideList) {
       foldRows.forEach(row => {
         items.push({ type: 'fold_token', row });
       });
@@ -479,6 +509,7 @@ export const TokenList = () => {
     foldRows,
     scamRows,
     tokenRows,
+    customTestnetSections,
     foldHideList,
     foldScam,
     hasNoAssets,
@@ -532,6 +563,17 @@ export const TokenList = () => {
               onValueChange={setIsLpTokenEnabled}
             />
           );
+        case 'custom_testnet_assets':
+          return (
+            <CustomTestnetAssetSection
+              style={styles.customTestnetSection}
+              data={item.data}
+              tokenButtonLabel={t('page.singleHome.sectionHeader.Token')}
+              loadTokens={loadCustomTestnetTokens}
+              getAccountByAddress={getAccountByAddress}
+              onTokenPress={handleTokenPress}
+            />
+          );
         case 'scam_header':
           return (
             <View style={styles.foldRowWrap}>
@@ -567,7 +609,9 @@ export const TokenList = () => {
       handleTokenPress,
       handleToggleTokenFold,
       isLpTokenEnabled,
+      loadCustomTestnetTokens,
       styles,
+      t,
     ],
   );
 
@@ -577,6 +621,9 @@ export const TokenList = () => {
     }
     if (item.type === 'scam_header') {
       return `scam-header-${item.data.total}`;
+    }
+    if (item.type === 'custom_testnet_assets') {
+      return `custom-testnet-assets-${item.data.chain.id}`;
     }
     if (item.type === 'empty-assets') {
       return `empty-assets-${item.data}`;
@@ -690,6 +737,9 @@ const getStyles = createGetStyles2024(() => ({
   foldRowWrap: {
     height: ASSETS_ITEM_HEIGHT_NEW,
     marginBottom: 8,
+  },
+  customTestnetSection: {
+    marginBottom: 12,
   },
   renderItemWrapper: {
     height: ASSETS_ITEM_HEIGHT_NEW,
