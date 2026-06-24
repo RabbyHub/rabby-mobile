@@ -22,14 +22,16 @@ export const ChainInitialBadge = memo(
   },
 );
 
-const getStyle = createGetStyles2024(({ colors2024 }) =>
+const getStyle = createGetStyles2024(({ colors2024, isLight }) =>
   StyleSheet.create({
     chainInitialBadge: {
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors2024['neutral-foot'],
       borderWidth: 1.7,
-      borderColor: colors2024['neutral-bg-1'],
+      borderColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
       overflow: 'hidden',
     },
     chainInitialText: {

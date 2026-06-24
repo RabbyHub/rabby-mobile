@@ -458,12 +458,14 @@ export const CustomTestnetAssetSection = memo(
   },
 );
 
-const getStyle = createGetStyles2024(({ colors2024 }) =>
+const getStyle = createGetStyles2024(({ colors2024, isLight }) =>
   StyleSheet.create({
     container: {
       overflow: 'hidden',
       borderRadius: 16,
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
     },
     header: {
       minHeight: 56,
@@ -511,7 +513,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     },
     tokenPreview: {
       borderWidth: 1.3,
-      borderColor: colors2024['neutral-bg-1'],
+      borderColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
       borderRadius: 18,
       backgroundColor: colors2024['neutral-line'],
       paddingHorizontal: 0,
@@ -560,7 +564,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
     },
     tokenAvatar: {
       flexShrink: 0,

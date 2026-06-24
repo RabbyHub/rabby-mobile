@@ -6,7 +6,12 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Keyboard, StyleSheet, View } from 'react-native';
+import {
+  Keyboard,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { debounce } from 'lodash';
@@ -179,99 +184,101 @@ export const CustomTestnetAddTokenSheet = memo(
     const confirmDisabled = lookupState.status !== 'found' || confirming;
 
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>
-          {t('page.customTestnet.addToken.title')}
-        </Text>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <View style={styles.container}>
+          <Text style={styles.title}>
+            {t('page.customTestnet.addToken.title')}
+          </Text>
 
-        <View style={styles.content}>
-          <View style={styles.field}>
-            <Text style={styles.label}>
-              {t('page.customTestnet.addToken.chain')}
-            </Text>
-            <View style={styles.chainField}>
-              <ChainInitialBadge name={chain.name} size={24} />
-              <Text numberOfLines={1} style={styles.chainName}>
-                {chain.name}
+          <View style={styles.content}>
+            <View style={styles.field}>
+              <Text style={styles.label}>
+                {t('page.customTestnet.addToken.chain')}
               </Text>
-            </View>
-          </View>
-
-          <View style={styles.field}>
-            <Text style={styles.label}>
-              {t('page.customTestnet.addToken.tokenAddress')}
-            </Text>
-            <View style={styles.addressInputWrap}>
-              <BottomSheetTextInput
-                multiline
-                value={address}
-                onChangeText={handleAddressChange}
-                placeholder={t('page.customTestnet.addToken.enterAddress')}
-                placeholderTextColor={colors2024['neutral-secondary']}
-                style={styles.addressInput}
-                textAlignVertical="top"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <PasteButton
-                style={styles.pasteButton}
-                iconColor={colors2024['brand-default']}
-                onPaste={text => {
-                  handleAddressChange(text.trim());
-                  Keyboard.dismiss();
-                }}
-              />
-            </View>
-            {lookupState.status === 'found' ? (
-              <View style={styles.foundToken}>
-                <Text style={styles.foundTokenLabel}>
-                  {t('page.customTestnet.addToken.foundToken')}
+              <View style={styles.chainField}>
+                <ChainInitialBadge name={chain.name} size={24} />
+                <Text numberOfLines={1} style={styles.chainName}>
+                  {chain.name}
                 </Text>
-                <View style={styles.foundTokenMain}>
-                  <AssetAvatar
-                    size={24}
-                    chain={chain.serverId}
-                    chainSize={10}
-                    innerChainStyle={styles.foundTokenChainIcon}
-                  />
-                  <Text style={styles.foundTokenSymbol}>
-                    {lookupState.token.symbol}
-                  </Text>
-                </View>
               </View>
-            ) : lookupState.status === 'checking' ? (
-              <Text style={styles.checkingText}>
-                {t('page.customTestnet.addToken.checking')}
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>
+                {t('page.customTestnet.addToken.tokenAddress')}
               </Text>
-            ) : lookupState.status === 'error' ? (
-              <Text style={styles.errorText}>{lookupState.error}</Text>
-            ) : null}
+              <View style={styles.addressInputWrap}>
+                <BottomSheetTextInput
+                  multiline
+                  value={address}
+                  onChangeText={handleAddressChange}
+                  placeholder={t('page.customTestnet.addToken.enterAddress')}
+                  placeholderTextColor={colors2024['neutral-secondary']}
+                  style={styles.addressInput}
+                  textAlignVertical="top"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <PasteButton
+                  style={styles.pasteButton}
+                  iconColor={colors2024['brand-default']}
+                  onPaste={text => {
+                    handleAddressChange(text.trim());
+                    Keyboard.dismiss();
+                  }}
+                />
+              </View>
+              {lookupState.status === 'found' ? (
+                <View style={styles.foundToken}>
+                  <Text style={styles.foundTokenLabel}>
+                    {t('page.customTestnet.addToken.foundToken')}
+                  </Text>
+                  <View style={styles.foundTokenMain}>
+                    <AssetAvatar
+                      size={24}
+                      chain={chain.serverId}
+                      chainSize={10}
+                      innerChainStyle={styles.foundTokenChainIcon}
+                    />
+                    <Text style={styles.foundTokenSymbol}>
+                      {lookupState.token.symbol}
+                    </Text>
+                  </View>
+                </View>
+              ) : lookupState.status === 'checking' ? (
+                <Text style={styles.checkingText}>
+                  {t('page.customTestnet.addToken.checking')}
+                </Text>
+              ) : lookupState.status === 'error' ? (
+                <Text style={styles.errorText}>{lookupState.error}</Text>
+              ) : null}
+            </View>
+          </View>
+
+          <View style={styles.footer}>
+            <Button
+              title={t('global.Cancel')}
+              type="plain"
+              height={48}
+              containerStyle={styles.footerButton}
+              buttonStyle={styles.cancelButton}
+              titleStyle={styles.cancelButtonText}
+              onPress={handleCancel}
+              disabled={confirming}
+            />
+            <Button
+              title={t('global.Confirm')}
+              type="primary"
+              height={48}
+              containerStyle={styles.footerButton}
+              buttonStyle={styles.confirmButton}
+              onPress={handleConfirm}
+              loading={confirming}
+              disabled={confirmDisabled}
+            />
           </View>
         </View>
-
-        <View style={styles.footer}>
-          <Button
-            title={t('global.Cancel')}
-            type="plain"
-            height={48}
-            containerStyle={styles.footerButton}
-            buttonStyle={styles.cancelButton}
-            titleStyle={styles.cancelButtonText}
-            onPress={handleCancel}
-            disabled={confirming}
-          />
-          <Button
-            title={t('global.Confirm')}
-            type="primary"
-            height={48}
-            containerStyle={styles.footerButton}
-            buttonStyle={styles.confirmButton}
-            onPress={handleConfirm}
-            loading={confirming}
-            disabled={confirmDisabled}
-          />
-        </View>
-      </View>
+      </TouchableWithoutFeedback>
     );
   },
 );

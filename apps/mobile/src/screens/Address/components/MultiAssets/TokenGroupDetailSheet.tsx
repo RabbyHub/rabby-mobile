@@ -50,6 +50,7 @@ const AmountOnlyTokenDistributionRow = memo(
           chain={token.chain}
           size={46}
           chainSize={18}
+          innerChainStyle={styles.innerChain}
           style={styles.tokenAvatar}
         />
         <View style={styles.amountOnlyContent}>
@@ -148,7 +149,7 @@ const TokenGroupDetailSheet: React.FC<TokenGroupDetailSheetProps> = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     flex: 1,
     backgroundColor: colors2024['neutral-bg-0'],
@@ -168,7 +169,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   amountOnlyRow: {
     height: ASSETS_ITEM_HEIGHT_NEW,
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
@@ -209,6 +212,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
     fontWeight: '700',
     textAlign: 'right',
+  },
+  innerChain: {
+    overflow: 'hidden',
   },
 }));
 
