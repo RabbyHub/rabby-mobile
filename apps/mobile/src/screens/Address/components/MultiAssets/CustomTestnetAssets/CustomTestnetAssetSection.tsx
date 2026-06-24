@@ -11,6 +11,7 @@ import {
   GestureResponderEvent,
   StyleProp,
   StyleSheet,
+  TextStyle,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -22,7 +23,6 @@ import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
-import { AccountOverview } from '@/screens/Home/components/AccountOverview';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { formatAmount } from '@/utils/number';
@@ -44,8 +44,13 @@ type CustomTestnetAssetSectionProps = {
   loadTokens: LoadCustomTestnetAssetTokens;
   getAccountByAddress(address?: string): KeyringAccountWithAlias | undefined;
   tokenDisplayMode: TokenDisplayMode;
+  hideAccount?: boolean;
+  renderAccount?(
+    account: KeyringAccountWithAlias,
+    textStyle: TextStyle,
+  ): React.ReactNode;
   onTokenPress(token: ITokenItem): void;
-  onTokenGroupPress(tokens: ITokenItem[]): void;
+  onTokenGroupPress?(tokens: ITokenItem[]): void;
   onTokenButtonPress?(data: CustomTestnetAssetSectionData): void;
 };
 
@@ -96,17 +101,22 @@ const CustomTestnetTokenRow = memo(
   ({
     row,
     account,
+    renderAccount,
     onPress,
     onGroupPress,
   }: {
     row: CustomTestnetTokenDisplayRow;
     account?: KeyringAccountWithAlias;
+    renderAccount?(
+      account: KeyringAccountWithAlias,
+      textStyle: TextStyle,
+    ): React.ReactNode;
     onPress(token: ITokenItem): void;
-    onGroupPress(tokens: ITokenItem[]): void;
+    onGroupPress?(tokens: ITokenItem[]): void;
   }) => {
     const { styles } = useTheme2024({ getStyle });
     const handlePress = useCallback(() => {
-      if (row.mode === 'group') {
+      if (row.mode === 'group' && onGroupPress) {
         onGroupPress(row.tokens);
         return;
       }
@@ -127,13 +137,9 @@ const CustomTestnetTokenRow = memo(
             <Text numberOfLines={1} style={styles.tokenSymbol}>
               {getTokenSymbol(row.token)}
             </Text>
-            {account ? (
-              <AccountOverview
-                account={account}
-                logoSize={14}
-                textStyle={styles.accountText}
-              />
-            ) : null}
+            {account && renderAccount
+              ? renderAccount(account, styles.accountText)
+              : null}
           </View>
           <Text numberOfLines={1} style={styles.tokenBalance}>
             {formatAmount(row.token.amount, 4, true)}
@@ -152,6 +158,8 @@ export const CustomTestnetAssetSection = memo(
     loadTokens,
     getAccountByAddress,
     tokenDisplayMode,
+    hideAccount,
+    renderAccount,
     onTokenPress,
     onTokenGroupPress,
     onTokenButtonPress,
@@ -263,10 +271,11 @@ export const CustomTestnetAssetSection = memo(
                   key={row.key}
                   row={row}
                   account={
-                    row.mode === 'token'
+                    !hideAccount && row.mode === 'token'
                       ? getAccountByAddress(row.token.owner_addr)
                       : undefined
                   }
+                  renderAccount={renderAccount}
                   onPress={onTokenPress}
                   onGroupPress={onTokenGroupPress}
                 />

@@ -11,6 +11,8 @@ import type {
 } from './types';
 import type { ITokenItem } from '@/types/assets';
 
+const EMPTY_ADDRESSES: string[] = [];
+
 const customTestnetTokenListQueue = new PQueue({
   intervalCap: 5,
   concurrency: 5,
@@ -91,4 +93,13 @@ export function useCustomTestnetAssetSections(addresses: string[]) {
     sections,
     loadTokens,
   };
+}
+
+export function useSingleAddressCustomTestnetAssetSections(address?: string) {
+  const addresses = useMemo(
+    () => (address ? [address] : EMPTY_ADDRESSES),
+    [address],
+  );
+
+  return useCustomTestnetAssetSections(addresses);
 }

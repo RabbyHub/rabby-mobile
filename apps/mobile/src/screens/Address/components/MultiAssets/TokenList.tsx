@@ -11,7 +11,7 @@ import {
   View,
   Dimensions,
   ViewStyle,
-  StyleSheet,
+  TextStyle,
 } from 'react-native';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { useShallow } from 'zustand/shallow';
@@ -74,6 +74,7 @@ import { CustomTestnetAssetSection } from './CustomTestnetAssets/CustomTestnetAs
 import { useCustomTestnetAssetSections } from './CustomTestnetAssets/useCustomTestnetAssetSections';
 import type { CustomTestnetAssetSectionData } from './CustomTestnetAssets/types';
 import { Text } from '@/components/Typography';
+import { AccountOverview } from '@/screens/Home/components/AccountOverview';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -476,6 +477,13 @@ export const TokenList = () => {
     [handleOpenTokenGroupDetail],
   );
 
+  const renderCustomTestnetAccount = useCallback(
+    (account: KeyringAccountWithAlias, textStyle: TextStyle) => (
+      <AccountOverview account={account} logoSize={14} textStyle={textStyle} />
+    ),
+    [],
+  );
+
   const handleOpenScamToken = useCallback(() => {
     setFoldScam(false);
   }, []);
@@ -650,6 +658,7 @@ export const TokenList = () => {
               loadTokens={loadCustomTestnetTokens}
               getAccountByAddress={getAccountByAddress}
               tokenDisplayMode={tokenDisplayMode}
+              renderAccount={renderCustomTestnetAccount}
               onTokenPress={handleCustomTestnetTokenPress}
               onTokenGroupPress={handleCustomTestnetTokenGroupPress}
             />
@@ -698,6 +707,7 @@ export const TokenList = () => {
       handleCustomTestnetTokenPress,
       handleOpenScamToken,
       handleCustomTestnetTokenGroupPress,
+      renderCustomTestnetAccount,
       handleTokenPress,
       handleToggleTokenFold,
       isLpTokenEnabled,

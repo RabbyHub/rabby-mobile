@@ -51,6 +51,10 @@ import useTokenList, {
 import { formatNetworth } from '@/utils/math';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
+import { CustomTestnetAssetSection } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/CustomTestnetAssetSection';
+import { useSingleAddressCustomTestnetAssetSections } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/useCustomTestnetAssetSections';
+import type { CustomTestnetAssetSectionData } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/types';
+import { Text } from '@/components/Typography';
 
 type TokenListItem =
   | {
@@ -59,6 +63,13 @@ type TokenListItem =
     }
   | {
       type: 'toggle_token_fold';
+    }
+  | {
+      type: 'custom_testnet_assets';
+      data: CustomTestnetAssetSectionData;
+    }
+  | {
+      type: 'custom_testnet_divider';
     }
   | {
       type: 'scam_token';
@@ -150,6 +161,23 @@ interface Props {
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
+const EMPTY_CUSTOM_TESTNET_SECTIONS: CustomTestnetAssetSectionData[] = [];
+
+const appendCustomTestnetItems = (
+  items: TokenListItem[],
+  sections: CustomTestnetAssetSectionData[],
+) => {
+  if (!sections.length) {
+    return;
+  }
+  items.push({ type: 'custom_testnet_divider' });
+  sections.forEach(section => {
+    items.push({
+      type: 'custom_testnet_assets',
+      data: section,
+    });
+  });
+};
 
 export const TokenList = ({
   noAssetsOnAnyChain,
@@ -177,6 +205,14 @@ export const TokenList = ({
 
   const currentAddress = currentAccount?.address;
   const lowerAddress = currentAddress?.toLowerCase();
+  const {
+    sections: customTestnetSections,
+    loadTokens: loadCustomTestnetTokens,
+  } = useSingleAddressCustomTestnetAssetSections(currentAddress);
+  const shouldShowCustomTestnetSections = !selectedChain && !isLpTokenEnabled;
+  const visibleCustomTestnetSections = shouldShowCustomTestnetSections
+    ? customTestnetSections
+    : EMPTY_CUSTOM_TESTNET_SECTIONS;
 
   useEffect(() => {
     if (!currentAddress) {
@@ -289,7 +325,8 @@ export const TokenList = ({
       items.push({ type: 'unfold_token', tokenId });
     });
 
-    const hasFoldSection = hasFoldTokens || isLpTokenEnabled;
+    const hasFoldSection =
+      hasFoldTokens || isLpTokenEnabled || visibleCustomTestnetSections.length;
     if (hasFoldSection) {
       items.push({ type: 'toggle_token_fold' });
       if (!foldHideList) {
@@ -311,6 +348,7 @@ export const TokenList = ({
             });
           }
         }
+        appendCustomTestnetItems(items, visibleCustomTestnetSections);
       }
     }
 
@@ -359,6 +397,7 @@ export const TokenList = ({
     scamTokenPreviewLogoUrls,
     t,
     unFoldTokenIds,
+    visibleCustomTestnetSections,
   ]);
 
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
@@ -371,7 +410,6 @@ export const TokenList = ({
 
   const handleOpenTokenDetail = useCallback(
     (token: ITokenItem) => {
-      console.log(currentAccount);
       navigateDeprecated(RootNames.TokenDetail, {
         token,
         isSingleAddress: true,
@@ -380,6 +418,20 @@ export const TokenList = ({
     },
     [currentAccount],
   );
+
+  const handleOpenCustomTestnetTokenDetail = useCallback(
+    (token: ITokenItem) => {
+      navigateDeprecated(RootNames.TokenDetail, {
+        token,
+        isSingleAddress: true,
+        account: currentAccount as any,
+        isCustomTestnetToken: true,
+      });
+    },
+    [currentAccount],
+  );
+
+  const getCustomTestnetAccountByAddress = useCallback(() => undefined, []);
 
   const handleRefresh = useCallback(async () => {
     if (!currentAddress) {
@@ -451,6 +503,30 @@ export const TokenList = ({
               }}
             />
           );
+        case 'custom_testnet_assets':
+          return (
+            <View style={styles.customTestnetSectionWrap}>
+              <CustomTestnetAssetSection
+                data={item.data}
+                tokenButtonLabel={t('page.singleHome.sectionHeader.Token')}
+                loadTokens={loadCustomTestnetTokens}
+                getAccountByAddress={getCustomTestnetAccountByAddress}
+                tokenDisplayMode="byAsset"
+                hideAccount
+                onTokenPress={handleOpenCustomTestnetTokenDetail}
+              />
+            </View>
+          );
+        case 'custom_testnet_divider':
+          return (
+            <View style={styles.customTestnetDivider}>
+              <View style={styles.customTestnetDividerLine} />
+              <Text style={styles.customTestnetDividerText}>
+                {t('page.multiAddressAssets.customNetworkTokenHeader')}
+              </Text>
+              <View style={styles.customTestnetDividerLine} />
+            </View>
+          );
         case 'empty-token':
           return (
             <EmptyTokenRow
@@ -481,9 +557,13 @@ export const TokenList = ({
       foldHideList,
       foldTokenUsdValue,
       handleOpenTokenDetail,
+      handleOpenCustomTestnetTokenDetail,
       isLight,
       isLpTokenEnabled,
+      getCustomTestnetAccountByAddress,
+      loadCustomTestnetTokens,
       styles,
+      t,
       tokenRowStyle,
     ],
   );
@@ -494,6 +574,12 @@ export const TokenList = ({
     }
     if (item.type === 'scam_token') {
       return `scam-token-${item.data.total}`;
+    }
+    if (item.type === 'custom_testnet_assets') {
+      return `custom-testnet-assets-${item.data.chain.id}`;
+    }
+    if (item.type === 'custom_testnet_divider') {
+      return 'custom-testnet-divider';
     }
     if (item.type === 'loading-skeleton') {
       return `loading-${item.data}`;
@@ -598,6 +684,30 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   buttonHeader: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  customTestnetSectionWrap: {
+    paddingHorizontal: 16,
+  },
+  customTestnetDivider: {
+    height: 16,
+    marginTop: 12,
+    marginBottom: 9,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 32.5,
+    gap: 12,
+  },
+  customTestnetDividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#D3D8E0',
+  },
+  customTestnetDividerText: {
+    color: '#9A9CA9',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '400',
   },
   assetHeader: {
     backgroundColor: ctx.colors2024['neutral-bg-gray'],
