@@ -52,9 +52,9 @@ import { formatNetworth } from '@/utils/math';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
 import { CustomTestnetAssetSection } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/CustomTestnetAssetSection';
+import { CustomTestnetAssetDivider } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/CustomTestnetAssetDivider';
 import { useSingleAddressCustomTestnetAssetSections } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/useCustomTestnetAssetSections';
 import type { CustomTestnetAssetSectionData } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/types';
-import { Text } from '@/components/Typography';
 
 type TokenListItem =
   | {
@@ -519,13 +519,9 @@ export const TokenList = ({
           );
         case 'custom_testnet_divider':
           return (
-            <View style={styles.customTestnetDivider}>
-              <View style={styles.customTestnetDividerLine} />
-              <Text style={styles.customTestnetDividerText}>
-                {t('page.multiAddressAssets.customNetworkTokenHeader')}
-              </Text>
-              <View style={styles.customTestnetDividerLine} />
-            </View>
+            <CustomTestnetAssetDivider
+              style={styles.singleCustomTestnetDivider}
+            />
           );
         case 'empty-token':
           return (
@@ -688,26 +684,9 @@ const getStyles = createGetStyles2024(ctx => ({
   customTestnetSectionWrap: {
     paddingHorizontal: 16,
   },
-  customTestnetDivider: {
-    height: 16,
-    marginTop: 12,
+  singleCustomTestnetDivider: {
     marginBottom: 9,
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: 32.5,
-    gap: 12,
-  },
-  customTestnetDividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#D3D8E0',
-  },
-  customTestnetDividerText: {
-    color: '#9A9CA9',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '400',
   },
   assetHeader: {
     backgroundColor: ctx.colors2024['neutral-bg-gray'],

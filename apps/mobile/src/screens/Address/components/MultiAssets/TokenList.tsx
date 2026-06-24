@@ -71,9 +71,9 @@ import { useAppForeground } from '@/hooks/useAppForeground';
 import addressBalanceStore from '@/store/balance';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
 import { CustomTestnetAssetSection } from './CustomTestnetAssets/CustomTestnetAssetSection';
+import { CustomTestnetAssetDivider } from './CustomTestnetAssets/CustomTestnetAssetDivider';
 import { useCustomTestnetAssetSections } from './CustomTestnetAssets/useCustomTestnetAssetSections';
 import type { CustomTestnetAssetSectionData } from './CustomTestnetAssets/types';
-import { Text } from '@/components/Typography';
 import { AccountOverview } from '@/screens/Home/components/AccountOverview';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
@@ -664,15 +664,7 @@ export const TokenList = () => {
             />
           );
         case 'custom_testnet_divider':
-          return (
-            <View style={styles.customTestnetDivider}>
-              <View style={styles.customTestnetDividerLine} />
-              <Text style={styles.customTestnetDividerText}>
-                {t('page.multiAddressAssets.customNetworkTokenHeader')}
-              </Text>
-              <View style={styles.customTestnetDividerLine} />
-            </View>
-          );
+          return <CustomTestnetAssetDivider />;
         case 'scam_header':
           return (
             <View style={styles.foldRowWrap}>
@@ -845,27 +837,6 @@ const getStyles = createGetStyles2024(() => ({
   },
   customTestnetSection: {
     marginBottom: 12,
-  },
-  customTestnetDivider: {
-    height: 16,
-    marginTop: 12,
-    marginBottom: 17,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16.5,
-    gap: 12,
-  },
-  customTestnetDividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#D3D8E0',
-  },
-  customTestnetDividerText: {
-    color: '#9A9CA9',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '400',
   },
   renderItemWrapper: {
     height: ASSETS_ITEM_HEIGHT_NEW,
