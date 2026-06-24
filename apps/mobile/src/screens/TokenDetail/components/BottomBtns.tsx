@@ -60,7 +60,7 @@ export const TokenDetailBottomBtns = ({
     !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);
 
   const toastDisabledAction = useCallback(() => {
-    toast.show(t('page.dashboard.assets.comingSoon'));
+    toast.show(t('page.tokenDetail.customTestnetNotSupported'));
   }, [t]);
 
   const moreItems: {
@@ -105,10 +105,6 @@ export const TokenDetailBottomBtns = ({
       Icon: RcIconBridge,
       disabled: disableSwapBridge,
       onPress: async () => {
-        if (disableSwapBridge) {
-          toast.error(t('page.tokenDetail.customTestnetNotSupported'));
-          return;
-        }
         const chain = findChain({
           serverId: token.chain,
         });
