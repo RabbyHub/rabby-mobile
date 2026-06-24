@@ -66,6 +66,9 @@ type ManagedOptions = ToastOptions & {
    */
   standalone?: boolean;
 };
+type ToastLoadingOptions = Omit<Partial<ManagedOptions>, 'standalone'> & {
+  blockInteraction?: boolean;
+};
 const managedToasts = new Set<any>();
 type ShowParamas = Parameters<typeof Toast.show>;
 function showManagedToast(
@@ -169,35 +172,34 @@ export const toast = {
   positions: Toast.positions,
 };
 
-export const toastLoading = (
-  msg?: string,
-  options?: Omit<Partial<ManagedOptions>, 'standalone'>,
-) => {
+export const toastLoading = (msg?: string, options?: ToastLoadingOptions) => {
+  const {
+    blockInteraction = false,
+    containerStyle,
+    ...toastOptions
+  } = options || {};
+  const styles = getTheme2024({ getStyle });
   clearManagedToasts();
   const toastInst = showManagedToast(
-    <View
-      style={{
-        width: 126,
-        height: 126,
-        justifyContent: 'space-evenly',
-        alignItems: 'center',
-        borderRadius: 8,
-      }}>
-      <ActivityIndicator size="large" />
-      {msg ? (
-        <Text style={{ color: ThemeColors2024.light['neutral-title-2'] }}>
-          {msg}
-        </Text>
-      ) : null}
+    <View style={blockInteraction && styles.loadingOverlay}>
+      <View style={styles.loadingBox}>
+        <ActivityIndicator size="large" />
+        {msg ? <Text style={styles.loadingText}>{msg}</Text> : null}
+      </View>
     </View>,
     {
       duration: 300000000,
       animation: true,
       hideOnPress: false,
-      opacity: 0.9,
+      opacity: blockInteraction ? 1 : 0.9,
       shadow: false,
       position: 0,
-      ...options,
+      backgroundColor: blockInteraction ? 'transparent' : undefined,
+      ...toastOptions,
+      containerStyle: StyleSheet.flatten([
+        blockInteraction && styles.loadingBlockingContainer,
+        containerStyle,
+      ]),
     },
   );
 
@@ -318,6 +320,38 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
     selfDefinedContent: {
       maxWidth: 250,
+    },
+    loadingBlockingContainer: {
+      marginHorizontal: 0,
+      width: '100%',
+      height: '100%',
+      padding: 0,
+      borderRadius: 0,
+      backgroundColor: 'transparent',
+    },
+    loadingOverlay: {
+      flex: 1,
+      width: '100%',
+      height: '100%',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.18)',
+    },
+    loadingBox: {
+      width: 126,
+      minHeight: 126,
+      justifyContent: 'space-evenly',
+      alignItems: 'center',
+      borderRadius: 8,
+      backgroundColor: ThemeColors2024.light['neutral-black'],
+      paddingVertical: 18,
+      paddingHorizontal: 12,
+    },
+    loadingText: {
+      color: ThemeColors2024.light['neutral-title-2'],
+      textAlign: 'center',
+      fontSize: 15,
+      fontWeight: '700',
     },
   };
 });

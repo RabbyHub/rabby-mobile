@@ -116,13 +116,17 @@ async function removeAppDbFilesBestEffort() {
   );
 }
 
-function forceExitAppSoon() {
+function forceExitAppSoon(delayMs = 100) {
   setTimeout(() => {
     RNHelpers.forceExitApp();
-  }, 100);
+  }, delayMs);
 }
 
-export async function dropAppDataSourceAndQuitApp() {
+export async function dropAppDataSourceAndQuitApp({
+  exitDelayMs = 100,
+}: {
+  exitDelayMs?: number;
+} = {}) {
   let appDataSource: DataSource | null = null;
 
   try {
@@ -147,7 +151,7 @@ export async function dropAppDataSourceAndQuitApp() {
       );
     });
     // it will cause crash on iOS production
-    forceExitAppSoon();
+    forceExitAppSoon(exitDelayMs);
   }
 }
 

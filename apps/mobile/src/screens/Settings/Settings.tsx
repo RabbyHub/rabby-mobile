@@ -61,7 +61,7 @@ import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 
 import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
 
-import { toast } from '@/components2024/Toast';
+import { toast, toastLoading } from '@/components2024/Toast';
 import {
   APP_FEATURE_SWITCH,
   APP_URLS,
@@ -183,10 +183,12 @@ import {
   SwitchDataAnalysis,
   SwitchUserBehaviorTrackingOptOut,
 } from './components/SwitchUserBehaviorTrackingOptOut';
+import { sleep } from '@/utils/async';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
 };
+const CLEAR_APP_CACHE_EXIT_DELAY_MS = 2000;
 
 const isIOS = Platform.OS === 'ios';
 
@@ -329,6 +331,27 @@ function SettingsBlocks() {
   const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
   const { appTheme } = useAppTheme();
   const { t } = useTranslation();
+  const handleClearAndroidAppCache = useCallback(async () => {
+    const hideLoading = toastLoading(
+      t('page.settingModal.clearAppCache.clearingToast'),
+      {
+        blockInteraction: true,
+      },
+    );
+
+    await sleep(50);
+    abortAllSyncTasks();
+    resetUpdateHistoryTime();
+    await dropAppDataSourceAndQuitApp({
+      exitDelayMs: CLEAR_APP_CACHE_EXIT_DELAY_MS,
+    });
+    hideLoading();
+    toast.success(t('page.settingModal.clearAppCache.clearDoneQuitToast'), {
+      duration: CLEAR_APP_CACHE_EXIT_DELAY_MS,
+      hideOnPress: false,
+      position: toast.positions.CENTER,
+    });
+  }, [t]);
   const appThemeText = useMemo(() => {
     return (
       makeThemeOptions(t).find(item => item.value === appTheme)?.title || ''
@@ -691,11 +714,7 @@ function SettingsBlocks() {
                           'page.settingModal.clearAppCache.button.clear_and_quit',
                         ),
                         style: 'destructive',
-                        onPress: async () => {
-                          abortAllSyncTasks();
-                          resetUpdateHistoryTime();
-                          await dropAppDataSourceAndQuitApp();
-                        },
+                        onPress: handleClearAndroidAppCache,
                       },
                 ],
               );
