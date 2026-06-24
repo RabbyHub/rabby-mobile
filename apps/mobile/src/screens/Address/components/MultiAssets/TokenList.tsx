@@ -348,11 +348,7 @@ export const TokenList = () => {
   });
 
   const hasNoAssets =
-    tokenRows.length +
-      foldRows.length +
-      scamRows.length +
-      visibleCustomTestnetSections.length ===
-      0 &&
+    tokenRows.length + foldRows.length + scamRows.length === 0 &&
     !isLoading &&
     isFocused;
 
@@ -556,6 +552,7 @@ export const TokenList = () => {
       0;
     const hasDefaultTokenSections =
       tokenRows.length + foldRows.length + scamRows.length > 0;
+    const hasFoldContent = foldRows.length + scamRows.length > 0;
 
     if (isLoading && hasNoTokenItems) {
       items.push(
@@ -574,7 +571,6 @@ export const TokenList = () => {
           name: t('page.singleHome.sectionHeader.Token'),
         }),
       });
-      return items;
     }
 
     tokenRows.forEach((row, index) => {
@@ -610,10 +606,12 @@ export const TokenList = () => {
         }
       }
 
-      appendCustomTestnetItems(items, visibleCustomTestnetSections);
+      if (hasFoldContent) {
+        appendCustomTestnetItems(items, visibleCustomTestnetSections);
+      }
     }
 
-    if (!hasDefaultTokenSections) {
+    if (!hasFoldContent) {
       appendCustomTestnetItems(items, visibleCustomTestnetSections);
     }
 

@@ -330,13 +330,15 @@ export const TokenList = ({
 
   const dataList = useMemo(() => {
     const items: TokenListItem[] = [];
+    const hasNoTokenItems =
+      unFoldTokenIds.length + foldTokenIds.length + scamTokenIds.length === 0;
 
     unFoldTokenIds.forEach(tokenId => {
       items.push({ type: 'unfold_token', tokenId });
     });
 
-    const hasFoldSection =
-      hasFoldTokens || isLpTokenEnabled || visibleCustomTestnetSections.length;
+    const hasFoldContent = foldTokenIds.length + scamTokenIds.length > 0;
+    const hasFoldSection = hasFoldContent || isLpTokenEnabled;
     if (hasFoldSection) {
       items.push({ type: 'toggle_token_fold' });
       if (!foldHideList) {
@@ -358,12 +360,17 @@ export const TokenList = ({
             });
           }
         }
-        appendCustomTestnetItems(items, visibleCustomTestnetSections);
+
+        if (hasFoldContent) {
+          appendCustomTestnetItems(items, visibleCustomTestnetSections);
+        }
       }
     }
 
     if (
-      (isLoading && items.length === 0) ||
+      (isLoading &&
+        items.length === 0 &&
+        visibleCustomTestnetSections.length === 0) ||
       (isAllLoading && isLpTokenEnabled)
     ) {
       items.push(
@@ -374,7 +381,11 @@ export const TokenList = ({
       );
     }
 
-    if (!isLoading && items.length === 0) {
+    if (
+      !isLoading &&
+      hasNoTokenItems &&
+      (items.length === 0 || visibleCustomTestnetSections.length > 0)
+    ) {
       if (noAnyAssets) {
         // items.push({ type: 'empty-token' });
         items.push({
@@ -393,12 +404,15 @@ export const TokenList = ({
       }
     }
 
+    if (!hasFoldContent) {
+      appendCustomTestnetItems(items, visibleCustomTestnetSections);
+    }
+
     return items;
   }, [
     foldHideList,
     foldScam,
     foldTokenIds,
-    hasFoldTokens,
     isAllLoading,
     isLoading,
     isLpTokenEnabled,
