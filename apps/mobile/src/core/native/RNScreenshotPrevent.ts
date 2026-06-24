@@ -12,7 +12,7 @@ const { RNScreenshotPrevent: nativeModule } = resolveNativeModule(
   NativeModuleNames.RNScreenshotPrevent,
 );
 const { ReactNativeSecurity: nativeSecurityModule } = resolveNativeModule(
-  'ReactNativeSecurity',
+  NativeModuleNames.ReactNativeSecurity,
 );
 
 type Listeners = EventEmitterRecordToListeners<

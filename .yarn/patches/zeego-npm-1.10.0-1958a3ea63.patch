@@ -183,7 +183,7 @@ index 95aaaaf..bb3cd58 100644
                      image: triggerItem?.icon,
                      subactions: nestedItems,
                      attributes: triggerItem.menuAttributes,
-@@ -446,19 +476,26 @@ If you want to use a custom component as your <Content />, you can use the creat
+@@ -446,19 +476,25 @@ If you want to use a custom component as your <Content />, you can use the creat
        shouldOpenOnLongPress = triggerItem.props.action === 'longPress'
      }
  
@@ -195,7 +195,6 @@ index 95aaaaf..bb3cd58 100644
          onPressAction={({ nativeEvent }) => {
            callbacks[nativeEvent.event]?.()
          }}
-+        // @ts-expect-error
 +        androidSuppressNativeLongPress={androidSuppressNativeLongPress}
 +        themeVariant={themeVariant}
          shouldOpenOnLongPress={shouldOpenOnLongPress}
