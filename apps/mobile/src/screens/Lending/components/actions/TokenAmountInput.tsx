@@ -31,6 +31,15 @@ interface TokenAmountInputProps {
   tokenSelectContent?: React.ReactNode;
 }
 
+const shouldSyncAmountImmediately = (amount: string) => {
+  if (!amount) {
+    return false;
+  }
+
+  const numericAmount = Number(amount);
+  return Number.isFinite(numericAmount) && numericAmount === 0;
+};
+
 export const TokenAmountInput = ({
   symbol,
   value,
@@ -101,6 +110,12 @@ export const TokenAmountInput = ({
         debouncedChangeText.cancel();
         onChange?.(formatted);
         return false;
+      }
+
+      if (shouldSyncAmountImmediately(formatted)) {
+        debouncedChangeText.cancel();
+        onChange?.(formatted);
+        return;
       }
 
       debouncedChangeText(formatted);
