@@ -1,4 +1,5 @@
 import type { ITokenItem, TokenDisplayMode } from '@/types/assets';
+import type { CustomTestnetAssetSectionToken } from './types';
 
 export type CustomTestnetTokenDisplayRow = {
   key: string;
@@ -9,6 +10,34 @@ export type CustomTestnetTokenDisplayRow = {
 
 const getCustomTestnetAssetGroupKey = (token: ITokenItem) =>
   `${token.chain.toLowerCase()}::${token.id.toLowerCase()}`;
+
+export const makeMetadataTokenItem = (
+  token: CustomTestnetAssetSectionToken,
+  chainServerId: string,
+): ITokenItem => ({
+  amount: 0,
+  chain: chainServerId,
+  decimals: token.decimals,
+  display_symbol: token.symbol,
+  id: token.id,
+  is_core: false,
+  is_verified: false,
+  is_wallet: false,
+  is_scam: false,
+  is_suspicious: false,
+  logo_url: '',
+  name: token.symbol,
+  optimized_symbol: token.symbol,
+  price: 0,
+  symbol: token.symbol,
+  usd_value: 0,
+  owner_addr: '',
+  raw_amount: '0',
+  raw_amount_hex_str: '0x0',
+  price_24h_change: 0,
+  cex_ids: [],
+  time_at: 0,
+});
 
 const aggregateCustomTestnetTokensByAsset = (
   tokens: ITokenItem[],

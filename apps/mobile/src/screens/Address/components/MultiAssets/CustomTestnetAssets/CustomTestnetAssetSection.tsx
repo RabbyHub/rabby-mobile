@@ -7,7 +7,6 @@ import React, {
   useState,
 } from 'react';
 import {
-  ActivityIndicator,
   GestureResponderEvent,
   StyleProp,
   StyleSheet,
@@ -16,10 +15,12 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 
 import { RcIconAddCircleBold } from '@/assets/icons/address';
-import { RcArrowDownCC } from '@/assets/icons/common';
+import RcArrowDown from '@/assets/icons/custom-testnet/IconArrowDown.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
+import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
@@ -36,6 +37,7 @@ import type {
 import { ChainInitialBadge } from './ChainInitialBadge';
 import {
   getCustomTestnetTokenDisplayRows,
+  makeMetadataTokenItem,
   type CustomTestnetTokenDisplayRow,
 } from './utils';
 import type { ITokenItem, TokenDisplayMode } from '@/types/assets';
@@ -90,6 +92,28 @@ const TokenPreviewStack = memo(
   },
 );
 
+const TokenBalanceSkeleton = memo(() => {
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const Linear = useCallback(() => {
+    return (
+      <LinearGradient
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.balanceSkeletonLinear}
+        colors={[colors2024['neutral-bg-1'], colors2024['neutral-line']]}
+      />
+    );
+  }, [colors2024, styles.balanceSkeletonLinear]);
+
+  return (
+    <CustomSkeleton
+      animation="wave"
+      LinearGradientComponent={Linear}
+      style={styles.balanceSkeleton}
+    />
+  );
+});
+
 const CustomTestnetTokenRow = memo(
   ({
     row,
@@ -98,7 +122,9 @@ const CustomTestnetTokenRow = memo(
     onPress,
     onGroupPress,
   }: {
-    row: CustomTestnetTokenDisplayRow;
+    row: CustomTestnetTokenDisplayRow & {
+      balanceLoading?: boolean;
+    };
     account?: KeyringAccountWithAlias;
     renderAccount?(
       account: KeyringAccountWithAlias,
@@ -134,9 +160,13 @@ const CustomTestnetTokenRow = memo(
               ? renderAccount(account, styles.accountText)
               : null}
           </View>
-          <Text numberOfLines={1} style={styles.tokenBalance}>
-            {formatAmount(row.token.amount, 4, true)}
-          </Text>
+          {row.balanceLoading ? (
+            <TokenBalanceSkeleton />
+          ) : (
+            <Text numberOfLines={1} style={styles.tokenBalance}>
+              {formatAmount(row.token.amount, 4, true)}
+            </Text>
+          )}
         </View>
       </TouchableOpacity>
     );
@@ -180,6 +210,38 @@ export const CustomTestnetAssetSection = memo(
         token => !loadedTokenKeys.has(getSectionTokenKey(token)),
       );
     }, [data.chain.id, data.tokens, expanded, hasLoaded, tokens]);
+    const rowsToRender = useMemo(() => {
+      const loadedRows = displayRows;
+
+      if (!expanded || (hasLoaded && !loading && !missingLoadedTokens.length)) {
+        return loadedRows;
+      }
+
+      const loadedTokenKeys = new Set(
+        tokens.map(token => `${data.chain.id}:${token.id.toLowerCase()}`),
+      );
+      const loadingRows = data.tokens
+        .filter(token => !loadedTokenKeys.has(getSectionTokenKey(token)))
+        .map(token => ({
+          key: `loading-${getSectionTokenKey(token)}`,
+          token: makeMetadataTokenItem(token, data.chain.serverId),
+          tokens: [],
+          mode: 'token' as const,
+          balanceLoading: true,
+        }));
+
+      return [...loadedRows, ...loadingRows];
+    }, [
+      data.chain.id,
+      data.chain.serverId,
+      data.tokens,
+      displayRows,
+      expanded,
+      hasLoaded,
+      loading,
+      missingLoadedTokens.length,
+      tokens,
+    ]);
 
     const handleToggle = useCallback(() => {
       setExpanded(value => !value);
@@ -289,10 +351,8 @@ export const CustomTestnetAssetSection = memo(
               style={styles.chainName}>
               {data.chain.name}
             </Text>
-            <RcArrowDownCC
-              width={16}
-              height={16}
-              color={colors2024['neutral-foot']}
+            <RcArrowDown
+              color={colors2024['neutral-secondary']}
               style={expanded ? styles.caretExpanded : null}
             />
           </View>
@@ -319,29 +379,20 @@ export const CustomTestnetAssetSection = memo(
         {expanded ? (
           <View style={styles.expandedContent}>
             <View style={styles.divider} />
-            {loading && !tokens.length ? (
-              <View style={styles.loadingRow}>
-                <ActivityIndicator
-                  color={colors2024['neutral-secondary']}
-                  size="small"
-                />
-              </View>
-            ) : (
-              displayRows.map(row => (
-                <CustomTestnetTokenRow
-                  key={row.key}
-                  row={row}
-                  account={
-                    !hideAccount && row.mode === 'token'
-                      ? getAccountByAddress(row.token.owner_addr)
-                      : undefined
-                  }
-                  renderAccount={renderAccount}
-                  onPress={onTokenPress}
-                  onGroupPress={onTokenGroupPress}
-                />
-              ))
-            )}
+            {rowsToRender.map(row => (
+              <CustomTestnetTokenRow
+                key={row.key}
+                row={row}
+                account={
+                  !hideAccount && row.mode === 'token'
+                    ? getAccountByAddress(row.token.owner_addr)
+                    : undefined
+                }
+                renderAccount={renderAccount}
+                onPress={onTokenPress}
+                onGroupPress={onTokenGroupPress}
+              />
+            ))}
           </View>
         ) : null}
       </View>
@@ -443,11 +494,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       height: StyleSheet.hairlineWidth,
       backgroundColor: colors2024['neutral-line'],
     },
-    loadingRow: {
-      height: 74,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
     tokenRow: {
       height: 74,
       paddingLeft: 12,
@@ -494,6 +540,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       lineHeight: 20,
       fontWeight: '700',
       textAlign: 'right',
+    },
+    balanceSkeleton: {
+      width: 76,
+      height: 20,
+      borderRadius: 100,
+      backgroundColor: colors2024['neutral-line'],
+    },
+    balanceSkeletonLinear: {
+      height: '100%',
     },
   }),
 );
