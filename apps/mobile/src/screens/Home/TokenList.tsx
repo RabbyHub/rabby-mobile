@@ -51,6 +51,15 @@ import useTokenList, {
 import { formatNetworth } from '@/utils/math';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
+import { CustomTestnetAssetSection } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/CustomTestnetAssetSection';
+import { CustomTestnetAssetDivider } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/CustomTestnetAssetDivider';
+import { useSingleAddressCustomTestnetAssetSections } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/useCustomTestnetAssetSections';
+import type { CustomTestnetAssetSectionData } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/types';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 type TokenListItem =
   | {
@@ -59,6 +68,13 @@ type TokenListItem =
     }
   | {
       type: 'toggle_token_fold';
+    }
+  | {
+      type: 'custom_testnet_assets';
+      data: CustomTestnetAssetSectionData;
+    }
+  | {
+      type: 'custom_testnet_divider';
     }
   | {
       type: 'scam_token';
@@ -150,6 +166,23 @@ interface Props {
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
+const EMPTY_CUSTOM_TESTNET_SECTIONS: CustomTestnetAssetSectionData[] = [];
+
+const appendCustomTestnetItems = (
+  items: TokenListItem[],
+  sections: CustomTestnetAssetSectionData[],
+) => {
+  if (!sections.length) {
+    return;
+  }
+  items.push({ type: 'custom_testnet_divider' });
+  sections.forEach(section => {
+    items.push({
+      type: 'custom_testnet_assets',
+      data: section,
+    });
+  });
+};
 
 export const TokenList = ({
   noAssetsOnAnyChain,
@@ -168,6 +201,9 @@ export const TokenList = ({
   const [foldScam, setFoldScam] = useState(true);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const [customTokenListVersion, setCustomTokenListVersion] = useState(0);
+  const [customTestnetCollapseKey, setCustomTestnetCollapseKey] = useState(0);
+  const [hasRequestedTokenList, setHasRequestedTokenList] = useState(false);
   const isScreenFocused = useIsFocused();
 
   const focusedTab = useFocusedTab();
@@ -175,8 +211,29 @@ export const TokenList = ({
     return focusedTab === 'tokens';
   }, [focusedTab]);
 
+  useEffect(() => {
+    if (isFocused) {
+      setCustomTokenListVersion(version => version + 1);
+    } else {
+      setCustomTestnetCollapseKey(key => key + 1);
+    }
+  }, [isFocused]);
+
   const currentAddress = currentAccount?.address;
   const lowerAddress = currentAddress?.toLowerCase();
+  useEffect(() => {
+    setHasRequestedTokenList(false);
+  }, [lowerAddress]);
+
+  const {
+    sections: customTestnetSections,
+    loadTokens: loadCustomTestnetTokens,
+    loadToken: loadCustomTestnetToken,
+  } = useSingleAddressCustomTestnetAssetSections(
+    currentAddress,
+    customTokenListVersion,
+  );
+  const shouldShowCustomTestnetSections = !selectedChain && !isLpTokenEnabled;
 
   useEffect(() => {
     if (!currentAddress) {
@@ -240,24 +297,35 @@ export const TokenList = ({
     [foldCoreUsdValue],
   );
 
-  const isLoading = useTokenList(state => {
-    if (!lowerAddress) {
-      return false;
-    }
-    return !!state.isLoadingByAddress[lowerAddress]?.loading;
-  });
-  const isAllLoading = useTokenList(state => {
-    if (!lowerAddress) {
-      return false;
-    }
-    return !!state.isLoadingByAddress[lowerAddress]?.allLoading;
-  });
+  const { isLoading, isAllLoading } = useTokenList(
+    useShallow(state => {
+      if (!lowerAddress) {
+        return {
+          isLoading: false,
+          isAllLoading: false,
+        };
+      }
+      const loadingState = state.isLoadingByAddress[lowerAddress];
+      return {
+        isLoading: !!loadingState?.loading,
+        isAllLoading: !!loadingState?.allLoading,
+      };
+    }),
+  );
+  const visibleCustomTestnetSections =
+    shouldShowCustomTestnetSections &&
+    hasRequestedTokenList &&
+    !isLoading &&
+    !isAllLoading
+      ? customTestnetSections
+      : EMPTY_CUSTOM_TESTNET_SECTIONS;
   const getTokenList = useTokenList(s => s.getTokenList);
 
   const refreshTokenList = useCallback(() => {
     if (!currentAddress) {
       return;
     }
+    setHasRequestedTokenList(true);
     getTokenList(currentAddress);
   }, [currentAddress, getTokenList]);
 
@@ -284,12 +352,15 @@ export const TokenList = ({
 
   const dataList = useMemo(() => {
     const items: TokenListItem[] = [];
+    const hasNoTokenItems =
+      unFoldTokenIds.length + foldTokenIds.length + scamTokenIds.length === 0;
 
     unFoldTokenIds.forEach(tokenId => {
       items.push({ type: 'unfold_token', tokenId });
     });
 
-    const hasFoldSection = hasFoldTokens || isLpTokenEnabled;
+    const hasFoldContent = foldTokenIds.length + scamTokenIds.length > 0;
+    const hasFoldSection = hasFoldContent || isLpTokenEnabled;
     if (hasFoldSection) {
       items.push({ type: 'toggle_token_fold' });
       if (!foldHideList) {
@@ -311,11 +382,17 @@ export const TokenList = ({
             });
           }
         }
+
+        if (hasFoldContent) {
+          appendCustomTestnetItems(items, visibleCustomTestnetSections);
+        }
       }
     }
 
     if (
-      (isLoading && items.length === 0) ||
+      (isLoading &&
+        items.length === 0 &&
+        visibleCustomTestnetSections.length === 0) ||
       (isAllLoading && isLpTokenEnabled)
     ) {
       items.push(
@@ -326,7 +403,11 @@ export const TokenList = ({
       );
     }
 
-    if (!isLoading && items.length === 0) {
+    if (
+      !isLoading &&
+      hasNoTokenItems &&
+      (items.length === 0 || visibleCustomTestnetSections.length > 0)
+    ) {
       if (noAnyAssets) {
         // items.push({ type: 'empty-token' });
         items.push({
@@ -345,12 +426,15 @@ export const TokenList = ({
       }
     }
 
+    if (!hasFoldContent) {
+      appendCustomTestnetItems(items, visibleCustomTestnetSections);
+    }
+
     return items;
   }, [
     foldHideList,
     foldScam,
     foldTokenIds,
-    hasFoldTokens,
     isAllLoading,
     isLoading,
     isLpTokenEnabled,
@@ -359,6 +443,7 @@ export const TokenList = ({
     scamTokenPreviewLogoUrls,
     t,
     unFoldTokenIds,
+    visibleCustomTestnetSections,
   ]);
 
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
@@ -371,7 +456,6 @@ export const TokenList = ({
 
   const handleOpenTokenDetail = useCallback(
     (token: ITokenItem) => {
-      console.log(currentAccount);
       navigateDeprecated(RootNames.TokenDetail, {
         token,
         isSingleAddress: true,
@@ -379,6 +463,45 @@ export const TokenList = ({
       });
     },
     [currentAccount],
+  );
+
+  const handleOpenCustomTestnetTokenDetail = useCallback(
+    (token: ITokenItem) => {
+      navigateDeprecated(RootNames.TokenDetail, {
+        token,
+        isSingleAddress: true,
+        account: currentAccount as any,
+        isCustomTestnetToken: true,
+      });
+    },
+    [currentAccount],
+  );
+
+  const getCustomTestnetAccountByAddress = useCallback(() => undefined, []);
+
+  const handleCustomTestnetTokenButtonPress = useCallback(
+    (data: CustomTestnetAssetSectionData) => {
+      let modalId: ReturnType<typeof createGlobalBottomSheetModal2024> | null =
+        null;
+      const closeModal = () => {
+        if (!modalId) {
+          return;
+        }
+        removeGlobalBottomSheetModal2024(modalId);
+        modalId = null;
+      };
+
+      modalId = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.CUSTOM_TESTNET_ADD_TOKEN,
+        chain: data.chain,
+        onCancel: closeModal,
+        onConfirm: () => {
+          setCustomTokenListVersion(version => version + 1);
+          closeModal();
+        },
+      });
+    },
+    [],
   );
 
   const handleRefresh = useCallback(async () => {
@@ -451,6 +574,29 @@ export const TokenList = ({
               }}
             />
           );
+        case 'custom_testnet_assets':
+          return (
+            <View style={styles.customTestnetSectionWrap}>
+              <CustomTestnetAssetSection
+                data={item.data}
+                tokenButtonLabel={t('page.singleHome.sectionHeader.Token')}
+                loadTokens={loadCustomTestnetTokens}
+                loadToken={loadCustomTestnetToken}
+                getAccountByAddress={getCustomTestnetAccountByAddress}
+                tokenDisplayMode="byAsset"
+                hideAccount
+                onTokenPress={handleOpenCustomTestnetTokenDetail}
+                onTokenButtonPress={handleCustomTestnetTokenButtonPress}
+                collapseKey={customTestnetCollapseKey}
+              />
+            </View>
+          );
+        case 'custom_testnet_divider':
+          return (
+            <CustomTestnetAssetDivider
+              style={styles.singleCustomTestnetDivider}
+            />
+          );
         case 'empty-token':
           return (
             <EmptyTokenRow
@@ -478,12 +624,19 @@ export const TokenList = ({
     },
     [
       currentAccount,
+      customTestnetCollapseKey,
       foldHideList,
       foldTokenUsdValue,
       handleOpenTokenDetail,
+      handleOpenCustomTestnetTokenDetail,
+      handleCustomTestnetTokenButtonPress,
       isLight,
       isLpTokenEnabled,
+      getCustomTestnetAccountByAddress,
+      loadCustomTestnetToken,
+      loadCustomTestnetTokens,
       styles,
+      t,
       tokenRowStyle,
     ],
   );
@@ -494,6 +647,12 @@ export const TokenList = ({
     }
     if (item.type === 'scam_token') {
       return `scam-token-${item.data.total}`;
+    }
+    if (item.type === 'custom_testnet_assets') {
+      return `custom-testnet-assets-${item.data.chain.id}`;
+    }
+    if (item.type === 'custom_testnet_divider') {
+      return 'custom-testnet-divider';
     }
     if (item.type === 'loading-skeleton') {
       return `loading-${item.data}`;
@@ -598,6 +757,13 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   buttonHeader: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  customTestnetSectionWrap: {
+    paddingHorizontal: 16,
+  },
+  singleCustomTestnetDivider: {
+    marginBottom: 9,
+    paddingHorizontal: 32.5,
   },
   assetHeader: {
     backgroundColor: ctx.colors2024['neutral-bg-gray'],

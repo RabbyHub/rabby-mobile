@@ -6,7 +6,13 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ListRenderItem, View, Dimensions, ViewStyle } from 'react-native';
+import {
+  ListRenderItem,
+  View,
+  Dimensions,
+  ViewStyle,
+  TextStyle,
+} from 'react-native';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { useShallow } from 'zustand/shallow';
 
@@ -64,6 +70,11 @@ import { RNGHRefreshControl } from '@/components/customized/reexports';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import addressBalanceStore from '@/store/balance';
 import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNudgedTickerText';
+import { CustomTestnetAssetSection } from './CustomTestnetAssets/CustomTestnetAssetSection';
+import { CustomTestnetAssetDivider } from './CustomTestnetAssets/CustomTestnetAssetDivider';
+import { useCustomTestnetAssetSections } from './CustomTestnetAssets/useCustomTestnetAssetSections';
+import type { CustomTestnetAssetSectionData } from './CustomTestnetAssets/types';
+import { AccountOverview } from '@/screens/Home/components/AccountOverview';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -175,6 +186,13 @@ type TokenListItem =
       type: 'toggle_token_fold';
     }
   | {
+      type: 'custom_testnet_assets';
+      data: CustomTestnetAssetSectionData;
+    }
+  | {
+      type: 'custom_testnet_divider';
+    }
+  | {
       type: 'scam_header';
       data: {
         total: number;
@@ -191,6 +209,23 @@ type TokenListItem =
     };
 
 const { batchGetTokenList } = useTokenList.getState();
+const EMPTY_CUSTOM_TESTNET_SECTIONS: CustomTestnetAssetSectionData[] = [];
+
+const appendCustomTestnetItems = (
+  items: TokenListItem[],
+  sections: CustomTestnetAssetSectionData[],
+) => {
+  if (!sections.length) {
+    return;
+  }
+  items.push({ type: 'custom_testnet_divider' });
+  sections.forEach(section => {
+    items.push({
+      type: 'custom_testnet_assets',
+      data: section,
+    });
+  });
+};
 
 export const TokenList = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -204,13 +239,29 @@ export const TokenList = () => {
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
+  const [customTokenListVersion, setCustomTokenListVersion] = useState(0);
+  const [customTestnetCollapseKey, setCustomTestnetCollapseKey] = useState(0);
 
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
 
   const getAccountByAddress = useFindAccountByAddress();
+  const {
+    sections: customTestnetSections,
+    loadTokens: loadCustomTestnetTokens,
+    loadToken: loadCustomTestnetToken,
+  } = useCustomTestnetAssetSections(myTop10Addresses, customTokenListVersion);
+  const shouldShowCustomTestnetSections = !chain && !isLpTokenEnabled;
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
+
+  useEffect(() => {
+    if (isFocused) {
+      setCustomTokenListVersion(version => version + 1);
+    } else {
+      setCustomTestnetCollapseKey(key => key + 1);
+    }
+  }, [isFocused]);
 
   const multiAssetsKey = useMemo(
     () =>
@@ -284,6 +335,10 @@ export const TokenList = () => {
   );
 
   const isLoading = useTokenList(s => s.isLoading);
+  const visibleCustomTestnetSections =
+    shouldShowCustomTestnetSections && !isLoading
+      ? customTestnetSections
+      : EMPTY_CUSTOM_TESTNET_SECTIONS;
 
   useEffect(() => {
     batchGetTokenList(myTop10Addresses);
@@ -308,7 +363,13 @@ export const TokenList = () => {
     isFocused;
 
   const handleOpenTokenDetail = useCallback(
-    (token: ITokenItem, account?: KeyringAccountWithAlias) => {
+    (
+      token: ITokenItem,
+      account?: KeyringAccountWithAlias,
+      options?: {
+        isCustomTestnetToken?: boolean;
+      },
+    ) => {
       if (isTabsSwiping.value) {
         return;
       }
@@ -317,6 +378,7 @@ export const TokenList = () => {
         unHold: false,
         needUseCacheToken: true,
         account,
+        isCustomTestnetToken: options?.isCustomTestnetToken,
       });
     },
     [],
@@ -336,6 +398,55 @@ export const TokenList = () => {
       );
     },
     [getAccountByAddress, handleOpenTokenDetail, tokenDisplayMode],
+  );
+
+  const handleCustomTestnetTokenPress = useCallback(
+    (token: ITokenItem) => {
+      if (isTabsSwiping.value) {
+        return;
+      }
+
+      handleOpenTokenDetail(token, getAccountByAddress(token.owner_addr), {
+        isCustomTestnetToken: true,
+      });
+    },
+    [getAccountByAddress, handleOpenTokenDetail],
+  );
+
+  const handleOpenTokenGroupDetail = useCallback(
+    (
+      groupItems: ITokenItem[],
+      options?: {
+        amountOnly?: boolean;
+      },
+    ) => {
+      if (!groupItems.length) {
+        return;
+      }
+
+      const maxHeight = Dimensions.get('window').height - 160;
+      const listHeight = groupItems.length * (ASSETS_ITEM_HEIGHT_NEW + 8) + 28;
+      const snapPoint = Math.min(maxHeight, listHeight + 100);
+      const modalId = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.TOKEN_GROUP_DETAIL,
+        tokens: groupItems,
+        amountOnly: options?.amountOnly,
+        isCustomTestnetToken: options?.amountOnly,
+        onCancel: () => {
+          removeGlobalBottomSheetModal2024(modalId);
+        },
+        bottomSheetModalProps: {
+          snapPoints: [snapPoint],
+          handleStyle: {
+            backgroundColor: colors2024['neutral-bg-0'],
+          },
+          enableContentPanningGesture: true,
+          enablePanDownToClose: true,
+          enableDismissOnClose: true,
+        },
+      });
+    },
+    [colors2024],
   );
 
   const handleGroupPress = useCallback(
@@ -359,27 +470,51 @@ export const TokenList = () => {
         );
         return;
       }
-      const maxHeight = Dimensions.get('window').height - 160;
-      const listHeight = groupItems.length * (ASSETS_ITEM_HEIGHT_NEW + 8) + 28;
-      const snapPoint = Math.min(maxHeight, listHeight + 100);
-      const modalId = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.TOKEN_GROUP_DETAIL,
-        tokens: groupItems,
-        onCancel: () => {
-          removeGlobalBottomSheetModal2024(modalId);
-        },
-        bottomSheetModalProps: {
-          snapPoints: [snapPoint],
-          handleStyle: {
-            backgroundColor: colors2024['neutral-bg-0'],
-          },
-          enableContentPanningGesture: true,
-          enablePanDownToClose: true,
-          enableDismissOnClose: true,
+      handleOpenTokenGroupDetail(groupItems);
+    },
+    [getAccountByAddress, handleOpenTokenDetail, handleOpenTokenGroupDetail],
+  );
+
+  const handleCustomTestnetTokenGroupPress = useCallback(
+    (groupItems: ITokenItem[]) => {
+      if (isTabsSwiping.value) {
+        return;
+      }
+      handleOpenTokenGroupDetail(groupItems, { amountOnly: true });
+    },
+    [handleOpenTokenGroupDetail],
+  );
+
+  const renderCustomTestnetAccount = useCallback(
+    (account: KeyringAccountWithAlias, textStyle: TextStyle) => (
+      <AccountOverview account={account} logoSize={14} textStyle={textStyle} />
+    ),
+    [],
+  );
+
+  const handleCustomTestnetTokenButtonPress = useCallback(
+    (data: CustomTestnetAssetSectionData) => {
+      let modalId: ReturnType<typeof createGlobalBottomSheetModal2024> | null =
+        null;
+      const closeModal = () => {
+        if (!modalId) {
+          return;
+        }
+        removeGlobalBottomSheetModal2024(modalId);
+        modalId = null;
+      };
+
+      modalId = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.CUSTOM_TESTNET_ADD_TOKEN,
+        chain: data.chain,
+        onCancel: closeModal,
+        onConfirm: () => {
+          setCustomTokenListVersion(version => version + 1);
+          closeModal();
         },
       });
     },
-    [colors2024, getAccountByAddress, handleOpenTokenDetail],
+    [],
   );
 
   const handleOpenScamToken = useCallback(() => {
@@ -420,7 +555,14 @@ export const TokenList = () => {
   const dataList = useMemo(() => {
     const items: TokenListItem[] = [];
     const hasNoTokenItems =
-      tokenRows.length + foldRows.length + scamRows.length === 0;
+      tokenRows.length +
+        foldRows.length +
+        scamRows.length +
+        visibleCustomTestnetSections.length ===
+      0;
+    const hasDefaultTokenSections =
+      tokenRows.length + foldRows.length + scamRows.length > 0;
+    const hasFoldContent = foldRows.length + scamRows.length > 0;
 
     if (isLoading && hasNoTokenItems) {
       items.push(
@@ -439,7 +581,6 @@ export const TokenList = () => {
           name: t('page.singleHome.sectionHeader.Token'),
         }),
       });
-      return items;
     }
 
     tokenRows.forEach((row, index) => {
@@ -450,9 +591,11 @@ export const TokenList = () => {
       });
     });
 
-    items.push({ type: 'toggle_token_fold' });
+    if (hasDefaultTokenSections) {
+      items.push({ type: 'toggle_token_fold' });
+    }
 
-    if (!foldHideList) {
+    if (hasDefaultTokenSections && !foldHideList) {
       foldRows.forEach(row => {
         items.push({ type: 'fold_token', row });
       });
@@ -472,6 +615,14 @@ export const TokenList = () => {
           });
         }
       }
+
+      if (hasFoldContent) {
+        appendCustomTestnetItems(items, visibleCustomTestnetSections);
+      }
+    }
+
+    if (!hasFoldContent) {
+      appendCustomTestnetItems(items, visibleCustomTestnetSections);
     }
 
     return items;
@@ -479,6 +630,7 @@ export const TokenList = () => {
     foldRows,
     scamRows,
     tokenRows,
+    visibleCustomTestnetSections,
     foldHideList,
     foldScam,
     hasNoAssets,
@@ -532,6 +684,25 @@ export const TokenList = () => {
               onValueChange={setIsLpTokenEnabled}
             />
           );
+        case 'custom_testnet_assets':
+          return (
+            <CustomTestnetAssetSection
+              style={styles.customTestnetSection}
+              data={item.data}
+              tokenButtonLabel={t('page.singleHome.sectionHeader.Token')}
+              loadTokens={loadCustomTestnetTokens}
+              loadToken={loadCustomTestnetToken}
+              getAccountByAddress={getAccountByAddress}
+              tokenDisplayMode={tokenDisplayMode}
+              renderAccount={renderCustomTestnetAccount}
+              onTokenPress={handleCustomTestnetTokenPress}
+              onTokenGroupPress={handleCustomTestnetTokenGroupPress}
+              onTokenButtonPress={handleCustomTestnetTokenButtonPress}
+              collapseKey={customTestnetCollapseKey}
+            />
+          );
+        case 'custom_testnet_divider':
+          return <CustomTestnetAssetDivider />;
         case 'scam_header':
           return (
             <View style={styles.foldRowWrap}>
@@ -559,15 +730,23 @@ export const TokenList = () => {
     },
     [
       tokenDisplayMode,
+      customTestnetCollapseKey,
       foldHideList,
       foldTokenUsdValue,
       getAccountByAddress,
       handleGroupPress,
+      handleCustomTestnetTokenPress,
+      handleCustomTestnetTokenButtonPress,
       handleOpenScamToken,
+      handleCustomTestnetTokenGroupPress,
+      renderCustomTestnetAccount,
       handleTokenPress,
       handleToggleTokenFold,
       isLpTokenEnabled,
+      loadCustomTestnetToken,
+      loadCustomTestnetTokens,
       styles,
+      t,
     ],
   );
 
@@ -577,6 +756,12 @@ export const TokenList = () => {
     }
     if (item.type === 'scam_header') {
       return `scam-header-${item.data.total}`;
+    }
+    if (item.type === 'custom_testnet_assets') {
+      return `custom-testnet-assets-${item.data.chain.id}`;
+    }
+    if (item.type === 'custom_testnet_divider') {
+      return 'custom-testnet-divider';
     }
     if (item.type === 'empty-assets') {
       return `empty-assets-${item.data}`;
@@ -690,6 +875,9 @@ const getStyles = createGetStyles2024(() => ({
   foldRowWrap: {
     height: ASSETS_ITEM_HEIGHT_NEW,
     marginBottom: 8,
+  },
+  customTestnetSection: {
+    marginBottom: 12,
   },
   renderItemWrapper: {
     height: ASSETS_ITEM_HEIGHT_NEW,

@@ -739,6 +739,9 @@ export const TokenSelectorSheetModal = ({
                 const disabled =
                   !!supportChainServerIdSet &&
                   !supportChainServerIdSet.has(token.chain);
+                const isCustomTestnetToken =
+                  selectTab === 'testnet' ||
+                  !!findChainByServerID(token.chain)?.isTestnet;
 
                 let percentColor = colors2024['red-default'];
                 if (
@@ -787,6 +790,7 @@ export const TokenSelectorSheetModal = ({
                       <TokenItemContextMenu
                         token={token}
                         needToTokenMarketInfo={needToTokenMarketInfo}
+                        isCustomTestnetToken={isCustomTestnetToken}
                         closeBottomSheet={() => {
                           toggleShowSheetModal('destroy');
                         }}
@@ -824,17 +828,22 @@ export const TokenSelectorSheetModal = ({
                               // setTimeout(() => {
                               //   toggleShowSheetModal('destroy');
                               // }, 100);
-                              navigateDeprecated(
-                                needToTokenMarketInfo
-                                  ? RootNames.TokenMarketInfo
-                                  : RootNames.TokenDetail,
-                                {
+                              if (needToTokenMarketInfo) {
+                                navigateDeprecated(RootNames.TokenMarketInfo, {
                                   token,
                                   needUseCacheToken: true,
                                   tokenSelectType: type,
                                   account: ownerAccount,
-                                },
-                              );
+                                });
+                                return;
+                              }
+                              navigateDeprecated(RootNames.TokenDetail, {
+                                token,
+                                needUseCacheToken: true,
+                                tokenSelectType: type,
+                                account: ownerAccount,
+                                isCustomTestnetToken,
+                              });
                             }}
                             afterNode={
                               lightDisable && (
@@ -872,6 +881,7 @@ export const TokenSelectorSheetModal = ({
                         toggleShowSheetModal('destroy');
                       }}
                       needToTokenMarketInfo={needToTokenMarketInfo}
+                      isCustomTestnetToken={isCustomTestnetToken}
                       type={type}>
                       <TouchableOpacity
                         key={token_key}
@@ -1091,6 +1101,7 @@ export const TokenSelectorSheetModal = ({
       supportChainServerIdSet,
       debouncedQuery,
       needToTokenMarketInfo,
+      selectTab,
       type,
       styles,
       isBridgeTo,
