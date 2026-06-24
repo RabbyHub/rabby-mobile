@@ -2,12 +2,11 @@ import { useCallback, useMemo } from 'react';
 import PQueue from 'p-queue';
 
 import { apiCustomTestnet } from '@/core/apis';
-import { customTestnetService } from '@/core/services/shared';
+import { useCustomTestnetAssetSectionsData } from '@/store/customTestnet';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
 
 import type {
   CustomTestnetAssetSectionToken,
-  CustomTestnetAssetSectionData,
   LoadCustomTestnetAssetToken,
   LoadCustomTestnetAssetTokens,
 } from './types';
@@ -49,43 +48,8 @@ const makeFallbackTokenItem = (
 ): ITokenItem => makeMetadataTokenItem(token, chain.serverId, ownerAddress);
 
 // for multi-address
-export function useCustomTestnetAssetSections(
-  addresses: string[],
-  customTokenListVersion = 0,
-) {
-  const sections = useMemo<CustomTestnetAssetSectionData[]>(() => {
-    customTokenListVersion;
-    const chains = apiCustomTestnet.getCustomTestnetList();
-    const customTokens = customTestnetService.store.customTokenList || [];
-
-    return chains
-      .map(chain => {
-        const tokens = customTokens
-          .filter(token => token.chainId === chain.id)
-          .map(token => ({
-            id: token.id,
-            chainId: token.chainId,
-            symbol: token.symbol,
-            decimals: token.decimals,
-          }));
-
-        return {
-          chain,
-          ownerAddresses: addresses,
-          tokens: [
-            {
-              id: chain.nativeTokenAddress,
-              chainId: chain.id,
-              symbol: chain.nativeTokenSymbol,
-              decimals: chain.nativeTokenDecimals,
-              isNative: true,
-            },
-            ...tokens,
-          ],
-        };
-      })
-      .filter(section => section.tokens.length > 0);
-  }, [addresses, customTokenListVersion]);
+export function useCustomTestnetAssetSections(addresses: string[]) {
+  const sections = useCustomTestnetAssetSectionsData(addresses);
 
   const loadTokenItems = useCallback(
     async (
@@ -166,14 +130,11 @@ export function useCustomTestnetAssetSections(
   };
 }
 
-export function useSingleAddressCustomTestnetAssetSections(
-  address?: string,
-  customTokenListVersion = 0,
-) {
+export function useSingleAddressCustomTestnetAssetSections(address?: string) {
   const addresses = useMemo(
     () => (address ? [address] : EMPTY_ADDRESSES),
     [address],
   );
 
-  return useCustomTestnetAssetSections(addresses, customTokenListVersion);
+  return useCustomTestnetAssetSections(addresses);
 }

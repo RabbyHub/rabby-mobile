@@ -239,7 +239,6 @@ export const TokenList = () => {
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
-  const [customTokenListVersion, setCustomTokenListVersion] = useState(0);
   const [customTestnetCollapseKey, setCustomTestnetCollapseKey] = useState(0);
 
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
@@ -249,16 +248,14 @@ export const TokenList = () => {
     sections: customTestnetSections,
     loadTokens: loadCustomTestnetTokens,
     loadToken: loadCustomTestnetToken,
-  } = useCustomTestnetAssetSections(myTop10Addresses, customTokenListVersion);
+  } = useCustomTestnetAssetSections(myTop10Addresses);
   const shouldShowCustomTestnetSections = !chain && !isLpTokenEnabled;
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
 
   useEffect(() => {
-    if (isFocusing) {
-      setCustomTokenListVersion(version => version + 1);
-    } else {
+    if (!isFocusing) {
       setCustomTestnetCollapseKey(key => key + 1);
     }
   }, [isFocusing]);
@@ -509,7 +506,6 @@ export const TokenList = () => {
         chain: data.chain,
         onCancel: closeModal,
         onConfirm: () => {
-          setCustomTokenListVersion(version => version + 1);
           closeModal();
         },
       });

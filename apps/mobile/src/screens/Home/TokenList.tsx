@@ -201,7 +201,6 @@ export const TokenList = ({
   const [foldScam, setFoldScam] = useState(true);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
-  const [customTokenListVersion, setCustomTokenListVersion] = useState(0);
   const [customTestnetCollapseKey, setCustomTestnetCollapseKey] = useState(0);
   const [hasRequestedTokenList, setHasRequestedTokenList] = useState(false);
   const isScreenFocused = useIsFocused();
@@ -227,10 +226,7 @@ export const TokenList = ({
     sections: customTestnetSections,
     loadTokens: loadCustomTestnetTokens,
     loadToken: loadCustomTestnetToken,
-  } = useSingleAddressCustomTestnetAssetSections(
-    currentAddress,
-    customTokenListVersion,
-  );
+  } = useSingleAddressCustomTestnetAssetSections(currentAddress);
   const shouldShowCustomTestnetSections = !selectedChain && !isLpTokenEnabled;
 
   useEffect(() => {
@@ -494,7 +490,6 @@ export const TokenList = ({
         chain: data.chain,
         onCancel: closeModal,
         onConfirm: () => {
-          setCustomTokenListVersion(version => version + 1);
           closeModal();
         },
       });
