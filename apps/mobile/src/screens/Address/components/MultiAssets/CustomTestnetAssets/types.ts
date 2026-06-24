@@ -23,3 +23,11 @@ export type LoadCustomTestnetAssetTokensParams = {
 export type LoadCustomTestnetAssetTokens = (
   params: LoadCustomTestnetAssetTokensParams,
 ) => Promise<ITokenItem[]>;
+
+export type LoadCustomTestnetAssetTokenParams = {
+  token: CustomTestnetAssetSectionToken;
+};
+
+export type LoadCustomTestnetAssetToken = (
+  params: LoadCustomTestnetAssetTokenParams,
+) => Promise<ITokenItem[]>;

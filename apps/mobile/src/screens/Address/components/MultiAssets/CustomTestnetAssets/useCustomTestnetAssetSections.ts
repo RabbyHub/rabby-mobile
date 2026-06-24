@@ -6,7 +6,9 @@ import { customTestnetService } from '@/core/services/shared';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
 
 import type {
+  CustomTestnetAssetSectionToken,
   CustomTestnetAssetSectionData,
+  LoadCustomTestnetAssetToken,
   LoadCustomTestnetAssetTokens,
 } from './types';
 import type { ITokenItem } from '@/types/assets';
@@ -20,8 +22,12 @@ const customTestnetTokenListQueue = new PQueue({
 });
 
 // for multi-address
-export function useCustomTestnetAssetSections(addresses: string[]) {
+export function useCustomTestnetAssetSections(
+  addresses: string[],
+  customTokenListVersion = 0,
+) {
   const sections = useMemo<CustomTestnetAssetSectionData[]>(() => {
+    customTokenListVersion;
     const chains = apiCustomTestnet.getCustomTestnetList();
     const customTokens = customTestnetService.store.customTokenList || [];
 
@@ -51,7 +57,33 @@ export function useCustomTestnetAssetSections(addresses: string[]) {
         };
       })
       .filter(section => section.tokens.length > 0);
-  }, []);
+  }, [customTokenListVersion]);
+
+  const loadTokenItems = useCallback(
+    async (
+      address: string,
+      token: CustomTestnetAssetSectionToken,
+    ): Promise<ITokenItem[]> => {
+      const tokenItem = await customTestnetTokenListQueue.add(async () => {
+        const tokenWithBalance = await apiCustomTestnet.getCustomTestnetToken({
+          address,
+          chainId: token.chainId,
+          tokenId: token.id,
+        });
+
+        const nextTokenItem = customTestnetTokenToTokenItem(tokenWithBalance);
+        return {
+          ...nextTokenItem,
+          owner_addr: address,
+          usd_value: 0,
+          cex_ids: [],
+        } satisfies ITokenItem;
+      });
+
+      return tokenItem ? [tokenItem] : [];
+    },
+    [],
+  );
 
   const loadTokens = useCallback<LoadCustomTestnetAssetTokens>(
     async ({ chainId }) => {
@@ -89,17 +121,36 @@ export function useCustomTestnetAssetSections(addresses: string[]) {
     [addresses],
   );
 
+  const loadToken = useCallback<LoadCustomTestnetAssetToken>(
+    async ({ token }) => {
+      if (!addresses.length) {
+        return [];
+      }
+
+      const tokenGroups = await Promise.all(
+        addresses.map(address => loadTokenItems(address, token)),
+      );
+
+      return tokenGroups.flat();
+    },
+    [addresses, loadTokenItems],
+  );
+
   return {
     sections,
     loadTokens,
+    loadToken,
   };
 }
 
-export function useSingleAddressCustomTestnetAssetSections(address?: string) {
+export function useSingleAddressCustomTestnetAssetSections(
+  address?: string,
+  customTokenListVersion = 0,
+) {
   const addresses = useMemo(
     () => (address ? [address] : EMPTY_ADDRESSES),
     [address],
   );
 
-  return useCustomTestnetAssetSections(addresses);
+  return useCustomTestnetAssetSections(addresses, customTokenListVersion);
 }

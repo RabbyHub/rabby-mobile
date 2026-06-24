@@ -1897,6 +1897,19 @@
       "signTx": {
         "title": "Transaction Data"
       },
+      "addToken": {
+        "title": "Add Custom Network Token",
+        "chain": "Chain",
+        "tokenAddress": "Token Address",
+        "enterAddress": "Enter Address",
+        "foundToken": "Found Token",
+        "checking": "Checking token...",
+        "invalidAddress": "Invalid token address",
+        "notErc20": "No ERC20 token found at this address",
+        "alreadyAdded": "This token has already been added",
+        "added": "Token added",
+        "addFailed": "Failed to add token"
+      },
       "ConfirmModifyRpcModal": {
         "desc": "The chain is already integrated by Rabby. Do you need to modify its RPC URL?"
       }

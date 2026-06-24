@@ -29,8 +29,11 @@ import { formatAmount } from '@/utils/number';
 
 import type {
   CustomTestnetAssetSectionData,
+  CustomTestnetAssetSectionToken,
+  LoadCustomTestnetAssetToken,
   LoadCustomTestnetAssetTokens,
 } from './types';
+import { ChainInitialBadge } from './ChainInitialBadge';
 import {
   getCustomTestnetTokenDisplayRows,
   type CustomTestnetTokenDisplayRow,
@@ -42,6 +45,7 @@ type CustomTestnetAssetSectionProps = {
   style?: StyleProp<ViewStyle>;
   tokenButtonLabel: string;
   loadTokens: LoadCustomTestnetAssetTokens;
+  loadToken: LoadCustomTestnetAssetToken;
   getAccountByAddress(address?: string): KeyringAccountWithAlias | undefined;
   tokenDisplayMode: TokenDisplayMode;
   hideAccount?: boolean;
@@ -60,22 +64,11 @@ const formatTokenCount = (count: number) => {
   return count > 99 ? '99+' : String(count);
 };
 
-const ChainInitialBadge = memo(
-  ({ name, size = 18 }: { name: string; size?: number }) => {
-    const { styles } = useTheme2024({ getStyle });
-    const label = name.substring(0, 3).replace(/\s/g, '').toUpperCase();
+const getSectionTokenKey = (token: CustomTestnetAssetSectionToken) =>
+  `${token.chainId}:${token.id.toLowerCase()}`;
 
-    return (
-      <View
-        style={[
-          styles.chainInitialBadge,
-          { width: size, height: size, borderRadius: size / 3 },
-        ]}>
-        <Text style={styles.chainInitialText}>{label}</Text>
-      </View>
-    );
-  },
-);
+const getTokenItemKey = (token: ITokenItem) =>
+  `${token.chain}:${token.id.toLowerCase()}:${token.owner_addr?.toLowerCase()}`;
 
 const TokenPreviewStack = memo(
   ({ tokens }: { tokens: CustomTestnetAssetSectionData['tokens'] }) => {
@@ -156,6 +149,7 @@ export const CustomTestnetAssetSection = memo(
     style,
     tokenButtonLabel,
     loadTokens,
+    loadToken,
     getAccountByAddress,
     tokenDisplayMode,
     hideAccount,
@@ -174,6 +168,18 @@ export const CustomTestnetAssetSection = memo(
       () => getCustomTestnetTokenDisplayRows(tokens, tokenDisplayMode),
       [tokenDisplayMode, tokens],
     );
+    const missingLoadedTokens = useMemo(() => {
+      if (!expanded || !hasLoaded) {
+        return [];
+      }
+
+      const loadedTokenKeys = new Set(
+        tokens.map(token => `${data.chain.id}:${token.id.toLowerCase()}`),
+      );
+      return data.tokens.filter(
+        token => !loadedTokenKeys.has(getSectionTokenKey(token)),
+      );
+    }, [data.chain.id, data.tokens, expanded, hasLoaded, tokens]);
 
     const handleToggle = useCallback(() => {
       setExpanded(value => !value);
@@ -186,6 +192,13 @@ export const CustomTestnetAssetSection = memo(
       },
       [data, onTokenButtonPress],
     );
+
+    useEffect(() => {
+      requestSeqRef.current += 1;
+      setTokens([]);
+      setLoading(false);
+      setHasLoaded(false);
+    }, [data.chain.id]);
 
     useEffect(() => {
       if (!expanded || hasLoaded) {
@@ -209,6 +222,9 @@ export const CustomTestnetAssetSection = memo(
           console.error('Load custom testnet asset tokens failed:', error);
         })
         .finally(() => {
+          if (cancelled || requestSeqRef.current !== requestSeq) {
+            return;
+          }
           setLoading(false);
         });
 
@@ -216,6 +232,51 @@ export const CustomTestnetAssetSection = memo(
         cancelled = true;
       };
     }, [data.chain.id, expanded, hasLoaded, loadTokens]);
+
+    useEffect(() => {
+      if (!missingLoadedTokens.length) {
+        return;
+      }
+
+      let cancelled = false;
+      const requestSeq = requestSeqRef.current;
+
+      Promise.all(
+        missingLoadedTokens.map(token =>
+          loadToken({
+            token,
+          }),
+        ),
+      )
+        .then(tokenGroups => {
+          if (cancelled || requestSeqRef.current !== requestSeq) {
+            return;
+          }
+
+          const nextTokens = tokenGroups.flat();
+          if (!nextTokens.length) {
+            return;
+          }
+
+          setTokens(prevTokens => {
+            const tokenMap = new Map<string, ITokenItem>();
+            prevTokens.forEach(token => {
+              tokenMap.set(getTokenItemKey(token), token);
+            });
+            nextTokens.forEach(token => {
+              tokenMap.set(getTokenItemKey(token), token);
+            });
+            return Array.from(tokenMap.values());
+          });
+        })
+        .catch(error => {
+          console.error('Load custom testnet asset token failed:', error);
+        });
+
+      return () => {
+        cancelled = true;
+      };
+    }, [loadToken, missingLoadedTokens]);
 
     return (
       <View style={[styles.container, style]}>
@@ -311,21 +372,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-    },
-    chainInitialBadge: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors2024['neutral-foot'],
-      borderWidth: 1.7,
-      borderColor: colors2024['neutral-bg-1'],
-      overflow: 'hidden',
-    },
-    chainInitialText: {
-      color: colors2024['neutral-InvertHighlight'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 6.8,
-      lineHeight: 9,
-      fontWeight: '700',
     },
     chainName: {
       flexShrink: 1,

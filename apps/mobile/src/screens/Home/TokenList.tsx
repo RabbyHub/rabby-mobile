@@ -55,6 +55,11 @@ import { CustomTestnetAssetSection } from '@/screens/Address/components/MultiAss
 import { CustomTestnetAssetDivider } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/CustomTestnetAssetDivider';
 import { useSingleAddressCustomTestnetAssetSections } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/useCustomTestnetAssetSections';
 import type { CustomTestnetAssetSectionData } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/types';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 type TokenListItem =
   | {
@@ -196,6 +201,7 @@ export const TokenList = ({
   const [foldScam, setFoldScam] = useState(true);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const [customTokenListVersion, setCustomTokenListVersion] = useState(0);
   const isScreenFocused = useIsFocused();
 
   const focusedTab = useFocusedTab();
@@ -208,7 +214,11 @@ export const TokenList = ({
   const {
     sections: customTestnetSections,
     loadTokens: loadCustomTestnetTokens,
-  } = useSingleAddressCustomTestnetAssetSections(currentAddress);
+    loadToken: loadCustomTestnetToken,
+  } = useSingleAddressCustomTestnetAssetSections(
+    currentAddress,
+    customTokenListVersion,
+  );
   const shouldShowCustomTestnetSections = !selectedChain && !isLpTokenEnabled;
   const visibleCustomTestnetSections = shouldShowCustomTestnetSections
     ? customTestnetSections
@@ -433,6 +443,31 @@ export const TokenList = ({
 
   const getCustomTestnetAccountByAddress = useCallback(() => undefined, []);
 
+  const handleCustomTestnetTokenButtonPress = useCallback(
+    (data: CustomTestnetAssetSectionData) => {
+      let modalId: ReturnType<typeof createGlobalBottomSheetModal2024> | null =
+        null;
+      const closeModal = () => {
+        if (!modalId) {
+          return;
+        }
+        removeGlobalBottomSheetModal2024(modalId);
+        modalId = null;
+      };
+
+      modalId = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.CUSTOM_TESTNET_ADD_TOKEN,
+        chain: data.chain,
+        onCancel: closeModal,
+        onConfirm: () => {
+          setCustomTokenListVersion(version => version + 1);
+          closeModal();
+        },
+      });
+    },
+    [],
+  );
+
   const handleRefresh = useCallback(async () => {
     if (!currentAddress) {
       return;
@@ -510,10 +545,12 @@ export const TokenList = ({
                 data={item.data}
                 tokenButtonLabel={t('page.singleHome.sectionHeader.Token')}
                 loadTokens={loadCustomTestnetTokens}
+                loadToken={loadCustomTestnetToken}
                 getAccountByAddress={getCustomTestnetAccountByAddress}
                 tokenDisplayMode="byAsset"
                 hideAccount
                 onTokenPress={handleOpenCustomTestnetTokenDetail}
+                onTokenButtonPress={handleCustomTestnetTokenButtonPress}
               />
             </View>
           );
@@ -554,9 +591,11 @@ export const TokenList = ({
       foldTokenUsdValue,
       handleOpenTokenDetail,
       handleOpenCustomTestnetTokenDetail,
+      handleCustomTestnetTokenButtonPress,
       isLight,
       isLpTokenEnabled,
       getCustomTestnetAccountByAddress,
+      loadCustomTestnetToken,
       loadCustomTestnetTokens,
       styles,
       t,

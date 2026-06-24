@@ -239,6 +239,7 @@ export const TokenList = () => {
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
+  const [customTokenListVersion, setCustomTokenListVersion] = useState(0);
 
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
 
@@ -246,7 +247,8 @@ export const TokenList = () => {
   const {
     sections: customTestnetSections,
     loadTokens: loadCustomTestnetTokens,
-  } = useCustomTestnetAssetSections(myTop10Addresses);
+    loadToken: loadCustomTestnetToken,
+  } = useCustomTestnetAssetSections(myTop10Addresses, customTokenListVersion);
   const shouldShowCustomTestnetSections = !chain && !isLpTokenEnabled;
   const visibleCustomTestnetSections = shouldShowCustomTestnetSections
     ? customTestnetSections
@@ -484,6 +486,31 @@ export const TokenList = () => {
     [],
   );
 
+  const handleCustomTestnetTokenButtonPress = useCallback(
+    (data: CustomTestnetAssetSectionData) => {
+      let modalId: ReturnType<typeof createGlobalBottomSheetModal2024> | null =
+        null;
+      const closeModal = () => {
+        if (!modalId) {
+          return;
+        }
+        removeGlobalBottomSheetModal2024(modalId);
+        modalId = null;
+      };
+
+      modalId = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.CUSTOM_TESTNET_ADD_TOKEN,
+        chain: data.chain,
+        onCancel: closeModal,
+        onConfirm: () => {
+          setCustomTokenListVersion(version => version + 1);
+          closeModal();
+        },
+      });
+    },
+    [],
+  );
+
   const handleOpenScamToken = useCallback(() => {
     setFoldScam(false);
   }, []);
@@ -656,11 +683,13 @@ export const TokenList = () => {
               data={item.data}
               tokenButtonLabel={t('page.singleHome.sectionHeader.Token')}
               loadTokens={loadCustomTestnetTokens}
+              loadToken={loadCustomTestnetToken}
               getAccountByAddress={getAccountByAddress}
               tokenDisplayMode={tokenDisplayMode}
               renderAccount={renderCustomTestnetAccount}
               onTokenPress={handleCustomTestnetTokenPress}
               onTokenGroupPress={handleCustomTestnetTokenGroupPress}
+              onTokenButtonPress={handleCustomTestnetTokenButtonPress}
             />
           );
         case 'custom_testnet_divider':
@@ -697,12 +726,14 @@ export const TokenList = () => {
       getAccountByAddress,
       handleGroupPress,
       handleCustomTestnetTokenPress,
+      handleCustomTestnetTokenButtonPress,
       handleOpenScamToken,
       handleCustomTestnetTokenGroupPress,
       renderCustomTestnetAccount,
       handleTokenPress,
       handleToggleTokenFold,
       isLpTokenEnabled,
+      loadCustomTestnetToken,
       loadCustomTestnetTokens,
       styles,
       t,
