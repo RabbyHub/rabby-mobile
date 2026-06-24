@@ -6,6 +6,7 @@ import { StyleProp, TextStyle, View } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Text } from '@/components/Typography';
+import { ellipsisAddress } from '@/utils/address';
 
 export const AccountOverview = ({
   account,
@@ -38,7 +39,7 @@ export const AccountOverview = ({
         numberOfLines={1}
         ellipsizeMode="tail"
         style={[styles.titleText, textStyle]}>
-        {account.aliasName}
+        {account.aliasName || ellipsisAddress(account.address)}
       </Text>
     </View>
   );

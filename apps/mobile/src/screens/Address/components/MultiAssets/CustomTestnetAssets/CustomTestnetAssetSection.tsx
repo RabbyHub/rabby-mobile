@@ -60,6 +60,7 @@ type CustomTestnetAssetSectionProps = {
   onTokenPress(token: ITokenItem): void;
   onTokenGroupPress?(tokens: ITokenItem[]): void;
   onTokenButtonPress?(data: CustomTestnetAssetSectionData): void;
+  collapseKey?: string | number;
 };
 
 const TOKEN_PREVIEW_LIMIT = 3;
@@ -137,6 +138,9 @@ const CustomTestnetTokenRow = memo(
   }) => {
     const { styles } = useTheme2024({ getStyle });
     const handlePress = useCallback(() => {
+      if (row.balanceLoading) {
+        return;
+      }
       if (row.mode === 'group' && onGroupPress) {
         onGroupPress(row.tokens);
         return;
@@ -145,12 +149,16 @@ const CustomTestnetTokenRow = memo(
     }, [onGroupPress, onPress, row]);
 
     return (
-      <TouchableOpacity style={styles.tokenRow} onPress={handlePress}>
+      <TouchableOpacity
+        style={styles.tokenRow}
+        onPress={handlePress}
+        disabled={row.balanceLoading}>
         <AssetAvatar
           logo={row.token.logo_url}
           chain={row.token.chain}
           size={46}
           chainSize={18}
+          innerChainStyle={styles.innerChainStyle}
           style={styles.tokenAvatar}
         />
         <View style={styles.tokenContent}>
@@ -189,6 +197,7 @@ export const CustomTestnetAssetSection = memo(
     onTokenPress,
     onTokenGroupPress,
     onTokenButtonPress,
+    collapseKey,
   }: CustomTestnetAssetSectionProps) => {
     const { styles, colors2024 } = useTheme2024({ getStyle });
     const [expanded, setExpanded] = useState(false);
@@ -277,9 +286,21 @@ export const CustomTestnetAssetSection = memo(
       tokens,
     ]);
 
-    const handleToggle = useCallback(() => {
-      setExpanded(value => !value);
+    const resetLoadedTokens = useCallback(() => {
+      requestSeqRef.current += 1;
+      setTokens([]);
+      setLoading(false);
+      setHasLoaded(false);
     }, []);
+
+    const handleToggle = useCallback(() => {
+      setExpanded(value => {
+        if (value) {
+          resetLoadedTokens();
+        }
+        return !value;
+      });
+    }, [resetLoadedTokens]);
 
     const handleTokenButtonPress = useCallback(
       (event: GestureResponderEvent) => {
@@ -290,11 +311,13 @@ export const CustomTestnetAssetSection = memo(
     );
 
     useEffect(() => {
-      requestSeqRef.current += 1;
-      setTokens([]);
-      setLoading(false);
-      setHasLoaded(false);
-    }, [data.chain.id]);
+      resetLoadedTokens();
+    }, [data.chain.id, resetLoadedTokens]);
+
+    useEffect(() => {
+      setExpanded(false);
+      resetLoadedTokens();
+    }, [collapseKey, resetLoadedTokens]);
 
     useEffect(() => {
       if (!expanded || hasLoaded) {
@@ -306,7 +329,7 @@ export const CustomTestnetAssetSection = memo(
       requestSeqRef.current = requestSeq;
       setLoading(true);
 
-      loadTokens({ chainId: data.chain.id })
+      loadTokens({ chain: data.chain, tokens: data.tokens })
         .then(nextTokens => {
           if (cancelled || requestSeqRef.current !== requestSeq) {
             return;
@@ -327,7 +350,7 @@ export const CustomTestnetAssetSection = memo(
       return () => {
         cancelled = true;
       };
-    }, [data.chain.id, expanded, hasLoaded, loadTokens]);
+    }, [data.chain, data.tokens, expanded, hasLoaded, loadTokens]);
 
     useEffect(() => {
       if (!missingLoadedTokens.length) {
@@ -340,6 +363,7 @@ export const CustomTestnetAssetSection = memo(
       Promise.all(
         missingLoadedTokens.map(token =>
           loadToken({
+            chain: data.chain,
             token,
           }),
         ),
@@ -372,7 +396,7 @@ export const CustomTestnetAssetSection = memo(
       return () => {
         cancelled = true;
       };
-    }, [loadToken, missingLoadedTokens]);
+    }, [data.chain, loadToken, missingLoadedTokens]);
 
     return (
       <View style={[styles.container, style]}>
@@ -540,6 +564,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     },
     tokenAvatar: {
       flexShrink: 0,
+    },
+    innerChainStyle: {
+      borderRadius: 12,
+      overflow: 'hidden',
     },
     tokenContent: {
       flex: 1,

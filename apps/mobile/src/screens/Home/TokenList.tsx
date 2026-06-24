@@ -202,6 +202,8 @@ export const TokenList = ({
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const [customTokenListVersion, setCustomTokenListVersion] = useState(0);
+  const [customTestnetCollapseKey, setCustomTestnetCollapseKey] = useState(0);
+  const [hasRequestedTokenList, setHasRequestedTokenList] = useState(false);
   const isScreenFocused = useIsFocused();
 
   const focusedTab = useFocusedTab();
@@ -209,8 +211,20 @@ export const TokenList = ({
     return focusedTab === 'tokens';
   }, [focusedTab]);
 
+  useEffect(() => {
+    if (isFocused) {
+      setCustomTokenListVersion(version => version + 1);
+    } else {
+      setCustomTestnetCollapseKey(key => key + 1);
+    }
+  }, [isFocused]);
+
   const currentAddress = currentAccount?.address;
   const lowerAddress = currentAddress?.toLowerCase();
+  useEffect(() => {
+    setHasRequestedTokenList(false);
+  }, [lowerAddress]);
+
   const {
     sections: customTestnetSections,
     loadTokens: loadCustomTestnetTokens,
@@ -220,9 +234,6 @@ export const TokenList = ({
     customTokenListVersion,
   );
   const shouldShowCustomTestnetSections = !selectedChain && !isLpTokenEnabled;
-  const visibleCustomTestnetSections = shouldShowCustomTestnetSections
-    ? customTestnetSections
-    : EMPTY_CUSTOM_TESTNET_SECTIONS;
 
   useEffect(() => {
     if (!currentAddress) {
@@ -286,24 +297,35 @@ export const TokenList = ({
     [foldCoreUsdValue],
   );
 
-  const isLoading = useTokenList(state => {
-    if (!lowerAddress) {
-      return false;
-    }
-    return !!state.isLoadingByAddress[lowerAddress]?.loading;
-  });
-  const isAllLoading = useTokenList(state => {
-    if (!lowerAddress) {
-      return false;
-    }
-    return !!state.isLoadingByAddress[lowerAddress]?.allLoading;
-  });
+  const { isLoading, isAllLoading } = useTokenList(
+    useShallow(state => {
+      if (!lowerAddress) {
+        return {
+          isLoading: false,
+          isAllLoading: false,
+        };
+      }
+      const loadingState = state.isLoadingByAddress[lowerAddress];
+      return {
+        isLoading: !!loadingState?.loading,
+        isAllLoading: !!loadingState?.allLoading,
+      };
+    }),
+  );
+  const visibleCustomTestnetSections =
+    shouldShowCustomTestnetSections &&
+    hasRequestedTokenList &&
+    !isLoading &&
+    !isAllLoading
+      ? customTestnetSections
+      : EMPTY_CUSTOM_TESTNET_SECTIONS;
   const getTokenList = useTokenList(s => s.getTokenList);
 
   const refreshTokenList = useCallback(() => {
     if (!currentAddress) {
       return;
     }
+    setHasRequestedTokenList(true);
     getTokenList(currentAddress);
   }, [currentAddress, getTokenList]);
 
@@ -565,6 +587,7 @@ export const TokenList = ({
                 hideAccount
                 onTokenPress={handleOpenCustomTestnetTokenDetail}
                 onTokenButtonPress={handleCustomTestnetTokenButtonPress}
+                collapseKey={customTestnetCollapseKey}
               />
             </View>
           );
@@ -601,6 +624,7 @@ export const TokenList = ({
     },
     [
       currentAccount,
+      customTestnetCollapseKey,
       foldHideList,
       foldTokenUsdValue,
       handleOpenTokenDetail,

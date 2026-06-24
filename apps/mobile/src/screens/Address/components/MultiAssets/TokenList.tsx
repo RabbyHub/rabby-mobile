@@ -240,6 +240,7 @@ export const TokenList = () => {
   const [foldScam, setFoldScam] = useState(true);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
   const [customTokenListVersion, setCustomTokenListVersion] = useState(0);
+  const [customTestnetCollapseKey, setCustomTestnetCollapseKey] = useState(0);
 
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
 
@@ -250,12 +251,17 @@ export const TokenList = () => {
     loadToken: loadCustomTestnetToken,
   } = useCustomTestnetAssetSections(myTop10Addresses, customTokenListVersion);
   const shouldShowCustomTestnetSections = !chain && !isLpTokenEnabled;
-  const visibleCustomTestnetSections = shouldShowCustomTestnetSections
-    ? customTestnetSections
-    : EMPTY_CUSTOM_TESTNET_SECTIONS;
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
+
+  useEffect(() => {
+    if (isFocused) {
+      setCustomTokenListVersion(version => version + 1);
+    } else {
+      setCustomTestnetCollapseKey(key => key + 1);
+    }
+  }, [isFocused]);
 
   const multiAssetsKey = useMemo(
     () =>
@@ -329,6 +335,10 @@ export const TokenList = () => {
   );
 
   const isLoading = useTokenList(s => s.isLoading);
+  const visibleCustomTestnetSections =
+    shouldShowCustomTestnetSections && !isLoading
+      ? customTestnetSections
+      : EMPTY_CUSTOM_TESTNET_SECTIONS;
 
   useEffect(() => {
     batchGetTokenList(myTop10Addresses);
@@ -688,6 +698,7 @@ export const TokenList = () => {
               onTokenPress={handleCustomTestnetTokenPress}
               onTokenGroupPress={handleCustomTestnetTokenGroupPress}
               onTokenButtonPress={handleCustomTestnetTokenButtonPress}
+              collapseKey={customTestnetCollapseKey}
             />
           );
         case 'custom_testnet_divider':
@@ -719,6 +730,7 @@ export const TokenList = () => {
     },
     [
       tokenDisplayMode,
+      customTestnetCollapseKey,
       foldHideList,
       foldTokenUsdValue,
       getAccountByAddress,

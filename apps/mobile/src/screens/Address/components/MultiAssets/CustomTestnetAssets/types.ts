@@ -18,7 +18,8 @@ export type CustomTestnetAssetSectionData = {
 };
 
 export type LoadCustomTestnetAssetTokensParams = {
-  chainId: number;
+  chain: TestnetChain;
+  tokens: CustomTestnetAssetSectionToken[];
 };
 
 export type LoadCustomTestnetAssetTokens = (
@@ -26,6 +27,7 @@ export type LoadCustomTestnetAssetTokens = (
 ) => Promise<ITokenItem[]>;
 
 export type LoadCustomTestnetAssetTokenParams = {
+  chain: TestnetChain;
   token: CustomTestnetAssetSectionToken;
 };
 
