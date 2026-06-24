@@ -42,8 +42,16 @@ export const HistoryFilterMenu = ({
   };
   return (
     <View style={styles.container}>
-      {/* <TouchableOpacity hitSlop={historyHitSlop} onPress={switchShowAll}> */}
-      <AppSwitch2024 value={!isShowAll} onValueChange={e => switchShowAll(e)} />
+      <TouchableOpacity
+        hitSlop={historyHitSlop}
+        activeOpacity={1}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: !isShowAll }}
+        onPress={() => switchShowAll(isShowAll)}>
+        <View pointerEvents="none">
+          <AppSwitch2024 value={!isShowAll} accessible={false} />
+        </View>
+      </TouchableOpacity>
       {/* {isShowAll ? (
           <RcIconEyeCC
             color={colors2024['neutral-foot']}
@@ -59,7 +67,6 @@ export const HistoryFilterMenu = ({
             height={24}
           />
         )} */}
-      {/* </TouchableOpacity> */}
     </View>
   );
 };

@@ -31,6 +31,9 @@ type ModalData = {
   ref: React.RefObject<AppBottomSheetModal | null>;
 };
 
+const PRESENT_RETRY_LIMIT = 5;
+const PRESENT_RETRY_DELAY = 50;
+
 export const GlobalBottomSheetModal = () => {
   const modalRefs = React.useRef<Record<string, ModalData['ref']>>({});
   const presentedModalIds = React.useRef<Set<string>>(new Set());
@@ -45,12 +48,21 @@ export const GlobalBottomSheetModal = () => {
     }, {} as Record<string, ModalData['ref']>);
   }, [modals]);
 
-  const handlePresent = React.useCallback<
-    GlobalSheetModalListeners[EVENT_NAMES.PRESENT]
-  >((key: string) => {
+  const handlePresent = React.useCallback((key: string, retryCount = 0) => {
+    if (presentedModalIds.current.has(key)) {
+      return;
+    }
+
     const currentModal = modalRefs.current[key]?.current;
 
     if (!currentModal) {
+      if (retryCount < PRESENT_RETRY_LIMIT && modalRefs.current[key]) {
+        setTimeout(() => {
+          handlePresent(key, retryCount + 1);
+        }, PRESENT_RETRY_DELAY);
+        return;
+      }
+
       if (__DEV__) {
         console.warn(
           `[GlobalBottomSheetModal] Modal with key ${key} not found`,
