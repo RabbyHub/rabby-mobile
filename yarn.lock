@@ -39584,7 +39584,7 @@ __metadata:
     react-native-bundle-splitter: "npm:^3.0.1"
     react-native-bundle-visualizer: "npm:3.1.0"
     react-native-cloud-storage: "npm:^1.4.1"
-    react-native-collapsible-tab-view: "npm:^6.2.1"
+    react-native-collapsible-tab-view: "npm:8.0.1"
     react-native-crypto-js: "npm:^1.0.0"
     react-native-device-info: "npm:14.0.4"
     react-native-dotenv: "npm:^3.4.9"
@@ -39605,7 +39605,7 @@ __metadata:
     react-native-linear-gradient: "npm:^2.8.3"
     react-native-localize: "npm:3.3.0"
     react-native-mmkv: "npm:3.3.1"
-    react-native-pager-view: "npm:6.7.0"
+    react-native-pager-view: "npm:8.0.2"
     react-native-permissions: "npm:5.3.0"
     react-native-qrcode-svg: "npm:^6.2.0"
     react-native-quick-crypto: "npm:0.7.13"
@@ -40239,9 +40239,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-collapsible-tab-view@npm:6.2.1":
-  version: 6.2.1
-  resolution: "react-native-collapsible-tab-view@npm:6.2.1"
+"react-native-collapsible-tab-view@npm:8.0.1":
+  version: 8.0.1
+  resolution: "react-native-collapsible-tab-view@npm:8.0.1"
   dependencies:
     use-deep-compare: "npm:^1.1.0"
   peerDependencies:
@@ -40249,29 +40249,11 @@ __metadata:
     react: "*"
     react-native: "*"
     react-native-pager-view: "*"
-    react-native-reanimated: ">=2.15.0"
+    react-native-reanimated: ">=3.8.1"
   peerDependenciesMeta:
     "@shopify/flash-list":
       optional: true
-  checksum: 10/6782afb6c2f831fb3a2a60517fac165a8f48c7d43baa1390b0a5500072b8a85159712f0e46c874c7461873a1f5b7da334645b0488104d5fcf1fab17d94ce3ac3
-  languageName: node
-  linkType: hard
-
-"react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@npm%3A6.2.1#./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 6.2.1
-  resolution: "react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@npm%3A6.2.1#./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch::version=6.2.1&hash=9a13ba&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  dependencies:
-    use-deep-compare: "npm:^1.1.0"
-  peerDependencies:
-    "@shopify/flash-list": ">=1.0.0"
-    react: "*"
-    react-native: "*"
-    react-native-pager-view: "*"
-    react-native-reanimated: ">=2.15.0"
-  peerDependenciesMeta:
-    "@shopify/flash-list":
-      optional: true
-  checksum: 10/b1a44b2350f3b2189309d7b8954e566088eb800f6ff223edf7bf6217a7b6c8cb8300431f06971fc1acf811f8c2c0f0ab9a99e17743c44b4a1fcb782665661d46
+  checksum: 10/9dc34159359952623374c879e40e387a09e53181980a970319853b153e430a7d9f81ba3bc8cd78a8423fc875b532db376b6183f988c9178ad863c3dc2c3646bd
   languageName: node
   linkType: hard
 
@@ -40584,23 +40566,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-pager-view@npm:6.7.0":
-  version: 6.7.0
-  resolution: "react-native-pager-view@npm:6.7.0"
+"react-native-pager-view@npm:8.0.2":
+  version: 8.0.2
+  resolution: "react-native-pager-view@npm:8.0.2"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/01257ced1f51e798423c9af6c891dfa0ab3bac22c4e67fa5995dc0f25f36013beed92e1e8b509d57af85f934f316dad017dc05db7142cd063849c1acbff3f7ed
-  languageName: node
-  linkType: hard
-
-"react-native-pager-view@patch:react-native-pager-view@npm%3A6.7.0#./.yarn/patches/react-native-pager-view-npm-6.7.0-0fd4ad27df.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 6.7.0
-  resolution: "react-native-pager-view@patch:react-native-pager-view@npm%3A6.7.0#./.yarn/patches/react-native-pager-view-npm-6.7.0-0fd4ad27df.patch::version=6.7.0&hash=f3e00e&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 10/e3a0e4b335075ec01233e370e8fb444cbf509462c9277b3b00f63b2402a990813a3cff52b1a7cd9323fbcd43d332f381f538f3132f5f420ef4d7f097400cfe10
+  checksum: 10/b17b9407291c42978b163009bb2d27d44e35ffb84f19a60c66108249c564ad911554cf22dc9ef214d7f9318b75fe5cc68f4555bb57a042de3c7171d4230d893b
   languageName: node
   linkType: hard
 
@@ -49315,7 +49287,7 @@ __metadata:
 
 "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::version=1.10.0&hash=9bb0a3&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 1.10.0
-  resolution: "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::version=1.10.0&hash=515748&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::version=1.10.0&hash=a085a0&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@radix-ui/react-context-menu": "npm:^2.0.1"
     "@radix-ui/react-dropdown-menu": "npm:^2.0.1"
@@ -49325,13 +49297,13 @@ __metadata:
     react: "*"
     react-native: "*"
     react-native-ios-context-menu: ^2.3.2
-  checksum: 10/085ddf3599c192fbccdffdf4712424994838da99cf3144cc555bc647e92db404c9d162e5a0da9ed70b73d8fe1d52c0489fbf4f423355b2577e09a81b4b84c21d
+  checksum: 10/3a0f21903b98110d9290d339e793e845c5ee54e37e7efcd5c15553a193076fcea80ff20d36fd1caaad8d491a38ee9a6f06c7c5e0227383c2f43fabf659b5e755
   languageName: node
   linkType: hard
 
 "zeego@patch:zeego@patch%3Azeego@npm%253A1.10.0%23./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch%3A%3Aversion=1.10.0&hash=9bb0a3&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#./.yarn/patches/zeego-patch-5b72c1c320.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 1.10.0
-  resolution: "zeego@patch:zeego@patch%3Azeego@npm%253A1.10.0%23./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch%3A%3Aversion=1.10.0&hash=515748&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#./.yarn/patches/zeego-patch-5b72c1c320.patch::version=1.10.0&hash=2d6f92&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "zeego@patch:zeego@patch%3Azeego@npm%253A1.10.0%23./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch%3A%3Aversion=1.10.0&hash=a085a0&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#./.yarn/patches/zeego-patch-5b72c1c320.patch::version=1.10.0&hash=2d6f92&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@radix-ui/react-context-menu": "npm:^2.0.1"
     "@radix-ui/react-dropdown-menu": "npm:^2.0.1"
@@ -49341,7 +49313,7 @@ __metadata:
     react: "*"
     react-native: "*"
     react-native-ios-context-menu: ^2.3.2
-  checksum: 10/fb80909cf6082990bf7168fab043b892eb8cda0fff7b668523be1721c3e288d290924f0d00fa269afa3cc09a851ce0e14fd7ddf74a5dae655ea3acb80615be76
+  checksum: 10/8eb14c8f5ea2117466e386ac4d79e565000e7043ff64863667deea2883f7d51d3435f86b300b40ec584c4c0041bdaf6622c22a78d83278aee25f545331376d12
   languageName: node
   linkType: hard
 

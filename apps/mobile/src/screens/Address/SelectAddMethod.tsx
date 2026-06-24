@@ -150,8 +150,9 @@ function SelectAddMethod(): JSX.Element {
     }
 
     setConfirmCB(async () => {
-      navigation.replace(RootNames.StackAddress, {
-        screen: RootNames.ImportMnemonic2024,
+      navigation.replace(RootNames.ImportSecret, {
+        initialTab: 'seedPhrase',
+        flow: 'in_app',
       });
     });
     if (
@@ -162,8 +163,9 @@ function SelectAddMethod(): JSX.Element {
     ) {
       return;
     }
-    navigation.navigate(RootNames.StackAddress, {
-      screen: RootNames.ImportMnemonic2024,
+    navigation.navigate(RootNames.ImportSecret, {
+      initialTab: 'seedPhrase',
+      flow: 'in_app',
     });
   }, [navigation, shouldRedirectToSetPasswordBefore2024, setConfirmCB]);
 
@@ -173,8 +175,9 @@ function SelectAddMethod(): JSX.Element {
     }
 
     setConfirmCB(async () => {
-      navigation.replace(RootNames.StackAddress, {
-        screen: RootNames.ImportPrivateKey2024,
+      navigation.replace(RootNames.ImportSecret, {
+        initialTab: 'privateKey',
+        flow: 'in_app',
       });
     });
     if (
@@ -185,8 +188,9 @@ function SelectAddMethod(): JSX.Element {
     ) {
       return;
     }
-    navigation.navigate(RootNames.StackAddress, {
-      screen: RootNames.ImportPrivateKey2024,
+    navigation.navigate(RootNames.ImportSecret, {
+      initialTab: 'privateKey',
+      flow: 'in_app',
     });
   }, [navigation, shouldRedirectToSetPasswordBefore2024, setConfirmCB]);
 
