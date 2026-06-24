@@ -12,7 +12,6 @@ const { RNFileHelpers: nativeModule } = resolveNativeModule(
 );
 
 const RNFileHelpers = Object.freeze({
-  ...nativeModule,
   getFileCapabilitySnapshot:
     nativeModule.getFileCapabilitySnapshot ||
     ((): Promise<NativeFileCapabilitySnapshot> =>
