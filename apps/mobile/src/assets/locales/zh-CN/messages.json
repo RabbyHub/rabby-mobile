@@ -667,6 +667,7 @@
       "GasReserved": "预留 <1>0</1> {{ tokenName }} 用于 gas 费用"
     },
     "sendToken": {
+      "sendButton": "发送",
       "whitelistAlert__notWhitelisted_tip": "该地址未列入白名单。",
       "Chain": "链",
       "To": "收款地址",

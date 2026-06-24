@@ -306,7 +306,7 @@ function BottomArea() {
         <Button
           disabled={disableSubmitDueToBasic}
           type="primary"
-          title={'Send'}
+          title={t('page.sendToken.sendButton')}
           loading={isSubmitLoading}
           height={BOTTOM_BUTTON_SINGLE_HEIGHT}
           titleStyle={BOTTOM_BUTTON_TITLE_STYLE}

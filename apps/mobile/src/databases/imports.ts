@@ -1,5 +1,7 @@
 import RNHelpers from '@/core/native/RNHelpers';
 import { DataSource, DataSourceOptions } from 'typeorm/browser';
+import RNFS from 'react-native-fs';
+import { getRabbyAppDbPath } from './constant';
 // import * as Sentry from '@sentry/react-native';
 
 const appDataSourceInitRef = {
@@ -20,7 +22,7 @@ export async function initializeAppDataSource(
     appDataSourceInitRef.current = appDataSourceInitRef.current.then(
       async as => {
         console.debug(
-          `[initializeAppDataSource] initialized, will runMigrations`,
+          '[initializeAppDataSource] initialized, will runMigrations',
         );
         await as
           .runMigrations({
@@ -103,13 +105,50 @@ export async function clearAppDataSource() {
   await appDataSource.query('VACUUM');
 }
 
-export async function dropAppDataSourceAndQuitApp() {
-  const appDataSource = await prepareAppDataSource();
+async function removeAppDbFilesBestEffort() {
+  const dbPath = getRabbyAppDbPath();
+  await Promise.allSettled(
+    [dbPath, `${dbPath}-shm`, `${dbPath}-wal`].map(async filePath => {
+      if (await RNFS.exists(filePath)) {
+        await RNFS.unlink(filePath);
+      }
+    }),
+  );
+}
 
-  await appDataSource.dropDatabase();
-  await appDataSource.query('VACUUM');
-  // it will cause crash on iOS production
-  RNHelpers.forceExitApp();
+function forceExitAppSoon() {
+  setTimeout(() => {
+    RNHelpers.forceExitApp();
+  }, 100);
+}
+
+export async function dropAppDataSourceAndQuitApp() {
+  let appDataSource: DataSource | null = null;
+
+  try {
+    appDataSource = await prepareAppDataSource();
+    await appDataSource.dropDatabase();
+    await appDataSource.query('VACUUM');
+  } catch (error) {
+    console.error('[dropAppDataSourceAndQuitApp] clear database failed', error);
+  } finally {
+    try {
+      if (appDataSource?.isInitialized) {
+        await appDataSource.destroy();
+      }
+    } catch (error) {
+      console.error('[dropAppDataSourceAndQuitApp] destroy failed', error);
+    }
+    appDataSourceInitRef.current = null;
+    removeAppDbFilesBestEffort().catch(error => {
+      console.error(
+        '[dropAppDataSourceAndQuitApp] remove db files failed',
+        error,
+      );
+    });
+    // it will cause crash on iOS production
+    forceExitAppSoon();
+  }
 }
 
 export async function exp_dropAndResyncDataSource(

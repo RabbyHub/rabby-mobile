@@ -1,9 +1,9 @@
 import { useTheme2024 } from '@/hooks/theme';
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { TouchableOpacity } from 'react-native';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { ITokenItem } from '@/store/tokens';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 export const RightMore: React.FC<{
   token: ITokenItem;
@@ -52,7 +52,7 @@ export const RightMore: React.FC<{
   }, [isPined, pinToken, refreshTags, removePinedToken, token.id, token.chain]);
 
   return (
-    <TouchableOpacity onPress={handlePress}>
+    <CustomTouchableOpacity as="RNGHTouchableOpacity" onPress={handlePress}>
       <RcIconFavorite
         width={22}
         height={21}
@@ -60,6 +60,6 @@ export const RightMore: React.FC<{
           isPined ? colors2024['orange-default'] : colors2024['neutral-info']
         }
       />
-    </TouchableOpacity>
+    </CustomTouchableOpacity>
   );
 };

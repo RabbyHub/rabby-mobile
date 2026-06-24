@@ -662,6 +662,7 @@
       "copyAddress": "Copy Address"
     },
     "sendToken": {
+      "sendButton": "Send",
       "Chain": "Chain",
       "To": "To",
       "From": "From",

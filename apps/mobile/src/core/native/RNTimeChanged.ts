@@ -50,7 +50,7 @@ function subscribeTimeChanged(fn: Listeners['onTimeChanged']) {
 }
 
 const RNTimeChanged = Object.freeze({
-  ...nativeModule,
+  exitAppForSecurity: nativeModule.exitAppForSecurity,
   subscribeTimeChanged,
 });
 

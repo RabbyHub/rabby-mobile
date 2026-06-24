@@ -6,7 +6,7 @@ const { RNHelpers: nativeModule } = resolveNativeModule(
 );
 
 const RNHelpers = Object.freeze({
-  ...nativeModule,
+  forceExitApp: nativeModule.forceExitApp,
   moveTaskToBack: wrapPlatformOnlyMethod({
     method: nativeModule.moveTaskToBack,
     platform: 'android',

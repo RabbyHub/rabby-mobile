@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -37,24 +37,30 @@ const EnabledEmodeInfo = ({
       {/* 内部黑底避免内容被影响 */}
       <Pressable style={styles.inner} onPress={onPress}>
         <LightingIcon width={18} height={18} />
-        <MaskedView
-          maskElement={
-            <Text numberOfLines={1} ellipsizeMode="tail" style={styles.text}>
-              {title}
-            </Text>
-          }>
-          <LinearGradient
-            colors={['#2FE0FF', '#D06BFF']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}>
-            <Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              style={[styles.text, styles.opacity0]}>
-              {title}
-            </Text>
-          </LinearGradient>
-        </MaskedView>
+        {Platform.OS === 'android' ? (
+          <Text numberOfLines={1} ellipsizeMode="tail" style={styles.text}>
+            {title}
+          </Text>
+        ) : (
+          <MaskedView
+            maskElement={
+              <Text numberOfLines={1} ellipsizeMode="tail" style={styles.text}>
+                {title}
+              </Text>
+            }>
+            <LinearGradient
+              colors={['#2FE0FF', '#D06BFF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[styles.text, styles.opacity0]}>
+                {title}
+              </Text>
+            </LinearGradient>
+          </MaskedView>
+        )}
         <SettingIconCC
           width={18}
           height={18}
@@ -206,7 +212,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
-    color: 'black',
+    color: colors2024['brand-default'],
   },
   disabledText: {
     fontSize: 12,

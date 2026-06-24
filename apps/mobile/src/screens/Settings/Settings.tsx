@@ -692,6 +692,7 @@ function SettingsBlocks() {
                         ),
                         style: 'destructive',
                         onPress: async () => {
+                          abortAllSyncTasks();
                           resetUpdateHistoryTime();
                           await dropAppDataSourceAndQuitApp();
                         },
