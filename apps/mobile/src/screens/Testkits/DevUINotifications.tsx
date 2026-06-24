@@ -518,7 +518,6 @@ function DevUINotifications(): JSX.Element {
         }}>
         <Tabs.Tab name="toast" label={'Toast'}>
           <Tabs.ScrollView
-            tvParallaxProperties={undefined}
             nestedScrollEnabled={false}
             contentContainerStyle={styles.screenScrollableView}
             horizontal={false}>
@@ -527,7 +526,6 @@ function DevUINotifications(): JSX.Element {
         </Tabs.Tab>
         <Tabs.Tab name="notifications" label={'Notifications'}>
           <Tabs.ScrollView
-            tvParallaxProperties={undefined}
             nestedScrollEnabled={false}
             contentContainerStyle={styles.screenScrollableView}
             horizontal={false}>

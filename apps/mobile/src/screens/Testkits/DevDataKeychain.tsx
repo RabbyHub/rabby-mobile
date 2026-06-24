@@ -3806,7 +3806,6 @@ export default function DevDataKeychain(): JSX.Element {
   const renderTabScrollView = (children: React.ReactNode) => {
     return (
       <Tabs.ScrollView
-        tvParallaxProperties={undefined}
         horizontal={false}
         nestedScrollEnabled={false}
         contentContainerStyle={styles.scrollView}>

@@ -1,29 +1,19 @@
 // patch from file:///./../../../../node_modules/react-native-collapsible-tab-view/src/FlatList.tsx
 
 import React, { type Ref } from 'react';
-import {
-  FlatListProps as RNFlatListProps,
-  FlatList as RNFlatList,
-} from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import {
   useAfterMountEffect,
   useChainCallback,
   useCollapsibleStyle,
-  useConvertAnimatedToValue,
-  useScrollHandlerY,
   useSharedAnimatedRef,
   useTabNameContext,
   useTabsContext,
   useUpdateScrollViewContentSize,
 } from 'react-native-collapsible-tab-view/src/hooks';
 import { RNGHFlatList } from '../reexports';
-
-// const AnimatedScrollView = Animated.createAnimatedComponent<RNFlatListProps>(RNFlatList);
-// const FinalView = AnimatedScrollView;
-// type FinalProps = RNFlatListProps;
-// type FinalType = RNFlatList;
+import { useScrollHandlerY } from './hooks';
 
 type RNGHFlatListProps<T> = React.ComponentProps<typeof RNGHFlatList<T>>;
 const AnimatedRNGHFlatList =
@@ -101,16 +91,14 @@ function TabsFlatList<R>({
     [progressViewOffset, refreshControl],
   );
 
-  const contentInsetValue = useConvertAnimatedToValue(contentInset);
-
   const memoContentInset = React.useMemo(
-    () => ({ top: contentInsetValue }),
-    [contentInsetValue],
+    () => ({ top: contentInset }),
+    [contentInset],
   );
 
   const memoContentOffset = React.useMemo(
-    () => ({ x: 0, y: -contentInsetValue }),
-    [contentInsetValue],
+    () => ({ x: 0, y: -contentInset }),
+    [contentInset],
   );
 
   const memoContentContainerStyle = React.useMemo(
