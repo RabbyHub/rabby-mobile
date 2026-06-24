@@ -44,6 +44,7 @@ export function useCustomTestnetAssetSections(
 
         return {
           chain,
+          ownerAddresses: addresses,
           tokens: [
             {
               id: chain.nativeTokenAddress,
@@ -57,7 +58,7 @@ export function useCustomTestnetAssetSections(
         };
       })
       .filter(section => section.tokens.length > 0);
-  }, [customTokenListVersion]);
+  }, [addresses, customTokenListVersion]);
 
   const loadTokenItems = useCallback(
     async (

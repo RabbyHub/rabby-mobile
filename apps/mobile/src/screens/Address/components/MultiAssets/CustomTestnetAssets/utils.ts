@@ -8,12 +8,16 @@ export type CustomTestnetTokenDisplayRow = {
   mode: 'token' | 'group';
 };
 
-const getCustomTestnetAssetGroupKey = (token: ITokenItem) =>
+export const getCustomTestnetAssetGroupKey = (token: ITokenItem) =>
   `${token.chain.toLowerCase()}::${token.id.toLowerCase()}`;
+
+export const getCustomTestnetTokenRowKey = (token: ITokenItem) =>
+  `${token.owner_addr.toLowerCase()}::${getCustomTestnetAssetGroupKey(token)}`;
 
 export const makeMetadataTokenItem = (
   token: CustomTestnetAssetSectionToken,
   chainServerId: string,
+  ownerAddress = '',
 ): ITokenItem => ({
   amount: 0,
   chain: chainServerId,
@@ -31,7 +35,7 @@ export const makeMetadataTokenItem = (
   price: 0,
   symbol: token.symbol,
   usd_value: 0,
-  owner_addr: '',
+  owner_addr: ownerAddress,
   raw_amount: '0',
   raw_amount_hex_str: '0x0',
   price_24h_change: 0,
@@ -88,9 +92,7 @@ export const getCustomTestnetTokenDisplayRows = (
 ): CustomTestnetTokenDisplayRow[] => {
   if (tokenDisplayMode === 'byAddress') {
     return tokens.map(token => ({
-      key: `${token.owner_addr.toLowerCase()}::${getCustomTestnetAssetGroupKey(
-        token,
-      )}`,
+      key: getCustomTestnetTokenRowKey(token),
       token,
       tokens: [token],
       mode: 'token',

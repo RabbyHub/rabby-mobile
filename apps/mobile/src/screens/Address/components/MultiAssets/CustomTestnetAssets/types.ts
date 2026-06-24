@@ -14,6 +14,7 @@ export type CustomTestnetAssetSectionToken = Pick<
 export type CustomTestnetAssetSectionData = {
   chain: TestnetChain;
   tokens: CustomTestnetAssetSectionToken[];
+  ownerAddresses: string[];
 };
 
 export type LoadCustomTestnetAssetTokensParams = {

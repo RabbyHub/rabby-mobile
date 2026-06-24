@@ -36,7 +36,9 @@ import type {
 } from './types';
 import { ChainInitialBadge } from './ChainInitialBadge';
 import {
+  getCustomTestnetAssetGroupKey,
   getCustomTestnetTokenDisplayRows,
+  getCustomTestnetTokenRowKey,
   makeMetadataTokenItem,
   type CustomTestnetTokenDisplayRow,
 } from './utils';
@@ -222,24 +224,56 @@ export const CustomTestnetAssetSection = memo(
       );
       const loadingRows = data.tokens
         .filter(token => !loadedTokenKeys.has(getSectionTokenKey(token)))
-        .map(token => ({
-          key: `loading-${getSectionTokenKey(token)}`,
-          token: makeMetadataTokenItem(token, data.chain.serverId),
-          tokens: [],
-          mode: 'token' as const,
-          balanceLoading: true,
-        }));
+        .flatMap(token => {
+          if (
+            tokenDisplayMode === 'byAddress' &&
+            data.ownerAddresses.length > 0
+          ) {
+            return data.ownerAddresses.map(ownerAddress => {
+              const metadataToken = makeMetadataTokenItem(
+                token,
+                data.chain.serverId,
+                ownerAddress,
+              );
+
+              return {
+                key: getCustomTestnetTokenRowKey(metadataToken),
+                token: metadataToken,
+                tokens: [metadataToken],
+                mode: 'token' as const,
+                balanceLoading: true,
+              };
+            });
+          }
+
+          const metadataToken = makeMetadataTokenItem(
+            token,
+            data.chain.serverId,
+          );
+
+          return [
+            {
+              key: getCustomTestnetAssetGroupKey(metadataToken),
+              token: metadataToken,
+              tokens: [metadataToken],
+              mode: 'token' as const,
+              balanceLoading: true,
+            },
+          ];
+        });
 
       return [...loadedRows, ...loadingRows];
     }, [
       data.chain.id,
       data.chain.serverId,
+      data.ownerAddresses,
       data.tokens,
       displayRows,
       expanded,
       hasLoaded,
       loading,
       missingLoadedTokens.length,
+      tokenDisplayMode,
       tokens,
     ]);
 
