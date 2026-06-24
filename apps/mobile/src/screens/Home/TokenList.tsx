@@ -212,9 +212,7 @@ export const TokenList = ({
   }, [focusedTab]);
 
   useEffect(() => {
-    if (isFocused) {
-      setCustomTokenListVersion(version => version + 1);
-    } else {
+    if (!isFocused) {
       setCustomTestnetCollapseKey(key => key + 1);
     }
   }, [isFocused]);

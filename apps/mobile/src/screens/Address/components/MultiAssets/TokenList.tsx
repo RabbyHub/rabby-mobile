@@ -256,12 +256,12 @@ export const TokenList = () => {
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
 
   useEffect(() => {
-    if (isFocused) {
+    if (isFocusing) {
       setCustomTokenListVersion(version => version + 1);
     } else {
       setCustomTestnetCollapseKey(key => key + 1);
     }
-  }, [isFocused]);
+  }, [isFocusing]);
 
   const multiAssetsKey = useMemo(
     () =>
@@ -877,7 +877,7 @@ const getStyles = createGetStyles2024(() => ({
     marginBottom: 8,
   },
   customTestnetSection: {
-    marginBottom: 12,
+    marginBottom: 8,
   },
   renderItemWrapper: {
     height: ASSETS_ITEM_HEIGHT_NEW,
