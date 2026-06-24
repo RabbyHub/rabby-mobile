@@ -105,6 +105,10 @@ export const TokenDetailBottomBtns = ({
       Icon: RcIconBridge,
       disabled: disableSwapBridge,
       onPress: async () => {
+        if (disableSwapBridge) {
+          toast.error(t('page.tokenDetail.customTestnetNotSupported'));
+          return;
+        }
         const chain = findChain({
           serverId: token.chain,
         });
@@ -138,6 +142,7 @@ export const TokenDetailBottomBtns = ({
       serverId: token.chain,
     });
     if (disableSwapBridge) {
+      toast.error(t('page.tokenDetail.customTestnetNotSupported'));
       return;
     }
 
