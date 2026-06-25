@@ -43,6 +43,7 @@ export type ButtonProps = Omit<
         | 'aave';
       loading?: boolean;
       loadingStyle?: StyleProp<ViewStyle>;
+      loadingProps?: ActivityIndicatorProps;
       containerStyle?: StyleProp<ViewStyle>;
       TouchableComponent?:
         | React.FC<React.ComponentProps<typeof TouchableOpacity>>
@@ -86,6 +87,7 @@ export const Button = ({
   type = 'primary',
   loading = false,
   loadingStyle,
+  loadingProps: passedLoadingProps,
   loadingType = 'indicator',
   noShadow = false,
   disabled = false,
@@ -244,6 +246,7 @@ export const Button = ({
   const loadingProps: ActivityIndicatorProps = {
     color: currentColor,
     size: 'small',
+    ...passedLoadingProps,
   };
 
   const accessibilityState = {
