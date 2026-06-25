@@ -303,7 +303,7 @@ const TokenDetailContent = () => {
         />
         <View style={styles.balanceOverviewContent}>
           <BalanceOverview usdValue={usdValue} amount={amountSum || 0} />
-          {!baseTokenInfo || isCustomTestnetToken ? null : (
+          {!baseTokenInfo ? null : (
             <Pressable
               style={[
                 styles.floatingBarContent,
