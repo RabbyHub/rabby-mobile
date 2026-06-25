@@ -126,19 +126,34 @@ const TokenSelect = ({
   }, [_favoriteFilterValue, queryConds.keyword]);
 
   const isSend = type === 'send';
+  const customNetworkTop3Chains = useMemo(
+    () =>
+      customTestnetService
+        .getList()
+        .slice(0, 3)
+        .map(chain => chain.serverId),
+    [],
+  );
   const { isShowTestnet, selectedTab, onTabChange } = useSwitchNetTab({
     hideTestnetTab: !isSend || customTestnetService.getList().length === 0,
   });
+  const isCustomNetworkTab = isSend && selectedTab === 'testnet';
+  const effectiveFavoriteFilterValue = isCustomNetworkTab
+    ? 'all'
+    : favoriteFilterValue;
+  const effectiveIsLpTokenEnabled = isCustomNetworkTab
+    ? false
+    : isLpTokenEnabled;
 
   const isSameSourceTokenSelect =
     type === 'send' || type === 'swapFrom' || type === 'bridgeFrom';
   const shouldUseTokenRows =
     isSameSourceTokenSelect &&
-    selectedTab !== 'testnet' &&
-    favoriteFilterValue !== 'favorite';
+    !isCustomNetworkTab &&
+    effectiveFavoriteFilterValue !== 'favorite';
   const shouldUseTokenObjects =
-    selectedTab !== 'testnet' &&
-    favoriteFilterValue !== 'favorite' &&
+    !isCustomNetworkTab &&
+    effectiveFavoriteFilterValue !== 'favorite' &&
     !shouldUseTokenRows;
 
   const {
@@ -162,7 +177,7 @@ const TokenSelect = ({
   } = useSelectTokens({
     currentAccount,
     chain_server_id: queryConds.chainServerId,
-    isLpTokenEnabled,
+    isLpTokenEnabled: effectiveIsLpTokenEnabled,
     keyword: queryConds.keyword,
     returnTokenObjects: shouldUseTokenObjects,
   });
@@ -210,7 +225,7 @@ const TokenSelect = ({
 
   const { data: favoriteTokens, loading: favoriteTokensLoading } =
     useFavoriteTokens({
-      focus: favoriteFilterValue === 'favorite',
+      focus: effectiveFavoriteFilterValue === 'favorite',
       address: currentAccount?.address,
       chainId: queryConds.chainServerId,
     });
@@ -219,10 +234,10 @@ const TokenSelect = ({
     if (isSearching) {
       return true;
     }
-    if (isLpTokenEnabled) {
+    if (effectiveIsLpTokenEnabled) {
       return isLoadingAllTokens;
     }
-    if (favoriteFilterValue === 'favorite') {
+    if (effectiveFavoriteFilterValue === 'favorite') {
       return favoriteTokensLoading;
     }
     if (hasHandledTokenSelectorVisibleRef.current) {
@@ -230,10 +245,10 @@ const TokenSelect = ({
     }
     return isLoadingAllTokens;
   }, [
-    favoriteFilterValue,
+    effectiveFavoriteFilterValue,
+    effectiveIsLpTokenEnabled,
     favoriteTokensLoading,
     isLoadingAllTokens,
-    isLpTokenEnabled,
     isSearching,
   ]);
 
@@ -321,7 +336,7 @@ const TokenSelect = ({
     if (shouldUseTokenRows) {
       return [];
     }
-    if (favoriteFilterValue === 'favorite') {
+    if (effectiveFavoriteFilterValue === 'favorite') {
       return favoriteTokens.map(e => ({
         ...e,
         isPin: true,
@@ -334,7 +349,7 @@ const TokenSelect = ({
     return tokensWithPinStatus;
   }, [
     shouldUseTokenRows,
-    favoriteFilterValue,
+    effectiveFavoriteFilterValue,
     tokens,
     favoriteTokens,
     pinedQueue,
@@ -420,7 +435,7 @@ const TokenSelect = ({
       const i = tokenItemToITokenItem(item, currentAccount.address);
       return tagTokenItemFavorite(i, { pinedQueue }) as ITokenItem;
     });
-    if (favoriteFilterValue === 'favorite') {
+    if (effectiveFavoriteFilterValue === 'favorite') {
       return list.filter(token =>
         pinedQueue?.some(
           x => x.chainId === token.chain && x.tokenId === token.id,
@@ -430,7 +445,7 @@ const TokenSelect = ({
     return list;
   }, [
     rawTestnetTokenList,
-    favoriteFilterValue,
+    effectiveFavoriteFilterValue,
     pinedQueue,
     currentAccount?.address,
   ]);
@@ -454,6 +469,7 @@ const TokenSelect = ({
                 <AssetAvatar
                   size={26}
                   chain={token.chain}
+                  innerChainStyle={styles.avatarLogo}
                   logo={token.logo_url}
                   chainSize={type === 'send' ? 12 : 0}
                 />
@@ -488,11 +504,9 @@ const TokenSelect = ({
         onConfirm={handleCurrentTokenChange}
         onCancel={handleTokenSelectorClose}
         onSearch={handleSearchTokens}
-        isLoading={
-          selectedTab === 'testnet' ? testnetTokenListLoading : isListLoading
-        }
-        showFavoriteFilter={!queryConds.keyword}
-        favoriteFilterValue={favoriteFilterValue}
+        isLoading={isCustomNetworkTab ? testnetTokenListLoading : isListLoading}
+        showFavoriteFilter={!queryConds.keyword && !isCustomNetworkTab}
+        favoriteFilterValue={effectiveFavoriteFilterValue}
         onFavoriteFilterChange={setFavoriteFilterValue}
         type={type}
         disableItemCheck={disableItemCheck}
@@ -507,10 +521,12 @@ const TokenSelect = ({
         showTestNetSwitch={isShowTestnet}
         selectTab={selectedTab}
         onTabChange={onTabChange}
-        showLpTokenSwitch={!queryConds.keyword}
-        isLpTokenEnabled={isLpTokenEnabled}
+        showLpTokenSwitch={!queryConds.keyword && !isCustomNetworkTab}
+        isLpTokenEnabled={effectiveIsLpTokenEnabled}
         onLpTokenChange={setIsLpTokenEnabled}
         favoriteTokenKeySet={favoriteTokenKeySet}
+        showCustomNetworkChainPreview={isCustomNetworkTab}
+        customNetworkTop3Chains={customNetworkTop3Chains}
       />
     </>
   );
@@ -585,6 +601,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
+  },
+  avatarLogo: {
+    overflow: 'hidden',
   },
 }));
 

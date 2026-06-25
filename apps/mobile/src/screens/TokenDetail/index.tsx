@@ -1,6 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { apiCustomTestnet } from '@/core/apis';
 import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -50,6 +51,8 @@ import { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
 import { IconRightCC } from './components/IconRightCC';
 import { TokenDetailWalletCard } from './components/TokenDetailWalletCard';
+import { findChainByServerID } from '@/utils/chain';
+import { customTestnetTokenToTokenItem } from '@/utils/token';
 export type { RelatedDeFiType, TokenFromAddressItem } from './types';
 
 const isAndroid = Platform.OS === 'android';
@@ -58,7 +61,12 @@ const ScreenWidth = Dimensions.get('window').width;
 const TokenDetailContent = () => {
   const route =
     useRoute<GetRootScreenNavigationProps<'TokenDetail'>['route']>();
-  const { token, account, tokenSelectType } = route.params || {};
+  const {
+    token,
+    account,
+    tokenSelectType,
+    isCustomTestnetToken = false,
+  } = route.params || {};
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
 
   const { styles, colors2024 } = useTheme2024({
@@ -117,6 +125,27 @@ const TokenDetailContent = () => {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const fetchBaseTokenInfo = useCallback(async () => {
+    if (isCustomTestnetToken) {
+      const chainItem = findChainByServerID(token.chain);
+      if (!chainItem) {
+        return token;
+      }
+      const res = await apiCustomTestnet.getCustomTestnetToken({
+        chainId: chainItem.id,
+        address: effectiveAccount?.address!,
+        tokenId: token.id,
+      });
+      const tokenItem = customTestnetTokenToTokenItem(res);
+
+      return {
+        ...token,
+        ...tokenItem,
+        owner_addr: effectiveAccount?.address!,
+        usd_value: 0,
+        cex_ids: [],
+      } as ITokenItem;
+    }
+
     const res = await openapi.getToken(
       effectiveAccount?.address!,
       token.chain,
@@ -131,7 +160,7 @@ const TokenDetailContent = () => {
       usd_value: res?.usd_value,
       price: res?.price,
     } as ITokenItem;
-  }, [effectiveAccount?.address, token]);
+  }, [effectiveAccount?.address, isCustomTestnetToken, token]);
 
   const { data: baseTokenInfo, refreshAsync: refreshBaseTokenInfo } =
     useRequest(fetchBaseTokenInfo, {
@@ -199,6 +228,10 @@ const TokenDetailContent = () => {
   }, [baseTokenInfo, effectiveAccount, route.params, token]);
 
   const getHeaderRight = useCallback(() => {
+    if (isCustomTestnetToken) {
+      return null;
+    }
+
     return (
       <RightMore
         token={token}
@@ -214,7 +247,7 @@ const TokenDetailContent = () => {
         refreshTags={refreshTag}
       />
     );
-  }, [effectiveAccount?.address, refreshTag, token]);
+  }, [effectiveAccount?.address, isCustomTestnetToken, refreshTag, token]);
 
   useFocusEffect(
     useCallback(() => {
@@ -247,7 +280,7 @@ const TokenDetailContent = () => {
     amountSum,
     usdValue,
     percentChange,
-    has24hChangeData,
+    has24hChangeData: _has24hChangeData,
     isLoss,
     is24hNoChange,
     price,
@@ -261,10 +294,14 @@ const TokenDetailContent = () => {
       setManualBaseTokenRefreshing(false);
     });
   }, [refreshBaseTokenInfo]);
+  const has24hChangeData = _has24hChangeData && !isCustomTestnetToken;
   const renderHeader = useCallback(() => {
     return (
       <View style={[styles.balanceOverviewContainer, styles.listHeader]}>
-        <AccountSwitcher forScene="TokenDetail" disableSwitch={false} />
+        <AccountSwitcher
+          forScene="TokenDetail"
+          disableSwitch={isCustomTestnetToken}
+        />
         <View style={styles.balanceOverviewContent}>
           <BalanceOverview usdValue={usdValue} amount={amountSum || 0} />
           {!baseTokenInfo ? null : (
@@ -374,6 +411,7 @@ const TokenDetailContent = () => {
     effectiveAccount,
     handleOpenTokenMarketInfo,
     has24hChangeData,
+    isCustomTestnetToken,
     is24hNoChange,
     isLoss,
     percentChange,
@@ -431,8 +469,14 @@ const TokenDetailContent = () => {
         onReachTopStatusChange={handleReachTopStatusChange}
         finalAccount={effectiveAccount}
         token={token}
+        overWritePlaceholder={
+          isCustomTestnetToken
+            ? t('page.activities.signedTx.empty.testnetNoHistory')
+            : undefined
+        }
         ListHeaderComponent={renderHeader}
         baseTokenRefreshing={manualBaseTokenRefreshing}
+        disableHistoryRequest={isCustomTestnetToken}
       />
 
       <View style={styles.bottomContainer}>
@@ -440,6 +484,7 @@ const TokenDetailContent = () => {
           token={token}
           finalAccount={effectiveAccount}
           tokenSelectType={tokenSelectType}
+          disableSwapBridge={isCustomTestnetToken}
         />
       </View>
       <AccountSwitcherModal token={token} forScene="TokenDetail" inScreen />
