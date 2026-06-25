@@ -280,7 +280,7 @@ const TokenDetailContent = () => {
     amountSum,
     usdValue,
     percentChange,
-    has24hChangeData,
+    has24hChangeData: _has24hChangeData,
     isLoss,
     is24hNoChange,
     price,
@@ -294,6 +294,7 @@ const TokenDetailContent = () => {
       setManualBaseTokenRefreshing(false);
     });
   }, [refreshBaseTokenInfo]);
+  const has24hChangeData = _has24hChangeData && !isCustomTestnetToken;
   const renderHeader = useCallback(() => {
     return (
       <View style={[styles.balanceOverviewContainer, styles.listHeader]}>
