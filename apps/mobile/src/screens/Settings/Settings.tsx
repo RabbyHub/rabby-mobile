@@ -105,7 +105,7 @@ import InnerDappPreloadStrategySelector, {
   useInnerDappPreloadStrategySelectorModalVisible,
 } from './sheetModals/InnerDappPreloadStrategySelector';
 import { useInnerDappPreloadRetention } from '@/config/innerDappPreloadRetention';
-import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner2024';
+import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner';
 import WalletLockTestItemModal, {
   useWalletLockTestItemModalVisible,
 } from './sheetModals/DevWalletLock';
