@@ -50,6 +50,7 @@ export const TokenDetailHistoryList = ({
   ListHeaderComponent,
   baseTokenRefreshing,
   disableHistoryRequest,
+  overWritePlaceholder,
 }: {
   finalAccount: KeyringAccountWithAlias | null;
   token: ITokenItem;
@@ -58,6 +59,7 @@ export const TokenDetailHistoryList = ({
   ListHeaderComponent?: HistoryListHeaderComponent;
   baseTokenRefreshing?: boolean;
   disableHistoryRequest?: boolean;
+  overWritePlaceholder?: string;
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -323,7 +325,9 @@ export const TokenDetailHistoryList = ({
           <Empty
             style={styles.emptyStyle}
             title={
-              !isMyAddress
+              overWritePlaceholder
+                ? overWritePlaceholder
+                : !isMyAddress
                 ? t('page.activities.signedTx.empty.title')
                 : t('page.activities.signedTx.empty.titleLastThreeMonths')
             }
