@@ -18,7 +18,7 @@ export const TestnetChainLogo = ({
     colors2024['neutral-foot']
   }'></circle><text x='16' y='20' dominant-baseline='middle' text-anchor='middle' fill='${
     isLight ? colors2024['neutral-InvertHighlight'] : 'black'
-  }' font-size='12' line-height='12' font-weight='400'>${encodeURIComponent(
+  }' font-size='12' line-height='12' font-weight='700'>${encodeURIComponent(
     name.substring(0, 3).replace(/\s/g, ''),
   )}</text></svg>`;
 
