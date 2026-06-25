@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +29,11 @@ import BorrowItem from './components/ItemRender/BorrowItem';
 import SupplyItem from './components/ItemRender/SupplyItem';
 import { displayGhoForMintableMarket } from './utils/supply';
 import SummaryItem from './components/ItemRender/SummaryItem';
+import {
+  getWrappedNativeReservePair,
+  getWrappedNativeTokenOptions,
+  type PositionTokenOption,
+} from './utils/positionTokenSelector';
 import {
   useFetchLendingData,
   useLendingIsLoading,
@@ -75,6 +80,7 @@ type MyAssetItem =
       type: 'supply';
       underlyingAsset: string;
       usdValue: number;
+      tokenOptions?: PositionTokenOption[];
     };
 
 const MyAssetHome: React.FC = () => {
@@ -91,6 +97,7 @@ const MyAssetHome: React.FC = () => {
   const isFocused = useIsFocused();
   const openedRouteActionKeyRef = useRef<string | null>(null);
   const restoringPopupRefreshKeyRef = useRef<string | null>(null);
+  const [activeUnderlyingAsset, setActiveUnderlyingAsset] = useState('');
 
   const loading = isFetching || !iUserSummary || !displayPoolReserves;
 
@@ -140,13 +147,49 @@ const MyAssetHome: React.FC = () => {
         item.reserve.eModes,
       );
     });
+    const {
+      nativeReserve: nativeSupplyReserve,
+      wrappedReserve: wrappedNativeSupplyReserve,
+    } = getWrappedNativeReservePair(supplyList, chainEnum);
+    const shouldMergeWrappedNativeSupply =
+      nativeSupplyReserve &&
+      wrappedNativeSupplyReserve &&
+      nativeSupplyReserve.underlyingBalance ===
+        wrappedNativeSupplyReserve.underlyingBalance &&
+      nativeSupplyReserve.underlyingBalanceUSD ===
+        wrappedNativeSupplyReserve.underlyingBalanceUSD;
+    const wrappedNativeTokenOptions = shouldMergeWrappedNativeSupply
+      ? getWrappedNativeTokenOptions({
+          displayPoolReserves: supplyList,
+          chainEnum,
+        })
+      : undefined;
+
     supplyList?.forEach(item => {
+      if (
+        shouldMergeWrappedNativeSupply &&
+        wrappedNativeSupplyReserve &&
+        isSameAddress(
+          item.underlyingAsset,
+          wrappedNativeSupplyReserve.underlyingAsset,
+        )
+      ) {
+        return;
+      }
       const supplyUsd = Number(item.underlyingBalanceUSD || '0');
       if (supplyUsd > 0) {
         list.push({
           type: 'supply',
           underlyingAsset: item.underlyingAsset,
           usdValue: supplyUsd,
+          tokenOptions:
+            nativeSupplyReserve &&
+            isSameAddress(
+              item.underlyingAsset,
+              nativeSupplyReserve.underlyingAsset,
+            )
+              ? wrappedNativeTokenOptions
+              : undefined,
         });
       }
     });
@@ -228,11 +271,14 @@ const MyAssetHome: React.FC = () => {
       return (
         <SupplyItem
           underlyingAsset={item.underlyingAsset}
+          activeUnderlyingAsset={activeUnderlyingAsset}
+          tokenOptions={item.tokenOptions}
+          onChangeActiveUnderlyingAsset={setActiveUnderlyingAsset}
           style={styles.item}
         />
       );
     },
-    [styles.item],
+    [activeUnderlyingAsset, styles.item],
   );
 
   React.useEffect(() => {
