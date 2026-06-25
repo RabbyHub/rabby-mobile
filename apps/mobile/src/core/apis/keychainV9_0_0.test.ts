@@ -57,10 +57,6 @@ describe('core/apis/keychainV9_0_0', () => {
     const mockSetGenericPassword = jest.fn(async () => true);
     const mockResetGenericPassword = jest.fn(async () => true);
     const mockCanImplyAuthentication = jest.fn(async () => true);
-    const mockGetSupportedBiometryType = jest.fn(async () => 'Fingerprint');
-    const mockRequestSystemAuthentication = jest.fn(async () => ({
-      success: true,
-    }));
     const mockDebugGetGenericPasswordStateForOptions = jest.fn(async () => ({
       service: 'com.debank',
       hasEntry: true,
@@ -125,8 +121,7 @@ describe('core/apis/keychainV9_0_0', () => {
         getGenericPassword: mockGetGenericPassword,
         setGenericPassword: mockSetGenericPassword,
         resetGenericPassword: mockResetGenericPassword,
-        getSupportedBiometryType: mockGetSupportedBiometryType,
-        requestSystemAuthentication: mockRequestSystemAuthentication,
+        getSupportedBiometryType: jest.fn(async () => 'Fingerprint'),
         isPasscodeAuthAvailable: jest.fn(async () => true),
         canImplyAuthentication: mockCanImplyAuthentication,
         ACCESSIBLE: {
@@ -231,8 +226,6 @@ describe('core/apis/keychainV9_0_0', () => {
       mockGetGenericPassword,
       mockSetGenericPassword,
       mockCanImplyAuthentication,
-      mockGetSupportedBiometryType,
-      mockRequestSystemAuthentication,
       mockDebugGetGenericPasswordStateForOptions,
       mockDebugDecryptGenericPasswordForOptions,
       mockSafeVerifyPasswordAndUpdateUnlockTime,
@@ -669,12 +662,7 @@ describe('core/apis/keychainV9_0_0', () => {
   });
 
   it('does not rewrite Android biometrics storage when the entry is already no-auth', async () => {
-    const {
-      module,
-      mockSetGenericPassword,
-      mockSimplePrompt,
-      mockRequestSystemAuthentication,
-    } = await setup({
+    const { module, mockSetGenericPassword, mockSimplePrompt } = await setup({
       storage: 'KeystoreAESGCM_NoAuth',
       authType: 4,
     });
@@ -683,50 +671,12 @@ describe('core/apis/keychainV9_0_0', () => {
       purpose: module.RequestGenericPurpose.VERIFY,
     });
 
-    expect(mockRequestSystemAuthentication).toHaveBeenCalledWith(
+    expect(mockSimplePrompt).toHaveBeenCalledWith(
       expect.objectContaining({
-        accessControl: 'BiometryAnyOrDevicePasscode',
-        androidBiometricSecurityLevel: 'strong',
+        allowDeviceCredentials: true,
       }),
     );
-    expect(mockSimplePrompt).not.toHaveBeenCalled();
     expect(mockSetGenericPassword).not.toHaveBeenCalled();
-  });
-
-  it('keeps the no-auth unlock system prompt on strong biometrics', async () => {
-    const {
-      module,
-      mockGetGenericPassword,
-      mockGetSupportedBiometryType,
-      mockRequestSystemAuthentication,
-    } = await setup({
-      storage: 'KeystoreAESGCM_NoAuth',
-      authType: 4,
-    });
-
-    await module.requestGenericPassword({
-      purpose: module.RequestGenericPurpose.DECRYPT_PWD,
-      androidSystemAuthPromptSecurityLevel: 'weak',
-      onPlainPassword: jest.fn(),
-    });
-
-    expect(mockGetGenericPassword).toHaveBeenCalledWith(
-      expect.objectContaining({
-        service: 'com.debank',
-        androidBiometricSecurityLevel: 'strong',
-      }),
-    );
-    expect(mockGetSupportedBiometryType).toHaveBeenCalledWith(
-      expect.objectContaining({
-        androidBiometricSecurityLevel: 'strong',
-      }),
-    );
-    expect(mockRequestSystemAuthentication).toHaveBeenCalledWith(
-      expect.objectContaining({
-        accessControl: 'BiometryAnyOrDevicePasscode',
-        androidBiometricSecurityLevel: 'strong',
-      }),
-    );
   });
 
   it('passes the Android authenticated-session reuse option through business reads when requested', async () => {

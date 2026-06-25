@@ -1,5 +1,10 @@
 import { useTheme2024 } from '@/hooks/theme';
-import React, { useMemo, useCallback, useEffect } from 'react';
+import React, {
+  useMemo,
+  useCallback,
+  useEffect,
+  useDeferredValue,
+} from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import { navigateDeprecated, replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
@@ -343,8 +348,9 @@ export const ImportSecret = ({ route }: ScreenProps) => {
     return !privateKey?.trim() || !!privateKeyError;
   }, [activeTab, mnemonics, mnemonicError, privateKey, privateKeyError]);
 
-  const hasInputContent =
-    activeTab === 'seedPhrase' ? !!mnemonics?.trim() : !!privateKey?.trim();
+  const deferredHasInputContent = useDeferredValue(
+    activeTab === 'seedPhrase' ? !!mnemonics?.trim() : !!privateKey?.trim(),
+  );
 
   return (
     <FooterButtonScreenContainer
@@ -413,7 +419,7 @@ export const ImportSecret = ({ route }: ScreenProps) => {
           </View>
 
           {/* Create New Wallet Link - hidden for in_app flow */}
-          {!isInAppFlow && !hasInputContent && (
+          {!isInAppFlow && !deferredHasInputContent && (
             <View style={styles.linkWrapper}>
               <Text style={styles.linkText}>
                 <Trans

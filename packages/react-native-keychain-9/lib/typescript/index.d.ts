@@ -1,23 +1,5 @@
-import {
-  ACCESSIBLE,
-  ACCESS_CONTROL,
-  AUTHENTICATION_TYPE,
-  SECURITY_LEVEL,
-  SECURITY_RULES,
-  STORAGE_TYPE,
-  BIOMETRY_TYPE,
-} from './enums';
-import type {
-  Result,
-  UserCredentials,
-  SharedWebCredentials,
-  GetOptions,
-  BaseOptions,
-  SetOptions,
-  AuthenticationTypeOption,
-  AccessControlOption,
-  SystemAuthenticationResult,
-} from './types';
+import { ACCESSIBLE, ACCESS_CONTROL, AUTHENTICATION_TYPE, SECURITY_LEVEL, SECURITY_RULES, STORAGE_TYPE, BIOMETRY_TYPE } from './enums';
+import type { Result, UserCredentials, SharedWebCredentials, GetOptions, BaseOptions, SetOptions, AuthenticationTypeOption, AccessControlOption } from './types';
 /**
  * Saves the `username` and `password` combination for the given service.
  *
@@ -32,11 +14,7 @@ import type {
  * await Keychain.setGenericPassword('username', 'password');
  * ```
  */
-export declare function setGenericPassword(
-  username: string,
-  password: string,
-  serviceOrOptions?: string | SetOptions,
-): Promise<false | Result>;
+export declare function setGenericPassword(username: string, password: string, serviceOrOptions?: string | SetOptions): Promise<false | Result>;
 /**
  * Fetches the `username` and `password` combination for the given service.
  *
@@ -54,9 +32,7 @@ export declare function setGenericPassword(
  * }
  * ```
  */
-export declare function getGenericPassword(
-  serviceOrOptions?: string | GetOptions,
-): Promise<false | UserCredentials>;
+export declare function getGenericPassword(serviceOrOptions?: string | GetOptions): Promise<false | UserCredentials>;
 /**
  * Checks if generic password exists for the given service.
  *
@@ -70,9 +46,7 @@ export declare function getGenericPassword(
  * console.log('Password exists:', hasPassword);
  * ```
  */
-export declare function hasGenericPassword(
-  serviceOrOptions?: string | BaseOptions,
-): Promise<boolean>;
+export declare function hasGenericPassword(serviceOrOptions?: string | BaseOptions): Promise<boolean>;
 /**
  * Deletes all generic password keychain entries for the given service.
  *
@@ -86,9 +60,7 @@ export declare function hasGenericPassword(
  * console.log('Password reset successful:', success);
  * ```
  */
-export declare function resetGenericPassword(
-  serviceOrOptions?: string | BaseOptions,
-): Promise<boolean>;
+export declare function resetGenericPassword(serviceOrOptions?: string | BaseOptions): Promise<boolean>;
 /**
  * Gets all service keys used in generic password keychain entries.
  *
@@ -114,9 +86,7 @@ export declare function getAllGenericPasswordServices(): Promise<string[]>;
  * console.log('Internet credentials exist:', hasCredentials);
  * ```
  */
-export declare function hasInternetCredentials(
-  serverOrOptions: string | BaseOptions,
-): Promise<boolean>;
+export declare function hasInternetCredentials(serverOrOptions: string | BaseOptions): Promise<boolean>;
 /**
  * Saves the internet credentials for the given server.
  *
@@ -132,12 +102,7 @@ export declare function hasInternetCredentials(
  * await Keychain.setInternetCredentials('https://example.com', 'username', 'password');
  * ```
  */
-export declare function setInternetCredentials(
-  server: string,
-  username: string,
-  password: string,
-  options?: SetOptions,
-): Promise<false | Result>;
+export declare function setInternetCredentials(server: string, username: string, password: string, options?: SetOptions): Promise<false | Result>;
 /**
  * Fetches the internet credentials for the given server.
  *
@@ -156,10 +121,7 @@ export declare function setInternetCredentials(
  * }
  * ```
  */
-export declare function getInternetCredentials(
-  server: string,
-  options?: GetOptions,
-): Promise<false | UserCredentials>;
+export declare function getInternetCredentials(server: string, options?: GetOptions): Promise<false | UserCredentials>;
 /**
  * Deletes all internet password keychain entries for the given server.
  *
@@ -173,9 +135,7 @@ export declare function getInternetCredentials(
  * console.log('Credentials reset for server');
  * ```
  */
-export declare function resetInternetCredentials(
-  serverOrOptions: string | BaseOptions,
-): Promise<void>;
+export declare function resetInternetCredentials(serverOrOptions: string | BaseOptions): Promise<void>;
 /**
  * Gets the type of biometric authentication supported by the device.
  *
@@ -187,17 +147,7 @@ export declare function resetInternetCredentials(
  * console.log('Supported Biometry Type:', biometryType);
  * ```
  */
-export declare function getSupportedBiometryType(
-  serviceOrOptions?: string | GetOptions,
-): Promise<null | BIOMETRY_TYPE>;
-/**
- * Requests Android system authentication without reading or writing keychain data.
- *
- * @platform Android
- */
-export declare function requestSystemAuthentication(
-  serviceOrOptions?: string | GetOptions,
-): Promise<SystemAuthenticationResult>;
+export declare function getSupportedBiometryType(): Promise<null | BIOMETRY_TYPE>;
 /**
  * Request shared web credentials.
  *
@@ -215,9 +165,7 @@ export declare function requestSystemAuthentication(
  * }
  * ```
  */
-export declare function requestSharedWebCredentials(): Promise<
-  false | SharedWebCredentials
->;
+export declare function requestSharedWebCredentials(): Promise<false | SharedWebCredentials>;
 /**
  * Sets shared web credentials.
  *
@@ -235,11 +183,7 @@ export declare function requestSharedWebCredentials(): Promise<
  * console.log('Shared web credentials set');
  * ```
  */
-export declare function setSharedWebCredentials(
-  server: string,
-  username: string,
-  password?: string,
-): Promise<void>;
+export declare function setSharedWebCredentials(server: string, username: string, password?: string): Promise<void>;
 /**
  * Checks if the current device supports the specified authentication policy.
  *
@@ -255,9 +199,7 @@ export declare function setSharedWebCredentials(
  * console.log('Can imply authentication:', canAuthenticate);
  * ```
  */
-export declare function canImplyAuthentication(
-  options?: AuthenticationTypeOption,
-): Promise<boolean>;
+export declare function canImplyAuthentication(options?: AuthenticationTypeOption): Promise<boolean>;
 /**
  * Returns the security level supported by the library on the current device.
  *
@@ -273,33 +215,30 @@ export declare function canImplyAuthentication(
  * console.log('Security Level:', securityLevel);
  * ```
  */
-export declare function getSecurityLevel(
-  options?: AccessControlOption,
-): Promise<null | SECURITY_LEVEL>;
+export declare function getSecurityLevel(options?: AccessControlOption): Promise<null | SECURITY_LEVEL>;
 export * from './enums';
 export * from './types';
 /** @ignore */
 declare const _default: {
-  SECURITY_LEVEL: typeof SECURITY_LEVEL;
-  ACCESSIBLE: typeof ACCESSIBLE;
-  ACCESS_CONTROL: typeof ACCESS_CONTROL;
-  AUTHENTICATION_TYPE: typeof AUTHENTICATION_TYPE;
-  BIOMETRY_TYPE: typeof BIOMETRY_TYPE;
-  STORAGE_TYPE: typeof STORAGE_TYPE;
-  SECURITY_RULES: typeof SECURITY_RULES;
-  getSecurityLevel: typeof getSecurityLevel;
-  canImplyAuthentication: typeof canImplyAuthentication;
-  getSupportedBiometryType: typeof getSupportedBiometryType;
-  requestSystemAuthentication: typeof requestSystemAuthentication;
-  setInternetCredentials: typeof setInternetCredentials;
-  getInternetCredentials: typeof getInternetCredentials;
-  resetInternetCredentials: typeof resetInternetCredentials;
-  setGenericPassword: typeof setGenericPassword;
-  getGenericPassword: typeof getGenericPassword;
-  getAllGenericPasswordServices: typeof getAllGenericPasswordServices;
-  resetGenericPassword: typeof resetGenericPassword;
-  requestSharedWebCredentials: typeof requestSharedWebCredentials;
-  setSharedWebCredentials: typeof setSharedWebCredentials;
+    SECURITY_LEVEL: typeof SECURITY_LEVEL;
+    ACCESSIBLE: typeof ACCESSIBLE;
+    ACCESS_CONTROL: typeof ACCESS_CONTROL;
+    AUTHENTICATION_TYPE: typeof AUTHENTICATION_TYPE;
+    BIOMETRY_TYPE: typeof BIOMETRY_TYPE;
+    STORAGE_TYPE: typeof STORAGE_TYPE;
+    SECURITY_RULES: typeof SECURITY_RULES;
+    getSecurityLevel: typeof getSecurityLevel;
+    canImplyAuthentication: typeof canImplyAuthentication;
+    getSupportedBiometryType: typeof getSupportedBiometryType;
+    setInternetCredentials: typeof setInternetCredentials;
+    getInternetCredentials: typeof getInternetCredentials;
+    resetInternetCredentials: typeof resetInternetCredentials;
+    setGenericPassword: typeof setGenericPassword;
+    getGenericPassword: typeof getGenericPassword;
+    getAllGenericPasswordServices: typeof getAllGenericPasswordServices;
+    resetGenericPassword: typeof resetGenericPassword;
+    requestSharedWebCredentials: typeof requestSharedWebCredentials;
+    setSharedWebCredentials: typeof setSharedWebCredentials;
 };
 export default _default;
 //# sourceMappingURL=index.d.ts.map
