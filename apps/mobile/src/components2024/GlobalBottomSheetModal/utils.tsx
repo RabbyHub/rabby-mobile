@@ -382,7 +382,9 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.CUSTOM_TESTNET_ADD_TOKEN]: {
     snapPoints: [600],
     Component: CustomTestnetAddTokenSheet,
-    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+    globalModalPropsPreset: getDefaultViewTypePropsPreset({
+      android_keyboardInputMode: 'adjustPan',
+    }),
   },
   [MODAL_NAMES.REPAY_TOKEN_SELECT]: {
     snapPoints: [360],

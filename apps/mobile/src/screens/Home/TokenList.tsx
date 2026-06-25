@@ -308,11 +308,14 @@ export const TokenList = ({
       };
     }),
   );
+  const hasDefaultTokenData =
+    unFoldTokenIds.length + foldTokenIds.length + scamTokenIds.length > 0;
+  const shouldHideCustomTestnetSectionsWhileLoading =
+    (isLoading || isAllLoading) && !hasDefaultTokenData;
   const visibleCustomTestnetSections =
     shouldShowCustomTestnetSections &&
     hasRequestedTokenList &&
-    !isLoading &&
-    !isAllLoading
+    !shouldHideCustomTestnetSectionsWhileLoading
       ? customTestnetSections
       : EMPTY_CUSTOM_TESTNET_SECTIONS;
   const getTokenList = useTokenList(s => s.getTokenList);

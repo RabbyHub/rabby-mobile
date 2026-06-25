@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import {
   Keyboard,
+  KeyboardAvoidingView,
   StyleSheet,
   TouchableWithoutFeedback,
   View,
@@ -31,6 +32,14 @@ import type {
 } from '@/types/customTestnet';
 import { toast } from '@/components2024/Toast';
 import { ChainInitialBadge } from './ChainInitialBadge';
+import { IS_IOS } from '@/core/native/utils';
+import {
+  BOTTOM_BUTTON_DOUBLE_HEIGHT,
+  BOTTOM_BUTTON_GAP,
+  BOTTOM_BUTTON_TOP_OFFSET,
+  getBottomButtonBottomOffset,
+} from '@/constant/layout';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type CustomTestnetAddTokenSheetProps = {
   chain: TestnetChain;
@@ -58,12 +67,14 @@ type TokenLookupState =
 export const CustomTestnetAddTokenSheet = memo(
   ({ chain, onCancel, onConfirm }: CustomTestnetAddTokenSheetProps) => {
     const { styles, colors2024 } = useTheme2024({ getStyle });
+    const safeAreaInsets = useSafeAreaInsets();
     const { t } = useTranslation();
     const [address, setAddress] = useState('');
     const [lookupState, setLookupState] = useState<TokenLookupState>({
       status: 'idle',
     });
     const [confirming, setConfirming] = useState(false);
+    const [keyboardVisible, setKeyboardVisible] = useState(false);
     const lookupSeqRef = useRef(0);
 
     const lookupToken = useMemo(
@@ -107,6 +118,22 @@ export const CustomTestnetAddTokenSheet = memo(
         lookupToken.cancel();
       };
     }, [lookupToken]);
+
+    useEffect(() => {
+      const showEvent = Keyboard.addListener(
+        IS_IOS ? 'keyboardWillShow' : 'keyboardDidShow',
+        () => setKeyboardVisible(true),
+      );
+      const hideEvent = Keyboard.addListener(
+        IS_IOS ? 'keyboardWillHide' : 'keyboardDidHide',
+        () => setKeyboardVisible(false),
+      );
+
+      return () => {
+        showEvent.remove();
+        hideEvent.remove();
+      };
+    }, []);
 
     useEffect(() => {
       const nextAddress = address.trim();
@@ -190,93 +217,118 @@ export const CustomTestnetAddTokenSheet = memo(
             {t('page.customTestnet.addToken.title')}
           </Text>
 
-          <View style={styles.content}>
-            <View style={styles.field}>
-              <Text style={styles.label}>
-                {t('page.customTestnet.addToken.chain')}
-              </Text>
-              <View style={styles.chainField}>
-                <ChainInitialBadge name={chain.name} size={24} />
-                <Text numberOfLines={1} style={styles.chainName}>
-                  {chain.name}
+          <KeyboardAvoidingView
+            behavior={IS_IOS ? 'position' : 'height'}
+            keyboardVerticalOffset={-BOTTOM_BUTTON_DOUBLE_HEIGHT}
+            style={styles.keyboardAvoidingContent}>
+            <View
+              style={[
+                styles.content,
+                {
+                  paddingBottom: keyboardVisible
+                    ? 0
+                    : BOTTOM_BUTTON_TOP_OFFSET +
+                      BOTTOM_BUTTON_DOUBLE_HEIGHT +
+                      getBottomButtonBottomOffset(safeAreaInsets.bottom),
+                },
+              ]}>
+              <View style={styles.field}>
+                <Text style={styles.label}>
+                  {t('page.customTestnet.addToken.chain')}
                 </Text>
-              </View>
-            </View>
-
-            <View style={styles.field}>
-              <Text style={styles.label}>
-                {t('page.customTestnet.addToken.tokenAddress')}
-              </Text>
-              <View style={styles.addressInputWrap}>
-                <BottomSheetTextInput
-                  multiline
-                  value={address}
-                  onChangeText={handleAddressChange}
-                  placeholder={t('page.customTestnet.addToken.enterAddress')}
-                  placeholderTextColor={colors2024['neutral-secondary']}
-                  style={styles.addressInput}
-                  textAlignVertical="top"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-                <PasteButton
-                  style={styles.pasteButton}
-                  iconColor={colors2024['brand-default']}
-                  onPaste={text => {
-                    handleAddressChange(text.trim());
-                    Keyboard.dismiss();
-                  }}
-                />
-              </View>
-              {lookupState.status === 'found' ? (
-                <View style={styles.foundToken}>
-                  <Text style={styles.foundTokenLabel}>
-                    {t('page.customTestnet.addToken.foundToken')}
+                <View style={styles.chainField}>
+                  <ChainInitialBadge name={chain.name} size={24} />
+                  <Text numberOfLines={1} style={styles.chainName}>
+                    {chain.name}
                   </Text>
-                  <View style={styles.foundTokenMain}>
-                    <AssetAvatar
-                      size={24}
-                      chain={chain.serverId}
-                      chainSize={10}
-                      innerChainStyle={styles.foundTokenChainIcon}
-                    />
-                    <Text style={styles.foundTokenSymbol}>
-                      {lookupState.token.symbol}
-                    </Text>
-                  </View>
                 </View>
-              ) : lookupState.status === 'checking' ? (
-                <Text style={styles.checkingText}>
-                  {t('page.customTestnet.addToken.checking')}
-                </Text>
-              ) : lookupState.status === 'error' ? (
-                <Text style={styles.errorText}>{lookupState.error}</Text>
-              ) : null}
-            </View>
-          </View>
+              </View>
 
-          <View style={styles.footer}>
-            <Button
-              title={t('global.Cancel')}
-              type="plain"
-              height={48}
-              containerStyle={styles.footerButton}
-              buttonStyle={styles.cancelButton}
-              titleStyle={styles.cancelButtonText}
-              onPress={handleCancel}
-              disabled={confirming}
-            />
-            <Button
-              title={t('global.Confirm')}
-              type="primary"
-              height={48}
-              containerStyle={styles.footerButton}
-              buttonStyle={styles.confirmButton}
-              onPress={handleConfirm}
-              loading={confirming}
-              disabled={confirmDisabled}
-            />
-          </View>
+              <View style={styles.field}>
+                <Text style={styles.label}>
+                  {t('page.customTestnet.addToken.tokenAddress')}
+                </Text>
+                <View style={styles.addressInputWrap}>
+                  <BottomSheetTextInput
+                    multiline
+                    value={address}
+                    onChangeText={handleAddressChange}
+                    placeholder={t('page.customTestnet.addToken.enterAddress')}
+                    placeholderTextColor={colors2024['neutral-secondary']}
+                    style={styles.addressInput}
+                    textAlignVertical="top"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  <PasteButton
+                    style={styles.pasteButton}
+                    iconColor={colors2024['brand-default']}
+                    onPaste={text => {
+                      handleAddressChange(text.trim());
+                      Keyboard.dismiss();
+                    }}
+                  />
+                </View>
+                {lookupState.status === 'found' ? (
+                  <View style={styles.foundToken}>
+                    <Text style={styles.foundTokenLabel}>
+                      {t('page.customTestnet.addToken.foundToken')}
+                    </Text>
+                    <View style={styles.foundTokenMain}>
+                      <AssetAvatar
+                        size={24}
+                        chain={chain.serverId}
+                        chainSize={10}
+                        innerChainStyle={styles.foundTokenChainIcon}
+                      />
+                      <Text style={styles.foundTokenSymbol}>
+                        {lookupState.token.symbol}
+                      </Text>
+                    </View>
+                  </View>
+                ) : lookupState.status === 'checking' ? (
+                  <Text style={styles.checkingText}>
+                    {t('page.customTestnet.addToken.checking')}
+                  </Text>
+                ) : lookupState.status === 'error' ? (
+                  <Text style={styles.errorText}>{lookupState.error}</Text>
+                ) : null}
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+
+          {keyboardVisible ? null : (
+            <View
+              style={[
+                styles.footer,
+                {
+                  paddingBottom: getBottomButtonBottomOffset(
+                    safeAreaInsets.bottom,
+                  ),
+                },
+              ]}>
+              <Button
+                title={t('global.Cancel')}
+                type="plain"
+                height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+                containerStyle={styles.footerButton}
+                buttonStyle={styles.cancelButton}
+                titleStyle={styles.cancelButtonText}
+                onPress={handleCancel}
+                disabled={confirming}
+              />
+              <Button
+                title={t('global.Confirm')}
+                type="primary"
+                height={BOTTOM_BUTTON_DOUBLE_HEIGHT}
+                containerStyle={styles.footerButton}
+                buttonStyle={styles.confirmButton}
+                onPress={handleConfirm}
+                loading={confirming}
+                disabled={confirmDisabled}
+              />
+            </View>
+          )}
         </View>
       </TouchableWithoutFeedback>
     );
@@ -289,7 +341,6 @@ const getStyle = createGetStyles2024(ctx =>
       flex: 1,
       paddingHorizontal: 20,
       paddingTop: 12,
-      paddingBottom: 34,
       backgroundColor: ctx.colors2024['neutral-bg-1'],
     },
     title: {
@@ -299,6 +350,9 @@ const getStyle = createGetStyles2024(ctx =>
       lineHeight: 24,
       fontWeight: '800',
       textAlign: 'center',
+    },
+    keyboardAvoidingContent: {
+      flex: 1,
     },
     content: {
       marginTop: 26,
@@ -413,9 +467,13 @@ const getStyle = createGetStyles2024(ctx =>
       fontWeight: '400',
     },
     footer: {
-      marginTop: 'auto',
+      position: 'absolute',
+      left: 20,
+      right: 20,
+      bottom: 0,
       flexDirection: 'row',
-      gap: 12,
+      gap: BOTTOM_BUTTON_GAP,
+      paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     },
     footerButton: {
       flex: 1,

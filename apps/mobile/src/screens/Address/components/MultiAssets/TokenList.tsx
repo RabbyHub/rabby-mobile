@@ -337,8 +337,13 @@ export const TokenList = () => {
   );
 
   const isLoading = useTokenList(s => s.isLoading);
+  const hasDefaultTokenData =
+    tokenRows.length + foldRows.length + scamRows.length > 0;
+  const shouldHideCustomTestnetSectionsWhileLoading =
+    isLoading && !hasDefaultTokenData;
   const visibleCustomTestnetSections =
-    shouldShowCustomTestnetSections && !isLoading
+    shouldShowCustomTestnetSections &&
+    !shouldHideCustomTestnetSectionsWhileLoading
       ? customTestnetSections
       : EMPTY_CUSTOM_TESTNET_SECTIONS;
 
