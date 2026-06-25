@@ -40596,11 +40596,11 @@ __metadata:
 
 "react-native-pager-view@patch:react-native-pager-view@npm%3A6.7.0#./.yarn/patches/react-native-pager-view-npm-6.7.0-0fd4ad27df.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 6.7.0
-  resolution: "react-native-pager-view@patch:react-native-pager-view@npm%3A6.7.0#./.yarn/patches/react-native-pager-view-npm-6.7.0-0fd4ad27df.patch::version=6.7.0&hash=f3e00e&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "react-native-pager-view@patch:react-native-pager-view@npm%3A6.7.0#./.yarn/patches/react-native-pager-view-npm-6.7.0-0fd4ad27df.patch::version=6.7.0&hash=58195a&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/e3a0e4b335075ec01233e370e8fb444cbf509462c9277b3b00f63b2402a990813a3cff52b1a7cd9323fbcd43d332f381f538f3132f5f420ef4d7f097400cfe10
+  checksum: 10/0efccf0092b6e37283ecf2c3e39916359762a4e271bed50a40cbf991c317df2953afc0b5eeb8f513aeab4d5f4de99adb4b6ac5c1e3d2748f7e50e2f909c07e69
   languageName: node
   linkType: hard
 
@@ -40718,7 +40718,7 @@ __metadata:
 
 "react-native-reanimated@patch:react-native-reanimated@npm%3A3.19.2#./.yarn/patches/react-native-reanimated-npm-3.19.2-android-codegen.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 3.19.2
-  resolution: "react-native-reanimated@patch:react-native-reanimated@npm%3A3.19.2#./.yarn/patches/react-native-reanimated-npm-3.19.2-android-codegen.patch::version=3.19.2&hash=b43cb5&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "react-native-reanimated@patch:react-native-reanimated@npm%3A3.19.2#./.yarn/patches/react-native-reanimated-npm-3.19.2-android-codegen.patch::version=3.19.2&hash=ba9226&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@babel/plugin-transform-arrow-functions": "npm:^7.0.0-0"
     "@babel/plugin-transform-class-properties": "npm:^7.0.0-0"
@@ -40736,7 +40736,7 @@ __metadata:
     "@babel/core": ^7.0.0-0
     react: "*"
     react-native: "*"
-  checksum: 10/22b00234ca295fb69d048770a5023bc9a0e51cbdce7d0d578e1c636d9c1bf113468e7bb5b0fe50ee8308fa1954fc3e3a6aafaebc17d9d53b059ba2ba31dba96f
+  checksum: 10/0f8cb15cb9fde9bc5872ecb519898711a9c629c1664e7421b30735b3031866ca9b31fe852d012e33aaa5a10542ac9defa0c8271205fd01ee6e3ca8e1ca53096c
   languageName: node
   linkType: hard
 

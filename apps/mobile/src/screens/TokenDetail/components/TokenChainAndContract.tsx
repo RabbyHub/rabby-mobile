@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { useTheme2024 } from '@/hooks/theme';
@@ -56,10 +56,8 @@ export const TokenChainAndContract: React.FC<Props> = ({
     };
   }, [token]);
 
-  const handleCopyAddress = useMemoizedFn<
-    React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
-  >(evt => {
-    evt.stopPropagation();
+  const handleCopyAddress = useMemoizedFn((evt?: any) => {
+    evt?.stopPropagation?.();
     if (!token?.id) {
       return;
     }

@@ -6,6 +6,7 @@ import Animated, {
   withTiming,
   interpolate,
   AnimatedStyle,
+  Extrapolation,
 } from 'react-native-reanimated';
 
 type ItemLayout = {
@@ -38,6 +39,7 @@ const Indicator: React.FC<IndicatorProps> = ({
                 indexDecimal.value,
                 itemsLayout.map((_, i) => i),
                 itemsLayout.map(v => v.x),
+                Extrapolation.CLAMP,
               )
             : firstItemX,
       },
@@ -49,6 +51,7 @@ const Indicator: React.FC<IndicatorProps> = ({
             indexDecimal.value,
             itemsLayout.map((_, i) => i),
             itemsLayout.map(v => v.width),
+            Extrapolation.CLAMP,
           )
         : itemsLayout[0]?.width;
 

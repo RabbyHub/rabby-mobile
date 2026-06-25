@@ -11,3 +11,332 @@ index 3d4d8be1c6828c78125fc7f23a29ac7fcb8d4a22..b33cfe6d3152a92a9c588008af1c8f28
              } else {
                  srcDirs += "src/paper/java"
              }
+diff --git a/lib/module/fabricUtils.js b/lib/module/fabricUtils.js
+index 86c6a957e4f17a7417ce6cf33d03542c7a4db47c..3bf4ca8ca0bb0c7e8e546a95d10feffc034e1ebf 100644
+--- a/lib/module/fabricUtils.js
++++ b/lib/module/fabricUtils.js
+@@ -1,8 +1,12 @@
+ 'use strict';
+ 
+ /* eslint-disable */
+-import { findHostInstance } from './platform-specific/findHostInstance';
++import { findHostInstance, unwrapHostRef } from './platform-specific/findHostInstance';
+ let getInternalInstanceHandleFromPublicInstance;
++function getFabricNode(ref) {
++  const unwrappedRef = unwrapHostRef(ref);
++  return unwrappedRef?.__internalInstanceHandle?.stateNode?.node ?? unwrappedRef?._internalInstanceHandle?.stateNode?.node;
++}
+ export function getShadowNodeWrapperFromRef(ref, hostInstance) {
+   if (getInternalInstanceHandleFromPublicInstance === undefined) {
+     try {
+@@ -15,21 +19,21 @@ export function getShadowNodeWrapperFromRef(ref, hostInstance) {
+   // TODO: Clean this up since 0.74 is the minimum supported version now.
+   // taken from https://github.com/facebook/react-native/commit/803bb16531697233686efd475f004c1643e03617#diff-d8172256c6d63b5d32db10e54d7b10f37a26b337d5280d89f5bfd7bcea778292R196
+   // @ts-ignore some weird stuff on RN 0.74 - see examples with scrollView
+-  const scrollViewRef = ref?.getScrollResponder?.()?.getNativeScrollRef?.();
++  const scrollViewRef = getFabricNode(ref?.getScrollResponder?.()?.getNativeScrollRef?.());
+   // @ts-ignore some weird stuff on RN 0.74  - see examples with scrollView
+-  const otherScrollViewRef = ref?.getNativeScrollRef?.();
++  const otherScrollViewRef = getFabricNode(ref?.getNativeScrollRef?.());
+   // @ts-ignore some weird stuff on RN 0.74 - see setNativeProps example
+-  const textInputRef = ref?.__internalInstanceHandle?.stateNode?.node;
++  const textInputRef = getFabricNode(ref);
+   let resolvedRef;
+   if (scrollViewRef) {
+-    resolvedRef = scrollViewRef.__internalInstanceHandle.stateNode.node;
++    resolvedRef = scrollViewRef;
+   } else if (otherScrollViewRef) {
+-    resolvedRef = otherScrollViewRef.__internalInstanceHandle.stateNode.node;
++    resolvedRef = otherScrollViewRef;
+   } else if (textInputRef) {
+     resolvedRef = textInputRef;
+   } else {
+     const instance = hostInstance ?? findHostInstance(ref);
+-    resolvedRef = getInternalInstanceHandleFromPublicInstance(instance).stateNode.node;
++    resolvedRef = getFabricNode(instance) ?? getInternalInstanceHandleFromPublicInstance(instance).stateNode.node;
+   }
+   return resolvedRef;
+ }
+diff --git a/lib/module/hook/useAnimatedRef.js b/lib/module/hook/useAnimatedRef.js
+index 93551bd2a9a423ef8db73bbfb7795d3b0e6f1d13..4b3444c5fce5f73bc0d709a62cb0507117cf15c4 100644
+--- a/lib/module/hook/useAnimatedRef.js
++++ b/lib/module/hook/useAnimatedRef.js
+@@ -5,17 +5,12 @@ import { getShadowNodeWrapperFromRef } from '../fabricUtils';
+ import { makeMutable } from "../mutables.js";
+ import { isFabric, isIOS, isMacOS, shouldBeUseWeb } from "../PlatformChecker.js";
+ import { findNodeHandle } from '../platformFunctions/findNodeHandle';
++import { unwrapHostRef } from '../platform-specific/findHostInstance';
+ import { shareableMappingCache } from "../shareableMappingCache.js";
+ import { makeShareableCloneRecursive } from "../shareables.js";
+ const SHOULD_BE_USE_WEB = shouldBeUseWeb();
+ function getComponentOrScrollable(component) {
+-  if (component.getNativeScrollRef) {
+-    return component.getNativeScrollRef();
+-  }
+-  if (component.getScrollableNode) {
+-    return component.getScrollableNode();
+-  }
+-  return component;
++  return unwrapHostRef(component.getAnimatableRef?.() ?? component.getScrollResponder?.()?.getNativeScrollRef?.() ?? component.getNativeScrollRef?.() ?? component.getScrollableNode?.() ?? component);
+ }
+ function useAnimatedRefBase(getWrapper) {
+   const observers = useRef(new Map()).current;
+diff --git a/lib/module/platform-specific/findHostInstance.js b/lib/module/platform-specific/findHostInstance.js
+index a4bfe9cedd115608e25272c921067fd246f7c82e..c769d11e0293d77da111137eb5473096d4aaac02 100644
+--- a/lib/module/platform-specific/findHostInstance.js
++++ b/lib/module/platform-specific/findHostInstance.js
+@@ -3,6 +3,16 @@
+ 
+ import { ReanimatedError } from "../errors.js";
+ import { isFabric } from "../PlatformChecker.js";
++export function unwrapHostRef(ref, depth = 0) {
++  if (!ref || depth > 5) {
++    return ref;
++  }
++  const next = ref.getAnimatableRef?.() ?? ref.getScrollResponder?.()?.getNativeScrollRef?.() ?? ref.getNativeScrollRef?.() ?? ref.getScrollableNode?.() ?? ref.current ?? ref._componentRef ?? ref.pagerView;
++  if (!next || next === ref) {
++    return ref;
++  }
++  return unwrapHostRef(next, depth + 1);
++}
+ function findHostInstanceFastPath(maybeNativeRef) {
+   if (!maybeNativeRef) {
+     return undefined;
+@@ -42,10 +52,15 @@ function resolveFindHostInstance_DEPRECATED() {
+ let findHostInstance_DEPRECATED;
+ export function findHostInstance(component) {
+   // Fast path for native refs
+-  const hostInstance = findHostInstanceFastPath(component._componentRef);
++  const componentRef = component._componentRef;
++  const hostInstance = findHostInstanceFastPath(unwrapHostRef(componentRef));
+   if (hostInstance !== undefined) {
+     return hostInstance;
+   }
++  const directHostInstance = findHostInstanceFastPath(unwrapHostRef(component));
++  if (directHostInstance !== undefined) {
++    return directHostInstance;
++  }
+   resolveFindHostInstance_DEPRECATED();
+   /*
+     The Fabric implementation of `findHostInstance_DEPRECATED` requires a React ref as an argument
+@@ -53,6 +68,6 @@ export function findHostInstance(component) {
+     the ref provided by this method. It is the component's responsibility to ensure that this is 
+     a valid React ref.
+   */
+-  return findHostInstance_DEPRECATED(!isFabric() || component._hasAnimatedRef ? component._componentRef : component);
++  return findHostInstance_DEPRECATED(!isFabric() || component._hasAnimatedRef ? unwrapHostRef(componentRef) : component);
+ }
+ //# sourceMappingURL=findHostInstance.js.map
+diff --git a/lib/typescript/platform-specific/findHostInstance.d.ts b/lib/typescript/platform-specific/findHostInstance.d.ts
+index 243d997c6ff063c37d6a5bf018c28b523559976c..17155f92be223e1b61ba7eda12f7aa7dbc926585 100644
+--- a/lib/typescript/platform-specific/findHostInstance.d.ts
++++ b/lib/typescript/platform-specific/findHostInstance.d.ts
+@@ -10,6 +10,7 @@ type HostInstancePaper = {
+     viewConfig?: Record<string, unknown>;
+ };
+ export type HostInstance = HostInstanceFabric & HostInstancePaper;
++export declare function unwrapHostRef(ref: unknown, depth?: number): unknown;
+ export declare function findHostInstance(component: IAnimatedComponentInternal | React.Component): HostInstance;
+ export {};
+ //# sourceMappingURL=findHostInstance.d.ts.map
+diff --git a/src/fabricUtils.ts b/src/fabricUtils.ts
+index e6eff46e125d1778292ed0a2b409b0b57737ea25..59383c6842da36c6f7aaed4e853421c6bdcbf32f 100644
+--- a/src/fabricUtils.ts
++++ b/src/fabricUtils.ts
+@@ -5,12 +5,34 @@ import type { ShadowNodeWrapper } from './commonTypes';
+ import {
+   findHostInstance,
+   HostInstance,
++  unwrapHostRef,
+ } from './platform-specific/findHostInstance';
+ 
+ let getInternalInstanceHandleFromPublicInstance: (ref: unknown) => {
+   stateNode: { node: unknown };
+ };
+ 
++type FabricRef = {
++  __internalInstanceHandle?: {
++    stateNode?: {
++      node?: unknown;
++    };
++  };
++  _internalInstanceHandle?: {
++    stateNode?: {
++      node?: unknown;
++    };
++  };
++};
++
++function getFabricNode(ref: unknown) {
++  const unwrappedRef = unwrapHostRef(ref) as FabricRef;
++  return (
++    unwrappedRef?.__internalInstanceHandle?.stateNode?.node ??
++    unwrappedRef?._internalInstanceHandle?.stateNode?.node
++  );
++}
++
+ export function getShadowNodeWrapperFromRef(
+   ref: React.Component,
+   hostInstance?: HostInstance
+@@ -30,22 +52,25 @@ export function getShadowNodeWrapperFromRef(
+   // TODO: Clean this up since 0.74 is the minimum supported version now.
+   // taken from https://github.com/facebook/react-native/commit/803bb16531697233686efd475f004c1643e03617#diff-d8172256c6d63b5d32db10e54d7b10f37a26b337d5280d89f5bfd7bcea778292R196
+   // @ts-ignore some weird stuff on RN 0.74 - see examples with scrollView
+-  const scrollViewRef = ref?.getScrollResponder?.()?.getNativeScrollRef?.();
++  const scrollViewRef = getFabricNode(
++    ref?.getScrollResponder?.()?.getNativeScrollRef?.()
++  );
+   // @ts-ignore some weird stuff on RN 0.74  - see examples with scrollView
+-  const otherScrollViewRef = ref?.getNativeScrollRef?.();
++  const otherScrollViewRef = getFabricNode(ref?.getNativeScrollRef?.());
+   // @ts-ignore some weird stuff on RN 0.74 - see setNativeProps example
+-  const textInputRef = ref?.__internalInstanceHandle?.stateNode?.node;
++  const textInputRef = getFabricNode(ref);
+ 
+   let resolvedRef;
+   if (scrollViewRef) {
+-    resolvedRef = scrollViewRef.__internalInstanceHandle.stateNode.node;
++    resolvedRef = scrollViewRef;
+   } else if (otherScrollViewRef) {
+-    resolvedRef = otherScrollViewRef.__internalInstanceHandle.stateNode.node;
++    resolvedRef = otherScrollViewRef;
+   } else if (textInputRef) {
+     resolvedRef = textInputRef;
+   } else {
+     const instance = hostInstance ?? findHostInstance(ref);
+     resolvedRef =
++      getFabricNode(instance) ??
+       getInternalInstanceHandleFromPublicInstance(instance).stateNode.node;
+   }
+ 
+diff --git a/src/hook/useAnimatedRef.ts b/src/hook/useAnimatedRef.ts
+index 1913072cfef6e583a6deb36229c183f291d460a0..50ac42b904a7abe47b120d38dd6cade329d187b7 100644
+--- a/src/hook/useAnimatedRef.ts
++++ b/src/hook/useAnimatedRef.ts
+@@ -8,6 +8,7 @@ import { getShadowNodeWrapperFromRef } from '../fabricUtils';
+ import { makeMutable } from '../mutables';
+ import { isFabric, isIOS, isMacOS, shouldBeUseWeb } from '../PlatformChecker';
+ import { findNodeHandle } from '../platformFunctions/findNodeHandle';
++import { unwrapHostRef } from '../platform-specific/findHostInstance';
+ import { shareableMappingCache } from '../shareableMappingCache';
+ import { makeShareableCloneRecursive } from '../shareables';
+ import type {
+@@ -20,23 +21,32 @@ import type {
+ const SHOULD_BE_USE_WEB = shouldBeUseWeb();
+ 
+ interface MaybeScrollableComponent extends Component {
++  getAnimatableRef?: () => unknown;
+   getNativeScrollRef?: FlatList['getNativeScrollRef'];
+   getScrollableNode?:
+     | ScrollView['getScrollableNode']
+     | FlatList['getScrollableNode'];
++  getScrollResponder?: () =>
++    | {
++        getNativeScrollRef?: () => unknown;
++      }
++    | undefined;
++  current?: unknown;
++  _componentRef?: unknown;
++  pagerView?: unknown;
+   viewConfig?: {
+     uiViewClassName?: string;
+   };
+ }
+ 
+ function getComponentOrScrollable(component: MaybeScrollableComponent) {
+-  if (component.getNativeScrollRef) {
+-    return component.getNativeScrollRef();
+-  }
+-  if (component.getScrollableNode) {
+-    return component.getScrollableNode();
+-  }
+-  return component;
++  return unwrapHostRef(
++    component.getAnimatableRef?.() ??
++      component.getScrollResponder?.()?.getNativeScrollRef?.() ??
++      component.getNativeScrollRef?.() ??
++      component.getScrollableNode?.() ??
++      component
++  ) as Component;
+ }
+ 
+ function useAnimatedRefBase<TComponent extends Component>(
+diff --git a/src/platform-specific/findHostInstance.ts b/src/platform-specific/findHostInstance.ts
+index 5eff588a3ea43cd925c023b2d2dace16dca1e1df..762c0e8daccec15883f5ec9c16c7aaf71cab45f5 100644
+--- a/src/platform-specific/findHostInstance.ts
++++ b/src/platform-specific/findHostInstance.ts
+@@ -18,6 +18,42 @@ type HostInstancePaper = {
+ 
+ export type HostInstance = HostInstanceFabric & HostInstancePaper;
+ 
++type HostRefResolver = {
++  getAnimatableRef?: () => unknown;
++  getNativeScrollRef?: () => unknown;
++  getScrollableNode?: () => unknown;
++  getScrollResponder?: () =>
++    | {
++        getNativeScrollRef?: () => unknown;
++      }
++    | undefined;
++  current?: unknown;
++  _componentRef?: unknown;
++  pagerView?: unknown;
++};
++
++export function unwrapHostRef(ref: unknown, depth = 0): unknown {
++  if (!ref || depth > 5) {
++    return ref;
++  }
++
++  const maybeRef = ref as HostRefResolver;
++  const next =
++    maybeRef.getAnimatableRef?.() ??
++    maybeRef.getScrollResponder?.()?.getNativeScrollRef?.() ??
++    maybeRef.getNativeScrollRef?.() ??
++    maybeRef.getScrollableNode?.() ??
++    maybeRef.current ??
++    maybeRef._componentRef ??
++    maybeRef.pagerView;
++
++  if (!next || next === ref) {
++    return ref;
++  }
++
++  return unwrapHostRef(next, depth + 1);
++}
++
+ function findHostInstanceFastPath(maybeNativeRef: HostInstance | undefined) {
+   if (!maybeNativeRef) {
+     return undefined;
+@@ -71,13 +107,21 @@ export function findHostInstance(
+   component: IAnimatedComponentInternal | React.Component
+ ): HostInstance {
+   // Fast path for native refs
++  const componentRef = (component as IAnimatedComponentInternal)._componentRef;
+   const hostInstance = findHostInstanceFastPath(
+-    (component as IAnimatedComponentInternal)._componentRef as HostInstance
++    unwrapHostRef(componentRef) as HostInstance
+   );
+   if (hostInstance !== undefined) {
+     return hostInstance;
+   }
+ 
++  const directHostInstance = findHostInstanceFastPath(
++    unwrapHostRef(component) as HostInstance
++  );
++  if (directHostInstance !== undefined) {
++    return directHostInstance;
++  }
++
+   resolveFindHostInstance_DEPRECATED();
+   /*
+     The Fabric implementation of `findHostInstance_DEPRECATED` requires a React ref as an argument
+@@ -87,7 +131,7 @@ export function findHostInstance(
+   */
+   return findHostInstance_DEPRECATED(
+     !isFabric() || (component as IAnimatedComponentInternal)._hasAnimatedRef
+-      ? (component as IAnimatedComponentInternal)._componentRef
++      ? unwrapHostRef(componentRef)
+       : component
+   );
+ }

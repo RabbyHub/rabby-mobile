@@ -19,3 +19,57 @@ index aad38b2bf38cec3bc9fd90301b49b368c483f673..a1de30f7aef174ec61bbd2c5657b318e
      }
 
      public override fun createViewInstance(reactContext: ThemedReactContext): NestedScrollableHost {
+diff --git a/lib/commonjs/PagerView.js b/lib/commonjs/PagerView.js
+index 8e24a673e81d10907542850bca0402ee776e6938..bb67defe18be7885171772385f90010d524a9250 100644
+--- a/lib/commonjs/PagerView.js
++++ b/lib/commonjs/PagerView.js
+@@ -62,6 +62,9 @@ class PagerView extends _react.default.Component {
+     super(...args);
+     _defineProperty(this, "isScrolling", false);
+     _defineProperty(this, "pagerView", null);
++    _defineProperty(this, "getAnimatableRef", () => {
++      return this.pagerView;
++    });
+     _defineProperty(this, "_onPageScroll", e => {
+       if (this.props.onPageScroll) {
+         this.props.onPageScroll(e);
+diff --git a/lib/module/PagerView.js b/lib/module/PagerView.js
+index 0ec080512804458032e73abe41d23e886abffa5c..d0d4dd1f52b08e09fa440032040e95c43c73de7b 100644
+--- a/lib/module/PagerView.js
++++ b/lib/module/PagerView.js
+@@ -55,6 +55,9 @@ export class PagerView extends React.Component {
+     super(...args);
+     _defineProperty(this, "isScrolling", false);
+     _defineProperty(this, "pagerView", null);
++    _defineProperty(this, "getAnimatableRef", () => {
++      return this.pagerView;
++    });
+     _defineProperty(this, "_onPageScroll", e => {
+       if (this.props.onPageScroll) {
+         this.props.onPageScroll(e);
+diff --git a/lib/typescript/PagerView.d.ts b/lib/typescript/PagerView.d.ts
+index 309010f7214d4ea4d2a5c311d6873f1c0c40fa81..e003f44cca23583e2eb003db689b60bd6b93e88e 100644
+--- a/lib/typescript/PagerView.d.ts
++++ b/lib/typescript/PagerView.d.ts
+@@ -44,6 +44,7 @@ import PagerViewNativeComponent, { NativeProps } from './PagerViewNativeComponen
+ export declare class PagerView extends React.Component<NativeProps> {
+     private isScrolling;
+     pagerView: React.ElementRef<typeof PagerViewNativeComponent> | null;
++    getAnimatableRef: () => React.ElementRef<typeof PagerViewNativeComponent> | null;
+     private get deducedLayoutDirection();
+     private _onPageScroll;
+     private _onPageScrollStateChanged;
+diff --git a/src/PagerView.tsx b/src/PagerView.tsx
+index 5238f1d1bcc7f87f906bc12b4ea92a461c84d0d9..ea48fc83085f889e1f691b93e30d7fda6d505346 100644
+--- a/src/PagerView.tsx
++++ b/src/PagerView.tsx
+@@ -62,6 +62,9 @@ export class PagerView extends React.Component<NativeProps> {
+   private isScrolling = false;
+   pagerView: React.ElementRef<typeof PagerViewNativeComponent> | null = null;
+ 
++  public getAnimatableRef = () => {
++    return this.pagerView;
++  };
+ 
+   private get deducedLayoutDirection() {
+     if (

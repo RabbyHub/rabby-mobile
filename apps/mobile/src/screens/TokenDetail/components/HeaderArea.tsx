@@ -5,7 +5,6 @@ import {
   TextStyle,
   View,
   ViewStyle,
-  TouchableOpacity,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -62,11 +61,9 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
     return token?.id === chain?.nativeTokenAddress;
   }, [token?.id, token?.chain]);
 
-  const handleCopyAddress = useCallback<
-    React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
-  >(
-    evt => {
-      evt.stopPropagation();
+  const handleCopyAddress = useCallback(
+    (evt?: any) => {
+      evt?.stopPropagation?.();
       if (!token?.id || isNativeToken) {
         return;
       }
