@@ -5,7 +5,7 @@ import { zCreate, zMutative } from '@/core/utils/reexports';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { syncRemoteTokens } from '@/databases/sync/assets';
 import { eventBus, EVENT_PATCH_SINGLE_TOKEN } from '@/utils/events';
-import { defaultTokenFilter, lpTokenFilter } from '@/utils/lpToken';
+import { includeLpTokensFilter, lpTokenFilter } from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import { preferenceService } from '@/core/services/shared';
 import { getTokenSymbol } from '@/utils/token';
@@ -1274,8 +1274,8 @@ const computeMultiAssetsFromTokens = (
   return {
     unFoldTokens: unfoldedTokens,
     hasFoldTokens:
-      foldedTokens.filter(defaultTokenFilter).length > 0 ||
-      aggregatedScamTokens.filter(defaultTokenFilter).length > 0,
+      foldedTokens.filter(includeLpTokensFilter).length > 0 ||
+      aggregatedScamTokens.filter(includeLpTokensFilter).length > 0,
     foldTokens: foldedTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
     scamTokens: aggregatedScamTokens.filter(i =>
       lpTokenFilter(i, isLpTokenEnabled),
@@ -1361,8 +1361,8 @@ const computeSingleAssetsFromTokens = (
     : {
         unFoldTokens: unfoldedTokens,
         hasFoldTokens:
-          foldedTokens.filter(defaultTokenFilter).length > 0 ||
-          scamTokens.filter(defaultTokenFilter).length > 0,
+          foldedTokens.filter(includeLpTokensFilter).length > 0 ||
+          scamTokens.filter(includeLpTokensFilter).length > 0,
         foldTokens: foldedTokens.filter(i =>
           lpTokenFilter(i, isLpTokenEnabled),
         ),
