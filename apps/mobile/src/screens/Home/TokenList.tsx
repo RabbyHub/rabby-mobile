@@ -3,6 +3,7 @@ import React, {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { ListRenderItem, StyleSheet, View, ViewStyle } from 'react-native';
@@ -205,12 +206,34 @@ export const TokenList = ({
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const [customTestnetCollapseKey, setCustomTestnetCollapseKey] = useState(0);
   const [hasRequestedTokenList, setHasRequestedTokenList] = useState(false);
+  const customTestnetAddTokenModalIdRef = useRef<ReturnType<
+    typeof createGlobalBottomSheetModal2024
+  > | null>(null);
   const isScreenFocused = useIsFocused();
 
   const focusedTab = useFocusedTab();
   const isFocused = useMemo(() => {
     return focusedTab === 'tokens';
   }, [focusedTab]);
+
+  const closeCustomTestnetAddTokenModal = useCallback(() => {
+    const modalId = customTestnetAddTokenModalIdRef.current;
+    if (!modalId) {
+      return;
+    }
+    removeGlobalBottomSheetModal2024(modalId);
+    customTestnetAddTokenModalIdRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    if (!isScreenFocused || !isFocused) {
+      closeCustomTestnetAddTokenModal();
+    }
+  }, [closeCustomTestnetAddTokenModal, isFocused, isScreenFocused]);
+
+  useEffect(() => {
+    return closeCustomTestnetAddTokenModal;
+  }, [closeCustomTestnetAddTokenModal]);
 
   useEffect(() => {
     if (!isScreenFocused) {
@@ -478,27 +501,23 @@ export const TokenList = ({
 
   const handleCustomTestnetTokenButtonPress = useCallback(
     (data: CustomTestnetAssetSectionData, onConfirmCB?: () => void) => {
-      let modalId: ReturnType<typeof createGlobalBottomSheetModal2024> | null =
-        null;
       const closeModal = () => {
-        if (!modalId) {
-          return;
-        }
-        removeGlobalBottomSheetModal2024(modalId);
-        modalId = null;
+        closeCustomTestnetAddTokenModal();
       };
 
-      modalId = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.CUSTOM_TESTNET_ADD_TOKEN,
-        chain: data.chain,
-        onCancel: closeModal,
-        onConfirm: () => {
-          closeModal();
-          onConfirmCB?.();
-        },
-      });
+      closeCustomTestnetAddTokenModal();
+      customTestnetAddTokenModalIdRef.current =
+        createGlobalBottomSheetModal2024({
+          name: MODAL_NAMES.CUSTOM_TESTNET_ADD_TOKEN,
+          chain: data.chain,
+          onCancel: closeModal,
+          onConfirm: () => {
+            closeModal();
+            onConfirmCB?.();
+          },
+        });
     },
-    [],
+    [closeCustomTestnetAddTokenModal],
   );
 
   const handleCustomTestnetTokenRemove = useCallback(

@@ -60,7 +60,7 @@ export const TokenDetailBottomBtns = ({
     !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);
 
   const toastDisabledAction = useCallback(() => {
-    toast.show(t('page.tokenDetail.customTestnetNotSupported'));
+    toast.error(t('page.tokenDetail.customTestnetNotSupported'));
   }, [t]);
 
   const moreItems: {

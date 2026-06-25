@@ -56,6 +56,7 @@ type TokenLookupState =
   | {
       status: 'found';
       token: CustomTestnetTokenBase;
+      alreadyAdded?: boolean;
       error?: undefined;
     }
   | {
@@ -91,14 +92,18 @@ export const CustomTestnetAddTokenSheet = memo(
               return;
             }
 
+            const tokenBase = {
+              id: token.id,
+              chainId: token.chainId,
+              symbol: token.symbol,
+              decimals: token.decimals,
+            };
+
             setLookupState({
               status: 'found',
-              token: {
-                id: token.id,
-                chainId: token.chainId,
-                symbol: token.symbol,
-                decimals: token.decimals,
-              },
+              token: tokenBase,
+              alreadyAdded:
+                apiCustomTestnet.isAddedCustomTestnetToken(tokenBase),
             });
           } catch (error) {
             if (lookupSeqRef.current !== seq) {
@@ -161,19 +166,6 @@ export const CustomTestnetAddTokenSheet = memo(
         return;
       }
 
-      if (
-        apiCustomTestnet.isAddedCustomTestnetToken({
-          id: nextAddress,
-          chainId: chain.id,
-        })
-      ) {
-        setLookupState({
-          status: 'error',
-          error: t('page.customTestnet.addToken.alreadyAdded'),
-        });
-        return;
-      }
-
       const seq = lookupSeqRef.current;
       setLookupState({ status: 'checking' });
       lookupToken(nextAddress, seq);
@@ -194,6 +186,11 @@ export const CustomTestnetAddTokenSheet = memo(
       }
 
       Keyboard.dismiss();
+      if (lookupState.alreadyAdded) {
+        toast.error(t('page.customTestnet.addToken.alreadyAddedToast'));
+        return;
+      }
+
       setConfirming(true);
       try {
         await apiCustomTestnet.addCustomTestnetToken(lookupState.token);
