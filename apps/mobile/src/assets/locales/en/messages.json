@@ -3136,6 +3136,7 @@
       },
       "withdrawDetail": {
         "actions": "Withdraw",
+        "approveAndWithdraw": "Approve and Withdraw",
         "remainingSupply": "Remaining supply"
       },
       "toggleCollateralDetail": {

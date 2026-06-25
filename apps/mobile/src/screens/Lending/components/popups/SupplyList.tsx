@@ -34,6 +34,14 @@ import { TokenRowSectionHeader } from '@/screens/Home/components/AssetRenderItem
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { Text, TextInput } from '@/components/Typography';
 import { colord } from 'colord';
+import { PositionTokenSelector } from '../ItemRender/PositionTokenSelector';
+import {
+  getWrappedNativeReservePair,
+  getWrappedNativeTokenOptions,
+  isWrappedNativeSelectorReserve,
+  isWrappedNativeTokenReserve,
+  type BasicPositionTokenOption,
+} from '../../utils/positionTokenSelector';
 
 const FOOT_HEIGHT = 86;
 
@@ -59,6 +67,9 @@ export const LendingSupplyListContent: React.FC<
   const { fetchData } = useFetchLendingData();
   const [search, setSearch] = useState('');
   const [isInputActive, setIsInputActive] = useState(false);
+  const [selectedTokenByGroup, setSelectedTokenByGroup] = useState<
+    Record<string, string>
+  >({});
 
   const [foldHideList, setFoldHideList] = useState(true);
   const { chainEnum, marketKey } = useSelectedMarket();
@@ -143,12 +154,26 @@ export const LendingSupplyListContent: React.FC<
     return iUserSummary?.isInIsolationMode;
   }, [iUserSummary?.isInIsolationMode]);
 
+  const shouldMergeWrappedNativeRow = useMemo(() => {
+    const { nativeReserve, wrappedReserve } = getWrappedNativeReservePair(
+      filteredReserves,
+      chainEnum,
+    );
+    return !search.trim() && !!nativeReserve && !!wrappedReserve;
+  }, [chainEnum, filteredReserves, search]);
+
   const dataList = useMemo<SupplyListItem[]>(() => {
     if (loading) {
       return [];
     }
     const list: SupplyListItem[] = [];
     unFoldList.forEach(item => {
+      if (
+        shouldMergeWrappedNativeRow &&
+        isWrappedNativeTokenReserve(item, chainEnum)
+      ) {
+        return;
+      }
       list.push({
         type: 'reserve',
         data: item,
@@ -158,6 +183,12 @@ export const LendingSupplyListContent: React.FC<
       list.push({ type: 'toggle_fold' });
       if (!foldHideList) {
         foldList.forEach(item => {
+          if (
+            shouldMergeWrappedNativeRow &&
+            isWrappedNativeTokenReserve(item, chainEnum)
+          ) {
+            return;
+          }
           list.push({
             type: 'reserve',
             data: item,
@@ -166,7 +197,14 @@ export const LendingSupplyListContent: React.FC<
       }
     }
     return list;
-  }, [foldHideList, foldList, loading, unFoldList]);
+  }, [
+    chainEnum,
+    foldHideList,
+    foldList,
+    loading,
+    shouldMergeWrappedNativeRow,
+    unFoldList,
+  ]);
 
   const isolatedCard = useMemo(() => {
     if (loading || !isInIsolationMode) {
@@ -198,8 +236,8 @@ export const LendingSupplyListContent: React.FC<
   ]);
 
   const handlePressItem = useCallback(
-    (item: DisplayPoolReserveInfo) => {
-      const reserve = getTargetReserve(item.reserve.underlyingAsset);
+    (underlyingAsset: string) => {
+      const reserve = getTargetReserve(underlyingAsset);
       const userSummary = iUserSummary;
       if (!reserve || !userSummary) {
         return;
@@ -268,33 +306,72 @@ export const LendingSupplyListContent: React.FC<
       }
 
       const data = item.data;
+      const tokenOptions = isWrappedNativeSelectorReserve(data, chainEnum)
+        ? getWrappedNativeTokenOptions({
+            displayPoolReserves: sortReserves,
+            chainEnum,
+          })
+        : undefined;
+      const selectorGroupKey = tokenOptions?.length
+        ? `wrapped-native-${chainEnum || 'unknown'}`
+        : undefined;
+      const activeUnderlyingAsset =
+        selectorGroupKey && selectedTokenByGroup[selectorGroupKey]
+          ? selectedTokenByGroup[selectorGroupKey]
+          : data.underlyingAsset;
+      const activeData = tokenOptions?.length
+        ? getTargetReserve(activeUnderlyingAsset) || data
+        : data;
       const isWrapperToken = chainEnum
         ? isSameAddress(
             wrapperToken[chainEnum]?.address,
-            data.reserve.underlyingAsset,
+            activeData.reserve.underlyingAsset,
           )
         : false;
+      const shouldUseWrapperTokenStyle =
+        isWrapperToken && !tokenOptions?.length && !search;
       return (
         <TouchableOpacity
-          style={[styles.item, isWrapperToken && styles.wrapperToken]}
-          onPress={() => handlePressItem(data)}>
-          {isWrapperToken && !search && (
+          style={[
+            styles.item,
+            shouldUseWrapperTokenStyle && styles.wrapperToken,
+          ]}
+          onPress={() => handlePressItem(activeData.underlyingAsset)}>
+          {shouldUseWrapperTokenStyle && (
             <View style={styles.wrapperTokenArrow} />
           )}
           <View style={styles.left}>
             <TokenIcon
-              tokenSymbol={data.reserve.symbol}
+              tokenSymbol={activeData.reserve.symbol}
               chainSize={0}
               chain={chainEnum || CHAINS_ENUM.ETH}
             />
             <View style={styles.symbolContainer}>
-              <Text
-                style={styles.symbol}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {data.reserve.symbol}
-              </Text>
-              {!!isWrapperToken && chainEnum && (
+              {tokenOptions?.length ? (
+                <PositionTokenSelector
+                  activeUnderlyingAsset={activeUnderlyingAsset}
+                  options={tokenOptions as BasicPositionTokenOption[]}
+                  symbol={activeData.reserve.symbol}
+                  chain={activeData.chain}
+                  onChange={underlyingAsset => {
+                    if (!selectorGroupKey) {
+                      return;
+                    }
+                    setSelectedTokenByGroup(prev => ({
+                      ...prev,
+                      [selectorGroupKey]: underlyingAsset,
+                    }));
+                  }}
+                />
+              ) : (
+                <Text
+                  style={styles.symbol}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {activeData.reserve.symbol}
+                </Text>
+              )}
+              {!!shouldUseWrapperTokenStyle && chainEnum && (
                 <Text
                   style={styles.wrapperTokenText}
                   numberOfLines={1}
@@ -306,22 +383,34 @@ export const LendingSupplyListContent: React.FC<
               )}
             </View>
           </View>
-          {!isWrapperToken && (
+          {!shouldUseWrapperTokenStyle && (
             <Text style={styles.tvl}>
-              {formatUsdValueKMB(Number(data.reserve.totalLiquidityUSD || '0'))}
+              {formatUsdValueKMB(
+                Number(activeData.reserve.totalLiquidityUSD || '0'),
+              )}
             </Text>
           )}
-          {!isWrapperToken && (
+          {!shouldUseWrapperTokenStyle && (
             <View style={styles.right}>
               <Text style={styles.apy}>
-                {formatApy(Number(data.reserve.supplyAPY || '0'))}
+                {formatApy(Number(activeData.reserve.supplyAPY || '0'))}
               </Text>
             </View>
           )}
         </TouchableOpacity>
       );
     },
-    [chainEnum, foldHideList, handlePressItem, search, styles, t],
+    [
+      chainEnum,
+      foldHideList,
+      getTargetReserve,
+      handlePressItem,
+      search,
+      selectedTokenByGroup,
+      sortReserves,
+      styles,
+      t,
+    ],
   );
 
   const renderFooterComponent = useCallback(() => {
