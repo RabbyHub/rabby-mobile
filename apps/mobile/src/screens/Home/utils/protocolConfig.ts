@@ -151,7 +151,7 @@ export const useProtocolConfig = () => {
               screen: RootNames.PerpsMarketDetail,
               params: {
                 market:
-                  item?._originPortfolio?.detail?.position_token?.name || '',
+                  item?._originPortfolio?.detail?.position_token?.symbol || '',
               },
             });
           } else {
