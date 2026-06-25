@@ -809,7 +809,8 @@
         "empty": {
           "title": "Aún no hay transacciones firmadas",
           "desc": "Todas las transacciones firmadas a través de Rabby se mostrarán aquí.",
-          "titleLastThreeMonths": "Sin historial de transacciones en 90 días"
+          "titleLastThreeMonths": "Sin historial de transacciones en 90 días",
+          "testnetNoHistory": "El historial de transacciones de tokens personalizados no está disponible."
         },
         "status": {
           "submitFailed": "Error al enviar",
@@ -2091,6 +2092,21 @@
       },
       "signTx": {
         "title": "Datos de Transacción"
+      },
+      "addToken": {
+        "title": "Agregar token de red personalizada",
+        "chain": "Cadena",
+        "tokenAddress": "Dirección del token",
+        "enterAddress": "Ingresar dirección",
+        "foundToken": "Token encontrado",
+        "checking": "Comprobando token...",
+        "invalidAddress": "Dirección de token no válida",
+        "notErc20": "No se encontró ningún token ERC20 en esta dirección",
+        "alreadyAdded": "Este token ya se ha agregado",
+        "alreadyAddedToast": "Token ya agregado",
+        "added": "Token agregado",
+        "addFailed": "Error al agregar el token",
+        "removeFailed": "Error al eliminar el token"
       }
     },
     "tokenDetail": {
@@ -2219,7 +2235,8 @@
       "price": "Precio",
       "headerBalanceText": "Saldo",
       "copyCA": "Dirección del contrato del token copiada",
-      "wallet": "Cartera"
+      "wallet": "Cartera",
+      "customTestnetNotSupported": "El token en esta cadena no es compatible"
     },
     "setting": {
       "feedback": "Comentarios",
@@ -2535,7 +2552,8 @@
         "wallet_other": "Carteras",
         "wallet_one": "Billetera"
       },
-      "lowValueTokenHeader": "Tokens de bajo valor"
+      "lowValueTokenHeader": "Tokens de bajo valor",
+      "customNetworkTokenHeader": "Redes personalizadas agregadas"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -3289,7 +3307,8 @@
       },
       "withdrawDetail": {
         "actions": "Retirar",
-        "remainingSupply": "Suministro restante"
+        "remainingSupply": "Suministro restante",
+        "approveAndWithdraw": "Aprobar y retirar"
       },
       "borrowDetail": {
         "approveAndBorrow": "Aprobar y Prestar",

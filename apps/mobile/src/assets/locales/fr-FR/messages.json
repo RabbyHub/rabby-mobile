@@ -512,7 +512,8 @@
         "empty": {
           "desc": "Toutes les transactions signées via Rabby seront listées ici.",
           "title": "Aucune transaction signée pour le moment",
-          "titleLastThreeMonths": "Aucun historique de transactions depuis 90 jours"
+          "titleLastThreeMonths": "Aucun historique de transactions depuis 90 jours",
+          "testnetNoHistory": "L'historique des transactions du token personnalisé n'est pas disponible."
         },
         "tips": {
           "canNotCancel": "Impossible d'accélérer ou d'annuler : Pas la première txn en attente",
@@ -2009,7 +2010,8 @@
       "headerTokenValueText": "Valeur du jeton",
       "headerBalanceText": "Solde",
       "copyCA": "Adresse du contrat de jeton copiée",
-      "wallet": "Portefeuille"
+      "wallet": "Portefeuille",
+      "customTestnetNotSupported": "Le token sur cette chaîne n'est pas pris en charge"
     },
     "rabbyPoints": {
       "earn-points": "Gagnez des Points",
@@ -2088,6 +2090,21 @@
           "added": "Vous avez déjà ajouté cette chaîne"
         },
         "empty": "Aucune chaîne trouvée"
+      },
+      "addToken": {
+        "title": "Ajouter un token de réseau personnalisé",
+        "chain": "Chaîne",
+        "tokenAddress": "Adresse du token",
+        "enterAddress": "Saisir une adresse",
+        "foundToken": "Token trouvé",
+        "checking": "Vérification du token...",
+        "invalidAddress": "Adresse de token invalide",
+        "notErc20": "Aucun token ERC20 trouvé à cette adresse",
+        "alreadyAdded": "Ce token a déjà été ajouté",
+        "alreadyAddedToast": "Token déjà ajouté",
+        "added": "Token ajouté",
+        "addFailed": "Échec de l'ajout du token",
+        "removeFailed": "Échec de la suppression du token"
       }
     },
     "setting": {
@@ -2268,7 +2285,8 @@
         "wallet_other": "Portefeuilles",
         "wallet_one": "Portefeuille"
       },
-      "lowValueTokenHeader": "Tokens de faible valeur"
+      "lowValueTokenHeader": "Tokens de faible valeur",
+      "customNetworkTokenHeader": "Réseaux personnalisés ajoutés"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -3022,7 +3040,8 @@
       },
       "withdrawDetail": {
         "actions": "Retirer",
-        "remainingSupply": "Approvisionnement restant"
+        "remainingSupply": "Approvisionnement restant",
+        "approveAndWithdraw": "Approuver et retirer"
       },
       "borrowDetail": {
         "actions": "Emprunter",

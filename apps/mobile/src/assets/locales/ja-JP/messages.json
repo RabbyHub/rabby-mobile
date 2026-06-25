@@ -545,7 +545,8 @@
         "empty": {
           "title": "まだ署名されたトランザクションはありません。",
           "desc": "Rabbyを通じて署名されたすべてのトランザクションがここに一覧表示されます。",
-          "titleLastThreeMonths": "90日間取引履歴がありません"
+          "titleLastThreeMonths": "90日間取引履歴がありません",
+          "testnetNoHistory": "カスタムトークンのトランザクション履歴は利用できません。"
         },
         "status": {
           "pending": "保留中",
@@ -1989,7 +1990,8 @@
       "headerTokenValueText": "トークンの価値",
       "headerBalanceText": "残高",
       "copyCA": "トークンコントラクトアドレスがコピーされました",
-      "wallet": "ウォレット"
+      "wallet": "ウォレット",
+      "customTestnetNotSupported": "このチェーン上のトークンはサポートされていません"
     },
     "customTestnet": {
       "add": "カスタムネットワークを追加",
@@ -2022,7 +2024,22 @@
         "desc": "このチェーンは既にRabbyによって統合されています。RPC URLを変更する必要がありますか？"
       },
       "desc": "Rabbyはカスタムネットワークのセキュリティを検証できません。信頼できるネットワークのみを追加してください。",
-      "id": "ID"
+      "id": "ID",
+      "addToken": {
+        "title": "カスタムネットワークトークンを追加",
+        "chain": "チェーン",
+        "tokenAddress": "トークンアドレス",
+        "enterAddress": "アドレスを入力",
+        "foundToken": "トークンが見つかりました",
+        "checking": "トークンを確認中...",
+        "invalidAddress": "無効なトークンアドレス",
+        "notErc20": "このアドレスにERC20トークンが見つかりません",
+        "alreadyAdded": "このトークンはすでに追加されています",
+        "alreadyAddedToast": "トークンは追加済みです",
+        "added": "トークンを追加しました",
+        "addFailed": "トークンの追加に失敗しました",
+        "removeFailed": "トークンの削除に失敗しました"
+      }
     },
     "rabbyPoints": {
       "code-set-successfully": "紹介コードが正常に設定されました",
@@ -2311,7 +2328,8 @@
         "wallet_other": "ウォレット",
         "wallet_one": "ウォレット"
       },
-      "lowValueTokenHeader": "低価値トークン"
+      "lowValueTokenHeader": "低価値トークン",
+      "customNetworkTokenHeader": "追加済みカスタムネットワーク"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -3065,7 +3083,8 @@
       },
       "withdrawDetail": {
         "actions": "出金",
-        "remainingSupply": "残りの供給"
+        "remainingSupply": "残りの供給",
+        "approveAndWithdraw": "承認して出金"
       },
       "borrowDetail": {
         "actions": "借りる",
