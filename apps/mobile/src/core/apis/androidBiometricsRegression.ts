@@ -54,6 +54,31 @@ export function getAndroidBiometricSecurityLevelOptions():
   };
 }
 
+export function getAndroidUnlockBiometricSecurityLevelOptions():
+  | { androidBiometricSecurityLevel: AndroidBiometricSecurityLevel }
+  | Record<string, never> {
+  if (Platform.OS !== 'android') {
+    return {};
+  }
+
+  return {
+    androidBiometricSecurityLevel: ANDROID_BIOMETRIC_SECURITY_LEVELS.STRONG,
+  };
+}
+
+export function getAndroidUnlockSystemAuthPromptOptions():
+  | { androidSystemAuthPromptSecurityLevel: AndroidBiometricSecurityLevel }
+  | Record<string, never> {
+  if (Platform.OS !== 'android') {
+    return {};
+  }
+
+  return {
+    androidSystemAuthPromptSecurityLevel:
+      ANDROID_BIOMETRIC_SECURITY_LEVELS.STRONG,
+  };
+}
+
 export function getAndroidRegressionBiometricSecurityLevelOptions():
   | { androidBiometricSecurityLevel: AndroidBiometricSecurityLevel }
   | Record<string, never> {

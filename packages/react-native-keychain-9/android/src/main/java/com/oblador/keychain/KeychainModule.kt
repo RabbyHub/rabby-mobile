@@ -5,7 +5,9 @@ import android.text.TextUtils
 import android.util.Log
 import androidx.annotation.StringDef
 import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
 import androidx.biometric.BiometricPrompt.PromptInfo
+import androidx.fragment.app.FragmentActivity
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
@@ -31,6 +33,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.Executor
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -79,6 +82,7 @@ class KeychainModule(reactContext: ReactApplicationContext) :
       const val ACCESSIBLE = "accessible"
       const val ANDROID_ALLOW_AUTHENTICATED_SESSION_REUSE =
         "androidAllowAuthenticatedSessionReuse"
+      const val ANDROID_BIOMETRIC_SECURITY_LEVEL = "androidBiometricSecurityLevel"
       const val ANDROID_ALLOW_KEY_STORE_RECOVERY = "androidAllowKeyStoreRecovery"
       const val AUTH_PROMPT = "authenticationPrompt"
       const val AUTH_TYPE = "authenticationType"
@@ -437,9 +441,16 @@ class KeychainModule(reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun getSupportedBiometryType(promise: Promise) {
+    getSupportedBiometryTypeForOptions(null, promise)
+  }
+
+  @ReactMethod
+  fun getSupportedBiometryTypeForOptions(_options: ReadableMap?, promise: Promise) {
     try {
       var reply: String? = null
-      if (!DeviceAvailability.isStrongBiometricAuthAvailable(reactApplicationContext)) {
+      if (
+        !DeviceAvailability.isStrongBiometricAuthAvailable(reactApplicationContext)
+      ) {
         reply = null
       } else {
         if (isFingerprintAuthAvailable) {
@@ -454,6 +465,71 @@ class KeychainModule(reactContext: ReactApplicationContext) :
     } catch (e: Exception) {
       Log.e(KEYCHAIN_MODULE, e.message, e)
       promise.reject(Errors.E_SUPPORTED_BIOMETRY_ERROR, e)
+    } catch (fail: Throwable) {
+      Log.e(KEYCHAIN_MODULE, fail.message, fail)
+      promise.reject(Errors.E_UNKNOWN_ERROR, fail)
+    }
+  }
+
+  @ReactMethod
+  fun requestSystemAuthenticationForOptions(options: ReadableMap?, promise: Promise) {
+    try {
+      val activity =
+        reactApplicationContext.currentActivity as? FragmentActivity ?: throw NullPointerException(
+          "Not assigned current activity"
+        )
+      val allowedAuthenticators = getAllowedAuthenticators(options)
+      val authStatus =
+        BiometricManager.from(reactApplicationContext).canAuthenticate(allowedAuthenticators)
+
+      if (authStatus != BiometricManager.BIOMETRIC_SUCCESS) {
+        val result = Arguments.createMap()
+        result.putBoolean("success", false)
+        result.putString("error", getAndroidAuthenticatorStatusLabel(authStatus))
+        result.putInt("code", authStatus)
+        promise.resolve(result)
+        return
+      }
+
+      val promptInfo = getPromptInfo(options)
+      val executor = Executor { command -> activity.runOnUiThread(command) }
+      var didSettle = false
+      val resolveOnce = { success: Boolean, error: String?, code: Int? ->
+        if (didSettle) {
+          Unit
+        } else {
+          didSettle = true
+          val result = Arguments.createMap()
+          result.putBoolean("success", success)
+          if (error != null) {
+            result.putString("error", error)
+          } else {
+            result.putNull("error")
+          }
+          if (code != null) {
+            result.putInt("code", code)
+          } else {
+            result.putNull("code")
+          }
+          promise.resolve(result)
+        }
+      }
+      val prompt =
+        BiometricPrompt(
+          activity,
+          executor,
+          object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+              resolveOnce(true, null, null)
+            }
+
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+              resolveOnce(false, errString.toString(), errorCode)
+            }
+          }
+        )
+
+      activity.runOnUiThread { prompt.authenticate(promptInfo) }
     } catch (fail: Throwable) {
       Log.e(KEYCHAIN_MODULE, fail.message, fail)
       promise.reject(Errors.E_UNKNOWN_ERROR, fail)
@@ -575,12 +651,6 @@ class KeychainModule(reactContext: ReactApplicationContext) :
       "BIOMETRIC_STRONG | DEVICE_CREDENTIAL",
       BiometricManager.Authenticators.BIOMETRIC_STRONG or
         BiometricManager.Authenticators.DEVICE_CREDENTIAL
-    )
-    putAndroidAuthenticatorCapability(
-      result,
-      "biometricWeak",
-      "BIOMETRIC_WEAK",
-      BiometricManager.Authenticators.BIOMETRIC_WEAK
     )
     return result
   }
@@ -1060,11 +1130,26 @@ class KeychainModule(reactContext: ReactApplicationContext) :
         AccessControl.BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE == accessControl
     }
 
-    /** Extract user specified prompt info from options. */
-    private fun getPromptInfo(options: ReadableMap?): PromptInfo {
+    private fun getBiometricAuthenticators(): Int {
+      return BiometricManager.Authenticators.BIOMETRIC_STRONG
+    }
+
+    private fun getAllowedAuthenticators(options: ReadableMap?): Int {
       val accessControl = getAccessControlOrDefault(options)
       val useBiometry = getUseBiometry(accessControl)
       val usePasscode = getUsePasscode(accessControl)
+      val biometricAuthenticators = getBiometricAuthenticators()
+
+      return when {
+        useBiometry && usePasscode ->
+          biometricAuthenticators or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+        usePasscode -> BiometricManager.Authenticators.DEVICE_CREDENTIAL
+        else -> biometricAuthenticators
+      }
+    }
+
+    /** Extract user specified prompt info from options. */
+    private fun getPromptInfo(options: ReadableMap?): PromptInfo {
       val promptInfoOptionsMap =
         if (options != null && options.hasKey(Maps.AUTH_PROMPT)) options.getMap(Maps.AUTH_PROMPT)
         else null
@@ -1083,14 +1168,7 @@ class KeychainModule(reactContext: ReactApplicationContext) :
         val promptInfoDescription = promptInfoOptionsMap.getString(AuthPromptOptions.DESCRIPTION)
         promptInfoBuilder.setDescription(promptInfoDescription)
       }
-      val allowedAuthenticators =
-        when {
-          useBiometry && usePasscode ->
-            BiometricManager.Authenticators.BIOMETRIC_STRONG or
-              BiometricManager.Authenticators.DEVICE_CREDENTIAL
-          usePasscode -> BiometricManager.Authenticators.DEVICE_CREDENTIAL
-          else -> BiometricManager.Authenticators.BIOMETRIC_STRONG
-        }
+      val allowedAuthenticators = getAllowedAuthenticators(options)
 
       if (null != promptInfoOptionsMap &&
         promptInfoOptionsMap.hasKey(AuthPromptOptions.CANCEL) &&
