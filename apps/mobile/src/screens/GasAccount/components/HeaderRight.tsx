@@ -1,10 +1,17 @@
 import { RcIconGasAccountHeaderRight } from '@/assets/icons/gas-account';
 import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
-import { useCallback, useMemo, useState } from 'react';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
-import { Tip } from '@/components';
+import {
+  InteractionManager,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 import {
   useAccountsWithGasAccountBalance,
   useGasAccountLoginVisible,
@@ -18,6 +25,38 @@ import {
 import { Text } from '@/components/Typography';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
+const MENU_MIN_WIDTH = 220;
+const MENU_EDGE_PADDING = 16;
+const MENU_RIGHT_FALLBACK = 24;
+const MENU_TRIGGER_GAP = 4;
+const MENU_TOP_ADJUST = 8;
+
+type AnchorLayout = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+function clamp(value: number, min: number, max: number) {
+  if (max < min) {
+    return min;
+  }
+  return Math.min(Math.max(value, min), max);
+}
+
+function isFiniteLayout(layout?: AnchorLayout | null) {
+  return (
+    !!layout &&
+    Number.isFinite(layout.x) &&
+    Number.isFinite(layout.y) &&
+    Number.isFinite(layout.width) &&
+    Number.isFinite(layout.height) &&
+    layout.width > 0 &&
+    layout.height > 0
+  );
+}
+
 export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
   showWithdraw: openWithdrawPopup,
 }) => {
@@ -25,6 +64,14 @@ export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
+  const triggerRef = useRef<View>(null);
+  const [triggerLayout, setTriggerLayout] = useState<AnchorLayout | null>(null);
+  const [menuSize, setMenuSize] = useState({
+    width: MENU_MIN_WIDTH,
+    height: 0,
+  });
+  const { safeTop, safeOffHeader, safeOffBottom } = useSafeSizes();
+  const windowDimensions = useWindowDimensions();
   const isDark = useGetBinaryMode() === 'dark';
   const { account } = useGasAccountSign();
 
@@ -41,6 +88,7 @@ export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
   }, [accountsWithGasAccountBalance, account?.address, account?.type]);
 
   const showWithdraw = !!account;
+  const optionCount = Number(showWithdraw) + Number(showSwitchWallet);
 
   const [, setLoginVisible] = useGasAccountLoginVisible();
 
@@ -54,58 +102,151 @@ export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
     setLoginVisible(true);
   }, [setLoginVisible]);
 
+  const measureTrigger = useCallback(() => {
+    triggerRef.current?.measureInWindow((x, y, width, height) => {
+      const nextLayout = { x, y, width, height };
+      if (isFiniteLayout(nextLayout)) {
+        setTriggerLayout(nextLayout);
+      }
+    });
+  }, []);
+
+  const handleOpen = useCallback(() => {
+    setVisible(true);
+    requestAnimationFrame(measureTrigger);
+    InteractionManager.runAfterInteractions(measureTrigger);
+  }, [measureTrigger]);
+
+  const estimatedMenuHeight = useMemo(() => {
+    if (!optionCount) {
+      return 0;
+    }
+    return 32 + optionCount * 20 + Math.max(0, optionCount - 1) * 15;
+  }, [optionCount]);
+
+  const menuPosition = useMemo(() => {
+    const width = Math.max(menuSize.width || MENU_MIN_WIDTH, MENU_MIN_WIDTH);
+    const height = menuSize.height || estimatedMenuHeight;
+    const fallbackLeft = windowDimensions.width - MENU_RIGHT_FALLBACK - width;
+
+    const measuredOnRight =
+      isFiniteLayout(triggerLayout) &&
+      triggerLayout.x + triggerLayout.width > windowDimensions.width / 2;
+
+    const rawLeft = measuredOnRight
+      ? triggerLayout!.x + triggerLayout!.width - width
+      : fallbackLeft;
+
+    const fallbackTop = safeOffHeader - MENU_TOP_ADJUST;
+    const rawTop =
+      isFiniteLayout(triggerLayout) && measuredOnRight
+        ? triggerLayout!.y +
+          triggerLayout!.height +
+          MENU_TRIGGER_GAP -
+          MENU_TOP_ADJUST
+        : fallbackTop;
+
+    return {
+      left: clamp(
+        rawLeft,
+        MENU_EDGE_PADDING,
+        windowDimensions.width - MENU_EDGE_PADDING - width,
+      ),
+      top: clamp(
+        Math.max(rawTop, fallbackTop),
+        safeTop + MENU_EDGE_PADDING,
+        windowDimensions.height - safeOffBottom - MENU_EDGE_PADDING - height,
+      ),
+    };
+  }, [
+    estimatedMenuHeight,
+    menuSize.height,
+    menuSize.width,
+    safeOffBottom,
+    safeOffHeader,
+    safeTop,
+    triggerLayout,
+    windowDimensions.height,
+    windowDimensions.width,
+  ]);
+
   if (showSwitchWallet || account) {
     return (
-      <Tip
-        hideArrow
-        placement="bottom"
-        contentStyle={[
-          styles.content,
-          isDark && { backgroundColor: color['neutral-bg-1'] },
-        ]}
-        tooltipStyle={styles.tooltipStyle}
-        isVisible={visible}
-        onClose={() => setVisible(false)}
-        content={
-          <View style={styles.optionList}>
-            {showWithdraw ? (
-              <CustomTouchableOpacity
-                as="RNGHTouchableOpacity"
-                style={styles.option}
-                onPress={handleWithdraw}
-                hitSlop={10}>
-                <RcIconWithdrawCC
-                  color={colors2024['neutral-body']}
-                  style={styles.optionIcon}
-                />
-                <Text style={styles.text}>{t('page.gasAccount.withdraw')}</Text>
-              </CustomTouchableOpacity>
-            ) : null}
-            {showSwitchWallet ? (
-              <CustomTouchableOpacity
-                as="RNGHTouchableOpacity"
-                style={styles.option}
-                onPress={handleSwitch}
-                hitSlop={10}>
-                <RcIconSwitchCC
-                  color={colors2024['neutral-body']}
-                  style={styles.optionIcon}
-                />
-                <Text style={styles.text}>
-                  {t('page.gasAccount.switchAccount')}
-                </Text>
-              </CustomTouchableOpacity>
-            ) : null}
+      <>
+        <View ref={triggerRef} collapsable={false}>
+          <CustomTouchableOpacity
+            as="RNGHTouchableOpacity"
+            style={styles.container}
+            onPress={handleOpen}
+            hitSlop={10}>
+            <RcIconGasAccountHeaderRight />
+          </CustomTouchableOpacity>
+        </View>
+        <TrackedModal
+          modalId="gas-account-header-menu"
+          blocking={false}
+          transparent
+          visible={visible}
+          animationType="none"
+          onShow={measureTrigger}
+          onRequestClose={() => setVisible(false)}>
+          <View style={styles.modalRoot}>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={() => setVisible(false)}
+            />
+            <View
+              onLayout={event => {
+                const { width, height } = event.nativeEvent.layout;
+                if (width > 0 && height > 0) {
+                  setMenuSize({ width, height });
+                }
+              }}
+              style={[
+                styles.menuSurface,
+                styles.tooltipStyle,
+                {
+                  left: menuPosition.left,
+                  top: menuPosition.top,
+                },
+                isDark && { backgroundColor: color['neutral-bg-1'] },
+              ]}>
+              <View style={styles.optionList}>
+                {showWithdraw ? (
+                  <CustomTouchableOpacity
+                    as="RNGHTouchableOpacity"
+                    style={styles.option}
+                    onPress={handleWithdraw}
+                    hitSlop={10}>
+                    <RcIconWithdrawCC
+                      color={colors2024['neutral-body']}
+                      style={styles.optionIcon}
+                    />
+                    <Text style={styles.text}>
+                      {t('page.gasAccount.withdraw')}
+                    </Text>
+                  </CustomTouchableOpacity>
+                ) : null}
+                {showSwitchWallet ? (
+                  <CustomTouchableOpacity
+                    as="RNGHTouchableOpacity"
+                    style={styles.option}
+                    onPress={handleSwitch}
+                    hitSlop={10}>
+                    <RcIconSwitchCC
+                      color={colors2024['neutral-body']}
+                      style={styles.optionIcon}
+                    />
+                    <Text style={styles.text}>
+                      {t('page.gasAccount.switchAccount')}
+                    </Text>
+                  </CustomTouchableOpacity>
+                ) : null}
+              </View>
+            </View>
           </View>
-        }>
-        <CustomTouchableOpacity
-          as="RNGHTouchableOpacity"
-          style={styles.container}
-          onPress={() => setVisible(true)}
-          hitSlop={10}>
-          <RcIconGasAccountHeaderRight />
-        </CustomTouchableOpacity>
-      </Tip>
+        </TrackedModal>
+      </>
     );
   }
   return null;
@@ -115,6 +256,16 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   container: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalRoot: {
+    ...StyleSheet.absoluteFillObject,
+    flex: 1,
+  },
+  menuSurface: {
+    position: 'absolute',
+    minWidth: MENU_MIN_WIDTH,
+    backgroundColor: colors['neutral-card1'],
+    borderRadius: 12,
   },
   optionList: {
     minWidth: 220,
@@ -139,14 +290,6 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     shadowOpacity: 1,
     shadowRadius: 20.7,
     elevation: 20,
-  },
-  content: {
-    width: 'auto',
-    backgroundColor: colors['neutral-card1'],
-    height: 'auto',
-    marginLeft: 6,
-    borderRadius: 12,
-    shadowOpacity: 0,
   },
   optionIcon: {
     width: 16,
