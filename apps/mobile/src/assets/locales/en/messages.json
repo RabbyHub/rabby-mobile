@@ -594,6 +594,7 @@
         "empty": {
           "title": "No Transaction history",
           "titleLastThreeMonths": "No Transaction history in 90 Days",
+          "testnetNoHistory": "Custom token transaction history not available.",
           "desc": "All transactions signed via Rabby will be listed here."
         },
         "common": {

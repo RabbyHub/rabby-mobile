@@ -84,8 +84,61 @@ const formatTokenCount = (count: number) => {
 const getSectionTokenKey = (token: CustomTestnetAssetSectionToken) =>
   `${token.chainId}:${token.id.toLowerCase()}`;
 
+const getTokenOwnerKey = (address?: string) => (address || '').toLowerCase();
+
 const getTokenItemKey = (token: ITokenItem) =>
-  `${token.chain}:${token.id.toLowerCase()}:${token.owner_addr?.toLowerCase()}`;
+  `${token.chain}:${token.id.toLowerCase()}:${getTokenOwnerKey(
+    token.owner_addr,
+  )}`;
+
+const customTestnetTokenBalanceCache = new Map<string, ITokenItem>();
+
+const cacheCustomTestnetTokenBalances = (tokens: ITokenItem[]) => {
+  if (!tokens.length) {
+    return;
+  }
+
+  tokens.forEach(token => {
+    customTestnetTokenBalanceCache.set(getTokenItemKey(token), token);
+  });
+};
+
+const removeCustomTestnetTokenBalances = (token: ITokenItem) => {
+  customTestnetTokenBalanceCache.forEach((item, key) => {
+    if (
+      item.chain === token.chain &&
+      item.id.toLowerCase() === token.id.toLowerCase()
+    ) {
+      customTestnetTokenBalanceCache.delete(key);
+    }
+  });
+};
+
+const getCustomTestnetTokenBalanceCache = (
+  data: CustomTestnetAssetSectionData,
+) => {
+  const tokenIds = new Set(data.tokens.map(token => token.id.toLowerCase()));
+  const ownerKeys = new Set(data.ownerAddresses.map(getTokenOwnerKey));
+  const cachedTokens: ITokenItem[] = [];
+
+  customTestnetTokenBalanceCache.forEach(token => {
+    if (token.chain !== data.chain.serverId) {
+      return;
+    }
+    if (!tokenIds.has(token.id.toLowerCase())) {
+      return;
+    }
+    if (
+      ownerKeys.size > 0 &&
+      !ownerKeys.has(getTokenOwnerKey(token.owner_addr))
+    ) {
+      return;
+    }
+    cachedTokens.push(token);
+  });
+
+  return cachedTokens;
+};
 
 type CustomTestnetTokenRowViewModel = CustomTestnetTokenDisplayRow & {
   balanceLoading?: boolean;
@@ -302,31 +355,41 @@ export const CustomTestnetAssetSection = memo(
         return markRemovableRows(loadedRows);
       }
 
-      const loadedTokenKeys = new Set(
+      const loadedTokenItemKeys = new Set(tokens.map(getTokenItemKey));
+      const loadedSectionTokenKeys = new Set(
         tokens.map(token => `${data.chain.id}:${token.id.toLowerCase()}`),
       );
-      const loadingRows = data.tokens
-        .filter(token => !loadedTokenKeys.has(getSectionTokenKey(token)))
-        .flatMap(token => {
+      const loadingRows = data.tokens.flatMap<CustomTestnetTokenRowViewModel>(
+        token => {
           if (
             tokenDisplayMode === 'byAddress' &&
             data.ownerAddresses.length > 0
           ) {
-            return data.ownerAddresses.map(ownerAddress => {
+            return data.ownerAddresses.flatMap(ownerAddress => {
               const metadataToken = makeMetadataTokenItem(
                 token,
                 data.chain.serverId,
                 ownerAddress,
               );
 
-              return {
-                key: getCustomTestnetTokenRowKey(metadataToken),
-                token: metadataToken,
-                tokens: [metadataToken],
-                mode: 'token' as const,
-                balanceLoading: true,
-              };
+              if (loadedTokenItemKeys.has(getTokenItemKey(metadataToken))) {
+                return [];
+              }
+
+              return [
+                {
+                  key: getCustomTestnetTokenRowKey(metadataToken),
+                  token: metadataToken,
+                  tokens: [metadataToken],
+                  mode: 'token' as const,
+                  balanceLoading: true,
+                },
+              ];
             });
+          }
+
+          if (loadedSectionTokenKeys.has(getSectionTokenKey(token))) {
+            return [];
           }
 
           const metadataToken = makeMetadataTokenItem(
@@ -343,7 +406,8 @@ export const CustomTestnetAssetSection = memo(
               balanceLoading: true,
             },
           ];
-        });
+        },
+      );
 
       return markRemovableRows([...loadedRows, ...loadingRows]);
     }, [
@@ -389,6 +453,7 @@ export const CustomTestnetAssetSection = memo(
     const handleTokenRemove = useCallback(
       async (token: ITokenItem) => {
         await onTokenRemove?.(token, data);
+        removeCustomTestnetTokenBalances(token);
         setTokens(prevTokens =>
           prevTokens.filter(
             item =>
@@ -419,13 +484,20 @@ export const CustomTestnetAssetSection = memo(
       let cancelled = false;
       const requestSeq = requestSeqRef.current + 1;
       requestSeqRef.current = requestSeq;
-      setLoading(true);
+      const cachedTokens = getCustomTestnetTokenBalanceCache(data);
+      if (cachedTokens.length) {
+        setTokens(cachedTokens);
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
 
       loadTokens({ chain: data.chain, tokens: data.tokens })
         .then(nextTokens => {
           if (cancelled || requestSeqRef.current !== requestSeq) {
             return;
           }
+          cacheCustomTestnetTokenBalances(nextTokens);
           setTokens(nextTokens);
           setHasLoaded(true);
         })
@@ -442,7 +514,7 @@ export const CustomTestnetAssetSection = memo(
       return () => {
         cancelled = true;
       };
-    }, [data.chain, data.tokens, expanded, hasLoaded, loadTokens]);
+    }, [data, expanded, hasLoaded, loadTokens]);
 
     useEffect(() => {
       if (!missingLoadedTokens.length) {
@@ -470,6 +542,7 @@ export const CustomTestnetAssetSection = memo(
             return;
           }
 
+          cacheCustomTestnetTokenBalances(nextTokens);
           setTokens(prevTokens => {
             const tokenMap = new Map<string, ITokenItem>();
             prevTokens.forEach(token => {

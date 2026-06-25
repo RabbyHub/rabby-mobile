@@ -468,6 +468,11 @@ const TokenDetailContent = () => {
         onReachTopStatusChange={handleReachTopStatusChange}
         finalAccount={effectiveAccount}
         token={token}
+        overWritePlaceholder={
+          isCustomTestnetToken
+            ? t('page.activities.signedTx.empty.testnetNoHistory')
+            : undefined
+        }
         ListHeaderComponent={renderHeader}
         baseTokenRefreshing={manualBaseTokenRefreshing}
         disableHistoryRequest={isCustomTestnetToken}
