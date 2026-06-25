@@ -60,6 +60,8 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { apiCustomTestnet } from '@/core/apis';
+import { toast } from '@/components2024/Toast';
 
 type TokenListItem =
   | {
@@ -474,7 +476,7 @@ export const TokenList = ({
   const getCustomTestnetAccountByAddress = useCallback(() => undefined, []);
 
   const handleCustomTestnetTokenButtonPress = useCallback(
-    (data: CustomTestnetAssetSectionData) => {
+    (data: CustomTestnetAssetSectionData, onConfirmCB?: () => void) => {
       let modalId: ReturnType<typeof createGlobalBottomSheetModal2024> | null =
         null;
       const closeModal = () => {
@@ -491,10 +493,29 @@ export const TokenList = ({
         onCancel: closeModal,
         onConfirm: () => {
           closeModal();
+          onConfirmCB?.();
         },
       });
     },
     [],
+  );
+
+  const handleCustomTestnetTokenRemove = useCallback(
+    async (token: ITokenItem, data: CustomTestnetAssetSectionData) => {
+      try {
+        await apiCustomTestnet.removeCustomTestnetToken({
+          chainId: data.chain.id,
+          id: token.id,
+        });
+        toast.success(t('global.Deleted'));
+      } catch (error: any) {
+        toast.show(
+          error?.message || t('page.customTestnet.addToken.removeFailed'),
+        );
+        throw error;
+      }
+    },
+    [t],
   );
 
   const handleRefresh = useCallback(async () => {
@@ -580,6 +601,7 @@ export const TokenList = ({
                 hideAccount
                 onTokenPress={handleOpenCustomTestnetTokenDetail}
                 onTokenButtonPress={handleCustomTestnetTokenButtonPress}
+                onTokenRemove={handleCustomTestnetTokenRemove}
                 collapseKey={customTestnetCollapseKey}
               />
             </View>
@@ -623,6 +645,7 @@ export const TokenList = ({
       handleOpenTokenDetail,
       handleOpenCustomTestnetTokenDetail,
       handleCustomTestnetTokenButtonPress,
+      handleCustomTestnetTokenRemove,
       isLight,
       isLpTokenEnabled,
       getCustomTestnetAccountByAddress,

@@ -1908,7 +1908,8 @@
         "notErc20": "No ERC20 token found at this address",
         "alreadyAdded": "This token has already been added",
         "added": "Token added",
-        "addFailed": "Failed to add token"
+        "addFailed": "Failed to add token",
+        "removeFailed": "Failed to delete token"
       },
       "ConfirmModifyRpcModal": {
         "desc": "The chain is already integrated by Rabby. Do you need to modify its RPC URL?"

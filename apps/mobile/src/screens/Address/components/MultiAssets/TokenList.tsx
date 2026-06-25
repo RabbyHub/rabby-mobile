@@ -76,6 +76,8 @@ import { useCustomTestnetAssetSections } from './CustomTestnetAssets/useCustomTe
 import type { CustomTestnetAssetSectionData } from './CustomTestnetAssets/types';
 import { AccountOverview } from '@/screens/Home/components/AccountOverview';
 import { useIsFocused } from '@react-navigation/native';
+import { apiCustomTestnet } from '@/core/apis';
+import { toast } from '@/components2024/Toast';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -480,9 +482,13 @@ export const TokenList = () => {
       if (isTabsSwiping.value) {
         return;
       }
+      if (groupItems.length === 1 && groupItems[0]) {
+        handleCustomTestnetTokenPress(groupItems[0]);
+        return;
+      }
       handleOpenTokenGroupDetail(groupItems, { amountOnly: true });
     },
-    [handleOpenTokenGroupDetail],
+    [handleCustomTestnetTokenPress, handleOpenTokenGroupDetail],
   );
 
   const renderCustomTestnetAccount = useCallback(
@@ -493,7 +499,7 @@ export const TokenList = () => {
   );
 
   const handleCustomTestnetTokenButtonPress = useCallback(
-    (data: CustomTestnetAssetSectionData) => {
+    (data: CustomTestnetAssetSectionData, onConfirmCB?: () => void) => {
       let modalId: ReturnType<typeof createGlobalBottomSheetModal2024> | null =
         null;
       const closeModal = () => {
@@ -510,10 +516,29 @@ export const TokenList = () => {
         onCancel: closeModal,
         onConfirm: () => {
           closeModal();
+          onConfirmCB?.();
         },
       });
     },
     [],
+  );
+
+  const handleCustomTestnetTokenRemove = useCallback(
+    async (token: ITokenItem, data: CustomTestnetAssetSectionData) => {
+      try {
+        await apiCustomTestnet.removeCustomTestnetToken({
+          chainId: data.chain.id,
+          id: token.id,
+        });
+        toast.success(t('global.Deleted'));
+      } catch (error: any) {
+        toast.show(
+          error?.message || t('page.customTestnet.addToken.removeFailed'),
+        );
+        throw error;
+      }
+    },
+    [t],
   );
 
   const handleOpenScamToken = useCallback(() => {
@@ -697,6 +722,7 @@ export const TokenList = () => {
               onTokenPress={handleCustomTestnetTokenPress}
               onTokenGroupPress={handleCustomTestnetTokenGroupPress}
               onTokenButtonPress={handleCustomTestnetTokenButtonPress}
+              onTokenRemove={handleCustomTestnetTokenRemove}
               collapseKey={customTestnetCollapseKey}
             />
           );
@@ -736,6 +762,7 @@ export const TokenList = () => {
       handleGroupPress,
       handleCustomTestnetTokenPress,
       handleCustomTestnetTokenButtonPress,
+      handleCustomTestnetTokenRemove,
       handleOpenScamToken,
       handleCustomTestnetTokenGroupPress,
       renderCustomTestnetAccount,

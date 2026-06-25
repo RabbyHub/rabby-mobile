@@ -20,13 +20,18 @@ import LinearGradient from 'react-native-linear-gradient';
 import { RcIconAddCircleBold } from '@/assets/icons/address';
 import RcArrowDown from '@/assets/icons/custom-testnet/IconArrowDown.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
+import {
+  ContextMenuView,
+  MenuAction,
+} from '@/components2024/ContextMenuView/ContextMenuView';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import { Text } from '@/components/Typography';
-import { useTheme2024 } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { formatAmount } from '@/utils/number';
+import { useTranslation } from 'react-i18next';
 
 import type {
   CustomTestnetAssetSectionData,
@@ -59,7 +64,14 @@ type CustomTestnetAssetSectionProps = {
   ): React.ReactNode;
   onTokenPress(token: ITokenItem): void;
   onTokenGroupPress?(tokens: ITokenItem[]): void;
-  onTokenButtonPress?(data: CustomTestnetAssetSectionData): void;
+  onTokenButtonPress?(
+    data: CustomTestnetAssetSectionData,
+    confirmCB?: () => void,
+  ): void;
+  onTokenRemove?(
+    token: ITokenItem,
+    data: CustomTestnetAssetSectionData,
+  ): void | Promise<void>;
   collapseKey?: string | number;
 };
 
@@ -74,6 +86,16 @@ const getSectionTokenKey = (token: CustomTestnetAssetSectionToken) =>
 
 const getTokenItemKey = (token: ITokenItem) =>
   `${token.chain}:${token.id.toLowerCase()}:${token.owner_addr?.toLowerCase()}`;
+
+type CustomTestnetTokenRowViewModel = CustomTestnetTokenDisplayRow & {
+  balanceLoading?: boolean;
+  removable?: boolean;
+};
+
+const MenuIcons = {
+  deleteDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete_dark.png'),
+  delete: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete.png'),
+};
 
 const TokenPreviewStack = memo(
   ({ tokens }: { tokens: CustomTestnetAssetSectionData['tokens'] }) => {
@@ -124,10 +146,9 @@ const CustomTestnetTokenRow = memo(
     renderAccount,
     onPress,
     onGroupPress,
+    onRemove,
   }: {
-    row: CustomTestnetTokenDisplayRow & {
-      balanceLoading?: boolean;
-    };
+    row: CustomTestnetTokenRowViewModel;
     account?: KeyringAccountWithAlias;
     renderAccount?(
       account: KeyringAccountWithAlias,
@@ -135,8 +156,11 @@ const CustomTestnetTokenRow = memo(
     ): React.ReactNode;
     onPress(token: ITokenItem): void;
     onGroupPress?(tokens: ITokenItem[]): void;
+    onRemove?(token: ITokenItem): void | Promise<void>;
   }) => {
     const { styles } = useTheme2024({ getStyle });
+    const { t } = useTranslation();
+    const isDarkTheme = useGetBinaryMode() === 'dark';
     const handlePress = useCallback(() => {
       if (row.balanceLoading) {
         return;
@@ -148,7 +172,27 @@ const CustomTestnetTokenRow = memo(
       onPress(row.token);
     }, [onGroupPress, onPress, row]);
 
-    return (
+    const handleRemove = useCallback(() => {
+      Promise.resolve(onRemove?.(row.token)).catch(error => {
+        console.error('Remove custom testnet asset token failed:', error);
+      });
+    }, [onRemove, row.token]);
+
+    const removeActions = useMemo<MenuAction[]>(
+      () => [
+        {
+          title: t('page.addressDetail.addressListScreen.delete'),
+          icon: isDarkTheme ? MenuIcons.deleteDark : MenuIcons.delete,
+          key: 'delete',
+          androidIconName: 'ic_rabby_menu_delete',
+          destructive: true,
+          action: handleRemove,
+        },
+      ],
+      [handleRemove, isDarkTheme, t],
+    );
+
+    const rowNode = (
       <TouchableOpacity
         style={styles.tokenRow}
         onPress={handlePress}
@@ -180,6 +224,21 @@ const CustomTestnetTokenRow = memo(
         </View>
       </TouchableOpacity>
     );
+
+    if (!row.removable || !onRemove || row.balanceLoading) {
+      return rowNode;
+    }
+
+    return (
+      <ContextMenuView
+        menuConfig={{
+          menuActions: removeActions,
+        }}
+        preViewBorderRadius={16}
+        triggerProps={{ action: 'longPress' }}>
+        {rowNode}
+      </ContextMenuView>
+    );
   },
 );
 
@@ -197,6 +256,7 @@ export const CustomTestnetAssetSection = memo(
     onTokenPress,
     onTokenGroupPress,
     onTokenButtonPress,
+    onTokenRemove,
     collapseKey,
   }: CustomTestnetAssetSectionProps) => {
     const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -223,9 +283,23 @@ export const CustomTestnetAssetSection = memo(
     }, [data.chain.id, data.tokens, expanded, hasLoaded, tokens]);
     const rowsToRender = useMemo(() => {
       const loadedRows = displayRows;
+      const markRemovableRows = (
+        rows: CustomTestnetTokenRowViewModel[],
+      ): CustomTestnetTokenRowViewModel[] =>
+        rows.map(row => ({
+          ...row,
+          removable:
+            !row.balanceLoading &&
+            data.tokens.some(
+              token =>
+                !token.isNative &&
+                token.chainId === data.chain.id &&
+                token.id.toLowerCase() === row.token.id.toLowerCase(),
+            ),
+        }));
 
       if (!expanded || (hasLoaded && !loading && !missingLoadedTokens.length)) {
-        return loadedRows;
+        return markRemovableRows(loadedRows);
       }
 
       const loadedTokenKeys = new Set(
@@ -271,7 +345,7 @@ export const CustomTestnetAssetSection = memo(
           ];
         });
 
-      return [...loadedRows, ...loadingRows];
+      return markRemovableRows([...loadedRows, ...loadingRows]);
     }, [
       data.chain.id,
       data.chain.serverId,
@@ -305,9 +379,27 @@ export const CustomTestnetAssetSection = memo(
     const handleTokenButtonPress = useCallback(
       (event: GestureResponderEvent) => {
         event.stopPropagation();
-        onTokenButtonPress?.(data);
+        onTokenButtonPress?.(data, () => {
+          setExpanded(true);
+        });
       },
       [data, onTokenButtonPress],
+    );
+
+    const handleTokenRemove = useCallback(
+      async (token: ITokenItem) => {
+        await onTokenRemove?.(token, data);
+        setTokens(prevTokens =>
+          prevTokens.filter(
+            item =>
+              !(
+                item.chain === token.chain &&
+                item.id.toLowerCase() === token.id.toLowerCase()
+              ),
+          ),
+        );
+      },
+      [data, onTokenRemove],
     );
 
     useEffect(() => {
@@ -449,6 +541,7 @@ export const CustomTestnetAssetSection = memo(
                 renderAccount={renderAccount}
                 onPress={onTokenPress}
                 onGroupPress={onTokenGroupPress}
+                onRemove={onTokenRemove ? handleTokenRemove : undefined}
               />
             ))}
           </View>
