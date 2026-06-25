@@ -86,17 +86,37 @@ const aggregateCustomTestnetTokensByAsset = (
   });
 };
 
+const getCustomTestnetTokensByAddressRows = (
+  tokens: ITokenItem[],
+): CustomTestnetTokenDisplayRow[] => {
+  const grouped = new Map<string, ITokenItem[]>();
+
+  tokens.forEach(token => {
+    const key = getCustomTestnetAssetGroupKey(token);
+    const list = grouped.get(key);
+    if (list) {
+      list.push(token);
+    } else {
+      grouped.set(key, [token]);
+    }
+  });
+
+  return Array.from(grouped.values()).flatMap(groupTokens =>
+    groupTokens.map(token => ({
+      key: getCustomTestnetTokenRowKey(token),
+      token,
+      tokens: [token],
+      mode: 'token' as const,
+    })),
+  );
+};
+
 export const getCustomTestnetTokenDisplayRows = (
   tokens: ITokenItem[],
   tokenDisplayMode: TokenDisplayMode,
 ): CustomTestnetTokenDisplayRow[] => {
   if (tokenDisplayMode === 'byAddress') {
-    return tokens.map(token => ({
-      key: getCustomTestnetTokenRowKey(token),
-      token,
-      tokens: [token],
-      mode: 'token',
-    }));
+    return getCustomTestnetTokensByAddressRows(tokens);
   }
 
   return aggregateCustomTestnetTokensByAsset(tokens);

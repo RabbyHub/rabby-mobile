@@ -3,6 +3,7 @@ import React, {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { ListRenderItem, StyleSheet, View, ViewStyle } from 'react-native';
@@ -205,12 +206,34 @@ export const TokenList = ({
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const [customTestnetCollapseKey, setCustomTestnetCollapseKey] = useState(0);
   const [hasRequestedTokenList, setHasRequestedTokenList] = useState(false);
+  const customTestnetAddTokenModalIdRef = useRef<ReturnType<
+    typeof createGlobalBottomSheetModal2024
+  > | null>(null);
   const isScreenFocused = useIsFocused();
 
   const focusedTab = useFocusedTab();
   const isFocused = useMemo(() => {
     return focusedTab === 'tokens';
   }, [focusedTab]);
+
+  const closeCustomTestnetAddTokenModal = useCallback(() => {
+    const modalId = customTestnetAddTokenModalIdRef.current;
+    if (!modalId) {
+      return;
+    }
+    removeGlobalBottomSheetModal2024(modalId);
+    customTestnetAddTokenModalIdRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    if (!isScreenFocused || !isFocused) {
+      closeCustomTestnetAddTokenModal();
+    }
+  }, [closeCustomTestnetAddTokenModal, isFocused, isScreenFocused]);
+
+  useEffect(() => {
+    return closeCustomTestnetAddTokenModal;
+  }, [closeCustomTestnetAddTokenModal]);
 
   useEffect(() => {
     if (!isScreenFocused) {
@@ -308,11 +331,14 @@ export const TokenList = ({
       };
     }),
   );
+  const hasDefaultTokenData =
+    unFoldTokenIds.length + foldTokenIds.length + scamTokenIds.length > 0;
+  const shouldHideCustomTestnetSectionsWhileLoading =
+    (isLoading || isAllLoading) && !hasDefaultTokenData;
   const visibleCustomTestnetSections =
     shouldShowCustomTestnetSections &&
     hasRequestedTokenList &&
-    !isLoading &&
-    !isAllLoading
+    !shouldHideCustomTestnetSectionsWhileLoading
       ? customTestnetSections
       : EMPTY_CUSTOM_TESTNET_SECTIONS;
   const getTokenList = useTokenList(s => s.getTokenList);
@@ -349,14 +375,14 @@ export const TokenList = ({
   const dataList = useMemo(() => {
     const items: TokenListItem[] = [];
     const hasNoTokenItems =
-      unFoldTokenIds.length + foldTokenIds.length + scamTokenIds.length === 0;
+      unFoldTokenIds.length + foldTokenIds.length + scamTokenIds.length === 0 &&
+      !hasFoldTokens;
 
     unFoldTokenIds.forEach(tokenId => {
       items.push({ type: 'unfold_token', tokenId });
     });
 
-    const hasFoldContent = foldTokenIds.length + scamTokenIds.length > 0;
-    const hasFoldSection = hasFoldContent || isLpTokenEnabled;
+    const hasFoldSection = hasFoldTokens || isLpTokenEnabled;
     if (hasFoldSection) {
       items.push({ type: 'toggle_token_fold' });
       if (!foldHideList) {
@@ -378,10 +404,7 @@ export const TokenList = ({
             });
           }
         }
-
-        if (hasFoldContent) {
-          appendCustomTestnetItems(items, visibleCustomTestnetSections);
-        }
+        appendCustomTestnetItems(items, visibleCustomTestnetSections);
       }
     }
 
@@ -422,7 +445,7 @@ export const TokenList = ({
       }
     }
 
-    if (!hasFoldContent) {
+    if (!hasFoldTokens) {
       appendCustomTestnetItems(items, visibleCustomTestnetSections);
     }
 
@@ -431,6 +454,7 @@ export const TokenList = ({
     foldHideList,
     foldScam,
     foldTokenIds,
+    hasFoldTokens,
     isAllLoading,
     isLoading,
     isLpTokenEnabled,
@@ -477,27 +501,23 @@ export const TokenList = ({
 
   const handleCustomTestnetTokenButtonPress = useCallback(
     (data: CustomTestnetAssetSectionData, onConfirmCB?: () => void) => {
-      let modalId: ReturnType<typeof createGlobalBottomSheetModal2024> | null =
-        null;
       const closeModal = () => {
-        if (!modalId) {
-          return;
-        }
-        removeGlobalBottomSheetModal2024(modalId);
-        modalId = null;
+        closeCustomTestnetAddTokenModal();
       };
 
-      modalId = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.CUSTOM_TESTNET_ADD_TOKEN,
-        chain: data.chain,
-        onCancel: closeModal,
-        onConfirm: () => {
-          closeModal();
-          onConfirmCB?.();
-        },
-      });
+      closeCustomTestnetAddTokenModal();
+      customTestnetAddTokenModalIdRef.current =
+        createGlobalBottomSheetModal2024({
+          name: MODAL_NAMES.CUSTOM_TESTNET_ADD_TOKEN,
+          chain: data.chain,
+          onCancel: closeModal,
+          onConfirm: () => {
+            closeModal();
+            onConfirmCB?.();
+          },
+        });
     },
-    [],
+    [closeCustomTestnetAddTokenModal],
   );
 
   const handleCustomTestnetTokenRemove = useCallback(

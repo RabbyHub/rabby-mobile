@@ -109,6 +109,7 @@ import LpTokenSwitch from '@/screens/Home/components/LpTokenSwitch';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { isLpToken } from '@/utils/lpToken';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import { CustomNetworkChainPreview } from '@/screens/Send/components/CustomNetworkChainPreview';
 import { InnerModalChainInfo } from '@/screens/Send/components/InModalChainInfo';
 import { isNumber } from 'lodash';
 import { Text, TextInput } from '@/components/Typography';
@@ -312,6 +313,8 @@ export interface TokenSelectorProps<
   isLpTokenEnabled?: boolean;
   onLpTokenChange?: (value: boolean) => void;
   favoriteTokenKeySet?: ReadonlySet<string>;
+  showCustomNetworkChainPreview?: boolean;
+  customNetworkTop3Chains?: string[];
 }
 
 const isAndroid = Platform.OS === 'android';
@@ -408,6 +411,8 @@ export const TokenSelectorSheetModal = ({
   isLpTokenEnabled = false,
   onLpTokenChange: _onLpTokenChange,
   favoriteTokenKeySet,
+  showCustomNetworkChainPreview = false,
+  customNetworkTop3Chains,
   ref,
 }: RNViewProps &
   TokenSelectorProps & { ref?: Ref<TokenSelectorSheetModalInst> }) => {
@@ -1141,21 +1146,31 @@ export const TokenSelectorSheetModal = ({
         !isWatchOrSafeAccount(filterAccount);
       const _willShowChainFilter = !!chainItem && !hideChainFilter;
       const _willShowFavoriteFilter = !!showFavoriteFilter;
+      const _willShowSendChainInfo = isSend && !showCustomNetworkChainPreview;
+      const _willShowCustomNetworkChainPreview =
+        isSend && showCustomNetworkChainPreview;
+      const _willShowLpTokenSwitch = !!showLpTokenSwitch;
 
       return {
         willShowChainFilter: _willShowChainFilter,
         willShowAccountFilter: _willShowAccountFilter,
         willShowFilterRow:
+          _willShowSendChainInfo ||
+          _willShowCustomNetworkChainPreview ||
           _willShowAccountFilter ||
           _willShowChainFilter ||
-          _willShowFavoriteFilter,
+          _willShowFavoriteFilter ||
+          _willShowLpTokenSwitch,
       };
     }, [
       displayAccountFilter,
       filterAccount,
       chainItem,
       hideChainFilter,
+      isSend,
+      showCustomNetworkChainPreview,
       showFavoriteFilter,
+      showLpTokenSwitch,
     ]);
 
   const { onHardwareBackHandler } = useHandleBackPressClosable(
@@ -1292,7 +1307,9 @@ export const TokenSelectorSheetModal = ({
             !willShowFilterRow && { display: 'none' },
           ]}>
           <View style={styles.leftFilters}>
-            {isSend && (
+            {isSend && showCustomNetworkChainPreview ? (
+              <CustomNetworkChainPreview top3Chains={customNetworkTop3Chains} />
+            ) : isSend ? (
               <InnerModalChainInfo
                 account={filterAccount}
                 chainEnum={chainItem?.enum}
@@ -1308,7 +1325,7 @@ export const TokenSelectorSheetModal = ({
                   });
                 }}
               />
-            )}
+            ) : null}
             {willShowAccountFilter && (
               <AccountFilterItem
                 filterAccount={filterAccount}

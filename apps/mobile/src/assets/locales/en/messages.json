@@ -594,6 +594,7 @@
         "empty": {
           "title": "No Transaction history",
           "titleLastThreeMonths": "No Transaction history in 90 Days",
+          "testnetNoHistory": "Custom token transaction history not available.",
           "desc": "All transactions signed via Rabby will be listed here."
         },
         "common": {
@@ -1908,6 +1909,7 @@
         "invalidAddress": "Invalid token address",
         "notErc20": "No ERC20 token found at this address",
         "alreadyAdded": "This token has already been added",
+        "alreadyAddedToast": "Token already added",
         "added": "Token added",
         "addFailed": "Failed to add token",
         "removeFailed": "Failed to delete token"
