@@ -47,14 +47,6 @@ type LocalWebViewProps = WebViewProps & {
   backGroundColor?: string;
 };
 
-function ensureFileUrl(uri: string) {
-  if (/^[a-z][a-z\d+\-.]*:\/\//i.test(uri)) {
-    return uri;
-  }
-
-  return `file://${uri}`;
-}
-
 function defaultOnShouldStartLoadWithRequest(
   request: Parameters<OnShouldStartLoadWithRequest>[0],
   disableHttpRequest = true,
@@ -132,16 +124,18 @@ export const LocalWebView = ({
     devServerMobileLocalPagesAvailable,
   ]);
 
-  const { webviewSource, allowingReadAccessToURL } = useMemo(() => {
-    const assetPath = stringUtils.ensurePrefix(entryPath, '/builtin-pages');
-    const assetPathWithoutPrefix = stringUtils.unPrefix(assetPath, '/');
-    const localUri = refAssetForLocalWebView(assetPath).rawPath;
-    const iosBaseUrl = ensureFileUrl(WEBVIEW_BASEURL);
+  const { webviewSource } = useMemo(() => {
+    const localUri = IS_ANDROID
+      ? refAssetForLocalWebView(
+          stringUtils.ensurePrefix(entryPath, '/builtin-pages'),
+        ).rawPath
+      : refAssetForLocalWebView(
+          stringUtils.ensurePrefix(entryPath, '/builtin-pages'),
+        ).rawPath;
 
     return {
       localUri,
       devUri,
-      allowingReadAccessToURL: IS_IOS ? iosBaseUrl : undefined,
       webviewSource:
         __DEV__ && !forceUseLocalResource
           ? {
@@ -154,8 +148,11 @@ export const LocalWebView = ({
               baseUrl: `${stringUtils.ensureSuffix(WEBVIEW_BASEURL, '/')}`,
             }
           : {
-              uri: `${iosBaseUrl}${assetPathWithoutPrefix}`,
-              baseUrl: iosBaseUrl,
+              uri: `${WEBVIEW_BASEURL}${stringUtils.ensurePrefix(
+                entryPath,
+                '/builtin-pages',
+              )}`,
+              baseUrl: WEBVIEW_BASEURL,
             },
     };
   }, [entryPath, devUri, forceUseLocalResource]);
@@ -236,9 +233,6 @@ export const LocalWebView = ({
       {...(IS_IOS
         ? getLocalWebViewDefaultProps().iosWebViewProps
         : getLocalWebViewDefaultProps().androidWebViewProps)}
-      {...(IS_IOS && allowingReadAccessToURL
-        ? { allowingReadAccessToURL }
-        : {})}
       onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
       {...webviewProps}
       onLayout={event => {

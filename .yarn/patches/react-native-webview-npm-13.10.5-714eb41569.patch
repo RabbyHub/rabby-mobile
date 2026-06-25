@@ -1,3 +1,22 @@
+diff --git a/package.json b/package.json
+index cb38ce1144a1a5b4a5b0a2e08902c7e80e3c1994..60f428a873dfdc8496f1439ffbe2dab83c08ae27 100644
+--- a/package.json
++++ b/package.json
+@@ -95,6 +95,14 @@
+     "jsSrcsDir": "./src",
+     "android": {
+       "javaPackageName": "com.reactnativecommunity.webview"
++    },
++    "ios": {
++      "componentProvider": {
++        "RNCWebView": "RNCWebView"
++      },
++      "modulesProvider": {
++        "RNCWebViewModule": "RNCWebViewModule"
++      }
+     }
+   },
+   "packageManager": "yarn@1.22.19"
 diff --git a/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java b/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
 index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b4d3424c1 100644
 --- a/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
