@@ -1,21 +1,11 @@
-'use strict';
+"use strict";
 
 import { NativeModules, Platform } from 'react-native';
-import {
-  ACCESSIBLE,
-  ACCESS_CONTROL,
-  AUTHENTICATION_TYPE,
-  SECURITY_LEVEL,
-  SECURITY_RULES,
-  STORAGE_TYPE,
-  BIOMETRY_TYPE,
-} from './enums.js';
-import {
-  normalizeOptions,
-  normalizeServerOption,
-  normalizeServiceOption,
-} from './normalizeOptions.js';
-const { RNRabbyKeychainV9Manager } = NativeModules;
+import { ACCESSIBLE, ACCESS_CONTROL, AUTHENTICATION_TYPE, SECURITY_LEVEL, SECURITY_RULES, STORAGE_TYPE, BIOMETRY_TYPE } from "./enums.js";
+import { normalizeOptions, normalizeServerOption, normalizeServiceOption } from "./normalizeOptions.js";
+const {
+  RNRabbyKeychainV9Manager
+} = NativeModules;
 
 /**
  * Saves the `username` and `password` combination for the given service.
@@ -33,11 +23,7 @@ const { RNRabbyKeychainV9Manager } = NativeModules;
  */
 export function setGenericPassword(username, password, serviceOrOptions) {
   const options = normalizeOptions(serviceOrOptions);
-  return RNRabbyKeychainV9Manager.setGenericPasswordForOptions(
-    options,
-    username,
-    password,
-  );
+  return RNRabbyKeychainV9Manager.setGenericPasswordForOptions(options, username, password);
 }
 
 /**
@@ -147,12 +133,7 @@ export function hasInternetCredentials(serverOrOptions) {
  * ```
  */
 export function setInternetCredentials(server, username, password, options) {
-  return RNRabbyKeychainV9Manager.setInternetCredentialsForServer(
-    server,
-    username,
-    password,
-    normalizeOptions(options),
-  );
+  return RNRabbyKeychainV9Manager.setInternetCredentialsForServer(server, username, password, normalizeOptions(options));
 }
 
 /**
@@ -174,10 +155,7 @@ export function setInternetCredentials(server, username, password, options) {
  * ```
  */
 export function getInternetCredentials(server, options) {
-  return RNRabbyKeychainV9Manager.getInternetCredentialsForServer(
-    server,
-    normalizeOptions(options),
-  );
+  return RNRabbyKeychainV9Manager.getInternetCredentialsForServer(server, normalizeOptions(options));
 }
 
 /**
@@ -221,23 +199,6 @@ export function getSupportedBiometryType(serviceOrOptions) {
 }
 
 /**
- * Requests Android system authentication without reading or writing keychain data.
- *
- * @platform Android
- */
-export function requestSystemAuthentication(serviceOrOptions) {
-  const options = normalizeOptions(serviceOrOptions);
-  if (!RNRabbyKeychainV9Manager.requestSystemAuthenticationForOptions) {
-    return Promise.reject(
-      new Error('requestSystemAuthentication() is not supported'),
-    );
-  }
-  return RNRabbyKeychainV9Manager.requestSystemAuthenticationForOptions(
-    options,
-  );
-}
-
-/**
  * Request shared web credentials.
  *
  * @platform iOS
@@ -256,11 +217,7 @@ export function requestSystemAuthentication(serviceOrOptions) {
  */
 export function requestSharedWebCredentials() {
   if (Platform.OS !== 'ios') {
-    return Promise.reject(
-      new Error(
-        `requestSharedWebCredentials() is not supported on ${Platform.OS} yet`,
-      ),
-    );
+    return Promise.reject(new Error(`requestSharedWebCredentials() is not supported on ${Platform.OS} yet`));
   }
   return RNRabbyKeychainV9Manager.requestSharedWebCredentials();
 }
@@ -284,17 +241,9 @@ export function requestSharedWebCredentials() {
  */
 export function setSharedWebCredentials(server, username, password) {
   if (Platform.OS !== 'ios') {
-    return Promise.reject(
-      new Error(
-        `setSharedWebCredentials() is not supported on ${Platform.OS} yet`,
-      ),
-    );
+    return Promise.reject(new Error(`setSharedWebCredentials() is not supported on ${Platform.OS} yet`));
   }
-  return RNRabbyKeychainV9Manager.setSharedWebCredentialsForServer(
-    server,
-    username,
-    password,
-  );
+  return RNRabbyKeychainV9Manager.setSharedWebCredentialsForServer(server, username, password);
 }
 
 /**
@@ -340,8 +289,8 @@ export function getSecurityLevel(options) {
   }
   return RNRabbyKeychainV9Manager.getSecurityLevel(options);
 }
-export * from './enums.js';
-export * from './types.js';
+export * from "./enums.js";
+export * from "./types.js";
 /** @ignore */
 export default {
   SECURITY_LEVEL,
@@ -354,7 +303,6 @@ export default {
   getSecurityLevel,
   canImplyAuthentication,
   getSupportedBiometryType,
-  requestSystemAuthentication,
   setInternetCredentials,
   getInternetCredentials,
   resetInternetCredentials,
@@ -363,6 +311,6 @@ export default {
   getAllGenericPasswordServices,
   resetGenericPassword,
   requestSharedWebCredentials,
-  setSharedWebCredentials,
+  setSharedWebCredentials
 };
 //# sourceMappingURL=index.js.map

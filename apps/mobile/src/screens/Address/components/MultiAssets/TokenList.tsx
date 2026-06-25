@@ -389,11 +389,7 @@ export const TokenList = () => {
   });
 
   const hasNoAssets =
-    tokenRows.length +
-      foldRows.length +
-      visibleCustomTestnetSections.length +
-      scamRows.length ===
-      0 &&
+    tokenRows.length + foldRows.length + scamRows.length === 0 &&
     !isLoading &&
     !hasFoldTokens &&
     isFocused;

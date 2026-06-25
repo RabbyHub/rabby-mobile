@@ -17,7 +17,6 @@ import type {
   SetOptions,
   AuthenticationTypeOption,
   AccessControlOption,
-  SystemAuthenticationResult,
 } from './types';
 import {
   normalizeOptions,
@@ -44,13 +43,13 @@ const { RNRabbyKeychainV9Manager } = NativeModules;
 export function setGenericPassword(
   username: string,
   password: string,
-  serviceOrOptions?: string | SetOptions,
+  serviceOrOptions?: string | SetOptions
 ): Promise<false | Result> {
   const options = normalizeOptions(serviceOrOptions);
   return RNRabbyKeychainV9Manager.setGenericPasswordForOptions(
     options,
     username,
-    password,
+    password
   );
 }
 
@@ -72,7 +71,7 @@ export function setGenericPassword(
  * ```
  */
 export function getGenericPassword(
-  serviceOrOptions?: string | GetOptions,
+  serviceOrOptions?: string | GetOptions
 ): Promise<false | UserCredentials> {
   const options = normalizeOptions(serviceOrOptions);
   return RNRabbyKeychainV9Manager.getGenericPasswordForOptions(options);
@@ -92,7 +91,7 @@ export function getGenericPassword(
  * ```
  */
 export function hasGenericPassword(
-  serviceOrOptions?: string | BaseOptions,
+  serviceOrOptions?: string | BaseOptions
 ): Promise<boolean> {
   const options = normalizeServiceOption(serviceOrOptions);
   return RNRabbyKeychainV9Manager.hasGenericPasswordForOptions(options);
@@ -112,7 +111,7 @@ export function hasGenericPassword(
  * ```
  */
 export function resetGenericPassword(
-  serviceOrOptions?: string | BaseOptions,
+  serviceOrOptions?: string | BaseOptions
 ): Promise<boolean> {
   const options = normalizeServiceOption(serviceOrOptions);
   return RNRabbyKeychainV9Manager.resetGenericPasswordForOptions(options);
@@ -147,7 +146,7 @@ export function getAllGenericPasswordServices(): Promise<string[]> {
  * ```
  */
 export function hasInternetCredentials(
-  serverOrOptions: string | BaseOptions,
+  serverOrOptions: string | BaseOptions
 ): Promise<boolean> {
   const options = normalizeServerOption(serverOrOptions);
   return RNRabbyKeychainV9Manager.hasInternetCredentialsForOptions(options);
@@ -172,13 +171,13 @@ export function setInternetCredentials(
   server: string,
   username: string,
   password: string,
-  options?: SetOptions,
+  options?: SetOptions
 ): Promise<false | Result> {
   return RNRabbyKeychainV9Manager.setInternetCredentialsForServer(
     server,
     username,
     password,
-    normalizeOptions(options),
+    normalizeOptions(options)
   );
 }
 
@@ -202,11 +201,11 @@ export function setInternetCredentials(
  */
 export function getInternetCredentials(
   server: string,
-  options?: GetOptions,
+  options?: GetOptions
 ): Promise<false | UserCredentials> {
   return RNRabbyKeychainV9Manager.getInternetCredentialsForServer(
     server,
-    normalizeOptions(options),
+    normalizeOptions(options)
   );
 }
 
@@ -224,7 +223,7 @@ export function getInternetCredentials(
  * ```
  */
 export function resetInternetCredentials(
-  serverOrOptions: string | BaseOptions,
+  serverOrOptions: string | BaseOptions
 ): Promise<void> {
   const options = normalizeServerOption(serverOrOptions);
   return RNRabbyKeychainV9Manager.resetInternetCredentialsForOptions(options);
@@ -241,39 +240,12 @@ export function resetInternetCredentials(
  * console.log('Supported Biometry Type:', biometryType);
  * ```
  */
-export function getSupportedBiometryType(
-  serviceOrOptions?: string | GetOptions,
-): Promise<null | BIOMETRY_TYPE> {
+export function getSupportedBiometryType(): Promise<null | BIOMETRY_TYPE> {
   if (!RNRabbyKeychainV9Manager.getSupportedBiometryType) {
     return Promise.resolve(null);
   }
 
-  const options = normalizeOptions(serviceOrOptions);
-  if (RNRabbyKeychainV9Manager.getSupportedBiometryTypeForOptions) {
-    return RNRabbyKeychainV9Manager.getSupportedBiometryTypeForOptions(options);
-  }
-
   return RNRabbyKeychainV9Manager.getSupportedBiometryType();
-}
-
-/**
- * Requests Android system authentication without reading or writing keychain data.
- *
- * @platform Android
- */
-export function requestSystemAuthentication(
-  serviceOrOptions?: string | GetOptions,
-): Promise<SystemAuthenticationResult> {
-  const options = normalizeOptions(serviceOrOptions);
-  if (!RNRabbyKeychainV9Manager.requestSystemAuthenticationForOptions) {
-    return Promise.reject(
-      new Error('requestSystemAuthentication() is not supported'),
-    );
-  }
-
-  return RNRabbyKeychainV9Manager.requestSystemAuthenticationForOptions(
-    options,
-  );
 }
 
 /**
@@ -299,8 +271,8 @@ export function requestSharedWebCredentials(): Promise<
   if (Platform.OS !== 'ios') {
     return Promise.reject(
       new Error(
-        `requestSharedWebCredentials() is not supported on ${Platform.OS} yet`,
-      ),
+        `requestSharedWebCredentials() is not supported on ${Platform.OS} yet`
+      )
     );
   }
   return RNRabbyKeychainV9Manager.requestSharedWebCredentials();
@@ -326,19 +298,19 @@ export function requestSharedWebCredentials(): Promise<
 export function setSharedWebCredentials(
   server: string,
   username: string,
-  password?: string,
+  password?: string
 ): Promise<void> {
   if (Platform.OS !== 'ios') {
     return Promise.reject(
       new Error(
-        `setSharedWebCredentials() is not supported on ${Platform.OS} yet`,
-      ),
+        `setSharedWebCredentials() is not supported on ${Platform.OS} yet`
+      )
     );
   }
   return RNRabbyKeychainV9Manager.setSharedWebCredentialsForServer(
     server,
     username,
-    password,
+    password
   );
 }
 
@@ -358,7 +330,7 @@ export function setSharedWebCredentials(
  * ```
  */
 export function canImplyAuthentication(
-  options?: AuthenticationTypeOption,
+  options?: AuthenticationTypeOption
 ): Promise<boolean> {
   if (!RNRabbyKeychainV9Manager.canCheckAuthentication) {
     return Promise.resolve(false);
@@ -382,7 +354,7 @@ export function canImplyAuthentication(
  * ```
  */
 export function getSecurityLevel(
-  options?: AccessControlOption,
+  options?: AccessControlOption
 ): Promise<null | SECURITY_LEVEL> {
   if (!RNRabbyKeychainV9Manager.getSecurityLevel) {
     return Promise.resolve(null);
@@ -404,7 +376,6 @@ export default {
   getSecurityLevel,
   canImplyAuthentication,
   getSupportedBiometryType,
-  requestSystemAuthentication,
   setInternetCredentials,
   getInternetCredentials,
   resetInternetCredentials,

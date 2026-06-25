@@ -37,11 +37,6 @@ type RNBiometricsSimplePromptOptions = Parameters<
 >[0] & {
   allowDeviceCredentials?: boolean;
 };
-type SystemAuthenticationPromptResult = {
-  success: boolean;
-  error?: string | null;
-  code?: number | null;
-};
 
 function getRNBiometrics(): ReactNativeBiometrics {
   if (!_rnBiometricsInstance) {
@@ -193,9 +188,6 @@ export type KeychainCompatibleModule = {
   getSupportedBiometryType: (
     options?: KeychainCompatibleOptions,
   ) => Promise<KeychainSupportedBiometryType>;
-  requestSystemAuthentication?: (
-    options: KeychainCompatibleOptions,
-  ) => Promise<SystemAuthenticationPromptResult>;
   isPasscodeAuthAvailable?: () => Promise<boolean>;
   ACCESSIBLE: {
     WHEN_UNLOCKED_THIS_DEVICE_ONLY: unknown;
@@ -857,36 +849,8 @@ export function createBusinessKeychainApi({
     return getAuthOptionsForType(getAuthenticationType())?.accessControl;
   }
 
-  function getSystemAuthPromptOptions(
-    options: KeychainCompatibleOptions,
-    _androidSystemAuthPromptSecurityLevel?: AndroidBiometricSecurityLevel,
-  ): KeychainCompatibleOptions {
-    return {
-      ...options,
-      ...getAndroidBiometricSecurityLevelOptions(),
-      accessControl:
-        keychainModule.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE,
-    };
-  }
-
-  async function requestAndroidSystemAuthentication(
-    options: KeychainCompatibleOptions,
-  ): Promise<SystemAuthenticationPromptResult> {
-    if (typeof keychainModule.requestSystemAuthentication === 'function') {
-      return keychainModule.requestSystemAuthentication(options);
-    }
-
-    return getRNBiometrics().simplePrompt({
-      promptMessage: i18n.t('native.authentication.auth_prompt_desc'),
-      allowDeviceCredentials: true,
-    } as RNBiometricsSimplePromptOptions);
-  }
-
   async function getGenericPasswordWithBiometricPrompt(
     options: KeychainCompatibleOptions,
-    promptOptions?: {
-      androidSystemAuthPromptSecurityLevel?: AndroidBiometricSecurityLevel;
-    },
   ) {
     const result = await keychainModule.getGenericPassword(options);
     const credentials = result as DefaultRet;
@@ -898,13 +862,9 @@ export function createBusinessKeychainApi({
       credentials.storage === KEYCHAIN_STORAGE_TYPES.AES_GCM_NO_AUTH &&
       isAuthenticatedByBiometrics()
     ) {
-      const systemAuthPromptOptions = getSystemAuthPromptOptions(
-        options,
-        promptOptions?.androidSystemAuthPromptSecurityLevel,
-      );
       const [supportedBiometry, keychainPasscodeAvailable, keyguardSecure] =
         await Promise.all([
-          keychainModule.getSupportedBiometryType(systemAuthPromptOptions),
+          keychainModule.getSupportedBiometryType(),
           typeof keychainModule.isPasscodeAuthAvailable === 'function'
             ? keychainModule.isPasscodeAuthAvailable().catch(() => false)
             : Promise.resolve(false),
@@ -919,7 +879,6 @@ export function createBusinessKeychainApi({
         keychainPasscodeAvailable,
         keyguardSecure,
         allowDeviceCredentials: true,
-        androidSystemAuthPromptSecurityLevel: 'strong',
       });
 
       if (!supportedBiometry && !passcodeAvailable) {
@@ -935,11 +894,14 @@ export function createBusinessKeychainApi({
         );
       }
 
-      let promptResult: SystemAuthenticationPromptResult;
+      let promptResult: Awaited<
+        ReturnType<ReactNativeBiometrics['simplePrompt']>
+      >;
       try {
-        promptResult = await requestAndroidSystemAuthentication(
-          systemAuthPromptOptions,
-        );
+        promptResult = await getRNBiometrics().simplePrompt({
+          promptMessage: i18n.t('native.authentication.auth_prompt_desc'),
+          allowDeviceCredentials: true,
+        } as RNBiometricsSimplePromptOptions);
       } catch (error) {
         traceAndroidKeychainPerf('system_auth_prompt_error', {
           storage: credentials.storage,
@@ -1238,7 +1200,6 @@ export function createBusinessKeychainApi({
     onPlainPassword,
     androidAuthPromptPolicy = DEFAULT_ANDROID_AUTH_PROMPT_POLICY,
     androidAllowKeyStoreRecovery = false,
-    androidSystemAuthPromptSecurityLevel,
     shouldAttachTrustedVaultKeyString = true,
     authenticationType,
     skipBiometricsPasscodeUpgrade = false,
@@ -1252,7 +1213,6 @@ export function createBusinessKeychainApi({
     ) => void | Promise<void>;
     androidAuthPromptPolicy?: AndroidAuthPromptPolicy;
     androidAllowKeyStoreRecovery?: boolean;
-    androidSystemAuthPromptSecurityLevel?: AndroidBiometricSecurityLevel;
     shouldAttachTrustedVaultKeyString?: boolean;
     authenticationType?: KEYCHAIN_AUTH_TYPES;
     skipBiometricsPasscodeUpgrade?: boolean;
@@ -1268,7 +1228,6 @@ export function createBusinessKeychainApi({
         purpose,
         androidAuthPromptPolicy,
         androidAllowKeyStoreRecovery,
-        androidSystemAuthPromptSecurityLevel: 'strong',
         shouldAttachTrustedVaultKeyString,
         skipPostDecryptKeychainRewrite,
         deferPostDecryptKeychainRewrite,
@@ -1276,18 +1235,15 @@ export function createBusinessKeychainApi({
       const androidAccessControl =
         getAndroidRequestAccessControl(authenticationType);
 
-      const keychainObject = (await getGenericPasswordWithBiometricPrompt(
-        {
-          ...DEFAULT_GET_OPTIONS,
-          ...getAndroidBiometricSecurityLevelOptions(),
-          ...getAndroidAuthPromptPolicyOptions(androidAuthPromptPolicy),
-          // Access control is only used by Android when requesting device authentication
-          // For iOS, the access control is derived from the access control when the password was stored
-          accessControl: isAndroid ? androidAccessControl : undefined,
-          ...(isAndroid ? { androidAllowKeyStoreRecovery } : {}),
-        },
-        { androidSystemAuthPromptSecurityLevel },
-      )) as DefaultRet;
+      const keychainObject = (await getGenericPasswordWithBiometricPrompt({
+        ...DEFAULT_GET_OPTIONS,
+        ...getAndroidBiometricSecurityLevelOptions(),
+        ...getAndroidAuthPromptPolicyOptions(androidAuthPromptPolicy),
+        // Access control is only used by Android when requesting device authentication
+        // For iOS, the access control is derived from the access control when the password was stored
+        accessControl: isAndroid ? androidAccessControl : undefined,
+        ...(isAndroid ? { androidAllowKeyStoreRecovery } : {}),
+      })) as DefaultRet;
       traceAndroidKeychainPerf('request_generic_password_native_end', {
         elapsedMs: Date.now() - startedAt,
         hasPassword: !!keychainObject && !!keychainObject.password,
@@ -1716,9 +1672,9 @@ export function createBusinessKeychainApi({
     }
   }
 
-  function getSupportedBiometryType(options?: KeychainCompatibleOptions) {
+  function getSupportedBiometryType() {
     return keychainModule.getSupportedBiometryType(
-      options || getAndroidBiometricSecurityLevelOptions(),
+      getAndroidBiometricSecurityLevelOptions(),
     );
   }
 

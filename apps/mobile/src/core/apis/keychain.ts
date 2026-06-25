@@ -105,7 +105,6 @@ type KeychainBiometricsFailureDiagnostic = {
     purpose?: unknown;
     androidAuthPromptPolicy?: unknown;
     androidAllowKeyStoreRecovery?: unknown;
-    androidSystemAuthPromptSecurityLevel?: unknown;
     shouldAttachTrustedVaultKeyString?: unknown;
     skipPostDecryptKeychainRewrite?: unknown;
   };
@@ -258,7 +257,6 @@ export async function requestGenericPassword(
         androidAuthPromptPolicy: requestOptions.androidAuthPromptPolicy,
         androidAllowKeyStoreRecovery:
           requestOptions.androidAllowKeyStoreRecovery,
-        androidSystemAuthPromptSecurityLevel: 'strong',
         shouldAttachTrustedVaultKeyString:
           requestOptions.shouldAttachTrustedVaultKeyString,
         skipPostDecryptKeychainRewrite:
@@ -275,7 +273,6 @@ export async function requestGenericPassword(
         androidAuthPromptPolicy: requestOptions.androidAuthPromptPolicy,
         androidAllowKeyStoreRecovery:
           requestOptions.androidAllowKeyStoreRecovery,
-        androidSystemAuthPromptSecurityLevel: 'strong',
         shouldAttachTrustedVaultKeyString:
           requestOptions.shouldAttachTrustedVaultKeyString,
         skipPostDecryptKeychainRewrite:
@@ -298,10 +295,9 @@ export async function requestGenericPassword(
   }
 }
 
-export const getSupportedBiometryType = (
-  ...args: Parameters<typeof apisKeychainV8_2_0.getSupportedBiometryType>
-): Promise<KeychainSupportedBiometryType> =>
-  getCurrentKeychainApi().getSupportedBiometryType(...args);
+export const getSupportedBiometryType =
+  (): Promise<KeychainSupportedBiometryType> =>
+    getCurrentKeychainApi().getSupportedBiometryType();
 
 export const isPasscodeAuthAvailable = () =>
   getCurrentKeychainApi().isPasscodeAuthAvailable();
