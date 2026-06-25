@@ -324,6 +324,7 @@ export const TokenList = () => {
     scamRows,
     scamTokenPreviewLogoUrls,
     foldCoreUsdValue,
+    hasFoldTokens,
   } = useTokenAssetsIndexStore(
     useShallow(
       state =>
@@ -588,10 +589,10 @@ export const TokenList = () => {
         foldRows.length +
         scamRows.length +
         visibleCustomTestnetSections.length ===
-      0;
-    const hasDefaultTokenSections =
-      tokenRows.length + foldRows.length + scamRows.length > 0;
-    const hasFoldContent = foldRows.length + scamRows.length > 0;
+        0 && !hasFoldTokens;
+    //const hasDefaultTokenSections =
+    //tokenRows.length + foldRows.length + scamRows.length > 0;
+    const hasFoldSection = hasFoldTokens || isLpTokenEnabled;
 
     if (isLoading && hasNoTokenItems) {
       items.push(
@@ -620,11 +621,11 @@ export const TokenList = () => {
       });
     });
 
-    if (hasDefaultTokenSections) {
+    if (hasFoldSection) {
       items.push({ type: 'toggle_token_fold' });
     }
 
-    if (hasDefaultTokenSections && !foldHideList) {
+    if (hasFoldSection && !foldHideList) {
       foldRows.forEach(row => {
         items.push({ type: 'fold_token', row });
       });
@@ -645,27 +646,27 @@ export const TokenList = () => {
         }
       }
 
-      if (hasFoldContent) {
-        appendCustomTestnetItems(items, visibleCustomTestnetSections);
-      }
+      appendCustomTestnetItems(items, visibleCustomTestnetSections);
     }
 
-    if (!hasFoldContent) {
+    if (!hasFoldSection) {
       appendCustomTestnetItems(items, visibleCustomTestnetSections);
     }
 
     return items;
   }, [
+    tokenRows,
     foldRows,
     scamRows,
-    tokenRows,
     visibleCustomTestnetSections,
-    foldHideList,
-    foldScam,
-    hasNoAssets,
+    hasFoldTokens,
+    isLpTokenEnabled,
     isLoading,
-    scamTokenPreviewLogoUrls,
+    hasNoAssets,
+    foldHideList,
     t,
+    foldScam,
+    scamTokenPreviewLogoUrls,
   ]);
 
   const renderItem = useCallback<ListRenderItem<TokenListItem>>(

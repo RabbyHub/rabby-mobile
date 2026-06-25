@@ -352,14 +352,14 @@ export const TokenList = ({
   const dataList = useMemo(() => {
     const items: TokenListItem[] = [];
     const hasNoTokenItems =
-      unFoldTokenIds.length + foldTokenIds.length + scamTokenIds.length === 0;
+      unFoldTokenIds.length + foldTokenIds.length + scamTokenIds.length === 0 &&
+      !hasFoldTokens;
 
     unFoldTokenIds.forEach(tokenId => {
       items.push({ type: 'unfold_token', tokenId });
     });
 
-    const hasFoldContent = foldTokenIds.length + scamTokenIds.length > 0;
-    const hasFoldSection = hasFoldContent || isLpTokenEnabled;
+    const hasFoldSection = hasFoldTokens || isLpTokenEnabled;
     if (hasFoldSection) {
       items.push({ type: 'toggle_token_fold' });
       if (!foldHideList) {
@@ -381,10 +381,7 @@ export const TokenList = ({
             });
           }
         }
-
-        if (hasFoldContent) {
-          appendCustomTestnetItems(items, visibleCustomTestnetSections);
-        }
+        appendCustomTestnetItems(items, visibleCustomTestnetSections);
       }
     }
 
@@ -425,7 +422,7 @@ export const TokenList = ({
       }
     }
 
-    if (!hasFoldContent) {
+    if (!hasFoldTokens) {
       appendCustomTestnetItems(items, visibleCustomTestnetSections);
     }
 
@@ -434,6 +431,7 @@ export const TokenList = ({
     foldHideList,
     foldScam,
     foldTokenIds,
+    hasFoldTokens,
     isAllLoading,
     isLoading,
     isLpTokenEnabled,
