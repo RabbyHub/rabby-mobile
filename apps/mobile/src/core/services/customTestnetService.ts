@@ -81,6 +81,12 @@ export class CustomTestnetService {
     this.init(options);
   }
 
+  initFromStorage = () => {
+    this.init({
+      storageAdapter: appStorage,
+    });
+  };
+
   init = (options?: StorageAdapaterOptions) => {
     const storage = createPersistStore<CutsomTestnetServiceStore>(
       {
