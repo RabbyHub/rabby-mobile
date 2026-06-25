@@ -60,6 +60,8 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { apiCustomTestnet } from '@/core/apis';
+import { toast } from '@/components2024/Toast';
 
 type TokenListItem =
   | {
@@ -201,7 +203,6 @@ export const TokenList = ({
   const [foldScam, setFoldScam] = useState(true);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
-  const [customTokenListVersion, setCustomTokenListVersion] = useState(0);
   const [customTestnetCollapseKey, setCustomTestnetCollapseKey] = useState(0);
   const [hasRequestedTokenList, setHasRequestedTokenList] = useState(false);
   const isScreenFocused = useIsFocused();
@@ -212,12 +213,10 @@ export const TokenList = ({
   }, [focusedTab]);
 
   useEffect(() => {
-    if (isFocused) {
-      setCustomTokenListVersion(version => version + 1);
-    } else {
+    if (!isScreenFocused) {
       setCustomTestnetCollapseKey(key => key + 1);
     }
-  }, [isFocused]);
+  }, [isScreenFocused]);
 
   const currentAddress = currentAccount?.address;
   const lowerAddress = currentAddress?.toLowerCase();
@@ -229,10 +228,7 @@ export const TokenList = ({
     sections: customTestnetSections,
     loadTokens: loadCustomTestnetTokens,
     loadToken: loadCustomTestnetToken,
-  } = useSingleAddressCustomTestnetAssetSections(
-    currentAddress,
-    customTokenListVersion,
-  );
+  } = useSingleAddressCustomTestnetAssetSections(currentAddress);
   const shouldShowCustomTestnetSections = !selectedChain && !isLpTokenEnabled;
 
   useEffect(() => {
@@ -480,7 +476,7 @@ export const TokenList = ({
   const getCustomTestnetAccountByAddress = useCallback(() => undefined, []);
 
   const handleCustomTestnetTokenButtonPress = useCallback(
-    (data: CustomTestnetAssetSectionData) => {
+    (data: CustomTestnetAssetSectionData, onConfirmCB?: () => void) => {
       let modalId: ReturnType<typeof createGlobalBottomSheetModal2024> | null =
         null;
       const closeModal = () => {
@@ -496,12 +492,30 @@ export const TokenList = ({
         chain: data.chain,
         onCancel: closeModal,
         onConfirm: () => {
-          setCustomTokenListVersion(version => version + 1);
           closeModal();
+          onConfirmCB?.();
         },
       });
     },
     [],
+  );
+
+  const handleCustomTestnetTokenRemove = useCallback(
+    async (token: ITokenItem, data: CustomTestnetAssetSectionData) => {
+      try {
+        await apiCustomTestnet.removeCustomTestnetToken({
+          chainId: data.chain.id,
+          id: token.id,
+        });
+        toast.success(t('global.Deleted'));
+      } catch (error: any) {
+        toast.show(
+          error?.message || t('page.customTestnet.addToken.removeFailed'),
+        );
+        throw error;
+      }
+    },
+    [t],
   );
 
   const handleRefresh = useCallback(async () => {
@@ -587,6 +601,7 @@ export const TokenList = ({
                 hideAccount
                 onTokenPress={handleOpenCustomTestnetTokenDetail}
                 onTokenButtonPress={handleCustomTestnetTokenButtonPress}
+                onTokenRemove={handleCustomTestnetTokenRemove}
                 collapseKey={customTestnetCollapseKey}
               />
             </View>
@@ -630,6 +645,7 @@ export const TokenList = ({
       handleOpenTokenDetail,
       handleOpenCustomTestnetTokenDetail,
       handleCustomTestnetTokenButtonPress,
+      handleCustomTestnetTokenRemove,
       isLight,
       isLpTokenEnabled,
       getCustomTestnetAccountByAddress,

@@ -27,7 +27,7 @@ export const CustomTestnetAssetDivider = memo(
   },
 );
 
-const getStyle = createGetStyles2024(() =>
+const getStyle = createGetStyles2024(({ colors2024 }) =>
   StyleSheet.create({
     container: {
       height: 16,
@@ -41,7 +41,7 @@ const getStyle = createGetStyles2024(() =>
     line: {
       flex: 1,
       height: 1,
-      backgroundColor: '#D3D8E0',
+      backgroundColor: colors2024['neutral-line'],
     },
     text: {
       color: '#9A9CA9',

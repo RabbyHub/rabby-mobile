@@ -75,6 +75,9 @@ import { CustomTestnetAssetDivider } from './CustomTestnetAssets/CustomTestnetAs
 import { useCustomTestnetAssetSections } from './CustomTestnetAssets/useCustomTestnetAssetSections';
 import type { CustomTestnetAssetSectionData } from './CustomTestnetAssets/types';
 import { AccountOverview } from '@/screens/Home/components/AccountOverview';
+import { useIsFocused } from '@react-navigation/native';
+import { apiCustomTestnet } from '@/core/apis';
+import { toast } from '@/components2024/Toast';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -239,7 +242,6 @@ export const TokenList = () => {
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
   const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
-  const [customTokenListVersion, setCustomTokenListVersion] = useState(0);
   const [customTestnetCollapseKey, setCustomTestnetCollapseKey] = useState(0);
 
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
@@ -249,19 +251,19 @@ export const TokenList = () => {
     sections: customTestnetSections,
     loadTokens: loadCustomTestnetTokens,
     loadToken: loadCustomTestnetToken,
-  } = useCustomTestnetAssetSections(myTop10Addresses, customTokenListVersion);
+  } = useCustomTestnetAssetSections(myTop10Addresses);
   const shouldShowCustomTestnetSections = !chain && !isLpTokenEnabled;
   const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
 
+  const isScreenFocused = useIsFocused();
+
   useEffect(() => {
-    if (isFocused) {
-      setCustomTokenListVersion(version => version + 1);
-    } else {
+    if (!isScreenFocused) {
       setCustomTestnetCollapseKey(key => key + 1);
     }
-  }, [isFocused]);
+  }, [isScreenFocused]);
 
   const multiAssetsKey = useMemo(
     () =>
@@ -480,9 +482,13 @@ export const TokenList = () => {
       if (isTabsSwiping.value) {
         return;
       }
+      if (groupItems.length === 1 && groupItems[0]) {
+        handleCustomTestnetTokenPress(groupItems[0]);
+        return;
+      }
       handleOpenTokenGroupDetail(groupItems, { amountOnly: true });
     },
-    [handleOpenTokenGroupDetail],
+    [handleCustomTestnetTokenPress, handleOpenTokenGroupDetail],
   );
 
   const renderCustomTestnetAccount = useCallback(
@@ -493,7 +499,7 @@ export const TokenList = () => {
   );
 
   const handleCustomTestnetTokenButtonPress = useCallback(
-    (data: CustomTestnetAssetSectionData) => {
+    (data: CustomTestnetAssetSectionData, onConfirmCB?: () => void) => {
       let modalId: ReturnType<typeof createGlobalBottomSheetModal2024> | null =
         null;
       const closeModal = () => {
@@ -509,12 +515,30 @@ export const TokenList = () => {
         chain: data.chain,
         onCancel: closeModal,
         onConfirm: () => {
-          setCustomTokenListVersion(version => version + 1);
           closeModal();
+          onConfirmCB?.();
         },
       });
     },
     [],
+  );
+
+  const handleCustomTestnetTokenRemove = useCallback(
+    async (token: ITokenItem, data: CustomTestnetAssetSectionData) => {
+      try {
+        await apiCustomTestnet.removeCustomTestnetToken({
+          chainId: data.chain.id,
+          id: token.id,
+        });
+        toast.success(t('global.Deleted'));
+      } catch (error: any) {
+        toast.show(
+          error?.message || t('page.customTestnet.addToken.removeFailed'),
+        );
+        throw error;
+      }
+    },
+    [t],
   );
 
   const handleOpenScamToken = useCallback(() => {
@@ -698,6 +722,7 @@ export const TokenList = () => {
               onTokenPress={handleCustomTestnetTokenPress}
               onTokenGroupPress={handleCustomTestnetTokenGroupPress}
               onTokenButtonPress={handleCustomTestnetTokenButtonPress}
+              onTokenRemove={handleCustomTestnetTokenRemove}
               collapseKey={customTestnetCollapseKey}
             />
           );
@@ -737,6 +762,7 @@ export const TokenList = () => {
       handleGroupPress,
       handleCustomTestnetTokenPress,
       handleCustomTestnetTokenButtonPress,
+      handleCustomTestnetTokenRemove,
       handleOpenScamToken,
       handleCustomTestnetTokenGroupPress,
       renderCustomTestnetAccount,
@@ -877,7 +903,7 @@ const getStyles = createGetStyles2024(() => ({
     marginBottom: 8,
   },
   customTestnetSection: {
-    marginBottom: 12,
+    marginBottom: 8,
   },
   renderItemWrapper: {
     height: ASSETS_ITEM_HEIGHT_NEW,

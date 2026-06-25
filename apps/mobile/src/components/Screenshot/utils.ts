@@ -6,7 +6,7 @@ import { BUILD_GIT_INFO } from '@/constant/env';
 import { getAllAccounts } from '@/core/apis/address';
 import { getLatestNavigationName } from '@/utils/navigation';
 import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
-import { preferenceService } from '@/core/services';
+import { gasAccountService, preferenceService } from '@/core/services';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import {
   AccountSwitcherScene,
@@ -25,6 +25,17 @@ function runTryCatch<T extends (...args: any[]) => any>(
     console.error('Error occurred:', error);
     return null;
   }
+}
+
+function getGasAccountFeedbackAddress(sceneAddress?: string | null) {
+  const { accountId } = gasAccountService.getGasAccountSig();
+
+  return (
+    accountId ||
+    gasAccountService.getPendingHardwareAccount()?.address ||
+    sceneAddress ||
+    null
+  );
 }
 
 export async function getSceneAddresses() {
@@ -48,6 +59,7 @@ export async function getSceneAddresses() {
 
   return {
     ...values,
+    GasAccount: getGasAccountFeedbackAddress(values.GasAccount),
     Perps: perpsInfo?.address || perpsInfo,
   };
 }
