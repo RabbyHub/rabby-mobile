@@ -211,10 +211,10 @@ export const TokenList = ({
   }, [focusedTab]);
 
   useEffect(() => {
-    if (!isFocused) {
+    if (!isScreenFocused) {
       setCustomTestnetCollapseKey(key => key + 1);
     }
-  }, [isFocused]);
+  }, [isScreenFocused]);
 
   const currentAddress = currentAccount?.address;
   const lowerAddress = currentAddress?.toLowerCase();

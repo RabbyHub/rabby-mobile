@@ -454,6 +454,7 @@ const TokenSelect = ({
                 <AssetAvatar
                   size={26}
                   chain={token.chain}
+                  innerChainStyle={styles.avatarLogo}
                   logo={token.logo_url}
                   chainSize={type === 'send' ? 12 : 0}
                 />
@@ -585,6 +586,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
+  },
+  avatarLogo: {
+    overflow: 'hidden',
   },
 }));
 

@@ -75,6 +75,7 @@ import { CustomTestnetAssetDivider } from './CustomTestnetAssets/CustomTestnetAs
 import { useCustomTestnetAssetSections } from './CustomTestnetAssets/useCustomTestnetAssetSections';
 import type { CustomTestnetAssetSectionData } from './CustomTestnetAssets/types';
 import { AccountOverview } from '@/screens/Home/components/AccountOverview';
+import { useIsFocused } from '@react-navigation/native';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -254,11 +255,13 @@ export const TokenList = () => {
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
 
+  const isScreenFocused = useIsFocused();
+
   useEffect(() => {
-    if (!isFocusing) {
+    if (!isScreenFocused) {
       setCustomTestnetCollapseKey(key => key + 1);
     }
-  }, [isFocusing]);
+  }, [isScreenFocused]);
 
   const multiAssetsKey = useMemo(
     () =>
