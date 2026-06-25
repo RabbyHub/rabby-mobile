@@ -28,14 +28,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) =>
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors2024['neutral-foot'],
-      borderWidth: 1.7,
-      borderColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
       overflow: 'hidden',
     },
     chainInitialText: {
-      color: colors2024['neutral-InvertHighlight'],
+      color: isLight ? colors2024['neutral-InvertHighlight'] : 'black',
       fontFamily: 'SF Pro Rounded',
       fontSize: 6.8,
       lineHeight: 9,

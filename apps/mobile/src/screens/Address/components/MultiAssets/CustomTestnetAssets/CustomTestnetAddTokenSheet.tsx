@@ -350,7 +350,7 @@ const getStyle = createGetStyles2024(ctx =>
     },
     pasteButton: {
       position: 'absolute',
-      right: 16,
+      right: -2,
       bottom: 18,
       borderWidth: 0,
       padding: 0,
