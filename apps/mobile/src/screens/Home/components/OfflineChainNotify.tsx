@@ -202,36 +202,35 @@ export const OfflineChainNotify = ({
 
   return (
     <View style={[styles.container, style]}>
-      <Image
-        source={{ uri: chainInfo.logo }}
-        width={16}
-        height={16}
-        style={styles.logo}
-      />
+      <Image source={{ uri: chainInfo.logo }} style={styles.logo} />
 
       <View style={styles.textWrapper}>
-        <Text style={styles.text}>
+        <Text style={styles.text} numberOfLines={3} ellipsizeMode="tail">
           {t('page.dashboard.offlineChain.chain', {
             chain: chainInfo.name,
           })}
         </Text>
       </View>
 
-      <TouchableOpacity onPress={showTips} style={{ marginLeft: 40 }}>
-        <RcIconTipsCC
-          color={colors2024['orange-default']}
-          width={16}
-          height={16}
-        />
-      </TouchableOpacity>
+      <View style={styles.actions}>
+        <TouchableOpacity onPress={showTips} style={styles.iconButton}>
+          <RcIconTipsCC
+            color={colors2024['orange-default']}
+            width={16}
+            height={16}
+          />
+        </TouchableOpacity>
 
-      <TouchableOpacity style={{ marginLeft: 16 }} onPress={handleClose}>
-        <RcIconCloseCC
-          color={colors2024['orange-default']}
-          width={16}
-          height={16}
-        />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.iconButton, styles.closeButton]}
+          onPress={handleClose}>
+          <RcIconCloseCC
+            color={colors2024['orange-default']}
+            width={16}
+            height={16}
+          />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -244,7 +243,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 12,
     backgroundColor: colors2024['orange-light-1'],
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   containerNone: {
     display: 'none',
@@ -253,14 +252,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 16,
     height: 16,
     borderRadius: 9999,
-    alignSelf: 'flex-start',
     position: 'relative',
-    top: 1,
+    top: 2,
   },
   textWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
     flex: 1,
+    minWidth: 0,
+    marginLeft: 4,
   },
   text: {
     color: colors2024['orange-default'],
@@ -268,7 +266,27 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 16,
     fontStyle: 'normal',
     fontWeight: 500,
-    paddingHorizontal: 4,
+    flex: 1,
+    flexShrink: 1,
+    lineHeight: 20,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    marginLeft: 12,
+    position: 'relative',
+    top: -2,
+  },
+  iconButton: {
+    width: 20,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeButton: {
+    marginLeft: 12,
   },
 
   title: {
