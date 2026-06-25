@@ -157,6 +157,9 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
 
   const handleChangeActiveUnderlyingAsset = useCallback(
     (underlyingAsset: string) => {
+      if (directSignBtnRef.current?.isAuthInProgress()) {
+        return;
+      }
       if (isSameAddress(underlyingAsset, activeUnderlyingAsset)) {
         return;
       }
