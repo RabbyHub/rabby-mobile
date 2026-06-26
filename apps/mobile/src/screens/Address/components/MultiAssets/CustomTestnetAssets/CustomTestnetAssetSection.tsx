@@ -249,6 +249,7 @@ const CustomTestnetTokenRow = memo(
       <TouchableOpacity
         style={styles.tokenRow}
         onPress={handlePress}
+        delayLongPress={600}
         disabled={row.balanceLoading}>
         <AssetAvatar
           logo={row.token.logo_url}
