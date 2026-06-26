@@ -119,6 +119,7 @@ export type RootStackParamsList = {
     rawPortfolios?: AbstractProject[]; // only for single address
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
+    isCustomTestnetToken?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
   };
   [RootNames.TokenMarketInfo]: {

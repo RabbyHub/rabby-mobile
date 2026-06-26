@@ -193,6 +193,7 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   chainLogo: {
     borderWidth: 1.5,
+    overflow: 'hidden',
     borderColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],

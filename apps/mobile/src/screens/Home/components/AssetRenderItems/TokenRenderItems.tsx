@@ -380,6 +380,7 @@ export const TokenRowV2 = memo(
               chain={hideChainLogo ? false : data?.chain}
               style={mediaStyle}
               size={logoSize}
+              innerChainStyle={styles.innerChainStyle}
               chainSize={chainLogoSize}
             />
           </View>
@@ -1282,5 +1283,11 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   changeTextPositive: {
     color: ctx.colors2024['red-default'],
+  },
+  innerChainStyle: {
+    borderColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
+    borderWidth: 1.7,
   },
 }));

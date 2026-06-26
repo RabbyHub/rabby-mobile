@@ -49,6 +49,8 @@ export const TokenDetailHistoryList = ({
   onReachTopStatusChange,
   ListHeaderComponent,
   baseTokenRefreshing,
+  disableHistoryRequest,
+  overWritePlaceholder,
 }: {
   finalAccount: KeyringAccountWithAlias | null;
   token: ITokenItem;
@@ -56,6 +58,8 @@ export const TokenDetailHistoryList = ({
   onReachTopStatusChange?: (status: boolean) => void;
   ListHeaderComponent?: HistoryListHeaderComponent;
   baseTokenRefreshing?: boolean;
+  disableHistoryRequest?: boolean;
+  overWritePlaceholder?: string;
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -182,6 +186,13 @@ export const TokenDetailHistoryList = ({
 
   const batchFetchData = useMemoizedFn(async () => {
     const list: HistoryDisplayItem[] = [];
+    if (disableHistoryRequest) {
+      return {
+        list,
+        hasMore: false,
+      };
+    }
+
     const account = finalAccount;
     if (!account) {
       return {
@@ -237,14 +248,16 @@ export const TokenDetailHistoryList = ({
     reloadAsync,
     cancel,
   } = useInfiniteScroll(() => batchFetchData(), {
-    isNoMore: d => (d ? !d.hasMore : false),
+    isNoMore: d => disableHistoryRequest || (d ? !d.hasMore : false),
     onSuccess() {},
   });
 
   const refresh = useMemoizedFn(() => {
     lastMap.current = {};
     hasMoreMap.current = {};
-    reloadAsync();
+    if (!disableHistoryRequest) {
+      reloadAsync();
+    }
     onRefresh?.();
   });
 
@@ -312,7 +325,9 @@ export const TokenDetailHistoryList = ({
           <Empty
             style={styles.emptyStyle}
             title={
-              !isMyAddress
+              overWritePlaceholder
+                ? overWritePlaceholder
+                : !isMyAddress
                 ? t('page.activities.signedTx.empty.title')
                 : t('page.activities.signedTx.empty.titleLastThreeMonths')
             }

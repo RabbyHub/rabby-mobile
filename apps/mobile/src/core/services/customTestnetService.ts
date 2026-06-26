@@ -30,6 +30,7 @@ import createPersistStore, {
   StorageAdapaterOptions,
 } from '@rabby-wallet/persist-store';
 import { updateChainStore } from '@/constant/chains';
+import { syncCustomTestnetStore } from '@/store/customTestnet';
 import { appStorage } from '../storage/mmkv';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import type {
@@ -80,6 +81,12 @@ export class CustomTestnetService {
     this.init(options);
   }
 
+  initFromStorage = () => {
+    this.init({
+      storageAdapter: appStorage,
+    });
+  };
+
   init = (options?: StorageAdapaterOptions) => {
     const storage = createPersistStore<CutsomTestnetServiceStore>(
       {
@@ -103,6 +110,7 @@ export class CustomTestnetService {
         return createTestnetChain(item);
       }),
     });
+    this.syncStore();
   };
   add = async (chain: TestnetChainBase) => {
     return this._update(chain, true);
@@ -170,6 +178,7 @@ export class CustomTestnetService {
     };
     this.chains[chain.id] = createClientByChain(chain);
     this.syncChainList();
+    this.syncStore();
 
     if (this.getList().length) {
       reportCustomNetworkStatus(this.getList().length);
@@ -184,6 +193,7 @@ export class CustomTestnetService {
     });
     delete this.chains[chainId];
     this.syncChainList();
+    this.syncStore();
     if (this.getList().length) {
       reportCustomNetworkStatus(this.getList().length);
     }
@@ -409,12 +419,14 @@ export class CustomTestnetService {
       throw new Error('Token already added');
     }
     this.store.customTokenList = [...this.store.customTokenList, params];
+    this.syncStore();
   };
 
   removeToken = (params: Pick<CustomTestnetTokenBase, 'chainId' | 'id'>) => {
     this.store.customTokenList = this.store.customTokenList.filter(item => {
       return !isSameTestnetToken(item, params);
     });
+    this.syncStore();
   };
 
   hasToken = (params: Pick<CustomTestnetTokenBase, 'id' | 'chainId'>) => {
@@ -661,6 +673,13 @@ export class CustomTestnetService {
     const testnetList = this.getList();
     updateChainStore({
       testnetList: testnetList,
+    });
+  };
+
+  syncStore = () => {
+    syncCustomTestnetStore({
+      customTestnet: this.store.customTestnet,
+      customTokenList: this.store.customTokenList,
     });
   };
 }

@@ -69,6 +69,7 @@ import { SeedPhraseQrCode } from '../AddressDetail/SeedPhraseQrCode';
 import { LpTokenDescription } from '../LpTokenDescription';
 import CollateralTokenSelectModal from '@/screens/Lending/components/CollateralTokenSelect';
 import TokenGroupDetailSheet from '@/screens/Address/components/MultiAssets/TokenGroupDetailSheet';
+import { CustomTestnetAddTokenSheet } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/CustomTestnetAddTokenSheet';
 import RepayTokenSelectModal from '@/screens/Lending/components/RepayTokenModal';
 import {
   WalletConnectConnectSheet,
@@ -377,6 +378,13 @@ export const MODAL_CONFIGS = {
     snapPoints: [MODAL_MAX_HEIGHT],
     Component: TokenGroupDetailSheet,
     globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+  },
+  [MODAL_NAMES.CUSTOM_TESTNET_ADD_TOKEN]: {
+    snapPoints: [600],
+    Component: CustomTestnetAddTokenSheet,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset({
+      android_keyboardInputMode: 'adjustPan',
+    }),
   },
   [MODAL_NAMES.REPAY_TOKEN_SELECT]: {
     snapPoints: [360],

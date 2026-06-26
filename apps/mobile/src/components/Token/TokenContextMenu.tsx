@@ -21,9 +21,11 @@ interface Props {
   children: React.ReactElement<any>;
   type?: TokenSelectType;
   needToTokenMarketInfo?: boolean;
+  isCustomTestnetToken?: boolean;
 }
 export const TokenItemContextMenu: React.FC<Props> = props => {
-  const { children, token, type, needToTokenMarketInfo } = props;
+  const { children, token, type, needToTokenMarketInfo, isCustomTestnetToken } =
+    props;
 
   const { userTokenSettings, pinToken, removePinedToken } =
     useUserTokenSettings();
@@ -51,16 +53,29 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
 
   const gotoTokenDetail = useCallback(() => {
     Keyboard.dismiss();
-    navigateDeprecated(
-      needToTokenMarketInfo ? RootNames.TokenMarketInfo : RootNames.TokenDetail,
-      {
+    if (needToTokenMarketInfo) {
+      navigateDeprecated(RootNames.TokenMarketInfo, {
         token: tokenItemToITokenItem(token, ''),
         needUseCacheToken: true,
         tokenSelectType: type,
         account: currentAccount,
-      },
-    );
-  }, [needToTokenMarketInfo, token, type, currentAccount]);
+      });
+      return;
+    }
+    navigateDeprecated(RootNames.TokenDetail, {
+      token: tokenItemToITokenItem(token, ''),
+      needUseCacheToken: true,
+      tokenSelectType: type,
+      account: currentAccount,
+      isCustomTestnetToken,
+    });
+  }, [
+    currentAccount,
+    isCustomTestnetToken,
+    needToTokenMarketInfo,
+    token,
+    type,
+  ]);
 
   const { t } = useTranslation();
   const isDarkTheme = useGetBinaryMode() === 'dark';
