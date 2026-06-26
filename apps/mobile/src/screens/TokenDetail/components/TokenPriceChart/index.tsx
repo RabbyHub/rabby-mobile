@@ -450,9 +450,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
   },
   emptyChart: {
-    width: winInfo.width - 40,
+    width: winInfo.width - 56,
     height: 115,
     // marginTop: 24,
-    marginHorizontal: 20,
+    //marginHorizontal: 20,
   },
 }));
