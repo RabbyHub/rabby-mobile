@@ -572,7 +572,8 @@
         "empty": {
           "title": "İşlem geçmişi yok",
           "desc": "Tüm Rabby aracılığıyla imzalanan işlemler burada listelenecektir.",
-          "titleLastThreeMonths": "Son 90 Günde İşlem Geçmişi Yok"
+          "titleLastThreeMonths": "Son 90 Günde İşlem Geçmişi Yok",
+          "testnetNoHistory": "Özel token işlem geçmişi mevcut değil."
         },
         "common": {
           "unknownProtocol": "Bilinmeyen protokol",
@@ -1795,7 +1796,22 @@
       "empty": "Özel Ağ Yok",
       "id": "Tanım",
       "add": "Özel Ağ Ekle",
-      "desc": "Rabby, özel ağların güvenliğini doğrulayamaz. Lütfen sadece güvenilir ağlar ekleyin."
+      "desc": "Rabby, özel ağların güvenliğini doğrulayamaz. Lütfen sadece güvenilir ağlar ekleyin.",
+      "addToken": {
+        "title": "Özel Ağ Tokeni Ekle",
+        "chain": "Zincir",
+        "tokenAddress": "Token Adresi",
+        "enterAddress": "Adres Gir",
+        "foundToken": "Token Bulundu",
+        "checking": "Token kontrol ediliyor...",
+        "invalidAddress": "Geçersiz token adresi",
+        "notErc20": "Bu adreste ERC20 tokeni bulunamadı",
+        "alreadyAdded": "Bu token zaten eklenmiş",
+        "alreadyAddedToast": "Token zaten eklendi",
+        "added": "Token eklendi",
+        "addFailed": "Token eklenemedi",
+        "removeFailed": "Token silinemedi"
+      }
     },
     "addChain": {
       "title": "Rabby'ye Özel Ağı Ekle",
@@ -2076,7 +2092,8 @@
       "headerTokenValueText": "Token Değeri",
       "headerBalanceText": "Bakiyeniz",
       "copyCA": "Token sözleşmesi adresi kopyalandı",
-      "wallet": "Cüzdan"
+      "wallet": "Cüzdan",
+      "customTestnetNotSupported": "Bu zincirdeki token desteklenmiyor"
     },
     "approvalsAddressList": {
       "title": "Onaylar"
@@ -2258,7 +2275,8 @@
         "wallet_one": "Cüzdan",
         "wallet_other": "Cüzdanlar"
       },
-      "lowValueTokenHeader": "Düşük değerdeki tokenler"
+      "lowValueTokenHeader": "Düşük değerdeki tokenler",
+      "customNetworkTokenHeader": "Eklenen özel ağlar"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -3012,7 +3030,8 @@
       },
       "withdrawDetail": {
         "remainingSupply": "Kalan arzı",
-        "actions": "Çekim"
+        "actions": "Çekim",
+        "approveAndWithdraw": "Onayla ve çek"
       },
       "borrowDetail": {
         "actions": "Ödünç Al",

@@ -572,7 +572,8 @@
         "empty": {
           "title": "Tidak ada riwayat Transaksi",
           "desc": "Semua transaksi yang ditandatangani melalui Rabby akan terdaftar di sini.",
-          "titleLastThreeMonths": "Tidak ada riwayat Transaksi dalam 90 Hari"
+          "titleLastThreeMonths": "Tidak ada riwayat Transaksi dalam 90 Hari",
+          "testnetNoHistory": "Riwayat transaksi token kustom tidak tersedia."
         },
         "common": {
           "unknownProtocol": "Protokol tidak dikenal",
@@ -1795,7 +1796,22 @@
       "empty": "Tidak Ada Jaringan Kustom",
       "id": "ID",
       "desc": "Rabby tidak dapat memverifikasi keamanan jaringan kustom. Harap tambahkan jaringan yang tepercaya saja.",
-      "add": "Tambahkan Jaringan Kustom"
+      "add": "Tambahkan Jaringan Kustom",
+      "addToken": {
+        "title": "Tambahkan Token Jaringan Kustom",
+        "chain": "Rantai",
+        "tokenAddress": "Alamat Token",
+        "enterAddress": "Masukkan Alamat",
+        "foundToken": "Token Ditemukan",
+        "checking": "Memeriksa token...",
+        "invalidAddress": "Alamat token tidak valid",
+        "notErc20": "Tidak ada token ERC20 yang ditemukan di alamat ini",
+        "alreadyAdded": "Token ini sudah ditambahkan",
+        "alreadyAddedToast": "Token sudah ditambahkan",
+        "added": "Token ditambahkan",
+        "addFailed": "Gagal menambahkan token",
+        "removeFailed": "Gagal menghapus token"
+      }
     },
     "addChain": {
       "title": "Tambahkan Jaringan Kustom ke Rabby",
@@ -2076,7 +2092,8 @@
       "price": "Harga",
       "headerTokenValueText": "Nilai Token",
       "copyCA": "Alamat kontrak Token telah disalin",
-      "wallet": "Dompet"
+      "wallet": "Dompet",
+      "customTestnetNotSupported": "Token pada rantai ini tidak didukung"
     },
     "approvalsAddressList": {
       "title": "Persetujuan"
@@ -2258,7 +2275,8 @@
         "wallet_one": "Dompet",
         "wallet_other": "Dompet"
       },
-      "lowValueTokenHeader": "Token bernilai rendah"
+      "lowValueTokenHeader": "Token bernilai rendah",
+      "customNetworkTokenHeader": "Jaringan kustom yang ditambahkan"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -3012,7 +3030,8 @@
       },
       "withdrawDetail": {
         "remainingSupply": "Sisa pasokan",
-        "actions": "Tarik"
+        "actions": "Tarik",
+        "approveAndWithdraw": "Setujui dan tarik"
       },
       "borrowDetail": {
         "actions": "Meminjam",

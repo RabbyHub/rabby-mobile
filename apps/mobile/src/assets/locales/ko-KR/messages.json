@@ -751,7 +751,8 @@
         "empty": {
           "title": "아직 서명된 거래 없음",
           "desc": "Rabby를 통해 서명된 모든 거래가 여기에 나열됩니다.",
-          "titleLastThreeMonths": "90일 이내 거래 내역 없음"
+          "titleLastThreeMonths": "90일 이내 거래 내역 없음",
+          "testnetNoHistory": "사용자 정의 토큰 거래 내역을 사용할 수 없습니다."
         },
         "explain": {
           "singleNFTApproval": "{{protocol}}에 대한 단일 NFT 승인",
@@ -1951,6 +1952,21 @@
           "added": "이미 이 체인을 추가했습니다.",
           "supported": "체인은 이미 Rabby Wallet에 통합되었습니다."
         }
+      },
+      "addToken": {
+        "title": "사용자 정의 네트워크 토큰 추가",
+        "chain": "체인",
+        "tokenAddress": "토큰 주소",
+        "enterAddress": "주소 입력",
+        "foundToken": "토큰을 찾았습니다",
+        "checking": "토큰 확인 중...",
+        "invalidAddress": "잘못된 토큰 주소",
+        "notErc20": "이 주소에서 ERC20 토큰을 찾을 수 없습니다",
+        "alreadyAdded": "이 토큰은 이미 추가되었습니다",
+        "alreadyAddedToast": "토큰이 이미 추가되었습니다",
+        "added": "토큰이 추가되었습니다",
+        "addFailed": "토큰 추가 실패",
+        "removeFailed": "토큰 삭제 실패"
       }
     },
     "tokenDetail": {
@@ -2079,7 +2095,8 @@
       "headerTokenValueText": "토큰 가치",
       "headerBalanceText": "잔액",
       "copyCA": "토큰 계약 주소가 복사되었습니다.",
-      "wallet": "지갑"
+      "wallet": "지갑",
+      "customTestnetNotSupported": "이 체인의 토큰은 지원되지 않습니다"
     },
     "setting": {
       "screenTitle": "설정",
@@ -2259,7 +2276,8 @@
         "wallet_one": "지갑",
         "wallet_other": "지갑"
       },
-      "lowValueTokenHeader": "저가 토큰"
+      "lowValueTokenHeader": "저가 토큰",
+      "customNetworkTokenHeader": "추가된 사용자 정의 네트워크"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -3013,7 +3031,8 @@
       },
       "withdrawDetail": {
         "actions": "출금",
-        "remainingSupply": "남은 공급량"
+        "remainingSupply": "남은 공급량",
+        "approveAndWithdraw": "승인하고 출금"
       },
       "borrowDetail": {
         "approveAndBorrow": "승인 및 대출",

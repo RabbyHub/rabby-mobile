@@ -600,7 +600,8 @@
         "empty": {
           "title": "没有已签名的交易",
           "desc": "所有通过 Rabby 签名的交易将列在这里。",
-          "titleLastThreeMonths": "90天内没有交易记录"
+          "titleLastThreeMonths": "90天内没有交易记录",
+          "testnetNoHistory": "自定义代币交易记录不可用。"
         },
         "tips": {
           "canNotCancel": "无法加速或取消：不是第一个待处理的交易。",
@@ -1895,6 +1896,21 @@
       },
       "ConfirmModifyRpcModal": {
         "desc": "该链已经被 Rabby 集成。您是否需要修改其 RPC URL？"
+      },
+      "addToken": {
+        "title": "添加自定义网络代币",
+        "chain": "链",
+        "tokenAddress": "代币地址",
+        "enterAddress": "输入地址",
+        "foundToken": "已找到代币",
+        "checking": "正在检查代币...",
+        "invalidAddress": "无效的代币地址",
+        "notErc20": "该地址未找到 ERC20 代币",
+        "alreadyAdded": "该代币已添加",
+        "alreadyAddedToast": "代币已添加",
+        "added": "代币已添加",
+        "addFailed": "添加代币失败",
+        "removeFailed": "删除代币失败"
       }
     },
     "approvalsAddressList": {
@@ -2203,7 +2219,8 @@
       "price": "价格",
       "headerTokenValueText": "代币价值",
       "copyCA": "Token 合约地址已复制",
-      "wallet": "钱包"
+      "wallet": "钱包",
+      "customTestnetNotSupported": "不支持该链上的代币"
     },
     "customRpc": {
       "add": "修改 RPC URL",
@@ -2412,7 +2429,8 @@
         "wallet_one": "钱包",
         "wallet_other": "钱包"
       },
-      "lowValueTokenHeader": "低价值代币"
+      "lowValueTokenHeader": "低价值代币",
+      "customNetworkTokenHeader": "已添加的自定义网络"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -3166,7 +3184,8 @@
       },
       "withdrawDetail": {
         "actions": "提取",
-        "remainingSupply": "剩余存款"
+        "remainingSupply": "剩余存款",
+        "approveAndWithdraw": "授权并提取"
       },
       "borrowDetail": {
         "actions": "借款",
