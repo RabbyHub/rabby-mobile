@@ -75,7 +75,6 @@ export const CustomTestnetAddTokenSheet = memo(
       status: 'idle',
     });
     const [confirming, setConfirming] = useState(false);
-    const [keyboardVisible, setKeyboardVisible] = useState(false);
     const lookupSeqRef = useRef(0);
 
     const lookupToken = useMemo(
@@ -123,22 +122,6 @@ export const CustomTestnetAddTokenSheet = memo(
         lookupToken.cancel();
       };
     }, [lookupToken]);
-
-    useEffect(() => {
-      const showEvent = Keyboard.addListener(
-        IS_IOS ? 'keyboardWillShow' : 'keyboardDidShow',
-        () => setKeyboardVisible(true),
-      );
-      const hideEvent = Keyboard.addListener(
-        IS_IOS ? 'keyboardWillHide' : 'keyboardDidHide',
-        () => setKeyboardVisible(false),
-      );
-
-      return () => {
-        showEvent.remove();
-        hideEvent.remove();
-      };
-    }, []);
 
     useEffect(() => {
       const nextAddress = address.trim();
@@ -217,18 +200,9 @@ export const CustomTestnetAddTokenSheet = memo(
           <KeyboardAvoidingView
             behavior={IS_IOS ? 'position' : 'height'}
             keyboardVerticalOffset={-BOTTOM_BUTTON_DOUBLE_HEIGHT}
+            contentContainerStyle={styles.keyboardAvoidingContent}
             style={styles.keyboardAvoidingContent}>
-            <View
-              style={[
-                styles.content,
-                {
-                  paddingBottom: keyboardVisible
-                    ? 0
-                    : BOTTOM_BUTTON_TOP_OFFSET +
-                      BOTTOM_BUTTON_DOUBLE_HEIGHT +
-                      getBottomButtonBottomOffset(safeAreaInsets.bottom),
-                },
-              ]}>
+            <View style={styles.content}>
               <View style={styles.field}>
                 <Text style={styles.label}>
                   {t('page.customTestnet.addToken.chain')}
@@ -292,9 +266,7 @@ export const CustomTestnetAddTokenSheet = memo(
                 ) : null}
               </View>
             </View>
-          </KeyboardAvoidingView>
 
-          {keyboardVisible ? null : (
             <View
               style={[
                 styles.footer,
@@ -325,7 +297,7 @@ export const CustomTestnetAddTokenSheet = memo(
                 disabled={confirmDisabled}
               />
             </View>
-          )}
+          </KeyboardAvoidingView>
         </View>
       </TouchableWithoutFeedback>
     );
@@ -464,12 +436,9 @@ const getStyle = createGetStyles2024(ctx =>
       fontWeight: '400',
     },
     footer: {
-      position: 'absolute',
-      left: 20,
-      right: 20,
-      bottom: 0,
       flexDirection: 'row',
       gap: BOTTOM_BUTTON_GAP,
+      marginTop: 'auto',
       paddingTop: BOTTOM_BUTTON_TOP_OFFSET,
     },
     footerButton: {
