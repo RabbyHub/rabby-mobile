@@ -485,7 +485,8 @@
         "empty": {
           "title": "沒有已簽名的交易",
           "desc": "所有透過 Rabby 簽名的交易都會列在這裡。",
-          "titleLastThreeMonths": "90 天內無交易紀錄"
+          "titleLastThreeMonths": "90 天內無交易紀錄",
+          "testnetNoHistory": "自訂代幣交易記錄不可用。"
         },
         "CancelTxConfirmPopup": {
           "title": "清除本地待處理項",
@@ -2139,7 +2140,8 @@
       "headerBalanceText": "餘額",
       "headerTokenValueText": "代幣價值",
       "copyCA": "令牌合約地址已複製",
-      "wallet": "錢包"
+      "wallet": "錢包",
+      "customTestnetNotSupported": "不支援該鏈上的代幣"
     },
     "customTestnet": {
       "add": "新增自訂網絡",
@@ -2172,6 +2174,21 @@
       "desc": "Rabby 無法驗證自訂網絡的安全性。請僅新增可信網絡。",
       "ConfirmModifyRpcModal": {
         "desc": "該鏈已經被 Rabby 集成。您是否需要修改其 RPC URL？"
+      },
+      "addToken": {
+        "title": "新增自訂網絡代幣",
+        "chain": "鏈",
+        "tokenAddress": "代幣地址",
+        "enterAddress": "輸入地址",
+        "foundToken": "已找到代幣",
+        "checking": "正在檢查代幣...",
+        "invalidAddress": "無效的代幣地址",
+        "notErc20": "該地址未找到 ERC20 代幣",
+        "alreadyAdded": "該代幣已新增",
+        "alreadyAddedToast": "代幣已新增",
+        "added": "代幣已新增",
+        "addFailed": "新增代幣失敗",
+        "removeFailed": "刪除代幣失敗"
       }
     },
     "miniSignFooterBar": {
@@ -2439,7 +2456,8 @@
         "wallet_other": "錢包",
         "wallet_one": "錢包"
       },
-      "lowValueTokenHeader": "低價值的 tokens"
+      "lowValueTokenHeader": "低價值的 tokens",
+      "customNetworkTokenHeader": "已新增的自訂網絡"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -3193,7 +3211,8 @@
       },
       "withdrawDetail": {
         "remainingSupply": "剩餘供應量",
-        "actions": "提取"
+        "actions": "提取",
+        "approveAndWithdraw": "授權並提取"
       },
       "borrowDetail": {
         "approveAndBorrow": "授權和借款",

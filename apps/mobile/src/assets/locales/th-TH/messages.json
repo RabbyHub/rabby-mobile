@@ -1092,7 +1092,8 @@
         "empty": {
           "desc": "ธุรกรรมทั้งหมดที่ลงนามผ่าน Rabby จะถูกแสดงที่นี่",
           "title": "ยังไม่มีการทำธุรกรรมที่เซ็นชื่อ",
-          "titleLastThreeMonths": "ไม่มีประวัติการทำธุรกรรมใน 90 วัน"
+          "titleLastThreeMonths": "ไม่มีประวัติการทำธุรกรรมใน 90 วัน",
+          "testnetNoHistory": "ไม่มีประวัติธุรกรรมของโทเค็นแบบกำหนดเอง"
         },
         "CancelTxPopup": {
           "title": "ยกเลิกการทำธุรกรรม",
@@ -2212,6 +2213,21 @@
       },
       "ConfirmModifyRpcModal": {
         "desc": "Rabby ได้รวมเชนนี้แล้ว คุณต้องการแก้ไข URL RPC หรือไม่?"
+      },
+      "addToken": {
+        "title": "เพิ่มโทเค็นเครือข่ายที่กำหนดเอง",
+        "chain": "เชน",
+        "tokenAddress": "ที่อยู่โทเค็น",
+        "enterAddress": "กรอกที่อยู่",
+        "foundToken": "พบโทเค็น",
+        "checking": "กำลังตรวจสอบโทเค็น...",
+        "invalidAddress": "ที่อยู่โทเค็นไม่ถูกต้อง",
+        "notErc20": "ไม่พบโทเค็น ERC20 ที่ที่อยู่นี้",
+        "alreadyAdded": "โทเค็นนี้ถูกเพิ่มแล้ว",
+        "alreadyAddedToast": "เพิ่มโทเค็นแล้ว",
+        "added": "เพิ่มโทเค็นแล้ว",
+        "addFailed": "เพิ่มโทเค็นไม่สำเร็จ",
+        "removeFailed": "ลบโทเค็นไม่สำเร็จ"
       }
     },
     "tokenDetail": {
@@ -2340,7 +2356,8 @@
       "headerBalanceText": "ยอดเงิน",
       "headerTokenValueText": "ค่าโทเค็น",
       "copyCA": "ที่อยู่สัญญาโทเค็นได้ถูกคัดลอกแล้ว",
-      "wallet": "กระเป๋าสตางค์"
+      "wallet": "กระเป๋าสตางค์",
+      "customTestnetNotSupported": "ไม่รองรับโทเค็นบนเชนนี้"
     },
     "setting": {
       "aboutUs": "เกี่ยวกับเรา",
@@ -2520,7 +2537,8 @@
         "wallet_one": "กระเป๋าเงิน",
         "wallet_other": "กระเป๋าเงิน"
       },
-      "lowValueTokenHeader": "โทเค็นมูลค่าต่ำ"
+      "lowValueTokenHeader": "โทเค็นมูลค่าต่ำ",
+      "customNetworkTokenHeader": "เครือข่ายที่กำหนดเองที่เพิ่มแล้ว"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -3274,7 +3292,8 @@
       },
       "withdrawDetail": {
         "remainingSupply": "ซัพพลายที่เหลืออยู่",
-        "actions": "ถอนเงิน"
+        "actions": "ถอนเงิน",
+        "approveAndWithdraw": "อนุมัติและถอน"
       },
       "borrowDetail": {
         "actions": "ยืม",

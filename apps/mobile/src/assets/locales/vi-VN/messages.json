@@ -417,7 +417,8 @@
         "empty": {
           "title": "Chưa có giao dịch nào được ký kết",
           "desc": "Tất cả giao dịch được ký qua Rabby sẽ được liệt kê ở đây.",
-          "titleLastThreeMonths": "Không có lịch sử giao dịch trong 90 ngày"
+          "titleLastThreeMonths": "Không có lịch sử giao dịch trong 90 ngày",
+          "testnetNoHistory": "Lịch sử giao dịch token tùy chỉnh không khả dụng."
         },
         "CancelTxPopup": {
           "options": {
@@ -2067,7 +2068,8 @@
       "headerTokenValueText": "Giá trị Token",
       "headerBalanceText": "Số dư",
       "copyCA": "Địa chỉ hợp đồng Token đã được sao chép",
-      "wallet": "Ví"
+      "wallet": "Ví",
+      "customTestnetNotSupported": "Token trên chuỗi này không được hỗ trợ"
     },
     "backupPrivateKey": {
       "clickToShow": "Nhấn để hiển thị private key",
@@ -2174,7 +2176,22 @@
         "nativeTokenSymbolRequired": "Vui lòng nhập ký hiệu tiền tệ",
         "nameRequired": "Vui lòng nhập tên mạng"
       },
-      "currency": "Tiền tệ"
+      "currency": "Tiền tệ",
+      "addToken": {
+        "title": "Thêm token mạng tùy chỉnh",
+        "chain": "Chuỗi",
+        "tokenAddress": "Địa chỉ token",
+        "enterAddress": "Nhập địa chỉ",
+        "foundToken": "Đã tìm thấy token",
+        "checking": "Đang kiểm tra token...",
+        "invalidAddress": "Địa chỉ token không hợp lệ",
+        "notErc20": "Không tìm thấy token ERC20 tại địa chỉ này",
+        "alreadyAdded": "Token này đã được thêm",
+        "alreadyAddedToast": "Token đã được thêm",
+        "added": "Đã thêm token",
+        "addFailed": "Thêm token thất bại",
+        "removeFailed": "Xóa token thất bại"
+      }
     },
     "rabbyPoints": {
       "title": "Rabby Points",
@@ -2379,7 +2396,8 @@
         "wallet_other": "Ví dụ",
         "wallet_one": "Ví"
       },
-      "lowValueTokenHeader": "Token giá trị thấp"
+      "lowValueTokenHeader": "Token giá trị thấp",
+      "customNetworkTokenHeader": "Mạng tùy chỉnh đã thêm"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -3133,7 +3151,8 @@
       },
       "withdrawDetail": {
         "actions": "Rút tiền",
-        "remainingSupply": "Nguồn cung còn lại"
+        "remainingSupply": "Nguồn cung còn lại",
+        "approveAndWithdraw": "Phê duyệt và rút"
       },
       "borrowDetail": {
         "actions": "Vay mượn",

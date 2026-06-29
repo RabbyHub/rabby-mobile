@@ -122,8 +122,8 @@ const TokenResourceRow = React.memo(
         data={token}
         style={tokenStyle}
         onTokenPress={onTokenPress}
-        logoSize={46}
-        chainLogoSize={18}
+        //logoSize={46}
+        //chainLogoSize={18}
         scene="portfolio"
       />
     );
@@ -783,7 +783,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   renderItemWrapper: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
-    borderRadius: 16,
+    borderRadius: 14,
     height: ASSETS_ITEM_HEIGHT_NEW,
     paddingLeft: 12,
     width: '100%',
