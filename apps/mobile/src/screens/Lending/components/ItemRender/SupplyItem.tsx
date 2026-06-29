@@ -191,17 +191,19 @@ const SupplyItem: React.FC<SupplyItemProps> = ({
                     chain={reserve.chain}
                     onChange={onChangeActiveUnderlyingAsset}
                   />
-                  <View style={styles.suppliedBadge}>
-                    <Text style={styles.suppliedBadgeText}>
-                      {t('page.Lending.supplyDetail.supplied')}
-                    </Text>
-                  </View>
-                  {isIsolated ? <IsolatedTag /> : null}
                 </View>
               </View>
             </View>
-            <View style={styles.apyTag}>
-              <Text style={styles.apyTagText}>{`Apy ${apyText}`}</Text>
+            <View style={styles.badgeContainer}>
+              <View style={styles.suppliedBadge}>
+                <Text style={styles.suppliedBadgeText}>
+                  {t('page.Lending.supplyDetail.supplied')}
+                </Text>
+              </View>
+              <View style={styles.apyTag}>
+                <Text style={styles.apyTagText}>{`Apy ${apyText}`}</Text>
+              </View>
+              {isIsolated ? <IsolatedTag /> : null}
             </View>
           </View>
           <View style={styles.amountArea}>
@@ -249,7 +251,7 @@ const SupplyItem: React.FC<SupplyItemProps> = ({
 
 export default SupplyItem;
 
-const getStyle = createGetStyles2024(({ colors2024 }) => {
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   const cardBgColor = colors2024['neutral-bg-2'];
   const wrapperTokenCardBgColor = colord(cardBgColor).alpha(0.5).toRgbString();
 
@@ -259,7 +261,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingVertical: 14,
       paddingHorizontal: 0,
       marginTop: 12,
-      backgroundColor: cardBgColor,
+      backgroundColor: isLight
+        ? 'rgba(255, 255, 255, 0.9)'
+        : colors2024['neutral-bg-1'],
       position: 'relative',
       borderWidth: 1,
       borderColor: colors2024['neutral-bg-1'],
@@ -349,15 +353,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       color: colors2024['orange-default'],
       fontFamily: 'SF Pro Rounded',
     },
+    badgeContainer: {
+      display: 'flex',
+      flexDirection: 'row',
+      gap: 4,
+    },
     amountArea: {
       alignItems: 'flex-end',
       justifyContent: 'center',
       gap: 5,
     },
     amountUsd: {
-      fontSize: 16,
+      fontSize: 17,
       lineHeight: 20,
-      fontWeight: '700',
+      fontWeight: '500',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
     },
