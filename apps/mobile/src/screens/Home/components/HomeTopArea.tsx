@@ -13,6 +13,7 @@ import {
   useSingleHomeIsLoss,
 } from '../hooks/singleHome';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
+import { FOLD_ASSETS_HEADER_HEIGHT } from '@/constant/layout';
 
 export const HomeTopArea = () => {
   const { t } = useTranslation();
@@ -61,6 +62,7 @@ const getStyles = createGetStyles2024(() => ({
   container: {
     position: 'relative',
     marginBottom: 20,
+    minHeight: FOLD_ASSETS_HEADER_HEIGHT,
     // overflow: 'hidden',
     // height: HEADER_TOP_AREA_HEIGHT,
   },
