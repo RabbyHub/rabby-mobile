@@ -3601,7 +3601,7 @@
       "receiveSummary": {
         "progress": "ความคืบหน้าในการแปลง",
         "priceImpact": "เพดานผลกระทบต่อราคา",
-        "gasLimit": "Single Transaction Gas Limit",
+        "gasLimit": "Gas limit ต่อธุรกรรมเดียว",
         "estimateReceive": "รับโดยประมาณ:",
         "actualReceive": "รับ"
       },

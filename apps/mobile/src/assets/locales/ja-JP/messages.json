@@ -3392,7 +3392,7 @@
       "receiveSummary": {
         "progress": "変換進捗",
         "priceImpact": "価格影響上限",
-        "gasLimit": "Single Transaction Gas Limit",
+        "gasLimit": "1回の取引のGas limit",
         "estimateReceive": "推定受取：",
         "actualReceive": "受取"
       },
