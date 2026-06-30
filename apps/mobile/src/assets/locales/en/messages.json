@@ -1910,7 +1910,7 @@
         "notErc20": "No ERC20 token found at this address",
         "alreadyAdded": "This token has already been added",
         "alreadyAddedToast": "Token already added",
-        "added": "Token added",
+        "added": "Custom network token added successfully",
         "addFailed": "Failed to add token",
         "removeFailed": "Failed to delete token"
       },
