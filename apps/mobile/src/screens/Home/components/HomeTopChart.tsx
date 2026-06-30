@@ -144,7 +144,7 @@ export const HomeTopChart = memo(function Chart({
     });
   }, [balance, currentAddress, evmBalance]);
 
-  const heightAnim = useSharedValue(0);
+  const heightAnim = useSharedValue(FOLD_ASSETS_HEADER_HEIGHT);
   const opacityAnim = useSharedValue(0);
 
   useEffect(() => {
