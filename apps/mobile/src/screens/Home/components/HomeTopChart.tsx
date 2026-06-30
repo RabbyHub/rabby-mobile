@@ -18,7 +18,10 @@ import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/Cu
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { useCurrency } from '@/hooks/useCurrency';
-import { formatSmallCurrencyValueParts } from '@/utils/currency';
+import {
+  formatCurrencyValueParts,
+  formatSmallCurrencyValueParts,
+} from '@/utils/currency';
 import {
   FOLD_ASSETS_HEADER_HEIGHT,
   UNFOLD_ASSETS_HEADER_HEIGHT,
@@ -34,6 +37,7 @@ import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { AnimateableText } from '@/components/Typography';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import RefreshNudgedTickerText from '@/components/Animated/RefreshNudgedTickerText';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -250,6 +254,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   const changePercent = selectData.changePercent;
   const isLoss = selectData.isLoss;
   const _data = selectData.list;
+  const debouncedRawChange = useDebouncedValue(selectData.rawChange, 300);
 
   const netWorth = useMemo(() => {
     return formatSmallCurrencyValueParts(rawNetWorth, {
@@ -258,6 +263,12 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
       decimalOverMillion: 2,
     }).text;
   }, [rawNetWorth, currency]);
+
+  const change = useMemo(() => {
+    return formatCurrencyValueParts(Math.abs(debouncedRawChange), {
+      currency,
+    }).text;
+  }, [currency, debouncedRawChange]);
 
   const data = useMemo(() => {
     return (
@@ -301,12 +312,16 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
     const formatLoss = isActiveIndexData
       ? data?.[currentIndex.value]?.isLoss ?? false
       : isLoss;
+    const formatChangeValue = isActiveIndexData
+      ? data?.[currentIndex.value]?.change || ''
+      : change;
+    const sign = formatLoss ? '-' : '+';
     if (changePercent === '0%') {
       return changePercent;
     }
     return `${
-      formatChangePercent ? (formatLoss ? '-' : '+') : ''
-    }${formatChangePercent}`;
+      formatChangePercent ? sign : ''
+    }${formatChangePercent}(${sign}${formatChangeValue})`;
   }, [data, currentIndex.value, changePercent, isLoss, isInitialized]);
 
   const dateTime = useDerivedValue(() => {
@@ -330,6 +345,12 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
 
     return data?.[currentIndex?.value]?.netWorth || netWorth;
   }, [data, currentIndex, netWorth, isInitialized]);
+
+  const arrowStrokeProps = useAnimatedProps(() => {
+    return {
+      stroke: colors2024['neutral-secondary'],
+    };
+  }, [isLoss, data, currentIndex, colors2024]);
 
   const lossStyleProps = useAnimatedStyle(() => {
     // 如果还没初始化，使用默认样式
@@ -413,10 +434,6 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
           }}
           containerProps={makeTestIDProps(E2E_ID.home.singleBalanceValue)}
         />
-        <AnimateableText
-          style={[styles.changeTime, animOpacityStyle]}
-          animatedProps={dateTimeAnimatedProps}
-        />
       </View>
       <Pressable
         {...makeTestIDProps(E2E_ID.home.singleCurveToggle)}
@@ -437,6 +454,10 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
               style={lossStyleProps}
               animatedProps={percentChangeAnimatedProps}
             />
+            <AnimateableText
+              style={[styles.changeTime]}
+              animatedProps={dateTimeAnimatedProps}
+            />
             <View>
               <Svg
                 style={{
@@ -453,7 +474,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
                   strokeWidth={2}
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  animatedProps={lossStyleProps}
+                  animatedProps={arrowStrokeProps}
                 />
               </Svg>
             </View>
@@ -486,18 +507,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
   },
   charHeader: {
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexDirection: 'row',
+    //alignItems: 'center',
+    //justifyContent: 'space-between',
+    flexDirection: 'column',
     paddingLeft: 8,
+    gap: 4,
     width: ScreenWidth - 32,
   },
   leftContainer: {
     flexDirection: 'column',
     alignItems: 'flex-start',
     justifyContent: 'center',
-    marginRight: 24,
-    flexShrink: 1,
+    height: 42,
     minWidth: 0,
   },
   percentChangeContainer: {
@@ -505,14 +526,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'flex-end',
     alignSelf: 'flex-start',
-    marginTop: 16,
+    height: 18,
     flexShrink: 0,
-    // ...makeDebugBorder(),
   },
   netWorth: {
-    lineHeight: 46,
+    lineHeight: 42,
     // textAlign: 'center',
-    fontWeight: '900',
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
@@ -531,9 +551,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   changePercent: {
-    fontSize: 16,
-    lineHeight: 20,
-    marginLeft: 8,
+    fontSize: 14,
+    lineHeight: 18,
+    marginLeft: 0,
     marginRight: 4,
     fontWeight: '700',
     color: colors2024['green-default'],
