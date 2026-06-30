@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import {
   GestureResponderEvent,
   InteractionManager,
+  Platform,
   Pressable,
   StyleSheet,
   useWindowDimensions,
@@ -323,6 +324,11 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     shadowOpacity: 1,
     shadowRadius: 20.7,
     elevation: 20,
+    ...(Platform.OS === 'android'
+      ? {
+          boxShadow: '0px 10px 28px 0px rgba(25, 35, 60, 0.18)',
+        }
+      : {}),
   },
   optionIcon: {
     width: 16,
