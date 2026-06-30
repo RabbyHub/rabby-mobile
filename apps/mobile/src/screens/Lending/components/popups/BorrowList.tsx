@@ -341,7 +341,7 @@ export const LendingBorrowListContent: React.FC<
           onPress={() => handlePressItem(data)}>
           <View style={styles.left}>
             <TokenIcon
-              size={46}
+              size={40}
               chainSize={0}
               tokenSymbol={data.reserve.symbol}
             />
@@ -483,16 +483,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   apy: {
     flex: 0,
     width: 80,
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 17,
+    lineHeight: 22,
     textAlign: 'right',
-    fontWeight: '700',
+    fontWeight: '500',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
   totalBorrowed: {
     width: 100,
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
     textAlign: 'left',

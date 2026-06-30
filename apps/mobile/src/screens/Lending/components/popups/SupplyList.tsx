@@ -342,6 +342,7 @@ export const LendingSupplyListContent: React.FC<
           )}
           <View style={styles.left}>
             <TokenIcon
+              size={40}
               tokenSymbol={activeData.reserve.symbol}
               chainSize={0}
               chain={chainEnum || CHAINS_ENUM.ETH}
@@ -559,9 +560,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     apy: {
       width: 80,
       textAlign: 'right',
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
+      fontSize: 17,
+      lineHeight: 22,
+      fontWeight: '500',
       color: colors2024['green-default'],
       fontFamily: 'SF Pro Rounded',
     },
@@ -572,7 +573,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
     tvl: {
       width: 80,
-      fontSize: 14,
+      fontSize: 13,
       lineHeight: 18,
       fontWeight: '500',
       textAlign: 'left',
