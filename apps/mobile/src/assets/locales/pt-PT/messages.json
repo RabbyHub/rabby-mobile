@@ -573,7 +573,8 @@
         "empty": {
           "title": "Ainda não há transações assinadas",
           "desc": "Todas as transações assinadas via Rabby serão listadas aqui.",
-          "titleLastThreeMonths": "Sem histórico de transações nos últimos 90 dias"
+          "titleLastThreeMonths": "Sem histórico de transações nos últimos 90 dias",
+          "testnetNoHistory": "O histórico de transações de tokens personalizados não está disponível."
         },
         "explain": {
           "send": "Enviar {{amount}} {{symbol}}",
@@ -2291,7 +2292,8 @@
       "price": "Preço",
       "headerBalanceText": "Saldo",
       "copyCA": "Endereço do contrato do Token copiado",
-      "wallet": "Carteira"
+      "wallet": "Carteira",
+      "customTestnetNotSupported": "O token nesta cadeia não é suportado"
     },
     "customTestnet": {
       "add": "Adicionar Rede Personalizada",
@@ -2324,6 +2326,21 @@
         "nativeTokenSymbolRequired": "Por favor, insira o símbolo da moeda",
         "rpcUrlRequired": "Por favor, insira o URL RPC",
         "id": "Chain ID"
+      },
+      "addToken": {
+        "title": "Adicionar token de rede personalizada",
+        "chain": "Cadeia",
+        "tokenAddress": "Endereço do token",
+        "enterAddress": "Introduzir endereço",
+        "foundToken": "Token encontrado",
+        "checking": "A verificar o token...",
+        "invalidAddress": "Endereço de token inválido",
+        "notErc20": "Nenhum token ERC20 encontrado neste endereço",
+        "alreadyAdded": "Este token já foi adicionado",
+        "alreadyAddedToast": "Token já adicionado",
+        "added": "Token adicionado",
+        "addFailed": "Falha ao adicionar token",
+        "removeFailed": "Falha ao eliminar token"
       }
     },
     "setting": {
@@ -2640,7 +2657,8 @@
         "wallet_one": "Carteira",
         "wallet_other": "Carteiras"
       },
-      "lowValueTokenHeader": "Tokens de baixo valor"
+      "lowValueTokenHeader": "Tokens de baixo valor",
+      "customNetworkTokenHeader": "Redes personalizadas adicionadas"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -3394,7 +3412,8 @@
       },
       "withdrawDetail": {
         "actions": "Retirar",
-        "remainingSupply": "Fornecimento restante"
+        "remainingSupply": "Fornecimento restante",
+        "approveAndWithdraw": "Aprovar e retirar"
       },
       "borrowDetail": {
         "actions": "Emprestar",

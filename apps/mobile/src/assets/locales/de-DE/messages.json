@@ -576,7 +576,8 @@
         "empty": {
           "desc": "Alle Transaktionen, die über Rabby signiert wurden, werden hier aufgeführt.",
           "title": "Noch keine signierten Transaktionen",
-          "titleLastThreeMonths": "Keine Transaktionshistorie in 90 Tagen"
+          "titleLastThreeMonths": "Keine Transaktionshistorie in 90 Tagen",
+          "testnetNoHistory": "Transaktionsverlauf für benutzerdefinierte Token nicht verfügbar."
         },
         "explain": {
           "send": "Senden {{amount}} {{symbol}}",
@@ -2416,7 +2417,8 @@
       "headerTokenValueText": "Token-Wert",
       "headerBalanceText": "Guthaben",
       "copyCA": "Token-Vertrag-Adresse kopiert",
-      "wallet": "Wallet"
+      "wallet": "Wallet",
+      "customTestnetNotSupported": "Das Token auf dieser Chain wird nicht unterstützt"
     },
     "setting": {
       "currentVersion": "Aktuelle Version",
@@ -2493,6 +2495,21 @@
       },
       "ConfirmModifyRpcModal": {
         "desc": "Die Chain ist bereits von Rabby integriert. Müssen Sie die RPC-URL ändern?"
+      },
+      "addToken": {
+        "title": "Benutzerdefiniertes Netzwerk-Token hinzufügen",
+        "chain": "Chain",
+        "tokenAddress": "Token-Adresse",
+        "enterAddress": "Adresse eingeben",
+        "foundToken": "Token gefunden",
+        "checking": "Token wird geprüft...",
+        "invalidAddress": "Ungültige Token-Adresse",
+        "notErc20": "An dieser Adresse wurde kein ERC20-Token gefunden",
+        "alreadyAdded": "Dieses Token wurde bereits hinzugefügt",
+        "alreadyAddedToast": "Token bereits hinzugefügt",
+        "added": "Token hinzugefügt",
+        "addFailed": "Token konnte nicht hinzugefügt werden",
+        "removeFailed": "Token konnte nicht gelöscht werden"
       }
     },
     "settingModal": {
@@ -2640,7 +2657,8 @@
         "wallet_one": "Brieftasche",
         "wallet_other": "Brieftaschen"
       },
-      "lowValueTokenHeader": "Low-Value-Token"
+      "lowValueTokenHeader": "Low-Value-Token",
+      "customNetworkTokenHeader": "Hinzugefügte benutzerdefinierte Netzwerke"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -3394,7 +3412,8 @@
       },
       "withdrawDetail": {
         "remainingSupply": "Verbleibender Vorrat",
-        "actions": "Abheben"
+        "actions": "Abheben",
+        "approveAndWithdraw": "Genehmigen und abheben"
       },
       "borrowDetail": {
         "actions": "Leihen",

@@ -109,6 +109,7 @@ import LpTokenSwitch from '@/screens/Home/components/LpTokenSwitch';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { isLpToken } from '@/utils/lpToken';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import { CustomNetworkChainPreview } from '@/screens/Send/components/CustomNetworkChainPreview';
 import { InnerModalChainInfo } from '@/screens/Send/components/InModalChainInfo';
 import { isNumber } from 'lodash';
 import { Text, TextInput } from '@/components/Typography';
@@ -312,6 +313,8 @@ export interface TokenSelectorProps<
   isLpTokenEnabled?: boolean;
   onLpTokenChange?: (value: boolean) => void;
   favoriteTokenKeySet?: ReadonlySet<string>;
+  showCustomNetworkChainPreview?: boolean;
+  customNetworkTop3Chains?: string[];
 }
 
 const isAndroid = Platform.OS === 'android';
@@ -408,6 +411,8 @@ export const TokenSelectorSheetModal = ({
   isLpTokenEnabled = false,
   onLpTokenChange: _onLpTokenChange,
   favoriteTokenKeySet,
+  showCustomNetworkChainPreview = false,
+  customNetworkTop3Chains,
   ref,
 }: RNViewProps &
   TokenSelectorProps & { ref?: Ref<TokenSelectorSheetModalInst> }) => {
@@ -739,6 +744,9 @@ export const TokenSelectorSheetModal = ({
                 const disabled =
                   !!supportChainServerIdSet &&
                   !supportChainServerIdSet.has(token.chain);
+                const isCustomTestnetToken =
+                  selectTab === 'testnet' ||
+                  !!findChainByServerID(token.chain)?.isTestnet;
 
                 let percentColor = colors2024['red-default'];
                 if (
@@ -787,6 +795,7 @@ export const TokenSelectorSheetModal = ({
                       <TokenItemContextMenu
                         token={token}
                         needToTokenMarketInfo={needToTokenMarketInfo}
+                        isCustomTestnetToken={isCustomTestnetToken}
                         closeBottomSheet={() => {
                           toggleShowSheetModal('destroy');
                         }}
@@ -824,17 +833,22 @@ export const TokenSelectorSheetModal = ({
                               // setTimeout(() => {
                               //   toggleShowSheetModal('destroy');
                               // }, 100);
-                              navigateDeprecated(
-                                needToTokenMarketInfo
-                                  ? RootNames.TokenMarketInfo
-                                  : RootNames.TokenDetail,
-                                {
+                              if (needToTokenMarketInfo) {
+                                navigateDeprecated(RootNames.TokenMarketInfo, {
                                   token,
                                   needUseCacheToken: true,
                                   tokenSelectType: type,
                                   account: ownerAccount,
-                                },
-                              );
+                                });
+                                return;
+                              }
+                              navigateDeprecated(RootNames.TokenDetail, {
+                                token,
+                                needUseCacheToken: true,
+                                tokenSelectType: type,
+                                account: ownerAccount,
+                                isCustomTestnetToken,
+                              });
                             }}
                             afterNode={
                               lightDisable && (
@@ -872,6 +886,7 @@ export const TokenSelectorSheetModal = ({
                         toggleShowSheetModal('destroy');
                       }}
                       needToTokenMarketInfo={needToTokenMarketInfo}
+                      isCustomTestnetToken={isCustomTestnetToken}
                       type={type}>
                       <TouchableOpacity
                         key={token_key}
@@ -1091,6 +1106,7 @@ export const TokenSelectorSheetModal = ({
       supportChainServerIdSet,
       debouncedQuery,
       needToTokenMarketInfo,
+      selectTab,
       type,
       styles,
       isBridgeTo,
@@ -1130,21 +1146,31 @@ export const TokenSelectorSheetModal = ({
         !isWatchOrSafeAccount(filterAccount);
       const _willShowChainFilter = !!chainItem && !hideChainFilter;
       const _willShowFavoriteFilter = !!showFavoriteFilter;
+      const _willShowSendChainInfo = isSend && !showCustomNetworkChainPreview;
+      const _willShowCustomNetworkChainPreview =
+        isSend && showCustomNetworkChainPreview;
+      const _willShowLpTokenSwitch = !!showLpTokenSwitch;
 
       return {
         willShowChainFilter: _willShowChainFilter,
         willShowAccountFilter: _willShowAccountFilter,
         willShowFilterRow:
+          _willShowSendChainInfo ||
+          _willShowCustomNetworkChainPreview ||
           _willShowAccountFilter ||
           _willShowChainFilter ||
-          _willShowFavoriteFilter,
+          _willShowFavoriteFilter ||
+          _willShowLpTokenSwitch,
       };
     }, [
       displayAccountFilter,
       filterAccount,
       chainItem,
       hideChainFilter,
+      isSend,
+      showCustomNetworkChainPreview,
       showFavoriteFilter,
+      showLpTokenSwitch,
     ]);
 
   const { onHardwareBackHandler } = useHandleBackPressClosable(
@@ -1281,7 +1307,9 @@ export const TokenSelectorSheetModal = ({
             !willShowFilterRow && { display: 'none' },
           ]}>
           <View style={styles.leftFilters}>
-            {isSend && (
+            {isSend && showCustomNetworkChainPreview ? (
+              <CustomNetworkChainPreview top3Chains={customNetworkTop3Chains} />
+            ) : isSend ? (
               <InnerModalChainInfo
                 account={filterAccount}
                 chainEnum={chainItem?.enum}
@@ -1297,7 +1325,7 @@ export const TokenSelectorSheetModal = ({
                   });
                 }}
               />
-            )}
+            ) : null}
             {willShowAccountFilter && (
               <AccountFilterItem
                 filterAccount={filterAccount}
@@ -1466,6 +1494,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
 
     avatarLogo: {
       borderWidth: 1.5,
+      overflow: 'hidden',
       borderColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
@@ -1599,7 +1628,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     tokenLeft: {
       flexDirection: 'row',
       alignItems: 'center',
-      overflow: 'hidden',
       flexShrink: 0,
     },
     tokenLeftLoaded: {

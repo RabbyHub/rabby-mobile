@@ -27,6 +27,8 @@ import {
   DirectSignBtnMethods,
 } from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { getERC20Allowance } from '@/core/apis/provider';
+import { approveToken } from '@/core/apis/approvals';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { last, noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
@@ -54,7 +56,6 @@ import { useRefreshHistoryId } from '../../hooks';
 import wrapperToken from '../../config/wrapperToken';
 import { calculateMaxWithdrawAmount } from '../../utils/calculateMaxWithdrawAmount';
 import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
-import { sendRequest } from '@/core/apis/sendRequest';
 import { Button } from '@/components2024/Button';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
@@ -65,6 +66,12 @@ import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
 import { useZeroLTVBlockingWithdraw } from '../../hooks/useZeroLTVBlockingWithdraw';
+import { PositionTokenSelector } from '../ItemRender/PositionTokenSelector';
+import {
+  getWrappedNativeTokenOptions,
+  isWrappedNativeSelectorReserve,
+  type BasicPositionTokenOption,
+} from '../../utils/positionTokenSelector';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
@@ -72,6 +79,11 @@ import {
   BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
+import {
+  getNativeWithdrawApprovalAmount,
+  getNativeWithdrawRequiredAllowance,
+  isNativeWithdrawApprovalRequired,
+} from '../../utils/withdrawApproval';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -81,47 +93,102 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [_amount, setAmount] = useState<string | undefined>(undefined);
+  const [activeUnderlyingAsset, setActiveUnderlyingAsset] = useState(
+    reserve.underlyingAsset,
+  );
   const [isLoading, setIsLoading] = useState(false);
+  const [needApprove, setNeedApprove] = useState(false);
+  const [approveTxs, setApproveTxs] = useState<Tx[]>([]);
   const [withdrawTxs, setWithdrawTxs] = useState<Tx[]>([]);
   const [isChecked, setIsChecked] = useState(false);
   const { refresh } = useRefreshHistoryId();
   const { t } = useTranslation();
   const assetsBlockingWithdraw = useZeroLTVBlockingWithdraw();
 
-  const { formattedPoolReservesAndIncentives, wrapperPoolReserve } =
-    useLendingSummary();
+  const {
+    displayPoolReserves,
+    formattedPoolReservesAndIncentives,
+    getTargetReserve,
+    wrapperPoolReserve,
+  } = useLendingSummary();
   const { chainEnum, chainInfo, selectedMarketData } = useSelectedMarket();
+  const wethGatewayAddress = selectedMarketData?.addresses.WETH_GATEWAY;
   const { pools } = usePoolDataProviderContract();
+  const buildTransactionsRequestIdRef = useRef(0);
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
+
+  const resetTokenScopedState = useCallback(() => {
+    buildTransactionsRequestIdRef.current += 1;
+    setAmount(undefined);
+    setNeedApprove(false);
+    setApproveTxs([]);
+    setWithdrawTxs([]);
+    setIsChecked(false);
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    resetTokenScopedState();
+    setActiveUnderlyingAsset(reserve.underlyingAsset);
+  }, [reserve.underlyingAsset, resetTokenScopedState]);
+
+  const currentReserve = useMemo(() => {
+    return getTargetReserve(activeUnderlyingAsset) || reserve;
+  }, [activeUnderlyingAsset, getTargetReserve, reserve]);
+
+  const tokenOptions = useMemo(() => {
+    return isWrappedNativeSelectorReserve(currentReserve, chainEnum)
+      ? getWrappedNativeTokenOptions({
+          displayPoolReserves,
+          chainEnum,
+        })
+      : undefined;
+  }, [chainEnum, currentReserve, displayPoolReserves]);
+
+  const handleChangeActiveUnderlyingAsset = useCallback(
+    (underlyingAsset: string) => {
+      if (directSignBtnRef.current?.isAuthInProgress()) {
+        return;
+      }
+      if (isSameAddress(underlyingAsset, activeUnderlyingAsset)) {
+        return;
+      }
+      resetTokenScopedState();
+      setActiveUnderlyingAsset(underlyingAsset);
+    },
+    [activeUnderlyingAsset, resetTokenScopedState],
+  );
+
   const withdrawAmount = useMemo(() => {
     if (!userSummary.totalBorrowsUSD || userSummary.totalBorrowsUSD === '0') {
-      return Number(reserve.underlyingBalance || '0');
+      return Number(currentReserve.underlyingBalance || '0');
     }
     const targetPool = formattedPoolReservesAndIncentives.find(item => {
-      return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
+      return isSameAddress(currentReserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
         ? isSameAddress(
             item.underlyingAsset,
-            wrapperToken?.[reserve.chain]?.address,
+            wrapperToken?.[currentReserve.chain]?.address,
           )
-        : isSameAddress(item.underlyingAsset, reserve.underlyingAsset);
+        : isSameAddress(item.underlyingAsset, currentReserve.underlyingAsset);
     });
     if (!targetPool) {
       return 0;
     }
     return calculateMaxWithdrawAmount(
       userSummary,
-      reserve,
+      currentReserve,
       targetPool,
       MAX_CLICK_WITHDRAW_HF_THRESHOLD,
     ).toNumber();
-  }, [formattedPoolReservesAndIncentives, userSummary, reserve]);
+  }, [currentReserve, formattedPoolReservesAndIncentives, userSummary]);
 
   const amount = useMemo(() => {
     return _amount === '-1' ? withdrawAmount.toString() : _amount;
   }, [_amount, withdrawAmount]);
 
   const isNativeToken = useMemo(() => {
-    return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS);
-  }, [reserve.underlyingAsset]);
+    return isSameAddress(currentReserve.underlyingAsset, API_ETH_MOCK_ADDRESS);
+  }, [currentReserve.underlyingAsset]);
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
@@ -131,14 +198,17 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
-  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
+  const activeTxs = useMemo(
+    () => [...approveTxs, ...withdrawTxs],
+    [approveTxs, withdrawTxs],
+  );
   const {
     openDirect,
     prefetch: prefetchMiniSigner,
     instance,
   } = useMiniSigner({
     account: currentAccount!,
-    chainServerId: withdrawTxs.length ? withdrawTxs?.[0]?.chainId + '' : '',
+    chainServerId: activeTxs.length ? activeTxs[0]?.chainId + '' : '',
     autoResetGasStoreOnChainChange: true,
   });
   const { ctx } = useSignatureStoreOf(instance);
@@ -148,23 +218,23 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       return undefined;
     }
     const targetPool = formattedPoolReservesAndIncentives.find(item => {
-      return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
+      return isSameAddress(currentReserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
         ? isSameAddress(
             item.underlyingAsset,
-            wrapperToken?.[reserve.chain]?.address,
+            wrapperToken?.[currentReserve.chain]?.address,
           )
-        : isSameAddress(item.underlyingAsset, reserve.underlyingAsset);
+        : isSameAddress(item.underlyingAsset, currentReserve.underlyingAsset);
     });
     if (!targetPool) {
       return undefined;
     }
     return calculateHFAfterWithdraw({
       user: userSummary,
-      userReserve: reserve,
+      userReserve: currentReserve,
       poolReserve: targetPool,
       withdrawAmount: amount,
     }).toString();
-  }, [amount, formattedPoolReservesAndIncentives, reserve, userSummary]);
+  }, [amount, currentReserve, formattedPoolReservesAndIncentives, userSummary]);
 
   const isRisky = useMemo(() => {
     if (!afterHF || Number(afterHF) < 0) {
@@ -177,11 +247,11 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     if (!amount || isZeroAmount(amount)) {
       return undefined;
     }
-    const balance = BigNumber(reserve.underlyingBalance || '0').minus(
+    const balance = BigNumber(currentReserve.underlyingBalance || '0').minus(
       BigNumber(amount),
     );
     const balanceUSD = BigNumber(balance).multipliedBy(
-      BigNumber(reserve.reserve.formattedPriceInMarketReferenceCurrency),
+      BigNumber(currentReserve.reserve.formattedPriceInMarketReferenceCurrency),
     );
     return {
       balance: balance.toString(),
@@ -189,8 +259,8 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     };
   }, [
     amount,
-    reserve.reserve.formattedPriceInMarketReferenceCurrency,
-    reserve.underlyingBalance,
+    currentReserve.reserve.formattedPriceInMarketReferenceCurrency,
+    currentReserve.underlyingBalance,
   ]);
 
   const currentPoolReserve = useMemo(() => {
@@ -198,13 +268,13 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       isNativeToken
         ? wrapperPoolReserve
         : formattedPoolReservesAndIncentives.find(item =>
-            isSameAddress(item.underlyingAsset, reserve.underlyingAsset),
+            isSameAddress(item.underlyingAsset, currentReserve.underlyingAsset),
           )
     ) as ReserveDataHumanized | undefined | null;
   }, [
     formattedPoolReservesAndIncentives,
     isNativeToken,
-    reserve.underlyingAsset,
+    currentReserve.underlyingAsset,
     wrapperPoolReserve,
   ]);
 
@@ -216,16 +286,25 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   }, [assetsBlockingWithdraw, currentPoolReserve?.symbol]);
 
   const buildTransactions = useCallback(async () => {
+    const requestId = ++buildTransactionsRequestIdRef.current;
+    const isLatestRequest = () =>
+      requestId === buildTransactionsRequestIdRef.current;
+
+    setNeedApprove(false);
+    setApproveTxs([]);
+    setWithdrawTxs([]);
+
     if (
       !amount ||
       isZeroAmount(amount) ||
       !currentAccount ||
       isZeroLTVWithdrawBlocked
     ) {
-      setWithdrawTxs([]);
+      setIsLoading(false);
       return;
     }
     if (!pools) {
+      setIsLoading(false);
       return;
     }
 
@@ -240,30 +319,102 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       if (!targetPool?.aTokenAddress) {
         return;
       }
-      const withdrawResult = await buildWithdrawTx({
+
+      const formattedApproveTxs: Tx[] = [];
+      if (isNativeToken) {
+        if (!wethGatewayAddress || wethGatewayAddress === '0x0') {
+          throw new Error('WETHGateway is not configured for this market');
+        }
+
+        const requiredAllowance = getNativeWithdrawRequiredAllowance({
+          amount,
+          decimals: currentReserve.reserve.decimals,
+        });
+        const allowance = await getERC20Allowance(
+          chainInfo.serverId,
+          targetPool.aTokenAddress,
+          wethGatewayAddress,
+          currentAccount.address,
+          currentAccount,
+        );
+        if (!isLatestRequest()) {
+          return;
+        }
+
+        const actualNeedApprove = isNativeWithdrawApprovalRequired({
+          allowance,
+          requiredAllowance,
+        });
+        setNeedApprove(actualNeedApprove);
+        if (actualNeedApprove) {
+          const approveResult = await approveToken({
+            chainServerId: chainInfo.serverId,
+            id: targetPool.aTokenAddress,
+            spender: wethGatewayAddress,
+            amount: getNativeWithdrawApprovalAmount(requiredAllowance),
+            account: currentAccount,
+            isBuild: true,
+          });
+          if (!isLatestRequest()) {
+            return;
+          }
+
+          const approveTx = {
+            ...approveResult.params[0],
+            from: approveResult.params[0].from || currentAccount.address,
+            value: approveResult.params[0].value ?? '0x0',
+            chainId: approveResult.params[0].chainId || chainInfo.id,
+          } as Tx;
+          formattedApproveTxs.push(approveTx);
+        }
+      }
+
+      const withdrawAmountForTx = _amount === '-1' ? '-1' : amount;
+      const withdrawTx = await buildWithdrawTx({
         pool: pools.pool,
-        amount: _amount === '-1' ? '-1' : amount,
+        amount: withdrawAmountForTx,
         address: currentAccount.address,
-        reserve: targetPool.underlyingAsset,
-        aTokenAddress: targetPool?.aTokenAddress || '',
+        reserve: isNativeToken
+          ? API_ETH_MOCK_ADDRESS
+          : targetPool.underlyingAsset,
+        aTokenAddress: targetPool.aTokenAddress,
         useOptimizedPath: optimizedPath(selectedMarketData?.chainId),
       });
-      const txs = await Promise.all(withdrawResult.map(i => i.tx()));
-      const formatTxs = txs.map(item => {
-        delete item.gasLimit;
-        return {
-          ...item,
-          chainId: chainInfo.id,
-        };
-      });
+      if (!isLatestRequest()) {
+        return;
+      }
+      if (!withdrawTx) {
+        return;
+      }
+      const txWithOptionalGasLimit = withdrawTx as typeof withdrawTx & {
+        gasLimit?: unknown;
+      };
+      delete txWithOptionalGasLimit.gasLimit;
+      const formattedWithdrawTx = {
+        ...txWithOptionalGasLimit,
+        from: withdrawTx.from || currentAccount.address,
+        value:
+          typeof withdrawTx.value === 'string'
+            ? withdrawTx.value
+            : withdrawTx.value?.toHexString() || '0x0',
+        chainId: chainInfo.id,
+      } as unknown as Tx;
 
-      setWithdrawTxs(formatTxs as unknown as Tx[]);
+      setApproveTxs(formattedApproveTxs);
+      setWithdrawTxs([formattedWithdrawTx]);
     } catch (error) {
+      if (!isLatestRequest()) {
+        return;
+      }
       toast.error('something error');
+      setNeedApprove(false);
+      setApproveTxs([]);
       setWithdrawTxs([]);
       console.error('Build transactions error:', error);
     } finally {
-      setIsLoading(false);
+      if (isLatestRequest()) {
+        setIsLoading(false);
+      }
     }
     //currentAccount is not stable
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -273,9 +424,12 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     chainInfo,
     currentAccount?.address,
     currentPoolReserve,
+    currentReserve.reserve.decimals,
+    isNativeToken,
     isZeroLTVWithdrawBlocked,
     pools,
     selectedMarketData?.chainId,
+    wethGatewayAddress,
   ]);
 
   // 执行withdraw交易
@@ -283,7 +437,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     async (forceFullSign?: boolean) => {
       if (
         !currentAccount ||
-        !withdrawTxs.length ||
+        !activeTxs.length ||
         !amount ||
         isZeroAmount(amount) ||
         isZeroLTVWithdrawBlocked
@@ -293,7 +447,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
 
       try {
         setIsLoading(true);
-        if (!withdrawTxs?.length) {
+        if (!activeTxs.length) {
           toast.info('please retry');
           throw new Error('no txs');
         }
@@ -305,7 +459,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         if (canShowDirectSubmit && !forceFullSign) {
           try {
             results = await openDirect({
-              txs: withdrawTxs,
+              txs: activeTxs,
               ga: {
                 customAction: CUSTOM_HISTORY_ACTION.LENDING,
                 customActionTitleType:
@@ -323,8 +477,8 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
             return;
           }
         } else {
-          for (const tx of withdrawTxs) {
-            const result = await sendRequest({
+          for (const tx of activeTxs) {
+            const result = await apiProvider.sendRequest({
               data: {
                 method: 'eth_sendTransaction',
                 params: [tx],
@@ -344,22 +498,28 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         }
 
         const txId = last(results);
-        if (txId && withdrawTxs[0]?.chainId) {
+        if (txId && activeTxs[0]?.chainId) {
           transactionHistoryService.setCustomTxItem(
             currentAccount.address,
-            withdrawTxs[0].chainId,
+            activeTxs[0].chainId,
             txId,
             { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW },
           );
         }
 
         const targetPool = formattedPoolReservesAndIncentives.find(item => {
-          return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
+          return isSameAddress(
+            currentReserve.underlyingAsset,
+            API_ETH_MOCK_ADDRESS,
+          )
             ? isSameAddress(
                 item.underlyingAsset,
-                wrapperToken?.[reserve.chain]?.address,
+                wrapperToken?.[currentReserve.chain]?.address,
               )
-            : isSameAddress(item.underlyingAsset, reserve.underlyingAsset);
+            : isSameAddress(
+                item.underlyingAsset,
+                currentReserve.underlyingAsset,
+              );
         });
         const usdValue = targetPool
           ? new BigNumber(amount || '0')
@@ -399,7 +559,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     },
     [
       currentAccount,
-      withdrawTxs,
+      activeTxs,
       amount,
       canShowDirectSubmit,
       formattedPoolReservesAndIncentives,
@@ -408,8 +568,8 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       t,
       onClose,
       openDirect,
-      reserve.underlyingAsset,
-      reserve.chain,
+      currentReserve.underlyingAsset,
+      currentReserve.chain,
       source,
       isZeroLTVWithdrawBlocked,
     ],
@@ -423,7 +583,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       const maxSelected = value === '-1';
       if (maxSelected) {
         // 提取所有资产
-        if (BigNumber(withdrawAmount).eq(reserve.underlyingBalance)) {
+        if (BigNumber(withdrawAmount).eq(currentReserve.underlyingBalance)) {
           setAmount('-1');
         } else {
           setAmount(withdrawAmount.toString());
@@ -432,7 +592,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         setAmount(value);
       }
     },
-    [reserve.underlyingBalance, withdrawAmount],
+    [currentReserve.underlyingBalance, withdrawAmount],
   );
 
   useEffect(() => {
@@ -448,7 +608,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       !isZeroLTVWithdrawBlocked
     ) {
       prefetchMiniSigner({
-        txs: withdrawTxs?.length ? withdrawTxs : [],
+        txs: activeTxs,
         synGasHeaderInfo: true,
       });
     }
@@ -456,16 +616,21 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     canShowDirectSubmit,
     currentAccount?.address,
     amount,
-    withdrawTxs,
+    activeTxs,
     prefetchMiniSigner,
     isZeroLTVWithdrawBlocked,
   ]);
+
+  const actionTitle = needApprove
+    ? t('page.Lending.withdrawDetail.approveAndWithdraw')
+    : t('page.Lending.withdrawDetail.actions');
 
   return (
     <SignatureInstanceProvider instance={instance}>
       <AutoLockView as="View" style={styles.container}>
         <Text style={styles.title}>
-          {t('page.Lending.withdrawDetail.actions')} {reserve.reserve.symbol}
+          {t('page.Lending.withdrawDetail.actions')}{' '}
+          {currentReserve.reserve.symbol}
         </Text>
         <View style={styles.amountHeader}>
           <Text style={styles.amountHeaderTitle}>
@@ -473,11 +638,12 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           </Text>
           <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
             withdrawAmount.toString() || '0',
-          )}${reserve.reserve.symbol}($${formatAmountValueKMB(
+          )}${currentReserve.reserve.symbol}($${formatAmountValueKMB(
             BigNumber(withdrawAmount)
               .multipliedBy(
                 BigNumber(
-                  reserve.reserve.formattedPriceInMarketReferenceCurrency,
+                  currentReserve.reserve
+                    .formattedPriceInMarketReferenceCurrency,
                 ),
               )
               .toString(),
@@ -486,23 +652,36 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         <TokenAmountInput
           value={amount}
           onChange={handleChangeAmount}
-          symbol={reserve.reserve.symbol}
+          symbol={currentReserve.reserve.symbol}
           handleClickMaxButton={() => {
             handleChangeAmount('-1');
           }}
           tokenAmount={withdrawAmount}
-          tokenDecimals={reserve.reserve.decimals}
+          tokenDecimals={currentReserve.reserve.decimals}
           price={Number(
-            reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+            currentReserve.reserve.formattedPriceInMarketReferenceCurrency ||
+              '0',
           )}
           style={styles.amountInput}
           chain={chainEnum || CHAINS_ENUM.ETH}
+          tokenSelectContent={
+            tokenOptions?.length ? (
+              <PositionTokenSelector
+                triggerVariant="pill"
+                activeUnderlyingAsset={activeUnderlyingAsset}
+                options={tokenOptions as BasicPositionTokenOption[]}
+                symbol={currentReserve.reserve.symbol}
+                chain={currentReserve.chain}
+                onChange={handleChangeActiveUnderlyingAsset}
+              />
+            ) : undefined
+          }
         />
         <BottomSheetScrollView
           style={styles.bottomSheetScrollView}
           contentContainerStyle={styles.transactionContainer}>
           <WithdrawActionOverView
-            reserve={reserve}
+            reserve={currentReserve}
             userSummary={userSummary}
             afterHF={afterHF}
             amount={amount}
@@ -563,18 +742,19 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           ) : null}
           {canShowDirectSubmit ? (
             <DirectSignBtn
+              ref={directSignBtnRef}
               loading={isLoading}
               loadingType="circle"
-              key={`${amount}`}
+              key={`${currentReserve.underlyingAsset}-${amount}-${needApprove}`}
               showTextOnLoading
               wrapperStyle={styles.directSignBtn}
-              authTitle={t('page.Lending.withdrawDetail.actions')}
-              title={t('page.Lending.withdrawDetail.actions')}
+              authTitle={actionTitle}
+              title={actionTitle}
               onFinished={() => handleWithdraw()}
               disabled={
                 !amount ||
                 isZeroAmount(amount) ||
-                !withdrawTxs.length ||
+                !activeTxs.length ||
                 isLoading ||
                 !currentAccount ||
                 !!ctx?.disabledProcess ||
@@ -600,12 +780,12 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               titleStyle={BOTTOM_BUTTON_TITLE_STYLE}
               onPress={() => handleWithdraw()}
-              title={t('page.Lending.withdrawDetail.actions')}
+              title={actionTitle}
               loading={isLoading}
               disabled={
                 !amount ||
                 isZeroAmount(amount) ||
-                !withdrawTxs.length ||
+                !activeTxs.length ||
                 isLoading ||
                 !currentAccount ||
                 isZeroLTVWithdrawBlocked ||

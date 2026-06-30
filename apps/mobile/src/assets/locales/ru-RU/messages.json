@@ -432,7 +432,8 @@
         "empty": {
           "desc": "Все транзакции, подписанные через Rabby, будут перечислены здесь.",
           "title": "Ещё нет подписанных транзакций",
-          "titleLastThreeMonths": "Нет истории транзакций за 90 дней"
+          "titleLastThreeMonths": "Нет истории транзакций за 90 дней",
+          "testnetNoHistory": "История транзакций пользовательского токена недоступна."
         },
         "tips": {
           "canNotCancel": "Невозможно ускорить или отменить: не первая ожидающая txn",
@@ -1894,6 +1895,21 @@
       },
       "ConfirmModifyRpcModal": {
         "desc": "Цепочка уже интегрирована Rabby. Вам нужно изменить ее URL RPC?"
+      },
+      "addToken": {
+        "title": "Добавить токен пользовательской сети",
+        "chain": "Сеть",
+        "tokenAddress": "Адрес токена",
+        "enterAddress": "Введите адрес",
+        "foundToken": "Токен найден",
+        "checking": "Проверка токена...",
+        "invalidAddress": "Недействительный адрес токена",
+        "notErc20": "По этому адресу не найден токен ERC20",
+        "alreadyAdded": "Этот токен уже добавлен",
+        "alreadyAddedToast": "Токен уже добавлен",
+        "added": "Токен добавлен",
+        "addFailed": "Не удалось добавить токен",
+        "removeFailed": "Не удалось удалить токен"
       }
     },
     "addChain": {
@@ -2232,7 +2248,8 @@
       "headerTokenValueText": "Значение токена",
       "headerBalanceText": "Баланс",
       "copyCA": "Адрес контракта токена скопирован",
-      "wallet": "Кошелёк"
+      "wallet": "Кошелёк",
+      "customTestnetNotSupported": "Токен в этой сети не поддерживается"
     },
     "settingModal": {
       "themeMode": {
@@ -2379,7 +2396,8 @@
         "wallet_one": "Кошелек",
         "wallet_other": "Кошельки"
       },
-      "lowValueTokenHeader": "Токены низкой стоимости"
+      "lowValueTokenHeader": "Токены низкой стоимости",
+      "customNetworkTokenHeader": "Добавленные пользовательские сети"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -3133,7 +3151,8 @@
       },
       "withdrawDetail": {
         "remainingSupply": "Остаток запасов",
-        "actions": "Вывод"
+        "actions": "Вывод",
+        "approveAndWithdraw": "Одобрить и вывести"
       },
       "borrowDetail": {
         "approveAndBorrow": "Одобрить и Занять",

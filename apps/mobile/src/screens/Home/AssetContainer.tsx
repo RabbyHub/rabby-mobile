@@ -22,6 +22,7 @@ import {
   useSingleHomeAccount,
   useSingleHomeHasNoData,
 } from './hooks/singleHome';
+import { apiCustomTestnet } from '@/core/apis';
 import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
 import { useAccountHomeShowReceiveTip } from '../Address/components/MultiAssets/hooks';
@@ -87,6 +88,10 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
   // const { noAssetsValue } = useSingleHomeNoAssetsValueOnChain();
   const { accountToShowReceiveTip } =
     useAccountHomeShowReceiveTip(currentAccount);
+  const customTestnetCount = useMemo(
+    () => apiCustomTestnet.getCustomTestnetList().length,
+    [],
+  );
 
   if (!currentAccount) {
     return null;
@@ -102,7 +107,7 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
     );
   }
 
-  if (accountToShowReceiveTip) {
+  if (accountToShowReceiveTip && customTestnetCount === 0) {
     return <ReceiveOnNoAssets account={accountToShowReceiveTip} />;
   }
 
