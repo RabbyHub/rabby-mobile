@@ -1,7 +1,7 @@
-import React, { type Ref, useImperativeHandle } from 'react';
+import React, { useImperativeHandle } from 'react';
 import {
   AppSwitch2024,
-  SwitchToggleType,
+  SwitchToggleRefProp,
 } from '@/components/customized/Switch2024';
 
 export type UseValueHook = () => {
@@ -15,8 +15,7 @@ export const SwitchSettingCommon = ({
   ...props
 }: React.ComponentProps<typeof AppSwitch2024> & {
   useValueHook: UseValueHook;
-  ref?: Ref<SwitchToggleType>;
-}) => {
+} & SwitchToggleRefProp) => {
   const { value, setValue } = useValueHook();
 
   useImperativeHandle(ref, () => ({
