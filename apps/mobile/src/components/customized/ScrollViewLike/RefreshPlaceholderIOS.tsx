@@ -35,6 +35,7 @@ export const pulldownRefreshSizes = {
   homeHeaderHeight: Math.min(HOME_TOP_HEADER_SIZES.scrollableListTopOffset, 56),
 };
 
+const PULLDOWN_REFRESH_FAIL_OFFSET_X = 24;
 const scrHeight = Dimensions.get('screen').height;
 
 export function isOverPulldownRefreshThreshold(pullDistance: number) {
@@ -92,6 +93,10 @@ export const usePulldownRefreshGesture = <
     Gesture.Pan()
       .shouldCancelWhenOutside(false)
       .activeOffsetY([-8, 8])
+      .failOffsetX([
+        -PULLDOWN_REFRESH_FAIL_OFFSET_X,
+        PULLDOWN_REFRESH_FAIL_OFFSET_X,
+      ])
       .maxPointers(1)
       .onStart(event => {
         startValues.value.startedAtTop = scrollViewYValue.value <= 5;

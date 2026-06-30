@@ -229,6 +229,7 @@ const homeGestureConfs = {
     8,
     Math.round(Math.floor(getPullThreshold(scrHeight) * 0.1)),
   ),
+  failX: 24,
 };
 
 const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
@@ -357,6 +358,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
     Gesture.Pan()
       .shouldCancelWhenOutside(false)
       .activeOffsetY([-homeGestureConfs.activeY, homeGestureConfs.activeY])
+      .failOffsetX([-homeGestureConfs.failX, homeGestureConfs.failX])
       .maxPointers(1)
       .onStart(() => {
         startValues.value.restScrollOffset = getIsAtBottom(
