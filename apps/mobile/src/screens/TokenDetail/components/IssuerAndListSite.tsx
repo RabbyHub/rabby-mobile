@@ -118,7 +118,7 @@ const ExpandableDescription = ({
   const tagNamesContent = useMemo(() => {
     return tags?.length && tags?.length > 0 ? (
       <View style={[styles.tagContainer, { marginTop: description ? 16 : 0 }]}>
-        {tags?.map(item => {
+        {tags.sort().map(item => {
           return (
             <Text style={styles.tagText} key={item}>
               {item}
