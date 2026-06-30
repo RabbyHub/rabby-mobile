@@ -3460,7 +3460,7 @@
       "receiveSummary": {
         "progress": "Tiến trình chuyển đổi",
         "priceImpact": "Giới hạn tác động giá",
-        "gasLimit": "Single Transaction Gas Limit",
+        "gasLimit": "Gas limit cho một giao dịch",
         "estimateReceive": "Est.Nhận:",
         "actualReceive": "Nhận"
       },

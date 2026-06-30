@@ -3494,7 +3494,7 @@
       "receiveSummary": {
         "progress": "兑换进度",
         "priceImpact": "价格影响上限",
-        "gasLimit": "Single Transaction Gas Limit",
+        "gasLimit": "单笔交易 Gas limit",
         "estimateReceive": "预计收到：",
         "actualReceive": "收到"
       },

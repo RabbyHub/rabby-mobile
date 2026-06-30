@@ -3339,7 +3339,7 @@
       "receiveSummary": {
         "progress": "Kemajuan Konversi",
         "priceImpact": "Batas Dampak Harga",
-        "gasLimit": "Single Transaction Gas Limit",
+        "gasLimit": "Gas limit per transaksi",
         "estimateReceive": "Perkiraan Terima:",
         "actualReceive": "Terima"
       },
