@@ -363,7 +363,7 @@ const getStyles = createGetStyles2024(ctx => ({
     // backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   rowWrap: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   removeLeft: {
     marginLeft: 0,

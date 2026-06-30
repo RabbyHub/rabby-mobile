@@ -571,7 +571,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     overflow: 'hidden',
   },
   chartContainer: {
-    paddingLeft: 16,
+    paddingLeft: 14,
   },
   loading: {
     width: ScreenWidth - 32,

@@ -764,14 +764,13 @@ const getStyles = createGetStyles2024(ctx => ({
     left: 0,
     right: 0,
     height: ASSETS_SECTION_HEADER,
-    // paddingHorizontal: 16,
     zIndex: 1,
   },
   bgContainer: {
     // backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   rowWrap: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   removeLeft: {
     marginLeft: 0,
@@ -795,7 +794,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   customTestnetSectionWrap: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   singleCustomTestnetDivider: {
     marginBottom: 9,

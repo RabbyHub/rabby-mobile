@@ -87,7 +87,7 @@ const MemoizedTokenRowSectionHeader = React.memo(TokenRowSectionLpTokenHeader);
 const MemoizedItemLoader = React.memo(ItemLoader);
 export const MemoizedTokenItemLoader = React.memo((props: RNViewProps) => {
   return (
-    <View {...props} style={[{ paddingHorizontal: 16 }, props.style]}>
+    <View {...props} style={[{ paddingHorizontal: 12 }, props.style]}>
       <MemoizedItemLoader />
     </View>
   );
@@ -900,7 +900,7 @@ const getStyles = createGetStyles2024(() => ({
     flex: 1,
   },
   list: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 48,
   },
   tokenSectionHeader: {
