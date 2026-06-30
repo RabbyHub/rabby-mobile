@@ -14,6 +14,10 @@ export const getMessageStyles = (colors: AppColorsVariants) =>
       fontSize: 13,
       lineHeight: 16,
     },
+    messageHighlight: {
+      color: colors['blue-default'],
+      fontWeight: '500',
+    },
     messageTitle: {
       marginVertical: 12,
       position: 'relative',
