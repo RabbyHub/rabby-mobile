@@ -111,9 +111,11 @@ import {
   useHomePendingTxCount,
 } from '../hooks/history';
 import {
-  TabsScrollView,
-  TabsScrollViewProps,
-} from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
+  RabbyScrollView as TabsScrollView,
+  type RabbyScrollViewProps as TabsScrollViewProps,
+} from '@rabby-wallet/react-native-collapsible-tab-view/src/RabbyScrollView';
+import type { ScrollHandlerProps } from '@rabby-wallet/react-native-collapsible-tab-view/src/RabbyHooks';
+import { useCurrentTabScrollY } from '@rabby-wallet/react-native-collapsible-tab-view/src/hooks';
 import {
   RNGHRefreshControl,
   RNGHScrollView,
@@ -125,8 +127,6 @@ import {
   SCROLLABLE_STATUS,
   THRESHOLD_PERCENT,
 } from '../hooks/useHomeDrawerAnimate';
-import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
-import { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
 import { triggerImpact } from '@/utils/common';
 import {
   SharedValue,

@@ -37,9 +37,11 @@ import {
   NftItemWithCollection,
   varyNftListByFold,
 } from '@/screens/Home/hooks/nft';
-import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
-import { useFocusedTab } from 'react-native-collapsible-tab-view';
-import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
+import { RabbyFlatList as TabsFlatList } from '@rabby-wallet/react-native-collapsible-tab-view/src/RabbyFlatList';
+import {
+  useCurrentTabScrollY,
+  useFocusedTab,
+} from '@rabby-wallet/react-native-collapsible-tab-view/src/hooks';
 import { HomeTabName as TabName } from '@/hooks/navigation';
 import { ListRenderSeparator } from './RenderRow/Common';
 import {

@@ -12,7 +12,8 @@ import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar
 import { TabsTopHeader } from '@/screens/Home/components/OverviewTopHeader';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { RabbyControlledContainer as TabsContainer } from '@rabby-wallet/react-native-collapsible-tab-view/src/RabbyControlledContainer';
+import { Tab as TabsTab } from '@rabby-wallet/react-native-collapsible-tab-view/src/Tab';
 import { isTabsSwiping } from './hooks';
 import { NFTList } from './NFTList';
 import { ProtocolList } from './ProtocolList';
@@ -27,7 +28,6 @@ export const TAB_HEADER_FULL_HEIGHT =
 interface TabMultiAssetsProps {}
 
 import { HomeTabName as TabName } from '@/hooks/navigation';
-import { MultiAssetsContainer } from '@/components/customized/react-native-collapsible-tab-view/MultiAssetsContainer';
 export { HomeTabName as TabName } from '@/hooks/navigation';
 
 const homeTabScrollerRef = apisHomeTabIndex.homeTabScrollerRef;
@@ -71,7 +71,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
     <View style={styles.container}>
       <TabsTopHeader />
       <HomeCustomMaterialTabBar />
-      <MultiAssetsContainer
+      <TabsContainer
         ref={homeTabScrollerRef}
         onIndexChange={onIndexChange}
         onTabChange={handleTabChange}
@@ -101,23 +101,23 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
         }}
         containerStyle={styles.tabsContainer}
         headerContainerStyle={styles.headerContainer}>
-        <Tabs.Tab
+        <TabsTab
           key={TabName.overview}
           name={TabName.overview}
           label={() => null}>
           <HomeOverview />
-        </Tabs.Tab>
+        </TabsTab>
 
-        <Tabs.Tab key={TabName.token} name={TabName.token} label={() => null}>
+        <TabsTab key={TabName.token} name={TabName.token} label={() => null}>
           <TokenList />
-        </Tabs.Tab>
-        <Tabs.Tab key={TabName.defi} name={TabName.defi} label={() => null}>
+        </TabsTab>
+        <TabsTab key={TabName.defi} name={TabName.defi} label={() => null}>
           <ProtocolList />
-        </Tabs.Tab>
-        <Tabs.Tab key={TabName.nft} name={TabName.nft} label={() => null}>
+        </TabsTab>
+        <TabsTab key={TabName.nft} name={TabName.nft} label={() => null}>
           <NFTList />
-        </Tabs.Tab>
-      </MultiAssetsContainer>
+        </TabsTab>
+      </TabsContainer>
     </View>
   );
 };
