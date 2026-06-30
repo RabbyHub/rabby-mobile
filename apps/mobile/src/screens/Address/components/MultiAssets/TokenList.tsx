@@ -140,7 +140,7 @@ const TokenResourceRow = React.memo(
       <MemoizedTokenRow
         data={data}
         onTokenPress={handlePress}
-        logoSize={46}
+        logoSize={40}
         style={style}
         chainLogoSize={18}
         hideChainLogo={hideChainLogo}
