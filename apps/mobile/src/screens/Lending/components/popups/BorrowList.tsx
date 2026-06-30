@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { RefreshControl, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { Skeleton } from '@rneui/themed';
 import { useTheme2024 } from '@/hooks/theme';
@@ -23,7 +23,6 @@ import { PoolListLoading } from '../Loading';
 import { DisplayPoolReserveInfo } from '../../type';
 import { assetCanBeBorrowedByUser } from '../../utils/borrow';
 import {
-  useFetchLendingData,
   useLendingIsLoading,
   useLendingRemoteData,
   useLendingSummary,
@@ -53,7 +52,6 @@ export const LendingBorrowListContent: React.FC<
   const { displayPoolReserves, iUserSummary, getTargetReserve } =
     useLendingSummary();
   const { t } = useTranslation();
-  const { fetchData } = useFetchLendingData();
   const [search, setSearch] = useState('');
   const [isInputActive, setIsInputActive] = useState(false);
 
@@ -419,12 +417,6 @@ export const LendingBorrowListContent: React.FC<
         data={loading ? [] : dataList}
         style={styles.list}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={false}
-            onRefresh={() => fetchData(true)}
-          />
-        }
         keyExtractor={keyExtractor}
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={loading ? <PoolListLoading /> : null}

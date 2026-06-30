@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { RefreshControl, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
@@ -8,7 +8,6 @@ import {
   MODAL_NAMES,
 } from '@/components2024/GlobalBottomSheetModal/types';
 import {
-  useFetchLendingData,
   useLendingIsLoading,
   useLendingRemoteData,
   useLendingSummary,
@@ -64,7 +63,6 @@ export const LendingSupplyListContent: React.FC<
   const { displayPoolReserves, iUserSummary, getTargetReserve } =
     useLendingSummary();
   const { t } = useTranslation();
-  const { fetchData } = useFetchLendingData();
   const [search, setSearch] = useState('');
   const [isInputActive, setIsInputActive] = useState(false);
   const [selectedTokenByGroup, setSelectedTokenByGroup] = useState<
@@ -465,12 +463,6 @@ export const LendingSupplyListContent: React.FC<
         data={loading ? [] : dataList}
         style={styles.list}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={false}
-            onRefresh={() => fetchData(true)}
-          />
-        }
         keyExtractor={keyExtractor}
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={loading ? <PoolListLoading /> : null}

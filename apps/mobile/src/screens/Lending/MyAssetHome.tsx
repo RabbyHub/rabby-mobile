@@ -224,7 +224,6 @@ const MyAssetHome: React.FC = () => {
         removeGlobalBottomSheetModal2024(modalId);
       },
       bottomSheetModalProps: {
-        enableContentPanningGesture: false,
         rootViewType: 'View',
         handleStyle: {
           backgroundColor: colors2024['neutral-bg-1'],
@@ -238,7 +237,6 @@ const MyAssetHome: React.FC = () => {
       name: MODAL_NAMES.LENDING_TOKEN_LIST,
       initialTab: 'borrow',
       bottomSheetModalProps: {
-        enableContentPanningGesture: false,
         rootViewType: 'View',
         handleStyle: {
           backgroundColor: colors2024['neutral-bg-1'],
