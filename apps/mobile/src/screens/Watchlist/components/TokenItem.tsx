@@ -140,9 +140,9 @@ const TokenListItemComponent = ({
           {/* Token Chain Logo */}
           <AssetAvatar
             logo={item.logo_url}
-            size={46}
+            size={40}
             chain={item.chain}
-            chainSize={18}
+            chainSize={16}
             innerChainStyle={styles.chainLogo}
           />
           <View style={styles.tokenInfo}>
@@ -268,7 +268,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
   },
   rwaName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
@@ -276,7 +276,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flexShrink: 1,
   },
   tokenFdv: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
@@ -300,7 +300,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenRightSection: {
     flexDirection: 'column',
     alignItems: 'flex-end',
-    gap: 4,
+    gap: 2,
     justifyContent: 'center',
   },
   trendWrapper: {
@@ -309,9 +309,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
   },
   priceText: {
-    fontWeight: '700',
-    fontSize: 14,
-    lineHeight: 18,
+    fontWeight: '500',
+    fontSize: 17,
+    lineHeight: 22,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
@@ -386,7 +386,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
   },
   tokenFdvSeparator: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: colors2024['neutral-line'],
     fontFamily: 'SF Pro Rounded',
