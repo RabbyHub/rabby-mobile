@@ -354,6 +354,9 @@ export const RabbyControlledContainer = React.memo(
     const gestureStartIndex = useSharedValue(index.value);
     const touchStartX = useSharedValue(0);
     const touchStartY = useSharedValue(0);
+    const rawGestureTranslationX = useSharedValue(0);
+    const rawGestureActive = useSharedValue(0);
+    const gestureSettledOnEnd = useSharedValue(0);
 
     const controlledPagerGesture = React.useMemo(
       () =>
@@ -372,6 +375,9 @@ export const RabbyControlledContainer = React.memo(
 
             touchStartX.value = touch.absoluteX;
             touchStartY.value = touch.absoluteY;
+            rawGestureTranslationX.value = 0;
+            rawGestureActive.value = 0;
+            gestureSettledOnEnd.value = 0;
           })
           .onTouchesMove((event, stateManager) => {
             'worklet';
@@ -386,8 +392,10 @@ export const RabbyControlledContainer = React.memo(
             const diffY = touch.absoluteY - touchStartY.value;
             const absX = Math.abs(diffX);
             const absY = Math.abs(diffY);
+            rawGestureTranslationX.value = diffX;
 
             if (
+              rawGestureActive.value !== 1 &&
               absY > CONTROLLED_SWIPE_ACTIVE_OFFSET_X &&
               absY > absX * CONTROLLED_SWIPE_DIRECTION_RATIO
             ) {
@@ -399,20 +407,38 @@ export const RabbyControlledContainer = React.memo(
               absX > CONTROLLED_SWIPE_ACTIVE_OFFSET_X &&
               absX > absY * CONTROLLED_SWIPE_DIRECTION_RATIO
             ) {
+              if (rawGestureActive.value !== 1) {
+                rawGestureActive.value = 1;
+                gestureStartIndex.value = index.value;
+              }
               stateManager.activate();
+              indexDecimal.value = clamp(
+                gestureStartIndex.value - rawGestureTranslationX.value / width,
+                0,
+                tabNames.value.length - 1,
+              );
             }
           })
           .onStart(() => {
             'worklet';
 
-            gestureStartIndex.value = index.value;
+            if (rawGestureActive.value !== 1) {
+              gestureStartIndex.value = index.value;
+              rawGestureTranslationX.value = 0;
+            }
             runOnJS(emitPageScrollState)('dragging');
           })
           .onUpdate(event => {
             'worklet';
 
+            const translationX =
+              rawGestureActive.value === 1 &&
+              Math.abs(rawGestureTranslationX.value) >
+                Math.abs(event.translationX)
+                ? rawGestureTranslationX.value
+                : event.translationX;
             indexDecimal.value = clamp(
-              gestureStartIndex.value - event.translationX / width,
+              gestureStartIndex.value - translationX / width,
               0,
               tabNames.value.length - 1,
             );
@@ -420,12 +446,18 @@ export const RabbyControlledContainer = React.memo(
           .onEnd(event => {
             'worklet';
 
+            gestureSettledOnEnd.value = 1;
             const swipeDistance = width * CONTROLLED_SWIPE_DISTANCE_RATIO;
+            const translationX =
+              Math.abs(rawGestureTranslationX.value) >
+              Math.abs(event.translationX)
+                ? rawGestureTranslationX.value
+                : event.translationX;
             const shouldSwipeLeft =
-              event.translationX < -swipeDistance ||
+              translationX < -swipeDistance ||
               event.velocityX < -CONTROLLED_SWIPE_VELOCITY;
             const shouldSwipeRight =
-              event.translationX > swipeDistance ||
+              translationX > swipeDistance ||
               event.velocityX > CONTROLLED_SWIPE_VELOCITY;
             let targetIndex = gestureStartIndex.value;
 
@@ -445,14 +477,26 @@ export const RabbyControlledContainer = React.memo(
           .onFinalize(() => {
             'worklet';
 
+            if (
+              rawGestureActive.value === 1 &&
+              gestureSettledOnEnd.value !== 1
+            ) {
+              settleToIndex(Math.round(indexDecimal.value));
+            }
+            rawGestureActive.value = 0;
+            rawGestureTranslationX.value = 0;
+            gestureSettledOnEnd.value = 0;
             runOnJS(emitPageScrollState)('idle');
           }),
       [
         emitPageScrollState,
+        gestureSettledOnEnd,
         gestureStartIndex,
         index,
         indexDecimal,
         pagerProps?.scrollEnabled,
+        rawGestureActive,
+        rawGestureTranslationX,
         settleToIndex,
         tabNames,
         touchStartX,

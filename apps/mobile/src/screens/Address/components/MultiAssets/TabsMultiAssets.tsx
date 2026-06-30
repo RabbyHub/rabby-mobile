@@ -20,6 +20,8 @@ import { ProtocolList } from './ProtocolList';
 import { TokenList } from './TokenList';
 import { IS_IOS } from '@/core/native/utils';
 import { HomeOverview } from '@/screens/Home/components/HomeOverview';
+import { homeDrawerAnimateMutable } from '@/screens/Home/hooks/useHomeDrawerAnimate';
+import { useValueFromSharedValue } from '@/hooks/reanimated';
 
 export const TAB_HEADER_FULL_HEIGHT =
   HOME_TOP_HEADER_SIZES.headerHeight +
@@ -50,6 +52,9 @@ const onIndexChange = (idx: number) => {
 
 export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const isDappDrawerExpanded = useValueFromSharedValue(
+    homeDrawerAnimateMutable.isExpanded,
+  );
 
   const handleTabChange = useCallback(
     ({ prevIndex, index }: { prevIndex: number; index: number }) => {
@@ -93,6 +98,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
         lazy
         cancelLazyFadeIn
         pagerProps={{
+          scrollEnabled: !isDappDrawerExpanded,
           onPageScrollStateChanged: event => {
             isTabsSwiping.value =
               event?.nativeEvent?.pageScrollState !== 'idle';
