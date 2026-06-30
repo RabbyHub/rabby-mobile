@@ -3349,7 +3349,7 @@
       "receiveSummary": {
         "progress": "Progression de la conversion",
         "priceImpact": "Plafond d'impact sur le prix",
-        "gasLimit": "Single Transaction Gas Limit",
+        "gasLimit": "Gas limit par transaction",
         "estimateReceive": "Est.Réception:",
         "actualReceive": "Recevoir"
       },
