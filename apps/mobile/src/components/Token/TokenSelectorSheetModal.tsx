@@ -1027,7 +1027,12 @@ export const TokenSelectorSheetModal = ({
                                 ]}>
                                 <View style={styles.priceInfo}>
                                   <Text
-                                    style={[styles.tokenPrice]}
+                                    style={[
+                                      styles.tokenPrice,
+                                      {
+                                        color: percentColor,
+                                      },
+                                    ]}
                                     numberOfLines={1}>
                                     {`$${formatPrice(token.price)}`}
                                   </Text>
@@ -1497,7 +1502,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     tardeLevelText: {
       color: colors2024['green-default'],
       fontSize: 12,
-      fontWeight: '700',
+      fontWeight: '500',
       lineHeight: 16,
       fontFamily: 'SF Pro Rounded',
     },
@@ -1729,7 +1734,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     tokenHeaderAmount: {
       color: colors2024['neutral-secondary'],
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: '500',
       lineHeight: 18,
       textAlign: 'left',
@@ -1747,8 +1752,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     tokenHeaderNetworth: {
       color: colors2024['neutral-title-1'],
-      fontSize: 16,
-      fontWeight: '700',
+      fontSize: 17,
+      fontWeight: '500',
       lineHeight: 20,
       textAlign: 'right',
       fontFamily: 'SF Pro Rounded',

@@ -103,7 +103,7 @@ export const SearchAssets: React.FC<Props> = ({
               data={item}
               style={styles.renderItemWrapper}
               onTokenPress={handleOpenTokenDetail}
-              logoSize={46}
+              logoSize={40}
               decimalPrecision
             />
             {isPined ? <FavoriteTag style={styles.favoriteTag} /> : null}
