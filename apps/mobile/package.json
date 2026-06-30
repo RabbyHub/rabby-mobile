@@ -103,6 +103,7 @@
     "@rabby-wallet/rabby-security-engine": "2.0.12",
     "@rabby-wallet/rabby-sign-bvm": "0.1.1",
     "@rabby-wallet/rabby-swap": "0.0.77",
+    "@rabby-wallet/react-native-collapsible-tab-view": "workspace:^",
     "@rabby-wallet/react-native-keychain": "workspace:^",
     "@rabby-wallet/react-native-keychain-9": "workspace:^",
     "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^",

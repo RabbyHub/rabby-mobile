@@ -21,6 +21,4 @@ export const AppSwitch = (props: SwitchProps) => {
   );
 };
 
-export type SwitchToggleType = {
-  toggle: (enabled?: boolean) => void;
-};
+export type { SwitchToggleRefProp, SwitchToggleType } from './switchTypes';

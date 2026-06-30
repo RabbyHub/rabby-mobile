@@ -10385,6 +10385,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rabby-wallet/react-native-collapsible-tab-view@workspace:^, @rabby-wallet/react-native-collapsible-tab-view@workspace:packages/react-native-collapsible-tab-view":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/react-native-collapsible-tab-view@workspace:packages/react-native-collapsible-tab-view"
+  dependencies:
+    use-deep-compare: "npm:^1.1.0"
+  peerDependencies:
+    "@shopify/flash-list": ">=1.0.0"
+    react: "*"
+    react-native: "*"
+    react-native-gesture-handler: "*"
+    react-native-pager-view: "*"
+    react-native-reanimated: ">=2.15.0"
+  peerDependenciesMeta:
+    "@shopify/flash-list":
+      optional: true
+  languageName: unknown
+  linkType: soft
+
 "@rabby-wallet/react-native-keychain-9@workspace:^, @rabby-wallet/react-native-keychain-9@workspace:packages/react-native-keychain-9":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/react-native-keychain-9@workspace:packages/react-native-keychain-9"
@@ -39465,6 +39483,7 @@ __metadata:
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
     "@rabby-wallet/rabby-swap": "npm:0.0.77"
+    "@rabby-wallet/react-native-collapsible-tab-view": "workspace:^"
     "@rabby-wallet/react-native-keychain": "workspace:^"
     "@rabby-wallet/react-native-keychain-9": "workspace:^"
     "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^"
