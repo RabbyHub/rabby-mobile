@@ -18,12 +18,14 @@ declare global {
 //   console.tron = Reactotron;
 // }
 
-setInterval(() => {
-  ThreadSelf.postMessage({
-    type: 'ack',
-    time: Date.now(),
-  });
-}, 3000);
+if (typeof setInterval === 'function') {
+  setInterval(() => {
+    ThreadSelf.postMessage({
+      type: 'ack',
+      time: Date.now(),
+    });
+  }, 3000);
+}
 
 ErrorUtils.setGlobalHandler((error, isFatal) => {
   ThreadSelf.postMessage({

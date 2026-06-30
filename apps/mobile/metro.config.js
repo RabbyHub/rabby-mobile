@@ -52,6 +52,29 @@ const turboBuildBlockList = new RegExp(
 
 const LOG_FILE = path.join(__dirname, 'jsModuleId.log');
 
+const appSingletonPackages = ['react', 'react-native'];
+const isAppSingletonModule = moduleName =>
+  appSingletonPackages.some(
+    packageName =>
+      moduleName === packageName || moduleName.startsWith(`${packageName}/`),
+  );
+const isPathInside = (childPath, parentPath) => {
+  if (!childPath) {
+    return false;
+  }
+
+  const relativePath = path.relative(parentPath, childPath);
+  return (
+    relativePath === '' ||
+    (!!relativePath &&
+      !relativePath.startsWith('..') &&
+      !path.isAbsolute(relativePath))
+  );
+};
+const shouldResolveAppSingletonModule = (context, moduleName) =>
+  isAppSingletonModule(moduleName) &&
+  !isPathInside(context.originModulePath, projectRoot);
+
 /**
  * Compose functions from right to left.
  * @param {...Function} fns - Functions to compose
@@ -189,6 +212,15 @@ const config = {
      *
      * */
     resolveRequest: (context, moduleName, platform) => {
+      if (shouldResolveAppSingletonModule(context, moduleName)) {
+        return {
+          filePath: require.resolve(moduleName, {
+            paths: [projectRoot],
+          }),
+          type: 'sourceFile',
+        };
+      }
+
       if (moduleName === '@walletconnect/keyvaluestorage') {
         return {
           filePath: walletConnectKeyValueStorageShim,

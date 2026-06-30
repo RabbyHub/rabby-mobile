@@ -5,6 +5,8 @@ import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
@@ -36,7 +38,28 @@ public class RNHelpersModule extends SimplePackageSpec {
 
   @ReactMethod
   public void forceExitApp() {
+    Activity activity = getCurrentActivity();
+    if (activity != null) {
+      activity.runOnUiThread(() -> {
+        try {
+          activity.finishAndRemoveTask();
+        } catch (Exception ignored) {
+          try {
+            activity.finishAffinity();
+          } catch (Exception ignoredAgain) {
+            activity.finish();
+          }
+        }
+        new Handler(Looper.getMainLooper()).postDelayed(this::killProcess, 100);
+      });
+      return;
+    }
+    killProcess();
+  }
+
+  private void killProcess() {
     android.os.Process.killProcess(android.os.Process.myPid());
+    System.exit(0);
   }
 
   @ReactMethod

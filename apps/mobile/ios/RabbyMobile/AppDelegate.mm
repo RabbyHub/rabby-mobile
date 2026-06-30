@@ -6,6 +6,7 @@
 #import <React/RCTRootView.h>
 #import <React/RCTLinkingManager.h>
 #import <React/RCTHTTPRequestHandler.h>
+#import <ReactAppDependencyProvider/RCTAppDependencyProvider.h>
 
 // splash screen
 #import "RNSplashScreen.h"
@@ -49,50 +50,51 @@
   ];
 }
 
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+- (void)configureUserAgentProvider
 {
-  [FIRApp configure];
-
-  self.moduleName = @"RabbyMobile";
-
-  NSString *rabbitCodeFromBundle = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"rabbit_code"];
-  NSString *rabbitCode = rabbitCodeFromBundle ?: @"RABBY_MOBILE_CODE_DEV";
-  self.initialProps = @{ @"rabbitCode": rabbitCode };
-
-  // Create bridge manually — do NOT rely on [super ...]
-  RCTBridge *bridge = [[RCTBridge alloc] initWithDelegate:self launchOptions:launchOptions];
-
-  // Set up User-Agent
   NSString *userAgent = [self makeUserAgent];
-
-  RCTHTTPRequestHandler *requestHandler = [bridge moduleForName:@"RCTHTTPRequestHandler"];
-  if ([requestHandler respondsToSelector:@selector(setDefaultRequestHeaders:)]) {
-    [requestHandler performSelector:@selector(setDefaultRequestHeaders:)
-                         withObject:@{@"User-Agent": userAgent}];
-  }
 
   RCTSetCustomNSURLSessionConfigurationProvider(^NSURLSessionConfiguration *{
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
     configuration.HTTPAdditionalHeaders = @{ @"User-Agent": userAgent };
     return configuration;
   });
+}
+
+- (void)configureBridgeUserAgentIfAvailable
+{
+  RCTBridge *bridge = self.bridge;
+  if (!bridge) {
+    return;
+  }
+
+  NSString *userAgent = [self makeUserAgent];
+  RCTHTTPRequestHandler *requestHandler = [bridge moduleForName:@"RCTHTTPRequestHandler"];
+  if ([requestHandler respondsToSelector:@selector(setDefaultRequestHeaders:)]) {
+    [requestHandler performSelector:@selector(setDefaultRequestHeaders:)
+                         withObject:@{@"User-Agent": userAgent}];
+  }
+}
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+{
+  [FIRApp configure];
+
+  self.moduleName = @"RabbyMobile";
+  self.dependencyProvider = [RCTAppDependencyProvider new];
+
+  NSString *rabbitCodeFromBundle = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"rabbit_code"];
+  NSString *rabbitCode = rabbitCodeFromBundle ?: @"RABBY_MOBILE_CODE_DEV";
+  self.initialProps = @{ @"rabbitCode": rabbitCode };
+
+  [self configureUserAgentProvider];
 
   // Define UNUserNotificationCenter
   UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
   center.delegate = self;
 
-  // Create root view and window manually
-  RCTRootView *rootView = [[RCTRootView alloc] initWithBridge:bridge
-                                                   moduleName:self.moduleName
-                                            initialProperties:self.initialProps];
-
-  rootView.backgroundColor = [UIColor systemBackgroundColor];
-
-  self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-  UIViewController *rootViewController = [UIViewController new];
-  rootViewController.view = rootView;
-  self.window.rootViewController = rootViewController;
-  [self.window makeKeyAndVisible];
+  BOOL didFinish = [super application:application didFinishLaunchingWithOptions:launchOptions];
+  [self configureBridgeUserAgentIfAvailable];
 
 #if DEBUG
   // react-native-splash-screen's iOS `show` implementation blocks the main
@@ -102,7 +104,12 @@
   [RNSplashScreen show];
 #endif
 
-  return YES;
+  return didFinish;
+}
+
+- (void)customizeRootView:(RCTRootView *)rootView
+{
+  rootView.backgroundColor = [UIColor systemBackgroundColor];
 }
 
 //Called when a notification is delivered to a foreground app.

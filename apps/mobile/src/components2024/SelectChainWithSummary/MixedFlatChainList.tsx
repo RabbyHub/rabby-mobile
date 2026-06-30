@@ -12,7 +12,7 @@ import {
   useMatteredChainBalancesAll,
 } from '@/hooks/accountChainBalance';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
-import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { Account } from '@/core/services/preference';
 import {
   EMPTY_TOKEN_ENTITY_IDS,
@@ -26,6 +26,12 @@ import useTokenList from '@/store/tokens';
 const EMPTY_CHAIN_TOKEN_IDS_BY_CHAIN: Record<string, TokenEntityId[]> = {};
 
 type ChainBalanceMap = Record<string, { usd_value?: number } | undefined>;
+type ChainListItem = {
+  chain: Chain;
+  sectionIndex: number;
+  sectionLength: number;
+  sectionKey: 'mattered' | 'unmattered';
+};
 
 const getSelectedAddressesKey = (addresses: string[]) =>
   addresses
@@ -249,36 +255,43 @@ export default function MixedFlatChainList({
     [chainTokenIdsByChain],
   );
 
-  const sections = React.useMemo(() => {
+  const chainList = React.useMemo<ChainListItem[]>(() => {
     return [
-      {
-        title: 'Mattered',
-        data: matteredList,
-      },
-      {
-        title: 'Unmattered',
-        data: unmatteredList,
-      },
+      ...matteredList.map((chain, index) => ({
+        chain,
+        sectionIndex: index,
+        sectionLength: matteredList.length,
+        sectionKey: 'mattered' as const,
+      })),
+      ...unmatteredList.map((chain, index) => ({
+        chain,
+        sectionIndex: index,
+        sectionLength: unmatteredList.length,
+        sectionKey: 'unmattered' as const,
+      })),
     ];
   }, [matteredList, unmatteredList]);
 
   return (
-    <BottomSheetSectionList<Chain>
-      sections={sections}
+    <BottomSheetFlatList<ChainListItem>
+      data={chainList}
       onScrollBeginDrag={onScrollBeginDrag}
       style={style}
-      ListFooterComponent={<View style={{ height: 32 }} />}
-      keyExtractor={(item, idx) => `${item.enum}-${idx}`}
-      renderItem={({ item, index, section }) => {
+      ListFooterComponent={<View style={styles.listFooter} />}
+      keyExtractor={(item, idx) =>
+        `${item.sectionKey}-${item.chain.enum}-${idx}`
+      }
+      renderItem={({ item }) => {
+        const chain = item.chain;
         const unsupported = supportChains
-          ? !supportChains.includes(item.enum)
+          ? !supportChains.includes(chain.enum)
           : false;
         if (unsupportedChainMode === 'hidden' && unsupported) {
           return null;
         }
 
-        const isSectionFirst = index === 0;
-        const isSectionLast = index === section.data.length - 1;
+        const isSectionFirst = item.sectionIndex === 0;
+        const isSectionLast = item.sectionIndex === item.sectionLength - 1;
         return (
           <View
             style={[
@@ -287,12 +300,12 @@ export default function MixedFlatChainList({
             ]}>
             <ChainItem
               needAllAddresses={needAllAddresses}
-              data={item}
+              data={chain}
               value={value}
               onPress={onChange}
               disabled={unsupported}
               disabledTips={disabledTips}
-              tokens={getChainTokens(item.serverId)}
+              tokens={getChainTokens(chain.serverId)}
             />
           </View>
         );
@@ -311,5 +324,8 @@ const getStyle = createGetStyles2024(() => ({
   sectionLast: {
     borderBottomLeftRadius: RADIUS_VALUE,
     borderBottomRightRadius: RADIUS_VALUE,
+  },
+  listFooter: {
+    height: 32,
   },
 }));

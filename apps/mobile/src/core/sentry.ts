@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/react-native';
 import type { ReactNativeOptions } from '@sentry/react-native';
+import { Platform } from 'react-native';
 
 import { APP_VERSIONS } from '@/constant';
 import { SENTRY_DEBUG, getSentryEnv } from '@/constant/env';
@@ -78,6 +79,8 @@ type SentryEventHint = Parameters<SentryBeforeSend>[1];
 export const SENTRY_IGNORED_ERROR_MESSAGES = [
   'Missing or invalid topic field',
   'Non-Error exception captured',
+  "TurboModules are enabled, but mTurboModuleRegistry hasn't been set",
+  'TurboModules are enabled, but mTurboModuleRegistry has not been set',
 ] as const;
 
 export const SENTRY_IGNORED_ERROR_PATTERNS = [
@@ -189,6 +192,19 @@ export function shouldDropSentryEvent(
   );
 }
 
+const isAndroidBridgelessRuntime = () => {
+  if (Platform.OS !== 'android') {
+    return false;
+  }
+
+  const rnRuntime = globalThis as typeof globalThis & {
+    RN$Bridgeless?: boolean;
+    __turboModuleProxy?: unknown;
+  };
+
+  return rnRuntime.RN$Bridgeless === true || !!rnRuntime.__turboModuleProxy;
+};
+
 export function initSentry() {
   if (!canInitializeSentry()) {
     return;
@@ -204,6 +220,8 @@ export function initSentry() {
     return;
   }
 
+  const disableNativeBridgeAccess = isAndroidBridgelessRuntime();
+
   Sentry.init({
     enabled: true,
     dsn: 'https://86c83b97aaf2afd16f3d3227340c78dd@o4507018303438848.ingest.us.sentry.io/4507018395975680',
@@ -215,7 +233,15 @@ export function initSentry() {
     // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
     // We recommend adjusting this value in production.
     tracesSampleRate: 0.2,
-    enableAutoSessionTracking: true,
+    enableNative: !disableNativeBridgeAccess,
+    enableNativeCrashHandling: !disableNativeBridgeAccess,
+    enableNativeNagger: !disableNativeBridgeAccess,
+    enableNdk: !disableNativeBridgeAccess,
+    enableAutoPerformanceTracing: !disableNativeBridgeAccess,
+    enableAppStartTracking: !disableNativeBridgeAccess,
+    enableNativeFramesTracking: !disableNativeBridgeAccess,
+    enableStallTracking: !disableNativeBridgeAccess,
+    enableAutoSessionTracking: !disableNativeBridgeAccess,
     environment: getSentryEnv(),
     debug: SENTRY_DEBUG,
     beforeBreadcrumb: breadcrumb => dropWhenTrackingOptedOut(breadcrumb),

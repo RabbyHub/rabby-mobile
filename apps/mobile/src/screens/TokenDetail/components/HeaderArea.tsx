@@ -5,14 +5,13 @@ import {
   TextStyle,
   View,
   ViewStyle,
-  TouchableOpacity,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
 import { AssetAvatar } from '@/components';
-import { ellipsisOverflowedText } from '@/utils/text';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { getTokenSymbol } from '@/utils/token';
 import { useAssetsRefreshing } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
@@ -62,11 +61,9 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
     return token?.id === chain?.nativeTokenAddress;
   }, [token?.id, token?.chain]);
 
-  const handleCopyAddress = useCallback<
-    React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
-  >(
-    evt => {
-      evt.stopPropagation();
+  const handleCopyAddress = useCallback(
+    (evt?: any) => {
+      evt?.stopPropagation?.();
       if (!token?.id || isNativeToken) {
         return;
       }
@@ -117,14 +114,15 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
               )}
             </View>
             {displayCopy && (
-              <TouchableOpacity
+              <CustomTouchableOpacity
+                as="RNGHTouchableOpacity"
                 style={styles.touchBox}
                 onPress={handleCopyAddress}>
                 <Text style={styles.contractAddress}>
                   {ellipsisAddress(token.id)}
                 </Text>
                 <RcIconCopyCC style={styles.copy} />
-              </TouchableOpacity>
+              </CustomTouchableOpacity>
             )}
           </View>
           {!disableRefresh && refreshing && <LoadingCircle />}
