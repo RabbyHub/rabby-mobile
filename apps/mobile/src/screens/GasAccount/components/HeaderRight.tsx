@@ -4,6 +4,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  GestureResponderEvent,
   InteractionManager,
   Pressable,
   StyleSheet,
@@ -30,6 +31,7 @@ const MENU_EDGE_PADDING = 16;
 const MENU_RIGHT_FALLBACK = 24;
 const MENU_TRIGGER_GAP = 4;
 const MENU_TOP_ADJUST = 8;
+const MENU_TOUCH_ANCHOR_SIZE = 32;
 
 type AnchorLayout = {
   x: number;
@@ -65,6 +67,7 @@ export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const triggerRef = useRef<View>(null);
+  const pressAnchorRef = useRef<AnchorLayout | null>(null);
   const [triggerLayout, setTriggerLayout] = useState<AnchorLayout | null>(null);
   const [menuSize, setMenuSize] = useState({
     width: MENU_MIN_WIDTH,
@@ -92,30 +95,58 @@ export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
 
   const [, setLoginVisible] = useGasAccountLoginVisible();
 
-  const handleWithdraw = useCallback(() => {
+  const closeMenu = useCallback(() => {
+    pressAnchorRef.current = null;
     setVisible(false);
+  }, []);
+
+  const handleWithdraw = useCallback(() => {
+    closeMenu();
     openWithdrawPopup();
-  }, [openWithdrawPopup]);
+  }, [closeMenu, openWithdrawPopup]);
 
   const handleSwitch = useCallback(() => {
-    setVisible(false);
+    closeMenu();
     setLoginVisible(true);
-  }, [setLoginVisible]);
+  }, [closeMenu, setLoginVisible]);
 
   const measureTrigger = useCallback(() => {
     triggerRef.current?.measureInWindow((x, y, width, height) => {
       const nextLayout = { x, y, width, height };
       if (isFiniteLayout(nextLayout)) {
-        setTriggerLayout(nextLayout);
+        const pressAnchor = pressAnchorRef.current;
+        setTriggerLayout(
+          isFiniteLayout(pressAnchor)
+            ? {
+                ...nextLayout,
+                y: pressAnchor.y,
+                height: pressAnchor.height,
+              }
+            : nextLayout,
+        );
       }
     });
   }, []);
 
-  const handleOpen = useCallback(() => {
-    setVisible(true);
-    requestAnimationFrame(measureTrigger);
-    InteractionManager.runAfterInteractions(measureTrigger);
-  }, [measureTrigger]);
+  const handleOpen = useCallback(
+    (event?: GestureResponderEvent) => {
+      const { pageX, pageY } = event?.nativeEvent || {};
+      if (Number.isFinite(pageX) && Number.isFinite(pageY)) {
+        const pressAnchor = {
+          x: pageX - MENU_TOUCH_ANCHOR_SIZE / 2,
+          y: pageY - MENU_TOUCH_ANCHOR_SIZE / 2,
+          width: MENU_TOUCH_ANCHOR_SIZE,
+          height: MENU_TOUCH_ANCHOR_SIZE,
+        };
+        pressAnchorRef.current = pressAnchor;
+        setTriggerLayout(pressAnchor);
+      }
+      setVisible(true);
+      requestAnimationFrame(measureTrigger);
+      InteractionManager.runAfterInteractions(measureTrigger);
+    },
+    [measureTrigger],
+  );
 
   const estimatedMenuHeight = useMemo(() => {
     if (!optionCount) {
@@ -153,7 +184,7 @@ export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
         windowDimensions.width - MENU_EDGE_PADDING - width,
       ),
       top: clamp(
-        Math.max(rawTop, fallbackTop),
+        rawTop,
         safeTop + MENU_EDGE_PADDING,
         windowDimensions.height - safeOffBottom - MENU_EDGE_PADDING - height,
       ),
@@ -189,11 +220,11 @@ export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
           visible={visible}
           animationType="none"
           onShow={measureTrigger}
-          onRequestClose={() => setVisible(false)}>
-          <View style={styles.modalRoot}>
+          onRequestClose={closeMenu}>
+          <View pointerEvents="box-none" style={styles.modalRoot}>
             <Pressable
-              style={StyleSheet.absoluteFill}
-              onPress={() => setVisible(false)}
+              style={[StyleSheet.absoluteFill, styles.modalBackdrop]}
+              onPress={closeMenu}
             />
             <View
               onLayout={event => {
@@ -214,7 +245,6 @@ export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
               <View style={styles.optionList}>
                 {showWithdraw ? (
                   <CustomTouchableOpacity
-                    as="RNGHTouchableOpacity"
                     style={styles.option}
                     onPress={handleWithdraw}
                     hitSlop={10}>
@@ -229,7 +259,6 @@ export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
                 ) : null}
                 {showSwitchWallet ? (
                   <CustomTouchableOpacity
-                    as="RNGHTouchableOpacity"
                     style={styles.option}
                     onPress={handleSwitch}
                     hitSlop={10}>
@@ -261,11 +290,15 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     ...StyleSheet.absoluteFillObject,
     flex: 1,
   },
+  modalBackdrop: {
+    zIndex: 0,
+  },
   menuSurface: {
     position: 'absolute',
     minWidth: MENU_MIN_WIDTH,
     backgroundColor: colors['neutral-card1'],
     borderRadius: 12,
+    zIndex: 1,
   },
   optionList: {
     minWidth: 220,
