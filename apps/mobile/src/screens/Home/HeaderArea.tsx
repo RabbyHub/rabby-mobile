@@ -68,9 +68,9 @@ export default function HomeHeaderArea({ style }: RNViewProps) {
                 <WalletIcon
                   type={brandName as KEYRING_TYPE}
                   address={currentAddress}
-                  width={22}
-                  height={22}
-                  borderRadius={6}
+                  width={18}
+                  height={18}
+                  borderRadius={5}
                 />
               </TouchableOpacity>
             </View>
@@ -123,7 +123,9 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     flexShrink: 1,
     minWidth: 0,
-    width: '100%',
+    backgroundColor: ctx.colors2024['neutral-bg-5'],
+    padding: 6,
+    borderRadius: 8,
     gap: 6,
   },
   aliasBox: {
@@ -132,7 +134,6 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     flexShrink: 1,
     minWidth: 0,
-    flex: 1,
     gap: 6,
   },
   nameBox: {
@@ -158,11 +159,11 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   titleText: {
     width: '100%',
-    color: ctx.colors2024['neutral-title-1'],
+    color: ctx.colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '700',
+    fontWeight: '500',
     flexWrap: 'nowrap',
   },
   editIcon: {

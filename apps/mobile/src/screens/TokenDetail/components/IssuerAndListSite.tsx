@@ -118,7 +118,7 @@ const ExpandableDescription = ({
   const tagNamesContent = useMemo(() => {
     return tags?.length && tags?.length > 0 ? (
       <View style={[styles.tagContainer, { marginTop: description ? 16 : 0 }]}>
-        {tags?.map(item => {
+        {tags.sort().map(item => {
           return (
             <Text style={styles.tagText} key={item}>
               {item}
@@ -475,7 +475,7 @@ export const IssuerAndListSite: React.FC<Props> = ({
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     // marginLeft: 0,
-    marginHorizontal: 20,
+    marginHorizontal: 12,
     marginTop: 20,
     gap: 12,
     display: 'flex',
@@ -513,6 +513,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 18,
     lineHeight: 22,
     fontWeight: '900',
+    marginLeft: 8,
   },
 
   header: {

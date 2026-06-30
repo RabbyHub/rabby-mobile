@@ -787,7 +787,7 @@ const getStyles = createGetStyles2024(ctx => ({
     gap: 4,
   },
   tokenFdv: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
@@ -953,14 +953,14 @@ const getStyles = createGetStyles2024(ctx => ({
     gap: 4,
   },
   caValue: {
-    color: ctx.colors2024['neutral-foot'],
-    fontSize: 14,
+    color: ctx.colors2024['neutral-secondary'],
+    fontSize: 13,
     lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '500',
+    fontWeight: '400',
   },
   caValueText: {
-    color: ctx.colors2024['neutral-foot'],
+    color: ctx.colors2024['neutral-secondary'],
   },
   searchTokenDanger: {
     flex: 1,

@@ -717,7 +717,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderRadius: 16,
       position: 'relative',
       marginTop: 12,
-      marginHorizontal: 16,
+      marginHorizontal: 12,
       padding: 12,
     },
     riskContainer: {
@@ -827,7 +827,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     indicator: {
       backgroundColor: colors2024['neutral-body'],
-      height: 4,
+      height: 3,
       borderRadius: 100,
     },
     skeleton: {
