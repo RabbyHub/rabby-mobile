@@ -26,6 +26,7 @@ import {
 } from '@/assets2024/icons/gas-account';
 import { Text } from '@/components/Typography';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 
 const MENU_MIN_WIDTH = 220;
 const MENU_EDGE_PADDING = 16;
@@ -215,8 +216,7 @@ export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
           </CustomTouchableOpacity>
         </View>
         <TrackedModal
-          modalId="gas-account-header-menu"
-          blocking={false}
+          modalId={MODAL_GATE_IDS.gasAccountHeaderMenu}
           transparent
           visible={visible}
           animationType="none"
