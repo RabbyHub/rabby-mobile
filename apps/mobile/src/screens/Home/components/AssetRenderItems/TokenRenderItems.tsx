@@ -596,6 +596,8 @@ export const TokenRowSectionLpTokenHeader = memo(
   },
 );
 
+const TOKEN_ROW_BORDER_RADIUS = 14;
+
 const getStyles = createGetStyles2024(ctx => ({
   tokenRowWrap: {
     // height: ASSETS_ITEM_HEIGHT_NEW,
@@ -607,7 +609,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.isLight
       ? colord(ctx.colors2024['neutral-bg-1']).alpha(0.9).toRgbString()
       : ctx.colors2024['neutral-bg-2'],
-    borderRadius: 14,
+    borderRadius: TOKEN_ROW_BORDER_RADIUS,
     overflow: 'hidden',
     paddingLeft: 12,
     paddingRight: 16,
@@ -619,7 +621,7 @@ const getStyles = createGetStyles2024(ctx => ({
     right: 0,
     bottom: 0,
     left: 0,
-    borderRadius: 14,
+    borderRadius: TOKEN_ROW_BORDER_RADIUS,
     borderWidth: 1,
     borderColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-1']
