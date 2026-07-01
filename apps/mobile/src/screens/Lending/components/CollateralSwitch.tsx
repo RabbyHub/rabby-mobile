@@ -20,10 +20,10 @@ export const CollateralSwitch: React.FC<IProps> = ({
 }) => {
   const { colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const isEnabled =
-    reserve.usageAsCollateralEnabledOnUser && canBeEnabledAsCollateral;
+  const isEnabled = reserve.usageAsCollateralEnabledOnUser;
+  const canToggle = isEnabled || canBeEnabledAsCollateral;
 
-  if (!canBeEnabledAsCollateral) {
+  if (!canToggle) {
     return (
       <Tip
         as="RNGHPressable"
@@ -46,7 +46,7 @@ export const CollateralSwitch: React.FC<IProps> = ({
       value={isEnabled}
       barHeight={18}
       circleSize={18}
-      disabled={!canBeEnabledAsCollateral}
+      disabled={!canToggle}
       backgroundActive={colors2024['green-default']}
       circleBorderActiveColor={colors2024['green-default']}
       onValueChange={onValueChange}
