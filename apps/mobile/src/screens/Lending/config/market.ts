@@ -92,6 +92,7 @@ export enum CustomMarket {
   proto_xlayer_v3 = 'proto_xlayer_v3',
   proto_mantle_v3 = 'proto_mantle_v3',
   proto_megaeth_v3 = 'proto_megaeth_v3',
+  proto_monad_v3 = 'proto_monad_v3',
 }
 
 export const marketsData: {
@@ -587,6 +588,24 @@ export const marketsData: {
       UI_POOL_DATA_PROVIDER: '0x5c5228ac8bc1528482514af3e27e692495148717',
       UI_INCENTIVE_DATA_PROVIDER: AaveV3Metis.UI_INCENTIVE_DATA_PROVIDER,
       COLLECTOR: AaveV3Metis.COLLECTOR,
+    },
+  },
+  [CustomMarket.proto_monad_v3]: {
+    marketTitle: 'Monad',
+    market: CustomMarket.proto_monad_v3,
+    chainId: 143 as ChainId,
+    v3: true,
+    logo: '/icons/networks/monad.svg',
+    addresses: {
+      LENDING_POOL_ADDRESS_PROVIDER:
+        '0x34793Fb9935F7bB5E5aE920fb963F39063E7A615',
+      LENDING_POOL: '0x69a5F9AD4f96ebf0a0C792dD42a01cC5C0102fef',
+      WETH_GATEWAY: '0x5bB847f1E529df8819038BA6d34a95c9C2FB6813',
+      WALLET_BALANCE_PROVIDER: '0x1CC19583933Af0B70103797236267a9E049806F9',
+      UI_POOL_DATA_PROVIDER: '0xa7D38785be3422c25677A8aa4a44D3a0853A3a17',
+      UI_INCENTIVE_DATA_PROVIDER: '0x9d8678556BCF7240bE12982430C281Db76E26eA2',
+      GHO_TOKEN_ADDRESS: '0xfc421aD3C883Bf9E7C4f42dE845C4e4405799e73',
+      COLLECTOR: '0x22A14267f9F8bA21D11898F0772e652B09e6A8A1',
     },
   },
 } as const;

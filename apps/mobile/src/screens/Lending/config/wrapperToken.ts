@@ -1,4 +1,4 @@
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS, CHAINS_ENUM } from '@debank/common';
 
 const wrapperToken = {
   [CHAINS_ENUM.ETH]: {
@@ -161,6 +161,15 @@ const wrapperToken = {
     origin: {
       name: 'Ether',
       symbol: 'ETH',
+    },
+  },
+  MONAD: {
+    name: 'Wrapped MONAD',
+    symbol: 'WMON',
+    address: '0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A',
+    origin: {
+      name: 'MON',
+      symbol: 'MON',
     },
   },
 };
