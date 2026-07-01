@@ -242,9 +242,12 @@ RCT_EXPORT_MODULE();
       @"captured": @FALSE
     } mutableCopy];
 
-    UIViewController *presentedViewController = RCTPresentedViewController();
-    UIView *targetView = presentedViewController.view.superview ?: presentedViewController.view;
-    UIImage *image = [self convertViewToImage:targetView];
+    UIImage *image = [self convertVisibleWindowsToImage];
+    if (!image) {
+        UIViewController *presentedViewController = RCTPresentedViewController();
+        UIView *fallbackView = presentedViewController.view.superview ?: presentedViewController.view;
+        image = [self convertViewToImage:fallbackView];
+    }
     NSData *data = UIImagePNGRepresentation(image);
     if (!data) {
         [self emitUserDidTakeScreenshotChanged:result];
@@ -356,10 +359,101 @@ CGSize CGSizeAspectFill(const CGSize aspectRatio, const CGSize minimumSize)
 }
 
 - (UIImage *)convertViewToImage:(UIView *)view {
+    if (!view) {
+        return nil;
+    }
+
     // UIGraphicsBeginImageContextWithOptions(view.bounds.size, view.opaque, 0.0);
     // [view.layer renderInContext:UIGraphicsGetCurrentContext()];
     UIGraphicsBeginImageContextWithOptions(view.bounds.size, NO, 0.0);
     [view drawViewHierarchyInRect:view.bounds afterScreenUpdates:YES];
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return image;
+}
+
+- (NSArray<UIWindow *> *)visibleWindowsForScreenshot {
+    NSMutableArray<UIWindow *> *windows = [NSMutableArray array];
+
+    if (@available(iOS 13.0, *)) {
+        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if (![scene isKindOfClass:[UIWindowScene class]]) {
+                continue;
+            }
+
+            BOOL isForeground = scene.activationState == UISceneActivationStateForegroundActive ||
+                scene.activationState == UISceneActivationStateForegroundInactive;
+            if (!isForeground) {
+                continue;
+            }
+
+            UIWindowScene *windowScene = (UIWindowScene *)scene;
+            for (UIWindow *window in windowScene.windows) {
+                if (!window.hidden && window.alpha > 0.01 && !CGRectIsEmpty(window.bounds)) {
+                    [windows addObject:window];
+                }
+            }
+        }
+    }
+
+    if (windows.count == 0) {
+        for (UIWindow *window in [UIApplication sharedApplication].windows) {
+            if (!window.hidden && window.alpha > 0.01 && !CGRectIsEmpty(window.bounds)) {
+                [windows addObject:window];
+            }
+        }
+    }
+
+    [windows sortUsingComparator:^NSComparisonResult(UIWindow *left, UIWindow *right) {
+        if (left.windowLevel < right.windowLevel) {
+            return NSOrderedAscending;
+        }
+
+        if (left.windowLevel > right.windowLevel) {
+            return NSOrderedDescending;
+        }
+
+        return NSOrderedSame;
+    }];
+
+    return windows;
+}
+
+- (UIWindow *)baseWindowForScreenshot:(NSArray<UIWindow *> *)windows {
+    for (UIWindow *window in windows) {
+        if (window.isKeyWindow) {
+            return window;
+        }
+    }
+
+    return windows.firstObject;
+}
+
+- (UIImage *)convertVisibleWindowsToImage {
+    NSArray<UIWindow *> *windows = [self visibleWindowsForScreenshot];
+    if (windows.count == 0) {
+        return nil;
+    }
+
+    UIWindow *baseWindow = [self baseWindowForScreenshot:windows];
+    CGSize canvasSize = baseWindow.bounds.size;
+    CGFloat scale = baseWindow.screen.scale;
+    if (canvasSize.width <= 0 || canvasSize.height <= 0) {
+        canvasSize = [UIScreen mainScreen].bounds.size;
+    }
+    if (scale <= 0) {
+        scale = 0.0;
+    }
+
+    UIGraphicsBeginImageContextWithOptions(canvasSize, NO, scale);
+    for (UIWindow *window in windows) {
+        CGRect drawRect = window.frame;
+        if (CGRectIsEmpty(drawRect)) {
+            drawRect = (CGRect){CGPointZero, window.bounds.size};
+        }
+
+        [window drawViewHierarchyInRect:drawRect afterScreenUpdates:NO];
+    }
     UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     return image;
