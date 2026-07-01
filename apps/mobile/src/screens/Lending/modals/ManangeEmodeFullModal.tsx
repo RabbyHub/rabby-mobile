@@ -494,20 +494,14 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
               showTextOnLoading
               containerStyle={styles.fullWidthButton}
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
+              type="aave"
               onPress={() => handlePressManageEMode()}
               title={
                 wantDisableEmode
                   ? t('page.Lending.manageEmode.actions.disable')
                   : t('page.Lending.manageEmode.actions.enable')
               }
-              titleStyle={[
-                BOTTOM_BUTTON_TITLE_STYLE,
-                wantDisableEmode && styles.closeButtonTitle,
-                wantDisableEmode &&
-                  disableFullWidthButton &&
-                  styles.disableBtnTitle,
-              ]}
-              buttonStyle={wantDisableEmode ? styles.closeButton : undefined}
+              titleStyle={[BOTTOM_BUTTON_TITLE_STYLE]}
               loading={isLoading}
               disabled={disableFullWidthButton}
             />
