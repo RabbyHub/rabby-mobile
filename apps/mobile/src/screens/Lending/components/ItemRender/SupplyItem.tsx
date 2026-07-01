@@ -261,9 +261,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingVertical: 14,
       paddingHorizontal: 0,
       marginTop: 12,
-      backgroundColor: isLight
-        ? 'rgba(255, 255, 255, 0.9)'
-        : colors2024['neutral-bg-1'],
+      backgroundColor: isLight ? 'rgba(255, 255, 255, 0.9)' : cardBgColor,
       position: 'relative',
       borderWidth: 1,
       borderColor: colors2024['neutral-bg-1'],

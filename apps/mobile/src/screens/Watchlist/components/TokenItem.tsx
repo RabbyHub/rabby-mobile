@@ -239,7 +239,7 @@ export const TokenItemSkeleton = () => {
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenItem: {
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 4,
     gap: 8,
     display: 'flex',
@@ -300,7 +300,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenRightSection: {
     flexDirection: 'column',
     alignItems: 'flex-end',
-    gap: 2,
+    gap: 4,
     justifyContent: 'center',
   },
   trendWrapper: {
@@ -334,7 +334,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     alignContent: 'center',
     paddingVertical: 6,
     borderRadius: 6,
-    width: 68,
+    width: 78,
     gap: 2,
     alignItems: 'center',
   },

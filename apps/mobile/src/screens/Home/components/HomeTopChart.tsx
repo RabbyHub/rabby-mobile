@@ -424,7 +424,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
         <RefreshNudgedTickerText
           value={formatNetWorth}
           maxLength={16}
-          lineHeight={46}
+          lineHeight={42}
           duration={320}
           style={styles.netWorth}
           fontSizeByLength={{
@@ -555,13 +555,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     marginLeft: 0,
     marginRight: 4,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
   },
   changeTime: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',

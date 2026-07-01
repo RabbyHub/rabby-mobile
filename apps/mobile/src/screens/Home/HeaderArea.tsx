@@ -94,7 +94,7 @@ export default function HomeHeaderArea({ style }: RNViewProps) {
               </TouchableOpacity>
             )}
             {isLoadingCurve || balanceLoading ? (
-              <LoadingCircle />
+              <LoadingCircle size={20} />
             ) : (
               <RcIconCopy style={styles.copy} />
             )}
@@ -161,8 +161,8 @@ const getStyles = createGetStyles2024(ctx => ({
     width: '100%',
     color: ctx.colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '500',
     flexWrap: 'nowrap',
   },
