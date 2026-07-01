@@ -27,8 +27,8 @@ import DeviceUtils from '@/core/utils/device';
 import { perfEvents } from '@/core/utils/perf';
 import {
   getVisibleBlockingModalIds,
-  hasVisibleBlockingModal,
   MODAL_GATE_IDS,
+  subscribeModalGateDebugSnapshot,
 } from '@/utils/modalGate';
 
 export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT =
@@ -429,26 +429,38 @@ const shouldToastFeedbackByScreenshot = () => {
   );
 };
 
-const setLastScreenshot = (
-  image: ImageResolvedAssetSource | null,
-  uploadNow = false,
-) => {
-  if (
-    image &&
-    hasVisibleBlockingModal({
-      excludeIds: [MODAL_GATE_IDS.screenshotFeedback],
-    })
-  ) {
-    __DEV__ &&
-      console.debug(
-        '[modal-gate] skip screenshot feedback modal open, blocking modals:',
-        getVisibleBlockingModalIds({
-          excludeIds: [MODAL_GATE_IDS.screenshotFeedback],
-        }),
-      );
+const SCREENSHOT_FEEDBACK_MODAL_GATE_EXCLUDE_IDS = [
+  MODAL_GATE_IDS.screenshotFeedback,
+];
+const DEFERRED_SCREENSHOT_MODAL_OPEN_DELAY_MS = 450;
+
+type PendingScreenshotFeedback = {
+  image: ImageResolvedAssetSource;
+  uploadNow: boolean;
+};
+
+let pendingScreenshotFeedback: PendingScreenshotFeedback | null = null;
+let pendingScreenshotFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
+
+function getBlockingModalIdsForScreenshotFeedback() {
+  return getVisibleBlockingModalIds({
+    excludeIds: SCREENSHOT_FEEDBACK_MODAL_GATE_EXCLUDE_IDS,
+  });
+}
+
+function clearPendingScreenshotFeedbackTimer() {
+  if (!pendingScreenshotFeedbackTimer) {
     return;
   }
 
+  clearTimeout(pendingScreenshotFeedbackTimer);
+  pendingScreenshotFeedbackTimer = null;
+}
+
+const setLastScreenshotNow = (
+  image: ImageResolvedAssetSource | null,
+  uploadNow = false,
+) => {
   setFeedbackByScreenshot(prev => ({
     ...prev,
     lastScreenshot: image,
@@ -468,6 +480,76 @@ const setLastScreenshot = (
       },
     );
   }
+};
+
+function schedulePendingScreenshotFeedbackFlush() {
+  clearPendingScreenshotFeedbackTimer();
+
+  if (!pendingScreenshotFeedback) {
+    return;
+  }
+
+  const blockingModalIds = getBlockingModalIdsForScreenshotFeedback();
+  if (blockingModalIds.length) {
+    return;
+  }
+
+  pendingScreenshotFeedbackTimer = setTimeout(() => {
+    pendingScreenshotFeedbackTimer = null;
+
+    if (!pendingScreenshotFeedback) {
+      return;
+    }
+
+    const nextBlockingModalIds = getBlockingModalIdsForScreenshotFeedback();
+    if (nextBlockingModalIds.length) {
+      return;
+    }
+
+    const pending = pendingScreenshotFeedback;
+    pendingScreenshotFeedback = null;
+
+    if (!shouldToastFeedbackByScreenshot()) {
+      return;
+    }
+
+    setLastScreenshotNow(pending.image, pending.uploadNow);
+  }, DEFERRED_SCREENSHOT_MODAL_OPEN_DELAY_MS);
+}
+
+subscribeModalGateDebugSnapshot(() => {
+  schedulePendingScreenshotFeedbackFlush();
+});
+
+const setLastScreenshot = (
+  image: ImageResolvedAssetSource | null,
+  uploadNow = false,
+) => {
+  if (!image) {
+    pendingScreenshotFeedback = null;
+    clearPendingScreenshotFeedbackTimer();
+    setLastScreenshotNow(image, uploadNow);
+    return;
+  }
+
+  const blockingModalIds = getBlockingModalIdsForScreenshotFeedback();
+  if (blockingModalIds.length) {
+    pendingScreenshotFeedback = {
+      image,
+      uploadNow,
+    };
+
+    __DEV__ &&
+      console.debug(
+        '[modal-gate] defer screenshot feedback modal open, blocking modals:',
+        blockingModalIds,
+      );
+
+    schedulePendingScreenshotFeedbackFlush();
+    return;
+  }
+
+  setLastScreenshotNow(image, uploadNow);
 };
 
 export function debugShowSubmitFeedbackByScreenshotModal() {
