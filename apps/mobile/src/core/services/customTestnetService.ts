@@ -39,6 +39,7 @@ import type {
   TestnetChain,
   TestnetChainBase,
 } from '@/types/customTestnet';
+import { withTimeoutFallback } from '@/utils/async';
 
 export type {
   CustomTestnetToken,
@@ -641,7 +642,7 @@ export class CustomTestnetService {
 
     const res = await Promise.all(
       queryList.map(item =>
-        this.getToken(item).catch(e => {
+        withTimeoutFallback(this.getToken(item), 10000, null).catch(e => {
           console.error(e);
           return null;
         }),
