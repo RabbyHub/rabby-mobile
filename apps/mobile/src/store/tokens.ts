@@ -3,7 +3,10 @@ import { queryTokensCache } from '@/core/apis/tokenCache';
 import { openapi } from '@/core/request';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { syncRemoteTokens } from '@/databases/sync/assets';
+import {
+  syncRemoteTokens,
+  syncRemoteTokensByChain,
+} from '@/databases/sync/assets';
 import { eventBus, EVENT_PATCH_SINGLE_TOKEN } from '@/utils/events';
 import { includeLpTokensFilter, lpTokenFilter } from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
@@ -46,7 +49,11 @@ interface TokenListState {
   >;
   initStore(): void;
   batchGetTokenList(addresses: string[], force?: boolean): Promise<void>;
-  getTokenList(address: string, force?: boolean): Promise<void>;
+  getTokenList(
+    address: string,
+    force?: boolean,
+    chainServerId?: string,
+  ): Promise<void>;
   setTokenDisplayMode(mode: TokenDisplayMode): void;
 }
 
@@ -124,6 +131,22 @@ const replacePreviousCoreTokensWithCacheTokens = (
   const previousNonCoreTokens = previousTokens.filter(token => !token.is_core);
 
   return [...cacheTokens, ...previousNonCoreTokens];
+};
+
+const replaceTokensByChain = (
+  previousTokens: ITokenItem[],
+  nextTokens: ITokenItem[],
+  chainServerId: string,
+) => {
+  const normalizedChainServerId = chainServerId.toLowerCase();
+  const previousOtherChainTokens = previousTokens.filter(
+    token => token.chain.toLowerCase() !== normalizedChainServerId,
+  );
+  const nextChainTokens = nextTokens.filter(
+    token => token.chain.toLowerCase() === normalizedChainServerId,
+  );
+
+  return [...previousOtherChainTokens, ...nextChainTokens];
 };
 
 const isDataExpired = async (address: string) => {
@@ -1703,13 +1726,14 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
     set(() => ({ tokenListMap: realTimeTokenMap }));
   },
 
-  async getTokenList(address: string, force = false) {
+  async getTokenList(address: string, force = false, chainServerId?: string) {
     const normalizedAddress = address.toLowerCase();
     const isExpired = await isDataExpired(normalizedAddress);
     const hasCurrentAddressTokens =
       (get().tokenListMap[normalizedAddress] || []).length > 0;
+    const targetChainServerId = chainServerId || undefined;
     const isRefreshingWithValidLocalTokens =
-      hasCurrentAddressTokens && !isExpired;
+      hasCurrentAddressTokens && (!isExpired || !!targetChainServerId);
 
     /**
      * 阶段一： 校验有效期，有效期内直接用本地数据
@@ -1775,9 +1799,13 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
        * 阶段三： 从链接口中获取数据
        */
       let chainIdList: string[] = [];
-      // 单地址的查询还是使用 usedChainList，不然担心 token 选择器之类的地方用户找不到自己的 token
-      const chains = await openapi.usedChainList(address);
-      chainIdList = chains.map(item => item.id);
+      if (targetChainServerId) {
+        chainIdList = [targetChainServerId];
+      } else {
+        // 单地址的查询还是使用 usedChainList，不然担心 token 选择器之类的地方用户找不到自己的 token
+        const chains = await openapi.usedChainList(address);
+        chainIdList = chains.map(item => item.id);
+      }
       const realTimeTokenQueue = new PQueue({
         concurrency: 15,
       });
@@ -1802,13 +1830,34 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         .map(result => (result.status === 'fulfilled' ? result.value : []))
         .flat() as ITokenItem[];
 
-      syncRemoteTokens(normalizedAddress, results);
-      set(state => ({
-        tokenListMap: {
-          ...state.tokenListMap,
-          [normalizedAddress]: results,
-        },
-      }));
+      if (targetChainServerId) {
+        syncRemoteTokensByChain(
+          normalizedAddress,
+          targetChainServerId,
+          results,
+        );
+        set(state => {
+          const previousTokens = state.tokenListMap[normalizedAddress] || [];
+          return {
+            tokenListMap: {
+              ...state.tokenListMap,
+              [normalizedAddress]: replaceTokensByChain(
+                previousTokens,
+                results,
+                targetChainServerId,
+              ),
+            },
+          };
+        });
+      } else {
+        syncRemoteTokens(normalizedAddress, results);
+        set(state => ({
+          tokenListMap: {
+            ...state.tokenListMap,
+            [normalizedAddress]: results,
+          },
+        }));
+      }
     } finally {
       set(state => ({
         isLoadingByAddress: {

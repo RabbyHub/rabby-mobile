@@ -32,9 +32,12 @@ import type { ITokenItem } from '@/types/assets';
 
 export { patchSingleToken } from './token';
 
-export async function syncRemoteTokens(
+async function syncRemoteTokensInternal(
   address: string,
   _tokens: TokenItem[] | ITokenItem[],
+  options?: {
+    chain?: string;
+  },
 ) {
   const data = [..._tokens];
   if (data.length === 0) {
@@ -68,6 +71,14 @@ export async function syncRemoteTokens(
     .then(({ taskSignal, taskKey, queueCompleted }) => {
       if (queueCompleted) {
         console.debug(`[${taskKey}] batch upsert tasks completed`);
+        if (options?.chain) {
+          TokenItemEntity.cleanupStaleTokensByChain(
+            address,
+            options.chain,
+            syncTimestamp,
+          );
+          return;
+        }
         TokenItemEntity.cleanupStaleTokens(address, syncTimestamp);
       } else {
         console.warn(`[${taskKey}] batch upsert tasks aborted.`);
@@ -76,6 +87,23 @@ export async function syncRemoteTokens(
     .catch(error => {
       console.error('Batch upsert failed:', error);
     });
+}
+
+export async function syncRemoteTokens(
+  address: string,
+  _tokens: TokenItem[] | ITokenItem[],
+) {
+  return syncRemoteTokensInternal(address, _tokens);
+}
+
+export async function syncRemoteTokensByChain(
+  address: string,
+  chain: string,
+  _tokens: TokenItem[] | ITokenItem[],
+) {
+  return syncRemoteTokensInternal(address, _tokens, {
+    chain,
+  });
 }
 
 export async function syncRemoteTokensAmount(

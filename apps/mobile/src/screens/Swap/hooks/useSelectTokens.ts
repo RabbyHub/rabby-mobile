@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 import { useShallow } from 'zustand/shallow';
 
@@ -37,18 +37,33 @@ const buildTokenRows = (tokens: ITokenItem[]): TokenSelectIndexRow[] => {
   }));
 };
 
+const useSkipRemoteLoad = (
+  chain_server_id?: string,
+  skipEmptyChainInit?: boolean,
+) => {
+  const [initialized, setInitialized] = useState(false);
+  useEffect(() => {
+    if (chain_server_id) {
+      setInitialized(true);
+    }
+  }, [chain_server_id]);
+  return skipEmptyChainInit && !initialized;
+};
+
 export const useSelectTokens = ({
   currentAccount: _currentAccount,
   chain_server_id,
   isLpTokenEnabled,
   keyword,
   returnTokenObjects = false,
+  skipEmptyChainInit = false,
 }: {
   currentAccount?: Account | null;
   chain_server_id?: string;
   isLpTokenEnabled?: boolean;
   keyword?: string;
   returnTokenObjects?: boolean;
+  skipEmptyChainInit?: boolean;
 }) => {
   const currentAccount = useDebouncedValue(_currentAccount, 100);
   const currentAddress = currentAccount?.address || _currentAccount?.address;
@@ -59,6 +74,8 @@ export const useSelectTokens = ({
     currentAccount?.address || _currentAccount?.address,
   );
   const { myTop10Addresses } = useAccountInfo();
+
+  const skipRemoteLoad = useSkipRemoteLoad(chain_server_id, skipEmptyChainInit);
 
   // 产品需求：当 x 掉地址选择时搜索视图下仍然展示当前地址的余额，用 ref 缓存最后一个 currentAddress 实现
   useEffect(() => {
@@ -100,24 +117,27 @@ export const useSelectTokens = ({
 
   const loadToken = useCallback(
     (address?: string) => {
-      if (!address) {
+      if (!address || skipRemoteLoad) {
         return;
       }
-      getTokenList(address, true);
+      getTokenList(address, true, chain_server_id);
     },
-    [getTokenList],
+    [chain_server_id, getTokenList, skipRemoteLoad],
   );
 
-  const firstLoadedRef = useRef(false);
+  const lastLoadedTokenRequestKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!currentAddress) {
+    if (!currentAddress || skipRemoteLoad) {
       return;
     }
-    if (!firstLoadedRef.current) {
-      firstLoadedRef.current = true;
-      getTokenList(currentAddress, true);
+    const requestKey = `${currentAddress.toLowerCase()}::${
+      chain_server_id || ''
+    }`;
+    if (lastLoadedTokenRequestKeyRef.current !== requestKey) {
+      lastLoadedTokenRequestKeyRef.current = requestKey;
+      getTokenList(currentAddress, true, chain_server_id);
     }
-  }, [currentAddress, getTokenList]);
+  }, [chain_server_id, currentAddress, getTokenList, skipRemoteLoad]);
 
   const { value: searchTokenResult, loading: searchingToken } =
     useAsync(async () => {
