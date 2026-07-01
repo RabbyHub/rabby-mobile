@@ -55,6 +55,7 @@ import { CHAINS } from '@debank/common';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { BalanceChangeWrapper } from '../TxComponents/BalanceChangeWrapper';
 import { Text } from '@/components/Typography';
+import { HighlightedSignMessageText } from '../SignMessageHighlighter';
 
 export interface MultiActionProps {
   actionList: ParsedTypedDataActionData[] | ParsedTransactionActionData[];
@@ -417,7 +418,11 @@ const Actions = ({
               {t('page.signTx.typedDataMessage')}
             </Text>
           </View>
-          <Text style={styles.messageText}>{message}</Text>
+          <HighlightedSignMessageText
+            text={message}
+            style={styles.messageText}
+            highlightStyle={styles.messageHighlight}
+          />
         </BottomSheetScrollView>
       </Card>
     </View>
