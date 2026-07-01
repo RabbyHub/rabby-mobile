@@ -30,6 +30,9 @@ import { NextSearchBar } from '../SearchBar';
 import { Account } from '@/core/services/preference';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { Text, TextInput } from '@/components/Typography';
+import { apiCustomTestnet } from '@/core/apis';
+
+let hasInitializedCustomTestnetServiceForChainSelector = false;
 
 const useChainSelectorList = ({
   supportChains,
@@ -43,6 +46,18 @@ const useChainSelectorList = ({
   account?: Account;
 }) => {
   const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    if (
+      netTabKey !== 'testnet' ||
+      hasInitializedCustomTestnetServiceForChainSelector
+    ) {
+      return;
+    }
+    hasInitializedCustomTestnetServiceForChainSelector = true;
+    apiCustomTestnet.initCustomTestnetService();
+  }, [netTabKey]);
+
   const {
     testnetMatteredChainBalances,
     matteredChainBalances,

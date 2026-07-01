@@ -529,7 +529,7 @@ function ToggleCollateralContent({}: {}) {
                   <View style={styles.gasPreContainer}>
                     <DirectSignGasInfo
                       supportDirectSign={true}
-                      loading={isLoading}
+                      loading={false}
                       openShowMore={noop}
                       chainServeId={chainInfo?.serverId || ''}
                     />
