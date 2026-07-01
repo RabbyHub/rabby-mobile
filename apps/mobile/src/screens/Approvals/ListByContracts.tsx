@@ -193,8 +193,6 @@ const getStyles = createGetStyles(colors => {
     listContainer: {
       paddingTop: 20,
       paddingBottom: 0,
-      // repair top offset due to special contentInset in iOS
-      ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),
     },
     listFooterContainer: {
       flexDirection: 'row',
