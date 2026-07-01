@@ -395,7 +395,10 @@ export const TokenDetailHistoryList = ({
       scrollEventThrottle={16}
       loadMore={() => {
         // avoid exec multi times loadMore
-        if (loadingMore || noMore) {
+        if (loading || loadingMore || noMore || !fetchApiData) {
+          return;
+        }
+        if (!fetchApiData.hasMore) {
           return;
         }
         loadMore();
