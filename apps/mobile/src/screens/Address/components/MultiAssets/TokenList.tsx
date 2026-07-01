@@ -273,16 +273,6 @@ export const TokenList = () => {
   }, []);
 
   useEffect(() => {
-    if (!isScreenFocused || !isFocusing) {
-      closeCustomTestnetAddTokenModal();
-    }
-  }, [closeCustomTestnetAddTokenModal, isFocusing, isScreenFocused]);
-
-  useEffect(() => {
-    return closeCustomTestnetAddTokenModal;
-  }, [closeCustomTestnetAddTokenModal]);
-
-  useEffect(() => {
     if (!isScreenFocused) {
       setCustomTestnetCollapseKey(key => key + 1);
     }
