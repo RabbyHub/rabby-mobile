@@ -709,6 +709,45 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     }
   }
 
+  static async cleanupStaleTokensByChain(
+    owner_addr: string,
+    chain: string,
+    syncTimestamp: number,
+  ) {
+    try {
+      await prepareAppDataSource();
+      const repo = this.getRepository();
+      const currentTime = Date.now();
+      const deleteResult = await repo
+        .createQueryBuilder()
+        .delete()
+        .from(TokenItemEntity)
+        .where('lower(owner_addr) = lower(:owner_addr)', { owner_addr })
+        .andWhere('lower(chain) = lower(:chain)', { chain })
+        .andWhere('_local_updated_at < :syncTimestamp', { syncTimestamp })
+        .execute();
+
+      console.debug(
+        `🧹 Cleaned ${
+          deleteResult.affected || 0
+        } stale tokens for ${owner_addr} on ${chain}`,
+        'time:',
+        Date.now() - currentTime,
+      );
+
+      return {
+        deletedCount: deleteResult.affected || 0,
+        success: true,
+      };
+    } catch (error) {
+      console.error(
+        `❌ Failed to cleanup stale tokens for ${owner_addr} on ${chain}:`,
+        error,
+      );
+      throw error;
+    }
+  }
+
   static async getTokenListAmount({
     owner_addr,
     tokenList,
