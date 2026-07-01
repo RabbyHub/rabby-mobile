@@ -272,15 +272,15 @@ export const TokenList = () => {
     customTestnetAddTokenModalIdRef.current = null;
   }, []);
 
-  useEffect(() => {
-    if (!isScreenFocused || !isFocusing) {
-      closeCustomTestnetAddTokenModal();
-    }
-  }, [closeCustomTestnetAddTokenModal, isFocusing, isScreenFocused]);
+  //useEffect(() => {
+  //  if (!isScreenFocused || !isFocusing) {
+  //    closeCustomTestnetAddTokenModal();
+  //  }
+  //}, [closeCustomTestnetAddTokenModal, isFocusing, isScreenFocused]);
 
-  useEffect(() => {
-    return closeCustomTestnetAddTokenModal;
-  }, [closeCustomTestnetAddTokenModal]);
+  //useEffect(() => {
+  //  return closeCustomTestnetAddTokenModal;
+  //}, [closeCustomTestnetAddTokenModal]);
 
   useEffect(() => {
     if (!isScreenFocused) {
