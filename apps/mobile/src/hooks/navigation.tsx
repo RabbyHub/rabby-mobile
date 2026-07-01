@@ -404,6 +404,7 @@ export function resetNavigationTo(
       break;
     }
     case 'Unlock': {
+      perfEvents.emit('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS');
       navigation.reset({
         index: 0,
         routes: [
