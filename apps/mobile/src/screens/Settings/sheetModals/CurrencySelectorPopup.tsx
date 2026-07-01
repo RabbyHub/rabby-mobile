@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { Keyboard, useWindowDimensions, View } from 'react-native';
 
-import { RcIconCheckmarkCC, RcNextSearchCC } from '@/assets/icons/common';
+import { RcIconCheckmarkCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
@@ -23,10 +23,7 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import FastImage from 'react-native-fast-image';
-import {
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-} from 'react-native-gesture-handler';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import { sortBy, uniq } from 'lodash';
 import { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -69,7 +66,7 @@ export function CurrencySelectorPopup({
   const [isFocus, setIsFocus] = useState(false);
   const [searchText, setSearchText] = useState('');
 
-  const isShowFakePlaceholder = !searchText && !isFocus;
+  const inputNotActiveAndNoQuery = !searchText && !isFocus;
 
   const deferredSearchText = useDeferredValue(searchText);
 
@@ -133,38 +130,35 @@ export function CurrencySelectorPopup({
         <View>
           <Text style={styles.title}>{t('page.setting.currency')}</Text>
           <View style={styles.searchContainer}>
-            {isShowFakePlaceholder ? (
-              <View>
-                <TouchableWithoutFeedback
-                  onPress={() => {
-                    searchRef.current?.focus();
-                  }}>
-                  <View style={styles.fakePlaceholder}>
-                    <RcNextSearchCC
-                      color={colors2024['neutral-secondary']}
-                      width={16}
-                      height={16}
-                    />
-                    <Text style={styles.placeholder}>
-                      {t('page.setting.searchCurrency')}
-                    </Text>
-                  </View>
-                </TouchableWithoutFeedback>
-              </View>
-            ) : null}
             <NextSearchBar
               ref={searchRef}
+              as="BottomSheetTextInput"
               value={searchText}
               onChangeText={setSearchText}
+              inputContainerStyle={{
+                justifyContent: inputNotActiveAndNoQuery
+                  ? 'center'
+                  : 'flex-start',
+              }}
+              inputStyle={{
+                flex: inputNotActiveAndNoQuery ? 0 : 1,
+              }}
               onBlur={() => {
                 setIsFocus(false);
               }}
-              style={isShowFakePlaceholder ? styles.hidden : null}
               onFocus={() => {
                 setIsFocus(true);
               }}
               placeholder={t('page.setting.searchCurrency')}
             />
+            {inputNotActiveAndNoQuery ? (
+              <TouchableOpacity
+                style={styles.searchTapMask}
+                onPress={() => {
+                  searchRef.current?.focus();
+                }}
+              />
+            ) : null}
           </View>
         </View>
         <BottomSheetScrollView
@@ -235,24 +229,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       marginBottom: 14,
       position: 'relative',
     },
-    fakePlaceholder: {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 7,
-      backgroundColor: colors2024['neutral-bg-5'],
-      borderRadius: 12,
-      padding: 13,
-    },
-    placeholder: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '500',
-      color: colors2024['neutral-secondary'],
-    },
-
     list: {
       width: '100%',
       paddingBottom: 56,
@@ -296,8 +272,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       marginLeft: 'auto',
     },
 
-    hidden: {
-      display: 'none',
+    searchTapMask: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0,
     },
   };
 });
