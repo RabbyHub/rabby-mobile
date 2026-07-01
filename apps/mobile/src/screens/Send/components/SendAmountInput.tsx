@@ -20,7 +20,8 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
-import { RcIconSwitchCC } from '@/assets/icons/send';
+import { RcIconAmountModeSwitch } from '@/assets/icons/send/switch-amount';
+import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import { DEFAULT_MAX_FONT_SIZE } from '@/components/AutoShrinkAmountTextSizing';
 import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
@@ -43,10 +44,15 @@ type SendAmountInputProps = {
   value?: string;
   displayValueText?: string;
   unit: string;
-  quoteValueText: string;
-  quoteUnit: string;
+  inputPrefixText?: string;
+  showInputUnit?: boolean;
+  quoteText: string;
   showQuote?: boolean;
   canSwitchMode: boolean;
+  balanceText?: string;
+  showBalanceLoading?: boolean;
+  onBalancePress?: () => void;
+  balanceDisabled?: boolean;
   maxDecimalPlaces?: number | null;
   normalizeInputValue?: (value: string) => string;
   onChange?: (value: string) => void | boolean;
@@ -108,19 +114,20 @@ const CARET_BUFFER = 7;
 const MAIN_FONT_SIZE = DEFAULT_MAX_FONT_SIZE;
 const MIN_AMOUNT_FONT_SIZE = 17;
 const AMOUNT_FONT_SIZE_STEP = 1;
-const AMOUNT_CONTAINER_HEIGHT = 92;
-const AMOUNT_CONTENT_HEIGHT = 60;
-const AMOUNT_ROW_HEIGHT = 36;
+const AMOUNT_CONTAINER_HEIGHT = 106;
+const AMOUNT_CONTENT_HEIGHT = 66;
+const AMOUNT_ROW_HEIGHT = 34;
 const AMOUNT_ROW_MIN_COMPACT_HEIGHT = 34;
 const AMOUNT_DEFAULT_LINE_HEIGHT = 34;
 const AMOUNT_LINE_HEIGHT_EXTRA = 6;
 const AMOUNT_MIN_COMPACT_LEFT_OFFSET = 6;
-const QUOTE_ROW_TOP = 40;
-const QUOTE_ROW_MIN_COMPACT_TOP = 38;
+const AMOUNT_ROW_GAP = 12;
 const QUOTE_TEXT_FONT_SIZE = 14;
-const QUOTE_UNIT_GAP = 4;
+const SWITCH_ICON_SIZE = 20;
+const SWITCH_ICON_GAP = 4;
+const BALANCE_AREA_WIDTH = 190;
+const BOTTOM_ROW_PROTECTED_GAP = 12;
 const EMPTY_AMOUNT_DISPLAY_VALUE = '0';
-const AMOUNT_UNIT_RESERVED_WIDTH = CARET_BUFFER + UNIT_GAP;
 const AMOUNT_MEASURE_CHARS = [
   '0',
   '1',
@@ -134,12 +141,8 @@ const AMOUNT_MEASURE_CHARS = [
   '9',
   '.',
   '<',
+  '$',
 ];
-const QUOTE_MEASURE_CHARS = Array.from(
-  new Set(
-    '0123456789.,< >ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz$',
-  ),
-);
 
 function getDisplayAmountValue(value?: string) {
   return value || EMPTY_AMOUNT_DISPLAY_VALUE;
@@ -226,7 +229,6 @@ function getAmountVerticalLayout(
     amountTextTop: getAmountTextTop(fontSize, isMinCompactLayout),
     unitLineHeight: getUnitLineHeight(fontSize, isMinCompactLayout),
     unitTextTop: getUnitTextTop(fontSize, isMinCompactLayout),
-    quoteRowTop: isMinCompactLayout ? QUOTE_ROW_MIN_COMPACT_TOP : QUOTE_ROW_TOP,
   };
 }
 
@@ -235,10 +237,15 @@ export const SendAmountInput = ({
   value,
   displayValueText,
   unit,
-  quoteValueText,
-  quoteUnit,
+  inputPrefixText,
+  showInputUnit = true,
+  quoteText,
   showQuote = true,
   canSwitchMode,
+  balanceText,
+  showBalanceLoading,
+  onBalancePress,
+  balanceDisabled,
   maxDecimalPlaces,
   normalizeInputValue,
   onChange,
@@ -276,11 +283,9 @@ export const SendAmountInput = ({
   const [charWidthsAtBaseFontSize, setCharWidthsAtBaseFontSize] = useState<
     Record<string, number>
   >({});
-  const [quoteCharWidths, setQuoteCharWidths] = useState<
-    Record<string, number>
-  >({});
   const [unitWidthAtBaseFontSize, setUnitWidthAtBaseFontSize] = useState(0);
-  const [quoteUnitWidth, setQuoteUnitWidth] = useState(0);
+  const [quoteRowWidth, setQuoteRowWidth] = useState(0);
+  const [quoteNaturalWidth, setQuoteNaturalWidth] = useState(0);
   const [inputValue, setInputValue] = useState(value || '');
   const [inputSelection, setInputSelection] = useState(
     inputSelectionRef.current,
@@ -318,10 +323,11 @@ export const SendAmountInput = ({
   const displayInputValue = getDisplayAmountValue(
     displayValueText || inputValue,
   );
-  const displayUnitText = useMemo(() => getCompactUnitText(unit), [unit]);
-  const displayQuoteUnitText = useMemo(
-    () => getCompactUnitText(quoteUnit),
-    [quoteUnit],
+  const displayInputPrefixText = inputPrefixText || '';
+  const shouldShowInputUnit = showInputUnit && !!unit;
+  const displayUnitText = useMemo(
+    () => (shouldShowInputUnit ? getCompactUnitText(unit) : ''),
+    [shouldShowInputUnit, unit],
   );
   const textForMeasure = displayInputValue;
   const textInputValue = inputValue;
@@ -338,8 +344,9 @@ export const SendAmountInput = ({
   }, [maxDecimalPlaces]);
   const fallbackCharWidth =
     charWidthsAtBaseFontSize['0'] || MAIN_FONT_SIZE * 0.56;
-  const fallbackUnitWidth =
-    Math.max(getTextCharLength(displayUnitText), 1) * MAIN_FONT_SIZE * 0.58;
+  const fallbackUnitWidth = shouldShowInputUnit
+    ? Math.max(getTextCharLength(displayUnitText), 1) * MAIN_FONT_SIZE * 0.58
+    : 0;
   const measuredUnitWidthAtBaseFontSize =
     unitWidthAtBaseFontSize || fallbackUnitWidth;
   const getValueWidthAtBaseFontSize = useCallback(
@@ -354,23 +361,34 @@ export const SendAmountInput = ({
     },
     [charWidthsAtBaseFontSize, fallbackCharWidth],
   );
+  const prefixWidthAtBaseFontSize = displayInputPrefixText
+    ? getValueWidthAtBaseFontSize(displayInputPrefixText)
+    : 0;
 
   const getAmountLayout = useCallback(
     (nextValue: string) => {
       const nextValueWidthAtBaseFontSize = getValueWidthAtBaseFontSize(
         nextValue || '0',
       );
+      const unitGap = shouldShowInputUnit ? UNIT_GAP : 0;
       if (!inputAreaWidth || !nextValueWidthAtBaseFontSize) {
+        const prefixWidth = Math.ceil(prefixWidthAtBaseFontSize);
         const visibleValueWidth =
           nextValueWidthAtBaseFontSize > 0
             ? Math.ceil(nextValueWidthAtBaseFontSize) + CARET_BUFFER
             : 0;
+        const unitWidth = shouldShowInputUnit
+          ? Math.ceil(measuredUnitWidthAtBaseFontSize) + 2
+          : 0;
 
         return {
           fittingFontSize: MAIN_FONT_SIZE,
+          prefixWidth,
           valueInputWidth: undefined,
-          unitLeft: visibleValueWidth + UNIT_GAP,
-          unitWidth: Math.ceil(measuredUnitWidthAtBaseFontSize) + 2,
+          unitLeft: shouldShowInputUnit
+            ? prefixWidth + visibleValueWidth + UNIT_GAP
+            : 0,
+          unitWidth,
           isMinCompactLayout: false,
         };
       }
@@ -381,12 +399,19 @@ export const SendAmountInput = ({
         fontSize >= MIN_AMOUNT_FONT_SIZE;
         fontSize -= AMOUNT_FONT_SIZE_STEP
       ) {
+        const scaledPrefixWidth =
+          (prefixWidthAtBaseFontSize * fontSize) / MAIN_FONT_SIZE;
         const scaledValueWidth =
           (nextValueWidthAtBaseFontSize * fontSize) / MAIN_FONT_SIZE;
-        const scaledUnitWidth =
-          (measuredUnitWidthAtBaseFontSize * fontSize) / MAIN_FONT_SIZE;
+        const scaledUnitWidth = shouldShowInputUnit
+          ? (measuredUnitWidthAtBaseFontSize * fontSize) / MAIN_FONT_SIZE
+          : 0;
         const totalWidth =
-          scaledValueWidth + scaledUnitWidth + AMOUNT_UNIT_RESERVED_WIDTH;
+          scaledPrefixWidth +
+          scaledValueWidth +
+          CARET_BUFFER +
+          scaledUnitWidth +
+          unitGap;
 
         if (totalWidth <= inputAreaWidth) {
           nextFittingFontSize = fontSize;
@@ -394,13 +419,16 @@ export const SendAmountInput = ({
         }
       }
 
+      const minPrefixWidth =
+        (prefixWidthAtBaseFontSize * MIN_AMOUNT_FONT_SIZE) / MAIN_FONT_SIZE;
       const minValueWidth =
         (nextValueWidthAtBaseFontSize * MIN_AMOUNT_FONT_SIZE) / MAIN_FONT_SIZE;
-      const minUnitWidth =
-        (measuredUnitWidthAtBaseFontSize * MIN_AMOUNT_FONT_SIZE) /
-        MAIN_FONT_SIZE;
+      const minUnitWidth = shouldShowInputUnit
+        ? (measuredUnitWidthAtBaseFontSize * MIN_AMOUNT_FONT_SIZE) /
+          MAIN_FONT_SIZE
+        : 0;
       const minTotalWidth =
-        minValueWidth + minUnitWidth + AMOUNT_UNIT_RESERVED_WIDTH;
+        minPrefixWidth + minValueWidth + CARET_BUFFER + minUnitWidth + unitGap;
       const isMinCompactLayout =
         nextFittingFontSize === MIN_AMOUNT_FONT_SIZE &&
         minTotalWidth > inputAreaWidth;
@@ -410,11 +438,19 @@ export const SendAmountInput = ({
 
       const valueWidth =
         (nextValueWidthAtBaseFontSize * nextFittingFontSize) / MAIN_FONT_SIZE;
-      const scaledUnitWidth =
-        (measuredUnitWidthAtBaseFontSize * nextFittingFontSize) /
-        MAIN_FONT_SIZE;
+      const prefixWidth = Math.ceil(
+        (prefixWidthAtBaseFontSize * nextFittingFontSize) / MAIN_FONT_SIZE,
+      );
+      const scaledUnitWidth = shouldShowInputUnit
+        ? (measuredUnitWidthAtBaseFontSize * nextFittingFontSize) /
+          MAIN_FONT_SIZE
+        : 0;
+      const unitWidth = shouldShowInputUnit
+        ? Math.ceil(scaledUnitWidth) + 2
+        : 0;
+      const reservedAfterValue = shouldShowInputUnit ? UNIT_GAP + unitWidth : 0;
       const maxValueWidth = Math.max(
-        effectiveInputAreaWidth - UNIT_GAP - Math.ceil(scaledUnitWidth),
+        effectiveInputAreaWidth - prefixWidth - reservedAfterValue,
         1,
       );
       const visibleValueWidth = Math.min(
@@ -422,12 +458,13 @@ export const SendAmountInput = ({
         maxValueWidth,
       );
 
-      const unitWidth = Math.ceil(scaledUnitWidth) + 2;
-
       return {
         fittingFontSize: nextFittingFontSize,
+        prefixWidth,
         valueInputWidth: maxValueWidth,
-        unitLeft: visibleValueWidth + UNIT_GAP,
+        unitLeft: shouldShowInputUnit
+          ? prefixWidth + visibleValueWidth + UNIT_GAP
+          : 0,
         unitWidth,
         isMinCompactLayout,
       };
@@ -436,11 +473,14 @@ export const SendAmountInput = ({
       getValueWidthAtBaseFontSize,
       inputAreaWidth,
       measuredUnitWidthAtBaseFontSize,
+      prefixWidthAtBaseFontSize,
+      shouldShowInputUnit,
     ],
   );
 
   const {
     fittingFontSize,
+    prefixWidth,
     valueInputWidth,
     unitLeft,
     unitWidth,
@@ -449,7 +489,7 @@ export const SendAmountInput = ({
     () => getAmountLayout(textForMeasure),
     [getAmountLayout, textForMeasure],
   );
-  const inputLeft = 0;
+  const inputLeft = prefixWidth;
   const inputWidth = valueInputWidth;
   const normalizedSelectionStart = Math.max(
     0,
@@ -477,6 +517,10 @@ export const SendAmountInput = ({
 
   const applyUnitLayoutNative = useCallback(
     (nextValue: string) => {
+      if (!shouldShowInputUnit) {
+        return;
+      }
+
       const nextLayout = getAmountLayout(getDisplayAmountValue(nextValue));
       const nextVerticalLayout = getAmountVerticalLayout(
         nextLayout.fittingFontSize,
@@ -493,7 +537,7 @@ export const SendAmountInput = ({
         },
       });
     },
-    [getAmountLayout],
+    [getAmountLayout, shouldShowInputUnit],
   );
 
   const handleInputAreaLayout = (event: LayoutChangeEvent) => {
@@ -521,26 +565,18 @@ export const SendAmountInput = ({
     setUnitWidthAtBaseFontSize(event.nativeEvent.lines[0]?.width || 0);
   };
 
-  const handleQuoteCharMeasure = (
-    char: string,
-    event: NativeSyntheticEvent<TextLayoutEventData>,
-  ) => {
-    const width = event.nativeEvent.lines[0]?.width || 0;
-    setQuoteCharWidths(prev =>
-      prev[char] === width
-        ? prev
-        : {
-            ...prev,
-            [char]: width,
-          },
-    );
-  };
+  const handleQuoteRowLayout = useCallback((event: LayoutChangeEvent) => {
+    const width = Math.ceil(event.nativeEvent.layout.width);
+    setQuoteRowWidth(prev => (prev === width ? prev : width));
+  }, []);
 
-  const handleQuoteUnitMeasure = (
-    event: NativeSyntheticEvent<TextLayoutEventData>,
-  ) => {
-    setQuoteUnitWidth(event.nativeEvent.lines[0]?.width || 0);
-  };
+  const handleQuoteMeasure = useCallback(
+    (event: NativeSyntheticEvent<TextLayoutEventData>) => {
+      const width = Math.ceil(event.nativeEvent.lines[0]?.width || 0);
+      setQuoteNaturalWidth(prev => (prev === width ? prev : width));
+    },
+    [],
+  );
 
   const handleInputSelectionChange = useCallback(
     (event: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
@@ -661,30 +697,24 @@ export const SendAmountInput = ({
     });
   }, [onSwitchMode, tokenInputRef]);
 
-  const fallbackQuoteCharWidth =
-    quoteCharWidths['0'] || QUOTE_TEXT_FONT_SIZE * 0.56;
-  const fallbackQuoteUnitWidth =
-    Math.max(getTextCharLength(displayQuoteUnitText), 1) *
-    QUOTE_TEXT_FONT_SIZE *
-    0.58;
-  const measuredQuoteUnitWidth = quoteUnitWidth || fallbackQuoteUnitWidth;
-  const quoteTextMaxWidth = Math.max(
-    inputAreaWidth -
-      (canSwitchMode ? 24 : 0) -
-      measuredQuoteUnitWidth -
-      QUOTE_UNIT_GAP,
-    1,
-  );
-  const quoteTextWidth = useMemo(() => {
-    return quoteValueText
-      .split('')
-      .reduce(
-        (sum, char) => sum + (quoteCharWidths[char] || fallbackQuoteCharWidth),
-        0,
-      );
-  }, [fallbackQuoteCharWidth, quoteCharWidths, quoteValueText]);
+  const quoteTextMaxWidth = useMemo(() => {
+    if (!quoteRowWidth) {
+      return 0;
+    }
+
+    const switchReservedWidth = canSwitchMode
+      ? SWITCH_ICON_SIZE + SWITCH_ICON_GAP
+      : 0;
+
+    return Math.max(quoteRowWidth - switchReservedWidth, 1);
+  }, [canSwitchMode, quoteRowWidth]);
   const shouldFixQuoteWidth =
-    !!inputAreaWidth && quoteTextWidth >= quoteTextMaxWidth - 1;
+    !!quoteTextMaxWidth && quoteNaturalWidth >= quoteTextMaxWidth - 1;
+  const quoteTextWidthStyle = quoteTextMaxWidth
+    ? shouldFixQuoteWidth
+      ? { width: quoteTextMaxWidth }
+      : { maxWidth: quoteTextMaxWidth }
+    : null;
 
   const hasValue = !!inputValue || hasDisplayValueOverride;
   const showAmountSkeleton = !hasValue && token.amount > 0 && isEstimatingGas;
@@ -696,7 +726,6 @@ export const SendAmountInput = ({
     amountTextTop,
     unitLineHeight,
     unitTextTop,
-    quoteRowTop,
   } = useMemo(
     () => getAmountVerticalLayout(fittingFontSize, isMinCompactLayout),
     [fittingFontSize, isMinCompactLayout],
@@ -708,231 +737,282 @@ export const SendAmountInput = ({
           width: inputAreaWidth + AMOUNT_MIN_COMPACT_LEFT_OFFSET,
         }
       : null;
-  const compactQuoteRowStyle =
-    isMinCompactLayout && inputAreaWidth
-      ? {
-          marginLeft: -AMOUNT_MIN_COMPACT_LEFT_OFFSET,
-          paddingLeft: AMOUNT_MIN_COMPACT_LEFT_OFFSET,
-          width: inputAreaWidth + AMOUNT_MIN_COMPACT_LEFT_OFFSET,
-          maxWidth: inputAreaWidth + AMOUNT_MIN_COMPACT_LEFT_OFFSET,
-        }
-      : null;
+  const isBalancePressDisabled =
+    balanceDisabled || showBalanceLoading || !onBalancePress;
 
   return (
     <View style={[styles.container, style]}>
-      <SilentTouchableView
-        viewStyle={styles.leftInputContainer}
-        onPress={evt => {
-          evt.stopPropagation();
-          tokenInputRef.current?.focus();
-        }}>
-        <View style={styles.leftInputContent} onLayout={handleInputAreaLayout}>
-          {showAmountSkeleton ? (
-            <CustomSkeleton
-              animation="wave"
-              LinearGradientComponent={Linear}
-              style={styles.skeleton}
-            />
-          ) : (
+      <View style={styles.content}>
+        <View style={styles.topRow}>
+          <SilentTouchableView
+            viewStyle={styles.leftInputContainer}
+            onPress={evt => {
+              evt.stopPropagation();
+              tokenInputRef.current?.focus();
+            }}>
             <View
-              style={[
-                styles.amountRow,
-                {
-                  height: amountRowHeight,
-                },
-                compactAmountRowStyle,
-              ]}>
-              <TextInput
-                ref={tokenInputRef}
-                value={textInputValue}
-                onChangeText={handleInputChange}
-                inputMode="decimal"
-                keyboardType="decimal-pad"
-                numberOfLines={1}
-                multiline={false}
-                scrollEnabled
-                maxLength={inputMaxLength}
-                placeholder={EMPTY_AMOUNT_DISPLAY_VALUE}
-                placeholderTextColor={colors2024['neutral-info']}
-                selectionColor={
-                  IS_ANDROID ? undefined : colors2024['brand-default']
-                }
-                onKeyPress={handleInputKeyPress}
-                onSelectionChange={handleInputSelectionChange}
-                onFocus={handleInputFocus}
-                onBlur={handleInputBlur}
-                style={[
-                  styles.input,
-                  {
-                    top: amountTextTop,
-                    height: amountLineHeight,
-                    lineHeight: amountLineHeight,
-                    left: inputLeft,
-                    fontSize: fittingFontSize,
-                    width: inputWidth,
-                  },
-                  (showStaticEmptyAmount || hasDisplayValueOverride) &&
-                    styles.staticHiddenInput,
-                ]}
-                {...amountInputProps}
-              />
-              {hasDisplayValueOverride ? (
-                <Text
-                  pointerEvents="none"
-                  accessible={false}
-                  accessibilityElementsHidden
-                  importantForAccessibility="no"
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  style={[
-                    styles.displayValueText,
-                    {
-                      top: amountTextTop,
-                      height: amountLineHeight,
-                      lineHeight: amountLineHeight,
-                      left: inputLeft,
-                      fontSize: fittingFontSize,
-                      width: inputWidth,
-                    },
-                  ]}>
-                  {displayValueText}
-                </Text>
-              ) : null}
-              {IS_ANDROID ? (
-                <Text
-                  ref={setUnitTextNodeRef}
-                  pointerEvents="none"
-                  accessible={false}
-                  accessibilityElementsHidden
-                  importantForAccessibility="no"
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  style={[
-                    styles.unitText,
-                    {
-                      top: unitTextTop,
-                      height: unitLineHeight,
-                      lineHeight: unitLineHeight,
-                      fontSize: fittingFontSize,
-                      left: unitLeft,
-                      width: unitWidth,
-                    },
-                    showStaticEmptyAmount && styles.staticHiddenInput,
-                  ]}>
-                  {displayUnitText}
-                </Text>
-              ) : (
-                <TextInput
-                  ref={setUnitTextNodeRef}
-                  value={displayUnitText}
-                  editable={false}
-                  caretHidden
-                  contextMenuHidden
-                  pointerEvents="none"
-                  accessible={false}
-                  accessibilityElementsHidden
-                  importantForAccessibility="no"
-                  numberOfLines={1}
-                  multiline={false}
-                  scrollEnabled={false}
-                  style={[
-                    styles.unitText,
-                    {
-                      top: unitTextTop,
-                      height: unitLineHeight,
-                      lineHeight: unitLineHeight,
-                      fontSize: fittingFontSize,
-                      left: unitLeft,
-                      width: unitWidth,
-                    },
-                    showStaticEmptyAmount && styles.staticHiddenInput,
-                  ]}
+              style={styles.leftInputContent}
+              onLayout={handleInputAreaLayout}>
+              {showAmountSkeleton ? (
+                <CustomSkeleton
+                  animation="wave"
+                  LinearGradientComponent={Linear}
+                  style={styles.skeleton}
                 />
-              )}
-              {showStaticEmptyAmount ? (
+              ) : (
                 <View
-                  pointerEvents="none"
-                  accessible={false}
-                  accessibilityElementsHidden
-                  importantForAccessibility="no"
-                  style={styles.staticEmptyAmountRow}>
-                  <Text numberOfLines={1} style={styles.staticEmptyAmountText}>
-                    {EMPTY_AMOUNT_DISPLAY_VALUE}
-                  </Text>
-                  <Text numberOfLines={1} style={styles.staticUnitText}>
-                    {displayUnitText}
-                  </Text>
+                  style={[
+                    styles.amountRow,
+                    {
+                      height: amountRowHeight,
+                    },
+                    compactAmountRowStyle,
+                  ]}>
+                  {displayInputPrefixText ? (
+                    <Text
+                      pointerEvents="none"
+                      accessible={false}
+                      accessibilityElementsHidden
+                      importantForAccessibility="no"
+                      numberOfLines={1}
+                      style={[
+                        styles.inputPrefixText,
+                        {
+                          top: amountTextTop,
+                          height: amountLineHeight,
+                          lineHeight: amountLineHeight,
+                          fontSize: fittingFontSize,
+                          width: prefixWidth,
+                        },
+                        showStaticEmptyAmount && styles.staticHiddenInput,
+                      ]}>
+                      {displayInputPrefixText}
+                    </Text>
+                  ) : null}
+                  <TextInput
+                    ref={tokenInputRef}
+                    value={textInputValue}
+                    onChangeText={handleInputChange}
+                    inputMode="decimal"
+                    keyboardType="decimal-pad"
+                    numberOfLines={1}
+                    multiline={false}
+                    scrollEnabled
+                    maxLength={inputMaxLength}
+                    placeholder={EMPTY_AMOUNT_DISPLAY_VALUE}
+                    placeholderTextColor={colors2024['neutral-info']}
+                    selectionColor={colors2024['brand-default']}
+                    cursorColor={colors2024['brand-default']}
+                    onKeyPress={handleInputKeyPress}
+                    onSelectionChange={handleInputSelectionChange}
+                    onFocus={handleInputFocus}
+                    onBlur={handleInputBlur}
+                    style={[
+                      styles.input,
+                      {
+                        top: amountTextTop,
+                        height: amountLineHeight,
+                        lineHeight: amountLineHeight,
+                        left: inputLeft,
+                        fontSize: fittingFontSize,
+                        width: inputWidth,
+                      },
+                      (showStaticEmptyAmount || hasDisplayValueOverride) &&
+                        styles.staticHiddenInput,
+                    ]}
+                    {...amountInputProps}
+                  />
+                  {hasDisplayValueOverride ? (
+                    <Text
+                      pointerEvents="none"
+                      accessible={false}
+                      accessibilityElementsHidden
+                      importantForAccessibility="no"
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                      style={[
+                        styles.displayValueText,
+                        {
+                          top: amountTextTop,
+                          height: amountLineHeight,
+                          lineHeight: amountLineHeight,
+                          left: inputLeft,
+                          fontSize: fittingFontSize,
+                          width: inputWidth,
+                        },
+                      ]}>
+                      {displayValueText}
+                    </Text>
+                  ) : null}
+                  {shouldShowInputUnit ? (
+                    IS_ANDROID ? (
+                      <Text
+                        ref={setUnitTextNodeRef}
+                        pointerEvents="none"
+                        accessible={false}
+                        accessibilityElementsHidden
+                        importantForAccessibility="no"
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                        style={[
+                          styles.unitText,
+                          {
+                            top: unitTextTop,
+                            height: unitLineHeight,
+                            lineHeight: unitLineHeight,
+                            fontSize: fittingFontSize,
+                            left: unitLeft,
+                            width: unitWidth,
+                          },
+                          showStaticEmptyAmount && styles.staticHiddenInput,
+                        ]}>
+                        {displayUnitText}
+                      </Text>
+                    ) : (
+                      <TextInput
+                        ref={setUnitTextNodeRef}
+                        value={displayUnitText}
+                        editable={false}
+                        caretHidden
+                        contextMenuHidden
+                        pointerEvents="none"
+                        accessible={false}
+                        accessibilityElementsHidden
+                        importantForAccessibility="no"
+                        numberOfLines={1}
+                        multiline={false}
+                        scrollEnabled={false}
+                        style={[
+                          styles.unitText,
+                          {
+                            top: unitTextTop,
+                            height: unitLineHeight,
+                            lineHeight: unitLineHeight,
+                            fontSize: fittingFontSize,
+                            left: unitLeft,
+                            width: unitWidth,
+                          },
+                          showStaticEmptyAmount && styles.staticHiddenInput,
+                        ]}
+                      />
+                    )
+                  ) : null}
+                  {showStaticEmptyAmount ? (
+                    <View
+                      pointerEvents="none"
+                      accessible={false}
+                      accessibilityElementsHidden
+                      importantForAccessibility="no"
+                      style={styles.staticEmptyAmountRow}>
+                      {displayInputPrefixText ? (
+                        <Text
+                          numberOfLines={1}
+                          style={styles.staticInputPrefixText}>
+                          {displayInputPrefixText}
+                        </Text>
+                      ) : null}
+                      <Text
+                        numberOfLines={1}
+                        style={styles.staticEmptyAmountText}>
+                        {EMPTY_AMOUNT_DISPLAY_VALUE}
+                      </Text>
+                      {shouldShowInputUnit ? (
+                        <Text numberOfLines={1} style={styles.staticUnitText}>
+                          {displayUnitText}
+                        </Text>
+                      ) : null}
+                    </View>
+                  ) : null}
                 </View>
-              ) : null}
+              )}
             </View>
-          )}
+          </SilentTouchableView>
+
+          <View style={styles.rightControls}>
+            {!hasValue && token.amount > 0 && !isEstimatingGas ? (
+              <TouchableOpacity
+                disabled={isEstimatingGas}
+                style={styles.maxButtonWrapper}
+                onPress={handleClickMaxButton}
+                {...maxButtonProps}>
+                <Text style={styles.maxButtonText}>MAX</Text>
+              </TouchableOpacity>
+            ) : null}
+            <View style={styles.divider} />
+            <TokenSelect
+              accountInScreen={currentAccount}
+              chainId=""
+              token={token}
+              disableItemCheck={disableItemCheck}
+              onTokenChange={handleCurrentTokenChange}
+              type="send"
+              placeholder={placeholder}
+              supportChains={[]}
+              style={styles.tokenSelect}
+              {...tokenSelectProps}
+            />
+          </View>
+        </View>
+
+        <View style={styles.bottomRow}>
           {showQuote ? (
             <TouchableOpacity
               activeOpacity={canSwitchMode ? 0.7 : 1}
               disabled={!canSwitchMode}
               onPress={handleSwitchModePress}
-              style={[
-                styles.quoteRow,
-                {
-                  top: quoteRowTop,
-                },
-                compactQuoteRowStyle,
-              ]}
+              style={styles.quoteRow}
+              onLayout={handleQuoteRowLayout}
               hitSlop={8}>
               <Text
-                style={[
-                  styles.quoteText,
-                  inputAreaWidth
-                    ? shouldFixQuoteWidth
-                      ? { width: quoteTextMaxWidth }
-                      : { maxWidth: quoteTextMaxWidth }
-                    : null,
-                ]}
+                style={[styles.quoteText, quoteTextWidthStyle]}
                 ellipsizeMode="tail"
                 numberOfLines={1}>
-                {quoteValueText}
-              </Text>
-              <Text style={styles.quoteUnitText} numberOfLines={1}>
-                {displayQuoteUnitText}
+                {quoteText}
               </Text>
               {canSwitchMode ? (
-                <View style={styles.switchIconWrapper}>
-                  <RcIconSwitchCC
+                <View style={styles.switchIcon}>
+                  <RcIconAmountModeSwitch
                     fillColor={colors2024['neutral-line']}
-                    strokeColor={colors2024['neutral-body']}
-                    width={20}
-                    height={20}
+                    iconColor={colors2024['neutral-foot']}
                   />
                 </View>
               ) : null}
             </TouchableOpacity>
-          ) : null}
-        </View>
-      </SilentTouchableView>
+          ) : (
+            <View style={styles.quotePlaceholder} />
+          )}
 
-      <View style={styles.rightControls}>
-        {!hasValue && token.amount > 0 && !isEstimatingGas ? (
+          <View style={styles.bottomRowSpacer} />
+
           <TouchableOpacity
-            disabled={isEstimatingGas}
-            style={styles.maxButtonWrapper}
-            onPress={handleClickMaxButton}
-            {...maxButtonProps}>
-            <Text style={styles.maxButtonText}>MAX</Text>
+            activeOpacity={isBalancePressDisabled ? 1 : 0.7}
+            disabled={isBalancePressDisabled}
+            onPress={onBalancePress}
+            style={styles.balanceArea}
+            hitSlop={8}>
+            {showBalanceLoading ? (
+              <CustomSkeleton
+                animation="wave"
+                LinearGradientComponent={Linear}
+                style={styles.balanceSkeleton}
+              />
+            ) : balanceText ? (
+              <>
+                <RcIconWalletCC
+                  width={16}
+                  height={16}
+                  color={colors2024['neutral-foot']}
+                />
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={styles.balanceText}>
+                  {balanceText}
+                </Text>
+              </>
+            ) : null}
           </TouchableOpacity>
-        ) : null}
-        <View style={styles.divider} />
-        <TokenSelect
-          accountInScreen={currentAccount}
-          chainId=""
-          token={token}
-          disableItemCheck={disableItemCheck}
-          onTokenChange={handleCurrentTokenChange}
-          type="send"
-          placeholder={placeholder}
-          supportChains={[]}
-          style={styles.tokenSelect}
-          {...tokenSelectProps}
-        />
+        </View>
       </View>
 
       {AMOUNT_MEASURE_CHARS.map(char => (
@@ -950,21 +1030,14 @@ export const SendAmountInput = ({
         style={[styles.measureText, styles.measureUnitText]}>
         {displayUnitText}
       </Text>
-      {QUOTE_MEASURE_CHARS.map(char => (
+      {showQuote ? (
         <Text
-          key={`quote-${char}`}
           numberOfLines={1}
-          onTextLayout={event => handleQuoteCharMeasure(char, event)}
+          onTextLayout={handleQuoteMeasure}
           style={[styles.measureText, styles.measureQuoteText]}>
-          {char}
+          {quoteText}
         </Text>
-      ))}
-      <Text
-        numberOfLines={1}
-        onTextLayout={handleQuoteUnitMeasure}
-        style={[styles.measureText, styles.measureQuoteText]}>
-        {displayQuoteUnitText}
-      </Text>
+      ) : null}
     </View>
   );
 };
@@ -975,18 +1048,26 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       borderRadius: 16,
       backgroundColor: colors2024['neutral-bg-2'],
       height: AMOUNT_CONTAINER_HEIGHT,
+      paddingHorizontal: 16,
+      paddingVertical: 20,
+      overflow: 'hidden',
+    },
+    content: {
+      height: AMOUNT_CONTENT_HEIGHT,
+      gap: AMOUNT_ROW_GAP,
+    },
+    topRow: {
+      height: AMOUNT_ROW_HEIGHT,
       flexDirection: 'row',
       alignItems: 'center',
-      paddingRight: 16,
-      overflow: 'hidden',
     },
     leftInputContainer: {
       flex: 1,
       minWidth: 0,
-      paddingLeft: 16,
+      height: AMOUNT_ROW_HEIGHT,
     },
     leftInputContent: {
-      height: AMOUNT_CONTENT_HEIGHT,
+      height: AMOUNT_ROW_HEIGHT,
       position: 'relative',
     },
     amountRow: {
@@ -997,10 +1078,24 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       right: 0,
       overflow: 'hidden',
     },
+    inputPrefixText: {
+      position: 'absolute',
+      left: 0,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-title-1'],
+      includeFontPadding: false,
+      padding: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
+      textAlignVertical: 'center',
+      overflow: 'hidden',
+      zIndex: 2,
+    },
     input: {
       position: 'absolute',
       left: 0,
-      fontWeight: '900',
+      fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
       color: colors2024['neutral-title-1'],
       padding: 0,
@@ -1015,7 +1110,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     displayValueText: {
       position: 'absolute',
       left: 0,
-      fontWeight: '900',
+      fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
       color: colors2024['neutral-title-1'],
       padding: 0,
@@ -1053,10 +1148,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       overflow: 'hidden',
       zIndex: 3,
     },
+    staticInputPrefixText: {
+      color: colors2024['neutral-title-1'],
+      fontSize: MAIN_FONT_SIZE,
+      fontWeight: '700',
+      lineHeight: AMOUNT_DEFAULT_LINE_HEIGHT,
+      fontFamily: 'SF Pro Rounded',
+      includeFontPadding: false,
+      padding: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
+    },
     staticEmptyAmountText: {
       color: colors2024['neutral-info'],
       fontSize: MAIN_FONT_SIZE,
-      fontWeight: '900',
+      fontWeight: '700',
       lineHeight: AMOUNT_DEFAULT_LINE_HEIGHT,
       fontFamily: 'SF Pro Rounded',
       includeFontPadding: false,
@@ -1076,42 +1182,47 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       paddingTop: 0,
       paddingBottom: 0,
     },
-    quoteRow: {
-      position: 'absolute',
-      left: 0,
+    bottomRow: {
       height: 20,
       flexDirection: 'row',
       alignItems: 'center',
-      alignSelf: 'flex-start',
-      maxWidth: '100%',
+    },
+    quoteRow: {
+      height: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      minWidth: 0,
     },
     quoteText: {
-      color: colors2024['neutral-secondary'],
+      color: colors2024['neutral-foot'],
       fontSize: QUOTE_TEXT_FONT_SIZE,
       fontWeight: '400',
       lineHeight: 18,
       fontFamily: 'SF Pro Rounded',
       flexShrink: 1,
+      minWidth: 0,
     },
-    quoteUnitText: {
-      color: colors2024['neutral-secondary'],
-      fontSize: QUOTE_TEXT_FONT_SIZE,
-      fontWeight: '400',
-      lineHeight: 18,
-      fontFamily: 'SF Pro Rounded',
+    quotePlaceholder: {
+      flex: 1,
+      minWidth: 0,
+    },
+    bottomRowSpacer: {
+      width: BOTTOM_ROW_PROTECTED_GAP,
       flexShrink: 0,
-      marginLeft: QUOTE_UNIT_GAP,
     },
-    switchIconWrapper: {
-      width: 20,
-      height: 20,
-      marginLeft: 4,
+    switchIcon: {
+      width: SWITCH_ICON_SIZE,
+      height: SWITCH_ICON_SIZE,
+      marginLeft: SWITCH_ICON_GAP,
+      flexShrink: 0,
       transform: [{ rotate: '-90deg' }],
     },
     rightControls: {
       flexDirection: 'row',
       alignItems: 'center',
       flexShrink: 0,
+      height: AMOUNT_ROW_HEIGHT,
       gap: 12,
       marginLeft: 12,
     },
@@ -1137,14 +1248,37 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     },
     skeleton: {
       marginTop: 0,
-      marginBottom: 4,
       backgroundColor: colors2024['neutral-line'],
-      height: 36,
+      height: AMOUNT_ROW_HEIGHT,
       width: 120,
       borderRadius: 100,
     },
     skeletonLinear: {
       height: '100%',
+    },
+    balanceArea: {
+      maxWidth: BALANCE_AREA_WIDTH,
+      height: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexShrink: 0,
+      gap: 4,
+    },
+    balanceText: {
+      color: colors2024['neutral-foot'],
+      fontSize: 14,
+      fontWeight: '400',
+      lineHeight: 18,
+      fontFamily: 'SF Pro Rounded',
+      maxWidth: BALANCE_AREA_WIDTH - 20,
+      flexShrink: 1,
+      minWidth: 0,
+    },
+    balanceSkeleton: {
+      backgroundColor: colors2024['neutral-line'],
+      height: 16,
+      width: 100,
+      borderRadius: 8,
     },
     measureText: {
       position: 'absolute',
@@ -1154,7 +1288,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     },
     measureValueText: {
       fontFamily: 'SF Pro Rounded',
-      fontWeight: '900',
+      fontWeight: '700',
       fontSize: MAIN_FONT_SIZE,
       lineHeight: AMOUNT_DEFAULT_LINE_HEIGHT,
     },

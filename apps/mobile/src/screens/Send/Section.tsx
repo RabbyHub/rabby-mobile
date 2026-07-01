@@ -5,15 +5,13 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { View, TouchableOpacity } from 'react-native';
-import { Skeleton } from '@rneui/themed';
+import { View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   apiSendToken,
   useInputBlurOnEvents,
   useSendTokenFormValuesSelector,
-  useSendTokenInternalSelector,
   useSendTokenInternalShallowSelector,
   useSendTokenScreenChainToken,
   useSendTokenScreenStateSelector,
@@ -22,7 +20,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { MINIMUM_GAS_LIMIT } from '@/constant/gas';
 import { checkIfTokenBalanceEnough, getTokenSymbol } from '@/utils/token';
-import { noop } from 'lodash';
 import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { tokenAmountBn } from '../Swap/utils';
@@ -163,57 +160,29 @@ const BalanceHeader = React.memo(function BalanceHeader() {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
-  const { handleClickMaxButton, currentTokenBalance } =
-    useSendTokenInternalShallowSelector(ctx => ({
-      handleClickMaxButton: ctx.callbacks.handleClickMaxButton,
-      currentTokenBalance: ctx.computed.currentTokenBalance,
-    }));
-  const {
-    balanceError,
-    balanceWarn,
-    isLoading,
-    showBalanceLoading,
-    showGasReserved,
-  } = useSendTokenScreenStateShallowSelector(state => ({
-    balanceError: state.balanceError,
-    balanceWarn: state.balanceWarn,
-    isLoading: state.isLoading,
-    showBalanceLoading: state.showBalanceLoading,
-    showGasReserved: state.showGasReserved,
+  const { currentTokenBalance } = useSendTokenInternalShallowSelector(ctx => ({
+    currentTokenBalance: ctx.computed.currentTokenBalance,
   }));
+  const { balanceError, balanceWarn, showGasReserved } =
+    useSendTokenScreenStateShallowSelector(state => ({
+      balanceError: state.balanceError,
+      balanceWarn: state.balanceWarn,
+      showGasReserved: state.showGasReserved,
+    }));
+  const showIssue = !showGasReserved && (balanceError || balanceWarn);
 
   return (
     <View style={styles.titleSection}>
       <Text style={styles.sectionTitle}>{t('page.sendToken.newAmount')}</Text>
-      <TouchableOpacity
-        style={styles.balanceArea}
-        onPress={isLoading ? noop : handleClickMaxButton}>
-        {showBalanceLoading ? (
-          <Skeleton style={{ width: 100, height: 16 }} />
-        ) : (
-          <>
-            {!showGasReserved && (balanceError || balanceWarn) ? (
-              <Text style={[styles.issueText]}>
-                {balanceError ? (
-                  <>
-                    {balanceError}: {currentTokenBalance}
-                  </>
-                ) : balanceWarn ? (
-                  <>{balanceWarn}</>
-                ) : null}
-              </Text>
-            ) : (
-              <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={styles.balanceText}>
-                {t('page.sendToken.sectionBalance.title')}:{' '}
-                {currentTokenBalance}
-              </Text>
-            )}
-          </>
-        )}
-      </TouchableOpacity>
+      {showIssue ? (
+        <Text style={styles.issueText} numberOfLines={1} ellipsizeMode="tail">
+          {balanceError
+            ? `${balanceError}: ${currentTokenBalance}`
+            : balanceWarn}
+        </Text>
+      ) : (
+        <View style={styles.titleRightSpacer} />
+      )}
     </View>
   );
 });
@@ -224,6 +193,7 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
     chainItem,
     checkCexSupport,
     currentToken,
+    currentTokenBalance,
     directSignBtnRef,
     disableItemCheck,
     handleClickMaxButton,
@@ -233,15 +203,19 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
     chainItem: ctx.computed.chainItem,
     checkCexSupport: ctx.callbacks.checkCexSupport,
     currentToken: ctx.computed.currentToken,
+    currentTokenBalance: ctx.computed.currentTokenBalance,
     directSignBtnRef: ctx.directSignBtnRef,
     disableItemCheck: ctx.fns.disableItemCheck,
     handleClickMaxButton: ctx.callbacks.handleClickMaxButton,
     handleFieldChange: ctx.callbacks.handleFieldChange,
     setSlider: ctx.callbacks.setSlider,
   }));
-  const isEstimatingGas = useSendTokenScreenStateSelector(
-    state => state.isEstimatingGas,
-  );
+  const { isEstimatingGas, isLoading, showBalanceLoading } =
+    useSendTokenScreenStateShallowSelector(state => ({
+      isEstimatingGas: state.isEstimatingGas,
+      isLoading: state.isLoading,
+      showBalanceLoading: state.showBalanceLoading,
+    }));
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -510,19 +484,18 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
     usdValueFromTokenAmount.lt(0.01)
       ? SMALL_USD_AMOUNT_TEXT
       : undefined;
-  const amountInputUnit = inputMode === 'usd' ? 'USD' : tokenSymbol;
+  const amountInputPrefixText = inputMode === 'usd' ? '$' : '';
+  const amountInputUnit = tokenSymbol;
   const amountInputMaxDecimalPlaces =
     inputMode === 'usd' ? 2 : currentToken.decimals;
   const showQuote = !!activeUsdPrice;
-  const quoteValueText = activeUsdPrice
+  const quoteText = activeUsdPrice
     ? inputMode === 'usd'
-      ? formatTokenQuoteValueText(safeFormAmount)
-      : formatUsdQuoteValueText(safeFormAmount.times(activeUsdPrice))
+      ? `${formatTokenQuoteValueText(safeFormAmount)} ${tokenSymbol}`
+      : `$${formatUsdQuoteValueText(safeFormAmount.times(activeUsdPrice))}`
     : '';
-  const quoteUnit = activeUsdPrice
-    ? inputMode === 'usd'
-      ? tokenSymbol
-      : 'USD'
+  const balanceText = currentTokenBalance
+    ? `${currentTokenBalance} ${tokenSymbol}`
     : '';
   const handleAmountChange =
     inputMode === 'usd' ? handleUsdAmountChange : handleTokenAmountChange;
@@ -536,9 +509,14 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
           value={amountInputValue}
           displayValueText={amountInputDisplayValueText}
           unit={amountInputUnit}
-          quoteValueText={quoteValueText}
-          quoteUnit={quoteUnit}
+          inputPrefixText={amountInputPrefixText}
+          showInputUnit={false}
+          quoteText={quoteText}
           showQuote={showQuote}
+          balanceText={balanceText}
+          showBalanceLoading={showBalanceLoading}
+          balanceDisabled={isLoading}
+          onBalancePress={handleAmountInputMaxButton}
           maxDecimalPlaces={amountInputMaxDecimalPlaces}
           normalizeInputValue={normalizeAmountInputValue}
           onChange={handleAmountChange}
@@ -619,15 +597,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flex: 1,
       height: 4,
     },
-    balanceText: {
-      color: colors2024['neutral-foot'],
-      fontSize: 14,
-      fontWeight: '400',
-      lineHeight: 18,
-      fontFamily: 'SF Pro Rounded',
-      maxWidth: 240,
-    },
-
     titleSection: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -637,9 +606,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingHorizontal: 8,
     },
 
-    balanceArea: {
-      flexDirection: 'row',
-      alignItems: 'center',
+    titleRightSpacer: {
+      width: 197,
+      height: 18,
     },
 
     issueBlock: {
@@ -663,6 +632,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontSize: 14,
       fontWeight: '400',
       lineHeight: 18,
+      maxWidth: 240,
+      textAlign: 'right',
     },
 
     tokenDetail: {
