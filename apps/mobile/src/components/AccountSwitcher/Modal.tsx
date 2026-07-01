@@ -14,11 +14,35 @@ import {
 import { useDappCurrentAccount } from '@/hooks/useDapps';
 import { DappInfo } from '@/core/services/dappService';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import { useSheetModals } from '@/hooks/useSheetModal';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { ITokenItem } from '@/store/tokens';
+
+const PRESENT_RETRY_LIMIT = 5;
+const PRESENT_RETRY_DELAY = 50;
+
+function presentSheetModalWhenReady(
+  modalRef: React.RefObject<AppBottomSheetModal | null>,
+  isCancelled: () => boolean,
+  retryCount = 0,
+) {
+  if (isCancelled()) {
+    return;
+  }
+
+  const modal = modalRef.current;
+  if (modal) {
+    modal.present();
+    return;
+  }
+
+  if (retryCount < PRESENT_RETRY_LIMIT) {
+    setTimeout(() => {
+      presentSheetModalWhenReady(modalRef, isCancelled, retryCount + 1);
+    }, PRESENT_RETRY_DELAY);
+  }
+}
 
 export function AccountSwitcherModal({
   forScene,
@@ -37,10 +61,6 @@ export function AccountSwitcherModal({
 }>) {
   const { isVisible, toggleSceneVisible } = useAccountSceneVisible(forScene);
   const modalRef = useRef<AppBottomSheetModal>(null);
-  const { toggleShowSheetModal } = useSheetModals({
-    selectAddress: modalRef,
-  });
-
   const { styles, colors2024 } = useTheme2024({ getStyle: getModalStyle });
 
   useLayoutEffect(() => {
@@ -54,11 +74,19 @@ export function AccountSwitcherModal({
   }, [forScene, toggleSceneVisible]);
 
   useEffect(() => {
+    let cancelled = false;
+
     if (isVisible) {
       Keyboard.dismiss();
+      presentSheetModalWhenReady(modalRef, () => cancelled);
+    } else {
+      modalRef.current?.close();
     }
-    toggleShowSheetModal('selectAddress', isVisible || 'destroy');
-  }, [isVisible, toggleShowSheetModal]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isVisible]);
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
@@ -134,10 +162,6 @@ export function AccountSwitcherModalInDappWebView({
     '@ActiveDappWebViewModal',
   );
   const modalRef = useRef<AppBottomSheetModal>(null);
-  const { toggleShowSheetModal } = useSheetModals({
-    selectAddress: modalRef,
-  });
-
   const { styles, colors2024 } = useTheme2024({
     getStyle: getModalInDappWebViewStyle,
   });
@@ -155,11 +179,19 @@ export function AccountSwitcherModalInDappWebView({
   }, [toggleSceneVisible]);
 
   useEffect(() => {
+    let cancelled = false;
+
     if (isVisible) {
       Keyboard.dismiss();
+      presentSheetModalWhenReady(modalRef, () => cancelled);
+    } else {
+      modalRef.current?.close();
     }
-    toggleShowSheetModal('selectAddress', isVisible || 'destroy');
-  }, [isVisible, toggleShowSheetModal]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isVisible]);
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {

@@ -143,6 +143,7 @@ export function HeaderBackPressable({
   const { colors2024 } = apisTheme.getColors2024(themeMode);
   return (
     <CustomTouchableOpacity
+      as="RNGHTouchableOpacity"
       {...touchableProps}
       style={[styles.backButtonStyle, style]}
       hitSlop={hitSlop}
@@ -181,6 +182,7 @@ export const useStackScreenConfig = () => {
         headerTintColor: colors['neutral-title-1'],
         headerLeft: ({ tintColor }) => (
           <CustomTouchableOpacity
+            as="RNGHTouchableOpacity"
             style={styles.backButtonStyle}
             hitSlop={24}
             onPress={navBack}>
@@ -712,8 +714,6 @@ const PROTECTED_SCREENS: {
   [RootNames.CreateMnemonic]: getProtectedConf(),
   [RootNames.ImportMnemonic]: getProtectedConf(),
   [RootNames.ImportPrivateKey]: getProtectedConf(),
-  [RootNames.ImportMnemonic2024]: getProtectedConf(),
-  [RootNames.ImportPrivateKey2024]: getProtectedConf(),
   [RootNames.CreateMnemonicBackup]: getProtectedConf(),
   [RootNames.CreateMnemonicVerify]: getProtectedConf(),
   [RootNames.BackupPrivateKey]: getProtectedConf(),

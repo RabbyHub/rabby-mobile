@@ -493,20 +493,32 @@ export const TokenSelectorSheetModal = ({
     route.name === RootNames.SwapBridge ||
     route.name === RootNames.MultiSwapBridge;
 
-  if (isSwapTo && swapToTokenDetail && visible && isFocused && isSwapRoute) {
-    setSwapToTokenDetail(false);
-  }
+  useEffect(() => {
+    if (
+      !isSwapTo ||
+      !swapToTokenDetail ||
+      !visible ||
+      !isFocused ||
+      !isSwapRoute
+    ) {
+      return;
+    }
 
-  if (
-    isSwapTo &&
-    isSwapRoute &&
-    route.params?.isSwapToTokenDetail &&
-    swapToTokenDetail &&
-    visible &&
-    isFocused
-  ) {
-    toggleShowSheetModal('destroy');
-  }
+    if (route.params?.isSwapToTokenDetail) {
+      toggleShowSheetModal('destroy');
+      return;
+    }
+
+    setSwapToTokenDetail(false);
+  }, [
+    isFocused,
+    isSwapRoute,
+    isSwapTo,
+    route.params?.isSwapToTokenDetail,
+    swapToTokenDetail,
+    toggleShowSheetModal,
+    visible,
+  ]);
 
   const currentRoute = getLatestNavigationName();
   const isInInitialRoute = useMemo(() => {

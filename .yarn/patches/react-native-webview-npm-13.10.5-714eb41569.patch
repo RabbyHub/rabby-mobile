@@ -1,3 +1,22 @@
+diff --git a/package.json b/package.json
+index cb38ce1144a1a5b4a5b0a2e08902c7e80e3c1994..60f428a873dfdc8496f1439ffbe2dab83c08ae27 100644
+--- a/package.json
++++ b/package.json
+@@ -95,6 +95,14 @@
+     "jsSrcsDir": "./src",
+     "android": {
+       "javaPackageName": "com.reactnativecommunity.webview"
++    },
++    "ios": {
++      "componentProvider": {
++        "RNCWebView": "RNCWebView"
++      },
++      "modulesProvider": {
++        "RNCWebViewModule": "RNCWebViewModule"
++      }
+     }
+   },
+   "packageManager": "yarn@1.22.19"
 diff --git a/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java b/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
 index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..f9efa2311cbf387d6fb0bd5606f1197b4d3424c1 100644
 --- a/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
@@ -461,11 +480,10 @@ diff --git a/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewMana
 index 5bae4aa9e66897473a9083a2c9320c99d72e80d7..456547621a60911296e878fe45d9aa55ae6ebf80 100644
 --- a/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java
 +++ b/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java
-@@ -331,6 +331,12 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper>
+@@ -331,6 +331,11 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper>
          mRNCWebViewManagerImpl.setWebviewDebuggingEnabled(view, value);
      }
  
-+    @Override
 +    @ReactProp(name = "disableJsPromptLike")
 +    public void setDisableJsPromptLike(RNCWebViewWrapper view, boolean value) {
 +        mRNCWebViewManagerImpl.setDisableJsPromptLike(view, value);
@@ -819,3 +837,21 @@ index 7cbd83521257c1a730cca632a712737253dcddab..9a7011445029fbbd22524879f8fc0128
 +    disableJsPromptLike?: boolean;
  }
  export {};
+diff --git a/src/RNCWebViewNativeComponent.ts b/src/RNCWebViewNativeComponent.ts
+index a6e72f0f8e2e29dc064452c35ef0d4d4d08b3f98..1c645b31ef387f9f23f73f73a1dc3db7edb7fd63 100644
+--- a/src/RNCWebViewNativeComponent.ts
++++ b/src/RNCWebViewNativeComponent.ts
+@@ -80,4 +80,5 @@ export type WebViewNavigationEvent = Readonly<{
+     | 'formresubmit'
+     | 'other';
+   mainDocumentURL?: string;
++  isReload?: boolean;
+ }>;
+@@ -218,6 +219,7 @@ export interface NativeProps extends ViewProps {
+   decelerationRate?: Double;
+   directionalLockEnabled?: boolean;
+   enableApplePay?: boolean;
++  disableJsPromptLike?: boolean;
+   hideKeyboardAccessoryView?: boolean;
+   keyboardDisplayRequiresUserAction?: boolean;
+   limitsNavigationsToAppBoundDomains?: boolean;

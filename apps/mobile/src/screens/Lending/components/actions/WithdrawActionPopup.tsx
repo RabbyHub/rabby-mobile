@@ -56,7 +56,6 @@ import { useRefreshHistoryId } from '../../hooks';
 import wrapperToken from '../../config/wrapperToken';
 import { calculateMaxWithdrawAmount } from '../../utils/calculateMaxWithdrawAmount';
 import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
-import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';

@@ -14,7 +14,8 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import { RabbyFlatList as TabsFlatList } from '@rabby-wallet/react-native-collapsible-tab-view/src/RabbyFlatList';
+import { useCurrentTabScrollY } from '@rabby-wallet/react-native-collapsible-tab-view/src/hooks';
 import { useShallow } from 'zustand/shallow';
 
 import { ASSETS_ITEM_HEIGHT_NEW, RootNames } from '@/constant/layout';
@@ -59,7 +60,6 @@ import {
   HOME_TOP_HEADER_SIZES,
   SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
 } from '@/constant/home';
-import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
 import {
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,

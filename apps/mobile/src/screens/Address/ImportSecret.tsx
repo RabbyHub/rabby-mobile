@@ -1,10 +1,5 @@
 import { useTheme2024 } from '@/hooks/theme';
-import React, {
-  useMemo,
-  useCallback,
-  useEffect,
-  useDeferredValue,
-} from 'react';
+import React, { useMemo, useCallback, useEffect } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import { navigateDeprecated, replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
@@ -14,7 +9,6 @@ import { NextInput } from '@/components2024/Form/Input';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   Keyboard,
-  Pressable,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
@@ -39,6 +33,7 @@ import * as SecretVault from '@/core/utils/secretVault';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 /** Toast position at the top of screen */
 const TOAST_POSITION_TOP = 30;
@@ -134,7 +129,9 @@ export const ImportSecret = ({ route }: ScreenProps) => {
   const TabToggle = useCallback(() => {
     return (
       <View style={styles.tabContainer}>
-        <Pressable
+        <CustomTouchableOpacity
+          as="RNGHTouchableOpacity"
+          activeOpacity={1}
           style={[styles.tab, activeTab === 'seedPhrase' && styles.tabActive]}
           onPress={() => handleTabChange('seedPhrase')}>
           <Text
@@ -144,8 +141,10 @@ export const ImportSecret = ({ route }: ScreenProps) => {
             ]}>
             {t('page.manageAddress.seed-phrase')}
           </Text>
-        </Pressable>
-        <Pressable
+        </CustomTouchableOpacity>
+        <CustomTouchableOpacity
+          as="RNGHTouchableOpacity"
+          activeOpacity={1}
           style={[styles.tab, activeTab === 'privateKey' && styles.tabActive]}
           onPress={() => handleTabChange('privateKey')}
           {...makeTestIDProps(E2E_ID.onboarding.privateKeyTab)}>
@@ -156,7 +155,7 @@ export const ImportSecret = ({ route }: ScreenProps) => {
             ]}>
             {t('page.manageAddress.private-key')}
           </Text>
-        </Pressable>
+        </CustomTouchableOpacity>
       </View>
     );
   }, [activeTab, handleTabChange, styles, t]);
@@ -332,14 +331,10 @@ export const ImportSecret = ({ route }: ScreenProps) => {
   // Handle scanner result
   React.useEffect(() => {
     if (scanner.text) {
-      if (activeTab === 'seedPhrase') {
-        setMnemonics(scanner.text);
-      } else {
-        setPrivateKey(scanner.text);
-      }
+      handleInputChange(scanner.text);
       scanner.clear();
     }
-  }, [scanner, activeTab]);
+  }, [scanner, handleInputChange]);
 
   const isConfirmDisabled = React.useMemo(() => {
     if (activeTab === 'seedPhrase') {
@@ -348,9 +343,8 @@ export const ImportSecret = ({ route }: ScreenProps) => {
     return !privateKey?.trim() || !!privateKeyError;
   }, [activeTab, mnemonics, mnemonicError, privateKey, privateKeyError]);
 
-  const deferredHasInputContent = useDeferredValue(
-    activeTab === 'seedPhrase' ? !!mnemonics?.trim() : !!privateKey?.trim(),
-  );
+  const hasInputContent =
+    activeTab === 'seedPhrase' ? !!mnemonics?.trim() : !!privateKey?.trim();
 
   return (
     <FooterButtonScreenContainer
@@ -419,7 +413,7 @@ export const ImportSecret = ({ route }: ScreenProps) => {
           </View>
 
           {/* Create New Wallet Link - hidden for in_app flow */}
-          {!isInAppFlow && !deferredHasInputContent && (
+          {!isInAppFlow && !hasInputContent && (
             <View style={styles.linkWrapper}>
               <Text style={styles.linkText}>
                 <Trans

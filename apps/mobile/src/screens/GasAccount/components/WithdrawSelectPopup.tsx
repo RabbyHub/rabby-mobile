@@ -363,12 +363,14 @@ const RecipientAddressInnerPopup = ({
           <Text style={[styles.title, styles.contentTitle]}>
             {t('page.gasAccount.withdrawPopup.selectRecipientAddress')}
           </Text>
-          <View style={styles.headerRow}>
-            <Text style={styles.helpText}>
+          <View style={[styles.headerRow, styles.recipientHeaderRow]}>
+            <Text style={[styles.helpText, styles.recipientHeaderText]}>
               {t('page.gasAccount.withdrawPopup.recipientAddress')}
             </Text>
-            <View style={styles.help}>
-              <Text style={styles.helpText}>
+            <View style={[styles.help, styles.recipientLimitHeader]}>
+              <Text
+                style={[styles.helpText, styles.recipientLimitHeaderText]}
+                numberOfLines={1}>
                 {t('page.gasAccount.withdrawPopup.withdrawalLimit')}
               </Text>
               <Pressable onPress={tips}>
@@ -531,6 +533,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginBottom: 6,
     paddingHorizontal: 6,
   },
+  recipientHeaderRow: {
+    gap: 12,
+  },
+  recipientHeaderText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  recipientLimitHeader: {
+    flexShrink: 0,
+    justifyContent: 'flex-end',
+    maxWidth: '54%',
+    minWidth: 128,
+  },
+  recipientLimitHeaderText: {
+    flexShrink: 1,
+    minWidth: 0,
+  },
 
   help: {
     flexDirection: 'row',
@@ -617,6 +636,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   shadowSelected: {
+    width: '100%',
     borderColor: colors2024['neutral-line'],
     borderRadius: 12,
     padding: 6,
@@ -624,9 +644,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
   },
   innerRow: {
+    width: '100%',
     backgroundColor: colors2024['neutral-bg-1'],
     padding: 16,
     flexDirection: 'row',
+    gap: 12,
     justifyContent: 'space-between',
     alignItems: 'center',
     borderColor: colors2024['neutral-line'],
@@ -637,6 +659,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   innerWalletRow: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     gap: 8,
     alignItems: 'center',
@@ -647,11 +671,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 12,
   },
   walletNameContainer: {
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
   innerName: {
+    flexShrink: 1,
+    minWidth: 0,
     fontSize: 16,
     fontWeight: '500',
     lineHeight: 20,
@@ -672,6 +699,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
   },
   limit: {
+    width: 108,
+    flexShrink: 0,
+    textAlign: 'right',
     fontSize: 17,
     fontWeight: '700',
     lineHeight: 22,
@@ -698,19 +728,22 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
   },
   accountContainer: {
-    width: '70%',
+    flex: 1,
+    minWidth: 0,
   },
   fullWidth: {
     width: '100%',
   },
   innerWalletInfo: {
+    flex: 1,
+    minWidth: 0,
     gap: 4,
-    flexShrink: 1,
   },
   scrollMinHeight: {
     minHeight: 364,
   },
   contentGradient: {
+    width: '100%',
     flex: 1,
     paddingHorizontal: 20,
     position: 'relative',

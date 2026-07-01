@@ -61,7 +61,7 @@ import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 
 import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
 
-import { toast } from '@/components2024/Toast';
+import { toast, toastLoading } from '@/components2024/Toast';
 import {
   APP_FEATURE_SWITCH,
   APP_URLS,
@@ -128,7 +128,13 @@ import {
   dropAppDataSourceAndQuitApp,
 } from '@/databases/imports';
 import { AppCacheSizeText } from './components/SpecialText';
-import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
+import {
+  IS_ANDROID,
+  IS_IOS,
+  isBridgelessRuntimeEnabled,
+  isTurboModuleEnabled,
+  isTurboModuleRuntimeEnabled,
+} from '@/core/native/utils';
 import { abortAllSyncTasks } from '@/databases/sync/_task';
 import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
@@ -177,10 +183,12 @@ import {
   SwitchDataAnalysis,
   SwitchUserBehaviorTrackingOptOut,
 } from './components/SwitchUserBehaviorTrackingOptOut';
+import { sleep } from '@/utils/async';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
 };
+const CLEAR_APP_CACHE_EXIT_DELAY_MS = 2000;
 
 const isIOS = Platform.OS === 'ios';
 
@@ -235,6 +243,9 @@ function AlertBuildInfo({
     `rabbit_code_len: ${rabbitCodeLen ?? 'unknown'}`,
     '   ',
     `Hermes Engine: ${IS_HERMES_ENABLED ? 'Enabled' : 'Disabled'}`,
+    `Turbo Module: ${isTurboModuleRuntimeEnabled() ? 'Enabled' : 'Disabled'}`,
+    `Turbo Proxy: ${isTurboModuleEnabled() ? 'Enabled' : 'Disabled'}`,
+    `Bridgeless: ${isBridgelessRuntimeEnabled() ? 'Enabled' : 'Disabled'}`,
     `Strip Console: ${IS_CONSOLE_STRIPPED ? 'Enabled' : 'Disabled'}`,
     `Worker Thread: ${isWorkerThreadRunning() ? 'Enabled' : 'Disabled'}`,
   ];
@@ -320,6 +331,27 @@ function SettingsBlocks() {
   const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
   const { appTheme } = useAppTheme();
   const { t } = useTranslation();
+  const handleClearAndroidAppCache = useCallback(async () => {
+    const hideLoading = toastLoading(
+      t('page.settingModal.clearAppCache.clearingToast'),
+      {
+        blockInteraction: true,
+      },
+    );
+
+    await sleep(50);
+    abortAllSyncTasks();
+    resetUpdateHistoryTime();
+    await dropAppDataSourceAndQuitApp({
+      exitDelayMs: CLEAR_APP_CACHE_EXIT_DELAY_MS,
+    });
+    hideLoading();
+    toast.success(t('page.settingModal.clearAppCache.clearDoneQuitToast'), {
+      duration: CLEAR_APP_CACHE_EXIT_DELAY_MS,
+      hideOnPress: false,
+      position: toast.positions.CENTER,
+    });
+  }, [t]);
   const appThemeText = useMemo(() => {
     return (
       makeThemeOptions(t).find(item => item.value === appTheme)?.title || ''
@@ -682,10 +714,7 @@ function SettingsBlocks() {
                           'page.settingModal.clearAppCache.button.clear_and_quit',
                         ),
                         style: 'destructive',
-                        onPress: async () => {
-                          resetUpdateHistoryTime();
-                          await dropAppDataSourceAndQuitApp();
-                        },
+                        onPress: handleClearAndroidAppCache,
                       },
                 ],
               );

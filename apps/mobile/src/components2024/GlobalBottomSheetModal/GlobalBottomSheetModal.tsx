@@ -33,10 +33,14 @@ type ModalData = {
   ref: React.RefObject<AppBottomSheetModal | null>;
 };
 
+const PRESENT_RETRY_LIMIT = 5;
+const PRESENT_RETRY_DELAY = 50;
+
 let globalRemoveAllModals: ((params?: RemoveParams) => void) | null = null;
 
 export const GlobalBottomSheetModal2024 = () => {
   const modalRefs = React.useRef<Record<string, ModalData['ref']>>({});
+  const presentedModalIds = React.useRef<Set<MODAL_ID>>(new Set());
   const [modals, setModals] = React.useState<ModalData[]>([]);
 
   const removeAllModals = React.useCallback((params?: RemoveParams) => {
@@ -49,6 +53,7 @@ export const GlobalBottomSheetModal2024 = () => {
 
     // Clear all modal refs
     modalRefs.current = {};
+    presentedModalIds.current.clear();
 
     // Clear all modals from state
     setModals([]);
@@ -68,12 +73,21 @@ export const GlobalBottomSheetModal2024 = () => {
     }, {} as Record<string, ModalData['ref']>);
   }, [modals]);
 
-  const handlePresent = React.useCallback<
-    GlobalSheetModalListeners[EVENT_NAMES.PRESENT]
-  >(key => {
-    const currentModal = modalRefs.current[key];
+  const handlePresent = React.useCallback((key: MODAL_ID, retryCount = 0) => {
+    if (presentedModalIds.current.has(key)) {
+      return;
+    }
+
+    const currentModal = modalRefs.current[key]?.current;
 
     if (!currentModal) {
+      if (retryCount < PRESENT_RETRY_LIMIT && modalRefs.current[key]) {
+        setTimeout(() => {
+          handlePresent(key, retryCount + 1);
+        }, PRESENT_RETRY_DELAY);
+        return;
+      }
+
       if (__DEV__) {
         console.warn(
           `[GlobalBottomSheetModal] Modal with key ${key} not found`,
@@ -82,9 +96,27 @@ export const GlobalBottomSheetModal2024 = () => {
       return;
     }
 
-    currentModal.current?.present();
+    currentModal.present();
+    presentedModalIds.current.add(key);
     globalSheetModalEvents.emit(EVENT_NAMES.PRESENTED, key);
   }, []);
+
+  React.useEffect(() => {
+    const pendingModals = modals.filter(
+      modal => !presentedModalIds.current.has(modal.id),
+    );
+    if (!pendingModals.length) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      pendingModals.forEach(modal => handlePresent(modal.id));
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [handlePresent, modals]);
 
   const [getApproval] = useApproval();
 
@@ -137,12 +169,8 @@ export const GlobalBottomSheetModal2024 = () => {
       if (params.screenshotReportFreeBeforeModalClose) {
         storeApiScreenshotReport.markIsScreenshotReportFree(true);
       }
-
-      setTimeout(() => {
-        handlePresent(id);
-      }, 0);
     },
-    [getApproval, handlePresent],
+    [getApproval],
   );
 
   const handleRemove = React.useCallback<
@@ -155,6 +183,7 @@ export const GlobalBottomSheetModal2024 = () => {
       );
     }
     delete modalRefs.current[key];
+    presentedModalIds.current.delete(key);
 
     setModals(prev => {
       return prev.filter(modal => modal.id !== key);

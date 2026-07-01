@@ -58,8 +58,6 @@ export default function buildUnserializedTransaction(txMeta) {
   return TransactionFactory.fromTxData(txParams, { common });
 }
 
-export { sendRequest } from './sendRequest';
-
 export const requestETHRpc = <T = any>(
   data: { method: string; params: any },
   chainId: string,

@@ -99,6 +99,11 @@ build_adhoc() {
   if turbo_build_enabled; then
     turbo_prepare_ios_derived_data;
   fi
+
+  if [ "$SENTRY_DISABLE_AUTO_UPLOAD" == "true" ]; then
+    export GYM_XCARGS="${GYM_XCARGS:+$GYM_XCARGS }SENTRY_DISABLE_AUTO_UPLOAD=true"
+  fi
+
   turbo_bundle_exec exec fastlane ios adhoc;
   build_status=$?
 

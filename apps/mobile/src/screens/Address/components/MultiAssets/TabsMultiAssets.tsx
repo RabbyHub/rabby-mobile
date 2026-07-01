@@ -12,13 +12,16 @@ import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar
 import { TabsTopHeader } from '@/screens/Home/components/OverviewTopHeader';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { RabbyControlledContainer as TabsContainer } from '@rabby-wallet/react-native-collapsible-tab-view/src/RabbyControlledContainer';
+import { Tab as TabsTab } from '@rabby-wallet/react-native-collapsible-tab-view/src/Tab';
 import { isTabsSwiping } from './hooks';
 import { NFTList } from './NFTList';
 import { ProtocolList } from './ProtocolList';
 import { TokenList } from './TokenList';
 import { IS_IOS } from '@/core/native/utils';
 import { HomeOverview } from '@/screens/Home/components/HomeOverview';
+import { homeDrawerAnimateMutable } from '@/screens/Home/hooks/useHomeDrawerAnimate';
+import { useValueFromSharedValue } from '@/hooks/reanimated';
 
 export const TAB_HEADER_FULL_HEIGHT =
   HOME_TOP_HEADER_SIZES.headerHeight +
@@ -27,7 +30,6 @@ export const TAB_HEADER_FULL_HEIGHT =
 interface TabMultiAssetsProps {}
 
 import { HomeTabName as TabName } from '@/hooks/navigation';
-import { MultiAssetsContainer } from '@/components/customized/react-native-collapsible-tab-view/MultiAssetsContainer';
 export { HomeTabName as TabName } from '@/hooks/navigation';
 
 const homeTabScrollerRef = apisHomeTabIndex.homeTabScrollerRef;
@@ -50,6 +52,9 @@ const onIndexChange = (idx: number) => {
 
 export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const isDappDrawerExpanded = useValueFromSharedValue(
+    homeDrawerAnimateMutable.isExpanded,
+  );
 
   const handleTabChange = useCallback(
     ({ prevIndex, index }: { prevIndex: number; index: number }) => {
@@ -71,7 +76,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
     <View style={styles.container}>
       <TabsTopHeader />
       <HomeCustomMaterialTabBar />
-      <MultiAssetsContainer
+      <TabsContainer
         ref={homeTabScrollerRef}
         onIndexChange={onIndexChange}
         onTabChange={handleTabChange}
@@ -93,6 +98,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
         lazy
         cancelLazyFadeIn
         pagerProps={{
+          scrollEnabled: !isDappDrawerExpanded,
           onPageScrollStateChanged: event => {
             isTabsSwiping.value =
               event?.nativeEvent?.pageScrollState !== 'idle';
@@ -101,23 +107,23 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
         }}
         containerStyle={styles.tabsContainer}
         headerContainerStyle={styles.headerContainer}>
-        <Tabs.Tab
+        <TabsTab
           key={TabName.overview}
           name={TabName.overview}
           label={() => null}>
           <HomeOverview />
-        </Tabs.Tab>
+        </TabsTab>
 
-        <Tabs.Tab key={TabName.token} name={TabName.token} label={() => null}>
+        <TabsTab key={TabName.token} name={TabName.token} label={() => null}>
           <TokenList />
-        </Tabs.Tab>
-        <Tabs.Tab key={TabName.defi} name={TabName.defi} label={() => null}>
+        </TabsTab>
+        <TabsTab key={TabName.defi} name={TabName.defi} label={() => null}>
           <ProtocolList />
-        </Tabs.Tab>
-        <Tabs.Tab key={TabName.nft} name={TabName.nft} label={() => null}>
+        </TabsTab>
+        <TabsTab key={TabName.nft} name={TabName.nft} label={() => null}>
           <NFTList />
-        </Tabs.Tab>
-      </MultiAssetsContainer>
+        </TabsTab>
+      </TabsContainer>
     </View>
   );
 };
