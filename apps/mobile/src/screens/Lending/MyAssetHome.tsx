@@ -224,7 +224,6 @@ const MyAssetHome: React.FC = () => {
         removeGlobalBottomSheetModal2024(modalId);
       },
       bottomSheetModalProps: {
-        enableContentPanningGesture: false,
         rootViewType: 'View',
         handleStyle: {
           backgroundColor: colors2024['neutral-bg-1'],
@@ -238,7 +237,6 @@ const MyAssetHome: React.FC = () => {
       name: MODAL_NAMES.LENDING_TOKEN_LIST,
       initialTab: 'borrow',
       bottomSheetModalProps: {
-        enableContentPanningGesture: false,
         rootViewType: 'View',
         handleStyle: {
           backgroundColor: colors2024['neutral-bg-1'],
@@ -509,74 +507,78 @@ const MyAssetHome: React.FC = () => {
 
 export default MyAssetHome;
 
-const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  container: {
-    flex: 1,
-    backgroundColor: colors2024['neutral-bg-1'],
-  },
-  headerContainer: {
-    //flexDirection: 'row',
-    //gap: 16,
-  },
-  listContentContainer: {
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-  },
-  footer: {
-    paddingTop: 12,
-    paddingBottom: 118,
-  },
-  actionBar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    paddingTop: 12,
-    paddingHorizontal: 16,
-    paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
-    backgroundColor: colors2024['neutral-bg-1'],
-  },
-  actionBtnContainer: {
-    flex: 1,
-    backgroundColor: colors2024['neutral-bg-1'],
-  },
-  actionButton: {
-    borderRadius: 12,
-    height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
-  },
-  normalButton: {
-    backgroundColor: colors2024['neutral-line'],
-  },
-  actionGhostTitle: {
-    fontSize: BOTTOM_BUTTON_TEXT_SIZE,
-    lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
-  },
-  actionPrimaryTitle: {
-    fontSize: BOTTOM_BUTTON_TEXT_SIZE,
-    lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-  },
-  item: {
-    marginHorizontal: 0,
-  },
-  emptyContainer: {
-    paddingTop: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyText: {
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-secondary'],
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, safeAreaInsets, isLight }) => ({
+    container: {
+      flex: 1,
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
+    },
+    headerContainer: {
+      //flexDirection: 'row',
+      //gap: 16,
+    },
+    listContentContainer: {
+      paddingVertical: 6,
+      paddingHorizontal: 16,
+    },
+    footer: {
+      paddingTop: 12,
+      paddingBottom: 118,
+    },
+    actionBar: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+      paddingTop: 12,
+      paddingHorizontal: 16,
+      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+      backgroundColor: colors2024['neutral-bg-1'],
+    },
+    actionBtnContainer: {
+      flex: 1,
+      backgroundColor: colors2024['neutral-bg-1'],
+    },
+    actionButton: {
+      borderRadius: 12,
+      height: BOTTOM_BUTTON_DOUBLE_HEIGHT,
+    },
+    normalButton: {
+      backgroundColor: colors2024['neutral-line'],
+    },
+    actionGhostTitle: {
+      fontSize: BOTTOM_BUTTON_TEXT_SIZE,
+      lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-title-1'],
+    },
+    actionPrimaryTitle: {
+      fontSize: BOTTOM_BUTTON_TEXT_SIZE,
+      lineHeight: BOTTOM_BUTTON_TEXT_LINE_HEIGHT,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+    },
+    item: {
+      marginHorizontal: 0,
+    },
+    emptyContainer: {
+      paddingTop: 80,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    emptyText: {
+      fontSize: 14,
+      lineHeight: 18,
+      color: colors2024['neutral-secondary'],
+      fontWeight: '500',
+      fontFamily: 'SF Pro Rounded',
+    },
+  }),
+);

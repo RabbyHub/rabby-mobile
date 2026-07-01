@@ -43,7 +43,7 @@ const CHART_HORIZONTAL_INSET = 66;
 
 const MAX_NETWORTH_FS = 38;
 const MIN_NETWORTH_FS = 24;
-const NETWORTH_FIT_LEN = 7;
+const NETWORTH_FIT_LEN = 9;
 
 const svIsFoldMultiChart = makeMutable(true);
 
@@ -397,7 +397,7 @@ const ChartHeader = React.memo(
             <RefreshNudgedTickerText
               value={formatNetWorth}
               maxLength={24}
-              lineHeight={46}
+              lineHeight={42}
               duration={320}
               style={[
                 styles.netWorth,
@@ -533,8 +533,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
   },
   netWorth: {
-    lineHeight: 46,
-    fontWeight: '800',
+    lineHeight: 42,
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
@@ -552,16 +552,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   changePercent: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '600',
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
   },
   changeTime: {
-    fontSize: 16,
-    fontWeight: '400',
-    lineHeight: 20,
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 18,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     marginLeft: 4,

@@ -47,7 +47,7 @@ export const ScreenLayouts = {
 const SCREEN_WIDTH = Dimensions.get('window').width - 32;
 export const DEFI_CARD_WIDTH = (SCREEN_WIDTH - 12) / 2;
 export const ASSETS_ITEM_HEIGHT = 68;
-export const ASSETS_ITEM_HEIGHT_NEW = 74;
+export const ASSETS_ITEM_HEIGHT_NEW = 68;
 export const DEFI_ITEM_HEIGHT = 200;
 export const ASSETS_SECTION_HEADER = 36;
 export const TOKEN_EMPTY_ROW_HIGHT = 326;
@@ -64,8 +64,8 @@ export const ADDRESS_ENTRY_HEIGHT = 78;
 export const ADDRESS_ENTRY_GAP = 12;
 export const TOGGLE_SPLIT_HEIGHT = 24;
 
-export const FOLD_ASSETS_HEADER_HEIGHT = 46;
-export const FOLD_ASSETS_HEADER_HEIGHT_WITH_PADDING = 46 + 32;
+export const FOLD_ASSETS_HEADER_HEIGHT = 64;
+export const FOLD_ASSETS_HEADER_HEIGHT_WITH_PADDING = 64 + 32;
 export const UNFOLD_ASSETS_HEADER_HEIGHT = 161 + 20;
 export const TAB_HEADER_HEIGHT = 36;
 

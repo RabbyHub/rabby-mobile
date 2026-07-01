@@ -93,7 +93,7 @@ const EmptyItem = () => {
             <View style={styles.left}>
               <TokenIcon
                 tokenSymbol={item.reserve.symbol}
-                size={46}
+                size={40}
                 chainSize={0}
                 chain={chainEnum || CHAINS_ENUM.ETH}
               />
@@ -129,12 +129,15 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     gap: 12,
     borderRadius: 16,
     marginBottom: 120,
-    backgroundColor: colors2024['neutral-bg-1'],
+    marginTop: 12,
+    //backgroundColor: colors2024['neutral-bg-1'],
   },
   listContainer: {
-    paddingHorizontal: 4,
-    paddingTop: 4,
-    paddingBottom: 24,
+    paddingHorizontal: 12,
+    paddingTop: 14,
+    paddingBottom: 4,
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderRadius: 14,
   },
   listHeader: {
     flexDirection: 'row',
@@ -196,7 +199,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   tvl: {
     width: 100,
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
     textAlign: 'right',
@@ -205,9 +208,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   apy: {
     width: 60,
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '500',
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'right',
