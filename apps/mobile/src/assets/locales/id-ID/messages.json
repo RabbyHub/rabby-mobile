@@ -1808,7 +1808,6 @@
         "notErc20": "Tidak ada token ERC20 yang ditemukan di alamat ini",
         "alreadyAdded": "Token ini sudah ditambahkan",
         "alreadyAddedToast": "Token sudah ditambahkan",
-        "added": "Token ditambahkan",
         "addFailed": "Gagal menambahkan token",
         "removeFailed": "Gagal menghapus token"
       }

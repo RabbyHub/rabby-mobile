@@ -24,6 +24,7 @@ export const MODAL_GATE_IDS = {
   syncExtensionNoNewAddresses: 'sync-extension-no-new-addresses',
   gasAccountSwitchLoginAddress: 'gas-account-switch-login-address',
   gasAccountDepositTokenAlert: 'gas-account-deposit-token-alert',
+  gasAccountHeaderMenu: 'gas-account-header-menu',
   perpsAgentsLimit: 'perps-agents-limit',
   perpsDepositToken: 'perps-deposit-token',
   perpsEditTpSlPrice: 'perps-edit-tp-sl-price',

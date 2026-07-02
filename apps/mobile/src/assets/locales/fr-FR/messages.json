@@ -2102,7 +2102,6 @@
         "notErc20": "Aucun token ERC20 trouvé à cette adresse",
         "alreadyAdded": "Ce token a déjà été ajouté",
         "alreadyAddedToast": "Token déjà ajouté",
-        "added": "Token ajouté",
         "addFailed": "Échec de l'ajout du token",
         "removeFailed": "Échec de la suppression du token"
       }
