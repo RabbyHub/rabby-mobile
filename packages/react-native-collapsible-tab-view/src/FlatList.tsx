@@ -1,5 +1,6 @@
 import React from 'react'
 import { FlatList as RNFlatList, FlatListProps } from 'react-native'
+import type { SharedValue } from 'react-native-reanimated'
 
 import { AnimatedFlatList } from './helpers'
 import {
@@ -13,6 +14,10 @@ import {
   useTabsContext,
   useUpdateScrollViewContentSize,
 } from './hooks'
+
+type CollapsibleFlatListProps<T> = FlatListProps<T> & {
+  pullDownDistance?: SharedValue<number>
+}
 
 /**
  * Used as a memo to prevent rerendering too often when the context changes.
@@ -32,15 +37,18 @@ function FlatListImpl<R>(
     style,
     onContentSizeChange,
     refreshControl,
+    pullDownDistance,
     ...rest
-  }: Omit<FlatListProps<R>, 'onScroll'>,
+  }: Omit<CollapsibleFlatListProps<R>, 'onScroll'>,
   passRef: React.Ref<RNFlatList>
 ): React.ReactElement {
   const name = useTabNameContext()
   const { setRef, contentInset } = useTabsContext()
   const ref = useSharedAnimatedRef<RNFlatList<unknown>>(passRef)
 
-  const { scrollHandler, enable } = useScrollHandlerY(name)
+  const { scrollHandler, enable } = useScrollHandlerY(name, {
+    pullDownDistance,
+  })
   const onLayout = useAfterMountEffect(rest.onLayout, () => {
     'worklet'
     // we enable the scroll event after mounting
@@ -127,5 +135,5 @@ function FlatListImpl<R>(
  * Use like a regular FlatList.
  */
 export const FlatList = React.forwardRef(FlatListImpl) as <T>(
-  p: FlatListProps<T> & { ref?: React.Ref<RNFlatList<T>> }
+  p: CollapsibleFlatListProps<T> & { ref?: React.Ref<RNFlatList<T>> }
 ) => React.ReactElement

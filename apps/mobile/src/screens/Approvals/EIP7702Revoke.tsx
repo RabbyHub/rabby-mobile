@@ -17,7 +17,7 @@ import {
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useApprovalsPage } from './useApprovalsPage';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs } from '@rabby-wallet/react-native-collapsible-tab-view/src';
 import { useFocusEffect } from '@react-navigation/native';
 import { SkeletonListByAssets } from './components/Skeleton';
 import { ApprovalsLayouts } from './layout';
@@ -331,7 +331,7 @@ export default function EIP7702RevokeList() {
         refreshControl={
           <RefreshControl
             {...(isIOS && {
-              progressViewOffset: -12,
+              progressViewOffset: ApprovalsLayouts.tabbarHeight,
             })}
             enabled={isSupportedAccount}
             refreshing={refreshing}

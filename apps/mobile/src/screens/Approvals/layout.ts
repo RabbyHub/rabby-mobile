@@ -42,6 +42,7 @@ export const ApprovalsLayouts = {
   assetsItemPadding: 16,
 
   listFooterComponentHeight: 56,
+  listTopGap: 12,
   innerContainerHorizontalOffset: 16,
 
   get riskAlertTooltipMaxWidth() {
