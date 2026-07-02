@@ -18,6 +18,7 @@ import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import { AppRootName, RootNames, makeHeadersPresets } from '@/constant/layout';
+import { APP_FEATURE_SWITCH } from '@/constant';
 import {
   NavigationContainerRef,
   useNavigation,
@@ -867,6 +868,10 @@ export function startSubscribeIOSScreenRecording() {
 }
 
 export function startSubscribeRemoteNotification() {
+  if (!APP_FEATURE_SWITCH.transactionNotification) {
+    return;
+  }
+
   function earlyReturnL1<T = any>(retValue?: T) {
     return retValue;
   }

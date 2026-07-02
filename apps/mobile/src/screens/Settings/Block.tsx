@@ -211,6 +211,7 @@ export type SettingConfBlock = {
     | 'rightNode'
     | 'disabled'
     | 'onDisabledPress'
+    | 'visible'
     | 'testID'
     | 'accessibilityLabel'
   >[];
