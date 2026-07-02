@@ -3340,7 +3340,7 @@
       "receiveSummary": {
         "progress": "전환 진행률",
         "priceImpact": "가격 충격 상한",
-        "gasLimit": "Single Transaction Gas Limit",
+        "gasLimit": "단일 거래 Gas limit",
         "estimateReceive": "예상 수령:",
         "actualReceive": "수령"
       },

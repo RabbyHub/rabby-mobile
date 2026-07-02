@@ -3339,7 +3339,7 @@
       "receiveSummary": {
         "progress": "Dönüştürme ilerlemesi",
         "priceImpact": "Fiyat Etkisi Limiti",
-        "gasLimit": "Single Transaction Gas Limit",
+        "gasLimit": "Tek işlem Gas limit",
         "estimateReceive": "Tah. Alım:",
         "actualReceive": "Al"
       },

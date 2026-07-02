@@ -3460,7 +3460,7 @@
       "receiveSummary": {
         "progress": "Прогресс конвертации",
         "priceImpact": "Лимит влияния на цену",
-        "gasLimit": "Single Transaction Gas Limit",
+        "gasLimit": "Gas limit для одной транзакции",
         "estimateReceive": "Ожидаемое получение:",
         "actualReceive": "Получить"
       },
