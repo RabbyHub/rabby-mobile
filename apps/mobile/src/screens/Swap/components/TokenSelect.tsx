@@ -180,6 +180,7 @@ const TokenSelect = ({
     isLpTokenEnabled: effectiveIsLpTokenEnabled,
     keyword: queryConds.keyword,
     returnTokenObjects: shouldUseTokenObjects,
+    skipEmptyChainInit: type === 'bridgeFrom',
   });
 
   useImperativeHandle(ref, () => ({
