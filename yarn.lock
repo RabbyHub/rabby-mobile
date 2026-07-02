@@ -10322,13 +10322,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-bridge@npm:0.0.4":
-  version: 0.0.4
-  resolution: "@rabby-wallet/rabby-bridge@npm:0.0.4"
+"@rabby-wallet/rabby-bridge@npm:0.0.5":
+  version: 0.0.5
+  resolution: "@rabby-wallet/rabby-bridge@npm:0.0.5"
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.9.58"
-  checksum: 10/ad72558498ed4f67ae4f441d9378ba59828e8011ef56b1a9fa7151d3fb1031a1122717af05377981602780e915e9f490f1a39c473ce765ff5659fb1c2a12e728
+  checksum: 10/bc8d8c0045af5c261473492e0a3da66de78c0e0ad13ec3c016f61e9fdfbee2c19a7b66cf2b390dea6f4bc80604f3093b108e27f48c563d82b70f899df58c1940
   languageName: node
   linkType: hard
 
@@ -10370,9 +10370,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.77":
-  version: 0.0.77
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.77"
+"@rabby-wallet/rabby-swap@npm:0.0.78":
+  version: 0.0.78
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.78"
   dependencies:
     "@ethersproject/abi": "npm:^5.7.0"
     axios: "npm:^0.27.2"
@@ -10381,7 +10381,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
-  checksum: 10/1e9cf74bda6b3bc192f3d8ed6881d0c0ea5ab39bb6c2c9372d6ecc5232edf5dad9001ec42b9e16a5823e91213f6519e25b034e69a1b26f730275289c4436dd66
+  checksum: 10/f4da0abddc0e648d7c35dca9031263aa1686f802002e259fd884a69c5e6258322b83496b7b5cfd714aa5749f658d45292276eafceeb1ce1d52e817f6e9d22a8f
   languageName: node
   linkType: hard
 
@@ -39478,11 +39478,11 @@ __metadata:
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": "npm:0.1.14"
     "@rabby-wallet/rabby-api": "npm:0.9.61"
-    "@rabby-wallet/rabby-bridge": "npm:0.0.4"
+    "@rabby-wallet/rabby-bridge": "npm:0.0.5"
     "@rabby-wallet/rabby-logger": "npm:0.3.0"
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
-    "@rabby-wallet/rabby-swap": "npm:0.0.77"
+    "@rabby-wallet/rabby-swap": "npm:0.0.78"
     "@rabby-wallet/react-native-collapsible-tab-view": "workspace:^"
     "@rabby-wallet/react-native-keychain": "workspace:^"
     "@rabby-wallet/react-native-keychain-9": "workspace:^"
