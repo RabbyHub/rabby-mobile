@@ -155,7 +155,7 @@ export const formatUsdValue = (
   const bnValue = new BigNumber(value);
   if (bnValue.lt(0)) {
     if (bnValue.gt(-0.01)) {
-      return `<$0.01`;
+      return `-<$0.01`;
     }
     return `-$${formatNumber(
       Math.abs(Number(value)),
