@@ -24,7 +24,16 @@ import {
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
 
-const marketList: MarketDataType[] = Object.values(marketsData);
+const MARKETS_HIDDEN_FROM_SELECTOR = new Set<CustomMarket>([
+  CustomMarket.proto_soneium_v3,
+  CustomMarket.proto_scroll_v3,
+  CustomMarket.proto_zksync_v3,
+  CustomMarket.proto_metis_v3,
+]);
+
+const marketList: MarketDataType[] = Object.values(marketsData).filter(
+  item => !MARKETS_HIDDEN_FROM_SELECTOR.has(item.market),
+);
 const EMPTY_PROTOCOLS: IProtocolItem[] = [];
 const getProtocolLendingNetWorth = (protocol: IProtocolItem) => {
   return protocol._portfolios.reduce((sum, portfolio) => {
