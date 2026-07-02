@@ -32,7 +32,7 @@ import type { ITokenItem } from '@/types/assets';
 
 export { patchSingleToken } from './token';
 
-async function syncRemoteTokensInternal(
+export async function syncRemoteTokens(
   address: string,
   _tokens: TokenItem[] | ITokenItem[],
 ) {
@@ -76,13 +76,6 @@ async function syncRemoteTokensInternal(
     .catch(error => {
       console.error('Batch upsert failed:', error);
     });
-}
-
-export async function syncRemoteTokens(
-  address: string,
-  _tokens: TokenItem[] | ITokenItem[],
-) {
-  return syncRemoteTokensInternal(address, _tokens);
 }
 
 export async function syncRemoteTokensAmount(
