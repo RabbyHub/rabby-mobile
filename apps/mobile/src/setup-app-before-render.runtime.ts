@@ -68,13 +68,16 @@ import { startWatchLayoutChange } from './hooks/useAppLayout';
 import { startCareAppNotificationPermissions } from './hooks/appNotification';
 import nftListStore from './store/nfts';
 import { keyringService } from './core/services';
+import { APP_FEATURE_SWITCH } from './constant';
 
 const UNLOCKED_STORES_AFTER_UNLOCK_DELAY_MS = 800;
 
 startComputationThread();
 startSubscribeLangChange();
 
-connectPushServerOnBootstrap();
+if (APP_FEATURE_SWITCH.transactionNotification) {
+  connectPushServerOnBootstrap();
+}
 
 startManageAccountStoreLifecycle();
 loadLockInfoOnBootstrap();
@@ -120,8 +123,10 @@ trimNoLongerSupportsOnUnlock();
 startCheckClearAction();
 startSubscribeOpenApiHttpErrorDebugToast();
 
-startCareAppNotificationPermissions();
-startSubscribeRemoteNotification();
+if (APP_FEATURE_SWITCH.transactionNotification) {
+  startCareAppNotificationPermissions();
+  startSubscribeRemoteNotification();
+}
 
 async function initPersistedStores() {
   console.time('initPersistedStores');
