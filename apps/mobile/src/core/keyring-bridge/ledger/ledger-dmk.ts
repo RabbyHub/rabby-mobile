@@ -73,7 +73,7 @@ function isLedgerDmkClearSigningEnabled() {
     APP_STORE_NAMES.preference,
   ) as Partial<PreferenceStore> | null;
 
-  return preference?.ledgerDmkClearSigningEnabled === true;
+  return preference?.ledgerDmkClearSigningEnabled !== false;
 }
 
 function buildEthSigner({

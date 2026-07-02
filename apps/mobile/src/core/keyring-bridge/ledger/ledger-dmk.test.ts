@@ -427,8 +427,38 @@ describe('ledger DMK bridge discovery', () => {
     expect(signer.signTransaction).toHaveBeenCalledTimes(1);
   });
 
-  it('uses a basic context module by default to skip remote clear-signing loaders', async () => {
+  it('uses the DMK default context module by default', async () => {
     jest.resetModules();
+
+    const deviceId = 'ledger-default-context-device-id';
+    const sessionId = 'session-1';
+    const signer = {
+      signTransaction: jest.fn(() => ({
+        observable: of({
+          status: 'completed',
+          output: { r: '0x1', s: '0x2', v: '0x1b' },
+        }),
+      })),
+    };
+    const signerBuilder = makeSignerBuilder(signer);
+
+    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
+    mockSignerEthBuilder.mockReturnValue(signerBuilder);
+
+    const { getLedgerDmkSession } = require('./ledger-dmk');
+    const session = await getLedgerDmkSession(deviceId);
+
+    await session.signTransaction("44'/60'/0'/0/0", new Uint8Array());
+
+    expect(mockContextModuleBuild).not.toHaveBeenCalled();
+    expect(signerBuilder.withContextModule).not.toHaveBeenCalled();
+  });
+
+  it('uses a basic context module when clear signing is disabled', async () => {
+    jest.resetModules();
+    mockAppStorageGetItem.mockReturnValue({
+      ledgerDmkClearSigningEnabled: false,
+    });
 
     const deviceId = 'ledger-basic-context-device-id';
     const sessionId = 'session-1';
@@ -455,35 +485,5 @@ describe('ledger DMK bridge discovery', () => {
     expect(signerBuilder.withContextModule).toHaveBeenCalledWith(
       mockContextModule,
     );
-  });
-
-  it('uses the DMK default context module when clear signing is enabled', async () => {
-    jest.resetModules();
-    mockAppStorageGetItem.mockReturnValue({
-      ledgerDmkClearSigningEnabled: true,
-    });
-
-    const deviceId = 'ledger-clear-signing-device-id';
-    const sessionId = 'session-1';
-    const signer = {
-      signTransaction: jest.fn(() => ({
-        observable: of({
-          status: 'completed',
-          output: { r: '0x1', s: '0x2', v: '0x1b' },
-        }),
-      })),
-    };
-    const signerBuilder = makeSignerBuilder(signer);
-
-    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
-    mockSignerEthBuilder.mockReturnValue(signerBuilder);
-
-    const { getLedgerDmkSession } = require('./ledger-dmk');
-    const session = await getLedgerDmkSession(deviceId);
-
-    await session.signTransaction("44'/60'/0'/0/0", new Uint8Array());
-
-    expect(mockContextModuleBuild).not.toHaveBeenCalled();
-    expect(signerBuilder.withContextModule).not.toHaveBeenCalled();
   });
 });
