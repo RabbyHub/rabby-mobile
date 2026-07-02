@@ -57,14 +57,18 @@ export function CurrencySelectorPopup({
   const { isShowCurrencyPopup: visible, setIsShowCurrencyPopup } =
     useCurrentCurrencyVisible();
 
-  const handleCancel = useCallback(() => {
-    setIsShowCurrencyPopup(false);
-    onCancel?.();
-  }, [setIsShowCurrencyPopup, onCancel]);
-
   const searchRef = useRef<NextSearchBarMethods>(null);
   const [isFocus, setIsFocus] = useState(false);
   const [searchText, setSearchText] = useState('');
+
+  const handleCancel = useCallback(() => {
+    searchRef.current?.blur();
+    Keyboard.dismiss();
+    setIsFocus(false);
+    setSearchText('');
+    setIsShowCurrencyPopup(false);
+    onCancel?.();
+  }, [setIsShowCurrencyPopup, onCancel]);
 
   const inputNotActiveAndNoQuery = !searchText && !isFocus;
 
@@ -125,6 +129,9 @@ export function CurrencySelectorPopup({
         linearGradientType: isLight ? 'bg0' : 'bg1',
       })}
       onDismiss={handleCancel}
+      keyboardBehavior="extend"
+      keyboardBlurBehavior="restore"
+      enableBlurKeyboardOnGesture
       enableContentPanningGesture={true}>
       <AutoLockView as="View" style={[styles.container]}>
         <View>
@@ -152,6 +159,12 @@ export function CurrencySelectorPopup({
               }}
               onFocus={() => {
                 setIsFocus(true);
+              }}
+              onCancel={() => {
+                setSearchText('');
+                setIsFocus(false);
+                Keyboard.dismiss();
+                searchRef.current?.blur();
               }}
               placeholder={t('page.setting.searchCurrency')}
             />

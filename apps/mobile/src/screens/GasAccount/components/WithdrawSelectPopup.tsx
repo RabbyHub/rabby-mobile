@@ -353,7 +353,9 @@ const RecipientAddressInnerPopup = ({
       })}
       enableDynamicSizing
       maxDynamicContentSize={maxHeight}>
-      <BottomSheetScrollView style={styles.scrollMinHeight}>
+      <BottomSheetScrollView
+        style={styles.scrollMinHeight}
+        contentContainerStyle={styles.scrollContent}>
         <LinearGradient
           colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
           locations={[0.0745, 0.2242]}
@@ -535,6 +537,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   recipientHeaderRow: {
     gap: 12,
+    paddingHorizontal: 16,
   },
   recipientHeaderText: {
     flex: 1,
@@ -543,8 +546,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   recipientLimitHeader: {
     flexShrink: 0,
     justifyContent: 'flex-end',
-    maxWidth: '54%',
-    minWidth: 128,
+    maxWidth: '50%',
+    minWidth: 112,
   },
   recipientLimitHeaderText: {
     flexShrink: 1,
@@ -636,17 +639,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   shadowSelected: {
-    width: '100%',
+    alignSelf: 'stretch',
     borderColor: colors2024['neutral-line'],
     borderRadius: 12,
-    padding: 6,
     marginBottom: 12,
     backgroundColor: colors2024['neutral-bg-1'],
   },
   innerRow: {
-    width: '100%',
-    backgroundColor: colors2024['neutral-bg-1'],
-    padding: 16,
+    alignSelf: 'stretch',
+    minWidth: 0,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     flexDirection: 'row',
     gap: 12,
     justifyContent: 'space-between',
@@ -672,6 +675,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   walletNameContainer: {
     minWidth: 0,
+    flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -699,7 +703,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
   },
   limit: {
-    width: 108,
+    minWidth: 92,
     flexShrink: 0,
     textAlign: 'right',
     fontSize: 17,
@@ -742,10 +746,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   scrollMinHeight: {
     minHeight: 364,
   },
+  scrollContent: {
+    minHeight: 364,
+    flexGrow: 1,
+  },
   contentGradient: {
-    width: '100%',
-    flex: 1,
-    paddingHorizontal: 20,
+    flexGrow: 1,
+    alignSelf: 'stretch',
     position: 'relative',
   },
   contentTitle: {
@@ -754,6 +761,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   flex1: {
     flex: 1,
+    alignSelf: 'stretch',
+    paddingHorizontal: 16,
   },
   floatBottomSpacer: {
     height: 130,
