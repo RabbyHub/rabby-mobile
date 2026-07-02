@@ -12,18 +12,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aave-dao/aave-address-book@npm:4.47.14":
-  version: 4.47.14
-  resolution: "@aave-dao/aave-address-book@npm:4.47.14"
+"@aave-dao/aave-address-book@npm:4.49.3":
+  version: 4.49.3
+  resolution: "@aave-dao/aave-address-book@npm:4.49.3"
   peerDependencies:
     viem: ^2.23.5
-  checksum: 10/08bd63d23d681abeba2f1fc206bcf7b7704c6e1ab42824442413e025a466f68e68f1b4288e0e44a263cd6ec90ca10b07f9ec09841a73aec7741509a9e82aab1e
+  checksum: 10/719ee07381f4139c4915a4ee5e87edcf539a310e813e1a59e80c06734faaeaa43ffe6a2f9118f14e60f1782e0243f7672a5c08fd1b77311dabf44655fdc25bfa
   languageName: node
   linkType: hard
 
-"@aave/contract-helpers@npm:1.37.1":
-  version: 1.37.1
-  resolution: "@aave/contract-helpers@npm:1.37.1"
+"@aave/contract-helpers@npm:1.38.0":
+  version: 1.38.0
+  resolution: "@aave/contract-helpers@npm:1.38.0"
   dependencies:
     isomorphic-unfetch: "npm:^3.1.0"
   peerDependencies:
@@ -31,17 +31,17 @@ __metadata:
     ethers: ^5.x
     reflect-metadata: ^0.1.x
     tslib: ^2.4.x
-  checksum: 10/92416750a9ea361bed58d318d9b63331a828d9b14a501572d13e734ef5eaf7d67017bf769a7f77f245bb4b4c48b266dc3501d9076e8f11b29d493cc8e7206c8e
+  checksum: 10/4eee9c1d2492030749eab288f4f7fbeb33baeb93eb4f1a2470504617f16d7debf720feb5b36bf36d970466ec91cd249b301783deac3003a16835a1b78aa382bf
   languageName: node
   linkType: hard
 
-"@aave/math-utils@npm:1.37.1":
-  version: 1.37.1
-  resolution: "@aave/math-utils@npm:1.37.1"
+"@aave/math-utils@npm:1.38.0":
+  version: 1.38.0
+  resolution: "@aave/math-utils@npm:1.38.0"
   peerDependencies:
     bignumber.js: ^9.x
     tslib: ^2.4.x
-  checksum: 10/fb72133f5d5a778b9b52787f159a00bdda4257343d4d8f9e6230977bbadfefbbcb6cc50c216434ee589c98cf279475b31139bafa958372fe0da12d0e574708f8
+  checksum: 10/7e8e4ae97c1dbfa62d7da36fad3e864f4f507835b5b50f26615dfac666aeda4bd1881316dcb858813c81c69ea044e4f474107ec03d8db3ace27b7d46b44889a2
   languageName: node
   linkType: hard
 
@@ -38754,9 +38754,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "rabby-mobile@workspace:apps/mobile"
   dependencies:
-    "@aave-dao/aave-address-book": "npm:4.47.14"
-    "@aave/contract-helpers": "npm:1.37.1"
-    "@aave/math-utils": "npm:1.37.1"
+    "@aave-dao/aave-address-book": "npm:4.49.3"
+    "@aave/contract-helpers": "npm:1.38.0"
+    "@aave/math-utils": "npm:1.38.0"
     "@babel/core": "npm:^7.25.2"
     "@babel/plugin-proposal-decorators": "npm:^7.25.9"
     "@babel/plugin-transform-export-namespace-from": "npm:^7.25.9"
