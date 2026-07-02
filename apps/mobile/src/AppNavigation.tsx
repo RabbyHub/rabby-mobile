@@ -92,6 +92,7 @@ import { HomeScreenNavigator } from '@/perfs/loadables/homeRootNavigator';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 import { NEED_DEVSETTINGBLOCKS } from './constant';
 import { startReadableAccountBootstrapWarmups } from './setup-app-before-render';
+import { FeedbackBottomSheetGlobalHost } from './components/Screenshot/FeedbackBottomSheetGlobalHost';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
@@ -394,6 +395,7 @@ function AppNavigationOverlayGlobals({
   return (
     <>
       <ScreenshotFeedbackGlobalHost />
+      <FeedbackBottomSheetGlobalHost />
       {postUnlockGlobalsEnabled && <ToggleCollateralModal />}
 
       {/** @warning put all business stub components before this modal */}

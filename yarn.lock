@@ -9587,6 +9587,7 @@ __metadata:
     "@metamask/utils": "npm:^8.2.0"
     "@rabby-wallet/gnosis-sdk": "npm:1.4.9"
     "@rabby-wallet/rabby-api": "npm:0.9.61"
+    "@react-native-documents/picker": "npm:^12.0.1"
     "@types/node": "npm:^20.14.8"
     "@typescript-eslint/eslint-plugin": "npm:^5.62.0"
     "@typescript-eslint/parser": "npm:^5.62.0"
@@ -9746,6 +9747,23 @@ __metadata:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
   checksum: 10/3246b7f7154fb6f11a6f1832d12005393718d665c2e961d177b4d14840a079678ebf43b050e09ae1327f101c50a7f635a7904c369ce62f07082723572416f52f
+  languageName: node
+  linkType: hard
+
+"@rabby-wallet/rabby-api@npm:0.9.63-0":
+  version: 0.9.63-0
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.63-0"
+  dependencies:
+    "@rabby-wallet/rabby-sign": "npm:0.4.0"
+    axios: "npm:^0.27.2"
+    axios-rate-limit: "npm:^1.3.0"
+    eth-rpc-errors: "npm:^4.0.3"
+    lodash: "npm:^4.17.21"
+    qss: "npm:^2.0.3"
+  peerDependencies:
+    "@debank/common": ^0.3.9
+    "@rabby-wallet/rabby-sign": ">= 0.3"
+  checksum: 10/ed4a832c8c35ec9129f3a366846de7c723a565e05693b974c1529dc63a48e4c404a1a2069ee404e7d45aeef4573fbf75f7ace6f45b1656ee5fc4a5e1789e2a37
   languageName: node
   linkType: hard
 
@@ -11365,6 +11383,16 @@ __metadata:
     react: ">=16.6.3"
     react-native: ">=0.58.4"
   checksum: 10/c1eb786cf548fd559f779d3af75ab47eee62d74b3f8affeb4032a9891ba5f0f53df280299d0506623a04b375a2c6c4903e1ed5b55377c0a478e2e3af4248f02c
+  languageName: node
+  linkType: hard
+
+"@react-native-documents/picker@npm:^12.0.1":
+  version: 12.0.1
+  resolution: "@react-native-documents/picker@npm:12.0.1"
+  peerDependencies:
+    react: "*"
+    react-native: ">=0.79.0"
+  checksum: 10/5d915828a2baade9b476589738c2dc4ac192b4444006e198e15676e952991bdbf472163bb739592abf581fb7402a193c9cc49319fa986fb7fd6434aaae3a3a68
   languageName: node
   linkType: hard
 
@@ -38793,7 +38821,7 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": "npm:0.1.14"
-    "@rabby-wallet/rabby-api": "npm:0.9.61"
+    "@rabby-wallet/rabby-api": "npm:0.9.63-0"
     "@rabby-wallet/rabby-bridge": "npm:0.0.4"
     "@rabby-wallet/rabby-logger": "npm:0.3.0"
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"

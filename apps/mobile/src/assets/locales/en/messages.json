@@ -2319,7 +2319,8 @@
       "currency": "Currency",
       "searchCurrency": "Search Currency",
       "transactionNotification": "Txn notifications (Beta)",
-      "dataAnalysis": "Data Analysis"
+      "dataAnalysis": "Data Analysis",
+      "bugReportHistory": "Bug Report History"
     },
     "settingModal": {
       "themeMode": {

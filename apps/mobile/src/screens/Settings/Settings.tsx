@@ -35,6 +35,7 @@ import {
   RcWalletConnect,
   RcAutolock,
   RcDataAnalysis,
+  RcBugReport,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -143,6 +144,7 @@ import {
 } from './Modals/DevModalDevServer';
 import {
   FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
+  toggleFeedbackHistoryVisible,
   useScreenshotToReportEnabled,
 } from '@/components/Screenshot/hooks';
 import { SwitchScreenshotToReport } from './components/SwitchScreenshotToReport';
@@ -547,6 +549,14 @@ function SettingsBlocks() {
               handleScreenshotToBugToggle();
             },
             // disabled: disabledBiometrics,
+            visible: !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
+          },
+          {
+            label: t('page.setting.bugReportHistory'),
+            icon: RcBugReport,
+            onPress: () => {
+              toggleFeedbackHistoryVisible(true);
+            },
             visible: !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
           },
           {

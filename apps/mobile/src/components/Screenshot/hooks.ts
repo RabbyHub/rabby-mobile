@@ -30,6 +30,7 @@ import {
   hasVisibleBlockingModal,
   MODAL_GATE_IDS,
 } from '@/utils/modalGate';
+import { makeDeviceUUID } from '@/core/apis/device';
 
 export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT =
   IS_ANDROID && !DeviceUtils.isGteAndroid(14);
@@ -286,6 +287,7 @@ export function useLatestRepliedFeedbacks() {
   const { localFeedbacks } = useMemo(() => {
     return {
       localFeedbacks: feedbacks
+        .slice()
         .sort(sortFeedbackItemByCreateAtDesc)
         .slice(0, LATEST_LOCAL_FEEDBACK_LIMIT),
     };
@@ -327,9 +329,44 @@ export function useLatestRepliedFeedbacks() {
   return { lastRepliedFeedback, loading, error };
 }
 
+export function useFeedbackHistory(enabled = true) {
+  const feedbacks = screenshotFeedbackStore(s => s.feedbacks);
+
+  const localFeedbacks = useMemo(() => {
+    return feedbacks
+      .slice()
+      .sort(sortFeedbackItemByCreateAtDesc)
+      .slice(0, LATEST_LOCAL_FEEDBACK_LIMIT);
+  }, [feedbacks]);
+
+  const [{ value: feedbackHistory = [], loading, error }, loadFeedbackHistory] =
+    useAsyncFn(async () => {
+      if (!localFeedbacks.length) {
+        return [];
+      }
+
+      const rtFeedbacks = await openapi.getUserFeedbackList(
+        localFeedbacks.map(localFeedback => localFeedback.id),
+      );
+
+      return rtFeedbacks.slice().sort(sortFeedbackItemByCreateAtDesc);
+    }, [localFeedbacks]);
+
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    loadFeedbackHistory();
+  }, [enabled, loadFeedbackHistory]);
+
+  return { feedbackHistory, loading, error, loadFeedbackHistory };
+}
+
 type FeedbackByScreenshotState = {
   lastScreenshot: ImageResolvedAssetSource | null;
   submitModalShown: boolean;
+  isShowHistory: boolean;
   feedbackText: string;
   uploadedImageUrl: string;
 
@@ -341,6 +378,7 @@ function getDefaultValue(): FeedbackByScreenshotState {
   return {
     lastScreenshot: null,
     submitModalShown: false,
+    isShowHistory: false,
     feedbackText: '',
     uploadedImageUrl: '',
 
@@ -415,6 +453,22 @@ export function useSubmitFeedbackModalVisible() {
     submitFeedbackModalVisible: submitModalShown,
   };
 }
+
+export function useFeedbackHistoryVisible() {
+  const isShowHistory = feedbackByScreenshotStore(s => s.isShowHistory);
+
+  return {
+    isShowHistory: isShowHistory,
+    toggleFeedbackHistoryVisible,
+  };
+}
+
+export const toggleFeedbackHistoryVisible = (v?: boolean) => {
+  setFeedbackByScreenshot(prev => ({
+    ...prev,
+    isShowHistory: v ?? !prev.isShowHistory,
+  }));
+};
 
 const shouldToastFeedbackByScreenshot = () => {
   if (FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) return false;
@@ -606,7 +660,6 @@ export function useSubmitFeedbackOnScreenshot() {
       if (isSubmittingRef.current) return;
       setSubmitting(true, true);
 
-      let submitResult: UserFeedbackItem | null = null;
       try {
         let imageUrl = uploadedImageUrl;
         if (!imageUrl && lastScreenshot?.uri) {
@@ -627,23 +680,18 @@ export function useSubmitFeedbackOnScreenshot() {
         // console.debug('[debug] extraInfo', extraInfo);
 
         // TODO: report to sentry here, add extra fields here
-        submitResult = await openapi.postUserFeedback({
-          title: '',
+        const submitResult = await openapi.postClientFeedbackMessage({
+          device_id: makeDeviceUUID().deviceUUID,
           image_url_list: [imageUrl],
           content: feedbackText,
           extra: extraInfo,
         });
+        toggleFeedbackHistoryVisible(true);
         // TODO: report to sentry here, add submitResult.id as extra field here
       } catch (error) {
         console.error('feedback submission error', error);
       } finally {
         setSubmitting(false, true);
-      }
-
-      if (submitResult?.id) {
-        onFeedbackSubmitted(submitResult);
-      } else {
-        console.error('Feedback submission failed, please try again later');
       }
     },
     [
@@ -653,7 +701,6 @@ export function useSubmitFeedbackOnScreenshot() {
       lastScreenshot?.uri,
       isSubmittingRef,
       setSubmitting,
-      onFeedbackSubmitted,
     ],
   );
 
