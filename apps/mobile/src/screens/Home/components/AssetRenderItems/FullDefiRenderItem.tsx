@@ -31,6 +31,8 @@ import { IProtocolItem, IProtocolPortfolio } from '@/store/protocols';
 import { formatUsdValue } from '@/utils/number';
 import useProtocols from '@/store/protocols';
 import { Text } from '@/components/Typography';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { RootNames } from '@/constant/layout';
 
 type SectionListItem = {
   data: IProtocolPortfolio[];
@@ -68,27 +70,45 @@ export const FullDefiRenderItem = ({
 
   const { openTab } = useBrowser();
 
+  const { navigation } = useSafeSetNavigationOptions();
   const handleOpenSite = useCallback(() => {
     if (data?.site_url) {
-      openTab(data?.site_url);
-      const origin = safeGetOrigin(data?.site_url);
-      const chain = findChain({ serverId: data.chain });
-      dappService.patchDapps({
-        [origin]: {
-          currentAccount: account,
-          chainId: isFromAppChain ? undefined : chain?.enum || CHAINS_ENUM.ETH,
-          isDapp: true,
-        },
-      });
-      if (origin) {
-        matomoRequestEvent({
-          category: 'Websites Usage',
-          action: 'Website_Visit_Defi Detail',
-          label: origin,
+      if (data?.id === 'hyperliquid') {
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.Perps,
+          params: {},
         });
+      } else {
+        openTab(data?.site_url);
+        const origin = safeGetOrigin(data?.site_url);
+        const chain = findChain({ serverId: data.chain });
+        dappService.patchDapps({
+          [origin]: {
+            currentAccount: account,
+            chainId: isFromAppChain
+              ? undefined
+              : chain?.enum || CHAINS_ENUM.ETH,
+            isDapp: true,
+          },
+        });
+        if (origin) {
+          matomoRequestEvent({
+            category: 'Websites Usage',
+            action: 'Website_Visit_Defi Detail',
+            label: origin,
+          });
+        }
       }
     }
-  }, [account, data.chain, data?.site_url, isFromAppChain, openTab]);
+  }, [
+    account,
+    data.chain,
+    data?.site_url,
+    data?.id,
+    isFromAppChain,
+    openTab,
+    navigation,
+  ]);
 
   const sectionsMultiProject = useMemo(() => {
     if (!account) {
