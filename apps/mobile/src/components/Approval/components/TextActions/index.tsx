@@ -22,6 +22,7 @@ import { Account } from '@/core/services/preference';
 import { Text } from '@/components/Typography';
 import { getMessageStyles } from './styles';
 import type { Chain } from '@debank/common';
+import { HighlightedSignMessageText } from '../SignMessageHighlighter';
 
 export { getMessageStyles } from './styles';
 
@@ -172,7 +173,11 @@ const Actions = ({
               {t('page.signText.title')}
             </Text>
           </View>
-          <Text style={styles.messageText}>{message}</Text>
+          <HighlightedSignMessageText
+            text={message}
+            style={styles.messageText}
+            highlightStyle={styles.messageHighlight}
+          />
         </BottomSheetScrollView>
       </Card>
     </View>
