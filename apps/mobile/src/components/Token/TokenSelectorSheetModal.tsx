@@ -111,6 +111,7 @@ import { isLpToken } from '@/utils/lpToken';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { CustomNetworkChainPreview } from '@/screens/Send/components/CustomNetworkChainPreview';
 import { InnerModalChainInfo } from '@/screens/Send/components/InModalChainInfo';
+import { colord } from 'colord';
 import { isNumber } from 'lodash';
 import { Text, TextInput } from '@/components/Typography';
 
@@ -192,7 +193,7 @@ export const isSwapTokenType = (s?: string) =>
 
 const hiddenZIndex = -9999;
 
-const ITEM_HEIGHT = 72;
+const ITEM_HEIGHT = 70;
 
 const stylesForRenderProbe = StyleSheet.create({
   rowWrapper: {
@@ -789,6 +790,11 @@ export const TokenSelectorSheetModal = ({
                         }}
                         type={type}>
                         <TouchableOpacity
+                          style={[
+                            styles.tokenItemOuter,
+                            (disabled || lightDisable) &&
+                              styles.tokenItemDisabled,
+                          ]}
                           delayLongPress={200}
                           onLongPress={() => {
                             longPressTriggered.current = true;
@@ -807,16 +813,17 @@ export const TokenSelectorSheetModal = ({
                             }
                             confirmTokenSelection(token);
                           }}>
+                          <View
+                            pointerEvents="none"
+                            style={styles.tokenItemOuterInnerBorder}
+                          />
                           <ExternalTokenRow
                             decimalPrecision
                             data={token}
                             logoSize={40}
                             rightInfoMode="balance"
                             touchable={false}
-                            style={[
-                              (disabled || lightDisable) &&
-                                styles.tokenItemDisabled,
-                            ]}
+                            style={styles.tokenSelectorExternalTokenRow}
                             onPressBottomRow={() => {
                               // setTimeout(() => {
                               //   toggleShowSheetModal('destroy');
@@ -903,6 +910,10 @@ export const TokenSelectorSheetModal = ({
                           (disabled || lightDisable) &&
                             styles.tokenItemDisabled,
                         ]}>
+                        <View
+                          pointerEvents="none"
+                          style={styles.tokenItemOuterInnerBorder}
+                        />
                         <View style={styles.tokenItem}>
                           <View
                             style={[styles.tokenLeft, styles.tokenLeftLoaded]}>
@@ -1027,7 +1038,7 @@ export const TokenSelectorSheetModal = ({
                                 ]}>
                                 <View style={styles.priceInfo}>
                                   <Text
-                                    style={[styles.tokenPrice]}
+                                    style={styles.tokenPrice}
                                     numberOfLines={1}>
                                     {`$${formatPrice(token.price)}`}
                                   </Text>
@@ -1419,6 +1430,8 @@ export const TokenSelectorSheetModal = ({
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+  const tokenItemBorderRadius = 16;
+
   return {
     arrow: {
       width: 10,
@@ -1497,7 +1510,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     tardeLevelText: {
       color: colors2024['green-default'],
       fontSize: 12,
-      fontWeight: '700',
+      fontWeight: '500',
       lineHeight: 16,
       fontFamily: 'SF Pro Rounded',
     },
@@ -1578,19 +1591,36 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     tokenItemOuter: {
       flexDirection: 'column',
+      position: 'relative',
+      overflow: 'hidden',
       backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
+        ? colord(colors2024['neutral-bg-1']).alpha(0.9).toRgbString()
         : colors2024['neutral-bg-2'],
-      paddingRight: 12,
-      paddingLeft: 12,
-      gap: 12,
-      borderRadius: 16,
+      borderRadius: tokenItemBorderRadius,
+    },
+    tokenItemOuterInnerBorder: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      borderRadius: tokenItemBorderRadius,
+      borderWidth: 1,
+      borderColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-5'],
+    },
+    tokenSelectorExternalTokenRow: {
+      backgroundColor: 'transparent',
+      borderRadius: 0,
+      overflow: 'visible',
     },
     tokenItem: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       height: ITEM_HEIGHT,
+      paddingHorizontal: 12,
       gap: 12,
       // ...makeDebugBorder(),
       // // leave here for debug
@@ -1699,7 +1729,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     tokenPrice: {
       color: colors2024['neutral-secondary'],
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: '500',
       lineHeight: 18,
       fontFamily: 'SF Pro Rounded',
@@ -1709,7 +1739,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     percent: {
       textAlign: 'right',
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: '500',
       lineHeight: 18,
       fontFamily: 'SF Pro Rounded',
@@ -1729,7 +1759,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     tokenHeaderAmount: {
       color: colors2024['neutral-secondary'],
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: '500',
       lineHeight: 18,
       textAlign: 'left',
@@ -1747,9 +1777,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     tokenHeaderNetworth: {
       color: colors2024['neutral-title-1'],
-      fontSize: 16,
-      fontWeight: '700',
-      lineHeight: 20,
+      fontSize: 18,
+      fontWeight: '500',
+      lineHeight: 22,
       textAlign: 'right',
       fontFamily: 'SF Pro Rounded',
     },
