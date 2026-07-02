@@ -322,7 +322,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
     return `${
       formatChangePercent ? sign : ''
     }${formatChangePercent}(${sign}${formatChangeValue})`;
-  }, [data, currentIndex.value, changePercent, isLoss, isInitialized]);
+  }, [data, currentIndex.value, changePercent, isLoss, isInitialized, change]);
 
   const dateTime = useDerivedValue(() => {
     // 如果还没初始化，返回默认值
