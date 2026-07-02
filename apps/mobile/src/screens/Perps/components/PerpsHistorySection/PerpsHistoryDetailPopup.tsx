@@ -115,7 +115,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
-    return height - 200;
+    return height - 120;
   }, [height]);
 
   useEffect(() => {

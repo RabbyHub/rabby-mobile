@@ -199,7 +199,7 @@ export const TokenChainAndContract: React.FC<Props> = ({
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     // marginLeft: 0,
-    marginHorizontal: 20,
+    marginHorizontal: 12,
     marginTop: 12,
     gap: 12,
     display: 'flex',
@@ -246,6 +246,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     flexShrink: 0,
+    marginLeft: 8,
     // marginBottom: 4,
   },
   helpContent: {

@@ -177,7 +177,7 @@ export default ActivityAndHolders;
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     position: 'relative',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     marginTop: 8,
   },
   header: {
@@ -190,6 +190,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 17,
     fontWeight: '700',
+    marginLeft: 8,
   },
   activeText: {
     color: colors2024['neutral-title-1'],

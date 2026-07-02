@@ -278,10 +278,12 @@ const SummaryItem: React.FC<SummaryItemProps> = ({
 
 export default SummaryItem;
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? 'rgba(255, 255, 255, 0.9)'
+      : colors2024['neutral-bg-2'],
     paddingTop: 0,
     paddingBottom: 16,
   },
