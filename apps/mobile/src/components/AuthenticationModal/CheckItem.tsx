@@ -3,7 +3,7 @@ import { StyleProp, StyleSheet, ViewStyle, View } from 'react-native';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { Radio } from '../Radio';
-import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
+import { TouchableOpacity } from '@gorhom/bottom-sheet';
 import { Text } from '@/components/Typography';
 
 interface Props {
@@ -22,15 +22,14 @@ export const CheckItem: React.FC<Props> = ({
   const { styles } = useThemeStyles(getStyle);
 
   return (
-    <CustomTouchableOpacity
-      as="RNGHTouchableOpacity"
+    <TouchableOpacity
       style={StyleSheet.flatten([
         styles.main,
         checked ? styles.mainChecked : {},
         style,
       ])}
       onPress={onPress}>
-      <View pointerEvents="none">
+      <View>
         <Radio
           containerStyle={styles.radio}
           iconStyle={styles.iconStyle}
@@ -38,7 +37,7 @@ export const CheckItem: React.FC<Props> = ({
         />
       </View>
       <Text style={styles.text}>{label}</Text>
-    </CustomTouchableOpacity>
+    </TouchableOpacity>
   );
 };
 
