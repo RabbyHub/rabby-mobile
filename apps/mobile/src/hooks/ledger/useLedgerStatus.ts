@@ -2,8 +2,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiLedger } from '@/core/apis';
 import { atom, getDefaultStore, useAtom } from 'jotai';
 import React from 'react';
-import { Device } from 'react-native-ble-plx';
-import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
+import type { LedgerDmkDevice } from '@/core/keyring-bridge/ledger/ledger-dmk';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -41,18 +40,16 @@ export const useLedgerStatus = (
       const id = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.CONNECT_LEDGER,
         deviceId,
-        onSelectDevice: async (d: Device) => {
+        onSelectDevice: async (d: LedgerDmkDevice) => {
           console.log('selected device', d.id);
           try {
-            const transport = await TransportBLE.open(d.id);
-            await transport.close();
+            await apiLedger.connectDevice(d);
             await apiLedger.fixDeviceId(address, d.id);
             setStatus('CONNECTED');
             isConnected = true;
             cb?.();
           } catch (e) {
             console.log('ledger connect error', e);
-            await TransportBLE.disconnectDevice(d.id);
             rej?.();
             setStatus('DISCONNECTED');
           } finally {
@@ -104,18 +101,16 @@ export const callConnectLedgerModal = ({
   const id = createGlobalBottomSheetModal2024({
     name: MODAL_NAMES.CONNECT_LEDGER,
     deviceId,
-    onSelectDevice: async (d: Device) => {
+    onSelectDevice: async (d: LedgerDmkDevice) => {
       console.log('selected device', d.id);
       try {
-        const transport = await TransportBLE.open(d.id);
-        await transport.close();
+        await apiLedger.connectDevice(d);
         await apiLedger.fixDeviceId(address, d.id);
         isConnected = true;
         setLedgerStatus(true);
         cb?.();
       } catch (e) {
         console.log('ledger connect error', e);
-        await TransportBLE.disconnectDevice(d.id);
         setLedgerStatus(false);
         reject?.();
       } finally {

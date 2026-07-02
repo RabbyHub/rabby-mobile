@@ -1,0 +1,22 @@
+diff --git a/package.json b/package.json
+index e100de70b6ba37d81c27624a69a96dd265ed8c9e..3661ad542126f38a8c998ef3b1e95b007bafb7a6 100644
+--- a/package.json
++++ b/package.json
+@@ -9,7 +9,7 @@
+     "@types/uuid": "^10.0.0",
+     "@vitejs/plugin-react": "^5.0.0",
+     "react-native": "0.76.6",
+-    "react-native-ble-plx": "3.4.0",
++    "react-native-ble-plx": "3.5.1",
+     "rxjs": "7.8.2",
+     "ts-node": "10.9.2",
+     "vitest-react-native": "^0.1.5",
+@@ -39,7 +39,7 @@
+   "name": "@ledgerhq/device-transport-kit-react-native-ble",
+   "peerDependencies": {
+     "react-native": ">0.74.1",
+-    "react-native-ble-plx": "3.4.0",
++    "react-native-ble-plx": "3.5.1",
+     "rxjs": "7.8.2",
+     "@ledgerhq/device-management-kit": "^1.0.0"
+   },
