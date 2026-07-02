@@ -79,7 +79,7 @@ const getHomeHeaderStyle = createGetStyles2024(({ safeAreaInsets }) => ({
   },
 
   backButton: {
-    marginRight: 8,
+    marginRight: 4,
   },
 }));
 

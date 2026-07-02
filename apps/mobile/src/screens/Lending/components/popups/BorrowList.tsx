@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { RefreshControl, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { Skeleton } from '@rneui/themed';
 import { useTheme2024 } from '@/hooks/theme';
@@ -23,7 +23,6 @@ import { PoolListLoading } from '../Loading';
 import { DisplayPoolReserveInfo } from '../../type';
 import { assetCanBeBorrowedByUser } from '../../utils/borrow';
 import {
-  useFetchLendingData,
   useLendingIsLoading,
   useLendingRemoteData,
   useLendingSummary,
@@ -53,7 +52,6 @@ export const LendingBorrowListContent: React.FC<
   const { displayPoolReserves, iUserSummary, getTargetReserve } =
     useLendingSummary();
   const { t } = useTranslation();
-  const { fetchData } = useFetchLendingData();
   const [search, setSearch] = useState('');
   const [isInputActive, setIsInputActive] = useState(false);
 
@@ -341,7 +339,7 @@ export const LendingBorrowListContent: React.FC<
           onPress={() => handlePressItem(data)}>
           <View style={styles.left}>
             <TokenIcon
-              size={46}
+              size={40}
               chainSize={0}
               tokenSymbol={data.reserve.symbol}
             />
@@ -419,12 +417,6 @@ export const LendingBorrowListContent: React.FC<
         data={loading ? [] : dataList}
         style={styles.list}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={false}
-            onRefresh={() => fetchData(true)}
-          />
-        }
         keyExtractor={keyExtractor}
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={loading ? <PoolListLoading /> : null}
@@ -483,16 +475,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   apy: {
     flex: 0,
     width: 80,
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 17,
+    lineHeight: 22,
     textAlign: 'right',
-    fontWeight: '700',
+    fontWeight: '500',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
   totalBorrowed: {
     width: 100,
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
     textAlign: 'left',
