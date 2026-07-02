@@ -9,6 +9,7 @@ import BigNumber from 'bignumber.js';
 import { formatNetworth } from '@/utils/math';
 import { ellipsisAddress } from '@/utils/address';
 import { useBrowser } from '@/hooks/browser/useBrowser';
+import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
 import { isAppChain } from '../../utils/appchain';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -73,7 +74,8 @@ export const FullDefiRenderItem = ({
   const { navigation } = useSafeSetNavigationOptions();
   const handleOpenSite = useCallback(() => {
     if (data?.site_url) {
-      if (data?.id === 'hyperliquid') {
+      if (data?.id === 'hyperliquid' && account) {
+        switchPerpsAccountBeforeNavigate(account);
         navigation.push(RootNames.StackTransaction, {
           screen: RootNames.Perps,
           params: {},
