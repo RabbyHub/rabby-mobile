@@ -1,6 +1,5 @@
 import React, {
   useCallback,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -274,9 +273,11 @@ export const SendAmountInput = ({
   const unitTextRef = useRef<{
     setNativeProps?: (nativeProps: object) => void;
   } | null>(null);
+  const propInputValue = value || '';
+  const previousPropInputValueRef = useRef(propInputValue);
   const inputSelectionRef = useRef({
-    start: getDisplayAmountValue(value).length,
-    end: getDisplayAmountValue(value).length,
+    start: getDisplayAmountValue(propInputValue).length,
+    end: getDisplayAmountValue(propInputValue).length,
   });
 
   const [inputAreaWidth, setInputAreaWidth] = useState(0);
@@ -286,7 +287,7 @@ export const SendAmountInput = ({
   const [unitWidthAtBaseFontSize, setUnitWidthAtBaseFontSize] = useState(0);
   const [quoteRowWidth, setQuoteRowWidth] = useState(0);
   const [quoteNaturalWidth, setQuoteNaturalWidth] = useState(0);
-  const [inputValue, setInputValue] = useState(value || '');
+  const [inputValue, setInputValue] = useState(propInputValue);
   const [inputSelection, setInputSelection] = useState(
     inputSelectionRef.current,
   );
@@ -298,9 +299,10 @@ export const SendAmountInput = ({
     },
     [],
   );
-  useEffect(() => {
-    setInputValue(value || '');
-  }, [value]);
+  useLayoutEffect(() => {
+    previousPropInputValueRef.current = propInputValue;
+    setInputValue(prev => (prev === propInputValue ? prev : propInputValue));
+  }, [propInputValue]);
 
   useLayoutEffect(() => {
     if (amountFocus && !tokenSelectorVisible) {
@@ -320,8 +322,12 @@ export const SendAmountInput = ({
   }, [colors2024, styles.skeletonLinear]);
 
   const hasDisplayValueOverride = !!displayValueText;
+  const textInputValue =
+    previousPropInputValueRef.current !== propInputValue
+      ? propInputValue
+      : inputValue;
   const displayInputValue = getDisplayAmountValue(
-    displayValueText || inputValue,
+    displayValueText || textInputValue,
   );
   const displayInputPrefixText = inputPrefixText || '';
   const shouldShowInputUnit = showInputUnit && !!unit;
@@ -330,7 +336,6 @@ export const SendAmountInput = ({
     [shouldShowInputUnit, unit],
   );
   const textForMeasure = displayInputValue;
-  const textInputValue = inputValue;
   const decimalPlacesLimit = useMemo(() => {
     if (
       typeof maxDecimalPlaces !== 'number' ||
@@ -630,7 +635,7 @@ export const SendAmountInput = ({
             textInputValue.slice(0, start - 1) + textInputValue.slice(end),
           );
         }
-        return inputValue;
+        return textInputValue;
       }
 
       if (key.length === 1) {
@@ -641,7 +646,7 @@ export const SendAmountInput = ({
 
       return null;
     },
-    [inputValue, normalizeTypedInputValue, textInputValue],
+    [normalizeTypedInputValue, textInputValue],
   );
 
   const handleInputKeyPress = useCallback(
@@ -656,7 +661,7 @@ export const SendAmountInput = ({
 
   const handleInputChange = useCallback(
     (nextValue: string) => {
-      const previousValue = inputValue;
+      const previousValue = textInputValue;
       const normalizedValue = normalizeTypedInputValue(nextValue);
 
       if (normalizedValue !== nextValue) {
@@ -683,9 +688,9 @@ export const SendAmountInput = ({
     },
     [
       applyUnitLayoutNative,
-      inputValue,
       normalizeTypedInputValue,
       onChange,
+      textInputValue,
       tokenInputRef,
     ],
   );
@@ -716,7 +721,7 @@ export const SendAmountInput = ({
       : { maxWidth: quoteTextMaxWidth }
     : null;
 
-  const hasValue = !!inputValue || hasDisplayValueOverride;
+  const hasValue = !!textInputValue || hasDisplayValueOverride;
   const showAmountSkeleton = !hasValue && token.amount > 0 && isEstimatingGas;
   const showStaticEmptyAmount =
     !hasValue && !isInputFocused && !showAmountSkeleton;
