@@ -110,7 +110,7 @@ export const useEIP7702ApprovalsQuery = ({
   searchKeyword,
 }: {
   isActive: boolean;
-  chain?: CHAINS_ENUM;
+  chain?: CHAINS_ENUM | string | null;
   account?: Account | null;
   refreshKey?: number;
   searchKeyword?: string;
@@ -143,7 +143,7 @@ export const useEIP7702ApprovalsQuery = ({
     }
 
     return (error ? [] : value || [])
-      ?.filter(item => !!item && (chain ? item.chain === chain : true))
+      ?.filter(item => !!item)
       .map(
         (e, _, arr) =>
           ({
@@ -153,18 +153,29 @@ export const useEIP7702ApprovalsQuery = ({
             list: arr,
           } as any as EIP7702Delegated),
       );
-  }, [error, value, chain, currentAccount]);
+  }, [error, value, currentAccount]);
+
+  const chainFilteredDelegationAddresses = useMemo(() => {
+    if (!chain) {
+      return rawDelegationAddresses;
+    }
+
+    const selectedChain = chain.toString();
+    return rawDelegationAddresses.filter(
+      item => item.chain?.toString() === selectedChain,
+    );
+  }, [chain, rawDelegationAddresses]);
 
   const delegationAddresses = useMemo(() => {
     const keyword = effectiveSearchKeyword?.trim().toLowerCase();
     if (!keyword) {
-      return rawDelegationAddresses;
+      return chainFilteredDelegationAddresses;
     }
 
-    return rawDelegationAddresses.filter(item =>
+    return chainFilteredDelegationAddresses.filter(item =>
       item.delegatedAddress?.toLowerCase().includes(keyword),
     );
-  }, [rawDelegationAddresses, effectiveSearchKeyword]);
+  }, [chainFilteredDelegationAddresses, effectiveSearchKeyword]);
 
   const totalCount = rawDelegationAddresses.length;
 
@@ -289,6 +300,8 @@ type EIP7702ApprovalsContextValue = {
   totalCount: number;
   isSupportedAccount: boolean;
   selectedRows: EIP7702Delegated[];
+  selectedChain: CHAINS_ENUM | string | null;
+  setSelectedChain: (chain: CHAINS_ENUM | string | null) => void;
   toggleSelectedRow: (row: EIP7702Delegated) => void;
   clearSelectedRows: () => void;
   refresh: () => void;
@@ -304,6 +317,8 @@ const EIP7702ApprovalsContext =
     totalCount: 0,
     isSupportedAccount: false,
     selectedRows: [],
+    selectedChain: null,
+    setSelectedChain: () => {},
     toggleSelectedRow: () => {},
     clearSelectedRows: () => {},
     refresh: () => {},
@@ -327,6 +342,9 @@ export function EIP7702ApprovalsProvider({
   searchKeyword?: string;
 }>) {
   const [refreshKey, setRefreshKey] = useState(0);
+  const [selectedChain, setSelectedChainState] = useState<
+    CHAINS_ENUM | string | null
+  >(null);
   const shouldQuery = isActive || prefetch;
 
   const {
@@ -343,6 +361,7 @@ export function EIP7702ApprovalsProvider({
     account,
     refreshKey,
     searchKeyword,
+    chain: selectedChain,
   });
   const isSupportedAccount = useMemo(() => {
     if (!account?.type) {
@@ -354,6 +373,14 @@ export function EIP7702ApprovalsProvider({
   const clearSelectedRows = useCallback(() => {
     setSelectedRows([]);
   }, [setSelectedRows]);
+
+  const setSelectedChain = useCallback(
+    (chain: CHAINS_ENUM | string | null) => {
+      setSelectedRows([]);
+      setSelectedChainState(chain);
+    },
+    [setSelectedRows],
+  );
 
   const toggleSelectedRow = useCallback(
     (row: EIP7702Delegated) => {
@@ -406,6 +433,8 @@ export function EIP7702ApprovalsProvider({
       totalCount,
       isSupportedAccount,
       selectedRows,
+      selectedChain,
+      setSelectedChain,
       toggleSelectedRow,
       clearSelectedRows,
       refresh,
@@ -419,6 +448,8 @@ export function EIP7702ApprovalsProvider({
       totalCount,
       isSupportedAccount,
       selectedRows,
+      selectedChain,
+      setSelectedChain,
       toggleSelectedRow,
       clearSelectedRows,
       refresh,
