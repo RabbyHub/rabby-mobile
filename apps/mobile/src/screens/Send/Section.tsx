@@ -37,6 +37,7 @@ import {
   formatSpeicalAmount,
   formatTokenAmountInput,
 } from '@/utils/number';
+import { formatSendUsdValueText } from './utils';
 
 const USD_INPUT_REGEX = /^\d*(\.\d{0,2})?$/;
 const TOKEN_INPUT_REGEX = /^\d*(\.\d*)?$/;
@@ -54,29 +55,6 @@ function isValidUsdPrice(price?: number | string | null) {
 function getSafeAmountBn(amount?: string | number | BigNumber | null) {
   const bn = new BigNumber(amount || 0);
   return bn.isFinite() && !bn.isNaN() ? bn : new BigNumber(0);
-}
-
-function formatFixedUsdAmountText(value: BigNumber) {
-  const fixedValue = value.toFixed(2);
-  const [intPart, decimalPart] = fixedValue.split('.');
-  const sign = intPart.startsWith('-') ? '-' : '';
-  const absIntPart = sign ? intPart.slice(1) : intPart;
-  const groupedIntPart = absIntPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-
-  return `${sign}${groupedIntPart}.${decimalPart || '00'}`;
-}
-
-function formatUsdQuoteValueText(value: string | number | BigNumber) {
-  const bn = getSafeAmountBn(value);
-
-  if (bn.isZero()) {
-    return '0';
-  }
-  if (bn.gt(0) && bn.lt(0.01)) {
-    return '<0.01';
-  }
-
-  return formatFixedUsdAmountText(bn);
 }
 
 function formatTokenQuoteValueText(value: string | number | BigNumber) {
@@ -156,13 +134,14 @@ const SyncSelectedGasLevel = React.memo(function SyncSelectedGasLevel() {
   return null;
 });
 
-const BalanceHeader = React.memo(function BalanceHeader() {
+const BalanceHeader = React.memo(function BalanceHeader({
+  balanceIssueValueText,
+}: {
+  balanceIssueValueText: string;
+}) {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
-  const { currentTokenBalance } = useSendTokenInternalShallowSelector(ctx => ({
-    currentTokenBalance: ctx.computed.currentTokenBalance,
-  }));
   const { balanceError, balanceWarn, showGasReserved } =
     useSendTokenScreenStateShallowSelector(state => ({
       balanceError: state.balanceError,
@@ -177,7 +156,7 @@ const BalanceHeader = React.memo(function BalanceHeader() {
       {showIssue ? (
         <Text style={styles.issueText} numberOfLines={1} ellipsizeMode="tail">
           {balanceError
-            ? `${balanceError}: ${currentTokenBalance}`
+            ? `${balanceError}: ${balanceIssueValueText}`
             : balanceWarn}
         </Text>
       ) : (
@@ -492,16 +471,22 @@ const SendAmountInputSection = React.memo(function SendAmountInputSection() {
   const quoteText = activeUsdPrice
     ? inputMode === 'usd'
       ? `${formatTokenQuoteValueText(safeFormAmount)} ${tokenSymbol}`
-      : `$${formatUsdQuoteValueText(safeFormAmount.times(activeUsdPrice))}`
+      : formatSendUsdValueText(safeFormAmount.times(activeUsdPrice))
     : '';
-  const balanceText = currentTokenBalance
-    ? `${currentTokenBalance} ${tokenSymbol}`
-    : '';
+  const tokenBalanceBn = new BigNumber(
+    currentToken.raw_amount_hex_str || 0,
+  ).div(10 ** currentToken.decimals);
+  const balanceIssueValueText =
+    inputMode === 'usd' && activeUsdPrice
+      ? formatSendUsdValueText(tokenBalanceBn.times(activeUsdPrice))
+      : currentTokenBalance;
+  const balanceText = currentTokenBalance || '';
   const handleAmountChange =
     inputMode === 'usd' ? handleUsdAmountChange : handleTokenAmountChange;
 
   return (
     <View>
+      <BalanceHeader balanceIssueValueText={balanceIssueValueText} />
       {currentAccount && chainItem && (
         <SendAmountInputControl
           ref={amountInputRef}
@@ -576,7 +561,6 @@ export const BalanceSection = React.memo(function BalanceSection({
   return (
     <View style={style}>
       <SyncSelectedGasLevel />
-      <BalanceHeader />
       <SendAmountInputSection />
     </View>
   );
