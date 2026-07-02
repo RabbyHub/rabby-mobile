@@ -13,7 +13,6 @@ import {
 import TokenIcon from '../TokenIcon';
 import IsolatedTag from '../IsolatedTag';
 import { useLendingSummary, useSelectedMarket } from '../../hooks';
-import { getSupplyCapData } from '../../utils/supply';
 import { CollateralSwitch } from '../CollateralSwitch';
 import { formatApy, formatListNetWorth } from '../../utils/format';
 import { useToggleCollateralModal } from '../../modals/ToggleCollateralModal';
@@ -104,10 +103,8 @@ const SupplyItem: React.FC<SupplyItemProps> = ({
     if (!reserve) {
       return false;
     }
-    const { supplyCapReached } = getSupplyCapData(reserve);
     return userSummary
-      ? !supplyCapReached &&
-          reserve.reserve.reserveLiquidationThreshold !== '0' &&
+      ? reserve.reserve.reserveLiquidationThreshold !== '0' &&
           ((!reserve.reserve.isIsolated && !userSummary.isInIsolationMode) ||
             userSummary.isolatedReserve?.underlyingAsset ===
               reserve.underlyingAsset ||
