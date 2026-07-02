@@ -247,7 +247,14 @@ export function useScroller<T extends RefComponent>() {
   return scroller
 }
 
-export const useScrollHandlerY = (name: TabName) => {
+type ScrollHandlerOptions = {
+  pullDownDistance?: Animated.SharedValue<number>
+}
+
+export const useScrollHandlerY = (
+  name: TabName,
+  { pullDownDistance }: ScrollHandlerOptions = {}
+) => {
   const {
     accDiffClamp,
     focusedTab,
@@ -374,6 +381,9 @@ export const useScrollHandlerY = (name: TabName) => {
             let { y } = event.contentOffset
             // normalize the value so it starts at 0
             y = y + contentInset.value
+            if (pullDownDistance) {
+              pullDownDistance.value = Math.max(0, -y)
+            }
             const clampMax =
               contentHeight.value -
               (containerHeight.value || 0) +
@@ -384,6 +394,9 @@ export const useScrollHandlerY = (name: TabName) => {
               : interpolate(y, [0, clampMax], [0, clampMax], Extrapolate.CLAMP)
           } else {
             const { y } = event.contentOffset
+            if (pullDownDistance) {
+              pullDownDistance.value = 0
+            }
             scrollYCurrent.value = y
           }
 

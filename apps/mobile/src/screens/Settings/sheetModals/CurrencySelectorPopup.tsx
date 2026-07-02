@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Keyboard, useWindowDimensions, View } from 'react-native';
+import { Keyboard, Pressable, useWindowDimensions, View } from 'react-native';
 
 import { RcIconCheckmarkCC } from '@/assets/icons/common';
 
@@ -129,7 +129,11 @@ export function CurrencySelectorPopup({
       <AutoLockView as="View" style={[styles.container]}>
         <View>
           <Text style={styles.title}>{t('page.setting.currency')}</Text>
-          <View style={styles.searchContainer}>
+          <Pressable
+            style={styles.searchContainer}
+            onPress={() => {
+              searchRef.current?.focus();
+            }}>
             <NextSearchBar
               ref={searchRef}
               as="BottomSheetTextInput"
@@ -151,15 +155,7 @@ export function CurrencySelectorPopup({
               }}
               placeholder={t('page.setting.searchCurrency')}
             />
-            {inputNotActiveAndNoQuery ? (
-              <TouchableOpacity
-                style={styles.searchTapMask}
-                onPress={() => {
-                  searchRef.current?.focus();
-                }}
-              />
-            ) : null}
-          </View>
+          </Pressable>
         </View>
         <BottomSheetScrollView
           style={styles.list}
@@ -270,14 +266,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     extra: {
       marginLeft: 'auto',
-    },
-
-    searchTapMask: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      top: 0,
-      bottom: 0,
     },
   };
 });

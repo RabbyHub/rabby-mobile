@@ -1,9 +1,7 @@
 import React from 'react';
 import { View, useWindowDimensions } from 'react-native';
-import {
-  MaterialTabBar,
-  MaterialTabItem,
-} from 'react-native-collapsible-tab-view';
+import { MaterialTabBar } from '@rabby-wallet/react-native-collapsible-tab-view/src/MaterialTabBar/TabBar';
+import { MaterialTabItem } from '@rabby-wallet/react-native-collapsible-tab-view/src/MaterialTabBar/TabItem';
 import { Indicator } from './CustomIndicator';
 
 const disableInnerIndicator = {
