@@ -3,10 +3,7 @@ import { queryTokensCache } from '@/core/apis/tokenCache';
 import { openapi } from '@/core/request';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import {
-  syncRemoteTokens,
-  syncRemoteTokensByChain,
-} from '@/databases/sync/assets';
+import { syncRemoteTokens } from '@/databases/sync/assets';
 import { eventBus, EVENT_PATCH_SINGLE_TOKEN } from '@/utils/events';
 import { includeLpTokensFilter, lpTokenFilter } from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
@@ -1831,11 +1828,6 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         .flat() as ITokenItem[];
 
       if (targetChainServerId) {
-        syncRemoteTokensByChain(
-          normalizedAddress,
-          targetChainServerId,
-          results,
-        );
         set(state => {
           const previousTokens = state.tokenListMap[normalizedAddress] || [];
           return {
