@@ -17,6 +17,7 @@ import {
 } from '@/assets2024/icons/gas-account';
 import { Text } from '@/components/Typography';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 
 export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
   showWithdraw: openWithdrawPopup,
@@ -65,6 +66,7 @@ export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
         ]}
         tooltipStyle={styles.tooltipStyle}
         isVisible={visible}
+        modalGateId={MODAL_GATE_IDS.gasAccountHeaderMenu}
         onClose={() => setVisible(false)}
         content={
           <View style={styles.optionList}>
