@@ -193,7 +193,7 @@ export const isSwapTokenType = (s?: string) =>
 
 const hiddenZIndex = -9999;
 
-const ITEM_HEIGHT = 72;
+const ITEM_HEIGHT = 70;
 
 const stylesForRenderProbe = StyleSheet.create({
   rowWrapper: {
@@ -1050,12 +1050,7 @@ export const TokenSelectorSheetModal = ({
                                 ]}>
                                 <View style={styles.priceInfo}>
                                   <Text
-                                    style={[
-                                      styles.tokenPrice,
-                                      {
-                                        color: percentColor,
-                                      },
-                                    ]}
+                                    style={styles.tokenPrice}
                                     numberOfLines={1}>
                                     {`$${formatPrice(token.price)}`}
                                   </Text>
@@ -1746,7 +1741,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     tokenPrice: {
       color: colors2024['neutral-secondary'],
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: '500',
       lineHeight: 18,
       fontFamily: 'SF Pro Rounded',
@@ -1756,7 +1751,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     percent: {
       textAlign: 'right',
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: '500',
       lineHeight: 18,
       fontFamily: 'SF Pro Rounded',
@@ -1794,9 +1789,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     tokenHeaderNetworth: {
       color: colors2024['neutral-title-1'],
-      fontSize: 17,
+      fontSize: 18,
       fontWeight: '500',
-      lineHeight: 20,
+      lineHeight: 22,
       textAlign: 'right',
       fontFamily: 'SF Pro Rounded',
     },

@@ -460,29 +460,15 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
                   ? t('page.Lending.manageEmode.actions.disable')
                   : t('page.Lending.manageEmode.actions.enable')
               }
-              titleStyle={[
-                BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE,
-                wantDisableEmode && styles.closeButtonTitle,
-                wantDisableEmode &&
-                  disableDirectSignBtn &&
-                  styles.disableBtnTitle,
-              ]}
-              buttonStyle={wantDisableEmode ? styles.closeButton : undefined}
+              titleStyle={BOTTOM_BUTTON_WITH_ICON_TITLE_STYLE}
               title={
                 wantDisableEmode
                   ? t('page.Lending.manageEmode.actions.disable')
                   : t('page.Lending.manageEmode.actions.enable')
               }
-              iconColor={
-                wantDisableEmode
-                  ? disableDirectSignBtn
-                    ? colors2024['neutral-info']
-                    : colors2024['neutral-title-1']
-                  : undefined
-              }
               onFinished={() => handlePressManageEMode()}
               disabled={disableDirectSignBtn}
-              type="primary"
+              type="aave"
               height={BOTTOM_BUTTON_SINGLE_HEIGHT}
               syncUnlockTime
               account={currentAccount}
@@ -581,15 +567,6 @@ const getStyles = createGetStyles2024(ctx => ({
   fullWidthButton: {
     flex: 1,
     height: BOTTOM_BUTTON_SINGLE_HEIGHT,
-  },
-  closeButtonTitle: {
-    color: ctx.colors2024['neutral-title-1'],
-  },
-  disableBtnTitle: {
-    color: ctx.colors2024['neutral-info'],
-  },
-  closeButton: {
-    backgroundColor: ctx.colors2024['neutral-line'],
   },
   checkbox: {
     display: 'flex',

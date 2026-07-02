@@ -153,11 +153,7 @@ export const TokenRowV2 = memo(
           </Text>
           {showAccount ? (
             <View style={styles.priceInfo}>
-              <Text
-                style={StyleSheet.flatten([
-                  styles.price,
-                  { color: percentColor },
-                ])}>{`$${formatPrice(data.price)}`}</Text>
+              <Text style={styles.price}>{`$${formatPrice(data.price)}`}</Text>
               {isNumber(data.price_24h_change) && (
                 <Text
                   style={StyleSheet.compose(styles.percent, {
@@ -172,11 +168,7 @@ export const TokenRowV2 = memo(
             </View>
           ) : scene === 'portfolio' ? (
             <View style={styles.priceInfo}>
-              <Text
-                style={StyleSheet.flatten([
-                  styles.price,
-                  { color: percentColor },
-                ])}>{`$${formatPrice(data.price)}`}</Text>
+              <Text style={styles.price}>{`$${formatPrice(data.price)}`}</Text>
               {isNumber(data.price_24h_change) && (
                 <Text
                   style={StyleSheet.compose(styles.percent, {
@@ -906,14 +898,14 @@ const getStyles = createGetStyles2024(ctx => ({
     marginBottom: 2,
     textAlign: 'right',
     color: ctx.colors2024['neutral-title-1'],
-    fontSize: 17,
-    lineHeight: 20,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
   },
   searchAmountStr: {
     color: ctx.colors2024['neutral-secondary'],
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
@@ -1004,14 +996,14 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   price: {
     color: ctx.colors2024['neutral-secondary'],
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
   },
   percent: {
     textAlign: 'right',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
@@ -1039,7 +1031,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   changeText: {
     fontWeight: '500',
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     color: ctx.colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',

@@ -344,14 +344,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 5,
   },
   amountUsd: {
-    fontSize: 17,
-    lineHeight: 20,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '500',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
   amountToken: {
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
