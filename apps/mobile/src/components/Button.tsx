@@ -208,6 +208,8 @@ export const Button = ({
     ...passedLoadingProps,
   };
 
+  const treatAsDisabled = disabled || loading;
+
   const accessibilityState = {
     disabled: !!disabled,
     busy: !!loading,
@@ -233,8 +235,9 @@ export const Button = ({
       testID="RABBY_BUTTON_WRAPPER">
       <TouchableComponentInternal
         onPress={handleOnPress}
+        disabled={treatAsDisabled}
         delayPressIn={0}
-        activeOpacity={0.3}
+        activeOpacity={treatAsDisabled ? 1 : 0.3}
         accessibilityRole="button"
         accessibilityState={accessibilityState}
         {...rest}
