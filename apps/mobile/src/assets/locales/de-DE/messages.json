@@ -2507,6 +2507,7 @@
         "notErc20": "An dieser Adresse wurde kein ERC20-Token gefunden",
         "alreadyAdded": "Dieses Token wurde bereits hinzugefügt",
         "alreadyAddedToast": "Token bereits hinzugefügt",
+        "added": "Benutzerdefiniertes Netzwerk-Token erfolgreich hinzugefügt",
         "addFailed": "Token konnte nicht hinzugefügt werden",
         "removeFailed": "Token konnte nicht gelöscht werden"
       }

@@ -2188,6 +2188,7 @@
         "notErc20": "Không tìm thấy token ERC20 tại địa chỉ này",
         "alreadyAdded": "Token này đã được thêm",
         "alreadyAddedToast": "Token đã được thêm",
+        "added": "Đã thêm token mạng tùy chỉnh thành công",
         "addFailed": "Thêm token thất bại",
         "removeFailed": "Xóa token thất bại"
       }

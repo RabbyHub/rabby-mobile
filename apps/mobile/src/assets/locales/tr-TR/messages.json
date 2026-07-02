@@ -1808,6 +1808,7 @@
         "notErc20": "Bu adreste ERC20 tokeni bulunamadı",
         "alreadyAdded": "Bu token zaten eklenmiş",
         "alreadyAddedToast": "Token zaten eklendi",
+        "added": "Özel ağ tokeni başarıyla eklendi",
         "addFailed": "Token eklenemedi",
         "removeFailed": "Token silinemedi"
       }
