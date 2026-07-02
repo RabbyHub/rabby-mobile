@@ -118,12 +118,16 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
   }, [isPined, t, isDarkTheme, handlePress, gotoTokenDetail]);
 
   const menuActions = React.useMemo(() => {
-    return ['favorite', 'detail']
+    const menuKeys = isCustomTestnetToken
+      ? ['detail']
+      : (['favorite', 'detail'] as const);
+
+    return menuKeys
       .map(key => {
-        return menuActionDict[key]!;
+        return menuActionDict[key];
       })
       .filter(v => v);
-  }, [menuActionDict]);
+  }, [isCustomTestnetToken, menuActionDict]);
 
   return (
     <ContextMenuView

@@ -63,6 +63,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiCustomTestnet } from '@/core/apis';
 import { toast } from '@/components2024/Toast';
+import { isWatchOrSafeAccount } from '@/utils/account';
 
 type TokenListItem =
   | {
@@ -252,7 +253,11 @@ export const TokenList = ({
     loadTokens: loadCustomTestnetTokens,
     loadToken: loadCustomTestnetToken,
   } = useSingleAddressCustomTestnetAssetSections(currentAddress);
-  const shouldShowCustomTestnetSections = !selectedChain && !isLpTokenEnabled;
+  const shouldShowCustomTestnetSections =
+    !!currentAccount &&
+    !isWatchOrSafeAccount(currentAccount) &&
+    !selectedChain &&
+    !isLpTokenEnabled;
 
   useEffect(() => {
     if (!currentAddress) {

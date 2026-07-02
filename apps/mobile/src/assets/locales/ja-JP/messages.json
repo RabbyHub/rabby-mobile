@@ -2036,7 +2036,6 @@
         "notErc20": "このアドレスにERC20トークンが見つかりません",
         "alreadyAdded": "このトークンはすでに追加されています",
         "alreadyAddedToast": "トークンは追加済みです",
-        "added": "トークンを追加しました",
         "addFailed": "トークンの追加に失敗しました",
         "removeFailed": "トークンの削除に失敗しました"
       }

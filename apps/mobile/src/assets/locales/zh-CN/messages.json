@@ -1908,7 +1908,6 @@
         "notErc20": "该地址未找到 ERC20 代币",
         "alreadyAdded": "该代币已添加",
         "alreadyAddedToast": "代币已添加",
-        "added": "代币已添加",
         "addFailed": "添加代币失败",
         "removeFailed": "删除代币失败"
       }

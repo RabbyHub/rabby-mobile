@@ -16,7 +16,7 @@ import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractProject } from '@/screens/Home/types';
 import { getMarketTabToSwapPageAction } from '@/screens/Market/analytics';
-import { findChain } from '@/utils/chain';
+import { findChain, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS_ENUM } from '@debank/common';
 import { preferenceService } from '@/core/services';
@@ -143,6 +143,10 @@ export const TokenMarketInfoScreen = () => {
 
   const { safeOffBottom } = useSafeSizes();
 
+  const isCustomTestnet = useMemo(() => {
+    return token.chain && !!findChainByServerID(token.chain)?.isTestnet;
+  }, [token]);
+
   const finalAccount = useMemo(() => {
     return account || accounts[0] || preferenceService.getFallbackAccount();
   }, [account, accounts]);
@@ -155,6 +159,9 @@ export const TokenMarketInfoScreen = () => {
     loading: tokenWithAmountLoading,
   } = useRequest(
     async () => {
+      if (!token || !token.id || isCustomTestnet) {
+        return;
+      }
       const res = await openapi.getToken(
         finalAccount!.address,
         token.chain,
@@ -179,7 +186,7 @@ export const TokenMarketInfoScreen = () => {
     refreshAsync: refreshTokenEntity,
   } = useRequest(
     async () => {
-      if (!token || !token.id) {
+      if (!token || !token.id || isCustomTestnet) {
         return;
       }
 
@@ -212,7 +219,7 @@ export const TokenMarketInfoScreen = () => {
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const getHeaderRight = useCallback(() => {
-    return (
+    return isCustomTestnet ? null : (
       <RightMore
         token={token}
         triggerUpdate={() =>
@@ -227,7 +234,7 @@ export const TokenMarketInfoScreen = () => {
         refreshTags={refreshTag}
       />
     );
-  }, [token, refreshTag, finalAccount?.address]);
+  }, [isCustomTestnet, token, refreshTag, finalAccount?.address]);
 
   useFocusEffect(
     useCallback(() => {
