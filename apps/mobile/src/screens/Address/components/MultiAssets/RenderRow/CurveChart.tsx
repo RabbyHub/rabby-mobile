@@ -516,7 +516,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'column',
     width: '100%',
     maxWidth: '100%',
-    gap: 4,
+    gap: 2,
     // ...makeDebugBorder('blue'),
   },
   skeleton: {
@@ -602,7 +602,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     // ...makeDebugBorder('orange'),
-    lineHeight: 46,
+    lineHeight: 42,
   },
   netWorthTextContainer: {
     flex: 1,
