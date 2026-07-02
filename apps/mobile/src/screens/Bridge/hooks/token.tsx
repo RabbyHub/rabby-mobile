@@ -399,6 +399,25 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     });
   });
 
+  useEffect(() => {
+    if (
+      !toChain ||
+      toToken?.id ||
+      navState?.toTokenId ||
+      (navState?.toChainEnum && navState.toChainEnum !== toChain)
+    ) {
+      return;
+    }
+
+    setToToken(getChainDefaultToken(toChain));
+  }, [
+    navState?.toChainEnum,
+    navState?.toTokenId,
+    setToToken,
+    toChain,
+    toToken?.id,
+  ]);
+
   const switchToken = useCallback(() => {
     wrappedSwitchFromChain(toChain, false);
     wrappedSwitchToChain(fromChain, false);
