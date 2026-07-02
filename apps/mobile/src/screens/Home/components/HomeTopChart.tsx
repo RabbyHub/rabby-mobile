@@ -511,7 +511,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     //justifyContent: 'space-between',
     flexDirection: 'column',
     paddingLeft: 8,
-    gap: 4,
+    gap: 2,
     width: ScreenWidth - 32,
   },
   leftContainer: {
