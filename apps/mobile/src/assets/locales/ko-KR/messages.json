@@ -1964,6 +1964,7 @@
         "notErc20": "이 주소에서 ERC20 토큰을 찾을 수 없습니다",
         "alreadyAdded": "이 토큰은 이미 추가되었습니다",
         "alreadyAddedToast": "토큰이 이미 추가되었습니다",
+        "added": "사용자 정의 네트워크 토큰이 성공적으로 추가되었습니다",
         "addFailed": "토큰 추가 실패",
         "removeFailed": "토큰 삭제 실패"
       }
