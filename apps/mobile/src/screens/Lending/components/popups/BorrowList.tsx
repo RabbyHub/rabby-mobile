@@ -541,7 +541,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   listHeader: {
     paddingVertical: 2,
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -559,6 +559,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
+    paddingLeft: 4,
     flex: 1,
   },
   headerApy: {
@@ -566,6 +567,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
     width: 80,
+    paddingRight: 4,
     textAlign: 'right',
   },
   headerMyBorrows: {
