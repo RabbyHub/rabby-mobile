@@ -338,7 +338,7 @@ export const BrowserTab = ({
         viewShot: fileName,
       });
     } catch (e) {
-      console.error('viewShot', e);
+      console.warn('[BrowserTab] viewShot capture failed', e);
     }
   });
 

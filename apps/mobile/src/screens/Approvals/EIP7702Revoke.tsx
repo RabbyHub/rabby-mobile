@@ -17,7 +17,7 @@ import {
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useApprovalsPage } from './useApprovalsPage';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs } from '@rabby-wallet/react-native-collapsible-tab-view/src';
 import { useFocusEffect } from '@react-navigation/native';
 import { SkeletonListByAssets } from './components/Skeleton';
 import { ApprovalsLayouts } from './layout';
@@ -45,15 +45,25 @@ import { Text } from '@/components/Typography';
 const isIOS = Platform.OS === 'ios';
 function EIP7702Header({
   chainEnums,
+  selectedChain,
   isSupportedAccount,
   onPressSupportedChains,
 }: {
   chainEnums: Array<CHAINS_ENUM | string>;
+  selectedChain?: CHAINS_ENUM | string | null;
   isSupportedAccount: boolean;
   onPressSupportedChains: () => void;
 }) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const selectedChainInfo = React.useMemo(
+    () => (selectedChain ? findChainByEnum(selectedChain) : null),
+    [selectedChain],
+  );
+  const displayChainEnums = React.useMemo(
+    () => (selectedChain ? [selectedChain] : chainEnums),
+    [chainEnums, selectedChain],
+  );
 
   return (
     <View style={styles.headerContainer}>
@@ -89,7 +99,7 @@ function EIP7702Header({
           style={styles.supportedChainsButton}>
           <View style={styles.supportedChainsMain}>
             <View style={styles.supportedChainsIcons}>
-              {chainEnums.map((chainEnum, index) => (
+              {displayChainEnums.map((chainEnum, index) => (
                 <ChainIconImage
                   key={chainEnum}
                   chainEnum={chainEnum}
@@ -102,7 +112,7 @@ function EIP7702Header({
               ))}
             </View>
             <Text style={styles.supportedChainsText}>
-              {t('page.approvals.supportedChains')}
+              {selectedChainInfo?.name || t('page.approvals.supportedChains')}
             </Text>
           </View>
           <RcArrowRight2CC
@@ -219,8 +229,14 @@ function EIP7702Row({ item }: { item: EIP7702Delegated }) {
 
 export default function EIP7702RevokeList() {
   const { styles } = useTheme2024({ getStyle });
-  const { isLoading, data, refresh, isSupportedAccount } =
-    useEIP7702Approvals();
+  const {
+    isLoading,
+    data,
+    refresh,
+    isSupportedAccount,
+    selectedChain,
+    setSelectedChain,
+  } = useEIP7702Approvals();
   const {
     searchKw,
     safeSizeInfo: { safeSizes },
@@ -295,16 +311,24 @@ export default function EIP7702RevokeList() {
   const closeSupportedChains = React.useCallback(() => {
     supportedChainsSheetRef.current?.dismiss();
   }, []);
+  const handleSelectSupportedChain = React.useCallback(
+    (chain: CHAINS_ENUM | string | null) => {
+      setSelectedChain(chain);
+      closeSupportedChains();
+    },
+    [closeSupportedChains, setSelectedChain],
+  );
 
   const ListHeaderComponent = React.useCallback(
     () => (
       <EIP7702Header
         chainEnums={headerChainEnums}
+        selectedChain={selectedChain}
         isSupportedAccount={isSupportedAccount}
         onPressSupportedChains={openSupportedChains}
       />
     ),
-    [headerChainEnums, isSupportedAccount, openSupportedChains],
+    [headerChainEnums, isSupportedAccount, openSupportedChains, selectedChain],
   );
   const ItemSeparatorComponent = React.useCallback(
     () => <View style={styles.itemSeparator} />,
@@ -331,7 +355,7 @@ export default function EIP7702RevokeList() {
         refreshControl={
           <RefreshControl
             {...(isIOS && {
-              progressViewOffset: -12,
+              progressViewOffset: ApprovalsLayouts.tabbarHeight,
             })}
             enabled={isSupportedAccount}
             refreshing={refreshing}
@@ -344,6 +368,8 @@ export default function EIP7702RevokeList() {
       <EIP7702SupportedChainsSheet
         ref={supportedChainsSheetRef}
         chains={supportedChains}
+        selectedChain={selectedChain}
+        onSelect={handleSelectSupportedChain}
         onClose={closeSupportedChains}
       />
     </ApprovalsTabView>
@@ -363,7 +389,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     listContainer: {
       paddingTop: 0,
       paddingBottom: 0,
-      ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),
     },
     itemSeparator: {
       height: 8,

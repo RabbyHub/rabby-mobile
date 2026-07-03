@@ -663,6 +663,7 @@
       "copyAddress": "Copy Address"
     },
     "sendToken": {
+      "sendButton": "Send",
       "Chain": "Chain",
       "To": "To",
       "From": "From",
@@ -2332,6 +2333,8 @@
           "clear_and_quit": "Clear & Close App",
           "clear": "Clear"
         },
+        "clearingToast": "Clearing...",
+        "clearDoneQuitToast": "Cleared. Closing app soon.",
         "iOSToastTitle": "Clear Cache Success",
         "iOSToastDesc": "You need to restart the app to take effect."
       },

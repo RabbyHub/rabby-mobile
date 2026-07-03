@@ -148,6 +148,7 @@ const AddressList = ({
             showMarkIfNewlyAdded={showMarkIfNewlyAdded}
             data={item}
             onSelect={onDone}
+            contextMenuAndroidTriggerMode="native"
           />
         </View>
       );

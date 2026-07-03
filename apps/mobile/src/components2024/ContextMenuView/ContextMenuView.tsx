@@ -32,6 +32,7 @@ type Props = {
   children: React.ReactElement<any>;
   triggerProps?: Omit<MenuTriggerProps, 'children'>;
   androidLongPressDuration?: number;
+  androidTriggerMode?: 'gesture' | 'native';
 } & ContextMenuContentProps;
 
 export const ContextMenuView: React.FC<Props> = ({
@@ -43,6 +44,7 @@ export const ContextMenuView: React.FC<Props> = ({
   triggerProps,
   preViewBorderRadius = 30,
   androidLongPressDuration = 350,
+  androidTriggerMode = 'gesture',
 }) => {
   const { colors2024 } = useTheme2024();
 
@@ -60,7 +62,10 @@ export const ContextMenuView: React.FC<Props> = ({
       runOnJS(androidShowMenu)();
     });
 
-  const needUseGdOnAndroid = IS_ANDROID && triggerProps?.action === 'longPress';
+  const needUseGdOnAndroid =
+    IS_ANDROID &&
+    triggerProps?.action === 'longPress' &&
+    androidTriggerMode === 'gesture';
 
   return (
     <ContextMenu.Root

@@ -212,9 +212,7 @@ export type AddressNavigatorParamList = {
     finishGoToScreen:
       | typeof RootNames.CreateSelectMethod
       | typeof RootNames.ImportSuccess2024
-      | typeof RootNames.ImportMnemonic2024
-      | typeof RootNames.CreateChooseBackup
-      | typeof RootNames.ImportPrivateKey2024;
+      | typeof RootNames.CreateChooseBackup;
     title?: string;
     hideProgress?: boolean;
     delaySetPassword?: boolean;
@@ -282,10 +280,8 @@ export type AddressNavigatorParamList = {
     isExistedKR?: boolean;
   };
   [RootNames.ImportPrivateKey]?: {};
-  [RootNames.ImportPrivateKey2024]?: {};
   [RootNames.ImportHardwareAddress]?: {};
   [RootNames.ImportMnemonic]?: {};
-  [RootNames.ImportMnemonic2024]?: {};
   [RootNames.AddMnemonic]?: {};
   [RootNames.PreCreateMnemonic]?: {};
   [RootNames.CreateMnemonic]?: {};
@@ -442,9 +438,7 @@ export type SettingNavigatorParamList = {
           | typeof RootNames.PreCreateMnemonic
           | typeof RootNames.ImportPrivateKey
           | typeof RootNames.ImportMnemonic
-          | typeof RootNames.ImportMnemonic2024
           | typeof RootNames.CreateSelectMethod
-          | typeof RootNames.ImportPrivateKey2024
           | typeof RootNames.ImportSuccess2024;
       }
     | {

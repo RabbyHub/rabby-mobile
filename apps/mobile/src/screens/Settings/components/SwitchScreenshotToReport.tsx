@@ -1,7 +1,9 @@
-import React, { type Ref, useImperativeHandle } from 'react';
+import React, { useImperativeHandle } from 'react';
 
-import { AppSwitch2024 } from '@/components/customized/Switch2024';
-import { SwitchToggleType } from '@/components';
+import {
+  AppSwitch2024,
+  SwitchToggleRefProp,
+} from '@/components/customized/Switch2024';
 import { useScreenshotToReportEnabled } from '@/components/Screenshot/hooks';
 import useInterval from 'react-use/lib/useInterval';
 import { NEED_DEVSETTINGBLOCKS } from '@/constant';
@@ -15,8 +17,7 @@ export const SwitchScreenshotToReport = ({
   ...props
 }: React.ComponentProps<typeof AppSwitch2024> & {
   onToggleSuccess?: (enabled: boolean) => void | Promise<void>;
-  ref?: Ref<SwitchToggleType>;
-}) => {
+} & SwitchToggleRefProp) => {
   const { isShowFeedbackOnScreenshot, toggleScreenshotToReport } =
     useScreenshotToReportEnabled();
 

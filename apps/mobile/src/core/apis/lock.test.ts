@@ -84,6 +84,11 @@ const loadLockModule = () => {
     RABBY_MOBILE_KR_PWD: 'built-in-password',
   }));
 
+  jest.doMock('@/constant', () => ({
+    APP_TEST_PWD: '11111111',
+    NEED_DEVSETTINGBLOCKS: true,
+  }));
+
   jest.doMock('@/constant/event', () => ({
     BroadcastEvent: {
       accountsChanged: 'accountsChanged',

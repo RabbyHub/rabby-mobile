@@ -58,10 +58,10 @@ import { perfEvents } from './core/utils/perf';
 import { RefLikeObject } from './utils/type';
 import { useRendererDetect } from './components/Perf/PerfDetector';
 import { useTranslation } from 'react-i18next';
+import { BackgroundSecureBlurView } from './components/customized/BackgroundSecureBlurView';
 import {
   AliasNameEditModal,
   ApprovalTokenDetailSheetModalStub,
-  BackgroundSecureBlurView,
   BottomSheetBrowser,
   BottomSheetDappInfoPopup,
   BrowserFavoritePopup,

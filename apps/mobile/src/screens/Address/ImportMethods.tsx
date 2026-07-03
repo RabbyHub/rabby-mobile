@@ -38,7 +38,6 @@ import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useSetPasswordFirst } from '@/hooks/useLock';
-import { trigger } from 'react-native-haptic-feedback';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -49,6 +48,8 @@ import { IS_IOS } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import { useImportAddressProc } from '@/hooks/address/useNewUser';
+import { naviPush, naviReplace } from '@/utils/navigation';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -60,6 +61,7 @@ function ImportMethods(): JSX.Element {
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
   const { t } = useTranslation();
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
+  const { setConfirmCB } = useImportAddressProc();
 
   const route =
     useRoute<
@@ -87,6 +89,51 @@ function ImportMethods(): JSX.Element {
     return require('@/assets2024/icons/common/IconGoogleDrive.png');
   }, []);
 
+  const openImportSecret = React.useCallback(
+    (initialTab: 'seedPhrase' | 'privateKey', action: 'push' | 'replace') => {
+      const params = { initialTab, flow: 'in_app' as const };
+      if (action === 'replace') {
+        naviReplace(RootNames.ImportSecret, params);
+        return;
+      }
+      naviPush(RootNames.ImportSecret, params);
+    },
+    [],
+  );
+
+  const handleImportSecretPress = React.useCallback(
+    async (initialTab: 'seedPhrase' | 'privateKey') => {
+      setConfirmCB(async () => {
+        openImportSecret(initialTab, 'replace');
+      });
+
+      if (
+        state?.isNotNewUserProc &&
+        (await shouldRedirectToSetPasswordBefore2024({
+          backScreen: RootNames.CreateSelectMethod,
+          isFirstImportPassword: true,
+        }))
+      ) {
+        return;
+      }
+
+      openImportSecret(initialTab, 'push');
+
+      !state?.isNotNewUserProc &&
+        preferenceService.setReportActionTs(
+          initialTab === 'seedPhrase'
+            ? REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE
+            : REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_PRIVATE_KEY,
+        );
+    },
+    [
+      openImportSecret,
+      setConfirmCB,
+      shouldRedirectToSetPasswordBefore2024,
+      state?.isNotNewUserProc,
+    ],
+  );
+
   return (
     <NormalScreenContainer overwriteStyle={styles.wrapper}>
       <LinearGradient
@@ -112,29 +159,7 @@ function ImportMethods(): JSX.Element {
             <Card
               style={styles.importItem}
               // hasArrow={state?.isNotNewUserProc}
-              onPress={async () => {
-                if (
-                  // only has address in this set password
-                  state?.isNotNewUserProc &&
-                  (await shouldRedirectToSetPasswordBefore2024({
-                    backScreen: RootNames.ImportMnemonic2024,
-                  }))
-                ) {
-                  return;
-                }
-
-                navigation.dispatch(
-                  StackActions.push(RootNames.StackAddress, {
-                    screen: RootNames.ImportMnemonic2024,
-                    params: {},
-                  }),
-                );
-
-                !state?.isNotNewUserProc &&
-                  preferenceService.setReportActionTs(
-                    REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE,
-                  );
-              }}>
+              onPress={() => handleImportSecretPress('seedPhrase')}>
               <SeedPhraseIcon style={styles.icon} />
               <Text style={styles.importType}>
                 {t('page.nextComponent.importAddress.seedPhrase')}
@@ -144,28 +169,7 @@ function ImportMethods(): JSX.Element {
               // hasArrow={state?.isNotNewUserProc}
               style={styles.importItem}
               {...makeTestIDProps(E2E_ID.onboarding.importMethodPrivateKey)}
-              onPress={async () => {
-                if (
-                  state?.isNotNewUserProc &&
-                  (await shouldRedirectToSetPasswordBefore2024({
-                    backScreen: RootNames.ImportPrivateKey2024,
-                  }))
-                ) {
-                  return;
-                }
-
-                navigation.dispatch(
-                  StackActions.push(RootNames.StackAddress, {
-                    screen: RootNames.ImportPrivateKey2024,
-                    params: {},
-                  }),
-                );
-
-                !state?.isNotNewUserProc &&
-                  preferenceService.setReportActionTs(
-                    REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_PRIVATE_KEY,
-                  );
-              }}>
+              onPress={() => handleImportSecretPress('privateKey')}>
               <PrivateKeyIcon style={styles.icon} />
               <Text style={styles.importType}>
                 {t('page.nextComponent.importAddress.privateKey')}

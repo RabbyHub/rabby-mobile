@@ -13,12 +13,53 @@ import { Platform } from 'react-native';
 
 const ANALYTICS_PATH = 'https://matomo.debank.com/matomo.php';
 const genExtensionId = customAlphabet('1234567890abcdef', 16);
-const firebaseAnalyticsClient = firebaseAnalytics();
-
+type FirebaseAnalyticsModule = ReturnType<typeof firebaseAnalytics>;
 type AnalyticsPreferenceStore = {
   extensionId?: string;
   [USER_BEHAVIOR_TRACKING_OPT_OUT_KEY]?: boolean;
 };
+
+let firebaseAnalyticsInstance: FirebaseAnalyticsModule | null | undefined;
+let firebaseAnalyticsUnavailableLogged = false;
+
+function logFirebaseAnalyticsUnavailable(error: unknown) {
+  if (firebaseAnalyticsUnavailableLogged) {
+    return;
+  }
+  firebaseAnalyticsUnavailableLogged = true;
+  console.warn('[analytics] Firebase analytics unavailable', error);
+}
+
+function getFirebaseAnalytics() {
+  if (firebaseAnalyticsInstance !== undefined) {
+    return firebaseAnalyticsInstance;
+  }
+
+  try {
+    firebaseAnalyticsInstance = firebaseAnalytics();
+  } catch (error) {
+    firebaseAnalyticsInstance = null;
+    logFirebaseAnalyticsUnavailable(error);
+  }
+
+  return firebaseAnalyticsInstance;
+}
+
+async function safeFirebaseAnalyticsCall<T>(
+  callback: (instance: FirebaseAnalyticsModule) => Promise<T>,
+) {
+  const instance = getFirebaseAnalytics();
+  if (!instance) {
+    return undefined;
+  }
+
+  try {
+    return await callback(instance);
+  } catch (error) {
+    logFirebaseAnalyticsUnavailable(error);
+    return undefined;
+  }
+}
 
 const getStoredPreference = () =>
   appStorage.getItem(APP_STORE_NAMES.preference) as
@@ -52,39 +93,38 @@ function getOrCreateExtensionId() {
 }
 
 export const syncFirebaseAnalyticsCollectionWithOptOut = async () => {
-  try {
-    await firebaseAnalyticsClient.setAnalyticsCollectionEnabled(
-      canTrackUserBehavior(),
-    );
-  } catch (error) {
-    console.error('setAnalyticsCollectionEnabled Error', error);
-  }
+  await safeFirebaseAnalyticsCall(instance =>
+    instance.setAnalyticsCollectionEnabled(canTrackUserBehavior()),
+  );
 };
 
 void syncFirebaseAnalyticsCollectionWithOptOut();
 
 export const analytics = {
-  logEvent: async (
-    ...args: Parameters<typeof firebaseAnalyticsClient.logEvent>
-  ) => {
+  logEvent: async (...args: Parameters<FirebaseAnalyticsModule['logEvent']>) => {
     if (!canTrackUserBehavior()) {
       return;
     }
-    return firebaseAnalyticsClient.logEvent(...args);
+    return safeFirebaseAnalyticsCall(instance => instance.logEvent(...args));
   },
   logScreenView: async (
-    ...args: Parameters<typeof firebaseAnalyticsClient.logScreenView>
+    ...args: Parameters<FirebaseAnalyticsModule['logScreenView']>
   ) => {
     if (!canTrackUserBehavior()) {
       return;
     }
-    return firebaseAnalyticsClient.logScreenView(...args);
+    return safeFirebaseAnalyticsCall(instance =>
+      instance.logScreenView(...args),
+    );
   },
   setAnalyticsCollectionEnabled: (
     ...args: Parameters<
-      typeof firebaseAnalyticsClient.setAnalyticsCollectionEnabled
+      FirebaseAnalyticsModule['setAnalyticsCollectionEnabled']
     >
-  ) => firebaseAnalyticsClient.setAnalyticsCollectionEnabled(...args),
+  ) =>
+    safeFirebaseAnalyticsCall(instance =>
+      instance.setAnalyticsCollectionEnabled(...args),
+    ),
 };
 
 const getParams = async () => {

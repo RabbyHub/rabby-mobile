@@ -1,37 +1,29 @@
-import { IS_IOS, makeRnEEClass, resolveNativeModule } from './utils';
+import { NativeModules } from 'react-native';
+
+import { NativeModuleNames } from './specs/types';
+import {
+  EventEmitterRecordToListeners,
+  IS_IOS,
+  makeRnEEClass,
+  resolveNativeModule,
+} from './utils';
 
 const { RNScreenshotPrevent: nativeModule } = resolveNativeModule(
-  'RNScreenshotPrevent',
+  NativeModuleNames.RNScreenshotPrevent,
+);
+const { ReactNativeSecurity: nativeSecurityModule } = resolveNativeModule(
+  NativeModuleNames.ReactNativeSecurity,
 );
 
-type Listeners = {
-  /**
-   * @platform iOS, Android >= 14
-   */
-  userDidTakeScreenshot: (ret?: {
-    captured?: boolean;
-    path?: string;
-    height?: string | number;
-    width?: string | number;
-    imageBase64?: string;
-    imageType?: 'jpeg' | 'png';
-    name?: string;
-  }) => any;
-  screenCapturedChanged: (ret: { isBeingCaptured: boolean }) => any;
-  appSwitcherBlurChanged: (ret: { visible: boolean }) => any;
-  screenCaptureDetectionChanged: (ret: { enabled: boolean }) => any;
-  /**
-   * @description subscribe to android app state change, pause means app is in background, resume means app is in foreground
-   */
-  androidOnLifeCycleChanged: (ret: { state: 'resume' | 'pause' }) => any;
-  /** @description pointless now */
-  preventScreenshotChanged: (ret: {
-    isPrevent: boolean;
-    success: boolean;
-  }) => any;
-};
+type Listeners = EventEmitterRecordToListeners<
+  import('./specs/NativeRNScreenshotPrevent').EventEmitterRecord
+>;
 const { NativeEventEmitter } = makeRnEEClass<Listeners>();
-const eventEmitter = new NativeEventEmitter(nativeModule);
+const legacyEventModule =
+  (NativeModules[NativeModuleNames.RNScreenshotPrevent] as
+    | typeof nativeModule
+    | undefined) || nativeModule;
+const eventEmitter = new NativeEventEmitter(legacyEventModule);
 
 function makeDefaultHandler<T extends keyof Listeners>(fn: Listeners[T]) {
   if (typeof fn !== 'function') {
@@ -48,6 +40,31 @@ function makeDefaultHandler<T extends keyof Listeners>(fn: Listeners[T]) {
     };
   }
 }
+
+function addNativeListener<T extends keyof Listeners & string>(
+  eventName: T,
+  fn: Listeners[T],
+) {
+  const handler = makeDefaultHandler<T>(fn);
+  if (handler) {
+    return handler;
+  }
+
+  const codegenEventEmitter = (
+    nativeModule as unknown as Record<string, unknown>
+  )[eventName];
+  if (typeof codegenEventEmitter === 'function') {
+    return (
+      codegenEventEmitter as (listener: Listeners[T]) => {
+        remove: () => void;
+      }
+    )(fn);
+  }
+
+  // Legacy bridge fallback for Android and non-newArch iOS builds.
+  return eventEmitter.addListener(eventName, fn);
+}
+
 // type DefaulHandle = {
 //   readonly remove: EmitterSubscription['remove'];
 // };
@@ -55,59 +72,69 @@ function makeDefaultHandler<T extends keyof Listeners>(fn: Listeners[T]) {
  * subscribes to userDidTakeScreenshot event
  */
 function onUserDidTakeScreenshot(fn: Listeners['userDidTakeScreenshot']) {
-  const handler = makeDefaultHandler<'userDidTakeScreenshot'>(fn);
-  if (handler) {
-    return handler;
-  }
-
-  return eventEmitter.addListener('userDidTakeScreenshot', fn);
+  return addNativeListener('userDidTakeScreenshot', fn);
 }
 
 function iosOnScreenCaptureChanged(fn: Listeners['screenCapturedChanged']) {
-  const handler = makeDefaultHandler<'screenCapturedChanged'>(fn);
-  if (handler) {
-    return handler;
-  }
-
-  return eventEmitter.addListener('screenCapturedChanged', fn);
+  return addNativeListener('screenCapturedChanged', fn);
 }
 
 function iosOnAppSwitcherBlurChanged(fn: Listeners['appSwitcherBlurChanged']) {
-  const handler = makeDefaultHandler<'appSwitcherBlurChanged'>(fn);
-  if (handler) {
-    return handler;
-  }
-
-  return eventEmitter.addListener('appSwitcherBlurChanged', fn);
+  return addNativeListener('appSwitcherBlurChanged', fn);
 }
 
 function androidOnLifeCycleChanged(fn: Listeners['androidOnLifeCycleChanged']) {
-  const handler = makeDefaultHandler<'androidOnLifeCycleChanged'>(fn);
-  if (handler) {
-    return handler;
-  }
-
-  return eventEmitter.addListener('androidOnLifeCycleChanged', fn);
+  return addNativeListener('androidOnLifeCycleChanged', fn);
 }
 
 function onPreventScreenshotChanged(fn: Listeners['preventScreenshotChanged']) {
-  const handler = makeDefaultHandler<'preventScreenshotChanged'>(fn);
-  if (handler) {
-    return handler;
-  }
-
-  return eventEmitter.addListener('preventScreenshotChanged', fn);
+  return addNativeListener('preventScreenshotChanged', fn);
 }
 
 function onScreenCaptureDetectionChanged(
   fn: Listeners['screenCaptureDetectionChanged'],
 ) {
-  const handler = makeDefaultHandler<'screenCaptureDetectionChanged'>(fn);
-  if (handler) {
-    return handler;
+  return addNativeListener('screenCaptureDetectionChanged', fn);
+}
+
+let hasWarnedMissingTogglePreventScreenshot = false;
+function warnMissingTogglePreventScreenshot(error?: unknown) {
+  if (hasWarnedMissingTogglePreventScreenshot) {
+    return;
   }
 
-  return eventEmitter.addListener('screenCaptureDetectionChanged', fn);
+  hasWarnedMissingTogglePreventScreenshot = true;
+  console.warn(
+    'RNScreenshotPrevent.togglePreventScreenshot is unavailable; falling back to ReactNativeSecurity when possible.',
+    error,
+  );
+}
+
+function togglePreventScreenshot(isPrevent: boolean) {
+  try {
+    const nativeToggle = nativeModule.togglePreventScreenshot;
+    if (typeof nativeToggle === 'function') {
+      return nativeToggle.call(nativeModule, isPrevent);
+    }
+  } catch (error) {
+    warnMissingTogglePreventScreenshot(error);
+  }
+
+  try {
+    const fallbackMethod = isPrevent
+      ? nativeSecurityModule.blockScreen
+      : nativeSecurityModule.unblockScreen;
+
+    if (typeof fallbackMethod === 'function') {
+      warnMissingTogglePreventScreenshot();
+      return fallbackMethod.call(nativeSecurityModule);
+    }
+  } catch (error) {
+    warnMissingTogglePreventScreenshot(error);
+    return;
+  }
+
+  warnMissingTogglePreventScreenshot();
 }
 
 if (__DEV__) {
@@ -129,7 +156,11 @@ if (__DEV__) {
  * @see https://github.com/killserver/react-native-screenshot-prevent/issues/17
  */
 const RNScreenshotPrevent = Object.freeze({
-  ...nativeModule,
+  togglePreventScreenshot,
+  setAppSwitcherBlurEnabled: nativeModule.setAppSwitcherBlurEnabled,
+  iosIsBeingCaptured: nativeModule.iosIsBeingCaptured,
+  iosProtectFromScreenRecording: nativeModule.iosProtectFromScreenRecording,
+  iosUnprotectFromScreenRecording: nativeModule.iosUnprotectFromScreenRecording,
   onPreventScreenshotChanged,
   // iosToggleBlurView(bool: boolean) {
   //   nativeModule.iosToggleBlurView(!!bool);
@@ -161,6 +192,7 @@ const RNScreenshotPrevent = Object.freeze({
     // }
     return nativeModule.startScreenCaptureDetection();
   },
+  stopScreenCaptureDetection: nativeModule.stopScreenCaptureDetection,
   scanScreenshotDirectory: (
     ...params: Parameters<typeof nativeModule.scanScreenshotDirectory>
   ) => {

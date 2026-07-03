@@ -45,6 +45,9 @@ interface AddressItemProps {
   disableMenu?: boolean;
   onSelect?: () => void;
   useLongPressing?: boolean;
+  contextMenuAndroidTriggerMode?: React.ComponentProps<
+    typeof AddressItemContextMenu
+  >['androidTriggerMode'];
   handleGoDetail?: () => void;
   showMarkIfNewlyAdded?: React.ComponentProps<
     typeof AddressItemInner2024
@@ -60,6 +63,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     disableMenu,
     isScrolling,
     useLongPressing,
+    contextMenuAndroidTriggerMode,
     handleGoDetail,
     showMarkIfNewlyAdded,
   } = props;
@@ -121,7 +125,8 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     <AddressItemContextMenu
       account={account}
       preViewBorderRadius={16}
-      actions={['copy', 'pin', 'edit', 'delete']}>
+      actions={['copy', 'pin', 'edit', 'delete']}
+      androidTriggerMode={contextMenuAndroidTriggerMode}>
       {children}
     </AddressItemContextMenu>
   );

@@ -1,0 +1,59 @@
+{
+  "name": "@rabby-wallet/react-native-collapsible-tab-view",
+  "version": "6.2.1",
+  "private": true,
+  "description": "Rabby Mobile source fork of react-native-collapsible-tab-view 6.2.1",
+  "main": "lib/commonjs/index.js",
+  "react-native": "src/index.tsx",
+  "module": "lib/module/index.js",
+  "types": "lib/typescript/src/index.d.ts",
+  "files": [
+    "src",
+    "lib"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
+  "keywords": [
+    "react-native-component",
+    "react-component",
+    "react-native",
+    "ios",
+    "android",
+    "tab",
+    "swipe",
+    "scrollable",
+    "coverflow"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RabbyHub/rabby-mobile.git",
+    "directory": "packages/react-native-collapsible-tab-view"
+  },
+  "author": "Pedro Bern <pedrobermoreira@gmail.com> (https://github.com/pedrobern/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/RabbyHub/rabby-mobile/issues"
+  },
+  "homepage": "https://github.com/RabbyHub/rabby-mobile",
+  "peerDependencies": {
+    "@shopify/flash-list": ">=1.0.0",
+    "react": "*",
+    "react-native": "*",
+    "react-native-gesture-handler": "*",
+    "react-native-pager-view": "*",
+    "react-native-reanimated": ">=2.15.0"
+  },
+  "peerDependenciesMeta": {
+    "@shopify/flash-list": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "use-deep-compare": "^1.1.0"
+  },
+  "eslintIgnore": [
+    "node_modules/",
+    "lib/"
+  ]
+}

@@ -76,7 +76,9 @@ export const BackupUnlockScreen: React.FC<Props> = ({
   onConfirm,
   ignoreValidation,
 }) => {
-  const [password, setPassword] = React.useState<string>(APP_TEST_PWD);
+  const [password, setPassword] = React.useState<string>(
+    __DEV__ ? APP_TEST_PWD : '',
+  );
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [error, setError] = React.useState<string>();
   const { t } = useTranslation();
@@ -120,6 +122,8 @@ export const BackupUnlockScreen: React.FC<Props> = ({
             inputProps={{
               value: password,
               secureTextEntry: true,
+              textContentType: 'none',
+              autoComplete: 'off',
               inputMode: 'text',
               returnKeyType: 'done',
               placeholderTextColor: colors2024['neutral-foot'],
