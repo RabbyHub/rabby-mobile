@@ -67,7 +67,7 @@ import { useAppForeground } from '@/hooks/useAppForeground';
 export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   return (
-    <View {...props} style={[{ paddingHorizontal: 16 }, props.style]}>
+    <View {...props} style={[{ paddingHorizontal: 12 }, props.style]}>
       <ItemLoader style={styles.removeLeft} />
     </View>
   );
@@ -407,11 +407,11 @@ const getStyles = createGetStyles2024(ctx => ({
     // marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
   },
   list: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 48,
   },
   bgContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   sectionHeader: {
     fontFamily: 'SF Pro Rounded',

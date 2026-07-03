@@ -63,6 +63,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiCustomTestnet } from '@/core/apis';
 import { toast } from '@/components2024/Toast';
+import { isWatchOrSafeAccount } from '@/utils/account';
 
 type TokenListItem =
   | {
@@ -121,8 +122,8 @@ const TokenResourceRow = React.memo(
         data={token}
         style={tokenStyle}
         onTokenPress={onTokenPress}
-        logoSize={46}
-        chainLogoSize={18}
+        //logoSize={46}
+        //chainLogoSize={18}
         scene="portfolio"
       />
     );
@@ -252,7 +253,11 @@ export const TokenList = ({
     loadTokens: loadCustomTestnetTokens,
     loadToken: loadCustomTestnetToken,
   } = useSingleAddressCustomTestnetAssetSections(currentAddress);
-  const shouldShowCustomTestnetSections = !selectedChain && !isLpTokenEnabled;
+  const shouldShowCustomTestnetSections =
+    !!currentAccount &&
+    !isWatchOrSafeAccount(currentAccount) &&
+    !selectedChain &&
+    !isLpTokenEnabled;
 
   useEffect(() => {
     if (!currentAddress) {
@@ -764,21 +769,20 @@ const getStyles = createGetStyles2024(ctx => ({
     left: 0,
     right: 0,
     height: ASSETS_SECTION_HEADER,
-    // paddingHorizontal: 16,
     zIndex: 1,
   },
   bgContainer: {
     // backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   rowWrap: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   removeLeft: {
     marginLeft: 0,
   },
   renderItemWrapper: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
-    borderRadius: 16,
+    borderRadius: 14,
     height: ASSETS_ITEM_HEIGHT_NEW,
     paddingLeft: 12,
     width: '100%',
@@ -795,7 +799,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   customTestnetSectionWrap: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   singleCustomTestnetDivider: {
     marginBottom: 9,

@@ -236,12 +236,17 @@ export const QuoteList = (props: QuotesProps) => {
         <TouchableOpacity onPress={refreshQuote} style={styles.refreshIconBtn}>
           <RcIconRefreshCC color={colors2024['neutral-body']} />
         </TouchableOpacity>
-        <Text style={styles.headerText}>
-          {t('page.bridge.the-following-bridge-route-are-found')}
-        </Text>
-        <Text style={styles.subtitleText}>
-          {t('page.bridge.best-subtitle')}
-        </Text>
+        <View
+          style={{
+            paddingHorizontal: 12,
+          }}>
+          <Text style={styles.headerText}>
+            {t('page.bridge.the-following-bridge-route-are-found')}
+          </Text>
+          <Text style={styles.subtitleText}>
+            {t('page.bridge.best-subtitle')}
+          </Text>
+        </View>
         <View style={{ flex: 1 }}>
           <Quotes {...props} loading={props.loading} />
           <View style={{ height: 20 }} />

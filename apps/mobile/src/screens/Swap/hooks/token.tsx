@@ -17,7 +17,11 @@ import { openapi } from '@/core/request';
 import useDebounce from 'react-use/lib/useDebounce';
 import { swapService } from '@/core/services';
 import { useAsyncInitializeChainList } from '@/hooks/useChain';
-import { getChainDefaultToken, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
+import {
+  getChainDefaultToken,
+  getDefaultSwapToTokenItem,
+  SWAP_SUPPORT_CHAINS,
+} from '@/constant/swap';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwapSettings } from './settings';
 import { QuoteProvider, TDexQuoteData, useQuoteMethods } from './quote';
@@ -621,6 +625,19 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     },
     account,
   });
+
+  useEffect(() => {
+    if (receiveToken?.id || !payToken?.id) {
+      return;
+    }
+
+    const defaultToToken = getDefaultSwapToTokenItem(chain);
+    if (!defaultToToken || isSameAddress(payToken.id, defaultToToken.id)) {
+      return;
+    }
+
+    setReceiveToken(defaultToToken);
+  }, [chain, payToken?.id, receiveToken?.id, setReceiveToken]);
 
   useEffect(() => {
     swapService.setSelectedFromToken(payToken);

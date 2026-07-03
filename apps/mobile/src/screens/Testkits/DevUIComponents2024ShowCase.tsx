@@ -124,7 +124,7 @@ function TickerGlyphCell({ glyph }: { glyph: string }) {
         value={value}
         maxLength={1}
         duration={320}
-        lineHeight={46}
+        lineHeight={42}
         style={styles.tickerText}
         containerStyle={styles.tickerGlyphValue}
         fontSizeByLength={{
@@ -163,7 +163,7 @@ function AnimatedTickerTextShowCase() {
           value={value}
           maxLength={16}
           duration={320}
-          lineHeight={46}
+          lineHeight={42}
           style={styles.tickerText}
           fontSizeByLength={{
             maxFontSize: 38,
@@ -444,8 +444,8 @@ const getStyles = createGetStyles2024(ctx =>
       backgroundColor: ctx.colors2024['neutral-bg-2'],
     },
     tickerText: {
-      lineHeight: 46,
-      fontWeight: '900',
+      lineHeight: 42,
+      fontWeight: '700',
       color: ctx.colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
     },

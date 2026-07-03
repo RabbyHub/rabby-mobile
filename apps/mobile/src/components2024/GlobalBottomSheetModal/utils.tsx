@@ -353,9 +353,7 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.LENDING_TOKEN_LIST]: {
     snapPoints: [MODAL_MAX_HEIGHT],
     Component: LendingTokenList,
-    globalModalPropsPreset: getDefaultViewTypePropsPreset({
-      enableContentPanningGesture: false,
-    }),
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.DEBT_TOKEN_SELECT]: {
     snapPoints: ['85%'],
@@ -382,9 +380,7 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.CUSTOM_TESTNET_ADD_TOKEN]: {
     snapPoints: [600],
     Component: CustomTestnetAddTokenSheet,
-    globalModalPropsPreset: getDefaultViewTypePropsPreset({
-      android_keyboardInputMode: 'adjustPan',
-    }),
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.REPAY_TOKEN_SELECT]: {
     snapPoints: [360],

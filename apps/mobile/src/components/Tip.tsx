@@ -8,6 +8,7 @@ import { useSwitch } from '@/hooks/useSwitch';
 import { AppColorsVariants } from '@/constant/theme';
 import { RNGHPressable, RNGHPressableProps } from './customized/reexports';
 import { Text } from '@/components/Typography';
+import { TrackedModal } from './Modal/TrackedModal';
 
 type PressableComponent = 'RNPressable' | 'RNGHPressable';
 type PressableComProps<T extends PressableComponent> = T extends 'RNPressable'
@@ -26,9 +27,36 @@ type TipProps<T extends PressableComponent> = Omit<TooltipProps, 'content'> & {
     }) => void;
   };
   noPressable?: boolean;
+  modalGateId?: string;
+  modalGateBlocking?: boolean;
 };
 
 const destroyListeners = new Set<() => void>();
+
+const TipModalGateContext = React.createContext<{
+  modalGateId: string;
+  modalGateBlocking: boolean;
+} | null>(null);
+
+const TipModalWithGate = ({
+  children,
+  ...modalProps
+}: React.PropsWithChildren<Record<string, unknown>>) => {
+  const modalGate = React.useContext(TipModalGateContext);
+
+  if (!modalGate) {
+    return null;
+  }
+
+  return (
+    <TrackedModal
+      {...modalProps}
+      modalId={modalGate.modalGateId}
+      blocking={modalGate.modalGateBlocking}>
+      {children}
+    </TrackedModal>
+  );
+};
 
 function destroyTips() {
   destroyListeners.forEach(listener => {
@@ -47,6 +75,9 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
   isLight,
   children,
   noPressable = false,
+  modalGateId,
+  modalGateBlocking = true,
+  modalComponent,
   ...rest
 }: TipProps<T>) => {
   const { colors, styles } = useThemeStyles(getStyle);
@@ -92,6 +123,17 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
     [arrowSize, hideArrow],
   );
 
+  const modalGateContextValue = useMemo(
+    () =>
+      modalGateId
+        ? {
+            modalGateId,
+            modalGateBlocking,
+          }
+        : null,
+    [modalGateBlocking, modalGateId],
+  );
+
   const onPress = pressableProps?.onPress;
   const handleOnPress = useCallback<PressableComProps<T>['onPress'] & object>(
     evt => {
@@ -105,7 +147,7 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
     [onPress, turnOff, turnOn],
   );
 
-  return (
+  const tooltipNode = (
     <Tooltip
       isVisible={on}
       placement="top"
@@ -119,6 +161,7 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
       content={_content}
       showChildInTooltip={false}
       arrowSize={_arrowSize}
+      modalComponent={modalGateId ? TipModalWithGate : modalComponent}
       {...rest}
       contentStyle={StyleSheet.flatten([
         styles.tooltipContent,
@@ -143,6 +186,16 @@ const TipBase = <T extends PressableComponent = 'RNPressable'>({
       )}
     </Tooltip>
   );
+
+  if (modalGateContextValue) {
+    return (
+      <TipModalGateContext.Provider value={modalGateContextValue}>
+        {tooltipNode}
+      </TipModalGateContext.Provider>
+    );
+  }
+
+  return tooltipNode;
 };
 
 export const Tip = Object.assign(TipBase, {

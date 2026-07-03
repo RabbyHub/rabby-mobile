@@ -7,6 +7,7 @@ import { stringUtils } from '@rabby-wallet/base-utils';
 import { checkIfEnabledNotificationWithPermission } from './switch';
 import { IS_IOS } from '../native/utils';
 import { AppState } from 'react-native';
+import { APP_FEATURE_SWITCH } from '@/constant';
 
 export function getFeServiceURL() {
   if (!isNonPublicProductionEnv) return RABBY_MOBILE_FE_SERVICE_URL || null;
@@ -24,6 +25,10 @@ export function getFeServiceURL() {
 }
 
 export const connectFeService = async (data: { pushToken: string }) => {
+  if (!APP_FEATURE_SWITCH.transactionNotification) {
+    return;
+  }
+
   const pushToken = data.pushToken;
   if (!pushToken) {
     throw new Error(
@@ -86,6 +91,10 @@ const connectFeServiceIntervalRef = {
   lastSuccessSignature: '',
 };
 export function startConnectFeServiceInterval(pushToken: string) {
+  if (!APP_FEATURE_SWITCH.transactionNotification) {
+    return;
+  }
+
   if (!pushToken) {
     if (__DEV__) {
       console.warn(
