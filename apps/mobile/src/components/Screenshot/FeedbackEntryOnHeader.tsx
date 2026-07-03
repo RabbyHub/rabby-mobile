@@ -26,11 +26,16 @@ export function FeedbackEntryOnHeader({ style }: RNViewProps) {
     return makeDeviceUUID().deviceUUID;
   }, []);
 
-  const { data } = useRequest(async () => {
-    return openapi.getClientFeedbackUnread({
-      device_id: deviceId,
-    });
-  });
+  const { data, mutate } = useRequest(
+    async () => {
+      return openapi.getClientFeedbackUnread({
+        device_id: deviceId,
+      });
+    },
+    {
+      pollingInterval: 10 * 1000,
+    },
+  );
 
   if (!data?.unread_count) {
     return null;
@@ -43,6 +48,15 @@ export function FeedbackEntryOnHeader({ style }: RNViewProps) {
         style={[styles.iconContainer, style]}
         onPress={() => {
           toggleFeedbackHistoryVisible(true);
+          mutate(prev => {
+            if (prev) {
+              return {
+                ...prev,
+                unread_count: 0,
+              };
+            }
+            return prev;
+          });
         }}>
         <RcEntryCC style={styles.icon} color={styles.icon.color} />
       </TouchableOpacity>

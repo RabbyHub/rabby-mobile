@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Image, ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -111,11 +117,17 @@ export const FeedbackBottomSheet: React.FC = () => {
     toggleShowSheetModal,
   ]);
 
+  const hasMessage = useMemo(() => {
+    return !!feedbackMessagesData?.messages?.length;
+  }, [feedbackMessagesData?.messages?.length]);
+
   useEffect(() => {
-    if (isShowHistory) {
-      // scrollToBottom();
+    if (isShowHistory && hasMessage) {
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
     }
-  }, [feedbackMessagesData?.messages?.length, isShowHistory, scrollToBottom]);
+  }, [hasMessage, isShowHistory, scrollToBottom]);
 
   return (
     <AppBottomSheetModal
@@ -148,13 +160,13 @@ export const FeedbackBottomSheet: React.FC = () => {
             style={styles.messageList}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
-            onContentSizeChange={() => {
-              // setTimeout(() => {
-              if (isShowHistory) {
-                scrollToBottom();
-              }
-              // }, 500);
-            }}
+            // onContentSizeChange={() => {
+            //   // setTimeout(() => {
+            //   if (isShowHistory) {
+            //     scrollToBottom();
+            //   }
+            //   // }, 500);
+            // }}
             contentContainerStyle={styles.messageListContent}>
             {feedbackMessagesData?.messages?.map(message => (
               <FeedbackMessageItem key={message.id} message={message} />
