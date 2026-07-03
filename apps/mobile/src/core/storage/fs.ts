@@ -120,7 +120,7 @@ export class AppScreenshotFS {
 
   static async uploadFile<T extends any>(
     input: string,
-    url: string = `${INITIAL_OPENAPI_URL}/v1/feedback/app/upload`,
+    url: string = `${INITIAL_OPENAPI_URL}/v1/client_feedback/upload`,
   ): Promise<T | null> {
     const base64 = await AppScreenshotFS.uriToBase64(input);
     if (!base64) return null;

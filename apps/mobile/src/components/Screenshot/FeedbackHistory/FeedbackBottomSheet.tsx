@@ -5,24 +5,26 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Image, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { useFeedbackHistoryVisible } from '../hooks';
+import {
+  getScreenshotFeedbackExtraSafely,
+  useFeedbackHistoryVisible,
+  useScreenshotFeedbackTotalBalanceText,
+} from '../hooks';
 
+import { RcIconCloseCC } from '@/assets/icons/common';
 import RcIconRabby from '@/assets2024/icons/common/rabby-wallet.svg';
 import { RcIconUser } from '@/assets/icons/gnosis';
-import { Text } from '@/components/Typography';
+import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
+import { toast } from '@/components2024/Toast';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { FontWeightEnum } from '@/core/utils/fonts';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  BottomSheetScrollView,
-  BottomSheetTextInput,
-} from '@gorhom/bottom-sheet';
 import type { ClientFeedbackMessage } from '@rabby-wallet/rabby-api/dist/types';
 import AutoLockView from '../../AutoLockView';
 import { AppBottomSheetModal } from '../../customized/BottomSheet';
@@ -31,6 +33,17 @@ import { useCreation, useRequest } from 'ahooks';
 import { openapi } from '@/core/request';
 import { makeDeviceUUID } from '@/core/apis/device';
 import Video from 'react-native-video';
+import {
+  KeyboardAwareScrollView,
+  KeyboardProvider,
+} from 'react-native-keyboard-controller';
+import { sortBy } from 'lodash';
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { launchImageLibrary, type Asset } from 'react-native-image-picker';
+import FastImage from 'react-native-fast-image';
+import RcRabbyAvatar from '@/assets/icons/feedback/rabby-avatar.svg';
+import RcUserAvatar from '@/assets/icons/feedback/user-avatar.svg';
+import RcCloseIcon from '@/assets/icons/feedback/close-light.svg';
 
 type FeedbackMessage = {
   id: string;
@@ -40,6 +53,92 @@ type FeedbackMessage = {
 };
 
 const SHEET_HEIGHT = 652;
+const ONE_MB = 1024 * 1024;
+const MAX_IMAGE_FILE_SIZE = 5 * ONE_MB;
+const MAX_VIDEO_FILE_SIZE = 50 * ONE_MB;
+
+type PickedFeedbackMedia = Asset;
+
+function isVideoMedia(media?: PickedFeedbackMedia | null) {
+  const filename = media?.fileName || media?.uri || '';
+  return (
+    media?.type?.startsWith('video/') ||
+    /\.(mp4|mov|m4v|webm|3gp)$/i.test(filename)
+  );
+}
+
+function getUploadFilename(media: PickedFeedbackMedia) {
+  if (media.fileName) {
+    return media.fileName;
+  }
+
+  return isVideoMedia(media) ? 'feedback-video.mp4' : 'feedback-image.jpg';
+}
+
+function getUploadMimeType(media: PickedFeedbackMedia) {
+  if (media.type) {
+    return media.type;
+  }
+
+  return isVideoMedia(media) ? 'video/mp4' : 'image/jpeg';
+}
+
+function getMediaSizeLimitError(media: PickedFeedbackMedia) {
+  if (!media.fileSize) {
+    return null;
+  }
+
+  if (isVideoMedia(media)) {
+    return media.fileSize > MAX_VIDEO_FILE_SIZE
+      ? 'Video size must be 50 MB or smaller.'
+      : null;
+  }
+
+  return media.fileSize > MAX_IMAGE_FILE_SIZE
+    ? 'Image size must be 5 MB or smaller.'
+    : null;
+}
+
+function getFeedbackErrorMessage(error: unknown, fallback: string) {
+  const maybeError = error as {
+    message?: unknown;
+    response?: {
+      data?: {
+        message?: unknown;
+        error?: unknown;
+      };
+    };
+  };
+  const message =
+    maybeError?.response?.data?.message ||
+    maybeError?.response?.data?.error ||
+    maybeError?.message;
+
+  if (typeof message === 'string' && message.trim()) {
+    return message;
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
+async function uploadFeedbackMedia(media: PickedFeedbackMedia) {
+  if (!media.uri) {
+    throw new Error('No selected feedback media uri');
+  }
+
+  const formData = new FormData();
+  formData.append('file', {
+    uri: media.uri,
+    type: getUploadMimeType(media),
+    name: getUploadFilename(media),
+  } as unknown as Blob);
+
+  return openapi.uploadClientFeedback(formData);
+}
 
 export const FeedbackBottomSheet: React.FC = () => {
   const { t } = useTranslation();
@@ -48,13 +147,51 @@ export const FeedbackBottomSheet: React.FC = () => {
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal();
   const { isShowHistory, toggleFeedbackHistoryVisible } =
     useFeedbackHistoryVisible();
+  const totalBalanceText = useScreenshotFeedbackTotalBalanceText();
   const [replyText, setReplyText] = useState('');
+  const [selectedMedia, setSelectedMedia] =
+    useState<PickedFeedbackMedia | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollToBottom = useCallback((animated = false) => {
-    console.log('scrollToBottom', scrollViewRef.current);
     requestAnimationFrame(() => {
       scrollViewRef.current?.scrollToEnd({ animated });
     });
+  }, []);
+
+  const handlePickMedia = useCallback(async () => {
+    const result = await launchImageLibrary({
+      mediaType: 'mixed',
+      selectionLimit: 1,
+    });
+
+    if (result.didCancel) {
+      return;
+    }
+
+    if (result.errorCode) {
+      console.error(
+        'launchImageLibrary error',
+        result.errorCode,
+        result.errorMessage,
+      );
+      toast.error(result.errorMessage || 'Failed to open photo library.');
+      return;
+    }
+
+    const media = result.assets?.find(asset => !!asset.uri);
+    if (media) {
+      const limitError = getMediaSizeLimitError(media);
+      if (limitError) {
+        toast.error(limitError);
+        return;
+      }
+
+      setSelectedMedia(media);
+    }
+  }, []);
+
+  const handleRemoveMedia = useCallback(() => {
+    setSelectedMedia(null);
   }, []);
 
   const deviceId = useCreation(() => {
@@ -64,46 +201,75 @@ export const FeedbackBottomSheet: React.FC = () => {
   const { data: feedbackMessagesData, runAsync: fetchFeedbackMessages } =
     useRequest(
       async () => {
-        return openapi.getClientFeedbackMessages({
+        const res = await openapi.getClientFeedbackMessages({
           device_id: deviceId,
+          limit: 100,
         });
+        res.messages = sortBy(res.messages, m => m.create_at);
+        return res;
       },
       {
         cacheKey: `feedbackMessages-${deviceId}`,
         staleTime: 5 * 1000,
+        ready: isShowHistory,
         onSuccess: () => {
           // scrollToBottom();
         },
       },
     );
 
-  const { runAsync: handleSubmitReply } = useRequest(
-    async () => {
-      if (!replyText.trim()) {
-        return;
-      }
+  const { runAsync: handleSubmitReply, loading: isSubmittingReply } =
+    useRequest(
+      async () => {
+        const content = replyText.trim();
+        if (!selectedMedia) {
+          return;
+        }
 
-      await openapi.postClientFeedbackMessage({
-        device_id: deviceId,
-        content: replyText,
-        // image_url_list: [
-        //   'https://static.debank.com/image/feedback/ac77eb2e68fd49e786a8919862fef3bf/6833c8f1b2904d2e8ea97d652ad8f54a/f88406e1732239ecb024e10c9dc3d9f6.png',
-        // ],
-      });
-    },
-    {
-      manual: true,
-      onSuccess: async () => {
-        setReplyText('');
-        await fetchFeedbackMessages();
-        scrollToBottom();
+        const uploadResult = await uploadFeedbackMedia(selectedMedia);
+        const imageUrlList = uploadResult?.image_url
+          ? [uploadResult.image_url]
+          : undefined;
+        const videoUrlList = uploadResult?.video_url
+          ? [uploadResult.video_url]
+          : undefined;
+
+        if (!imageUrlList && !videoUrlList) {
+          throw new Error('Feedback media upload did not return a media url');
+        }
+
+        const extraInfo = await getScreenshotFeedbackExtraSafely(
+          totalBalanceText,
+        );
+
+        await openapi.postClientFeedbackMessage({
+          device_id: deviceId,
+          content: content || undefined,
+          image_url_list: imageUrlList,
+          video_url_list: videoUrlList,
+          extra: extraInfo,
+        });
       },
-    },
-  );
+      {
+        manual: true,
+        onSuccess: async () => {
+          setReplyText('');
+          setSelectedMedia(null);
+          toast.success('提交成功');
+          await fetchFeedbackMessages();
+          scrollToBottom();
+        },
+        onError: error => {
+          console.error('feedback reply submission error', error);
+          toast.error(getFeedbackErrorMessage(error, 'Upload failed.'));
+        },
+      },
+    );
 
   useEffect(() => {
     if (isShowHistory) {
       setReplyText('');
+      setSelectedMedia(null);
       toggleShowSheetModal(true);
       fetchFeedbackMessages();
       scrollToBottom();
@@ -125,7 +291,7 @@ export const FeedbackBottomSheet: React.FC = () => {
     if (isShowHistory && hasMessage) {
       setTimeout(() => {
         scrollToBottom();
-      }, 100);
+      }, 300);
     }
   }, [hasMessage, isShowHistory, scrollToBottom]);
 
@@ -142,50 +308,58 @@ export const FeedbackBottomSheet: React.FC = () => {
       onDismiss={() => {
         toggleFeedbackHistoryVisible(false);
       }}
-      keyboardBehavior="extend"
-      keyboardBlurBehavior="restore"
-      android_keyboardInputMode="adjustPan"
+      // keyboardBehavior="extend"
+      // keyboardBlurBehavior="restore"
+      // android_keyboardInputMode="adjustPan"
       enableContentPanningGesture={true}
       enablePanDownToClose={true}>
       <View style={styles.mainContainer}>
         <AutoLockView style={styles.container}>
-          <BottomSheetHandlableView style={styles.titleContainer}>
-            <Text style={styles.title}>
-              {t('page.setting.bugReportHistory')}
-            </Text>
-          </BottomSheetHandlableView>
+          <KeyboardProvider>
+            <BottomSheetHandlableView style={styles.titleContainer}>
+              <Text style={styles.title}>
+                {t('page.setting.bugReportHistory')}
+              </Text>
+            </BottomSheetHandlableView>
 
-          <ScrollView
-            ref={scrollViewRef}
-            style={styles.messageList}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            // onContentSizeChange={() => {
-            //   // setTimeout(() => {
-            //   if (isShowHistory) {
-            //     scrollToBottom();
-            //   }
-            //   // }, 500);
-            // }}
-            contentContainerStyle={styles.messageListContent}>
-            {feedbackMessagesData?.messages?.map(message => (
-              <FeedbackMessageItem key={message.id} message={message} />
-            ))}
+            <KeyboardAwareScrollView
+              ref={scrollViewRef}
+              style={styles.messageList}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              // ScrollViewComponent={ScrollView}
+              bottomOffset={14}
+              // onContentSizeChange={() => {
+              //   // setTimeout(() => {
+              //   if (isShowHistory) {
+              //     scrollToBottom();
+              //   }
+              //   // }, 500);
+              // }}
+              contentContainerStyle={styles.messageListContent}>
+              {feedbackMessagesData?.messages?.map(message => (
+                <FeedbackMessageItem key={message.id} message={message} />
+              ))}
 
-            <ReplyComposer
-              value={replyText}
-              onChangeText={setReplyText}
-              onSubmit={handleSubmitReply}
-            />
-          </ScrollView>
+              <ReplyComposer
+                value={replyText}
+                onChangeText={setReplyText}
+                selectedMedia={selectedMedia}
+                onPickMedia={handlePickMedia}
+                onRemoveMedia={handleRemoveMedia}
+                onSubmit={handleSubmitReply}
+                submitting={isSubmittingReply}
+              />
+            </KeyboardAwareScrollView>
 
-          <View style={styles.footerTipContainer}>
-            <Text style={styles.footerTip}>
-              {t('component.feedbackHistoryModal.findHistoryTip', {
-                defaultValue: 'You can find the history in Settings',
-              })}
-            </Text>
-          </View>
+            <View style={styles.footerTipContainer}>
+              <Text style={styles.footerTip}>
+                {t('component.feedbackHistoryModal.findHistoryTip', {
+                  defaultValue: 'You can find the history in Settings',
+                })}
+              </Text>
+            </View>
+          </KeyboardProvider>
         </AutoLockView>
       </View>
     </AppBottomSheetModal>
@@ -194,9 +368,7 @@ export const FeedbackBottomSheet: React.FC = () => {
 
 function FeedbackMessageItem({ message }: { message: ClientFeedbackMessage }) {
   const { styles } = useTheme2024({ getStyle });
-  const isSupport =
-    message.sender === 'ops' ||
-    message.id === '2dc2249ace1e4acc8551ce9a3b46e1a2';
+  const isSupport = message.sender === 'ops';
 
   return (
     <View
@@ -204,7 +376,7 @@ function FeedbackMessageItem({ message }: { message: ClientFeedbackMessage }) {
         styles.messageRow,
         isSupport ? styles.supportMessageRow : styles.userMessageRow,
       ]}>
-      {isSupport ? <Avatar role="support" /> : null}
+      {isSupport ? <RcRabbyAvatar style={styles.avatar} /> : null}
       <View
         style={[
           styles.messageBubble,
@@ -222,7 +394,7 @@ function FeedbackMessageItem({ message }: { message: ClientFeedbackMessage }) {
         {message.image_url_list?.length ? (
           <View style={styles.fileList}>
             {message.image_url_list.map((imageUri, index) => (
-              <Image
+              <FastImage
                 key={index}
                 source={{ uri: imageUri }}
                 style={[styles.feedbackImage]}
@@ -244,25 +416,7 @@ function FeedbackMessageItem({ message }: { message: ClientFeedbackMessage }) {
           </View>
         ) : null}
       </View>
-      {!isSupport ? <Avatar role="user" /> : null}
-    </View>
-  );
-}
-
-function Avatar({ role }: { role: FeedbackMessage['role'] }) {
-  const { styles } = useTheme2024({ getStyle });
-
-  if (role === 'support') {
-    return (
-      <View style={styles.avatar}>
-        <RcIconRabby width={32} height={32} />
-      </View>
-    );
-  }
-
-  return (
-    <View style={[styles.avatar, styles.userAvatar]}>
-      <RcIconUser width={20} height={20} />
+      {!isSupport ? <RcUserAvatar style={styles.avatar} /> : null}
     </View>
   );
 }
@@ -270,20 +424,29 @@ function Avatar({ role }: { role: FeedbackMessage['role'] }) {
 function ReplyComposer({
   value,
   onChangeText,
+  selectedMedia,
+  onPickMedia,
+  onRemoveMedia,
   onSubmit,
+  submitting,
 }: {
   value: string;
   onChangeText: (text: string) => void;
+  selectedMedia?: PickedFeedbackMedia | null;
+  onPickMedia: () => void | Promise<void>;
+  onRemoveMedia: () => void;
   onSubmit?: (() => void) | (() => Promise<void>);
+  submitting?: boolean;
 }) {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const selectedMediaUri = selectedMedia?.uri;
 
   return (
     <View style={[styles.messageRow, styles.userMessageRow]}>
       <View
         style={[styles.messageBubble, styles.userBubble, styles.replyBubble]}>
-        <BottomSheetTextInput
+        <TextInput
           value={value}
           onChangeText={onChangeText}
           // multiline
@@ -293,30 +456,62 @@ function ReplyComposer({
           })}
           placeholderTextColor={styles.replyInputPlaceholder.color}
           style={styles.replyInput}
+          enterKeyHint="send"
+          onSubmitEditing={onSubmit}
         />
-        <View style={styles.mediaPlaceholder}>
-          <Text style={styles.mediaPlaceholderText}>
-            {t('component.feedbackHistoryModal.mediaPlaceholder', {
-              defaultValue: '+\nImage/Video\n(required)',
-            })}
-          </Text>
-        </View>
+        {selectedMediaUri ? (
+          <View style={styles.mediaPreviewContainer}>
+            {isVideoMedia(selectedMedia) ? (
+              <Video
+                source={{ uri: selectedMediaUri }}
+                style={styles.mediaPreview}
+                resizeMode="cover"
+                paused
+                muted
+              />
+            ) : (
+              <FastImage
+                source={{ uri: selectedMediaUri }}
+                style={styles.mediaPreview}
+                resizeMode="cover"
+              />
+            )}
+            <View style={styles.removeMediaButton}>
+              <TouchableOpacity onPress={onRemoveMedia} disabled={submitting}>
+                <RcCloseIcon width={21} height={21} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <TouchableOpacity onPress={onPickMedia} disabled={submitting}>
+            <View style={styles.mediaPlaceholder}>
+              <Text style={styles.mediaPlaceholderText}>+</Text>
+              <Text style={styles.mediaPlaceholderText}>
+                {t('component.feedbackHistoryModal.mediaPlaceholder', {
+                  defaultValue: 'Image/Video\n(required)',
+                })}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
         <Button
           title={t('component.screenshotModal.submitButtonText')}
           type="primary"
           height={32}
           onPress={onSubmit}
+          loading={submitting}
+          disabled={submitting || !selectedMediaUri}
           containerStyle={styles.replySubmitButtonContainer}
           buttonStyle={styles.replySubmitButton}
           titleStyle={styles.replySubmitButtonTitle}
         />
       </View>
-      <Avatar role="user" />
+      <RcUserAvatar style={styles.avatar} />
     </View>
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
   mainContainer: {
     height: '100%',
     maxHeight: SHEET_HEIGHT,
@@ -342,7 +537,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   messageListContent: {
     paddingHorizontal: 12,
-    paddingBottom: 12,
+    paddingBottom: 0,
   },
   messageRow: {
     width: '100%',
@@ -362,10 +557,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   avatar: {
     width: 36,
     height: 36,
-    borderRadius: 18,
     flexShrink: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   userAvatar: {
     backgroundColor: colors2024['neutral-bg-2'],
@@ -438,6 +630,27 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
     backgroundColor: colors2024['neutral-bg-5'],
   },
+  mediaPreviewContainer: {
+    position: 'relative',
+    alignSelf: 'flex-start',
+  },
+  mediaPreview: {
+    width: 80,
+    height: 80,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: colors2024['neutral-bg-5'],
+  },
+  removeMediaButton: {
+    position: 'absolute',
+    top: -5,
+    right: -2,
+    width: 21,
+    height: 21,
+    borderRadius: 21,
+  },
   mediaPlaceholderText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
@@ -460,18 +673,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
-    fontWeight: FontWeightEnum.bold,
+    fontWeight: '700',
   },
   footerTipContainer: {
-    height: 68,
     alignItems: 'center',
     paddingTop: 16,
+    paddingBottom: Math.max(safeAreaInsets.bottom, 36),
   },
   footerTip: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 16,
-    fontWeight: FontWeightEnum.medium,
+    fontWeight: '500',
     color: colors2024['neutral-secondary'],
   },
 }));

@@ -463,6 +463,10 @@ export function useFeedbackHistoryVisible() {
   };
 }
 
+export function useScreenshotFeedbackTotalBalanceText() {
+  return feedbackByScreenshotStore(s => s.totalBalanceText);
+}
+
 export const toggleFeedbackHistoryVisible = (v?: boolean) => {
   setFeedbackByScreenshot(prev => ({
     ...prev,
@@ -632,7 +636,9 @@ const closeSubmitModal = ({
   }));
 };
 
-async function getScreenshotFeedbackExtraSafely(totalBalanceText: string) {
+export async function getScreenshotFeedbackExtraSafely(
+  totalBalanceText: string,
+) {
   try {
     return await getScreenshotFeedbackExtra({ totalBalanceText });
   } catch (error) {
