@@ -442,6 +442,13 @@ export const TokenSelectorSheetModal = ({
   const isBridgeTo = type === 'bridgeTo';
   const isSwapTo = type === 'swapTo';
   const isSend = type === 'send';
+  const inputRef = useRef<TextInput | null>(null);
+  const [query, setQuery] = useState('');
+
+  const clearSearchInput = useCallback(() => {
+    setQuery('');
+    inputRef.current?.clear();
+  }, []);
 
   const onLpTokenChange = useCallback(
     (value: boolean) => {
@@ -469,10 +476,9 @@ export const TokenSelectorSheetModal = ({
       setIsInputActive(false);
       onLpTokenChange?.(false);
       onFavoriteFilterChange?.('all');
-      setQuery('');
-      inputRef.current?.clear();
+      clearSearchInput();
     }
-  }, [onFavoriteFilterChange, onLpTokenChange, visible]);
+  }, [clearSearchInput, onFavoriteFilterChange, onLpTokenChange, visible]);
 
   const { bottom } = useSafeAreaInsets();
 
@@ -480,9 +486,6 @@ export const TokenSelectorSheetModal = ({
 
   const { isLight, styles, colors2024 } = useTheme2024({ getStyle });
 
-  const inputRef = useRef<TextInput | null>(null);
-
-  const [query, setQuery] = useState('');
   const debouncedQuery = useDebouncedValue(query, 250); // 跟外面组件用一样的 debounce，不然组件里的 UI 状态先变会导致 UI 闪一下
   const [isInputActive, setIsInputActive] = useState(false);
 
@@ -1260,7 +1263,7 @@ export const TokenSelectorSheetModal = ({
           <View style={[styles.searchInputContainer, { marginBottom: 8 }]}>
             <NextSearchBar
               onCancel={() => {
-                setQuery('');
+                clearSearchInput();
                 setTimeout(() => {
                   inputRef.current?.blur();
                 }, 50);
