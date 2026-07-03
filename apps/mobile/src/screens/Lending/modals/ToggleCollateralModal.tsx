@@ -595,7 +595,23 @@ function ToggleCollateralContent({}: {}) {
 export const ToggleCollateralModal = () => {
   const { hasUserSummary } = useHasUserSummary();
   const { currentRouteName } = useCurrentRouteName();
+  const [, setIsShowToggleCollateralModal] = useAtom(toggleCollateralModalAtom);
+  const [, setCurrentToggleReserve] = useAtom(currentToggleReserveAtom);
   const isLendingRoute = currentRouteName === RootNames.Lending;
+
+  useEffect(() => {
+    if (!currentRouteName || isLendingRoute) {
+      return;
+    }
+    setIsShowToggleCollateralModal(false);
+    setCurrentToggleReserve(null);
+  }, [
+    currentRouteName,
+    isLendingRoute,
+    setCurrentToggleReserve,
+    setIsShowToggleCollateralModal,
+  ]);
+
   if (!hasUserSummary || !isLendingRoute) {
     return null;
   }
