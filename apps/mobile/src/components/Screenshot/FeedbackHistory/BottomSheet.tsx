@@ -5,8 +5,8 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { ScrollView, View } from 'react-native';
 
 import {
   getScreenshotFeedbackExtraSafely,
@@ -14,43 +14,32 @@ import {
   useScreenshotFeedbackTotalBalanceText,
 } from '../hooks';
 
-import { RcIconCloseCC } from '@/assets/icons/common';
-import RcIconRabby from '@/assets2024/icons/common/rabby-wallet.svg';
-import { RcIconUser } from '@/assets/icons/gnosis';
+import RcCloseIcon from '@/assets/icons/feedback/close-light.svg';
+import RcRabbyAvatar from '@/assets/icons/feedback/rabby-avatar.svg';
+import RcUserAvatar from '@/assets/icons/feedback/user-avatar.svg';
 import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
-import { toast } from '@/components2024/Toast';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { FontWeightEnum } from '@/core/utils/fonts';
+import { toast } from '@/components2024/Toast';
+import { makeDeviceUUID } from '@/core/apis/device';
+import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024 } from '@/utils/styles';
 import type { ClientFeedbackMessage } from '@rabby-wallet/rabby-api/dist/types';
-import AutoLockView from '../../AutoLockView';
-import { AppBottomSheetModal } from '../../customized/BottomSheet';
-import { BottomSheetHandlableView } from '../../customized/BottomSheetHandle';
 import { useCreation, useRequest } from 'ahooks';
-import { openapi } from '@/core/request';
-import { makeDeviceUUID } from '@/core/apis/device';
-import Video from 'react-native-video';
+import { sortBy } from 'lodash';
+import FastImage from 'react-native-fast-image';
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { launchImageLibrary, type Asset } from 'react-native-image-picker';
 import {
   KeyboardAwareScrollView,
   KeyboardProvider,
 } from 'react-native-keyboard-controller';
-import { sortBy } from 'lodash';
-import { TouchableOpacity } from 'react-native-gesture-handler';
-import { launchImageLibrary, type Asset } from 'react-native-image-picker';
-import FastImage from 'react-native-fast-image';
-import RcRabbyAvatar from '@/assets/icons/feedback/rabby-avatar.svg';
-import RcUserAvatar from '@/assets/icons/feedback/user-avatar.svg';
-import RcCloseIcon from '@/assets/icons/feedback/close-light.svg';
-
-type FeedbackMessage = {
-  id: string;
-  role: 'user' | 'support';
-  text: string;
-  imageUri?: string;
-};
+import Video from 'react-native-video';
+import AutoLockView from '../../AutoLockView';
+import { AppBottomSheetModal } from '../../customized/BottomSheet';
+import { BottomSheetHandlableView } from '../../customized/BottomSheetHandle';
 
 const SHEET_HEIGHT = 652;
 const ONE_MB = 1024 * 1024;
@@ -140,7 +129,7 @@ async function uploadFeedbackMedia(media: PickedFeedbackMedia) {
   return openapi.uploadClientFeedback(formData);
 }
 
-export const FeedbackBottomSheet: React.FC = () => {
+export const FeedbackHistoryBottomSheet: React.FC = () => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
@@ -291,7 +280,7 @@ export const FeedbackBottomSheet: React.FC = () => {
     if (isShowHistory && hasMessage) {
       setTimeout(() => {
         scrollToBottom();
-      }, 300);
+      }, 100);
     }
   }, [hasMessage, isShowHistory, scrollToBottom]);
 

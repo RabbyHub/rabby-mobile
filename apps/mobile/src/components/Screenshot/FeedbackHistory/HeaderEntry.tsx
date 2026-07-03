@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 
-import { toggleFeedbackHistoryVisible } from './hooks';
+import { toggleFeedbackHistoryVisible } from '../hooks';
 
-import RcEntryCC from './icons/entry-cc.svg';
+import RcEntryCC from '../icons/entry-cc.svg';
 
 import { Button } from '@/components2024/Button';
 import {
@@ -19,7 +19,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useCreation, useRequest } from 'ahooks';
 
-export function FeedbackEntryOnHeader({ style }: RNViewProps) {
+export function FeedbackHistoryHeaderEntry({ style }: RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
 
   const deviceId = useCreation(() => {
