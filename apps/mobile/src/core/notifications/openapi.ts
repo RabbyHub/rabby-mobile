@@ -6,6 +6,7 @@ import { makeDeviceUUID } from '../apis/device';
 import { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
 import { AppState } from 'react-native';
 import { instrumentOpenApiFailureLogging } from '@/utils/openapiFailureLogging';
+import { APP_FEATURE_SWITCH } from '@/constant';
 
 export type DeviceActiveStatusResponse = {
   success: boolean;
@@ -35,6 +36,14 @@ class NotificationsOpenApiService extends OpenApiService {
     // deviceId: string;
     isActive: boolean;
   }): Promise<DeviceActiveStatusResponse> {
+    if (!APP_FEATURE_SWITCH.transactionNotification) {
+      return {
+        success: false,
+        device_id: '',
+        is_active: false,
+      };
+    }
+
     const response = await this.request.post('/v1/notification/device/active', {
       device_id: this.#getDeviceUUID(),
       is_active: params.isActive,
@@ -43,6 +52,14 @@ class NotificationsOpenApiService extends OpenApiService {
   }
 
   async heartbeat(/* params: { app_state: 'foreground' | 'background' } */): Promise<HeartbeatResponse> {
+    if (!APP_FEATURE_SWITCH.transactionNotification) {
+      return {
+        success: false,
+        device_id: '',
+        ttl: 0,
+      };
+    }
+
     const response = await this.request.post(
       '/v1/notification/device/heartbeat',
       {
@@ -60,6 +77,16 @@ class NotificationsOpenApiService extends OpenApiService {
     pushToken: string;
     userAddrs: string[];
   }): Promise<BindDeviceResponse> {
+    if (!APP_FEATURE_SWITCH.transactionNotification) {
+      return {
+        success: false,
+        device_id: '',
+        total: 0,
+        added: 0,
+        removed: 0,
+      };
+    }
+
     const response = await this.request.post('/v1/notification/bind', {
       application_id: APPLICATION_ID,
       device_id: this.#getDeviceUUID(),

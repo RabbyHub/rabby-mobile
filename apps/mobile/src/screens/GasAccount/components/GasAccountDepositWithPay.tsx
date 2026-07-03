@@ -259,6 +259,7 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
           buttonStyle={styles.depositWithPayBtn}
           titleStyle={styles.btnTitle}
           loading={isPurchasing}
+          loadingProps={{ color: isLight ? '#fff' : '#000' }}
           disabled={!selectedProduct}
           title={
             <View style={styles.depositWithTitle}>

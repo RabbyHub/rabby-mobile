@@ -212,48 +212,52 @@ export const AddAsset = ({
         enum: site?.chainId,
       });
     setCurrentChain(chain);
-    if (chain?.isTestnet) {
-      if (account) {
-        const { address } = params.data.options;
-        const isAdded = await apiCustomTestnet.isAddedCustomTestnetToken({
-          id: address,
-          chainId: chain.id,
-        });
-        const result = await apiCustomTestnet.getCustomTestnetToken({
-          chainId: chain.id,
-          address: account?.address,
-          tokenId: address,
-        });
-        setCustomTestnetToken(result);
-        setIsCustomTestnetTokenAdded(isAdded);
-      }
-    } else {
-      const customTokens = await preferenceService.getCustomizedToken();
-      if (account) {
-        const { address } = params.data.options;
-        const result = await openapi.searchToken(
-          account.address,
-          address,
-          undefined,
-          true,
-        );
-        setTokens(result);
-        if (result.length === 1) {
-          setToken(result[0]);
-        }
-        if (result.length > 1) {
-          setChainSelectorVisible(true);
-          activeSelectChainPopup();
-        }
-        const token = result[0];
-        if (token) {
-          const target = findChain({
-            serverId: token.chain,
+    try {
+      if (chain?.isTestnet) {
+        if (account) {
+          const { address } = params.data.options;
+          const isAdded = await apiCustomTestnet.isAddedCustomTestnetToken({
+            id: address,
+            chainId: chain.id,
           });
-          setCurrentChain(target || findChain({ enum: CHAINS_ENUM.ETH })!);
+          const result = await apiCustomTestnet.getCustomTestnetToken({
+            chainId: chain.id,
+            address: account?.address,
+            tokenId: address,
+          });
+          setCustomTestnetToken(result);
+          setIsCustomTestnetTokenAdded(isAdded);
         }
+      } else {
+        const customTokens = await preferenceService.getCustomizedToken();
+        if (account) {
+          const { address } = params.data.options;
+          const result = await openapi.searchToken(
+            account.address,
+            address,
+            undefined,
+            true,
+          );
+          setTokens(result);
+          if (result.length === 1) {
+            setToken(result[0]);
+          }
+          if (result.length > 1) {
+            setChainSelectorVisible(true);
+            activeSelectChainPopup();
+          }
+          const token = result[0];
+          if (token) {
+            const target = findChain({
+              serverId: token.chain,
+            });
+            setCurrentChain(target || findChain({ enum: CHAINS_ENUM.ETH })!);
+          }
+        }
+        setCustomTokens(customTokens);
       }
-      setCustomTokens(customTokens);
+    } catch (e) {
+      console.error(e);
     }
 
     setIsLoading(false);

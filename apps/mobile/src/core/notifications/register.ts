@@ -18,6 +18,7 @@ import { notificationEvents, parseRemoteData } from './data';
 import { getTopMyAccountsOnNotifications } from './utils';
 import { makeAvoidParallelAsyncFunc } from '../utils/concurrency';
 import { APP_MMKV_KEYS } from '../storage/mmkvConstants';
+import { APP_FEATURE_SWITCH } from '@/constant';
 
 const iosPush = {
   token: '',
@@ -49,35 +50,52 @@ export function useNotificationStore() {
   return { pushToken };
 }
 
-const iosTokenReady = new Promise<string>((resolve, reject) => {
-  if (IS_IOS) {
-    PushNotificationIOS.addEventListener('register', deviceToken => {
-      PushNotificationIOS.removeEventListener('register');
+let iosTokenReady: Promise<string> | null = null;
+const getIosTokenReady = () => {
+  if (!iosTokenReady) {
+    iosTokenReady = new Promise<string>((resolve, reject) => {
+      if (IS_IOS) {
+        PushNotificationIOS.addEventListener('register', deviceToken => {
+          PushNotificationIOS.removeEventListener('register');
 
-      console.debug('[iosTokenReady] iOS APNs device token:', deviceToken);
-      iosPush.token = deviceToken;
-      iosPush.error = null;
-      resolve(deviceToken);
+          console.debug('[iosTokenReady] iOS APNs device token:', deviceToken);
+          iosPush.token = deviceToken;
+          iosPush.error = null;
+          resolve(deviceToken);
+        });
+
+        PushNotificationIOS.addEventListener('registrationError', error => {
+          PushNotificationIOS.removeEventListener('registrationError');
+
+          console.error('[iosTokenReady] iOS APNs registration error:', error);
+          iosPush.error = error;
+          iosPush.token = '';
+          reject(error);
+        });
+      } else {
+        resolve('');
+      }
     });
-
-    PushNotificationIOS.addEventListener('registrationError', error => {
-      PushNotificationIOS.removeEventListener('registrationError');
-
-      console.error('[iosTokenReady] iOS APNs registration error:', error);
-      iosPush.error = error;
-      iosPush.token = '';
-      reject(error);
-    });
-  } else {
-    resolve('');
   }
-});
+
+  return iosTokenReady;
+};
 
 export const registerForPushNotifications = async () => {
+  if (!APP_FEATURE_SWITCH.transactionNotification) {
+    notificationStore.setState(prev => {
+      prev.pushToken = '';
+    });
+
+    return {
+      pushToken: '',
+    };
+  }
+
   let pushToken = '';
 
   if (Platform.OS === 'ios') {
-    pushToken = await iosTokenReady;
+    pushToken = await getIosTokenReady();
     const authStatus = await iosCheckPermission();
     const enabled = authStatus?.alert ?? false;
     if (!enabled) {
@@ -108,6 +126,10 @@ export const registerForPushNotifications = async () => {
 };
 
 export const startSubscribePushNotifications = async () => {
+  if (!APP_FEATURE_SWITCH.transactionNotification) {
+    return;
+  }
+
   if (IS_IOS) {
     const intialNotificationPromise =
       PushNotificationIOS.getInitialNotification();
@@ -250,6 +272,10 @@ function onHeartbeatResponse(resp: HeartbeatResponse) {
 
 const CONNECT_DURATION_MS = __DEV__ ? 5 * 1000 : 30 * 1000;
 export async function startConnectPushServerInterval() {
+  if (!APP_FEATURE_SWITCH.transactionNotification) {
+    return;
+  }
+
   const requstConnect = async (appEnabled?: boolean) => {
     const { enabled } = await checkIfEnabledNotificationWithPermission(
       appEnabled,
@@ -288,6 +314,16 @@ export async function startConnectPushServerInterval() {
 }
 
 export const requestBindDevice = async (pushToken: string) => {
+  if (!APP_FEATURE_SWITCH.transactionNotification) {
+    return {
+      success: false,
+      device_id: '',
+      total: 0,
+      added: 0,
+      removed: 0,
+    };
+  }
+
   return notificationOpenapi.bindDevice({
     platform: Platform.OS === 'ios' ? 'ios' : 'android',
     pushToken,
@@ -298,6 +334,10 @@ export const requestBindDevice = async (pushToken: string) => {
 };
 
 export async function startBindPushServerOnDemand(pushToken: string) {
+  if (!APP_FEATURE_SWITCH.transactionNotification) {
+    return;
+  }
+
   perfEvents.on('USER_MANUALLY_UNLOCK_UI_READY', () => {
     requestBindDevice(pushToken);
   });

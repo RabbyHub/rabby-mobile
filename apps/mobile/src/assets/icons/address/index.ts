@@ -22,6 +22,7 @@ import CreateAddressCC from '@/assets/icons/address/create-address-cc.svg';
 import PrivateKeyCC from '@/assets/icons/wallet/private-key.svg';
 import SeedPhraseCC from '@/assets/icons/wallet/seed.svg';
 export { default as RcIconAddCircle } from '@/assets/icons/address/add-circle-cc.svg';
+export { default as RcIconAddCircleBold } from '@/assets/icons/address/add-circle-bold-cc.svg';
 export { default as RcIconCreateSeed } from '@/assets/icons/address/create-seed-cc.svg';
 export { default as RcIcoAddSeed } from '@/assets/icons/address/add-seed-cc.svg';
 export { default as RcIconInnerScanner } from './inner-scan.svg';

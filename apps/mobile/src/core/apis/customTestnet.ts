@@ -32,6 +32,7 @@ class ApiCustomTestnet {
   updateCustomTestnet = customTestnetService.update;
   removeCustomTestnet = customTestnetService.remove;
   getCustomTestnetList = customTestnetService.getList;
+  initCustomTestnetService = customTestnetService.initFromStorage;
 
   getCustomTestnetNonce = async ({
     address,

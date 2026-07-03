@@ -41,6 +41,7 @@ import { isWalletUnlockCancelled } from '@/utils/walletUnlockError';
 import {
   ensureProviderRequestContext,
   getProviderRequestChain,
+  normalizeProviderRequestChainId,
 } from './requestContext';
 
 export const resemblesETHAddress = (str: string): boolean => {
@@ -249,22 +250,58 @@ const flowContext = flow
       ctx.request.data.params[0] = message;
       ctx.request.data.params[1] = from;
     }
-    if (approvalType && (!condition || !condition(ctx.request))) {
-      ctx.request.requestedApproval = true;
-      if (approvalType === 'SignTx' && !('chainId' in params[0])) {
+    if (approvalType === 'SignTx') {
+      const tx = params?.[0];
+      if (tx && !('chainId' in tx)) {
         const requestChain = getProviderRequestChain(ctx.request);
         if (requestChain) {
-          params[0].chainId = requestChain.id;
+          tx.chainId = requestChain.id;
         } else {
           const site = dappService.getConnectedDapp(origin);
           const chain = findChain({
             enum: site?.chainId,
           });
           if (chain) {
-            params[0].chainId = chain.id;
+            tx.chainId = chain.id;
           }
         }
       }
+      const txChainId = normalizeProviderRequestChainId(tx?.chainId);
+      const chain = txChainId ? findChain({ id: txChainId }) : null;
+      if (!chain) {
+        const requestContext = ctx.request.requestContext;
+        Sentry.captureException(new Error('Unsupported SignTx chainId'), {
+          tags: {
+            scene: 'rpcFlow',
+            approvalType,
+            method,
+            source: requestContext?.source || 'unknown',
+          },
+          extra: {
+            origin,
+            sessionName: name,
+            rawChainId: tx?.chainId,
+            normalizedChainId: txChainId,
+            requestContext: requestContext
+              ? {
+                  origin: requestContext.origin,
+                  source: requestContext.source,
+                  chainId: requestContext.chainId,
+                }
+              : undefined,
+            connectedDappChainId: dappService.getConnectedDapp(origin)?.chainId,
+          },
+        });
+        throw ethErrors.rpc.invalidParams({
+          message: 'Unsupported chainId for eth_sendTransaction',
+          data: {
+            chainId: tx?.chainId,
+          },
+        });
+      }
+    }
+    if (approvalType && (!condition || !condition(ctx.request))) {
+      ctx.request.requestedApproval = true;
       if (
         !isFromMobileInnerDapp ||
         !shouldAutoPersonalSign({

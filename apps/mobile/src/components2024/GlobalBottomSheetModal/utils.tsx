@@ -69,6 +69,7 @@ import { SeedPhraseQrCode } from '../AddressDetail/SeedPhraseQrCode';
 import { LpTokenDescription } from '../LpTokenDescription';
 import CollateralTokenSelectModal from '@/screens/Lending/components/CollateralTokenSelect';
 import TokenGroupDetailSheet from '@/screens/Address/components/MultiAssets/TokenGroupDetailSheet';
+import { CustomTestnetAddTokenSheet } from '@/screens/Address/components/MultiAssets/CustomTestnetAssets/CustomTestnetAddTokenSheet';
 import RepayTokenSelectModal from '@/screens/Lending/components/RepayTokenModal';
 import {
   WalletConnectConnectSheet,
@@ -352,9 +353,7 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.LENDING_TOKEN_LIST]: {
     snapPoints: [MODAL_MAX_HEIGHT],
     Component: LendingTokenList,
-    globalModalPropsPreset: getDefaultViewTypePropsPreset({
-      enableContentPanningGesture: false,
-    }),
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.DEBT_TOKEN_SELECT]: {
     snapPoints: ['85%'],
@@ -376,6 +375,11 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.TOKEN_GROUP_DETAIL]: {
     snapPoints: [MODAL_MAX_HEIGHT],
     Component: TokenGroupDetailSheet,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+  },
+  [MODAL_NAMES.CUSTOM_TESTNET_ADD_TOKEN]: {
+    snapPoints: [600],
+    Component: CustomTestnetAddTokenSheet,
     globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.REPAY_TOKEN_SELECT]: {

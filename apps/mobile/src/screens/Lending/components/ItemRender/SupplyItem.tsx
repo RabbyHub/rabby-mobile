@@ -13,7 +13,6 @@ import {
 import TokenIcon from '../TokenIcon';
 import IsolatedTag from '../IsolatedTag';
 import { useLendingSummary, useSelectedMarket } from '../../hooks';
-import { getSupplyCapData } from '../../utils/supply';
 import { CollateralSwitch } from '../CollateralSwitch';
 import { formatApy, formatListNetWorth } from '../../utils/format';
 import { useToggleCollateralModal } from '../../modals/ToggleCollateralModal';
@@ -23,21 +22,40 @@ import wrapperToken from '../../config/wrapperToken';
 import { Text } from '@/components/Typography';
 import { colord } from 'colord';
 import { openLendingActionPopup } from '../../utils/actionPopup';
+import { PositionTokenSelector } from './PositionTokenSelector';
+import type {
+  BasicPositionTokenOption,
+  PositionTokenOption,
+} from '../../utils/positionTokenSelector';
 
 interface SupplyItemProps extends RNViewProps {
   underlyingAsset: string;
+  activeUnderlyingAsset: string;
+  tokenOptions?: PositionTokenOption[];
+  onChangeActiveUnderlyingAsset: (underlyingAsset: string) => void;
 }
 
-const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
+const SupplyItem: React.FC<SupplyItemProps> = ({
+  underlyingAsset,
+  activeUnderlyingAsset,
+  tokenOptions,
+  onChangeActiveUnderlyingAsset,
+  style,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
   const { iUserSummary: userSummary, getTargetReserve } = useLendingSummary();
   const { openCollateralChange } = useToggleCollateralModal();
   const { chainEnum } = useSelectedMarket();
+  const currentUnderlyingAsset =
+    tokenOptions?.length && activeUnderlyingAsset
+      ? activeUnderlyingAsset
+      : underlyingAsset;
+
   const reserve = useMemo(() => {
-    return getTargetReserve(underlyingAsset);
-  }, [getTargetReserve, underlyingAsset]);
+    return getTargetReserve(currentUnderlyingAsset);
+  }, [currentUnderlyingAsset, getTargetReserve]);
 
   const { apyText, suppliedUsdText, suppliedTokenText, isIsolated } =
     useMemo(() => {
@@ -85,10 +103,8 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
     if (!reserve) {
       return false;
     }
-    const { supplyCapReached } = getSupplyCapData(reserve);
     return userSummary
-      ? !supplyCapReached &&
-          reserve.reserve.reserveLiquidationThreshold !== '0' &&
+      ? reserve.reserve.reserveLiquidationThreshold !== '0' &&
           ((!reserve.reserve.isIsolated && !userSummary.isInIsolationMode) ||
             userSummary.isolatedReserve?.underlyingAsset ===
               reserve.underlyingAsset ||
@@ -139,6 +155,7 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
         )
       : false;
   }, [chainEnum, reserve]);
+  const shouldUseWrapperTokenStyle = isWrapperToken && !tokenOptions?.length;
 
   if (!reserve) {
     return null;
@@ -146,8 +163,12 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
 
   return (
     <View
-      style={[styles.container, isWrapperToken && styles.wrapperToken, style]}>
-      {isWrapperToken && <View style={styles.wrapperTokenArrow} />}
+      style={[
+        styles.container,
+        shouldUseWrapperTokenStyle && styles.wrapperToken,
+        style,
+      ]}>
+      {shouldUseWrapperTokenStyle && <View style={styles.wrapperTokenArrow} />}
       <View style={styles.content}>
         <View style={styles.headerRow}>
           <View style={styles.tokenInfo}>
@@ -160,23 +181,26 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
               />
               <View style={styles.tokenTextArea}>
                 <View style={styles.symbolArea}>
-                  <Text
-                    style={styles.symbol}
-                    numberOfLines={1}
-                    ellipsizeMode="tail">
-                    {reserve.reserve.symbol}
-                  </Text>
-                  <View style={styles.suppliedBadge}>
-                    <Text style={styles.suppliedBadgeText}>
-                      {t('page.Lending.supplyDetail.supplied')}
-                    </Text>
-                  </View>
-                  {isIsolated ? <IsolatedTag /> : null}
+                  <PositionTokenSelector
+                    activeUnderlyingAsset={currentUnderlyingAsset}
+                    options={tokenOptions as BasicPositionTokenOption[]}
+                    symbol={reserve.reserve.symbol}
+                    chain={reserve.chain}
+                    onChange={onChangeActiveUnderlyingAsset}
+                  />
                 </View>
               </View>
             </View>
-            <View style={styles.apyTag}>
-              <Text style={styles.apyTagText}>{`Apy ${apyText}`}</Text>
+            <View style={styles.badgeContainer}>
+              <View style={styles.suppliedBadge}>
+                <Text style={styles.suppliedBadgeText}>
+                  {t('page.Lending.supplyDetail.supplied')}
+                </Text>
+              </View>
+              <View style={styles.apyTag}>
+                <Text style={styles.apyTagText}>{`Apy ${apyText}`}</Text>
+              </View>
+              {isIsolated ? <IsolatedTag /> : null}
             </View>
           </View>
           <View style={styles.amountArea}>
@@ -224,7 +248,7 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
 
 export default SupplyItem;
 
-const getStyle = createGetStyles2024(({ colors2024 }) => {
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   const cardBgColor = colors2024['neutral-bg-2'];
   const wrapperTokenCardBgColor = colord(cardBgColor).alpha(0.5).toRgbString();
 
@@ -234,7 +258,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingVertical: 14,
       paddingHorizontal: 0,
       marginTop: 12,
-      backgroundColor: cardBgColor,
+      backgroundColor: isLight ? 'rgba(255, 255, 255, 0.9)' : cardBgColor,
       position: 'relative',
       borderWidth: 1,
       borderColor: colors2024['neutral-bg-1'],
@@ -324,20 +348,25 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       color: colors2024['orange-default'],
       fontFamily: 'SF Pro Rounded',
     },
+    badgeContainer: {
+      display: 'flex',
+      flexDirection: 'row',
+      gap: 4,
+    },
     amountArea: {
       alignItems: 'flex-end',
       justifyContent: 'center',
       gap: 5,
     },
     amountUsd: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
+      fontSize: 18,
+      lineHeight: 22,
+      fontWeight: '500',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
     },
     amountToken: {
-      fontSize: 14,
+      fontSize: 13,
       lineHeight: 18,
       fontWeight: '500',
       color: colors2024['neutral-secondary'],

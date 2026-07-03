@@ -10,6 +10,7 @@ import {
   PerpDexsResponse,
   UserAbstractionResp,
   UserNonFundingLedgerUpdates,
+  WsFastAssetCtxs,
   WsFill,
 } from '@rabby-wallet/hyperliquid-sdk';
 // import { ApproveSignatures } from '@/background/service/perps';
@@ -997,6 +998,61 @@ const updateMarketData = (payload: [string, AssetCtx[]][]) => {
   });
 };
 
+// Overlay fresh markPx/midPx from fastAssetCtxs onto perp marketData (by coin
+// name). This feed supersedes the throttled allDexsAssetCtxs for PRICES only;
+// other ctx fields still come from allDexsAssetCtxs. Spot coins in the combined
+// feed match no perp name and are ignored (mobile has no spot). Same ref when
+// unchanged so the map rebuild + re-render is skipped.
+const overlayFastCtxsToMarketData = (
+  list: MarketData[],
+  fastCtxs: WsFastAssetCtxs,
+): MarketData[] => {
+  let changed = false;
+  const next = list.map(item => {
+    const fc = fastCtxs[item.name];
+    if (!fc) {
+      return item;
+    }
+    // Delta frames omit unchanged fields, so keep the prior value when absent.
+    const markPx = fc.markPx != null ? fc.markPx : item.markPx;
+    const midPx = fc.midPx != null ? fc.midPx : item.midPx;
+    if (markPx === item.markPx && midPx === item.midPx) {
+      return item;
+    }
+    changed = true;
+    return {
+      ...item,
+      markPx,
+      midPx,
+      pxDecimals: getPxDecimals(String(markPx ?? item.markPx ?? '')),
+    };
+  });
+  return changed ? next : list;
+};
+
+const updateMarketDataByFastCtxs = (payload: WsFastAssetCtxs) => {
+  if (!payload) {
+    return;
+  }
+  setPerpsState(prev => {
+    if (prev.marketData.length === 0) {
+      return prev;
+    }
+    const nextMarketData = overlayFastCtxsToMarketData(
+      prev.marketData,
+      payload,
+    );
+    if (nextMarketData === prev.marketData) {
+      return prev;
+    }
+    return {
+      ...prev,
+      marketData: nextMarketData,
+      marketDataMap: buildMarketDataMap(nextMarketData),
+    };
+  });
+};
+
 export const subscribeToUserData = (account: Account) => {
   const sdk = apisPerps.getPerpsSDK();
   const address = account.address;
@@ -1071,6 +1127,12 @@ export const subscribeToUserData = (account: Account) => {
       updateMarketData(ctxs);
     });
 
+  // Fresh prices from the fast feed; global data, no per-user guard needed.
+  const { unsubscribe: unsubscribeFastAssetCtxs } =
+    sdk.ws.subscribeToFastAssetCtxs(data => {
+      updateMarketDataByFastCtxs(data);
+    });
+
   const { unsubscribe: unsubscribeFills } = sdk.ws.subscribeToUserFills(
     data => {
       // Only process data when app is active
@@ -1108,6 +1170,7 @@ export const subscribeToUserData = (account: Account) => {
       unsubscribeClearinghouseState,
       unsubscribeSpotState,
       unsubscribeAllDexsAssetCtxs,
+      unsubscribeFastAssetCtxs,
       unsubscribeOpenOrders,
       unsubscribeFills,
       unsubscribeUserNonFundingLedgerUpdates,

@@ -22,6 +22,7 @@ import {
   checkNotificationPermission,
   requestUngrantedNotificationPermission,
 } from '@/core/notifications/switch';
+import { APP_FEATURE_SWITCH } from '@/constant';
 
 const appNotificationStore = zCreate<{
   /**
@@ -33,12 +34,22 @@ const appNotificationStore = zCreate<{
   return {
     hasSystemPermission: null,
     enabledTransactionNofification:
-      preferenceService.getPreferenceByKey('enabledTransactionNofification') ??
-      false,
+      APP_FEATURE_SWITCH.transactionNotification &&
+      (preferenceService.getPreferenceByKey('enabledTransactionNofification') ??
+        false),
   };
 });
 
 export async function fetchHasSystemPermission() {
+  if (!APP_FEATURE_SWITCH.transactionNotification) {
+    appNotificationStore.setState({
+      hasSystemPermission: false,
+      enabledTransactionNofification: false,
+    });
+
+    return false;
+  }
+
   const hasSystemPermission = await checkNotificationPermission();
   appNotificationStore.setState({ hasSystemPermission });
 
@@ -46,6 +57,10 @@ export async function fetchHasSystemPermission() {
 }
 
 export async function startCareAppNotificationPermissions() {
+  if (!APP_FEATURE_SWITCH.transactionNotification) {
+    return;
+  }
+
   const hasSystemPermission = await fetchHasSystemPermission();
 
   if (
@@ -66,6 +81,15 @@ export async function startCareAppNotificationPermissions() {
 export async function setEnableTransactionNofification(
   valOrFunc: UpdaterOrPartials<boolean>,
 ) {
+  if (!APP_FEATURE_SWITCH.transactionNotification) {
+    appNotificationStore.setState({
+      hasSystemPermission: false,
+      enabledTransactionNofification: false,
+    });
+
+    return false;
+  }
+
   fetchHasSystemPermission();
   const hasSystemPermission =
     appNotificationStore.getState().hasSystemPermission;
@@ -126,6 +150,15 @@ export const useAppNotificationEnabled = () => {
     s => s.enabledTransactionNofification,
   );
   const hasSystemPermission = appNotificationStore(s => s.hasSystemPermission);
+
+  if (!APP_FEATURE_SWITCH.transactionNotification) {
+    return {
+      enabledTransactionNofification: false,
+      hasSystemPermission: false,
+      value: false,
+      setValue: setEnableTransactionNofification,
+    };
+  }
 
   return {
     enabledTransactionNofification,

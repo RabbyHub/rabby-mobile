@@ -14,7 +14,7 @@ import {
 } from '@aave/contract-helpers';
 import BigNumber from 'bignumber.js';
 import { MAX_UINT_AMOUNT, referralCode } from './utils/constant';
-import { ethers } from 'ethers';
+import { ethers, PopulatedTransaction } from 'ethers';
 import { ZERO_PERMIT } from './modals/DebtSwapModal/utils';
 
 export enum InterestRate {
@@ -57,29 +57,42 @@ export const buildSupplyTx = async ({
   });
 };
 
-export const buildWithdrawTx = async ({
-  pool,
-  amount,
-  address,
-  reserve,
-  aTokenAddress,
-  useOptimizedPath,
-}: {
+type BuildWithdrawTxParams = {
   pool: Pool;
   amount: string;
   address: string;
   reserve: string;
   aTokenAddress: string;
   useOptimizedPath?: boolean;
-}) => {
-  return pool.withdraw({
+};
+
+export async function buildWithdrawTx(params: BuildWithdrawTxParams) {
+  const { pool, amount, address, reserve, aTokenAddress, useOptimizedPath } =
+    params;
+
+  const withdrawResult = await pool.withdraw({
     user: address,
     reserve,
     amount,
     aTokenAddress,
     useOptimizedPath: !!useOptimizedPath,
   });
-};
+  const actionTx = withdrawResult.find(tx => tx.txType === 'DLP_ACTION');
+  if (!actionTx) {
+    throw new Error('Withdraw action tx not found');
+  }
+
+  try {
+    return await actionTx.tx();
+  } catch (error) {
+    const transaction = (error as { transaction?: PopulatedTransaction })
+      .transaction;
+    if (transaction) {
+      return transaction;
+    }
+    throw error;
+  }
+}
 
 export const buildBorrowTx = async ({
   poolBundle,

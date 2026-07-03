@@ -28,7 +28,17 @@ interface TokenAmountInputProps {
   placeholder?: string;
   isEstimatingGas?: boolean;
   onClickToken?: () => void;
+  tokenSelectContent?: React.ReactNode;
 }
+
+const shouldSyncAmountImmediately = (amount: string) => {
+  if (!amount) {
+    return false;
+  }
+
+  const numericAmount = Number(amount);
+  return Number.isFinite(numericAmount) && numericAmount === 0;
+};
 
 export const TokenAmountInput = ({
   symbol,
@@ -43,6 +53,7 @@ export const TokenAmountInput = ({
   handleClickMaxButton,
   isEstimatingGas,
   onClickToken,
+  tokenSelectContent,
 }: React.PropsWithChildren<RNViewProps & TokenAmountInputProps>) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
@@ -99,6 +110,12 @@ export const TokenAmountInput = ({
         debouncedChangeText.cancel();
         onChange?.(formatted);
         return false;
+      }
+
+      if (shouldSyncAmountImmediately(formatted)) {
+        debouncedChangeText.cancel();
+        onChange?.(formatted);
+        return;
       }
 
       debouncedChangeText(formatted);
@@ -177,7 +194,9 @@ export const TokenAmountInput = ({
             </TouchableOpacity>
           ))}
         <View style={styles.placeholder} />
-        {showTokenSelect ? (
+        {tokenSelectContent ? (
+          <View style={styles.tokenSelectContent}>{tokenSelectContent}</View>
+        ) : showTokenSelect ? (
           <Pressable onPress={onClickToken} style={styles.tokenInfoContainer}>
             <TokenIcon
               size={26}
@@ -317,6 +336,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       backgroundColor: colors2024['neutral-line'],
       padding: 4,
       justifyContent: 'space-between',
+    },
+    tokenSelectContent: {
+      flexShrink: 0,
     },
     tokenInfoContainerHidden: {
       flexDirection: 'row',
