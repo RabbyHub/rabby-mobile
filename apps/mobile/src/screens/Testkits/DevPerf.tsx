@@ -13,7 +13,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useNavigation } from '@react-navigation/native';

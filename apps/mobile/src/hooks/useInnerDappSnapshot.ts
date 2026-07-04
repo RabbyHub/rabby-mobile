@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 
 import { MMKVStorageStrategy, zustandByMMKV } from '@/core/storage/mmkv';
 import { getViewShotFilePath } from '@/utils/browser';

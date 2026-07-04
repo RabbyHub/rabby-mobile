@@ -93,7 +93,7 @@ function loadBrowserServiceModule({
       }
     },
   }));
-  jest.doMock('react-native-fs', () => ({
+  jest.doMock('@rabby-wallet/react-native-fs', () => ({
     DocumentDirectoryPath: '/doc',
     copyFile: (...args: unknown[]) => mockCopyFile(...args),
     exists: (...args: unknown[]) => mockExists(...args),

@@ -1,4 +1,4 @@
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 import { getRabbyAppDbName, getRabbyAppDbPath } from './constant';
 import { toast } from '@/components2024/Toast';
 import { Platform, Share } from 'react-native';

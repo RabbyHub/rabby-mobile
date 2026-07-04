@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Dimensions, Image, ImageResolvedAssetSource } from 'react-native';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { openapi } from '@/core/request';

@@ -8,7 +8,7 @@ import React, {
   useState,
 } from 'react';
 import { Platform, ScrollView, TouchableOpacity, View } from 'react-native';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 import dayjs from 'dayjs';
 import { strFromU8, Unzip, UnzipInflate, unzipSync, zipSync } from 'fflate';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';

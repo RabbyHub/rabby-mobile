@@ -1,4 +1,4 @@
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { IS_ANDROID } from '../native/utils';

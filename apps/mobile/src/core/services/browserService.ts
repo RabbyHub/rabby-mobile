@@ -14,7 +14,7 @@ import {
   safeGetOrigin,
   safeParseURL,
 } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 import { getViewShotFilePath } from '@/utils/browser';
 
 export interface BrowserHistoryItem {

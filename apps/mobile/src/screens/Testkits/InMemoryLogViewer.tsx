@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Platform, ScrollView, TouchableOpacity, View } from 'react-native';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 import dayjs from 'dayjs';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { Text } from '@/components/Typography';
