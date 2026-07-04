@@ -140,6 +140,12 @@ type AsyncStreamTestResult = {
   updatedAt: string;
 };
 
+type BatchedAsyncStreamTestResult = AsyncStreamTestResult & {
+  batchBytes: number;
+  writeBatches: number;
+  readBatches: number;
+};
+
 const APP_FILE_SCAN_LIMIT = 300;
 const APP_FILE_SCAN_DEPTH = 4;
 const FILE_SHEET_PAGE_SIZE = 10;
@@ -157,6 +163,13 @@ const ASYNC_STREAM_TEST_BYTES = 16 * 1024 * 1024;
 const ASYNC_STREAM_CHUNK_BYTES = 256 * 1024;
 const ASYNC_STREAM_BUFFER_COUNT = 2;
 const ASYNC_STREAM_TEST_PATH = `${BYTE_IO_TEST_DIR}/async-stream-io.bin`;
+const ASYNC_BATCH_STREAM_TEST_BYTES = 16 * 1024 * 1024;
+const ASYNC_BATCH_STREAM_CHUNK_BYTES = 256 * 1024;
+const ASYNC_BATCH_STREAM_CHUNKS_PER_BATCH = 16;
+const ASYNC_BATCH_STREAM_BUFFER_COUNT = ASYNC_BATCH_STREAM_CHUNKS_PER_BATCH;
+const ASYNC_BATCH_STREAM_BATCH_BYTES =
+  ASYNC_BATCH_STREAM_CHUNK_BYTES * ASYNC_BATCH_STREAM_CHUNKS_PER_BATCH;
+const ASYNC_BATCH_STREAM_TEST_PATH = `${BYTE_IO_TEST_DIR}/async-stream-batch-io.bin`;
 
 const APP_OWNED_FILE_DIRS = [
   { key: 'documents', label: 'Documents', path: RNFS.DocumentDirectoryPath },
@@ -466,6 +479,8 @@ function DevCapabilityFile() {
     useState<OwnedStreamTestResult | null>(null);
   const [asyncStreamResult, setAsyncStreamResult] =
     useState<AsyncStreamTestResult | null>(null);
+  const [batchedAsyncStreamResult, setBatchedAsyncStreamResult] =
+    useState<BatchedAsyncStreamTestResult | null>(null);
   const [nativeFsDiagnostics, setNativeFsDiagnostics] = useState<
     NativeFSDiagnosticEvent[]
   >([]);
@@ -736,6 +751,7 @@ function DevCapabilityFile() {
           byteIoResult,
           ownedStreamResult,
           asyncStreamResult,
+          batchedAsyncStreamResult,
           nativeFsDiagnostics: nativeFsDiagnostics.slice(-16),
         },
         null,
@@ -744,6 +760,7 @@ function DevCapabilityFile() {
     [
       accessibleImageSnapshot,
       asyncStreamResult,
+      batchedAsyncStreamResult,
       byteIoResult,
       capabilitySnapshot,
       fileSnapshot,
@@ -1210,6 +1227,157 @@ function DevCapabilityFile() {
       console.error('handleRunAsyncStreamFile failed', error);
       toast.error('Failed to run async native stream test');
       setLastAction(`${dayjs().format('HH:mm:ss')} Async stream test failed`);
+    } finally {
+      setBusyKey(null);
+    }
+  }, [refreshNativeFsDiagnostics]);
+
+  const handleRunBatchedAsyncStreamFile = useCallback(async () => {
+    setBusyKey('async-stream-batch-run');
+    try {
+      const jsiAvailable = RNFS.isJSIAvailable();
+      const asyncAvailable = RNFS.isNativeAsyncFileIOAvailable();
+
+      if (!jsiAvailable) {
+        throw new Error('Rabby native FS JSI binding is unavailable');
+      }
+      if (!asyncAvailable) {
+        throw new Error('Rabby native FS async stream is unavailable');
+      }
+
+      RNFS.clearDiagnostics();
+
+      await RNFS.mkdir(BYTE_IO_TEST_DIR, {
+        NSURLIsExcludedFromBackupKey: true,
+      });
+
+      const writer = RNFS.createAsyncWriteStream(ASYNC_BATCH_STREAM_TEST_PATH, {
+        bufferSize: ASYNC_BATCH_STREAM_CHUNK_BYTES,
+        bufferCount: ASYNC_BATCH_STREAM_BUFFER_COUNT,
+      });
+
+      let offset = 0;
+      let checksum = 0;
+      let commits = 0;
+      let writeBatches = 0;
+
+      const writeStartedAt = nowMs();
+      while (offset < ASYNC_BATCH_STREAM_TEST_BYTES) {
+        const buffers: Uint8Array[] = [];
+        const lengths: number[] = [];
+
+        while (
+          buffers.length < ASYNC_BATCH_STREAM_CHUNKS_PER_BATCH &&
+          offset < ASYNC_BATCH_STREAM_TEST_BYTES
+        ) {
+          const buffer = writer.acquireBuffer();
+          const length = Math.min(
+            buffer.byteLength,
+            ASYNC_BATCH_STREAM_TEST_BYTES - offset,
+          );
+
+          for (let index = 0; index < length; index += 1) {
+            const absoluteIndex = offset + index;
+            const value = getPatternByte(absoluteIndex);
+            buffer[index] = value;
+            checksum = updateChecksum(checksum, value, absoluteIndex);
+          }
+
+          buffers.push(buffer);
+          lengths.push(length);
+          offset += length;
+        }
+
+        await writer.commitBatch(buffers, lengths);
+        commits += buffers.length;
+        writeBatches += 1;
+      }
+
+      const writeStats = await writer.close();
+      const writeDurationMs = nowMs() - writeStartedAt;
+
+      const reader = RNFS.createAsyncReadStream(ASYNC_BATCH_STREAM_TEST_PATH, {
+        bufferSize: ASYNC_BATCH_STREAM_BATCH_BYTES,
+      });
+
+      let readBytes = 0;
+      let reads = 0;
+      let readBatches = 0;
+      let readChecksum = 0;
+      const readStartedAt = nowMs();
+
+      while (true) {
+        const chunk = await reader.readBatch(ASYNC_BATCH_STREAM_BATCH_BYTES);
+        if (!chunk) {
+          break;
+        }
+
+        for (let index = 0; index < chunk.byteLength; index += 1) {
+          readChecksum = updateChecksum(
+            readChecksum,
+            chunk[index],
+            readBytes + index,
+          );
+        }
+
+        readBytes += chunk.byteLength;
+        reads += 1;
+        readBatches += 1;
+      }
+
+      const readStats = await reader.close();
+      const readDurationMs = nowMs() - readStartedAt;
+      const expectedChecksum = normalizeChecksum(checksum);
+      const actualChecksum = normalizeChecksum(readChecksum);
+      const verified =
+        readBytes === ASYNC_BATCH_STREAM_TEST_BYTES &&
+        actualChecksum === expectedChecksum &&
+        writeStats.bytesWritten === ASYNC_BATCH_STREAM_TEST_BYTES &&
+        writeStats.commits === commits &&
+        readStats.bytesRead === ASYNC_BATCH_STREAM_TEST_BYTES &&
+        readStats.reads === reads;
+
+      const result = {
+        path: ASYNC_BATCH_STREAM_TEST_PATH,
+        jsiAvailable,
+        asyncAvailable,
+        totalBytes: ASYNC_BATCH_STREAM_TEST_BYTES,
+        chunkBytes: ASYNC_BATCH_STREAM_CHUNK_BYTES,
+        batchBytes: ASYNC_BATCH_STREAM_BATCH_BYTES,
+        bufferCount: ASYNC_BATCH_STREAM_BUFFER_COUNT,
+        commits,
+        reads,
+        writeBatches,
+        readBatches,
+        writeDurationMs,
+        readDurationMs,
+        checksum: actualChecksum,
+        verified,
+        writeStats,
+        readStats,
+        updatedAt: new Date().toISOString(),
+      } satisfies BatchedAsyncStreamTestResult;
+
+      setBatchedAsyncStreamResult(result);
+      refreshNativeFsDiagnostics();
+      setLastAction(
+        `${dayjs().format(
+          'HH:mm:ss',
+        )} Ran batched native async stream for ${formatBytes(
+          result.totalBytes,
+        )}`,
+      );
+      toast.success(
+        verified
+          ? 'Batched async stream verified'
+          : 'Batched async stream finished',
+      );
+    } catch (error) {
+      console.error('handleRunBatchedAsyncStreamFile failed', error);
+      toast.error('Failed to run batched async stream test');
+      setLastAction(
+        `${dayjs().format('HH:mm:ss')} Batched async stream test failed`,
+      );
     } finally {
       setBusyKey(null);
     }
@@ -1872,6 +2040,99 @@ function DevCapabilityFile() {
               showTextOnLoading
               containerStyle={styles.singleActionButton}
               onPress={handleRunAsyncStreamFile}
+            />
+          </View>
+        </View>
+
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Batched Async Stream Test</Text>
+          <Text style={styles.noteText}>
+            This sample keeps the same 256 KB native-owned buffers as the
+            baseline async stream test, but groups 16 chunks into each async
+            write and read batch so JS/native Promise round trips drop from 64
+            to 4 for the same 16 MB payload.
+          </Text>
+          {renderStatusRow({
+            label: 'Async worker',
+            value: batchedAsyncStreamResult?.asyncAvailable
+              ? 'granted'
+              : 'default',
+            displayValue: batchedAsyncStreamResult
+              ? batchedAsyncStreamResult.asyncAvailable
+                ? 'Available'
+                : 'Unavailable'
+              : RNFS.isNativeAsyncFileIOAvailable()
+              ? 'Available'
+              : 'Not checked',
+          })}
+          {renderStatusRow({
+            label: 'Batch shape',
+            value: batchedAsyncStreamResult?.verified ? 'granted' : 'default',
+            displayValue: `${formatBytes(
+              ASYNC_BATCH_STREAM_CHUNK_BYTES,
+            )} x ${ASYNC_BATCH_STREAM_CHUNKS_PER_BATCH}`,
+          })}
+          {renderStatusRow({
+            label: 'Total size',
+            value: 'default',
+            displayValue: formatBytes(ASYNC_BATCH_STREAM_TEST_BYTES),
+          })}
+          {renderStatusRow({
+            label: 'Write result',
+            value: batchedAsyncStreamResult?.verified ? 'granted' : 'default',
+            displayValue: batchedAsyncStreamResult
+              ? `${batchedAsyncStreamResult.writeBatches} batches / ${
+                  batchedAsyncStreamResult.commits
+                } chunks · ${formatDurationMs(
+                  batchedAsyncStreamResult.writeDurationMs,
+                )}`
+              : 'None',
+          })}
+          {renderStatusRow({
+            label: 'Read result',
+            value: batchedAsyncStreamResult?.verified ? 'granted' : 'default',
+            displayValue: batchedAsyncStreamResult
+              ? `${
+                  batchedAsyncStreamResult.readBatches
+                } batches · ${formatDurationMs(
+                  batchedAsyncStreamResult.readDurationMs,
+                )}`
+              : 'Not checked',
+          })}
+          {renderStatusRow({
+            label: 'Worker stats',
+            value: batchedAsyncStreamResult?.verified ? 'granted' : 'default',
+            displayValue: batchedAsyncStreamResult
+              ? `${formatBytes(
+                  batchedAsyncStreamResult.writeStats.bytesWritten,
+                )} written · ${formatBytes(
+                  batchedAsyncStreamResult.readStats.bytesRead,
+                )} read · pending=${
+                  batchedAsyncStreamResult.writeStats.pendingBuffers
+                }`
+              : '-',
+          })}
+          {renderStatusRow({
+            label: 'Checksum',
+            value: batchedAsyncStreamResult?.verified ? 'granted' : 'default',
+            displayValue: batchedAsyncStreamResult?.checksum || '-',
+          })}
+          <Text style={styles.noteText} selectable>
+            {ASYNC_BATCH_STREAM_TEST_PATH}
+          </Text>
+          <View style={styles.sectionActionsRow}>
+            <Button
+              title={
+                busyKey === 'async-stream-batch-run'
+                  ? 'Running Batch...'
+                  : 'Run Batched Stream'
+              }
+              type="primary"
+              height={40}
+              loading={busyKey === 'async-stream-batch-run'}
+              showTextOnLoading
+              containerStyle={styles.singleActionButton}
+              onPress={handleRunBatchedAsyncStreamFile}
             />
           </View>
         </View>

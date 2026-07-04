@@ -144,6 +144,7 @@ export type NativeFSAsyncWriteStreamStats = NativeFSWriteStreamStats & {
 export type NativeFSAsyncWriteStream = {
   acquireBuffer(): Uint8Array;
   commit(buffer: Uint8Array, byteLength?: number): Promise<number>;
+  commitBatch(buffers: Uint8Array[], byteLengths?: number[]): Promise<number>;
   close(): Promise<NativeFSAsyncWriteStreamStats>;
   stats(): NativeFSAsyncWriteStreamStats;
 };
@@ -164,6 +165,7 @@ export type NativeFSAsyncReadStreamStats = {
 
 export type NativeFSAsyncReadStream = {
   readChunk(byteLength?: number): Promise<Uint8Array | null>;
+  readBatch(byteLength?: number): Promise<Uint8Array | null>;
   close(): Promise<NativeFSAsyncReadStreamStats>;
   stats(): NativeFSAsyncReadStreamStats;
 };
