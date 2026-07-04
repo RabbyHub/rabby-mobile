@@ -115,6 +115,53 @@ function createNativeWriteStream(
   );
 }
 
+function createNativeAsyncWriteStream(
+  filepath: string,
+  optionsOrBufferSize?: { bufferSize?: number, bufferCount?: number } | number,
+  legacyBufferCount?: number,
+) {
+  const nativeFS = getNativeFS();
+  const createAsyncWriteStream = nativeFS.createAsyncWriteStream;
+
+  if (typeof createAsyncWriteStream !== 'function') {
+    throw new Error(
+      '@rabby-wallet/react-native-fs native async write stream is not available',
+    );
+  }
+
+  const options = normalizeWriteStreamOptions(
+    optionsOrBufferSize,
+    legacyBufferCount,
+  );
+
+  return createAsyncWriteStream(
+    normalizeFilePath(filepath),
+    options.bufferSize,
+    options.bufferCount,
+  );
+}
+
+function createNativeAsyncReadStream(
+  filepath: string,
+  optionsOrBufferSize?: { bufferSize?: number } | number,
+) {
+  const nativeFS = getNativeFS();
+  const createAsyncReadStream = nativeFS.createAsyncReadStream;
+
+  if (typeof createAsyncReadStream !== 'function') {
+    throw new Error(
+      '@rabby-wallet/react-native-fs native async read stream is not available',
+    );
+  }
+
+  const bufferSize =
+    typeof optionsOrBufferSize === 'number'
+      ? optionsOrBufferSize
+      : optionsOrBufferSize?.bufferSize;
+
+  return createAsyncReadStream(normalizeFilePath(filepath), bufferSize);
+}
+
 type NativeFSZipArchiveEntry = {
   sourcePath: string,
   archivePath: string,
@@ -420,6 +467,35 @@ var RNFS = {
       bufferSize,
       bufferCount,
     );
+  },
+
+  isNativeAsyncFileIOAvailable(): boolean {
+    if (!installNativeFS()) {
+      return false;
+    }
+    return (
+      typeof global.__RabbyNativeFS?.createAsyncWriteStream === 'function' &&
+      typeof global.__RabbyNativeFS?.createAsyncReadStream === 'function'
+    );
+  },
+
+  createAsyncWriteStream(
+    filepath: string,
+    optionsOrBufferSize?: { bufferSize?: number, bufferCount?: number } | number,
+    legacyBufferCount?: number,
+  ) {
+    return createNativeAsyncWriteStream(
+      filepath,
+      optionsOrBufferSize,
+      legacyBufferCount,
+    );
+  },
+
+  createAsyncReadStream(
+    filepath: string,
+    optionsOrBufferSize?: { bufferSize?: number } | number,
+  ) {
+    return createNativeAsyncReadStream(filepath, optionsOrBufferSize);
   },
 
   isNativeZipArchiveAvailable(): boolean {

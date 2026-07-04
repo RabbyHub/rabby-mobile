@@ -3,18 +3,23 @@
 #include <algorithm>
 #include <cerrno>
 #include <chrono>
+#include <condition_variable>
 #include <cstdint>
 #include <cstring>
 #include <fcntl.h>
 #include <deque>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
 #include <string>
 #include <sys/stat.h>
+#include <thread>
 #include <unistd.h>
 #include <utility>
 #include <vector>
+
+#include <ReactCommon/CallInvoker.h>
 
 #ifdef __ANDROID__
 #include <android/log.h>
@@ -22,6 +27,7 @@
 #endif
 
 namespace jsi = facebook::jsi;
+namespace react = facebook::react;
 
 namespace rabbyfs {
 namespace {
@@ -486,6 +492,172 @@ jsi::Value wrapHostFunction(
     unsigned int argCount,
     jsi::HostFunctionType function);
 
+struct PromiseCallbacks {
+  PromiseCallbacks(jsi::Function&& resolveFn, jsi::Function&& rejectFn)
+      : resolve(std::move(resolveFn)), reject(std::move(rejectFn)) {}
+
+  jsi::Function resolve;
+  jsi::Function reject;
+};
+
+struct WriteStreamStatsSnapshot {
+  uint64_t writerId;
+  std::string path;
+  size_t bufferSize;
+  size_t bufferCount;
+  size_t freeBuffers;
+  size_t acquiredBuffers;
+  size_t pendingBuffers;
+  size_t bytesWritten;
+  size_t commits;
+  bool closed;
+};
+
+struct ReadStreamStatsSnapshot {
+  uint64_t readerId;
+  std::string path;
+  size_t bufferSize;
+  size_t bytesRead;
+  size_t reads;
+  bool closed;
+  bool eof;
+};
+
+using PromiseStart = std::function<void(std::shared_ptr<PromiseCallbacks>)>;
+
+jsi::Object makePromise(
+    jsi::Runtime& runtime,
+    const char* name,
+    PromiseStart start) {
+  auto promiseConstructor = requireGlobalFunction(runtime, "Promise");
+  auto executor = jsi::Function::createFromHostFunction(
+      runtime,
+      jsi::PropNameID::forAscii(runtime, name),
+      2,
+      [start = std::move(start)](jsi::Runtime& runtime,
+                                 const jsi::Value&,
+                                 const jsi::Value* arguments,
+                                 size_t count) -> jsi::Value {
+        if (count < 2 || !arguments[0].isObject() || !arguments[1].isObject()) {
+          throw jsi::JSError(runtime, "RabbyNativeFS Promise executor expected resolve and reject");
+        }
+
+        auto resolve = arguments[0].asObject(runtime).asFunction(runtime);
+        auto reject = arguments[1].asObject(runtime).asFunction(runtime);
+        try {
+          start(std::make_shared<PromiseCallbacks>(
+              std::move(resolve),
+              std::move(reject)));
+        } catch (const jsi::JSError&) {
+          throw;
+        } catch (const std::exception& error) {
+          throw jsi::JSError(runtime, error.what());
+        }
+        return jsi::Value::undefined();
+      });
+
+  return promiseConstructor.callAsConstructor(runtime, std::move(executor)).asObject(runtime);
+}
+
+void resolvePromiseNumber(
+    const std::shared_ptr<react::CallInvoker>& jsCallInvoker,
+    std::shared_ptr<PromiseCallbacks> callbacks,
+    double value) {
+  jsCallInvoker->invokeAsync(
+      [callbacks = std::move(callbacks), value](jsi::Runtime& runtime) {
+        callbacks->resolve.call(runtime, jsi::Value(value));
+      });
+}
+
+void resolvePromiseNull(
+    const std::shared_ptr<react::CallInvoker>& jsCallInvoker,
+    std::shared_ptr<PromiseCallbacks> callbacks) {
+  jsCallInvoker->invokeAsync(
+      [callbacks = std::move(callbacks)](jsi::Runtime& runtime) {
+        callbacks->resolve.call(runtime, jsi::Value::null());
+      });
+}
+
+void resolvePromiseBytes(
+    const std::shared_ptr<react::CallInvoker>& jsCallInvoker,
+    std::shared_ptr<PromiseCallbacks> callbacks,
+    std::vector<uint8_t>&& bytes) {
+  jsCallInvoker->invokeAsync(
+      [callbacks = std::move(callbacks),
+       bytes = std::move(bytes)](jsi::Runtime& runtime) mutable {
+        auto result = makeUint8Array(runtime, std::move(bytes));
+        callbacks->resolve.call(runtime, jsi::Value(runtime, result));
+      });
+}
+
+void rejectPromise(
+    const std::shared_ptr<react::CallInvoker>& jsCallInvoker,
+    std::shared_ptr<PromiseCallbacks> callbacks,
+    std::string message) {
+  jsCallInvoker->invokeAsync(
+      [callbacks = std::move(callbacks),
+       message = std::move(message)](jsi::Runtime& runtime) {
+        callbacks->reject.call(
+            runtime,
+            jsi::String::createFromUtf8(runtime, message));
+      });
+}
+
+jsi::Object makeWriteStreamStatsObject(
+    jsi::Runtime& runtime,
+    const WriteStreamStatsSnapshot& snapshot) {
+  jsi::Object result(runtime);
+  result.setProperty(runtime, "writerId", static_cast<double>(snapshot.writerId));
+  result.setProperty(runtime, "path", jsi::String::createFromUtf8(runtime, snapshot.path));
+  result.setProperty(runtime, "bufferSize", static_cast<double>(snapshot.bufferSize));
+  result.setProperty(runtime, "bufferCount", static_cast<double>(snapshot.bufferCount));
+  result.setProperty(runtime, "freeBuffers", static_cast<double>(snapshot.freeBuffers));
+  result.setProperty(runtime, "acquiredBuffers", static_cast<double>(snapshot.acquiredBuffers));
+  result.setProperty(runtime, "pendingBuffers", static_cast<double>(snapshot.pendingBuffers));
+  result.setProperty(runtime, "bytesWritten", static_cast<double>(snapshot.bytesWritten));
+  result.setProperty(runtime, "commits", static_cast<double>(snapshot.commits));
+  result.setProperty(runtime, "closed", snapshot.closed);
+  return result;
+}
+
+void resolvePromiseWriteStats(
+    const std::shared_ptr<react::CallInvoker>& jsCallInvoker,
+    std::shared_ptr<PromiseCallbacks> callbacks,
+    WriteStreamStatsSnapshot snapshot) {
+  jsCallInvoker->invokeAsync(
+      [callbacks = std::move(callbacks),
+       snapshot = std::move(snapshot)](jsi::Runtime& runtime) {
+        auto result = makeWriteStreamStatsObject(runtime, snapshot);
+        callbacks->resolve.call(runtime, jsi::Value(runtime, result));
+      });
+}
+
+jsi::Object makeReadStreamStatsObject(
+    jsi::Runtime& runtime,
+    const ReadStreamStatsSnapshot& snapshot) {
+  jsi::Object result(runtime);
+  result.setProperty(runtime, "readerId", static_cast<double>(snapshot.readerId));
+  result.setProperty(runtime, "path", jsi::String::createFromUtf8(runtime, snapshot.path));
+  result.setProperty(runtime, "bufferSize", static_cast<double>(snapshot.bufferSize));
+  result.setProperty(runtime, "bytesRead", static_cast<double>(snapshot.bytesRead));
+  result.setProperty(runtime, "reads", static_cast<double>(snapshot.reads));
+  result.setProperty(runtime, "closed", snapshot.closed);
+  result.setProperty(runtime, "eof", snapshot.eof);
+  return result;
+}
+
+void resolvePromiseReadStats(
+    const std::shared_ptr<react::CallInvoker>& jsCallInvoker,
+    std::shared_ptr<PromiseCallbacks> callbacks,
+    ReadStreamStatsSnapshot snapshot) {
+  jsCallInvoker->invokeAsync(
+      [callbacks = std::move(callbacks),
+       snapshot = std::move(snapshot)](jsi::Runtime& runtime) {
+        auto result = makeReadStreamStatsObject(runtime, snapshot);
+        callbacks->resolve.call(runtime, jsi::Value(runtime, result));
+      });
+}
+
 class OwnedWriteStreamHostObject final : public jsi::HostObject {
  public:
   OwnedWriteStreamHostObject(
@@ -743,6 +915,783 @@ class OwnedWriteStreamHostObject final : public jsi::HostObject {
   std::vector<Slot> slots_;
 };
 
+class AsyncWriteStreamHostObject final
+    : public jsi::HostObject,
+      public std::enable_shared_from_this<AsyncWriteStreamHostObject> {
+ public:
+  AsyncWriteStreamHostObject(
+      std::string path,
+      size_t bufferSize,
+      size_t bufferCount,
+      std::shared_ptr<react::CallInvoker> jsCallInvoker)
+      : path_(std::move(path)),
+        bufferSize_(bufferSize),
+        writerId_(nextOwnedWriterId()),
+        jsCallInvoker_(std::move(jsCallInvoker)) {
+    if (!jsCallInvoker_) {
+      throw std::runtime_error("RabbyNativeFS async stream requires JS CallInvoker");
+    }
+
+    fd_ = open(path_.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    if (fd_ == -1) {
+      throw std::runtime_error(errnoMessage("open", path_));
+    }
+
+    slots_.reserve(bufferCount);
+    for (size_t index = 0; index < bufferCount; index += 1) {
+      slots_.push_back(Slot{std::make_shared<VectorBuffer>(bufferSize_)});
+    }
+
+    worker_ = std::thread([this] { workerLoop(); });
+  }
+
+  ~AsyncWriteStreamHostObject() override {
+    shutdownWorker();
+  }
+
+  jsi::Value get(jsi::Runtime& runtime, const jsi::PropNameID& name) override {
+    auto property = name.utf8(runtime);
+    if (property == "acquireBuffer") {
+      return wrapHostFunction(
+          runtime,
+          "acquireAsyncWriteBuffer",
+          0,
+          [this](jsi::Runtime& runtime,
+                 const jsi::Value&,
+                 const jsi::Value*,
+                 size_t) -> jsi::Value {
+            return jsi::Value(runtime, acquireBuffer(runtime));
+          });
+    }
+    if (property == "commit") {
+      return wrapHostFunction(
+          runtime,
+          "commitAsyncWriteBuffer",
+          2,
+          [this](jsi::Runtime& runtime,
+                 const jsi::Value&,
+                 const jsi::Value* arguments,
+                 size_t count) -> jsi::Value {
+            return jsi::Value(runtime, commit(runtime, arguments, count));
+          });
+    }
+    if (property == "close") {
+      return wrapHostFunction(
+          runtime,
+          "closeAsyncWriteStream",
+          0,
+          [this](jsi::Runtime& runtime,
+                 const jsi::Value&,
+                 const jsi::Value*,
+                 size_t) -> jsi::Value {
+            return jsi::Value(runtime, close(runtime));
+          });
+    }
+    if (property == "stats") {
+      return wrapHostFunction(
+          runtime,
+          "statsAsyncWriteStream",
+          0,
+          [this](jsi::Runtime& runtime,
+                 const jsi::Value&,
+                 const jsi::Value*,
+                 size_t) -> jsi::Value {
+            return jsi::Value(runtime, makeWriteStreamStatsObject(runtime, statsSnapshot()));
+          });
+    }
+    return jsi::Value::undefined();
+  }
+
+  std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime& runtime) override {
+    std::vector<jsi::PropNameID> names;
+    names.reserve(4);
+    names.push_back(jsi::PropNameID::forAscii(runtime, "acquireBuffer"));
+    names.push_back(jsi::PropNameID::forAscii(runtime, "commit"));
+    names.push_back(jsi::PropNameID::forAscii(runtime, "close"));
+    names.push_back(jsi::PropNameID::forAscii(runtime, "stats"));
+    return names;
+  }
+
+ private:
+  enum class SlotState {
+    Free,
+    Acquired,
+    Pending,
+  };
+
+  enum class WorkType {
+    Commit,
+    Close,
+  };
+
+  struct Slot {
+    std::shared_ptr<VectorBuffer> buffer;
+    SlotState state = SlotState::Free;
+    uint64_t generation = 0;
+  };
+
+  struct WorkItem {
+    WorkType type;
+    size_t slotIndex = 0;
+    uint64_t generation = 0;
+    size_t byteLength = 0;
+    SteadyClock::time_point startedAt;
+    std::shared_ptr<PromiseCallbacks> callbacks;
+  };
+
+  jsi::Object acquireBuffer(jsi::Runtime& runtime) {
+    std::shared_ptr<VectorBuffer> buffer;
+    size_t slotIndex = 0;
+    uint64_t generation = 0;
+
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      ensureOpenLocked();
+
+      bool found = false;
+      for (size_t index = 0; index < slots_.size(); index += 1) {
+        auto& slot = slots_[index];
+        if (slot.state != SlotState::Free) {
+          continue;
+        }
+
+        slot.state = SlotState::Acquired;
+        slot.generation += 1;
+        buffer = slot.buffer;
+        slotIndex = index;
+        generation = slot.generation;
+        found = true;
+        break;
+      }
+
+      if (!found) {
+        throw jsi::JSError(runtime, "RabbyNativeFS async write stream has no free buffer");
+      }
+    }
+
+    auto arrayBuffer = jsi::ArrayBuffer(runtime, buffer);
+    auto uint8ArrayConstructor = requireGlobalFunction(runtime, "Uint8Array");
+    auto uint8Array = uint8ArrayConstructor.callAsConstructor(runtime, std::move(arrayBuffer)).asObject(runtime);
+    uint8Array.setExternalMemoryPressure(runtime, buffer->size());
+    uint8Array.setProperty(runtime, "__rabbyNativeFSWriterId", static_cast<double>(writerId_));
+    uint8Array.setProperty(runtime, "__rabbyNativeFSSlot", static_cast<double>(slotIndex));
+    uint8Array.setProperty(runtime, "__rabbyNativeFSGeneration", static_cast<double>(generation));
+    return uint8Array;
+  }
+
+  jsi::Object commit(
+      jsi::Runtime& runtime,
+      const jsi::Value* arguments,
+      size_t count) {
+    if (count < 1 || !arguments[0].isObject()) {
+      throw jsi::JSError(runtime, "RabbyNativeFS async commit expects an owned Uint8Array");
+    }
+
+    auto object = arguments[0].asObject(runtime);
+    auto writerId = requireTokenNumber(runtime, object, "__rabbyNativeFSWriterId");
+    auto slotIndex = requireTokenNumber(runtime, object, "__rabbyNativeFSSlot");
+    auto generation = requireTokenNumber(runtime, object, "__rabbyNativeFSGeneration");
+
+    if (writerId != writerId_) {
+      throw jsi::JSError(runtime, "RabbyNativeFS async buffer belongs to another writer");
+    }
+    if (slotIndex >= slots_.size()) {
+      throw jsi::JSError(runtime, "RabbyNativeFS async buffer slot is out of range");
+    }
+
+    std::shared_ptr<VectorBuffer> expectedBuffer;
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      ensureOpenLocked();
+      auto& slot = slots_[static_cast<size_t>(slotIndex)];
+      if (slot.state != SlotState::Acquired || slot.generation != generation) {
+        throw jsi::JSError(runtime, "RabbyNativeFS async buffer is not currently acquired");
+      }
+      expectedBuffer = slot.buffer;
+    }
+
+    auto bytes = requireBytes(runtime, arguments[0]);
+    if (bytes.byteOffset != 0) {
+      throw jsi::JSError(runtime, "RabbyNativeFS async commit expects the original acquired buffer, not a subarray");
+    }
+    if (bytes.buffer.data(runtime) != expectedBuffer->data()) {
+      throw jsi::JSError(runtime, "RabbyNativeFS async buffer storage mismatch");
+    }
+
+    size_t byteLength = bytes.byteLength;
+    if (count > 1 && !arguments[1].isUndefined() && !arguments[1].isNull()) {
+      if (!arguments[1].isNumber()) {
+        throw jsi::JSError(runtime, "RabbyNativeFS async commit length must be a number");
+      }
+      auto length = arguments[1].asNumber();
+      if (length < 0) {
+        throw jsi::JSError(runtime, "RabbyNativeFS async commit length must be >= 0");
+      }
+      byteLength = static_cast<size_t>(length);
+    }
+    if (byteLength > bytes.byteLength || byteLength > expectedBuffer->size()) {
+      throw jsi::JSError(runtime, "RabbyNativeFS async commit length exceeds the acquired buffer");
+    }
+
+    auto self = shared_from_this();
+    return makePromise(
+        runtime,
+        "commitAsyncWriteBufferPromise",
+        [self,
+         slotIndex = static_cast<size_t>(slotIndex),
+         generation,
+         byteLength](std::shared_ptr<PromiseCallbacks> callbacks) {
+          self->enqueueCommit(slotIndex, generation, byteLength, std::move(callbacks));
+        });
+  }
+
+  jsi::Object close(jsi::Runtime& runtime) {
+    auto self = shared_from_this();
+    return makePromise(
+        runtime,
+        "closeAsyncWriteStreamPromise",
+        [self](std::shared_ptr<PromiseCallbacks> callbacks) {
+          self->enqueueClose(std::move(callbacks));
+        });
+  }
+
+  void enqueueCommit(
+      size_t slotIndex,
+      uint64_t generation,
+      size_t byteLength,
+      std::shared_ptr<PromiseCallbacks> callbacks) {
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      ensureOpenLocked();
+      auto& slot = slots_[slotIndex];
+      if (slot.state != SlotState::Acquired || slot.generation != generation) {
+        throw std::runtime_error("RabbyNativeFS async buffer is not currently acquired");
+      }
+
+      slot.state = SlotState::Pending;
+      queue_.push_back(WorkItem{
+          WorkType::Commit,
+          slotIndex,
+          generation,
+          byteLength,
+          SteadyClock::now(),
+          std::move(callbacks)});
+    }
+    cv_.notify_one();
+  }
+
+  void enqueueClose(std::shared_ptr<PromiseCallbacks> callbacks) {
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      if (closed_) {
+        throw std::runtime_error("RabbyNativeFS async write stream is already closed");
+      }
+      if (closing_) {
+        throw std::runtime_error("RabbyNativeFS async write stream close is already pending");
+      }
+      for (const auto& slot : slots_) {
+        if (slot.state == SlotState::Acquired) {
+          throw std::runtime_error("RabbyNativeFS cannot close an async write stream with acquired buffers");
+        }
+      }
+
+      closing_ = true;
+      queue_.push_back(WorkItem{
+          WorkType::Close,
+          0,
+          0,
+          0,
+          SteadyClock::now(),
+          std::move(callbacks)});
+    }
+    cv_.notify_one();
+  }
+
+  void workerLoop() {
+    for (;;) {
+      WorkItem item;
+      {
+        std::unique_lock<std::mutex> lock(mutex_);
+        cv_.wait(lock, [this] { return stopRequested_ || !queue_.empty(); });
+        if (queue_.empty()) {
+          if (stopRequested_) {
+            break;
+          }
+          continue;
+        }
+        item = std::move(queue_.front());
+        queue_.pop_front();
+      }
+
+      if (item.type == WorkType::Commit) {
+        processCommit(std::move(item));
+      } else {
+        processClose(std::move(item));
+      }
+    }
+  }
+
+  void processCommit(WorkItem item) {
+    try {
+      std::shared_ptr<VectorBuffer> buffer;
+      {
+        std::lock_guard<std::mutex> lock(mutex_);
+        buffer = slots_[item.slotIndex].buffer;
+      }
+
+      writeAllToFd(fd_, buffer->data(), item.byteLength, path_);
+
+      size_t totalBytes = 0;
+      {
+        std::lock_guard<std::mutex> lock(mutex_);
+        auto& slot = slots_[item.slotIndex];
+        if (slot.generation == item.generation && slot.state == SlotState::Pending) {
+          slot.state = SlotState::Free;
+        }
+        bytesWritten_ += item.byteLength;
+        commits_ += 1;
+        totalBytes = bytesWritten_;
+      }
+
+      logNativeFsInfo(
+          "async-write",
+          "commit",
+          path_,
+          item.byteLength,
+          durationUsSince(item.startedAt));
+      resolvePromiseNumber(jsCallInvoker_, std::move(item.callbacks), static_cast<double>(totalBytes));
+    } catch (const std::exception& error) {
+      {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (item.slotIndex < slots_.size()) {
+          slots_[item.slotIndex].state = SlotState::Free;
+        }
+      }
+      logNativeFsError("asyncWriteCommit", path_, error.what());
+      rejectPromise(jsCallInvoker_, std::move(item.callbacks), error.what());
+    }
+    cv_.notify_all();
+  }
+
+  void processClose(WorkItem item) {
+    try {
+      if (fd_ != -1 && ::close(fd_) == -1) {
+        throw std::runtime_error(errnoMessage("close", path_));
+      }
+      fd_ = -1;
+
+      WriteStreamStatsSnapshot snapshot;
+      {
+        std::lock_guard<std::mutex> lock(mutex_);
+        closed_ = true;
+        closing_ = false;
+        stopRequested_ = true;
+        snapshot = statsSnapshotLocked();
+      }
+
+      logNativeFsInfo(
+          "async-write",
+          "close",
+          path_,
+          snapshot.bytesWritten,
+          durationUsSince(item.startedAt));
+      resolvePromiseWriteStats(jsCallInvoker_, std::move(item.callbacks), std::move(snapshot));
+    } catch (const std::exception& error) {
+      logNativeFsError("asyncWriteClose", path_, error.what());
+      rejectPromise(jsCallInvoker_, std::move(item.callbacks), error.what());
+    }
+    cv_.notify_all();
+  }
+
+  void ensureOpenLocked() const {
+    if (closed_ || closing_ || fd_ == -1) {
+      throw std::runtime_error("RabbyNativeFS async write stream is closed");
+    }
+  }
+
+  WriteStreamStatsSnapshot statsSnapshot() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return statsSnapshotLocked();
+  }
+
+  WriteStreamStatsSnapshot statsSnapshotLocked() const {
+    size_t freeBuffers = 0;
+    size_t acquiredBuffers = 0;
+    size_t pendingBuffers = 0;
+
+    for (const auto& slot : slots_) {
+      if (slot.state == SlotState::Free) {
+        freeBuffers += 1;
+      } else if (slot.state == SlotState::Acquired) {
+        acquiredBuffers += 1;
+      } else {
+        pendingBuffers += 1;
+      }
+    }
+
+    return WriteStreamStatsSnapshot{
+        writerId_,
+        path_,
+        bufferSize_,
+        slots_.size(),
+        freeBuffers,
+        acquiredBuffers,
+        pendingBuffers,
+        bytesWritten_,
+        commits_,
+        closed_};
+  }
+
+  void shutdownWorker() {
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      stopRequested_ = true;
+    }
+    cv_.notify_all();
+    if (worker_.joinable() && worker_.get_id() != std::this_thread::get_id()) {
+      worker_.join();
+    }
+    if (fd_ != -1) {
+      ::close(fd_);
+      fd_ = -1;
+    }
+  }
+
+  std::string path_;
+  size_t bufferSize_;
+  uint64_t writerId_;
+  int fd_ = -1;
+  bool closed_ = false;
+  bool closing_ = false;
+  bool stopRequested_ = false;
+  size_t bytesWritten_ = 0;
+  size_t commits_ = 0;
+  std::vector<Slot> slots_;
+  std::shared_ptr<react::CallInvoker> jsCallInvoker_;
+  mutable std::mutex mutex_;
+  std::condition_variable cv_;
+  std::deque<WorkItem> queue_;
+  std::thread worker_;
+};
+
+uint64_t nextAsyncReaderId() {
+  static uint64_t nextId = 1;
+  return nextId++;
+}
+
+class AsyncReadStreamHostObject final
+    : public jsi::HostObject,
+      public std::enable_shared_from_this<AsyncReadStreamHostObject> {
+ public:
+  AsyncReadStreamHostObject(
+      std::string path,
+      size_t bufferSize,
+      std::shared_ptr<react::CallInvoker> jsCallInvoker)
+      : path_(std::move(path)),
+        bufferSize_(bufferSize),
+        readerId_(nextAsyncReaderId()),
+        jsCallInvoker_(std::move(jsCallInvoker)) {
+    if (!jsCallInvoker_) {
+      throw std::runtime_error("RabbyNativeFS async stream requires JS CallInvoker");
+    }
+
+    fd_ = open(path_.c_str(), O_RDONLY);
+    if (fd_ == -1) {
+      throw std::runtime_error(errnoMessage("open", path_));
+    }
+
+    worker_ = std::thread([this] { workerLoop(); });
+  }
+
+  ~AsyncReadStreamHostObject() override {
+    shutdownWorker();
+  }
+
+  jsi::Value get(jsi::Runtime& runtime, const jsi::PropNameID& name) override {
+    auto property = name.utf8(runtime);
+    if (property == "readChunk") {
+      return wrapHostFunction(
+          runtime,
+          "readAsyncChunk",
+          1,
+          [this](jsi::Runtime& runtime,
+                 const jsi::Value&,
+                 const jsi::Value* arguments,
+                 size_t count) -> jsi::Value {
+            size_t length = count > 0
+                ? requirePositiveSize(runtime, arguments[0], bufferSize_, "length")
+                : bufferSize_;
+            auto self = shared_from_this();
+            return jsi::Value(
+                runtime,
+                makePromise(
+                    runtime,
+                    "readAsyncChunkPromise",
+                    [self, length](std::shared_ptr<PromiseCallbacks> callbacks) {
+                      self->enqueueRead(length, std::move(callbacks));
+                    }));
+          });
+    }
+    if (property == "close") {
+      return wrapHostFunction(
+          runtime,
+          "closeAsyncReadStream",
+          0,
+          [this](jsi::Runtime& runtime,
+                 const jsi::Value&,
+                 const jsi::Value*,
+                 size_t) -> jsi::Value {
+            auto self = shared_from_this();
+            return jsi::Value(
+                runtime,
+                makePromise(
+                    runtime,
+                    "closeAsyncReadStreamPromise",
+                    [self](std::shared_ptr<PromiseCallbacks> callbacks) {
+                      self->enqueueClose(std::move(callbacks));
+                    }));
+          });
+    }
+    if (property == "stats") {
+      return wrapHostFunction(
+          runtime,
+          "statsAsyncReadStream",
+          0,
+          [this](jsi::Runtime& runtime,
+                 const jsi::Value&,
+                 const jsi::Value*,
+                 size_t) -> jsi::Value {
+            return jsi::Value(runtime, makeReadStreamStatsObject(runtime, statsSnapshot()));
+          });
+    }
+    return jsi::Value::undefined();
+  }
+
+  std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime& runtime) override {
+    std::vector<jsi::PropNameID> names;
+    names.reserve(3);
+    names.push_back(jsi::PropNameID::forAscii(runtime, "readChunk"));
+    names.push_back(jsi::PropNameID::forAscii(runtime, "close"));
+    names.push_back(jsi::PropNameID::forAscii(runtime, "stats"));
+    return names;
+  }
+
+ private:
+  enum class WorkType {
+    Read,
+    Close,
+  };
+
+  struct WorkItem {
+    WorkType type;
+    size_t length = 0;
+    SteadyClock::time_point startedAt;
+    std::shared_ptr<PromiseCallbacks> callbacks;
+  };
+
+  void enqueueRead(size_t length, std::shared_ptr<PromiseCallbacks> callbacks) {
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      ensureOpenLocked();
+      queue_.push_back(WorkItem{
+          WorkType::Read,
+          length,
+          SteadyClock::now(),
+          std::move(callbacks)});
+    }
+    cv_.notify_one();
+  }
+
+  void enqueueClose(std::shared_ptr<PromiseCallbacks> callbacks) {
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      if (closed_) {
+        throw std::runtime_error("RabbyNativeFS async read stream is already closed");
+      }
+      if (closing_) {
+        throw std::runtime_error("RabbyNativeFS async read stream close is already pending");
+      }
+      closing_ = true;
+      queue_.push_back(WorkItem{
+          WorkType::Close,
+          0,
+          SteadyClock::now(),
+          std::move(callbacks)});
+    }
+    cv_.notify_one();
+  }
+
+  void workerLoop() {
+    for (;;) {
+      WorkItem item;
+      {
+        std::unique_lock<std::mutex> lock(mutex_);
+        cv_.wait(lock, [this] { return stopRequested_ || !queue_.empty(); });
+        if (queue_.empty()) {
+          if (stopRequested_) {
+            break;
+          }
+          continue;
+        }
+        item = std::move(queue_.front());
+        queue_.pop_front();
+      }
+
+      if (item.type == WorkType::Read) {
+        processRead(std::move(item));
+      } else {
+        processClose(std::move(item));
+      }
+    }
+  }
+
+  void processRead(WorkItem item) {
+    try {
+      {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (eof_) {
+          resolvePromiseNull(jsCallInvoker_, std::move(item.callbacks));
+          return;
+        }
+      }
+
+      std::vector<uint8_t> bytes(item.length);
+      size_t totalRead = 0;
+      while (totalRead < bytes.size()) {
+        ssize_t readCount = ::read(fd_, bytes.data() + totalRead, bytes.size() - totalRead);
+        if (readCount == -1) {
+          if (errno == EINTR) {
+            continue;
+          }
+          throw std::runtime_error(errnoMessage("read", path_));
+        }
+        if (readCount == 0) {
+          break;
+        }
+        totalRead += static_cast<size_t>(readCount);
+      }
+
+      if (totalRead == 0) {
+        {
+          std::lock_guard<std::mutex> lock(mutex_);
+          eof_ = true;
+        }
+        logNativeFsInfo(
+            "async-read",
+            "read-eof",
+            path_,
+            0,
+            durationUsSince(item.startedAt));
+        resolvePromiseNull(jsCallInvoker_, std::move(item.callbacks));
+        return;
+      }
+
+      if (totalRead != bytes.size()) {
+        bytes.resize(totalRead);
+      }
+      {
+        std::lock_guard<std::mutex> lock(mutex_);
+        bytesRead_ += totalRead;
+        reads_ += 1;
+      }
+
+      logNativeFsInfo(
+          "async-read",
+          "read",
+          path_,
+          totalRead,
+          durationUsSince(item.startedAt));
+      resolvePromiseBytes(jsCallInvoker_, std::move(item.callbacks), std::move(bytes));
+    } catch (const std::exception& error) {
+      logNativeFsError("asyncReadChunk", path_, error.what());
+      rejectPromise(jsCallInvoker_, std::move(item.callbacks), error.what());
+    }
+  }
+
+  void processClose(WorkItem item) {
+    try {
+      if (fd_ != -1 && ::close(fd_) == -1) {
+        throw std::runtime_error(errnoMessage("close", path_));
+      }
+      fd_ = -1;
+
+      ReadStreamStatsSnapshot snapshot;
+      {
+        std::lock_guard<std::mutex> lock(mutex_);
+        closed_ = true;
+        closing_ = false;
+        stopRequested_ = true;
+        snapshot = statsSnapshotLocked();
+      }
+
+      logNativeFsInfo(
+          "async-read",
+          "close",
+          path_,
+          snapshot.bytesRead,
+          durationUsSince(item.startedAt));
+      resolvePromiseReadStats(jsCallInvoker_, std::move(item.callbacks), std::move(snapshot));
+    } catch (const std::exception& error) {
+      logNativeFsError("asyncReadClose", path_, error.what());
+      rejectPromise(jsCallInvoker_, std::move(item.callbacks), error.what());
+    }
+    cv_.notify_all();
+  }
+
+  void ensureOpenLocked() const {
+    if (closed_ || closing_ || fd_ == -1) {
+      throw std::runtime_error("RabbyNativeFS async read stream is closed");
+    }
+  }
+
+  ReadStreamStatsSnapshot statsSnapshot() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return statsSnapshotLocked();
+  }
+
+  ReadStreamStatsSnapshot statsSnapshotLocked() const {
+    return ReadStreamStatsSnapshot{
+        readerId_,
+        path_,
+        bufferSize_,
+        bytesRead_,
+        reads_,
+        closed_,
+        eof_};
+  }
+
+  void shutdownWorker() {
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      stopRequested_ = true;
+    }
+    cv_.notify_all();
+    if (worker_.joinable() && worker_.get_id() != std::this_thread::get_id()) {
+      worker_.join();
+    }
+    if (fd_ != -1) {
+      ::close(fd_);
+      fd_ = -1;
+    }
+  }
+
+  std::string path_;
+  size_t bufferSize_;
+  uint64_t readerId_;
+  int fd_ = -1;
+  bool closed_ = false;
+  bool closing_ = false;
+  bool stopRequested_ = false;
+  bool eof_ = false;
+  size_t bytesRead_ = 0;
+  size_t reads_ = 0;
+  std::shared_ptr<react::CallInvoker> jsCallInvoker_;
+  mutable std::mutex mutex_;
+  std::condition_variable cv_;
+  std::deque<WorkItem> queue_;
+  std::thread worker_;
+};
+
 jsi::Value wrapHostFunction(
     jsi::Runtime& runtime,
     const char* name,
@@ -854,9 +1803,107 @@ jsi::Value makeCreateWriteStreamFunction(
       });
 }
 
+jsi::Value makeCreateAsyncWriteStreamFunction(
+    jsi::Runtime& runtime,
+    std::shared_ptr<react::CallInvoker> jsCallInvoker) {
+  return wrapHostFunction(
+      runtime,
+      "createAsyncWriteStream",
+      3,
+      [jsCallInvoker = std::move(jsCallInvoker)](jsi::Runtime& runtime,
+                                                  const jsi::Value&,
+                                                  const jsi::Value* arguments,
+                                                  size_t count) -> jsi::Value {
+        std::string path;
+        try {
+          path = requirePath(runtime, arguments, count);
+          size_t bufferSize = count > 1
+              ? requirePositiveSize(runtime, arguments[1], 256 * 1024, "bufferSize")
+              : 256 * 1024;
+          size_t bufferCount = count > 2
+              ? requirePositiveSize(runtime, arguments[2], 2, "bufferCount")
+              : 2;
+
+          if (bufferSize > 16 * 1024 * 1024) {
+            throw jsi::JSError(runtime, "RabbyNativeFS async write stream bufferSize is too large");
+          }
+          if (bufferCount > 16) {
+            throw jsi::JSError(runtime, "RabbyNativeFS async write stream bufferCount is too large");
+          }
+
+          auto startedAt = SteadyClock::now();
+          auto writer = std::make_shared<AsyncWriteStreamHostObject>(
+              path,
+              bufferSize,
+              bufferCount,
+              jsCallInvoker);
+          logNativeFsInfo(
+              "async-open",
+              "createAsyncWriteStream",
+              path,
+              bufferSize * bufferCount,
+              durationUsSince(startedAt));
+          auto object = jsi::Object::createFromHostObject(runtime, writer);
+          object.setExternalMemoryPressure(runtime, bufferSize * bufferCount);
+          return jsi::Value(runtime, object);
+        } catch (const jsi::JSError&) {
+          throw;
+        } catch (const std::exception& error) {
+          logNativeFsError("createAsyncWriteStream", path, error.what());
+          throw jsi::JSError(runtime, error.what());
+        }
+      });
+}
+
+jsi::Value makeCreateAsyncReadStreamFunction(
+    jsi::Runtime& runtime,
+    std::shared_ptr<react::CallInvoker> jsCallInvoker) {
+  return wrapHostFunction(
+      runtime,
+      "createAsyncReadStream",
+      2,
+      [jsCallInvoker = std::move(jsCallInvoker)](jsi::Runtime& runtime,
+                                                  const jsi::Value&,
+                                                  const jsi::Value* arguments,
+                                                  size_t count) -> jsi::Value {
+        std::string path;
+        try {
+          path = requirePath(runtime, arguments, count);
+          size_t bufferSize = count > 1
+              ? requirePositiveSize(runtime, arguments[1], 256 * 1024, "bufferSize")
+              : 256 * 1024;
+
+          if (bufferSize > 16 * 1024 * 1024) {
+            throw jsi::JSError(runtime, "RabbyNativeFS async read stream bufferSize is too large");
+          }
+
+          auto startedAt = SteadyClock::now();
+          auto reader = std::make_shared<AsyncReadStreamHostObject>(
+              path,
+              bufferSize,
+              jsCallInvoker);
+          logNativeFsInfo(
+              "async-open",
+              "createAsyncReadStream",
+              path,
+              bufferSize,
+              durationUsSince(startedAt));
+          auto object = jsi::Object::createFromHostObject(runtime, reader);
+          return jsi::Value(runtime, object);
+        } catch (const jsi::JSError&) {
+          throw;
+        } catch (const std::exception& error) {
+          logNativeFsError("createAsyncReadStream", path, error.what());
+          throw jsi::JSError(runtime, error.what());
+        }
+      });
+}
+
 } // namespace
 
-void install(jsi::Runtime& runtime) {
+void install(
+    jsi::Runtime& runtime,
+    std::shared_ptr<react::CallInvoker> jsCallInvoker) {
   logNativeFsInstall();
 
   auto fs = jsi::Object(runtime);
@@ -1053,6 +2100,18 @@ void install(jsi::Runtime& runtime) {
       runtime,
       "createOwnedWriteStreamForTest",
       makeCreateWriteStreamFunction(runtime, "createOwnedWriteStreamForTest"));
+
+  if (jsCallInvoker) {
+    fs.setProperty(
+        runtime,
+        "createAsyncWriteStream",
+        makeCreateAsyncWriteStreamFunction(runtime, jsCallInvoker));
+
+    fs.setProperty(
+        runtime,
+        "createAsyncReadStream",
+        makeCreateAsyncReadStreamFunction(runtime, std::move(jsCallInvoker)));
+  }
 
   fs.setProperty(
       runtime,

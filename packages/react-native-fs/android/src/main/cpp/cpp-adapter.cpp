@@ -1,6 +1,7 @@
 #include <fbjni/fbjni.h>
 #include <jni.h>
 #include <jsi/jsi.h>
+#include <ReactCommon/CallInvokerHolder.h>
 
 #include "RabbyNativeFS.h"
 
@@ -14,10 +15,16 @@ class RabbyNativeFSAdapter : public jni::HybridClass<RabbyNativeFSAdapter> {
     return makeCxxInstance();
   }
 
-  void nativeInstall(jlong jsiPtr) {
+  void nativeInstall(
+      jlong jsiPtr,
+      jni::alias_ref<react::CallInvokerHolder::javaobject> jsCallInvokerHolder) {
     auto runtime = reinterpret_cast<jsi::Runtime*>(jsiPtr);
     if (runtime != nullptr) {
-      rabbyfs::install(*runtime);
+      rabbyfs::install(
+          *runtime,
+          jsCallInvokerHolder != nullptr
+              ? jsCallInvokerHolder->cthis()->getCallInvoker()
+              : nullptr);
     }
   }
 

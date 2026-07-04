@@ -124,6 +124,7 @@ export type NativeFSWriteStreamStats = {
   bufferCount: number;
   freeBuffers: number;
   acquiredBuffers: number;
+  pendingBuffers?: number;
   bytesWritten: number;
   commits: number;
   closed: boolean;
@@ -134,6 +135,37 @@ export type NativeFSWriteStream = {
   commit(buffer: Uint8Array, byteLength?: number): number;
   close(): void;
   stats(): NativeFSWriteStreamStats;
+};
+
+export type NativeFSAsyncWriteStreamStats = NativeFSWriteStreamStats & {
+  pendingBuffers: number;
+};
+
+export type NativeFSAsyncWriteStream = {
+  acquireBuffer(): Uint8Array;
+  commit(buffer: Uint8Array, byteLength?: number): Promise<number>;
+  close(): Promise<NativeFSAsyncWriteStreamStats>;
+  stats(): NativeFSAsyncWriteStreamStats;
+};
+
+export type NativeFSAsyncReadStreamOptions = {
+  bufferSize?: number;
+};
+
+export type NativeFSAsyncReadStreamStats = {
+  readerId: number;
+  path: string;
+  bufferSize: number;
+  bytesRead: number;
+  reads: number;
+  closed: boolean;
+  eof: boolean;
+};
+
+export type NativeFSAsyncReadStream = {
+  readChunk(byteLength?: number): Promise<Uint8Array | null>;
+  close(): Promise<NativeFSAsyncReadStreamStats>;
+  stats(): NativeFSAsyncReadStreamStats;
 };
 
 export type NativeFSZipArchiveEntry = {
@@ -212,6 +244,24 @@ export function createOwnedWriteStreamForTest(
   bufferSize?: number,
   bufferCount?: number,
 ): OwnedWriteStreamForTest;
+export function isNativeAsyncFileIOAvailable(): boolean;
+export function createAsyncWriteStream(
+  filepath: string,
+  options?: NativeFSWriteStreamOptions,
+): NativeFSAsyncWriteStream;
+export function createAsyncWriteStream(
+  filepath: string,
+  bufferSize?: number,
+  bufferCount?: number,
+): NativeFSAsyncWriteStream;
+export function createAsyncReadStream(
+  filepath: string,
+  options?: NativeFSAsyncReadStreamOptions,
+): NativeFSAsyncReadStream;
+export function createAsyncReadStream(
+  filepath: string,
+  bufferSize?: number,
+): NativeFSAsyncReadStream;
 export function isNativeZipArchiveAvailable(): boolean;
 export function isNativeZipEntryExtractionAvailable(): boolean;
 export function createZipArchive(

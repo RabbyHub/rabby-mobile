@@ -30,6 +30,8 @@ import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.modules.core.RCTNativeAppEventEmitter;
+import com.facebook.react.turbomodule.core.CallInvokerHolderImpl;
+import com.facebook.react.turbomodule.core.interfaces.CallInvokerHolder;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -81,7 +83,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
 
   private native HybridData initHybrid();
 
-  private native void nativeInstall(long jsiPtr);
+  private native void nativeInstall(long jsiPtr, CallInvokerHolderImpl jsCallInvokerHolder);
 
   public RNFSManager(ReactApplicationContext reactContext) {
     super(reactContext);
@@ -103,10 +105,22 @@ public class RNFSManager extends ReactContextBaseJavaModule {
 
       System.loadLibrary("rabbynativefs");
       JavaScriptContextHolder jsContext = getReactApplicationContext().getJavaScriptContextHolder();
+      CallInvokerHolder jsCallInvokerHolder = getReactApplicationContext().getJSCallInvokerHolder();
+      if (jsContext == null || jsContext.get() == 0) {
+        return false;
+      }
       mHybridData = initHybrid();
-      nativeInstall(jsContext.get());
+      nativeInstall(
+          jsContext.get(),
+          jsCallInvokerHolder instanceof CallInvokerHolderImpl
+              ? (CallInvokerHolderImpl) jsCallInvokerHolder
+              : null);
       return true;
     } catch (Exception exception) {
+      if (mHybridData != null) {
+        mHybridData.resetNative();
+        mHybridData = null;
+      }
       Log.e(MODULE_NAME, "Failed to install RabbyNativeFS JSI bindings", exception);
       return false;
     }

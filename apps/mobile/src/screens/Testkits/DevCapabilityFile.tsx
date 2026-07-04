@@ -26,6 +26,8 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import RNFS, {
+  type NativeFSAsyncReadStreamStats,
+  type NativeFSAsyncWriteStreamStats,
   type NativeFSDiagnosticEvent,
   type NativeFSWriteStreamStats,
 } from '@rabby-wallet/react-native-fs';
@@ -120,6 +122,24 @@ type OwnedStreamTestResult = {
   updatedAt: string;
 };
 
+type AsyncStreamTestResult = {
+  path: string;
+  jsiAvailable: boolean;
+  asyncAvailable: boolean;
+  totalBytes: number;
+  chunkBytes: number;
+  bufferCount: number;
+  commits: number;
+  reads: number;
+  writeDurationMs: number;
+  readDurationMs: number;
+  checksum: string;
+  verified: boolean;
+  writeStats: NativeFSAsyncWriteStreamStats;
+  readStats: NativeFSAsyncReadStreamStats;
+  updatedAt: string;
+};
+
 const APP_FILE_SCAN_LIMIT = 300;
 const APP_FILE_SCAN_DEPTH = 4;
 const FILE_SHEET_PAGE_SIZE = 10;
@@ -133,6 +153,10 @@ const OWNED_STREAM_TEST_BYTES = 16 * 1024 * 1024;
 const OWNED_STREAM_CHUNK_BYTES = 256 * 1024;
 const OWNED_STREAM_BUFFER_COUNT = 2;
 const OWNED_STREAM_TEST_PATH = `${BYTE_IO_TEST_DIR}/owned-stream-io.bin`;
+const ASYNC_STREAM_TEST_BYTES = 16 * 1024 * 1024;
+const ASYNC_STREAM_CHUNK_BYTES = 256 * 1024;
+const ASYNC_STREAM_BUFFER_COUNT = 2;
+const ASYNC_STREAM_TEST_PATH = `${BYTE_IO_TEST_DIR}/async-stream-io.bin`;
 
 const APP_OWNED_FILE_DIRS = [
   { key: 'documents', label: 'Documents', path: RNFS.DocumentDirectoryPath },
@@ -440,6 +464,8 @@ function DevCapabilityFile() {
   );
   const [ownedStreamResult, setOwnedStreamResult] =
     useState<OwnedStreamTestResult | null>(null);
+  const [asyncStreamResult, setAsyncStreamResult] =
+    useState<AsyncStreamTestResult | null>(null);
   const [nativeFsDiagnostics, setNativeFsDiagnostics] = useState<
     NativeFSDiagnosticEvent[]
   >([]);
@@ -709,6 +735,7 @@ function DevCapabilityFile() {
             : null,
           byteIoResult,
           ownedStreamResult,
+          asyncStreamResult,
           nativeFsDiagnostics: nativeFsDiagnostics.slice(-16),
         },
         null,
@@ -716,6 +743,7 @@ function DevCapabilityFile() {
       ),
     [
       accessibleImageSnapshot,
+      asyncStreamResult,
       byteIoResult,
       capabilitySnapshot,
       fileSnapshot,
@@ -1059,6 +1087,133 @@ function DevCapabilityFile() {
       setBusyKey(null);
     }
   }, [loadFileSnapshot, refreshNativeFsDiagnostics]);
+
+  const handleRunAsyncStreamFile = useCallback(async () => {
+    setBusyKey('async-stream-run');
+    try {
+      const jsiAvailable = RNFS.isJSIAvailable();
+      const asyncAvailable = RNFS.isNativeAsyncFileIOAvailable();
+
+      if (!jsiAvailable) {
+        throw new Error('Rabby native FS JSI binding is unavailable');
+      }
+      if (!asyncAvailable) {
+        throw new Error('Rabby native FS async stream is unavailable');
+      }
+
+      RNFS.clearDiagnostics();
+
+      await RNFS.mkdir(BYTE_IO_TEST_DIR, {
+        NSURLIsExcludedFromBackupKey: true,
+      });
+
+      const writer = RNFS.createAsyncWriteStream(ASYNC_STREAM_TEST_PATH, {
+        bufferSize: ASYNC_STREAM_CHUNK_BYTES,
+        bufferCount: ASYNC_STREAM_BUFFER_COUNT,
+      });
+
+      let offset = 0;
+      let checksum = 0;
+      let commits = 0;
+
+      const writeStartedAt = nowMs();
+      while (offset < ASYNC_STREAM_TEST_BYTES) {
+        const buffer = writer.acquireBuffer();
+        const length = Math.min(
+          buffer.byteLength,
+          ASYNC_STREAM_TEST_BYTES - offset,
+        );
+
+        for (let index = 0; index < length; index += 1) {
+          const absoluteIndex = offset + index;
+          const value = getPatternByte(absoluteIndex);
+          buffer[index] = value;
+          checksum = updateChecksum(checksum, value, absoluteIndex);
+        }
+
+        await writer.commit(buffer, length);
+        commits += 1;
+        offset += length;
+      }
+
+      const writeStats = await writer.close();
+      const writeDurationMs = nowMs() - writeStartedAt;
+
+      const reader = RNFS.createAsyncReadStream(ASYNC_STREAM_TEST_PATH, {
+        bufferSize: ASYNC_STREAM_CHUNK_BYTES,
+      });
+
+      let readBytes = 0;
+      let reads = 0;
+      let readChecksum = 0;
+      const readStartedAt = nowMs();
+
+      while (true) {
+        const chunk = await reader.readChunk(ASYNC_STREAM_CHUNK_BYTES);
+        if (!chunk) {
+          break;
+        }
+
+        for (let index = 0; index < chunk.byteLength; index += 1) {
+          readChecksum = updateChecksum(
+            readChecksum,
+            chunk[index],
+            readBytes + index,
+          );
+        }
+
+        readBytes += chunk.byteLength;
+        reads += 1;
+      }
+
+      const readStats = await reader.close();
+      const readDurationMs = nowMs() - readStartedAt;
+      const expectedChecksum = normalizeChecksum(checksum);
+      const actualChecksum = normalizeChecksum(readChecksum);
+      const verified =
+        readBytes === ASYNC_STREAM_TEST_BYTES &&
+        actualChecksum === expectedChecksum &&
+        writeStats.bytesWritten === ASYNC_STREAM_TEST_BYTES &&
+        writeStats.commits === commits &&
+        readStats.bytesRead === ASYNC_STREAM_TEST_BYTES &&
+        readStats.reads === reads;
+
+      const result = {
+        path: ASYNC_STREAM_TEST_PATH,
+        jsiAvailable,
+        asyncAvailable,
+        totalBytes: ASYNC_STREAM_TEST_BYTES,
+        chunkBytes: ASYNC_STREAM_CHUNK_BYTES,
+        bufferCount: ASYNC_STREAM_BUFFER_COUNT,
+        commits,
+        reads,
+        writeDurationMs,
+        readDurationMs,
+        checksum: actualChecksum,
+        verified,
+        writeStats,
+        readStats,
+        updatedAt: new Date().toISOString(),
+      } satisfies AsyncStreamTestResult;
+
+      setAsyncStreamResult(result);
+      refreshNativeFsDiagnostics();
+      setLastAction(
+        `${dayjs().format(
+          'HH:mm:ss',
+        )} Ran native async stream for ${formatBytes(result.totalBytes)}`,
+      );
+      toast.success(
+        verified ? 'Async native stream verified' : 'Async stream finished',
+      );
+    } catch (error) {
+      console.error('handleRunAsyncStreamFile failed', error);
+      toast.error('Failed to run async native stream test');
+      setLastAction(`${dayjs().format('HH:mm:ss')} Async stream test failed`);
+    } finally {
+      setBusyKey(null);
+    }
+  }, [refreshNativeFsDiagnostics]);
 
   const handleClearNativeFsDiagnostics = useCallback(() => {
     try {
@@ -1636,6 +1791,92 @@ function DevCapabilityFile() {
         </View>
 
         <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Async Native Stream Test</Text>
+          <Text style={styles.noteText}>
+            This sample uses native-owned buffers for writes and a native worker
+            for disk I/O. The JS side awaits Promise completion while the file
+            read/write work runs off the JS thread.
+          </Text>
+          {renderStatusRow({
+            label: 'Async worker',
+            value: asyncStreamResult?.asyncAvailable ? 'granted' : 'default',
+            displayValue: asyncStreamResult
+              ? asyncStreamResult.asyncAvailable
+                ? 'Available'
+                : 'Unavailable'
+              : RNFS.isNativeAsyncFileIOAvailable()
+              ? 'Available'
+              : 'Not checked',
+          })}
+          {renderStatusRow({
+            label: 'Native buffer',
+            value: asyncStreamResult?.verified ? 'granted' : 'default',
+            displayValue: `${formatBytes(
+              ASYNC_STREAM_CHUNK_BYTES,
+            )} x ${ASYNC_STREAM_BUFFER_COUNT}`,
+          })}
+          {renderStatusRow({
+            label: 'Total size',
+            value: 'default',
+            displayValue: formatBytes(ASYNC_STREAM_TEST_BYTES),
+          })}
+          {renderStatusRow({
+            label: 'Write result',
+            value: asyncStreamResult?.verified ? 'granted' : 'default',
+            displayValue: asyncStreamResult
+              ? `${asyncStreamResult.commits} commits · ${formatDurationMs(
+                  asyncStreamResult.writeDurationMs,
+                )}`
+              : 'None',
+          })}
+          {renderStatusRow({
+            label: 'Read result',
+            value: asyncStreamResult?.verified ? 'granted' : 'default',
+            displayValue: asyncStreamResult
+              ? `${asyncStreamResult.reads} reads · ${formatDurationMs(
+                  asyncStreamResult.readDurationMs,
+                )}`
+              : 'Not checked',
+          })}
+          {renderStatusRow({
+            label: 'Worker stats',
+            value: asyncStreamResult?.verified ? 'granted' : 'default',
+            displayValue: asyncStreamResult
+              ? `${formatBytes(
+                  asyncStreamResult.writeStats.bytesWritten,
+                )} written · ${formatBytes(
+                  asyncStreamResult.readStats.bytesRead,
+                )} read · pending=${
+                  asyncStreamResult.writeStats.pendingBuffers
+                }`
+              : '-',
+          })}
+          {renderStatusRow({
+            label: 'Checksum',
+            value: asyncStreamResult?.verified ? 'granted' : 'default',
+            displayValue: asyncStreamResult?.checksum || '-',
+          })}
+          <Text style={styles.noteText} selectable>
+            {ASYNC_STREAM_TEST_PATH}
+          </Text>
+          <View style={styles.sectionActionsRow}>
+            <Button
+              title={
+                busyKey === 'async-stream-run'
+                  ? 'Running Async...'
+                  : 'Run Async Stream'
+              }
+              type="primary"
+              height={40}
+              loading={busyKey === 'async-stream-run'}
+              showTextOnLoading
+              containerStyle={styles.singleActionButton}
+              onPress={handleRunAsyncStreamFile}
+            />
+          </View>
+        </View>
+
+        <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Native FS Diagnostics</Text>
           <Text style={styles.noteText}>
             Native-owned in-memory ring buffer for file I/O probes. It records
@@ -1725,6 +1966,8 @@ function DevCapabilityFile() {
               ? 'Reading large file...'
               : busyKey === 'owned-stream-write'
               ? 'Writing owned stream...'
+              : busyKey === 'async-stream-run'
+              ? 'Running async stream...'
               : 'Actions',
           onPress: () => {
             setActionSheetVisible(true);
