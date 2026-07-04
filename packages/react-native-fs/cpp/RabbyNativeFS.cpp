@@ -161,7 +161,7 @@ void logNativeFsOwnedClose(
     int64_t durationUs) {
   recordDiagnosticEvent(
       "owned-write",
-      "closeOwnedWriteStreamForTest",
+      "closeWriteStream",
       path,
       bytes,
       durationUs,
@@ -803,6 +803,57 @@ void clearDiagnostics() {
   diagnosticEvents.clear();
 }
 
+jsi::Value makeCreateWriteStreamFunction(
+    jsi::Runtime& runtime,
+    const char* functionName) {
+  return wrapHostFunction(
+      runtime,
+      functionName,
+      3,
+      [functionName](jsi::Runtime& runtime,
+                     const jsi::Value&,
+                     const jsi::Value* arguments,
+                     size_t count) -> jsi::Value {
+        std::string path;
+        try {
+          path = requirePath(runtime, arguments, count);
+          size_t bufferSize = count > 1
+              ? requirePositiveSize(runtime, arguments[1], 256 * 1024, "bufferSize")
+              : 256 * 1024;
+          size_t bufferCount = count > 2
+              ? requirePositiveSize(runtime, arguments[2], 2, "bufferCount")
+              : 2;
+
+          if (bufferSize > 16 * 1024 * 1024) {
+            throw jsi::JSError(runtime, "RabbyNativeFS owned stream bufferSize is too large");
+          }
+          if (bufferCount > 16) {
+            throw jsi::JSError(runtime, "RabbyNativeFS owned stream bufferCount is too large");
+          }
+
+          auto startedAt = SteadyClock::now();
+          auto writer = std::make_shared<OwnedWriteStreamHostObject>(
+              path,
+              bufferSize,
+              bufferCount);
+          logNativeFsInfo(
+              "owned-open",
+              functionName,
+              path,
+              bufferSize * bufferCount,
+              durationUsSince(startedAt));
+          auto object = jsi::Object::createFromHostObject(runtime, writer);
+          object.setExternalMemoryPressure(runtime, bufferSize * bufferCount);
+          return jsi::Value(runtime, object);
+        } catch (const jsi::JSError&) {
+          throw;
+        } catch (const std::exception& error) {
+          logNativeFsError(functionName, path, error.what());
+          throw jsi::JSError(runtime, error.what());
+        }
+      });
+}
+
 } // namespace
 
 void install(jsi::Runtime& runtime) {
@@ -995,53 +1046,13 @@ void install(jsi::Runtime& runtime) {
 
   fs.setProperty(
       runtime,
+      "createWriteStream",
+      makeCreateWriteStreamFunction(runtime, "createWriteStream"));
+
+  fs.setProperty(
+      runtime,
       "createOwnedWriteStreamForTest",
-      wrapHostFunction(
-          runtime,
-          "createOwnedWriteStreamForTest",
-          3,
-          [](jsi::Runtime& runtime,
-             const jsi::Value&,
-             const jsi::Value* arguments,
-             size_t count) -> jsi::Value {
-            std::string path;
-            try {
-              path = requirePath(runtime, arguments, count);
-              size_t bufferSize = count > 1
-                  ? requirePositiveSize(runtime, arguments[1], 256 * 1024, "bufferSize")
-                  : 256 * 1024;
-              size_t bufferCount = count > 2
-                  ? requirePositiveSize(runtime, arguments[2], 2, "bufferCount")
-                  : 2;
-
-              if (bufferSize > 16 * 1024 * 1024) {
-                throw jsi::JSError(runtime, "RabbyNativeFS owned stream bufferSize is too large");
-              }
-              if (bufferCount > 16) {
-                throw jsi::JSError(runtime, "RabbyNativeFS owned stream bufferCount is too large");
-              }
-
-              auto startedAt = SteadyClock::now();
-              auto writer = std::make_shared<OwnedWriteStreamHostObject>(
-                  path,
-                  bufferSize,
-                  bufferCount);
-              logNativeFsInfo(
-                  "owned-open",
-                  "createOwnedWriteStreamForTest",
-                  path,
-                  bufferSize * bufferCount,
-                  durationUsSince(startedAt));
-              auto object = jsi::Object::createFromHostObject(runtime, writer);
-              object.setExternalMemoryPressure(runtime, bufferSize * bufferCount);
-              return jsi::Value(runtime, object);
-            } catch (const jsi::JSError&) {
-              throw;
-            } catch (const std::exception& error) {
-              logNativeFsError("createOwnedWriteStreamForTest", path, error.what());
-              throw jsi::JSError(runtime, error.what());
-            }
-          }));
+      makeCreateWriteStreamFunction(runtime, "createOwnedWriteStreamForTest"));
 
   fs.setProperty(
       runtime,

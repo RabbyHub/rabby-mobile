@@ -112,7 +112,12 @@ type FSInfoResult = {
 
 type ByteInput = Uint8Array | ArrayBuffer;
 
-export type OwnedWriteStreamStatsForTest = {
+export type NativeFSWriteStreamOptions = {
+  bufferSize?: number;
+  bufferCount?: number;
+};
+
+export type NativeFSWriteStreamStats = {
   writerId: number;
   path: string;
   bufferSize: number;
@@ -124,12 +129,15 @@ export type OwnedWriteStreamStatsForTest = {
   closed: boolean;
 };
 
-export type OwnedWriteStreamForTest = {
+export type NativeFSWriteStream = {
   acquireBuffer(): Uint8Array;
   commit(buffer: Uint8Array, byteLength?: number): number;
   close(): void;
-  stats(): OwnedWriteStreamStatsForTest;
+  stats(): NativeFSWriteStreamStats;
 };
+
+export type OwnedWriteStreamStatsForTest = NativeFSWriteStreamStats;
+export type OwnedWriteStreamForTest = NativeFSWriteStream;
 
 export type NativeFSDiagnosticEvent = {
   id: number;
@@ -158,6 +166,15 @@ export function writeBytes(
   contents: ByteInput,
   position?: number,
 ): void;
+export function createWriteStream(
+  filepath: string,
+  options?: NativeFSWriteStreamOptions,
+): NativeFSWriteStream;
+export function createWriteStream(
+  filepath: string,
+  bufferSize?: number,
+  bufferCount?: number,
+): NativeFSWriteStream;
 export function createOwnedWriteStreamForTest(
   filepath: string,
   bufferSize?: number,

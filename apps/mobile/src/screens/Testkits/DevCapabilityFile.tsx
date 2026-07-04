@@ -27,6 +27,7 @@ import {
 } from 'react-native';
 import RNFS, {
   type NativeFSDiagnosticEvent,
+  type NativeFSWriteStreamStats,
 } from '@rabby-wallet/react-native-fs';
 
 import { AppBottomSheetModal, AppBottomSheetModalTitle } from '@/components';
@@ -103,18 +104,6 @@ type ByteIoTestResult = {
   updatedAt: string;
 };
 
-type OwnedStreamStatsForTest = {
-  writerId: number;
-  path: string;
-  bufferSize: number;
-  bufferCount: number;
-  freeBuffers: number;
-  acquiredBuffers: number;
-  bytesWritten: number;
-  commits: number;
-  closed: boolean;
-};
-
 type OwnedStreamTestResult = {
   path: string;
   jsiAvailable: boolean;
@@ -127,7 +116,7 @@ type OwnedStreamTestResult = {
   checksum: string;
   verified: boolean;
   staleCommitRejected: boolean;
-  stats: OwnedStreamStatsForTest;
+  stats: NativeFSWriteStreamStats;
   updatedAt: string;
 };
 
@@ -980,11 +969,10 @@ function DevCapabilityFile() {
         NSURLIsExcludedFromBackupKey: true,
       });
 
-      const writer = RNFS.createOwnedWriteStreamForTest(
-        OWNED_STREAM_TEST_PATH,
-        OWNED_STREAM_CHUNK_BYTES,
-        OWNED_STREAM_BUFFER_COUNT,
-      );
+      const writer = RNFS.createWriteStream(OWNED_STREAM_TEST_PATH, {
+        bufferSize: OWNED_STREAM_CHUNK_BYTES,
+        bufferCount: OWNED_STREAM_BUFFER_COUNT,
+      });
       let offset = 0;
       let checksum = 0;
       let commits = 0;
@@ -1020,7 +1008,7 @@ function DevCapabilityFile() {
       }
       writer.close();
       const writeDurationMs = nowMs() - writeStartedAt;
-      const stats = writer.stats() as OwnedStreamStatsForTest;
+      const stats = writer.stats();
 
       const readStartedAt = nowMs();
       const bytes = RNFS.readFileBytes(OWNED_STREAM_TEST_PATH);
@@ -1566,10 +1554,10 @@ function DevCapabilityFile() {
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Owned Buffer Stream Test</Text>
           <Text style={styles.noteText}>
-            This sample validates the native-owned buffer ownership model before
-            the async worker is added. JS acquires a native buffer, fills it,
-            commits it to the writer, and the native state machine rejects a
-            stale commit after the buffer is released.
+            This sample validates the stable native-owned write stream API. JS
+            acquires a native buffer, fills it, commits it to the writer, and
+            the native state machine rejects a stale commit after the buffer is
+            released.
           </Text>
           {renderStatusRow({
             label: 'Native buffer',

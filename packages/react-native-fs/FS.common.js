@@ -74,6 +74,47 @@ function requireByteInput(contents) {
   throw new Error('Expected Uint8Array or ArrayBuffer');
 }
 
+function normalizeWriteStreamOptions(optionsOrBufferSize, legacyBufferCount) {
+  if (typeof optionsOrBufferSize === 'number') {
+    return {
+      bufferSize: optionsOrBufferSize,
+      bufferCount: legacyBufferCount,
+    };
+  }
+
+  return {
+    bufferSize: optionsOrBufferSize?.bufferSize,
+    bufferCount: optionsOrBufferSize?.bufferCount,
+  };
+}
+
+function createNativeWriteStream(
+  filepath: string,
+  optionsOrBufferSize?: { bufferSize?: number, bufferCount?: number } | number,
+  legacyBufferCount?: number,
+) {
+  const nativeFS = getNativeFS();
+  const createWriteStream =
+    nativeFS.createWriteStream || nativeFS.createOwnedWriteStreamForTest;
+
+  if (typeof createWriteStream !== 'function') {
+    throw new Error(
+      '@rabby-wallet/react-native-fs native write stream is not available',
+    );
+  }
+
+  const options = normalizeWriteStreamOptions(
+    optionsOrBufferSize,
+    legacyBufferCount,
+  );
+
+  return createWriteStream(
+    normalizeFilePath(filepath),
+    options.bufferSize,
+    options.bufferCount,
+  );
+}
+
 type MkdirOptions = {
   NSURLIsExcludedFromBackupKey?: boolean, // iOS only
   NSFileProtectionKey?: string, // IOS only
@@ -293,13 +334,25 @@ var RNFS = {
     );
   },
 
+  createWriteStream(
+    filepath: string,
+    optionsOrBufferSize?: { bufferSize?: number, bufferCount?: number } | number,
+    legacyBufferCount?: number,
+  ) {
+    return createNativeWriteStream(
+      filepath,
+      optionsOrBufferSize,
+      legacyBufferCount,
+    );
+  },
+
   createOwnedWriteStreamForTest(
     filepath: string,
     bufferSize: number = 256 * 1024,
     bufferCount: number = 2,
   ) {
-    return getNativeFS().createOwnedWriteStreamForTest(
-      normalizeFilePath(filepath),
+    return createNativeWriteStream(
+      filepath,
       bufferSize,
       bufferCount,
     );
