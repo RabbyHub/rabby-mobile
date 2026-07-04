@@ -115,6 +115,70 @@ function createNativeWriteStream(
   );
 }
 
+type NativeFSZipArchiveEntry = {
+  sourcePath: string,
+  archivePath: string,
+  size?: number,
+  mtimeMs?: number,
+};
+
+type NativeFSZipArchiveOptions = {
+  compressionLevel?: number,
+};
+
+type NativeFSZipEntryExtractionOptions = {
+  entryName?: string,
+  entryNameSuffix?: string,
+};
+
+function normalizeZipArchiveEntries(entries: NativeFSZipArchiveEntry[]) {
+  if (!Array.isArray(entries)) {
+    throw new Error('createZipArchive expected entries to be an array');
+  }
+
+  return entries.map(entry => {
+    if (!entry || typeof entry.sourcePath !== 'string') {
+      throw new Error('createZipArchive entry.sourcePath must be a string');
+    }
+    if (!entry.archivePath || typeof entry.archivePath !== 'string') {
+      throw new Error('createZipArchive entry.archivePath must be a string');
+    }
+
+    const normalizedEntry = {
+      sourcePath: normalizeFilePath(entry.sourcePath),
+      archivePath: entry.archivePath,
+    };
+
+    if (typeof entry.size === 'number') {
+      normalizedEntry.size = entry.size;
+    }
+    if (typeof entry.mtimeMs === 'number') {
+      normalizedEntry.mtimeMs = entry.mtimeMs;
+    }
+
+    return normalizedEntry;
+  });
+}
+
+function normalizeZipEntryExtractionOptions(
+  options: NativeFSZipEntryExtractionOptions = {},
+) {
+  const normalizedOptions = {};
+
+  if (typeof options.entryName === 'string' && options.entryName.length > 0) {
+    normalizedOptions.entryName = options.entryName;
+  }
+
+  if (
+    typeof options.entryNameSuffix === 'string' &&
+    options.entryNameSuffix.length > 0
+  ) {
+    normalizedOptions.entryNameSuffix = options.entryNameSuffix;
+  }
+
+  return normalizedOptions;
+}
+
 type MkdirOptions = {
   NSURLIsExcludedFromBackupKey?: boolean, // iOS only
   NSFileProtectionKey?: string, // IOS only
@@ -355,6 +419,56 @@ var RNFS = {
       filepath,
       bufferSize,
       bufferCount,
+    );
+  },
+
+  isNativeZipArchiveAvailable(): boolean {
+    return typeof RNFSManager.createZipArchive === 'function';
+  },
+
+  isNativeZipEntryExtractionAvailable(): boolean {
+    return typeof RNFSManager.extractZipEntry === 'function';
+  },
+
+  createZipArchive(
+    targetPath: string,
+    entries: NativeFSZipArchiveEntry[],
+    options: NativeFSZipArchiveOptions = {},
+  ) {
+    if (typeof RNFSManager.createZipArchive !== 'function') {
+      return Promise.reject(
+        new Error(
+          '@rabby-wallet/react-native-fs native zip archive is not available',
+        ),
+      );
+    }
+
+    return RNFSManager.createZipArchive(
+      normalizeFilePath(targetPath),
+      normalizeZipArchiveEntries(entries),
+      {
+        compressionLevel: options.compressionLevel,
+      },
+    );
+  },
+
+  extractZipEntry(
+    archivePath: string,
+    targetPath: string,
+    options: NativeFSZipEntryExtractionOptions = {},
+  ) {
+    if (typeof RNFSManager.extractZipEntry !== 'function') {
+      return Promise.reject(
+        new Error(
+          '@rabby-wallet/react-native-fs native zip entry extraction is not available',
+        ),
+      );
+    }
+
+    return RNFSManager.extractZipEntry(
+      normalizeFilePath(archivePath),
+      normalizeFilePath(targetPath),
+      normalizeZipEntryExtractionOptions(options),
     );
   },
 

@@ -1,9 +1,20 @@
 import RNFS from '@rabby-wallet/react-native-fs';
-import type { LoggingFileSystemAdapter } from '@rabby-wallet/rabby-logger';
+import type {
+  LoggingFileSystemAdapter,
+  RollingTextArchiveAdapter,
+} from '@rabby-wallet/rabby-logger';
 
 const isNativeByteFsAvailable = () => {
   try {
     return RNFS.isJSIAvailable();
+  } catch (_error) {
+    return false;
+  }
+};
+
+const isNativeZipArchiveAvailable = () => {
+  try {
+    return RNFS.isNativeZipArchiveAvailable();
   } catch (_error) {
     return false;
   }
@@ -72,3 +83,14 @@ export const rnfsLoggingAdapter: LoggingFileSystemAdapter = {
     return RNFS.unlink(path);
   },
 };
+
+export const rnfsLoggingArchiveAdapter: RollingTextArchiveAdapter | undefined =
+  isNativeZipArchiveAvailable()
+    ? {
+        async createZipArchive({ targetPath, entries, compressionLevel }) {
+          await RNFS.createZipArchive(targetPath, entries, {
+            compressionLevel,
+          });
+        },
+      }
+    : undefined;

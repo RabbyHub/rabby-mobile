@@ -136,6 +136,38 @@ export type NativeFSWriteStream = {
   stats(): NativeFSWriteStreamStats;
 };
 
+export type NativeFSZipArchiveEntry = {
+  sourcePath: string;
+  archivePath: string;
+  size?: number;
+  mtimeMs?: number;
+};
+
+export type NativeFSZipArchiveOptions = {
+  compressionLevel?: number;
+};
+
+export type NativeFSZipEntryExtractionOptions = {
+  entryName?: string;
+  entryNameSuffix?: string;
+};
+
+export type NativeFSZipArchiveResult = {
+  targetPath: string;
+  entries: number;
+  bytesRead: number;
+  bytesWritten: number;
+  durationMs: number;
+};
+
+export type NativeFSZipEntryExtractionResult = {
+  archivePath: string;
+  targetPath: string;
+  entryName: string;
+  bytesWritten: number;
+  durationMs: number;
+};
+
 export type OwnedWriteStreamStatsForTest = NativeFSWriteStreamStats;
 export type OwnedWriteStreamForTest = NativeFSWriteStream;
 
@@ -180,6 +212,18 @@ export function createOwnedWriteStreamForTest(
   bufferSize?: number,
   bufferCount?: number,
 ): OwnedWriteStreamForTest;
+export function isNativeZipArchiveAvailable(): boolean;
+export function isNativeZipEntryExtractionAvailable(): boolean;
+export function createZipArchive(
+  targetPath: string,
+  entries: NativeFSZipArchiveEntry[],
+  options?: NativeFSZipArchiveOptions,
+): Promise<NativeFSZipArchiveResult>;
+export function extractZipEntry(
+  archivePath: string,
+  targetPath: string,
+  options?: NativeFSZipEntryExtractionOptions,
+): Promise<NativeFSZipEntryExtractionResult>;
 export function getDiagnosticsSnapshot(): NativeFSDiagnosticEvent[];
 export function clearDiagnostics(): void;
 export function existsSync(filepath: string): boolean;

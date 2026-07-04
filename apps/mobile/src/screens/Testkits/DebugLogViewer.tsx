@@ -585,6 +585,45 @@ async function extractLatestLogFileFromArchive(
   extraCleanupPaths: string[] = [],
   preferredEntryPath?: string | null,
 ) {
+  const normalizedPreferredEntryPath =
+    getArchiveEntryPathFromLogPath(preferredEntryPath);
+
+  if (RNFS.isNativeZipEntryExtractionAvailable()) {
+    try {
+      const shareTempDir = await ensureShareTempDir();
+      const extractedLogPath = `${shareTempDir}/${archive.name.replace(
+        /\.zip$/,
+        '',
+      )}-latest-${Date.now()}.log`;
+      const extractionResult = await RNFS.extractZipEntry(
+        archive.path,
+        extractedLogPath,
+        normalizedPreferredEntryPath
+          ? { entryName: normalizedPreferredEntryPath }
+          : { entryNameSuffix: '.log' },
+      );
+      const extractedLogName = getFileBaseName(extractionResult.entryName);
+
+      return {
+        entryPath: extractionResult.entryName,
+        shareTarget: {
+          path: extractedLogPath,
+          name: extractedLogName,
+          mimeType: 'text/plain',
+          title: 'Share latest app log file',
+          subject: extractedLogName,
+          message: `Rabby app latest log file: ${extractionResult.entryName}`,
+          successMessage: `Opened share sheet: ${extractedLogName}`,
+          cleanupPaths: [...extraCleanupPaths, extractedLogPath],
+        } satisfies ShareableFileTarget,
+      };
+    } catch (error) {
+      if (!normalizedPreferredEntryPath) {
+        throw error;
+      }
+    }
+  }
+
   const archiveBase64 = await RNFS.readFile(archive.path, 'base64');
   const archiveEntries = unzipSync(
     Uint8Array.from(Buffer.from(archiveBase64, 'base64')),

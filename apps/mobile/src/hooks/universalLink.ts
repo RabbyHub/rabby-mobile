@@ -53,7 +53,9 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'open-testkit-screen';
   dappUrl?: string;
   uri?: string;
-  testkitScreen?: typeof RootNames.DevCapabilityFile;
+  testkitScreen?:
+    | typeof RootNames.DevCapabilityFile
+    | typeof RootNames.DebugLogViewer;
   testkitParams?: {
     tab?: 'overview' | 'debug';
   };
@@ -61,6 +63,7 @@ type OnParseUrlAndProcessAction = (payload: {
 
 const NON_PRODUCTION_TESTKIT_SCREENS = {
   DevCapabilityFile: RootNames.DevCapabilityFile,
+  DebugLogViewer: RootNames.DebugLogViewer,
 } as const;
 
 function getRabbyGoTarget(
@@ -260,6 +263,13 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
 
 const hideToastRef: RefLikeObject<() => void | null> = { current: () => null };
 const handleAppLink = async (url: string, isInit = false) => {
+  const testkitAction = parseNonProductionTestkitLink(url);
+  if (testkitAction) {
+    handleActions(testkitAction);
+    setNextAppLink('');
+    return;
+  }
+
   if (keyringService.isUnlocked() || isUnlockSessionValid()) {
     // Parse the link when the wallet is fully unlocked or in a valid post-unlock session.
     parseActionAndProcessLink(url, handleActions);
