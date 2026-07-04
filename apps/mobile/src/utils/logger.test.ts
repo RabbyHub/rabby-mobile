@@ -22,11 +22,13 @@ function loadLoggerModule() {
   }));
 
   jest.doMock('@rabby-wallet/rabby-logger', () => {
+    const MockRollingTextLogWriter = jest.fn();
+
     return {
       AppLogger: class MockAppLogger {
         debug = jest.fn();
       },
-      RollingZipLogWriter: class MockRollingZipLogWriter {},
+      RollingTextLogWriter: MockRollingTextLogWriter,
     };
   });
 
@@ -70,5 +72,20 @@ describe('devLog', () => {
     devLog('scope', 'a', 1);
 
     expect(logger.debug).not.toHaveBeenCalled();
+  });
+});
+
+describe('file logger startup behavior', () => {
+  it('uses the plain segment writer on startup', () => {
+    loadLoggerModule();
+
+    const { RollingTextLogWriter } = require('@rabby-wallet/rabby-logger');
+    const options = RollingTextLogWriter.mock.calls[0][0];
+
+    expect(options).toEqual(
+      expect.objectContaining({
+        archivePrefix: 'rabby-mobile-logs',
+      }),
+    );
   });
 });

@@ -7,7 +7,13 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Platform, ScrollView, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import RNFS from '@rabby-wallet/react-native-fs';
 import dayjs from 'dayjs';
 import { strFromU8, Unzip, UnzipInflate, unzipSync, zipSync } from 'fflate';
@@ -43,7 +49,7 @@ type ArchiveFileItem = {
   name: string;
   path: string;
   size: number;
-  kind: 'zip' | 'partial' | 'other';
+  kind: 'zip' | 'partial' | 'log' | 'other';
   createdAt: string | null;
   modifiedAt: string | null;
 };
@@ -155,6 +161,10 @@ function getFileKind(name: string): ArchiveFileItem['kind'] {
     return 'zip';
   }
 
+  if (name.endsWith('.log')) {
+    return 'log';
+  }
+
   return 'other';
 }
 
@@ -176,6 +186,22 @@ function isSamePath(left?: string | null, right?: string | null) {
   return !!left && !!right && left === right;
 }
 
+function getArchiveEntryPathFromLogPath(filePath?: string | null) {
+  if (!filePath) {
+    return null;
+  }
+
+  if (filePath.startsWith('logs/')) {
+    return filePath;
+  }
+
+  if (filePath.endsWith('.log')) {
+    return `logs/${getFileBaseName(filePath)}`;
+  }
+
+  return filePath;
+}
+
 function getArchiveKindDisplay(
   kind: ArchiveFileItem['kind'],
 ): ArchiveKindDisplay {
@@ -191,6 +217,14 @@ function getArchiveKindDisplay(
       label: 'ZIP PARTIAL',
       description:
         'Live archive still being written. Share flow exports it first.',
+    };
+  }
+
+  if (kind === 'log') {
+    return {
+      label: 'LOG',
+      description:
+        'Current text segment. Share latest exports these segments to a temporary zip snapshot.',
     };
   }
 
@@ -214,6 +248,28 @@ async function ensureShareTempDir() {
   });
 
   return shareTempDir;
+}
+
+async function exportCurrentLogSnapshotForSharing(): Promise<PreparedArchiveShare | null> {
+  await logger.flush();
+
+  const shareTempDir = await ensureShareTempDir();
+  const snapshotPath = `${shareTempDir}/rabby-mobile-logs-share-${Date.now()}.zip`;
+  const exportedSnapshotPath = await logger.exportArchiveSnapshot(snapshotPath);
+
+  if (!exportedSnapshotPath) {
+    return null;
+  }
+
+  await waitForFileReady(exportedSnapshotPath);
+
+  return {
+    archive: makeArchiveFileRef(exportedSnapshotPath, 'zip'),
+    cleanupPaths: [exportedSnapshotPath],
+    preferredLatestLogEntryPath: getArchiveEntryPathFromLogPath(
+      logger.getState().activeEntryPath,
+    ),
+  } satisfies PreparedArchiveShare;
 }
 
 function joinUint8Chunks(chunks: Uint8Array[], totalBytes: number) {
@@ -469,8 +525,11 @@ function getLatestLogEntryPath(
   entries: ArchiveEntriesMap,
   preferredEntryPath?: string | null,
 ) {
-  if (preferredEntryPath && entries[preferredEntryPath]) {
-    return preferredEntryPath;
+  const normalizedPreferredEntryPath =
+    getArchiveEntryPathFromLogPath(preferredEntryPath);
+
+  if (normalizedPreferredEntryPath && entries[normalizedPreferredEntryPath]) {
+    return normalizedPreferredEntryPath;
   }
 
   return (
@@ -662,6 +721,9 @@ export default function DebugLogViewerScreen(): JSX.Element {
   } = useAppLogFileSwitch();
   const navigation = useNavigation();
   const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [sharingArchivePath, setSharingArchivePath] = useState<string | null>(
+    null,
+  );
   const [isArchiveSharePickerVisible, setIsArchiveSharePickerVisible] =
     useState(false);
   const [lastAction, setLastAction] = useState('Idle');
@@ -961,6 +1023,12 @@ export default function DebugLogViewerScreen(): JSX.Element {
         );
       }
 
+      const currentLogSnapshot = await exportCurrentLogSnapshotForSharing();
+
+      if (currentLogSnapshot) {
+        return currentLogSnapshot;
+      }
+
       const nextSnapshot = await refreshSnapshot();
       const latestArchive =
         nextSnapshot.files.find(item => item.kind === 'zip') || null;
@@ -1074,6 +1142,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
       return;
     }
 
+    setBusyKey('picker');
     try {
       const nextSnapshot = await refreshSnapshot();
       const archives = nextSnapshot.files.filter(
@@ -1088,6 +1157,8 @@ export default function DebugLogViewerScreen(): JSX.Element {
       setIsArchiveSharePickerVisible(true);
     } catch (error) {
       markError('Open share picker', error);
+    } finally {
+      setBusyKey(null);
     }
   }, [busyKey, canShareArchive, markError, markInfo, refreshSnapshot]);
 
@@ -1098,12 +1169,14 @@ export default function DebugLogViewerScreen(): JSX.Element {
       }
 
       setBusyKey('share');
+      setSharingArchivePath(archive.path);
       try {
         await shareArchiveFile(archive);
         setIsArchiveSharePickerVisible(false);
       } catch (error) {
         markError('Share selected archive', error);
       } finally {
+        setSharingArchivePath(null);
         setBusyKey(null);
       }
     },
@@ -1137,12 +1210,14 @@ export default function DebugLogViewerScreen(): JSX.Element {
 
         <Section
           title="Archive Share"
-          description="Use sharing near the top of the page when you want to export the latest zip quickly, extract just the newest `.log` entry, or choose another archive by time range. When the logger currently has an active `.zip.partial`, `share latest` now finalizes that live archive first and then shares the finalized zip or its newest `.log` entry directly. The picker still accepts `.zip.partial`; inactive partial files fall back to an exported temporary zip.">
+          description="Use sharing near the top of the page when you want to export the latest zip quickly, extract just the newest `.log` entry, or choose another archive by time range. `Share latest` flushes pending writes, exports the current `.log` segments as a temporary zip snapshot, and falls back to the latest finalized zip when there is no active text segment. The picker still accepts finalized `.zip` files and legacy `.zip.partial` files.">
           <Button
             title={busyKey === 'share' ? 'Opening...' : 'Share Latest Zip'}
             type="ghost"
             height={48}
             disabled={!!busyKey || !canShareArchive}
+            loading={busyKey === 'share'}
+            showTextOnLoading
             onPress={handleShareLatestZip}
             containerStyle={styles.singleActionButton}
           />
@@ -1153,20 +1228,26 @@ export default function DebugLogViewerScreen(): JSX.Element {
             type="ghost"
             height={48}
             disabled={!!busyKey || !canShareArchive}
+            loading={busyKey === 'share-log'}
+            showTextOnLoading
             onPress={handleShareLatestLogFile}
             containerStyle={styles.singleActionButton}
           />
           <Button
-            title="Choose Archive to Share"
+            title={
+              busyKey === 'picker' ? 'Opening...' : 'Choose Archive to Share'
+            }
             type="ghost"
             height={48}
             disabled={!!busyKey || !canShareArchive}
+            loading={busyKey === 'picker'}
+            showTextOnLoading
             onPress={handleOpenArchiveSharePicker}
             containerStyle={styles.singleActionButton}
           />
           <Text style={styles.sectionHint}>
             {canShareArchive
-              ? 'Non-production builds can share the latest archive directly, extract-and-share the newest `.log` entry, or open a picker to choose another finalized `.zip` or `.zip.partial`. Active partial archives are finalized on demand so the share result stays current.'
+              ? 'Non-production builds can share a latest snapshot zip, extract-and-share the newest `.log` entry, or open a picker to choose another finalized `.zip` or legacy `.zip.partial`.'
               : 'Archive sharing is disabled in production builds even if this page is reachable.'}
           </Text>
         </Section>
@@ -1312,6 +1393,8 @@ export default function DebugLogViewerScreen(): JSX.Element {
               type="ghost"
               height={48}
               disabled={!!busyKey}
+              loading={busyKey === 'sample'}
+              showTextOnLoading
               onPress={handleWriteSampleLogs}
               containerStyle={styles.actionButton}
             />
@@ -1322,6 +1405,8 @@ export default function DebugLogViewerScreen(): JSX.Element {
               type="ghost"
               height={48}
               disabled={!!busyKey}
+              loading={busyKey === 'burst'}
+              showTextOnLoading
               onPress={handleWriteRotationBurst}
               containerStyle={styles.actionButton}
             />
@@ -1341,6 +1426,8 @@ export default function DebugLogViewerScreen(): JSX.Element {
               type="ghost"
               height={48}
               disabled={!!busyKey}
+              loading={busyKey === 'flush'}
+              showTextOnLoading
               onPress={handleFlush}
               containerStyle={styles.actionButton}
             />
@@ -1349,6 +1436,8 @@ export default function DebugLogViewerScreen(): JSX.Element {
               type="ghost"
               height={48}
               disabled={!!busyKey}
+              loading={busyKey === 'finalize'}
+              showTextOnLoading
               onPress={handleFinalize}
               containerStyle={styles.actionButton}
             />
@@ -1359,6 +1448,8 @@ export default function DebugLogViewerScreen(): JSX.Element {
               type="ghost"
               height={48}
               disabled={!!busyKey}
+              loading={busyKey === 'refresh'}
+              showTextOnLoading
               onPress={handleRefresh}
               containerStyle={styles.actionButton}
             />
@@ -1369,6 +1460,8 @@ export default function DebugLogViewerScreen(): JSX.Element {
               type="ghost"
               height={48}
               disabled={!!busyKey}
+              loading={busyKey === 'validate'}
+              showTextOnLoading
               onPress={handleValidateLatestZip}
               containerStyle={styles.actionButton}
             />
@@ -1377,7 +1470,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
 
         <Section
           title="Archive Files"
-          description="You should see finalized `.zip` files and, while logging is active, a current `.zip.partial`. Each row is explicitly labeled as `ZIP` or `ZIP PARTIAL` so you can tell whether it is already finalized.">
+          description="You should see current `.log` text segments while the text writer is active, plus finalized `.zip` files after explicit finalize or legacy `.zip.partial` files from older writer implementations. Each row is labeled so you can tell whether it is already finalized.">
           <MetaRow
             label="Root exists"
             value={snapshot.rootExists ? 'true' : 'false'}
@@ -1407,6 +1500,8 @@ export default function DebugLogViewerScreen(): JSX.Element {
                           ? styles.fileBadgeZip
                           : file.kind === 'partial'
                           ? styles.fileBadgePartial
+                          : file.kind === 'log'
+                          ? styles.fileBadgeLog
                           : styles.fileBadgeOther,
                       ]}>
                       {archiveKindDisplay.label}
@@ -1470,15 +1565,16 @@ export default function DebugLogViewerScreen(): JSX.Element {
             </>
           ) : (
             <Text style={styles.emptyText}>
-              No validation result yet. Finalize a zip first, then tap `Validate
-              Latest Zip`.
+              No validation result yet. Use `Share Latest Zip` to test a current
+              snapshot, or finalize a zip first and then tap `Validate Latest
+              Zip`.
             </Text>
           )}
         </Section>
 
         <Section
           title="Suggested Flow"
-          description="This is the shortest path to verify whether device-side zip streaming is actually stable.">
+          description="This is the shortest path to verify whether current text segments and on-demand zip snapshots are actually stable.">
           <Text style={styles.checklistItem}>
             1. Confirm file logging is enabled.
           </Text>
@@ -1488,11 +1584,12 @@ export default function DebugLogViewerScreen(): JSX.Element {
             4. Tap `Validate Latest Zip`.
           </Text>
           <Text style={styles.checklistItem}>
-            5. Export that zip off-device and unzip it again on desktop.
+            5. Tap `Share Latest Zip` and confirm the shared file includes the
+            latest logs.
           </Text>
           <Text style={styles.checklistItem}>
-            6. Repeat once more with `Write Rotation Burst` and app
-            backgrounding.
+            6. Tap `Share Latest Log File`, then repeat once more with `Write
+            Rotation Burst` and app backgrounding.
           </Text>
         </Section>
       </ScrollView>
@@ -1541,6 +1638,13 @@ export default function DebugLogViewerScreen(): JSX.Element {
                         ]}>
                         {archiveKindDisplay.label}
                       </Text>
+                      {busyKey === 'share' &&
+                      sharingArchivePath === file.path ? (
+                        <ActivityIndicator
+                          size="small"
+                          color={colors2024['brand-default']}
+                        />
+                      ) : null}
                     </View>
                     <Text style={styles.shareSheetItemMeta}>
                       {formatBytes(file.size)} · {formatArchiveTimeRange(file)}
@@ -1800,6 +1904,10 @@ const getStyles = createGetStyles2024(ctx => {
     fileBadgePartial: {
       color: ctx.colors2024['orange-default'],
       backgroundColor: `${ctx.colors2024['orange-default']}1F`,
+    },
+    fileBadgeLog: {
+      color: ctx.colors2024['brand-default'],
+      backgroundColor: `${ctx.colors2024['brand-default']}1F`,
     },
     fileBadgeOther: {
       color: ctx.colors2024['neutral-foot'],
