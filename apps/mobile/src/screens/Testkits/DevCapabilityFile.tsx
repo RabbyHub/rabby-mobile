@@ -3,7 +3,11 @@ import {
   BottomSheetFlatList,
   BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
-import { useFocusEffect } from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useRoute,
+  type RouteProp,
+} from '@react-navigation/native';
 import dayjs from 'dayjs';
 import React, {
   useCallback,
@@ -21,7 +25,9 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import RNFS from 'react-native-fs';
+import RNFS, {
+  type NativeFSDiagnosticEvent,
+} from '@rabby-wallet/react-native-fs';
 
 import { AppBottomSheetModal, AppBottomSheetModalTitle } from '@/components';
 import { Text } from '@/components/Typography';
@@ -40,6 +46,7 @@ import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { PillsSwitch } from '@/components2024/PillSwitch';
 import { createGetStyles2024 } from '@/utils/styles';
+import { RootNames } from '@/constant/layout';
 
 const TAB_OPTIONS = [
   { key: 'overview', label: 'Overview' },
@@ -85,10 +92,58 @@ type AccessibleImageSnapshot = {
   refreshedAt: string;
 };
 
+type ByteIoTestResult = {
+  operation: 'write' | 'read';
+  path: string;
+  jsiAvailable: boolean;
+  byteLength: number;
+  checksum: string;
+  durationMs: number;
+  verified: boolean;
+  updatedAt: string;
+};
+
+type OwnedStreamStatsForTest = {
+  writerId: number;
+  path: string;
+  bufferSize: number;
+  bufferCount: number;
+  freeBuffers: number;
+  acquiredBuffers: number;
+  bytesWritten: number;
+  commits: number;
+  closed: boolean;
+};
+
+type OwnedStreamTestResult = {
+  path: string;
+  jsiAvailable: boolean;
+  totalBytes: number;
+  chunkBytes: number;
+  bufferCount: number;
+  commits: number;
+  writeDurationMs: number;
+  readDurationMs: number;
+  checksum: string;
+  verified: boolean;
+  staleCommitRejected: boolean;
+  stats: OwnedStreamStatsForTest;
+  updatedAt: string;
+};
+
 const APP_FILE_SCAN_LIMIT = 300;
 const APP_FILE_SCAN_DEPTH = 4;
 const FILE_SHEET_PAGE_SIZE = 10;
 const ACCESSIBLE_IMAGE_QUERY_LIMIT = IS_IOS ? 20 : 60;
+const BYTE_IO_TEST_BYTES = 16 * 1024 * 1024;
+const BYTE_IO_TEST_DIR = `${
+  RNFS.CachesDirectoryPath || RNFS.DocumentDirectoryPath
+}/rabby-file-playground`;
+const BYTE_IO_TEST_PATH = `${BYTE_IO_TEST_DIR}/typed-array-io.bin`;
+const OWNED_STREAM_TEST_BYTES = 16 * 1024 * 1024;
+const OWNED_STREAM_CHUNK_BYTES = 256 * 1024;
+const OWNED_STREAM_BUFFER_COUNT = 2;
+const OWNED_STREAM_TEST_PATH = `${BYTE_IO_TEST_DIR}/owned-stream-io.bin`;
 
 const APP_OWNED_FILE_DIRS = [
   { key: 'documents', label: 'Documents', path: RNFS.DocumentDirectoryPath },
@@ -190,6 +245,83 @@ function resolveRenderableImageUri(
   return candidate;
 }
 
+function nowMs() {
+  return Date.now();
+}
+
+function formatDurationMs(durationMs?: number | null) {
+  if (durationMs === null || durationMs === undefined) {
+    return '-';
+  }
+
+  return `${durationMs.toFixed(1)} ms`;
+}
+
+function formatDurationUs(durationUs?: number | null) {
+  if (durationUs === null || durationUs === undefined) {
+    return '-';
+  }
+
+  return `${(durationUs / 1000).toFixed(1)} ms`;
+}
+
+function formatNativeFsDiagnosticEvent(event: NativeFSDiagnosticEvent) {
+  const status = event.isError ? 'error' : event.category;
+  const message = event.message ? ` · ${event.message}` : '';
+
+  return `${status}:${event.operation} · ${formatBytes(
+    event.bytes,
+  )} · ${formatDurationUs(event.durationUs)} · tid=${event.tid}${message}`;
+}
+
+function normalizeChecksum(checksum: number) {
+  return checksum.toString(16).padStart(8, '0');
+}
+
+function updateChecksum(checksum: number, value: number, index: number) {
+  return (checksum + value * ((index % 251) + 1)) >>> 0;
+}
+
+function getPatternByte(index: number) {
+  return (index * 31 + 17) & 0xff;
+}
+
+function checksumPattern(length: number) {
+  let checksum = 0;
+
+  for (let index = 0; index < length; index += 1) {
+    checksum = updateChecksum(checksum, getPatternByte(index), index);
+  }
+
+  return normalizeChecksum(checksum);
+}
+
+function createByteIoPayload(length: number) {
+  const bytes = new Uint8Array(length);
+  let checksum = 0;
+
+  for (let index = 0; index < length; index += 1) {
+    const value = getPatternByte(index);
+    bytes[index] = value;
+    checksum = updateChecksum(checksum, value, index);
+  }
+
+  return {
+    bytes,
+    checksum: normalizeChecksum(checksum),
+  };
+}
+
+function checksumBytes(bytes: Uint8Array) {
+  let checksum = 0;
+
+  for (let index = 0; index < bytes.byteLength; index += 1) {
+    checksum = updateChecksum(checksum, bytes[index], index);
+  }
+
+  return normalizeChecksum(checksum);
+}
+
 async function listAppOwnedFiles(): Promise<AppOwnedFileSnapshot> {
   const dedupedDirs = APP_OWNED_FILE_DIRS.filter(
     (dir, index, list): dir is { key: string; label: string; path: string } =>
@@ -286,12 +418,23 @@ async function listAppOwnedFiles(): Promise<AppOwnedFileSnapshot> {
 }
 
 function DevCapabilityFile() {
+  const route = useRoute<
+    RouteProp<
+      {
+        [RootNames.DevCapabilityFile]: {
+          tab?: TabKey;
+        };
+      },
+      typeof RootNames.DevCapabilityFile
+    >
+  >();
+  const routeTabKey = route.params?.tab;
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { styles, colors2024 } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
   });
-  const [tabKey, setTabKey] = useState<TabKey>('overview');
+  const [tabKey, setTabKey] = useState<TabKey>(routeTabKey || 'overview');
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [lastAction, setLastAction] = useState('Idle');
   const [capabilitySnapshot, setCapabilitySnapshot] =
@@ -303,6 +446,14 @@ function DevCapabilityFile() {
     useState<AccessibleImageSnapshot | null>(null);
   const [selectedAccessibleImage, setSelectedAccessibleImage] =
     useState<AccessibleImageItem | null>(null);
+  const [byteIoResult, setByteIoResult] = useState<ByteIoTestResult | null>(
+    null,
+  );
+  const [ownedStreamResult, setOwnedStreamResult] =
+    useState<OwnedStreamTestResult | null>(null);
+  const [nativeFsDiagnostics, setNativeFsDiagnostics] = useState<
+    NativeFSDiagnosticEvent[]
+  >([]);
   const [actionSheetVisible, setActionSheetVisible] = useState(false);
   const [fileSheetVisible, setFileSheetVisible] = useState(false);
   const [accessibleImageSheetVisible, setAccessibleImageSheetVisible] =
@@ -314,6 +465,12 @@ function DevCapabilityFile() {
   const actionSheetRef = useRef<AppBottomSheetModal>(null);
   const fileSheetRef = useRef<AppBottomSheetModal>(null);
   const accessibleImageSheetRef = useRef<AppBottomSheetModal>(null);
+
+  useEffect(() => {
+    if (routeTabKey) {
+      setTabKey(routeTabKey);
+    }
+  }, [routeTabKey]);
 
   const panelMaxHeight = useMemo(
     () => Math.floor(windowHeight * 0.46),
@@ -561,15 +718,21 @@ function DevCapabilityFile() {
                 height: selectedAccessibleImage.height,
               }
             : null,
+          byteIoResult,
+          ownedStreamResult,
+          nativeFsDiagnostics: nativeFsDiagnostics.slice(-16),
         },
         null,
         2,
       ),
     [
       accessibleImageSnapshot,
+      byteIoResult,
       capabilitySnapshot,
       fileSnapshot,
       lastAction,
+      nativeFsDiagnostics,
+      ownedStreamResult,
       selectedAccessibleImage,
     ],
   );
@@ -695,6 +858,231 @@ function DevCapabilityFile() {
   const handleClearAccessibleImage = useCallback(() => {
     setSelectedAccessibleImage(null);
     setLastAction(`${dayjs().format('HH:mm:ss')} Cleared image preview`);
+  }, []);
+
+  const refreshNativeFsDiagnostics = useCallback(() => {
+    try {
+      setNativeFsDiagnostics(RNFS.getDiagnosticsSnapshot());
+    } catch (error) {
+      console.warn('Failed to read native FS diagnostics', error);
+    }
+  }, []);
+
+  const handleWriteByteIoFile = useCallback(async () => {
+    setBusyKey('byte-write');
+    try {
+      const jsiAvailable = RNFS.isJSIAvailable();
+
+      if (!jsiAvailable) {
+        throw new Error('Rabby native FS JSI binding is unavailable');
+      }
+
+      RNFS.clearDiagnostics();
+
+      await RNFS.mkdir(BYTE_IO_TEST_DIR, {
+        NSURLIsExcludedFromBackupKey: true,
+      });
+
+      const { bytes, checksum } = createByteIoPayload(BYTE_IO_TEST_BYTES);
+      const startedAt = nowMs();
+      RNFS.writeFileBytes(BYTE_IO_TEST_PATH, bytes);
+      const durationMs = nowMs() - startedAt;
+
+      const result = {
+        operation: 'write',
+        path: BYTE_IO_TEST_PATH,
+        jsiAvailable,
+        byteLength: bytes.byteLength,
+        checksum,
+        durationMs,
+        verified: RNFS.existsSync(BYTE_IO_TEST_PATH),
+        updatedAt: new Date().toISOString(),
+      } satisfies ByteIoTestResult;
+
+      setByteIoResult(result);
+      refreshNativeFsDiagnostics();
+      await loadFileSnapshot();
+      setLastAction(
+        `${dayjs().format('HH:mm:ss')} Wrote ${formatBytes(
+          result.byteLength,
+        )} via JSI bytes`,
+      );
+      toast.success('Byte file written');
+    } catch (error) {
+      console.error('handleWriteByteIoFile failed', error);
+      toast.error('Failed to write byte file');
+      setLastAction(`${dayjs().format('HH:mm:ss')} Byte write failed`);
+    } finally {
+      setBusyKey(null);
+    }
+  }, [loadFileSnapshot, refreshNativeFsDiagnostics]);
+
+  const handleReadByteIoFile = useCallback(async () => {
+    setBusyKey('byte-read');
+    try {
+      const jsiAvailable = RNFS.isJSIAvailable();
+
+      if (!jsiAvailable) {
+        throw new Error('Rabby native FS JSI binding is unavailable');
+      }
+
+      RNFS.clearDiagnostics();
+
+      const startedAt = nowMs();
+      const bytes = RNFS.readFileBytes(BYTE_IO_TEST_PATH);
+      const durationMs = nowMs() - startedAt;
+      const checksum = checksumBytes(bytes);
+      const expectedChecksum = checksumPattern(BYTE_IO_TEST_BYTES);
+      const verified =
+        bytes.byteLength === BYTE_IO_TEST_BYTES &&
+        checksum === expectedChecksum;
+
+      const result = {
+        operation: 'read',
+        path: BYTE_IO_TEST_PATH,
+        jsiAvailable,
+        byteLength: bytes.byteLength,
+        checksum,
+        durationMs,
+        verified,
+        updatedAt: new Date().toISOString(),
+      } satisfies ByteIoTestResult;
+
+      setByteIoResult(result);
+      refreshNativeFsDiagnostics();
+      setLastAction(
+        `${dayjs().format('HH:mm:ss')} Read ${formatBytes(
+          result.byteLength,
+        )} via JSI bytes`,
+      );
+      toast.success(verified ? 'Byte file verified' : 'Byte file read');
+    } catch (error) {
+      console.error('handleReadByteIoFile failed', error);
+      toast.error('Failed to read byte file');
+      setLastAction(`${dayjs().format('HH:mm:ss')} Byte read failed`);
+    } finally {
+      setBusyKey(null);
+    }
+  }, [refreshNativeFsDiagnostics]);
+
+  const handleWriteOwnedStreamFile = useCallback(async () => {
+    setBusyKey('owned-stream-write');
+    try {
+      const jsiAvailable = RNFS.isJSIAvailable();
+
+      if (!jsiAvailable) {
+        throw new Error('Rabby native FS JSI binding is unavailable');
+      }
+
+      RNFS.clearDiagnostics();
+
+      await RNFS.mkdir(BYTE_IO_TEST_DIR, {
+        NSURLIsExcludedFromBackupKey: true,
+      });
+
+      const writer = RNFS.createOwnedWriteStreamForTest(
+        OWNED_STREAM_TEST_PATH,
+        OWNED_STREAM_CHUNK_BYTES,
+        OWNED_STREAM_BUFFER_COUNT,
+      );
+      let offset = 0;
+      let checksum = 0;
+      let commits = 0;
+      let staleCommitRejected = false;
+
+      const writeStartedAt = nowMs();
+      while (offset < OWNED_STREAM_TEST_BYTES) {
+        const buffer = writer.acquireBuffer();
+        const length = Math.min(
+          buffer.byteLength,
+          OWNED_STREAM_TEST_BYTES - offset,
+        );
+
+        for (let index = 0; index < length; index += 1) {
+          const absoluteIndex = offset + index;
+          const value = getPatternByte(absoluteIndex);
+          buffer[index] = value;
+          checksum = updateChecksum(checksum, value, absoluteIndex);
+        }
+
+        writer.commit(buffer, length);
+        commits += 1;
+
+        if (!staleCommitRejected) {
+          try {
+            writer.commit(buffer, length);
+          } catch (_error) {
+            staleCommitRejected = true;
+          }
+        }
+
+        offset += length;
+      }
+      writer.close();
+      const writeDurationMs = nowMs() - writeStartedAt;
+      const stats = writer.stats() as OwnedStreamStatsForTest;
+
+      const readStartedAt = nowMs();
+      const bytes = RNFS.readFileBytes(OWNED_STREAM_TEST_PATH);
+      const readDurationMs = nowMs() - readStartedAt;
+      const readChecksum = checksumBytes(bytes);
+      const expectedChecksum = normalizeChecksum(checksum);
+      const verified =
+        bytes.byteLength === OWNED_STREAM_TEST_BYTES &&
+        readChecksum === expectedChecksum &&
+        stats.bytesWritten === OWNED_STREAM_TEST_BYTES &&
+        stats.commits === commits &&
+        staleCommitRejected;
+
+      const result = {
+        path: OWNED_STREAM_TEST_PATH,
+        jsiAvailable,
+        totalBytes: OWNED_STREAM_TEST_BYTES,
+        chunkBytes: OWNED_STREAM_CHUNK_BYTES,
+        bufferCount: OWNED_STREAM_BUFFER_COUNT,
+        commits,
+        writeDurationMs,
+        readDurationMs,
+        checksum: readChecksum,
+        verified,
+        staleCommitRejected,
+        stats,
+        updatedAt: new Date().toISOString(),
+      } satisfies OwnedStreamTestResult;
+
+      setOwnedStreamResult(result);
+      refreshNativeFsDiagnostics();
+      await loadFileSnapshot();
+      setLastAction(
+        `${dayjs().format('HH:mm:ss')} Wrote ${formatBytes(
+          result.totalBytes,
+        )} via owned buffers`,
+      );
+      toast.success(
+        verified
+          ? 'Owned buffer stream verified'
+          : 'Owned buffer stream finished',
+      );
+    } catch (error) {
+      console.error('handleWriteOwnedStreamFile failed', error);
+      toast.error('Failed to run owned buffer stream test');
+      setLastAction(`${dayjs().format('HH:mm:ss')} Owned stream test failed`);
+    } finally {
+      setBusyKey(null);
+    }
+  }, [loadFileSnapshot, refreshNativeFsDiagnostics]);
+
+  const handleClearNativeFsDiagnostics = useCallback(() => {
+    try {
+      RNFS.clearDiagnostics();
+      setNativeFsDiagnostics([]);
+      setLastAction(
+        `${dayjs().format('HH:mm:ss')} Cleared native FS diagnostics`,
+      );
+    } catch (error) {
+      console.warn('Failed to clear native FS diagnostics', error);
+      toast.error('Failed to clear native FS diagnostics');
+    }
   }, []);
 
   const summaryBadges = useMemo(() => {
@@ -1096,6 +1484,210 @@ function DevCapabilityFile() {
           ) : null}
         </View>
 
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Large File Byte I/O Test</Text>
+          <Text style={styles.noteText}>
+            This sample uses the Rabby-owned `react-native-fs` JSI byte APIs to
+            write and read a {formatBytes(BYTE_IO_TEST_BYTES)} sandbox file. It
+            avoids the old base64 string bridge path so large file content does
+            not have to be encoded through JS strings.
+          </Text>
+          {renderStatusRow({
+            label: 'JSI binding',
+            value: byteIoResult?.jsiAvailable ? 'granted' : 'default',
+            displayValue: byteIoResult
+              ? byteIoResult.jsiAvailable
+                ? 'Available'
+                : 'Unavailable'
+              : 'Not checked',
+          })}
+          {renderStatusRow({
+            label: 'Payload size',
+            value: 'default',
+            displayValue: formatBytes(BYTE_IO_TEST_BYTES),
+          })}
+          {renderStatusRow({
+            label: 'Last operation',
+            value: byteIoResult ? 'granted' : 'default',
+            displayValue: byteIoResult
+              ? `${byteIoResult.operation.toUpperCase()} · ${formatDurationMs(
+                  byteIoResult.durationMs,
+                )}`
+              : 'None',
+          })}
+          {renderStatusRow({
+            label: 'Read/write bytes',
+            value: byteIoResult?.byteLength ? 'granted' : 'default',
+            displayValue: formatBytes(byteIoResult?.byteLength || 0),
+          })}
+          {renderStatusRow({
+            label: 'Checksum',
+            value: byteIoResult?.verified ? 'granted' : 'default',
+            displayValue: byteIoResult?.checksum || '-',
+            hint: byteIoResult
+              ? byteIoResult.verified
+                ? 'Readback matched the deterministic payload'
+                : 'Write completed or readback has not matched the expected payload yet'
+              : 'Write first, then read to verify',
+          })}
+          <Text style={styles.noteText} selectable>
+            {BYTE_IO_TEST_PATH}
+          </Text>
+          <View style={styles.sectionActionsRow}>
+            <Button
+              title={
+                busyKey === 'byte-write'
+                  ? 'Writing large file...'
+                  : 'Write Large File'
+              }
+              type="primary"
+              height={40}
+              loading={busyKey === 'byte-write'}
+              showTextOnLoading
+              containerStyle={styles.sectionActionButton}
+              onPress={handleWriteByteIoFile}
+            />
+            <Button
+              title={
+                busyKey === 'byte-read'
+                  ? 'Reading large file...'
+                  : 'Read Large File'
+              }
+              type="warning"
+              height={40}
+              loading={busyKey === 'byte-read'}
+              showTextOnLoading
+              containerStyle={styles.sectionActionButton}
+              onPress={handleReadByteIoFile}
+            />
+          </View>
+        </View>
+
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Owned Buffer Stream Test</Text>
+          <Text style={styles.noteText}>
+            This sample validates the native-owned buffer ownership model before
+            the async worker is added. JS acquires a native buffer, fills it,
+            commits it to the writer, and the native state machine rejects a
+            stale commit after the buffer is released.
+          </Text>
+          {renderStatusRow({
+            label: 'Native buffer',
+            value: ownedStreamResult?.verified ? 'granted' : 'default',
+            displayValue: `${formatBytes(
+              OWNED_STREAM_CHUNK_BYTES,
+            )} x ${OWNED_STREAM_BUFFER_COUNT}`,
+          })}
+          {renderStatusRow({
+            label: 'Total size',
+            value: 'default',
+            displayValue: formatBytes(OWNED_STREAM_TEST_BYTES),
+          })}
+          {renderStatusRow({
+            label: 'Write result',
+            value: ownedStreamResult?.verified ? 'granted' : 'default',
+            displayValue: ownedStreamResult
+              ? `${ownedStreamResult.commits} commits · ${formatDurationMs(
+                  ownedStreamResult.writeDurationMs,
+                )}`
+              : 'None',
+          })}
+          {renderStatusRow({
+            label: 'Readback',
+            value: ownedStreamResult?.verified ? 'granted' : 'default',
+            displayValue: ownedStreamResult
+              ? `${formatBytes(
+                  ownedStreamResult.totalBytes,
+                )} · ${formatDurationMs(ownedStreamResult.readDurationMs)}`
+              : 'Not checked',
+          })}
+          {renderStatusRow({
+            label: 'Ownership guard',
+            value: ownedStreamResult?.staleCommitRejected
+              ? 'granted'
+              : 'default',
+            displayValue: ownedStreamResult?.staleCommitRejected
+              ? 'Stale commit rejected'
+              : 'Not checked',
+            hint: 'This confirms a committed lease cannot be committed again.',
+          })}
+          {renderStatusRow({
+            label: 'Writer stats',
+            value: ownedStreamResult?.verified ? 'granted' : 'default',
+            displayValue: ownedStreamResult
+              ? `${formatBytes(ownedStreamResult.stats.bytesWritten)} · ${
+                  ownedStreamResult.stats.freeBuffers
+                }/${ownedStreamResult.stats.bufferCount} free · closed=${
+                  ownedStreamResult.stats.closed ? 'yes' : 'no'
+                }`
+              : '-',
+          })}
+          {renderStatusRow({
+            label: 'Checksum',
+            value: ownedStreamResult?.verified ? 'granted' : 'default',
+            displayValue: ownedStreamResult?.checksum || '-',
+          })}
+          <Text style={styles.noteText} selectable>
+            {OWNED_STREAM_TEST_PATH}
+          </Text>
+          <View style={styles.sectionActionsRow}>
+            <Button
+              title={
+                busyKey === 'owned-stream-write'
+                  ? 'Writing owned stream...'
+                  : 'Run Owned Stream Test'
+              }
+              type="primary"
+              height={40}
+              loading={busyKey === 'owned-stream-write'}
+              showTextOnLoading
+              containerStyle={styles.singleActionButton}
+              onPress={handleWriteOwnedStreamFile}
+            />
+          </View>
+        </View>
+
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Native FS Diagnostics</Text>
+          <Text style={styles.noteText}>
+            Native-owned in-memory ring buffer for file I/O probes. It records
+            byte count, native duration, thread id, operation, and path tail
+            without writing diagnostic files from JS.
+          </Text>
+          {renderStatusRow({
+            label: 'Event count',
+            value: nativeFsDiagnostics.length ? 'granted' : 'default',
+            displayValue: `${nativeFsDiagnostics.length}`,
+          })}
+          {renderStatusRow({
+            label: 'Latest event',
+            value: nativeFsDiagnostics.length ? 'granted' : 'default',
+            displayValue: nativeFsDiagnostics.length
+              ? formatNativeFsDiagnosticEvent(
+                  nativeFsDiagnostics[nativeFsDiagnostics.length - 1],
+                )
+              : 'None',
+          })}
+          {nativeFsDiagnostics.slice(-5).map(event => (
+            <Text
+              key={event.id}
+              style={styles.noteText}
+              numberOfLines={3}
+              selectable>
+              {formatNativeFsDiagnosticEvent(event)}
+            </Text>
+          ))}
+          <View style={styles.sectionActionsRow}>
+            <Button
+              title="Clear Native FS Diagnostics"
+              type="ghost"
+              height={40}
+              containerStyle={styles.singleActionButton}
+              onPress={handleClearNativeFsDiagnostics}
+            />
+          </View>
+        </View>
+
         <View style={styles.actionsRow}>
           <Button
             title="Copy JSON"
@@ -1139,6 +1731,12 @@ function DevCapabilityFile() {
               ? 'Updating...'
               : busyKey === 'accessible-images'
               ? 'Loading images...'
+              : busyKey === 'byte-write'
+              ? 'Writing large file...'
+              : busyKey === 'byte-read'
+              ? 'Reading large file...'
+              : busyKey === 'owned-stream-write'
+              ? 'Writing owned stream...'
               : 'Actions',
           onPress: () => {
             setActionSheetVisible(true);

@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect } from 'react';
 import { Linking } from 'react-native';
+import { StackActions } from '@react-navigation/native';
 import { t } from 'i18next';
 import { keyringService } from '@/core/services';
 import { urlUtils } from '@rabby-wallet/base-utils';
@@ -24,6 +25,9 @@ import {
   pairWalletConnectUri,
   parseWalletConnectUriFromLink,
 } from '@/core/walletconnect';
+import { isNonPublicProductionEnv } from '@/constant';
+import { RootNames } from '@/constant/layout';
+import { navigationRef } from '@/utils/navigation';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -42,10 +46,75 @@ function setNextAppLink(linkOrSetter: string | ((prev: string) => string)) {
 }
 
 type OnParseUrlAndProcessAction = (payload: {
-  type: 'open-dapp' | 'walletconnect-uri' | 'walletconnect-redirect';
+  type:
+    | 'open-dapp'
+    | 'walletconnect-uri'
+    | 'walletconnect-redirect'
+    | 'open-testkit-screen';
   dappUrl?: string;
   uri?: string;
+  testkitScreen?: typeof RootNames.DevCapabilityFile;
+  testkitParams?: {
+    tab?: 'overview' | 'debug';
+  };
 }) => void;
+
+const NON_PRODUCTION_TESTKIT_SCREENS = {
+  DevCapabilityFile: RootNames.DevCapabilityFile,
+} as const;
+
+function getRabbyGoTarget(
+  urlInfo: NonNullable<ReturnType<typeof urlUtils.safeParseURL>>,
+) {
+  if (urlInfo.protocol === 'rabby:') {
+    return urlInfo.hostname || urlInfo.pathname.replace(/^\/+/, '');
+  }
+
+  if (!urlInfo.pathname.startsWith(UL_MATCH_PREFIX)) {
+    return '';
+  }
+
+  return urlInfo.pathname
+    .slice(UL_MATCH_PREFIX.length)
+    .replace(/^\/+/, '')
+    .split('/')[0];
+}
+
+function parseNonProductionTestkitLink(appLink: string) {
+  if (!isNonPublicProductionEnv) {
+    return null;
+  }
+
+  const urlInfo = urlUtils.safeParseURL(appLink);
+  if (!urlInfo) {
+    return null;
+  }
+
+  const target = getRabbyGoTarget(urlInfo);
+  const rabbyGoCmd = urlInfo.searchParams.get('_cmd');
+  if (target !== 'testkit' && rabbyGoCmd !== 'open-testkit') {
+    return null;
+  }
+
+  const screenRaw = urlInfo.searchParams.get('screen') || 'DevCapabilityFile';
+  const screen =
+    NON_PRODUCTION_TESTKIT_SCREENS[
+      screenRaw as keyof typeof NON_PRODUCTION_TESTKIT_SCREENS
+    ];
+  if (!screen) {
+    console.warn('[useUniversalLinkOnTop] Unknown testkit screen:', screenRaw);
+    return null;
+  }
+
+  const tabRaw = urlInfo.searchParams.get('tab');
+
+  return {
+    type: 'open-testkit-screen',
+    testkitScreen: screen,
+    testkitParams:
+      tabRaw === 'debug' || tabRaw === 'overview' ? { tab: tabRaw } : undefined,
+  } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+}
 
 function isWalletConnectRedirectLink(appLink: string) {
   const urlInfo = urlUtils.safeParseURL(appLink);
@@ -93,6 +162,12 @@ function parseActionAndProcessLink(
     return;
   }
 
+  const testkitAction = parseNonProductionTestkitLink(appLink);
+  if (testkitAction) {
+    onActions?.(testkitAction);
+    return;
+  }
+
   if (!ALLOWED_UL_DOMAINS.some(domain => appLink.startsWith(domain))) return;
 
   const urlInfo = urlUtils.safeParseURL(appLink);
@@ -122,6 +197,28 @@ function parseActionAndProcessLink(
 
 const toastTip = toastWithIcon(RcIconInfoForToast);
 
+function dispatchWhenNavigationReady(
+  action: ReturnType<typeof StackActions.push>,
+  actionName: string,
+  retryCount = 0,
+) {
+  if (navigationRef.isReady()) {
+    navigationRef.dispatch(action);
+    return;
+  }
+
+  if (retryCount >= 40) {
+    console.warn(
+      `[useUniversalLinkOnTop] Navigation is not ready for ${actionName}`,
+    );
+    return;
+  }
+
+  setTimeout(() => {
+    dispatchWhenNavigationReady(action, actionName, retryCount + 1);
+  }, 100);
+}
+
 const handleActions: OnParseUrlAndProcessAction = payload => {
   switch (payload.type) {
     case 'open-dapp':
@@ -145,6 +242,18 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       break;
     case 'walletconnect-redirect':
       markWalletConnectDappRedirectPending('metadata_redirect');
+      break;
+    case 'open-testkit-screen':
+      if (!payload.testkitScreen) {
+        return;
+      }
+      dispatchWhenNavigationReady(
+        StackActions.push(RootNames.StackTestkits, {
+          screen: payload.testkitScreen,
+          params: payload.testkitParams,
+        }),
+        payload.testkitScreen,
+      );
       break;
   }
 };
