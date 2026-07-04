@@ -24,6 +24,7 @@ Pod::Spec.new do |s|
   s.pod_target_xcconfig = {
     "CLANG_CXX_LANGUAGE_STANDARD" => "c++17"
   }
+  s.library = 'z'
 
   if respond_to?(:install_modules_dependencies, true)
     install_modules_dependencies(s)

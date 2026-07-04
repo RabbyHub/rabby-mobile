@@ -617,10 +617,9 @@ async function extractLatestLogFileFromArchive(
           cleanupPaths: [...extraCleanupPaths, extractedLogPath],
         } satisfies ShareableFileTarget,
       };
-    } catch (error) {
-      if (!normalizedPreferredEntryPath) {
-        throw error;
-      }
+    } catch (_error) {
+      // Fall back to the JS parser for legacy or third-party zip variants that
+      // the native fast path may reject.
     }
   }
 

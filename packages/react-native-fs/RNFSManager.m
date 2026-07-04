@@ -24,6 +24,7 @@
 
 #import <CommonCrypto/CommonDigest.h>
 #import <Photos/Photos.h>
+#import <zlib.h>
 
 
 @interface RNFSManager()
@@ -37,6 +38,603 @@
 @implementation RNFSManager
 
 static NSMutableDictionary *completionHandlers;
+
+static NSString * const RNFSZipErrorDomain = @"RNFSZip";
+static const NSUInteger RNFSZipBufferSize = 256 * 1024;
+
+static NSError *RNFSZipMakeError(NSString *message)
+{
+  return [NSError errorWithDomain:RNFSZipErrorDomain
+                             code:1
+                         userInfo:@{NSLocalizedDescriptionKey: message ?: @"ZIP operation failed"}];
+}
+
+static NSData *RNFSZipUTF8Data(NSString *value)
+{
+  return [value dataUsingEncoding:NSUTF8StringEncoding] ?: [NSData data];
+}
+
+static void RNFSZipAppendUInt16(NSMutableData *data, uint16_t value)
+{
+  uint8_t bytes[2] = {
+    (uint8_t)(value & 0xff),
+    (uint8_t)((value >> 8) & 0xff),
+  };
+  [data appendBytes:bytes length:sizeof(bytes)];
+}
+
+static void RNFSZipAppendUInt32(NSMutableData *data, uint32_t value)
+{
+  uint8_t bytes[4] = {
+    (uint8_t)(value & 0xff),
+    (uint8_t)((value >> 8) & 0xff),
+    (uint8_t)((value >> 16) & 0xff),
+    (uint8_t)((value >> 24) & 0xff),
+  };
+  [data appendBytes:bytes length:sizeof(bytes)];
+}
+
+static uint16_t RNFSZipReadUInt16(const uint8_t *bytes)
+{
+  return (uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8);
+}
+
+static uint32_t RNFSZipReadUInt32(const uint8_t *bytes)
+{
+  return (uint32_t)bytes[0] |
+    ((uint32_t)bytes[1] << 8) |
+    ((uint32_t)bytes[2] << 16) |
+    ((uint32_t)bytes[3] << 24);
+}
+
+static BOOL RNFSZipWriteData(NSFileHandle *file, NSData *data, NSError **error)
+{
+  @try {
+    [file writeData:data];
+    return YES;
+  } @catch (NSException *exception) {
+    if (error) {
+      *error = RNFSZipMakeError(exception.reason ?: exception.name);
+    }
+    return NO;
+  }
+}
+
+static BOOL RNFSZipWriteBytes(NSFileHandle *file, const void *bytes, NSUInteger length, NSError **error)
+{
+  NSData *data = [NSData dataWithBytes:bytes length:length];
+  return RNFSZipWriteData(file, data, error);
+}
+
+static NSString *RNFSZipNormalizeEntryName(NSString *entryName, NSError **error)
+{
+  if (![entryName isKindOfClass:[NSString class]] || entryName.length == 0) {
+    if (error) {
+      *error = RNFSZipMakeError(@"Zip entry path is required");
+    }
+    return nil;
+  }
+
+  NSString *normalized = [entryName stringByReplacingOccurrencesOfString:@"\\" withString:@"/"];
+  while ([normalized hasPrefix:@"/"]) {
+    normalized = [normalized substringFromIndex:1];
+  }
+
+  NSMutableArray<NSString *> *parts = [NSMutableArray array];
+  for (NSString *part in [normalized componentsSeparatedByString:@"/"]) {
+    if (part.length == 0 || [part isEqualToString:@"."]) {
+      continue;
+    }
+    if ([part isEqualToString:@".."]) {
+      if (error) {
+        *error = RNFSZipMakeError([NSString stringWithFormat:@"Zip entry path must not contain '..': %@", entryName]);
+      }
+      return nil;
+    }
+    [parts addObject:part];
+  }
+
+  if (parts.count == 0) {
+    if (error) {
+      *error = RNFSZipMakeError(@"Zip entry path is empty");
+    }
+    return nil;
+  }
+
+  return [parts componentsJoinedByString:@"/"];
+}
+
+static int RNFSZipCompressionLevel(NSDictionary *options)
+{
+  NSNumber *levelNumber = [options objectForKey:@"compressionLevel"];
+  if (![levelNumber isKindOfClass:[NSNumber class]]) {
+    return Z_DEFAULT_COMPRESSION;
+  }
+
+  int level = [levelNumber intValue];
+  if (level < Z_NO_COMPRESSION) {
+    return Z_NO_COMPRESSION;
+  }
+  if (level > Z_BEST_COMPRESSION) {
+    return Z_BEST_COMPRESSION;
+  }
+  return level;
+}
+
+static void RNFSZipGetDosDateTime(NSDate *date, uint16_t *dosDate, uint16_t *dosTime)
+{
+  NSDate *nextDate = date ?: [NSDate date];
+  NSCalendar *calendar = [NSCalendar currentCalendar];
+  NSDateComponents *components = [calendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond
+                                             fromDate:nextDate];
+  NSInteger year = MIN(MAX(components.year, 1980), 2107);
+  NSInteger month = MIN(MAX(components.month, 1), 12);
+  NSInteger day = MIN(MAX(components.day, 1), 31);
+  NSInteger hour = MIN(MAX(components.hour, 0), 23);
+  NSInteger minute = MIN(MAX(components.minute, 0), 59);
+  NSInteger second = MIN(MAX(components.second, 0), 59);
+
+  *dosDate = (uint16_t)(((year - 1980) << 9) | (month << 5) | day);
+  *dosTime = (uint16_t)((hour << 11) | (minute << 5) | (second / 2));
+}
+
+static NSMutableData *RNFSZipLocalHeader(NSData *nameData, uint16_t dosDate, uint16_t dosTime)
+{
+  NSMutableData *header = [NSMutableData dataWithCapacity:30 + nameData.length];
+  RNFSZipAppendUInt32(header, 0x04034b50);
+  RNFSZipAppendUInt16(header, 20);
+  RNFSZipAppendUInt16(header, 0x0008);
+  RNFSZipAppendUInt16(header, 8);
+  RNFSZipAppendUInt16(header, dosTime);
+  RNFSZipAppendUInt16(header, dosDate);
+  RNFSZipAppendUInt32(header, 0);
+  RNFSZipAppendUInt32(header, 0);
+  RNFSZipAppendUInt32(header, 0);
+  RNFSZipAppendUInt16(header, (uint16_t)nameData.length);
+  RNFSZipAppendUInt16(header, 0);
+  [header appendData:nameData];
+  return header;
+}
+
+static NSMutableData *RNFSZipDataDescriptor(uint32_t crcValue, uint32_t compressedSize, uint32_t uncompressedSize)
+{
+  NSMutableData *descriptor = [NSMutableData dataWithCapacity:16];
+  RNFSZipAppendUInt32(descriptor, 0x08074b50);
+  RNFSZipAppendUInt32(descriptor, crcValue);
+  RNFSZipAppendUInt32(descriptor, compressedSize);
+  RNFSZipAppendUInt32(descriptor, uncompressedSize);
+  return descriptor;
+}
+
+static NSMutableData *RNFSZipCentralDirectoryHeader(NSData *nameData,
+                                                   uint16_t dosDate,
+                                                   uint16_t dosTime,
+                                                   uint32_t crcValue,
+                                                   uint32_t compressedSize,
+                                                   uint32_t uncompressedSize,
+                                                   uint32_t localHeaderOffset)
+{
+  NSMutableData *header = [NSMutableData dataWithCapacity:46 + nameData.length];
+  RNFSZipAppendUInt32(header, 0x02014b50);
+  RNFSZipAppendUInt16(header, 20);
+  RNFSZipAppendUInt16(header, 20);
+  RNFSZipAppendUInt16(header, 0x0008);
+  RNFSZipAppendUInt16(header, 8);
+  RNFSZipAppendUInt16(header, dosTime);
+  RNFSZipAppendUInt16(header, dosDate);
+  RNFSZipAppendUInt32(header, crcValue);
+  RNFSZipAppendUInt32(header, compressedSize);
+  RNFSZipAppendUInt32(header, uncompressedSize);
+  RNFSZipAppendUInt16(header, (uint16_t)nameData.length);
+  RNFSZipAppendUInt16(header, 0);
+  RNFSZipAppendUInt16(header, 0);
+  RNFSZipAppendUInt16(header, 0);
+  RNFSZipAppendUInt16(header, 0);
+  RNFSZipAppendUInt32(header, 0);
+  RNFSZipAppendUInt32(header, localHeaderOffset);
+  [header appendData:nameData];
+  return header;
+}
+
+static NSMutableData *RNFSZipEndOfCentralDirectory(uint16_t entryCount,
+                                                   uint32_t centralDirectorySize,
+                                                   uint32_t centralDirectoryOffset)
+{
+  NSMutableData *header = [NSMutableData dataWithCapacity:22];
+  RNFSZipAppendUInt32(header, 0x06054b50);
+  RNFSZipAppendUInt16(header, 0);
+  RNFSZipAppendUInt16(header, 0);
+  RNFSZipAppendUInt16(header, entryCount);
+  RNFSZipAppendUInt16(header, entryCount);
+  RNFSZipAppendUInt32(header, centralDirectorySize);
+  RNFSZipAppendUInt32(header, centralDirectoryOffset);
+  RNFSZipAppendUInt16(header, 0);
+  return header;
+}
+
+static BOOL RNFSZipDeflateFile(NSString *sourcePath,
+                               NSFileHandle *zipFile,
+                               int compressionLevel,
+                               uint32_t *crcValue,
+                               uint32_t *compressedSize,
+                               uint32_t *uncompressedSize,
+                               NSError **error)
+{
+  NSInputStream *inputStream = [NSInputStream inputStreamWithFileAtPath:sourcePath];
+  [inputStream open];
+  if (inputStream.streamStatus == NSStreamStatusError) {
+    if (error) {
+      *error = inputStream.streamError ?: RNFSZipMakeError([NSString stringWithFormat:@"Cannot open zip source file: %@", sourcePath]);
+    }
+    return NO;
+  }
+
+  z_stream stream;
+  memset(&stream, 0, sizeof(stream));
+  int zResult = deflateInit2(&stream, compressionLevel, Z_DEFLATED, -MAX_WBITS, 8, Z_DEFAULT_STRATEGY);
+  if (zResult != Z_OK) {
+    [inputStream close];
+    if (error) {
+      *error = RNFSZipMakeError([NSString stringWithFormat:@"deflateInit2 failed: %d", zResult]);
+    }
+    return NO;
+  }
+
+  uint8_t *inputBuffer = malloc(RNFSZipBufferSize);
+  uint8_t *outputBuffer = malloc(RNFSZipBufferSize);
+  if (!inputBuffer || !outputBuffer) {
+    free(inputBuffer);
+    free(outputBuffer);
+    deflateEnd(&stream);
+    [inputStream close];
+    if (error) {
+      *error = RNFSZipMakeError(@"Cannot allocate zip buffers");
+    }
+    return NO;
+  }
+
+  uLong crc = crc32(0L, Z_NULL, 0);
+  uint64_t compressedTotal = 0;
+  uint64_t uncompressedTotal = 0;
+  BOOL success = YES;
+
+  while (success) {
+    NSInteger read = [inputStream read:inputBuffer maxLength:RNFSZipBufferSize];
+    if (read < 0) {
+      if (error) {
+        *error = inputStream.streamError ?: RNFSZipMakeError([NSString stringWithFormat:@"Cannot read zip source file: %@", sourcePath]);
+      }
+      success = NO;
+      break;
+    }
+
+    BOOL finishedInput = read == 0;
+    if (read > 0) {
+      crc = crc32(crc, inputBuffer, (uInt)read);
+      uncompressedTotal += (uint64_t)read;
+    }
+
+    stream.next_in = inputBuffer;
+    stream.avail_in = (uInt)read;
+
+    int flush = finishedInput ? Z_FINISH : Z_NO_FLUSH;
+    do {
+      stream.next_out = outputBuffer;
+      stream.avail_out = (uInt)RNFSZipBufferSize;
+      zResult = deflate(&stream, flush);
+      if (zResult == Z_STREAM_ERROR) {
+        if (error) {
+          *error = RNFSZipMakeError(@"deflate failed");
+        }
+        success = NO;
+        break;
+      }
+
+      NSUInteger produced = RNFSZipBufferSize - stream.avail_out;
+      if (produced > 0) {
+        if (!RNFSZipWriteBytes(zipFile, outputBuffer, produced, error)) {
+          success = NO;
+          break;
+        }
+        compressedTotal += (uint64_t)produced;
+      }
+    } while (success && (stream.avail_out == 0 || (flush == Z_FINISH && zResult != Z_STREAM_END)));
+
+    if (!success || finishedInput) {
+      break;
+    }
+  }
+
+  free(inputBuffer);
+  free(outputBuffer);
+  deflateEnd(&stream);
+  [inputStream close];
+
+  if (!success) {
+    return NO;
+  }
+  if (compressedTotal > UINT32_MAX || uncompressedTotal > UINT32_MAX) {
+    if (error) {
+      *error = RNFSZipMakeError(@"Zip64 archives are not supported");
+    }
+    return NO;
+  }
+
+  *crcValue = (uint32_t)crc;
+  *compressedSize = (uint32_t)compressedTotal;
+  *uncompressedSize = (uint32_t)uncompressedTotal;
+  return YES;
+}
+
+static NSDictionary *RNFSZipFindCentralDirectoryEntry(NSString *archivePath,
+                                                     NSString *requestedEntryName,
+                                                     NSString *entryNameSuffix,
+                                                     NSError **error)
+{
+  NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:archivePath error:error];
+  if (!attributes) {
+    return nil;
+  }
+
+  unsigned long long archiveSize = [attributes[NSFileSize] unsignedLongLongValue];
+  if (archiveSize < 22) {
+    if (error) {
+      *error = RNFSZipMakeError(@"Invalid zip archive: missing end record");
+    }
+    return nil;
+  }
+
+  NSFileHandle *file = [NSFileHandle fileHandleForReadingAtPath:archivePath];
+  if (!file) {
+    if (error) {
+      *error = RNFSZipMakeError([NSString stringWithFormat:@"Cannot open zip archive: %@", archivePath]);
+    }
+    return nil;
+  }
+
+  unsigned long long tailLength = MIN(archiveSize, (unsigned long long)(22 + UINT16_MAX));
+  [file seekToFileOffset:archiveSize - tailLength];
+  NSData *tailData = [file readDataOfLength:(NSUInteger)tailLength];
+  const uint8_t *tailBytes = tailData.bytes;
+  NSInteger eocdOffset = -1;
+  for (NSInteger offset = (NSInteger)tailData.length - 22; offset >= 0; offset--) {
+    if (RNFSZipReadUInt32(tailBytes + offset) == 0x06054b50) {
+      eocdOffset = offset;
+      break;
+    }
+  }
+
+  if (eocdOffset < 0) {
+    if (error) {
+      *error = RNFSZipMakeError(@"Invalid zip archive: EOCD not found");
+    }
+    return nil;
+  }
+
+  uint16_t entryCount = RNFSZipReadUInt16(tailBytes + eocdOffset + 10);
+  uint32_t centralDirectorySize = RNFSZipReadUInt32(tailBytes + eocdOffset + 12);
+  uint32_t centralDirectoryOffset = RNFSZipReadUInt32(tailBytes + eocdOffset + 16);
+  if ((uint64_t)centralDirectoryOffset + (uint64_t)centralDirectorySize > archiveSize) {
+    if (error) {
+      *error = RNFSZipMakeError(@"Invalid zip archive: central directory out of range");
+    }
+    return nil;
+  }
+
+  [file seekToFileOffset:centralDirectoryOffset];
+  NSData *centralData = [file readDataOfLength:centralDirectorySize];
+  const uint8_t *centralBytes = centralData.bytes;
+  NSUInteger offset = 0;
+  NSDictionary *selectedEntry = nil;
+
+  for (uint16_t index = 0; index < entryCount && offset + 46 <= centralData.length; index++) {
+    if (RNFSZipReadUInt32(centralBytes + offset) != 0x02014b50) {
+      if (error) {
+        *error = RNFSZipMakeError(@"Invalid zip archive: central directory record is malformed");
+      }
+      return nil;
+    }
+
+    uint16_t method = RNFSZipReadUInt16(centralBytes + offset + 10);
+    uint32_t crcValue = RNFSZipReadUInt32(centralBytes + offset + 16);
+    uint32_t compressedSize = RNFSZipReadUInt32(centralBytes + offset + 20);
+    uint32_t uncompressedSize = RNFSZipReadUInt32(centralBytes + offset + 24);
+    uint16_t nameLength = RNFSZipReadUInt16(centralBytes + offset + 28);
+    uint16_t extraLength = RNFSZipReadUInt16(centralBytes + offset + 30);
+    uint16_t commentLength = RNFSZipReadUInt16(centralBytes + offset + 32);
+    uint32_t localHeaderOffset = RNFSZipReadUInt32(centralBytes + offset + 42);
+    NSUInteger recordLength = 46 + nameLength + extraLength + commentLength;
+    if (offset + recordLength > centralData.length) {
+      if (error) {
+        *error = RNFSZipMakeError(@"Invalid zip archive: central directory entry out of range");
+      }
+      return nil;
+    }
+
+    NSData *nameData = [centralData subdataWithRange:NSMakeRange(offset + 46, nameLength)];
+    NSString *entryName = [[NSString alloc] initWithData:nameData encoding:NSUTF8StringEncoding];
+    NSError *normalizeError = nil;
+    NSString *normalizedName = RNFSZipNormalizeEntryName(entryName, &normalizeError);
+    if (normalizedName) {
+      BOOL matches = NO;
+      if (requestedEntryName.length > 0) {
+        matches = [normalizedName isEqualToString:requestedEntryName];
+      } else if (entryNameSuffix.length > 0) {
+        matches = [normalizedName hasSuffix:entryNameSuffix];
+      } else {
+        matches = YES;
+      }
+
+      if (matches) {
+        if (!selectedEntry || [normalizedName compare:selectedEntry[@"entryName"]] == NSOrderedDescending) {
+          selectedEntry = @{
+            @"entryName": normalizedName,
+            @"method": @(method),
+            @"crc32": @(crcValue),
+            @"compressedSize": @(compressedSize),
+            @"uncompressedSize": @(uncompressedSize),
+            @"localHeaderOffset": @(localHeaderOffset),
+          };
+        }
+      }
+    }
+
+    offset += recordLength;
+  }
+
+  if (!selectedEntry && error) {
+    *error = RNFSZipMakeError(@"Zip entry not found");
+  }
+  return selectedEntry;
+}
+
+static BOOL RNFSZipInflateEntry(NSString *archivePath,
+                                NSDictionary *entry,
+                                NSString *targetPath,
+                                NSError **error)
+{
+  NSFileManager *fileManager = [NSFileManager defaultManager];
+  NSString *parentPath = [targetPath stringByDeletingLastPathComponent];
+  if (parentPath.length > 0) {
+    [fileManager createDirectoryAtPath:parentPath withIntermediateDirectories:YES attributes:nil error:nil];
+  }
+  [fileManager createFileAtPath:targetPath contents:nil attributes:nil];
+
+  NSFileHandle *archiveFile = [NSFileHandle fileHandleForReadingAtPath:archivePath];
+  NSFileHandle *targetFile = [NSFileHandle fileHandleForWritingAtPath:targetPath];
+  if (!archiveFile || !targetFile) {
+    if (error) {
+      *error = RNFSZipMakeError(@"Cannot open zip archive or extraction target");
+    }
+    return NO;
+  }
+
+  uint32_t localHeaderOffset = [entry[@"localHeaderOffset"] unsignedIntValue];
+  [archiveFile seekToFileOffset:localHeaderOffset];
+  NSData *localHeader = [archiveFile readDataOfLength:30];
+  if (localHeader.length < 30 || RNFSZipReadUInt32(localHeader.bytes) != 0x04034b50) {
+    if (error) {
+      *error = RNFSZipMakeError(@"Invalid zip archive: local file header is malformed");
+    }
+    return NO;
+  }
+
+  const uint8_t *localBytes = localHeader.bytes;
+  uint16_t nameLength = RNFSZipReadUInt16(localBytes + 26);
+  uint16_t extraLength = RNFSZipReadUInt16(localBytes + 28);
+  uint64_t dataOffset = (uint64_t)localHeaderOffset + 30 + nameLength + extraLength;
+  uint32_t compressedSize = [entry[@"compressedSize"] unsignedIntValue];
+  uint32_t expectedSize = [entry[@"uncompressedSize"] unsignedIntValue];
+  uint32_t expectedCrc = [entry[@"crc32"] unsignedIntValue];
+  uint16_t method = [entry[@"method"] unsignedShortValue];
+  [archiveFile seekToFileOffset:dataOffset];
+
+  uint8_t *outputBuffer = malloc(RNFSZipBufferSize);
+  if (!outputBuffer) {
+    free(outputBuffer);
+    if (error) {
+      *error = RNFSZipMakeError(@"Cannot allocate zip extraction buffers");
+    }
+    return NO;
+  }
+
+  uLong crc = crc32(0L, Z_NULL, 0);
+  uint64_t remaining = compressedSize;
+  uint64_t writtenTotal = 0;
+  BOOL success = YES;
+
+  if (method == 0) {
+    while (success && remaining > 0) {
+      NSUInteger nextRead = (NSUInteger)MIN((uint64_t)RNFSZipBufferSize, remaining);
+      NSData *chunk = [archiveFile readDataOfLength:nextRead];
+      if (chunk.length == 0) {
+        if (error) {
+          *error = RNFSZipMakeError(@"Unexpected end of zip entry");
+        }
+        success = NO;
+        break;
+      }
+      crc = crc32(crc, chunk.bytes, (uInt)chunk.length);
+      writtenTotal += chunk.length;
+      remaining -= chunk.length;
+      if (!RNFSZipWriteData(targetFile, chunk, error)) {
+        success = NO;
+      }
+    }
+  } else if (method == 8) {
+    z_stream stream;
+    memset(&stream, 0, sizeof(stream));
+    int zResult = inflateInit2(&stream, -MAX_WBITS);
+    if (zResult != Z_OK) {
+      if (error) {
+        *error = RNFSZipMakeError([NSString stringWithFormat:@"inflateInit2 failed: %d", zResult]);
+      }
+      success = NO;
+    }
+
+    while (success && remaining > 0) {
+      NSUInteger nextRead = (NSUInteger)MIN((uint64_t)RNFSZipBufferSize, remaining);
+      NSData *chunk = [archiveFile readDataOfLength:nextRead];
+      if (chunk.length == 0) {
+        if (error) {
+          *error = RNFSZipMakeError(@"Unexpected end of zip entry");
+        }
+        success = NO;
+        break;
+      }
+
+      remaining -= chunk.length;
+      stream.next_in = (Bytef *)chunk.bytes;
+      stream.avail_in = (uInt)chunk.length;
+
+      do {
+        stream.next_out = outputBuffer;
+        stream.avail_out = (uInt)RNFSZipBufferSize;
+        zResult = inflate(&stream, remaining == 0 ? Z_FINISH : Z_NO_FLUSH);
+        if (zResult != Z_OK && zResult != Z_STREAM_END) {
+          if (error) {
+            *error = RNFSZipMakeError([NSString stringWithFormat:@"inflate failed: %d", zResult]);
+          }
+          success = NO;
+          break;
+        }
+
+        NSUInteger produced = RNFSZipBufferSize - stream.avail_out;
+        if (produced > 0) {
+          crc = crc32(crc, outputBuffer, (uInt)produced);
+          writtenTotal += produced;
+          if (!RNFSZipWriteBytes(targetFile, outputBuffer, produced, error)) {
+            success = NO;
+            break;
+          }
+        }
+      } while (success && stream.avail_out == 0);
+    }
+
+    inflateEnd(&stream);
+  } else {
+    if (error) {
+      *error = RNFSZipMakeError([NSString stringWithFormat:@"Unsupported zip compression method: %u", method]);
+    }
+    success = NO;
+  }
+
+  free(outputBuffer);
+
+  if (!success) {
+    [fileManager removeItemAtPath:targetPath error:nil];
+    return NO;
+  }
+  if (writtenTotal != expectedSize || (uint32_t)crc != expectedCrc) {
+    [fileManager removeItemAtPath:targetPath error:nil];
+    if (error) {
+      *error = RNFSZipMakeError(@"Zip entry checksum or size mismatch");
+    }
+    return NO;
+  }
+
+  return YES;
+}
 
 RCT_EXPORT_MODULE();
 
@@ -467,6 +1065,183 @@ RCT_EXPORT_METHOD(copyFile:(NSString *)filepath
   }
 
   resolve(nil);
+}
+
+RCT_EXPORT_METHOD(createZipArchive:(NSString *)targetPath
+                  entries:(NSArray *)entries
+                  options:(NSDictionary *)options
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  NSDate *startedAt = [NSDate date];
+  NSFileManager *fileManager = [NSFileManager defaultManager];
+  NSString *parentPath = [targetPath stringByDeletingLastPathComponent];
+  if (parentPath.length > 0) {
+    [fileManager createDirectoryAtPath:parentPath withIntermediateDirectories:YES attributes:nil error:nil];
+  }
+  [fileManager createFileAtPath:targetPath contents:nil attributes:nil];
+
+  NSFileHandle *zipFile = [NSFileHandle fileHandleForWritingAtPath:targetPath];
+  if (!zipFile) {
+    return reject(@"ENOENT", [NSString stringWithFormat:@"ENOENT: no such file or directory, open '%@'", targetPath], nil);
+  }
+
+  NSError *error = nil;
+  NSMutableData *centralDirectory = [NSMutableData data];
+  uint64_t currentOffset = 0;
+  uint64_t totalBytesRead = 0;
+  int compressionLevel = RNFSZipCompressionLevel(options);
+
+  for (NSDictionary *entry in entries) {
+    NSString *sourcePath = [entry objectForKey:@"sourcePath"];
+    NSString *archivePath = RNFSZipNormalizeEntryName([entry objectForKey:@"archivePath"], &error);
+    if (!archivePath) {
+      [fileManager removeItemAtPath:targetPath error:nil];
+      return [self reject:reject withError:error];
+    }
+
+    BOOL isDirectory = NO;
+    if (![fileManager fileExistsAtPath:sourcePath isDirectory:&isDirectory] || isDirectory) {
+      [fileManager removeItemAtPath:targetPath error:nil];
+      return reject(@"ENOENT", [NSString stringWithFormat:@"ENOENT: no such file or directory, open '%@'", sourcePath], nil);
+    }
+
+    NSDictionary *attributes = [fileManager attributesOfItemAtPath:sourcePath error:&error];
+    if (!attributes) {
+      [fileManager removeItemAtPath:targetPath error:nil];
+      return [self reject:reject withError:error];
+    }
+
+    NSDate *mtime = attributes[NSFileModificationDate];
+    NSNumber *mtimeMs = [entry objectForKey:@"mtimeMs"];
+    if ([mtimeMs isKindOfClass:[NSNumber class]]) {
+      mtime = [NSDate dateWithTimeIntervalSince1970:[mtimeMs doubleValue] / 1000.0];
+    }
+
+    NSData *nameData = RNFSZipUTF8Data(archivePath);
+    if (nameData.length > UINT16_MAX || currentOffset > UINT32_MAX) {
+      [fileManager removeItemAtPath:targetPath error:nil];
+      return [self reject:reject withError:RNFSZipMakeError(@"Zip64 archives are not supported")];
+    }
+
+    uint16_t dosDate = 0;
+    uint16_t dosTime = 0;
+    RNFSZipGetDosDateTime(mtime, &dosDate, &dosTime);
+
+    uint32_t localHeaderOffset = (uint32_t)currentOffset;
+    NSData *localHeader = RNFSZipLocalHeader(nameData, dosDate, dosTime);
+    if (!RNFSZipWriteData(zipFile, localHeader, &error)) {
+      [fileManager removeItemAtPath:targetPath error:nil];
+      return [self reject:reject withError:error];
+    }
+    currentOffset += localHeader.length;
+
+    uint32_t crcValue = 0;
+    uint32_t compressedSize = 0;
+    uint32_t uncompressedSize = 0;
+    if (!RNFSZipDeflateFile(sourcePath, zipFile, compressionLevel, &crcValue, &compressedSize, &uncompressedSize, &error)) {
+      [fileManager removeItemAtPath:targetPath error:nil];
+      return [self reject:reject withError:error];
+    }
+    currentOffset += compressedSize;
+    totalBytesRead += uncompressedSize;
+
+    NSData *descriptor = RNFSZipDataDescriptor(crcValue, compressedSize, uncompressedSize);
+    if (!RNFSZipWriteData(zipFile, descriptor, &error)) {
+      [fileManager removeItemAtPath:targetPath error:nil];
+      return [self reject:reject withError:error];
+    }
+    currentOffset += descriptor.length;
+
+    NSData *centralHeader = RNFSZipCentralDirectoryHeader(nameData, dosDate, dosTime, crcValue, compressedSize, uncompressedSize, localHeaderOffset);
+    [centralDirectory appendData:centralHeader];
+  }
+
+  if (entries.count > UINT16_MAX || currentOffset > UINT32_MAX || centralDirectory.length > UINT32_MAX) {
+    [fileManager removeItemAtPath:targetPath error:nil];
+    return [self reject:reject withError:RNFSZipMakeError(@"Zip64 archives are not supported")];
+  }
+
+  uint32_t centralDirectoryOffset = (uint32_t)currentOffset;
+  if (!RNFSZipWriteData(zipFile, centralDirectory, &error)) {
+    [fileManager removeItemAtPath:targetPath error:nil];
+    return [self reject:reject withError:error];
+  }
+  currentOffset += centralDirectory.length;
+
+  NSData *eocd = RNFSZipEndOfCentralDirectory((uint16_t)entries.count, (uint32_t)centralDirectory.length, centralDirectoryOffset);
+  if (!RNFSZipWriteData(zipFile, eocd, &error)) {
+    [fileManager removeItemAtPath:targetPath error:nil];
+    return [self reject:reject withError:error];
+  }
+  [zipFile closeFile];
+
+  NSDictionary *targetAttributes = [fileManager attributesOfItemAtPath:targetPath error:nil];
+  NSNumber *bytesWritten = targetAttributes[NSFileSize] ?: @(0);
+  NSTimeInterval durationMs = [[NSDate date] timeIntervalSinceDate:startedAt] * 1000.0;
+  NSLog(@"[RabbyNativeFS] [zip] op=createZipArchive entries=%lu bytes_read=%llu bytes_written=%@ duration_ms=%.0f path_tail=%@",
+        (unsigned long)entries.count,
+        totalBytesRead,
+        bytesWritten,
+        durationMs,
+        targetPath);
+
+  resolve(@{
+    @"targetPath": targetPath,
+    @"entries": @(entries.count),
+    @"bytesRead": @(totalBytesRead),
+    @"bytesWritten": bytesWritten,
+    @"durationMs": @(durationMs),
+  });
+}
+
+RCT_EXPORT_METHOD(extractZipEntry:(NSString *)archivePath
+                  targetPath:(NSString *)targetPath
+                  options:(NSDictionary *)options
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  NSDate *startedAt = [NSDate date];
+  NSError *error = nil;
+  NSString *entryName = nil;
+  NSString *requestedEntryName = [options objectForKey:@"entryName"];
+  if ([requestedEntryName isKindOfClass:[NSString class]] && requestedEntryName.length > 0) {
+    entryName = RNFSZipNormalizeEntryName(requestedEntryName, &error);
+    if (!entryName) {
+      return [self reject:reject withError:error];
+    }
+  }
+
+  NSString *entryNameSuffix = [options objectForKey:@"entryNameSuffix"];
+  if (![entryNameSuffix isKindOfClass:[NSString class]]) {
+    entryNameSuffix = nil;
+  }
+
+  NSDictionary *entry = RNFSZipFindCentralDirectoryEntry(archivePath, entryName, entryNameSuffix, &error);
+  if (!entry) {
+    return [self reject:reject withError:error];
+  }
+
+  if (!RNFSZipInflateEntry(archivePath, entry, targetPath, &error)) {
+    return [self reject:reject withError:error];
+  }
+
+  NSDictionary *targetAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:targetPath error:nil];
+  NSNumber *bytesWritten = targetAttributes[NSFileSize] ?: @(0);
+  NSTimeInterval durationMs = [[NSDate date] timeIntervalSinceDate:startedAt] * 1000.0;
+  NSLog(@"[RabbyNativeFS] [zip] op=extractZipEntry entry=%@ bytes_written=%@ duration_ms=%.0f target_tail=%@",
+        entry[@"entryName"],
+        bytesWritten,
+        durationMs,
+        targetPath);
+
+  resolve(@{
+    @"archivePath": archivePath,
+    @"targetPath": targetPath,
+    @"entryName": entry[@"entryName"],
+    @"bytesWritten": bytesWritten,
+    @"durationMs": @(durationMs),
+  });
 }
 
 - (NSArray<NSString *> *)supportedEvents
