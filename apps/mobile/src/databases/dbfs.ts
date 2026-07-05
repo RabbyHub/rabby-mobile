@@ -126,7 +126,7 @@ export const downloadDbFile = async () => {
   }
 
   const dbPath = getDbPath(getRabbyAppDbName()) || '';
-  let destPath;
+  let destPath = '';
   if (Platform.OS === 'android') {
     destPath = RNFS.ExternalStorageDirectoryPath + '/' + getRabbyAppDbName();
   } else if (Platform.OS === 'ios') {
@@ -136,13 +136,12 @@ export const downloadDbFile = async () => {
   try {
     const exists = await RNFS.exists(dbPath);
     if (exists) {
-      const destExists = await RNFS.exists(destPath);
-
-      if (destExists && Platform.OS === 'ios') {
-        await RNFS.unlink(destPath);
-      }
-
-      await RNFS.copyFile(dbPath, destPath);
+      await RNFS.persistFile(dbPath, destPath, {
+        mode: 'copy',
+        overwrite: true,
+        ensureParent: true,
+        NSURLIsExcludedFromBackupKey: true,
+      });
 
       if (Platform.OS === 'ios') {
         await Share.share({ url: `file://${destPath}` });
