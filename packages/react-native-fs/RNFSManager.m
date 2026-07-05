@@ -106,6 +106,33 @@ static BOOL RNFSZipWriteBytes(NSFileHandle *file, const void *bytes, NSUInteger 
   return RNFSZipWriteData(file, data, error);
 }
 
+static NSString *RNFSNormalizeLocalFilePath(NSString *path)
+{
+  if (![path isKindOfClass:[NSString class]]) {
+    return path;
+  }
+  if ([path hasPrefix:@"file://"]) {
+    NSURL *url = [NSURL URLWithString:path];
+    return url.path ?: [path substringFromIndex:@"file://".length];
+  }
+  return path;
+}
+
+static NSString *RNFSPathTail(NSString *path)
+{
+  static const NSUInteger maxLength = 96;
+  if (![path isKindOfClass:[NSString class]] || path.length <= maxLength) {
+    return path;
+  }
+  return [@"..." stringByAppendingString:[path substringFromIndex:path.length - maxLength]];
+}
+
+static NSNumber *RNFSFileSizeAtPath(NSString *path)
+{
+  NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:nil];
+  return [attributes objectForKey:NSFileSize] ?: @(0);
+}
+
 static NSString *RNFSZipNormalizeEntryName(NSString *entryName, NSError **error)
 {
   if (![entryName isKindOfClass:[NSString class]] || entryName.length == 0) {
@@ -1065,6 +1092,96 @@ RCT_EXPORT_METHOD(copyFile:(NSString *)filepath
   }
 
   resolve(nil);
+}
+
+RCT_EXPORT_METHOD(persistFile:(NSString *)sourceUri
+                  targetPath:(NSString *)targetPath
+                  options:(NSDictionary *)options
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  NSDate *startedAt = [NSDate date];
+  NSFileManager *manager = [NSFileManager defaultManager];
+  NSString *sourcePath = RNFSNormalizeLocalFilePath(sourceUri);
+  NSString *normalizedTargetPath = RNFSNormalizeLocalFilePath(targetPath);
+  NSString *mode = [options objectForKey:@"mode"] ?: @"copy";
+  BOOL overwrite = [options objectForKey:@"overwrite"] == nil ? YES : [[options objectForKey:@"overwrite"] boolValue];
+  BOOL ensureParent = [options objectForKey:@"ensureParent"] == nil ? YES : [[options objectForKey:@"ensureParent"] boolValue];
+  NSError *error = nil;
+
+  if (![mode isEqualToString:@"copy"] && ![mode isEqualToString:@"move"]) {
+    return reject(@"EINVAL", @"EINVAL: persistFile mode must be 'copy' or 'move'", nil);
+  }
+
+  if (ensureParent) {
+    NSString *parentPath = [normalizedTargetPath stringByDeletingLastPathComponent];
+    if (parentPath.length > 0 && ![manager fileExistsAtPath:parentPath]) {
+      BOOL created = [manager createDirectoryAtPath:parentPath withIntermediateDirectories:YES attributes:nil error:&error];
+      if (!created) {
+        return [self reject:reject withError:error];
+      }
+    }
+  }
+
+  if ([manager fileExistsAtPath:normalizedTargetPath]) {
+    if (!overwrite) {
+      return reject(@"EEXIST", [NSString stringWithFormat:@"EEXIST: file already exists, open '%@'", normalizedTargetPath], nil);
+    }
+
+    BOOL removed = [manager removeItemAtPath:normalizedTargetPath error:&error];
+    if (!removed) {
+      return [self reject:reject withError:error];
+    }
+  }
+
+  BOOL success = NO;
+  if ([mode isEqualToString:@"move"]) {
+    success = [manager moveItemAtPath:sourcePath toPath:normalizedTargetPath error:&error];
+  } else {
+    success = [manager copyItemAtPath:sourcePath toPath:normalizedTargetPath error:&error];
+  }
+
+  if (!success) {
+    return [self reject:reject withError:error];
+  }
+
+  NSURL *targetUrl = [NSURL fileURLWithPath:normalizedTargetPath];
+  if ([[options allKeys] containsObject:@"NSURLIsExcludedFromBackupKey"] ||
+      [[options allKeys] containsObject:@"excludeFromBackup"]) {
+    NSNumber *value = [options objectForKey:@"NSURLIsExcludedFromBackupKey"] ?: [options objectForKey:@"excludeFromBackup"];
+    success = [targetUrl setResourceValue:value forKey:NSURLIsExcludedFromBackupKey error:&error];
+    if (!success) {
+      return [self reject:reject withError:error];
+    }
+  }
+
+  if ([options objectForKey:@"NSFileProtectionKey"]) {
+    NSMutableDictionary *attributes = [[NSMutableDictionary alloc] init];
+    [attributes setValue:[options objectForKey:@"NSFileProtectionKey"] forKey:@"NSFileProtectionKey"];
+    success = [manager setAttributes:attributes ofItemAtPath:normalizedTargetPath error:&error];
+    if (!success) {
+      return [self reject:reject withError:error];
+    }
+  }
+
+  NSTimeInterval durationMs = [[NSDate date] timeIntervalSinceDate:startedAt] * 1000.0;
+  NSNumber *bytesWritten = RNFSFileSizeAtPath(normalizedTargetPath);
+  NSLog(
+    @"[RabbyNativeFS] [persist-file] mode=%@ bytes=%@ duration_ms=%.0f source_tail=%@ target_tail=%@",
+    mode,
+    bytesWritten,
+    durationMs,
+    RNFSPathTail(sourcePath),
+    RNFSPathTail(normalizedTargetPath)
+  );
+
+  resolve(@{
+    @"sourcePath": sourcePath ?: @"",
+    @"targetPath": normalizedTargetPath ?: @"",
+    @"mode": mode,
+    @"bytesWritten": bytesWritten ?: @(0),
+    @"durationMs": @(durationMs),
+  });
 }
 
 RCT_EXPORT_METHOD(createZipArchive:(NSString *)targetPath

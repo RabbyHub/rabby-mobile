@@ -2,6 +2,8 @@
 
 #import <React/RCTBridge+Private.h>
 #import <React/RCTUtils.h>
+#import <ReactCommon/CallInvoker.h>
+#import <ReactCommon/RCTTurboModule.h>
 #import <jsi/jsi.h>
 
 #import "../cpp/RabbyNativeFS.h"
@@ -20,7 +22,7 @@
     return NO;
   }
 
-  rabbyfs::install(*runtime);
+  rabbyfs::install(*runtime, [(RCTBridge *)cxxBridge jsCallInvoker]);
   return YES;
 }
 

@@ -46,12 +46,14 @@ export function useInnerDappSnapshot() {
 
     const fileName = `screenshot-${key}-${Date.now()}.jpg`;
     const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
-    await removeSnapshotFile(fileName);
+    const prevPath = innerDappSnapshotStore.getState().snapshotByKey[key];
+    await removeSnapshotFile(prevPath);
     try {
-      if (await RNFS.exists(filePath)) {
-        await RNFS.unlink(filePath);
-      }
-      await RNFS.copyFile(tempUri, filePath);
+      await RNFS.persistFile(tempUri, filePath, {
+        mode: 'copy',
+        overwrite: true,
+        ensureParent: true,
+      });
 
       innerDappSnapshotStore.setState(prev => ({
         ...prev,

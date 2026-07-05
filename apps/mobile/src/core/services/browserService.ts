@@ -380,10 +380,11 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
     const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
     await this.removeScreenshot({ tabId });
     try {
-      if (await RNFS.exists(filePath)) {
-        await RNFS.unlink(filePath);
-      }
-      await RNFS.copyFile(tempUri, filePath);
+      await RNFS.persistFile(tempUri, filePath, {
+        mode: 'copy',
+        overwrite: true,
+        ensureParent: true,
+      });
       // return filePath?.startsWith('file://') ? filePath : `file://${filePath}`;
       return fileName;
     } catch (e) {

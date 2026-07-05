@@ -72,6 +72,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
 
   private static final String RNFSFileTypeRegular = "RNFSFileTypeRegular";
   private static final String RNFSFileTypeDirectory = "RNFSFileTypeDirectory";
+  private static final int RNFSPathTailMaxLength = 96;
 
   private SparseArray<Downloader> downloaders = new SparseArray<>();
   private SparseArray<Uploader> uploaders = new SparseArray<>();
@@ -84,6 +85,13 @@ public class RNFSManager extends ReactContextBaseJavaModule {
   private native HybridData initHybrid();
 
   private native void nativeInstall(long jsiPtr, CallInvokerHolderImpl jsCallInvokerHolder);
+
+  private static String pathTail(String path) {
+    if (path == null || path.length() <= RNFSPathTailMaxLength) {
+      return path;
+    }
+    return "..." + path.substring(path.length() - RNFSPathTailMaxLength);
+  }
 
   public RNFSManager(ReactApplicationContext reactContext) {
     super(reactContext);
@@ -467,6 +475,11 @@ public class RNFSManager extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
+  public void persistFile(final String sourceUri, final String targetPath, final ReadableMap options, final Promise promise) {
+    new PersistFileTask(promise).execute(sourceUri, targetPath, options);
+  }
+
+  @ReactMethod
   public void createZipArchive(final String targetPath, final ReadableArray entries, final ReadableMap options, final Promise promise) {
     new CreateZipArchiveTask(promise).execute(targetPath, entries, options);
   }
@@ -794,6 +807,177 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       } catch (Exception ex) {
         return ex;
       }
+    }
+  }
+
+  private static class PersistFileResult {
+    String sourcePath;
+    String targetPath;
+    String mode;
+    long bytesWritten;
+    long durationMs;
+    Exception exception;
+  }
+
+  private boolean getBooleanOption(ReadableMap options, String key, boolean fallback) {
+    if (options == null || !options.hasKey(key) || options.isNull(key)) {
+      return fallback;
+    }
+    return options.getBoolean(key);
+  }
+
+  private String getStringOption(ReadableMap options, String key, String fallback) {
+    if (options == null || !options.hasKey(key) || options.isNull(key)) {
+      return fallback;
+    }
+    return options.getString(key);
+  }
+
+  private File getFileFromFileUri(String path, boolean isDirectoryAllowed) throws IORejectionException {
+    Uri uri = getFileUri(path, isDirectoryAllowed);
+    if (!"file".equals(uri.getScheme())) {
+      return null;
+    }
+    return new File(uri.getPath());
+  }
+
+  private void ensureParentDirectoryForFilePath(String path) throws IORejectionException, IOException {
+    File targetFile = getFileFromFileUri(path, false);
+    if (targetFile == null) {
+      return;
+    }
+    File parent = targetFile.getParentFile();
+    if (parent != null && !parent.exists() && !parent.mkdirs() && !parent.exists()) {
+      throw new IOException("Failed to create parent directory for '" + path + "'");
+    }
+  }
+
+  private void deleteFileIfExists(String path) throws IORejectionException, IOException {
+    File file = getFileFromFileUri(path, true);
+    if (file != null && file.exists() && !file.delete()) {
+      throw new IOException("Failed to delete existing file '" + path + "'");
+    }
+  }
+
+  private long copyStreamToPath(String sourceUri, String targetPath) throws Exception {
+    InputStream in = null;
+    OutputStream out = null;
+    long bytesWritten = 0;
+    try {
+      in = getInputStream(sourceUri);
+      out = getOutputStream(targetPath, false);
+      byte[] buffer = new byte[256 * 1024];
+      int read;
+      while ((read = in.read(buffer)) != -1) {
+        out.write(buffer, 0, read);
+        bytesWritten += read;
+      }
+      return bytesWritten;
+    } finally {
+      if (in != null) {
+        try {
+          in.close();
+        } catch (IOException ignored) {
+        }
+      }
+      if (out != null) {
+        try {
+          out.close();
+        } catch (IOException ignored) {
+        }
+      }
+    }
+  }
+
+  private class PersistFileTask extends AsyncTask<Object, Void, PersistFileResult> {
+    private final Promise promise;
+
+    PersistFileTask(Promise promise) {
+      this.promise = promise;
+    }
+
+    @Override
+    protected PersistFileResult doInBackground(Object... args) {
+      PersistFileResult result = new PersistFileResult();
+      long startedAt = System.nanoTime();
+      String sourceUri = (String) args[0];
+      String targetPath = (String) args[1];
+      ReadableMap options = (ReadableMap) args[2];
+      String mode = getStringOption(options, "mode", "copy");
+      boolean overwrite = getBooleanOption(options, "overwrite", true);
+      boolean ensureParent = getBooleanOption(options, "ensureParent", true);
+
+      result.sourcePath = sourceUri;
+      result.targetPath = targetPath;
+      result.mode = mode;
+
+      try {
+        if (!"copy".equals(mode) && !"move".equals(mode)) {
+          throw new IOException("persistFile mode must be 'copy' or 'move'");
+        }
+
+        if (ensureParent) {
+          ensureParentDirectoryForFilePath(targetPath);
+        }
+
+        File targetFile = getFileFromFileUri(targetPath, true);
+        if (targetFile != null && targetFile.exists()) {
+          if (!overwrite) {
+            throw new IOException("Target file already exists: " + targetPath);
+          }
+          deleteFileIfExists(targetPath);
+        }
+
+        File sourceFile = getFileFromFileUri(sourceUri, false);
+        boolean movedByRename = false;
+        if ("move".equals(mode) && sourceFile != null && targetFile != null) {
+          movedByRename = sourceFile.renameTo(targetFile);
+          if (movedByRename) {
+            result.bytesWritten = targetFile.length();
+          }
+        }
+
+        if (!movedByRename) {
+          result.bytesWritten = copyStreamToPath(sourceUri, targetPath);
+          if ("move".equals(mode) && sourceFile != null && sourceFile.exists() && !sourceFile.delete()) {
+            throw new IOException("Failed to delete source file after move: " + sourceUri);
+          }
+        }
+      } catch (Exception ex) {
+        result.exception = ex;
+      } finally {
+        result.durationMs = (System.nanoTime() - startedAt) / 1000000;
+      }
+
+      return result;
+    }
+
+    @Override
+    protected void onPostExecute(PersistFileResult result) {
+      if (result.exception != null) {
+        result.exception.printStackTrace();
+        reject(promise, result.sourcePath, result.exception);
+        return;
+      }
+
+      Log.i(
+          "RabbyNativeFS",
+          String.format(
+              Locale.US,
+              "[persist-file] mode=%s bytes=%d duration_ms=%d source_tail=%s target_tail=%s",
+              result.mode,
+              result.bytesWritten,
+              result.durationMs,
+              pathTail(result.sourcePath),
+              pathTail(result.targetPath)));
+
+      WritableMap infoMap = Arguments.createMap();
+      infoMap.putString("sourcePath", result.sourcePath);
+      infoMap.putString("targetPath", result.targetPath);
+      infoMap.putString("mode", result.mode);
+      infoMap.putDouble("bytesWritten", (double) result.bytesWritten);
+      infoMap.putDouble("durationMs", (double) result.durationMs);
+      promise.resolve(infoMap);
     }
   }
 

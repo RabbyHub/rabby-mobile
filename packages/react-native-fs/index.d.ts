@@ -7,6 +7,23 @@ type FileOptions = {
   NSFileProtectionKey?: string; // IOS only
 };
 
+export type NativeFSPersistFileOptions = {
+  mode?: 'copy' | 'move';
+  overwrite?: boolean;
+  ensureParent?: boolean;
+  NSURLIsExcludedFromBackupKey?: boolean;
+  excludeFromBackup?: boolean;
+  NSFileProtectionKey?: string;
+};
+
+export type NativeFSPersistFileResult = {
+  sourcePath: string;
+  targetPath: string;
+  mode: 'copy' | 'move';
+  bytesWritten: number;
+  durationMs: number;
+};
+
 type ReadDirItem = {
   ctime: Date | undefined; // The creation date of the file (iOS only)
   mtime: Date | undefined; // The last modified date of the file
@@ -291,6 +308,11 @@ export function copyFile(
   destPath: string,
   options?: FileOptions,
 ): Promise<void>;
+export function persistFile(
+  sourceUri: string,
+  targetPath: string,
+  options?: NativeFSPersistFileOptions,
+): Promise<NativeFSPersistFileResult>;
 export function pathForBundle(bundleNamed: string): Promise<string>;
 export function pathForGroup(groupName: string): Promise<string>;
 export function getFSInfo(): Promise<FSInfoResult>;

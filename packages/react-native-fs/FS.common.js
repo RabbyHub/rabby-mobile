@@ -178,6 +178,23 @@ type NativeFSZipEntryExtractionOptions = {
   entryNameSuffix?: string,
 };
 
+type NativeFSPersistFileOptions = {
+  mode?: 'copy' | 'move',
+  overwrite?: boolean,
+  ensureParent?: boolean,
+  NSURLIsExcludedFromBackupKey?: boolean, // iOS only
+  excludeFromBackup?: boolean, // iOS only
+  NSFileProtectionKey?: string, // iOS only
+};
+
+type NativeFSPersistFileResult = {
+  sourcePath: string,
+  targetPath: string,
+  mode: 'copy' | 'move',
+  bytesWritten: number,
+  durationMs: number,
+};
+
 function normalizeZipArchiveEntries(entries: NativeFSZipArchiveEntry[]) {
   if (!Array.isArray(entries)) {
     throw new Error('createZipArchive expected entries to be an array');
@@ -224,6 +241,15 @@ function normalizeZipEntryExtractionOptions(
   }
 
   return normalizedOptions;
+}
+
+function normalizePersistFileOptions(options: NativeFSPersistFileOptions = {}) {
+  return {
+    ...options,
+    mode: options.mode || 'copy',
+    overwrite: options.overwrite !== false,
+    ensureParent: options.ensureParent !== false,
+  };
 }
 
 type MkdirOptions = {
@@ -588,6 +614,26 @@ var RNFS = {
       normalizeFilePath(destPath),
       options,
     ).then(() => void 0);
+  },
+
+  persistFile(
+    sourceUri: string,
+    targetPath: string,
+    options: NativeFSPersistFileOptions = {},
+  ): Promise<NativeFSPersistFileResult> {
+    if (typeof RNFSManager.persistFile !== 'function') {
+      return Promise.reject(
+        new Error(
+          '@rabby-wallet/react-native-fs native persistFile is not available',
+        ),
+      );
+    }
+
+    return RNFSManager.persistFile(
+      normalizeFilePath(sourceUri),
+      normalizeFilePath(targetPath),
+      normalizePersistFileOptions(options),
+    );
   },
 
   pathForBundle(bundleNamed: string): Promise<string> {

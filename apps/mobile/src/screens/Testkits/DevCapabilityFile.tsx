@@ -146,6 +146,22 @@ type BatchedAsyncStreamTestResult = AsyncStreamTestResult & {
   readBatches: number;
 };
 
+type PersistFileTestResult = {
+  sourcePath: string;
+  copyTargetPath: string;
+  moveTargetPath: string;
+  totalBytes: number;
+  copyBytes: number;
+  moveBytes: number;
+  copyDurationMs: number;
+  moveDurationMs: number;
+  readDurationMs: number;
+  checksum: string;
+  verified: boolean;
+  sourceRemoved: boolean;
+  updatedAt: string;
+};
+
 const APP_FILE_SCAN_LIMIT = 300;
 const APP_FILE_SCAN_DEPTH = 4;
 const FILE_SHEET_PAGE_SIZE = 10;
@@ -170,6 +186,10 @@ const ASYNC_BATCH_STREAM_BUFFER_COUNT = ASYNC_BATCH_STREAM_CHUNKS_PER_BATCH;
 const ASYNC_BATCH_STREAM_BATCH_BYTES =
   ASYNC_BATCH_STREAM_CHUNK_BYTES * ASYNC_BATCH_STREAM_CHUNKS_PER_BATCH;
 const ASYNC_BATCH_STREAM_TEST_PATH = `${BYTE_IO_TEST_DIR}/async-stream-batch-io.bin`;
+const PERSIST_FILE_TEST_BYTES = 16 * 1024 * 1024;
+const PERSIST_FILE_SOURCE_PATH = `${BYTE_IO_TEST_DIR}/persist-file-source.bin`;
+const PERSIST_FILE_COPY_PATH = `${BYTE_IO_TEST_DIR}/persist-file-copy.bin`;
+const PERSIST_FILE_MOVE_PATH = `${BYTE_IO_TEST_DIR}/persist-file-move.bin`;
 
 const APP_OWNED_FILE_DIRS = [
   { key: 'documents', label: 'Documents', path: RNFS.DocumentDirectoryPath },
@@ -481,6 +501,8 @@ function DevCapabilityFile() {
     useState<AsyncStreamTestResult | null>(null);
   const [batchedAsyncStreamResult, setBatchedAsyncStreamResult] =
     useState<BatchedAsyncStreamTestResult | null>(null);
+  const [persistFileResult, setPersistFileResult] =
+    useState<PersistFileTestResult | null>(null);
   const [nativeFsDiagnostics, setNativeFsDiagnostics] = useState<
     NativeFSDiagnosticEvent[]
   >([]);
@@ -752,6 +774,7 @@ function DevCapabilityFile() {
           ownedStreamResult,
           asyncStreamResult,
           batchedAsyncStreamResult,
+          persistFileResult,
           nativeFsDiagnostics: nativeFsDiagnostics.slice(-16),
         },
         null,
@@ -767,6 +790,7 @@ function DevCapabilityFile() {
       lastAction,
       nativeFsDiagnostics,
       ownedStreamResult,
+      persistFileResult,
       selectedAccessibleImage,
     ],
   );
@@ -1383,6 +1407,97 @@ function DevCapabilityFile() {
     }
   }, [refreshNativeFsDiagnostics]);
 
+  const handleRunPersistFileTest = useCallback(async () => {
+    setBusyKey('persist-file-run');
+    try {
+      const jsiAvailable = RNFS.isJSIAvailable();
+
+      if (!jsiAvailable) {
+        throw new Error('Rabby native FS JSI binding is unavailable');
+      }
+
+      RNFS.clearDiagnostics();
+
+      await RNFS.mkdir(BYTE_IO_TEST_DIR, {
+        NSURLIsExcludedFromBackupKey: true,
+      });
+
+      const { bytes, checksum } = createByteIoPayload(PERSIST_FILE_TEST_BYTES);
+      RNFS.writeFileBytes(PERSIST_FILE_SOURCE_PATH, bytes);
+
+      const copyResult = await RNFS.persistFile(
+        PERSIST_FILE_SOURCE_PATH,
+        PERSIST_FILE_COPY_PATH,
+        {
+          mode: 'copy',
+          overwrite: true,
+          ensureParent: true,
+          NSURLIsExcludedFromBackupKey: true,
+        },
+      );
+      const moveResult = await RNFS.persistFile(
+        PERSIST_FILE_SOURCE_PATH,
+        PERSIST_FILE_MOVE_PATH,
+        {
+          mode: 'move',
+          overwrite: true,
+          ensureParent: true,
+          NSURLIsExcludedFromBackupKey: true,
+        },
+      );
+
+      const readStartedAt = nowMs();
+      const copyBytes = RNFS.readFileBytes(PERSIST_FILE_COPY_PATH);
+      const moveBytes = RNFS.readFileBytes(PERSIST_FILE_MOVE_PATH);
+      const readDurationMs = nowMs() - readStartedAt;
+      const copyChecksum = checksumBytes(copyBytes);
+      const moveChecksum = checksumBytes(moveBytes);
+      const sourceRemoved = !RNFS.existsSync(PERSIST_FILE_SOURCE_PATH);
+      const verified =
+        copyBytes.byteLength === PERSIST_FILE_TEST_BYTES &&
+        moveBytes.byteLength === PERSIST_FILE_TEST_BYTES &&
+        copyResult.bytesWritten === PERSIST_FILE_TEST_BYTES &&
+        moveResult.bytesWritten === PERSIST_FILE_TEST_BYTES &&
+        copyChecksum === checksum &&
+        moveChecksum === checksum &&
+        sourceRemoved;
+
+      const result = {
+        sourcePath: PERSIST_FILE_SOURCE_PATH,
+        copyTargetPath: PERSIST_FILE_COPY_PATH,
+        moveTargetPath: PERSIST_FILE_MOVE_PATH,
+        totalBytes: PERSIST_FILE_TEST_BYTES,
+        copyBytes: copyResult.bytesWritten,
+        moveBytes: moveResult.bytesWritten,
+        copyDurationMs: copyResult.durationMs,
+        moveDurationMs: moveResult.durationMs,
+        readDurationMs,
+        checksum: copyChecksum,
+        verified,
+        sourceRemoved,
+        updatedAt: new Date().toISOString(),
+      } satisfies PersistFileTestResult;
+
+      setPersistFileResult(result);
+      refreshNativeFsDiagnostics();
+      await loadFileSnapshot();
+      setLastAction(
+        `${dayjs().format('HH:mm:ss')} Persisted ${formatBytes(
+          result.totalBytes,
+        )} by native path copy/move`,
+      );
+      toast.success(
+        verified ? 'Native persist file verified' : 'Persist file finished',
+      );
+    } catch (error) {
+      console.error('handleRunPersistFileTest failed', error);
+      toast.error('Failed to run native persist file test');
+      setLastAction(`${dayjs().format('HH:mm:ss')} Persist file test failed`);
+    } finally {
+      setBusyKey(null);
+    }
+  }, [loadFileSnapshot, refreshNativeFsDiagnostics]);
+
   const handleClearNativeFsDiagnostics = useCallback(() => {
     try {
       RNFS.clearDiagnostics();
@@ -1959,6 +2074,75 @@ function DevCapabilityFile() {
         </View>
 
         <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Native Persist File Test</Text>
+          <Text style={styles.noteText}>
+            This sample validates path-only native file persistence. JS creates
+            one source file, then native code copies and moves it without
+            reading file content back through JS strings.
+          </Text>
+          {renderStatusRow({
+            label: 'Total size',
+            value: 'default',
+            displayValue: formatBytes(PERSIST_FILE_TEST_BYTES),
+          })}
+          {renderStatusRow({
+            label: 'Copy result',
+            value: persistFileResult?.verified ? 'granted' : 'default',
+            displayValue: persistFileResult
+              ? `${formatBytes(
+                  persistFileResult.copyBytes,
+                )} · ${formatDurationMs(persistFileResult.copyDurationMs)}`
+              : 'None',
+          })}
+          {renderStatusRow({
+            label: 'Move result',
+            value: persistFileResult?.verified ? 'granted' : 'default',
+            displayValue: persistFileResult
+              ? `${formatBytes(
+                  persistFileResult.moveBytes,
+                )} · ${formatDurationMs(persistFileResult.moveDurationMs)}`
+              : 'None',
+          })}
+          {renderStatusRow({
+            label: 'Readback',
+            value: persistFileResult?.verified ? 'granted' : 'default',
+            displayValue: persistFileResult
+              ? `${formatDurationMs(
+                  persistFileResult.readDurationMs,
+                )} · source removed=${
+                  persistFileResult.sourceRemoved ? 'yes' : 'no'
+                }`
+              : 'Not checked',
+          })}
+          {renderStatusRow({
+            label: 'Checksum',
+            value: persistFileResult?.verified ? 'granted' : 'default',
+            displayValue: persistFileResult?.checksum || '-',
+          })}
+          <Text style={styles.noteText} selectable>
+            {PERSIST_FILE_COPY_PATH}
+          </Text>
+          <Text style={styles.noteText} selectable>
+            {PERSIST_FILE_MOVE_PATH}
+          </Text>
+          <View style={styles.sectionActionsRow}>
+            <Button
+              title={
+                busyKey === 'persist-file-run'
+                  ? 'Persisting file...'
+                  : 'Run Persist File'
+              }
+              type="primary"
+              height={40}
+              loading={busyKey === 'persist-file-run'}
+              showTextOnLoading
+              containerStyle={styles.singleActionButton}
+              onPress={handleRunPersistFileTest}
+            />
+          </View>
+        </View>
+
+        <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Async Native Stream Test</Text>
           <Text style={styles.noteText}>
             This sample uses native-owned buffers for writes and a native worker
@@ -2227,6 +2411,8 @@ function DevCapabilityFile() {
               ? 'Reading large file...'
               : busyKey === 'owned-stream-write'
               ? 'Writing owned stream...'
+              : busyKey === 'persist-file-run'
+              ? 'Persisting file...'
               : busyKey === 'async-stream-run'
               ? 'Running async stream...'
               : 'Actions',

@@ -43,6 +43,10 @@ export class AppScreenshotFS {
   }
 
   static normalizeFilePath(filePath: string) {
+    if (filePath.startsWith('content://')) {
+      return filePath;
+    }
+
     if (IS_IOS && filePath.startsWith('file://')) {
       return stringUtils.unPrefix(filePath, 'file://');
     } else if (IS_ANDROID && !filePath.startsWith('file://')) {
@@ -79,12 +83,49 @@ export class AppScreenshotFS {
     };base64,${input}`;
   }
 
+  static normalizeImageUri(input: string, contentType = 'image/jpeg') {
+    if (
+      input.startsWith('data:image/') ||
+      input.startsWith('file://') ||
+      input.startsWith('content://')
+    ) {
+      return input;
+    }
+
+    if (input.startsWith('/')) {
+      return `file://${input}`;
+    }
+
+    return AppScreenshotFS.normalizeBase64(input, contentType);
+  }
+
+  static normalizeUploadFileUri(input: string) {
+    if (
+      input.startsWith('file://') ||
+      input.startsWith('content://') ||
+      input.startsWith('data:')
+    ) {
+      return input;
+    }
+
+    if (input.startsWith('/')) {
+      return `file://${input}`;
+    }
+
+    return input;
+  }
+
   static async uriToPath(
     input: string,
     options?: { fallbackAsBase64?: boolean },
   ) {
     const maybeTest = {
-      path: input.startsWith('file://') || input.startsWith('/') ? input : '',
+      path:
+        input.startsWith('file://') ||
+        input.startsWith('content://') ||
+        input.startsWith('/')
+          ? input
+          : '',
       base64: () =>
         input.startsWith('data:image/') && input.indexOf('base64,') > -1
           ? input.split(',')[1] ?? ''
@@ -93,7 +134,9 @@ export class AppScreenshotFS {
 
     let val = '';
 
-    if (maybeTest.path && (await RNFS.exists(maybeTest.path))) {
+    if (maybeTest.path.startsWith('content://')) {
+      return { type: 'fs', data: maybeTest.path };
+    } else if (maybeTest.path && (await RNFS.exists(maybeTest.path))) {
       return { type: 'fs', data: maybeTest.path };
     } else if ((val = maybeTest.base64())) {
       return { type: 'base64', data: val };
@@ -122,12 +165,17 @@ export class AppScreenshotFS {
     input: string,
     url: string = `${INITIAL_OPENAPI_URL}/v1/feedback/app/upload`,
   ): Promise<T | null> {
-    const base64 = await AppScreenshotFS.uriToBase64(input);
-    if (!base64) return null;
+    const pathInfo = await AppScreenshotFS.uriToPath(input, {
+      fallbackAsBase64: true,
+    });
+    if (!pathInfo) return null;
 
     const formData = new FormData();
     formData.append('file', {
-      uri: `data:image/jpeg;base64,${base64}`,
+      uri:
+        pathInfo.type === 'fs'
+          ? AppScreenshotFS.normalizeUploadFileUri(pathInfo.data)
+          : `data:image/jpeg;base64,${pathInfo.data}`,
       type: 'image/jpeg',
       name: 'screenshot.jpg',
     } as unknown as Blob);
@@ -150,7 +198,9 @@ export class AppScreenshotFS {
     input: string,
     options?: { fallbackAsBase64?: boolean; imageType?: string },
   ) {
-    const pathInfo = await AppScreenshotFS.uriToPath(input);
+    const pathInfo = await AppScreenshotFS.uriToPath(input, {
+      fallbackAsBase64: options?.fallbackAsBase64,
+    });
     if (!pathInfo) return null;
 
     const targetPath = `${this.#dir}/screenshot-${
@@ -159,12 +209,15 @@ export class AppScreenshotFS {
       AppScreenshotFS.normalizeContentType(options?.imageType || 'jpeg').ext
     }`;
 
-    if (pathInfo.type === 'fs' && (await RNFS.exists(pathInfo.data))) {
-      await RNFS.copyFile(pathInfo.data, targetPath);
+    if (pathInfo.type === 'fs') {
+      await RNFS.persistFile(pathInfo.data, targetPath, {
+        mode: 'copy',
+        overwrite: true,
+        ensureParent: true,
+        NSURLIsExcludedFromBackupKey: false,
+      });
     } else if (pathInfo.type === 'base64') {
       await RNFS.writeFile(targetPath, pathInfo.data, 'base64');
-    } else if (options?.fallbackAsBase64 && input.length < 10 * 1024 * 1024) {
-      await RNFS.writeFile(targetPath, input, 'base64');
     }
 
     return AppScreenshotFS.normalizeFilePath(targetPath);

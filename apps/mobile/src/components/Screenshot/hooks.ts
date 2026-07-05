@@ -608,7 +608,7 @@ export function startSubscribeUserDidTakeScreenshot() {
         setLastScreenshot(
           Image.resolveAssetSource({
             // TODO: set contentType by params.type
-            uri: AppScreenshotFS.normalizeBase64(
+            uri: AppScreenshotFS.normalizeImageUri(
               inAppPath,
               params?.imageType || 'image/jpeg',
             ),
