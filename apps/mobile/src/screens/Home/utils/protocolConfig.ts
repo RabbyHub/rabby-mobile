@@ -48,7 +48,7 @@ interface ProtocolConfigItemType {
 export const useProtocolConfig = () => {
   const { navigation } = useSafeSetNavigationOptions();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { accounts } = useMyAccounts();
+  const { accounts } = useMyAccounts({ disableAutoFetch: true });
   const { setMarketKey } = useSelectedMarket();
 
   const generateAAVEConfig = useCallback(

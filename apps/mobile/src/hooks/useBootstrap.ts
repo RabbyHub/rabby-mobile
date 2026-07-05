@@ -18,9 +18,13 @@ import {
 import { sendUserAddressEvent } from '@/core/apis/analytics';
 import { apisLock, apisPerps } from '@/core/apis';
 import { loadSecurityChain } from './global';
-import { getTriedUnlock, storeApiLock } from './useLock';
+import {
+  getBootstrapAccountFlags,
+  getTriedUnlock,
+  loadBootstrapAppLockState,
+  storeApiLock,
+} from './useLock';
 import SplashScreen from 'react-native-splash-screen';
-import { storeApiAccounts } from './account';
 import { storeApisBiometrics } from './biometrics';
 import { apisPerpsStore } from './perps/usePerpsStore';
 // import { browserStateAtom } from './browser/useBrowser';
@@ -36,6 +40,7 @@ import { replace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { setBrowserState } from './browser/useBrowser';
 import { perfEvents } from '@/core/utils/perf';
+import { runAfterHomePostStartupReady } from '@/core/utils/homeStartupReady';
 
 const syncCustomTestChainList = () => {
   try {
@@ -113,17 +118,12 @@ export function useInitializeAppOnTop() {
       sendUserAddressEvent();
 
       doInitializeApis();
-      storeApiAccounts.fetchAccounts().then(accounts => {
+      getBootstrapAccountFlags().then(accountFlags => {
         storeApiLock.setAppLock(prev => ({
           ...prev,
           appUnlocked: true,
           isUnlockSessionValid: apisLock.isUnlockSessionValid(),
-          hasVisibleAccounts: accounts.length > 0,
-          hasStoredKeyrings:
-            accounts.length > 0 ||
-            keyringService.hasVault() ||
-            keyringService.hasEncryptedKeyringData() ||
-            keyringService.hasUnencryptedKeyringData(),
+          ...accountFlags,
         }));
       });
       perpsService.unlockAgentWallets();
@@ -134,17 +134,12 @@ export function useInitializeAppOnTop() {
         appUnlocked: false,
         isUnlockSessionValid: apisLock.isUnlockSessionValid(),
       }));
-      storeApiAccounts.fetchAccounts().then(accounts => {
+      getBootstrapAccountFlags().then(accountFlags => {
         storeApiLock.setAppLock(prev => ({
           ...prev,
           appUnlocked: false,
           isUnlockSessionValid: apisLock.isUnlockSessionValid(),
-          hasVisibleAccounts: accounts.length > 0,
-          hasStoredKeyrings:
-            accounts.length > 0 ||
-            keyringService.hasVault() ||
-            keyringService.hasEncryptedKeyringData() ||
-            keyringService.hasUnencryptedKeyringData(),
+          ...accountFlags,
         }));
       });
       setBrowserState({
@@ -188,8 +183,8 @@ export function useInitializeAppOnTop() {
 
 export function subscribeUnlockToFetchAccounts() {
   perfEvents.subscribe('USER_MANUALLY_UNLOCK_UI_READY', async () => {
-    const accounts = await keyringService.getAllVisibleAccountsArray();
-    if (!accounts?.length) {
+    const accountFlags = await getBootstrapAccountFlags();
+    if (!accountFlags.hasVisibleAccounts) {
       replace(RootNames.StackGetStarted, {
         screen: RootNames.GetStarted,
       });
@@ -292,6 +287,44 @@ runIIFEFunc(() => {
   });
 });
 
+const postRenderBootstrapWarmupsStateRef = {
+  started: false,
+};
+
+function schedulePostRenderBootstrapWarmups(reason: string) {
+  if (postRenderBootstrapWarmupsStateRef.started) {
+    return;
+  }
+
+  postRenderBootstrapWarmupsStateRef.started = true;
+
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      runAfterHomePostStartupReady(
+        () => {
+          Promise.allSettled([
+            getTriedUnlock(),
+            storeApisBiometrics.fetchBiometrics(),
+          ]).then(results => {
+            results.forEach(result => {
+              if (result.status === 'rejected') {
+                console.error(
+                  `schedulePostRenderBootstrapWarmups::${reason}`,
+                  result.reason,
+                );
+              }
+            });
+          });
+        },
+        {
+          fallbackMs: 5000,
+          label: 'bootstrap_post_render_warmups',
+        },
+      );
+    }, 120);
+  });
+}
+
 /**
  * @description only call this hook on the top level component
  */
@@ -303,13 +336,41 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
     startedLoadRef.current = true;
 
     Promise.allSettled([
-      getTriedUnlock(),
+      loadBootstrapAppLockState(),
       loadSecurityChain({ rabbitCode }),
-      storeApisBiometrics.fetchBiometrics(),
     ])
-      .then(async ([_unlockResult, _securityChain]) => {
-        console.debug('useBootstrapApp::sucess', _unlockResult);
+      .then(async ([_initialLockResult, _securityChain]) => {
+        const initialLockState =
+          _initialLockResult.status === 'fulfilled'
+            ? _initialLockResult.value
+            : null;
+        const shouldWaitAutoUnlock =
+          _initialLockResult.status !== 'fulfilled' ||
+          (!initialLockState?.appUnlocked &&
+            !initialLockState?.isUnlockSessionValid);
+        const unlockResult = shouldWaitAutoUnlock
+          ? await Promise.allSettled([getTriedUnlock()]).then(
+              ([result]) => result,
+            )
+          : null;
+
+        console.debug('useBootstrapApp::sucess', {
+          initialLockStatus: _initialLockResult.status,
+          securityChainStatus: _securityChain.status,
+          unlockStatus: unlockResult?.status ?? 'deferred',
+          shouldWaitAutoUnlock,
+        });
         setBootstrap({ couldRender: true });
+
+        if (shouldWaitAutoUnlock) {
+          setTimeout(() => {
+            storeApisBiometrics.fetchBiometrics().catch(error => {
+              console.error('fetchBiometrics::postRender::error', error);
+            });
+          }, 0);
+        } else {
+          schedulePostRenderBootstrapWarmups('bootstrap_could_render');
+        }
       })
       .catch(err => {
         startedLoadRef.current = false;

@@ -30,6 +30,7 @@ import { KeyringAccount, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { updateHistoryTimeSingleAddress } from '@/hooks/historyTokenDict';
 import { checkAddedAccountsGasAccountIfNeeded } from '@/utils/autoLoginGasAccount';
+import { runAfterHomePostStartupReady } from '@/core/utils/homeStartupReady';
 
 export interface AccountStoreState {
   accounts: KeyringAccountWithAlias[];
@@ -47,6 +48,7 @@ export const NEWLY_ADDED_ACCOUNT_DURATION = 10 * 60 * 1000;
 
 class AccountStore extends BaseStore<AccountStoreState> {
   private hasStartedLifecycle = false;
+  private deferredFetchAccountReasons = new Set<string>();
 
   private readonly fetchAccountsInParallel =
     this.createAvoidParallelAsyncMethod(
@@ -107,6 +109,27 @@ class AccountStore extends BaseStore<AccountStoreState> {
 
   fetchAccounts = async (options?: { force?: boolean }) => {
     return this.fetchAccountsInParallel(options);
+  };
+
+  private scheduleFetchAccountsAfterHomePostStartupReady = (
+    reason: string,
+    options?: { force?: boolean },
+  ) => {
+    if (this.deferredFetchAccountReasons.has(reason)) {
+      return;
+    }
+
+    this.deferredFetchAccountReasons.add(reason);
+    runAfterHomePostStartupReady(
+      () => {
+        this.deferredFetchAccountReasons.delete(reason);
+        this.fetchAccounts(options);
+      },
+      {
+        fallbackMs: 5000,
+        label: `account_store_${reason}`,
+      },
+    );
   };
 
   fetchNewlyAddedAccounts = async () => {
@@ -216,7 +239,7 @@ class AccountStore extends BaseStore<AccountStoreState> {
     this.hasStartedLifecycle = true;
 
     perfEvents.subscribe('USER_MANUALLY_UNLOCK_UI_READY', () => {
-      this.fetchAccounts();
+      this.scheduleFetchAccountsAfterHomePostStartupReady('unlock_ui_ready');
     });
 
     keyringService.on('newAccount', () => {
@@ -251,7 +274,9 @@ class AccountStore extends BaseStore<AccountStoreState> {
 
     keyringService.store.subscribe(state => {
       if (state.booted && state.vault) {
-        this.fetchAccounts();
+        this.scheduleFetchAccountsAfterHomePostStartupReady(
+          'keyring_store_ready',
+        );
       }
     });
 

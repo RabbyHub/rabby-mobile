@@ -287,7 +287,18 @@ export class KeyringService extends RNEventEmitter {
   //       ].includes(keyring.type as any),
   //   );
   // }
+  private getPublicAccountSnapshotAccountCount() {
+    const snapshot = this.getPublicAccountSnapshotFromStore();
+    return this.isPublicAccountSnapshotValid(snapshot)
+      ? snapshot?.accounts.length ?? 0
+      : 0;
+  }
   async getCountOfAccountsInKeyring() {
+    const snapshotAccountCount = this.getPublicAccountSnapshotAccountCount();
+    if (snapshotAccountCount > 0) {
+      return snapshotAccountCount;
+    }
+
     const accounts = await this.getAllTypedVisibleAccounts();
     return accounts.length;
   }

@@ -41,6 +41,8 @@ import { svsLayout } from './hooks/useAppLayout';
 import { openapi } from './core/request';
 import { DEFAULT_RABBY_MOBILE_CODE, IS_ROZENITE_ENABLED } from './constant/env';
 import { startSetupAppBeforeRenderDeferred } from './setup-app-before-render';
+import { runAfterHomePostStartupReady } from './core/utils/homeStartupReady';
+import { startSubscribeLangChange } from './hooks/lang';
 
 Safe.openapiService = openapi;
 
@@ -81,17 +83,30 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
     }
 
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let cancelHomePostReadyWait: (() => void) | null = null;
     const frameId = requestAnimationFrame(() => {
       timeoutId = setTimeout(() => {
-        startSetupAppBeforeRenderDeferred('main_screen_could_render').catch(
-          error => {
-            console.error('startSetupAppBeforeRenderDeferred::error', error);
+        cancelHomePostReadyWait = runAfterHomePostStartupReady(
+          () => {
+            startSetupAppBeforeRenderDeferred('home_post_startup_ready').catch(
+              error => {
+                console.error(
+                  'startSetupAppBeforeRenderDeferred::error',
+                  error,
+                );
+              },
+            );
+          },
+          {
+            fallbackMs: 5000,
+            label: 'setup_before_render_deferred',
           },
         );
       }, 120);
     });
 
     return () => {
+      cancelHomePostReadyWait?.();
       cancelAnimationFrame(frameId);
       if (timeoutId) {
         clearTimeout(timeoutId);
@@ -128,6 +143,9 @@ function SizeWatcher() {
 
 function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
   const rabbitCode = __DEV__ ? DEFAULT_RABBY_MOBILE_CODE : propRabbitCode || '';
+  useEffect(() => {
+    startSubscribeLangChange();
+  }, []);
   useBootstrapApp({ rabbitCode });
 
   return (
