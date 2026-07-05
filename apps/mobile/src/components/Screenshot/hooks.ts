@@ -588,13 +588,27 @@ export function startSubscribeUserDidTakeScreenshot() {
         : '';
 
       if (params?.imageBase64) {
+        const inAppPath = await appScreenshotFS.saveScreenshotFrom(
+          params.imageBase64,
+          {
+            fallbackAsBase64: true,
+            imageType: params?.imageType,
+          },
+        );
+        const screenshotUri = inAppPath
+          ? AppScreenshotFS.normalizeImageUri(
+              inAppPath,
+              params.imageType || 'image/jpeg',
+            )
+          : AppScreenshotFS.normalizeBase64(
+              params.imageBase64,
+              params.imageType || 'image/jpeg',
+            );
+
         setLastScreenshot(
           Image.resolveAssetSource({
             // TODO: set contentType by params.type
-            uri: AppScreenshotFS.normalizeBase64(
-              params.imageBase64,
-              params.imageType || 'image/jpeg',
-            ),
+            uri: screenshotUri,
             height: sizes.height,
             width: sizes.width,
           }),

@@ -17,6 +17,18 @@ export class AppScreenshotFS {
     return DIRS['SCREEN_SHOT_TMP'];
   }
 
+  static async ensureScreenshotDir() {
+    await RNFS.mkdir(DIRS['SCREEN_SHOT_TMP'], {
+      NSURLIsExcludedFromBackupKey: false,
+    });
+  }
+
+  static makeScreenshotFilePath(imageType = 'jpeg') {
+    return `${DIRS['SCREEN_SHOT_TMP']}/screenshot-${
+      APP_IDS.forScreenshot
+    }-${Date.now()}.${AppScreenshotFS.normalizeContentType(imageType).ext}`;
+  }
+
   constructor() {
     this.#dir = DIRS['SCREEN_SHOT_TMP'];
 
@@ -71,6 +83,17 @@ export class AppScreenshotFS {
       default:
         return { mime: contentType, ext: contentType.split('/').pop() };
     }
+  }
+
+  static resolveImageContentType(input: string, fallback = 'image/jpeg') {
+    const dataUrlMatch = input.match(/^data:(image\/[^;]+);base64,/i);
+    if (dataUrlMatch?.[1]) {
+      return AppScreenshotFS.normalizeContentType(dataUrlMatch[1]);
+    }
+
+    const pathPart = input.split('?')[0] || '';
+    const extMatch = pathPart.match(/\.([a-z0-9]+)$/i);
+    return AppScreenshotFS.normalizeContentType(extMatch?.[1] || fallback);
   }
 
   static normalizeBase64(input: string, contentType = 'image/jpeg') {
@@ -170,14 +193,25 @@ export class AppScreenshotFS {
     });
     if (!pathInfo) return null;
 
+    const fileType = AppScreenshotFS.resolveImageContentType(input);
+    let cleanupPath = '';
+    let uploadUri =
+      pathInfo.type === 'fs'
+        ? AppScreenshotFS.normalizeUploadFileUri(pathInfo.data)
+        : `data:${fileType.mime};base64,${pathInfo.data}`;
+    if (pathInfo.type === 'base64') {
+      const targetPath = AppScreenshotFS.makeScreenshotFilePath(fileType.mime);
+      await AppScreenshotFS.ensureScreenshotDir();
+      await RNFS.writeFile(targetPath, pathInfo.data, 'base64');
+      cleanupPath = targetPath;
+      uploadUri = AppScreenshotFS.normalizeUploadFileUri(targetPath);
+    }
+
     const formData = new FormData();
     formData.append('file', {
-      uri:
-        pathInfo.type === 'fs'
-          ? AppScreenshotFS.normalizeUploadFileUri(pathInfo.data)
-          : `data:image/jpeg;base64,${pathInfo.data}`,
-      type: 'image/jpeg',
-      name: 'screenshot.jpg',
+      uri: uploadUri,
+      type: fileType.mime,
+      name: `screenshot.${fileType.ext}`,
     } as unknown as Blob);
 
     return fetch(url, {
@@ -188,6 +222,11 @@ export class AppScreenshotFS {
       },
     })
       .then(response => response.json())
+      .finally(() => {
+        if (cleanupPath) {
+          RNFS.unlink(cleanupPath).catch(() => undefined);
+        }
+      })
       .catch(error => {
         console.error('Upload file error:', error);
         throw error;
@@ -203,11 +242,9 @@ export class AppScreenshotFS {
     });
     if (!pathInfo) return null;
 
-    const targetPath = `${this.#dir}/screenshot-${
-      APP_IDS.forScreenshot
-    }-${Date.now()}.${
-      AppScreenshotFS.normalizeContentType(options?.imageType || 'jpeg').ext
-    }`;
+    const targetPath = AppScreenshotFS.makeScreenshotFilePath(
+      options?.imageType || 'jpeg',
+    );
 
     if (pathInfo.type === 'fs') {
       await RNFS.persistFile(pathInfo.data, targetPath, {
