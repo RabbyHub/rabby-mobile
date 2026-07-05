@@ -13,12 +13,14 @@ const BASE_URL = isNonPublicProductionEnv
   : 'https://download.rabby.io/downloads/wallet-mobile-config';
 // const CONFIG_URL = `${BASE_URL}/${Platform.OS === 'android' ? 'android' : 'ios'}.json`;
 const CONFIG_URL = `${BASE_URL}/rabby-mobile.json`;
+export const ONLINE_SWITCH_ENABLE_WORKER_THREAD =
+  '20251226.enable_worker_thread' as const;
 
 type OnlineConfig = {
   ['switches']?: {
     ['20250820.reportSentry_slowQuery']?: boolean;
     ['20250924.android_webview_always_treat_as_reload']?: boolean;
-    ['20251226.enable_worker_thread']?: boolean;
+    [ONLINE_SWITCH_ENABLE_WORKER_THREAD]?: boolean;
     /** @deprecated keep it disabled online, or the insertions will be error on old version */
     ['20260105.disable_db_prepared_upsert']?: boolean;
     ['20260116.allow_short_auto_lock_time_on_bootstrap']?: boolean;
@@ -32,7 +34,7 @@ function getDefaultOnlineConfig(): OnlineConfig {
     switches: {
       '20250820.reportSentry_slowQuery': false,
       '20250924.android_webview_always_treat_as_reload': true,
-      '20251226.enable_worker_thread': false,
+      [ONLINE_SWITCH_ENABLE_WORKER_THREAD]: false,
       '20260105.disable_db_prepared_upsert': false,
       '20260116.allow_short_auto_lock_time_on_bootstrap': false,
       '20260122.enable_db_prepared_upsert': false,
@@ -81,6 +83,10 @@ export function startSyncOnlineConfig() {
 
 export function getOnlineConfig() {
   return configRef.current;
+}
+
+export function isOnlineWorkerThreadEnabled(config = configRef.current) {
+  return !!config.switches?.[ONLINE_SWITCH_ENABLE_WORKER_THREAD];
 }
 
 export function subscribeOnlineConfig(listener: () => void) {

@@ -150,6 +150,7 @@ import {
   CurrencySelectorPopup,
   useCurrentCurrencyVisible,
 } from './sheetModals/CurrencySelectorPopup';
+import { isOnlineWorkerThreadEnabled } from '@/core/config/online';
 import { isWorkerThreadRunning } from '@/perfs/thread';
 import {
   setEnableTransactionNofification,
@@ -236,7 +237,10 @@ function AlertBuildInfo({
     '   ',
     `Hermes Engine: ${IS_HERMES_ENABLED ? 'Enabled' : 'Disabled'}`,
     `Strip Console: ${IS_CONSOLE_STRIPPED ? 'Enabled' : 'Disabled'}`,
-    `Worker Thread: ${isWorkerThreadRunning() ? 'Enabled' : 'Disabled'}`,
+    `Worker Thread Switch: ${
+      isOnlineWorkerThreadEnabled() ? 'Enabled' : 'Disabled'
+    }`,
+    `Worker Thread Running: ${isWorkerThreadRunning() ? 'Yes' : 'No'}`,
   ];
 
   if (isNonPublicProductionEnv) {
