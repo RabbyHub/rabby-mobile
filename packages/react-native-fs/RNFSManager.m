@@ -205,6 +205,28 @@ static void RNFSZipGetDosDateTime(NSDate *date, uint16_t *dosDate, uint16_t *dos
   *dosTime = (uint16_t)((hour << 11) | (minute << 5) | (second / 2));
 }
 
+static NSNumber *RNFSZipDosDateTimeToMillis(uint16_t dosDate, uint16_t dosTime)
+{
+  if (dosDate == 0) {
+    return nil;
+  }
+
+  NSDateComponents *components = [[NSDateComponents alloc] init];
+  components.year = ((dosDate >> 9) & 0x7f) + 1980;
+  components.month = (dosDate >> 5) & 0x0f;
+  components.day = dosDate & 0x1f;
+  components.hour = (dosTime >> 11) & 0x1f;
+  components.minute = (dosTime >> 5) & 0x3f;
+  components.second = (dosTime & 0x1f) * 2;
+
+  NSDate *date = [[NSCalendar currentCalendar] dateFromComponents:components];
+  if (!date) {
+    return nil;
+  }
+
+  return @([date timeIntervalSince1970] * 1000.0);
+}
+
 static NSMutableData *RNFSZipLocalHeader(NSData *nameData, uint16_t dosDate, uint16_t dosTime)
 {
   NSMutableData *header = [NSMutableData dataWithCapacity:30 + nameData.length];
@@ -513,6 +535,126 @@ static NSDictionary *RNFSZipFindCentralDirectoryEntry(NSString *archivePath,
     *error = RNFSZipMakeError(@"Zip entry not found");
   }
   return selectedEntry;
+}
+
+static NSArray<NSDictionary *> *RNFSZipListCentralDirectoryEntries(NSString *archivePath,
+                                                                   NSString *entryNameSuffix,
+                                                                   BOOL includeDirectories,
+                                                                   NSUInteger limit,
+                                                                   NSError **error)
+{
+  NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:archivePath error:error];
+  if (!attributes) {
+    return nil;
+  }
+
+  unsigned long long archiveSize = [attributes[NSFileSize] unsignedLongLongValue];
+  if (archiveSize < 22) {
+    if (error) {
+      *error = RNFSZipMakeError(@"Invalid zip archive: missing end record");
+    }
+    return nil;
+  }
+
+  NSFileHandle *file = [NSFileHandle fileHandleForReadingAtPath:archivePath];
+  if (!file) {
+    if (error) {
+      *error = RNFSZipMakeError([NSString stringWithFormat:@"Cannot open zip archive: %@", archivePath]);
+    }
+    return nil;
+  }
+
+  unsigned long long tailLength = MIN(archiveSize, (unsigned long long)(22 + UINT16_MAX));
+  [file seekToFileOffset:archiveSize - tailLength];
+  NSData *tailData = [file readDataOfLength:(NSUInteger)tailLength];
+  const uint8_t *tailBytes = tailData.bytes;
+  NSInteger eocdOffset = -1;
+  for (NSInteger offset = (NSInteger)tailData.length - 22; offset >= 0; offset--) {
+    if (RNFSZipReadUInt32(tailBytes + offset) == 0x06054b50) {
+      eocdOffset = offset;
+      break;
+    }
+  }
+
+  if (eocdOffset < 0) {
+    if (error) {
+      *error = RNFSZipMakeError(@"Invalid zip archive: EOCD not found");
+    }
+    return nil;
+  }
+
+  uint16_t entryCount = RNFSZipReadUInt16(tailBytes + eocdOffset + 10);
+  uint32_t centralDirectorySize = RNFSZipReadUInt32(tailBytes + eocdOffset + 12);
+  uint32_t centralDirectoryOffset = RNFSZipReadUInt32(tailBytes + eocdOffset + 16);
+  if ((uint64_t)centralDirectoryOffset + (uint64_t)centralDirectorySize > archiveSize) {
+    if (error) {
+      *error = RNFSZipMakeError(@"Invalid zip archive: central directory out of range");
+    }
+    return nil;
+  }
+
+  [file seekToFileOffset:centralDirectoryOffset];
+  NSData *centralData = [file readDataOfLength:centralDirectorySize];
+  const uint8_t *centralBytes = centralData.bytes;
+  NSUInteger offset = 0;
+  NSMutableArray<NSDictionary *> *entries = [NSMutableArray array];
+
+  for (uint16_t index = 0; index < entryCount && offset + 46 <= centralData.length; index++) {
+    if (RNFSZipReadUInt32(centralBytes + offset) != 0x02014b50) {
+      if (error) {
+        *error = RNFSZipMakeError(@"Invalid zip archive: central directory record is malformed");
+      }
+      return nil;
+    }
+
+    uint16_t method = RNFSZipReadUInt16(centralBytes + offset + 10);
+    uint16_t dosTime = RNFSZipReadUInt16(centralBytes + offset + 12);
+    uint16_t dosDate = RNFSZipReadUInt16(centralBytes + offset + 14);
+    uint32_t crcValue = RNFSZipReadUInt32(centralBytes + offset + 16);
+    uint32_t compressedSize = RNFSZipReadUInt32(centralBytes + offset + 20);
+    uint32_t uncompressedSize = RNFSZipReadUInt32(centralBytes + offset + 24);
+    uint16_t nameLength = RNFSZipReadUInt16(centralBytes + offset + 28);
+    uint16_t extraLength = RNFSZipReadUInt16(centralBytes + offset + 30);
+    uint16_t commentLength = RNFSZipReadUInt16(centralBytes + offset + 32);
+    NSUInteger recordLength = 46 + nameLength + extraLength + commentLength;
+    if (offset + recordLength > centralData.length) {
+      if (error) {
+        *error = RNFSZipMakeError(@"Invalid zip archive: central directory entry out of range");
+      }
+      return nil;
+    }
+
+    NSData *nameData = [centralData subdataWithRange:NSMakeRange(offset + 46, nameLength)];
+    NSString *entryName = [[NSString alloc] initWithData:nameData encoding:NSUTF8StringEncoding];
+    BOOL isDirectory = [entryName hasSuffix:@"/"];
+    NSError *normalizeError = nil;
+    NSString *normalizedName = RNFSZipNormalizeEntryName(entryName, &normalizeError);
+    if (normalizedName && (includeDirectories || !isDirectory)) {
+      BOOL matches = entryNameSuffix.length == 0 || [normalizedName hasSuffix:entryNameSuffix];
+      if (matches) {
+        NSMutableDictionary *entry = [@{
+          @"entryName": normalizedName,
+          @"directory": @(isDirectory),
+          @"compressedSize": @(compressedSize),
+          @"uncompressedSize": @(uncompressedSize),
+          @"crc32": @(crcValue),
+          @"method": @(method),
+        } mutableCopy];
+        NSNumber *mtimeMs = RNFSZipDosDateTimeToMillis(dosDate, dosTime);
+        if (mtimeMs) {
+          entry[@"mtimeMs"] = mtimeMs;
+        }
+        [entries addObject:entry];
+      }
+    }
+
+    offset += recordLength;
+    if (limit > 0 && entries.count >= limit) {
+      break;
+    }
+  }
+
+  return entries;
 }
 
 static BOOL RNFSZipInflateEntry(NSString *archivePath,
@@ -1357,6 +1499,58 @@ RCT_EXPORT_METHOD(extractZipEntry:(NSString *)archivePath
     @"targetPath": targetPath,
     @"entryName": entry[@"entryName"],
     @"bytesWritten": bytesWritten,
+    @"durationMs": @(durationMs),
+  });
+}
+
+RCT_EXPORT_METHOD(listZipEntries:(NSString *)archivePath
+                  options:(NSDictionary *)options
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  NSDate *startedAt = [NSDate date];
+  NSError *error = nil;
+  NSString *entryNameSuffix = [options objectForKey:@"entryNameSuffix"];
+  if (![entryNameSuffix isKindOfClass:[NSString class]]) {
+    entryNameSuffix = nil;
+  }
+  NSNumber *includeDirectoriesNumber = [options objectForKey:@"includeDirectories"];
+  BOOL includeDirectories =
+    [includeDirectoriesNumber isKindOfClass:[NSNumber class]] &&
+    [includeDirectoriesNumber boolValue];
+  NSNumber *limitNumber = [options objectForKey:@"limit"];
+  NSUInteger limit = [limitNumber isKindOfClass:[NSNumber class]]
+    ? (NSUInteger)MAX([limitNumber integerValue], 0)
+    : 0;
+
+  NSArray<NSDictionary *> *entries = RNFSZipListCentralDirectoryEntries(
+    archivePath,
+    entryNameSuffix,
+    includeDirectories,
+    limit,
+    &error
+  );
+  if (!entries) {
+    return [self reject:reject withError:error];
+  }
+
+  unsigned long long totalBytes = 0;
+  for (NSDictionary *entry in entries) {
+    totalBytes += [[entry objectForKey:@"uncompressedSize"] unsignedLongLongValue];
+  }
+
+  NSTimeInterval durationMs = [[NSDate date] timeIntervalSinceDate:startedAt] * 1000.0;
+  NSLog(@"[RabbyNativeFS] [zip] op=listZipEntries entries=%lu bytes=%llu duration_ms=%.0f path_tail=%@",
+        (unsigned long)entries.count,
+        totalBytes,
+        durationMs,
+        RNFSPathTail(archivePath));
+
+  resolve(@{
+    @"archivePath": archivePath,
+    @"entries": entries,
+    @"totalEntries": @(entries.count),
+    @"totalBytes": @(totalBytes),
     @"durationMs": @(durationMs),
   });
 }

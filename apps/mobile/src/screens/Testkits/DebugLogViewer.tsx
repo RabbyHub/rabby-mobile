@@ -321,7 +321,62 @@ async function listArchiveFiles() {
   };
 }
 
+async function readFirstLinePreviewFromNativeZipEntry(
+  archive: Pick<ArchiveFileItem, 'name' | 'path'>,
+  entryName: string,
+) {
+  const shareTempDir = await ensureShareTempDir();
+  const extractedPath = `${shareTempDir}/${archive.name.replace(
+    /\.zip$/,
+    '',
+  )}-preview-${Date.now()}.log`;
+
+  try {
+    await RNFS.extractZipEntry(archive.path, extractedPath, { entryName });
+    await waitForFileReady(extractedPath);
+    const text = await RNFS.readFile(extractedPath, 'utf8');
+    return text.split('\n')[0]?.slice(0, 180) || null;
+  } finally {
+    RNFS.unlink(extractedPath).catch(noop);
+  }
+}
+
 async function validateArchiveFile(file: ArchiveFileItem) {
+  if (
+    RNFS.isNativeZipEntryListingAvailable() &&
+    RNFS.isNativeZipEntryExtractionAvailable()
+  ) {
+    try {
+      const listing = await RNFS.listZipEntries(file.path);
+      const entries = [...listing.entries].sort((left, right) =>
+        left.entryName.localeCompare(right.entryName),
+      );
+      const entryNames = entries.map(entry => entry.entryName);
+      const firstEntryPath = entryNames[0] || null;
+      const firstLinePreview = firstEntryPath
+        ? await readFirstLinePreviewFromNativeZipEntry(file, firstEntryPath)
+        : null;
+      const totalBytes = entries.reduce(
+        (sum, entry) => sum + entry.uncompressedSize,
+        0,
+      );
+
+      return {
+        archiveName: file.name,
+        archivePath: file.path,
+        checkedAt: new Date().toISOString(),
+        entryCount: listing.totalEntries,
+        totalBytes,
+        entryNames,
+        firstEntryPath,
+        firstLinePreview,
+      } satisfies ZipValidationResult;
+    } catch (_error) {
+      // Fall back to the old JS parser for older native builds or unusual zip
+      // variants that the native central-directory reader rejects.
+    }
+  }
+
   const base64 = await RNFS.readFile(file.path, 'base64');
   const archive = unzipSync(Uint8Array.from(Buffer.from(base64, 'base64')));
   const entryNames = Object.keys(archive).sort((left, right) =>
@@ -1566,7 +1621,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
 
         <Section
           title="Zip Validation"
-          description="Validation reads the latest finalized zip from device storage and parses it in-app with `fflate.unzipSync()`.">
+          description="Validation reads the latest finalized zip metadata through native RNFS when available, then falls back to the JS `fflate.unzipSync()` parser for compatibility.">
           {validationResult ? (
             <>
               <MetaRow

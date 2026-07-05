@@ -178,6 +178,30 @@ type NativeFSZipEntryExtractionOptions = {
   entryNameSuffix?: string,
 };
 
+type NativeFSZipEntryListingOptions = {
+  entryNameSuffix?: string,
+  includeDirectories?: boolean,
+  limit?: number,
+};
+
+type NativeFSZipEntryInfo = {
+  entryName: string,
+  directory: boolean,
+  compressedSize: number,
+  uncompressedSize: number,
+  crc32: number,
+  method: number,
+  mtimeMs?: number,
+};
+
+type NativeFSZipEntryListingResult = {
+  archivePath: string,
+  entries: NativeFSZipEntryInfo[],
+  totalEntries: number,
+  totalBytes: number,
+  durationMs: number,
+};
+
 type NativeFSPersistFileOptions = {
   mode?: 'copy' | 'move',
   overwrite?: boolean,
@@ -238,6 +262,29 @@ function normalizeZipEntryExtractionOptions(
     options.entryNameSuffix.length > 0
   ) {
     normalizedOptions.entryNameSuffix = options.entryNameSuffix;
+  }
+
+  return normalizedOptions;
+}
+
+function normalizeZipEntryListingOptions(
+  options: NativeFSZipEntryListingOptions = {},
+) {
+  const normalizedOptions = {};
+
+  if (
+    typeof options.entryNameSuffix === 'string' &&
+    options.entryNameSuffix.length > 0
+  ) {
+    normalizedOptions.entryNameSuffix = options.entryNameSuffix;
+  }
+
+  if (typeof options.includeDirectories === 'boolean') {
+    normalizedOptions.includeDirectories = options.includeDirectories;
+  }
+
+  if (typeof options.limit === 'number' && options.limit > 0) {
+    normalizedOptions.limit = Math.floor(options.limit);
   }
 
   return normalizedOptions;
@@ -532,6 +579,10 @@ var RNFS = {
     return typeof RNFSManager.extractZipEntry === 'function';
   },
 
+  isNativeZipEntryListingAvailable(): boolean {
+    return typeof RNFSManager.listZipEntries === 'function';
+  },
+
   createZipArchive(
     targetPath: string,
     entries: NativeFSZipArchiveEntry[],
@@ -571,6 +622,24 @@ var RNFS = {
       normalizeFilePath(archivePath),
       normalizeFilePath(targetPath),
       normalizeZipEntryExtractionOptions(options),
+    );
+  },
+
+  listZipEntries(
+    archivePath: string,
+    options: NativeFSZipEntryListingOptions = {},
+  ): Promise<NativeFSZipEntryListingResult> {
+    if (typeof RNFSManager.listZipEntries !== 'function') {
+      return Promise.reject(
+        new Error(
+          '@rabby-wallet/react-native-fs native zip entry listing is not available',
+        ),
+      );
+    }
+
+    return RNFSManager.listZipEntries(
+      normalizeFilePath(archivePath),
+      normalizeZipEntryListingOptions(options),
     );
   },
 

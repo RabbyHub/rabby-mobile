@@ -203,6 +203,12 @@ export type NativeFSZipEntryExtractionOptions = {
   entryNameSuffix?: string;
 };
 
+export type NativeFSZipEntryListingOptions = {
+  entryNameSuffix?: string;
+  includeDirectories?: boolean;
+  limit?: number;
+};
+
 export type NativeFSZipArchiveResult = {
   targetPath: string;
   entries: number;
@@ -216,6 +222,24 @@ export type NativeFSZipEntryExtractionResult = {
   targetPath: string;
   entryName: string;
   bytesWritten: number;
+  durationMs: number;
+};
+
+export type NativeFSZipEntryInfo = {
+  entryName: string;
+  directory: boolean;
+  compressedSize: number;
+  uncompressedSize: number;
+  crc32: number;
+  method: number;
+  mtimeMs?: number;
+};
+
+export type NativeFSZipEntryListingResult = {
+  archivePath: string;
+  entries: NativeFSZipEntryInfo[];
+  totalEntries: number;
+  totalBytes: number;
   durationMs: number;
 };
 
@@ -283,6 +307,7 @@ export function createAsyncReadStream(
 ): NativeFSAsyncReadStream;
 export function isNativeZipArchiveAvailable(): boolean;
 export function isNativeZipEntryExtractionAvailable(): boolean;
+export function isNativeZipEntryListingAvailable(): boolean;
 export function createZipArchive(
   targetPath: string,
   entries: NativeFSZipArchiveEntry[],
@@ -293,6 +318,10 @@ export function extractZipEntry(
   targetPath: string,
   options?: NativeFSZipEntryExtractionOptions,
 ): Promise<NativeFSZipEntryExtractionResult>;
+export function listZipEntries(
+  archivePath: string,
+  options?: NativeFSZipEntryListingOptions,
+): Promise<NativeFSZipEntryListingResult>;
 export function getDiagnosticsSnapshot(): NativeFSDiagnosticEvent[];
 export function clearDiagnostics(): void;
 export function existsSync(filepath: string): boolean;

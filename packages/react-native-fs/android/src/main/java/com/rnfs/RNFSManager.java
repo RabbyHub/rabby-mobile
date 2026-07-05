@@ -489,6 +489,11 @@ public class RNFSManager extends ReactContextBaseJavaModule {
     new ExtractZipEntryTask(promise).execute(archivePath, targetPath, options);
   }
 
+  @ReactMethod
+  public void listZipEntries(final String archivePath, final ReadableMap options, final Promise promise) {
+    new ListZipEntriesTask(promise).execute(archivePath, options);
+  }
+
   private static String normalizeZipEntryName(String entryName) throws IOException {
     if (entryName == null) {
       throw new IOException("Zip entry path is required");
@@ -553,6 +558,15 @@ public class RNFSManager extends ReactContextBaseJavaModule {
     String targetPath;
     String entryName;
     long bytesWritten;
+    long durationMs;
+    Exception exception;
+  }
+
+  private static class ZipEntryListingResult {
+    String archivePath;
+    WritableArray entries;
+    int entryCount;
+    long totalBytes;
     long durationMs;
     Exception exception;
   }
@@ -781,6 +795,118 @@ public class RNFSManager extends ReactContextBaseJavaModule {
       infoMap.putString("targetPath", result.targetPath);
       infoMap.putString("entryName", result.entryName);
       infoMap.putDouble("bytesWritten", (double) result.bytesWritten);
+      infoMap.putDouble("durationMs", (double) result.durationMs);
+      promise.resolve(infoMap);
+    }
+  }
+
+  private class ListZipEntriesTask extends AsyncTask<Object, Void, ZipEntryListingResult> {
+    private final Promise promise;
+
+    ListZipEntriesTask(Promise promise) {
+      this.promise = promise;
+    }
+
+    @Override
+    protected ZipEntryListingResult doInBackground(Object... args) {
+      ZipEntryListingResult result = new ZipEntryListingResult();
+      long startedAt = System.nanoTime();
+      String archivePath = (String) args[0];
+      ReadableMap options = (ReadableMap) args[1];
+      File archiveFile = new File(archivePath);
+      result.archivePath = archivePath;
+      result.entries = Arguments.createArray();
+
+      try {
+        if (!archiveFile.isFile()) {
+          throw new IOException("Zip archive file does not exist: " + archivePath);
+        }
+
+        boolean includeDirectories =
+            options != null &&
+            options.hasKey("includeDirectories") &&
+            !options.isNull("includeDirectories") &&
+            options.getBoolean("includeDirectories");
+        int limit =
+            options != null && options.hasKey("limit") && !options.isNull("limit")
+                ? options.getInt("limit")
+                : 0;
+        String entryNameSuffix = getOptionalString(options, "entryNameSuffix");
+
+        try (ZipFile zipFile = new ZipFile(archiveFile)) {
+          Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
+          while (zipEntries.hasMoreElements()) {
+            ZipEntry entry = zipEntries.nextElement();
+            boolean isDirectory = entry.isDirectory();
+            if (isDirectory && !includeDirectories) {
+              continue;
+            }
+
+            String entryName;
+            try {
+              entryName = normalizeZipEntryName(entry.getName());
+            } catch (IOException ignored) {
+              continue;
+            }
+
+            if (entryNameSuffix != null && !entryName.endsWith(entryNameSuffix)) {
+              continue;
+            }
+
+            long uncompressedSize = Math.max(entry.getSize(), 0);
+            long compressedSize = Math.max(entry.getCompressedSize(), 0);
+            WritableMap entryMap = Arguments.createMap();
+            entryMap.putString("entryName", entryName);
+            entryMap.putBoolean("directory", isDirectory);
+            entryMap.putDouble("compressedSize", (double) compressedSize);
+            entryMap.putDouble("uncompressedSize", (double) uncompressedSize);
+            entryMap.putDouble("crc32", (double) Math.max(entry.getCrc(), 0));
+            entryMap.putInt("method", entry.getMethod());
+            if (entry.getTime() > 0) {
+              entryMap.putDouble("mtimeMs", (double) entry.getTime());
+            }
+
+            result.entries.pushMap(entryMap);
+            result.entryCount += 1;
+            result.totalBytes += uncompressedSize;
+
+            if (limit > 0 && result.entryCount >= limit) {
+              break;
+            }
+          }
+        }
+      } catch (Exception ex) {
+        result.exception = ex;
+      } finally {
+        result.durationMs = (System.nanoTime() - startedAt) / 1000000;
+      }
+
+      return result;
+    }
+
+    @Override
+    protected void onPostExecute(ZipEntryListingResult result) {
+      if (result.exception != null) {
+        result.exception.printStackTrace();
+        reject(promise, result.archivePath, result.exception);
+        return;
+      }
+
+      Log.i(
+          "RabbyNativeFS",
+          String.format(
+              Locale.US,
+              "[zip] op=listZipEntries entries=%d bytes=%d duration_ms=%d path_tail=%s",
+              result.entryCount,
+              result.totalBytes,
+              result.durationMs,
+              result.archivePath));
+
+      WritableMap infoMap = Arguments.createMap();
+      infoMap.putString("archivePath", result.archivePath);
+      infoMap.putArray("entries", result.entries);
+      infoMap.putInt("totalEntries", result.entryCount);
+      infoMap.putDouble("totalBytes", (double) result.totalBytes);
       infoMap.putDouble("durationMs", (double) result.durationMs);
       promise.resolve(infoMap);
     }
