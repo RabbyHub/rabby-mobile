@@ -21,6 +21,7 @@ import {
   SyncTaskAbortError,
   type SyncTaskPriority,
 } from './scheduler';
+import { notifySyncAbortHandlers } from './abort';
 
 /**
  * @description In most cases, you don't need call it manually,
@@ -29,8 +30,13 @@ import {
 export const syncAbortControllers: {
   [P in ReturnType<typeof makeSyncTaskKey>]?: AbortController | null;
 } = {};
+const activeSyncAbortControllers = new Set<AbortController>();
 
-export function abortAllSyncTasks() {
+export function abortAllSyncTasks(reason = 'manual') {
+  notifySyncAbortHandlers(reason);
+  activeSyncAbortControllers.forEach(controller => {
+    controller.abort();
+  });
   Object.entries(syncAbortControllers).forEach(([taskKey, controller]) => {
     logger.warn('[debug] abortAllSyncTasks::will abort', taskKey);
     controller?.abort();
@@ -136,6 +142,7 @@ export async function batchSaveWithPQueueAndTransaction<
     syncAbortControllers[taskKey]?.abort();
   }
   syncAbortControllers[taskKey] = curAbortController;
+  activeSyncAbortControllers.add(curAbortController);
 
   const currentSignal = curAbortController.signal;
   const loggerPrefix = !owner_addr
@@ -265,7 +272,15 @@ export async function batchSaveWithPQueueAndTransaction<
           });
 
           try {
+            let paramsBuildMs = 0;
+            let executeMs = 0;
             if (upsertMethod.supportedBulkUpsert && upsertMethod.stmSql) {
+              const paramsBuildStartedAt = Date.now();
+              ctx.setStage('params_build', {
+                round,
+                count: curBatch.length,
+                totalRound,
+              });
               const paramsRows = curBatch.map(item => {
                 const getUpsertParams = item.getUpsertParams;
                 if (typeof getUpsertParams !== 'function') {
@@ -275,14 +290,37 @@ export async function batchSaveWithPQueueAndTransaction<
                 }
                 return getUpsertParams.call(item) as Scalar[];
               });
+              paramsBuildMs = Date.now() - paramsBuildStartedAt;
+              markDbSyncTaskStage(diagTaskId, 'params_built', {
+                schedulerTaskId,
+                round,
+                count: curBatch.length,
+                durationMs: paramsBuildMs,
+              });
+
               const commands: SQLBatchTuple[] = [
                 [upsertMethod.stmSql, paramsRows],
               ];
+              const executeStartedAt = Date.now();
+              ctx.setStage('execute_batch', {
+                round,
+                count: curBatch.length,
+                totalRound,
+                paramsBuildMs,
+              });
               await db.executeBatch(commands);
+              executeMs = Date.now() - executeStartedAt;
             } else {
+              const executeStartedAt = Date.now();
+              ctx.setStage('typeorm_upsert', {
+                round,
+                count: curBatch.length,
+                totalRound,
+              });
               await repo.manager.upsert(entityCls, curBatch, {
                 conflictPaths: ['_db_id'],
               });
+              executeMs = Date.now() - executeStartedAt;
             }
 
             printLog &&
@@ -303,6 +341,9 @@ export async function batchSaveWithPQueueAndTransaction<
               totalRound,
               count: curBatch.length,
               durationMs,
+              paramsBuildMs,
+              executeMs,
+              method: upsertMethod.method,
             });
           } catch (error) {
             makeEmit(false, syncDetails);
@@ -355,6 +396,13 @@ export async function batchSaveWithPQueueAndTransaction<
     },
   );
 
+  const unregisterAbortController = () => {
+    activeSyncAbortControllers.delete(curAbortController);
+    if (syncAbortControllers[taskKey] === curAbortController) {
+      syncAbortControllers[taskKey] = null;
+    }
+  };
+
   const finalizePromise = schedulerPromise
     .then(() => {
       finishDiagTask(diagTaskHadError ? 'error' : 'success', {
@@ -377,7 +425,8 @@ export async function batchSaveWithPQueueAndTransaction<
       }
 
       throw error;
-    });
+    })
+    .finally(unregisterAbortController);
 
   if (waitTaskDoneReturn) {
     const queueCompleted = await finalizePromise;

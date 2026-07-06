@@ -532,6 +532,9 @@ export function markDbSyncTaskBatch(
     totalRound: number;
     count: number;
     durationMs: number;
+    paramsBuildMs?: number;
+    executeMs?: number;
+    method?: string;
   },
 ) {
   if (!enabled || id === null) {
@@ -560,6 +563,9 @@ export function markDbSyncTaskBatch(
     totalRound: data.totalRound,
     count: data.count,
     durationMs: data.durationMs,
+    paramsBuildMs: data.paramsBuildMs,
+    executeMs: data.executeMs,
+    method: data.method,
   });
 }
 

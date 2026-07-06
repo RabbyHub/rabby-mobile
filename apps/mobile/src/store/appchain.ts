@@ -10,6 +10,12 @@ import PQueue from 'p-queue';
 import { appChainResourceStore } from './appchainResource';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 import { runAfterHomePostStartupReady } from '@/core/utils/homeStartupReady';
+import {
+  getSyncAbortVersion,
+  isSyncAbortVersionStale,
+  makeSyncAbortError,
+  registerSyncAbortHandler,
+} from '@/databases/sync/abort';
 
 /**
  * 用于展示的 AppChain 数据结构
@@ -142,9 +148,37 @@ function settleAppChainPersistRequests(
   });
 }
 
+function abortPendingAppChainPersists(reason: string) {
+  const pendingOwnerCount = pendingAppChainPersists.size;
+  const error = makeSyncAbortError(reason);
+
+  if (pendingAppChainFlushCancel) {
+    pendingAppChainFlushCancel();
+    pendingAppChainFlushCancel = null;
+  }
+  if (pendingAppChainFlushTimer) {
+    clearTimeout(pendingAppChainFlushTimer);
+    pendingAppChainFlushTimer = null;
+  }
+
+  const pending = Array.from(pendingAppChainPersists.values());
+  pendingAppChainPersists.clear();
+  settleAppChainPersistRequests(pending, error);
+
+  if (pendingOwnerCount) {
+    traceStartupDiagnostic('db', 'pending_appchain_sync_abort', {
+      reason,
+      pendingOwnerCount,
+    });
+  }
+}
+
+registerSyncAbortHandler(abortPendingAppChainPersists);
+
 async function persistPendingAppChains(
   pendingEntries: Array<[string, PendingAppChainPersist]>,
 ) {
+  const abortVersion = getSyncAbortVersion();
   const ownerAddrs = pendingEntries.map(([ownerAddr]) => ownerAddr);
   const pending = pendingEntries.map(([, item]) => item);
   if (!ownerAddrs.length) {
@@ -180,6 +214,10 @@ async function persistPendingAppChains(
   });
 
   try {
+    if (isSyncAbortVersionStale(abortVersion)) {
+      throw makeSyncAbortError('appchain_persist');
+    }
+
     if (entities.length) {
       const { queueCompleted, taskKey } =
         await batchSaveWithPQueueAndTransaction(AppChainEntity, entities, {
@@ -199,6 +237,9 @@ async function persistPendingAppChains(
         throw new Error(`[${taskKey}] appchain persist aborted`);
       }
     } else {
+      if (isSyncAbortVersionStale(abortVersion)) {
+        throw makeSyncAbortError('appchain_persist');
+      }
       await cleanupStaleAppChainsForOwners(ownerAddrs, syncTimestamp);
     }
 

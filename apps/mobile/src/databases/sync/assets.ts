@@ -31,6 +31,12 @@ import type { EvmTotalBalanceResponse } from '../hooks/balance';
 import { setHistoryLoading } from '@/hooks/historyTokenDict';
 import type { ITokenItem } from '@/types/assets';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
+import {
+  getSyncAbortVersion,
+  isSyncAbortVersionStale,
+  makeSyncAbortError,
+  registerSyncAbortHandler,
+} from './abort';
 
 export { patchSingleToken } from './token';
 
@@ -63,6 +69,48 @@ const pendingTokenSyncs = new Map<string, PendingTokenAddressSync>();
 let pendingTokenFlushTimer: ReturnType<typeof setTimeout> | null = null;
 let tokenFlushInFlight: Promise<void> | null = null;
 
+function rejectBalanceSyncRequests(
+  pending: PendingBalanceSync[],
+  error: unknown,
+) {
+  pending.forEach(item => {
+    emitBalanceSyncResult(item, false);
+    item.reject(error);
+  });
+}
+
+function abortPendingAssetSyncs(reason: string) {
+  const error = makeSyncAbortError(reason);
+  const pendingBalanceCount = pendingBalanceSyncs.length;
+  const pendingTokenAddressCount = pendingTokenSyncs.size;
+
+  if (pendingBalanceFlushTimer) {
+    clearTimeout(pendingBalanceFlushTimer);
+    pendingBalanceFlushTimer = null;
+  }
+  if (pendingTokenFlushTimer) {
+    clearTimeout(pendingTokenFlushTimer);
+    pendingTokenFlushTimer = null;
+  }
+
+  const pendingBalance = pendingBalanceSyncs.splice(0);
+  const pendingToken = Array.from(pendingTokenSyncs.values());
+  pendingTokenSyncs.clear();
+
+  rejectBalanceSyncRequests(pendingBalance, error);
+  resolveTokenSyncRequests(pendingToken);
+
+  if (pendingBalanceCount || pendingTokenAddressCount) {
+    traceStartupDiagnostic('db', 'pending_asset_sync_abort', {
+      reason,
+      pendingBalanceCount,
+      pendingTokenAddressCount,
+    });
+  }
+}
+
+registerSyncAbortHandler(abortPendingAssetSyncs);
+
 function emitBalanceSyncResult(pending: PendingBalanceSync, success: boolean) {
   appOrmEvents.emit('onRemoteDataUpserted', {
     owner_addr: pending.owner_addr,
@@ -89,13 +137,20 @@ function scheduleBalanceSyncFlush() {
 }
 
 async function flushPendingBalanceSyncs() {
+  const abortVersion = getSyncAbortVersion();
   const pending = pendingBalanceSyncs.splice(0);
   if (!pending.length) {
     return;
   }
 
   try {
+    if (isSyncAbortVersionStale(abortVersion)) {
+      throw makeSyncAbortError('balance_flush');
+    }
     await prepareAppDataSourceWithDiag('balance', BalanceEntity.name);
+    if (isSyncAbortVersionStale(abortVersion)) {
+      throw makeSyncAbortError('balance_flush');
+    }
     await batchSaveWithPQueueAndTransaction(
       BalanceEntity,
       pending.map(item => item.item),
@@ -116,10 +171,7 @@ async function flushPendingBalanceSyncs() {
       item.resolve();
     });
   } catch (error) {
-    pending.forEach(item => {
-      emitBalanceSyncResult(item, false);
-      item.reject(error);
-    });
+    rejectBalanceSyncRequests(pending, error);
   }
 }
 
@@ -239,6 +291,7 @@ function scheduleTokenSyncFlush() {
 async function persistPendingTokenSyncs(
   pendingEntries: Array<[string, PendingTokenAddressSync]>,
 ) {
+  const abortVersion = getSyncAbortVersion();
   const addresses = pendingEntries.map(([address]) => address);
   const pending = pendingEntries.map(([, item]) => item);
   if (!addresses.length) {
@@ -260,6 +313,10 @@ async function persistPendingTokenSyncs(
   const allTokenItems: TokenItemEntity[] = [];
 
   try {
+    if (isSyncAbortVersionStale(abortVersion)) {
+      return;
+    }
+
     syncTimestamp = Date.now();
     const entityBuildStartedAt = Date.now();
     let rawCount = 0;
@@ -283,7 +340,14 @@ async function persistPendingTokenSyncs(
       allTokenItems.length,
     );
 
+    if (isSyncAbortVersionStale(abortVersion)) {
+      return;
+    }
+
     await prepareAppDataSourceWithDiag('token', TokenItemEntity.name);
+    if (isSyncAbortVersionStale(abortVersion)) {
+      return;
+    }
     const { queueCompleted, taskKey } = await batchSaveWithPQueueAndTransaction(
       TokenItemEntity,
       allTokenItems,

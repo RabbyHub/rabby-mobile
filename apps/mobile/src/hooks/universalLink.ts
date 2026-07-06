@@ -256,7 +256,7 @@ async function clearAppCacheFromLink() {
 
   clearAppCacheFromLinkStateRef.running = true;
   try {
-    abortAllSyncTasks();
+    abortAllSyncTasks('clear-app-cache-link');
     resetUpdateHistoryTime();
     await dropAppDataSourceAndQuitApp({
       exitDelayMs: 300,
