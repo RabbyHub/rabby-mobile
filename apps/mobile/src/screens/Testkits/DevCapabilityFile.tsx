@@ -2767,6 +2767,7 @@ const getStyles = createGetStyles2024(ctx =>
     },
     statusRow: {
       flexDirection: 'row',
+      flexWrap: 'wrap',
       alignItems: 'flex-start',
       justifyContent: 'space-between',
       gap: 12,
@@ -2776,7 +2777,7 @@ const getStyles = createGetStyles2024(ctx =>
       paddingVertical: 12,
     },
     statusLabelBlock: {
-      width: 112,
+      width: 128,
       flexShrink: 0,
       gap: 4,
     },
@@ -2793,7 +2794,7 @@ const getStyles = createGetStyles2024(ctx =>
     },
     statusValue: {
       flex: 1,
-      minWidth: 0,
+      minWidth: 132,
       fontSize: 14,
       lineHeight: 18,
       fontWeight: '700',
