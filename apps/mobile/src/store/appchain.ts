@@ -263,11 +263,14 @@ function scheduleAppChainPersistFlush() {
     return;
   }
 
-  pendingAppChainFlushCancel = runAfterHomePostStartupReady(
+  let didRunImmediately = false;
+  const cancel = runAfterHomePostStartupReady(
     () => {
+      didRunImmediately = true;
       pendingAppChainFlushCancel = null;
       pendingAppChainFlushTimer = setTimeout(() => {
         pendingAppChainFlushTimer = null;
+        pendingAppChainFlushCancel = null;
         void flushPendingAppChainPersists();
       }, APPCHAIN_PERSIST_FLUSH_DELAY_MS);
     },
@@ -276,6 +279,7 @@ function scheduleAppChainPersistFlush() {
       label: 'appchain_persist_flush',
     },
   );
+  pendingAppChainFlushCancel = didRunImmediately ? null : cancel;
 }
 
 async function flushPendingAppChainPersists() {
