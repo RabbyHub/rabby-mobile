@@ -21,6 +21,7 @@ import {
   refreshAutolockTimeout,
 } from './autoLock';
 import { logger } from '@/utils/logger';
+import { traceAndroidInstant } from '../utils/androidTrace';
 
 export const enum PasswordStatus {
   Unknown = -1,
@@ -34,6 +35,7 @@ export type UnlockWalletOptions = {
   trustedVaultKeyString?: string;
   onTrustedVaultKeyString?: (vaultKeyString: string) => void | Promise<void>;
   deferMemStoreKeyringsUpdate?: boolean;
+  deferKeyringRuntimeRestore?: boolean;
 };
 export type ValidationBehaviorOnFinishedContext = {
   hasSetupCustomPassword?: boolean;
@@ -104,6 +106,7 @@ function traceAndroidUnlockPerf(
 
   logger.info(`[RabbyUnlockPerf:lock] ${event}`, data);
   console.info('[RabbyUnlockPerf:lock]', event, data);
+  traceAndroidInstant(`unlock.lock_api.${event}`, data);
 }
 
 export async function throwErrorIfInvalidPwd(password: string) {
@@ -126,7 +129,7 @@ export async function verifyPasswordOrUnlock(password: string) {
     throw new Error(result.formFieldError || ERRORS.INCORRECT_PASSWORD);
   }
   updateUnlockTime();
-  notifyUserManuallyUnlockUIReady();
+  notifyPostUnlockUIReady();
 }
 
 export async function setupWalletPassword(newPassword: string) {
@@ -323,6 +326,14 @@ export function isUnlocked() {
   return keyringService.isUnlocked();
 }
 
+export function isKeyringRuntimeReady() {
+  return keyringService.isKeyringRuntimeReady();
+}
+
+export async function ensureKeyringRuntimeReady(reason = 'lock_api') {
+  return keyringService.ensureKeyringRuntimeReady(reason);
+}
+
 export async function isLockedWithCustomPassword() {
   if (keyringService.isUnlocked()) return false;
 
@@ -377,6 +388,7 @@ async function unlockWallet(
         trustedVaultKeyString: options.trustedVaultKeyString,
         onTrustedVaultKeyString: options.onTrustedVaultKeyString,
         deferMemStoreKeyringsUpdate: options.deferMemStoreKeyringsUpdate,
+        deferKeyringRuntimeRestore: options.deferKeyringRuntimeRestore,
       },
     );
     traceAndroidUnlockPerf('submit_password_end', {
@@ -491,7 +503,7 @@ export const tryAutoUnlockRabbyMobileWithUpdateUnlockTime = async () => {
   if (keyringService.isUnlocked()) {
     updateUnlockTime();
     if (!wasUnlocked) {
-      notifyUserManuallyUnlockUIReady();
+      notifyPostUnlockUIReady();
     }
   }
   return result;
@@ -513,48 +525,72 @@ export function subscribeAppLock(fn: () => any) {
   return dispose;
 }
 
-type UserManuallyUnlockContext = {
+type WalletAuthUnlockedContext = {
   isFirstTimeAfterLaunch: boolean;
 };
 
-const pendingUserManuallyUnlockUIReadyRef = {
-  current: null as UserManuallyUnlockContext | null,
+const pendingPostUnlockUIReadyRef = {
+  current: null as WalletAuthUnlockedContext | null,
 };
 
-export function notifyUserManuallyUnlockUIReady(
-  expectedCtx?: UserManuallyUnlockContext,
+export function notifyPostUnlockUIReady(
+  expectedCtx?: WalletAuthUnlockedContext,
 ) {
-  const ctx = pendingUserManuallyUnlockUIReadyRef.current;
+  const ctx = pendingPostUnlockUIReadyRef.current;
   if (!ctx || (expectedCtx && ctx !== expectedCtx)) {
     return;
   }
 
-  pendingUserManuallyUnlockUIReadyRef.current = null;
+  pendingPostUnlockUIReadyRef.current = null;
   if (!keyringService.isUnlocked()) {
     return;
   }
 
+  traceAndroidUnlockPerf('refresh_memstore_keyrings_start');
   void Promise.resolve()
     .then(() =>
       (
         keyringService as KeyringServiceWithUnlockOptions
       ).refreshMemStoreKeyrings?.(),
     )
+    .then(() => {
+      traceAndroidUnlockPerf('refresh_memstore_keyrings_end');
+    })
     .catch(error => {
       traceAndroidUnlockPerf('refresh_memstore_keyrings_error', {
         error: error instanceof Error ? error.message : String(error),
       });
     });
+  traceAndroidUnlockPerf('post_unlock_ui_ready_emit_start', {
+    listenerCount: perfEvents.listenerCount('POST_UNLOCK_UI_READY'),
+    legacyListenerCount: perfEvents.listenerCount(
+      'USER_MANUALLY_UNLOCK_UI_READY',
+    ),
+  });
+  perfEvents.emit('POST_UNLOCK_UI_READY', ctx);
   perfEvents.emit('USER_MANUALLY_UNLOCK_UI_READY', ctx);
+  traceAndroidUnlockPerf('post_unlock_ui_ready_emit_end');
 }
 
-export function deferNotifyUserManuallyUnlockUIReady() {
-  const ctx = pendingUserManuallyUnlockUIReadyRef.current;
+export function deferNotifyPostUnlockUIReady() {
+  const ctx = pendingPostUnlockUIReadyRef.current;
   if (!ctx) {
     return null;
   }
   // Capture this unlock so delayed callbacks cannot consume a later unlock.
-  return () => notifyUserManuallyUnlockUIReady(ctx);
+  return () => notifyPostUnlockUIReady(ctx);
+}
+
+/** @deprecated use notifyPostUnlockUIReady */
+export function notifyUserManuallyUnlockUIReady(
+  expectedCtx?: WalletAuthUnlockedContext,
+) {
+  notifyPostUnlockUIReady(expectedCtx);
+}
+
+/** @deprecated use deferNotifyPostUnlockUIReady */
+export function deferNotifyUserManuallyUnlockUIReady() {
+  return deferNotifyPostUnlockUIReady();
 }
 
 runIIFEFunc(() => {
@@ -566,15 +602,24 @@ runIIFEFunc(() => {
     if (ctx.scene === 'unlock') {
       const isFirstTimeAfterLaunch = isFirstTimeAfterLaunchRef.current;
       isFirstTimeAfterLaunchRef.current = false;
-      pendingUserManuallyUnlockUIReadyRef.current = {
+      pendingPostUnlockUIReadyRef.current = {
         isFirstTimeAfterLaunch,
       };
+      traceAndroidUnlockPerf('wallet_auth_unlocked_emit_start', {
+        isFirstTimeAfterLaunch,
+        listenerCount: perfEvents.listenerCount('WALLET_AUTH_UNLOCKED'),
+        legacyListenerCount: perfEvents.listenerCount('USER_MANUALLY_UNLOCK'),
+      });
+      perfEvents.emit('WALLET_AUTH_UNLOCKED', {
+        isFirstTimeAfterLaunch,
+      });
       perfEvents.emit('USER_MANUALLY_UNLOCK', {
         isFirstTimeAfterLaunch,
       });
+      traceAndroidUnlockPerf('wallet_auth_unlocked_emit_end');
     }
   });
   keyringService.on('lock', () => {
-    pendingUserManuallyUnlockUIReadyRef.current = null;
+    pendingPostUnlockUIReadyRef.current = null;
   });
 });

@@ -43,6 +43,7 @@ import { DEFAULT_RABBY_MOBILE_CODE, IS_ROZENITE_ENABLED } from './constant/env';
 import { startSetupAppBeforeRenderDeferred } from './setup-app-before-render';
 import { runAfterHomePostStartupReady } from './core/utils/homeStartupReady';
 import { startSubscribeLangChange } from './hooks/lang';
+import { traceAndroidInstant } from './core/utils/androidTrace';
 
 Safe.openapiService = openapi;
 
@@ -76,6 +77,16 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   useRendererDetect({ name: 'MainScreen' });
 
   const { couldRender } = useAppCouldRender();
+
+  React.useEffect(() => {
+    traceAndroidInstant('react.MainScreen.mounted');
+  }, []);
+
+  React.useEffect(() => {
+    traceAndroidInstant('bootstrap.couldRender.changed', {
+      couldRender,
+    });
+  }, [couldRender]);
 
   React.useEffect(() => {
     if (!couldRender) {
@@ -144,6 +155,7 @@ function SizeWatcher() {
 function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
   const rabbitCode = __DEV__ ? DEFAULT_RABBY_MOBILE_CODE : propRabbitCode || '';
   useEffect(() => {
+    traceAndroidInstant('react.App.mounted');
     startSubscribeLangChange();
   }, []);
   useBootstrapApp({ rabbitCode });

@@ -75,6 +75,7 @@ import {
   endUnlockCriticalWindow,
   runStartupDiagnosticTask,
 } from '@/core/utils/startupDiagnostics';
+import { traceAndroidInstant } from '@/core/utils/androidTrace';
 import {
   getNextUnlockAuthenticationState,
   shouldKeepStoredCredentialIconWhenSystemAuthUnavailable,
@@ -184,7 +185,7 @@ function nextFrame() {
 }
 
 function notifyUnlockUIReadyAfterHomePaint() {
-  const notifyUIReady = apisLock.deferNotifyUserManuallyUnlockUIReady();
+  const notifyUIReady = apisLock.deferNotifyPostUnlockUIReady();
   if (!notifyUIReady) {
     return;
   }
@@ -194,13 +195,13 @@ function notifyUnlockUIReadyAfterHomePaint() {
     return;
   }
 
-  traceAndroidUnlockPerf('unlock_ui_ready_notify_deferred_start', {
+  traceAndroidUnlockPerf('post_unlock_ui_ready_notify_deferred_start', {
     delayMs: POST_UNLOCK_UI_READY_DELAY_MS,
   });
 
   InteractionManager.runAfterInteractions(() => {
     setTimeout(() => {
-      traceAndroidUnlockPerf('unlock_ui_ready_notify_deferred_fire');
+      traceAndroidUnlockPerf('post_unlock_ui_ready_notify_deferred_fire');
       notifyUIReady();
     }, POST_UNLOCK_UI_READY_DELAY_MS);
   });
@@ -235,6 +236,7 @@ function traceAndroidUnlockPerf(
 
   logger.info(`[RabbyUnlockPerf:unlock] ${event}`, data);
   console.info('[RabbyUnlockPerf:unlock]', event, data);
+  traceAndroidInstant(`unlock.${event}`, data);
 }
 
 function setUnlockSyncCriticalMode(active: boolean, reason: string) {
@@ -346,7 +348,10 @@ function useUnlockForm(
       const hideToast = needAlert ? null : toastUnlocking();
       try {
         measureTime.start('UnlockWithPassword');
-        const result = await storeApisUnlock.unlockApp(values.password);
+        const result = await storeApisUnlock.unlockApp(values.password, {
+          deferMemStoreKeyringsUpdate: isAndroid,
+          deferKeyringRuntimeRestore: isAndroid,
+        });
         const timeResult = measureTime.end('UnlockWithPassword');
         reportUnlockTime(timeResult.diff, 'password');
 
@@ -628,6 +633,7 @@ export default function UnlockScreen() {
                     ? credentials.vaultKeyString
                     : undefined,
                 deferMemStoreKeyringsUpdate: isAndroid,
+                deferKeyringRuntimeRestore: isAndroid,
                 onTrustedVaultKeyString: isAndroid
                   ? vaultKeyString => {
                       if (credentials) {

@@ -78,7 +78,7 @@ export default function AutoLockView<
 function ForAppNav(props: Props<'View'>) {
   React.useEffect(() => {
     const subUnlock = perfEvents.subscribe(
-      'USER_MANUALLY_UNLOCK',
+      'WALLET_AUTH_UNLOCKED',
       apisAutoLock.handleUnlock,
     );
     keyringService.on('lock', apisAutoLock.handleLock);

@@ -20,15 +20,30 @@ public class MainActivity extends ReactActivity {
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-    // SplashScreen.show(this);
-    // https://github.com/crazycodeboy/react-native-splash-screen/blob/b47197626804a742b8569cad50d5e0ed92fc765c/android/src/main/java/org/devio/rn/splashscreen/SplashScreen.java#L25
-    SplashScreen.show(this, R.style.SplashScreenTheme, true);
+    RabbyStartupTrace.beginSection("MainActivity.onCreate");
+    try {
+      // SplashScreen.show(this);
+      // https://github.com/crazycodeboy/react-native-splash-screen/blob/b47197626804a742b8569cad50d5e0ed92fc765c/android/src/main/java/org/devio/rn/splashscreen/SplashScreen.java#L25
+      RabbyStartupTrace.beginSection("MainActivity.splash.show");
+      try {
+        SplashScreen.show(this, R.style.SplashScreenTheme, true);
+      } finally {
+        RabbyStartupTrace.endSection();
+      }
 
-    // super.onCreate(savedInstanceState);
-    // fix: https://sentry.io/organizations/debank/issues/?groupStatsPeriod=24h&page=0&project=6312337&query=is%3Aunresolved&referrer=issue-list&statsPeriod=14d
-    // https://github.com/software-mansion/react-native-screens#android
-    super.onCreate(null);
-    requestHighRefreshRate("onCreate");
+      // super.onCreate(savedInstanceState);
+      // fix: https://sentry.io/organizations/debank/issues/?groupStatsPeriod=24h&page=0&project=6312337&query=is%3Aunresolved&referrer=issue-list&statsPeriod=14d
+      // https://github.com/software-mansion/react-native-screens#android
+      RabbyStartupTrace.beginSection("MainActivity.super.onCreate");
+      try {
+        super.onCreate(null);
+      } finally {
+        RabbyStartupTrace.endSection();
+      }
+      requestHighRefreshRate("onCreate");
+    } finally {
+      RabbyStartupTrace.endSection();
+    }
   }
 
   @Override
@@ -61,9 +76,11 @@ public class MainActivity extends ReactActivity {
    */
   @Override
   protected ReactActivityDelegate createReactActivityDelegate() {
+    RabbyStartupTrace.instant("MainActivity.createReactActivityDelegate");
     return new DefaultReactActivityDelegate(this, getMainComponentName(), DefaultNewArchitectureEntryPoint.getFabricEnabled()) {
       @Override
       protected Bundle getLaunchOptions() {
+        RabbyStartupTrace.instant("MainActivity.getLaunchOptions");
         Bundle initialProperties = new Bundle();
         if (BuildConfig.rabbitCode != null) {
           initialProperties.putString("rabbitCode", BuildConfig.rabbitCode);

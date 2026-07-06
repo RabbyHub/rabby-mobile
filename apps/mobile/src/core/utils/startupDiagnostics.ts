@@ -3,11 +3,19 @@ import RNFS from '@rabby-wallet/react-native-fs';
 
 import { isNonPublicProductionEnv } from '@/constant';
 import { logger } from '@/utils/logger';
+import {
+  beginAndroidAsyncTrace,
+  endAndroidAsyncTrace,
+  nextAndroidTraceCookie,
+  traceAndroidCounter,
+  traceAndroidInstant,
+} from './androidTrace';
 
 type DiagnosticData = Record<string, unknown>;
 
 type ActiveDbSyncTask = {
   id: number;
+  traceCookie: number;
   startedAt: number;
   taskFor: string;
   entityName: string;
@@ -30,6 +38,7 @@ type ActiveDbSyncTask = {
 
 type ActiveWarmupTask = {
   id: number;
+  traceCookie: number;
   startedAt: number;
   name: string;
   detail?: DiagnosticData;
@@ -37,6 +46,7 @@ type ActiveWarmupTask = {
 
 type UnlockCriticalWindow = {
   id: number;
+  traceCookie: number;
   startedAt: number;
   reason: string;
   intervalId: ReturnType<typeof setInterval> | null;
@@ -48,6 +58,7 @@ type UnlockCriticalWindow = {
 
 type DbActiveWindow = {
   id: number;
+  traceCookie: number;
   startedAt: number;
   intervalId: ReturnType<typeof setInterval> | null;
   lastTickAt: number;
@@ -448,6 +459,11 @@ function markUnlockWindowStall(window: UnlockCriticalWindow, gapMs: number) {
     elapsedMs: now() - window.startedAt,
     ...getActiveTaskSnapshot(),
   });
+  traceAndroidInstant('unlock.window_js_stall', {
+    id: window.id,
+    reason: window.reason,
+    gapMs,
+  });
 }
 
 function markDbActiveWindowStall(window: DbActiveWindow, gapMs: number) {
@@ -469,6 +485,11 @@ function markDbActiveWindowStall(window: DbActiveWindow, gapMs: number) {
     peakActiveTaskCount: window.peakActiveTaskCount,
     ...getActiveTaskSnapshot(),
   });
+  traceAndroidInstant('db.active_window_js_stall', {
+    id: window.id,
+    gapMs,
+    activeDbTaskCount: activeDbSyncTasks.size,
+  });
 }
 
 function ensureDbActiveWindow() {
@@ -479,6 +500,7 @@ function ensureDbActiveWindow() {
   const startedAt = now();
   const window: DbActiveWindow = {
     id: ++dbActiveWindowSeq,
+    traceCookie: nextAndroidTraceCookie(),
     startedAt,
     intervalId: null,
     lastTickAt: startedAt,
@@ -514,6 +536,11 @@ function ensureDbActiveWindow() {
     id: window.id,
     ...getActiveTaskSnapshot(),
   });
+  beginAndroidAsyncTrace('db.active_window', window.traceCookie, {
+    id: window.id,
+    activeDbTaskCount: activeDbSyncTasks.size,
+  });
+  traceAndroidCounter('db.active_task_count', activeDbSyncTasks.size);
   publishDbSummarySnapshot(true);
 }
 
@@ -550,6 +577,13 @@ function endDbActiveWindowIfIdle() {
     peakActiveTaskCount: window.peakActiveTaskCount,
     ...getActiveTaskSnapshot(),
   });
+  endAndroidAsyncTrace('db.active_window', window.traceCookie, {
+    id: window.id,
+    durationMs: summary.durationMs,
+    maxGapMs: window.maxGapMs,
+    stallCount: window.stallCount,
+  });
+  traceAndroidCounter('db.active_task_count', activeDbSyncTasks.size);
   flushDiagnosticLines();
 }
 
@@ -579,6 +613,7 @@ export function beginUnlockCriticalWindow(reason: string) {
   const startedAt = now();
   const window: UnlockCriticalWindow = {
     id: ++unlockWindowSeq,
+    traceCookie: nextAndroidTraceCookie(),
     startedAt,
     reason,
     intervalId: null,
@@ -604,6 +639,10 @@ export function beginUnlockCriticalWindow(reason: string) {
     reason,
     ...getActiveTaskSnapshot(),
   });
+  beginAndroidAsyncTrace('unlock.critical_window', window.traceCookie, {
+    id: window.id,
+    reason,
+  });
 
   return window.id;
 }
@@ -626,14 +665,22 @@ export function endUnlockCriticalWindow(
   }
 
   activeUnlockWindowRef.current = null;
+  const durationMs = now() - window.startedAt;
   trace('unlock', 'critical_window_end', {
     id,
     reason: window.reason,
-    durationMs: now() - window.startedAt,
+    durationMs,
     maxGapMs: window.maxGapMs,
     stallCount: window.stallCount,
     ...getActiveTaskSnapshot(),
     ...data,
+  });
+  endAndroidAsyncTrace('unlock.critical_window', window.traceCookie, {
+    id,
+    reason: window.reason,
+    durationMs,
+    maxGapMs: window.maxGapMs,
+    stallCount: window.stallCount,
   });
 }
 
@@ -647,9 +694,11 @@ export async function runStartupDiagnosticTask<T>(
   }
 
   const id = ++warmupTaskSeq;
+  const traceCookie = nextAndroidTraceCookie();
   const startedAt = now();
   activeWarmupTasks.set(id, {
     id,
+    traceCookie,
     startedAt,
     name,
     detail,
@@ -661,25 +710,41 @@ export async function runStartupDiagnosticTask<T>(
     detail,
     ...getActiveTaskSnapshot(),
   });
+  beginAndroidAsyncTrace(`warmup.${name}`, traceCookie, {
+    id,
+    name,
+  });
 
   try {
     const result = await task();
+    const durationMs = now() - startedAt;
     trace('warmup', 'task_end', {
       id,
       name,
       status: 'success',
-      durationMs: now() - startedAt,
+      durationMs,
       ...getActiveTaskSnapshot(),
+    });
+    endAndroidAsyncTrace(`warmup.${name}`, traceCookie, {
+      id,
+      status: 'success',
+      durationMs,
     });
     return result;
   } catch (error) {
+    const durationMs = now() - startedAt;
     trace('warmup', 'task_end', {
       id,
       name,
       status: 'error',
-      durationMs: now() - startedAt,
+      durationMs,
       error: error instanceof Error ? error.message : String(error),
       ...getActiveTaskSnapshot(),
+    });
+    endAndroidAsyncTrace(`warmup.${name}`, traceCookie, {
+      id,
+      status: 'error',
+      durationMs,
     });
     throw error;
   } finally {
@@ -705,6 +770,7 @@ export function beginDbSyncTask(meta: {
   const id = ++dbTaskSeq;
   const task: ActiveDbSyncTask = {
     id,
+    traceCookie: nextAndroidTraceCookie(),
     startedAt: now(),
     stage: 'created',
     stageDetail: '',
@@ -735,6 +801,13 @@ export function beginDbSyncTask(meta: {
     delayBetweenTasks: meta.delayBetweenTasks,
     activeDbTaskCount: activeDbSyncTasks.size,
   });
+  beginAndroidAsyncTrace(`db.sync_task.${meta.entityName}`, task.traceCookie, {
+    id: task.id,
+    taskFor: meta.taskFor,
+    rows: meta.totalRows,
+    batches: meta.totalBatches,
+  });
+  traceAndroidCounter('db.active_task_count', activeDbSyncTasks.size);
   publishDbSummarySnapshot(true);
 
   return id;
@@ -810,6 +883,15 @@ export function markDbSyncTaskBatch(
     executeMs: data.executeMs,
     method: data.method,
   });
+  traceAndroidInstant('db.sync_task.batch', {
+    id: task.id,
+    entityName: task.entityName,
+    round: data.round + 1,
+    totalRound: data.totalRound,
+    count: data.count,
+    durationMs: data.durationMs,
+    method: data.method,
+  });
 }
 
 export function endDbSyncTask(
@@ -836,6 +918,12 @@ export function endDbSyncTask(
     activeDbTaskCount: activeDbSyncTasks.size,
     ...data,
   });
+  endAndroidAsyncTrace(`db.sync_task.${task.entityName}`, task.traceCookie, {
+    id: task.id,
+    status,
+    durationMs: task.endedAt - task.startedAt,
+  });
+  traceAndroidCounter('db.active_task_count', activeDbSyncTasks.size);
   publishDbSummarySnapshot(true);
   endDbActiveWindowIfIdle();
 }

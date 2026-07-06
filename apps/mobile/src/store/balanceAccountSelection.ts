@@ -7,6 +7,7 @@ import {
   sortAccountList,
 } from '@/core/apis/account';
 import { keyringService } from '@/core/services';
+import { traceAndroidInstant } from '@/core/utils/androidTrace';
 import type { Account, IPinAddress } from '@/types/account';
 import accountStore from './account';
 import {
@@ -165,9 +166,17 @@ export function startProcessAccountBalanceEvents() {
   startProcessAddressBalanceEvents();
 
   const ensureSelectionLifecycle = () => {
-    ensureAccountBalanceSelectionLifecycle().catch(error => {
-      console.error('ensureAccountBalanceSelectionLifecycle::error', error);
-    });
+    traceAndroidInstant('global_task.balance_selection_lifecycle.start');
+    ensureAccountBalanceSelectionLifecycle()
+      .catch(error => {
+        traceAndroidInstant('global_task.balance_selection_lifecycle.error', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        console.error('ensureAccountBalanceSelectionLifecycle::error', error);
+      })
+      .finally(() => {
+        traceAndroidInstant('global_task.balance_selection_lifecycle.end');
+      });
   };
 
   if (keyringService.isUnlocked()) {

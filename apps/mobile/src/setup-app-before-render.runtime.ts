@@ -49,9 +49,8 @@ import {
   scene24hBalanceStore,
 } from './store/balance24h';
 import { startProcessMultiCurveEvents } from './store/curve24h';
-import {
-  startProcessAccountBalanceEvents,
-} from './store/balanceAccountSelection';
+import { startProcessAccountBalanceEvents } from './store/balanceAccountSelection';
+import { traceAndroidInstant } from './core/utils/androidTrace';
 import * as apisAutoLock from './core/apis/autoLock';
 import { isUnlockSessionValid } from './core/apis/lock';
 import { startWatchLayoutChange } from './hooks/useAppLayout';
@@ -134,13 +133,26 @@ export async function initReadableAccountStores() {
 }
 
 const startInitStores = async () => {
+  traceAndroidInstant('global_task.init_persisted_stores.start');
   await startInitPersistedStores();
+  traceAndroidInstant('global_task.init_persisted_stores.end');
 };
 
 function startInitStoresAfterUnlockInteractions(reason: string) {
+  traceAndroidInstant('global_task.init_persisted_stores.schedule', {
+    reason,
+    delayMs: UNLOCKED_STORES_AFTER_UNLOCK_DELAY_MS,
+  });
   const interactionHandle = InteractionManager.runAfterInteractions(() => {
     setTimeout(() => {
+      traceAndroidInstant('global_task.init_persisted_stores.fire', {
+        reason,
+      });
       startInitStores().catch(error => {
+        traceAndroidInstant('global_task.init_persisted_stores.error', {
+          reason,
+          error: error instanceof Error ? error.message : String(error),
+        });
         console.error(`startInitStoresOnUnlock::${reason}::error`, error);
       });
     }, UNLOCKED_STORES_AFTER_UNLOCK_DELAY_MS);
@@ -164,10 +176,14 @@ startInitStoresOnUnlock();
 
 function startWalletConnectStartupPolicy() {
   if (keyringService.isUnlocked() || isUnlockSessionValid()) {
+    traceAndroidInstant('global_task.walletconnect_restore.already_unlocked');
     startRestoreWalletConnectSessions();
   }
 
-  keyringService.on('unlock', startRestoreWalletConnectSessions);
+  keyringService.on('unlock', () => {
+    traceAndroidInstant('global_task.walletconnect_restore.unlock_event');
+    startRestoreWalletConnectSessions();
+  });
 }
 
 startWalletConnectStartupPolicy();

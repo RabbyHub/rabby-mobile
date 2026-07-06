@@ -46,6 +46,9 @@ type KeyringState = {
 
 type MemStoreState = {
   isUnlocked: boolean;
+  keyringRuntimeReady: boolean;
+  keyringRuntimeRestoring: boolean;
+  keyringRuntimeRestoreError: string | null;
   keyringTypes: any[];
   keyrings: any[];
   preMnemonics: string;
@@ -99,6 +102,11 @@ export type KeyringServiceOptions = {
   keyringClasses?: (typeof KeyringIntf)[];
   onSetAddressAlias?: OnSetAddressAlias;
   onCreateKeyring?: OnCreateKeyring;
+  perfLogger?: KeyringPerfLogger;
+};
+
+export type KeyringPerfLogger = {
+  instant?: (event: string, data?: Record<string, unknown>) => void;
 };
 
 export type PersistType = 'perps' | 'keyring';
@@ -145,6 +153,14 @@ export type SubmitPasswordOptions = {
    */
   onTrustedVaultKeyString?: (vaultKeyString: string) => void | Promise<void>;
   deferMemStoreKeyringsUpdate?: boolean;
+  deferKeyringRuntimeRestore?: boolean;
+};
+
+type DeferredKeyringRuntimeRestore = {
+  keyringsToRestore: KeyringSerializedData[];
+  unencryptedKeyringData: KeyringSerializedData[];
+  hasUnencryptedKeyringData: boolean;
+  scheduledAt: number;
 };
 
 function getUtf8ByteLength(value: string) {
@@ -178,10 +194,8 @@ export class KeyringService extends RNEventEmitter {
   //
   // PUBLIC METHODS
   //
-  keyrings: KeyringInstance[]
-;
-  keyringClasses: (typeof KeyringIntf)[] = []
-;
+  keyrings: KeyringInstance[];
+  keyringClasses: (typeof KeyringIntf)[] = [];
   get keyringTypes() {
     return this.keyringClasses;
   }
@@ -189,20 +203,18 @@ export class KeyringService extends RNEventEmitter {
   set keyringTypes(value) {
     this.keyringClasses = value;
   }
-  store!: ObservableStore<KeyringState>
-;
-  memStore: ObservableStore<MemStoreState>
-;
-  #password: string | null = null
-;
-  private readonly encryptor: EncryptorAdapter
-;
-  private readonly contactService?: ContactBookService
-;
-  private readonly onSetAddressAlias?: OnSetAddressAlias
-;
-  private readonly onCreateKeyring?: OnCreateKeyring
-;
+  store!: ObservableStore<KeyringState>;
+  memStore: ObservableStore<MemStoreState>;
+  #password: string | null = null;
+  private readonly encryptor: EncryptorAdapter;
+  private readonly contactService?: ContactBookService;
+  private readonly onSetAddressAlias?: OnSetAddressAlias;
+  private readonly onCreateKeyring?: OnCreateKeyring;
+  private readonly perfLogger?: KeyringPerfLogger;
+  private pendingKeyringRuntimeRestore: DeferredKeyringRuntimeRestore | null =
+    null;
+  private keyringRuntimeRestorePromise: Promise<any[]> | null = null;
+  private keyringRuntimeRestoreId = 0;
   constructor(
     options?: KeyringServiceOptions & {
       contactService?: ContactBookService;
@@ -215,6 +227,7 @@ export class KeyringService extends RNEventEmitter {
       keyringClasses = keyringSdks,
       onSetAddressAlias,
       onCreateKeyring,
+      perfLogger,
       contactService,
     } = options || {};
 
@@ -224,14 +237,56 @@ export class KeyringService extends RNEventEmitter {
     this.keyringClasses = Object.values(keyringClasses);
     this.memStore = new ObservableStore({
       isUnlocked: false,
+      keyringRuntimeReady: false,
+      keyringRuntimeRestoring: false,
+      keyringRuntimeRestoreError: null,
       keyringTypes: this.keyringClasses.map(krt => krt.type),
       keyrings: [],
       preMnemonics: '',
     });
     this.onSetAddressAlias = onSetAddressAlias;
     this.onCreateKeyring = onCreateKeyring;
+    this.perfLogger = perfLogger;
 
     this.keyrings = [];
+  }
+
+  private traceKeyringPerf(event: string, data: Record<string, unknown> = {}) {
+    this.perfLogger?.instant?.(event, data);
+  }
+
+  private updateKeyringRuntimeState(
+    state: Partial<
+      Pick<
+        MemStoreState,
+        | 'keyringRuntimeReady'
+        | 'keyringRuntimeRestoring'
+        | 'keyringRuntimeRestoreError'
+      >
+    >,
+  ) {
+    this.memStore.updateState(state);
+  }
+
+  private resetKeyringRuntimeState() {
+    this.keyringRuntimeRestoreId += 1;
+    this.pendingKeyringRuntimeRestore = null;
+    this.keyringRuntimeRestorePromise = null;
+    this.updateKeyringRuntimeState({
+      keyringRuntimeReady: false,
+      keyringRuntimeRestoring: false,
+      keyringRuntimeRestoreError: null,
+    });
+  }
+
+  private markKeyringRuntimeReady() {
+    this.pendingKeyringRuntimeRestore = null;
+    this.keyringRuntimeRestorePromise = null;
+    this.updateKeyringRuntimeState({
+      keyringRuntimeReady: true,
+      keyringRuntimeRestoring: false,
+      keyringRuntimeRestoreError: null,
+    });
   }
   loadStore(initState: Partial<KeyringState>) {
     this.store = new ObservableStore({
@@ -251,7 +306,12 @@ export class KeyringService extends RNEventEmitter {
   }
   async boot(password: string) {
     await this._setupBoot(password);
-    this.memStore.updateState({ isUnlocked: true });
+    this.memStore.updateState({
+      isUnlocked: true,
+      keyringRuntimeReady: true,
+      keyringRuntimeRestoring: false,
+      keyringRuntimeRestoreError: null,
+    });
   }
   // TODO: add strict check for newPassword in logic layer too.
   async updatePassword(oldPassword: string, newPassword: string) {
@@ -361,6 +421,31 @@ export class KeyringService extends RNEventEmitter {
   isUnlocked() {
     return this.memStore.getState().isUnlocked;
   }
+  isKeyringRuntimeReady() {
+    return this.memStore.getState().keyringRuntimeReady;
+  }
+  isKeyringRuntimeRestoring() {
+    return this.memStore.getState().keyringRuntimeRestoring;
+  }
+  private shouldWaitForKeyringRuntime(type?: string | KeyringTypeName) {
+    if (!this.isUnlocked() || this.isKeyringRuntimeReady()) {
+      return false;
+    }
+
+    if (type) {
+      return isSensitiveKeyringType(type);
+    }
+
+    return true;
+  }
+  private async ensureKeyringRuntimeReadyForType(
+    reason: string,
+    type?: string | KeyringTypeName,
+  ) {
+    if (this.shouldWaitForKeyringRuntime(type)) {
+      await this.ensureKeyringRuntimeReady(reason);
+    }
+  }
   hasVault() {
     return Boolean(this.store.getState().vault);
   }
@@ -461,6 +546,7 @@ export class KeyringService extends RNEventEmitter {
   async setLocked(): Promise<MemStoreState> {
     // set locked
     this.#password = null;
+    this.resetKeyringRuntimeState();
     this.memStore.updateState({ isUnlocked: false });
     // remove keyrings
     this.keyrings = [];
@@ -485,8 +571,7 @@ export class KeyringService extends RNEventEmitter {
     this.memStore.updateState({ isUnlocked: true });
     this.emit('unlock', { scene: options.scene });
   }
-  _isSubmittingPassword = false
-;
+  _isSubmittingPassword = false;
   /**
    * Submit Password
    *
@@ -505,26 +590,52 @@ export class KeyringService extends RNEventEmitter {
     options: SubmitPasswordOptions = {},
   ): Promise<MemStoreState> {
     if (this._isSubmittingPassword) {
+      this.traceKeyringPerf('submit_password.already_submitting');
       return this.memStore.getState();
     }
 
+    const startedAt = nowMs();
     const encryptedVault = this.store.getState().vault;
-    const hasVault = !!encryptedVault;
-    const trustedPassword = !!options.trustedPassword;
+    const hasVault = Boolean(encryptedVault);
+    const trustedPassword = Boolean(options.trustedPassword);
     const shouldVerifyBeforeUnlock = !trustedPassword || !hasVault;
+
+    this.traceKeyringPerf('submit_password.start', {
+      hasVault,
+      trustedPassword,
+      hasTrustedVaultKeyString:
+        typeof options.trustedVaultKeyString === 'string',
+      deferMemStoreKeyringsUpdate: Boolean(options.deferMemStoreKeyringsUpdate),
+      deferKeyringRuntimeRestore: Boolean(options.deferKeyringRuntimeRestore),
+      shouldVerifyBeforeUnlock,
+    });
 
     try {
       this._isSubmittingPassword = true;
       if (shouldVerifyBeforeUnlock) {
+        this.traceKeyringPerf('submit_password.verify_password_start', {
+          elapsedMs: nowMs() - startedAt,
+        });
         await this.verifyPassword(password);
+        this.traceKeyringPerf('submit_password.verify_password_end', {
+          elapsedMs: nowMs() - startedAt,
+        });
       }
       this.#password = password;
       try {
         if (hasVault) {
+          this.traceKeyringPerf('submit_password.unlock_keyrings_start', {
+            elapsedMs: nowMs() - startedAt,
+          });
           this.keyrings = await this.unlockKeyrings(password, {
             trustedVaultKeyString: options.trustedVaultKeyString,
             onTrustedVaultKeyString: options.onTrustedVaultKeyString,
             deferMemStoreKeyringsUpdate: options.deferMemStoreKeyringsUpdate,
+            deferKeyringRuntimeRestore: options.deferKeyringRuntimeRestore,
+          });
+          this.traceKeyringPerf('submit_password.unlock_keyrings_end', {
+            elapsedMs: nowMs() - startedAt,
+            keyringCount: this.keyrings.length,
           });
         }
       } catch (error) {
@@ -532,7 +643,13 @@ export class KeyringService extends RNEventEmitter {
           throw error;
         }
       }
+      this.traceKeyringPerf('submit_password.set_unlocked_start', {
+        elapsedMs: nowMs() - startedAt,
+      });
       this._setUnlocked({ scene: 'unlock' });
+      this.traceKeyringPerf('submit_password.set_unlocked_end', {
+        elapsedMs: nowMs() - startedAt,
+      });
 
       // Populate the locked-read stores for older vaults without forcing a
       // rewrite on every unlock.
@@ -541,10 +658,33 @@ export class KeyringService extends RNEventEmitter {
         (!this.store.getState().unencryptedKeyringData ||
           !this.hasPublicAccountSnapshot())
       ) {
+        this.traceKeyringPerf('submit_password.legacy_persist_start', {
+          elapsedMs: nowMs() - startedAt,
+        });
         await this.persistAllKeyrings();
+        this.traceKeyringPerf('submit_password.legacy_persist_end', {
+          elapsedMs: nowMs() - startedAt,
+        });
       }
 
-      return this.fullUpdate();
+      this.traceKeyringPerf('submit_password.full_update_start', {
+        elapsedMs: nowMs() - startedAt,
+      });
+      const state = this.fullUpdate();
+      this.traceKeyringPerf('submit_password.full_update_end', {
+        elapsedMs: nowMs() - startedAt,
+      });
+      this.traceKeyringPerf('submit_password.end', {
+        elapsedMs: nowMs() - startedAt,
+        keyringCount: this.keyrings.length,
+      });
+      return state;
+    } catch (error) {
+      this.traceKeyringPerf('submit_password.error', {
+        elapsedMs: nowMs() - startedAt,
+        error: getErrorText(error),
+      });
+      throw error;
     } finally {
       this._isSubmittingPassword = false;
     }
@@ -572,6 +712,9 @@ export class KeyringService extends RNEventEmitter {
    * (usually after removing the last / only account) from a keyring
    */
   async removeEmptyKeyrings() {
+    if (this.shouldWaitForKeyringRuntime()) {
+      await this.ensureKeyringRuntimeReady('remove_empty_keyrings');
+    }
     const validKeyrings: KeyringInstance[] = [];
 
     // Since getAccounts returns a Promise
@@ -600,6 +743,7 @@ export class KeyringService extends RNEventEmitter {
     type: string,
     newAccountArray: string[],
   ): Promise<string[]> {
+    await this.ensureKeyringRuntimeReadyForType('check_for_duplicate', type);
     const keyrings = this.getKeyringsByType(type);
     const _accounts = await Promise.all(
       keyrings.map(keyring => keyring.getAccounts()),
@@ -693,6 +837,7 @@ export class KeyringService extends RNEventEmitter {
    */
   async exportAccount(address: string): Promise<string> {
     this.assertUnlocked();
+    await this.ensureKeyringRuntimeReady('export_account');
 
     try {
       return this.getKeyringForAccount(address).then(keyring => {
@@ -858,20 +1003,23 @@ export class KeyringService extends RNEventEmitter {
       });
   }
   removeKeyringByPublicKey(publicKey: string) {
-    const keyring = (this.keyrings as KeyringIntf[]).find(
-      item => item.publicKey === publicKey,
-    );
-    if (keyring) {
-      this.assertCanPersistKeyringMutation(keyring);
-    }
+    return this.ensureKeyringRuntimeReady('remove_keyring_by_public_key')
+      .then(() => {
+        const keyring = (this.keyrings as KeyringIntf[]).find(
+          item => item.publicKey === publicKey,
+        );
+        if (keyring) {
+          this.assertCanPersistKeyringMutation(keyring);
+        }
 
-    this.keyrings = (this.keyrings as KeyringIntf[]).filter(item => {
-      if (item.publicKey) {
-        return item.publicKey !== publicKey;
-      }
-      return true;
-    });
-    return this.persistAllKeyrings()
+        this.keyrings = (this.keyrings as KeyringIntf[]).filter(item => {
+          if (item.publicKey) {
+            return item.publicKey !== publicKey;
+          }
+          return true;
+        });
+      })
+      .then(() => this.persistAllKeyrings())
       .then(this._updateMemStoreKeyrings.bind(this))
       .then(this.fullUpdate.bind(this))
       .catch(e => {
@@ -881,6 +1029,9 @@ export class KeyringService extends RNEventEmitter {
   async addKeyring<T extends KeyringInstance>(
     keyring: KeyringInstance,
   ): Promise<string[] | T | boolean> {
+    if (this.shouldWaitForKeyringRuntime(keyring.type)) {
+      await this.ensureKeyringRuntimeReady('add_keyring');
+    }
     this.assertCanPersistKeyringMutation(keyring);
 
     return keyring
@@ -932,32 +1083,61 @@ export class KeyringService extends RNEventEmitter {
     password: string,
     options: SubmitPasswordOptions = {},
   ): Promise<any[]> {
+    const startedAt = nowMs();
     const encryptedVault = this.store.getState().vault;
     if (!encryptedVault) {
       // throw new Error(i18n.t('background.error.canNotUnlock'));
       throw new Error('Cannot unlock without a previous vault');
     }
 
+    this.traceKeyringPerf('unlock_keyrings.start', {
+      hasTrustedVaultKeyString:
+        typeof options.trustedVaultKeyString === 'string',
+      deferMemStoreKeyringsUpdate: Boolean(options.deferMemStoreKeyringsUpdate),
+      deferKeyringRuntimeRestore: Boolean(options.deferKeyringRuntimeRestore),
+    });
+    this.traceKeyringPerf('unlock_keyrings.clear_keyrings_start');
     await this.clearKeyrings();
+    this.traceKeyringPerf('unlock_keyrings.clear_keyrings_end', {
+      elapsedMs: nowMs() - startedAt,
+    });
     let vault: unknown = null;
 
     if (options.trustedVaultKeyString) {
+      this.traceKeyringPerf('unlock_keyrings.decrypt_cached_key_start', {
+        elapsedMs: nowMs() - startedAt,
+      });
       try {
         vault = await this.encryptor.decryptWithExportedKey(
           encryptedVault,
           options.trustedVaultKeyString,
         );
+        this.traceKeyringPerf('unlock_keyrings.decrypt_cached_key_end', {
+          elapsedMs: nowMs() - startedAt,
+          success: true,
+        });
       } catch {
         vault = null;
+        this.traceKeyringPerf('unlock_keyrings.decrypt_cached_key_end', {
+          elapsedMs: nowMs() - startedAt,
+          success: false,
+        });
       }
     }
 
     if (!vault) {
+      this.traceKeyringPerf('unlock_keyrings.decrypt_password_start', {
+        elapsedMs: nowMs() - startedAt,
+      });
       const decryptDetail = await this.encryptor.decryptWithDetail(
         password,
         encryptedVault,
       );
       vault = decryptDetail.vault;
+      this.traceKeyringPerf('unlock_keyrings.decrypt_password_end', {
+        elapsedMs: nowMs() - startedAt,
+        hasExportedKeyString: Boolean(decryptDetail.exportedKeyString),
+      });
 
       if (decryptDetail.exportedKeyString) {
         Promise.resolve()
@@ -977,25 +1157,244 @@ export class KeyringService extends RNEventEmitter {
           isSensitiveKeyringType(type),
         )
       : (vault as KeyringSerializedData[]);
-    // TODO: FIXME
-    await Promise.all(
-      Array.from(keyringsToRestore as any).map(
-        this._restoreKeyring.bind(this) as any,
-      ),
+    const shouldDeferKeyringRuntimeRestore = Boolean(
+      options.deferKeyringRuntimeRestore && this.hasPublicAccountSnapshot(),
     );
-    if (hasUnencryptedKeyringData) {
-      await Promise.all(
-        unencryptedKeyringData.map(this._restoreKeyring.bind(this)),
+
+    if (
+      options.deferKeyringRuntimeRestore &&
+      !shouldDeferKeyringRuntimeRestore
+    ) {
+      this.traceKeyringPerf(
+        'unlock_keyrings.defer_runtime_restore_unavailable',
+        {
+          elapsedMs: nowMs() - startedAt,
+          hasPublicAccountSnapshot: this.hasPublicAccountSnapshot(),
+        },
       );
     }
-    if (!options.deferMemStoreKeyringsUpdate) {
-      await this._updateMemStoreKeyrings();
+
+    if (shouldDeferKeyringRuntimeRestore) {
+      this.pendingKeyringRuntimeRestore = {
+        keyringsToRestore: Array.from(
+          keyringsToRestore as KeyringSerializedData[],
+        ),
+        unencryptedKeyringData: hasUnencryptedKeyringData
+          ? Array.from(unencryptedKeyringData)
+          : [],
+        hasUnencryptedKeyringData,
+        scheduledAt: nowMs(),
+      };
+      this.updateKeyringRuntimeState({
+        keyringRuntimeReady: false,
+        keyringRuntimeRestoring: false,
+        keyringRuntimeRestoreError: null,
+      });
+      this.traceKeyringPerf('unlock_keyrings.defer_runtime_restore_scheduled', {
+        elapsedMs: nowMs() - startedAt,
+        sensitiveKeyringCount: keyringsToRestore.length,
+        unencryptedKeyringCount: hasUnencryptedKeyringData
+          ? unencryptedKeyringData.length
+          : 0,
+      });
+      return this.keyrings;
     }
+
+    // TODO: FIXME
+    this.traceKeyringPerf('unlock_keyrings.restore_sensitive_start', {
+      elapsedMs: nowMs() - startedAt,
+      keyringCount: keyringsToRestore.length,
+      hasUnencryptedKeyringData,
+    });
+    await Promise.all(
+      Array.from(keyringsToRestore as KeyringSerializedData[]).map(serialized =>
+        this._restoreKeyring(serialized),
+      ),
+    );
+    this.traceKeyringPerf('unlock_keyrings.restore_sensitive_end', {
+      elapsedMs: nowMs() - startedAt,
+      runtimeKeyringCount: this.keyrings.length,
+    });
+    if (hasUnencryptedKeyringData) {
+      this.traceKeyringPerf('unlock_keyrings.restore_unencrypted_start', {
+        elapsedMs: nowMs() - startedAt,
+        keyringCount: unencryptedKeyringData.length,
+      });
+      await Promise.all(
+        unencryptedKeyringData.map(serialized =>
+          this._restoreKeyring(serialized),
+        ),
+      );
+      this.traceKeyringPerf('unlock_keyrings.restore_unencrypted_end', {
+        elapsedMs: nowMs() - startedAt,
+        runtimeKeyringCount: this.keyrings.length,
+      });
+    }
+    if (!options.deferMemStoreKeyringsUpdate) {
+      this.traceKeyringPerf('unlock_keyrings.update_memstore_start', {
+        elapsedMs: nowMs() - startedAt,
+      });
+      await this._updateMemStoreKeyrings();
+      this.traceKeyringPerf('unlock_keyrings.update_memstore_end', {
+        elapsedMs: nowMs() - startedAt,
+      });
+    } else {
+      this.traceKeyringPerf('unlock_keyrings.update_memstore_skipped', {
+        elapsedMs: nowMs() - startedAt,
+      });
+    }
+    this.traceKeyringPerf('unlock_keyrings.end', {
+      elapsedMs: nowMs() - startedAt,
+      keyringCount: this.keyrings.length,
+    });
+    this.markKeyringRuntimeReady();
     return this.keyrings;
   }
+  async startDeferredKeyringRuntimeRestore(reason = 'unknown'): Promise<any[]> {
+    if (this.isKeyringRuntimeReady()) {
+      this.traceKeyringPerf('keyring_runtime_restore_skip_ready', {
+        reason,
+        keyringCount: this.keyrings.length,
+      });
+      return this.keyrings;
+    }
+
+    if (this.keyringRuntimeRestorePromise) {
+      this.traceKeyringPerf('keyring_runtime_restore_join_existing', {
+        reason,
+      });
+      return this.keyringRuntimeRestorePromise;
+    }
+
+    const pending = this.pendingKeyringRuntimeRestore;
+    if (!pending) {
+      if (
+        this.keyrings.length ||
+        !this.store.getState().hasEncryptedKeyringData
+      ) {
+        this.markKeyringRuntimeReady();
+        return this.keyrings;
+      }
+
+      throw new Error('Keyring runtime is not ready');
+    }
+
+    const restoreId = this.keyringRuntimeRestoreId + 1;
+    this.keyringRuntimeRestoreId = restoreId;
+    const previousKeyrings = this.keyrings.slice();
+    const startedAt = nowMs();
+    this.pendingKeyringRuntimeRestore = null;
+    this.updateKeyringRuntimeState({
+      keyringRuntimeReady: false,
+      keyringRuntimeRestoring: true,
+      keyringRuntimeRestoreError: null,
+    });
+    this.traceKeyringPerf('keyring_runtime_restore_start', {
+      reason,
+      pendingMs: startedAt - pending.scheduledAt,
+      sensitiveKeyringCount: pending.keyringsToRestore.length,
+      unencryptedKeyringCount: pending.hasUnencryptedKeyringData
+        ? pending.unencryptedKeyringData.length
+        : 0,
+    });
+
+    this.keyringRuntimeRestorePromise = (async () => {
+      try {
+        await Promise.all(
+          pending.keyringsToRestore.map(serialized =>
+            this._restoreKeyring(serialized, { restoreId }),
+          ),
+        );
+        this.traceKeyringPerf('keyring_runtime_restore_sensitive_end', {
+          reason,
+          elapsedMs: nowMs() - startedAt,
+          runtimeKeyringCount: this.keyrings.length,
+        });
+
+        if (pending.hasUnencryptedKeyringData) {
+          await Promise.all(
+            pending.unencryptedKeyringData.map(serialized =>
+              this._restoreKeyring(serialized, { restoreId }),
+            ),
+          );
+        }
+
+        if (restoreId !== this.keyringRuntimeRestoreId) {
+          this.traceKeyringPerf('keyring_runtime_restore_stale_end', {
+            reason,
+            elapsedMs: nowMs() - startedAt,
+          });
+          return this.keyrings;
+        }
+
+        this.markKeyringRuntimeReady();
+        this.traceKeyringPerf('keyring_runtime_restore_end', {
+          reason,
+          elapsedMs: nowMs() - startedAt,
+          runtimeKeyringCount: this.keyrings.length,
+        });
+        return this.keyrings;
+      } catch (error) {
+        if (restoreId === this.keyringRuntimeRestoreId) {
+          this.keyrings = previousKeyrings;
+          this.pendingKeyringRuntimeRestore = pending;
+          this.keyringRuntimeRestorePromise = null;
+          this.updateKeyringRuntimeState({
+            keyringRuntimeReady: false,
+            keyringRuntimeRestoring: false,
+            keyringRuntimeRestoreError: getErrorText(error),
+          });
+        }
+
+        this.traceKeyringPerf('keyring_runtime_restore_error', {
+          reason,
+          elapsedMs: nowMs() - startedAt,
+          error: getErrorText(error),
+        });
+        throw error;
+      }
+    })();
+
+    return this.keyringRuntimeRestorePromise;
+  }
+
+  async ensureKeyringRuntimeReady(reason = 'unknown') {
+    if (!this.isUnlocked()) {
+      throw new Error('background.error.unlock');
+    }
+
+    if (this.isKeyringRuntimeReady()) {
+      return;
+    }
+
+    const startedAt = nowMs();
+    this.traceKeyringPerf('ensure_keyring_runtime_ready_wait_start', {
+      reason,
+      isRestoring: this.isKeyringRuntimeRestoring(),
+    });
+    await this.startDeferredKeyringRuntimeRestore(reason);
+    this.traceKeyringPerf('ensure_keyring_runtime_ready_wait_end', {
+      reason,
+      elapsedMs: nowMs() - startedAt,
+      keyringCount: this.keyrings.length,
+    });
+  }
+
   async refreshMemStoreKeyrings(): Promise<MemStoreState> {
+    const startedAt = nowMs();
+    this.traceKeyringPerf('refresh_memstore_keyrings.start', {
+      keyringCount: this.keyrings.length,
+    });
+    await this.ensureKeyringRuntimeReady('refresh_memstore_keyrings');
     await this._updateMemStoreKeyrings();
-    return this.fullUpdate();
+    this.traceKeyringPerf('refresh_memstore_keyrings.update_memstore_end', {
+      elapsedMs: nowMs() - startedAt,
+    });
+    const state = this.fullUpdate();
+    this.traceKeyringPerf('refresh_memstore_keyrings.end', {
+      elapsedMs: nowMs() - startedAt,
+    });
+    return state;
   }
   getVaultStorageDebugState(): KeyringVaultStorageDebugState {
     const state = this.store.getState();
@@ -1041,7 +1440,7 @@ export class KeyringService extends RNEventEmitter {
       this.keyrings = [];
       const vault = await fn();
       await Promise.all(
-        Array.from(vault).map(this._restoreKeyring.bind(this) as any),
+        Array.from(vault).map(serialized => this._restoreKeyring(serialized)),
       );
 
       return {
@@ -1149,18 +1548,54 @@ export class KeyringService extends RNEventEmitter {
    */
   private async _restoreKeyring(
     serialized: KeyringSerializedData,
+    options: { restoreId?: number } = {},
   ): Promise<any> {
+    const startedAt = nowMs();
     const { type, data } = serialized;
+    this.traceKeyringPerf('restore_keyring.start', {
+      type,
+    });
     const Keyring = this.getKeyringClassForType(type);
     const keyring =
       typeof this.onCreateKeyring === 'function'
         ? this.onCreateKeyring(Keyring)
         : new Keyring({});
+    this.traceKeyringPerf('restore_keyring.deserialize_start', {
+      type,
+      elapsedMs: nowMs() - startedAt,
+    });
     await keyring.deserialize(data);
+    this.traceKeyringPerf('restore_keyring.deserialize_end', {
+      type,
+      elapsedMs: nowMs() - startedAt,
+    });
 
     // getAccounts also validates the accounts for some keyrings
+    this.traceKeyringPerf('restore_keyring.get_accounts_start', {
+      type,
+      elapsedMs: nowMs() - startedAt,
+    });
     await keyring.getAccounts();
+    this.traceKeyringPerf('restore_keyring.get_accounts_end', {
+      type,
+      elapsedMs: nowMs() - startedAt,
+    });
+    if (
+      typeof options.restoreId === 'number' &&
+      options.restoreId !== this.keyringRuntimeRestoreId
+    ) {
+      this.traceKeyringPerf('restore_keyring.stale_skip', {
+        type,
+        elapsedMs: nowMs() - startedAt,
+      });
+      return keyring;
+    }
+
     this.keyrings.push(keyring);
+    this.traceKeyringPerf('restore_keyring.end', {
+      type,
+      elapsedMs: nowMs() - startedAt,
+    });
     return keyring;
   }
   /**
@@ -1194,15 +1629,6 @@ export class KeyringService extends RNEventEmitter {
   //
   // PUBLIC METHODS
   //
-;
-;
-;
-;
-;
-;
-;
-;
-;
   private normalizePublicAccountSnapshot(
     raw: any,
   ): PublicAccountSnapshot | undefined {
@@ -1525,7 +1951,6 @@ export class KeyringService extends RNEventEmitter {
   //   keyring.index =
   //     Math.max(...keryings.map((item) => item.index), keryings.length - 1) + 1;
   // }
-;
   // eslint-disable-next-line jsdoc/require-returns
   //
   // SIGNING METHODS
@@ -1624,6 +2049,10 @@ export class KeyringService extends RNEventEmitter {
     return this.persistUnencryptedKeyrings([keyring.type]);
   }
   async persistAllKeyrings(): Promise<boolean> {
+    if (this.isUnlocked() && !this.isKeyringRuntimeReady()) {
+      await this.ensureKeyringRuntimeReady('persist_all_keyrings');
+    }
+
     if (!this.#password || typeof this.#password !== 'string') {
       return Promise.reject(
         new Error('KeyringService - password is not a string'),
@@ -1662,13 +2091,16 @@ export class KeyringService extends RNEventEmitter {
       isSensitiveKeyringType(keyring.type),
     );
     await Promise.all(
-      unencryptedKeyringData.map(this._restoreKeyring.bind(this)),
+      unencryptedKeyringData.map(serialized =>
+        this._restoreKeyring(serialized),
+      ),
     );
     await this._updateMemStoreKeyrings();
     return this.keyrings;
   }
   /* eslint-disable require-await */
   async clearKeyrings(): Promise<void> {
+    this.resetKeyringRuntimeState();
     // clear keyrings from memory
     this.keyrings = [];
     this.memStore.updateState({
@@ -1685,6 +2117,19 @@ export class KeyringService extends RNEventEmitter {
    * @returns The array of accounts.
    */
   async getAccounts(): Promise<string[]> {
+    if (!this.isKeyringRuntimeReady()) {
+      const snapshotAccounts = this.getAccountsFromSnapshot();
+      if (snapshotAccounts.length) {
+        this.traceKeyringPerf('public_snapshot_fallback_used', {
+          method: 'getAccounts',
+          accountCount: snapshotAccounts.length,
+        });
+        return snapshotAccounts.map(item => normalizeAddress(item.address));
+      }
+
+      await this.ensureKeyringRuntimeReady('get_accounts');
+    }
+
     const keyrings = this.keyrings || [];
     const addrs = await Promise.all(keyrings.map(kr => kr.getAccounts())).then(
       keyringArrays => {
@@ -1710,6 +2155,10 @@ export class KeyringService extends RNEventEmitter {
     type?: string | KeyringTypeName,
     includeWatchKeyring = true,
   ): Promise<any> {
+    await this.ensureKeyringRuntimeReadyForType(
+      'get_keyring_for_account',
+      type,
+    );
     const hexed = normalizeAddress(address).toLowerCase();
     log.debug(`KeyringService - getKeyringForAccount: ${hexed}`);
     let keyrings = type
@@ -1732,7 +2181,7 @@ export class KeyringService extends RNEventEmitter {
         return accounts.includes(hexed);
       });
       if (winners && winners.length > 0) {
-        return winners[0][0];
+        return winners[0]![0];
       }
       throw new Error('No keyring found for the requested account.');
     });
@@ -1798,9 +2247,13 @@ export class KeyringService extends RNEventEmitter {
   }
 
   getAllTypedAccounts(): Promise<DisplayedKeyring[]> {
-    if (!this.isUnlocked()) {
+    if (!this.isKeyringRuntimeReady()) {
       const snapshotAccounts = this.getTypedAccountsFromSnapshot();
       if (snapshotAccounts.length) {
+        this.traceKeyringPerf('public_snapshot_fallback_used', {
+          method: 'getAllTypedAccounts',
+          accountGroupCount: snapshotAccounts.length,
+        });
         return Promise.resolve(snapshotAccounts);
       }
     }
@@ -1811,9 +2264,13 @@ export class KeyringService extends RNEventEmitter {
   }
 
   async getAllTypedVisibleAccounts(): Promise<DisplayedKeyring[]> {
-    if (!this.isUnlocked()) {
+    if (!this.isKeyringRuntimeReady()) {
       const snapshotAccounts = this.getTypedAccountsFromSnapshot();
       if (snapshotAccounts.length) {
+        this.traceKeyringPerf('public_snapshot_fallback_used', {
+          method: 'getAllTypedVisibleAccounts',
+          accountGroupCount: snapshotAccounts.length,
+        });
         return snapshotAccounts;
       }
     }
@@ -1825,9 +2282,13 @@ export class KeyringService extends RNEventEmitter {
   }
 
   async getAllVisibleAccountsArray() {
-    if (!this.isUnlocked()) {
+    if (!this.isKeyringRuntimeReady()) {
       const snapshotAccounts = this.getAccountsFromSnapshot();
       if (snapshotAccounts.length) {
+        this.traceKeyringPerf('public_snapshot_fallback_used', {
+          method: 'getAllVisibleAccountsArray',
+          accountCount: snapshotAccounts.length,
+        });
         return snapshotAccounts;
       }
     }
@@ -1853,9 +2314,13 @@ export class KeyringService extends RNEventEmitter {
   }
 
   async getAllAddresses() {
-    if (!this.isUnlocked()) {
+    if (!this.isKeyringRuntimeReady()) {
       const snapshotAccounts = this.getAccountsFromSnapshot();
       if (snapshotAccounts.length) {
+        this.traceKeyringPerf('public_snapshot_fallback_used', {
+          method: 'getAllAddresses',
+          accountCount: snapshotAccounts.length,
+        });
         return snapshotAccounts;
       }
     }
@@ -1889,10 +2354,23 @@ export class KeyringService extends RNEventEmitter {
    * Updates the in-memory keyrings, without persisting.
    */
   private async _updateMemStoreKeyrings(): Promise<void> {
+    const startedAt = nowMs();
+    this.traceKeyringPerf('update_memstore_keyrings.start', {
+      keyringCount: this.keyrings.length,
+    });
     const keyrings = await Promise.all(
       this.keyrings.map(keyring => this.displayForKeyring(keyring)),
     );
-    return this.memStore.updateState({ keyrings });
+    this.traceKeyringPerf('update_memstore_keyrings.display_end', {
+      elapsedMs: nowMs() - startedAt,
+      displayedKeyringCount: keyrings.length,
+    });
+    const result = this.memStore.updateState({ keyrings });
+    this.traceKeyringPerf('update_memstore_keyrings.end', {
+      elapsedMs: nowMs() - startedAt,
+      displayedKeyringCount: keyrings.length,
+    });
+    return result;
   }
 
   /**
@@ -2131,24 +2609,16 @@ export class KeyringService extends RNEventEmitter {
     );
 
     await Promise.all(
-      Array.from(mergeKeyringSerializedData).map(
-        this._restoreKeyring.bind(this) as any,
+      Array.from(mergeKeyringSerializedData).map(serialized =>
+        this._restoreKeyring(serialized),
       ),
     );
     await this.persistAllKeyrings();
 
     await this._updateMemStoreKeyrings();
 
-    if (addedAccounts.length) {
-      this.emit('newAccount', addedAccounts[0]);
-    }
-
     addedAccounts.forEach(account => {
-      this.emit('newAccount', {
-        address: account.address,
-        brandName: account.brandName || account.type,
-        type: (account.type || account.brandName) as KeyringTypeName,
-      });
+      this.emit('newAccount', account);
     });
 
     return addedAccounts;

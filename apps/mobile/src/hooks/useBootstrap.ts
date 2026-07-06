@@ -41,6 +41,14 @@ import { RootNames } from '@/constant/layout';
 import { setBrowserState } from './browser/useBrowser';
 import { perfEvents } from '@/core/utils/perf';
 import { runAfterHomePostStartupReady } from '@/core/utils/homeStartupReady';
+import {
+  beginAndroidAsyncTrace,
+  beginAndroidTraceSection,
+  endAndroidAsyncTrace,
+  endAndroidTraceSection,
+  nextAndroidTraceCookie,
+  traceAndroidInstant,
+} from '@/core/utils/androidTrace';
 
 const syncCustomTestChainList = () => {
   try {
@@ -107,14 +115,23 @@ const doInitializeApis = async () => {
 export function useInitializeAppOnTop() {
   React.useEffect(() => {
     const onUnlock = () => {
+      traceAndroidInstant('global_task.wallet_auth_unlocked.start', {
+        source: 'useBootstrap',
+      });
       console.debug('useBootstrap::onUnlock');
       storeApiLock.setAppLock(prev => ({
         ...prev,
         appUnlocked: true,
         isUnlockSessionValid: apisLock.isUnlockSessionValid(),
       }));
+      traceAndroidInstant('global_task.wallet_auth_unlocked.end', {
+        source: 'useBootstrap',
+      });
     };
     const onUnlockUIReady = () => {
+      traceAndroidInstant('global_task.post_unlock_ui_ready.start', {
+        source: 'useBootstrap',
+      });
       sendUserAddressEvent();
 
       doInitializeApis();
@@ -127,6 +144,9 @@ export function useInitializeAppOnTop() {
         }));
       });
       perpsService.unlockAgentWallets();
+      traceAndroidInstant('global_task.post_unlock_ui_ready.end', {
+        source: 'useBootstrap',
+      });
     };
     const onLock = () => {
       storeApiLock.setAppLock(prev => ({
@@ -154,9 +174,9 @@ export function useInitializeAppOnTop() {
       apisPerpsStore.logout();
       apisPerps.destroyPerpsSDK();
     };
-    const sub = perfEvents.subscribe('USER_MANUALLY_UNLOCK', onUnlock);
+    const sub = perfEvents.subscribe('WALLET_AUTH_UNLOCKED', onUnlock);
     const subUIReady = perfEvents.subscribe(
-      'USER_MANUALLY_UNLOCK_UI_READY',
+      'POST_UNLOCK_UI_READY',
       onUnlockUIReady,
     );
     keyringService.on('lock', onLock);
@@ -173,7 +193,7 @@ export function useInitializeAppOnTop() {
       apisSafe.syncAllGnosisNetworks();
       doInitializeApis();
     };
-    const sub = perfEvents.subscribe('USER_MANUALLY_UNLOCK_UI_READY', onUnlock);
+    const sub = perfEvents.subscribe('POST_UNLOCK_UI_READY', onUnlock);
 
     return () => {
       sub.remove();
@@ -182,7 +202,7 @@ export function useInitializeAppOnTop() {
 }
 
 export function subscribeUnlockToFetchAccounts() {
-  perfEvents.subscribe('USER_MANUALLY_UNLOCK_UI_READY', async () => {
+  perfEvents.subscribe('POST_UNLOCK_UI_READY', async () => {
     const accountFlags = await getBootstrapAccountFlags();
     if (!accountFlags.hasVisibleAccounts) {
       replace(RootNames.StackGetStarted, {
@@ -275,6 +295,9 @@ export function useJavaScriptBeforeContentLoaded() {
 const splashScreenVisibleRef = { current: true };
 const hideSplashScreen = (forceHide = false) => {
   if (splashScreenVisibleRef.current || forceHide) {
+    traceAndroidInstant('bootstrap.splash.hide', {
+      forceHide,
+    });
     SplashScreen.hide();
     splashScreenVisibleRef.current = false;
   }
@@ -335,10 +358,36 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
     if (startedLoadRef.current) return;
     startedLoadRef.current = true;
 
-    Promise.allSettled([
-      loadBootstrapAppLockState(),
-      loadSecurityChain({ rabbitCode }),
-    ])
+    const bootstrapTraceCookie = nextAndroidTraceCookie();
+    const lockStateTraceCookie = nextAndroidTraceCookie();
+    beginAndroidAsyncTrace('bootstrap.useBootstrapApp', bootstrapTraceCookie);
+    beginAndroidAsyncTrace(
+      'bootstrap.loadBootstrapAppLockState',
+      lockStateTraceCookie,
+    );
+    const lockStatePromise = loadBootstrapAppLockState().finally(() => {
+      endAndroidAsyncTrace(
+        'bootstrap.loadBootstrapAppLockState',
+        lockStateTraceCookie,
+      );
+    });
+    const didTraceSecurityChain = beginAndroidTraceSection(
+      'bootstrap.loadSecurityChain',
+    );
+    let securityChainResult:
+      | ReturnType<typeof loadSecurityChain>
+      | Promise<never>;
+    try {
+      securityChainResult = loadSecurityChain({ rabbitCode });
+    } catch (error) {
+      securityChainResult = Promise.reject(error);
+    } finally {
+      if (didTraceSecurityChain) {
+        endAndroidTraceSection();
+      }
+    }
+
+    Promise.allSettled([lockStatePromise, securityChainResult])
       .then(async ([_initialLockResult, _securityChain]) => {
         const initialLockState =
           _initialLockResult.status === 'fulfilled'
@@ -355,6 +404,12 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
           : null;
 
         console.debug('useBootstrapApp::sucess', {
+          initialLockStatus: _initialLockResult.status,
+          securityChainStatus: _securityChain.status,
+          unlockStatus: unlockResult?.status ?? 'deferred',
+          shouldWaitAutoUnlock,
+        });
+        traceAndroidInstant('bootstrap.couldRender.set_true', {
           initialLockStatus: _initialLockResult.status,
           securityChainStatus: _securityChain.status,
           unlockStatus: unlockResult?.status ?? 'deferred',
@@ -378,6 +433,7 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
         setBootstrap({ couldRender: false });
       })
       .finally(() => {
+        endAndroidAsyncTrace('bootstrap.useBootstrapApp', bootstrapTraceCookie);
         setTimeout(() => {
           hideSplashScreen(false);
           console.debug(

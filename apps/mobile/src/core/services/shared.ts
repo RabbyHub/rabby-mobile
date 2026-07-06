@@ -62,6 +62,9 @@ import {
 } from '@/utils/trackingOptOut';
 import { syncFirebaseAnalyticsCollectionWithOptOut } from '@/utils/analytics';
 import { syncSentryUserBehaviorTrackingEnabled } from '@/core/sentry';
+import { isNonPublicProductionEnv } from '@/constant';
+import { logger } from '@/utils/logger';
+import { traceAndroidInstant } from '../utils/androidTrace';
 
 migrateAppStorage(appStorage);
 
@@ -125,6 +128,16 @@ export const keyringService = new KeyringService({
   onSetAddressAlias,
   onCreateKeyring,
   contactService,
+  perfLogger: {
+    instant(event, data) {
+      if (!isNonPublicProductionEnv) {
+        return;
+      }
+
+      logger.info(`[RabbyKeyringPerf] ${event}`, data || {});
+      traceAndroidInstant(`keyring.${event}`, data);
+    },
+  },
 });
 keyringService.loadStore(keyringState || {});
 
