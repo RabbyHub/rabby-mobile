@@ -6,21 +6,32 @@ import { hydrateCachedHomeDayCurve, initCurve24hStore } from './store/curve24h';
 import { useAppChainStore } from './store/appchain';
 import addressBalanceStore from './store/balance';
 import { ensureAccountBalanceSelectionLifecycle } from './store/balanceAccountSelection';
+import { runStartupDiagnosticTask } from './core/utils/startupDiagnostics';
 
 async function initPersistedStores() {
-  console.time('initPersistedStores');
-  try {
-    await useAppChainStore.getState().initStore();
-    await Promise.all([
-      addressBalanceStore.initStore(),
-      balance24hStore.initStore(),
-      initCurve24hStore(),
-    ]);
-    hydrateCachedHome24hBalanceScene();
-    hydrateCachedHomeDayCurve();
-  } finally {
-    console.timeEnd('initPersistedStores');
-  }
+  return runStartupDiagnosticTask('initPersistedStores', {}, async () => {
+    console.time('initPersistedStores');
+    try {
+      await runStartupDiagnosticTask('appChainStore.initStore', {}, () =>
+        useAppChainStore.getState().initStore(),
+      );
+      await Promise.all([
+        runStartupDiagnosticTask('addressBalanceStore.initStore', {}, () =>
+          addressBalanceStore.initStore(),
+        ),
+        runStartupDiagnosticTask('balance24hStore.initStore', {}, () =>
+          balance24hStore.initStore(),
+        ),
+        runStartupDiagnosticTask('initCurve24hStore', {}, () =>
+          initCurve24hStore(),
+        ),
+      ]);
+      hydrateCachedHome24hBalanceScene();
+      hydrateCachedHomeDayCurve();
+    } finally {
+      console.timeEnd('initPersistedStores');
+    }
+  });
 }
 
 const initPersistedStoresStateRef = {
@@ -43,7 +54,9 @@ export async function startInitPersistedStores() {
 export async function startReadableAccountBootstrapWarmups() {
   const results = await Promise.allSettled([
     startInitPersistedStores(),
-    ensureAccountBalanceSelectionLifecycle(),
+    runStartupDiagnosticTask('ensureAccountBalanceSelectionLifecycle', {}, () =>
+      ensureAccountBalanceSelectionLifecycle(),
+    ),
   ]);
 
   results.forEach(result => {

@@ -20,6 +20,7 @@ import {
 } from '@/constant/assets';
 import { BalanceEntity } from '../entities/balance';
 import { batchSaveWithPQueueAndTransaction, BeforeEmitFn } from './_task';
+import { appOrmEvents } from './_event';
 import { BuyItemEntity } from '../entities/buyItem';
 import { CexEntity } from '../entities/cex';
 import { deleteCurveCache } from '@/utils/24balanceCurveCache';
@@ -29,23 +30,142 @@ import { removeCexId } from '@/utils/addressCexId';
 import type { EvmTotalBalanceResponse } from '../hooks/balance';
 import { setHistoryLoading } from '@/hooks/historyTokenDict';
 import type { ITokenItem } from '@/types/assets';
+import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 
 export { patchSingleToken } from './token';
 
-export async function syncRemoteTokens(
-  address: string,
-  _tokens: TokenItem[] | ITokenItem[],
+const BALANCE_SYNC_FLUSH_DELAY_MS = 32;
+const BALANCE_BATCH_OWNER = '__balance_batch__';
+const TOKEN_BATCH_OWNER = '__token_batch__';
+
+type PendingBalanceSync = {
+  owner_addr: string;
+  item: BalanceEntity;
+  resolve: () => void;
+  reject: (error: unknown) => void;
+};
+
+const pendingBalanceSyncs: PendingBalanceSync[] = [];
+let pendingBalanceFlushTimer: ReturnType<typeof setTimeout> | null = null;
+
+function emitBalanceSyncResult(pending: PendingBalanceSync, success: boolean) {
+  appOrmEvents.emit('onRemoteDataUpserted', {
+    owner_addr: pending.owner_addr,
+    taskFor: 'balance',
+    syncDetails: {
+      count: 1,
+      total: 1,
+      round: 0,
+      batchSize: 1,
+    },
+    success,
+  });
+}
+
+function scheduleBalanceSyncFlush() {
+  if (pendingBalanceFlushTimer) {
+    return;
+  }
+
+  pendingBalanceFlushTimer = setTimeout(() => {
+    pendingBalanceFlushTimer = null;
+    void flushPendingBalanceSyncs();
+  }, BALANCE_SYNC_FLUSH_DELAY_MS);
+}
+
+async function flushPendingBalanceSyncs() {
+  const pending = pendingBalanceSyncs.splice(0);
+  if (!pending.length) {
+    return;
+  }
+
+  try {
+    await prepareAppDataSourceWithDiag('balance', BalanceEntity.name);
+    await batchSaveWithPQueueAndTransaction(
+      BalanceEntity,
+      pending.map(item => item.item),
+      {
+        owner_addr: BALANCE_BATCH_OWNER,
+        taskFor: 'balance',
+        batchSize: 100,
+        concurrency: 1,
+        delayBetweenTasks: 0,
+        waitTaskDoneReturn: true,
+        noNeedAbort: true,
+        skipEmit: true,
+      },
+    );
+
+    pending.forEach(item => {
+      emitBalanceSyncResult(item, true);
+      item.resolve();
+    });
+  } catch (error) {
+    pending.forEach(item => {
+      emitBalanceSyncResult(item, false);
+      item.reject(error);
+    });
+  }
+}
+
+function enqueueBalanceSync(owner_addr: string, item: BalanceEntity) {
+  return new Promise<void>((resolve, reject) => {
+    pendingBalanceSyncs.push({
+      owner_addr,
+      item,
+      resolve,
+      reject,
+    });
+    scheduleBalanceSyncFlush();
+  });
+}
+
+function traceEntityBuild(
+  taskFor: string,
+  entityName: string,
+  startedAt: number,
+  rawCount: number,
+  entityCount: number,
 ) {
+  traceStartupDiagnostic('db', 'entity_build', {
+    taskFor,
+    entityName,
+    rawCount,
+    entityCount,
+    durationMs: Date.now() - startedAt,
+  });
+}
+
+async function prepareAppDataSourceWithDiag(
+  taskFor: string,
+  entityName: string,
+) {
+  const startedAt = Date.now();
+  await prepareAppDataSource();
+  traceStartupDiagnostic('db', 'prepare_data_source', {
+    taskFor,
+    entityName,
+    durationMs: Date.now() - startedAt,
+  });
+}
+
+function normalizeTokenInput(_tokens: TokenItem[] | ITokenItem[]) {
   const data = [..._tokens];
   if (data.length === 0) {
     data.push(EMPTY_TOKEN_ITEM);
   }
-  const tokens = data.sort((a, b) =>
+
+  return data.sort((a, b) =>
     b.is_core === a.is_core ? 0 : b.is_core ? 1 : -1,
   );
+}
 
-  const syncTimestamp = Date.now();
-
+function buildTokenEntities(
+  address: string,
+  _tokens: TokenItem[] | ITokenItem[],
+  syncTimestamp: number,
+) {
+  const tokens = normalizeTokenInput(_tokens);
   const tokenItems = tokens.map(raw => {
     const tokenItem = new TokenItemEntity();
     TokenItemEntity.fillEntity(tokenItem, address, raw);
@@ -54,7 +174,51 @@ export async function syncRemoteTokens(
     return tokenItem;
   });
 
-  await prepareAppDataSource();
+  return {
+    tokens,
+    tokenItems,
+  };
+}
+
+function emitTokenSyncResult(
+  owner_addr: string,
+  count: number,
+  success: boolean,
+) {
+  appOrmEvents.emit('onRemoteDataUpserted', {
+    owner_addr,
+    taskFor: 'token',
+    syncDetails: {
+      count,
+      total: count,
+      round: 0,
+      batchSize: count,
+    },
+    success,
+  });
+}
+
+export async function syncRemoteTokens(
+  address: string,
+  _tokens: TokenItem[] | ITokenItem[],
+) {
+  const syncTimestamp = Date.now();
+
+  const entityBuildStartedAt = Date.now();
+  const { tokens, tokenItems } = buildTokenEntities(
+    address,
+    _tokens,
+    syncTimestamp,
+  );
+  traceEntityBuild(
+    'token',
+    TokenItemEntity.name,
+    entityBuildStartedAt,
+    tokens.length,
+    tokenItems.length,
+  );
+
+  await prepareAppDataSourceWithDiag('token', TokenItemEntity.name);
 
   // await TokenItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(TokenItemEntity, tokenItems, {
@@ -64,16 +228,103 @@ export async function syncRemoteTokens(
     concurrency: 1,
     delayBetweenTasks: 1.5 * 1e3,
     waitTaskDoneReturn: true,
+    afterBatches: async () => {
+      await TokenItemEntity.cleanupStaleTokens(address, syncTimestamp);
+    },
   })
     .then(({ taskSignal, taskKey, queueCompleted }) => {
       if (queueCompleted) {
         console.debug(`[${taskKey}] batch upsert tasks completed`);
-        TokenItemEntity.cleanupStaleTokens(address, syncTimestamp);
       } else {
         console.warn(`[${taskKey}] batch upsert tasks aborted.`);
       }
     })
     .catch(error => {
+      console.error('Batch upsert failed:', error);
+    });
+}
+
+export async function syncRemoteTokensForAddresses(
+  tokenMap: Record<string, TokenItem[] | ITokenItem[]>,
+) {
+  const addresses = Object.keys(tokenMap).map(address => address.toLowerCase());
+  if (!addresses.length) {
+    return;
+  }
+
+  const syncTimestamp = Date.now();
+  const entityBuildStartedAt = Date.now();
+  const tokenItemsByAddress = new Map<string, TokenItemEntity[]>();
+  const allTokenItems: TokenItemEntity[] = [];
+  let rawCount = 0;
+
+  addresses.forEach(address => {
+    const { tokens, tokenItems } = buildTokenEntities(
+      address,
+      tokenMap[address] || [],
+      syncTimestamp,
+    );
+    rawCount += tokens.length;
+    tokenItemsByAddress.set(address, tokenItems);
+    allTokenItems.push(...tokenItems);
+  });
+
+  traceEntityBuild(
+    'token',
+    TokenItemEntity.name,
+    entityBuildStartedAt,
+    rawCount,
+    allTokenItems.length,
+  );
+
+  await prepareAppDataSourceWithDiag('token', TokenItemEntity.name);
+  await batchSaveWithPQueueAndTransaction(TokenItemEntity, allTokenItems, {
+    owner_addr: `${TOKEN_BATCH_OWNER}:${addresses.length}`,
+    taskFor: 'token',
+    batchSize: 300,
+    concurrency: 1,
+    delayBetweenTasks: 0,
+    waitTaskDoneReturn: true,
+    noNeedAbort: true,
+    skipEmit: true,
+    afterBatches: async () => {
+      await Promise.all(
+        addresses.map(address =>
+          TokenItemEntity.cleanupStaleTokens(address, syncTimestamp),
+        ),
+      );
+    },
+  })
+    .then(({ queueCompleted, taskKey }) => {
+      if (!queueCompleted) {
+        console.warn(`[${taskKey}] batch upsert tasks aborted.`);
+        addresses.forEach(address => {
+          emitTokenSyncResult(
+            address,
+            tokenItemsByAddress.get(address)?.length || 0,
+            false,
+          );
+        });
+        return;
+      }
+
+      addresses.forEach(address => {
+        emitTokenSyncResult(
+          address,
+          tokenItemsByAddress.get(address)?.length || 0,
+          true,
+        );
+      });
+      console.debug(`[${taskKey}] multi-address batch upsert tasks completed`);
+    })
+    .catch(error => {
+      addresses.forEach(address => {
+        emitTokenSyncResult(
+          address,
+          tokenItemsByAddress.get(address)?.length || 0,
+          false,
+        );
+      });
       console.error('Batch upsert failed:', error);
     });
 }
@@ -86,14 +337,22 @@ export async function syncRemoteTokensAmount(
 ) {
   const syncTimestamp = Date.now();
 
+  const entityBuildStartedAt = Date.now();
   const tokenItems = updateTokens.map(raw => {
     const tokenItem = new TokenItemEntity();
     TokenItemEntity.fillEntity(tokenItem, raw.address, raw.token);
     tokenItem._local_updated_at = syncTimestamp;
     return tokenItem;
   });
+  traceEntityBuild(
+    'token',
+    TokenItemEntity.name,
+    entityBuildStartedAt,
+    updateTokens.length,
+    tokenItems.length,
+  );
 
-  await prepareAppDataSource();
+  await prepareAppDataSourceWithDiag('token', TokenItemEntity.name);
 
   await batchSaveWithPQueueAndTransaction(TokenItemEntity, tokenItems, {
     owner_addr: '',
@@ -167,6 +426,7 @@ export async function syncRemoteHistory(
     const customTxItemsMap = transactionHistoryService.getCustomTxItemMap();
     const swapFailHistoryList =
       transactionHistoryService.getSwapFailTransactions(address);
+    const entityBuildStartedAt = Date.now();
     const historyItems = history_list
       .filter(i => Boolean(i.tx))
       .map(raw => {
@@ -184,7 +444,14 @@ export async function syncRemoteHistory(
         updateSwapFailHistoryItem(item, swapFailHistoryList);
         return item;
       });
-    await prepareAppDataSource();
+    traceEntityBuild(
+      'all-history',
+      HistoryItemEntity.name,
+      entityBuildStartedAt,
+      history_list.length,
+      historyItems.length,
+    );
+    await prepareAppDataSourceWithDiag('all-history', HistoryItemEntity.name);
     // // leave here for debug save
     // const saveResult = await TokenItemEntity.save(tokenItems).catch(err => {
     //   console.error('TokenItemEntity.save err', err);
@@ -234,14 +501,22 @@ export async function syncRemoteNFTs(address: string, _nfts: NFTItem[]) {
     b.is_core === a.is_core ? 0 : b.is_core ? 1 : -1,
   );
   const syncTimestamp = Date.now();
+  const entityBuildStartedAt = Date.now();
   const nftItems = nfts.map(raw => {
     const nftItem = new NFTItemEntity();
     NFTItemEntity.fillEntity(nftItem, address, raw);
     nftItem._local_updated_at = syncTimestamp;
     return nftItem;
   });
+  traceEntityBuild(
+    'nfts',
+    NFTItemEntity.name,
+    entityBuildStartedAt,
+    nfts.length,
+    nftItems.length,
+  );
 
-  await prepareAppDataSource();
+  await prepareAppDataSourceWithDiag('nfts', NFTItemEntity.name);
   await batchSaveWithPQueueAndTransaction(NFTItemEntity, nftItems, {
     owner_addr: address,
     taskFor: 'nfts',
@@ -249,11 +524,13 @@ export async function syncRemoteNFTs(address: string, _nfts: NFTItem[]) {
     concurrency: 1,
     delayBetweenTasks: 1.5 * 1e3,
     waitTaskDoneReturn: true,
+    afterBatches: async () => {
+      await NFTItemEntity.cleanupStaleNFTs(address, syncTimestamp);
+    },
   })
     .then(({ taskSignal, taskKey, queueCompleted }) => {
       if (queueCompleted) {
         console.debug(`[${taskKey}] batch upsert tasks completed`);
-        NFTItemEntity.cleanupStaleNFTs(address, syncTimestamp);
       } else {
         console.warn(`[${taskKey}] batch upsert tasks aborted.`);
       }
@@ -272,6 +549,7 @@ export async function syncRemoteProtocols(
     data.push(EMPTY_PROTOCOL_ITEM);
   }
   const syncTimestamp = Date.now();
+  const entityBuildStartedAt = Date.now();
   const items = data.map(raw => {
     const protocolItem = new ProtocolItemEntity();
     ProtocolItemEntity.fillEntity(protocolItem, address, raw);
@@ -279,8 +557,15 @@ export async function syncRemoteProtocols(
 
     return protocolItem;
   });
+  traceEntityBuild(
+    'protocols',
+    ProtocolItemEntity.name,
+    entityBuildStartedAt,
+    data.length,
+    items.length,
+  );
 
-  await prepareAppDataSource();
+  await prepareAppDataSourceWithDiag('protocols', ProtocolItemEntity.name);
   await batchSaveWithPQueueAndTransaction(ProtocolItemEntity, items, {
     owner_addr: address,
     taskFor: 'protocols',
@@ -288,11 +573,13 @@ export async function syncRemoteProtocols(
     concurrency: 1,
     delayBetweenTasks: 1.5 * 1e3,
     waitTaskDoneReturn: true,
+    afterBatches: async () => {
+      await ProtocolItemEntity.cleanupStaleProtocols(address, syncTimestamp);
+    },
   })
     .then(({ taskSignal, taskKey, queueCompleted }) => {
       if (queueCompleted) {
         console.debug(`[${taskKey}] batch upsert tasks completed`);
-        ProtocolItemEntity.cleanupStaleProtocols(address, syncTimestamp);
       } else {
         console.warn(`[${taskKey}] batch upsert tasks aborted.`);
       }
@@ -408,24 +695,14 @@ export async function syncBalance(
   isCore: boolean,
   balance: EvmTotalBalanceResponse,
 ) {
+  const entityBuildStartedAt = Date.now();
   const balanceItem = new BalanceEntity();
   BalanceEntity.fillEntity(balanceItem, address.toLowerCase(), isCore, balance);
+  traceEntityBuild('balance', BalanceEntity.name, entityBuildStartedAt, 1, 1);
 
-  await prepareAppDataSource();
-  await batchSaveWithPQueueAndTransaction(BalanceEntity, [balanceItem], {
-    owner_addr: address,
-    taskFor: 'balance',
-    batchSize: 100,
-    concurrency: 1,
-    delayBetweenTasks: 0,
-    waitTaskDoneReturn: true,
-  })
-    .then(({ taskSignal, taskKey }) => {
-      if (taskSignal.aborted) {
-        console.warn(`[${taskKey}] Batch upsertion was aborted.`);
-      } else {
-        console.debug(`[${taskKey}] batch upsert tasks created`);
-      }
+  await enqueueBalanceSync(address, balanceItem)
+    .then(() => {
+      console.debug(`[balance-${address}] batch upsert tasks created`);
     })
     .catch(error => {
       console.error('Batch upsert failed:', error);

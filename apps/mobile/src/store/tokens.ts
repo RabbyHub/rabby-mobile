@@ -3,7 +3,10 @@ import { queryTokensCache } from '@/core/apis/tokenCache';
 import { openapi } from '@/core/request';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { syncRemoteTokens } from '@/databases/sync/assets';
+import {
+  syncRemoteTokens,
+  syncRemoteTokensForAddresses,
+} from '@/databases/sync/assets';
 import { eventBus, EVENT_PATCH_SINGLE_TOKEN } from '@/utils/events';
 import { includeLpTokensFilter, lpTokenFilter } from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
@@ -1716,9 +1719,9 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           .map(result => (result.status === 'fulfilled' ? result.value : []))
           .flat() as ITokenItem[];
         realTimeTokenMap[address.toLowerCase()] = results;
-        syncRemoteTokens(address.toLowerCase(), results);
       }),
     );
+    syncRemoteTokensForAddresses(realTimeTokenMap);
     set(() => ({ isLoading: false }));
     set(() => ({ tokenListMap: realTimeTokenMap }));
   },

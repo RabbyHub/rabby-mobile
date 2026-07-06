@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useMemo } from 'react';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -35,6 +36,14 @@ import { touchedFeedback } from '@/utils/touch';
 import { ALL_ORM_ENTITIES } from '@/databases/entities';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { Text, AnimateableText } from '@/components/Typography';
+import {
+  clearSyncSchedulerRecentTasks,
+  pauseSyncScheduler,
+  resumeSyncScheduler,
+  setSyncSchedulerCriticalMode,
+  type SyncTaskSnapshot,
+  useSyncSchedulerSnapshot,
+} from '@/databases/sync/scheduler';
 
 function UpdatedTimeCount({ updatedAt }: { updatedAt: number }) {
   const { countdownTextStyles, countdownTextProps } = useRestCountDownLabel({
@@ -386,6 +395,194 @@ function DevSQLiteInfo() {
   );
 }
 
+function formatMs(value?: number) {
+  if (typeof value !== 'number') {
+    return '-';
+  }
+
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(1)}s`;
+  }
+
+  return `${value}ms`;
+}
+
+function shortenOwner(owner: string) {
+  if (!owner) {
+    return '-';
+  }
+
+  if (owner.length <= 16) {
+    return owner;
+  }
+
+  return `${owner.slice(0, 8)}...${owner.slice(-6)}`;
+}
+
+function DevSyncTaskInfoRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: unknown;
+}) {
+  const { styles } = useTheme2024({
+    getStyle: getStyles,
+    isLight: true,
+  });
+
+  return (
+    <View style={styles.schedulerInfoRow}>
+      <Text style={styles.schedulerInfoLabel}>{label}</Text>
+      <Text
+        numberOfLines={2}
+        ellipsizeMode="middle"
+        style={styles.schedulerInfoValue}>
+        {stringifyInfoValue(value)}
+      </Text>
+    </View>
+  );
+}
+
+function DevSyncTaskCard({ task }: { task: SyncTaskSnapshot }) {
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getStyles,
+    isLight: true,
+  });
+  const statusColor =
+    task.status === 'error' || task.status === 'aborted'
+      ? colors2024['red-default']
+      : task.status === 'success'
+      ? colors2024['green-default']
+      : colors2024['blue-default'];
+  const duration =
+    task.durationMs ??
+    (task.startedAt
+      ? Date.now() - task.startedAt
+      : Date.now() - task.createdAt);
+
+  return (
+    <View style={styles.schedulerTaskCard}>
+      <View style={styles.schedulerTaskHeader}>
+        <Text numberOfLines={1} style={styles.schedulerTaskTitle}>
+          {task.taskFor} / {task.entityName}
+        </Text>
+        <Text style={[styles.schedulerTaskStatus, { color: statusColor }]}>
+          {task.status}
+        </Text>
+      </View>
+
+      <View style={styles.schedulerTaskBody}>
+        <DevSyncTaskInfoRow label="owner" value={shortenOwner(task.owner)} />
+        <DevSyncTaskInfoRow label="priority" value={task.priority} />
+        <DevSyncTaskInfoRow
+          label="rows"
+          value={`${task.rowCount} rows / ${task.completedBatches}/${task.totalBatches} batches`}
+        />
+        <DevSyncTaskInfoRow label="batch size" value={task.batchSize} />
+        <DevSyncTaskInfoRow label="method" value={task.method || '-'} />
+        <DevSyncTaskInfoRow label="stage" value={task.stage} />
+        <DevSyncTaskInfoRow label="duration" value={formatMs(duration)} />
+        {task.lastBatch && (
+          <DevSyncTaskInfoRow
+            label="last batch"
+            value={`#${task.lastBatch.round + 1}, ${
+              task.lastBatch.count
+            } rows, ${formatMs(task.lastBatch.durationMs)}`}
+          />
+        )}
+        {task.lastError && (
+          <DevSyncTaskInfoRow label="error" value={task.lastError} />
+        )}
+      </View>
+    </View>
+  );
+}
+
+function DevSyncTaskPanel() {
+  const { styles } = useTheme2024({
+    getStyle: getStyles,
+    isLight: true,
+  });
+  const snapshot = useSyncSchedulerSnapshot();
+  const liveTasks = snapshot.tasks;
+  const recentTasks = useMemo(
+    () => snapshot.recentTasks.slice(0, 12),
+    [snapshot.recentTasks],
+  );
+  const isManuallyPaused = snapshot.pauseReasons.includes('dev-panel');
+  const isDevCritical = snapshot.criticalReasons.includes('dev-panel-critical');
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <Text style={[styles.componentName, { fontSize: 24, marginBottom: 12 }]}>
+        SQLite / Sync task queue
+      </Text>
+
+      <View style={styles.schedulerSummaryGrid}>
+        <DevSyncTaskInfoRow label="active" value={snapshot.activeCount} />
+        <DevSyncTaskInfoRow label="queued" value={snapshot.queuedCount} />
+        <DevSyncTaskInfoRow label="recent" value={snapshot.recentCount} />
+        <DevSyncTaskInfoRow
+          label="pause"
+          value={snapshot.pauseReasons.join(', ') || '-'}
+        />
+        <DevSyncTaskInfoRow
+          label="critical"
+          value={snapshot.criticalReasons.join(', ') || '-'}
+        />
+      </View>
+
+      <View style={styles.schedulerActions}>
+        <Button
+          title={isManuallyPaused ? 'Resume Sync' : 'Pause Sync'}
+          height={40}
+          containerStyle={styles.schedulerActionButton}
+          onPress={() => {
+            if (isManuallyPaused) {
+              resumeSyncScheduler('dev-panel');
+            } else {
+              pauseSyncScheduler('dev-panel');
+            }
+          }}
+        />
+        <Button
+          title={isDevCritical ? 'End Critical' : 'Start Critical'}
+          height={40}
+          containerStyle={styles.schedulerActionButton}
+          onPress={() => {
+            setSyncSchedulerCriticalMode(!isDevCritical, 'dev-panel-critical');
+          }}
+        />
+        <Button
+          title="Clear Recent"
+          height={40}
+          containerStyle={styles.schedulerActionButton}
+          onPress={clearSyncSchedulerRecentTasks}
+        />
+      </View>
+
+      <Text style={[styles.subMarkedTitle, { marginTop: 12, marginBottom: 8 }]}>
+        Live tasks
+      </Text>
+      {liveTasks.length ? (
+        liveTasks.map(task => <DevSyncTaskCard key={task.id} task={task} />)
+      ) : (
+        <Text style={styles.schedulerEmptyText}>No live sync task</Text>
+      )}
+
+      <Text style={[styles.subMarkedTitle, { marginTop: 12, marginBottom: 8 }]}>
+        Recent tasks
+      </Text>
+      {recentTasks.length ? (
+        recentTasks.map(task => <DevSyncTaskCard key={task.id} task={task} />)
+      ) : (
+        <Text style={styles.schedulerEmptyText}>No recent sync task</Text>
+      )}
+    </View>
+  );
+}
+
 function DevDataAccount() {
   const { styles } = useTheme2024({
     getStyle: getStyles,
@@ -404,21 +601,19 @@ function DevDataAccount() {
         Account's data
       </Text>
       <View style={[styles.propertyDesc, { marginTop: 12 }]}>
-        <Text style={[styles.subMarkedTitle]}>
-          Table tokenitem{' '.repeat(100)}
-        </Text>
+        <Text style={[styles.subMarkedTitle]}>Table tokenitem</Text>
         <Text style={{ marginTop: 8 }}>
-          Current Address: {currentAccount?.address || '-'} {' '.repeat(50)}
+          Current Address: {currentAccount?.address || '-'}
         </Text>
         <View style={styles.propertyView}>
           <Text style={{ marginTop: 8 }}>
             uniq id on tokenitem table:{' '}
-            {assetsInfo.uniqueChainAddressCount || 0} {' '.repeat(100)}
+            {assetsInfo.uniqueChainAddressCount || 0}
           </Text>
         </View>
         <View style={styles.propertyView}>
           <Text style={{ marginTop: 8 }}>
-            Total records: {assetsInfo.totalRecords || 0} {' '.repeat(100)}
+            Total records: {assetsInfo.totalRecords || 0}
           </Text>
         </View>
       </View>
@@ -496,14 +691,16 @@ function DevDataSQLite() {
         contentContainerStyle={[styles.screenScrollableView]}
         horizontal={false}>
         <Text style={styles.areaTitle}>SQLite</Text>
-        <Text style={[styles.propertyDesc, { marginVertical: 12 }]}>
-          <Text style={[styles.subMarkedTitle]}>Summary{' '.repeat(100)}</Text>
+        <View style={[styles.propertyDesc, { marginVertical: 12, gap: 8 }]}>
+          <Text style={styles.subMarkedTitle}>Summary</Text>
           <Text style={{ marginBottom: 12 }}>
             This screen shows the basic capability for high-performance Data
             Workflow, which is based on the SQLite database.
           </Text>
-        </Text>
+        </View>
         <DevSQLiteInfo />
+
+        <DevSyncTaskPanel />
 
         <DevDataAccount />
 
@@ -610,6 +807,92 @@ const getStyles = createGetStyles2024(ctx => {
       fontSize: 18,
       fontWeight: '700',
       color: ctx.colors2024['neutral-title-1'],
+    },
+    schedulerSummaryGrid: {
+      width: '100%',
+      maxWidth: CONTENT_W,
+      flexDirection: 'column',
+      gap: 8,
+      marginBottom: 12,
+    },
+    schedulerInfoRow: {
+      width: '100%',
+      minHeight: 36,
+      borderRadius: 8,
+      backgroundColor: ctx.colors2024['neutral-bg-1'],
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+    },
+    schedulerInfoLabel: {
+      width: 96,
+      flexShrink: 0,
+      fontSize: 13,
+      color: ctx.colors2024['neutral-secondary'],
+    },
+    schedulerInfoValue: {
+      flex: 1,
+      minWidth: 0,
+      textAlign: 'right',
+      fontSize: 13,
+      fontWeight: '600',
+      color: ctx.colors2024['neutral-title-1'],
+    },
+    schedulerActions: {
+      width: '100%',
+      maxWidth: CONTENT_W,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginBottom: 8,
+    },
+    schedulerActionButton: {
+      minWidth: 128,
+      flexGrow: 1,
+    },
+    schedulerTaskCard: {
+      width: '100%',
+      maxWidth: CONTENT_W,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: ctx.colors2024['neutral-line'],
+      padding: 12,
+      marginBottom: 10,
+      backgroundColor: ctx.colors2024['neutral-bg-1'],
+      gap: 8,
+    },
+    schedulerTaskHeader: {
+      width: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+    },
+    schedulerTaskTitle: {
+      flex: 1,
+      minWidth: 0,
+      fontSize: 16,
+      fontWeight: '700',
+      color: ctx.colors2024['neutral-title-1'],
+    },
+    schedulerTaskStatus: {
+      flexShrink: 0,
+      fontSize: 13,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+    },
+    schedulerTaskBody: {
+      width: '100%',
+      flexDirection: 'column',
+      gap: 6,
+    },
+    schedulerEmptyText: {
+      fontSize: 14,
+      color: ctx.colors2024['neutral-secondary'],
+      marginBottom: 8,
     },
 
     openedDappRecord: {

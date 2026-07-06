@@ -5,6 +5,7 @@ import {
   ColumnType,
   getMetadataArgsStorage,
 } from 'typeorm/browser';
+import { Scalar } from '@op-engineering/op-sqlite';
 import { ColumnMetadataArgs } from 'typeorm/browser/metadata-args/ColumnMetadataArgs';
 
 type ColumnInfo = {
@@ -160,8 +161,8 @@ export function ParseEntity() {
       configurable: false,
     });
 
-    Object.defineProperty(constructor.prototype, 'bindUpsertParams', {
-      value: function (stm: any) {
+    Object.defineProperty(constructor.prototype, 'getUpsertParams', {
+      value: function (): Scalar[] {
         const params = parseResult.orderedPropertyNames.map(propName => {
           let value = (this as any)[propName];
           const column = parseResult.propMapToColumn[propName];
@@ -196,6 +197,17 @@ export function ParseEntity() {
 
           return transformedValue;
         });
+
+        return params as Scalar[];
+      },
+      writable: false,
+      enumerable: false,
+      configurable: false,
+    });
+
+    Object.defineProperty(constructor.prototype, 'bindUpsertParams', {
+      value: function (stm: any) {
+        const params = this.getUpsertParams();
 
         stm.bindSync(params);
         return stm;

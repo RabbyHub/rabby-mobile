@@ -1,12 +1,14 @@
 import { openapi } from '@/core/request';
 import { zCreate } from '@/core/utils/reexports';
 import { AppChainEntity } from '@/databases/entities/appchain';
+import { batchSaveWithPQueueAndTransaction } from '@/databases/sync/_task';
 import {
   AppChainItem,
   PortfolioItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import PQueue from 'p-queue';
 import { appChainResourceStore } from './appchainResource';
+import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
 
 /**
  * 用于展示的 AppChain 数据结构
@@ -76,21 +78,43 @@ const persistAppChains = async (
   const syncTimestamp = Date.now();
 
   // 批量保存
+  const entityBuildStartedAt = Date.now();
   const entities = appChains.map(item => {
     const entity = new AppChainEntity();
     AppChainEntity.fillEntity(entity, owner_addr.toLowerCase(), item);
     return entity;
   });
+  traceStartupDiagnostic('db', 'entity_build', {
+    taskFor: 'appchain',
+    entityName: AppChainEntity.name,
+    rawCount: appChains.length,
+    entityCount: entities.length,
+    durationMs: Date.now() - entityBuildStartedAt,
+  });
 
-  if (entities.length > 0) {
-    await AppChainEntity.getRepository().save(entities);
-  }
-
-  // 清理过期数据（在本次同步之前更新的数据）
-  await AppChainEntity.cleanupStaleAppChains(
-    owner_addr.toLowerCase(),
-    syncTimestamp,
-  );
+  await batchSaveWithPQueueAndTransaction(AppChainEntity, entities, {
+    owner_addr: owner_addr.toLowerCase(),
+    taskFor: 'appchain',
+    batchSize: 100,
+    concurrency: 1,
+    delayBetweenTasks: 0,
+    waitTaskDoneReturn: true,
+    noNeedAbort: true,
+    skipEmit: true,
+    afterBatches: async () => {
+      // 清理过期数据（在本次同步之前更新的数据）
+      const cleanupStartedAt = Date.now();
+      await AppChainEntity.cleanupStaleAppChains(
+        owner_addr.toLowerCase(),
+        syncTimestamp,
+      );
+      traceStartupDiagnostic('db', 'appchain_cleanup', {
+        taskFor: 'appchain',
+        entityName: AppChainEntity.name,
+        durationMs: Date.now() - cleanupStartedAt,
+      });
+    },
+  });
 };
 
 export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
