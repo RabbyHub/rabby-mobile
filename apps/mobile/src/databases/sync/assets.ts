@@ -222,7 +222,9 @@ function normalizeTokenInput(_tokens: TokenItem[] | ITokenItem[]) {
     data.push(EMPTY_TOKEN_ITEM);
   }
 
-  return data;
+  return data.sort((a, b) =>
+    b.is_core === a.is_core ? 0 : b.is_core ? 1 : -1,
+  );
 }
 
 function buildTokenEntities(

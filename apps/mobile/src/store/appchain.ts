@@ -120,15 +120,19 @@ async function cleanupStaleAppChainsForOwners(
   syncTimestamp: number,
 ) {
   const cleanupStartedAt = Date.now();
-  const result = await AppChainEntity.cleanupStaleAppChainsForOwners(
-    ownerAddrs,
-    syncTimestamp,
+  const results = await Promise.all(
+    ownerAddrs.map(ownerAddr =>
+      AppChainEntity.cleanupStaleAppChains(ownerAddr, syncTimestamp),
+    ),
   );
   traceStartupDiagnostic('db', 'appchain_cleanup', {
     taskFor: 'appchain',
     entityName: AppChainEntity.name,
     ownerCount: ownerAddrs.length,
-    deletedCount: result.deletedCount,
+    deletedCount: results.reduce(
+      (sum, result) => sum + (result.deletedCount || 0),
+      0,
+    ),
     durationMs: Date.now() - cleanupStartedAt,
   });
 }
