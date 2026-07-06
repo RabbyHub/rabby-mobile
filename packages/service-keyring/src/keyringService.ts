@@ -427,13 +427,35 @@ export class KeyringService extends RNEventEmitter {
   isKeyringRuntimeRestoring() {
     return this.memStore.getState().keyringRuntimeRestoring;
   }
+  private hasRuntimeKeyringForType(type: string | KeyringTypeName) {
+    return this.keyrings.some(keyring => keyring.type === type);
+  }
+  private hasPendingRuntimeKeyringDataForType(type: string | KeyringTypeName) {
+    const pending = this.pendingKeyringRuntimeRestore;
+    if (pending) {
+      return [
+        ...pending.keyringsToRestore,
+        ...pending.unencryptedKeyringData,
+      ].some(serialized => serialized.type === type);
+    }
+
+    return Boolean(
+      this.store
+        .getState()
+        .unencryptedKeyringData?.some(serialized => serialized.type === type),
+    );
+  }
   private shouldWaitForKeyringRuntime(type?: string | KeyringTypeName) {
     if (!this.isUnlocked() || this.isKeyringRuntimeReady()) {
       return false;
     }
 
     if (type) {
-      return isSensitiveKeyringType(type);
+      return (
+        isSensitiveKeyringType(type) ||
+        (!this.hasRuntimeKeyringForType(type) &&
+          this.hasPendingRuntimeKeyringDataForType(type))
+      );
     }
 
     return true;
