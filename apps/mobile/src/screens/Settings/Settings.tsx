@@ -301,7 +301,7 @@ function ClearAppCacheSettingItem() {
     }
     setIsClearing(true);
     try {
-      abortAllSyncTasks();
+      abortAllSyncTasks('clear-app-cache-ios');
       resetUpdateHistoryTime();
       await clearAppDataSource();
       Alert.alert(
@@ -328,7 +328,7 @@ function ClearAppCacheSettingItem() {
 
     try {
       await sleep(50);
-      abortAllSyncTasks();
+      abortAllSyncTasks('clear-app-cache-android');
       resetUpdateHistoryTime();
       await dropAppDataSourceAndQuitApp({
         exitDelayMs: CLEAR_APP_CACHE_EXIT_DELAY_MS,

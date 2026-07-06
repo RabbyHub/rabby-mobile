@@ -1,16 +1,25 @@
 import nftListStore from './store/nfts';
 import useProtocolListStore from './store/protocols';
 import tokenListStore from './store/tokens';
+import { runStartupDiagnosticTask } from './core/utils/startupDiagnostics';
 
 async function initReadableAccountStores() {
-  console.time('initReadableAccountStores');
-  try {
-    await tokenListStore.getState().initStore();
-    await nftListStore.getState().initStore();
-    await useProtocolListStore.getState().initStore();
-  } finally {
-    console.timeEnd('initReadableAccountStores');
-  }
+  return runStartupDiagnosticTask('initReadableAccountStores', {}, async () => {
+    console.time('initReadableAccountStores');
+    try {
+      await runStartupDiagnosticTask('tokenListStore.initStore', {}, () =>
+        tokenListStore.getState().initStore(),
+      );
+      await runStartupDiagnosticTask('nftListStore.initStore', {}, () =>
+        nftListStore.getState().initStore(),
+      );
+      await runStartupDiagnosticTask('protocolListStore.initStore', {}, () =>
+        useProtocolListStore.getState().initStore(),
+      );
+    } finally {
+      console.timeEnd('initReadableAccountStores');
+    }
+  });
 }
 
 const initReadableAccountStoresStateRef = {
