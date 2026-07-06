@@ -11,7 +11,7 @@ export const useBgSize = () => {
   const { safeTop, safeOffHeader } = useSafeSizes();
 
   const sizes = useMemo(() => {
-    const topHeight = safeOffHeader - 11;
+    const topHeight = safeOffHeader - 2;
     const centerFoldHeight = FOLD_ASSETS_HEADER_HEIGHT_WITH_PADDING;
     const centerUnfoldHeight = UNFOLD_ASSETS_HEADER_HEIGHT;
     const endHeight = TAB_HEADER_HEIGHT;

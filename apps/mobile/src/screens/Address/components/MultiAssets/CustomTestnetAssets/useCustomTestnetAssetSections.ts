@@ -13,6 +13,7 @@ import type {
 import { makeMetadataTokenItem } from './utils';
 import type { ITokenItem } from '@/types/assets';
 import type { TestnetChain } from '@/types/customTestnet';
+import { withTimeoutFallback } from '@/utils/async';
 
 const EMPTY_ADDRESSES: string[] = [];
 const CUSTOM_TESTNET_TOKEN_REQUEST_TIMEOUT = 8000;
@@ -24,24 +25,6 @@ const customTestnetTokenListQueue = new PQueue({
 });
 
 let hasInitializedCustomTestnetServiceForAssetList = false;
-
-const withTimeoutFallback = async <T>(promise: Promise<T>, fallback: T) => {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([
-      promise,
-      new Promise<T>(resolve => {
-        timer = setTimeout(() => {
-          resolve(fallback);
-        }, CUSTOM_TESTNET_TOKEN_REQUEST_TIMEOUT);
-      }),
-    ]);
-  } finally {
-    if (timer) {
-      clearTimeout(timer);
-    }
-  }
-};
 
 const makeFallbackTokenItem = (
   chain: TestnetChain,
@@ -76,6 +59,7 @@ export function useCustomTestnetAssetSections(addresses: string[]) {
               chainId: token.chainId,
               tokenId: token.id,
             }),
+            CUSTOM_TESTNET_TOKEN_REQUEST_TIMEOUT,
             null,
           );
 

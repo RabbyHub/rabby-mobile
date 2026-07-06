@@ -134,12 +134,12 @@ const DisableEmodeOverviewModal = ({ onClose }: { onClose: () => void }) => {
         <Button
           loadingType="circle"
           showTextOnLoading
+          type="aave"
           containerStyle={styles.fullWidthButton}
           height={BOTTOM_BUTTON_SINGLE_HEIGHT}
-          titleStyle={[BOTTOM_BUTTON_TITLE_STYLE, styles.closeButtonTitle]}
+          titleStyle={[BOTTOM_BUTTON_TITLE_STYLE]}
           onPress={() => handlePressManageEMode()}
           title={t('page.Lending.manageEmode.disableTitle')}
-          buttonStyle={styles.closeButton}
         />
       </View>
     </AutoLockView>

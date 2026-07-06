@@ -108,7 +108,7 @@ const getStyle = createGetStyles2024(ctx => ({
   defiLoaderGroup: {
     height: DEFI_ITEM_HEIGHT,
     flexDirection: 'row',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   defiLoaderHeader: {
     flexDirection: 'row',

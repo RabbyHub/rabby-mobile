@@ -1808,7 +1808,7 @@
         "notErc20": "Bu adreste ERC20 tokeni bulunamadı",
         "alreadyAdded": "Bu token zaten eklenmiş",
         "alreadyAddedToast": "Token zaten eklendi",
-        "added": "Token eklendi",
+        "added": "Özel ağ tokeni başarıyla eklendi",
         "addFailed": "Token eklenemedi",
         "removeFailed": "Token silinemedi"
       }
@@ -3339,7 +3339,7 @@
       "receiveSummary": {
         "progress": "Dönüştürme ilerlemesi",
         "priceImpact": "Fiyat Etkisi Limiti",
-        "gasLimit": "Single Transaction Gas Limit",
+        "gasLimit": "Tek işlem Gas limit",
         "estimateReceive": "Tah. Alım:",
         "actualReceive": "Al"
       },
