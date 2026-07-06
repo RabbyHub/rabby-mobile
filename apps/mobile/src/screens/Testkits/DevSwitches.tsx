@@ -66,6 +66,7 @@ import { SwitchAllowScreenshot } from '../Settings/components/SwitchAllowScreens
 import { LabelScreenshotToReport } from '../Settings/components/SwitchScreenshotToReport';
 import { useAutoLockCountDown } from '../Settings/components/LockAbout';
 import { SwitchShowFloatingAutoLockCountdown } from '../Settings/components/SwitchFloatingView';
+import { useToggleShowOpenApiSummaryPanel } from '../Settings/components/FloatingOpenApiSummaryPanel';
 import { useGoogleSign } from '@/hooks/cloudStorage';
 import {
   deleteAllBackups,
@@ -756,6 +757,8 @@ function DevSwitchAboutOpenApiDebug() {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { toastOpenApiHttpErrorStatus, toggleToastOpenApiHttpErrorStatus } =
     useToastOpenApiHttpErrorStatus();
+  const { showOpenApiSummaryPanel, toggleShowOpenApiSummaryPanel } =
+    useToggleShowOpenApiSummaryPanel();
 
   return (
     <View style={styles.showCaseRowsContainer}>
@@ -788,6 +791,23 @@ function DevSwitchAboutOpenApiDebug() {
           {toastOpenApiHttpErrorStatus
             ? 'Toast HTTP 4xx/5xx responses from openapi, testOpenapi, and notificationOpenapi'
             : 'Keep HTTP 4xx/5xx openapi responses silent and only log them'}
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.switchRowWrapper}
+        onPress={() => {
+          toggleShowOpenApiSummaryPanel();
+        }}>
+        <AppSwitch2024
+          value={showOpenApiSummaryPanel}
+          onPress={evt => evt.stopPropagation()}
+          onValueChange={toggleShowOpenApiSummaryPanel}
+        />
+        <Text style={styles.switchLabel}>
+          {showOpenApiSummaryPanel
+            ? 'Hide Floating OpenAPI Diagnostics Panel'
+            : 'Show Floating OpenAPI Diagnostics Panel'}
         </Text>
       </TouchableOpacity>
     </View>
