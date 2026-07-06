@@ -254,6 +254,13 @@ async function clearAppCacheFromLink() {
     return;
   }
 
+  if (!keyringService.isUnlocked() && !isUnlockSessionValid()) {
+    console.warn(
+      '[useUniversalLinkOnTop] clear app cache link ignored before unlock',
+    );
+    return;
+  }
+
   clearAppCacheFromLinkStateRef.running = true;
   try {
     abortAllSyncTasks('clear-app-cache-link');

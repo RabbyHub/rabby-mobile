@@ -270,7 +270,7 @@ export class AppChainEntity extends EntityAddressAssetBase {
         .createQueryBuilder()
         .delete()
         .from(AppChainEntity)
-        .where('owner_addr IN (:...owner_addrs)', {
+        .where('LOWER(owner_addr) IN (:...owner_addrs)', {
           owner_addrs: normalizedOwners,
         })
         .andWhere('_local_updated_at < :syncTimestamp', { syncTimestamp })

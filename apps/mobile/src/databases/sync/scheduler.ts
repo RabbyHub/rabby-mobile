@@ -240,7 +240,7 @@ function traceScheduler(event: string, data: Record<string, unknown> = {}) {
   });
 }
 
-function shouldHoldQueuedTask(task: RuntimeSyncTask) {
+function getTaskHoldReason(task: RuntimeSyncTask) {
   if (pauseReasons.size > 0) {
     return `pause:${Array.from(pauseReasons).join(',')}`;
   }
@@ -254,7 +254,7 @@ function shouldHoldQueuedTask(task: RuntimeSyncTask) {
 
 function markQueuedHoldStates() {
   queuedTasks.forEach(task => {
-    const holdReason = shouldHoldQueuedTask(task);
+    const holdReason = getTaskHoldReason(task);
     const nextStatus: SyncTaskStatus = holdReason ? 'paused' : 'queued';
     if (
       task.status !== nextStatus ||
@@ -278,7 +278,7 @@ function findRunnableTaskIndex() {
   markQueuedHoldStates();
 
   for (let i = 0; i < queuedTasks.length; i += 1) {
-    if (!shouldHoldQueuedTask(queuedTasks[i])) {
+    if (!getTaskHoldReason(queuedTasks[i])) {
       return i;
     }
   }
@@ -417,15 +417,17 @@ function createTaskContext(task: RuntimeSyncTask): SyncTaskRuntimeContext {
       publishSnapshot();
     },
     waitIfPaused: async () => {
-      while (pauseReasons.size > 0) {
+      let holdReason = getTaskHoldReason(task);
+      while (holdReason) {
         if (task.signal?.aborted) {
           throw new SyncTaskAbortError();
         }
 
         task.status = 'paused';
-        task.stage = `pause:${Array.from(pauseReasons).join(',')}`;
+        task.stage = holdReason;
         publishSnapshot(true);
         await waitForPauseResume(task.signal);
+        holdReason = getTaskHoldReason(task);
       }
 
       if (task.status === 'paused') {
