@@ -3520,7 +3520,7 @@
       "receiveSummary": {
         "progress": "轉換進度",
         "priceImpact": "價格影響上限",
-        "gasLimit": "Single Transaction Gas Limit",
+        "gasLimit": "單筆交易 Gas limit",
         "estimateReceive": "預計收到：",
         "actualReceive": "收到"
       },

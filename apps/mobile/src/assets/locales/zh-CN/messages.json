@@ -1909,7 +1909,7 @@
         "notErc20": "该地址未找到 ERC20 代币",
         "alreadyAdded": "该代币已添加",
         "alreadyAddedToast": "代币已添加",
-        "added": "代币已添加",
+        "added": "自定义网络代币添加成功",
         "addFailed": "添加代币失败",
         "removeFailed": "删除代币失败"
       }
@@ -3494,7 +3494,7 @@
       "receiveSummary": {
         "progress": "兑换进度",
         "priceImpact": "价格影响上限",
-        "gasLimit": "Single Transaction Gas Limit",
+        "gasLimit": "单笔交易 Gas limit",
         "estimateReceive": "预计收到：",
         "actualReceive": "收到"
       },

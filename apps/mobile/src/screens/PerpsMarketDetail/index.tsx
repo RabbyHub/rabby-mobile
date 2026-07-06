@@ -723,7 +723,7 @@ export const PerpsMarketDetailScreen = () => {
               coin,
               size: sizeStr,
               direction: positionData?.direction as 'Long' | 'Short',
-              price: (activeAssetCtx?.markPx as unknown as string) || '0',
+              price: activeAssetCtx?.markPx || currentAssetCtx?.markPx || '0',
             });
             setCurrentTpOrSl({
               tpPrice: undefined,

@@ -2507,7 +2507,7 @@
         "notErc20": "An dieser Adresse wurde kein ERC20-Token gefunden",
         "alreadyAdded": "Dieses Token wurde bereits hinzugefügt",
         "alreadyAddedToast": "Token bereits hinzugefügt",
-        "added": "Token hinzugefügt",
+        "added": "Benutzerdefiniertes Netzwerk-Token erfolgreich hinzugefügt",
         "addFailed": "Token konnte nicht hinzugefügt werden",
         "removeFailed": "Token konnte nicht gelöscht werden"
       }
@@ -3721,7 +3721,7 @@
       "receiveSummary": {
         "progress": "Konvertierungsfortschritt",
         "priceImpact": "Preisauswirkungsobergrenze",
-        "gasLimit": "Single Transaction Gas Limit",
+        "gasLimit": "Gas limit pro Transaktion",
         "estimateReceive": "Gesch. Empfang:",
         "actualReceive": "Empfangen"
       },

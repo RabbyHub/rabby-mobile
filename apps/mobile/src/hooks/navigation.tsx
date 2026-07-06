@@ -18,6 +18,7 @@ import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import { AppRootName, RootNames, makeHeadersPresets } from '@/constant/layout';
+import { APP_FEATURE_SWITCH } from '@/constant';
 import {
   NavigationContainerRef,
   useNavigation,
@@ -404,6 +405,7 @@ export function resetNavigationTo(
       break;
     }
     case 'Unlock': {
+      perfEvents.emit('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS');
       navigation.reset({
         index: 0,
         routes: [
@@ -867,6 +869,10 @@ export function startSubscribeIOSScreenRecording() {
 }
 
 export function startSubscribeRemoteNotification() {
+  if (!APP_FEATURE_SWITCH.transactionNotification) {
+    return;
+  }
+
   function earlyReturnL1<T = any>(retValue?: T) {
     return retValue;
   }

@@ -157,7 +157,7 @@ export const TokenInfoPopup = () => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     position: 'absolute',
     zIndex: 10,
@@ -209,6 +209,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: '100%',
   },
   renderItemWrapper: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     position: 'absolute',
     zIndex: 3,
     elevation: 3,

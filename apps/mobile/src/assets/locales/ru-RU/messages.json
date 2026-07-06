@@ -1907,7 +1907,7 @@
         "notErc20": "По этому адресу не найден токен ERC20",
         "alreadyAdded": "Этот токен уже добавлен",
         "alreadyAddedToast": "Токен уже добавлен",
-        "added": "Токен добавлен",
+        "added": "Токен пользовательской сети успешно добавлен",
         "addFailed": "Не удалось добавить токен",
         "removeFailed": "Не удалось удалить токен"
       }
@@ -3460,7 +3460,7 @@
       "receiveSummary": {
         "progress": "Прогресс конвертации",
         "priceImpact": "Лимит влияния на цену",
-        "gasLimit": "Single Transaction Gas Limit",
+        "gasLimit": "Gas limit для одной транзакции",
         "estimateReceive": "Ожидаемое получение:",
         "actualReceive": "Получить"
       },

@@ -9,6 +9,7 @@ import BigNumber from 'bignumber.js';
 import { formatNetworth } from '@/utils/math';
 import { ellipsisAddress } from '@/utils/address';
 import { useBrowser } from '@/hooks/browser/useBrowser';
+import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
 import { isAppChain } from '../../utils/appchain';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -31,6 +32,8 @@ import { IProtocolItem, IProtocolPortfolio } from '@/store/protocols';
 import { formatUsdValue } from '@/utils/number';
 import useProtocols from '@/store/protocols';
 import { Text } from '@/components/Typography';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { RootNames } from '@/constant/layout';
 
 type SectionListItem = {
   data: IProtocolPortfolio[];
@@ -68,27 +71,46 @@ export const FullDefiRenderItem = ({
 
   const { openTab } = useBrowser();
 
+  const { navigation } = useSafeSetNavigationOptions();
   const handleOpenSite = useCallback(() => {
     if (data?.site_url) {
-      openTab(data?.site_url);
-      const origin = safeGetOrigin(data?.site_url);
-      const chain = findChain({ serverId: data.chain });
-      dappService.patchDapps({
-        [origin]: {
-          currentAccount: account,
-          chainId: isFromAppChain ? undefined : chain?.enum || CHAINS_ENUM.ETH,
-          isDapp: true,
-        },
-      });
-      if (origin) {
-        matomoRequestEvent({
-          category: 'Websites Usage',
-          action: 'Website_Visit_Defi Detail',
-          label: origin,
+      if (data?.id === 'hyperliquid' && account) {
+        switchPerpsAccountBeforeNavigate(account);
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.Perps,
+          params: {},
         });
+      } else {
+        openTab(data?.site_url);
+        const origin = safeGetOrigin(data?.site_url);
+        const chain = findChain({ serverId: data.chain });
+        dappService.patchDapps({
+          [origin]: {
+            currentAccount: account,
+            chainId: isFromAppChain
+              ? undefined
+              : chain?.enum || CHAINS_ENUM.ETH,
+            isDapp: true,
+          },
+        });
+        if (origin) {
+          matomoRequestEvent({
+            category: 'Websites Usage',
+            action: 'Website_Visit_Defi Detail',
+            label: origin,
+          });
+        }
       }
     }
-  }, [account, data.chain, data?.site_url, isFromAppChain, openTab]);
+  }, [
+    account,
+    data.chain,
+    data?.site_url,
+    data?.id,
+    isFromAppChain,
+    openTab,
+    navigation,
+  ]);
 
   const sectionsMultiProject = useMemo(() => {
     if (!account) {
@@ -433,7 +455,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-3'],
-    marginHorizontal: 16,
+    marginHorizontal: 12,
     borderRadius: 16,
     paddingTop: 14,
     paddingBottom: 14,

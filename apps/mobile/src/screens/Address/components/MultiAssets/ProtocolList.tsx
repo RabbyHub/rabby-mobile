@@ -390,11 +390,11 @@ const getStyles = createGetStyles2024(() => ({
     // marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
   },
   list: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 48,
   },
   bgContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   emptyAssets: {
     marginHorizontal: 0,

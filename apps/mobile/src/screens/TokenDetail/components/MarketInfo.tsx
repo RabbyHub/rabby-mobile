@@ -10,7 +10,7 @@ import { Text } from '@/components/Typography';
 import { isNumber } from 'lodash';
 
 const PRICE_VALUE_MAX_LENGTH = 7;
-const PRICE_VALUE_BASE_FONT_SIZE = 42;
+const PRICE_VALUE_BASE_FONT_SIZE = 38;
 const PRICE_VALUE_MIN_FONT_SIZE = 22;
 
 const MarketInfo = ({
@@ -162,7 +162,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontSize: 42,
     lineHeight: 46,
-    fontWeight: '900',
+    fontWeight: '700',
   },
   priceChangeContainer: {
     flexDirection: 'row',

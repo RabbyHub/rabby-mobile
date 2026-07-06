@@ -401,6 +401,10 @@ function SettingsBlocks() {
   }, []);
 
   const handleTransactionNotificationToggle = useCallback(async () => {
+    if (!APP_FEATURE_SWITCH.transactionNotification) {
+      return;
+    }
+
     const finalValue = await setEnableTransactionNofification(prev => !prev);
     if (typeof finalValue !== 'boolean') {
       return;
@@ -484,6 +488,7 @@ function SettingsBlocks() {
             label: t('page.setting.transactionNotification'),
             icon: RcNotification,
             rightNode: <TrackedTransactionNotificationSwitch />,
+            visible: APP_FEATURE_SWITCH.transactionNotification,
             onPress: () => {
               handleTransactionNotificationToggle();
             },
