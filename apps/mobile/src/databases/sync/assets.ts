@@ -37,6 +37,7 @@ export { patchSingleToken } from './token';
 const BALANCE_SYNC_FLUSH_DELAY_MS = 32;
 const BALANCE_BATCH_OWNER = '__balance_batch__';
 const TOKEN_BATCH_OWNER = '__token_batch__';
+const PROTOCOL_BATCH_OWNER = '__protocol_batch__';
 
 type PendingBalanceSync = {
   owner_addr: string;
@@ -188,6 +189,53 @@ function emitTokenSyncResult(
   appOrmEvents.emit('onRemoteDataUpserted', {
     owner_addr,
     taskFor: 'token',
+    syncDetails: {
+      count,
+      total: count,
+      round: 0,
+      batchSize: count,
+    },
+    success,
+  });
+}
+
+function normalizeProtocolInput(protocols: ComplexProtocol[]) {
+  const data = [...protocols];
+  if (data.length === 0) {
+    data.push(EMPTY_PROTOCOL_ITEM);
+  }
+
+  return data;
+}
+
+function buildProtocolEntities(
+  address: string,
+  protocols: ComplexProtocol[],
+  syncTimestamp: number,
+) {
+  const data = normalizeProtocolInput(protocols);
+  const items = data.map(raw => {
+    const protocolItem = new ProtocolItemEntity();
+    ProtocolItemEntity.fillEntity(protocolItem, address, raw);
+    protocolItem._local_updated_at = syncTimestamp;
+
+    return protocolItem;
+  });
+
+  return {
+    protocols: data,
+    items,
+  };
+}
+
+function emitProtocolSyncResult(
+  owner_addr: string,
+  count: number,
+  success: boolean,
+) {
+  appOrmEvents.emit('onRemoteDataUpserted', {
+    owner_addr,
+    taskFor: 'protocols',
     syncDetails: {
       count,
       total: count,
@@ -544,19 +592,13 @@ export async function syncRemoteProtocols(
   address: string,
   protocols: ComplexProtocol[],
 ) {
-  const data = [...protocols];
-  if (data.length === 0) {
-    data.push(EMPTY_PROTOCOL_ITEM);
-  }
   const syncTimestamp = Date.now();
   const entityBuildStartedAt = Date.now();
-  const items = data.map(raw => {
-    const protocolItem = new ProtocolItemEntity();
-    ProtocolItemEntity.fillEntity(protocolItem, address, raw);
-    protocolItem._local_updated_at = syncTimestamp;
-
-    return protocolItem;
-  });
+  const { protocols: data, items } = buildProtocolEntities(
+    address,
+    protocols,
+    syncTimestamp,
+  );
   traceEntityBuild(
     'protocols',
     ProtocolItemEntity.name,
@@ -585,6 +627,97 @@ export async function syncRemoteProtocols(
       }
     })
     .catch(error => {
+      console.error('Batch upsert failed:', error);
+    });
+}
+
+export async function syncRemoteProtocolsForAddresses(
+  protocolMap: Record<string, ComplexProtocol[]>,
+) {
+  const addresses = Object.keys(protocolMap).map(address =>
+    address.toLowerCase(),
+  );
+  if (!addresses.length) {
+    return;
+  }
+
+  const syncTimestamp = Date.now();
+  const entityBuildStartedAt = Date.now();
+  const protocolItemsByAddress = new Map<string, ProtocolItemEntity[]>();
+  const allProtocolItems: ProtocolItemEntity[] = [];
+  let rawCount = 0;
+
+  addresses.forEach(address => {
+    const { protocols, items } = buildProtocolEntities(
+      address,
+      protocolMap[address] || [],
+      syncTimestamp,
+    );
+    rawCount += protocols.length;
+    protocolItemsByAddress.set(address, items);
+    allProtocolItems.push(...items);
+  });
+
+  traceEntityBuild(
+    'protocols',
+    ProtocolItemEntity.name,
+    entityBuildStartedAt,
+    rawCount,
+    allProtocolItems.length,
+  );
+
+  await prepareAppDataSourceWithDiag('protocols', ProtocolItemEntity.name);
+  await batchSaveWithPQueueAndTransaction(
+    ProtocolItemEntity,
+    allProtocolItems,
+    {
+      owner_addr: `${PROTOCOL_BATCH_OWNER}:${addresses.length}`,
+      taskFor: 'protocols',
+      batchSize: 200,
+      concurrency: 1,
+      delayBetweenTasks: 0,
+      waitTaskDoneReturn: true,
+      noNeedAbort: true,
+      skipEmit: true,
+      afterBatches: async () => {
+        await Promise.all(
+          addresses.map(address =>
+            ProtocolItemEntity.cleanupStaleProtocols(address, syncTimestamp),
+          ),
+        );
+      },
+    },
+  )
+    .then(({ queueCompleted, taskKey }) => {
+      if (!queueCompleted) {
+        console.warn(`[${taskKey}] batch upsert tasks aborted.`);
+        addresses.forEach(address => {
+          emitProtocolSyncResult(
+            address,
+            protocolItemsByAddress.get(address)?.length || 0,
+            false,
+          );
+        });
+        return;
+      }
+
+      addresses.forEach(address => {
+        emitProtocolSyncResult(
+          address,
+          protocolItemsByAddress.get(address)?.length || 0,
+          true,
+        );
+      });
+      console.debug(`[${taskKey}] multi-address batch upsert tasks completed`);
+    })
+    .catch(error => {
+      addresses.forEach(address => {
+        emitProtocolSyncResult(
+          address,
+          protocolItemsByAddress.get(address)?.length || 0,
+          false,
+        );
+      });
       console.error('Batch upsert failed:', error);
     });
 }

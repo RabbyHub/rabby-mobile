@@ -28,6 +28,9 @@ import {
 import { isNonPublicProductionEnv } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import { navigationRef } from '@/utils/navigation';
+import { dropAppDataSourceAndQuitApp } from '@/databases/imports';
+import { abortAllSyncTasks } from '@/databases/sync/_task';
+import { resetUpdateHistoryTime } from './historyTokenDict';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -50,7 +53,8 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'open-dapp'
     | 'walletconnect-uri'
     | 'walletconnect-redirect'
-    | 'open-testkit-screen';
+    | 'open-testkit-screen'
+    | 'clear-app-cache';
   dappUrl?: string;
   uri?: string;
   testkitScreen?:
@@ -121,6 +125,39 @@ function parseNonProductionTestkitLink(appLink: string) {
   } satisfies Parameters<OnParseUrlAndProcessAction>[0];
 }
 
+function parseNonProductionMaintenanceLink(appLink: string) {
+  if (!isNonPublicProductionEnv) {
+    return null;
+  }
+
+  const urlInfo = urlUtils.safeParseURL(appLink);
+  if (!urlInfo) {
+    return null;
+  }
+
+  const target = getRabbyGoTarget(urlInfo);
+  const rabbyGoCmd = urlInfo.searchParams.get('_cmd');
+
+  if (
+    rabbyGoCmd === 'clear-app-cache' ||
+    target === 'clear-app-cache' ||
+    (target === 'debug' && rabbyGoCmd === 'clear-cache')
+  ) {
+    return {
+      type: 'clear-app-cache',
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  return null;
+}
+
+function parseNonProductionLink(appLink: string) {
+  return (
+    parseNonProductionMaintenanceLink(appLink) ||
+    parseNonProductionTestkitLink(appLink)
+  );
+}
+
 function isWalletConnectRedirectLink(appLink: string) {
   const urlInfo = urlUtils.safeParseURL(appLink);
   if (!urlInfo) {
@@ -173,6 +210,12 @@ function parseActionAndProcessLink(
     return;
   }
 
+  const maintenanceAction = parseNonProductionMaintenanceLink(appLink);
+  if (maintenanceAction) {
+    onActions?.(maintenanceAction);
+    return;
+  }
+
   if (!ALLOWED_UL_DOMAINS.some(domain => appLink.startsWith(domain))) return;
 
   const urlInfo = urlUtils.safeParseURL(appLink);
@@ -201,6 +244,28 @@ function parseActionAndProcessLink(
 }
 
 const toastTip = toastWithIcon(RcIconInfoForToast);
+
+const clearAppCacheFromLinkStateRef = {
+  running: false,
+};
+
+async function clearAppCacheFromLink() {
+  if (clearAppCacheFromLinkStateRef.running) {
+    return;
+  }
+
+  clearAppCacheFromLinkStateRef.running = true;
+  try {
+    abortAllSyncTasks();
+    resetUpdateHistoryTime();
+    await dropAppDataSourceAndQuitApp({
+      exitDelayMs: 300,
+    });
+  } catch (error) {
+    clearAppCacheFromLinkStateRef.running = false;
+    console.error('[useUniversalLinkOnTop] clear app cache failed', error);
+  }
+}
 
 function dispatchWhenNavigationReady(
   action: ReturnType<typeof StackActions.push>,
@@ -260,14 +325,17 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
         payload.testkitScreen,
       );
       break;
+    case 'clear-app-cache':
+      void clearAppCacheFromLink();
+      break;
   }
 };
 
 const hideToastRef: RefLikeObject<() => void | null> = { current: () => null };
 const handleAppLink = async (url: string, isInit = false) => {
-  const testkitAction = parseNonProductionTestkitLink(url);
-  if (testkitAction) {
-    handleActions(testkitAction);
+  const nonProductionAction = parseNonProductionLink(url);
+  if (nonProductionAction) {
+    handleActions(nonProductionAction);
     setNextAppLink('');
     return;
   }
