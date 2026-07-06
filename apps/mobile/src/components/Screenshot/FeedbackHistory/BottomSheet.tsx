@@ -14,9 +14,12 @@ import {
   useScreenshotFeedbackTotalBalanceText,
 } from '../hooks';
 
-import RcCloseIcon from '@/assets/icons/feedback/close-light.svg';
-import RcRabbyAvatar from '@/assets/icons/feedback/rabby-avatar.svg';
-import RcUserAvatar from '@/assets/icons/feedback/user-avatar.svg';
+import RcCloseIconLight from '@/assets/icons/feedback/close.svg';
+import RcCloseIconDark from '@/assets/icons/feedback/close-dark.svg';
+import RcRabbyAvatarLight from '@/assets/icons/feedback/rabby-avatar.svg';
+import RcRabbyAvatarDark from '@/assets/icons/feedback/rabby-avatar-dark.svg';
+import RcUserAvatarLight from '@/assets/icons/feedback/user-avatar.svg';
+import RcUserAvatarDark from '@/assets/icons/feedback/user-avatar-dark.svg';
 import { Text, TextInput } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -131,7 +134,7 @@ async function uploadFeedbackMedia(media: PickedFeedbackMedia) {
 
 export const FeedbackHistoryBottomSheet: React.FC = () => {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal();
   const { isShowHistory, toggleFeedbackHistoryVisible } =
@@ -304,8 +307,8 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   return (
     <AppBottomSheetModal
       {...makeBottomSheetProps({
-        linearGradientType: 'linear',
         colors: colors2024,
+        linearGradientType: isLight ? 'bg0' : 'bg1',
       })}
       ref={sheetModalRef}
       index={0}
@@ -365,8 +368,26 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   );
 };
 
+const Avatar: React.FC<{
+  isUser?: boolean;
+}> = ({ isUser }) => {
+  const { styles, isLight } = useTheme2024({ getStyle });
+  if (isUser) {
+    return isLight ? (
+      <RcUserAvatarLight style={styles.avatar} />
+    ) : (
+      <RcUserAvatarDark style={styles.avatar} />
+    );
+  }
+  return isLight ? (
+    <RcRabbyAvatarLight style={styles.avatar} />
+  ) : (
+    <RcRabbyAvatarDark style={styles.avatar} />
+  );
+};
+
 function FeedbackMessageItem({ message }: { message: ClientFeedbackMessage }) {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, isLight } = useTheme2024({ getStyle });
   const isSupport = message.sender === 'ops';
 
   return (
@@ -375,7 +396,7 @@ function FeedbackMessageItem({ message }: { message: ClientFeedbackMessage }) {
         styles.messageRow,
         isSupport ? styles.supportMessageRow : styles.userMessageRow,
       ]}>
-      {isSupport ? <RcRabbyAvatar style={styles.avatar} /> : null}
+      {isSupport ? <Avatar /> : null}
       <View
         style={[
           styles.messageBubble,
@@ -417,7 +438,7 @@ function FeedbackMessageItem({ message }: { message: ClientFeedbackMessage }) {
           </View>
         ) : null}
       </View>
-      {!isSupport ? <RcUserAvatar style={styles.avatar} /> : null}
+      {!isSupport ? <Avatar isUser /> : null}
     </View>
   );
 }
@@ -439,7 +460,7 @@ function ReplyComposer({
   onSubmit?: (() => void) | (() => Promise<void>);
   submitting?: boolean;
 }) {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const selectedMediaUri = selectedMedia?.uri;
 
@@ -483,7 +504,11 @@ function ReplyComposer({
             )}
             <View style={styles.removeMediaButton}>
               <TouchableOpacity onPress={onRemoveMedia} disabled={submitting}>
-                <RcCloseIcon width={21} height={21} />
+                {isLight ? (
+                  <RcCloseIconLight width={21} height={21} />
+                ) : (
+                  <RcCloseIconDark width={21} height={21} />
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -511,185 +536,189 @@ function ReplyComposer({
           titleStyle={styles.replySubmitButtonTitle}
         />
       </View>
-      <RcUserAvatar style={styles.avatar} />
+      <Avatar isUser />
     </View>
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024, safeAreaInsets }) => ({
-  mainContainer: {
-    height: '100%',
-    maxHeight: SHEET_HEIGHT,
-  },
-  container: {
-    flex: 1,
-  },
-  titleContainer: {
-    paddingBottom: 16,
-    alignItems: 'center',
-  },
-  title: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    fontStyle: 'normal',
-    fontWeight: '800',
-    lineHeight: 24,
-    color: colors2024['neutral-title-1'],
-  },
-  messageList: {
-    flex: 1,
-    width: '100%',
-  },
-  messageListContent: {
-    paddingHorizontal: 12,
-    paddingBottom: 0,
-  },
-  messageRow: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    marginBottom: 12,
-  },
-  userMessageRow: {
-    justifyContent: 'flex-end',
-    paddingLeft: 44,
-  },
-  supportMessageRow: {
-    justifyContent: 'flex-start',
-    paddingRight: 44,
-  },
-  avatar: {
-    width: 36,
-    height: 36,
-    flexShrink: 0,
-  },
-  userAvatar: {
-    backgroundColor: colors2024['neutral-bg-2'],
-  },
-  messageBubble: {
-    borderRadius: 12,
-    padding: 12,
-    minWidth: 0,
-    flex: 1,
-  },
-  userBubble: {
-    backgroundColor: colors2024['neutral-bg-2'],
-  },
-  supportBubble: {
-    backgroundColor: colors2024['brand-light-1'],
-  },
-  messageText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    color: colors2024['neutral-title-1'],
-  },
-  userMessageText: {
-    // fontWeight: FontWeightEnum.bold,
-  },
-  supportMessageText: {
-    // fontWeight: FontWeightEnum.medium,
-  },
-  fileList: {
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 7,
-  },
-  feedbackImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
-  },
-  imageWithText: {
-    marginTop: 7,
-  },
-  replyBubble: {},
-  replyInput: {
-    // height: 42,
-    width: '100%',
-    padding: 0,
-    // fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
-    color: colors2024['neutral-title-1'],
-    marginBottom: 12,
-  },
-  replyInputPlaceholder: {
-    color: colors2024['neutral-secondary'],
-  },
-  mediaPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    marginTop: 0,
-    alignSelf: 'flex-start',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors2024['neutral-bg-5'],
-  },
-  mediaPreviewContainer: {
-    position: 'relative',
-    alignSelf: 'flex-start',
-  },
-  mediaPreview: {
-    width: 80,
-    height: 80,
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: colors2024['neutral-bg-5'],
-  },
-  removeMediaButton: {
-    position: 'absolute',
-    top: -5,
-    right: -2,
-    width: 21,
-    height: 21,
-    borderRadius: 21,
-  },
-  mediaPlaceholderText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '500',
-    textAlign: 'center',
-    color: colors2024['neutral-secondary'],
-  },
-  replySubmitButtonContainer: {
-    width: 80,
-    height: 32,
-    alignSelf: 'flex-end',
-    marginTop: 7,
-  },
-  replySubmitButton: {
-    height: 32,
-    borderRadius: 8,
-  },
-  replySubmitButtonTitle: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-  },
-  footerTipContainer: {
-    alignItems: 'center',
-    paddingTop: 16,
-    paddingBottom: Math.max(safeAreaInsets.bottom, 36),
-  },
-  footerTip: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 16,
-    fontWeight: '500',
-    color: colors2024['neutral-secondary'],
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, safeAreaInsets, isLight }) => ({
+    mainContainer: {
+      height: '100%',
+      maxHeight: SHEET_HEIGHT,
+    },
+    container: {
+      flex: 1,
+    },
+    titleContainer: {
+      paddingBottom: 16,
+      alignItems: 'center',
+    },
+    title: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      fontStyle: 'normal',
+      fontWeight: '800',
+      lineHeight: 24,
+      color: colors2024['neutral-title-1'],
+    },
+    messageList: {
+      flex: 1,
+      width: '100%',
+    },
+    messageListContent: {
+      paddingHorizontal: 12,
+      paddingBottom: 0,
+    },
+    messageRow: {
+      width: '100%',
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 8,
+      marginBottom: 12,
+    },
+    userMessageRow: {
+      justifyContent: 'flex-end',
+      paddingLeft: 44,
+    },
+    supportMessageRow: {
+      justifyContent: 'flex-start',
+      paddingRight: 44,
+    },
+    avatar: {
+      width: 36,
+      height: 36,
+      flexShrink: 0,
+    },
+    userAvatar: {
+      backgroundColor: colors2024['neutral-bg-2'],
+    },
+    messageBubble: {
+      borderRadius: 12,
+      padding: 12,
+      minWidth: 0,
+      flex: 1,
+    },
+    userBubble: {
+      backgroundColor: colors2024['neutral-bg-2'],
+    },
+    supportBubble: {
+      backgroundColor: isLight
+        ? colors2024['brand-light-1']
+        : colors2024['brand-light-2'],
+    },
+    messageText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors2024['neutral-title-1'],
+    },
+    userMessageText: {
+      // fontWeight: FontWeightEnum.bold,
+    },
+    supportMessageText: {
+      // fontWeight: FontWeightEnum.medium,
+    },
+    fileList: {
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginTop: 7,
+    },
+    feedbackImage: {
+      width: 80,
+      height: 80,
+      borderRadius: 12,
+      backgroundColor: colors2024['neutral-bg-5'],
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+    },
+    imageWithText: {
+      marginTop: 7,
+    },
+    replyBubble: {},
+    replyInput: {
+      // height: 42,
+      width: '100%',
+      padding: 0,
+      // fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '400',
+      color: colors2024['neutral-title-1'],
+      marginBottom: 12,
+    },
+    replyInputPlaceholder: {
+      color: colors2024['neutral-secondary'],
+    },
+    mediaPlaceholder: {
+      width: 80,
+      height: 80,
+      borderRadius: 8,
+      marginTop: 0,
+      alignSelf: 'flex-start',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors2024['neutral-bg-5'],
+    },
+    mediaPreviewContainer: {
+      position: 'relative',
+      alignSelf: 'flex-start',
+    },
+    mediaPreview: {
+      width: 80,
+      height: 80,
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      borderRadius: 12,
+      overflow: 'hidden',
+      backgroundColor: colors2024['neutral-bg-5'],
+    },
+    removeMediaButton: {
+      position: 'absolute',
+      top: -5,
+      right: -2,
+      width: 21,
+      height: 21,
+      borderRadius: 21,
+    },
+    mediaPlaceholderText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '500',
+      textAlign: 'center',
+      color: colors2024['neutral-secondary'],
+    },
+    replySubmitButtonContainer: {
+      width: 80,
+      height: 32,
+      alignSelf: 'flex-end',
+      marginTop: 7,
+    },
+    replySubmitButton: {
+      height: 32,
+      borderRadius: 8,
+    },
+    replySubmitButtonTitle: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+    },
+    footerTipContainer: {
+      alignItems: 'center',
+      paddingTop: 16,
+      paddingBottom: Math.max(safeAreaInsets.bottom, 36),
+    },
+    footerTip: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 16,
+      fontWeight: '500',
+      color: colors2024['neutral-secondary'],
+    },
+  }),
+);
