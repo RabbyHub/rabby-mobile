@@ -2,7 +2,7 @@ import { Linking, Platform } from 'react-native';
 import VersionCheck from 'react-native-version-check';
 import Toast from 'react-native-root-toast';
 import semver from 'semver';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 
 import { toast } from '@/components2024/Toast';
 import { devLog } from './logger';

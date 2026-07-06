@@ -125,6 +125,17 @@ export const FloatingDiagnosticsPanel = registerAppScreen<
     ),
 });
 
+export const FloatingDbSyncSummaryPanel = registerAppScreen<
+  typeof import('@/screens/Settings/components/FloatingDbSyncSummaryPanel').FloatingDbSyncSummaryPanel
+>({
+  loader: () =>
+    import('@/screens/Settings/components/FloatingDbSyncSummaryPanel').then(
+      m => ({
+        default: m.FloatingDbSyncSummaryPanel,
+      }),
+    ),
+});
+
 export const WideScreenDebugPanel = registerAppScreen<
   typeof import('@/components/Debug/WideScreenDebugPanel').WideScreenDebugPanel
 >({

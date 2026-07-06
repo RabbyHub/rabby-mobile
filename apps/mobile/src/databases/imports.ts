@@ -1,6 +1,6 @@
 import RNHelpers from '@/core/native/RNHelpers';
 import { DataSource, DataSourceOptions } from 'typeorm/browser';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 import { getRabbyAppDbPath } from './constant';
 // import * as Sentry from '@sentry/react-native';
 

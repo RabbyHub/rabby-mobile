@@ -1,6 +1,6 @@
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { Platform } from 'react-native';
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 import { MMKV_FILE_NAMES } from '../storage/mmkvConstants';
 
 const isIOS = Platform.OS === 'ios';

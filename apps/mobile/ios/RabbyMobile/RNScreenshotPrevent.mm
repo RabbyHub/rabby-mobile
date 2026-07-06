@@ -254,11 +254,29 @@ RCT_EXPORT_MODULE();
         return;
     }
 
-    [result setObject:@(image.size.height) forKey:@"height"];
-    [result setObject:@(image.size.width) forKey:@"width"];
-    [result setObject:[data base64EncodedStringWithOptions:0] forKey:@"imageBase64"];
-    [result setObject:@"png" forKey:@"imageType"];
-    [result setObject:@TRUE forKey:@"captured"];
+    NSString *tempDir = [NSTemporaryDirectory() stringByAppendingPathComponent:@"rabby-screen-capture"];
+    BOOL directoryReady = [[NSFileManager defaultManager]
+      createDirectoryAtPath:tempDir
+      withIntermediateDirectories:YES
+      attributes:nil
+      error:nil];
+    if (!directoryReady) {
+        [self emitUserDidTakeScreenshotChanged:result];
+        return;
+    }
+
+    NSString *fileName = [NSString stringWithFormat:@"rabby-screen-capture-%@.png", [[NSUUID UUID] UUIDString]];
+    NSString *filePath = [tempDir stringByAppendingPathComponent:fileName];
+    BOOL success = [data writeToFile:filePath options:NSDataWritingAtomic error:nil];
+    if (success) {
+        [result setObject:filePath forKey:@"path"];
+        [result setObject:fileName forKey:@"name"];
+        [result setObject:@(image.size.height) forKey:@"height"];
+        [result setObject:@(image.size.width) forKey:@"width"];
+        [result setObject:@"" forKey:@"imageBase64"];
+        [result setObject:@"png" forKey:@"imageType"];
+        [result setObject:@TRUE forKey:@"captured"];
+    }
 
     [self emitUserDidTakeScreenshotChanged:result];
 }

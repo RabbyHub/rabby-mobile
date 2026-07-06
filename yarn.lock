@@ -10332,12 +10332,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-logger@npm:0.3.0":
-  version: 0.3.0
-  resolution: "@rabby-wallet/rabby-logger@npm:0.3.0"
+"@rabby-wallet/rabby-logger@npm:0.3.1":
+  version: 0.3.1
+  resolution: "@rabby-wallet/rabby-logger@npm:0.3.1"
   dependencies:
     fflate: "npm:^0.8.2"
-  checksum: 10/596d11c9d5489a87502304843479c680a45fd22917f0f1a55abfcc10589082069e8225e5b422d3885202bb21c707d0ad36d711edd112eb376112f89873ac1a43
+  checksum: 10/d123d3edacaee72b6b007bbe2cac3c5c0fe88c0f8f3dc8d123efd6bcb810c30d186c780c09a46fa96fa841dbd7e2f03f42045d5c966c85d0af89b566da185b5a
   languageName: node
   linkType: hard
 
@@ -10399,6 +10399,21 @@ __metadata:
     react-native-reanimated: ">=2.15.0"
   peerDependenciesMeta:
     "@shopify/flash-list":
+      optional: true
+  languageName: unknown
+  linkType: soft
+
+"@rabby-wallet/react-native-fs@workspace:^, @rabby-wallet/react-native-fs@workspace:packages/react-native-fs":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/react-native-fs@workspace:packages/react-native-fs"
+  dependencies:
+    base-64: "npm:^0.1.0"
+    utf8: "npm:^3.0.0"
+  peerDependencies:
+    react-native: "*"
+    react-native-windows: "*"
+  peerDependenciesMeta:
+    react-native-windows:
       optional: true
   languageName: unknown
   linkType: soft
@@ -39479,11 +39494,12 @@ __metadata:
     "@rabby-wallet/rabby-action": "npm:0.1.14"
     "@rabby-wallet/rabby-api": "npm:0.9.61"
     "@rabby-wallet/rabby-bridge": "npm:0.0.6"
-    "@rabby-wallet/rabby-logger": "npm:0.3.0"
+    "@rabby-wallet/rabby-logger": "npm:0.3.1"
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
     "@rabby-wallet/rabby-swap": "npm:0.0.78"
     "@rabby-wallet/react-native-collapsible-tab-view": "workspace:^"
+    "@rabby-wallet/react-native-fs": "workspace:^"
     "@rabby-wallet/react-native-keychain": "workspace:^"
     "@rabby-wallet/react-native-keychain-9": "workspace:^"
     "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^"
@@ -39611,7 +39627,6 @@ __metadata:
     react-native-edge-to-edge: "npm:^1.6.0"
     react-native-exception-handler: "npm:^2.10.10"
     react-native-fast-image: "npm:^8.6.3"
-    react-native-fs: "npm:^2.20.0"
     react-native-gesture-handler: "npm:2.30.0"
     react-native-get-random-values: "npm:^2.0.0"
     react-native-haptic-feedback: "npm:2.3.3"
@@ -40369,38 +40384,6 @@ __metadata:
     react: ^17 || ^18
     react-native: ">=0.60.0"
   checksum: 10/ed340c2b6c2e76658fa0a899a45132871017018bec0a03423b7456610810e79b2844dfa16063c05d98b89a7613eeb0de2fdf3ad978cdfa4d488a4e01228a7349
-  languageName: node
-  linkType: hard
-
-"react-native-fs@npm:2.20.0":
-  version: 2.20.0
-  resolution: "react-native-fs@npm:2.20.0"
-  dependencies:
-    base-64: "npm:^0.1.0"
-    utf8: "npm:^3.0.0"
-  peerDependencies:
-    react-native: "*"
-    react-native-windows: "*"
-  peerDependenciesMeta:
-    react-native-windows:
-      optional: true
-  checksum: 10/372e59f55d5e544e87093d832896fa3d56ba9802ca140c17b4b8903afe047714e022d3b1a2ddf18d744cb7f4f973593c8083641db9ae0768688b1390078d67a2
-  languageName: node
-  linkType: hard
-
-"react-native-fs@patch:react-native-fs@npm%3A2.20.0#./.yarn/patches/react-native-fs-npm-2.20.0-a38fe24051.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 2.20.0
-  resolution: "react-native-fs@patch:react-native-fs@npm%3A2.20.0#./.yarn/patches/react-native-fs-npm-2.20.0-a38fe24051.patch::version=2.20.0&hash=1db9cd&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  dependencies:
-    base-64: "npm:^0.1.0"
-    utf8: "npm:^3.0.0"
-  peerDependencies:
-    react-native: "*"
-    react-native-windows: "*"
-  peerDependenciesMeta:
-    react-native-windows:
-      optional: true
-  checksum: 10/71e5ca299cba234f3bfdad3dff5931af265614c961120df8c12fce7e0ae210553bc2550c1e34bc12327f2e063d56c707a09171ca612aa41eb9f4d9b4d03028ae
   languageName: node
   linkType: hard
 

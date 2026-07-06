@@ -74,11 +74,19 @@ async function initAccountBalanceSelectionLifecycle() {
   console.time('initAccountBalanceSelectionLifecycle');
 
   try {
-    const syncSelectionFromAccounts = async (
+    const syncSelectionFromAccounts = async ({
       accountState = accountStore.getState(),
-    ) => {
+      allowFetchFallback = false,
+    }: {
+      accountState?: ReturnType<typeof accountStore.getState>;
+      allowFetchFallback?: boolean;
+    } = {}) => {
       const canUseStoreSnapshot =
         accountState.hasFetchedAccounts || accountState.accounts.length > 0;
+      if (!canUseStoreSnapshot && !allowFetchFallback) {
+        return;
+      }
+
       const snapshot = canUseStoreSnapshot
         ? buildMatteredAccountsSnapshotFromStoreAccounts(
             accountState.accounts,
@@ -119,7 +127,7 @@ async function initAccountBalanceSelectionLifecycle() {
 
         accountBalanceSelectionLifecycleStateRef.prevSelectionSignature =
           nextSignature;
-        void syncSelectionFromAccounts(state);
+        void syncSelectionFromAccounts({ accountState: state });
       });
     }
 

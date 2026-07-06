@@ -44,31 +44,26 @@ import { rateModalStartSyncNetworth } from './components/RateModal/hooks';
 import { trimNoLongerSupportsOnUnlock } from './components2024/NoLongerSupports/useNoLongerSupports';
 import { startCheckClearAction } from './utils/clipboard';
 import { startSubscribeOpenApiHttpErrorDebugToast } from './utils/openapiDebugToast';
-import tokenListStore from './store/tokens';
 import {
-  balance24hStore,
   hydrateCachedHome24hBalanceScene,
   scene24hBalanceStore,
 } from './store/balance24h';
+import { startProcessMultiCurveEvents } from './store/curve24h';
 import {
-  hydrateCachedHomeDayCurve,
-  initCurve24hStore,
-  startProcessMultiCurveEvents,
-} from './store/curve24h';
-import useProtocolListStore from './store/protocols';
-import { useAppChainStore } from './store/appchain';
-import addressBalanceStore from './store/balance';
-import {
-  ensureAccountBalanceSelectionLifecycle,
   startProcessAccountBalanceEvents,
 } from './store/balanceAccountSelection';
 import * as apisAutoLock from './core/apis/autoLock';
 import { isUnlockSessionValid } from './core/apis/lock';
 import { startWatchLayoutChange } from './hooks/useAppLayout';
 import { startCareAppNotificationPermissions } from './hooks/appNotification';
-import nftListStore from './store/nfts';
 import { keyringService } from './core/services';
 import { APP_FEATURE_SWITCH } from './constant';
+import {
+  startInitPersistedStores,
+  startReadableAccountBootstrapWarmups,
+  startUnlockScreenBootstrapWarmups,
+} from './setup-readable-account-bootstrap-warmups';
+import { startInitReadableAccountStores } from './setup-readable-account-stores';
 
 const UNLOCKED_STORES_AFTER_UNLOCK_DELAY_MS = 800;
 
@@ -128,57 +123,14 @@ if (APP_FEATURE_SWITCH.transactionNotification) {
   startSubscribeRemoteNotification();
 }
 
-async function initPersistedStores() {
-  console.time('initPersistedStores');
-  await useAppChainStore.getState().initStore();
-  await Promise.all([
-    addressBalanceStore.initStore(),
-    balance24hStore.initStore(),
-    initCurve24hStore(),
-  ]);
-  hydrateCachedHome24hBalanceScene();
-  hydrateCachedHomeDayCurve();
-  console.timeEnd('initPersistedStores');
-}
+export {
+  startInitPersistedStores,
+  startReadableAccountBootstrapWarmups,
+  startUnlockScreenBootstrapWarmups,
+};
 
 export async function initReadableAccountStores() {
-  console.time('initReadableAccountStores');
-  await tokenListStore.getState().initStore();
-  await nftListStore.getState().initStore();
-  await useProtocolListStore.getState().initStore();
-  console.timeEnd('initReadableAccountStores');
-}
-
-const initPersistedStoresStateRef = {
-  promise: null as Promise<void> | null,
-};
-export const startInitPersistedStores = async () => {
-  if (initPersistedStoresStateRef.promise) {
-    return initPersistedStoresStateRef.promise;
-  }
-  const promise = initPersistedStores();
-  initPersistedStoresStateRef.promise = promise;
-  await promise;
-};
-
-export async function startReadableAccountBootstrapWarmups() {
-  const results = await Promise.allSettled([
-    startInitPersistedStores(),
-    ensureAccountBalanceSelectionLifecycle(),
-  ]);
-
-  results.forEach(result => {
-    if (result.status === 'rejected') {
-      console.error(
-        'startReadableAccountBootstrapWarmups::error',
-        result.reason,
-      );
-    }
-  });
-}
-
-export async function startUnlockScreenBootstrapWarmups() {
-  return startReadableAccountBootstrapWarmups();
+  return startInitReadableAccountStores();
 }
 
 const startInitStores = async () => {

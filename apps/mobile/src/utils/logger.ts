@@ -1,10 +1,13 @@
 import { Platform } from 'react-native';
-import { AppLogger, RollingZipLogWriter } from '@rabby-wallet/rabby-logger';
+import { AppLogger, RollingTextLogWriter } from '@rabby-wallet/rabby-logger';
 import debugLogService from '@/core/services/debugLogService';
 import { APP_DOCUMENT_LIKE_PATH } from '@/core/utils/appFS';
 import { APP_RUNTIME_ENV } from '@/constant/env';
 import { isNonPublicProductionEnv } from '@/constant';
-import { rnfsLoggingAdapter } from './logging/rnfsAdapter';
+import {
+  rnfsLoggingAdapter,
+  rnfsLoggingArchiveAdapter,
+} from './logging/rnfsAdapter';
 import {
   getEffectiveConsoleCaptureEnabled,
   getEffectiveFileLoggingEnabled,
@@ -12,10 +15,11 @@ import {
 
 export const APP_LOG_ROOT_PATH = `${APP_DOCUMENT_LIKE_PATH}/applogs`;
 
-const logWriter = new RollingZipLogWriter({
+const logWriter = new RollingTextLogWriter({
   fs: rnfsLoggingAdapter,
   rootDir: APP_LOG_ROOT_PATH,
   archivePrefix: 'rabby-mobile-logs',
+  archiveAdapter: rnfsLoggingArchiveAdapter,
 });
 
 export const logger = new AppLogger({

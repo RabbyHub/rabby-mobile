@@ -5,6 +5,7 @@ import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import {
   syncRemoteProtocols,
   syncRemoteProtocol,
+  syncRemoteProtocolsForAddresses,
 } from '@/databases/sync/assets';
 import { batchQueryNFTsWithLocalCache } from '@/databases/hooks/nft';
 import {
@@ -94,6 +95,81 @@ export const syncProtocols = async (
   const protocols = [...snapshotRes, ...appChainProtocols];
   syncRemoteProtocols(address, snapshotRes);
   return protocols.map(p => complexProtocol2ProtocolItem(p, address));
+};
+
+type LoadedProtocolResult = {
+  address: string;
+  protocols: IProtocolItem[];
+  remoteProtocols?: ComplexProtocol[];
+};
+
+async function loadProtocolsForSync(
+  address: string,
+  force?: boolean,
+): Promise<LoadedProtocolResult> {
+  if (!address) {
+    return {
+      address,
+      protocols: [],
+    };
+  }
+
+  const normalizedAddress = address.toLowerCase();
+  const isExpired = await ProtocolItemEntity.isExpired(normalizedAddress);
+
+  if (!isExpired && !force) {
+    const protocols = await ProtocolItemEntity.batchQueryProtocols(
+      normalizedAddress,
+    );
+    return {
+      address: normalizedAddress,
+      protocols,
+    };
+  }
+
+  const snapshotRes = (await loadPortfolioSnapshot(normalizedAddress)) || [];
+  const { protocols: appChainProtocols } = await loadAppChainComplexProtocols(
+    normalizedAddress,
+    force,
+  );
+  const protocols = [...snapshotRes, ...appChainProtocols];
+
+  return {
+    address: normalizedAddress,
+    protocols: protocols.map(p =>
+      complexProtocol2ProtocolItem(p, normalizedAddress),
+    ),
+    remoteProtocols: snapshotRes,
+  };
+}
+
+export const syncProtocolsForAddresses = async (
+  addresses: string[],
+  force?: boolean,
+): Promise<Record<string, IProtocolItem[]>> => {
+  const lowerAddresses = Array.from(
+    new Set(addresses.map(address => address.toLowerCase()).filter(Boolean)),
+  );
+  if (!lowerAddresses.length) {
+    return {};
+  }
+
+  const results = await Promise.all(
+    lowerAddresses.map(address => loadProtocolsForSync(address, force)),
+  );
+  const protocolMap: Record<string, IProtocolItem[]> = {};
+  const remoteProtocolMap: Record<string, ComplexProtocol[]> = {};
+
+  results.forEach(result => {
+    protocolMap[result.address] = result.protocols;
+    if (result.remoteProtocols) {
+      remoteProtocolMap[result.address] = result.remoteProtocols;
+    }
+  });
+
+  void syncRemoteProtocolsForAddresses(remoteProtocolMap);
+
+  return protocolMap;
 };
 
 export const syncSpecificProtocol = async (

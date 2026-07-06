@@ -5,7 +5,7 @@ import { autoLoginGasAccountIfNeeded } from '@/utils/autoLoginGasAccount';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect } from 'react';
-import { AppState, View } from 'react-native';
+import { AppState, InteractionManager, View } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import * as apisAccount from '@/core/apis/account';
@@ -15,6 +15,7 @@ import {
   scheduleHomeStartupReady,
   traceHomeStartupReady,
   useHomePostStartupReady,
+  useHomeStartupReady,
 } from '@/core/utils/homeStartupReady';
 import { apisHomeTabIndex, resetNavigationTo } from '@/hooks/navigation';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -35,19 +36,19 @@ import { useHomePortfolioStore } from './hooks/useHomePortfolioSummary';
 import { storeApiAccounts } from '@/hooks/account';
 import { startInitReadableAccountStores } from '@/setup-app-before-render';
 
-let hasStartedInitReadableAccountStoresOnHomeMount = false;
+let hasStartedInitReadableAccountStoresAfterHomeReady = false;
 
-async function startInitReadableAccountStoresOnHomeMount() {
-  if (hasStartedInitReadableAccountStoresOnHomeMount) {
+async function startInitReadableAccountStoresAfterHomeReady() {
+  if (hasStartedInitReadableAccountStoresAfterHomeReady) {
     return;
   }
 
   const accounts = await storeApiAccounts.fetchAccounts();
-  if (!accounts.length || hasStartedInitReadableAccountStoresOnHomeMount) {
+  if (!accounts.length || hasStartedInitReadableAccountStoresAfterHomeReady) {
     return;
   }
 
-  hasStartedInitReadableAccountStoresOnHomeMount = true;
+  hasStartedInitReadableAccountStoresAfterHomeReady = true;
   await startInitReadableAccountStores();
 }
 
@@ -76,12 +77,46 @@ function HomeStartupReadyScheduler() {
   useEffect(() => {
     resetHomeStartupReady();
     traceHomeStartupReady('home_mount');
-    startInitReadableAccountStoresOnHomeMount().catch(error => {
-      console.error('startInitReadableAccountStoresOnHomeMount::error', error);
-    });
 
     return scheduleHomeStartupReady();
   }, []);
+
+  return null;
+}
+
+function HomeReadableAccountStoresBootstrap() {
+  const homePostStartupReady = useHomePostStartupReady();
+
+  useEffect(() => {
+    if (!homePostStartupReady) {
+      return;
+    }
+
+    let disposed = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const interactionHandle = InteractionManager.runAfterInteractions(() => {
+      timeoutId = setTimeout(() => {
+        if (disposed) {
+          return;
+        }
+
+        startInitReadableAccountStoresAfterHomeReady().catch(error => {
+          console.error(
+            'startInitReadableAccountStoresAfterHomeReady::error',
+            error,
+          );
+        });
+      }, 120);
+    });
+
+    return () => {
+      disposed = true;
+      interactionHandle.cancel?.();
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [homePostStartupReady]);
 
   return null;
 }
@@ -270,6 +305,7 @@ function MultiAddressHome(): JSX.Element {
       </View>
 
       <HomeStartupReadyScheduler />
+      <HomeReadableAccountStoresBootstrap />
       <HomePostStartupEffects
         appThemeConfig={appThemeConfig}
         trackGasAccountActive={trackGasAccountActive}
