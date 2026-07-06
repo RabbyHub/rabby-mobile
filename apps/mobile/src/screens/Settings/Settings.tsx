@@ -562,7 +562,7 @@ function SettingsBlocks() {
             onPress: () => {
               toggleFeedbackHistoryVisible(true);
             },
-            visible: !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
+            // visible: !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
           },
           {
             label: t('page.setting.dataAnalysis'),

@@ -126,7 +126,7 @@ async function uploadFeedbackMedia(media: PickedFeedbackMedia) {
     name: getUploadFilename(media),
   } as unknown as Blob);
 
-  return openapi.uploadClientFeedback(formData);
+  return openapi.uploadClientFeedback(formData, true);
 }
 
 export const FeedbackHistoryBottomSheet: React.FC = () => {
@@ -141,11 +141,27 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   const [selectedMedia, setSelectedMedia] =
     useState<PickedFeedbackMedia | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+  const pendingScrollToBottomRef = useRef(false);
   const scrollToBottom = useCallback((animated = false) => {
     requestAnimationFrame(() => {
       scrollViewRef.current?.scrollToEnd({ animated });
     });
   }, []);
+  const requestScrollToBottomAfterLayout = useCallback(
+    (animated = false) => {
+      pendingScrollToBottomRef.current = true;
+      scrollToBottom(animated);
+    },
+    [scrollToBottom],
+  );
+  const handleScrollViewContentSizeChange = useCallback(() => {
+    if (!isShowHistory || !pendingScrollToBottomRef.current) {
+      return;
+    }
+
+    scrollToBottom();
+    pendingScrollToBottomRef.current = false;
+  }, [isShowHistory, scrollToBottom]);
 
   const handlePickMedia = useCallback(async () => {
     const result = await launchImageLibrary({
@@ -202,7 +218,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
         staleTime: 5 * 1000,
         ready: isShowHistory,
         onSuccess: () => {
-          // scrollToBottom();
+          requestScrollToBottomAfterLayout();
         },
       },
     );
@@ -244,11 +260,14 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
         onSuccess: async () => {
           setReplyText('');
           setSelectedMedia(null);
-          toast.success('提交成功');
+          toast.success(t('component.submitFeedbackSuccessModal.desc'), {
+            hideOnPress: true,
+          });
           await fetchFeedbackMessages();
-          scrollToBottom();
+          requestScrollToBottomAfterLayout();
         },
         onError: error => {
+          console.log('feedback', error);
           console.error('feedback reply submission error', error);
           toast.error(getFeedbackErrorMessage(error, 'Upload failed.'));
         },
@@ -261,14 +280,14 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
       setSelectedMedia(null);
       toggleShowSheetModal(true);
       fetchFeedbackMessages();
-      scrollToBottom();
+      requestScrollToBottomAfterLayout();
     } else {
       toggleShowSheetModal('destroy');
     }
   }, [
     fetchFeedbackMessages,
     isShowHistory,
-    scrollToBottom,
+    requestScrollToBottomAfterLayout,
     toggleShowSheetModal,
   ]);
 
@@ -278,11 +297,9 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
 
   useEffect(() => {
     if (isShowHistory && hasMessage) {
-      setTimeout(() => {
-        scrollToBottom();
-      }, 100);
+      requestScrollToBottomAfterLayout();
     }
-  }, [hasMessage, isShowHistory, scrollToBottom]);
+  }, [hasMessage, isShowHistory, requestScrollToBottomAfterLayout]);
 
   return (
     <AppBottomSheetModal
@@ -300,7 +317,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
       // keyboardBehavior="extend"
       // keyboardBlurBehavior="restore"
       // android_keyboardInputMode="adjustPan"
-      enableContentPanningGesture={true}
+      enableContentPanningGesture={false}
       enablePanDownToClose={true}>
       <View style={styles.mainContainer}>
         <AutoLockView style={styles.container}>
@@ -316,15 +333,8 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
               style={styles.messageList}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
-              // ScrollViewComponent={ScrollView}
               bottomOffset={14}
-              // onContentSizeChange={() => {
-              //   // setTimeout(() => {
-              //   if (isShowHistory) {
-              //     scrollToBottom();
-              //   }
-              //   // }, 500);
-              // }}
+              onContentSizeChange={handleScrollViewContentSizeChange}
               contentContainerStyle={styles.messageListContent}>
               {feedbackMessagesData?.messages?.map(message => (
                 <FeedbackMessageItem key={message.id} message={message} />
@@ -400,6 +410,8 @@ function FeedbackMessageItem({ message }: { message: ClientFeedbackMessage }) {
                 source={{ uri: videoUri }}
                 style={[styles.feedbackImage]}
                 resizeMode="cover"
+                paused
+                muted
               />
             ))}
           </View>
@@ -446,7 +458,11 @@ function ReplyComposer({
           placeholderTextColor={styles.replyInputPlaceholder.color}
           style={styles.replyInput}
           enterKeyHint="send"
-          onSubmitEditing={onSubmit}
+          onSubmitEditing={() => {
+            if (selectedMedia) {
+              onSubmit?.();
+            }
+          }}
         />
         {selectedMediaUri ? (
           <View style={styles.mediaPreviewContainer}>
