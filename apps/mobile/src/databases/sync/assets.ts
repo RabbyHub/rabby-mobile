@@ -222,9 +222,7 @@ function normalizeTokenInput(_tokens: TokenItem[] | ITokenItem[]) {
     data.push(EMPTY_TOKEN_ITEM);
   }
 
-  return data.sort((a, b) =>
-    b.is_core === a.is_core ? 0 : b.is_core ? 1 : -1,
-  );
+  return data;
 }
 
 function buildTokenEntities(
@@ -493,46 +491,7 @@ export async function syncRemoteTokens(
   address: string,
   _tokens: TokenItem[] | ITokenItem[],
 ) {
-  const syncTimestamp = Date.now();
-
-  const entityBuildStartedAt = Date.now();
-  const { tokens, tokenItems } = buildTokenEntities(
-    address,
-    _tokens,
-    syncTimestamp,
-  );
-  traceEntityBuild(
-    'token',
-    TokenItemEntity.name,
-    entityBuildStartedAt,
-    tokens.length,
-    tokenItems.length,
-  );
-
-  await prepareAppDataSourceWithDiag('token', TokenItemEntity.name);
-
-  // await TokenItemEntity.deleteForAddress(address);
-  await batchSaveWithPQueueAndTransaction(TokenItemEntity, tokenItems, {
-    owner_addr: address,
-    taskFor: 'token',
-    batchSize: 300,
-    concurrency: 1,
-    delayBetweenTasks: 1.5 * 1e3,
-    waitTaskDoneReturn: true,
-    afterBatches: async () => {
-      await TokenItemEntity.cleanupStaleTokens(address, syncTimestamp);
-    },
-  })
-    .then(({ taskSignal, taskKey, queueCompleted }) => {
-      if (queueCompleted) {
-        console.debug(`[${taskKey}] batch upsert tasks completed`);
-      } else {
-        console.warn(`[${taskKey}] batch upsert tasks aborted.`);
-      }
-    })
-    .catch(error => {
-      console.error('Batch upsert failed:', error);
-    });
+  await enqueueTokenSync(address.toLowerCase(), _tokens);
 }
 
 export async function syncRemoteTokensForAddresses(

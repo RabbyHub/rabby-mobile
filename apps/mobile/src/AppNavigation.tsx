@@ -66,6 +66,7 @@ import {
   BrowserFavoritePopup,
   BrowserManagePopup,
   DuplicateAddressModal,
+  FloatingDbSyncSummaryPanel,
   FloatingDiagnosticsPanel,
   GlobalMiniApproval,
   GlobalMiniSignTypedDataPortal,
@@ -354,6 +355,7 @@ function AppNavigationOverlayGlobals({
       {/** @warning put all business stub components before this modal */}
       {deferredGlobalsEnabled && <GlobalSecurityTipStubModal />}
       {showDiagnostics && <FloatingDiagnosticsPanel />}
+      {showDiagnostics && <FloatingDbSyncSummaryPanel />}
       {postUnlockGlobalsEnabled && (
         <GlobalMiniApproval key="global-mini-approval" />
       )}

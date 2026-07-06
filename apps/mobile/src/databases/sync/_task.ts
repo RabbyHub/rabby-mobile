@@ -100,9 +100,6 @@ function ensureNotAborted(signal?: AbortSignal) {
   }
 }
 
-/**
- * @warning the `data` list would be mutated internally for performance consideration
- */
 export async function batchSaveWithPQueueAndTransaction<
   T extends typeof EntityAddressAssetBase,
 >(
@@ -226,6 +223,15 @@ export async function batchSaveWithPQueueAndTransaction<
       signal: currentSignal,
       replaceQueuedDuplicates: !noNeedAbort,
       runner: async ctx => {
+        markDbSyncTaskStage(
+          diagTaskId,
+          'running',
+          {
+            schedulerTaskId,
+            queuedByScheduler: true,
+          },
+          true,
+        );
         ensureNotAborted(currentSignal);
 
         const upsertMethod = resolveUpsertMethod(entityCls);
@@ -247,11 +253,11 @@ export async function batchSaveWithPQueueAndTransaction<
         const db = connection.getDb();
         let dataIdx = 0;
 
-        while (dataIdx < totalLen && data.length) {
+        while (dataIdx < totalLen) {
           await ctx.waitIfPaused();
           ensureNotAborted(currentSignal);
 
-          const curBatch = data.splice(0, batchSize);
+          const curBatch = data.slice(dataIdx, dataIdx + batchSize);
           const round = Math.floor(dataIdx / batchSize);
           const roundText = `${round + 1}`;
           const roundPercent = `${roundText} / ${totalRound}`;
@@ -281,6 +287,18 @@ export async function batchSaveWithPQueueAndTransaction<
                 count: curBatch.length,
                 totalRound,
               });
+              markDbSyncTaskStage(
+                diagTaskId,
+                'params_build',
+                {
+                  schedulerTaskId,
+                  round,
+                  count: curBatch.length,
+                  totalRound,
+                  method: upsertMethod.method,
+                },
+                true,
+              );
               const paramsRows = curBatch.map(item => {
                 const getUpsertParams = item.getUpsertParams;
                 if (typeof getUpsertParams !== 'function') {
@@ -308,6 +326,19 @@ export async function batchSaveWithPQueueAndTransaction<
                 totalRound,
                 paramsBuildMs,
               });
+              markDbSyncTaskStage(
+                diagTaskId,
+                'execute_batch',
+                {
+                  schedulerTaskId,
+                  round,
+                  count: curBatch.length,
+                  totalRound,
+                  paramsBuildMs,
+                  method: upsertMethod.method,
+                },
+                true,
+              );
               await db.executeBatch(commands);
               executeMs = Date.now() - executeStartedAt;
             } else {
@@ -317,6 +348,18 @@ export async function batchSaveWithPQueueAndTransaction<
                 count: curBatch.length,
                 totalRound,
               });
+              markDbSyncTaskStage(
+                diagTaskId,
+                'typeorm_upsert',
+                {
+                  schedulerTaskId,
+                  round,
+                  count: curBatch.length,
+                  totalRound,
+                  method: upsertMethod.method,
+                },
+                true,
+              );
               await repo.manager.upsert(entityCls, curBatch, {
                 conflictPaths: ['_db_id'],
               });
@@ -364,7 +407,7 @@ export async function batchSaveWithPQueueAndTransaction<
             throw error;
           }
 
-          dataIdx += batchSize;
+          dataIdx += curBatch.length;
         }
 
         if (afterBatches) {
@@ -394,6 +437,16 @@ export async function batchSaveWithPQueueAndTransaction<
         });
       },
     },
+  );
+  markDbSyncTaskStage(
+    diagTaskId,
+    'queued',
+    {
+      schedulerTaskId,
+      queuedByScheduler: true,
+      priority,
+    },
+    true,
   );
 
   const unregisterAbortController = () => {

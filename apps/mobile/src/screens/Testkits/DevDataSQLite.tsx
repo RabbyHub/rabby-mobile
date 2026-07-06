@@ -36,6 +36,7 @@ import { touchedFeedback } from '@/utils/touch';
 import { ALL_ORM_ENTITIES } from '@/databases/entities';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { Text, AnimateableText } from '@/components/Typography';
+import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import {
   clearSyncSchedulerRecentTasks,
   pauseSyncScheduler,
@@ -44,6 +45,7 @@ import {
   type SyncTaskSnapshot,
   useSyncSchedulerSnapshot,
 } from '@/databases/sync/scheduler';
+import { useToggleShowDbSyncSummaryPanel } from '../Settings/components/FloatingDbSyncSummaryPanel';
 
 function UpdatedTimeCount({ updatedAt }: { updatedAt: number }) {
   const { countdownTextStyles, countdownTextProps } = useRestCountDownLabel({
@@ -499,6 +501,36 @@ function DevSyncTaskCard({ task }: { task: SyncTaskSnapshot }) {
   );
 }
 
+function DevDbSyncSummaryToggleRow() {
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getStyles,
+    isLight: true,
+  });
+  const { showDbSyncSummaryPanel, toggleShowDbSyncSummaryPanel } =
+    useToggleShowDbSyncSummaryPanel();
+
+  return (
+    <View style={styles.schedulerInfoRow}>
+      <View style={styles.schedulerToggleText}>
+        <Text style={styles.schedulerToggleTitle}>Floating summary</Text>
+        <Text style={styles.schedulerToggleDesc}>
+          Persisted overlay for startup DB sync tasks
+        </Text>
+      </View>
+      <AppSwitch2024
+        circleSize={20}
+        value={!!showDbSyncSummaryPanel}
+        changeValueImmediately={false}
+        onValueChange={nextEnabled => {
+          toggleShowDbSyncSummaryPanel(nextEnabled);
+        }}
+        backgroundActive={colors2024['green-default']}
+        circleBorderActiveColor={colors2024['green-default']}
+      />
+    </View>
+  );
+}
+
 function DevSyncTaskPanel() {
   const { styles } = useTheme2024({
     getStyle: getStyles,
@@ -520,6 +552,7 @@ function DevSyncTaskPanel() {
       </Text>
 
       <View style={styles.schedulerSummaryGrid}>
+        <DevDbSyncSummaryToggleRow />
         <DevSyncTaskInfoRow label="active" value={snapshot.activeCount} />
         <DevSyncTaskInfoRow label="queued" value={snapshot.queuedCount} />
         <DevSyncTaskInfoRow label="recent" value={snapshot.recentCount} />
@@ -840,6 +873,21 @@ const getStyles = createGetStyles2024(ctx => {
       fontSize: 13,
       fontWeight: '600',
       color: ctx.colors2024['neutral-title-1'],
+    },
+    schedulerToggleText: {
+      flex: 1,
+      minWidth: 0,
+      flexDirection: 'column',
+      gap: 2,
+    },
+    schedulerToggleTitle: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: ctx.colors2024['neutral-title-1'],
+    },
+    schedulerToggleDesc: {
+      fontSize: 12,
+      color: ctx.colors2024['neutral-secondary'],
     },
     schedulerActions: {
       width: '100%',

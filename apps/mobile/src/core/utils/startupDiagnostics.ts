@@ -19,7 +19,13 @@ type ActiveDbSyncTask = {
   waitTaskDoneReturn: boolean;
   delayBetweenTasks: number;
   stage: string;
+  stageDetail: string;
   completedBatches: number;
+  paramsBuildMs: number;
+  executeMs: number;
+  batchDurationMs: number;
+  status: 'running' | 'success' | 'error' | 'aborted';
+  endedAt?: number;
 };
 
 type ActiveWarmupTask = {
@@ -49,6 +55,51 @@ type DbActiveWindow = {
   stallCount: number;
   loggedStallCount: number;
   peakActiveTaskCount: number;
+  taskIds: number[];
+};
+
+export type DbSyncSummaryTask = Pick<
+  ActiveDbSyncTask,
+  | 'id'
+  | 'taskFor'
+  | 'entityName'
+  | 'totalRows'
+  | 'batchSize'
+  | 'totalBatches'
+  | 'completedBatches'
+  | 'stage'
+  | 'stageDetail'
+  | 'paramsBuildMs'
+  | 'executeMs'
+  | 'batchDurationMs'
+  | 'status'
+  | 'startedAt'
+  | 'endedAt'
+>;
+
+export type DbSyncWindowSummary = {
+  id: number;
+  startedAt: number;
+  endedAt?: number;
+  durationMs: number;
+  taskCount: number;
+  totalRows: number;
+  totalBatches: number;
+  completedBatches: number;
+  paramsBuildMs: number;
+  executeMs: number;
+  batchDurationMs: number;
+  maxGapMs: number;
+  stallCount: number;
+  peakActiveTaskCount: number;
+  tasks: DbSyncSummaryTask[];
+};
+
+export type DbSyncSummarySnapshot = {
+  enabled: boolean;
+  updatedAt: number;
+  activeWindow: DbSyncWindowSummary | null;
+  lastWindow: DbSyncWindowSummary | null;
 };
 
 const isAndroid = Platform.OS === 'android';
@@ -66,6 +117,8 @@ let dbActiveWindowSeq = 0;
 
 const activeDbSyncTasks = new Map<number, ActiveDbSyncTask>();
 const activeWarmupTasks = new Map<number, ActiveWarmupTask>();
+const dbSyncTaskSummaries = new Map<number, ActiveDbSyncTask>();
+const dbSummaryListeners = new Set<() => void>();
 
 const activeUnlockWindowRef: {
   current: UnlockCriticalWindow | null;
@@ -89,9 +142,170 @@ const diagnosticFilePath =
 const pendingDiagnosticLines: string[] = [];
 let diagnosticFlushTimer: ReturnType<typeof setTimeout> | null = null;
 let isFlushingDiagnosticLines = false;
+let lastDbSummarySnapshot: DbSyncSummarySnapshot = {
+  enabled,
+  updatedAt: now(),
+  activeWindow: null,
+  lastWindow: null,
+};
+let dbSummaryPublishTimer: ReturnType<typeof setTimeout> | null = null;
+let lastDbSummaryPublishAt = 0;
 
 function now() {
   return Date.now();
+}
+
+function toDbSyncSummaryTask(task: ActiveDbSyncTask): DbSyncSummaryTask {
+  const {
+    id,
+    taskFor,
+    entityName,
+    totalRows,
+    batchSize,
+    totalBatches,
+    completedBatches,
+    stage,
+    stageDetail,
+    paramsBuildMs,
+    executeMs,
+    batchDurationMs,
+    status,
+    startedAt,
+    endedAt,
+  } = task;
+
+  return {
+    id,
+    taskFor,
+    entityName,
+    totalRows,
+    batchSize,
+    totalBatches,
+    completedBatches,
+    stage,
+    stageDetail,
+    paramsBuildMs,
+    executeMs,
+    batchDurationMs,
+    status,
+    startedAt,
+    endedAt,
+  };
+}
+
+function buildDbWindowSummary(
+  window: DbActiveWindow,
+  endedAt?: number,
+): DbSyncWindowSummary {
+  const currentTime = endedAt ?? now();
+  const tasks = window.taskIds
+    .map(id => dbSyncTaskSummaries.get(id))
+    .filter((task): task is ActiveDbSyncTask => !!task)
+    .map(toDbSyncSummaryTask);
+
+  return {
+    id: window.id,
+    startedAt: window.startedAt,
+    endedAt,
+    durationMs: currentTime - window.startedAt,
+    taskCount: tasks.length,
+    totalRows: tasks.reduce((sum, task) => sum + task.totalRows, 0),
+    totalBatches: tasks.reduce((sum, task) => sum + task.totalBatches, 0),
+    completedBatches: tasks.reduce(
+      (sum, task) => sum + task.completedBatches,
+      0,
+    ),
+    paramsBuildMs: tasks.reduce((sum, task) => sum + task.paramsBuildMs, 0),
+    executeMs: tasks.reduce((sum, task) => sum + task.executeMs, 0),
+    batchDurationMs: tasks.reduce((sum, task) => sum + task.batchDurationMs, 0),
+    maxGapMs: window.maxGapMs,
+    stallCount: window.stallCount,
+    peakActiveTaskCount: window.peakActiveTaskCount,
+    tasks,
+  };
+}
+
+function buildDbSummarySnapshot(): DbSyncSummarySnapshot {
+  const activeWindow = activeDbWindowRef.current;
+
+  return {
+    enabled,
+    updatedAt: now(),
+    activeWindow: activeWindow ? buildDbWindowSummary(activeWindow) : null,
+    lastWindow: lastDbSummarySnapshot.lastWindow,
+  };
+}
+
+function formatDbTaskStageDetail(data: DiagnosticData) {
+  const parts: string[] = [];
+  const round = typeof data.round === 'number' ? data.round : null;
+  const totalRound =
+    typeof data.totalRound === 'number' ? data.totalRound : null;
+  const count = typeof data.count === 'number' ? data.count : null;
+
+  if (round !== null && totalRound !== null) {
+    parts.push(`r${round + 1}/${totalRound}`);
+  } else if (round !== null) {
+    parts.push(`r${round + 1}`);
+  }
+
+  if (count !== null) {
+    parts.push(`${count} rows`);
+  }
+
+  if (typeof data.priority === 'string') {
+    parts.push(data.priority);
+  }
+
+  return parts.join(' ');
+}
+
+function publishDbSummarySnapshot(immediate = false) {
+  if (!enabled) {
+    return;
+  }
+
+  const current = now();
+  if (
+    !immediate &&
+    current - lastDbSummaryPublishAt < 500 &&
+    dbSummaryPublishTimer
+  ) {
+    return;
+  }
+
+  const publish = () => {
+    dbSummaryPublishTimer = null;
+    lastDbSummaryPublishAt = now();
+    lastDbSummarySnapshot = buildDbSummarySnapshot();
+    dbSummaryListeners.forEach(listener => listener());
+  };
+
+  if (immediate || current - lastDbSummaryPublishAt >= 500) {
+    if (dbSummaryPublishTimer) {
+      clearTimeout(dbSummaryPublishTimer);
+      dbSummaryPublishTimer = null;
+    }
+    publish();
+    return;
+  }
+
+  dbSummaryPublishTimer = setTimeout(
+    publish,
+    Math.max(0, 500 - (current - lastDbSummaryPublishAt)),
+  );
+}
+
+export function getDbSyncSummarySnapshot() {
+  return lastDbSummarySnapshot;
+}
+
+export function subscribeDbSyncSummarySnapshot(listener: () => void) {
+  dbSummaryListeners.add(listener);
+
+  return () => {
+    dbSummaryListeners.delete(listener);
+  };
 }
 
 function queueDiagnosticLine(
@@ -272,6 +486,7 @@ function ensureDbActiveWindow() {
     stallCount: 0,
     loggedStallCount: 0,
     peakActiveTaskCount: activeDbSyncTasks.size,
+    taskIds: [],
   };
 
   window.intervalId = setInterval(() => {
@@ -286,6 +501,8 @@ function ensureDbActiveWindow() {
     if (gapMs >= STALL_WARN_MS) {
       markDbActiveWindowStall(window, gapMs);
     }
+
+    publishDbSummarySnapshot();
   }, STALL_INTERVAL_MS);
 
   activeDbWindowRef.current = window;
@@ -297,6 +514,7 @@ function ensureDbActiveWindow() {
     id: window.id,
     ...getActiveTaskSnapshot(),
   });
+  publishDbSummarySnapshot(true);
 }
 
 function endDbActiveWindowIfIdle() {
@@ -313,10 +531,20 @@ function endDbActiveWindowIfIdle() {
     clearInterval(window.intervalId);
   }
 
+  const endedAt = now();
+  const summary = buildDbWindowSummary(window, endedAt);
   activeDbWindowRef.current = null;
+  lastDbSummarySnapshot = {
+    enabled,
+    updatedAt: endedAt,
+    activeWindow: null,
+    lastWindow: summary,
+  };
+  dbSyncTaskSummaries.clear();
+  dbSummaryListeners.forEach(listener => listener());
   trace('db', 'active_window_end', {
     id: window.id,
-    durationMs: now() - window.startedAt,
+    durationMs: summary.durationMs,
     maxGapMs: window.maxGapMs,
     stallCount: window.stallCount,
     peakActiveTaskCount: window.peakActiveTaskCount,
@@ -479,11 +707,18 @@ export function beginDbSyncTask(meta: {
     id,
     startedAt: now(),
     stage: 'created',
+    stageDetail: '',
     completedBatches: 0,
+    paramsBuildMs: 0,
+    executeMs: 0,
+    batchDurationMs: 0,
+    status: 'running',
     ...meta,
   };
   activeDbSyncTasks.set(id, task);
+  dbSyncTaskSummaries.set(id, task);
   ensureDbActiveWindow();
+  activeDbWindowRef.current?.taskIds.push(id);
   const activeDbWindow = activeDbWindowRef.current;
   if (activeDbWindow) {
     activeDbWindow.peakActiveTaskCount = Math.max(
@@ -500,6 +735,7 @@ export function beginDbSyncTask(meta: {
     delayBetweenTasks: meta.delayBetweenTasks,
     activeDbTaskCount: activeDbSyncTasks.size,
   });
+  publishDbSummarySnapshot(true);
 
   return id;
 }
@@ -508,6 +744,7 @@ export function markDbSyncTaskStage(
   id: number | null,
   stage: string,
   data: DiagnosticData = {},
+  immediate = false,
 ) {
   if (!enabled || id === null) {
     return;
@@ -519,6 +756,8 @@ export function markDbSyncTaskStage(
   }
 
   task.stage = stage;
+  task.stageDetail = formatDbTaskStageDetail(data);
+  publishDbSummarySnapshot(immediate);
   trace('db', 'sync_task_stage', {
     ...serializeDbTask(task),
     ...data,
@@ -548,6 +787,10 @@ export function markDbSyncTaskBatch(
 
   task.stage = 'batch_upsert';
   task.completedBatches = Math.max(task.completedBatches, data.round + 1);
+  task.paramsBuildMs += data.paramsBuildMs || 0;
+  task.executeMs += data.executeMs || 0;
+  task.batchDurationMs += data.durationMs;
+  publishDbSummarySnapshot();
 
   const shouldLog =
     data.durationMs >= 120 ||
@@ -584,12 +827,15 @@ export function endDbSyncTask(
   }
 
   activeDbSyncTasks.delete(id);
+  task.status = status;
+  task.endedAt = now();
   trace('db', 'sync_task_end', {
     ...serializeDbTask(task),
     status,
-    durationMs: now() - task.startedAt,
+    durationMs: task.endedAt - task.startedAt,
     activeDbTaskCount: activeDbSyncTasks.size,
     ...data,
   });
+  publishDbSummarySnapshot(true);
   endDbActiveWindowIfIdle();
 }
