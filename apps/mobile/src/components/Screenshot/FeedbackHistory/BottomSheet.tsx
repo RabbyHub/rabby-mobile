@@ -212,7 +212,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
       async () => {
         const content = replyText.trim();
         if (!selectedMedia) {
-          return;
+          throw new Error('No selected feedback media to upload');
         }
 
         const uploadResult = await uploadFeedbackMedia(selectedMedia);
