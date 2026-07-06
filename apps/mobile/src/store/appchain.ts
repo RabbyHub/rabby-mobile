@@ -9,6 +9,7 @@ import {
 import PQueue from 'p-queue';
 import { appChainResourceStore } from './appchainResource';
 import { traceStartupDiagnostic } from '@/core/utils/startupDiagnostics';
+import { runAfterHomePostStartupReady } from '@/core/utils/homeStartupReady';
 
 /**
  * 用于展示的 AppChain 数据结构
@@ -47,6 +48,29 @@ const getAppChainQueue = new PQueue({
   intervalCap: 10,
 });
 
+const APPCHAIN_PERSIST_FLUSH_DELAY_MS = 80;
+const APPCHAIN_PERSIST_FALLBACK_MS = 4000;
+const APPCHAIN_BATCH_OWNER = '__appchain_batch__';
+
+type AppChainPersistDetail = Parameters<
+  typeof appChainResourceStore.persistInBackgroundFor
+>[2];
+
+type PendingAppChainPersistRequest = {
+  resolve: () => void;
+  reject: (error: unknown) => void;
+};
+
+type PendingAppChainPersist = {
+  appChains: AppChainItem[];
+  requests: PendingAppChainPersistRequest[];
+};
+
+const pendingAppChainPersists = new Map<string, PendingAppChainPersist>();
+let pendingAppChainFlushTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingAppChainFlushCancel: (() => void) | null = null;
+let appChainPersistInFlight: Promise<void> | null = null;
+
 /**
  * 将 AppChainItem 转换为 IAppChainItem
  */
@@ -71,51 +95,204 @@ const toAppChainItem = (item: AppChainItem): IAppChainItem => {
  * 同步 AppChain 数据到数据库
  * 从接口获取数据后，更新数据库
  */
-const persistAppChains = async (
+function buildAppChainEntities(
   owner_addr: string,
   appChains: AppChainItem[],
-): Promise<void> => {
-  const syncTimestamp = Date.now();
-
-  // 批量保存
-  const entityBuildStartedAt = Date.now();
-  const entities = appChains.map(item => {
+  syncTimestamp: number,
+) {
+  const ownerAddr = owner_addr.toLowerCase();
+  return appChains.map(item => {
     const entity = new AppChainEntity();
-    AppChainEntity.fillEntity(entity, owner_addr.toLowerCase(), item);
+    AppChainEntity.fillEntity(entity, ownerAddr, item);
+    entity._local_updated_at = syncTimestamp;
     return entity;
   });
+}
+
+async function cleanupStaleAppChainsForOwners(
+  ownerAddrs: string[],
+  syncTimestamp: number,
+) {
+  const cleanupStartedAt = Date.now();
+  const result = await AppChainEntity.cleanupStaleAppChainsForOwners(
+    ownerAddrs,
+    syncTimestamp,
+  );
+  traceStartupDiagnostic('db', 'appchain_cleanup', {
+    taskFor: 'appchain',
+    entityName: AppChainEntity.name,
+    ownerCount: ownerAddrs.length,
+    deletedCount: result.deletedCount,
+    durationMs: Date.now() - cleanupStartedAt,
+  });
+}
+
+function settleAppChainPersistRequests(
+  pending: PendingAppChainPersist[],
+  error?: unknown,
+) {
+  pending.forEach(item => {
+    item.requests.forEach(request => {
+      if (error) {
+        request.reject(error);
+      } else {
+        request.resolve();
+      }
+    });
+  });
+}
+
+async function persistPendingAppChains(
+  pendingEntries: Array<[string, PendingAppChainPersist]>,
+) {
+  const ownerAddrs = pendingEntries.map(([ownerAddr]) => ownerAddr);
+  const pending = pendingEntries.map(([, item]) => item);
+  if (!ownerAddrs.length) {
+    settleAppChainPersistRequests(pending);
+    return;
+  }
+
+  const requestCount = pending.reduce(
+    (sum, item) => sum + item.requests.length,
+    0,
+  );
+  traceStartupDiagnostic('db', 'appchain_coalesce_flush', {
+    ownerCount: ownerAddrs.length,
+    requestCount,
+  });
+
+  const syncTimestamp = Date.now();
+  const entityBuildStartedAt = Date.now();
+  const entities = pendingEntries.flatMap(([ownerAddr, item]) =>
+    buildAppChainEntities(ownerAddr, item.appChains, syncTimestamp),
+  );
+  const rawCount = pending.reduce(
+    (sum, item) => sum + item.appChains.length,
+    0,
+  );
+
   traceStartupDiagnostic('db', 'entity_build', {
     taskFor: 'appchain',
     entityName: AppChainEntity.name,
-    rawCount: appChains.length,
+    rawCount,
     entityCount: entities.length,
     durationMs: Date.now() - entityBuildStartedAt,
   });
 
-  await batchSaveWithPQueueAndTransaction(AppChainEntity, entities, {
-    owner_addr: owner_addr.toLowerCase(),
-    taskFor: 'appchain',
-    batchSize: 100,
-    concurrency: 1,
-    delayBetweenTasks: 0,
-    waitTaskDoneReturn: true,
-    noNeedAbort: true,
-    skipEmit: true,
-    afterBatches: async () => {
-      // 清理过期数据（在本次同步之前更新的数据）
-      const cleanupStartedAt = Date.now();
-      await AppChainEntity.cleanupStaleAppChains(
-        owner_addr.toLowerCase(),
-        syncTimestamp,
-      );
-      traceStartupDiagnostic('db', 'appchain_cleanup', {
-        taskFor: 'appchain',
-        entityName: AppChainEntity.name,
-        durationMs: Date.now() - cleanupStartedAt,
-      });
+  try {
+    if (entities.length) {
+      const { queueCompleted, taskKey } =
+        await batchSaveWithPQueueAndTransaction(AppChainEntity, entities, {
+          owner_addr: `${APPCHAIN_BATCH_OWNER}:${ownerAddrs.length}`,
+          taskFor: 'appchain',
+          batchSize: 100,
+          concurrency: 1,
+          delayBetweenTasks: 0,
+          waitTaskDoneReturn: true,
+          noNeedAbort: true,
+          skipEmit: true,
+          afterBatches: () =>
+            cleanupStaleAppChainsForOwners(ownerAddrs, syncTimestamp),
+        });
+
+      if (!queueCompleted) {
+        throw new Error(`[${taskKey}] appchain persist aborted`);
+      }
+    } else {
+      await cleanupStaleAppChainsForOwners(ownerAddrs, syncTimestamp);
+    }
+
+    settleAppChainPersistRequests(pending);
+  } catch (error) {
+    settleAppChainPersistRequests(pending, error);
+    throw error;
+  }
+}
+
+function scheduleAppChainPersistFlush() {
+  if (
+    pendingAppChainFlushTimer ||
+    pendingAppChainFlushCancel ||
+    appChainPersistInFlight
+  ) {
+    return;
+  }
+
+  pendingAppChainFlushCancel = runAfterHomePostStartupReady(
+    () => {
+      pendingAppChainFlushCancel = null;
+      pendingAppChainFlushTimer = setTimeout(() => {
+        pendingAppChainFlushTimer = null;
+        void flushPendingAppChainPersists();
+      }, APPCHAIN_PERSIST_FLUSH_DELAY_MS);
     },
+    {
+      fallbackMs: APPCHAIN_PERSIST_FALLBACK_MS,
+      label: 'appchain_persist_flush',
+    },
+  );
+}
+
+async function flushPendingAppChainPersists() {
+  if (appChainPersistInFlight) {
+    return;
+  }
+
+  const pendingEntries = Array.from(pendingAppChainPersists.entries());
+  pendingAppChainPersists.clear();
+  if (!pendingEntries.length) {
+    return;
+  }
+
+  appChainPersistInFlight = persistPendingAppChains(pendingEntries).finally(
+    () => {
+      appChainPersistInFlight = null;
+      if (pendingAppChainPersists.size > 0) {
+        scheduleAppChainPersistFlush();
+      }
+    },
+  );
+
+  await appChainPersistInFlight;
+}
+
+const persistAppChains = async (
+  owner_addr: string,
+  appChains: AppChainItem[],
+): Promise<void> => {
+  const ownerAddr = owner_addr.toLowerCase();
+
+  return new Promise<void>((resolve, reject) => {
+    const pending = pendingAppChainPersists.get(ownerAddr);
+    if (pending) {
+      pending.appChains = appChains.slice();
+      pending.requests.push({ resolve, reject });
+    } else {
+      pendingAppChainPersists.set(ownerAddr, {
+        appChains: appChains.slice(),
+        requests: [{ resolve, reject }],
+      });
+    }
+
+    scheduleAppChainPersistFlush();
   });
 };
+
+function persistAppChainsInBackground(
+  ownerAddr: string,
+  appChains: AppChainItem[],
+  detail: AppChainPersistDetail,
+) {
+  void appChainResourceStore
+    .persistInBackgroundFor(
+      ownerAddr.toLowerCase(),
+      () => persistAppChains(ownerAddr, appChains),
+      detail,
+    )
+    .catch(error => {
+      console.error(`Failed to persist appchains for ${ownerAddr}:`, error);
+    });
+}
 
 export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
   appChainMap: {},
@@ -244,14 +421,10 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
                 force,
               },
             );
-            await appChainResourceStore.persistInBackgroundFor(
-              address,
-              () => persistAppChains(address, appChains),
-              {
-                trigger: 'batchGetAppChains',
-                force,
-              },
-            );
+            persistAppChainsInBackground(address, appChains, {
+              trigger: 'batchGetAppChains',
+              force,
+            });
             return { address, appChains };
           } catch (error) {
             appChainResourceStore.markRemoteErrorFor(
@@ -366,14 +539,10 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
           force,
         },
       );
-      await appChainResourceStore.persistInBackgroundFor(
-        lowerAddress,
-        () => persistAppChains(lowerAddress, appChains),
-        {
-          trigger: 'getAppChains',
-          force,
-        },
-      );
+      persistAppChainsInBackground(lowerAddress, appChains, {
+        trigger: 'getAppChains',
+        force,
+      });
       // 更新 store
       set(state => ({
         appChainMap: {

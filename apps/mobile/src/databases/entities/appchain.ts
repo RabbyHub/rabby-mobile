@@ -229,6 +229,40 @@ export class AppChainEntity extends EntityAddressAssetBase {
     syncTimestamp: number,
   ) {
     try {
+      const result = await this.cleanupStaleAppChainsForOwners(
+        [owner_addr],
+        syncTimestamp,
+      );
+
+      return {
+        deletedCount: result.deletedCount,
+        success: true,
+      };
+    } catch (error) {
+      console.error(
+        `Failed to cleanup stale appchains for ${owner_addr}:`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  static async cleanupStaleAppChainsForOwners(
+    owner_addrs: string[],
+    syncTimestamp: number,
+  ) {
+    const normalizedOwners = Array.from(
+      new Set(owner_addrs.map(item => item.toLowerCase()).filter(Boolean)),
+    );
+
+    if (!normalizedOwners.length) {
+      return {
+        deletedCount: 0,
+        success: true,
+      };
+    }
+
+    try {
       await prepareAppDataSource();
       const repo = this.getRepository();
 
@@ -236,7 +270,9 @@ export class AppChainEntity extends EntityAddressAssetBase {
         .createQueryBuilder()
         .delete()
         .from(AppChainEntity)
-        .where('lower(owner_addr) = lower(:owner_addr)', { owner_addr })
+        .where('owner_addr IN (:...owner_addrs)', {
+          owner_addrs: normalizedOwners,
+        })
         .andWhere('_local_updated_at < :syncTimestamp', { syncTimestamp })
         .execute();
 
@@ -245,10 +281,7 @@ export class AppChainEntity extends EntityAddressAssetBase {
         success: true,
       };
     } catch (error) {
-      console.error(
-        `Failed to cleanup stale appchains for ${owner_addr}:`,
-        error,
-      );
+      console.error('Failed to cleanup stale appchains for owners:', error);
       throw error;
     }
   }
