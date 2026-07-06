@@ -554,7 +554,6 @@ class LedgerKeyring {
   }
 
   async signTypedData(withAccount: string, data: any, options: any = {}) {
-    await this._reconnect();
     const isV4 = options.version === 'V4';
     if (!isV4) {
       throw new Error(
@@ -562,6 +561,7 @@ class LedgerKeyring {
       );
     }
 
+    await this._reconnect();
     try {
       const hdPath = await this.unlockAccountByAddress(withAccount);
       await this.makeApp(true);

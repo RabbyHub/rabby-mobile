@@ -46,6 +46,7 @@ export const ledgerErrorHandler = (error: unknown) => {
     tag === 'RefusedByUserDAError' ||
     code === '5501' ||
     code === '6985' ||
+    text.includes('0x5501') ||
     text.includes('0x6985') ||
     text.includes('RefusedByUserDAError')
   ) {

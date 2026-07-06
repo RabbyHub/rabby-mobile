@@ -1,9 +1,15 @@
+import * as sigUtil from 'eth-sig-util';
+
 import LedgerKeyring, { type LedgerKeyringSession } from './LedgerKeyring';
 import { LedgerHDPathType } from './utils';
 
 const ADDRESS = '0x0000000000000000000000000000000000000001';
 
 describe('LedgerKeyring DMK session adapter', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('uses device-scoped DMK sessions and sends Ledger paths without m prefix', async () => {
     const getAddress = jest.fn(async () => ({
       address: ADDRESS,
@@ -243,5 +249,165 @@ describe('LedgerKeyring DMK session adapter', () => {
       returnChainCode: true,
     });
     expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves personal_sign hex payload semantics and verifies the recovered signer', async () => {
+    const recoverPersonalSignature = jest
+      .spyOn(sigUtil, 'recoverPersonalSignature')
+      .mockReturnValue(ADDRESS);
+    const close = jest.fn();
+    const session = {
+      getAddress: jest.fn(async () => ({
+        address: ADDRESS,
+        publicKey: '04abcdef',
+      })),
+      signTransaction: jest.fn(),
+      signPersonalMessage: jest.fn(async () => ({
+        r: '0x1',
+        s: '0x2',
+        v: 27,
+      })),
+      signTypedData: jest.fn(),
+      close,
+    } as unknown as LedgerKeyringSession;
+    const keyring = new LedgerKeyring({
+      accounts: [ADDRESS.toLowerCase()],
+      accountDetails: {
+        [ADDRESS]: {
+          hdPath: "m/44'/60'/0'/0/0",
+          deviceId: 'ledger-device-id',
+        },
+      },
+      getLedgerSession: jest.fn(async () => session),
+    });
+    keyring.setDeviceId('ledger-device-id');
+
+    const signature = await keyring.signPersonalMessage(
+      ADDRESS,
+      '0x68656c6c6f',
+    );
+
+    expect(signature).toBe(
+      `0x${'1'.padStart(64, '0')}${'2'.padStart(64, '0')}1b`,
+    );
+    expect(session.signPersonalMessage).toHaveBeenCalledWith(
+      "44'/60'/0'/0/0",
+      Buffer.from('68656c6c6f', 'hex'),
+    );
+    expect(recoverPersonalSignature).toHaveBeenCalledWith({
+      data: '0x68656c6c6f',
+      sig: signature,
+    });
+    expect(close).not.toHaveBeenCalled();
+  });
+
+  it('cleans up when personal_sign recovers a different address', async () => {
+    jest
+      .spyOn(sigUtil, 'recoverPersonalSignature')
+      .mockReturnValue('0x0000000000000000000000000000000000000002');
+    const close = jest.fn();
+    const session = {
+      getAddress: jest.fn(async () => ({
+        address: ADDRESS,
+        publicKey: '04abcdef',
+      })),
+      signTransaction: jest.fn(),
+      signPersonalMessage: jest.fn(async () => ({
+        r: '0x1',
+        s: '0x2',
+        v: 27,
+      })),
+      signTypedData: jest.fn(),
+      close,
+    } as unknown as LedgerKeyringSession;
+    const keyring = new LedgerKeyring({
+      accounts: [ADDRESS.toLowerCase()],
+      accountDetails: {
+        [ADDRESS]: {
+          hdPath: "m/44'/60'/0'/0/0",
+          deviceId: 'ledger-device-id',
+        },
+      },
+      getLedgerSession: jest.fn(async () => session),
+    });
+    keyring.setDeviceId('ledger-device-id');
+
+    await expect(
+      keyring.signPersonalMessage(ADDRESS, '0x68656c6c6f'),
+    ).rejects.toThrow("signature doesn't match the right address");
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  it('signs typed-data V4 through the session adapter and verifies the recovered signer', async () => {
+    const recoverTypedSignature = jest
+      .spyOn(sigUtil, 'recoverTypedSignature_v4')
+      .mockReturnValue(ADDRESS);
+    const close = jest.fn();
+    const typedData = {
+      domain: { name: 'Rabby' },
+      types: {
+        EIP712Domain: [{ name: 'name', type: 'string' }],
+        Message: [{ name: 'contents', type: 'string' }],
+      },
+      primaryType: 'Message',
+      message: { contents: 'hello' },
+    };
+    const session = {
+      getAddress: jest.fn(async () => ({
+        address: ADDRESS,
+        publicKey: '04abcdef',
+      })),
+      signTransaction: jest.fn(),
+      signPersonalMessage: jest.fn(),
+      signTypedData: jest.fn(async () => ({
+        r: '0x3',
+        s: '0x4',
+        v: '0x1c',
+      })),
+      close,
+    } as unknown as LedgerKeyringSession;
+    const keyring = new LedgerKeyring({
+      accounts: [ADDRESS.toLowerCase()],
+      accountDetails: {
+        [ADDRESS]: {
+          hdPath: "m/44'/60'/0'/0/0",
+          deviceId: 'ledger-device-id',
+        },
+      },
+      getLedgerSession: jest.fn(async () => session),
+    });
+    keyring.setDeviceId('ledger-device-id');
+
+    const signature = await keyring.signTypedData(ADDRESS, typedData, {
+      version: 'V4',
+    });
+
+    expect(signature).toBe(
+      `0x${'3'.padStart(64, '0')}${'4'.padStart(64, '0')}1c`,
+    );
+    expect(session.signTypedData).toHaveBeenCalledWith(
+      "44'/60'/0'/0/0",
+      typedData,
+    );
+    expect(recoverTypedSignature).toHaveBeenCalledWith({
+      data: typedData,
+      sig: signature,
+    });
+    expect(close).not.toHaveBeenCalled();
+  });
+
+  it('rejects non-V4 typed-data before opening a Ledger session', async () => {
+    const getLedgerSession = jest.fn();
+    const keyring = new LedgerKeyring({
+      getLedgerSession,
+    });
+
+    await expect(
+      keyring.signTypedData(ADDRESS, {}, { version: 'V1' }),
+    ).rejects.toThrow('Only version 4');
+    await expect(
+      keyring.signTypedData(ADDRESS, {}, { version: 'V3' }),
+    ).rejects.toThrow('Only version 4');
+    expect(getLedgerSession).not.toHaveBeenCalled();
   });
 });

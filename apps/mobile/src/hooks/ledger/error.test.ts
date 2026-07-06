@@ -21,6 +21,10 @@ describe('ledgerErrorHandler', () => {
         },
       } as any),
     ).toBe(LEDGER_ERROR_CODES.USER_REJECTED);
+
+    expect(ledgerErrorHandler(new Error('Action refused 0x5501'))).toBe(
+      LEDGER_ERROR_CODES.USER_REJECTED,
+    );
   });
 
   it('keeps existing LedgerJS message classification working', () => {
