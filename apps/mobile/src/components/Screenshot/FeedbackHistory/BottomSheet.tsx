@@ -13,6 +13,10 @@ import {
   useFeedbackHistoryVisible,
   useScreenshotFeedbackTotalBalanceText,
 } from '../hooks';
+import {
+  FeedbackMediaPreview,
+  type FeedbackPreviewMedia,
+} from './MediaPreview';
 
 import RcCloseIconLight from '@/assets/icons/feedback/close.svg';
 import RcCloseIconDark from '@/assets/icons/feedback/close-dark.svg';
@@ -140,11 +144,22 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   const { isShowHistory, toggleFeedbackHistoryVisible } =
     useFeedbackHistoryVisible();
   const totalBalanceText = useScreenshotFeedbackTotalBalanceText();
-  const [replyText, setReplyText] = useState('');
   const [selectedMedia, setSelectedMedia] =
     useState<PickedFeedbackMedia | null>(null);
+  const [previewMedia, setPreviewMedia] = useState<FeedbackPreviewMedia | null>(
+    null,
+  );
+  const replyTextRef = useRef('');
+  const replyInputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const pendingScrollToBottomRef = useRef(false);
+  const handleReplyTextChange = useCallback((text: string) => {
+    replyTextRef.current = text;
+  }, []);
+  const clearReplyText = useCallback(() => {
+    replyTextRef.current = '';
+    replyInputRef.current?.clear();
+  }, []);
   const scrollToBottom = useCallback((animated = false) => {
     requestAnimationFrame(() => {
       scrollViewRef.current?.scrollToEnd({ animated });
@@ -201,6 +216,12 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   const handleRemoveMedia = useCallback(() => {
     setSelectedMedia(null);
   }, []);
+  const handleOpenMediaPreview = useCallback((media: FeedbackPreviewMedia) => {
+    setPreviewMedia(media);
+  }, []);
+  const handleCloseMediaPreview = useCallback(() => {
+    setPreviewMedia(null);
+  }, []);
 
   const deviceId = useCreation(() => {
     return makeDeviceUUID().deviceUUID;
@@ -229,7 +250,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   const { runAsync: handleSubmitReply, loading: isSubmittingReply } =
     useRequest(
       async () => {
-        const content = replyText.trim();
+        const content = replyTextRef.current.trim();
         if (!selectedMedia) {
           throw new Error('No selected feedback media to upload');
         }
@@ -261,7 +282,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
       {
         manual: true,
         onSuccess: async () => {
-          setReplyText('');
+          clearReplyText();
           setSelectedMedia(null);
           toast.success(t('component.submitFeedbackSuccessModal.desc'), {
             hideOnPress: true,
@@ -279,15 +300,17 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
 
   useEffect(() => {
     if (isShowHistory) {
-      setReplyText('');
+      clearReplyText();
       setSelectedMedia(null);
       toggleShowSheetModal(true);
       fetchFeedbackMessages();
       requestScrollToBottomAfterLayout();
     } else {
+      setPreviewMedia(null);
       toggleShowSheetModal('destroy');
     }
   }, [
+    clearReplyText,
     fetchFeedbackMessages,
     isShowHistory,
     requestScrollToBottomAfterLayout,
@@ -305,66 +328,80 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   }, [hasMessage, isShowHistory, requestScrollToBottomAfterLayout]);
 
   return (
-    <AppBottomSheetModal
-      {...makeBottomSheetProps({
-        colors: colors2024,
-        linearGradientType: isLight ? 'bg0' : 'bg1',
-      })}
-      ref={sheetModalRef}
-      index={0}
-      snapPoints={[SHEET_HEIGHT]}
-      enableDismissOnClose
-      onDismiss={() => {
-        toggleFeedbackHistoryVisible(false);
-      }}
-      // keyboardBehavior="extend"
-      // keyboardBlurBehavior="restore"
-      // android_keyboardInputMode="adjustPan"
-      enableContentPanningGesture={false}
-      enablePanDownToClose={true}>
-      <View style={styles.mainContainer}>
-        <AutoLockView style={styles.container}>
-          <KeyboardProvider>
-            <BottomSheetHandlableView style={styles.titleContainer}>
-              <Text style={styles.title}>
-                {t('page.setting.bugReportHistory')}
-              </Text>
-            </BottomSheetHandlableView>
+    <>
+      <AppBottomSheetModal
+        {...makeBottomSheetProps({
+          colors: colors2024,
+          linearGradientType: isLight ? 'bg0' : 'bg1',
+        })}
+        ref={sheetModalRef}
+        index={0}
+        snapPoints={[SHEET_HEIGHT]}
+        enableDismissOnClose
+        onDismiss={() => {
+          toggleFeedbackHistoryVisible(false);
+        }}
+        // keyboardBehavior="extend"
+        // keyboardBlurBehavior="restore"
+        // android_keyboardInputMode="adjustPan"
+        enableContentPanningGesture={false}
+        enablePanDownToClose={true}>
+        <View style={styles.mainContainer}>
+          <AutoLockView style={styles.container}>
+            <KeyboardProvider>
+              <BottomSheetHandlableView style={styles.titleContainer}>
+                <Text style={styles.title}>
+                  {t('page.setting.bugReportHistory')}
+                </Text>
+              </BottomSheetHandlableView>
 
-            <KeyboardAwareScrollView
-              ref={scrollViewRef}
-              style={styles.messageList}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-              bottomOffset={14}
-              onContentSizeChange={handleScrollViewContentSizeChange}
-              contentContainerStyle={styles.messageListContent}>
-              {feedbackMessagesData?.messages?.map(message => (
-                <FeedbackMessageItem key={message.id} message={message} />
-              ))}
+              <KeyboardAwareScrollView
+                ref={scrollViewRef}
+                style={styles.messageList}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+                bottomOffset={14}
+                onContentSizeChange={handleScrollViewContentSizeChange}
+                contentContainerStyle={styles.messageListContent}>
+                {feedbackMessagesData?.messages?.map(message => (
+                  <FeedbackMessageItem
+                    key={message.id}
+                    message={message}
+                    onPreviewMedia={handleOpenMediaPreview}
+                  />
+                ))}
 
-              <ReplyComposer
-                value={replyText}
-                onChangeText={setReplyText}
-                selectedMedia={selectedMedia}
-                onPickMedia={handlePickMedia}
-                onRemoveMedia={handleRemoveMedia}
-                onSubmit={handleSubmitReply}
-                submitting={isSubmittingReply}
-              />
-            </KeyboardAwareScrollView>
+                <ReplyComposer
+                  key="reply-composer"
+                  inputRef={replyInputRef}
+                  onChangeText={handleReplyTextChange}
+                  selectedMedia={selectedMedia}
+                  onPickMedia={handlePickMedia}
+                  onRemoveMedia={handleRemoveMedia}
+                  onSubmit={handleSubmitReply}
+                  submitting={isSubmittingReply}
+                />
+              </KeyboardAwareScrollView>
 
-            <View style={styles.footerTipContainer}>
-              <Text style={styles.footerTip}>
-                {t('component.feedbackHistoryModal.findHistoryTip', {
-                  defaultValue: 'You can find the history in Settings',
-                })}
-              </Text>
-            </View>
-          </KeyboardProvider>
-        </AutoLockView>
-      </View>
-    </AppBottomSheetModal>
+              <View style={styles.footerTipContainer}>
+                <Text style={styles.footerTip}>
+                  {t('component.feedbackHistoryModal.findHistoryTip', {
+                    defaultValue: 'You can find the history in Settings',
+                  })}
+                </Text>
+              </View>
+            </KeyboardProvider>
+          </AutoLockView>
+        </View>
+      </AppBottomSheetModal>
+
+      {previewMedia ? (
+        <FeedbackMediaPreview
+          media={previewMedia}
+          onClose={handleCloseMediaPreview}
+        />
+      ) : null}
+    </>
   );
 };
 
@@ -386,7 +423,13 @@ const Avatar: React.FC<{
   );
 };
 
-function FeedbackMessageItem({ message }: { message: ClientFeedbackMessage }) {
+function FeedbackMessageItem({
+  message,
+  onPreviewMedia,
+}: {
+  message: ClientFeedbackMessage;
+  onPreviewMedia: (media: FeedbackPreviewMedia) => void;
+}) {
   const { styles, isLight } = useTheme2024({ getStyle });
   const isSupport = message.sender === 'ops';
 
@@ -414,26 +457,43 @@ function FeedbackMessageItem({ message }: { message: ClientFeedbackMessage }) {
         {message.image_url_list?.length ? (
           <View style={styles.fileList}>
             {message.image_url_list.map((imageUri, index) => (
-              <FastImage
+              <TouchableOpacity
                 key={index}
-                source={{ uri: imageUri }}
-                style={[styles.feedbackImage]}
-                resizeMode="cover"
-              />
+                activeOpacity={0.85}
+                onPress={() =>
+                  onPreviewMedia({ type: 'image', uri: imageUri })
+                }>
+                <FastImage
+                  source={{ uri: imageUri }}
+                  style={styles.feedbackImage}
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
             ))}
           </View>
         ) : null}
         {message.video_url_list?.length ? (
           <View style={styles.fileList}>
             {message.video_url_list.map((videoUri, index) => (
-              <Video
+              <TouchableOpacity
                 key={index}
-                source={{ uri: videoUri }}
-                style={[styles.feedbackImage]}
-                resizeMode="cover"
-                paused
-                muted
-              />
+                activeOpacity={0.85}
+                onPress={() =>
+                  onPreviewMedia({ type: 'video', uri: videoUri })
+                }>
+                <View>
+                  <Video
+                    source={{ uri: videoUri }}
+                    style={styles.feedbackImage}
+                    resizeMode="cover"
+                    paused
+                    muted
+                  />
+                  <View style={styles.videoPlayBadge}>
+                    <View style={styles.videoPlayTriangle} />
+                  </View>
+                </View>
+              </TouchableOpacity>
             ))}
           </View>
         ) : null}
@@ -444,7 +504,7 @@ function FeedbackMessageItem({ message }: { message: ClientFeedbackMessage }) {
 }
 
 function ReplyComposer({
-  value,
+  inputRef,
   onChangeText,
   selectedMedia,
   onPickMedia,
@@ -452,7 +512,7 @@ function ReplyComposer({
   onSubmit,
   submitting,
 }: {
-  value: string;
+  inputRef: React.Ref<React.ComponentRef<typeof TextInput>>;
   onChangeText: (text: string) => void;
   selectedMedia?: PickedFeedbackMedia | null;
   onPickMedia: () => void | Promise<void>;
@@ -469,7 +529,7 @@ function ReplyComposer({
       <View
         style={[styles.messageBubble, styles.userBubble, styles.replyBubble]}>
         <TextInput
-          value={value}
+          ref={inputRef}
           onChangeText={onChangeText}
           // multiline
           textAlignVertical="top"
@@ -513,16 +573,18 @@ function ReplyComposer({
             </View>
           </View>
         ) : (
-          <TouchableOpacity onPress={onPickMedia} disabled={submitting}>
-            <View style={styles.mediaPlaceholder}>
-              <Text style={styles.mediaPlaceholderText}>+</Text>
-              <Text style={styles.mediaPlaceholderText}>
-                {t('component.feedbackHistoryModal.mediaPlaceholder', {
-                  defaultValue: 'Image/Video\n(required)',
-                })}
-              </Text>
-            </View>
-          </TouchableOpacity>
+          <View style={styles.mediaPlaceholderContainer}>
+            <TouchableOpacity onPress={onPickMedia} disabled={submitting}>
+              <View style={styles.mediaPlaceholder}>
+                <Text style={styles.mediaPlaceholderText}>+</Text>
+                <Text style={styles.mediaPlaceholderText}>
+                  {t('component.feedbackHistoryModal.mediaPlaceholder', {
+                    defaultValue: 'Image/Video\n(required)',
+                  })}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
         )}
         <Button
           title={t('component.screenshotModal.submitButtonText')}
@@ -635,6 +697,28 @@ const getStyle = createGetStyles2024(
       borderWidth: 1,
       borderColor: colors2024['neutral-line'],
     },
+    videoPlayBadge: {
+      position: 'absolute',
+      top: 24,
+      left: 24,
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    },
+    videoPlayTriangle: {
+      width: 0,
+      height: 0,
+      marginLeft: 3,
+      borderTopWidth: 7,
+      borderBottomWidth: 7,
+      borderLeftWidth: 11,
+      borderTopColor: 'transparent',
+      borderBottomColor: 'transparent',
+      borderLeftColor: '#fff',
+    },
     imageWithText: {
       marginTop: 7,
     },
@@ -652,6 +736,11 @@ const getStyle = createGetStyles2024(
     },
     replyInputPlaceholder: {
       color: colors2024['neutral-secondary'],
+    },
+    mediaPlaceholderContainer: {
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
     },
     mediaPlaceholder: {
       width: 80,
