@@ -1263,8 +1263,8 @@ export const TokenSelectorSheetModal = ({
           <View style={[styles.searchInputContainer, { marginBottom: 8 }]}>
             <NextSearchBar
               onCancel={() => {
-                clearSearchInput();
                 setTimeout(() => {
+                  clearSearchInput();
                   inputRef.current?.blur();
                 }, 50);
               }}
