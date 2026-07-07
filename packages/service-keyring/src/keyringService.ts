@@ -1304,6 +1304,7 @@ export class KeyringService extends RNEventEmitter {
     const restoreId = this.keyringRuntimeRestoreId + 1;
     this.keyringRuntimeRestoreId = restoreId;
     const previousKeyrings = this.keyrings.slice();
+    const nextKeyrings = previousKeyrings.slice();
     const startedAt = nowMs();
     this.pendingKeyringRuntimeRestore = null;
     this.updateKeyringRuntimeState({
@@ -1324,13 +1325,16 @@ export class KeyringService extends RNEventEmitter {
       try {
         await Promise.all(
           pending.keyringsToRestore.map(serialized =>
-            this._restoreKeyring(serialized, { restoreId }),
+            this._restoreKeyring(serialized, {
+              restoreId,
+              targetKeyrings: nextKeyrings,
+            }),
           ),
         );
         this.traceKeyringPerf('keyring_runtime_restore_sensitive_end', {
           reason,
           elapsedMs: nowMs() - startedAt,
-          runtimeKeyringCount: this.keyrings.length,
+          runtimeKeyringCount: nextKeyrings.length,
         });
 
         if (pending.hasUnencryptedKeyringData) {
@@ -1341,13 +1345,16 @@ export class KeyringService extends RNEventEmitter {
           });
           await Promise.all(
             pending.unencryptedKeyringData.map(serialized =>
-              this._restoreKeyring(serialized, { restoreId }),
+              this._restoreKeyring(serialized, {
+                restoreId,
+                targetKeyrings: nextKeyrings,
+              }),
             ),
           );
           this.traceKeyringPerf('keyring_runtime_restore_unencrypted_end', {
             reason,
             elapsedMs: nowMs() - startedAt,
-            runtimeKeyringCount: this.keyrings.length,
+            runtimeKeyringCount: nextKeyrings.length,
           });
         }
 
@@ -1359,6 +1366,7 @@ export class KeyringService extends RNEventEmitter {
           return this.keyrings;
         }
 
+        this.keyrings = nextKeyrings;
         this.traceKeyringPerf('keyring_runtime_restore_update_memstore_start', {
           reason,
           elapsedMs: nowMs() - startedAt,
@@ -1427,7 +1435,8 @@ export class KeyringService extends RNEventEmitter {
     const startedAt = nowMs();
     const wasRuntimeReady = this.isKeyringRuntimeReady();
     const hadDeferredRuntimeRestore =
-      !!this.pendingKeyringRuntimeRestore || !!this.keyringRuntimeRestorePromise;
+      !!this.pendingKeyringRuntimeRestore ||
+      !!this.keyringRuntimeRestorePromise;
     this.traceKeyringPerf('refresh_memstore_keyrings.start', {
       keyringCount: this.keyrings.length,
       wasRuntimeReady,
@@ -1440,9 +1449,12 @@ export class KeyringService extends RNEventEmitter {
         elapsedMs: nowMs() - startedAt,
       });
     } else {
-      this.traceKeyringPerf('refresh_memstore_keyrings.update_memstore_skipped', {
-        elapsedMs: nowMs() - startedAt,
-      });
+      this.traceKeyringPerf(
+        'refresh_memstore_keyrings.update_memstore_skipped',
+        {
+          elapsedMs: nowMs() - startedAt,
+        },
+      );
     }
     const state = this.fullUpdate();
     this.traceKeyringPerf('refresh_memstore_keyrings.end', {
@@ -1602,7 +1614,10 @@ export class KeyringService extends RNEventEmitter {
    */
   private async _restoreKeyring(
     serialized: KeyringSerializedData,
-    options: { restoreId?: number } = {},
+    options: {
+      restoreId?: number;
+      targetKeyrings?: any[];
+    } = {},
   ): Promise<any> {
     const startedAt = nowMs();
     const { type, data } = serialized;
@@ -1645,7 +1660,8 @@ export class KeyringService extends RNEventEmitter {
       return keyring;
     }
 
-    this.keyrings.push(keyring);
+    const targetKeyrings = options.targetKeyrings ?? this.keyrings;
+    targetKeyrings.push(keyring);
     this.traceKeyringPerf('restore_keyring.end', {
       type,
       elapsedMs: nowMs() - startedAt,

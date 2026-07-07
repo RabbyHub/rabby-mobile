@@ -1,7 +1,6 @@
 import { Platform } from 'react-native';
 import RNFS from '@rabby-wallet/react-native-fs';
 
-import { logger } from '@/utils/logger';
 import {
   beginAndroidAsyncTrace,
   endAndroidAsyncTrace,
@@ -10,6 +9,26 @@ import {
   traceAndroidInstant,
 } from './androidTrace';
 import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
+
+let startupDiagnosticsLogger:
+  | typeof import('@/utils/logger').logger
+  | null
+  | undefined;
+
+function getStartupDiagnosticsLogger() {
+  if (startupDiagnosticsLogger !== undefined) {
+    return startupDiagnosticsLogger;
+  }
+
+  try {
+    startupDiagnosticsLogger = require('@/utils/logger')
+      .logger as typeof import('@/utils/logger').logger;
+  } catch {
+    startupDiagnosticsLogger = null;
+  }
+
+  return startupDiagnosticsLogger;
+}
 
 type DiagnosticData = Record<string, unknown>;
 type StartupDiagnosticFile = Awaited<ReturnType<typeof RNFS.readDir>>[number];
@@ -670,9 +689,12 @@ async function runStartupDiagnosticFileRetentionOnce() {
       diagnosticFiles.slice(5).map(file => RNFS.unlink(file.path)),
     );
   } catch (error) {
-    logger.warn('[RabbyStartupDiag:file] retention_failed', {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    getStartupDiagnosticsLogger()?.warn(
+      '[RabbyStartupDiag:file] retention_failed',
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+    );
   }
 }
 
@@ -690,9 +712,12 @@ function flushDiagnosticLines() {
   RNFS.appendFile(diagnosticFilePath, content, 'utf8')
     .then(() => runStartupDiagnosticFileRetentionOnce())
     .catch(error => {
-      logger.warn('[RabbyStartupDiag:file] flush_failed', {
-        error: error instanceof Error ? error.message : String(error),
-      });
+      getStartupDiagnosticsLogger()?.warn(
+        '[RabbyStartupDiag:file] flush_failed',
+        {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      );
     })
     .finally(() => {
       isFlushingDiagnosticLines = false;
@@ -708,7 +733,10 @@ function trace(scope: string, event: string, data: DiagnosticData = {}) {
   }
 
   queueDiagnosticLine(scope, event, data);
-  logger.info(`[RabbyStartupDiag:${scope}] ${event}`, data);
+  getStartupDiagnosticsLogger()?.info(
+    `[RabbyStartupDiag:${scope}] ${event}`,
+    data,
+  );
   try {
     console.info(
       `[RabbyStartupDiag:${scope}] ${event} ${JSON.stringify(data)}`,
