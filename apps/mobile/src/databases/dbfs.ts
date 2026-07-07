@@ -48,7 +48,9 @@ export async function getDbFileSize() {
       : Promise.resolve(0),
   ]).then(allInfosResult => {
     const total_bytes = allInfosResult.reduce((acc, promiseRet) => {
-      if (promiseRet.status === 'fulfilled') acc += promiseRet.value;
+      if (promiseRet.status === 'fulfilled') {
+        acc += promiseRet.value;
+      }
 
       return acc;
     }, 0);
@@ -58,35 +60,32 @@ export async function getDbFileSize() {
 }
 
 export async function removeDBFiles() {
-  return walkDbFiles().then(result => {
-    Promise.allSettled([
-      result.db && RNFS.unlink(result.db.path),
-      result.dbshm && RNFS.unlink(result.dbshm.path),
-      result.dbwal && RNFS.unlink(result.dbwal.path),
-    ]).then(([db, dbshm, dbwal]) => {
-      if (db.status === 'fulfilled' && db.value) {
-        console.debug(
-          `DB file removed: ${
-            db.status === 'fulfilled' ? 'success' : 'failed'
-          }`,
-        );
-      }
-      if (dbshm.status === 'fulfilled' && dbshm.value) {
-        console.debug(
-          `DB-SHM file removed: ${
-            dbshm.status === 'fulfilled' ? 'success' : 'failed'
-          }`,
-        );
-      }
-      if (dbwal.status === 'fulfilled' && dbwal.value) {
-        console.debug(
-          `DB-WAL file removed: ${
-            dbwal.status === 'fulfilled' ? 'success' : 'failed'
-          }`,
-        );
-      }
-    });
-  });
+  const result = await walkDbFiles();
+  const [db, dbshm, dbwal] = await Promise.allSettled([
+    result.db && RNFS.unlink(result.db.path),
+    result.dbshm && RNFS.unlink(result.dbshm.path),
+    result.dbwal && RNFS.unlink(result.dbwal.path),
+  ]);
+
+  if (db.status === 'fulfilled' && db.value) {
+    console.debug(
+      `DB file removed: ${db.status === 'fulfilled' ? 'success' : 'failed'}`,
+    );
+  }
+  if (dbshm.status === 'fulfilled' && dbshm.value) {
+    console.debug(
+      `DB-SHM file removed: ${
+        dbshm.status === 'fulfilled' ? 'success' : 'failed'
+      }`,
+    );
+  }
+  if (dbwal.status === 'fulfilled' && dbwal.value) {
+    console.debug(
+      `DB-WAL file removed: ${
+        dbwal.status === 'fulfilled' ? 'success' : 'failed'
+      }`,
+    );
+  }
 }
 
 function getDbPath(databaseName: string, location = 'default') {

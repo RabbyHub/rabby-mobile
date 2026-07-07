@@ -8,7 +8,7 @@ import {
   useExposureRateGuide,
   rateGuideLastExposureState,
 } from '@/components/RateModal/hooks';
-import { ScreenshotFeedbackHomeTip } from '@/components/Screenshot/SubmitFeedback/HomeTip';
+import { TipFeedbackByScreenshot } from '@/components/Screenshot/HomeCenterTip';
 import { useViewedHomeTip } from '@/components/Screenshot/hooks';
 import { ITEM_LAYOUT_PADDING_HORIZONTAL } from '@/constant/home';
 import {
@@ -24,6 +24,7 @@ import { ConvertDustBanner } from './ConvertDustBanner';
 import { useConvertDustBanner } from '../hooks/useConvertDustBanner';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
+import { IS_ANDROID, isBridgelessRuntimeEnabled } from '@/core/native/utils';
 
 export function HomeCenterArea() {
   const { styles } = useTheme2024({
@@ -40,6 +41,10 @@ export function HomeCenterArea() {
   const forceShowDepositAssetsCard = mockData?.forceShowDepositAssetsCard;
   const { shouldShowConvertDustBanner, dismissConvertDustBanner } =
     useConvertDustBanner();
+  const homeCenterEntering =
+    IS_ANDROID && isBridgelessRuntimeEnabled()
+      ? undefined
+      : FadeInUp.duration(200);
 
   const prevAccountToShowReceiveTipRef = useRef(accountToShowReceiveTip);
   if (!isLoadingAccountToShowReceiveTip) {
@@ -135,26 +140,26 @@ export function HomeCenterArea() {
         onlyOneContent ? styles.contentBetweenHeaderAndMatrixOnlyOne : null,
       ]}>
       {blocksVisibility.offlineChainData && (
-        <Animated.View entering={FadeInUp.duration(200)}>
+        <Animated.View entering={homeCenterEntering}>
           <OfflineChainNotify data={offlineChainData} />
         </Animated.View>
       )}
 
       {blocksVisibility.soloAccountToShowReceiveTip && (
-        <Animated.View entering={FadeInUp.duration(200)}>
+        <Animated.View entering={homeCenterEntering}>
           <DepositAssetsCard account={displayAccount || null} />
         </Animated.View>
       )}
 
       {blocksVisibility.tipScreenshot && (
-        <Animated.View entering={FadeInUp.duration(200)}>
-          <ScreenshotFeedbackHomeTip />
+        <Animated.View entering={homeCenterEntering}>
+          <TipFeedbackByScreenshot />
         </Animated.View>
       )}
 
       {blocksVisibility.rateGuideOnHome && (
         <Animated.View
-          entering={FadeInUp.duration(200)}
+          entering={homeCenterEntering}
           style={{
             paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
           }}>
@@ -165,7 +170,7 @@ export function HomeCenterArea() {
       )}
 
       {blocksVisibility.convertDustBanner && (
-        <Animated.View entering={FadeInUp.duration(200)}>
+        <Animated.View entering={homeCenterEntering}>
           <ConvertDustBanner
             onPress={handlePressConvertDustBanner}
             onClose={dismissConvertDustBanner}

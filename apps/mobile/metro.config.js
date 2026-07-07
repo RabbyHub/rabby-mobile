@@ -52,6 +52,75 @@ const turboBuildBlockList = new RegExp(
 
 const LOG_FILE = path.join(__dirname, 'jsModuleId.log');
 
+const appSingletonPackages = [
+  'react',
+  'react-native',
+  'react-native-gesture-handler',
+  'react-native-reanimated',
+];
+const isAppSingletonModule = moduleName =>
+  appSingletonPackages.some(
+    packageName =>
+      moduleName === packageName || moduleName.startsWith(`${packageName}/`),
+  );
+const isPathInside = (childPath, parentPath) => {
+  if (!childPath) {
+    return false;
+  }
+
+  const relativePath = path.relative(parentPath, childPath);
+  return (
+    relativePath === '' ||
+    (!!relativePath &&
+      !relativePath.startsWith('..') &&
+      !path.isAbsolute(relativePath))
+  );
+};
+const shouldResolveAppSingletonModule = (context, moduleName) =>
+  isAppSingletonModule(moduleName) &&
+  !isPathInside(context.originModulePath, projectRoot);
+
+const resolvePackageEntryFile = entryPath => {
+  if (fs.existsSync(entryPath) && fs.statSync(entryPath).isFile()) {
+    return entryPath;
+  }
+
+  for (const ext of sourceExts) {
+    const filePath = `${entryPath}.${ext}`;
+    if (fs.existsSync(filePath)) {
+      return filePath;
+    }
+  }
+
+  return entryPath;
+};
+
+const resolveAppSingletonModule = moduleName => {
+  const packageName = appSingletonPackages.find(
+    name => moduleName === name || moduleName.startsWith(`${name}/`),
+  );
+
+  if (moduleName === packageName) {
+    const packageJsonPath = require.resolve(`${packageName}/package.json`, {
+      paths: [projectRoot],
+    });
+    const packageJson = require(packageJsonPath);
+
+    if (typeof packageJson['react-native'] === 'string') {
+      return resolvePackageEntryFile(
+        path.resolve(
+          path.dirname(packageJsonPath),
+          packageJson['react-native'],
+        ),
+      );
+    }
+  }
+
+  return require.resolve(moduleName, {
+    paths: [projectRoot],
+  });
+};
+
 /**
  * Compose functions from right to left.
  * @param {...Function} fns - Functions to compose
@@ -189,6 +258,13 @@ const config = {
      *
      * */
     resolveRequest: (context, moduleName, platform) => {
+      if (shouldResolveAppSingletonModule(context, moduleName)) {
+        return {
+          filePath: resolveAppSingletonModule(moduleName),
+          type: 'sourceFile',
+        };
+      }
+
       if (moduleName === '@walletconnect/keyvaluestorage') {
         return {
           filePath: walletConnectKeyValueStorageShim,

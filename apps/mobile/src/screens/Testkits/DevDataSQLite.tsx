@@ -36,6 +36,7 @@ import { touchedFeedback } from '@/utils/touch';
 import { ALL_ORM_ENTITIES } from '@/databases/entities';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { Text, AnimateableText } from '@/components/Typography';
+import RNHelpers from '@/core/native/RNHelpers';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import {
   clearSyncSchedulerRecentTasks,
@@ -368,6 +369,16 @@ function DevSQLiteInfo() {
         height={48}
         containerStyle={[styles.rowWrapper, { marginBottom: 12 }]}
         onPress={() => getSqliteInfo()}
+      />
+
+      <Button
+        title={'Force Exit App'}
+        type="danger"
+        height={48}
+        containerStyle={[styles.rowWrapper, { marginVertical: 12 }]}
+        onPress={() => {
+          RNHelpers.forceExitApp();
+        }}
       />
 
       <Button

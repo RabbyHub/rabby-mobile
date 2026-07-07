@@ -1,7 +1,9 @@
-import React, { type Ref, useImperativeHandle, useState, useRef } from 'react';
+import React, { useImperativeHandle, useState, useRef } from 'react';
 import { Alert } from 'react-native';
-import { AppSwitch2024 } from '@/components/customized/Switch2024';
-import { SwitchToggleType } from '@/components';
+import {
+  AppSwitch2024,
+  SwitchToggleRefProp,
+} from '@/components/customized/Switch2024';
 import { useBiometrics } from '@/hooks/biometrics';
 import { useWalletPasswordInfo } from '@/screens/ManagePassword/useManagePassword';
 import { AuthenticationModal2024 as AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal2024';
@@ -137,8 +139,7 @@ export const SwitchBiometricsAuthentication = ({
 }: React.ComponentProps<typeof AppSwitch2024> & {
   onToggleSuccess?: (enabled: boolean) => void | Promise<void>;
   onUnavailablePress?: () => void;
-  ref?: Ref<SwitchToggleType>;
-}) => {
+} & SwitchToggleRefProp) => {
   const {
     isBiometricsEnabled,
     couldSetupBiometrics,

@@ -1,8 +1,8 @@
-import React, { type Ref, useImperativeHandle } from 'react';
+import React, { useImperativeHandle } from 'react';
 
 import {
   AppSwitch2024,
-  SwitchToggleType,
+  SwitchToggleRefProp,
 } from '@/components/customized/Switch2024';
 import { useThemeColors } from '@/hooks/theme';
 import {
@@ -13,9 +13,7 @@ import {
 export const SwitchShowFloatingAutoLockCountdown = ({
   ref,
   ...props
-}: React.ComponentProps<typeof AppSwitch2024> & {
-  ref?: Ref<SwitchToggleType>;
-}) => {
+}: React.ComponentProps<typeof AppSwitch2024> & SwitchToggleRefProp) => {
   const { showAutoLockCountdown, toggleShowAutoLockCountdown } =
     useToggleShowAutoLockCountdown();
   const colors = useThemeColors();
@@ -44,9 +42,7 @@ export const SwitchShowFloatingAutoLockCountdown = ({
 export const SwitchShowFloatingUnlockStatusBar = ({
   ref,
   ...props
-}: React.ComponentProps<typeof AppSwitch2024> & {
-  ref?: Ref<SwitchToggleType>;
-}) => {
+}: React.ComponentProps<typeof AppSwitch2024> & SwitchToggleRefProp) => {
   const { showUnlockStatusBar, toggleShowUnlockStatusBar } =
     useToggleShowUnlockStatusBar();
   const colors = useThemeColors();

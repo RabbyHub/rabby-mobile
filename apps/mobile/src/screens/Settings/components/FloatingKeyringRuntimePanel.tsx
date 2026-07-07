@@ -11,7 +11,6 @@ import Animated, {
 import {
   Gesture,
   GestureDetector,
-  GestureHandlerRootView,
 } from 'react-native-gesture-handler';
 
 import { AnimateableText, Text } from '@/components/Typography';
@@ -675,7 +674,7 @@ export function FloatingKeyringRuntimePanel() {
   }
 
   return (
-    <GestureHandlerRootView pointerEvents="box-none" style={styles.portal}>
+    <View pointerEvents="box-none" style={styles.portal}>
       <Animated.View style={[styles.container, rootAnimatedStyles]}>
         <Animated.View
           pointerEvents="none"
@@ -699,7 +698,7 @@ export function FloatingKeyringRuntimePanel() {
           </Animated.View>
         </GestureDetector>
       </Animated.View>
-    </GestureHandlerRootView>
+    </View>
   );
 }
 

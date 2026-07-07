@@ -58,6 +58,32 @@ type Props = {
 export type EditCustomTestnetPopupType = {
   doBack: () => void;
 };
+
+const PRESENT_RETRY_LIMIT = 5;
+const PRESENT_RETRY_DELAY = 50;
+
+function presentSheetModalWhenReady(
+  modalRef: React.RefObject<AppBottomSheetModal | null>,
+  isCancelled: () => boolean,
+  retryCount = 0,
+) {
+  if (isCancelled()) {
+    return;
+  }
+
+  const modal = modalRef.current;
+  if (modal) {
+    modal.present();
+    return;
+  }
+
+  if (retryCount < PRESENT_RETRY_LIMIT) {
+    setTimeout(() => {
+      presentSheetModalWhenReady(modalRef, isCancelled, retryCount + 1);
+    }, PRESENT_RETRY_DELAY);
+  }
+}
+
 export const EditCustomTestnetPopup = ({
   data,
   visible,
@@ -136,11 +162,17 @@ export const EditCustomTestnetPopup = ({
 
   const modalRef = React.useRef<AppBottomSheetModal>(null);
   React.useEffect(() => {
+    let cancelled = false;
+
     if (!visible) {
       modalRef.current?.close();
     } else {
-      modalRef.current?.present();
+      presentSheetModalWhenReady(modalRef, () => cancelled);
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [visible]);
 
   useEffect(() => {
