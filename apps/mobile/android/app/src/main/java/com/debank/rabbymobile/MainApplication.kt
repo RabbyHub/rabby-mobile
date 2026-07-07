@@ -41,8 +41,20 @@ class MainApplication : Application(), ReactApplication {
     get() = getDefaultReactHost(applicationContext, reactNativeHost)
 
   override fun onCreate() {
-    super.onCreate()
-    loadReactNative(this)
-    OkHttpClientProvider.setOkHttpClientFactory(UserAgentClientFactory())
+    RabbyStartupTrace.beginSection("Application.onCreate")
+    try {
+      super.onCreate()
+      RabbyStartupTrace.instant("Application.super.onCreate")
+      RabbyStartupTrace.beginSection("Application.loadReactNative")
+      try {
+        loadReactNative(this)
+      } finally {
+        RabbyStartupTrace.endSection()
+      }
+      OkHttpClientProvider.setOkHttpClientFactory(UserAgentClientFactory())
+      RabbyStartupTrace.instant("Application.okhttpFactoryReady")
+    } finally {
+      RabbyStartupTrace.endSection()
+    }
   }
 }

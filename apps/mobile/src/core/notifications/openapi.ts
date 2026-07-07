@@ -5,7 +5,7 @@ import { APP_VERSIONS, APPLICATION_ID } from '@/constant';
 import { makeDeviceUUID } from '../apis/device';
 import { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
 import { AppState } from 'react-native';
-import { instrumentOpenApiFailureLogging } from '@/utils/openapiFailureLogging';
+import { instrumentOpenApiRequestDiagnostics } from '@/utils/openapiRequestDiagnostics';
 import { APP_FEATURE_SWITCH } from '@/constant';
 
 export type DeviceActiveStatusResponse = {
@@ -122,4 +122,4 @@ export const notificationOpenapi = new NotificationsOpenApiService({
 });
 
 notificationOpenapi.initSync();
-instrumentOpenApiFailureLogging(notificationOpenapi, 'notificationOpenapi');
+instrumentOpenApiRequestDiagnostics(notificationOpenapi, 'notificationOpenapi');

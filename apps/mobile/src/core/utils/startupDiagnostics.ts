@@ -1,13 +1,22 @@
 import { Platform } from 'react-native';
 import RNFS from '@rabby-wallet/react-native-fs';
 
-import { isNonPublicProductionEnv } from '@/constant';
 import { logger } from '@/utils/logger';
+import {
+  beginAndroidAsyncTrace,
+  endAndroidAsyncTrace,
+  nextAndroidTraceCookie,
+  traceAndroidCounter,
+  traceAndroidInstant,
+} from './androidTrace';
+import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
 
 type DiagnosticData = Record<string, unknown>;
+type StartupDiagnosticFile = Awaited<ReturnType<typeof RNFS.readDir>>[number];
 
 type ActiveDbSyncTask = {
   id: number;
+  traceCookie: number;
   startedAt: number;
   taskFor: string;
   entityName: string;
@@ -30,6 +39,7 @@ type ActiveDbSyncTask = {
 
 type ActiveWarmupTask = {
   id: number;
+  traceCookie: number;
   startedAt: number;
   name: string;
   detail?: DiagnosticData;
@@ -37,6 +47,7 @@ type ActiveWarmupTask = {
 
 type UnlockCriticalWindow = {
   id: number;
+  traceCookie: number;
   startedAt: number;
   reason: string;
   intervalId: ReturnType<typeof setInterval> | null;
@@ -48,6 +59,7 @@ type UnlockCriticalWindow = {
 
 type DbActiveWindow = {
   id: number;
+  traceCookie: number;
   startedAt: number;
   intervalId: ReturnType<typeof setInterval> | null;
   lastTickAt: number;
@@ -102,23 +114,69 @@ export type DbSyncSummarySnapshot = {
   lastWindow: DbSyncWindowSummary | null;
 };
 
+export type KeyringRuntimeConvergenceStatus =
+  | 'idle'
+  | 'waiting'
+  | 'running'
+  | 'success'
+  | 'error'
+  | 'canceled'
+  | 'skipped';
+
+export type KeyringRuntimeConvergenceRecord = {
+  id: number;
+  event: string;
+  status: KeyringRuntimeConvergenceStatus;
+  timestamp: number;
+  generation?: number;
+  reason?: string;
+  elapsedMs?: number;
+  error?: string;
+};
+
+export type KeyringRuntimeConvergenceSnapshot = {
+  enabled: boolean;
+  updatedAt: number;
+  status: KeyringRuntimeConvergenceStatus;
+  event: string;
+  generation: number;
+  reason: string;
+  fallbackMs: number;
+  scheduledAt: number;
+  startedAt: number;
+  endedAt: number;
+  waitMs: number;
+  elapsedMs: number;
+  runtimeReady: boolean | null;
+  runtimeRestoring: boolean | null;
+  runtimeError: string | null;
+  keyringCount: number | null;
+  error: string;
+  lastPerfEvent: string;
+  lastPerfElapsedMs: number;
+  records: KeyringRuntimeConvergenceRecord[];
+};
+
 const isAndroid = Platform.OS === 'android';
-const enabled = isAndroid && isNonPublicProductionEnv;
+const enabled = isAndroid && isNonProductionDiagnosticsEnabled;
 const STALL_INTERVAL_MS = 50;
 const STALL_WARN_MS = 120;
 const STALL_LOG_MS = 250;
 const MAX_STALL_LOGS_PER_WINDOW = 8;
 const MAX_SNAPSHOT_TASKS = 5;
+const MAX_KEYRING_CONVERGENCE_RECORDS = 5;
 
 let dbTaskSeq = 0;
 let warmupTaskSeq = 0;
 let unlockWindowSeq = 0;
 let dbActiveWindowSeq = 0;
+let keyringRuntimeConvergenceRecordSeq = 0;
 
 const activeDbSyncTasks = new Map<number, ActiveDbSyncTask>();
 const activeWarmupTasks = new Map<number, ActiveWarmupTask>();
 const dbSyncTaskSummaries = new Map<number, ActiveDbSyncTask>();
 const dbSummaryListeners = new Set<() => void>();
+const keyringRuntimeConvergenceListeners = new Set<() => void>();
 
 const activeUnlockWindowRef: {
   current: UnlockCriticalWindow | null;
@@ -133,7 +191,7 @@ const activeDbWindowRef: {
 };
 
 const diagnosticFilePath =
-  isAndroid && RNFS.ExternalDirectoryPath
+  enabled && RNFS.ExternalDirectoryPath
     ? `${
         RNFS.ExternalDirectoryPath
       }/rabby-startup-diagnostics-${Date.now()}.ndjson`
@@ -142,11 +200,34 @@ const diagnosticFilePath =
 const pendingDiagnosticLines: string[] = [];
 let diagnosticFlushTimer: ReturnType<typeof setTimeout> | null = null;
 let isFlushingDiagnosticLines = false;
+let didRunDiagnosticFileRetention = false;
 let lastDbSummarySnapshot: DbSyncSummarySnapshot = {
   enabled,
   updatedAt: now(),
   activeWindow: null,
   lastWindow: null,
+};
+let lastKeyringRuntimeConvergenceSnapshot: KeyringRuntimeConvergenceSnapshot = {
+  enabled,
+  updatedAt: now(),
+  status: 'idle',
+  event: '',
+  generation: 0,
+  reason: '',
+  fallbackMs: 0,
+  scheduledAt: 0,
+  startedAt: 0,
+  endedAt: 0,
+  waitMs: 0,
+  elapsedMs: 0,
+  runtimeReady: null,
+  runtimeRestoring: null,
+  runtimeError: null,
+  keyringCount: null,
+  error: '',
+  lastPerfEvent: '',
+  lastPerfElapsedMs: 0,
+  records: [],
 };
 let dbSummaryPublishTimer: ReturnType<typeof setTimeout> | null = null;
 let lastDbSummaryPublishAt = 0;
@@ -308,6 +389,200 @@ export function subscribeDbSyncSummarySnapshot(listener: () => void) {
   };
 }
 
+function getKeyringRuntimeConvergenceStatus(
+  event: string,
+): KeyringRuntimeConvergenceStatus {
+  if (event.endsWith('_scheduled')) {
+    return 'waiting';
+  }
+
+  if (event.endsWith('_start')) {
+    return 'running';
+  }
+
+  if (event.endsWith('_end')) {
+    return 'success';
+  }
+
+  if (event.endsWith('_error')) {
+    return 'error';
+  }
+
+  if (event.includes('_cancel')) {
+    return 'canceled';
+  }
+
+  if (event.includes('_skip')) {
+    return 'skipped';
+  }
+
+  return lastKeyringRuntimeConvergenceSnapshot.status;
+}
+
+function publishKeyringRuntimeConvergenceSnapshot(
+  snapshot: KeyringRuntimeConvergenceSnapshot,
+) {
+  lastKeyringRuntimeConvergenceSnapshot = snapshot;
+  keyringRuntimeConvergenceListeners.forEach(listener => listener());
+}
+
+export function getKeyringRuntimeConvergenceSnapshot() {
+  return lastKeyringRuntimeConvergenceSnapshot;
+}
+
+export function subscribeKeyringRuntimeConvergenceSnapshot(
+  listener: () => void,
+) {
+  keyringRuntimeConvergenceListeners.add(listener);
+
+  return () => {
+    keyringRuntimeConvergenceListeners.delete(listener);
+  };
+}
+
+export function recordKeyringRuntimeConvergenceDiagnostic(
+  event: string,
+  data: DiagnosticData = {},
+) {
+  if (!enabled) {
+    return;
+  }
+
+  const timestamp = now();
+  const previous = lastKeyringRuntimeConvergenceSnapshot;
+  const status = getKeyringRuntimeConvergenceStatus(event);
+  const generation =
+    typeof data.generation === 'number' ? data.generation : previous.generation;
+  const isNewGeneration = generation !== previous.generation;
+  const scheduledAt =
+    event.endsWith('_scheduled') || isNewGeneration
+      ? timestamp
+      : previous.scheduledAt;
+  const startedAt = event.endsWith('_start') ? timestamp : previous.startedAt;
+  const endedAt =
+    status === 'success' || status === 'error' || status === 'canceled'
+      ? timestamp
+      : previous.endedAt;
+  const waitMs =
+    event.endsWith('_start') && scheduledAt
+      ? timestamp - scheduledAt
+      : previous.waitMs;
+  const elapsedMs =
+    typeof data.elapsedMs === 'number'
+      ? data.elapsedMs
+      : endedAt && startedAt
+      ? endedAt - startedAt
+      : previous.elapsedMs;
+  const reason =
+    typeof data.reason === 'string' ? data.reason : previous.reason;
+  const error =
+    typeof data.error === 'string'
+      ? data.error
+      : status === 'error'
+      ? previous.error
+      : '';
+
+  const record: KeyringRuntimeConvergenceRecord = {
+    id: ++keyringRuntimeConvergenceRecordSeq,
+    event,
+    status,
+    timestamp,
+    generation,
+    reason,
+    elapsedMs,
+    error,
+  };
+
+  publishKeyringRuntimeConvergenceSnapshot({
+    ...previous,
+    enabled,
+    updatedAt: timestamp,
+    status,
+    event,
+    generation,
+    reason,
+    fallbackMs:
+      typeof data.fallbackMs === 'number'
+        ? data.fallbackMs
+        : previous.fallbackMs,
+    scheduledAt,
+    startedAt,
+    endedAt,
+    waitMs,
+    elapsedMs,
+    runtimeReady:
+      typeof data.runtimeReady === 'boolean'
+        ? data.runtimeReady
+        : previous.runtimeReady,
+    runtimeRestoring:
+      typeof data.runtimeRestoring === 'boolean'
+        ? data.runtimeRestoring
+        : previous.runtimeRestoring,
+    runtimeError:
+      typeof data.runtimeError === 'string'
+        ? data.runtimeError
+        : data.runtimeError === null
+        ? null
+        : previous.runtimeError,
+    keyringCount:
+      typeof data.keyringCount === 'number'
+        ? data.keyringCount
+        : previous.keyringCount,
+    error,
+    records: [record, ...previous.records].slice(
+      0,
+      MAX_KEYRING_CONVERGENCE_RECORDS,
+    ),
+  });
+}
+
+export function recordKeyringRuntimePerfDiagnostic(
+  event: string,
+  data: DiagnosticData = {},
+) {
+  if (
+    !enabled ||
+    (!event.startsWith('keyring_runtime_') &&
+      !event.startsWith('refresh_memstore_keyrings') &&
+      !event.startsWith('update_memstore_keyrings') &&
+      event !== 'unlock_keyrings.defer_runtime_restore_scheduled')
+  ) {
+    return;
+  }
+
+  const timestamp = now();
+  const previous = lastKeyringRuntimeConvergenceSnapshot;
+  const isError = event.endsWith('_error') || event.endsWith('.error');
+  const isStart = event.endsWith('_start') || event.endsWith('.start');
+  const isEnd = event.endsWith('_end') || event.endsWith('.end');
+  const status: KeyringRuntimeConvergenceStatus = isError
+    ? 'error'
+    : isStart
+    ? 'running'
+    : isEnd
+    ? 'success'
+    : previous.status;
+  const elapsedMs =
+    typeof data.elapsedMs === 'number' ? data.elapsedMs : previous.elapsedMs;
+
+  publishKeyringRuntimeConvergenceSnapshot({
+    ...previous,
+    enabled,
+    updatedAt: timestamp,
+    status,
+    event: previous.event || event,
+    elapsedMs,
+    error:
+      typeof data.error === 'string'
+        ? data.error
+        : isError
+        ? previous.error
+        : previous.error,
+    lastPerfEvent: event,
+    lastPerfElapsedMs: elapsedMs,
+  });
+}
+
 function queueDiagnosticLine(
   scope: string,
   event: string,
@@ -349,6 +624,58 @@ function queueDiagnosticLine(
   }, 15000);
 }
 
+function getStartupDiagnosticFileTimestamp(file: StartupDiagnosticFile) {
+  const maybeDate = file.mtime || file.ctime;
+
+  if (maybeDate instanceof Date) {
+    return maybeDate.getTime();
+  }
+
+  if (maybeDate) {
+    const parsedTime = new Date(maybeDate).getTime();
+    if (!Number.isNaN(parsedTime)) {
+      return parsedTime;
+    }
+  }
+
+  const nameTime = file.name.match(
+    /^rabby-startup-diagnostics-(\d+)\.ndjson$/,
+  )?.[1];
+
+  return nameTime ? Number(nameTime) : 0;
+}
+
+async function runStartupDiagnosticFileRetentionOnce() {
+  if (
+    didRunDiagnosticFileRetention ||
+    !enabled ||
+    !RNFS.ExternalDirectoryPath
+  ) {
+    return;
+  }
+
+  didRunDiagnosticFileRetention = true;
+
+  try {
+    const files = await RNFS.readDir(RNFS.ExternalDirectoryPath);
+    const diagnosticFiles = files
+      .filter(file => /^rabby-startup-diagnostics-\d+\.ndjson$/.test(file.name))
+      .sort(
+        (left, right) =>
+          getStartupDiagnosticFileTimestamp(right) -
+          getStartupDiagnosticFileTimestamp(left),
+      );
+
+    await Promise.all(
+      diagnosticFiles.slice(5).map(file => RNFS.unlink(file.path)),
+    );
+  } catch (error) {
+    logger.warn('[RabbyStartupDiag:file] retention_failed', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
 function flushDiagnosticLines() {
   if (
     !diagnosticFilePath ||
@@ -361,6 +688,7 @@ function flushDiagnosticLines() {
   isFlushingDiagnosticLines = true;
   const content = `${pendingDiagnosticLines.splice(0).join('\n')}\n`;
   RNFS.appendFile(diagnosticFilePath, content, 'utf8')
+    .then(() => runStartupDiagnosticFileRetentionOnce())
     .catch(error => {
       logger.warn('[RabbyStartupDiag:file] flush_failed', {
         error: error instanceof Error ? error.message : String(error),
@@ -448,6 +776,11 @@ function markUnlockWindowStall(window: UnlockCriticalWindow, gapMs: number) {
     elapsedMs: now() - window.startedAt,
     ...getActiveTaskSnapshot(),
   });
+  traceAndroidInstant('unlock.window_js_stall', {
+    id: window.id,
+    reason: window.reason,
+    gapMs,
+  });
 }
 
 function markDbActiveWindowStall(window: DbActiveWindow, gapMs: number) {
@@ -469,6 +802,11 @@ function markDbActiveWindowStall(window: DbActiveWindow, gapMs: number) {
     peakActiveTaskCount: window.peakActiveTaskCount,
     ...getActiveTaskSnapshot(),
   });
+  traceAndroidInstant('db.active_window_js_stall', {
+    id: window.id,
+    gapMs,
+    activeDbTaskCount: activeDbSyncTasks.size,
+  });
 }
 
 function ensureDbActiveWindow() {
@@ -479,6 +817,7 @@ function ensureDbActiveWindow() {
   const startedAt = now();
   const window: DbActiveWindow = {
     id: ++dbActiveWindowSeq,
+    traceCookie: nextAndroidTraceCookie(),
     startedAt,
     intervalId: null,
     lastTickAt: startedAt,
@@ -514,6 +853,11 @@ function ensureDbActiveWindow() {
     id: window.id,
     ...getActiveTaskSnapshot(),
   });
+  beginAndroidAsyncTrace('db.active_window', window.traceCookie, {
+    id: window.id,
+    activeDbTaskCount: activeDbSyncTasks.size,
+  });
+  traceAndroidCounter('db.active_task_count', activeDbSyncTasks.size);
   publishDbSummarySnapshot(true);
 }
 
@@ -550,6 +894,13 @@ function endDbActiveWindowIfIdle() {
     peakActiveTaskCount: window.peakActiveTaskCount,
     ...getActiveTaskSnapshot(),
   });
+  endAndroidAsyncTrace('db.active_window', window.traceCookie, {
+    id: window.id,
+    durationMs: summary.durationMs,
+    maxGapMs: window.maxGapMs,
+    stallCount: window.stallCount,
+  });
+  traceAndroidCounter('db.active_task_count', activeDbSyncTasks.size);
   flushDiagnosticLines();
 }
 
@@ -579,6 +930,7 @@ export function beginUnlockCriticalWindow(reason: string) {
   const startedAt = now();
   const window: UnlockCriticalWindow = {
     id: ++unlockWindowSeq,
+    traceCookie: nextAndroidTraceCookie(),
     startedAt,
     reason,
     intervalId: null,
@@ -604,6 +956,10 @@ export function beginUnlockCriticalWindow(reason: string) {
     reason,
     ...getActiveTaskSnapshot(),
   });
+  beginAndroidAsyncTrace('unlock.critical_window', window.traceCookie, {
+    id: window.id,
+    reason,
+  });
 
   return window.id;
 }
@@ -626,14 +982,22 @@ export function endUnlockCriticalWindow(
   }
 
   activeUnlockWindowRef.current = null;
+  const durationMs = now() - window.startedAt;
   trace('unlock', 'critical_window_end', {
     id,
     reason: window.reason,
-    durationMs: now() - window.startedAt,
+    durationMs,
     maxGapMs: window.maxGapMs,
     stallCount: window.stallCount,
     ...getActiveTaskSnapshot(),
     ...data,
+  });
+  endAndroidAsyncTrace('unlock.critical_window', window.traceCookie, {
+    id,
+    reason: window.reason,
+    durationMs,
+    maxGapMs: window.maxGapMs,
+    stallCount: window.stallCount,
   });
 }
 
@@ -647,9 +1011,11 @@ export async function runStartupDiagnosticTask<T>(
   }
 
   const id = ++warmupTaskSeq;
+  const traceCookie = nextAndroidTraceCookie();
   const startedAt = now();
   activeWarmupTasks.set(id, {
     id,
+    traceCookie,
     startedAt,
     name,
     detail,
@@ -661,25 +1027,41 @@ export async function runStartupDiagnosticTask<T>(
     detail,
     ...getActiveTaskSnapshot(),
   });
+  beginAndroidAsyncTrace(`warmup.${name}`, traceCookie, {
+    id,
+    name,
+  });
 
   try {
     const result = await task();
+    const durationMs = now() - startedAt;
     trace('warmup', 'task_end', {
       id,
       name,
       status: 'success',
-      durationMs: now() - startedAt,
+      durationMs,
       ...getActiveTaskSnapshot(),
+    });
+    endAndroidAsyncTrace(`warmup.${name}`, traceCookie, {
+      id,
+      status: 'success',
+      durationMs,
     });
     return result;
   } catch (error) {
+    const durationMs = now() - startedAt;
     trace('warmup', 'task_end', {
       id,
       name,
       status: 'error',
-      durationMs: now() - startedAt,
+      durationMs,
       error: error instanceof Error ? error.message : String(error),
       ...getActiveTaskSnapshot(),
+    });
+    endAndroidAsyncTrace(`warmup.${name}`, traceCookie, {
+      id,
+      status: 'error',
+      durationMs,
     });
     throw error;
   } finally {
@@ -705,6 +1087,7 @@ export function beginDbSyncTask(meta: {
   const id = ++dbTaskSeq;
   const task: ActiveDbSyncTask = {
     id,
+    traceCookie: nextAndroidTraceCookie(),
     startedAt: now(),
     stage: 'created',
     stageDetail: '',
@@ -735,6 +1118,13 @@ export function beginDbSyncTask(meta: {
     delayBetweenTasks: meta.delayBetweenTasks,
     activeDbTaskCount: activeDbSyncTasks.size,
   });
+  beginAndroidAsyncTrace(`db.sync_task.${meta.entityName}`, task.traceCookie, {
+    id: task.id,
+    taskFor: meta.taskFor,
+    rows: meta.totalRows,
+    batches: meta.totalBatches,
+  });
+  traceAndroidCounter('db.active_task_count', activeDbSyncTasks.size);
   publishDbSummarySnapshot(true);
 
   return id;
@@ -810,6 +1200,15 @@ export function markDbSyncTaskBatch(
     executeMs: data.executeMs,
     method: data.method,
   });
+  traceAndroidInstant('db.sync_task.batch', {
+    id: task.id,
+    entityName: task.entityName,
+    round: data.round + 1,
+    totalRound: data.totalRound,
+    count: data.count,
+    durationMs: data.durationMs,
+    method: data.method,
+  });
 }
 
 export function endDbSyncTask(
@@ -836,6 +1235,12 @@ export function endDbSyncTask(
     activeDbTaskCount: activeDbSyncTasks.size,
     ...data,
   });
+  endAndroidAsyncTrace(`db.sync_task.${task.entityName}`, task.traceCookie, {
+    id: task.id,
+    status,
+    durationMs: task.endedAt - task.startedAt,
+  });
+  traceAndroidCounter('db.active_task_count', activeDbSyncTasks.size);
   publishDbSummarySnapshot(true);
   endDbActiveWindowIfIdle();
 }

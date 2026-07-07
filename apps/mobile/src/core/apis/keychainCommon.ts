@@ -16,6 +16,7 @@ import {
   getAndroidBiometricSecurityLevelOptions,
   type AndroidBiometricSecurityLevel,
 } from './androidBiometricsRegression';
+import { isNonProductionDiagnosticsEnabled } from '../utils/diagnosticEnv';
 
 export const KEYCHAIN_DEFAULT_SERVICE = 'com.debank';
 export const KEYCHAIN_GENERIC_USER = 'rabbymobile-user';
@@ -51,7 +52,7 @@ function traceAndroidKeychainPerf(
   event: string,
   data: Record<string, unknown> = {},
 ) {
-  if (!isAndroid) {
+  if (!isAndroid || !isNonProductionDiagnosticsEnabled) {
     return;
   }
 

@@ -1359,7 +1359,7 @@ export function startProcessAddressBalanceEvents() {
     });
   });
 
-  perfEvents.subscribe('USER_MANUALLY_UNLOCK_UI_READY', async () => {
+  perfEvents.subscribe('POST_UNLOCK_UI_READY', async () => {
     syncBalanceAccountStore();
   });
 

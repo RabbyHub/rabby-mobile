@@ -7,10 +7,16 @@ import androidx.appcompat.app.AppCompatActivity;
 public class SplashActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
+		RabbyStartupTrace.beginSection("SplashActivity.onCreate");
+		try {
+			super.onCreate(savedInstanceState);
 
-		Intent intent = new Intent(this, MainActivity.class);
-		startActivity(intent);
-		finish();
+			Intent intent = new Intent(this, MainActivity.class);
+			RabbyStartupTrace.instant("SplashActivity.startMainActivity");
+			startActivity(intent);
+			finish();
+		} finally {
+			RabbyStartupTrace.endSection();
+		}
 	}
 }

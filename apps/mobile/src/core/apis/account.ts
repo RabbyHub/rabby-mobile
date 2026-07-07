@@ -29,6 +29,7 @@ import { makeAvoidParallelAsyncFunc } from '../utils/concurrency';
 import BigNumber from 'bignumber.js';
 import { makeJsEEClass } from '@/core/services/_utils';
 import { logger } from '@/utils/logger';
+import { isNonProductionDiagnosticsEnabled } from '../utils/diagnosticEnv';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -36,7 +37,7 @@ function traceAndroidUnlockAccountPerf(
   event: string,
   data: Record<string, unknown> = {},
 ) {
-  if (!isAndroid) {
+  if (!isAndroid || !isNonProductionDiagnosticsEnabled) {
     return;
   }
 

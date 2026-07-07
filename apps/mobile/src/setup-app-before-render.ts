@@ -1,3 +1,5 @@
+import { traceAndroidInstant } from './core/utils/androidTrace';
+
 type SetupBeforeRenderRuntime =
   typeof import('./setup-app-before-render.runtime');
 type ReadableAccountBootstrapRuntime =
@@ -17,19 +19,39 @@ const readableAccountStoresRuntimeRef = {
 
 async function loadSetupBeforeRenderRuntime(_reason: string) {
   if (setupBeforeRenderRuntimeRef.promise) {
+    traceAndroidInstant('startup.load_setup_before_render_runtime.reuse', {
+      reason: _reason,
+    });
     return setupBeforeRenderRuntimeRef.promise;
   }
 
+  const startedAt = Date.now();
+  traceAndroidInstant('startup.load_setup_before_render_runtime.start', {
+    reason: _reason,
+  });
   const runtimePromise = (
     __DEV__
       ? Promise.resolve(
           require('./setup-app-before-render.runtime') as SetupBeforeRenderRuntime,
         )
       : import('./setup-app-before-render.runtime')
-  ).catch(error => {
-    setupBeforeRenderRuntimeRef.promise = null;
-    throw error;
-  });
+  )
+    .then(runtime => {
+      traceAndroidInstant('startup.load_setup_before_render_runtime.end', {
+        reason: _reason,
+        elapsedMs: Date.now() - startedAt,
+      });
+      return runtime;
+    })
+    .catch(error => {
+      traceAndroidInstant('startup.load_setup_before_render_runtime.error', {
+        reason: _reason,
+        elapsedMs: Date.now() - startedAt,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setupBeforeRenderRuntimeRef.promise = null;
+      throw error;
+    });
 
   setupBeforeRenderRuntimeRef.promise = runtimePromise;
   return runtimePromise;
@@ -37,19 +59,39 @@ async function loadSetupBeforeRenderRuntime(_reason: string) {
 
 async function loadReadableAccountBootstrapRuntime(_reason: string) {
   if (readableAccountBootstrapRuntimeRef.promise) {
+    traceAndroidInstant('startup.load_readable_account_bootstrap.reuse', {
+      reason: _reason,
+    });
     return readableAccountBootstrapRuntimeRef.promise;
   }
 
+  const startedAt = Date.now();
+  traceAndroidInstant('startup.load_readable_account_bootstrap.start', {
+    reason: _reason,
+  });
   const runtimePromise = (
     __DEV__
       ? Promise.resolve(
           require('./setup-readable-account-bootstrap-warmups') as ReadableAccountBootstrapRuntime,
         )
       : import('./setup-readable-account-bootstrap-warmups')
-  ).catch(error => {
-    readableAccountBootstrapRuntimeRef.promise = null;
-    throw error;
-  });
+  )
+    .then(runtime => {
+      traceAndroidInstant('startup.load_readable_account_bootstrap.end', {
+        reason: _reason,
+        elapsedMs: Date.now() - startedAt,
+      });
+      return runtime;
+    })
+    .catch(error => {
+      traceAndroidInstant('startup.load_readable_account_bootstrap.error', {
+        reason: _reason,
+        elapsedMs: Date.now() - startedAt,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      readableAccountBootstrapRuntimeRef.promise = null;
+      throw error;
+    });
 
   readableAccountBootstrapRuntimeRef.promise = runtimePromise;
   return runtimePromise;
@@ -57,19 +99,39 @@ async function loadReadableAccountBootstrapRuntime(_reason: string) {
 
 async function loadReadableAccountStoresRuntime(_reason: string) {
   if (readableAccountStoresRuntimeRef.promise) {
+    traceAndroidInstant('startup.load_readable_account_stores.reuse', {
+      reason: _reason,
+    });
     return readableAccountStoresRuntimeRef.promise;
   }
 
+  const startedAt = Date.now();
+  traceAndroidInstant('startup.load_readable_account_stores.start', {
+    reason: _reason,
+  });
   const runtimePromise = (
     __DEV__
       ? Promise.resolve(
           require('./setup-readable-account-stores') as ReadableAccountStoresRuntime,
         )
       : import('./setup-readable-account-stores')
-  ).catch(error => {
-    readableAccountStoresRuntimeRef.promise = null;
-    throw error;
-  });
+  )
+    .then(runtime => {
+      traceAndroidInstant('startup.load_readable_account_stores.end', {
+        reason: _reason,
+        elapsedMs: Date.now() - startedAt,
+      });
+      return runtime;
+    })
+    .catch(error => {
+      traceAndroidInstant('startup.load_readable_account_stores.error', {
+        reason: _reason,
+        elapsedMs: Date.now() - startedAt,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      readableAccountStoresRuntimeRef.promise = null;
+      throw error;
+    });
 
   readableAccountStoresRuntimeRef.promise = runtimePromise;
   return runtimePromise;
@@ -78,7 +140,13 @@ async function loadReadableAccountStoresRuntime(_reason: string) {
 export async function startSetupAppBeforeRenderDeferred(
   reason = 'app_could_render',
 ) {
+  traceAndroidInstant('startup.start_setup_before_render_deferred.start', {
+    reason,
+  });
   await loadSetupBeforeRenderRuntime(reason);
+  traceAndroidInstant('startup.start_setup_before_render_deferred.end', {
+    reason,
+  });
 }
 
 export async function startInitPersistedStores() {

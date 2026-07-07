@@ -20,6 +20,10 @@ export async function getKeyring<T = KeyringInstance>(
   type: KeyringTypeName,
   callbackOnNewKeyring?: (keyring: KeyringInstance) => void,
 ): Promise<T> {
+  if (keyringService.isUnlocked() && !keyringService.isKeyringRuntimeReady()) {
+    await keyringService.ensureKeyringRuntimeReady('api.get_keyring');
+  }
+
   let keyring = keyringService.getKeyringByType(type) as any as KeyringInstance;
   let isNewKey = false;
 
@@ -58,6 +62,10 @@ export async function requestKeyring(
   keyringId: number | null,
   ...params: any[]
 ) {
+  if (keyringService.isUnlocked() && !keyringService.isKeyringRuntimeReady()) {
+    await keyringService.ensureKeyringRuntimeReady('api.request_keyring');
+  }
+
   let keyring: any;
   if (keyringId !== null && keyringId !== undefined) {
     keyring = stashKeyrings[keyringId];
@@ -144,6 +152,12 @@ export const addKeyring = async (
   if (keyring) {
     if (isSensitiveKeyringType(keyring.type)) {
       await ensureWalletUnlocked();
+    }
+    if (
+      keyringService.isUnlocked() &&
+      !keyringService.isKeyringRuntimeReady()
+    ) {
+      await keyringService.ensureKeyringRuntimeReady('api.add_keyring');
     }
     keyring.byImport = byImport;
     // If keyring exits, just save

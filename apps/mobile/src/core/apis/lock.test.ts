@@ -4,6 +4,8 @@ const mockResetPassword = jest.fn();
 const mockDangerouslyResetPasswordAndKeyrings = jest.fn();
 const mockGetCountOfAccountsInKeyring = jest.fn();
 const mockIsUnlocked = jest.fn();
+const mockIsKeyringRuntimeReady = jest.fn();
+const mockEnsureKeyringRuntimeReady = jest.fn();
 const mockSubmitPassword = jest.fn();
 const mockSetLocked = jest.fn();
 const mockHasPublicAccountSnapshot = jest.fn();
@@ -20,6 +22,14 @@ const mockShouldRejectUnlockDueToMultipleFailed = jest.fn();
 const mockRefreshAutolockTimeout = jest.fn();
 const mockGetPersistedUnlockSessionExpireTime = jest.fn();
 const mockPerfEmit = jest.fn();
+const mockPerfListenerCount = jest.fn();
+const mockRecordKeyringRuntimeConvergenceDiagnostic = jest.fn();
+const mockRunAfterHomePostStartupReady = jest.fn(
+  (callback: () => void, _options?: unknown) => {
+    callback();
+    return jest.fn();
+  },
+);
 
 const createEventClass = () =>
   class EventEmitter {
@@ -45,6 +55,10 @@ const keyringService = {
   getCountOfAccountsInKeyring: (...args: unknown[]) =>
     mockGetCountOfAccountsInKeyring(...args),
   isUnlocked: (...args: unknown[]) => mockIsUnlocked(...args),
+  isKeyringRuntimeReady: (...args: unknown[]) =>
+    mockIsKeyringRuntimeReady(...args),
+  ensureKeyringRuntimeReady: (...args: unknown[]) =>
+    mockEnsureKeyringRuntimeReady(...args),
   submitPassword: (...args: unknown[]) => mockSubmitPassword(...args),
   setLocked: (...args: unknown[]) => mockSetLocked(...args),
   hasPublicAccountSnapshot: (...args: unknown[]) =>
@@ -53,6 +67,14 @@ const keyringService = {
   off: (...args: unknown[]) => mockKeyringOff(...args),
   refreshMemStoreKeyrings: (...args: unknown[]) =>
     mockRefreshMemStoreKeyrings(...args),
+  memStore: {
+    getState: () => ({
+      keyringRuntimeReady: mockIsKeyringRuntimeReady(),
+      keyringRuntimeRestoring: false,
+      keyringRuntimeRestoreError: null,
+      keyrings: [],
+    }),
+  },
 };
 
 const preferenceService = {
@@ -125,7 +147,18 @@ const loadLockModule = () => {
   jest.doMock('../utils/perf', () => ({
     perfEvents: {
       emit: (...args: unknown[]) => mockPerfEmit(...args),
+      listenerCount: (...args: unknown[]) => mockPerfListenerCount(...args),
     },
+  }));
+
+  jest.doMock('../utils/homeStartupReady', () => ({
+    runAfterHomePostStartupReady: (...args: unknown[]) =>
+      mockRunAfterHomePostStartupReady(...args),
+  }));
+
+  jest.doMock('../utils/startupDiagnostics', () => ({
+    recordKeyringRuntimeConvergenceDiagnostic: (...args: unknown[]) =>
+      mockRecordKeyringRuntimeConvergenceDiagnostic(...args),
   }));
 
   jest.doMock('./autoLock', () => ({
@@ -157,8 +190,11 @@ describe('core/apis/lock password and session utilities', () => {
     mockDangerouslyResetPasswordAndKeyrings.mockResolvedValue(undefined);
     mockGetCountOfAccountsInKeyring.mockResolvedValue(0);
     mockIsUnlocked.mockReturnValue(false);
+    mockIsKeyringRuntimeReady.mockReturnValue(true);
+    mockEnsureKeyringRuntimeReady.mockResolvedValue(undefined);
     mockSubmitPassword.mockResolvedValue(undefined);
     mockSetLocked.mockResolvedValue(undefined);
+    mockRefreshMemStoreKeyrings.mockResolvedValue(undefined);
     mockResetPerpsStore.mockResolvedValue(undefined);
     mockHasPublicAccountSnapshot.mockReturnValue(true);
     mockGetPreference.mockReturnValue(0);
@@ -167,6 +203,7 @@ describe('core/apis/lock password and session utilities', () => {
       timeDiff: 0,
     });
     mockGetPersistedUnlockSessionExpireTime.mockReturnValue(Date.now() + 1_000);
+    mockPerfListenerCount.mockReturnValue(0);
   });
 
   afterEach(() => {
@@ -391,6 +428,7 @@ describe('core/apis/lock password and session utilities', () => {
       trustedVaultKeyString: undefined,
       onTrustedVaultKeyString: undefined,
       deferMemStoreKeyringsUpdate: undefined,
+      deferKeyringRuntimeRestore: undefined,
     });
     expect(mockResetMultipleFailed).toHaveBeenCalled();
     expect(mockInitCurrentAccount).toHaveBeenCalled();
@@ -429,5 +467,37 @@ describe('core/apis/lock password and session utilities', () => {
 
     expect(mockSubmitPassword).not.toHaveBeenCalled();
     expect(mockSetPreference).not.toHaveBeenCalled();
+  });
+
+  it('skips keyring runtime convergence while locked', () => {
+    const { scheduleKeyringRuntimeConvergence } = loadLockModule();
+    jest.clearAllMocks();
+    mockIsUnlocked.mockReturnValue(false);
+
+    scheduleKeyringRuntimeConvergence('test');
+
+    expect(mockRunAfterHomePostStartupReady).not.toHaveBeenCalled();
+    expect(mockRefreshMemStoreKeyrings).not.toHaveBeenCalled();
+  });
+
+  it('runs keyring runtime convergence after home startup when unlocked', async () => {
+    const { scheduleKeyringRuntimeConvergence } = loadLockModule();
+    jest.clearAllMocks();
+    mockIsUnlocked.mockReturnValue(true);
+    mockIsKeyringRuntimeReady.mockReturnValue(false);
+
+    scheduleKeyringRuntimeConvergence('test');
+
+    expect(mockRunAfterHomePostStartupReady).toHaveBeenCalledWith(
+      expect.any(Function),
+      {
+        fallbackMs: 5000,
+        label: 'keyring_runtime_convergence',
+      },
+    );
+
+    await Promise.resolve();
+
+    expect(mockRefreshMemStoreKeyrings).toHaveBeenCalledTimes(1);
   });
 });

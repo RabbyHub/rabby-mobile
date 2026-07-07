@@ -68,6 +68,8 @@ import {
   DuplicateAddressModal,
   FloatingDbSyncSummaryPanel,
   FloatingDiagnosticsPanel,
+  FloatingKeyringRuntimePanel,
+  FloatingOpenApiSummaryPanel,
   GlobalMiniApproval,
   GlobalMiniSignTypedDataPortal,
   GlobalSecurityTipStubModal,
@@ -345,7 +347,7 @@ function AppNavigationOverlayGlobals({
   deferredGlobalsEnabled: boolean;
   postUnlockGlobalsEnabled: boolean;
 }) {
-  const showDiagnostics = deferredGlobalsEnabled || NEED_DEVSETTINGBLOCKS;
+  const showDiagnostics = NEED_DEVSETTINGBLOCKS;
 
   return (
     <>
@@ -356,6 +358,8 @@ function AppNavigationOverlayGlobals({
       {deferredGlobalsEnabled && <GlobalSecurityTipStubModal />}
       {showDiagnostics && <FloatingDiagnosticsPanel />}
       {showDiagnostics && <FloatingDbSyncSummaryPanel />}
+      {showDiagnostics && <FloatingKeyringRuntimePanel />}
+      {showDiagnostics && <FloatingOpenApiSummaryPanel />}
       {postUnlockGlobalsEnabled && (
         <GlobalMiniApproval key="global-mini-approval" />
       )}
