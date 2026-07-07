@@ -10,10 +10,8 @@ import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { UpdateFirmwareAlert } from '@/utils/bluetoothPermissions';
 import {
   connectLedgerDevice,
-  connectLedgerDeviceById,
   disconnectLedgerDevice,
   isLedgerDeviceConnected,
-  isLedgerDeviceReachable,
   subscribeLedgerDevices,
   type LedgerDmkDevice,
 } from '@/core/keyring-bridge/ledger/ledger-dmk';
@@ -68,7 +66,6 @@ export async function cleanUp() {
 
 export async function isConnected(
   address: string,
-  skipBLEOpen = false,
 ): Promise<[boolean, string?]> {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
   const detail = keyring.getAccountInfo(address);
@@ -78,24 +75,9 @@ export async function isConnected(
   }
 
   keyring.setDeviceId(detail.deviceId);
-  if (skipBLEOpen) {
-    return [true, detail.deviceId];
-  }
 
-  if (
-    isLedgerDeviceConnected(detail.deviceId) &&
-    (await isLedgerDeviceReachable(detail.deviceId))
-  ) {
+  if (isLedgerDeviceConnected(detail.deviceId)) {
     return [true, detail.deviceId];
-  }
-
-  try {
-    await connectLedgerDeviceById(detail.deviceId);
-    if (await isLedgerDeviceReachable(detail.deviceId)) {
-      return [true, detail.deviceId];
-    }
-  } catch {
-    return [false, detail.deviceId];
   }
 
   return [false, detail.deviceId];

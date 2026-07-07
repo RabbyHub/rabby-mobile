@@ -619,10 +619,7 @@ export class SignatureManager {
     }
     if (account.type === KEYRING_CLASS.HARDWARE.LEDGER) {
       try {
-        const [isConnected, id] = await apiLedger.isConnected(
-          account.address,
-          // true,
-        );
+        const [isConnected, id] = await apiLedger.isConnected(account.address);
         setLedgerStatus(isConnected);
         if (isConnected) {
           cb();

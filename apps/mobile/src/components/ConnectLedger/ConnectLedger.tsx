@@ -27,6 +27,8 @@ import { useMemoizedFn } from 'ahooks';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 
+const LEDGER_SCAN_TIMEOUT_MS = 15000;
+
 export const ConnectLedger: React.FC<{
   onDone?: () => void;
   onSelectDevice?: (d: LedgerDmkDevice) => void | Promise<void>;
@@ -51,7 +53,7 @@ export const ConnectLedger: React.FC<{
     searchAndPair();
     notfoundTimerRef.current = setTimeout(() => {
       setCurrentScreen('notfound');
-    }, 5000);
+    }, LEDGER_SCAN_TIMEOUT_MS);
   }, [searchAndPair]);
 
   const handleScanDone = React.useCallback(() => {

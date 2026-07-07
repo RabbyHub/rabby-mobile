@@ -4,6 +4,15 @@ import LedgerKeyring, { type LedgerKeyringSession } from './LedgerKeyring';
 import { LedgerHDPathType } from './utils';
 
 const ADDRESS = '0x0000000000000000000000000000000000000001';
+const TYPED_DATA = {
+  domain: { name: 'Rabby' },
+  types: {
+    EIP712Domain: [{ name: 'name', type: 'string' }],
+    Message: [{ name: 'contents', type: 'string' }],
+  },
+  primaryType: 'Message',
+  message: { contents: 'hello' },
+};
 
 describe('LedgerKeyring DMK session adapter', () => {
   afterEach(() => {
@@ -97,9 +106,7 @@ describe('LedgerKeyring DMK session adapter', () => {
       "44'/60'/0'/0/0",
       Buffer.from('00', 'hex'),
     );
-    expect(getAddress).toHaveBeenCalledWith("44'/60'/0'/0/0", {
-      returnChainCode: true,
-    });
+    expect(getAddress).not.toHaveBeenCalled();
     expect(close).not.toHaveBeenCalled();
 
     await keyring.cleanUp();
@@ -150,13 +157,13 @@ describe('LedgerKeyring DMK session adapter', () => {
     expect(sessionB.close).toHaveBeenCalledTimes(1);
   });
 
-  it('cleans up a stale session when transaction address verification fails', async () => {
+  it('cleans up a stale session when transaction signing fails', async () => {
     const close = jest.fn();
     const session = {
-      getAddress: jest.fn(async () => {
+      getAddress: jest.fn(),
+      signTransaction: jest.fn(async () => {
         throw new Error('Ledger disconnected');
       }),
-      signTransaction: jest.fn(),
       signPersonalMessage: jest.fn(),
       signTypedData: jest.fn(),
       close,
@@ -180,15 +187,15 @@ describe('LedgerKeyring DMK session adapter', () => {
     expect(close).toHaveBeenCalledTimes(1);
   });
 
-  it('cleans up a stale session when typed-data address verification fails', async () => {
+  it('cleans up a stale session when typed-data signing fails', async () => {
     const close = jest.fn();
     const session = {
-      getAddress: jest.fn(async () => {
-        throw new Error('Ledger disconnected');
-      }),
+      getAddress: jest.fn(),
       signTransaction: jest.fn(),
       signPersonalMessage: jest.fn(),
-      signTypedData: jest.fn(),
+      signTypedData: jest.fn(async () => {
+        throw new Error('Ledger disconnected');
+      }),
       close,
     } as unknown as LedgerKeyringSession;
     const keyring = new LedgerKeyring({
@@ -204,7 +211,7 @@ describe('LedgerKeyring DMK session adapter', () => {
     keyring.setDeviceId('ledger-device-id');
 
     await expect(
-      keyring.signTypedData(ADDRESS, {}, { version: 'V4' }),
+      keyring.signTypedData(ADDRESS, TYPED_DATA, { version: 'V4' }),
     ).rejects.toThrow('Ledger disconnected');
 
     expect(close).toHaveBeenCalledTimes(1);
@@ -245,9 +252,7 @@ describe('LedgerKeyring DMK session adapter', () => {
     await expect(
       (keyring as any)._signTransaction(ADDRESS, '00', () => signedTx),
     ).rejects.toThrow("signature doesn't match the right address");
-    expect(session.getAddress).toHaveBeenCalledWith("44'/60'/0'/0/0", {
-      returnChainCode: true,
-    });
+    expect(session.getAddress).not.toHaveBeenCalled();
     expect(close).toHaveBeenCalledTimes(1);
   });
 
@@ -294,6 +299,7 @@ describe('LedgerKeyring DMK session adapter', () => {
       "44'/60'/0'/0/0",
       Buffer.from('68656c6c6f', 'hex'),
     );
+    expect(session.getAddress).not.toHaveBeenCalled();
     expect(recoverPersonalSignature).toHaveBeenCalledWith({
       data: '0x68656c6c6f',
       sig: signature,
@@ -343,15 +349,6 @@ describe('LedgerKeyring DMK session adapter', () => {
       .spyOn(sigUtil, 'recoverTypedSignature_v4')
       .mockReturnValue(ADDRESS);
     const close = jest.fn();
-    const typedData = {
-      domain: { name: 'Rabby' },
-      types: {
-        EIP712Domain: [{ name: 'name', type: 'string' }],
-        Message: [{ name: 'contents', type: 'string' }],
-      },
-      primaryType: 'Message',
-      message: { contents: 'hello' },
-    };
     const session = {
       getAddress: jest.fn(async () => ({
         address: ADDRESS,
@@ -378,7 +375,7 @@ describe('LedgerKeyring DMK session adapter', () => {
     });
     keyring.setDeviceId('ledger-device-id');
 
-    const signature = await keyring.signTypedData(ADDRESS, typedData, {
+    const signature = await keyring.signTypedData(ADDRESS, TYPED_DATA, {
       version: 'V4',
     });
 
@@ -387,10 +384,11 @@ describe('LedgerKeyring DMK session adapter', () => {
     );
     expect(session.signTypedData).toHaveBeenCalledWith(
       "44'/60'/0'/0/0",
-      typedData,
+      TYPED_DATA,
     );
+    expect(session.getAddress).not.toHaveBeenCalled();
     expect(recoverTypedSignature).toHaveBeenCalledWith({
-      data: typedData,
+      data: TYPED_DATA,
       sig: signature,
     });
     expect(close).not.toHaveBeenCalled();
@@ -408,6 +406,18 @@ describe('LedgerKeyring DMK session adapter', () => {
     await expect(
       keyring.signTypedData(ADDRESS, {}, { version: 'V3' }),
     ).rejects.toThrow('Only version 4');
+    expect(getLedgerSession).not.toHaveBeenCalled();
+  });
+
+  it('rejects incomplete typed-data before opening a Ledger session', async () => {
+    const getLedgerSession = jest.fn();
+    const keyring = new LedgerKeyring({
+      getLedgerSession,
+    });
+
+    await expect(
+      keyring.signTypedData(ADDRESS, {}, { version: 'V4' }),
+    ).rejects.toThrow('Typed data payload is incomplete');
     expect(getLedgerSession).not.toHaveBeenCalled();
   });
 });

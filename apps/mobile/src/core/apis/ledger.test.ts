@@ -117,34 +117,27 @@ describe('core/apis/ledger', () => {
     expect(callback).toHaveBeenCalledWith(false);
   });
 
-  it('reconnects a known Ledger device before asking the UI to pick one', async () => {
+  it('reports connected when a current Ledger session exists', async () => {
     const {
       isConnected,
       mockKeyring,
-      mockConnectLedgerDeviceById,
       mockIsLedgerDeviceConnected,
       mockIsLedgerDeviceReachable,
     } = setupLedgerApiModule('Ethereum');
     mockKeyring.getAccountInfo.mockReturnValue({
       deviceId: 'ledger-device-id',
     });
-    mockIsLedgerDeviceConnected
-      .mockReturnValueOnce(false)
-      .mockReturnValueOnce(true);
-    mockIsLedgerDeviceReachable.mockResolvedValueOnce(true);
-    mockConnectLedgerDeviceById.mockResolvedValueOnce('session-1');
+    mockIsLedgerDeviceConnected.mockReturnValueOnce(true);
 
     await expect(
       isConnected('0x0000000000000000000000000000000000000001'),
     ).resolves.toEqual([true, 'ledger-device-id']);
 
     expect(mockKeyring.setDeviceId).toHaveBeenCalledWith('ledger-device-id');
-    expect(mockConnectLedgerDeviceById).toHaveBeenCalledWith(
-      'ledger-device-id',
-    );
+    expect(mockIsLedgerDeviceReachable).not.toHaveBeenCalled();
   });
 
-  it('returns disconnected when reconnecting a known Ledger device fails', async () => {
+  it('does not scan by persisted Ledger device id when no live session exists', async () => {
     const {
       isConnected,
       mockKeyring,
@@ -155,16 +148,11 @@ describe('core/apis/ledger', () => {
       deviceId: 'ledger-device-id',
     });
     mockIsLedgerDeviceConnected.mockReturnValue(false);
-    mockConnectLedgerDeviceById.mockRejectedValueOnce(
-      new Error('Ledger: Device not found'),
-    );
 
     await expect(
       isConnected('0x0000000000000000000000000000000000000001'),
     ).resolves.toEqual([false, 'ledger-device-id']);
 
-    expect(mockConnectLedgerDeviceById).toHaveBeenCalledWith(
-      'ledger-device-id',
-    );
+    expect(mockConnectLedgerDeviceById).not.toHaveBeenCalled();
   });
 });

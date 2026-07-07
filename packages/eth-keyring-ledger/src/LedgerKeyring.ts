@@ -461,7 +461,7 @@ class LedgerKeyring {
     },
   ) {
     try {
-      const hdPath = await this.unlockAccountByAddress(address);
+      const hdPath = this.getHdPathByAddress(address);
       await this.makeApp(true);
       const res = normalizeSignature(
         await this.session!.signTransaction(
@@ -499,7 +499,7 @@ class LedgerKeyring {
     await this._reconnect();
     try {
       await this.makeApp(true);
-      const hdPath = await this.unlockAccountByAddress(withAccount);
+      const hdPath = this.getHdPathByAddress(withAccount);
       const res = normalizeMessageSignature(
         await this.session!.signPersonalMessage(
           this._toLedgerPath(hdPath),
@@ -528,20 +528,6 @@ class LedgerKeyring {
     }
   }
 
-  async unlockAccountByAddress(address: string) {
-    const hdPath = this.getHdPathByAddress(address);
-    const unlockedAddress: string = await this.unlock(hdPath);
-
-    // unlock resolves to the address for the given hdPath as reported by the ledger device
-    // if that address is not the requested address, then this account belongs to a different device or seed
-    if (unlockedAddress.toLowerCase() !== address.toLowerCase()) {
-      throw new Error(
-        `Ledger: Account ${address} does not belong to the connected device`,
-      );
-    }
-    return hdPath;
-  }
-
   private getHdPathByAddress(address: string) {
     const checksummedAddress = ethUtil.toChecksumAddress(address);
     const detail = this.accountDetails[checksummedAddress];
@@ -560,10 +546,13 @@ class LedgerKeyring {
         'Ledger: Only version 4 of typed data signing is supported',
       );
     }
+    if (!data?.domain || !data?.types || !data?.message) {
+      throw new Error('Ledger: Typed data payload is incomplete');
+    }
 
     await this._reconnect();
     try {
-      const hdPath = await this.unlockAccountByAddress(withAccount);
+      const hdPath = this.getHdPathByAddress(withAccount);
       await this.makeApp(true);
 
       const res = normalizeMessageSignature(
