@@ -153,14 +153,23 @@ function getDmkErrorTag(error: unknown) {
 function getDmkErrorCode(error: unknown) {
   const value = error as any;
   const code = normalizeStatusWord(
-    value?.errorCode ?? value?.originalError?.errorCode,
+    value?.statusCode ??
+      value?.errorCode ??
+      value?.message?.statusCode ??
+      value?.message?.errorCode ??
+      value?.originalError?.statusCode ??
+      value?.originalError?.errorCode,
   );
 
   if (code) {
     return code;
   }
 
-  return getDmkErrorTag(error) === 'RefusedByUserDAError' ? '6985' : undefined;
+  if (getDmkErrorTag(error) === 'RefusedByUserDAError') {
+    return '6985';
+  }
+
+  return undefined;
 }
 
 function appendStatusWord(message: string, code?: string) {
@@ -179,22 +188,34 @@ function attachStatusWord(error: Error, code?: string) {
   return error;
 }
 
+function getDmkErrorMessage(error: unknown, fallback: string) {
+  const value = error as any;
+  const dmkMessage = value?.message;
+  const message =
+    (typeof dmkMessage === 'string' && dmkMessage) ||
+    (typeof dmkMessage?.message === 'string' && dmkMessage.message) ||
+    (typeof dmkMessage?.detail === 'string' && dmkMessage.detail) ||
+    (typeof value?.name === 'string' && value.name) ||
+    getDmkErrorTag(error) ||
+    fallback;
+
+  return appendStatusWord(message, getDmkErrorCode(error));
+}
+
 function toError(error: unknown) {
   const code = getDmkErrorCode(error);
   if (error instanceof Error) {
-    const message = appendStatusWord(error.message, code);
+    const message = getDmkErrorMessage(error, error.message || error.name);
     const normalizedError =
       message === error.message ? error : new Error(message);
 
     return attachStatusWord(normalizedError, code);
   }
 
-  const value = error as any;
-  const tag = getDmkErrorTag(error);
-  const message =
-    value?.message || tag || value?.name || 'Unknown Ledger DMK error';
-
-  return attachStatusWord(new Error(appendStatusWord(message, code)), code);
+  return attachStatusWord(
+    new Error(getDmkErrorMessage(error, 'Unknown Ledger DMK error')),
+    code,
+  );
 }
 
 function getListedSessionId(deviceId: string) {

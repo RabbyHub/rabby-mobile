@@ -514,6 +514,63 @@ describe('ledger DMK bridge discovery', () => {
     );
   });
 
+  it('reopens Ethereum when DMK nests retryable status words inside message objects', async () => {
+    const deviceId = 'ledger-nested-6d02-device-id';
+    const sessionId = 'session-1';
+    const rawTx = new Uint8Array([1, 2, 3]);
+    const signer = {
+      signTransaction: jest
+        .fn()
+        .mockReturnValueOnce({
+          observable: of({
+            status: 'error',
+            error: {
+              name: 'DeviceActionStateError',
+              message: {
+                statusCode: '0x6d02',
+                message: 'Unexpected device exchange error happened',
+              },
+            },
+          }),
+        })
+        .mockReturnValueOnce({
+          observable: of({
+            status: 'completed',
+            output: { r: '0x1', s: '0x2', v: '0x1b' },
+          }),
+        }),
+    };
+
+    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
+    mockDmk.getDeviceSessionState.mockReturnValue(
+      of({
+        sessionStateType: 1,
+        deviceStatus: 'CONNECTED',
+        currentApp: {
+          name: 'Ethereum',
+          version: '1.0.0',
+        },
+      }),
+    );
+    mockSignerEthBuilder.mockReturnValue(makeSignerBuilder(signer));
+
+    const { getLedgerDmkSession } = require('./ledger-dmk');
+    const session = await getLedgerDmkSession(deviceId);
+
+    await expect(
+      session.signTransaction("44'/60'/0'/0/0", rawTx),
+    ).resolves.toEqual({
+      r: '0x1',
+      s: '0x2',
+      v: '0x1b',
+    });
+
+    expect(mockOpenAppDeviceAction).toHaveBeenCalledWith({
+      input: { appName: 'Ethereum' },
+    });
+    expect(signer.signTransaction).toHaveBeenCalledTimes(2);
+  });
+
   it('unsubscribes a completed action before allowing the next signer action', async () => {
     const deviceId = 'ledger-sequential-device-id';
     const sessionId = 'session-1';
