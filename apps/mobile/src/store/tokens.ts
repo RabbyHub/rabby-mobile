@@ -1729,11 +1729,14 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
     const hasCurrentAddressTokens =
       (get().tokenListMap[normalizedAddress] || []).length > 0;
     const targetChainServerId = chainServerId || undefined;
+
+    // 如果本地有数据且未过期（目的：避免缓存接口的延迟问题），或者本地有数据且指定了链（目的：单链刷新就一个接口，没必要走缓存接口），可跳过缓存接口
     const isRefreshingWithValidLocalTokens =
       hasCurrentAddressTokens && (!isExpired || !!targetChainServerId);
 
     /**
      * 阶段一： 校验有效期，有效期内直接用本地数据
+     * TODO: 如果db数据失效了，流程走到：先从cache接口拿数据，然后逐链拿；会出现问题：折叠按钮先没有再出现的情况，此处可以借助db缓存去优化。
      */
     if (!force && !isExpired) {
       const tokens = (await TokenItemEntity.batchQueryTokens(
