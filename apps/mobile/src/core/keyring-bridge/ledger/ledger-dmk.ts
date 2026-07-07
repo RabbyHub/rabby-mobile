@@ -2,10 +2,13 @@ import type * as LedgerContextModule from '@ledgerhq/context-module/lib/types';
 import {
   DeviceActionStatus,
   DeviceManagementKitBuilder,
+  DeviceStatus,
   GetAppAndVersionCommand,
+  OpenAppDeviceAction,
   isSuccessCommandResult,
   type DeviceManagementKit,
   type DeviceSessionId,
+  type DeviceSessionState,
   type DiscoveredDevice,
 } from '@ledgerhq/device-management-kit';
 import {
@@ -34,16 +37,27 @@ const {
 export type LedgerDmkDevice = DiscoveredDevice;
 
 const CONNECT_TIMEOUT_MS = 10000;
-const DEVICE_RESPONSE_TIMEOUT_MS = 15000;
+const ETH_APP_NAME = 'Ethereum';
 const LEDGER_TIMING_PREFIX = '[DEBUG-ledger-timing]';
+const RETRY_OPEN_ETH_APP_ERROR_CODES = new Set([
+  '6d00',
+  '6e00',
+  '6d02',
+  '650f',
+]);
 
 let dmk: DeviceManagementKit | undefined;
+let fullEthContextModule: LedgerContextModule.ContextModule | undefined;
 let basicEthContextModule: LedgerContextModule.ContextModule | undefined;
 const devicesById = new Map<string, LedgerDmkDevice>();
 const sessionsByDeviceId = new Map<string, DeviceSessionId>();
 const pendingConnections = new Map<string, Promise<DeviceSessionId>>();
 const actionQueuesBySessionId = new Map<DeviceSessionId, Promise<unknown>>();
 const staleDeviceIds = new Set<string>();
+// ponytail: keep Ledger telemetry off the signing critical path; add async app-owned reporting only if product needs it.
+const noOpBlindSigningReporter = {
+  report: async () => undefined,
+} as unknown as LedgerContextModule.BlindSigningReporter;
 
 function getDmk() {
   if (!dmk) {
@@ -55,14 +69,43 @@ function getDmk() {
   return dmk;
 }
 
+function createEthContextModule({
+  sdk,
+  defaultLoaders,
+}: {
+  sdk: DeviceManagementKit;
+  defaultLoaders: boolean;
+}) {
+  const builder = new ContextModuleBuilder({
+    loggerFactory: tag => sdk.getLoggerFactory()(['ContextModule', tag]),
+  })
+    .setChain(ContextModuleChainID.Ethereum)
+    .setBlindSigningReporter(noOpBlindSigningReporter);
+
+  if (!defaultLoaders) {
+    builder.removeDefaultLoaders();
+  }
+
+  return builder.build();
+}
+
+function getFullEthContextModule(sdk: DeviceManagementKit) {
+  if (!fullEthContextModule) {
+    fullEthContextModule = createEthContextModule({
+      sdk,
+      defaultLoaders: true,
+    });
+  }
+
+  return fullEthContextModule;
+}
+
 function getBasicEthContextModule(sdk: DeviceManagementKit) {
   if (!basicEthContextModule) {
-    basicEthContextModule = new ContextModuleBuilder({
-      loggerFactory: tag => sdk.getLoggerFactory()(['ContextModule', tag]),
-    })
-      .setChain(ContextModuleChainID.Ethereum)
-      .removeDefaultLoaders()
-      .build();
+    basicEthContextModule = createEthContextModule({
+      sdk,
+      defaultLoaders: false,
+    });
   }
 
   return basicEthContextModule;
@@ -86,7 +129,7 @@ function buildEthSigner({
   const builder = new SignerEthBuilder({ dmk: sdk, sessionId });
 
   if (isLedgerDmkClearSigningEnabled()) {
-    return builder.build();
+    return builder.withContextModule(getFullEthContextModule(sdk)).build();
   }
 
   return builder.withContextModule(getBasicEthContextModule(sdk)).build();
@@ -128,12 +171,22 @@ function appendStatusWord(message: string, code?: string) {
   return `${message} 0x${code}`;
 }
 
+function attachStatusWord(error: Error, code?: string) {
+  if (code) {
+    (error as Error & { errorCode?: string }).errorCode = code;
+  }
+
+  return error;
+}
+
 function toError(error: unknown) {
   const code = getDmkErrorCode(error);
   if (error instanceof Error) {
     const message = appendStatusWord(error.message, code);
+    const normalizedError =
+      message === error.message ? error : new Error(message);
 
-    return message === error.message ? error : new Error(message);
+    return attachStatusWord(normalizedError, code);
   }
 
   const value = error as any;
@@ -141,7 +194,7 @@ function toError(error: unknown) {
   const message =
     value?.message || tag || value?.name || 'Unknown Ledger DMK error';
 
-  return new Error(appendStatusWord(message, code));
+  return attachStatusWord(new Error(appendStatusWord(message, code)), code);
 }
 
 function getListedSessionId(deviceId: string) {
@@ -342,7 +395,8 @@ function getConnectedSession(deviceId: string) {
     return undefined;
   }
 
-  const sessionId = getListedSessionId(deviceId);
+  const sessionId =
+    sessionsByDeviceId.get(deviceId) ?? getListedSessionId(deviceId);
 
   if (sessionId) {
     sessionsByDeviceId.set(deviceId, sessionId);
@@ -413,7 +467,7 @@ function discoverLedgerDevice(deviceId: string) {
 
 export async function connectLedgerDevice(device: LedgerDmkDevice) {
   const existing = getConnectedSession(device.id);
-  if (existing) {
+  if (existing && (await getLedgerDeviceSessionState(device.id))) {
     return existing;
   }
 
@@ -426,7 +480,10 @@ export async function connectLedgerDevice(device: LedgerDmkDevice) {
 
   let timedOut = false;
   const rawConnect = getDmk()
-    .connect({ device })
+    .connect({
+      device,
+      sessionRefresherOptions: { isRefresherDisabled: true },
+    })
     .then(sessionId => {
       if (timedOut) {
         getDmk()
@@ -469,39 +526,101 @@ export async function connectLedgerDevice(device: LedgerDmkDevice) {
 
 export async function connectLedgerDeviceById(deviceId: string) {
   const existing = getConnectedSession(deviceId);
-  if (existing) {
+  if (existing && (await getLedgerDeviceSessionState(deviceId))) {
     return existing;
   }
 
   return connectLedgerDevice(await discoverLedgerDevice(deviceId));
 }
 
-export function isLedgerDeviceConnected(deviceId: string) {
-  return Boolean(getConnectedSession(deviceId));
+async function getSessionState(sessionId: DeviceSessionId) {
+  return firstValueFrom(
+    getDmk().getDeviceSessionState({ sessionId }).pipe(take(1)),
+  );
 }
 
-export async function isLedgerDeviceReachable(
-  deviceId: string,
-  timeoutMs = DEVICE_RESPONSE_TIMEOUT_MS,
+function assertDeviceReady(state: DeviceSessionState) {
+  switch (state.deviceStatus) {
+    case DeviceStatus.CONNECTED:
+      return state;
+    case DeviceStatus.LOCKED:
+      throw new Error('Ledger: Device is locked 0x5515');
+    case DeviceStatus.NOT_CONNECTED:
+      throw new Error('Ledger: Device disconnected');
+    case DeviceStatus.BUSY:
+      throw new Error('Ledger: Device busy');
+    default:
+      throw new Error('Ledger: Unexpected device state');
+  }
+}
+
+function getCurrentAppName(state: DeviceSessionState) {
+  return 'currentApp' in state ? state.currentApp.name : undefined;
+}
+
+function shouldRetryOpenEthApp(error: unknown) {
+  const code = getDmkErrorCode(error);
+
+  return Boolean(code && RETRY_OPEN_ETH_APP_ERROR_CODES.has(code));
+}
+
+async function readAppAndVersion(
+  sessionId: DeviceSessionId,
+  abortTimeout?: number,
 ) {
+  const result = await getDmk().sendCommand({
+    sessionId,
+    command: new GetAppAndVersionCommand(),
+    ...(abortTimeout ? { abortTimeout } : {}),
+  });
+
+  if (!isSuccessCommandResult(result)) {
+    throw toError(result.error);
+  }
+
+  return {
+    appName: result.data.name,
+    version: result.data.version,
+  };
+}
+
+export async function getLedgerDeviceSessionState(deviceId: string) {
   const sessionId = getConnectedSession(deviceId);
 
   if (!sessionId) {
-    return false;
+    return undefined;
   }
 
   try {
-    const result = await getDmk().sendCommand({
-      sessionId,
-      command: new GetAppAndVersionCommand(),
-      abortTimeout: timeoutMs,
-    });
+    const state = await getSessionState(sessionId);
 
-    return isSuccessCommandResult(result);
-  } catch (error) {
+    if (state.deviceStatus === DeviceStatus.NOT_CONNECTED) {
+      markDeviceSessionStale(deviceId);
+      return undefined;
+    }
+
+    return state;
+  } catch {
     markDeviceSessionStale(deviceId);
-    return false;
+    return undefined;
   }
+}
+
+async function ensureEthApp(sessionId: DeviceSessionId, force = false) {
+  const state = assertDeviceReady(await getSessionState(sessionId));
+  if (!force && getCurrentAppName(state) === ETH_APP_NAME) {
+    return;
+  }
+
+  await resolveAction<void>(
+    getDmk().executeDeviceAction({
+      sessionId,
+      deviceAction: new OpenAppDeviceAction({
+        input: { appName: ETH_APP_NAME },
+      }),
+    }),
+    { actionName: 'openEthApp' },
+  );
 }
 
 export async function disconnectLedgerDevice(deviceId: string) {
@@ -527,63 +646,54 @@ export async function getLedgerDmkSession(
   }
 
   const sessionId = await connectLedgerDeviceById(deviceId);
-  const sdk = getDmk();
-  const buildSigner = () => buildEthSigner({ sdk, sessionId });
+  const signer = buildEthSigner({ sdk: getDmk(), sessionId });
+  const withEthApp = <T>(
+    actionName: string,
+    task: () => { observable: Observable<any>; cancel?: () => void },
+  ) =>
+    enqueueSessionAction(sessionId, async () => {
+      await ensureEthApp(sessionId);
+      try {
+        return await resolveAction<T>(task(), { actionName });
+      } catch (error) {
+        if (!shouldRetryOpenEthApp(error)) {
+          throw error;
+        }
+
+        await ensureEthApp(sessionId, true);
+        return resolveAction<T>(task(), { actionName });
+      }
+    });
 
   return {
     getAddress(path, options) {
-      return enqueueSessionAction(sessionId, () =>
-        resolveAction(
-          buildSigner().getAddress(path, {
-            checkOnDevice: options?.checkOnDevice,
-            returnChainCode: options?.returnChainCode,
-          }),
-          {
-            actionName: 'getAddress',
-          },
-        ),
+      return withEthApp('getAddress', () =>
+        signer.getAddress(path, {
+          checkOnDevice: options?.checkOnDevice,
+          returnChainCode: options?.returnChainCode,
+          skipOpenApp: true,
+        }),
       );
     },
     signTransaction(path, rawTx) {
-      return enqueueSessionAction(sessionId, () =>
-        resolveAction<Signature>(buildSigner().signTransaction(path, rawTx), {
-          actionName: 'signTransaction',
-        }),
+      return withEthApp<Signature>('signTransaction', () =>
+        signer.signTransaction(path, rawTx, { skipOpenApp: true }),
       );
     },
     signPersonalMessage(path, message) {
-      return enqueueSessionAction(sessionId, () =>
-        resolveAction<Signature>(buildSigner().signMessage(path, message), {
-          actionName: 'signPersonalMessage',
-        }),
+      return withEthApp<Signature>('signPersonalMessage', () =>
+        signer.signMessage(path, message, { skipOpenApp: true }),
       );
     },
     signTypedData(path, data) {
-      return enqueueSessionAction(sessionId, () =>
-        resolveAction<Signature>(
-          buildSigner().signTypedData(path, data as TypedData),
-          {
-            actionName: 'signTypedData',
-          },
-        ),
+      return withEthApp<Signature>('signTypedData', () =>
+        signer.signTypedData(path, data as TypedData, { skipOpenApp: true }),
       );
     },
-    async getAppAndVersion() {
-      return enqueueSessionAction(sessionId, async () => {
-        const result = await sdk.sendCommand({
-          sessionId,
-          command: new GetAppAndVersionCommand(),
-        });
-
-        if (!isSuccessCommandResult(result)) {
-          throw toError(result.error);
-        }
-
-        return {
-          appName: result.data.name,
-          version: result.data.version,
-        };
-      });
+    getAppAndVersion() {
+      return enqueueSessionAction(sessionId, () =>
+        readAppAndVersion(sessionId),
+      );
     },
     close() {
       return disconnectLedgerDevice(deviceId);

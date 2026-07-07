@@ -11,7 +11,7 @@ import { UpdateFirmwareAlert } from '@/utils/bluetoothPermissions';
 import {
   connectLedgerDevice,
   disconnectLedgerDevice,
-  isLedgerDeviceConnected,
+  getLedgerDeviceSessionState,
   subscribeLedgerDevices,
   type LedgerDmkDevice,
 } from '@/core/keyring-bridge/ledger/ledger-dmk';
@@ -76,7 +76,7 @@ export async function isConnected(
 
   keyring.setDeviceId(detail.deviceId);
 
-  if (isLedgerDeviceConnected(detail.deviceId)) {
+  if (await getLedgerDeviceSessionState(detail.deviceId)) {
     return [true, detail.deviceId];
   }
 

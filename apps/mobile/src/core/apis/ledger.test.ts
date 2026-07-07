@@ -28,8 +28,7 @@ function setupLedgerApiModule(appName: string) {
   const mockBindLedgerEvents = jest.fn();
   const mockUpdateFirmwareAlert = jest.fn();
   const mockConnectLedgerDeviceById = jest.fn();
-  const mockIsLedgerDeviceConnected = jest.fn();
-  const mockIsLedgerDeviceReachable = jest.fn();
+  const mockGetLedgerDeviceSessionState = jest.fn();
 
   jest.doMock('@rabby-wallet/keyring-utils', () => ({
     KEYRING_TYPE: {
@@ -65,8 +64,7 @@ function setupLedgerApiModule(appName: string) {
     connectLedgerDevice: jest.fn(),
     connectLedgerDeviceById: mockConnectLedgerDeviceById,
     disconnectLedgerDevice: jest.fn(),
-    isLedgerDeviceConnected: mockIsLedgerDeviceConnected,
-    isLedgerDeviceReachable: mockIsLedgerDeviceReachable,
+    getLedgerDeviceSessionState: mockGetLedgerDeviceSessionState,
     subscribeLedgerDevices: jest.fn(),
   }));
 
@@ -77,8 +75,7 @@ function setupLedgerApiModule(appName: string) {
     mockKeyring,
     mockGetKeyring,
     mockConnectLedgerDeviceById,
-    mockIsLedgerDeviceConnected,
-    mockIsLedgerDeviceReachable,
+    mockGetLedgerDeviceSessionState,
   };
 }
 
@@ -118,23 +115,23 @@ describe('core/apis/ledger', () => {
   });
 
   it('reports connected when a current Ledger session exists', async () => {
-    const {
-      isConnected,
-      mockKeyring,
-      mockIsLedgerDeviceConnected,
-      mockIsLedgerDeviceReachable,
-    } = setupLedgerApiModule('Ethereum');
+    const { isConnected, mockKeyring, mockGetLedgerDeviceSessionState } =
+      setupLedgerApiModule('Ethereum');
     mockKeyring.getAccountInfo.mockReturnValue({
       deviceId: 'ledger-device-id',
     });
-    mockIsLedgerDeviceConnected.mockReturnValueOnce(true);
+    mockGetLedgerDeviceSessionState.mockResolvedValueOnce({
+      deviceStatus: 'CONNECTED',
+    });
 
     await expect(
       isConnected('0x0000000000000000000000000000000000000001'),
     ).resolves.toEqual([true, 'ledger-device-id']);
 
     expect(mockKeyring.setDeviceId).toHaveBeenCalledWith('ledger-device-id');
-    expect(mockIsLedgerDeviceReachable).not.toHaveBeenCalled();
+    expect(mockGetLedgerDeviceSessionState).toHaveBeenCalledWith(
+      'ledger-device-id',
+    );
   });
 
   it('does not scan by persisted Ledger device id when no live session exists', async () => {
@@ -142,12 +139,12 @@ describe('core/apis/ledger', () => {
       isConnected,
       mockKeyring,
       mockConnectLedgerDeviceById,
-      mockIsLedgerDeviceConnected,
+      mockGetLedgerDeviceSessionState,
     } = setupLedgerApiModule('Ethereum');
     mockKeyring.getAccountInfo.mockReturnValue({
       deviceId: 'ledger-device-id',
     });
-    mockIsLedgerDeviceConnected.mockReturnValue(false);
+    mockGetLedgerDeviceSessionState.mockResolvedValueOnce(undefined);
 
     await expect(
       isConnected('0x0000000000000000000000000000000000000001'),
