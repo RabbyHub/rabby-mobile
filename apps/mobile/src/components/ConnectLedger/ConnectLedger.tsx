@@ -8,7 +8,7 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAtom } from 'jotai';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Device } from 'react-native-ble-plx';
+import type { LedgerDmkDevice } from '@/core/keyring-bridge/ledger/ledger-dmk';
 import { isLoadedAtom, settingAtom } from '../HDSetting/MainContainer';
 import { toast, toastIndicator } from '@/components2024/Toast';
 import { BluetoothPermissionScreen } from './BluetoothPermissionScreen';
@@ -27,9 +27,11 @@ import { useMemoizedFn } from 'ahooks';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 
+const LEDGER_SCAN_TIMEOUT_MS = 15000;
+
 export const ConnectLedger: React.FC<{
   onDone?: () => void;
-  onSelectDevice?: (d: Device) => void | Promise<void>;
+  onSelectDevice?: (d: LedgerDmkDevice) => void | Promise<void>;
   deviceId?: string;
 }> = ({ onDone, onSelectDevice, deviceId }) => {
   const { searchAndPair, devices, errorCode } = useLedgerImport();
@@ -51,7 +53,7 @@ export const ConnectLedger: React.FC<{
     searchAndPair();
     notfoundTimerRef.current = setTimeout(() => {
       setCurrentScreen('notfound');
-    }, 5000);
+    }, LEDGER_SCAN_TIMEOUT_MS);
   }, [searchAndPair]);
 
   const handleScanDone = React.useCallback(() => {
@@ -147,6 +149,7 @@ export const ConnectLedger: React.FC<{
 
   const handleSelectDevice = React.useCallback(
     async device => {
+      await apiLedger.connectDevice(device);
       await apiLedger.setDeviceId(device.id);
       if (onSelectDevice) {
         await onSelectDevice(device);

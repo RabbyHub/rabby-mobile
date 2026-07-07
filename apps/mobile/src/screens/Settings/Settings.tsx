@@ -925,6 +925,15 @@ function DevSettingsBlocks({
       !preferenceService.getUserBehaviorTrackingOptOut(),
     );
   }, []);
+  const [ledgerDmkClearSigningEnabled, setLedgerDmkClearSigningEnabledState] =
+    useState(() => preferenceService.getLedgerDmkClearSigningEnabled());
+  const toggleLedgerDmkClearSigning = useCallback((enabled?: boolean) => {
+    setLedgerDmkClearSigningEnabledState(prev => {
+      const next = typeof enabled === 'boolean' ? enabled : !prev;
+      preferenceService.setLedgerDmkClearSigningEnabled(next);
+      return next;
+    });
+  }, []);
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -981,6 +990,23 @@ function DevSettingsBlocks({
                 <Text style={{ color: colors['neutral-body'] }}>
                   {innerDappPreloadLabel}
                 </Text>
+              ),
+              visible: NEED_DEVSETTINGBLOCKS,
+            },
+            {
+              label: 'Ledger Clear Signing',
+              icon: RcCode,
+              onPress: () => {
+                toggleLedgerDmkClearSigning();
+              },
+              rightNode: (
+                <AppSwitch2024
+                  circleSize={20}
+                  changeValueImmediately={false}
+                  value={ledgerDmkClearSigningEnabled}
+                  onValueChange={toggleLedgerDmkClearSigning}
+                  onPress={evt => evt.stopPropagation()}
+                />
               ),
               visible: NEED_DEVSETTINGBLOCKS,
             },

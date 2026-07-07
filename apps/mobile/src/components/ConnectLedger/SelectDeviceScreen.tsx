@@ -2,7 +2,7 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Device } from 'react-native-ble-plx';
+import type { LedgerDmkDevice } from '@/core/keyring-bridge/ledger/ledger-dmk';
 import {
   CommonSelectDeviceScreen,
   Props,
@@ -10,7 +10,7 @@ import {
 
 export const SelectDeviceScreen: React.FC<
   Pick<Props, 'errorCode' | 'onSelect' | 'currentDeviceId'> & {
-    devices: Device[];
+    devices: LedgerDmkDevice[];
   }
 > = ({ devices, ...props }) => {
   const { t } = useTranslation();

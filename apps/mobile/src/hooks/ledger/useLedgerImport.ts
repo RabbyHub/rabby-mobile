@@ -1,30 +1,23 @@
 // Forked from: https://github.com/rainbow-me/rainbow/blob/5ae2fba13376609907fa823e27e5d3ee8dfa4664/src/hooks/useLedgerImport.ts
 
-import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Subscription } from '@ledgerhq/hw-transport';
-import {
-  checkAndRequestAndroidBluetooth,
-  showBluetoothPermissionsAlert,
-  showBluetoothPoweredOffAlert,
-} from '../../utils/bluetoothPermissions';
+import { checkAndRequestAndroidBluetooth } from '../../utils/bluetoothPermissions';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from './error';
 import { Platform } from 'react-native';
-import { Device } from 'react-native-ble-plx';
 import { apiLedger } from '@/core/apis';
+import type { LedgerDmkDevice } from '@/core/keyring-bridge/ledger/ledger-dmk';
 
 /**
  * React hook used for checking connecting to a ledger device for the first time
  */
 export function useLedgerImport() {
-  const observer = useRef<Subscription | undefined>(undefined);
-  const listener = useRef<Subscription | undefined>(undefined);
-  const [devices, setDevices] = useState<Device[]>([]);
+  const stopSearchRef = useRef<(() => void) | undefined>(undefined);
+  const [devices, setDevices] = useState<LedgerDmkDevice[]>([]);
   const [errorCode, setErrorCode] = useState<LEDGER_ERROR_CODES>();
   const handleCleanUp = () => {
     console.log('[LedgerImport] - Cleaning up');
-    observer?.current?.unsubscribe();
-    listener?.current?.unsubscribe();
+    stopSearchRef.current?.();
+    stopSearchRef.current = undefined;
   };
   /**
    * Handles local error handling for useLedgerStatusCheck
@@ -39,75 +32,29 @@ export function useLedgerImport() {
   /**
    * Handles successful ledger connection events after opening transport
    */
-  const handlePairSuccess = useCallback((device: Device) => {
+  const handlePairSuccess = useCallback((device: LedgerDmkDevice) => {
     console.log('[LedgerImport] - Pairing Success');
-    setDevices(prev => [...prev, device]);
+    setDevices(prev =>
+      prev.some(item => item.id === device.id) ? prev : [...prev, device],
+    );
   }, []);
 
   /**
    * searches & pairs to the first found ledger device
    */
   const searchAndPair = useCallback(() => {
-    let currentDeviceId = '';
-
     console.debug('[LedgerImport] - Searching for Ledger Device', {});
-    const newObserver = TransportBLE.observeState({
-      // havnt seen complete or error fire yet but its in the docs so keeping for reporting purposes
-      complete: () => {
-        console.log('[LedgerImport] Observer complete');
-      },
-      error: (e: any) => {
-        console.log('[LedgerImport] Observer error ', { e });
-      },
-      next: async (e: any) => {
-        // App is not authorized to use Bluetooth
-        if (e.type === 'Unauthorized') {
-          console.log('[LedgerImport] - Bluetooth Unauthorized', {});
-          if (Platform.OS === 'ios') {
-            await showBluetoothPermissionsAlert();
-          } else {
-            await checkAndRequestAndroidBluetooth();
-          }
-        }
-        // Bluetooth is turned off
-        if (e.type === 'PoweredOff') {
-          console.log('[LedgerImport] - Bluetooth Powered Off');
-          apiLedger.cleanUp();
-          await showBluetoothPoweredOffAlert();
-        }
-        if (e.available) {
-          const newListener = TransportBLE.listen({
-            complete: () => {},
-            error: error => {
-              console.error(new Error('[Ledger Import] - Error Pairing'), {
-                errorMessage: (error as Error).message,
-              });
-            },
-            next: async e => {
-              if (e.type === 'add') {
-                const device = e.descriptor;
-                // prevent duplicate alerts
-                if (currentDeviceId === device.id) {
-                  return;
-                }
-                // set the current device id to prevent duplicate alerts
-                currentDeviceId = device.id;
-
-                try {
-                  handlePairSuccess(device);
-                } catch (e) {
-                  handlePairError(e as Error);
-                  currentDeviceId === '';
-                }
-              }
-            },
-          });
-          listener.current = newListener;
+    stopSearchRef.current?.();
+    stopSearchRef.current = apiLedger.searchDevices({
+      next: device => {
+        try {
+          handlePairSuccess(device);
+        } catch (e) {
+          handlePairError(e as Error);
         }
       },
+      error: handlePairError,
     });
-
-    observer.current = newObserver;
   }, [handlePairError, handlePairSuccess]);
 
   /**

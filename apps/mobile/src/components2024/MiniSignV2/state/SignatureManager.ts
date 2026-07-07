@@ -619,10 +619,7 @@ export class SignatureManager {
     }
     if (account.type === KEYRING_CLASS.HARDWARE.LEDGER) {
       try {
-        const [isConnected, id] = await apiLedger.isConnected(
-          account.address,
-          // true,
-        );
+        const [isConnected, id] = await apiLedger.isConnected(account.address);
         setLedgerStatus(isConnected);
         if (isConnected) {
           cb();
@@ -638,7 +635,11 @@ export class SignatureManager {
         }
 
         return;
-      } catch (error) {}
+      } catch {
+        setLedgerStatus(false);
+        this.rejectPending(MINI_SIGN_ERROR.PREFETCH_FAILURE);
+        return;
+      }
     }
 
     if (account.type === KEYRING_CLASS.HARDWARE.ONEKEY) {
@@ -658,7 +659,11 @@ export class SignatureManager {
           });
         }
         return;
-      } catch (error) {}
+      } catch {
+        setOneKeyStatus(false);
+        this.rejectPending(MINI_SIGN_ERROR.PREFETCH_FAILURE);
+        return;
+      }
     }
     cb();
     return;
