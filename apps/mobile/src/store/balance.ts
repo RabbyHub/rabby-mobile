@@ -27,7 +27,7 @@ import {
   ResourceSnapshot,
 } from './_resourceBase';
 import { ResourceLocalTarget } from './_resourceFlowDebug';
-import { useAppChainStore } from './appchain';
+import { ensureAppChainStoreInitialized, useAppChainStore } from './appchain';
 
 export interface CURVE_STEP_ITEM {
   timestamp: number;
@@ -348,6 +348,46 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     );
   };
 
+  syncAppChainTotalsForAddresses = (
+    addresses: string[],
+    detail?: Record<string, unknown>,
+  ) => {
+    let hasChanged = false;
+
+    normalizeBalanceAddresses(addresses).forEach(address => {
+      const current = this.getAddressValue(address);
+      if (!current) {
+        return;
+      }
+
+      const appChainUsdValue = getAppChainUsdValue(address);
+      const totalBalance = current.evmBalance + appChainUsdValue;
+      if (current.totalBalance === totalBalance) {
+        return;
+      }
+
+      hasChanged = true;
+      this.applyHydratedValue(
+        address,
+        {
+          ...current,
+          totalBalance,
+        },
+        {
+          localTargets: buildBalanceLocalTargets(address),
+          detail: {
+            source: 'syncAppChainTotalsForAddresses',
+            ...detail,
+            appChainUsdValue,
+            totalBalance,
+          },
+        },
+      );
+    });
+
+    return hasChanged;
+  };
+
   useAddressesFlowState = (addresses: string[]) => {
     const normalizedAddresses = useMemo(
       () =>
@@ -369,6 +409,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     }, [flow]);
   };
   initStore = async () => {
+    await ensureAppChainStoreInitialized();
     const result = await BalanceEntity.queryAllBalance();
     const appChainMap = useAppChainStore.getState().appChainMap;
 
@@ -414,6 +455,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     if (!accounts.length) {
       return;
     }
+    await ensureAppChainStoreInitialized();
 
     const lowerAddresses = Array.from(
       new Set(accounts.map(item => item.address.toLowerCase())),
@@ -500,6 +542,9 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     const coreAddressSet = buildCoreAddressSet(addresses as Account[]);
 
     const fetchList: Array<{ address: string; isCore: boolean }> = [];
+    if (!force) {
+      await ensureAppChainStoreInitialized();
+    }
 
     for (const address of lowerAddresses) {
       const isCore = coreAddressSet.has(address);
@@ -705,6 +750,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
 
     try {
       if (!force) {
+        await ensureAppChainStoreInitialized();
         this.markHydrateStarted(lowerAddress, {
           localTargets,
           detail: buildBalanceTraceDetail(
@@ -1388,6 +1434,23 @@ export function startProcessAddressBalanceEvents() {
         source: 'balance_changed',
       },
     );
+  });
+
+  let prevAppChainMap = useAppChainStore.getState().appChainMap;
+  useAppChainStore.subscribe(state => {
+    if (state.appChainMap === prevAppChainMap) {
+      return;
+    }
+    prevAppChainMap = state.appChainMap;
+
+    const addresses = Object.keys(addressBalanceStore.getAddressValueMap());
+    if (!addresses.length) {
+      return;
+    }
+
+    addressBalanceStore.syncAppChainTotalsForAddresses(addresses, {
+      trigger: 'appchain_store_changed',
+    });
   });
 }
 
