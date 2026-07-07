@@ -49,7 +49,7 @@ initializeAppDataSource(dbOptions).catch(err => {
 });
 
 export async function exp_reConnectAppDataSource() {
-  abortAllSyncTasks();
+  abortAllSyncTasks('reconnect-app-data-source');
 
   return exp_dropAndResyncDataSource(dbOptions);
 }

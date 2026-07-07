@@ -7,6 +7,7 @@ import {
   sortAccountList,
 } from '@/core/apis/account';
 import { keyringService } from '@/core/services';
+import { traceAndroidInstant } from '@/core/utils/androidTrace';
 import type { Account, IPinAddress } from '@/types/account';
 import accountStore from './account';
 import {
@@ -74,11 +75,19 @@ async function initAccountBalanceSelectionLifecycle() {
   console.time('initAccountBalanceSelectionLifecycle');
 
   try {
-    const syncSelectionFromAccounts = async (
+    const syncSelectionFromAccounts = async ({
       accountState = accountStore.getState(),
-    ) => {
+      allowFetchFallback = false,
+    }: {
+      accountState?: ReturnType<typeof accountStore.getState>;
+      allowFetchFallback?: boolean;
+    } = {}) => {
       const canUseStoreSnapshot =
         accountState.hasFetchedAccounts || accountState.accounts.length > 0;
+      if (!canUseStoreSnapshot && !allowFetchFallback) {
+        return;
+      }
+
       const snapshot = canUseStoreSnapshot
         ? buildMatteredAccountsSnapshotFromStoreAccounts(
             accountState.accounts,
@@ -119,7 +128,7 @@ async function initAccountBalanceSelectionLifecycle() {
 
         accountBalanceSelectionLifecycleStateRef.prevSelectionSignature =
           nextSignature;
-        void syncSelectionFromAccounts(state);
+        void syncSelectionFromAccounts({ accountState: state });
       });
     }
 
@@ -157,9 +166,17 @@ export function startProcessAccountBalanceEvents() {
   startProcessAddressBalanceEvents();
 
   const ensureSelectionLifecycle = () => {
-    ensureAccountBalanceSelectionLifecycle().catch(error => {
-      console.error('ensureAccountBalanceSelectionLifecycle::error', error);
-    });
+    traceAndroidInstant('global_task.balance_selection_lifecycle.start');
+    ensureAccountBalanceSelectionLifecycle()
+      .catch(error => {
+        traceAndroidInstant('global_task.balance_selection_lifecycle.error', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        console.error('ensureAccountBalanceSelectionLifecycle::error', error);
+      })
+      .finally(() => {
+        traceAndroidInstant('global_task.balance_selection_lifecycle.end');
+      });
   };
 
   if (keyringService.isUnlocked()) {

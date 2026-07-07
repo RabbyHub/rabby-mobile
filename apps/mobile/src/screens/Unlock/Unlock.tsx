@@ -66,16 +66,24 @@ import { TextInput } from '@/components/Typography';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { startUnlockScreenBootstrapWarmups } from '@/setup-app-before-render';
+import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
 import { cancelPendingWalletUnlock } from '@/utils/walletUnlock';
 import { logger } from '@/utils/logger';
 import { toastUnlocking } from '@/utils/toastUnlocking';
+import {
+  beginUnlockCriticalWindow,
+  endUnlockCriticalWindow,
+  runStartupDiagnosticTask,
+} from '@/core/utils/startupDiagnostics';
+import { traceAndroidInstant } from '@/core/utils/androidTrace';
 import {
   getNextUnlockAuthenticationState,
   shouldKeepStoredCredentialIconWhenSystemAuthUnavailable,
   shouldShowSystemAuthUnavailableTipForUnlock,
   shouldUsePasswordUnlockMode,
 } from './authState';
+import { setSyncSchedulerCriticalMode } from '@/databases/sync/scheduler';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -127,16 +135,22 @@ function startUnlockWarmups(reason: string) {
     return unlockWarmupsStateRef.promise;
   }
 
-  unlockWarmupsStateRef.promise = Promise.allSettled([
-    startUnlockScreenBootstrapWarmups(),
-    preloadTransactionHotNavigator(),
-  ]).then(results => {
-    results.forEach(result => {
-      if (result.status === 'rejected') {
-        console.error(`startUnlockWarmups::${reason}::error`, result.reason);
-      }
-    });
-  });
+  unlockWarmupsStateRef.promise = runStartupDiagnosticTask(
+    'unlock_warmups',
+    { reason },
+    async () => {
+      const results = await Promise.allSettled([
+        startUnlockScreenBootstrapWarmups(),
+        preloadTransactionHotNavigator(),
+      ]);
+
+      results.forEach(result => {
+        if (result.status === 'rejected') {
+          console.error(`startUnlockWarmups::${reason}::error`, result.reason);
+        }
+      });
+    },
+  );
 
   return unlockWarmupsStateRef.promise;
 }
@@ -172,7 +186,7 @@ function nextFrame() {
 }
 
 function notifyUnlockUIReadyAfterHomePaint() {
-  const notifyUIReady = apisLock.deferNotifyUserManuallyUnlockUIReady();
+  const notifyUIReady = apisLock.deferNotifyPostUnlockUIReady();
   if (!notifyUIReady) {
     return;
   }
@@ -182,13 +196,13 @@ function notifyUnlockUIReadyAfterHomePaint() {
     return;
   }
 
-  traceAndroidUnlockPerf('unlock_ui_ready_notify_deferred_start', {
+  traceAndroidUnlockPerf('post_unlock_ui_ready_notify_deferred_start', {
     delayMs: POST_UNLOCK_UI_READY_DELAY_MS,
   });
 
   InteractionManager.runAfterInteractions(() => {
     setTimeout(() => {
-      traceAndroidUnlockPerf('unlock_ui_ready_notify_deferred_fire');
+      traceAndroidUnlockPerf('post_unlock_ui_ready_notify_deferred_fire');
       notifyUIReady();
     }, POST_UNLOCK_UI_READY_DELAY_MS);
   });
@@ -217,12 +231,21 @@ function traceAndroidUnlockPerf(
   event: string,
   data: Record<string, unknown> = {},
 ) {
-  if (!isAndroid) {
+  if (!isAndroid || !isNonProductionDiagnosticsEnabled) {
     return;
   }
 
   logger.info(`[RabbyUnlockPerf:unlock] ${event}`, data);
   console.info('[RabbyUnlockPerf:unlock]', event, data);
+  traceAndroidInstant(`unlock.${event}`, data);
+}
+
+function setUnlockSyncCriticalMode(active: boolean, reason: string) {
+  if (!isAndroid) {
+    return;
+  }
+
+  setSyncSchedulerCriticalMode(active, reason);
 }
 
 function shouldSwitchToPasswordAfterBiometricsError(error: unknown) {
@@ -321,10 +344,15 @@ function useUnlockForm(
 
       const { needAlert } = await tipEnableBiometrics(values.password);
       console.debug('needAlert', needAlert);
+      const unlockDiagId = beginUnlockCriticalWindow('password_submit');
+      setUnlockSyncCriticalMode(true, 'password_submit');
       const hideToast = needAlert ? null : toastUnlocking();
       try {
         measureTime.start('UnlockWithPassword');
-        const result = await storeApisUnlock.unlockApp(values.password);
+        const result = await storeApisUnlock.unlockApp(values.password, {
+          deferMemStoreKeyringsUpdate: isAndroid,
+          deferKeyringRuntimeRestore: isAndroid,
+        });
         const timeResult = measureTime.end('UnlockWithPassword');
         reportUnlockTime(timeResult.diff, 'password');
 
@@ -359,6 +387,10 @@ function useUnlockForm(
         storeApisUnlock.resetUnlocking();
       } finally {
         hideToast?.();
+        setUnlockSyncCriticalMode(false, 'password_submit');
+        endUnlockCriticalWindow(unlockDiagId, {
+          source: 'password_submit',
+        });
       }
     },
   });
@@ -579,6 +611,10 @@ export default function UnlockScreen() {
             });
             hideAuthToastRef.current?.();
             hideAuthToastRef.current = null;
+            const unlockDiagId = beginUnlockCriticalWindow(
+              'biometrics_plain_password',
+            );
+            setUnlockSyncCriticalMode(true, 'biometrics_plain_password');
             if (!isFaceID) {
               hidePostAuthToastRef.current = toastUnlocking();
               traceAndroidUnlockPerf('post_auth_unlock_toast_show', {
@@ -598,6 +634,7 @@ export default function UnlockScreen() {
                     ? credentials.vaultKeyString
                     : undefined,
                 deferMemStoreKeyringsUpdate: isAndroid,
+                deferKeyringRuntimeRestore: isAndroid,
                 onTrustedVaultKeyString: isAndroid
                   ? vaultKeyString => {
                       if (credentials) {
@@ -633,6 +670,10 @@ export default function UnlockScreen() {
             } finally {
               hidePostAuthToastRef.current?.();
               hidePostAuthToastRef.current = null;
+              setUnlockSyncCriticalMode(false, 'biometrics_plain_password');
+              endUnlockCriticalWindow(unlockDiagId, {
+                source: 'biometrics_plain_password',
+              });
             }
           },
         });

@@ -1,5 +1,9 @@
 import { MaskedLogValue } from '@rabby-wallet/rabby-logger';
 
+jest.mock('@/constant', () => ({
+  isNonPublicProductionEnv: true,
+}));
+
 jest.mock('./logger', () => {
   const {
     MaskedLogValue: NextMaskedLogValue,
@@ -8,6 +12,7 @@ jest.mock('./logger', () => {
   return {
     logger: {
       mask: jest.fn((value: unknown) => new NextMaskedLogValue(value)),
+      info: jest.fn(),
       warn: jest.fn(),
     },
   };
@@ -17,11 +22,23 @@ import {
   buildOpenApiHttpErrorToastMessage,
   buildOpenApiFailurePayload,
   extractOpenApiResponseCode,
+  getOpenApiRequestDiagnosticsSnapshot,
   shouldLogOpenApiFailureResponse,
   shouldToastOpenApiHttpErrorStatus,
-} from './openapiFailureLogging';
+} from './openapiRequestDiagnostics';
 
-describe('openapi failure logging', () => {
+describe('openapi request diagnostics', () => {
+  it('exposes the non-production diagnostics snapshot shape', () => {
+    expect(getOpenApiRequestDiagnosticsSnapshot()).toEqual(
+      expect.objectContaining({
+        enabled: expect.any(Boolean),
+        inFlightCount: expect.any(Number),
+        records: expect.any(Array),
+        slowThresholdMs: expect.any(Number),
+      }),
+    );
+  });
+
   it('detects http and api-level non-200 responses', () => {
     expect(
       shouldLogOpenApiFailureResponse({

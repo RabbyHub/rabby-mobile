@@ -19,7 +19,6 @@ import { navigationRef } from '@/utils/navigation';
 import { RootNames } from './constant/layout';
 import { apisHomeTabIndex, useStackScreenConfig } from './hooks/navigation';
 import { analytics, matomoLogScreenView } from './utils/analytics';
-import * as apisAccount from './core/apis/account';
 
 import { AppStatusBar } from './components/AppStatusBar';
 import AutoLockView from './components/AutoLockView';
@@ -67,7 +66,10 @@ import {
   BrowserFavoritePopup,
   BrowserManagePopup,
   DuplicateAddressModal,
+  FloatingDbSyncSummaryPanel,
   FloatingDiagnosticsPanel,
+  FloatingKeyringRuntimePanel,
+  FloatingOpenApiSummaryPanel,
   GlobalMiniApproval,
   GlobalMiniSignTypedDataPortal,
   GlobalSecurityTipStubModal,
@@ -93,57 +95,10 @@ import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 import { NEED_DEVSETTINGBLOCKS } from './constant';
 import { startReadableAccountBootstrapWarmups } from './setup-app-before-render';
 import { FeedbackHistoryHost } from './components/Screenshot/FeedbackHistory/GlobalHost';
+import { useHomeStartupReady } from './core/utils/homeStartupReady';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
-
-type AppInitialRouteName =
-  | typeof RootNames.StackGetStarted
-  | typeof RootNames.StackRoot
-  | typeof RootNames.Unlock;
-
-function useAppInitialRouteName(isAppUnlocked: boolean) {
-  const [initialRouteName, setInitialRouteName] =
-    React.useState<AppInitialRouteName | null>(() =>
-      isAppUnlocked ? null : RootNames.Unlock,
-    );
-
-  React.useEffect(() => {
-    if (!isAppUnlocked) {
-      setInitialRouteName(prev => prev || RootNames.Unlock);
-      return;
-    }
-    if (initialRouteName) {
-      return;
-    }
-
-    let cancelled = false;
-
-    apisAccount
-      .hasVisibleAccounts()
-      .then(hasVisibleAccounts => {
-        if (cancelled) {
-          return;
-        }
-
-        setInitialRouteName(
-          hasVisibleAccounts ? RootNames.StackRoot : RootNames.StackGetStarted,
-        );
-      })
-      .catch(error => {
-        console.error('useAppInitialRouteName::error', error);
-        if (!cancelled) {
-          setInitialRouteName(RootNames.StackRoot);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [initialRouteName, isAppUnlocked]);
-
-  return initialRouteName;
-}
 
 const RootAnimOptions: React.ComponentProps<
   typeof RootStack.Navigator
@@ -328,9 +283,11 @@ function useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked: boolean) {
 function useReadableAccountWarmupsOnHomeVisible({
   shouldWarmupReadableAccounts,
   hasVisibleAccounts,
+  homeStartupReady,
 }: {
   shouldWarmupReadableAccounts: boolean;
   hasVisibleAccounts: boolean;
+  homeStartupReady: boolean;
 }) {
   const startedRef = React.useRef(false);
 
@@ -338,7 +295,8 @@ function useReadableAccountWarmupsOnHomeVisible({
     if (
       startedRef.current ||
       !shouldWarmupReadableAccounts ||
-      !hasVisibleAccounts
+      !hasVisibleAccounts ||
+      !homeStartupReady
     ) {
       return;
     }
@@ -348,7 +306,7 @@ function useReadableAccountWarmupsOnHomeVisible({
       startedRef.current = false;
       console.error('useReadableAccountWarmupsOnHomeVisible::error', error);
     });
-  }, [shouldWarmupReadableAccounts, hasVisibleAccounts]);
+  }, [shouldWarmupReadableAccounts, hasVisibleAccounts, homeStartupReady]);
 }
 
 function AppNavigationDeferredGlobals({
@@ -390,7 +348,7 @@ function AppNavigationOverlayGlobals({
   deferredGlobalsEnabled: boolean;
   postUnlockGlobalsEnabled: boolean;
 }) {
-  const showDiagnostics = deferredGlobalsEnabled || NEED_DEVSETTINGBLOCKS;
+  const showDiagnostics = NEED_DEVSETTINGBLOCKS;
 
   return (
     <>
@@ -401,6 +359,9 @@ function AppNavigationOverlayGlobals({
       {/** @warning put all business stub components before this modal */}
       {deferredGlobalsEnabled && <GlobalSecurityTipStubModal />}
       {showDiagnostics && <FloatingDiagnosticsPanel />}
+      {showDiagnostics && <FloatingDbSyncSummaryPanel />}
+      {showDiagnostics && <FloatingKeyringRuntimePanel />}
+      {showDiagnostics && <FloatingOpenApiSummaryPanel />}
       {postUnlockGlobalsEnabled && (
         <GlobalMiniApproval key="global-mini-approval" />
       )}
@@ -446,6 +407,7 @@ export default function AppNavigation() {
     hasVisibleAccounts,
     hasStoredKeyrings,
   } = useAppUnlocked();
+  const homeStartupReady = useHomeStartupReady();
   const canSkipInitialUnlock = isAppUnlocked || isUnlockSessionValid;
 
   const initialRouteName = hasVisibleAccounts
@@ -462,6 +424,7 @@ export default function AppNavigation() {
   useReadableAccountWarmupsOnHomeVisible({
     shouldWarmupReadableAccounts: !isAppUnlocked && isUnlockSessionValid,
     hasVisibleAccounts,
+    homeStartupReady,
   });
 
   const onReady = useCallback<

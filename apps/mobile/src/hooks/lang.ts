@@ -148,7 +148,13 @@ function i18nChange(lang: SupportedLang) {
     });
 }
 
+let hasStartedSubscribeLangChange = false;
 export function startSubscribeLangChange() {
+  if (hasStartedSubscribeLangChange) {
+    return;
+  }
+  hasStartedSubscribeLangChange = true;
+
   i18nChange(langStore.getState().lang);
   langStore.subscribe(async state => {
     i18nChange(state.lang);

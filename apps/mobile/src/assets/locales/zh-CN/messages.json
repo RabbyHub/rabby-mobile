@@ -2295,6 +2295,8 @@
         },
         "title": "清除应用缓存",
         "clearAppCacheDesc": "这将删除临时缓存文件，而不会影响您的个人数据或设置。应用程序需要重新启动以完成此过程。您希望继续吗？",
+        "clearingToast": "正在清理...",
+        "clearDoneQuitToast": "已清理，即将关闭应用。",
         "iOSToastTitle": "清除缓存成功",
         "iOSToastDesc": "您需要重新启动应用程序才能生效。"
       },
