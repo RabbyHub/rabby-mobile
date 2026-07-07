@@ -17,6 +17,7 @@ import { useFloatingView } from '@/hooks/appSettings';
 import {
   Gesture,
   GestureDetector,
+  GestureHandlerRootView,
 } from 'react-native-gesture-handler';
 import { RcIconLogo } from '@/assets/icons/common';
 import { Text, AnimateableText } from '@/components/Typography';
@@ -231,7 +232,9 @@ function FloatingUnlockStatusBar() {
   }, [dragStartLeft, dragStartTop, positionLeft, positionTop]);
 
   return (
-    <View pointerEvents="box-none" style={styles.unlockStatusPortal}>
+    <GestureHandlerRootView
+      pointerEvents="box-none"
+      style={styles.unlockStatusPortal}>
       <GestureDetector gesture={panGesture}>
         <Animated.View
           style={[
@@ -254,7 +257,7 @@ function FloatingUnlockStatusBar() {
           </Text>
         </Animated.View>
       </GestureDetector>
-    </View>
+    </GestureHandlerRootView>
   );
 }
 
@@ -501,7 +504,7 @@ function FloatingDiagnosticsPanelContent({
   }, [handleTop]);
 
   return (
-    <View pointerEvents="box-none" style={styles.portal}>
+    <GestureHandlerRootView pointerEvents="box-none" style={styles.portal}>
       <Animated.View style={[styles.container, rootAnimatedStyles]}>
         <Animated.View
           pointerEvents="none"
@@ -564,7 +567,7 @@ function FloatingDiagnosticsPanelContent({
           </Animated.View>
         </GestureDetector>
       </Animated.View>
-    </View>
+    </GestureHandlerRootView>
   );
 }
 

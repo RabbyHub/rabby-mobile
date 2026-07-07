@@ -27,6 +27,8 @@ import { RestoreFromCloud } from '../RestoreFromCloud/RestoreFromCloud';
 import { IS_IOS } from '@/core/native/utils';
 import ImportMethods from '../Address/ImportMethods';
 import { ImportHardwareAddressScreen } from '../Address/ImportHardwareAddress';
+import { ImportPrivateKeyScreen2024 } from '../Address/ImportPrivateKeyScreen2024';
+import { ImportSeedPhraseScreen2024 } from '../Address/ImportSeedPhraseScreen2024';
 import { ImportSuccessScreen2024 } from '../Address/ImportSuccessScreen2024';
 import { createGetStyles2024 } from '@/utils/styles';
 import CreateNewAddress from '../Address/CreateNewAddress';
@@ -335,6 +337,15 @@ export function AddressNavigator() {
         }}
       />
       <AddressStack.Screen
+        name={RootNames.ImportPrivateKey2024}
+        component={ImportPrivateKeyScreen2024}
+        options={{
+          headerTitle: t('screens.addressStackTitle.ImportPrivateKey'),
+          title: t('screens.addressStackTitle.ImportPrivateKey'),
+          headerTitleStyle: styles.headerTitleText,
+        }}
+      />
+      <AddressStack.Screen
         name={RootNames.ImportMnemonic}
         component={ImportSeedPhraseScreen}
         options={{
@@ -344,6 +355,15 @@ export function AddressNavigator() {
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
           headerRight: CloudBackupButton,
+        }}
+      />
+      <AddressStack.Screen
+        name={RootNames.ImportMnemonic2024}
+        component={ImportSeedPhraseScreen2024}
+        options={{
+          headerTitle: t('screens.addressStackTitle.ImportMnemonic'),
+          title: t('screens.addressStackTitle.ImportMnemonic'),
+          headerTitleStyle: styles.headerTitleText,
         }}
       />
       <AddressStack.Screen

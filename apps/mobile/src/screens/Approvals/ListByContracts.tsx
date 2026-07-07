@@ -18,14 +18,13 @@ import {
   useApprovalsPage,
   useRevokeApprovals,
 } from './useApprovalsPage';
-import { Tabs } from '@rabby-wallet/react-native-collapsible-tab-view/src';
+import { Tabs } from 'react-native-collapsible-tab-view';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
-import { FlatListProps } from 'react-native';
+import { SectionListProps } from 'react-native';
 import ApprovalContractRow from './components/ApprovalContractRow';
 import { SkeletonListByContracts } from './components/Skeleton';
-import { ApprovalsLayouts } from './layout';
+import { ApprovalsLayouts, IOS_SWIPABLE_LEFT_OFFSET } from './layout';
 import { useFocusEffect } from '@react-navigation/native';
-import { useApprovalsPullTopGap } from './useApprovalsPullTopGap';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -39,17 +38,15 @@ export default function ListByContracts() {
     contractEmptyStatus,
     safeSizeInfo: { safeSizes },
   } = useApprovalsPage();
-  const { pullDownDistance, ListTopGap, captureRefreshDistance } =
-    useApprovalsPullTopGap();
 
   const keyExtractor = React.useCallback<
-    FlatListProps<ContractApprovalItem>['keyExtractor'] & object
+    SectionListProps<ContractApprovalItem>['keyExtractor'] & object
   >((contractItem, index) => {
     return `${contractItem.id}-${index}`;
   }, []);
 
   const renderItem = React.useCallback<
-    FlatListProps<ContractApprovalItem>['renderItem'] & object
+    SectionListProps<ContractApprovalItem>['renderItem'] & object
   >(
     ({ item, index }) => {
       const isFirstItem = index === 0;
@@ -58,6 +55,10 @@ export default function ListByContracts() {
           style={[
             styles.itemWrapper,
             isFirstItem ? { marginTop: 0 } : { marginTop: 8 },
+            {
+              paddingHorizontal:
+                ApprovalsLayouts.innerContainerHorizontalOffset,
+            },
           ]}>
           <ApprovalContractRow contract={item} />
         </View>
@@ -68,6 +69,17 @@ export default function ListByContracts() {
 
   const { fallList, simulateLoadNext, resetPage, isFetchingNextPage } =
     usePsudoPagination(displaySortedContractList, { pageSize: 10 });
+
+  const sectionList = React.useMemo(() => {
+    return !fallList?.length
+      ? []
+      : [
+          {
+            title: '',
+            data: fallList,
+          },
+        ];
+  }, [fallList]);
 
   const onEndReached = React.useCallback(() => {
     simulateLoadNext(150);
@@ -132,12 +144,9 @@ export default function ListByContracts() {
         styles.innerContainer,
         // makeDebugBorder('red')
       ]}>
-      <Tabs.FlatList<ContractApprovalItem>
+      <Tabs.SectionList<ContractApprovalItem>
         initialNumToRender={20}
         maxToRenderPerBatch={20}
-        data={fallList}
-        pullDownDistance={pullDownDistance}
-        ListHeaderComponent={ListTopGap}
         ListFooterComponent={
           <View style={styles.listFooterContainer}>
             {isFetchingNextPage ? <ActivityIndicator /> : null}
@@ -146,18 +155,20 @@ export default function ListByContracts() {
         style={styles.list}
         contentContainerStyle={styles.listContainer}
         renderItem={renderItem}
+        renderSectionFooter={() => <View style={styles.footContainer} />}
+        sections={sectionList}
         keyExtractor={keyExtractor}
         ListEmptyComponent={ListEmptyComponent}
+        stickySectionHeadersEnabled={false}
         onEndReached={onEndReached}
         onEndReachedThreshold={0.3}
         refreshControl={
           <RefreshControl
             {...(isIOS && {
-              progressViewOffset: ApprovalsLayouts.tabbarHeight,
+              progressViewOffset: -12,
             })}
             refreshing={refreshing}
             onRefresh={() => {
-              captureRefreshDistance();
               refresh();
             }}
           />
@@ -178,11 +189,12 @@ const getStyles = createGetStyles(colors => {
       flexDirection: 'column',
     },
 
-    list: {
-      paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
-    },
+    list: {},
     listContainer: {
+      paddingTop: 20,
       paddingBottom: 0,
+      // repair top offset due to special contentInset in iOS
+      ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),
     },
     listFooterContainer: {
       flexDirection: 'row',
@@ -194,6 +206,8 @@ const getStyles = createGetStyles(colors => {
     itemWrapper: {
       width: '100%',
     },
+    footContainer: {},
+
     innerContainer: {
       padding: 0,
       paddingBottom: 0,

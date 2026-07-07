@@ -16,6 +16,3 @@ import 'reflect-metadata';
 import { install } from 'react-native-quick-crypto';
 
 install();
-
-// quick-crypto installs global.crypto, then this polyfills crypto.getRandomValues.
-require('react-native-get-random-values');

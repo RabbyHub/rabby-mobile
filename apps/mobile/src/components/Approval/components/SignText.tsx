@@ -527,18 +527,9 @@ export const SignText = ({
             setGnosisFooterBarVisible(false);
             handleCancel();
           }}
-          securityLevel={securityLevel}
-          hasUnProcessSecurityResult={hasUnProcessSecurityResult}
-          engineResults={engineResults}
-          onSubmit={() => {
-            if (
-              hasUnProcessSecurityResult ||
-              currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring
-            ) {
-              return;
-            }
-            handleGnosisSign();
-          }}
+          // securityLevel={securityLevel}
+          // hasUnProcessSecurityResult={hasUnProcessSecurityResult}
+          onSubmit={handleGnosisSign}
           enableTooltip={
             currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring
           }
@@ -548,7 +539,6 @@ export const SignText = ({
             ) : null
           }
           disabledProcess={
-            hasUnProcessSecurityResult ||
             currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring
           }
           // isSubmitting={isSubmittingGnosis}

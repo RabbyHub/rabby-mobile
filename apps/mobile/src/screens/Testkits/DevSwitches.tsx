@@ -44,7 +44,6 @@ import {
   useExpScreenCapture,
   useIosForceDisableAlertForSensitiveScene,
   useMockBatchRevoke,
-  useScreenshotDebugToast,
   useTimeTipAboutSeedPhraseAndPrivateKey,
   useToastOpenApiHttpErrorStatus,
   useToggleShowAutoLockCountdown,
@@ -382,8 +381,6 @@ function DevSwitchAboutScreenProtection() {
 
   const { isScreenshotReportEnabled } = useIsShowFeedbackOnScreenshot();
   const { toggleSkipReportIn24Hours } = useScreenshotToReportEnabled();
-  const { screenshotDebugToastEnabled, toggleScreenshotDebugToast } =
-    useScreenshotDebugToast();
 
   return (
     <View style={styles.showCaseRowsContainer}>
@@ -470,23 +467,6 @@ function DevSwitchAboutScreenProtection() {
               <LabelScreenshotToReport />
             </View>
           </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.switchRowWrapper, { marginTop: 12 }]}
-          onPress={() => {
-            toggleScreenshotDebugToast();
-          }}>
-          <AppSwitch2024
-            value={screenshotDebugToastEnabled}
-            onPress={evt => evt.stopPropagation()}
-            onValueChange={toggleScreenshotDebugToast}
-          />
-          <Text style={styles.switchLabel}>
-            {screenshotDebugToastEnabled
-              ? 'Show screenshot diagnostics toast'
-              : 'Keep screenshot diagnostics toast hidden'}
-          </Text>
         </TouchableOpacity>
 
         <Button

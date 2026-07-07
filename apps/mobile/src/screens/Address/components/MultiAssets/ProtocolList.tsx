@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RabbyFlatList as TabsFlatList } from '@rabby-wallet/react-native-collapsible-tab-view/src/RabbyFlatList';
-import { useCurrentTabScrollY } from '@rabby-wallet/react-native-collapsible-tab-view/src/hooks';
+import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -37,6 +36,7 @@ import {
   SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
 } from '@/constant/home';
 import { IS_ANDROID } from '@/core/native/utils';
+import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
 import {
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,

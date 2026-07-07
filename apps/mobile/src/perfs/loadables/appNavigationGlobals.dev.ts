@@ -14,7 +14,7 @@ export { BottomSheetDappInfoPopup } from '@/screens/Browser/BottomSheetBrowser';
 export { ScreenshotFeedbackSubmitModal } from '@/components/Screenshot/SubmitFeedback/SubmitModal';
 export { ToggleCollateralModal } from '@/screens/Lending/modals/ToggleCollateralModal';
 export { default as GlobalSecurityTipStubModal } from '@/components/Security/SecurityTipStubModal';
-export { BackgroundSecureBlurView } from '@/components/customized/BackgroundSecureBlurView';
+export { BackgroundSecureBlurView } from '@/components/customized/BlurViews';
 export { FloatingDiagnosticsPanel } from '@/screens/Settings/components/FloatingDiagnosticsPanel';
 export { FloatingDbSyncSummaryPanel } from '@/screens/Settings/components/FloatingDbSyncSummaryPanel';
 export { FloatingKeyringRuntimePanel } from '@/screens/Settings/components/FloatingKeyringRuntimePanel';

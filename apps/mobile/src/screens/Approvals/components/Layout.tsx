@@ -78,6 +78,7 @@ export function ApprovalsTabView<T extends React.ComponentType<any>>({
       style={[
         props?.style,
         {
+          paddingTop: ApprovalsLayouts.tabbarHeight,
           paddingBottom:
             safeSizes.bottomAreaHeight + (isAndroid ? safeOffBottom : 0),
         },

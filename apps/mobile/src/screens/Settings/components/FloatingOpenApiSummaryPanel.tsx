@@ -11,6 +11,7 @@ import Animated, {
 import {
   Gesture,
   GestureDetector,
+  GestureHandlerRootView,
 } from 'react-native-gesture-handler';
 
 import { AnimateableText, Text } from '@/components/Typography';
@@ -532,7 +533,7 @@ export function FloatingOpenApiSummaryPanel() {
   }
 
   return (
-    <View pointerEvents="box-none" style={styles.portal}>
+    <GestureHandlerRootView pointerEvents="box-none" style={styles.portal}>
       <Animated.View style={[styles.container, rootAnimatedStyles]}>
         <Animated.View
           pointerEvents="none"
@@ -556,7 +557,7 @@ export function FloatingOpenApiSummaryPanel() {
           </Animated.View>
         </GestureDetector>
       </Animated.View>
-    </View>
+    </GestureHandlerRootView>
   );
 }
 

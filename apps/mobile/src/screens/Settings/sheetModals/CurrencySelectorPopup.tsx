@@ -7,9 +7,9 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Keyboard, Pressable, useWindowDimensions, View } from 'react-native';
+import { Keyboard, useWindowDimensions, View } from 'react-native';
 
-import { RcIconCheckmarkCC } from '@/assets/icons/common';
+import { RcIconCheckmarkCC, RcNextSearchCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
@@ -23,7 +23,10 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import FastImage from 'react-native-fast-image';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import {
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+} from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import { sortBy, uniq } from 'lodash';
 import { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -57,20 +60,16 @@ export function CurrencySelectorPopup({
   const { isShowCurrencyPopup: visible, setIsShowCurrencyPopup } =
     useCurrentCurrencyVisible();
 
-  const searchRef = useRef<NextSearchBarMethods>(null);
-  const [isFocus, setIsFocus] = useState(false);
-  const [searchText, setSearchText] = useState('');
-
   const handleCancel = useCallback(() => {
-    searchRef.current?.blur();
-    Keyboard.dismiss();
-    setIsFocus(false);
-    setSearchText('');
     setIsShowCurrencyPopup(false);
     onCancel?.();
   }, [setIsShowCurrencyPopup, onCancel]);
 
-  const inputNotActiveAndNoQuery = !searchText && !isFocus;
+  const searchRef = useRef<NextSearchBarMethods>(null);
+  const [isFocus, setIsFocus] = useState(false);
+  const [searchText, setSearchText] = useState('');
+
+  const isShowFakePlaceholder = !searchText && !isFocus;
 
   const deferredSearchText = useDeferredValue(searchText);
 
@@ -129,46 +128,44 @@ export function CurrencySelectorPopup({
         linearGradientType: isLight ? 'bg0' : 'bg1',
       })}
       onDismiss={handleCancel}
-      keyboardBehavior="extend"
-      keyboardBlurBehavior="restore"
-      enableBlurKeyboardOnGesture
       enableContentPanningGesture={true}>
       <AutoLockView as="View" style={[styles.container]}>
         <View>
           <Text style={styles.title}>{t('page.setting.currency')}</Text>
-          <Pressable
-            style={styles.searchContainer}
-            onPress={() => {
-              searchRef.current?.focus();
-            }}>
+          <View style={styles.searchContainer}>
+            {isShowFakePlaceholder ? (
+              <View>
+                <TouchableWithoutFeedback
+                  onPress={() => {
+                    searchRef.current?.focus();
+                  }}>
+                  <View style={styles.fakePlaceholder}>
+                    <RcNextSearchCC
+                      color={colors2024['neutral-secondary']}
+                      width={16}
+                      height={16}
+                    />
+                    <Text style={styles.placeholder}>
+                      {t('page.setting.searchCurrency')}
+                    </Text>
+                  </View>
+                </TouchableWithoutFeedback>
+              </View>
+            ) : null}
             <NextSearchBar
               ref={searchRef}
-              as="BottomSheetTextInput"
               value={searchText}
               onChangeText={setSearchText}
-              inputContainerStyle={{
-                justifyContent: inputNotActiveAndNoQuery
-                  ? 'center'
-                  : 'flex-start',
-              }}
-              inputStyle={{
-                flex: inputNotActiveAndNoQuery ? 0 : 1,
-              }}
               onBlur={() => {
                 setIsFocus(false);
               }}
+              style={isShowFakePlaceholder ? styles.hidden : null}
               onFocus={() => {
                 setIsFocus(true);
               }}
-              onCancel={() => {
-                setSearchText('');
-                setIsFocus(false);
-                Keyboard.dismiss();
-                searchRef.current?.blur();
-              }}
               placeholder={t('page.setting.searchCurrency')}
             />
-          </Pressable>
+          </View>
         </View>
         <BottomSheetScrollView
           style={styles.list}
@@ -238,6 +235,24 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       marginBottom: 14,
       position: 'relative',
     },
+    fakePlaceholder: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 7,
+      backgroundColor: colors2024['neutral-bg-5'],
+      borderRadius: 12,
+      padding: 13,
+    },
+    placeholder: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '500',
+      color: colors2024['neutral-secondary'],
+    },
+
     list: {
       width: '100%',
       paddingBottom: 56,
@@ -279,6 +294,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     extra: {
       marginLeft: 'auto',
+    },
+
+    hidden: {
+      display: 'none',
     },
   };
 });

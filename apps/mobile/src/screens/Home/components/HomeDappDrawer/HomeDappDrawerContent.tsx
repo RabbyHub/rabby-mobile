@@ -12,9 +12,7 @@ import { atomByMMKV } from '@/core/storage/mmkv';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { MaterialTabBar } from '@rabby-wallet/react-native-collapsible-tab-view/src/MaterialTabBar/TabBar';
-import { RabbyControlledContainer as TabsContainer } from '@rabby-wallet/react-native-collapsible-tab-view/src/RabbyControlledContainer';
-import { Tab as TabsTab } from '@rabby-wallet/react-native-collapsible-tab-view/src/Tab';
+import { MaterialTabBar, Tabs } from 'react-native-collapsible-tab-view';
 
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { DappInfo } from '@/core/services/dappService';
@@ -390,7 +388,7 @@ export const HomeDappDrawerContent: React.FC<{
           renderTabContent={tabKey => renderTabContent(tabKey, true)}
         />
       ) : (
-        <TabsContainer
+        <Tabs.Container
           renderTabBar={renderTabBar}
           tabBarHeight={TAB_BAR_HEIGHT}
           lazy
@@ -404,17 +402,17 @@ export const HomeDappDrawerContent: React.FC<{
             tabs.map(tabItem => {
               if (tabItem.id === 'favorite') {
                 return (
-                  <TabsTab
+                  <Tabs.Tab
                     key={tabItem.id}
                     label={renderFavoriteLabel}
                     name="favorite">
                     {renderTabContent(tabItem.id)}
-                  </TabsTab>
+                  </Tabs.Tab>
                 );
               }
 
               return (
-                <TabsTab
+                <Tabs.Tab
                   key={tabItem.id}
                   label={label =>
                     renderCategoryLabel({
@@ -424,11 +422,11 @@ export const HomeDappDrawerContent: React.FC<{
                   }
                   name={tabItem.id}>
                   {renderTabContent(tabItem.id)}
-                </TabsTab>
+                </Tabs.Tab>
               );
             }) as unknown as React.ReactElement<any>
           }
-        </TabsContainer>
+        </Tabs.Container>
       )}
     </View>
   );

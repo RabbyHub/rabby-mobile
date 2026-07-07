@@ -93,31 +93,14 @@ export const GnosisDrawer = ({
     setCheckedAccount(account);
   };
 
-  const isSignedAccount = React.useCallback(
-    (account?: Account | null) => {
-      if (!account) {
-        return false;
-      }
-
-      return signatures.some(sig => isSameAddress(sig.signer, account.address));
-    },
-    [signatures],
-  );
-
-  const canConfirm =
-    !!checkedAccount?.type && !isSignedAccount(checkedAccount) && !isLoading;
-
   const handleConfirm = async () => {
-    if (!canConfirm || !checkedAccount) {
-      return;
-    }
-
     try {
       setIsLoading(true);
-      await onConfirm(checkedAccount, signatures.length <= 0);
+      checkedAccount &&
+        (await onConfirm(checkedAccount, signatures.length <= 0));
+      setIsLoading(false);
     } catch (e) {
       console.error(e);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -144,15 +127,6 @@ export const GnosisDrawer = ({
       apisSafe.getGnosisTransactionSignatures().then(setSignatures);
     }
   }, [confirmations]);
-
-  useEffect(() => {
-    if (
-      checkedAccount &&
-      (!checkedAccount.type || isSignedAccount(checkedAccount))
-    ) {
-      setCheckedAccount(null);
-    }
-  }, [checkedAccount, isSignedAccount]);
 
   const modalRef = React.useRef<AppBottomSheetModal>(null);
   const { bottom } = useSafeAreaInsets();
@@ -191,17 +165,19 @@ export const GnosisDrawer = ({
           }
           renderItem={item => {
             const owner = item.item;
-            const ownerSigned = isSignedAccount(owner);
             return (
               <AddressItem
                 key={owner.address}
                 account={owner}
-                signed={ownerSigned}
+                signed={
+                  !!signatures.find(sig =>
+                    isSameAddress(sig.signer, owner.address),
+                  )
+                }
                 onSelect={handleSelectAccount}
                 checked={
                   checkedAccount
-                    ? !ownerSigned &&
-                      isSameAddress(owner.address, checkedAccount.address)
+                    ? isSameAddress(owner.address, checkedAccount.address)
                     : false
                 }
               />
@@ -217,7 +193,7 @@ export const GnosisDrawer = ({
           />
           <Button
             onPress={handleConfirm}
-            disabled={!canConfirm}
+            disabled={!checkedAccount}
             title={
               isLoading ? (
                 <ActivityIndicator color="#fff" />

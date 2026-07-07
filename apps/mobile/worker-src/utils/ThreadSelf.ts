@@ -1,22 +1,6 @@
+import { NativeModules, DeviceEventEmitter } from 'react-native';
+import { makeRnEEClass } from './event';
 import { jsonResponse } from './workmsg';
-
-type EmitterSubscription = {
-  remove(): void;
-};
-
-type ThreadSelfEventEmitter = {
-  addListener<TEvent extends keyof Listeners & string>(
-    eventType: TEvent,
-    listener: Listeners[TEvent],
-  ): EmitterSubscription;
-};
-
-const nativeModulesImport = require('react-native/Libraries/BatchedBridge/NativeModules');
-const NativeModules = nativeModulesImport.default ?? nativeModulesImport;
-
-const rctDeviceEventEmitterImport = require('react-native/Libraries/EventEmitter/RCTDeviceEventEmitter');
-const RCTDeviceEventEmitter =
-  rctDeviceEventEmitterImport.default ?? rctDeviceEventEmitterImport;
 
 const { ThreadSelfModule } = NativeModules;
 export const ThreadSelf = {
@@ -32,7 +16,8 @@ export const ThreadSelf = {
 type Listeners = {
   msgToThread: (payload?: any) => any;
 };
-export const threadSelfEE: ThreadSelfEventEmitter = RCTDeviceEventEmitter;
+const { NativeEventEmitter } = makeRnEEClass<Listeners>();
+export const threadSelfEE = new NativeEventEmitter(ThreadSelfModule);
 
 threadSelfEE.addListener('msgToThread', message => {
   if (__DEV__) {

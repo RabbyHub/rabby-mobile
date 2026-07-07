@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useFocusedTab } from '@rabby-wallet/react-native-collapsible-tab-view/src/hooks';
+import { useFocusedTab } from 'react-native-collapsible-tab-view';
 
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 

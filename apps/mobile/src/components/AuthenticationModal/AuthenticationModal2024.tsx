@@ -264,7 +264,7 @@ export const AuthenticationModal2024 = ({
   );
   const hasCheckFailed = checklistState.includes(false);
 
-  const [password, setPassword] = React.useState(__DEV__ ? APP_TEST_PWD : '');
+  const [password, setPassword] = React.useState(APP_TEST_PWD);
   const [error, setError] = React.useState<string>();
 
   const onFinishedReturnBase = useMemo(

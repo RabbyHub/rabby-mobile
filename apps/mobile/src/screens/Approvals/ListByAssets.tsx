@@ -11,21 +11,21 @@ import {
   NotMatchedHolder,
   getScrollableSectionHeight,
 } from './components/Layout';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   type AssetApprovalItem,
   useApprovalsPage,
   useRevokeApprovals,
 } from './useApprovalsPage';
-import { Tabs } from '@rabby-wallet/react-native-collapsible-tab-view/src';
+import { Tabs } from 'react-native-collapsible-tab-view';
 import { useFocusEffect } from '@react-navigation/native';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
-import { FlatListProps } from 'react-native';
+import { SectionListProps } from 'react-native';
 import { SkeletonListByAssets } from './components/Skeleton';
 import ApprovalAssetRow from './components/ApprovalAssetRow';
 import { ApprovalsLayouts } from './layout';
-import { useApprovalsPullTopGap } from './useApprovalsPullTopGap';
+import { IOS_SWIPABLE_LEFT_OFFSET } from './layout';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -39,17 +39,15 @@ export default function ListByAssets() {
     assetEmptyStatus,
     safeSizeInfo: { safeSizes },
   } = useApprovalsPage();
-  const { pullDownDistance, ListTopGap, captureRefreshDistance } =
-    useApprovalsPullTopGap();
 
   const keyExtractor = React.useCallback<
-    FlatListProps<AssetApprovalItem>['keyExtractor'] & object
+    SectionListProps<AssetApprovalItem>['keyExtractor'] & object
   >((contractItem, index) => {
     return `${contractItem.id}-${index}`;
   }, []);
 
   const renderItem = React.useCallback<
-    FlatListProps<AssetApprovalItem>['renderItem'] & object
+    SectionListProps<AssetApprovalItem>['renderItem'] & object
   >(
     ({ item, index }) => {
       const isFirstItem = index === 0;
@@ -69,6 +67,17 @@ export default function ListByAssets() {
 
   const { fallList, simulateLoadNext, resetPage, isFetchingNextPage } =
     usePsudoPagination(displaySortedAssetApprovalList, { pageSize: 20 });
+
+  const sectionList = React.useMemo(() => {
+    return !fallList?.length
+      ? []
+      : [
+          {
+            title: '',
+            data: fallList,
+          },
+        ];
+  }, [fallList]);
 
   const onEndReached = React.useCallback(() => {
     simulateLoadNext(150);
@@ -133,12 +142,9 @@ export default function ListByAssets() {
         styles.innerContainer,
         // makeDebugBorder('red')
       ]}>
-      <Tabs.FlatList<AssetApprovalItem>
+      <Tabs.SectionList<AssetApprovalItem>
         initialNumToRender={20}
         maxToRenderPerBatch={20}
-        data={fallList}
-        pullDownDistance={pullDownDistance}
-        ListHeaderComponent={ListTopGap}
         ListFooterComponent={
           <View style={styles.listFooterContainer}>
             {isFetchingNextPage ? <ActivityIndicator /> : null}
@@ -152,18 +158,22 @@ export default function ListByAssets() {
         ]}
         contentContainerStyle={styles.listContainer}
         renderItem={renderItem}
+        // renderSectionHeader={renderSectionHeader}
+        renderSectionFooter={() => <View style={styles.footContainer} />}
+        sections={sectionList}
+        // sections={[]}
         keyExtractor={keyExtractor}
         ListEmptyComponent={ListEmptyComponent}
+        stickySectionHeadersEnabled={false}
         onEndReached={onEndReached}
         onEndReachedThreshold={0.3}
         refreshControl={
           <RefreshControl
             {...(isIOS && {
-              progressViewOffset: ApprovalsLayouts.tabbarHeight,
+              progressViewOffset: -12,
             })}
             refreshing={refreshing}
             onRefresh={() => {
-              captureRefreshDistance();
               refresh();
             }}
           />
@@ -192,11 +202,15 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
       // ...makeDebugBorder('green'),
     },
     listContainer: {
+      paddingTop: 20,
       paddingBottom: 0,
+      // repair top offset due to special contentInset in iOS
+      ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),
     },
     itemWrapper: {
       width: '100%',
     },
+    footContainer: {},
 
     innerContainer: {
       padding: 0,

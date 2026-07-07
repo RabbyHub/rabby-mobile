@@ -22,7 +22,7 @@ export async function initializeAppDataSource(
     appDataSourceInitRef.current = appDataSourceInitRef.current.then(
       async as => {
         console.debug(
-          '[initializeAppDataSource] initialized, will runMigrations',
+          `[initializeAppDataSource] initialized, will runMigrations`,
         );
         await as
           .runMigrations({

@@ -5,6 +5,12 @@ import {
   Pressable,
   ViewStyle,
 } from 'react-native';
+import {
+  MaterialTabBar,
+  MaterialTabItem,
+  useFocusedTab,
+} from 'react-native-collapsible-tab-view';
+
 import React, { useCallback, useLayoutEffect, useRef } from 'react';
 import Animated, {
   useAnimatedStyle,
@@ -343,9 +349,7 @@ function SideChainSelector() {
   );
 }
 
-type MaterialTabBarProps = {
-  indexDecimal: Animated.SharedValue<number>;
-};
+type MaterialTabBarProps = React.ComponentProps<typeof MaterialTabBar>;
 
 const AssetsTabLabels = [
   TabbarLabels[HomeTabName.token],

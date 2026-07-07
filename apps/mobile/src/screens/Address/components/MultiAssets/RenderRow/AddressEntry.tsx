@@ -7,7 +7,6 @@ export const AddressEntry = ({
   data,
   onSelect,
   showMarkIfNewlyAdded,
-  contextMenuAndroidTriggerMode,
 }: {
   data: KeyringAccountWithAlias & {
     changPercent?: string;
@@ -16,9 +15,6 @@ export const AddressEntry = ({
   showMarkIfNewlyAdded?: React.ComponentProps<
     typeof AddressItemEntry
   >['showMarkIfNewlyAdded'];
-  contextMenuAndroidTriggerMode?: React.ComponentProps<
-    typeof AddressItemEntry
-  >['contextMenuAndroidTriggerMode'];
   onSelect?: () => void;
 }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -31,7 +27,6 @@ export const AddressEntry = ({
       changePercent={data.changPercent}
       onSelect={onSelect}
       isLoss={data.isLoss}
-      contextMenuAndroidTriggerMode={contextMenuAndroidTriggerMode}
     />
   );
 };

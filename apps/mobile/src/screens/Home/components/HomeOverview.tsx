@@ -111,11 +111,9 @@ import {
   useHomePendingTxCount,
 } from '../hooks/history';
 import {
-  RabbyScrollView as TabsScrollView,
-  type RabbyScrollViewProps as TabsScrollViewProps,
-} from '@rabby-wallet/react-native-collapsible-tab-view/src/RabbyScrollView';
-import type { ScrollHandlerProps } from '@rabby-wallet/react-native-collapsible-tab-view/src/RabbyHooks';
-import { useCurrentTabScrollY } from '@rabby-wallet/react-native-collapsible-tab-view/src/hooks';
+  TabsScrollView,
+  TabsScrollViewProps,
+} from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
 import {
   RNGHRefreshControl,
   RNGHScrollView,
@@ -127,6 +125,8 @@ import {
   SCROLLABLE_STATUS,
   THRESHOLD_PERCENT,
 } from '../hooks/useHomeDrawerAnimate';
+import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
 import { triggerImpact } from '@/utils/common';
 import {
   SharedValue,
@@ -229,13 +229,7 @@ const homeGestureConfs = {
     8,
     Math.round(Math.floor(getPullThreshold(scrHeight) * 0.1)),
   ),
-  failX: 24,
 };
-
-const HOME_DRAWER_OPEN_THRESHOLD = getPullThreshold(scrHeight);
-const HOME_DRAWER_CLOSE_THRESHOLD = HOME_DRAWER_OPEN_THRESHOLD * 0.6;
-const HOME_DRAWER_BOTTOM_SLOP = 2;
-const HOME_DRAWER_CONTROL_SLOP = homeGestureConfs.activeY;
 
 const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   onJsPulldownRefresh: prop_onJsPulldownRefresh,
@@ -250,18 +244,14 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   );
 
   const scrollToEnd = useCallback(
-    (
-      toBottom: boolean,
-      animated = true,
-      nextScrollableStatus: SCROLLABLE_STATUS = 'UNLOCKED',
-    ) => {
+    (toBottom: boolean, animated = true) => {
       'worklet';
       if (toBottom) {
         scrollTo(scrollableRef, 0, 9999, animated);
       } else {
         scrollTo(scrollableRef, 0, 0, animated);
       }
-      scrollableStatus.value = nextScrollableStatus;
+      scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
     },
     [scrollableRef, scrollableStatus],
   );
@@ -358,11 +348,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
 
   const startValues = useSharedValue({
     startedAtTop: scrollY.value <= 5,
-    startedAtBottom: false,
     restScrollOffset: 0,
-    isControllingDrawer: false,
-    shouldExpandDrawer: false,
-    hasSnappedScrollToEnd: false,
     hasImpactOnPandown: false,
     hasImpactOnPanup: false,
   });
@@ -371,51 +357,29 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
     Gesture.Pan()
       .shouldCancelWhenOutside(false)
       .activeOffsetY([-homeGestureConfs.activeY, homeGestureConfs.activeY])
-      .failOffsetX([-homeGestureConfs.failX, homeGestureConfs.failX])
       .maxPointers(1)
       .onStart(() => {
-        const { restScrollOffset } = getIsAtBottom(scrollY.value);
-        startValues.value.restScrollOffset = restScrollOffset;
-        startValues.value.startedAtBottom =
-          restScrollOffset <= HOME_DRAWER_BOTTOM_SLOP;
+        startValues.value.restScrollOffset = getIsAtBottom(
+          scrollY.value,
+        ).restScrollOffset;
         startValues.value.startedAtTop = scrollY.value <= 5;
-        startValues.value.isControllingDrawer = false;
-        startValues.value.shouldExpandDrawer = false;
-        startValues.value.hasSnappedScrollToEnd = false;
       })
       .onUpdate(event => {
         panUp: {
+          const { isAtBottom } = getIsAtBottom(scrollY.value, translateY.value);
           const restScrollOffset = startValues.value.restScrollOffset;
-          const drawerTranslateY = event.translationY + restScrollOffset;
-          const shouldStartControllingDrawer =
-            event.translationY < 0 &&
-            (startValues.value.startedAtBottom ||
-              drawerTranslateY <= HOME_DRAWER_CONTROL_SLOP * -1);
 
-          if (
-            startValues.value.isControllingDrawer ||
-            shouldStartControllingDrawer
-          ) {
-            startValues.value.isControllingDrawer = true;
-            translateY.value = Math.min(0, drawerTranslateY);
+          translateY.value = event.translationY + restScrollOffset;
+          if (isAtBottom) {
             scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
-
-            if (IS_ANDROID && !startValues.value.hasSnappedScrollToEnd) {
-              scrollToEnd(true, false, 'LOCKED');
-              startValues.value.hasSnappedScrollToEnd = true;
-            }
-
-            if (translateY.value <= HOME_DRAWER_OPEN_THRESHOLD * -1) {
-              startValues.value.shouldExpandDrawer = true;
-            } else if (translateY.value >= HOME_DRAWER_CLOSE_THRESHOLD * -1) {
-              startValues.value.shouldExpandDrawer = false;
-            }
           } else {
-            translateY.value = 0;
             scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
           }
 
-          if (startValues.value.shouldExpandDrawer && event.translationY < 0) {
+          if (hasOverThreshold() && event.translationY < 0) {
+            if (IS_ANDROID) {
+              scrollToEnd(true, true);
+            }
             !startValues.value.hasImpactOnPandown && runOnJS(triggerImpact)();
             startValues.value.hasImpactOnPandown = true;
           }
@@ -440,7 +404,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
         panUp: {
           const hasImpactOnPandown = startValues.value.hasImpactOnPandown;
 
-          if (startValues.value.shouldExpandDrawer || hasOverThreshold()) {
+          if (hasOverThreshold()) {
             translateY.value = withTiming(-scrHeight, undefined, () => {
               scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
             });

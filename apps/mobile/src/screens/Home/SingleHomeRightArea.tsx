@@ -171,10 +171,7 @@ export const SingleHomeRightArea = () => {
   return (
     <>
       <HeaderRightHistory />
-      <CustomTouchableOpacity
-        as="RNGHTouchableOpacity"
-        hitSlop={hitSlop}
-        onPress={onPress}>
+      <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
         <RcIconSettingCC
           width={20}
           height={20}

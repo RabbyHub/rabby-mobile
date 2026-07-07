@@ -31,12 +31,8 @@ type ModalData = {
   ref: React.RefObject<AppBottomSheetModal | null>;
 };
 
-const PRESENT_RETRY_LIMIT = 5;
-const PRESENT_RETRY_DELAY = 50;
-
 export const GlobalBottomSheetModal = () => {
   const modalRefs = React.useRef<Record<string, ModalData['ref']>>({});
-  const presentedModalIds = React.useRef<Set<string>>(new Set());
   const [modals, setModals] = React.useState<ModalData[]>([]);
 
   const { colors, colors2024, isLight } = useTheme2024();
@@ -48,21 +44,12 @@ export const GlobalBottomSheetModal = () => {
     }, {} as Record<string, ModalData['ref']>);
   }, [modals]);
 
-  const handlePresent = React.useCallback((key: string, retryCount = 0) => {
-    if (presentedModalIds.current.has(key)) {
-      return;
-    }
-
-    const currentModal = modalRefs.current[key]?.current;
+  const handlePresent = React.useCallback<
+    GlobalSheetModalListeners[EVENT_NAMES.PRESENT]
+  >((key: string) => {
+    const currentModal = modalRefs.current[key];
 
     if (!currentModal) {
-      if (retryCount < PRESENT_RETRY_LIMIT && modalRefs.current[key]) {
-        setTimeout(() => {
-          handlePresent(key, retryCount + 1);
-        }, PRESENT_RETRY_DELAY);
-        return;
-      }
-
       if (__DEV__) {
         console.warn(
           `[GlobalBottomSheetModal] Modal with key ${key} not found`,
@@ -71,27 +58,9 @@ export const GlobalBottomSheetModal = () => {
       return;
     }
 
-    currentModal.present();
-    presentedModalIds.current.add(key);
+    currentModal.current?.present();
     globalSheetModalEvents.emit(EVENT_NAMES.PRESENTED, key);
   }, []);
-
-  React.useEffect(() => {
-    const pendingModals = modals.filter(
-      modal => !presentedModalIds.current.has(modal.id),
-    );
-    if (!pendingModals.length) {
-      return;
-    }
-
-    const timeoutId = setTimeout(() => {
-      pendingModals.forEach(modal => handlePresent(modal.id));
-    }, 100);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [handlePresent, modals]);
 
   const [getApproval] = useApproval();
 
@@ -137,10 +106,14 @@ export const GlobalBottomSheetModal = () => {
         };
         modalRefs.current[id] = newModal.ref;
 
+        setTimeout(() => {
+          handlePresent(id);
+        }, 100);
+
         return [...prev, newModal];
       });
     },
-    [getApproval],
+    [getApproval, handlePresent],
   );
 
   const handleRemove = React.useCallback<
@@ -153,7 +126,6 @@ export const GlobalBottomSheetModal = () => {
       );
     }
     delete modalRefs.current[key];
-    presentedModalIds.current.delete(key);
     // const modalInst = modals.find(modal => modal.id === key);
     // modalInst?.params.onCancel?.();
 

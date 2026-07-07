@@ -6,7 +6,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { apiProvider } from '@/core/apis';
-import { sendRequest } from '@/core/apis/sendRequest';
 import useAsync from 'react-use/lib/useAsync';
 import { Account } from '@/core/services/preference';
 import { getRecommendNonce } from '@/core/apis/provider';
@@ -104,11 +103,13 @@ async function checkEIP7702Delegation(
 
 export const useEIP7702ApprovalsQuery = ({
   isActive,
+  chain,
   account,
   refreshKey = 0,
   searchKeyword,
 }: {
   isActive: boolean;
+  chain?: CHAINS_ENUM;
   account?: Account | null;
   refreshKey?: number;
   searchKeyword?: string;
@@ -141,7 +142,7 @@ export const useEIP7702ApprovalsQuery = ({
     }
 
     return (error ? [] : value || [])
-      ?.filter(item => !!item)
+      ?.filter(item => !!item && (chain ? item.chain === chain : true))
       .map(
         (e, _, arr) =>
           ({
@@ -151,7 +152,7 @@ export const useEIP7702ApprovalsQuery = ({
             list: arr,
           } as any as EIP7702Delegated),
       );
-  }, [error, value, currentAccount]);
+  }, [error, value, chain, currentAccount]);
 
   const delegationAddresses = useMemo(() => {
     const keyword = effectiveSearchKeyword?.trim().toLowerCase();
@@ -225,7 +226,7 @@ export const useEIP7702ApprovalsQuery = ({
             type: 4,
             nonce: _nonce,
           };
-          await sendRequest({
+          await apiProvider.sendRequest({
             data: {
               $ctx: {
                 eip7702Revoke: true,

@@ -1,6 +1,6 @@
-import React, { useImperativeHandle, useCallback } from 'react';
+import React, { type Ref, useImperativeHandle, useCallback } from 'react';
 
-import { AppSwitch, SwitchToggleRefProp } from '@/components';
+import { AppSwitch, SwitchToggleType } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
 import { useForceAllowScreenshot } from '@/hooks/appSettings';
 import { IS_IOS } from '@/core/native/utils';
@@ -9,7 +9,9 @@ import { Alert } from 'react-native';
 export const SwitchAllowScreenshot = ({
   ref,
   ...props
-}: React.ComponentProps<typeof AppSwitch> & SwitchToggleRefProp) => {
+}: React.ComponentProps<typeof AppSwitch> & {
+  ref?: Ref<SwitchToggleType>;
+}) => {
   const { forceAllowScreenshot, setAllowScreenshot } =
     useForceAllowScreenshot();
   const colors = useThemeColors();
@@ -19,8 +21,8 @@ export const SwitchAllowScreenshot = ({
       setAllowScreenshot(prev => value ?? !prev);
       if (IS_IOS) {
         Alert.alert(
-          'Restart required',
-          'Please restart the app for the changes to take effect',
+          `Restart required`,
+          `Please restart the app for the changes to take effect`,
         );
       }
     },

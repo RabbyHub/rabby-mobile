@@ -2226,18 +2226,9 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
               gnosisAccount={currentGnosisAdmin}
               account={currentGnosisAdmin}
               onCancel={handleCancel}
-              securityLevel={securityLevel}
-              hasUnProcessSecurityResult={hasUnProcessSecurityResult}
-              engineResults={engineResults}
-              onSubmit={() => {
-                if (
-                  hasUnProcessSecurityResult ||
-                  currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring
-                ) {
-                  return;
-                }
-                runHandleGnosisSign();
-              }}
+              // securityLevel={securityLevel}
+              // hasUnProcessSecurityResult={hasUnProcessSecurityResult}
+              onSubmit={runHandleGnosisSign}
               enableTooltip={
                 currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring
               }
@@ -2248,7 +2239,6 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                 ) : null
               }
               disabledProcess={
-                hasUnProcessSecurityResult ||
                 currentGnosisAdmin?.type === KEYRING_TYPE.WatchAddressKeyring
               }
               // isSubmitting={isSubmittingGnosis}

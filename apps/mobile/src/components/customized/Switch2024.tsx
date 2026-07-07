@@ -23,4 +23,6 @@ export const AppSwitch2024 = (props: SwitchProps) => {
   );
 };
 
-export type { SwitchToggleRefProp, SwitchToggleType } from './switchTypes';
+export type SwitchToggleType = {
+  toggle: (enabled?: boolean) => void;
+};

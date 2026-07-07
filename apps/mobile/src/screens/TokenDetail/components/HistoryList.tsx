@@ -34,8 +34,6 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { ITokenItem } from '@/store/tokens';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import { syncSingleAddress } from '@/databases/hooks/history';
-import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 
 interface IFetchHistory {
   last: number;
@@ -75,10 +73,8 @@ export const TokenDetailHistoryList = ({
 
   const isReady = useRef(false);
   const lastMap = useRef<Record<string, number>>({});
-  const activeRequestKeyRef = useRef('');
   const dbLastCursorRef = useRef<number>(0);
   const hasMoreMap = useRef<Record<string, boolean>>({});
-  const [firstFetchDone, setFirstFetchDone] = useState(false);
 
   const [historySuccessList, setHistorySuccessList] = useState<string[]>(
     transactionHistoryService.getSucceedList(),
@@ -182,39 +178,13 @@ export const TokenDetailHistoryList = ({
   };
 
   const isMyAddress = useMemo(() => {
-    if (!finalAccount) {
-      return false;
-    }
     return (
       finalAccount?.type !== KEYRING_CLASS.WATCH &&
       finalAccount?.type !== KEYRING_CLASS.GNOSIS
     );
   }, [finalAccount]);
 
-  const requestKey = useMemo(
-    () =>
-      [
-        currentAddress?.toLowerCase() || '',
-        tokenItem.chain,
-        tokenItem.id,
-        isMyAddress ? 'db' : 'api',
-      ].join(':'),
-    [currentAddress, isMyAddress, tokenItem.chain, tokenItem.id],
-  );
-
-  const resetPagination = useMemoizedFn(() => {
-    lastMap.current = {};
-    hasMoreMap.current = {};
-    dbLastCursorRef.current = 0;
-  });
-
   const batchFetchData = useMemoizedFn(async () => {
-    if (activeRequestKeyRef.current !== requestKey) {
-      activeRequestKeyRef.current = requestKey;
-      resetPagination();
-      setFirstFetchDone(false);
-    }
-
     const list: HistoryDisplayItem[] = [];
     if (disableHistoryRequest) {
       return {
@@ -263,9 +233,6 @@ export const TokenDetailHistoryList = ({
     if (!isReady.current) {
       isReady.current = true;
     }
-    if (isMyAddress) {
-      setFirstFetchDone(true);
-    }
     return {
       list: orderBy(list, 'time_at', 'desc'),
       hasMore: Object.values(hasMoreMap.current).some(item => item),
@@ -282,13 +249,12 @@ export const TokenDetailHistoryList = ({
     cancel,
   } = useInfiniteScroll(() => batchFetchData(), {
     isNoMore: d => disableHistoryRequest || (d ? !d.hasMore : false),
-    reloadDeps: [requestKey, disableHistoryRequest],
     onSuccess() {},
   });
 
   const refresh = useMemoizedFn(() => {
-    resetPagination();
-    setFirstFetchDone(false);
+    lastMap.current = {};
+    hasMoreMap.current = {};
     if (!disableHistoryRequest) {
       reloadAsync();
     }
@@ -304,7 +270,7 @@ export const TokenDetailHistoryList = ({
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
 
   const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
-    resetPagination();
+    dbLastCursorRef.current = 0;
     reloadAsync();
   });
 
@@ -323,19 +289,6 @@ export const TokenDetailHistoryList = ({
     };
   }, [throttleBatchFetchData]);
 
-  useAppOrmSyncEvents({
-    taskFor: ['all-history'],
-    onRemoteDataUpserted: ctx => {
-      if (!ctx.success || !isMyAddress || !currentAddress) {
-        return;
-      }
-      if (ctx.owner_addr.toLowerCase() !== currentAddress.toLowerCase()) {
-        return;
-      }
-      throttleBatchFetchData();
-    },
-  });
-
   useMount(() => {
     const list = transactionHistoryService.getSucceedList();
     setHistorySuccessList(list);
@@ -350,16 +303,6 @@ export const TokenDetailHistoryList = ({
       }) || []
     );
   }, [fetchApiData]);
-
-  useEffect(() => {
-    if (!isMyAddress || !firstFetchDone || displayList.length) {
-      return;
-    }
-    if (!currentAddress) {
-      return;
-    }
-    syncSingleAddress(currentAddress.toLowerCase());
-  }, [currentAddress, displayList.length, firstFetchDone, isMyAddress]);
 
   return (
     <HistoryList
@@ -395,10 +338,7 @@ export const TokenDetailHistoryList = ({
       scrollEventThrottle={16}
       loadMore={() => {
         // avoid exec multi times loadMore
-        if (loading || loadingMore || noMore || !fetchApiData) {
-          return;
-        }
-        if (!fetchApiData.hasMore) {
+        if (loadingMore || noMore) {
           return;
         }
         loadMore();

@@ -23,7 +23,6 @@ import { trigger } from 'react-native-haptic-feedback';
 import QRCode from 'react-native-qrcode-svg';
 import { default as RcIconMCopy } from '@/assets2024/icons/address/mcopy-cc.svg';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
-import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import {
   createGlobalBottomSheetModal2024,
@@ -134,8 +133,7 @@ function ReceiveScreen(): JSX.Element {
         ) : (
           <Text style={styles.titleText}>******</Text>
         )}
-        <CustomTouchableOpacity
-          as="RNGHTouchableOpacity"
+        <Pressable
           style={styles.headerIconEye}
           onPress={() => setShowName(e => !e)}>
           {showName ? (
@@ -151,7 +149,7 @@ function ReceiveScreen(): JSX.Element {
               color={colors2024['neutral-title-1']}
             />
           )}
-        </CustomTouchableOpacity>
+        </Pressable>
       </View>
     ),
     [

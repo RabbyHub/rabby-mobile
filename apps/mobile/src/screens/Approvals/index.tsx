@@ -1,9 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Platform } from 'react-native';
-import { Tabs } from '@rabby-wallet/react-native-collapsible-tab-view/src';
-import { MaterialTabBar } from '@rabby-wallet/react-native-collapsible-tab-view/src/MaterialTabBar/TabBar';
-import { MaterialTabItem } from '@rabby-wallet/react-native-collapsible-tab-view/src/MaterialTabBar/TabItem';
+import {
+  Tabs,
+  MaterialTabBar,
+  MaterialTabItem,
+} from 'react-native-collapsible-tab-view';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';

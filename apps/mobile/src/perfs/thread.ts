@@ -3,7 +3,6 @@ import {
   isOnlineWorkerThreadEnabled,
   subscribeOnlineConfig,
 } from '@/core/config/online';
-import { IS_ANDROID, isBridgelessRuntimeEnabled } from '@/core/native/utils';
 import { Thread, ThreadError } from '@/core/native/RNThread';
 
 // relative path from the app bundle root
@@ -13,10 +12,6 @@ let didSubscribeOnlineConfig = false;
 
 export function isWorkerThreadRunning() {
   return workerThread.isRunning;
-}
-
-export function shouldDisableWorkerThread() {
-  return IS_ANDROID && isBridgelessRuntimeEnabled();
 }
 
 function startWorkerThreadOnce() {
@@ -34,13 +29,6 @@ function startWorkerThreadOnce() {
 }
 
 async function startWorkerThreadIfEnabled() {
-  if (shouldDisableWorkerThread()) {
-    console.debug(
-      '[perf] Worker Thread disabled on Android bridgeless runtime',
-    );
-    return;
-  }
-
   if (!isOnlineWorkerThreadEnabled()) {
     return;
   }

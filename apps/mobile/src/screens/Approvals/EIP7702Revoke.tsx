@@ -17,7 +17,7 @@ import {
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useApprovalsPage } from './useApprovalsPage';
-import { Tabs } from '@rabby-wallet/react-native-collapsible-tab-view/src';
+import { Tabs } from 'react-native-collapsible-tab-view';
 import { useFocusEffect } from '@react-navigation/native';
 import { SkeletonListByAssets } from './components/Skeleton';
 import { ApprovalsLayouts } from './layout';
@@ -331,7 +331,7 @@ export default function EIP7702RevokeList() {
         refreshControl={
           <RefreshControl
             {...(isIOS && {
-              progressViewOffset: ApprovalsLayouts.tabbarHeight,
+              progressViewOffset: -12,
             })}
             enabled={isSupportedAccount}
             refreshing={refreshing}
@@ -363,6 +363,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     listContainer: {
       paddingTop: 0,
       paddingBottom: 0,
+      ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),
     },
     itemSeparator: {
       height: 8,

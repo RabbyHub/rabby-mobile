@@ -32,18 +32,9 @@ interface Props {
   children: React.ReactElement<any>;
   preViewBorderRadius?: number;
   actions: ('copy' | 'pin' | 'edit' | 'delete')[];
-  androidTriggerMode?: React.ComponentProps<
-    typeof ContextMenuView
-  >['androidTriggerMode'];
 }
 export const AddressItemContextMenu: React.FC<Props> = props => {
-  const {
-    account,
-    children,
-    actions,
-    preViewBorderRadius = 20,
-    androidTriggerMode,
-  } = props;
+  const { account, children, actions, preViewBorderRadius = 20 } = props;
   const removeAccount = useDeleteAccountModal();
   const editAliasName = useAliasNameEditModal();
 
@@ -171,7 +162,6 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
         menuActions: menuActions,
       }}
       preViewBorderRadius={preViewBorderRadius}
-      androidTriggerMode={androidTriggerMode}
       triggerProps={{ action: 'longPress' }}>
       {children}
     </ContextMenuView>

@@ -41,7 +41,6 @@ const getStyles = (colors: AppColorsVariants) =>
     container: {
       borderWidth: 1,
       borderColor: colors['neutral-line'],
-      backgroundColor: colors['neutral-black'],
       width: 200,
       height: 200,
       borderRadius: 8,
@@ -50,12 +49,10 @@ const getStyles = (colors: AppColorsVariants) =>
     camera: {
       width: '100%',
       height: '100%',
-      backgroundColor: colors['neutral-black'],
     },
     cameraWrap: {
       position: 'relative',
       borderRadius: 8,
-      backgroundColor: colors['neutral-black'],
       overflow: 'hidden',
       filter: 'blur(4px)',
     },
@@ -175,6 +172,7 @@ export interface QRCodeScannerProps extends CameraViewProps {}
 export const QRCodeScanner = (props: QRCodeScannerProps) => {
   const { hasPermission, requestPermission } = useCameraPermission();
   const appState = useAppState();
+  const colors = useThemeColors();
 
   React.useEffect(() => {
     if (!hasPermission && appState === 'active') {

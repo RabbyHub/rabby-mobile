@@ -270,23 +270,21 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
           <Dots color={contentColor} />
         ) : null}
       </View>
-      {description ? (
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          style={styles.description}>
-          <Text
-            style={[
-              styles.descriptionText,
-              {
-                color: colors2024['neutral-secondary'],
-              },
-            ]}>
-            {description}
-          </Text>
-        </ScrollView>
-      ) : (
-        <View style={styles.noDescription} />
-      )}
+      <ScrollView
+        style={StyleSheet.flatten([
+          styles.description,
+          !description && styles.noDescription,
+        ])}>
+        <Text
+          style={[
+            styles.descriptionText,
+            {
+              color: colors2024['neutral-secondary'],
+            },
+          ]}>
+          {description}
+        </Text>
+      </ScrollView>
 
       <View style={styles.footer}>
         {status === 'SENDING' && <FooterResend onResend={onRetry} />}

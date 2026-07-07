@@ -1,4 +1,5 @@
 import React, {
+  type Ref,
   useCallback,
   useImperativeHandle,
   useSyncExternalStore,
@@ -6,7 +7,7 @@ import React, {
 
 import {
   AppSwitch2024,
-  SwitchToggleRefProp,
+  SwitchToggleType,
 } from '@/components/customized/Switch2024';
 import { preferenceService } from '@/core/services';
 import { perfEvents } from '@/core/utils/perf';
@@ -35,7 +36,9 @@ function getUserBehaviorTrackingOptOutSnapshot() {
 export const SwitchUserBehaviorTrackingOptOut = ({
   ref,
   ...props
-}: React.ComponentProps<typeof AppSwitch2024> & SwitchToggleRefProp) => {
+}: React.ComponentProps<typeof AppSwitch2024> & {
+  ref?: Ref<SwitchToggleType>;
+}) => {
   const optOut = useSyncExternalStore(
     subscribeUserBehaviorTrackingOptOut,
     getUserBehaviorTrackingOptOutSnapshot,
@@ -77,7 +80,9 @@ export const SwitchUserBehaviorTrackingOptOut = ({
 export const SwitchDataAnalysis = ({
   ref,
   ...props
-}: React.ComponentProps<typeof AppSwitch2024> & SwitchToggleRefProp) => {
+}: React.ComponentProps<typeof AppSwitch2024> & {
+  ref?: Ref<SwitchToggleType>;
+}) => {
   const optOut = useSyncExternalStore(
     subscribeUserBehaviorTrackingOptOut,
     getUserBehaviorTrackingOptOutSnapshot,
