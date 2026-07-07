@@ -1,4 +1,4 @@
-import RNFS from 'react-native-fs';
+import RNFS from '@rabby-wallet/react-native-fs';
 import { getRabbyAppDbName, getRabbyAppDbPath } from './constant';
 import { toast } from '@/components2024/Toast';
 import { Platform, Share } from 'react-native';
@@ -48,7 +48,9 @@ export async function getDbFileSize() {
       : Promise.resolve(0),
   ]).then(allInfosResult => {
     const total_bytes = allInfosResult.reduce((acc, promiseRet) => {
-      if (promiseRet.status === 'fulfilled') acc += promiseRet.value;
+      if (promiseRet.status === 'fulfilled') {
+        acc += promiseRet.value;
+      }
 
       return acc;
     }, 0);
@@ -58,35 +60,32 @@ export async function getDbFileSize() {
 }
 
 export async function removeDBFiles() {
-  return walkDbFiles().then(result => {
-    Promise.allSettled([
-      result.db && RNFS.unlink(result.db.path),
-      result.dbshm && RNFS.unlink(result.dbshm.path),
-      result.dbwal && RNFS.unlink(result.dbwal.path),
-    ]).then(([db, dbshm, dbwal]) => {
-      if (db.status === 'fulfilled' && db.value) {
-        console.debug(
-          `DB file removed: ${
-            db.status === 'fulfilled' ? 'success' : 'failed'
-          }`,
-        );
-      }
-      if (dbshm.status === 'fulfilled' && dbshm.value) {
-        console.debug(
-          `DB-SHM file removed: ${
-            dbshm.status === 'fulfilled' ? 'success' : 'failed'
-          }`,
-        );
-      }
-      if (dbwal.status === 'fulfilled' && dbwal.value) {
-        console.debug(
-          `DB-WAL file removed: ${
-            dbwal.status === 'fulfilled' ? 'success' : 'failed'
-          }`,
-        );
-      }
-    });
-  });
+  const result = await walkDbFiles();
+  const [db, dbshm, dbwal] = await Promise.allSettled([
+    result.db && RNFS.unlink(result.db.path),
+    result.dbshm && RNFS.unlink(result.dbshm.path),
+    result.dbwal && RNFS.unlink(result.dbwal.path),
+  ]);
+
+  if (db.status === 'fulfilled' && db.value) {
+    console.debug(
+      `DB file removed: ${db.status === 'fulfilled' ? 'success' : 'failed'}`,
+    );
+  }
+  if (dbshm.status === 'fulfilled' && dbshm.value) {
+    console.debug(
+      `DB-SHM file removed: ${
+        dbshm.status === 'fulfilled' ? 'success' : 'failed'
+      }`,
+    );
+  }
+  if (dbwal.status === 'fulfilled' && dbwal.value) {
+    console.debug(
+      `DB-WAL file removed: ${
+        dbwal.status === 'fulfilled' ? 'success' : 'failed'
+      }`,
+    );
+  }
 }
 
 function getDbPath(databaseName: string, location = 'default') {
@@ -126,7 +125,7 @@ export const downloadDbFile = async () => {
   }
 
   const dbPath = getDbPath(getRabbyAppDbName()) || '';
-  let destPath;
+  let destPath = '';
   if (Platform.OS === 'android') {
     destPath = RNFS.ExternalStorageDirectoryPath + '/' + getRabbyAppDbName();
   } else if (Platform.OS === 'ios') {
@@ -136,13 +135,12 @@ export const downloadDbFile = async () => {
   try {
     const exists = await RNFS.exists(dbPath);
     if (exists) {
-      const destExists = await RNFS.exists(destPath);
-
-      if (destExists && Platform.OS === 'ios') {
-        await RNFS.unlink(destPath);
-      }
-
-      await RNFS.copyFile(dbPath, destPath);
+      await RNFS.persistFile(dbPath, destPath, {
+        mode: 'copy',
+        overwrite: true,
+        ensureParent: true,
+        NSURLIsExcludedFromBackupKey: true,
+      });
 
       if (Platform.OS === 'ios') {
         await Share.share({ url: `file://${destPath}` });

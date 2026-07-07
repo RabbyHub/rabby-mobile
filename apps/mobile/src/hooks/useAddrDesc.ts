@@ -9,7 +9,7 @@ import { getCexWithLocalCache } from '@/databases/hooks/cex';
 const queue = new PQueue({ intervalCap: 10, concurrency: 7, interval: 1000 });
 
 export const useFetchCexInfo = () => {
-  const { accounts } = useAccounts();
+  const { accounts } = useAccounts({ disableAutoFetch: true });
   const { whitelist } = useWhitelist();
 
   const pendingFetchCexAddresses = useMemo(() => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -8,6 +8,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { default as RcIconEyeCC } from '@/assets/icons/receive/eye-cc.svg';
 import { default as RcIconEyeCloseCC } from '@/assets/icons/receive/eye-close-cc.svg';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 const historyHitSlop = {
   top: 4,
@@ -42,8 +43,17 @@ export const HistoryFilterMenu = ({
   };
   return (
     <View style={styles.container}>
-      {/* <TouchableOpacity hitSlop={historyHitSlop} onPress={switchShowAll}> */}
-      <AppSwitch2024 value={!isShowAll} onValueChange={e => switchShowAll(e)} />
+      <CustomTouchableOpacity
+        as="RNGHTouchableOpacity"
+        hitSlop={historyHitSlop}
+        activeOpacity={1}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: !isShowAll }}
+        onPress={() => switchShowAll(isShowAll)}>
+        <View pointerEvents="none">
+          <AppSwitch2024 value={!isShowAll} accessible={false} />
+        </View>
+      </CustomTouchableOpacity>
       {/* {isShowAll ? (
           <RcIconEyeCC
             color={colors2024['neutral-foot']}
@@ -59,7 +69,6 @@ export const HistoryFilterMenu = ({
             height={24}
           />
         )} */}
-      {/* </TouchableOpacity> */}
     </View>
   );
 };

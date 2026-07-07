@@ -1,0 +1,55 @@
+{
+  "name": "@react-native-menu/menu",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Local source fork of @react-native-menu/menu 2.0.0 for Rabby Mobile",
+  "main": "lib/commonjs/index",
+  "module": "lib/module/index",
+  "types": "lib/typescript/src/index.d.ts",
+  "react-native": "src/index",
+  "source": "src/index",
+  "files": [
+    "src",
+    "lib",
+    "android",
+    "ios",
+    "react-native-menu.podspec",
+    "!lib/typescript/example",
+    "!**/__tests__",
+    "!**/__fixtures__",
+    "!**/__mocks__"
+  ],
+  "keywords": [
+    "react-native",
+    "ios",
+    "android"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RabbyHub/rabby-mobile.git",
+    "directory": "packages/react-native-menu"
+  },
+  "author": "Jesse Katsumata <jesse.katsumata@gmail.com> (https://github.com/Naturalclar)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/RabbyHub/rabby-mobile/issues"
+  },
+  "homepage": "https://github.com/RabbyHub/rabby-mobile",
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "codegenConfig": {
+    "name": "RNMenuViewSpec",
+    "type": "components",
+    "jsSrcsDir": "src",
+    "ios": {
+      "componentProvider": {
+        "MenuView": "MenuView"
+      }
+    }
+  }
+}

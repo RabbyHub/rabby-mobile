@@ -109,23 +109,56 @@ export function usePasswordStatus() {
   };
 }
 
+export async function getBootstrapAccountFlags() {
+  const visibleAccountsCount =
+    await keyringService.getCountOfAccountsInKeyring();
+  const hasVisibleAccounts = visibleAccountsCount > 0;
+
+  return {
+    hasVisibleAccounts,
+    hasStoredKeyrings:
+      hasVisibleAccounts ||
+      keyringService.hasVault() ||
+      keyringService.hasEncryptedKeyringData() ||
+      keyringService.hasUnencryptedKeyringData(),
+  };
+}
+
+export const loadBootstrapAppLockState = async () => {
+  const [lockInfo, accountFlags] = await Promise.all([
+    apisLock.getRabbyLockInfo(),
+    getBootstrapAccountFlags(),
+  ]);
+  const appUnlocked = keyringService.isUnlocked();
+  const isUnlockSessionValid = apisLock.isUnlockSessionValid();
+
+  if (!appUnlocked && isUnlockSessionValid) {
+    apisAutoLock.refreshAutolockTimeout();
+  }
+
+  const nextState = {
+    appUnlocked,
+    isUnlockSessionValid,
+    ...accountFlags,
+    pwdStatus: lockInfo.pwdStatus,
+  };
+
+  setAppLock(nextState);
+  return nextState;
+};
+
 export const getTriedUnlock = async () => {
   return apisLock
     .tryAutoUnlockRabbyMobileWithUpdateUnlockTime()
     .then(async result => {
-      const accounts = await keyringService.getAllVisibleAccountsArray();
+      const accountFlags = await getBootstrapAccountFlags();
       if (!keyringService.isUnlocked() && apisLock.isUnlockSessionValid()) {
         apisAutoLock.refreshAutolockTimeout();
       }
       setAppLock({
         appUnlocked: keyringService.isUnlocked(),
         isUnlockSessionValid: apisLock.isUnlockSessionValid(),
-        hasVisibleAccounts: accounts.length > 0,
-        hasStoredKeyrings:
-          accounts.length > 0 ||
-          keyringService.hasVault() ||
-          keyringService.hasEncryptedKeyringData() ||
-          keyringService.hasUnencryptedKeyringData(),
+        ...accountFlags,
         pwdStatus: result.lockInfo.pwdStatus,
       });
       return result;
@@ -146,17 +179,12 @@ export const fetchLockInfo = makeAvoidParallelAsyncFunc(async () => {
 
   try {
     const response = await apisLock.getRabbyLockInfo();
-    const accounts = await keyringService.getAllVisibleAccountsArray();
+    const accountFlags = await getBootstrapAccountFlags();
 
     setAppLock({
       appUnlocked: keyringService.isUnlocked(),
       isUnlockSessionValid: apisLock.isUnlockSessionValid(),
-      hasVisibleAccounts: accounts.length > 0,
-      hasStoredKeyrings:
-        accounts.length > 0 ||
-        keyringService.hasVault() ||
-        keyringService.hasEncryptedKeyringData() ||
-        keyringService.hasUnencryptedKeyringData(),
+      ...accountFlags,
       pwdStatus: response.pwdStatus,
     });
 

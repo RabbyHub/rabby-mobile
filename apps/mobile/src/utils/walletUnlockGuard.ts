@@ -12,6 +12,7 @@ export function setWalletUnlockRequester(requester: WalletUnlockRequester) {
 
 export async function ensureWalletUnlocked() {
   if (apisLock.isUnlocked()) {
+    await apisLock.ensureKeyringRuntimeReady('wallet_unlock_guard');
     return;
   }
 
@@ -20,6 +21,7 @@ export async function ensureWalletUnlocked() {
   }
 
   await walletUnlockRequester();
+  await apisLock.ensureKeyringRuntimeReady('wallet_unlock_guard_after_request');
 }
 
 export function isWalletUnlockRequired(error: unknown) {

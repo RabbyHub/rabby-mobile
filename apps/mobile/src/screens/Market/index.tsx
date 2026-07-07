@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import { Platform, View } from 'react-native';
 
 import { RcNextSearchCC } from '@/assets/icons/common';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
@@ -81,7 +82,8 @@ export default function MarketScreen() {
 
   const renderHeaderRight = useCallback(
     () => (
-      <Pressable
+      <CustomTouchableOpacity
+        as="RNGHTouchableOpacity"
         hitSlop={10}
         style={styles.headerRight}
         onPress={() => {
@@ -95,7 +97,7 @@ export default function MarketScreen() {
           height={20}
           color={colors2024['neutral-title-1']}
         />
-      </Pressable>
+      </CustomTouchableOpacity>
     ),
     [colors2024, navigation, styles.headerRight],
   );

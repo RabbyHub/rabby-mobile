@@ -307,6 +307,7 @@ export const Button = ({
       testID="RABBY_BUTTON_WRAPPER">
       <TouchableComponentInternal
         onPress={handleOnPress}
+        disabled={treatAsDisabled}
         delayPressIn={0}
         activeOpacity={treatAsDisabled ? 1 : 0.3}
         accessibilityRole="button"

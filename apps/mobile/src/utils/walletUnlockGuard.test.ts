@@ -5,6 +5,7 @@ function loadWalletUnlockGuardModule(isUnlocked: boolean) {
 
   jest.doMock('@/core/apis/lock', () => ({
     isUnlocked: (...args: unknown[]) => mockIsUnlocked(...args),
+    ensureKeyringRuntimeReady: jest.fn(async () => undefined),
   }));
   jest.doMock('@rabby-wallet/keyring-utils', () => ({
     KEYRING_TYPE: {

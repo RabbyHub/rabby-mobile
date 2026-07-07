@@ -1,7 +1,11 @@
 import { zCreate } from '@/core/utils/reexports';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { AppChainEntity } from '@/databases/entities/appchain';
-import { syncProtocols, syncSpecificProtocol } from '@/databases/hooks/assets';
+import {
+  syncProtocols,
+  syncProtocolsForAddresses,
+  syncSpecificProtocol,
+} from '@/databases/hooks/assets';
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { formatAppChain } from '@/utils/appchain';
 import { reportLendingUserStatusOnce } from '@/utils/lendingUserStatus';
@@ -287,18 +291,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
 
     set(() => ({ isLoading: true }));
     try {
-      const results = await Promise.all(
-        lowerAddresses.map(address => syncProtocols(address, force)),
-      );
-      const resultMap: Record<string, IProtocolItem[]> = {};
-      results.forEach((protocols, index) => {
-        const address = lowerAddresses[index];
-        if (!address) {
-          return;
-        }
-        const lower = address.toLowerCase();
-        resultMap[lower] = protocols;
-      });
+      const resultMap = await syncProtocolsForAddresses(lowerAddresses, force);
       set(() => ({ protocolMap: resultMap }));
       reportLendingUserStatusOnce({
         addresses: lowerAddresses,

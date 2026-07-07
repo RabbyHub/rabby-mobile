@@ -45,7 +45,6 @@ export type SwitchProps = TouchableWithoutFeedbackProps & {
   testID?: string;
 };
 
-export type RabbySwitch = {};
 const Switch = ({
   value: propValue = false,
   onValueChange = () => null,

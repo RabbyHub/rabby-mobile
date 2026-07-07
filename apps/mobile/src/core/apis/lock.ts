@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
 import { BroadcastEvent } from '@/constant/event';
+import { APP_TEST_PWD, NEED_DEVSETTINGBLOCKS } from '@/constant';
 import {
   keyringService,
   perpsService,
@@ -21,6 +22,10 @@ import {
   refreshAutolockTimeout,
 } from './autoLock';
 import { logger } from '@/utils/logger';
+import { traceAndroidInstant } from '../utils/androidTrace';
+import { isNonProductionDiagnosticsEnabled } from '../utils/diagnosticEnv';
+import { runAfterHomePostStartupReady } from '../utils/homeStartupReady';
+import { recordKeyringRuntimeConvergenceDiagnostic } from '../utils/startupDiagnostics';
 
 export const enum PasswordStatus {
   Unknown = -1,
@@ -34,6 +39,7 @@ export type UnlockWalletOptions = {
   trustedVaultKeyString?: string;
   onTrustedVaultKeyString?: (vaultKeyString: string) => void | Promise<void>;
   deferMemStoreKeyringsUpdate?: boolean;
+  deferKeyringRuntimeRestore?: boolean;
 };
 export type ValidationBehaviorOnFinishedContext = {
   hasSetupCustomPassword?: boolean;
@@ -93,17 +99,43 @@ const ERRORS = {
 };
 
 const isAndroid = Platform.OS === 'android';
+const KEYRING_RUNTIME_CONVERGENCE_FALLBACK_MS = 5000;
 
 function traceAndroidUnlockPerf(
   event: string,
   data: Record<string, unknown> = {},
 ) {
-  if (!isAndroid) {
+  if (!isAndroid || !isNonProductionDiagnosticsEnabled) {
     return;
   }
 
   logger.info(`[RabbyUnlockPerf:lock] ${event}`, data);
   console.info('[RabbyUnlockPerf:lock]', event, data);
+  traceAndroidInstant(`unlock.lock_api.${event}`, data);
+}
+
+function getKeyringRuntimeDiagnosticState() {
+  const state = keyringService.memStore.getState();
+
+  return {
+    runtimeReady: state.keyringRuntimeReady,
+    runtimeRestoring: state.keyringRuntimeRestoring,
+    runtimeError: state.keyringRuntimeRestoreError,
+    keyringCount: state.keyrings.length,
+  };
+}
+
+function traceKeyringRuntimeConvergence(
+  event: string,
+  data: Record<string, unknown> = {},
+) {
+  const payload = {
+    ...getKeyringRuntimeDiagnosticState(),
+    ...data,
+  };
+
+  recordKeyringRuntimeConvergenceDiagnostic(event, payload);
+  traceAndroidUnlockPerf(event, payload);
 }
 
 export async function throwErrorIfInvalidPwd(password: string) {
@@ -126,7 +158,7 @@ export async function verifyPasswordOrUnlock(password: string) {
     throw new Error(result.formFieldError || ERRORS.INCORRECT_PASSWORD);
   }
   updateUnlockTime();
-  notifyUserManuallyUnlockUIReady();
+  notifyPostUnlockUIReady();
 }
 
 export async function setupWalletPassword(newPassword: string) {
@@ -264,6 +296,47 @@ export async function clearCustomPassword(currentPassword: string) {
   return result;
 }
 
+/**
+ * Debug-only helper for dev/regression packages.
+ * Requires the wallet to be unlocked, then re-encrypts the current vault with
+ * the standard local test password.
+ */
+export async function debugSetUnlockedWalletPasswordToTestPassword() {
+  const result = { error: '' };
+  if (!NEED_DEVSETTINGBLOCKS || !APP_TEST_PWD) {
+    result.error = 'Only available in non-production packages';
+    return result;
+  }
+
+  if (!keyringService.isUnlocked()) {
+    result.error = 'Unlock wallet before setting the test password';
+    return result;
+  }
+
+  const debugKeyringService = keyringService as typeof keyringService & {
+    dangerouslySetUnlockedPasswordForDebug?: (
+      newPassword: string,
+    ) => Promise<void>;
+  };
+
+  if (!debugKeyringService.dangerouslySetUnlockedPasswordForDebug) {
+    result.error = 'Current keyring service does not support this debug action';
+    return result;
+  }
+
+  try {
+    await debugKeyringService.dangerouslySetUnlockedPasswordForDebug(
+      APP_TEST_PWD,
+    );
+    resetMultipleFailed();
+  } catch (error) {
+    console.error(error);
+    result.error = 'Failed to set test password';
+  }
+
+  return result;
+}
+
 /* ===================== Password:end ===================== */
 
 export async function getRabbyLockInfo() {
@@ -323,6 +396,143 @@ export function isUnlocked() {
   return keyringService.isUnlocked();
 }
 
+export function isKeyringRuntimeReady() {
+  return keyringService.isKeyringRuntimeReady();
+}
+
+export async function ensureKeyringRuntimeReady(reason = 'lock_api') {
+  return keyringService.ensureKeyringRuntimeReady(reason);
+}
+
+const keyringRuntimeConvergenceRef = {
+  generation: 0,
+  cancel: null as (() => void) | null,
+  running: false,
+};
+
+function cancelKeyringRuntimeConvergence(reason: string) {
+  keyringRuntimeConvergenceRef.generation += 1;
+  const cancel = keyringRuntimeConvergenceRef.cancel;
+  keyringRuntimeConvergenceRef.cancel = null;
+  cancel?.();
+  keyringRuntimeConvergenceRef.cancel = null;
+  traceKeyringRuntimeConvergence('keyring_runtime_convergence_cancel', {
+    reason,
+  });
+}
+
+export function scheduleKeyringRuntimeConvergence(reason = 'unknown') {
+  if (!keyringService.isUnlocked()) {
+    traceKeyringRuntimeConvergence('keyring_runtime_convergence_skip_locked', {
+      reason,
+    });
+    return () => undefined;
+  }
+
+  keyringRuntimeConvergenceRef.cancel?.();
+  const generation = keyringRuntimeConvergenceRef.generation + 1;
+  keyringRuntimeConvergenceRef.generation = generation;
+
+  traceKeyringRuntimeConvergence('keyring_runtime_convergence_scheduled', {
+    reason,
+    generation,
+    fallbackMs: KEYRING_RUNTIME_CONVERGENCE_FALLBACK_MS,
+    runtimeReady: keyringService.isKeyringRuntimeReady(),
+  });
+
+  const cancelHomeReadyWait = runAfterHomePostStartupReady(
+    () => {
+      if (generation !== keyringRuntimeConvergenceRef.generation) {
+        traceKeyringRuntimeConvergence(
+          'keyring_runtime_convergence_skip_stale',
+          {
+            reason,
+            generation,
+          },
+        );
+        return;
+      }
+
+      keyringRuntimeConvergenceRef.cancel = null;
+      if (!keyringService.isUnlocked()) {
+        traceKeyringRuntimeConvergence(
+          'keyring_runtime_convergence_skip_locked_run',
+          {
+            reason,
+            generation,
+          },
+        );
+        return;
+      }
+
+      if (keyringRuntimeConvergenceRef.running) {
+        traceKeyringRuntimeConvergence(
+          'keyring_runtime_convergence_skip_running',
+          {
+            reason,
+            generation,
+          },
+        );
+        return;
+      }
+
+      keyringRuntimeConvergenceRef.running = true;
+      const startedAt = Date.now();
+      traceKeyringRuntimeConvergence('keyring_runtime_convergence_start', {
+        reason,
+        generation,
+        runtimeReady: keyringService.isKeyringRuntimeReady(),
+      });
+
+      void Promise.resolve()
+        .then(() =>
+          (
+            keyringService as KeyringServiceWithUnlockOptions
+          ).refreshMemStoreKeyrings?.(),
+        )
+        .then(() => {
+          traceKeyringRuntimeConvergence('keyring_runtime_convergence_end', {
+            reason,
+            generation,
+            elapsedMs: Date.now() - startedAt,
+            runtimeReady: keyringService.isKeyringRuntimeReady(),
+          });
+        })
+        .catch(error => {
+          traceKeyringRuntimeConvergence('keyring_runtime_convergence_error', {
+            reason,
+            generation,
+            elapsedMs: Date.now() - startedAt,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        })
+        .finally(() => {
+          keyringRuntimeConvergenceRef.running = false;
+        });
+    },
+    {
+      fallbackMs: KEYRING_RUNTIME_CONVERGENCE_FALLBACK_MS,
+      label: 'keyring_runtime_convergence',
+    },
+  );
+
+  const cancel = () => {
+    if (generation !== keyringRuntimeConvergenceRef.generation) {
+      return;
+    }
+
+    keyringRuntimeConvergenceRef.generation += 1;
+    keyringRuntimeConvergenceRef.cancel = null;
+    cancelHomeReadyWait();
+    traceKeyringRuntimeConvergence('keyring_runtime_convergence_cancel', {
+      reason: 'dispose',
+    });
+  };
+
+  keyringRuntimeConvergenceRef.cancel = cancel;
+  return cancel;
+}
+
 export async function isLockedWithCustomPassword() {
   if (keyringService.isUnlocked()) return false;
 
@@ -377,6 +587,7 @@ async function unlockWallet(
         trustedVaultKeyString: options.trustedVaultKeyString,
         onTrustedVaultKeyString: options.onTrustedVaultKeyString,
         deferMemStoreKeyringsUpdate: options.deferMemStoreKeyringsUpdate,
+        deferKeyringRuntimeRestore: options.deferKeyringRuntimeRestore,
       },
     );
     traceAndroidUnlockPerf('submit_password_end', {
@@ -491,7 +702,7 @@ export const tryAutoUnlockRabbyMobileWithUpdateUnlockTime = async () => {
   if (keyringService.isUnlocked()) {
     updateUnlockTime();
     if (!wasUnlocked) {
-      notifyUserManuallyUnlockUIReady();
+      notifyPostUnlockUIReady();
     }
   }
   return result;
@@ -513,48 +724,57 @@ export function subscribeAppLock(fn: () => any) {
   return dispose;
 }
 
-type UserManuallyUnlockContext = {
+type WalletAuthUnlockedContext = {
   isFirstTimeAfterLaunch: boolean;
 };
 
-const pendingUserManuallyUnlockUIReadyRef = {
-  current: null as UserManuallyUnlockContext | null,
+const pendingPostUnlockUIReadyRef = {
+  current: null as WalletAuthUnlockedContext | null,
 };
 
-export function notifyUserManuallyUnlockUIReady(
-  expectedCtx?: UserManuallyUnlockContext,
+export function notifyPostUnlockUIReady(
+  expectedCtx?: WalletAuthUnlockedContext,
 ) {
-  const ctx = pendingUserManuallyUnlockUIReadyRef.current;
+  const ctx = pendingPostUnlockUIReadyRef.current;
   if (!ctx || (expectedCtx && ctx !== expectedCtx)) {
     return;
   }
 
-  pendingUserManuallyUnlockUIReadyRef.current = null;
+  pendingPostUnlockUIReadyRef.current = null;
   if (!keyringService.isUnlocked()) {
     return;
   }
 
-  void Promise.resolve()
-    .then(() =>
-      (
-        keyringService as KeyringServiceWithUnlockOptions
-      ).refreshMemStoreKeyrings?.(),
-    )
-    .catch(error => {
-      traceAndroidUnlockPerf('refresh_memstore_keyrings_error', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-    });
+  traceAndroidUnlockPerf('post_unlock_ui_ready_emit_start', {
+    listenerCount: perfEvents.listenerCount('POST_UNLOCK_UI_READY'),
+    legacyListenerCount: perfEvents.listenerCount(
+      'USER_MANUALLY_UNLOCK_UI_READY',
+    ),
+  });
+  perfEvents.emit('POST_UNLOCK_UI_READY', ctx);
   perfEvents.emit('USER_MANUALLY_UNLOCK_UI_READY', ctx);
+  traceAndroidUnlockPerf('post_unlock_ui_ready_emit_end');
 }
 
-export function deferNotifyUserManuallyUnlockUIReady() {
-  const ctx = pendingUserManuallyUnlockUIReadyRef.current;
+export function deferNotifyPostUnlockUIReady() {
+  const ctx = pendingPostUnlockUIReadyRef.current;
   if (!ctx) {
     return null;
   }
   // Capture this unlock so delayed callbacks cannot consume a later unlock.
-  return () => notifyUserManuallyUnlockUIReady(ctx);
+  return () => notifyPostUnlockUIReady(ctx);
+}
+
+/** @deprecated use notifyPostUnlockUIReady */
+export function notifyUserManuallyUnlockUIReady(
+  expectedCtx?: WalletAuthUnlockedContext,
+) {
+  notifyPostUnlockUIReady(expectedCtx);
+}
+
+/** @deprecated use deferNotifyPostUnlockUIReady */
+export function deferNotifyUserManuallyUnlockUIReady() {
+  return deferNotifyPostUnlockUIReady();
 }
 
 runIIFEFunc(() => {
@@ -566,15 +786,26 @@ runIIFEFunc(() => {
     if (ctx.scene === 'unlock') {
       const isFirstTimeAfterLaunch = isFirstTimeAfterLaunchRef.current;
       isFirstTimeAfterLaunchRef.current = false;
-      pendingUserManuallyUnlockUIReadyRef.current = {
+      pendingPostUnlockUIReadyRef.current = {
         isFirstTimeAfterLaunch,
       };
+      traceAndroidUnlockPerf('wallet_auth_unlocked_emit_start', {
+        isFirstTimeAfterLaunch,
+        listenerCount: perfEvents.listenerCount('WALLET_AUTH_UNLOCKED'),
+        legacyListenerCount: perfEvents.listenerCount('USER_MANUALLY_UNLOCK'),
+      });
+      perfEvents.emit('WALLET_AUTH_UNLOCKED', {
+        isFirstTimeAfterLaunch,
+      });
       perfEvents.emit('USER_MANUALLY_UNLOCK', {
         isFirstTimeAfterLaunch,
       });
+      traceAndroidUnlockPerf('wallet_auth_unlocked_emit_end');
+      scheduleKeyringRuntimeConvergence('wallet_auth_unlocked');
     }
   });
   keyringService.on('lock', () => {
-    pendingUserManuallyUnlockUIReadyRef.current = null;
+    pendingPostUnlockUIReadyRef.current = null;
+    cancelKeyringRuntimeConvergence('lock');
   });
 });

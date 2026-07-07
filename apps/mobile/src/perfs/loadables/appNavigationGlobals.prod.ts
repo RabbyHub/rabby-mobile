@@ -106,10 +106,10 @@ export const GlobalSecurityTipStubModal = registerAppScreen<
 });
 
 export const BackgroundSecureBlurView = registerAppScreen<
-  typeof import('@/components/customized/BlurViews').BackgroundSecureBlurView
+  typeof import('@/components/customized/BackgroundSecureBlurView').BackgroundSecureBlurView
 >({
   loader: () =>
-    import('@/components/customized/BlurViews').then(m => ({
+    import('@/components/customized/BackgroundSecureBlurView').then(m => ({
       default: m.BackgroundSecureBlurView,
     })),
 });
@@ -121,6 +121,39 @@ export const FloatingDiagnosticsPanel = registerAppScreen<
     import('@/screens/Settings/components/FloatingDiagnosticsPanel').then(
       m => ({
         default: m.FloatingDiagnosticsPanel,
+      }),
+    ),
+});
+
+export const FloatingDbSyncSummaryPanel = registerAppScreen<
+  typeof import('@/screens/Settings/components/FloatingDbSyncSummaryPanel').FloatingDbSyncSummaryPanel
+>({
+  loader: () =>
+    import('@/screens/Settings/components/FloatingDbSyncSummaryPanel').then(
+      m => ({
+        default: m.FloatingDbSyncSummaryPanel,
+      }),
+    ),
+});
+
+export const FloatingKeyringRuntimePanel = registerAppScreen<
+  typeof import('@/screens/Settings/components/FloatingKeyringRuntimePanel').FloatingKeyringRuntimePanel
+>({
+  loader: () =>
+    import('@/screens/Settings/components/FloatingKeyringRuntimePanel').then(
+      m => ({
+        default: m.FloatingKeyringRuntimePanel,
+      }),
+    ),
+});
+
+export const FloatingOpenApiSummaryPanel = registerAppScreen<
+  typeof import('@/screens/Settings/components/FloatingOpenApiSummaryPanel').FloatingOpenApiSummaryPanel
+>({
+  loader: () =>
+    import('@/screens/Settings/components/FloatingOpenApiSummaryPanel').then(
+      m => ({
+        default: m.FloatingOpenApiSummaryPanel,
       }),
     ),
 });

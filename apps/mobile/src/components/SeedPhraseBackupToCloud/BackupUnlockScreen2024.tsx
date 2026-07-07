@@ -76,7 +76,9 @@ export const BackupUnlockScreen: React.FC<Props> = ({
   isError,
   onClearError,
 }) => {
-  const [password, setPassword] = React.useState<string>(APP_TEST_PWD);
+  const [password, setPassword] = React.useState<string>(
+    __DEV__ ? APP_TEST_PWD : '',
+  );
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [error, setError] = React.useState<string>();
   const { t } = useTranslation();

@@ -25,6 +25,7 @@ import {
 } from './state';
 import { walletConnectStorage } from './storage';
 import { emitWalletConnectUiEvent } from './uiEvents';
+import { traceAndroidInstant } from '../utils/androidTrace';
 
 type WalletConnectCore = InstanceType<typeof Core> & {
   pairing?: {
@@ -185,12 +186,23 @@ export async function initWalletConnect() {
 
 export function startRestoreWalletConnectSessions() {
   if (!RABBY_MOBILE_WALLETCONNECT_PROJECT_ID) {
+    traceAndroidInstant('global_task.walletconnect_restore.skipped', {
+      reason: 'missing_project_id',
+    });
     return;
   }
 
+  traceAndroidInstant('global_task.walletconnect_restore.start', {
+    hasInitPromise: Boolean(initPromise),
+    hasClient: Boolean(walletKitClient),
+  });
   initWalletConnect().catch((error: unknown) => {
+    traceAndroidInstant('global_task.walletconnect_restore.error', {
+      error: getWalletConnectErrorMessage(error),
+    });
     console.warn('startRestoreWalletConnectSessions::error', error);
   });
+  traceAndroidInstant('global_task.walletconnect_restore.end');
 }
 
 export function getWalletConnectClient() {

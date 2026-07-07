@@ -81,6 +81,7 @@ function loadAddressModule({
   jest.doMock('@rabby-wallet/eth-keyring-watch', () => jest.fn());
   jest.doMock('@/core/apis/lock', () => ({
     isUnlocked: (...args: unknown[]) => mockIsUnlocked(...args),
+    ensureKeyringRuntimeReady: jest.fn(async () => undefined),
   }));
   jest.doMock('@/constant/event', () => ({
     BroadcastEvent: {

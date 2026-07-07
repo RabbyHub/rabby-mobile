@@ -44,6 +44,7 @@ import {
   useExpScreenCapture,
   useIosForceDisableAlertForSensitiveScene,
   useMockBatchRevoke,
+  useScreenshotDebugToast,
   useTimeTipAboutSeedPhraseAndPrivateKey,
   useToastOpenApiHttpErrorStatus,
   useToggleShowAutoLockCountdown,
@@ -66,6 +67,8 @@ import { SwitchAllowScreenshot } from '../Settings/components/SwitchAllowScreens
 import { LabelScreenshotToReport } from '../Settings/components/SwitchScreenshotToReport';
 import { useAutoLockCountDown } from '../Settings/components/LockAbout';
 import { SwitchShowFloatingAutoLockCountdown } from '../Settings/components/SwitchFloatingView';
+import { useToggleShowOpenApiSummaryPanel } from '../Settings/components/FloatingOpenApiSummaryPanel';
+import { useToggleShowKeyringRuntimePanel } from '../Settings/components/FloatingKeyringRuntimePanel';
 import { useGoogleSign } from '@/hooks/cloudStorage';
 import {
   deleteAllBackups,
@@ -379,6 +382,8 @@ function DevSwitchAboutScreenProtection() {
 
   const { isScreenshotReportEnabled } = useIsShowFeedbackOnScreenshot();
   const { toggleSkipReportIn24Hours } = useScreenshotToReportEnabled();
+  const { screenshotDebugToastEnabled, toggleScreenshotDebugToast } =
+    useScreenshotDebugToast();
 
   return (
     <View style={styles.showCaseRowsContainer}>
@@ -465,6 +470,23 @@ function DevSwitchAboutScreenProtection() {
               <LabelScreenshotToReport />
             </View>
           </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.switchRowWrapper, { marginTop: 12 }]}
+          onPress={() => {
+            toggleScreenshotDebugToast();
+          }}>
+          <AppSwitch2024
+            value={screenshotDebugToastEnabled}
+            onPress={evt => evt.stopPropagation()}
+            onValueChange={toggleScreenshotDebugToast}
+          />
+          <Text style={styles.switchLabel}>
+            {screenshotDebugToastEnabled
+              ? 'Show screenshot diagnostics toast'
+              : 'Keep screenshot diagnostics toast hidden'}
+          </Text>
         </TouchableOpacity>
 
         <Button
@@ -756,6 +778,8 @@ function DevSwitchAboutOpenApiDebug() {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { toastOpenApiHttpErrorStatus, toggleToastOpenApiHttpErrorStatus } =
     useToastOpenApiHttpErrorStatus();
+  const { showOpenApiSummaryPanel, toggleShowOpenApiSummaryPanel } =
+    useToggleShowOpenApiSummaryPanel();
 
   return (
     <View style={styles.showCaseRowsContainer}>
@@ -790,6 +814,23 @@ function DevSwitchAboutOpenApiDebug() {
             : 'Keep HTTP 4xx/5xx openapi responses silent and only log them'}
         </Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.switchRowWrapper}
+        onPress={() => {
+          toggleShowOpenApiSummaryPanel();
+        }}>
+        <AppSwitch2024
+          value={showOpenApiSummaryPanel}
+          onPress={evt => evt.stopPropagation()}
+          onValueChange={toggleShowOpenApiSummaryPanel}
+        />
+        <Text style={styles.switchLabel}>
+          {showOpenApiSummaryPanel
+            ? 'Hide Floating OpenAPI Diagnostics Panel'
+            : 'Show Floating OpenAPI Diagnostics Panel'}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -803,6 +844,8 @@ function DevSwitchAboutAutoLock() {
     useAutoLockCountDown();
 
   const { showAutoLockCountdown } = useToggleShowAutoLockCountdown();
+  const { showKeyringRuntimePanel, toggleShowKeyringRuntimePanel } =
+    useToggleShowKeyringRuntimePanel();
 
   return (
     <View style={styles.showCaseRowsContainer}>
@@ -831,6 +874,22 @@ function DevSwitchAboutAutoLock() {
             {showAutoLockCountdown
               ? 'Hide Floating Diagnostics Panel'
               : 'Show Floating Diagnostics Panel'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.switchRowWrapper}
+          onPress={() => {
+            toggleShowKeyringRuntimePanel();
+          }}>
+          <AppSwitch2024
+            value={showKeyringRuntimePanel}
+            onPress={evt => evt.stopPropagation()}
+            onValueChange={toggleShowKeyringRuntimePanel}
+          />
+          <Text style={styles.switchLabel}>
+            {showKeyringRuntimePanel
+              ? 'Hide Floating Keyring Runtime Panel'
+              : 'Show Floating Keyring Runtime Panel'}
           </Text>
         </TouchableOpacity>
         <View style={[styles.rowWrapper, { marginTop: 12 }]}>

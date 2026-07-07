@@ -2,14 +2,12 @@ import React, { type Ref, useCallback, useMemo } from 'react';
 import { View } from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
-import { useTranslation } from 'react-i18next';
 
 import { AppBottomSheetModal, AppBottomSheetModalTitle } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { ModalLayouts } from '@/constant/layout';
-import { Button } from '@/components2024/Button';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { findChainByEnum } from '@/utils/chain';
@@ -36,7 +34,6 @@ export const EIP7702SupportedChainsSheet = ({
   onClose,
   ref,
 }: SupportedChainsSheetProps) => {
-  const { t } = useTranslation();
   const { safeOffBottom } = useSafeSizes();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
@@ -55,10 +52,6 @@ export const EIP7702SupportedChainsSheet = ({
       };
     });
   }, [chains]);
-
-  const handleClose = useCallback(() => {
-    onClose?.();
-  }, [onClose]);
 
   const renderItem = useCallback(
     ({ item }: { item: ChainItem }) => {
@@ -152,6 +145,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 16,
     lineHeight: 20,
     color: colors2024['neutral-title-1'],
+    flex: 1,
+    minWidth: 0,
     flexShrink: 1,
   },
   footerContainer: {
