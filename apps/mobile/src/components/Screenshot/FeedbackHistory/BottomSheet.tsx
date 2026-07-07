@@ -6,7 +6,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, View } from 'react-native';
+import { ActivityIndicator, ScrollView, View } from 'react-native';
 
 import {
   getScreenshotFeedbackExtraSafely,
@@ -54,6 +54,10 @@ const MAX_IMAGE_FILE_SIZE = 5 * ONE_MB;
 const MAX_VIDEO_FILE_SIZE = 50 * ONE_MB;
 
 type PickedFeedbackMedia = Asset;
+type UploadedFeedbackMediaUrls = {
+  imageUrlList?: string[];
+  videoUrlList?: string[];
+};
 
 function isVideoMedia(media?: PickedFeedbackMedia | null) {
   const filename = media?.fileName || media?.uri || '';
@@ -136,16 +140,40 @@ async function uploadFeedbackMedia(media: PickedFeedbackMedia) {
   return openapi.uploadClientFeedback(formData, true);
 }
 
+function getUploadedFeedbackMediaUrls(uploadResult?: {
+  image_url?: string;
+  video_url?: string;
+}): UploadedFeedbackMediaUrls {
+  return {
+    imageUrlList: uploadResult?.image_url
+      ? [uploadResult.image_url]
+      : undefined,
+    videoUrlList: uploadResult?.video_url
+      ? [uploadResult.video_url]
+      : undefined,
+  };
+}
+
+function hasUploadedFeedbackMediaUrls(urls?: UploadedFeedbackMediaUrls | null) {
+  return !!urls?.imageUrlList?.length || !!urls?.videoUrlList?.length;
+}
+
 export const FeedbackHistoryBottomSheet: React.FC = () => {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal();
-  const { isShowHistory, toggleFeedbackHistoryVisible } =
-    useFeedbackHistoryVisible();
+  const {
+    isShowHistory,
+    feedbackHistoryRefreshKey,
+    toggleFeedbackHistoryVisible,
+  } = useFeedbackHistoryVisible();
   const totalBalanceText = useScreenshotFeedbackTotalBalanceText();
   const [selectedMedia, setSelectedMedia] =
     useState<PickedFeedbackMedia | null>(null);
+  const [uploadedMediaUrls, setUploadedMediaUrls] =
+    useState<UploadedFeedbackMediaUrls | null>(null);
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [previewMedia, setPreviewMedia] = useState<FeedbackPreviewMedia | null>(
     null,
   );
@@ -153,6 +181,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   const replyInputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const pendingScrollToBottomRef = useRef(false);
+  const mediaUploadRequestIdRef = useRef(0);
   const handleReplyTextChange = useCallback((text: string) => {
     replyTextRef.current = text;
   }, []);
@@ -180,6 +209,49 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
     scrollToBottom();
     pendingScrollToBottomRef.current = false;
   }, [isShowHistory, scrollToBottom]);
+
+  const resetSelectedMedia = useCallback(() => {
+    mediaUploadRequestIdRef.current += 1;
+    setSelectedMedia(null);
+    setUploadedMediaUrls(null);
+    setIsUploadingMedia(false);
+  }, []);
+
+  const uploadSelectedMedia = useCallback(
+    async (media: PickedFeedbackMedia, requestId: number) => {
+      setIsUploadingMedia(true);
+      setUploadedMediaUrls(null);
+
+      try {
+        const uploadResult = await uploadFeedbackMedia(media);
+        const mediaUrls = getUploadedFeedbackMediaUrls(uploadResult);
+
+        if (!hasUploadedFeedbackMediaUrls(mediaUrls)) {
+          throw new Error('Feedback media upload did not return a media url');
+        }
+
+        if (requestId !== mediaUploadRequestIdRef.current) {
+          return;
+        }
+
+        setUploadedMediaUrls(mediaUrls);
+      } catch (error) {
+        if (requestId !== mediaUploadRequestIdRef.current) {
+          return;
+        }
+
+        console.error('feedback media upload error', error);
+        toast.error(getFeedbackErrorMessage(error, 'Upload failed.'));
+        setSelectedMedia(null);
+        setUploadedMediaUrls(null);
+      } finally {
+        if (requestId === mediaUploadRequestIdRef.current) {
+          setIsUploadingMedia(false);
+        }
+      }
+    },
+    [],
+  );
 
   const handlePickMedia = useCallback(async () => {
     const result = await launchImageLibrary({
@@ -209,13 +281,17 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
         return;
       }
 
+      const requestId = mediaUploadRequestIdRef.current + 1;
+      mediaUploadRequestIdRef.current = requestId;
       setSelectedMedia(media);
+      setUploadedMediaUrls(null);
+      void uploadSelectedMedia(media, requestId);
     }
-  }, []);
+  }, [uploadSelectedMedia]);
 
   const handleRemoveMedia = useCallback(() => {
-    setSelectedMedia(null);
-  }, []);
+    resetSelectedMedia();
+  }, [resetSelectedMedia]);
   const handleOpenMediaPreview = useCallback((media: FeedbackPreviewMedia) => {
     setPreviewMedia(media);
   }, []);
@@ -238,83 +314,96 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
         return res;
       },
       {
+        manual: true,
         cacheKey: `feedbackMessages-${deviceId}`,
         staleTime: 5 * 1000,
-        ready: isShowHistory,
         onSuccess: () => {
           requestScrollToBottomAfterLayout();
         },
       },
     );
 
-  const { runAsync: handleSubmitReply, loading: isSubmittingReply } =
-    useRequest(
-      async () => {
-        const content = replyTextRef.current.trim();
-        if (!selectedMedia) {
-          throw new Error('No selected feedback media to upload');
-        }
+  const {
+    runAsync: handleSubmitReply,
+    loading: isSubmittingReply,
+    cancel: cancelSubmitReply,
+  } = useRequest(
+    async () => {
+      const content = replyTextRef.current.trim();
+      if (!selectedMedia) {
+        throw new Error('No selected feedback media to upload');
+      }
 
-        const uploadResult = await uploadFeedbackMedia(selectedMedia);
-        const imageUrlList = uploadResult?.image_url
-          ? [uploadResult.image_url]
-          : undefined;
-        const videoUrlList = uploadResult?.video_url
-          ? [uploadResult.video_url]
-          : undefined;
+      if (isUploadingMedia) {
+        throw new Error('Feedback media is still uploading.');
+      }
 
-        if (!imageUrlList && !videoUrlList) {
-          throw new Error('Feedback media upload did not return a media url');
-        }
+      if (!hasUploadedFeedbackMediaUrls(uploadedMediaUrls)) {
+        throw new Error('No uploaded feedback media url');
+      }
 
-        const extraInfo = await getScreenshotFeedbackExtraSafely(
-          totalBalanceText,
-        );
+      const extraInfo = await getScreenshotFeedbackExtraSafely(
+        totalBalanceText,
+      );
 
-        await openapi.postClientFeedbackMessage({
-          device_id: deviceId,
-          content: content || undefined,
-          image_url_list: imageUrlList,
-          video_url_list: videoUrlList,
-          extra: extraInfo,
+      await openapi.postClientFeedbackMessage({
+        device_id: deviceId,
+        content: content || undefined,
+        image_url_list: uploadedMediaUrls?.imageUrlList,
+        video_url_list: uploadedMediaUrls?.videoUrlList,
+        extra: extraInfo,
+      });
+    },
+    {
+      manual: true,
+      onSuccess: async () => {
+        clearReplyText();
+        resetSelectedMedia();
+        toast.success(t('component.submitFeedbackSuccessModal.desc'), {
+          hideOnPress: true,
         });
+        await fetchFeedbackMessages();
+        requestScrollToBottomAfterLayout();
       },
-      {
-        manual: true,
-        onSuccess: async () => {
-          clearReplyText();
-          setSelectedMedia(null);
-          toast.success(t('component.submitFeedbackSuccessModal.desc'), {
-            hideOnPress: true,
-          });
-          await fetchFeedbackMessages();
-          requestScrollToBottomAfterLayout();
-        },
-        onError: error => {
-          console.log('feedback', error);
-          console.error('feedback reply submission error', error);
-          toast.error(getFeedbackErrorMessage(error, 'Upload failed.'));
-        },
+      onError: error => {
+        console.log('feedback', error);
+        console.error('feedback reply submission error', error);
+        toast.error(getFeedbackErrorMessage(error, 'Upload failed.'));
       },
-    );
+    },
+  );
 
   useEffect(() => {
     if (isShowHistory) {
       clearReplyText();
-      setSelectedMedia(null);
+      resetSelectedMedia();
       toggleShowSheetModal(true);
-      fetchFeedbackMessages();
-      requestScrollToBottomAfterLayout();
     } else {
+      cancelSubmitReply();
+      resetSelectedMedia();
       setPreviewMedia(null);
       toggleShowSheetModal('destroy');
     }
   }, [
     clearReplyText,
+    cancelSubmitReply,
+    isShowHistory,
+    resetSelectedMedia,
+    toggleShowSheetModal,
+  ]);
+
+  useEffect(() => {
+    if (!isShowHistory) {
+      return;
+    }
+
+    fetchFeedbackMessages();
+    requestScrollToBottomAfterLayout();
+  }, [
+    feedbackHistoryRefreshKey,
     fetchFeedbackMessages,
     isShowHistory,
     requestScrollToBottomAfterLayout,
-    toggleShowSheetModal,
   ]);
 
   const hasMessage = useMemo(() => {
@@ -332,7 +421,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
       <AppBottomSheetModal
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: isLight ? 'bg0' : 'bg1',
+          linearGradientType: isLight ? 'bg1' : 'bg1',
         })}
         ref={sheetModalRef}
         index={0}
@@ -360,7 +449,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
                 style={styles.messageList}
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
-                bottomOffset={14}
+                bottomOffset={146}
                 onContentSizeChange={handleScrollViewContentSizeChange}
                 contentContainerStyle={styles.messageListContent}>
                 {feedbackMessagesData?.messages?.map(message => (
@@ -376,6 +465,10 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
                   inputRef={replyInputRef}
                   onChangeText={handleReplyTextChange}
                   selectedMedia={selectedMedia}
+                  mediaUploadReady={hasUploadedFeedbackMediaUrls(
+                    uploadedMediaUrls,
+                  )}
+                  uploadingMedia={isUploadingMedia}
                   onPickMedia={handlePickMedia}
                   onRemoveMedia={handleRemoveMedia}
                   onSubmit={handleSubmitReply}
@@ -511,10 +604,14 @@ function ReplyComposer({
   onRemoveMedia,
   onSubmit,
   submitting,
+  uploadingMedia,
+  mediaUploadReady,
 }: {
   inputRef: React.Ref<React.ComponentRef<typeof TextInput>>;
   onChangeText: (text: string) => void;
   selectedMedia?: PickedFeedbackMedia | null;
+  mediaUploadReady?: boolean;
+  uploadingMedia?: boolean;
   onPickMedia: () => void | Promise<void>;
   onRemoveMedia: () => void;
   onSubmit?: (() => void) | (() => Promise<void>);
@@ -540,7 +637,7 @@ function ReplyComposer({
           style={styles.replyInput}
           enterKeyHint="send"
           onSubmitEditing={() => {
-            if (selectedMedia) {
+            if (selectedMedia && mediaUploadReady && !uploadingMedia) {
               onSubmit?.();
             }
           }}
@@ -571,6 +668,11 @@ function ReplyComposer({
                 )}
               </TouchableOpacity>
             </View>
+            {uploadingMedia ? (
+              <View style={styles.mediaUploadMask}>
+                <ActivityIndicator size="small" color="#fff" />
+              </View>
+            ) : null}
           </View>
         ) : (
           <View style={styles.mediaPlaceholderContainer}>
@@ -592,7 +694,12 @@ function ReplyComposer({
           height={32}
           onPress={onSubmit}
           loading={submitting}
-          disabled={submitting || !selectedMediaUri}
+          disabled={
+            submitting ||
+            uploadingMedia ||
+            !selectedMediaUri ||
+            !mediaUploadReady
+          }
           containerStyle={styles.replySubmitButtonContainer}
           buttonStyle={styles.replySubmitButton}
           titleStyle={styles.replySubmitButtonTitle}
@@ -772,6 +879,19 @@ const getStyle = createGetStyles2024(
       width: 21,
       height: 21,
       borderRadius: 21,
+    },
+    mediaUploadMask: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      width: 80,
+      height: 80,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.35)',
     },
     mediaPlaceholderText: {
       fontFamily: 'SF Pro Rounded',

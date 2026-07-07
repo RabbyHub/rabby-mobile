@@ -212,6 +212,7 @@ type FeedbackByScreenshotState = {
   lastScreenshot: ImageResolvedAssetSource | null;
   submitModalShown: boolean;
   isShowHistory: boolean;
+  feedbackHistoryRefreshKey: number;
   feedbackText: string;
   uploadedImageUrl: string;
 
@@ -222,6 +223,7 @@ function getDefaultValue(): FeedbackByScreenshotState {
     lastScreenshot: null,
     submitModalShown: false,
     isShowHistory: false,
+    feedbackHistoryRefreshKey: 0,
     feedbackText: '',
     uploadedImageUrl: '',
 
@@ -268,10 +270,17 @@ export function useSubmitFeedbackModalVisible() {
 }
 
 export function useFeedbackHistoryVisible() {
-  const isShowHistory = feedbackByScreenshotStore(s => s.isShowHistory);
+  const { isShowHistory, feedbackHistoryRefreshKey } =
+    feedbackByScreenshotStore(
+      useShallow(s => ({
+        isShowHistory: s.isShowHistory,
+        feedbackHistoryRefreshKey: s.feedbackHistoryRefreshKey,
+      })),
+    );
 
   return {
     isShowHistory: isShowHistory,
+    feedbackHistoryRefreshKey,
     toggleFeedbackHistoryVisible,
   };
 }
@@ -281,10 +290,17 @@ export function useScreenshotFeedbackTotalBalanceText() {
 }
 
 export const toggleFeedbackHistoryVisible = (v?: boolean) => {
-  setFeedbackByScreenshot(prev => ({
-    ...prev,
-    isShowHistory: v ?? !prev.isShowHistory,
-  }));
+  setFeedbackByScreenshot(prev => {
+    const isShowHistory = v ?? !prev.isShowHistory;
+
+    return {
+      ...prev,
+      isShowHistory,
+      feedbackHistoryRefreshKey: isShowHistory
+        ? prev.feedbackHistoryRefreshKey + 1
+        : prev.feedbackHistoryRefreshKey,
+    };
+  });
 };
 
 const shouldToastFeedbackByScreenshot = () => {
