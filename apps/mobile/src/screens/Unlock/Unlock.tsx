@@ -66,6 +66,7 @@ import { TextInput } from '@/components/Typography';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { startUnlockScreenBootstrapWarmups } from '@/setup-app-before-render';
+import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
 import { cancelPendingWalletUnlock } from '@/utils/walletUnlock';
 import { logger } from '@/utils/logger';
@@ -230,7 +231,7 @@ function traceAndroidUnlockPerf(
   event: string,
   data: Record<string, unknown> = {},
 ) {
-  if (!isAndroid) {
+  if (!isAndroid || !isNonProductionDiagnosticsEnabled) {
     return;
   }
 

@@ -347,7 +347,7 @@ function AppNavigationOverlayGlobals({
   deferredGlobalsEnabled: boolean;
   postUnlockGlobalsEnabled: boolean;
 }) {
-  const showDiagnostics = deferredGlobalsEnabled || NEED_DEVSETTINGBLOCKS;
+  const showDiagnostics = NEED_DEVSETTINGBLOCKS;
 
   return (
     <>

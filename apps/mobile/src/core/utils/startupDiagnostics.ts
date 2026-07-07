@@ -1,7 +1,6 @@
 import { Platform } from 'react-native';
 import RNFS from '@rabby-wallet/react-native-fs';
 
-import { isNonPublicProductionEnv } from '@/constant';
 import { logger } from '@/utils/logger';
 import {
   beginAndroidAsyncTrace,
@@ -10,8 +9,10 @@ import {
   traceAndroidCounter,
   traceAndroidInstant,
 } from './androidTrace';
+import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
 
 type DiagnosticData = Record<string, unknown>;
+type StartupDiagnosticFile = Awaited<ReturnType<typeof RNFS.readDir>>[number];
 
 type ActiveDbSyncTask = {
   id: number;
@@ -157,7 +158,7 @@ export type KeyringRuntimeConvergenceSnapshot = {
 };
 
 const isAndroid = Platform.OS === 'android';
-const enabled = isAndroid && isNonPublicProductionEnv;
+const enabled = isAndroid && isNonProductionDiagnosticsEnabled;
 const STALL_INTERVAL_MS = 50;
 const STALL_WARN_MS = 120;
 const STALL_LOG_MS = 250;
@@ -190,7 +191,7 @@ const activeDbWindowRef: {
 };
 
 const diagnosticFilePath =
-  isAndroid && RNFS.ExternalDirectoryPath
+  enabled && RNFS.ExternalDirectoryPath
     ? `${
         RNFS.ExternalDirectoryPath
       }/rabby-startup-diagnostics-${Date.now()}.ndjson`
@@ -199,6 +200,7 @@ const diagnosticFilePath =
 const pendingDiagnosticLines: string[] = [];
 let diagnosticFlushTimer: ReturnType<typeof setTimeout> | null = null;
 let isFlushingDiagnosticLines = false;
+let didRunDiagnosticFileRetention = false;
 let lastDbSummarySnapshot: DbSyncSummarySnapshot = {
   enabled,
   updatedAt: now(),
@@ -622,6 +624,58 @@ function queueDiagnosticLine(
   }, 15000);
 }
 
+function getStartupDiagnosticFileTimestamp(file: StartupDiagnosticFile) {
+  const maybeDate = file.mtime || file.ctime;
+
+  if (maybeDate instanceof Date) {
+    return maybeDate.getTime();
+  }
+
+  if (maybeDate) {
+    const parsedTime = new Date(maybeDate).getTime();
+    if (!Number.isNaN(parsedTime)) {
+      return parsedTime;
+    }
+  }
+
+  const nameTime = file.name.match(
+    /^rabby-startup-diagnostics-(\d+)\.ndjson$/,
+  )?.[1];
+
+  return nameTime ? Number(nameTime) : 0;
+}
+
+async function runStartupDiagnosticFileRetentionOnce() {
+  if (
+    didRunDiagnosticFileRetention ||
+    !enabled ||
+    !RNFS.ExternalDirectoryPath
+  ) {
+    return;
+  }
+
+  didRunDiagnosticFileRetention = true;
+
+  try {
+    const files = await RNFS.readDir(RNFS.ExternalDirectoryPath);
+    const diagnosticFiles = files
+      .filter(file => /^rabby-startup-diagnostics-\d+\.ndjson$/.test(file.name))
+      .sort(
+        (left, right) =>
+          getStartupDiagnosticFileTimestamp(right) -
+          getStartupDiagnosticFileTimestamp(left),
+      );
+
+    await Promise.all(
+      diagnosticFiles.slice(5).map(file => RNFS.unlink(file.path)),
+    );
+  } catch (error) {
+    logger.warn('[RabbyStartupDiag:file] retention_failed', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
 function flushDiagnosticLines() {
   if (
     !diagnosticFilePath ||
@@ -634,6 +688,7 @@ function flushDiagnosticLines() {
   isFlushingDiagnosticLines = true;
   const content = `${pendingDiagnosticLines.splice(0).join('\n')}\n`;
   RNFS.appendFile(diagnosticFilePath, content, 'utf8')
+    .then(() => runStartupDiagnosticFileRetentionOnce())
     .catch(error => {
       logger.warn('[RabbyStartupDiag:file] flush_failed', {
         error: error instanceof Error ? error.message : String(error),

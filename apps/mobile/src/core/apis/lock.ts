@@ -22,6 +22,7 @@ import {
 } from './autoLock';
 import { logger } from '@/utils/logger';
 import { traceAndroidInstant } from '../utils/androidTrace';
+import { isNonProductionDiagnosticsEnabled } from '../utils/diagnosticEnv';
 import { runAfterHomePostStartupReady } from '../utils/homeStartupReady';
 import { recordKeyringRuntimeConvergenceDiagnostic } from '../utils/startupDiagnostics';
 
@@ -103,7 +104,7 @@ function traceAndroidUnlockPerf(
   event: string,
   data: Record<string, unknown> = {},
 ) {
-  if (!isAndroid) {
+  if (!isAndroid || !isNonProductionDiagnosticsEnabled) {
     return;
   }
 

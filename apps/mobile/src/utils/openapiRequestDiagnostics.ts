@@ -1,7 +1,7 @@
 import type { OpenApiService } from '@rabby-wallet/rabby-api';
 import type { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
 import { logger } from './logger';
-import { isNonPublicProductionEnv } from '@/constant';
 import {
   openApiDebugEvents,
   OPENAPI_HTTP_ERROR_DEBUG,
@@ -99,7 +99,7 @@ type AxiosRequestLike = OpenApiService['request'] & {
   };
 };
 
-const diagnosticsEnabled = isNonPublicProductionEnv;
+const diagnosticsEnabled = isNonProductionDiagnosticsEnabled;
 let nextOpenApiDiagnosticId = 0;
 let lastOpenApiDiagnosticsUpdatedAt = Date.now();
 const openApiDiagnosticRecords: OpenApiRequestDiagnosticRecord[] = [];
@@ -663,6 +663,10 @@ function logOpenApiFailure(args: {
   response?: AxiosResponse;
   error?: unknown;
 }) {
+  if (!diagnosticsEnabled) {
+    return;
+  }
+
   maybeToastOpenApiHttpError(args);
   logger.warn(
     '[openapi] non-200 request detected',
@@ -766,6 +770,10 @@ export function instrumentOpenApiRequestDiagnostics(
   service: OpenApiService,
   source: OpenApiFailureSource,
 ) {
+  if (!diagnosticsEnabled) {
+    return;
+  }
+
   const instrumentedService = service as OpenApiService & {
     [SERVICE_INSTRUMENTED_KEY]?: boolean;
     initSync(options?: unknown): void;

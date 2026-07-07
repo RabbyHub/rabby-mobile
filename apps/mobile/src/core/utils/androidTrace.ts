@@ -1,5 +1,7 @@
 import { NativeModules, Platform } from 'react-native';
 
+import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
+
 type TraceArgs = Record<string, unknown>;
 type NativeTraceArgs = Record<string, string>;
 type NativeTraceGlobal = typeof globalThis & {
@@ -35,9 +37,7 @@ const TRACE_NAME_PREFIX = 'Rabby:';
 const MAX_TRACE_NAME_LENGTH = 110;
 const MAX_TRACE_ARG_LENGTH = 48;
 
-const enabled =
-  Platform.OS === 'android' &&
-  (__DEV__ || process.env.RABBY_MOBILE_BUILD_ENV !== 'production');
+const enabled = Platform.OS === 'android' && isNonProductionDiagnosticsEnabled;
 
 let nextCookieValue = 100000;
 let loggedMissingNativeTrace = false;
