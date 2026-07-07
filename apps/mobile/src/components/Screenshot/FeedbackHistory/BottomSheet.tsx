@@ -320,52 +320,55 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
       },
     );
 
-  const { runAsync: handleSubmitReply, loading: isSubmittingReply } =
-    useRequest(
-      async () => {
-        const content = replyTextRef.current.trim();
-        if (!selectedMedia) {
-          throw new Error('No selected feedback media to upload');
-        }
+  const {
+    runAsync: handleSubmitReply,
+    loading: isSubmittingReply,
+    cancel: cancelSubmitReply,
+  } = useRequest(
+    async () => {
+      const content = replyTextRef.current.trim();
+      if (!selectedMedia) {
+        throw new Error('No selected feedback media to upload');
+      }
 
-        if (isUploadingMedia) {
-          throw new Error('Feedback media is still uploading.');
-        }
+      if (isUploadingMedia) {
+        throw new Error('Feedback media is still uploading.');
+      }
 
-        if (!hasUploadedFeedbackMediaUrls(uploadedMediaUrls)) {
-          throw new Error('No uploaded feedback media url');
-        }
+      if (!hasUploadedFeedbackMediaUrls(uploadedMediaUrls)) {
+        throw new Error('No uploaded feedback media url');
+      }
 
-        const extraInfo = await getScreenshotFeedbackExtraSafely(
-          totalBalanceText,
-        );
+      const extraInfo = await getScreenshotFeedbackExtraSafely(
+        totalBalanceText,
+      );
 
-        await openapi.postClientFeedbackMessage({
-          device_id: deviceId,
-          content: content || undefined,
-          image_url_list: uploadedMediaUrls?.imageUrlList,
-          video_url_list: uploadedMediaUrls?.videoUrlList,
-          extra: extraInfo,
+      await openapi.postClientFeedbackMessage({
+        device_id: deviceId,
+        content: content || undefined,
+        image_url_list: uploadedMediaUrls?.imageUrlList,
+        video_url_list: uploadedMediaUrls?.videoUrlList,
+        extra: extraInfo,
+      });
+    },
+    {
+      manual: true,
+      onSuccess: async () => {
+        clearReplyText();
+        resetSelectedMedia();
+        toast.success(t('component.submitFeedbackSuccessModal.desc'), {
+          hideOnPress: true,
         });
+        await fetchFeedbackMessages();
+        requestScrollToBottomAfterLayout();
       },
-      {
-        manual: true,
-        onSuccess: async () => {
-          clearReplyText();
-          resetSelectedMedia();
-          toast.success(t('component.submitFeedbackSuccessModal.desc'), {
-            hideOnPress: true,
-          });
-          await fetchFeedbackMessages();
-          requestScrollToBottomAfterLayout();
-        },
-        onError: error => {
-          console.log('feedback', error);
-          console.error('feedback reply submission error', error);
-          toast.error(getFeedbackErrorMessage(error, 'Upload failed.'));
-        },
+      onError: error => {
+        console.log('feedback', error);
+        console.error('feedback reply submission error', error);
+        toast.error(getFeedbackErrorMessage(error, 'Upload failed.'));
       },
-    );
+    },
+  );
 
   useEffect(() => {
     if (isShowHistory) {
@@ -375,12 +378,14 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
       fetchFeedbackMessages();
       requestScrollToBottomAfterLayout();
     } else {
+      cancelSubmitReply();
       resetSelectedMedia();
       setPreviewMedia(null);
       toggleShowSheetModal('destroy');
     }
   }, [
     clearReplyText,
+    cancelSubmitReply,
     fetchFeedbackMessages,
     isShowHistory,
     requestScrollToBottomAfterLayout,
