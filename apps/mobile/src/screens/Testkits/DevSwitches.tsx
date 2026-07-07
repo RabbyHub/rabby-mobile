@@ -67,6 +67,7 @@ import { LabelScreenshotToReport } from '../Settings/components/SwitchScreenshot
 import { useAutoLockCountDown } from '../Settings/components/LockAbout';
 import { SwitchShowFloatingAutoLockCountdown } from '../Settings/components/SwitchFloatingView';
 import { useToggleShowOpenApiSummaryPanel } from '../Settings/components/FloatingOpenApiSummaryPanel';
+import { useToggleShowKeyringRuntimePanel } from '../Settings/components/FloatingKeyringRuntimePanel';
 import { useGoogleSign } from '@/hooks/cloudStorage';
 import {
   deleteAllBackups,
@@ -823,6 +824,8 @@ function DevSwitchAboutAutoLock() {
     useAutoLockCountDown();
 
   const { showAutoLockCountdown } = useToggleShowAutoLockCountdown();
+  const { showKeyringRuntimePanel, toggleShowKeyringRuntimePanel } =
+    useToggleShowKeyringRuntimePanel();
 
   return (
     <View style={styles.showCaseRowsContainer}>
@@ -851,6 +854,22 @@ function DevSwitchAboutAutoLock() {
             {showAutoLockCountdown
               ? 'Hide Floating Diagnostics Panel'
               : 'Show Floating Diagnostics Panel'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.switchRowWrapper}
+          onPress={() => {
+            toggleShowKeyringRuntimePanel();
+          }}>
+          <AppSwitch2024
+            value={showKeyringRuntimePanel}
+            onPress={evt => evt.stopPropagation()}
+            onValueChange={toggleShowKeyringRuntimePanel}
+          />
+          <Text style={styles.switchLabel}>
+            {showKeyringRuntimePanel
+              ? 'Hide Floating Keyring Runtime Panel'
+              : 'Show Floating Keyring Runtime Panel'}
           </Text>
         </TouchableOpacity>
         <View style={[styles.rowWrapper, { marginTop: 12 }]}>

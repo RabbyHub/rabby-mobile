@@ -292,6 +292,19 @@ describe('keyringService support eth-keyring-watch', () => {
 
       expect(keyring.type).toBe(KEYRING_TYPE.WatchAddressKeyring);
       expect(service.isKeyringRuntimeReady()).toBe(true);
+      expect(service.memStore.getState().keyrings).toEqual([
+        expect.objectContaining({
+          type: KEYRING_TYPE.HdKeyring,
+        }),
+        expect.objectContaining({
+          type: KEYRING_TYPE.WatchAddressKeyring,
+          accounts: [
+            expect.objectContaining({
+              address: TEST_ADDR,
+            }),
+          ],
+        }),
+      ]);
     });
 
     it('ignores legacy public account snapshot versions', async () => {

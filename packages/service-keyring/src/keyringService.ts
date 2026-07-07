@@ -1334,11 +1334,21 @@ export class KeyringService extends RNEventEmitter {
         });
 
         if (pending.hasUnencryptedKeyringData) {
+          this.traceKeyringPerf('keyring_runtime_restore_unencrypted_start', {
+            reason,
+            elapsedMs: nowMs() - startedAt,
+            keyringCount: pending.unencryptedKeyringData.length,
+          });
           await Promise.all(
             pending.unencryptedKeyringData.map(serialized =>
               this._restoreKeyring(serialized, { restoreId }),
             ),
           );
+          this.traceKeyringPerf('keyring_runtime_restore_unencrypted_end', {
+            reason,
+            elapsedMs: nowMs() - startedAt,
+            runtimeKeyringCount: this.keyrings.length,
+          });
         }
 
         if (restoreId !== this.keyringRuntimeRestoreId) {
@@ -1349,6 +1359,17 @@ export class KeyringService extends RNEventEmitter {
           return this.keyrings;
         }
 
+        this.traceKeyringPerf('keyring_runtime_restore_update_memstore_start', {
+          reason,
+          elapsedMs: nowMs() - startedAt,
+          runtimeKeyringCount: this.keyrings.length,
+        });
+        await this._updateMemStoreKeyrings();
+        this.traceKeyringPerf('keyring_runtime_restore_update_memstore_end', {
+          reason,
+          elapsedMs: nowMs() - startedAt,
+          runtimeKeyringCount: this.keyrings.length,
+        });
         this.markKeyringRuntimeReady();
         this.traceKeyringPerf('keyring_runtime_restore_end', {
           reason,
@@ -1404,14 +1425,25 @@ export class KeyringService extends RNEventEmitter {
 
   async refreshMemStoreKeyrings(): Promise<MemStoreState> {
     const startedAt = nowMs();
+    const wasRuntimeReady = this.isKeyringRuntimeReady();
+    const hadDeferredRuntimeRestore =
+      !!this.pendingKeyringRuntimeRestore || !!this.keyringRuntimeRestorePromise;
     this.traceKeyringPerf('refresh_memstore_keyrings.start', {
       keyringCount: this.keyrings.length,
+      wasRuntimeReady,
+      hadDeferredRuntimeRestore,
     });
     await this.ensureKeyringRuntimeReady('refresh_memstore_keyrings');
-    await this._updateMemStoreKeyrings();
-    this.traceKeyringPerf('refresh_memstore_keyrings.update_memstore_end', {
-      elapsedMs: nowMs() - startedAt,
-    });
+    if (wasRuntimeReady || !hadDeferredRuntimeRestore) {
+      await this._updateMemStoreKeyrings();
+      this.traceKeyringPerf('refresh_memstore_keyrings.update_memstore_end', {
+        elapsedMs: nowMs() - startedAt,
+      });
+    } else {
+      this.traceKeyringPerf('refresh_memstore_keyrings.update_memstore_skipped', {
+        elapsedMs: nowMs() - startedAt,
+      });
+    }
     const state = this.fullUpdate();
     this.traceKeyringPerf('refresh_memstore_keyrings.end', {
       elapsedMs: nowMs() - startedAt,

@@ -136,6 +136,17 @@ export const FloatingDbSyncSummaryPanel = registerAppScreen<
     ),
 });
 
+export const FloatingKeyringRuntimePanel = registerAppScreen<
+  typeof import('@/screens/Settings/components/FloatingKeyringRuntimePanel').FloatingKeyringRuntimePanel
+>({
+  loader: () =>
+    import('@/screens/Settings/components/FloatingKeyringRuntimePanel').then(
+      m => ({
+        default: m.FloatingKeyringRuntimePanel,
+      }),
+    ),
+});
+
 export const FloatingOpenApiSummaryPanel = registerAppScreen<
   typeof import('@/screens/Settings/components/FloatingOpenApiSummaryPanel').FloatingOpenApiSummaryPanel
 >({

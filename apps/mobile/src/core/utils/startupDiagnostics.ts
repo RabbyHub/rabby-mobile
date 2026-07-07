@@ -113,6 +113,49 @@ export type DbSyncSummarySnapshot = {
   lastWindow: DbSyncWindowSummary | null;
 };
 
+export type KeyringRuntimeConvergenceStatus =
+  | 'idle'
+  | 'waiting'
+  | 'running'
+  | 'success'
+  | 'error'
+  | 'canceled'
+  | 'skipped';
+
+export type KeyringRuntimeConvergenceRecord = {
+  id: number;
+  event: string;
+  status: KeyringRuntimeConvergenceStatus;
+  timestamp: number;
+  generation?: number;
+  reason?: string;
+  elapsedMs?: number;
+  error?: string;
+};
+
+export type KeyringRuntimeConvergenceSnapshot = {
+  enabled: boolean;
+  updatedAt: number;
+  status: KeyringRuntimeConvergenceStatus;
+  event: string;
+  generation: number;
+  reason: string;
+  fallbackMs: number;
+  scheduledAt: number;
+  startedAt: number;
+  endedAt: number;
+  waitMs: number;
+  elapsedMs: number;
+  runtimeReady: boolean | null;
+  runtimeRestoring: boolean | null;
+  runtimeError: string | null;
+  keyringCount: number | null;
+  error: string;
+  lastPerfEvent: string;
+  lastPerfElapsedMs: number;
+  records: KeyringRuntimeConvergenceRecord[];
+};
+
 const isAndroid = Platform.OS === 'android';
 const enabled = isAndroid && isNonPublicProductionEnv;
 const STALL_INTERVAL_MS = 50;
@@ -120,16 +163,19 @@ const STALL_WARN_MS = 120;
 const STALL_LOG_MS = 250;
 const MAX_STALL_LOGS_PER_WINDOW = 8;
 const MAX_SNAPSHOT_TASKS = 5;
+const MAX_KEYRING_CONVERGENCE_RECORDS = 5;
 
 let dbTaskSeq = 0;
 let warmupTaskSeq = 0;
 let unlockWindowSeq = 0;
 let dbActiveWindowSeq = 0;
+let keyringRuntimeConvergenceRecordSeq = 0;
 
 const activeDbSyncTasks = new Map<number, ActiveDbSyncTask>();
 const activeWarmupTasks = new Map<number, ActiveWarmupTask>();
 const dbSyncTaskSummaries = new Map<number, ActiveDbSyncTask>();
 const dbSummaryListeners = new Set<() => void>();
+const keyringRuntimeConvergenceListeners = new Set<() => void>();
 
 const activeUnlockWindowRef: {
   current: UnlockCriticalWindow | null;
@@ -158,6 +204,28 @@ let lastDbSummarySnapshot: DbSyncSummarySnapshot = {
   updatedAt: now(),
   activeWindow: null,
   lastWindow: null,
+};
+let lastKeyringRuntimeConvergenceSnapshot: KeyringRuntimeConvergenceSnapshot = {
+  enabled,
+  updatedAt: now(),
+  status: 'idle',
+  event: '',
+  generation: 0,
+  reason: '',
+  fallbackMs: 0,
+  scheduledAt: 0,
+  startedAt: 0,
+  endedAt: 0,
+  waitMs: 0,
+  elapsedMs: 0,
+  runtimeReady: null,
+  runtimeRestoring: null,
+  runtimeError: null,
+  keyringCount: null,
+  error: '',
+  lastPerfEvent: '',
+  lastPerfElapsedMs: 0,
+  records: [],
 };
 let dbSummaryPublishTimer: ReturnType<typeof setTimeout> | null = null;
 let lastDbSummaryPublishAt = 0;
@@ -317,6 +385,200 @@ export function subscribeDbSyncSummarySnapshot(listener: () => void) {
   return () => {
     dbSummaryListeners.delete(listener);
   };
+}
+
+function getKeyringRuntimeConvergenceStatus(
+  event: string,
+): KeyringRuntimeConvergenceStatus {
+  if (event.endsWith('_scheduled')) {
+    return 'waiting';
+  }
+
+  if (event.endsWith('_start')) {
+    return 'running';
+  }
+
+  if (event.endsWith('_end')) {
+    return 'success';
+  }
+
+  if (event.endsWith('_error')) {
+    return 'error';
+  }
+
+  if (event.includes('_cancel')) {
+    return 'canceled';
+  }
+
+  if (event.includes('_skip')) {
+    return 'skipped';
+  }
+
+  return lastKeyringRuntimeConvergenceSnapshot.status;
+}
+
+function publishKeyringRuntimeConvergenceSnapshot(
+  snapshot: KeyringRuntimeConvergenceSnapshot,
+) {
+  lastKeyringRuntimeConvergenceSnapshot = snapshot;
+  keyringRuntimeConvergenceListeners.forEach(listener => listener());
+}
+
+export function getKeyringRuntimeConvergenceSnapshot() {
+  return lastKeyringRuntimeConvergenceSnapshot;
+}
+
+export function subscribeKeyringRuntimeConvergenceSnapshot(
+  listener: () => void,
+) {
+  keyringRuntimeConvergenceListeners.add(listener);
+
+  return () => {
+    keyringRuntimeConvergenceListeners.delete(listener);
+  };
+}
+
+export function recordKeyringRuntimeConvergenceDiagnostic(
+  event: string,
+  data: DiagnosticData = {},
+) {
+  if (!enabled) {
+    return;
+  }
+
+  const timestamp = now();
+  const previous = lastKeyringRuntimeConvergenceSnapshot;
+  const status = getKeyringRuntimeConvergenceStatus(event);
+  const generation =
+    typeof data.generation === 'number' ? data.generation : previous.generation;
+  const isNewGeneration = generation !== previous.generation;
+  const scheduledAt =
+    event.endsWith('_scheduled') || isNewGeneration
+      ? timestamp
+      : previous.scheduledAt;
+  const startedAt = event.endsWith('_start') ? timestamp : previous.startedAt;
+  const endedAt =
+    status === 'success' || status === 'error' || status === 'canceled'
+      ? timestamp
+      : previous.endedAt;
+  const waitMs =
+    event.endsWith('_start') && scheduledAt
+      ? timestamp - scheduledAt
+      : previous.waitMs;
+  const elapsedMs =
+    typeof data.elapsedMs === 'number'
+      ? data.elapsedMs
+      : endedAt && startedAt
+      ? endedAt - startedAt
+      : previous.elapsedMs;
+  const reason =
+    typeof data.reason === 'string' ? data.reason : previous.reason;
+  const error =
+    typeof data.error === 'string'
+      ? data.error
+      : status === 'error'
+      ? previous.error
+      : '';
+
+  const record: KeyringRuntimeConvergenceRecord = {
+    id: ++keyringRuntimeConvergenceRecordSeq,
+    event,
+    status,
+    timestamp,
+    generation,
+    reason,
+    elapsedMs,
+    error,
+  };
+
+  publishKeyringRuntimeConvergenceSnapshot({
+    ...previous,
+    enabled,
+    updatedAt: timestamp,
+    status,
+    event,
+    generation,
+    reason,
+    fallbackMs:
+      typeof data.fallbackMs === 'number'
+        ? data.fallbackMs
+        : previous.fallbackMs,
+    scheduledAt,
+    startedAt,
+    endedAt,
+    waitMs,
+    elapsedMs,
+    runtimeReady:
+      typeof data.runtimeReady === 'boolean'
+        ? data.runtimeReady
+        : previous.runtimeReady,
+    runtimeRestoring:
+      typeof data.runtimeRestoring === 'boolean'
+        ? data.runtimeRestoring
+        : previous.runtimeRestoring,
+    runtimeError:
+      typeof data.runtimeError === 'string'
+        ? data.runtimeError
+        : data.runtimeError === null
+        ? null
+        : previous.runtimeError,
+    keyringCount:
+      typeof data.keyringCount === 'number'
+        ? data.keyringCount
+        : previous.keyringCount,
+    error,
+    records: [record, ...previous.records].slice(
+      0,
+      MAX_KEYRING_CONVERGENCE_RECORDS,
+    ),
+  });
+}
+
+export function recordKeyringRuntimePerfDiagnostic(
+  event: string,
+  data: DiagnosticData = {},
+) {
+  if (
+    !enabled ||
+    (!event.startsWith('keyring_runtime_') &&
+      !event.startsWith('refresh_memstore_keyrings') &&
+      !event.startsWith('update_memstore_keyrings') &&
+      event !== 'unlock_keyrings.defer_runtime_restore_scheduled')
+  ) {
+    return;
+  }
+
+  const timestamp = now();
+  const previous = lastKeyringRuntimeConvergenceSnapshot;
+  const isError = event.endsWith('_error') || event.endsWith('.error');
+  const isStart = event.endsWith('_start') || event.endsWith('.start');
+  const isEnd = event.endsWith('_end') || event.endsWith('.end');
+  const status: KeyringRuntimeConvergenceStatus = isError
+    ? 'error'
+    : isStart
+    ? 'running'
+    : isEnd
+    ? 'success'
+    : previous.status;
+  const elapsedMs =
+    typeof data.elapsedMs === 'number' ? data.elapsedMs : previous.elapsedMs;
+
+  publishKeyringRuntimeConvergenceSnapshot({
+    ...previous,
+    enabled,
+    updatedAt: timestamp,
+    status,
+    event: previous.event || event,
+    elapsedMs,
+    error:
+      typeof data.error === 'string'
+        ? data.error
+        : isError
+        ? previous.error
+        : previous.error,
+    lastPerfEvent: event,
+    lastPerfElapsedMs: elapsedMs,
+  });
 }
 
 function queueDiagnosticLine(
