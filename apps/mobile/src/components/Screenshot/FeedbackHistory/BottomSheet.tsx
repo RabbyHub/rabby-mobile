@@ -523,16 +523,18 @@ function ReplyComposer({
             </View>
           </View>
         ) : (
-          <TouchableOpacity onPress={onPickMedia} disabled={submitting}>
-            <View style={styles.mediaPlaceholder}>
-              <Text style={styles.mediaPlaceholderText}>+</Text>
-              <Text style={styles.mediaPlaceholderText}>
-                {t('component.feedbackHistoryModal.mediaPlaceholder', {
-                  defaultValue: 'Image/Video\n(required)',
-                })}
-              </Text>
-            </View>
-          </TouchableOpacity>
+          <View style={styles.mediaPlaceholderContainer}>
+            <TouchableOpacity onPress={onPickMedia} disabled={submitting}>
+              <View style={styles.mediaPlaceholder}>
+                <Text style={styles.mediaPlaceholderText}>+</Text>
+                <Text style={styles.mediaPlaceholderText}>
+                  {t('component.feedbackHistoryModal.mediaPlaceholder', {
+                    defaultValue: 'Image/Video\n(required)',
+                  })}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
         )}
         <Button
           title={t('component.screenshotModal.submitButtonText')}
@@ -662,6 +664,11 @@ const getStyle = createGetStyles2024(
     },
     replyInputPlaceholder: {
       color: colors2024['neutral-secondary'],
+    },
+    mediaPlaceholderContainer: {
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
     },
     mediaPlaceholder: {
       width: 80,
