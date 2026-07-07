@@ -76,6 +76,10 @@ const pendingAppChainPersists = new Map<string, PendingAppChainPersist>();
 let pendingAppChainFlushTimer: ReturnType<typeof setTimeout> | null = null;
 let pendingAppChainFlushCancel: (() => void) | null = null;
 let appChainPersistInFlight: Promise<void> | null = null;
+const appChainInitStoreStateRef = {
+  promise: null as Promise<void> | null,
+  hasCompleted: false,
+};
 
 /**
  * 将 AppChainItem 转换为 IAppChainItem
@@ -349,7 +353,14 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
   isLoadingByAddress: {},
 
   async initStore() {
-    try {
+    if (appChainInitStoreStateRef.hasCompleted) {
+      return;
+    }
+    if (appChainInitStoreStateRef.promise) {
+      return appChainInitStoreStateRef.promise;
+    }
+
+    const promise = (async () => {
       // 从数据库加载缓存数据
       const allAppChains = await AppChainEntity.queryAll();
 
@@ -371,15 +382,32 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
         });
       }
 
-      set({ appChainMap });
-      Object.entries(appChainMap).forEach(([ownerAddr, value]) => {
+      let nextAppChainMap = appChainMap;
+      set(state => {
+        nextAppChainMap = {
+          ...appChainMap,
+          ...state.appChainMap,
+        };
+        return {
+          appChainMap: nextAppChainMap,
+        };
+      });
+      Object.entries(nextAppChainMap).forEach(([ownerAddr, value]) => {
         appChainResourceStore.hydrate(ownerAddr, value, {
           trigger: 'initStore',
         });
       });
-    } catch (error) {
-      console.error('Failed to init appchain store:', error);
-    }
+      appChainInitStoreStateRef.hasCompleted = true;
+    })()
+      .catch(error => {
+        console.error('Failed to init appchain store:', error);
+      })
+      .finally(() => {
+        appChainInitStoreStateRef.promise = null;
+      });
+
+    appChainInitStoreStateRef.promise = promise;
+    await promise;
   },
 
   async batchGetAppChains(addresses, force = false) {
@@ -635,5 +663,8 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
     }, 0);
   },
 }));
+
+export const ensureAppChainStoreInitialized = () =>
+  useAppChainStore.getState().initStore();
 
 export default useAppChainStore;
