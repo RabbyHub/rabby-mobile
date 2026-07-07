@@ -1,6 +1,6 @@
 import React, { type Ref, useCallback, useMemo } from 'react';
 import { View } from 'react-native';
-import { BottomSheetFlatList, TouchableOpacity } from '@gorhom/bottom-sheet';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 
 import { AppBottomSheetModal, AppBottomSheetModalTitle } from '@/components';
@@ -13,7 +13,6 @@ import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { findChainByEnum } from '@/utils/chain';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { Text } from '@/components/Typography';
-import { RcIconCheckedCC } from '../icons';
 
 type ChainItem = {
   chainEnum: CHAINS_ENUM | string;
@@ -22,9 +21,7 @@ type ChainItem = {
 
 type SupportedChainsSheetProps = {
   chains: Array<CHAINS_ENUM | string>;
-  selectedChain?: CHAINS_ENUM | string | null;
   title?: string;
-  onSelect?: (chain: CHAINS_ENUM | string | null) => void;
   onClose?: () => void;
   ref?: Ref<BottomSheetModalMethods>;
 };
@@ -33,9 +30,7 @@ const FOOTER_HEIGHT = 56;
 
 export const EIP7702SupportedChainsSheet = ({
   chains,
-  selectedChain,
   title = 'Supported Chains',
-  onSelect,
   onClose,
   ref,
 }: SupportedChainsSheetProps) => {
@@ -58,23 +53,10 @@ export const EIP7702SupportedChainsSheet = ({
     });
   }, [chains]);
 
-  const handleClose = useCallback(() => {
-    onClose?.();
-  }, [onClose]);
-
   const renderItem = useCallback(
     ({ item }: { item: ChainItem }) => {
-      const isSelected =
-        !!selectedChain &&
-        selectedChain.toString() === item.chainEnum.toString();
-
       return (
-        <TouchableOpacity
-          activeOpacity={0.75}
-          style={[styles.chainItem, isSelected && styles.chainItemSelected]}
-          onPress={() => {
-            onSelect?.(isSelected ? null : item.chainEnum);
-          }}>
+        <View style={styles.chainItem}>
           <ChainIconImage
             chainEnum={item.chainEnum}
             size={46}
@@ -83,17 +65,10 @@ export const EIP7702SupportedChainsSheet = ({
           <Text style={styles.chainName} numberOfLines={1}>
             {item.name}
           </Text>
-          {isSelected ? (
-            <RcIconCheckedCC
-              width={20}
-              height={20}
-              color={colors2024['brand-default']}
-            />
-          ) : null}
-        </TouchableOpacity>
+        </View>
       );
     },
-    [colors2024, onSelect, selectedChain, styles],
+    [styles],
   );
 
   return (
@@ -159,9 +134,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-  },
-  chainItemSelected: {
-    backgroundColor: colors2024['brand-light-1'],
   },
   chainIcon: {
     borderRadius: 12,
