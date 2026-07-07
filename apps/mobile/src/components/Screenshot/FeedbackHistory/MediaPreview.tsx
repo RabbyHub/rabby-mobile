@@ -1,8 +1,16 @@
-import React, { useEffect } from 'react';
-import { StatusBar, StyleSheet, useWindowDimensions } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Platform,
+  StatusBar,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 
 import RcCloseIconLight from '@/assets/icons/feedback/close.svg';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { Text } from '@/components/Typography';
+import { Slider } from '@rneui/themed';
 import FastImage from 'react-native-fast-image';
 import {
   Gesture,
@@ -17,16 +25,19 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import Video from 'react-native-video';
+import Video, {
+  type OnLoadData,
+  type OnProgressData,
+  type VideoRef,
+} from 'react-native-video';
 
 const MEDIA_PREVIEW_MAX_SCALE = 4;
-const MEDIA_PREVIEW_DISMISS_DISTANCE = 120;
-const MEDIA_PREVIEW_DISMISS_VELOCITY = 900;
 const MEDIA_PREVIEW_MIN_DISMISS_SCALE = 0.82;
 const MEDIA_PREVIEW_DISMISS_PROGRESS_MULTIPLIER = 1.2;
 const MEDIA_PREVIEW_DISMISS_PREDICTIVE_DISTANCE = 80;
 const MEDIA_PREVIEW_DISMISS_TARGET_DISTANCE_RATIO = 1.4;
 const MEDIA_PREVIEW_DISMISS_ROTATION_FACTOR = 0.0003;
+const SHOULD_USE_NATIVE_VIDEO_CONTROLS = Platform.OS !== 'ios';
 const MEDIA_PREVIEW_RESET_SPRING_CONFIG = {
   damping: 22,
   stiffness: 260,
@@ -43,6 +54,24 @@ function clampWorklet(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+function formatVideoTime(seconds: number) {
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    return '0:00';
+  }
+
+  const totalSeconds = Math.floor(seconds);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const remainingSeconds = totalSeconds % 60;
+  const paddedSeconds = String(remainingSeconds).padStart(2, '0');
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, '0')}:${paddedSeconds}`;
+  }
+
+  return `${minutes}:${paddedSeconds}`;
+}
+
 export function FeedbackMediaPreview({
   media,
   onClose,
@@ -52,6 +81,13 @@ export function FeedbackMediaPreview({
 }) {
   const { width, height } = useWindowDimensions();
   const isImage = media.type === 'image';
+  const shouldUseCustomVideoControls =
+    !isImage && !SHOULD_USE_NATIVE_VIDEO_CONTROLS;
+  const videoRef = useRef<VideoRef>(null);
+  const [isVideoPaused, setIsVideoPaused] = useState(false);
+  const [videoDuration, setVideoDuration] = useState(0);
+  const [videoCurrentTime, setVideoCurrentTime] = useState(0);
+  const [isVideoSeeking, setIsVideoSeeking] = useState(false);
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
   const translateX = useSharedValue(0);
@@ -76,6 +112,10 @@ export function FeedbackMediaPreview({
     dismissOriginY.value = height / 2;
     dismissRotation.value = 0;
     backgroundOpacity.value = 1;
+    setIsVideoPaused(false);
+    setVideoDuration(0);
+    setVideoCurrentTime(0);
+    setIsVideoSeeking(false);
   }, [
     backgroundOpacity,
     dismissOriginX,
@@ -93,27 +133,65 @@ export function FeedbackMediaPreview({
     width,
   ]);
 
+  const handleVideoLoad = useCallback((event: OnLoadData) => {
+    setVideoDuration(event.duration || 0);
+    setVideoCurrentTime(event.currentTime || 0);
+  }, []);
+
+  const handleVideoProgress = useCallback(
+    (event: OnProgressData) => {
+      if (!isVideoSeeking) {
+        setVideoCurrentTime(event.currentTime || 0);
+      }
+    },
+    [isVideoSeeking],
+  );
+
+  const handleVideoEnd = useCallback(() => {
+    setIsVideoPaused(true);
+    setVideoCurrentTime(videoDuration);
+  }, [videoDuration]);
+
+  const handleToggleVideoPlayback = useCallback(() => {
+    setIsVideoPaused(prev => {
+      if (
+        prev &&
+        videoDuration > 0 &&
+        videoCurrentTime >= videoDuration - 0.5
+      ) {
+        videoRef.current?.seek(0);
+        setVideoCurrentTime(0);
+      }
+
+      return !prev;
+    });
+  }, [videoCurrentTime, videoDuration]);
+
+  const handleVideoSlidingStart = useCallback(() => {
+    setIsVideoSeeking(true);
+  }, []);
+
+  const handleVideoValueChange = useCallback((value: number) => {
+    setVideoCurrentTime(value);
+  }, []);
+
+  const handleVideoSlidingComplete = useCallback((value: number) => {
+    videoRef.current?.seek(value);
+    setVideoCurrentTime(value);
+    setIsVideoSeeking(false);
+  }, []);
+
   const panGesture = Gesture.Pan()
     .minDistance(2)
     .maxPointers(1)
     .onStart(event => {
-      if (isImage && scale.value <= 1.01) {
+      if (scale.value <= 1.01) {
         dismissOriginX.value = clampWorklet(event.absoluteX, 0, width);
         dismissOriginY.value = clampWorklet(event.absoluteY, 0, height);
       }
     })
     .onUpdate(event => {
-      if (!isImage) {
-        translateX.value = 0;
-        translateY.value = event.translationY;
-        backgroundOpacity.value =
-          event.translationY > 0
-            ? clampWorklet(1 - event.translationY / height, 0.25, 1)
-            : 1;
-        return;
-      }
-
-      if (isImage && scale.value > 1.01) {
+      if (scale.value > 1.01) {
         dismissScale.value = 1;
         dismissRotation.value = 0;
         backgroundOpacity.value = 1;
@@ -156,22 +234,7 @@ export function FeedbackMediaPreview({
           : 1;
     })
     .onEnd(event => {
-      if (!isImage) {
-        if (
-          event.translationY > MEDIA_PREVIEW_DISMISS_DISTANCE ||
-          event.velocityY > MEDIA_PREVIEW_DISMISS_VELOCITY
-        ) {
-          runOnJS(onClose)();
-          return;
-        }
-
-        translateX.value = withSpring(0);
-        translateY.value = withSpring(0);
-        backgroundOpacity.value = withTiming(1, { duration: 120 });
-        return;
-      }
-
-      if (isImage && scale.value > 1.01) {
+      if (scale.value > 1.01) {
         savedTranslateX.value = translateX.value;
         savedTranslateY.value = translateY.value;
         dismissScale.value = 1;
@@ -229,7 +292,6 @@ export function FeedbackMediaPreview({
     });
 
   const pinchGesture = Gesture.Pinch()
-    .enabled(isImage)
     .onUpdate(event => {
       const nextScale = clampWorklet(
         savedScale.value * event.scale,
@@ -279,7 +341,6 @@ export function FeedbackMediaPreview({
     });
 
   const doubleTapGesture = Gesture.Tap()
-    .enabled(isImage)
     .numberOfTaps(2)
     .onEnd(() => {
       const nextScale = scale.value > 1.01 ? 1 : 2;
@@ -294,9 +355,11 @@ export function FeedbackMediaPreview({
       backgroundOpacity.value = withTiming(1, { duration: 120 });
     });
 
-  const previewGesture = isImage
-    ? Gesture.Simultaneous(panGesture, pinchGesture, doubleTapGesture)
-    : panGesture;
+  const previewGesture = Gesture.Simultaneous(
+    panGesture,
+    pinchGesture,
+    doubleTapGesture,
+  );
 
   const backdropAnimatedStyle = useAnimatedStyle(() => ({
     opacity: backgroundOpacity.value,
@@ -348,15 +411,57 @@ export function FeedbackMediaPreview({
               />
             ) : (
               <Video
+                ref={videoRef}
                 source={{ uri: media.uri }}
                 style={{ width, height }}
                 resizeMode="contain"
-                controls
-                paused={false}
+                controls={SHOULD_USE_NATIVE_VIDEO_CONTROLS}
+                paused={shouldUseCustomVideoControls ? isVideoPaused : false}
+                progressUpdateInterval={250}
+                onLoad={handleVideoLoad}
+                onProgress={handleVideoProgress}
+                onEnd={handleVideoEnd}
               />
             )}
           </Animated.View>
         </GestureDetector>
+        {shouldUseCustomVideoControls ? (
+          <View style={styles.videoControlsContainer}>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={handleToggleVideoPlayback}
+              style={styles.videoControlButton}>
+              {isVideoPaused ? (
+                <View style={styles.videoPlayIcon} />
+              ) : (
+                <View style={styles.videoPauseIcon}>
+                  <View style={styles.videoPauseBar} />
+                  <View style={styles.videoPauseBar} />
+                </View>
+              )}
+            </TouchableOpacity>
+            <Text style={styles.videoTimeText}>
+              {formatVideoTime(videoCurrentTime)}
+            </Text>
+            <Slider
+              allowTouchTrack
+              style={styles.videoSlider}
+              value={Math.min(videoCurrentTime, videoDuration || 0)}
+              minimumValue={0}
+              maximumValue={Math.max(videoDuration, 0.01)}
+              minimumTrackTintColor="#fff"
+              maximumTrackTintColor="rgba(255, 255, 255, 0.35)"
+              thumbStyle={styles.videoSliderThumb}
+              trackStyle={styles.videoSliderTrack}
+              onSlidingStart={handleVideoSlidingStart}
+              onValueChange={handleVideoValueChange}
+              onSlidingComplete={handleVideoSlidingComplete}
+            />
+            <Text style={styles.videoTimeText}>
+              {formatVideoTime(videoDuration)}
+            </Text>
+          </View>
+        ) : null}
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={onClose}
@@ -390,5 +495,70 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 3,
+  },
+  videoControlsContainer: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    bottom: 42,
+    minHeight: 52,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.52)',
+    zIndex: 2,
+  },
+  videoControlButton: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  videoPlayIcon: {
+    width: 0,
+    height: 0,
+    marginLeft: 3,
+    borderTopWidth: 8,
+    borderBottomWidth: 8,
+    borderLeftWidth: 13,
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    borderLeftColor: '#fff',
+  },
+  videoPauseIcon: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  videoPauseBar: {
+    width: 4,
+    height: 16,
+    borderRadius: 2,
+    backgroundColor: '#fff',
+  },
+  videoSlider: {
+    flex: 1,
+    height: 40,
+    marginHorizontal: 8,
+  },
+  videoSliderTrack: {
+    height: 3,
+    borderRadius: 2,
+  },
+  videoSliderThumb: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#fff',
+  },
+  videoTimeText: {
+    minWidth: 38,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 14,
+    fontWeight: '500',
+    color: '#fff',
+    textAlign: 'center',
   },
 });
