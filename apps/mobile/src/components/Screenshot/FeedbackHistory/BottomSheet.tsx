@@ -140,11 +140,19 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   const { isShowHistory, toggleFeedbackHistoryVisible } =
     useFeedbackHistoryVisible();
   const totalBalanceText = useScreenshotFeedbackTotalBalanceText();
-  const [replyText, setReplyText] = useState('');
   const [selectedMedia, setSelectedMedia] =
     useState<PickedFeedbackMedia | null>(null);
+  const replyTextRef = useRef('');
+  const replyInputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const pendingScrollToBottomRef = useRef(false);
+  const handleReplyTextChange = useCallback((text: string) => {
+    replyTextRef.current = text;
+  }, []);
+  const clearReplyText = useCallback(() => {
+    replyTextRef.current = '';
+    replyInputRef.current?.clear();
+  }, []);
   const scrollToBottom = useCallback((animated = false) => {
     requestAnimationFrame(() => {
       scrollViewRef.current?.scrollToEnd({ animated });
@@ -229,7 +237,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   const { runAsync: handleSubmitReply, loading: isSubmittingReply } =
     useRequest(
       async () => {
-        const content = replyText.trim();
+        const content = replyTextRef.current.trim();
         if (!selectedMedia) {
           throw new Error('No selected feedback media to upload');
         }
@@ -261,7 +269,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
       {
         manual: true,
         onSuccess: async () => {
-          setReplyText('');
+          clearReplyText();
           setSelectedMedia(null);
           toast.success(t('component.submitFeedbackSuccessModal.desc'), {
             hideOnPress: true,
@@ -279,7 +287,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
 
   useEffect(() => {
     if (isShowHistory) {
-      setReplyText('');
+      clearReplyText();
       setSelectedMedia(null);
       toggleShowSheetModal(true);
       fetchFeedbackMessages();
@@ -288,6 +296,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
       toggleShowSheetModal('destroy');
     }
   }, [
+    clearReplyText,
     fetchFeedbackMessages,
     isShowHistory,
     requestScrollToBottomAfterLayout,
@@ -344,8 +353,9 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
               ))}
 
               <ReplyComposer
-                value={replyText}
-                onChangeText={setReplyText}
+                key="reply-composer"
+                inputRef={replyInputRef}
+                onChangeText={handleReplyTextChange}
                 selectedMedia={selectedMedia}
                 onPickMedia={handlePickMedia}
                 onRemoveMedia={handleRemoveMedia}
@@ -444,7 +454,7 @@ function FeedbackMessageItem({ message }: { message: ClientFeedbackMessage }) {
 }
 
 function ReplyComposer({
-  value,
+  inputRef,
   onChangeText,
   selectedMedia,
   onPickMedia,
@@ -452,7 +462,7 @@ function ReplyComposer({
   onSubmit,
   submitting,
 }: {
-  value: string;
+  inputRef: React.Ref<React.ComponentRef<typeof TextInput>>;
   onChangeText: (text: string) => void;
   selectedMedia?: PickedFeedbackMedia | null;
   onPickMedia: () => void | Promise<void>;
@@ -469,7 +479,7 @@ function ReplyComposer({
       <View
         style={[styles.messageBubble, styles.userBubble, styles.replyBubble]}>
         <TextInput
-          value={value}
+          ref={inputRef}
           onChangeText={onChangeText}
           // multiline
           textAlignVertical="top"
