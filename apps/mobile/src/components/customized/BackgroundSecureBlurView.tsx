@@ -12,9 +12,8 @@ export function BackgroundSecureBlurView() {
     return null;
   }
 
-  const { BackgroundSecureBlurViewLegacy } = require(
-    './BackgroundSecureBlurViewLegacy',
-  ) as typeof import('./BackgroundSecureBlurViewLegacy');
+  const { BackgroundSecureBlurViewLegacy } =
+    require('./BackgroundSecureBlurViewLegacy') as typeof import('./BackgroundSecureBlurViewLegacy');
 
   return <BackgroundSecureBlurViewLegacy />;
 }

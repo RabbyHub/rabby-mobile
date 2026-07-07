@@ -238,8 +238,10 @@ class AccountStore extends BaseStore<AccountStoreState> {
     }
     this.hasStartedLifecycle = true;
 
-    perfEvents.subscribe('USER_MANUALLY_UNLOCK_UI_READY', () => {
-      this.scheduleFetchAccountsAfterHomePostStartupReady('unlock_ui_ready');
+    perfEvents.subscribe('POST_UNLOCK_UI_READY', () => {
+      this.scheduleFetchAccountsAfterHomePostStartupReady(
+        'post_unlock_ui_ready',
+      );
     });
 
     keyringService.on('newAccount', () => {

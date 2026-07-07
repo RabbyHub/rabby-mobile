@@ -110,7 +110,8 @@ export function usePasswordStatus() {
 }
 
 export async function getBootstrapAccountFlags() {
-  const visibleAccountsCount = await keyringService.getCountOfAccountsInKeyring();
+  const visibleAccountsCount =
+    await keyringService.getCountOfAccountsInKeyring();
   const hasVisibleAccounts = visibleAccountsCount > 0;
 
   return {

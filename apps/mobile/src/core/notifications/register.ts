@@ -368,7 +368,7 @@ export async function startBindPushServerOnDemand(pushToken: string) {
     return;
   }
 
-  perfEvents.on('USER_MANUALLY_UNLOCK_UI_READY', () => {
+  perfEvents.on('POST_UNLOCK_UI_READY', () => {
     requestBindDevice(pushToken);
   });
 

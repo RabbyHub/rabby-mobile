@@ -1443,7 +1443,7 @@ RCT_EXPORT_METHOD(createZipArchive:(NSString *)targetPath
         totalBytesRead,
         bytesWritten,
         durationMs,
-        targetPath);
+        RNFSPathTail(targetPath));
 
   resolve(@{
     @"targetPath": targetPath,

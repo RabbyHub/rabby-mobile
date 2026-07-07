@@ -67,6 +67,42 @@ public class RNHelpersModule extends NativeRNHelpersSpec {
 
   @ReactMethod
   @Override
+  public void androidTraceInstant(String name) {
+    RabbyStartupTrace.instant(name);
+  }
+
+  @ReactMethod
+  @Override
+  public void androidTraceBeginSection(String name) {
+    RabbyStartupTrace.beginSection(name);
+  }
+
+  @ReactMethod
+  @Override
+  public void androidTraceEndSection() {
+    RabbyStartupTrace.endSection();
+  }
+
+  @ReactMethod
+  @Override
+  public void androidTraceBeginAsyncSection(String name, double cookie) {
+    RabbyStartupTrace.beginAsyncSection(name, (int) cookie);
+  }
+
+  @ReactMethod
+  @Override
+  public void androidTraceEndAsyncSection(String name, double cookie) {
+    RabbyStartupTrace.endAsyncSection(name, (int) cookie);
+  }
+
+  @ReactMethod
+  @Override
+  public void androidTraceCounter(String name, double value) {
+    RabbyStartupTrace.counter(name, (int) value);
+  }
+
+  @ReactMethod
+  @Override
   public void moveTaskToBack(Promise promise) {
     Activity activity = getCurrentActivity();
     if (activity == null) {

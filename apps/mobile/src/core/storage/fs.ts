@@ -68,6 +68,14 @@ export class AppScreenshotFS {
     return filePath;
   }
 
+  static normalizeLocalFilePath(filePath: string) {
+    if (filePath.startsWith('file://')) {
+      return stringUtils.unPrefix(filePath, 'file://');
+    }
+
+    return filePath;
+  }
+
   static normalizeContentType(contentType: string) {
     switch (contentType?.toLowerCase()) {
       case 'jpg':
@@ -138,16 +146,38 @@ export class AppScreenshotFS {
     return input;
   }
 
+  static isNativeScreenshotCapturePath(input: string) {
+    if (!input || input.startsWith('content://')) {
+      return false;
+    }
+
+    const path = AppScreenshotFS.normalizeLocalFilePath(input);
+    return /\/rabby-screen-capture\/rabby-screen-capture-[^/]+\.png$/i.test(
+      path,
+    );
+  }
+
+  static async cleanupNativeScreenshotCaptureSource(input: string) {
+    if (!AppScreenshotFS.isNativeScreenshotCapturePath(input)) {
+      return;
+    }
+
+    await RNFS.unlink(AppScreenshotFS.normalizeLocalFilePath(input)).catch(
+      () => undefined,
+    );
+  }
+
   static async uriToPath(
     input: string,
     options?: { fallbackAsBase64?: boolean },
   ) {
+    const localPath = AppScreenshotFS.normalizeLocalFilePath(input);
     const maybeTest = {
       path:
-        input.startsWith('file://') ||
-        input.startsWith('content://') ||
-        input.startsWith('/')
-          ? input
+        input.startsWith('content://') || localPath.startsWith('/')
+          ? input.startsWith('content://')
+            ? input
+            : localPath
           : '',
       base64: () =>
         input.startsWith('data:image/') && input.indexOf('base64,') > -1
@@ -235,7 +265,11 @@ export class AppScreenshotFS {
 
   async saveScreenshotFrom(
     input: string,
-    options?: { fallbackAsBase64?: boolean; imageType?: string },
+    options?: {
+      fallbackAsBase64?: boolean;
+      imageType?: string;
+      cleanupSource?: boolean;
+    },
   ) {
     const pathInfo = await AppScreenshotFS.uriToPath(input, {
       fallbackAsBase64: options?.fallbackAsBase64,
@@ -247,12 +281,20 @@ export class AppScreenshotFS {
     );
 
     if (pathInfo.type === 'fs') {
-      await RNFS.persistFile(pathInfo.data, targetPath, {
-        mode: 'copy',
-        overwrite: true,
-        ensureParent: true,
-        NSURLIsExcludedFromBackupKey: false,
-      });
+      try {
+        await RNFS.persistFile(pathInfo.data, targetPath, {
+          mode: 'copy',
+          overwrite: true,
+          ensureParent: true,
+          NSURLIsExcludedFromBackupKey: false,
+        });
+      } finally {
+        if (options?.cleanupSource) {
+          await AppScreenshotFS.cleanupNativeScreenshotCaptureSource(
+            pathInfo.data,
+          );
+        }
+      }
     } else if (pathInfo.type === 'base64') {
       await RNFS.writeFile(targetPath, pathInfo.data, 'base64');
     }

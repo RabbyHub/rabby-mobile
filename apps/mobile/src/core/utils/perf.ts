@@ -31,8 +31,14 @@ export type PerfEventBusListeners = {
     combinedData: Multi24hBalanceState['combinedData'][keyof Multi24hBalanceState['combinedData']];
   }) => void;
 
+  WALLET_AUTH_UNLOCKED: (ctx: { isFirstTimeAfterLaunch: boolean }) => void;
+
+  POST_UNLOCK_UI_READY: (ctx: { isFirstTimeAfterLaunch: boolean }) => void;
+
+  /** @deprecated use WALLET_AUTH_UNLOCKED */
   USER_MANUALLY_UNLOCK: (ctx: { isFirstTimeAfterLaunch: boolean }) => void;
 
+  /** @deprecated use POST_UNLOCK_UI_READY */
   USER_MANUALLY_UNLOCK_UI_READY: (ctx: {
     isFirstTimeAfterLaunch: boolean;
   }) => void;

@@ -117,12 +117,15 @@ export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
       const nextLayout = { x, y, width, height };
       if (isFiniteLayout(nextLayout)) {
         const pressAnchor = pressAnchorRef.current;
+        const measuredPressAnchor = isFiniteLayout(pressAnchor)
+          ? pressAnchor
+          : null;
         setTriggerLayout(
-          isFiniteLayout(pressAnchor)
+          measuredPressAnchor
             ? {
                 ...nextLayout,
-                y: pressAnchor.y,
-                height: pressAnchor.height,
+                y: measuredPressAnchor.y,
+                height: measuredPressAnchor.height,
               }
             : nextLayout,
         );
@@ -133,7 +136,12 @@ export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
   const handleOpen = useCallback(
     (event?: GestureResponderEvent) => {
       const { pageX, pageY } = event?.nativeEvent || {};
-      if (Number.isFinite(pageX) && Number.isFinite(pageY)) {
+      if (
+        typeof pageX === 'number' &&
+        typeof pageY === 'number' &&
+        Number.isFinite(pageX) &&
+        Number.isFinite(pageY)
+      ) {
         const pressAnchor = {
           x: pageX - MENU_TOUCH_ANCHOR_SIZE / 2,
           y: pageY - MENU_TOUCH_ANCHOR_SIZE / 2,
@@ -161,20 +169,21 @@ export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
     const width = Math.max(menuSize.width || MENU_MIN_WIDTH, MENU_MIN_WIDTH);
     const height = menuSize.height || estimatedMenuHeight;
     const fallbackLeft = windowDimensions.width - MENU_RIGHT_FALLBACK - width;
+    const measuredLayout = isFiniteLayout(triggerLayout) ? triggerLayout : null;
 
     const measuredOnRight =
-      isFiniteLayout(triggerLayout) &&
-      triggerLayout.x + triggerLayout.width > windowDimensions.width / 2;
+      !!measuredLayout &&
+      measuredLayout.x + measuredLayout.width > windowDimensions.width / 2;
 
     const rawLeft = measuredOnRight
-      ? triggerLayout!.x + triggerLayout!.width - width
+      ? measuredLayout.x + measuredLayout.width - width
       : fallbackLeft;
 
     const fallbackTop = safeOffHeader - MENU_TOP_ADJUST;
     const rawTop =
-      isFiniteLayout(triggerLayout) && measuredOnRight
-        ? triggerLayout!.y +
-          triggerLayout!.height +
+      measuredLayout && measuredOnRight
+        ? measuredLayout.y +
+          measuredLayout.height +
           MENU_TRIGGER_GAP -
           MENU_TOP_ADJUST
         : fallbackTop;

@@ -1,6 +1,6 @@
 import type {
+  FlashListRef,
   FlashListProps,
-  FlashList as SPFlashList,
 } from '@shopify/flash-list'
 import React, { useCallback } from 'react'
 import Animated from 'react-native-reanimated'
@@ -23,7 +23,7 @@ import {
  */
 
 type FlashListMemoProps = React.PropsWithChildren<FlashListProps<unknown>>
-type FlashListMemoRef = SPFlashList<any>
+type FlashListMemoRef = FlashListRef<any>
 
 let AnimatedFlashList: React.ComponentClass<FlashListProps<any>> | null = null
 
@@ -48,7 +48,7 @@ const FlashListMemo = React.memo(
   React.forwardRef<FlashListMemoRef, FlashListMemoProps>((props, passRef) => {
     ensureFlastList()
     return AnimatedFlashList ? (
-      <AnimatedFlashList ref={passRef} {...props} />
+      <AnimatedFlashList ref={passRef as any} {...props} />
     ) : (
       <></>
     )
@@ -63,7 +63,7 @@ function FlashListImpl<R>(
     contentContainerStyle: _contentContainerStyle,
     ...rest
   }: Omit<FlashListProps<R>, 'onScroll'>,
-  passRef: React.Ref<SPFlashList<any>>
+  passRef: React.Ref<FlashListRef<any>>
 ) {
   const name = useTabNameContext()
   const { setRef, contentInset } = useTabsContext()
@@ -120,7 +120,7 @@ function FlashListImpl<R>(
   const memoContentContainerStyle = React.useMemo(
     () => ({
       paddingTop: contentContainerStyle.paddingTop,
-      ..._contentContainerStyle,
+      ...(_contentContainerStyle as object),
     }),
     [_contentContainerStyle, contentContainerStyle.paddingTop]
   )
@@ -131,7 +131,7 @@ function FlashListImpl<R>(
       // We are not accessing the right element or view of the Flashlist (recyclerlistview). So we need to give
       // this ref the access to it
       // eslint-ignore
-      ;(recyclerRef as any)(value?.recyclerlistview_unsafe)
+      ;(recyclerRef as any)(value?.getNativeScrollRef?.())
       ;(ref as any)(value)
     },
     [recyclerRef, ref]
@@ -161,5 +161,5 @@ function FlashListImpl<R>(
  * Use like a regular FlashList.
  */
 export const FlashList = React.forwardRef(FlashListImpl) as <T>(
-  p: FlashListProps<T> & { ref?: React.Ref<SPFlashList<T>> }
+  p: FlashListProps<T> & { ref?: React.Ref<FlashListRef<T>> }
 ) => React.ReactElement

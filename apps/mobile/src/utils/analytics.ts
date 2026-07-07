@@ -101,7 +101,9 @@ export const syncFirebaseAnalyticsCollectionWithOptOut = async () => {
 void syncFirebaseAnalyticsCollectionWithOptOut();
 
 export const analytics = {
-  logEvent: async (...args: Parameters<FirebaseAnalyticsModule['logEvent']>) => {
+  logEvent: async (
+    ...args: Parameters<FirebaseAnalyticsModule['logEvent']>
+  ) => {
     if (!canTrackUserBehavior()) {
       return;
     }

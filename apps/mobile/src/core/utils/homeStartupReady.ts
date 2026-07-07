@@ -2,6 +2,8 @@ import { InteractionManager, Platform } from 'react-native';
 
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { logger } from '@/utils/logger';
+import { traceAndroidInstant } from './androidTrace';
+import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
 
 const HOME_CRITICAL_READY_DELAY_MS = 32;
 const HOME_POST_STARTUP_DEFER_MS = 450;
@@ -36,11 +38,12 @@ const homeStartupReadyStore = zCreate(
 );
 
 function traceHomeStartup(event: string, data: Record<string, unknown> = {}) {
-  if (!isAndroid) {
+  if (!isAndroid || !isNonProductionDiagnosticsEnabled) {
     return;
   }
 
   logger.info(`[RabbyUnlockPerf:home] ${event}`, data);
+  traceAndroidInstant(`home.${event}`, data);
 }
 
 export function useHomeStartupReady() {

@@ -703,7 +703,7 @@ export function startSubscribeUserDidTakeScreenshot() {
           width: coerceNumber(params?.width, 100),
         };
         const fullPath = params?.path
-          ? AppScreenshotFS.normalizeFilePath(params.path)
+          ? AppScreenshotFS.normalizeLocalFilePath(params.path)
           : '';
 
         if (params?.imageBase64) {
@@ -737,6 +737,7 @@ export function startSubscribeUserDidTakeScreenshot() {
           showScreenshotDebugToast('image file');
           const inAppPath = await appScreenshotFS.saveScreenshotFrom(fullPath, {
             imageType: params?.imageType,
+            cleanupSource: true,
           });
           if (!inAppPath) {
             showScreenshotDebugToast('skip saveFile');

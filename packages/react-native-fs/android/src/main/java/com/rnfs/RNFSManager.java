@@ -658,7 +658,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
               result.bytesRead,
               result.bytesWritten,
               result.durationMs,
-              result.targetPath));
+              pathTail(result.targetPath)));
 
       WritableMap infoMap = Arguments.createMap();
       infoMap.putString("targetPath", result.targetPath);
@@ -788,7 +788,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
               result.entryName,
               result.bytesWritten,
               result.durationMs,
-              result.targetPath));
+              pathTail(result.targetPath)));
 
       WritableMap infoMap = Arguments.createMap();
       infoMap.putString("archivePath", result.archivePath);
@@ -900,7 +900,7 @@ public class RNFSManager extends ReactContextBaseJavaModule {
               result.entryCount,
               result.totalBytes,
               result.durationMs,
-              result.archivePath));
+              pathTail(result.archivePath)));
 
       WritableMap infoMap = Arguments.createMap();
       infoMap.putString("archivePath", result.archivePath);
