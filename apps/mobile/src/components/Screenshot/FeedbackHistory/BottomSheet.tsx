@@ -163,8 +163,11 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal();
-  const { isShowHistory, toggleFeedbackHistoryVisible } =
-    useFeedbackHistoryVisible();
+  const {
+    isShowHistory,
+    feedbackHistoryRefreshKey,
+    toggleFeedbackHistoryVisible,
+  } = useFeedbackHistoryVisible();
   const totalBalanceText = useScreenshotFeedbackTotalBalanceText();
   const [selectedMedia, setSelectedMedia] =
     useState<PickedFeedbackMedia | null>(null);
@@ -311,9 +314,9 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
         return res;
       },
       {
+        manual: true,
         cacheKey: `feedbackMessages-${deviceId}`,
         staleTime: 5 * 1000,
-        ready: isShowHistory,
         onSuccess: () => {
           requestScrollToBottomAfterLayout();
         },
@@ -375,8 +378,6 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
       clearReplyText();
       resetSelectedMedia();
       toggleShowSheetModal(true);
-      fetchFeedbackMessages();
-      requestScrollToBottomAfterLayout();
     } else {
       cancelSubmitReply();
       resetSelectedMedia();
@@ -386,11 +387,23 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   }, [
     clearReplyText,
     cancelSubmitReply,
+    isShowHistory,
+    resetSelectedMedia,
+    toggleShowSheetModal,
+  ]);
+
+  useEffect(() => {
+    if (!isShowHistory) {
+      return;
+    }
+
+    fetchFeedbackMessages();
+    requestScrollToBottomAfterLayout();
+  }, [
+    feedbackHistoryRefreshKey,
     fetchFeedbackMessages,
     isShowHistory,
     requestScrollToBottomAfterLayout,
-    resetSelectedMedia,
-    toggleShowSheetModal,
   ]);
 
   const hasMessage = useMemo(() => {

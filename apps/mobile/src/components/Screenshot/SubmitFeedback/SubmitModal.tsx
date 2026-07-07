@@ -370,6 +370,7 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       flex: 1,
       marginTop: 16,
       marginBottom: 16,
+      overflow: 'hidden',
       // ...makeDebugBorder(),
     },
     image: IS_IOS ? { borderRadius: 21 } : {},
