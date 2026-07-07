@@ -22,8 +22,16 @@ import Video from 'react-native-video';
 const MEDIA_PREVIEW_MAX_SCALE = 4;
 const MEDIA_PREVIEW_DISMISS_DISTANCE = 120;
 const MEDIA_PREVIEW_DISMISS_VELOCITY = 900;
-const MEDIA_PREVIEW_MIN_DISMISS_SCALE = 0.3;
-const MEDIA_PREVIEW_DISMISS_SCALE_DISTANCE_RATIO = 0.6;
+const MEDIA_PREVIEW_MIN_DISMISS_SCALE = 0.82;
+const MEDIA_PREVIEW_DISMISS_PROGRESS_MULTIPLIER = 1.2;
+const MEDIA_PREVIEW_DISMISS_PREDICTIVE_DISTANCE = 80;
+const MEDIA_PREVIEW_DISMISS_TARGET_DISTANCE_RATIO = 1.4;
+const MEDIA_PREVIEW_DISMISS_ROTATION_FACTOR = 0.0003;
+const MEDIA_PREVIEW_RESET_SPRING_CONFIG = {
+  damping: 22,
+  stiffness: 260,
+  mass: 0.8,
+};
 
 export type FeedbackPreviewMedia = {
   type: 'image' | 'video';
@@ -53,6 +61,7 @@ export function FeedbackMediaPreview({
   const dismissScale = useSharedValue(1);
   const dismissOriginX = useSharedValue(width / 2);
   const dismissOriginY = useSharedValue(height / 2);
+  const dismissRotation = useSharedValue(0);
   const backgroundOpacity = useSharedValue(1);
 
   useEffect(() => {
@@ -65,11 +74,13 @@ export function FeedbackMediaPreview({
     dismissScale.value = 1;
     dismissOriginX.value = width / 2;
     dismissOriginY.value = height / 2;
+    dismissRotation.value = 0;
     backgroundOpacity.value = 1;
   }, [
     backgroundOpacity,
     dismissOriginX,
     dismissOriginY,
+    dismissRotation,
     dismissScale,
     height,
     media.uri,
@@ -84,6 +95,7 @@ export function FeedbackMediaPreview({
 
   const panGesture = Gesture.Pan()
     .minDistance(2)
+    .maxPointers(1)
     .onStart(event => {
       if (isImage && scale.value <= 1.01) {
         dismissOriginX.value = clampWorklet(event.absoluteX, 0, width);
@@ -91,8 +103,19 @@ export function FeedbackMediaPreview({
       }
     })
     .onUpdate(event => {
+      if (!isImage) {
+        translateX.value = 0;
+        translateY.value = event.translationY;
+        backgroundOpacity.value =
+          event.translationY > 0
+            ? clampWorklet(1 - event.translationY / height, 0.25, 1)
+            : 1;
+        return;
+      }
+
       if (isImage && scale.value > 1.01) {
         dismissScale.value = 1;
+        dismissRotation.value = 0;
         backgroundOpacity.value = 1;
         const maxTranslateX = (width * (scale.value - 1)) / 2;
         const maxTranslateY = (height * (scale.value - 1)) / 2;
@@ -109,45 +132,99 @@ export function FeedbackMediaPreview({
         return;
       }
 
-      translateX.value = 0;
+      translateX.value = event.translationX;
       translateY.value = event.translationY;
-      dismissScale.value =
-        isImage && event.translationY > 0
-          ? clampWorklet(
-              1 -
-                event.translationY /
-                  Math.max(
-                    height * MEDIA_PREVIEW_DISMISS_SCALE_DISTANCE_RATIO,
-                    MEDIA_PREVIEW_DISMISS_DISTANCE,
-                  ),
-              MEDIA_PREVIEW_MIN_DISMISS_SCALE,
-              1,
-            )
-          : 1;
+      dismissRotation.value =
+        event.translationY > 0
+          ? event.translationX * MEDIA_PREVIEW_DISMISS_ROTATION_FACTOR
+          : 0;
+
+      const dismissProgress = clampWorklet(
+        ((event.translationX + event.translationY) / Math.max(width, height)) *
+          MEDIA_PREVIEW_DISMISS_PROGRESS_MULTIPLIER,
+        0,
+        1,
+      );
+      dismissScale.value = clampWorklet(
+        1 - dismissProgress * (1 - MEDIA_PREVIEW_MIN_DISMISS_SCALE),
+        MEDIA_PREVIEW_MIN_DISMISS_SCALE,
+        1,
+      );
       backgroundOpacity.value =
         event.translationY > 0
-          ? clampWorklet(1 - event.translationY / height, 0.25, 1)
+          ? clampWorklet(1 - dismissProgress * 0.8, 0.2, 1)
           : 1;
     })
     .onEnd(event => {
+      if (!isImage) {
+        if (
+          event.translationY > MEDIA_PREVIEW_DISMISS_DISTANCE ||
+          event.velocityY > MEDIA_PREVIEW_DISMISS_VELOCITY
+        ) {
+          runOnJS(onClose)();
+          return;
+        }
+
+        translateX.value = withSpring(0);
+        translateY.value = withSpring(0);
+        backgroundOpacity.value = withTiming(1, { duration: 120 });
+        return;
+      }
+
       if (isImage && scale.value > 1.01) {
         savedTranslateX.value = translateX.value;
         savedTranslateY.value = translateY.value;
         dismissScale.value = 1;
+        dismissRotation.value = 0;
         return;
       }
 
-      if (
-        event.translationY > MEDIA_PREVIEW_DISMISS_DISTANCE ||
-        event.velocityY > MEDIA_PREVIEW_DISMISS_VELOCITY
-      ) {
-        runOnJS(onClose)();
+      const predictedX = event.translationX + event.velocityX / 2;
+      const predictedY = event.translationY + event.velocityY / 2;
+      const shouldDismiss =
+        event.translationY > 0 &&
+        predictedY > 0 &&
+        predictedX + predictedY > MEDIA_PREVIEW_DISMISS_PREDICTIVE_DISTANCE;
+
+      if (shouldDismiss) {
+        const angleX = predictedX / width;
+        const angleY = predictedY / height;
+        const angleDistance = Math.sqrt(angleX * angleX + angleY * angleY);
+        const targetTranslateX =
+          angleDistance > 0
+            ? (angleX / angleDistance) *
+              MEDIA_PREVIEW_DISMISS_TARGET_DISTANCE_RATIO *
+              width
+            : 0;
+        const targetTranslateY =
+          angleDistance > 0
+            ? (angleY / angleDistance) *
+              MEDIA_PREVIEW_DISMISS_TARGET_DISTANCE_RATIO *
+              height
+            : height;
+
+        translateX.value = withTiming(targetTranslateX, { duration: 180 });
+        translateY.value = withTiming(
+          targetTranslateY,
+          { duration: 180 },
+          finished => {
+            if (finished) {
+              runOnJS(onClose)();
+            }
+          },
+        );
+        dismissRotation.value = withTiming(
+          dismissRotation.value + predictedX * 0.0001,
+          { duration: 180 },
+        );
+        backgroundOpacity.value = withTiming(0, { duration: 140 });
         return;
       }
 
-      translateX.value = withSpring(0);
-      translateY.value = withSpring(0);
-      dismissScale.value = withSpring(1);
+      translateX.value = withSpring(0, MEDIA_PREVIEW_RESET_SPRING_CONFIG);
+      translateY.value = withSpring(0, MEDIA_PREVIEW_RESET_SPRING_CONFIG);
+      dismissScale.value = withSpring(1, MEDIA_PREVIEW_RESET_SPRING_CONFIG);
+      dismissRotation.value = withSpring(0, MEDIA_PREVIEW_RESET_SPRING_CONFIG);
       backgroundOpacity.value = withTiming(1, { duration: 120 });
     });
 
@@ -165,6 +242,7 @@ export function FeedbackMediaPreview({
         translateX.value = 0;
         translateY.value = 0;
         dismissScale.value = 1;
+        dismissRotation.value = 0;
       }
     })
     .onEnd(() => {
@@ -178,6 +256,7 @@ export function FeedbackMediaPreview({
         savedTranslateX.value = 0;
         savedTranslateY.value = 0;
         dismissScale.value = withSpring(1);
+        dismissRotation.value = withSpring(0);
         return;
       }
 
@@ -211,6 +290,7 @@ export function FeedbackMediaPreview({
       savedTranslateX.value = 0;
       savedTranslateY.value = 0;
       dismissScale.value = withSpring(1);
+      dismissRotation.value = withSpring(0);
       backgroundOpacity.value = withTiming(1, { duration: 120 });
     });
 
@@ -232,6 +312,7 @@ export function FeedbackMediaPreview({
         { translateX: translateX.value + dismissOriginOffsetX },
         { translateY: translateY.value + dismissOriginOffsetY },
         { scale: scale.value * dismissScale.value },
+        { rotate: `${dismissRotation.value}rad` },
       ],
     };
   });
@@ -245,7 +326,6 @@ export function FeedbackMediaPreview({
       statusBarTranslucent
       onRequestClose={onClose}>
       <GestureHandlerRootView style={styles.root}>
-        <StatusBar hidden animated />
         <Animated.View
           style={[
             StyleSheet.absoluteFillObject,
