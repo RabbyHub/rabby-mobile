@@ -475,6 +475,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
                   uploadingMedia={isUploadingMedia}
                   onPickMedia={handlePickMedia}
                   onRemoveMedia={handleRemoveMedia}
+                  onPreviewMedia={handleOpenMediaPreview}
                   onSubmit={handleSubmitReply}
                   submitting={isSubmittingReply}
                 />
@@ -606,6 +607,7 @@ function ReplyComposer({
   selectedMedia,
   onPickMedia,
   onRemoveMedia,
+  onPreviewMedia,
   onSubmit,
   submitting,
   uploadingMedia,
@@ -618,12 +620,28 @@ function ReplyComposer({
   uploadingMedia?: boolean;
   onPickMedia: () => void | Promise<void>;
   onRemoveMedia: () => void;
+  onPreviewMedia: (media: FeedbackPreviewMedia) => void;
   onSubmit?: (() => void) | (() => Promise<void>);
   submitting?: boolean;
 }) {
   const { styles, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const selectedMediaUri = selectedMedia?.uri;
+  const isSelectedVideo = isVideoMedia(selectedMedia);
+  const handlePreviewSelectedMedia = useCallback(() => {
+    if (uploadingMedia) {
+      return;
+    }
+
+    if (!selectedMediaUri) {
+      return;
+    }
+
+    onPreviewMedia({
+      type: isSelectedVideo ? 'video' : 'image',
+      uri: selectedMediaUri,
+    });
+  }, [isSelectedVideo, onPreviewMedia, selectedMediaUri, uploadingMedia]);
 
   return (
     <View style={[styles.messageRow, styles.userMessageRow]}>
@@ -648,24 +666,36 @@ function ReplyComposer({
         />
         {selectedMediaUri ? (
           <View style={styles.mediaPreviewContainer}>
-            {isVideoMedia(selectedMedia) ? (
-              <Video
-                source={{ uri: selectedMediaUri }}
-                style={styles.mediaPreview}
-                resizeMode="cover"
-                paused
-                muted
-              />
-            ) : (
-              <FastImage
-                source={{ uri: selectedMediaUri }}
-                style={styles.mediaPreview}
-                resizeMode="cover"
-              />
-            )}
+            <TouchableOpacity
+              activeOpacity={uploadingMedia ? 1 : 0.85}
+              disabled={uploadingMedia}
+              onPress={handlePreviewSelectedMedia}>
+              {isSelectedVideo ? (
+                <View>
+                  <Video
+                    source={{ uri: selectedMediaUri }}
+                    style={styles.mediaPreview}
+                    resizeMode="cover"
+                    paused
+                    muted
+                  />
+                  {!uploadingMedia ? (
+                    <View style={styles.videoPlayBadge}>
+                      <View style={styles.videoPlayTriangle} />
+                    </View>
+                  ) : null}
+                </View>
+              ) : (
+                <FastImage
+                  source={{ uri: selectedMediaUri }}
+                  style={styles.mediaPreview}
+                  resizeMode="cover"
+                />
+              )}
+            </TouchableOpacity>
 
             {uploadingMedia ? (
-              <View style={styles.mediaUploadMask}>
+              <View pointerEvents="none" style={styles.mediaUploadMask}>
                 <ActivityIndicator size="small" color="#fff" />
               </View>
             ) : null}
