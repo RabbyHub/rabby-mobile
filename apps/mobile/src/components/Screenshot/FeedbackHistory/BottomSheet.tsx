@@ -6,7 +6,13 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Keyboard, ScrollView, View } from 'react-native';
+import {
+  ActivityIndicator,
+  BackHandler,
+  Keyboard,
+  ScrollView,
+  View,
+} from 'react-native';
 
 import {
   getScreenshotFeedbackExtraSafely,
@@ -398,6 +404,24 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
     resetSelectedMedia,
     toggleShowSheetModal,
   ]);
+
+  useEffect(() => {
+    if (!isShowHistory) {
+      return;
+    }
+
+    const backSubscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        toggleFeedbackHistoryVisible(false);
+        return true;
+      },
+    );
+
+    return () => {
+      backSubscription.remove();
+    };
+  }, [isShowHistory, toggleFeedbackHistoryVisible]);
 
   useEffect(() => {
     if (!isShowHistory) {
