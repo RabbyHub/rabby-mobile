@@ -85,6 +85,7 @@ import {
   getNativeWithdrawRequiredAllowance,
   isNativeWithdrawApprovalRequired,
 } from '../../utils/withdrawApproval';
+import { isUserCancelledError } from '../../utils/error';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -554,6 +555,10 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         setAmount(undefined);
         onClose?.();
       } catch (error) {
+        console.error('Handle withdraw error:', error);
+        if (forceFullSign && isUserCancelledError(error)) {
+          await buildTransactions();
+        }
       } finally {
         setIsLoading(false);
       }
@@ -573,6 +578,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       currentReserve.chain,
       source,
       isZeroLTVWithdrawBlocked,
+      buildTransactions,
     ],
   );
 
