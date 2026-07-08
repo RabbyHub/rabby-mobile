@@ -722,7 +722,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 36,
     lineHeight: 42,
-    fontWeight: '800',
+    fontWeight: '700',
     textAlign: 'center',
   },
   positionValueWrapper: {
