@@ -573,11 +573,12 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         onClose?.();
       } catch (error) {
         console.error('Handle repay error:', error);
-        if (!forceFullSign) {
+        const isUserCancel = error === MINI_SIGN_ERROR.USER_CANCELLED;
+        if (!isUserCancel) {
           toast.error('something error');
+          setAmount(undefined);
+          onClose?.();
         }
-        setAmount(undefined);
-        onClose?.();
       } finally {
         setIsLoading(false);
       }
