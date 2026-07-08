@@ -52,6 +52,7 @@ export const marketTotalMarketSizeMap: Partial<Record<CustomMarket, number>> = {
   [CustomMarket.proto_lido_v3]: 228_763_153,
   [CustomMarket.proto_bnb_v3]: 207_575_532,
   [CustomMarket.proto_polygon_v3]: 154_980_088,
+  [CustomMarket.proto_monad_v3]: 200_000_000,
   [CustomMarket.proto_ink_v3]: 131_354_087,
   [CustomMarket.proto_xlayer_v3]: 57_983_835,
   [CustomMarket.proto_gnosis_v3]: 69_206_145,
@@ -63,5 +64,4 @@ export const marketTotalMarketSizeMap: Partial<Record<CustomMarket, number>> = {
   [CustomMarket.proto_zksync_v3]: 950_141,
   [CustomMarket.proto_metis_v3]: 301_953,
   [CustomMarket.proto_soneium_v3]: 161_023,
-  [CustomMarket.proto_monad_v3]: 0,
 };
