@@ -88,6 +88,7 @@ import {
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
+import { isUserCancelledError } from '../../utils/error';
 
 export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   reserve,
@@ -573,11 +574,8 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         onClose?.();
       } catch (error) {
         console.error('Handle repay error:', error);
-        const isUserCancel = error === MINI_SIGN_ERROR.USER_CANCELLED;
-        if (!isUserCancel) {
-          toast.error('something error');
-          setAmount(undefined);
-          onClose?.();
+        if (forceFullSign && isUserCancelledError(error)) {
+          await buildTransactions();
         }
       } finally {
         setIsLoading(false);
@@ -597,6 +595,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
       openDirect,
       reserve.underlyingAsset,
       source,
+      buildTransactions,
     ],
   );
 
