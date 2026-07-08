@@ -494,7 +494,7 @@ export const PerpsMarketDetailScreen = () => {
 
   return (
     <>
-      <NormalScreenContainer2024 type={'bg1'}>
+      <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
         {!hasPermission ? <PerpsRegionAlert /> : null}
         <ScrollView
           style={styles.container}
@@ -864,7 +864,7 @@ const getStyles = createGetStyles2024(ctx => {
       position: 'relative',
     },
     scrollContent: {
-      paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
+      // paddingBottom: getBottomButtonBottomOffset(safeAreaInsets.bottom),
     },
     header: {
       display: 'flex',
@@ -873,7 +873,9 @@ const getStyles = createGetStyles2024(ctx => {
       marginBottom: 30,
     },
     chart: {
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
       height: 322,
       borderRadius: 20,
     },
