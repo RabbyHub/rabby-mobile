@@ -173,6 +173,17 @@ const TickerTexts = ({
     ...measureStrings,
   ]);
 
+  // Same-styled static text shown while glyphs are being measured, so the
+  // ticker swaps in without any layout jump.
+  const placeholderText = (
+    Children.map(children as any, child => {
+      if (typeof child === 'string' || typeof child === 'number') {
+        return `${child}`;
+      }
+      return child?.props?.children ?? '';
+    }) as string[]
+  ).join('');
+
   const handleMeasure = useCallback(
     (e: LayoutChangeEvent, v: string) => {
       if (!measureMap.current) return;
@@ -191,6 +202,11 @@ const TickerTexts = ({
 
   return (
     <View style={[styles.row, containerStyle]}>
+      {measured !== true && (
+        <Text {...textProps} style={textStyle}>
+          {placeholderText}
+        </Text>
+      )}
       {measured === true &&
         Children.map(children, child => {
           if (typeof child === 'string' || typeof child === 'number') {
