@@ -575,7 +575,7 @@ export function useSubmitFeedbackOnScreenshot() {
     useRefState(false);
   const submitFeedbackByScreenshot = useCallback(
     async function () {
-      if (isSubmittingRef.current) return;
+      if (isSubmittingRef.current) return false;
       setSubmitting(true, true);
 
       try {
@@ -584,7 +584,9 @@ export function useSubmitFeedbackOnScreenshot() {
           const result = await AppScreenshotFS.uploadFile<{
             image_url: string;
           }>(lastScreenshot?.uri);
-          if (!result?.image_url) return;
+          if (!result?.image_url) {
+            throw new Error('Screenshot upload did not return an image url');
+          }
           imageUrl = result.image_url;
         }
 
@@ -604,9 +606,10 @@ export function useSubmitFeedbackOnScreenshot() {
           content: feedbackText,
           extra: extraInfo,
         });
-        toggleFeedbackHistoryVisible(true);
+        return true;
       } catch (error) {
         console.error('feedback submission error', error);
+        throw error;
       } finally {
         setSubmitting(false, true);
       }
