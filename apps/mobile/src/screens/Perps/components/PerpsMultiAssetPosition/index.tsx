@@ -479,6 +479,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   homeContainer: {
     marginTop: 24,
+    marginBottom: 0,
     ...Platform.select({
       ios: {
         shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.4)',
