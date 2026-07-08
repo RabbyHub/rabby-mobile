@@ -6,7 +6,13 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView, View } from 'react-native';
+import {
+  ActivityIndicator,
+  BackHandler,
+  Keyboard,
+  ScrollView,
+  View,
+} from 'react-native';
 
 import {
   getScreenshotFeedbackExtraSafely,
@@ -130,14 +136,18 @@ async function uploadFeedbackMedia(media: PickedFeedbackMedia) {
     throw new Error('No selected feedback media uri');
   }
 
+  console.log('-------start--------', Date.now());
   const formData = new FormData();
   formData.append('file', {
     uri: media.uri,
     type: getUploadMimeType(media),
     name: getUploadFilename(media),
   } as unknown as Blob);
+  console.log('-------append--------', Date.now());
 
-  return openapi.uploadClientFeedback(formData, true);
+  const res = await openapi.uploadClientFeedback(formData, true);
+  console.log('----------end--------', Date.now());
+  return res;
 }
 
 function getUploadedFeedbackMediaUrls(uploadResult?: {
@@ -190,9 +200,11 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
     replyInputRef.current?.clear();
   }, []);
   const scrollToBottom = useCallback((animated = false) => {
-    requestAnimationFrame(() => {
-      scrollViewRef.current?.scrollToEnd({ animated });
-    });
+    setTimeout(() => {
+      requestAnimationFrame(() => {
+        scrollViewRef.current?.scrollToEnd({ animated });
+      });
+    }, 200);
   }, []);
   const requestScrollToBottomAfterLayout = useCallback(
     (animated = false) => {
@@ -341,6 +353,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
       if (!hasUploadedFeedbackMediaUrls(uploadedMediaUrls)) {
         throw new Error('No uploaded feedback media url');
       }
+      Keyboard.dismiss();
 
       const extraInfo = await getScreenshotFeedbackExtraSafely(
         totalBalanceText,
@@ -391,6 +404,24 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
     resetSelectedMedia,
     toggleShowSheetModal,
   ]);
+
+  useEffect(() => {
+    if (!isShowHistory) {
+      return;
+    }
+
+    const backSubscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        toggleFeedbackHistoryVisible(false);
+        return true;
+      },
+    );
+
+    return () => {
+      backSubscription.remove();
+    };
+  }, [isShowHistory, toggleFeedbackHistoryVisible]);
 
   useEffect(() => {
     if (!isShowHistory) {
@@ -471,6 +502,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
                   uploadingMedia={isUploadingMedia}
                   onPickMedia={handlePickMedia}
                   onRemoveMedia={handleRemoveMedia}
+                  onPreviewMedia={handleOpenMediaPreview}
                   onSubmit={handleSubmitReply}
                   submitting={isSubmittingReply}
                 />
@@ -602,6 +634,7 @@ function ReplyComposer({
   selectedMedia,
   onPickMedia,
   onRemoveMedia,
+  onPreviewMedia,
   onSubmit,
   submitting,
   uploadingMedia,
@@ -614,12 +647,28 @@ function ReplyComposer({
   uploadingMedia?: boolean;
   onPickMedia: () => void | Promise<void>;
   onRemoveMedia: () => void;
+  onPreviewMedia: (media: FeedbackPreviewMedia) => void;
   onSubmit?: (() => void) | (() => Promise<void>);
   submitting?: boolean;
 }) {
   const { styles, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const selectedMediaUri = selectedMedia?.uri;
+  const isSelectedVideo = isVideoMedia(selectedMedia);
+  const handlePreviewSelectedMedia = useCallback(() => {
+    if (uploadingMedia) {
+      return;
+    }
+
+    if (!selectedMediaUri) {
+      return;
+    }
+
+    onPreviewMedia({
+      type: isSelectedVideo ? 'video' : 'image',
+      uri: selectedMediaUri,
+    });
+  }, [isSelectedVideo, onPreviewMedia, selectedMediaUri, uploadingMedia]);
 
   return (
     <View style={[styles.messageRow, styles.userMessageRow]}>
@@ -628,7 +677,7 @@ function ReplyComposer({
         <TextInput
           ref={inputRef}
           onChangeText={onChangeText}
-          // multiline
+          multiline
           textAlignVertical="top"
           placeholder={t('component.feedbackHistoryModal.replyPlaceholder', {
             defaultValue: 'Enter a new reply... (optional)',
@@ -644,21 +693,39 @@ function ReplyComposer({
         />
         {selectedMediaUri ? (
           <View style={styles.mediaPreviewContainer}>
-            {isVideoMedia(selectedMedia) ? (
-              <Video
-                source={{ uri: selectedMediaUri }}
-                style={styles.mediaPreview}
-                resizeMode="cover"
-                paused
-                muted
-              />
-            ) : (
-              <FastImage
-                source={{ uri: selectedMediaUri }}
-                style={styles.mediaPreview}
-                resizeMode="cover"
-              />
-            )}
+            <TouchableOpacity
+              activeOpacity={uploadingMedia ? 1 : 0.85}
+              disabled={uploadingMedia}
+              onPress={handlePreviewSelectedMedia}>
+              {isSelectedVideo ? (
+                <View>
+                  <Video
+                    source={{ uri: selectedMediaUri }}
+                    style={styles.mediaPreview}
+                    resizeMode="cover"
+                    paused
+                    muted
+                  />
+                  {!uploadingMedia ? (
+                    <View style={styles.videoPlayBadge}>
+                      <View style={styles.videoPlayTriangle} />
+                    </View>
+                  ) : null}
+                </View>
+              ) : (
+                <FastImage
+                  source={{ uri: selectedMediaUri }}
+                  style={styles.mediaPreview}
+                  resizeMode="cover"
+                />
+              )}
+            </TouchableOpacity>
+
+            {uploadingMedia ? (
+              <View pointerEvents="none" style={styles.mediaUploadMask}>
+                <ActivityIndicator size="small" color="#fff" />
+              </View>
+            ) : null}
             <View style={styles.removeMediaButton}>
               <TouchableOpacity onPress={onRemoveMedia} disabled={submitting}>
                 {isLight ? (
@@ -668,11 +735,6 @@ function ReplyComposer({
                 )}
               </TouchableOpacity>
             </View>
-            {uploadingMedia ? (
-              <View style={styles.mediaUploadMask}>
-                <ActivityIndicator size="small" color="#fff" />
-              </View>
-            ) : null}
           </View>
         ) : (
           <View style={styles.mediaPlaceholderContainer}>
@@ -806,25 +868,27 @@ const getStyle = createGetStyles2024(
     },
     videoPlayBadge: {
       position: 'absolute',
-      top: 24,
-      left: 24,
-      width: 32,
-      height: 32,
-      borderRadius: 16,
+      top: 31,
+      left: 31,
+      width: 20,
+      height: 20,
+      borderRadius: 20,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.45)',
+      backgroundColor: 'rgba(0, 0, 0, 0.40)',
+      borderWidth: 1,
+      borderColor: colors2024['neutral-bg-1'],
     },
     videoPlayTriangle: {
       width: 0,
       height: 0,
-      marginLeft: 3,
-      borderTopWidth: 7,
-      borderBottomWidth: 7,
-      borderLeftWidth: 11,
+      marginLeft: 2,
+      borderTopWidth: 4,
+      borderBottomWidth: 4,
+      borderLeftWidth: 7,
       borderTopColor: 'transparent',
       borderBottomColor: 'transparent',
-      borderLeftColor: '#fff',
+      borderLeftColor: colors2024['neutral-bg-1'],
     },
     imageWithText: {
       marginTop: 7,
