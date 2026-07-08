@@ -175,10 +175,13 @@ export const PerpsPositionItem: React.FC<{
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 16,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    borderRadius: 14,
     // paddingHorizontal: 14,
     paddingVertical: 14,
+    ...(isLight ? { boxShadow: '0 18 40 0 rgba(55, 56, 63, 0.04)' } : null),
   },
   mainContent: {
     flexDirection: 'row',
@@ -188,7 +191,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   leftSection: {
     flexDirection: 'column',
-    gap: 4,
+    gap: 8,
     flex: 1,
   },
   coinInfoRow: {
@@ -223,13 +226,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '700',
+    fontWeight: '500',
     color: colors2024['neutral-foot'],
   },
   crossTag: {
     borderRadius: 4,
     paddingHorizontal: 4,
-    height: 20,
+    height: 18,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-5'],
@@ -244,7 +247,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 4,
     justifyContent: 'center',
     alignItems: 'center',
-    height: 20,
+    height: 18,
   },
   leverageText: {
     fontFamily: 'SF Pro Rounded',
@@ -293,18 +296,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   rightSection: {
     alignItems: 'flex-end',
-    gap: 4,
+    gap: 5,
   },
   priceText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '500',
     color: colors2024['neutral-title-1'],
   },
   pnlText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
   },
