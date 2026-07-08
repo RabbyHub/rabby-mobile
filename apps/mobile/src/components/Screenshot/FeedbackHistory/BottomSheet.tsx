@@ -130,14 +130,18 @@ async function uploadFeedbackMedia(media: PickedFeedbackMedia) {
     throw new Error('No selected feedback media uri');
   }
 
+  console.log('-------start--------', Date.now());
   const formData = new FormData();
   formData.append('file', {
     uri: media.uri,
     type: getUploadMimeType(media),
     name: getUploadFilename(media),
   } as unknown as Blob);
+  console.log('-------append--------', Date.now());
 
-  return openapi.uploadClientFeedback(formData, true);
+  const res = await openapi.uploadClientFeedback(formData, true);
+  console.log('----------end--------', Date.now());
+  return res;
 }
 
 function getUploadedFeedbackMediaUrls(uploadResult?: {
@@ -659,6 +663,12 @@ function ReplyComposer({
                 resizeMode="cover"
               />
             )}
+
+            {uploadingMedia ? (
+              <View style={styles.mediaUploadMask}>
+                <ActivityIndicator size="small" color="#fff" />
+              </View>
+            ) : null}
             <View style={styles.removeMediaButton}>
               <TouchableOpacity onPress={onRemoveMedia} disabled={submitting}>
                 {isLight ? (
@@ -668,11 +678,6 @@ function ReplyComposer({
                 )}
               </TouchableOpacity>
             </View>
-            {uploadingMedia ? (
-              <View style={styles.mediaUploadMask}>
-                <ActivityIndicator size="small" color="#fff" />
-              </View>
-            ) : null}
           </View>
         ) : (
           <View style={styles.mediaPlaceholderContainer}>
@@ -806,25 +811,27 @@ const getStyle = createGetStyles2024(
     },
     videoPlayBadge: {
       position: 'absolute',
-      top: 24,
-      left: 24,
-      width: 32,
-      height: 32,
-      borderRadius: 16,
+      top: 31,
+      left: 31,
+      width: 20,
+      height: 20,
+      borderRadius: 20,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.45)',
+      backgroundColor: 'rgba(0, 0, 0, 0.40)',
+      borderWidth: 1,
+      borderColor: colors2024['neutral-bg-1'],
     },
     videoPlayTriangle: {
       width: 0,
       height: 0,
-      marginLeft: 3,
-      borderTopWidth: 7,
-      borderBottomWidth: 7,
-      borderLeftWidth: 11,
+      marginLeft: 2,
+      borderTopWidth: 4,
+      borderBottomWidth: 4,
+      borderLeftWidth: 7,
       borderTopColor: 'transparent',
       borderBottomColor: 'transparent',
-      borderLeftColor: '#fff',
+      borderLeftColor: colors2024['neutral-bg-1'],
     },
     imageWithText: {
       marginTop: 7,
