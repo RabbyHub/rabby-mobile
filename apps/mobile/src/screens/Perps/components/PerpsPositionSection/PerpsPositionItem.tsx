@@ -323,7 +323,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingTop: 10,
     borderTopWidth: 0.5,
     paddingHorizontal: 14,
-    borderTopColor: colors2024['neutral-line'],
+    borderTopColor: colors2024['neutral-bg-5'],
   },
   tpSlText: {
     fontFamily: 'SF Pro Rounded',

@@ -49,7 +49,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: isLight ? colors2024['neutral-bg-1'] : 'transparent',
-    backgroundColor: isLight ? 'rgba(255, 255, 255, 0.9)' : 'transparent',
+    borderColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-5'],
+    backgroundColor: isLight
+      ? 'rgba(255, 255, 255, 0.9)'
+      : colors2024['neutral-bg-2'],
   },
 }));
