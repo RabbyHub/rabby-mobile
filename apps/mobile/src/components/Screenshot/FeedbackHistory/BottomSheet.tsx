@@ -6,7 +6,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Keyboard, ScrollView, View } from 'react-native';
 
 import {
   getScreenshotFeedbackExtraSafely,
@@ -194,9 +194,11 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
     replyInputRef.current?.clear();
   }, []);
   const scrollToBottom = useCallback((animated = false) => {
-    requestAnimationFrame(() => {
-      scrollViewRef.current?.scrollToEnd({ animated });
-    });
+    setTimeout(() => {
+      requestAnimationFrame(() => {
+        scrollViewRef.current?.scrollToEnd({ animated });
+      });
+    }, 200);
   }, []);
   const requestScrollToBottomAfterLayout = useCallback(
     (animated = false) => {
@@ -345,6 +347,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
       if (!hasUploadedFeedbackMediaUrls(uploadedMediaUrls)) {
         throw new Error('No uploaded feedback media url');
       }
+      Keyboard.dismiss();
 
       const extraInfo = await getScreenshotFeedbackExtraSafely(
         totalBalanceText,
@@ -650,7 +653,7 @@ function ReplyComposer({
         <TextInput
           ref={inputRef}
           onChangeText={onChangeText}
-          // multiline
+          multiline
           textAlignVertical="top"
           placeholder={t('component.feedbackHistoryModal.replyPlaceholder', {
             defaultValue: 'Enter a new reply... (optional)',
