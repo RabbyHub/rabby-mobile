@@ -9,10 +9,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import {
-  BottomSheetFlatList,
-  type BottomSheetFlatListMethods,
-} from '@gorhom/bottom-sheet';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import Clipboard from '@react-native-clipboard/clipboard';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
@@ -55,6 +52,7 @@ type ReceiveSheetListItem =
       kind: 'account';
       account: Account;
       sectionIndex: number;
+      sectionTitle: AccountPannelSectionTitle;
       key: string;
     };
 
@@ -442,10 +440,8 @@ export function AccountsPanelInSheetModal({
     useSortAccountOnSelector();
 
   const scrollViewRef = React.useRef<FlatList<CombineDataInterface>>(null);
-  const receiveSheetListRef = React.useRef<BottomSheetFlatListMethods>(null);
   const scrollToBottom = useCallback(() => {
     if (isReceiveSheet) {
-      receiveSheetListRef.current?.scrollToEnd({ animated: true });
       return;
     }
     scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -556,7 +552,7 @@ export function AccountsPanelInSheetModal({
   const { safeOffBottom } = useSafeSizes();
 
   const renderAddressItem = useCallback(
-    (item: Account, index: number) => {
+    (item: Account, index: number, isReceiveSectionFirstItem = false) => {
       const Content = (
         <AddressItemInSheetModal
           addressItemProps={{ account: item }}
@@ -575,6 +571,7 @@ export function AccountsPanelInSheetModal({
           key={`${item.address}-${item.type}-${item.brandName}-${index}`}
           style={[
             { borderRadius: isReceive ? 20 : 16 },
+            isReceiveSectionFirstItem && styles.receiveSectionFirstItemGap,
             index > 0 && styles.addressItemTopGap,
           ]}>
           {isReceive ? (
@@ -593,6 +590,7 @@ export function AccountsPanelInSheetModal({
       isPinnedAccount,
       isReceive,
       onSelectAccount,
+      styles.receiveSectionFirstItemGap,
       styles.addressItemTopGap,
     ],
   );
@@ -605,6 +603,7 @@ export function AccountsPanelInSheetModal({
         kind: 'account',
         account,
         sectionIndex: index,
+        sectionTitle: AccountPannelSectionTitle.MyAddresses,
         key: `myAddresses-${account.address}-${account.brandName}-${index}`,
       });
     });
@@ -622,6 +621,7 @@ export function AccountsPanelInSheetModal({
             kind: 'account',
             account,
             sectionIndex: index,
+            sectionTitle: AccountPannelSectionTitle.SafeAddresses,
             key: `safeAddresses-${account.address}-${account.brandName}-${index}`,
           });
         });
@@ -641,6 +641,7 @@ export function AccountsPanelInSheetModal({
             kind: 'account',
             account,
             sectionIndex: index,
+            sectionTitle: AccountPannelSectionTitle.WatchAddresses,
             key: `watchAddresses-${account.address}-${account.brandName}-${index}`,
           });
         });
@@ -661,7 +662,6 @@ export function AccountsPanelInSheetModal({
       <View style={[styles.panel, styles.receiveSheetPanel, containerStyle]}>
         <View style={styles.scrollViewContainer}>
           <BottomSheetFlatList<ReceiveSheetListItem>
-            ref={receiveSheetListRef}
             style={styles.receiveSheetList}
             contentContainerStyle={[
               styles.receiveSheetListContentContainer,
@@ -680,7 +680,12 @@ export function AccountsPanelInSheetModal({
                 );
               }
 
-              return renderAddressItem(item.account, item.sectionIndex);
+              return renderAddressItem(
+                item.account,
+                item.sectionIndex,
+                item.sectionIndex === 0 &&
+                  item.sectionTitle !== AccountPannelSectionTitle.MyAddresses,
+              );
             }}
           />
         </View>
@@ -788,6 +793,9 @@ const getPanelStyle = createGetStyles2024(ctx => {
       width: '100%',
     },
     addressItemTopGap: {
+      marginTop: SIZES.itemGap,
+    },
+    receiveSectionFirstItemGap: {
       marginTop: SIZES.itemGap,
     },
     bottomBarContainer: {
