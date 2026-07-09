@@ -49,6 +49,8 @@ export async function getSceneAddresses() {
   const values = Object.entries(accounts).reduce((acc, [key, value]) => {
     if (!key.startsWith('@')) {
       acc[key as AccountSwitcherScene] = value?.currentAccount?.address || null;
+      acc[(key + 'AccountType') as AccountSwitcherScene] =
+        value?.currentAccount?.type || null;
     }
     return acc;
   }, {} as { [K in AccountSwitcherScene]: string | null });
@@ -61,6 +63,7 @@ export async function getSceneAddresses() {
     ...values,
     GasAccount: getGasAccountFeedbackAddress(values.GasAccount),
     Perps: perpsInfo?.address || perpsInfo,
+    PerpsAccountType: perpsInfo?.type,
   };
 }
 
@@ -91,7 +94,7 @@ export async function getScreenshotFeedbackExtra({
   const appBuildRevision = BUILD_GIT_INFO.BUILD_GIT_HASH;
 
   const myAccountList = await getAllAccounts();
-  let myFirstCallableAddress = '';
+  let myFirstCallableAccount: Account | undefined;
   const {
     callables: myCallableAddressCount,
     uncallables: myUncallableAddressCount,
@@ -101,7 +104,7 @@ export async function getScreenshotFeedbackExtra({
         item.type !== KEYRING_TYPE.WatchAddressKeyring &&
         item.type !== KEYRING_TYPE.GnosisKeyring
       ) {
-        myFirstCallableAddress = myFirstCallableAddress || item.address;
+        myFirstCallableAccount = myFirstCallableAccount || item;
         acc.callables += 1;
       } else {
         acc.uncallables += 1;
@@ -110,7 +113,7 @@ export async function getScreenshotFeedbackExtra({
     },
     { callables: 0, uncallables: 0 },
   );
-  const myCurrentAddress = preferenceService.getFallbackAccount()?.address;
+  const myCurrentAccount = preferenceService.getFallbackAccount();
 
   return {
     totalBalanceText,
@@ -122,8 +125,10 @@ export async function getScreenshotFeedbackExtra({
     applicationId: APPLICATION_ID,
     myCallableAddressCount,
     myUncallableAddressCount,
-    myFirstAddress: myFirstCallableAddress,
-    myCurrentAddress,
+    myFirstAddress: myFirstCallableAccount?.address,
+    myFirstAddressType: myFirstCallableAccount?.type,
+    myCurrentAddress: myCurrentAccount?.address,
+    myCurrentAddressType: myCurrentAccount?.type,
     mySceneAddresses: await runTryCatch(async () => await getSceneAddresses()),
 
     systemName: runTryCatch(() => DeviceInfo.getSystemName()),
