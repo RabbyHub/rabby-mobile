@@ -79,13 +79,15 @@ export async function isConnected(
 
   keyring.setDeviceId(detail.deviceId);
 
-  if (await getLedgerDeviceSessionState(detail.deviceId)) {
+  const state = await getLedgerDeviceSessionState(detail.deviceId);
+  if (state?.deviceStatus === 'CONNECTED') {
     return [true, detail.deviceId];
   }
 
   try {
     await connectKnownLedgerDeviceById(detail.deviceId);
-    return [true, detail.deviceId];
+    const connectedState = await getLedgerDeviceSessionState(detail.deviceId);
+    return [connectedState?.deviceStatus === 'CONNECTED', detail.deviceId];
   } catch {
     return [false, detail.deviceId];
   }
@@ -107,15 +109,13 @@ export async function getCurrentUsedHDPathType() {
 
 export async function setCurrentUsedHDPathType(hdPathType: LedgerHDPathType) {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
-  return queue.add(async () => {
-    await keyring.setHDPathType(hdPathType);
-    return keyring.setCurrentUsedHDPathType();
-  });
+  await keyring.setHDPathType(hdPathType);
+  return queue.add(() => keyring.setCurrentUsedHDPathType());
 }
 
 export async function setHDPathType(hdPathType: LedgerHDPathType) {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
-  return queue.add(() => keyring.setHDPathType(hdPathType));
+  return keyring.setHDPathType(hdPathType);
 }
 
 export async function getInitialAccounts() {

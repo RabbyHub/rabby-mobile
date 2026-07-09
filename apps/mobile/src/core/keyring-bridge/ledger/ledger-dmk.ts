@@ -60,6 +60,12 @@ const staleDeviceIds = new Set<string>();
 const noOpBlindSigningReporter = {
   report: async () => undefined,
 } as unknown as LedgerContextModule.BlindSigningReporter;
+const noOpTypedDataLoader: LedgerContextModule.TypedDataContextLoader = {
+  load: async () => ({
+    type: 'error',
+    error: new Error('Ledger typed data clear signing disabled'),
+  }),
+};
 
 export function getKnownLedgerDevice(deviceId: string): LedgerDmkDevice {
   // ponytail: DMK connect only reads id/transport; replace when DMK exposes stable BLE ids.
@@ -95,6 +101,7 @@ function createEthContextModule({
 
   if (!defaultLoaders) {
     builder.removeDefaultLoaders();
+    builder.addTypedDataLoader(noOpTypedDataLoader);
   }
 
   return builder.build();

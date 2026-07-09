@@ -40,6 +40,7 @@ import {
 import useAsync from 'react-use/lib/useAsync';
 import { useUnmount } from 'ahooks';
 import { Text } from '@/components/Typography';
+import { isLedgerDisconnectedError } from '@/utils/ledger';
 
 interface ApprovalParams {
   address: string;
@@ -226,7 +227,11 @@ export const LedgerHardwareWaiting = ({
     }
     eventBus.addListener(EVENTS.COMMON_HARDWARE.REJECTED, async data => {
       setErrorMessage(data);
-      setConnectStatus(APPROVAL_STATUS_MAP.REJECTED);
+      setConnectStatus(
+        isLedgerDisconnectedError(data)
+          ? APPROVAL_STATUS_MAP.FAILED
+          : APPROVAL_STATUS_MAP.REJECTED,
+      );
     });
     eventBus.addListener(EVENTS.TX_SUBMITTING, async () => {
       setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTING);
@@ -365,6 +370,9 @@ export const LedgerHardwareWaiting = ({
     React.useMemo(() => {
       if (description?.includes('0x650f')) {
         return [t('page.newAddress.ledger.error.lockedOrNoEthApp'), 'origin'];
+      }
+      if (isLedgerDisconnectedError(description)) {
+        return [t('page.signFooterBar.ledger.unlockAlert'), 'origin'];
       }
       if (description?.includes('0x5515') || description?.includes('0x6b0c')) {
         return [t('page.signFooterBar.ledger.unlockAlert'), 'origin'];

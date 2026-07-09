@@ -52,4 +52,13 @@ describe('ledger utils', () => {
     expect(isLedgerLockError('Error 0x650f')).toBe(true);
     expect(isLedgerLockError('Error 0x1234')).toBe(false);
   });
+
+  it('recognizes Ledger disconnection errors', () => {
+    const { isLedgerDisconnectedError } = loadLedgerModule();
+
+    expect(
+      isLedgerDisconnectedError('Error: DeviceDisconnectedWhileSendingError'),
+    ).toBe(true);
+    expect(isLedgerDisconnectedError('Action refused 0x6985')).toBe(false);
+  });
 });

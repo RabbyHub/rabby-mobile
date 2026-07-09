@@ -155,6 +155,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
 
   const abortLoadRef = React.useRef<(() => void) | null>(null);
   const exitRef = React.useRef(false);
+  const loadVersionRef = React.useRef(0);
   const startNumberRef = React.useRef(0); // Default to index 0, updated when setting changes
   const [currentAccounts, setCurrentAccounts] = React.useState<ViewAccount[]>(
     [],
@@ -236,6 +237,9 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
   const handleLoadAddress = React.useCallback(
     (startIndex?: number) => {
       let isAborted = false;
+      const loadVersion = loadVersionRef.current;
+      const isCurrentLoad = () =>
+        !isAborted && loadVersion === loadVersionRef.current;
       const abort = () => {
         isAborted = true;
       };
@@ -254,12 +258,15 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
           for (; i < start + maxCountRef.current && !isAborted; ) {
             await yieldToRN();
             const nextAccounts = await loadAddress(i);
-            if (isAborted) {
+            if (!isCurrentLoad()) {
               break;
             }
             if (nextAccounts) {
               startTransition(() => {
                 setAccounts(prev => {
+                  if (loadVersion !== loadVersionRef.current) {
+                    return prev;
+                  }
                   return [...prev, ...nextAccounts];
                 });
               });
@@ -267,7 +274,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
             i += stepCountRef.current;
           }
         } catch (err: any) {
-          if (isAborted) {
+          if (!isCurrentLoad()) {
             return;
           }
           const errorCode = ledgerErrorHandler(err);
@@ -291,7 +298,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
           return;
         }
 
-        if (isAborted) return;
+        if (!isCurrentLoad()) return;
 
         setLoading(false);
 
@@ -337,6 +344,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
       const nextStartIndex = nextSetting
         ? nextSetting.startNumber - 1
         : startNumberRef.current;
+      loadVersionRef.current += 1;
       startNumberRef.current = nextStartIndex;
       setAccounts([]);
       setSelectedAccounts([]);
@@ -413,6 +421,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
   React.useEffect(() => {
     return () => {
       exitRef.current = true;
+      loadVersionRef.current += 1;
       abortLoadRef.current?.();
       setSetting(prev => ({ ...prev, startNumber: 1 }));
     };
@@ -579,6 +588,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
             type="ghost"
             title={t('global.refresh')}
             onPress={() => {
+              loadVersionRef.current += 1;
               abortLoadRef.current?.();
               abortLoadRef.current = handleLoadAddress();
             }}
