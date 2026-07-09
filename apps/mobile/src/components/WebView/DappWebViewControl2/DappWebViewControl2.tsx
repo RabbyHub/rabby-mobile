@@ -36,8 +36,6 @@ import { BottomNavControl2, BottomNavControlCbCtx } from './Widgets';
 import { APP_UA_PARIALS } from '@/constant';
 import { createGetStyles2024 } from '@/utils/styles';
 import AutoLockView from '@/components/AutoLockView';
-import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
-import { IS_ANDROID } from '@/core/native/utils';
 import { checkShouldStartLoadingWithRequestForDappWebView } from '../utils';
 import { FontNames } from '@/core/utils/fonts';
 import { DappWebViewHideContext } from '@/screens/Dapps/hooks/useDappView';
@@ -188,8 +186,11 @@ const DappWebViewControl2 = ({
     webviewActions,
   } = useWebViewControl({ initialTabId: dappTabId });
 
-  const { entryScriptWeb3Loaded, fullScript } =
-    useJavaScriptBeforeContentLoaded();
+  const {
+    entryScriptWeb3Loaded,
+    beforeContentLoadedBuiltinScriptIds,
+    documentEndBuiltinScriptIds,
+  } = useJavaScriptBeforeContentLoaded();
 
   const { formattedCurrentUrl, stillInDappOrigin, urlString } = useMemo(() => {
     const urlString = latestUrl || convertToWebviewUrl(dappOrigin);
@@ -357,11 +358,11 @@ const DappWebViewControl2 = ({
         applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
         javaScriptEnabled
         // androidLayerType='software'
-        injectedJavaScriptBeforeContentLoaded={fullScript}
+        injectedJavaScriptBeforeContentLoadedBuiltinScriptIds={
+          beforeContentLoadedBuiltinScriptIds
+        }
         injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
-        {...(IS_ANDROID && {
-          injectedJavaScript: PATCH_ANCHOR_TARGET,
-        })}
+        injectedJavaScriptBuiltinScriptIds={documentEndBuiltinScriptIds}
         onNavigationStateChange={webviewActions.onNavigationStateChange}
         webviewDebuggingEnabled={__DEV__}
         onLoadStart={nativeEvent => {
@@ -403,7 +404,8 @@ const DappWebViewControl2 = ({
     embedHtml,
     webviewProps,
     entryScriptWeb3Loaded,
-    fullScript,
+    beforeContentLoadedBuiltinScriptIds,
+    documentEndBuiltinScriptIds,
     initialUrl,
     onBridgeMessage,
     onLoadStart,

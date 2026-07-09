@@ -45,8 +45,6 @@ import { APP_UA_PARIALS } from '@/constant';
 import { createGetStyles } from '@/utils/styles';
 import AutoLockView from '../AutoLockView';
 import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
-import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
-import { IS_ANDROID } from '@/core/native/utils';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { checkShouldStartLoadingWithRequestForDappWebView } from './utils';
 
@@ -225,8 +223,11 @@ const DappWebViewControl = ({
     webviewActions,
   } = useWebViewControl({ initialTabId: dappTabId });
 
-  const { entryScriptWeb3Loaded, fullScript } =
-    useJavaScriptBeforeContentLoaded();
+  const {
+    entryScriptWeb3Loaded,
+    beforeContentLoadedBuiltinScriptIds,
+    documentEndBuiltinScriptIds,
+  } = useJavaScriptBeforeContentLoaded();
 
   const { formattedCurrentUrl } = useMemo(() => {
     return {
@@ -381,11 +382,11 @@ const DappWebViewControl = ({
         applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
         javaScriptEnabled
         // androidLayerType='software'
-        injectedJavaScriptBeforeContentLoaded={fullScript}
+        injectedJavaScriptBeforeContentLoadedBuiltinScriptIds={
+          beforeContentLoadedBuiltinScriptIds
+        }
         injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
-        {...(IS_ANDROID && {
-          injectedJavaScript: PATCH_ANCHOR_TARGET,
-        })}
+        injectedJavaScriptBuiltinScriptIds={documentEndBuiltinScriptIds}
         onNavigationStateChange={webviewActions.onNavigationStateChange}
         webviewDebuggingEnabled={__DEV__}
         onLoadStart={nativeEvent => {
@@ -427,7 +428,8 @@ const DappWebViewControl = ({
     embedHtml,
     webviewProps,
     entryScriptWeb3Loaded,
-    fullScript,
+    beforeContentLoadedBuiltinScriptIds,
+    documentEndBuiltinScriptIds,
     initialUrl,
     onBridgeMessage,
     onLoadStart,

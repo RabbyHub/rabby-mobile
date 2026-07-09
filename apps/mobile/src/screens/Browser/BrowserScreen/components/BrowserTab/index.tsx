@@ -32,7 +32,6 @@ import { APP_UA_PARIALS } from '@/constant';
 import { DESKTOP_MODE_UA, USER_AGENT } from '@/constant/browser';
 import { parsePossibleURL } from '@/constant/dappView';
 import { isNonPublicProductionEnv } from '@/constant';
-import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import {
@@ -272,8 +271,11 @@ export const BrowserTab = ({
 
   const viewShotRef = useRef<ViewShot | null>(null);
 
-  const { entryScriptWeb3Loaded, fullScript } =
-    useJavaScriptBeforeContentLoaded();
+  const {
+    entryScriptWeb3Loaded,
+    beforeContentLoadedBuiltinScriptIds,
+    documentEndBuiltinScriptIds,
+  } = useJavaScriptBeforeContentLoaded();
 
   const { onLoadStart, onMessage: onWebViewMessage } = useSetupWebview({
     dappOrigin: origin,
@@ -653,11 +655,13 @@ export const BrowserTab = ({
                     // applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
                     javaScriptEnabled
                     // androidLayerType='software'
-                    injectedJavaScriptBeforeContentLoaded={fullScript}
+                    injectedJavaScriptBeforeContentLoadedBuiltinScriptIds={
+                      beforeContentLoadedBuiltinScriptIds
+                    }
                     injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
-                    {...(IS_ANDROID && {
-                      injectedJavaScript: PATCH_ANCHOR_TARGET,
-                    })}
+                    injectedJavaScriptBuiltinScriptIds={
+                      documentEndBuiltinScriptIds
+                    }
                     onNavigationStateChange={event => {
                       // onUpdateTab?.({
                       //   url: event.url,

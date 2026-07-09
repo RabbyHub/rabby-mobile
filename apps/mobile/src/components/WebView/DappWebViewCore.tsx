@@ -18,7 +18,6 @@ import {
 } from '@/core/bridges/useBackgroundBridge';
 import { useWebViewControl } from '@/components/WebView/hooks';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { checkShouldStartLoadingWithRequestForDappWebView } from './utils';
 import { getOnlineConfig } from '@/core/config/online';
 import {
@@ -33,9 +32,7 @@ import { WebviewError } from '@/screens/Browser/BrowserScreen/components/Browser
 import { openExternalUrl } from '@/core/utils/linking';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const autoRunnerInjected = `${
-  IS_ANDROID ? PATCH_ANCHOR_TARGET : ''
-}\ntrue;${injectedAutoRunnerSource}\ntrue;`;
+const autoRunnerInjected = `true;${injectedAutoRunnerSource}\ntrue;`;
 
 type OnLoadStartEvent = Parameters<NonNullable<WebViewProps['onLoadStart']>>[0];
 
@@ -161,8 +158,11 @@ export default function DappWebViewCore({
     }
   }, [dappOrigin, internalController, offscreenPreload, webviewActive]);
 
-  const { entryScriptWeb3Loaded, fullScript } =
-    useJavaScriptBeforeContentLoaded();
+  const {
+    entryScriptWeb3Loaded,
+    beforeContentLoadedBuiltinScriptIds,
+    documentEndBuiltinScriptIds,
+  } = useJavaScriptBeforeContentLoaded();
 
   const { onLoadStart: onBridgeLoadStart, onMessage: onBridgeMessage } =
     useSetupWebview({
@@ -522,11 +522,11 @@ export default function DappWebViewCore({
           scalesPageToFit: resolvedScalesPageToFit,
         })}
         javaScriptEnabled
-        injectedJavaScriptBeforeContentLoaded={fullScript}
+        injectedJavaScriptBeforeContentLoadedBuiltinScriptIds={
+          beforeContentLoadedBuiltinScriptIds
+        }
         injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
-        // {...(IS_ANDROID && {
-        //   injectedJavaScript: PATCH_ANCHOR_TARGET,
-        // })}
+        injectedJavaScriptBuiltinScriptIds={documentEndBuiltinScriptIds}
         injectedJavaScript={autoRunnerInjected}
         webviewDebuggingEnabled={webviewDebuggingEnabled}
         onNavigationStateChange={handleNavigationStateChange}
