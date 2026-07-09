@@ -128,7 +128,16 @@ const sortByUsdValueDesc = (list: ITokenItem[]) =>
 const replacePreviousCoreTokensWithCacheTokens = (
   previousTokens: ITokenItem[],
   cacheTokens: ITokenItem[],
+  cacheNoCoreTokens?: ITokenItem[],
 ) => {
+  // 优先用内存态的noCore数据，如果内存态没有noCore数据，则用db的noCore数据
+  if (
+    cacheNoCoreTokens &&
+    cacheNoCoreTokens.length > 0 &&
+    previousTokens.every(token => token.is_core)
+  ) {
+    return [...cacheTokens, ...cacheNoCoreTokens];
+  }
   const previousNonCoreTokens = previousTokens.filter(token => !token.is_core);
 
   return [...cacheTokens, ...previousNonCoreTokens];
@@ -1735,8 +1744,11 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
   async getTokenList(address: string, force = false, chainServerId?: string) {
     const normalizedAddress = address.toLowerCase();
     const isExpired = await isDataExpired(normalizedAddress);
-    const hasCurrentAddressTokens =
-      (get().tokenListMap[normalizedAddress] || []).length > 0;
+    const currentStateTokens = get().tokenListMap[normalizedAddress] || [];
+    const hasCurrentAddressTokens = currentStateTokens.length > 0;
+    const hasCurrentNoCoreTokens = currentStateTokens.some(
+      token => !token.is_core,
+    );
     const targetChainServerId = chainServerId || undefined;
 
     // 如果本地有数据且未过期（目的：避免缓存接口的延迟问题），或者本地有数据且指定了链（目的：单链刷新就一个接口，没必要走缓存接口），可跳过缓存接口
@@ -1784,11 +1796,21 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         const cacheTokens = filterInterfaceTokenList(
           cacheList.map(item => tokenItemToITokenItem(item, address)),
         );
+        // 以此弥补cache接口数据不完整，带来的接口列表闪动
+        let noCoreDBTokens: ITokenItem[] = [];
+        if (!hasCurrentNoCoreTokens) {
+          const noCoreDBTokensList =
+            await TokenItemEntity.batchQueryNoCoreTokens(normalizedAddress);
+          noCoreDBTokens = filterInterfaceTokenList(
+            noCoreDBTokensList.map(tokenItemEntityToTokenItem),
+          );
+        }
         set(state => {
           const previousTokens = state.tokenListMap[normalizedAddress] || [];
           const mergedCacheTokens = replacePreviousCoreTokensWithCacheTokens(
             previousTokens,
             cacheTokens,
+            noCoreDBTokens,
           );
           return {
             tokenListMap: {
