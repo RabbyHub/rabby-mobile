@@ -51,6 +51,7 @@ import BigNumber from 'bignumber.js';
 
 let perpsTopTokenCache: PerpTopTokenV3[] = [];
 let perpsCategoryCache: PerpTopTokenCategory[] = [];
+const PERPS_STARTUP_PREFETCH_DELAY_MS = 3000;
 
 // Per-dex raw snapshots, source of truth for rebuilding the aggregated
 // `currentClearinghouseState`. Stale frames (older `time`) never win.
@@ -703,7 +704,7 @@ const handleSelectDefaultAccount = async (accounts: Account[]) => {
         : initialState.homePositionPnl;
       setHomePositionPnl(pnl);
       sdk.initAccount(account.address);
-      subscribeToUserData(account);
+      subscribeToUserData(account, { marketFeed: false });
       fetchUserAbstraction(account.address);
     };
 
@@ -1053,9 +1054,17 @@ const updateMarketDataByFastCtxs = (payload: WsFastAssetCtxs) => {
   });
 };
 
-export const subscribeToUserData = (account: Account) => {
+type SubscribeToUserDataOptions = {
+  marketFeed?: boolean;
+};
+
+export const subscribeToUserData = (
+  account: Account,
+  options: SubscribeToUserDataOptions = {},
+) => {
   const sdk = apisPerps.getPerpsSDK();
   const address = account.address;
+  const marketFeedUnsubscribers: (() => void)[] = [];
   unsubscribeAll();
   const { unsubscribe: unsubscribeClearinghouseState } =
     sdk.ws.subscribeToAllDexsClearinghouseState(address, data => {
@@ -1121,17 +1130,24 @@ export const subscribeToUserData = (account: Account) => {
     },
   );
 
-  const { unsubscribe: unsubscribeAllDexsAssetCtxs } =
-    sdk.ws.subscribeToAllDexsAssetCtxs(data => {
-      const { ctxs } = data;
-      updateMarketData(ctxs);
-    });
+  if (options.marketFeed !== false) {
+    const { unsubscribe: unsubscribeAllDexsAssetCtxs } =
+      sdk.ws.subscribeToAllDexsAssetCtxs(data => {
+        const { ctxs } = data;
+        updateMarketData(ctxs);
+      });
 
-  // Fresh prices from the fast feed; global data, no per-user guard needed.
-  const { unsubscribe: unsubscribeFastAssetCtxs } =
-    sdk.ws.subscribeToFastAssetCtxs(data => {
-      updateMarketDataByFastCtxs(data);
-    });
+    // Fresh prices from the fast feed; global data, no per-user guard needed.
+    const { unsubscribe: unsubscribeFastAssetCtxs } =
+      sdk.ws.subscribeToFastAssetCtxs(data => {
+        updateMarketDataByFastCtxs(data);
+      });
+
+    marketFeedUnsubscribers.push(
+      unsubscribeAllDexsAssetCtxs,
+      unsubscribeFastAssetCtxs,
+    );
+  }
 
   const { unsubscribe: unsubscribeFills } = sdk.ws.subscribeToUserFills(
     data => {
@@ -1169,8 +1185,7 @@ export const subscribeToUserData = (account: Account) => {
       // unsubscribeWebData2,
       unsubscribeClearinghouseState,
       unsubscribeSpotState,
-      unsubscribeAllDexsAssetCtxs,
-      unsubscribeFastAssetCtxs,
+      ...marketFeedUnsubscribers,
       unsubscribeOpenOrders,
       unsubscribeFills,
       unsubscribeUserNonFundingLedgerUpdates,
@@ -1525,9 +1540,32 @@ export const usePerpsStore = () => {
   };
 };
 
-runIIFEFunc(fetchMarketData);
-runIIFEFunc(fetchFavoriteMarkets);
-runIIFEFunc(fetchMarginModeByCoin);
+const fetchMarketDataIfNeeded = () => {
+  const { marketData, marketDataStatus } = perpsStore.getState();
+  if (marketDataStatus === 'success' && marketData.length > 0) {
+    return Promise.resolve();
+  }
+  return fetchMarketData();
+};
+
+runIIFEFunc(fetchMarketDataIfNeeded, {
+  label: 'perps.fetchMarketData',
+  stage: 'homePostStartupIdle',
+  delayMs: PERPS_STARTUP_PREFETCH_DELAY_MS,
+  fallbackMs: 8000,
+});
+runIIFEFunc(fetchFavoriteMarkets, {
+  label: 'perps.fetchFavoriteMarkets',
+  stage: 'homePostStartupIdle',
+  delayMs: PERPS_STARTUP_PREFETCH_DELAY_MS,
+  fallbackMs: 8000,
+});
+runIIFEFunc(fetchMarginModeByCoin, {
+  label: 'perps.fetchMarginModeByCoin',
+  stage: 'homePostStartupIdle',
+  delayMs: PERPS_STARTUP_PREFETCH_DELAY_MS,
+  fallbackMs: 8000,
+});
 
 export function startSubscribePerpsOnAppState() {
   const sdk = apisPerps.getPerpsSDK();

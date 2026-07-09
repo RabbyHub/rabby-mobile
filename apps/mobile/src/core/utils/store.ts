@@ -1,4 +1,11 @@
 import { isEqual } from 'lodash';
+import { InteractionManager } from 'react-native';
+
+import {
+  runAfterHomePostStartupReady,
+  traceHomeStartupReady,
+} from './homeStartupReady';
+import { traceAndroidInstant } from './androidTrace';
 
 export type UpdaterOrPartials<Val = unknown> =
   | (Val extends any[] ? Val[number][] : Partial<Val>)
@@ -72,14 +79,197 @@ export {
   makeAvoidParallelAsyncFunc,
 } from './concurrency';
 
+export type RunIIFEFuncStage =
+  | 'immediate'
+  | 'homePostStartupReady'
+  | 'homePostStartupIdle';
+
+export type RunIIFEFuncOptions = {
+  label?: string;
+  stage?: RunIIFEFuncStage;
+  delayMs?: number;
+  fallbackMs?: number;
+  idleTimeoutMs?: number;
+};
+
+type ScheduledIIFEFunc = {
+  cancel: () => void;
+};
+
+function isRunIIFEFuncOptions(value: unknown): value is RunIIFEFuncOptions {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+  return (
+    'stage' in value ||
+    'label' in value ||
+    'delayMs' in value ||
+    'fallbackMs' in value ||
+    'idleTimeoutMs' in value
+  );
+}
+
+function traceIIFEFunc(
+  event: string,
+  options: RunIIFEFuncOptions,
+  extra?: Record<string, unknown>,
+) {
+  if (!options.label) {
+    return;
+  }
+
+  const payload = {
+    label: options.label,
+    stage: options.stage ?? 'immediate',
+    ...extra,
+  };
+  traceAndroidInstant(`iife_task.${event}`, payload);
+  traceHomeStartupReady(`iife_task_${event}`, payload);
+}
+
+function runIIFEFuncTask<T extends (...args: any[]) => any>(
+  func: T,
+  options: RunIIFEFuncOptions,
+  inputArgs: Parameters<T>,
+) {
+  traceIIFEFunc('fire', options);
+  try {
+    const result = func(...inputArgs);
+    if (result && typeof result.then === 'function') {
+      result.then(
+        () => {
+          traceIIFEFunc('done', options);
+        },
+        (error: unknown) => {
+          traceIIFEFunc('error', options, {
+            error: error instanceof Error ? error.message : String(error),
+          });
+          console.error(`[runIIFEFunc] ${options.label || 'anonymous'}`, error);
+        },
+      );
+    } else {
+      traceIIFEFunc('done', options);
+    }
+    return result;
+  } catch (error) {
+    traceIIFEFunc('error', options, {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    console.error(`[runIIFEFunc] ${options.label || 'anonymous'}`, error);
+    return undefined;
+  }
+}
+
+function scheduleHomePostStartupIdle<T extends (...args: any[]) => any>(
+  func: T,
+  options: RunIIFEFuncOptions,
+  inputArgs: Parameters<T>,
+): ScheduledIIFEFunc {
+  let disposed = false;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let idleId: ReturnType<typeof requestIdleCallback> | null = null;
+  let interactionHandle: ReturnType<
+    typeof InteractionManager.runAfterInteractions
+  > | null = null;
+
+  const cancelHomePostStartupReady = runAfterHomePostStartupReady(
+    () => {
+      if (disposed) {
+        return;
+      }
+
+      const scheduleIdleTask = () => {
+        interactionHandle = InteractionManager.runAfterInteractions(() => {
+          if (disposed) {
+            return;
+          }
+
+          if (typeof requestIdleCallback === 'function') {
+            idleId = requestIdleCallback(
+              () => {
+                if (!disposed) {
+                  runIIFEFuncTask(func, options, inputArgs);
+                }
+              },
+              { timeout: options.idleTimeoutMs ?? 5000 },
+            );
+            return;
+          }
+
+          runIIFEFuncTask(func, options, inputArgs);
+        });
+      };
+
+      if (options.delayMs && options.delayMs > 0) {
+        timeoutId = setTimeout(scheduleIdleTask, options.delayMs);
+        return;
+      }
+
+      scheduleIdleTask();
+    },
+    {
+      label: options.label,
+      fallbackMs: options.fallbackMs,
+    },
+  );
+
+  return {
+    cancel: () => {
+      disposed = true;
+      cancelHomePostStartupReady();
+      interactionHandle?.cancel?.();
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      if (idleId !== null && typeof cancelIdleCallback === 'function') {
+        cancelIdleCallback(idleId);
+      }
+    },
+  };
+}
+
 /**
- * @description nothing, just run it, mark it `iife` with this method
+ * @description mark and optionally schedule module-level side effects.
  */
 export function runIIFEFunc<T extends (...args: any[]) => any>(
   func: T,
-  ...inputArags: any[]
-) {
-  return func(...inputArags);
+  optionsOrFirstArg?: RunIIFEFuncOptions | Parameters<T>[0],
+  ...restArgs: any[]
+): ReturnType<T> | ScheduledIIFEFunc | undefined {
+  const hasOptions = isRunIIFEFuncOptions(optionsOrFirstArg);
+  const options = hasOptions
+    ? (optionsOrFirstArg as RunIIFEFuncOptions)
+    : ({} as RunIIFEFuncOptions);
+  const inputArgs = (
+    hasOptions
+      ? restArgs
+      : optionsOrFirstArg === undefined
+      ? restArgs
+      : [optionsOrFirstArg, ...restArgs]
+  ) as Parameters<T>;
+  const stage = options.stage ?? 'immediate';
+
+  traceIIFEFunc('schedule', options);
+
+  if (stage === 'homePostStartupReady') {
+    return {
+      cancel: runAfterHomePostStartupReady(
+        () => {
+          runIIFEFuncTask(func, options, inputArgs);
+        },
+        {
+          label: options.label,
+          fallbackMs: options.fallbackMs,
+        },
+      ),
+    };
+  }
+
+  if (stage === 'homePostStartupIdle') {
+    return scheduleHomePostStartupIdle(func, options, inputArgs);
+  }
+
+  return runIIFEFuncTask(func, options, inputArgs);
 }
 
 export function runDevIIFEFunc<T extends (...args: any[]) => any>(
