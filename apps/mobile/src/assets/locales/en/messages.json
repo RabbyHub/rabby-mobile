@@ -3709,6 +3709,10 @@
     },
     "AccountSelectPopup": {
       "noAvailableAddress": "No available address"
+    },
+    "feedbackHistoryModal": {
+      "replyPlaceholder": "Enter a new reply... (optional)",
+      "mediaPlaceholder": "Image/Video\n(required)"
     }
   },
   "native": {
