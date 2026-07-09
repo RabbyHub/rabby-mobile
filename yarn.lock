@@ -9587,7 +9587,6 @@ __metadata:
     "@metamask/utils": "npm:^8.2.0"
     "@rabby-wallet/gnosis-sdk": "npm:1.4.9"
     "@rabby-wallet/rabby-api": "npm:0.9.63-1"
-    "@react-native-documents/picker": "npm:^12.0.1"
     "@types/node": "npm:^20.14.8"
     "@typescript-eslint/eslint-plugin": "npm:^5.62.0"
     "@typescript-eslint/parser": "npm:^5.62.0"
@@ -11369,7 +11368,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native-documents/picker@npm:12.0.1, @react-native-documents/picker@npm:^12.0.1":
+"@react-native-documents/picker@npm:12.0.1":
   version: 12.0.1
   resolution: "@react-native-documents/picker@npm:12.0.1"
   peerDependencies:
