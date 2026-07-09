@@ -5,17 +5,10 @@ interface IsLpTokenProps {
   is_suspicious?: boolean | null;
 }
 
-export const commonTokenFilter = (token: IsLpTokenProps) => {
-  // null和false是两种情况，null表示没处理，false已经明确是诈骗token
-  if (token.is_verified === false || !!token.is_suspicious) {
-    return false;
-  }
-  return true;
-};
-
 // lpTokenMode is false
 export const defaultTokenFilter = (token: IsLpTokenProps) => {
-  if (!commonTokenFilter(token)) {
+  // null和false是两种情况，null表示没处理，false已经明确是诈骗token
+  if (token.is_verified === false || !!token.is_suspicious) {
     return false;
   }
   if (token.is_core === false) {
@@ -29,7 +22,7 @@ export const defaultTokenFilter = (token: IsLpTokenProps) => {
 
 // lpTokenMode is true
 export const includeLpTokensFilter = (token: IsLpTokenProps) => {
-  if (!commonTokenFilter(token)) {
+  if (token.is_verified === false || !!token.is_suspicious) {
     return false;
   }
   if (token.is_core === false && !token.protocol_id) {

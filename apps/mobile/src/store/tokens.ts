@@ -8,11 +8,7 @@ import {
   syncRemoteTokensForAddresses,
 } from '@/databases/sync/assets';
 import { eventBus, EVENT_PATCH_SINGLE_TOKEN } from '@/utils/events';
-import {
-  commonTokenFilter,
-  includeLpTokensFilter,
-  lpTokenFilter,
-} from '@/utils/lpToken';
+import { includeLpTokensFilter, lpTokenFilter } from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import { preferenceService } from '@/core/services/shared';
 import { getTokenSymbol } from '@/utils/token';
@@ -152,9 +148,6 @@ const replaceTokensByChain = (
 
   return [...previousOtherChainTokens, ...nextChainTokens];
 };
-
-const filterInterfaceTokenList = (tokens: ITokenItem[]) =>
-  tokens.filter(commonTokenFilter);
 
 const isDataExpired = async (address: string) => {
   const isExpired = await TokenItemEntity.isExpired(address);
@@ -1724,8 +1717,8 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
     lowerAddresses.forEach(address => {
       cacheTokenQueue.add(async () => {
         const list = await queryTokensCache(address);
-        cacheTokenMap[address.toLowerCase()] = filterInterfaceTokenList(
-          list.map(item => tokenItemToITokenItem(item, address)),
+        cacheTokenMap[address.toLowerCase()] = list.map(item =>
+          tokenItemToITokenItem(item, address),
         );
       });
     });
@@ -1766,10 +1759,8 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
                     isTestnet: false,
                   },
                 );
-                const tokenList = filterInterfaceTokenList(
-                  chainTokensRes.map(item =>
-                    tokenItemToITokenItem(item, address),
-                  ),
+                const tokenList = chainTokensRes.map(item =>
+                  tokenItemToITokenItem(item, address),
                 );
                 return tokenList;
               }),
@@ -1849,8 +1840,8 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         }));
       } else {
         const cacheList = await queryTokensCache(address);
-        const cacheTokens = filterInterfaceTokenList(
-          cacheList.map(item => tokenItemToITokenItem(item, address)),
+        const cacheTokens = cacheList.map(item =>
+          tokenItemToITokenItem(item, address),
         );
         const currentState = get();
         const previousTokens =
@@ -1905,10 +1896,8 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
                   isTestnet: false,
                 },
               );
-              const tokenList = filterInterfaceTokenList(
-                chainTokensRes.map(item =>
-                  tokenItemToITokenItem(item, address),
-                ),
+              const tokenList = chainTokensRes.map(item =>
+                tokenItemToITokenItem(item, address),
               );
               return tokenList;
             }),
