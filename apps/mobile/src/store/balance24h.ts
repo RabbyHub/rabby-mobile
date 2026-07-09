@@ -25,6 +25,7 @@ import {
   type IBalance24hData,
   setBalance24hCache,
 } from '@/utils/24hBalanceCache';
+import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 
 export type Address24hBalanceValue = IBalance24hData['data'] & {
   updateTime: IBalance24hData['updateTime'];
@@ -202,7 +203,15 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
   };
 
   initStore = async () => {
-    balance24hMMKV.getAllKeys().forEach(key => {
+    const startedAt = Date.now();
+    const keys = balance24hMMKV.getAllKeys();
+    let hydratedCount = 0;
+
+    markStartupPerf('balance24hStore', 'initStore_start', {
+      keyCount: keys.length,
+    });
+
+    keys.forEach(key => {
       const lowerAddress = this.normalizeAddress(key);
       if (!lowerAddress) {
         return;
@@ -237,6 +246,13 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
           },
         },
       );
+      hydratedCount += 1;
+    });
+
+    markStartupPerf('balance24hStore', 'initStore_end', {
+      elapsedMs: Date.now() - startedAt,
+      keyCount: keys.length,
+      hydratedCount,
     });
   };
 

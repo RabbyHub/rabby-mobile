@@ -88,6 +88,7 @@ import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import Animated from 'react-native-reanimated';
+import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 
 const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
   KeyboardAwareScrollView,
@@ -109,6 +110,30 @@ const EMPTY_TOKEN_ITEM = {
   amount: 0,
   price: 0,
 };
+
+const SEND_SCREEN_RENDER_MARK_LIMIT = 20;
+let sendScreenRenderSeq = 0;
+
+function markSendScreenPerf(event: string, data: Record<string, unknown> = {}) {
+  markStartupPerf('sendScreen', event, data);
+}
+
+function markSendScreenRenderPerf(
+  renderSeq: number,
+  event: string,
+  data: Record<string, unknown> = {},
+) {
+  if (renderSeq > SEND_SCREEN_RENDER_MARK_LIMIT) {
+    return;
+  }
+
+  markSendScreenPerf(event, {
+    renderSeq,
+    ...data,
+  });
+}
+
+markSendScreenPerf('module_loaded');
 
 function getInitialDisplayToken(token: TokenItem): TokenItem | null {
   const chain = findChainByServerID(token.chain);
@@ -248,6 +273,11 @@ const SendScreenBody = React.memo(function SendScreenBody({
 function SendScreen({
   isForMultipleAddress = false,
 }: PropsForAccountSwitchScreen): JSX.Element {
+  const renderSeq = ++sendScreenRenderSeq;
+  markSendScreenRenderPerf(renderSeq, 'render_start', {
+    isForMultipleAddress,
+  });
+
   const navigation = useNavigation();
   const { t } = useTranslation();
   const { setNavigationOptions } = useSafeSetNavigationOptions();
@@ -255,11 +285,32 @@ function SendScreen({
     useState(false);
   const { localPendingTxData, clearLocalPendingTxData } =
     useRecentSendPendingTx(isForMultipleAddress);
+  markSendScreenRenderPerf(renderSeq, 'recent_pending_tx_hook_end', {
+    hasLocalPendingTx: !!localPendingTxData,
+  });
+
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
+  markSendScreenRenderPerf(renderSeq, 'scene_account_hook_end', {
+    hasCurrentAccount: !!currentAccount,
+    accountType: currentAccount?.type,
+    brandName: currentAccount?.brandName,
+  });
 
   useRendererDetect({ name: 'SendScreen' });
+
+  useEffect(() => {
+    markSendScreenPerf('mounted', {
+      isForMultipleAddress,
+    });
+
+    return () => {
+      markSendScreenPerf('unmounted', {
+        isForMultipleAddress,
+      });
+    };
+  }, [isForMultipleAddress]);
 
   useEffect(() => {
     clearLocalPendingTxData();
@@ -276,6 +327,13 @@ function SendScreen({
 
   const { chainItem, currentToken } = useSendTokenScreenChainToken();
   const routeParams = useAtomValue(sendScreenParamsAtom);
+  markSendScreenRenderPerf(renderSeq, 'route_and_chain_hook_end', {
+    hasNavParams: !!navParams,
+    hasRouteParams: !!routeParams,
+    chain: chainItem?.serverId,
+    tokenChain: currentToken.chain,
+    tokenId: currentToken.id,
+  });
 
   const screenState = useSendTokenScreenStateShallowSelector(state => ({
     clickedMax: state.clickedMax,
@@ -283,6 +341,12 @@ function SendScreen({
     selectedGasLevel: state.selectedGasLevel,
     toAddrDesc: state.toAddrDesc,
   }));
+  markSendScreenRenderPerf(renderSeq, 'screen_state_selector_end', {
+    inited: screenState.inited,
+    hasToAddrDesc: !!screenState.toAddrDesc,
+    clickedMax: screenState.clickedMax,
+    hasSelectedGasLevel: !!screenState.selectedGasLevel,
+  });
 
   const Header = useCallback(
     () => <SendHeaderRight isForMultipleAddress={isForMultipleAddress} />,
@@ -404,12 +468,25 @@ function SendScreen({
     disableItemCheck,
     currentAccount,
   });
+  markSendScreenRenderPerf(renderSeq, 'send_token_form_hook_end', {
+    hasTo: !!formValues.to,
+    whitelistEnabled,
+    hasMiniSignInstance: !!miniSignInstance,
+    canDirectSign,
+    hasToAccount: !!toAccount,
+    hasCurrentAccount: !!currentAccount,
+  });
 
   useEffect(() => {
     if (!formValues.to) return;
     if (!isValidHexAddress(formValues.to as `0x${string}`)) return;
 
+    markSendScreenPerf('to_addr_desc_start');
     getAddrDescWithCexLocalCacheSync(formValues.to).then(res => {
+      markSendScreenPerf('to_addr_desc_end', {
+        hasCex: !!res?.cex,
+        contractChainCount: Object.keys(res?.contract || {}).length,
+      });
       apiSendToken.putScreenState({
         toAddrDesc: res,
       });
@@ -421,6 +498,14 @@ function SendScreen({
   });
   const initByCacheFinishedRef = useRef(false);
   const initByCache = useCallback(async () => {
+    const startedAt = Date.now();
+    markSendScreenPerf('init_by_cache_start', {
+      hasNavParams: !!navParams,
+      hasRouteParams: !!routeParams,
+      hasCurrentAccount: !!currentAccount,
+      isForMultipleAddress,
+    });
+
     let targetToken: TokenItem | null = null;
     const { chainItem: latestChainItem, currentToken } = getSendChainToken();
 
@@ -478,15 +563,32 @@ function SendScreen({
       }
 
       if (!targetToken && currentAccount?.address) {
+        const lastTokenStartedAt = Date.now();
+        markSendScreenPerf('last_time_send_token_start');
         targetToken =
           (await preferenceService.getLastTimeSendToken(
             currentAccount?.address,
           )) ?? null;
+        markSendScreenPerf('last_time_send_token_end', {
+          elapsedMs: Date.now() - lastTokenStartedAt,
+          hasToken: !!targetToken,
+          chain: targetToken?.chain,
+          tokenId: targetToken?.id,
+        });
       }
       if (!targetToken) {
+        const orderedChainStartedAt = Date.now();
+        markSendScreenPerf('fetch_ordered_chain_list_start', {
+          hasAddress: !!currentAccount?.address,
+        });
         const { firstChain } = await fetchOrderedChainList({
           address: currentAccount?.address,
           supportChains: undefined,
+        });
+        markSendScreenPerf('fetch_ordered_chain_list_end', {
+          elapsedMs: Date.now() - orderedChainStartedAt,
+          hasFirstChain: !!firstChain,
+          firstChain: firstChain?.serverId,
         });
         targetToken = firstChain ? makeTokenFromChain(firstChain) : null;
       }
@@ -496,11 +598,21 @@ function SendScreen({
     }
 
     if (navParams?.toAddress && currentAccount?.address) {
+      const recommendStartedAt = Date.now();
+      markSendScreenPerf('recommend_token_start', {
+        chain: targetToken.chain,
+        tokenId: targetToken.id,
+      });
       const res = await getRecommendToken({
         from: currentAccount?.address,
         to: navParams?.toAddress || '',
         tokenId: targetToken.id,
         chain: targetToken.chain,
+      });
+      markSendScreenPerf('recommend_token_end', {
+        elapsedMs: Date.now() - recommendStartedAt,
+        chain: res.chain,
+        tokenId: res.tokenId,
       });
       if (
         !lowcaseSame(res.chain, targetToken.chain) ||
@@ -521,6 +633,15 @@ function SendScreen({
     }
     const initialDisplayToken = getInitialDisplayToken(targetToken);
     if (initialDisplayToken) {
+      markSendScreenPerf('initial_display_token_apply', {
+        chain: initialDisplayToken.chain,
+        tokenId: initialDisplayToken.id,
+        hasSymbol: !!(
+          initialDisplayToken.optimized_symbol ||
+          initialDisplayToken.display_symbol ||
+          initialDisplayToken.symbol
+        ),
+      });
       apiSendToken.putChainToken({ currentToken: initialDisplayToken });
       if (currentAccount?.address) {
         apiSendToken.markBalanceLoading({
@@ -532,16 +653,39 @@ function SendScreen({
       apiSendToken.putScreenState({ initialTokenIdentityReady: true });
     }
 
+    const loadCurrentTokenStartedAt = Date.now();
+    markSendScreenPerf('load_current_token_start', {
+      enabled: !!currentAccount?.address,
+      chain: targetToken.chain,
+      tokenId: targetToken.id,
+    });
     const loadedTokenPromise = currentAccount?.address
       ? loadCurrentToken(
           targetToken.id,
           targetToken.chain,
           currentAccount.address,
-        ).catch(error => {
-          console.error('SendScreen loadCurrentToken error', error);
-          return null;
-        })
-      : Promise.resolve(null);
+        )
+          .then(loadedToken => {
+            markSendScreenPerf('load_current_token_end', {
+              elapsedMs: Date.now() - loadCurrentTokenStartedAt,
+              hasLoadedToken: !!loadedToken,
+            });
+            return loadedToken;
+          })
+          .catch(error => {
+            markSendScreenPerf('load_current_token_error', {
+              elapsedMs: Date.now() - loadCurrentTokenStartedAt,
+              error: error instanceof Error ? error.message : String(error),
+            });
+            console.error('SendScreen loadCurrentToken error', error);
+            return null;
+          })
+      : Promise.resolve(null).then(value => {
+          markSendScreenPerf('load_current_token_skip', {
+            elapsedMs: Date.now() - loadCurrentTokenStartedAt,
+          });
+          return value;
+        });
 
     if (!initialDisplayToken) {
       void loadedTokenPromise.then(loadedToken => {
@@ -552,29 +696,51 @@ function SendScreen({
     }
 
     await Promise.race([loadedTokenPromise, sleep(5000)]);
+    markSendScreenPerf('init_by_cache_end', {
+      elapsedMs: Date.now() - startedAt,
+      hasInitialDisplayToken: !!initialDisplayToken,
+      chain: targetToken.chain,
+      tokenId: targetToken.id,
+    });
   }, [
     navParams,
     routeParams,
     currentAccount,
     fetchOrderedChainList,
     loadCurrentToken,
+    isForMultipleAddress,
   ]);
 
   const checkIsAddressBlocked = useCallback(async (to?: string) => {
     if (!to) return;
 
     try {
+      const startedAt = Date.now();
+      markSendScreenPerf('blocked_address_check_start');
       const { is_blocked } = await openapi.isBlockedAddress(to);
+      markSendScreenPerf('blocked_address_check_end', {
+        elapsedMs: Date.now() - startedAt,
+        isBlocked: is_blocked,
+      });
       if (is_blocked) {
         apiPageStateCache.clearPageStateCache();
         setIsShowBlockedTransactionDialog(true);
       }
     } catch (e) {
+      markSendScreenPerf('blocked_address_check_error', {
+        error: e instanceof Error ? e.message : String(e),
+      });
       console.error('checkIsAddressBlocked error', e);
     }
   }, []);
 
   useEffect(() => {
+    markSendScreenPerf('init_effect_commit', {
+      inited: screenState.inited,
+      hasToAddress: !!navParams?.toAddress,
+      initByCacheFinished: initByCacheFinishedRef.current,
+    });
+
     if (screenState.inited) {
       (async () => {
         if (initByCacheFinishedRef.current) return;
@@ -583,10 +749,14 @@ function SendScreen({
         try {
           await initByCache();
         } catch (e) {
+          markSendScreenPerf('init_by_cache_error', {
+            error: e instanceof Error ? e.message : String(e),
+          });
           console.error('SendScreen initByCache error', e);
           initByCacheFinishedRef.current = false;
         } finally {
           apiSendToken.putScreenState({ initialTokenReady: true });
+          markSendScreenPerf('initial_token_ready_set');
         }
       })();
       checkIsAddressBlocked(navParams?.toAddress);
@@ -603,19 +773,38 @@ function SendScreen({
       if (!initByCacheFinishedRef.current) return;
       if (!currentAccount?.address) return;
 
-      await refreshCurrentTokenBalance();
+      const startedAt = Date.now();
+      markSendScreenPerf('refresh_current_token_balance_start');
+      try {
+        await refreshCurrentTokenBalance();
+        markSendScreenPerf('refresh_current_token_balance_end', {
+          elapsedMs: Date.now() - startedAt,
+        });
+      } catch (error) {
+        markSendScreenPerf('refresh_current_token_balance_error', {
+          elapsedMs: Date.now() - startedAt,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
+      }
     })();
   }, [currentAccount?.address, refreshCurrentTokenBalance]);
 
   useEffect(() => {
+    markSendScreenPerf('account_ready_effect_commit', {
+      hasCurrentAccount: !!currentAccount,
+    });
+
     if (!currentAccount) {
       redirectBackErrorHandler(navigation);
       return;
     } else {
       apiSendToken.putScreenState({ inited: true });
+      markSendScreenPerf('screen_inited_set');
 
       return () => {
         apiPageStateCache.clearPageStateCache();
+        markSendScreenPerf('page_state_cache_clear_on_account_effect_cleanup');
       };
     }
   }, [currentAccount, navigation]);
@@ -624,6 +813,7 @@ function SendScreen({
 
   useLayoutEffect(() => {
     return () => {
+      markSendScreenPerf('layout_cleanup_reset_screen_state');
       apiSendToken.resetScreenState();
     };
   }, []);
@@ -731,6 +921,15 @@ function SendScreen({
       whitelistEnabled,
     ],
   );
+
+  markSendScreenRenderPerf(renderSeq, 'render_end', {
+    inited: screenState.inited,
+    hasCurrentAccount: !!currentAccount,
+    chain: chainItem?.serverId,
+    tokenChain: currentToken.chain,
+    tokenId: currentToken.id,
+    hasTo: !!formValues.to,
+  });
 
   return (
     <SignatureInstanceProvider instance={miniSignInstance}>

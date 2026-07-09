@@ -30,6 +30,7 @@ import BigNumber from 'bignumber.js';
 import { makeJsEEClass } from '@/core/services/_utils';
 import { logger } from '@/utils/logger';
 import { isNonProductionDiagnosticsEnabled } from '../utils/diagnosticEnv';
+import { markStartupPerf } from '../utils/startupPerfMarks';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -183,10 +184,24 @@ async function fetchAllAccountsProcess() {
   const startedAt = Date.now();
 
   traceAndroidUnlockAccountPerf('get_all_visible_accounts_start');
+  markStartupPerf('account', 'get_all_visible_accounts_start');
 
   try {
+    const keyringStartedAt = Date.now();
     const visibleAccounts = await keyringService.getAllVisibleAccountsArray();
+    markStartupPerf('account', 'keyring_visible_accounts_end', {
+      elapsedMs: Date.now() - keyringStartedAt,
+      count: visibleAccounts.length,
+    });
+
+    const hydrateStartedAt = Date.now();
     await addressBalanceStore.hydrateCachedBalancesForAccounts(visibleAccounts);
+    markStartupPerf('account', 'hydrate_cached_balances_end', {
+      elapsedMs: Date.now() - hydrateStartedAt,
+      count: visibleAccounts.length,
+    });
+
+    const mapStartedAt = Date.now();
     const balanceMap = addressBalanceStore.getAddressValueMap();
     nextAccounts = visibleAccounts.map(account => {
       const balance = balanceMap[account.address.toLowerCase()];
@@ -197,7 +212,12 @@ async function fetchAllAccountsProcess() {
         balance: balance?.totalBalance || 0,
       };
     });
+    markStartupPerf('account', 'map_visible_accounts_end', {
+      elapsedMs: Date.now() - mapStartedAt,
+      count: nextAccounts.length,
+    });
 
+    const aliasStartedAt = Date.now();
     await Promise.allSettled(
       nextAccounts.map(async (account, idx) => {
         const aliasName = contactService.getAliasByAddress(account.address);
@@ -207,6 +227,10 @@ async function fetchAllAccountsProcess() {
         };
       }),
     );
+    markStartupPerf('account', 'alias_visible_accounts_end', {
+      elapsedMs: Date.now() - aliasStartedAt,
+      count: nextAccounts.length,
+    });
   } catch (err) {
     traceAndroidUnlockAccountPerf('get_all_visible_accounts_error', {
       elapsedMs: Date.now() - startedAt,
@@ -215,6 +239,10 @@ async function fetchAllAccountsProcess() {
     Sentry.captureException(err);
   } finally {
     traceAndroidUnlockAccountPerf('get_all_visible_accounts_end', {
+      elapsedMs: Date.now() - startedAt,
+      count: nextAccounts.length,
+    });
+    markStartupPerf('account', 'get_all_visible_accounts_end', {
       elapsedMs: Date.now() - startedAt,
       count: nextAccounts.length,
     });

@@ -9,6 +9,23 @@ import { Thread, ThreadError } from '@/core/native/RNThread';
 export const workerThread = new Thread('worker-src/worker.thread.js');
 let workerThreadStartPromise: Promise<number> | null = null;
 let didSubscribeOnlineConfig = false;
+let workerThreadDeferredStartTimer: ReturnType<typeof setTimeout> | null = null;
+
+function getStartupProfilerWorkerDelayMs() {
+  const activeUntil = Number(
+    (
+      globalThis as typeof globalThis & {
+        __RABBY_STARTUP_PROFILER_ACTIVE_UNTIL__?: number;
+      }
+    ).__RABBY_STARTUP_PROFILER_ACTIVE_UNTIL__ || 0,
+  );
+
+  if (!Number.isFinite(activeUntil) || activeUntil <= 0) {
+    return 0;
+  }
+
+  return Math.max(0, activeUntil - Date.now());
+}
 
 export function isWorkerThreadRunning() {
   return workerThread.isRunning;
@@ -30,6 +47,20 @@ function startWorkerThreadOnce() {
 
 async function startWorkerThreadIfEnabled() {
   if (!isOnlineWorkerThreadEnabled()) {
+    return;
+  }
+
+  const profilerDelayMs = getStartupProfilerWorkerDelayMs();
+  if (profilerDelayMs > 0) {
+    if (!workerThreadDeferredStartTimer) {
+      console.info('[RabbyStartupProfiler] worker_thread_deferred', {
+        delayMs: profilerDelayMs,
+      });
+      workerThreadDeferredStartTimer = setTimeout(() => {
+        workerThreadDeferredStartTimer = null;
+        void startWorkerThreadIfEnabled();
+      }, profilerDelayMs);
+    }
     return;
   }
 

@@ -40,6 +40,7 @@ import { fetchIconSymbolAndName, IconSymbolInterface } from './utils/icon';
 import { jotaiStore, zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
+import { shouldSuppressPerfCaptureConsoleNoise } from '@/core/utils/perfCaptureConsole';
 import { debounce } from 'lodash';
 import {
   worker_formatReserves,
@@ -79,6 +80,24 @@ const getMarketInfo = (market?: CustomMarket) => {
     isMainnet,
   };
 };
+
+function debugLendingPerf(
+  label: string,
+  summary: Record<string, unknown>,
+  ...verboseValues: unknown[]
+) {
+  if (shouldSuppressPerfCaptureConsoleNoise()) {
+    console.debug(label, summary);
+    return;
+  }
+
+  if (verboseValues.length) {
+    console.debug(label, ...verboseValues);
+    return;
+  }
+
+  console.debug(label, summary);
+}
 
 function useSelectedMarketKey() {
   const [marketKey, setMarketKey] = useAtom(marketAtom);
@@ -339,8 +358,13 @@ async function computeFormattedReservesAndIncentives({
         baseCurrencyData.marketReferenceCurrencyPriceInUsd,
     })) || []
   ).map(mapItem);
-  console.debug(
+  debugLendingPerf(
     '[perf] formattedReservesAndIncentivesAtom:: formattedReserves',
+    {
+      reservesCount: reservesArray.length,
+      eModeCount: eModes?.length || 0,
+      formattedReserveCount: formattedReserves.length,
+    },
     formattedReserves,
   );
   const formattedPoolReservesAndIncentives = (
@@ -355,8 +379,13 @@ async function computeFormattedReservesAndIncentives({
       eModes,
     })) || []
   ).map(mapItem) as unknown as FormattedReservesAndIncentives[];
-  console.debug(
+  debugLendingPerf(
     '[perf] formattedReservesAndIncentivesAtom:: formattedPoolReservesAndIncentives',
+    {
+      reservesCount: reservesArray.length,
+      eModeCount: eModes?.length || 0,
+      formattedPoolReserveCount: formattedPoolReservesAndIncentives.length,
+    },
     formattedPoolReservesAndIncentives,
   );
 
@@ -407,8 +436,14 @@ async function computeIUserSummary({
   const currentTimestamp = dayjs().unix();
   const userReservesArray = userReserves.userReserves;
 
-  console.debug(
+  debugLendingPerf(
     '[perf] iUserSummaryAtom:: userReservesArray, formattedReserves',
+    {
+      userReserveCount: userReservesArray.length,
+      formattedReserveCount: Array.isArray(formattedReserves)
+        ? formattedReserves.length
+        : 0,
+    },
     userReservesArray,
     formattedReserves,
   );
@@ -429,8 +464,12 @@ async function computeIUserSummary({
   });
   const endTime = Date.now();
   const diff = endTime - startTime;
-  console.debug(
+  debugLendingPerf(
     '[perf] iUserSummaryAtom:: syncResult, startTime, endTime, diff',
+    {
+      elapsedMs: diff,
+      userReserveCount: syncResult?.userReservesData?.length || 0,
+    },
     syncResult,
     startTime,
     endTime,
@@ -711,7 +750,17 @@ async function applyRemoteData(
     iUserSummary: iUserSummary as UserSummary,
   });
 
-  console.debug('[perf] lending:: remote data will be set', newVal);
+  debugLendingPerf(
+    '[perf] lending:: remote data will be set',
+    {
+      marketKey,
+      reservesCount: newVal.reserves?.reservesData?.length || 0,
+      userReserveCount: newVal.userReserves?.userReserves?.length || 0,
+      walletTokenCount: newVal.walletBalances?.[0]?.length || 0,
+      eModeCount: newVal.eModes?.length || 0,
+    },
+    newVal,
+  );
   remoteDataState.setState({
     ...prev,
     [lendingDataKey]: newVal,

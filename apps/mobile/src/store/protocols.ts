@@ -11,6 +11,7 @@ import { formatAppChain } from '@/utils/appchain';
 import { reportLendingUserStatusOnce } from '@/utils/lendingUserStatus';
 import { complexProtocol2ProtocolItem } from '@/utils/protocol';
 import type { ICacheProtocolItem, IProtocolItem } from '@/types/assets';
+import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 
 export type {
   ICacheProtocolItem,
@@ -248,15 +249,34 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
   isLoading: false,
   isLoadingByAddress: {},
   async initStore() {
+    const startedAt = Date.now();
+    markStartupPerf('protocolListStore', 'initStore_start');
+
+    const accountsStartedAt = Date.now();
     const { top10Addresses } = await getTop10MyAccounts(true);
+    markStartupPerf('protocolListStore', 'top10_accounts_end', {
+      elapsedMs: Date.now() - accountsStartedAt,
+      count: top10Addresses.length,
+    });
+
+    const loadStartedAt = Date.now();
     const [protocolMap, appChainMap] = await Promise.all([
       ProtocolItemEntity.getDefaultProtocolsByAddresses(top10Addresses),
       buildAppChainProtocolMap(top10Addresses),
     ]);
+    markStartupPerf('protocolListStore', 'load_cache_end', {
+      elapsedMs: Date.now() - loadStartedAt,
+      count: top10Addresses.length,
+    });
+
     // 写入 Store
     set(() => ({
       protocolMap: mergeProtocolMaps(protocolMap, appChainMap),
     }));
+    markStartupPerf('protocolListStore', 'initStore_end', {
+      elapsedMs: Date.now() - startedAt,
+      count: top10Addresses.length,
+    });
   },
   async batchGetProtocols(addresses, force = false) {
     if (!addresses.length) {

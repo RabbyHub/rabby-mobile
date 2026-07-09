@@ -11,6 +11,7 @@ import {
 import { makeDefaultSelectData } from '@/store/curveShared';
 import { sceneCurve24hStore } from '@/store/curve24h';
 import { useShallow } from 'zustand/react/shallow';
+import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 
 type HomeChangeData = Pick<
   Combined24hBalanceData,
@@ -267,17 +268,67 @@ const homePortfolioStore = zCreate<HomePortfolioState>(() =>
 );
 
 let hasStartedHomePortfolioLifecycle = false;
+let homePortfolioSyncSeq = 0;
+let isHomePortfolioSyncScheduled = false;
+let pendingHomePortfolioSyncTriggers = 0;
 
-function syncHomePortfolioState() {
+function syncHomePortfolioState(
+  syncMode: 'initial' | 'scheduled' = 'scheduled',
+  triggerCount = 1,
+) {
+  const startedAt = Date.now();
+  homePortfolioSyncSeq += 1;
+  const seq = homePortfolioSyncSeq;
   const nextState = buildHomePortfolioState();
+  const buildMs = Date.now() - startedAt;
+  let didChange = false;
 
   homePortfolioStore.setState(prev => {
     if (isSameState(prev, nextState)) {
       return prev;
     }
 
+    didChange = true;
     return nextState;
   });
+
+  markStartupPerf('homePortfolio', 'sync_state_end', {
+    seq,
+    elapsedMs: Date.now() - startedAt,
+    buildMs,
+    didChange,
+    syncMode,
+    triggerCount,
+    displayAddressCount: nextState.displayAddresses.length,
+    totalBalance: nextState.totalBalance,
+    hasResolvedSelection: nextState.hasResolvedSelection,
+    hasFetchedAccounts: nextState.hasFetchedAccounts,
+    isBalanceFetchingRemote: nextState.isBalanceFetchingRemote,
+    is24hChangeFetchingRemote: nextState.is24hChangeFetchingRemote,
+    isCurveFetchingRemote: nextState.isCurveFetchingRemote,
+  });
+}
+
+function scheduleHomePortfolioStateSync() {
+  pendingHomePortfolioSyncTriggers += 1;
+  if (isHomePortfolioSyncScheduled) {
+    return;
+  }
+
+  isHomePortfolioSyncScheduled = true;
+  const run = () => {
+    const triggerCount = pendingHomePortfolioSyncTriggers;
+    pendingHomePortfolioSyncTriggers = 0;
+    isHomePortfolioSyncScheduled = false;
+    syncHomePortfolioState('scheduled', triggerCount);
+  };
+
+  if (typeof requestAnimationFrame === 'function') {
+    requestAnimationFrame(run);
+    return;
+  }
+
+  setTimeout(run, 0);
 }
 
 function ensureHomePortfolioLifecycle() {
@@ -287,14 +338,14 @@ function ensureHomePortfolioLifecycle() {
 
   hasStartedHomePortfolioLifecycle = true;
 
-  balanceAccountsStore.subscribe(syncHomePortfolioState);
-  accountStore.subscribe(syncHomePortfolioState);
-  addressBalanceStore.subscribe(syncHomePortfolioState);
-  balance24hStore.subscribe(syncHomePortfolioState);
-  scene24hBalanceStore.subscribe(syncHomePortfolioState);
-  sceneCurve24hStore.subscribe(syncHomePortfolioState);
+  balanceAccountsStore.subscribe(scheduleHomePortfolioStateSync);
+  accountStore.subscribe(scheduleHomePortfolioStateSync);
+  addressBalanceStore.subscribe(scheduleHomePortfolioStateSync);
+  balance24hStore.subscribe(scheduleHomePortfolioStateSync);
+  scene24hBalanceStore.subscribe(scheduleHomePortfolioStateSync);
+  sceneCurve24hStore.subscribe(scheduleHomePortfolioStateSync);
 
-  syncHomePortfolioState();
+  syncHomePortfolioState('initial');
 }
 
 export function useHomePortfolioStore<T>(

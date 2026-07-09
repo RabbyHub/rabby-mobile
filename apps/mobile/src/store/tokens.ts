@@ -25,6 +25,7 @@ import PQueue from 'p-queue';
 import { ResourceBaseStore } from './_resourceBase';
 import type { ObservableResourceValueSource } from './_resourceFlow';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
@@ -1654,15 +1655,34 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
     preferenceService.setTokenDisplayMode(mode);
   },
   async initStore() {
+    const startedAt = Date.now();
+    markStartupPerf('tokenListStore', 'initStore_start');
+
     // 在 App 启动时执行，初始化冷备数据
     // 取 Top10 地址
+    const accountsStartedAt = Date.now();
     const { top10Addresses } = await getTop10MyAccounts(true);
+    markStartupPerf('tokenListStore', 'top10_accounts_end', {
+      elapsedMs: Date.now() - accountsStartedAt,
+      count: top10Addresses.length,
+    });
+
     const lowerAddresses = Array.from(
       new Set(top10Addresses.map(item => item.toLowerCase())),
     );
+    const loadStartedAt = Date.now();
     const tokenMap = await TokenItemEntity.getDefaultTokensByAddresses(
       lowerAddresses,
     );
+    markStartupPerf('tokenListStore', 'load_cache_end', {
+      elapsedMs: Date.now() - loadStartedAt,
+      count: lowerAddresses.length,
+      tokenCount: Object.values(tokenMap).reduce(
+        (acc, tokens) => acc + tokens.length,
+        0,
+      ),
+    });
+
     // 写入 Store
     syncTokenRuntimeStoresFromTokenListMap(
       tokenMap,
@@ -1673,6 +1693,10 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
       },
     );
     set(() => ({ tokenListMap: tokenMap }));
+    markStartupPerf('tokenListStore', 'initStore_end', {
+      elapsedMs: Date.now() - startedAt,
+      count: lowerAddresses.length,
+    });
   },
 
   async batchGetTokenList(addresses: string[], force = false) {

@@ -6,6 +6,7 @@ import type { DisplayNftItem } from '@/types/assets';
 import { eventBus, EventBusListeners } from '@/utils/events';
 import { useCallback, useEffect } from 'react';
 import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
+import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 
 const normalizeAddresses = (addresses: string[]) =>
   Array.from(new Set(addresses.map(address => address.toLowerCase())));
@@ -103,7 +104,16 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
   shortCache: true,
 
   async initStore() {
+    const startedAt = Date.now();
+    markStartupPerf('nftListStore', 'initStore_start');
+
+    const accountsStartedAt = Date.now();
     const { top10Addresses } = await getTop10MyAccounts(true);
+    markStartupPerf('nftListStore', 'top10_accounts_end', {
+      elapsedMs: Date.now() - accountsStartedAt,
+      count: top10Addresses.length,
+    });
+
     if (!top10Addresses.length) {
       set(state => ({
         ...state,
@@ -111,10 +121,23 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
         isLoading: false,
         isFirstFetch: false,
       }));
+      markStartupPerf('nftListStore', 'initStore_end', {
+        elapsedMs: Date.now() - startedAt,
+        count: 0,
+      });
       return;
     }
 
+    const loadStartedAt = Date.now();
     await get().batchLoadCacheNFT(top10Addresses);
+    markStartupPerf('nftListStore', 'batch_load_cache_end', {
+      elapsedMs: Date.now() - loadStartedAt,
+      count: top10Addresses.length,
+    });
+    markStartupPerf('nftListStore', 'initStore_end', {
+      elapsedMs: Date.now() - startedAt,
+      count: top10Addresses.length,
+    });
   },
 
   refreshTagNft() {

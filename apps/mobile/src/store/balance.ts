@@ -28,6 +28,7 @@ import {
 } from './_resourceBase';
 import { ResourceLocalTarget } from './_resourceFlowDebug';
 import { ensureAppChainStoreInitialized, useAppChainStore } from './appchain';
+import { markStartupPerf } from '@/core/utils/startupPerfMarks';
 
 export interface CURVE_STEP_ITEM {
   timestamp: number;
@@ -409,9 +410,25 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     }, [flow]);
   };
   initStore = async () => {
+    const startedAt = Date.now();
+    markStartupPerf('addressBalanceStore', 'initStore_start');
+
+    const appChainStartedAt = Date.now();
     await ensureAppChainStoreInitialized();
+    markStartupPerf('addressBalanceStore', 'ensure_appchain_end', {
+      elapsedMs: Date.now() - appChainStartedAt,
+    });
+
+    const queryStartedAt = Date.now();
     const result = await BalanceEntity.queryAllBalance();
+    markStartupPerf('addressBalanceStore', 'query_all_balance_end', {
+      elapsedMs: Date.now() - queryStartedAt,
+      count: result.length,
+    });
+
+    const hydrateStartedAt = Date.now();
     const appChainMap = useAppChainStore.getState().appChainMap;
+    let hydratedCount = 0;
 
     for (const item of result) {
       const lowerAddress = item.owner_addr.toLowerCase();
@@ -446,7 +463,17 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
           totalBalance: value.totalBalance,
         },
       });
+      hydratedCount += 1;
     }
+
+    markStartupPerf('addressBalanceStore', 'hydrate_loop_end', {
+      elapsedMs: Date.now() - hydrateStartedAt,
+      count: hydratedCount,
+    });
+    markStartupPerf('addressBalanceStore', 'initStore_end', {
+      elapsedMs: Date.now() - startedAt,
+      count: hydratedCount,
+    });
   };
 
   hydrateCachedBalancesForAccounts = async (
