@@ -2,10 +2,15 @@ import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { isLoadedAtom, MainContainer, settingAtom } from './MainContainer';
+import {
+  isLoadedAtom,
+  MainContainer,
+  type Setting,
+  settingAtom,
+} from './MainContainer';
 
 export const SettingOneKey: React.FC<{
-  onDone: () => void;
+  onDone: (setting: Setting) => void;
 }> = ({ onDone }) => {
   const { t } = useTranslation();
   const [, setLoading] = React.useState(false);
@@ -26,9 +31,9 @@ export const SettingOneKey: React.FC<{
   const [isLoaded, setIsLoaded] = useAtom(isLoadedAtom);
 
   const handleConfirm = React.useCallback(
-    value => {
+    (value: Setting) => {
       setSetting(value);
-      onDone?.();
+      onDone?.(value);
     },
     [onDone, setSetting],
   );

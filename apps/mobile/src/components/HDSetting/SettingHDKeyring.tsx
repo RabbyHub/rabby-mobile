@@ -1,12 +1,16 @@
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { MainContainer, settingAtom } from './MainContainer';
+import { MainContainer, type Setting, settingAtom } from './MainContainer';
 import { useAtom } from 'jotai';
 import { apiMnemonic } from '@/core/apis';
 
+type MnemonicKeyring = NonNullable<
+  ReturnType<typeof apiMnemonic.getKeyringByMnemonic>
+>;
+
 export const SettingHDKeyring: React.FC<{
-  onDone: () => void;
+  onDone: (setting: Setting) => void;
   mnemonics: string;
   passphrase: string;
 }> = ({ onDone, mnemonics, passphrase }) => {
@@ -60,11 +64,15 @@ export const SettingHDKeyring: React.FC<{
   }, [mnemonics, passphrase]);
 
   const handleConfirm = React.useCallback(
-    async value => {
+    async (value: Setting) => {
       const keyring = await getMnemonicKeyring();
-      await keyring?.setHDPathType(value.hdPath);
+      await keyring?.setHDPathType(
+        value.hdPath as unknown as Parameters<
+          MnemonicKeyring['setHDPathType']
+        >[0],
+      );
       setSetting(value);
-      onDone?.();
+      onDone?.(value);
     },
     [getMnemonicKeyring, onDone, setSetting],
   );

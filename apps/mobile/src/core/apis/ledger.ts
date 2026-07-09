@@ -10,8 +10,11 @@ import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { UpdateFirmwareAlert } from '@/utils/bluetoothPermissions';
 import {
   connectLedgerDevice,
+  connectKnownLedgerDeviceById,
   disconnectLedgerDevice,
+  getLedgerAppAndVersion,
   getLedgerDeviceSessionState,
+  getKnownLedgerDevice,
   subscribeLedgerDevices,
   type LedgerDmkDevice,
 } from '@/core/keyring-bridge/ledger/ledger-dmk';
@@ -80,7 +83,12 @@ export async function isConnected(
     return [true, detail.deviceId];
   }
 
-  return [false, detail.deviceId];
+  try {
+    await connectKnownLedgerDeviceById(detail.deviceId);
+    return [true, detail.deviceId];
+  } catch {
+    return [false, detail.deviceId];
+  }
 }
 
 export async function getCurrentUsedHDPathType() {
@@ -99,13 +107,15 @@ export async function getCurrentUsedHDPathType() {
 
 export async function setCurrentUsedHDPathType(hdPathType: LedgerHDPathType) {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
-  await keyring.setHDPathType(hdPathType);
-  return queue.add(() => keyring.setCurrentUsedHDPathType());
+  return queue.add(async () => {
+    await keyring.setHDPathType(hdPathType);
+    return keyring.setCurrentUsedHDPathType();
+  });
 }
 
 export async function setHDPathType(hdPathType: LedgerHDPathType) {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
-  return keyring.setHDPathType(hdPathType);
+  return queue.add(() => keyring.setHDPathType(hdPathType));
 }
 
 export async function getInitialAccounts() {
@@ -160,8 +170,17 @@ export async function checkEthApp(cb: (result: boolean) => void) {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
 
   try {
-    await keyring.makeApp();
-    const { appName } = await keyring.getAppAndVersion();
+    const deviceId = await keyring.getDeviceId();
+    let appAndVersion: { appName: string; version: string };
+
+    if (deviceId) {
+      appAndVersion = await getLedgerAppAndVersion(deviceId);
+    } else {
+      await keyring.makeApp();
+      appAndVersion = await keyring.getAppAndVersion();
+    }
+
+    const { appName } = appAndVersion;
     const isEthApp = appName === 'Ethereum';
 
     cb(isEthApp);
@@ -190,6 +209,14 @@ export function searchDevices({
 
 export async function connectDevice(device: LedgerDmkDevice) {
   return connectLedgerDevice(device);
+}
+
+export async function connectDeviceById(deviceId: string) {
+  return connectKnownLedgerDeviceById(deviceId);
+}
+
+export function getKnownDevice(deviceId: string) {
+  return getKnownLedgerDevice(deviceId);
 }
 
 export function getMaxAccountLimit() {

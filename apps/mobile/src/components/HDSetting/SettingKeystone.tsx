@@ -10,6 +10,7 @@ import {
   settingAtom,
   Props as MainContainerProps,
   MAX_ACCOUNT_COUNT,
+  type Setting,
 } from './MainContainer';
 import { HardwareSVG } from '@/assets/icons/address';
 import { AppColorsVariants } from '@/constant/theme';
@@ -99,7 +100,7 @@ const getStyles = (colors: AppColorsVariants) =>
   });
 
 export const SettingKeystone: React.FC<{
-  onDone: () => void;
+  onDone: (setting?: Setting) => void;
   brand: string;
   onSwitchDevice?: () => void;
 }> = ({ onDone, brand, onSwitchDevice }) => {
@@ -163,9 +164,9 @@ export const SettingKeystone: React.FC<{
   const [isLoaded, setIsLoaded] = useAtom(isLoadedAtom);
 
   const handleConfirm = React.useCallback(
-    value => {
+    (value: Setting) => {
       setSetting(value);
-      onDone?.();
+      onDone?.(value);
     },
     [onDone, setSetting],
   );
