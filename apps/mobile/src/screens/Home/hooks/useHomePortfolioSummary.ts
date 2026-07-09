@@ -182,7 +182,7 @@ function buildHomePortfolioState(): HomePortfolioState {
     (!accountState.hasFetchedAccounts || accountState.isFetchingAccounts);
   const showBalanceLoadingWithoutLocal =
     isPendingDisplayAddresses ||
-    (displayAddresses.length > 0 && !balanceState.hasAnyBalanceValue);
+    (displayAddresses.length > 0 && !balanceState.hasAllBalanceValue);
   const currentBalanceFlow =
     addressBalanceStore.getAddressesFlowState(displayAddresses);
   const missingChangeInputAddresses = displayAddresses.filter(address => {
