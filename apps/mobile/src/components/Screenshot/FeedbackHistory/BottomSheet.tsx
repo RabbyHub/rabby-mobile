@@ -230,6 +230,21 @@ async function compressFeedbackMedia(
   };
 }
 
+async function compressFeedbackMediaWithFallback(
+  media: PickedFeedbackMedia,
+  onVideoCancellationId: (cancellationId: string) => void,
+) {
+  try {
+    return await compressFeedbackMedia(media, onVideoCancellationId);
+  } catch (error) {
+    console.warn(
+      'feedback media compression failed, uploading original media',
+      error,
+    );
+    return media;
+  }
+}
+
 async function uploadFeedbackMedia(media: PickedFeedbackMedia) {
   if (!media.uri) {
     throw new Error('No selected feedback media uri');
@@ -343,7 +358,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
       setUploadedMediaUrls(null);
 
       try {
-        const compressedMedia = await compressFeedbackMedia(
+        const mediaToUpload = await compressFeedbackMediaWithFallback(
           media,
           cancellationId => {
             if (requestId === mediaUploadRequestIdRef.current) {
@@ -357,12 +372,12 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
         }
         videoCompressionCancellationIdRef.current = null;
 
-        const limitError = getMediaSizeLimitError(compressedMedia);
+        const limitError = getMediaSizeLimitError(mediaToUpload);
         if (limitError) {
           throw new Error(limitError);
         }
 
-        const uploadResult = await uploadFeedbackMedia(compressedMedia);
+        const uploadResult = await uploadFeedbackMedia(mediaToUpload);
         const mediaUrls = getUploadedFeedbackMediaUrls(uploadResult);
 
         if (!hasUploadedFeedbackMediaUrls(mediaUrls)) {
