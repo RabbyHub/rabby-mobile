@@ -4,16 +4,16 @@ import { View, TouchableOpacity } from 'react-native';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
-import RcBgBug from './icons/hometip-bg-bug.svg';
-import RcBulb from './icons/hometip-bulb.svg';
-import RcCloseCC from './icons/hometip-close-cc.svg';
+import RcBgBug from '../icons/hometip-bg-bug.svg';
+import RcBulb from '../icons/hometip-bulb.svg';
+import RcCloseCC from '../icons/hometip-close-cc.svg';
 
-import { useViewedHomeTip } from './hooks';
+import { useViewedHomeTip } from '../hooks';
 import { ScreenLayouts } from '@/constant/layout';
 import { IS_IOS } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
 
-export function TipFeedbackByScreenshot({ style }: RNViewProps) {
+export function ScreenshotFeedbackHomeTip({ style }: RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 

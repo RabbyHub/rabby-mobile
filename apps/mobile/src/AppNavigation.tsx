@@ -53,7 +53,7 @@ import MoreImportMethods from '@/screens/Address/MoreImportMethods';
 import SelectAddMethod from '@/screens/Address/SelectAddMethod';
 import Backup from '@/screens/Address/Backup';
 import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
-import { ScreenshotFeedbackGlobalHost } from './components/Screenshot/ScreenshotFeedbackGlobalHost';
+import { ScreenshotFeedbackHost } from './components/Screenshot/SubmitFeedback/GlobalHost';
 import { perfEvents } from './core/utils/perf';
 import { RefLikeObject } from './utils/type';
 import { useRendererDetect } from './components/Perf/PerfDetector';
@@ -92,6 +92,7 @@ import { HomeScreenNavigator } from '@/perfs/loadables/homeRootNavigator';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 import { NEED_DEVSETTINGBLOCKS } from './constant';
 import { startReadableAccountBootstrapWarmups } from './setup-app-before-render';
+import { FeedbackHistoryHost } from './components/Screenshot/FeedbackHistory/GlobalHost';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
@@ -393,7 +394,8 @@ function AppNavigationOverlayGlobals({
 
   return (
     <>
-      <ScreenshotFeedbackGlobalHost />
+      <ScreenshotFeedbackHost />
+      <FeedbackHistoryHost />
       {postUnlockGlobalsEnabled && <ToggleCollateralModal />}
 
       {/** @warning put all business stub components before this modal */}

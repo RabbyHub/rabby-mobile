@@ -9586,7 +9586,7 @@ __metadata:
     "@metamask/json-rpc-engine": "npm:^7.3.0"
     "@metamask/utils": "npm:^8.2.0"
     "@rabby-wallet/gnosis-sdk": "npm:1.4.9"
-    "@rabby-wallet/rabby-api": "npm:0.9.61"
+    "@rabby-wallet/rabby-api": "npm:0.9.63"
     "@types/node": "npm:^20.14.8"
     "@typescript-eslint/eslint-plugin": "npm:^5.62.0"
     "@typescript-eslint/parser": "npm:^5.62.0"
@@ -9732,9 +9732,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.61":
-  version: 0.9.61
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.61"
+"@rabby-wallet/rabby-api@npm:0.9.63":
+  version: 0.9.63
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.63"
   dependencies:
     "@rabby-wallet/rabby-sign": "npm:0.4.0"
     axios: "npm:^0.27.2"
@@ -9745,7 +9745,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 10/3246b7f7154fb6f11a6f1832d12005393718d665c2e961d177b4d14840a079678ebf43b050e09ae1327f101c50a7f635a7904c369ce62f07082723572416f52f
+  checksum: 10/f909e5cb07b24b656b94af9f339abae3732845fabeb480e66d5b7ffafd6263d2617923ac33ad2224c268e5dcd08fa5c9cd989539dccf246ba6835f6107c7263a
   languageName: node
   linkType: hard
 
@@ -38793,7 +38793,7 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": "npm:0.1.14"
-    "@rabby-wallet/rabby-api": "npm:0.9.61"
+    "@rabby-wallet/rabby-api": "npm:0.9.63"
     "@rabby-wallet/rabby-bridge": "npm:0.0.6"
     "@rabby-wallet/rabby-logger": "npm:0.3.0"
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
@@ -38920,6 +38920,7 @@ __metadata:
     react-native-bundle-visualizer: "npm:3.1.0"
     react-native-cloud-storage: "npm:^1.4.1"
     react-native-collapsible-tab-view: "npm:^6.2.1"
+    react-native-compressor: "npm:2.0.2"
     react-native-crypto-js: "npm:^1.0.0"
     react-native-device-info: "npm:14.0.4"
     react-native-dotenv: "npm:^3.4.9"
@@ -38931,6 +38932,7 @@ __metadata:
     react-native-get-random-values: "npm:^2.0.0"
     react-native-haptic-feedback: "npm:2.3.3"
     react-native-iap: "patch:react-native-iap@npm%3A12.16.4#../../.yarn/patches/react-native-iap-npm-12.16.4-49632744b4.patch"
+    react-native-image-picker: "npm:8.2.1"
     react-native-inappbrowser-reborn: "npm:^3.7.0"
     react-native-indicators: "npm:^0.17.0"
     react-native-ios-context-menu: "npm:1.15.3"
@@ -38940,6 +38942,7 @@ __metadata:
     react-native-linear-gradient: "npm:^2.8.3"
     react-native-localize: "npm:3.3.0"
     react-native-mmkv: "npm:^2.12.2"
+    react-native-nitro-modules: "npm:0.35.9"
     react-native-pager-view: "npm:6.7.0"
     react-native-permissions: "npm:5.3.0"
     react-native-qrcode-svg: "npm:^6.2.0"
@@ -39610,6 +39613,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-compressor@npm:2.0.2":
+  version: 2.0.2
+  resolution: "react-native-compressor@npm:2.0.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-nitro-modules: ">=0.35.0"
+  checksum: 10/30abb4610d8c2cf184cb2405ecb411e86e21193f88f3eaed8785c6b6fc871d8a49dc6482f589e88bfd23f60af64266ee1b7fb38d4f9af9ff315ba93fc09f6485
+  languageName: node
+  linkType: hard
+
 "react-native-crypto-js@npm:^1.0.0":
   version: 1.0.0
   resolution: "react-native-crypto-js@npm:1.0.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-crypto-js%2F-%2Freact-native-crypto-js-1.0.0.tgz"
@@ -39781,6 +39795,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-image-picker@npm:8.2.1":
+  version: 8.2.1
+  resolution: "react-native-image-picker@npm:8.2.1"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10/d726950f2ab025462f5fbb788b2331672fc5bca1ac44899892736448ed3ee2d3ea49db9d6fee3bcbba4b4e064efeb646924e1cbd8522a23edd28c960f1db66aa
+  languageName: node
+  linkType: hard
+
 "react-native-inappbrowser-reborn@npm:^3.7.0":
   version: 3.7.0
   resolution: "react-native-inappbrowser-reborn@npm:3.7.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-inappbrowser-reborn%2F-%2Freact-native-inappbrowser-reborn-3.7.0.tgz"
@@ -39926,6 +39950,16 @@ __metadata:
     react: "*"
     react-native: ">=0.71.0"
   checksum: 10/6255dbb5a07fd6cec2524fc86f2c5c971060883e6e2bd76f2303768aaeba0a10d78505411f5ddb16d9f44595bfc4b6d49e8f28a3ae2df6ce0ee8a69035954938
+  languageName: node
+  linkType: hard
+
+"react-native-nitro-modules@npm:0.35.9":
+  version: 0.35.9
+  resolution: "react-native-nitro-modules@npm:0.35.9"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10/f1554947b20d4bb2688cca88bd0f30091ce2652a5e3bf63b196f587ee4ae2ed09820e9e05e43acda4d4051b3dc952deb554ae495467aec6d9a4778443ad6c4e3
   languageName: node
   linkType: hard
 

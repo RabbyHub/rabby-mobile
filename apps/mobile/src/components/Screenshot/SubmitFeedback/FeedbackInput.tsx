@@ -7,7 +7,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import {
   SCREENSHOT_FEEDBACK_MAX_LENGTH,
   useFeedbackOnScreenshot,
-} from './hooks';
+} from '../hooks';
 import { useTranslation } from 'react-i18next';
 import { IS_ANDROID } from '@/core/native/utils';
 import { Text, TextInput } from '@/components/Typography';
@@ -15,7 +15,7 @@ import { Text, TextInput } from '@/components/Typography';
 export type BottomInputMethods = {};
 export type BottomInputProps = {} & RNViewProps;
 
-const ModalInput = ({
+export const ScreenshotFeedbackInput = ({
   style,
 }: BottomInputProps & { ref?: Ref<BottomInputMethods> }) => {
   const { feedbackText: value, onChangeFeedback } = useFeedbackOnScreenshot();
@@ -69,9 +69,7 @@ const ModalInput = ({
   );
 };
 
-export default ModalInput;
-
-export const ModalBottomInputSizes = {
+export const ScreenshotFeedbackInputSizes = {
   mainHeight: 108,
   get totalContainerHeight() {
     return this.mainHeight + 12 * 2;
@@ -90,7 +88,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     inputContainer: {
       flex: 1,
       width: '100%',
-      height: ModalBottomInputSizes.mainHeight,
+      height: ScreenshotFeedbackInputSizes.mainHeight,
       borderRadius: 12,
       paddingHorizontal: 12,
       paddingVertical: 12,
