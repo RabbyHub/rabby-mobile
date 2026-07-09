@@ -15,6 +15,7 @@ import {
 import { appJsonStore } from '@/core/storage/mmkv';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { apisPerps } from '@/core/apis';
+import type { Account } from '@/types/account';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
