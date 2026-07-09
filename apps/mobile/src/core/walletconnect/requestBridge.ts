@@ -42,6 +42,8 @@ type WalletConnectJsonRpcResponse =
     };
 
 const WALLET_SWITCH_ETHEREUM_CHAIN_METHOD = 'wallet_switchEthereumChain';
+const ETH_SIGN_TYPED_DATA_METHOD = 'eth_signTypedData';
+const ETH_SIGN_TYPED_DATA_V4_METHOD = 'eth_signTypedData_v4';
 
 const WALLETCONNECT_TRANSACTION_RETURN_TOASTS = {
   sent: {
@@ -129,6 +131,32 @@ function normalizeRequestParams(params: unknown) {
     return [];
   }
   return [params];
+}
+
+function normalizeWalletConnectProviderRequest(
+  method: string,
+  params: unknown,
+) {
+  const normalizedParams = normalizeRequestParams(params);
+  if (
+    method !== ETH_SIGN_TYPED_DATA_METHOD ||
+    Array.isArray(normalizedParams[0])
+  ) {
+    return {
+      method,
+      params: normalizedParams,
+    };
+  }
+
+  return {
+    method: ETH_SIGN_TYPED_DATA_V4_METHOD,
+    params: [
+      normalizedParams[0],
+      typeof normalizedParams[1] === 'string'
+        ? normalizedParams[1]
+        : JSON.stringify(normalizedParams[1]),
+    ],
+  };
 }
 
 function normalizeSwitchEthereumChainId(params: unknown) {
@@ -311,10 +339,11 @@ async function executeSessionRequest(input: {
   await waitForAppActiveBeforeApproval(method);
 
   const origin = getWalletConnectSessionOrigin(session);
+  const providerRequest = normalizeWalletConnectProviderRequest(method, params);
   return sendRequest({
     data: {
-      method,
-      params: normalizeRequestParams(params),
+      method: providerRequest.method,
+      params: providerRequest.params,
       $ctx: {},
     },
     session: {
