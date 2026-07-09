@@ -11368,16 +11368,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native-documents/picker@npm:12.0.1":
-  version: 12.0.1
-  resolution: "@react-native-documents/picker@npm:12.0.1"
-  peerDependencies:
-    react: "*"
-    react-native: ">=0.79.0"
-  checksum: 10/5d915828a2baade9b476589738c2dc4ac192b4444006e198e15676e952991bdbf472163bb739592abf581fb7402a193c9cc49319fa986fb7fd6434aaae3a3a68
-  languageName: node
-  linkType: hard
-
 "@react-native-firebase/analytics@npm:18.8.0":
   version: 18.8.0
   resolution: "@react-native-firebase/analytics@npm:18.8.0"
@@ -38823,7 +38813,6 @@ __metadata:
     "@react-native-community/hooks": "npm:100.1.0"
     "@react-native-community/netinfo": "npm:^12.0.1"
     "@react-native-community/push-notification-ios": "npm:^1.12.0"
-    "@react-native-documents/picker": "npm:12.0.1"
     "@react-native-firebase/analytics": "npm:18.8.0"
     "@react-native-firebase/app": "npm:18.8.0"
     "@react-native-firebase/messaging": "npm:18.8.0"
