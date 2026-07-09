@@ -290,6 +290,10 @@
     },
     "AccountSelectPopup": {
       "noAvailableAddress": "ไม่มีที่อยู่ที่ใช้ได้"
+    },
+    "feedbackHistoryModal": {
+      "replyPlaceholder": "ป้อนการตอบกลับใหม่... (ไม่บังคับ)",
+      "mediaPlaceholder": "รูปภาพ/วิดีโอ\n(จำเป็น)"
     }
   },
   "page": {
@@ -2005,7 +2009,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "เลือกเชน",
-      "title": "เลือกกระเป๋าเงินเพื่อรับ"
+      "title": "เลือกกระเป๋าเงินเพื่อรับ",
+      "subtitle": "เลือกกระเป๋าเงินเพื่อรับคริปโตของคุณ"
     },
     "miniSignFooterBar": {
       "signWithLedger": "ลงนาม",
@@ -2390,7 +2395,8 @@
       "screenshotReportSwitch": "ถ่ายภาพหน้าจอเพื่อติดตามข้อบกพร่อง",
       "currency": "สกุลเงิน",
       "searchCurrency": "ค้นหาเงินตรา",
-      "dataAnalysis": "การวิเคราะห์ข้อมูล"
+      "dataAnalysis": "การวิเคราะห์ข้อมูล",
+      "bugReportHistory": "ประวัติรายงานบั๊ก"
     },
     "settingModal": {
       "themeMode": {
@@ -2404,7 +2410,9 @@
         "title": "ล้างแคชแอป",
         "clearAppCacheDesc": "'การดำเนินการนี้จะลบไฟล์แคชที่จัดเก็บชั่วคราวโดยไม่ส่งผลกระทบต่อข้อมูลส่วนตัวหรือการตั้งค่าของคุณ แอปจำเป็นต้องรีสตาร์ทเพื่อทำกระบวนการให้เสร็จสิ้น คุณต้องการดำเนินการต่อหรือไม่?'",
         "iOSToastTitle": "ล้างแคชสำเร็จ",
-        "iOSToastDesc": "คุณต้องรีสตาร์ทแอปจึงจะมีผล"
+        "iOSToastDesc": "คุณต้องรีสตาร์ทแอปจึงจะมีผล",
+        "clearingToast": "กำลังล้าง...",
+        "clearDoneQuitToast": "ล้างแล้ว แอปจะปิดในไม่ช้า"
       },
       "clearBrowserData": {
         "button": "ล้างข้อมูล",

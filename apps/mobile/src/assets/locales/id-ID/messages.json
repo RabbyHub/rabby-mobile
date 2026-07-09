@@ -2100,7 +2100,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "Pilih Rantai",
-      "title": "Pilih Dompet untuk Menerima"
+      "title": "Pilih Dompet untuk Menerima",
+      "subtitle": "Pilih dompet untuk menerima kripto Anda."
     },
     "singleHome": {
       "sectionHeader": {
@@ -2194,7 +2195,8 @@
       "searchCurrency": "Cari Mata Uang",
       "screenshotReportSwitch": "Ambil tangkapan layar untuk melaporkan bug",
       "currency": "Mata Uang",
-      "dataAnalysis": "Analisis Data"
+      "dataAnalysis": "Analisis Data",
+      "bugReportHistory": "Riwayat Laporan Bug"
     },
     "settingModal": {
       "themeMode": {
@@ -2208,7 +2210,9 @@
         "title": "Bersihkan Cache Aplikasi",
         "iOSToastTitle": "Bersihkan Cache Berhasil",
         "iOSToastDesc": "Anda perlu memulai ulang aplikasi untuk memberikan efek.",
-        "clearAppCacheDesc": "Ini akan menghapus file cache sementara tanpa mempengaruhi data pribadi atau pengaturan Anda. Aplikasi perlu di-restart untuk menyelesaikan proses. Apakah Anda ingin melanjutkan?"
+        "clearAppCacheDesc": "Ini akan menghapus file cache sementara tanpa mempengaruhi data pribadi atau pengaturan Anda. Aplikasi perlu di-restart untuk menyelesaikan proses. Apakah Anda ingin melanjutkan?",
+        "clearingToast": "Membersihkan...",
+        "clearDoneQuitToast": "Dibersihkan. Aplikasi akan segera ditutup."
       },
       "clearBrowserData": {
         "title": "Bersihkan Data Browser",
@@ -3660,6 +3664,10 @@
     },
     "AccountSelectPopup": {
       "noAvailableAddress": "Tidak ada alamat yang tersedia"
+    },
+    "feedbackHistoryModal": {
+      "replyPlaceholder": "Masukkan balasan baru... (opsional)",
+      "mediaPlaceholder": "Gambar/Video\n(wajib)"
     }
   },
   "native": {

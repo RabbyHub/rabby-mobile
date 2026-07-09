@@ -2091,7 +2091,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "选择链",
-      "title": "选择钱包接收"
+      "title": "选择钱包接收",
+      "subtitle": "选择钱包以接收您的加密资产。"
     },
     "tokenDetail": {
       "relateDefi": "相关 DeFi",
@@ -2282,7 +2283,8 @@
       "currency": "货币",
       "searchCurrency": "搜索货币",
       "screenshotReportSwitch": "截图以报告错误",
-      "dataAnalysis": "数据分析"
+      "dataAnalysis": "数据分析",
+      "bugReportHistory": "Bug 报告历史"
     },
     "settingModal": {
       "themeMode": {
@@ -3793,6 +3795,10 @@
     },
     "AccountSelectPopup": {
       "noAvailableAddress": "没有可用地址"
+    },
+    "feedbackHistoryModal": {
+      "replyPlaceholder": "输入新的回复...（可选）",
+      "mediaPlaceholder": "图片/视频\n（必填）"
     }
   },
   "bluetooth": {

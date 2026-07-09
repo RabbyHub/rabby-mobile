@@ -305,6 +305,10 @@
     },
     "AccountSelectPopup": {
       "noAvailableAddress": "No hay dirección disponible"
+    },
+    "feedbackHistoryModal": {
+      "replyPlaceholder": "Escribe una nueva respuesta... (opcional)",
+      "mediaPlaceholder": "Imagen/Vídeo\n(obligatorio)"
     }
   },
   "page": {
@@ -1934,7 +1938,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "Seleccionar cadena",
-      "title": "Seleccionar Wallet para recibir"
+      "title": "Seleccionar Wallet para recibir",
+      "subtitle": "Elige una wallet para recibir tus criptoactivos."
     },
     "sign": {
       "transactionSpeed": "Velocidad de Transacción"
@@ -2269,7 +2274,8 @@
       "searchCurrency": "Buscar moneda",
       "currency": "Moneda",
       "screenshotReportSwitch": "Captura de pantalla para informar un error",
-      "dataAnalysis": "Análisis de datos"
+      "dataAnalysis": "Análisis de datos",
+      "bugReportHistory": "Historial de informes de errores"
     },
     "gasAccount": {
       "deposit": "Depósito",
@@ -2419,7 +2425,9 @@
         "title": "Borrar caché de la aplicación",
         "clearAppCacheDesc": "Esto eliminará los archivos temporales almacenados en caché sin afectar tus datos personales o configuraciones. La aplicación necesita reiniciarse para completar el proceso. ¿Deseas continuar?",
         "iOSToastTitle": "Borrar caché con éxito",
-        "iOSToastDesc": "Debes reiniciar la aplicación para que surta efecto."
+        "iOSToastDesc": "Debes reiniciar la aplicación para que surta efecto.",
+        "clearingToast": "Borrando...",
+        "clearDoneQuitToast": "Borrado. La aplicación se cerrará pronto."
       },
       "clearBrowserData": {
         "button": "Claro",
