@@ -631,16 +631,14 @@ function HomeOverviewCriticalStartupEffects({
 }) {
   const hasTriggeredRef = useRef(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!couldDoRefresh() || hasTriggeredRef.current) {
-        return;
-      }
-      hasTriggeredRef.current = true;
+  useEffect(() => {
+    if (hasTriggeredRef.current) {
+      return;
+    }
+    hasTriggeredRef.current = true;
 
-      void triggerUpdate({ localOnly: true });
-    }, [triggerUpdate]),
-  );
+    void triggerUpdate({ localOnly: true });
+  }, [triggerUpdate]);
 
   return null;
 }
@@ -703,27 +701,36 @@ function HomeOverviewPostStartupEffects({
 
   useFocusEffect(
     useCallback(() => {
-      if (!couldDoRefresh()) {
+      const isFirstTrigger = isFirstTriggerRef.current;
+      const canRefreshOverview = couldDoRefresh();
+
+      if (!isFirstTrigger && !canRefreshOverview) {
         return;
       }
-      const forceFirstTime = isFirstTriggerRef.current;
+
       if (isFirstTriggerRef.current) {
         isFirstTriggerRef.current = false;
       }
-      triggerUpdate(forceFirstTime || undefined).then(balanceAccounts => {
+
+      triggerUpdate(isFirstTrigger || undefined).then(balanceAccounts => {
         // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
         const balanceAddresses = Object.keys(balanceAccounts);
         scene24hBalanceStore.refresh24hAssets({
           addresses: balanceAddresses.length ? balanceAddresses : undefined,
-          force: forceFirstTime,
+          force: isFirstTrigger,
           reason: 'manual_refresh',
         });
         refreshDayCurve({
           addresses: balanceAddresses.length ? balanceAddresses : undefined,
-          force: forceFirstTime,
+          force: isFirstTrigger,
           reason: 'manual_refresh',
         });
       });
+
+      if (!canRefreshOverview) {
+        return;
+      }
+
       triggerApprovalAlertCounts(HOME_REFRESH_INTERVAL);
       // // leave here to measure perf impact
       // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
