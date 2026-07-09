@@ -442,6 +442,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
           maxLength={16}
           lineHeight={42}
           duration={320}
+          containerStyle={styles.netWorthTickerContainer}
           style={styles.netWorth}
           fontSizeByLength={{
             maxFontSize: MAX_NETWORTH_FS,
@@ -551,6 +552,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
+  },
+  netWorthTickerContainer: {
+    width: '100%',
   },
   changeSection: {
     flexDirection: 'row',
