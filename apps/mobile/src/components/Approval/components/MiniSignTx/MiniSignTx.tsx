@@ -279,7 +279,7 @@ export const MiniSignTx = ({
   //   value,
   // });
   const [realNonce, setRealNonce] = useState('');
-  const [gasLimit, setGasLimit] = useState<string | undefined>(undefined);
+  const [gasLimit, setGasLimit] = useState<string | undefined>('0x0');
   const [maxPriorityFee, setMaxPriorityFee] = useState(0);
   const [nativeTokenBalance, setNativeTokenBalance] = useState('0x0');
   const [gasToken, setGasToken] = useState<GasTokenInfo | undefined>(undefined);
