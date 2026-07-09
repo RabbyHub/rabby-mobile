@@ -14,7 +14,7 @@ import {
   SWAP_SUPPORT_CHAINS,
 } from '@/constant/swap';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
-import { findChainByServerID } from '@/utils/chain';
+import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { getTxMatchData } from '@/utils/tempo';
 
 export type ViewKey = keyof typeof CEX | keyof typeof DEX;
@@ -57,6 +57,45 @@ export type SwapServiceStore = {
   /**
    * @deprecated
    */
+};
+
+const getSelectedChainServerId = (chain: CHAINS_ENUM | null) => {
+  if (!chain) {
+    return undefined;
+  }
+
+  return findChainByEnum(chain)?.serverId;
+};
+
+const isTokenOnSelectedChain = (
+  token: TokenItem | undefined,
+  chain: CHAINS_ENUM | null,
+) => {
+  if (!token) {
+    return true;
+  }
+
+  const chainServerId = getSelectedChainServerId(chain);
+  return (
+    !!chainServerId &&
+    token.chain?.toLowerCase() === chainServerId.toLowerCase()
+  );
+};
+
+const sanitizeSelectedTokens = (store: SwapServiceStore) => {
+  if (!store.selectedChain) {
+    store.selectedFromToken = undefined;
+    store.selectedToToken = undefined;
+    return;
+  }
+
+  if (!isTokenOnSelectedChain(store.selectedFromToken, store.selectedChain)) {
+    store.selectedFromToken = undefined;
+  }
+
+  if (!isTokenOnSelectedChain(store.selectedToToken, store.selectedChain)) {
+    store.selectedToToken = undefined;
+  }
 };
 
 export class SwapService {
@@ -114,6 +153,8 @@ export class SwapService {
         storage.selectedToToken = undefined;
       }
 
+      sanitizeSelectedTokens(storage);
+
       if (storage.recentToTokens?.length) {
         storage.recentToTokens = storage.recentToTokens.filter(item => {
           const chainEnum = findChainByServerID(item.chain)?.enum;
@@ -145,7 +186,9 @@ export class SwapService {
       this.store.selectedChain = null;
       this.store.selectedFromToken = undefined;
       this.store.selectedToToken = undefined;
+      return;
     }
+    sanitizeSelectedTokens(this.store);
   };
 
   getSwap = <K extends keyof SwapServiceStore>(key?: K) => {
@@ -200,25 +243,39 @@ export class SwapService {
   };
 
   getSelectedChain = () => {
+    this.handleUnsupportedChain();
     return this.store.selectedChain;
   };
 
   setSelectedChain = (chain: CHAINS_ENUM) => {
     this.store.selectedChain = chain;
+    sanitizeSelectedTokens(this.store);
   };
 
   getSelectedFromToken = () => {
+    sanitizeSelectedTokens(this.store);
     return this.store.selectedFromToken;
   };
   getSelectedToToken = () => {
+    sanitizeSelectedTokens(this.store);
     return this.store.selectedToToken;
   };
 
   setSelectedFromToken = (token?: TokenItem) => {
-    this.store.selectedFromToken = token;
+    this.store.selectedFromToken = isTokenOnSelectedChain(
+      token,
+      this.store.selectedChain,
+    )
+      ? token
+      : undefined;
   };
   setSelectedToToken = (token?: TokenItem) => {
-    this.store.selectedToToken = token;
+    this.store.selectedToToken = isTokenOnSelectedChain(
+      token,
+      this.store.selectedChain,
+    )
+      ? token
+      : undefined;
   };
 
   getUnlimitedAllowance = () => {
