@@ -136,7 +136,8 @@ const replacePreviousCoreTokensWithCacheTokens = (
     cacheNoCoreTokens.length > 0 &&
     previousTokens.every(token => token.is_core)
   ) {
-    return [...cacheTokens, ...cacheNoCoreTokens];
+    const filteredTokens = cacheNoCoreTokens.filter(token => !token.is_core);
+    return [...cacheTokens, ...filteredTokens];
   }
   const previousNonCoreTokens = previousTokens.filter(token => !token.is_core);
 
@@ -1757,7 +1758,6 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
 
     /**
      * 阶段一： 校验有效期，有效期内直接用本地数据
-     * TODO: 如果db数据失效了，流程走到：先从cache接口拿数据，然后逐链拿；会出现问题：折叠按钮先没有再出现的情况，此处可以借助db缓存去优化。
      */
     if (!force && !isExpired) {
       const tokens = (await TokenItemEntity.batchQueryTokens(
