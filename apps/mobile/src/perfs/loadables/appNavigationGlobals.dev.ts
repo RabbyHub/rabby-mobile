@@ -16,6 +16,9 @@ export { ToggleCollateralModal } from '@/screens/Lending/modals/ToggleCollateral
 export { default as GlobalSecurityTipStubModal } from '@/components/Security/SecurityTipStubModal';
 export { BackgroundSecureBlurView } from '@/components/customized/BlurViews';
 export { FloatingDiagnosticsPanel } from '@/screens/Settings/components/FloatingDiagnosticsPanel';
+export { FloatingDbSyncSummaryPanel } from '@/screens/Settings/components/FloatingDbSyncSummaryPanel';
+export { FloatingKeyringRuntimePanel } from '@/screens/Settings/components/FloatingKeyringRuntimePanel';
+export { FloatingOpenApiSummaryPanel } from '@/screens/Settings/components/FloatingOpenApiSummaryPanel';
 export { WideScreenDebugPanel } from '@/components/Debug/WideScreenDebugPanel';
 export { GlobalMiniApproval } from '@/components/Approval/components/MiniSignTx/GlobalMiniApproval';
 export { GlobalMiniSignTypedDataPortal } from '@/components/Approval/components/MiniSignTypedData/GlobalMiniSignTypedDataPortal';

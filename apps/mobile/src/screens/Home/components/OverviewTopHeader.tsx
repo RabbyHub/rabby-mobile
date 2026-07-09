@@ -155,6 +155,10 @@ export function TabsTopHeader(): JSX.Element {
   const showHeaderSideLoadingIndicator = useMemo(() => {
     return showBalanceLoadingWithoutLocal || isAnyRemoteRefreshing;
   }, [isAnyRemoteRefreshing, showBalanceLoadingWithoutLocal]);
+  const showNetWorthSideLoadingIndicator =
+    showHeaderSideLoadingIndicator &&
+    !showBalanceLoadingWithoutLocal &&
+    !showChangeLoading;
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
@@ -288,7 +292,7 @@ export function TabsTopHeader(): JSX.Element {
               </View>
             ) : null}
             {!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
-            showHeaderSideLoadingIndicator ? (
+            showNetWorthSideLoadingIndicator ? (
               <LoadingCircle />
             ) : null}
           </Pressable>

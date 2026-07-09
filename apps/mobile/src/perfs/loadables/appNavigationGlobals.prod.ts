@@ -125,6 +125,39 @@ export const FloatingDiagnosticsPanel = registerAppScreen<
     ),
 });
 
+export const FloatingDbSyncSummaryPanel = registerAppScreen<
+  typeof import('@/screens/Settings/components/FloatingDbSyncSummaryPanel').FloatingDbSyncSummaryPanel
+>({
+  loader: () =>
+    import('@/screens/Settings/components/FloatingDbSyncSummaryPanel').then(
+      m => ({
+        default: m.FloatingDbSyncSummaryPanel,
+      }),
+    ),
+});
+
+export const FloatingKeyringRuntimePanel = registerAppScreen<
+  typeof import('@/screens/Settings/components/FloatingKeyringRuntimePanel').FloatingKeyringRuntimePanel
+>({
+  loader: () =>
+    import('@/screens/Settings/components/FloatingKeyringRuntimePanel').then(
+      m => ({
+        default: m.FloatingKeyringRuntimePanel,
+      }),
+    ),
+});
+
+export const FloatingOpenApiSummaryPanel = registerAppScreen<
+  typeof import('@/screens/Settings/components/FloatingOpenApiSummaryPanel').FloatingOpenApiSummaryPanel
+>({
+  loader: () =>
+    import('@/screens/Settings/components/FloatingOpenApiSummaryPanel').then(
+      m => ({
+        default: m.FloatingOpenApiSummaryPanel,
+      }),
+    ),
+});
+
 export const WideScreenDebugPanel = registerAppScreen<
   typeof import('@/components/Debug/WideScreenDebugPanel').WideScreenDebugPanel
 >({

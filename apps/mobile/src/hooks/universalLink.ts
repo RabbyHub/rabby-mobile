@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect } from 'react';
 import { Linking } from 'react-native';
+import { StackActions } from '@react-navigation/native';
 import { t } from 'i18next';
 import { keyringService } from '@/core/services';
 import { urlUtils } from '@rabby-wallet/base-utils';
@@ -24,6 +25,12 @@ import {
   pairWalletConnectUri,
   parseWalletConnectUriFromLink,
 } from '@/core/walletconnect';
+import { isNonPublicProductionEnv } from '@/constant';
+import { RootNames } from '@/constant/layout';
+import { navigationRef } from '@/utils/navigation';
+import { dropAppDataSourceAndQuitApp } from '@/databases/imports';
+import { abortAllSyncTasks } from '@/databases/sync/_task';
+import { resetUpdateHistoryTime } from './historyTokenDict';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -42,10 +49,114 @@ function setNextAppLink(linkOrSetter: string | ((prev: string) => string)) {
 }
 
 type OnParseUrlAndProcessAction = (payload: {
-  type: 'open-dapp' | 'walletconnect-uri' | 'walletconnect-redirect';
+  type:
+    | 'open-dapp'
+    | 'walletconnect-uri'
+    | 'walletconnect-redirect'
+    | 'open-testkit-screen'
+    | 'clear-app-cache';
   dappUrl?: string;
   uri?: string;
+  testkitScreen?:
+    | typeof RootNames.DevCapabilityFile
+    | typeof RootNames.DebugLogViewer
+    | typeof RootNames.DevDataSQLite;
+  testkitParams?: {
+    tab?: 'overview' | 'debug';
+  };
 }) => void;
+
+const NON_PRODUCTION_TESTKIT_SCREENS = {
+  DevCapabilityFile: RootNames.DevCapabilityFile,
+  DebugLogViewer: RootNames.DebugLogViewer,
+  DevDataSQLite: RootNames.DevDataSQLite,
+} as const;
+
+function getRabbyGoTarget(
+  urlInfo: NonNullable<ReturnType<typeof urlUtils.safeParseURL>>,
+) {
+  if (urlInfo.protocol === 'rabby:') {
+    return urlInfo.hostname || urlInfo.pathname.replace(/^\/+/, '');
+  }
+
+  if (!urlInfo.pathname.startsWith(UL_MATCH_PREFIX)) {
+    return '';
+  }
+
+  return urlInfo.pathname
+    .slice(UL_MATCH_PREFIX.length)
+    .replace(/^\/+/, '')
+    .split('/')[0];
+}
+
+function parseNonProductionTestkitLink(appLink: string) {
+  if (!isNonPublicProductionEnv) {
+    return null;
+  }
+
+  const urlInfo = urlUtils.safeParseURL(appLink);
+  if (!urlInfo) {
+    return null;
+  }
+
+  const target = getRabbyGoTarget(urlInfo);
+  const rabbyGoCmd = urlInfo.searchParams.get('_cmd');
+  if (target !== 'testkit' && rabbyGoCmd !== 'open-testkit') {
+    return null;
+  }
+
+  const screenRaw = urlInfo.searchParams.get('screen') || 'DevCapabilityFile';
+  const screen =
+    NON_PRODUCTION_TESTKIT_SCREENS[
+      screenRaw as keyof typeof NON_PRODUCTION_TESTKIT_SCREENS
+    ];
+  if (!screen) {
+    console.warn('[useUniversalLinkOnTop] Unknown testkit screen:', screenRaw);
+    return null;
+  }
+
+  const tabRaw = urlInfo.searchParams.get('tab');
+
+  return {
+    type: 'open-testkit-screen',
+    testkitScreen: screen,
+    testkitParams:
+      tabRaw === 'debug' || tabRaw === 'overview' ? { tab: tabRaw } : undefined,
+  } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+}
+
+function parseNonProductionMaintenanceLink(appLink: string) {
+  if (!isNonPublicProductionEnv) {
+    return null;
+  }
+
+  const urlInfo = urlUtils.safeParseURL(appLink);
+  if (!urlInfo) {
+    return null;
+  }
+
+  const target = getRabbyGoTarget(urlInfo);
+  const rabbyGoCmd = urlInfo.searchParams.get('_cmd');
+
+  if (
+    rabbyGoCmd === 'clear-app-cache' ||
+    target === 'clear-app-cache' ||
+    (target === 'debug' && rabbyGoCmd === 'clear-cache')
+  ) {
+    return {
+      type: 'clear-app-cache',
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  return null;
+}
+
+function parseNonProductionLink(appLink: string) {
+  return (
+    parseNonProductionMaintenanceLink(appLink) ||
+    parseNonProductionTestkitLink(appLink)
+  );
+}
 
 function isWalletConnectRedirectLink(appLink: string) {
   const urlInfo = urlUtils.safeParseURL(appLink);
@@ -93,6 +204,18 @@ function parseActionAndProcessLink(
     return;
   }
 
+  const testkitAction = parseNonProductionTestkitLink(appLink);
+  if (testkitAction) {
+    onActions?.(testkitAction);
+    return;
+  }
+
+  const maintenanceAction = parseNonProductionMaintenanceLink(appLink);
+  if (maintenanceAction) {
+    onActions?.(maintenanceAction);
+    return;
+  }
+
   if (!ALLOWED_UL_DOMAINS.some(domain => appLink.startsWith(domain))) return;
 
   const urlInfo = urlUtils.safeParseURL(appLink);
@@ -122,6 +245,57 @@ function parseActionAndProcessLink(
 
 const toastTip = toastWithIcon(RcIconInfoForToast);
 
+const clearAppCacheFromLinkStateRef = {
+  running: false,
+};
+
+async function clearAppCacheFromLink() {
+  if (clearAppCacheFromLinkStateRef.running) {
+    return;
+  }
+
+  if (!keyringService.isUnlocked() && !isUnlockSessionValid()) {
+    console.warn(
+      '[useUniversalLinkOnTop] clear app cache link ignored before unlock',
+    );
+    return;
+  }
+
+  clearAppCacheFromLinkStateRef.running = true;
+  try {
+    abortAllSyncTasks('clear-app-cache-link');
+    resetUpdateHistoryTime();
+    await dropAppDataSourceAndQuitApp({
+      exitDelayMs: 300,
+    });
+  } catch (error) {
+    clearAppCacheFromLinkStateRef.running = false;
+    console.error('[useUniversalLinkOnTop] clear app cache failed', error);
+  }
+}
+
+function dispatchWhenNavigationReady(
+  action: ReturnType<typeof StackActions.push>,
+  actionName: string,
+  retryCount = 0,
+) {
+  if (navigationRef.isReady()) {
+    navigationRef.dispatch(action);
+    return;
+  }
+
+  if (retryCount >= 40) {
+    console.warn(
+      `[useUniversalLinkOnTop] Navigation is not ready for ${actionName}`,
+    );
+    return;
+  }
+
+  setTimeout(() => {
+    dispatchWhenNavigationReady(action, actionName, retryCount + 1);
+  }, 100);
+}
+
 const handleActions: OnParseUrlAndProcessAction = payload => {
   switch (payload.type) {
     case 'open-dapp':
@@ -146,11 +320,33 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
     case 'walletconnect-redirect':
       markWalletConnectDappRedirectPending('metadata_redirect');
       break;
+    case 'open-testkit-screen':
+      if (!payload.testkitScreen) {
+        return;
+      }
+      dispatchWhenNavigationReady(
+        StackActions.push(RootNames.StackTestkits, {
+          screen: payload.testkitScreen,
+          params: payload.testkitParams,
+        }),
+        payload.testkitScreen,
+      );
+      break;
+    case 'clear-app-cache':
+      void clearAppCacheFromLink();
+      break;
   }
 };
 
 const hideToastRef: RefLikeObject<() => void | null> = { current: () => null };
 const handleAppLink = async (url: string, isInit = false) => {
+  const nonProductionAction = parseNonProductionLink(url);
+  if (nonProductionAction) {
+    handleActions(nonProductionAction);
+    setNextAppLink('');
+    return;
+  }
+
   if (keyringService.isUnlocked() || isUnlockSessionValid()) {
     // Parse the link when the wallet is fully unlocked or in a valid post-unlock session.
     parseActionAndProcessLink(url, handleActions);

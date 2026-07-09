@@ -2,6 +2,7 @@ import * as sinon from 'sinon';
 import { KeyringService } from '../src/keyringService';
 import mockEncryptor from '../test/mock-encryptor';
 import { KEYRING_TYPE, KeyringTypeName } from '@rabby-wallet/keyring-utils';
+import { keyringSdks } from '../src/types';
 
 const password = 'password123';
 const walletOneSeedWords =
@@ -247,6 +248,61 @@ describe('keyringService support eth-keyring-watch', () => {
           address: TEST_HD_ADDR,
           brandName: 'Rabby Wallet',
           type: KEYRING_TYPE.HdKeyring,
+        }),
+      ]);
+    });
+
+    it('waits for deferred runtime restore when typed unencrypted keyring is not loaded', async () => {
+      const service = new KeyringService({
+        encryptor: mockEncryptor as any,
+        keyringClasses: [
+          TestHdKeyring as any,
+          ...Object.values(keyringSdks),
+        ] as any,
+      });
+      service.loadStore({});
+      await service.boot(password);
+      service.keyrings = [new TestHdKeyring() as any];
+
+      const watchKeyring = await service.addNewKeyring(
+        KEYRING_TYPE.WatchAddressKeyring as KeyringTypeName,
+      );
+      watchKeyring.setAccountToAdd(TEST_ADDR);
+      await service.addNewAccount(watchKeyring);
+      await service.setLocked();
+
+      expect(service.isUnlocked()).toBe(false);
+      expect(service.keyrings.map(keyring => keyring.type)).toEqual([
+        KEYRING_TYPE.WatchAddressKeyring,
+      ]);
+
+      await service.submitPassword(password, {
+        deferKeyringRuntimeRestore: true,
+        deferMemStoreKeyringsUpdate: true,
+      });
+
+      expect(service.isUnlocked()).toBe(true);
+      expect(service.isKeyringRuntimeReady()).toBe(false);
+      expect(service.keyrings).toHaveLength(0);
+
+      const keyring = await service.getKeyringForAccount(
+        TEST_ADDR,
+        KEYRING_TYPE.WatchAddressKeyring,
+      );
+
+      expect(keyring.type).toBe(KEYRING_TYPE.WatchAddressKeyring);
+      expect(service.isKeyringRuntimeReady()).toBe(true);
+      expect(service.memStore.getState().keyrings).toEqual([
+        expect.objectContaining({
+          type: KEYRING_TYPE.HdKeyring,
+        }),
+        expect.objectContaining({
+          type: KEYRING_TYPE.WatchAddressKeyring,
+          accounts: [
+            expect.objectContaining({
+              address: TEST_ADDR,
+            }),
+          ],
         }),
       ]);
     });

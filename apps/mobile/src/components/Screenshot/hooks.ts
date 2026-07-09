@@ -1,6 +1,6 @@
-import { useCallback } from 'react';
-import { Image, ImageResolvedAssetSource } from 'react-native';
-import RNFS from 'react-native-fs';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { Dimensions, Image, ImageResolvedAssetSource } from 'react-native';
+import RNFS from '@rabby-wallet/react-native-fs';
 
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { openapi } from '@/core/request';
@@ -469,17 +469,31 @@ export function startSubscribeUserDidTakeScreenshot() {
         width: coerceNumber(params?.width, 100),
       };
       const fullPath = params?.path
-        ? AppScreenshotFS.normalizeFilePath(params.path)
+        ? AppScreenshotFS.normalizeLocalFilePath(params.path)
         : '';
 
       if (params?.imageBase64) {
+        const inAppPath = await appScreenshotFS.saveScreenshotFrom(
+          params.imageBase64,
+          {
+            fallbackAsBase64: true,
+            imageType: params?.imageType,
+          },
+        );
+        const screenshotUri = inAppPath
+          ? AppScreenshotFS.normalizeImageUri(
+              inAppPath,
+              params.imageType || 'image/jpeg',
+            )
+          : AppScreenshotFS.normalizeBase64(
+              params.imageBase64,
+              params.imageType || 'image/jpeg',
+            );
+
         setLastScreenshot(
           Image.resolveAssetSource({
             // TODO: set contentType by params.type
-            uri: AppScreenshotFS.normalizeBase64(
-              params.imageBase64,
-              params.imageType || 'image/jpeg',
-            ),
+            uri: screenshotUri,
             height: sizes.height,
             width: sizes.width,
           }),
@@ -487,13 +501,14 @@ export function startSubscribeUserDidTakeScreenshot() {
       } else if (fullPath && (await RNFS.exists(fullPath))) {
         const inAppPath = await appScreenshotFS.saveScreenshotFrom(fullPath, {
           imageType: params?.imageType,
+          cleanupSource: true,
         });
         if (!inAppPath) return;
 
         setLastScreenshot(
           Image.resolveAssetSource({
             // TODO: set contentType by params.type
-            uri: AppScreenshotFS.normalizeBase64(
+            uri: AppScreenshotFS.normalizeImageUri(
               inAppPath,
               params?.imageType || 'image/jpeg',
             ),
