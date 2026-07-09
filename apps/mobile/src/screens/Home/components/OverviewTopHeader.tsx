@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   GestureResponderEvent,
   Pressable,
@@ -165,25 +159,6 @@ export function TabsTopHeader(): JSX.Element {
     showHeaderSideLoadingIndicator &&
     !showBalanceLoadingWithoutLocal &&
     !showChangeLoading;
-  const [animateNetWorth, setAnimateNetWorth] = useState(false);
-
-  useEffect(() => {
-    if (
-      animateNetWorth ||
-      showBalanceLoadingWithoutLocal ||
-      showChangeLoading
-    ) {
-      return;
-    }
-
-    const frame = requestAnimationFrame(() => {
-      setAnimateNetWorth(true);
-    });
-
-    return () => {
-      cancelAnimationFrame(frame);
-    };
-  }, [animateNetWorth, showBalanceLoadingWithoutLocal, showChangeLoading]);
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
@@ -287,7 +262,6 @@ export function TabsTopHeader(): JSX.Element {
             ) : (
               <RefreshNudgedTickerText
                 value={netWorthValue}
-                animate={animateNetWorth}
                 maxLength={16}
                 lineHeight={22}
                 duration={320}
