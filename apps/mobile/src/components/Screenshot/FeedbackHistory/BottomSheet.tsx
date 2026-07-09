@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
   BackHandler,
   Keyboard,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   ScrollView,
   View,
 } from 'react-native';
@@ -40,8 +42,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024 } from '@/utils/styles';
 import type { ClientFeedbackMessage } from '@rabby-wallet/rabby-api/dist/types';
-import { useCreation, useRequest } from 'ahooks';
-import { sortBy } from 'lodash';
+import { useCreation, useInfiniteScroll, useRequest } from 'ahooks';
+import { sortBy, uniqBy } from 'lodash';
 import FastImage from 'react-native-fast-image';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { launchImageLibrary, type Asset } from 'react-native-image-picker';
@@ -58,11 +60,17 @@ const SHEET_HEIGHT = 652;
 const ONE_MB = 1024 * 1024;
 const MAX_IMAGE_FILE_SIZE = 5 * ONE_MB;
 const MAX_VIDEO_FILE_SIZE = 50 * ONE_MB;
+const FEEDBACK_HISTORY_PAGE_SIZE = 50;
+const LOAD_MORE_TOP_THRESHOLD = 40;
 
 type PickedFeedbackMedia = Asset;
 type UploadedFeedbackMediaUrls = {
   imageUrlList?: string[];
   videoUrlList?: string[];
+};
+type FeedbackMessagesPage = {
+  list: ClientFeedbackMessage[];
+  totalCount: number;
 };
 
 function isVideoMedia(media?: PickedFeedbackMedia | null) {
@@ -191,6 +199,8 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   const replyInputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const pendingScrollToBottomRef = useRef(false);
+  const shouldScrollAfterReloadRef = useRef(false);
+  const loadingMoreGuardRef = useRef(false);
   const mediaUploadRequestIdRef = useRef(0);
   const handleReplyTextChange = useCallback((text: string) => {
     replyTextRef.current = text;
@@ -315,25 +325,82 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
     return makeDeviceUUID().deviceUUID;
   }, []);
 
-  const { data: feedbackMessagesData, runAsync: fetchFeedbackMessages } =
-    useRequest(
-      async () => {
-        const res = await openapi.getClientFeedbackMessages({
-          device_id: deviceId,
-          limit: 100,
-        });
-        res.messages = sortBy(res.messages, m => m.create_at);
-        return res;
-      },
-      {
-        manual: true,
-        cacheKey: `feedbackMessages-${deviceId}`,
-        staleTime: 5 * 1000,
-        onSuccess: () => {
+  const {
+    data: feedbackMessagesData,
+    loadingMore,
+    loadMore,
+    noMore,
+    reloadAsync: reloadFeedbackMessagesAsync,
+  } = useInfiniteScroll<FeedbackMessagesPage>(
+    async currentData => {
+      const res = await openapi.getClientFeedbackMessages({
+        device_id: deviceId,
+        start: currentData?.list.length || 0,
+        limit: FEEDBACK_HISTORY_PAGE_SIZE,
+      });
+
+      return {
+        list: res.messages,
+        totalCount: res.total_count,
+      };
+    },
+    {
+      manual: true,
+      isNoMore: data =>
+        !!data && data.list.length >= Math.max(data.totalCount, 0),
+      onSuccess: () => {
+        if (shouldScrollAfterReloadRef.current) {
+          shouldScrollAfterReloadRef.current = false;
           requestScrollToBottomAfterLayout();
-        },
+        }
       },
+      onError: error => {
+        shouldScrollAfterReloadRef.current = false;
+        console.error('feedback history loading error', error);
+      },
+    },
+  );
+
+  const reloadFeedbackMessages = useCallback(async () => {
+    shouldScrollAfterReloadRef.current = true;
+    try {
+      await reloadFeedbackMessagesAsync();
+    } catch {
+      // useInfiniteScroll's onError handles logging and resets scroll state.
+    }
+  }, [reloadFeedbackMessagesAsync]);
+
+  useEffect(() => {
+    if (!loadingMore) {
+      loadingMoreGuardRef.current = false;
+    }
+  }, [loadingMore]);
+
+  const handleListReachTop = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset } = event.nativeEvent;
+
+      if (
+        contentOffset.y > LOAD_MORE_TOP_THRESHOLD ||
+        loadingMoreGuardRef.current ||
+        loadingMore ||
+        noMore
+      ) {
+        return;
+      }
+
+      loadingMoreGuardRef.current = true;
+      loadMore();
+    },
+    [loadMore, loadingMore, noMore],
+  );
+
+  const feedbackMessages = useMemo(() => {
+    return sortBy(
+      uniqBy(feedbackMessagesData?.list || [], message => message.id),
+      message => message.create_at,
     );
+  }, [feedbackMessagesData?.list]);
 
   const {
     runAsync: handleSubmitReply,
@@ -375,7 +442,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
         toast.success(t('component.submitFeedbackSuccessModal.desc'), {
           hideOnPress: true,
         });
-        await fetchFeedbackMessages();
+        await reloadFeedbackMessages();
         requestScrollToBottomAfterLayout();
       },
       onError: error => {
@@ -428,18 +495,18 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
       return;
     }
 
-    fetchFeedbackMessages();
+    void reloadFeedbackMessages();
     requestScrollToBottomAfterLayout();
   }, [
     feedbackHistoryRefreshKey,
-    fetchFeedbackMessages,
     isShowHistory,
+    reloadFeedbackMessages,
     requestScrollToBottomAfterLayout,
   ]);
 
   const hasMessage = useMemo(() => {
-    return !!feedbackMessagesData?.messages?.length;
-  }, [feedbackMessagesData?.messages?.length]);
+    return !!feedbackMessages.length;
+  }, [feedbackMessages.length]);
 
   useEffect(() => {
     if (isShowHistory && hasMessage) {
@@ -482,8 +549,18 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
                 showsVerticalScrollIndicator={false}
                 bottomOffset={146}
                 onContentSizeChange={handleScrollViewContentSizeChange}
+                onScrollEndDrag={handleListReachTop}
+                onMomentumScrollEnd={handleListReachTop}
+                maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
                 contentContainerStyle={styles.messageListContent}>
-                {feedbackMessagesData?.messages?.map(message => (
+                {loadingMore ? (
+                  <ActivityIndicator
+                    style={styles.historyLoadingIndicator}
+                    color={colors2024['brand-default']}
+                  />
+                ) : null}
+
+                {feedbackMessages.map(message => (
                   <FeedbackMessageItem
                     key={message.id}
                     message={message}
@@ -800,6 +877,9 @@ const getStyle = createGetStyles2024(
     messageListContent: {
       paddingHorizontal: 12,
       paddingBottom: 0,
+    },
+    historyLoadingIndicator: {
+      marginBottom: 12,
     },
     messageRow: {
       width: '100%',
