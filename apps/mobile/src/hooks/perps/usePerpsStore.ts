@@ -1550,21 +1550,33 @@ const fetchMarketDataIfNeeded = () => {
 
 runIIFEFunc(fetchMarketDataIfNeeded, {
   label: 'perps.fetchMarketData',
+  owner: 'perps',
+  reason: 'warm market list after Home without starting fast feed on startup',
   stage: 'homePostStartupIdle',
+  priority: 'low',
   delayMs: PERPS_STARTUP_PREFETCH_DELAY_MS,
   fallbackMs: 8000,
+  budgetMs: 300,
 });
 runIIFEFunc(fetchFavoriteMarkets, {
   label: 'perps.fetchFavoriteMarkets',
+  owner: 'perps',
+  reason: 'warm user preference data after Home',
   stage: 'homePostStartupIdle',
+  priority: 'low',
   delayMs: PERPS_STARTUP_PREFETCH_DELAY_MS,
   fallbackMs: 8000,
+  budgetMs: 200,
 });
 runIIFEFunc(fetchMarginModeByCoin, {
   label: 'perps.fetchMarginModeByCoin',
+  owner: 'perps',
+  reason: 'warm perps margin mode cache after Home',
   stage: 'homePostStartupIdle',
+  priority: 'low',
   delayMs: PERPS_STARTUP_PREFETCH_DELAY_MS,
   fallbackMs: 8000,
+  budgetMs: 200,
 });
 
 export function startSubscribePerpsOnAppState() {

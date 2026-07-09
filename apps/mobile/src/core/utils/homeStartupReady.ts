@@ -1,7 +1,6 @@
 import { InteractionManager, Platform } from 'react-native';
 
 import { zCreate, zMutative } from '@/core/utils/reexports';
-import { logger } from '@/utils/logger';
 import { traceAndroidInstant } from './androidTrace';
 import { isNonProductionDiagnosticsEnabled } from './diagnosticEnv';
 
@@ -42,7 +41,7 @@ function traceHomeStartup(event: string, data: Record<string, unknown> = {}) {
     return;
   }
 
-  logger.info(`[RabbyUnlockPerf:home] ${event}`, data);
+  console.info(`[RabbyUnlockPerf:home] ${event}`, data);
   traceAndroidInstant(`home.${event}`, data);
 }
 
