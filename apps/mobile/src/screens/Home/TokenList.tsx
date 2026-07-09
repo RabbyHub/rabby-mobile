@@ -845,6 +845,16 @@ export const TokenList = ({
   );
 
   const keyExtractor = useCallback(getTokenListItemKey, []);
+  const listExtraData = useMemo(
+    () => ({
+      foldHideList,
+      foldScam,
+      foldTokenIds,
+      isLpTokenEnabled,
+      scamTokenIds,
+    }),
+    [foldHideList, foldScam, foldTokenIds, isLpTokenEnabled, scamTokenIds],
+  );
 
   const ListRenderSeparator = useCallback(() => {
     return <View style={{ height: SPACING_HEIGHT }} />;
@@ -878,6 +888,7 @@ export const TokenList = ({
     <View style={styles.container}>
       <Tabs.FlatList
         data={dataList}
+        extraData={listExtraData}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         ItemSeparatorComponent={ListRenderSeparator}
