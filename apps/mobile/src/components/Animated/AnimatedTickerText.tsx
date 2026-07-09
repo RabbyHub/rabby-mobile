@@ -234,8 +234,7 @@ const AnimatedTickerColumn = memo(
     );
     const columnWidth = useSharedValue(
       initialChar
-        ? lineHeight * 0.9 * getCharWidthUnit(initialChar) +
-            GLYPH_SIDE_BEARING
+        ? lineHeight * 0.9 * getCharWidthUnit(initialChar) + GLYPH_SIDE_BEARING
         : 0,
     );
 
@@ -306,11 +305,7 @@ const AnimatedTickerColumn = memo(
     );
 
     const columnStyle = useAnimatedStyle(() => {
-      const {
-        text,
-        isRtl,
-        isOverflow,
-      } = textState.value;
+      const { text, isRtl, isOverflow } = textState.value;
       if (isRtl || isOverflow) {
         return {
           width: 0,
@@ -429,10 +424,10 @@ const AnimatedTickerText = ({
     const { isRtl, isOverflow, fontSize } = textState.value;
 
     return {
-      display: !animate || isRtl || isOverflow ? 'flex' : 'none',
+      display: isRtl || isOverflow ? 'flex' : 'none',
       ...(fontSize ? { fontSize } : {}),
     };
-  }, [animate]);
+  });
 
   const columns = React.useMemo(
     () => Array.from({ length: maxLength }, (_, index) => index),
@@ -441,11 +436,24 @@ const AnimatedTickerText = ({
 
   return (
     <View {...containerProps} style={[styles.row, containerStyle]}>
-      <AnimateableText
-        {...textProps}
-        style={[style, fallbackStyle, { lineHeight, height: lineHeight }]}
-        animatedProps={fallbackAnimatedProps}
-      />
+      {!animate ? (
+        <AnimateableText
+          {...textProps}
+          style={[style, { lineHeight, height: lineHeight }]}
+          animatedProps={fallbackAnimatedProps}
+        />
+      ) : (
+        <AnimateableText
+          {...textProps}
+          style={[
+            style,
+            styles.fallbackText,
+            fallbackStyle,
+            { lineHeight, height: lineHeight },
+          ]}
+          animatedProps={fallbackAnimatedProps}
+        />
+      )}
       {animate
         ? columns.map(index => (
             <AnimatedTickerColumn
@@ -488,6 +496,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     textAlign: 'center',
+  },
+  fallbackText: {
+    display: 'none',
   },
 });
 
