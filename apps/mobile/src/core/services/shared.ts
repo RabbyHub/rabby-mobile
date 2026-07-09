@@ -66,6 +66,7 @@ import { isNonPublicProductionEnv } from '@/constant';
 import { logger } from '@/utils/logger';
 import { traceAndroidInstant } from '../utils/androidTrace';
 import { recordKeyringRuntimePerfDiagnostic } from '../utils/startupDiagnostics';
+import { registerCoreServices } from './serviceRegistry';
 
 migrateAppStorage(appStorage);
 
@@ -329,4 +330,32 @@ migrateServices({
   perps: perpsService,
   lending: lendingService,
   currency: currencyService,
+});
+
+registerCoreServices({
+  autoConnectService,
+  bridgeService,
+  browserHistoryService,
+  browserService,
+  contactService,
+  currencyService,
+  dappService,
+  gasAccountService,
+  hdKeyringService,
+  keyringService,
+  lendingService,
+  metamaskModeService,
+  notificationService,
+  offlineChainService,
+  perpsService,
+  preferenceService,
+  rabbyPointsService,
+  securityEngineService,
+  sessionService,
+  swapService,
+  syncChainService,
+  transactionBroadcastWatcherService,
+  transactionHistoryService,
+  transactionWatcherService,
+  whitelistService,
 });
