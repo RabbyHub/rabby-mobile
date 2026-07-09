@@ -1,6 +1,5 @@
 import { IManageToken } from '@/core/services/preference';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
-import { preferenceService } from '@/core/services';
 import { openapi } from '@/core/request';
 import { atom, useAtom } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -11,6 +10,7 @@ import {
   watchlistTokenSortAtom,
 } from '../sort';
 import { getWatchlistTopCache } from '../cache';
+import { getDisplayUserTokenSettings } from '@/hooks/useTokenSettings';
 
 const chunkArray = (arr: IManageToken[], size: number): IManageToken[][] => {
   const chunks: IManageToken[][] = [];
@@ -38,8 +38,7 @@ export const useWatchlistTokens = (onBeforeRefresh?: () => void) => {
         if (noData) {
           setLoading(true);
         }
-        const { pinedQueue = [] } =
-          await preferenceService.getUserTokenSettings();
+        const { pinedQueue = [] } = await getDisplayUserTokenSettings();
         setHasData(pinedQueue.length > 0);
         // 生成所有token的key
         const allKeys = pinedQueue

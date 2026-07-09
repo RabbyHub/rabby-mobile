@@ -13,8 +13,18 @@ function setupOneKeyEventsModule() {
   jest.resetModules();
 
   const mockCreateGlobalBottomSheetModal = jest.fn(() => 'modal-id');
-  const mockRemoveGlobalBottomSheetModal = jest.fn();
-  const mockGlobalBottomSheetModalAddListener = jest.fn();
+  let dismissListener: ((id: string) => void) | undefined;
+  const mockRemoveGlobalBottomSheetModal = jest.fn(id => {
+    if (typeof id !== 'string') {
+      return;
+    }
+    dismissListener?.(id);
+  });
+  const mockGlobalBottomSheetModalAddListener = jest.fn((eventName, cb) => {
+    if (eventName === 'DISMISS') {
+      dismissListener = cb;
+    }
+  });
   const { EventEmitter } = require('events');
   const eventBus = new EventEmitter();
   const EVENTS = {
@@ -44,6 +54,8 @@ function setupOneKeyEventsModule() {
     },
   }));
   jest.doMock('./events', () => ({
+    EVENT_ONEKEY_CLOSE_UI_PIN_WINDOW: 'ONEKEY_CLOSE_UI_PIN_WINDOW',
+    EVENT_ONEKEY_REQUEST_BUTTON: 'ONEKEY_REQUEST_BUTTON',
     EVENT_ONEKEY_REQUEST_PASSPHRASE_ON_DEVICE:
       'ONEKEY_REQUEST_PASSPHRASE_ON_DEVICE',
     eventBus,
@@ -57,6 +69,8 @@ function setupOneKeyEventsModule() {
     ...oneKeyModule,
     ...eventsModule,
     mockCreateGlobalBottomSheetModal,
+    mockRemoveGlobalBottomSheetModal,
+    mockGlobalBottomSheetModalAddListener,
   };
 }
 
@@ -149,6 +163,141 @@ describe('bindOneKeyEvents', () => {
       switchOnDevice: true,
     });
     expect(mockCreateGlobalBottomSheetModal).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes the waiting modal when the SDK closes the pin window', () => {
+    const {
+      bindOneKeyEvents,
+      eventBus,
+      EVENTS,
+      EVENT_ONEKEY_CLOSE_UI_PIN_WINDOW,
+      mockRemoveGlobalBottomSheetModal,
+    } = setupOneKeyEventsModule();
+    const keyring = createKeyring();
+
+    bindOneKeyEvents(keyring);
+    eventBus.emit(EVENTS.ONEKEY.REQUEST_PASSPHRASE, {
+      payload: {
+        device: {
+          connectId: 'connect-id',
+        },
+      },
+    });
+    eventBus.emit(EVENT_ONEKEY_CLOSE_UI_PIN_WINDOW);
+
+    expect(mockRemoveGlobalBottomSheetModal).toHaveBeenCalledWith('modal-id', {
+      waitMaxtime: 300,
+    });
+    expect(keyring.bridge.cancel).not.toHaveBeenCalled();
+  });
+
+  it('does not cancel when pin and passphrase waiting modals share one singleton id', () => {
+    const {
+      bindOneKeyEvents,
+      eventBus,
+      EVENTS,
+      EVENT_ONEKEY_CLOSE_UI_PIN_WINDOW,
+      mockRemoveGlobalBottomSheetModal,
+    } = setupOneKeyEventsModule();
+    const keyring = createKeyring();
+
+    bindOneKeyEvents(keyring);
+    eventBus.emit(EVENTS.ONEKEY.REQUEST_PIN, {
+      payload: {
+        device: {
+          connectId: 'connect-id',
+        },
+      },
+    });
+    eventBus.emit(EVENTS.ONEKEY.REQUEST_PASSPHRASE, {
+      payload: {
+        device: {
+          connectId: 'connect-id',
+        },
+      },
+    });
+    eventBus.emit(EVENT_ONEKEY_CLOSE_UI_PIN_WINDOW);
+
+    expect(mockRemoveGlobalBottomSheetModal).toHaveBeenCalledWith('modal-id', {
+      waitMaxtime: 300,
+    });
+    expect(keyring.bridge.cancel).not.toHaveBeenCalled();
+  });
+
+  it('closes the waiting modal when the SDK asks for device confirmation', () => {
+    const {
+      bindOneKeyEvents,
+      eventBus,
+      EVENTS,
+      EVENT_ONEKEY_REQUEST_BUTTON,
+      mockRemoveGlobalBottomSheetModal,
+    } = setupOneKeyEventsModule();
+    const keyring = createKeyring();
+
+    bindOneKeyEvents(keyring);
+    eventBus.emit(EVENTS.ONEKEY.REQUEST_PIN, {
+      payload: {
+        device: {
+          connectId: 'connect-id',
+        },
+      },
+    });
+    eventBus.emit(EVENT_ONEKEY_REQUEST_BUTTON);
+
+    expect(mockRemoveGlobalBottomSheetModal).toHaveBeenCalledWith('modal-id', {
+      waitMaxtime: 300,
+    });
+    expect(keyring.bridge.cancel).not.toHaveBeenCalled();
+  });
+
+  it('does not miss device confirmation emitted while acknowledging device-side PIN', () => {
+    const {
+      bindOneKeyEvents,
+      eventBus,
+      EVENTS,
+      EVENT_ONEKEY_REQUEST_BUTTON,
+      mockRemoveGlobalBottomSheetModal,
+    } = setupOneKeyEventsModule();
+    const keyring = createKeyring();
+    keyring.bridge.receivePin.mockImplementation(() => {
+      eventBus.emit(EVENT_ONEKEY_REQUEST_BUTTON);
+    });
+
+    bindOneKeyEvents(keyring);
+    eventBus.emit(EVENTS.ONEKEY.REQUEST_PIN, {
+      payload: {
+        device: {
+          connectId: 'connect-id',
+        },
+      },
+    });
+
+    expect(mockRemoveGlobalBottomSheetModal).toHaveBeenCalledWith('modal-id', {
+      waitMaxtime: 300,
+    });
+    expect(keyring.bridge.cancel).not.toHaveBeenCalled();
+  });
+
+  it('cancels the request when the user dismisses the device-side waiting modal', () => {
+    const {
+      bindOneKeyEvents,
+      eventBus,
+      EVENTS,
+      mockGlobalBottomSheetModalAddListener,
+    } = setupOneKeyEventsModule();
+    const keyring = createKeyring();
+
+    bindOneKeyEvents(keyring);
+    eventBus.emit(EVENTS.ONEKEY.REQUEST_PASSPHRASE, {
+      payload: {
+        device: {
+          connectId: 'connect-id',
+        },
+      },
+    });
+    mockGlobalBottomSheetModalAddListener.mock.calls[0][1]('modal-id');
+
+    expect(keyring.bridge.cancel).toHaveBeenCalledWith('connect-id');
   });
 
   it('binds each OneKey keyring instance once', () => {

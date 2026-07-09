@@ -81,12 +81,12 @@ export const BottomSheetDappInfoPopup = registerAppScreen<
     })),
 });
 
-export const ModalsSubmitFeedbackByScreenshotStub = registerAppScreen<
-  typeof import('@/components/Screenshot/ScreenshotModal').ModalsSubmitFeedbackByScreenshotStub
+export const ScreenshotFeedbackSubmitModal = registerAppScreen<
+  typeof import('@/components/Screenshot/SubmitFeedback/SubmitModal').ScreenshotFeedbackSubmitModal
 >({
   loader: () =>
-    import('@/components/Screenshot/ScreenshotModal').then(m => ({
-      default: m.ModalsSubmitFeedbackByScreenshotStub,
+    import('@/components/Screenshot/SubmitFeedback/SubmitModal').then(m => ({
+      default: m.ScreenshotFeedbackSubmitModal,
     })),
 });
 
@@ -121,6 +121,39 @@ export const FloatingDiagnosticsPanel = registerAppScreen<
     import('@/screens/Settings/components/FloatingDiagnosticsPanel').then(
       m => ({
         default: m.FloatingDiagnosticsPanel,
+      }),
+    ),
+});
+
+export const FloatingDbSyncSummaryPanel = registerAppScreen<
+  typeof import('@/screens/Settings/components/FloatingDbSyncSummaryPanel').FloatingDbSyncSummaryPanel
+>({
+  loader: () =>
+    import('@/screens/Settings/components/FloatingDbSyncSummaryPanel').then(
+      m => ({
+        default: m.FloatingDbSyncSummaryPanel,
+      }),
+    ),
+});
+
+export const FloatingKeyringRuntimePanel = registerAppScreen<
+  typeof import('@/screens/Settings/components/FloatingKeyringRuntimePanel').FloatingKeyringRuntimePanel
+>({
+  loader: () =>
+    import('@/screens/Settings/components/FloatingKeyringRuntimePanel').then(
+      m => ({
+        default: m.FloatingKeyringRuntimePanel,
+      }),
+    ),
+});
+
+export const FloatingOpenApiSummaryPanel = registerAppScreen<
+  typeof import('@/screens/Settings/components/FloatingOpenApiSummaryPanel').FloatingOpenApiSummaryPanel
+>({
+  loader: () =>
+    import('@/screens/Settings/components/FloatingOpenApiSummaryPanel').then(
+      m => ({
+        default: m.FloatingOpenApiSummaryPanel,
       }),
     ),
 });

@@ -34,6 +34,7 @@ function loadPerpsModule({ isUnlocked = true }: { isUnlocked?: boolean } = {}) {
   }));
   jest.doMock('@/core/apis/lock', () => ({
     isUnlocked: (...args: unknown[]) => mockIsUnlocked(...args),
+    ensureKeyringRuntimeReady: jest.fn(async () => undefined),
   }));
   jest.doMock('../services', () => ({
     perpsService: {

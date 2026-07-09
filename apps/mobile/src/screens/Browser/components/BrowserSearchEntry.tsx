@@ -151,7 +151,12 @@ const BlurViewOnlyIOSWrapper = ({
   if (isAndroid) {
     return (
       <View
-        style={{ borderRadius, backgroundColor: colors2024['neutral-bg-1'] }}>
+        style={{
+          borderRadius,
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-1']
+            : colors2024['neutral-bg-2'],
+        }}>
         {children}
       </View>
     );

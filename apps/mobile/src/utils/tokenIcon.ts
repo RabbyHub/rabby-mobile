@@ -166,6 +166,8 @@ const TOKEN_ICON_MAP_PNG: Record<string, string> = {
     'https://static-assets.rabby.io/files/6bb7c716-247e-4978-9aea-61d96cce0d6d.png',
   EURM: 'https://static-assets.rabby.io/files/a41592dd-f2a6-4288-92b6-a8b934829a35.png',
   MNT: 'https://static-assets.rabby.io/files/296c598e-dad4-47cf-b023-9f5047ac044b.png',
+  SYRUPUSDC:
+    'https://static-assets.rabby.io/files/3dc0efa9-1191-451b-84cc-098b88fdb0e9.png',
 };
 
 /**

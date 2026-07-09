@@ -107,6 +107,7 @@ describe('hooks/biometrics', () => {
       },
     }));
     jest.doMock('@/core/apis/lock', () => ({
+      ensureKeyringRuntimeReady: jest.fn(async () => undefined),
       parseValidationBehavior: jest.fn(),
     }));
     jest.doMock('@/core/services', () => ({

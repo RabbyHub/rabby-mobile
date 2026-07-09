@@ -3,7 +3,10 @@ import { queryTokensCache } from '@/core/apis/tokenCache';
 import { openapi } from '@/core/request';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { syncRemoteTokens } from '@/databases/sync/assets';
+import {
+  syncRemoteTokens,
+  syncRemoteTokensForAddresses,
+} from '@/databases/sync/assets';
 import { eventBus, EVENT_PATCH_SINGLE_TOKEN } from '@/utils/events';
 import {
   commonTokenFilter,
@@ -1628,6 +1631,39 @@ export const useTokenAssetsIndexStore = zCreate(
   })),
 );
 
+let lastTokenListMapSyncedToRuntime: TokenListState['tokenListMap'] | undefined;
+
+const syncTokenRuntimeStoresFromTokenListMap = (
+  tokenListMap: TokenListState['tokenListMap'],
+  addresses: string[],
+  source: ObservableResourceValueSource = 'remote',
+  options?: {
+    markTokenListMapSynced?: boolean;
+  },
+) => {
+  const normalizedAddresses = Array.from(normalizeAddressSet(addresses));
+
+  if (!normalizedAddresses.length) {
+    if (options?.markTokenListMapSynced) {
+      lastTokenListMapSyncedToRuntime = tokenListMap;
+    }
+    return;
+  }
+
+  tokenEntityResourceStore.syncAddressesFromTokenListMap(
+    tokenListMap,
+    normalizedAddresses,
+    source,
+  );
+  useTokenIndexStore
+    .getState()
+    .syncFromTokenListMap(tokenListMap, normalizedAddresses);
+
+  if (options?.markTokenListMapSynced) {
+    lastTokenListMapSyncedToRuntime = tokenListMap;
+  }
+};
+
 const tokenListStore = zCreate<TokenListState>((set, get) => ({
   tokenListMap: {},
   isLoading: false, // 整体的 loading 状态
@@ -1649,6 +1685,14 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
       lowerAddresses,
     );
     // 写入 Store
+    syncTokenRuntimeStoresFromTokenListMap(
+      tokenMap,
+      lowerAddresses,
+      'hydrate',
+      {
+        markTokenListMapSynced: true,
+      },
+    );
     set(() => ({ tokenListMap: tokenMap }));
   },
 
@@ -1679,6 +1723,9 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             res[key] = [transformedToken];
           }
         }
+        syncTokenRuntimeStoresFromTokenListMap(res, lowerAddresses, 'hydrate', {
+          markTokenListMapSynced: true,
+        });
         set(() => ({ tokenListMap: res, isLoading: false }));
         return;
       }
@@ -1697,17 +1744,24 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
       });
     });
     await waitQueueFinished(cacheTokenQueue);
-    set(state => {
-      const mergedCacheTokenMap = { ...state.tokenListMap };
-      lowerAddresses.forEach(address => {
-        const normalizedAddress = address.toLowerCase();
-        const previousTokens = state.tokenListMap[normalizedAddress] || [];
-        const cacheTokens = cacheTokenMap[normalizedAddress] || [];
-        mergedCacheTokenMap[normalizedAddress] =
-          replacePreviousCoreTokensWithCacheTokens(previousTokens, cacheTokens);
-      });
-      return { tokenListMap: mergedCacheTokenMap };
+    const currentTokenListMap = get().tokenListMap;
+    const mergedCacheTokenMap = { ...currentTokenListMap };
+    lowerAddresses.forEach(address => {
+      const normalizedAddress = address.toLowerCase();
+      const previousTokens = currentTokenListMap[normalizedAddress] || [];
+      const cacheTokens = cacheTokenMap[normalizedAddress] || [];
+      mergedCacheTokenMap[normalizedAddress] =
+        replacePreviousCoreTokensWithCacheTokens(previousTokens, cacheTokens);
     });
+    syncTokenRuntimeStoresFromTokenListMap(
+      mergedCacheTokenMap,
+      lowerAddresses,
+      'remote',
+      {
+        markTokenListMapSynced: true,
+      },
+    );
+    set(() => ({ tokenListMap: mergedCacheTokenMap }));
     const realTimeTokenMap: Record<string, ITokenItem[]> = {};
     const realTimeTokenQueue = new PQueue({
       concurrency: 15,
@@ -1739,11 +1793,18 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
           .map(result => (result.status === 'fulfilled' ? result.value : []))
           .flat() as ITokenItem[];
         realTimeTokenMap[address.toLowerCase()] = results;
-        syncRemoteTokens(address.toLowerCase(), results);
       }),
     );
-    set(() => ({ isLoading: false }));
-    set(() => ({ tokenListMap: realTimeTokenMap }));
+    syncTokenRuntimeStoresFromTokenListMap(
+      realTimeTokenMap,
+      lowerAddresses,
+      'remote',
+      {
+        markTokenListMapSynced: true,
+      },
+    );
+    set(() => ({ tokenListMap: realTimeTokenMap, isLoading: false }));
+    syncRemoteTokensForAddresses(realTimeTokenMap);
   },
 
   async getTokenList(address: string, force = false, chainServerId?: string) {
@@ -1768,12 +1829,19 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         normalizedAddress,
       )) as TokenItemEntity[];
       const res = tokens.map(tokenItemEntityToTokenItem);
-      set(state => ({
-        tokenListMap: {
-          ...state.tokenListMap,
-          [normalizedAddress]: res,
+      const nextTokenListMap = {
+        ...get().tokenListMap,
+        [normalizedAddress]: res,
+      };
+      syncTokenRuntimeStoresFromTokenListMap(
+        nextTokenListMap,
+        [normalizedAddress],
+        'hydrate',
+        {
+          markTokenListMapSynced: true,
         },
-      }));
+      );
+      set(() => ({ tokenListMap: nextTokenListMap }));
       return;
     }
 
@@ -1800,6 +1868,10 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         const cacheTokens = filterInterfaceTokenList(
           cacheList.map(item => tokenItemToITokenItem(item, address)),
         );
+        const currentState = get();
+        const previousTokens =
+          currentState.tokenListMap[normalizedAddress] || [];
+
         // 以此弥补cache接口数据不完整，带来的接口列表闪动
         let noCoreDBTokens: ITokenItem[] = [];
         if (!hasCurrentNoCoreTokens) {
@@ -1809,25 +1881,32 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
             noCoreDBTokensList.map(tokenItemEntityToTokenItem),
           );
         }
-        set(state => {
-          const previousTokens = state.tokenListMap[normalizedAddress] || [];
-          const mergedCacheTokens = replacePreviousCoreTokensWithCacheTokens(
-            previousTokens,
-            cacheTokens,
-            noCoreDBTokens,
-          );
-          return {
-            tokenListMap: {
-              ...state.tokenListMap,
-              [normalizedAddress]: mergedCacheTokens,
-            },
-            isLoadingByAddress: {
-              ...state.isLoadingByAddress,
-              // cache已经拿到，但是不是所有token都拿到
-              [normalizedAddress]: { loading: false, allLoading: true },
-            },
-          };
-        });
+
+        const mergedCacheTokens = replacePreviousCoreTokensWithCacheTokens(
+          previousTokens,
+          cacheTokens,
+          noCoreDBTokens,
+        );
+        const nextTokenListMap = {
+          ...currentState.tokenListMap,
+          [normalizedAddress]: mergedCacheTokens,
+        };
+        syncTokenRuntimeStoresFromTokenListMap(
+          nextTokenListMap,
+          [normalizedAddress],
+          'remote',
+          {
+            markTokenListMapSynced: true,
+          },
+        );
+        set(state => ({
+          tokenListMap: nextTokenListMap,
+          isLoadingByAddress: {
+            ...state.isLoadingByAddress,
+            // cache已经拿到，但是不是所有token都拿到
+            [normalizedAddress]: { loading: false, allLoading: true },
+          },
+        }));
       }
 
       /**
@@ -1868,27 +1947,45 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
         .flat() as ITokenItem[];
 
       if (targetChainServerId) {
-        set(state => {
-          const previousTokens = state.tokenListMap[normalizedAddress] || [];
-          return {
-            tokenListMap: {
-              ...state.tokenListMap,
-              [normalizedAddress]: replaceTokensByChain(
-                previousTokens,
-                results,
-                targetChainServerId,
-              ),
-            },
-          };
-        });
-      } else {
-        syncRemoteTokens(normalizedAddress, results);
-        set(state => ({
-          tokenListMap: {
-            ...state.tokenListMap,
-            [normalizedAddress]: results,
+        const currentState = get();
+        const previousTokens =
+          currentState.tokenListMap[normalizedAddress] || [];
+        const nextTokenListMap = {
+          ...currentState.tokenListMap,
+          [normalizedAddress]: replaceTokensByChain(
+            previousTokens,
+            results,
+            targetChainServerId,
+          ),
+        };
+        syncTokenRuntimeStoresFromTokenListMap(
+          nextTokenListMap,
+          [normalizedAddress],
+          'remote',
+          {
+            markTokenListMapSynced: true,
           },
+        );
+        set(() => ({
+          tokenListMap: nextTokenListMap,
         }));
+      } else {
+        const nextTokenListMap = {
+          ...get().tokenListMap,
+          [normalizedAddress]: results,
+        };
+        syncTokenRuntimeStoresFromTokenListMap(
+          nextTokenListMap,
+          [normalizedAddress],
+          'remote',
+          {
+            markTokenListMapSynced: true,
+          },
+        );
+        set(() => ({
+          tokenListMap: nextTokenListMap,
+        }));
+        syncRemoteTokens(normalizedAddress, results);
       }
     } finally {
       set(state => ({
@@ -1905,37 +2002,45 @@ const patchSingleTokenInStore = (address: string, token: ITokenItem) => {
   const normalizedAddress = normalizeAddress(address);
   const nextToken = tokenItemToITokenItem(token, normalizedAddress);
 
-  tokenListStore.setState(state => {
-    const currentTokens = state.tokenListMap[normalizedAddress] || [];
-    const matchedIndex = currentTokens.findIndex(
-      item =>
-        item.chain.toLowerCase() === nextToken.chain.toLowerCase() &&
-        isSameAddress(item.id, nextToken.id),
-    );
-    const hasPositiveAmount = (nextToken.amount || 0) > 0;
-    let nextTokens = currentTokens;
+  const currentState = tokenListStore.getState();
+  const currentTokens = currentState.tokenListMap[normalizedAddress] || [];
+  const matchedIndex = currentTokens.findIndex(
+    item =>
+      item.chain.toLowerCase() === nextToken.chain.toLowerCase() &&
+      isSameAddress(item.id, nextToken.id),
+  );
+  const hasPositiveAmount = (nextToken.amount || 0) > 0;
+  let nextTokens = currentTokens;
 
-    if (matchedIndex > -1) {
-      if (hasPositiveAmount) {
-        nextTokens = currentTokens.slice();
-        nextTokens[matchedIndex] = nextToken;
-      } else {
-        nextTokens = currentTokens.filter((_, index) => index !== matchedIndex);
-      }
-    } else if (hasPositiveAmount) {
-      nextTokens = [...currentTokens, nextToken];
+  if (matchedIndex > -1) {
+    if (hasPositiveAmount) {
+      nextTokens = currentTokens.slice();
+      nextTokens[matchedIndex] = nextToken;
+    } else {
+      nextTokens = currentTokens.filter((_, index) => index !== matchedIndex);
     }
+  } else if (hasPositiveAmount) {
+    nextTokens = [...currentTokens, nextToken];
+  }
 
-    if (nextTokens === currentTokens) {
-      return state;
-    }
+  if (nextTokens === currentTokens) {
+    return;
+  }
 
-    return {
-      tokenListMap: {
-        ...state.tokenListMap,
-        [normalizedAddress]: nextTokens,
-      },
-    };
+  const nextTokenListMap = {
+    ...currentState.tokenListMap,
+    [normalizedAddress]: nextTokens,
+  };
+  syncTokenRuntimeStoresFromTokenListMap(
+    nextTokenListMap,
+    [normalizedAddress],
+    'remote',
+    {
+      markTokenListMapSynced: true,
+    },
+  );
+  tokenListStore.setState({
+    tokenListMap: nextTokenListMap,
   });
 };
 
@@ -1970,6 +2075,11 @@ tokenListStore.subscribe(state => {
   if (state.tokenListMap === lastComputedTokenListMap) {
     return;
   }
+  if (state.tokenListMap === lastTokenListMapSyncedToRuntime) {
+    lastComputedTokenListMap = state.tokenListMap;
+    lastTokenListMapSyncedToRuntime = undefined;
+    return;
+  }
   const previousTokenListMap = lastComputedTokenListMap;
   const changedAddresses = getTokenListMapChangedAddresses(
     previousTokenListMap,
@@ -1979,13 +2089,13 @@ tokenListStore.subscribe(state => {
   if (!changedAddresses.size) {
     return;
   }
-  useTokenIndexStore
-    .getState()
-    .syncFromTokenListMap(state.tokenListMap, Array.from(changedAddresses));
   tokenEntityResourceStore.syncChangedAddressesFromTokenListMap(
     state.tokenListMap,
     changedAddresses,
   );
+  useTokenIndexStore
+    .getState()
+    .syncFromTokenListMap(state.tokenListMap, Array.from(changedAddresses));
 });
 
 const getChangedTokenEntityIdsFromMetaMap = (

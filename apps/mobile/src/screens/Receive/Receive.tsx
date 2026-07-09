@@ -95,6 +95,9 @@ function ReceiveScreen(): JSX.Element {
 
     return [prefix, middle, suffix];
   }, [account]);
+  const maskedAddressMiddle = useMemo(() => {
+    return addressSplit[1] ? '*'.repeat(addressSplit[1].length) : '';
+  }, [addressSplit]);
 
   const isWatchMode = useMemo(
     () => account?.type === KEYRING_CLASS.WATCH,
@@ -362,7 +365,7 @@ function ReceiveScreen(): JSX.Element {
                   <Text style={styles.highlightAddrPart}>
                     {addressSplit[0]}
                   </Text>
-                  {addressSplit[1]}
+                  {showName ? addressSplit[1] : maskedAddressMiddle}
                   <Text style={styles.highlightAddrPart}>
                     {addressSplit[2]}
                   </Text>

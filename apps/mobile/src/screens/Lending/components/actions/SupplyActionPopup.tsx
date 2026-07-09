@@ -81,6 +81,7 @@ import {
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
+import { isUserCancelledError } from '../../utils/error';
 
 type SupplyActionPopupProps = PopupDetailProps & {
   onBeforeSwapNavigate?: () => void;
@@ -687,6 +688,10 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
         setAmount(undefined);
         onClose?.();
       } catch (error) {
+        console.error('Handle supply error:', error);
+        if (forceFullSign && isUserCancelledError(error)) {
+          await buildTransactions();
+        }
       } finally {
         setIsLoading(false);
       }
@@ -703,6 +708,7 @@ export const SupplyActionPopup: React.FC<SupplyActionPopupProps> = ({
       t,
       onClose,
       openDirect,
+      buildTransactions,
     ],
   );
 

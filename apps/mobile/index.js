@@ -10,11 +10,17 @@ import { enableFreeze, enableScreens } from 'react-native-screens';
 // enableFreeze();
 enableScreens(true);
 
+import { traceAndroidInstant } from './src/core/utils/androidTrace';
+
+traceAndroidInstant('js.index.body.start');
+
 import { initSentry } from './src/core/sentry';
 // Init Sentry before polyfills as it patches global Promise
 // @see https://docs.sentry.io/platforms/react-native/integrations/unhandled-rejections/#auto-patching-default-behavior
 if (!__DEV__) {
+  traceAndroidInstant('js.sentry.init.start');
   initSentry();
+  traceAndroidInstant('js.sentry.init.end');
 }
 
 import './src/utils/logging/install';
@@ -42,7 +48,9 @@ import { name as appName } from './app.json';
 import './src/setup-app-before-render';
 
 // must be called synchoronously immediately
+traceAndroidInstant('js.appRegistry.register.start');
 AppRegistry.registerComponent(appName, () => App);
+traceAndroidInstant('js.appRegistry.register.end');
 
 // This is the default configuration
 configureReanimatedLogger({

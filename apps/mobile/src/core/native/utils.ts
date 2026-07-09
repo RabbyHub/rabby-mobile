@@ -34,6 +34,12 @@ interface NativeModulesStatic {
   };
   RNHelpers: NativeModule & {
     forceExitApp(): void;
+    androidTraceInstant?(name: string): void;
+    androidTraceBeginSection?(name: string): void;
+    androidTraceEndSection?(): void;
+    androidTraceBeginAsyncSection?(name: string, cookie: number): void;
+    androidTraceEndAsyncSection?(name: string, cookie: number): void;
+    androidTraceCounter?(name: string, value: number): void;
     moveTaskToBack?(): Promise<boolean>;
     shareFile?(options: {
       filePath: string;

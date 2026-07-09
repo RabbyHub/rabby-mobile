@@ -48,6 +48,8 @@ import { TokenItemSkeleton } from '@/screens/Watchlist/components/TokenItem';
 import { tokenItemToITokenItem } from '@/utils/token';
 import { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
+import { isCustomTestnetFavoriteChain } from '@/utils/favoriteToken';
+import { getDisplayUserTokenSettings } from '@/hooks/useTokenSettings';
 
 interface Props {
   resultTokens: ITokenItem[];
@@ -92,8 +94,8 @@ export const SearchAssetsOnHome: React.FC<Props> = ({
   }, []);
 
   const fetchPinedTokenList = useCallback(() => {
-    preferenceService.getUserTokenSettings().then(res => {
-      setWatchlistTokenList(res.pinedQueue || []);
+    getDisplayUserTokenSettings().then(res => {
+      setWatchlistTokenList(res.pinedQueue);
     });
   }, []);
 
@@ -146,6 +148,13 @@ export const SearchAssetsOnHome: React.FC<Props> = ({
 
   const renderItem = useCallback(
     ({ item }: { item: ITokenItem }) => {
+      const isCustomTestnetToken = isCustomTestnetFavoriteChain(item.chain);
+      const isPined =
+        !isCustomTestnetToken &&
+        watchlistTokenList.some(
+          t => t.chainId === item.chain && t.tokenId === item.id,
+        );
+
       return (
         item && (
           <ExternalTokenRow
@@ -156,14 +165,12 @@ export const SearchAssetsOnHome: React.FC<Props> = ({
             decimalPrecision
             rightSlot={
               inGlobalSearch ? (
-                watchlistTokenList.some(
-                  t => t.chainId === item.chain && t.tokenId === item.id,
-                ) ? (
+                isPined ? (
                   <View style={styles.badge}>
                     <RcIconStarFull width={12} height={12} />
                   </View>
                 ) : null
-              ) : (
+              ) : isCustomTestnetToken ? null : (
                 <Pressable
                   style={styles.rightSlot}
                   onPress={e => {
@@ -175,9 +182,7 @@ export const SearchAssetsOnHome: React.FC<Props> = ({
                     width={22}
                     height={21}
                     color={
-                      watchlistTokenList.some(
-                        t => t.chainId === item.chain && t.tokenId === item.id,
-                      )
+                      isPined
                         ? colors2024['orange-default']
                         : colors2024['neutral-line']
                     }

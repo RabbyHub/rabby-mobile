@@ -40,6 +40,36 @@ public class RNHelpersModule extends SimplePackageSpec {
   }
 
   @ReactMethod
+  public void androidTraceInstant(String name) {
+    RabbyStartupTrace.instant(name);
+  }
+
+  @ReactMethod
+  public void androidTraceBeginSection(String name) {
+    RabbyStartupTrace.beginSection(name);
+  }
+
+  @ReactMethod
+  public void androidTraceEndSection() {
+    RabbyStartupTrace.endSection();
+  }
+
+  @ReactMethod
+  public void androidTraceBeginAsyncSection(String name, double cookie) {
+    RabbyStartupTrace.beginAsyncSection(name, (int) cookie);
+  }
+
+  @ReactMethod
+  public void androidTraceEndAsyncSection(String name, double cookie) {
+    RabbyStartupTrace.endAsyncSection(name, (int) cookie);
+  }
+
+  @ReactMethod
+  public void androidTraceCounter(String name, double value) {
+    RabbyStartupTrace.counter(name, (int) value);
+  }
+
+  @ReactMethod
   public void moveTaskToBack(Promise promise) {
     Activity activity = getCurrentActivity();
     if (activity == null) {

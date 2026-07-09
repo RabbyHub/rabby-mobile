@@ -8,7 +8,7 @@ import {
   useExposureRateGuide,
   rateGuideLastExposureState,
 } from '@/components/RateModal/hooks';
-import { TipFeedbackByScreenshot } from '@/components/Screenshot/HomeCenterTip';
+import { ScreenshotFeedbackHomeTip } from '@/components/Screenshot/SubmitFeedback/HomeTip';
 import { useViewedHomeTip } from '@/components/Screenshot/hooks';
 import { ITEM_LAYOUT_PADDING_HORIZONTAL } from '@/constant/home';
 import {
@@ -148,7 +148,7 @@ export function HomeCenterArea() {
 
       {blocksVisibility.tipScreenshot && (
         <Animated.View entering={FadeInUp.duration(200)}>
-          <TipFeedbackByScreenshot />
+          <ScreenshotFeedbackHomeTip />
         </Animated.View>
       )}
 
