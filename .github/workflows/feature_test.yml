@@ -27,6 +27,14 @@ on:
         required: false
         type: boolean
         default: false
+      ANDROID_16KB_CHECK:
+        required: false
+        type: choice
+        options:
+          - 'warn'
+          - 'strict'
+          - 'off'
+        default: 'warn'
       macos_machine_location:
         required: true
         type: choice
@@ -89,6 +97,7 @@ jobs:
       I18N_LIVE_PREVIEW: ${{ inputs.I18N_LIVE_PREVIEW && '1' || '0' }}
       SKIP_BUILD: ${{ inputs.__SKIP_BUILD }}
       RABBY_MOBILE_NM_USE_CACHE: ${{ inputs.RABBY_MOBILE_NM_USE_CACHE }}
+      RABBY_MOBILE_ANDROID_16KB_CHECK: ${{ inputs.ANDROID_16KB_CHECK }}
       XCODE_VER: '26.3'
     steps:
       - name: Checkout git repo

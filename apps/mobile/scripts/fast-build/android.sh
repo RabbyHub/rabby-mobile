@@ -293,7 +293,7 @@ replace_js_bundle() {
   fi
 
   echo "Aligning APK..."
-  $zipalign_path -v -p 4 "$repacked_apk" "$aligned_apk"
+  $zipalign_path -P 16 -v -p 4 "$repacked_apk" "$aligned_apk"
   cd "$work_dir"
 }
 
