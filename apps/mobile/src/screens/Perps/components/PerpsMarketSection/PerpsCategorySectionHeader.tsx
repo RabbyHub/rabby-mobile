@@ -65,7 +65,7 @@ export const PerpsCategorySectionHeader: React.FC<{
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   row: {
-    marginTop: 24,
+    marginTop: 30,
     marginBottom: 12,
     paddingHorizontal: 4,
     flexDirection: 'row',
