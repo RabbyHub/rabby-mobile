@@ -69,6 +69,11 @@ export const MiniWaiting = ({
     handleCancelOnce(error?.description);
   });
 
+  const handleRetry = useMemoizedFn(() => {
+    cancelHandledRef.current = true;
+    onRetry?.();
+  });
+
   return (
     <AppBottomSheetModal
       ref={sheetModalRef}
@@ -90,21 +95,21 @@ export const MiniWaiting = ({
                 error={error}
                 onCancel={handleCancel}
                 onDone={onDone}
-                onRetry={onRetry}
+                onRetry={handleRetry}
               />
             ) : currentAccount?.type === KEYRING_TYPE.OneKeyKeyring ? (
               <MiniOneKeyHardwareWaiting
                 error={error}
                 onCancel={handleCancel}
                 onDone={onDone}
-                onRetry={onRetry}
+                onRetry={handleRetry}
               />
             ) : (
               <MiniPrivatekeyWaiting
                 error={error}
                 onCancel={handleCancel}
                 onDone={onDone}
-                onRetry={onRetry}
+                onRetry={handleRetry}
               />
             )}
           </>
