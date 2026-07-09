@@ -1053,6 +1053,7 @@ export type AccountsBalanceState = {
   matteredAccountLength: number;
   totalBalance: number;
   hasAnyBalanceValue: boolean;
+  hasAllBalanceValue: boolean;
   isAnyBalanceLoading: boolean;
   isAnyBalanceLoadingWithoutValue: boolean;
   isAnyBalanceFetchingRemote: boolean;
@@ -1110,6 +1111,7 @@ export const balanceAccountsStore = zCreate(
     matteredAccountLength: 0,
     totalBalance: 0,
     hasAnyBalanceValue: false,
+    hasAllBalanceValue: false,
     isAnyBalanceLoading: false,
     isAnyBalanceLoadingWithoutValue: false,
     isAnyBalanceFetchingRemote: false,
@@ -1313,6 +1315,9 @@ function buildSelectedBalanceDerivedState(
     {
       totalBalance: 0,
       hasAnyBalanceValue: false,
+      hasAllBalanceValue:
+        snapshots.length > 0 &&
+        snapshots.every(snapshot => snapshot.flow.hasValue),
       isAnyBalanceLoading: false,
       isAnyBalanceLoadingWithoutValue: false,
       isAnyBalanceFetchingRemote: false,
