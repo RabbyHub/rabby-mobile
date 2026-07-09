@@ -12,12 +12,15 @@ import { useTranslation } from 'react-i18next';
 
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { useSubmitFeedbackOnScreenshot } from './hooks';
+import {
+  toggleFeedbackHistoryVisible,
+  useSubmitFeedbackOnScreenshot,
+} from '../hooks';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 
 import { Button } from '@/components2024/Button';
 import { FontWeightEnum } from '@/core/utils/fonts';
-import ModalInput from './ModalInput';
+import { ScreenshotFeedbackInput } from './FeedbackInput';
 import { toast } from '@/components2024/Toast';
 
 import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
@@ -96,7 +99,7 @@ function wrapOnPress(handler?: (evt: GestureResponderEvent) => void) {
   };
 }
 
-export function ModalsSubmitFeedbackByScreenshotStub() {
+export function ScreenshotFeedbackSubmitModal() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getModalStyle });
   const { t } = useTranslation();
 
@@ -112,6 +115,31 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
   const [skipInNext1Day, setSkipInNext1Day] = useState(false);
 
   const { browserState } = useBrowser();
+
+  const handleSubmitFeedback = useCallback(async () => {
+    try {
+      const submitted = await submitFeedbackByScreenshot();
+      if (!submitted) {
+        return;
+      }
+
+      closeSubmitModal({
+        skipInNext1Day,
+        clearText: true,
+      });
+      toast.success(t('component.submitFeedbackSuccessModal.desc'), {
+        duration: 3000,
+        hideOnPress: true,
+      });
+      toggleFeedbackHistoryVisible(true);
+    } catch {
+      toast.error(
+        t('component.screenshotModal.submitFailed', {
+          defaultValue: 'Submit failed.',
+        }),
+      );
+    }
+  }, [closeSubmitModal, skipInNext1Day, submitFeedbackByScreenshot, t]);
 
   useEffect(() => {
     if (globalModalShown) {
@@ -139,6 +167,10 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
           style={[styles.avoidingView, IS_ANDROID && styles.maskBg]}
           activeOpacity={1}
           onPress={() => {
+            if (isSubmitting) {
+              return;
+            }
+
             if (Keyboard.isVisible()) {
               Keyboard.dismiss();
             } else {
@@ -183,7 +215,7 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
                 </View>
                 {/* Submit Area */}
                 <View style={styles.submitArea}>
-                  <ModalInput style={[]} />
+                  <ScreenshotFeedbackInput style={[]} />
                   <View style={styles.buttonGroup}>
                     <Button
                       title={t('global.cancel')}
@@ -223,24 +255,9 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
                       ]}
                       type="primary"
                       disabled={isSubmitting || !canSubmitFeedback}
-                      // loading={isSubmitting}
+                      loading={isSubmitting}
                       loadingStyle={styles.buttonLoading}
-                      onPress={wrapOnPress(evt => {
-                        submitFeedbackByScreenshot();
-                        setTimeout(() => {
-                          closeSubmitModal({
-                            skipInNext1Day,
-                            clearText: true,
-                          });
-                          toast.success(
-                            t('component.submitFeedbackSuccessModal.desc'),
-                            {
-                              duration: 3000,
-                              hideOnPress: true,
-                            },
-                          );
-                        }, 300);
-                      })}
+                      onPress={wrapOnPress(handleSubmitFeedback)}
                     />
                   </View>
                   <SwitchTextLine
@@ -370,6 +387,7 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       flex: 1,
       marginTop: 16,
       marginBottom: 16,
+      overflow: 'hidden',
       // ...makeDebugBorder(),
     },
     image: IS_IOS ? { borderRadius: 21 } : {},

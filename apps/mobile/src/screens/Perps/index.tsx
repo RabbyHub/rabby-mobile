@@ -215,7 +215,7 @@ export const PerpsOriginScreen = () => {
 
   return (
     <>
-      <NormalScreenContainer2024 type={'bg1'}>
+      <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
         {!isLight && (
           <ImageBackground
             source={require('@/assets2024/icons/perps/ImgPerpsHomeBg.png')}

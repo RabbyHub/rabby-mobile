@@ -92,7 +92,7 @@ function getCurrentAppStateForLog() {
 
 async function waitForAppActiveBeforeApproval(method: string) {
   if (isAppActive()) {
-    return;
+    return false;
   }
 
   addWalletConnectLog(
@@ -119,6 +119,7 @@ async function waitForAppActiveBeforeApproval(method: string) {
   addWalletConnectLog('request', 'app foregrounded before approval', {
     method,
   });
+  return true;
 }
 
 function normalizeRequestParams(params: unknown) {
@@ -308,9 +309,43 @@ async function executeSessionRequest(input: {
     );
   }
 
-  await waitForAppActiveBeforeApproval(method);
+  const didWait = await waitForAppActiveBeforeApproval(method);
+  let activeSession = session;
+  let activeAccount = account;
+  let activeChain = chain;
 
-  const origin = getWalletConnectSessionOrigin(session);
+  if (didWait) {
+    const nextSession = getWalletConnectSession(walletKit, event.topic);
+    if (!nextSession) {
+      throw ethErrors.provider.disconnected('WalletConnect session not found.');
+    }
+    activeSession = nextSession;
+
+    const activeRequestChain = getRequestChain(event, activeSession);
+    if (
+      !isWalletConnectMethodApproved(
+        activeSession,
+        activeRequestChain.caip2,
+        method,
+      )
+    ) {
+      throw ethErrors.provider.unauthorized({
+        message: `WalletConnect method is not approved for this session: ${method}`,
+      });
+    }
+
+    activeChain = activeRequestChain.chain;
+    const nextAccount = await resolveWalletConnectAccount(activeSession);
+    if (!nextAccount) {
+      throw ethErrors.provider.unauthorized({
+        message:
+          'No Rabby account is available for this WalletConnect session.',
+      });
+    }
+    activeAccount = nextAccount;
+  }
+
+  const origin = getWalletConnectSessionOrigin(activeSession);
   return sendRequest({
     data: {
       method,
@@ -319,18 +354,18 @@ async function executeSessionRequest(input: {
     },
     session: {
       origin,
-      name: session.peer?.metadata?.name || 'WalletConnect dapp',
-      icon: session.peer?.metadata?.icons?.[0] || '',
+      name: activeSession.peer?.metadata?.name || 'WalletConnect dapp',
+      icon: activeSession.peer?.metadata?.icons?.[0] || '',
       $mobileCtx: {
         isFromWalletConnect: true,
       },
     },
-    account,
+    account: activeAccount,
     requestContext: {
       origin,
       source: 'walletconnect',
-      chainId: chain.id,
-      accountAddress: account.address,
+      chainId: activeChain.id,
+      accountAddress: activeAccount.address,
     },
   });
 }

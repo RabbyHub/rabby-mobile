@@ -11,7 +11,7 @@ export { BottomSheetBrowser } from '@/screens/Browser/BottomSheetBrowser';
 export { BrowserManagePopup } from '@/screens/Browser/BottomSheetBrowser';
 export { BrowserFavoritePopup } from '@/screens/Browser/BottomSheetBrowser';
 export { BottomSheetDappInfoPopup } from '@/screens/Browser/BottomSheetBrowser';
-export { ModalsSubmitFeedbackByScreenshotStub } from '@/components/Screenshot/ScreenshotModal';
+export { ScreenshotFeedbackSubmitModal } from '@/components/Screenshot/SubmitFeedback/SubmitModal';
 export { ToggleCollateralModal } from '@/screens/Lending/modals/ToggleCollateralModal';
 export { default as GlobalSecurityTipStubModal } from '@/components/Security/SecurityTipStubModal';
 export { BackgroundSecureBlurView } from '@/components/customized/BlurViews';

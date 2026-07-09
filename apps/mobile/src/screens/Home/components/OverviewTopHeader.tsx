@@ -22,7 +22,7 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import RcIconEyeCC from '@/assets2024/icons/home/eye-cc.svg';
 import RcIconEyeCloseCC from '@/assets2024/icons/home/eye-close-cc.svg';
 import RcIconEyeHalfCloseCC from '@/assets2024/icons/home/eye-half-close-cc.svg';
-import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHeader';
+import { FeedbackHistoryHeaderEntry } from '@/components/Screenshot/FeedbackHistory/HeaderEntry';
 import {
   HOME_TOP_HEADER_SIZES,
   ITEM_LAYOUT_PADDING_HORIZONTAL,
@@ -304,7 +304,7 @@ export function TabsTopHeader(): JSX.Element {
         onPress={() => handleSwitchToTokenTab(1)}>
         {showRightArea ? (
           <>
-            <FeedbackEntryOnHeader style={styles.feedbackEntry} />
+            <FeedbackHistoryHeaderEntry style={styles.feedbackEntry} />
 
             <AddressListScreenButton type="address" />
             <Pressable

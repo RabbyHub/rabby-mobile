@@ -81,12 +81,12 @@ export const BottomSheetDappInfoPopup = registerAppScreen<
     })),
 });
 
-export const ModalsSubmitFeedbackByScreenshotStub = registerAppScreen<
-  typeof import('@/components/Screenshot/ScreenshotModal').ModalsSubmitFeedbackByScreenshotStub
+export const ScreenshotFeedbackSubmitModal = registerAppScreen<
+  typeof import('@/components/Screenshot/SubmitFeedback/SubmitModal').ScreenshotFeedbackSubmitModal
 >({
   loader: () =>
-    import('@/components/Screenshot/ScreenshotModal').then(m => ({
-      default: m.ModalsSubmitFeedbackByScreenshotStub,
+    import('@/components/Screenshot/SubmitFeedback/SubmitModal').then(m => ({
+      default: m.ScreenshotFeedbackSubmitModal,
     })),
 });
 
