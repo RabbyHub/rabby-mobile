@@ -24,6 +24,7 @@ import {
   extractOpenApiResponseCode,
   getOpenApiRequestDiagnosticsSnapshot,
   shouldLogOpenApiFailureResponse,
+  shouldSuppressOpenApiDiagnosticConsole,
   shouldToastOpenApiHttpErrorStatus,
 } from './openapiRequestDiagnostics';
 
@@ -123,6 +124,31 @@ describe('openapi request diagnostics', () => {
       MaskedLogValue,
     );
     expect(payload.response?.apiCode).toBe(503);
+  });
+
+  it('suppresses diagnostic console output during performance capture windows', () => {
+    const globalRef = globalThis as typeof globalThis & {
+      __RABBY_OPENAPI_DIAGNOSTIC_CONSOLE_DISABLED__?: boolean;
+      __RABBY_PERF_CAPTURE_CONSOLE_NOISE_SUPPRESSED_UNTIL__?: number;
+    };
+
+    delete globalRef.__RABBY_OPENAPI_DIAGNOSTIC_CONSOLE_DISABLED__;
+    delete globalRef.__RABBY_PERF_CAPTURE_CONSOLE_NOISE_SUPPRESSED_UNTIL__;
+    expect(shouldSuppressOpenApiDiagnosticConsole()).toBe(false);
+
+    globalRef.__RABBY_PERF_CAPTURE_CONSOLE_NOISE_SUPPRESSED_UNTIL__ =
+      Date.now() + 1000;
+    expect(shouldSuppressOpenApiDiagnosticConsole()).toBe(true);
+
+    globalRef.__RABBY_PERF_CAPTURE_CONSOLE_NOISE_SUPPRESSED_UNTIL__ =
+      Date.now() - 1;
+    expect(shouldSuppressOpenApiDiagnosticConsole()).toBe(false);
+
+    globalRef.__RABBY_OPENAPI_DIAGNOSTIC_CONSOLE_DISABLED__ = true;
+    expect(shouldSuppressOpenApiDiagnosticConsole()).toBe(true);
+
+    delete globalRef.__RABBY_OPENAPI_DIAGNOSTIC_CONSOLE_DISABLED__;
+    delete globalRef.__RABBY_PERF_CAPTURE_CONSOLE_NOISE_SUPPRESSED_UNTIL__;
   });
 
   it('builds a concise toast message for http error responses', () => {
