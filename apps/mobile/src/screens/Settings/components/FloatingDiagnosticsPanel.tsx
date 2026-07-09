@@ -14,10 +14,7 @@ import { useAutoLockCountDown } from './LockAbout';
 import { colord } from 'colord';
 import { NEED_DEVSETTINGBLOCKS } from '@/constant';
 import { useFloatingView } from '@/hooks/appSettings';
-import {
-  Gesture,
-  GestureDetector,
-} from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { RcIconLogo } from '@/assets/icons/common';
 import { Text, AnimateableText } from '@/components/Typography';
 import {

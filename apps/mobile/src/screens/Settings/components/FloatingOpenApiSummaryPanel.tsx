@@ -8,10 +8,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
-import {
-  Gesture,
-  GestureDetector,
-} from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import { AnimateableText, Text } from '@/components/Typography';
 import { isNonPublicProductionEnv, NEED_DEVSETTINGBLOCKS } from '@/constant';
