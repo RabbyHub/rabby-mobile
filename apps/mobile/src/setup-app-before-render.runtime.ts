@@ -7,7 +7,6 @@ import { InteractionManager } from 'react-native';
 import { runIIFEFunc } from './core/utils/store';
 import { startSubscribeLangChange } from './hooks/lang';
 import { connectPushServerOnBootstrap } from './core/notifications';
-import { startRestoreWalletConnectSessions } from './core/walletconnect/client';
 
 import { startManageAccountStoreLifecycle } from './hooks/account';
 
@@ -51,6 +50,7 @@ import {
 import { startProcessMultiCurveEvents } from './store/curve24h';
 import { startProcessAccountBalanceEvents } from './store/balanceAccountSelection';
 import { traceAndroidInstant } from './core/utils/androidTrace';
+import { runAfterHomePostStartupReady } from './core/utils/homeStartupReady';
 import * as apisAutoLock from './core/apis/autoLock';
 import { isUnlockSessionValid } from './core/apis/lock';
 import { startWatchLayoutChange } from './hooks/useAppLayout';
@@ -65,6 +65,9 @@ import {
 import { startInitReadableAccountStores } from './setup-readable-account-stores';
 
 const UNLOCKED_STORES_AFTER_UNLOCK_DELAY_MS = 800;
+const WALLETCONNECT_RESTORE_AFTER_HOME_IDLE_DELAY_MS = 60000;
+const WALLETCONNECT_RESTORE_HOME_READY_FALLBACK_MS = 10000;
+const WALLETCONNECT_RESTORE_IDLE_TIMEOUT_MS = 10000;
 
 startComputationThread();
 startSubscribeLangChange();
@@ -174,15 +177,83 @@ function startInitStoresOnUnlock() {
 
 startInitStoresOnUnlock();
 
+let walletConnectRestoreScheduled = false;
+
+function startWalletConnectRestore(reason: string) {
+  traceAndroidInstant('global_task.walletconnect_restore.fire', {
+    reason,
+  });
+  import('./core/walletconnect/client')
+    .then(({ startRestoreWalletConnectSessions }) => {
+      startRestoreWalletConnectSessions();
+    })
+    .catch(error => {
+      traceAndroidInstant('global_task.walletconnect_restore.error', {
+        reason,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      console.warn('startWalletConnectRestoreAfterHomeReady::error', error);
+    });
+}
+
+function startWalletConnectRestoreAfterIdle(reason: string) {
+  InteractionManager.runAfterInteractions(() => {
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(
+        () => {
+          startWalletConnectRestore(reason);
+        },
+        {
+          timeout: WALLETCONNECT_RESTORE_IDLE_TIMEOUT_MS,
+        },
+      );
+      return;
+    }
+
+    startWalletConnectRestore(reason);
+  });
+}
+
+function startWalletConnectRestoreAfterHomeReady(reason: string) {
+  if (walletConnectRestoreScheduled) {
+    traceAndroidInstant('global_task.walletconnect_restore.schedule_skipped', {
+      reason,
+    });
+    return;
+  }
+
+  walletConnectRestoreScheduled = true;
+  traceAndroidInstant('global_task.walletconnect_restore.schedule', {
+    reason,
+    delayMs: WALLETCONNECT_RESTORE_AFTER_HOME_IDLE_DELAY_MS,
+    idleTimeoutMs: WALLETCONNECT_RESTORE_IDLE_TIMEOUT_MS,
+  });
+
+  runAfterHomePostStartupReady(
+    () => {
+      setTimeout(() => {
+        traceAndroidInstant('global_task.walletconnect_restore.idle_wait_start', {
+          reason,
+        });
+        startWalletConnectRestoreAfterIdle(reason);
+      }, WALLETCONNECT_RESTORE_AFTER_HOME_IDLE_DELAY_MS);
+    },
+    {
+      label: 'walletconnect_restore',
+      fallbackMs: WALLETCONNECT_RESTORE_HOME_READY_FALLBACK_MS,
+    },
+  );
+}
+
 function startWalletConnectStartupPolicy() {
   if (keyringService.isUnlocked() || isUnlockSessionValid()) {
     traceAndroidInstant('global_task.walletconnect_restore.already_unlocked');
-    startRestoreWalletConnectSessions();
+    startWalletConnectRestoreAfterHomeReady('already_unlocked');
   }
 
   keyringService.on('unlock', () => {
     traceAndroidInstant('global_task.walletconnect_restore.unlock_event');
-    startRestoreWalletConnectSessions();
+    startWalletConnectRestoreAfterHomeReady('unlock_event');
   });
 }
 
