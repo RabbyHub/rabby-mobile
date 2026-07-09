@@ -1,5 +1,11 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react-native';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react-native';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 const mockApiLedger = {
@@ -86,7 +92,12 @@ jest.mock('@/core/apis/mnemonic', () => ({
   activeAndPersistAccountsByMnemonics: jest.fn(),
 }));
 
-jest.mock('@/assets2024/icons/common/setting-cc.svg', () => () => null);
+jest.mock('@/assets2024/icons/common/setting-cc.svg', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+
+  return () => <Text>settings</Text>;
+});
 
 jest.mock('@/components/Typography', () => ({
   Text: require('react-native').Text,
@@ -110,7 +121,20 @@ jest.mock('./AccountListView', () => {
   const { Text } = require('react-native');
 
   return {
-    AccountListView: () => <Text>account-list</Text>,
+    AccountListView: ({
+      accounts,
+    }: {
+      accounts: Array<{ address: string; index: number }>;
+    }) => (
+      <>
+        <Text>account-list</Text>
+        {accounts.map(account => (
+          <Text key={account.address}>
+            {account.index}:{account.address}
+          </Text>
+        ))}
+      </>
+    ),
   };
 });
 
@@ -143,8 +167,12 @@ jest.mock('i18next', () => ({
   t: (key: string) => key,
 }));
 
+const mockStartTransition = jest.spyOn(React, 'startTransition');
 const { ImportMoreAddress } =
   require('./ImportMoreAddress') as typeof import('./ImportMoreAddress');
+const {
+  createGlobalBottomSheetModal2024,
+} = require('@/components2024/GlobalBottomSheetModal');
 
 describe('ImportMoreAddress', () => {
   let consoleErrorSpy: jest.SpyInstance;
@@ -159,6 +187,7 @@ describe('ImportMoreAddress', () => {
     mockApiLedger.getAddresses.mockRejectedValue(
       new Error('DisconnectedDeviceDuringOperation'),
     );
+    mockStartTransition.mockImplementation(callback => callback());
     global.requestIdleCallback = ((cb: IdleRequestCallback) => {
       cb({ didTimeout: false, timeRemaining: () => 0 });
       return 0;
@@ -191,5 +220,49 @@ describe('ImportMoreAddress', () => {
     });
 
     expect(screen.getByText('Refresh')).toBeTruthy();
+  });
+
+  it('ignores address appends scheduled before the HD path setting changes', async () => {
+    const staleAddress = '0x0000000000000000000000000000000000000001';
+    const nextAddress = '0x0000000000000000000000000000000000000002';
+    const pendingTransitions: Array<() => void> = [];
+
+    mockApiLedger.getAddresses
+      .mockResolvedValueOnce([{ address: staleAddress, index: 1 }])
+      .mockResolvedValueOnce([{ address: nextAddress, index: 1 }]);
+    mockStartTransition.mockImplementationOnce(callback => {
+      pendingTransitions.push(callback);
+    });
+
+    render(
+      <ImportMoreAddress
+        params={{
+          type: KEYRING_TYPE.LedgerKeyring,
+          brandName: 'Ledger',
+        }}
+        onCancel={jest.fn()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(pendingTransitions).toHaveLength(1);
+    });
+
+    fireEvent.press(screen.getByText('settings'));
+    const onDone = createGlobalBottomSheetModal2024.mock.calls[0][0].onDone;
+
+    act(() => {
+      onDone({ hdPath: 'BIP44', startNumber: 1 });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(`1:${nextAddress}`)).toBeTruthy();
+    });
+
+    act(() => {
+      pendingTransitions.forEach(callback => callback());
+    });
+
+    expect(screen.queryByText(`1:${staleAddress}`)).toBeNull();
   });
 });

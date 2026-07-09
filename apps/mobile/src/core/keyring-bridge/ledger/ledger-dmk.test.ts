@@ -5,6 +5,7 @@ const mockBuild = jest.fn();
 const mockSignerEthBuilder = jest.fn();
 const mockContextModule = {};
 const mockContextModuleBuild = jest.fn(() => mockContextModule);
+const mockContextModuleAddTypedDataLoader = jest.fn();
 const mockContextModuleRemoveDefaultLoaders = jest.fn();
 const mockContextModuleSetBlindSigningReporter = jest.fn();
 const mockContextModuleSetChain = jest.fn();
@@ -67,6 +68,7 @@ jest.mock('@/core/storage/mmkv', () => ({
 jest.mock('@ledgerhq/context-module', () => ({
   ContextModuleBuilder: jest.fn(() => ({
     build: mockContextModuleBuild,
+    addTypedDataLoader: mockContextModuleAddTypedDataLoader.mockReturnThis(),
     removeDefaultLoaders:
       mockContextModuleRemoveDefaultLoaders.mockReturnThis(),
     setBlindSigningReporter:
@@ -552,6 +554,9 @@ describe('ledger DMK bridge discovery', () => {
       expect.objectContaining({ report: expect.any(Function) }),
     );
     expect(mockContextModuleRemoveDefaultLoaders).toHaveBeenCalledTimes(1);
+    expect(mockContextModuleAddTypedDataLoader).toHaveBeenCalledWith(
+      expect.objectContaining({ load: expect.any(Function) }),
+    );
     expect(signerBuilder.withContextModule).toHaveBeenCalledWith(
       mockContextModule,
     );
@@ -588,6 +593,7 @@ describe('ledger DMK bridge discovery', () => {
       expect.objectContaining({ report: expect.any(Function) }),
     );
     expect(mockContextModuleRemoveDefaultLoaders).not.toHaveBeenCalled();
+    expect(mockContextModuleAddTypedDataLoader).not.toHaveBeenCalled();
     expect(signerBuilder.withContextModule).toHaveBeenCalledWith(
       mockContextModule,
     );
