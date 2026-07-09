@@ -54,6 +54,9 @@ const WALLETCONNECT_TRANSACTION_RETURN_TOASTS = {
   },
 } as const;
 
+const ETH_SIGN_TYPED_DATA_METHOD = 'eth_signTypedData';
+const ETH_SIGN_TYPED_DATA_V4_METHOD = 'eth_signTypedData_v4';
+
 function isWalletConnectTransactionMethod(method?: string) {
   return !!method && WALLETCONNECT_SIGN_METHODS.includes(method);
 }
@@ -158,6 +161,32 @@ function normalizeSwitchEthereumChainId(params: unknown) {
   }
 
   return chainId;
+}
+
+function normalizeWalletConnectProviderRequest(
+  method: string,
+  params: unknown,
+) {
+  const normalizedParams = normalizeRequestParams(params);
+  if (
+    method !== ETH_SIGN_TYPED_DATA_METHOD ||
+    Array.isArray(normalizedParams[0])
+  ) {
+    return {
+      method,
+      params: normalizedParams,
+    };
+  }
+
+  return {
+    method: ETH_SIGN_TYPED_DATA_V4_METHOD,
+    params: [
+      normalizedParams[0],
+      typeof normalizedParams[1] === 'string'
+        ? normalizedParams[1]
+        : JSON.stringify(normalizedParams[1]),
+    ],
+  };
 }
 
 function getRpcError(error: unknown) {
@@ -346,10 +375,12 @@ async function executeSessionRequest(input: {
   }
 
   const origin = getWalletConnectSessionOrigin(activeSession);
+  const providerRequest = normalizeWalletConnectProviderRequest(method, params);
+
   return sendRequest({
     data: {
-      method,
-      params: normalizeRequestParams(params),
+      method: providerRequest.method,
+      params: providerRequest.params,
       $ctx: {},
     },
     session: {
