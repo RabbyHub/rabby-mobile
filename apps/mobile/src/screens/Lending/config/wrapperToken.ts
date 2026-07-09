@@ -1,4 +1,4 @@
-import { CHAINS, CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@debank/common';
 
 const wrapperToken = {
   [CHAINS_ENUM.ETH]: {
