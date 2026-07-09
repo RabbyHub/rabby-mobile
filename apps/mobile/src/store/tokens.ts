@@ -26,6 +26,7 @@ import PQueue from 'p-queue';
 import { ResourceBaseStore } from './_resourceBase';
 import type { ObservableResourceValueSource } from './_resourceFlow';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { uniqBy } from 'lodash';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
@@ -125,6 +126,9 @@ const compareByUsdValueDesc = (a: ITokenItem, b: ITokenItem) => {
 const sortByUsdValueDesc = (list: ITokenItem[]) =>
   list.slice().sort(compareByUsdValueDesc);
 
+const getTokenUniqueKey = (token: ITokenItem) =>
+  `${token.chain.toLowerCase()}:${token.id.toLowerCase()}`;
+
 const replacePreviousCoreTokensWithCacheTokens = (
   previousTokens: ITokenItem[],
   cacheTokens: ITokenItem[],
@@ -137,11 +141,11 @@ const replacePreviousCoreTokensWithCacheTokens = (
     previousTokens.every(token => token.is_core)
   ) {
     const filteredTokens = cacheNoCoreTokens.filter(token => !token.is_core);
-    return [...cacheTokens, ...filteredTokens];
+    return uniqBy([...cacheTokens, ...filteredTokens], getTokenUniqueKey);
   }
   const previousNonCoreTokens = previousTokens.filter(token => !token.is_core);
 
-  return [...cacheTokens, ...previousNonCoreTokens];
+  return uniqBy([...cacheTokens, ...previousNonCoreTokens], getTokenUniqueKey);
 };
 
 const replaceTokensByChain = (
