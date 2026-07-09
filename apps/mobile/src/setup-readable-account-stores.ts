@@ -1,21 +1,11 @@
-import nftListStore from './store/nfts';
-import useProtocolListStore from './store/protocols';
-import tokenListStore from './store/tokens';
 import { runStartupDiagnosticTask } from './core/utils/startupDiagnostics';
+import { startReadableAccountHeavyStoreInitializers } from './store/initializers';
 
 async function initReadableAccountStores() {
   return runStartupDiagnosticTask('initReadableAccountStores', {}, async () => {
     console.time('initReadableAccountStores');
     try {
-      await runStartupDiagnosticTask('tokenListStore.initStore', {}, () =>
-        tokenListStore.getState().initStore(),
-      );
-      await runStartupDiagnosticTask('nftListStore.initStore', {}, () =>
-        nftListStore.getState().initStore(),
-      );
-      await runStartupDiagnosticTask('protocolListStore.initStore', {}, () =>
-        useProtocolListStore.getState().initStore(),
-      );
+      await startReadableAccountHeavyStoreInitializers();
     } finally {
       console.timeEnd('initReadableAccountStores');
     }
