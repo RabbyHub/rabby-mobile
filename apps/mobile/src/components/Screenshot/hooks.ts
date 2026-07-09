@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Dimensions, Image, ImageResolvedAssetSource } from 'react-native';
+import { useCallback } from 'react';
+import { Image, ImageResolvedAssetSource } from 'react-native';
 import RNFS from 'react-native-fs';
 
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
@@ -8,19 +8,13 @@ import { AppScreenshotFS, appScreenshotFS } from '@/core/storage/fs';
 import { coerceNumber } from '@/utils/coerce';
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
-import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
-import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { useRefState } from '@/hooks/common/useRefState';
-import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
+import { IS_ANDROID } from '@/core/native/utils';
 import { isNonPublicProductionEnv } from '@/constant';
 import { getScreenshotFeedbackExtra } from './utils';
 import { getGlobalScreenCapturable } from '@/hooks/native/security';
 import { pick } from 'lodash';
-import {
-  resolveValFromUpdater,
-  runDevIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 import DeviceUtils from '@/core/utils/device';
@@ -30,19 +24,17 @@ import {
   MODAL_GATE_IDS,
   subscribeModalGateDebugSnapshot,
 } from '@/utils/modalGate';
+import { makeDeviceUUID } from '@/core/apis/device';
 
 export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT =
   IS_ANDROID && !DeviceUtils.isGteAndroid(14);
-type LocalUserFeedbackItem = Pick<UserFeedbackItem, 'id' | 'create_at'>;
 type ScreenshotFeedbackStore = {
   viewedHomeTip: boolean;
-  feedbacks: LocalUserFeedbackItem[];
   showFeedbackOnScreenshot_20250923: boolean | null;
   disableScreenshotToReportUntil: number; // timestamp
 };
 const getDefaultValueFeedback = (): ScreenshotFeedbackStore => ({
   viewedHomeTip: FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
-  feedbacks: [] as LocalUserFeedbackItem[],
   showFeedbackOnScreenshot_20250923: true,
   disableScreenshotToReportUntil: -1,
 });
@@ -76,14 +68,6 @@ export const storeApiScreenshotReport = {
   },
 };
 
-// runDevIIFEFunc(() => {
-//   appJsonStore.setItem('@screenshotFeedback', {
-//     viewedHomeTip: false,
-//     feedbacks: [],
-//     showFeedbackOnScreenshot_20250923: true,
-//     disableScreenshotToReportUntil: -1,
-//   });
-// });
 const screenshotFeedbackStore = zustandByMMKV(
   APP_MMKV_WEAK_KEYS.SCREENSHOT_FEEDBACK,
   getDefaultValueFeedback(),
@@ -159,9 +143,7 @@ export function useScreenshotToReportEnabled() {
       })),
     );
 
-  const isShowFeedbackOnScreenshot = useMemo(() => {
-    return showFeedbackOnScreenshot_20250923 != false;
-  }, [showFeedbackOnScreenshot_20250923]);
+  const isShowFeedbackOnScreenshot = showFeedbackOnScreenshot_20250923 != false;
 
   return {
     disableScreenshotToReportUntil: disableScreenshotToReportUntil,
@@ -171,7 +153,7 @@ export function useScreenshotToReportEnabled() {
   };
 }
 
-export const getShowFeedbackOnScreenshotCapture = () => {
+const getShowFeedbackOnScreenshotCapture = () => {
   const values = screenshotFeedbackStore.getState();
   return isEnabledScreenshotToReport({
     showFeedbackOnScreenshot: values.showFeedbackOnScreenshot_20250923,
@@ -226,127 +208,26 @@ export function useViewedHomeTip() {
   };
 }
 
-export function sortFeedbackItemByCreateAtDesc(
-  a: LocalUserFeedbackItem,
-  b: LocalUserFeedbackItem,
-) {
-  return b.create_at - a.create_at;
-}
-
-export const LATEST_LOCAL_FEEDBACK_LIMIT = 10;
-
-const onFeedbackSubmitted = (idOrItem: LocalUserFeedbackItem) => {
-  setScreenshotFeedback(prev => {
-    const list = prev.feedbacks;
-
-    const newFeedback = {
-      id: idOrItem.id,
-      create_at: idOrItem.create_at || Date.now(),
-    };
-    list.push(newFeedback);
-    // order by timestamp desc
-    list.sort(sortFeedbackItemByCreateAtDesc);
-
-    return {
-      ...prev,
-      feedbacks: Array.from(list).slice(0, LATEST_LOCAL_FEEDBACK_LIMIT),
-    };
-  });
-};
-
-const clearFeedbacks = () => {
-  setScreenshotFeedback(prev => ({ ...prev, feedbacks: [] }));
-};
-
-const removeLocalFeedback = (id: string) => {
-  setScreenshotFeedback(prev => {
-    const list = prev.feedbacks.filter(item => item.id !== id);
-    return {
-      ...prev,
-      feedbacks: Array.from(list).slice(0, LATEST_LOCAL_FEEDBACK_LIMIT),
-    };
-  });
-};
-
-function useScreenshotFeedbacks() {
-  return {
-    onFeedbackSubmitted,
-    clearFeedbacks,
-    removeLocalFeedback,
-  };
-}
-
-export function useLatestRepliedFeedbacks() {
-  const { feedbacks } = screenshotFeedbackStore(
-    useShallow(s => ({
-      feedbacks: s.feedbacks,
-    })),
-  );
-
-  const { localFeedbacks } = useMemo(() => {
-    return {
-      localFeedbacks: feedbacks
-        .sort(sortFeedbackItemByCreateAtDesc)
-        .slice(0, LATEST_LOCAL_FEEDBACK_LIMIT),
-    };
-  }, [feedbacks]);
-
-  const [{ value: lastRepliedFeedback, loading, error }, loadFeedbacks] =
-    useAsyncFn(async () => {
-      if (!localFeedbacks.length) return;
-
-      const rtFeedbacks = await openapi.getUserFeedbackList(
-        localFeedbacks.map(localFeedback => localFeedback.id),
-      );
-
-      // console.debug('[debug] rtFeedbacks', rtFeedbacks);
-
-      const latestReplied = rtFeedbacks
-        .filter(item => item.status === 'complete')
-        .sort(sortFeedbackItemByCreateAtDesc)
-        .at(0);
-
-      return latestReplied;
-    }, [localFeedbacks]);
-
-  useEffect(() => {
-    loadFeedbacks();
-
-    const timer = setInterval(
-      () => {
-        loadFeedbacks();
-      },
-      __DEV__ ? 5 * 1e3 : 30 * 1e3,
-    );
-
-    return () => {
-      clearInterval(timer);
-    };
-  }, [loadFeedbacks]);
-
-  return { lastRepliedFeedback, loading, error };
-}
-
 type FeedbackByScreenshotState = {
   lastScreenshot: ImageResolvedAssetSource | null;
   submitModalShown: boolean;
+  isShowHistory: boolean;
+  feedbackHistoryRefreshKey: number;
   feedbackText: string;
   uploadedImageUrl: string;
 
   totalBalanceText: string;
-
-  viewingFeedback: UserFeedbackItem | null;
 };
 function getDefaultValue(): FeedbackByScreenshotState {
   return {
     lastScreenshot: null,
     submitModalShown: false,
+    isShowHistory: false,
+    feedbackHistoryRefreshKey: 0,
     feedbackText: '',
     uploadedImageUrl: '',
 
     totalBalanceText: '',
-
-    viewingFeedback: null,
   };
 }
 export const SCREENSHOT_FEEDBACK_MAX_LENGTH = 301;
@@ -370,34 +251,6 @@ function setFeedbackByScreenshot(
   });
 }
 
-const startViewingFeedback = (feedback: UserFeedbackItem) => {
-  setFeedbackByScreenshot(prev => ({
-    ...prev,
-    viewingFeedback: feedback,
-  }));
-};
-
-const finishViewFeedback = () => {
-  const viewingFeedback = feedbackByScreenshotStore.getState().viewingFeedback;
-  if (viewingFeedback) {
-    removeLocalFeedback(viewingFeedback?.id);
-  }
-  setFeedbackByScreenshot(prev => ({
-    ...prev,
-    viewingFeedback: null,
-  }));
-};
-
-export function useViewingFeedback() {
-  const viewingFeedback = feedbackByScreenshotStore(s => s.viewingFeedback);
-
-  return {
-    viewingFeedback,
-    startViewingFeedback,
-    finishViewFeedback,
-  };
-}
-
 export function screenshotModalStartSyncNetworth() {
   perfEvents.subscribe('SCENE_24H_BALANCE_UPDATED', ({ combinedData }) => {
     const netWorth = combinedData.netWorth;
@@ -416,6 +269,40 @@ export function useSubmitFeedbackModalVisible() {
   };
 }
 
+export function useFeedbackHistoryVisible() {
+  const { isShowHistory, feedbackHistoryRefreshKey } =
+    feedbackByScreenshotStore(
+      useShallow(s => ({
+        isShowHistory: s.isShowHistory,
+        feedbackHistoryRefreshKey: s.feedbackHistoryRefreshKey,
+      })),
+    );
+
+  return {
+    isShowHistory: isShowHistory,
+    feedbackHistoryRefreshKey,
+    toggleFeedbackHistoryVisible,
+  };
+}
+
+export function useScreenshotFeedbackTotalBalanceText() {
+  return feedbackByScreenshotStore(s => s.totalBalanceText);
+}
+
+export const toggleFeedbackHistoryVisible = (v?: boolean) => {
+  setFeedbackByScreenshot(prev => {
+    const isShowHistory = v ?? !prev.isShowHistory;
+
+    return {
+      ...prev,
+      isShowHistory,
+      feedbackHistoryRefreshKey: isShowHistory
+        ? prev.feedbackHistoryRefreshKey + 1
+        : prev.feedbackHistoryRefreshKey,
+    };
+  });
+};
+
 const shouldToastFeedbackByScreenshot = () => {
   if (FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) return false;
   if (!getGlobalScreenCapturable()) return false;
@@ -423,10 +310,7 @@ const shouldToastFeedbackByScreenshot = () => {
   if (storeApiScreenshotReport.isScreenshotReportFree()) return false;
 
   const feedbackByScreenshot = feedbackByScreenshotStore.getState();
-  return (
-    !feedbackByScreenshot.viewingFeedback &&
-    !feedbackByScreenshot.submitModalShown
-  );
+  return !feedbackByScreenshot.submitModalShown;
 };
 
 const SCREENSHOT_FEEDBACK_MODAL_GATE_EXCLUDE_IDS = [
@@ -466,6 +350,7 @@ const setLastScreenshotNow = (
     lastScreenshot: image,
     submitModalShown: !!image,
     feedbackText: '',
+    uploadedImageUrl: '',
   }));
 
   if (image?.uri && uploadNow) {
@@ -626,20 +511,24 @@ export function startSubscribeUserDidTakeScreenshot() {
 const onChangeFeedback = (feedback: string) => {
   setFeedbackByScreenshot(prev => ({
     ...prev,
-    feedbackText: feedback.slice(0, SCREENSHOT_FEEDBACK_MAX_LENGTH), // Limit feedback to 1000 characters
+    feedbackText: feedback.slice(0, SCREENSHOT_FEEDBACK_MAX_LENGTH),
   }));
 };
 
 export function useFeedbackOnScreenshot() {
-  const submitFeedbackOnScreenshot = feedbackByScreenshotStore(s => s);
+  const { submitModalShown, feedbackText, uploadedImageUrl } =
+    feedbackByScreenshotStore(
+      useShallow(s => ({
+        submitModalShown: s.submitModalShown,
+        feedbackText: s.feedbackText,
+        uploadedImageUrl: s.uploadedImageUrl,
+      })),
+    );
 
   return {
-    globalModalShown: submitFeedbackOnScreenshot.submitModalShown,
-    feedbackText: submitFeedbackOnScreenshot.feedbackText,
-    feedbackOverLimit:
-      submitFeedbackOnScreenshot.feedbackText.length >
-      SCREENSHOT_FEEDBACK_MAX_LENGTH - 1,
-    uploadedImageUrl: submitFeedbackOnScreenshot.uploadedImageUrl,
+    globalModalShown: submitModalShown,
+    feedbackText,
+    uploadedImageUrl,
     onChangeFeedback,
   };
 }
@@ -660,7 +549,9 @@ const closeSubmitModal = ({
   }));
 };
 
-async function getScreenshotFeedbackExtraSafely(totalBalanceText: string) {
+export async function getScreenshotFeedbackExtraSafely(
+  totalBalanceText: string,
+) {
   try {
     return await getScreenshotFeedbackExtra({ totalBalanceText });
   } catch (error) {
@@ -679,23 +570,23 @@ export function useSubmitFeedbackOnScreenshot() {
 
   const { globalModalShown, feedbackText, uploadedImageUrl } =
     useFeedbackOnScreenshot();
-  const { onFeedbackSubmitted } = useScreenshotFeedbacks();
 
   const { stateRef: isSubmittingRef, setRefState: setSubmitting } =
     useRefState(false);
   const submitFeedbackByScreenshot = useCallback(
     async function () {
-      if (isSubmittingRef.current) return;
+      if (isSubmittingRef.current) return false;
       setSubmitting(true, true);
 
-      let submitResult: UserFeedbackItem | null = null;
       try {
         let imageUrl = uploadedImageUrl;
         if (!imageUrl && lastScreenshot?.uri) {
           const result = await AppScreenshotFS.uploadFile<{
             image_url: string;
           }>(lastScreenshot?.uri);
-          if (!result?.image_url) return;
+          if (!result?.image_url) {
+            throw new Error('Screenshot upload did not return an image url');
+          }
           imageUrl = result.image_url;
         }
 
@@ -709,23 +600,18 @@ export function useSubmitFeedbackOnScreenshot() {
         // console.debug('[debug] extraInfo', extraInfo);
 
         // TODO: report to sentry here, add extra fields here
-        submitResult = await openapi.postUserFeedback({
-          title: '',
+        await openapi.postClientFeedbackMessage({
+          device_id: makeDeviceUUID().deviceUUID,
           image_url_list: [imageUrl],
           content: feedbackText,
           extra: extraInfo,
         });
-        // TODO: report to sentry here, add submitResult.id as extra field here
+        return true;
       } catch (error) {
         console.error('feedback submission error', error);
+        throw error;
       } finally {
         setSubmitting(false, true);
-      }
-
-      if (submitResult?.id) {
-        onFeedbackSubmitted(submitResult);
-      } else {
-        console.error('Feedback submission failed, please try again later');
       }
     },
     [
@@ -735,7 +621,6 @@ export function useSubmitFeedbackOnScreenshot() {
       lastScreenshot?.uri,
       isSubmittingRef,
       setSubmitting,
-      onFeedbackSubmitted,
     ],
   );
 

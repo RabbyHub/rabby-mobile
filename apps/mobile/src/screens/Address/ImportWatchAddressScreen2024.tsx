@@ -107,7 +107,6 @@ export const ImportWatchAddressScreen2024 = () => {
         params: {
           type: KEYRING_TYPE.WatchAddressKeyring,
           address: normalizedAddress,
-          alias: ellipsisAddress(normalizedAddress),
           brandName: KEYRING_CLASS.WATCH,
         },
       });

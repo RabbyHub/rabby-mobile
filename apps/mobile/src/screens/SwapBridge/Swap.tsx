@@ -53,6 +53,7 @@ import {
 import { refreshIdAtom, useRabbyFeeVisible } from '../Swap/hooks/atom';
 import { buildDexSwap, dexSwap } from '../Swap/hooks/swap';
 import { Button } from '@/components2024/Button';
+import { SignRiskWarning } from '@/components/SignRiskWarning';
 import {
   PropsForAccountSwitchScreen,
   ScreenSceneAccountProvider,
@@ -1164,6 +1165,51 @@ const Swap = ({
 
   const showRiskTips =
     isSlippageLow || isSlippageHigh || showLoss || miniSignGasFeeTooHigh;
+  const showRiskConfirm = showRiskTips && !swapBtnDisabled;
+  const [riskChecked, setRiskChecked] = useState(false);
+  const riskConfirmKey = useMemo(
+    () =>
+      [
+        showRiskConfirm,
+        chain,
+        payToken?.chain,
+        payToken?.id,
+        receiveToken?.chain,
+        receiveToken?.id,
+        payAmount,
+        activeProvider?.name,
+        activeProvider?.actualReceiveAmount,
+        activeProvider?.quote?.tx?.data,
+        isApprove,
+        isSlippageLow,
+        isSlippageHigh,
+        showLoss,
+        miniSignGasFeeTooHigh,
+      ].join('|'),
+    [
+      showRiskConfirm,
+      chain,
+      payToken?.chain,
+      payToken?.id,
+      receiveToken?.chain,
+      receiveToken?.id,
+      payAmount,
+      activeProvider?.name,
+      activeProvider?.actualReceiveAmount,
+      activeProvider?.quote?.tx?.data,
+      isApprove,
+      isSlippageLow,
+      isSlippageHigh,
+      showLoss,
+      miniSignGasFeeTooHigh,
+    ],
+  );
+  const riskConfirmDisabled = showRiskConfirm && !riskChecked;
+
+  useEffect(() => {
+    setRiskChecked(false);
+  }, [riskConfirmKey]);
+
   const shouldPauseMiniSignerEffects =
     useMiniSignerEffectPause(miniSignLoading);
 
@@ -1709,6 +1755,12 @@ const Swap = ({
                 : undefined
             }>
             <View>
+              {showRiskConfirm ? (
+                <SignRiskWarning
+                  checked={riskChecked}
+                  onToggle={() => setRiskChecked(checked => !checked)}
+                />
+              ) : null}
               {canShowDirectSubmit ? (
                 <DirectSignBtn
                   ref={directSignBtnRef}
@@ -1721,12 +1773,13 @@ const Swap = ({
                   showTextOnLoading
                   authTitle={t('page.whitelist.confirmPassword')}
                   title={btnText}
-                  onFinished={handleSwap}
+                  onFinished={() => handleSwap({ ignoreGasFee: riskChecked })}
                   disabled={
                     swapBtnDisabled ||
                     !canDirectSign ||
                     miniSignLoading ||
-                    approveTxPending
+                    approveTxPending ||
+                    riskConfirmDisabled
                   }
                   type={'primary'}
                   syncUnlockTime
@@ -1743,7 +1796,6 @@ const Swap = ({
                   }}
                   account={currentAccount}
                   showHardWalletProcess
-                  showRiskTips={showRiskTips && !swapBtnDisabled}
                 />
               ) : (
                 <Button
@@ -1767,14 +1819,14 @@ const Swap = ({
                       return;
                     }
                     // gotoSwap();
-                    handleSwap();
+                    handleSwap({ ignoreGasFee: riskChecked });
                   }}
                   title={btnText}
                   disabled={
                     isSupportedChain
-                      ? swapBtnDisabled
+                      ? swapBtnDisabled || riskConfirmDisabled
                       : externalDapps.length > 0
-                      ? false
+                      ? riskConfirmDisabled
                       : true
                   }
                 />
@@ -1787,7 +1839,7 @@ const Swap = ({
           onCancel={() => {
             setTwoStepApproveModalVisible(false);
           }}
-          onConfirm={handleSwap}
+          onConfirm={() => handleSwap({ ignoreGasFee: riskChecked })}
         />
 
         {userAddress && payToken && receiveToken && chain ? (

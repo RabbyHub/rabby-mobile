@@ -39,6 +39,7 @@ import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import BridgeShowMore, { RecommendFromToken } from './BridgeShowMore';
 import { tokenPriceImpact, useBridge } from '../hooks/token';
 import { Button } from '@/components2024/Button';
+import { SignRiskWarning } from '@/components/SignRiskWarning';
 
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 import { CHAINS_ENUM } from '@debank/common';
@@ -1244,27 +1245,6 @@ export const BridgeContent = ({
     t,
   ]);
 
-  const handleConfirm = () => {
-    if (showExternalDappTips && externalDapps.length > 0) {
-      setExternalDappOpen(true);
-      return;
-    }
-
-    if (fetchingBridgeQuote) {
-      return;
-    }
-    if (!selectedBridgeQuote) {
-      refresh(e => e + 1);
-
-      return;
-    }
-    if (selectedBridgeQuote?.shouldTwoStepApprove) {
-      setTwoStepApproveModalVisible(true);
-      return;
-    }
-    handleBridge();
-  };
-
   const switchFeePopup = useSetSettingVisible();
 
   const openFeePopup = useCallback(() => {
@@ -1286,6 +1266,67 @@ export const BridgeContent = ({
 
   const showRiskTips =
     isSlippageHigh || isSlippageLow || showLoss || miniSignGasFeeTooHigh;
+  const showRiskConfirm = showRiskTips && !btnDisabled && !miniSignLoading;
+  const [riskChecked, setRiskChecked] = useState(false);
+  const riskConfirmKey = useMemo(
+    () =>
+      [
+        showRiskConfirm,
+        fromToken?.chain,
+        fromToken?.id,
+        toToken?.chain,
+        toToken?.id,
+        amount,
+        selectedBridgeQuote?.aggregator.id,
+        selectedBridgeQuote?.bridge_id,
+        selectedBridgeQuote?.to_token_amount,
+        isSlippageHigh,
+        isSlippageLow,
+        showLoss,
+        miniSignGasFeeTooHigh,
+      ].join('|'),
+    [
+      showRiskConfirm,
+      fromToken?.chain,
+      fromToken?.id,
+      toToken?.chain,
+      toToken?.id,
+      amount,
+      selectedBridgeQuote?.aggregator.id,
+      selectedBridgeQuote?.bridge_id,
+      selectedBridgeQuote?.to_token_amount,
+      isSlippageHigh,
+      isSlippageLow,
+      showLoss,
+      miniSignGasFeeTooHigh,
+    ],
+  );
+  const riskConfirmDisabled = showRiskConfirm && !riskChecked;
+
+  useEffect(() => {
+    setRiskChecked(false);
+  }, [riskConfirmKey]);
+
+  const handleConfirm = () => {
+    if (showExternalDappTips && externalDapps.length > 0) {
+      setExternalDappOpen(true);
+      return;
+    }
+
+    if (fetchingBridgeQuote) {
+      return;
+    }
+    if (!selectedBridgeQuote) {
+      refresh(e => e + 1);
+
+      return;
+    }
+    if (selectedBridgeQuote?.shouldTwoStepApprove) {
+      setTwoStepApproveModalVisible(true);
+      return;
+    }
+    handleBridge({ ignoreGasFee: riskChecked });
+  };
 
   const [scrollEnabled, setScrollEnabled] = useState(true);
 
@@ -1499,50 +1540,62 @@ export const BridgeContent = ({
                 ? t('component.externalSwapBrideDappPopup.noDapps')
                 : undefined
             }>
-            {canShowDirectSubmit ? (
-              <DirectSignBtn
-                ref={directSignBtnRef}
-                key={`${selectedBridgeQuote?.aggregator.id}-${selectedBridgeQuote?.bridge?.id}-${refreshId}`}
-                height={BOTTOM_BUTTON_HEIGHT}
-                titleStyle={styles.bottomButtonTitle}
-                authTitle={t('page.whitelist.confirmPassword')}
-                title={t('global.confirm')}
-                loadingType="circle"
-                onFinished={handleBridge}
-                disabled={btnDisabled || !canDirectSign || miniSignLoading}
-                type={'primary'}
-                syncUnlockTime
-                onBeforeAuth={() => {
-                  clearExpiredTimer();
-                  formValuesRef.current.save(buildFormSnapshot());
-                }}
-                onCancel={() => {
-                  formValuesRef.current.clear();
-                  refresh(e => e + 1);
-                }}
-                onAuthModalDismiss={() => {
-                  formValuesRef.current.clear();
-                }}
-                account={currentAccount}
-                showHardWalletProcess
-                showRiskTips={showRiskTips && !btnDisabled && !miniSignLoading}
-                loading={miniSignLoading}
-                showTextOnLoading
-              />
-            ) : (
-              <Button
-                height={BOTTOM_BUTTON_HEIGHT}
-                onPress={handleConfirm}
-                title={btnText}
-                titleStyle={[styles.btnTitle, styles.bottomButtonTitle]}
-                loading={fetchingBridgeQuote}
-                disabled={
-                  !isSupportedChain && externalDapps.length > 0
-                    ? false
-                    : btnDisabled
-                }
-              />
-            )}
+            <View>
+              {showRiskConfirm ? (
+                <SignRiskWarning
+                  checked={riskChecked}
+                  onToggle={() => setRiskChecked(checked => !checked)}
+                />
+              ) : null}
+              {canShowDirectSubmit ? (
+                <DirectSignBtn
+                  ref={directSignBtnRef}
+                  key={`${selectedBridgeQuote?.aggregator.id}-${selectedBridgeQuote?.bridge?.id}-${refreshId}`}
+                  height={BOTTOM_BUTTON_HEIGHT}
+                  titleStyle={styles.bottomButtonTitle}
+                  authTitle={t('page.whitelist.confirmPassword')}
+                  title={t('global.confirm')}
+                  loadingType="circle"
+                  onFinished={() => handleBridge({ ignoreGasFee: riskChecked })}
+                  disabled={
+                    btnDisabled ||
+                    !canDirectSign ||
+                    miniSignLoading ||
+                    riskConfirmDisabled
+                  }
+                  type={'primary'}
+                  syncUnlockTime
+                  onBeforeAuth={() => {
+                    clearExpiredTimer();
+                    formValuesRef.current.save(buildFormSnapshot());
+                  }}
+                  onCancel={() => {
+                    formValuesRef.current.clear();
+                    refresh(e => e + 1);
+                  }}
+                  onAuthModalDismiss={() => {
+                    formValuesRef.current.clear();
+                  }}
+                  account={currentAccount}
+                  showHardWalletProcess
+                  loading={miniSignLoading}
+                  showTextOnLoading
+                />
+              ) : (
+                <Button
+                  height={BOTTOM_BUTTON_HEIGHT}
+                  onPress={handleConfirm}
+                  title={btnText}
+                  titleStyle={[styles.btnTitle, styles.bottomButtonTitle]}
+                  loading={fetchingBridgeQuote}
+                  disabled={
+                    !isSupportedChain && externalDapps.length > 0
+                      ? riskConfirmDisabled
+                      : btnDisabled || riskConfirmDisabled
+                  }
+                />
+              )}
+            </View>
           </Tip>
         </View>
 
@@ -1551,7 +1604,7 @@ export const BridgeContent = ({
           onCancel={() => {
             setTwoStepApproveModalVisible(false);
           }}
-          onConfirm={handleBridge}
+          onConfirm={() => handleBridge({ ignoreGasFee: riskChecked })}
         />
 
         {fromToken && toToken && Number(amount) > 0 ? (

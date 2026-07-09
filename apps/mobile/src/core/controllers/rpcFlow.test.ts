@@ -9,6 +9,9 @@ const mockGetStatsData = jest.fn();
 const mockSetStatsData = jest.fn();
 const mockSetCurrentRequestDeferFn = jest.fn();
 const mockUnLock = jest.fn();
+const mockSyncCustomTestnetChainList = jest.fn();
+const mockGetCustomTestnetList = jest.fn();
+const mockGetTestnetChainList = jest.fn();
 
 jest.mock('@sentry/react-native', () => ({
   captureException: (...args: unknown[]) => mockCaptureException(...args),
@@ -22,6 +25,7 @@ jest.mock('@/constant/chains', () => ({
   CHAINS_ENUM: {
     ETH: 'eth',
   },
+  getTestnetChainList: (...args: unknown[]) => mockGetTestnetChainList(...args),
 }));
 
 jest.mock('../services', () => ({
@@ -35,6 +39,11 @@ jest.mock('../services', () => ({
     getConnectedDapp: (...args: unknown[]) => mockGetConnectedDapp(...args),
   },
   keyringService: {},
+  customTestnetService: {
+    syncChainList: (...args: unknown[]) =>
+      mockSyncCustomTestnetChainList(...args),
+    getList: (...args: unknown[]) => mockGetCustomTestnetList(...args),
+  },
   notificationService: {
     requestApproval: (...args: unknown[]) => mockRequestApproval(...args),
     getStatsData: (...args: unknown[]) => mockGetStatsData(...args),
@@ -152,6 +161,8 @@ describe('rpcFlow SignTx chain guard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockFindChain.mockReturnValue(null);
+    mockGetCustomTestnetList.mockReturnValue([]);
+    mockGetTestnetChainList.mockReturnValue([]);
     mockGetDapp.mockReturnValue(undefined);
     mockGetConnectedDapp.mockReturnValue({
       chainId: 'eth',
@@ -204,5 +215,101 @@ describe('rpcFlow SignTx chain guard', () => {
         }),
       }),
     );
+  });
+
+  it('syncs custom testnet chains before SignTx chain validation', async () => {
+    const customChain = {
+      enum: 'CUSTOM_9001',
+      id: 9001,
+      serverId: 'custom_9001',
+    };
+    mockGetCustomTestnetList.mockReturnValue([customChain]);
+    mockGetConnectedDapp.mockReturnValue({
+      chainId: 'CUSTOM_9001',
+    });
+    mockFindChain.mockImplementation(({ enum: chainEnum, id }: any) => {
+      if (
+        mockSyncCustomTestnetChainList.mock.calls.length &&
+        (id === 9001 || chainEnum === 'CUSTOM_9001')
+      ) {
+        return customChain;
+      }
+      return null;
+    });
+    mockRequestApproval.mockResolvedValue({
+      chainId: 9001,
+    });
+    mockEthSendTransaction.mockResolvedValue('0xhash');
+
+    await expect(
+      rpcFlow({
+        data: {
+          method: 'eth_sendTransaction',
+          params: [
+            {
+              from: account.address,
+              to: '0x2222222222222222222222222222222222222222',
+            },
+          ],
+        },
+        session: {
+          origin: 'https://custom.example',
+          name: 'Custom Dapp',
+          icon: '',
+        },
+        account,
+      } as any),
+    ).resolves.toBe('0xhash');
+
+    expect(mockSyncCustomTestnetChainList).toHaveBeenCalled();
+    expect(mockRequestApproval).toHaveBeenCalled();
+    expect(mockCaptureException).not.toHaveBeenCalled();
+  });
+
+  it('does not resync custom testnet chains when chain store is already warm', async () => {
+    const customChain = {
+      enum: 'CUSTOM_9001',
+      id: 9001,
+      serverId: 'custom_9001',
+    };
+    mockGetCustomTestnetList.mockReturnValue([customChain]);
+    mockGetTestnetChainList.mockReturnValue([customChain]);
+    mockGetConnectedDapp.mockReturnValue({
+      chainId: 'CUSTOM_9001',
+    });
+    mockFindChain.mockImplementation(({ enum: chainEnum, id }: any) => {
+      if (id === 9001 || chainEnum === 'CUSTOM_9001') {
+        return customChain;
+      }
+      return null;
+    });
+    mockRequestApproval.mockResolvedValue({
+      chainId: 9001,
+    });
+    mockEthSendTransaction.mockResolvedValue('0xhash');
+
+    await expect(
+      rpcFlow({
+        data: {
+          method: 'eth_sendTransaction',
+          params: [
+            {
+              from: account.address,
+              to: '0x2222222222222222222222222222222222222222',
+            },
+          ],
+        },
+        session: {
+          origin: 'https://custom.example',
+          name: 'Custom Dapp',
+          icon: '',
+        },
+        account,
+      } as any),
+    ).resolves.toBe('0xhash');
+
+    expect(mockSyncCustomTestnetChainList).not.toHaveBeenCalled();
+    expect(mockRequestApproval).toHaveBeenCalled();
+    expect(mockCaptureException).not.toHaveBeenCalled();
   });
 });

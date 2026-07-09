@@ -56,6 +56,7 @@ import { BorrowActionPopup } from '@/screens/Lending/components/actions/BorrowAc
 import { RepayActionPopup } from '@/screens/Lending/components/actions/RepayActionPopup';
 import { HFDescription } from '@/screens/Lending/components/HFDescription';
 import { AddressListModal } from '@/screens/Address/components/MultiAssets/AddressList';
+import { ReceiveAddressListSheet } from '@/screens/Address/ReceiveAddressListSheet';
 import { ManageEmodeModal } from '@/screens/Lending/modals/ManageEmode';
 import ManageEmodeFullModal from '@/screens/Lending/modals/ManangeEmodeFullModal';
 import SelectCategoryModal from '@/screens/Lending/components/EmodeCategory/SelectCategoryModal';
@@ -77,6 +78,10 @@ import {
 } from '@/components2024/WalletConnect/WalletConnectSheets';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
+const RECEIVE_ADDRESS_LIST_MODAL_HEIGHT = Math.max(
+  Dimensions.get('window').height - 200,
+  453,
+);
 
 function getDefaultViewTypePropsPreset(
   input?: Partial<GlobalBottomSheetModalProps>,
@@ -205,6 +210,14 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.ADDRESS_LiST]: {
     snapPoints: [MODAL_MAX_HEIGHT],
     Component: AddressListModal,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset({
+      enableContentPanningGesture: true,
+      rootViewType: 'View',
+    }),
+  },
+  [MODAL_NAMES.RECEIVE_ADDRESS_LIST]: {
+    snapPoints: [RECEIVE_ADDRESS_LIST_MODAL_HEIGHT],
+    Component: ReceiveAddressListSheet,
     globalModalPropsPreset: getDefaultViewTypePropsPreset({
       enableContentPanningGesture: true,
       rootViewType: 'View',
