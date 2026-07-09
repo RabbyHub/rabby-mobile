@@ -60,6 +60,7 @@ import Video from 'react-native-video';
 import AutoLockView from '../../AutoLockView';
 import { AppBottomSheetModal } from '../../customized/BottomSheet';
 import { BottomSheetHandlableView } from '../../customized/BottomSheetHandle';
+import { ThemeColors2024 } from '@/constant/theme';
 
 const SHEET_HEIGHT = 652;
 const ONE_MB = 1024 * 1024;
@@ -1090,7 +1091,7 @@ const getStyle = createGetStyles2024(
       justifyContent: 'center',
       backgroundColor: 'rgba(0, 0, 0, 0.40)',
       borderWidth: 1,
-      borderColor: colors2024['neutral-bg-1'],
+      borderColor: ThemeColors2024.light['neutral-bg-1'],
     },
     videoPlayTriangle: {
       width: 0,
@@ -1101,7 +1102,7 @@ const getStyle = createGetStyles2024(
       borderLeftWidth: 7,
       borderTopColor: 'transparent',
       borderBottomColor: 'transparent',
-      borderLeftColor: colors2024['neutral-bg-1'],
+      borderLeftColor: ThemeColors2024.light['neutral-bg-1'],
     },
     imageWithText: {
       marginTop: 7,
