@@ -3,9 +3,6 @@ import { Observable, of } from 'rxjs';
 const mockAddTransport = jest.fn();
 const mockBuild = jest.fn();
 const mockSignerEthBuilder = jest.fn();
-const mockOpenAppDeviceAction = jest.fn(function OpenAppDeviceAction(args) {
-  return { openAppArgs: args };
-});
 const mockContextModule = {};
 const mockContextModuleBuild = jest.fn(() => mockContextModule);
 const mockContextModuleRemoveDefaultLoaders = jest.fn();
@@ -48,7 +45,6 @@ jest.mock('@ledgerhq/device-management-kit', () => ({
     ReadyWithSecureChannel: 2,
   },
   GetAppAndVersionCommand: jest.fn(),
-  OpenAppDeviceAction: mockOpenAppDeviceAction,
   isSuccessCommandResult: (...args: unknown[]) =>
     mockIsSuccessCommandResult(...args),
 }));
@@ -124,7 +120,6 @@ describe('ledger DMK bridge discovery', () => {
         },
       }),
     );
-    mockOpenAppDeviceAction.mockClear();
     mockSignerEthBuilder.mockReset();
     mockIsSuccessCommandResult.mockReset();
     mockIsSuccessCommandResult.mockImplementation(result =>
@@ -253,12 +248,9 @@ describe('ledger DMK bridge discovery', () => {
     expect(mockDmk.connect).toHaveBeenCalledTimes(2);
   });
 
-  it('drops a cached discovered device after a failed connect so the retry rescans', async () => {
+  it('connects a known Ledger id directly after a cached device connect fails', async () => {
     const deviceId = 'ledger-other-app-device-id';
     const staleDevice = { id: deviceId, name: 'Ledger stale' };
-    const freshDevice = { id: deviceId, name: 'Ledger fresh' };
-    const unsubscribe = jest.fn();
-    let observer: { next(devices: unknown[]): void } | undefined;
 
     mockDmk.connect
       .mockRejectedValueOnce(new Error('OpeningConnectionError'))
@@ -273,6 +265,30 @@ describe('ledger DMK bridge discovery', () => {
       'OpeningConnectionError',
     );
 
+    await expect(connectLedgerDeviceById(deviceId)).resolves.toBe('session-2');
+    expect(mockDmk.listenToAvailableDevices).not.toHaveBeenCalled();
+    expect(mockDmk.connect).toHaveBeenLastCalledWith({
+      device: expect.objectContaining({
+        id: deviceId,
+        name: 'Ledger',
+        transport: 'RN_BLE',
+      }),
+      sessionRefresherOptions: { isRefresherDisabled: false },
+    });
+  });
+
+  it('falls back to scanning when direct known-id connect fails', async () => {
+    const deviceId = 'ledger-direct-fallback-device-id';
+    const freshDevice = { id: deviceId, name: 'Ledger fresh' };
+    const unsubscribe = jest.fn();
+    let observer: { next(devices: unknown[]): void } | undefined;
+
+    mockDmk.connect
+      .mockRejectedValueOnce(new Error('OpeningConnectionError'))
+      .mockResolvedValueOnce('session-2');
+
+    const { connectLedgerDeviceById } = require('./ledger-dmk');
+
     mockDmk.listenToAvailableDevices.mockReturnValueOnce({
       subscribe: nextObserver => {
         observer = nextObserver;
@@ -281,6 +297,7 @@ describe('ledger DMK bridge discovery', () => {
     });
 
     const retry = connectLedgerDeviceById(deviceId);
+    await new Promise(resolve => setImmediate(resolve));
 
     expect(mockDmk.listenToAvailableDevices).toHaveBeenCalledWith({
       transport: 'RN_BLE',
@@ -291,7 +308,7 @@ describe('ledger DMK bridge discovery', () => {
     await expect(retry).resolves.toBe('session-2');
     expect(mockDmk.connect).toHaveBeenLastCalledWith({
       device: freshDevice,
-      sessionRefresherOptions: { isRefresherDisabled: true },
+      sessionRefresherOptions: { isRefresherDisabled: false },
     });
     expect(unsubscribe).toHaveBeenCalledTimes(1);
     expect(mockDmk.stopDiscovering).toHaveBeenCalledTimes(1);
@@ -365,7 +382,53 @@ describe('ledger DMK bridge discovery', () => {
     ).rejects.toThrow('0x6985');
   });
 
-  it('skips app commands when the session state already has Ethereum open', async () => {
+  it('preserves nested DMK error details for UI display', async () => {
+    const deviceId = 'ledger-detailed-error-device-id';
+    const sessionId = 'session-1';
+    const signer = {
+      signTransaction: jest.fn(() => ({
+        observable: of({
+          status: 'error',
+          error: {
+            name: 'DeviceActionStateError',
+            message: {
+              message: 'Blind signing must be enabled',
+              statusCode: '0x6a80',
+              statusText: 'INCORRECT_DATA',
+              reason: 'Contract data disabled',
+            },
+            originalError: {
+              message: 'TransportStatusError',
+              errorCode: '6a80',
+            },
+            cause: new Error('Nested cause text'),
+          },
+        }),
+        cancel: jest.fn(),
+      })),
+    };
+
+    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
+    mockSignerEthBuilder.mockReturnValue(makeSignerBuilder(signer));
+
+    const { getLedgerDmkSession } = require('./ledger-dmk');
+    const session = await getLedgerDmkSession(deviceId);
+
+    let error: Error | undefined;
+    try {
+      await session.signTransaction("44'/60'/0'/0/0", new Uint8Array());
+    } catch (err) {
+      error = err as Error;
+    }
+
+    expect(error?.message).toContain(
+      'DeviceActionStateError Blind signing must be enabled 0x6a80 INCORRECT_DATA Contract data disabled',
+    );
+    expect(error?.message).toContain('TransportStatusError 6a80');
+    expect(error?.message).toContain('Nested cause text');
+  });
+
+  it('lets the Ethereum signer manage app opening', async () => {
     const deviceId = 'ledger-eth-state-device-id';
     const sessionId = 'session-1';
     const rawTx = new Uint8Array([1, 2, 3]);
@@ -392,183 +455,12 @@ describe('ledger DMK bridge discovery', () => {
       v: '0x1b',
     });
 
-    expect(mockOpenAppDeviceAction).not.toHaveBeenCalled();
     expect(mockDmk.executeDeviceAction).not.toHaveBeenCalled();
     expect(mockDmk.sendCommand).not.toHaveBeenCalled();
     expect(signer.signTransaction).toHaveBeenCalledWith(
       "44'/60'/0'/0/0",
       rawTx,
-      { skipOpenApp: true },
     );
-  });
-
-  it('opens Ethereum from the session state before signing', async () => {
-    const deviceId = 'ledger-open-eth-before-sign-device-id';
-    const sessionId = 'session-1';
-    const rawTx = new Uint8Array([1, 2, 3]);
-    const signer = {
-      signTransaction: jest.fn(() => ({
-        observable: of({
-          status: 'completed',
-          output: { r: '0x1', s: '0x2', v: '0x1b' },
-        }),
-      })),
-    };
-
-    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
-    mockDmk.getDeviceSessionState.mockReturnValue(
-      of({
-        sessionStateType: 1,
-        deviceStatus: 'CONNECTED',
-        currentApp: {
-          name: 'BOLOS',
-          version: '1.0.0',
-        },
-      }),
-    );
-    mockSignerEthBuilder.mockReturnValue(makeSignerBuilder(signer));
-
-    const { getLedgerDmkSession } = require('./ledger-dmk');
-    const session = await getLedgerDmkSession(deviceId);
-
-    await expect(
-      session.signTransaction("44'/60'/0'/0/0", rawTx),
-    ).resolves.toEqual({
-      r: '0x1',
-      s: '0x2',
-      v: '0x1b',
-    });
-
-    expect(mockOpenAppDeviceAction).toHaveBeenCalledWith({
-      input: { appName: 'Ethereum' },
-    });
-    expect(mockDmk.executeDeviceAction).toHaveBeenCalledWith({
-      sessionId,
-      deviceAction: { openAppArgs: { input: { appName: 'Ethereum' } } },
-    });
-    expect(mockDmk.sendCommand).not.toHaveBeenCalled();
-    expect(signer.signTransaction).toHaveBeenCalledWith(
-      "44'/60'/0'/0/0",
-      rawTx,
-      { skipOpenApp: true },
-    );
-  });
-
-  it('reopens Ethereum once when stale app state causes a 0x6d02 exchange error', async () => {
-    const deviceId = 'ledger-stale-eth-state-device-id';
-    const sessionId = 'session-1';
-    const rawTx = new Uint8Array([1, 2, 3]);
-    const signer = {
-      signTransaction: jest
-        .fn()
-        .mockReturnValueOnce({
-          observable: of({
-            status: 'error',
-            error: {
-              message: 'Unexpected device exchange error happened',
-              errorCode: '6d02',
-            },
-          }),
-        })
-        .mockReturnValueOnce({
-          observable: of({
-            status: 'completed',
-            output: { r: '0x1', s: '0x2', v: '0x1b' },
-          }),
-        }),
-    };
-
-    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
-    mockDmk.getDeviceSessionState.mockReturnValue(
-      of({
-        sessionStateType: 1,
-        deviceStatus: 'CONNECTED',
-        currentApp: {
-          name: 'Ethereum',
-          version: '1.0.0',
-        },
-      }),
-    );
-    mockSignerEthBuilder.mockReturnValue(makeSignerBuilder(signer));
-
-    const { getLedgerDmkSession } = require('./ledger-dmk');
-    const session = await getLedgerDmkSession(deviceId);
-
-    await expect(
-      session.signTransaction("44'/60'/0'/0/0", rawTx),
-    ).resolves.toEqual({
-      r: '0x1',
-      s: '0x2',
-      v: '0x1b',
-    });
-
-    expect(mockOpenAppDeviceAction).toHaveBeenCalledWith({
-      input: { appName: 'Ethereum' },
-    });
-    expect(signer.signTransaction).toHaveBeenCalledTimes(2);
-    expect(signer.signTransaction).toHaveBeenNthCalledWith(
-      2,
-      "44'/60'/0'/0/0",
-      rawTx,
-      { skipOpenApp: true },
-    );
-  });
-
-  it('reopens Ethereum when DMK nests retryable status words inside message objects', async () => {
-    const deviceId = 'ledger-nested-6d02-device-id';
-    const sessionId = 'session-1';
-    const rawTx = new Uint8Array([1, 2, 3]);
-    const signer = {
-      signTransaction: jest
-        .fn()
-        .mockReturnValueOnce({
-          observable: of({
-            status: 'error',
-            error: {
-              name: 'DeviceActionStateError',
-              message: {
-                statusCode: '0x6d02',
-                message: 'Unexpected device exchange error happened',
-              },
-            },
-          }),
-        })
-        .mockReturnValueOnce({
-          observable: of({
-            status: 'completed',
-            output: { r: '0x1', s: '0x2', v: '0x1b' },
-          }),
-        }),
-    };
-
-    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
-    mockDmk.getDeviceSessionState.mockReturnValue(
-      of({
-        sessionStateType: 1,
-        deviceStatus: 'CONNECTED',
-        currentApp: {
-          name: 'Ethereum',
-          version: '1.0.0',
-        },
-      }),
-    );
-    mockSignerEthBuilder.mockReturnValue(makeSignerBuilder(signer));
-
-    const { getLedgerDmkSession } = require('./ledger-dmk');
-    const session = await getLedgerDmkSession(deviceId);
-
-    await expect(
-      session.signTransaction("44'/60'/0'/0/0", rawTx),
-    ).resolves.toEqual({
-      r: '0x1',
-      s: '0x2',
-      v: '0x1b',
-    });
-
-    expect(mockOpenAppDeviceAction).toHaveBeenCalledWith({
-      input: { appName: 'Ethereum' },
-    });
-    expect(signer.signTransaction).toHaveBeenCalledTimes(2);
   });
 
   it('unsubscribes a completed action before allowing the next signer action', async () => {
@@ -615,102 +507,13 @@ describe('ledger DMK bridge discovery', () => {
     expect(mockSignerEthBuilder).toHaveBeenCalledTimes(1);
   });
 
-  it('queues mixed signer actions on the same session', async () => {
-    const deviceId = 'ledger-mixed-sequential-device-id';
-    const sessionId = 'mixed-session-1';
-    let getAddressObserver:
-      | {
-          next: (value: unknown) => void;
-        }
-      | undefined;
-    const signer = {
-      getAddress: jest.fn(() => ({
-        observable: new Observable(observer => {
-          getAddressObserver = observer;
-        }),
-      })),
-      signTransaction: jest.fn(() => ({
-        observable: of({
-          status: 'completed',
-          output: { r: '0x1', s: '0x2', v: '0x1b' },
-        }),
-      })),
-    };
-
-    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
-    mockSignerEthBuilder.mockReturnValue(makeSignerBuilder(signer));
-
-    const { getLedgerDmkSession } = require('./ledger-dmk');
-    const session = await getLedgerDmkSession(deviceId);
-    const getAddressPromise = session.getAddress("44'/60'/0'/0/0");
-
-    await new Promise(resolve => setTimeout(resolve, 0));
-
-    expect(signer.getAddress).toHaveBeenCalledTimes(1);
-
-    const signPromise = session.signTransaction(
-      "44'/60'/0'/0/0",
-      new Uint8Array(),
-    );
-
-    await Promise.resolve();
-
-    expect(signer.signTransaction).not.toHaveBeenCalled();
-
-    getAddressObserver!.next({
-      status: 'completed',
-      output: { address: '0xabc' },
-    });
-
-    await expect(getAddressPromise).resolves.toEqual({ address: '0xabc' });
-    await expect(signPromise).resolves.toEqual({
-      r: '0x1',
-      s: '0x2',
-      v: '0x1b',
-    });
-    expect(signer.signTransaction).toHaveBeenCalledTimes(1);
-  });
-
-  it('keeps clear signing loaders by default without blocking on Ledger telemetry', async () => {
-    jest.resetModules();
-
-    const deviceId = 'ledger-default-context-device-id';
-    const sessionId = 'session-1';
-    const signer = {
-      signTransaction: jest.fn(() => ({
-        observable: of({
-          status: 'completed',
-          output: { r: '0x1', s: '0x2', v: '0x1b' },
-        }),
-      })),
-    };
-    const signerBuilder = makeSignerBuilder(signer);
-
-    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
-    mockSignerEthBuilder.mockReturnValue(signerBuilder);
-
-    const { getLedgerDmkSession } = require('./ledger-dmk');
-    const session = await getLedgerDmkSession(deviceId);
-
-    await session.signTransaction("44'/60'/0'/0/0", new Uint8Array());
-
-    expect(mockContextModuleSetChain).toHaveBeenCalledWith('ethereum');
-    expect(mockContextModuleSetBlindSigningReporter).toHaveBeenCalledWith(
-      expect.objectContaining({ report: expect.any(Function) }),
-    );
-    expect(mockContextModuleRemoveDefaultLoaders).not.toHaveBeenCalled();
-    expect(signerBuilder.withContextModule).toHaveBeenCalledWith(
-      mockContextModule,
-    );
-  });
-
-  it('uses a basic context module when clear signing is disabled', async () => {
+  it('uses a basic context module by default and ignores the deprecated clear signing key', async () => {
     jest.resetModules();
     mockAppStorageGetItem.mockReturnValue({
-      ledgerDmkClearSigningEnabled: false,
+      ledgerDmkClearSigningEnabled: true,
     });
 
-    const deviceId = 'ledger-basic-context-device-id';
+    const deviceId = 'ledger-default-basic-context-device-id';
     const sessionId = 'session-1';
     const signer = {
       signTransaction: jest.fn(() => ({
@@ -735,6 +538,42 @@ describe('ledger DMK bridge discovery', () => {
       expect.objectContaining({ report: expect.any(Function) }),
     );
     expect(mockContextModuleRemoveDefaultLoaders).toHaveBeenCalledTimes(1);
+    expect(signerBuilder.withContextModule).toHaveBeenCalledWith(
+      mockContextModule,
+    );
+  });
+
+  it('keeps clear signing loaders when the new clear signing key is enabled', async () => {
+    jest.resetModules();
+    mockAppStorageGetItem.mockReturnValue({
+      ledgerDmkClearSigningEnabledV2: true,
+    });
+
+    const deviceId = 'ledger-clear-signing-context-device-id';
+    const sessionId = 'session-1';
+    const signer = {
+      signTransaction: jest.fn(() => ({
+        observable: of({
+          status: 'completed',
+          output: { r: '0x1', s: '0x2', v: '0x1b' },
+        }),
+      })),
+    };
+    const signerBuilder = makeSignerBuilder(signer);
+
+    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
+    mockSignerEthBuilder.mockReturnValue(signerBuilder);
+
+    const { getLedgerDmkSession } = require('./ledger-dmk');
+    const session = await getLedgerDmkSession(deviceId);
+
+    await session.signTransaction("44'/60'/0'/0/0", new Uint8Array());
+
+    expect(mockContextModuleSetChain).toHaveBeenCalledWith('ethereum');
+    expect(mockContextModuleSetBlindSigningReporter).toHaveBeenCalledWith(
+      expect.objectContaining({ report: expect.any(Function) }),
+    );
+    expect(mockContextModuleRemoveDefaultLoaders).not.toHaveBeenCalled();
     expect(signerBuilder.withContextModule).toHaveBeenCalledWith(
       mockContextModule,
     );

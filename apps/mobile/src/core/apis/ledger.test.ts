@@ -29,6 +29,10 @@ function setupLedgerApiModule(appName: string) {
   const mockUpdateFirmwareAlert = jest.fn();
   const mockConnectLedgerDeviceById = jest.fn();
   const mockGetLedgerDeviceSessionState = jest.fn();
+  const mockGetKnownLedgerDevice = jest.fn((deviceId: string) => ({
+    id: deviceId,
+    name: 'Ledger',
+  }));
 
   jest.doMock('@rabby-wallet/keyring-utils', () => ({
     KEYRING_TYPE: {
@@ -65,6 +69,7 @@ function setupLedgerApiModule(appName: string) {
     connectLedgerDeviceById: mockConnectLedgerDeviceById,
     disconnectLedgerDevice: jest.fn(),
     getLedgerDeviceSessionState: mockGetLedgerDeviceSessionState,
+    getKnownLedgerDevice: mockGetKnownLedgerDevice,
     subscribeLedgerDevices: jest.fn(),
   }));
 
@@ -76,6 +81,7 @@ function setupLedgerApiModule(appName: string) {
     mockGetKeyring,
     mockConnectLedgerDeviceById,
     mockGetLedgerDeviceSessionState,
+    mockGetKnownLedgerDevice,
   };
 }
 
@@ -134,7 +140,7 @@ describe('core/apis/ledger', () => {
     );
   });
 
-  it('does not scan by persisted Ledger device id when no live session exists', async () => {
+  it('checks the persisted Ledger device id when no live session exists', async () => {
     const {
       isConnected,
       mockKeyring,
@@ -145,11 +151,34 @@ describe('core/apis/ledger', () => {
       deviceId: 'ledger-device-id',
     });
     mockGetLedgerDeviceSessionState.mockResolvedValueOnce(undefined);
+    mockConnectLedgerDeviceById.mockResolvedValueOnce('session-1');
+
+    await expect(
+      isConnected('0x0000000000000000000000000000000000000001'),
+    ).resolves.toEqual([true, 'ledger-device-id']);
+
+    expect(mockConnectLedgerDeviceById).toHaveBeenCalledWith(
+      'ledger-device-id',
+    );
+  });
+
+  it('reports disconnected when the persisted Ledger device id cannot connect', async () => {
+    const {
+      isConnected,
+      mockKeyring,
+      mockConnectLedgerDeviceById,
+      mockGetLedgerDeviceSessionState,
+    } = setupLedgerApiModule('Ethereum');
+    mockKeyring.getAccountInfo.mockReturnValue({
+      deviceId: 'ledger-device-id',
+    });
+    mockGetLedgerDeviceSessionState.mockResolvedValueOnce(undefined);
+    mockConnectLedgerDeviceById.mockRejectedValueOnce(
+      new Error('OpeningConnectionError'),
+    );
 
     await expect(
       isConnected('0x0000000000000000000000000000000000000001'),
     ).resolves.toEqual([false, 'ledger-device-id']);
-
-    expect(mockConnectLedgerDeviceById).not.toHaveBeenCalled();
   });
 });

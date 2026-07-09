@@ -10,8 +10,10 @@ import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { UpdateFirmwareAlert } from '@/utils/bluetoothPermissions';
 import {
   connectLedgerDevice,
+  connectLedgerDeviceById,
   disconnectLedgerDevice,
   getLedgerDeviceSessionState,
+  getKnownLedgerDevice,
   subscribeLedgerDevices,
   type LedgerDmkDevice,
 } from '@/core/keyring-bridge/ledger/ledger-dmk';
@@ -80,7 +82,12 @@ export async function isConnected(
     return [true, detail.deviceId];
   }
 
-  return [false, detail.deviceId];
+  try {
+    await connectLedgerDeviceById(detail.deviceId);
+    return [true, detail.deviceId];
+  } catch {
+    return [false, detail.deviceId];
+  }
 }
 
 export async function getCurrentUsedHDPathType() {
@@ -190,6 +197,14 @@ export function searchDevices({
 
 export async function connectDevice(device: LedgerDmkDevice) {
   return connectLedgerDevice(device);
+}
+
+export async function connectDeviceById(deviceId: string) {
+  return connectLedgerDeviceById(deviceId);
+}
+
+export function getKnownDevice(deviceId: string) {
+  return getKnownLedgerDevice(deviceId);
 }
 
 export function getMaxAccountLimit() {
