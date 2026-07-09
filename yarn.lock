@@ -9568,6 +9568,7 @@ __metadata:
     nock: "npm:^13.3.1"
     prettier: "npm:^2.7.1"
     prettier-plugin-packagejson: "npm:^2.4.5"
+    react-native-image-picker: "npm:8.2.1"
     rimraf: "npm:^3.0.2"
     simple-git-hooks: "npm:^2.8.0"
     ts-node: "npm:^10.9.1"
@@ -11338,16 +11339,6 @@ __metadata:
     react: ">=16.6.3"
     react-native: ">=0.58.4"
   checksum: 10/c1eb786cf548fd559f779d3af75ab47eee62d74b3f8affeb4032a9891ba5f0f53df280299d0506623a04b375a2c6c4903e1ed5b55377c0a478e2e3af4248f02c
-  languageName: node
-  linkType: hard
-
-"@react-native-documents/picker@npm:12.0.1":
-  version: 12.0.1
-  resolution: "@react-native-documents/picker@npm:12.0.1"
-  peerDependencies:
-    react: "*"
-    react-native: ">=0.79.0"
-  checksum: 10/5d915828a2baade9b476589738c2dc4ac192b4444006e198e15676e952991bdbf472163bb739592abf581fb7402a193c9cc49319fa986fb7fd6434aaae3a3a68
   languageName: node
   linkType: hard
 
@@ -38824,7 +38815,6 @@ __metadata:
     "@react-native-community/hooks": "npm:100.1.0"
     "@react-native-community/netinfo": "npm:^12.0.1"
     "@react-native-community/push-notification-ios": "npm:^1.12.0"
-    "@react-native-documents/picker": "npm:12.0.1"
     "@react-native-firebase/analytics": "npm:18.8.0"
     "@react-native-firebase/app": "npm:18.8.0"
     "@react-native-firebase/messaging": "npm:18.8.0"

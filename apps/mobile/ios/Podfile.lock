@@ -2211,34 +2211,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-document-picker (12.0.1):
-    - boost
-    - DoubleConversion
-    - fast_float
-    - fmt
-    - glog
-    - hermes-engine
-    - RCT-Folly
-    - RCT-Folly/Fabric
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - SocketRocket
-    - Yoga
   - react-native-get-random-values (2.0.0):
     - boost
     - DoubleConversion
@@ -3482,7 +3454,6 @@ DEPENDENCIES:
   - react-native-cloud-storage (from `../node_modules/react-native-cloud-storage`)
   - "react-native-compat (from `../node_modules/@walletconnect/react-native-compat`)"
   - react-native-compressor (from `../node_modules/react-native-compressor`)
-  - "react-native-document-picker (from `../node_modules/@react-native-documents/picker`)"
   - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - react-native-ios-context-menu (from `../node_modules/react-native-ios-context-menu`)
@@ -3700,8 +3671,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@walletconnect/react-native-compat"
   react-native-compressor:
     :path: "../node_modules/react-native-compressor"
-  react-native-document-picker:
-    :path: "../node_modules/@react-native-documents/picker"
   react-native-get-random-values:
     :path: "../node_modules/react-native-get-random-values"
   react-native-image-picker:
@@ -3924,7 +3893,6 @@ SPEC CHECKSUMS:
   react-native-cloud-storage: 70ce6dd005f51b58a45d7530208d9c045192c138
   react-native-compat: f358b840778f0629515767bd62945fc910fe94e0
   react-native-compressor: 1994e62092a31f4be0cc9be55dda063945df4bc2
-  react-native-document-picker: e8a5ea96d4231cc2a18fa1162fef1c4a65bca95d
   react-native-get-random-values: 0354aabbfcea26ba6c74fd2fffb9c26f6c19eaff
   react-native-image-picker: ea6dee9018ef769f00d83ebdb36739319241d11c
   react-native-ios-context-menu: e529171ba760a1af7f2ef0729f5a7f4d226171c5
