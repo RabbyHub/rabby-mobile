@@ -2222,7 +2222,8 @@
       "title": "Approvals"
     },
     "receiveAddressList": {
-      "title": "Select Wallet to Receive",
+      "title": "Select Wallet",
+      "subtitle": "Choose a wallet to receive your crypto.",
       "selectChainTitle": "Select Chain"
     },
     "singleHome": {
