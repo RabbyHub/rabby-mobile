@@ -107,13 +107,15 @@ export async function getCurrentUsedHDPathType() {
 
 export async function setCurrentUsedHDPathType(hdPathType: LedgerHDPathType) {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
-  await keyring.setHDPathType(hdPathType);
-  return queue.add(() => keyring.setCurrentUsedHDPathType());
+  return queue.add(async () => {
+    await keyring.setHDPathType(hdPathType);
+    return keyring.setCurrentUsedHDPathType();
+  });
 }
 
 export async function setHDPathType(hdPathType: LedgerHDPathType) {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
-  return keyring.setHDPathType(hdPathType);
+  return queue.add(() => keyring.setHDPathType(hdPathType));
 }
 
 export async function getInitialAccounts() {

@@ -1,11 +1,14 @@
+const mockPQueueAdd = jest.fn((fn: () => unknown) => fn());
+const mockPQueueClear = jest.fn();
+
 jest.mock(
   'p-queue/dist',
   () => ({
     __esModule: true,
     default: class MockPQueue {
-      clear = jest.fn();
+      clear = mockPQueueClear;
 
-      add = jest.fn((fn: () => unknown) => fn());
+      add = mockPQueueAdd;
     },
   }),
   { virtual: true },
@@ -23,7 +26,10 @@ function setupLedgerApiModule(appName: string) {
     })),
     getDeviceId: jest.fn(() => 'ledger-device-id'),
     getAccountInfo: jest.fn(),
+    getAddresses: jest.fn(async () => []),
     setDeviceId: jest.fn(),
+    setHDPathType: jest.fn(async () => undefined),
+    setCurrentUsedHDPathType: jest.fn(async () => undefined),
   };
   const mockGetKeyring = jest.fn(async () => mockKeyring);
   const mockBindLedgerEvents = jest.fn();
@@ -92,10 +98,38 @@ function setupLedgerApiModule(appName: string) {
   };
 }
 
+function useSerialQueueMock() {
+  let running = false;
+  const pending: Array<() => void> = [];
+
+  mockPQueueAdd.mockImplementation((fn: () => unknown) => {
+    const run = async () => {
+      running = true;
+      try {
+        return await fn();
+      } finally {
+        running = false;
+        pending.shift()?.();
+      }
+    };
+
+    if (!running) {
+      return run();
+    }
+
+    return new Promise((resolve, reject) => {
+      pending.push(() => {
+        run().then(resolve, reject);
+      });
+    });
+  });
+}
+
 describe('core/apis/ledger', () => {
   afterEach(() => {
     jest.clearAllTimers();
     jest.useRealTimers();
+    mockPQueueAdd.mockImplementation((fn: () => unknown) => fn());
     jest.dontMock('@rabby-wallet/keyring-utils');
     jest.dontMock('./keyring');
     jest.dontMock('@/utils/ledger');
@@ -205,5 +239,77 @@ describe('core/apis/ledger', () => {
     await expect(
       isConnected('0x0000000000000000000000000000000000000001'),
     ).resolves.toEqual([false, 'ledger-device-id']);
+  });
+
+  it('serializes Ledger HD path switching with the current-path marker', async () => {
+    const { setCurrentUsedHDPathType, mockKeyring } =
+      setupLedgerApiModule('Ethereum');
+    jest.runOnlyPendingTimers();
+    const order: string[] = [];
+
+    mockPQueueAdd.mockImplementationOnce(async (fn: () => unknown) => {
+      order.push('queue');
+      return fn();
+    });
+    mockKeyring.setHDPathType.mockImplementationOnce(
+      async (hdPathType: string) => {
+        order.push(`set:${hdPathType}`);
+      },
+    );
+    mockKeyring.setCurrentUsedHDPathType.mockImplementationOnce(async () => {
+      order.push('mark');
+    });
+
+    await setCurrentUsedHDPathType('BIP44' as any);
+
+    expect(order).toEqual(['queue', 'set:BIP44', 'mark']);
+  });
+
+  it('serializes direct Ledger HD path switching through the Ledger queue', async () => {
+    const { setHDPathType, mockKeyring } = setupLedgerApiModule('Ethereum');
+    jest.runOnlyPendingTimers();
+    const order: string[] = [];
+
+    mockPQueueAdd.mockImplementationOnce(async (fn: () => unknown) => {
+      order.push('queue');
+      return fn();
+    });
+    mockKeyring.setHDPathType.mockImplementationOnce(
+      async (hdPathType: string) => {
+        order.push(`set:${hdPathType}`);
+      },
+    );
+
+    await setHDPathType('BIP44' as any);
+
+    expect(order).toEqual(['queue', 'set:BIP44']);
+  });
+
+  it('does not switch Ledger HD path while address enumeration is still queued', async () => {
+    const { getAddresses, setHDPathType, mockKeyring } =
+      setupLedgerApiModule('Ethereum');
+    jest.runOnlyPendingTimers();
+    useSerialQueueMock();
+    let finishAddressEnumeration: () => void = () => undefined;
+
+    mockKeyring.getAddresses.mockReturnValueOnce(
+      new Promise(resolve => {
+        finishAddressEnumeration = () => resolve([]);
+      }),
+    );
+
+    const addressEnumeration = getAddresses(0, 1);
+    await Promise.resolve();
+
+    const switchHDPath = setHDPathType('BIP44' as any);
+    await Promise.resolve();
+
+    expect(mockKeyring.setHDPathType).not.toHaveBeenCalled();
+
+    finishAddressEnumeration();
+    await addressEnumeration;
+    await switchHDPath;
+
+    expect(mockKeyring.setHDPathType).toHaveBeenCalledWith('BIP44');
   });
 });

@@ -104,13 +104,13 @@ export const ConnectLedger: React.FC<{
 
         return;
       }
-      await apiLedger.getCurrentUsedHDPathType().then(res => {
-        const hdPathType = res ?? LedgerHDPathType.LedgerLive;
-        apiLedger.setHDPathType(hdPathType);
-        setSetting({
-          startNumber: 1,
-          hdPath: hdPathType,
-        });
+      const hdPathType =
+        (await apiLedger.getCurrentUsedHDPathType()) ??
+        LedgerHDPathType.LedgerLive;
+      await apiLedger.setHDPathType(hdPathType);
+      setSetting({
+        startNumber: 1,
+        hdPath: hdPathType,
       });
 
       if (address) {
