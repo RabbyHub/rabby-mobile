@@ -199,7 +199,7 @@
     "react-native-get-random-values": "^2.0.0",
     "react-native-haptic-feedback": "2.3.3",
     "react-native-iap": "patch:react-native-iap@npm%3A12.16.4#../../.yarn/patches/react-native-iap-npm-12.16.4-49632744b4.patch",
-    "react-native-image-picker": "^8.2.1",
+    "react-native-image-picker": "8.2.1",
     "react-native-inappbrowser-reborn": "^3.7.0",
     "react-native-indicators": "^0.17.0",
     "react-native-ios-context-menu": "1.15.3",

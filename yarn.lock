@@ -38943,7 +38943,7 @@ __metadata:
     react-native-get-random-values: "npm:^2.0.0"
     react-native-haptic-feedback: "npm:2.3.3"
     react-native-iap: "patch:react-native-iap@npm%3A12.16.4#../../.yarn/patches/react-native-iap-npm-12.16.4-49632744b4.patch"
-    react-native-image-picker: "npm:^8.2.1"
+    react-native-image-picker: "npm:8.2.1"
     react-native-inappbrowser-reborn: "npm:^3.7.0"
     react-native-indicators: "npm:^0.17.0"
     react-native-ios-context-menu: "npm:1.15.3"
@@ -39764,7 +39764,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-image-picker@npm:^8.2.1":
+"react-native-image-picker@npm:8.2.1":
   version: 8.2.1
   resolution: "react-native-image-picker@npm:8.2.1"
   peerDependencies:
