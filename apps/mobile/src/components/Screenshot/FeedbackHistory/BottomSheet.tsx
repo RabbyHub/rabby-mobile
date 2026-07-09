@@ -580,7 +580,6 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
         requestScrollToBottomAfterLayout();
       },
       onError: error => {
-        console.log('feedback', error);
         console.error('feedback reply submission error', error);
         toast.error(getFeedbackErrorMessage(error, 'Upload failed.'));
       },
