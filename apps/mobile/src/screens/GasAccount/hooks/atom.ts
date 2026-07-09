@@ -19,6 +19,7 @@ import {
   runIIFEFunc,
   UpdaterOrPartials,
 } from '@/core/utils/store';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { eventBus, EVENTS } from '@/utils/events';
 import { handleGasAccountLoginSuccess } from '@/utils/gasAccountAnalytics';
 import { setGasAccountStoreApi } from '@/utils/gasAccountStoreApiBridge';
@@ -65,7 +66,7 @@ runIIFEFunc(() => {
       reason: 'tx_completed',
     });
   });
-});
+}, STARTUP_TASKS.gasAccountEventBridge);
 
 type GasAccountVisibleState = {
   loginVisible: boolean;

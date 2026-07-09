@@ -7,6 +7,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { perfEvents } from '@/core/utils/perf';
 import { runIIFEFunc } from '@/core/utils/store';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { apisHomeTabIndex, HomeTabName } from '@/hooks/navigation';
 import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
 import { TabsTopHeader } from '@/screens/Home/components/OverviewTopHeader';
@@ -42,7 +43,7 @@ runIIFEFunc(() => {
       homeTabScrollerRef.current?.setIndex(Math.max(0, currentIndex - 1));
     }
   });
-});
+}, STARTUP_TASKS.homeTabBackListener);
 
 const onIndexChange = (idx: number) => {
   apisHomeTabIndex.setTabIndex(idx);

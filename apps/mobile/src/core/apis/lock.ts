@@ -15,6 +15,7 @@ import {
   shouldRejectUnlockDueToMultipleFailed,
 } from '../utils/unlockRateLimit';
 import { runIIFEFunc } from '../utils/store';
+import { STARTUP_TASKS } from '../utils/startupTaskManifest';
 import { perfEvents } from '../utils/perf';
 import {
   getPersistedUnlockSessionExpireTime,
@@ -766,4 +767,4 @@ runIIFEFunc(() => {
     pendingPostUnlockUIReadyRef.current = null;
     cancelKeyringRuntimeConvergence('lock');
   });
-});
+}, STARTUP_TASKS.lockUnlockEventBridge);

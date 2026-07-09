@@ -9,6 +9,7 @@ import {
   runIIFEFunc,
   UpdaterOrPartials,
 } from '@/core/utils/store';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 
 export const globalSupportCexList: ProjectItem[] = [];
 type SupportedCexListState = {
@@ -31,7 +32,7 @@ runIIFEFunc(() => {
     globalSupportCexList.length === 0 && globalSupportCexList.push(...res);
     setSupportCexList(res);
   });
-});
+}, STARTUP_TASKS.cexSupportListFetch);
 export const useCexSupportList = () => {
   const list = supportCexListStore(s => s.list);
 

@@ -6,6 +6,7 @@ import {
   runIIFEFunc,
   UpdaterOrPartials,
 } from '@/core/utils/store';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
@@ -478,7 +479,7 @@ function setAutoLockMinutes(valOrFunc: UpdaterOrPartials<number>) {
 runIIFEFunc(() => {
   const times = apisAutoLock.getPersistedAutoLockTimes();
   setAutoLockMinutes(times.minutes);
-});
+}, STARTUP_TASKS.appSettingsAutoLockHydrate);
 
 export function useAutoLockTimeMinites() {
   const autoLockMinutes = autoLockState(s => s.minutes);

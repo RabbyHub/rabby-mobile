@@ -70,6 +70,7 @@ import {
   FloatingDiagnosticsPanel,
   FloatingKeyringRuntimePanel,
   FloatingOpenApiSummaryPanel,
+  FloatingStartupTaskSummaryPanel,
   GlobalMiniApproval,
   GlobalMiniSignTypedDataPortal,
   GlobalSecurityTipStubModal,
@@ -360,6 +361,7 @@ function AppNavigationOverlayGlobals({
       {showDiagnostics && <FloatingDbSyncSummaryPanel />}
       {showDiagnostics && <FloatingKeyringRuntimePanel />}
       {showDiagnostics && <FloatingOpenApiSummaryPanel />}
+      {showDiagnostics && <FloatingStartupTaskSummaryPanel />}
       {postUnlockGlobalsEnabled && (
         <GlobalMiniApproval key="global-mini-approval" />
       )}

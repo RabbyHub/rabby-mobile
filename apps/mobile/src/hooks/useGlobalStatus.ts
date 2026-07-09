@@ -6,6 +6,7 @@ import {
   runIIFEFunc,
   UpdaterOrPartials,
 } from '@/core/utils/store';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { useShallow } from 'zustand/react/shallow';
 
 const PING_URL = 'https://app-api.rabby.io/ping';
@@ -29,7 +30,7 @@ const networkStatusState = zCreate<{ isDisconnected: boolean }>(() => ({
 
 runIIFEFunc(() => {
   startNetworkPolling();
-});
+}, STARTUP_TASKS.globalNetworkPolling);
 
 function setNetworkStatus(valOrFunc: UpdaterOrPartials<boolean>) {
   networkStatusState.setState(prev => {

@@ -28,6 +28,7 @@ import {
   runIIFEFunc,
   UpdaterOrPartials,
 } from '@/core/utils/store';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { useShallow } from 'zustand/react/shallow';
 import { logger } from '@/utils/logger';
 import { isNonPublicProductionEnv } from '@/constant';
@@ -193,7 +194,7 @@ runIIFEFunc(() => {
   fetchSystemAuthAvailability().then(systemAuth => {
     setBiometrics(prev => ({ ...prev, ...systemAuth }));
   });
-});
+}, STARTUP_TASKS.biometricsSystemAuthAvailability);
 
 function isPrimaryAndroidBiometricsEntryReady(state: KeychainDebugState) {
   if (state.platform !== 'android' || !state.debugSupported) {

@@ -19,6 +19,7 @@ export { FloatingDiagnosticsPanel } from '@/screens/Settings/components/Floating
 export { FloatingDbSyncSummaryPanel } from '@/screens/Settings/components/FloatingDbSyncSummaryPanel';
 export { FloatingKeyringRuntimePanel } from '@/screens/Settings/components/FloatingKeyringRuntimePanel';
 export { FloatingOpenApiSummaryPanel } from '@/screens/Settings/components/FloatingOpenApiSummaryPanel';
+export { FloatingStartupTaskSummaryPanel } from '@/screens/Settings/components/FloatingStartupTaskSummaryPanel';
 export { WideScreenDebugPanel } from '@/components/Debug/WideScreenDebugPanel';
 export { GlobalMiniApproval } from '@/components/Approval/components/MiniSignTx/GlobalMiniApproval';
 export { GlobalMiniSignTypedDataPortal } from '@/components/Approval/components/MiniSignTypedData/GlobalMiniSignTypedDataPortal';

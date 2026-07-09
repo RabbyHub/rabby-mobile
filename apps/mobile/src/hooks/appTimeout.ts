@@ -10,6 +10,7 @@ import {
   runIIFEFunc,
   UpdaterOrPartials,
 } from '@/core/utils/store';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { atom, useAtom } from 'jotai';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -33,7 +34,7 @@ runIIFEFunc(() => {
   autoLockEvent.addListener('change', value => {
     autoLockStore.setState({ autoLockTime: value });
   });
-});
+}, STARTUP_TASKS.appTimeoutAutoLockHydrate);
 
 function setAutoLockMinutes(valOrFunc: UpdaterOrPartials<number>) {
   autoLockStore.setState(prev => {

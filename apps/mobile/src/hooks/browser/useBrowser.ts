@@ -27,6 +27,7 @@ import {
   runIIFEFunc,
   UpdaterOrPartials,
 } from '@/core/utils/store';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { perfEvents } from '@/core/utils/perf';
 
 type TabsState = {
@@ -485,4 +486,4 @@ runIIFEFunc(() => {
   perfEvents.subscribe('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS', () => {
     browserApis.hideBrowser();
   });
-});
+}, STARTUP_TASKS.browserGlobalClearListener);

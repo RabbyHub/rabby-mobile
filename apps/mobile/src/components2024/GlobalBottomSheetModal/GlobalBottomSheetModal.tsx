@@ -24,6 +24,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { makeBottomSheetProps } from './utils-help';
 import { storeApiScreenshotReport } from '@/components/Screenshot/hooks';
 import { runIIFEFunc } from '@/core/utils/store';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { perfEvents } from '@/core/utils/perf';
 
 type ModalData = {
@@ -331,4 +332,4 @@ runIIFEFunc(() => {
   perfEvents.subscribe('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS', () => {
     removeAllGlobalBottomSheetModals();
   });
-});
+}, STARTUP_TASKS.globalBottomSheetClearListener);

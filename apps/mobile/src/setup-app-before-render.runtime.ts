@@ -5,6 +5,7 @@ import {
 import { InteractionManager } from 'react-native';
 
 import { runIIFEFunc } from './core/utils/store';
+import { STARTUP_TASKS } from './core/utils/startupTaskManifest';
 import { startSubscribeLangChange } from './hooks/lang';
 import { connectPushServerOnBootstrap } from './core/notifications';
 
@@ -95,7 +96,7 @@ autoGoogleSignIfPreviousSignedOnBoot();
 startSyncDefaultRPCs();
 runIIFEFunc(() => {
   storeApiGasAccount.fetchGasAccountInfo();
-});
+}, STARTUP_TASKS.setupGasAccountInfoFetch);
 startSubscribePerpsOnAppState();
 startWatchLayoutChange();
 
@@ -232,9 +233,12 @@ function startWalletConnectRestoreAfterHomeReady(reason: string) {
   runAfterHomePostStartupReady(
     () => {
       setTimeout(() => {
-        traceAndroidInstant('global_task.walletconnect_restore.idle_wait_start', {
-          reason,
-        });
+        traceAndroidInstant(
+          'global_task.walletconnect_restore.idle_wait_start',
+          {
+            reason,
+          },
+        );
         startWalletConnectRestoreAfterIdle(reason);
       }, WALLETCONNECT_RESTORE_AFTER_HOME_IDLE_DELAY_MS);
     },

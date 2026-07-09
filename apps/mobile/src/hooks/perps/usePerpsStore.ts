@@ -39,6 +39,7 @@ import {
   runIIFEFunc,
   UpdaterOrPartials,
 } from '@/core/utils/store';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { AppState } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 import { perpsService } from '@/core/services';
@@ -51,8 +52,6 @@ import BigNumber from 'bignumber.js';
 
 let perpsTopTokenCache: PerpTopTokenV3[] = [];
 let perpsCategoryCache: PerpTopTokenCategory[] = [];
-const PERPS_STARTUP_PREFETCH_DELAY_MS = 3000;
-
 // Per-dex raw snapshots, source of truth for rebuilding the aggregated
 // `currentClearinghouseState`. Stale frames (older `time`) never win.
 // Key '' === hyper native dex.
@@ -1548,36 +1547,9 @@ const fetchMarketDataIfNeeded = () => {
   return fetchMarketData();
 };
 
-runIIFEFunc(fetchMarketDataIfNeeded, {
-  label: 'perps.fetchMarketData',
-  owner: 'perps',
-  reason: 'warm market list after Home without starting fast feed on startup',
-  stage: 'homePostStartupIdle',
-  priority: 'low',
-  delayMs: PERPS_STARTUP_PREFETCH_DELAY_MS,
-  fallbackMs: 8000,
-  budgetMs: 300,
-});
-runIIFEFunc(fetchFavoriteMarkets, {
-  label: 'perps.fetchFavoriteMarkets',
-  owner: 'perps',
-  reason: 'warm user preference data after Home',
-  stage: 'homePostStartupIdle',
-  priority: 'low',
-  delayMs: PERPS_STARTUP_PREFETCH_DELAY_MS,
-  fallbackMs: 8000,
-  budgetMs: 200,
-});
-runIIFEFunc(fetchMarginModeByCoin, {
-  label: 'perps.fetchMarginModeByCoin',
-  owner: 'perps',
-  reason: 'warm perps margin mode cache after Home',
-  stage: 'homePostStartupIdle',
-  priority: 'low',
-  delayMs: PERPS_STARTUP_PREFETCH_DELAY_MS,
-  fallbackMs: 8000,
-  budgetMs: 200,
-});
+runIIFEFunc(fetchMarketDataIfNeeded, STARTUP_TASKS.perpsFetchMarketData);
+runIIFEFunc(fetchFavoriteMarkets, STARTUP_TASKS.perpsFetchFavoriteMarkets);
+runIIFEFunc(fetchMarginModeByCoin, STARTUP_TASKS.perpsFetchMarginModeByCoin);
 
 export function startSubscribePerpsOnAppState() {
   const sdk = apisPerps.getPerpsSDK();

@@ -11,6 +11,7 @@ import {
   runIIFEFunc,
   UpdaterOrPartials,
 } from '@/core/utils/store';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { RefLikeObject } from '@/utils/type';
 import { balanceAccountsStore } from '@/store/balance';
 
@@ -137,4 +138,4 @@ runIIFEFunc(() => {
   });
 
   resetFetchHistoryTxCount();
-});
+}, STARTUP_TASKS.homeHistorySyncListener);
