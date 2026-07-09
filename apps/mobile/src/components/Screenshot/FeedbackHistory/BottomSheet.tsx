@@ -44,6 +44,11 @@ import { createGetStyles2024 } from '@/utils/styles';
 import type { ClientFeedbackMessage } from '@rabby-wallet/rabby-api/dist/types';
 import { useCreation, useInfiniteScroll, useRequest } from 'ahooks';
 import { sortBy, uniqBy } from 'lodash';
+import {
+  getFileSize,
+  Image as ImageCompressor,
+  Video as VideoCompressor,
+} from 'react-native-compressor';
 import FastImage from 'react-native-fast-image';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { launchImageLibrary, type Asset } from 'react-native-image-picker';
@@ -97,6 +102,53 @@ function getUploadMimeType(media: PickedFeedbackMedia) {
   return isVideoMedia(media) ? 'video/mp4' : 'image/jpeg';
 }
 
+function getCompressedFilename(media: PickedFeedbackMedia, extension: string) {
+  const fallbackName =
+    extension === 'mp4' ? 'feedback-video' : 'feedback-image';
+  const filenameWithoutExtension =
+    media.fileName?.replace(/\.[^/.]+$/, '') || fallbackName;
+
+  return `${filenameWithoutExtension}.${extension}`;
+}
+
+function getMediaExtension(uri: string, fallback: string) {
+  const uriWithoutQuery = uri.split(/[?#]/)[0];
+  return (
+    uriWithoutQuery.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase() || fallback
+  );
+}
+
+function getImageCompressionOutput(media: PickedFeedbackMedia): 'jpg' | 'png' {
+  const sourceExtension = getMediaExtension(
+    media.fileName || media.uri || '',
+    'jpg',
+  );
+
+  return media.type === 'image/png' || sourceExtension === 'png'
+    ? 'png'
+    : 'jpg';
+}
+
+function getCompressedMimeType(media: PickedFeedbackMedia, extension: string) {
+  const mimeTypes: Record<string, string> = {
+    heic: 'image/heic',
+    heif: 'image/heif',
+    jpeg: 'image/jpeg',
+    jpg: 'image/jpeg',
+    m4v: 'video/x-m4v',
+    mov: 'video/quicktime',
+    mp4: 'video/mp4',
+    png: 'image/png',
+    webm: 'video/webm',
+  };
+
+  return (
+    mimeTypes[extension] ||
+    media.type ||
+    (isVideoMedia(media) ? 'video/mp4' : 'image/jpeg')
+  );
+}
+
 function getMediaSizeLimitError(media: PickedFeedbackMedia) {
   if (!media.fileSize) {
     return null;
@@ -137,6 +189,45 @@ function getFeedbackErrorMessage(error: unknown, fallback: string) {
   }
 
   return fallback;
+}
+
+async function compressFeedbackMedia(
+  media: PickedFeedbackMedia,
+  onVideoCancellationId: (cancellationId: string) => void,
+): Promise<PickedFeedbackMedia> {
+  if (!media.uri) {
+    throw new Error('No selected feedback media uri');
+  }
+
+  const video = isVideoMedia(media);
+  const imageOutput = getImageCompressionOutput(media);
+  const compressedUri = video
+    ? await VideoCompressor.compress(media.uri, {
+        compressionMethod: 'auto',
+        maxSize: 960,
+        minimumFileSizeForCompress: 0,
+        getCancellationId: onVideoCancellationId,
+      })
+    : await ImageCompressor.compress(media.uri, {
+        compressionMethod: 'auto',
+        output: imageOutput,
+        returnableOutputType: 'uri',
+      });
+  const compressedFileSize = Number(await getFileSize(compressedUri));
+  const compressedExtension = getMediaExtension(
+    compressedUri,
+    video ? 'mp4' : imageOutput,
+  );
+
+  return {
+    ...media,
+    uri: compressedUri,
+    fileName: getCompressedFilename(media, compressedExtension),
+    fileSize: Number.isFinite(compressedFileSize)
+      ? compressedFileSize
+      : undefined,
+    type: getCompressedMimeType(media, compressedExtension),
+  };
 }
 
 async function uploadFeedbackMedia(media: PickedFeedbackMedia) {
@@ -202,6 +293,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
   const shouldScrollAfterReloadRef = useRef(false);
   const loadingMoreGuardRef = useRef(false);
   const mediaUploadRequestIdRef = useRef(0);
+  const videoCompressionCancellationIdRef = useRef<string | null>(null);
   const handleReplyTextChange = useCallback((text: string) => {
     replyTextRef.current = text;
   }, []);
@@ -234,6 +326,12 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
 
   const resetSelectedMedia = useCallback(() => {
     mediaUploadRequestIdRef.current += 1;
+    if (videoCompressionCancellationIdRef.current) {
+      VideoCompressor.cancelCompression(
+        videoCompressionCancellationIdRef.current,
+      );
+      videoCompressionCancellationIdRef.current = null;
+    }
     setSelectedMedia(null);
     setUploadedMediaUrls(null);
     setIsUploadingMedia(false);
@@ -245,7 +343,26 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
       setUploadedMediaUrls(null);
 
       try {
-        const uploadResult = await uploadFeedbackMedia(media);
+        const compressedMedia = await compressFeedbackMedia(
+          media,
+          cancellationId => {
+            if (requestId === mediaUploadRequestIdRef.current) {
+              videoCompressionCancellationIdRef.current = cancellationId;
+            }
+          },
+        );
+
+        if (requestId !== mediaUploadRequestIdRef.current) {
+          return;
+        }
+        videoCompressionCancellationIdRef.current = null;
+
+        const limitError = getMediaSizeLimitError(compressedMedia);
+        if (limitError) {
+          throw new Error(limitError);
+        }
+
+        const uploadResult = await uploadFeedbackMedia(compressedMedia);
         const mediaUrls = getUploadedFeedbackMediaUrls(uploadResult);
 
         if (!hasUploadedFeedbackMediaUrls(mediaUrls)) {
@@ -268,6 +385,7 @@ export const FeedbackHistoryBottomSheet: React.FC = () => {
         setUploadedMediaUrls(null);
       } finally {
         if (requestId === mediaUploadRequestIdRef.current) {
+          videoCompressionCancellationIdRef.current = null;
           setIsUploadingMedia(false);
         }
       }

@@ -38932,6 +38932,7 @@ __metadata:
     react-native-bundle-visualizer: "npm:3.1.0"
     react-native-cloud-storage: "npm:^1.4.1"
     react-native-collapsible-tab-view: "npm:^6.2.1"
+    react-native-compressor: "npm:2.0.2"
     react-native-crypto-js: "npm:^1.0.0"
     react-native-device-info: "npm:14.0.4"
     react-native-dotenv: "npm:^3.4.9"
@@ -38953,6 +38954,7 @@ __metadata:
     react-native-linear-gradient: "npm:^2.8.3"
     react-native-localize: "npm:3.3.0"
     react-native-mmkv: "npm:^2.12.2"
+    react-native-nitro-modules: "npm:0.35.9"
     react-native-pager-view: "npm:6.7.0"
     react-native-permissions: "npm:5.3.0"
     react-native-qrcode-svg: "npm:^6.2.0"
@@ -39623,6 +39625,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-compressor@npm:2.0.2":
+  version: 2.0.2
+  resolution: "react-native-compressor@npm:2.0.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-nitro-modules: ">=0.35.0"
+  checksum: 10/30abb4610d8c2cf184cb2405ecb411e86e21193f88f3eaed8785c6b6fc871d8a49dc6482f589e88bfd23f60af64266ee1b7fb38d4f9af9ff315ba93fc09f6485
+  languageName: node
+  linkType: hard
+
 "react-native-crypto-js@npm:^1.0.0":
   version: 1.0.0
   resolution: "react-native-crypto-js@npm:1.0.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-crypto-js%2F-%2Freact-native-crypto-js-1.0.0.tgz"
@@ -39949,6 +39962,16 @@ __metadata:
     react: "*"
     react-native: ">=0.71.0"
   checksum: 10/6255dbb5a07fd6cec2524fc86f2c5c971060883e6e2bd76f2303768aaeba0a10d78505411f5ddb16d9f44595bfc4b6d49e8f28a3ae2df6ce0ee8a69035954938
+  languageName: node
+  linkType: hard
+
+"react-native-nitro-modules@npm:0.35.9":
+  version: 0.35.9
+  resolution: "react-native-nitro-modules@npm:0.35.9"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10/f1554947b20d4bb2688cca88bd0f30091ce2652a5e3bf63b196f587ee4ae2ed09820e9e05e43acda4d4051b3dc952deb554ae495467aec6d9a4778443ad6c4e3
   languageName: node
   linkType: hard
 
