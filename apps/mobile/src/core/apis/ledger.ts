@@ -10,8 +10,9 @@ import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { UpdateFirmwareAlert } from '@/utils/bluetoothPermissions';
 import {
   connectLedgerDevice,
-  connectLedgerDeviceById,
+  connectKnownLedgerDeviceById,
   disconnectLedgerDevice,
+  getLedgerAppAndVersion,
   getLedgerDeviceSessionState,
   getKnownLedgerDevice,
   subscribeLedgerDevices,
@@ -83,7 +84,7 @@ export async function isConnected(
   }
 
   try {
-    await connectLedgerDeviceById(detail.deviceId);
+    await connectKnownLedgerDeviceById(detail.deviceId);
     return [true, detail.deviceId];
   } catch {
     return [false, detail.deviceId];
@@ -167,8 +168,17 @@ export async function checkEthApp(cb: (result: boolean) => void) {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
 
   try {
-    await keyring.makeApp();
-    const { appName } = await keyring.getAppAndVersion();
+    const deviceId = await keyring.getDeviceId();
+    let appAndVersion: { appName: string; version: string };
+
+    if (deviceId) {
+      appAndVersion = await getLedgerAppAndVersion(deviceId);
+    } else {
+      await keyring.makeApp();
+      appAndVersion = await keyring.getAppAndVersion();
+    }
+
+    const { appName } = appAndVersion;
     const isEthApp = appName === 'Ethereum';
 
     cb(isEthApp);
@@ -200,7 +210,7 @@ export async function connectDevice(device: LedgerDmkDevice) {
 }
 
 export async function connectDeviceById(deviceId: string) {
-  return connectLedgerDeviceById(deviceId);
+  return connectKnownLedgerDeviceById(deviceId);
 }
 
 export function getKnownDevice(deviceId: string) {

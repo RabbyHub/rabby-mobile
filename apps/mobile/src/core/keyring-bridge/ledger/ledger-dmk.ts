@@ -492,38 +492,6 @@ export function subscribeLedgerDevices({
   };
 }
 
-function discoverLedgerDevice(deviceId: string) {
-  const cached = devicesById.get(deviceId);
-  if (cached) {
-    return Promise.resolve(cached);
-  }
-
-  return new Promise<LedgerDmkDevice>((resolve, reject) => {
-    let stop = () => {};
-    const timeout = setTimeout(() => {
-      stop();
-      reject(new Error('Ledger: Device not found'));
-    }, CONNECT_TIMEOUT_MS);
-
-    const finish = (fn: () => void) => {
-      clearTimeout(timeout);
-      stop();
-      fn();
-    };
-
-    stop = subscribeLedgerDevices({
-      next: device => {
-        if (device.id === deviceId) {
-          finish(() => resolve(device));
-        }
-      },
-      error: err => {
-        finish(() => reject(err));
-      },
-    });
-  });
-}
-
 export async function connectLedgerDevice(device: LedgerDmkDevice) {
   const existing = getConnectedSession(device.id);
   if (existing && (await getLedgerDeviceSessionState(device.id))) {
@@ -583,7 +551,7 @@ export async function connectLedgerDevice(device: LedgerDmkDevice) {
   return promise;
 }
 
-export async function connectLedgerDeviceById(deviceId: string) {
+export async function connectKnownLedgerDeviceById(deviceId: string) {
   const existing = getConnectedSession(deviceId);
   if (existing && (await getLedgerDeviceSessionState(deviceId))) {
     return existing;
@@ -594,11 +562,11 @@ export async function connectLedgerDeviceById(deviceId: string) {
     return connectLedgerDevice(cached);
   }
 
-  try {
-    return await connectLedgerDevice(getKnownLedgerDevice(deviceId));
-  } catch {
-    return connectLedgerDevice(await discoverLedgerDevice(deviceId));
-  }
+  return connectLedgerDevice(getKnownLedgerDevice(deviceId));
+}
+
+export async function connectLedgerDeviceById(deviceId: string) {
+  return connectKnownLedgerDeviceById(deviceId);
 }
 
 async function getSessionState(sessionId: DeviceSessionId) {
@@ -625,6 +593,30 @@ async function readAppAndVersion(
     appName: result.data.name,
     version: result.data.version,
   };
+}
+
+function getCurrentAppAndVersion(state: any) {
+  const app = state?.currentApp;
+
+  if (!app?.name) {
+    return undefined;
+  }
+
+  return {
+    appName: app.name,
+    version: app.version,
+  };
+}
+
+export async function getLedgerAppAndVersion(deviceId: string) {
+  const sessionId = await connectKnownLedgerDeviceById(deviceId);
+  const currentApp = getCurrentAppAndVersion(await getSessionState(sessionId));
+
+  if (currentApp) {
+    return currentApp;
+  }
+
+  return readAppAndVersion(sessionId);
 }
 
 export async function getLedgerDeviceSessionState(deviceId: string) {

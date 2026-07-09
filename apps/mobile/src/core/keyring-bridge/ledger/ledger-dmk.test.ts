@@ -277,41 +277,55 @@ describe('ledger DMK bridge discovery', () => {
     });
   });
 
-  it('falls back to scanning when direct known-id connect fails', async () => {
+  it('does not scan the same persisted id when direct known-id connect fails', async () => {
     const deviceId = 'ledger-direct-fallback-device-id';
-    const freshDevice = { id: deviceId, name: 'Ledger fresh' };
-    const unsubscribe = jest.fn();
-    let observer: { next(devices: unknown[]): void } | undefined;
 
-    mockDmk.connect
-      .mockRejectedValueOnce(new Error('OpeningConnectionError'))
-      .mockResolvedValueOnce('session-2');
+    mockDmk.connect.mockRejectedValueOnce(new Error('OpeningConnectionError'));
 
-    const { connectLedgerDeviceById } = require('./ledger-dmk');
+    const { connectKnownLedgerDeviceById } = require('./ledger-dmk');
 
-    mockDmk.listenToAvailableDevices.mockReturnValueOnce({
-      subscribe: nextObserver => {
-        observer = nextObserver;
-        return { unsubscribe };
-      },
+    await expect(connectKnownLedgerDeviceById(deviceId)).rejects.toThrow(
+      'OpeningConnectionError',
+    );
+    expect(mockDmk.listenToAvailableDevices).not.toHaveBeenCalled();
+  });
+
+  it('uses the DMK session state current app before sending an app command', async () => {
+    const deviceId = 'ledger-app-state-device-id';
+    const sessionId = 'session-1';
+
+    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
+
+    const { getLedgerAppAndVersion } = require('./ledger-dmk');
+
+    await expect(getLedgerAppAndVersion(deviceId)).resolves.toEqual({
+      appName: 'Ethereum',
+      version: '1.0.0',
     });
+    expect(mockDmk.sendCommand).not.toHaveBeenCalled();
+  });
 
-    const retry = connectLedgerDeviceById(deviceId);
-    await new Promise(resolve => setImmediate(resolve));
+  it('falls back to an app command when the DMK session state has no current app yet', async () => {
+    const deviceId = 'ledger-app-command-device-id';
+    const sessionId = 'session-1';
+    const connectedState = {
+      sessionStateType: 0,
+      deviceStatus: 'CONNECTED',
+      deviceModelId: 'nanoX',
+    };
 
-    expect(mockDmk.listenToAvailableDevices).toHaveBeenCalledWith({
-      transport: 'RN_BLE',
+    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
+    mockDmk.getDeviceSessionState
+      .mockReturnValueOnce(of(connectedState))
+      .mockReturnValueOnce(of(connectedState));
+
+    const { getLedgerAppAndVersion } = require('./ledger-dmk');
+
+    await expect(getLedgerAppAndVersion(deviceId)).resolves.toEqual({
+      appName: 'Ethereum',
+      version: '1.0.0',
     });
-
-    observer?.next([freshDevice]);
-
-    await expect(retry).resolves.toBe('session-2');
-    expect(mockDmk.connect).toHaveBeenLastCalledWith({
-      device: freshDevice,
-      sessionRefresherOptions: { isRefresherDisabled: false },
-    });
-    expect(unsubscribe).toHaveBeenCalledTimes(1);
-    expect(mockDmk.stopDiscovering).toHaveBeenCalledTimes(1);
+    expect(mockDmk.sendCommand).toHaveBeenCalledTimes(1);
   });
 
   it('leaves user-interaction actions pending until DMK emits a terminal state', async () => {
