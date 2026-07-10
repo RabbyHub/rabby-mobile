@@ -17,6 +17,7 @@ function setupLedgerApiModule(appName: string) {
 
   const mockKeyring = {
     makeApp: jest.fn(async () => undefined),
+    getAddresses: jest.fn(async () => []),
     getAppAndVersion: jest.fn(async () => ({
       appName,
       version: '1.0.0',
@@ -38,6 +39,7 @@ function setupLedgerApiModule(appName: string) {
     id: deviceId,
     name: 'Ledger',
   }));
+  const mockResetLedgerDeviceSession = jest.fn();
 
   jest.doMock('@rabby-wallet/keyring-utils', () => ({
     KEYRING_TYPE: {
@@ -76,6 +78,7 @@ function setupLedgerApiModule(appName: string) {
     getLedgerAppAndVersion: mockGetLedgerAppAndVersion,
     getLedgerDeviceSessionState: mockGetLedgerDeviceSessionState,
     getKnownLedgerDevice: mockGetKnownLedgerDevice,
+    resetLedgerDeviceSession: mockResetLedgerDeviceSession,
     subscribeLedgerDevices: jest.fn(),
   }));
 
@@ -89,6 +92,7 @@ function setupLedgerApiModule(appName: string) {
     mockGetLedgerAppAndVersion,
     mockGetLedgerDeviceSessionState,
     mockGetKnownLedgerDevice,
+    mockResetLedgerDeviceSession,
   };
 }
 
@@ -143,6 +147,22 @@ describe('core/apis/ledger', () => {
     expect(mockKeyring.makeApp).toHaveBeenCalledTimes(1);
     expect(mockKeyring.getAppAndVersion).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledWith(true);
+  });
+
+  it('marks the Ledger session stale when address derivation disconnects', async () => {
+    const { getAddresses, mockKeyring, mockResetLedgerDeviceSession } =
+      setupLedgerApiModule('Ethereum');
+    const error = new Error('DeviceDisconnectedWhileSendingError');
+
+    jest.runOnlyPendingTimers();
+    mockKeyring.getAddresses.mockRejectedValueOnce(error);
+
+    await expect(getAddresses(0, 1)).rejects.toThrow(
+      'DeviceDisconnectedWhileSendingError',
+    );
+    expect(mockResetLedgerDeviceSession).toHaveBeenCalledWith(
+      'ledger-device-id',
+    );
   });
 
   it('reports connected when a current Ledger session exists', async () => {

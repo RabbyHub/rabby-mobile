@@ -42,7 +42,6 @@ export const ConnectLedger: React.FC<{
     'scan' | 'select' | 'ble' | 'notfound' | 'openEthApp'
   >('ble');
   const notfoundTimerRef = React.useRef<any>(null);
-  const openEthAppExpiredTimerRef = React.useRef<any>(null);
   const unmountedRef = React.useRef(false);
   const selectingDeviceRef = React.useRef(false);
   let toastHiddenRef = React.useRef<() => void>(() => {});
@@ -60,10 +59,6 @@ export const ConnectLedger: React.FC<{
       return await apiLedger.checkEthApp(result => {
         if (!result) {
           setCurrentScreen('openEthApp');
-          clearTimeout(openEthAppExpiredTimerRef.current);
-          openEthAppExpiredTimerRef.current = setTimeout(() => {
-            setCurrentScreen('select');
-          }, 60000);
         }
       });
     } catch (err: any) {
@@ -101,8 +96,9 @@ export const ConnectLedger: React.FC<{
           toast.show(t('page.newAddress.ledger.error.lockedOrNoEthApp'));
         }
         setIsLoaded(true);
+        setCurrentScreen('select');
 
-        return;
+        return false;
       }
       const hdPathType =
         (await apiLedger.getCurrentUsedHDPathType()) ??
@@ -137,6 +133,7 @@ export const ConnectLedger: React.FC<{
         });
         onDone?.();
       }
+      return true;
     },
     [onDone, setIsLoaded, setSetting, showImportMorePopup, t],
   );
@@ -154,19 +151,25 @@ export const ConnectLedger: React.FC<{
         await apiLedger.setDeviceId(device.id);
         if (onSelectDevice) {
           await onSelectDevice(device);
+          isSelected = true;
         } else {
-          if (await checkEthApp()) {
-            await importFirstAddress(1);
-          } else {
+          const isEthAppOpen = await checkEthApp();
+          const retryCount = isEthAppOpen ? 1 : 5;
+
+          if (!isEthAppOpen) {
             toastHiddenRef.current = toastIndicator('Connecting', {
               isTop: true,
             });
-            // maybe need to reconnect device
-            await importFirstAddress(5);
-            toastHiddenRef.current?.();
+          }
+
+          try {
+            isSelected = await importFirstAddress(retryCount);
+          } finally {
+            if (!isEthAppOpen) {
+              toastHiddenRef.current?.();
+            }
           }
         }
-        isSelected = true;
       } finally {
         if (!isSelected) {
           selectingDeviceRef.current = false;

@@ -15,6 +15,7 @@ import {
   getLedgerAppAndVersion,
   getLedgerDeviceSessionState,
   getKnownLedgerDevice,
+  resetLedgerDeviceSession,
   subscribeLedgerDevices,
   type LedgerDmkDevice,
 } from '@/core/keyring-bridge/ledger/ledger-dmk';
@@ -49,7 +50,7 @@ export async function getAddresses(start: number, end: number) {
   } catch (e) {
     const deviceId = await keyring.getDeviceId();
     if (deviceId) {
-      await disconnectLedgerDevice(deviceId);
+      resetLedgerDeviceSession(deviceId);
     }
     throw e;
   }
@@ -102,7 +103,7 @@ export async function getCurrentUsedHDPathType() {
   } catch (e) {
     const deviceId = await keyring.getDeviceId();
     if (deviceId) {
-      disconnectLedgerDevice(deviceId);
+      resetLedgerDeviceSession(deviceId);
     }
   }
 }

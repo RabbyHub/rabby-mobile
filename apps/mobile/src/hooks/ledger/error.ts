@@ -81,7 +81,12 @@ export const ledgerErrorHandler = (error: unknown) => {
     return LEDGER_ERROR_CODES.OFF_OR_LOCKED;
   }
 
-  if (text.includes('Disconnected')) {
+  if (
+    tag === 'DeviceSessionNotFound' ||
+    text.includes('DeviceSessionNotFound') ||
+    text.includes('Device session not found') ||
+    text.includes('Disconnected')
+  ) {
     console.error(new Error('[Ledger] - Disconnected Error'), {
       error,
     });

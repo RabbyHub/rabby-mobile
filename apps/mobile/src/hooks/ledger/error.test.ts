@@ -35,4 +35,19 @@ describe('ledgerErrorHandler', () => {
       LEDGER_ERROR_CODES.OFF_OR_LOCKED,
     );
   });
+
+  it('classifies stale DMK sessions as disconnected', () => {
+    const consoleError = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+
+    expect(
+      ledgerErrorHandler({
+        _tag: 'DeviceSessionNotFound',
+        originalError: new Error('Device session not found'),
+      } as any),
+    ).toBe(LEDGER_ERROR_CODES.DISCONNECTED);
+
+    consoleError.mockRestore();
+  });
 });

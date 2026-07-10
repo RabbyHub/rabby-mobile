@@ -1,6 +1,7 @@
 import { Observable, of } from 'rxjs';
 
 const mockAddTransport = jest.fn();
+const mockAddLogger = jest.fn();
 const mockBuild = jest.fn();
 const mockSignerEthBuilder = jest.fn();
 const mockContextModule = {};
@@ -11,6 +12,7 @@ const mockContextModuleSetBlindSigningReporter = jest.fn();
 const mockContextModuleSetChain = jest.fn();
 const mockIsSuccessCommandResult = jest.fn();
 const mockAppStorageGetItem = jest.fn();
+const mockRNBleTransportFactory = jest.fn();
 const mockDmk = {
   connect: jest.fn(),
   disconnect: jest.fn(),
@@ -32,6 +34,7 @@ jest.mock('@ledgerhq/device-management-kit', () => ({
   },
   DeviceManagementKitBuilder: jest.fn(() => ({
     addTransport: mockAddTransport.mockReturnThis(),
+    addLogger: mockAddLogger.mockReturnThis(),
     build: mockBuild.mockReturnValue(mockDmk),
   })),
   DeviceStatus: {
@@ -51,7 +54,7 @@ jest.mock('@ledgerhq/device-management-kit', () => ({
 }));
 
 jest.mock('@ledgerhq/device-transport-kit-react-native-ble', () => ({
-  RNBleTransportFactory: 'RNBleTransportFactory',
+  RNBleTransportFactory: mockRNBleTransportFactory,
   rnBleTransportIdentifier: 'RN_BLE',
 }));
 
@@ -130,6 +133,16 @@ describe('ledger DMK bridge discovery', () => {
     jest.useRealTimers();
   });
 
+  it('registers the patched RN BLE transport factory', () => {
+    jest.resetModules();
+
+    const { getDmk } = require('./ledger-dmk-session');
+    getDmk();
+
+    expect(mockAddTransport).toHaveBeenCalledWith(mockRNBleTransportFactory);
+    expect(mockAddLogger).toHaveBeenCalledTimes(1);
+  });
+
   afterEach(() => {
     jest.useRealTimers();
   });
@@ -166,6 +179,49 @@ describe('ledger DMK bridge discovery', () => {
 
     expect(unsubscribe).toHaveBeenCalledTimes(1);
     expect(mockDmk.stopDiscovering).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears stale discovered devices before a new search', async () => {
+    const deviceId = 'ledger-search-refresh-device-id';
+    const staleDevice = {
+      id: deviceId,
+      name: 'Ledger stale',
+      transport: 'RN_BLE',
+    };
+    const unsubscribe = jest.fn();
+
+    mockDmk.listenToAvailableDevices
+      .mockReturnValueOnce({
+        subscribe: observer => {
+          of([staleDevice]).subscribe(observer);
+          return { unsubscribe };
+        },
+      })
+      .mockReturnValueOnce({
+        subscribe: observer => {
+          of([]).subscribe(observer);
+          return { unsubscribe };
+        },
+      });
+    mockDmk.connect.mockResolvedValueOnce('session-1');
+
+    const {
+      connectLedgerDeviceById,
+      subscribeLedgerDevices,
+    } = require('./ledger-dmk');
+
+    subscribeLedgerDevices({ next: jest.fn(), error: jest.fn() })();
+    subscribeLedgerDevices({ next: jest.fn(), error: jest.fn() })();
+
+    await expect(connectLedgerDeviceById(deviceId)).resolves.toBe('session-1');
+    expect(mockDmk.connect).toHaveBeenCalledWith({
+      device: expect.objectContaining({
+        id: deviceId,
+        name: 'Ledger',
+        transport: 'RN_BLE',
+      }),
+      sessionRefresherOptions: { isRefresherDisabled: false },
+    });
   });
 
   it('does not cancel a pending signer action from an app-side timeout', async () => {
@@ -279,6 +335,55 @@ describe('ledger DMK bridge discovery', () => {
     });
   });
 
+  it('retries direct device connect when DMK reports a stale session', async () => {
+    const device = { id: 'ledger-stale-connect-device-id', name: 'Ledger' };
+
+    mockDmk.connect
+      .mockRejectedValueOnce({
+        _tag: 'DeviceSessionNotFound',
+        originalError: new Error('Device session not found'),
+      })
+      .mockResolvedValueOnce('session-2');
+
+    const { connectLedgerDevice } = require('./ledger-dmk');
+
+    await expect(connectLedgerDevice(device)).resolves.toBe('session-2');
+    expect(mockDmk.connect).toHaveBeenCalledTimes(2);
+    expect(mockDmk.listenToAvailableDevices).not.toHaveBeenCalled();
+  });
+
+  it('clears a listed DMK session before reconnecting a known device id', async () => {
+    const deviceId = 'ledger-reset-stale-session-device-id';
+    const staleSessionId = 'stale-session-1';
+
+    mockDmk.listConnectedDevices
+      .mockReturnValueOnce([{ id: deviceId, sessionId: staleSessionId }])
+      .mockReturnValue([]);
+    mockDmk.connect.mockResolvedValueOnce('fresh-session-1');
+
+    const {
+      connectKnownLedgerDeviceById,
+      resetLedgerDeviceSession,
+    } = require('./ledger-dmk');
+
+    resetLedgerDeviceSession(deviceId);
+
+    await expect(connectKnownLedgerDeviceById(deviceId)).resolves.toBe(
+      'fresh-session-1',
+    );
+    expect(mockDmk.disconnect).toHaveBeenCalledWith({
+      sessionId: staleSessionId,
+    });
+    expect(mockDmk.connect).toHaveBeenCalledWith({
+      device: expect.objectContaining({
+        id: deviceId,
+        name: 'Ledger',
+        transport: 'RN_BLE',
+      }),
+      sessionRefresherOptions: { isRefresherDisabled: false },
+    });
+  });
+
   it('does not scan the same persisted id when direct known-id connect fails', async () => {
     const deviceId = 'ledger-direct-fallback-device-id';
 
@@ -330,6 +435,84 @@ describe('ledger DMK bridge discovery', () => {
     expect(mockDmk.sendCommand).toHaveBeenCalledTimes(1);
   });
 
+  it('reconnects when the app state read uses a stale DMK session', async () => {
+    const deviceId = 'ledger-stale-app-state-device-id';
+    const staleSessionId = 'stale-session-1';
+    const freshSessionId = 'fresh-session-1';
+
+    mockDmk.connect
+      .mockResolvedValueOnce(staleSessionId)
+      .mockResolvedValueOnce(freshSessionId);
+    mockDmk.getDeviceSessionState
+      .mockImplementationOnce(() => {
+        throw {
+          _tag: 'DeviceSessionNotFound',
+          originalError: new Error('Device session not found'),
+        };
+      })
+      .mockReturnValueOnce(
+        of({
+          sessionStateType: 1,
+          deviceStatus: 'CONNECTED',
+          currentApp: {
+            name: 'Ethereum',
+            version: '1.0.0',
+          },
+        }),
+      );
+
+    const { getLedgerAppAndVersion } = require('./ledger-dmk');
+
+    await expect(getLedgerAppAndVersion(deviceId)).resolves.toEqual({
+      appName: 'Ethereum',
+      version: '1.0.0',
+    });
+    expect(mockDmk.disconnect).toHaveBeenCalledWith({
+      sessionId: staleSessionId,
+    });
+    expect(mockDmk.connect).toHaveBeenCalledTimes(2);
+    expect(mockDmk.sendCommand).not.toHaveBeenCalled();
+  });
+
+  it('reconnects when the app version command uses a stale DMK session', async () => {
+    const deviceId = 'ledger-stale-app-command-device-id';
+    const staleSessionId = 'stale-session-1';
+    const freshSessionId = 'fresh-session-1';
+    const connectedState = {
+      sessionStateType: 0,
+      deviceStatus: 'CONNECTED',
+      deviceModelId: 'nanoX',
+    };
+
+    mockDmk.connect
+      .mockResolvedValueOnce(staleSessionId)
+      .mockResolvedValueOnce(freshSessionId);
+    mockDmk.getDeviceSessionState.mockReturnValue(of(connectedState));
+    mockDmk.sendCommand
+      .mockRejectedValueOnce({
+        _tag: 'DeviceSessionNotFound',
+        originalError: new Error('Device session not found'),
+      })
+      .mockResolvedValueOnce({
+        data: {
+          name: 'Ethereum',
+          version: '1.0.0',
+        },
+      });
+
+    const { getLedgerAppAndVersion } = require('./ledger-dmk');
+
+    await expect(getLedgerAppAndVersion(deviceId)).resolves.toEqual({
+      appName: 'Ethereum',
+      version: '1.0.0',
+    });
+    expect(mockDmk.disconnect).toHaveBeenCalledWith({
+      sessionId: staleSessionId,
+    });
+    expect(mockDmk.connect).toHaveBeenCalledTimes(2);
+    expect(mockDmk.sendCommand).toHaveBeenCalledTimes(2);
+  });
+
   it('leaves user-interaction actions pending until DMK emits a terminal state', async () => {
     jest.useFakeTimers();
 
@@ -368,6 +551,61 @@ describe('ledger DMK bridge discovery', () => {
     expect(rejection).toBeUndefined();
     expect(cancel).not.toHaveBeenCalled();
     expect(mockDmk.disconnect).not.toHaveBeenCalledWith({ sessionId });
+  });
+
+  it('rebinds a cached keyring wrapper to the current DMK session', async () => {
+    const deviceId = 'ledger-rebound-session-device-id';
+    const staleSessionId = 'stale-session-1';
+    const freshSessionId = 'fresh-session-2';
+    const address = '0x0000000000000000000000000000000000000001';
+    const staleSigner = {
+      getAddress: jest.fn(() => ({
+        observable: of({
+          status: 'error',
+          error: {
+            _tag: 'DeviceSessionNotFound',
+            originalError: new Error('Device session not found'),
+          },
+        }),
+      })),
+    };
+    const freshSigner = {
+      getAddress: jest.fn(() => ({
+        observable: of({
+          status: 'completed',
+          output: { address },
+        }),
+      })),
+    };
+
+    mockDmk.listConnectedDevices.mockReturnValue([
+      { id: deviceId, sessionId: staleSessionId },
+    ]);
+    mockSignerEthBuilder.mockImplementation(({ sessionId }) =>
+      makeSignerBuilder(
+        sessionId === staleSessionId ? staleSigner : freshSigner,
+      ),
+    );
+
+    const { getLedgerDmkSession } = require('./ledger-dmk');
+    const session = await getLedgerDmkSession(deviceId);
+
+    mockDmk.listConnectedDevices.mockReturnValue([]);
+    mockDmk.getDeviceSessionState.mockImplementationOnce(() => {
+      throw {
+        _tag: 'DeviceSessionNotFound',
+        originalError: new Error('Device session not found'),
+      };
+    });
+    mockDmk.connect.mockResolvedValueOnce(freshSessionId);
+
+    await expect(session.getAddress("44'/60'/0'/0/0")).resolves.toEqual({
+      address,
+    });
+    expect(mockSignerEthBuilder).toHaveBeenLastCalledWith({
+      dmk: mockDmk,
+      sessionId: freshSessionId,
+    });
   });
 
   it('normalizes DMK user rejection errors to the legacy rejected status word', async () => {
