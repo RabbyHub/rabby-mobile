@@ -1,7 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import { RcIconCloseCC } from '@/assets/icons/common';
 import { useTheme2024 } from '@/hooks/theme';
-import { formatUsdValue } from '@/utils/number';
+import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +21,8 @@ import RcIconUSDH from '@/assets2024/icons/perps/IconUSDH.svg';
 import RcIconUSDE from '@/assets2024/icons/perps/IconUSDE.svg';
 import RcIconCardArrow from '@/assets2024/icons/perps/IconCardArrow.svg';
 import { apisPerps } from '@/core/apis';
+import BigNumber from 'bignumber.js';
+import TickerTexts, { TickItem } from '@/components/Animated/TickerText';
 
 const COIN_ICON_MAP: Record<string, React.ReactNode> = {
   USDC: <RcIconUSDC width={16} height={16} />,
@@ -71,9 +73,12 @@ export const PerpsAccountCard: React.FC<{
         <View style={styles.balanceCardInner}>
           <View style={styles.balanceCardRow}>
             <View style={styles.balanceCardContentLeft}>
-              <Text style={styles.balance}>
-                {formatUsdValue(Number(availableBalance || 0))}
-              </Text>
+              <TickerTexts textStyle={styles.balance} duration={750}>
+                <TickItem rotateItems={['$']}>{'$'}</TickItem>
+                {splitNumberByStep(
+                  new BigNumber(availableBalance || 0).toFixed(2),
+                )}
+              </TickerTexts>
               <TouchableOpacity
                 disabled={!isUnifiedAccount}
                 onPress={() => setIsBalanceExpanded(prev => !prev)}
@@ -303,7 +308,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
   },
   balanceCard: {
-    marginTop: 10,
+    // marginTop: 10,
     borderRadius: 16,
     padding: 2, // gradient border width
   },
@@ -336,7 +341,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 36,
     lineHeight: 36,
-    fontWeight: '900',
+    fontWeight: '700',
     color: '#F7FAFC',
   },
   availableBalance: {

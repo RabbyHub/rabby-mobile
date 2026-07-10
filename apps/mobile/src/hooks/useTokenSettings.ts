@@ -1,23 +1,27 @@
 import { preferenceService } from '@/core/services';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { filterCustomTestnetUserTokenSettings } from '@/utils/favoriteToken';
 
-type UserTokenSettingsState = Awaited<
-  ReturnType<typeof preferenceService.getUserTokenSettings>
+type UserTokenSettingsState = ReturnType<
+  typeof preferenceService.getUserTokenSettingsSync
 >;
-const userTokenSettingsStore = zCreate<UserTokenSettingsState>(() => {
-  return {
-    foldTokens: [],
-    unfoldTokens: [],
-    includeDefiAndTokens: [],
-    excludeDefiAndTokens: [],
-    pinedQueue: [],
-    foldNfts: [],
-    unfoldNfts: [],
-    foldDefis: [],
-    unFoldDefis: [],
-    ...preferenceService.getUserTokenSettings(),
+
+export const getDisplayUserTokenSettingsSync = (): UserTokenSettingsState => {
+  return filterCustomTestnetUserTokenSettings(
+    preferenceService.getUserTokenSettingsSync(),
+  );
+};
+
+export const getDisplayUserTokenSettings =
+  async (): Promise<UserTokenSettingsState> => {
+    return filterCustomTestnetUserTokenSettings(
+      await preferenceService.getUserTokenSettings(),
+    );
   };
+
+const userTokenSettingsStore = zCreate<UserTokenSettingsState>(() => {
+  return getDisplayUserTokenSettingsSync();
 });
 
 function setUserTokenSettings(
@@ -28,7 +32,7 @@ function setUserTokenSettings(
       strict: false,
     });
 
-    return newVal;
+    return filterCustomTestnetUserTokenSettings(newVal);
   });
 }
 
@@ -37,7 +41,7 @@ export function getUserTokenSettingsInMemory() {
 }
 
 const fetchUserTokenSettings = async () => {
-  const data = await preferenceService.getUserTokenSettings();
+  const data = await getDisplayUserTokenSettings();
   setUserTokenSettings(data);
 };
 

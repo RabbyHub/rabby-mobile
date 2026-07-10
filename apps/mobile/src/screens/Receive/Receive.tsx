@@ -95,7 +95,6 @@ function ReceiveScreen(): JSX.Element {
 
     return [prefix, middle, suffix];
   }, [account]);
-
   const isWatchMode = useMemo(
     () => account?.type === KEYRING_CLASS.WATCH,
     [account?.type],
@@ -359,13 +358,19 @@ function ReceiveScreen(): JSX.Element {
                 style={styles.addressDetailContainer}
                 onPress={handleCopy}>
                 <Text style={styles.qrCardAddress}>
-                  <Text style={styles.highlightAddrPart}>
-                    {addressSplit[0]}
-                  </Text>
-                  {addressSplit[1]}
-                  <Text style={styles.highlightAddrPart}>
-                    {addressSplit[2]}
-                  </Text>
+                  {showName ? (
+                    <>
+                      <Text style={styles.highlightAddrPart}>
+                        {addressSplit[0]}
+                      </Text>
+                      {addressSplit[1]}
+                      <Text style={styles.highlightAddrPart}>
+                        {addressSplit[2]}
+                      </Text>
+                    </>
+                  ) : (
+                    '******'
+                  )}
                 </Text>
               </Pressable>
             </View>

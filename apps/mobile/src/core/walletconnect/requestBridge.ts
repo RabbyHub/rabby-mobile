@@ -54,6 +54,9 @@ const WALLETCONNECT_TRANSACTION_RETURN_TOASTS = {
   },
 } as const;
 
+const ETH_SIGN_TYPED_DATA_METHOD = 'eth_signTypedData';
+const ETH_SIGN_TYPED_DATA_V4_METHOD = 'eth_signTypedData_v4';
+
 function isWalletConnectTransactionMethod(method?: string) {
   return !!method && WALLETCONNECT_SIGN_METHODS.includes(method);
 }
@@ -92,7 +95,7 @@ function getCurrentAppStateForLog() {
 
 async function waitForAppActiveBeforeApproval(method: string) {
   if (isAppActive()) {
-    return;
+    return false;
   }
 
   addWalletConnectLog(
@@ -119,6 +122,7 @@ async function waitForAppActiveBeforeApproval(method: string) {
   addWalletConnectLog('request', 'app foregrounded before approval', {
     method,
   });
+  return true;
 }
 
 function normalizeRequestParams(params: unknown) {
@@ -157,6 +161,32 @@ function normalizeSwitchEthereumChainId(params: unknown) {
   }
 
   return chainId;
+}
+
+function normalizeWalletConnectProviderRequest(
+  method: string,
+  params: unknown,
+) {
+  const normalizedParams = normalizeRequestParams(params);
+  if (
+    method !== ETH_SIGN_TYPED_DATA_METHOD ||
+    Array.isArray(normalizedParams[0])
+  ) {
+    return {
+      method,
+      params: normalizedParams,
+    };
+  }
+
+  return {
+    method: ETH_SIGN_TYPED_DATA_V4_METHOD,
+    params: [
+      normalizedParams[0],
+      typeof normalizedParams[1] === 'string'
+        ? normalizedParams[1]
+        : JSON.stringify(normalizedParams[1]),
+    ],
+  };
 }
 
 function getRpcError(error: unknown) {
@@ -308,29 +338,65 @@ async function executeSessionRequest(input: {
     );
   }
 
-  await waitForAppActiveBeforeApproval(method);
+  const didWait = await waitForAppActiveBeforeApproval(method);
+  let activeSession = session;
+  let activeAccount = account;
+  let activeChain = chain;
 
-  const origin = getWalletConnectSessionOrigin(session);
+  if (didWait) {
+    const nextSession = getWalletConnectSession(walletKit, event.topic);
+    if (!nextSession) {
+      throw ethErrors.provider.disconnected('WalletConnect session not found.');
+    }
+    activeSession = nextSession;
+
+    const activeRequestChain = getRequestChain(event, activeSession);
+    if (
+      !isWalletConnectMethodApproved(
+        activeSession,
+        activeRequestChain.caip2,
+        method,
+      )
+    ) {
+      throw ethErrors.provider.unauthorized({
+        message: `WalletConnect method is not approved for this session: ${method}`,
+      });
+    }
+
+    activeChain = activeRequestChain.chain;
+    const nextAccount = await resolveWalletConnectAccount(activeSession);
+    if (!nextAccount) {
+      throw ethErrors.provider.unauthorized({
+        message:
+          'No Rabby account is available for this WalletConnect session.',
+      });
+    }
+    activeAccount = nextAccount;
+  }
+
+  const origin = getWalletConnectSessionOrigin(activeSession);
+  const providerRequest = normalizeWalletConnectProviderRequest(method, params);
+
   return sendRequest({
     data: {
-      method,
-      params: normalizeRequestParams(params),
+      method: providerRequest.method,
+      params: providerRequest.params,
       $ctx: {},
     },
     session: {
       origin,
-      name: session.peer?.metadata?.name || 'WalletConnect dapp',
-      icon: session.peer?.metadata?.icons?.[0] || '',
+      name: activeSession.peer?.metadata?.name || 'WalletConnect dapp',
+      icon: activeSession.peer?.metadata?.icons?.[0] || '',
       $mobileCtx: {
         isFromWalletConnect: true,
       },
     },
-    account,
+    account: activeAccount,
     requestContext: {
       origin,
       source: 'walletconnect',
-      chainId: chain.id,
-      accountAddress: account.address,
+      chainId: activeChain.id,
+      accountAddress: activeAccount.address,
     },
   });
 }

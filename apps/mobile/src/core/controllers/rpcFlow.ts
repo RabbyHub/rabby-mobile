@@ -6,6 +6,7 @@ import { ethErrors } from 'eth-rpc-errors';
 // } from 'background/service';
 import {
   autoConnectService,
+  customTestnetService,
   dappService,
   keyringService,
   notificationService,
@@ -19,7 +20,7 @@ import * as Sentry from '@sentry/react-native';
 // import stats from '@/stats';
 import { addHexPrefix, stripHexPrefix } from 'ethereumjs-util';
 import { eventBus, EVENTS } from '@/utils/events';
-import { Chain, CHAINS_ENUM } from '@/constant/chains';
+import { Chain, CHAINS_ENUM, getTestnetChainList } from '@/constant/chains';
 import * as apisDapp from '../apis/dapp';
 import { stats } from '@/utils/stats';
 import { waitSignComponentAmounted } from '../utils/signEvent';
@@ -66,6 +67,12 @@ const flow = new PromiseFlow<{
 const flowContext = flow
   .use(async (ctx, next) => {
     ensureProviderRequestContext(ctx.request);
+    if (
+      !getTestnetChainList().length &&
+      customTestnetService.getList().length
+    ) {
+      customTestnetService.syncChainList();
+    }
     return next();
   })
   .use(async (ctx, next) => {

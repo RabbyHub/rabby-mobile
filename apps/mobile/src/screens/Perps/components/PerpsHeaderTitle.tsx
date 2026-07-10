@@ -73,8 +73,8 @@ const PerpsHeaderContent: React.FC<{
                   style={[
                     popupState.isShowLoginPopup ? styles.reverseCaret : null,
                   ]}
-                  width={18}
-                  height={18}
+                  width={14}
+                  height={14}
                   bgColor={colors2024['neutral-bg-5']}
                   lineColor={colors2024['neutral-title-1']}
                 />
@@ -166,7 +166,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-foot'],
     flexShrink: 1,
   },
   reverseCaret: {
