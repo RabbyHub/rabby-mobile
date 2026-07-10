@@ -6,12 +6,16 @@ import {
   Platform,
 } from 'react-native';
 
-import { preferenceService } from '@/core/services';
+import {
+  getPreferenceSnapshot,
+  setPreferenceByKey,
+} from '@/core/serviceApi/preference';
 import { zCreate } from '@/core/utils/reexports';
+import type {
+  UpdaterOrPartials} from '@/core/utils/store';
 import {
   resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
+  runIIFEFunc
 } from '@/core/utils/store';
 import { UseValueHook } from '@/screens/Settings/components/SwitchSettingCommon';
 import DeviceUtils from '@/core/utils/device';
@@ -35,7 +39,7 @@ const appNotificationStore = zCreate<{
     hasSystemPermission: null,
     enabledTransactionNofification:
       APP_FEATURE_SWITCH.transactionNotification &&
-      (preferenceService.getPreferenceByKey('enabledTransactionNofification') ??
+      (getPreferenceSnapshot('enabledTransactionNofification') ??
         false),
   };
 });
@@ -129,10 +133,10 @@ export async function setEnableTransactionNofification(
     );
     if (!prevHasSystemPermission) newVal = true;
 
-    preferenceService.setPreferenceByKey(
+    void setPreferenceByKey(
       'enabledTransactionNofification',
       newVal,
-    );
+    ).catch(console.error);
     finalValue = newVal;
 
     return { enabledTransactionNofification: newVal };

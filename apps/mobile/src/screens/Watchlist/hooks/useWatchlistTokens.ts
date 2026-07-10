@@ -1,5 +1,5 @@
-import { IManageToken } from '@/core/services/preference';
-import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
+import type { IManageToken } from '@/core/services/preference';
+import type { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
 import { atom, useAtom } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';

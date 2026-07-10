@@ -99,6 +99,27 @@ function loadAddressModule({
   jest.doMock('./keyring', () => ({
     getKeyring: (...args: unknown[]) => mockGetKeyring(...args),
   }));
+  jest.doMock('@/core/serviceApi', () => ({
+    contactServiceApi: {
+      removeAlias: (...args: unknown[]) => mockRemoveAlias(...args),
+    },
+    dappServiceApi: {
+      getDapps: (...args: unknown[]) => mockGetDapps(...args),
+      updateDapp: (...args: unknown[]) => mockUpdateDapp(...args),
+    },
+    perpsServiceApi: {
+      removeAgentWallet: (...args: unknown[]) =>
+        mockRemoveAgentWallet(...args),
+    },
+    whitelistServiceApi: {
+      removeWhitelist: (...args: unknown[]) => mockRemoveWhitelist(...args),
+    },
+  }));
+  jest.doMock('@/core/serviceApi/transactionHistory', () => ({
+    transactionHistoryServiceApi: {
+      removeList: (...args: unknown[]) => mockRemoveList(...args),
+    },
+  }));
   jest.doMock('../services', () => ({
     contactService: {
       removeAlias: mockRemoveAlias,

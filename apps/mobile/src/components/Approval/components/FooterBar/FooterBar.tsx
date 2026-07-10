@@ -1,13 +1,13 @@
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
-import { Chain } from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
 import { SecurityEngineLevel } from '@/constant/security';
-import { AppColors2024Variants, AppColorsVariants } from '@/constant/theme';
-import { dappService, preferenceService } from '@/core/services';
-import { DappInfo } from '@/core/services/dappService';
-import { Account } from '@/core/services/preference';
+import type { AppColors2024Variants, AppColorsVariants } from '@/constant/theme';
+import { getDappSnapshot } from '@/core/serviceApi/dapp';
+import type { DappInfo } from '@/core/services/dappService';
+import type { Account } from '@/core/services/preference';
 import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
-import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
-import { Result } from '@rabby-wallet/rabby-security-engine';
+import type { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
+import type { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import clsx from 'clsx';
 import React, { useEffect, useMemo, useRef } from 'react';
@@ -15,15 +15,16 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { AccountInfo } from './AccountInfo';
-import { ActionGroup, Props as ActionGroupProps } from './ActionGroup';
+import type { Props as ActionGroupProps } from './ActionGroup';
+import { ActionGroup } from './ActionGroup';
 import { GasAccountTips } from './GasLessComponents/GasAccountTips';
 import { GasLessNotEnough } from './GasLessComponents/GasLessNotEnough';
-import { GasLessConfig } from './GasLessComponents';
+import type { GasLessConfig } from './GasLessComponents';
 import { GasLessActivityToSign } from './GasLessComponents/GasLessActivityToSign';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Text } from '@/components/Typography';
 import { shouldUseLegacyApprovalFooterAutoSwitch } from '../TxComponents/GasSelector/approvalGasDisplay';
-import { GasAccountTopUpWaitCallback } from '@/screens/GasAccount/components/topUpContinuation';
+import type { GasAccountTopUpWaitCallback } from '@/screens/GasAccount/components/topUpContinuation';
 import {
   BOTTOM_BUTTON_BOTTOM_OFFSET,
   BOTTOM_BUTTON_TOP_OFFSET,
@@ -293,7 +294,7 @@ export const FooterBar: React.FC<Props> = ({
 
   useEffect(() => {
     if (origin) {
-      const site = dappService.getDapp(origin);
+      const site = getDappSnapshot(origin);
       site && setConnectedSite(site);
     }
   }, [origin]);

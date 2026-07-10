@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 
 import { INNER_DAPP_LIST } from '../constants';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';

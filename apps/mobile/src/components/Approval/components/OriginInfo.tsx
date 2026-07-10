@@ -1,15 +1,16 @@
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { findChain } from '@/utils/chain';
-import { CHAINS, Chain } from '@debank/common';
+import type { Chain } from '@debank/common';
+import { CHAINS } from '@debank/common';
 import React, { useEffect, useMemo } from 'react';
 import SecurityLevelTagNoText from './SecurityEngine/SecurityLevelTagNoText';
-import { Result } from '@rabby-wallet/rabby-security-engine';
+import type { Result } from '@rabby-wallet/rabby-security-engine';
 import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
-import { dappService } from '@/core/services';
+import { dappServiceApi } from '@/core/serviceApi/dapp';
 import { Image, View } from 'react-native';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { useTheme2024 } from '@/hooks/theme';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { Tip } from '@/components';
 import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -100,10 +101,19 @@ export const OriginInfo: React.FC<Props> = ({
   }, [origin]);
 
   useEffect(() => {
+    let cancelled = false;
+
     if (origin) {
-      const result = dappService.getDapp(origin);
-      result && setConnectedSite(result);
+      dappServiceApi.getDapp(origin).then(result => {
+        if (!cancelled && result) {
+          setConnectedSite(result);
+        }
+      });
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [origin]);
 
   const engineResultMap = useMemo(() => {

@@ -9,7 +9,11 @@ import React, {
 import { makeTxPageBackgroundColors, RootNames } from '@/constant/layout';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
-import { preferenceService, transactionHistoryService } from '@/core/services';
+import {
+  getTransactionHistoryListSnapshot,
+  getTransactionHistorySucceedListSnapshot,
+  transactionHistoryServiceApi,
+} from '@/core/serviceApi/transactionHistory';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
@@ -23,7 +27,7 @@ import PQueue from 'p-queue';
 import { last, unionBy, orderBy, debounce } from 'lodash';
 import { View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
-import {
+import type {
   TxAllHistoryResult,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -32,7 +36,7 @@ import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -52,7 +56,7 @@ import {
   getHistoryItemType,
 } from './components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
@@ -114,7 +118,7 @@ function History({
   });
   const [firstFetchDone, setFirstFetchDone] = useState(false);
   const [historySuccessList, setHistorySuccessList] = useState<string[]>(
-    transactionHistoryService.getSucceedList(),
+    getTransactionHistorySucceedListSnapshot(),
   );
 
   const mergeDataWithDeduplication = useMemoizedFn(
@@ -356,7 +360,7 @@ function History({
 
   const fetchLocalTx = useMemoizedFn(async (address: string) => {
     const { pendings: _pendings, completeds: _completeds } =
-      transactionHistoryService.getList(address);
+      getTransactionHistoryListSnapshot(address);
 
     const pendings = _pendings.filter(item => {
       const chain = findChain({ id: item.chainId });
@@ -382,7 +386,7 @@ function History({
               }) || item.isSynced;
 
             if (isSynced && !item.isSynced) {
-              transactionHistoryService.updateTx({
+              void transactionHistoryServiceApi.updateTx({
                 ...item.maxGasTx,
                 isSynced: true,
               });
@@ -514,9 +518,9 @@ function History({
   // }, [data]);
 
   useMount(() => {
-    const list = transactionHistoryService.getSucceedList();
+    const list = getTransactionHistorySucceedListSnapshot();
     setHistorySuccessList(list);
-    transactionHistoryService.clearSuccessAndFailList(
+    void transactionHistoryServiceApi.clearSuccessAndFailList(
       isForMultipleAddress ? undefined : currentAddress,
     );
   });

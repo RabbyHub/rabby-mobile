@@ -1,16 +1,17 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import type {
+  ListRenderItemInfo} from 'react-native';
 import {
   ActivityIndicator,
   Image,
-  ListRenderItemInfo,
   View,
 } from 'react-native';
 import { findChain } from '@/utils/chain';
 import type { SafeMessage } from '@rabby-wallet/gnosis-sdk';
 import type { SafeTransactionDataPartial } from '@safe-global/types-kit';
 import { IconLoadFailed, RcIconEmptyCC } from '@/assets/icons/gnosis';
-import { CHAINS_ENUM } from '@/constant/chains';
+import type { CHAINS_ENUM } from '@/constant/chains';
 import { useGnosisSafeInfo } from '@/hooks/gnosis/useGnosisSafeInfo';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
@@ -21,7 +22,7 @@ import { FlatList } from 'react-native-gesture-handler';
 import { verifyTypedData } from 'viem';
 import { GnosisMessageQueueItem } from './GnosisMessageQueueItem';
 import { apisSafe } from '@/core/apis/safe';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { Text } from '@/components/Typography';
 
 interface TransactionConfirmationsProps {

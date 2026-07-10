@@ -9,11 +9,12 @@ import mixPlugin from 'colord/plugins/mix';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { ActionsContainer, PropsWithAuthSession } from './ActionsContainer';
+import type { PropsWithAuthSession } from './ActionsContainer';
+import { ActionsContainer } from './ActionsContainer';
 import { GasLessAnimatedWrapper } from './GasLessComponents';
 import { useSubmitAction } from './useSubmitAction';
-import { preferenceService } from '@/core/services';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { setReportActionTs } from '@/core/serviceApi/preference';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { Text } from '@/components/Typography';
 import { BOTTOM_BUTTON_DOUBLE_HEIGHT } from '@/constant/layout';
 
@@ -40,7 +41,7 @@ export const SubmitActions: React.FC<PropsWithAuthSession> = ({
     setIsSign(true);
 
     isSwap &&
-      preferenceService.setReportActionTs(
+      void setReportActionTs(
         REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN,
         {
           chain: chain?.serverId as string,

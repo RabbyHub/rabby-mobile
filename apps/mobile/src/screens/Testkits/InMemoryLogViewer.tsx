@@ -5,9 +5,10 @@ import dayjs from 'dayjs';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { Text } from '@/components/Typography';
 import { toast } from '@/components2024/Toast';
-import debugLogService, {
+import type {
   DebugLogEntry,
-} from '@/core/services/debugLogService';
+} from '@/core/utils/debugLogService';
+import debugLogService from '@/core/utils/debugLogService';
 import { useTheme2024 } from '@/hooks/theme';
 import { shareLocalFile } from '@/utils/shareLocalFile';
 import { createGetStyles2024 } from '@/utils/styles';

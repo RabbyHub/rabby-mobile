@@ -1,14 +1,16 @@
 import { keyBy } from 'lodash';
 import { CHAINS_ENUM } from '@/constant/chains';
-import { keyringService } from '../services';
 import {
-  autoConnectService,
-  dappService,
-  metamaskModeService,
-} from '@/core/services/shared';
+  addDappSync,
+  autoConnectServiceApi,
+  getDappSnapshot,
+  getKeyringMemStoreStateSnapshot,
+  metamaskModeServiceApi,
+  updateDappSync,
+} from '@/core/serviceApi';
 import providerController from './provider';
 import { findChain, findChainByEnum } from '@/utils/chain';
-import { ProviderRequest } from './type';
+import type { ProviderRequest } from './type';
 import { createDappBySession } from '@/core/utils/createDappBySession';
 import { openapi } from '../request';
 
@@ -30,9 +32,9 @@ const tabCheckin = ({
   // }
   console.debug('[tabCheckin]', origin, name, icon, userAgent);
 
-  const dapp = dappService.getDapp(origin);
+  const dapp = getDappSnapshot(origin);
   if (!dapp) {
-    dappService.addDapp(
+    addDappSync(
       createDappBySession({
         origin,
         name,
@@ -40,13 +42,13 @@ const tabCheckin = ({
       }),
     );
   } else {
-    dappService.updateDapp({
+    updateDappSync({
       ...dapp,
       name: name,
       icon: icon,
     });
   }
-  autoConnectService.prepare(origin);
+  void autoConnectServiceApi.prepare(origin).catch(console.error);
 
   return null;
 };
@@ -55,8 +57,8 @@ const getProviderState = async (req: ProviderRequest) => {
   const {
     session: { origin },
   } = req;
-  const chainEnum = dappService.getDapp(origin)?.chainId || CHAINS_ENUM.ETH;
-  const isUnlocked = keyringService.memStore.getState().isUnlocked;
+  const chainEnum = getDappSnapshot(origin)?.chainId || CHAINS_ENUM.ETH;
+  const isUnlocked = getKeyringMemStoreStateSnapshot()?.isUnlocked || false;
   let networkVersion = '1';
   if (networkIdMap[chainEnum]) {
     networkVersion = networkIdMap[chainEnum];
@@ -106,7 +108,7 @@ const getIsMetamaskMode = async (req: ProviderRequest) => {
   if (!origin) {
     return false;
   }
-  return metamaskModeService.checkIsMetamaskMode(origin);
+  return metamaskModeServiceApi.checkIsMetamaskMode(origin);
 };
 
 export default {

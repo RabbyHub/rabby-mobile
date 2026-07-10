@@ -1,5 +1,9 @@
 import { openapi } from '@/core/request';
-import { offlineChainService } from '@/core/services';
+import {
+  getCloseTipsChainsSnapshot,
+  mockClearCloseTipsChains,
+  setCloseTipsChains,
+} from '@/core/serviceApi/offlineChain';
 import { useTheme2024 } from '@/hooks/theme';
 import addressBalanceStore from '@/store/balance';
 import { useAccountStore } from '@/store/account';
@@ -21,7 +25,8 @@ import {
 import { useMockDataForHomeCenterArea } from '../hooks/homeCenterArea';
 import { isNonPublicProductionEnv } from '@/constant';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { Text } from '@/components/Typography';
 
 // const closedTipsChainsAtom = atom(offlineChainService.getCloseTipsChains());
@@ -29,7 +34,7 @@ type ClosedTipsState = {
   closedTipsChains: string[];
 };
 const closedTipsStore = zCreate<ClosedTipsState>(() => ({
-  closedTipsChains: offlineChainService.getCloseTipsChains(),
+  closedTipsChains: getCloseTipsChainsSnapshot(),
 }));
 
 function setClosedTipsChainState(
@@ -38,20 +43,19 @@ function setClosedTipsChainState(
   closedTipsStore.setState(prev => {
     const { newVal } = resolveValFromUpdater(prev.closedTipsChains, valOrFunc);
 
-    offlineChainService.setCloseTipsChains(newVal);
+    void setCloseTipsChains(newVal).catch(console.error);
 
     return { ...prev, closedTipsChains: newVal };
   });
 }
 
 const clearOfflineChainTips = () => {
-  offlineChainService.mockClearCloseTipsChains();
+  void mockClearCloseTipsChains().catch(console.error);
   setClosedTipsChainState([]);
 };
 
 const setClosedTipsChain = (chain: string) => {
   setClosedTipsChainState(p => [...p, chain]);
-  offlineChainService.setCloseTipsChains([chain]);
 };
 
 export const useMockClearOfflineChainTips = () => {

@@ -12,7 +12,7 @@ import {
   EVENTS,
 } from './events';
 import { apisAppWin2024 } from '@/core/services2024/appWin';
-import { MODAL_ID } from '@/components2024/GlobalBottomSheetModal/types';
+import type { MODAL_ID } from '@/components2024/GlobalBottomSheetModal/types';
 
 // 当前版本的 OneKeyKeyring 仅支持在设备上输入 PIN 和 Passphrase
 const ONLY_IN_DEVICE = true;

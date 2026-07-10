@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import type {
+  StyleProp,
+  ViewStyle} from 'react-native';
 import {
   Keyboard,
   Platform,
-  StyleProp,
   TouchableOpacity,
-  View,
-  ViewStyle,
+  View
 } from 'react-native';
 
 import { ReactIconHome } from '@/assets2024/icons/browser';
@@ -35,7 +36,7 @@ import { BrowserHot } from './BrowserHot';
 import { BrowserFavorite } from './BrowserFavorite';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LocalPannableDraggableView } from '@/components/customized/BottomSheetDraggableView';
-import { dappService } from '@/core/services';
+import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { browserApis } from '@/hooks/browser/useBrowser';
 
@@ -132,7 +133,7 @@ export function BrowserSearch({
       await waitKeyboardHide();
       if (
         options?.isRemindOpen &&
-        !dappService.getDapp(safeGetOrigin(url))?.isSkipRemind
+        !getDappSnapshot(safeGetOrigin(url))?.isSkipRemind
       ) {
         browserApis.setPartialBrowserState({
           isShowDappInfo: true,

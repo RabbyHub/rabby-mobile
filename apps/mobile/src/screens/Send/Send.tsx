@@ -19,7 +19,7 @@ import {
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
 import {
@@ -40,8 +40,8 @@ import {
   findChainByServerID,
   makeTokenFromChain,
 } from '@/utils/chain';
-import { preferenceService } from '@/core/services';
-import {
+import { getLastTimeSendToken } from '@/core/serviceApi/preference';
+import type {
   TokenItem,
   TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -58,8 +58,9 @@ import BigNumber from 'bignumber.js';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import type {
+  PropsForAccountSwitchScreen} from '@/hooks/accountsSwitcher';
 import {
-  PropsForAccountSwitchScreen,
   ScreenSceneAccountProvider,
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
@@ -78,7 +79,7 @@ import { getRecommendToken } from '@/utils/addressSupport';
 import { lowcaseSame } from '@/utils/common';
 import { ShowMoreOnSend } from './components/ShowMoreOnSend';
 import { PendingTxItem } from '../Swap/components/PendingTxItem';
-import { SendTxHistoryItem } from '@/core/services/transactionHistory';
+import type { SendTxHistoryItem } from '@/core/services/transactionHistory';
 import { useRecentSendPendingTx } from './hooks/useRecentSend';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import { globalSupportCexList } from '@/hooks/useCexSupportList';
@@ -566,7 +567,7 @@ function SendScreen({
         const lastTokenStartedAt = Date.now();
         markSendScreenPerf('last_time_send_token_start');
         targetToken =
-          (await preferenceService.getLastTimeSendToken(
+          (await getLastTimeSendToken(
             currentAccount?.address,
           )) ?? null;
         markSendScreenPerf('last_time_send_token_end', {

@@ -6,10 +6,10 @@ import React, {
   useState,
 } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useInfiniteScroll, useMemoizedFn, useMount } from 'ahooks';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 import {
   ensureHistoryListItemFromDb,
   fetchHistoryTokenItem,
@@ -20,9 +20,12 @@ import {
   HistoryList,
   type HistoryListHeaderComponent,
 } from '@/screens/Transaction/components/HistoryGroupList';
-import { transactionHistoryService } from '@/core/services';
-import { openapi } from '@/core/request';
 import {
+  getTransactionHistorySucceedListSnapshot,
+  transactionHistoryServiceApi,
+} from '@/core/serviceApi/transactionHistory';
+import { openapi } from '@/core/request';
+import type {
   TxAllHistoryResult,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -32,7 +35,7 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { Empty } from '@/screens/Transaction/components/Empty';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/store/tokens';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 
 interface IFetchHistory {
@@ -77,7 +80,7 @@ export const TokenDetailHistoryList = ({
   const hasMoreMap = useRef<Record<string, boolean>>({});
 
   const [historySuccessList, setHistorySuccessList] = useState<string[]>(
-    transactionHistoryService.getSucceedList(),
+    getTransactionHistorySucceedListSnapshot(),
   );
 
   const historyListRef = useRef<{ scrollToTop: () => void }>(null);
@@ -290,9 +293,9 @@ export const TokenDetailHistoryList = ({
   }, [throttleBatchFetchData]);
 
   useMount(() => {
-    const list = transactionHistoryService.getSucceedList();
+    const list = getTransactionHistorySucceedListSnapshot();
     setHistorySuccessList(list);
-    transactionHistoryService.clearSuccessAndFailList(currentAddress);
+    void transactionHistoryServiceApi.clearSuccessAndFailList(currentAddress);
   });
 
   const displayList = useMemo(() => {

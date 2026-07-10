@@ -1,7 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import RcIconQuestionCC from '@/assets/icons/transaction-record/icon-question-cc.svg';
 import { Tip } from '@/components';
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -16,12 +16,13 @@ import { useMemoizedFn, useMount } from 'ahooks';
 import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 // import { toast } from '@/components2024/Toast';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
-import { transactionHistoryService } from '@/core/services/shared';
+import type { KeyringAccountWithAlias} from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
+import { getTransactionHistoryListSnapshot } from '@/core/serviceApi/transactionHistory';
 import { apiCustomTestnet } from '@/core/apis/customTestnet';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { findAccountByPriority } from '@/utils/account';
-import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
+import type { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
 import { useFindChain } from '@/hooks/useFindChain';
 import { apiProvider } from '@/core/apis';
 import { sendRequest } from '@/core/apis/sendRequest';
@@ -47,7 +48,7 @@ export const TransactionPendingDetail = ({
 
   useMount(() => {
     const { pendings: _pendings, completeds: _completeds } =
-      transactionHistoryService.getList(data.address);
+      getTransactionHistoryListSnapshot(data.address);
     const isCanCancel =
       minBy(
         _pendings.filter(i => i.chainId === data.chainId),

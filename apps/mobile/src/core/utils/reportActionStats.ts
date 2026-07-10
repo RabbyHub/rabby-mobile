@@ -1,6 +1,6 @@
 import { stats } from '@/utils/stats';
 import { IS_IOS } from '../native/utils';
-import { REPORT_TIMEOUT_ACTION_KEY } from '../services/type';
+import { REPORT_TIMEOUT_ACTION_KEY } from '../utils/reportTimeoutAction';
 
 const reportFunc = async (
   type: Parameters<typeof stats.report>[0],

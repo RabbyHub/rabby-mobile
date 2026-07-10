@@ -1,22 +1,24 @@
-import { StyleProp, TextStyle, TouchableOpacity, View } from 'react-native';
-import { CHAINS_ENUM } from '@/constant/chains';
+import type { StyleProp, TextStyle} from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
+import type { CHAINS_ENUM } from '@/constant/chains';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { SelectSortedChainProps } from '@/components2024/SelectChainWithSummary';
+import type { SelectSortedChainProps } from '@/components2024/SelectChainWithSummary';
 import { useFindChain } from '@/hooks/useFindChain';
 import React from 'react';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
+import type {
+  MODAL_ID} from '@/components2024/GlobalBottomSheetModal/types';
 import {
-  MODAL_ID,
   MODAL_NAMES,
 } from '@/components2024/GlobalBottomSheetModal/types';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { useTranslation } from 'react-i18next';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {

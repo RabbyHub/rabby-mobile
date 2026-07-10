@@ -1,16 +1,18 @@
-import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
+import type { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { RootNames } from '@/constant/layout';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { useAlias2 } from '@/hooks/alias';
 import { resetNavigationOnTopOfHome } from '@/hooks/navigation';
 import {
   useAddressBalance,
   useIsLoadingBalance,
 } from '@/hooks/useCurrentBalance';
+import type {
+  makeDefaultSelectData} from '@/hooks/useCurve';
 import {
-  makeDefaultSelectData,
   useAddressCurveSelectData,
   useIsLoadingCurve,
 } from '@/hooks/useCurve';

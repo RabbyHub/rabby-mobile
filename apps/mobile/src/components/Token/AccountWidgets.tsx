@@ -1,9 +1,10 @@
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
-import { View, ViewStyle } from 'react-native';
+import type { ViewStyle } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/Typography';
 
 export function AccountInfoInTokenRow({

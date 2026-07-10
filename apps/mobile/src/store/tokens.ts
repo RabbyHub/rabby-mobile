@@ -10,7 +10,10 @@ import {
 import { eventBus, EVENT_PATCH_SINGLE_TOKEN } from '@/utils/events';
 import { includeLpTokensFilter, lpTokenFilter } from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
-import { preferenceService } from '@/core/services/shared';
+import {
+  getTokenDisplayModeSnapshot,
+  setTokenDisplayMode as setPreferenceTokenDisplayMode,
+} from '@/core/serviceApi/preference';
 import { getTokenSymbol } from '@/utils/token';
 import {
   tokenItemEntityToTokenItem,
@@ -1647,12 +1650,12 @@ const syncTokenRuntimeStoresFromTokenListMap = (
 const tokenListStore = zCreate<TokenListState>((set, get) => ({
   tokenListMap: {},
   isLoading: false, // 整体的 loading 状态
-  tokenDisplayMode: preferenceService.getTokenDisplayMode(),
+  tokenDisplayMode: getTokenDisplayModeSnapshot(),
   // 单个地址的 loading 状态：cache token拿到loading设置false，等所有token都拿到allLoading才设置false
   isLoadingByAddress: {},
   setTokenDisplayMode(mode) {
     set(() => ({ tokenDisplayMode: mode }));
-    preferenceService.setTokenDisplayMode(mode);
+    void setPreferenceTokenDisplayMode(mode).catch(console.error);
   },
   async initStore() {
     const startedAt = Date.now();

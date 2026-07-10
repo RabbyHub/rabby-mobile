@@ -3,11 +3,16 @@ import { Platform } from 'react-native';
 import { useMemoizedFn } from 'ahooks';
 import { last, omit, sortBy } from 'lodash';
 import { v4 as uuid } from 'uuid';
-import { ContentMode } from 'react-native-webview/lib/WebViewTypes';
+import type { ContentMode } from 'react-native-webview/lib/WebViewTypes';
 
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
-import { browserService, dappService } from '@/core/services';
-import { Tab } from '@/core/services/browserService';
+import {
+  browserServiceApi,
+  getBrowserTabsSnapshot,
+  removeBrowserScreenshot,
+} from '@/core/serviceApi/browser';
+import { getDappSnapshot } from '@/core/serviceApi/dapp';
+import type { Tab } from '@/core/services/browserService';
 import { isGoogle } from '@/utils/browser';
 import {
   EVENT_SHOW_BROWSER,
@@ -22,10 +27,11 @@ import {
 
 import { useDappsValue } from '../useDapps';
 import { zCreate } from '@/core/utils/reexports';
+import type {
+  UpdaterOrPartials} from '@/core/utils/store';
 import {
   resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
+  runIIFEFunc
 } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { perfEvents } from '@/core/utils/perf';
@@ -210,12 +216,19 @@ export const browserApis = {
   },
 
   getBrowserTabs: () => {
-    setTabsStore(browserService.getBrowserTabs());
+    setTabsStore(getBrowserTabsSnapshot());
+    void browserServiceApi
+      .getBrowserTabs()
+      .then(setTabsStore)
+      .catch(console.error);
   },
 
   updateBrowserTabs: (payload: Partial<TabsState>) => {
-    browserService.updateBrowserTabs(payload);
-    browserApis.getBrowserTabs();
+    setTabsStore(prev => ({
+      ...prev,
+      ...payload,
+    }));
+    void browserServiceApi.updateBrowserTabs(payload).catch(console.error);
   },
 
   navigateToBrowserScreen: () => {
@@ -264,13 +277,13 @@ export const browserApis = {
     browserApis.updateBrowserTabs({
       tabs: newTabs,
     });
-    browserService.removeScreenshot({ tabId });
+    void removeBrowserScreenshot({ tabId }).catch(console.error);
   },
 
   closeAllTabs: () => {
     const store = tabsStore.getState();
     store.tabs.forEach(tab => {
-      browserService.removeScreenshot({ tabId: tab.id });
+      void removeBrowserScreenshot({ tabId: tab.id }).catch(console.error);
     });
     browserApis.updateBrowserTabs({
       tabs: [],
@@ -308,7 +321,7 @@ export const browserApis = {
           tabs: finalTabs,
         };
 
-        browserService.updateBrowserTabs(result);
+        void browserServiceApi.updateBrowserTabs(result).catch(console.error);
         return result;
       });
     });
@@ -332,7 +345,7 @@ export const browserApis = {
           return item;
         }),
       };
-      browserService.updateBrowserTabs(res);
+      void browserServiceApi.updateBrowserTabs(res).catch(console.error);
       return res;
     });
   },
@@ -352,7 +365,7 @@ export const browserApis = {
     }
     if (
       options?.isRemindOpen &&
-      !dappService.getDapp(safeGetOrigin(url))?.isSkipRemind
+      !getDappSnapshot(safeGetOrigin(url))?.isSkipRemind
     ) {
       browserApis.setPartialBrowserState({
         isShowDappInfo: true,
@@ -442,7 +455,7 @@ export const browserApis = {
         activeTabId,
         tabs,
       };
-      browserService.updateBrowserTabs(res);
+      void browserServiceApi.updateBrowserTabs(res).catch(console.error);
       return res;
     });
   },

@@ -56,7 +56,11 @@ import * as apisAutoLock from './core/apis/autoLock';
 import { isUnlockSessionValid } from './core/apis/lock';
 import { startWatchLayoutChange } from './hooks/useAppLayout';
 import { startCareAppNotificationPermissions } from './hooks/appNotification';
-import { keyringService } from './core/services';
+import {
+  bindKeyringEvent,
+  bindKeyringEventOnce,
+  isKeyringUnlockedSnapshot,
+} from './core/serviceApi';
 import { APP_FEATURE_SWITCH } from './constant';
 import {
   startInitPersistedStores,
@@ -166,12 +170,12 @@ function startInitStoresAfterUnlockInteractions(reason: string) {
 }
 
 function startInitStoresOnUnlock() {
-  if (keyringService.isUnlocked()) {
+  if (isKeyringUnlockedSnapshot()) {
     startInitStoresAfterUnlockInteractions('already_unlocked');
     return;
   }
 
-  keyringService.once('unlock', () => {
+  void bindKeyringEventOnce('unlock', () => {
     startInitStoresAfterUnlockInteractions('unlock_event');
   });
 }
@@ -250,12 +254,12 @@ function startWalletConnectRestoreAfterHomeReady(reason: string) {
 }
 
 function startWalletConnectStartupPolicy() {
-  if (keyringService.isUnlocked() || isUnlockSessionValid()) {
+  if (isKeyringUnlockedSnapshot() || isUnlockSessionValid()) {
     traceAndroidInstant('global_task.walletconnect_restore.already_unlocked');
     startWalletConnectRestoreAfterHomeReady('already_unlocked');
   }
 
-  keyringService.on('unlock', () => {
+  void bindKeyringEvent('unlock', () => {
     traceAndroidInstant('global_task.walletconnect_restore.unlock_event');
     startWalletConnectRestoreAfterHomeReady('unlock_event');
   });

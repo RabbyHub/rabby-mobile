@@ -1,8 +1,8 @@
-import { Result } from '@rabby-wallet/rabby-security-engine';
+import type { Result } from '@rabby-wallet/rabby-security-engine';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import ViewRawModal from '../TxComponents/ViewRawModal';
-import {
+import type {
   ApproveTokenRequireData,
   ContractRequireData,
   MultiSigRequireData,
@@ -27,7 +27,7 @@ import BatchPermit2 from './BatchPermit2';
 import { NoActionAlert } from '../NoActionAlert/NoActionAlert';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import IconQuestionMark from '@/assets/icons/sign/question-mark-24-cc.svg';
-import { Chain } from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Tip } from '@/components';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
@@ -49,8 +49,8 @@ import { getActionTypeText } from './utils';
 import { TransactionActionList } from '../Actions/components/TransactionActionList';
 import { noop } from 'lodash';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { Account } from '@/core/services/preference';
-import { ParseCommonResponse } from '@rabby-wallet/rabby-api/dist/types';
+import type { Account } from '@/core/services/preference';
+import type { ParseCommonResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { CHAINS } from '@debank/common';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { BalanceChangeWrapper } from '../TxComponents/BalanceChangeWrapper';

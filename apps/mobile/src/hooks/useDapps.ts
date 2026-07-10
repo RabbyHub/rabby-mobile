@@ -1,26 +1,38 @@
 import { createDappBySession } from '@/core/apis/dapp';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import * as apisDapp from '@/core/apis/dapp';
 import type { DappInfo, DappStore } from '@/core/services/dappService';
 import type { Account, KeyringAccountWithAlias } from '@/types/account';
-import { dappService } from '@/core/services/shared';
-import { FieldNilable, stringUtils } from '@rabby-wallet/base-utils';
+import {
+  bindDappStoreListener,
+  dappServiceApi,
+  getDappSnapshot,
+  getDappStoreSnapshot,
+  getDappsSnapshot,
+} from '@/core/serviceApi/dapp';
+import { stringUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom } from 'jotai';
 import { useAccounts } from './account';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { getDappAccount } from '@/core/utils/dappAccount';
 
 export { getDappAccount } from '@/core/utils/dappAccount';
 
 const dappServiceStore = zCreate<DappStore>(() => {
-  return {
-    ...dappService.store,
-  };
+  return getDappStoreSnapshot();
 });
-dappService.setBeforeSetKV((k, v) => {
+
+let dappStoreBindingPromise: Promise<void> | null = null;
+let disposeDappStoreBinding: (() => void) | null = null;
+
+function applyDappStoreUpdate<K extends keyof DappStore>(
+  k: K,
+  v: DappStore[K],
+) {
   dappServiceStore.setState(prev => {
     const { newVal, changed } = resolveValFromUpdater(prev[k], v as any, {
       strict: true,
@@ -31,7 +43,24 @@ dappService.setBeforeSetKV((k, v) => {
     prev[k] = { ...prev[k], ...newVal };
     return { ...prev };
   });
-});
+}
+
+function ensureDappStoreBinding() {
+  if (disposeDappStoreBinding || dappStoreBindingPromise) {
+    return;
+  }
+
+  dappStoreBindingPromise = bindDappStoreListener((k, v) => {
+    applyDappStoreUpdate(k, v as DappStore[typeof k]);
+  })
+    .then(dispose => {
+      disposeDappStoreBinding = dispose;
+    })
+    .catch(error => {
+      dappStoreBindingPromise = null;
+      console.error(error);
+    });
+}
 
 function setDapps(valOrFunc: UpdaterOrPartials<Record<string, DappInfo>>) {
   dappServiceStore.setState(prev => {
@@ -39,26 +68,38 @@ function setDapps(valOrFunc: UpdaterOrPartials<Record<string, DappInfo>>) {
       strict: false,
     });
 
-    return newVal;
+    return {
+      ...prev,
+      dapps: newVal,
+    };
   });
 }
 
 export function useDappsValue() {
+  useEffect(() => {
+    ensureDappStoreBinding();
+  }, []);
+
   return { dapps: dappServiceStore(s => s.dapps) };
 }
 
 function isDappConnected(dappOrigin: string) {
-  const dapp = dappService.getDapp(dappOrigin);
+  const dapp = getDappSnapshot(dappOrigin);
   return !!dapp?.isConnected;
 }
 
 export function useDapps() {
+  useEffect(() => {
+    ensureDappStoreBinding();
+  }, []);
+
   const dapps = dappServiceStore(s => s.dapps);
 
   const getDapps = useCallback(() => {
-    const res = dappService.getDapps();
+    const res = getDappsSnapshot();
 
     setDapps(res);
+    ensureDappStoreBinding();
     return res;
   }, []);
 
@@ -68,27 +109,28 @@ export function useDapps() {
       // now we must ensure all dappOrigin has https:// prefix
       item.origin = stringUtils.ensurePrefix(item.info?.id, 'https://');
     });
-    const res = dappService.addDapp(data);
-    return res;
+    void dappServiceApi.addDapp(data).catch(console.error);
   }, []);
 
   /**
    * @deprecated
    */
   const updateFavorite = useCallback((id: string, v: boolean) => {
-    if (dappService.getDapp(id)) {
-      dappService.updateFavorite(id, v);
-    } else {
-      dappService.addDapp({
-        ...createDappBySession({
-          origin: id,
-          name: '',
-          icon: '',
-        }),
-        isFavorite: v,
-        favoriteAt: v ? Date.now() : null,
-      });
-    }
+    void (async () => {
+      if (await dappServiceApi.getDapp(id)) {
+        await dappServiceApi.updateFavorite(id, v);
+      } else {
+        await dappServiceApi.addDapp({
+          ...createDappBySession({
+            origin: id,
+            name: '',
+            icon: '',
+          }),
+          isFavorite: v,
+          favoriteAt: v ? Date.now() : null,
+        });
+      }
+    })().catch(console.error);
   }, []);
 
   const removeDapp = useCallback((id: string) => {
@@ -108,10 +150,12 @@ export function useDapps() {
   // );
 
   const setDapp = useMemoizedFn((data: DappInfo) => {
-    dappService.addDapp({
-      ...dappService.getDapp(data.origin),
-      ...data,
-    });
+    void (async () => {
+      await dappServiceApi.addDapp({
+        ...(await dappServiceApi.getDapp(data.origin)),
+        ...data,
+      });
+    })().catch(console.error);
   });
 
   return {
@@ -129,15 +173,17 @@ export function useDapps() {
 export function useDappCurrentAccount() {
   const setDappCurrentAccount = useCallback(
     (id: DappInfo['origin'], currentAccount: Account) => {
-      if (!dappService.getDapp(id)) {
-        throw new Error('dapp not found');
-      }
+      void (async () => {
+        if (!(await dappServiceApi.getDapp(id))) {
+          throw new Error('dapp not found');
+        }
 
-      dappService.patchDapps({
-        [id]: {
-          currentAccount,
-        },
-      });
+        await dappServiceApi.patchDapps({
+          [id]: {
+            currentAccount,
+          },
+        });
+      })().catch(console.error);
     },
     [],
   );

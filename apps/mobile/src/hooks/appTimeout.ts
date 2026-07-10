@@ -3,12 +3,13 @@ import * as apisAutoLock from '@/core/apis/autoLock';
 import * as apisLock from '@/core/apis/lock';
 import { autoLockEvent } from '@/core/apis/autoLock';
 import { unlockTimeEvent } from '@/core/apis/lock';
-import { preferenceService } from '@/core/services';
+import { setPreference } from '@/core/serviceApi/preference';
 import { zCreate } from '@/core/utils/reexports';
+import type {
+  UpdaterOrPartials} from '@/core/utils/store';
 import {
   resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
+  runIIFEFunc
 } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { atom, useAtom } from 'jotai';
@@ -64,9 +65,9 @@ export function useAutoLockTime() {
 export const onAutoLockTimeMsChange = (ms: number) => {
   const minutes = apisAutoLock.coerceAutoLockTimeout(ms).minutes;
   setAutoLockMinutes(minutes);
-  preferenceService.setPreference({
+  void setPreference({
     autoLockTime: minutes,
-  });
+  }).catch(console.error);
   apisAutoLock.refreshAutolockTimeout();
 };
 

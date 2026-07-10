@@ -1,13 +1,13 @@
 import { findChain } from '@/utils/chain';
 import { useSheetModal } from '@/hooks/useSheetModal';
-import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
+import type { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import React, { useCallback, useMemo } from 'react';
 import { atom, useAtom } from 'jotai';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { KeyringAccountWithAlias } from '@/hooks/account';
-import { Account } from '@/core/services/preference';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
+import type { Account } from '@/core/services/preference';
 
 const popups = {
   generalTokenDetailPopup: {

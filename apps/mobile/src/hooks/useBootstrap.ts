@@ -1,11 +1,11 @@
 import * as React from 'react';
 import {
-  customTestnetService,
-  keyringService,
-  perpsService,
-} from '@/core/services';
+  bindKeyringEvent,
+  initCoreServices,
+  perpsServiceApi,
+} from '@/core/serviceApi';
+import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
 import { initApis } from '@/core/apis/init';
-import { initServices } from '@/core/services/init';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
 import { apisLock, apisPerps } from '@/core/apis';
 import { loadSecurityChain } from './global';
@@ -20,12 +20,13 @@ import { storeApisBiometrics } from './biometrics';
 import { apisPerpsStore } from './perps/usePerpsStore';
 // import { browserStateAtom } from './browser/useBrowser';
 import { apisSafe } from '@/core/apis/safe';
-import { RefLikeObject } from '@/utils/type';
+import type { RefLikeObject } from '@/utils/type';
 import { zCreate } from '@/core/utils/reexports';
+import type {
+  UpdaterOrPartials} from '@/core/utils/store';
 import {
   resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
+  runIIFEFunc
 } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { replace } from '@/utils/navigation';
@@ -43,11 +44,9 @@ import {
 } from '@/core/utils/androidTrace';
 
 const syncCustomTestChainList = () => {
-  try {
-    customTestnetService.syncChainList();
-  } catch (e) {
+  customTestnetServiceApi.syncChainList().catch(e => {
     console.error(e);
-  }
+  });
 };
 
 type BootStrapState = {
@@ -88,7 +87,7 @@ const doInitializeApis = async () => {
   apiInitializedRef.current = true;
 
   try {
-    await initServices();
+    await initCoreServices();
     await initApis();
     syncCustomTestChainList();
   } catch (error) {
@@ -131,7 +130,7 @@ export function useInitializeAppOnTop() {
           ...accountFlags,
         }));
       });
-      perpsService.unlockAgentWallets();
+      void perpsServiceApi.unlockAgentWallets();
       traceAndroidInstant('global_task.post_unlock_ui_ready.end', {
         source: 'useBootstrap',
       });
@@ -158,7 +157,7 @@ export function useInitializeAppOnTop() {
         searchTabId: '',
         trigger: '',
       });
-      perpsService.lockAgentWallets();
+      void perpsServiceApi.lockAgentWallets();
       apisPerpsStore.logout();
       apisPerps.destroyPerpsSDK();
     };
@@ -167,12 +166,17 @@ export function useInitializeAppOnTop() {
       'POST_UNLOCK_UI_READY',
       onUnlockUIReady,
     );
-    keyringService.on('lock', onLock);
+    let removeLockListener: (() => void) | null = null;
+    void bindKeyringEvent('lock', onLock)
+      .then(remove => {
+        removeLockListener = remove;
+      })
+      .catch(console.error);
 
     return () => {
       sub.remove();
       subUIReady.remove();
-      keyringService.off('lock', onLock);
+      removeLockListener?.();
     };
   }, []);
 

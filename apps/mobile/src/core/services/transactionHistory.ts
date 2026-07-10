@@ -33,7 +33,7 @@ import {
   loadTxSaveFromLocalStore,
   txDonePatchTokenAmountInDb,
 } from '@/databases/sync/history';
-import { REPORT_TIMEOUT_ACTION_KEY } from './type';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { updateExpiredTime } from '@/databases/sync/utils';
 import { matomoRequestEvent } from '@/utils/analytics';
 import {

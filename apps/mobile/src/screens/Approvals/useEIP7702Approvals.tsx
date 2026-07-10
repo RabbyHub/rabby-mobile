@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { apiProvider } from '@/core/apis';
 import useAsync from 'react-use/lib/useAsync';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { getRecommendNonce } from '@/core/apis/provider';
 import { fromHex, zeroAddress } from 'viem';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';

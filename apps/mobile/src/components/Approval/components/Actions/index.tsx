@@ -1,12 +1,12 @@
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import { Result } from '@rabby-wallet/rabby-security-engine';
-import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
-import { Chain } from '@/constant/chains';
+import type { Result } from '@rabby-wallet/rabby-security-engine';
+import type { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
+import type { Chain } from '@/constant/chains';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BalanceChangeWrapper } from '../TxComponents/BalanceChangeWrapper';
 import { useTheme2024 } from '@/hooks/theme';
-import {
+import type {
   ActionRequireData,
   ParsedActionData,
   ParsedTransactionActionData,
@@ -25,7 +25,7 @@ import useCommonStyle from '../../hooks/useCommonStyle';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { getActionTypeText } from './utils';
 import { TransactionActionList } from './components/TransactionActionList';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import type { MultiActionProps } from '../TypedDataActions';
 import { getActionsStyle } from './styles';
 import { Text } from '@/components/Typography';

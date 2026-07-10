@@ -6,9 +6,13 @@ import { RcEditPenCC } from '@/assets/icons/send';
 import { touchedFeedback } from '@/utils/touch';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import type { KeyringAccountWithAlias} from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { useTranslation } from 'react-i18next';
-import { contactService } from '@/core/services';
+import {
+  contactServiceApi,
+  getContactAliasSnapshot,
+} from '@/core/serviceApi/contact';
 import { isValidHexAddress } from '@metamask/utils';
 import { IS_IOS } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
@@ -33,7 +37,7 @@ export function AddressEditorBadge({
   const [storedAlias, setStoredAlias] = useState('');
   const fetchAlias = useCallback(() => {
     if (isValidHexAddress(account.address as `0x${string}`)) {
-      const alias = contactService.getAliasByAddress(account.address, {
+      const alias = getContactAliasSnapshot(account.address, {
         keepEmptyIfNotFound: true,
       })?.alias;
       setStoredAlias(alias || '');
@@ -58,7 +62,7 @@ export function AddressEditorBadge({
           undefined,
           alias => {
             if (alias.trim().length) {
-              contactService.updateAlias({
+              void contactServiceApi.updateAlias({
                 address: account.address,
                 name: alias,
               });

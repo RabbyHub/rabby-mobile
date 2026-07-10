@@ -9,7 +9,11 @@ import React, {
 
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
-import { transactionHistoryService } from '@/core/services';
+import {
+  getTransactionHistoryLendingSuccessListSnapshot,
+  getTransactionHistoryListSnapshot,
+  transactionHistoryServiceApi,
+} from '@/core/serviceApi/transactionHistory';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
@@ -19,11 +23,11 @@ import {
   useMount,
   useRequest,
 } from 'ahooks';
-import PQueue from 'p-queue';
+import type PQueue from 'p-queue';
 import { last, orderBy, debounce } from 'lodash';
 import { View } from 'react-native';
 import { HistoryList } from '@/screens/Transaction/components/HistoryGroupList';
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -38,7 +42,7 @@ import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
 } from '@/screens/Transaction/components/type';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { makeTxPageBackgroundColors } from '@/constant/layout';
 import { Text } from '@/components/Typography';
@@ -172,7 +176,7 @@ function LendingHistory(): JSX.Element {
 
     if (finalSceneCurrentAccount?.address) {
       const lendingSuccessHistoryList =
-        transactionHistoryService.getLendingSuccessHistoryList(
+        getTransactionHistoryLendingSuccessListSnapshot(
           finalSceneCurrentAccount?.address.toLowerCase()!,
         );
       // Merge and deduplicate using Set
@@ -182,7 +186,7 @@ function LendingHistory(): JSX.Element {
         );
         return uniqueList;
       });
-      transactionHistoryService.clearLendingSuccessHistoryList(
+      void transactionHistoryServiceApi.clearLendingSuccessHistoryList(
         finalSceneCurrentAccount?.address.toLowerCase()!,
       );
     }
@@ -192,7 +196,7 @@ function LendingHistory(): JSX.Element {
 
   const fetchLocalTx = useMemoizedFn(async (address: string) => {
     const { pendings: _pendings, completeds: _completeds } =
-      transactionHistoryService.getList(address);
+      getTransactionHistoryListSnapshot(address);
 
     const pendings = _pendings.filter(item => {
       const chain = findChain({ id: item.chainId });
@@ -218,7 +222,7 @@ function LendingHistory(): JSX.Element {
               }) || item.isSynced;
 
             if (isSynced && !item.isSynced) {
-              transactionHistoryService.updateTx({
+              void transactionHistoryServiceApi.updateTx({
                 ...item.maxGasTx,
                 isSynced: true,
               });

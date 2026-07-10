@@ -5,7 +5,7 @@ import { getBrowserHistoryList } from '@/hooks/browser/useBrowserHistory';
 import { getAllRPC } from '@/hooks/useCustomRPC';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useMount } from 'ahooks';
-import { browserService, dappService } from '../services/shared';
+import { browserServiceApi, dappServiceApi } from '@/core/serviceApi';
 import { setChainList } from '@/hooks/useChainList';
 
 /**
@@ -23,21 +23,26 @@ export function useSetupServiceStub() {
     getAllRPC();
     getBookmarkList();
     getBrowserHistoryList();
-    const data = browserService.getBrowserTabs();
-    setTabs(
-      data.tabs.map(tab => {
-        if (tab.isDapp) {
-          return tab;
-        }
-        const isDapp = !!dappService.getDapp(
-          safeGetOrigin(tab.url || tab.initialUrl),
-        )?.isDapp;
+    void Promise.all([
+      browserServiceApi.getBrowserTabs(),
+      dappServiceApi.getDapps(),
+    ])
+      .then(([data, dapps]) => {
+        setTabs(
+          data.tabs.map(tab => {
+            if (tab.isDapp) {
+              return tab;
+            }
+            const isDapp =
+              !!dapps[safeGetOrigin(tab.url || tab.initialUrl)]?.isDapp;
 
-        return {
-          ...tab,
-          isDapp,
-        };
-      }),
-    );
+            return {
+              ...tab,
+              isDapp,
+            };
+          }),
+        );
+      })
+      .catch(console.error);
   });
 }

@@ -1,12 +1,13 @@
 import { AppState, PermissionsAndroid, Platform } from 'react-native';
 
-import { preferenceService } from '@/core/services';
+import { getPreferenceSnapshot } from '@/core/serviceApi';
 import DeviceUtils from '@/core/utils/device';
 import { PerAndroid } from '@/core/utils/permissions';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import PushNotificationIOS, {
+import type {
   PushNotificationPermissions,
 } from '@react-native-community/push-notification-ios';
+import PushNotificationIOS from '@react-native-community/push-notification-ios';
 import { APP_FEATURE_SWITCH } from '@/constant';
 
 export function iosCheckPermission(): Promise<PushNotificationPermissions> {
@@ -80,7 +81,7 @@ export async function checkIfEnabledNotificationWithPermission(
 
   const appEnabled =
     inputAppEnabled ??
-    preferenceService.getPreferenceByKey('enabledTransactionNofification') ??
+    getPreferenceSnapshot('enabledTransactionNofification') ??
     true;
 
   const hasPermission = await checkNotificationPermission();

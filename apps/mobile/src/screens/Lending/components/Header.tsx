@@ -10,7 +10,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import { naviPush } from '@/utils/navigation';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useInterval } from 'ahooks';
-import { transactionHistoryService } from '@/core/services';
+import {
+  getTransactionHistoryLendingSuccessListSnapshot,
+  getTransactionHistoryListSnapshot,
+} from '@/core/serviceApi/transactionHistory';
 import { findChain } from '@/utils/chain';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { CUSTOM_HISTORY_ACTION } from '@/screens/Transaction/components/type';
@@ -62,7 +65,7 @@ export const LendingHistoryHeader = ({
     if (!address) {
       return [];
     }
-    const { pendings: _pendings } = transactionHistoryService.getList(address);
+    const { pendings: _pendings } = getTransactionHistoryListSnapshot(address);
 
     const pending = _pendings.filter(item => {
       const chain = findChain({ id: item.chainId });
@@ -72,7 +75,7 @@ export const LendingHistoryHeader = ({
     });
 
     const lendingSuccessHistoryList =
-      transactionHistoryService.getLendingSuccessHistoryList(address);
+      getTransactionHistoryLendingSuccessListSnapshot(address);
     const lendingSuccessHistoryListCount = lendingSuccessHistoryList.length;
     setShowGreenDot(lendingSuccessHistoryListCount > 0);
     setPendingCount(pending.length);

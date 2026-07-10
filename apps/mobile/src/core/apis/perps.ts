@@ -1,10 +1,11 @@
 import { HyperliquidSDK } from '@rabby-wallet/hyperliquid-sdk';
-import { perpsService } from '../services';
+import { perpsServiceApi } from '@/core/serviceApi';
 import { withWalletUnlock } from '@/utils/walletUnlockGuard';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { apisKeyring } from './keyring';
 import { PERPS_AGENT_NAME } from '@/constant/perps';
 import type { Account } from '../services/preference';
+import type { ApproveSignatures } from '@/core/services/perpsService';
 
 let sdkInstance: HyperliquidSDK | null = null;
 
@@ -27,38 +28,62 @@ class ApisPerps {
   }
 
   createPerpsAgentWallet = withWalletUnlock(async (masterWallet: string) => {
-    return perpsService.createAgentWallet(masterWallet);
+    return perpsServiceApi.createAgentWallet(masterWallet);
   });
-  setPerpsCurrentAccount = perpsService.setCurrentAccount;
-  getPerpsCurrentAccount = perpsService.getCurrentAccount;
-  getPerpsLastUsedAccount = perpsService.getLastUsedAccount;
+  setPerpsCurrentAccount = (account: Account | null) =>
+    perpsServiceApi.setCurrentAccount(account);
+  getPerpsCurrentAccount = () => perpsServiceApi.getCurrentAccount();
+  getPerpsLastUsedAccount = () => perpsServiceApi.getLastUsedAccount();
   getAgentWalletPreference = async (masterWallet: string) => {
-    return perpsService.getAgentWalletPreference(masterWallet);
+    return perpsServiceApi.getAgentWalletPreference(masterWallet);
   };
   getPerpsAgentAddress = async (masterWallet: string) => {
-    return perpsService.getAgentWalletPreference(masterWallet)?.agentAddress;
+    return (await perpsServiceApi.getAgentWalletPreference(masterWallet))
+      ?.agentAddress;
   };
-  updatePerpsAgentWalletPreference = perpsService.updateAgentWalletPreference;
-  setSendApproveAfterDeposit = perpsService.setSendApproveAfterDeposit;
+  updatePerpsAgentWalletPreference = (
+    masterAddress: string,
+    agentPreference: Parameters<
+      typeof perpsServiceApi.updateAgentWalletPreference
+    >[1],
+  ) =>
+    perpsServiceApi.updateAgentWalletPreference(
+      masterAddress,
+      agentPreference,
+    );
+  setSendApproveAfterDeposit = (
+    masterAddress: string,
+    sendApproveAfterDeposit: ApproveSignatures,
+  ) =>
+    perpsServiceApi.setSendApproveAfterDeposit(
+      masterAddress,
+      sendApproveAfterDeposit,
+    );
   getSendApproveAfterDeposit = async (masterAddress: string) => {
-    return perpsService.getSendApproveAfterDeposit(masterAddress);
+    return perpsServiceApi.getSendApproveAfterDeposit(masterAddress);
   };
-  setHasDoneNewUserProcess = perpsService.setHasDoneNewUserProcess;
-  getHasDoneNewUserProcess = perpsService.getHasDoneNewUserProcess;
-  setHasShownPerpsGuidePopup = perpsService.setHasShownPerpsGuidePopup;
-  getHasShownPerpsGuidePopup = perpsService.getHasShownPerpsGuidePopup;
-  setHasClosedLearnMoreCard = perpsService.setHasClosedLearnMoreCard;
-  getHasClosedLearnMoreCard = perpsService.getHasClosedLearnMoreCard;
-  setSelectedKlineInterval = perpsService.setSelectedKlineInterval;
-  getSelectedKlineInterval = perpsService.getSelectedKlineInterval;
+  setHasDoneNewUserProcess = (hasDone: boolean) =>
+    perpsServiceApi.setHasDoneNewUserProcess(hasDone);
+  getHasDoneNewUserProcess = () => perpsServiceApi.getHasDoneNewUserProcess();
+  setHasShownPerpsGuidePopup = (value: boolean) =>
+    perpsServiceApi.setHasShownPerpsGuidePopup(value);
+  getHasShownPerpsGuidePopup = () =>
+    perpsServiceApi.getHasShownPerpsGuidePopup();
+  setHasClosedLearnMoreCard = (value: boolean) =>
+    perpsServiceApi.setHasClosedLearnMoreCard(value);
+  getHasClosedLearnMoreCard = () => perpsServiceApi.getHasClosedLearnMoreCard();
+  setSelectedKlineInterval = (
+    value: Parameters<typeof perpsServiceApi.setSelectedKlineInterval>[0],
+  ) => perpsServiceApi.setSelectedKlineInterval(value);
+  getSelectedKlineInterval = () => perpsServiceApi.getSelectedKlineInterval();
   getPerpsAgentWallet = withWalletUnlock(async (masterWallet: string) => {
-    return perpsService.getAgentWallet(masterWallet);
+    return perpsServiceApi.getAgentWallet(masterWallet);
   });
   getOrCreatePerpsAgentWallet = withWalletUnlock(
     async (masterWallet: string) => {
-      const res = await perpsService.getAgentWallet(masterWallet);
+      const res = await perpsServiceApi.getAgentWallet(masterWallet);
       if (!res) {
-        const resp = await perpsService.createAgentWallet(masterWallet);
+        const resp = await perpsServiceApi.createAgentWallet(masterWallet);
         return {
           vault: resp.vault,
           agentAddress: resp.agentAddress,

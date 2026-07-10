@@ -5,17 +5,18 @@ import { findChain } from '@/utils/chain';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import { ScrollView, TouchableOpacity, View } from 'react-native';
 
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 
 import { RootNames } from '@/constant/layout';
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import type { KeyringAccountWithAlias} from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { naviPush } from '@/utils/navigation';
-import { ApproveTokenRequireData } from '@rabby-wallet/rabby-action';
+import type { ApproveTokenRequireData } from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import { unionBy } from 'lodash';
@@ -26,7 +27,7 @@ import { RevokeTokenBtn } from './components/RevokeTokenBtn';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { findAccountByPriority } from '@/utils/account';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { Text } from '@/components/Typography';
 import {
   ActionDetailItem,

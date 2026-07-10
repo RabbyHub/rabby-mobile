@@ -7,7 +7,7 @@ import { AssetAvatar } from '@/components';
 import { default as RcCaretDownCircleCC } from '@/components/AccountSwitcher/icons/caret-down-circle.svg';
 import { default as RcCaretDownCircleDarkCC } from '@/components/AccountSwitcher/icons/caret-down-circle-dark.svg';
 import { apiContact } from '@/core/apis';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
 import { HeaderBackPressable } from '@/hooks/navigation';

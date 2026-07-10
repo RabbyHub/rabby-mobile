@@ -1,8 +1,8 @@
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKeyring } from './keyring';
 import type { TrezorKeyring } from '@/core/keyring-bridge/trezor/trezor-keyring';
-import { keyringService, preferenceService } from '../services/shared';
-import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
+import { keyringServiceApi, preferenceServiceApi } from '@/core/serviceApi';
+import type { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 // import { bindOneKeyEvents } from '@/utils/onekey';
 
 const trezorType = KEYRING_TYPE.TrezorKeyring;
@@ -17,8 +17,8 @@ export async function importAddress(index: number) {
   const keyring = await getKeyring<TrezorKeyring>(trezorType);
 
   keyring.setAccountToUnlock(index.toString());
-  const result = await keyringService.addNewAccount(keyring);
-  preferenceService.initCurrentAccount();
+  const result = await keyringServiceApi.addNewAccount(keyring);
+  await preferenceServiceApi.initCurrentAccount();
   console.log('importAddress index', index, result);
   return result;
 }

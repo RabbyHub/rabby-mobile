@@ -1,19 +1,20 @@
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
-import { Chain, CHAINS_ENUM } from '@/constant/chains';
-import { Account } from '@/core/services/preference';
+import type { Chain, CHAINS_ENUM } from '@/constant/chains';
+import type { Account } from '@/core/services/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChainByEnum } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import type {
+  StyleProp,
+  ViewStyle} from 'react-native';
 import {
   Image,
-  StyleProp,
   StyleSheet,
   TouchableOpacity,
-  View,
-  ViewStyle,
+  View
 } from 'react-native';
 import {
   createGlobalBottomSheetModal2024,

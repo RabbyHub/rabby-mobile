@@ -2,7 +2,10 @@ import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { appStorage } from '@/core/storage/mmkv';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
-import { preferenceService } from '@/core/services';
+import {
+  getFallbackAccountSnapshot,
+  getPinnedAddressSnapshot,
+} from '@/core/serviceApi';
 import { getFirstMyAccountFromAccountSelectorList } from '@/utils/accountSelectorList';
 import type { Account } from '@/types/account';
 
@@ -157,8 +160,8 @@ export function selectWalletConnectAccountForOrigin(
     ) ||
     getFirstMyAccountFromAccountSelectorList({
       accounts,
-      pinAddresses: preferenceService.getPinAddresses(),
+      pinAddresses: getPinnedAddressSnapshot(),
     }) ||
-    preferenceService.getFallbackAccount()
+    getFallbackAccountSnapshot()
   );
 }

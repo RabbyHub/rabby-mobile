@@ -1,27 +1,33 @@
 import { useCallback } from 'react';
-import { gasAccountService } from '@/core/services/shared';
-import { ClaimedGiftAddress } from '@/core/services/gasAccount';
+import type { ClaimedGiftAddress } from '@/core/services/gasAccount';
+import {
+  gasAccountServiceApi,
+  getGasAccountCurrentEligibleAddressSnapshot,
+  getGasAccountHasClaimedGiftSnapshot,
+  getGasAccountSigSnapshot,
+} from '@/core/serviceApi/gasAccount';
 import { useAccounts } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { zCreate } from '@/core/utils/reexports';
+import type {
+  UpdaterOrPartials} from '@/core/utils/store';
 import {
   makeAvoidParallelAsyncFunc,
   resolveValFromUpdater,
-  runDevIIFEFunc,
-  UpdaterOrPartials,
+  runDevIIFEFunc
 } from '@/core/utils/store';
 import * as apisAccount from '@/core/apis/account';
 import { storeApiGasAccount } from '@/screens/GasAccount/hooks/atom';
 
 runDevIIFEFunc(() => {
   // mock haven't claimed gift
-  gasAccountService.setHasClaimedGift(false);
+  void gasAccountServiceApi.setHasClaimedGift(false);
 });
 
 const gasAccountState = zCreate(() => ({
-  gasAccountSig: gasAccountService.getGasAccountSig(),
-  hasClaimedGift: gasAccountService.getHasClaimedGift(),
-  currentEligibleAddress: gasAccountService.getCurrentEligibleAddress(),
+  gasAccountSig: getGasAccountSigSnapshot(),
+  hasClaimedGift: getGasAccountHasClaimedGiftSnapshot(),
+  currentEligibleAddress: getGasAccountCurrentEligibleAddressSnapshot(),
   eligibilityData: [] as ClaimedGiftAddress[],
 }));
 
@@ -31,9 +37,9 @@ function reFetchStatus() {
 
     return {
       ...prev,
-      gasAccountSig: gasAccountService.getGasAccountSig(),
-      hasClaimedGift: gasAccountService.getHasClaimedGift(),
-      currentEligibleAddress: gasAccountService.getCurrentEligibleAddress(),
+      gasAccountSig: getGasAccountSigSnapshot(),
+      hasClaimedGift: getGasAccountHasClaimedGiftSnapshot(),
+      currentEligibleAddress: getGasAccountCurrentEligibleAddressSnapshot(),
       eligibilityData: [],
     };
   });
@@ -59,11 +65,11 @@ export const checkGasAccountAddressesEligibility = makeAvoidParallelAsyncFunc(
         setEligibilityData(gifts);
         return gifts;
       };
-      if (gasAccountService.getHasClaimedGift()) {
+      if (await gasAccountServiceApi.getHasClaimedGift()) {
         return doReturn([]);
       }
 
-      const gasAccountSig = gasAccountService.getGasAccountSig();
+      const gasAccountSig = await gasAccountServiceApi.getGasAccountSig();
       if (gasAccountSig?.sig) {
         return doReturn([]);
       }
@@ -74,7 +80,7 @@ export const checkGasAccountAddressesEligibility = makeAvoidParallelAsyncFunc(
       if (addresses.length === 0) {
         return doReturn([]);
       }
-      const result = await gasAccountService.checkAddressEligibilityBatch(
+      const result = await gasAccountServiceApi.checkAddressEligibilityBatch(
         addresses,
         force,
       );
@@ -121,35 +127,13 @@ export const useGasAccountEligibility = () => {
         }
 
         // 保存sig到全局状态
-        gasAccountService.setGasAccountSig(sig, account);
+        await gasAccountServiceApi.setGasAccountSig(sig, account);
 
         // 使用sig claim gift
-        await gasAccountService.claimGift(address, sig);
+        await gasAccountServiceApi.claimGift(address, sig);
 
-        // 更新全局状态
-        gasAccountService.setHasClaimedGift(true);
-
-        // 更新当前有资格的地址状态
-        const currentEligible = gasAccountService.getCurrentEligibleAddress();
-        if (
-          currentEligible &&
-          currentEligible.address.toLowerCase() === address.toLowerCase()
-        ) {
-          // 如果当前有资格的地址就是claim的地址，清除它
-          gasAccountService.store.currentEligibleAddress = undefined;
-        }
-
-        // 更新缓存，标记该地址已领取
-        const addressKey = address.toLowerCase();
-        if (gasAccountService.store.eligibilityCache[addressKey]) {
-          gasAccountService.store.eligibilityCache[addressKey] = {
-            ...gasAccountService.store.eligibilityCache[addressKey],
-            isEligible: false,
-            isClaimed: true,
-            giftUsdValue: 0,
-          };
-        }
-        gasAccountService.setHasClaimedGift(true);
+        // 更新全局状态、当前有资格地址和资格缓存
+        await gasAccountServiceApi.markGiftClaimed(address);
 
         return true;
       } catch (err) {

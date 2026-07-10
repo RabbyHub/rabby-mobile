@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { useDappsHome } from '@/hooks/useDappsHome';
 import { createGetStyles2024 } from '@/utils/styles';

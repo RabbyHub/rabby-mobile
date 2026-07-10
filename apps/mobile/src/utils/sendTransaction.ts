@@ -4,7 +4,7 @@ import {
   is7702Tx,
 } from '@/utils/transaction';
 
-import {
+import type {
   ExplainTxResponse,
   GasLevel,
   ParseTxResponse,
@@ -12,13 +12,11 @@ import {
   TxPushType,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { findChain, isTestnet } from './chain';
-import {
-  keyringService,
-  notificationService,
-  preferenceService,
-  transactionHistoryService,
-  whitelistService,
-} from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
+import { miscServiceApi } from '@/core/serviceApi/misc';
+import { notificationServiceApi } from '@/core/serviceApi/notification';
 import { apiKeyring, apiProvider } from '@/core/apis';
 import { openapi, testOpenapi } from '@/core/request';
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
@@ -49,14 +47,14 @@ import { isNonPublicProductionEnv } from '@/constant';
 import { getDefaultStore } from 'jotai';
 import { mockBatchRevokeStore } from '@/hooks/appSettings';
 import type { Account } from '@/types/account';
-import miscService from '@/core/services/misc';
+import type {
+  TxWithTempoExtras} from './tempo';
 import {
   buildTempoTransaction,
   isTempoBatchSupportedAccountType,
   isTempoChain,
   shouldUseTempoTransaction,
-  toTempoCallsTx,
-  TxWithTempoExtras,
+  toTempoCallsTx
 } from './tempo';
 
 // fail code
@@ -210,10 +208,10 @@ export const sendTransaction = async ({
     normalGas = gasMarket.find(item => item.level === 'normal')!;
   }
 
-  const signingTxId = await transactionHistoryService.addSigningTx(tx);
+  const signingTxId = await transactionHistoryServiceApi.addSigningTx(tx);
 
   const reportGasLevel =
-    normalGas.level || miscService.getCurrentGasLevel() || 'normal';
+    normalGas.level || miscServiceApi.getCurrentGasLevel() || 'normal';
 
   stats.report('createTransaction', {
     type: currentAccount.brandName,
@@ -522,11 +520,11 @@ export const sendTransaction = async ({
     cex: cexInfo,
     walletProvider: {
       hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-      hasAddress: keyringService.hasAddress.bind(keyringService),
-      getWhitelist: async () => whitelistService.getWhitelist(),
-      isWhitelistEnabled: async () => whitelistService.isWhitelistEnabled(),
+      hasAddress: keyringServiceApi.hasAddress,
+      getWhitelist: async () => whitelistServiceApi.getWhitelist(),
+      isWhitelistEnabled: async () => whitelistServiceApi.isWhitelistEnabled(),
       getPendingTxsByNonce: async (...args) =>
-        transactionHistoryService.getPendingTxsByNonce(...args),
+        transactionHistoryServiceApi.getPendingTxsByNonce(...args),
       findChain,
       ALIAS_ADDRESS,
     },
@@ -552,7 +550,7 @@ export const sendTransaction = async ({
     apiProvider: openapi,
   });
 
-  await transactionHistoryService.updateSigningTx(signingTxId, {
+  await transactionHistoryServiceApi.updateSigningTx(signingTxId, {
     rawTx: {
       nonce: recommendNonce,
     },
@@ -588,7 +586,7 @@ export const sendTransaction = async ({
   }
 
   const handleSendAfter = async () => {
-    const statsData = await notificationService.getStatsData();
+    const statsData = await notificationServiceApi.getStatsData();
 
     if (statsData?.signed) {
       const sData: any = {
@@ -762,10 +760,10 @@ export const sendTransactionByMiniSignV2 = async ({
     accountType: currentAccount.type,
   });
 
-  const signingTxId = await transactionHistoryService.addSigningTx(tx);
+  const signingTxId = await transactionHistoryServiceApi.addSigningTx(tx);
   onSigningTxCreated?.(signingTxId);
 
-  const reportGasLevel = miscService.getCurrentGasLevel() || 'normal';
+  const reportGasLevel = miscServiceApi.getCurrentGasLevel() || 'normal';
 
   stats.report('createTransaction', {
     type: currentAccount.brandName,
@@ -885,11 +883,11 @@ export const sendTransactionByMiniSignV2 = async ({
     cex: cexInfo,
     walletProvider: {
       hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-      hasAddress: keyringService.hasAddress.bind(keyringService),
-      getWhitelist: async () => whitelistService.getWhitelist(),
-      isWhitelistEnabled: async () => whitelistService.isWhitelistEnabled(),
+      hasAddress: keyringServiceApi.hasAddress,
+      getWhitelist: async () => whitelistServiceApi.getWhitelist(),
+      isWhitelistEnabled: async () => whitelistServiceApi.isWhitelistEnabled(),
       getPendingTxsByNonce: async (...args) =>
-        transactionHistoryService.getPendingTxsByNonce(...args),
+        transactionHistoryServiceApi.getPendingTxsByNonce(...args),
       findChain,
       ALIAS_ADDRESS,
     },
@@ -917,7 +915,7 @@ export const sendTransactionByMiniSignV2 = async ({
     apiProvider: openapi,
   });
 
-  await transactionHistoryService.updateSigningTx(signingTxId, {
+  await transactionHistoryServiceApi.updateSigningTx(signingTxId, {
     rawTx: {
       nonce: tx.nonce,
     },
@@ -934,7 +932,7 @@ export const sendTransactionByMiniSignV2 = async ({
   onProgress?.('builded');
 
   const handleSendAfter = async () => {
-    const statsData = await notificationService.getStatsData();
+    const statsData = await notificationServiceApi.getStatsData();
 
     if (statsData?.signed) {
       const sData: any = {

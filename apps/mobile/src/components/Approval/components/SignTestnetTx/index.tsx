@@ -1,11 +1,12 @@
 import { DEFAULT_GAS_LIMIT_RATIO, MINIMUM_GAS_LIMIT } from '@/constant/gas';
 import { apiCustomTestnet } from '@/core/apis';
+import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import {
-  dappService,
-  preferenceService,
-  transactionHistoryService,
-} from '@/core/services';
-import { Account, ChainGas } from '@/core/services/preference';
+  getLastTimeGasSelection,
+  updateLastTimeGasSelection,
+} from '@/core/serviceApi/preference';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import type { Account, ChainGas } from '@/core/services/preference';
 import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { intToHex } from '@/utils/number';
@@ -14,13 +15,14 @@ import {
   KEYRING_CLASS,
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
-import { GasLevel, Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { GasLevel, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { isHexString } from 'ethereumjs-util';
-import React, { ReactNode, useMemo, useState } from 'react';
+import type { ReactNode} from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WaitingSignComponent } from '../map';
-import { AppColors2024Variants } from '@/constant/theme';
+import type { AppColors2024Variants } from '@/constant/theme';
 import { useTheme2024 } from '@/hooks/theme';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { useFindChain } from '@/hooks/useFindChain';
@@ -32,9 +34,10 @@ import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useMount, useRequest } from 'ahooks';
 import { StyleSheet, View } from 'react-native';
 import { normalizeTxParams } from '../SignTx/util';
+import type {
+  GasSelectorResponse} from '../TxComponents/GasSelector/GasSelectorHeader';
 import {
-  GasSelectorHeader,
-  GasSelectorResponse,
+  GasSelectorHeader
 } from '../TxComponents/GasSelector/GasSelectorHeader';
 import { FooterBar } from '../FooterBar/FooterBar';
 import { SignAdvancedSettings } from '../SignAdvancedSettings';
@@ -206,7 +209,7 @@ export const SignTestnetTx = ({
   const currentAccount = params.isGnosis ? params.account! : $account;
   const { colors2024 } = useTheme2024();
   const styles = React.useMemo(() => getStyles(colors2024), [colors2024]);
-  const site = dappService.getDapp(origin || '');
+  const site = getDappSnapshot(origin || '');
 
   const {
     data = '0x',
@@ -344,7 +347,7 @@ export const SignTestnetTx = ({
   const { data: lastTimeGas, runAsync: runGetLastTimeGasSelection } =
     useRequest(
       async () => {
-        return preferenceService.getLastTimeGasSelection(chainId);
+        return getLastTimeGasSelection(chainId);
       },
       {
         manual: true,
@@ -550,7 +553,7 @@ export const SignTestnetTx = ({
       selected.gasLevel = selectedGas.level;
     }
     if (!isSpeedUp && !isCancel && !isSwap) {
-      await preferenceService.updateLastTimeGasSelection(chainId, selected);
+      await updateLastTimeGasSelection(chainId, selected);
     }
     const transaction: Tx = {
       from: tx.from,
@@ -566,7 +569,7 @@ export const SignTestnetTx = ({
     const approval = (await getApproval())!;
 
     approval?.signingTxId &&
-      (await transactionHistoryService.updateSigningTx(approval.signingTxId, {
+      (await transactionHistoryServiceApi.updateSigningTx(approval.signingTxId, {
         rawTx: {
           nonce: realNonce || tx.nonce,
         },

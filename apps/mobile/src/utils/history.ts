@@ -8,7 +8,7 @@ import {
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
 import { HistoryItemCateType } from '@/types/history';
-import { transactionHistoryService } from '@/core/services/shared';
+import { getTransactionHistoryTransactionsSnapshot } from '@/core/serviceApi/transactionHistory';
 import { findChain } from './chain';
 
 export const isNFTTokenId = (tokenId: string) => {
@@ -26,7 +26,7 @@ export const checkIsGasDepositTx = ({
     return false;
   }
 
-  return !!transactionHistoryService.store.transactions.find(item => {
+  return !!getTransactionHistoryTransactionsSnapshot().find(item => {
     return item.chainId === chainId && item.hash === hash && item.isGasDeposit;
   });
 };

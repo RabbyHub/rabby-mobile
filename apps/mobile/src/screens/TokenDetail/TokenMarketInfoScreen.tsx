@@ -14,12 +14,12 @@ import {
 import { openapi } from '@/core/request';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
-import { AbstractProject } from '@/screens/Home/types';
+import type { AbstractProject } from '@/screens/Home/types';
 import { getMarketTabToSwapPageAction } from '@/screens/Market/analytics';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS_ENUM } from '@debank/common';
-import { preferenceService } from '@/core/services';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
@@ -35,13 +35,14 @@ import {
   RefreshControl,
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
-import { TokenChartRef, TokenPriceChart } from './components/TokenPriceChart';
+import type { TokenChartRef} from './components/TokenPriceChart';
+import { TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
-import { GetRootScreenNavigationProps } from '@/navigation-type';
+import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
+import type { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenChainAndContract } from './components/TokenChainAndContract';
 import { IssuerAndListSite } from './components/IssuerAndListSite';
 import RcIconWarningCC from '@/assets2024/icons/common/warning-circle-cc.svg';
@@ -60,16 +61,17 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { DynamicCustomMaterialTabBar } from './components/CustomTabBar';
 import CustomLabel from './components/CustomLabel';
 import { CandlePeriod } from '@/components2024/TradingViewCandleChart/type';
-import TradingViewCandleChart, {
+import type {
   TradingViewChartRef,
 } from '@/components2024/TradingViewCandleChart';
+import TradingViewCandleChart from '@/components2024/TradingViewCandleChart';
 import TimePanel from './components/TimePanel';
 import MarketInfo from './components/MarketInfo';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import ActivityAndHolders from './components/Market/ActivityAndHolders';
 import { scrollEndCallBack } from './components/Market/hooks';
 import { every10sEvent, useEvery10sEvent } from './event';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/store/tokens';
 import { formatAmountValueKMB } from './util';
 import { Text } from '@/components/Typography';
 
@@ -148,7 +150,7 @@ export const TokenMarketInfoScreen = () => {
   }, [token]);
 
   const finalAccount = useMemo(() => {
-    return account || accounts[0] || preferenceService.getFallbackAccount();
+    return account || accounts[0] || getFallbackAccountSnapshot();
   }, [account, accounts]);
 
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();

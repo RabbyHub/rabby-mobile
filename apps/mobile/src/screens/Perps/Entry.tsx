@@ -1,28 +1,30 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
+import type {
+  DappSelectItem} from '@/components2024/DappFrameAccountHeader';
 import {
-  DappSelectItem,
   INNER_DAPP_LIST,
 } from '@/components2024/DappFrameAccountHeader';
 import { InnerDappWebViewScreen } from '@/components2024/InnerDappWebViewScreen';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { PerpsOriginScreen } from './index';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { apisDapp } from '@/core/apis';
 import { createDappBySession } from '@/core/apis/dapp';
-import { dappService } from '@/core/services';
+import { dappServiceApi } from '@/core/serviceApi/dapp';
 import { noop } from 'lodash';
+import type {
+  CompositeScreenProps} from '@react-navigation/native';
 import {
-  CompositeScreenProps,
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
-import {
+import type {
   RootStackParamsList,
   TransactionNavigatorParamList,
 } from '@/navigation-type';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { matomoRequestEvent } from '@/utils/analytics';
 
@@ -39,9 +41,13 @@ const resolveActiveId = (list: DappSelectItem[], preferredId: string) => {
   return list[0]?.id;
 };
 
-const ensureDappAccount = (origin: string, name: string, account: Account) => {
-  if (!dappService.getDapp(origin)) {
-    dappService.addDapp({
+const ensureDappAccount = async (
+  origin: string,
+  name: string,
+  account: Account,
+) => {
+  if (!(await dappServiceApi.getDapp(origin))) {
+    await dappServiceApi.addDapp({
       ...createDappBySession({
         origin,
         name,
@@ -111,7 +117,9 @@ export function PerpsScreen() {
         if (item?.url) {
           const origin = safeGetOrigin(item.url) || item.url;
           if (origin) {
-            ensureDappAccount(origin, item.name, account);
+            void ensureDappAccount(origin, item.name, account).catch(
+              console.error,
+            );
           }
         }
       }

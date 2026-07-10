@@ -1,12 +1,12 @@
 import { AppBottomSheetModal } from '@/components';
 import { toast } from '@/components2024/Toast';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
-import { Chain } from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
 import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
 import { apisSafe } from '@/core/apis/safe';
 import { openapi } from '@/core/request';
-import { customRPCService } from '@/core/services';
-import { Account, ChainGas } from '@/core/services/preference';
+import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
+import type { Account, ChainGas } from '@/core/services/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { useFindChain } from '@/hooks/useFindChain';
 import { useSheetModal } from '@/hooks/useSheetModal';
@@ -20,7 +20,7 @@ import {
 } from '@/utils/transaction';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import {
+import type {
   ExplainTxResponse,
   GasAccountCheckResult,
   GasLevel,
@@ -28,13 +28,14 @@ import {
   Tx,
   TxPushType,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { Result } from '@rabby-wallet/rabby-security-engine';
+import type { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { useDebounceFn, useMemoizedFn } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import _, { omit } from 'lodash';
+import type {
+  ReactNode} from 'react';
 import React, {
-  ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -43,7 +44,7 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
-import { GasLessConfig } from '../FooterBar/GasLessComponents';
+import type { GasLessConfig } from '../FooterBar/GasLessComponents';
 import {
   explainGas,
   getGasTokenBalance,
@@ -51,7 +52,7 @@ import {
   getRecommendNonce,
 } from '../SignTx/calc';
 import { normalizeTxParams } from '../SignTx/util';
-import { GasSelectorResponse } from '../TxComponents/GasSelector/GasSelectorHeader';
+import type { GasSelectorResponse } from '../TxComponents/GasSelector/GasSelectorHeader';
 import { SignMainnetGasSelectorHeader } from '../TxComponents/GasSelector/SignMainnetGasSelectorHeader';
 import { useEffectiveApprovalGasMethod } from '../TxComponents/GasSelector/useEffectiveApprovalGasMethod';
 import type { ApprovalGasMethod } from '../TxComponents/GasSelector/approvalGasDisplay';
@@ -63,11 +64,12 @@ import { apiCustomRPC, apiProvider } from '@/core/apis';
 import { toast as toast2024 } from '@/components2024/Toast';
 import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
+import type {
+  MiniApprovalTaskType} from '@/hooks/useMiniApprovalTask';
 import {
-  MiniApprovalTaskType,
   useMiniApprovalTask,
 } from '@/hooks/useMiniApprovalTask';
-import { sendTransaction } from '@/utils/sendTransaction';
+import type { sendTransaction } from '@/utils/sendTransaction';
 import { EVENT_MINI_APPROVAL_START_SIGN, eventBus } from '@/utils/events';
 import AutoLockView from '@/components/AutoLockView';
 
@@ -81,11 +83,13 @@ import { View } from 'react-native';
 import { BalanceChangeLoading } from './BalanceChangeLoanding';
 import { useGetMiniSignTxExtraProps } from '@/hooks/useMiniApproval';
 import BalanceChange from '../TxComponents/BalanceChange';
+import type {
+  GasAccountTopUpResult} from '@/screens/GasAccount/components/topUpContinuation';
 import {
-  buildTopUpResumedTxs,
-  GasAccountTopUpResult,
+  buildTopUpResumedTxs
 } from '@/screens/GasAccount/components/topUpContinuation';
-import { GasTokenInfo, isTempoChain } from '@/utils/tempo';
+import type { GasTokenInfo} from '@/utils/tempo';
+import { isTempoChain } from '@/utils/tempo';
 
 let count = 1;
 let unCount = 0;
@@ -728,7 +732,7 @@ export const MiniSignTx = ({
       return;
     }
     try {
-      await customRPCService.syncDefaultRPC();
+      await customRPCServiceApi.syncDefaultRPC();
     } catch (e) {
       console.error(' miniSignTx sync default rpc error', e);
     }

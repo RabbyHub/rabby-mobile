@@ -1,4 +1,4 @@
-import { makeJsEEClass } from '@/core/services/_utils';
+import { makeJsEEClass } from '@/core/utils/makeJsEEClass';
 import type { Multi24hBalanceState } from '@/store/balance24h';
 import type { ContactBookStore } from '@rabby-wallet/service-address';
 import type { PreferenceStore } from '../services/preference';

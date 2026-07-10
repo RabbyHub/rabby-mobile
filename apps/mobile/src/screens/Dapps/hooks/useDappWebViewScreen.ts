@@ -1,13 +1,14 @@
 import { createRef, useCallback, useMemo, useRef } from 'react';
 import { atom, useAtom, useAtomValue } from 'jotai';
 
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useDapps } from '@/hooks/useDapps';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { createDappBySession, syncBasicDappInfo } from '@/core/apis/dapp';
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
+import type {
+  ActiveDappState} from '@/core/bridges/state';
 import {
-  ActiveDappState,
   activeDappStateEvents,
   getActiveDappState,
   globalSetActiveDappState,
@@ -28,8 +29,8 @@ import {
 } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
-import { HomeNavigatorParamsList } from '@/navigation-type';
-import { preferenceService } from '@/core/services';
+import type { HomeNavigatorParamsList } from '@/navigation-type';
+import { toggleAllowNotifyAccountsChanged } from '@/core/serviceApi/preference';
 import { apisDapp } from '@/core/apis';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
@@ -175,7 +176,7 @@ export function useDappWebViewScreen() {
       _setActiveDappOrigin(origin);
 
       if (!origin) {
-        preferenceService.toggleAllowNotifyAccountsChanged(false);
+        void toggleAllowNotifyAccountsChanged(false).catch(console.error);
         inactivate();
       }
     },
@@ -375,7 +376,7 @@ export function useDappWebViewScreen() {
         setActiveDappOrigin(item.origin);
       }
 
-      preferenceService.toggleAllowNotifyAccountsChanged(true);
+      void toggleAllowNotifyAccountsChanged(true).catch(console.error);
 
       activate(dappInfo);
 

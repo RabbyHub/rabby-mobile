@@ -12,7 +12,7 @@ import {
   topUpGasAccount,
 } from '@/core/apis/gasAccount';
 import { sendRequest } from '@/core/apis/sendRequest';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import { useAccounts } from '@/hooks/account';
 import { useMiniSigner } from '@/hooks/useSigner';
@@ -42,9 +42,10 @@ import {
   useGasAccountBridgeSupportUpdatedAt,
   useGasAccountSign,
 } from '@/screens/GasAccount/hooks/atom';
-import {
+import type {
   GasAccountAvailableToken,
-  GasAccountAvailableTokenRow,
+  GasAccountAvailableTokenRow} from '@/screens/GasAccount/hooks/useDepositTokenAvailability';
+import {
   getGasAccountAvailableTokenFromRow,
   useGasAccountDepositAvailableTokens,
 } from '@/screens/GasAccount/hooks/useDepositTokenAvailability';
@@ -62,7 +63,7 @@ import { formatUsdValue } from '@/utils/number';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { GasAccountBridgeQuote, Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { GasAccountBridgeQuote, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { CHAINS_ENUM } from '@debank/common';
 import { GasAccountDepositTokenPicker } from './GasAccountDepositTokenPicker';
 import {
@@ -77,7 +78,7 @@ import { useRequest } from 'ahooks';
 import { openapi } from '@/core/request';
 import { pollDepositStatus } from '@/core/apis/gasAccount';
 import { toast } from '@/components2024/Toast';
-import { GasAccountTopUpWaitCallback } from './topUpContinuation';
+import type { GasAccountTopUpWaitCallback } from './topUpContinuation';
 import { apiProvider } from '@/core/apis';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import AuthButton from '@/components2024/AuthButton';

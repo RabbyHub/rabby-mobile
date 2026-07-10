@@ -24,7 +24,8 @@ import BigNumber from 'bignumber.js';
 import { QuoteList } from './BridgeQuotes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { BridgeHeader, BridgeHeaderRef } from './BridgeHeader';
+import type { BridgeHeaderRef } from './BridgeHeader';
+import { BridgeHeader } from './BridgeHeader';
 import { openapi } from '@/core/request';
 import pRetry from 'p-retry';
 import { stats } from '@/utils/stats';
@@ -53,13 +54,14 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { BridgePendingTxItem } from './PendingTxItem';
 import { last } from 'lodash';
-import { transactionHistoryService } from '@/core/services/shared';
-import { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { matomoRequestEvent } from '@/utils/analytics';
+import type {
+  DirectSignBtnMethods} from '@/components2024/DirectSignBtn';
 import {
-  DirectSignBtn,
-  DirectSignBtnMethods,
+  DirectSignBtn
 } from '@/components2024/DirectSignBtn';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
@@ -70,8 +72,9 @@ import { BridgeSlippage } from './BridgeSlippage';
 import { Text } from '@/components/Typography';
 import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
+import type {
+  FormAmountMode} from '@/utils/form';
 import {
-  FormAmountMode,
   FormValuesOnSubmit,
   createAmountComparer,
   shouldIgnoreAmountChangeInMaxMode,
@@ -1038,7 +1041,7 @@ export const BridgeContent = ({
         const txHash = last(res) || '';
 
         if (txHash) {
-          transactionHistoryService.addBridgeTxHistory({
+          void transactionHistoryServiceApi.addBridgeTxHistory({
             address: currentAccount?.address!,
             fromChainId: findChainByServerID(fromToken?.chain || '')?.id || 0,
             toChainId: findChainByServerID(toToken?.chain || '')?.id || 0,

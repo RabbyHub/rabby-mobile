@@ -1,5 +1,6 @@
 import { apiMnemonic } from '@/core/apis';
-import { BackupData, decryptFiles } from '@/core/utils/cloudBackup';
+import type { BackupData} from '@/core/utils/cloudBackup';
+import { decryptFiles } from '@/core/utils/cloudBackup';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -8,9 +9,9 @@ import { BackupUnlockScreen } from '../SeedPhraseBackupToCloud/BackupUnlockScree
 import { BackupRestoreScreen } from './BackupRestoreScreen2024';
 import { useImportAddressProc } from '@/hooks/address/useNewUser';
 import { RootNames } from '@/constant/layout';
-import { preferenceService } from '@/core/services';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
-import { shouldRedirectToSetPasswordBefore2024 } from '@/hooks/useLock';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
+import { setReportActionTs } from '@/core/serviceApi/preference';
+import type { shouldRedirectToSetPasswordBefore2024 } from '@/hooks/useLock';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 interface Props {
@@ -57,7 +58,7 @@ export const SeedPhraseRestoreFromCloud2024: React.FC<Props> = ({
             isFirstImportPassword: true,
           })
         ) {
-          preferenceService.setReportActionTs(
+          void setReportActionTs(
             REPORT_TIMEOUT_ACTION_KEY.IMPORT_SEED_PHRASE_RESTORE_CONFIRM,
           );
           setConfirmCB(() =>

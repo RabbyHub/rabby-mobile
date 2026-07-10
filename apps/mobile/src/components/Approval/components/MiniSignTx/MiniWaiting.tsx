@@ -7,10 +7,10 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { MiniLedgerHardwareWaiting } from './MiniLedgerHardwareWaiting';
 import { MiniPrivatekeyWaiting } from './MiniPrivatekeyWaiting';
-import { BatchSignTxTaskType } from './useBatchSignTxTask';
+import type { BatchSignTxTaskType } from './useBatchSignTxTask';
 import { MiniOneKeyHardwareWaiting } from './MiniOneKeyHardwareWaiting';
 import { useMemoizedFn } from 'ahooks';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 
 export const MiniWaiting = ({
   visible,

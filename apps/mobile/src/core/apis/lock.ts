@@ -2,11 +2,21 @@ import { Platform } from 'react-native';
 import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
 import { BroadcastEvent } from '@/constant/event';
 import {
-  keyringService,
-  perpsService,
-  preferenceService,
-  sessionService,
-} from '../services';
+  bindKeyringEventSync,
+  broadcastSessionEventSync,
+  getKeyringMemStoreStateSnapshot,
+  getPreferenceSnapshot,
+  hasKeyringPublicAccountSnapshot,
+  initCurrentAccountSync,
+  isKeyringBootedSnapshot,
+  isKeyringRuntimeReadySnapshot,
+  isKeyringUnlockedSnapshot,
+  keyringServiceApi,
+  perpsServiceApi,
+  refreshKeyringMemStoreKeyringsIfPossible,
+  setPreferenceSync,
+  submitKeyringPasswordForUnlock,
+} from '@/core/serviceApi';
 import { makeEEClass } from './event';
 import { formatTimeReadable } from '@/utils/time';
 import {
@@ -83,7 +93,7 @@ function getInitError(password: string) {
 async function safeVerifyPassword(password: string) {
   const result = { success: false, error: null as null | Error };
   try {
-    await keyringService.verifyPassword(password);
+    await keyringServiceApi.verifyPassword(password);
     result.success = true;
   } catch (error: any) {
     result.success = false;
@@ -115,13 +125,13 @@ function traceAndroidUnlockPerf(
 }
 
 function getKeyringRuntimeDiagnosticState() {
-  const state = keyringService.memStore.getState();
+  const state = getKeyringMemStoreStateSnapshot();
 
   return {
-    runtimeReady: state.keyringRuntimeReady,
-    runtimeRestoring: state.keyringRuntimeRestoring,
-    runtimeError: state.keyringRuntimeRestoreError,
-    keyringCount: state.keyrings.length,
+    runtimeReady: state?.keyringRuntimeReady,
+    runtimeRestoring: state?.keyringRuntimeRestoring,
+    runtimeError: state?.keyringRuntimeRestoreError,
+    keyringCount: state?.keyrings.length || 0,
   };
 }
 
@@ -140,14 +150,14 @@ function traceKeyringRuntimeConvergence(
 
 export async function throwErrorIfInvalidPwd(password: string) {
   try {
-    await keyringService.verifyPassword(password);
+    await keyringServiceApi.verifyPassword(password);
   } catch (error) {
     throw new Error(ERRORS.INCORRECT_PASSWORD);
   }
 }
 
 export async function verifyPasswordOrUnlock(password: string) {
-  if (keyringService.isUnlocked()) {
+  if (isKeyringUnlockedSnapshot()) {
     await throwErrorIfInvalidPwd(password);
     updateUnlockTime();
     return;
@@ -176,8 +186,8 @@ export async function setupWalletPassword(newPassword: string) {
       console.log('r.error', r.error, RABBY_MOBILE_KR_PWD);
       throw new Error(ERRORS.CURRENT_IS_INCORRET);
     }
-    await keyringService.updatePassword(RABBY_MOBILE_KR_PWD, newPassword);
-    await perpsService.resetStore();
+    await keyringServiceApi.updatePassword(RABBY_MOBILE_KR_PWD, newPassword);
+    await perpsServiceApi.resetStore();
   } catch (error: any) {
     result.error = error?.message || 'Failed to set password';
   }
@@ -204,8 +214,8 @@ export async function updateWalletPassword(
   }
 
   try {
-    await keyringService.updatePassword(oldPassword, newPassword);
-    await perpsService.resetStore();
+    await keyringServiceApi.updatePassword(oldPassword, newPassword);
+    await perpsServiceApi.resetStore();
   } catch (error) {
     result.error = 'Failed to set password';
   }
@@ -218,7 +228,7 @@ export async function shouldAskSetPassword() {
 
   if (!lockInfo.isUseCustomPwd) return true;
 
-  return (await keyringService.getCountOfAccountsInKeyring()) === 0;
+  return (await keyringServiceApi.getCountOfAccountsInKeyring()) === 0;
 }
 
 export async function resetPasswordOnUI(newPassword: string) {
@@ -227,7 +237,7 @@ export async function resetPasswordOnUI(newPassword: string) {
 
   try {
     const hasAccountsInKeyring =
-      (await keyringService.getCountOfAccountsInKeyring()) > 0;
+      (await keyringServiceApi.getCountOfAccountsInKeyring()) > 0;
 
     if (hasAccountsInKeyring) {
       const lockInfo = await getRabbyLockInfo();
@@ -240,8 +250,8 @@ export async function resetPasswordOnUI(newPassword: string) {
       }
       // await updateWalletPassword(RABBY_MOBILE_KR_PWD, newPassword);
     } else {
-      await keyringService.resetPassword(newPassword);
-      await perpsService.resetStore();
+      await keyringServiceApi.resetPassword(newPassword);
+      await perpsServiceApi.resetStore();
     }
   } catch (error) {
     console.error(error);
@@ -259,11 +269,11 @@ export async function dangerouslyResetPasswordAndKeyrings(
   if (result.error) return result;
 
   try {
-    await keyringService.dangerouslyResetPasswordAndKeyrings(
+    await keyringServiceApi.dangerouslyResetPasswordAndKeyrings(
       oldPassword,
       newPassword,
     );
-    await perpsService.resetStore();
+    await perpsServiceApi.resetStore();
   } catch (error) {
     console.error(error);
     result.error = 'Failed to reset password an clear keyrings';
@@ -287,8 +297,8 @@ export async function clearCustomPassword(currentPassword: string) {
   }
 
   try {
-    await keyringService.updatePassword(currentPassword, RABBY_MOBILE_KR_PWD);
-    await perpsService.resetStore();
+    await keyringServiceApi.updatePassword(currentPassword, RABBY_MOBILE_KR_PWD);
+    await perpsServiceApi.resetStore();
   } catch (error) {
     result.error = 'Failed to cancel password';
   }
@@ -330,16 +340,16 @@ async function tryAutoUnlockRabbyMobile() {
     );
   }
 
-  if (!keyringService.isBooted()) {
-    await keyringService.boot(RABBY_MOBILE_KR_PWD);
+  if (!isKeyringBootedSnapshot()) {
+    await keyringServiceApi.boot(RABBY_MOBILE_KR_PWD);
   }
   const lockInfo = await getRabbyLockInfo();
 
   try {
-    if (lockInfo.isUseBuiltInPwd && !keyringService.isUnlocked()) {
-      await keyringService.submitPassword(RABBY_MOBILE_KR_PWD);
-    } else if (!keyringService.isUnlocked()) {
-      await keyringService.restoreUnencryptedKeyrings();
+    if (lockInfo.isUseBuiltInPwd && !isKeyringUnlockedSnapshot()) {
+      await keyringServiceApi.submitPassword(RABBY_MOBILE_KR_PWD);
+    } else if (!isKeyringUnlockedSnapshot()) {
+      await keyringServiceApi.restoreUnencryptedKeyrings();
     }
   } catch (e) {
     console.error('[tryAutoUnlockRabbyMobile]');
@@ -352,15 +362,15 @@ async function tryAutoUnlockRabbyMobile() {
 }
 
 export function isUnlocked() {
-  return keyringService.isUnlocked();
+  return isKeyringUnlockedSnapshot();
 }
 
 export function isKeyringRuntimeReady() {
-  return keyringService.isKeyringRuntimeReady();
+  return isKeyringRuntimeReadySnapshot();
 }
 
 export async function ensureKeyringRuntimeReady(reason = 'lock_api') {
-  return keyringService.ensureKeyringRuntimeReady(reason);
+  return keyringServiceApi.ensureKeyringRuntimeReady(reason);
 }
 
 const keyringRuntimeConvergenceRef = {
@@ -381,7 +391,7 @@ function cancelKeyringRuntimeConvergence(reason: string) {
 }
 
 export function scheduleKeyringRuntimeConvergence(reason = 'unknown') {
-  if (!keyringService.isUnlocked()) {
+  if (!isKeyringUnlockedSnapshot()) {
     traceKeyringRuntimeConvergence('keyring_runtime_convergence_skip_locked', {
       reason,
     });
@@ -396,7 +406,7 @@ export function scheduleKeyringRuntimeConvergence(reason = 'unknown') {
     reason,
     generation,
     fallbackMs: KEYRING_RUNTIME_CONVERGENCE_FALLBACK_MS,
-    runtimeReady: keyringService.isKeyringRuntimeReady(),
+    runtimeReady: isKeyringRuntimeReadySnapshot(),
   });
 
   const cancelHomeReadyWait = runAfterHomePostStartupReady(
@@ -413,7 +423,7 @@ export function scheduleKeyringRuntimeConvergence(reason = 'unknown') {
       }
 
       keyringRuntimeConvergenceRef.cancel = null;
-      if (!keyringService.isUnlocked()) {
+      if (!isKeyringUnlockedSnapshot()) {
         traceKeyringRuntimeConvergence(
           'keyring_runtime_convergence_skip_locked_run',
           {
@@ -440,21 +450,17 @@ export function scheduleKeyringRuntimeConvergence(reason = 'unknown') {
       traceKeyringRuntimeConvergence('keyring_runtime_convergence_start', {
         reason,
         generation,
-        runtimeReady: keyringService.isKeyringRuntimeReady(),
+        runtimeReady: isKeyringRuntimeReadySnapshot(),
       });
 
       void Promise.resolve()
-        .then(() =>
-          (
-            keyringService as KeyringServiceWithUnlockOptions
-          ).refreshMemStoreKeyrings?.(),
-        )
+        .then(() => refreshKeyringMemStoreKeyringsIfPossible())
         .then(() => {
           traceKeyringRuntimeConvergence('keyring_runtime_convergence_end', {
             reason,
             generation,
             elapsedMs: Date.now() - startedAt,
-            runtimeReady: keyringService.isKeyringRuntimeReady(),
+            runtimeReady: isKeyringRuntimeReadySnapshot(),
           });
         })
         .catch(error => {
@@ -493,7 +499,7 @@ export function scheduleKeyringRuntimeConvergence(reason = 'unknown') {
 }
 
 export async function isLockedWithCustomPassword() {
-  if (keyringService.isUnlocked()) return false;
+  if (isKeyringUnlockedSnapshot()) return false;
 
   const lockInfo = await getRabbyLockInfo();
   return lockInfo.isUseCustomPwd;
@@ -504,14 +510,6 @@ export type UnlockResultErrors = {
   formFieldError?: string;
   toastError?: string;
 };
-type KeyringServiceWithUnlockOptions = typeof keyringService & {
-  submitPassword: (
-    password: string,
-    options?: UnlockWalletOptions,
-  ) => ReturnType<typeof keyringService.submitPassword>;
-  refreshMemStoreKeyrings?: () => Promise<unknown>;
-};
-
 async function unlockWallet(
   password: string,
   options: UnlockWalletOptions = {},
@@ -539,16 +537,13 @@ async function unlockWallet(
     traceAndroidUnlockPerf('submit_password_start', {
       elapsedMs: Date.now() - startedAt,
     });
-    await (keyringService as KeyringServiceWithUnlockOptions).submitPassword(
-      password,
-      {
-        trustedPassword: options.trustedPassword,
-        trustedVaultKeyString: options.trustedVaultKeyString,
-        onTrustedVaultKeyString: options.onTrustedVaultKeyString,
-        deferMemStoreKeyringsUpdate: options.deferMemStoreKeyringsUpdate,
-        deferKeyringRuntimeRestore: options.deferKeyringRuntimeRestore,
-      },
-    );
+    await submitKeyringPasswordForUnlock(password, {
+      trustedPassword: options.trustedPassword,
+      trustedVaultKeyString: options.trustedVaultKeyString,
+      onTrustedVaultKeyString: options.onTrustedVaultKeyString,
+      deferMemStoreKeyringsUpdate: options.deferMemStoreKeyringsUpdate,
+      deferKeyringRuntimeRestore: options.deferKeyringRuntimeRestore,
+    });
     traceAndroidUnlockPerf('submit_password_end', {
       elapsedMs: Date.now() - startedAt,
     });
@@ -566,8 +561,8 @@ async function unlockWallet(
   traceAndroidUnlockPerf('post_submit_start', {
     elapsedMs: Date.now() - startedAt,
   });
-  preferenceService.initCurrentAccount();
-  sessionService.broadcastEvent(BroadcastEvent.unlock);
+  initCurrentAccountSync();
+  broadcastSessionEventSync(BroadcastEvent.unlock);
   traceAndroidUnlockPerf('unlock_wallet_end', {
     elapsedMs: Date.now() - startedAt,
   });
@@ -576,10 +571,10 @@ async function unlockWallet(
 }
 
 export async function lockWallet() {
-  await keyringService.setLocked();
+  await keyringServiceApi.setLocked();
   clearUnlockTime();
-  sessionService.broadcastEvent(BroadcastEvent.accountsChanged, []);
-  sessionService.broadcastEvent(BroadcastEvent.lock);
+  broadcastSessionEventSync(BroadcastEvent.accountsChanged, []);
+  broadcastSessionEventSync(BroadcastEvent.lock);
 }
 
 const { EventEmitter: UnlockTimeEvent } = makeEEClass<{
@@ -588,9 +583,7 @@ const { EventEmitter: UnlockTimeEvent } = makeEEClass<{
 export const unlockTimeEvent = new UnlockTimeEvent();
 
 const unlockTimeRef = {
-  current: normalizeUnlockTime(
-    preferenceService.getPreference('lastUnlockTime'),
-  ),
+  current: normalizeUnlockTime(getPreferenceSnapshot('lastUnlockTime')),
 };
 
 function normalizeUnlockTime(time: unknown) {
@@ -606,7 +599,7 @@ export function getUnlockTime() {
 export async function updateUnlockTime() {
   const time = Date.now();
   unlockTimeRef.current = time;
-  preferenceService.setPreference({
+  setPreferenceSync({
     lastUnlockTime: time,
   });
   refreshAutolockTimeout();
@@ -615,7 +608,7 @@ export async function updateUnlockTime() {
 
 export function clearUnlockTime() {
   unlockTimeRef.current = 0;
-  preferenceService.setPreference({
+  setPreferenceSync({
     lastUnlockTime: 0,
     unlockSessionExpireTime: 0,
   });
@@ -630,10 +623,7 @@ export function isUnlockSessionValid(now = Date.now()) {
   const expireTime = getPersistedUnlockSessionExpireTime();
   if (expireTime !== -1 && expireTime <= now) return false;
 
-  if (
-    !keyringService.isUnlocked() &&
-    !keyringService.hasPublicAccountSnapshot()
-  ) {
+  if (!isKeyringUnlockedSnapshot() && !hasKeyringPublicAccountSnapshot()) {
     return false;
   }
 
@@ -656,9 +646,9 @@ function makeLockApiWithUpdateUnlockTime<T extends (...args: any[]) => any>(
 }
 
 export const tryAutoUnlockRabbyMobileWithUpdateUnlockTime = async () => {
-  const wasUnlocked = keyringService.isUnlocked();
+  const wasUnlocked = isKeyringUnlockedSnapshot();
   const result = await tryAutoUnlockRabbyMobile();
-  if (keyringService.isUnlocked()) {
+  if (isKeyringUnlockedSnapshot()) {
     updateUnlockTime();
     if (!wasUnlocked) {
       notifyPostUnlockUIReady();
@@ -674,13 +664,7 @@ export const safeVerifyPasswordAndUpdateUnlockTime =
   makeLockApiWithUpdateUnlockTime(safeVerifyPassword, result => result.success);
 
 export function subscribeAppLock(fn: () => any) {
-  keyringService.on('lock', fn);
-
-  const dispose = () => {
-    keyringService.off('lock', fn);
-  };
-
-  return dispose;
+  return bindKeyringEventSync('lock', fn);
 }
 
 type WalletAuthUnlockedContext = {
@@ -700,7 +684,7 @@ export function notifyPostUnlockUIReady(
   }
 
   pendingPostUnlockUIReadyRef.current = null;
-  if (!keyringService.isUnlocked()) {
+  if (!isKeyringUnlockedSnapshot()) {
     return;
   }
 
@@ -740,9 +724,9 @@ runIIFEFunc(() => {
   const isFirstTimeAfterLaunchRef = {
     current: true,
   };
-  keyringService.on('unlock', ctx => {
+  bindKeyringEventSync('unlock', ctx => {
     console.debug('[perf] keyringService unlock event ctx', ctx);
-    if (ctx.scene === 'unlock') {
+    if ((ctx as { scene?: string }).scene === 'unlock') {
       const isFirstTimeAfterLaunch = isFirstTimeAfterLaunchRef.current;
       isFirstTimeAfterLaunchRef.current = false;
       pendingPostUnlockUIReadyRef.current = {
@@ -763,7 +747,7 @@ runIIFEFunc(() => {
       scheduleKeyringRuntimeConvergence('wallet_auth_unlocked');
     }
   });
-  keyringService.on('lock', () => {
+  bindKeyringEventSync('lock', () => {
     pendingPostUnlockUIReadyRef.current = null;
     cancelKeyringRuntimeConvergence('lock');
   });

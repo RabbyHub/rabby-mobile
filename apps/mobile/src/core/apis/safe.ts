@@ -1,17 +1,17 @@
-import { keyringService, preferenceService } from '../services/shared';
-
 import { ethers } from 'ethers';
 // import { preferenceService } from '../service';
-import { Chain } from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
 import { findChain } from '@/utils/chain';
-import Safe, { SafeMessage } from '@rabby-wallet/gnosis-sdk';
+import type { SafeMessage } from '@rabby-wallet/gnosis-sdk';
+import Safe from '@rabby-wallet/gnosis-sdk';
 import { t } from 'i18next';
 import { isAddress } from 'web3-utils';
 import { builtinEthereumProvider, EthereumProvider } from './ethereumProvider';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKeyring } from './keyring';
+import type {
+  GnosisKeyring} from '@rabby-wallet/eth-keyring-gnosis';
 import {
-  GnosisKeyring,
   TransactionBuiltEvent,
   TransactionConfirmedEvent,
 } from '@rabby-wallet/eth-keyring-gnosis';
@@ -21,10 +21,16 @@ import { isEqual, sortBy, uniq, without } from 'lodash';
 import { toChecksumAddress } from '@ethereumjs/util';
 import { hashSafeMessage } from '@safe-global/protocol-kit/dist/src/utils/eip-712';
 import PQueue from 'p-queue';
+import type {
+  SafeTransactionItem} from '@rabby-wallet/gnosis-sdk/dist/api';
 import {
-  GNOSIS_SUPPORT_CHAINS,
-  SafeTransactionItem,
+  GNOSIS_SUPPORT_CHAINS
 } from '@rabby-wallet/gnosis-sdk/dist/api';
+import {
+  getFallbackAccountSnapshot,
+  keyringServiceApi,
+  preferenceServiceApi,
+} from '@/core/serviceApi';
 
 const gnosisPQueue = new PQueue({
   interval: 1000,
@@ -40,7 +46,7 @@ export const createSafeService = async ({
   address: string;
   networkId: string;
 }) => {
-  const account = preferenceService.getFallbackAccount();
+  const account = getFallbackAccountSnapshot();
   const currentProvider = new EthereumProvider();
   if (account) {
     currentProvider.currentAccount = account.address;
@@ -92,16 +98,18 @@ class ApisSafe {
     try {
       keyring = await getKeyring(keyringType);
     } catch {
-      const GnosisKeyring = keyringService.getKeyringClassForType(keyringType);
+      const GnosisKeyring = await keyringServiceApi.getKeyringClassForType(
+        keyringType,
+      );
       keyring = new GnosisKeyring({});
       isNewKey = true;
     }
 
     keyring.setAccountToAdd(address);
     keyring.setNetworkIds(address, networkIds);
-    await keyringService.addNewAccount(keyring);
+    await keyringServiceApi.addNewAccount(keyring);
     if (isNewKey) {
-      await keyringService.addKeyring(keyring);
+      await keyringServiceApi.addKeyring(keyring);
     }
     (keyring as GnosisKeyring).on(TransactionBuiltEvent, data => {
       eventBus.emit(EVENTS.broadcastToUI, {
@@ -115,7 +123,7 @@ class ApisSafe {
         });
       });
     });
-    preferenceService.initCurrentAccount();
+    await preferenceServiceApi.initCurrentAccount();
   };
   syncAllGnosisNetworks = async () => {
     const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
@@ -141,7 +149,7 @@ class ApisSafe {
       },
     );
     if (isChanged) {
-      await keyringService.persistKeyringsForKeyring(keyring);
+      await keyringServiceApi.persistKeyringsForKeyring(keyring);
     }
   };
 
@@ -163,7 +171,7 @@ class ApisSafe {
       return;
     }
     keyring.setNetworkIds(address, nextNetworks);
-    await keyringService.persistKeyringsForKeyring(keyring);
+    await keyringServiceApi.persistKeyringsForKeyring(keyring);
   };
   getSafeVersion = async ({
     address,
@@ -172,7 +180,7 @@ class ApisSafe {
     address: string;
     networkId: string;
   }) => {
-    const account = preferenceService.getFallbackAccount();
+    const account = getFallbackAccountSnapshot();
     if (!account) {
       throw new Error(t('background.error.noCurrentAccount'));
     }

@@ -5,7 +5,8 @@ import { noop } from 'lodash';
 import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import type { KeyringAccountWithAlias} from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import AddressPopover from '../AddressPopover';
 import AddressSource from '../AddressSourceCard';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
@@ -14,7 +15,7 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { useRisks } from '@/components/SendLike/risk';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
-import {
+import type {
   AddrDescResponse,
   ProjectItem,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -24,7 +25,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { toast } from '@/components2024/Toast';
-import { contactService } from '@/core/services';
+import { contactServiceApi } from '@/core/serviceApi/contact';
 export interface ConfirmAddressScreenProps {
   title?: string;
   disableWhiteSwitch?: boolean;
@@ -98,7 +99,7 @@ const ConfirmAddress = ({
       await setInWhitelist(inWhiteList);
     }
     if (editingAlias.trim().length) {
-      contactService.updateAlias({
+      await contactServiceApi.updateAlias({
         address: account.address,
         name: editingAlias,
       });

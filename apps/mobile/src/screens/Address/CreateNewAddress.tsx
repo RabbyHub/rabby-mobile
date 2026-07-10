@@ -1,11 +1,12 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import React, { useCallback, useState } from 'react';
 
+import type {
+  StyleProp,
+  TextStyle} from 'react-native';
 import {
   StyleSheet,
   View,
-  StyleProp,
-  TextStyle,
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
@@ -20,11 +21,12 @@ import { apiMnemonic } from '@/core/apis';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
 import useAsync from 'react-use/lib/useAsync';
 import { ellipsisAddress } from '@/utils/address';
-import { contactService, keyringService } from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { contactServiceApi } from '@/core/serviceApi/contact';
 import { Skeleton } from '@rneui/themed';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions, useRoute } from '@react-navigation/native';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import LinearGradient from 'react-native-linear-gradient';
 import { replaceToFirst } from '@/utils/navigation';
@@ -90,9 +92,9 @@ function MainListBlocks() {
     } else {
       // first create
       seedPhrase = await apiMnemonic.generatePreMnemonic();
-      const Keyring = keyringService.getKeyringClassForType(
+      const Keyring = (await keyringServiceApi.getKeyringClassForType(
         KEYRING_CLASS.MNEMONIC,
-      ) as any;
+      )) as any;
       const keyring = new Keyring({ mnemonic: seedPhrase, passphrase: '' });
       accountsToCreate = keyring?.getAddresses(0, 1);
     }
@@ -153,7 +155,7 @@ function MainListBlocks() {
   }, [newAddress, value, navigation, state, storeSeedPharse, storeAddressList]);
 
   const handleDone = useCallback(async () => {
-    contactService.setAlias({
+    await contactServiceApi.setAlias({
       address: newAddress,
       alias: '',
     });

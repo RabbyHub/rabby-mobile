@@ -1,13 +1,14 @@
 /* eslint-disable react-native/no-inline-styles */
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import {
+import type {
   ApproveAction,
   ApproveNFTAction,
-  GasLevel,
   ProjectItem,
   SendAction,
-  TokenItem,
+  TokenItem} from '@rabby-wallet/rabby-api/dist/types';
+import {
+  GasLevel
 } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
@@ -15,12 +16,13 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TxChange } from '@/screens/Transaction/components/TokenChange';
-import {
+import type {
   ApproveTokenRequireData,
-  ParsedTransactionActionData,
   ReceiveTokenItem,
   SendRequireData,
-  SwapRequireData,
+  SwapRequireData} from '@rabby-wallet/rabby-action';
+import {
+  ParsedTransactionActionData
 } from '@rabby-wallet/rabby-action';
 import TokenLabel from '@/screens/Transaction/components/TokenLabel';
 import { getTokenSymbol } from '@/utils/token';
@@ -30,20 +32,20 @@ import { RootNames } from '@/constant/layout';
 import { TxStatusItem } from '@/screens/Transaction/components/TxStatusItem';
 import { getAliasName } from '@/core/apis/contact';
 import { findChain } from '@/utils/chain';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import {
   CUSTOM_HISTORY_TITLE_TYPE,
   HistoryItemCateType,
 } from '@/screens/Transaction/components/type';
-import { TokenChangeDataItem } from '@/screens/Transaction/components/HistoryItem';
+import type { TokenChangeDataItem } from '@/screens/Transaction/components/HistoryItem';
 import { HistoryItemTokenArea } from '@/screens/Transaction/components/HistoryItemTokenArea';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
 import { naviPush } from '@/utils/navigation';
 import FastImage from 'react-native-fast-image';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { Text } from '@/components/Typography';
-import { Account } from '@/types/account';
+import type { Account } from '@/types/account';
 
 const ellipsisAddress = (address: string) => {
   if (!address) {
@@ -497,12 +499,21 @@ export const TransactionItem = ({
   ]);
 
   useEffect(() => {
+    let cancelled = false;
     if (!data.isPending && !isInSendHistory) {
       const rawId = `${data.address.toLowerCase()}-${data.maxGasTx?.hash}`;
-      const isShowStatus =
-        transactionHistoryService.clearSuccessAndFailSingleId(rawId);
-      isShowStatus && setShowSuccess(true);
+      transactionHistoryServiceApi
+        .clearSuccessAndFailSingleId(rawId)
+        .then(isShowStatus => {
+          if (!cancelled && isShowStatus) {
+            setShowSuccess(true);
+          }
+        })
+        .catch(() => undefined);
     }
+    return () => {
+      cancelled = true;
+    };
   }, [data, isInSendHistory]);
 
   const noNeedTokenChangeType = useMemo(

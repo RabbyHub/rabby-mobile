@@ -2,19 +2,21 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { atom, useAtom } from 'jotai';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
+import type {
+  KeyringAccountWithAlias} from '@/hooks/account';
 import {
-  KeyringAccountWithAlias,
   storeApiAccounts,
   useAccounts,
 } from '@/hooks/account';
 import { openapi } from '@/core/request';
-import { ApprovalStatus } from '@rabby-wallet/rabby-api/dist/types';
+import type { ApprovalStatus } from '@rabby-wallet/rabby-api/dist/types';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import PQueue from 'p-queue';
 import { useMemoizedFn } from 'ahooks';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 
 // const approvalStatusAtom = atom<ApprovalStatus[]>([]);

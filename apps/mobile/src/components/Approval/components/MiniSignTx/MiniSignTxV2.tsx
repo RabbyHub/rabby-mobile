@@ -3,9 +3,10 @@ import { MiniFooterBar } from './MiniFooterBar';
 import BalanceChange from '../TxComponents/BalanceChange';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BalanceChangeLoading } from './BalanceChangeLoanding';
+import type {
+  GasSelectorResponse} from '../TxComponents/GasSelector/GasSelectorHeader';
 import {
-  GasSelectorHeader,
-  GasSelectorResponse,
+  GasSelectorHeader
 } from '../TxComponents/GasSelector/GasSelectorHeader';
 import type { ApprovalGasMethod } from '../TxComponents/GasSelector/approvalGasDisplay';
 import { useTranslation } from 'react-i18next';
@@ -35,19 +36,21 @@ import { useMiniSignFixedMode } from '@/hooks/miniSignGasStore';
 import BigNumber from 'bignumber.js';
 import { toast as toast2024 } from '@/components2024/Toast';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
-import miscService from '@/core/services/misc';
+import { miscServiceApi } from '@/core/serviceApi/misc';
+import type {
+  GasAccountTopUpResult} from '@/screens/GasAccount/components/topUpContinuation';
 import {
-  buildTopUpResumedTxs,
-  GasAccountTopUpResult,
+  buildTopUpResumedTxs
 } from '@/screens/GasAccount/components/topUpContinuation';
+import type {
+  TempoFeeTokenOption,
+  TxWithTempoExtras} from '@/utils/tempo';
 import {
   calcTempoMaxGasCostRawAmountIn18,
   isTempoBatchSupportedAccountType,
   isTempoChain,
   listTempoFeeTokenOptionsFromCache,
-  loadTempoFeeTokenOptionsState,
-  TempoFeeTokenOption,
-  TxWithTempoExtras,
+  loadTempoFeeTokenOptionsState
 } from '@/utils/tempo';
 import { SignMainnetGasSelectorHeader } from '../TxComponents/GasSelector/SignMainnetGasSelectorHeader';
 import tokenListStore from '@/store/tokens';
@@ -445,7 +448,7 @@ const MiniSignTxV2 = ({
   );
 
   useEffect(() => {
-    miscService.setCurrentGasLevel(ctx?.selectedGas?.level);
+    miscServiceApi.setCurrentGasLevel(ctx?.selectedGas?.level);
   }, [ctx?.selectedGas?.level]);
 
   if (!ctx || !config?.account || !ctx?.txs?.length || !currentAccount) {

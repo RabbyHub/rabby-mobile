@@ -2,9 +2,10 @@ import React, { useMemo } from 'react';
 import { View } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import type {
+  DappSelectItem} from '@/components2024/DappFrameAccountHeader';
 import {
-  DappFrameAccountHeader,
-  DappSelectItem,
+  DappFrameAccountHeader
 } from '@/components2024/DappFrameAccountHeader';
 import DappWebViewCore from '@/components/WebView/DappWebViewCore';
 import { apisDapp } from '@/core/apis';
@@ -13,7 +14,7 @@ import { useDappsValue, getDappAccount } from '@/hooks/useDapps';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 type InnerDappWebViewScreenProps = {

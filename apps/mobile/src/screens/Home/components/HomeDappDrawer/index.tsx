@@ -3,9 +3,10 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type {
+  FlatListProps} from 'react-native';
 import {
   Dimensions,
-  FlatListProps,
   Platform,
   FlatList as RNFlatList,
   TouchableOpacity,
@@ -31,7 +32,7 @@ import { RcNextSearchCC } from '@/assets/icons/common';
 import { ReactIconHome } from '@/assets2024/icons/browser';
 import RcIconDelete from '@/assets2024/icons/common/delete-cc.svg';
 import { IS_ANDROID } from '@/core/native/utils';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
@@ -47,7 +48,7 @@ import { triggerImpact } from '@/utils/common';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
 import { Button } from '@/components2024/Button';
-import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
+import type { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { matomoRequestEvent } from '@/utils/analytics';

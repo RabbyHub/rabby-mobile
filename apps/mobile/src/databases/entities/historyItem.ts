@@ -1,10 +1,11 @@
 import 'reflect-metadata';
-import {
-  BuyServiceProvider,
+import type {
   NFTItem,
-  TokenItem,
+  TokenItem} from '@rabby-wallet/rabby-api/dist/types';
+import {
+  BuyServiceProvider
 } from '@rabby-wallet/rabby-api/dist/types';
-import { TxHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { TxHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Entity, Column, Brackets } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import {
@@ -13,10 +14,11 @@ import {
   jsonTransformer,
 } from './_helpers';
 import { prepareAppDataSource } from '../imports';
+import type {
+  ProjectItemType} from '@/types/history';
 import {
   CUSTOM_HISTORY_TITLE_TYPE,
-  HistoryItemCateType,
-  ProjectItemType,
+  HistoryItemCateType
 } from '@/types/history';
 import {
   checkIsGasDepositTx,

@@ -3,9 +3,9 @@ import {
   RcIconEmptyCC,
   RcIconInfoCC,
 } from '@/assets/icons/gnosis';
-import { CHAINS_ENUM } from '@/constant/chains';
+import type { CHAINS_ENUM } from '@/constant/chains';
 import { apisSafe } from '@/core/apis/safe';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useGnosisSafeInfo } from '@/hooks/gnosis/useGnosisSafeInfo';
 import { useThemeColors } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
@@ -20,10 +20,11 @@ import dayjs from 'dayjs';
 import { groupBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type {
+  ListRenderItemInfo} from 'react-native';
 import {
   ActivityIndicator,
   Image,
-  ListRenderItemInfo,
   View,
 } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
@@ -35,7 +36,7 @@ import { intToHex } from '@/utils/number';
 import { toast } from '@/components2024/Toast';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { Text } from '@/components/Typography';
 
 export type ConfirmationProps = {

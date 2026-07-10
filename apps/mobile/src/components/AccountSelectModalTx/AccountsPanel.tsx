@@ -5,14 +5,15 @@ import {
   makeDebugBorder,
   makeDevOnlyStyle,
 } from '@/utils/styles';
+import type {
+  StyleProp,
+  ViewStyle} from 'react-native';
 import {
   FlatList,
   Pressable as RNPressable,
-  StyleProp,
   StyleSheet,
   TouchableOpacity,
-  View,
-  ViewStyle,
+  View
 } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 
@@ -20,7 +21,7 @@ import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { RcIconAddWhitelist, RcIconCopy, RcIconQR } from './icons';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { trigger } from 'react-native-haptic-feedback';
 import { toast } from '@/components2024/Toast';
 import { useSortAccountOnSelector } from '@/hooks/accountsSelector';
@@ -32,8 +33,9 @@ import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { BottomSheetFlatList, TouchableHighlight } from '@gorhom/bottom-sheet';
 import { useWhitelistVariedAccounts } from '@/screens/Send/hooks/useWhiteListAddress';
+import type {
+  RecentHistoryItem} from '@/screens/Send/hooks/useRecentSend';
 import {
-  RecentHistoryItem,
   useRecentSend,
 } from '@/screens/Send/hooks/useRecentSend';
 import { RecentUsedItem } from './RecentUsedItem';

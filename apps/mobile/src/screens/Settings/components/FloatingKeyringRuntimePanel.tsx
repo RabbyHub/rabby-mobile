@@ -15,7 +15,7 @@ import {
 
 import { AnimateableText, Text } from '@/components/Typography';
 import { isNonPublicProductionEnv, NEED_DEVSETTINGBLOCKS } from '@/constant';
-import { keyringService } from '@/core/services';
+import { bindKeyringMemStore } from '@/core/serviceApi/keyring';
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import {
   getKeyringRuntimeConvergenceSnapshot,
@@ -370,15 +370,27 @@ function useSyncKeyringRuntimeMutables() {
 
 function useSyncKeyringRuntimeMemStoreMutables() {
   React.useEffect(() => {
+    let disposed = false;
+    let cleanup: (() => void) | undefined;
+
     const sync = (state: KeyringRuntimeMemStoreState) => {
       syncKeyringRuntimeMemStoreMutables(state);
     };
 
-    sync(keyringService.memStore.getState());
-    keyringService.memStore.subscribe(sync);
+    void bindKeyringMemStore(sync)
+      .then(nextCleanup => {
+        if (disposed) {
+          nextCleanup();
+          return;
+        }
+
+        cleanup = nextCleanup;
+      })
+      .catch(console.error);
 
     return () => {
-      keyringService.memStore.unsubscribe(sync);
+      disposed = true;
+      cleanup?.();
     };
   }, []);
 }

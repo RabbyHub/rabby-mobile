@@ -1,15 +1,16 @@
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import {
+import type {
   NativeSyntheticEvent,
+  TextInputSubmitEditingEventData} from 'react-native';
+import {
   Platform,
   StyleSheet,
-  TextInputSubmitEditingEventData,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { RcIconCopyCC } from '@/assets/icons/common';
-import { contactService } from '@/core/services';
+import { contactServiceApi } from '@/core/serviceApi/contact';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import RcIconClose from '@/assets/icons/import-success/clear.svg';
@@ -107,7 +108,7 @@ export const AddressInput: React.FC<Props> = ({
 
   const handleSubmit = React.useCallback(
     (e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => {
-      contactService.setAlias({
+      void contactServiceApi.setAlias({
         address,
         alias: e.nativeEvent.text,
       });

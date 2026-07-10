@@ -1,7 +1,11 @@
 import { ProviderRequest } from './type';
 
 import { ethErrors } from 'eth-rpc-errors';
-import { dappService, keyringService, preferenceService } from '../services';
+import {
+  getDappSnapshot,
+  getFallbackAccountSnapshot,
+  keyringServiceApi,
+} from '@/core/serviceApi';
 
 import rpcFlow from './rpcFlow';
 import internalMethod from './internalMethod';
@@ -28,13 +32,13 @@ export default async function provider<T = void>(
   } else if (origin) {
     if (origin === INTERNAL_REQUEST_ORIGIN) {
       account =
-        req.account || preferenceService.getFallbackAccount() || undefined;
+        req.account || getFallbackAccountSnapshot() || undefined;
     } else {
-      const site = dappService.getDapp(origin);
+      const site = getDappSnapshot(origin);
       if (site?.isConnected) {
         account =
           site.currentAccount ||
-          preferenceService.getFallbackAccount() ||
+          getFallbackAccountSnapshot() ||
           undefined;
       }
     }
@@ -47,7 +51,7 @@ export default async function provider<T = void>(
   }
 
   if (!IGNORE_CHECK.includes(method)) {
-    const hasVault = keyringService.hasVault();
+    const hasVault = await keyringServiceApi.hasVault();
     if (!hasVault) {
       throw ethErrors.provider.userRejectedRequest({
         message: 'wallet must has at least one account',

@@ -8,14 +8,15 @@ import mixPlugin from 'colord/plugins/mix';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
+import type {
+  PropsWithAuthSession} from '../FooterBar/ActionsContainer';
 import {
-  ActionsContainer,
-  PropsWithAuthSession,
+  ActionsContainer
 } from '../FooterBar/ActionsContainer';
 import { GasLessAnimatedWrapper } from '../FooterBar/GasLessComponents';
 import { useSubmitAction } from '../FooterBar/useSubmitAction';
-import { preferenceService } from '@/core/services';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { setReportActionTs } from '@/core/serviceApi/preference';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
 import { Button } from '@/components2024/Button';
 import useDebounce from 'react-use/lib/useDebounce';
 import { useGetMiniSigningTypedData } from '@/hooks/useMiniApprovalDirectSignTypedData';
@@ -45,7 +46,7 @@ export const MiniSubmitActions: React.FC<PropsWithAuthSession> = ({
     setIsSign(true);
 
     isSwap &&
-      preferenceService.setReportActionTs(
+      void setReportActionTs(
         REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN,
         {
           chain: chain?.serverId as string,

@@ -1,16 +1,17 @@
 import RcIconDisconnect from '@/assets/icons/dapp/icon-disconnect-circle.svg';
 import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
+import type {
+  StyleProp,
+  ViewStyle} from 'react-native';
 import {
   Image,
-  StyleProp,
   useWindowDimensions,
-  View,
-  ViewStyle,
+  View
 } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { DappIcon } from '../DappIcon';

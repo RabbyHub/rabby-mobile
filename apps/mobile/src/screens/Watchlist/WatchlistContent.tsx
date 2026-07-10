@@ -1,17 +1,22 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAtom, useSetAtom } from 'jotai';
+import type {
+  ViewToken} from 'react-native';
 import {
   Platform,
   Pressable,
   RefreshControl,
-  View,
-  ViewToken,
+  View
 } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { Button } from '@/components2024/Button';
 import { Text } from '@/components/Typography';
-import { preferenceService } from '@/core/services';
+import {
+  getWatchlistSkipSnapshot,
+  pinUserToken,
+  setWatchlistSkip,
+} from '@/core/serviceApi/preference';
 import {
   BOTTOM_BUTTON_SINGLE_HEIGHT,
   BOTTOM_BUTTON_TITLE_STYLE,
@@ -27,7 +32,7 @@ import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { tokenItemToITokenItem } from '@/utils/token';
 import { useFocusEffect } from '@react-navigation/native';
-import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
+import type { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import { useTranslation } from 'react-i18next';
 
@@ -75,7 +80,7 @@ export function WatchlistContent({
 
   const [tokenSort, setTokenSort] = useAtom(watchlistTokenSortAtom);
   const [changeSort, setChangeSort] = useAtom(watchlistChangeSortAtom);
-  const [skip, setSkip] = useState(() => preferenceService.getWatchlistSkip());
+  const [skip, setSkip] = useState(() => getWatchlistSkipSnapshot());
   const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
   const [hasInitialized, setHasInitialized] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
@@ -102,7 +107,7 @@ export function WatchlistContent({
   );
 
   useEffect(() => {
-    setSkip(preferenceService.getWatchlistSkip());
+    setSkip(getWatchlistSkipSnapshot());
   }, []);
 
   useEffect(() => {
@@ -131,13 +136,16 @@ export function WatchlistContent({
     const tokens = hotTokenList.filter(token =>
       selectedTokens.has(`${token.chain}:${token.id}`),
     );
-    tokens.forEach(token => {
-      preferenceService.pinToken({
-        chainId: token.chain,
-        tokenId: token.id,
-      });
-    });
-    handleFetchTokens();
+    void Promise.all(
+      tokens.map(token =>
+        pinUserToken({
+          chainId: token.chain,
+          tokenId: token.id,
+        }),
+      ),
+    )
+      .then(() => handleFetchTokens())
+      .catch(console.error);
   }, [handleFetchTokens, hotTokenList, selectedTokens]);
 
   const list = useMemo(
@@ -394,7 +402,7 @@ export function WatchlistContent({
           <Pressable
             onPress={() => {
               setSkip(true);
-              preferenceService.setWatchlistSkip(true);
+              void setWatchlistSkip(true).catch(console.error);
             }}>
             <Text style={styles.skipText}>
               {t('page.watchlist.footer.skip')}

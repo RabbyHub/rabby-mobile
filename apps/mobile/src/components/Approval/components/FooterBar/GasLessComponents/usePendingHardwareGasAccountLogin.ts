@@ -1,5 +1,5 @@
 import { toast } from '@/components2024/Toast';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { useAccounts } from '@/hooks/account';
 import {
   useGasAccountInfoV2,
@@ -10,7 +10,7 @@ import { usePendingHardwareAccount } from '@/screens/GasAccount/hooks/atom';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { BRAND_ALIAS_TYPE_TEXT } from '@rabby-wallet/keyring-utils';
-import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
+import type { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

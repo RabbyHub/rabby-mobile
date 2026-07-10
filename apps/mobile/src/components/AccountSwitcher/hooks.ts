@@ -2,16 +2,16 @@ import { atom, useAtom } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { type AccountSwitcherScene } from '@/hooks/sceneAccountInfoAtom';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { apisAccount } from '@/core/apis';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { useRequest } from 'ahooks';
 import { isEqual } from 'lodash';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { zCreate } from '@/core/utils/reexports';
-import { keyringService } from '@/core/services';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/store/tokens';
 import { perfEvents } from '@/core/utils/perf';
 
 type AccountSwitcherState = {

@@ -2,15 +2,16 @@ import { TokenItemEntity } from '../entities/tokenitem';
 import { NFTItemEntity } from '../entities/nftItem';
 import { prepareAppDataSource } from '../imports';
 import { HistoryItemEntity } from '../entities/historyItem';
-import {
+import type {
   BuyHistoryList,
   Cex,
   ComplexProtocol,
   NFTItem,
-  SwapTradeList,
   TokenItem,
   TxAllHistoryResult,
-  TxHistoryResult,
+  TxHistoryResult} from '@rabby-wallet/rabby-api/dist/types';
+import {
+  SwapTradeList
 } from '@rabby-wallet/rabby-api/dist/types';
 import { ProtocolItemEntity } from '../entities/portocolItem';
 import {
@@ -24,8 +25,12 @@ import { appOrmEvents } from './_event';
 import { BuyItemEntity } from '../entities/buyItem';
 import { CexEntity } from '../entities/cex';
 import { deleteCurveCache } from '@/utils/24balanceCurveCache';
-import { preferenceService, transactionHistoryService } from '@/core/services';
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import { getPinnedTokenSnapshot } from '@/core/serviceApi';
+import {
+  getTransactionHistoryCustomTxItemMapSnapshot,
+  getTransactionHistorySwapFailTransactionsSnapshot,
+} from '@/core/serviceApi/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 import { removeCexId } from '@/utils/addressCexId';
 import type { EvmTotalBalanceResponse } from '../hooks/balance';
 import { setHistoryLoading } from '@/hooks/historyTokenDict';
@@ -604,10 +609,10 @@ export async function syncRemoteHistory(
 
     const projectDict = project_dict;
 
-    const pinedQueue = preferenceService.getPinToken();
-    const customTxItemsMap = transactionHistoryService.getCustomTxItemMap();
+    const pinedQueue = getPinnedTokenSnapshot();
+    const customTxItemsMap = getTransactionHistoryCustomTxItemMapSnapshot();
     const swapFailHistoryList =
-      transactionHistoryService.getSwapFailTransactions(address);
+      getTransactionHistorySwapFailTransactionsSnapshot(address);
     const entityBuildStartedAt = Date.now();
     const historyItems = history_list
       .filter(i => Boolean(i.tx))

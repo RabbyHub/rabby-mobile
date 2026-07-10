@@ -16,8 +16,7 @@ import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
 import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { IS_IOS } from '@/core/native/utils';
-import { dappService } from '@/core/services';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { useGetDappAccount } from '@/hooks/useDapps';
 import { getAddressBarTitle, isGoogle } from '@/utils/browser';
@@ -25,7 +24,7 @@ import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { CurrentDappPopup } from './CurrentDappPopup';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { Text } from '@/components/Typography';
 
 export function BrowserHeader({

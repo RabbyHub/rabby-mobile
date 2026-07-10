@@ -3,6 +3,8 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import PQueue from 'p-queue';
 
+import type {
+  ApprovalItem} from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
 import {
   type AssetApprovalSpender,
   type AssetApprovalItem,
@@ -13,8 +15,7 @@ import {
   getContractRiskEvaluation,
   markContractTokenSpender,
   makeComputedRiskAboutValues,
-  markParentForAssetItemSpender,
-  ApprovalItem,
+  markParentForAssetItemSpender
 } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
 
 approvalUtils.setApprovalEnvsOnce({ appIsDev: __DEV__, appIsProd: !__DEV__ });
@@ -38,7 +39,7 @@ import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { openapi, testOpenapi } from '@/core/request';
 import { approvalUtils } from '@rabby-wallet/biz-utils';
 import { atom, useAtom, useAtomValue } from 'jotai';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import {
   type RevokeItemDict,
@@ -52,7 +53,7 @@ import {
 } from './utils';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { ApprovalsLayouts } from './layout';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 
 export const FILTER_TYPES = {
   contract: 'contract',

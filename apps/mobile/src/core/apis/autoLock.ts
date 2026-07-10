@@ -1,7 +1,11 @@
 import { AppState, NativeEventSubscription } from 'react-native';
 
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
-import { keyringService, preferenceService } from '../services';
+import {
+  getPreferenceSnapshot,
+  isKeyringUnlockedSnapshot,
+  setPreferenceSync,
+} from '@/core/serviceApi';
 import { makeEEClass } from './event';
 
 const MILLISECS_PER_MIN = 60 * 1e3;
@@ -79,7 +83,7 @@ export function coerceAutoLockTimeout(ms: number) {
 export function getPersistedAutoLockTimes() {
   // enforce zero to default value
   const minutes =
-    preferenceService.getPreference('autoLockTime') ||
+    getPreferenceSnapshot('autoLockTime') ||
     DEFAULT_AUTO_LOCK_MINUTES;
 
   const formatted = coerceAutoLockTimeout(minutes * MILLISECS_PER_MIN);
@@ -105,12 +109,12 @@ function normalizeUnlockSessionExpireTime(time: unknown) {
 
 export function getPersistedUnlockSessionExpireTime() {
   const expireTime = normalizeUnlockSessionExpireTime(
-    preferenceService.getPreference('unlockSessionExpireTime'),
+    getPreferenceSnapshot('unlockSessionExpireTime'),
   );
   if (expireTime) return expireTime;
 
   const unlockTime = normalizeUnlockTime(
-    preferenceService.getPreference('lastUnlockTime'),
+    getPreferenceSnapshot('lastUnlockTime'),
   );
   if (!unlockTime) return 0;
 
@@ -119,10 +123,10 @@ export function getPersistedUnlockSessionExpireTime() {
 
 function canRefreshUnlockSession(now = Date.now()) {
   const unlockTime = normalizeUnlockTime(
-    preferenceService.getPreference('lastUnlockTime'),
+    getPreferenceSnapshot('lastUnlockTime'),
   );
   if (!unlockTime || unlockTime > now) return false;
-  if (keyringService.isUnlocked()) return true;
+  if (isKeyringUnlockedSnapshot()) return true;
 
   const expireTime = getPersistedUnlockSessionExpireTime();
   return expireTime === -1 || expireTime > now;
@@ -131,7 +135,7 @@ function canRefreshUnlockSession(now = Date.now()) {
 function refreshPersistedUnlockSessionExpireTime(expireTime: number) {
   if (!canRefreshUnlockSession()) return;
 
-  preferenceService.setPreference({
+  setPreferenceSync({
     unlockSessionExpireTime: expireTime,
   });
 }

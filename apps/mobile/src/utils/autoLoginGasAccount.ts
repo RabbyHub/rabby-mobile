@@ -1,5 +1,6 @@
 import { openapi } from '@/core/request';
-import { gasAccountService, keyringService } from '@/core/services';
+import { getGasAccountAccountsWithBalanceSnapshot } from '@/core/serviceApi/gasAccount';
+import { isKeyringUnlockedSnapshot } from '@/core/serviceApi/keyring';
 import {
   getAccountList,
   filterDirectlySignableAccounts,
@@ -78,7 +79,7 @@ function mergeAccountsWithGasBalance(nextAccounts: GasAccountBalanceAccount[]) {
     return;
   }
 
-  const prevAccounts = gasAccountService.getAccountsWithGasAccountBalance();
+  const prevAccounts = getGasAccountAccountsWithBalanceSnapshot();
   const merged = [...prevAccounts];
 
   nextAccounts.forEach(account => {
@@ -142,7 +143,7 @@ export const refreshAccountsWithGasAccountBalance = makeAvoidParallelAsyncFunc(
       return mapped;
     } catch (error) {
       console.error('refreshAccountsWithGasAccountBalance error', error);
-      return gasAccountService.getAccountsWithGasAccountBalance();
+      return getGasAccountAccountsWithBalanceSnapshot();
     }
   },
 );
@@ -173,7 +174,7 @@ export async function autoLoginGasAccountIfNeeded() {
     if (directAccount) {
       mergeAccountsWithGasBalance(toGasAccountBalanceAccounts([directAccount]));
       if (
-        keyringService.isUnlocked() &&
+        isKeyringUnlockedSnapshot() &&
         (await loginAutoDetectedAccount(directAccount))
       ) {
         refreshAllAccountsWithBalanceInBackground('after auto login');
@@ -212,7 +213,7 @@ export const checkAddedAccountsGasAccountIfNeeded = makeAvoidParallelAsyncFunc(
       toGasAccountBalanceAccounts([...directWithBalance, ...hwWithBalance]),
     );
 
-    if (!keyringService.isUnlocked()) {
+    if (!isKeyringUnlockedSnapshot()) {
       setPendingHardwareAccount(hwWithBalance[0]);
       return;
     }

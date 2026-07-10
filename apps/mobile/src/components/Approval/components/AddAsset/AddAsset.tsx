@@ -1,7 +1,8 @@
 import { RcIconInfoFillCC } from '@/assets/icons/common';
+import type {
+  CopyAddressIconType} from '@/components/AddressViewer/CopyAddress';
 import {
-  CopyAddressIcon,
-  CopyAddressIconType,
+  CopyAddressIcon
 } from '@/components/AddressViewer/CopyAddress';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Button } from '@/components/Button';
@@ -17,13 +18,15 @@ import { Tip } from '@/components/Tip';
 import { HistoryItem } from '@/components/TokenDetailPopup/HistoryItem';
 import { SkeletonHistoryListOfTokenDetail } from '@/components/TokenDetailPopup/Skeleton';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { Chain, CHAINS_ENUM } from '@/constant/chains';
+import type { Chain} from '@/constant/chains';
+import { CHAINS_ENUM } from '@/constant/chains';
 import { ModalLayouts } from '@/constant/layout';
 import { apiCustomTestnet } from '@/core/apis';
 import { openapi } from '@/core/request';
-import { dappService, preferenceService } from '@/core/services';
-import { CustomTestnetToken } from '@/core/services/customTestnetService';
-import { Account, Token } from '@/core/services/preference';
+import { dappServiceApi } from '@/core/serviceApi/dapp';
+import { getCustomizedToken } from '@/core/serviceApi/preference';
+import type { CustomTestnetToken } from '@/core/services/customTestnetService';
+import type { Account, Token } from '@/core/services/preference';
 import { useThemeStyles } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
 import { ellipsisAddress } from '@/utils/address';
@@ -33,12 +36,13 @@ import { createGetStyles } from '@/utils/styles';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { getTokenSymbol } from '@/utils/token';
 import { formatTokenAmount } from '@debank/common';
+import type {
+  BottomSheetFlatListMethods} from '@gorhom/bottom-sheet';
 import {
-  BottomSheetFlatList,
-  BottomSheetFlatListMethods,
+  BottomSheetFlatList
 } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import {
+import type {
   TokenItem,
   TxDisplayItem,
   TxHistoryItem,
@@ -205,7 +209,7 @@ export const AddAsset = ({
     const requestChain = params.requestContext?.chainId
       ? findChain({ id: params.requestContext.chainId })
       : undefined;
-    const site = await dappService.getDapp(params.session.origin);
+    const site = await dappServiceApi.getDapp(params.session.origin);
     const chain =
       requestChain ||
       findChain({
@@ -229,7 +233,7 @@ export const AddAsset = ({
           setIsCustomTestnetTokenAdded(isAdded);
         }
       } else {
-        const customTokens = await preferenceService.getCustomizedToken();
+        const customTokens = await getCustomizedToken();
         if (account) {
           const { address } = params.data.options;
           const result = await openapi.searchToken(

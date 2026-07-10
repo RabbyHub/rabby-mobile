@@ -2,14 +2,15 @@ import { createRef, useCallback, useMemo, useRef } from 'react';
 import { atom, useAtom, useAtomValue } from 'jotai';
 
 import { useSheetModals } from '@/hooks/useSheetModal';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { DappInfo } from '@/core/services/dappService';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import type { DappInfo } from '@/core/services/dappService';
 import { useDapps } from '@/hooks/useDapps';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { createDappBySession, syncBasicDappInfo } from '@/core/apis/dapp';
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
+import type {
+  ActiveDappState} from '@/core/bridges/state';
 import {
-  ActiveDappState,
   activeDappStateEvents,
   getActiveDappState,
   globalSetActiveDappState,

@@ -9,7 +9,15 @@ import { AppState, View } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import * as apisAccount from '@/core/apis/account';
-import { browserService, preferenceService } from '@/core/services';
+import {
+  getBrowserBookmarkCountSnapshot,
+  getBrowserTabCountSnapshot,
+} from '@/core/serviceApi/browser';
+import {
+  getPinnedTokenSnapshot,
+  getPreferenceSnapshot,
+  setPreference,
+} from '@/core/serviceApi/preference';
 import {
   resetHomeStartupReady,
   scheduleHomeStartupReady,
@@ -215,35 +223,28 @@ function HomePostStartupEffects({
       return;
     }
 
-    const lastReportTime =
-      preferenceService.getPreference('lastReportTime') || 0;
+    const lastReportTime = getPreferenceSnapshot('lastReportTime') || 0;
     if (!lastReportTime || !dayjs(lastReportTime).isToday()) {
-      preferenceService.setPreference({
+      void setPreference({
         lastReportTime: Date.now(),
-      });
+      }).catch(console.error);
 
       matomoRequestEvent({
         category: 'Websites Usage',
         action: 'Website_LikeStatus',
-        label: `LikeDapp:${
-          browserService.bookmark.getState().ids?.length || 0
-        }`,
+        label: `LikeDapp:${getBrowserBookmarkCountSnapshot()}`,
       });
 
       matomoRequestEvent({
         category: 'Websites Usage',
         action: 'Website_TabStatus',
-        label: `TabNumber:${
-          browserService.getBrowserTabs()?.tabs?.length || 0
-        }`,
+        label: `TabNumber:${getBrowserTabCountSnapshot()}`,
       });
 
       matomoRequestEvent({
         category: 'Watchlist Usage',
         action: 'Watchlist_LikeStatus',
-        label: `LikeToken:${
-          preferenceService.getPreference('pinedQueue')?.length || 0
-        }`,
+        label: `LikeToken:${getPinnedTokenSnapshot().length}`,
       });
     }
   }, [homePostStartupReady]);

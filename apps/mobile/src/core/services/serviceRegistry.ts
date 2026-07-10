@@ -1,4 +1,14 @@
 import type * as SharedServices from './shared';
+import {
+  callDeferredService,
+  ensureDeferredService,
+  getRegisteredDeferredService,
+  isDeferredServiceRegistered,
+  registerDeferredService,
+  registerDeferredServiceLoader,
+  waitDeferredService,
+} from './deferred';
+import type { MethodArgs, MethodReturn, ServiceMethod } from './deferred';
 
 type SharedServiceExports = typeof SharedServices;
 
@@ -9,6 +19,8 @@ export type CoreServiceRegistry = Pick<
   | 'browserHistoryService'
   | 'browserService'
   | 'contactService'
+  | 'customRPCService'
+  | 'customTestnetService'
   | 'currencyService'
   | 'dappService'
   | 'gasAccountService'
@@ -33,74 +45,81 @@ export type CoreServiceRegistry = Pick<
 
 export type CoreServiceName = keyof CoreServiceRegistry;
 
-type Deferred<T> = {
-  promise: Promise<T>;
-  resolve: (value: T) => void;
-};
-
-const registeredServices = new Map<string, unknown>();
-const pendingServices = new Map<string, Deferred<unknown>>();
-
-function createDeferred<T>(): Deferred<T> {
-  let resolve!: (value: T) => void;
-  const promise = new Promise<T>(innerResolve => {
-    resolve = innerResolve;
-  });
-
-  return { promise, resolve };
-}
-
-export function registerService<T>(name: string, service: T) {
-  const previous = registeredServices.get(name);
+export function registerService<Name extends CoreServiceName>(
+  name: Name,
+  service: CoreServiceRegistry[Name],
+) {
+  const previous = getRegisteredService(name);
   if (previous && previous !== service && __DEV__) {
     console.warn(`[serviceRegistry] overriding registered service: ${name}`);
   }
 
-  registeredServices.set(name, service);
-
-  const pending = pendingServices.get(name);
-  if (pending) {
-    pending.resolve(service);
-    pendingServices.delete(name);
-  }
+  return registerDeferredService(name, service);
 }
 
 export function registerCoreServices(services: Partial<CoreServiceRegistry>) {
   Object.entries(services).forEach(([name, service]) => {
     if (service) {
-      registerService(name, service);
+      registerService(
+        name as CoreServiceName,
+        service as CoreServiceRegistry[CoreServiceName],
+      );
     }
   });
+}
+
+export function registerCoreServiceLoader<Name extends CoreServiceName>(
+  name: Name,
+  loader: () => void | Promise<void>,
+) {
+  return registerDeferredServiceLoader(name, loader);
+}
+
+export function ensureCoreService<Name extends CoreServiceName>(name: Name) {
+  return ensureDeferredService(name);
+}
+
+export function isCoreServiceRegistered<Name extends CoreServiceName>(
+  name: Name,
+) {
+  return isDeferredServiceRegistered(name);
 }
 
 export function getRegisteredService<Name extends CoreServiceName>(
   name: Name,
 ): CoreServiceRegistry[Name] | undefined {
-  return registeredServices.get(name) as CoreServiceRegistry[Name] | undefined;
+  return getRegisteredDeferredService<CoreServiceRegistry[Name]>(name);
 }
 
 export function waitForCoreService<Name extends CoreServiceName>(
   name: Name,
+  options?: { timeoutMs?: number },
 ): Promise<CoreServiceRegistry[Name]> {
-  const service = getRegisteredService(name);
-  if (service) {
-    return Promise.resolve(service);
-  }
-
-  const pending = pendingServices.get(name);
-  if (pending) {
-    return pending.promise as Promise<CoreServiceRegistry[Name]>;
-  }
-
-  const nextPending = createDeferred<CoreServiceRegistry[Name]>();
-  pendingServices.set(name, nextPending as Deferred<unknown>);
-  return nextPending.promise;
+  return waitDeferredService<CoreServiceRegistry[Name]>(name, options);
 }
 
 export async function callCoreService<Name extends CoreServiceName, Ret>(
   name: Name,
   caller: (service: CoreServiceRegistry[Name]) => Ret | Promise<Ret>,
+  options?: { timeoutMs?: number },
 ): Promise<Awaited<Ret>> {
-  const service = await waitForCoreService(name);
+  const service = await waitForCoreService(name, options);
   return caller(service) as Promise<Awaited<Ret>>;
+}
+
+export function callCoreServiceMethod<
+  Name extends CoreServiceName,
+  TMethod extends ServiceMethod<CoreServiceRegistry[Name]>,
+>(
+  name: Name,
+  method: TMethod,
+  args: MethodArgs<CoreServiceRegistry[Name], TMethod>,
+  options?: { timeoutMs?: number },
+): Promise<MethodReturn<CoreServiceRegistry[Name], TMethod>> {
+  return callDeferredService<CoreServiceRegistry[Name], TMethod>(
+    name,
+    method,
+    args,
+    options,
+  );
 }

@@ -5,7 +5,8 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import { Alert, LayoutChangeEvent } from 'react-native';
+import type { LayoutChangeEvent } from 'react-native';
+import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Sentry from '@sentry/react-native';
 import * as Yup from 'yup';
@@ -17,14 +18,13 @@ import {
 } from '@ethereumjs/util';
 import { EventEmitter } from 'events';
 
-import {
-  customTestnetService,
-  preferenceService,
-  transactionHistoryService,
-} from '@/core/services';
+import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
+import { setLastTimeSendToken } from '@/core/serviceApi/preference';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
-import { CHAINS_ENUM, Chain } from '@/constant/chains';
-import {
+import type { Chain } from '@/constant/chains';
+import { CHAINS_ENUM } from '@/constant/chains';
+import type {
   AddrDescResponse,
   GasLevel,
   ProjectItem,
@@ -34,13 +34,14 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtomValue } from 'jotai';
 import { openapi } from '@/core/request';
-import i18next, { TFunction } from 'i18next';
+import type { TFunction } from 'i18next';
+import i18next from 'i18next';
 import BigNumber from 'bignumber.js';
 import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useContactAccounts } from '@/hooks/contact';
-import { UIContactBookItem } from '@/core/apis/contact';
-import { Account } from '@/core/services/preference';
+import type { UIContactBookItem } from '@/core/apis/contact';
+import type { Account } from '@/core/services/preference';
 import { apiContact, apiCustomTestnet, apiProvider } from '@/core/apis';
 import { formatSpeicalAmount } from '@/utils/number';
 import { useCheckAddressType } from '@/hooks/useParseAddress';
@@ -59,7 +60,7 @@ import { naviReplace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useIsFocused, useRoute } from '@react-navigation/native';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
-import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
+import type { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import {
   isAccountSupportMiniApproval,
   makeAccountObject,
@@ -72,14 +73,14 @@ import {
 } from './useRecentSend';
 import { isEqual, last } from 'lodash';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { useSwapBridgeSlider } from '@/screens/Swap/hooks/slider';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
 import { tokenAmountBn } from '@/screens/Swap/utils';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
-import { ExtractAtomValueType, IExtractFromPromise } from '@/utils/type';
+import type { ExtractAtomValueType, IExtractFromPromise } from '@/utils/type';
 import { useFindAddressByWhitelist } from './useWhiteListAddress';
 import { coerceNumber } from '@/utils/coerce';
 import {
@@ -88,7 +89,7 @@ import {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import type { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useStore } from 'zustand';
 import { useShallow } from 'zustand/shallow';
 import { createStore } from 'zustand/vanilla';
@@ -97,12 +98,13 @@ import {
   makeSWRKeyAsyncFunc,
 } from '@/core/utils/concurrency';
 import { jotaiStore, zMutative } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import { TextInput } from '@/components/Typography';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
+import type { TextInput } from '@/components/Typography';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
-import { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
 import { createAmountComparer, FormValuesOnSubmit } from '@/utils/form';
-import { BridgeFormSnapshot } from '@/screens/Bridge/components/BridgeContent';
+import type { BridgeFormSnapshot } from '@/screens/Bridge/components/BridgeContent';
 import { toast } from '@/components2024/Toast';
 import { getChainDefaultToken } from '@/constant/swap';
 import { eventBus, EVENTS } from '@/utils/events';
@@ -523,7 +525,7 @@ const fetchGasList = async (
   account: Account | null,
 ) => {
   const list: GasLevel[] = chainItem?.isTestnet
-    ? await customTestnetService.getGasMarket({ chainId: chainItem.id })
+    ? await customTestnetServiceApi.getGasMarket({ chainId: chainItem.id })
     : await apiProvider.gasMarketV2(
         {
           chain: chainItem!,
@@ -1326,7 +1328,7 @@ export function useSendTokenForm({
         }
       }
       try {
-        await preferenceService.setLastTimeSendToken(
+        await setLastTimeSendToken(
           currentAccount!.address,
           currentToken,
         );
@@ -1358,7 +1360,7 @@ export function useSendTokenForm({
                 },
               });
 
-              transactionHistoryService.addSendTxHistory({
+              void transactionHistoryServiceApi.addSendTxHistory({
                 token: currentToken,
                 amount: Number(amount),
                 to,
@@ -1438,7 +1440,7 @@ export function useSendTokenForm({
               const hash = resp as string;
               console.debug('hash', hash);
               currentAccount?.type !== KEYRING_CLASS.GNOSIS &&
-                transactionHistoryService.addSendTxHistory({
+                void transactionHistoryServiceApi.addSendTxHistory({
                   token: currentToken,
                   amount: Number(amount),
                   to,

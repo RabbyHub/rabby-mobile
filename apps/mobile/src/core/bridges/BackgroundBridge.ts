@@ -17,7 +17,10 @@ import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
 
 import { createOriginMiddleware } from './middlewares';
 import { createSanitizationMiddleware } from './middlewares/SanitizationMiddleware';
-import { dappService, keyringService, sessionService } from '../services';
+import {
+  getDappSnapshot,
+  isKeyringUnlockedSnapshot,
+} from '@/core/serviceApi';
 import getRpcMethodMiddleware, {
   RefLikeObject,
 } from './middlewares/RPCMethodMiddleware';
@@ -108,7 +111,7 @@ export class BackgroundBridge extends EventEmitter {
     setTimeout(() => {
       const chain =
         findChain({
-          enum: dappService.getDapp(this.#webviewOrigin)?.chainId,
+          enum: getDappSnapshot(this.#webviewOrigin)?.chainId,
         }) ||
         findChain({
           enum: CHAINS_ENUM.ETH,
@@ -132,7 +135,7 @@ export class BackgroundBridge extends EventEmitter {
   }
 
   isUnlocked() {
-    return keyringService.isUnlocked();
+    return isKeyringUnlockedSnapshot();
   }
 
   onUnlock() {

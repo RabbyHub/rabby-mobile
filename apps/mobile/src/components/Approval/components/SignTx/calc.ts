@@ -1,5 +1,5 @@
-import { TransactionGroup } from '@/core/services/transactionHistory';
-import { GasAccountCheckResult, Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
+import type { GasAccountCheckResult, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { useEffect, useMemo, useState } from 'react';
 import { openapi } from '@/core/request';
@@ -9,13 +9,14 @@ import {
   DEFAULT_GAS_LIMIT_RATIO,
   MINIMUM_GAS_LIMIT,
 } from '@/constant/gas';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { findChain } from '@/utils/chain';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import i18n from '@/utils/i18n';
 import { getEIP7702MiniGasLimit } from '@/utils/7702';
+import type {
+  GasTokenBalanceInfo} from '@/utils/tempo';
 import {
-  GasTokenBalanceInfo,
   getTempoFeeTokenInfo,
   isTempoChain,
 } from '@/utils/tempo';
@@ -193,7 +194,7 @@ export const getRecommendNonce = async ({
     account,
   );
   const localNonce =
-    (await transactionHistoryService.getNonceByChain(tx.from, chainId)) || 0;
+    (await transactionHistoryServiceApi.getNonceByChain(tx.from, chainId)) || 0;
   return `0x${BigNumber.max(onChainNonce, localNonce).toString(16)}`;
 };
 

@@ -306,7 +306,7 @@ export const currencyService = new CurrencyService({
   storageAdapter: appStorage,
 });
 
-export { default as debugLogService } from './debugLogService';
+export { default as debugLogService } from '../utils/debugLogService';
 
 migrateServices({
   contactBook: contactService,

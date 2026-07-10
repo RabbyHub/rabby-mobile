@@ -2,7 +2,7 @@ import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
 import { useThemeColors } from '@/hooks/theme';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import { createGetStyles } from '@/utils/styles';
-import { CHAINS_ENUM } from '@debank/common';
+import type { CHAINS_ENUM } from '@debank/common';
 import { TouchableOpacity } from '@gorhom/bottom-sheet';
 import dayjs from 'dayjs';
 import { sortBy } from 'lodash';
@@ -13,7 +13,7 @@ import { apisSafe } from '@/core/apis/safe';
 import { useGnosisPendingMessages } from '@/hooks/gnosis/useGnosisPendingMessages';
 import type { SafeMessage } from '@rabby-wallet/gnosis-sdk';
 import { GnosisMessageQueueList } from './GnosisMessageQueueList';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { Text } from '@/components/Typography';
 
 const getTabs = (

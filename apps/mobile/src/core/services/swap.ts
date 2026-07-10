@@ -15,7 +15,7 @@ import {
 } from '@/constant/swap';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
-import { getTxMatchData } from '@/utils/tempo';
+import { getTxMatchData } from '@/utils/tempoTx';
 
 export type ViewKey = keyof typeof CEX | keyof typeof DEX;
 

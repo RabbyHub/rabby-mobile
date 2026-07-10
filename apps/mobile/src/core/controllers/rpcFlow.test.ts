@@ -39,11 +39,6 @@ jest.mock('../services', () => ({
     getConnectedDapp: (...args: unknown[]) => mockGetConnectedDapp(...args),
   },
   keyringService: {},
-  customTestnetService: {
-    syncChainList: (...args: unknown[]) =>
-      mockSyncCustomTestnetChainList(...args),
-    getList: (...args: unknown[]) => mockGetCustomTestnetList(...args),
-  },
   notificationService: {
     requestApproval: (...args: unknown[]) => mockRequestApproval(...args),
     getStatsData: (...args: unknown[]) => mockGetStatsData(...args),
@@ -54,6 +49,14 @@ jest.mock('../services', () => ({
   },
   preferenceService: {
     getFallbackAccount: jest.fn(),
+  },
+}));
+
+jest.mock('@/core/serviceApi/customTestnet', () => ({
+  customTestnetServiceApi: {
+    syncChainList: (...args: unknown[]) =>
+      mockSyncCustomTestnetChainList(...args),
+    getList: (...args: unknown[]) => mockGetCustomTestnetList(...args),
   },
 }));
 

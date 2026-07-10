@@ -3,23 +3,23 @@ import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import { ScrollView, TouchableOpacity, View } from 'react-native';
 
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
 
 import { RootNames, getBottomButtonBottomOffset } from '@/constant/layout';
 import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { naviPush } from '@/utils/navigation';
-import { RevokeNFTRequireData } from '@rabby-wallet/rabby-action';
+import type { RevokeNFTRequireData } from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { HistoryItemIcon } from '../HistoryItemIcon';
 import { HistoryItemCateType } from '../type';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { Text } from '@/components/Typography';
 import { ActionDetailSection } from './components/ActionDetailSection';
 import { ActionSpenderView } from './components/ActionSpenderView';

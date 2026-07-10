@@ -6,12 +6,13 @@ import {
   convertLegacyTo1559,
 } from '@/utils/transaction';
 
+import type {
+  ParsedTransactionActionData,
+  ActionRequireData} from '@rabby-wallet/rabby-action';
 import {
   parseAction,
   fetchActionRequiredData,
-  formatSecurityEngineContext,
-  ParsedTransactionActionData,
-  ActionRequireData,
+  formatSecurityEngineContext
 } from '@rabby-wallet/rabby-action';
 import type { Result } from '@rabby-wallet/rabby-security-engine';
 
@@ -47,24 +48,25 @@ import {
 } from '../domain/gasSelection';
 import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
 import { normalizeTxParams } from '@/components/Approval/components/SignTx/util';
-import { BlockInfo, calcGasLimit } from '@/core/apis/transactions';
+import type { BlockInfo} from '@/core/apis/transactions';
+import { calcGasLimit } from '@/core/apis/transactions';
 import {
   FailedCode,
   sendTransactionByMiniSignV2 as sendTransaction,
 } from '@/utils/sendTransaction';
 import { isLedgerLockError } from '@/utils/ledger';
-import { buildFingerprint, SignerCtx } from '../domain/ctx';
+import type { SignerCtx } from '../domain/ctx';
+import { buildFingerprint } from '../domain/ctx';
 import { openapi, testOpenapi } from '@/core/request';
-import {
-  customRPCService,
-  gasAccountService,
-  keyringService,
-  transactionHistoryService,
-  whitelistService,
-} from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { getGasAccountSigSnapshot } from '@/core/serviceApi/gasAccount';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import { apiCustomRPC, apiKeyring, apiProvider } from '@/core/apis';
+import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
 import { executeSecurityEngine } from '@/core/apis/securityEngine';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
+import { miscServiceApi } from '@/core/serviceApi/misc';
 import {
   getRetryTxRecommendNonce,
   getRetryTxType,
@@ -72,15 +74,15 @@ import {
   setRetryTxRecommendNonce,
 } from '@/utils/errorTxRetry';
 import { t } from 'i18next';
-import miscService from '@/core/services/misc';
 import { requestETHRpc } from '@/core/apis/provider';
+import type {
+  TxWithTempoExtras} from '@/utils/tempo';
 import {
   buildTempoTransaction,
   isTempoBatchSupportedAccountType,
   isTempoChain,
   shouldUseTempoTransaction,
-  toTempoCallsTx,
-  TxWithTempoExtras,
+  toTempoCallsTx
 } from '@/utils/tempo';
 import { resolveMiniSignSubmitGasMode } from '../state/gasPaymentState';
 import { shouldAutoSwitchToApprovalGasAccount } from '@/components/Approval/components/TxComponents/GasSelector/approvalGasDisplay';
@@ -273,7 +275,7 @@ async function computeGasAccount(params: {
   const { txsCalc, accountType } = params;
   try {
     if (!txsCalc.length) return undefined;
-    const sig = gasAccountService.getGasAccountSig();
+    const sig = getGasAccountSigSnapshot();
     const chain = findChain({ id: txsCalc[0]?.tx.chainId })!;
     const res = await openapi.checkGasAccountTxs({
       sig: sig.sig || '',
@@ -401,12 +403,12 @@ export class SignatureSteps {
               sender: account.address,
               walletProvider: {
                 hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-                hasAddress: keyringService.hasAddress.bind(keyringService),
-                getWhitelist: async () => whitelistService.getWhitelist(),
+                hasAddress: address => keyringServiceApi.hasAddress(address),
+                getWhitelist: async () => whitelistServiceApi.getWhitelist(),
                 isWhitelistEnabled: async () =>
-                  whitelistService.isWhitelistEnabled(),
+                  whitelistServiceApi.isWhitelistEnabled(),
                 getPendingTxsByNonce: async (...args) =>
-                  transactionHistoryService.getPendingTxsByNonce(...args),
+                  transactionHistoryServiceApi.getPendingTxsByNonce(...args),
                 findChain,
                 ALIAS_ADDRESS,
               },
@@ -431,7 +433,7 @@ export class SignatureSteps {
               isTestnet: isTestnet(chain.serverId),
               provider: {
                 getTimeSpan,
-                hasAddress: keyringService.hasAddress.bind(keyringService),
+                hasAddress: address => keyringServiceApi.hasAddress(address),
               },
             });
           }),
@@ -459,12 +461,12 @@ export class SignatureSteps {
           sender: account.address,
           walletProvider: {
             hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-            hasAddress: keyringService.hasAddress.bind(keyringService),
-            getWhitelist: async () => whitelistService.getWhitelist(),
+            hasAddress: address => keyringServiceApi.hasAddress(address),
+            getWhitelist: async () => whitelistServiceApi.getWhitelist(),
             isWhitelistEnabled: async () =>
-              whitelistService.isWhitelistEnabled(),
+              whitelistServiceApi.isWhitelistEnabled(),
             getPendingTxsByNonce: async (...args) =>
-              transactionHistoryService.getPendingTxsByNonce(...args),
+              transactionHistoryServiceApi.getPendingTxsByNonce(...args),
             findChain,
             ALIAS_ADDRESS,
           },
@@ -479,7 +481,7 @@ export class SignatureSteps {
           isTestnet: isTestnet(chain.serverId),
           provider: {
             getTimeSpan,
-            hasAddress: keyringService.hasAddress.bind(keyringService),
+            hasAddress: address => keyringServiceApi.hasAddress(address),
           },
         });
         engineResult = await executeSecurityEngine(ctx);
@@ -533,7 +535,7 @@ export class SignatureSteps {
       hasCustomChainRPC,
       baseRecommendNonce,
     ] = await Promise.all([
-      customRPCService.syncDefaultRPC().catch(() => {}),
+      customRPCServiceApi.syncDefaultRPC().catch(() => {}),
       apiProvider.gasMarketV2(
         {
           chain,
@@ -938,7 +940,7 @@ export class SignatureSteps {
         };
       }
   > {
-    miscService.setCurrentGasLevel(params?.selectedGas?.level);
+    miscServiceApi.setCurrentGasLevel(params?.selectedGas?.level);
 
     const {
       chainServerId,
@@ -1001,7 +1003,7 @@ export class SignatureSteps {
         }
         let sig: string | undefined;
         if (options?.isGasAccount) {
-          sig = gasAccountService.getGasAccountSig().sig;
+          sig = getGasAccountSigSnapshot().sig;
         }
 
         const result = await sendTransaction({

@@ -1,5 +1,5 @@
 import { DB } from '@op-engineering/op-sqlite';
-import { makeJsEEClass } from '@/core/services/_utils';
+import { makeJsEEClass } from '@/core/utils/makeJsEEClass';
 
 type UppdateHookPayload = Parameters<
   Parameters<DB['updateHook']>[0] & Function

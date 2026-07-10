@@ -1,5 +1,7 @@
-import { Keyboard, ScrollView, useWindowDimensions, View } from 'react-native';
-import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
+import type { ScrollView} from 'react-native';
+import { Keyboard, useWindowDimensions, View } from 'react-native';
+import type { AccountSwitcherAopProps} from './hooks';
+import { useAccountSceneVisible } from './hooks';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { AccountsPanelInModal } from './AccountsPanel';
@@ -12,13 +14,13 @@ import {
   useRef,
 } from 'react';
 import { useDappCurrentAccount } from '@/hooks/useDapps';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/store/tokens';
 
 export function AccountSwitcherModal({
   forScene,

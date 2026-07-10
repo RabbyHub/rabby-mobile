@@ -1,27 +1,49 @@
 import { USD_CURRENCY } from '@/constant/currency';
-import { CurrencyServiceStore } from '@/core/services/currencyService';
-import { currencyService } from '@/core/services/shared';
+import type { CurrencyServiceStore } from '@/core/services/currencyService';
+import {
+  bindCurrencyStoreListener,
+  currencyServiceApi,
+  getCurrencyStoreSnapshot,
+} from '@/core/serviceApi/currency';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
 import { formatCurrencyValueParts } from '@/utils/currency';
 import { useMemoizedFn } from 'ahooks';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 // export const currencyServiceAtom = atom<typeof currencyService.store>(
 //   currencyService.store,
 // );
 
 const currencyServiceStore = zCreate<CurrencyServiceStore>(() => {
-  return currencyService.store;
+  return getCurrencyStoreSnapshot();
 });
-currencyService.setBeforeSetKV((k, v) => {
-  currencyServiceStore.setState(prev => {
-    if (prev[k] === v) return prev;
 
-    prev = { ...prev, [k]: v };
-    return prev;
-  });
-});
+let currencyStoreBindingPromise: Promise<void> | null = null;
+let disposeCurrencyStoreBinding: (() => void) | null = null;
+
+function ensureCurrencyStoreBinding() {
+  if (disposeCurrencyStoreBinding || currencyStoreBindingPromise) {
+    return;
+  }
+
+  currencyStoreBindingPromise = bindCurrencyStoreListener((k, v) => {
+    currencyServiceStore.setState(prev => {
+      if (prev[k] === v) return prev;
+
+      prev = { ...prev, [k]: v };
+      return prev;
+    });
+  })
+    .then(dispose => {
+      disposeCurrencyStoreBinding = dispose;
+    })
+    .catch(error => {
+      currencyStoreBindingPromise = null;
+      console.error(error);
+    });
+}
 
 export function setCurrencyStore(
   valOrFunc: UpdaterOrPartials<CurrencyServiceStore['data']>,
@@ -32,13 +54,17 @@ export function setCurrencyStore(
     });
 
     // sync to service store
-    currencyService.setStore(newVal);
+    void currencyServiceApi.setStore(newVal).catch(console.error);
 
     return { ...prev, data: newVal };
   });
 }
 
 export function useCurrency() {
+  useEffect(() => {
+    ensureCurrencyStoreBinding();
+  }, []);
+
   const currencyStore = currencyServiceStore(s => s.data);
 
   const currency = useMemo(() => {

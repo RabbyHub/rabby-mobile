@@ -19,7 +19,7 @@ import {
 import useAsync from 'react-use/lib/useAsync';
 import { Skeleton } from '@rneui/themed';
 import { openapi } from '@/core/request';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatPerpsUsdValue, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -46,7 +46,7 @@ import {
   isAccountSupportMiniApproval,
 } from '@/utils/account';
 import { CHAINS_ENUM } from '@debank/common';
-import { PerpBridgeQuote, Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { PerpBridgeQuote, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { abiCoder } from '@/core/apis/sendRequest';
 import { getERC20Allowance } from '@/core/apis/provider';
@@ -60,17 +60,19 @@ import { tokenAmountBn } from '@/screens/Swap/utils';
 import { useTwoStepSwap } from '@/screens/Swap/hooks/twoStepSwap';
 import { AccountSummary } from '@/hooks/perps/usePerpsStore';
 
+import type {
+  PerpsDepositTokenRow} from './PerpsSelectTokenPopup';
 import {
   getPerpsDepositTokenFromRow,
-  PerpsDepositTokenRow,
   PerpsSelectTokenPopup,
 } from './PerpsSelectTokenPopup';
 import { PerpsDepositTokenModal } from './PerpsDepositTokenModal';
+import type {
+  ITokenItem,
+  TokenEntityId} from '@/store/tokens';
 import useTokenList, {
   buildTokenEntityId,
   EMPTY_TOKEN_ENTITY_IDS,
-  ITokenItem,
-  TokenEntityId,
   tokenEntityResourceStore,
   useTokenIndexStore,
 } from '@/store/tokens';

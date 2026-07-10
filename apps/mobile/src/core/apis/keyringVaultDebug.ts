@@ -1,37 +1,11 @@
-import { keyringService } from '../services';
-
-type KeyringServiceWithVaultDebug = typeof keyringService & {
-  getVaultStorageDebugState: () => {
-    hasVault: boolean;
-    vaultBytes: number;
-    vaultHash: string | null;
-    hasBooted: boolean;
-    hasUnencryptedKeyringData: boolean;
-    unencryptedKeyringCount: number;
-    hasEncryptedKeyringData: boolean;
-  };
-  debugMeasureUnlockPaths: (options: {
-    password?: string;
-    trustedVaultKeyString?: string;
-    measurePassword?: boolean;
-    measureCachedKey?: boolean;
-  }) => Promise<
-    Array<{
-      label: string;
-      source: 'password' | 'cachedKey';
-      success: boolean;
-      durationMs: number;
-      error?: string;
-      keyringCount?: number;
-    }>
-  >;
-  debugExportTrustedVaultKeyString: (password: string) => Promise<string>;
-};
-
-const vaultDebugService = keyringService as KeyringServiceWithVaultDebug;
+import {
+  exportTrustedVaultKeyStringForDebug,
+  getKeyringVaultDebugStateSnapshot,
+  measureKeyringUnlockPathsForDebug,
+} from '@/core/serviceApi';
 
 export function getVaultStorageDebugState() {
-  return vaultDebugService.getVaultStorageDebugState();
+  return getKeyringVaultDebugStateSnapshot();
 }
 
 export function measureUnlockPaths(options: {
@@ -40,9 +14,9 @@ export function measureUnlockPaths(options: {
   measurePassword?: boolean;
   measureCachedKey?: boolean;
 }) {
-  return vaultDebugService.debugMeasureUnlockPaths(options);
+  return measureKeyringUnlockPathsForDebug(options);
 }
 
 export function exportTrustedVaultKeyString(password: string) {
-  return vaultDebugService.debugExportTrustedVaultKeyString(password);
+  return exportTrustedVaultKeyStringForDebug(password);
 }

@@ -2,22 +2,31 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { sendRequest } from '@/core/apis/provider';
 import { openapi } from '@/core/request';
 import {
-  gasAccountService,
-  keyringService,
-  perpsService,
-} from '@/core/services';
-import {
+  bindKeyringEventSync,
+  clearGasAccountPendingHardwareAccountSync,
+  getGasAccountAccountsWithBalanceSnapshot,
+  getGasAccountDataSnapshot,
+  getGasAccountPendingHardwareAccountSnapshot,
+  keyringServiceApi,
+  perpsServiceApi,
+  setGasAccountAccountsWithBalanceSync,
+  setGasAccountCurrentBalanceStateSync,
+  setGasAccountHasClaimedGiftSync,
+  setGasAccountPendingHardwareAccountSync,
+  setGasAccountSigSync,
+} from '@/core/serviceApi';
+import type {
   GasAccountRuntimeAccount,
   GasAccountServiceStore,
 } from '@/core/services/gasAccount';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { MMKVStorageStrategy, zustandByMMKV } from '@/core/storage/mmkv';
 import { zCreate } from '@/core/utils/reexports';
+import type { UpdaterOrPartials } from '@/core/utils/store';
 import {
   makeAvoidParallelAsyncFunc,
   resolveValFromUpdater,
   runIIFEFunc,
-  UpdaterOrPartials,
 } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { eventBus, EVENTS } from '@/utils/events';
@@ -30,19 +39,21 @@ import {
 } from '@/utils/walletUnlock';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { GasAccountBridgeToken } from '@rabby-wallet/rabby-api/dist/types';
-import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
+import type { GasAccountBridgeToken } from '@rabby-wallet/rabby-api/dist/types';
+import type { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 import pRetry from 'p-retry';
 import { useCallback } from 'react';
+import type {
+  GasAccountBalanceAccount,
+  GasAccountSessionAccount,
+  GasAccountState,
+} from './state';
 import {
   createInitialGasAccountState,
   failHistoryRefreshState,
   failSnapshotRefreshState,
   finishHistoryRefreshState,
   finishSnapshotRefreshState,
-  GasAccountBalanceAccount,
-  GasAccountSessionAccount,
-  GasAccountState,
   invalidateSessionState,
   markSnapshotDirtyState,
   startHistoryRefreshState,
@@ -104,7 +115,7 @@ type GasAccountZustandState = GasAccountState<
   GasAccountVisibleState;
 
 const getSessionStateFromService = () => {
-  const data = gasAccountService.getGasAccountData() as GasAccountServiceStore;
+  const data = getGasAccountDataSnapshot() as GasAccountServiceStore;
   const hasSession = !!data.sig && !!data.accountId;
 
   return {
@@ -116,11 +127,11 @@ const getSessionStateFromService = () => {
 };
 
 const getDiscoveryStateFromRuntime = () => ({
-  pendingHardwareAccount: gasAccountService.getPendingHardwareAccount() as
+  pendingHardwareAccount: getGasAccountPendingHardwareAccountSnapshot() as
     | GasAccountRuntimeAccount
     | undefined,
   accountsWithBalance:
-    gasAccountService.getAccountsWithGasAccountBalance() as GasAccountBalanceAccount[],
+    getGasAccountAccountsWithBalanceSnapshot() as GasAccountBalanceAccount[],
   status: 'idle' as const,
 });
 
@@ -253,9 +264,8 @@ if (gasAccountDepositRuntimeStore.getState().bridgeSupportLoading) {
 }
 
 export const cleanupGasAccountAfterDeletedAddress = async (address: string) => {
-  const restAddresses = await keyringService.getAllAddresses();
-  const gasAccount =
-    gasAccountService.getGasAccountData() as GasAccountServiceStore;
+  const restAddresses = await keyringServiceApi.getAllAddresses();
+  const gasAccount = getGasAccountDataSnapshot() as GasAccountServiceStore;
   if (gasAccount?.account?.address) {
     // check if there is another type address in wallet
     const stillHasAddr = restAddresses.some(item => {
@@ -266,7 +276,7 @@ export const cleanupGasAccountAfterDeletedAddress = async (address: string) => {
     });
     if (!stillHasAddr && isSameAddress(address, gasAccount.account.address)) {
       // if there is no another type address then reset signature
-      gasAccountService.setGasAccountSig();
+      setGasAccountSigSync();
       eventBus.emit(EVENTS.AUTO_LOGIN_GAS_ACCOUNT, null);
     }
   }
@@ -282,17 +292,17 @@ const syncDeleteGasAccount = async ({
      * keep gas account session
      */
     // cleanupGasAccountAfterDeletedAddress(address);
-    const perpsAccount = await perpsService.getCurrentAccount();
+    const perpsAccount = await perpsServiceApi.getCurrentAccount();
     if (
       isSameAddress(perpsAccount?.address || '', address) &&
       perpsAccount?.type === type
     ) {
       eventBus.emit(EVENTS.PERPS.LOG_OUT, perpsAccount);
-      perpsService.setCurrentAccount(null);
+      void perpsServiceApi.setCurrentAccount(null);
     }
   }
 };
-keyringService.on('removedAccount', syncDeleteGasAccount);
+bindKeyringEventSync('removedAccount', syncDeleteGasAccount);
 
 export const useGasAccountSign = () => {
   return gasAccountStore(s => s.session) || {};
@@ -302,9 +312,9 @@ const setGasAccount = (
   sig?: string,
   account?: GasAccountServiceStore['account'],
 ) => {
-  gasAccountService.setGasAccountSig(sig, account);
+  setGasAccountSigSync(sig, account);
   if (!sig || !account) {
-    gasAccountService.setCurrentBalanceState();
+    setGasAccountCurrentBalanceStateSync();
     gasAccountStore.setState(prev => invalidateSessionState(prev));
     return;
   }
@@ -350,7 +360,7 @@ const refreshSnapshot = async () => {
   const { sig, accountId } = gasAccountStore.getState().session;
 
   if (!sig || !accountId) {
-    gasAccountService.setCurrentBalanceState();
+    setGasAccountCurrentBalanceStateSync();
     return undefined;
   }
 
@@ -370,7 +380,7 @@ const refreshSnapshot = async () => {
     }
 
     if (result.account.id) {
-      gasAccountService.setCurrentBalanceState(
+      setGasAccountCurrentBalanceStateSync(
         accountId,
         Number(result.account.balance || 0) > 0,
       );
@@ -607,8 +617,8 @@ export const storeApiGasAccount = {
   },
   loadMoreHistory,
   invalidateSession(options?: { recheckAccounts?: boolean }) {
-    gasAccountService.setGasAccountSig();
-    gasAccountService.setCurrentBalanceState();
+    setGasAccountSigSync();
+    setGasAccountCurrentBalanceStateSync();
     gasAccountStore.setState(prev => invalidateSessionState(prev));
     if (options?.recheckAccounts) {
       triggerReLoginAfterInvalidSession();
@@ -621,7 +631,7 @@ export const storeApiGasAccount = {
     setVisibleFor('switchVisible', valOrFunc);
   },
   setAccountsWithGasAccountBalance(accounts: GasAccountBalanceAccount[]) {
-    gasAccountService.setAccountsWithGasAccountBalance(accounts);
+    setGasAccountAccountsWithBalanceSync(accounts);
     gasAccountStore.setState(prev =>
       updateDiscoveryState(prev, {
         accountsWithBalance: accounts,
@@ -631,7 +641,7 @@ export const storeApiGasAccount = {
     );
   },
   setPendingHardwareAccount(account?: GasAccountRuntimeAccount) {
-    gasAccountService.setPendingHardwareAccount(account);
+    setGasAccountPendingHardwareAccountSync(account);
     gasAccountStore.setState(prev =>
       updateDiscoveryState(prev, {
         pendingHardwareAccount: account,
@@ -639,7 +649,7 @@ export const storeApiGasAccount = {
     );
   },
   clearPendingHardwareAccount() {
-    gasAccountService.clearPendingHardwareAccount();
+    clearGasAccountPendingHardwareAccountSync();
     gasAccountStore.setState(prev =>
       updateDiscoveryState(prev, {
         pendingHardwareAccount: undefined,
@@ -710,7 +720,7 @@ export const storeApiGasAccount = {
       if (result?.success) {
         handleGasAccountLoginSuccess(signature, selectAccount);
         storeApiGasAccount.setGasAccount(signature, selectAccount);
-        gasAccountService.setHasClaimedGift(true);
+        setGasAccountHasClaimedGiftSync(true);
         storeApiGasAccount.clearPendingHardwareAccount();
         storeApiGasAccount.markSnapshotDirty('login');
       } else {

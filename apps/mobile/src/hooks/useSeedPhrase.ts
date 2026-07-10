@@ -1,8 +1,9 @@
 import { useCallback, useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
-import { keyringService } from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { TypeKeyringGroup, useWalletTypeData } from './useWalletTypeData';
+import type { TypeKeyringGroup} from './useWalletTypeData';
+import { useWalletTypeData } from './useWalletTypeData';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { apiMnemonic } from '@/core/apis';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
@@ -10,12 +11,12 @@ import { navigateDeprecated, replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
 import { ellipsisAddress } from '@/utils/address';
-import { contactService } from '@/core/services';
+import { contactServiceApi } from '@/core/serviceApi/contact';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 const useGetHdKeys = () => {
   return useAsync(async () => {
-    const allClassAccounts = await keyringService.getAllTypedAccounts();
+    const allClassAccounts = await keyringServiceApi.getAllTypedAccounts();
     return allClassAccounts.filter(
       item => item.type === KEYRING_TYPE.HdKeyring,
     );
@@ -88,7 +89,7 @@ export const useSeedPhrase = () => {
         return;
       }
 
-      contactService.setAlias({
+      await contactServiceApi.setAlias({
         address: newAddress,
         alias: '',
       });

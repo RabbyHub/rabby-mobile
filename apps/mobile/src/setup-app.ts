@@ -4,7 +4,7 @@ import { logger } from '@/utils/logger';
 import './perfs/bundle-splitter-analysis';
 import './devtools/e2eBridge';
 import './databases/orm';
-import './core/services';
+import './core/serviceApi/registerLegacyServices';
 import './core/utils/devServerSettings';
 import './core/config/online';
 

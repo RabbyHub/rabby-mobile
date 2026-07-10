@@ -1,5 +1,5 @@
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { WrapTokenAddressMap } from '@rabby-wallet/rabby-swap';
 import BigNumber from 'bignumber.js';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
@@ -15,7 +15,7 @@ import { refreshIdAtom } from './atom';
 import useAsync from 'react-use/lib/useAsync';
 import { openapi } from '@/core/request';
 import useDebounce from 'react-use/lib/useDebounce';
-import { swapService } from '@/core/services';
+import { swapServiceApi } from '@/core/serviceApi/swap';
 import { useAsyncInitializeChainList } from '@/hooks/useChain';
 import {
   getChainDefaultToken,
@@ -24,7 +24,8 @@ import {
 } from '@/constant/swap';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwapSettings } from './settings';
-import { QuoteProvider, TDexQuoteData, useQuoteMethods } from './quote';
+import type { QuoteProvider, TDexQuoteData} from './quote';
+import { useQuoteMethods } from './quote';
 import { stats } from '@/utils/stats';
 import { formatTokenAmountInput } from '@/utils/number';
 import { getTokenSymbol, isTokenMarketClosed } from '@/utils/token';
@@ -39,7 +40,7 @@ import { isSwapWrapToken } from '../utils';
 import { RequestRateLimiter } from './rateLimit';
 import { useFocusEffect } from '@react-navigation/native';
 import { eventBus, EVENTS } from '@/utils/events';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { useAutoSlippageEffect } from './autoSlippageEffect';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import {
@@ -356,26 +357,31 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   const [showMoreVisible, setShowMoreVisible] = useState(false);
   const [quotesListVisible, setQuotesListVisible] = useState(false);
 
-  const {
-    initialSelectedChain,
-    oChain,
-    defaultSelectedFromToken,
-    defaultSelectedToToken,
-  } = useMemo(() => {
-    const lastSelectedChain = swapService.getSelectedChain();
-    return {
-      initialSelectedChain: lastSelectedChain, // state.swap.$$initialSelectedChain,
-      oChain: lastSelectedChain || CHAINS_ENUM.ETH,
-      defaultSelectedFromToken: swapService.getSelectedFromToken(),
-      defaultSelectedToToken: swapService.getSelectedToToken(),
-    };
-  }, []);
-
-  const [chain, setChain] = useState(oChain);
-  const handleChain = (c: CHAINS_ENUM) => {
-    setChain(c);
-    swapService.setSelectedChain(c);
-  };
+  const [initialSelectedChain, setInitialSelectedChain] =
+    useState<CHAINS_ENUM | null>(null);
+  const [chain, setChain] = useState(CHAINS_ENUM.ETH);
+  const hasLoadedPersistedSwapSelectionRef = useRef(false);
+  const hasUserChangedSwapSelectionRef = useRef(false);
+  const handleChain = useCallback(
+    (
+      c: CHAINS_ENUM,
+      options: {
+        markUserChange?: boolean;
+        persist?: boolean;
+      } = {},
+    ) => {
+      if (options.markUserChange) {
+        hasUserChangedSwapSelectionRef.current = true;
+      }
+      if (options.persist !== false) {
+        swapServiceApi.setSelectedChain(c).catch(error => {
+          console.error(error);
+        });
+      }
+      setChain(c);
+    },
+    [],
+  );
 
   const chainInfo = useMemo(
     () => findChainByEnum(chain) || CHAINS[chain],
@@ -524,12 +530,11 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   const [payToken, setPayToken] = useTokenInfo({
     userAddress,
     chain,
-    defaultToken: defaultSelectedFromToken || getChainDefaultToken(chain),
+    defaultToken: getChainDefaultToken(chain),
   });
   const [receiveToken, _setReceiveToken] = useTokenInfo({
     userAddress,
     chain,
-    defaultToken: defaultSelectedToToken,
   });
 
   const {
@@ -561,9 +566,10 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         payTokenId?: string;
         changeTo?: boolean;
         payUseBaseToken?: boolean;
+        markUserChange?: boolean;
       },
     ) => {
-      handleChain(c);
+      handleChain(c, { markUserChange: opts?.markUserChange !== false });
       if (!opts?.changeTo) {
         setPayToken({
           ...getChainDefaultToken(c),
@@ -593,12 +599,12 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       setSlider(0);
       setActiveProvider(undefined);
     },
-    [setActiveProvider, setPayToken, setReceiveToken],
+    [handleChain, setActiveProvider, setPayToken, setReceiveToken],
   );
 
   const switchSwapAgain = useCallback(
     (c: CHAINS_ENUM, payTokenId: string, receiveTokenId: string) => {
-      handleChain(c);
+      handleChain(c, { markUserChange: true });
       setPayToken({
         ...getChainDefaultToken(c),
         id: payTokenId,
@@ -611,7 +617,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       setSlider(0);
       setActiveProvider(undefined);
     },
-    [setActiveProvider, setPayToken, setReceiveToken],
+    [handleChain, setActiveProvider, setPayToken, setReceiveToken],
   );
 
   useAsyncInitializeChainList({
@@ -620,11 +626,56 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     onChainInitializedAsync: firstEnum => {
       // only init chain if it's not cached before
       if (!initialSelectedChain) {
-        switchChain(firstEnum);
+        switchChain(firstEnum, { markUserChange: false });
       }
     },
     account,
   });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    Promise.all([
+      swapServiceApi.getSelectedChain(),
+      swapServiceApi.getSelectedFromToken(),
+      swapServiceApi.getSelectedToToken(),
+    ])
+      .then(([lastSelectedChain, defaultSelectedFromToken, defaultSelectedToToken]) => {
+        if (cancelled) {
+          return;
+        }
+
+        setInitialSelectedChain(lastSelectedChain);
+        hasLoadedPersistedSwapSelectionRef.current = true;
+
+        if (hasUserChangedSwapSelectionRef.current) {
+          return;
+        }
+
+        if (lastSelectedChain) {
+          handleChain(lastSelectedChain, {
+            markUserChange: false,
+            persist: false,
+          });
+        }
+        if (defaultSelectedFromToken) {
+          setPayToken(defaultSelectedFromToken);
+        }
+        if (defaultSelectedToToken) {
+          setReceiveToken(defaultSelectedToToken);
+        }
+      })
+      .catch(error => {
+        if (!cancelled) {
+          hasLoadedPersistedSwapSelectionRef.current = true;
+          console.error(error);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [handleChain, setPayToken, setReceiveToken]);
 
   useEffect(() => {
     if (receiveToken?.id || !payToken?.id) {
@@ -640,11 +691,21 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   }, [chain, payToken?.id, receiveToken?.id, setReceiveToken]);
 
   useEffect(() => {
-    swapService.setSelectedFromToken(payToken);
+    if (!hasLoadedPersistedSwapSelectionRef.current) {
+      return;
+    }
+    swapServiceApi.setSelectedFromToken(payToken).catch(error => {
+      console.error(error);
+    });
   }, [payToken]);
 
   useEffect(() => {
-    swapService.setSelectedToToken(receiveToken);
+    if (!hasLoadedPersistedSwapSelectionRef.current) {
+      return;
+    }
+    swapServiceApi.setSelectedToToken(receiveToken).catch(error => {
+      console.error(error);
+    });
   }, [receiveToken]);
 
   const exchangeToken = useCallback(() => {

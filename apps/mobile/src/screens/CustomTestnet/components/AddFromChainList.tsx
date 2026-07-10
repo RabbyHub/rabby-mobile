@@ -1,15 +1,14 @@
 import { apiCustomTestnet } from '@/core/apis';
 import { openapi } from '@/core/request';
-import {
-  TestnetChain,
-  createTestnetChain,
-} from '@/core/services/customTestnetService';
+import type {
+  TestnetChain} from '@/core/services/customTestnetService';
+import { createTestnetChain } from '@/core/utils/customTestnetChain';
 import { useDebounce, useInfiniteScroll, useRequest } from 'ahooks';
 // import { TooltipWithMagnetArrow } from '@/ui/component/Tooltip/TooltipWithMagnetArrow';
 import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
 import RcIconBack from '@/assets/icons/header/back-cc.svg';
 import { AppBottomSheetModalTitle, Tip } from '@/components';
-import { AppColorsVariants } from '@/constant/theme';
+import type { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
@@ -17,15 +16,16 @@ import { Input } from '@rneui/themed';
 import { range, sortBy } from 'lodash';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import type {
+  StyleProp,
+  ViewStyle} from 'react-native';
 import {
   Dimensions,
   Keyboard,
-  StyleProp,
   StyleSheet,
   TouchableWithoutFeedback,
   useWindowDimensions,
-  View,
-  ViewStyle,
+  View
 } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Animated, {

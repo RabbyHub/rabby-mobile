@@ -1,5 +1,5 @@
 import { formatAmount, formatTokenAmount } from '@/utils/number';
-import {
+import type {
   BalanceChange as IBalanceChange,
   TokenItem,
   TransferingNFTItem,
@@ -7,7 +7,8 @@ import {
 import BigNumber from 'bignumber.js';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, ViewProps } from 'react-native';
+import type { ViewProps } from 'react-native';
+import { View } from 'react-native';
 // import useBalanceChange from '../..//hooks/useBalanceChange';
 // import { Table, Col, Row } from '../Actions/components/Table';
 // import LogoWithText from '../Actions/components/LogoWithText';
@@ -27,7 +28,7 @@ import { naviPush } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { Text } from '@/components/Typography';
 import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';

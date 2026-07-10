@@ -54,7 +54,7 @@ export const BridgeHeader = ({
   clearBridgeHistoryRedDot,
   ref,
 }: {
-  clearBridgeHistoryRedDot?: () => number;
+  clearBridgeHistoryRedDot?: () => number | Promise<number>;
   ref?: Ref<BridgeHeaderRef>;
 }) => {
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
@@ -72,14 +72,15 @@ export const BridgeHeader = ({
     setHistoryVisible(false);
   }, []);
 
-  const openHistory = useCallback(() => {
+  const openHistory = useCallback(async () => {
     Keyboard.dismiss();
     setHistoryVisible(true);
     const currentTs = (
       clearBridgeHistoryRedDot || clearBridgeHistoryRedDotFromScene
     )();
-    if (currentTs) {
-      setRecentShowTime(currentTs);
+    const resolvedCurrentTs = await currentTs;
+    if (resolvedCurrentTs) {
+      setRecentShowTime(resolvedCurrentTs);
     }
   }, [clearBridgeHistoryRedDot, clearBridgeHistoryRedDotFromScene]);
 

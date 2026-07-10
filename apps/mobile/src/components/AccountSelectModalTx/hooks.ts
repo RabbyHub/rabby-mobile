@@ -1,15 +1,16 @@
 import React, { useEffect } from 'react';
-import { isValidHexAddress, Hex } from '@metamask/utils';
+import type { Hex } from '@metamask/utils';
+import { isValidHexAddress } from '@metamask/utils';
 import { useTranslation } from 'react-i18next';
 import { useWhitelist } from '@/hooks/whitelist';
 import { Alert } from 'react-native';
-import { contactService } from '@/core/services';
+import { getContactAliasSnapshot } from '@/core/serviceApi/contact';
 import { devLog } from '@/utils/logger';
 import { throttle } from 'lodash';
 import type { HistoryLocalDetailParams } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import { useAtom } from 'jotai';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import EventEmitter from 'events';
 
 function getNoop() {
@@ -114,8 +115,7 @@ export const useAlertAddress = (address: string, onConfirm: () => void) => {
   useEffect(() => {
     if (address && isValidHexAddress(address as Hex)) {
       if (isAddrOnWhitelist(address)) {
-        const aliasName =
-          contactService.getAliasByAddress(address)?.alias || '';
+        const aliasName = getContactAliasSnapshot(address)?.alias || '';
         Alert.alert(
           t('page.whitelist.alreadyInYour'),
           `${address}` + (aliasName ? ` (${aliasName})` : ''),

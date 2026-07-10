@@ -1,10 +1,11 @@
 import DeviceUtils from '@/core/utils/device';
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import { isNonPublicProductionEnv } from '@/constant';
+import type {
+  UpdaterOrPartials} from '@/core/utils/store';
 import {
   resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
+  runIIFEFunc
 } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { useShallow } from 'zustand/react/shallow';
@@ -17,7 +18,7 @@ import {
   coerceKeychainStorageType,
   type KeychainStorageType,
 } from '@/core/apis/keychainCommon';
-import { preferenceService } from '@/core/services';
+import { setPreference } from '@/core/serviceApi/preference';
 import { useCallback, useMemo } from 'react';
 
 const isIOS = DeviceUtils.isIOS();
@@ -490,9 +491,9 @@ export function useAutoLockTimeMinites() {
 const onAutoLockTimeMsChange = (ms: number) => {
   const minutes = apisAutoLock.coerceAutoLockTimeout(ms).minutes;
   setAutoLockMinutes(minutes);
-  preferenceService.setPreference({
+  void setPreference({
     autoLockTime: minutes,
-  });
+  }).catch(console.error);
   apisAutoLock.refreshAutolockTimeout();
 };
 export function useAutoLockTimeMs() {

@@ -8,24 +8,27 @@ import React, {
   useImperativeHandle,
 } from 'react';
 import type { Ref } from 'react';
+import type {
+  StyleProp,
+  ViewStyle} from 'react-native';
 import {
   Dimensions,
   Linking,
   Platform,
-  StyleProp,
   StyleSheet,
-  View,
-  ViewStyle,
+  View
 } from 'react-native';
-import WebView, { WebViewProps } from 'react-native-webview';
+import type { WebViewProps } from 'react-native-webview';
+import WebView from 'react-native-webview';
 
 import { ScreenLayouts2 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
-import {
-  useWebViewControl,
+import type {
   WebViewActions,
-  WebViewState,
+  WebViewState} from '@/components/WebView/hooks';
+import {
+  useWebViewControl
 } from '@/components/WebView/hooks';
 import { checkShouldStartLoadingWithRequestForDappWebView } from '@/components/WebView/utils';
 import { APP_UA_PARIALS } from '@/constant';
@@ -34,13 +37,11 @@ import { parsePossibleURL } from '@/constant/dappView';
 import { isNonPublicProductionEnv } from '@/constant';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import {
-  browserService,
-  dappService,
-  perpsService,
-  preferenceService,
-} from '@/core/services';
-import { Tab } from '@/core/services/browserService';
+import { saveBrowserScreenshot } from '@/core/serviceApi/browser';
+import { perpsServiceApi } from '@/core/serviceApi';
+import { getDappSnapshot } from '@/core/serviceApi/dapp';
+import { setHasShowAsterPopup } from '@/core/serviceApi/preference';
+import type { Tab } from '@/core/services/browserService';
 import { FontNames } from '@/core/utils/fonts';
 import {
   useBrowser,
@@ -332,7 +333,7 @@ export const BrowserTab = ({
       if (!viewShot || !tabId) {
         return;
       }
-      const fileName = await browserService.saveScreenshot({
+      const fileName = await saveBrowserScreenshot({
         tempUri: viewShot,
         tabId,
       });
@@ -447,7 +448,7 @@ export const BrowserTab = ({
       return;
     }
     const origin = urlInfo?.origin;
-    if (isActive && origin && dappService.getDapp(origin)?.isConnected) {
+    if (isActive && origin && dappInfo?.isConnected) {
       matomoRequestEvent({
         category: 'Websites Usage',
         action: 'Website_Connected',
@@ -458,6 +459,7 @@ export const BrowserTab = ({
     browserState.isShowBrowser,
     browserState.isShowSearch,
     isActive,
+    dappInfo?.isConnected,
     urlInfo?.origin,
   ]);
 
@@ -778,7 +780,7 @@ export const BrowserTab = ({
                       const origin = safeGetOrigin(nativeEvent.url);
                       if (
                         isGoogle(webviewState.resolvedUrl) &&
-                        dappService.getDapp(origin)?.isDapp &&
+                        getDappSnapshot(origin)?.isDapp &&
                         origin
                       ) {
                         matomoRequestEvent({
@@ -930,14 +932,14 @@ export const BrowserTab = ({
             }
             onClose={() => {
               setIsShowInvite(false);
-              perpsService.setInviteConfig(account?.address || '', {
+              void perpsServiceApi.setInviteConfig(account?.address || '', {
                 lastConnectedAt: Date.now(),
               });
             }}
             onInvite={async () => {
               try {
                 await handleInvite();
-                perpsService.setInviteConfig(account?.address || '', {
+                void perpsServiceApi.setInviteConfig(account?.address || '', {
                   lastConnectedAt: Date.now(),
                 });
                 setIsShowInvite(false);
@@ -991,12 +993,12 @@ export const BrowserTab = ({
             }
             onClose={() => {
               setIsShowAsterInvite(false);
-              preferenceService.setHasShowAsterPopup(true);
+              void setHasShowAsterPopup(true).catch(console.error);
             }}
             onInvite={() => {
               handleGoTo(PERPS_ASTER_INVITE_URL);
               setIsShowAsterInvite(false);
-              preferenceService.setHasShowAsterPopup(true);
+              void setHasShowAsterPopup(true).catch(console.error);
             }}
             footer={
               <View style={styles.dappWebViewNavControl}>
@@ -1047,7 +1049,7 @@ export const BrowserTab = ({
               }}
               value={account}
               onChange={v => {
-                dappService.updateDapp({
+                setDapp({
                   ...dappInfo,
                   currentAccount: v,
                 });

@@ -1,9 +1,10 @@
 import RcIconHistory from '@/assets/icons/dapp/icon-history.svg';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { StyleProp, View, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { View } from 'react-native';
 import { DappHistoryCardList } from './DappHistoryCardList';
 import { DappHistorySectionEmpty } from './DappHistorySectionEmpty';
 import { Text } from '@/components/Typography';

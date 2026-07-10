@@ -4,11 +4,11 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import { touchedFeedback } from '@/utils/touch';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { RootNames } from '@/constant/layout';
 import { StackActions, useNavigation } from '@react-navigation/native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamsList } from '@/navigation-type';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamsList } from '@/navigation-type';
 import RcIconArrow from '@/assets/icons/home/setting';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;

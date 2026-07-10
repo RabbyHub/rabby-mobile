@@ -1,20 +1,22 @@
+import type {
+  ReactNode} from 'react';
 import React, {
   useMemo,
-  ReactNode,
   useState,
   useEffect,
   useCallback,
 } from 'react';
+import type {
+  TextStyle} from 'react-native';
 import {
   View,
   StyleSheet,
   Image,
-  TouchableOpacity,
-  TextStyle,
+  TouchableOpacity
 } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useTranslation } from 'react-i18next';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { toast } from '@/components2024/Toast';
 import AddressMemo from './AddressMemo';
 import UserListDrawer from './UserListDrawer';
@@ -43,14 +45,14 @@ import {
   removeContractWhitelist,
 } from '@/core/apis/securityEngine';
 import { useWhitelist } from '@/hooks/whitelist';
-import { keyringService } from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { useApprovalSecurityEngine } from '../../../hooks/useApprovalSecurityEngine';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 import { useThemeColors } from '@/hooks/theme';
 import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPopup/hooks';
 import IconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import { useFindChain } from '@/hooks/useFindChain';
-import { Chain } from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
 import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
@@ -198,23 +200,23 @@ const AddressMark = ({
   }) => {
     if (data.onWhitelist && !onWhitelist) {
       if (isContract && chainId) {
-        addContractWhitelist({
+        await addContractWhitelist({
           address,
           chainId,
         });
       } else {
-        addAddressWhitelist(address);
+        await addAddressWhitelist(address);
       }
       toast.success('Mark as "Trusted"');
     }
     if (data.onBlacklist && !onBlacklist) {
       if (isContract && chainId) {
-        addContractBlacklist({
+        await addContractBlacklist({
           address,
           chainId,
         });
       } else {
-        addAddressBlacklist(address);
+        await addAddressBlacklist(address);
       }
       toast.success('Mark as "Blocked"');
     }
@@ -224,21 +226,21 @@ const AddressMark = ({
       (onBlacklist || onWhitelist)
     ) {
       if (isContract && chainId) {
-        removeContractBlacklist({
+        await removeContractBlacklist({
           address,
           chainId,
         });
-        removeContractWhitelist({
+        await removeContractWhitelist({
           address,
           chainId,
         });
       } else {
-        removeAddressBlacklist(address);
-        removeAddressWhitelist(address);
+        await removeAddressBlacklist(address);
+        await removeAddressWhitelist(address);
       }
       toast.success(t('page.signTx.markRemoved'));
     }
-    init();
+    await init();
     onChange();
   };
   return (
@@ -514,7 +516,7 @@ const KnownAddress = ({
   const { t } = useTranslation();
 
   const handleAddressChange = async (addr: string) => {
-    const res = await keyringService.hasAddress(addr);
+    const res = await keyringServiceApi.hasAddress(addr);
     setInWhitelist(!!whitelist.find(item => isSameAddress(item, addr)));
     setHasAddress(res);
   };

@@ -1,4 +1,4 @@
-import { keyringService } from '../services';
+import { isKeyringUnlockedSnapshot } from '@/core/serviceApi';
 
 interface CacheState {
   path: string;
@@ -12,7 +12,7 @@ export function hasPageStateCache() {
 }
 
 export function getPageStateCache() {
-  if (!keyringService.isUnlocked()) return null;
+  if (!isKeyringUnlockedSnapshot()) return null;
 
   // return pageStateCacheService.get();
   return null;

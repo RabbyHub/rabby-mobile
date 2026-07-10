@@ -1,7 +1,5 @@
-import {
-  preferenceService,
-  transactionHistoryService,
-} from '@/core/services/shared';
+import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
+import { getTransactionHistoryTransactionsSnapshot } from '@/core/serviceApi/transactionHistory';
 import type { DappInfo } from '@/core/services/dappService';
 import type { KeyringAccountWithAlias } from '@/types/account';
 import { resolveDappAccount } from '@/utils/dappAccount';
@@ -16,7 +14,7 @@ export const getDappAccount = ({
   return resolveDappAccount({
     dappInfo,
     accounts,
-    transactions: transactionHistoryService.store.transactions,
-    fallbackAccount: preferenceService.getFallbackAccount(),
+    transactions: getTransactionHistoryTransactionsSnapshot(),
+    fallbackAccount: getFallbackAccountSnapshot(),
   });
 };

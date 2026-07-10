@@ -1,11 +1,12 @@
 import { RcNextLeftCC } from '@/assets/icons/common';
+import type {
+  NextSearchBarMethods} from '@/components2024/SearchBar';
 import {
-  NextSearchBar,
-  NextSearchBarMethods,
+  NextSearchBar
 } from '@/components2024/SearchBar';
 import { toast } from '@/components2024/Toast';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
-import { DappInfo } from '@/core/services/dappService';
+import type { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { useDappsHome } from '@/hooks/useDappsHome';
 import { createGetStyles2024 } from '@/utils/styles';

@@ -1,9 +1,9 @@
 import { OpenApiService } from '@rabby-wallet/rabby-api';
-import { RabbyApiPlugin } from '@rabby-wallet/rabby-api/dist/plugins/intf';
+import type { RabbyApiPlugin } from '@rabby-wallet/rabby-api/dist/plugins/intf';
 
 import { gS } from '@rabby-wallet/rabby-sign-bvm/es/sign-rabby';
 import { APP_VERSIONS } from '@/constant';
-import { openApiStore } from './services/openapiStore';
+import { openApiStore } from './storage/openapiStore';
 import { instrumentOpenApiRequestDiagnostics } from '@/utils/openapiRequestDiagnostics';
 
 const SIGN_HDS = [

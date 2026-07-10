@@ -1,9 +1,15 @@
-import React, { useCallback, useRef, useEffect } from 'react';
+import type React from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 
 import { BackgroundBridge } from './BackgroundBridge';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import type { WebViewNavigation } from 'react-native-webview';
-import { dappService, sessionService } from '../services/shared';
+import {
+  addDappSync,
+  deleteSessionSync,
+  getDappSnapshot,
+  getOrCreateSessionSync,
+} from '@/core/serviceApi';
 import { createDappBySession } from '@/core/utils/createDappBySession';
 import { useRefState } from '@/hooks/common/useRefState';
 import { RABBY_DECLARED_PREFIX } from '@rabby-wallet/rn-webview-bridge';
@@ -53,7 +59,7 @@ export function useSetupWebview({
   const destroyCurrentBridge = useCallback(() => {
     if (currentBridgeRef.current) {
       currentBridgeRef.current.onDisconnect();
-      sessionService.deleteSession(currentBridgeRef.current);
+      deleteSessionSync(currentBridgeRef.current);
       currentBridgeRef.current = null;
     }
   }, [currentBridgeRef]);
@@ -71,15 +77,15 @@ export function useSetupWebview({
         isFromMobileInnerDapp,
       });
 
-      const session = sessionService.getOrCreateSession(newBridge);
+      const session = getOrCreateSessionSync(newBridge);
       session?.setProp({
         origin: urlBridge,
         icon: '',
         name: titleRef.current,
       });
 
-      if (!dappService.getDapp(urlBridge) && session) {
-        dappService.addDapp(createDappBySession(session));
+      if (!getDappSnapshot(urlBridge) && session) {
+        addDappSync(createDappBySession(session));
       }
 
       putBackgroundBridge(newBridge, true);

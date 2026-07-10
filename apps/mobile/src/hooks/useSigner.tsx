@@ -9,7 +9,7 @@ import type {
 } from '@/components2024/MiniSignV2/domain/types';
 import { SignatureManager } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { registry } from '@/components2024/MiniSignV2/state/SignatureManagerRegistry';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { normalizeTxParams } from '@/components/Approval/components/SignTx/util';
 import {
   useMemoMiniSignGasStore,

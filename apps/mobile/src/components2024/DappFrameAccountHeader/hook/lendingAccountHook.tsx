@@ -1,4 +1,4 @@
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import React, { useCallback } from 'react';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import useAppChainStore from '@/store/appchain';

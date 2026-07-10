@@ -2,7 +2,10 @@ import { useEffect, useLayoutEffect } from 'react';
 import { Linking } from 'react-native';
 import { StackActions } from '@react-navigation/native';
 import { t } from 'i18next';
-import { keyringService } from '@/core/services';
+import {
+  bindKeyringEvent,
+  isKeyringUnlockedSnapshot,
+} from '@/core/serviceApi/keyring';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { browserApis } from './browser/useBrowser';
 import useMount from 'react-use/lib/useMount';
@@ -19,7 +22,7 @@ import {
   UL_MATCH_PREFIX,
   WALLETCONNECT_REDIRECT_PATH,
 } from '@/constant/universalLink';
-import { RefLikeObject } from '@/utils/type';
+import type { RefLikeObject } from '@/utils/type';
 import {
   markWalletConnectDappRedirectPending,
   pairWalletConnectUri,
@@ -254,7 +257,7 @@ async function clearAppCacheFromLink() {
     return;
   }
 
-  if (!keyringService.isUnlocked() && !isUnlockSessionValid()) {
+  if (!isKeyringUnlockedSnapshot() && !isUnlockSessionValid()) {
     console.warn(
       '[useUniversalLinkOnTop] clear app cache link ignored before unlock',
     );
@@ -347,7 +350,7 @@ const handleAppLink = async (url: string, isInit = false) => {
     return;
   }
 
-  if (keyringService.isUnlocked() || isUnlockSessionValid()) {
+  if (isKeyringUnlockedSnapshot() || isUnlockSessionValid()) {
     // Parse the link when the wallet is fully unlocked or in a valid post-unlock session.
     parseActionAndProcessLink(url, handleActions);
     setNextAppLink('');
@@ -394,6 +397,9 @@ export function useUniversalLinkOnTop() {
   }, []);
 
   useLayoutEffect(() => {
+    let disposed = false;
+    let cleanup: (() => void) | undefined;
+
     const onUnlock = () => {
       hideToastRef.current?.();
       const nextAppLink = getNextAppLink();
@@ -402,10 +408,21 @@ export function useUniversalLinkOnTop() {
         parseActionAndProcessLink(nextAppLink, handleActions);
       }
     };
-    keyringService.on('unlock', onUnlock);
+
+    void bindKeyringEvent('unlock', onUnlock)
+      .then(nextCleanup => {
+        if (disposed) {
+          nextCleanup();
+          return;
+        }
+
+        cleanup = nextCleanup;
+      })
+      .catch(console.error);
 
     return () => {
-      keyringService.off('unlock', onUnlock);
+      disposed = true;
+      cleanup?.();
     };
   }, []);
 }

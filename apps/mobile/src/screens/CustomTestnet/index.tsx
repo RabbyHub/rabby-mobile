@@ -3,9 +3,9 @@ import React, { useCallback } from 'react';
 
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { toast } from '@/components2024/Toast';
-import { AppColorsVariants } from '@/constant/theme';
+import type { AppColorsVariants } from '@/constant/theme';
 import { apiCustomTestnet } from '@/core/apis';
-import {
+import type {
   TestnetChain,
   TestnetChainBase,
 } from '@/core/services/customTestnetService';
@@ -26,9 +26,10 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 import { CustomTestnetItem } from './components/CustomTestnetItem';
+import type {
+  EditCustomTestnetPopupType} from './components/EditTestnetPopup';
 import {
-  EditCustomTestnetPopup,
-  EditCustomTestnetPopupType,
+  EditCustomTestnetPopup
 } from './components/EditTestnetPopup';
 import { Empty } from './components/Empty';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';

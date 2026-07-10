@@ -1,21 +1,22 @@
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useMemoizedFn } from 'ahooks';
-import {
+import type {
   AssetCtx,
   AssetPosition,
   ClearinghouseState,
   MarginSummary,
   OpenOrder,
   PerpDexsResponse,
-  UserAbstractionResp,
   UserNonFundingLedgerUpdates,
   WsFastAssetCtxs,
-  WsFill,
+  WsFill} from '@rabby-wallet/hyperliquid-sdk';
+import {
+  UserAbstractionResp
 } from '@rabby-wallet/hyperliquid-sdk';
 // import { ApproveSignatures } from '@/background/service/perps';
-import { Account } from '@/core/services/preference';
-import { ApproveSignatures } from '@/core/services/perpsService';
+import type { Account } from '@/core/services/preference';
+import type { ApproveSignatures } from '@/core/services/perpsService';
 import {
   DEFAULT_TOP_ASSET,
   DEFAULT_TOKEN_CATEGORY,
@@ -34,16 +35,17 @@ import { eventBus, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
 import { unionBy } from 'lodash';
 import { zCreate } from '@/core/utils/reexports';
+import type {
+  UpdaterOrPartials} from '@/core/utils/store';
 import {
   resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
+  runIIFEFunc
 } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { AppState } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
-import { perpsService } from '@/core/services';
-import {
+import { perpsServiceApi } from '@/core/serviceApi';
+import type {
   PerpTopTokenV3,
   PerpTopTokenCategory,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -399,7 +401,7 @@ const setCurrentPerpsAccount = (payload: Account) => {
         ? prev.userAbstractionReady
         : false,
   }));
-  perpsService.setCurrentAccount(payload);
+  void perpsServiceApi.setCurrentAccount(payload);
 };
 
 export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
@@ -425,7 +427,7 @@ export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
     accountNeedApproveAgent: false,
     accountNeedApproveBuilderFee: false,
   }));
-  perpsService.setCurrentAccount(payload);
+  void perpsServiceApi.setCurrentAccount(payload);
 };
 
 // Cache of the latest WS-pushed asset ctxs keyed by dex name.
@@ -627,7 +629,7 @@ const fetchMarketData = (): Promise<void> => {
 };
 
 const fetchFavoriteMarkets = async () => {
-  const favoriteMarkets = await perpsService.getFavoriteMarkets();
+  const favoriteMarkets = await perpsServiceApi.getFavoriteMarkets();
   setPerpsState(prev => ({ ...prev, favoriteMarkets }));
 };
 
@@ -640,11 +642,11 @@ export const addFavoriteMarket = (market: string) => {
     ...prev,
     favoriteMarkets: [...prev.favoriteMarkets, normalizedMarket.toUpperCase()],
   }));
-  perpsService.addFavoriteMarket(normalizedMarket);
+  void perpsServiceApi.addFavoriteMarket(normalizedMarket);
 };
 
 const fetchMarginModeByCoin = async () => {
-  const marginModeByCoin = await perpsService.getMarginModeByCoin();
+  const marginModeByCoin = await perpsServiceApi.getMarginModeByCoin();
   setPerpsState(prev => ({ ...prev, marginModeByCoin }));
 };
 
@@ -664,7 +666,7 @@ export const setMarginModeForCoin = (
       marginModeByCoin: { ...prev.marginModeByCoin, [coin]: mode },
     };
   });
-  perpsService.setMarginModeForCoin(coin, mode);
+  void perpsServiceApi.setMarginModeForCoin(coin, mode);
 };
 
 export const removeFavoriteMarket = (market: string) => {
@@ -673,7 +675,7 @@ export const removeFavoriteMarket = (market: string) => {
     ...prev,
     favoriteMarkets: prev.favoriteMarkets.filter(m => m !== normalizedMarket),
   }));
-  perpsService.removeFavoriteMarket(normalizedMarket);
+  void perpsServiceApi.removeFavoriteMarket(normalizedMarket);
 };
 
 const handleSelectDefaultAccount = async (accounts: Account[]) => {

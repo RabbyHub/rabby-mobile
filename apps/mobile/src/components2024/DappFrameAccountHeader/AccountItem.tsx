@@ -1,4 +1,4 @@
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { apiContact } from '@/core/apis';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { ellipsisAddress } from '@/utils/address';

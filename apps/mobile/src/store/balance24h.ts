@@ -1,12 +1,17 @@
 import { useMemo } from 'react';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { getTop10MyAccounts } from '@/core/apis/account';
-import { keyringService } from '@/core/services';
+import {
+  bindKeyringEvent,
+  keyringServiceApi,
+} from '@/core/serviceApi/keyring';
+import type { Account } from '@/types/account';
 import { perfEvents } from '@/core/utils/perf';
 import { MMKV_FILE_NAMES } from '@/core/storage/mmkvConstants';
 import { balance24hMMKV } from '@/core/storage/mmkvInstances';
+import type {
+  AccountsBalanceState} from './balance';
 import {
-  AccountsBalanceState,
   accountsBalanceEvents,
   balanceAccountsStore,
 } from './balance';
@@ -16,8 +21,9 @@ import { debounce, isEqual } from 'lodash';
 import PQueue from 'p-queue';
 import { useShallow } from 'zustand/react/shallow';
 import { BaseStore } from './_base';
-import { ResourceBaseStore, ResourceFlowState } from './_resourceBase';
-import { ResourceLocalTarget } from './_resourceFlowDebug';
+import type { ResourceFlowState } from './_resourceBase';
+import { ResourceBaseStore } from './_resourceBase';
+import type { ResourceLocalTarget } from './_resourceFlowDebug';
 import addressBalanceStore, { type AddressBalanceSnapshot } from './balance';
 import {
   fetch24hBalance,
@@ -917,9 +923,10 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
     }
     this.hasStartedLifecycle = true;
 
-    keyringService.on('removedAccount', async account => {
-      const lowerAddress = account.address.toLowerCase();
-      const addresses = await keyringService.getAllAddresses();
+    void bindKeyringEvent('removedAccount', async account => {
+      const removedAccount = account as Account;
+      const lowerAddress = removedAccount.address.toLowerCase();
+      const addresses = await keyringServiceApi.getAllAddresses();
       const stillExists = addresses.some(item => {
         return item.address.toLowerCase() === lowerAddress;
       });
@@ -932,7 +939,7 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
         source: 'keyringService.removedAccount',
         reason: 'address_deleted',
       });
-    });
+    }).catch(console.error);
 
     balance24hStore.subscribe(() => {
       const addresses = this.getState().addresses.Home;

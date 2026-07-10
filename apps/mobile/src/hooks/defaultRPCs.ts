@@ -1,7 +1,9 @@
-import { customRPCService } from '@/core/services';
+import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
 
 export function startSyncDefaultRPCs() {
   setInterval(() => {
-    customRPCService.syncDefaultRPC(false);
+    customRPCServiceApi.syncDefaultRPC(false).catch(error => {
+      console.error(error);
+    });
   }, 20 * 60 * 1000);
 }

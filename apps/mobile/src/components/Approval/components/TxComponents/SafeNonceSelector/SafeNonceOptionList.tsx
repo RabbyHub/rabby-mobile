@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeNonceOptionListItem } from './SafeNonceOptionListItem';
 import { SafeNoncePendingOptionContent } from './SafeNoncePendingOptionContent';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { Text } from '@/components/Typography';
 
 interface OptionListProps {

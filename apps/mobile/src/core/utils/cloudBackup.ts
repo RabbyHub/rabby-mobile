@@ -1,11 +1,13 @@
 import { CloudStorage } from 'react-native-cloud-storage';
 import { IS_ANDROID, IS_IOS } from '../native/utils';
-import {
-  GoogleSignin,
+import type {
   SignInResponse,
-  User,
+  User} from '@react-native-google-signin/google-signin';
+import {
+  GoogleSignin
 } from '@react-native-google-signin/google-signin';
-import { appEncryptor, keyringService } from '../services/shared';
+import { appEncryptorApi } from '@/core/serviceApi/appEncryptor';
+import { isKeyringUnlockedSnapshot } from '@/core/serviceApi/keyring';
 import { APPLICATION_ID, FIREBASE_WEBCLIENT_ID } from '@/constant';
 import { getAddressFromMnemonic } from './mnemonic';
 import { getMnemonicByAddress } from '../apis/mnemonic';
@@ -61,7 +63,7 @@ export const saveMnemonicToCloud = async ({
   await makeDirIfNeeded();
 
   const data: Omit<BackupData, 'filename'> = {
-    mnemonicEncrypted: await appEncryptor.encrypt(password, mnemonic),
+    mnemonicEncrypted: await appEncryptorApi.encrypt(password, mnemonic),
     address: getAddressFromMnemonic(mnemonic, 0),
     createdAt: new Date().getTime() + '',
     version: CURRENT_VERSION,
@@ -95,7 +97,7 @@ export const decryptFiles = async ({
 
   for (const file of files) {
     try {
-      const mnemonic = await appEncryptor.decrypt(
+      const mnemonic = await appEncryptorApi.decrypt(
         password,
         file.mnemonicEncrypted,
       );
@@ -299,7 +301,7 @@ export const refreshAccessToken = async () => {
 export const checkCloudBackupExists = async (
   address: string,
 ): Promise<boolean> => {
-  if (!keyringService.isUnlocked()) {
+  if (!isKeyringUnlockedSnapshot()) {
     return false;
   }
 

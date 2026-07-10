@@ -17,25 +17,26 @@ import { useTheme2024 } from '@/hooks/theme';
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
+import type {
+  MODAL_ID} from '@/components2024/GlobalBottomSheetModal/types';
 import {
-  MODAL_ID,
   MODAL_NAMES,
 } from '@/components2024/GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { CHAINS_ENUM } from '@debank/common';
+import type { CHAINS_ENUM } from '@debank/common';
 import { Image } from 'react-native';
 import { findChainByEnum } from '@/utils/chain';
 import { add0x, ellipsisAddress } from '@/utils/address';
 import { isValidHexAddress } from '@metamask/utils';
-import { IManageToken } from '@/core/services/preference';
+import type { IManageToken } from '@/core/services/preference';
 import { useFocusEffect } from '@react-navigation/native';
 import { TokenItemSkeleton } from '@/screens/Watchlist/components/TokenItem';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { tokenItemToITokenItem } from '@/utils/token';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/store/tokens';
 import { FavoriteTag } from '@/components2024/Favorite';
 import { Text } from '@/components/Typography';
 import { SearchTokenHeader } from './SearchTokenHeader';

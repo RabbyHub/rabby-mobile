@@ -1,17 +1,19 @@
-import { Tab } from '@/core/services/browserService';
+import type { Tab } from '@/core/services/browserService';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useMemoizedFn, useMount } from 'ahooks';
 import { useTranslation } from 'react-i18next';
-import { ListRenderItem, StyleProp, View, ViewStyle } from 'react-native';
+import type { ListRenderItem} from 'react-native';
+import { StyleProp, View, ViewStyle } from 'react-native';
 import { BrowserTabCard } from './BrowserTabCard';
 // import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useRef } from 'react';
 import { BrowserTabEmpty } from './BrowserTabEmpty';
+import type {
+  BottomSheetFlatListMethods} from '@gorhom/bottom-sheet';
 import {
-  BottomSheetFlatList,
-  BottomSheetFlatListMethods,
+  BottomSheetFlatList
 } from '@gorhom/bottom-sheet';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';

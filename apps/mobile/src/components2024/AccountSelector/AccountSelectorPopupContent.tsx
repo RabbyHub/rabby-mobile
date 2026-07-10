@@ -1,9 +1,10 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { IS_ANDROID } from '@/core/native/utils';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { isSameAccount } from '@/hooks/accountsSwitcher';
 import { useMemoizedFn } from 'ahooks';
 import React, { useCallback, useEffect, useMemo } from 'react';

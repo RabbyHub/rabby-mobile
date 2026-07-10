@@ -1,11 +1,11 @@
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { DEX } from '@/constant/swap';
 import { eventBus, EVENTS } from '@/utils/events';
 import { getRpcTxReceipt } from '@/core/utils/tx';
 import { useMiniSigner } from '@/hooks/useSigner';
-import { findChain } from '@/utils/chain';
-import { Chain, CHAINS_ENUM } from '@debank/common';
-import {
+import type { findChain } from '@/utils/chain';
+import type { Chain, CHAINS_ENUM } from '@debank/common';
+import type {
   ExplainTxResponse,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -16,10 +16,11 @@ import { last, random } from 'lodash';
 import PQueue from 'p-queue';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import type {
+  QuoteProvider,
+  TDexQuoteData} from '../../Swap/hooks';
 import {
   isSwapWrapToken,
-  QuoteProvider,
-  TDexQuoteData,
   useQuoteMethods,
   useSwapSupportedDexList,
 } from '../../Swap/hooks';

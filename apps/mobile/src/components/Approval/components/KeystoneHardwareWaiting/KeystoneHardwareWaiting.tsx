@@ -1,5 +1,5 @@
-import { transactionHistoryService } from '@/core/services/shared';
-import { Account } from '@/core/services/preference';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import type { Account } from '@/core/services/preference';
 import { useApproval } from '@/hooks/useApproval';
 import { eventBus, EVENTS } from '@/utils/events';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -8,7 +8,7 @@ import { ApprovalPopupContainer } from '../Popup/ApprovalPopupContainer';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { StyleSheet, View } from 'react-native';
 import KeystoneSVG from '@/assets/icons/wallet/keystone.svg';
-import { AppColorsVariants } from '@/constant/theme';
+import type { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { stats } from '@/utils/stats';
 import {
@@ -238,7 +238,7 @@ export const KeystoneHardwareWaiting = ({
       if (!isSignText) {
         const signingTxId = approval?.data?.params?.signingTxId;
         if (signingTxId) {
-          const signingTx = await transactionHistoryService.getSigningTx(
+          const signingTx = await transactionHistoryServiceApi.getSigningTx(
             signingTxId,
           );
 

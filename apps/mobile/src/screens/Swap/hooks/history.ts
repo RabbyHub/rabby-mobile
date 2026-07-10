@@ -1,5 +1,5 @@
 import { openapi } from '@/core/request';
-import { SwapItem } from '@rabby-wallet/rabby-api/dist/types';
+import type { SwapItem } from '@rabby-wallet/rabby-api/dist/types';
 import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { uniqBy } from 'lodash';
@@ -7,13 +7,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 import { refreshIdAtom } from './atom';
 import { useInterval, useMount, useRequest } from 'ahooks';
-import { swapService, transactionHistoryService } from '@/core/services';
-import { findChain } from '@/utils/chain';
-import { TransactionGroup } from '@/core/services/transactionHistory';
-import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { swapServiceApi } from '@/core/serviceApi';
 import {
+  getTransactionHistoryRecentPendingSnapshot,
+  getTransactionHistoryRecentTxSnapshot,
+} from '@/core/serviceApi/transactionHistory';
+import { findChain } from '@/utils/chain';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import type {
   SwapTxHistoryItem,
   SendTxHistoryItem,
+  TransactionGroup,
 } from '@/core/services/transactionHistory';
 const swapTxHistoryVisibleAtom = atom(false);
 
@@ -135,7 +139,7 @@ export const useReadPendingCount = () => {
 };
 
 export const fetchLocalSwapPendingTx = (address: string) => {
-  return transactionHistoryService.getRecentPendingTxHistory(
+  return getTransactionHistoryRecentPendingSnapshot(
     address,
     'swap',
   ) as SwapTxHistoryItem;
@@ -153,7 +157,7 @@ export const fetchRefreshLocalData = (
   const address = data.address;
   const chainId = data.chainId;
   const hash = data.hash;
-  const newData = transactionHistoryService.getRecentTxHistory(
+  const newData = getTransactionHistoryRecentTxSnapshot(
     address,
     hash,
     chainId,
@@ -179,14 +183,16 @@ export const useClearSwapHistoryRedDot = () => {
     forScene: 'MakeTransactionAbout',
   });
 
-  return useCallback(() => {
+  return useCallback(async () => {
     if (!currentAccount?.address) {
       return 0;
     }
 
     setSwapHistoryRedDot(false);
-    const currentTs = swapService.getOpenSwapHistoryTs(currentAccount.address);
-    swapService.setOpenSwapHistoryTs(currentAccount.address);
+    const currentTs = await swapServiceApi.getOpenSwapHistoryTs(
+      currentAccount.address,
+    );
+    await swapServiceApi.setOpenSwapHistoryTs(currentAccount.address);
     return currentTs;
   }, [currentAccount?.address, setSwapHistoryRedDot]);
 };
@@ -218,14 +224,16 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
         ?.filter(item => item?.status === 'Pending')
         .sort((a, b) => b.create_at - a.create_at);
 
-      const openModalTs = swapService.getOpenSwapHistoryTs(account.address);
+      const openModalTs = await swapServiceApi.getOpenSwapHistoryTs(
+        account.address,
+      );
       const ts = data?.history_list
         ?.filter(item => item?.status !== 'Pending')
         .sort((a, b) => b.finished_at - a.finished_at);
       if (openModalTs) {
         setSwapHistoryRedDot(ts?.[0]?.finished_at > openModalTs / 1000);
       } else {
-        swapService.setOpenSwapHistoryTs(account.address);
+        await swapServiceApi.setOpenSwapHistoryTs(account.address);
       }
       // judge if the tx is in local storage todo
       setTxData(txData?.[0] || null);
@@ -295,12 +303,12 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
     };
   }, []);
 
-  const clearSwapHistoryRedDot = useCallback(() => {
+  const clearSwapHistoryRedDot = useCallback(async () => {
     setSwapHistoryRedDot(false);
-    const currentTs = swapService.getOpenSwapHistoryTs(
+    const currentTs = await swapServiceApi.getOpenSwapHistoryTs(
       currentAccount?.address!,
     );
-    swapService.setOpenSwapHistoryTs(currentAccount?.address!);
+    await swapServiceApi.setOpenSwapHistoryTs(currentAccount?.address!);
     return currentTs;
   }, [setSwapHistoryRedDot, currentAccount?.address]);
 

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { Alert, AppState, StyleSheet } from 'react-native';
 import { debounce, get, merge } from 'lodash';
 
-import {
+import type {
   NativeStackHeaderLeftProps,
   NativeStackNavigationOptions,
   NativeStackScreenProps,
@@ -17,10 +17,12 @@ import {
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
-import { AppRootName, RootNames, makeHeadersPresets } from '@/constant/layout';
+import type { AppRootName} from '@/constant/layout';
+import { RootNames, makeHeadersPresets } from '@/constant/layout';
 import { APP_FEATURE_SWITCH } from '@/constant';
+import type {
+  NavigationContainerRef} from '@react-navigation/native';
 import {
-  NavigationContainerRef,
   useNavigation,
 } from '@react-navigation/native';
 
@@ -39,17 +41,18 @@ import {
   useIosForceDisableAlertForSensitiveScene,
 } from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
-import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
+import type { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { zCreate } from '@/core/utils/reexports';
+import type {
+  UpdaterOrPartials} from '@/core/utils/store';
 import {
   makeAvoidParallelAsyncFunc,
-  resolveValFromUpdater,
-  UpdaterOrPartials,
+  resolveValFromUpdater
 } from '@/core/utils/store';
 import { RefLikeObject } from '@/utils/type';
 import { perfEvents } from '@/core/utils/perf';
 import { useShallow } from 'zustand/react/shallow';
-import { CollapsibleRef } from 'react-native-collapsible-tab-view';
+import type { CollapsibleRef } from 'react-native-collapsible-tab-view';
 import { autoLockEvent } from '@/core/apis/autoLock';
 import { notificationEvents } from '@/core/notifications/data';
 import {
@@ -57,11 +60,9 @@ import {
   txResultToToHistoryDisplayItem,
 } from '@/utils/transaction';
 // import { SampleNotifiedTxResult } from '@/core/notifications/sample-data';
-import {
-  keyringService,
-  preferenceService,
-  transactionHistoryService,
-} from '@/core/services';
+import { bindKeyringEvent } from '@/core/serviceApi/keyring';
+import { getPinnedTokenSnapshot } from '@/core/serviceApi/preference';
+import { getTransactionHistoryCustomTxItemMapSnapshot } from '@/core/serviceApi/transactionHistory';
 import { browserApis } from './browser/useBrowser';
 import { notificationOpenapi } from '@/core/notifications/openapi';
 import { toast, toastLoading } from '@/components2024/Toast';
@@ -556,9 +557,9 @@ const unlockUIState = {
   finishedUnlockResetNav: false,
   resetNaviOnTopOfHomeWhenUnlockRef: null as null | ResetNaviOnUIUnlockFn,
 };
-keyringService.addListener('lock', () => {
+void bindKeyringEvent('lock', () => {
   unlockUIState.finishedUnlockResetNav = false;
-});
+}).catch(console.error);
 export class UnlockUIManager {
   static triggerAutoUnlock(delay = 500) {
     const action = () => {
@@ -979,9 +980,8 @@ export function startSubscribeRemoteNotification() {
 
           hideToastRef.current();
 
-          const pinedQueue = preferenceService.getPinToken();
-          const customTxItemsMap =
-            transactionHistoryService.getCustomTxItemMap();
+          const pinedQueue = getPinnedTokenSnapshot();
+          const customTxItemsMap = getTransactionHistoryCustomTxItemMapSnapshot();
           const historyDisplayItem = txResultToToHistoryDisplayItem({
             address: parsedData.txInfo?.ownerAddress || '',
             res: txDetail,

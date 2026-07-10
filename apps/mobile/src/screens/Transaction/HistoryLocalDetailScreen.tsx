@@ -10,11 +10,12 @@ import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
-import { transactionHistoryService } from '@/core/services';
-import { TransactionGroup } from '@/core/services/transactionHistory';
-import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
+import type { KeyringAccountWithAlias} from '@/hooks/account';
+import { useMyAccounts } from '@/hooks/account';
 import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
+import type { GetNestedScreenRouteProp } from '@/navigation-type';
 import { findAccountByPriority } from '@/utils/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -56,7 +57,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
-  const fetchRefreshData = useCallback(() => {
+  const fetchRefreshData = useCallback(async () => {
     if (!isPending) {
       // has done
       return;
@@ -65,7 +66,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
     const address = data.address;
     const chainId = data.chainId;
     const nonce = data.nonce;
-    const groups = transactionHistoryService.getPendingTxsByNonce(
+    const groups = await transactionHistoryServiceApi.getPendingTxsByNonce(
       address,
       chainId,
       nonce,
@@ -96,7 +97,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
   useEffect(() => {
     if (!data.isPending) {
       const rawId = `${data.address.toLowerCase()}-${data.maxGasTx?.hash}`;
-      transactionHistoryService.clearSuccessAndFailSingleId(rawId);
+      void transactionHistoryServiceApi.clearSuccessAndFailSingleId(rawId);
     }
   }, [data]);
 

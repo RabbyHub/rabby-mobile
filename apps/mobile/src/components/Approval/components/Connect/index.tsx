@@ -1,23 +1,26 @@
-import { SIGN_PERMISSION_TYPES } from '@/constant/permission';
+import type { SIGN_PERMISSION_TYPES } from '@/constant/permission';
 import { SecurityEngineLevel } from '@/constant/security';
 import { apiSecurityEngine } from '@/core/apis';
 import { openapi } from '@/core/request';
+import { dappServiceApi } from '@/core/serviceApi/dapp';
+import { getShouldDisplayBlockedRequestApprovalSnapshot } from '@/core/serviceApi/notification';
 import {
-  dappService,
-  notificationService,
-  preferenceService,
-} from '@/core/services';
+  getFallbackAccountSnapshot,
+  getIsShowTestnetSnapshot,
+} from '@/core/serviceApi/preference';
 import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import i18n from '@/utils/i18n';
-import { Chain, CHAINS_ENUM } from '@/constant/chains';
-import { Result } from '@rabby-wallet/rabby-security-engine';
-import {
+import type { Chain} from '@/constant/chains';
+import { CHAINS_ENUM } from '@/constant/chains';
+import type { Result } from '@rabby-wallet/rabby-security-engine';
+import type {
   ContextActionData,
-  Level,
-  RuleConfig,
+  RuleConfig} from '@rabby-wallet/rabby-security-engine/dist/rules';
+import {
+  Level
 } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import clsx from 'clsx';
 import PQueue from 'p-queue';
@@ -31,7 +34,8 @@ import { SignTestnetPermission } from './SignTestnetPermission';
 import UserListDrawer from './UserListDrawer';
 import ArrowDownSVG from '@/assets/icons/approval/arrow-down-blue.svg';
 import { StyleSheet } from 'react-native';
-import { AppColors2024Variants, AppColorsVariants } from '@/constant/theme';
+import type { AppColors2024Variants} from '@/constant/theme';
+import { AppColorsVariants } from '@/constant/theme';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { Spin } from '@/components/Spin';
 import useCommonStyle from '../../hooks/useCommonStyle';
@@ -40,14 +44,14 @@ import {
   useSceneAccountInfo,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
-import { AccountSwitcherAopProps } from '@/components/AccountSwitcher/hooks';
+import type { AccountSwitcherAopProps } from '@/components/AccountSwitcher/hooks';
 import { ChainSelector } from '@/components2024/ChainSelector';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Button } from '@/components2024/Button';
 import { toast } from '@/components2024/Toast';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { AccountSelector } from '@/components2024/AccountSelector';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { ConnectSkeleton } from './ConnectSkeleton';
 import { useAccounts, useMyAccounts } from '@/hooks/account';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -128,7 +132,7 @@ ConnectProps) => {
   const { accounts } = useAccounts();
   const [selectedAccount, setSelectedAccount] = useState<
     Account | undefined | null
-  >(accounts?.[0] || preferenceService.getFallbackAccount());
+  >(accounts?.[0] || getFallbackAccountSnapshot());
   const { colors, styles, colors2024 } = useTheme2024({ getStyle });
   const [, resolveApproval, rejectApproval] = useApproval();
   const { t } = useTranslation();
@@ -351,7 +355,7 @@ ConnectProps) => {
   };
 
   const init = async () => {
-    const site = await dappService.getDapp(origin);
+    const site = await dappServiceApi.getDapp(origin);
     const _selectedAccount = getDappAccount({ dappInfo: site, accounts });
     setSelectedAccount(_selectedAccount);
     let level: 'very_low' | 'low' | 'medium' | 'high' = 'low';
@@ -405,7 +409,7 @@ ConnectProps) => {
     });
     queue.add(async () => {
       try {
-        isShowTestnet = !!preferenceService.getIsShowTestnet();
+        isShowTestnet = !!getIsShowTestnetSnapshot();
       } catch (e) {
         console.log(e);
       }
@@ -500,7 +504,7 @@ ConnectProps) => {
   const { activePopup, setData } = useCommonPopupView();
 
   React.useEffect(() => {
-    const result = notificationService.checkNeedDisplayBlockedRequestApproval();
+    const result = getShouldDisplayBlockedRequestApprovalSnapshot();
     setDisplayBlockedRequestApproval(result);
   }, []);
 

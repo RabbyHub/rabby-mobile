@@ -1,14 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Keyboard, Pressable, View, ViewStyle } from 'react-native';
+import type { ViewStyle } from 'react-native';
+import { Keyboard, Pressable, View } from 'react-native';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
 // import RcIconSearchCC from '@/assets/icons/select-chain/icon-search-cc.svg';
 import { RcNextSearchCC } from '@/assets/icons/common';
-import { CHAINS_ENUM, Chain } from '@/constant/chains';
+import type { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { useTheme2024, useGetBinaryMode } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 
-import { NetSwitchTabsKey } from '@/constant/netType';
+import type { NetSwitchTabsKey } from '@/constant/netType';
 import {
   useLoadMatteredChainBalances,
   useMatteredChainBalancesAll,
@@ -27,9 +28,10 @@ import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { NextSearchBar } from '../SearchBar';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
-import { Text, TextInput } from '@/components/Typography';
+import type { TextInput } from '@/components/Typography';
+import { Text } from '@/components/Typography';
 import { apiCustomTestnet } from '@/core/apis';
 
 let hasInitializedCustomTestnetServiceForChainSelector = false;

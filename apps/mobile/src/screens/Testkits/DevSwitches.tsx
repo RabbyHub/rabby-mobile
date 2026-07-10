@@ -51,7 +51,8 @@ import {
   WIDE_SCREEN_DEBUG_PANEL_MIN_ALLOWED_WIDTH,
   WIDE_SCREEN_DEBUG_PANEL_WIDTH,
 } from '@/hooks/appSettings';
-import { AppBottomSheetModal, SwitchToggleType } from '@/components';
+import type { SwitchToggleType } from '@/components';
+import { AppBottomSheetModal } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import {
   FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
@@ -90,14 +91,16 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { toast } from '@/components2024/Toast';
 import RNHelpers from '@/core/native/RNHelpers';
-import { keyringService, preferenceService } from '@/core/services';
+import { keyringServiceApi } from '@/core/serviceApi/keyring';
+import { dangerouslySetTokenManageSettingMapForDev } from '@/core/serviceApi/preference';
 import { makeTokenManageSettingMap } from '@/core/_mocks/preferenceMigration';
 import { getKeyring } from '@/core/apis/keyring';
-import { MockWalletConnectKeyring } from '@/core/keyring-bridge/walletconnect/mock-walletconnect-keyring';
+import type { MockWalletConnectKeyring } from '@/core/keyring-bridge/walletconnect/mock-walletconnect-keyring';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import type {
+  SharedValue} from 'react-native-reanimated';
 import {
-  SharedValue,
   useAnimatedProps,
   useAnimatedStyle,
   useFrameCallback,
@@ -1584,7 +1587,7 @@ async function importWalletConnectAddress({
     realBrandUrl,
   });
 
-  await keyringService.addNewAccount(keyring as any);
+  await keyringServiceApi.addNewAccount(keyring as any);
 }
 
 function DevMock() {
@@ -1631,8 +1634,8 @@ function DevMock() {
           title={'Mock assets data <= 0.5.4'}
           type="ghost"
           height={48}
-          onPress={() => {
-            preferenceService._dangerouslySetTokenManageSettingMap(
+          onPress={async () => {
+            await dangerouslySetTokenManageSettingMapForDev(
               makeTokenManageSettingMap(),
             );
 

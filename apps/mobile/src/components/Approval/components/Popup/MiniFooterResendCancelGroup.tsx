@@ -1,12 +1,12 @@
 import { Button } from '@/components2024/Button';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
 import { useTheme2024 } from '@/hooks/theme';
-import { RetryUpdateType } from '@/utils/errorTxRetry';
+import type { RetryUpdateType } from '@/utils/errorTxRetry';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import { SvgProps } from 'react-native-svg';
+import type { SvgProps } from 'react-native-svg';
 
 export interface Props {
   onResend: () => void;

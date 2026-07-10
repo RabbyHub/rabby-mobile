@@ -1,23 +1,21 @@
 import * as Sentry from '@sentry/react-native';
 import { toast } from '@/components2024/Toast';
-import {
-  notificationService,
-  preferenceService,
-  transactionHistoryService,
-} from '@/core/services/shared';
-import { Account } from '@/core/services/preference';
+import { notificationServiceApi } from '@/core/serviceApi/notification';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
+import type { Account } from '@/core/services/preference';
 import { useApproval } from '@/hooks/useApproval';
 import { APPROVAL_STATUS_MAP, eventBus, EVENTS } from '@/utils/events';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import type {
+  Props as ApprovalPopupContainerProps} from '../Popup/ApprovalPopupContainer';
 import {
-  ApprovalPopupContainer,
-  Props as ApprovalPopupContainerProps,
+  ApprovalPopupContainer
 } from '../Popup/ApprovalPopupContainer';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { StyleSheet, View } from 'react-native';
 import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
-import { AppColorsVariants } from '@/constant/theme';
+import type { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { stats } from '@/utils/stats';
 import {
@@ -29,10 +27,11 @@ import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
 import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 import { findChain } from '@/utils/chain';
+import type {
+  RetryUpdateType} from '@/utils/errorTxRetry';
 import {
   getTxFailedResult,
   retryTxReset,
-  RetryUpdateType,
   setRetryTxRecommendNonce,
   setRetryTxType,
   useDebugToastErrorTxRetryInfo,
@@ -168,7 +167,7 @@ export const OneKeyHardwareWaiting = ({
       }
     }
 
-    notificationService.callCurrentRequestDeferFn(true);
+    await notificationServiceApi.callCurrentRequestDeferFn(true);
     if (showToast) {
       toast.success(t('page.signFooterBar.ledger.resent'));
     }
@@ -187,7 +186,7 @@ export const OneKeyHardwareWaiting = ({
     if (!isSignText) {
       const signingTxId = approval.data.params.signingTxId;
       if (signingTxId) {
-        const signingTx = await transactionHistoryService.getSigningTx(
+        const signingTx = await transactionHistoryServiceApi.getSigningTx(
           signingTxId,
         );
 

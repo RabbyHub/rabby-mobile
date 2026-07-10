@@ -1,16 +1,17 @@
-import { Chain, CHAINS_ENUM } from '@/constant/chains';
-import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
-import { Result } from '@rabby-wallet/rabby-security-engine';
+import type { Chain} from '@/constant/chains';
+import { CHAINS_ENUM } from '@/constant/chains';
+import type { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
+import type { Result } from '@rabby-wallet/rabby-security-engine';
 import React from 'react';
 import Actions from '../Actions';
 import Loading from '../TxComponents/Loading';
 import { findChain } from '@/utils/chain';
-import {
+import type {
   ActionRequireData,
   ParsedActionData,
 } from '@rabby-wallet/rabby-action';
-import { Account } from '@/core/services/preference';
-import { MultiActionProps } from '../TypedDataActions';
+import type { Account } from '@/core/services/preference';
+import type { MultiActionProps } from '../TypedDataActions';
 
 export const TxTypeComponent = ({
   actionRequireData,

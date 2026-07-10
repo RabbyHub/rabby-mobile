@@ -98,11 +98,13 @@ export const CustomTestnetAddTokenSheet = memo(
               decimals: token.decimals,
             };
 
+            const alreadyAdded =
+              await apiCustomTestnet.isAddedCustomTestnetToken(tokenBase);
+
             setLookupState({
               status: 'found',
               token: tokenBase,
-              alreadyAdded:
-                apiCustomTestnet.isAddedCustomTestnetToken(tokenBase),
+              alreadyAdded,
             });
           } catch (error) {
             if (lookupSeqRef.current !== seq) {

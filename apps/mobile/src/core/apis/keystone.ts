@@ -1,8 +1,8 @@
 import { getKeyring } from './keyring';
-import { KeystoneKeyring } from '@rabby-wallet/eth-keyring-keystone';
+import type { KeystoneKeyring } from '@rabby-wallet/eth-keyring-keystone';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { keyringService, preferenceService } from '../services/shared';
-import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
+import { keyringServiceApi, preferenceServiceApi } from '@/core/serviceApi';
+import type { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import {
   AcquireMemeStoreData,
   MemStoreDataReady,
@@ -33,10 +33,10 @@ export async function importAddress(index: number) {
   );
 
   keyring.setAccountToUnlock(index);
-  const res = ((await keyringService.addNewAccount(keyring as any))[0] as any)
+  const res = ((await keyringServiceApi.addNewAccount(keyring as any))[0] as any)
     .address;
 
-  preferenceService.initCurrentAccount();
+  await preferenceServiceApi.initCurrentAccount();
 
   return res;
 }
@@ -114,7 +114,7 @@ export async function removeAddressAndForgetDevice() {
   await Promise.all(
     accounts.map(
       async account =>
-        await keyringService.removeAccount(
+        await keyringServiceApi.removeAccount(
           account.address,
           KEYRING_CLASS.HARDWARE.KEYSTONE,
           undefined,

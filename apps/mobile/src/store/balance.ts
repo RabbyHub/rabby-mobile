@@ -1,6 +1,9 @@
 import { openapi } from '@/core/request';
-import { keyringService } from '@/core/services';
-import { makeJsEEClass } from '@/core/services/_utils';
+import {
+  bindKeyringEvent,
+  keyringServiceApi,
+} from '@/core/serviceApi/keyring';
+import { makeJsEEClass } from '@/core/utils/makeJsEEClass';
 import { ORM_TABLE_NAMES } from '@/databases/constant';
 import { BalanceEntity } from '@/databases/entities/balance';
 import type { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
@@ -9,24 +12,27 @@ import { HOME_REFRESH_INTERVAL } from '@/constant/home';
 import { appStorage } from '@/core/storage/mmkv';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import type {
+  KeyringTypeName} from '@rabby-wallet/keyring-utils';
 import {
-  CORE_KEYRING_TYPES,
-  KeyringTypeName,
+  CORE_KEYRING_TYPES
 } from '@rabby-wallet/keyring-utils';
-import { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
+import type { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
 import PQueue from 'p-queue';
 import { useCallback, useMemo, useRef } from 'react';
 import type { Account } from '@/types/account';
 import { perfEvents } from '@/core/utils/perf';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import {
-  ResourceBaseStore,
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater } from '@/core/utils/store';
+import type {
   ResourceFlowState,
-  ResourceSnapshot,
+  ResourceSnapshot} from './_resourceBase';
+import {
+  ResourceBaseStore
 } from './_resourceBase';
-import { ResourceLocalTarget } from './_resourceFlowDebug';
+import type { ResourceLocalTarget } from './_resourceFlowDebug';
 import { ensureAppChainStoreInitialized, useAppChainStore } from './appchain';
 
 export interface CURVE_STEP_ITEM {
@@ -538,7 +544,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     const lowerAddresses = Array.from(
       new Set(top10Addresses.map(item => item.toLowerCase())),
     );
-    const addresses = await keyringService.getAllAddresses();
+    const addresses = await keyringServiceApi.getAllAddresses();
     const coreAddressSet = buildCoreAddressSet(addresses as Account[]);
 
     const fetchList: Array<{ address: string; isCore: boolean }> = [];
@@ -741,7 +747,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
   ) => {
     const lowerAddress = address.toLowerCase();
 
-    const addresses = await keyringService.getAllAddresses();
+    const addresses = await keyringServiceApi.getAllAddresses();
     const isCore = addresses
       .filter(item => isSameAddress(item.address, address))
       .some(item => CORE_KEYRING_TYPES.includes(item.type as any));
@@ -1394,21 +1400,22 @@ export function startProcessAddressBalanceEvents() {
   }
   hasStartedAddressBalanceLifecycle = true;
 
-  keyringService.on('removedAccount', async account => {
-    const addresses = await keyringService.getAllAddresses();
+  void bindKeyringEvent('removedAccount', async account => {
+    const removedAccount = account as Account;
+    const addresses = await keyringServiceApi.getAllAddresses();
     const stillExists = addresses.some(item => {
-      return isSameAddress(item.address, account.address);
+      return isSameAddress(item.address, removedAccount.address);
     });
 
     if (stillExists) {
       return;
     }
 
-    addressBalanceStore.removeAddressBalance(account.address, {
+    addressBalanceStore.removeAddressBalance(removedAccount.address, {
       source: 'keyringService.removedAccount',
       reason: 'address_deleted',
     });
-  });
+  }).catch(console.error);
 
   perfEvents.subscribe('POST_UNLOCK_UI_READY', async () => {
     syncBalanceAccountStore();

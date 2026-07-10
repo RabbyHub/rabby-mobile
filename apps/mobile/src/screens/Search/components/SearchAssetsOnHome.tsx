@@ -8,13 +8,14 @@ import RcIconStarFull from '@/assets/icons/dapp/icon-star-mini-full.svg';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type {
+  ViewProps} from 'react-native';
 import {
   FlatList,
   FlatListProps,
   Keyboard,
   Pressable,
-  View,
-  ViewProps,
+  View
 } from 'react-native';
 import {
   TouchableOpacity,
@@ -23,30 +24,34 @@ import {
 
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
+import type { AbstractPortfolioToken } from '@/screens/Home/types';
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
+import type {
+  MODAL_ID} from '@/components2024/GlobalBottomSheetModal/types';
 import {
-  MODAL_ID,
   MODAL_NAMES,
 } from '@/components2024/GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { CHAINS_ENUM } from '@debank/common';
+import type { CHAINS_ENUM } from '@debank/common';
 import { Image } from 'react-native';
 import { findChainByEnum } from '@/utils/chain';
 import { add0x, ellipsisAddress } from '@/utils/address';
 import { isValidHexAddress } from '@metamask/utils';
-import { IManageToken } from '@/core/services/preference';
-import { preferenceService } from '@/core/services';
+import type { IManageToken } from '@/core/services/preference';
+import {
+  pinUserToken,
+  removePinnedUserToken,
+} from '@/core/serviceApi/preference';
 import { toast } from '@/components2024/Toast';
 import { useFocusEffect } from '@react-navigation/native';
 import { TokenItemSkeleton } from '@/screens/Watchlist/components/TokenItem';
 import { tokenItemToITokenItem } from '@/utils/token';
-import { ITokenItem } from '@/store/tokens';
+import type { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
 import { isCustomTestnetFavoriteChain } from '@/utils/favoriteToken';
 import { getDisplayUserTokenSettings } from '@/hooks/useTokenSettings';
@@ -101,23 +106,25 @@ export const SearchAssetsOnHome: React.FC<Props> = ({
 
   const handlePressFavorite = useCallback(
     (tokenId: string, chainId: string) => {
-      if (
-        watchlistTokenList.some(
-          t => t.chainId === chainId && t.tokenId === tokenId,
-        )
-      ) {
-        preferenceService.removePinedToken({
-          chainId: chainId,
-          tokenId: tokenId,
-        });
-        toast.success(t('page.watchlist.toast.remove'));
-      } else {
-        preferenceService.pinToken({
-          chainId: chainId,
-          tokenId: tokenId,
-        });
-      }
-      fetchPinedTokenList();
+      void (async () => {
+        if (
+          watchlistTokenList.some(
+            item => item.chainId === chainId && item.tokenId === tokenId,
+          )
+        ) {
+          await removePinnedUserToken({
+            chainId: chainId,
+            tokenId: tokenId,
+          });
+          toast.success(t('page.watchlist.toast.remove'));
+        } else {
+          await pinUserToken({
+            chainId: chainId,
+            tokenId: tokenId,
+          });
+        }
+        fetchPinedTokenList();
+      })().catch(console.error);
     },
     [fetchPinedTokenList, t, watchlistTokenList],
   );

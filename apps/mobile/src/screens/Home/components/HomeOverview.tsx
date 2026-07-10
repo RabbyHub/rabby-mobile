@@ -29,13 +29,14 @@ import {
 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import type {
+  ScrollView,
+  ViewProps} from 'react-native';
 import {
   Dimensions,
-  ScrollView,
   StyleSheet,
   useWindowDimensions,
-  View,
-  ViewProps,
+  View
 } from 'react-native';
 
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -54,7 +55,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
-import { currencyService } from '@/core/services';
+import { currencyServiceApi } from '@/core/serviceApi/currency';
 import { storeApiAccounts, useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
 import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
@@ -115,13 +116,15 @@ import {
   useHomeHistoryCount,
   useHomePendingTxCount,
 } from '../hooks/history';
+import type {
+  TabsScrollViewProps} from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
 import {
-  TabsScrollView,
-  TabsScrollViewProps,
+  TabsScrollView
 } from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
+import type {
+  RNGHScrollView} from '@/components/customized/reexports';
 import {
-  RNGHRefreshControl,
-  RNGHScrollView,
+  RNGHRefreshControl
 } from '@/components/customized/reexports';
 import {
   getPullThreshold,
@@ -131,11 +134,12 @@ import {
   THRESHOLD_PERCENT,
 } from '../hooks/useHomeDrawerAnimate';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
-import { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
+import type { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
 import { triggerImpact } from '@/utils/common';
+import type {
+  WorkletFunction} from 'react-native-reanimated/lib/typescript/commonTypes';
 import {
-  SharedValue,
-  WorkletFunction,
+  SharedValue
 } from 'react-native-reanimated/lib/typescript/commonTypes';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import {
@@ -153,9 +157,10 @@ import { getTop10MyAccounts } from '@/core/apis/account';
 import { isEqual } from 'lodash';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
 import type { Account } from '@/types/account';
+import type {
+  OnRefreshOnJs} from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import {
   isOverPulldownRefreshThreshold,
-  OnRefreshOnJs,
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
   setPulldownRefreshStage,
@@ -985,7 +990,7 @@ export const HomeOverview = React.memo(() => {
     const forceRefresh = true;
     const { top10Addresses } = await getTop10MyAccounts();
     syncTop10History(top10Addresses, forceRefresh);
-    currencyService.syncCurrencyList(forceRefresh);
+    void currencyServiceApi.syncCurrencyList(forceRefresh);
 
     // refresh token/protocol list
     useTokenList.getState().batchGetTokenList(top10Addresses, forceRefresh);

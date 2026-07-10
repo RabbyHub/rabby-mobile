@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { View, Pressable, TouchableOpacity } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
-import { PopupDetailProps } from '../../type';
+import type { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { TokenAmountInput } from './TokenAmountInput';
 import {
@@ -21,14 +21,15 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { buildRepayTx, optimizedPath } from '../../poolService';
+import type {
+  DirectSignBtnMethods} from '@/components2024/DirectSignBtn';
 import {
-  DirectSignBtn,
-  DirectSignBtnMethods,
+  DirectSignBtn
 } from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { toast } from '@/components2024/Toast';
 import RepayActionOverView from './RepayActionOverView';
 import { parseUnits } from 'viem';
@@ -43,7 +44,7 @@ import { useMiniSigner } from '@/hooks/useSigner';
 import { debounce, last, noop } from 'lodash';
 import { formatTokenAmount } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
-import { transactionHistoryService } from '@/core/services/shared';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
@@ -75,7 +76,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { IAvailableRepayToken } from '../RepayTokenModal';
+import type { IAvailableRepayToken } from '../RepayTokenModal';
 import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
@@ -528,7 +529,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         }
         const txId = last(results);
         if (txId && txsForMiniApproval[0]?.chainId) {
-          transactionHistoryService.setCustomTxItem(
+          void transactionHistoryServiceApi.setCustomTxItem(
             currentAccount.address,
             txsForMiniApproval[0].chainId,
             txId,

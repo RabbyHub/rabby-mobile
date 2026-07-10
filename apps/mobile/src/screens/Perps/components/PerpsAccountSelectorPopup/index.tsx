@@ -3,9 +3,10 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useAccountSelectorList } from '@/components2024/AccountSelector/useAccountSelectorList';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { apisPerps } from '@/core/apis';
-import { Account } from '@/core/services/preference';
+import type { Account } from '@/core/services/preference';
+import type {
+  KeyringAccountWithAlias} from '@/hooks/account';
 import {
-  KeyringAccountWithAlias,
   useAccounts,
   usePinAddresses,
 } from '@/hooks/account';

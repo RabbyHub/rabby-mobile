@@ -6,10 +6,11 @@ import React, {
   useImperativeHandle,
 } from 'react';
 import type { Ref } from 'react';
+import type {
+  ViewStyle} from 'react-native';
 import {
   View,
   Platform,
-  ViewStyle,
   Image,
   Dimensions,
   ActivityIndicator,
@@ -19,18 +20,19 @@ import { last } from 'lodash';
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDevOnlyStyle } from '@/utils/styles';
 import { RcIconCopyRegularCC, RcIconJumpCC } from '@/assets/icons/common';
-import {
-  BottomSheetFlatList,
+import type {
   BottomSheetFlatListMethods,
-  BottomSheetProps,
-} from '@gorhom/bottom-sheet';
+  BottomSheetProps} from '@gorhom/bottom-sheet';
 import {
+  BottomSheetFlatList
+} from '@gorhom/bottom-sheet';
+import type {
   TokenItem,
   TxDisplayItem,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 // import { AbstractPortfolioToken } from '@/screens/home/types';
 import { useInfiniteScroll, useMemoizedFn } from 'ahooks';
 import { HistoryItem } from '@/components/TokenDetailPopup/HistoryItem';
@@ -40,9 +42,10 @@ import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHan
 import { SMALL_TOKEN_ID, abstractTokenToTokenItem } from '@/utils/token';
 import { AppBottomSheetModal, AssetAvatar, Button, Tip } from '@/components';
 import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';
+import type {
+  CopyAddressIconType} from '@/components/AddressViewer/CopyAddress';
 import {
-  CopyAddressIcon,
-  CopyAddressIconType,
+  CopyAddressIcon
 } from '@/components/AddressViewer/CopyAddress';
 import { findChain, findChainByServerID, getChain } from '@/utils/chain';
 import { getTokenSymbol } from '@/utils/token';
@@ -55,7 +58,7 @@ import {
   SkeletonTokenDetailHeader,
 } from './Skeleton';
 import { NotFoundHolder } from '@/components/EmptyHolder/NotFound';
-import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
+import type { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
@@ -66,8 +69,11 @@ import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { TOKEN_DETAIL_HISTORY_SIZES } from './layout';
 import AutoLockView from '../AutoLockView';
 import { BlockedButton } from './BlockedButton';
-import { Account, Token } from '@/core/services/preference';
-import { preferenceService } from '@/core/services';
+import type { Account, Token } from '@/core/services/preference';
+import {
+  getBlockedToken,
+  getCustomizedToken,
+} from '@/core/serviceApi/preference';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useManageTokenList } from '@/screens/Home/hooks/useManageToken';
 import { useManageTestnetTokenList } from '@/screens/Home/hooks/useManageTestnetToken';
@@ -76,7 +82,7 @@ import { apiCustomTestnet } from '@/core/apis';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
+import type { AbstractPortfolioToken } from '@/screens/Home/types';
 import { Text } from '@/components/Typography';
 
 const PAGE_COUNT = 10;
@@ -567,9 +573,9 @@ export const BottomSheetModalTokenDetail = ({
     } else {
       let list: Token[] = [];
       if (token.is_core) {
-        list = await preferenceService.getBlockedToken();
+        list = await getBlockedToken();
       } else {
-        list = await preferenceService.getCustomizedToken();
+        list = await getCustomizedToken();
       }
 
       const isAdded = list.some(

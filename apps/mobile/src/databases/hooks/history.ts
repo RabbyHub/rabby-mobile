@@ -1,7 +1,7 @@
 import { syncRemoteHistory } from '../sync/assets';
 import { HistoryItemEntity } from '../entities/historyItem';
 import { openapi } from '@/core/request';
-import { transactionHistoryService } from '@/core/services';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import {
   historyTimeStore,
   setHistoryLoading,
@@ -9,7 +9,7 @@ import {
 } from '@/hooks/historyTokenDict';
 import PQueue from 'p-queue';
 import { prepareAppDataSource } from '../imports';
-import { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
+import type { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
 
 const USE_REALTIME_API_DURATION = 24 * 5 * 60 * 60 * 1000; // use async history api if user not opened app in 5 days
 
@@ -27,8 +27,8 @@ const isSyncingRef = {
   current: false,
 };
 
-const getIsNeedSyncData = (address: string) => {
-  if (transactionHistoryService.getIsNeedFetchTxHistory(address)) {
+const getIsNeedSyncData = async (address: string) => {
+  if (await transactionHistoryServiceApi.getIsNeedFetchTxHistory(address)) {
     // some tx done need to update
     console.debug('🔍syncTop10History some tx done so isNeedSyncData');
     return true;

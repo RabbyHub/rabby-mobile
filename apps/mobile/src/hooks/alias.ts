@@ -1,10 +1,13 @@
-import { contactService } from '@/core/services';
+import {
+  contactServiceApi,
+  getContactAliasSnapshot,
+} from '@/core/serviceApi/contact';
 import { useCallback, useEffect, useState } from 'react';
 import { useAccounts } from './account';
 import { apiContact } from '@/core/apis';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { perfEvents } from '@/core/utils/perf';
-import { AddressAliasItem } from '@rabby-wallet/service-address';
+import type { AddressAliasItem } from '@rabby-wallet/service-address';
 import { useShallow } from 'zustand/react/shallow';
 import { addressUtils } from '@rabby-wallet/base-utils';
 
@@ -14,7 +17,7 @@ export const useAlias = (address?: string) => {
   const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
   useEffect(() => {
     if (address) {
-      setName(contactService.getAliasByAddress(address)?.alias || '');
+      setName(getContactAliasSnapshot(address)?.alias || '');
     } else {
       setName('');
     }
@@ -26,7 +29,7 @@ export const useAlias = (address?: string) => {
         return;
       }
       setName(alias);
-      contactService.updateAlias({ address, name: alias });
+      void contactServiceApi.updateAlias({ address, name: alias });
       fetchAccounts();
     },
     [address, fetchAccounts],
@@ -106,7 +109,7 @@ export function useAlias2(
   const fetchAlias = useCallback(() => {
     if (!address) return;
 
-    const aliasItem = contactService.getAliasByAddress(address, {
+    const aliasItem = getContactAliasSnapshot(address, {
       keepEmptyIfNotFound: false,
     });
     if (aliasItem) setName(address, aliasItem);
@@ -122,7 +125,7 @@ export function useAlias2(
 
   const updateAlias = useCallback(
     (alias: string) => {
-      contactService.updateAlias({ address, name: alias });
+      void contactServiceApi.updateAlias({ address, name: alias });
       if (FETCH_AFTER_UPDATE) {
         fetchAlias();
       }

@@ -1,7 +1,7 @@
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { fromHex, isHex } from 'viem';
 import type { Account } from '@/types/account';
-import { keyringService } from '../services/shared';
+import { getKeyringsByTypeSnapshot } from '@/core/serviceApi';
 
 const AUTO_CONNECT_SILENTLY_ORIGINS = new Set<string>([
   'https://polymarket.com',
@@ -80,7 +80,9 @@ export const shouldAutoPersonalSign = ({
   }
 
   if (account.brandName === KEYRING_CLASS.MNEMONIC) {
-    const currentKeyring = keyringService.keyrings.find(item => {
+    const currentKeyring = getKeyringsByTypeSnapshot(
+      KEYRING_CLASS.MNEMONIC,
+    ).find(item => {
       return (
         item.type === KEYRING_CLASS.MNEMONIC &&
         item.accounts.includes(account.address)

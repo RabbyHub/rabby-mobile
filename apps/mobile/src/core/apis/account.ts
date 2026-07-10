@@ -12,7 +12,14 @@ import * as Sentry from '@sentry/react-native';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 
-import { contactService, keyringService, preferenceService } from '../services';
+import {
+  getContactAliasMapSnapshot,
+  getContactAliasSnapshot,
+} from '../serviceApi/contact';
+import {
+  getPinnedAddressSnapshot,
+  keyringServiceApi,
+} from '../serviceApi';
 import addressBalanceStore from '@/store/balance';
 
 import { getAddressCacheBalance } from './balance';
@@ -27,7 +34,7 @@ import type {
 import { makeAvoidParallelAsyncFunc } from '../utils/concurrency';
 
 import BigNumber from 'bignumber.js';
-import { makeJsEEClass } from '@/core/services/_utils';
+import { makeJsEEClass } from '@/core/utils/makeJsEEClass';
 import { logger } from '@/utils/logger';
 import { isNonProductionDiagnosticsEnabled } from '../utils/diagnosticEnv';
 import { markStartupPerf } from '../utils/startupPerfMarks';
@@ -64,7 +71,7 @@ export async function hasVisibleAccounts() {
 
   try {
     const restAccountsCount =
-      await keyringService.getCountOfAccountsInKeyring();
+      await keyringServiceApi.getCountOfAccountsInKeyring();
 
     traceAndroidUnlockAccountPerf('has_visible_accounts_end', {
       elapsedMs: Date.now() - startedAt,
@@ -82,7 +89,7 @@ export async function hasVisibleAccounts() {
 }
 
 async function getAllVisibleAccounts(): Promise<DisplayedKeyring[]> {
-  const typedAccounts = await keyringService.getAllTypedVisibleAccounts();
+  const typedAccounts = await keyringServiceApi.getAllTypedVisibleAccounts();
 
   return typedAccounts.map(account => ({
     ...account,
@@ -93,7 +100,7 @@ async function getAllVisibleAccounts(): Promise<DisplayedKeyring[]> {
 export async function getAllAccountsToDisplay() {
   const [displayedKeyrings, allAliasNames] = await Promise.all([
     getAllVisibleAccounts(),
-    contactService.getAliasByMap(),
+    getContactAliasMapSnapshot(),
   ]);
 
   const result = await Promise.all(
@@ -188,7 +195,7 @@ async function fetchAllAccountsProcess() {
 
   try {
     const keyringStartedAt = Date.now();
-    const visibleAccounts = await keyringService.getAllVisibleAccountsArray();
+    const visibleAccounts = await keyringServiceApi.getAllVisibleAccountsArray();
     markStartupPerf('account', 'keyring_visible_accounts_end', {
       elapsedMs: Date.now() - keyringStartedAt,
       count: visibleAccounts.length,
@@ -219,8 +226,8 @@ async function fetchAllAccountsProcess() {
 
     const aliasStartedAt = Date.now();
     await Promise.allSettled(
-      nextAccounts.map(async (account, idx) => {
-        const aliasName = contactService.getAliasByAddress(account.address);
+      nextAccounts.map((account, idx) => {
+        const aliasName = getContactAliasSnapshot(account.address);
         nextAccounts[idx] = {
           ...account,
           aliasName: aliasName?.alias || '',
@@ -429,7 +436,7 @@ export async function getAccountList(options?: {
   let sortedAccounts = accounts;
 
   if (sortBy.includes('highlight')) {
-    const pinAddresses = preferenceService.getPinAddresses();
+    const pinAddresses = getPinnedAddressSnapshot();
     sortedAccounts = sortAccountList(accounts, {
       highlightedAddresses: pinAddresses,
     });

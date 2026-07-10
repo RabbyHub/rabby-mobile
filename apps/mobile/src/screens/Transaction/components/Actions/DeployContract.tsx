@@ -1,5 +1,5 @@
-import { TransactionGroup } from '@/core/services/transactionHistory';
-import { Account } from '@/core/services/preference';
+import type { TransactionGroup } from '@/core/services/transactionHistory';
+import type { Account } from '@/core/services/preference';
 import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { findChain } from '@/utils/chain';
