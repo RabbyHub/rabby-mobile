@@ -26,6 +26,12 @@ type StoreInitializerState = {
   promise: Promise<void> | null;
 };
 
+export type ReadableAccountHeavyStoreTarget =
+  | 'token'
+  | 'nft'
+  | 'protocol'
+  | 'all';
+
 const storeInitializers = new Map<string, StoreInitializerRegistration>();
 const storeInitializerStates = new Map<string, StoreInitializerState>();
 
@@ -155,6 +161,26 @@ export async function startReadableAccountHeavyStoreInitializers() {
     ['nftListStore.initStore'],
     ['protocolListStore.initStore'],
   ]);
+}
+
+export async function startReadableAccountHeavyStoreInitializer(
+  target: ReadableAccountHeavyStoreTarget,
+) {
+  if (target === 'all') {
+    await startReadableAccountHeavyStoreInitializers();
+    return;
+  }
+
+  const targetToInitializerId: Record<
+    Exclude<ReadableAccountHeavyStoreTarget, 'all'>,
+    string
+  > = {
+    token: 'tokenListStore.initStore',
+    nft: 'nftListStore.initStore',
+    protocol: 'protocolListStore.initStore',
+  };
+
+  await ensureStoreInitializer(targetToInitializerId[target]);
 }
 
 export { ensureStoreInitializer };

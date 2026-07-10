@@ -1,30 +1,28 @@
 import { runStartupDiagnosticTask } from './core/utils/startupDiagnostics';
-import { startReadableAccountHeavyStoreInitializers } from './store/initializers';
+import { startReadableAccountHeavyStoreInitializer } from './store/initializers';
+import type { ReadableAccountHeavyStoreTarget } from './store/initializers';
 
-async function initReadableAccountStores() {
-  return runStartupDiagnosticTask('initReadableAccountStores', {}, async () => {
-    console.time('initReadableAccountStores');
-    try {
-      await startReadableAccountHeavyStoreInitializers();
-    } finally {
-      console.timeEnd('initReadableAccountStores');
-    }
-  });
-}
+export type ReadableAccountStoreWarmupTarget =
+  ReadableAccountHeavyStoreTarget;
 
-const initReadableAccountStoresStateRef = {
-  promise: null as Promise<void> | null,
-};
-
-export async function startInitReadableAccountStores() {
-  if (initReadableAccountStoresStateRef.promise) {
-    return initReadableAccountStoresStateRef.promise;
-  }
-
-  const promise = initReadableAccountStores().catch(error => {
-    initReadableAccountStoresStateRef.promise = null;
-    throw error;
-  });
-  initReadableAccountStoresStateRef.promise = promise;
-  await promise;
+export async function startInitReadableAccountStores(
+  target: ReadableAccountStoreWarmupTarget = 'all',
+  reason = 'unknown',
+) {
+  return runStartupDiagnosticTask(
+    `initReadableAccountStores.${target}`,
+    {
+      target,
+      reason,
+    },
+    async () => {
+      const label = `initReadableAccountStores.${target}`;
+      console.time(label);
+      try {
+        await startReadableAccountHeavyStoreInitializer(target);
+      } finally {
+        console.timeEnd(label);
+      }
+    },
+  );
 }

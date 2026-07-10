@@ -149,6 +149,18 @@ export const STARTUP_TASKS = {
     fallbackMs: 8000,
     budgetMs: 200,
   }),
+  readableAccountStoresIdleWarmup: defineStartupTask({
+    label: 'readableAccountStores.idleWarmup',
+    owner: 'home-assets',
+    reason:
+      'warm heavy readable account stores only after Home has been usable for a while',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    delayMs: 12000,
+    fallbackMs: 20000,
+    idleTimeoutMs: 10000,
+    budgetMs: 450,
+  }),
 } as const;
 
 export type StartupTaskManifest = typeof STARTUP_TASKS;

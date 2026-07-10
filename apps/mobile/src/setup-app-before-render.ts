@@ -1,4 +1,5 @@
 import { traceAndroidInstant } from './core/utils/androidTrace';
+import type { ReadableAccountStoreWarmupTarget } from './setup-readable-account-stores';
 
 type SetupBeforeRenderRuntime =
   typeof import('./setup-app-before-render.runtime');
@@ -169,8 +170,11 @@ export async function startReadableAccountBootstrapWarmups() {
   ).startReadableAccountBootstrapWarmups();
 }
 
-export async function startInitReadableAccountStores() {
+export async function startInitReadableAccountStores(
+  target: ReadableAccountStoreWarmupTarget = 'all',
+  reason = 'unknown',
+) {
   return (
     await loadReadableAccountStoresRuntime('start_init_readable_account_stores')
-  ).startInitReadableAccountStores();
+  ).startInitReadableAccountStores(target, reason);
 }

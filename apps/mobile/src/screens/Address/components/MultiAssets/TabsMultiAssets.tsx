@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { View } from 'react-native';
+import { InteractionManager, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -32,6 +32,9 @@ import { MultiAssetsContainer } from '@/components/customized/react-native-colla
 export { HomeTabName as TabName } from '@/hooks/navigation';
 
 const homeTabScrollerRef = apisHomeTabIndex.homeTabScrollerRef;
+type ReadableAccountStoreWarmupTarget = 'token' | 'nft' | 'protocol';
+const scheduledReadableAccountStoreWarmupTargets =
+  new Set<ReadableAccountStoreWarmupTarget>();
 
 runIIFEFunc(() => {
   perfEvents.subscribe('NAV_BACK_ON_HOME', () => {
@@ -45,8 +48,48 @@ runIIFEFunc(() => {
   });
 }, STARTUP_TASKS.homeTabBackListener);
 
+function getReadableAccountStoreWarmupTargetByIndex(
+  idx: number,
+): ReadableAccountStoreWarmupTarget | null {
+  if (idx === 1) {
+    return 'token';
+  }
+  if (idx === 2) {
+    return 'protocol';
+  }
+  if (idx === 3) {
+    return 'nft';
+  }
+  return null;
+}
+
+function scheduleReadableAccountStoreWarmupForTab(idx: number) {
+  const target = getReadableAccountStoreWarmupTargetByIndex(idx);
+  if (!target || scheduledReadableAccountStoreWarmupTargets.has(target)) {
+    return;
+  }
+
+  scheduledReadableAccountStoreWarmupTargets.add(target);
+  InteractionManager.runAfterInteractions(() => {
+    setTimeout(() => {
+      import('@/setup-app-before-render')
+        .then(({ startInitReadableAccountStores }) =>
+          startInitReadableAccountStores(target, `home_tab_${target}`),
+        )
+        .catch(error => {
+          scheduledReadableAccountStoreWarmupTargets.delete(target);
+          console.error(
+            `scheduleReadableAccountStoreWarmupForTab::${target}::error`,
+            error,
+          );
+        });
+    }, 80);
+  });
+}
+
 const onIndexChange = (idx: number) => {
   apisHomeTabIndex.setTabIndex(idx);
+  scheduleReadableAccountStoreWarmupForTab(idx);
 };
 
 export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {

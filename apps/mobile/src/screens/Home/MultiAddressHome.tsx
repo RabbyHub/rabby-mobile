@@ -5,7 +5,7 @@ import { autoLoginGasAccountIfNeeded } from '@/utils/autoLoginGasAccount';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect } from 'react';
-import { AppState, InteractionManager, View } from 'react-native';
+import { AppState, View } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import * as apisAccount from '@/core/apis/account';
@@ -34,22 +34,31 @@ import { TmpHomeRefresher } from './components/TmpHomeRefresher';
 import { storeApiGasAccount } from '../GasAccount/hooks/atom';
 import { useHomePortfolioStore } from './hooks/useHomePortfolioSummary';
 import { storeApiAccounts } from '@/hooks/account';
-import { startInitReadableAccountStores } from '@/setup-app-before-render';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
+import { scheduleStartupTask } from '@/core/utils/startupScheduler';
 
-let hasStartedInitReadableAccountStoresAfterHomeReady = false;
+let hasStartedInitReadableAccountStoresIdleWarmup = false;
 
-async function startInitReadableAccountStoresAfterHomeReady() {
-  if (hasStartedInitReadableAccountStoresAfterHomeReady) {
+async function startInitReadableAccountStoresIdleWarmup() {
+  if (hasStartedInitReadableAccountStoresIdleWarmup) {
     return;
   }
 
   const accounts = await storeApiAccounts.fetchAccounts();
-  if (!accounts.length || hasStartedInitReadableAccountStoresAfterHomeReady) {
+  if (!accounts.length || hasStartedInitReadableAccountStoresIdleWarmup) {
     return;
   }
 
-  hasStartedInitReadableAccountStoresAfterHomeReady = true;
-  await startInitReadableAccountStores();
+  hasStartedInitReadableAccountStoresIdleWarmup = true;
+  try {
+    const { startInitReadableAccountStores } = await import(
+      '@/setup-app-before-render'
+    );
+    await startInitReadableAccountStores('all', 'home_idle_fallback');
+  } catch (error) {
+    hasStartedInitReadableAccountStoresIdleWarmup = false;
+    throw error;
+  }
 }
 
 const detectHasAccounts = async () => {
@@ -92,28 +101,21 @@ function HomeReadableAccountStoresBootstrap() {
       return;
     }
 
-    let disposed = false;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    const interactionHandle = InteractionManager.runAfterInteractions(() => {
-      timeoutId = setTimeout(() => {
-        if (disposed) {
-          return;
-        }
-
-        startInitReadableAccountStoresAfterHomeReady().catch(error => {
+    const handle = scheduleStartupTask(
+      () =>
+        startInitReadableAccountStoresIdleWarmup().catch(error => {
           console.error(
-            'startInitReadableAccountStoresAfterHomeReady::error',
+            'startInitReadableAccountStoresIdleWarmup::error',
             error,
           );
-        });
-      }, 120);
-    });
+          throw error;
+        }),
+      STARTUP_TASKS.readableAccountStoresIdleWarmup,
+    );
 
     return () => {
-      disposed = true;
-      interactionHandle.cancel?.();
-      if (timeoutId) {
-        clearTimeout(timeoutId);
+      if (handle && typeof handle === 'object' && 'cancel' in handle) {
+        handle.cancel();
       }
     };
   }, [homePostStartupReady]);
