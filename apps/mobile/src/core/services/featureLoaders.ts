@@ -1,7 +1,7 @@
 import { appStorage } from '../storage/mmkv';
 import { traceAndroidInstant } from '../utils/androidTrace';
-import { keyringService } from './bootstrap';
 import {
+  getRegisteredService,
   isCoreServiceRegistered,
   registerService,
   type CoreServiceName,
@@ -107,14 +107,24 @@ export function loadOfflineChainService() {
 export function loadPerpsService() {
   return loadFeatureService('perpsService', async () => {
     const { PerpsService } = await import('./perpsService');
+    const getKeyringService = () => {
+      const service = getRegisteredService('keyringService');
+      if (!service) {
+        throw new Error('keyringService is not ready');
+      }
+      return service;
+    };
+
     registerService(
       'perpsService',
       new PerpsService({
         storageAdapter: appStorage,
         keyringCrypto: {
-          decryptWithPassword: value => keyringService.decryptWithPassword(value),
-          encryptWithPassword: value => keyringService.encryptWithPassword(value),
-          isUnlocked: () => keyringService.isUnlocked(),
+          decryptWithPassword: value =>
+            getKeyringService().decryptWithPassword(value),
+          encryptWithPassword: value =>
+            getKeyringService().encryptWithPassword(value),
+          isUnlocked: () => getKeyringService().isUnlocked(),
         },
       }),
     );

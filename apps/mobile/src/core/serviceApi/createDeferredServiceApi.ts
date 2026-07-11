@@ -21,23 +21,7 @@ export type DeferredServiceApi<TService extends object> = {
   ) => Promise<MethodReturn<TService, TMethod>>;
 };
 
-let legacyCoreServicesLoadPromise: Promise<void> | null = null;
 const featureCoreServiceLoadPromiseMap = new Map<string, Promise<void>>();
-
-function loadLegacyCoreServices() {
-  if (legacyCoreServicesLoadPromise) {
-    return legacyCoreServicesLoadPromise;
-  }
-
-  legacyCoreServicesLoadPromise = import('@/core/services')
-    .then(() => undefined)
-    .catch(error => {
-      legacyCoreServicesLoadPromise = null;
-      throw error;
-    });
-
-  return legacyCoreServicesLoadPromise;
-}
 
 function loadFeatureCoreService(name: CoreServiceName) {
   const pending = featureCoreServiceLoadPromiseMap.get(name);
@@ -47,12 +31,7 @@ function loadFeatureCoreService(name: CoreServiceName) {
 
   const loadPromise = import('@/core/services/featureLoaders')
     .then(module => module.loadFeatureCoreService(name))
-    .then(result => {
-      if (result === null) {
-        return loadLegacyCoreServices();
-      }
-      return undefined;
-    })
+    .then(() => undefined)
     .catch(error => {
       featureCoreServiceLoadPromiseMap.delete(name);
       throw error;

@@ -1,1 +1,3 @@
-export { appEncryptor as appEncryptorApi } from '@/core/services/bootstrap';
+import RNEncryptor from '@/core/services/encryptor';
+
+export const appEncryptorApi = new RNEncryptor();

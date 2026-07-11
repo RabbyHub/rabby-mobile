@@ -2,6 +2,7 @@ const path = require('path');
 
 const srcRoot = path.resolve(__dirname, '../src');
 const servicesRoot = path.join(srcRoot, 'core/services');
+const services2024Root = path.join(srcRoot, 'core/services2024');
 const serviceApiRoot = path.join(srcRoot, 'core/serviceApi');
 
 function normalizePath(filePath) {
@@ -10,7 +11,10 @@ function normalizePath(filePath) {
 
 function isSameOrInside(filePath, dirPath) {
   const relative = path.relative(dirPath, filePath);
-  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+  return (
+    relative === '' ||
+    (!relative.startsWith('..') && !path.isAbsolute(relative))
+  );
 }
 
 function isAllowedFile(filePath) {
@@ -21,6 +25,7 @@ function isAllowedFile(filePath) {
   const normalized = normalizePath(filePath);
   return (
     isSameOrInside(normalized, servicesRoot) ||
+    isSameOrInside(normalized, services2024Root) ||
     isSameOrInside(normalized, serviceApiRoot)
   );
 }
@@ -30,7 +35,17 @@ function resolveImportSource(importSource, filePath) {
     return null;
   }
 
-  if (importSource === '@/core/services' || importSource.startsWith('@/core/services/')) {
+  if (
+    importSource === '@/core/services' ||
+    importSource.startsWith('@/core/services/')
+  ) {
+    return path.join(srcRoot, importSource.slice('@/'.length));
+  }
+
+  if (
+    importSource === '@/core/services2024' ||
+    importSource.startsWith('@/core/services2024/')
+  ) {
     return path.join(srcRoot, importSource.slice('@/'.length));
   }
 
@@ -51,7 +66,10 @@ function isCoreServiceSource(importSource, filePath) {
     return false;
   }
 
-  return isSameOrInside(resolved, servicesRoot);
+  return (
+    isSameOrInside(resolved, servicesRoot) ||
+    isSameOrInside(resolved, services2024Root)
+  );
 }
 
 function getStaticSourceValue(sourceNode) {
