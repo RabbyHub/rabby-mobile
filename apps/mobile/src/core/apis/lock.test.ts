@@ -3,10 +3,13 @@ const mockUpdatePassword = jest.fn();
 const mockResetPassword = jest.fn();
 const mockDangerouslyResetPasswordAndKeyrings = jest.fn();
 const mockGetCountOfAccountsInKeyring = jest.fn();
+const mockIsBooted = jest.fn();
 const mockIsUnlocked = jest.fn();
 const mockIsKeyringRuntimeReady = jest.fn();
 const mockEnsureKeyringRuntimeReady = jest.fn();
+const mockBoot = jest.fn();
 const mockSubmitPassword = jest.fn();
+const mockRestoreUnencryptedKeyrings = jest.fn();
 const mockSetLocked = jest.fn();
 const mockHasPublicAccountSnapshot = jest.fn();
 const mockKeyringOn = jest.fn();
@@ -121,6 +124,73 @@ const loadLockModule = () => {
     sessionService,
   }));
 
+  jest.doMock('@/core/serviceApi', () => {
+    const getPreferenceSnapshot = (key?: string) => {
+      if (key) {
+        return mockGetPreference(key);
+      }
+
+      const lastUnlockTime = mockGetPreference('lastUnlockTime');
+      return lastUnlockTime === undefined
+        ? undefined
+        : {
+            lastUnlockTime,
+          };
+    };
+
+    const bindKeyringEventSync = (
+      event: string,
+      listener: (...args: unknown[]) => void,
+    ) => {
+      mockKeyringOn(event, listener);
+      return () => mockKeyringOff(event, listener);
+    };
+
+    const bindKeyringEvent = async (
+      event: string,
+      listener: (...args: unknown[]) => void,
+    ) => bindKeyringEventSync(event, listener);
+
+    return {
+      bindKeyringEvent,
+      bindKeyringEventSync,
+      broadcastSessionEventSync: (...args: unknown[]) =>
+        mockBroadcastEvent(...args),
+      getKeyringMemStoreStateSnapshot: () => keyringService.memStore.getState(),
+      getPreferenceSnapshot,
+      hasKeyringPublicAccountSnapshot: () => mockHasPublicAccountSnapshot(),
+      initCurrentAccountSync: (...args: unknown[]) =>
+        mockInitCurrentAccount(...args),
+      isKeyringBootedSnapshot: () => mockIsBooted(),
+      isKeyringRuntimeReadySnapshot: () => mockIsKeyringRuntimeReady(),
+      isKeyringUnlockedSnapshot: () => mockIsUnlocked(),
+      keyringServiceApi: {
+        boot: (...args: unknown[]) => mockBoot(...args),
+        dangerouslyResetPasswordAndKeyrings: (...args: unknown[]) =>
+          mockDangerouslyResetPasswordAndKeyrings(...args),
+        ensureKeyringRuntimeReady: (...args: unknown[]) =>
+          mockEnsureKeyringRuntimeReady(...args),
+        getCountOfAccountsInKeyring: (...args: unknown[]) =>
+          mockGetCountOfAccountsInKeyring(...args),
+        resetPassword: (...args: unknown[]) => mockResetPassword(...args),
+        restoreUnencryptedKeyrings: (...args: unknown[]) =>
+          mockRestoreUnencryptedKeyrings(...args),
+        setLocked: (...args: unknown[]) => mockSetLocked(...args),
+        submitPassword: (...args: unknown[]) => mockSubmitPassword(...args),
+        updatePassword: (...args: unknown[]) => mockUpdatePassword(...args),
+        verifyPassword: (...args: unknown[]) => mockVerifyPassword(...args),
+      },
+      perpsServiceApi: {
+        resetStore: (...args: unknown[]) => mockResetPerpsStore(...args),
+      },
+      refreshKeyringMemStoreKeyringsIfPossible: (...args: unknown[]) =>
+        mockRefreshMemStoreKeyrings(...args),
+      setPreferenceSync: (...args: unknown[]) => mockSetPreference(...args),
+      submitKeyringPasswordForUnlock: (...args: unknown[]) =>
+        mockSubmitPassword(...args),
+    };
+  });
+
   jest.doMock('./event', () => ({
     makeEEClass: () => ({
       EventEmitter: createEventClass(),
@@ -189,10 +259,13 @@ describe('core/apis/lock password and session utilities', () => {
     mockResetPassword.mockResolvedValue(undefined);
     mockDangerouslyResetPasswordAndKeyrings.mockResolvedValue(undefined);
     mockGetCountOfAccountsInKeyring.mockResolvedValue(0);
+    mockIsBooted.mockReturnValue(true);
     mockIsUnlocked.mockReturnValue(false);
     mockIsKeyringRuntimeReady.mockReturnValue(true);
     mockEnsureKeyringRuntimeReady.mockResolvedValue(undefined);
+    mockBoot.mockResolvedValue(undefined);
     mockSubmitPassword.mockResolvedValue(undefined);
+    mockRestoreUnencryptedKeyrings.mockResolvedValue(undefined);
     mockSetLocked.mockResolvedValue(undefined);
     mockRefreshMemStoreKeyrings.mockResolvedValue(undefined);
     mockResetPerpsStore.mockResolvedValue(undefined);
@@ -411,6 +484,21 @@ describe('core/apis/lock password and session utilities', () => {
     clearUnlockTime();
     expect(updates).toEqual([Date.now(), 0]);
     expect(getUnlockTime()).toBe(0);
+  });
+
+  it('hydrates unlock time lazily when preference service becomes ready after module load', () => {
+    let preferenceReady = false;
+    mockGetPreference.mockImplementation(() =>
+      preferenceReady ? Date.now() : undefined,
+    );
+
+    const { getUnlockTime, isUnlockSessionValid } = loadLockModule();
+
+    expect(getUnlockTime()).toBe(0);
+
+    preferenceReady = true;
+    expect(getUnlockTime()).toBe(Date.now());
+    expect(isUnlockSessionValid()).toBe(true);
   });
 
   it('unlocks through submitPassword and refreshes unlock time only on success', async () => {

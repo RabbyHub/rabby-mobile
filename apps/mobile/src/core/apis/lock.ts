@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
 import { BroadcastEvent } from '@/constant/event';
 import {
+  bindKeyringEvent,
   bindKeyringEventSync,
   broadcastSessionEventSync,
   getKeyringMemStoreStateSnapshot,
@@ -297,7 +298,10 @@ export async function clearCustomPassword(currentPassword: string) {
   }
 
   try {
-    await keyringServiceApi.updatePassword(currentPassword, RABBY_MOBILE_KR_PWD);
+    await keyringServiceApi.updatePassword(
+      currentPassword,
+      RABBY_MOBILE_KR_PWD,
+    );
     await perpsServiceApi.resetStore();
   } catch (error) {
     result.error = 'Failed to cancel password';
@@ -582,18 +586,39 @@ const { EventEmitter: UnlockTimeEvent } = makeEEClass<{
 }>();
 export const unlockTimeEvent = new UnlockTimeEvent();
 
-const unlockTimeRef = {
-  current: normalizeUnlockTime(getPreferenceSnapshot('lastUnlockTime')),
-};
-
 function normalizeUnlockTime(time: unknown) {
   return typeof time === 'number' && Number.isFinite(time) && time > 0
     ? time
     : 0;
 }
 
-export function getUnlockTime() {
+function readPersistedUnlockTime() {
+  const preference = getPreferenceSnapshot();
+  if (!preference) {
+    return null;
+  }
+
+  return normalizeUnlockTime(preference.lastUnlockTime);
+}
+
+const unlockTimeRef = {
+  current: readPersistedUnlockTime() ?? 0,
+};
+
+function syncUnlockTimeFromPreference() {
+  const persistedUnlockTime = readPersistedUnlockTime();
+  if (
+    persistedUnlockTime !== null &&
+    (unlockTimeRef.current === 0 || persistedUnlockTime > unlockTimeRef.current)
+  ) {
+    unlockTimeRef.current = persistedUnlockTime;
+  }
+
   return unlockTimeRef.current;
+}
+
+export function getUnlockTime() {
+  return syncUnlockTimeFromPreference();
 }
 
 export async function updateUnlockTime() {
@@ -720,35 +745,37 @@ export function deferNotifyUserManuallyUnlockUIReady() {
   return deferNotifyPostUnlockUIReady();
 }
 
-runIIFEFunc(() => {
+runIIFEFunc(async () => {
   const isFirstTimeAfterLaunchRef = {
     current: true,
   };
-  bindKeyringEventSync('unlock', ctx => {
-    console.debug('[perf] keyringService unlock event ctx', ctx);
-    if ((ctx as { scene?: string }).scene === 'unlock') {
-      const isFirstTimeAfterLaunch = isFirstTimeAfterLaunchRef.current;
-      isFirstTimeAfterLaunchRef.current = false;
-      pendingPostUnlockUIReadyRef.current = {
-        isFirstTimeAfterLaunch,
-      };
-      traceAndroidUnlockPerf('wallet_auth_unlocked_emit_start', {
-        isFirstTimeAfterLaunch,
-        listenerCount: perfEvents.listenerCount('WALLET_AUTH_UNLOCKED'),
-        legacyListenerCount: perfEvents.listenerCount('USER_MANUALLY_UNLOCK'),
-      });
-      perfEvents.emit('WALLET_AUTH_UNLOCKED', {
-        isFirstTimeAfterLaunch,
-      });
-      perfEvents.emit('USER_MANUALLY_UNLOCK', {
-        isFirstTimeAfterLaunch,
-      });
-      traceAndroidUnlockPerf('wallet_auth_unlocked_emit_end');
-      scheduleKeyringRuntimeConvergence('wallet_auth_unlocked');
-    }
-  });
-  bindKeyringEventSync('lock', () => {
-    pendingPostUnlockUIReadyRef.current = null;
-    cancelKeyringRuntimeConvergence('lock');
-  });
+  await Promise.all([
+    bindKeyringEvent('unlock', ctx => {
+      console.debug('[perf] keyringService unlock event ctx', ctx);
+      if ((ctx as { scene?: string }).scene === 'unlock') {
+        const isFirstTimeAfterLaunch = isFirstTimeAfterLaunchRef.current;
+        isFirstTimeAfterLaunchRef.current = false;
+        pendingPostUnlockUIReadyRef.current = {
+          isFirstTimeAfterLaunch,
+        };
+        traceAndroidUnlockPerf('wallet_auth_unlocked_emit_start', {
+          isFirstTimeAfterLaunch,
+          listenerCount: perfEvents.listenerCount('WALLET_AUTH_UNLOCKED'),
+          legacyListenerCount: perfEvents.listenerCount('USER_MANUALLY_UNLOCK'),
+        });
+        perfEvents.emit('WALLET_AUTH_UNLOCKED', {
+          isFirstTimeAfterLaunch,
+        });
+        perfEvents.emit('USER_MANUALLY_UNLOCK', {
+          isFirstTimeAfterLaunch,
+        });
+        traceAndroidUnlockPerf('wallet_auth_unlocked_emit_end');
+        scheduleKeyringRuntimeConvergence('wallet_auth_unlocked');
+      }
+    }),
+    bindKeyringEvent('lock', () => {
+      pendingPostUnlockUIReadyRef.current = null;
+      cancelKeyringRuntimeConvergence('lock');
+    }),
+  ]);
 }, STARTUP_TASKS.lockUnlockEventBridge);
