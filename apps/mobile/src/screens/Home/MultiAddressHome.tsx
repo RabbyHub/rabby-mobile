@@ -45,6 +45,7 @@ import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { scheduleStartupTask } from '@/core/utils/startupScheduler';
 
 let hasStartedInitReadableAccountStoresIdleWarmup = false;
+const HOME_DB_STARTUP_CRITICAL_REASON = 'home_startup';
 
 async function startInitReadableAccountStoresIdleWarmup() {
   if (hasStartedInitReadableAccountStoresIdleWarmup) {
@@ -82,6 +83,75 @@ const detectHasAccounts = async () => {
   return result;
 };
 
+function startHomeDbLowPriorityHold() {
+  let disposed = false;
+  let isCriticalActive = false;
+  let releaseHandle: ReturnType<typeof scheduleStartupTask> | undefined;
+  let setCriticalMode: ((active: boolean, reason: string) => void) | null =
+    null;
+
+  const releaseCriticalMode = () => {
+    if (!isCriticalActive) {
+      return;
+    }
+
+    isCriticalActive = false;
+    traceHomeStartupReady('home_db_low_priority_release', {
+      reason: HOME_DB_STARTUP_CRITICAL_REASON,
+    });
+
+    if (setCriticalMode) {
+      setCriticalMode(false, HOME_DB_STARTUP_CRITICAL_REASON);
+      return;
+    }
+
+    import('@/databases/sync/scheduler')
+      .then(({ setSyncSchedulerCriticalMode }) => {
+        setSyncSchedulerCriticalMode(false, HOME_DB_STARTUP_CRITICAL_REASON);
+      })
+      .catch(error => {
+        console.error('release Home DB low priority hold failed', error);
+      });
+  };
+
+  import('@/databases/sync/scheduler')
+    .then(({ setSyncSchedulerCriticalMode }) => {
+      if (disposed) {
+        return;
+      }
+
+      setCriticalMode = setSyncSchedulerCriticalMode;
+      isCriticalActive = true;
+      traceHomeStartupReady('home_db_low_priority_hold', {
+        reason: HOME_DB_STARTUP_CRITICAL_REASON,
+      });
+      setSyncSchedulerCriticalMode(true, HOME_DB_STARTUP_CRITICAL_REASON);
+
+      releaseHandle = scheduleStartupTask(
+        releaseCriticalMode,
+        STARTUP_TASKS.homeDbLowPriorityRelease,
+      );
+    })
+    .catch(error => {
+      console.error('start Home DB low priority hold failed', error);
+    });
+
+  return () => {
+    disposed = true;
+    if (
+      releaseHandle &&
+      typeof releaseHandle === 'object' &&
+      'cancel' in releaseHandle
+    ) {
+      const maybeCancelable = releaseHandle as { cancel?: unknown };
+      if (typeof maybeCancelable.cancel === 'function') {
+        maybeCancelable.cancel();
+      }
+    }
+    releaseCriticalMode();
+  };
+}
+
 function HomeDeferredLifecycle() {
   useInitDetectDBAssets();
   useTrack0331HomeActiveSnapshots();
@@ -93,8 +163,13 @@ function HomeStartupReadyScheduler() {
   useEffect(() => {
     resetHomeStartupReady();
     traceHomeStartupReady('home_mount');
+    const stopHomeDbLowPriorityHold = startHomeDbLowPriorityHold();
+    const stopHomeStartupReady = scheduleHomeStartupReady();
 
-    return scheduleHomeStartupReady();
+    return () => {
+      stopHomeStartupReady();
+      stopHomeDbLowPriorityHold();
+    };
   }, []);
 
   return null;

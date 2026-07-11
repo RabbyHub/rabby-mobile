@@ -166,6 +166,18 @@ export const STARTUP_TASKS = {
     idleTimeoutMs: 10000,
     budgetMs: 450,
   }),
+  homeDbLowPriorityRelease: defineStartupTask({
+    label: 'home.dbLowPriorityRelease',
+    owner: 'home-db',
+    reason:
+      'release low-priority DB writes only after early Home interactions are likely quiet',
+    stage: 'homePostStartupIdle',
+    priority: 'high',
+    delayMs: 1500,
+    fallbackMs: 10000,
+    idleTimeoutMs: 5000,
+    budgetMs: 20,
+  }),
 } as const;
 
 export type StartupTaskManifest = typeof STARTUP_TASKS;

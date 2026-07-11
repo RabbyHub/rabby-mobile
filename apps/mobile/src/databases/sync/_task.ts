@@ -22,6 +22,7 @@ import {
   type SyncTaskPriority,
 } from './scheduler';
 import { notifySyncAbortHandlers } from './abort';
+import { isNonProductionDiagnosticsEnabled } from '@/core/utils/diagnosticEnv';
 
 /**
  * @description In most cases, you don't need call it manually,
@@ -98,6 +99,65 @@ function ensureNotAborted(signal?: AbortSignal) {
   if (signal?.aborted) {
     throw new SyncTaskAbortError();
   }
+}
+
+function sleep(ms: number, signal?: AbortSignal) {
+  if (ms <= 0) {
+    return Promise.resolve();
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    let settled = false;
+    const timeoutId = setTimeout(() => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      clearTimeout(timeoutId);
+      reject(new SyncTaskAbortError());
+    };
+
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
+function estimateParamsPayload(paramsRows: Scalar[][]) {
+  if (!isNonProductionDiagnosticsEnabled) {
+    return null;
+  }
+
+  let stringChars = 0;
+  let maxStringChars = 0;
+  let valueCount = 0;
+
+  paramsRows.forEach(row => {
+    row.forEach(value => {
+      valueCount += 1;
+      if (typeof value !== 'string') {
+        return;
+      }
+
+      stringChars += value.length;
+      maxStringChars = Math.max(maxStringChars, value.length);
+    });
+  });
+
+  return {
+    columnCount: paramsRows[0]?.length || 0,
+    valueCount,
+    stringChars,
+    maxStringChars,
+  };
 }
 
 export async function batchSaveWithPQueueAndTransaction<
@@ -280,6 +340,7 @@ export async function batchSaveWithPQueueAndTransaction<
           try {
             let paramsBuildMs = 0;
             let executeMs = 0;
+            let paramsPayload: ReturnType<typeof estimateParamsPayload> = null;
             if (upsertMethod.supportedBulkUpsert && upsertMethod.stmSql) {
               const paramsBuildStartedAt = Date.now();
               ctx.setStage('params_build', {
@@ -308,12 +369,14 @@ export async function batchSaveWithPQueueAndTransaction<
                 }
                 return getUpsertParams.call(item) as Scalar[];
               });
+              paramsPayload = estimateParamsPayload(paramsRows);
               paramsBuildMs = Date.now() - paramsBuildStartedAt;
               markDbSyncTaskStage(diagTaskId, 'params_built', {
                 schedulerTaskId,
                 round,
                 count: curBatch.length,
                 durationMs: paramsBuildMs,
+                ...(paramsPayload || {}),
               });
 
               const commands: SQLBatchTuple[] = [
@@ -387,6 +450,7 @@ export async function batchSaveWithPQueueAndTransaction<
               paramsBuildMs,
               executeMs,
               method: upsertMethod.method,
+              ...(paramsPayload || {}),
             });
           } catch (error) {
             makeEmit(false, syncDetails);
@@ -408,6 +472,20 @@ export async function batchSaveWithPQueueAndTransaction<
           }
 
           dataIdx += curBatch.length;
+          if (dataIdx < totalLen && delayBetweenTasks > 0) {
+            ctx.setStage('batch_delay', {
+              delayMs: delayBetweenTasks,
+              nextRound: Math.floor(dataIdx / batchSize),
+              totalRound,
+            });
+            markDbSyncTaskStage(diagTaskId, 'batch_delay', {
+              schedulerTaskId,
+              delayMs: delayBetweenTasks,
+              nextRound: Math.floor(dataIdx / batchSize),
+              totalRound,
+            });
+            await sleep(delayBetweenTasks, currentSignal);
+          }
         }
 
         if (afterBatches) {

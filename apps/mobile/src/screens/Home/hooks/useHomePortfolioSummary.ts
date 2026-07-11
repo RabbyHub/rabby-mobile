@@ -267,14 +267,18 @@ const homePortfolioStore = zCreate<HomePortfolioState>(() =>
   buildInitialState(),
 );
 
+const HOME_PORTFOLIO_SYNC_MIN_INTERVAL_MS = 120;
+
 let hasStartedHomePortfolioLifecycle = false;
 let homePortfolioSyncSeq = 0;
 let isHomePortfolioSyncScheduled = false;
 let pendingHomePortfolioSyncTriggers = 0;
+let lastHomePortfolioSyncAt = 0;
 
 function syncHomePortfolioState(
   syncMode: 'initial' | 'scheduled' = 'scheduled',
   triggerCount = 1,
+  scheduledDelayMs = 0,
 ) {
   const startedAt = Date.now();
   homePortfolioSyncSeq += 1;
@@ -299,6 +303,7 @@ function syncHomePortfolioState(
     didChange,
     syncMode,
     triggerCount,
+    scheduledDelayMs,
     displayAddressCount: nextState.displayAddresses.length,
     totalBalance: nextState.totalBalance,
     hasResolvedSelection: nextState.hasResolvedSelection,
@@ -316,19 +321,40 @@ function scheduleHomePortfolioStateSync() {
   }
 
   isHomePortfolioSyncScheduled = true;
+  const scheduledAt = Date.now();
+  const elapsedSinceLastSync = lastHomePortfolioSyncAt
+    ? scheduledAt - lastHomePortfolioSyncAt
+    : HOME_PORTFOLIO_SYNC_MIN_INTERVAL_MS;
+  const delayMs = Math.max(
+    0,
+    HOME_PORTFOLIO_SYNC_MIN_INTERVAL_MS - elapsedSinceLastSync,
+  );
   const run = () => {
     const triggerCount = pendingHomePortfolioSyncTriggers;
     pendingHomePortfolioSyncTriggers = 0;
     isHomePortfolioSyncScheduled = false;
-    syncHomePortfolioState('scheduled', triggerCount);
+    lastHomePortfolioSyncAt = Date.now();
+    syncHomePortfolioState(
+      'scheduled',
+      triggerCount,
+      lastHomePortfolioSyncAt - scheduledAt,
+    );
+  };
+  const runOnFrame = () => {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(run);
+      return;
+    }
+
+    run();
   };
 
-  if (typeof requestAnimationFrame === 'function') {
-    requestAnimationFrame(run);
+  if (delayMs > 0) {
+    setTimeout(runOnFrame, delayMs);
     return;
   }
 
-  setTimeout(run, 0);
+  runOnFrame();
 }
 
 function ensureHomePortfolioLifecycle() {
@@ -346,6 +372,7 @@ function ensureHomePortfolioLifecycle() {
   sceneCurve24hStore.subscribe(scheduleHomePortfolioStateSync);
 
   syncHomePortfolioState('initial');
+  lastHomePortfolioSyncAt = Date.now();
 }
 
 export function useHomePortfolioStore<T>(

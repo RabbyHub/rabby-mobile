@@ -52,6 +52,7 @@ type ActiveDbSyncTask = {
   paramsBuildMs: number;
   executeMs: number;
   batchDurationMs: number;
+  executionActive: boolean;
   status: 'running' | 'success' | 'error' | 'aborted';
   endedAt?: number;
 };
@@ -347,6 +348,28 @@ function toDbSyncSummaryTask(task: ActiveDbSyncTask): DbSyncSummaryTask {
     startedAt,
     endedAt,
   };
+}
+
+function isDbSyncExecutionStage(stage: string) {
+  return (
+    stage === 'running' ||
+    stage === 'upsert_method' ||
+    stage === 'params_build' ||
+    stage === 'params_built' ||
+    stage === 'execute_batch' ||
+    stage === 'typeorm_upsert' ||
+    stage === 'after_batches_start'
+  );
+}
+
+function getDbSyncExecutionTaskCount() {
+  let count = 0;
+  activeDbSyncTasks.forEach(task => {
+    if (task.executionActive) {
+      count += 1;
+    }
+  });
+  return count;
 }
 
 function buildDbWindowSummary(
@@ -890,6 +913,7 @@ function serializeDbTask(task: ActiveDbSyncTask) {
     totalBatches: task.totalBatches,
     completedBatches: task.completedBatches,
     stage: task.stage,
+    executionActive: task.executionActive,
     ageMs: now() - task.startedAt,
   };
 }
@@ -913,6 +937,7 @@ function getActiveTaskSnapshot() {
 
   return {
     activeDbTaskCount: activeDbSyncTasks.size,
+    activeDbExecutionTaskCount: getDbSyncExecutionTaskCount(),
     activeWarmupTaskCount: activeWarmupTasks.size,
     dbTasks,
     warmupTasks,
@@ -977,6 +1002,7 @@ function ensureDbActiveWindow() {
   }
 
   const startedAt = now();
+  const activeDbExecutionTaskCount = getDbSyncExecutionTaskCount();
   const window: DbActiveWindow = {
     id: ++dbActiveWindowSeq,
     traceCookie: nextAndroidTraceCookie(),
@@ -986,7 +1012,7 @@ function ensureDbActiveWindow() {
     maxGapMs: 0,
     stallCount: 0,
     loggedStallCount: 0,
-    peakActiveTaskCount: activeDbSyncTasks.size,
+    peakActiveTaskCount: activeDbExecutionTaskCount,
     taskIds: [],
   };
 
@@ -996,7 +1022,7 @@ function ensureDbActiveWindow() {
     window.lastTickAt = current;
     window.peakActiveTaskCount = Math.max(
       window.peakActiveTaskCount,
-      activeDbSyncTasks.size,
+      getDbSyncExecutionTaskCount(),
     );
 
     if (gapMs >= STALL_WARN_MS) {
@@ -1018,13 +1044,14 @@ function ensureDbActiveWindow() {
   beginAndroidAsyncTrace('db.active_window', window.traceCookie, {
     id: window.id,
     activeDbTaskCount: activeDbSyncTasks.size,
+    activeDbExecutionTaskCount,
   });
-  traceAndroidCounter('db.active_task_count', activeDbSyncTasks.size);
+  traceAndroidCounter('db.active_task_count', activeDbExecutionTaskCount);
   publishDbSummarySnapshot(true);
 }
 
 function endDbActiveWindowIfIdle() {
-  if (!enabled || activeDbSyncTasks.size > 0) {
+  if (!enabled || getDbSyncExecutionTaskCount() > 0) {
     return;
   }
 
@@ -1064,6 +1091,43 @@ function endDbActiveWindowIfIdle() {
   });
   traceAndroidCounter('db.active_task_count', activeDbSyncTasks.size);
   flushDiagnosticLines();
+}
+
+function attachDbTaskToActiveWindow(task: ActiveDbSyncTask) {
+  const activeDbWindow = activeDbWindowRef.current;
+  if (!activeDbWindow) {
+    return;
+  }
+
+  dbSyncTaskSummaries.set(task.id, task);
+  if (!activeDbWindow.taskIds.includes(task.id)) {
+    activeDbWindow.taskIds.push(task.id);
+  }
+  activeDbWindow.peakActiveTaskCount = Math.max(
+    activeDbWindow.peakActiveTaskCount,
+    getDbSyncExecutionTaskCount(),
+  );
+}
+
+function setDbSyncTaskExecutionActive(
+  task: ActiveDbSyncTask,
+  executionActive: boolean,
+) {
+  if (task.executionActive === executionActive) {
+    if (executionActive) {
+      attachDbTaskToActiveWindow(task);
+    }
+    return;
+  }
+
+  task.executionActive = executionActive;
+  if (executionActive) {
+    ensureDbActiveWindow();
+    attachDbTaskToActiveWindow(task);
+  } else {
+    endDbActiveWindowIfIdle();
+  }
+  traceAndroidCounter('db.active_task_count', getDbSyncExecutionTaskCount());
 }
 
 export function isStartupDiagnosticsEnabled() {
@@ -1367,20 +1431,12 @@ export function beginDbSyncTask(meta: {
     paramsBuildMs: 0,
     executeMs: 0,
     batchDurationMs: 0,
+    executionActive: false,
     status: 'running',
     ...meta,
   };
   activeDbSyncTasks.set(id, task);
   dbSyncTaskSummaries.set(id, task);
-  ensureDbActiveWindow();
-  activeDbWindowRef.current?.taskIds.push(id);
-  const activeDbWindow = activeDbWindowRef.current;
-  if (activeDbWindow) {
-    activeDbWindow.peakActiveTaskCount = Math.max(
-      activeDbWindow.peakActiveTaskCount,
-      activeDbSyncTasks.size,
-    );
-  }
 
   trace('db', 'sync_task_start', {
     ...serializeDbTask(task),
@@ -1389,6 +1445,7 @@ export function beginDbSyncTask(meta: {
     waitTaskDoneReturn: meta.waitTaskDoneReturn,
     delayBetweenTasks: meta.delayBetweenTasks,
     activeDbTaskCount: activeDbSyncTasks.size,
+    activeDbExecutionTaskCount: getDbSyncExecutionTaskCount(),
   });
   beginAndroidAsyncTrace(`db.sync_task.${meta.entityName}`, task.traceCookie, {
     id: task.id,
@@ -1396,7 +1453,7 @@ export function beginDbSyncTask(meta: {
     rows: meta.totalRows,
     batches: meta.totalBatches,
   });
-  traceAndroidCounter('db.active_task_count', activeDbSyncTasks.size);
+  traceAndroidCounter('db.active_task_count', getDbSyncExecutionTaskCount());
   publishDbSummarySnapshot(true);
 
   return id;
@@ -1419,6 +1476,7 @@ export function markDbSyncTaskStage(
 
   task.stage = stage;
   task.stageDetail = formatDbTaskStageDetail(data);
+  setDbSyncTaskExecutionActive(task, isDbSyncExecutionStage(stage));
   publishDbSummarySnapshot(immediate);
   trace('db', 'sync_task_stage', {
     ...serializeDbTask(task),
@@ -1448,6 +1506,7 @@ export function markDbSyncTaskBatch(
   }
 
   task.stage = 'batch_upsert';
+  setDbSyncTaskExecutionActive(task, false);
   task.completedBatches = Math.max(task.completedBatches, data.round + 1);
   task.paramsBuildMs += data.paramsBuildMs || 0;
   task.executeMs += data.executeMs || 0;
@@ -1497,14 +1556,16 @@ export function endDbSyncTask(
     return;
   }
 
-  activeDbSyncTasks.delete(id);
   task.status = status;
   task.endedAt = now();
+  task.executionActive = false;
+  activeDbSyncTasks.delete(id);
   trace('db', 'sync_task_end', {
     ...serializeDbTask(task),
     status,
     durationMs: task.endedAt - task.startedAt,
     activeDbTaskCount: activeDbSyncTasks.size,
+    activeDbExecutionTaskCount: getDbSyncExecutionTaskCount(),
     ...data,
   });
   endAndroidAsyncTrace(`db.sync_task.${task.entityName}`, task.traceCookie, {
@@ -1512,7 +1573,7 @@ export function endDbSyncTask(
     status,
     durationMs: task.endedAt - task.startedAt,
   });
-  traceAndroidCounter('db.active_task_count', activeDbSyncTasks.size);
+  traceAndroidCounter('db.active_task_count', getDbSyncExecutionTaskCount());
   publishDbSummarySnapshot(true);
   endDbActiveWindowIfIdle();
 }
