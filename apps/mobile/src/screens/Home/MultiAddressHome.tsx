@@ -45,7 +45,19 @@ import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { scheduleStartupTask } from '@/core/utils/startupScheduler';
 
 let hasStartedInitReadableAccountStoresIdleWarmup = false;
+let hasStartedHomeSceneDerivedDataActivation = false;
 const HOME_DB_STARTUP_CRITICAL_REASON = 'home_startup';
+
+function cancelStartupTaskHandle(
+  handle: ReturnType<typeof scheduleStartupTask> | undefined,
+) {
+  if (handle && typeof handle === 'object' && 'cancel' in handle) {
+    const maybeCancelable = handle as { cancel?: unknown };
+    if (typeof maybeCancelable.cancel === 'function') {
+      maybeCancelable.cancel();
+    }
+  }
+}
 
 async function startInitReadableAccountStoresIdleWarmup() {
   if (hasStartedInitReadableAccountStoresIdleWarmup) {
@@ -65,6 +77,23 @@ async function startInitReadableAccountStoresIdleWarmup() {
     await startInitReadableAccountStores('all', 'home_idle_fallback');
   } catch (error) {
     hasStartedInitReadableAccountStoresIdleWarmup = false;
+    throw error;
+  }
+}
+
+async function startHomeSceneDerivedDataActivationWarmup() {
+  if (hasStartedHomeSceneDerivedDataActivation) {
+    return;
+  }
+
+  hasStartedHomeSceneDerivedDataActivation = true;
+  try {
+    const { startHomeSceneDerivedDataActivation } = await import(
+      '@/store/homeSceneActivation'
+    );
+    await startHomeSceneDerivedDataActivation('home_post_startup_ready');
+  } catch (error) {
+    hasStartedHomeSceneDerivedDataActivation = false;
     throw error;
   }
 }
@@ -138,16 +167,7 @@ function startHomeDbLowPriorityHold() {
 
   return () => {
     disposed = true;
-    if (
-      releaseHandle &&
-      typeof releaseHandle === 'object' &&
-      'cancel' in releaseHandle
-    ) {
-      const maybeCancelable = releaseHandle as { cancel?: unknown };
-      if (typeof maybeCancelable.cancel === 'function') {
-        maybeCancelable.cancel();
-      }
-    }
+    cancelStartupTaskHandle(releaseHandle);
     releaseCriticalMode();
   };
 }
@@ -183,7 +203,19 @@ function HomeReadableAccountStoresBootstrap() {
       return;
     }
 
-    const handle = scheduleStartupTask(
+    const homeSceneHandle = scheduleStartupTask(
+      () =>
+        startHomeSceneDerivedDataActivationWarmup().catch(error => {
+          console.error(
+            'startHomeSceneDerivedDataActivationWarmup::error',
+            error,
+          );
+          throw error;
+        }),
+      STARTUP_TASKS.homeSceneDerivedDataActivation,
+    );
+
+    const readableAccountHandle = scheduleStartupTask(
       () =>
         startInitReadableAccountStoresIdleWarmup().catch(error => {
           console.error(
@@ -196,9 +228,8 @@ function HomeReadableAccountStoresBootstrap() {
     );
 
     return () => {
-      if (handle && typeof handle === 'object' && 'cancel' in handle) {
-        handle.cancel();
-      }
+      cancelStartupTaskHandle(homeSceneHandle);
+      cancelStartupTaskHandle(readableAccountHandle);
     };
   }, [homePostStartupReady]);
 

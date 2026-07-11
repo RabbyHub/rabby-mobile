@@ -43,11 +43,6 @@ import { rateModalStartSyncNetworth } from './components/RateModal/hooks';
 import { trimNoLongerSupportsOnUnlock } from './components2024/NoLongerSupports/useNoLongerSupports';
 import { startCheckClearAction } from './utils/clipboard';
 import { startSubscribeOpenApiHttpErrorDebugToast } from './utils/openapiDebugToast';
-import {
-  hydrateCachedHome24hBalanceScene,
-  scene24hBalanceStore,
-} from './store/balance24h';
-import { startProcessMultiCurveEvents } from './store/curve24h';
 import { startProcessAccountBalanceEvents } from './store/balanceAccountSelection';
 import { traceAndroidInstant } from './core/utils/androidTrace';
 import { runAfterHomePostStartupReady } from './core/utils/homeStartupReady';
@@ -118,9 +113,6 @@ rateModalStartSyncNetworth();
 screenshotModalStartSyncNetworth();
 
 startProcessAccountBalanceEvents();
-scene24hBalanceStore.startProcessScene24hBalanceEvents();
-hydrateCachedHome24hBalanceScene();
-startProcessMultiCurveEvents();
 
 trimNoLongerSupportsOnUnlock();
 

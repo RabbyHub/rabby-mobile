@@ -7,9 +7,6 @@ import {
   hydrateCachedHome24hBalanceScene,
 } from './balance24h';
 import { hydrateCachedHomeDayCurve, initCurve24hStore } from './curve24h';
-import nftListStore from './nfts';
-import useProtocolListStore from './protocols';
-import tokenListStore from './tokens';
 
 type StoreInitializerPhase =
   | 'boot-readable-account'
@@ -128,19 +125,28 @@ registerStoreInitializer({
 registerStoreInitializer({
   id: 'tokenListStore.initStore',
   phase: 'readable-account-heavy',
-  run: () => tokenListStore.getState().initStore(),
+  run: async () => {
+    const { default: tokenListStore } = await import('./tokens');
+    await tokenListStore.getState().initStore();
+  },
 });
 
 registerStoreInitializer({
   id: 'nftListStore.initStore',
   phase: 'readable-account-heavy',
-  run: () => nftListStore.getState().initStore(),
+  run: async () => {
+    const { default: nftListStore } = await import('./nfts');
+    await nftListStore.getState().initStore();
+  },
 });
 
 registerStoreInitializer({
   id: 'protocolListStore.initStore',
   phase: 'readable-account-heavy',
-  run: () => useProtocolListStore.getState().initStore(),
+  run: async () => {
+    const { default: useProtocolListStore } = await import('./protocols');
+    await useProtocolListStore.getState().initStore();
+  },
 });
 
 export async function startReadableAccountBootStoreInitializers() {
@@ -151,6 +157,11 @@ export async function startReadableAccountBootStoreInitializers() {
       'balance24hStore.initStore',
       'initCurve24hStore',
     ],
+  ]);
+}
+
+export async function startHomeSceneCacheHydrateInitializers() {
+  await runStoreInitializerSteps([
     ['hydrateCachedHome24hBalanceScene', 'hydrateCachedHomeDayCurve'],
   ]);
 }

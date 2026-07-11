@@ -166,6 +166,16 @@ export const STARTUP_TASKS = {
     idleTimeoutMs: 10000,
     budgetMs: 450,
   }),
+  homeSceneDerivedDataActivation: defineStartupTask({
+    label: 'home.sceneDerivedDataActivation',
+    owner: 'home-assets',
+    reason:
+      'activate Home 24h and curve derived data after the first Home frame is usable',
+    stage: 'homePostStartupReady',
+    priority: 'normal',
+    fallbackMs: 3000,
+    budgetMs: 160,
+  }),
   homeDbLowPriorityRelease: defineStartupTask({
     label: 'home.dbLowPriorityRelease',
     owner: 'home-db',
