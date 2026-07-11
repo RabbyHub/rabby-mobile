@@ -1,16 +1,11 @@
 import { useCallback } from 'react';
 import { useAtom, useSetAtom } from 'jotai';
 
-import { appStorage, atomByMMKV } from '@/core/storage/mmkv';
-
-export const CONVERT_DUST_BANNER_VISITED_KEY =
-  '@home.convertDustBanner.visited';
-
-export function getConvertDustBannerVisitedSnapshot() {
-  return !!(appStorage.getItem(CONVERT_DUST_BANNER_VISITED_KEY) as
-    | boolean
-    | null);
-}
+import { atomByMMKV } from '@/core/storage/mmkv';
+import {
+  CONVERT_DUST_BANNER_VISITED_KEY,
+  getConvertDustBannerVisitedSnapshot,
+} from './convertDustBannerStorage';
 
 const convertDustBannerVisitedAtom = atomByMMKV<boolean>(
   CONVERT_DUST_BANNER_VISITED_KEY,

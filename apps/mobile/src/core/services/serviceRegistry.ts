@@ -1,4 +1,30 @@
-import type * as SharedServices from './shared';
+import type { ContactBookService } from '@rabby-wallet/service-address';
+import type { KeyringService } from '@rabby-wallet/service-keyring';
+import type { PreferenceService } from '../startupServices/preference';
+import type { AutoConnectService } from './autoConnect';
+import type { BridgeService } from './bridge';
+import type { BrowserHistoryService } from './browserHistoryService';
+import type { BrowserService } from './browserService';
+import type { CurrencyService } from './currencyService';
+import type { CustomRPCService } from './customRPCService';
+import type { CustomTestnetService } from './customTestnetService';
+import type { DappService } from './dappService';
+import type { GasAccountService } from './gasAccount';
+import type { HDKeyringService } from './hdKeyringService';
+import type { LendingService } from './lendingService';
+import type { MetamaskModeService } from './metamaskModeService';
+import type { NotificationService } from './notification';
+import type { OfflineChainService } from './offlineChain';
+import type { PerpsService } from './perpsService';
+import type { RabbyPointsService } from './rabbyPoints';
+import type { SecurityEngineService } from './securityEngine';
+import type { SessionService } from './session';
+import type { SwapService } from './swap';
+import type { SyncChainService } from './syncChainService';
+import type { TransactionBroadcastWatcherService } from './transactionBroadcastWatcher';
+import type { TransactionHistoryService } from './transactionHistory';
+import type { TransactionWatcherService } from './transactionWatcher';
+import type { WhitelistService } from './whitelist';
 import {
   callDeferredService,
   ensureDeferredService,
@@ -10,38 +36,35 @@ import {
 } from './deferred';
 import type { MethodArgs, MethodReturn, ServiceMethod } from './deferred';
 
-type SharedServiceExports = typeof SharedServices;
-
-export type CoreServiceRegistry = Pick<
-  SharedServiceExports,
-  | 'autoConnectService'
-  | 'bridgeService'
-  | 'browserHistoryService'
-  | 'browserService'
-  | 'contactService'
-  | 'customRPCService'
-  | 'customTestnetService'
-  | 'currencyService'
-  | 'dappService'
-  | 'gasAccountService'
-  | 'hdKeyringService'
-  | 'keyringService'
-  | 'lendingService'
-  | 'metamaskModeService'
-  | 'notificationService'
-  | 'offlineChainService'
-  | 'perpsService'
-  | 'preferenceService'
-  | 'rabbyPointsService'
-  | 'securityEngineService'
-  | 'sessionService'
-  | 'swapService'
-  | 'syncChainService'
-  | 'transactionBroadcastWatcherService'
-  | 'transactionHistoryService'
-  | 'transactionWatcherService'
-  | 'whitelistService'
->;
+export type CoreServiceRegistry = {
+  autoConnectService: AutoConnectService;
+  bridgeService: BridgeService;
+  browserHistoryService: BrowserHistoryService;
+  browserService: BrowserService;
+  contactService: ContactBookService;
+  customRPCService: CustomRPCService;
+  customTestnetService: CustomTestnetService;
+  currencyService: CurrencyService;
+  dappService: DappService;
+  gasAccountService: GasAccountService;
+  hdKeyringService: HDKeyringService;
+  keyringService: KeyringService;
+  lendingService: LendingService;
+  metamaskModeService: MetamaskModeService;
+  notificationService: NotificationService;
+  offlineChainService: OfflineChainService;
+  perpsService: PerpsService;
+  preferenceService: PreferenceService;
+  rabbyPointsService: RabbyPointsService;
+  securityEngineService: SecurityEngineService;
+  sessionService: SessionService;
+  swapService: SwapService;
+  syncChainService: SyncChainService;
+  transactionBroadcastWatcherService: TransactionBroadcastWatcherService;
+  transactionHistoryService: TransactionHistoryService;
+  transactionWatcherService: TransactionWatcherService;
+  whitelistService: WhitelistService;
+};
 
 export type CoreServiceName = keyof CoreServiceRegistry;
 

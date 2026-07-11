@@ -13,15 +13,11 @@ import {
 } from '@rabby-wallet/service-address';
 
 import { findChainByID } from '@/utils/chain';
-import { DappService } from './dappService';
-import { NotificationService } from './notification';
 import { PreferenceService } from '../startupServices/preference';
 import { SecurityEngineService } from './securityEngine';
 import { TransactionBroadcastWatcherService } from './transactionBroadcastWatcher';
 import { TransactionHistoryService } from './transactionHistory';
 import { TransactionWatcherService } from './transactionWatcher';
-import { WhitelistService } from './whitelist';
-import { SessionService } from './session';
 import WatchKeyring from '@rabby-wallet/eth-keyring-watch';
 import { GnosisKeyring } from '@rabby-wallet/eth-keyring-gnosis';
 import { KeyringService } from '@rabby-wallet/service-keyring';
@@ -32,10 +28,8 @@ import { KeystoneKeyring } from '@rabby-wallet/eth-keyring-keystone';
 import { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
 import SimpleKeyring from '@rabby-wallet/eth-simple-keyring';
 import HDKeyring from '@rabby-wallet/eth-hd-keyring';
-import { HDKeyringService } from './hdKeyringService';
-import { GasAccountService } from './gasAccount';
 import { MockWalletConnectKeyring } from '../keyring-bridge/walletconnect/mock-walletconnect-keyring';
-import { migrateAppStorage, migrateServices } from '@/migrations/migrations';
+import { migrateAppStorage, migrateService } from '@/migrations/migrations';
 import { TrezorKeyring } from '../keyring-bridge/trezor/trezor-keyring';
 import { perfEvents } from '../utils/perf';
 import { KeyringIntf } from '@rabby-wallet/keyring-utils';
@@ -108,6 +102,7 @@ contactService.setBeforeSetKV((k, v) => {
     }
   }
 });
+migrateService(APP_STORE_NAMES.contactBook, contactService);
 
 export const appEncryptor = new RNEncryptor();
 
@@ -140,14 +135,6 @@ keyringService.store.subscribe(value => {
   keyringStorage.clearAll();
   // keyringStorage.flushToDisk?.();
   keyringStorage.setItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE, value);
-});
-
-export const dappService = new DappService({
-  storageAdapter: appStorage,
-});
-
-export const sessionService = new SessionService({
-  dappService,
 });
 
 export const preferenceService = new PreferenceService({
@@ -191,19 +178,11 @@ preferenceService.setBeforeSetKV((k, v) => {
 });
 
 try_catch_issue_on_preference({ pos: 'after_preference' });
-
-export const whitelistService = new WhitelistService({
-  storageAdapter: appStorage,
-});
+migrateService(APP_STORE_NAMES.preference, preferenceService);
 
 export const transactionHistoryService = new TransactionHistoryService({
   storageAdapter: appStorage,
   preferenceService,
-});
-
-export const notificationService = new NotificationService({
-  preferenceService,
-  transactionHistoryService,
 });
 
 export const transactionWatcherService = new TransactionWatcherService({
@@ -250,33 +229,12 @@ const syncPendingTxs = () => {
 
 syncPendingTxs();
 
-export const hdKeyringService = new HDKeyringService({
-  storageAdapter: appStorage,
-});
-
-export const gasAccountService = new GasAccountService({
-  storageAdapter: appStorage,
-});
-
-migrateServices({
-  contactBook: contactService,
-  dapps: dappService,
-  preference: preferenceService,
-  whitelist: whitelistService,
-} as Parameters<typeof migrateServices>[0]);
-
 registerCoreServices({
   contactService,
-  dappService,
-  gasAccountService,
-  hdKeyringService,
   keyringService,
-  notificationService,
   preferenceService,
   securityEngineService,
-  sessionService,
   transactionBroadcastWatcherService,
   transactionHistoryService,
   transactionWatcherService,
-  whitelistService,
 });

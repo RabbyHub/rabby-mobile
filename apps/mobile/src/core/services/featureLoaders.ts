@@ -1,4 +1,6 @@
 import { appStorage } from '../storage/mmkv';
+import { APP_STORE_NAMES } from '../storage/storeConstant';
+import { migrateService } from '@/migrations/migrations';
 import { traceAndroidInstant } from '../utils/androidTrace';
 import {
   getRegisteredService,
@@ -205,6 +207,85 @@ export function loadBrowserHistoryService() {
   });
 }
 
+export function loadDappService() {
+  return loadFeatureService('dappService', async () => {
+    const { DappService } = await import('./dappService');
+    const preferenceService = await waitForCoreService('preferenceService');
+    const dappService = new DappService({
+      storageAdapter: appStorage,
+    });
+    migrateService(APP_STORE_NAMES.dapps, dappService, {
+      [APP_STORE_NAMES.preference]: preferenceService,
+    });
+    registerService('dappService', dappService);
+  });
+}
+
+export function loadSessionService() {
+  return loadFeatureService('sessionService', async () => {
+    const { SessionService } = await import('./session');
+    const dappService = await waitForCoreService('dappService');
+    registerService(
+      'sessionService',
+      new SessionService({
+        dappService,
+      }),
+    );
+  });
+}
+
+export function loadWhitelistService() {
+  return loadFeatureService('whitelistService', async () => {
+    const { WhitelistService } = await import('./whitelist');
+    const whitelistService = new WhitelistService({
+      storageAdapter: appStorage,
+    });
+    migrateService(APP_STORE_NAMES.whitelist, whitelistService);
+    registerService('whitelistService', whitelistService);
+  });
+}
+
+export function loadNotificationService() {
+  return loadFeatureService('notificationService', async () => {
+    const { NotificationService } = await import('./notification');
+    const [preferenceService, transactionHistoryService] = await Promise.all([
+      waitForCoreService('preferenceService'),
+      waitForCoreService('transactionHistoryService'),
+    ]);
+    registerService(
+      'notificationService',
+      new NotificationService({
+        preferenceService,
+        transactionHistoryService,
+      }),
+    );
+  });
+}
+
+export function loadHDKeyringService() {
+  return loadFeatureService('hdKeyringService', async () => {
+    const { HDKeyringService } = await import('./hdKeyringService');
+    registerService(
+      'hdKeyringService',
+      new HDKeyringService({
+        storageAdapter: appStorage,
+      }),
+    );
+  });
+}
+
+export function loadGasAccountService() {
+  return loadFeatureService('gasAccountService', async () => {
+    const { GasAccountService } = await import('./gasAccount');
+    registerService(
+      'gasAccountService',
+      new GasAccountService({
+        storageAdapter: appStorage,
+      }),
+    );
+  });
+}
+
 export function loadAutoConnectService() {
   return loadFeatureService('autoConnectService', async () => {
     const { AutoConnectService } = await import('./autoConnect');
@@ -264,11 +345,11 @@ export function loadFeatureCoreService(name: CoreServiceName) {
     case 'customTestnetService':
       return loadCustomTestnetService();
     case 'dappService':
-      return loadBootstrapCoreServices(name);
+      return loadDappService();
     case 'gasAccountService':
-      return loadBootstrapCoreServices(name);
+      return loadGasAccountService();
     case 'hdKeyringService':
-      return loadBootstrapCoreServices(name);
+      return loadHDKeyringService();
     case 'keyringService':
       return loadBootstrapCoreServices(name);
     case 'lendingService':
@@ -276,7 +357,7 @@ export function loadFeatureCoreService(name: CoreServiceName) {
     case 'metamaskModeService':
       return loadMetamaskModeService();
     case 'notificationService':
-      return loadBootstrapCoreServices(name);
+      return loadNotificationService();
     case 'offlineChainService':
       return loadOfflineChainService();
     case 'perpsService':
@@ -288,7 +369,7 @@ export function loadFeatureCoreService(name: CoreServiceName) {
     case 'securityEngineService':
       return loadBootstrapCoreServices(name);
     case 'sessionService':
-      return loadBootstrapCoreServices(name);
+      return loadSessionService();
     case 'swapService':
       return loadSwapService();
     case 'syncChainService':
@@ -300,7 +381,7 @@ export function loadFeatureCoreService(name: CoreServiceName) {
     case 'transactionWatcherService':
       return loadBootstrapCoreServices(name);
     case 'whitelistService':
-      return loadBootstrapCoreServices(name);
+      return loadWhitelistService();
     default:
       return null;
   }

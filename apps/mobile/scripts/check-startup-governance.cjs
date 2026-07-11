@@ -35,6 +35,13 @@ const serviceRuntimeImportBoundaryPatterns = [
   /\/src\/core\/serviceApi\//,
 ];
 
+const heavyStartupRuntimeModules = [
+  '@noble/curves',
+  '@rabby-wallet/rabby-swap',
+  '@op-engineering/op-sqlite',
+  'typeorm/browser',
+];
+
 function isCoreServiceModule(source) {
   return (
     source === '@/core/services' ||
@@ -44,9 +51,35 @@ function isCoreServiceModule(source) {
   );
 }
 
+function isAppDatabaseOrmModule(source) {
+  return source === '@/databases/orm' || source === './orm';
+}
+
 function isAllowedServiceRuntimeImportFile(filePath) {
   return serviceRuntimeImportBoundaryPatterns.some(pattern =>
     pattern.test(filePath),
+  );
+}
+
+function isAllowedDatabaseOrmImportFile(relPath) {
+  return (
+    relPath === 'src/databases/register.ts' ||
+    relPath === 'src/databases/orm.ts'
+  );
+}
+
+function isHeavyStartupRuntimeModule(source) {
+  return heavyStartupRuntimeModules.some(
+    moduleName => source === moduleName || source.startsWith(`${moduleName}/`),
+  );
+}
+
+function isAllowedHeavyStartupImportFile(filePath) {
+  return (
+    /\/src\/core\/databases\//.test(filePath) ||
+    /\/src\/databases\//.test(filePath) ||
+    /\/src\/core\/services\//.test(filePath) ||
+    /\/src\/core\/utils\/typeorm\.ts$/.test(filePath)
   );
 }
 
@@ -142,6 +175,71 @@ function checkCoreServiceRuntimeImports(filePath, relPath, source) {
           source,
           match.index,
         )} service requires must go through core/serviceApi or a service loader`,
+      );
+    }
+  }
+}
+
+function checkDatabaseGovernanceImports(filePath, relPath, source) {
+  const staticImportPattern = /import\s+([\s\S]*?)\s+from\s+['"]([^'"]+)['"]/g;
+  let match;
+  while ((match = staticImportPattern.exec(source))) {
+    const [, importClause, importSource] = match;
+    if (
+      isAppDatabaseOrmModule(importSource) &&
+      !isAllowedDatabaseOrmImportFile(relPath)
+    ) {
+      errors.push(
+        `${relPath}:${getLineNumber(
+          source,
+          match.index,
+        )} database orm must be loaded through databases/register and the app data-source registry`,
+      );
+    }
+
+    if (
+      startupSensitivePathPatterns.some(pattern => pattern.test(filePath)) &&
+      isHeavyStartupRuntimeModule(importSource) &&
+      !isAllowedHeavyStartupImportFile(filePath) &&
+      !isTypeOnlyImportClause(importClause)
+    ) {
+      warnings.push(
+        `${relPath}:${getLineNumber(
+          source,
+          match.index,
+        )} startup-sensitive heavy package import should be behind a startup task, service loader, or explicit route-level demand`,
+      );
+    }
+  }
+
+  const dynamicImportPattern = /import\(\s*['"]([^'"]+)['"]\s*\)/g;
+  while ((match = dynamicImportPattern.exec(source))) {
+    const [, importSource] = match;
+    if (
+      isAppDatabaseOrmModule(importSource) &&
+      !isAllowedDatabaseOrmImportFile(relPath)
+    ) {
+      errors.push(
+        `${relPath}:${getLineNumber(
+          source,
+          match.index,
+        )} database orm dynamic imports must be isolated in databases/register`,
+      );
+    }
+  }
+
+  const requirePattern = /require\(\s*['"]([^'"]+)['"]\s*\)/g;
+  while ((match = requirePattern.exec(source))) {
+    const [, importSource] = match;
+    if (
+      isAppDatabaseOrmModule(importSource) &&
+      !isAllowedDatabaseOrmImportFile(relPath)
+    ) {
+      errors.push(
+        `${relPath}:${getLineNumber(
+          source,
+          match.index,
+        )} database orm requires must be isolated in databases/register`,
       );
     }
   }
@@ -255,6 +353,7 @@ for (const filePath of walk(srcRoot)) {
   let searchIndex = 0;
 
   checkCoreServiceRuntimeImports(filePath, relPath, source);
+  checkDatabaseGovernanceImports(filePath, relPath, source);
 
   while (true) {
     const callIndex = source.indexOf('runIIFEFunc(', searchIndex);

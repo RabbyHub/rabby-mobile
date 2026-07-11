@@ -106,6 +106,15 @@ export const STARTUP_TASKS = {
     priority: 'critical',
     budgetMs: 80,
   }),
+  homePreSplashLocalStateWarmup: defineStartupTask({
+    label: 'home.preSplashLocalStateWarmup',
+    owner: 'home',
+    reason:
+      'read local-only Home display gates before the first Home render without gating splash hide',
+    stage: 'preSplash',
+    priority: 'high',
+    budgetMs: 16,
+  }),
   homeHistorySyncListener: defineStartupTask({
     label: 'homeHistory.syncListener',
     owner: 'home',
@@ -262,6 +271,15 @@ export const STARTUP_TASKS = {
     fallbackMs: 10000,
     idleTimeoutMs: 5000,
     budgetMs: 20,
+  }),
+  databaseAppDataSourceLoader: defineStartupTask({
+    label: 'database.appDataSourceLoader',
+    owner: 'database',
+    reason:
+      'open the app SQLite data source only after a database consumer explicitly requests it',
+    stage: 'onDemand',
+    priority: 'high',
+    budgetMs: 600,
   }),
 } as const;
 

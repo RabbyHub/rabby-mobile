@@ -61,11 +61,16 @@ import {
   startUnlockScreenBootstrapWarmups,
 } from './setup-readable-account-bootstrap-warmups';
 import { startInitReadableAccountStores } from './setup-readable-account-stores';
+import { warmHomePreSplashLocalState } from './setup-home-pre-splash-state';
 
 const UNLOCKED_STORES_AFTER_UNLOCK_DELAY_MS = 800;
 const WALLETCONNECT_RESTORE_AFTER_HOME_IDLE_DELAY_MS = 60000;
 const WALLETCONNECT_RESTORE_HOME_READY_FALLBACK_MS = 10000;
 const WALLETCONNECT_RESTORE_IDLE_TIMEOUT_MS = 10000;
+
+runIIFEFunc(() => {
+  warmHomePreSplashLocalState();
+}, STARTUP_TASKS.homePreSplashLocalStateWarmup);
 
 runIIFEFunc(() => {
   startComputationThread();
