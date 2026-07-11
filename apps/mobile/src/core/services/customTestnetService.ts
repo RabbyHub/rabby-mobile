@@ -704,8 +704,3 @@ const createClientByChain = (chain: TestnetChainBase) => {
     transport: http(chain.rpcUrl),
   });
 };
-
-
-export const customTestnetService = new CustomTestnetService({
-  storageAdapter: appStorage,
-});

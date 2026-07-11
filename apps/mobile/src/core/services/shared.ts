@@ -14,11 +14,15 @@ import { SwapService } from './swap';
 import { SyncChainService } from './syncChainService';
 import { registerCoreServices } from './serviceRegistry';
 import { keyringService } from './bootstrap';
+import type { CustomRPCService } from './customRPCService';
+import type { CustomTestnetService } from './customTestnetService';
 
 export * from './bootstrap';
 export { default as debugLogService } from '../utils/debugLogService';
 
 export declare const autoConnectService: AutoConnectService;
+export declare const customRPCService: CustomRPCService;
+export declare const customTestnetService: CustomTestnetService;
 export declare const rabbyPointsService: RabbyPointsService;
 
 export const browserHistoryService = new BrowserHistoryService({

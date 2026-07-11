@@ -69,6 +69,30 @@ export function loadCurrencyService() {
   });
 }
 
+export function loadCustomRPCService() {
+  return loadFeatureService('customRPCService', async () => {
+    const { CustomRPCService } = await import('./customRPCService');
+    registerService(
+      'customRPCService',
+      new CustomRPCService({
+        storageAdapter: appStorage,
+      }),
+    );
+  });
+}
+
+export function loadCustomTestnetService() {
+  return loadFeatureService('customTestnetService', async () => {
+    const { CustomTestnetService } = await import('./customTestnetService');
+    registerService(
+      'customTestnetService',
+      new CustomTestnetService({
+        storageAdapter: appStorage,
+      }),
+    );
+  });
+}
+
 export function loadLendingService() {
   return loadFeatureService('lendingService', async () => {
     const { LendingService } = await import('./lendingService');
@@ -220,6 +244,10 @@ export function loadFeatureCoreService(name: CoreServiceName) {
       return loadBrowserService();
     case 'currencyService':
       return loadCurrencyService();
+    case 'customRPCService':
+      return loadCustomRPCService();
+    case 'customTestnetService':
+      return loadCustomTestnetService();
     case 'lendingService':
       return loadLendingService();
     case 'metamaskModeService':

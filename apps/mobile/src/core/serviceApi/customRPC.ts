@@ -1,10 +1,10 @@
-import type { customRPCService } from '@/core/services/customRPCService';
+import type { CustomRPCService } from '@/core/services/customRPCService';
 import {
   createDeferredServiceApi,
   registerLegacyCoreServiceLoader,
 } from './createDeferredServiceApi';
 
-export type CustomRPCServiceApiContract = typeof customRPCService;
+export type CustomRPCServiceApiContract = CustomRPCService;
 
 registerLegacyCoreServiceLoader('customRPCService');
 

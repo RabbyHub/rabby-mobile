@@ -24,7 +24,7 @@ import {
 import { DappInfo } from './dappService';
 import { stats } from '@/utils/stats';
 import { findChain } from '@/utils/chain';
-import { customTestnetService } from './customTestnetService';
+import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 // import { updateExpiredTime } from '@/databases/sync/assets'
@@ -1002,7 +1002,7 @@ export class TransactionHistoryService {
       const results = await Promise.all(
         broadcastedTxs.map(tx => {
           if (chain.isTestnet) {
-            return customTestnetService.getTx({
+            return customTestnetServiceApi.getTx({
               chainId: chain.id,
               hash: tx.hash!,
             });

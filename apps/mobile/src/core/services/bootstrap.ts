@@ -33,8 +33,6 @@ import { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
 import SimpleKeyring from '@rabby-wallet/eth-simple-keyring';
 import HDKeyring from '@rabby-wallet/eth-hd-keyring';
 import { HDKeyringService } from './hdKeyringService';
-import { customTestnetService } from './customTestnetService';
-import { customRPCService } from './customRPCService';
 import { GasAccountService } from './gasAccount';
 import { MockWalletConnectKeyring } from '../keyring-bridge/walletconnect/mock-walletconnect-keyring';
 import { migrateAppStorage, migrateServices } from '@/migrations/migrations';
@@ -43,6 +41,7 @@ import { perfEvents } from '../utils/perf';
 import { KeyringIntf } from '@rabby-wallet/keyring-utils';
 import { openapi } from '../request';
 import { setTxRpcClient } from '../utils/tx';
+import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
 import {
   setUserBehaviorTrackingOptOutCache,
   USER_BEHAVIOR_TRACKING_OPT_OUT_KEY,
@@ -78,7 +77,7 @@ function try_catch_issue_on_preference({
 
 try_catch_issue_on_preference({ pos: 'before_preference' });
 GnosisKeyring.setOpenapiService(openapi);
-setTxRpcClient(payload => customRPCService.defaultEthRPC(payload));
+setTxRpcClient(payload => customRPCServiceApi.defaultEthRPC(payload));
 
 const keyringClasses = [
   MockWalletConnectKeyring,
@@ -264,8 +263,6 @@ migrateServices({
 
 registerCoreServices({
   contactService,
-  customRPCService,
-  customTestnetService,
   dappService,
   gasAccountService,
   hdKeyringService,
@@ -279,5 +276,3 @@ registerCoreServices({
   transactionWatcherService,
   whitelistService,
 });
-
-export { customRPCService, customTestnetService };
