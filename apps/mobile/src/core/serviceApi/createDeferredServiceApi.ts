@@ -22,6 +22,7 @@ export type DeferredServiceApi<TService extends object> = {
 };
 
 let legacyCoreServicesLoadPromise: Promise<void> | null = null;
+const featureCoreServiceLoadPromiseMap = new Map<string, Promise<void>>();
 
 function loadLegacyCoreServices() {
   if (legacyCoreServicesLoadPromise) {
@@ -38,10 +39,33 @@ function loadLegacyCoreServices() {
   return legacyCoreServicesLoadPromise;
 }
 
+function loadFeatureCoreService(name: CoreServiceName) {
+  const pending = featureCoreServiceLoadPromiseMap.get(name);
+  if (pending) {
+    return pending;
+  }
+
+  const loadPromise = import('@/core/services/featureLoaders')
+    .then(module => module.loadFeatureCoreService(name))
+    .then(result => {
+      if (result === null) {
+        return loadLegacyCoreServices();
+      }
+      return undefined;
+    })
+    .catch(error => {
+      featureCoreServiceLoadPromiseMap.delete(name);
+      throw error;
+    });
+
+  featureCoreServiceLoadPromiseMap.set(name, loadPromise);
+  return loadPromise;
+}
+
 export function registerLegacyCoreServiceLoader<Name extends CoreServiceName>(
   name: Name,
 ) {
-  return registerCoreServiceLoader(name, loadLegacyCoreServices);
+  return registerCoreServiceLoader(name, () => loadFeatureCoreService(name));
 }
 
 export function createDeferredServiceApi<

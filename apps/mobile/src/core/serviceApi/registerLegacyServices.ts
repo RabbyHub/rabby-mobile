@@ -1,1 +1,2 @@
-import '@/core/services';
+import '@/core/services/bootstrap';
+import './index';

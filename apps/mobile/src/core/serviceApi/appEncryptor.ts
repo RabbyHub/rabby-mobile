@@ -1,1 +1,1 @@
-export { appEncryptor as appEncryptorApi } from '@/core/services/shared';
+export { appEncryptor as appEncryptorApi } from '@/core/services/bootstrap';
