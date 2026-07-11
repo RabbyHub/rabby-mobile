@@ -33,6 +33,26 @@ export const syncAbortControllers: {
 } = {};
 const activeSyncAbortControllers = new Set<AbortController>();
 
+const DB_SYNC_WRITE_POLICIES: Partial<
+  Record<
+    SyncTaskOptions['taskFor'],
+    {
+      maxBatchSize?: number;
+      minDelayBetweenTasks?: number;
+      maxDelayBetweenTasks?: number;
+    }
+  >
+> = {
+  token: {
+    maxBatchSize: 120,
+    minDelayBetweenTasks: 16,
+  },
+  'all-history': {
+    maxBatchSize: 10,
+    maxDelayBetweenTasks: 32,
+  },
+};
+
 export function abortAllSyncTasks(reason = 'manual') {
   notifySyncAbortHandlers(reason);
   activeSyncAbortControllers.forEach(controller => {
@@ -99,6 +119,46 @@ function ensureNotAborted(signal?: AbortSignal) {
   if (signal?.aborted) {
     throw new SyncTaskAbortError();
   }
+}
+
+function resolveDbSyncWritePolicy(options: {
+  taskFor: SyncTaskOptions['taskFor'];
+  batchSize: number;
+  delayBetweenTasks: number;
+}) {
+  const policy = DB_SYNC_WRITE_POLICIES[options.taskFor];
+  if (!policy) {
+    return {
+      batchSize: options.batchSize,
+      delayBetweenTasks: options.delayBetweenTasks,
+      didApplyPolicy: false,
+    };
+  }
+
+  const batchSize = Math.max(
+    1,
+    Math.min(options.batchSize, policy.maxBatchSize || options.batchSize),
+  );
+  let delayBetweenTasks = Math.max(
+    options.delayBetweenTasks,
+    policy.minDelayBetweenTasks || 0,
+  );
+  if (typeof policy.maxDelayBetweenTasks === 'number') {
+    delayBetweenTasks = Math.min(
+      delayBetweenTasks,
+      policy.maxDelayBetweenTasks,
+    );
+  }
+
+  return {
+    batchSize,
+    delayBetweenTasks,
+    didApplyPolicy:
+      batchSize !== options.batchSize ||
+      delayBetweenTasks !== options.delayBetweenTasks,
+    requestedBatchSize: options.batchSize,
+    requestedDelayBetweenTasks: options.delayBetweenTasks,
+  };
 }
 
 function sleep(ms: number, signal?: AbortSignal) {
@@ -179,9 +239,9 @@ export async function batchSaveWithPQueueAndTransaction<
   },
 ) {
   const {
-    batchSize = 50,
+    batchSize: requestedBatchSize = 50,
     concurrency = 2,
-    delayBetweenTasks = 1 * 1e3,
+    delayBetweenTasks: requestedDelayBetweenTasks = 1 * 1e3,
     owner_addr,
     taskFor,
     printLog = __DEV__,
@@ -192,6 +252,12 @@ export async function batchSaveWithPQueueAndTransaction<
     priority = inferSyncTaskPriority(taskFor),
     skipEmit = false,
   } = options;
+  const writePolicy = resolveDbSyncWritePolicy({
+    taskFor,
+    batchSize: requestedBatchSize,
+    delayBetweenTasks: requestedDelayBetweenTasks,
+  });
+  const { batchSize, delayBetweenTasks } = writePolicy;
 
   const taskKey = makeSyncTaskKey(taskFor, owner_addr);
   const curAbortController = new AbortController();
@@ -228,6 +294,19 @@ export async function batchSaveWithPQueueAndTransaction<
     waitTaskDoneReturn,
     delayBetweenTasks,
   });
+  if (writePolicy.didApplyPolicy) {
+    markDbSyncTaskStage(
+      diagTaskId,
+      'write_policy',
+      {
+        requestedBatchSize: writePolicy.requestedBatchSize,
+        effectiveBatchSize: batchSize,
+        requestedDelayBetweenTasks: writePolicy.requestedDelayBetweenTasks,
+        effectiveDelayBetweenTasks: delayBetweenTasks,
+      },
+      true,
+    );
+  }
   let didFinishDiagTask = false;
   let diagTaskHadError = false;
   const finishDiagTask = (
