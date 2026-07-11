@@ -27,7 +27,6 @@ import { GnosisKeyring } from '@rabby-wallet/eth-keyring-gnosis';
 import { KeyringService } from '@rabby-wallet/service-keyring';
 import RNEncryptor from './encryptor';
 import { onCreateKeyring, onSetAddressAlias } from './keyringParams';
-import { RabbyPointsService } from './rabbyPoints';
 import { LedgerKeyring } from '@rabby-wallet/eth-keyring-ledger';
 import { KeystoneKeyring } from '@rabby-wallet/eth-keyring-keystone';
 import { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
@@ -42,7 +41,6 @@ import { migrateAppStorage, migrateServices } from '@/migrations/migrations';
 import { TrezorKeyring } from '../keyring-bridge/trezor/trezor-keyring';
 import { perfEvents } from '../utils/perf';
 import { KeyringIntf } from '@rabby-wallet/keyring-utils';
-import { AutoConnectService } from './autoConnect';
 import { openapi } from '../request';
 import { setTxRpcClient } from '../utils/tx';
 import {
@@ -221,13 +219,6 @@ export const securityEngineService = new SecurityEngineService({
   storageAdapter: appStorage,
 });
 
-export const autoConnectService = new AutoConnectService({
-  dappService,
-  getAccounts: () => keyringService.getAllVisibleAccountsArray(),
-  getRecentTransactions: () => transactionHistoryService.store.transactions,
-  getFallbackAccount: () => preferenceService.getFallbackAccount(),
-});
-
 transactionWatcherService.roll();
 
 const syncPendingTxs = () => {
@@ -256,10 +247,6 @@ const syncPendingTxs = () => {
 
 syncPendingTxs();
 
-export const rabbyPointsService = new RabbyPointsService({
-  storageAdapter: appStorage,
-});
-
 export const hdKeyringService = new HDKeyringService({
   storageAdapter: appStorage,
 });
@@ -276,7 +263,6 @@ migrateServices({
 } as Parameters<typeof migrateServices>[0]);
 
 registerCoreServices({
-  autoConnectService,
   contactService,
   customRPCService,
   customTestnetService,
@@ -286,7 +272,6 @@ registerCoreServices({
   keyringService,
   notificationService,
   preferenceService,
-  rabbyPointsService,
   securityEngineService,
   sessionService,
   transactionBroadcastWatcherService,

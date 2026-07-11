@@ -20,6 +20,7 @@ export * from './notification';
 export * from './offlineChain';
 export * from './perps';
 export * from './preference';
+export * from './rabbyPoints';
 export * from './securityEngine';
 export * from './session';
 export * from './swap';

@@ -5,6 +5,7 @@ import {
   isCoreServiceRegistered,
   registerService,
   type CoreServiceName,
+  waitForCoreService,
 } from './serviceRegistry';
 
 function traceFeatureServiceLoad(
@@ -167,8 +168,50 @@ export function loadBrowserHistoryService() {
   });
 }
 
+export function loadAutoConnectService() {
+  return loadFeatureService('autoConnectService', async () => {
+    const { AutoConnectService } = await import('./autoConnect');
+    const [
+      dappService,
+      keyringService,
+      preferenceService,
+      transactionHistoryService,
+    ] = await Promise.all([
+      waitForCoreService('dappService'),
+      waitForCoreService('keyringService'),
+      waitForCoreService('preferenceService'),
+      waitForCoreService('transactionHistoryService'),
+    ]);
+
+    registerService(
+      'autoConnectService',
+      new AutoConnectService({
+        dappService,
+        getAccounts: () => keyringService.getAllVisibleAccountsArray(),
+        getRecentTransactions: () =>
+          transactionHistoryService.store.transactions,
+        getFallbackAccount: () => preferenceService.getFallbackAccount(),
+      }),
+    );
+  });
+}
+
+export function loadRabbyPointsService() {
+  return loadFeatureService('rabbyPointsService', async () => {
+    const { RabbyPointsService } = await import('./rabbyPoints');
+    registerService(
+      'rabbyPointsService',
+      new RabbyPointsService({
+        storageAdapter: appStorage,
+      }),
+    );
+  });
+}
+
 export function loadFeatureCoreService(name: CoreServiceName) {
   switch (name) {
+    case 'autoConnectService':
+      return loadAutoConnectService();
     case 'bridgeService':
       return loadBridgeService();
     case 'browserHistoryService':
@@ -185,6 +228,8 @@ export function loadFeatureCoreService(name: CoreServiceName) {
       return loadOfflineChainService();
     case 'perpsService':
       return loadPerpsService();
+    case 'rabbyPointsService':
+      return loadRabbyPointsService();
     case 'swapService':
       return loadSwapService();
     case 'syncChainService':

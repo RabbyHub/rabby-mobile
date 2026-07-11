@@ -8,6 +8,8 @@ import { LendingService } from './lendingService';
 import { MetamaskModeService } from './metamaskModeService';
 import { OfflineChainService } from './offlineChain';
 import { PerpsService } from './perpsService';
+import type { AutoConnectService } from './autoConnect';
+import type { RabbyPointsService } from './rabbyPoints';
 import { SwapService } from './swap';
 import { SyncChainService } from './syncChainService';
 import { registerCoreServices } from './serviceRegistry';
@@ -15,6 +17,9 @@ import { keyringService } from './bootstrap';
 
 export * from './bootstrap';
 export { default as debugLogService } from '../utils/debugLogService';
+
+export declare const autoConnectService: AutoConnectService;
+export declare const rabbyPointsService: RabbyPointsService;
 
 export const browserHistoryService = new BrowserHistoryService({
   storageAdapter: appStorage,
