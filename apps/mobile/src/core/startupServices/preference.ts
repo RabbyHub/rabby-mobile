@@ -29,7 +29,6 @@ import type {
   Token,
   TokenDisplayMode,
 } from '@/types/assets';
-import { keyringServiceApi } from '@/core/serviceApi/keyring';
 
 export type { Account, IPinAddress } from '@/types/account';
 export type {
@@ -234,6 +233,10 @@ export type SetCurrentAccountOptions = {
   needSyncToSession?: boolean;
 };
 
+type PreferenceServiceOptions = StorageAdapaterOptions & {
+  getAllVisibleAccountsArray?: () => Promise<Account[]>;
+};
+
 export class PreferenceService extends StoreServiceBase<
   PreferenceStore,
   APP_STORE_NAMES.preference
@@ -244,7 +247,9 @@ export class PreferenceService extends StoreServiceBase<
 
   private _allowedToNotifyAccountsChanged = false;
 
-  constructor(options: StorageAdapaterOptions) {
+  private getAllVisibleAccountsArray: () => Promise<Account[]>;
+
+  constructor(options: PreferenceServiceOptions) {
     const defaultLang = 'en';
     const storedPreference = options.storageAdapter?.getItem(
       APP_STORE_NAMES.preference,
@@ -316,6 +321,9 @@ export class PreferenceService extends StoreServiceBase<
         },
       },
     );
+
+    this.getAllVisibleAccountsArray =
+      options.getAllVisibleAccountsArray || (() => Promise.resolve([]));
 
     if ('balanceMap' in this.store) {
       delete this.store.balanceMap;
@@ -555,7 +563,7 @@ export class PreferenceService extends StoreServiceBase<
    * to the first address in address list
    */
   resetCurrentAccount = async () => {
-    const [account] = await keyringServiceApi.getAllVisibleAccountsArray();
+    const [account] = await this.getAllVisibleAccountsArray();
     this.setCurrentAccount(account);
   };
 
@@ -628,7 +636,7 @@ export class PreferenceService extends StoreServiceBase<
     }
     // TODO: 排序
     // return the first account in the account list
-    const [first] = await keyringServiceApi.getAllVisibleAccountsArray();
+    const [first] = await this.getAllVisibleAccountsArray();
 
     return first!;
   };

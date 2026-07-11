@@ -24,7 +24,6 @@ import {
 import { DappInfo } from './dappService';
 import { stats } from '@/utils/stats';
 import { findChain } from '@/utils/chain';
-import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 // import { updateExpiredTime } from '@/databases/sync/assets'
@@ -40,6 +39,7 @@ import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
 } from '@/types/history';
+import { callCoreService } from './serviceRegistry';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -1002,10 +1002,12 @@ export class TransactionHistoryService {
       const results = await Promise.all(
         broadcastedTxs.map(tx => {
           if (chain.isTestnet) {
-            return customTestnetServiceApi.getTx({
-              chainId: chain.id,
-              hash: tx.hash!,
-            });
+            return callCoreService('customTestnetService', service =>
+              service.getTx({
+                chainId: chain.id,
+                hash: tx.hash!,
+              }),
+            );
           } else {
             // Use standard RPC to get transaction receipt
             return getRpcTxReceipt(chain.serverId, tx.hash!);

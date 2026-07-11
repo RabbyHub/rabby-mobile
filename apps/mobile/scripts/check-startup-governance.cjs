@@ -29,6 +29,124 @@ const allowedRequirePatterns = [
   /require\(['"]p-queue\/dist['"]\)/,
 ];
 
+const serviceRuntimeImportBoundaryPatterns = [
+  /\/src\/core\/services\//,
+  /\/src\/core\/services2024\//,
+  /\/src\/core\/serviceApi\//,
+];
+
+function isCoreServiceModule(source) {
+  return (
+    source === '@/core/services' ||
+    source.startsWith('@/core/services/') ||
+    source === '@/core/services2024' ||
+    source.startsWith('@/core/services2024/')
+  );
+}
+
+function isAllowedServiceRuntimeImportFile(filePath) {
+  return serviceRuntimeImportBoundaryPatterns.some(pattern =>
+    pattern.test(filePath),
+  );
+}
+
+function isTypeOnlyImportClause(clause) {
+  const normalized = clause.trim();
+  if (normalized.startsWith('type ')) {
+    return true;
+  }
+
+  if (!normalized.startsWith('{') || !normalized.endsWith('}')) {
+    return false;
+  }
+
+  const body = normalized.slice(1, -1).trim();
+  if (!body) {
+    return false;
+  }
+
+  return body
+    .split(',')
+    .map(part => part.trim())
+    .filter(Boolean)
+    .every(part => part.startsWith('type '));
+}
+
+function isTypeImportExpression(source, index) {
+  const lineStart = source.lastIndexOf('\n', index) + 1;
+  const linePrefix = source.slice(lineStart, index);
+  return /:\s*$/.test(linePrefix) || /\bextends\s*$/.test(linePrefix);
+}
+
+function checkCoreServiceRuntimeImports(filePath, relPath, source) {
+  if (isAllowedServiceRuntimeImportFile(filePath)) {
+    return;
+  }
+
+  const staticImportPattern = /import\s+([\s\S]*?)\s+from\s+['"]([^'"]+)['"]/g;
+  let match;
+  while ((match = staticImportPattern.exec(source))) {
+    const [, importClause, importSource] = match;
+    if (!isCoreServiceModule(importSource)) {
+      continue;
+    }
+
+    if (isTypeOnlyImportClause(importClause)) {
+      continue;
+    }
+
+    errors.push(
+      `${relPath}:${getLineNumber(
+        source,
+        match.index,
+      )} runtime service imports must go through core/serviceApi; use import type for service types`,
+    );
+  }
+
+  const sideEffectImportPattern = /import\s+['"]([^'"]+)['"]/g;
+  while ((match = sideEffectImportPattern.exec(source))) {
+    const [, importSource] = match;
+    if (isCoreServiceModule(importSource)) {
+      errors.push(
+        `${relPath}:${getLineNumber(
+          source,
+          match.index,
+        )} service side-effect imports are only allowed inside core service boundaries`,
+      );
+    }
+  }
+
+  const dynamicImportPattern = /import\(\s*['"]([^'"]+)['"]\s*\)/g;
+  while ((match = dynamicImportPattern.exec(source))) {
+    const [, importSource] = match;
+    if (isTypeImportExpression(source, match.index)) {
+      continue;
+    }
+
+    if (isCoreServiceModule(importSource)) {
+      errors.push(
+        `${relPath}:${getLineNumber(
+          source,
+          match.index,
+        )} dynamic service imports must go through core/serviceApi or a service loader`,
+      );
+    }
+  }
+
+  const requirePattern = /require\(\s*['"]([^'"]+)['"]\s*\)/g;
+  while ((match = requirePattern.exec(source))) {
+    const [, importSource] = match;
+    if (isCoreServiceModule(importSource)) {
+      errors.push(
+        `${relPath}:${getLineNumber(
+          source,
+          match.index,
+        )} service requires must go through core/serviceApi or a service loader`,
+      );
+    }
+  }
+}
+
 function walk(dir, output = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.name === 'node_modules' || entry.name.startsWith('.')) {
@@ -135,6 +253,8 @@ for (const filePath of walk(srcRoot)) {
   const source = fs.readFileSync(filePath, 'utf8');
   const relPath = path.relative(appRoot, filePath);
   let searchIndex = 0;
+
+  checkCoreServiceRuntimeImports(filePath, relPath, source);
 
   while (true) {
     const callIndex = source.indexOf('runIIFEFunc(', searchIndex);

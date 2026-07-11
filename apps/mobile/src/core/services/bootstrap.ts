@@ -41,7 +41,6 @@ import { perfEvents } from '../utils/perf';
 import { KeyringIntf } from '@rabby-wallet/keyring-utils';
 import { openapi } from '../request';
 import { setTxRpcClient } from '../utils/tx';
-import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
 import {
   setUserBehaviorTrackingOptOutCache,
   USER_BEHAVIOR_TRACKING_OPT_OUT_KEY,
@@ -50,7 +49,7 @@ import { isNonPublicProductionEnv } from '@/constant';
 import { logger } from '@/utils/logger';
 import { traceAndroidInstant } from '../utils/androidTrace';
 import { recordKeyringRuntimePerfDiagnostic } from '../utils/startupDiagnostics';
-import { registerCoreServices } from './serviceRegistry';
+import { callCoreService, registerCoreServices } from './serviceRegistry';
 
 migrateAppStorage(appStorage);
 
@@ -77,7 +76,11 @@ function try_catch_issue_on_preference({
 
 try_catch_issue_on_preference({ pos: 'before_preference' });
 GnosisKeyring.setOpenapiService(openapi);
-setTxRpcClient(payload => customRPCServiceApi.defaultEthRPC(payload));
+setTxRpcClient(payload =>
+  callCoreService('customRPCService', service =>
+    service.defaultEthRPC(payload),
+  ),
+);
 
 const keyringClasses = [
   MockWalletConnectKeyring,
@@ -149,6 +152,7 @@ export const sessionService = new SessionService({
 
 export const preferenceService = new PreferenceService({
   storageAdapter: appStorage,
+  getAllVisibleAccountsArray: () => keyringService.getAllVisibleAccountsArray(),
 });
 
 preferenceService.setBeforeSetKV((k, v) => {

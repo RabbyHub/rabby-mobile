@@ -10,8 +10,7 @@ import interval from 'interval-promise';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { TransactionHistoryService } from './transactionHistory';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
-import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
-import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
+import { callCoreService } from './serviceRegistry';
 
 class Transaction {
   createdTime = 0;
@@ -96,21 +95,21 @@ export class TransactionWatcherService {
     }
 
     if (chainItem.isTestnet) {
-      return customTestnetServiceApi
-        .getTransactionReceipt({
+      return callCoreService('customTestnetService', service =>
+        service.getTransactionReceipt({
           chainId: chainItem.id,
           hash,
-        })
-        .catch(() => null);
+        }),
+      ).catch(() => null);
     }
 
-    return customRPCServiceApi
-      .defaultEthRPC({
+    return callCoreService('customRPCService', service =>
+      service.defaultEthRPC({
         chainServerId: chainItem.serverId,
         method: 'eth_getTransactionReceipt',
         params: [hash],
-      })
-      .catch(() => null);
+      }),
+    ).catch(() => null);
   };
 
   notify = async (id: string, txReceipt) => {

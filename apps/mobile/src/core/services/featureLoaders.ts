@@ -8,6 +8,8 @@ import {
   waitForCoreService,
 } from './serviceRegistry';
 
+let bootstrapCoreServicesPromise: Promise<void> | null = null;
+
 function traceFeatureServiceLoad(
   name: CoreServiceName,
   event: 'start' | 'done' | 'skip',
@@ -30,6 +32,17 @@ async function loadFeatureService<Name extends CoreServiceName>(
   await loader();
   traceFeatureServiceLoad(name, 'done', {
     durationMs: Date.now() - startedAt,
+  });
+}
+
+function loadBootstrapCoreServices(name: CoreServiceName) {
+  return loadFeatureService(name, async () => {
+    if (!bootstrapCoreServicesPromise) {
+      bootstrapCoreServicesPromise = import('./bootstrap').then(
+        () => undefined,
+      );
+    }
+    await bootstrapCoreServicesPromise;
   });
 }
 
@@ -242,26 +255,52 @@ export function loadFeatureCoreService(name: CoreServiceName) {
       return loadBrowserHistoryService();
     case 'browserService':
       return loadBrowserService();
+    case 'contactService':
+      return loadBootstrapCoreServices(name);
     case 'currencyService':
       return loadCurrencyService();
     case 'customRPCService':
       return loadCustomRPCService();
     case 'customTestnetService':
       return loadCustomTestnetService();
+    case 'dappService':
+      return loadBootstrapCoreServices(name);
+    case 'gasAccountService':
+      return loadBootstrapCoreServices(name);
+    case 'hdKeyringService':
+      return loadBootstrapCoreServices(name);
+    case 'keyringService':
+      return loadBootstrapCoreServices(name);
     case 'lendingService':
       return loadLendingService();
     case 'metamaskModeService':
       return loadMetamaskModeService();
+    case 'notificationService':
+      return loadBootstrapCoreServices(name);
     case 'offlineChainService':
       return loadOfflineChainService();
     case 'perpsService':
       return loadPerpsService();
+    case 'preferenceService':
+      return loadBootstrapCoreServices(name);
     case 'rabbyPointsService':
       return loadRabbyPointsService();
+    case 'securityEngineService':
+      return loadBootstrapCoreServices(name);
+    case 'sessionService':
+      return loadBootstrapCoreServices(name);
     case 'swapService':
       return loadSwapService();
     case 'syncChainService':
       return loadSyncChainService();
+    case 'transactionBroadcastWatcherService':
+      return loadBootstrapCoreServices(name);
+    case 'transactionHistoryService':
+      return loadBootstrapCoreServices(name);
+    case 'transactionWatcherService':
+      return loadBootstrapCoreServices(name);
+    case 'whitelistService':
+      return loadBootstrapCoreServices(name);
     default:
       return null;
   }

@@ -8,7 +8,9 @@ import {
 } from './homeStartupReady';
 
 export type StartupTaskStage =
+  | 'registration'
   | 'immediate'
+  | 'preSplash'
   | 'homeCritical'
   | 'homePostStartupReady'
   | 'homePostStartupIdle'
@@ -31,6 +33,7 @@ export type StartupTaskOptions = {
 
 export type StartupTaskHandle = {
   cancel: () => void;
+  run?: () => unknown;
 };
 
 type StartupDiagnosticsModule = typeof import('./startupDiagnostics');
@@ -267,6 +270,34 @@ function scheduleHomePostStartupIdle<T>(
   };
 }
 
+function scheduleOnDemandStartupTask<T>(
+  task: () => T,
+  options: StartupTaskOptions,
+  diagnosticId: number | null,
+): StartupTaskHandle {
+  let disposed = false;
+  let fired = false;
+
+  return {
+    run: () => {
+      if (disposed || fired) {
+        return undefined;
+      }
+
+      fired = true;
+      return runStartupTask(task, options, diagnosticId);
+    },
+    cancel: () => {
+      if (disposed || fired) {
+        return;
+      }
+
+      disposed = true;
+      markStartupTaskDiagnostic(diagnosticId, 'cancel');
+    },
+  };
+}
+
 export function scheduleStartupTask<T>(
   task: () => T,
   options: StartupTaskOptions = {},
@@ -301,5 +332,21 @@ export function scheduleStartupTask<T>(
     return scheduleHomePostStartupIdle(task, options, diagnosticId);
   }
 
+  if (stage === 'onDemand') {
+    return scheduleOnDemandStartupTask(task, options, diagnosticId);
+  }
+
   return runStartupTask(task, options, diagnosticId);
+}
+
+export function runOnDemandStartupTask<T>(
+  task: () => T,
+  options: StartupTaskOptions = {},
+): T | undefined {
+  const handle = scheduleStartupTask(task, {
+    ...options,
+    stage: 'onDemand',
+  }) as StartupTaskHandle;
+
+  return handle.run?.() as T | undefined;
 }

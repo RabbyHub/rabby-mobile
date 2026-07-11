@@ -67,60 +67,69 @@ const WALLETCONNECT_RESTORE_AFTER_HOME_IDLE_DELAY_MS = 60000;
 const WALLETCONNECT_RESTORE_HOME_READY_FALLBACK_MS = 10000;
 const WALLETCONNECT_RESTORE_IDLE_TIMEOUT_MS = 10000;
 
-startComputationThread();
+runIIFEFunc(() => {
+  startComputationThread();
+  startManageAccountStoreLifecycle();
+  loadLockInfoOnBootstrap().catch(error => {
+    console.error('loadLockInfoOnBootstrap::setupRuntime::error', error);
+  });
+  apisAutoLock.setupAutoLockChecker();
+  subscribeUnlockToFetchAccounts();
+  startSubscribeAppStateChange();
+  startWatchLayoutChange();
+  startProcessAccountBalanceEvents();
+  startCheckClearAction();
+  startSubscribeOpenApiHttpErrorDebugToast();
+}, STARTUP_TASKS.setupRuntimeCoreLifecycle);
 
-if (APP_FEATURE_SWITCH.transactionNotification) {
-  connectPushServerOnBootstrap();
-}
+runIIFEFunc(() => {
+  if (APP_FEATURE_SWITCH.transactionNotification) {
+    connectPushServerOnBootstrap();
+  }
 
-startManageAccountStoreLifecycle();
-loadLockInfoOnBootstrap();
-apisAutoLock.setupAutoLockChecker();
-startFetchOnceTop5TokensForAllAccounts();
-subscribeUnlockToFetchAccounts();
-startSubscribeAppStateChange();
+  startFetchOnceTop5TokensForAllAccounts();
+  startSyncOnlineConfig();
+  loadVersionInfoOnBootstrap();
+  loadJavaScriptBeforeContentLoadedOnBoot();
+  autoGoogleSignIfPreviousSignedOnBoot();
+  startSyncDefaultRPCs();
+  rateModalStartSyncNetworth();
+  screenshotModalStartSyncNetworth();
+  trimNoLongerSupportsOnUnlock();
+}, STARTUP_TASKS.setupRuntimeRemoteWarmups);
 
-startSyncOnlineConfig();
-loadVersionInfoOnBootstrap();
+runIIFEFunc(() => {
+  startSubscribeOnekeyDevices();
+  startSubscribeTrezorConnectOnUrl();
+}, STARTUP_TASKS.setupRuntimeHardwareSubscriptions);
 
-loadJavaScriptBeforeContentLoadedOnBoot();
-
-startSubscribeOnekeyDevices();
-startSubscribeTrezorConnectOnUrl();
-
-autoGoogleSignIfPreviousSignedOnBoot();
-startSyncDefaultRPCs();
 runIIFEFunc(async () => {
   const { storeApiGasAccount } = await import(
     './screens/GasAccount/hooks/atom'
   );
   storeApiGasAccount.fetchGasAccountInfo();
 }, STARTUP_TASKS.setupGasAccountInfoFetch);
-startSubscribePerpsOnAppState();
-startWatchLayoutChange();
 
-startSubscribeUserDidTakeScreenshot();
-startSubscribeAtSensitiveScene();
-startSubscribeIOSJustScreenshotted();
-startSubscribeIOSAppSwitcherBlur();
-enableIOSAppSwitcherBlur();
-startSubscribeWhetherPreventScreenshot();
-startSubscribeIOSScreenRecording();
+runIIFEFunc(() => {
+  startSubscribePerpsOnAppState();
+}, STARTUP_TASKS.setupRuntimePerpsAppStateSubscription);
 
-rateModalStartSyncNetworth();
-screenshotModalStartSyncNetworth();
+runIIFEFunc(() => {
+  startSubscribeUserDidTakeScreenshot();
+  startSubscribeAtSensitiveScene();
+  startSubscribeIOSJustScreenshotted();
+  startSubscribeIOSAppSwitcherBlur();
+  enableIOSAppSwitcherBlur();
+  startSubscribeWhetherPreventScreenshot();
+  startSubscribeIOSScreenRecording();
+}, STARTUP_TASKS.setupRuntimeSecuritySubscriptions);
 
-startProcessAccountBalanceEvents();
-
-trimNoLongerSupportsOnUnlock();
-
-startCheckClearAction();
-startSubscribeOpenApiHttpErrorDebugToast();
-
-if (APP_FEATURE_SWITCH.transactionNotification) {
-  startCareAppNotificationPermissions();
-  startSubscribeRemoteNotification();
-}
+runIIFEFunc(() => {
+  if (APP_FEATURE_SWITCH.transactionNotification) {
+    startCareAppNotificationPermissions();
+    startSubscribeRemoteNotification();
+  }
+}, STARTUP_TASKS.setupRuntimeNotificationBootstrap);
 
 export {
   startInitPersistedStores,

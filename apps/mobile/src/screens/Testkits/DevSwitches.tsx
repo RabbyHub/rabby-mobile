@@ -81,6 +81,7 @@ import {
   useMakeMockDataForRateGuideExposure,
 } from '@/components/RateModal/hooks';
 import { useMakeMockDataForHomeCenterArea } from '@/screens/Home/hooks/homeCenterArea';
+import { useConvertDustBannerDebugControls } from '@/screens/Home/hooks/useConvertDustBanner';
 import { useMockClearOfflineChainTips } from '@/screens/Home/components/OfflineChainNotify';
 import {
   toggleViewedGuidance,
@@ -98,8 +99,7 @@ import { getKeyring } from '@/core/apis/keyring';
 import type { MockWalletConnectKeyring } from '@/core/keyring-bridge/walletconnect/mock-walletconnect-keyring';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import type {
-  SharedValue} from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 import {
   useAnimatedProps,
   useAnimatedStyle,
@@ -1091,6 +1091,11 @@ function DevTestHomeCenterArea() {
   const { mockData, setMockData } = useMakeMockDataForHomeCenterArea();
   const { clearOfflineChainTips } = useMockClearOfflineChainTips();
   const { viewedHomeTip, mockResetViewedHomeTip } = useViewedHomeTip();
+  const {
+    convertDustBannerVisited,
+    resetConvertDustBannerVisited,
+    markConvertDustBannerVisited,
+  } = useConvertDustBannerDebugControls();
   const { multiTabs20251205Viewed } = useGuidanceShown();
   const [isShow0331SnapshotModal, setIsShow0331SnapshotModal] = useState(false);
 
@@ -1179,6 +1184,34 @@ function DevTestHomeCenterArea() {
             }}
           />
         )}
+
+        <Text style={[styles.metaLabel, { marginTop: 12 }]}>
+          Convert Dust Banner Visited: {convertDustBannerVisited ? 'yes' : 'no'}
+        </Text>
+
+        <Button
+          title={'Reset Convert Dust Banner Visited'}
+          type="ghost"
+          height={48}
+          containerStyle={{ marginTop: 12 }}
+          disabled={!convertDustBannerVisited}
+          onPress={() => {
+            resetConvertDustBannerVisited();
+            toast.success('Convert Dust banner visited reset');
+          }}
+        />
+
+        <Button
+          title={'Mark Convert Dust Banner Visited'}
+          type="ghost"
+          height={48}
+          containerStyle={{ marginTop: 12 }}
+          disabled={convertDustBannerVisited}
+          onPress={() => {
+            markConvertDustBannerVisited();
+            toast.success('Convert Dust banner marked visited');
+          }}
+        />
       </View>
 
       <View style={[styles.secondarySectionHeader, { marginTop: 24 }]}>
