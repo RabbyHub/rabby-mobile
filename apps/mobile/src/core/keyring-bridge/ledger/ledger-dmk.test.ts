@@ -761,6 +761,67 @@ describe('ledger DMK bridge discovery', () => {
     expect(mockSignerEthBuilder).toHaveBeenCalledTimes(1);
   });
 
+  it('rejects a concurrent signer action and allows retry after the active action finishes', async () => {
+    const deviceId = 'ledger-concurrent-device-id';
+    const sessionId = 'session-1';
+    let completeFirstAction: (() => void) | undefined;
+    let markFirstActionStarted: (() => void) | undefined;
+    const firstActionStarted = new Promise<void>(resolve => {
+      markFirstActionStarted = resolve;
+    });
+    const signer = {
+      signTransaction: jest
+        .fn()
+        .mockReturnValueOnce({
+          observable: new Observable(observer => {
+            markFirstActionStarted?.();
+            completeFirstAction = () => {
+              observer.next({
+                status: 'completed',
+                output: { r: '0x1', s: '0x2', v: '0x1b' },
+              });
+            };
+          }),
+        })
+        .mockReturnValueOnce({
+          observable: of({
+            status: 'completed',
+            output: { r: '0x3', s: '0x4', v: '0x1c' },
+          }),
+        }),
+    };
+
+    mockDmk.listConnectedDevices.mockReturnValue([{ id: deviceId, sessionId }]);
+    mockSignerEthBuilder.mockReturnValue(makeSignerBuilder(signer));
+
+    const { getLedgerDmkSession } = require('./ledger-dmk');
+    const session = await getLedgerDmkSession(deviceId);
+    const firstAction = session.signTransaction(
+      "44'/60'/0'/0/0",
+      new Uint8Array(),
+    );
+    await firstActionStarted;
+
+    await expect(
+      session.signTransaction("44'/60'/0'/0/1", new Uint8Array()),
+    ).rejects.toThrow(
+      'Ledger: Another request is awaiting confirmation. Finish or cancel it, then try again.',
+    );
+    await expect(session.getAppAndVersion()).rejects.toThrow(
+      'Ledger: Another request is awaiting confirmation. Finish or cancel it, then try again.',
+    );
+    expect(signer.signTransaction).toHaveBeenCalledTimes(1);
+    expect(mockDmk.sendCommand).not.toHaveBeenCalled();
+
+    completeFirstAction?.();
+    await firstAction;
+
+    await expect(
+      session.signTransaction("44'/60'/0'/0/1", new Uint8Array()),
+    ).resolves.toEqual({ r: '0x3', s: '0x4', v: '0x1c' });
+    expect(signer.signTransaction).toHaveBeenCalledTimes(2);
+  });
+
   it('uses a basic context module by default and ignores the deprecated clear signing key', async () => {
     jest.resetModules();
     mockAppStorageGetItem.mockReturnValue({

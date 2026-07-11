@@ -254,16 +254,32 @@ export async function getLedgerDmkSession(
 
     return currentSessionId;
   };
+  let isDeviceActionActive = false;
+  const runDeviceAction = async <T>(task: () => Promise<T>) => {
+    if (isDeviceActionActive) {
+      throw new Error(
+        'Ledger: Another request is awaiting confirmation. Finish or cancel it, then try again.',
+      );
+    }
+
+    isDeviceActionActive = true;
+    try {
+      return await task();
+    } finally {
+      isDeviceActionActive = false;
+    }
+  };
   const runSignerAction = async <T>(
     actionName: string,
     task: (currentSigner: ReturnType<typeof buildEthSigner>) => {
       observable: Observable<any>;
       cancel?: () => void;
     },
-  ) => {
-    await refreshSignerSession();
-    return resolveAction<T>(task(signer), { actionName });
-  };
+  ) =>
+    runDeviceAction(async () => {
+      await refreshSignerSession();
+      return await resolveAction<T>(task(signer), { actionName });
+    });
 
   return {
     getAddress(path, options) {
@@ -289,9 +305,11 @@ export async function getLedgerDmkSession(
         currentSigner.signTypedData(path, data as TypedData),
       );
     },
-    async getAppAndVersion() {
-      const currentSessionId = await refreshSignerSession();
-      return readLedgerAppAndVersion(currentSessionId);
+    getAppAndVersion() {
+      return runDeviceAction(async () => {
+        const currentSessionId = await refreshSignerSession();
+        return readLedgerAppAndVersion(currentSessionId);
+      });
     },
     close() {
       return disconnectLedgerDevice(deviceId);
