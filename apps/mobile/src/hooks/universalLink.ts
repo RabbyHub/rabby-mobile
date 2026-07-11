@@ -32,7 +32,13 @@ import { isNonPublicProductionEnv } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import { navigationRef } from '@/utils/navigation';
 import { dropAppDataSourceAndQuitApp } from '@/databases/imports';
-import { abortAllSyncTasks } from '@/databases/sync/_task';
+import {
+  abortAllSyncTasks,
+  clearDbSyncWritePolicyOverride,
+  getDbSyncWritePolicyDebugSnapshot,
+  setDbSyncWritePolicyOverride,
+  type DbSyncWritePolicyOverride,
+} from '@/databases/sync/_task';
 import { resetUpdateHistoryTime } from './historyTokenDict';
 
 const nextAppLinkRef = {
@@ -57,7 +63,9 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'walletconnect-uri'
     | 'walletconnect-redirect'
     | 'open-testkit-screen'
-    | 'clear-app-cache';
+    | 'clear-app-cache'
+    | 'debug-sync-all-history'
+    | 'debug-db-sync-policy';
   dappUrl?: string;
   uri?: string;
   testkitScreen?:
@@ -66,6 +74,10 @@ type OnParseUrlAndProcessAction = (payload: {
     | typeof RootNames.DevDataSQLite;
   testkitParams?: {
     tab?: 'overview' | 'debug';
+  };
+  debugDbSyncPolicy?: {
+    resetWritePolicyOverride?: boolean;
+    writePolicyOverride?: DbSyncWritePolicyOverride;
   };
 }) => void;
 
@@ -128,6 +140,102 @@ function parseNonProductionTestkitLink(appLink: string) {
   } satisfies Parameters<OnParseUrlAndProcessAction>[0];
 }
 
+function parseBooleanParam(value: string | null) {
+  if (!value) {
+    return false;
+  }
+
+  return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
+}
+
+function parseIntegerParam(
+  params: URLSearchParams,
+  keys: string[],
+  options: {
+    min: number;
+    max: number;
+  },
+) {
+  for (const key of keys) {
+    const raw = params.get(key);
+    if (!raw) {
+      continue;
+    }
+
+    const value = Number(raw);
+    if (!Number.isFinite(value)) {
+      console.warn('[useUniversalLinkOnTop] Invalid integer param:', {
+        key,
+        raw,
+      });
+      continue;
+    }
+
+    const normalized = Math.trunc(value);
+    if (normalized < options.min || normalized > options.max) {
+      console.warn('[useUniversalLinkOnTop] Integer param out of range:', {
+        key,
+        raw,
+        min: options.min,
+        max: options.max,
+      });
+      continue;
+    }
+
+    return normalized;
+  }
+
+  return undefined;
+}
+
+function parseDebugDbSyncPolicyParams(params: URLSearchParams) {
+  const writePolicyOverride: DbSyncWritePolicyOverride = {};
+  const maxBatchSize = parseIntegerParam(
+    params,
+    ['batchSize', 'maxBatchSize', 'allHistoryBatchSize'],
+    {
+      min: 1,
+      max: 2000,
+    },
+  );
+  const minDelayBetweenTasks = parseIntegerParam(
+    params,
+    ['minDelayBetweenTasks', 'minDelay'],
+    {
+      min: 0,
+      max: 60 * 1000,
+    },
+  );
+  const maxDelayBetweenTasks = parseIntegerParam(
+    params,
+    ['maxDelayBetweenTasks', 'maxDelay', 'delayBetweenTasks'],
+    {
+      min: 0,
+      max: 60 * 1000,
+    },
+  );
+
+  if (typeof maxBatchSize === 'number') {
+    writePolicyOverride.maxBatchSize = maxBatchSize;
+  }
+  if (typeof minDelayBetweenTasks === 'number') {
+    writePolicyOverride.minDelayBetweenTasks = minDelayBetweenTasks;
+  }
+  if (typeof maxDelayBetweenTasks === 'number') {
+    writePolicyOverride.maxDelayBetweenTasks = maxDelayBetweenTasks;
+  }
+
+  return {
+    resetWritePolicyOverride:
+      parseBooleanParam(params.get('resetPolicy')) ||
+      parseBooleanParam(params.get('clearPolicy')) ||
+      parseBooleanParam(params.get('resetDbSyncPolicy')),
+    writePolicyOverride: Object.keys(writePolicyOverride).length
+      ? writePolicyOverride
+      : undefined,
+  };
+}
+
 function parseNonProductionMaintenanceLink(appLink: string) {
   if (!isNonPublicProductionEnv) {
     return null;
@@ -148,6 +256,26 @@ function parseNonProductionMaintenanceLink(appLink: string) {
   ) {
     return {
       type: 'clear-app-cache',
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  if (
+    rabbyGoCmd === 'debug-sync-all-history' ||
+    target === 'debug-sync-all-history'
+  ) {
+    return {
+      type: 'debug-sync-all-history',
+      debugDbSyncPolicy: parseDebugDbSyncPolicyParams(urlInfo.searchParams),
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  if (
+    rabbyGoCmd === 'debug-db-sync-policy' ||
+    target === 'debug-db-sync-policy'
+  ) {
+    return {
+      type: 'debug-db-sync-policy',
+      debugDbSyncPolicy: parseDebugDbSyncPolicyParams(urlInfo.searchParams),
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -277,6 +405,50 @@ async function clearAppCacheFromLink() {
   }
 }
 
+async function applyDebugDbSyncPolicyFromLink(
+  policy?: Parameters<OnParseUrlAndProcessAction>[0]['debugDbSyncPolicy'],
+) {
+  if (!policy) {
+    return;
+  }
+
+  if (policy.resetWritePolicyOverride) {
+    clearDbSyncWritePolicyOverride('all-history');
+  }
+  if (policy.writePolicyOverride) {
+    setDbSyncWritePolicyOverride('all-history', policy.writePolicyOverride);
+  }
+
+  console.info('[useUniversalLinkOnTop] debug db sync policy applied', {
+    writePolicy: getDbSyncWritePolicyDebugSnapshot('all-history'),
+  });
+}
+
+async function debugSyncAllHistoryFromLink(
+  policy?: Parameters<OnParseUrlAndProcessAction>[0]['debugDbSyncPolicy'],
+) {
+  await applyDebugDbSyncPolicyFromLink(policy);
+
+  if (!isKeyringUnlockedSnapshot() && !isUnlockSessionValid()) {
+    console.warn(
+      '[useUniversalLinkOnTop] debug history all-sync link ignored before unlock',
+    );
+    return;
+  }
+
+  try {
+    const { debugResetAndSyncAllHistory } = await import(
+      '@/databases/debug/historySyncDebug'
+    );
+    await debugResetAndSyncAllHistory(policy);
+  } catch (error) {
+    console.error(
+      '[useUniversalLinkOnTop] debug history all-sync failed',
+      error,
+    );
+  }
+}
+
 function dispatchWhenNavigationReady(
   action: ReturnType<typeof StackActions.push>,
   actionName: string,
@@ -337,6 +509,12 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       break;
     case 'clear-app-cache':
       void clearAppCacheFromLink();
+      break;
+    case 'debug-sync-all-history':
+      void debugSyncAllHistoryFromLink(payload.debugDbSyncPolicy);
+      break;
+    case 'debug-db-sync-policy':
+      void applyDebugDbSyncPolicyFromLink(payload.debugDbSyncPolicy);
       break;
   }
 };

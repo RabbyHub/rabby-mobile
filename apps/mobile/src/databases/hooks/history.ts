@@ -238,6 +238,9 @@ export const syncTop10History = async (
   top10Addresses: string[],
   force?: boolean,
   resetEntity?: boolean,
+  options?: {
+    forceAllHistoryApi?: boolean;
+  },
 ) => {
   if (top10Addresses.length === 0) {
     console.debug('🔍syncTop10History CUSTOM_LOGGER:=>: No account');
@@ -264,8 +267,9 @@ export const syncTop10History = async (
       const isForceFetchFromApi = force || (await getIsNeedSyncData(address));
       if (isForceFetchFromApi) {
         const latestUpdateTime = historyTimeStore.getState()?.[address] || 0;
-        const isUseRealTimeApi =
-          latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
+        const isUseRealTimeApi = options?.forceAllHistoryApi
+          ? false
+          : latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
         updateHistoryTimeSingleAddress(address);
         console.debug(
           '🔍syncTop10History CUSTOM_LOGGER:=>: update sync address:',

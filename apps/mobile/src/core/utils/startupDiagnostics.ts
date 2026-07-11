@@ -33,6 +33,28 @@ function getStartupDiagnosticsLogger() {
 type DiagnosticData = Record<string, unknown>;
 type StartupDiagnosticFile = Awaited<ReturnType<typeof RNFS.readDir>>[number];
 
+type OpSqliteDiagnosticPayload = {
+  op?: string;
+  opId?: string;
+  phase?: string;
+  durationMs?: number;
+  argsConvertMs?: number;
+  nativeExecuteMs?: number;
+  commandCount?: number;
+  [key: string]: unknown;
+};
+
+type OpSqliteDiagnosticContext = {
+  dbSyncTaskId: number | null;
+  schedulerTaskId?: number;
+  taskFor: string;
+  entityName: string;
+  round: number;
+  count: number;
+  totalRound: number;
+  method: string;
+};
+
 type ActiveDbSyncTask = {
   id: number;
   traceCookie: number;
@@ -252,6 +274,14 @@ const activeDbWindowRef: {
 } = {
   current: null,
 };
+
+const opSqliteDiagnosticContextRef: {
+  current: OpSqliteDiagnosticContext | null;
+} = {
+  current: null,
+};
+
+let didInstallOpSqliteDiagnosticHook = false;
 
 const diagnosticFilePath =
   enabled && RNFS.ExternalDirectoryPath
@@ -900,6 +930,50 @@ function trace(scope: string, event: string, data: DiagnosticData = {}) {
     );
   } catch {
     console.info(`[RabbyStartupDiag:${scope}] ${event}`);
+  }
+}
+
+function getGlobalForOpSqliteDiagnostics() {
+  return globalThis as typeof globalThis & {
+    __RABBY_OP_SQLITE_DIAGNOSTIC__?: (
+      payload: OpSqliteDiagnosticPayload,
+    ) => void;
+  };
+}
+
+function installOpSqliteDiagnosticHook() {
+  if (!enabled || didInstallOpSqliteDiagnosticHook) {
+    return;
+  }
+
+  didInstallOpSqliteDiagnosticHook = true;
+  getGlobalForOpSqliteDiagnostics().__RABBY_OP_SQLITE_DIAGNOSTIC__ =
+    payload => {
+      const context = opSqliteDiagnosticContextRef.current;
+
+      trace('db', 'op_sqlite_execute_batch_phase', {
+        ...(context || {}),
+        ...payload,
+      });
+    };
+}
+
+export async function withOpSqliteDiagnosticContext<T>(
+  context: OpSqliteDiagnosticContext,
+  task: () => Promise<T>,
+): Promise<T> {
+  if (!enabled) {
+    return task();
+  }
+
+  installOpSqliteDiagnosticHook();
+  const previousContext = opSqliteDiagnosticContextRef.current;
+  opSqliteDiagnosticContextRef.current = context;
+
+  try {
+    return await task();
+  } finally {
+    opSqliteDiagnosticContextRef.current = previousContext;
   }
 }
 

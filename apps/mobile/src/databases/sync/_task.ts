@@ -12,6 +12,7 @@ import {
   endDbSyncTask,
   markDbSyncTaskBatch,
   markDbSyncTaskStage,
+  withOpSqliteDiagnosticContext,
 } from '@/core/utils/startupDiagnostics';
 import {
   inferSyncTaskPriority,
@@ -33,25 +34,153 @@ export const syncAbortControllers: {
 } = {};
 const activeSyncAbortControllers = new Set<AbortController>();
 
-const DB_SYNC_WRITE_POLICIES: Partial<
-  Record<
-    SyncTaskOptions['taskFor'],
-    {
-      maxBatchSize?: number;
-      minDelayBetweenTasks?: number;
-      maxDelayBetweenTasks?: number;
-    }
-  >
+export type DbSyncWritePolicy = {
+  maxBatchSize?: number;
+  minDelayBetweenTasks?: number;
+  maxDelayBetweenTasks?: number;
+};
+
+export type DbSyncWritePolicyOverride = Partial<DbSyncWritePolicy>;
+
+const DEFAULT_DB_SYNC_WRITE_POLICIES: Partial<
+  Record<SyncTaskOptions['taskFor'], DbSyncWritePolicy>
 > = {
   token: {
     maxBatchSize: 120,
     minDelayBetweenTasks: 16,
   },
   'all-history': {
-    maxBatchSize: 10,
+    maxBatchSize: 50,
     maxDelayBetweenTasks: 32,
   },
 };
+
+const runtimeDbSyncWritePolicyOverrides: Partial<
+  Record<SyncTaskOptions['taskFor'], DbSyncWritePolicyOverride>
+> = {};
+
+function normalizePositiveInt(value: unknown, max: number) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return undefined;
+  }
+
+  const normalized = Math.trunc(value);
+  if (normalized <= 0) {
+    return undefined;
+  }
+
+  return Math.min(normalized, max);
+}
+
+function normalizeNonNegativeInt(value: unknown, max: number) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return undefined;
+  }
+
+  const normalized = Math.trunc(value);
+  if (normalized < 0) {
+    return undefined;
+  }
+
+  return Math.min(normalized, max);
+}
+
+function sanitizeDbSyncWritePolicyOverride(
+  override: DbSyncWritePolicyOverride,
+) {
+  const sanitized: DbSyncWritePolicyOverride = {};
+  const maxBatchSize = normalizePositiveInt(override.maxBatchSize, 2000);
+  const minDelayBetweenTasks = normalizeNonNegativeInt(
+    override.minDelayBetweenTasks,
+    60 * 1000,
+  );
+  const maxDelayBetweenTasks = normalizeNonNegativeInt(
+    override.maxDelayBetweenTasks,
+    60 * 1000,
+  );
+
+  if (typeof maxBatchSize === 'number') {
+    sanitized.maxBatchSize = maxBatchSize;
+  }
+  if (typeof minDelayBetweenTasks === 'number') {
+    sanitized.minDelayBetweenTasks = minDelayBetweenTasks;
+  }
+  if (typeof maxDelayBetweenTasks === 'number') {
+    sanitized.maxDelayBetweenTasks = maxDelayBetweenTasks;
+  }
+
+  return sanitized;
+}
+
+function getDbSyncWritePolicy(taskFor: SyncTaskOptions['taskFor']) {
+  const defaultPolicy = DEFAULT_DB_SYNC_WRITE_POLICIES[taskFor];
+  const runtimeOverride = isNonPublicProductionEnv
+    ? runtimeDbSyncWritePolicyOverrides[taskFor]
+    : undefined;
+
+  if (!defaultPolicy && !runtimeOverride) {
+    return null;
+  }
+
+  return {
+    policy: {
+      ...(defaultPolicy || {}),
+      ...(runtimeOverride || {}),
+    },
+    defaultPolicy,
+    runtimeOverride,
+  };
+}
+
+export function setDbSyncWritePolicyOverride(
+  taskFor: SyncTaskOptions['taskFor'],
+  override: DbSyncWritePolicyOverride,
+) {
+  if (!isNonPublicProductionEnv) {
+    return null;
+  }
+
+  const sanitized = sanitizeDbSyncWritePolicyOverride(override);
+  if (!Object.keys(sanitized).length) {
+    delete runtimeDbSyncWritePolicyOverrides[taskFor];
+    return getDbSyncWritePolicyDebugSnapshot(taskFor);
+  }
+
+  runtimeDbSyncWritePolicyOverrides[taskFor] = sanitized;
+  return getDbSyncWritePolicyDebugSnapshot(taskFor);
+}
+
+export function clearDbSyncWritePolicyOverride(
+  taskFor: SyncTaskOptions['taskFor'],
+) {
+  if (!isNonPublicProductionEnv) {
+    return null;
+  }
+
+  delete runtimeDbSyncWritePolicyOverrides[taskFor];
+  return getDbSyncWritePolicyDebugSnapshot(taskFor);
+}
+
+export function getDbSyncWritePolicyDebugSnapshot(
+  taskFor: SyncTaskOptions['taskFor'],
+) {
+  const resolved = getDbSyncWritePolicy(taskFor);
+  if (!resolved) {
+    return {
+      taskFor,
+      defaultPolicy: null,
+      runtimeOverride: null,
+      effectivePolicy: null,
+    };
+  }
+
+  return {
+    taskFor,
+    defaultPolicy: resolved.defaultPolicy || null,
+    runtimeOverride: resolved.runtimeOverride || null,
+    effectivePolicy: resolved.policy,
+  };
+}
 
 export function abortAllSyncTasks(reason = 'manual') {
   notifySyncAbortHandlers(reason);
@@ -126,14 +255,15 @@ function resolveDbSyncWritePolicy(options: {
   batchSize: number;
   delayBetweenTasks: number;
 }) {
-  const policy = DB_SYNC_WRITE_POLICIES[options.taskFor];
-  if (!policy) {
+  const resolvedPolicy = getDbSyncWritePolicy(options.taskFor);
+  if (!resolvedPolicy) {
     return {
       batchSize: options.batchSize,
       delayBetweenTasks: options.delayBetweenTasks,
       didApplyPolicy: false,
     };
   }
+  const { policy, defaultPolicy, runtimeOverride } = resolvedPolicy;
 
   const batchSize = Math.max(
     1,
@@ -158,6 +288,8 @@ function resolveDbSyncWritePolicy(options: {
       delayBetweenTasks !== options.delayBetweenTasks,
     requestedBatchSize: options.batchSize,
     requestedDelayBetweenTasks: options.delayBetweenTasks,
+    defaultPolicy,
+    runtimeOverride,
   };
 }
 
@@ -303,6 +435,8 @@ export async function batchSaveWithPQueueAndTransaction<
         effectiveBatchSize: batchSize,
         requestedDelayBetweenTasks: writePolicy.requestedDelayBetweenTasks,
         effectiveDelayBetweenTasks: delayBetweenTasks,
+        defaultPolicy: writePolicy.defaultPolicy,
+        runtimeOverride: writePolicy.runtimeOverride,
       },
       true,
     );
@@ -481,7 +615,19 @@ export async function batchSaveWithPQueueAndTransaction<
                 },
                 true,
               );
-              await db.executeBatch(commands);
+              await withOpSqliteDiagnosticContext(
+                {
+                  dbSyncTaskId: diagTaskId,
+                  schedulerTaskId,
+                  taskFor: taskFor || '@unknown',
+                  entityName: entityCls.name,
+                  round,
+                  count: curBatch.length,
+                  totalRound,
+                  method: upsertMethod.method,
+                },
+                () => db.executeBatch(commands),
+              );
               executeMs = Date.now() - executeStartedAt;
             } else {
               const executeStartedAt = Date.now();
