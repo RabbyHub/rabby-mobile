@@ -1,14 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import type {
-  StyleProp,
-  ViewStyle} from 'react-native';
-import {
-  Dimensions,
-  TouchableOpacity,
-  View
-} from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { Dimensions, TouchableOpacity, View } from 'react-native';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
 import TouchableView from '../Touchable/TouchableView';
@@ -17,10 +11,10 @@ import {
   useSceneAccountInfo,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
-import type { AccountSwitcherAopProps} from './hooks';
+import type { AccountSwitcherAopProps } from './hooks';
 import { useAccountSceneVisible } from './hooks';
 import React, { useCallback, useEffect, useMemo } from 'react';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { LinearGradientContainer } from '@/components2024/ScreenContainer/LinearGradientContainer';
 import {
   AddressItemInPanel,

@@ -8,13 +8,10 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import type {
-  MODAL_ID} from '@/components2024/GlobalBottomSheetModal/types';
-import {
-  MODAL_NAMES,
-} from '@/components2024/GlobalBottomSheetModal/types';
+import type { MODAL_ID } from '@/components2024/GlobalBottomSheetModal/types';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useTranslation } from 'react-i18next';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {

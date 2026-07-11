@@ -7,7 +7,7 @@ import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { Text } from '@/components/Typography';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import type {
   GasAccountAvailableToken,

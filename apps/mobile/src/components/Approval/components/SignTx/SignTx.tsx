@@ -1,4 +1,4 @@
-import type { Account, ChainGas } from '@/core/services/preference';
+import type { Account, ChainGas } from '@/core/startupServices/preference';
 import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useTheme2024 } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
@@ -23,15 +23,13 @@ import type {
   TokenItem,
   Tx,
   TxPushType,
-  MultiAction} from '@rabby-wallet/rabby-api/dist/types';
-import {
-  TransactionAction,
+  MultiAction,
 } from '@rabby-wallet/rabby-api/dist/types';
+import { TransactionAction } from '@rabby-wallet/rabby-api/dist/types';
 import type { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import BigNumber from 'bignumber.js';
-import type {
-  ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import React, {
   useCallback,
   useEffect,
@@ -46,11 +44,12 @@ import { isHexString } from 'ethereumjs-util';
 import type {
   ActionRequireData,
   ParsedTransactionActionData,
-  SendRequireData} from '@rabby-wallet/rabby-action';
+  SendRequireData,
+} from '@rabby-wallet/rabby-action';
 import {
   fetchActionRequiredData,
   parseAction,
-  formatSecurityEngineContext
+  formatSecurityEngineContext,
 } from '@rabby-wallet/rabby-action';
 import { openapi, testOpenapi } from '@/core/request';
 import {
@@ -138,21 +137,19 @@ import { calcGasLimit } from '@/core/apis/transactions';
 import { getEIP7702MiniGasLimit } from '@/utils/7702';
 import { Text } from '@/components/Typography';
 import { checkGasAccountLevelValidation } from './useGasAccountLevelValidation';
-import type {
-  GasAccountTopUpResult} from '@/screens/GasAccount/components/topUpContinuation';
-import {
-  getBumpedNonceAfterTopUp,
-} from '@/screens/GasAccount/components/topUpContinuation';
+import type { GasAccountTopUpResult } from '@/screens/GasAccount/components/topUpContinuation';
+import { getBumpedNonceAfterTopUp } from '@/screens/GasAccount/components/topUpContinuation';
 import type {
   GasTokenInfo,
   TempoFeeTokenOption,
-  TxWithTempoExtras} from '@/utils/tempo';
+  TxWithTempoExtras,
+} from '@/utils/tempo';
 import {
   calcTempoMaxGasCostRawAmountIn18,
   isTempoBatchSupportedAccountType,
   isTempoChain,
   listTempoFeeTokenOptionsFromCache,
-  loadTempoFeeTokenOptionsState
+  loadTempoFeeTokenOptionsState,
 } from '@/utils/tempo';
 import tokenListStore from '@/store/tokens';
 
@@ -1303,20 +1300,23 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     // gaEvent('allow');
 
     approval.signingTxId &&
-      (await transactionHistoryServiceApi.updateSigningTx(approval.signingTxId, {
-        rawTx: {
-          nonce: realNonce || tx.nonce,
+      (await transactionHistoryServiceApi.updateSigningTx(
+        approval.signingTxId,
+        {
+          rawTx: {
+            nonce: realNonce || tx.nonce,
+          },
+          explain: {
+            ...txDetail!,
+            approvalId: approval.id,
+            calcSuccess: !(checkErrors.length > 0),
+          },
+          action: {
+            actionData,
+            requiredData: actionRequireData,
+          },
         },
-        explain: {
-          ...txDetail!,
-          approvalId: approval.id,
-          calcSuccess: !(checkErrors.length > 0),
-        },
-        action: {
-          actionData,
-          requiredData: actionRequireData,
-        },
-      }));
+      ));
 
     if (isSend) {
       const sendActionRequireData = actionRequireData as SendRequireData;
@@ -1771,8 +1771,9 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         await getSafeInfo();
       }
       checkCanProcess();
-      const lastTimeGas: ChainGas | null =
-        await getLastTimeGasSelection(chainId);
+      const lastTimeGas: ChainGas | null = await getLastTimeGasSelection(
+        chainId,
+      );
       let customGasPrice = 0;
       if (lastTimeGas?.lastTimeSelect === 'gasPrice' && lastTimeGas.gasPrice) {
         // use cached gasPrice if exist

@@ -10,8 +10,8 @@ import {
 } from '@/core/serviceApi/notification';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { sleep } from '@/utils/async';
-import type { Account } from '@/core/services/preference';
-import type { ReactNode} from 'react';
+import type { Account } from '@/core/startupServices/preference';
+import type { ReactNode } from 'react';
 import { useCallback } from 'react';
 
 export let DirectSubmitReject;
@@ -97,7 +97,9 @@ export const useMiniApproval = () => {
                 const signingTxId =
                   getCurrentMiniApprovalSnapshot()?.signingTxId;
                 if (signingTxId) {
-                  void transactionHistoryServiceApi.removeSigningTx(signingTxId);
+                  void transactionHistoryServiceApi.removeSigningTx(
+                    signingTxId,
+                  );
                   setCurrentMiniApprovalSnapshot(null);
                 }
                 reject(e);

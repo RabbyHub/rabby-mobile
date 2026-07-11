@@ -41,7 +41,7 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useContactAccounts } from '@/hooks/contact';
 import type { UIContactBookItem } from '@/core/apis/contact';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { apiContact, apiCustomTestnet, apiProvider } from '@/core/apis';
 import { formatSpeicalAmount } from '@/utils/number';
 import { useCheckAddressType } from '@/hooks/useParseAddress';
@@ -1328,10 +1328,7 @@ export function useSendTokenForm({
         }
       }
       try {
-        await setLastTimeSendToken(
-          currentAccount!.address,
-          currentToken,
-        );
+        await setLastTimeSendToken(currentAccount!.address, currentToken);
         // await persistPageStateCache();
         if (
           !isForceSignTx &&

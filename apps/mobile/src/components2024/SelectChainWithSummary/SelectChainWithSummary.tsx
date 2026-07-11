@@ -28,7 +28,7 @@ import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { NextSearchBar } from '../SearchBar';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import type { TextInput } from '@/components/Typography';
 import { Text } from '@/components/Typography';

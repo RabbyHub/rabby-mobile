@@ -4,7 +4,7 @@ import { memo, useState } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { TouchableOpacity, View } from 'react-native';
 
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { WalletIcon } from '../WalletIcon/WalletIcon';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import { useAlias } from '@/hooks/alias';

@@ -1,19 +1,10 @@
 import React from 'react';
-import type {
-  SectionListProps} from 'react-native';
-import {
-  View,
-  ActivityIndicator,
-  SectionList,
-} from 'react-native';
+import type { SectionListProps } from 'react-native';
+import { View, ActivityIndicator, SectionList } from 'react-native';
 import { AppBottomSheetModal } from '@/components';
-import type {
-  BottomSheetModalProps} from '@gorhom/bottom-sheet';
-import {
-  BottomSheetScrollView,
-} from '@gorhom/bottom-sheet';
-import type {
-  ApprovalAssetsItem} from '../useApprovalsPage';
+import type { BottomSheetModalProps } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import type { ApprovalAssetsItem } from '../useApprovalsPage';
 import {
   useApprovalsPage,
   useFocusedApprovalOnApprovals,
@@ -32,7 +23,7 @@ import AutoLockView from '@/components/AutoLockView';
 import { useTranslation } from 'react-i18next';
 import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
 import { querySelectedAssetSpender } from '../utils';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 const MemoInModalApprovalAssetRow = React.memo(

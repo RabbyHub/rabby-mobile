@@ -1,5 +1,5 @@
 import { toast } from '@/components2024/Toast';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useAccounts } from '@/hooks/account';
 import {
   useGasAccountInfoV2,

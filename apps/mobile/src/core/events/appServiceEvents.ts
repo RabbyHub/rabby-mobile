@@ -1,4 +1,4 @@
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { makeJsEEClass } from '@/core/utils/makeJsEEClass';
 
 const { EventEmitter: AppServiceEvents } = makeJsEEClass<{

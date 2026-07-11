@@ -22,7 +22,7 @@ import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPop
 import NoBalanceSVG from '@/assets/icons/sign/no-balance-cc.svg';
 import NFTDefaultSVG from '@/assets/nft-default.svg';
 import TouchableText from '@/components/Touchable/TouchableText';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Text } from '@/components/Typography';
 

@@ -4,14 +4,13 @@ import { naviPush } from '@/utils/navigation';
 import React from 'react';
 import type {
   ApprovalSpenderItemToBeRevoked,
-  AssetApprovalSpender} from '../Approvals/useApprovalsPage';
-import {
-  useApprovalsPage,
+  AssetApprovalSpender,
 } from '../Approvals/useApprovalsPage';
+import { useApprovalsPage } from '../Approvals/useApprovalsPage';
 import { useApprovalAlertCounts } from '../Home/hooks/approvals';
 import { useRevokeOne } from './useRevokeOne';
 import { findIndexRevokeList } from './utils';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 
 export const useBatchRevoke = ({

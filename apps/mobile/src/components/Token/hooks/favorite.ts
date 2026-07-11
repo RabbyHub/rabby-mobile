@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState, useRef, useCallback } from 'react';
 import type { ITokenItem } from '@/store/tokens';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import type { IManageToken } from '@/core/services/preference';
+import type { IManageToken } from '@/core/startupServices/preference';
 import { openapi } from '@/core/request';
 import { atom, useAtom } from 'jotai';
 import { getDisplayUserTokenSettings } from '@/hooks/useTokenSettings';

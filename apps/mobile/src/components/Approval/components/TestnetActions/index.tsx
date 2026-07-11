@@ -39,7 +39,7 @@ import Loading from '../TxComponents/Loading';
 import ViewRawModal from '../TxComponents/ViewRawModal';
 import BalanceChange from '../TxComponents/BalanceChange';
 import { getMessageStyles } from '../TextActions';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 export const TestnetActions = ({

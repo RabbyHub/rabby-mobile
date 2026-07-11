@@ -13,15 +13,14 @@ import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import i18n from '@/utils/i18n';
-import type { Chain} from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
 import { CHAINS_ENUM } from '@/constant/chains';
 import type { Result } from '@rabby-wallet/rabby-security-engine';
 import type {
   ContextActionData,
-  RuleConfig} from '@rabby-wallet/rabby-security-engine/dist/rules';
-import {
-  Level
+  RuleConfig,
 } from '@rabby-wallet/rabby-security-engine/dist/rules';
+import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import clsx from 'clsx';
 import PQueue from 'p-queue';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
@@ -34,7 +33,7 @@ import { SignTestnetPermission } from './SignTestnetPermission';
 import UserListDrawer from './UserListDrawer';
 import ArrowDownSVG from '@/assets/icons/approval/arrow-down-blue.svg';
 import { StyleSheet } from 'react-native';
-import type { AppColors2024Variants} from '@/constant/theme';
+import type { AppColors2024Variants } from '@/constant/theme';
 import { AppColorsVariants } from '@/constant/theme';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { Spin } from '@/components/Spin';
@@ -51,7 +50,7 @@ import { Button } from '@/components2024/Button';
 import { toast } from '@/components2024/Toast';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { AccountSelector } from '@/components2024/AccountSelector';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { ConnectSkeleton } from './ConnectSkeleton';
 import { useAccounts, useMyAccounts } from '@/hooks/account';
 import { matomoRequestEvent } from '@/utils/analytics';

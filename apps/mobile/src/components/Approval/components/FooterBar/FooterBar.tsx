@@ -1,10 +1,13 @@
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import type { Chain } from '@/constant/chains';
 import { SecurityEngineLevel } from '@/constant/security';
-import type { AppColors2024Variants, AppColorsVariants } from '@/constant/theme';
+import type {
+  AppColors2024Variants,
+  AppColorsVariants,
+} from '@/constant/theme';
 import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import type { DappInfo } from '@/core/services/dappService';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
 import type { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import type { Result } from '@rabby-wallet/rabby-security-engine';

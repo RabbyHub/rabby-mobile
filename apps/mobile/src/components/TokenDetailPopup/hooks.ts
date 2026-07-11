@@ -7,7 +7,7 @@ import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import type { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import type { KeyringAccountWithAlias } from '@/hooks/account';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 
 const popups = {
   generalTokenDetailPopup: {

@@ -1,7 +1,7 @@
 import { RcIconCheckedCC } from '@/assets/icons/common';
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 import OneKeySvg from '@/assets/icons/wallet/onekey.svg';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { Loading } from '@/screens/Bridge/components/BridgeSwitchBtn';
 import { createGetStyles2024 } from '@/utils/styles';

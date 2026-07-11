@@ -16,7 +16,7 @@ import { sendRequest } from '@/core/apis/sendRequest';
 import { findChain } from '@/utils/chain';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apisSafe } from '@/core/apis/safe';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 // import { GnosisTransactionExplain } from './GnosisTransactionExplain';
 // import { GnosisTransactionConfirmations } from './GnosisTransactionConfirmations';
 // import { ReplacePopup } from './ReplacePopup';

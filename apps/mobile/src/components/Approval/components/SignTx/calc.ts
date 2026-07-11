@@ -1,5 +1,8 @@
 import type { TransactionGroup } from '@/core/services/transactionHistory';
-import type { GasAccountCheckResult, Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type {
+  GasAccountCheckResult,
+  Tx,
+} from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { useEffect, useMemo, useState } from 'react';
 import { openapi } from '@/core/request';
@@ -11,15 +14,11 @@ import {
 } from '@/constant/gas';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { findChain } from '@/utils/chain';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import i18n from '@/utils/i18n';
 import { getEIP7702MiniGasLimit } from '@/utils/7702';
-import type {
-  GasTokenBalanceInfo} from '@/utils/tempo';
-import {
-  getTempoFeeTokenInfo,
-  isTempoChain,
-} from '@/utils/tempo';
+import type { GasTokenBalanceInfo } from '@/utils/tempo';
+import { getTempoFeeTokenInfo, isTempoChain } from '@/utils/tempo';
 import { decodeFunctionResult, encodeFunctionData } from 'viem';
 import { Abis as TempoAbis, Addresses as TempoAddresses } from 'viem/tempo';
 

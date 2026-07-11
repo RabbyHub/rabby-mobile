@@ -191,14 +191,14 @@ export class TransactionHistoryService {
    * @description notice, always set store.transactions by calling `_setStoreTransaction`
    */
   store!: TxHistoryStore;
-  preferenceService?: import('./preference').PreferenceService;
+  preferenceService?: import('../startupServices/preference').PreferenceService;
 
   private _signingTxList: TransactionSigningItem[] = [];
   private _txHistoryLimit = 500;
 
   constructor(
     options?: StorageAdapaterOptions & {
-      preferenceService: import('./preference').PreferenceService;
+      preferenceService: import('../startupServices/preference').PreferenceService;
     },
   ) {
     this.preferenceService = options?.preferenceService;

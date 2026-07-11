@@ -1,15 +1,11 @@
 import { useEffect, useMemo } from 'react';
 
 import { getPreferenceSnapshot } from '@/core/serviceApi/preference';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import type { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
 import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
-import type {
-  DisplayChainWithWhiteLogo} from '@/utils/chain';
-import {
-  formatChainToDisplay,
-  varyAndSortChainItems,
-} from '@/utils/chain';
+import type { DisplayChainWithWhiteLogo } from '@/utils/chain';
+import { formatChainToDisplay, varyAndSortChainItems } from '@/utils/chain';
 import type { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { coerceFloat } from '@/utils/number';
 import { zCreate } from '@/core/utils/reexports';

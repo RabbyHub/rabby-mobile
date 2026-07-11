@@ -24,7 +24,7 @@ import {
 } from '@/constant/swap';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwapSettings } from './settings';
-import type { QuoteProvider, TDexQuoteData} from './quote';
+import type { QuoteProvider, TDexQuoteData } from './quote';
 import { useQuoteMethods } from './quote';
 import { stats } from '@/utils/stats';
 import { formatTokenAmountInput } from '@/utils/number';
@@ -40,7 +40,7 @@ import { isSwapWrapToken } from '../utils';
 import { RequestRateLimiter } from './rateLimit';
 import { useFocusEffect } from '@react-navigation/native';
 import { eventBus, EVENTS } from '@/utils/events';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useAutoSlippageEffect } from './autoSlippageEffect';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import {
@@ -640,31 +640,37 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       swapServiceApi.getSelectedFromToken(),
       swapServiceApi.getSelectedToToken(),
     ])
-      .then(([lastSelectedChain, defaultSelectedFromToken, defaultSelectedToToken]) => {
-        if (cancelled) {
-          return;
-        }
+      .then(
+        ([
+          lastSelectedChain,
+          defaultSelectedFromToken,
+          defaultSelectedToToken,
+        ]) => {
+          if (cancelled) {
+            return;
+          }
 
-        setInitialSelectedChain(lastSelectedChain);
-        hasLoadedPersistedSwapSelectionRef.current = true;
+          setInitialSelectedChain(lastSelectedChain);
+          hasLoadedPersistedSwapSelectionRef.current = true;
 
-        if (hasUserChangedSwapSelectionRef.current) {
-          return;
-        }
+          if (hasUserChangedSwapSelectionRef.current) {
+            return;
+          }
 
-        if (lastSelectedChain) {
-          handleChain(lastSelectedChain, {
-            markUserChange: false,
-            persist: false,
-          });
-        }
-        if (defaultSelectedFromToken) {
-          setPayToken(defaultSelectedFromToken);
-        }
-        if (defaultSelectedToToken) {
-          setReceiveToken(defaultSelectedToToken);
-        }
-      })
+          if (lastSelectedChain) {
+            handleChain(lastSelectedChain, {
+              markUserChange: false,
+              persist: false,
+            });
+          }
+          if (defaultSelectedFromToken) {
+            setPayToken(defaultSelectedFromToken);
+          }
+          if (defaultSelectedToToken) {
+            setReceiveToken(defaultSelectedToToken);
+          }
+        },
+      )
       .catch(error => {
         if (!cancelled) {
           hasLoadedPersistedSwapSelectionRef.current = true;

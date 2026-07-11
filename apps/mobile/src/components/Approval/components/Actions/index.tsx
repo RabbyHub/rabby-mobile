@@ -25,7 +25,7 @@ import useCommonStyle from '../../hooks/useCommonStyle';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { getActionTypeText } from './utils';
 import { TransactionActionList } from './components/TransactionActionList';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import type { MultiActionProps } from '../TypedDataActions';
 import { getActionsStyle } from './styles';
 import { Text } from '@/components/Typography';

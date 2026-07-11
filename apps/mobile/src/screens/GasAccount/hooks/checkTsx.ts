@@ -3,7 +3,7 @@ import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useGasAccountSign } from './atom';
 import { openapi } from '@/core/request';
 import useDebounce from 'react-use/lib/useDebounce';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useRequest } from 'ahooks';
 
 export const GAS_ACCOUNT_INSUFFICIENT_TIP =

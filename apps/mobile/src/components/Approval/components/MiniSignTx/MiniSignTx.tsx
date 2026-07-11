@@ -6,7 +6,7 @@ import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
 import { apisSafe } from '@/core/apis/safe';
 import { openapi } from '@/core/request';
 import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
-import type { Account, ChainGas } from '@/core/services/preference';
+import type { Account, ChainGas } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { useFindChain } from '@/hooks/useFindChain';
 import { useSheetModal } from '@/hooks/useSheetModal';
@@ -33,8 +33,7 @@ import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { useDebounceFn, useMemoizedFn } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import _, { omit } from 'lodash';
-import type {
-  ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import React, {
   useCallback,
   useEffect,
@@ -64,11 +63,8 @@ import { apiCustomRPC, apiProvider } from '@/core/apis';
 import { toast as toast2024 } from '@/components2024/Toast';
 import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
-import type {
-  MiniApprovalTaskType} from '@/hooks/useMiniApprovalTask';
-import {
-  useMiniApprovalTask,
-} from '@/hooks/useMiniApprovalTask';
+import type { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
+import { useMiniApprovalTask } from '@/hooks/useMiniApprovalTask';
 import type { sendTransaction } from '@/utils/sendTransaction';
 import { EVENT_MINI_APPROVAL_START_SIGN, eventBus } from '@/utils/events';
 import AutoLockView from '@/components/AutoLockView';
@@ -83,12 +79,9 @@ import { View } from 'react-native';
 import { BalanceChangeLoading } from './BalanceChangeLoanding';
 import { useGetMiniSignTxExtraProps } from '@/hooks/useMiniApproval';
 import BalanceChange from '../TxComponents/BalanceChange';
-import type {
-  GasAccountTopUpResult} from '@/screens/GasAccount/components/topUpContinuation';
-import {
-  buildTopUpResumedTxs
-} from '@/screens/GasAccount/components/topUpContinuation';
-import type { GasTokenInfo} from '@/utils/tempo';
+import type { GasAccountTopUpResult } from '@/screens/GasAccount/components/topUpContinuation';
+import { buildTopUpResumedTxs } from '@/screens/GasAccount/components/topUpContinuation';
+import type { GasTokenInfo } from '@/utils/tempo';
 import { isTempoChain } from '@/utils/tempo';
 
 let count = 1;

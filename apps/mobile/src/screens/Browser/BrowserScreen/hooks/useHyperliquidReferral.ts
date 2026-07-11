@@ -7,7 +7,7 @@ import {
 import { apisPerps } from '@/core/apis';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { getPreferenceSnapshot } from '@/core/serviceApi/preference';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { miniSignTypedData } from '@/hooks/useMiniSignTypedData';
 import { checkPerpsReference } from '@/utils/perps';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
@@ -149,8 +149,7 @@ export const useAsterReferral = (options?: {
         return false;
       }
 
-      const hasShowAsterReferral =
-        getPreferenceSnapshot('hasShowAsterPopup');
+      const hasShowAsterReferral = getPreferenceSnapshot('hasShowAsterPopup');
 
       if (hasShowAsterReferral) {
         return false;

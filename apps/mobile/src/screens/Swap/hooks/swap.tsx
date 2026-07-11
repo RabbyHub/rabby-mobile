@@ -16,7 +16,7 @@ import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/utils/reportTimeoutAction';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import type { SwapTxHistoryItem } from '@/core/services/transactionHistory';
 import { matomoRequestEvent } from '@/utils/analytics';
 import type { FromSceneParam } from '@/navigation-type';
@@ -258,12 +258,9 @@ export const dexSwap = async (
         account,
       }).then(res => {
         const hash = res as string;
-        void setReportActionTs(
-          REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN,
-          {
-            chain: chainObj.serverId as string,
-          },
-        ).catch(console.error);
+        void setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN, {
+          chain: chainObj.serverId as string,
+        }).catch(console.error);
         if (addSwapTxHistoryObj) {
           const swapTxHistoryObj = {
             ...addSwapTxHistoryObj,
@@ -399,12 +396,9 @@ export const dexSwap = async (
       .then(res => {
         const hash = res as string;
         console.log('after swap  hash: ', hash);
-        void setReportActionTs(
-          REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN,
-          {
-            chain: chainObj.serverId as string,
-          },
-        ).catch(console.error);
+        void setReportActionTs(REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN, {
+          chain: chainObj.serverId as string,
+        }).catch(console.error);
         if (addSwapTxHistoryObj) {
           const swapTxHistoryObj = {
             ...addSwapTxHistoryObj,

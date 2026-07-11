@@ -1,4 +1,4 @@
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import type { KeyringAccountWithAlias } from '@/core/apis/account';
 import { HeaderBackPressable, useRabbyAppNavigation } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';

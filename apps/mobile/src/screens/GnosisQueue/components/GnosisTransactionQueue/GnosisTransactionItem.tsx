@@ -4,7 +4,7 @@ import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apisSafe } from '@/core/apis/safe';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { openapi } from '@/core/request';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useThemeColors } from '@/hooks/theme';
 import { useSendRoutes } from '@/hooks/useSendRoutes';

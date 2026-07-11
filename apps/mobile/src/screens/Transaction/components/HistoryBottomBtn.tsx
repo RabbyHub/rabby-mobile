@@ -7,7 +7,7 @@ import {
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { getTransactionHistoryListSnapshot } from '@/core/serviceApi/transactionHistory';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';

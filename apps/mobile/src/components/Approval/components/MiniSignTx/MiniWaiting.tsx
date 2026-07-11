@@ -10,7 +10,7 @@ import { MiniPrivatekeyWaiting } from './MiniPrivatekeyWaiting';
 import type { BatchSignTxTaskType } from './useBatchSignTxTask';
 import { MiniOneKeyHardwareWaiting } from './MiniOneKeyHardwareWaiting';
 import { useMemoizedFn } from 'ahooks';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 
 export const MiniWaiting = ({
   visible,

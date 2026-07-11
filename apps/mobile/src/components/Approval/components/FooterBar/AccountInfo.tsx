@@ -3,7 +3,7 @@ import { Tip } from '@/components/Tip';
 import { TruncatedText } from '@/components/TruncatedText';
 import type { Chain } from '@/constant/chains';
 import { getContactAliasSnapshot } from '@/core/serviceApi/contact';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { splitNumberByStep } from '@/utils/number';

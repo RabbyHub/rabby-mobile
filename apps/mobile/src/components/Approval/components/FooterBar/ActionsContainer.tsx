@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Chain } from '@/constant/chains';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import {
   getShouldDisplayBlockedRequestApprovalSnapshot,
@@ -75,9 +75,7 @@ export const ActionsContainer: React.FC<
     setDisplayBlockedRequestApproval(
       getShouldDisplayBlockedRequestApprovalSnapshot(),
     );
-    setDisplayCancelAllApproval(
-      getShouldDisplayCancelAllApprovalSnapshot(),
-    );
+    setDisplayCancelAllApproval(getShouldDisplayCancelAllApprovalSnapshot());
   }, []);
 
   const displayPopup =

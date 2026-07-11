@@ -27,10 +27,9 @@ import { openTxExternalUrl } from '@/utils/transaction';
 import { formatTokenAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 import type {
   ReceiveTokenItem,
-  SwapRequireData} from '@rabby-wallet/rabby-action';
-import {
-  ParsedTransactionActionData
+  SwapRequireData,
 } from '@rabby-wallet/rabby-action';
+import { ParsedTransactionActionData } from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
@@ -43,7 +42,7 @@ import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/dist/types';
 import { findAccountByPriority } from '@/utils/account';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 import { HistoryItemTokenPrice } from '../HistoryItemTokenPrice';
 import { Media } from '@/components/Media';

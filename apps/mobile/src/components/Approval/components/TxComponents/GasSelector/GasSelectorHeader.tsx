@@ -17,7 +17,8 @@ import type {
 } from '@rabby-wallet/rabby-api/dist/types';
 import type {
   NativeSyntheticEvent,
-  TextInputChangeEventData} from 'react-native';
+  TextInputChangeEventData,
+} from 'react-native';
 import {
   Image,
   Keyboard,
@@ -71,7 +72,7 @@ import type { SvgProps } from 'react-native-svg';
 import { RcIconInfoCC } from '@/assets/icons/common';
 import { apiProvider } from '@/core/apis';
 import useDebounce from 'react-use/lib/useDebounce';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import {
   useMiniSignGasPanelController,

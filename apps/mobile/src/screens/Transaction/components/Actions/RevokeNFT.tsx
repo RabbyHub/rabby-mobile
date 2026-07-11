@@ -19,7 +19,7 @@ import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { HistoryItemIcon } from '../HistoryItemIcon';
 import { HistoryItemCateType } from '../type';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 import { ActionDetailSection } from './components/ActionDetailSection';
 import { ActionSpenderView } from './components/ActionSpenderView';

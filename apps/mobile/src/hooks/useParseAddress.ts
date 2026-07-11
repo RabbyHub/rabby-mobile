@@ -7,7 +7,7 @@ import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { formatTxExplainAbiData } from '../utils/transaction';
 import { apiProvider } from '@/core/apis';
 import { openapi as mainnetOpenApi, testOpenapi } from '@/core/request';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 
 export function useCheckAddressType(
   addr: string,

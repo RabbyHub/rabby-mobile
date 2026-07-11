@@ -10,7 +10,7 @@ import { throttle } from 'lodash';
 import type { HistoryLocalDetailParams } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import { useAtom } from 'jotai';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import EventEmitter from 'events';
 
 function getNoop() {

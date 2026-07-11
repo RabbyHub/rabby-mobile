@@ -1,4 +1,4 @@
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { formatNetworth } from '@/utils/math';
 import { formatUsdValue } from '@/utils/number';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';

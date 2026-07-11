@@ -28,7 +28,7 @@ import { naviPush } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { Text } from '@/components/Typography';
 import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';

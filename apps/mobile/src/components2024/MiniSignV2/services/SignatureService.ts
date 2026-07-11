@@ -3,11 +3,15 @@ import type { Tx, GasLevel } from '@rabby-wallet/rabby-api/dist/types';
 import { SignatureSteps } from './SignatureSteps';
 import { findChain } from '@/utils/chain';
 import BigNumber from 'bignumber.js';
-import type { CalcItem, GasSelectionOptions, SignerConfig } from '../domain/types';
+import type {
+  CalcItem,
+  GasSelectionOptions,
+  SignerConfig,
+} from '../domain/types';
 import { explainGas } from '@/components/Approval/components/SignTx/calc';
 import type { SignerCtx } from '../domain/ctx';
 import { buildFingerprint } from '../domain/ctx';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 
 type PrepareParams = {
   txs: Tx[];

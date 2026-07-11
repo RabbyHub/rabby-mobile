@@ -6,13 +6,14 @@ import {
   makeTokenSettingSets,
   tagTokenItemFavorite,
 } from '@/screens/Home/utils/token';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import type {
   ITokenItem,
   TokenSelectIndexRow,
-  TokenEntityId} from '@/store/tokens';
+  TokenEntityId,
+} from '@/store/tokens';
 import useTokenList, {
   buildTokenEntityId,
   selectTokenSelectIndexResult,

@@ -4,7 +4,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { TouchableOpacity, View } from 'react-native';
 
 import { IS_ANDROID } from '@/core/native/utils';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { isSameAccount } from '@/hooks/accountsSwitcher';
 import { useMemoizedFn } from 'ahooks';
 import React, { useCallback, useEffect, useMemo } from 'react';

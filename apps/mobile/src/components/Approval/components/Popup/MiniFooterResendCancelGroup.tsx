@@ -1,5 +1,5 @@
 import { Button } from '@/components2024/Button';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import type { RetryUpdateType } from '@/utils/errorTxRetry';
 import { createGetStyles2024 } from '@/utils/styles';

@@ -1,4 +1,4 @@
-import type { IManageToken } from '@/core/services/preference';
+import type { IManageToken } from '@/core/startupServices/preference';
 import type { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
 import { atom, useAtom } from 'jotai';

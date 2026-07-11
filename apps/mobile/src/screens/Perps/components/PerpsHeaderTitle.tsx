@@ -5,7 +5,7 @@ import { TouchableOpacity, View } from 'react-native';
 
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { apiContact } from '@/core/apis';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { ellipsisAddress } from '@/utils/address';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
 import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';

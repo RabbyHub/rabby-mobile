@@ -14,7 +14,7 @@ import { View } from 'react-native';
 import { GnosisTransactionQueueList } from './GnosisTransactionQueueList';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apisSafe } from '@/core/apis/safe';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 const getTabs = (

@@ -3,6 +3,7 @@ const path = require('path');
 const srcRoot = path.resolve(__dirname, '../src');
 const servicesRoot = path.join(srcRoot, 'core/services');
 const services2024Root = path.join(srcRoot, 'core/services2024');
+const startupServicesRoot = path.join(srcRoot, 'core/startupServices');
 const serviceApiRoot = path.join(srcRoot, 'core/serviceApi');
 
 function normalizePath(filePath) {
@@ -30,6 +31,14 @@ function isAllowedFile(filePath) {
   );
 }
 
+function isStartupServiceFile(filePath) {
+  if (!filePath || filePath.startsWith('<')) {
+    return false;
+  }
+
+  return isSameOrInside(normalizePath(filePath), startupServicesRoot);
+}
+
 function resolveImportSource(importSource, filePath) {
   if (typeof importSource !== 'string') {
     return null;
@@ -49,6 +58,13 @@ function resolveImportSource(importSource, filePath) {
     return path.join(srcRoot, importSource.slice('@/'.length));
   }
 
+  if (
+    importSource === '@/core/startupServices' ||
+    importSource.startsWith('@/core/startupServices/')
+  ) {
+    return path.join(srcRoot, importSource.slice('@/'.length));
+  }
+
   if (importSource.startsWith('@/')) {
     return path.join(srcRoot, importSource.slice('@/'.length));
   }
@@ -61,6 +77,19 @@ function resolveImportSource(importSource, filePath) {
 }
 
 function isCoreServiceSource(importSource, filePath) {
+  const resolved = resolveImportSource(importSource, filePath);
+  if (!resolved) {
+    return false;
+  }
+
+  return (
+    isSameOrInside(resolved, servicesRoot) ||
+    isSameOrInside(resolved, services2024Root) ||
+    isSameOrInside(resolved, startupServicesRoot)
+  );
+}
+
+function isLegacyCoreServiceSource(importSource, filePath) {
   const resolved = resolveImportSource(importSource, filePath);
   if (!resolved) {
     return false;
@@ -128,6 +157,71 @@ module.exports = {
   },
   create(context) {
     const filePath = context.getFilename();
+    if (isStartupServiceFile(filePath)) {
+      return {
+        ImportDeclaration(node) {
+          const importSource = getStaticSourceValue(node.source);
+          if (
+            importSource &&
+            isLegacyCoreServiceSource(importSource, filePath) &&
+            !isTypeOnlyImport(node)
+          ) {
+            reportRuntimeServiceImport(context, node.source, importSource);
+          }
+        },
+        ExportNamedDeclaration(node) {
+          const importSource = getStaticSourceValue(node.source);
+          if (
+            importSource &&
+            isLegacyCoreServiceSource(importSource, filePath) &&
+            !isTypeOnlyExport(node)
+          ) {
+            reportRuntimeServiceImport(context, node.source, importSource);
+          }
+        },
+        ExportAllDeclaration(node) {
+          const importSource = getStaticSourceValue(node.source);
+          if (
+            importSource &&
+            isLegacyCoreServiceSource(importSource, filePath) &&
+            node.exportKind !== 'type'
+          ) {
+            reportRuntimeServiceImport(context, node.source, importSource);
+          }
+        },
+        CallExpression(node) {
+          if (
+            node.callee.type !== 'Identifier' ||
+            node.callee.name !== 'require' ||
+            !node.arguments.length
+          ) {
+            return;
+          }
+
+          const importSource = getStaticSourceValue(node.arguments[0]);
+          if (
+            importSource &&
+            isLegacyCoreServiceSource(importSource, filePath)
+          ) {
+            reportRuntimeServiceImport(
+              context,
+              node.arguments[0],
+              importSource,
+            );
+          }
+        },
+        ImportExpression(node) {
+          const importSource = getStaticSourceValue(node.source);
+          if (
+            importSource &&
+            isLegacyCoreServiceSource(importSource, filePath)
+          ) {
+            reportRuntimeServiceImport(context, node.source, importSource);
+          }
+        },
+      };
+    }
+
     if (isAllowedFile(filePath)) {
       return {};
     }

@@ -8,8 +8,7 @@ import React, {
   useImperativeHandle,
   type Ref,
 } from 'react';
-import type {
-  ListRenderItem} from 'react-native';
+import type { ListRenderItem } from 'react-native';
 import {
   View,
   Keyboard,
@@ -17,14 +16,13 @@ import {
   StyleSheet,
   Platform,
   Dimensions,
-  Alert
+  Alert,
 } from 'react-native';
 import type {
   BottomSheetBackdropProps,
-  BottomSheetFlatListMethods} from '@gorhom/bottom-sheet';
-import {
-  BottomSheetFlatList
+  BottomSheetFlatListMethods,
 } from '@gorhom/bottom-sheet';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import useDebounce from 'react-use/lib/useDebounce';
 import type { CHAINS_ENUM, Chain } from '@/constant/chains';
 import type {
@@ -32,7 +30,7 @@ import type {
   TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
-import type { SheetModalShowType} from '@/hooks/useSheetModal';
+import type { SheetModalShowType } from '@/hooks/useSheetModal';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -60,14 +58,13 @@ import AutoLockView from '../AutoLockView';
 import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type {
-  CompositeScreenProps} from '@react-navigation/native';
+import type { CompositeScreenProps } from '@react-navigation/native';
 import {
   useFocusEffect,
   useIsFocused,
   useRoute,
 } from '@react-navigation/native';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { isSameAccount } from '@/hooks/accountsSwitcher';
 import { AccountInfoInTokenRow } from './AccountWidgets';
 import { findAccountByPriority, isWatchOrSafeAccount } from '@/utils/account';
@@ -96,9 +93,7 @@ import { ExchangeLogos } from '@/screens/Home/components/AssetRenderItems/Exchan
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { touchedFeedback } from '@/utils/touch';
-import type {
-  ITokenItem,
-  TokenSelectIndexRow} from '@/store/tokens';
+import type { ITokenItem, TokenSelectIndexRow } from '@/store/tokens';
 import {
   buildTokenEntityId,
   getTokenSelectIndexRowKey,

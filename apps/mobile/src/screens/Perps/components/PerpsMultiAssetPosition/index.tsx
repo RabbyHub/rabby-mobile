@@ -11,12 +11,9 @@ import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useFindAccountByAddress } from '@/screens/Address/components/MultiAssets/hooks/share';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useShallow } from 'zustand/react/shallow';
-import type { Account } from '@/core/services/preference';
-import type {
-  AssetPosition} from '@rabby-wallet/hyperliquid-sdk';
-import {
-  ClearinghouseState,
-} from '@rabby-wallet/hyperliquid-sdk';
+import type { Account } from '@/core/startupServices/preference';
+import type { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
+import { ClearinghouseState } from '@rabby-wallet/hyperliquid-sdk';
 import RcIconHyperliquid from '@/assets2024/icons/perps/IconHyper.svg';
 // import RcIconHyperliquid from '@/assets2024/icons/perps/IconHyperliquid.svg';
 import { AssetAvatar } from '@/components';

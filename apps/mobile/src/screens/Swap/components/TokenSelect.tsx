@@ -1,5 +1,4 @@
-import type {
-  ComponentProps} from 'react';
+import type { ComponentProps } from 'react';
 import React, {
   useState,
   useEffect,
@@ -14,11 +13,8 @@ import { View, TouchableOpacity } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
-import type {
-  ITokenCheck} from '@/components/Token/TokenSelectorSheetModal';
-import {
-  useTokenSelectorModalVisible,
-} from '@/components/Token/TokenSelectorSheetModal';
+import type { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
+import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSheetModal';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { openapi } from '@/core/request';
 import { useTranslation } from 'react-i18next';
@@ -28,7 +24,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components';
 import { ellipsisOverflowedText } from '@/utils/text';
 import type { CHAINS_ENUM } from '@debank/common';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useCustomTestnetStore } from '@/store/customTestnet';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';

@@ -4,7 +4,7 @@ import { withWalletUnlock } from '@/utils/walletUnlockGuard';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { apisKeyring } from './keyring';
 import { PERPS_AGENT_NAME } from '@/constant/perps';
-import type { Account } from '../services/preference';
+import type { Account } from '../startupServices/preference';
 import type { ApproveSignatures } from '@/core/services/perpsService';
 
 let sdkInstance: HyperliquidSDK | null = null;
@@ -47,10 +47,7 @@ class ApisPerps {
       typeof perpsServiceApi.updateAgentWalletPreference
     >[1],
   ) =>
-    perpsServiceApi.updateAgentWalletPreference(
-      masterAddress,
-      agentPreference,
-    );
+    perpsServiceApi.updateAgentWalletPreference(masterAddress, agentPreference);
   setSendApproveAfterDeposit = (
     masterAddress: string,
     sendApproveAfterDeposit: ApproveSignatures,

@@ -19,7 +19,7 @@ import type {
   GasAccountRuntimeAccount,
   GasAccountServiceStore,
 } from '@/core/services/gasAccount';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { MMKVStorageStrategy, zustandByMMKV } from '@/core/storage/mmkv';
 import { zCreate } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';

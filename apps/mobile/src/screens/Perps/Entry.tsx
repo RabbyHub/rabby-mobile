@@ -1,25 +1,18 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import type {
-  DappSelectItem} from '@/components2024/DappFrameAccountHeader';
-import {
-  INNER_DAPP_LIST,
-} from '@/components2024/DappFrameAccountHeader';
+import type { DappSelectItem } from '@/components2024/DappFrameAccountHeader';
+import { INNER_DAPP_LIST } from '@/components2024/DappFrameAccountHeader';
 import { InnerDappWebViewScreen } from '@/components2024/InnerDappWebViewScreen';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { PerpsOriginScreen } from './index';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { apisDapp } from '@/core/apis';
 import { createDappBySession } from '@/core/apis/dapp';
 import { dappServiceApi } from '@/core/serviceApi/dapp';
 import { noop } from 'lodash';
-import type {
-  CompositeScreenProps} from '@react-navigation/native';
-import {
-  useNavigation,
-  useRoute,
-} from '@react-navigation/native';
+import type { CompositeScreenProps } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type {
   RootStackParamsList,
   TransactionNavigatorParamList,

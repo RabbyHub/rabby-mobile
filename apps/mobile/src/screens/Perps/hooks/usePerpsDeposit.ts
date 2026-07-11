@@ -4,7 +4,7 @@ import {
   PERPS_SEND_ARB_USDC_ADDRESS,
 } from '@/constant/perps';
 import { sendRequest } from '@/core/apis/sendRequest';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 // import { useAuth } from '@/hooks/useAuth';

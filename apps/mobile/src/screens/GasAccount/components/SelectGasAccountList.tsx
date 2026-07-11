@@ -1,7 +1,7 @@
 import RcIconCheck from '@/assets/icons/select-chain/icon-checked.svg';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { openapi } from '@/core/request';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
@@ -11,7 +11,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import type { GasAccountInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { sortBy } from 'lodash';
-import type { ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import React, { useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { TouchableOpacity, View } from 'react-native';

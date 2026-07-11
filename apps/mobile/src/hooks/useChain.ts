@@ -8,7 +8,7 @@ import {
   useLoadMatteredChainBalances,
 } from './accountChainBalance';
 import { getPreferenceSnapshot } from '@/core/serviceApi/preference';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 
 export type ChainSelectorPurpose =
   | 'dashboard'
@@ -34,9 +34,9 @@ export function useAsyncInitializeChainList({
   const { matteredChainBalances } = useChainBalances();
 
   const pinned = useMemo(() => {
-    return ((
-      getPreferenceSnapshot('pinnedChain') as CHAINS_ENUM[]
-    )?.filter(item => findChainByEnum(item)) || []) as CHAINS_ENUM[];
+    return ((getPreferenceSnapshot('pinnedChain') as CHAINS_ENUM[])?.filter(
+      item => findChainByEnum(item),
+    ) || []) as CHAINS_ENUM[];
   }, []);
 
   const { matteredList, unmatteredList } = useMemo(() => {

@@ -8,7 +8,7 @@ import {
   getAccountList,
 } from '@/core/apis/account';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useFocusEffect } from '@react-navigation/native';

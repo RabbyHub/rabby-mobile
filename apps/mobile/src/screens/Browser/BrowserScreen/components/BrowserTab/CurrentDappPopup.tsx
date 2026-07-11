@@ -14,7 +14,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS_ENUM } from '@debank/common';
 import { useTranslation } from 'react-i18next';
 import { apisDapp } from '@/core/apis';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 interface Props {

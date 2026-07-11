@@ -12,7 +12,7 @@ import type { TransactionGroup } from '@/core/services/transactionHistory';
 
 import { Text } from '@/components/Typography';
 import { RootNames, getBottomButtonBottomOffset } from '@/constant/layout';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { naviPush } from '@/utils/navigation';

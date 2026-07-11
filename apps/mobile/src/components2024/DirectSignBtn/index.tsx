@@ -1,4 +1,4 @@
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import type { IAuthButtonProps } from '../AuthButton';
 import AuthButton from '../AuthButton';
 import { isHardWareAccountAccountSupportMiniApproval } from '@/utils/account';

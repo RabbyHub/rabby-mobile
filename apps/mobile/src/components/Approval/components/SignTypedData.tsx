@@ -1,4 +1,4 @@
-import type { ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Result } from '@rabby-wallet/rabby-security-engine';
@@ -8,15 +8,16 @@ import RuleDrawer from './SecurityEngine/RuleDrawer';
 import Actions from './TypedDataActions';
 import type {
   ActionRequireData,
-  ParsedTypedDataActionData} from '@rabby-wallet/rabby-action';
+  ParsedTypedDataActionData,
+} from '@rabby-wallet/rabby-action';
 import {
   parseAction,
   formatSecurityEngineContext,
-  fetchActionRequiredData
+  fetchActionRequiredData,
 } from '@rabby-wallet/rabby-action';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { findChain, isTestnetChainId } from '@/utils/chain';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useApproval } from '@/hooks/useApproval';
@@ -510,7 +511,8 @@ export const SignTypedData = ({
         hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
         hasAddress: address => keyringServiceApi.hasAddress(address),
         getWhitelist: async () => whitelistServiceApi.getWhitelist(),
-        isWhitelistEnabled: async () => whitelistServiceApi.isWhitelistEnabled(),
+        isWhitelistEnabled: async () =>
+          whitelistServiceApi.isWhitelistEnabled(),
         getPendingTxsByNonce: async (...args) =>
           transactionHistoryServiceApi.getPendingTxsByNonce(...args),
         findChain,

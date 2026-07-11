@@ -13,7 +13,7 @@ import {
 } from '@/assets2024/singleHome';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { naviPush } from '@/utils/navigation';
 import { Text } from '@/components/Typography';
 interface IProps {

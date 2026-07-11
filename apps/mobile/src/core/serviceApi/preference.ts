@@ -6,7 +6,7 @@ import type {
   PreferenceStore,
   Token,
   TokenDisplayMode,
-} from '@/core/services/preference';
+} from '@/core/startupServices/preference';
 import { getRegisteredService } from '@/core/services/serviceRegistry';
 import {
   createDeferredServiceApi,
@@ -23,7 +23,9 @@ export const preferenceServiceApi = createDeferredServiceApi<
 >('preferenceService');
 
 export function getFallbackAccountSnapshot() {
-  return getRegisteredService('preferenceService')?.getFallbackAccount() || null;
+  return (
+    getRegisteredService('preferenceService')?.getFallbackAccount() || null
+  );
 }
 
 export function getIsShowTestnetSnapshot() {
@@ -82,9 +84,9 @@ export function initCurrentAccountSync() {
 }
 
 export async function getLastTimeGasSelection(chainId: keyof GasCache) {
-  return (await preferenceServiceApi.getLastTimeGasSelection(chainId)) as
-    | ChainGas
-    | null;
+  return (await preferenceServiceApi.getLastTimeGasSelection(
+    chainId,
+  )) as ChainGas | null;
 }
 
 export async function updateLastTimeGasSelection(
@@ -97,9 +99,9 @@ export async function updateLastTimeGasSelection(
 export async function getLastTimeSendToken(
   ...args: Parameters<PreferenceService['getLastTimeSendToken']>
 ) {
-  return (await preferenceServiceApi.getLastTimeSendToken(...args)) as ReturnType<
-    PreferenceService['getLastTimeSendToken']
-  >;
+  return (await preferenceServiceApi.getLastTimeSendToken(
+    ...args,
+  )) as ReturnType<PreferenceService['getLastTimeSendToken']>;
 }
 
 export async function setLastTimeSendToken(

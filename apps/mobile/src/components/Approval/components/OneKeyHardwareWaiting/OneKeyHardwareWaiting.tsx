@@ -2,16 +2,13 @@ import * as Sentry from '@sentry/react-native';
 import { toast } from '@/components2024/Toast';
 import { notificationServiceApi } from '@/core/serviceApi/notification';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useApproval } from '@/hooks/useApproval';
 import { APPROVAL_STATUS_MAP, eventBus, EVENTS } from '@/utils/events';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type {
-  Props as ApprovalPopupContainerProps} from '../Popup/ApprovalPopupContainer';
-import {
-  ApprovalPopupContainer
-} from '../Popup/ApprovalPopupContainer';
+import type { Props as ApprovalPopupContainerProps } from '../Popup/ApprovalPopupContainer';
+import { ApprovalPopupContainer } from '../Popup/ApprovalPopupContainer';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { StyleSheet, View } from 'react-native';
 import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
@@ -27,8 +24,7 @@ import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
 import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 import { findChain } from '@/utils/chain';
-import type {
-  RetryUpdateType} from '@/utils/errorTxRetry';
+import type { RetryUpdateType } from '@/utils/errorTxRetry';
 import {
   getTxFailedResult,
   retryTxReset,

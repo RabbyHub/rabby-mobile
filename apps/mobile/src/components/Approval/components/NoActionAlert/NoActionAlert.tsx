@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 import { openapi } from '@/core/request';
 import RcIconAlert from '@/assets/icons/sign/tx/alert-currentcolor.svg';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 const getStyles = (colors: AppColorsVariants) =>

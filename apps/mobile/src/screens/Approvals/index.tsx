@@ -1,12 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Platform } from 'react-native';
-import type {
-  MaterialTabBar} from 'react-native-collapsible-tab-view';
-import {
-  Tabs,
-  MaterialTabItem,
-} from 'react-native-collapsible-tab-view';
+import type { MaterialTabBar } from 'react-native-collapsible-tab-view';
+import { Tabs, MaterialTabItem } from 'react-native-collapsible-tab-view';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';
@@ -33,7 +29,7 @@ import { HeaderRight } from './components/Headers/HeaderRight';
 import { HeaderCenter } from './components/Headers/HeaderCenter';
 import { ellipsisAddress } from '@/utils/address';
 import { CustomMaterialTabBar } from '@/components2024/CustomTabs/CustomMaterialTabBar';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useRoute } from '@react-navigation/native';
 import type { GetNestedScreenRouteProp } from '@/navigation-type';
 const isAndroid = Platform.OS === 'android';

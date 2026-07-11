@@ -1,9 +1,6 @@
 import { RcIconInfoFillCC } from '@/assets/icons/common';
-import type {
-  CopyAddressIconType} from '@/components/AddressViewer/CopyAddress';
-import {
-  CopyAddressIcon
-} from '@/components/AddressViewer/CopyAddress';
+import type { CopyAddressIconType } from '@/components/AddressViewer/CopyAddress';
+import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Button } from '@/components/Button';
 import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';
@@ -18,7 +15,7 @@ import { Tip } from '@/components/Tip';
 import { HistoryItem } from '@/components/TokenDetailPopup/HistoryItem';
 import { SkeletonHistoryListOfTokenDetail } from '@/components/TokenDetailPopup/Skeleton';
 import TouchableView from '@/components/Touchable/TouchableView';
-import type { Chain} from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { ModalLayouts } from '@/constant/layout';
 import { apiCustomTestnet } from '@/core/apis';
@@ -26,7 +23,7 @@ import { openapi } from '@/core/request';
 import { dappServiceApi } from '@/core/serviceApi/dapp';
 import { getCustomizedToken } from '@/core/serviceApi/preference';
 import type { CustomTestnetToken } from '@/core/services/customTestnetService';
-import type { Account, Token } from '@/core/services/preference';
+import type { Account, Token } from '@/core/startupServices/preference';
 import { useThemeStyles } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
 import { ellipsisAddress } from '@/utils/address';
@@ -36,11 +33,8 @@ import { createGetStyles } from '@/utils/styles';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { getTokenSymbol } from '@/utils/token';
 import { formatTokenAmount } from '@debank/common';
-import type {
-  BottomSheetFlatListMethods} from '@gorhom/bottom-sheet';
-import {
-  BottomSheetFlatList
-} from '@gorhom/bottom-sheet';
+import type { BottomSheetFlatListMethods } from '@gorhom/bottom-sheet';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type {
   TokenItem,

@@ -18,7 +18,7 @@ import { TouchableOpacity } from 'react-native';
 import { Card } from '../Actions/components/Card';
 import { Radio } from '@/components/Radio';
 import { findChain } from '@/utils/chain';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 interface BroadcastModeProps {

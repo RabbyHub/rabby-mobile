@@ -1,4 +1,4 @@
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { DEX } from '@/constant/swap';
 import { eventBus, EVENTS } from '@/utils/events';
 import { getRpcTxReceipt } from '@/core/utils/tx';
@@ -16,9 +16,7 @@ import { last, random } from 'lodash';
 import PQueue from 'p-queue';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type {
-  QuoteProvider,
-  TDexQuoteData} from '../../Swap/hooks';
+import type { QuoteProvider, TDexQuoteData } from '../../Swap/hooks';
 import {
   isSwapWrapToken,
   useQuoteMethods,

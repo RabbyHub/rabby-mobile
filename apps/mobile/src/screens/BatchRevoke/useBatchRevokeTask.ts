@@ -13,7 +13,7 @@ import { useGasAccountSign } from '../GasAccount/hooks/atom';
 import { findIndexRevokeList } from './utils';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { ensureWalletUnlockedForAction } from '@/utils/walletUnlock';
 
 export async function buildTx(

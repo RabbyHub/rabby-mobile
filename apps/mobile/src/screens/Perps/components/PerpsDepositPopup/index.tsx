@@ -19,7 +19,7 @@ import {
 import useAsync from 'react-use/lib/useAsync';
 import { Skeleton } from '@rneui/themed';
 import { openapi } from '@/core/request';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatPerpsUsdValue, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -60,16 +60,13 @@ import { tokenAmountBn } from '@/screens/Swap/utils';
 import { useTwoStepSwap } from '@/screens/Swap/hooks/twoStepSwap';
 import { AccountSummary } from '@/hooks/perps/usePerpsStore';
 
-import type {
-  PerpsDepositTokenRow} from './PerpsSelectTokenPopup';
+import type { PerpsDepositTokenRow } from './PerpsSelectTokenPopup';
 import {
   getPerpsDepositTokenFromRow,
   PerpsSelectTokenPopup,
 } from './PerpsSelectTokenPopup';
 import { PerpsDepositTokenModal } from './PerpsDepositTokenModal';
-import type {
-  ITokenItem,
-  TokenEntityId} from '@/store/tokens';
+import type { ITokenItem, TokenEntityId } from '@/store/tokens';
 import useTokenList, {
   buildTokenEntityId,
   EMPTY_TOKEN_ENTITY_IDS,

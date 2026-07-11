@@ -6,7 +6,7 @@ import {
   updateLastTimeGasSelection,
 } from '@/core/serviceApi/preference';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
-import type { Account, ChainGas } from '@/core/services/preference';
+import type { Account, ChainGas } from '@/core/startupServices/preference';
 import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { intToHex } from '@/utils/number';
@@ -18,7 +18,7 @@ import {
 import type { GasLevel, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { isHexString } from 'ethereumjs-util';
-import type { ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WaitingSignComponent } from '../map';
@@ -34,11 +34,8 @@ import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useMount, useRequest } from 'ahooks';
 import { StyleSheet, View } from 'react-native';
 import { normalizeTxParams } from '../SignTx/util';
-import type {
-  GasSelectorResponse} from '../TxComponents/GasSelector/GasSelectorHeader';
-import {
-  GasSelectorHeader
-} from '../TxComponents/GasSelector/GasSelectorHeader';
+import type { GasSelectorResponse } from '../TxComponents/GasSelector/GasSelectorHeader';
+import { GasSelectorHeader } from '../TxComponents/GasSelector/GasSelectorHeader';
 import { FooterBar } from '../FooterBar/FooterBar';
 import { SignAdvancedSettings } from '../SignAdvancedSettings';
 import { TestnetActions } from '../TestnetActions';
@@ -569,11 +566,14 @@ export const SignTestnetTx = ({
     const approval = (await getApproval())!;
 
     approval?.signingTxId &&
-      (await transactionHistoryServiceApi.updateSigningTx(approval.signingTxId, {
-        rawTx: {
-          nonce: realNonce || tx.nonce,
+      (await transactionHistoryServiceApi.updateSigningTx(
+        approval.signingTxId,
+        {
+          rawTx: {
+            nonce: realNonce || tx.nonce,
+          },
         },
-      }));
+      ));
 
     if (currentAccount?.type && WaitingSignComponent[currentAccount.type]) {
       resolveApproval({

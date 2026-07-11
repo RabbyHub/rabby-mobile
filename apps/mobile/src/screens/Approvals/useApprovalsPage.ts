@@ -3,8 +3,7 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import PQueue from 'p-queue';
 
-import type {
-  ApprovalItem} from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
+import type { ApprovalItem } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
 import {
   type AssetApprovalSpender,
   type AssetApprovalItem,
@@ -15,7 +14,7 @@ import {
   getContractRiskEvaluation,
   markContractTokenSpender,
   makeComputedRiskAboutValues,
-  markParentForAssetItemSpender
+  markParentForAssetItemSpender,
 } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
 
 approvalUtils.setApprovalEnvsOnce({ appIsDev: __DEV__, appIsProd: !__DEV__ });
@@ -53,7 +52,7 @@ import {
 } from './utils';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { ApprovalsLayouts } from './layout';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 
 export const FILTER_TYPES = {
   contract: 'contract',

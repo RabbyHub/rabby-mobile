@@ -5,7 +5,7 @@ import {
   WHITELIST_ADDRESS,
   WHITELIST_SPENDER,
 } from './constant';
-import type { AbiFunction} from 'viem';
+import type { AbiFunction } from 'viem';
 import { encodeFunctionData, parseAbiItem } from 'viem';
 import { findChain } from '@/utils/chain';
 import { isValidAddress } from '@ethereumjs/util';
@@ -15,7 +15,7 @@ import BigNumber from 'bignumber.js';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { getERC20Allowance, requestETHRpc } from '@/core/apis/provider';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { approveToken } from '@/core/apis/approvals';
 
 const rpcQueue = new PQueue({

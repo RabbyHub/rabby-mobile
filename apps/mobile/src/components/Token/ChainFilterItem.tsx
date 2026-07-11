@@ -5,7 +5,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import ChainIconImage from '../Chain/ChainIconImage';
 import CloseBoldSVG from '@/assets2024/icons/common/close-bold-cc.svg';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 const FILTER_ITEM_H = 34;

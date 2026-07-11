@@ -13,7 +13,7 @@ import { apisSafe } from '@/core/apis/safe';
 import { useGnosisPendingMessages } from '@/hooks/gnosis/useGnosisPendingMessages';
 import type { SafeMessage } from '@rabby-wallet/gnosis-sdk';
 import { GnosisMessageQueueList } from './GnosisMessageQueueList';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 const getTabs = (

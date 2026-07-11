@@ -1,4 +1,4 @@
-import type { StyleProp, TextStyle} from 'react-native';
+import type { StyleProp, TextStyle } from 'react-native';
 import { TouchableOpacity, View } from 'react-native';
 import type { CHAINS_ENUM } from '@/constant/chains';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
@@ -11,14 +11,11 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import type {
-  MODAL_ID} from '@/components2024/GlobalBottomSheetModal/types';
-import {
-  MODAL_NAMES,
-} from '@/components2024/GlobalBottomSheetModal/types';
+import type { MODAL_ID } from '@/components2024/GlobalBottomSheetModal/types';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { useTranslation } from 'react-i18next';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {

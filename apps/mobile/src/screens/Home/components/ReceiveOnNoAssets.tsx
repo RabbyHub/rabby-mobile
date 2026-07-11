@@ -4,7 +4,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { RNTouchableOpacity } from '@/components/customized/reexports';
 
 import IconBtnCopyCC from '@/assets2024/icons/address/mcopy-cc.svg';

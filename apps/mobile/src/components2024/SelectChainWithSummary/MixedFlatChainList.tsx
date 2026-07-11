@@ -14,10 +14,8 @@ import {
 } from '@/hooks/accountChainBalance';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
-import type { Account } from '@/core/services/preference';
-import type {
-  ITokenItem,
-  TokenEntityId} from '@/store/tokens';
+import type { Account } from '@/core/startupServices/preference';
+import type { ITokenItem, TokenEntityId } from '@/store/tokens';
 import {
   EMPTY_TOKEN_ENTITY_IDS,
   tokenEntityResourceStore,

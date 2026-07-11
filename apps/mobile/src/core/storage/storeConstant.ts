@@ -45,7 +45,7 @@ export type STORE_SERVICE_MAP = {
   // browserHistoryService
   [APP_STORE_NAMES.browserHistory]: import('@/core/services/browserHistoryService').BrowserHistoryService;
   // preferenceService
-  [APP_STORE_NAMES.preference]: import('@/core/services/preference').PreferenceService;
+  [APP_STORE_NAMES.preference]: import('@/core/startupServices/preference').PreferenceService;
   // whitelistService
   [APP_STORE_NAMES.whitelist]: import('@/core/services/whitelist').WhitelistService;
   // transactionHistoryService

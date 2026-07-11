@@ -30,7 +30,7 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useContactAccounts } from '@/hooks/contact';
 import type { UIContactBookItem } from '@/core/apis/contact';
-import type { Account, ChainGas } from '@/core/services/preference';
+import type { Account, ChainGas } from '@/core/startupServices/preference';
 import { apiContact, apiProvider, apiToken } from '@/core/apis';
 import { formatSpeicalAmount } from '@/utils/number';
 import { getKRCategoryByType } from '@/utils/transaction';
@@ -47,7 +47,7 @@ import {
 } from '@/utils/account';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { useRecentSendToHistoryFor } from '@/screens/Send/hooks/useRecentSend';
-import type { EventBusListeners} from '@/utils/events';
+import type { EventBusListeners } from '@/utils/events';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';

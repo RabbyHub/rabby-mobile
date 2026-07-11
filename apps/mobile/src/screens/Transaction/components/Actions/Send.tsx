@@ -37,7 +37,7 @@ import { Tip } from '@/components/Tip';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { findAccountByPriority } from '@/utils/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import {

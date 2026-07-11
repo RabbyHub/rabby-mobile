@@ -21,18 +21,16 @@ import {
 } from '@rabby-wallet/rabby-swap';
 import type {
   DecodeCalldataResult,
-  QuoteResult} from '@rabby-wallet/rabby-swap/dist/quote';
-import {
-  decodeCalldata,
-  getQuote,
+  QuoteResult,
 } from '@rabby-wallet/rabby-swap/dist/quote';
+import { decodeCalldata, getQuote } from '@rabby-wallet/rabby-swap/dist/quote';
 import BigNumber from 'bignumber.js';
 import pRetry from 'p-retry';
 import React, { useRef } from 'react';
 import { useSwapSettings, useSwapSupportedDexList } from './settings';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import { apiProvider } from '@/core/apis';
-import type { Account, ChainGas } from '@/core/services/preference';
+import type { Account, ChainGas } from '@/core/startupServices/preference';
 
 const { isSameAddress } = addressUtils;
 

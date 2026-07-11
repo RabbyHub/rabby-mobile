@@ -27,7 +27,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { Skeleton, Slider } from '@rneui/themed';
 import LinearGradient from 'react-native-linear-gradient';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import type { TokenItemMaybeWithOwner } from '@/databases/hooks/token';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import useAutoFocusInput from '@/hooks/useAutoFocusInput';

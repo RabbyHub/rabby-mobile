@@ -12,7 +12,7 @@ import { ScrollView, TouchableOpacity, View } from 'react-native';
 import type { TransactionGroup } from '@/core/services/transactionHistory';
 
 import { RootNames } from '@/constant/layout';
-import type { KeyringAccountWithAlias} from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { naviPush } from '@/utils/navigation';
@@ -27,7 +27,7 @@ import { RevokeTokenBtn } from './components/RevokeTokenBtn';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { findAccountByPriority } from '@/utils/account';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 import {
   ActionDetailItem,

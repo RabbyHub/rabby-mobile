@@ -1,6 +1,6 @@
 import type { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { RootNames } from '@/constant/layout';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { zCreate } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';
 import { resolveValFromUpdater } from '@/core/utils/store';
@@ -10,12 +10,8 @@ import {
   useAddressBalance,
   useIsLoadingBalance,
 } from '@/hooks/useCurrentBalance';
-import type {
-  makeDefaultSelectData} from '@/hooks/useCurve';
-import {
-  useAddressCurveSelectData,
-  useIsLoadingCurve,
-} from '@/hooks/useCurve';
+import type { makeDefaultSelectData } from '@/hooks/useCurve';
+import { useAddressCurveSelectData, useIsLoadingCurve } from '@/hooks/useCurve';
 import { addressCurve24hStore } from '@/store/curve24h';
 import {
   balance24hStore,

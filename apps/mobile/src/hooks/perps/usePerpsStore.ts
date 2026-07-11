@@ -10,12 +10,11 @@ import type {
   PerpDexsResponse,
   UserNonFundingLedgerUpdates,
   WsFastAssetCtxs,
-  WsFill} from '@rabby-wallet/hyperliquid-sdk';
-import {
-  UserAbstractionResp
+  WsFill,
 } from '@rabby-wallet/hyperliquid-sdk';
+import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
 // import { ApproveSignatures } from '@/background/service/perps';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import type { ApproveSignatures } from '@/core/services/perpsService';
 import {
   DEFAULT_TOP_ASSET,
@@ -35,12 +34,8 @@ import { eventBus, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
 import { unionBy } from 'lodash';
 import { zCreate } from '@/core/utils/reexports';
-import type {
-  UpdaterOrPartials} from '@/core/utils/store';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc
-} from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater, runIIFEFunc } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { AppState } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';

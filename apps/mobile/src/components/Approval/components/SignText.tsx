@@ -1,6 +1,6 @@
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useApproval } from '@/hooks/useApproval';
-import type { ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { WaitingSignComponent } from './map';
@@ -17,11 +17,10 @@ import { useTranslation } from 'react-i18next';
 import { dappServiceApi, getDappSnapshot } from '@/core/serviceApi/dapp';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
 import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
-import type {
-  ParsedTextActionData} from '@rabby-wallet/rabby-action';
+import type { ParsedTextActionData } from '@rabby-wallet/rabby-action';
 import {
   parseAction,
-  formatSecurityEngineContext
+  formatSecurityEngineContext,
 } from '@rabby-wallet/rabby-action';
 import { hex2Text } from '@/constant/tx';
 import { openapi, testOpenapi } from '@/core/request';

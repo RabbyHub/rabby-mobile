@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import type { ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import React, { useCallback, useMemo } from 'react';
 import BigNumber from 'bignumber.js';
 import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
@@ -26,7 +26,7 @@ import type { HistoryDisplayItem } from '../MultiAddressHistory';
 import { HistoryItemTokenPrice } from './HistoryItemTokenPrice';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { HistoryItemCateType } from './type';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { isArray } from 'lodash';
 import { Dimensions } from 'react-native';
 import { Text } from '@/components/Typography';

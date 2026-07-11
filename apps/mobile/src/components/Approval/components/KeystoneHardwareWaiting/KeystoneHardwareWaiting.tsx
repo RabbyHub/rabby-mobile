@@ -1,5 +1,5 @@
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useApproval } from '@/hooks/useApproval';
 import { eventBus, EVENTS } from '@/utils/events';
 import React, { useCallback, useMemo, useRef, useState } from 'react';

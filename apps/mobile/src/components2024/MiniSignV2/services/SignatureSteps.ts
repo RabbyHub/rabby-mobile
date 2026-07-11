@@ -8,11 +8,12 @@ import {
 
 import type {
   ParsedTransactionActionData,
-  ActionRequireData} from '@rabby-wallet/rabby-action';
+  ActionRequireData,
+} from '@rabby-wallet/rabby-action';
 import {
   parseAction,
   fetchActionRequiredData,
-  formatSecurityEngineContext
+  formatSecurityEngineContext,
 } from '@rabby-wallet/rabby-action';
 import type { Result } from '@rabby-wallet/rabby-security-engine';
 
@@ -30,7 +31,7 @@ import type {
   SendOptions,
   SignerConfig,
 } from '../domain/types';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { intToHex } from '@/utils/number';
 import {
   explainGas,
@@ -48,7 +49,7 @@ import {
 } from '../domain/gasSelection';
 import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
 import { normalizeTxParams } from '@/components/Approval/components/SignTx/util';
-import type { BlockInfo} from '@/core/apis/transactions';
+import type { BlockInfo } from '@/core/apis/transactions';
 import { calcGasLimit } from '@/core/apis/transactions';
 import {
   FailedCode,
@@ -75,14 +76,13 @@ import {
 } from '@/utils/errorTxRetry';
 import { t } from 'i18next';
 import { requestETHRpc } from '@/core/apis/provider';
-import type {
-  TxWithTempoExtras} from '@/utils/tempo';
+import type { TxWithTempoExtras } from '@/utils/tempo';
 import {
   buildTempoTransaction,
   isTempoBatchSupportedAccountType,
   isTempoChain,
   shouldUseTempoTransaction,
-  toTempoCallsTx
+  toTempoCallsTx,
 } from '@/utils/tempo';
 import { resolveMiniSignSubmitGasMode } from '../state/gasPaymentState';
 import { shouldAutoSwitchToApprovalGasAccount } from '@/components/Approval/components/TxComponents/GasSelector/approvalGasDisplay';

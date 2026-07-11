@@ -20,13 +20,8 @@ import dayjs from 'dayjs';
 import { groupBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type {
-  ListRenderItemInfo} from 'react-native';
-import {
-  ActivityIndicator,
-  Image,
-  View,
-} from 'react-native';
+import type { ListRenderItemInfo } from 'react-native';
+import { ActivityIndicator, Image, View } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { numberToHex, toChecksumAddress } from 'web3-utils';
@@ -36,7 +31,7 @@ import { intToHex } from '@/utils/number';
 import { toast } from '@/components2024/Toast';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 export type ConfirmationProps = {

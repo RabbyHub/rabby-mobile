@@ -4,7 +4,7 @@ import { sendRequest } from '@/core/apis/provider';
 import { bridgeServiceApi } from '@/core/serviceApi';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import type { BridgeRecord } from '@/core/services/bridge';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import type { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import { approveToken } from '@/screens/Swap/hooks/swap';
 import { findChain } from '@/utils/chain';

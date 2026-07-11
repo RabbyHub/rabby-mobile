@@ -1,4 +1,4 @@
-import type { Chain} from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
 import { CHAINS_ENUM } from '@/constant/chains';
 import type { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
 import type { Result } from '@rabby-wallet/rabby-security-engine';
@@ -10,7 +10,7 @@ import type {
   ActionRequireData,
   ParsedActionData,
 } from '@rabby-wallet/rabby-action';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import type { MultiActionProps } from '../TypedDataActions';
 
 export const TxTypeComponent = ({

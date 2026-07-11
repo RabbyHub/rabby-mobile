@@ -1,4 +1,4 @@
-import type { Account, IPinAddress } from '@/core/services/preference';
+import type { Account, IPinAddress } from '@/core/startupServices/preference';
 import { storeApiAccounts, useAccounts, usePinAddresses } from './account';
 import React, { useCallback, useMemo } from 'react';
 import { useAtom } from 'jotai';
@@ -11,7 +11,8 @@ import { sortAccountList } from '@/utils/sortAccountList';
 import { isSameAccount } from '@/utils/isSameAccount';
 import type {
   AccountSwitcherScene,
-  SceneAccountInfo} from './sceneAccountInfoAtom';
+  SceneAccountInfo,
+} from './sceneAccountInfoAtom';
 import {
   makeSceneAccount,
   sceneAccountInfoStore,

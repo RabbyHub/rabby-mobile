@@ -15,7 +15,7 @@ import {
 import { findChainByID } from '@/utils/chain';
 import { DappService } from './dappService';
 import { NotificationService } from './notification';
-import { PreferenceService } from './preference';
+import { PreferenceService } from '../startupServices/preference';
 import { SecurityEngineService } from './securityEngine';
 import { TransactionBroadcastWatcherService } from './transactionBroadcastWatcher';
 import { TransactionHistoryService } from './transactionHistory';
@@ -49,8 +49,6 @@ import {
   setUserBehaviorTrackingOptOutCache,
   USER_BEHAVIOR_TRACKING_OPT_OUT_KEY,
 } from '@/utils/trackingOptOut';
-import { syncFirebaseAnalyticsCollectionWithOptOut } from '@/utils/analytics';
-import { syncSentryUserBehaviorTrackingEnabled } from '@/core/sentry';
 import { isNonPublicProductionEnv } from '@/constant';
 import { logger } from '@/utils/logger';
 import { traceAndroidInstant } from '../utils/androidTrace';
@@ -154,15 +152,35 @@ export const sessionService = new SessionService({
 
 export const preferenceService = new PreferenceService({
   storageAdapter: appStorage,
-  keyringService,
-  sessionService,
 });
 
 preferenceService.setBeforeSetKV((k, v) => {
   if (k === USER_BEHAVIOR_TRACKING_OPT_OUT_KEY) {
     setUserBehaviorTrackingOptOutCache(v !== false);
-    void syncFirebaseAnalyticsCollectionWithOptOut();
-    syncSentryUserBehaviorTrackingEnabled();
+    void import('@/utils/analytics')
+      .then(({ syncFirebaseAnalyticsCollectionWithOptOut }) =>
+        syncFirebaseAnalyticsCollectionWithOptOut(),
+      )
+      .catch(error => {
+        if (__DEV__) {
+          console.error(
+            '[bootstrap] syncFirebaseAnalyticsCollectionWithOptOut error',
+            error,
+          );
+        }
+      });
+    void import('@/core/sentry')
+      .then(({ syncSentryUserBehaviorTrackingEnabled }) =>
+        syncSentryUserBehaviorTrackingEnabled(),
+      )
+      .catch(error => {
+        if (__DEV__) {
+          console.error(
+            '[bootstrap] syncSentryUserBehaviorTrackingEnabled error',
+            error,
+          );
+        }
+      });
   }
 
   perfEvents.emit('PREFERENCE_UPDATED', {

@@ -18,7 +18,7 @@ import { Divide } from '../Actions/components/Divide';
 import { getActionsStyle } from '../Actions/styles';
 import type { ParsedTextActionData } from '@rabby-wallet/rabby-action';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 import { getMessageStyles } from './styles';
 import type { Chain } from '@debank/common';

@@ -1,15 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import type {
-  StyleProp,
-  ViewStyle} from 'react-native';
-import {
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  View
-} from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import Clipboard from '@react-native-clipboard/clipboard';
 
@@ -20,7 +13,7 @@ import {
   WalletPin,
 } from '@/components2024/AddressItem/AddressItem';
 import { RcIconCopy, RcIconQR } from './icons';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { trigger } from 'react-native-haptic-feedback';
 import { toast } from '@/components2024/Toast';
 import { useSortAccountOnSelector } from '@/hooks/accountsSelector';

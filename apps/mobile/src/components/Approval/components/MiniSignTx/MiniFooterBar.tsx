@@ -4,7 +4,7 @@ import { SecurityEngineLevel } from '@/constant/security';
 import type { AppColorsVariants } from '@/constant/theme';
 import { getDappSnapshot } from '@/core/serviceApi/dapp';
 import type { DappInfo } from '@/core/services/dappService';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import type { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
 import { navigateDeprecated } from '@/utils/navigation';

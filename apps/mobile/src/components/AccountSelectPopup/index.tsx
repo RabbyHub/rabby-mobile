@@ -1,4 +1,4 @@
-import type { KeyringAccountWithAlias} from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/hooks/account';
 import { useAccounts } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
@@ -14,7 +14,7 @@ import { Button } from '../Button';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { AccountSelectItem } from './AccountSelectItem';
 import { RcIconEmptyCC } from '@/assets/icons/gnosis';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { Text } from '@/components/Typography';
 
 interface AccountSelectDrawerProps {

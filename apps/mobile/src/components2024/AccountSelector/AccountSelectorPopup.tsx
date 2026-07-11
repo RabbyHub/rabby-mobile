@@ -1,19 +1,13 @@
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import type {
-  ComponentProps} from 'react';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-} from 'react';
-import type { ScrollView} from 'react-native';
+import type { ComponentProps } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import type { ScrollView } from 'react-native';
 import { useWindowDimensions, View } from 'react-native';
 import { AccountSelectorPopupContent } from './AccountSelectorPopupContent';
 

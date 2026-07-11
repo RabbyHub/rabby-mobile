@@ -19,7 +19,7 @@ import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import RcIconBackTopCC from '@/assets2024/icons/perps/IconBackTopCC.svg';
 import { usePerpsPopupState } from './hooks/usePerpsPopupState';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { usePerpsDeposit } from './hooks/usePerpsDeposit';
 import { PerpsMarketHomeList } from './components/PerpsMarketSection/PerpsMarketHomeList';
 import { PerpsPositionSection } from './components/PerpsPositionSection';
@@ -167,9 +167,12 @@ export const PerpsOriginScreen = () => {
       ready: !!currentPerpsAccount?.address,
       onSuccess: shouldShow => {
         if (shouldShow) {
-          void perpsServiceApi.setInviteConfig(currentPerpsAccount?.address || '', {
-            lastInvitedAt: Date.now(),
-          });
+          void perpsServiceApi.setInviteConfig(
+            currentPerpsAccount?.address || '',
+            {
+              lastInvitedAt: Date.now(),
+            },
+          );
         }
       },
     },

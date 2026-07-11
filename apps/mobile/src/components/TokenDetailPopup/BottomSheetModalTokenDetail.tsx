@@ -6,8 +6,7 @@ import React, {
   useImperativeHandle,
 } from 'react';
 import type { Ref } from 'react';
-import type {
-  ViewStyle} from 'react-native';
+import type { ViewStyle } from 'react-native';
 import {
   View,
   Platform,
@@ -22,10 +21,9 @@ import { createGetStyles, makeDevOnlyStyle } from '@/utils/styles';
 import { RcIconCopyRegularCC, RcIconJumpCC } from '@/assets/icons/common';
 import type {
   BottomSheetFlatListMethods,
-  BottomSheetProps} from '@gorhom/bottom-sheet';
-import {
-  BottomSheetFlatList
+  BottomSheetProps,
 } from '@gorhom/bottom-sheet';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import type {
   TokenItem,
   TxDisplayItem,
@@ -42,11 +40,8 @@ import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHan
 import { SMALL_TOKEN_ID, abstractTokenToTokenItem } from '@/utils/token';
 import { AppBottomSheetModal, AssetAvatar, Button, Tip } from '@/components';
 import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';
-import type {
-  CopyAddressIconType} from '@/components/AddressViewer/CopyAddress';
-import {
-  CopyAddressIcon
-} from '@/components/AddressViewer/CopyAddress';
+import type { CopyAddressIconType } from '@/components/AddressViewer/CopyAddress';
+import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { findChain, findChainByServerID, getChain } from '@/utils/chain';
 import { getTokenSymbol } from '@/utils/token';
 import { useTranslation } from 'react-i18next';
@@ -69,7 +64,7 @@ import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { TOKEN_DETAIL_HISTORY_SIZES } from './layout';
 import AutoLockView from '../AutoLockView';
 import { BlockedButton } from './BlockedButton';
-import type { Account, Token } from '@/core/services/preference';
+import type { Account, Token } from '@/core/startupServices/preference';
 import {
   getBlockedToken,
   getCustomizedToken,

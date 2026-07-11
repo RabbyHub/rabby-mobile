@@ -5,7 +5,7 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import React, { useCallback, useMemo } from 'react';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import RcIconCorrectCC from './icons/correct-cc.svg';
-import type { Account } from '@/core/services/preference';
+import type { Account } from '@/core/startupServices/preference';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import { useTokenAmountForAddress, useTopTokensForAddress } from './hooks';
 import { AssetAvatar } from '../AssetAvatar';
