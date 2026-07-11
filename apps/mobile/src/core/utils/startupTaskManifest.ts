@@ -97,6 +97,15 @@ export const STARTUP_TASKS = {
     priority: 'critical',
     budgetMs: 8,
   }),
+  bootstrapI18nReady: defineStartupTask({
+    label: 'bootstrap.i18nReady',
+    owner: 'i18n',
+    reason:
+      'start initial language loading as soon as App mounts without gating native splash hide',
+    stage: 'homeCritical',
+    priority: 'critical',
+    budgetMs: 80,
+  }),
   homeHistorySyncListener: defineStartupTask({
     label: 'homeHistory.syncListener',
     owner: 'home',

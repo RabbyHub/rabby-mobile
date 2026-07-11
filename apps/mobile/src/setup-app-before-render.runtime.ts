@@ -6,7 +6,6 @@ import { InteractionManager } from 'react-native';
 
 import { runIIFEFunc } from './core/utils/store';
 import { STARTUP_TASKS } from './core/utils/startupTaskManifest';
-import { startSubscribeLangChange } from './hooks/lang';
 import { connectPushServerOnBootstrap } from './core/notifications';
 
 import { startManageAccountStoreLifecycle } from './hooks/account';
@@ -69,7 +68,6 @@ const WALLETCONNECT_RESTORE_HOME_READY_FALLBACK_MS = 10000;
 const WALLETCONNECT_RESTORE_IDLE_TIMEOUT_MS = 10000;
 
 startComputationThread();
-startSubscribeLangChange();
 
 if (APP_FEATURE_SWITCH.transactionNotification) {
   connectPushServerOnBootstrap();
