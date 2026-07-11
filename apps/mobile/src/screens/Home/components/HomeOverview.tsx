@@ -20,6 +20,7 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
+import { fetchTop5TokensForAllAccountsOnce } from '@/components/AccountSwitcher/hooks';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { clearLendingActionPopupState } from '@/screens/Lending/utils/actionPopup';
 import {
@@ -29,14 +30,12 @@ import {
 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import type {
-  ScrollView,
-  ViewProps} from 'react-native';
+import type { ScrollView, ViewProps } from 'react-native';
 import {
   Dimensions,
   StyleSheet,
   useWindowDimensions,
-  View
+  View,
 } from 'react-native';
 
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -85,6 +84,8 @@ import {
   useHomePostStartupReady,
   useHomeStartupReady,
 } from '@/core/utils/homeStartupReady';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
+import { scheduleStartupTask } from '@/core/utils/startupScheduler';
 import { syncTop10History } from '@/databases/hooks/history';
 import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
@@ -116,16 +117,10 @@ import {
   useHomeHistoryCount,
   useHomePendingTxCount,
 } from '../hooks/history';
-import type {
-  TabsScrollViewProps} from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
-import {
-  TabsScrollView
-} from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
-import type {
-  RNGHScrollView} from '@/components/customized/reexports';
-import {
-  RNGHRefreshControl
-} from '@/components/customized/reexports';
+import type { TabsScrollViewProps } from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
+import { TabsScrollView } from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
+import type { RNGHScrollView } from '@/components/customized/reexports';
+import { RNGHRefreshControl } from '@/components/customized/reexports';
 import {
   getPullThreshold,
   getScrollContainerPb,
@@ -136,11 +131,8 @@ import {
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import type { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
 import { triggerImpact } from '@/utils/common';
-import type {
-  WorkletFunction} from 'react-native-reanimated/lib/typescript/commonTypes';
-import {
-  SharedValue
-} from 'react-native-reanimated/lib/typescript/commonTypes';
+import type { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
+import { SharedValue } from 'react-native-reanimated/lib/typescript/commonTypes';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import {
   HOME_TOP_HEADER_SIZES,
@@ -157,8 +149,7 @@ import { getTop10MyAccounts } from '@/core/apis/account';
 import { isEqual } from 'lodash';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
 import type { Account } from '@/types/account';
-import type {
-  OnRefreshOnJs} from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
+import type { OnRefreshOnJs } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import {
   isOverPulldownRefreshThreshold,
   pulldownRefreshSizes,
@@ -172,6 +163,32 @@ import { withAnimatedTickerRefreshNudge } from '@/components/Animated/RefreshNud
 
 function couldDoRefresh() {
   return apisHomeTabIndex.isHomeAtFirstTab();
+}
+
+function cancelStartupTaskHandle(
+  handle: ReturnType<typeof scheduleStartupTask> | undefined,
+) {
+  if (handle && typeof handle === 'object' && 'cancel' in handle) {
+    const maybeCancelable = handle as { cancel?: unknown };
+    if (typeof maybeCancelable.cancel === 'function') {
+      maybeCancelable.cancel();
+    }
+  }
+}
+
+async function warmHomeHistoryAfterStartup() {
+  const { top10Addresses } = await getTop10MyAccounts();
+  await syncTop10History(top10Addresses, false);
+}
+
+async function warmReceiveAddressListAfterStartup() {
+  await Promise.all([
+    storeApiAccounts.fetchAccounts(),
+    fetchTop5TokensForAllAccountsOnce(),
+    preloadTransactionHotNavigator(),
+    import('@/screens/Address/ReceiveAddressListSheet'),
+    import('@/components/AccountSelector/AccountsPanel'),
+  ]);
 }
 
 const OFFSETS = {
@@ -699,6 +716,22 @@ function HomeOverviewPostStartupEffects({
     return () => clearTimeout(timeoutId);
   }, []);
 
+  useEffect(() => {
+    const historyWarmupHandle = scheduleStartupTask(
+      () => warmHomeHistoryAfterStartup(),
+      STARTUP_TASKS.homeHistoryWarmup,
+    );
+    const receiveAddressListWarmupHandle = scheduleStartupTask(
+      () => warmReceiveAddressListAfterStartup(),
+      STARTUP_TASKS.homeReceiveAddressListWarmup,
+    );
+
+    return () => {
+      cancelStartupTaskHandle(historyWarmupHandle);
+      cancelStartupTaskHandle(receiveAddressListWarmupHandle);
+    };
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       refreshSuccessAndFailList();
@@ -746,9 +779,6 @@ function HomeOverviewPostStartupEffects({
       triggerApprovalAlertCounts(HOME_REFRESH_INTERVAL);
       // // leave here to measure perf impact
       // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
-      getTop10MyAccounts().then(({ top10Addresses }) => {
-        syncTop10History(top10Addresses, false);
-      });
     }, [triggerUpdate]),
   );
 

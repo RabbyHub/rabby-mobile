@@ -156,7 +156,7 @@ const setTokensByAddr = (addr: string, tokens: TokenItem[]) => {
 };
 
 const fetchTokensByAddresses = (addrs: string[], count = 5) => {
-  TokenItemEntity.queryTokensByOwner(addrs, {
+  return TokenItemEntity.queryTokensByOwner(addrs, {
     filter_tokenGte10Dollar: false,
     filter_tokenProportionGte10Percent: false,
   }).then(tokens => {
@@ -183,14 +183,14 @@ function useTopTokensByAccount() {
 
 const fetchedRef = { current: false };
 export const fetchTop5TokensForAllAccountsOnce = () => {
-  if (fetchedRef.current) return;
+  if (fetchedRef.current) return Promise.resolve();
   fetchedRef.current = true;
 
-  apisAccount
+  return apisAccount
     .getAllAccountsToDisplay()
     .then(accounts => {
       const addresses = new Set([...accounts.map(account => account.address)]);
-      fetchTokensByAddresses([...addresses]);
+      return fetchTokensByAddresses([...addresses]);
     })
     .catch(error => {
       console.error('[useFetchTokensForAllAccounts] error', error);

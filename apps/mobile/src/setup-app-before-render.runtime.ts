@@ -18,7 +18,6 @@ import { startSyncDefaultRPCs } from './hooks/defaultRPCs';
 import { startSubscribePerpsOnAppState } from './hooks/perps/usePerpsStore';
 import { startSubscribeOnekeyDevices } from './core/apis/onekey';
 import { startSubscribeTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
-import { startFetchOnceTop5TokensForAllAccounts } from './components/AccountSwitcher/hooks';
 import { startSyncOnlineConfig } from './core/config/online';
 import { loadVersionInfoOnBootstrap } from './hooks/version';
 import { autoGoogleSignIfPreviousSignedOnBoot } from './hooks/cloudStorage';
@@ -92,7 +91,6 @@ runIIFEFunc(() => {
     connectPushServerOnBootstrap();
   }
 
-  startFetchOnceTop5TokensForAllAccounts();
   startSyncOnlineConfig();
   loadVersionInfoOnBootstrap();
   loadJavaScriptBeforeContentLoadedOnBoot();
