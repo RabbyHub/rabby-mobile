@@ -125,12 +125,14 @@ export const STARTUP_TASKS = {
   perpsFetchMarketData: defineStartupTask({
     label: 'perps.fetchMarketData',
     owner: 'perps',
-    reason: 'warm market list after Home without starting fast feed on startup',
+    reason:
+      'warm market list only after early Home interactions are likely complete',
     stage: 'homePostStartupIdle',
     priority: 'low',
-    delayMs: 3000,
-    fallbackMs: 8000,
-    budgetMs: 300,
+    delayMs: 15000,
+    fallbackMs: 30000,
+    idleTimeoutMs: 10000,
+    budgetMs: 450,
   }),
   perpsFetchFavoriteMarkets: defineStartupTask({
     label: 'perps.fetchFavoriteMarkets',
