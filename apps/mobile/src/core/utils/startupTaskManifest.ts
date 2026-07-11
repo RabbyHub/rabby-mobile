@@ -25,10 +25,13 @@ export const STARTUP_TASKS = {
   setupGasAccountInfoFetch: defineStartupTask({
     label: 'setup.gasAccountInfoFetch',
     owner: 'gas-account',
-    reason: 'preserve existing boot-time gas account info refresh',
-    stage: 'immediate',
-    priority: 'normal',
-    budgetMs: 80,
+    reason: 'refresh gas account info after Home is usable',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    delayMs: 3000,
+    fallbackMs: 8000,
+    idleTimeoutMs: 5000,
+    budgetMs: 120,
   }),
   gasAccountEventBridge: defineStartupTask({
     label: 'gasAccount.eventBridge',

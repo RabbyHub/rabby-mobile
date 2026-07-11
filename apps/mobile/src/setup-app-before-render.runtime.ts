@@ -17,7 +17,6 @@ import {
 } from './hooks/useLock';
 import { startSyncDefaultRPCs } from './hooks/defaultRPCs';
 import { startSubscribePerpsOnAppState } from './hooks/perps/usePerpsStore';
-import { storeApiGasAccount } from './screens/GasAccount/hooks/atom';
 import { startSubscribeOnekeyDevices } from './core/apis/onekey';
 import { startSubscribeTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
 import { startFetchOnceTop5TokensForAllAccounts } from './components/AccountSwitcher/hooks';
@@ -98,7 +97,10 @@ startSubscribeTrezorConnectOnUrl();
 
 autoGoogleSignIfPreviousSignedOnBoot();
 startSyncDefaultRPCs();
-runIIFEFunc(() => {
+runIIFEFunc(async () => {
+  const { storeApiGasAccount } = await import(
+    './screens/GasAccount/hooks/atom'
+  );
   storeApiGasAccount.fetchGasAccountInfo();
 }, STARTUP_TASKS.setupGasAccountInfoFetch);
 startSubscribePerpsOnAppState();

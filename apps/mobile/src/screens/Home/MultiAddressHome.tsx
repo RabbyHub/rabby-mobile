@@ -39,7 +39,6 @@ import { setIsFoldMultiChart } from '../Address/components/MultiAssets/RenderRow
 import { TabsMultiAssets } from '../Address/components/MultiAssets/TabsMultiAssets';
 import { useInitDetectDBAssets } from '../Search/useAssets';
 import { TmpHomeRefresher } from './components/TmpHomeRefresher';
-import { storeApiGasAccount } from '../GasAccount/hooks/atom';
 import { useHomePortfolioStore } from './hooks/useHomePortfolioSummary';
 import { storeApiAccounts } from '@/hooks/account';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
@@ -198,12 +197,27 @@ function HomePostStartupEffects({
         return;
       }
 
-      storeApiGasAccount.scheduleSnapshotRefresh({
-        reason: 'home_focus',
-      });
-      autoLoginGasAccountIfNeeded().catch(error => {
-        console.error('autoLoginGasAccountIfNeeded error', error);
-      });
+      let cancelled = false;
+      import('../GasAccount/hooks/atom')
+        .then(({ storeApiGasAccount }) => {
+          if (cancelled) {
+            return;
+          }
+
+          storeApiGasAccount.scheduleSnapshotRefresh({
+            reason: 'home_focus',
+          });
+          autoLoginGasAccountIfNeeded().catch(error => {
+            console.error('autoLoginGasAccountIfNeeded error', error);
+          });
+        })
+        .catch(error => {
+          console.error('load gas account store api error', error);
+        });
+
+      return () => {
+        cancelled = true;
+      };
     }, [homePostStartupReady]),
   );
 
