@@ -1179,6 +1179,13 @@ let hasStartedAddressBalanceLifecycle = false;
 let accountBalanceSelectionSnapshotGetter: AccountBalanceSelectionSnapshotGetter | null =
   null;
 
+export function getSelectedBalanceAddressesSnapshot() {
+  const state = balanceAccountsStore.getState();
+  return state.selectedAddresses.length
+    ? state.selectedAddresses
+    : Object.keys(state.balance);
+}
+
 export function setAccountBalanceSelectionSnapshotGetter(
   getter: AccountBalanceSelectionSnapshotGetter,
 ) {

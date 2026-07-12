@@ -57,7 +57,10 @@ import { currencyServiceApi } from '@/core/serviceApi/currency';
 import { storeApiAccounts, useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
 import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
-import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
+import addressBalanceStore, {
+  balanceAccountsStore,
+  getSelectedBalanceAddressesSnapshot,
+} from '@/store/balance';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
 import { useTranslation } from 'react-i18next';
@@ -144,7 +147,6 @@ import { useDismissConvertDustBanner } from '../hooks/useConvertDustBanner';
 import { useMemoizedFn } from 'ahooks';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { sleep } from '@/utils/async';
-import { getTop10MyAccounts } from '@/core/apis/account';
 import { isEqual } from 'lodash';
 import { preloadTransactionHotNavigator } from '@/perfs/preloads';
 import type { Account } from '@/types/account';
@@ -176,7 +178,10 @@ function cancelStartupTaskHandle(
 }
 
 async function warmHomeHistoryAfterStartup() {
-  const { top10Addresses } = await getTop10MyAccounts();
+  const top10Addresses = getSelectedBalanceAddressesSnapshot();
+  if (!top10Addresses.length) {
+    return;
+  }
   await syncTop10History(top10Addresses, false);
 }
 
@@ -1016,9 +1021,13 @@ export const HomeOverview = React.memo(() => {
     forceUpdateApprovalAlertCounts();
     apisLending.fetchLendingData();
     const forceRefresh = true;
-    const { top10Addresses } = await getTop10MyAccounts();
-    syncTop10History(top10Addresses, forceRefresh);
     void currencyServiceApi.syncCurrencyList(forceRefresh);
+
+    const top10Addresses = getSelectedBalanceAddressesSnapshot();
+    if (!top10Addresses.length) {
+      return;
+    }
+    syncTop10History(top10Addresses, forceRefresh);
 
     // refresh token/protocol list
     useTokenList.getState().batchGetTokenList(top10Addresses, forceRefresh);

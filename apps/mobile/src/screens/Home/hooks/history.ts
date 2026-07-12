@@ -1,6 +1,5 @@
 import { debounce } from 'lodash';
 
-import { getTop10MyAccounts } from '@/core/apis/account';
 import {
   getTransactionHistoryFailedCountSnapshot,
   getTransactionHistoryPendingsAddressesSnapshot,
@@ -19,7 +18,10 @@ import {
 } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import type { RefLikeObject } from '@/utils/type';
-import { balanceAccountsStore } from '@/store/balance';
+import {
+  balanceAccountsStore,
+  getSelectedBalanceAddressesSnapshot,
+} from '@/store/balance';
 
 type HomeHistoryState = {
   pendingTxCount: number;
@@ -70,7 +72,7 @@ function setHistoryCount(
 
 export const refreshSuccessAndFailList = makeAvoidParallelAsyncFunc(
   async () => {
-    const { top10Addresses } = await getTop10MyAccounts();
+    const top10Addresses = getSelectedBalanceAddressesSnapshot();
     if (!top10Addresses.length) return;
     const timestamp =
       await transactionHistoryServiceApi.getClearSuccessAndFailListTs();
