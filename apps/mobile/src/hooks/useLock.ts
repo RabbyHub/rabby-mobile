@@ -1,12 +1,12 @@
 import React, { useCallback, useMemo } from 'react';
-import type { AppStateStatus} from 'react-native';
+import type { AppStateStatus } from 'react-native';
 import { AppState, Platform } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import {
   isKeyringUnlockedSnapshot,
   keyringServiceApi,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/keyring';
 import { apisAutoLock, apisLock } from '@/core/apis';
 import { PasswordStatus } from '@/core/apis/lock';
 import { useRabbyAppNavigation } from './navigation';
@@ -21,11 +21,10 @@ import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { zCreate } from '@/core/utils/reexports';
 import { naviPush } from '@/utils/navigation';
-import type {
-  UpdaterOrPartials} from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
 import {
   makeAvoidParallelAsyncFunc,
-  resolveValFromUpdater
+  resolveValFromUpdater,
 } from '@/core/utils/store';
 import type { RefLikeObject } from '@/utils/type';
 

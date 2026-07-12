@@ -3,9 +3,9 @@ import { AppState, NativeEventSubscription } from 'react-native';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import {
   getPreferenceSnapshot,
-  isKeyringUnlockedSnapshot,
   setPreferenceSync,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/preference';
+import { isKeyringUnlockedSnapshot } from '@/core/serviceApi/keyring';
 import { makeEEClass } from './event';
 
 const MILLISECS_PER_MIN = 60 * 1e3;
@@ -83,8 +83,7 @@ export function coerceAutoLockTimeout(ms: number) {
 export function getPersistedAutoLockTimes() {
   // enforce zero to default value
   const minutes =
-    getPreferenceSnapshot('autoLockTime') ||
-    DEFAULT_AUTO_LOCK_MINUTES;
+    getPreferenceSnapshot('autoLockTime') || DEFAULT_AUTO_LOCK_MINUTES;
 
   const formatted = coerceAutoLockTimeout(minutes * MILLISECS_PER_MIN);
 

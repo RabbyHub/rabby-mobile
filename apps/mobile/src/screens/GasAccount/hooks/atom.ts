@@ -4,6 +4,7 @@ import { openapi } from '@/core/request';
 import {
   bindKeyringEventSync,
   clearGasAccountPendingHardwareAccountSync,
+  getGasAccountData,
   getGasAccountAccountsWithBalanceSnapshot,
   getGasAccountDataSnapshot,
   getGasAccountPendingHardwareAccountSnapshot,
@@ -114,17 +115,23 @@ type GasAccountZustandState = GasAccountState<
 > &
   GasAccountVisibleState;
 
-const getSessionStateFromService = () => {
-  const data = getGasAccountDataSnapshot() as GasAccountServiceStore;
-  const hasSession = !!data.sig && !!data.accountId;
+const getSessionStateFromData = (
+  data: Partial<GasAccountServiceStore> | undefined,
+) => {
+  const hasSession = !!data?.sig && !!data?.accountId;
 
   return {
-    sig: data.sig,
-    accountId: data.accountId,
-    account: data.account as GasAccountSessionAccount | undefined,
+    sig: data?.sig,
+    accountId: data?.accountId,
+    account: data?.account as GasAccountSessionAccount | undefined,
     status: hasSession ? ('logged_in' as const) : ('idle' as const),
   };
 };
+
+const getSessionStateFromService = () =>
+  getSessionStateFromData(
+    getGasAccountDataSnapshot() as GasAccountServiceStore,
+  );
 
 const getDiscoveryStateFromRuntime = () => ({
   pendingHardwareAccount: getGasAccountPendingHardwareAccountSnapshot() as
@@ -331,6 +338,42 @@ const setGasAccount = (
     ),
   );
 };
+
+const hydrateSessionFromService = makeAvoidParallelAsyncFunc(async () => {
+  const data = (await getGasAccountData()) as GasAccountServiceStore;
+  const nextSession = getSessionStateFromData(data);
+
+  gasAccountStore.setState(prev => {
+    if (nextSession.status !== 'logged_in') {
+      if (
+        prev.session.status === 'logged_in' ||
+        prev.session.status === 'logging_in'
+      ) {
+        return prev;
+      }
+      return updateSessionState(prev, nextSession);
+    }
+
+    const isSameSession =
+      prev.session.sig === nextSession.sig &&
+      prev.session.accountId === nextSession.accountId &&
+      prev.session.account?.address === nextSession.account?.address &&
+      prev.session.account?.type === nextSession.account?.type &&
+      prev.session.account?.brandName === nextSession.account?.brandName &&
+      prev.session.status === nextSession.status;
+
+    if (isSameSession) {
+      return prev;
+    }
+
+    return markSnapshotDirtyState(
+      updateSessionState(prev, nextSession),
+      'session_hydrated',
+    );
+  });
+
+  return nextSession;
+});
 
 let latestSnapshotRefreshRequestId = 0;
 const createSnapshotRefreshRequestId = () => {
@@ -592,6 +635,7 @@ export const storeApiGasAccount = {
   getSession() {
     return gasAccountStore.getState().session;
   },
+  hydrateSessionFromService,
   getPendingHardwareAccount() {
     return gasAccountStore.getState().discovery.pendingHardwareAccount;
   },

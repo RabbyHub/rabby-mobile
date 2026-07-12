@@ -1,8 +1,8 @@
 import type { TransactionBroadcastWatcherService } from '@/core/services/transactionBroadcastWatcher';
-import { getRegisteredService } from '@/core/services/serviceRegistry';
 import {
   createDeferredServiceApi,
   registerLegacyCoreServiceLoader,
+  runServiceSideEffectWhenReady,
 } from './createDeferredServiceApi';
 
 export type TransactionBroadcastWatcherServiceApiContract =
@@ -18,9 +18,9 @@ export const transactionBroadcastWatcherServiceApi = createDeferredServiceApi<
 export function addBroadcastTransactionSync(
   ...args: Parameters<TransactionBroadcastWatcherService['addTx']>
 ) {
-  const service = getRegisteredService('transactionBroadcastWatcherService');
-  if (!service) {
-    throw new Error('transactionBroadcastWatcherService is not ready');
-  }
-  service.addTx(...args);
+  runServiceSideEffectWhenReady(
+    'transactionBroadcastWatcherService',
+    service => service.addTx(...args),
+    'transactionBroadcastWatcherService.addTx',
+  );
 }

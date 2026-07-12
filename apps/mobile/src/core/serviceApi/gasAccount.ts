@@ -3,6 +3,7 @@ import { getRegisteredService } from '@/core/services/serviceRegistry';
 import {
   createDeferredServiceApi,
   registerLegacyCoreServiceLoader,
+  runServiceSideEffectWhenReady,
 } from './createDeferredServiceApi';
 
 export type GasAccountServiceApiContract = GasAccountService;
@@ -37,62 +38,74 @@ export function getGasAccountDataSnapshot() {
   return getRegisteredService('gasAccountService')?.getGasAccountData() || {};
 }
 
+export async function getGasAccountData() {
+  return (await gasAccountServiceApi.getGasAccountData()) as ReturnType<
+    GasAccountService['getGasAccountData']
+  >;
+}
+
+export async function getGasAccountLastDepositAccount() {
+  return (await gasAccountServiceApi.getLastDepositAccount()) as ReturnType<
+    GasAccountService['getLastDepositAccount']
+  >;
+}
+
 export function setGasAccountSigSync(
   ...args: Parameters<GasAccountService['setGasAccountSig']>
 ) {
-  const service = getRegisteredService('gasAccountService');
-  if (!service) {
-    throw new Error('gasAccountService is not ready');
-  }
-  service.setGasAccountSig(...args);
+  runServiceSideEffectWhenReady(
+    'gasAccountService',
+    service => service.setGasAccountSig(...args),
+    'gasAccountService.setGasAccountSig',
+  );
 }
 
 export function setGasAccountCurrentBalanceStateSync(
   ...args: Parameters<GasAccountService['setCurrentBalanceState']>
 ) {
-  const service = getRegisteredService('gasAccountService');
-  if (!service) {
-    throw new Error('gasAccountService is not ready');
-  }
-  service.setCurrentBalanceState(...args);
+  runServiceSideEffectWhenReady(
+    'gasAccountService',
+    service => service.setCurrentBalanceState(...args),
+    'gasAccountService.setCurrentBalanceState',
+  );
 }
 
 export function setGasAccountAccountsWithBalanceSync(
   ...args: Parameters<GasAccountService['setAccountsWithGasAccountBalance']>
 ) {
-  const service = getRegisteredService('gasAccountService');
-  if (!service) {
-    throw new Error('gasAccountService is not ready');
-  }
-  service.setAccountsWithGasAccountBalance(...args);
+  runServiceSideEffectWhenReady(
+    'gasAccountService',
+    service => service.setAccountsWithGasAccountBalance(...args),
+    'gasAccountService.setAccountsWithGasAccountBalance',
+  );
 }
 
 export function setGasAccountPendingHardwareAccountSync(
   ...args: Parameters<GasAccountService['setPendingHardwareAccount']>
 ) {
-  const service = getRegisteredService('gasAccountService');
-  if (!service) {
-    throw new Error('gasAccountService is not ready');
-  }
-  service.setPendingHardwareAccount(...args);
+  runServiceSideEffectWhenReady(
+    'gasAccountService',
+    service => service.setPendingHardwareAccount(...args),
+    'gasAccountService.setPendingHardwareAccount',
+  );
 }
 
 export function clearGasAccountPendingHardwareAccountSync() {
-  const service = getRegisteredService('gasAccountService');
-  if (!service) {
-    throw new Error('gasAccountService is not ready');
-  }
-  service.clearPendingHardwareAccount();
+  runServiceSideEffectWhenReady(
+    'gasAccountService',
+    service => service.clearPendingHardwareAccount(),
+    'gasAccountService.clearPendingHardwareAccount',
+  );
 }
 
 export function setGasAccountHasClaimedGiftSync(
   ...args: Parameters<GasAccountService['setHasClaimedGift']>
 ) {
-  const service = getRegisteredService('gasAccountService');
-  if (!service) {
-    throw new Error('gasAccountService is not ready');
-  }
-  service.setHasClaimedGift(...args);
+  runServiceSideEffectWhenReady(
+    'gasAccountService',
+    service => service.setHasClaimedGift(...args),
+    'gasAccountService.setHasClaimedGift',
+  );
 }
 
 export function getGasAccountCurrentEligibleAddressSnapshot() {
@@ -101,8 +114,9 @@ export function getGasAccountCurrentEligibleAddressSnapshot() {
 
 export function getGasAccountAccountsWithBalanceSnapshot() {
   return (
-    getRegisteredService('gasAccountService')?.getAccountsWithGasAccountBalance() ||
-    []
+    getRegisteredService(
+      'gasAccountService',
+    )?.getAccountsWithGasAccountBalance() || []
   );
 }
 

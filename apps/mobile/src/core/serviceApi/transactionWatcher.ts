@@ -1,8 +1,8 @@
 import type { TransactionWatcherService } from '@/core/services/transactionWatcher';
-import { getRegisteredService } from '@/core/services/serviceRegistry';
 import {
   createDeferredServiceApi,
   registerLegacyCoreServiceLoader,
+  runServiceSideEffectWhenReady,
 } from './createDeferredServiceApi';
 
 export type TransactionWatcherServiceApiContract = TransactionWatcherService;
@@ -17,9 +17,9 @@ export const transactionWatcherServiceApi = createDeferredServiceApi<
 export function addWatchedTransactionSync(
   ...args: Parameters<TransactionWatcherService['addTx']>
 ) {
-  const service = getRegisteredService('transactionWatcherService');
-  if (!service) {
-    throw new Error('transactionWatcherService is not ready');
-  }
-  service.addTx(...args);
+  runServiceSideEffectWhenReady(
+    'transactionWatcherService',
+    service => service.addTx(...args),
+    'transactionWatcherService.addTx',
+  );
 }

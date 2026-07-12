@@ -93,8 +93,38 @@ import {
   getBottomButtonBottomOffset,
 } from '@/constant/layout';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
+import { getGasAccountLastDepositAccount } from '@/core/serviceApi/gasAccount';
 
 type DepositAccount = Account;
+
+const getInitialDepositToken = (
+  availableTokenRows: GasAccountAvailableTokenRow[],
+  lastDepositAccount?: Account,
+) => {
+  const findToken = (matcher: (token: GasAccountAvailableToken) => boolean) => {
+    const row = availableTokenRows.find(item => {
+      const token = getGasAccountAvailableTokenFromRow(item);
+      return !!token && matcher(token);
+    });
+
+    return getGasAccountAvailableTokenFromRow(row) || undefined;
+  };
+
+  if (lastDepositAccount?.address) {
+    const tokenByLastAccount = findToken(token =>
+      isSameAddress(token.owner_addr || '', lastDepositAccount.address),
+    );
+    if (tokenByLastAccount) {
+      return tokenByLastAccount;
+    }
+  }
+
+  return (
+    findToken(token => token.chain !== 'eth') ||
+    getGasAccountAvailableTokenFromRow(availableTokenRows[0]) ||
+    undefined
+  );
+};
 
 export const GasAccountDepositTokenForm: React.FC<{
   visible?: boolean;
@@ -210,6 +240,10 @@ const GasAccountDepositTokenFormInner: React.FC<{
   const [bridgeQuoteError, setBridgeQuoteError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showEstimateTip, setShowEstimateTip] = useState(false);
+  const [lastDepositAccount, setLastDepositAccount] = useState<
+    Account | undefined
+  >();
+  const [lastDepositAccountReady, setLastDepositAccountReady] = useState(false);
   const pollCancelRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -217,6 +251,36 @@ const GasAccountDepositTokenFormInner: React.FC<{
       pollCancelRef.current?.();
     };
   }, []);
+
+  useEffect(() => {
+    if (!visible) {
+      return;
+    }
+
+    let cancelled = false;
+    setLastDepositAccountReady(false);
+
+    getGasAccountLastDepositAccount()
+      .then(account => {
+        if (!cancelled) {
+          setLastDepositAccount(account);
+        }
+      })
+      .catch(error => {
+        if (__DEV__) {
+          console.error('getGasAccountLastDepositAccount error', error);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLastDepositAccountReady(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [visible]);
 
   const { data: _tokenInfo } = useRequest(
     async () => {
@@ -276,24 +340,20 @@ const GasAccountDepositTokenFormInner: React.FC<{
       setSelectedToken(undefined);
       return;
     }
+    if (!lastDepositAccountReady) {
+      return;
+    }
     if (!didInitSelectedTokenRef.current) {
       didInitSelectedTokenRef.current = true;
       setSelectedToken(prev => {
         if (!prev) {
-          return (
-            getGasAccountAvailableTokenFromRow(
-              availableTokenRows.find(row => {
-                const token = getGasAccountAvailableTokenFromRow(row);
-                return token?.chain !== 'eth';
-              }) || availableTokenRows[0],
-            ) || undefined
-          );
+          return getInitialDepositToken(availableTokenRows, lastDepositAccount);
         }
 
         return prev;
       });
     }
-  }, [availableTokenRows]);
+  }, [availableTokenRows, lastDepositAccount, lastDepositAccountReady]);
 
   const selectedOwnerAccount = useMemo(() => {
     const matched = myAccounts.filter(

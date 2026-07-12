@@ -1,8 +1,8 @@
 import type { HDKeyringService } from '@/core/services/hdKeyringService';
-import { getRegisteredService } from '@/core/services/serviceRegistry';
 import {
   createDeferredServiceApi,
   registerLegacyCoreServiceLoader,
+  runServiceSideEffectWhenReady,
 } from './createDeferredServiceApi';
 
 export type HDKeyringServiceApiContract = HDKeyringService;
@@ -17,9 +17,9 @@ export const hdKeyringServiceApi = createDeferredServiceApi<
 export function addHdKeyringUnixRecordSync(
   ...args: Parameters<HDKeyringService['addUnixRecord']>
 ) {
-  const service = getRegisteredService('hdKeyringService');
-  if (!service) {
-    throw new Error('hdKeyringService is not ready');
-  }
-  service.addUnixRecord(...args);
+  runServiceSideEffectWhenReady(
+    'hdKeyringService',
+    service => service.addUnixRecord(...args),
+    'hdKeyringService.addUnixRecord',
+  );
 }

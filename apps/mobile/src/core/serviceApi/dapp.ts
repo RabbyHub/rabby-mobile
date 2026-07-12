@@ -11,6 +11,7 @@ import {
 import {
   createDeferredServiceApi,
   registerLegacyCoreServiceLoader,
+  runServiceSideEffectWhenReady,
 } from './createDeferredServiceApi';
 
 export type DappServiceApiContract = DappService;
@@ -29,45 +30,45 @@ export function getDappSnapshot(origin: string) {
 }
 
 export function addDappSync(...args: Parameters<DappService['addDapp']>) {
-  const service = getRegisteredService('dappService');
-  if (!service) {
-    throw new Error('dappService is not ready');
-  }
-  service.addDapp(...args);
+  runServiceSideEffectWhenReady(
+    'dappService',
+    service => service.addDapp(...args),
+    'dappService.addDapp',
+  );
 }
 
 export function removeDappSync(...args: Parameters<DappService['removeDapp']>) {
-  const service = getRegisteredService('dappService');
-  if (!service) {
-    throw new Error('dappService is not ready');
-  }
-  service.removeDapp(...args);
+  runServiceSideEffectWhenReady(
+    'dappService',
+    service => service.removeDapp(...args),
+    'dappService.removeDapp',
+  );
 }
 
 export function updateDappSync(...args: Parameters<DappService['updateDapp']>) {
-  const service = getRegisteredService('dappService');
-  if (!service) {
-    throw new Error('dappService is not ready');
-  }
-  service.updateDapp(...args);
+  runServiceSideEffectWhenReady(
+    'dappService',
+    service => service.updateDapp(...args),
+    'dappService.updateDapp',
+  );
 }
 
 export function patchDappsSync(...args: Parameters<DappService['patchDapps']>) {
-  const service = getRegisteredService('dappService');
-  if (!service) {
-    throw new Error('dappService is not ready');
-  }
-  service.patchDapps(...args);
+  runServiceSideEffectWhenReady(
+    'dappService',
+    service => service.patchDapps(...args),
+    'dappService.patchDapps',
+  );
 }
 
 export function disconnectDappSync(
   ...args: Parameters<DappService['disconnect']>
 ) {
-  const service = getRegisteredService('dappService');
-  if (!service) {
-    throw new Error('dappService is not ready');
-  }
-  service.disconnect(...args);
+  runServiceSideEffectWhenReady(
+    'dappService',
+    service => service.disconnect(...args),
+    'dappService.disconnect',
+  );
 }
 
 export function getDappsSnapshot() {

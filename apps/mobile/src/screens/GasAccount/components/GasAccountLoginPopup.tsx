@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { useWindowDimensions, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useGasAccountInfo, useGasAccountMethods } from '../hooks';
+import { useGasAccountSign } from '../hooks/atom';
 import { SelectGasAccountList } from './SelectGasAccountList';
 import { toast } from '@/components2024/Toast';
 import { filterMyAccounts } from '@/utils/account';
@@ -25,6 +26,7 @@ const GasAccountLoginContent: React.FC<{
   const { t } = useTranslation();
   const { login } = useGasAccountMethods();
   const { value: gasAccountInfo } = useGasAccountInfo();
+  const { account: sessionAccount } = useGasAccountSign();
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
@@ -35,15 +37,27 @@ const GasAccountLoginContent: React.FC<{
   const [loading, setLoading] = useState(false);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const currentLoginAccount = useMemo(
-    () =>
-      gasAccountInfo?.account?.id
-        ? filterAccounts.find(item =>
-            isSameAddress(gasAccountInfo.account.id, item.address),
-          )
-        : null,
-    [filterAccounts, gasAccountInfo?.account?.id],
-  );
+  const currentLoginAccount = useMemo(() => {
+    const address = gasAccountInfo?.account?.id || sessionAccount?.address;
+    if (!address) {
+      return null;
+    }
+
+    return (
+      filterAccounts.find(
+        item =>
+          isSameAddress(address, item.address) &&
+          (!sessionAccount?.type || item.type === sessionAccount.type),
+      ) ||
+      filterAccounts.find(item => isSameAddress(address, item.address)) ||
+      null
+    );
+  }, [
+    filterAccounts,
+    gasAccountInfo?.account?.id,
+    sessionAccount?.address,
+    sessionAccount?.type,
+  ]);
   const [selectedAccount, setSelectAccount] = useState(currentLoginAccount);
 
   const confirmAddress = useMemoizedFn(async (account: Account) => {

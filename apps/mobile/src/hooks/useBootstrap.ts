@@ -1,9 +1,7 @@
 import * as React from 'react';
-import {
-  bindKeyringEvent,
-  initCoreServices,
-  perpsServiceApi,
-} from '@/core/serviceApi';
+import { bindKeyringEvent } from '@/core/serviceApi/keyring';
+import { initCoreServices } from '@/core/serviceApi/init';
+import { perpsServiceApi } from '@/core/serviceApi/perps';
 import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
 import { initApis } from '@/core/apis/init';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
@@ -22,12 +20,8 @@ import { apisPerpsStore } from './perps/usePerpsStore';
 import { apisSafe } from '@/core/apis/safe';
 import type { RefLikeObject } from '@/utils/type';
 import { zCreate } from '@/core/utils/reexports';
-import type {
-  UpdaterOrPartials} from '@/core/utils/store';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc
-} from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
+import { resolveValFromUpdater, runIIFEFunc } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { replace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';

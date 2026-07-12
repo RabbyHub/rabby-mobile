@@ -283,6 +283,16 @@ export const STARTUP_TASKS = {
     fallbackMs: 3000,
     budgetMs: 160,
   }),
+  currencyServiceBinding: defineStartupTask({
+    label: 'currency.serviceBinding',
+    owner: 'currency',
+    reason:
+      'bind currency service and refresh remote currency list after Home is usable',
+    stage: 'homePostStartupReady',
+    priority: 'normal',
+    fallbackMs: 5000,
+    budgetMs: 450,
+  }),
   homeDbLowPriorityRelease: defineStartupTask({
     label: 'home.dbLowPriorityRelease',
     owner: 'home-db',

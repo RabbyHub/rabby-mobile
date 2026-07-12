@@ -92,21 +92,47 @@ export const GasAccountScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      let isActive = true;
       storeApiGasAccount.setHistoryRefreshEnabled(true);
-      storeApiGasAccount.refreshSnapshot().catch(error => {
-        console.error('refreshSnapshot on GasAccountScreen focus error', error);
-      });
-      storeApiGasAccount.refreshHistory().catch(error => {
-        console.error('refreshHistory on GasAccountScreen focus error', error);
-      });
-      refreshAccountsWithGasAccountBalance().catch(error => {
-        console.error('refreshAccountsWithGasAccountBalance error', error);
-      });
+
+      const refreshGasAccountState = async () => {
+        try {
+          await storeApiGasAccount.hydrateSessionFromService();
+        } catch (error) {
+          console.error(
+            'hydrateSessionFromService on GasAccountScreen error',
+            error,
+          );
+        }
+
+        if (!isActive) {
+          return;
+        }
+
+        storeApiGasAccount.refreshSnapshot().catch(error => {
+          console.error(
+            'refreshSnapshot on GasAccountScreen focus error',
+            error,
+          );
+        });
+        storeApiGasAccount.refreshHistory().catch(error => {
+          console.error(
+            'refreshHistory on GasAccountScreen focus error',
+            error,
+          );
+        });
+        refreshAccountsWithGasAccountBalance().catch(error => {
+          console.error('refreshAccountsWithGasAccountBalance error', error);
+        });
+      };
+
+      void refreshGasAccountState();
       if (pendingHardwareAddress) {
         refreshPendingHardwareGasAccountInfo();
       }
 
       return () => {
+        isActive = false;
         storeApiGasAccount.setHistoryRefreshEnabled(false);
       };
     }, [pendingHardwareAddress, refreshPendingHardwareGasAccountInfo]),

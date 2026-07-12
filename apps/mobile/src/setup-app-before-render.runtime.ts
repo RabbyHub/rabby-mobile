@@ -52,7 +52,7 @@ import {
   bindKeyringEvent,
   bindKeyringEventOnce,
   isKeyringUnlockedSnapshot,
-} from './core/serviceApi';
+} from './core/serviceApi/keyring';
 import { APP_FEATURE_SWITCH } from './constant';
 import {
   startInitPersistedStores,

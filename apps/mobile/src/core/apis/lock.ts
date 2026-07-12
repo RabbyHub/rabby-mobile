@@ -4,20 +4,22 @@ import { BroadcastEvent } from '@/constant/event';
 import {
   bindKeyringEvent,
   bindKeyringEventSync,
-  broadcastSessionEventSync,
   getKeyringMemStoreStateSnapshot,
-  getPreferenceSnapshot,
   hasKeyringPublicAccountSnapshot,
-  initCurrentAccountSync,
   isKeyringBootedSnapshot,
   isKeyringRuntimeReadySnapshot,
   isKeyringUnlockedSnapshot,
   keyringServiceApi,
-  perpsServiceApi,
   refreshKeyringMemStoreKeyringsIfPossible,
-  setPreferenceSync,
   submitKeyringPasswordForUnlock,
-} from '@/core/serviceApi';
+} from '@/core/serviceApi/keyring';
+import { broadcastSessionEventSync } from '@/core/serviceApi/session';
+import {
+  getPreferenceSnapshot,
+  initCurrentAccountSync,
+  setPreferenceSync,
+} from '@/core/serviceApi/preference';
+import { perpsServiceApi } from '@/core/serviceApi/perps';
 import { makeEEClass } from './event';
 import { formatTimeReadable } from '@/utils/time';
 import {

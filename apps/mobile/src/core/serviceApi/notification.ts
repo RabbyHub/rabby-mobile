@@ -6,6 +6,7 @@ import {
 import {
   createDeferredServiceApi,
   registerLegacyCoreServiceLoader,
+  runServiceSideEffectWhenReady,
 } from './createDeferredServiceApi';
 
 export type NotificationServiceApiContract = NotificationService;
@@ -42,7 +43,9 @@ export function getShouldDisplayCancelAllApprovalSnapshot() {
 }
 
 export function getCurrentMiniApprovalSnapshot() {
-  return getRegisteredService('notificationService')?.currentMiniApproval || null;
+  return (
+    getRegisteredService('notificationService')?.currentMiniApproval || null
+  );
 }
 
 export function setCurrentMiniApprovalSnapshot(
@@ -57,11 +60,11 @@ export function setCurrentMiniApprovalSnapshot(
 export function setCurrentRequestDeferFnSync(
   value: Parameters<NotificationService['setCurrentRequestDeferFn']>[0],
 ) {
-  const service = getRegisteredService('notificationService');
-  if (!service) {
-    throw new Error('notificationService is not ready');
-  }
-  service.setCurrentRequestDeferFn(value);
+  runServiceSideEffectWhenReady(
+    'notificationService',
+    service => service.setCurrentRequestDeferFn(value),
+    'notificationService.setCurrentRequestDeferFn',
+  );
 }
 
 export function getNotificationStatsDataSnapshot() {
@@ -71,19 +74,19 @@ export function getNotificationStatsDataSnapshot() {
 export function setNotificationStatsDataSync(
   ...args: Parameters<NotificationService['setStatsData']>
 ) {
-  const service = getRegisteredService('notificationService');
-  if (!service) {
-    throw new Error('notificationService is not ready');
-  }
-  service.setStatsData(...args);
+  runServiceSideEffectWhenReady(
+    'notificationService',
+    service => service.setStatsData(...args),
+    'notificationService.setStatsData',
+  );
 }
 
 export function unlockNotificationSync() {
-  const service = getRegisteredService('notificationService');
-  if (!service) {
-    throw new Error('notificationService is not ready');
-  }
-  service.unLock();
+  runServiceSideEffectWhenReady(
+    'notificationService',
+    service => service.unLock(),
+    'notificationService.unLock',
+  );
 }
 
 export async function bindNotificationEvent(

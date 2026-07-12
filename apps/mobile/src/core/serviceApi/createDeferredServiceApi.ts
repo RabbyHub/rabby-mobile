@@ -1,6 +1,7 @@
 import {
   callCoreServiceMethod,
   ensureCoreService,
+  getRegisteredService,
   isCoreServiceRegistered,
   registerCoreServiceLoader,
   waitForCoreService,
@@ -137,4 +138,24 @@ export async function waitServiceApiReady<Name extends CoreServiceName>(
   options?: { timeoutMs?: number },
 ) {
   await waitForCoreService(name, options);
+}
+
+export function runServiceSideEffectWhenReady<Name extends CoreServiceName>(
+  name: Name,
+  runner: (service: CoreServiceRegistry[Name]) => void,
+  label: string,
+) {
+  const service = getRegisteredService(name);
+  if (service) {
+    runner(service);
+    return true;
+  }
+
+  void waitForCoreService(name)
+    .then(runner)
+    .catch(error => {
+      console.error(`[serviceApi] ${label} failed`, error);
+    });
+
+  return false;
 }

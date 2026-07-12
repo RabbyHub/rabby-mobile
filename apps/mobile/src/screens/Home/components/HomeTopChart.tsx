@@ -439,6 +439,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
         <RefreshNudgedTickerText
           value={formatNetWorth}
           animate={animateNetWorth}
+          animateWidth={false}
           maxLength={16}
           lineHeight={42}
           duration={320}

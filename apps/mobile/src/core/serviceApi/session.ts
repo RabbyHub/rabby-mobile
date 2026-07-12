@@ -14,6 +14,10 @@ export const sessionServiceApi = createDeferredServiceApi<
   SessionServiceApiContract
 >('sessionService');
 
+function getSessionServiceSnapshot() {
+  return getRegisteredService('sessionService');
+}
+
 function assertSessionServiceSnapshot() {
   const service = getRegisteredService('sessionService');
   if (!service) {
@@ -31,11 +35,17 @@ export function getOrCreateSessionSync(
 export function deleteSessionSync(
   ...args: Parameters<SessionService['deleteSession']>
 ) {
-  assertSessionServiceSnapshot().deleteSession(...args);
+  const service = getSessionServiceSnapshot();
+  if (service) {
+    service.deleteSession(...args);
+  }
 }
 
 export function broadcastSessionEventSync(
   ...args: Parameters<SessionService['broadcastEvent']>
 ) {
-  assertSessionServiceSnapshot().broadcastEvent(...args);
+  const service = getSessionServiceSnapshot();
+  if (service) {
+    service.broadcastEvent(...args);
+  }
 }

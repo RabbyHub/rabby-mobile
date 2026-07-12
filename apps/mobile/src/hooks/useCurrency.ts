@@ -6,6 +6,8 @@ import {
   getCurrencyStoreSnapshot,
 } from '@/core/serviceApi/currency';
 import { zCreate } from '@/core/utils/reexports';
+import { scheduleStartupTask } from '@/core/utils/startupScheduler';
+import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import type { UpdaterOrPartials } from '@/core/utils/store';
 import { resolveValFromUpdater } from '@/core/utils/store';
 import { formatCurrencyValueParts } from '@/utils/currency';
@@ -22,10 +24,11 @@ const currencyServiceStore = zCreate<CurrencyServiceStore>(() => {
 
 let currencyStoreBindingPromise: Promise<void> | null = null;
 let disposeCurrencyStoreBinding: (() => void) | null = null;
+let currencyStoreBindingScheduled = false;
 
 function ensureCurrencyStoreBinding() {
   if (disposeCurrencyStoreBinding || currencyStoreBindingPromise) {
-    return;
+    return currencyStoreBindingPromise || Promise.resolve();
   }
 
   currencyStoreBindingPromise = bindCurrencyStoreListener((k, v) => {
@@ -43,6 +46,20 @@ function ensureCurrencyStoreBinding() {
       currencyStoreBindingPromise = null;
       console.error(error);
     });
+
+  return currencyStoreBindingPromise;
+}
+
+function scheduleCurrencyStoreBinding() {
+  if (currencyStoreBindingScheduled || disposeCurrencyStoreBinding) {
+    return;
+  }
+
+  currencyStoreBindingScheduled = true;
+  scheduleStartupTask(
+    () => ensureCurrencyStoreBinding(),
+    STARTUP_TASKS.currencyServiceBinding,
+  );
 }
 
 export function setCurrencyStore(
@@ -62,7 +79,7 @@ export function setCurrencyStore(
 
 export function useCurrency() {
   useEffect(() => {
-    ensureCurrencyStoreBinding();
+    scheduleCurrencyStoreBinding();
   }, []);
 
   const currencyStore = currencyServiceStore(s => s.data);
