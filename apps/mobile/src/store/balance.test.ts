@@ -30,8 +30,9 @@ describe('store/balance', () => {
           mockOpenapiGetTotalBalanceV2(...args),
       },
     }));
-    jest.doMock('@/core/services', () => ({
-      keyringService: {
+    jest.doMock('@/core/serviceApi/keyring', () => ({
+      bindKeyringEvent: jest.fn(),
+      keyringServiceApi: {
         getAllAddresses: (...args: unknown[]) =>
           mockKeyringServiceGetAllAddresses(...args),
       },
