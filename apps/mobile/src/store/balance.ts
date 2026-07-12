@@ -457,6 +457,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
 
   hydrateCachedBalancesForAccounts = async (
     accounts: Array<Pick<Account, 'address' | 'type'>>,
+    options?: { startupFastPath?: boolean },
   ) => {
     if (!accounts.length) {
       return;
@@ -476,6 +477,15 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     }
 
     const coreAddressSet = buildCoreAddressSet(accounts as Account[]);
+    const startupBalanceCacheMap = options?.startupFastPath
+      ? await BalanceEntity.queryBalanceCacheMapForStartup(
+          lowerAddresses.map(address => ({
+            owner_addr: address,
+            isCore: coreAddressSet.has(address),
+          })),
+        )
+      : null;
+
     for (const address of lowerAddresses) {
       const localTargets = buildBalanceLocalTargets(address);
 
@@ -497,10 +507,12 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         },
       });
 
-      const cacheBalance = await BalanceEntity.queryBalanceCache(
-        address,
-        coreAddressSet.has(address),
-      );
+      const isCore = coreAddressSet.has(address);
+      const cacheBalance =
+        startupBalanceCacheMap?.[`${address}-${isCore ? 'core' : 'nocore'}`] ||
+        (!startupBalanceCacheMap
+          ? await BalanceEntity.queryBalanceCache(address, isCore)
+          : null);
 
       if (!cacheBalance) {
         this.markHydrateSkipped(address, {
@@ -517,7 +529,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       const value = buildPersistedBalanceValue(
         cacheBalance,
         appChainUsdValue,
-        coreAddressSet.has(address),
+        isCore,
       );
 
       this.applyHydratedValue(address, value, {
@@ -525,7 +537,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         detail: {
           source: 'hydrateCachedBalancesForAccounts',
           appChainUsdValue,
-          isCore: coreAddressSet.has(address),
+          isCore,
           totalBalance: value.totalBalance,
         },
       });

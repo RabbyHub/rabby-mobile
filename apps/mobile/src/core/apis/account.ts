@@ -202,7 +202,12 @@ async function fetchAllAccountsProcess() {
     });
 
     const hydrateStartedAt = Date.now();
-    await addressBalanceStore.hydrateCachedBalancesForAccounts(visibleAccounts);
+    await addressBalanceStore.hydrateCachedBalancesForAccounts(
+      visibleAccounts,
+      {
+        startupFastPath: true,
+      },
+    );
     markStartupPerf('account', 'hydrate_cached_balances_end', {
       elapsedMs: Date.now() - hydrateStartedAt,
       count: visibleAccounts.length,
