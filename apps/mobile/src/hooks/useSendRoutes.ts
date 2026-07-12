@@ -8,7 +8,6 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { NavigatorScreenParams } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { useCallback } from 'react';
-import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -16,12 +15,59 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { naviPush } from '@/utils/navigation';
+import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
+import { storeApiAccounts } from '@/hooks/account';
+import type { KeyringAccountWithAlias } from '@/types/account';
+import { filterMyAccounts, findAccountByPriority } from '@/utils/account';
+import { getContactAliasSnapshot } from '@/core/serviceApi/contact';
+import { ellipsisAddress } from '@/utils/address';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 export const sendScreenParamsAtom = atom<{ [key: string]: any }>({});
 export const isSingleAddressAtom = atom<boolean>(false);
+
+async function getWhitelistRecordsForSendRoute() {
+  try {
+    return await whitelistServiceApi.getWhitelistRecords();
+  } catch {
+    return [];
+  }
+}
+
+async function findAccountWithoutBalanceForSendRoute(address: string): Promise<{
+  inWhitelist: boolean;
+  isMyImported: boolean;
+  account: KeyringAccountWithAlias;
+}> {
+  const whitelist = await getWhitelistRecordsForSendRoute();
+  const accounts = storeApiAccounts.getAccounts();
+  const targetAccounts = accounts.filter(item =>
+    isSameAddress(item.address, address),
+  );
+  const myAccountsInner = filterMyAccounts(accounts);
+  const defaultAccount: KeyringAccountWithAlias = {
+    address,
+    aliasName:
+      getContactAliasSnapshot(address)?.alias || ellipsisAddress(address),
+    balance: 0,
+    type: KEYRING_CLASS.WATCH,
+    brandName: KEYRING_CLASS.WATCH,
+  };
+
+  return {
+    inWhitelist: whitelist.some(item => isSameAddress(item.address, address)),
+    isMyImported: myAccountsInner.some(item =>
+      isSameAddress(item.address, address),
+    ),
+    account: targetAccounts.length
+      ? findAccountByPriority(targetAccounts)
+      : defaultAccount,
+  };
+}
+
 export const useSendRoutes = () => {
-  const { findAccountWithoutBalance } = useFindAddressByWhitelist();
   const [params, setParams] = useAtom(sendScreenParamsAtom);
   const [isSingleAddress, setIsSingleAddress] = useAtom(isSingleAddressAtom);
 
@@ -76,7 +122,7 @@ export const useSendRoutes = () => {
 
       if (p?.toAddress) {
         const { inWhitelist, account, isMyImported } =
-          findAccountWithoutBalance(p.toAddress);
+          await findAccountWithoutBalanceForSendRoute(p.toAddress);
         if (inWhitelist || isMyImported) {
           navigateToTargetScreen(mergedParams, isForSingleAddress);
         } else {
@@ -120,7 +166,6 @@ export const useSendRoutes = () => {
       );
     },
     [
-      findAccountWithoutBalance,
       navigateToSendScreen,
       params,
       setIsSingleAddress,
