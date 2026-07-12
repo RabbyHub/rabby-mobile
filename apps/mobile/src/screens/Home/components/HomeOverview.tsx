@@ -15,7 +15,6 @@ import RcIconConvertDustCC from '@/assets2024/icons/home/IconDustCC.svg';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { useAppLanguage } from '@/hooks/lang';
-import { useIsPostUnlockLockedSession } from '@/hooks/useLock';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -791,9 +790,8 @@ function DeferredHomeDappDrawer({
   onScrollBack: React.ComponentProps<typeof HomeDappDrawer>['onScrollBack'];
 }) {
   const postStartupReady = useHomePostStartupReady();
-  const isPostUnlockLockedSession = useIsPostUnlockLockedSession();
 
-  if (!postStartupReady && !isPostUnlockLockedSession) {
+  if (!postStartupReady) {
     return null;
   }
 

@@ -25,7 +25,6 @@ import {
   safeGetOrigin,
 } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
-import { useDappsValue } from '../useDapps';
 import { zCreate } from '@/core/utils/reexports';
 import type {
   UpdaterOrPartials} from '@/core/utils/store';
@@ -184,17 +183,14 @@ function useDisplayedTabs() {
 
 export function useHomeDisplayedTabs() {
   const tabs = tabsStore(s => s.tabs);
-  const { dapps } = useDappsValue();
 
   const homeDisplayedTabs = useMemo(
     () =>
       sortBy(
-        tabs.filter(item => {
-          return dapps[safeGetOrigin(item.url || item.initialUrl)]?.isDapp;
-        }),
+        getDisplayedTabs(tabs),
         tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
       ).slice(0, 4),
-    [tabs, dapps],
+    [tabs],
   );
 
   return { homeDisplayedTabs };
