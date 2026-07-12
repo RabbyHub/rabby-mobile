@@ -8,7 +8,7 @@ import {
   addDappSync,
   deleteSessionSync,
   getDappSnapshot,
-  getOrCreateSessionSync,
+  sessionServiceApi,
 } from '@/core/serviceApi';
 import { createDappBySession } from '@/core/utils/createDappBySession';
 import { useRefState } from '@/hooks/common/useRefState';
@@ -55,8 +55,10 @@ export function useSetupWebview({
 }) {
   const { setRefState: putBackgroundBridge, stateRef: currentBridgeRef } =
     useRefState<BackgroundBridge | null>(null);
+  const bridgeInitSeqRef = useRef(0);
 
   const destroyCurrentBridge = useCallback(() => {
+    bridgeInitSeqRef.current += 1;
     if (currentBridgeRef.current) {
       currentBridgeRef.current.onDisconnect();
       deleteSessionSync(currentBridgeRef.current);
@@ -65,7 +67,8 @@ export function useSetupWebview({
   }, [currentBridgeRef]);
 
   const initializeBackgroundBridge = useCallback(
-    (urlBridge: string, isMainFrame: boolean = true) => {
+    async (urlBridge: string, isMainFrame: boolean = true) => {
+      const initSeq = ++bridgeInitSeqRef.current;
       urlRef.current = urlBridge;
       const newBridge = new BackgroundBridge({
         webview: webviewRef,
@@ -77,7 +80,13 @@ export function useSetupWebview({
         isFromMobileInnerDapp,
       });
 
-      const session = getOrCreateSessionSync(newBridge);
+      const session = await sessionServiceApi.getOrCreateSession(newBridge);
+      if (initSeq !== bridgeInitSeqRef.current) {
+        newBridge.onDisconnect();
+        deleteSessionSync(newBridge);
+        return;
+      }
+
       session?.setProp({
         origin: urlBridge,
         icon: '',
@@ -92,6 +101,7 @@ export function useSetupWebview({
     },
     [
       isFromMobileInnerDapp,
+      bridgeInitSeqRef,
       urlRef,
       webviewRef,
       webviewIdRef,
