@@ -17,6 +17,7 @@ import {
   getContactAliasSnapshot,
 } from '../serviceApi/contact';
 import {
+  getPublicAccountSnapshotAccounts,
   getPinnedAddressSnapshot,
   keyringServiceApi,
 } from '../serviceApi';
@@ -195,10 +196,14 @@ async function fetchAllAccountsProcess() {
 
   try {
     const keyringStartedAt = Date.now();
-    const visibleAccounts = await keyringServiceApi.getAllVisibleAccountsArray();
+    const snapshotAccounts = getPublicAccountSnapshotAccounts();
+    const visibleAccounts = snapshotAccounts.length
+      ? snapshotAccounts
+      : await keyringServiceApi.getAllVisibleAccountsArray();
     markStartupPerf('account', 'keyring_visible_accounts_end', {
       elapsedMs: Date.now() - keyringStartedAt,
       count: visibleAccounts.length,
+      source: snapshotAccounts.length ? 'public_snapshot' : 'runtime',
     });
 
     const hydrateStartedAt = Date.now();

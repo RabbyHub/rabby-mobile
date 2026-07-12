@@ -67,10 +67,9 @@ export const keyringServiceApi = createDeferredServiceApi<
 
 type KeyringMemStoreState = ReturnType<KeyringService['memStore']['getState']>;
 type KeyringMemStoreListener = (state: KeyringMemStoreState) => void;
-type KeyringStoreState = Parameters<KeyringService['store']['subscribe']>[0] extends (
-  state: infer State,
-  ...args: any[]
-) => any
+type KeyringStoreState = Parameters<
+  KeyringService['store']['subscribe']
+>[0] extends (state: infer State, ...args: any[]) => any
   ? State
   : unknown;
 type KeyringStoreListener = (state: KeyringStoreState) => void;
@@ -92,12 +91,22 @@ export function isKeyringBootedSnapshot() {
 }
 
 export function isKeyringRuntimeReadySnapshot() {
-  return getRegisteredService('keyringService')?.isKeyringRuntimeReady() || false;
+  return (
+    getRegisteredService('keyringService')?.isKeyringRuntimeReady() || false
+  );
 }
 
 export function hasKeyringPublicAccountSnapshot() {
   return (
     getRegisteredService('keyringService')?.hasPublicAccountSnapshot() || false
+  );
+}
+
+export function getPublicAccountSnapshotAccounts() {
+  return (
+    getRegisteredService(
+      'keyringService',
+    )?.getPublicAccountSnapshotAccounts() || []
   );
 }
 
