@@ -14,6 +14,7 @@ import type {
 import {
   accountsBalanceEvents,
   balanceAccountsStore,
+  getSelectedBalanceAddressesSnapshot,
 } from './balance';
 import { formatSmallUsdValue } from './curveShared';
 import { formatUsdValue } from '@/utils/number';
@@ -138,6 +139,15 @@ const build24hTraceDetail = (
     endpoint: trace?.endpoint,
   };
 };
+
+async function getSelectedBalanceAddressesOrTop10Fallback() {
+  const selectedAddresses = getSelectedBalanceAddressesSnapshot();
+  if (selectedAddresses.length) {
+    return selectedAddresses;
+  }
+
+  return (await getTop10MyAccounts()).top10Addresses;
+}
 
 class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
   constructor() {
@@ -781,7 +791,7 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
     async (scene: BalanceScene, options?: FetchTotalBalanceOptions) => {
       let { addresses, force = false, reason } = options || {};
       if (!addresses?.length) {
-        addresses = (await getTop10MyAccounts()).top10Addresses;
+        addresses = await getSelectedBalanceAddressesOrTop10Fallback();
       }
 
       const normalizedAddresses = normalizeAddressesForCompare(
@@ -897,7 +907,7 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
       addresses ||
       (balanceAccounts && Object.keys(balanceAccounts).length
         ? Object.keys(balanceAccounts)
-        : (await getTop10MyAccounts()).top10Addresses);
+        : await getSelectedBalanceAddressesOrTop10Fallback());
 
     const lastTop10Addresses = this.lastTop10AddressesRef.current;
     this.lastTop10AddressesRef.current =
