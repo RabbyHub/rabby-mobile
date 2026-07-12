@@ -1,8 +1,5 @@
 import { openapi } from '@/core/request';
-import {
-  bindKeyringEvent,
-  keyringServiceApi,
-} from '@/core/serviceApi/keyring';
+import { bindKeyringEvent, keyringServiceApi } from '@/core/serviceApi/keyring';
 import { makeJsEEClass } from '@/core/utils/makeJsEEClass';
 import { ORM_TABLE_NAMES } from '@/databases/constant';
 import { BalanceEntity } from '@/databases/entities/balance';
@@ -12,11 +9,8 @@ import { HOME_REFRESH_INTERVAL } from '@/constant/home';
 import { appStorage } from '@/core/storage/mmkv';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import type {
-  KeyringTypeName} from '@rabby-wallet/keyring-utils';
-import {
-  CORE_KEYRING_TYPES
-} from '@rabby-wallet/keyring-utils';
+import type { KeyringTypeName } from '@rabby-wallet/keyring-utils';
+import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
 import type { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
 import PQueue from 'p-queue';
 import { useCallback, useMemo, useRef } from 'react';
@@ -26,12 +20,8 @@ import { zCreate, zMutative } from '@/core/utils/reexports';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import type { UpdaterOrPartials } from '@/core/utils/store';
 import { resolveValFromUpdater } from '@/core/utils/store';
-import type {
-  ResourceFlowState,
-  ResourceSnapshot} from './_resourceBase';
-import {
-  ResourceBaseStore
-} from './_resourceBase';
+import type { ResourceFlowState, ResourceSnapshot } from './_resourceBase';
+import { ResourceBaseStore } from './_resourceBase';
 import type { ResourceLocalTarget } from './_resourceFlowDebug';
 import { ensureAppChainStoreInitialized, useAppChainStore } from './appchain';
 
@@ -69,15 +59,30 @@ const buildPersistedBalanceValue = (
   balance: EvmTotalBalanceResponse,
   appChainUsdValue: number,
   isCore: boolean,
+  options?: {
+    preferPersistedTotal?: boolean;
+  },
 ): AddressBalanceResourceValue => {
   const evmBalance = balance.evm_usd_value || 0;
+  const totalBalance = options?.preferPersistedTotal
+    ? Number(balance.total_usd_value) || 0
+    : evmBalance + appChainUsdValue;
 
   return {
     evmBalance,
-    totalBalance: evmBalance + appChainUsdValue,
+    totalBalance,
     chainList: balance.chain_list,
     isCore,
   };
+};
+
+const canUseStartupPersistedTotal = (balance: EvmTotalBalanceResponse) => {
+  const totalBalance = Number(balance.total_usd_value) || 0;
+  const evmBalance = Number(balance.evm_usd_value) || 0;
+
+  // Older cache rows may have evm_usd_value added by migration as 0 without
+  // backfill. In that ambiguous case keep the old appchain-store path.
+  return totalBalance === 0 || evmBalance > 0;
 };
 
 const buildRemoteBalancePayload = (
@@ -462,7 +467,11 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     if (!accounts.length) {
       return;
     }
-    await ensureAppChainStoreInitialized();
+    const useStartupFastPath = !!options?.startupFastPath;
+
+    if (!useStartupFastPath) {
+      await ensureAppChainStoreInitialized();
+    }
 
     const lowerAddresses = Array.from(
       new Set(accounts.map(item => item.address.toLowerCase())),
@@ -485,6 +494,19 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
           })),
         )
       : null;
+    const shouldFallbackStartupPersistedTotal =
+      useStartupFastPath &&
+      lowerAddresses.some(address => {
+        const isCore = coreAddressSet.has(address);
+        const cacheBalance =
+          startupBalanceCacheMap?.[`${address}-${isCore ? 'core' : 'nocore'}`];
+
+        return !!cacheBalance && !canUseStartupPersistedTotal(cacheBalance);
+      });
+
+    if (shouldFallbackStartupPersistedTotal) {
+      await ensureAppChainStoreInitialized();
+    }
 
     for (const address of lowerAddresses) {
       const localTargets = buildBalanceLocalTargets(address);
@@ -525,11 +547,24 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         continue;
       }
 
-      const appChainUsdValue = getAppChainUsdValue(address);
+      const preferPersistedTotal =
+        useStartupFastPath &&
+        !shouldFallbackStartupPersistedTotal &&
+        canUseStartupPersistedTotal(cacheBalance);
+      const appChainUsdValue = preferPersistedTotal
+        ? Math.max(
+            (Number(cacheBalance.total_usd_value) || 0) -
+              (Number(cacheBalance.evm_usd_value) || 0),
+            0,
+          )
+        : getAppChainUsdValue(address);
       const value = buildPersistedBalanceValue(
         cacheBalance,
         appChainUsdValue,
         isCore,
+        {
+          preferPersistedTotal,
+        },
       );
 
       this.applyHydratedValue(address, value, {
@@ -538,6 +573,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
           source: 'hydrateCachedBalancesForAccounts',
           appChainUsdValue,
           isCore,
+          preferPersistedTotal,
           totalBalance: value.totalBalance,
         },
       });
