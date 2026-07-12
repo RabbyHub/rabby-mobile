@@ -166,6 +166,18 @@ export const STARTUP_TASKS = {
     priority: 'normal',
     budgetMs: 8,
   }),
+  serviceStoreStubBrowserDappWarmup: defineStartupTask({
+    label: 'serviceStoreStub.browserDappWarmup',
+    owner: 'service-store-stub',
+    reason:
+      'hydrate browser, dapp, and custom RPC local stores after Home is usable',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    delayMs: 1500,
+    fallbackMs: 10000,
+    idleTimeoutMs: 5000,
+    budgetMs: 450,
+  }),
   setupRuntimeCoreLifecycle: defineStartupTask({
     label: 'setup.runtimeCoreLifecycle',
     owner: 'bootstrap',
