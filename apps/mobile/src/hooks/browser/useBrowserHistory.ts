@@ -64,6 +64,10 @@ export function resetBrowserHistoryStore() {
   });
 }
 
+export function useBrowserHistoryCount() {
+  return browserHistoryStore(s => s.ids.length);
+}
+
 export function useBrowserHistory() {
   const { ids, entities } = browserHistoryStore(s => s);
   const { dapps } = useDappsValue();

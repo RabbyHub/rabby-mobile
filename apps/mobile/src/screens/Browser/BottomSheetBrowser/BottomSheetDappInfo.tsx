@@ -513,6 +513,11 @@ export const DappInfoPopup: React.FC<{
 
 export const BottomSheetDappInfoPopup: React.FC = () => {
   const { browserState, setPartialBrowserState, openTab } = useBrowser();
+
+  if (!browserState.isShowDappInfo) {
+    return null;
+  }
+
   return (
     <DappInfoPopup
       visible={browserState.isShowDappInfo}
