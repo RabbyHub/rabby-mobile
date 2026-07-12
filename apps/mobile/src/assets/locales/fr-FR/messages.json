@@ -1685,7 +1685,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "Sélectionner la chaîne",
-      "title": "Sélectionner un portefeuille pour recevoir"
+      "title": "Sélectionner un portefeuille pour recevoir",
+      "subtitle": "Choisissez un portefeuille pour recevoir vos cryptos."
     },
     "singleHome": {
       "sectionHeader": {
@@ -2138,7 +2139,8 @@
       "searchCurrency": "Rechercher une devise",
       "screenshotReportSwitch": "Capture d'écran pour signaler un bug",
       "currency": "Monnaie",
-      "dataAnalysis": "Analyse des données"
+      "dataAnalysis": "Analyse des données",
+      "bugReportHistory": "Historique des rapports de bug"
     },
     "settingModal": {
       "themeMode": {
@@ -2152,7 +2154,9 @@
         "title": "Effacer le cache de l'application",
         "clearAppCacheDesc": "Cela supprimera les fichiers cache temporaires sans affecter vos données personnelles ou paramètres. L'application doit redémarrer pour terminer le processus. Souhaitez-vous continuer ?",
         "iOSToastTitle": "Effacer le cache avec succès",
-        "iOSToastDesc": "Vous devez redémarrer l'application pour prendre effet."
+        "iOSToastDesc": "Vous devez redémarrer l'application pour prendre effet.",
+        "clearingToast": "Effacement...",
+        "clearDoneQuitToast": "Effacé. L'application va bientôt se fermer."
       },
       "clearBrowserData": {
         "title": "Effacer les données du navigateur",
@@ -3705,6 +3709,10 @@
     },
     "AccountSelectPopup": {
       "noAvailableAddress": "Aucune adresse disponible"
+    },
+    "feedbackHistoryModal": {
+      "replyPlaceholder": "Saisissez une nouvelle réponse... (facultatif)",
+      "mediaPlaceholder": "Image/Vidéo\n(obligatoire)"
     }
   },
   "global": {
