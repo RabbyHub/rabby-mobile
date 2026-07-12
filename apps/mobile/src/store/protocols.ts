@@ -12,6 +12,7 @@ import { reportLendingUserStatusOnce } from '@/utils/lendingUserStatus';
 import { complexProtocol2ProtocolItem } from '@/utils/protocol';
 import type { ICacheProtocolItem, IProtocolItem } from '@/types/assets';
 import { markStartupPerf } from '@/core/utils/startupPerfMarks';
+import { getSelectedBalanceAddressesSnapshot } from './balance';
 
 export type {
   ICacheProtocolItem,
@@ -252,10 +253,10 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
     const startedAt = Date.now();
     markStartupPerf('protocolListStore', 'initStore_start');
 
-    const accountsStartedAt = Date.now();
-    const { top10Addresses } = await getTop10MyAccounts(true);
-    markStartupPerf('protocolListStore', 'top10_accounts_end', {
-      elapsedMs: Date.now() - accountsStartedAt,
+    const addressesStartedAt = Date.now();
+    const top10Addresses = getSelectedBalanceAddressesSnapshot();
+    markStartupPerf('protocolListStore', 'selected_addresses_snapshot_end', {
+      elapsedMs: Date.now() - addressesStartedAt,
       count: top10Addresses.length,
     });
 

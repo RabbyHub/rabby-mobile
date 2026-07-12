@@ -6,6 +6,7 @@ import type { DisplayNftItem } from '@/types/assets';
 import { eventBus, EventBusListeners } from '@/utils/events';
 import { useCallback, useEffect } from 'react';
 import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
+import { getSelectedBalanceAddressesSnapshot } from './balance';
 
 const normalizeAddresses = (addresses: string[]) =>
   Array.from(new Set(addresses.map(address => address.toLowerCase())));
@@ -103,7 +104,7 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
   shortCache: true,
 
   async initStore() {
-    const { top10Addresses } = await getTop10MyAccounts(true);
+    const top10Addresses = getSelectedBalanceAddressesSnapshot();
     if (!top10Addresses.length) {
       set(state => ({
         ...state,

@@ -29,6 +29,7 @@ import { ResourceBaseStore } from './_resourceBase';
 import type { ObservableResourceValueSource } from './_resourceFlow';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { markStartupPerf } from '@/core/utils/startupPerfMarks';
+import { getSelectedBalanceAddressesSnapshot } from './balance';
 
 export type { ITokenItem, TokenAssetsResult } from '@/types/assets';
 
@@ -1663,10 +1664,10 @@ const tokenListStore = zCreate<TokenListState>((set, get) => ({
 
     // 在 App 启动时执行，初始化冷备数据
     // 取 Top10 地址
-    const accountsStartedAt = Date.now();
-    const { top10Addresses } = await getTop10MyAccounts(true);
-    markStartupPerf('tokenListStore', 'top10_accounts_end', {
-      elapsedMs: Date.now() - accountsStartedAt,
+    const addressesStartedAt = Date.now();
+    const top10Addresses = getSelectedBalanceAddressesSnapshot();
+    markStartupPerf('tokenListStore', 'selected_addresses_snapshot_end', {
+      elapsedMs: Date.now() - addressesStartedAt,
       count: top10Addresses.length,
     });
 

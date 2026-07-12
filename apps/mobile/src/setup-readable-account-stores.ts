@@ -1,4 +1,5 @@
 import { runStartupDiagnosticTask } from './core/utils/startupDiagnostics';
+import { ensureAccountBalanceSelectionLifecycle } from './store/balanceAccountSelection';
 import { startReadableAccountHeavyStoreInitializer } from './store/initializers';
 import type { ReadableAccountHeavyStoreTarget } from './store/initializers';
 
@@ -19,6 +20,7 @@ export async function startInitReadableAccountStores(
       const label = `initReadableAccountStores.${target}`;
       console.time(label);
       try {
+        await ensureAccountBalanceSelectionLifecycle();
         await startReadableAccountHeavyStoreInitializer(target);
       } finally {
         console.timeEnd(label);
