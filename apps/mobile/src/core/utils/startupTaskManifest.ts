@@ -332,10 +332,12 @@ export const STARTUP_TASKS = {
     label: 'currency.serviceBinding',
     owner: 'currency',
     reason:
-      'bind currency service and refresh remote currency list after Home is usable',
-    stage: 'homePostStartupReady',
-    priority: 'normal',
-    fallbackMs: 5000,
+      'bind currency service and refresh remote currency list after early Home interactions are likely complete',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    delayMs: 3000,
+    fallbackMs: 10000,
+    idleTimeoutMs: 5000,
     budgetMs: 450,
   }),
   homeDbLowPriorityRelease: defineStartupTask({

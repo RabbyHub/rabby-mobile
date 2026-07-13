@@ -153,7 +153,6 @@ export async function startReadableAccountBootStoreInitializers() {
   await runStoreInitializerSteps([
     ['appChainStore.initStore'],
     [
-      'addressBalanceStore.initStore',
       'balance24hStore.initStore',
       'initCurve24hStore',
     ],
