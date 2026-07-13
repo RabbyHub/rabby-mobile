@@ -24,6 +24,7 @@ export * from './rabbyPoints';
 export * from './securityEngine';
 export * from './session';
 export * from './swap';
+export * from './syncChain';
 export * from './transactionBroadcastWatcher';
 export * from './transactionHistory';
 export * from './transactionWatcher';

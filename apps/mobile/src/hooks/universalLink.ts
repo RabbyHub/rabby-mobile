@@ -65,7 +65,8 @@ type OnParseUrlAndProcessAction = (payload: {
     | 'open-testkit-screen'
     | 'clear-app-cache'
     | 'debug-sync-all-history'
-    | 'debug-db-sync-policy';
+    | 'debug-db-sync-policy'
+    | 'debug-lending';
   dappUrl?: string;
   uri?: string;
   testkitScreen?:
@@ -78,6 +79,10 @@ type OnParseUrlAndProcessAction = (payload: {
   debugDbSyncPolicy?: {
     resetWritePolicyOverride?: boolean;
     writePolicyOverride?: DbSyncWritePolicyOverride;
+  };
+  debugLending?: {
+    action: 'open' | 'refresh' | 'probe';
+    market?: string;
   };
 }) => void;
 
@@ -276,6 +281,25 @@ function parseNonProductionMaintenanceLink(appLink: string) {
     return {
       type: 'debug-db-sync-policy',
       debugDbSyncPolicy: parseDebugDbSyncPolicyParams(urlInfo.searchParams),
+    } satisfies Parameters<OnParseUrlAndProcessAction>[0];
+  }
+
+  if (rabbyGoCmd === 'debug-lending' || target === 'debug-lending') {
+    const action = urlInfo.searchParams.get('action') || 'open';
+    if (!['open', 'refresh', 'probe'].includes(action)) {
+      console.warn(
+        '[useUniversalLinkOnTop] Unknown Lending debug action:',
+        action,
+      );
+      return null;
+    }
+
+    return {
+      type: 'debug-lending',
+      debugLending: {
+        action: action as 'open' | 'refresh' | 'probe',
+        market: urlInfo.searchParams.get('market') || undefined,
+      },
     } satisfies Parameters<OnParseUrlAndProcessAction>[0];
   }
 
@@ -515,6 +539,36 @@ const handleActions: OnParseUrlAndProcessAction = payload => {
       break;
     case 'debug-db-sync-policy':
       void applyDebugDbSyncPolicyFromLink(payload.debugDbSyncPolicy);
+      break;
+    case 'debug-lending':
+      if (!isNonPublicProductionEnv || !payload.debugLending) {
+        return;
+      }
+      void import('@/screens/Lending/debugDeepLink')
+        .then(module =>
+          module.runNonProductionLendingDebugCommand(payload.debugLending!, {
+            openLending: () => {
+              dispatchWhenNavigationReady(
+                StackActions.push(RootNames.StackTransaction, {
+                  screen: RootNames.Lending,
+                  params: {
+                    dappId: 'aave',
+                  },
+                }),
+                RootNames.Lending,
+              );
+            },
+          }),
+        )
+        .catch(error => {
+          console.error(
+            '[useUniversalLinkOnTop] Lending debug command failed',
+            {
+              command: payload.debugLending,
+              error,
+            },
+          );
+        });
       break;
   }
 };

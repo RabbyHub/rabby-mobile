@@ -340,6 +340,16 @@ export const STARTUP_TASKS = {
     idleTimeoutMs: 5000,
     budgetMs: 450,
   }),
+  syncChainMetadataWarmup: defineStartupTask({
+    label: 'chain.syncMetadataWarmup',
+    owner: 'chain',
+    reason:
+      'restore cached dynamic chain metadata after Home and refresh it without gating first paint',
+    stage: 'homePostStartupReady',
+    priority: 'normal',
+    fallbackMs: 5000,
+    budgetMs: 120,
+  }),
   homeDbLowPriorityRelease: defineStartupTask({
     label: 'home.dbLowPriorityRelease',
     owner: 'home-db',
