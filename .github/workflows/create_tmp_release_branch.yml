@@ -1,4 +1,4 @@
-name: Create Thursday Tmp Branch
+name: Create Tmp Release Branch
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ defaults:
     shell: bash --noprofile --norc -eo pipefail {0}
 
 concurrency:
-  group: create-thursday-tmp-branch
+  group: create-tmp-release-branch
   cancel-in-progress: false
 
 jobs:
