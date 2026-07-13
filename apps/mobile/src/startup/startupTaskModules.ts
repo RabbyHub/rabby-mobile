@@ -13,7 +13,7 @@ export const STARTUP_LAUNCH_TASK_MODULE_FILES = [
   'src/hooks/biometrics.ts',
   'src/hooks/useBootstrap.ts',
   'src/hooks/useGlobalStatus.ts',
-  'src/startup/launchPlan.ts',
+  'src/startup/launchTasks.ts',
 ] as const;
 
 export const STARTUP_DEFERRED_TASK_MODULE_FILES = [

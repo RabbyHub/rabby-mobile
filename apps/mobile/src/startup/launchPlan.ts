@@ -1,11 +1,7 @@
-import { startSubscribeLangChange } from '@/hooks/lang';
-import { runStartupTask } from '@/core/utils/store';
-import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
+import './launchTasks';
 
-export function startLaunchPhase() {
-  runStartupTask(
-    () => startSubscribeLangChange(),
-    STARTUP_TASKS.bootstrapI18nReady,
-  );
+import { advanceStartupPhase } from './phaseRegistry';
+
+export function startLaunchPhase(reason = 'app_mounted') {
+  advanceStartupPhase('launch', reason);
 }
-
