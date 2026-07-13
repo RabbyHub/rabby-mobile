@@ -17,6 +17,28 @@ registerStartupPhaseTask('launch', {
 });
 
 registerStartupPhaseTask('launch', {
+  id: STARTUP_TASKS.homePreSplashLocalStateWarmup.label,
+  run: () => {
+    runStartupTask(async () => {
+      const { warmHomePreSplashLocalState } = await import(
+        '@/setup-home-pre-splash-state'
+      );
+      warmHomePreSplashLocalState();
+    }, STARTUP_TASKS.homePreSplashLocalStateWarmup);
+  },
+});
+
+registerStartupPhaseTask('launch', {
+  id: STARTUP_TASKS.computationWorkerPrewarm.label,
+  run: () => {
+    runStartupTask(async () => {
+      const { requestComputationThreadStart } = await import('@/perfs/thread');
+      requestComputationThreadStart('startup_prewarm');
+    }, STARTUP_TASKS.computationWorkerPrewarm);
+  },
+});
+
+registerStartupPhaseTask('launch', {
   id: STARTUP_TASKS.transactionWatchersStart.label,
   run: () => {
     runStartupTask(

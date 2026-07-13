@@ -45,6 +45,12 @@ const coreServiceLoaderRegistrationFiles = new Set([
   'src/core/services/serviceRegistry.ts',
 ]);
 
+const setupRuntimeStaticImportSources = new Set([
+  './core/utils/androidTrace',
+  './core/utils/startupTaskManifest',
+  './core/utils/store',
+]);
+
 const heavyStartupRuntimeModules = [
   '@noble/curves',
   '@rabby-wallet/rabby-swap',
@@ -266,6 +272,38 @@ function checkCoreServiceLoaderRegistration(relPath, source) {
   }
 }
 
+function checkSetupRuntimeImports(relPath, source) {
+  const staticImportPattern = /import\s+([\s\S]*?)\s+from\s+['"]([^'"]+)['"]/g;
+  let match;
+  while ((match = staticImportPattern.exec(source))) {
+    const [, importClause, importSource] = match;
+    if (isTypeOnlyImportClause(importClause)) {
+      continue;
+    }
+
+    if (
+      relPath === 'src/setup-app-before-render.runtime.ts' &&
+      !setupRuntimeStaticImportSources.has(importSource)
+    ) {
+      errors.push(
+        `${relPath}:${getLineNumber(
+          source,
+          match.index,
+        )} setup runtime must dynamically import deferred task owners`,
+      );
+    }
+
+    if (importSource.includes('/startup/deferredTasks/')) {
+      errors.push(
+        `${relPath}:${getLineNumber(
+          source,
+          match.index,
+        )} deferred startup task owners must not be statically imported`,
+      );
+    }
+  }
+}
+
 function walk(dir, output = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.name === 'node_modules' || entry.name.startsWith('.')) {
@@ -398,6 +436,7 @@ for (const filePath of walk(srcRoot)) {
   checkCoreServiceRuntimeImports(filePath, relPath, source);
   checkDatabaseGovernanceImports(filePath, relPath, source);
   checkCoreServiceLoaderRegistration(relPath, source);
+  checkSetupRuntimeImports(relPath, source);
 
   while (true) {
     const callIndex = source.indexOf('runStartupTask(', searchIndex);

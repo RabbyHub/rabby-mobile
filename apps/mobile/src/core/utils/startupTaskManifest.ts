@@ -219,6 +219,15 @@ export const STARTUP_TASKS = {
     fallbackMs: 5000,
     budgetMs: 160,
   }),
+  setupRuntimeUnlockPolicies: defineStartupTask({
+    label: 'setup.runtimeUnlockPolicies',
+    owner: 'bootstrap',
+    reason:
+      'register post-unlock store hydration and WalletConnect restore policies',
+    stage: 'registration',
+    priority: 'high',
+    budgetMs: 80,
+  }),
   setupRuntimeRemoteWarmups: defineStartupTask({
     label: 'setup.runtimeRemoteWarmups',
     owner: 'bootstrap',
