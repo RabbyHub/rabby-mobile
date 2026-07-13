@@ -37,6 +37,7 @@ import { zCreate } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';
 import { resolveValFromUpdater, runIIFEFunc } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
+import { scheduleStartupTask } from '@/core/utils/startupScheduler';
 import { AppState } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 import { perpsServiceApi } from '@/core/serviceApi';
@@ -1549,10 +1550,9 @@ runIIFEFunc(fetchFavoriteMarkets, STARTUP_TASKS.perpsFetchFavoriteMarkets);
 runIIFEFunc(fetchMarginModeByCoin, STARTUP_TASKS.perpsFetchMarginModeByCoin);
 
 export function startSubscribePerpsOnAppState() {
-  const sdk = apisPerps.getPerpsSDK();
   const subscription = AppState.addEventListener('change', nextAppState => {
     // Pass the state string ('active', 'background', 'inactive') directly
-    sdk.ws.handleAppStateChange(nextAppState);
+    apisPerps.getPerpsSDKSnapshot()?.ws.handleAppStateChange(nextAppState);
 
     // When app returns to active, retry market data if it previously failed or never loaded.
     if (nextAppState === 'active') {
@@ -1580,6 +1580,11 @@ export const useSubscribePosition = (sortedAccounts: Account[]) => {
   const isMounted = useRef(false);
   const currentHasFetchAddresses = useRef<string[]>([]);
   const hasSelectedDefaultAccount = useRef(false);
+  const top10AccountsRef = useRef<Account[]>([]);
+
+  useEffect(() => {
+    top10AccountsRef.current = top10Accounts;
+  }, [top10Accounts]);
 
   useEffect(() => {
     eventBus.on(EVENTS.PERPS.LOG_OUT, (account: Account | null) => {
@@ -1619,34 +1624,41 @@ export const useSubscribePosition = (sortedAccounts: Account[]) => {
     }
     if (top10Accounts && top10Accounts.length > 0) {
       isMounted.current = true;
-      const sdk = apisPerps.getPerpsSDK();
-      // maybe websocket is bad, no fetch data
-      let timeout = setTimeout(() => {
-        if (!hasSelectedDefaultAccount.current) {
-          hasSelectedDefaultAccount.current = true;
-          handleSelectDefaultAccount(top10Accounts);
+      scheduleStartupTask(() => {
+        const accounts = top10AccountsRef.current;
+        if (!accounts.length) {
+          return;
         }
-      }, 5 * 1000);
-      const top10Addresses = top10Accounts.map(item => item.address);
-      sdk.ws.subscribeToAllDexsClearinghouseState(top10Addresses, data => {
-        if (!currentHasFetchAddresses.current.includes(data.user)) {
-          currentHasFetchAddresses.current.push(data.user);
-          if (
-            currentHasFetchAddresses.current.length === top10Addresses.length
-          ) {
-            setIsFetchAllDone(true);
-            clearTimeout(timeout);
-            if (!hasSelectedDefaultAccount.current) {
-              hasSelectedDefaultAccount.current = true;
-              handleSelectDefaultAccount(top10Accounts);
+
+        const sdk = apisPerps.getPerpsSDK();
+        // maybe websocket is bad, no fetch data
+        const timeout = setTimeout(() => {
+          if (!hasSelectedDefaultAccount.current) {
+            hasSelectedDefaultAccount.current = true;
+            handleSelectDefaultAccount(accounts);
+          }
+        }, 5 * 1000);
+        const top10Addresses = accounts.map(item => item.address);
+        sdk.ws.subscribeToAllDexsClearinghouseState(top10Addresses, data => {
+          if (!currentHasFetchAddresses.current.includes(data.user)) {
+            currentHasFetchAddresses.current.push(data.user);
+            if (
+              currentHasFetchAddresses.current.length === top10Addresses.length
+            ) {
+              setIsFetchAllDone(true);
+              clearTimeout(timeout);
+              if (!hasSelectedDefaultAccount.current) {
+                hasSelectedDefaultAccount.current = true;
+                handleSelectDefaultAccount(accounts);
+              }
             }
           }
-        }
-        setClearinghouseStateMap({
-          address: data.user,
-          data: formatAllDexsClearinghouseState(data.clearinghouseStates),
+          setClearinghouseStateMap({
+            address: data.user,
+            data: formatAllDexsClearinghouseState(data.clearinghouseStates),
+          });
         });
-      });
+      }, STARTUP_TASKS.perpsHomePositionSubscription);
     }
   }, [top10Accounts]);
 };

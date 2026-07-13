@@ -294,6 +294,18 @@ export const STARTUP_TASKS = {
     fallbackMs: 8000,
     budgetMs: 200,
   }),
+  perpsHomePositionSubscription: defineStartupTask({
+    label: 'perps.homePositionSubscription',
+    owner: 'perps',
+    reason:
+      'subscribe Home Perps position data after early Home interactions are likely complete',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    delayMs: 5000,
+    fallbackMs: 12000,
+    idleTimeoutMs: 6000,
+    budgetMs: 220,
+  }),
   readableAccountStoresIdleWarmup: defineStartupTask({
     label: 'readableAccountStores.idleWarmup',
     owner: 'home-assets',

@@ -22,6 +22,10 @@ class ApisPerps {
     return sdkInstance;
   }
 
+  getPerpsSDKSnapshot() {
+    return sdkInstance;
+  }
+
   destroyPerpsSDK() {
     sdkInstance?.ws.disconnect();
     sdkInstance = null;
