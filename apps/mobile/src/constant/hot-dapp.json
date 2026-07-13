@@ -320,62 +320,6 @@
     "en": "An aggregated trading product designed for onchain trading use cases."
   },
   {
-    "category": "Predict",
-    "name": "Polymarket",
-    "origin": "https://polymarket.com",
-    "logo": "https://static-assets.rabby.io/files/b20294f0-b1c6-44cc-a77d-4da51df7d628.png",
-    "zh": "全球最大的预测市场,用真实资金交易事件结果与概率。",
-    "en": "The world’s largest prediction market, where users trade real-money probabilities on event outcomes."
-  },
-  {
-    "category": "Predict",
-    "name": "Predict Fun",
-    "origin": "https://predict.fun",
-    "logo": "https://static.debank.com/image/dapp/logo_url/36dcf7600703e201d1020785c278b26f/36dcf7600703e201d1020785c278b26f.png",
-    "zh": "BNB Chain 原生预测市场,强调更轻量、更社区化的预测交易体验。",
-    "en": "A BNB Chain-native prediction market focused on a lightweight, community-driven trading experience."
-  },
-  {
-    "category": "Predict",
-    "name": "Kalshi",
-    "origin": "https://kalshi.com",
-    "logo": "https://static-assets.rabby.io/files/bc0b269c-9737-4414-b957-e80fcd449f86.png",
-    "zh": "合规事件交易平台,主打把现实世界事件做成可交易合约。",
-    "en": "A regulated event trading platform that turns real-world outcomes into tradable contracts."
-  },
-  {
-    "category": "Predict",
-    "name": "OPINION",
-    "origin": "https://www.opinion.trade",
-    "logo": "https://static-assets.rabby.io/files/ed24a3b5-cb90-499c-b439-ebc425703690.png",
-    "zh": "以观点交易为核心的预测型平台,偏向宏观与立场表达类市场。",
-    "en": "A prediction-style platform centered on trading opinions, with a focus on macro and narrative-driven markets."
-  },
-  {
-    "category": "Predict",
-    "name": "Limitless Exchange",
-    "origin": "https://limitless.exchange",
-    "logo": "https://static.debank.com/image/dapp/logo_url/46d843bc64c66da4cd2645e143d40c71/46d843bc64c66da4cd2645e143d40c71.png",
-    "zh": "主打无需许可创建和交易事件市场的去中心化预测平台。",
-    "en": "A decentralized prediction platform focused on permissionless market creation and event trading."
-  },
-  {
-    "category": "Predict",
-    "name": "Probable",
-    "origin": "https://probable.markets",
-    "logo": "https://static-assets.rabby.io/files/30765746-a65c-492b-b520-147b09726684.png",
-    "zh": "部署在 BNB Chain 上的去中心化预测市场。",
-    "en": "A decentralized prediction market built on BNB Chain."
-  },
-  {
-    "category": "Predict",
-    "name": "Myriad",
-    "origin": "https://myriad.markets",
-    "logo": "https://static.debank.com/image/dapp/logo_url/a56bf85820246425fface6a20000f0b0/a56bf85820246425fface6a20000f0b0.png",
-    "zh": "围绕多主题事件交易构建的预测市场平台。",
-    "en": "A prediction market platform built around trading across a wide range of event categories."
-  },
-  {
     "category": "NFT",
     "name": "OpenSea",
     "origin": "https://opensea.io",
