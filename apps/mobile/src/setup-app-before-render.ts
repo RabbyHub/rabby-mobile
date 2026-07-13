@@ -144,7 +144,8 @@ export async function startSetupAppBeforeRenderDeferred(
   traceAndroidInstant('startup.start_setup_before_render_deferred.start', {
     reason,
   });
-  await loadSetupBeforeRenderRuntime(reason);
+  const runtime = await loadSetupBeforeRenderRuntime(reason);
+  runtime.registerSetupAppBeforeRenderDeferredTasks(reason);
   traceAndroidInstant('startup.start_setup_before_render_deferred.end', {
     reason,
   });

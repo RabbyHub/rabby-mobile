@@ -42,10 +42,8 @@ import { openapi } from './core/request';
 import { DEFAULT_RABBY_MOBILE_CODE, IS_ROZENITE_ENABLED } from './constant/env';
 import { startSetupAppBeforeRenderDeferred } from './setup-app-before-render';
 import { runAfterHomePostStartupReady } from './core/utils/homeStartupReady';
-import { startSubscribeLangChange } from './hooks/lang';
 import { traceAndroidInstant } from './core/utils/androidTrace';
-import { runStartupTask } from './core/utils/store';
-import { STARTUP_TASKS } from './core/utils/startupTaskManifest';
+import { startLaunchPhase } from './startup/launchPlan';
 
 Safe.openapiService = openapi;
 
@@ -158,10 +156,7 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
   const rabbitCode = __DEV__ ? DEFAULT_RABBY_MOBILE_CODE : propRabbitCode || '';
   useEffect(() => {
     traceAndroidInstant('react.App.mounted');
-    runStartupTask(
-      () => startSubscribeLangChange(),
-      STARTUP_TASKS.bootstrapI18nReady,
-    );
+    startLaunchPhase();
   }, []);
   useBootstrapApp({ rabbitCode });
 

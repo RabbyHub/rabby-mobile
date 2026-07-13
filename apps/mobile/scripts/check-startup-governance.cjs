@@ -6,6 +6,11 @@ const path = require('path');
 const appRoot = path.resolve(__dirname, '..');
 const srcRoot = path.join(appRoot, 'src');
 const strict = process.argv.includes('--strict');
+const startupTaskModulesPath = path.join(
+  srcRoot,
+  'startup',
+  'startupTaskModules.ts',
+);
 
 const ignoredFilePatterns = [
   /\.test\.[jt]sx?$/,
@@ -342,6 +347,28 @@ function getLineNumber(source, index) {
 
 const errors = [];
 const warnings = [];
+const startupTaskCallFiles = new Set();
+
+function readStartupTaskModuleFiles() {
+  if (!fs.existsSync(startupTaskModulesPath)) {
+    errors.push(
+      'src/startup/startupTaskModules.ts is required to govern startup task registration files',
+    );
+    return new Set();
+  }
+
+  const manifestSource = fs.readFileSync(startupTaskModulesPath, 'utf8');
+  const files = new Set();
+  const fileLiteralPattern = /['"](src\/[^'"]+\.[jt]sx?)['"]/g;
+  let match;
+  while ((match = fileLiteralPattern.exec(manifestSource))) {
+    files.add(match[1]);
+  }
+
+  return files;
+}
+
+const governedStartupTaskModuleFiles = readStartupTaskModuleFiles();
 
 for (const filePath of walk(srcRoot)) {
   if (isIgnored(filePath)) {
@@ -380,6 +407,17 @@ for (const filePath of walk(srcRoot)) {
     }
 
     const callSource = source.slice(callIndex, closeParenIndex + 1);
+    startupTaskCallFiles.add(relPath);
+
+    if (!governedStartupTaskModuleFiles.has(relPath)) {
+      errors.push(
+        `${relPath}:${getLineNumber(
+          source,
+          callIndex,
+        )} runStartupTask files must be listed in src/startup/startupTaskModules.ts`,
+      );
+    }
+
     if (!callSource.includes('STARTUP_TASKS.')) {
       errors.push(
         `${relPath}:${getLineNumber(
@@ -412,6 +450,22 @@ for (const filePath of walk(srcRoot)) {
         } startup-sensitive require should be justified or converted to import()/service registry`,
       );
     });
+  }
+}
+
+for (const moduleFile of governedStartupTaskModuleFiles) {
+  const modulePath = path.join(appRoot, moduleFile);
+  if (!fs.existsSync(modulePath)) {
+    errors.push(
+      `src/startup/startupTaskModules.ts lists missing file: ${moduleFile}`,
+    );
+    continue;
+  }
+
+  if (!startupTaskCallFiles.has(moduleFile)) {
+    warnings.push(
+      `${moduleFile} is listed in startupTaskModules but has no active runStartupTask call`,
+    );
   }
 }
 
