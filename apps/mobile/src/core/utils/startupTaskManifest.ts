@@ -115,6 +115,15 @@ export const STARTUP_TASKS = {
     priority: 'high',
     budgetMs: 16,
   }),
+  computationWorkerPrewarm: defineStartupTask({
+    label: 'computation.workerPrewarm',
+    owner: 'worker',
+    reason:
+      'prewarm computation worker infrastructure early while keeping heavy calculations on demand',
+    stage: 'preSplash',
+    priority: 'normal',
+    budgetMs: 8,
+  }),
   homeHistorySyncListener: defineStartupTask({
     label: 'homeHistory.syncListener',
     owner: 'home',
@@ -146,6 +155,18 @@ export const STARTUP_TASKS = {
     fallbackMs: 8000,
     idleTimeoutMs: 5000,
     budgetMs: 240,
+  }),
+  homeLendingDataWarmup: defineStartupTask({
+    label: 'home.lendingDataWarmup',
+    owner: 'lending',
+    reason:
+      'warm Lending health-factor data only after Home is usable and early interactions are likely quiet',
+    stage: 'homePostStartupIdle',
+    priority: 'low',
+    delayMs: 3000,
+    fallbackMs: 10000,
+    idleTimeoutMs: 5000,
+    budgetMs: 600,
   }),
   cexSupportListFetch: defineStartupTask({
     label: 'cex.supportListFetch',

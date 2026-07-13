@@ -32,7 +32,7 @@ const isStartupProfilerEnabled =
   process.env.buildchannel === 'selfhost-reg';
 
 const shouldDeferWorkerDuringStartupProfile =
-  process.env.RABBY_STARTUP_PROFILER_DEFER_WORKER !== 'false';
+  process.env.RABBY_STARTUP_PROFILER_DEFER_WORKER === 'true';
 
 function setStartupProfilerActiveUntil(activeUntil: number) {
   const profilerGlobal = globalThis as StartupProfilerGlobal;

@@ -36,7 +36,7 @@ import {
   startSubscribeIOSScreenRecording,
   startSubscribeRemoteNotification,
 } from './hooks/navigation';
-import { startComputationThread } from './perfs/thread';
+import { requestComputationThreadStart } from './perfs/thread';
 import { rateModalStartSyncNetworth } from './components/RateModal/hooks';
 import { trimNoLongerSupportsOnUnlock } from './components2024/NoLongerSupports/useNoLongerSupports';
 import { startCheckClearAction } from './utils/clipboard';
@@ -72,7 +72,10 @@ runIIFEFunc(() => {
 }, STARTUP_TASKS.homePreSplashLocalStateWarmup);
 
 runIIFEFunc(() => {
-  startComputationThread();
+  requestComputationThreadStart('startup_prewarm');
+}, STARTUP_TASKS.computationWorkerPrewarm);
+
+runIIFEFunc(() => {
   startManageAccountStoreLifecycle();
   loadLockInfoOnBootstrap().catch(error => {
     console.error('loadLockInfoOnBootstrap::setupRuntime::error', error);
