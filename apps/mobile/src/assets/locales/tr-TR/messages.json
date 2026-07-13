@@ -2100,7 +2100,8 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "Zincir Seçin",
-      "title": "Cüzdan Seçin Almak İçin"
+      "title": "Cüzdan Seçin Almak İçin",
+      "subtitle": "Kripto almak için bir cüzdan seçin."
     },
     "singleHome": {
       "sectionHeader": {
@@ -2194,7 +2195,8 @@
       "currency": "Para Birimi",
       "searchCurrency": "Para Araştırması",
       "screenshotReportSwitch": "Hata bildirmek için ekran görüntüsü alın",
-      "dataAnalysis": "Veri Analizi"
+      "dataAnalysis": "Veri Analizi",
+      "bugReportHistory": "Hata Raporu Geçmişi"
     },
     "settingModal": {
       "themeMode": {
@@ -2208,7 +2210,9 @@
         "title": "Uygulama Önbelleğini Temizle",
         "iOSToastTitle": "Önbellek Başarıyla Temizlendi",
         "iOSToastDesc": "Uygulamanın etkili olması için yeniden başlatmanız gerekiyor.",
-        "clearAppCacheDesc": "Bu, kişisel verilerinizi veya ayarlarınızı etkilemeden geçici önbellek dosyalarını kaldıracaktır. Süreci tamamlamak için uygulamanın yeniden başlatılması gerekiyor. Devam etmek istiyor musunuz?"
+        "clearAppCacheDesc": "Bu, kişisel verilerinizi veya ayarlarınızı etkilemeden geçici önbellek dosyalarını kaldıracaktır. Süreci tamamlamak için uygulamanın yeniden başlatılması gerekiyor. Devam etmek istiyor musunuz?",
+        "clearingToast": "Temizleniyor...",
+        "clearDoneQuitToast": "Temizlendi. Uygulama yakında kapanacak."
       },
       "clearBrowserData": {
         "title": "Tarayıcı Verilerini Temizle",
@@ -3660,6 +3664,10 @@
     },
     "AccountSelectPopup": {
       "noAvailableAddress": "Mevcut adres yok"
+    },
+    "feedbackHistoryModal": {
+      "replyPlaceholder": "Yeni bir yanıt girin... (isteğe bağlı)",
+      "mediaPlaceholder": "Görsel/Video\n(gerekli)"
     }
   },
   "native": {
