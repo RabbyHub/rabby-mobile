@@ -20,6 +20,10 @@ import {
 import { computeCurveBalanceChange } from '@/store/curveShared';
 import { navigateDeprecated } from '@/utils/navigation';
 import { ellipsisAddress } from '@/utils/address';
+import {
+  beginFeatureActivation,
+  markFeatureActivation,
+} from '@/core/utils/featureActivationDiagnostics';
 import { useEffect, useMemo, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -94,9 +98,21 @@ function presetSingHomeAccount(account: Account) {
 }
 export const apisSingleHome = {
   navigateToSingleHome: (account: Account, options?: { replace?: boolean }) => {
+    const cycleId = beginFeatureActivation(
+      'single-address',
+      'single_address_navigation_requested',
+    );
     presetSingHomeAccount(account);
+    markFeatureActivation('single-address', 'state-prepared', {
+      cycleId,
+      reason: 'single_home_account_preset',
+    });
     requestAnimationFrame(() => {
       const { replace } = options || {};
+      markFeatureActivation('single-address', 'navigation-dispatched', {
+        cycleId,
+        reason: replace ? 'replace_after_frame' : 'navigate_after_frame',
+      });
       if (replace) {
         resetNavigationOnTopOfHome(RootNames.SingleAddressStack, {
           screen: RootNames.SingleAddressHome,

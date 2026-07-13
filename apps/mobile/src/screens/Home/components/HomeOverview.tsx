@@ -83,6 +83,10 @@ import {
 } from '@/constant/home';
 import { perfEvents } from '@/core/utils/perf';
 import {
+  beginFeatureActivation,
+  markFeatureActivation,
+} from '@/core/utils/featureActivationDiagnostics';
+import {
   useHomePostStartupReady,
   useHomeStartupReady,
 } from '@/core/utils/homeStartupReady';
@@ -1157,6 +1161,16 @@ export const HomeOverview = React.memo(() => {
           handlePressReceive();
           break;
         case MultiHomeFeatTitle.Swap:
+          {
+            const cycleId = beginFeatureActivation(
+              'swap',
+              'multi_home_swap_press',
+            );
+            markFeatureActivation('swap', 'navigation-dispatched', {
+              cycleId,
+              reason: 'multi_home_navigation_push',
+            });
+          }
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
               screen: RootNames.MultiSwapBridge,
@@ -1168,6 +1182,16 @@ export const HomeOverview = React.memo(() => {
 
           break;
         case MultiHomeFeatTitle.Bridge:
+          {
+            const cycleId = beginFeatureActivation(
+              'bridge',
+              'multi_home_bridge_press',
+            );
+            markFeatureActivation('bridge', 'navigation-dispatched', {
+              cycleId,
+              reason: 'multi_home_navigation_push',
+            });
+          }
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
               screen: RootNames.MultiSwapBridge,

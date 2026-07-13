@@ -16,8 +16,7 @@ import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
-import type {
-  CompositeScreenProps} from '@react-navigation/native';
+import type { CompositeScreenProps } from '@react-navigation/native';
 import {
   useIsFocused,
   useNavigation,
@@ -53,8 +52,7 @@ import { refreshIdAtom, useRabbyFeeVisible } from '../Swap/hooks/atom';
 import { buildDexSwap, dexSwap } from '../Swap/hooks/swap';
 import { Button } from '@/components2024/Button';
 import { SignRiskWarning } from '@/components/SignRiskWarning';
-import type {
-  PropsForAccountSwitchScreen} from '@/hooks/accountsSwitcher';
+import type { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
 import {
   ScreenSceneAccountProvider,
   useSceneAccountInfo,
@@ -91,11 +89,8 @@ import type { SwapTxHistoryItem } from '@/core/services/transactionHistory';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useTwoStepSwap } from '../Swap/hooks/twoStepSwap';
-import type {
-  DirectSignBtnMethods} from '@/components2024/DirectSignBtn';
-import {
-  DirectSignBtn
-} from '@/components2024/DirectSignBtn';
+import type { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import useDebounce from 'react-use/lib/useDebounce';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { SignatureInstanceProvider } from '@/components2024/MiniSignV2/state/SignatureInstanceContext';
@@ -107,8 +102,7 @@ import { APP_VERSIONS } from '@/constant';
 import { stats } from '@/utils/stats';
 import { Text } from '@/components/Typography';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
-import type {
-  FormAmountMode} from '@/utils/form';
+import type { FormAmountMode } from '@/utils/form';
 import {
   FormValuesOnSubmit,
   createAmountComparer,
@@ -121,6 +115,10 @@ import {
   updateQuotePollingPauseReason,
 } from '@/utils/quotePolling';
 import ArrowDownSVG from '@/assets/icons/swap/icon-arrow-down-with-bg.svg';
+import {
+  ensureFeatureActivation,
+  markFeatureActivation,
+} from '@/core/utils/featureActivationDiagnostics';
 
 const isAndroid = Platform.OS === 'android';
 const BOTTOM_BUTTON_HEIGHT = 52;
@@ -140,12 +138,49 @@ type SwapRouteProps = CompositeScreenProps<
 type SwapProps = PropsForAccountSwitchScreen<{
   disableHeaderRight?: boolean;
   disableAccountSwitcherModal?: boolean;
+  diagnosticActive?: boolean;
 }>;
+
+function SwapActivationDataProbe({
+  currentAddress,
+  payTokenChain,
+  payTokenId,
+  receiveTokenChain,
+  receiveTokenId,
+}: {
+  currentAddress?: string;
+  payTokenChain?: string;
+  payTokenId?: string;
+  receiveTokenChain?: string;
+  receiveTokenId?: string;
+}) {
+  useEffect(() => {
+    if (!currentAddress || !payTokenId || !receiveTokenId) {
+      return;
+    }
+
+    const cycleId = ensureFeatureActivation('swap', 'swap_data_probe');
+    markFeatureActivation('swap', 'data-ready', {
+      cycleId,
+      reason: 'swap_token_pair_ready',
+      detail: `${payTokenChain}:${payTokenId}->${receiveTokenChain}:${receiveTokenId}`,
+    });
+  }, [
+    currentAddress,
+    payTokenChain,
+    payTokenId,
+    receiveTokenChain,
+    receiveTokenId,
+  ]);
+
+  return null;
+}
 
 const Swap = ({
   isForMultipleAddress = false,
   disableHeaderRight = false,
   disableAccountSwitcherModal = false,
+  diagnosticActive = false,
 }: SwapProps) => {
   /** Swap form snapshot for validation during auth */
   interface SwapFormSnapshot {
@@ -1493,6 +1528,15 @@ const Swap = ({
   return (
     <SignatureInstanceProvider instance={instance}>
       <NormalScreenContainer2024 type="bg1">
+        {diagnosticActive ? (
+          <SwapActivationDataProbe
+            currentAddress={currentAccount?.address}
+            payTokenChain={payToken?.chain}
+            payTokenId={payToken?.id}
+            receiveTokenChain={receiveToken?.chain}
+            receiveTokenId={receiveToken?.id}
+          />
+        ) : null}
         {isForMultipleAddress && !disableAccountSwitcherModal && (
           <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
         )}

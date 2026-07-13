@@ -12,18 +12,24 @@ import Animated, {
 
 import { AnimateableText, Text } from '@/components/Typography';
 import {
+  getFeatureActivationDiagnosticsSnapshot,
+  subscribeFeatureActivationDiagnostics,
+  type FeatureActivationEventRecord,
+} from '@/core/utils/featureActivationDiagnostics';
+import {
   getStartupRuntimeDiagnosticsSnapshot,
   subscribeStartupRuntimeDiagnostics,
   type StartupModuleLoadRecord,
   type StartupRuntimeDiagnosticsSnapshot,
 } from '@/startup/runtimeDiagnostics';
 
-const MAX_MODULE_ROWS = 5;
+const MAX_MODULE_ROWS = 4;
+const MAX_FEATURE_ROWS = 5;
 const screenLayout = Dimensions.get('window');
 const HANDLE_SIZE = 48;
 const PANEL_WIDTH = Math.min(screenLayout.width - 24, 580);
 const PANEL_BODY_WIDTH = PANEL_WIDTH - HANDLE_SIZE;
-const PANEL_HEIGHT = Math.min(264, screenLayout.height * 0.8);
+const PANEL_HEIGHT = Math.min(350, screenLayout.height * 0.8);
 const VERTICAL_EDGE_PADDING = 40;
 const HORIZONTAL_EDGE_PADDING = 0;
 const SIDE_LEFT = 0;
@@ -38,6 +44,9 @@ const runtimeMetricLoading = makeMutable('0');
 const runtimeMetricErrors = makeMutable('0');
 const runtimeMetricElapsed = makeMutable('0ms');
 const runtimeModuleLines = Array.from({ length: MAX_MODULE_ROWS }, () =>
+  makeMutable(''),
+);
+const runtimeFeatureLines = Array.from({ length: MAX_FEATURE_ROWS }, () =>
   makeMutable(''),
 );
 const startupRuntimeDiagnosticsEnabled =
@@ -139,6 +148,12 @@ function formatModuleLine(record: StartupModuleLoadRecord) {
   return `${status} | ${record.taskStage} | ${record.group}/${record.name} | ${duration}`;
 }
 
+function formatFeatureLine(record: FeatureActivationEventRecord) {
+  return `${record.feature}#${record.visitNumber}: ${
+    record.event
+  } | +${formatMs(record.elapsedMs)} / ${formatMs(record.stepMs)}`;
+}
+
 function syncRuntimeMutables(snapshot: StartupRuntimeDiagnosticsSnapshot) {
   runtimePhaseTitle.value = `${snapshot.phase}: ${snapshot.milestone}`;
   runtimePhaseReason.value = snapshot.phaseReason;
@@ -165,10 +180,28 @@ function syncRuntimeMutables(snapshot: StartupRuntimeDiagnosticsSnapshot) {
 function useSyncStartupRuntimeMutables() {
   React.useEffect(() => {
     syncRuntimeMutables(getStartupRuntimeDiagnosticsSnapshot());
+    const syncFeatureMutables = () => {
+      const snapshot = getFeatureActivationDiagnosticsSnapshot();
+      runtimeFeatureLines.forEach((line, index) => {
+        line.value = snapshot.events[index]
+          ? formatFeatureLine(snapshot.events[index])
+          : index === 0
+          ? 'No feature activation recorded yet'
+          : '';
+      });
+    };
+    syncFeatureMutables();
 
-    return subscribeStartupRuntimeDiagnostics(() => {
+    const unsubscribeRuntime = subscribeStartupRuntimeDiagnostics(() => {
       syncRuntimeMutables(getStartupRuntimeDiagnosticsSnapshot());
     });
+    const unsubscribeFeatures =
+      subscribeFeatureActivationDiagnostics(syncFeatureMutables);
+
+    return () => {
+      unsubscribeRuntime();
+      unsubscribeFeatures();
+    };
   }, []);
 }
 
@@ -255,6 +288,12 @@ function RuntimeWindow() {
       </View>
       <View style={styles.moduleList}>
         {runtimeModuleLines.map((line, index) => (
+          <ModuleLine key={index} value={line} />
+        ))}
+      </View>
+      <Text style={styles.sectionLabel}>feature cycles</Text>
+      <View style={styles.featureList}>
+        {runtimeFeatureLines.map((line, index) => (
           <ModuleLine key={index} value={line} />
         ))}
       </View>
@@ -561,6 +600,16 @@ const styles = StyleSheet.create({
   },
   moduleList: {
     marginTop: 8,
+    rowGap: 3,
+  },
+  sectionLabel: {
+    marginTop: 8,
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontSize: 9,
+    lineHeight: 12,
+  },
+  featureList: {
+    marginTop: 3,
     rowGap: 3,
   },
   moduleText: {
