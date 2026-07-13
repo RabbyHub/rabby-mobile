@@ -23,6 +23,7 @@ find_package(ReactAndroid REQUIRED CONFIG)
 
 target_link_libraries(
   ${PACKAGE_NAME}
+  "-Wl,-z,max-page-size=16384"
   ${LOG_LIB}
   android
   fbjni::fbjni
