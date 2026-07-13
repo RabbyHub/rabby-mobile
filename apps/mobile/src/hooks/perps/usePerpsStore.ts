@@ -35,7 +35,7 @@ import { openapi } from '@/core/request';
 import { unionBy } from 'lodash';
 import { zCreate } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';
-import { resolveValFromUpdater, runIIFEFunc } from '@/core/utils/store';
+import { resolveValFromUpdater, runStartupTask } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { scheduleStartupTask } from '@/core/utils/startupScheduler';
 import { AppState } from 'react-native';
@@ -1545,9 +1545,9 @@ const fetchMarketDataIfNeeded = () => {
   return fetchMarketData();
 };
 
-runIIFEFunc(fetchMarketDataIfNeeded, STARTUP_TASKS.perpsFetchMarketData);
-runIIFEFunc(fetchFavoriteMarkets, STARTUP_TASKS.perpsFetchFavoriteMarkets);
-runIIFEFunc(fetchMarginModeByCoin, STARTUP_TASKS.perpsFetchMarginModeByCoin);
+runStartupTask(fetchMarketDataIfNeeded, STARTUP_TASKS.perpsFetchMarketData);
+runStartupTask(fetchFavoriteMarkets, STARTUP_TASKS.perpsFetchFavoriteMarkets);
+runStartupTask(fetchMarginModeByCoin, STARTUP_TASKS.perpsFetchMarginModeByCoin);
 
 export function startSubscribePerpsOnAppState() {
   const subscription = AppState.addEventListener('change', nextAppState => {

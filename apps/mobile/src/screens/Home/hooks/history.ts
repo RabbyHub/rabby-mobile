@@ -14,7 +14,7 @@ import type {
   UpdaterOrPartials} from '@/core/utils/store';
 import {
   resolveValFromUpdater,
-  runIIFEFunc
+  runStartupTask
 } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import type { RefLikeObject } from '@/utils/type';
@@ -135,7 +135,7 @@ export const resetFetchHistoryTxCount = makeAvoidParallelAsyncFunc(async () => {
 
 const thorttleGetSuccessAndFailList = debounce(refreshSuccessAndFailList, 1000);
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   onAppOrmSyncEvents({
     taskFor: ['all-history'],
     onRemoteDataUpserted: ctx => {

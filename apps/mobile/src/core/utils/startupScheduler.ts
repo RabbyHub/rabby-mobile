@@ -143,7 +143,7 @@ function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
   return !!value && typeof (value as any).then === 'function';
 }
 
-function runStartupTask<T>(
+function executeStartupTask<T>(
   task: () => T,
   options: StartupTaskOptions,
   diagnosticId: number | null,
@@ -229,7 +229,7 @@ function scheduleHomePostStartupIdle<T>(
             idleId = requestIdleCallback(
               () => {
                 if (!disposed) {
-                  runStartupTask(task, options, diagnosticId);
+                  executeStartupTask(task, options, diagnosticId);
                 }
               },
               { timeout: options.idleTimeoutMs ?? 5000 },
@@ -237,7 +237,7 @@ function scheduleHomePostStartupIdle<T>(
             return;
           }
 
-          runStartupTask(task, options, diagnosticId);
+          executeStartupTask(task, options, diagnosticId);
         });
       };
 
@@ -285,7 +285,7 @@ function scheduleOnDemandStartupTask<T>(
       }
 
       fired = true;
-      return runStartupTask(task, options, diagnosticId);
+      return executeStartupTask(task, options, diagnosticId);
     },
     cancel: () => {
       if (disposed || fired) {
@@ -312,7 +312,7 @@ export function scheduleStartupTask<T>(
   if (stage === 'homePostStartupReady') {
     const cancelHomePostStartupReady = runAfterHomePostStartupReady(
       () => {
-        runStartupTask(task, options, diagnosticId);
+        executeStartupTask(task, options, diagnosticId);
       },
       {
         label: options.label,
@@ -336,7 +336,7 @@ export function scheduleStartupTask<T>(
     return scheduleOnDemandStartupTask(task, options, diagnosticId);
   }
 
-  return runStartupTask(task, options, diagnosticId);
+  return executeStartupTask(task, options, diagnosticId);
 }
 
 export function runOnDemandStartupTask<T>(

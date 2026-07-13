@@ -30,7 +30,7 @@ import type {
   UpdaterOrPartials} from '@/core/utils/store';
 import {
   resolveValFromUpdater,
-  runIIFEFunc
+  runStartupTask
 } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { perfEvents } from '@/core/utils/perf';
@@ -491,7 +491,7 @@ export function useBrowser() {
   };
 }
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   perfEvents.subscribe('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS', () => {
     browserApis.hideBrowser();
   });

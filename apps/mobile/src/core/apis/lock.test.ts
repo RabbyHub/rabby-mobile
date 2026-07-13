@@ -211,7 +211,7 @@ const loadLockModule = () => {
   }));
 
   jest.doMock('../utils/store', () => ({
-    runIIFEFunc: (fn: () => unknown) => fn(),
+    runStartupTask: (fn: () => unknown) => fn(),
   }));
 
   jest.doMock('../utils/perf', () => ({

@@ -4,7 +4,7 @@ import {
 } from './hooks/useBootstrap';
 import { InteractionManager } from 'react-native';
 
-import { runIIFEFunc } from './core/utils/store';
+import { runStartupTask } from './core/utils/store';
 import { STARTUP_TASKS } from './core/utils/startupTaskManifest';
 import { connectPushServerOnBootstrap } from './core/notifications';
 
@@ -49,8 +49,8 @@ import { isUnlockSessionValid } from './core/apis/lock';
 import { startWatchLayoutChange } from './hooks/useAppLayout';
 import { startCareAppNotificationPermissions } from './hooks/appNotification';
 import {
-  bindKeyringEvent,
-  bindKeyringEventOnce,
+  bindKeyringEventAfterRegistration,
+  bindKeyringEventOnceAfterRegistration,
   isKeyringUnlockedSnapshot,
 } from './core/serviceApi/keyring';
 import { APP_FEATURE_SWITCH } from './constant';
@@ -67,15 +67,15 @@ const WALLETCONNECT_RESTORE_AFTER_HOME_IDLE_DELAY_MS = 60000;
 const WALLETCONNECT_RESTORE_HOME_READY_FALLBACK_MS = 10000;
 const WALLETCONNECT_RESTORE_IDLE_TIMEOUT_MS = 10000;
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   warmHomePreSplashLocalState();
 }, STARTUP_TASKS.homePreSplashLocalStateWarmup);
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   requestComputationThreadStart('startup_prewarm');
 }, STARTUP_TASKS.computationWorkerPrewarm);
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   startManageAccountStoreLifecycle();
   loadLockInfoOnBootstrap().catch(error => {
     console.error('loadLockInfoOnBootstrap::setupRuntime::error', error);
@@ -89,7 +89,7 @@ runIIFEFunc(() => {
   startSubscribeOpenApiHttpErrorDebugToast();
 }, STARTUP_TASKS.setupRuntimeCoreLifecycle);
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   if (APP_FEATURE_SWITCH.transactionNotification) {
     connectPushServerOnBootstrap();
   }
@@ -104,23 +104,23 @@ runIIFEFunc(() => {
   trimNoLongerSupportsOnUnlock();
 }, STARTUP_TASKS.setupRuntimeRemoteWarmups);
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   startSubscribeOnekeyDevices();
   startSubscribeTrezorConnectOnUrl();
 }, STARTUP_TASKS.setupRuntimeHardwareSubscriptions);
 
-runIIFEFunc(async () => {
+runStartupTask(async () => {
   const { storeApiGasAccount } = await import(
     './screens/GasAccount/hooks/atom'
   );
   storeApiGasAccount.fetchGasAccountInfo();
 }, STARTUP_TASKS.setupGasAccountInfoFetch);
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   startSubscribePerpsOnAppState();
 }, STARTUP_TASKS.setupRuntimePerpsAppStateSubscription);
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   startSubscribeUserDidTakeScreenshot();
   startSubscribeAtSensitiveScene();
   startSubscribeIOSJustScreenshotted();
@@ -130,7 +130,7 @@ runIIFEFunc(() => {
   startSubscribeIOSScreenRecording();
 }, STARTUP_TASKS.setupRuntimeSecuritySubscriptions);
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   if (APP_FEATURE_SWITCH.transactionNotification) {
     startCareAppNotificationPermissions();
     startSubscribeRemoteNotification();
@@ -182,7 +182,7 @@ function startInitStoresOnUnlock() {
     return;
   }
 
-  void bindKeyringEventOnce('unlock', () => {
+  bindKeyringEventOnceAfterRegistration('unlock', () => {
     startInitStoresAfterUnlockInteractions('unlock_event');
   });
 }
@@ -266,7 +266,7 @@ function startWalletConnectStartupPolicy() {
     startWalletConnectRestoreAfterHomeReady('already_unlocked');
   }
 
-  void bindKeyringEvent('unlock', () => {
+  bindKeyringEventAfterRegistration('unlock', () => {
     traceAndroidInstant('global_task.walletconnect_restore.unlock_event');
     startWalletConnectRestoreAfterHomeReady('unlock_event');
   });

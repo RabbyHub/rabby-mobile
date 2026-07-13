@@ -3,7 +3,7 @@ import { AppState } from 'react-native';
 import { zCreate } from '@/core/utils/reexports';
 import {
   resolveValFromUpdater,
-  runIIFEFunc,
+  runStartupTask,
   UpdaterOrPartials,
 } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
@@ -28,7 +28,7 @@ const networkStatusState = zCreate<{ isDisconnected: boolean }>(() => ({
   isDisconnected: false,
 }));
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   startNetworkPolling();
 }, STARTUP_TASKS.globalNetworkPolling);
 

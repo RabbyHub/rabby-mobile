@@ -28,7 +28,7 @@ import type {
   UpdaterOrPartials} from '@/core/utils/store';
 import {
   resolveValFromUpdater,
-  runIIFEFunc
+  runStartupTask
 } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { useShallow } from 'zustand/react/shallow';
@@ -192,7 +192,7 @@ async function fetchSystemAuthAvailability() {
   });
 }
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   fetchSystemAuthAvailability().then(systemAuth => {
     setBiometrics(prev => ({ ...prev, ...systemAuth }));
   });

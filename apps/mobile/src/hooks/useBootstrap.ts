@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { bindKeyringEvent } from '@/core/serviceApi/keyring';
+import { bindKeyringEventAfterRegistration } from '@/core/serviceApi/keyring';
 import { initCoreServices } from '@/core/serviceApi/init';
 import { perpsServiceApi } from '@/core/serviceApi/perps';
 import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
@@ -21,7 +21,7 @@ import { apisSafe } from '@/core/apis/safe';
 import type { RefLikeObject } from '@/utils/type';
 import { zCreate } from '@/core/utils/reexports';
 import type { UpdaterOrPartials } from '@/core/utils/store';
-import { resolveValFromUpdater, runIIFEFunc } from '@/core/utils/store';
+import { resolveValFromUpdater, runStartupTask } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { replace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
@@ -160,17 +160,15 @@ export function useInitializeAppOnTop() {
       'POST_UNLOCK_UI_READY',
       onUnlockUIReady,
     );
-    let removeLockListener: (() => void) | null = null;
-    void bindKeyringEvent('lock', onLock)
-      .then(remove => {
-        removeLockListener = remove;
-      })
-      .catch(console.error);
+    const removeLockListener = bindKeyringEventAfterRegistration(
+      'lock',
+      onLock,
+    );
 
     return () => {
       sub.remove();
       subUIReady.remove();
-      removeLockListener?.();
+      removeLockListener();
     };
   }, []);
 
@@ -224,7 +222,7 @@ const hideSplashScreen = (forceHide = false) => {
   }
 };
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   const sub = perfEvents.subscribe('APP_NAVIGATION_READY', () => {
     hideSplashScreen(true);
     sub.remove();

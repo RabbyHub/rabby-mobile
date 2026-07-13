@@ -6,6 +6,7 @@ import type {
 import {
   callCoreService,
   getRegisteredService,
+  waitForCoreServiceRegistration,
 } from '@/core/services/serviceRegistry';
 import {
   createDeferredServiceApi,
@@ -213,6 +214,87 @@ export async function bindKeyringEvent(
     void callCoreService('keyringService', service => {
       service.off(event, listener);
     }).catch(console.error);
+  };
+}
+
+export function bindKeyringEventAfterRegistration(
+  event: string,
+  listener: (...args: any[]) => void,
+) {
+  const service = getRegisteredService('keyringService');
+  if (service) {
+    service.on(event, listener);
+
+    return () => {
+      service.off(event, listener);
+    };
+  }
+
+  let disposed = false;
+  let disposeRegisteredListener: null | (() => void) = null;
+
+  void waitForCoreServiceRegistration('keyringService')
+    .then(registeredService => {
+      if (disposed) {
+        return;
+      }
+
+      registeredService.on(event, listener);
+      disposeRegisteredListener = () => {
+        registeredService.off(event, listener);
+      };
+    })
+    .catch(error => {
+      if (!disposed) {
+        console.error('[keyringServiceApi] bind event after registration', error);
+      }
+    });
+
+  return () => {
+    disposed = true;
+    disposeRegisteredListener?.();
+  };
+}
+
+export function bindKeyringEventOnceAfterRegistration(
+  event: string,
+  listener: (...args: any[]) => void,
+) {
+  const service = getRegisteredService('keyringService');
+  if (service) {
+    service.once(event, listener);
+
+    return () => {
+      service.off(event, listener);
+    };
+  }
+
+  let disposed = false;
+  let disposeRegisteredListener: null | (() => void) = null;
+
+  void waitForCoreServiceRegistration('keyringService')
+    .then(registeredService => {
+      if (disposed) {
+        return;
+      }
+
+      registeredService.once(event, listener);
+      disposeRegisteredListener = () => {
+        registeredService.off(event, listener);
+      };
+    })
+    .catch(error => {
+      if (!disposed) {
+        console.error(
+          '[keyringServiceApi] bind once after registration',
+          error,
+        );
+      }
+    });
+
+  return () => {
+    disposed = true;
+    disposeRegisteredListener?.();
   };
 }
 

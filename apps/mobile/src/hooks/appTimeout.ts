@@ -9,7 +9,7 @@ import type {
   UpdaterOrPartials} from '@/core/utils/store';
 import {
   resolveValFromUpdater,
-  runIIFEFunc
+  runStartupTask
 } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { atom, useAtom } from 'jotai';
@@ -28,7 +28,7 @@ const autoLockStore = zCreate<AppTimeoutState>(() => {
   };
 });
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   const times = apisAutoLock.getPersistedAutoLockTimes();
   setAutoLockMinutes(times.minutes);
 

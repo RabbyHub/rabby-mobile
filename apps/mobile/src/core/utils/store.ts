@@ -79,13 +79,13 @@ export {
   makeAvoidParallelAsyncFunc,
 } from './concurrency';
 
-export type RunIIFEFuncStage = StartupTaskStage;
+export type RunStartupTaskStage = StartupTaskStage;
 
-export type RunIIFEFuncOptions = StartupTaskOptions;
+export type RunStartupTaskOptions = StartupTaskOptions;
 
-type ScheduledIIFEFunc = StartupTaskHandle;
+type ScheduledStartupTask = StartupTaskHandle;
 
-function isRunIIFEFuncOptions(value: unknown): value is RunIIFEFuncOptions {
+function isRunStartupTaskOptions(value: unknown): value is RunStartupTaskOptions {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return false;
   }
@@ -103,17 +103,17 @@ function isRunIIFEFuncOptions(value: unknown): value is RunIIFEFuncOptions {
 }
 
 /**
- * @description mark and optionally schedule module-level side effects.
+ * @description run a task through startup metadata and stage scheduling.
  */
-export function runIIFEFunc<T extends (...args: any[]) => any>(
+export function runStartupTask<T extends (...args: any[]) => any>(
   func: T,
-  optionsOrFirstArg?: RunIIFEFuncOptions | Parameters<T>[0],
+  optionsOrFirstArg?: RunStartupTaskOptions | Parameters<T>[0],
   ...restArgs: any[]
-): ReturnType<T> | ScheduledIIFEFunc | undefined {
-  const hasOptions = isRunIIFEFuncOptions(optionsOrFirstArg);
+): ReturnType<T> | ScheduledStartupTask | undefined {
+  const hasOptions = isRunStartupTaskOptions(optionsOrFirstArg);
   const options = hasOptions
-    ? (optionsOrFirstArg as RunIIFEFuncOptions)
-    : ({} as RunIIFEFuncOptions);
+    ? (optionsOrFirstArg as RunStartupTaskOptions)
+    : ({} as RunStartupTaskOptions);
   const inputArgs = (
     hasOptions
       ? restArgs
@@ -122,10 +122,10 @@ export function runIIFEFunc<T extends (...args: any[]) => any>(
       : [optionsOrFirstArg, ...restArgs]
   ) as Parameters<T>;
 
-  return scheduleStartupTask(() => func(...inputArgs), {
-    ...options,
-    tracePrefix: 'iife_task',
-  }) as ReturnType<T> | ScheduledIIFEFunc | undefined;
+  return scheduleStartupTask(
+    () => func(...inputArgs),
+    options,
+  ) as ReturnType<T> | ScheduledStartupTask | undefined;
 }
 
 export function runDevIIFEFunc<T extends (...args: any[]) => any>(

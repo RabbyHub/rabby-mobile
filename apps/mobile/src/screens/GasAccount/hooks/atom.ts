@@ -27,7 +27,7 @@ import type { UpdaterOrPartials } from '@/core/utils/store';
 import {
   makeAvoidParallelAsyncFunc,
   resolveValFromUpdater,
-  runIIFEFunc,
+  runStartupTask,
 } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { eventBus, EVENTS } from '@/utils/events';
@@ -63,7 +63,7 @@ import {
   updateSessionState,
 } from './state';
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   eventBus.on(EVENTS.AUTO_LOGIN_GAS_ACCOUNT, () => {
     gasAccountStore.setState({
       session: getSessionStateFromService(),

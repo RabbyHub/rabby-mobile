@@ -33,6 +33,7 @@ import {
   registerDeferredService,
   registerDeferredServiceLoader,
   waitDeferredService,
+  waitDeferredServiceRegistration,
 } from './deferred';
 import type { MethodArgs, MethodReturn, ServiceMethod } from './deferred';
 
@@ -119,6 +120,16 @@ export function waitForCoreService<Name extends CoreServiceName>(
   options?: { timeoutMs?: number },
 ): Promise<CoreServiceRegistry[Name]> {
   return waitDeferredService<CoreServiceRegistry[Name]>(name, options);
+}
+
+export function waitForCoreServiceRegistration<Name extends CoreServiceName>(
+  name: Name,
+  options?: { timeoutMs?: number },
+): Promise<CoreServiceRegistry[Name]> {
+  return waitDeferredServiceRegistration<CoreServiceRegistry[Name]>(
+    name,
+    options,
+  );
 }
 
 export async function callCoreService<Name extends CoreServiceName, Ret>(

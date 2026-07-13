@@ -5,7 +5,7 @@ import type {
   UpdaterOrPartials} from '@/core/utils/store';
 import {
   resolveValFromUpdater,
-  runIIFEFunc
+  runStartupTask
 } from '@/core/utils/store';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
 import { useShallow } from 'zustand/react/shallow';
@@ -477,7 +477,7 @@ function setAutoLockMinutes(valOrFunc: UpdaterOrPartials<number>) {
   });
 }
 
-runIIFEFunc(() => {
+runStartupTask(() => {
   const times = apisAutoLock.getPersistedAutoLockTimes();
   setAutoLockMinutes(times.minutes);
 }, STARTUP_TASKS.appSettingsAutoLockHydrate);

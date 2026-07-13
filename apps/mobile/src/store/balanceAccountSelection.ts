@@ -7,7 +7,7 @@ import {
   sortAccountList,
 } from '@/core/apis/account';
 import {
-  bindKeyringEvent,
+  bindKeyringEventAfterRegistration,
   isKeyringUnlockedSnapshot,
 } from '@/core/serviceApi/keyring';
 import { traceAndroidInstant } from '@/core/utils/androidTrace';
@@ -186,7 +186,5 @@ export function startProcessAccountBalanceEvents() {
     ensureSelectionLifecycle();
   }
 
-  void bindKeyringEvent('unlock', ensureSelectionLifecycle).catch(
-    console.error,
-  );
+  bindKeyringEventAfterRegistration('unlock', ensureSelectionLifecycle);
 }

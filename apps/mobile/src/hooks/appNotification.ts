@@ -15,7 +15,7 @@ import type {
   UpdaterOrPartials} from '@/core/utils/store';
 import {
   resolveValFromUpdater,
-  runIIFEFunc
+  runStartupTask
 } from '@/core/utils/store';
 import { UseValueHook } from '@/screens/Settings/components/SwitchSettingCommon';
 import DeviceUtils from '@/core/utils/device';

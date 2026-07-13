@@ -60,7 +60,7 @@ import {
   txResultToToHistoryDisplayItem,
 } from '@/utils/transaction';
 // import { SampleNotifiedTxResult } from '@/core/notifications/sample-data';
-import { bindKeyringEvent } from '@/core/serviceApi/keyring';
+import { bindKeyringEventAfterRegistration } from '@/core/serviceApi/keyring';
 import { getPinnedTokenSnapshot } from '@/core/serviceApi/preference';
 import { getTransactionHistoryCustomTxItemMapSnapshot } from '@/core/serviceApi/transactionHistory';
 import { browserApis } from './browser/useBrowser';
@@ -557,9 +557,9 @@ const unlockUIState = {
   finishedUnlockResetNav: false,
   resetNaviOnTopOfHomeWhenUnlockRef: null as null | ResetNaviOnUIUnlockFn,
 };
-void bindKeyringEvent('lock', () => {
+bindKeyringEventAfterRegistration('lock', () => {
   unlockUIState.finishedUnlockResetNav = false;
-}).catch(console.error);
+});
 export class UnlockUIManager {
   static triggerAutoUnlock(delay = 500) {
     const action = () => {

@@ -356,25 +356,25 @@ for (const filePath of walk(srcRoot)) {
   checkDatabaseGovernanceImports(filePath, relPath, source);
 
   while (true) {
-    const callIndex = source.indexOf('runIIFEFunc(', searchIndex);
+    const callIndex = source.indexOf('runStartupTask(', searchIndex);
     if (callIndex === -1) {
       break;
     }
 
     const before = source.slice(Math.max(0, callIndex - 4), callIndex);
     if (/\/\/\s*$/.test(before)) {
-      searchIndex = callIndex + 'runIIFEFunc('.length;
+      searchIndex = callIndex + 'runStartupTask('.length;
       continue;
     }
 
-    const openParenIndex = callIndex + 'runIIFEFunc'.length;
+    const openParenIndex = callIndex + 'runStartupTask'.length;
     const closeParenIndex = findMatchingParen(source, openParenIndex);
     if (closeParenIndex === -1) {
       errors.push(
         `${relPath}:${getLineNumber(
           source,
           callIndex,
-        )} cannot parse runIIFEFunc call`,
+        )} cannot parse runStartupTask call`,
       );
       break;
     }
@@ -385,7 +385,7 @@ for (const filePath of walk(srcRoot)) {
         `${relPath}:${getLineNumber(
           source,
           callIndex,
-        )} runIIFEFunc must use STARTUP_TASKS metadata`,
+        )} runStartupTask must use STARTUP_TASKS metadata`,
       );
     }
 

@@ -163,6 +163,40 @@ export function waitDeferredService<TService extends object>(
   });
 }
 
+export function waitDeferredServiceRegistration<TService extends object>(
+  name: string,
+  options: { timeoutMs?: number } = {},
+) {
+  const service = serviceMap.get(name) as TService | undefined;
+  if (service) {
+    return Promise.resolve(service);
+  }
+
+  return new Promise<TService>((resolve, reject) => {
+    const waiter: Waiter<TService> = { resolve, reject };
+
+    if (typeof options.timeoutMs === 'number') {
+      waiter.timeoutId = setTimeout(() => {
+        const waiters = waiterMap.get(name);
+        if (waiters) {
+          waiterMap.set(
+            name,
+            waiters.filter(item => item !== waiter),
+          );
+        }
+        reject(new Error(`Deferred service "${name}" timed out`));
+      }, options.timeoutMs);
+    }
+
+    const waiters = waiterMap.get(name);
+    if (waiters) {
+      waiters.push(waiter);
+    } else {
+      waiterMap.set(name, [waiter]);
+    }
+  });
+}
+
 export async function callDeferredService<
   TService extends object,
   TMethod extends ServiceMethod<TService>,

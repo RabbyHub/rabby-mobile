@@ -44,7 +44,7 @@ import { startSetupAppBeforeRenderDeferred } from './setup-app-before-render';
 import { runAfterHomePostStartupReady } from './core/utils/homeStartupReady';
 import { startSubscribeLangChange } from './hooks/lang';
 import { traceAndroidInstant } from './core/utils/androidTrace';
-import { runIIFEFunc } from './core/utils/store';
+import { runStartupTask } from './core/utils/store';
 import { STARTUP_TASKS } from './core/utils/startupTaskManifest';
 
 Safe.openapiService = openapi;
@@ -158,7 +158,7 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
   const rabbitCode = __DEV__ ? DEFAULT_RABBY_MOBILE_CODE : propRabbitCode || '';
   useEffect(() => {
     traceAndroidInstant('react.App.mounted');
-    runIIFEFunc(
+    runStartupTask(
       () => startSubscribeLangChange(),
       STARTUP_TASKS.bootstrapI18nReady,
     );
