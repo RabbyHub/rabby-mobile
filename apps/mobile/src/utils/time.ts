@@ -48,6 +48,23 @@ export function getTimeSpan(seconds: number) {
   };
 }
 
+export const formatTimeSpanToMinutes = ({
+  d,
+  h,
+  m,
+}: {
+  d: number;
+  h: number;
+  m: number;
+}) =>
+  [
+    d > 0 ? `${d} day${d > 1 ? 's' : ''}` : '',
+    h > 0 ? `${h} hour${h > 1 ? 's' : ''}` : '',
+    m > 0 ? `${m} minute${m > 1 ? 's' : ''}` : '',
+  ]
+    .filter(Boolean)
+    .join(' ') || '1 minute';
+
 export function getTimeSpanByMs(ms: number) {
   const s = Math.floor(ms / 1000);
   const m = Math.floor(s / 60);
