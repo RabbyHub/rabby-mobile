@@ -72,7 +72,8 @@ type OnParseUrlAndProcessAction = (payload: {
   testkitScreen?:
     | typeof RootNames.DevCapabilityFile
     | typeof RootNames.DebugLogViewer
-    | typeof RootNames.DevDataSQLite;
+    | typeof RootNames.DevDataSQLite
+    | typeof RootNames.DevSwitches;
   testkitParams?: {
     tab?: 'overview' | 'debug';
   };
@@ -90,6 +91,7 @@ const NON_PRODUCTION_TESTKIT_SCREENS = {
   DevCapabilityFile: RootNames.DevCapabilityFile,
   DebugLogViewer: RootNames.DebugLogViewer,
   DevDataSQLite: RootNames.DevDataSQLite,
+  DevSwitches: RootNames.DevSwitches,
 } as const;
 
 function getRabbyGoTarget(

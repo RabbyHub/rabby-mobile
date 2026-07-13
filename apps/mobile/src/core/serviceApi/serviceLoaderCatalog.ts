@@ -7,6 +7,7 @@ import type {
   StartupTaskOptions,
   StartupTaskPriority,
 } from '@/core/utils/startupScheduler';
+import { observeStartupModuleLoad } from '@/startup/runtimeDiagnostics';
 
 const CORE_SERVICE_LOADER_NAMES: Record<CoreServiceName, true> = {
   autoConnectService: true,
@@ -72,9 +73,15 @@ function loadCoreService(name: CoreServiceName) {
   const loadPromise = Promise.resolve(
     runOnDemandStartupTask(
       () =>
-        import('@/core/services/featureLoaders').then(module =>
-          module.loadFeatureCoreService(name),
-        ),
+        observeStartupModuleLoad(
+          {
+            name: 'core/services/featureLoaders',
+            group: 'service',
+            taskStage: 'onDemand',
+            reason: `service:${name}`,
+          },
+          () => import('@/core/services/featureLoaders'),
+        ).then(module => module.loadFeatureCoreService(name)),
       getLoaderTaskOptions(name),
     ),
   )

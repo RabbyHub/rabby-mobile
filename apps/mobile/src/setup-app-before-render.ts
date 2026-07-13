@@ -1,5 +1,6 @@
 import { traceAndroidInstant } from './core/utils/androidTrace';
 import type { ReadableAccountStoreWarmupTarget } from './setup-readable-account-stores';
+import { observeStartupModuleLoad } from './startup/runtimeDiagnostics';
 
 type SetupBeforeRenderRuntime =
   typeof import('./setup-app-before-render.runtime');
@@ -30,12 +31,19 @@ async function loadSetupBeforeRenderRuntime(_reason: string) {
   traceAndroidInstant('startup.load_setup_before_render_runtime.start', {
     reason: _reason,
   });
-  const runtimePromise = (
-    __DEV__
-      ? Promise.resolve(
-          require('./setup-app-before-render.runtime') as SetupBeforeRenderRuntime,
-        )
-      : import('./setup-app-before-render.runtime')
+  const runtimePromise = observeStartupModuleLoad(
+    {
+      name: 'setup/setup-app-before-render.runtime',
+      group: 'setup',
+      taskStage: 'homePostStartupReady',
+      reason: _reason,
+    },
+    () =>
+      __DEV__
+        ? Promise.resolve(
+            require('./setup-app-before-render.runtime') as SetupBeforeRenderRuntime,
+          )
+        : import('./setup-app-before-render.runtime'),
   )
     .then(runtime => {
       traceAndroidInstant('startup.load_setup_before_render_runtime.end', {
@@ -70,12 +78,19 @@ async function loadReadableAccountBootstrapRuntime(_reason: string) {
   traceAndroidInstant('startup.load_readable_account_bootstrap.start', {
     reason: _reason,
   });
-  const runtimePromise = (
-    __DEV__
-      ? Promise.resolve(
-          require('./setup-readable-account-bootstrap-warmups') as ReadableAccountBootstrapRuntime,
-        )
-      : import('./setup-readable-account-bootstrap-warmups')
+  const runtimePromise = observeStartupModuleLoad(
+    {
+      name: 'setup/readable-account-bootstrap-warmups',
+      group: 'setup',
+      taskStage: 'homePostStartupReady',
+      reason: _reason,
+    },
+    () =>
+      __DEV__
+        ? Promise.resolve(
+            require('./setup-readable-account-bootstrap-warmups') as ReadableAccountBootstrapRuntime,
+          )
+        : import('./setup-readable-account-bootstrap-warmups'),
   )
     .then(runtime => {
       traceAndroidInstant('startup.load_readable_account_bootstrap.end', {
@@ -110,12 +125,19 @@ async function loadReadableAccountStoresRuntime(_reason: string) {
   traceAndroidInstant('startup.load_readable_account_stores.start', {
     reason: _reason,
   });
-  const runtimePromise = (
-    __DEV__
-      ? Promise.resolve(
-          require('./setup-readable-account-stores') as ReadableAccountStoresRuntime,
-        )
-      : import('./setup-readable-account-stores')
+  const runtimePromise = observeStartupModuleLoad(
+    {
+      name: 'setup/readable-account-stores',
+      group: 'setup',
+      taskStage: 'homePostStartupIdle',
+      reason: _reason,
+    },
+    () =>
+      __DEV__
+        ? Promise.resolve(
+            require('./setup-readable-account-stores') as ReadableAccountStoresRuntime,
+          )
+        : import('./setup-readable-account-stores'),
   )
     .then(runtime => {
       traceAndroidInstant('startup.load_readable_account_stores.end', {

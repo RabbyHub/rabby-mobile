@@ -9,6 +9,7 @@ import {
   type CoreServiceName,
   waitForCoreService,
 } from './serviceRegistry';
+import { observeStartupModuleLoad } from '@/startup/runtimeDiagnostics';
 
 let startupCoreServicesPromise: Promise<void> | null = null;
 
@@ -31,7 +32,15 @@ async function loadFeatureService<Name extends CoreServiceName>(
 
   const startedAt = Date.now();
   traceFeatureServiceLoad(name, 'start');
-  await loader();
+  await observeStartupModuleLoad(
+    {
+      name: `core-service/${name}`,
+      group: 'service',
+      taskStage: 'onDemand',
+      reason: 'core service implementation and initialization',
+    },
+    loader,
+  );
   traceFeatureServiceLoad(name, 'done', {
     durationMs: Date.now() - startedAt,
   });

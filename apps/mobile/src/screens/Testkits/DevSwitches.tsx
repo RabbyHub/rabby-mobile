@@ -70,6 +70,7 @@ import { SwitchShowFloatingAutoLockCountdown } from '../Settings/components/Swit
 import { useToggleShowOpenApiSummaryPanel } from '../Settings/components/FloatingOpenApiSummaryPanel';
 import { useToggleShowKeyringRuntimePanel } from '../Settings/components/FloatingKeyringRuntimePanel';
 import { useToggleShowStartupTaskSummaryPanel } from '../Settings/components/FloatingStartupTaskSummaryPanel';
+import { useToggleShowStartupRuntimePanel } from '../Settings/components/startupRuntimePanelSetting';
 import { useGoogleSign } from '@/hooks/cloudStorage';
 import {
   deleteAllBackups,
@@ -832,6 +833,8 @@ function DevSwitchAboutAutoLock() {
     useToggleShowKeyringRuntimePanel();
   const { showStartupTaskSummaryPanel, toggleShowStartupTaskSummaryPanel } =
     useToggleShowStartupTaskSummaryPanel();
+  const { showStartupRuntimePanel, toggleShowStartupRuntimePanel } =
+    useToggleShowStartupRuntimePanel();
 
   return (
     <View style={styles.showCaseRowsContainer}>
@@ -892,6 +895,22 @@ function DevSwitchAboutAutoLock() {
             {showStartupTaskSummaryPanel
               ? 'Hide Floating Startup Task Panel'
               : 'Show Floating Startup Task Panel'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.switchRowWrapper}
+          onPress={() => {
+            toggleShowStartupRuntimePanel();
+          }}>
+          <AppSwitch2024
+            value={showStartupRuntimePanel}
+            onPress={evt => evt.stopPropagation()}
+            onValueChange={toggleShowStartupRuntimePanel}
+          />
+          <Text style={styles.switchLabel}>
+            {showStartupRuntimePanel
+              ? 'Hide Floating Startup Phase and Module Panel'
+              : 'Show Floating Startup Phase and Module Panel'}
           </Text>
         </TouchableOpacity>
         <View style={[styles.rowWrapper, { marginTop: 12 }]}>

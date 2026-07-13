@@ -1,4 +1,5 @@
 import { traceAndroidInstant } from '@/core/utils/androidTrace';
+import { markStartupRuntimePhase } from './runtimeDiagnostics';
 
 export type StartupPhase = 'launch';
 
@@ -19,7 +20,11 @@ const advancedPhases: Record<StartupPhase, string | null> = {
   launch: null,
 };
 
-function runPhaseTask(phase: StartupPhase, task: StartupPhaseTask, reason: string) {
+function runPhaseTask(
+  phase: StartupPhase,
+  task: StartupPhaseTask,
+  reason: string,
+) {
   traceAndroidInstant('startup.phase_task.run', {
     phase,
     id: task.id,
@@ -65,6 +70,7 @@ export function advanceStartupPhase(phase: StartupPhase, reason = 'unknown') {
   }
 
   advancedPhases[phase] = reason;
+  markStartupRuntimePhase('launch', 'phase-advanced', reason);
   traceAndroidInstant('startup.phase.advance', {
     phase,
     reason,

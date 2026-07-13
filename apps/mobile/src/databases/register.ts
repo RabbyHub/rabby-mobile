@@ -1,12 +1,21 @@
 import { runOnDemandStartupTask } from '@/core/utils/startupScheduler';
 import { STARTUP_TASKS } from '@/core/utils/startupTaskManifest';
+import { observeStartupModuleLoad } from '@/startup/runtimeDiagnostics';
 import { registerAppDataSourceLoader } from './registry';
 
 registerAppDataSourceLoader(
   async reason => {
     await runOnDemandStartupTask(
       async () => {
-        const { startAppDataSource } = await import('./orm');
+        const { startAppDataSource } = await observeStartupModuleLoad(
+          {
+            name: 'databases/orm',
+            group: 'database',
+            taskStage: 'onDemand',
+            reason,
+          },
+          () => import('./orm'),
+        );
         await startAppDataSource(reason);
       },
       {

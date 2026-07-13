@@ -6,6 +6,7 @@ import {
   runAfterHomePostStartupReady,
   traceHomeStartupReady,
 } from './homeStartupReady';
+import { markStartupRuntimePhase } from '@/startup/runtimeDiagnostics';
 
 export type StartupTaskStage =
   | 'registration'
@@ -213,6 +214,11 @@ function scheduleHomePostStartupIdle<T>(
     typeof InteractionManager.runAfterInteractions
   > | null = null;
 
+  const executeIdleTask = () => {
+    markStartupRuntimePhase('home', 'idle', options.label || 'idle_task');
+    executeStartupTask(task, options, diagnosticId);
+  };
+
   const cancelHomePostStartupReady = runAfterHomePostStartupReady(
     () => {
       if (disposed) {
@@ -229,7 +235,7 @@ function scheduleHomePostStartupIdle<T>(
             idleId = requestIdleCallback(
               () => {
                 if (!disposed) {
-                  executeStartupTask(task, options, diagnosticId);
+                  executeIdleTask();
                 }
               },
               { timeout: options.idleTimeoutMs ?? 5000 },
@@ -237,7 +243,7 @@ function scheduleHomePostStartupIdle<T>(
             return;
           }
 
-          executeStartupTask(task, options, diagnosticId);
+          executeIdleTask();
         });
       };
 

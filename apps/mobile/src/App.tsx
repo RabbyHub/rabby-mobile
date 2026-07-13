@@ -44,6 +44,8 @@ import { startSetupAppBeforeRenderDeferred } from './setup-app-before-render';
 import { runAfterHomePostStartupReady } from './core/utils/homeStartupReady';
 import { traceAndroidInstant } from './core/utils/androidTrace';
 import { startLaunchPhase } from './startup/launchPlan';
+import { StartupRuntimePanelHost } from './screens/Settings/components/StartupRuntimePanelHost';
+import { NEED_DEVSETTINGBLOCKS } from './constant';
 
 Safe.openapiService = openapi;
 
@@ -170,6 +172,7 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
             <Suspense fallback={null}>
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}
               <GestureHandlerRootView style={{ flex: 1 }}>
+                {NEED_DEVSETTINGBLOCKS ? <StartupRuntimePanelHost /> : null}
                 {/* read from native bundle on production */}
                 <MainScreen rabbitCode={rabbitCode} />
               </GestureHandlerRootView>
