@@ -6,7 +6,7 @@ import { noop, uniqueId } from 'lodash';
 import type { sendTransaction } from '@/utils/sendTransaction';
 import {
   getCurrentMiniApprovalSnapshot,
-  setCurrentMiniApprovalSnapshot,
+  setCurrentMiniApprovalSync,
 } from '@/core/serviceApi/notification';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { sleep } from '@/utils/async';
@@ -100,7 +100,7 @@ export const useMiniApproval = () => {
                   void transactionHistoryServiceApi.removeSigningTx(
                     signingTxId,
                   );
-                  setCurrentMiniApprovalSnapshot(null);
+                  setCurrentMiniApprovalSync(null);
                 }
                 reject(e);
               },
@@ -114,7 +114,7 @@ export const useMiniApproval = () => {
                   checkGasFee: false,
                 }));
                 setMiniSignExtraProps(() => DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
-                setCurrentMiniApprovalSnapshot(null);
+                setCurrentMiniApprovalSync(null);
                 resolve(res);
               },
             };

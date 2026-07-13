@@ -162,8 +162,12 @@ export const gasAccountStore = zCreate<GasAccountZustandState>(() => ({
     GasAccountHistoryItem,
     GasAccountPendingHistoryItem
   >({
-    session: getSessionStateFromService(),
-    discovery: getDiscoveryStateFromRuntime(),
+    session: getSessionStateFromData(undefined),
+    discovery: {
+      pendingHardwareAccount: undefined,
+      accountsWithBalance: [],
+      status: 'idle',
+    },
   }),
   loginVisible: false,
   switchVisible: false,
@@ -272,7 +276,7 @@ if (gasAccountDepositRuntimeStore.getState().bridgeSupportLoading) {
 
 export const cleanupGasAccountAfterDeletedAddress = async (address: string) => {
   const restAddresses = await keyringServiceApi.getAllAddresses();
-  const gasAccount = getGasAccountDataSnapshot() as GasAccountServiceStore;
+  const gasAccount = (await getGasAccountData()) as GasAccountServiceStore;
   if (gasAccount?.account?.address) {
     // check if there is another type address in wallet
     const stillHasAddr = restAddresses.some(item => {

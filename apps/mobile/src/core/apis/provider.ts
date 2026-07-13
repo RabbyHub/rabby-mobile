@@ -7,14 +7,14 @@ import {
   isValidAddress,
   toChecksumAddress,
 } from '@ethereumjs/util';
-import type { Chain} from '@/constant/chains';
+import type { Chain } from '@/constant/chains';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { addresses, abis } from '@eth-optimism/contracts-ts';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import providerController from '../controllers/provider';
 import {
   getFallbackAccountSnapshot,
-  setCurrentMiniApprovalSnapshot,
+  setCurrentMiniApprovalSync,
 } from '@/core/serviceApi';
 import { customRPCServiceApi } from '@/core/serviceApi/customRPC';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
@@ -318,7 +318,7 @@ export const ethSendTransaction = async (
 ) => {
   const signingTxId = args?.[0]?.approvalRes?.signingTxId;
   try {
-    setCurrentMiniApprovalSnapshot({
+    setCurrentMiniApprovalSync({
       signingTxId,
     });
     const res = await providerController.ethSendTransaction(...args);

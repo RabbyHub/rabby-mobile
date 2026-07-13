@@ -1,6 +1,6 @@
 import {
   addBrowserBookmarkItem,
-  getBrowserBookmarkSnapshot,
+  getBrowserBookmarks,
   removeBrowserBookmarkItems,
 } from '@/core/serviceApi/browser';
 import type { BrowserBookmarkItem } from '@/core/services/browserService';
@@ -35,8 +35,8 @@ function setBrowserBookmarkStore(
   });
 }
 
-export const getBookmarkList = () => {
-  const { entities, ids } = getBrowserBookmarkSnapshot();
+export const getBookmarkList = async () => {
+  const { entities, ids } = await getBrowserBookmarks();
   setBrowserBookmarkStore({
     ids,
     entities,
@@ -59,7 +59,7 @@ export function useBrowserBookmark() {
         });
         await removeBrowserBookmarkItems(idsToRemove);
         await addBrowserBookmarkItem(item);
-        getBookmarkList();
+        await getBookmarkList();
       } catch (e) {
         console.error(e);
       }
@@ -72,7 +72,7 @@ export function useBrowserBookmark() {
       return safeGetOrigin(id) === urlInfo?.origin;
     });
     void removeBrowserBookmarkItems(idsToRemove)
-      .then(getBookmarkList)
+      .then(() => getBookmarkList())
       .catch(console.error);
   });
 

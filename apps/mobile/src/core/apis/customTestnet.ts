@@ -2,7 +2,7 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { customTestnetServiceApi } from '@/core/serviceApi/customTestnet';
 import type { CustomTestnetService } from '@/core/services/customTestnetService';
 import {
-  getTransactionHistoryTransactionsSnapshot,
+  getTransactionHistoryTransactions,
   transactionHistoryServiceApi,
 } from '@/core/serviceApi/transactionHistory';
 
@@ -71,7 +71,8 @@ class ApiCustomTestnet {
 
   getUsedCustomTestnetChainList = async () => {
     const ids = new Set<number>();
-    getTransactionHistoryTransactionsSnapshot().forEach(item => {
+    const transactions = await getTransactionHistoryTransactions();
+    transactions.forEach(item => {
       ids.add(item.chainId);
     });
     const chainList = Array.from(ids).filter(

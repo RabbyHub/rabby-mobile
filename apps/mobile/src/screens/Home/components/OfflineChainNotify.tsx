@@ -1,7 +1,7 @@
 import { openapi } from '@/core/request';
 import {
-  getCloseTipsChainsSnapshot,
   mockClearCloseTipsChains,
+  offlineChainServiceApi,
   setCloseTipsChains,
 } from '@/core/serviceApi/offlineChain';
 import { useTheme2024 } from '@/hooks/theme';
@@ -16,7 +16,7 @@ import RcIconTipsCC from '@/assets2024/icons/offlineChain/info-cc.svg';
 import RcIconCloseCC from '@/assets2024/icons/offlineChain/close-cc.svg';
 import { TouchableOpacity } from 'react-native';
 import dayjs from 'dayjs';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal2024,
@@ -34,8 +34,25 @@ type ClosedTipsState = {
   closedTipsChains: string[];
 };
 const closedTipsStore = zCreate<ClosedTipsState>(() => ({
-  closedTipsChains: getCloseTipsChainsSnapshot(),
+  closedTipsChains: [],
 }));
+
+let closedTipsHydrationPromise: Promise<void> | null = null;
+
+function hydrateClosedTipsChains() {
+  if (!closedTipsHydrationPromise) {
+    closedTipsHydrationPromise = offlineChainServiceApi
+      .getCloseTipsChains()
+      .then(closedTipsChains => {
+        closedTipsStore.setState({ closedTipsChains });
+      })
+      .catch(error => {
+        closedTipsHydrationPromise = null;
+        throw error;
+      });
+  }
+  return closedTipsHydrationPromise;
+}
 
 function setClosedTipsChainState(
   valOrFunc: UpdaterOrPartials<ClosedTipsState['closedTipsChains']>,
@@ -63,6 +80,10 @@ export const useMockClearOfflineChainTips = () => {
 };
 
 export const useOfflineChain = () => {
+  useEffect(() => {
+    void hydrateClosedTipsChains().catch(console.error);
+  }, []);
+
   const closedTipsChains = closedTipsStore(s => s.closedTipsChains);
   const accounts = useAccountStore(s => s.accounts);
   const { mockData } = useMockDataForHomeCenterArea();

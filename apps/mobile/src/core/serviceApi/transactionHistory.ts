@@ -3,7 +3,10 @@ import type {
   CustomTxItem,
   TransactionGroup,
 } from '@/core/services/transactionHistory';
-import { getRegisteredService } from '@/core/services/serviceRegistry';
+import {
+  callCoreService,
+  getRegisteredService,
+} from '@/core/services/serviceRegistry';
 import { createDeferredServiceApi } from './createDeferredServiceApi';
 
 export type TransactionHistoryServiceApiContract = TransactionHistoryService;
@@ -65,6 +68,27 @@ export function getTransactionHistoryTransactionsSnapshot() {
     return [];
   }
   return service.store.transactions;
+}
+
+export async function getTransactionHistoryTransactions() {
+  return callCoreService(
+    'transactionHistoryService',
+    service => service.store.transactions,
+  );
+}
+
+export async function getTransactionHistoryCustomTxItemMap() {
+  return callCoreService('transactionHistoryService', service =>
+    service.getCustomTxItemMap(),
+  );
+}
+
+export async function getTransactionHistorySwapFailTransactions(
+  address: string,
+) {
+  return callCoreService('transactionHistoryService', service =>
+    service.getSwapFailTransactions(address),
+  );
 }
 
 export function getTransactionHistorySwapFailTransactionsSnapshot(

@@ -60,7 +60,7 @@ import type { SignerCtx } from '../domain/ctx';
 import { buildFingerprint } from '../domain/ctx';
 import { openapi, testOpenapi } from '@/core/request';
 import { keyringServiceApi } from '@/core/serviceApi/keyring';
-import { getGasAccountSigSnapshot } from '@/core/serviceApi/gasAccount';
+import { gasAccountServiceApi } from '@/core/serviceApi/gasAccount';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { whitelistServiceApi } from '@/core/serviceApi/whitelist';
 import { apiCustomRPC, apiKeyring, apiProvider } from '@/core/apis';
@@ -275,7 +275,7 @@ async function computeGasAccount(params: {
   const { txsCalc, accountType } = params;
   try {
     if (!txsCalc.length) return undefined;
-    const sig = getGasAccountSigSnapshot();
+    const sig = await gasAccountServiceApi.getGasAccountSig();
     const chain = findChain({ id: txsCalc[0]?.tx.chainId })!;
     const res = await openapi.checkGasAccountTxs({
       sig: sig.sig || '',
@@ -1003,7 +1003,7 @@ export class SignatureSteps {
         }
         let sig: string | undefined;
         if (options?.isGasAccount) {
-          sig = getGasAccountSigSnapshot().sig;
+          sig = (await gasAccountServiceApi.getGasAccountSig()).sig;
         }
 
         const result = await sendTransaction({

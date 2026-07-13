@@ -7,10 +7,7 @@ import { getAllAccounts } from '@/core/apis/address';
 import { getLatestNavigationName } from '@/utils/navigation';
 import type { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
 import { getFallbackAccountSnapshot } from '@/core/serviceApi/preference';
-import {
-  getGasAccountPendingHardwareAccountSnapshot,
-  getGasAccountSigSnapshot,
-} from '@/core/serviceApi/gasAccount';
+import { gasAccountServiceApi } from '@/core/serviceApi/gasAccount';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import type {
   AccountSwitcherScene,
@@ -32,12 +29,15 @@ function runTryCatch<T extends (...args: any[]) => any>(
   }
 }
 
-function getGasAccountFeedbackAddress(sceneAddress?: string | null) {
-  const { accountId } = getGasAccountSigSnapshot();
+async function getGasAccountFeedbackAddress(sceneAddress?: string | null) {
+  const [gasAccountSig, pendingHardwareAccount] = await Promise.all([
+    gasAccountServiceApi.getGasAccountSig(),
+    gasAccountServiceApi.getPendingHardwareAccount(),
+  ]);
 
   return (
-    accountId ||
-    getGasAccountPendingHardwareAccountSnapshot()?.address ||
+    gasAccountSig.accountId ||
+    pendingHardwareAccount?.address ||
     sceneAddress ||
     null
   );
@@ -66,7 +66,7 @@ export async function getSceneAddresses() {
 
   return {
     ...values,
-    GasAccount: getGasAccountFeedbackAddress(values.GasAccount),
+    GasAccount: await getGasAccountFeedbackAddress(values.GasAccount),
     Perps: perpsInfo?.address || perpsInfo,
     PerpsAccountType: perpsInfo?.type,
   };

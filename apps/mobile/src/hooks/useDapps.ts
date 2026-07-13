@@ -8,7 +8,6 @@ import {
   bindDappStoreListener,
   dappServiceApi,
   getDappSnapshot,
-  getDappStoreSnapshot,
   getDappsSnapshot,
 } from '@/core/serviceApi/dapp';
 import { stringUtils } from '@rabby-wallet/base-utils';
@@ -22,9 +21,7 @@ import { getDappAccount } from '@/core/utils/dappAccount';
 
 export { getDappAccount } from '@/core/utils/dappAccount';
 
-const dappServiceStore = zCreate<DappStore>(() => {
-  return getDappStoreSnapshot();
-});
+const dappServiceStore = zCreate<DappStore>(() => ({ dapps: {} }));
 
 let dappStoreBindingPromise: Promise<void> | null = null;
 let disposeDappStoreBinding: (() => void) | null = null;

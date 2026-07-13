@@ -132,8 +132,8 @@ export function hasGasAccountTrackedGa4ActiveTodaySnapshot() {
   );
 }
 
-export function markGasAccountLoggedInSnapshot() {
-  return getRegisteredService('gasAccountService')?.markLoggedIn() || false;
+export async function markGasAccountLoggedIn() {
+  return gasAccountServiceApi.markLoggedIn();
 }
 
 export async function setGasAccountLastDepositAccount(

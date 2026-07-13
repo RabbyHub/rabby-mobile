@@ -75,6 +75,20 @@ export function getBrowserTabCountSnapshot() {
   return getBrowserTabsSnapshot().tabs.length;
 }
 
+export async function getBrowserHistory() {
+  return callCoreService('browserService', service => ({
+    ids: service.history.selectors.selectIds(),
+    entities: service.history.selectors.selectEntities(),
+  }));
+}
+
+export async function getBrowserBookmarks() {
+  return callCoreService('browserService', service => ({
+    ids: service.bookmark.selectors.selectIds(),
+    entities: service.bookmark.selectors.selectEntities(),
+  }));
+}
+
 export async function addBrowserHistoryItem(item: BrowserHistoryItem) {
   await callCoreService('browserService', service => {
     service.history.addOne(item);

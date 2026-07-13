@@ -2,11 +2,7 @@
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  getTransactionHistoryFailedCountSnapshot,
-  getTransactionHistoryPendingsAddressesSnapshot,
-  getTransactionHistorySucceedCountSnapshot,
-} from '@/core/serviceApi/transactionHistory';
+import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
@@ -70,17 +66,16 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
 
   const { currentAccount } = useSingleHomeAccount();
 
-  const fetchHistory = useCallback(() => {
+  const fetchHistory = useCallback(async () => {
     if (!currentAccount) {
       return;
     }
 
-    const failCount = getTransactionHistoryFailedCountSnapshot(
-      currentAccount.address,
-    );
-    const successCount = getTransactionHistorySucceedCountSnapshot(
-      currentAccount.address,
-    );
+    const address = currentAccount.address;
+    const [failCount, successCount] = await Promise.all([
+      transactionHistoryServiceApi.getFailedCount(address),
+      transactionHistoryServiceApi.getSucceedCount(address),
+    ]);
     setHistoryCount({
       success: successCount,
       fail: failCount,
@@ -91,28 +86,34 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
       return;
     }
 
-    if (!currentAccount) {
-      return;
-    }
-    const addresses = [currentAccount.address];
     const { pendingsLength } =
-      getTransactionHistoryPendingsAddressesSnapshot(addresses);
+      await transactionHistoryServiceApi.getPendingsAddresses([address]);
     setPendingTxCount(pendingsLength);
     timeRef.current && clearInterval(timeRef.current);
-    timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
+    timeRef.current = pendingsLength
+      ? setInterval(() => {
+          void fetchHistory().catch(console.error);
+        }, 5000)
+      : null;
   }, [currentAccount, tokenItem]);
 
   const refreshId = refreshHistoryIdState(s => s.refreshId);
   useEffect(() => {
     if (refreshId > 0) {
-      fetchHistory();
+      void fetchHistory().catch(console.error);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshId]);
 
   useFocusEffect(
     useCallback(() => {
-      fetchHistory();
+      void fetchHistory().catch(console.error);
+      return () => {
+        if (timeRef.current) {
+          clearInterval(timeRef.current);
+          timeRef.current = null;
+        }
+      };
     }, [fetchHistory]),
   );
 

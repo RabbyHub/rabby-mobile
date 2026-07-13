@@ -1,20 +1,14 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import type { ClaimedGiftAddress } from '@/core/services/gasAccount';
-import {
-  gasAccountServiceApi,
-  getGasAccountCurrentEligibleAddressSnapshot,
-  getGasAccountHasClaimedGiftSnapshot,
-  getGasAccountSigSnapshot,
-} from '@/core/serviceApi/gasAccount';
+import { gasAccountServiceApi } from '@/core/serviceApi/gasAccount';
 import { useAccounts } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { zCreate } from '@/core/utils/reexports';
-import type {
-  UpdaterOrPartials} from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
 import {
   makeAvoidParallelAsyncFunc,
   resolveValFromUpdater,
-  runDevIIFEFunc
+  runDevIIFEFunc,
 } from '@/core/utils/store';
 import * as apisAccount from '@/core/apis/account';
 import { storeApiGasAccount } from '@/screens/GasAccount/hooks/atom';
@@ -25,21 +19,29 @@ runDevIIFEFunc(() => {
 });
 
 const gasAccountState = zCreate(() => ({
-  gasAccountSig: getGasAccountSigSnapshot(),
-  hasClaimedGift: getGasAccountHasClaimedGiftSnapshot(),
-  currentEligibleAddress: getGasAccountCurrentEligibleAddressSnapshot(),
+  gasAccountSig: {
+    sig: undefined as string | undefined,
+    accountId: undefined as string | undefined,
+  },
+  hasClaimedGift: false,
+  currentEligibleAddress: undefined as ClaimedGiftAddress | undefined,
   eligibilityData: [] as ClaimedGiftAddress[],
 }));
 
-function reFetchStatus() {
-  gasAccountState.setState(prev => {
-    // const { newVal } = resolveValFromUpdater(valOrFunc, prev);
+async function reFetchStatus() {
+  const [gasAccountSig, hasClaimedGift, currentEligibleAddress] =
+    await Promise.all([
+      gasAccountServiceApi.getGasAccountSig(),
+      gasAccountServiceApi.getHasClaimedGift(),
+      gasAccountServiceApi.getCurrentEligibleAddress(),
+    ]);
 
+  gasAccountState.setState(prev => {
     return {
       ...prev,
-      gasAccountSig: getGasAccountSigSnapshot(),
-      hasClaimedGift: getGasAccountHasClaimedGiftSnapshot(),
-      currentEligibleAddress: getGasAccountCurrentEligibleAddressSnapshot(),
+      gasAccountSig,
+      hasClaimedGift,
+      currentEligibleAddress,
       eligibilityData: [],
     };
   });
@@ -88,7 +90,7 @@ export const checkGasAccountAddressesEligibility = makeAvoidParallelAsyncFunc(
     } catch (err) {
       throw err;
     } finally {
-      reFetchStatus();
+      void reFetchStatus().catch(console.error);
     }
   },
 );
@@ -103,6 +105,10 @@ export const useGasAccountGiftEligibility = () => {
 };
 
 export const useGasAccountEligibility = () => {
+  useEffect(() => {
+    void reFetchStatus().catch(console.error);
+  }, []);
+
   const { accounts } = useAccounts({ disableAutoFetch: true });
   const currentEligibleAddress = gasAccountState(s => s.currentEligibleAddress);
 
@@ -140,7 +146,7 @@ export const useGasAccountEligibility = () => {
         console.error('Failed to claim gift:', err);
         throw err;
       } finally {
-        reFetchStatus();
+        void reFetchStatus().catch(console.error);
       }
     },
     [accounts],

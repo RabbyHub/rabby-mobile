@@ -44,13 +44,16 @@ export function getCurrentMiniApprovalSnapshot() {
   );
 }
 
-export function setCurrentMiniApprovalSnapshot(
+export function setCurrentMiniApprovalSync(
   value: NotificationService['currentMiniApproval'],
 ) {
-  const service = getRegisteredService('notificationService');
-  if (service) {
-    service.currentMiniApproval = value;
-  }
+  runServiceSideEffectWhenReady(
+    'notificationService',
+    service => {
+      service.currentMiniApproval = value;
+    },
+    'notificationService.setCurrentMiniApproval',
+  );
 }
 
 export function setCurrentRequestDeferFnSync(

@@ -17,14 +17,11 @@ import {
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
-import type { AppRootName} from '@/constant/layout';
+import type { AppRootName } from '@/constant/layout';
 import { RootNames, makeHeadersPresets } from '@/constant/layout';
 import { APP_FEATURE_SWITCH } from '@/constant';
-import type {
-  NavigationContainerRef} from '@react-navigation/native';
-import {
-  useNavigation,
-} from '@react-navigation/native';
+import type { NavigationContainerRef } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 
 import type { RootStackParamsList } from '@/navigation-type';
 import { setIOSScreenCapture } from './native/security';
@@ -43,11 +40,10 @@ import {
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 import type { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { zCreate } from '@/core/utils/reexports';
-import type {
-  UpdaterOrPartials} from '@/core/utils/store';
+import type { UpdaterOrPartials } from '@/core/utils/store';
 import {
   makeAvoidParallelAsyncFunc,
-  resolveValFromUpdater
+  resolveValFromUpdater,
 } from '@/core/utils/store';
 import { RefLikeObject } from '@/utils/type';
 import { perfEvents } from '@/core/utils/perf';
@@ -62,7 +58,7 @@ import {
 // import { SampleNotifiedTxResult } from '@/core/notifications/sample-data';
 import { bindKeyringEventAfterRegistration } from '@/core/serviceApi/keyring';
 import { getPinnedTokenSnapshot } from '@/core/serviceApi/preference';
-import { getTransactionHistoryCustomTxItemMapSnapshot } from '@/core/serviceApi/transactionHistory';
+import { getTransactionHistoryCustomTxItemMap } from '@/core/serviceApi/transactionHistory';
 import { browserApis } from './browser/useBrowser';
 import { notificationOpenapi } from '@/core/notifications/openapi';
 import { toast, toastLoading } from '@/components2024/Toast';
@@ -981,7 +977,7 @@ export function startSubscribeRemoteNotification() {
           hideToastRef.current();
 
           const pinedQueue = getPinnedTokenSnapshot();
-          const customTxItemsMap = getTransactionHistoryCustomTxItemMapSnapshot();
+          const customTxItemsMap = await getTransactionHistoryCustomTxItemMap();
           const historyDisplayItem = txResultToToHistoryDisplayItem({
             address: parsedData.txInfo?.ownerAddress || '',
             res: txDetail,

@@ -1,6 +1,7 @@
 import BigNumber from 'bignumber.js';
 import { transactionBroadcastWatcherServiceApi } from '@/core/serviceApi/transactionBroadcastWatcher';
 import {
+  getTransactionHistoryTransactions,
   getTransactionHistoryTransactionsSnapshot,
   transactionHistoryServiceApi,
 } from '@/core/serviceApi/transactionHistory';
@@ -141,7 +142,7 @@ class ApisTransactionHistory {
     );
   };
 
-  updateBridgeGasAccountTx = ({
+  updateBridgeGasAccountTx = async ({
     address,
     chainId,
     hash,
@@ -153,7 +154,8 @@ class ApisTransactionHistory {
     if (!chainId) {
       return;
     }
-    const tx = getTransactionHistoryTransactionsSnapshot().find(item => {
+    const transactions = await getTransactionHistoryTransactions();
+    const tx = transactions.find(item => {
       return (
         isSameAddress(item.address, address) &&
         item.chainId === chainId &&

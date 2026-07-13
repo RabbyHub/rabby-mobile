@@ -46,7 +46,7 @@ function loadCustomTestnetModule() {
     },
   }));
   jest.doMock('@/core/serviceApi/transactionHistory', () => ({
-    getTransactionHistoryTransactionsSnapshot: () =>
+    getTransactionHistoryTransactions: async () =>
       Object.values(transactionHistoryService.store.transactions),
     transactionHistoryServiceApi: {
       getNonceByChain: (...args: unknown[]) => mockGetNonceByChain(...args),

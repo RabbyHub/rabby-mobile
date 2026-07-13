@@ -1,7 +1,7 @@
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { transactionHistoryServiceApi } from '@/core/serviceApi/transactionHistory';
 import {
-  getGasAccountSigSnapshot,
+  gasAccountServiceApi,
   setGasAccountLastDepositAccount,
 } from '@/core/serviceApi';
 import { sendToken } from './token';
@@ -135,7 +135,7 @@ export const topUpGasAccount = async ({
     throw new Error(t('background.error.noCurrentAccount'));
   }
 
-  const { sig, accountId } = getGasAccountSigSnapshot();
+  const { sig, accountId } = await gasAccountServiceApi.getGasAccountSig();
 
   if (!sig || !accountId) {
     throw new Error('please login first');
@@ -184,7 +184,7 @@ export const afterTopUpGasAccount = async ({
   if (!account) {
     throw new Error(t('background.error.noCurrentAccount'));
   }
-  const { sig, accountId } = getGasAccountSigSnapshot();
+  const { sig, accountId } = await gasAccountServiceApi.getGasAccountSig();
 
   if (!sig || !accountId) {
     throw new Error('please login first');
@@ -243,7 +243,7 @@ export const afterBridgeTopUpGasAccount = async ({
     throw new Error(t('background.error.noCurrentAccount'));
   }
 
-  const { sig, accountId } = getGasAccountSigSnapshot();
+  const { sig, accountId } = await gasAccountServiceApi.getGasAccountSig();
 
   if (!sig || !accountId) {
     throw new Error('please login first');
@@ -356,7 +356,7 @@ export const buildTopUpGasAccount = async ({
     throw new Error(t('background.error.noCurrentAccount'));
   }
 
-  const { sig, accountId } = getGasAccountSigSnapshot();
+  const { sig, accountId } = await gasAccountServiceApi.getGasAccountSig();
 
   if (!sig || !accountId) {
     throw new Error('please login first');

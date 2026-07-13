@@ -20,8 +20,7 @@ async function warmBrowserDappStores() {
     getAllRPC(),
   ]);
 
-  getBookmarkList();
-  getBrowserHistoryList();
+  await Promise.all([getBookmarkList(), getBrowserHistoryList()]);
   setTabs(
     browserTabs.tabs.map(tab => {
       if (tab.isDapp) {

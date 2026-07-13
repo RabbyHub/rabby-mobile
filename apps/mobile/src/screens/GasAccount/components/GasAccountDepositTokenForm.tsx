@@ -694,7 +694,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
           return;
         }
 
-        apisTransactionHistory.updateBridgeGasAccountTx({
+        await apisTransactionHistory.updateBridgeGasAccountTx({
           address: selectedOwnerAccount.address,
           chainId: findChain({ serverId: selectedToken.chain })!.id,
           hash: lastHash,

@@ -1,7 +1,7 @@
 import { SectionList } from 'react-native';
 import {
   addBrowserHistoryItem,
-  getBrowserHistorySnapshot,
+  getBrowserHistory,
   removeBrowserHistoryItem,
   resetBrowserHistory,
 } from '@/core/serviceApi/browser';
@@ -49,8 +49,8 @@ function setBrowserHistoryStore(
   });
 }
 
-export const getBrowserHistoryList = () => {
-  const { entities, ids } = getBrowserHistorySnapshot();
+export const getBrowserHistoryList = async () => {
+  const { entities, ids } = await getBrowserHistory();
   setBrowserHistoryStore({
     ids,
     entities,
@@ -87,7 +87,7 @@ export function useBrowserHistory() {
           await removeBrowserHistoryItem(historyId);
         }
         await addBrowserHistoryItem(item);
-        getBrowserHistoryList();
+        await getBrowserHistoryList();
       } catch (e) {
         console.error(e);
       }
@@ -96,12 +96,14 @@ export function useBrowserHistory() {
 
   const removeBrowserHistory = useMemoizedFn((url: string) => {
     void removeBrowserHistoryItem(url)
-      .then(getBrowserHistoryList)
+      .then(() => getBrowserHistoryList())
       .catch(console.error);
   });
 
   const removeAllBrowserHistory = useMemoizedFn(() => {
-    void resetBrowserHistory().then(getBrowserHistoryList).catch(console.error);
+    void resetBrowserHistory()
+      .then(() => getBrowserHistoryList())
+      .catch(console.error);
   });
 
   const { list: browserHistoryList, sectionList: browserHistorySectionList } =

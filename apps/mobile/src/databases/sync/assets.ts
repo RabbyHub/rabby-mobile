@@ -9,10 +9,9 @@ import type {
   NFTItem,
   TokenItem,
   TxAllHistoryResult,
-  TxHistoryResult} from '@rabby-wallet/rabby-api/dist/types';
-import {
-  SwapTradeList
+  TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
+import { SwapTradeList } from '@rabby-wallet/rabby-api/dist/types';
 import { ProtocolItemEntity } from '../entities/portocolItem';
 import {
   EMPTY_NFT_ITEM,
@@ -27,8 +26,8 @@ import { CexEntity } from '../entities/cex';
 import { deleteCurveCache } from '@/utils/24balanceCurveCache';
 import { getPinnedTokenSnapshot } from '@/core/serviceApi';
 import {
-  getTransactionHistoryCustomTxItemMapSnapshot,
-  getTransactionHistorySwapFailTransactionsSnapshot,
+  getTransactionHistoryCustomTxItemMap,
+  getTransactionHistorySwapFailTransactions,
 } from '@/core/serviceApi/transactionHistory';
 import type { TransactionGroup } from '@/core/services/transactionHistory';
 import { removeCexId } from '@/utils/addressCexId';
@@ -610,9 +609,10 @@ export async function syncRemoteHistory(
     const projectDict = project_dict;
 
     const pinedQueue = getPinnedTokenSnapshot();
-    const customTxItemsMap = getTransactionHistoryCustomTxItemMapSnapshot();
-    const swapFailHistoryList =
-      getTransactionHistorySwapFailTransactionsSnapshot(address);
+    const [customTxItemsMap, swapFailHistoryList] = await Promise.all([
+      getTransactionHistoryCustomTxItemMap(),
+      getTransactionHistorySwapFailTransactions(address),
+    ]);
     const entityBuildStartedAt = Date.now();
     const historyItems = history_list
       .filter(i => Boolean(i.tx))
