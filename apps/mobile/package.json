@@ -96,7 +96,7 @@
     "@rabby-wallet/hyperliquid-sdk": "1.1.10",
     "@rabby-wallet/object-multiplex": "workspace:^",
     "@rabby-wallet/persist-store": "workspace:^",
-    "@rabby-wallet/rabby-action": "0.1.14",
+    "@rabby-wallet/rabby-action": "0.1.15",
     "@rabby-wallet/rabby-api": "0.9.63",
     "@rabby-wallet/rabby-bridge": "0.0.7",
     "@rabby-wallet/rabby-logger": "0.3.1",

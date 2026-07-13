@@ -400,6 +400,7 @@ export class SignatureSteps {
               chainId: chain.serverId,
               sender: account.address,
               walletProvider: {
+                ethRpc: requestETHRpc,
                 hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
                 hasAddress: keyringService.hasAddress.bind(keyringService),
                 getWhitelist: async () => whitelistService.getWhitelist(),
@@ -458,6 +459,7 @@ export class SignatureSteps {
           chainId: chain.serverId,
           sender: account.address,
           walletProvider: {
+            ethRpc: requestETHRpc,
             hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
             hasAddress: keyringService.hasAddress.bind(keyringService),
             getWhitelist: async () => whitelistService.getWhitelist(),
