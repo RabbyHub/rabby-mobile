@@ -12,19 +12,19 @@ let didSubscribeOnlineConfig = false;
 let workerThreadDeferredStartTimer: ReturnType<typeof setTimeout> | null = null;
 
 function getStartupProfilerWorkerDelayMs() {
-  const activeUntil = Number(
+  const deferWorkerUntil = Number(
     (
       globalThis as typeof globalThis & {
-        __RABBY_STARTUP_PROFILER_ACTIVE_UNTIL__?: number;
+        __RABBY_STARTUP_PROFILER_DEFER_WORKER_UNTIL__?: number;
       }
-    ).__RABBY_STARTUP_PROFILER_ACTIVE_UNTIL__ || 0,
+    ).__RABBY_STARTUP_PROFILER_DEFER_WORKER_UNTIL__ || 0,
   );
 
-  if (!Number.isFinite(activeUntil) || activeUntil <= 0) {
+  if (!Number.isFinite(deferWorkerUntil) || deferWorkerUntil <= 0) {
     return 0;
   }
 
-  return Math.max(0, activeUntil - Date.now());
+  return Math.max(0, deferWorkerUntil - Date.now());
 }
 
 export function isWorkerThreadRunning() {

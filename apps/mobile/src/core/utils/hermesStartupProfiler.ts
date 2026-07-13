@@ -20,24 +20,28 @@ const TRACE_TAG_REACT = 1 << 13;
 
 let didStartStartupProfiler = false;
 
+type StartupProfilerGlobal = typeof globalThis & {
+  __RABBY_STARTUP_PROFILER_ACTIVE_UNTIL__?: number;
+  __RABBY_STARTUP_PROFILER_DEFER_WORKER_UNTIL__?: number;
+  __RABBY_PERF_CAPTURE_CONSOLE_NOISE_SUPPRESSED_UNTIL__?: number;
+};
+
 const isStartupProfilerEnabled =
   __DEV__ ||
   process.env.RABBY_MOBILE_BUILD_ENV !== 'production' ||
   process.env.buildchannel === 'selfhost-reg';
 
+const shouldDeferWorkerDuringStartupProfile =
+  process.env.RABBY_STARTUP_PROFILER_DEFER_WORKER !== 'false';
+
 function setStartupProfilerActiveUntil(activeUntil: number) {
-  (
-    globalThis as typeof globalThis & {
-      __RABBY_STARTUP_PROFILER_ACTIVE_UNTIL__?: number;
-      __RABBY_PERF_CAPTURE_CONSOLE_NOISE_SUPPRESSED_UNTIL__?: number;
-    }
-  ).__RABBY_STARTUP_PROFILER_ACTIVE_UNTIL__ = activeUntil;
-  (
-    globalThis as typeof globalThis & {
-      __RABBY_STARTUP_PROFILER_ACTIVE_UNTIL__?: number;
-      __RABBY_PERF_CAPTURE_CONSOLE_NOISE_SUPPRESSED_UNTIL__?: number;
-    }
-  ).__RABBY_PERF_CAPTURE_CONSOLE_NOISE_SUPPRESSED_UNTIL__ = activeUntil;
+  const profilerGlobal = globalThis as StartupProfilerGlobal;
+
+  profilerGlobal.__RABBY_STARTUP_PROFILER_ACTIVE_UNTIL__ = activeUntil;
+  profilerGlobal.__RABBY_STARTUP_PROFILER_DEFER_WORKER_UNTIL__ =
+    shouldDeferWorkerDuringStartupProfile ? activeUntil : 0;
+  profilerGlobal.__RABBY_PERF_CAPTURE_CONSOLE_NOISE_SUPPRESSED_UNTIL__ =
+    activeUntil;
 }
 
 function traceStartupProfilerInstant(name: string) {
@@ -136,7 +140,10 @@ export function startHermesStartupProfiler() {
   try {
     traceStartupProfilerInstant('js.hermes_startup_profile.start');
     const started = sentryProfiler.startProfiling(true);
-    console.info('[RabbyStartupProfiler] start', started);
+    console.info('[RabbyStartupProfiler] start', {
+      ...started,
+      deferWorker: shouldDeferWorkerDuringStartupProfile,
+    });
     if (started?.started === false) {
       setStartupProfilerActiveUntil(0);
       return;
